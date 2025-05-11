@@ -25,8 +25,8 @@
 
 [![Build Status](https://img.shields.io/travis/ita-social-projects/GreenCity/master?style=flat-square)](https://travis-ci.org/github/ita-social-projects/GreenCity)
 [![Coverage Status](https://img.shields.io/gitlab/coverage/ita-social-projects/GreenCity/master?style=flat-square)](https://coveralls.io)
-[![Github Issues](https://img.shields.io/github/issues/ita-social-projects/GreenCity?style=flat-square)](https://github.com/ita-social-projects/GreenCity/issues)
-[![Pending Pull-Requests](https://img.shields.io/github/issues-pr/ita-social-projects/GreenCity?style=flat-square)](https://github.com/ita-social-projects/GreenCity/pulls)
+[![Github Issues](https://img.shields.io/github/issues/Liatoshynsky-Foundation/lf-admin?style=flat-square)](https://github.com/Liatoshynsky-Foundation/lf-admin/issues)
+[![Pending Pull-Requests](https://img.shields.io/github/issues-pr/Liatoshynsky-Foundation/lf-admin?style=flat-square)](https://github.com/Liatoshynsky-Foundation/lf-admin/pulls)
 [![License](http://img.shields.io/:license-mit-blue.svg?style=flat-square)](http://badges.mit-license.org)
 
 - For more on these wonderful  badges, refer to <a href="https://shields.io/" target="_blank">shields.io</a>.
@@ -85,8 +85,7 @@ api.secret=${API_SECRET}
 
 ### Clone
 
-- Clone this repo to your local machine using `https://github.com/ita-social-projects/SOMEREPO`
-
+- Clone this repo to your local machine using `git@github.com:Liatoshynsky-Foundation/lf-admin.git`
 ### Setup
 
 - If you want more syntax highlighting, format your code like this:
@@ -109,6 +108,10 @@ $ bower install
 
 ### How to run local
 
+```bash
+npm run dev
+```
+
 ### How to run Docker
 
 ---
@@ -122,16 +125,82 @@ $ bower install
 
 ## Documentation
 
+### Folder structure
+
+```markdown
+app/
+├── events/
+│   ├── page.tsx (list of events)
+│   ├── [slug]/
+│   │   └── page.tsx             # /events/:slug (individual event)
+│   ├── layout.tsx               # (optional layout)
+│   ├── components/              # News-specific components
+│   │   ├── Events.tsx           # Events component
+│   │   └── Event.tsx            # Event post component
+│   └── hooks/                   # event-specific hooks
+│       ├── useEvents.ts         # Custom hook for fetching all events
+│       └── useEvent.ts          # Custom hook for fetching a single event 
+├── shared/                      # Shared components and hooks
+│   ├── components/              # Reusable UI components
+│   │   ├── Header.tsx           # Shared Header component
+│   │   └── Footer.tsx           # Shared Footer component
+│   └── hooks/                   # Reusable hooks
+│       └── useAuth.ts           # Authentication hook (example)
+├── api/
+│   ├── events/
+│   │   ├── route.ts             # API for /api/events
+│   │   └── [slug]/
+│   │       └── route.ts         # API for /api/events/:slug
+├── middleware/                  # Middlewares for handling requests
+│   ├── logger.ts                # Middleware for logging
+│   └── authentication.ts       # Middleware for authentication checks
+└── lib/
+│   └── axiosAPI.ts           # Setup for axios API
+└── constants/    
+```
+
 ---
 
 ## Contributing
 
 ### Git flow
+```mermaid
+gitGraph
+   commit id: "Initial commit"
+   branch develop
+   checkout develop
+   commit id: "Setup project structure"
+   branch feature/login
+   checkout feature/login
+   commit id: "Add login UI"
+   commit id: "Connect login to backend"
+   checkout develop
+   merge feature/login id: "Merge login feature"
+   branch release/1.0
+   checkout release/1.0
+   commit id: "Prepare release 1.0"
+   checkout main
+   merge release/1.0 id: "Merge release 1.0 into main"
+   commit id: "Tag version v1.0"
+   checkout develop
+   merge release/1.0 id: "Merge release 1.0 back into develop"
+
+   checkout main
+   branch hotfix/1.0.1
+   checkout hotfix/1.0.1
+   commit id: "Fix critical bug in production"
+   checkout main
+   merge hotfix/1.0.1 id: "Merge hotfix into main"
+   commit id: "Tag version v1.0.1"
+   checkout develop
+   merge hotfix/1.0.1 id: "Merge hotfix into develop"
+
+```
 > To get started...
 #### Step 1
 
 - **Option 1**
-    - 🍴 Fork this repo!
+g    - 🍴 Fork this repo!
 
 - **Option 2**
     - 👯 Clone this repo to your local machine using `https://github.com/ita-social-projects/SOMEREPO.git`
@@ -142,7 +211,7 @@ $ bower install
 
 #### Step 3
 
-- 🔃 Create a new pull request using <a href="https://github.com/ita-social-projects/SOMEREPO/compare/" target="_blank">github.com/ita-social-projects/SOMEREPO</a>.
+- 🔃 Create a new pull request using <a href="https://github.com/Liatoshynsky-Foundation/lf-client/compare/" target="_blank">github.com/Liatoshynsky-Foundation/lf-client</a>.
 
 ### Issue flow
 
