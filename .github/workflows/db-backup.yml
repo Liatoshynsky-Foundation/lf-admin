@@ -61,13 +61,14 @@ jobs:
 
       - name: Upload Dump to Azure Storage
         env:
+          AZURE_BLOB_CONTAINER: ${{ secrets.AZURE_BLOB_CONTAINER }}
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
           TODAY: ${{ steps.set-date.outputs.date }}
         run: |
           az storage blob upload \
-            --container-name db-backups \
-            --file backup-$DB_SOURCE-$TODAY.tar.gz.enc \
-            --name backup-$DB_SOURCE-$TODAY.tar.gz.enc \
+            --container-name "$AZURE_BLOB_CONTAINER" \
+            --file "backup-$DB_SOURCE-$TODAY.tar.gz.enc" \
+            --name "backup-$DB_SOURCE-$TODAY.tar.gz.enc" \
             --overwrite \
             --connection-string "$AZURE_STORAGE_CONNECTION_STRING"
 
