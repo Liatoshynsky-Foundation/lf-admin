@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev-db-backup
     env:
-      DB_SOURCE: ${{ secrets.MONGODB_DEV_DB_NAME }}
-      DB_SOURCE_URL: ${{ secrets.MONGODB_DEV_URL }}
-      DB_TEST: ${{ secrets.MONGODB_TEST_DB_NAME }}
-      DB_TEST_URL: ${{ secrets.MONGODB_TEST_URL }}
+      DB_SOURCE: ${{ vars.DB_SOURCE }}
+      DB_SOURCE_URL: ${{ secrets.DB_SOURCE_URL }}
+      # DB_TEST: ${{ vars.DB_TEST }}
+      # DB_TEST_URL: ${{ secrets.DB_TEST_URL }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -38,49 +38,61 @@ jobs:
           --uri="$DB_SOURCE_URL" \
           -d $DB_SOURCE
 
-      - name: Restore Dump to MongoDB Atlas Test Cluster
-        env:
-          TODAY: ${{ steps.set-date.outputs.date }}
-        run: |
-          mongorestore \
-          backup-$DB_SOURCE-$TODAY \
-          --uri="$DB_TEST_URL" \
-          --nsInclude="$DB_SOURCE.*" \
-          --nsFrom="$DB_SOURCE.*" \
-          --nsTo="$DB_TEST.*" \
-          --drop
+      # - name: Restore Dump to MongoDB Atlas Test Cluster
+      #   env:
+      #     TODAY: ${{ steps.set-date.outputs.date }}
+      #   run: |
+      #     mongorestore \
+      #     backup-$DB_SOURCE-$TODAY \
+      #     --uri="$DB_TEST_URL" \
+      #     --nsInclude="$DB_SOURCE.*" \
+      #     --nsFrom="$DB_SOURCE.*" \
+      #     --nsTo="$DB_TEST.*" \
+      #     --drop
 
       - name: Encrypt Dump
         env:
-          ENCRYPTION_KEY: ${{ secrets.MONGODB_DEV_ENCRYPTION_KEY }}
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
           TODAY: ${{ steps.set-date.outputs.date }}
         run: |
           tar -czf backup-$DB_SOURCE-$TODAY.tar.gz backup-$DB_SOURCE-$TODAY
           openssl enc -aes-256-cbc -salt -in backup-$DB_SOURCE-$TODAY.tar.gz -out backup-$DB_SOURCE-$TODAY.tar.gz.enc -k "$ENCRYPTION_KEY"
           rm -rf backup-$DB_SOURCE-$TODAY backup-$DB_SOURCE-$TODAY.tar.gz
 
-      - name: Upload Dump to Azure Storage
+      - name: Upload Dump to Azure Storage (primary)
+        continue-on-error: true
         env:
+          AZURE_BLOB_CONTAINER: ${{ vars.AZURE_BLOB_CONTAINER }}
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
           TODAY: ${{ steps.set-date.outputs.date }}
         run: |
           az storage blob upload \
-            --container-name db-backups \
-            --file backup-$DB_SOURCE-$TODAY.tar.gz.enc \
-            --name backup-$DB_SOURCE-$TODAY.tar.gz.enc \
+            --container-name "$AZURE_BLOB_CONTAINER" \
+            --file "backup-$DB_SOURCE-$TODAY.tar.gz.enc" \
+            --name "backup-$DB_SOURCE-$TODAY.tar.gz.enc" \
             --overwrite \
             --connection-string "$AZURE_STORAGE_CONNECTION_STRING"
+
+      - name: Upload to GitHub Artifact (secondary)
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-${{ env.DB_SOURCE }}-${{ steps.set-date.outputs.date }}
+          path: backup-${{ env.DB_SOURCE }}-${{ steps.set-date.outputs.date }}.tar.gz.enc
 
       - name: Generate Download Link
         id: dev-backup
         env:
+          AZURE_STORAGE_ACCOUNT: ${{ vars.AZURE_STORAGE_ACCOUNT }}
+          AZURE_BLOB_CONTAINER: ${{ vars.AZURE_BLOB_CONTAINER }}
           TODAY: ${{ steps.set-date.outputs.date }}
         run: |
           BACKUP_FILE="backup-$DB_SOURCE-$TODAY.tar.gz.enc"
-          AZURE_URL="https://s2sbackups.blob.core.windows.net/db-backups/$BACKUP_FILE"
+          AZURE_URL="https://$AZURE_STORAGE_ACCOUNT.blob.core.windows.net/$AZURE_BLOB_CONTAINER/$BACKUP_FILE"
+          GH_ARTIFACT_URL="(see Actions → run artifacts at the bottom)"
 
           {
-            echo "- **Development DB Backup**: [Download Backup]($AZURE_URL)"
+            echo "- **Backup on Azure:** [Download Backup]($AZURE_URL)"
+            echo "- **Backup on GitHub:** $GH_ARTIFACT_URL"
             echo ""
             echo "### 🛠 Decrypt and Unpack"
             echo "**Encryption Key Location:**"
@@ -113,11 +125,11 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Create Issue on Failure
-        if: ${{ failure() }}
-        uses: JasonEtco/create-an-issue@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DB_NAME: ${{ secrets.MONGODB_DEV_DB_NAME }}
-        with:
-          filename: .github/db-issue-template.md
+      # - name: Create Issue on Failure
+      #   # if: ${{ failure() }}
+      #   uses: JasonEtco/create-an-issue@v2
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     DB_NAME: 'dev-db'
+      #   with:
+      #     filename: .github/db-issue-template.md
