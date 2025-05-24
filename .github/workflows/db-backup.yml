@@ -59,6 +59,12 @@ jobs:
           openssl enc -aes-256-cbc -salt -in backup-$DB_SOURCE-$TODAY.tar.gz -out backup-$DB_SOURCE-$TODAY.tar.gz.enc -k "$ENCRYPTION_KEY"
           rm -rf backup-$DB_SOURCE-$TODAY backup-$DB_SOURCE-$TODAY.tar.gz
 
+      - name: Debug Variables
+        run: |
+          echo "AZURE_BLOB_CONTAINER=$AZURE_BLOB_CONTAINER"
+          echo "DB_SOURCE=$DB_SOURCE"
+          echo "TODAY=$TODAY"
+
       - name: Upload Dump to Azure Storage
         env:
           # AZURE_BLOB_CONTAINER: ${{ env.AZURE_BLOB_CONTAINER }}
