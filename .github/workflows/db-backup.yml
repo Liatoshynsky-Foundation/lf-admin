@@ -61,7 +61,7 @@ jobs:
 
       - name: Upload Dump to Azure Storage
         env:
-          AZURE_BLOB_CONTAINER: ${{ secrets.AZURE_BLOB_CONTAINER }}
+          AZURE_BLOB_CONTAINER: ${{ env.AZURE_BLOB_CONTAINER }}
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
           TODAY: ${{ steps.set-date.outputs.date }}
         run: |
@@ -76,8 +76,8 @@ jobs:
       - name: Generate Download Link
         id: dev-backup
         env:
-          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
-          AZURE_BLOB_CONTAINER: ${{ secrets.AZURE_BLOB_CONTAINER }}
+          AZURE_STORAGE_ACCOUNT: ${{ env.AZURE_STORAGE_ACCOUNT }}
+          AZURE_BLOB_CONTAINER: ${{ env.AZURE_BLOB_CONTAINER }}
           TODAY: ${{ steps.set-date.outputs.date }}
         run: |
           BACKUP_FILE="backup-$DB_SOURCE-$TODAY.tar.gz.enc"
