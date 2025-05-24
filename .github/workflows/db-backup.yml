@@ -116,11 +116,10 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      # - name: Create Issue on Failure
-      #   if: ${{ failure() }}
-      #   uses: JasonEtco/create-an-issue@v2
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #     DB_NAME: ${{ secrets.DB_SOURCE }}
-      #   with:
-      #     filename: .github/db-issue-template.md
+      - name: Create Issue on Failure
+        # if: ${{ failure() }}
+        uses: JasonEtco/create-an-issue@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          filename: .github/db-issue-template.md
