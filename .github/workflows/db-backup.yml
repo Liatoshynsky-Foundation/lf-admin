@@ -12,8 +12,8 @@ jobs:
     env:
       DB_SOURCE: ${{ secrets.MONGODB_DEV_DB_NAME }}
       DB_SOURCE_URL: ${{ secrets.MONGODB_DEV_URL }}
-      DB_TEST: ${{ secrets.MONGODB_TEST_DB_NAME }}
-      DB_TEST_URL: ${{ secrets.MONGODB_TEST_URL }}
+      # DB_TEST: ${{ secrets.MONGODB_TEST_DB_NAME }}
+      # DB_TEST_URL: ${{ secrets.MONGODB_TEST_URL }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -38,17 +38,17 @@ jobs:
           --uri="$DB_SOURCE_URL" \
           -d $DB_SOURCE
 
-      - name: Restore Dump to MongoDB Atlas Test Cluster
-        env:
-          TODAY: ${{ steps.set-date.outputs.date }}
-        run: |
-          mongorestore \
-          backup-$DB_SOURCE-$TODAY \
-          --uri="$DB_TEST_URL" \
-          --nsInclude="$DB_SOURCE.*" \
-          --nsFrom="$DB_SOURCE.*" \
-          --nsTo="$DB_TEST.*" \
-          --drop
+      # - name: Restore Dump to MongoDB Atlas Test Cluster
+      #   env:
+      #     TODAY: ${{ steps.set-date.outputs.date }}
+      #   run: |
+      #     mongorestore \
+      #     backup-$DB_SOURCE-$TODAY \
+      #     --uri="$DB_TEST_URL" \
+      #     --nsInclude="$DB_SOURCE.*" \
+      #     --nsFrom="$DB_SOURCE.*" \
+      #     --nsTo="$DB_TEST.*" \
+      #     --drop
 
       - name: Encrypt Dump
         env:
@@ -113,11 +113,11 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Create Issue on Failure
-        if: ${{ failure() }}
-        uses: JasonEtco/create-an-issue@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DB_NAME: ${{ secrets.MONGODB_DEV_DB_NAME }}
-        with:
-          filename: .github/db-issue-template.md
+      # - name: Create Issue on Failure
+      #   if: ${{ failure() }}
+      #   uses: JasonEtco/create-an-issue@v2
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     DB_NAME: ${{ secrets.MONGODB_DEV_DB_NAME }}
+      #   with:
+      #     filename: .github/db-issue-template.md
