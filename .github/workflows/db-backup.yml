@@ -121,6 +121,6 @@ jobs:
         uses: JasonEtco/create-an-issue@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DB_NAME: ${{ vars.DB_SOURCE }}
+          DB_NAME: 'dev-db'
         with:
           filename: .github/db-issue-template.md
