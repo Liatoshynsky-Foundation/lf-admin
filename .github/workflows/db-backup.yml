@@ -59,7 +59,8 @@ jobs:
           openssl enc -aes-256-cbc -salt -in backup-$DB_SOURCE-$TODAY.tar.gz -out backup-$DB_SOURCE-$TODAY.tar.gz.enc -k "$ENCRYPTION_KEY"
           rm -rf backup-$DB_SOURCE-$TODAY backup-$DB_SOURCE-$TODAY.tar.gz
 
-      - name: Upload Dump to Azure Storage
+      - name: Upload Dump to Azure Storage (primary)
+        continue-on-error: true
         env:
           AZURE_BLOB_CONTAINER: ${{ vars.AZURE_BLOB_CONTAINER }}
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
@@ -72,6 +73,12 @@ jobs:
             --overwrite \
             --connection-string "$AZURE_STORAGE_CONNECTION_STRING"
 
+      - name: Upload to GitHub Artifact (secondary)
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-${{ env.DB_SOURCE }}-${{ steps.set-date.outputs.date }}
+          path: backup-${{ env.DB_SOURCE }}-${{ steps.set-date.outputs.date }}.tar.gz.enc
+
       - name: Generate Download Link
         id: dev-backup
         env:
@@ -81,9 +88,11 @@ jobs:
         run: |
           BACKUP_FILE="backup-$DB_SOURCE-$TODAY.tar.gz.enc"
           AZURE_URL="https://$AZURE_STORAGE_ACCOUNT.blob.core.windows.net/$AZURE_BLOB_CONTAINER/$BACKUP_FILE"
+          GH_ARTIFACT_URL="(see Actions → run artifacts at the bottom)"
 
           {
-            echo "- **Development DB Backup**: [Download Backup]($AZURE_URL)"
+            echo "- **Backup on Azure:** [Download Backup]($AZURE_URL)"
+            echo "- **Backup on GitHub:** $GH_ARTIFACT_URL"
             echo ""
             echo "### 🛠 Decrypt and Unpack"
             echo "**Encryption Key Location:**"
@@ -116,11 +125,11 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Create Issue on Failure
-        # if: ${{ failure() }}
-        uses: JasonEtco/create-an-issue@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DB_NAME: 'dev-db'
-        with:
-          filename: .github/db-issue-template.md
+      # - name: Create Issue on Failure
+      #   # if: ${{ failure() }}
+      #   uses: JasonEtco/create-an-issue@v2
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     DB_NAME: 'dev-db'
+      #   with:
+      #     filename: .github/db-issue-template.md
