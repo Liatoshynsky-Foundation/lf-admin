@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev-db-backup
     env:
-      DB_SOURCE: ${{ secrets.MONGODB_DEV_DB_NAME }}
-      DB_SOURCE_URL: ${{ secrets.MONGODB_DEV_URL }}
-      # DB_TEST: ${{ secrets.MONGODB_TEST_DB_NAME }}
-      # DB_TEST_URL: ${{ secrets.MONGODB_TEST_URL }}
+      DB_SOURCE: ${{ secrets.DB_SOURCE }}
+      DB_SOURCE_URL: ${{ secrets.DB_SOURCE_URL }}
+      # DB_TEST: ${{ secrets.DB_TEST }}
+      # DB_TEST_URL: ${{ secrets.DB_TEST_URL }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -52,7 +52,7 @@ jobs:
 
       - name: Encrypt Dump
         env:
-          ENCRYPTION_KEY: ${{ secrets.MONGODB_DEV_ENCRYPTION_KEY }}
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
           TODAY: ${{ steps.set-date.outputs.date }}
         run: |
           tar -czf backup-$DB_SOURCE-$TODAY.tar.gz backup-$DB_SOURCE-$TODAY
@@ -72,13 +72,16 @@ jobs:
             --overwrite \
             --connection-string "$AZURE_STORAGE_CONNECTION_STRING"
 
+
       - name: Generate Download Link
         id: dev-backup
         env:
+          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
+          AZURE_BLOB_CONTAINER: ${{ secrets.AZURE_BLOB_CONTAINER }}
           TODAY: ${{ steps.set-date.outputs.date }}
         run: |
           BACKUP_FILE="backup-$DB_SOURCE-$TODAY.tar.gz.enc"
-          AZURE_URL="https://s2sbackups.blob.core.windows.net/db-backups/$BACKUP_FILE"
+          AZURE_URL="https://$AZURE_STORAGE_ACCOUNT.blob.core.windows.net/$AZURE_BLOB_CONTAINER/$BACKUP_FILE"
 
           {
             echo "- **Development DB Backup**: [Download Backup]($AZURE_URL)"
@@ -119,6 +122,6 @@ jobs:
       #   uses: JasonEtco/create-an-issue@v2
       #   env:
       #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #     DB_NAME: ${{ secrets.MONGODB_DEV_DB_NAME }}
+      #     DB_NAME: ${{ secrets.DB_SOURCE }}
       #   with:
       #     filename: .github/db-issue-template.md
