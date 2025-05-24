@@ -1,6 +1,6 @@
 ---
 title: 'Backup Issue - ${{ env.DB_NAME }}'
-# labels: bug, backup
+labels: bug, backup
 ---
 
 ## Issue Description
