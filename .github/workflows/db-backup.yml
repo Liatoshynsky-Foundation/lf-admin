@@ -1,6 +1,7 @@
 name: Backup MongoDB Atlas
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: '0 2 * * *' # Run the workflow at 2:00 AM UTC every day
 
@@ -117,6 +118,6 @@ jobs:
         uses: JasonEtco/create-an-issue@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DB_NAME: 'db-dev'
+          DB_NAME: ${{ secrets.MONGODB_DEV_DB_NAME }}
         with:
           filename: .github/db-issue-template.md
