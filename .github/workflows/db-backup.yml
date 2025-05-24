@@ -10,9 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev-db-backup
     env:
-      DB_SOURCE: ${{ secrets.DB_SOURCE }}
+      DB_SOURCE: ${{ vars.DB_SOURCE }}
       DB_SOURCE_URL: ${{ secrets.DB_SOURCE_URL }}
-      # DB_TEST: ${{ secrets.DB_TEST }}
+      # DB_TEST: ${{ vars.DB_TEST }}
       # DB_TEST_URL: ${{ secrets.DB_TEST_URL }}
     steps:
       - name: Checkout Repository
@@ -77,7 +77,6 @@ jobs:
             --name "backup-$DB_SOURCE-$TODAY.tar.gz.enc" \
             --overwrite \
             --connection-string "$AZURE_STORAGE_CONNECTION_STRING"
-
 
       - name: Generate Download Link
         id: dev-backup
