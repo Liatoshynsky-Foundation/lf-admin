@@ -27,7 +27,7 @@ jobs:
           password: ${{ secrets.AzureAppService_ContainerPassword_598f38b8ca0445c7acbcc7d7ac3d30a6 }}
 
       - name: Build and push container image to registry
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           push: true
           tags: lfacrstage-bkg7bmd7gacxh9e5.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_960c1c49b72746a985193b504f55b231 }}/lf-stage-admin:${{ github.sha }}
