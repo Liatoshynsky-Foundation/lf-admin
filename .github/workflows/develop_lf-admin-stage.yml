@@ -30,7 +30,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           push: true
-          tags: lfacrstage-bkg7bmd7gacxh9e5.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_960c1c49b72746a985193b504f55b231 }}/lfacrstage/lf-stage-admin:${{ github.sha }}
+          tags: lfacrstage-bkg7bmd7gacxh9e5.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_960c1c49b72746a985193b504f55b231 }}/lf-stage-admin:${{ github.sha }}
           file: ./Dockerfile
 
   deploy:
@@ -48,4 +48,4 @@ jobs:
           app-name: 'lf-admin-stage'
           slot-name: 'production'
           publish-profile: ${{ secrets.AzureAppService_PublishProfile_d5b9cec1e4254c8a8fcc7b0ef69249ad }}
-          images: 'lfacrstage-bkg7bmd7gacxh9e5.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_960c1c49b72746a985193b504f55b231 }}/lfacrstage/lf-stage-admin:${{ github.sha }}'
+          images: 'lfacrstage-bkg7bmd7gacxh9e5.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_960c1c49b72746a985193b504f55b231 }}/lf-stage-admin:${{ github.sha }}'
