@@ -8,13 +8,7 @@ const createJestConfig = nextJest({
 const config: Config = {
   bail: 1,
   collectCoverage: true,
-  collectCoverageFrom: [
-    'app/**/*.{js,jsx,ts,tsx}',
-    '!app/**/*.test.{js,jsx,ts,tsx}',
-    '!app/**/*.{types,d}.{ts,tsx}',
-    '!app/constants/**',
-    '!app/types/**'
-  ],
+  collectCoverageFrom: ['app/**/*.{js,jsx,ts,tsx}', '!app/**/*.test.{js,jsx,ts,tsx}'],
   coverageDirectory: 'coverage',
   coverageProvider: 'v8',
   coverageThreshold: {
@@ -29,15 +23,6 @@ const config: Config = {
   moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx'],
   preset: 'ts-jest',
   testEnvironment: 'jest-environment-jsdom',
-  moduleNameMapper: {
-    '^~/public/(.*)$': '<rootDir>/public/$1',
-    '^~/i18n/(.*)$': '<rootDir>/i18n/$1',
-    '^~/utils/(.*)$': '<rootDir>/app/lib/utils/$1',
-    '^~/ds-components/(.*)$': '<rootDir>/app/shared/components/design-system/all-components/$1',
-    '^~/components/(.*)$': '<rootDir>/app/shared/components/$1',
-    '^~/hooks/(.*)$': '<rootDir>/app/shared/hooks/$1',
-    '^~/(.*)$': '<rootDir>/app/$1'
-  },
   modulePaths: ['<rootDir>/app'],
   testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/dist/'],
   transform: {

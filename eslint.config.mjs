@@ -10,64 +10,62 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const compat = new FlatCompat({
-  baseDirectory: __dirname
+    baseDirectory: __dirname
 });
 
 const eslintConfig = [
-  ...compat.extends('next/core-web-vitals', 'next/typescript', 'prettier'),
+    ...compat.extends('next/core-web-vitals', 'next/typescript', 'prettier'),
 
-  {
-    ignores: ['node_modules', '.next', 'coverage', '.idea', '.vscode']
-  },
-  {
-    rules: {
-      'prettier/prettier': [
-        'error',
-        {
-          endOfLine: 'auto'
-        }
-      ],
-      quotes: ['error', 'single'],
-      semi: ['error', 'always'],
-      indent: ['error', 2],
-      'no-console': 'warn',
-      'no-unused-vars': 'off',
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        {
-          argsIgnorePattern: '^_',
-          varsIgnorePattern: '^_'
-        }
-      ],
-      'no-var': 'error',
-      'prefer-const': 'warn',
-      '@typescript-eslint/no-explicit-any': 'warn',
-      'simple-import-sort/exports': 'error',
-      'import/no-duplicates': 'error',
-      'unused-imports/no-unused-imports': 'error'
-    }
-  },
-  {
-    plugins: {
-      'simple-import-sort': pluginSimpleImportSort,
-      prettier: eslintPluginPrettier,
-      import: pluginImport,
-      'unused-imports': pluginUnusedImports
+    {
+        ignores: ['node_modules', '.next', 'coverage', '.idea', '.vscode']
     },
-    rules: {
-      'simple-import-sort/imports': [
-        'error',
-        {
-          groups: [
-            ['^(\\u0000|@?\\w)'],
-            ['^~/(components|containers|hooks|ds-components)/'],
-            ['^(~/(utils|constants|styles|types)/|\\.)']
-          ]
+    {
+        rules: {
+            'prettier/prettier': [
+                'error',
+                {
+                    endOfLine: 'auto'
+                }
+            ],
+            quotes: ['error', 'single'],
+            semi: ['error', 'always'],
+            indent: ['error', 2],
+            'no-console': 'warn',
+            'no-unused-vars': 'off',
+            '@typescript-eslint/no-unused-vars': [
+                'error',
+                {
+                    argsIgnorePattern: '^_',
+                    varsIgnorePattern: '^_'
+                }
+            ],
+            'no-var': 'error',
+            'prefer-const': 'warn',
+            '@typescript-eslint/no-explicit-any': 'warn',
+            'simple-import-sort/exports': 'error',
+            'import/no-duplicates': 'error',
+            'unused-imports/no-unused-imports': 'error'
         }
-      ],
-      'simple-import-sort/exports': 'error'
+    },
+    {
+        plugins: {
+            'simple-import-sort': pluginSimpleImportSort,
+            prettier: eslintPluginPrettier,
+            import: pluginImport,
+            'unused-imports': pluginUnusedImports
+        },
+        rules: {
+            'simple-import-sort/imports': [
+                'error',
+                {
+                    groups: [
+                        ['^(\\u0000|@?\\w)']
+                    ]
+                }
+            ],
+            'simple-import-sort/exports': 'error'
+        }
     }
-  }
 ];
 
 export default eslintConfig;
