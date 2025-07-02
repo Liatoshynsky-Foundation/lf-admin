@@ -15,8 +15,8 @@ module.exports = {
         'build', // Changes to build system or dependencies
         'ci', // Changes to CI configuration
         'chore', // Other changes that don't modify src or test files
-        'revert', // Reverts a previous commit
-      ],
-    ],
-  },
+        'revert' // Reverts a previous commit
+      ]
+    ]
+  }
 };
