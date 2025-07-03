@@ -4,7 +4,7 @@ import React from 'react';
 import RootLayout from './layout';
 
 describe('RootLayout component', () => {
-  it('renders the header, footer, and children', () => {
+  it('should render the header, footer, and children', () => {
     render(
       <RootLayout>
         <div>Test Child</div>
@@ -15,7 +15,7 @@ describe('RootLayout component', () => {
     expect(screen.getByText(/Test Child/i)).toBeInTheDocument();
   });
 
-  it('applies the container styling', () => {
+  it('should applie the container styling', () => {
     const { container } = render(
       <RootLayout>
         <div>Content</div>
