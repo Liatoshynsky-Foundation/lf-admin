@@ -4,7 +4,7 @@ import React from 'react';
 import Header from './Header';
 
 describe('Header component', () => {
-  it('renders the header content', () => {
+  it('should render the header content', () => {
     render(<Header />);
     expect(screen.getByText(/Header/i)).toBeInTheDocument();
   });
