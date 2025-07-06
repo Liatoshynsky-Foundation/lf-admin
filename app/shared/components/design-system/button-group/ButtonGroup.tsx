@@ -1,8 +1,8 @@
 'use client';
-import { BoxProps, ButtonGroup as MUIButtonGroup } from '@mui/material';
+import { BoxProps } from '@mui/material';
 import React, { useLayoutEffect, useRef, useState } from 'react';
 
-import { StyledButtonItem, StyledIndicator } from './ButtonGroup.styles';
+import { StyledButtonGroup, StyledButtonItem, StyledIndicator } from './ButtonGroup.styles';
 
 interface ButtonGroupProps extends Omit<BoxProps, 'color' | 'size'> {
   buttons: React.ReactNode[];
@@ -60,7 +60,14 @@ const ButtonGroup = ({
   }, [activeButton, buttons]);
 
   return (
-    <MUIButtonGroup component="div" sx={sx} ref={containerRef} aria-label="Button Group" color={palette} {...props}>
+    <StyledButtonGroup
+      component="div"
+      sx={sx}
+      ref={containerRef}
+      aria-label="Button Group"
+      palette={palette}
+      {...props}
+    >
       <StyledIndicator
         palette={palette}
         left={indicatorStyle.left}
@@ -82,7 +89,7 @@ const ButtonGroup = ({
           {button}
         </StyledButtonItem>
       ))}
-    </MUIButtonGroup>
+    </StyledButtonGroup>
   );
 };
 export default ButtonGroup;

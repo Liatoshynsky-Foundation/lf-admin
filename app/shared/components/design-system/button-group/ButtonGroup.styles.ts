@@ -16,6 +16,31 @@ export const hexButtonGroupColors = {
   }
 };
 
+export const StyledButtonGroup = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'palette'
+})<{
+  palette: 'primary' | 'secondary';
+}>(({ palette }) => {
+  const paletteValues = palette === 'primary' ? hexButtonGroupColors.primary : hexButtonGroupColors.secondary;
+
+  return {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '9999px',
+    padding: '2px',
+    fontFamily: 'inherit',
+    position: 'relative',
+    overflow: 'hidden',
+    width: 'fit-content',
+    border: 'none',
+    lineHeight: '150%',
+    backgroundColor: paletteValues.groupBackgroundColor,
+    color: paletteValues.buttonTextColor
+  };
+});
+
 export const StyledIndicator = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'left' && prop !== 'width' && prop !== 'palette'
 })<{
