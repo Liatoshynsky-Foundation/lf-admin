@@ -8,20 +8,12 @@ export const NAVIGATION_DATA = {
   pages: [
     {
       element: { title: 'Борис Лятошинський', iconSrc: 'biography' },
-      collapseElements: [
-        { title: 'Життєпис', href: '/biography' },
-        { title: 'Дослідження та наукові роботи', href: '/research' }
-      ]
+      collapseElements: [{ title: 'Дослідження та наукові роботи', href: '/research' }]
     },
     {
       element: { title: 'Про фундацію', iconSrc: 'aboutFoundation' },
-      collapseElements: [
-        { title: 'Про нас', href: '/aboutUs' },
-        { title: 'Змі про нас', href: '/MediaAboutUs' }
-      ]
-    },
-    { title: 'Кабінет-Архів', iconSrc: 'archive', href: '/archive' },
-    { title: 'Співпраця', iconSrc: 'cooperation', href: '/cooperation' }
+      collapseElements: [{ title: 'Про нас', href: '/aboutUs' }]
+    }
   ],
   settings: [
     { title: 'Контакти', iconSrc: 'contacts', href: '/contacts' },
