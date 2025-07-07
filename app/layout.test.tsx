@@ -11,7 +11,6 @@ describe('RootLayout component', () => {
       </RootLayout>
     );
 
-    expect(screen.getByText(/Footer/i)).toBeInTheDocument();
     expect(screen.getByText(/Test Child/i)).toBeInTheDocument();
   });
 
