@@ -2,9 +2,14 @@ import './globals.css';
 import { Container } from '@mui/material';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono, Mulish } from 'next/font/google';
+import './globals.css';
+import { SideBarNavgation } from './components/side-navigation/SideNavigation';
 
-import Footer from './shared/components/Footer/Footer';
-import Header from './shared/components/Header/Header';
+const mulish = Mulish({
+  subsets: ['latin', 'cyrillic'],
+  weight: ['400', '700'],
+  variable: '--font-mulish',
+});
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -34,11 +39,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} ${mulish.variable}`}>
-        <Container maxWidth="md" sx={{ border: '1px solid #ccc', padding: '20px' }}>
-          <Header />
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} ${mulish.variable}`}
+      >
+        <SideBarNavgation />
+        <Container
+          maxWidth="md"
+          sx={{ border: '1px solid #ccc', padding: '20px' }}
+        >
           {children}
-          <Footer />
         </Container>
       </body>
     </html>

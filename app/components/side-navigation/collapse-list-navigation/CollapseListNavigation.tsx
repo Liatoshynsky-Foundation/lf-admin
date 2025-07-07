@@ -1,0 +1,79 @@
+import { Box, Collapse, List } from '@mui/material';
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { styles as SideNavigationStyles } from '../SideNavigation.styles';
+import { styles } from './CollapeListNavigation.styles';
+import { LinkElement } from '../link-element/LinkElement';
+import { ListElement } from '../list-element/ListElement';
+import { CollapseListNavigationProps } from 'app/types/sideNavigation';
+
+export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({
+  openNavbar,
+  elementProps,
+}) => {
+  const { element, collapseElements } = elementProps;
+  const [pageOpen, setPageOpen] = useState(false);
+  const handleClick = () => {
+    setPageOpen(!pageOpen);
+  };
+  useEffect(() => {
+    if (!openNavbar) {
+      setPageOpen(false);
+    }
+  }, [openNavbar]);
+  const collapseContent =
+    collapseElements &&
+    collapseElements.map((item) => {
+      return (
+        <LinkElement
+          element={item}
+          open={openNavbar}
+          key={item.href}
+          sxItem={{ mb: '0' }}
+        />
+      );
+    });
+  return (
+    <>
+      <ListElement
+        element={element}
+        open={openNavbar}
+        handleClick={handleClick}
+        sxItem={{ mb: '0' }}
+      >
+        <Box
+          sx={{
+            ...SideNavigationStyles.hideInClosed(openNavbar),
+            ...styles.listBox,
+          }}
+        >
+          {pageOpen ? (
+            <Image
+              src="./icons/chevronDown.svg"
+              alt="open list"
+              width={24}
+              height={24}
+            />
+          ) : (
+            <Image
+              src="./icons/chevronRight.svg"
+              alt="open list"
+              width={24}
+              height={24}
+            />
+          )}
+        </Box>
+      </ListElement>
+      <Collapse
+        in={openNavbar && pageOpen}
+        timeout="auto"
+        unmountOnExit
+        sx={styles.collapse}
+      >
+        <List component="div" disablePadding>
+          {collapseContent}
+        </List>
+      </Collapse>
+    </>
+  );
+};
