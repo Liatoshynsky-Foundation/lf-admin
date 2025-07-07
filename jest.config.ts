@@ -8,7 +8,7 @@ const createJestConfig = nextJest({
 const config: Config = {
   bail: 1,
   collectCoverage: true,
-  collectCoverageFrom: ['app/**/*.{js,jsx,ts,tsx}', '!app/**/*.test.{js,jsx,ts,tsx}'],
+  collectCoverageFrom: ['app/**/*.{js,jsx,ts,tsx}', '!app/**/*.{test,d}.{js,jsx,ts,tsx}', '!app/layout.tsx'],
   coverageDirectory: 'coverage',
   coverageProvider: 'v8',
   coverageThreshold: {
@@ -24,7 +24,7 @@ const config: Config = {
   preset: 'ts-jest',
   testEnvironment: 'jest-environment-jsdom',
   modulePaths: ['<rootDir>/app'],
-  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/dist/'],
+  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/dist/', '<rootDir>/coverage/'],
   transform: {
     '^.+\\.(js|jsx|ts|tsx)$': 'ts-jest'
   },

@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true, // Allow JavaScript files alongside TypeScript files
     "skipLibCheck": true, // Skip checking library types for faster builds
     "strict": true, // Enable strict type-checking options
@@ -23,6 +19,9 @@
       }
     ],
     "baseUrl": ".", // Base URL for module resolution
+    "paths": {
+      "~/public/*": ["./public/*"] // Path alias for easier imports
+    },
     "forceConsistentCasingInFileNames": true, // Enforce consistent casing in file names
     "noFallthroughCasesInSwitch": true, // Prevent fallthrough cases in switch statements
     "skipDefaultLibCheck": true, // Skip checking default library types for faster builds
@@ -35,7 +34,5 @@
     ".next/types/**/*.ts",
     "jest.config.ts" // Include Jest config file for TypeScript support
   ],
-  "exclude": [
-    "node_modules"
-  ] // Exclude node_modules from compilation
+  "exclude": ["node_modules"] // Exclude node_modules from compilation
 }
