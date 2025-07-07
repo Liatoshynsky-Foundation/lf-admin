@@ -6,15 +6,15 @@ export const styles = {
     minHeight: '40px',
     my: '16px',
     '&.Mui-selected': {
-      backgroundColor: '#190D031F',
-    },
+      backgroundColor: '#190D031F'
+    }
   },
   listItemIcon: {
     minWidth: '24px',
-    mx: '16px',
+    mx: '16px'
   },
   listItemText: {
     fontFamily: 'Mulish',
-    fontSize: '16px',
-  },
+    fontSize: '16px'
+  }
 };

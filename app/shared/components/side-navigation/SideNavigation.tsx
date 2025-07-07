@@ -1,13 +1,14 @@
 'use client';
-import Image from 'next/image';
 import { Box, Drawer, IconButton, List } from '@mui/material';
-import { useState } from 'react';
-import { CollapseListNavigation } from './collapse-list-navigation/CollapseListNavigation';
-import { NAVIGATION_DATA } from './SideNavigation.consts';
-import { LinkElement } from './link-element/LinkElement';
-import { Divider } from './divider/Divider';
-import { styles } from './SideNavigation.styles';
 import { ListElementType } from 'app/types/sideNavigation';
+import Image from 'next/image';
+import { useState } from 'react';
+
+import { CollapseListNavigation } from './collapse-list-navigation/CollapseListNavigation';
+import { Divider } from './divider/Divider';
+import { LinkElement } from './link-element/LinkElement';
+import { NAVIGATION_DATA } from './SideNavigation.consts';
+import { styles } from './SideNavigation.styles';
 
 export const SideBarNavgation = () => {
   const [open, setOpen] = useState(true);
@@ -16,37 +17,17 @@ export const SideBarNavgation = () => {
   const handleOpen = () => setOpen(!open);
 
   const mainContent = NAVIGATION_DATA.mainGroup.map((item) => (
-    <LinkElement
-      element={item as ListElementType}
-      open={open}
-      key={item.href}
-    />
+    <LinkElement element={item as ListElementType} open={open} key={item.href} />
   ));
   const pagesContent = NAVIGATION_DATA.pages.map((item) => {
     if (item.collapseElements) {
-      return (
-        <CollapseListNavigation
-          key={item.title}
-          openNavbar={open}
-          elementProps={item}
-        />
-      );
+      return <CollapseListNavigation key={item.title} openNavbar={open} elementProps={item} />;
     } else {
-      return (
-        <LinkElement
-          element={item as ListElementType}
-          open={open}
-          key={item.href}
-        />
-      );
+      return <LinkElement element={item as ListElementType} open={open} key={item.href} />;
     }
   });
   const settingsContent = NAVIGATION_DATA.settings.map((item) => (
-    <LinkElement
-      element={item as ListElementType}
-      open={open}
-      key={item.href}
-    />
+    <LinkElement element={item as ListElementType} open={open} key={item.href} />
   ));
 
   return (
@@ -57,7 +38,7 @@ export const SideBarNavgation = () => {
       hideBackdrop
       sx={{
         width: open ? '280px' : '105px',
-        ...styles.drawerPaper,
+        ...styles.drawerPaper
       }}
     >
       <Box sx={styles.topSection}>
@@ -66,12 +47,7 @@ export const SideBarNavgation = () => {
         </IconButton>
         {open && (
           <IconButton onClick={handleClose} sx={styles.hideBtn}>
-            <Image
-              src="./icons/doubleArrowLeft.svg"
-              alt="close button"
-              width={24}
-              height={24}
-            />
+            <Image src="./icons/doubleArrowLeft.svg" alt="close button" width={24} height={24} />
           </IconButton>
         )}
       </Box>

@@ -1,9 +1,9 @@
 export const styles = {
   listBox: {
     mx: '16px',
-    alignSelf: 'center',
+    alignSelf: 'center'
   },
   collapse: {
-    transition: 'ease-in 0.3s',
-  },
+    transition: 'ease-in 0.3s'
+  }
 };

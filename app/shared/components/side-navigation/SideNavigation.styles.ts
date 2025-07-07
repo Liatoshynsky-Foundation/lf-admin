@@ -9,14 +9,14 @@ export const styles = {
       scrollbarWidth: 'none',
       msOverflowStyle: 'none',
       '&::-webkit-scrollbar': {
-        display: 'none',
-      },
-    },
+        display: 'none'
+      }
+    }
   },
   topSection: {
     display: 'flex',
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-between'
   },
   hideBtn: {
     fontSize: 0,
@@ -24,9 +24,9 @@ export const styles = {
     width: 40,
     height: 40,
     backgroundColor: '#f0f0f0',
-    alignSelf: 'center',
+    alignSelf: 'center'
   },
   hideInClosed: (open: boolean) => ({
-    display: open ? 'block' : 'none',
-  }),
+    display: open ? 'block' : 'none'
+  })
 };

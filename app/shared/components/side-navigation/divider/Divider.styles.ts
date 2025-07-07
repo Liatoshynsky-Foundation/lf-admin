@@ -4,9 +4,9 @@ export const styles = {
     padding: '0',
     lineHeight: '140%',
     fontFamily: 'Mulish',
-    position: 'relative',
+    position: 'relative'
   },
   bothDivider: {
-    my: '16px',
-  },
+    my: '16px'
+  }
 };
