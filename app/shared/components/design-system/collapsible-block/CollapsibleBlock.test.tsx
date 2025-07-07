@@ -12,7 +12,7 @@ jest.mock('~/public/icons/chevron-down.svg', () => {
 describe('CollapsibleBlock', () => {
   const titleText = 'Test Block';
 
-  it('renders the title', () => {
+  it('should render the title', () => {
     render(
       <CollapsibleBlock title={titleText}>
         <div>Child Content</div>
@@ -21,7 +21,7 @@ describe('CollapsibleBlock', () => {
     expect(screen.getByText(titleText)).toBeInTheDocument();
   });
 
-  it('renders children when defaultExpanded is true', () => {
+  it('should render children when defaultExpanded is true', () => {
     render(
       <CollapsibleBlock title={titleText} defaultExpanded>
         <div>Child Content</div>
@@ -30,7 +30,7 @@ describe('CollapsibleBlock', () => {
     expect(screen.getByText('Child Content')).toBeInTheDocument();
   });
 
-  it('toggles expansion on click', () => {
+  it('should toggle expansion on click', () => {
     render(
       <CollapsibleBlock title={titleText}>
         <div>Child Content</div>
