@@ -19,11 +19,9 @@ export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({ 
       setPageOpen(false);
     }
   }, [openNavbar]);
-  const collapseContent =
-    collapseElements &&
-    collapseElements.map((item) => {
-      return <LinkElement element={item} open={openNavbar} key={item.href} sxItem={{ mb: '0' }} />;
-    });
+  const collapseContent = collapseElements?.map((item) => (
+    <LinkElement element={item} open={openNavbar} key={item.href} sxItem={{ mb: '0' }} />
+  ));
   return (
     <>
       <ListElement element={element} open={openNavbar} handleClick={handleClick} sxItem={{ mb: '0' }}>

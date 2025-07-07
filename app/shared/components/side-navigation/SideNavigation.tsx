@@ -21,7 +21,7 @@ export const SideBarNavgation = () => {
   ));
   const pagesContent = NAVIGATION_DATA.pages.map((item) => {
     if (item.collapseElements) {
-      return <CollapseListNavigation key={item.title} openNavbar={open} elementProps={item} />;
+      return <CollapseListNavigation key={item.element.title} openNavbar={open} elementProps={item} />;
     } else {
       return <LinkElement element={item as ListElementType} open={open} key={item.href} />;
     }
