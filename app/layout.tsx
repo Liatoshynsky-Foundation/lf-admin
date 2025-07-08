@@ -5,12 +5,6 @@ import { Geist, Geist_Mono, Mulish } from 'next/font/google';
 
 import { SideBarNavgation } from './shared/components/side-navigation/SideNavigation';
 
-const mulish = Mulish({
-  subsets: ['latin', 'cyrillic'],
-  weight: ['400', '700'],
-  variable: '--font-mulish'
-});
-
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin']
