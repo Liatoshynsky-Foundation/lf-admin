@@ -2,7 +2,7 @@ export const styles = {
   customTextFieldStyles: {
     '& .MuiInputBase-root': {
       borderRadius: 8,
-      backgroundColor: '#fff'
+      backgroundColor: 'inherit'
     },
     '& .MuiOutlinedInput-notchedOutline': {
       borderColor: '#d3d3d3',
