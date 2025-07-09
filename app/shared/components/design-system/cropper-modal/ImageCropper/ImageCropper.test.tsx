@@ -43,7 +43,8 @@ describe('Image cropper', () => {
     fireEvent.load(img);
 
     const reactCropDiv = getByTestId('react-crop');
-    const cropProp = JSON.parse(reactCropDiv.getAttribute('data-crop')!);
+    const dataCrop = reactCropDiv.getAttribute('data-crop') ?? '{}';
+    const cropProp = JSON.parse(dataCrop);
 
     expect(cropProp.width).toBeDefined();
     expect(cropProp.height).toBeDefined();

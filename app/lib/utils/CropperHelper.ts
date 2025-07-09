@@ -42,7 +42,7 @@ function createImage(url: string): Promise<HTMLImageElement> {
     const image = new Image();
     image.setAttribute('crossOrigin', 'anonymous');
     image.onload = () => resolve(image);
-    image.onerror = (error) => reject(error);
+    image.onerror = () => reject(new Error('Load failed'));
     image.src = url;
   });
 }

@@ -12,7 +12,7 @@ describe('Cropper helper', () => {
       set src(_src: string) {
         setTimeout(() => this.onload(), 0);
       }
-      setAttribute() {}
+      setAttribute: () => void = () => {};
     } as any;
 
     global.URL.createObjectURL = jest.fn(() => 'blob:http://localhost/fake');
@@ -73,7 +73,7 @@ describe('Cropper helper', () => {
       set src(_src: string) {
         setTimeout(() => this.onerror(new Error('Load failed')), 0);
       }
-      setAttribute() {}
+      setAttribute = () => {};
     } as any;
 
     await expect(getCroppedImg('https://example.com/invalid.jpg', crop, outputSize)).rejects.toThrow('Load failed');
