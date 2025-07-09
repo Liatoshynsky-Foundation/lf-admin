@@ -1,3 +1,5 @@
+import { PixelCrop } from 'react-image-crop';
+
 import getCroppedImg from './CropperHelper';
 
 describe('Cropper helper', () => {
@@ -18,7 +20,7 @@ describe('Cropper helper', () => {
     global.URL.createObjectURL = jest.fn(() => 'blob:http://localhost/fake');
   });
 
-  const crop = { x: 10, y: 10, width: 50, height: 50 };
+  const crop: PixelCrop = { x: 10, y: 10, width: 50, height: 50, unit: 'px' };
   const outputSize = { width: 100, height: 100 };
 
   it('should render dataUrl and blobUrl from a crop', async () => {

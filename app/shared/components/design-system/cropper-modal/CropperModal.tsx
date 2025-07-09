@@ -8,7 +8,7 @@ import getCroppedImg from '../../../../lib/utils/CropperHelper';
 import { styles } from './CropperModal.styles';
 import { ImageCropper } from './ImageCropper/ImageCropper';
 
-interface CropperModalPrpos {
+interface CropperModalProps {
   width: number;
   height: number;
   imageUrl: string;
@@ -17,7 +17,7 @@ interface CropperModalPrpos {
   handleSetNewPic: (newImage: string) => void;
 }
 
-export const CropperModal: React.FC<CropperModalPrpos> = ({
+export const CropperModal: React.FC<CropperModalProps> = ({
   width,
   height,
   imageUrl,

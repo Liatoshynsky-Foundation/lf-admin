@@ -1,6 +1,8 @@
+import { PixelCrop } from 'react-image-crop';
+
 export default async function getCroppedImg(
   imageSrc: string,
-  crop: any,
+  crop: PixelCrop,
   outputSize = { width: 0, height: 0 }
 ): Promise<{ dataUrl: string; blobUrl: string }> {
   const image = await createImage(imageSrc);
