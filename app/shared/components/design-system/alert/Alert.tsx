@@ -1,3 +1,4 @@
+'use client';
 import { CheckCircleOutline, CloseRounded, ErrorOutline, InfoOutlined, WarningAmberRounded } from '@mui/icons-material';
 import {
   Alert as MuiAlert,
