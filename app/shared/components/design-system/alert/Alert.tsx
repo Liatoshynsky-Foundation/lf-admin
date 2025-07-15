@@ -72,6 +72,8 @@ const Alert = forwardRef<HTMLDivElement, AlertProps>(
       }
     ];
 
+    const CustomCloseButton = () => <CloseButton label={label} onClick={handleClose} variant={variant} />;
+
     return (
       <MuiAlert
         icon={icon}
@@ -82,7 +84,7 @@ const Alert = forwardRef<HTMLDivElement, AlertProps>(
         variant={variant}
         sx={combinedStyles}
         slots={{
-          closeButton: () => <CloseButton label={label} onClick={handleClose} variant={variant} />
+          closeButton: CustomCloseButton
         }}
         {...props}
       >
