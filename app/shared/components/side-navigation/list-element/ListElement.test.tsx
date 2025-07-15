@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { ListElement } from './ListElement';
 
@@ -36,5 +37,10 @@ describe('List Element', () => {
       </ListElement>
     );
     expect(screen.getByText('TestChildren')).toBeInTheDocument();
+  });
+  it('should work with default handleClick fallback', async () => {
+    const user = userEvent.setup();
+    render(<ListElement element={element} open />);
+    await user.click(screen.getByRole('button'));
   });
 });
