@@ -7,7 +7,7 @@ import {
   AlertTitleProps,
   Box
 } from '@mui/material';
-import { ButtonHTMLAttributes, forwardRef, SyntheticEvent } from 'react';
+import { ButtonHTMLAttributes, forwardRef, SyntheticEvent, useCallback } from 'react';
 
 import { styles } from './Alert.styles';
 
@@ -57,11 +57,12 @@ export interface AlertProps extends Omit<MuiAlertProps, 'severity'> {
 
 const Alert = forwardRef<HTMLDivElement, AlertProps>(
   ({ title, label, description, icon, onClose, severity = 'info', variant = 'filled', ...props }, ref) => {
-    const handleClose = (event: SyntheticEvent) => {
-      if (onClose) {
-        onClose(event);
-      }
-    };
+    const handleClose = useCallback(
+      (event: SyntheticEvent) => {
+        onClose?.(event);
+      },
+      [onClose]
+    );
 
     const combinedStyles = [
       styles.alert,
@@ -72,7 +73,10 @@ const Alert = forwardRef<HTMLDivElement, AlertProps>(
       }
     ];
 
-    const CustomCloseButton = () => <CloseButton label={label} onClick={handleClose} variant={variant} />;
+    const CustomCloseButton = useCallback(
+      () => <CloseButton label={label} onClick={handleClose} variant={variant} />,
+      [label, handleClose, variant]
+    );
 
     return (
       <MuiAlert
