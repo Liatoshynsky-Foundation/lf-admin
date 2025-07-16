@@ -14,6 +14,7 @@ type BaseButtonProps = {
   endIcon?: ReactNode;
   loading?: boolean;
   label?: string;
+  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 } & (
   | {
       color?: 'primary' | 'secondary';

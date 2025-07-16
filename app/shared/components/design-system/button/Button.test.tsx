@@ -8,7 +8,7 @@ describe('Button Component', () => {
   const startIcon = <span data-testid="start-icon">▲</span>;
   const endIcon = <span data-testid="end-icon">▼</span>;
 
-  test('displays icons when provided', () => {
+  test('should display icons when provided', () => {
     render(
       <Button startIcon={startIcon} endIcon={endIcon}>
         Icons
@@ -19,7 +19,7 @@ describe('Button Component', () => {
     expect(screen.getByTestId('end-icon')).toBeInTheDocument();
   });
 
-  test('applies tertiary color styles', () => {
+  test('should apply tertiary color styles', () => {
     render(<Button color="tertiary">Tertiary Button</Button>);
 
     expect(screen.getByRole('button')).toHaveStyle({
@@ -28,7 +28,7 @@ describe('Button Component', () => {
     });
   });
 
-  test('loading state disables interaction and shows loader', () => {
+  test('should loading state disables interaction and shows loader', () => {
     const handleClick = jest.fn();
     render(
       <Button loading onClick={handleClick}>
