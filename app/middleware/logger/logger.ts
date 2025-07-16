@@ -7,10 +7,6 @@ import { SEVEN_DAYS_IN_SECONDS } from '~/constants';
 
 const { combine, timestamp, printf, errors, json } = format;
 
-const addSource = format((info) => {
-  return { ...info, source: 'admin' };
-});
-
 const formatStack = (stack: unknown): string => {
   if (typeof stack === 'string') {
     return `\n📌 Stack trace:\n${stack
@@ -41,7 +37,7 @@ const logger = createLogger({
       db: mongoUrl,
       collection: 'logger',
       expireAfterSeconds: SEVEN_DAYS_IN_SECONDS,
-      format: combine(errors({ stack: true }), timestamp(), addSource(), json())
+      format: combine(errors({ stack: true }), timestamp(), json())
     })
   ]
 });

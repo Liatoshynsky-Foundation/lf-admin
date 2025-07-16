@@ -10,38 +10,27 @@ const transportsMock = [
 
 let printfFormatterSpy: ((info: TransformableInfo) => string) | null = null;
 
-jest.mock('winston', () => {
-  const formatMock = jest.fn() as jest.Mock & {
-    combine: jest.Mock;
-    printf: jest.Mock;
-    timestamp: jest.Mock;
-    errors: jest.Mock;
-    json: jest.Mock;
-    colorize: jest.Mock;
-  };
-
-  formatMock.combine = jest.fn((...args) => args);
-  formatMock.printf = jest.fn((formatter) => {
-    printfFormatterSpy = formatter;
-    return { transform: formatter };
-  });
-  formatMock.timestamp = jest.fn();
-  formatMock.errors = jest.fn();
-  formatMock.json = jest.fn();
-  formatMock.colorize = jest.fn();
-
-  return {
-    createLogger: jest.fn(() => ({
-      info: infoMock,
-      error: errorMock,
-      transports: transportsMock
-    })),
-    format: formatMock,
-    transports: {
-      Console: jest.fn()
-    }
-  };
-});
+jest.mock('winston', () => ({
+  createLogger: jest.fn(() => ({
+    info: infoMock,
+    error: errorMock,
+    transports: transportsMock
+  })),
+  format: {
+    combine: jest.fn(),
+    timestamp: jest.fn(),
+    printf: jest.fn((formatter) => {
+      printfFormatterSpy = formatter;
+      return { transform: formatter };
+    }),
+    errors: jest.fn(),
+    json: jest.fn(),
+    colorize: jest.fn()
+  },
+  transports: {
+    Console: jest.fn()
+  }
+}));
 
 jest.mock('winston-mongodb', () => ({
   MongoDB: jest.fn()
