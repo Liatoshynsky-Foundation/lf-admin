@@ -20,6 +20,8 @@
     ],
     "baseUrl": ".", // Base URL for module resolution
     "paths": {
+      "~/ds-components/*": ["app/shared/components/design-system/*"],
+      "~/components/*": ["app/shared/components/*"],
       "~/public/*": ["./public/*"] // Path alias for easier imports
     },
     "forceConsistentCasingInFileNames": true, // Enforce consistent casing in file names

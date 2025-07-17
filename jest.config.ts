@@ -8,7 +8,12 @@ const createJestConfig = nextJest({
 const config: Config = {
   bail: 1,
   collectCoverage: true,
-  collectCoverageFrom: ['app/**/*.{js,jsx,ts,tsx}', '!app/**/*.{test,d}.{js,jsx,ts,tsx}', '!app/layout.tsx', '!app/types/**'],
+  collectCoverageFrom: [
+    'app/**/*.{js,jsx,ts,tsx}',
+    '!app/**/*.{test,d}.{js,jsx,ts,tsx}',
+    '!app/layout.tsx',
+    '!app/types/**'
+  ],
   coverageDirectory: 'coverage',
   coverageProvider: 'v8',
   coverageThreshold: {
