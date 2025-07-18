@@ -5,11 +5,11 @@ import { readFileAsDataURL } from 'app/lib/utils/readFileAsDataURL';
 import { useImageMetadata } from 'app/shared/hooks/use-image-metadata/useImageMetadata';
 import { useRef, useState } from 'react';
 
-import ImageIcon from '../../../../../public/icons/image.svg';
-import PencilIcon from '../../../../../public/icons/pencil.svg';
 import Button from '../button/Button';
 import { CropperModal } from '../cropper-modal/CropperModal';
 import { styles } from './PhotoBlock.styles';
+import ImageIcon from '~/public/icons/image.svg';
+import PencilIcon from '~/public/icons/pencil.svg';
 
 type ImagePreviewBlockProps = {
   imageUrl: string;
