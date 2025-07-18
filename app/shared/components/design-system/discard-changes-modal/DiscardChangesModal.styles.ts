@@ -46,27 +46,7 @@ export const styles = {
     marginTop: '32px'
   },
 
-  goBackBtn: {
-    padding: '8px 48px',
-    border: '1px solid #190D03',
-    borderRadius: '28px',
-    fontFamily: 'Mulish',
-    fontSize: '16px',
-    fontWeight: '500',
-    color: '#190D03',
-    lineHeight: '150%',
-    textTransform: 'none'
-  },
-
-  discardChangesBtn: {
-    padding: '8px 48px',
-    borderRadius: '28px',
-    fontFamily: 'Mulish',
-    fontSize: '16px',
-    fontWeight: '500',
-    color: '#FCFCFC',
-    backgroundColor: '#190D03',
-    lineHeight: '150%',
-    textTransform: 'none'
+  modalBtn: {
+    padding: '8px 48px'
   }
 };
