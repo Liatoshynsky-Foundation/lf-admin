@@ -16,7 +16,7 @@ describe('useImageMetadata', () => {
 
         set src(val: string) {
           this._src = val;
-          setTimeout(() => this.onload(), 0); // емуляція завантаження
+          setTimeout(() => this.onload(), 0);
         }
         get src() {
           return this._src;

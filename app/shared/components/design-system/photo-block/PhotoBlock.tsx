@@ -1,12 +1,13 @@
 'use client';
 
-import { Box, Button, Stack, Typography } from '@mui/material';
+import { Box, Stack, Typography } from '@mui/material';
 import { readFileAsDataURL } from 'app/lib/utils/readFileAsDataURL';
 import { useImageMetadata } from 'app/shared/hooks/use-image-metadata/useImageMetadata';
 import { useRef, useState } from 'react';
 
 import ImageIcon from '../../../../../public/icons/image.svg';
 import PencilIcon from '../../../../../public/icons/pencil.svg';
+import Button from '../button/Button';
 import { CropperModal } from '../cropper-modal/CropperModal';
 import { styles } from './PhotoBlock.styles';
 
@@ -65,11 +66,16 @@ export const ImagePreviewBlock = ({
           )}
 
           <Stack direction="row" spacing="16px" mt={1}>
-            <Button sx={styles.roundedButton} onClick={() => setIsCropperOpen(true)}>
-              <PencilIcon /> Редагувати
+            <Button
+              startIcon={<PencilIcon />}
+              variant="outlined"
+              color="primary"
+              onClick={() => setIsCropperOpen(true)}
+            >
+              Редагувати
             </Button>
-            <Button sx={styles.roundedButton} onClick={handleClickSelectImage}>
-              <ImageIcon /> Змінити зображення
+            <Button startIcon={<ImageIcon />} variant="outlined" color="primary" onClick={handleClickSelectImage}>
+              Змінити зображення
             </Button>
             <input ref={inputRef} type="file" accept="image/*" hidden onChange={handleFileChange} />
           </Stack>

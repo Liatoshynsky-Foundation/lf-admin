@@ -32,23 +32,5 @@ export const styles = {
   imageSizeText: {
     mb: 4,
     fontFamily: 'Mulish'
-  },
-
-  roundedButton: {
-    display: 'flex',
-    gap: '2px',
-    borderRadius: '999px',
-    borderColor: '#1e1e1e',
-    color: '#1e1e1e',
-    textTransform: 'none',
-    fontWeight: 400,
-    px: '12px',
-    py: '4px',
-    fontFamily: 'Mulish',
-    border: '1px solid black',
-    '&:hover': {
-      borderColor: '#000',
-      backgroundColor: '#f0f0f0'
-    }
   }
 };
