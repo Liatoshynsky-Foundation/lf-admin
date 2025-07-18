@@ -1,7 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ParagraphsBlock } from 'app/types/accordionBlocks';
-import React from 'react';
+
+jest.mock('../../../design-system/photo-block/PhotoBlock', () => ({
+  ImagePreviewBlock: () => <div data-testid="image-preview-block" />
+}));
 
 import { FoundationBlock } from './FoundationBlock';
 
@@ -28,6 +31,7 @@ describe('FoundationBlock', () => {
     mockProps.paragraphs.forEach((value) => {
       expect(screen.getByDisplayValue(value)).toBeInTheDocument();
     });
+    expect(screen.getByTestId('image-preview-block')).toBeInTheDocument();
   });
 
   it('should call onMainTextChange when main text changes', async () => {

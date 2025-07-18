@@ -14,6 +14,11 @@ jest.mock('../../design-system/collapsible-block/CollapsibleBlock', () => ({
   )
 }));
 
+jest.mock('../../design-system/photo-block/PhotoBlock', () => ({
+  __esModule: true,
+  ImagePreviewBlock: () => <div data-testid="image-preview-block" />
+}));
+
 describe('LiatoshynskyFoundation', () => {
   it('should render with main text and paragraphs', () => {
     render(<LiatoshynskyFoundation />);
