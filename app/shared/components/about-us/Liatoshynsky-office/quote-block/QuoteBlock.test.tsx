@@ -17,10 +17,10 @@ describe('QuoteBlock', () => {
   it('should render both text fields with correct titles and default values', () => {
     render(
       <QuoteBlock
-        defaultMainQuote={mockDefaultMainQuote}
-        defaultCaption={mockDefaultCaption}
-        onMainQuoteChange={mockOnMainQuoteChange}
-        onCaptionChange={mockOnCaptionChange}
+        title={mockDefaultMainQuote}
+        description={mockDefaultCaption}
+        onTitleChange={mockOnMainQuoteChange}
+        onDescriptionChange={mockOnCaptionChange}
       />
     );
 
@@ -33,10 +33,10 @@ describe('QuoteBlock', () => {
     const user = userEvent.setup();
     render(
       <QuoteBlock
-        defaultMainQuote={mockDefaultMainQuote}
-        defaultCaption={mockDefaultCaption}
-        onMainQuoteChange={mockOnMainQuoteChange}
-        onCaptionChange={mockOnCaptionChange}
+        title={mockDefaultMainQuote}
+        description={mockDefaultCaption}
+        onTitleChange={mockOnMainQuoteChange}
+        onDescriptionChange={mockOnCaptionChange}
       />
     );
 
