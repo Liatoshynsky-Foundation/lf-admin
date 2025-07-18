@@ -60,14 +60,13 @@ const Button = forwardRef(
 
     return (
       <MuiButton
-        sx={Object.assign(
-          {},
-          buttonBaseStyles,
-          sizeStyles[size],
-          typographyStyles[color]?.[size],
-          color === 'tertiary' ? variantStyles.tertiary.filled : variantStyles[color]?.[variant],
-          sx
-        )}
+        sx={{
+          ...buttonBaseStyles,
+          ...sizeStyles[size],
+          ...typographyStyles[color]?.[size],
+          ...(color === 'tertiary' ? variantStyles.tertiary.filled : variantStyles[color]?.[variant]),
+          ...(sx as object)
+        }}
         disabled={isDisabled}
         ref={forwardedRef}
         {...props}
