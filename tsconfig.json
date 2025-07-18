@@ -20,8 +20,14 @@
     ],
     "baseUrl": ".", // Base URL for module resolution
     "paths": {
+      "~/*": ["./app/*"],
       "~/ds-components/*": ["app/shared/components/design-system/*"],
       "~/components/*": ["app/shared/components/*"],
+      "~/constants/*": ["./app/constants/*"],
+      "~/middlewares/*": ["./app/middlewares/*"],
+      "~/utils/*": ["./app/lib/utils/*"],
+      "~/db/*": ["./app/db/*"],
+      "~/config/*": ["./app/config/*"],
       "~/public/*": ["./public/*"] // Path alias for easier imports
     },
     "forceConsistentCasingInFileNames": true, // Enforce consistent casing in file names
