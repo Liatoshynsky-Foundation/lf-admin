@@ -15,7 +15,7 @@ describe('DiscardChangesModal', () => {
     return props;
   };
 
-  it('renders modal with title and description', () => {
+  it('should render modal with title and description', () => {
     setup();
 
     expect(screen.getByText('Скасувати зміни?')).toBeInTheDocument();
@@ -24,7 +24,7 @@ describe('DiscardChangesModal', () => {
     ).toBeInTheDocument();
   });
 
-  it('calls handleClose when "Повернутись" button is clicked', () => {
+  it('should call handleClose when "Повернутись" button is clicked', () => {
     const { handleClose } = setup();
 
     const closeButton = screen.getByRole('button', { name: /Повернутись/i });
@@ -33,7 +33,7 @@ describe('DiscardChangesModal', () => {
     expect(handleClose).toHaveBeenCalled();
   });
 
-  it('calls handleSubmit when "Скасувати зміни" button is clicked', () => {
+  it('should call handleSubmit when "Скасувати зміни" button is clicked', () => {
     const { handleSubmit } = setup();
 
     const submitButton = screen.getByRole('button', { name: /Скасувати зміни/i });
@@ -42,7 +42,7 @@ describe('DiscardChangesModal', () => {
     expect(handleSubmit).toHaveBeenCalled();
   });
 
-  it('does not render content when modal is closed', () => {
+  it('should not render content when modal is closed', () => {
     setup({ open: false });
 
     expect(screen.queryByText('Скасувати зміни?')).not.toBeInTheDocument();
