@@ -33,6 +33,7 @@ type Ref = MuiButtonProps['ref'];
 const Button = forwardRef(
   (
     {
+      sx,
       size = 'medium',
       variant = 'filled',
       color = 'secondary',
@@ -63,7 +64,8 @@ const Button = forwardRef(
           ...buttonBaseStyles,
           ...sizeStyles[size],
           ...typographyStyles[color]?.[size],
-          ...(color === 'tertiary' ? variantStyles.tertiary.filled : variantStyles[color]?.[variant])
+          ...(color === 'tertiary' ? variantStyles.tertiary.filled : variantStyles[color]?.[variant]),
+          ...(sx as object)
         }}
         disabled={isDisabled}
         ref={forwardedRef}
