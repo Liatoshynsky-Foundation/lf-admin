@@ -12,7 +12,13 @@ const config: Config = {
     'app/**/*.{js,jsx,ts,tsx}',
     '!app/**/*.{test,d}.{js,jsx,ts,tsx}',
     '!app/layout.tsx',
-    '!app/types/**'
+    '!app/types/**',
+    'src/**/*.{js,ts}',
+    '!src/**/*.{test,d}.{js,ts}',
+    '!src/interfaces/**/*.{js,ts,graphql}',
+    '!src/domain/**/*.{js,ts}',
+    '!src/constants/**/*.{js,ts}',
+    '!src/infrastructure/models/**/*.{js,ts}'
   ],
   coverageDirectory: 'coverage',
   coverageProvider: 'v8',

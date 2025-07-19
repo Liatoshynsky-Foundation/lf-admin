@@ -1,0 +1,14 @@
+type Mutation {
+  login(email: String!, password: String!): LoginPayload!
+}
+
+type LoginPayload {
+  success: Boolean!
+  adminId: ID
+  adminType: String
+}
+
+type Query {
+  _empty: String
+}
+

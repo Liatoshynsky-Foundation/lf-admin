@@ -2,7 +2,7 @@ import type { TransformableInfo } from 'logform';
 import { createLogger, format, transports } from 'winston';
 import { MongoDB } from 'winston-mongodb';
 
-import { mongoUrl } from '~/config';
+import { mongoUrl } from '../../config';
 import { SEVEN_DAYS_IN_SECONDS } from '~/constants';
 
 const { combine, timestamp, printf, errors, json } = format;

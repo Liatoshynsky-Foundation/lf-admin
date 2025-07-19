@@ -26,8 +26,13 @@
       "~/constants/*": ["./app/constants/*"],
       "~/middlewares/*": ["./app/middlewares/*"],
       "~/utils/*": ["./app/lib/utils/*"],
-      "~/db/*": ["./app/db/*"],
       "~/config/*": ["./app/config/*"],
+      "~/application/*": ["./src/application/*"],
+      "~/domain/*": ["./src/domain/*"],
+      "~/container/*": ["./src/container/*"],
+      "~/back-constants/*": ["./src/constants/*"],
+      "~/infrastructure/*": ["./src/infrastructure/*"],
+      "~/interfaces/*": ["./src/interfaces/*"],
       "~/public/*": ["./public/*"] // Path alias for easier imports
     },
     "forceConsistentCasingInFileNames": true, // Enforce consistent casing in file names
