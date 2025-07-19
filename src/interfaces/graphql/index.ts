@@ -4,7 +4,7 @@ import { makeExecutableSchema } from '@graphql-tools/schema';
 
 import { resolvers } from './resolvers';
 
-const typesArray = loadFilesSync('src/interfaces/graphql/schemas/*.graphql');
+const typesArray = loadFilesSync('**/*.graphql');
 const typeDefs = mergeTypeDefs(typesArray);
 
 export const schema = makeExecutableSchema({
