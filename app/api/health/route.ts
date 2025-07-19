@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 import { stateNames } from '~/constants';
 import { errors } from '~/constants/errors';
-import dbConnect from '~/db/connect';
+import dbConnect from '~/infrastructure/db/connect';
 import { successResponse } from '~/utils/apiResponse';
 
 const getMongooseConnectionState = (state: number): string => {

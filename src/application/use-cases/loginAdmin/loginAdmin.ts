@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 
 import { LoginError } from '~/back-constants/customErrors/adminErrors';
 import { adminTypes } from '~/back-constants/index';
-import { AdminRepository } from '~/domain/repositories/AdminRepository';
+import { AdminRepository } from '~/domain/repositories/adminRepository';
 
 export const loginAdmin = ({ adminRepository }: { adminRepository: AdminRepository }) => {
   return {

@@ -1,4 +1,4 @@
-import type { AdminRepository as AdminRepositoryType } from '~/domain/repositories/AdminRepository';
+import type { AdminRepository as AdminRepositoryType } from '~/domain/repositories/adminRepository';
 import dbConnect from '~/infrastructure/db/connect';
 import { Admin } from '~/infrastructure/models/admin.model';
 
