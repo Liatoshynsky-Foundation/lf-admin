@@ -17,7 +17,7 @@ describe('mongoUrl', () => {
     process.env.MONGO_USERNAME = 'user';
     process.env.MONGO_PASSWORD = 'fake-pass'; //NOSONAR
 
-    const { mongoUrl } = await import('~/config/index');
+    const { mongoUrl } = await import('./index');
     expect(mongoUrl).toBe('mongodb://localhost:27018/testdb');
   });
 
@@ -28,7 +28,7 @@ describe('mongoUrl', () => {
     process.env.MONGO_USERNAME = 'user';
     process.env.MONGO_PASSWORD = 'fake-pass'; //NOSONAR
 
-    const { mongoUrl } = await import('~/config/index');
+    const { mongoUrl } = await import('./index');
     expect(mongoUrl).toBe('mongodb://localhost:27017/testdb');
   });
 
@@ -38,7 +38,7 @@ describe('mongoUrl', () => {
     process.env.MONGO_USERNAME = 'user';
     process.env.MONGO_PASSWORD = 'fake-pass'; //NOSONAR
 
-    const { mongoUrl } = await import('~/config/index');
+    const { mongoUrl } = await import('./index');
     expect(mongoUrl).toBe('mongodb+srv://user:fake-pass@remotehost/testdb');
   });
 });

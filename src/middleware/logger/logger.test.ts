@@ -40,7 +40,7 @@ describe('Logger', () => {
   let logger: Logger;
 
   beforeAll(async () => {
-    logger = (await import('~/middleware/logger/logger')).default;
+    logger = (await import('./logger')).default;
   });
 
   afterEach(() => {
