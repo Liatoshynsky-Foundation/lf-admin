@@ -15,9 +15,12 @@ const config: Config = {
     '!app/types/**',
     'src/**/*.{js,ts}',
     '!src/**/*.{test,d}.{js,ts}',
-    '!src/interfaces/**/*.{js,ts,graphql}',
+    '!src/interfaces/graphql/schemas/*.{graphql}',
+    '!src/interfaces/graphql/**/index.ts',
+    '!src/container/**/*.{js,ts}',
     '!src/domain/**/*.{js,ts}',
     '!src/constants/**/*.{js,ts}',
+    '!src/shared/types/**/*.{js,ts}',
     '!src/infrastructure/models/**/*.{js,ts}'
   ],
   coverageDirectory: 'coverage',

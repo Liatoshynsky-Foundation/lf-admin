@@ -1,11 +1,19 @@
+union LoginResult = LoginPayload | ErrorPayload
+
 type Mutation {
-  login(email: String!, password: String!): LoginPayload!
+  login(email: String!, password: String!): LoginResult!
 }
 
 type LoginPayload {
   success: Boolean!
   adminId: ID
   adminType: String
+}
+
+type ErrorPayload {
+  success: Boolean!
+  message: String!
+  statusCode: Int!
 }
 
 type Query {
