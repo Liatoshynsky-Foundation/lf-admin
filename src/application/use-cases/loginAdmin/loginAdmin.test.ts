@@ -17,7 +17,7 @@ describe('loginAdmin', () => {
   });
 
   it('should return id and type if all valid', async () => {
-    const fakeAdmin = { id: '123', type: 'admin', password: 'hashedPassword' };
+    const fakeAdmin = { id: '123', type: 'admin', password: 'hashedPassword' }; //NOSONAR
     mockAdminRepository.findByEmail.mockResolvedValue(fakeAdmin);
 
     (bcrypt.compare as jest.Mock).mockResolvedValue(true);
@@ -36,7 +36,7 @@ describe('loginAdmin', () => {
   });
 
   it('should throw LoginError if incorrect password', async () => {
-    const fakeAdmin = { id: '123', type: 'admin', password: 'hashedPassword' };
+    const fakeAdmin = { id: '123', type: 'admin', password: 'hashedPassword' }; //NOSONAR
     mockAdminRepository.findByEmail.mockResolvedValue(fakeAdmin);
 
     (bcrypt.compare as jest.Mock).mockResolvedValue(false);

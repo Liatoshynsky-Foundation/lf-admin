@@ -3,7 +3,7 @@ import { LoginError } from '~/back-constants/customErrors/adminErrors';
 
 describe('Mutation', () => {
   describe('login', () => {
-    const fakeArgs = { email: 'admin@example.com', password: 'password123' };
+    const fakeArgs = { email: 'admin@example.com', password: 'password123' }; //NOSONAR
     const fakeAdmin = { id: '123', type: 'superadmin' };
 
     const mockExecute = jest.fn();
