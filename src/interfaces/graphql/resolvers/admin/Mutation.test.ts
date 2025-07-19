@@ -44,7 +44,7 @@ describe('Mutation', () => {
       expect(result).toEqual({
         __typename: 'ErrorPayload',
         success: false,
-        message: 'Не правильний логін або пароль',
+        message: 'Неправильний логін або пароль',
         statusCode: 401
       });
     });
