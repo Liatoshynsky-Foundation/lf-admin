@@ -14,7 +14,11 @@ export interface TextBlock extends ChangeHandlers {
   text: string;
 }
 
+export interface Paragraph {
+  id: number;
+  text: string;
+}
 export interface ParagraphsBlock extends ChangeHandlers {
   mainText: string;
-  paragraphs: string[];
+  paragraphs: Paragraph[];
 }

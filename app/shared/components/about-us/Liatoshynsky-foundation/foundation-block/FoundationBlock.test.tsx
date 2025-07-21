@@ -10,7 +10,10 @@ import { FoundationBlock } from './FoundationBlock';
 
 const mockProps: ParagraphsBlock = {
   mainText: 'Основний текст про фундацію',
-  paragraphs: ['Перший абзац', 'Другий абзац'],
+  paragraphs: [
+    { id: 1, text: 'Перший абзац' },
+    { id: 2, text: 'Другий абзац' }
+  ],
   onMainTextChange: jest.fn(),
   onParagraphsChange: jest.fn()
 };
@@ -29,7 +32,7 @@ describe('FoundationBlock', () => {
 
     expect(screen.getByDisplayValue(mockProps.mainText)).toBeInTheDocument();
     mockProps.paragraphs.forEach((value) => {
-      expect(screen.getByDisplayValue(value)).toBeInTheDocument();
+      expect(screen.getByDisplayValue(value.text)).toBeInTheDocument();
     });
     expect(screen.getByTestId('image-preview-block')).toBeInTheDocument();
   });

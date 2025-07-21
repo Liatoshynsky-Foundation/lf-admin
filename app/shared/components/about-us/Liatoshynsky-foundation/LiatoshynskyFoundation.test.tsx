@@ -27,7 +27,7 @@ describe('LiatoshynskyFoundation', () => {
     expect(screen.getByText('Основний текст секції')).toBeInTheDocument();
 
     hardcodedData.paragraphs.forEach((paragraph) => {
-      expect(screen.getByDisplayValue(paragraph)).toBeInTheDocument();
+      expect(screen.getByDisplayValue(paragraph.text)).toBeInTheDocument();
     });
   });
 

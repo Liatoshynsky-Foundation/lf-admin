@@ -26,12 +26,12 @@ export const FoundationBlock = ({ mainText, paragraphs, onMainTextChange, onPara
         fullWidth
         multiline
       />
-      {paragraphs.map((text, index) => (
+      {paragraphs.map((paragraph, index) => (
         <CustomTextField
-          key={index}
+          key={paragraph.id}
           title={`Текст ${index + 1} абзацу`}
           label="Текст абзацу"
-          defaultValue={text}
+          defaultValue={paragraph.text}
           onChange={(e) => onParagraphsChange && onParagraphsChange(index, e.target.value)}
           fullWidth
           multiline

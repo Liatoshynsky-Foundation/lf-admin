@@ -11,7 +11,7 @@ export const LiatoshynskyFoundation = () => {
   const [paragraph, setParagraph] = useState(hardcodedData.paragraphs);
   const handleParagraphChange = (index: number, newValue: string) => {
     const updated = [...paragraph];
-    updated[index] = newValue;
+    updated[index] = { ...updated[index], text: newValue };
     setParagraph(updated);
   };
   return (
