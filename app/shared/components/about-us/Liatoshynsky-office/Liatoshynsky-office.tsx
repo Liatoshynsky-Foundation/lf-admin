@@ -2,7 +2,7 @@
 import { useState } from 'react';
 
 import { hardcodedData } from './Liatoshynsky-office.const';
-import { QuoteBlock } from '~/components/quote-block/QuoteBlock';
+import { QuoteBlock } from './quote-block/QuoteBlock';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 
 export const LiatoshynskyOffice = () => {
@@ -12,10 +12,10 @@ export const LiatoshynskyOffice = () => {
   return (
     <CollapsibleBlock title={'Кабінет Лятошинського'}>
       <QuoteBlock
-        defaultMainQuote={mainQuote}
-        defaultCaption={caption}
-        onMainQuoteChange={setMainQuote}
-        onCaptionChange={setCaption}
+        title={mainQuote}
+        description={caption}
+        onTitleChange={setMainQuote}
+        onDescriptionChange={setCaption}
       />
     </CollapsibleBlock>
   );
