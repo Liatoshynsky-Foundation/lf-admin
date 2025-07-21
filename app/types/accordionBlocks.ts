@@ -18,7 +18,15 @@ export interface Paragraph {
   id: number;
   text: string;
 }
+
 export interface ParagraphsBlock extends ChangeHandlers {
   mainText: string;
   paragraphs: Paragraph[];
+}
+
+export interface ConfigurableListItem {
+  id: number | string;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
 }
