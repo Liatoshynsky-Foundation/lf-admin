@@ -26,7 +26,7 @@ describe('AdminRepository', () => {
     expect(result).toEqual(mockAdmin);
   });
 
-  it('повертає null якщо не знайдено', async () => {
+  it('should return null if admin not exist', async () => {
     (Admin.findOne as jest.Mock).mockResolvedValue(null);
     const result = await repo.findByEmail('notfound@example.com');
     expect(result).toBeNull();
