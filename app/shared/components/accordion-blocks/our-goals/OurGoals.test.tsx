@@ -51,9 +51,11 @@ jest.mock('../../configurable-list/ConfigurableList', () => ({
 }));
 
 describe('OurGoals component', () => {
-  it('should render section title and goals list', () => {
+  beforeEach(() => {
     render(<OurGoals />);
+  });
 
+  it('should render section title and goals list', () => {
     expect(screen.getByLabelText(/Текст заголовку/i)).toBeInTheDocument();
 
     const goal = hardcodedData.goals[0];
@@ -62,7 +64,6 @@ describe('OurGoals component', () => {
   });
 
   it('should update section title', () => {
-    render(<OurGoals />);
     const sectionTitleInput = screen.getByLabelText(/Текст заголовку/i);
 
     fireEvent.change(sectionTitleInput, { target: { value: 'Новий заголовок' } });
@@ -70,7 +71,6 @@ describe('OurGoals component', () => {
   });
 
   it('should add a new goal item', () => {
-    render(<OurGoals />);
     const addButton = screen.getByRole('button', { name: /Додати пункт/i });
     const goalsCount = hardcodedData.goals.length;
 
@@ -81,8 +81,6 @@ describe('OurGoals component', () => {
   });
 
   it('should edit a goal item', async () => {
-    render(<OurGoals />);
-
     const firstTitleInput = screen.getAllByLabelText(/Заголовок пункту/i)[0];
     const firstTextInput = screen.getAllByLabelText(/Текст пункту/i)[0];
 
@@ -95,7 +93,6 @@ describe('OurGoals component', () => {
   });
 
   it('should delete a goal item', () => {
-    render(<OurGoals />);
     const deleteButtons = screen.getAllByTestId('trash-icon');
 
     const initialCount = deleteButtons.length;
