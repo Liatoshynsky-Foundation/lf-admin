@@ -57,7 +57,7 @@ describe('ItemWrapper', () => {
         <div>{CHILD_TEXT}</div>
       </ItemWrapper>
     );
-    const separator = screen.getAllByRole('presentation');
+    const separator = screen.getAllByTestId('separator');
     expect(separator.length).toBeGreaterThan(0);
   });
 
@@ -67,7 +67,7 @@ describe('ItemWrapper', () => {
         <div>{CHILD_TEXT}</div>
       </ItemWrapper>
     );
-    const presentations = screen.queryAllByRole('presentation');
-    expect(presentations.length).toBe(0);
+    const separators = screen.queryAllByTestId('separator');
+    expect(separators.length).toBe(0);
   });
 });

@@ -148,8 +148,8 @@ describe('ConfigurableList', () => {
         onDelete={jest.fn()}
       />
     );
-    const presentations = screen.queryAllByRole('presentation');
-    expect(presentations.length).toBe(2);
+    const separators = screen.queryAllByTestId('separator');
+    expect(separators.length).toBe(2);
   });
 
   it('should pass withSeparator=false for all if separator is false/undefined', () => {
@@ -164,7 +164,7 @@ describe('ConfigurableList', () => {
         onDelete={jest.fn()}
       />
     );
-    const presentations = screen.queryAllByRole('presentation');
-    expect(presentations.length).toBe(0);
+    const separators = screen.queryAllByTestId('separator');
+    expect(separators.length).toBe(0);
   });
 });

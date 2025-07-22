@@ -10,7 +10,7 @@ interface ItemWrapperProps {
   children: React.ReactNode;
 }
 
-const separator = <Box sx={styles.separator} role="presentation" />;
+const separator = <Box sx={styles.separator} data-testid="separator" />;
 
 const ItemWrapper: React.FC<ItemWrapperProps> = ({ editable, withSeparator = true, onDelete, children }) => {
   return (
