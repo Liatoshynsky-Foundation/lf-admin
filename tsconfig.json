@@ -33,7 +33,7 @@
       "~/back-constants/*": ["./src/constants/*"],
       "~/infrastructure/*": ["./src/infrastructure/*"],
       "~/interfaces/*": ["./src/interfaces/*"],
-      "~/shared/*": ["./src/shared/*"],
+      "~/back-shared/*": ["./src/shared/*"],
       "~/public/*": ["./public/*"] // Path alias for easier imports
     },
     "forceConsistentCasingInFileNames": true, // Enforce consistent casing in file names
