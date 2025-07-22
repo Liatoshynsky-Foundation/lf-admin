@@ -1,6 +1,6 @@
 import { LoginError } from '~/back-constants/customErrors/adminErrors';
-import { LoginArgs } from '~/shared/types/admin/types';
-import { GraphQLContext } from '~/shared/types/container/types';
+import { LoginArgs } from '~/back-shared/types/admin/types';
+import { GraphQLContext } from '~/back-shared/types/container/types';
 
 export const Mutation = {
   login: async (_: unknown, args: LoginArgs, context: GraphQLContext) => {
