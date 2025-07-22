@@ -3,7 +3,7 @@
 import { Box } from '@mui/material';
 
 import { styles } from './ConfigurableList.styles';
-import ItemWrapper from '~/components/configurable-list/ItemWrapper';
+import ItemWrapper from '~/components/configurable-list/item-wrapper/ItemWrapper';
 import Button from '~/ds-components/button/Button';
 import PlusIcon from '~/public/icons/plus.svg';
 import { ConfigurableListItem } from '~/types/accordionBlocks';

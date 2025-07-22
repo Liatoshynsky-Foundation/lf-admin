@@ -3,10 +3,11 @@ import { Box, IconButton } from '@mui/material';
 import { styles } from './ItemWrapper.styles';
 import TrashIcon from '~/public/icons/trash.svg';
 
-interface ItemWrapperProps extends React.PropsWithChildren {
+interface ItemWrapperProps {
   editable: boolean;
   onDelete: () => void;
   withSeparator?: boolean;
+  children: React.ReactNode;
 }
 
 const separator = <Box sx={styles.separator} role="presentation" />;
