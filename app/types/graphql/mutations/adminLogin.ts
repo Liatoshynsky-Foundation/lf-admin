@@ -1,0 +1,17 @@
+export const LOGIN_MUTATION = `
+  mutation Login($email: String!, $password: String!) {
+    login(email: $email, password: $password) {
+        __typename
+        ... on LoginPayload {
+            success
+            adminId
+            adminType
+        }
+        ... on ErrorPayload {
+            success
+            message
+            statusCode
+        }
+    }
+  }
+`;
