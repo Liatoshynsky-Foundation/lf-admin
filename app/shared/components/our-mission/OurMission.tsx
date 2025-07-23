@@ -4,12 +4,12 @@ import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import { useState } from 'react';
 
-import ConfigurableList from '../../components/configurable-list/ConfigurableList';
-import CollapsibleBlock from '../design-system/collapsible-block/CollapsibleBlock';
-import { CustomTextField } from '../design-system/text-field/TextField';
 import { DEFAULT_MISSION_POINTS, IMAGE_BLOCKS_INITIAL, OUR_MISSION_TEXT } from './OurMission.contants';
 import { styles } from './OurMission.styles';
+import ConfigurableList from '~/components/configurable-list/ConfigurableList';
+import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { ImagePreviewBlock } from '~/ds-components/photo-block/PhotoBlock';
+import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { ConfigurableListItem } from '~/types/accordionBlocks';
 
 type MissionImage = {

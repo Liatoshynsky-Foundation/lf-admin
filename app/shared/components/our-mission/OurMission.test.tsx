@@ -3,7 +3,7 @@ import React from 'react';
 
 import OurMission from './OurMission';
 
-jest.mock('../design-system/collapsible-block/CollapsibleBlock', () => {
+jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => {
   const MockCollapsibleBlock = ({ children, title }: { children: React.ReactNode; title: string }) => (
     <div data-testid="collapsible-block">
       <h2>{title}</h2>
@@ -14,7 +14,7 @@ jest.mock('../design-system/collapsible-block/CollapsibleBlock', () => {
   return MockCollapsibleBlock;
 });
 
-jest.mock('../design-system/text-field/TextField', () => {
+jest.mock('~/ds-components/text-field/TextField', () => {
   return {
     CustomTextField: ({
       title,
@@ -48,7 +48,7 @@ jest.mock('../design-system/text-field/TextField', () => {
   };
 });
 
-jest.mock('../../components/configurable-list/ConfigurableList', () => {
+jest.mock('~/components/configurable-list/ConfigurableList', () => {
   return function ConfigurableListMock(props: any) {
     return (
       <div data-testid="configurable-list">
