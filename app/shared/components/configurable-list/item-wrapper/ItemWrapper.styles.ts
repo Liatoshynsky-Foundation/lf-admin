@@ -7,7 +7,8 @@ export const styles = {
   },
   itemWrapper: {
     display: 'flex',
-    gap: '25px'
+    gap: '24px',
+    alignItems: 'center'
   },
   wrapperContent: {
     flex: 1
