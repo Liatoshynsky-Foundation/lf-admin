@@ -56,14 +56,14 @@ jest.mock('~/components/configurable-list/ConfigurableList', () => {
           <div key={item.id} data-testid="configurable-list-item">
             {props.renderItem({
               item,
-              onChange: (updatedItem: any) => props.onChange && props.onChange(updatedItem)
+              onChange: (updatedItem: any) => props.onChange?.(updatedItem)
             })}
-            <button data-testid="delete-btn" onClick={() => props.onDelete && props.onDelete(item.id)}>
+            <button data-testid="delete-btn" onClick={() => props.onDelete?.(item.id)}>
               Delete
             </button>
           </div>
         ))}
-        <button data-testid="add-btn" onClick={() => props.onCreate && props.onCreate()}>
+        <button data-testid="add-btn" onClick={() => props.onCreate?.()}>
           Додати пункт
         </button>
       </div>
@@ -79,7 +79,7 @@ jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
         type="file"
         data-testid="image-upload"
         onChange={(e: any) => {
-          if (e.target.files && e.target.files[0] && props.onChangeImage) {
+          if (e.target.files?.[0] && props.onChangeImage) {
             props.onChangeImage(e.target.files[0]);
           }
         }}
