@@ -1,21 +1,47 @@
 import { ApolloServer } from '@apollo/server';
-import { startServerAndCreateNextHandler } from '@as-integrations/next';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-import { createRequestContainer } from '~/container/index';
+import { createGraphQLContext } from '~/api/graphql/context';
 import { schema } from '~/interfaces/graphql';
 
-const server = new ApolloServer({ schema });
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const server = new ApolloServer({ schema });
+  const contextValue = await createGraphQLContext(req);
+  const apolloResponse = await server.executeOperation(
+    {
+      query: body.query,
+      variables: body.variables,
+      operationName: body.operationName
+    },
+    {
+      contextValue: {
+        ...contextValue
+      }
+    }
+  );
 
-const handler = startServerAndCreateNextHandler<NextRequest>(server, {
-  context: async () => {
-    const container = createRequestContainer();
-    return { container };
-  }
-});
+  const { singleResult } = apolloResponse.body;
+  const res = NextResponse.json(
+    {
+      ...(singleResult?.data ? { data: singleResult.data } : {}),
+      ...(singleResult?.errors ? { errors: singleResult.errors } : {})
+    },
+    { status: 200 }
+  );
 
-export async function GET(req: NextRequest) {
-  return handler(req);
+  contextValue.cookieActions.forEach((action) => {
+    if (action.action === 'set' && action.value) {
+      res.cookies.set(action.name, action.value, action.options);
+    } else if (action.action === 'delete') {
+      res.cookies.delete({
+        ...action.options,
+        name: action.name
+      });
+    }
+  });
+
+  return res;
 }
 
-export const POST = GET;
+export const GET = POST;

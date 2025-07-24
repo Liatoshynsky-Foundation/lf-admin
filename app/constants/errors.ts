@@ -3,5 +3,6 @@ export const errors = {
   MISSING_CREDENTIALS: '❌ Credentials are missing for remote MongoDB',
   MISSING_MONGO_URL: '❌ mongoUrl is not defined or is empty',
   FAILED_TO_CONNECT_DB: '❌ Failed to connect to the database',
-  RESPONSE_NOT_OK: '❌ HTTP error! Response is not 200 OK'
+  RESPONSE_NOT_OK: '❌ HTTP error! Response is not 200 OK',
+  FAILED_TO_REFRESH: 'Failed to refresh token'
 };

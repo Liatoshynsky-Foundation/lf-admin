@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 
-import { LoginError } from '~/back-constants/customErrors/adminErrors';
+import { LoginError } from '~/back-constants/apolloCustomErrors/adminErrors';
 import { adminTypes } from '~/back-constants/index';
 import { AdminRepository } from '~/domain/repositories/adminRepository';
 

@@ -1,7 +1,9 @@
 import { asFunction } from 'awilix';
 
 import { AdminRepository } from '~/infrastructure/repositories/adminRepository/adminRepository';
+import { RefreshTokenRepository } from '~/infrastructure/repositories/refreshTokenRepository/refreshTokenRepository';
 
 export const registerRepositories = () => ({
-  adminRepository: asFunction(() => AdminRepository()).singleton()
+  adminRepository: asFunction(() => AdminRepository()).scoped(),
+  refreshTokenRepository: asFunction(() => RefreshTokenRepository()).scoped()
 });

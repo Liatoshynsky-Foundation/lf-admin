@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 
 import { loginAdmin } from './loginAdmin';
-import { LoginError } from '~/back-constants/customErrors/adminErrors';
+import { LoginError } from '~/back-constants/apolloCustomErrors/adminErrors';
 
 jest.mock('bcrypt');
 
