@@ -2,12 +2,18 @@ union LoginResult = LoginPayload | ErrorPayload
 
 type Mutation {
   login(email: String!, password: String!): LoginResult!
+  logout: Boolean!
+  refreshToken: RefreshTokenPayload!
 }
 
 type LoginPayload {
   success: Boolean!
   adminId: ID
   adminType: String
+}
+
+type RefreshTokenPayload {
+  success: Boolean!
 }
 
 type ErrorPayload {
