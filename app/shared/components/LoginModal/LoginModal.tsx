@@ -85,7 +85,7 @@ const LoginModal = ({ onSubmit }: LoginModalProps) => {
           error={!!passwordError}
           helperText={passwordError}
         />
-        <Button variant="contained" sx={styles.button} onClick={handleSubmit}>
+        <Button variant="contained" sx={styles.button} onClick={handleSubmit} disabled={!username || !password}>
           Увійти
         </Button>
       </Box>

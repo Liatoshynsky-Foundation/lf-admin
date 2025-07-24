@@ -28,7 +28,7 @@ describe('LoginModal', () => {
     mockOnSubmit.mockClear();
   });
 
-  it('renders all elements correctly', () => {
+  it('should render all elements correctly', () => {
     render(<LoginModal onSubmit={mockOnSubmit} />);
 
     expect(screen.getByAltText('logo')).toBeInTheDocument();
@@ -39,8 +39,34 @@ describe('LoginModal', () => {
     expect(screen.getByRole('button', { name: 'Увійти' })).toBeInTheDocument();
   });
 
-  it('shows an error when the username is empty', () => {
+  it('should disable the submit button when the username is empty', () => {
     render(<LoginModal onSubmit={mockOnSubmit} />);
+
+    const passwordInput = screen.getByLabelText('Пароль');
+    fireEvent.change(passwordInput, { target: { value: 'password123' } });
+
+    const submitButton = screen.getByRole('button', { name: 'Увійти' });
+    expect(submitButton).toBeDisabled();
+  });
+
+  it('should disable the submit button when the password is empty', () => {
+    render(<LoginModal onSubmit={mockOnSubmit} />);
+
+    const usernameInput = screen.getByLabelText('Логін');
+    fireEvent.change(usernameInput, { target: { value: 'username' } });
+
+    const submitButton = screen.getByRole('button', { name: 'Увійти' });
+    expect(submitButton).toBeDisabled();
+  });
+
+  it('should show an error when the username is spaces', () => {
+    render(<LoginModal onSubmit={mockOnSubmit} />);
+
+    const usernameInput = screen.getByLabelText('Логін');
+    fireEvent.change(usernameInput, { target: { value: '  ' } });
+
+    const passwordInput = screen.getByLabelText('Пароль');
+    fireEvent.change(passwordInput, { target: { value: '  ' } });
 
     const submitButton = screen.getByRole('button', { name: 'Увійти' });
     fireEvent.click(submitButton);
@@ -49,11 +75,14 @@ describe('LoginModal', () => {
     expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 
-  it('shows an error when the password is empty', () => {
+  it('should show an error when the password is spaces', () => {
     render(<LoginModal onSubmit={mockOnSubmit} />);
 
     const usernameInput = screen.getByLabelText('Логін');
     fireEvent.change(usernameInput, { target: { value: 'testuser' } });
+
+    const passwordInput = screen.getByLabelText('Пароль');
+    fireEvent.change(passwordInput, { target: { value: '  ' } });
 
     const submitButton = screen.getByRole('button', { name: 'Увійти' });
     fireEvent.click(submitButton);
@@ -62,7 +91,7 @@ describe('LoginModal', () => {
     expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 
-  it('calls onSubmit with correct data when inputs are valid', () => {
+  it('should call onSubmit with correct data when inputs are valid', () => {
     render(<LoginModal onSubmit={mockOnSubmit} />);
 
     const usernameInput = screen.getByLabelText('Логін');
