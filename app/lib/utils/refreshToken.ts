@@ -30,11 +30,9 @@ const performRefresh = async (): Promise<void> => {
 };
 
 export const refreshToken = (): Promise<void> => {
-  if (!refreshTokenPromise) {
-    refreshTokenPromise = performRefresh().finally(() => {
-      refreshTokenPromise = null;
-    });
-  }
+  refreshTokenPromise ??= performRefresh().finally(() => {
+    refreshTokenPromise = null;
+  });
 
   return refreshTokenPromise;
 };
