@@ -21,27 +21,32 @@ export async function POST(req: NextRequest) {
     }
   );
 
-  const { singleResult } = apolloResponse.body;
-  const res = NextResponse.json(
-    {
-      ...(singleResult?.data ? { data: singleResult.data } : {}),
-      ...(singleResult?.errors ? { errors: singleResult.errors } : {})
-    },
-    { status: 200 }
-  );
+  if (apolloResponse.body.kind === 'single') {
+    const { singleResult } = apolloResponse.body;
 
-  contextValue.cookieActions.forEach((action) => {
-    if (action.action === 'set' && action.value) {
-      res.cookies.set(action.name, action.value, action.options);
-    } else if (action.action === 'delete') {
-      res.cookies.delete({
-        ...action.options,
-        name: action.name
-      });
-    }
-  });
+    const res = NextResponse.json(
+      {
+        ...(singleResult?.data ? { data: singleResult.data } : {}),
+        ...(singleResult?.errors ? { errors: singleResult.errors } : {})
+      },
+      { status: 200 }
+    );
 
-  return res;
+    contextValue.cookieActions.forEach((action) => {
+      if (action.action === 'set' && action.value) {
+        res.cookies.set(action.name, action.value, action.options);
+      } else if (action.action === 'delete') {
+        res.cookies.delete({
+          ...action.options,
+          name: action.name
+        });
+      }
+    });
+
+    return res;
+  } else {
+    return NextResponse.json({ errors: [{ message: 'Incremental delivery is not supported.' }] }, { status: 501 });
+  }
 }
 
 export const GET = POST;

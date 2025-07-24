@@ -34,7 +34,7 @@ beforeEach(() => {
 
 describe('GraphQL Mutations', () => {
   describe('login', () => {
-    const mockArgs = { email: 'test@test.com', password: 'password123' };
+    const mockArgs = { email: 'test@test.com', password: 'password123' }; //NOSONAR
     const mockAdmin = { id: 'admin-1', type: 'admin' };
     const mockTokens = {
       accessToken: 'new-access-token',
