@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
 
 import { mongoUrl } from '../../config';
-import logger from '../../middleware/logger/logger';
 import { errors } from '~/constants/errors';
+import logger from '~/middleware/logger/logger';
 
 type MongooseGlobalCache = {
   conn: typeof mongoose | null;

@@ -4,6 +4,7 @@ import { NextRequest } from 'next/server';
 import { CookieToAction, GraphQLContext } from '~/back-shared/types/container/types';
 import { AdminTokenPayload } from '~/back-shared/types/tokens/types';
 import { createRequestContainer } from '~/container/index';
+import logger from '~/middleware/logger/logger';
 
 export const createGraphQLContext = async (req: NextRequest): Promise<Omit<GraphQLContext, 'container'>> => {
   const requestContainer = createRequestContainer();
@@ -17,7 +18,9 @@ export const createGraphQLContext = async (req: NextRequest): Promise<Omit<Graph
   if (accessToken) {
     try {
       admin = tokenService.verifyAccessToken(accessToken);
-    } catch {}
+    } catch {
+      logger.warning('Access token not verified. Need to refresh it');
+    }
   }
 
   const cookieActions: CookieToAction[] = [];

@@ -1,12 +1,10 @@
 'use client';
 
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { AuthError } from '~/back-constants/apolloCustomErrors/authErrors';
 import { refreshToken } from '~/utils/refreshToken';
-
-let isRefreshing = false;
 
 const handleLogout = (client: QueryClient) => {
   if (window.location.pathname !== '/login') {
@@ -16,21 +14,22 @@ const handleLogout = (client: QueryClient) => {
 };
 
 export function ReactQueryProvider({ children }: Readonly<{ children: React.ReactNode }>) {
+  const isRefreshing = useRef(false);
   const [queryClient] = useState(
     () =>
       new QueryClient({
         queryCache: new QueryCache({
           onError: async (error) => {
             if (error instanceof AuthError) {
-              if (!isRefreshing) {
-                isRefreshing = true;
+              if (!isRefreshing.current) {
+                isRefreshing.current = true;
                 try {
                   await refreshToken();
                   await queryClient.refetchQueries({ predicate: (query) => query.state.status === 'error' });
                 } catch {
                   handleLogout(queryClient);
                 } finally {
-                  isRefreshing = false;
+                  isRefreshing.current = false;
                 }
               }
             }
@@ -40,14 +39,14 @@ export function ReactQueryProvider({ children }: Readonly<{ children: React.Reac
         mutationCache: new MutationCache({
           onError: async (error) => {
             if (error instanceof AuthError) {
-              if (!isRefreshing) {
-                isRefreshing = true;
+              if (!isRefreshing.current) {
+                isRefreshing.current = true;
                 try {
                   await refreshToken();
                 } catch {
                   handleLogout(queryClient);
                 } finally {
-                  isRefreshing = false;
+                  isRefreshing.current = false;
                 }
               }
             }

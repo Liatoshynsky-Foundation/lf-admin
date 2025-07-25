@@ -2,7 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
 
-import { ReactQueryProvider } from './reactQeryProvider';
+import { ReactQueryProvider } from './reactQueryProvider';
 import { AuthError } from '~/back-constants/apolloCustomErrors/authErrors';
 import { graphqlFetcher } from '~/hooks/use-graphql-fetcher/useGraphqlFetcher';
 import { refreshToken } from '~/utils/refreshToken';

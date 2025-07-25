@@ -1,6 +1,6 @@
 export interface Admin {
   id: string;
-  type: ['admin', 'superadmin'];
+  type: 'admin' | 'superadmin';
   email: string;
   password: string;
 }

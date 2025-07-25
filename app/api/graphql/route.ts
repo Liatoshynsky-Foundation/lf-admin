@@ -1,12 +1,11 @@
-import { ApolloServer } from '@apollo/server';
 import { NextRequest, NextResponse } from 'next/server';
 
+import { getApolloServer } from '~/api/graphql/apolloServer';
 import { createGraphQLContext } from '~/api/graphql/context';
-import { schema } from '~/interfaces/graphql';
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const server = new ApolloServer({ schema });
+  const server = getApolloServer();
   const contextValue = await createGraphQLContext(req);
   const apolloResponse = await server.executeOperation(
     {

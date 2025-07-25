@@ -24,7 +24,7 @@
       "~/ds-components/*": ["app/shared/components/design-system/*"],
       "~/components/*": ["app/shared/components/*"],
       "~/constants/*": ["./app/constants/*"],
-      "~/middlewares/*": ["./app/middlewares/*"],
+      "~/middleware/*": ["./src/middleware/*"],
       "~/utils/*": ["./app/lib/utils/*"],
       "~/config/*": ["./app/config/*"],
       "~/hooks/*": ["./app/shared/hooks/*"],

@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import { SideBarNavgation } from './SideNavigation';
+import { SideBarNavigation } from './SideNavigation';
 
 describe('Side Navigation', () => {
   beforeEach(() => {
-    render(<SideBarNavgation />);
+    render(<SideBarNavigation />);
   });
 
   it('should render side navigation open', () => {

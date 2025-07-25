@@ -3,8 +3,8 @@ import { Container } from '@mui/material';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono, Mulish } from 'next/font/google';
 
-import { ReactQueryProvider } from '~/components/react-query-provider/reactQeryProvider';
-import { SideBarNavgation } from '~/components/side-navigation/SideNavigation';
+import { ReactQueryProvider } from '~/components/react-query-provider/reactQueryProvider';
+import { SideBarNavigation } from '~/components/side-navigation/SideNavigation';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -36,7 +36,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} ${mulish.variable}`}>
         <ReactQueryProvider>
-          <SideBarNavgation />
+          <SideBarNavigation />
           <Container maxWidth="md" sx={{ border: '1px solid #ccc', padding: '20px' }}>
             {children}
           </Container>
