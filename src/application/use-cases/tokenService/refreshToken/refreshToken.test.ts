@@ -23,7 +23,7 @@ describe('refreshTokenService', () => {
       const adminId = 'admin-id-123';
       const jti = 'jti-123';
       const lifeTimeSeconds = 3600;
-      const adminType = adminTypes;
+      const adminType: adminTypes = 'admin';
 
       await service.addJTI(adminId, jti, lifeTimeSeconds, adminType);
 

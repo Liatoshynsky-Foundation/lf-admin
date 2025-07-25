@@ -29,7 +29,7 @@ describe('RefreshTokenRepository', () => {
       const adminId = 'admin-1';
       const jti = 'jti-1';
       const lifeTimeSeconds = 3600;
-      const adminType = adminTypes;
+      const adminType: adminTypes = 'admin';
 
       await repository.add(adminId, jti, lifeTimeSeconds, adminType);
 

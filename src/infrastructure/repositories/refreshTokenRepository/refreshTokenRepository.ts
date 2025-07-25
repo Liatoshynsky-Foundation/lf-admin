@@ -4,7 +4,7 @@ import dbConnect from '~/infrastructure/db/connect';
 import { RefreshToken } from '~/infrastructure/models/refreshToken.model';
 
 export const RefreshTokenRepository = (): RefreshTokenRepositoryType => ({
-  add: async (adminId: string, jti: string, lifeTimeSeconds: number, adminType: typeof adminTypes): Promise<void> => {
+  add: async (adminId: string, jti: string, lifeTimeSeconds: number, adminType: adminTypes): Promise<void> => {
     await dbConnect();
     const expiresAt = new Date(Date.now() + lifeTimeSeconds * 1000);
     await RefreshToken.create({ adminId, jti, expiresAt, adminType });

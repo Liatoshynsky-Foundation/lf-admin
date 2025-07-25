@@ -1,6 +1,8 @@
+import { adminTypes } from '~/back-constants/index';
+
 export interface Admin {
   id: string;
-  type: 'admin' | 'superadmin';
+  type: adminTypes;
   email: string;
   password: string;
 }

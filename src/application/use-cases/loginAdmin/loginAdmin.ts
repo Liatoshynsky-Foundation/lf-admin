@@ -6,7 +6,7 @@ import { AdminRepository } from '~/domain/repositories/adminRepository';
 
 export const loginAdmin = ({ adminRepository }: { adminRepository: AdminRepository }) => {
   return {
-    execute: async (email: string, password: string): Promise<{ id: string; type: typeof adminTypes } | null> => {
+    execute: async (email: string, password: string): Promise<{ id: string; type: adminTypes } | null> => {
       const admin = await adminRepository.findByEmail(email);
       if (!admin) throw new LoginError();
 

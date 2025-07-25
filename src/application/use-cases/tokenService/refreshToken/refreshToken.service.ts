@@ -6,7 +6,7 @@ export const refreshTokenService = ({
 }: {
   refreshTokenRepository: RefreshTokenRepository;
 }) => ({
-  addJTI: async (adminId: string, jti: string, lifeTimeSeconds: number, adminType: typeof adminTypes) => {
+  addJTI: async (adminId: string, jti: string, lifeTimeSeconds: number, adminType: adminTypes) => {
     await refreshTokenRepository.add(adminId, jti, lifeTimeSeconds, adminType);
   },
   isExistsJTI: async (jti: string): Promise<boolean> => {

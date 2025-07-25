@@ -1,11 +1,9 @@
 import mongoose from 'mongoose';
 
-import { adminTypes } from '~/back-constants/index';
-
 const refreshTokenSchema = new mongoose.Schema(
   {
     adminId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'Admin' },
-    adminType: { type: String, required: true, enum: adminTypes },
+    adminType: { type: String, required: true, enum: ['admin', 'superadmin'] },
     jti: { type: String, required: true, unique: true },
     expiresAt: { type: Date, required: true }
   },

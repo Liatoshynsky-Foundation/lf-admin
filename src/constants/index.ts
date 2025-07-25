@@ -1,4 +1,4 @@
-export const adminTypes = ['admin', 'superadmin'];
+export type adminTypes = 'admin' | 'superadmin';
 export const JWT_REFRESH_TOKEN_LIFETIME = 60 * 60 * 24;
 export const JWT_ACCESS_TOKEN_LIFETIME = 60 * 5;
 export const commonCookieOptions = {

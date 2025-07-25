@@ -1,10 +1,8 @@
 import mongoose from 'mongoose';
 
-import { adminTypes } from '~/back-constants/index';
-
 const adminSchema = new mongoose.Schema(
   {
-    type: { type: String, required: true, enum: adminTypes },
+    type: { type: String, required: true, enum: ['admin', 'superadmin'] },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true }
   },
