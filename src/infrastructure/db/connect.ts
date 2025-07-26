@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-import { mongoUrl } from '~/config';
+import { mongoUrl } from '../../config';
 import { errors } from '~/constants/errors';
 import logger from '~/middleware/logger/logger';
 

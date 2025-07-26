@@ -9,3 +9,8 @@ export const getMongoUrl = (): string => {
 };
 
 export const mongoUrl = getMongoUrl();
+
+export const getJWT = {
+  JWT_ACCESS_SECRET_TOKEN: process.env.JWT_ACCESS_SECRET_TOKEN ?? 'your-access-secret',
+  JWT_REFRESH_SECRET_TOKEN: process.env.JWT_REFRESH_SECRET_TOKEN ?? 'your-refresh-secret'
+};

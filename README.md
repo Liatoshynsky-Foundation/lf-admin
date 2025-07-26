@@ -1,6 +1,6 @@
 <a href="https://softserve.academy/"><img src="https://softserve.academy/pluginfile.php/1/theme_boost_union/logocompact/300x300/1739968192/softserve_academy_logo-2023.png" title="SoftServe Academy" alt="SoftServe Academy"></a>
 
-***INSERT GRAPHIC HERE (include hyperlink in image)***
+**_INSERT GRAPHIC HERE (include hyperlink in image)_**
 
 # Repository Title Goes Here
 
@@ -29,7 +29,7 @@
 [![Pending Pull-Requests](https://img.shields.io/github/issues-pr/Liatoshynsky-Foundation/lf-admin?style=flat-square)](https://github.com/Liatoshynsky-Foundation/lf-admin/pulls)
 [![License](http://img.shields.io/:license-mit-blue.svg?style=flat-square)](http://badges.mit-license.org)
 
-- For more on these wonderful  badges, refer to <a href="https://shields.io/" target="_blank">shields.io</a>.
+- For more on these wonderful badges, refer to <a href="https://shields.io/" target="_blank">shields.io</a>.
 
 ---
 
@@ -64,14 +64,17 @@
 - Images of what it should look like
 
 ### Required to install
-* Python (3.6.3)
-* PostgreSQL (9.5.9)
-* Django (1.11.6)
-* NodeJS (6.11.4)
-* Redis (3.0.6)
+
+- Python (3.6.3)
+- PostgreSQL (9.5.9)
+- Django (1.11.6)
+- NodeJS (6.11.4)
+- Redis (3.0.6)
 
 ### Environment
+
 environmental variables
+
 ```properties
 spring.datasource.url=${DATASOURCE_URL}
 spring.datasource.username=${DATASOURCE_USER}
@@ -86,6 +89,7 @@ api.secret=${API_SECRET}
 ### Clone
 
 - Clone this repo to your local machine using `git@github.com:Liatoshynsky-Foundation/lf-admin.git`
+
 ### Setup
 
 - If you want more syntax highlighting, format your code like this:
@@ -117,8 +121,11 @@ npm run dev
 ---
 
 ## Usage
+
 ### How to work with swagger UI
+
 ### How to run tests
+
 ### How to Checkstyle
 
 ---
@@ -130,33 +137,33 @@ npm run dev
 ```markdown
 app/
 ├── events/
-│   ├── page.tsx (list of events)
-│   ├── [slug]/
-│   │   └── page.tsx             # /events/:slug (individual event)
-│   ├── layout.tsx               # (optional layout)
-│   ├── components/              # News-specific components
-│   │   ├── Events.tsx           # Events component
-│   │   └── Event.tsx            # Event post component
-│   └── hooks/                   # event-specific hooks
-│       ├── useEvents.ts         # Custom hook for fetching all events
-│       └── useEvent.ts          # Custom hook for fetching a single event 
-├── shared/                      # Shared components and hooks
-│   ├── components/              # Reusable UI components
-│   │   ├── Header.tsx           # Shared Header component
-│   │   └── Footer.tsx           # Shared Footer component
-│   └── hooks/                   # Reusable hooks
-│       └── useAuth.ts           # Authentication hook (example)
+│ ├── page.tsx (list of events)
+│ ├── [slug]/
+│ │ └── page.tsx # /events/:slug (individual event)
+│ ├── layout.tsx # (optional layout)
+│ ├── components/ # News-specific components
+│ │ ├── Events.tsx # Events component
+│ │ └── Event.tsx # Event post component
+│ └── hooks/ # event-specific hooks
+│ ├── useEvents.ts # Custom hook for fetching all events
+│ └── useEvent.ts # Custom hook for fetching a single event
+├── shared/ # Shared components and hooks
+│ ├── components/ # Reusable UI components
+│ │ ├── Header.tsx # Shared Header component
+│ │ └── Footer.tsx # Shared Footer component
+│ └── hooks/ # Reusable hooks
+│ └── useAuth.ts # Authentication hook (example)
 ├── api/
-│   ├── events/
-│   │   ├── route.ts             # API for /api/events
-│   │   └── [slug]/
-│   │       └── route.ts         # API for /api/events/:slug
-├── middleware/                  # Middlewares for handling requests
-│   ├── logger.ts                # Middleware for logging
-│   └── authentication.ts       # Middleware for authentication checks
+│ ├── events/
+│ │ ├── route.ts # API for /api/events
+│ │ └── [slug]/
+│ │ └── route.ts # API for /api/events/:slug
+├── middleware/ # Middlewares for handling requests
+│ ├── logger.ts # Middleware for logging
+│ └── authentication.ts # Middleware for authentication checks
 └── lib/
-│   └── axiosAPI.ts           # Setup for axios API
-└── constants/    
+│ └── axiosAPI.ts # Setup for axios API
+└── constants/
 ```
 
 ---
@@ -164,6 +171,7 @@ app/
 ## Contributing
 
 ### Git flow
+
 ```mermaid
 gitGraph
    commit id: "Initial commit"
@@ -196,14 +204,102 @@ gitGraph
    merge hotfix/1.0.1 id: "Merge hotfix into develop"
 
 ```
+
+### JWT Login
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant LoginResolver
+    participant LoginAdminUseCase
+    participant AdminRepository
+    participant CreateTokenService
+    participant refreshTokenRepository
+    participant CookieService
+
+    Client->>LoginResolver: mutation login(email, password)
+    LoginResolver->>LoginAdminUseCase: validate credentials
+    LoginAdminUseCase->>AdminRepository: findAdminByEmail(email)
+    AdminRepository-->>LoginAdminUseCase: Admin | null
+    alt Admin found
+        LoginAdminUseCase->>LoginAdminUseCase: bcrypt.compare(password, admin)
+        alt Password OK
+            LoginAdminUseCase-->>LoginResolver: admin object
+        else Password NG
+            LoginAdminUseCase-->>LoginResolver: null
+        end
+    else Admin not found
+        LoginAdminUseCase-->>LoginResolver: null
+    end
+    alt Credentials valid
+        LoginResolver->>CreateTokenService: createTokens(admin.id, admin.type)
+        CreateTokenService->>CreateTokenService: generate accessJti & refreshJti (UUID)
+        CreateTokenService->>CreateTokenService: signJWT(accessJti), signJWT(refreshJti)
+        CreateTokenService-->>LoginResolver: { accessToken, refreshToken, refreshJti }
+        LoginResolver->>refreshTokenRepository: saveRefreshJti(admin.id, refreshJti)
+        refreshTokenRepository-->>LoginResolver: OK
+        LoginResolver->>Cookies: setCookie('access', accessToken)
+        LoginResolver->>Cookies: setCookie('refresh', refreshToken)
+        LoginResolver-->>Client: { adminId, adminType }
+    else Invalid credentials
+        LoginResolver-->>Client: Error("Invalid login or password")
+    end
+```
+
+### JWT Refresh
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant RefreshResolver
+    participant CreateTokenService
+    participant refreshTokenRepository
+    participant Cookies
+
+    Client->>RefreshResolver: mutation refreshToken()
+    RefreshResolver->>Cookies: readCookie('refresh')
+    CookieService-->>RefreshResolver: refreshToken | null
+    alt No refreshToken
+        RefreshResolver-->>Client: Error("No token provided")
+    else refreshToken present
+        RefreshResolver->>CreateTokenService: verifyJWT(refreshToken)
+        CreateTokenService-->>RefreshResolver: payload { jti, userId, type } | Error
+        alt Token invalid or expired
+            RefreshResolver->>refreshTokenRepository: deleteAllSessions(userId)
+            refreshTokenRepository-->>RefreshResolver: OK
+            RefreshResolver->>Cookies: clearAllCookies()
+            RefreshResolver-->>Client: Error("Session expired, please login")
+        else Token valid
+            RefreshResolver->>refreshTokenRepository: existsRefreshJti(jti)
+            refreshTokenRepository-->>RefreshResolver: true | false
+            alt JTI not in DB
+                RefreshResolver->>refreshTokenRepository: deleteAllSessions(userId)
+                RefreshResolver->>Cookies: clearAllCookies()
+                RefreshResolver-->>Client: Error("Invalid session")
+            else JTI valid
+                RefreshResolver->>refreshTokenRepository: deleteRefreshJti(jti)
+                refreshTokenRepository-->>RefreshResolver: OK
+                RefreshResolver->>CreateTokenService: createTokens(userId, type)
+                CreateTokenService-->>RefreshResolver: { accessToken, refreshToken, refreshJti }
+                RefreshResolver->>refreshTokenRepository: saveRefreshJti(userId, refreshJti)
+                refreshTokenRepository-->>RefreshResolver: OK
+                RefreshResolver->>Cookies: setCookie('access', accessToken)
+                RefreshResolver->>Cookies: setCookie('refresh', refreshToken)
+                RefreshResolver-->>Client: { success: true }
+            end
+        end
+    end
+```
+
 > To get started...
+
 #### Step 1
 
 - **Option 1**
-g    - 🍴 Fork this repo!
+  g - 🍴 Fork this repo!
 
 - **Option 2**
-    - 👯 Clone this repo to your local machine using `https://github.com/ita-social-projects/SOMEREPO.git`
+  - 👯 Clone this repo to your local machine using `https://github.com/ita-social-projects/SOMEREPO.git`
 
 #### Step 2
 
@@ -223,7 +319,6 @@ g    - 🍴 Fork this repo!
 
 [![@lhalam](https://avatars3.githubusercontent.com/u/3837059?s=100&v=4)](https://github.com/lhalam)
 
-
 - You can just grab their GitHub profile image URL
 - You should probably resize their picture using `?s=200` at the end of the image URL.
 
@@ -231,8 +326,8 @@ g    - 🍴 Fork this repo!
 
 ## FAQ
 
-- **How do I do *specifically* so and so?**
-    - No problem! Just do this.
+- **How do I do _specifically_ so and so?**
+  - No problem! Just do this.
 
 ---
 

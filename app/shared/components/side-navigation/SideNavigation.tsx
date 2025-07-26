@@ -10,7 +10,7 @@ import { LinkElement } from './link-element/LinkElement';
 import { NAVIGATION_DATA } from './SideNavigation.consts';
 import { styles } from './SideNavigation.styles';
 
-export const SideBarNavgation = () => {
+export const SideBarNavigation = () => {
   const [open, setOpen] = useState(true);
 
   const handleClose = () => setOpen(false);
