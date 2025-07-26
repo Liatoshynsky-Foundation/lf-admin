@@ -6,8 +6,8 @@ import { AdminTokenPayload, RefreshTokenPayload } from '~/back-shared/types/toke
 
 jest.mock('../../../../config', () => ({
   getJWT: {
-    JWT_ACCESS_TOKEN: 'test-access-secret-from-mock',
-    JWT_REFRESH_TOKEN: 'test-refresh-secret-from-mock'
+    JWT_ACCESS_SECRET_TOKEN: 'test-access-secret-from-mock',
+    JWT_REFRESH_SECRET_TOKEN: 'test-refresh-secret-from-mock'
   }
 }));
 
@@ -31,8 +31,8 @@ describe('createTokenService', () => {
     it('should include the correct payload and bind tokens via jti', () => {
       const { accessToken, refreshToken, refreshTokenJti } = tokenService.generateTokens(mockAdmin);
 
-      const decodedAccess = jwt.verify(accessToken, getJWT.JWT_ACCESS_TOKEN) as AdminTokenPayload;
-      const decodedRefresh = jwt.verify(refreshToken, getJWT.JWT_REFRESH_TOKEN) as RefreshTokenPayload;
+      const decodedAccess = jwt.verify(accessToken, getJWT.JWT_ACCESS_SECRET_TOKEN) as AdminTokenPayload;
+      const decodedRefresh = jwt.verify(refreshToken, getJWT.JWT_REFRESH_SECRET_TOKEN) as RefreshTokenPayload;
 
       expect(decodedAccess.id).toBe(mockAdmin.id);
       expect(decodedAccess.type).toBe(mockAdmin.type);

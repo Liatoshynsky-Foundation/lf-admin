@@ -3,11 +3,11 @@ import { GraphQLError } from 'graphql/error';
 import { LoginError } from '~/back-constants/apolloCustomErrors/adminErrors';
 import { errors } from '~/back-constants/errors';
 import {
-  ACCESS_TOKEN,
+  ACCESS_TOKEN_COOKIE_NAME,
   commonCookieOptions,
   JWT_ACCESS_TOKEN_LIFETIME,
   JWT_REFRESH_TOKEN_LIFETIME,
-  REFRESH_TOKEN
+  REFRESH_TOKEN_COOKIE_NAME
 } from '~/back-constants/index';
 import { LoginArgs } from '~/back-shared/types/admin/types';
 import { GraphQLContext } from '~/back-shared/types/container/types';
@@ -21,12 +21,12 @@ export const Mutation = {
       const admin = await loginAdmin.execute(args.email, args.password);
       const { accessToken, refreshToken, refreshTokenJti } = createTokenService.generateTokens(admin);
       await refreshTokenService.addJTI(admin.id, refreshTokenJti, JWT_REFRESH_TOKEN_LIFETIME, admin.type);
-      context.setCookie(ACCESS_TOKEN, accessToken, {
+      context.setCookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, {
         ...commonCookieOptions,
         maxAge: JWT_ACCESS_TOKEN_LIFETIME
       });
 
-      context.setCookie(REFRESH_TOKEN, refreshToken, {
+      context.setCookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
         ...commonCookieOptions,
         maxAge: JWT_REFRESH_TOKEN_LIFETIME
       });
@@ -61,8 +61,8 @@ export const Mutation = {
       } catch {}
     }
 
-    deleteCookie(ACCESS_TOKEN, { path: '/' });
-    deleteCookie(REFRESH_TOKEN, { path: '/' });
+    deleteCookie(ACCESS_TOKEN_COOKIE_NAME, { path: '/' });
+    deleteCookie(REFRESH_TOKEN_COOKIE_NAME, { path: '/' });
     return true;
   },
   refreshToken: async (_: unknown, __: unknown, context: GraphQLContext) => {
@@ -89,13 +89,16 @@ export const Mutation = {
 
       await refreshTokenService.addJTI(adminData.id, refreshTokenJti, JWT_REFRESH_TOKEN_LIFETIME, adminData.type);
 
-      setCookie(ACCESS_TOKEN, accessToken, { ...commonCookieOptions, maxAge: JWT_ACCESS_TOKEN_LIFETIME });
-      setCookie(REFRESH_TOKEN, refreshToken, { ...commonCookieOptions, maxAge: JWT_REFRESH_TOKEN_LIFETIME });
+      setCookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, { ...commonCookieOptions, maxAge: JWT_ACCESS_TOKEN_LIFETIME });
+      setCookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
+        ...commonCookieOptions,
+        maxAge: JWT_REFRESH_TOKEN_LIFETIME
+      });
 
       return { __typename: 'RefreshTokenPayload', success: true };
     } catch {
-      deleteCookie(ACCESS_TOKEN, { path: '/' });
-      deleteCookie(REFRESH_TOKEN, { path: '/' });
+      deleteCookie(ACCESS_TOKEN_COOKIE_NAME, { path: '/' });
+      deleteCookie(REFRESH_TOKEN_COOKIE_NAME, { path: '/' });
       throw new GraphQLError('Your session has expired or is invalid. Please log in again.', {
         extensions: { code: 'UNAUTHENTICATED' }
       });

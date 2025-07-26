@@ -12,31 +12,35 @@ export const createTokenService = () => ({
 
     const accessTokenPayload: Omit<AdminTokenPayload, 'refreshJti'> = {
       id: admin.id,
-      type: admin.type,
-      jti: accessTokenJti
+      type: admin.type
     };
 
-    const accessToken = jwt.sign({ ...accessTokenPayload, refreshJti: refreshTokenJti }, getJWT.JWT_ACCESS_TOKEN, {
-      expiresIn: JWT_ACCESS_TOKEN_LIFETIME
-    });
+    const accessToken = jwt.sign(
+      { ...accessTokenPayload, refreshJti: refreshTokenJti },
+      getJWT.JWT_ACCESS_SECRET_TOKEN,
+      {
+        expiresIn: JWT_ACCESS_TOKEN_LIFETIME,
+        jwtid: accessTokenJti
+      }
+    );
 
     const refreshTokenPayload: RefreshTokenPayload = {
-      id: admin.id,
-      jti: refreshTokenJti
+      id: admin.id
     };
 
-    const refreshToken = jwt.sign(refreshTokenPayload, getJWT.JWT_REFRESH_TOKEN, {
-      expiresIn: JWT_REFRESH_TOKEN_LIFETIME
+    const refreshToken = jwt.sign(refreshTokenPayload, getJWT.JWT_REFRESH_SECRET_TOKEN, {
+      expiresIn: JWT_REFRESH_TOKEN_LIFETIME,
+      jwtid: refreshTokenJti
     });
 
     return { accessToken, refreshToken, refreshTokenJti };
   },
 
   verifyAccessToken: (token: string): AdminTokenPayload => {
-    return jwt.verify(token, getJWT.JWT_ACCESS_TOKEN) as AdminTokenPayload;
+    return jwt.verify(token, getJWT.JWT_ACCESS_SECRET_TOKEN) as AdminTokenPayload;
   },
 
   verifyRefreshToken: (token: string): RefreshTokenPayload => {
-    return jwt.verify(token, getJWT.JWT_REFRESH_TOKEN) as RefreshTokenPayload;
+    return jwt.verify(token, getJWT.JWT_REFRESH_SECRET_TOKEN) as RefreshTokenPayload;
   }
 });

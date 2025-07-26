@@ -7,5 +7,5 @@ export const commonCookieOptions = {
   sameSite: 'strict' as const,
   path: '/'
 };
-export const ACCESS_TOKEN = 'accessToken';
-export const REFRESH_TOKEN = 'refreshToken';
+export const ACCESS_TOKEN_COOKIE_NAME = 'accessToken';
+export const REFRESH_TOKEN_COOKIE_NAME = 'refreshToken';
