@@ -14,6 +14,7 @@ import PencilIcon from '~/public/icons/pencil.svg';
 type ImagePreviewBlockProps = {
   imageUrl: string;
   fileName?: string;
+  title?: string;
   cropWidth: number;
   cropHeight: number;
   onChangeImage: (file: File) => void;
@@ -22,6 +23,7 @@ type ImagePreviewBlockProps = {
 export const ImagePreviewBlock = ({
   imageUrl,
   fileName,
+  title,
   cropWidth,
   cropHeight,
   onChangeImage
@@ -48,7 +50,7 @@ export const ImagePreviewBlock = ({
   return (
     <Box sx={styles.container}>
       <Typography variant="subtitle1" sx={styles.sectionTitle}>
-        Основне зображення
+        {title ?? 'Основне зображення'}
       </Typography>
 
       <Box sx={styles.imageBlock}>
@@ -70,11 +72,18 @@ export const ImagePreviewBlock = ({
               startIcon={<PencilIcon />}
               variant="outlined"
               color="primary"
+              size="small"
               onClick={() => setIsCropperOpen(true)}
             >
               Редагувати
             </Button>
-            <Button startIcon={<ImageIcon />} variant="outlined" color="primary" onClick={handleClickSelectImage}>
+            <Button
+              startIcon={<ImageIcon />}
+              variant="outlined"
+              color="primary"
+              size="small"
+              onClick={handleClickSelectImage}
+            >
               Змінити зображення
             </Button>
             <input ref={inputRef} type="file" accept="image/*" hidden onChange={handleFileChange} />

@@ -37,6 +37,14 @@ const config: Config = {
   moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx'],
   preset: 'ts-jest',
   testEnvironment: 'jest-environment-jsdom',
+  moduleNameMapper: {
+    '^~/public/(.*)$': '<rootDir>/public/$1',
+    '^~/utils/(.*)$': '<rootDir>/app/lib/utils/$1',
+    '^~/ds-components/(.*)$': '<rootDir>/app/shared/components/design-system/$1',
+    '^~/components/(.*)$': '<rootDir>/app/shared/components/$1',
+    '^~/hooks/(.*)$': '<rootDir>/app/shared/hooks/$1',
+    '^~/(.*)$': '<rootDir>/app/$1'
+  },
   modulePaths: ['<rootDir>/app'],
   testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/dist/', '<rootDir>/coverage/'],
   transform: {

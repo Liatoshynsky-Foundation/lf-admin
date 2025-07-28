@@ -115,7 +115,8 @@ export const buttonBaseStyles = {
   display: 'inline-flex',
   justifyContent: 'center',
   alignItems: 'center',
-  gap: '8px'
+  gap: '8px',
+  whiteSpace: 'nowrap'
 };
 
 export const sizeStyles = {
