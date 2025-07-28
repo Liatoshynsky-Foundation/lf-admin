@@ -7,15 +7,7 @@ import React from 'react';
 import PasswordField from '../design-system/password-field/PasswordField';
 import { CustomTextField } from '../design-system/text-field/TextField';
 import { styles } from './LoginModal.styles';
-
-interface LoginSubmitData {
-  login: string;
-  password: string;
-}
-
-interface LoginModalProps {
-  onSubmit: (data: LoginSubmitData) => void;
-}
+import { LoginModalProps } from '~/types/adminLogin';
 
 const LoginModal = ({ onSubmit }: LoginModalProps) => {
   const [username, setUsername] = React.useState('');

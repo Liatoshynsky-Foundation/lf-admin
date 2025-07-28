@@ -53,6 +53,8 @@ export const styles = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    flexDirection: 'column'
+    flexDirection: 'column',
+    height: 'calc(100vh - 120px)',
+    width: '100%'
   }
 };
