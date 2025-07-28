@@ -4,16 +4,15 @@ import React from 'react';
 
 import { ACCESS_TOKEN_COOKIE_NAME } from '~/back-constants/index';
 
-const AuthWrapper = async ({ children }: { children: React.ReactNode }) => {
-  const authToken = await cookies().then((c) => c.get(ACCESS_TOKEN_COOKIE_NAME)); // Check for auth token in cookies
+export default async function AuthWrapper({ children }: { children: React.ReactNode }) {
+  const cookieStore = await cookies();
+  const authToken = cookieStore.get(ACCESS_TOKEN_COOKIE_NAME);
 
   console.log('AuthWrapper triggered, auth-token:', authToken);
 
-  if (!authToken) {
-    redirect('/login');
+  if (authToken) {
+    return <>{children}</>;
   }
 
-  return <>{children}</>;
-};
-
-export default AuthWrapper;
+  redirect('/login');
+}
