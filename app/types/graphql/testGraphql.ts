@@ -2,7 +2,7 @@ import { gql } from '@apollo/client';
 
 export const TEST_QUERY = gql`
   query TestQuery {
-    user {
+    test {
       success
       __typename
     }

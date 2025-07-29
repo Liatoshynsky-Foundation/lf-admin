@@ -48,7 +48,7 @@ export type MutationLoginArgs = {
 export type Query = {
   __typename?: 'Query';
   _empty?: Maybe<Scalars['String']['output']>;
-  getAdminProfile: RefreshTokenPayload;
+  test: RefreshTokenPayload;
 };
 
 export type RefreshTokenPayload = {
@@ -72,7 +72,7 @@ export type GetAdminProfileQueryVariables = Exact<{ [key: string]: never }>;
 
 export type GetAdminProfileQuery = {
   __typename?: 'Query';
-  getAdminProfile: { __typename: 'RefreshTokenPayload'; success: boolean };
+  test: { __typename: 'RefreshTokenPayload'; success: boolean };
 };
 
 export const LoginDocument = gql`
@@ -121,7 +121,7 @@ export type LoginMutationResult = Apollo.MutationResult<LoginMutation>;
 export type LoginMutationOptions = Apollo.BaseMutationOptions<LoginMutation, LoginMutationVariables>;
 export const GetAdminProfileDocument = gql`
   query GetAdminProfile {
-    getAdminProfile {
+    test {
       __typename
       success
     }

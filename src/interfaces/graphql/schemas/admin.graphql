@@ -24,6 +24,6 @@ type ErrorPayload {
 
 type Query {
   _empty: String
-  user: RefreshTokenPayload!
+  test: RefreshTokenPayload!
 }
 

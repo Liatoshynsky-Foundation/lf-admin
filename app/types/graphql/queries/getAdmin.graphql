@@ -1,0 +1,6 @@
+query GetAdminProfile {
+    test {
+        __typename
+        success
+    }
+}
