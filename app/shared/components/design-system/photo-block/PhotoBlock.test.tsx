@@ -37,6 +37,7 @@ describe('ImagePreviewBlock', () => {
         cropWidth={300}
         cropHeight={200}
         onChangeImage={mockOnChangeImage}
+        title="Основне зображення"
       />
     );
 
