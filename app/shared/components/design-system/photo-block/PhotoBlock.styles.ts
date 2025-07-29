@@ -1,3 +1,5 @@
+import { CSSProperties } from "react";
+
 export const styles = {
   container: {
     p: 2,
@@ -20,9 +22,9 @@ export const styles = {
 
   imagePreview: {
     maxWidth: '500px',
-    maxHeight: '300px'
-  },
+    maxHeight: '300px',
 
+  },
   fileNameText: {
     color: 'rgba(71, 77, 90, 1)',
     fontFamily: 'Mulish',
@@ -32,5 +34,9 @@ export const styles = {
   imageSizeText: {
     mb: 4,
     fontFamily: 'Mulish'
-  }
+  },
+  editButton: {
+    width: '127px'
+  },
+  changeButton: {width: '190px'}
 };

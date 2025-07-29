@@ -1,8 +1,17 @@
 'use client';
-import { Button as MuiButton, ButtonProps as MuiButtonProps, CircularProgress } from '@mui/material';
+import {
+  Button as MuiButton,
+  ButtonProps as MuiButtonProps,
+  CircularProgress,
+} from '@mui/material';
 import { forwardRef, ReactNode } from 'react';
 
-import { buttonBaseStyles, sizeStyles, typographyStyles, variantStyles } from './Button.styles';
+import {
+  buttonBaseStyles,
+  sizeStyles,
+  typographyStyles,
+  variantStyles,
+} from './Button.styles';
 
 type Size = 'large' | 'medium' | 'small';
 
@@ -16,21 +25,19 @@ type BaseButtonProps = {
   label?: string;
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 } & (
-  | {
+    | {
       color?: 'primary' | 'secondary';
       variant?: Variant;
     }
-  | {
+    | {
       color: 'tertiary';
       variant?: 'filled';
     }
-);
+  );
 
 export type ButtonProps = BaseButtonProps & Omit<MuiButtonProps, keyof BaseButtonProps>;
 
-type Ref = MuiButtonProps['ref'];
-
-const Button = forwardRef(
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       sx,
@@ -44,45 +51,38 @@ const Button = forwardRef(
       endIcon,
       children,
       ...props
-    }: ButtonProps,
-    forwardedRef: Ref
+    },
+    ref
   ) => {
-    const loader = <CircularProgress color="inherit" data-testid="loader" size={25} />;
     const isDisabled = disabled ?? loading;
 
-    const content = (
-      <>
-        {startIcon}
-        <span className="lf-btn-label">{label ?? children}</span>
-        {endIcon}
-      </>
-    );
+    const buttonContent = label ?? children;
 
     return (
       <MuiButton
+        ref={ref}
+        size={size}
+        variant="contained"
+        startIcon={!loading ? startIcon : undefined}
+        endIcon={!loading ? endIcon : undefined}
+        disabled={isDisabled}
         sx={{
+          boxShadow: 'none',
           ...buttonBaseStyles,
           ...sizeStyles[size],
           ...typographyStyles[color]?.[size],
-          ...(color === 'tertiary' ? variantStyles.tertiary.filled : variantStyles[color]?.[variant]),
-          ...(sx as object)
+          ...(color === 'tertiary'
+            ? variantStyles.tertiary.filled
+            : variantStyles[color]?.[variant]),
+          ...(sx as object),
         }}
-        disabled={isDisabled}
-        ref={forwardedRef}
         {...props}
       >
-        {loading ? (
-          <>
-            <span className="lf-btn-hidden-content">{content}</span>
-            <span className="lf-btn-loader">{loader}</span>
-          </>
-        ) : (
-          content
-        )}
+        {loading ? <CircularProgress size={25} color="inherit" data-testid="loader" /> : buttonContent}
       </MuiButton>
     );
   }
 );
-Button.displayName = 'Button';
 
+Button.displayName = 'Button';
 export default Button;

@@ -116,7 +116,10 @@ export const buttonBaseStyles = {
   justifyContent: 'center',
   alignItems: 'center',
   gap: '8px',
-  whiteSpace: 'nowrap'
+  whiteSpace: 'nowrap',
+  '&:hover': {
+        boxShadow: 'none'
+      },
 };
 
 export const sizeStyles = {

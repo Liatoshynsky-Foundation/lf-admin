@@ -1,23 +1,28 @@
 'use client';
 
-import { Box, Stack, Typography } from '@mui/material';
+import { Box, Stack, StackProps, Typography } from '@mui/material';
 import { readFileAsDataURL } from 'app/lib/utils/readFileAsDataURL';
 import { useImageMetadata } from 'app/shared/hooks/use-image-metadata/useImageMetadata';
 import { useRef, useState } from 'react';
-
+import Image from 'next/image';
 import Button from '../button/Button';
 import { CropperModal } from '../cropper-modal/CropperModal';
 import { styles } from './PhotoBlock.styles';
 import ImageIcon from '~/public/icons/image.svg';
 import PencilIcon from '~/public/icons/pencil.svg';
+import AccessibleForwardIcon from '@mui/icons-material/AccessibleForward';
 
-type ImagePreviewBlockProps = {
+interface ImagePreviewBlockProps extends StackProps {
   imageUrl: string;
   fileName?: string;
   title?: string;
   cropWidth: number;
   cropHeight: number;
   onChangeImage: (file: File) => void;
+  direction?: 'row' | 'row-reverse' | 'column' | 'column-reverse';
+  buttonSpacing?: string;
+  stackSpacing?: string;
+  typographySpacing?: string;
 };
 
 export const ImagePreviewBlock = ({
@@ -26,13 +31,17 @@ export const ImagePreviewBlock = ({
   title,
   cropWidth,
   cropHeight,
-  onChangeImage
+  onChangeImage,
+  direction = "row",
+  buttonSpacing = "16px",
+  stackSpacing = "32px",
+  typographySpacing = "8px",
 }: ImagePreviewBlockProps) => {
   const [previewImage, setPreviewImage] = useState<string>(imageUrl);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const { dimensions, fileName: finalFileName } = useImageMetadata(previewImage, fileName);
+  const { dimensions, fileName: finalFileName, extension } = useImageMetadata(previewImage, fileName);
 
   const handleClickSelectImage = () => {
     inputRef.current?.click();
@@ -49,40 +58,53 @@ export const ImagePreviewBlock = ({
 
   return (
     <Box sx={styles.container}>
-      <Typography variant="subtitle1" sx={styles.sectionTitle}>
-        {title ?? 'Основне зображення'}
-      </Typography>
-
+      {title && (
+        <Typography variant="subtitle1" sx={styles.sectionTitle}>
+          {title}
+        </Typography>
+      )}
       <Box sx={styles.imageBlock}>
-        <Box component="img" src={previewImage} alt="Preview" sx={styles.imagePreview} />
-
-        <Stack>
-          <Typography variant="body1" sx={styles.fileNameText}>
-            Назва файлу {finalFileName}
-          </Typography>
-
-          {dimensions && (
-            <Typography variant="body2" color="text.secondary" sx={styles.imageSizeText}>
-              Розмір: {dimensions.width} × {dimensions.height}
+        <Box component="img" src={previewImage} alt="Preview" width={dimensions?.width} height={dimensions?.height} />
+        <Stack spacing={stackSpacing} maxWidth="200px">
+          <Stack spacing={typographySpacing}>
+            <Typography
+              variant="body1"
+              sx={{
+                ...styles.fileNameText,
+                display: '-webkit-box',
+                WebkitLineClamp: 1,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              Назва файлу {finalFileName}
             </Typography>
-          )}
 
-          <Stack direction="row" spacing="16px" mt={1}>
+            {dimensions && (
+              <Typography variant="body2" color="text.secondary" sx={styles.imageSizeText}>
+                Розмір: {dimensions.width} × {dimensions.height}
+              </Typography>
+            )}
+          </Stack>
+          <Stack direction={direction} spacing={buttonSpacing} mt={1} width="330px">
             <Button
-              startIcon={<PencilIcon />}
+              startIcon={<PencilIcon style={{ marginRight: '-8px' }} />}
               variant="outlined"
               color="primary"
               size="small"
               onClick={() => setIsCropperOpen(true)}
+              style={styles.editButton}
             >
               Редагувати
             </Button>
             <Button
-              startIcon={<ImageIcon />}
+              startIcon={<ImageIcon style={{ marginRight: '-8px' }} />}
               variant="outlined"
               color="primary"
               size="small"
               onClick={handleClickSelectImage}
+              sx={styles.changeButton}
             >
               Змінити зображення
             </Button>
