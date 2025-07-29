@@ -1,5 +1,6 @@
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+
 import { ContributorCard } from './ContributorCard';
 
 jest.mock('~/ds-components/text-field/TextField', () => ({
@@ -28,7 +29,7 @@ describe('ContributorCard', () => {
   it('renders contributor name and description fields with default values', () => {
     render(<ContributorCard contributorNameValue={name} contributorDescriptionValue={description} />);
 
-    expect(screen.getByLabelText("Ім'я")).toHaveValue(name);
+    expect(screen.getByLabelText('Ім`я')).toHaveValue(name);
     expect(screen.getByLabelText('Опис учасника')).toHaveValue(description);
   });
 

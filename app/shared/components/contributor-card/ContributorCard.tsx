@@ -31,7 +31,7 @@ export const ContributorCard = ({ contributorNameValue, contributorDescriptionVa
         stackSpacing="24px"
       />
       <Stack direction="column" gap={2} width="100%" mt={2}>
-        <CustomTextField label="Ім'я" defaultValue={contributorNameValue} fullWidth />
+        <CustomTextField label="Ім`я" defaultValue={contributorNameValue} fullWidth />
         <CustomTextField
           label="Опис учасника"
           defaultValue={contributorDescriptionValue}
