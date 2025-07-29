@@ -7,8 +7,6 @@ export default function Home() {
     <>
     <h1>Liatoshynsky project</h1>;
     <ContributorCard mainText={''} paragraphs={[]}/>
-    <FoundationBlock mainText={''} paragraphs={[]}/>
-    <OurGoals/>
     </>
   )
   
