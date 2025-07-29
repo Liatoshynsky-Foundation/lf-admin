@@ -41,7 +41,7 @@ export const ImagePreviewBlock = ({
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const { dimensions, fileName: finalFileName, extension } = useImageMetadata(previewImage, fileName);
+  const { dimensions, fileName: finalFileName } = useImageMetadata(previewImage, fileName);
 
   const handleClickSelectImage = () => {
     inputRef.current?.click();

@@ -5,8 +5,11 @@ import React, { useState } from 'react';
 
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { ImagePreviewBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
-
-export const ContributorCard = ({ mainText, paragraphs, onMainTextChange, onParagraphsChange }: ParagraphsBlock) => {
+type ContributorCardProps = {
+    contributorNameValue: string;
+    contributorDescriptionValue: string;
+}
+export const ContributorCard = ({ contributorNameValue, contributorDescriptionValue }: ContributorCardProps) => {
   const [imageUrl, setImageUrl] = useState('/images/oval-contributor-card.png');
   const [fileName, setFileName] = useState<string | undefined>(undefined);
 
@@ -31,14 +34,12 @@ export const ContributorCard = ({ mainText, paragraphs, onMainTextChange, onPara
        <Stack direction="column" gap={2} width="100%" mt={2}>
       <CustomTextField
         label="Ім'я"
-        defaultValue={mainText}
-        onChange={(e) => onMainTextChange && onMainTextChange(e.target.value)}
+        defaultValue={contributorNameValue}
         fullWidth
       />
     <CustomTextField
         label="Опис учасника"
-        defaultValue={mainText}
-        onChange={(e) => onMainTextChange && onMainTextChange(e.target.value)}
+        defaultValue={contributorDescriptionValue}
         fullWidth
         multiline
         margin="none"

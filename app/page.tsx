@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <>
     <h1>Liatoshynsky project</h1>;
-    <ContributorCard mainText={''} paragraphs={[]}/>
+    <ContributorCard contributorNameValue={''} contributorDescriptionValue={''}/>
     </>
   )
   
