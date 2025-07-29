@@ -42,5 +42,13 @@ describe('ContributorCard', () => {
     const img = screen.getByAltText('Preview') as HTMLImageElement;
     expect(img.src).toContain('/images/oval-contributor-card.png');
   });
+  it('renders with horizontal layout and correct spacing', () => {
+  const { container } = render(
+    <ContributorCard contributorNameValue="Test" contributorDescriptionValue="Desc" />
+  );
+
+  const stack = container.querySelector('.MuiStack-root');
+  expect(stack).toHaveStyle('flex-direction: row');
+});
 
 });
