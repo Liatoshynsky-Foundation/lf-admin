@@ -6,9 +6,9 @@ import React, { useState } from 'react';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { ImagePreviewBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
 type ContributorCardProps = {
-    contributorNameValue: string;
-    contributorDescriptionValue: string;
-}
+  contributorNameValue: string;
+  contributorDescriptionValue: string;
+};
 export const ContributorCard = ({ contributorNameValue, contributorDescriptionValue }: ContributorCardProps) => {
   const [imageUrl, setImageUrl] = useState('/images/oval-contributor-card.png');
   const [fileName, setFileName] = useState<string | undefined>(undefined);
@@ -31,19 +31,15 @@ export const ContributorCard = ({ contributorNameValue, contributorDescriptionVa
         buttonSpacing="8px"
         stackSpacing="24px"
       />
-       <Stack direction="column" gap={2} width="100%" mt={2}>
-      <CustomTextField
-        label="Ім'я"
-        defaultValue={contributorNameValue}
-        fullWidth
-      />
-    <CustomTextField
-        label="Опис учасника"
-        defaultValue={contributorDescriptionValue}
-        fullWidth
-        multiline
-        margin="none"
-      />
+      <Stack direction="column" gap={2} width="100%" mt={2}>
+        <CustomTextField label="Ім'я" defaultValue={contributorNameValue} fullWidth />
+        <CustomTextField
+          label="Опис учасника"
+          defaultValue={contributorDescriptionValue}
+          fullWidth
+          multiline
+          margin="none"
+        />
       </Stack>
     </Stack>
   );

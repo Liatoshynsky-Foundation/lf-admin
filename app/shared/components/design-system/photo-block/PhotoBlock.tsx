@@ -23,7 +23,7 @@ interface ImagePreviewBlockProps extends StackProps {
   buttonSpacing?: string;
   stackSpacing?: string;
   typographySpacing?: string;
-};
+}
 
 export const ImagePreviewBlock = ({
   imageUrl,
@@ -32,10 +32,10 @@ export const ImagePreviewBlock = ({
   cropWidth,
   cropHeight,
   onChangeImage,
-  direction = "row",
-  buttonSpacing = "16px",
-  stackSpacing = "32px",
-  typographySpacing = "8px",
+  direction = 'row',
+  buttonSpacing = '16px',
+  stackSpacing = '32px',
+  typographySpacing = '8px'
 }: ImagePreviewBlockProps) => {
   const [previewImage, setPreviewImage] = useState<string>(imageUrl);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
@@ -75,7 +75,7 @@ export const ImagePreviewBlock = ({
                 WebkitLineClamp: 1,
                 WebkitBoxOrient: 'vertical',
                 overflow: 'hidden',
-                textOverflow: 'ellipsis',
+                textOverflow: 'ellipsis'
               }}
             >
               Назва файлу {finalFileName}

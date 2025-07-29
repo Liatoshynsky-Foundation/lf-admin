@@ -7,8 +7,8 @@ const ContributorCardStyles = {
     '@media (max-width: 1440px) and (min-width: 1024px)': {
       maxWidth: '100%',
       width: 'auto',
-      height: 'auto',
-    },
+      height: 'auto'
+    }
   },
   input: {
     width: '675px',
@@ -16,9 +16,9 @@ const ContributorCardStyles = {
     opacity: 1,
     '@media (max-width: 1440px) and (min-width: 1024px)': {
       maxWidth: '100%',
-      width: 'auto',
-    },
-  },
+      width: 'auto'
+    }
+  }
 };
 
 export default ContributorCardStyles;

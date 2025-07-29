@@ -1,17 +1,8 @@
 'use client';
-import {
-  Button as MuiButton,
-  ButtonProps as MuiButtonProps,
-  CircularProgress,
-} from '@mui/material';
+import { Button as MuiButton, ButtonProps as MuiButtonProps, CircularProgress } from '@mui/material';
 import { forwardRef, ReactNode } from 'react';
 
-import {
-  buttonBaseStyles,
-  sizeStyles,
-  typographyStyles,
-  variantStyles,
-} from './Button.styles';
+import { buttonBaseStyles, sizeStyles, typographyStyles, variantStyles } from './Button.styles';
 
 type Size = 'large' | 'medium' | 'small';
 
@@ -25,15 +16,15 @@ type BaseButtonProps = {
   label?: string;
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 } & (
-    | {
+  | {
       color?: 'primary' | 'secondary';
       variant?: Variant;
     }
-    | {
+  | {
       color: 'tertiary';
       variant?: 'filled';
     }
-  );
+);
 
 export type ButtonProps = BaseButtonProps & Omit<MuiButtonProps, keyof BaseButtonProps>;
 
@@ -71,10 +62,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           ...buttonBaseStyles,
           ...sizeStyles[size],
           ...typographyStyles[color]?.[size],
-          ...(color === 'tertiary'
-            ? variantStyles.tertiary.filled
-            : variantStyles[color]?.[variant]),
-          ...(sx as object),
+          ...(color === 'tertiary' ? variantStyles.tertiary.filled : variantStyles[color]?.[variant]),
+          ...(sx as object)
         }}
         {...props}
       >
