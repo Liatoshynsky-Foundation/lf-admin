@@ -25,9 +25,9 @@ jest.mock('../../design-system/photo-block/PhotoBlock', () => ({
     onChangeImage: (e: { name: string }) => void;
   }) => (
     <div>
-      <div data-testid="image-preview-block" onClick={() => onChangeImage({ name: 'mocked-image.jpg' })}>
+      <button data-testid="image-preview-block" onClick={() => onChangeImage({ name: 'mocked-image.jpg' })}>
         Mocked Image Block
-      </div>
+      </button>
       <p data-testid="image-file-name">{fileName}</p>
       <img data-testid="image-element" src={imageUrl} alt="Preview" />
     </div>
