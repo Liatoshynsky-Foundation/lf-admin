@@ -6,8 +6,8 @@ import { AdminTokenPayload, RefreshTokenPayload } from '~/back-shared/types/toke
 
 jest.mock('../../../../config', () => ({
   getJWT: {
-    JWT_ACCESS_SECRET_TOKEN: 'test-access-secret-from-mock',
-    JWT_REFRESH_SECRET_TOKEN: 'test-refresh-secret-from-mock'
+    JWT_ACCESS_TOKEN_SECRET: 'test-access-secret-from-mock',
+    JWT_REFRESH_TOKEN_SECRET: 'test-refresh-secret-from-mock'
   }
 }));
 
