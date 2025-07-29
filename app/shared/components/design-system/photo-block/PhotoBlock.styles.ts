@@ -1,5 +1,3 @@
-import { CSSProperties } from 'react';
-
 export const styles = {
   container: {
     p: 2,

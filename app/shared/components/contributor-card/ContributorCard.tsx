@@ -1,6 +1,5 @@
 'use client';
-import { Box, Stack } from '@mui/material';
-import { ParagraphsBlock } from 'app/types/accordionBlocks';
+import { Stack } from '@mui/material';
 import React, { useState } from 'react';
 
 import { CustomTextField } from '~/ds-components/text-field/TextField';
