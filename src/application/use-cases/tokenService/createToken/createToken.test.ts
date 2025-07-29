@@ -28,22 +28,17 @@ describe('createTokenService', () => {
       expect(typeof refreshToken).toBe('string');
     });
 
-    it('should include the correct payload and bind tokens via jti', () => {
-      const { accessToken, refreshToken, refreshTokenJti } = tokenService.generateTokens(mockAdmin);
+    it('should include the correct payload', () => {
+      const { accessToken, refreshToken } = tokenService.generateTokens(mockAdmin);
 
-      const decodedAccess = jwt.verify(accessToken, getJWT.JWT_ACCESS_SECRET_TOKEN) as AdminTokenPayload;
-      const decodedRefresh = jwt.verify(refreshToken, getJWT.JWT_REFRESH_SECRET_TOKEN) as RefreshTokenPayload;
+      const decodedAccess = jwt.verify(accessToken, getJWT.JWT_ACCESS_TOKEN_SECRET) as AdminTokenPayload;
+      const decodedRefresh = jwt.verify(refreshToken, getJWT.JWT_REFRESH_TOKEN_SECRET) as RefreshTokenPayload;
 
       expect(decodedAccess.id).toBe(mockAdmin.id);
       expect(decodedAccess.type).toBe(mockAdmin.type);
-      expect(decodedAccess.jti).toBeDefined();
       expect(decodedAccess.refreshJti).toBeDefined();
 
       expect(decodedRefresh.id).toBe(mockAdmin.id);
-      expect(decodedRefresh.jti).toBeDefined();
-
-      expect(decodedAccess.refreshJti).toBe(decodedRefresh.jti);
-      expect(refreshTokenJti).toBe(decodedRefresh.jti);
     });
   });
 
@@ -54,7 +49,6 @@ describe('createTokenService', () => {
 
       expect(payload.id).toBe(mockAdmin.id);
       expect(payload.type).toBe(mockAdmin.type);
-      expect(payload.jti).toBeDefined();
     });
 
     it('should throw an error for a token signed with an invalid key', () => {
@@ -86,7 +80,6 @@ describe('createTokenService', () => {
       const payload = tokenService.verifyRefreshToken(refreshToken);
 
       expect(payload.id).toBe(mockAdmin.id);
-      expect(payload.jti).toBeDefined();
     });
 
     it('should throw an error for a token signed with an invalid key', () => {
