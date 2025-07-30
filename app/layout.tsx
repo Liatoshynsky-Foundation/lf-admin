@@ -3,6 +3,7 @@ import { Container } from '@mui/material';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono, Mulish } from 'next/font/google';
 
+import EmotionProvider from './shared/providers/EmotionProvider';
 import { ReactQueryProvider } from '~/components/react-query-provider/reactQueryProvider';
 import { SideBarNavigation } from '~/components/side-navigation/SideNavigation';
 
@@ -35,12 +36,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} ${mulish.variable}`}>
-        <ReactQueryProvider>
-          <SideBarNavigation />
-          <Container maxWidth="md" sx={{ border: '1px solid #ccc', padding: '20px' }}>
-            {children}
-          </Container>
-        </ReactQueryProvider>
+        <EmotionProvider>
+          <ReactQueryProvider>
+            <SideBarNavigation />
+            <Container maxWidth="md" sx={{ border: '1px solid #ccc', padding: '20px' }}>
+              {children}
+            </Container>
+          </ReactQueryProvider>
+        </EmotionProvider>
       </body>
     </html>
   );
