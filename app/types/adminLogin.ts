@@ -5,4 +5,5 @@ export interface LoginSubmitData {
 
 export interface LoginModalProps {
   onSubmit: (data: LoginSubmitData) => void;
+  submitError?: string | null;
 }

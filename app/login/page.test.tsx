@@ -1,9 +1,39 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import LoginPage from './page';
-import { useGraphqlMutation } from '~/shared/hooks/use-graphql/use-graphql-mutation/useGraphqlMutation';
+import { type LoginMutationResponse } from '~/types/graphql/adminLogin';
 
-jest.mock('~/shared/hooks/use-graphql/use-graphql-mutation/useGraphqlMutation');
+const mockSuccessMutationResponse: LoginMutationResponse = {
+  login: {
+    __typename: 'LoginPayload',
+    success: true,
+    adminId: '123',
+    adminType: 'superadmin'
+  }
+};
+
+const mockErrorMutationResponse: LoginMutationResponse = {
+  login: {
+    __typename: 'ErrorPayload',
+    success: false,
+    message: 'Invalid credentials',
+    statusCode: 401
+  }
+};
+
+const graphqlHookMock = jest.fn();
+const routerMockPush = jest.fn();
+const mockMutate = jest.fn();
+
+jest.mock('~/shared/hooks/use-graphql/use-graphql-mutation/useGraphqlMutation', () => ({
+  useGraphqlMutation: () => graphqlHookMock()
+}));
+
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: routerMockPush
+  })
+}));
 
 jest.mock('~/public/icons/eye.svg', () => {
   const Eye = () => <span>eye</span>;
@@ -18,16 +48,14 @@ jest.mock('~/public/icons/eye-closed.svg', () => {
 });
 
 describe('LoginPage', () => {
-  const mockMutate = jest.fn();
-
   beforeEach(() => {
     jest.clearAllMocks();
-    (useGraphqlMutation as jest.Mock).mockReturnValue({
+    graphqlHookMock.mockReturnValue({
       mutate: mockMutate
     });
   });
 
-  it('should render the login modal', () => {
+  it('should render the login modal with all fields and button', () => {
     render(<LoginPage />);
 
     expect(screen.getByLabelText(/Логін/i)).toBeInTheDocument();
@@ -35,7 +63,7 @@ describe('LoginPage', () => {
     expect(screen.getByRole('button', { name: 'Увійти' })).toBeInTheDocument();
   });
 
-  it('should call the mutation on form submission', () => {
+  it('should call the mutation on form submission with correct data', () => {
     render(<LoginPage />);
 
     const emailInput = screen.getByLabelText(/Логін/i);
@@ -46,13 +74,18 @@ describe('LoginPage', () => {
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
     fireEvent.click(submitButton);
 
-    expect(mockMutate).toHaveBeenCalledWith({ email: 'test@example.com', password: 'password123' }, expect.any(Object));
+    expect(mockMutate).toHaveBeenCalledWith(
+      { email: 'test@example.com', password: 'password123' }, //NOSONAR
+      expect.any(Object)
+    );
   });
 
-  it.skip('should handle successful login', () => {
-    const mockOnSuccess = jest.fn();
-    (useGraphqlMutation as jest.Mock).mockReturnValue({
-      mutate: ({ onSuccess }: any) => onSuccess({ login: { success: true } })
+  it('should handle successful login and redirect', () => {
+    graphqlHookMock.mockReturnValue({
+      mutate: (
+        _variables: { email: string; password: string },
+        { onSettled }: { onSettled: (response: LoginMutationResponse) => void }
+      ) => onSettled(mockSuccessMutationResponse)
     });
 
     render(<LoginPage />);
@@ -65,13 +98,15 @@ describe('LoginPage', () => {
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
     fireEvent.click(submitButton);
 
-    expect(mockOnSuccess).toHaveBeenCalledWith({ login: { success: true } });
+    expect(routerMockPush).toHaveBeenCalledWith('/');
   });
 
-  it.skip('should handle login failure', () => {
-    const mockOnError = jest.fn();
-    (useGraphqlMutation as jest.Mock).mockReturnValue({
-      mutate: ({ onError }: any) => onError(new Error('Login failed'))
+  it('should handle login failure and display error message', () => {
+    graphqlHookMock.mockReturnValue({
+      mutate: (
+        _variables: { email: string; password: string },
+        { onSettled }: { onSettled: (response: LoginMutationResponse) => void }
+      ) => onSettled(mockErrorMutationResponse)
     });
 
     render(<LoginPage />);
@@ -84,6 +119,27 @@ describe('LoginPage', () => {
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
     fireEvent.click(submitButton);
 
-    expect(mockOnError).toHaveBeenCalledWith(new Error('Login failed'));
+    expect(screen.getByText('Invalid credentials')).toBeInTheDocument();
+  });
+
+  it('should handle unexpected errors gracefully', () => {
+    graphqlHookMock.mockReturnValue({
+      mutate: (
+        _variables: { email: string; password: string },
+        { onSettled }: { onSettled: (response: LoginMutationResponse | null) => void }
+      ) => onSettled(null)
+    });
+
+    render(<LoginPage />);
+
+    const emailInput = screen.getByLabelText(/Логін/i);
+    const passwordInput = screen.getByLabelText(/Пароль/i);
+    const submitButton = screen.getByRole('button', { name: 'Увійти' });
+
+    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'password123' } });
+    fireEvent.click(submitButton);
+
+    expect(screen.getByText('Непередбачена помилка. Спробуйте ще раз.')).toBeInTheDocument();
   });
 });

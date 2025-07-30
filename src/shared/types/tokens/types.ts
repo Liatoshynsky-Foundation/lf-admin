@@ -6,4 +6,5 @@ export interface AdminTokenPayload {
 
 export interface RefreshTokenPayload {
   id: string;
+  jti?: string;
 }

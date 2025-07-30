@@ -1,12 +1,12 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { ACCESS_TOKEN_COOKIE_NAME } from './src/constants';
+import { REFRESH_TOKEN_COOKIE_NAME } from './src/constants';
 
 export function middleware(request: NextRequest) {
-  const authToken = request.cookies.get(ACCESS_TOKEN_COOKIE_NAME);
+  const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE_NAME);
 
-  if (!authToken && request.nextUrl.pathname !== '/login') {
+  if (!refreshToken && request.nextUrl.pathname !== '/login') {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 

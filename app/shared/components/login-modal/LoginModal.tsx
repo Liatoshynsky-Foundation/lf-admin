@@ -9,7 +9,7 @@ import { CustomTextField } from '../design-system/text-field/TextField';
 import { styles } from './LoginModal.styles';
 import { LoginModalProps } from '~/types/adminLogin';
 
-const LoginModal = ({ onSubmit }: LoginModalProps) => {
+const LoginModal = ({ onSubmit, submitError }: LoginModalProps) => {
   const [username, setUsername] = React.useState('');
   const [usernameError, setUsernameError] = React.useState<string | null>(null);
   const [password, setPassword] = React.useState('');
@@ -77,6 +77,11 @@ const LoginModal = ({ onSubmit }: LoginModalProps) => {
           error={!!passwordError}
           helperText={passwordError}
         />
+        {submitError && (
+          <Typography sx={styles.errorText} variant="body2">
+            {submitError}
+          </Typography>
+        )}
         <Button variant="contained" sx={styles.button} onClick={handleSubmit} disabled={!username || !password}>
           Увійти
         </Button>
