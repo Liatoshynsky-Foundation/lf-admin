@@ -47,6 +47,18 @@ jest.mock('~/public/icons/eye-closed.svg', () => {
   return EyeClosed;
 });
 
+const submitFormHelper = () => {
+  render(<LoginPage />);
+
+  const emailInput = screen.getByLabelText(/Логін/i);
+  const passwordInput = screen.getByLabelText(/Пароль/i);
+  const submitButton = screen.getByRole('button', { name: 'Увійти' });
+
+  fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+  fireEvent.change(passwordInput, { target: { value: 'password123' } });
+  fireEvent.click(submitButton);
+};
+
 describe('LoginPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -64,15 +76,7 @@ describe('LoginPage', () => {
   });
 
   it('should call the mutation on form submission with correct data', () => {
-    render(<LoginPage />);
-
-    const emailInput = screen.getByLabelText(/Логін/i);
-    const passwordInput = screen.getByLabelText(/Пароль/i);
-    const submitButton = screen.getByRole('button', { name: 'Увійти' });
-
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.click(submitButton);
+    submitFormHelper();
 
     expect(mockMutate).toHaveBeenCalledWith(
       { email: 'test@example.com', password: 'password123' }, //NOSONAR
@@ -88,15 +92,7 @@ describe('LoginPage', () => {
       ) => onSettled(mockSuccessMutationResponse)
     });
 
-    render(<LoginPage />);
-
-    const emailInput = screen.getByLabelText(/Логін/i);
-    const passwordInput = screen.getByLabelText(/Пароль/i);
-    const submitButton = screen.getByRole('button', { name: 'Увійти' });
-
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.click(submitButton);
+    submitFormHelper();
 
     expect(routerMockPush).toHaveBeenCalledWith('/');
   });
@@ -109,15 +105,7 @@ describe('LoginPage', () => {
       ) => onSettled(mockErrorMutationResponse)
     });
 
-    render(<LoginPage />);
-
-    const emailInput = screen.getByLabelText(/Логін/i);
-    const passwordInput = screen.getByLabelText(/Пароль/i);
-    const submitButton = screen.getByRole('button', { name: 'Увійти' });
-
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.click(submitButton);
+    submitFormHelper();
 
     expect(screen.getByText('Invalid credentials')).toBeInTheDocument();
   });
@@ -130,15 +118,7 @@ describe('LoginPage', () => {
       ) => onSettled(null)
     });
 
-    render(<LoginPage />);
-
-    const emailInput = screen.getByLabelText(/Логін/i);
-    const passwordInput = screen.getByLabelText(/Пароль/i);
-    const submitButton = screen.getByRole('button', { name: 'Увійти' });
-
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.click(submitButton);
+    submitFormHelper();
 
     expect(screen.getByText('Непередбачена помилка. Спробуйте ще раз.')).toBeInTheDocument();
   });
