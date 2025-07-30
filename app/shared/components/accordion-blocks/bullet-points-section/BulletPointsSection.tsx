@@ -4,35 +4,48 @@ import { Box, debounce, Typography } from '@mui/material';
 import { useState } from 'react';
 
 import ConfigurableList from '../../configurable-list/ConfigurableList';
-import { GoalItem, hardcodedData } from './OurGoals.const';
-import { styles } from './OurGoals.styles';
+import { BulletPointsItem, hardcodedData } from './BulletPointsSection.const';
+import { styles } from './BulletPointsSection.styles';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 
-const OurGoals: React.FC = () => {
-  const [sectionTitle, setSectionTitle] = useState(hardcodedData.sectionTitle);
-  const [goals, setGoals] = useState<GoalItem[]>(hardcodedData.goals);
+interface IBulletPointsSectionProps {
+  bulletPointsTitle: string;
+  defaultSectionTitle: string;
+}
+
+const BulletPointsSection: React.FC<IBulletPointsSectionProps> = ({ bulletPointsTitle, defaultSectionTitle }) => {
+  const [sectionTitle, setSectionTitle] = useState(defaultSectionTitle);
+  const [bulletPoints, setBulletPoints] = useState<BulletPointsItem[]>(hardcodedData.bulletPoints);
 
   const onCreate = () => {
-    const newGoal: GoalItem = { id: goals.length + 1, title: '', text: '' };
-    setGoals((prev) => [...prev, newGoal]);
-    return newGoal;
+    const newBulletPoint: BulletPointsItem = { id: bulletPoints.length + 1, title: '', text: '' };
+    setBulletPoints((prev) => [...prev, newBulletPoint]);
+    return newBulletPoint;
   };
 
-  const onChange = (newValue: GoalItem) => {
-    setGoals((prev) =>
-      prev.map((goal) => (goal.id === newValue.id ? { ...goal, title: newValue.title, text: newValue.text } : goal))
+  const onChange = (newValue: BulletPointsItem) => {
+    setBulletPoints((prev) =>
+      prev.map((bulletPoint) =>
+        bulletPoint.id === newValue.id ? { ...bulletPoint, title: newValue.title, text: newValue.text } : bulletPoint
+      )
     );
   };
 
   const onTitleChangeDelayed = debounce(setSectionTitle, 200);
   const onChangeDelayed = debounce(onChange, 200);
 
-  const onDelete = (id: GoalItem['id']) => {
-    setGoals((prev) => prev.filter((goal) => goal.id !== id));
+  const onDelete = (id: BulletPointsItem['id']) => {
+    setBulletPoints((prev) => prev.filter((bulletPoint) => bulletPoint.id !== id));
   };
 
-  const renderItem = ({ item, onChange }: { item: GoalItem; onChange: (newValue: GoalItem) => void }) => {
+  const renderItem = ({
+    item,
+    onChange
+  }: {
+    item: BulletPointsItem;
+    onChange: (newValue: BulletPointsItem) => void;
+  }) => {
     return (
       <Box display="flex" flexDirection="column" gap="16px">
         <CustomTextField
@@ -52,7 +65,7 @@ const OurGoals: React.FC = () => {
   };
 
   return (
-    <CollapsibleBlock title={'Наші цілі'}>
+    <CollapsibleBlock title={bulletPointsTitle}>
       <Box display="flex" flexDirection="column" gap="16px">
         <CustomTextField
           title="Заголовок секції"
@@ -67,7 +80,7 @@ const OurGoals: React.FC = () => {
             Пункти секції:
           </Typography>
           <ConfigurableList
-            items={goals}
+            items={bulletPoints}
             renderItem={renderItem}
             addBtnLabel="Додати пункт"
             onChange={onChangeDelayed}
@@ -82,4 +95,4 @@ const OurGoals: React.FC = () => {
   );
 };
 
-export default OurGoals;
+export default BulletPointsSection;

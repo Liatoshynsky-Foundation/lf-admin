@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
-import OurGoals from './OurGoals';
-import { GoalItem, hardcodedData } from './OurGoals.const';
+import BulletPointsSection from './BulletPointsSection';
+import { BulletPointsItem, hardcodedData } from './BulletPointsSection.const';
 
 jest.mock('@mui/material', () => {
   const originalModule = jest.requireActual('@mui/material');
@@ -9,7 +9,7 @@ jest.mock('@mui/material', () => {
   return {
     __esModule: true,
     ...originalModule,
-    debounce: (fn: (newValue: GoalItem) => void) => fn
+    debounce: (fn: (newValue: BulletPointsItem) => void) => fn
   };
 });
 
@@ -32,16 +32,22 @@ jest.mock('../../configurable-list/ConfigurableList', () => ({
     onChange,
     onDelete
   }: {
-    items: GoalItem[];
-    renderItem: ({ item, onChange }: { item: GoalItem; onChange: (newValue: GoalItem) => void }) => React.ReactNode;
-    onCreate: () => GoalItem;
-    onChange: (newValue: GoalItem) => void;
-    onDelete: (id: GoalItem['id']) => void;
+    items: BulletPointsItem[];
+    renderItem: ({
+      item,
+      onChange
+    }: {
+      item: BulletPointsItem;
+      onChange: (newValue: BulletPointsItem) => void;
+    }) => React.ReactNode;
+    onCreate: () => BulletPointsItem;
+    onChange: (newValue: BulletPointsItem) => void;
+    onDelete: (id: BulletPointsItem['id']) => void;
   }) => (
     <div data-testid="configurable-list">
-      {items.map((item: GoalItem) => (
+      {items.map((item: BulletPointsItem) => (
         <div key={item.id} data-testid="list-item">
-          {renderItem({ item, onChange: (newValue: GoalItem) => onChange(newValue) })}
+          {renderItem({ item, onChange: (newValue: BulletPointsItem) => onChange(newValue) })}
           <button onClick={() => onDelete(item.id)} data-testid="trash-icon"></button>
         </div>
       ))}
@@ -50,17 +56,17 @@ jest.mock('../../configurable-list/ConfigurableList', () => ({
   )
 }));
 
-describe('OurGoals component', () => {
+describe('BulletPoints component', () => {
   beforeEach(() => {
-    render(<OurGoals />);
+    render(<BulletPointsSection bulletPointsTitle="Наші цілі" defaultSectionTitle="Наша місія" />);
   });
 
-  it('should render section title and goals list', () => {
+  it('should render section title and bulletPoints list', () => {
     expect(screen.getByLabelText(/Текст заголовку/i)).toBeInTheDocument();
 
-    const goal = hardcodedData.goals[0];
-    expect(screen.getByDisplayValue(goal.title)).toBeInTheDocument();
-    expect(screen.getByDisplayValue(goal.text)).toBeInTheDocument();
+    const bulletPoint = hardcodedData.bulletPoints[0];
+    expect(screen.getByDisplayValue(bulletPoint.title)).toBeInTheDocument();
+    expect(screen.getByDisplayValue(bulletPoint.text)).toBeInTheDocument();
   });
 
   it('should update section title', () => {
@@ -70,17 +76,17 @@ describe('OurGoals component', () => {
     expect(sectionTitleInput).toHaveValue('Новий заголовок');
   });
 
-  it('should add a new goal item', () => {
+  it('should add a new bulletPoint item', () => {
     const addButton = screen.getByRole('button', { name: /Додати пункт/i });
-    const goalsCount = hardcodedData.goals.length;
+    const bulletPointsCount = hardcodedData.bulletPoints.length;
 
     fireEvent.click(addButton);
 
-    expect(screen.getAllByLabelText(/Заголовок пункту/i)).toHaveLength(goalsCount + 1);
-    expect(screen.getAllByLabelText(/Текст пункту/i)).toHaveLength(goalsCount + 1);
+    expect(screen.getAllByLabelText(/Заголовок пункту/i)).toHaveLength(bulletPointsCount + 1);
+    expect(screen.getAllByLabelText(/Текст пункту/i)).toHaveLength(bulletPointsCount + 1);
   });
 
-  it('should edit a goal item', async () => {
+  it('should edit a bulletPoint item', async () => {
     const firstTitleInput = screen.getAllByLabelText(/Заголовок пункту/i)[0];
     const firstTextInput = screen.getAllByLabelText(/Текст пункту/i)[0];
 
@@ -92,7 +98,7 @@ describe('OurGoals component', () => {
     });
   });
 
-  it('should delete a goal item', () => {
+  it('should delete a bulletPoint item', () => {
     const deleteButtons = screen.getAllByTestId('trash-icon');
 
     const initialCount = deleteButtons.length;
