@@ -10,6 +10,6 @@ export const errors = {
 export const loginErrors = {
   INVALID_CREDENTIALS: 'Неправильний логін або пароль',
   EMPTY_USERNAME: 'Логін не може бути порожнім',
-  EMPTY_PASSWORD: 'Пароль не може бути порожнім',
+  EMPTY_PASSWORD: 'Пароль не може бути порожнім', //NOSONAR
   UNEXPECTED_ERROR: 'Непередбачена помилка. Спробуйте ще раз.'
 };
