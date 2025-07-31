@@ -2,22 +2,23 @@
 
 import { Box, Button, Typography } from '@mui/material';
 import Image from 'next/image';
-import React from 'react';
+import React, { useState } from 'react';
 
 import PasswordField from '../design-system/password-field/PasswordField';
 import { CustomTextField } from '../design-system/text-field/TextField';
 import { styles } from './LoginModal.styles';
+import { loginErrors } from '~/constants/errors';
 import { LoginModalProps } from '~/types/adminLogin';
 
 const LoginModal = ({ onSubmit, submitError }: LoginModalProps) => {
-  const [username, setUsername] = React.useState('');
-  const [usernameError, setUsernameError] = React.useState<string | null>(null);
-  const [password, setPassword] = React.useState('');
-  const [passwordError, setPasswordError] = React.useState<string | null>(null);
+  const [username, setUsername] = useState('');
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const validateUsername = () => {
     if (!username.trim()) {
-      setUsernameError('Логін не може бути порожнім');
+      setUsernameError(loginErrors.EMPTY_USERNAME);
       return false;
     }
     setUsernameError(null);
@@ -31,7 +32,7 @@ const LoginModal = ({ onSubmit, submitError }: LoginModalProps) => {
 
   const validatePassword = () => {
     if (!password.trim()) {
-      setPasswordError('Пароль не може бути порожнім');
+      setPasswordError(loginErrors.EMPTY_PASSWORD);
       return false;
     }
     setPasswordError(null);

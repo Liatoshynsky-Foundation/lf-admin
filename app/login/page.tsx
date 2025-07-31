@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+import { loginErrors } from '~/constants/errors';
 import LoginModal from '~/shared/components/login-modal/LoginModal';
 import { useGraphqlMutation } from '~/shared/hooks/use-graphql/use-graphql-mutation/useGraphqlMutation';
 import { LoginSubmitData } from '~/types/adminLogin';
@@ -18,14 +19,14 @@ export default function LoginPage() {
   const responseHandler = (data: unknown, _error: Error | null, _variables: unknown, _context: unknown) => {
     const response = data as LoginMutationResponse;
     if (!response || typeof response !== 'object' || !('login' in response)) {
-      setLoginError('Непередбачена помилка. Спробуйте ще раз.');
+      setLoginError(loginErrors.UNEXPECTED_ERROR);
       return;
     }
 
     const result = response.login;
 
     if (result.__typename === 'ErrorPayload') {
-      setLoginError(result.message || 'Неправильний логін або пароль');
+      setLoginError(result.message || loginErrors.INVALID_CREDENTIALS);
       return;
     }
 
@@ -36,7 +37,7 @@ export default function LoginPage() {
       }
     }
 
-    setLoginError('Непередбачена помилка. Спробуйте ще раз.');
+    setLoginError(loginErrors.UNEXPECTED_ERROR);
   };
 
   const handleLoginSubmit = (data: LoginSubmitData) => {
