@@ -28,6 +28,7 @@
       "~/utils/*": ["./app/lib/utils/*"],
       "~/config/*": ["./app/config/*"],
       "~/hooks/*": ["./app/shared/hooks/*"],
+      "~/providers/*": ["./app/shared/providers/*"],
       "~/application/*": ["./src/application/*"],
       "~/domain/*": ["./src/domain/*"],
       "~/container/*": ["./src/container/*"],

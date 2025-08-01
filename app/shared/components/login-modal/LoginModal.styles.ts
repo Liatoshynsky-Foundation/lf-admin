@@ -5,7 +5,7 @@ export const styles = {
     borderRadius: '16px',
     padding: '20px 24px',
     maxWidth: '400px',
-    '&>*:not(:last-child):not(:first-child)': {
+    '& > *:nth-child(n+2):nth-last-child(n+2)': {
       marginBottom: '24px'
     }
   },
@@ -53,6 +53,14 @@ export const styles = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    flexDirection: 'column'
+    flexDirection: 'column',
+    height: 'calc(100vh - 120px)',
+    width: '100%'
+  },
+  errorText: {
+    color: '#E53D11',
+    textAlign: 'center',
+    marginTop: '0px',
+    fontSize: '1rem'
   }
 };
