@@ -58,7 +58,6 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         endIcon={!loading ? endIcon : undefined}
         disabled={isDisabled}
         sx={{
-          boxShadow: 'none',
           ...buttonBaseStyles,
           ...sizeStyles[size],
           ...typographyStyles[color]?.[size],

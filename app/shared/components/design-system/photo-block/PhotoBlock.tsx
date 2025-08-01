@@ -63,18 +63,14 @@ export const ImagePreviewBlock = ({
         </Typography>
       )}
       <Box sx={styles.imageBlock}>
-        <Box component="img" src={previewImage} alt="Preview" width={dimensions?.width} height={dimensions?.height} />
+        <Box component="img" src={previewImage} alt="Preview" sx={styles.imagePreview} />
         <Stack spacing={stackSpacing} maxWidth="200px">
           <Stack spacing={typographySpacing}>
             <Typography
               variant="body1"
               sx={{
                 ...styles.fileNameText,
-                display: '-webkit-box',
-                WebkitLineClamp: 1,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis'
+                ...styles.trimmedTypography
               }}
             >
               Назва файлу {finalFileName}

@@ -35,5 +35,12 @@ export const styles = {
   editButton: {
     width: '127px'
   },
-  changeButton: { width: '190px' }
+  changeButton: { width: '190px' },
+  trimmedTypography: {
+    display: '-webkit-box',
+    WebkitLineClamp: 1,
+    WebkitBoxOrient: 'vertical',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis'
+  }
 };
