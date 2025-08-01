@@ -1,7 +1,7 @@
 import '../globals.css';
 import { Container } from '@mui/material';
 
-import BodyProvider, { metadata as LayoutMetadata } from '~/shared/components/body-provider/BodyProvider';
+import BodyProvider, { metadata as LayoutMetadata } from '~/providers/body-provider/BodyProvider';
 import { SideBarNavigation } from '~/shared/components/side-navigation/SideNavigation';
 
 export const metadata = LayoutMetadata;

@@ -1,6 +1,6 @@
 import '../globals.css';
 
-import BodyProvider, { metadata as LayoutMetadata } from '~/shared/components/body-provider/BodyProvider';
+import BodyProvider, { metadata as LayoutMetadata } from '~/providers/body-provider/BodyProvider';
 
 export const metadata = LayoutMetadata;
 
