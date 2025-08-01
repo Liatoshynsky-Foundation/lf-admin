@@ -24,5 +24,6 @@ type ErrorPayload {
 
 type Query {
   _empty: String
+  test: RefreshTokenPayload!
 }
 

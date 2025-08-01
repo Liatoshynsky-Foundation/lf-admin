@@ -1,5 +1,5 @@
 import { errors } from '~/constants/errors';
-import { REFRESH_TOKEN_MUTATION } from '~/types/graphql/mutations/refreshToken';
+import { REFRESH_TOKEN_MUTATION } from '~/types/graphql/refreshTokenGraphQl';
 
 let refreshTokenPromise: Promise<void> | null = null;
 
