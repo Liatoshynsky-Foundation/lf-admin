@@ -47,6 +47,27 @@ jest.mock('~/public/icons/eye-closed.svg', () => {
   return EyeClosed;
 });
 
+const mockLoginWithSuccess = (onCompleted: (data: LoginMutation) => void) => {
+  const mockLoginFn = jest.fn().mockImplementation(() => {
+    act(() => onCompleted(mockSuccessMutationResponse));
+  });
+  return [mockLoginFn, { loading: false }];
+};
+
+const mockLoginWithError = (onCompleted: (data: LoginMutation) => void) => {
+  const mockLoginFn = jest.fn().mockImplementation(() => {
+    act(() => onCompleted(mockErrorMutationResponse));
+  });
+  return [mockLoginFn, { loading: false }];
+};
+
+const mockLoginWithNetworkError = (onError: (err: Error) => void) => {
+  const mockLoginFn = jest.fn().mockImplementation(() => {
+    act(() => onError(new Error('Network failed')));
+  });
+  return [mockLoginFn, { loading: false }];
+};
+
 const submitFormHelper = () => {
   render(<LoginPage />);
 
@@ -87,14 +108,7 @@ describe('LoginPage', () => {
   });
 
   it('should handle successful login and redirect', () => {
-    mockedUseLoginMutation.mockImplementation((options) => {
-      const mockLoginFn = jest.fn().mockImplementation(() => {
-        act(() => {
-          options.onCompleted(mockSuccessMutationResponse);
-        });
-      });
-      return [mockLoginFn, { loading: false }];
-    });
+    mockedUseLoginMutation.mockImplementation(({ onCompleted }) => mockLoginWithSuccess(onCompleted));
 
     submitFormHelper();
 
@@ -102,14 +116,7 @@ describe('LoginPage', () => {
   });
 
   it('should handle login failure and display error message', () => {
-    mockedUseLoginMutation.mockImplementation((options) => {
-      const mockLoginFn = jest.fn().mockImplementation(() => {
-        act(() => {
-          options.onCompleted(mockErrorMutationResponse);
-        });
-      });
-      return [mockLoginFn, { loading: false }];
-    });
+    mockedUseLoginMutation.mockImplementation(({ onCompleted }) => mockLoginWithError(onCompleted));
 
     submitFormHelper();
 
@@ -117,15 +124,7 @@ describe('LoginPage', () => {
   });
 
   it('should handle unexpected errors gracefully', () => {
-    const networkError = new Error('Network failed');
-    mockedUseLoginMutation.mockImplementation((options) => {
-      const mockLoginFn = jest.fn().mockImplementation(() => {
-        act(() => {
-          options.onError(networkError);
-        });
-      });
-      return [mockLoginFn, { loading: false }];
-    });
+    mockedUseLoginMutation.mockImplementation(({ onError }) => mockLoginWithNetworkError(onError));
 
     submitFormHelper();
 
