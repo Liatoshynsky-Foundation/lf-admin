@@ -26,20 +26,20 @@ describe('ContributorCard', () => {
   const name = 'John Doe';
   const description = 'Team leader';
 
-  it('renders contributor name and description fields with default values', () => {
+  it('should render contributor name and description fields with default values', () => {
     render(<ContributorCard contributorNameValue={name} contributorDescriptionValue={description} />);
 
     expect(screen.getByLabelText('Ім`я')).toHaveValue(name);
     expect(screen.getByLabelText('Опис учасника')).toHaveValue(description);
   });
 
-  it('renders image preview with default image', () => {
+  it('should render image preview with default image', () => {
     render(<ContributorCard contributorNameValue={name} contributorDescriptionValue={description} />);
 
     const img = screen.getByAltText('Preview') as HTMLImageElement;
     expect(img.src).toContain('/images/oval-contributor-card.png');
   });
-  it('renders with horizontal layout and correct spacing', () => {
+  it('should render with horizontal layout and correct spacing', () => {
     const { container } = render(<ContributorCard contributorNameValue="Test" contributorDescriptionValue="Desc" />);
 
     const stack = container.querySelector('.MuiStack-root');
