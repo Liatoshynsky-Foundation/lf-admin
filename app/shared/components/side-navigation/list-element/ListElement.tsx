@@ -17,7 +17,7 @@ export const ListElement: React.FC<LinkElementProps> = ({ element, open, handleC
     >
       {iconSrc && (
         <ListItemIcon sx={styles.listItemIcon}>
-          <Image src={`./icons/${iconSrc}.svg`} alt={title} width={24} height={24} />
+          <Image src={`/icons/${iconSrc}.svg`} alt={title} width={24} height={24} />
         </ListItemIcon>
       )}
       <ListItemText
