@@ -43,11 +43,11 @@ export const SideBarNavigation = () => {
     >
       <Box sx={styles.topSection}>
         <IconButton onClick={handleOpen} size="small">
-          <Image src="./icons/logo.svg" alt="logo" width={54} height={55} />
+          <Image src="/icons/logo.svg" alt="logo" width={54} height={55} />
         </IconButton>
         {open && (
           <IconButton onClick={handleClose} sx={styles.hideBtn}>
-            <Image src="./icons/doubleArrowLeft.svg" alt="close button" width={24} height={24} />
+            <Image src="/icons/doubleArrowLeft.svg" alt="close button" width={24} height={24} />
           </IconButton>
         )}
       </Box>

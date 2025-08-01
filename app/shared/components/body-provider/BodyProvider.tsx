@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono, Mulish } from 'next/font/google';
 
+import EmotionProvider from './shared/providers/EmotionProvider';
 import { ReactQueryProvider } from '~/components/react-query-provider/reactQueryProvider';
 
 const geistSans = Geist({
@@ -28,7 +29,9 @@ export default function BodyProvider({ children }: Readonly<{ children: React.Re
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${mulish.variable}`}>
       <body className={`${geistSans.variable} ${geistMono.variable} ${mulish.variable}`}>
-        <ReactQueryProvider>{children}</ReactQueryProvider>
+        <EmotionProvider>
+          <ReactQueryProvider>{children}</ReactQueryProvider>
+        </EmotionProvider>
       </body>
     </html>
   );

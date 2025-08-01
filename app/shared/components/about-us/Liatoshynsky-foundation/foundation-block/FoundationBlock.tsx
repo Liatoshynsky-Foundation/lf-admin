@@ -43,6 +43,7 @@ export const FoundationBlock = ({ mainText, paragraphs, onMainTextChange, onPara
         cropWidth={350}
         cropHeight={300}
         onChangeImage={handleChangeImage}
+        title="Основне зображення"
       />
     </Box>
   );

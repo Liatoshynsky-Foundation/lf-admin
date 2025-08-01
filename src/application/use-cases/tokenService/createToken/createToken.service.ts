@@ -17,7 +17,7 @@ export const createTokenService = () => ({
 
     const accessToken = jwt.sign(
       { ...accessTokenPayload, refreshJti: refreshTokenJti },
-      getJWT.JWT_ACCESS_SECRET_TOKEN,
+      getJWT.JWT_ACCESS_TOKEN_SECRET,
       {
         expiresIn: JWT_ACCESS_TOKEN_LIFETIME,
         jwtid: accessTokenJti
@@ -28,7 +28,7 @@ export const createTokenService = () => ({
       id: admin.id
     };
 
-    const refreshToken = jwt.sign(refreshTokenPayload, getJWT.JWT_REFRESH_SECRET_TOKEN, {
+    const refreshToken = jwt.sign(refreshTokenPayload, getJWT.JWT_REFRESH_TOKEN_SECRET, {
       expiresIn: JWT_REFRESH_TOKEN_LIFETIME,
       jwtid: refreshTokenJti
     });
@@ -37,10 +37,10 @@ export const createTokenService = () => ({
   },
 
   verifyAccessToken: (token: string): AdminTokenPayload => {
-    return jwt.verify(token, getJWT.JWT_ACCESS_SECRET_TOKEN) as AdminTokenPayload;
+    return jwt.verify(token, getJWT.JWT_ACCESS_TOKEN_SECRET) as AdminTokenPayload;
   },
 
   verifyRefreshToken: (token: string): RefreshTokenPayload => {
-    return jwt.verify(token, getJWT.JWT_REFRESH_SECRET_TOKEN) as RefreshTokenPayload;
+    return jwt.verify(token, getJWT.JWT_REFRESH_TOKEN_SECRET) as RefreshTokenPayload;
   }
 });
