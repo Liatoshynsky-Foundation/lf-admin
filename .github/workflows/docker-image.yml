@@ -1,7 +1,9 @@
 name: Docker Image build
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - develop
 
 jobs:
   build:
@@ -30,14 +32,16 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.IMAGE_BUILD_TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ghcr.io/liatoshynsky-foundation/lf-admin:latest
+          tags: |
+            ghcr.io/liatoshynsky-foundation/lf-admin:latest
+            ghcr.io/liatoshynsky-foundation/lf-admin:${{ github.sha }}
           file: ./Dockerfile
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
