@@ -1,9 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { act } from 'react';
 
 import LoginPage from './page';
-import { type LoginMutationResponse } from '~/types/graphql/adminLogin';
+import { type LoginMutation, useLoginMutation } from '~/types/graphql/generated/graphql';
 
-const mockSuccessMutationResponse: LoginMutationResponse = {
+const mockSuccessMutationResponse: LoginMutation = {
   login: {
     __typename: 'LoginPayload',
     success: true,
@@ -12,7 +13,7 @@ const mockSuccessMutationResponse: LoginMutationResponse = {
   }
 };
 
-const mockErrorMutationResponse: LoginMutationResponse = {
+const mockErrorMutationResponse: LoginMutation = {
   login: {
     __typename: 'ErrorPayload',
     success: false,
@@ -21,12 +22,11 @@ const mockErrorMutationResponse: LoginMutationResponse = {
   }
 };
 
-const graphqlHookMock = jest.fn();
+const mockedUseLoginMutation = useLoginMutation as jest.Mock;
 const routerMockPush = jest.fn();
-const mockMutate = jest.fn();
 
-jest.mock('~/shared/hooks/use-graphql/use-graphql-mutation/useGraphqlMutation', () => ({
-  useGraphqlMutation: () => graphqlHookMock()
+jest.mock('~/types/graphql/generated/graphql', () => ({
+  useLoginMutation: jest.fn()
 }));
 
 jest.mock('next/navigation', () => ({
@@ -62,34 +62,38 @@ const submitFormHelper = () => {
 describe('LoginPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    graphqlHookMock.mockReturnValue({
-      mutate: mockMutate
-    });
+    mockedUseLoginMutation.mockReturnValue([jest.fn(), { loading: false, error: undefined }]);
   });
 
   it('should render the login modal with all fields and button', () => {
     render(<LoginPage />);
-
     expect(screen.getByLabelText(/Логін/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Пароль/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Увійти' })).toBeInTheDocument();
   });
 
   it('should call the mutation on form submission with correct data', () => {
+    const mockLoginFn = jest.fn();
+    mockedUseLoginMutation.mockReturnValue([mockLoginFn, { loading: false }]);
+
     submitFormHelper();
 
-    expect(mockMutate).toHaveBeenCalledWith(
-      { email: 'test@example.com', password: 'password123' }, //NOSONAR
-      expect.any(Object)
-    );
+    expect(mockLoginFn).toHaveBeenCalledWith({
+      variables: {
+        email: 'test@example.com',
+        password: 'password123' //NOSONAR
+      }
+    });
   });
 
   it('should handle successful login and redirect', () => {
-    graphqlHookMock.mockReturnValue({
-      mutate: (
-        _variables: { email: string; password: string },
-        { onSettled }: { onSettled: (response: LoginMutationResponse) => void }
-      ) => onSettled(mockSuccessMutationResponse)
+    mockedUseLoginMutation.mockImplementation((options) => {
+      const mockLoginFn = jest.fn().mockImplementation(() => {
+        act(() => {
+          options.onCompleted(mockSuccessMutationResponse);
+        });
+      });
+      return [mockLoginFn, { loading: false }];
     });
 
     submitFormHelper();
@@ -98,11 +102,13 @@ describe('LoginPage', () => {
   });
 
   it('should handle login failure and display error message', () => {
-    graphqlHookMock.mockReturnValue({
-      mutate: (
-        _variables: { email: string; password: string },
-        { onSettled }: { onSettled: (response: LoginMutationResponse) => void }
-      ) => onSettled(mockErrorMutationResponse)
+    mockedUseLoginMutation.mockImplementation((options) => {
+      const mockLoginFn = jest.fn().mockImplementation(() => {
+        act(() => {
+          options.onCompleted(mockErrorMutationResponse);
+        });
+      });
+      return [mockLoginFn, { loading: false }];
     });
 
     submitFormHelper();
@@ -111,11 +117,14 @@ describe('LoginPage', () => {
   });
 
   it('should handle unexpected errors gracefully', () => {
-    graphqlHookMock.mockReturnValue({
-      mutate: (
-        _variables: { email: string; password: string },
-        { onSettled }: { onSettled: (response: LoginMutationResponse | null) => void }
-      ) => onSettled(null)
+    const networkError = new Error('Network failed');
+    mockedUseLoginMutation.mockImplementation((options) => {
+      const mockLoginFn = jest.fn().mockImplementation(() => {
+        act(() => {
+          options.onError(networkError);
+        });
+      });
+      return [mockLoginFn, { loading: false }];
     });
 
     submitFormHelper();

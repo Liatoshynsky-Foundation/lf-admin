@@ -5,9 +5,9 @@ import Image from 'next/image';
 import React, { useState } from 'react';
 
 import PasswordField from '../design-system/password-field/PasswordField';
-import { CustomTextField } from '../design-system/text-field/TextField';
 import { styles } from './LoginModal.styles';
 import { loginErrors } from '~/constants/errors';
+import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { LoginModalProps } from '~/types/adminLogin';
 
 const LoginModal = ({ onSubmit, submitError }: LoginModalProps) => {
