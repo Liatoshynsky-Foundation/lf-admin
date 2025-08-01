@@ -28,9 +28,7 @@ type BaseButtonProps = {
 
 export type ButtonProps = BaseButtonProps & Omit<MuiButtonProps, keyof BaseButtonProps>;
 
-type Ref = MuiButtonProps['ref'];
-
-const Button = forwardRef(
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       sx,
@@ -44,22 +42,21 @@ const Button = forwardRef(
       endIcon,
       children,
       ...props
-    }: ButtonProps,
-    forwardedRef: Ref
+    },
+    ref
   ) => {
-    const loader = <CircularProgress color="inherit" data-testid="loader" size={25} />;
     const isDisabled = disabled ?? loading;
 
-    const content = (
-      <>
-        {startIcon}
-        <span className="lf-btn-label">{label ?? children}</span>
-        {endIcon}
-      </>
-    );
+    const buttonContent = label ?? children;
 
     return (
       <MuiButton
+        ref={ref}
+        size={size}
+        variant="contained"
+        startIcon={!loading ? startIcon : undefined}
+        endIcon={!loading ? endIcon : undefined}
+        disabled={isDisabled}
         sx={{
           ...buttonBaseStyles,
           ...sizeStyles[size],
@@ -67,22 +64,13 @@ const Button = forwardRef(
           ...(color === 'tertiary' ? variantStyles.tertiary.filled : variantStyles[color]?.[variant]),
           ...(sx as object)
         }}
-        disabled={isDisabled}
-        ref={forwardedRef}
         {...props}
       >
-        {loading ? (
-          <>
-            <span className="lf-btn-hidden-content">{content}</span>
-            <span className="lf-btn-loader">{loader}</span>
-          </>
-        ) : (
-          content
-        )}
+        {loading ? <CircularProgress size={25} color="inherit" data-testid="loader" /> : buttonContent}
       </MuiButton>
     );
   }
 );
-Button.displayName = 'Button';
 
+Button.displayName = 'Button';
 export default Button;
