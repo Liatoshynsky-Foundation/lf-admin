@@ -1,122 +1,114 @@
 <a href="https://softserve.academy/"><img src="https://softserve.academy/pluginfile.php/1/theme_boost_union/logocompact/300x300/1739968192/softserve_academy_logo-2023.png" title="SoftServe Academy" alt="SoftServe Academy"></a>
 
-**_INSERT GRAPHIC HERE (include hyperlink in image)_**
+<img src="./public/images/liatoshynsky-thumbnail.jpg" title="Liatoshynsky Foundation" alt="Liatoshynsky Foundation">
 
-# Repository Title Goes Here
+# Liatoshynsky Foundation Admin
 
-> Subtitle or Short Description Goes Here
+«Liatoshynsky Foundation» присвячений популяризації творчості Бориса Лятошинського – видатного українського композитора, представника модернізму та експресіонізму.
 
-> ideally one sentence
-
-> include terms/tags that can be searched
-
-**Badges will go here**
-
-- build status
-- coverage
-- issues (waffle.io maybe)
-- devDependencies
-- npm package
-- slack
-- downloads
-- gitter chat
-- license
-- etc.
-
-[![Build Status](https://img.shields.io/travis/ita-social-projects/GreenCity/master?style=flat-square)](https://travis-ci.org/github/ita-social-projects/GreenCity)
-[![Coverage Status](https://img.shields.io/gitlab/coverage/ita-social-projects/GreenCity/master?style=flat-square)](https://coveralls.io)
-[![Github Issues](https://img.shields.io/github/issues/Liatoshynsky-Foundation/lf-admin?style=flat-square)](https://github.com/Liatoshynsky-Foundation/lf-admin/issues)
-[![Pending Pull-Requests](https://img.shields.io/github/issues-pr/Liatoshynsky-Foundation/lf-admin?style=flat-square)](https://github.com/Liatoshynsky-Foundation/lf-admin/pulls)
+[![Github Issues](https://img.shields.io/github/issues/Liatoshynsky-Foundation/lf-client?style=flat-square)](https://github.com/Liatoshynsky-Foundation/lf-client/issues)
+[![Pending Pull-Requests](https://img.shields.io/github/issues-pr/Liatoshynsky-Foundation/lf-client?style=flat-square)](https://github.com/Liatoshynsky-Foundation/lf-client/pulls)
 [![License](http://img.shields.io/:license-mit-blue.svg?style=flat-square)](http://badges.mit-license.org)
 
-- For more on these wonderful badges, refer to <a href="https://shields.io/" target="_blank">shields.io</a>.
+## Table of Contents
 
----
-
-## Table of Contents (Optional)
-
-> If your `README` has a lot of info, section headers might be nice.
-
-- [Installation](#installation)
-  - [Required to install](#Required-to-install)
-  - [Environment](#Environment)
-  - [Clone](#Clone)
-  - [Setup](#Setup)
-  - [How to run local](#How-to-run-local)
-  - [How to run Docker](#How-to-run-Docker)
-- [Usage](#Usage)
-  - [How to work with swagger UI](#How-to-work-with-swagger-UI)
-  - [How to run tests](#How-to-run-tests)
-  - [How to Checkstyle](#How-to-Checkstyle)
-- [Documentation](#Documentation))
+- [Installation](#️-installation--lf-admin)
+  - [Requirements](#️-requirements)
+  - [Environment](#️-environment)
+  - [Clone Repository](#️-clone-repository)
+  - [(Optional for macOS) Install Tooling via Homebrew](#️-optional-for-macos-install-tooling-via-homebrew)
+  - [Install Node Dependencies](#️-install-node-dependencies)
+  - [Run Locally](#️-run-locally)
+  - [Run with Docker](#️-run-with-docker)
+- [Usage](#usage)
+  - [How to work with swagger UI](#how-to-work-with-swagger-ui)
+  - [How to run tests](#how-to-run-tests)
+  - [How to Check Code Style (ESLint)](#️-how-to-check-code-style-eslint)
+- [Documentation](#documentation)
+  - [Folder structure](#folder-structure)
 - [Contributing](#contributing)
-  - [git flow](#git-flow)
-  - [issue flow](#git-flow)
-- [FAQ](#faq)
-- [Support](#support)
+  - [Git flow](#git-flow)
+  - [JWT Login](#jwt-login)
+  - [JWT Refresh](#jwt-refresh)
+  - [Issue flow](#issue-flow)
+- [Team](#team)
+  - [Mentors](#mentors)
+  - [Experts](#experts)
+  - [Development team](#development-team)
+  - [DevOps team](#devops-team)
+  - [Designer team](#designer-team)
 - [License](#license)
 
 ---
 
-## Installation
+## 🛠️ Installation – LF Admin
 
-- All the `code` required to get started
-- Images of what it should look like
+This guide will help you run the Liatoshynsky Foundation Admin Panel locally using Node.js or Docker
 
-### Required to install
+### ✅ Requirements
 
-- Python (3.6.3)
-- PostgreSQL (9.5.9)
-- Django (1.11.6)
-- NodeJS (6.11.4)
-- Redis (3.0.6)
+- NodeJS (22.0.0)
+- Download from: <a href="https://nodejs.org" target="_blank">this url</a>
+- npm (comes with Node.js)
+- Docker (for containerized setup): <a href="https://www.docker.com/products/docker-desktop" target="_blank">you can download here</a>
 
-### Environment
+🐳 Make sure Docker is installed and running locally if you use the Docker setup
 
-environmental variables
+### 🧪 Environment
 
-```properties
-spring.datasource.url=${DATASOURCE_URL}
-spring.datasource.username=${DATASOURCE_USER}
-spring.datasource.password=${DATASOURCE_PASSWORD}
-spring.mail.username=${EMAIL_ADDRESS}
-spring.mail.password=${EMAIL_PASSWORD}
-cloud.name=${CLOUD_NAME}
-api.key=${API_KEY}
-api.secret=${API_SECRET}
+.env file contains:
+
+```dotenv
+MONGO_USERNAME=
+MONGO_PASSWORD=
+MONGO_DB=
+MONGO_HOST=
+MONGO_PORT=
+AZURE_SAS_URL=
+JWT_ACCESS_TOKEN_SECRET=
+JWT_REFRESH_TOKEN_SECRET=
+NODE_ENV=development
 ```
 
-### Clone
-
-- Clone this repo to your local machine using `git@github.com:Liatoshynsky-Foundation/lf-admin.git`
-
-### Setup
-
-- If you want more syntax highlighting, format your code like this:
-
-> update and install this package first
+### 📦 Clone Repository
 
 ```shell
-$ brew update
-$ brew install SOMEREPOproductions
+git clone git@github.com:Liatoshynsky-Foundation/lf-admin.git
+cd lf-admin
 ```
 
-> now install npm and bower packages
+### 🍺 (Optional for macOS) Install Tooling via Homebrew
+
+These steps are only required if you plan to use local tools and dependencies via brew:
 
 ```shell
-$ npm install
-$ bower install
+brew update
+brew install SOMEREPOproductions
 ```
 
-- For all the possible languages that support syntax highlithing on GitHub (which is basically all of them), refer <a href="https://github.com/github/linguist/blob/master/lib/linguist/languages.yml" target="_blank">here</a>.
+### 📥 Install Node Dependencies
 
-### How to run local
+```shell
+npm install
+```
 
-```bash
+### 🚀 Run Locally
+
+```shell
 npm run dev
 ```
 
-### How to run Docker
+The admin panel will be available at http://localhost:3000 or your configured port
+
+### 🐳 Run with Docker
+
+- Ensure Docker is installed and running
+- Then run the following commands:
+
+```shell
+docker build -t lf-admin:latest .
+docker run --env-file .env -p 3001:3001 lf-admin:latest
+```
 
 ---
 
@@ -126,7 +118,28 @@ npm run dev
 
 ### How to run tests
 
-### How to Checkstyle
+- To run all unit tests open terminal and run `npm run test` in it.
+- To run single unit test file run `npm run test -- {component}.test.tsx`.
+
+### ✅ How to Check Code Style (ESLint)
+
+We use ESLint to enforce consistent code style and catch potential issues early
+
+- 🔍 To check for linting issues:
+
+```shell
+npm run lint
+```
+
+This command runs ESLint across the project and reports all issues without fixing them
+
+- 🛠️ To automatically fix fixable issues:
+
+```shell
+npm run lint:fix
+```
+
+This will fix formatting and style problems automatically (e.g. spacing, unused imports, etc)
 
 ---
 
@@ -135,18 +148,12 @@ npm run dev
 ### Folder structure
 
 ```markdown
-app/
+app/ (frontend part)
 ├── events/
 │ ├── page.tsx (list of events)
 │ ├── [slug]/
 │ │ └── page.tsx # /events/:slug (individual event)
-│ ├── layout.tsx # (optional layout)
-│ ├── components/ # News-specific components
-│ │ ├── Events.tsx # Events component
-│ │ └── Event.tsx # Event post component
-│ └── hooks/ # event-specific hooks
-│ ├── useEvents.ts # Custom hook for fetching all events
-│ └── useEvent.ts # Custom hook for fetching a single event
+│ └──layout.tsx # (optional layout)
 ├── shared/ # Shared components and hooks
 │ ├── components/ # Reusable UI components
 │ │ ├── Header.tsx # Shared Header component
@@ -154,16 +161,34 @@ app/
 │ └── hooks/ # Reusable hooks
 │ └── useAuth.ts # Authentication hook (example)
 ├── api/
-│ ├── events/
-│ │ ├── route.ts # API for /api/events
-│ │ └── [slug]/
-│ │ └── route.ts # API for /api/events/:slug
+│ ├── graphql/
+│ │ └── route.ts # API for /api/graphql
 ├── middleware/ # Middlewares for handling requests
 │ ├── logger.ts # Middleware for logging
 │ └── authentication.ts # Middleware for authentication checks
 └── lib/
+│ └── utils
 │ └── axiosAPI.ts # Setup for axios API
 └── constants/
+src/ (backend part)
+├── application # Application layer
+│ └── use-cases
+├── config
+│ └── index.ts
+├── domain # Domain layer (DDD principles)
+│ ├── entities
+│ ├── repositories
+│ └── value-objects
+├── infrastructure # Infrastructure implementations
+│ ├── db
+│ ├── models
+│ └── repositories
+├── interfaces # Interfaces to the outside world
+│ └── graphql
+├── middleware
+│ └── logger
+├── shared
+│ └── types
 ```
 
 ---
@@ -315,29 +340,48 @@ sequenceDiagram
 
 ## Team
 
-> Or Contributors/People
+### Mentors
 
-[![@lhalam](https://avatars3.githubusercontent.com/u/3837059?s=100&v=4)](https://github.com/lhalam)
+[![@kolyasalubov](https://avatars.githubusercontent.com/u/36229492?v=4&size=250)](https://github.com/kolyasalubov)
+[![@vlad-khrychov](https://avatars.githubusercontent.com/u/67462207?v=4&size=250)](https://github.com/vlad-khrychov)
 
-- You can just grab their GitHub profile image URL
-- You should probably resize their picture using `?s=200` at the end of the image URL.
+### Experts
 
----
+[![@bandvov](https://avatars.githubusercontent.com/u/48312647?v=4&size=250)](https://github.com/bandvov)
+[![@myevd](https://avatars.githubusercontent.com/u/177050012?v=4&size=250)](https://github.com/myevd)
 
-## FAQ
+### Development team
 
-- **How do I do _specifically_ so and so?**
-  - No problem! Just do this.
+[![@Mav-Ivan](https://avatars.githubusercontent.com/u/110425368?v=4&size=250)](https://github.com/Mav-Ivan)
+[![@VKormylo](https://avatars.githubusercontent.com/u/65959529?v=4&size=250)](https://github.com/VKormylo)
+[![@SofiiaYevush](https://avatars.githubusercontent.com/u/142519729?v=4&size=250)](https://github.com/SofiiaYevush)
+[![@yur4uwe](https://avatars.githubusercontent.com/u/157615455?v=4&size=250)](https://github.com/yur4uwe)
+[![@uliaescha](https://avatars.githubusercontent.com/u/136600464?v=4&size=250)](https://github.com/uliaescha)
+[![@Iarynovskyi](https://avatars.githubusercontent.com/u/164883382?v=4&size=250)](https://github.com/Iarynovskyi)
+[![@danikua](https://avatars.githubusercontent.com/u/115005047?v=4&size=250)](https://github.com/danikua)
+[![@lizabre](https://avatars.githubusercontent.com/u/108484546?v=4&size=250)](https://github.com/lizabre)
+[![@oleg191006](https://avatars.githubusercontent.com/u/156513251?v=4&size=250)](https://github.com/oleg191006)
+[![@IrynaKhylchuk](https://avatars.githubusercontent.com/u/141860021?v=4&size=250)](https://github.com/IrynaKhylchuk)
+[![@luvthenika](https://avatars.githubusercontent.com/u/124041223?v=4&size=250)](https://github.com/luvthenika)
+[![@irynalaitaruk](https://avatars.githubusercontent.com/u/30904237?v=4&size=250)](https://github.com/irynalaitaruk)
+[![@ssashayurchenko](https://avatars.githubusercontent.com/u/160735952?v=4&size=250)](https://github.com/ssashayurchenko)
+[![@Kryzhanivsky](https://avatars.githubusercontent.com/u/77616134?v=4&size=250)](https://github.com/Kryzhanivsky)
+[![@Mike-Popovych](https://avatars.githubusercontent.com/u/125293578?v=4&size=250)](https://github.com/Mike-Popovych)
+[![@TARDeus524](https://avatars.githubusercontent.com/u/142096148?v=4&size=250)](https://github.com/TARDeus524)
+[![@bohuslavstan](https://avatars.githubusercontent.com/u/50991998?v=4&size=250)](https://github.com/bohuslavstan)
 
----
+### DevOps team
 
-## Support
+[![@qwqw-333](https://avatars.githubusercontent.com/u/132368159?v=4&size=250)](https://github.com/qwqw-333)
+[![@denchik911](https://avatars.githubusercontent.com/u/61146063?v=4&size=250)](https://github.com/denchik911)
+[![@Taras4568](https://avatars.githubusercontent.com/u/137615339?v=4&size=250)](https://github.com/Taras4568)
 
-Reach out to me at one of the following places!
+### Designer team
 
-- Website at <a href="http://Website.com" target="_blank">`Website.com`</a>
-- Facebook at <a href="https://www.facebook.com/LiubomyrHalamaha/" target="_blank">`Liubomyr Halamaha`</a>
-- Insert more social links here.
+[![@Nastia197](https://avatars.githubusercontent.com/u/76164279?v=4&size=250)](https://github.com/Nastia197)
+[![@a-humanenko](https://avatars.githubusercontent.com/u/192996565?v=4&size=250)](https://github.com/a-humanenko)
+[![@Valigura](https://avatars.githubusercontent.com/u/12103932?v=4&size=250)](https://github.com/Valigura)
+[![@JuliaKharaim](https://avatars.githubusercontent.com/u/170419178?v=4&size=250)](https://github.com/JuliaKharaim)
 
 ---
 
