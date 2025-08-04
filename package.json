@@ -41,7 +41,8 @@
     "react-image-crop": "^11.0.10",
     "uuid": "^11.1.0",
     "winston": "^3.17.0",
-    "winston-mongodb": "^7.0.0"
+    "winston-mongodb": "^7.0.0",
+    "zustand": "^5.0.7"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
