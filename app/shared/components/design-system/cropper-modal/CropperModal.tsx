@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { PixelCrop } from 'react-image-crop';
 
 import getCroppedImg from '../../../../lib/utils/CropperHelper';
+import Alert from '../alert/Alert';
 import { styles } from './CropperModal.styles';
 import { ImageCropper } from './ImageCropper/ImageCropper';
 
@@ -15,6 +16,7 @@ interface CropperModalProps {
   open: boolean;
   handleClose: () => void;
   handleSetNewPic: (newImage: string) => void;
+  handleSetNewPics?: (newImage: string[]) => void;
 }
 
 export const CropperModal: React.FC<CropperModalProps> = ({
@@ -23,8 +25,10 @@ export const CropperModal: React.FC<CropperModalProps> = ({
   imageUrl,
   open,
   handleClose,
-  handleSetNewPic
+  handleSetNewPic,
+  handleSetNewPics = () => {}
 }) => {
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const [crop, setCrop] = useState<PixelCrop>();
   const imageName = imageUrl.split('./')[1];
   const handleCroppedImage = (imageUrl: PixelCrop) => {
@@ -32,14 +36,34 @@ export const CropperModal: React.FC<CropperModalProps> = ({
   };
 
   const handleSave = async () => {
-    const result = await getCroppedImg(imageUrl, crop as PixelCrop, { width, height });
-    handleSetNewPic(result.dataUrl);
-    handleClose();
+    try {
+      const result = await getCroppedImg(imageUrl, crop as PixelCrop, { width, height }, [
+        { width: 300, height: 200 },
+        { width: 600, height: 400 }
+      ]);
+      handleSetNewPic(result.dataUrl);
+      handleSetNewPics(result.allImagesUrl);
+      handleClose();
+    } catch (error: Error | unknown) {
+      if (error instanceof Error) {
+        setErrorMessage(error.message);
+      }
+    }
   };
 
   return (
     <Modal open={open} onClose={handleClose} sx={styles.modal}>
       <Box sx={styles.modalContent}>
+        {errorMessage && (
+          <Alert
+            title="Something went wrong :("
+            severity="error"
+            description={errorMessage}
+            onClose={() => {
+              setErrorMessage('');
+            }}
+          />
+        )}
         <Box sx={styles.topSection}>
           <Box sx={styles.textSection}>
             <Typography sx={styles.mainTitle}>Редагування зображення</Typography>

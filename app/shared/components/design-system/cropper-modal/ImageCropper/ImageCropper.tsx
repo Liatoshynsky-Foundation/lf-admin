@@ -43,7 +43,7 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({ width, height, image
 
   return (
     <Box sx={styles.cropper}>
-      <ReactCrop crop={crop} onChange={setCrop} onComplete={onCropComplete} aspect={aspectRatio} ruleOfThirds locked>
+      <ReactCrop crop={crop} onChange={setCrop} onComplete={onCropComplete} aspect={aspectRatio} ruleOfThirds>
         <img src={imageUrl} alt="Source" onLoad={(e) => onImageLoad(e.currentTarget)} />
       </ReactCrop>
     </Box>
