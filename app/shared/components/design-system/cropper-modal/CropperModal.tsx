@@ -8,11 +8,13 @@ import getCroppedImg from '../../../../lib/utils/CropperHelper';
 import Alert from '../alert/Alert';
 import { styles } from './CropperModal.styles';
 import { ImageCropper } from './ImageCropper/ImageCropper';
+import { Size } from '~/types/cropper';
 
 interface CropperModalProps {
   width: number;
   height: number;
   imageUrl: string;
+  otherSizes: Size[];
   open: boolean;
   handleClose: () => void;
   handleSetNewPic: (newImage: string) => void;
@@ -23,6 +25,7 @@ export const CropperModal: React.FC<CropperModalProps> = ({
   width,
   height,
   imageUrl,
+  otherSizes,
   open,
   handleClose,
   handleSetNewPic,
@@ -37,10 +40,7 @@ export const CropperModal: React.FC<CropperModalProps> = ({
 
   const handleSave = async () => {
     try {
-      const result = await getCroppedImg(imageUrl, crop as PixelCrop, { width, height }, [
-        { width: 300, height: 200 },
-        { width: 600, height: 400 }
-      ]);
+      const result = await getCroppedImg(imageUrl, crop as PixelCrop, { width, height }, otherSizes);
       handleSetNewPic(result.dataUrl);
       handleSetNewPics(result.allImagesUrl);
       handleClose();

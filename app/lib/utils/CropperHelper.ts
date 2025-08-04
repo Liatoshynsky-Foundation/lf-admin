@@ -6,7 +6,7 @@ export default async function getCroppedImg(
   imageSrc: string,
   crop: PixelCrop,
   outputSize: Size,
-  allSizes: Size[]
+  allSizes?: Size[]
 ): Promise<{ dataUrl: string; allImagesUrl: string[]; blobUrl: string }> {
   if (crop.width === 0 || crop.width === 0) {
     throw new Error('Оберіть необхідну зону');
@@ -32,8 +32,10 @@ export default async function getCroppedImg(
   );
 
   const dataUrl = canvas.toDataURL('image/jpeg');
-
-  const allImagesUrl = await createResizedImages(dataUrl, allSizes);
+  let allImagesUrl: string[];
+  if (allSizes) {
+    allImagesUrl = await createResizedImages(dataUrl, allSizes);
+  }
 
   return new Promise((resolve) => {
     canvas.toBlob((blob) => {
