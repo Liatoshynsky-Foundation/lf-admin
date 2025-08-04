@@ -44,7 +44,7 @@ export const CropperModal: React.FC<CropperModalProps> = ({
       handleSetNewPic(result.dataUrl);
       handleSetNewPics(result.allImagesUrl);
       handleClose();
-    } catch (error: Error | unknown) {
+    } catch (error) {
       if (error instanceof Error) {
         setErrorMessage(error.message);
       }

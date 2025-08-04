@@ -8,7 +8,7 @@ export default async function getCroppedImg(
   outputSize: Size,
   allSizes?: Size[]
 ): Promise<{ dataUrl: string; allImagesUrl: string[]; blobUrl: string }> {
-  if (crop.width === 0 || crop.width === 0) {
+  if (crop.width === 0 || crop.height === 0) {
     throw new Error('Оберіть необхідну зону');
   }
   const image = await createImage(imageSrc);
