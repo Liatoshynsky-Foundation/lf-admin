@@ -1,11 +1,11 @@
-import { create } from 'zustand';
+import { StateCreator } from 'zustand';
 
 export interface Admin {
   email: string;
   canEdit: boolean;
 }
 
-interface AdminUserState {
+export interface AdminUserState {
   email: string;
   isLoggedIn: boolean;
   canEdit: boolean;
@@ -21,7 +21,7 @@ interface AdminUserState {
   updateAdminPermission: (email: string, canEdit: boolean) => void;
 }
 
-export const useAdminUserStore = create<AdminUserState>((set, get) => ({
+export const createAdminSlice: StateCreator<AdminUserState, [], [], AdminUserState> = (set, get) => ({
   email: '',
   isLoggedIn: false,
   canEdit: false,
@@ -63,4 +63,4 @@ export const useAdminUserStore = create<AdminUserState>((set, get) => ({
       admins: get().admins.map((a) => (a.email === email ? { ...a, canEdit } : a))
     });
   }
-}));
+});
