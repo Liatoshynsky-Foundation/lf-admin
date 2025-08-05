@@ -23,7 +23,7 @@ jobs:
         run: npm ci
 
       - name: Generate changelog
-        run: npx auto changelog
+        run: npx auto changelog --prepend
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

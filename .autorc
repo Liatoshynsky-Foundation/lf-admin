@@ -1,6 +1,9 @@
 {
-  "plugins": ["changelog", "released"],
-  "baseBranch": "branch",
+  "plugins": [
+    ["@auto-it/changelog", { "prepend": true }],
+    "released"
+  ],
+  "baseBranch": "develop",
   "labels": [
     {
       "name": "feat",
@@ -57,8 +60,5 @@
       "changelogTitle": "⏪ Reverts",
       "releaseType": "patch"
     }
-  ],
-  "changelog": {
-    "prepend": true
-  }
+  ]
 }
