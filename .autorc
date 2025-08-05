@@ -1,7 +1,6 @@
 {
   "plugins": [
-    ["@auto-it/changelog", { "prepend": true }],
-    "released"
+    "conventional-commits"
   ],
   "baseBranch": "develop",
   "labels": [
