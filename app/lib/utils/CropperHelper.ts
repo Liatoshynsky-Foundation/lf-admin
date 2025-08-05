@@ -1,5 +1,6 @@
 import { PixelCrop } from 'react-image-crop';
 
+import { cropperErrors } from '~/constants/errors';
 import { Size } from '~/types/cropper';
 
 export default async function getCroppedImg(
@@ -9,7 +10,7 @@ export default async function getCroppedImg(
   allSizes?: Size[]
 ): Promise<{ dataUrl: string; allImagesUrl: string[]; blobUrl: string }> {
   if (crop.width === 0 || crop.height === 0) {
-    throw new Error('Оберіть необхідну зону');
+    throw new Error(cropperErrors.NO_FRAME);
   }
   const image = await createImage(imageSrc);
   const canvas = document.createElement('canvas');

@@ -13,3 +13,7 @@ export const loginErrors = {
   EMPTY_PASSWORD: 'Пароль не може бути порожнім', //NOSONAR
   UNEXPECTED_ERROR: 'Непередбачена помилка. Спробуйте ще раз.'
 };
+
+export const cropperErrors = {
+  NO_FRAME: 'Оберіть необхідну зону'
+};

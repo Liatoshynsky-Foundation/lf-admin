@@ -41,7 +41,6 @@ export const CropperModal: React.FC<CropperModalProps> = ({
   const handleSave = async () => {
     try {
       const result = await getCroppedImg(imageUrl, crop as PixelCrop, { width, height }, otherSizes);
-      console.log(result);
       handleSetNewPic(result.dataUrl);
       handleSetNewPics(result.allImagesUrl);
       handleClose();
