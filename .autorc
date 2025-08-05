@@ -2,7 +2,7 @@
   "plugins": [
     "conventional-commits"
   ],
-  "baseBranch": "develop",
+  "baseBranch": "chore/164/add-change-log-actions",
   "author": {
     "name": "github-actions[bot]",
     "email": "github-actions[bot]@users.noreply.github.com"
