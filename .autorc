@@ -3,6 +3,10 @@
     "conventional-commits"
   ],
   "baseBranch": "develop",
+  "author": {
+    "name": "github-actions[bot]",
+    "email": "github-actions[bot]@users.noreply.github.com"
+  },
   "labels": [
     {
       "name": "feat",

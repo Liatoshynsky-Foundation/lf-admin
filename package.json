@@ -49,6 +49,7 @@
     "zustand": "^5.0.7"
   },
   "devDependencies": {
+    "@auto-it/conventional-commits": "^11.3.0",
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
     "@eslint/eslintrc": "^3",
