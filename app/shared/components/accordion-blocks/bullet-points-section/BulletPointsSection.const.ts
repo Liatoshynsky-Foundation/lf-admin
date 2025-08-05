@@ -1,12 +1,11 @@
-export type GoalItem = {
+export type BulletPointsItem = {
   id: number | string;
   title: string;
   text: string;
 };
 
 export const hardcodedData = {
-  sectionTitle: 'Наші цілі',
-  goals: [
+  bulletPoints: [
     {
       id: 1,
       title: 'Осмислити спадщину Бориса Лятошинського та інших українських композиторів;',
