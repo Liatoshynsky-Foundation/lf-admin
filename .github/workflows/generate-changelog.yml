@@ -3,7 +3,7 @@ name: Generate Changelog
 on:
   push:
     branches:
-      - branch
+      - chore/164/add-change-log-actions
   workflow_dispatch:
 
 jobs:
