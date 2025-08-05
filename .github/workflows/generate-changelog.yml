@@ -27,7 +27,7 @@ jobs:
       - name: Generate Version Tag 
         run: npx auto version
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Generate changelog
         run: npx auto changelog
