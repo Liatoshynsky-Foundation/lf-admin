@@ -13,7 +13,7 @@ const LanguageSwitcher = ({ languageSwitcher }: { languageSwitcher: (language: '
     </Button>
   ];
 
-  return <ButtonGroup buttons={languages} defaultActiveButton={0} palette="primary"></ButtonGroup>;
+  return <ButtonGroup buttons={languages} defaultActiveButton={0}></ButtonGroup>;
 };
 
 export default LanguageSwitcher;
