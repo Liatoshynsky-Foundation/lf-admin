@@ -6,9 +6,8 @@ import { Size } from '~/types/cropper';
 export default async function getCroppedImg(
   imageSrc: string,
   crop: PixelCrop,
-  outputSize: Size,
-  allSizes?: Size[]
-): Promise<{ dataUrl: string; allImagesUrl: string[]; blobUrl: string }> {
+  outputSize: Size
+): Promise<{ dataUrl: string; blobUrl: string }> {
   if (crop.width === 0 || crop.height === 0) {
     throw new Error(cropperErrors.NO_FRAME);
   }
@@ -33,10 +32,6 @@ export default async function getCroppedImg(
   );
 
   const dataUrl = canvas.toDataURL('image/jpeg');
-  let allImagesUrl: string[];
-  if (allSizes) {
-    allImagesUrl = await createResizedImages(dataUrl, allSizes);
-  }
 
   return new Promise((resolve) => {
     canvas.toBlob((blob) => {
@@ -44,7 +39,7 @@ export default async function getCroppedImg(
         throw new Error('Canvas is empty');
       }
       const blobUrl = URL.createObjectURL(blob);
-      resolve({ dataUrl, allImagesUrl, blobUrl });
+      resolve({ dataUrl, blobUrl });
     }, 'image/jpeg');
   });
 }
@@ -56,27 +51,5 @@ function createImage(url: string): Promise<HTMLImageElement> {
     image.onload = () => resolve(image);
     image.onerror = () => reject(new Error('Load failed'));
     image.src = url;
-  });
-}
-
-async function createResizedImages(imageSrc: string, sizes: Size[]) {
-  const image = new Image();
-  image.crossOrigin = 'anonymous';
-  image.src = imageSrc;
-
-  await new Promise((resolve) => {
-    image.onload = resolve;
-  });
-
-  return sizes.map(({ width, height }) => {
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-
-    const ctx = canvas.getContext('2d')!;
-    ctx.drawImage(image, 0, 0, width, height);
-
-    const dataUrl = canvas.toDataURL('image/jpeg');
-    return dataUrl;
   });
 }
