@@ -10,23 +10,5 @@ export const styles = {
     flexWrap: 'wrap',
     gap: 2,
     fontFamily: 'Mulish'
-  },
-
-  leftControls: {
-    direction: 'row',
-    spacing: 2,
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    display: 'flex'
-  },
-
-  rightControls: {
-    direction: 'row',
-    spacing: 2,
-    display: 'flex'
-  },
-
-  button: {
-    textTransform: 'none'
   }
 };
