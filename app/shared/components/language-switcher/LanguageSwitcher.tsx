@@ -1,6 +1,6 @@
-import { Button } from '@mui/material';
 import React from 'react';
 
+import Button from '../design-system/button/Button';
 import ButtonGroup from '../design-system/button-group/ButtonGroup';
 
 const LanguageSwitcher = ({ languageSwitcher }: { languageSwitcher: (language: 'ua' | 'en') => void }) => {
