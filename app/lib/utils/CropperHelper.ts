@@ -1,16 +1,21 @@
 import { PixelCrop } from 'react-image-crop';
 
+import { cropperErrors } from '~/constants/errors';
+import { Size } from '~/types/cropper';
+
 export default async function getCroppedImg(
   imageSrc: string,
   crop: PixelCrop,
-  outputSize = { width: 0, height: 0 }
+  outputSize: Size
 ): Promise<{ dataUrl: string; blobUrl: string }> {
+  if (crop.width === 0 || crop.height === 0) {
+    throw new Error(cropperErrors.NO_FRAME);
+  }
   const image = await createImage(imageSrc);
   const canvas = document.createElement('canvas');
   canvas.width = outputSize.width;
   canvas.height = outputSize.height;
   const ctx = canvas.getContext('2d');
-
   const scaleX = image.naturalWidth / image.width;
   const scaleY = image.naturalHeight / image.height;
 
