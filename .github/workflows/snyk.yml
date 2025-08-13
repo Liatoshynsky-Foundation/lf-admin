@@ -1,4 +1,5 @@
-name: Snyk Full Scan
+name: Snyk Full Scan 
+
 
 on:
   push:
