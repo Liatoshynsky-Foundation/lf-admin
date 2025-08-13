@@ -23,28 +23,25 @@ jobs:
 
       - name: Snyk Open Source + License scan
         uses: snyk/actions/node@master
-        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          command: test --license --fail-on=none
+          command: test --license 
 
       - name: Snyk Code (SAST)
         uses: snyk/actions/node@master
-        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          command: code test --fail-on=none
+          command: code test
 
       - name: Build Docker image
         run: docker build -t lf-admin:latest .
 
       - name: Snyk Container scan
         uses: snyk/actions/docker@master
-        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           image: lf-admin:latest
-          args: --file=Dockerfile --fail-on=none
+          args: --file=Dockerfile 
