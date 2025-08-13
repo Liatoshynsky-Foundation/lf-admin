@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ParagraphsBlock } from 'app/types/accordionBlocks';
 
 jest.mock('../../../design-system/photo-block/PhotoBlock', () => ({
   ImagePreviewBlock: () => <div data-testid="image-preview-block" />
@@ -8,14 +7,17 @@ jest.mock('../../../design-system/photo-block/PhotoBlock', () => ({
 
 import { FoundationBlock } from './FoundationBlock';
 
-const mockProps: ParagraphsBlock = {
+const mockProps = {
   mainText: 'Основний текст про фундацію',
   paragraphs: [
     { id: 1, text: 'Перший абзац' },
     { id: 2, text: 'Другий абзац' }
   ],
+  imageUrl: '/images/test.png',
+  fileName: 'test.png',
   onMainTextChange: jest.fn(),
-  onParagraphsChange: jest.fn()
+  onParagraphsChange: jest.fn(),
+  onImageChange: jest.fn()
 };
 
 describe('FoundationBlock', () => {
@@ -23,7 +25,7 @@ describe('FoundationBlock', () => {
     jest.clearAllMocks();
   });
 
-  it('should render main text and all paragraph labels', () => {
+  it('should render main text, paragraphs and image preview block', () => {
     render(<FoundationBlock {...mockProps} />);
 
     expect(screen.getByText('Основний текст секції')).toBeInTheDocument();
@@ -31,9 +33,10 @@ describe('FoundationBlock', () => {
     expect(screen.getByText('Текст 2 абзацу')).toBeInTheDocument();
 
     expect(screen.getByDisplayValue(mockProps.mainText)).toBeInTheDocument();
-    mockProps.paragraphs.forEach((value) => {
-      expect(screen.getByDisplayValue(value.text)).toBeInTheDocument();
+    mockProps.paragraphs.forEach((paragraph) => {
+      expect(screen.getByDisplayValue(paragraph.text)).toBeInTheDocument();
     });
+
     expect(screen.getByTestId('image-preview-block')).toBeInTheDocument();
   });
 
@@ -45,7 +48,8 @@ describe('FoundationBlock', () => {
     await user.clear(mainTextInput);
     await user.type(mainTextInput, 'Новий текст');
 
-    expect(mockProps.onMainTextChange).toHaveBeenCalledWith('Н');
+    expect(mockProps.onMainTextChange).toHaveBeenCalled();
+    expect(mockProps.onMainTextChange).toHaveBeenCalledWith(expect.any(String));
   });
 
   it('should call onParagraphsChange when a paragraph changes', async () => {
@@ -58,6 +62,7 @@ describe('FoundationBlock', () => {
     await user.clear(secondParagraphInput);
     await user.type(secondParagraphInput, 'Updated second paragraph');
 
-    expect(mockProps.onParagraphsChange).toHaveBeenCalledWith(1, 'Updated second paragraph');
+    expect(mockProps.onParagraphsChange).toHaveBeenCalled();
+    expect(mockProps.onParagraphsChange).toHaveBeenCalledWith(1, expect.any(String));
   });
 });

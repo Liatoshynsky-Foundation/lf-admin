@@ -1,28 +1,38 @@
 'use client';
+
 import { Box } from '@mui/material';
-import { ParagraphsBlock } from 'app/types/accordionBlocks';
-import React, { useState } from 'react';
+import React from 'react';
 
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { ImagePreviewBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
+import { Paragraph } from '~/types/accordionBlocks';
 
-export const FoundationBlock = ({ mainText, paragraphs, onMainTextChange, onParagraphsChange }: ParagraphsBlock) => {
-  const [imageUrl, setImageUrl] = useState('/images/image.png');
-  const [fileName, setFileName] = useState<string | undefined>(undefined);
+interface FoundationBlockProps {
+  mainText: string;
+  paragraphs: Paragraph[];
+  imageUrl: string;
+  fileName?: string;
+  onMainTextChange: (val: string) => void;
+  onParagraphsChange: (index: number, val: string) => void;
+  onImageChange: (file: File) => void;
+}
 
-  const handleChangeImage = (file: File) => {
-    const newImageUrl = URL.createObjectURL(file);
-    setImageUrl(newImageUrl);
-    setFileName(file.name);
-  };
-
+export const FoundationBlock = ({
+  mainText,
+  paragraphs,
+  imageUrl,
+  fileName,
+  onMainTextChange,
+  onParagraphsChange,
+  onImageChange
+}: FoundationBlockProps) => {
   return (
     <Box display="flex" flexDirection="column" gap="16px">
       <CustomTextField
         title="Основний текст секції"
         label="Текст"
-        defaultValue={mainText}
-        onChange={(e) => onMainTextChange && onMainTextChange(e.target.value)}
+        value={mainText}
+        onChange={(e) => onMainTextChange(e.target.value)}
         fullWidth
         multiline
       />
@@ -31,8 +41,8 @@ export const FoundationBlock = ({ mainText, paragraphs, onMainTextChange, onPara
           key={paragraph.id}
           title={`Текст ${index + 1} абзацу`}
           label="Текст абзацу"
-          defaultValue={paragraph.text}
-          onChange={(e) => onParagraphsChange && onParagraphsChange(index, e.target.value)}
+          value={paragraph.text}
+          onChange={(e) => onParagraphsChange(index, e.target.value)}
           fullWidth
           multiline
         />
@@ -42,7 +52,7 @@ export const FoundationBlock = ({ mainText, paragraphs, onMainTextChange, onPara
         fileName={fileName}
         cropWidth={350}
         cropHeight={300}
-        onChangeImage={handleChangeImage}
+        onChangeImage={onImageChange}
         title="Основне зображення"
       />
     </Box>

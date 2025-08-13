@@ -10,7 +10,7 @@ export const QuoteBlock = ({ title, description, onTitleChange, onDescriptionCha
       <CustomTextField
         title="Головна цитата"
         label="Текст підпису"
-        defaultValue={title}
+        value={title}
         onChange={(e) => onTitleChange && onTitleChange(e.target.value)}
         fullWidth
         multiline
@@ -18,7 +18,7 @@ export const QuoteBlock = ({ title, description, onTitleChange, onDescriptionCha
       <CustomTextField
         title="Підпис до цитати"
         label="Текст підпису"
-        defaultValue={description}
+        value={description}
         onChange={(e) => onDescriptionChange && onDescriptionChange(e.target.value)}
         fullWidth
       />

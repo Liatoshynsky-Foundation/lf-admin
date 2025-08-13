@@ -2,7 +2,6 @@
 
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
-import { useState } from 'react';
 
 import { DEFAULT_MISSION_POINTS, IMAGE_BLOCKS_INITIAL, OUR_MISSION_TEXT } from './OurMission.contants';
 import { styles } from './OurMission.styles';
@@ -10,9 +9,11 @@ import ConfigurableList from '~/components/configurable-list/ConfigurableList';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { ImagePreviewBlock } from '~/ds-components/photo-block/PhotoBlock';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
+import useInitBlock from '~/shared/hooks/use-init-block/useInitBlock';
+import { useStore } from '~/store';
 import { ConfigurableListItem } from '~/types/accordionBlocks';
 
-type MissionImage = {
+export type MissionImage = {
   id: string;
   imageUrl: string;
   title?: string;
@@ -22,7 +23,7 @@ type MissionImage = {
   cropHeight: number;
 };
 
-type MissionPoint = ConfigurableListItem & {
+export type MissionPoint = ConfigurableListItem & {
   value: string;
 };
 
@@ -48,7 +49,7 @@ const MissionImageBlock = ({
       <CustomTextField
         title={OUR_MISSION_TEXT.imageCaptionTitle}
         label={OUR_MISSION_TEXT.imageCaptionLabel}
-        defaultValue={imageData.caption}
+        value={imageData.caption}
         fullWidth
         multiline
         onChange={(e) => onChangeCaption(imageData.id, e.target.value)}
@@ -58,32 +59,47 @@ const MissionImageBlock = ({
 };
 
 const OurMission = () => {
-  const [missionPoints, setMissionPoints] = useState<MissionPoint[]>(
-    DEFAULT_MISSION_POINTS.map((point) => ({
+  const pageId = 'aboutUs';
+  const blockId = 'ourMission';
+
+  const block = useInitBlock(pageId, blockId, {
+    title: OUR_MISSION_TEXT.sectionTitle,
+    missionPoints: DEFAULT_MISSION_POINTS.map((point) => ({
       id: crypto.randomUUID(),
       value: point
-    }))
-  );
+    })),
+    imageBlocks: IMAGE_BLOCKS_INITIAL
+  });
 
-  const [imageBlocks, setImageBlocks] = useState<MissionImage[]>(IMAGE_BLOCKS_INITIAL);
+  const setField = useStore((state) => state.setField);
 
   const handleChangeImage = (id: string, file: File) => {
     const newUrl = URL.createObjectURL(file);
-    setImageBlocks((prev) =>
-      prev.map((img) => (img.id === id ? { ...img, imageUrl: newUrl, fileName: file.name } : img))
+    const updated = block.imageBlocks.map((img: MissionImage) =>
+      img.id === id ? { ...img, imageUrl: newUrl, fileName: file.name } : img
     );
+    setField(pageId, blockId, 'imageBlocks', updated);
   };
 
   const handleChangeCaption = (id: string, caption: string) => {
-    setImageBlocks((prev) => prev.map((img) => (img.id === id ? { ...img, caption } : img)));
+    const updated = block.imageBlocks.map((img: MissionImage) => (img.id === id ? { ...img, caption } : img));
+    setField(pageId, blockId, 'imageBlocks', updated);
   };
 
   const handleChangeMissionPoint = (updatedPoint: MissionPoint) => {
-    setMissionPoints((prev) => prev.map((point) => (point.id === updatedPoint.id ? updatedPoint : point)));
+    const updated = block.missionPoints.map((point: MissionPoint) =>
+      point.id === updatedPoint.id ? updatedPoint : point
+    );
+    setField(pageId, blockId, 'missionPoints', updated);
   };
 
   const handleDeleteMissionPoint = (id: string | number) => {
-    setMissionPoints((prev) => prev.filter((point) => point.id !== id));
+    setField(
+      pageId,
+      blockId,
+      'missionPoints',
+      block.missionPoints.filter((point: MissionPoint) => point.id !== id)
+    );
   };
 
   const handleCreateMissionPoint = () => {
@@ -91,7 +107,8 @@ const OurMission = () => {
       id: crypto.randomUUID(),
       value: ''
     };
-    setMissionPoints((prev) => [...prev, newPoint]);
+    const updated = [...block.missionPoints, newPoint];
+    setField(pageId, blockId, 'missionPoints', updated);
     return newPoint;
   };
 
@@ -101,20 +118,21 @@ const OurMission = () => {
         <CustomTextField
           title={OUR_MISSION_TEXT.titleFieldTitle}
           label={OUR_MISSION_TEXT.titleFieldLabel}
-          defaultValue={OUR_MISSION_TEXT.sectionTitle}
+          value={block.title || ''}
           fullWidth
           multiline
+          onChange={(e) => setField(pageId, blockId, 'title', e.target.value)}
         />
       </Box>
 
-      {missionPoints.length > 0 && (
+      {block.missionPoints?.length > 0 && (
         <Box component="h4" sx={styles.pointHeader}>
           {OUR_MISSION_TEXT.pointFieldTitle}
         </Box>
       )}
 
       <ConfigurableList<MissionPoint>
-        items={missionPoints}
+        items={block.missionPoints || []}
         addBtnLabel={OUR_MISSION_TEXT.addPointButton}
         editable
         onCreate={handleCreateMissionPoint}
@@ -134,7 +152,7 @@ const OurMission = () => {
 
       <Divider sx={styles.divider} />
 
-      {imageBlocks.map((image) => (
+      {block.imageBlocks?.map((image: MissionImage) => (
         <MissionImageBlock
           key={image.id}
           imageData={image}

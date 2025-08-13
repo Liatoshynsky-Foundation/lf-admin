@@ -1,27 +1,50 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 
+import { FoundationBlock } from './foundation-block/FoundationBlock';
 import { hardcodedData } from './LiatoshynskyFoundation.const';
-import { FoundationBlock } from '~/components/about-us/Liatoshynsky-foundation/foundation-block/FoundationBlock';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
+import useInitBlock from '~/shared/hooks/use-init-block/useInitBlock';
+import { useStore } from '~/store';
 
 export const LiatoshynskyFoundation = () => {
-  const [text, setText] = useState(hardcodedData.mainText);
-  const [paragraph, setParagraph] = useState(hardcodedData.paragraphs);
-  const handleParagraphChange = (index: number, newValue: string) => {
-    const updated = [...paragraph];
-    updated[index] = { ...updated[index], text: newValue };
-    setParagraph(updated);
+  const pageId = 'aboutUs';
+  const blockId = 'liatoshynskyFoundation';
+
+  const block = useInitBlock(pageId, blockId, hardcodedData);
+
+  const setField = useStore((state) => state.setField);
+
+  const handleMainTextChange = (val: string) => {
+    setField(pageId, blockId, 'mainText', val);
   };
+
+  const handleParagraphsChange = (index: number, val: string) => {
+    const updatedParagraphs = [...(block.paragraphs || [])];
+    updatedParagraphs[index] = { ...updatedParagraphs[index], text: val };
+    setField(pageId, blockId, 'paragraphs', updatedParagraphs);
+  };
+
+  const handleImageChange = (file: File) => {
+    const newImageUrl = URL.createObjectURL(file);
+
+    setField(pageId, blockId, 'image', newImageUrl);
+
+    setField(pageId, blockId, 'imageFileName', file.name);
+  };
+
   return (
     <CollapsibleBlock title="Фундація Лятошинського">
       <FoundationBlock
-        mainText={text}
-        paragraphs={paragraph}
-        onMainTextChange={setText}
-        onParagraphsChange={handleParagraphChange}
-      />{' '}
+        mainText={block.mainText || ''}
+        paragraphs={block.paragraphs || []}
+        imageUrl={`/images/${block.image || ''}`}
+        fileName={block.imageFileName}
+        onMainTextChange={handleMainTextChange}
+        onParagraphsChange={handleParagraphsChange}
+        onImageChange={handleImageChange}
+      />
     </CollapsibleBlock>
   );
 };

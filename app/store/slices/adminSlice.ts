@@ -1,25 +1,6 @@
 import { StateCreator } from 'zustand';
 
-export interface Admin {
-  email: string;
-  canEdit: boolean;
-}
-
-export interface AdminUserState {
-  email: string;
-  isLoggedIn: boolean;
-  canEdit: boolean;
-  isSuperAdmin: boolean;
-
-  admins: Admin[];
-
-  login: (data: { email: string; canEdit: boolean; isSuperAdmin: boolean }) => void;
-  logout: () => void;
-
-  addAdmin: (admin: Admin) => void;
-  removeAdmin: (email: string) => void;
-  updateAdminPermission: (email: string, canEdit: boolean) => void;
-}
+import { AdminUserState } from '../types';
 
 export const createAdminSlice: StateCreator<AdminUserState, [], [], AdminUserState> = (set, get) => ({
   email: '',

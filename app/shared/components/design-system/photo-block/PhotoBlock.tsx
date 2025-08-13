@@ -3,7 +3,7 @@
 import { Box, Stack, StackProps, Typography } from '@mui/material';
 import { readFileAsDataURL } from 'app/lib/utils/readFileAsDataURL';
 import { useImageMetadata } from 'app/shared/hooks/use-image-metadata/useImageMetadata';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import Button from '../button/Button';
 import { CropperModal } from '../cropper-modal/CropperModal';
@@ -39,6 +39,10 @@ export const ImagePreviewBlock = ({
   const [previewImage, setPreviewImage] = useState<string>(imageUrl);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setPreviewImage(imageUrl);
+  }, [imageUrl]);
 
   const { dimensions, fileName: finalFileName } = useImageMetadata(previewImage, fileName);
 
