@@ -51,13 +51,13 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
     });
   },
   saveAsDraft: () => {
-    const content = get().blocks;
-    void content;
+    const _content = get().blocks;
+
     set({ isChanged: false });
   },
   publishPage: () => {
-    const content = get().blocks;
-    void content;
+    const _content = get().blocks;
+
     set({ isChanged: false });
   }
 });
