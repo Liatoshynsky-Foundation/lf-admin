@@ -49,5 +49,15 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
       isChanged: isInit ? get().isChanged : true,
       isInitialized: isInit ? true : get().isInitialized
     });
+  },
+  saveAsDraft: () => {
+    const content = get().blocks;
+    void content;
+    set({ isChanged: false });
+  },
+  publishPage: () => {
+    const content = get().blocks;
+    void content;
+    set({ isChanged: false });
   }
 });

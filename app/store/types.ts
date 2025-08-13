@@ -44,6 +44,8 @@ export interface EditState {
     data: Partial<BlocksMap[K]>,
     isInit?: boolean
   ) => void;
+  saveAsDraft: () => void;
+  publishPage: () => void;
 }
 
 export type BlockData<K extends keyof BlocksMap = keyof BlocksMap> = BlocksMap[K];
