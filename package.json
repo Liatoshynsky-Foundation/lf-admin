@@ -34,7 +34,7 @@
     "eslint-plugin-unused-imports": "^4.1.4",
     "graphql": "^16.11.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.16.3",
+    "mongoose": "^8.17.1",
     "next": "15.3.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
