@@ -1,5 +1,6 @@
 'use client';
 
+import { Box } from '@mui/material';
 import React from 'react';
 
 import { fetchPreview } from '~/lib/utils/fetchPreview';
@@ -23,7 +24,7 @@ export default function Home() {
   const onSave = () => {};
 
   return (
-    <>
+    <Box>
       <Header
         title={pageData.title}
         onPreview={onPreview}
@@ -31,6 +32,6 @@ export default function Home() {
         onSave={onSave}
         isSaving
       />
-    </>
+    </Box>
   );
 }
