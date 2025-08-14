@@ -9,7 +9,7 @@ type ContributorCardProps = {
   contributorDescriptionValue: string;
 };
 export const ContributorCard = ({ contributorNameValue, contributorDescriptionValue }: ContributorCardProps) => {
-  const [imageUrl, setImageUrl] = useState('/images/image.png');
+  const [imageUrl, setImageUrl] = useState('/images/oval-contributor-card.png');
   const [fileName, setFileName] = useState<string | undefined>(undefined);
 
   const handleChangeImage = (file: File) => {
