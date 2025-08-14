@@ -6,6 +6,7 @@ import Divider from '@mui/material/Divider';
 import { DEFAULT_MISSION_POINTS, IMAGE_BLOCKS_INITIAL, OUR_MISSION_TEXT } from './OurMission.contants';
 import { styles } from './OurMission.styles';
 import ConfigurableList from '~/components/configurable-list/ConfigurableList';
+import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { ImagePreviewBlock } from '~/ds-components/photo-block/PhotoBlock';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
@@ -59,8 +60,8 @@ const MissionImageBlock = ({
 };
 
 const OurMission = () => {
-  const pageId = 'aboutUs';
-  const blockId = 'ourMission';
+  const pageId = PAGE_IDS.ABOUT_US;
+  const blockId = BLOCK_IDS.OUR_MISSION;
 
   const block = useInitBlock(pageId, blockId, {
     title: OUR_MISSION_TEXT.sectionTitle,

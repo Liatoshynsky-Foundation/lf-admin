@@ -6,12 +6,13 @@ import { ImagePreviewBlock } from '../../design-system/photo-block/PhotoBlock';
 import { CustomTextField } from '../../design-system/text-field/TextField';
 import { QuoteBlock } from '../Liatoshynsky-office/quote-block/QuoteBlock';
 import { hardcodedData } from './EntrySection.consts';
+import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import useInitBlock from '~/shared/hooks/use-init-block/useInitBlock';
 import { useStore } from '~/store';
 
 export const EntrySection = () => {
-  const pageId = 'aboutUs';
-  const blockId = 'entrySection';
+  const pageId = PAGE_IDS.ABOUT_US;
+  const blockId = BLOCK_IDS.ENTRY_SECTION;
 
   const block = useInitBlock(pageId, blockId, hardcodedData);
 

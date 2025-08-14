@@ -4,13 +4,14 @@ import React from 'react';
 
 import { FoundationBlock } from './foundation-block/FoundationBlock';
 import { hardcodedData } from './LiatoshynskyFoundation.const';
+import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import useInitBlock from '~/shared/hooks/use-init-block/useInitBlock';
 import { useStore } from '~/store';
 
 export const LiatoshynskyFoundation = () => {
-  const pageId = 'aboutUs';
-  const blockId = 'liatoshynskyFoundation';
+  const pageId = PAGE_IDS.ABOUT_US;
+  const blockId = BLOCK_IDS.LIATOSHYNSKY_FOUNDATION;
 
   const block = useInitBlock(pageId, blockId, hardcodedData);
 

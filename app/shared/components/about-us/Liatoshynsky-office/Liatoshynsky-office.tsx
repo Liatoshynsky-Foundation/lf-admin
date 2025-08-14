@@ -2,13 +2,14 @@
 
 import { hardcodedData } from './Liatoshynsky-office.const';
 import { QuoteBlock } from './quote-block/QuoteBlock';
+import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import useInitBlock from '~/shared/hooks/use-init-block/useInitBlock';
 import { useStore } from '~/store';
 
 export const LiatoshynskyOffice = () => {
-  const pageId = 'aboutUs';
-  const blockId = 'liatoshynskyOffice';
+  const pageId = PAGE_IDS.ABOUT_US;
+  const blockId = BLOCK_IDS.LIATOSHYNSKY_OFFICE;
 
   const block = useInitBlock(pageId, blockId, hardcodedData);
 
