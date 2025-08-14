@@ -17,6 +17,7 @@ interface ImagePreviewBlockProps extends StackProps {
   title?: string;
   cropWidth: number;
   cropHeight: number;
+  oval?: boolean;
   onChangeImage: (file: File) => void;
   direction?: 'row' | 'row-reverse' | 'column' | 'column-reverse';
   buttonSpacing?: string;
@@ -30,6 +31,7 @@ export const ImagePreviewBlock = ({
   title,
   cropWidth,
   cropHeight,
+  oval = false,
   onChangeImage,
   direction = 'row',
   buttonSpacing = '16px',
@@ -110,7 +112,8 @@ export const ImagePreviewBlock = ({
 
       <CropperModal
         open={isCropperOpen}
-        imageUrl={previewImage}
+        oval={oval}
+        imageUrl={imageUrl}
         width={cropWidth}
         height={cropHeight}
         handleClose={() => setIsCropperOpen(false)}

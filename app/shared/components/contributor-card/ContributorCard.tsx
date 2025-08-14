@@ -9,7 +9,7 @@ type ContributorCardProps = {
   contributorDescriptionValue: string;
 };
 export const ContributorCard = ({ contributorNameValue, contributorDescriptionValue }: ContributorCardProps) => {
-  const [imageUrl, setImageUrl] = useState('/images/oval-contributor-card.png');
+  const [imageUrl, setImageUrl] = useState('/images/image.png');
   const [fileName, setFileName] = useState<string | undefined>(undefined);
 
   const handleChangeImage = (file: File) => {
@@ -29,6 +29,7 @@ export const ContributorCard = ({ contributorNameValue, contributorDescriptionVa
         direction="column"
         buttonSpacing="8px"
         stackSpacing="24px"
+        oval
       />
       <Stack direction="column" gap={2} width="100%" mt={2}>
         <CustomTextField label="Ім`я" defaultValue={contributorNameValue} fullWidth />
