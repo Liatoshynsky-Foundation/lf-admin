@@ -10,7 +10,10 @@
     "lint:fix": "npx eslint . --fix",
     "test": "jest",
     "prepare": "husky",
-    "codegen": "graphql-codegen"
+    "codegen": "graphql-codegen",
+    "migrate:create": "npx migrate create",
+    "migrate:up": "npx migrate up",
+    "migrate:down": "npx migrate down"
   },
   "dependencies": {
     "@apollo/client": "^3.13.8",
@@ -39,6 +42,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-image-crop": "^11.0.10",
+    "ts-migrate-mongoose": "^4.0.9",
     "uuid": "^11.1.0",
     "winston": "^3.17.0",
     "winston-mongodb": "^7.0.0",
