@@ -1,0 +1,5 @@
+ignore:
+  SNYK-JS-INFLIGHT-6095116:
+    - '*':
+        reason: "Dev dependency, not critical"
+        expires: 2025-12-31T23:59:59.000Z
