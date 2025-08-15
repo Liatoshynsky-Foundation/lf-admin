@@ -2,10 +2,9 @@ name: Snyk Full Scan
 
 
 on:
-  push:
+  pull_request:
     branches:
       - develop
-  workflow_dispatch:
 
 jobs:
   snyk:
