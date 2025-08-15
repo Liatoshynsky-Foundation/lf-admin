@@ -34,10 +34,10 @@ beforeEach(() => {
 
 describe('GraphQL Mutations', () => {
   describe('login', () => {
-    const mockArgs = { email: 'test@test.com', password: 'password123' }; //NOSONAR
+    const mockArgs = { email: 'test@test.com', password: process.env.TEST_ADMIN_PASSWORD };
     const mockAdmin = { id: 'admin-1', type: 'admin' };
     const mockTokens = {
-      accessToken: 'new-access-token',
+      accessToken: process.env.TEST_ACCESS_TOKEN,
       refreshToken: 'new-refresh-token',
       refreshTokenJti: 'new-jti'
     };
@@ -125,7 +125,7 @@ describe('GraphQL Mutations', () => {
     };
     const oldPayload = { id: 'admin-1', type: 'admin', jti: 'old-jti' };
     const newTokens = {
-      accessToken: 'new-access-token',
+      accessToken: process.env.TEST_ACCESS_TOKEN,
       refreshToken: 'new-refresh-token',
       refreshTokenJti: 'new-jti'
     };

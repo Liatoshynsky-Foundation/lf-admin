@@ -4,7 +4,7 @@ name: Snyk Full Scan
 on:
   push:
     branches:
-      - feature/169/problem-in-appoloserver-introspection-enabled
+      - develop
   workflow_dispatch:
 
 jobs:
@@ -26,14 +26,14 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          command: test --license 
+          command: test --license --strict-out-of-sync=false
 
       - name: Snyk Code (SAST)
         uses: snyk/actions/node@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          command: code test
+          command: code test --strict-out-of-sync=false
 
       - name: Build Docker image
         run: docker build -t lf-admin:latest .

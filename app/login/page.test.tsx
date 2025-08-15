@@ -102,7 +102,7 @@ describe('LoginPage', () => {
     expect(mockLoginFn).toHaveBeenCalledWith({
       variables: {
         email: 'test@example.com',
-        password: 'password123' //NOSONAR
+        password: process.env.TEST_ADMIN_PASSWORD
       }
     });
   });

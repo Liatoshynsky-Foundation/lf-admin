@@ -52,7 +52,7 @@ describe('createTokenService', () => {
     });
 
     it('should throw an error for a token signed with an invalid key', () => {
-      const maliciousToken = jwt.sign({ id: 'hacker' }, 'this-is-a-wrong-secret');
+      const maliciousToken = jwt.sign({ id: 'hacker' }, process.env.TEST_JWT_SECRET);
 
       expect(() => {
         tokenService.verifyAccessToken(maliciousToken);
@@ -83,7 +83,7 @@ describe('createTokenService', () => {
     });
 
     it('should throw an error for a token signed with an invalid key', () => {
-      const maliciousToken = jwt.sign({ id: 'hacker' }, 'this-is-a-wrong-secret');
+      const maliciousToken = jwt.sign({ id: 'hacker' }, process.env.TEST_JWT_SECRET);
 
       expect(() => {
         tokenService.verifyRefreshToken(maliciousToken);

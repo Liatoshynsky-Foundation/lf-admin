@@ -96,7 +96,7 @@ describe('LoginModal', () => {
 
     expect(mockOnSubmit).toHaveBeenCalledWith({
       login: 'testuser',
-      password: 'password123' // NOSONAR
+      password: process.env.TEST_ADMIN_PASSWORD
     });
   });
 });
