@@ -1,4 +1,6 @@
 export const hardcodedData = {
+  image: 'image.png',
+  imageSize: { height: '300', width: '816' },
   mainText:
     'Фундація Лятошинського  — це громадська організація, створена з метою зробити українську класичну музику ХХ–ХХІ століть впізнаваною у світі.',
   paragraphs: [

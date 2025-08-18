@@ -1,19 +1,22 @@
 'use client';
 import { Box } from '@mui/material';
-import { useState } from 'react';
 
 import CollapsibleBlock from '../../design-system/collapsible-block/CollapsibleBlock';
 import { ImagePreviewBlock } from '../../design-system/photo-block/PhotoBlock';
 import { CustomTextField } from '../../design-system/text-field/TextField';
 import { QuoteBlock } from '../Liatoshynsky-office/quote-block/QuoteBlock';
 import { hardcodedData } from './EntrySection.consts';
+import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
+import useInitBlock from '~/shared/hooks/use-init-block/useInitBlock';
+import { useStore } from '~/store';
 
 export const EntrySection = () => {
-  const [title, setTitle] = useState(hardcodedData.title);
-  const [image, setImage] = useState(hardcodedData.image);
-  const [imageCaption, setImageCaption] = useState(hardcodedData.imageCaption);
-  const [quoteText, setQuoteText] = useState(hardcodedData.quoteText);
-  const [quoteDescription, setQuoteDescription] = useState(hardcodedData.quoteDescription);
+  const pageId = PAGE_IDS.ABOUT_US;
+  const blockId = BLOCK_IDS.ENTRY_SECTION;
+
+  const block = useInitBlock(pageId, blockId, hardcodedData);
+
+  const setField = useStore((state) => state.setField);
 
   return (
     <CollapsibleBlock title="Вступна секція">
@@ -21,16 +24,17 @@ export const EntrySection = () => {
         title="Заголовок сторінки"
         label="Текст заголовку"
         fullWidth
-        defaultValue={title}
-        onChange={(e) => setTitle(e.target.value)}
+        value={block.title || ''}
+        onChange={(e) => setField(pageId, blockId, 'title', e.target.value)}
       />
+
       <Box sx={{ marginLeft: '-16px' }}>
         <ImagePreviewBlock
-          imageUrl={`/images/${image}`}
-          fileName={image}
+          imageUrl={`/images/${block.image || ''}`}
+          fileName={block.image || ''}
           cropHeight={50}
           cropWidth={50}
-          onChangeImage={(e) => setImage(e.name)}
+          onChangeImage={(file) => setField(pageId, blockId, 'image', file.name)}
         />
       </Box>
 
@@ -38,15 +42,16 @@ export const EntrySection = () => {
         title="Підпис до зображення"
         label="Текст підпису"
         fullWidth
-        defaultValue={imageCaption}
-        onChange={(e) => setImageCaption(e.target.value)}
+        value={block.imageCaption || ''}
+        onChange={(e) => setField(pageId, blockId, 'imageCaption', e.target.value)}
       />
+
       <Box sx={{ marginTop: '15px' }}>
         <QuoteBlock
-          title={quoteText}
-          description={quoteDescription}
-          onTitleChange={setQuoteText}
-          onDescriptionChange={setQuoteDescription}
+          title={block.quoteText || ''}
+          description={block.quoteDescription || ''}
+          onTitleChange={(val) => setField(pageId, blockId, 'quoteText', val)}
+          onDescriptionChange={(val) => setField(pageId, blockId, 'quoteDescription', val)}
         />
       </Box>
     </CollapsibleBlock>
