@@ -24,10 +24,6 @@ jobs:
         uses: snyk/actions/node@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-          TEST_JWT_SECRET: ${{ vars.TEST_JWT_SECRET }}
-          TEST_ADMIN_PASSWORD: ${{ vars.TEST_ADMIN_PASSWORD }}
-          TEST_ADMIN_EMAIL: ${{ vars.TEST_ADMIN_EMAIL }}
-          TEST_ACCESS_TOKEN: ${{ secrets.TEST_ACCESS_TOKEN }}
         with:
           command: test --license --strict-out-of-sync=false
 
