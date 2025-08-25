@@ -1,10 +1,10 @@
 export const PAGE_IDS = {
-  ABOUT_US: 'aboutUs'
+  ABOUT_US: 'about-us'
 };
 
 export const BLOCK_IDS = {
-  ENTRY_SECTION: 'entrySection',
-  LIATOSHYNSKY_FOUNDATION: 'liatoshynskyFoundation',
-  LIATOSHYNSKY_OFFICE: 'liatoshynskyOffice',
-  OUR_MISSION: 'ourMission'
+  INTRO_SECTION: 'IntroSection',
+  LIATOSHYNSKY_FOUNDATION: 'FoundationInfo',
+  LIATOSHYNSKY_OFFICE: 'LiatoshynskyOffice',
+  OUR_MISSION: 'OurMission'
 } as const;
