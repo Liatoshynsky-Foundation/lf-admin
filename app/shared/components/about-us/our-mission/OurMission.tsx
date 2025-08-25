@@ -15,7 +15,7 @@ import { proseToText, textToProse } from '~/lib/utils/prose';
 import { usePageBlocks } from '~/shared/hooks/use-page-blocks/usePageBlocks';
 import { useStore } from '~/store';
 import { ConfigurableListItem } from '~/types/accordionBlocks';
-import { MissionListItem, MissionListItemWithId } from '~/types/store/pages/about-us/blocks/missionBlock';
+import { MissionListItemWithId } from '~/types/store/pages/about-us/blocks/missionBlock';
 
 export type MissionPoint = ConfigurableListItem & { value: string };
 
@@ -83,8 +83,8 @@ const OurMission = () => {
   }));
 
   const handleChangeMissionPoint = (id: string | number, value: string) => {
-    const updatedList: MissionListItem[] = missionList.map((item) =>
-      item.id === id ? { uk: item.uk, en: item.en, [currentLocale]: textToProse(value) } : item
+    const updatedList: MissionListItemWithId[] = missionList.map((item) =>
+      item.id === id ? { ...item, [currentLocale]: textToProse(value) } : item
     );
     setField(pageId, blockId, 'list', updatedList);
   };
