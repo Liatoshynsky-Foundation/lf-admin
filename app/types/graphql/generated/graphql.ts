@@ -15,6 +15,7 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean };
   Int: { input: number; output: number };
   Float: { input: number; output: number };
+  JSON: { input: any; output: any };
 };
 
 export type ErrorPayload = {
@@ -22,6 +23,18 @@ export type ErrorPayload = {
   message: Scalars['String']['output'];
   statusCode: Scalars['Int']['output'];
   success: Scalars['Boolean']['output'];
+};
+
+export type LocalizedString = {
+  __typename?: 'LocalizedString';
+  en?: Maybe<Scalars['String']['output']>;
+  uk?: Maybe<Scalars['String']['output']>;
+};
+
+export type LocalizedTitle = {
+  __typename?: 'LocalizedTitle';
+  en: Scalars['String']['output'];
+  uk: Scalars['String']['output'];
 };
 
 export type LoginPayload = {
@@ -45,10 +58,27 @@ export type MutationLoginArgs = {
   password: Scalars['String']['input'];
 };
 
+export type Page = {
+  __typename?: 'Page';
+  blocks: Scalars['JSON']['output'];
+  createdAt: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  pageType: Scalars['String']['output'];
+  slug: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  title: LocalizedTitle;
+  updatedAt: Scalars['String']['output'];
+};
+
 export type Query = {
   __typename?: 'Query';
   _empty?: Maybe<Scalars['String']['output']>;
+  pageBlocks?: Maybe<Page>;
   test: RefreshTokenPayload;
+};
+
+export type QueryPageBlocksArgs = {
+  slug: Scalars['String']['input'];
 };
 
 export type RefreshTokenPayload = {
@@ -74,6 +104,12 @@ export type GetAdminProfileQuery = {
   __typename?: 'Query';
   test: { __typename: 'RefreshTokenPayload'; success: boolean };
 };
+
+export type GetPageQueryVariables = Exact<{
+  slug: Scalars['String']['input'];
+}>;
+
+export type GetPageQuery = { __typename?: 'Query'; pageBlocks?: { __typename?: 'Page'; blocks: any } | null };
 
 export const LoginDocument = gql`
   mutation Login($email: String!, $password: String!) {
@@ -165,3 +201,48 @@ export type GetAdminProfileQueryHookResult = ReturnType<typeof useGetAdminProfil
 export type GetAdminProfileLazyQueryHookResult = ReturnType<typeof useGetAdminProfileLazyQuery>;
 export type GetAdminProfileSuspenseQueryHookResult = ReturnType<typeof useGetAdminProfileSuspenseQuery>;
 export type GetAdminProfileQueryResult = Apollo.QueryResult<GetAdminProfileQuery, GetAdminProfileQueryVariables>;
+export const GetPageDocument = gql`
+  query GetPage($slug: String!) {
+    pageBlocks(slug: $slug) {
+      blocks
+    }
+  }
+`;
+
+/**
+ * __useGetPageQuery__
+ *
+ * To run a query within a React component, call `useGetPageQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetPageQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetPageQuery({
+ *   variables: {
+ *      slug: // value for 'slug'
+ *   },
+ * });
+ */
+export function useGetPageQuery(
+  baseOptions: Apollo.QueryHookOptions<GetPageQuery, GetPageQueryVariables> &
+    ({ variables: GetPageQueryVariables; skip?: boolean } | { skip: boolean })
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetPageQuery, GetPageQueryVariables>(GetPageDocument, options);
+}
+export function useGetPageLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetPageQuery, GetPageQueryVariables>) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetPageQuery, GetPageQueryVariables>(GetPageDocument, options);
+}
+export function useGetPageSuspenseQuery(
+  baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPageQuery, GetPageQueryVariables>
+) {
+  const options = baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
+  return Apollo.useSuspenseQuery<GetPageQuery, GetPageQueryVariables>(GetPageDocument, options);
+}
+export type GetPageQueryHookResult = ReturnType<typeof useGetPageQuery>;
+export type GetPageLazyQueryHookResult = ReturnType<typeof useGetPageLazyQuery>;
+export type GetPageSuspenseQueryHookResult = ReturnType<typeof useGetPageSuspenseQuery>;
+export type GetPageQueryResult = Apollo.QueryResult<GetPageQuery, GetPageQueryVariables>;
