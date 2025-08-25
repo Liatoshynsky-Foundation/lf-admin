@@ -3,22 +3,18 @@ import type { ChangeEvent, ReactNode } from 'react';
 
 import { EntrySection } from './EntrySection';
 
-// 🔹 Загальний мок для setField
 const setFieldMock = jest.fn();
 
-// 🔹 Мок стора
 jest.mock('~/store', () => ({
   useStore: (selector: (s: { locale: string; setField: typeof setFieldMock }) => unknown) =>
     selector({ locale: 'uk', setField: setFieldMock })
 }));
 
-// 🔹 Мок usePageBlocks (перевизначається у тестах)
 const usePageBlocksMock = jest.fn();
 jest.mock('~/shared/hooks/use-page-blocks/usePageBlocks', () => ({
   usePageBlocks: (...args: unknown[]) => usePageBlocksMock(...args)
 }));
 
-// 🔹 CollapsibleBlock
 jest.mock('../../design-system/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
   default: ({ children, title }: { children: ReactNode; title: string }) => (
@@ -29,7 +25,6 @@ jest.mock('../../design-system/collapsible-block/CollapsibleBlock', () => ({
   )
 }));
 
-// 🔹 ImagePreviewBlock
 jest.mock('../../design-system/photo-block/PhotoBlock', () => ({
   ImagePreviewBlock: ({
     imageUrl,

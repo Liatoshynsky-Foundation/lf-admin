@@ -3,7 +3,6 @@ import { render, screen } from '@testing-library/react';
 
 import About from './page';
 
-// 🔹 Моки для дочірніх компонентів
 jest.mock('~/shared/components/header/Header', () => ({
   Header: ({ title }: { title: string }) => <div data-testid="header">{title}</div>
 }));
