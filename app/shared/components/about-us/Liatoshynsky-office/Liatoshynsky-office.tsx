@@ -1,27 +1,54 @@
 'use client';
 
-import { hardcodedData } from './Liatoshynsky-office.const';
+import { Skeleton } from '@mui/material';
+
 import { QuoteBlock } from './quote-block/QuoteBlock';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
-import useInitBlock from '~/shared/hooks/use-init-block/useInitBlock';
+import { usePageBlocks } from '~/shared/hooks/use-page-blocks/usePageBlocks';
 import { useStore } from '~/store';
+import { LocalizedString } from '~/types/common';
 
 export const LiatoshynskyOffice = () => {
   const pageId = PAGE_IDS.ABOUT_US;
   const blockId = BLOCK_IDS.LIATOSHYNSKY_OFFICE;
 
-  const block = useInitBlock(pageId, blockId, hardcodedData);
-
+  const { blocks } = usePageBlocks(pageId);
   const setField = useStore((state) => state.setField);
+
+  const currentLocale: keyof LocalizedString = useStore((state) => state.locale);
+
+  const block = blocks.LiatoshynskyOffice;
+
+  if (!block) return <Skeleton sx={{ height: '60px' }} />;
+
+  const handleTitleChange = (val: string) => {
+    setField(pageId, blockId, 'quote', {
+      source: {
+        ...block.quote.source,
+        [currentLocale]: val
+      },
+      text: block.quote.text
+    });
+  };
+
+  const handleDescriptionChange = (val: string) => {
+    setField(pageId, blockId, 'quote', {
+      source: block.quote.source,
+      text: {
+        ...block.quote.text,
+        [currentLocale]: val
+      }
+    });
+  };
 
   return (
     <CollapsibleBlock title="Кабінет Лятошинського">
       <QuoteBlock
-        title={block.mainQuote || ''}
-        description={block.caption || ''}
-        onTitleChange={(val) => setField(pageId, blockId, 'mainQuote', val)}
-        onDescriptionChange={(val) => setField(pageId, blockId, 'caption', val)}
+        title={block.quote.source[currentLocale] || ''}
+        description={block.quote.text[currentLocale] || ''}
+        onTitleChange={handleTitleChange}
+        onDescriptionChange={handleDescriptionChange}
       />
     </CollapsibleBlock>
   );
