@@ -67,9 +67,9 @@ jest.mock('@mui/material', () => {
   return {
     ...original,
     Skeleton: () => (
-      <div role="progressbar" aria-busy="true">
+      <progress aria-busy="true" value={0} max={100}>
         Loading...
-      </div>
+      </progress>
     )
   };
 });
