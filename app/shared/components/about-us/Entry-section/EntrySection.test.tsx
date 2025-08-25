@@ -1,66 +1,181 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import type { ChangeEvent, ReactNode } from 'react';
 
 import { EntrySection } from './EntrySection';
-import { hardcodedData } from './EntrySection.consts';
 
+// 🔹 Загальний мок для setField
+const setFieldMock = jest.fn();
+
+// 🔹 Мок стора
+jest.mock('~/store', () => ({
+  useStore: (selector: (s: { locale: string; setField: typeof setFieldMock }) => unknown) =>
+    selector({ locale: 'uk', setField: setFieldMock })
+}));
+
+// 🔹 Мок usePageBlocks (перевизначається у тестах)
+const usePageBlocksMock = jest.fn();
+jest.mock('~/shared/hooks/use-page-blocks/usePageBlocks', () => ({
+  usePageBlocks: (...args: unknown[]) => usePageBlocksMock(...args)
+}));
+
+// 🔹 CollapsibleBlock
 jest.mock('../../design-system/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
-  default: ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div data-testid="collapsible-block">
+  default: ({ children, title }: { children: ReactNode; title: string }) => (
+    <section data-testid="collapsible">
       <h2>{title}</h2>
       {children}
-    </div>
+    </section>
   )
 }));
 
+// 🔹 ImagePreviewBlock
 jest.mock('../../design-system/photo-block/PhotoBlock', () => ({
-  __esModule: true,
   ImagePreviewBlock: ({
-    fileName,
     imageUrl,
+    fileName,
     onChangeImage
   }: {
-    fileName: string;
     imageUrl: string;
-    onChangeImage: (e: { name: string }) => void;
+    fileName: string;
+    onChangeImage: (file: { name: string }) => void;
   }) => (
-    <div>
-      <button data-testid="image-preview-block" onClick={() => onChangeImage({ name: 'mocked-image.jpg' })}>
-        Mocked Image Block
-      </button>
-      <p data-testid="image-file-name">{fileName}</p>
-      <img data-testid="image-element" src={imageUrl} alt="Preview" />
+    <div data-testid="image-preview">
+      <span data-testid="image-url">{imageUrl}</span>
+      <span data-testid="file-name">{fileName}</span>
+      <button onClick={() => onChangeImage({ name: 'new.png' })}>Upload Image</button>
     </div>
   )
 }));
 
-describe('Entry section', () => {
-  it('should render the section', () => {
+jest.mock('../../design-system/text-field/TextField', () => ({
+  CustomTextField: ({
+    title,
+    value,
+    onChange
+  }: {
+    title: string;
+    value: string;
+    onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  }) => (
+    <label>
+      {title}
+      <input data-testid={`textfield-${title}`} value={value} onChange={(e) => onChange(e)} />
+    </label>
+  )
+}));
+
+jest.mock('../Liatoshynsky-office/quote-block/QuoteBlock', () => ({
+  QuoteBlock: ({
+    title,
+    description,
+    onTitleChange,
+    onDescriptionChange
+  }: {
+    title: string;
+    description: string;
+    onTitleChange: (val: string) => void;
+    onDescriptionChange: (val: string) => void;
+  }) => (
+    <div data-testid="quote-block">
+      <span data-testid="quote-title-prop">{title}</span>
+      <span data-testid="quote-description-prop">{description}</span>
+      <input data-testid="quote-title" value={title} onChange={(e) => onTitleChange(e.target.value)} />
+      <input
+        data-testid="quote-description"
+        value={description}
+        onChange={(e) => onDescriptionChange(e.target.value)}
+      />
+    </div>
+  )
+}));
+
+describe('EntrySection', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    usePageBlocksMock.mockReturnValue({
+      blocks: {
+        IntroSection: {
+          title: { uk: 'Title' },
+          image: { src: 'test-image', caption: { uk: 'Caption' } },
+          quote: { source: { uk: 'Author' }, text: { uk: 'Quote' } }
+        }
+      }
+    });
+  });
+
+  it('should render all fields when block exists', () => {
     render(<EntrySection />);
     expect(screen.getByText('Вступна секція')).toBeInTheDocument();
-    expect(screen.getByDisplayValue(hardcodedData.title)).toBeInTheDocument();
-    expect(screen.getByDisplayValue(hardcodedData.imageCaption)).toBeInTheDocument();
-    expect(screen.getByText(hardcodedData.quoteText)).toBeInTheDocument();
+    ['Title', 'Caption', 'Author', 'Quote'].forEach((val) => expect(screen.getByDisplayValue(val)).toBeInTheDocument());
   });
 
-  it('should update title when user types in title field', () => {
+  it('should pass correct props to ImagePreviewBlock', () => {
     render(<EntrySection />);
-    const input = screen.getByLabelText(/текст заголовку/i);
-    fireEvent.change(input, { target: { value: 'New Title' } });
-    expect(input).toHaveValue('New Title');
+    const preview = screen.getByTestId('image-preview');
+    expect(within(preview).getByTestId('image-url')).toHaveTextContent('/images/test-image.png');
+    expect(within(preview).getByTestId('file-name')).toHaveTextContent('test-image');
   });
 
-  it('should update title when user types in caption field', () => {
+  it('should pass correct props to QuoteBlock', () => {
     render(<EntrySection />);
-    const input = screen.getByDisplayValue(hardcodedData.imageCaption);
-    fireEvent.change(input, { target: { value: 'New Caption' } });
-    expect(input).toHaveValue('New Caption');
+    expect(screen.getByTestId('quote-title-prop')).toHaveTextContent('Author');
+    expect(screen.getByTestId('quote-description-prop')).toHaveTextContent('Quote');
   });
 
-  it('should update image when ImagePreviewBlock triggers onChangeImage', () => {
+  it('should call setField when updating title', () => {
     render(<EntrySection />);
-    fireEvent.click(screen.getByTestId('image-preview-block'));
+    fireEvent.change(screen.getByTestId('textfield-Заголовок сторінки'), {
+      target: { value: 'New Title' }
+    });
+    expect(setFieldMock).toHaveBeenCalledWith(
+      'about-us',
+      'IntroSection',
+      'title',
+      expect.objectContaining({ uk: 'New Title' })
+    );
+  });
 
-    expect(screen.getByText('mocked-image.jpg')).toBeInTheDocument();
+  it('should call setField when uploading new image', () => {
+    render(<EntrySection />);
+    fireEvent.click(screen.getByText('Upload Image'));
+    expect(setFieldMock).toHaveBeenCalledWith(
+      'about-us',
+      'IntroSection',
+      'image',
+      expect.objectContaining({ src: 'new.png', generatedSrc: expect.stringContaining('new.png') })
+    );
+  });
+
+  it('should call setField when updating image caption', () => {
+    render(<EntrySection />);
+    fireEvent.change(screen.getByTestId('textfield-Підпис до зображення'), {
+      target: { value: 'New Caption' }
+    });
+    expect(setFieldMock).toHaveBeenCalledWith(
+      'about-us',
+      'IntroSection',
+      'image',
+      expect.objectContaining({ caption: expect.objectContaining({ uk: 'New Caption' }) })
+    );
+  });
+
+  it('should call setField when updating quote fields', () => {
+    render(<EntrySection />);
+    fireEvent.change(screen.getByTestId('quote-title'), { target: { value: 'New Author' } });
+    fireEvent.change(screen.getByTestId('quote-description'), { target: { value: 'New Quote' } });
+
+    expect(setFieldMock).toHaveBeenCalledWith(
+      'about-us',
+      'IntroSection',
+      'quote',
+      expect.objectContaining({ source: expect.objectContaining({ uk: 'New Author' }) })
+    );
+    expect(setFieldMock).toHaveBeenCalledWith(
+      'about-us',
+      'IntroSection',
+      'quote',
+      expect.objectContaining({ text: expect.objectContaining({ uk: 'New Quote' }) })
+    );
   });
 });
