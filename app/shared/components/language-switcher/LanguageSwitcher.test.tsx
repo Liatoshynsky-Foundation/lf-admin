@@ -42,7 +42,7 @@ describe('LanguageSwitcher', () => {
     render(<LanguageSwitcher languageSwitcher={mockLanguageSwitcher} />);
     const ukrainianButton = screen.getByText('Українська');
     fireEvent.click(ukrainianButton);
-    expect(mockLanguageSwitcher).toHaveBeenCalledWith('ua');
+    expect(mockLanguageSwitcher).toHaveBeenCalledWith('uk');
   });
 
   it('should call languageSwitcher with "en" when English is clicked', () => {

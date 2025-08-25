@@ -3,9 +3,9 @@ import React from 'react';
 import Button from '../design-system/button/Button';
 import ButtonGroup from '../design-system/button-group/ButtonGroup';
 
-const LanguageSwitcher = ({ languageSwitcher }: { languageSwitcher: (language: 'ua' | 'en') => void }) => {
+const LanguageSwitcher = ({ languageSwitcher }: { languageSwitcher: (language: 'uk' | 'en') => void }) => {
   const languages = [
-    <Button key={'ua'} onClick={() => languageSwitcher('ua')}>
+    <Button key={'uk'} onClick={() => languageSwitcher('uk')}>
       Українська
     </Button>,
     <Button key={'en'} onClick={() => languageSwitcher('en')}>
