@@ -12,7 +12,7 @@ interface FoundationBlockProps {
   imageUrl: string;
   fileName?: string;
   onMainTextChange: (val: string) => void;
-  onParagraphChange: (index: number, val: string) => void; // зміна по індексу
+  onParagraphChange: (index: number, val: string) => void;
   onImageChange: (file: File) => void;
 }
 

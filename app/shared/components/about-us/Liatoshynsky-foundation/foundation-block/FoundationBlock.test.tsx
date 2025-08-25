@@ -44,7 +44,19 @@ describe('FoundationBlock', () => {
     expect(screen.getByTestId('image-preview-block')).toBeInTheDocument();
   });
 
-  it(' should call onImageChange when a file is uploaded', async () => {
+  it('should call onParagraphChange when paragraph inputs change', async () => {
+    render(<FoundationBlock {...mockProps} />);
+    const user = userEvent.setup();
+
+    mockProps.paragraphs.forEach(async (p, index) => {
+      const input = screen.getByDisplayValue(p.text) as HTMLInputElement;
+      await user.clear(input);
+      await user.type(input, `Новий текст ${index + 1}`);
+      expect(mockProps.onParagraphChange).toHaveBeenCalledWith(index, expect.any(String));
+    });
+  });
+
+  it('should call onImageChange when a file is uploaded', async () => {
     render(<FoundationBlock {...mockProps} />);
     const user = userEvent.setup();
 
@@ -56,5 +68,11 @@ describe('FoundationBlock', () => {
     expect(mockProps.onImageChange).toHaveBeenCalledTimes(1);
     const uploadedFile = mockProps.onImageChange.mock.calls[0][0];
     expect(uploadedFile.name).toBe('photo.png');
+  });
+
+  it('should render correct number of paragraph inputs', () => {
+    render(<FoundationBlock {...mockProps} />);
+    const paragraphInputs = mockProps.paragraphs.map((p) => screen.getByDisplayValue(p.text));
+    expect(paragraphInputs.length).toBe(mockProps.paragraphs.length);
   });
 });

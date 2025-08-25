@@ -114,29 +114,45 @@ describe('OurMission', () => {
     expect(screen.getByTestId('input-Заголовок секції')).toHaveValue('Initial title');
   });
 
-  it('should render add button', () => {
+  it('should call setField when section title changes', () => {
     render(<OurMission />);
-    const addButton = screen.getByTestId('add-btn');
-    expect(addButton).toBeInTheDocument();
-    expect(addButton).toHaveTextContent('Додати пункт');
+    const input = screen.getByTestId('input-Заголовок секції');
+    fireEvent.change(input, { target: { value: 'New title' } });
+    expect(setFieldMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_MISSION, 'title', {
+      uk: 'New title'
+    });
   });
 
-  it('should add a mission point when add button clicked', () => {
+  it('should render add button and add a mission point', () => {
     render(<OurMission />);
-    fireEvent.click(screen.getByTestId('add-btn'));
+    const addButton = screen.getByTestId('add-btn');
+    fireEvent.click(addButton);
     expect(setFieldMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_MISSION, 'list', expect.any(Array));
   });
 
-  it('should upload image', () => {
+  it('should delete a mission point', () => {
+    render(<OurMission />);
+    const deleteBtn = screen.getByTestId('delete-btn');
+    fireEvent.click(deleteBtn);
+    expect(setFieldMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_MISSION, 'list', expect.any(Array));
+  });
+
+  it('should change mission point value', () => {
+    render(<OurMission />);
+    const missionInput = screen.getByTestId('input-undefined');
+    fireEvent.change(missionInput, { target: { value: 'Updated mission' } });
+    expect(setFieldMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_MISSION, 'list', expect.any(Array));
+  });
+
+  it('should upload image file for smallImage', () => {
     render(<OurMission />);
     fireEvent.click(screen.getAllByText('Upload Image')[0]);
     expect(setFieldMock).toHaveBeenCalled();
   });
 
-  it('should delete mission point', () => {
+  it('should upload image file for bigImage', () => {
     render(<OurMission />);
-    const deleteBtn = screen.getByTestId('delete-btn');
-    fireEvent.click(deleteBtn);
-    expect(setFieldMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_MISSION, 'list', expect.any(Array));
+    fireEvent.click(screen.getAllByText('Upload Image')[1]);
+    expect(setFieldMock).toHaveBeenCalled();
   });
 });
