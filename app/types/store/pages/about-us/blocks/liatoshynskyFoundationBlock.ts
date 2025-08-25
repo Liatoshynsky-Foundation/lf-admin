@@ -1,7 +1,7 @@
 export type ProseTextNode = {
   type: 'text';
   text: string;
-  marks?: { type: 'bold' | 'italic' | string }[];
+  marks?: { type: 'bold' | 'italic' }[];
 };
 
 export type ParagraphNode = {

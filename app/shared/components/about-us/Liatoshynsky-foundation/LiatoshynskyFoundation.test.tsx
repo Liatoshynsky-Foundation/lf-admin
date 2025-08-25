@@ -24,8 +24,6 @@ type Paragraph = { text: string };
 type FoundationBlockProps = {
   mainText: string;
   paragraphs: Paragraph[];
-  imageUrl?: string;
-  fileName?: string;
   onMainTextChange: (value: string) => void;
   onParagraphChange: (index: number, value: string) => void;
   onImageChange: (file: File) => void;
@@ -44,7 +42,7 @@ jest.mock('./foundation-block/FoundationBlock', () => ({
       <textarea aria-label="Main text" value={mainText} onChange={(e) => onMainTextChange(e.target.value)} />
       {paragraphs.map((p, i) => (
         <textarea
-          key={i}
+          key={`paragraph-${i}`}
           aria-label={`Paragraph ${i + 1}`}
           value={p.text}
           onChange={(e) => onParagraphChange(i, e.target.value)}
@@ -68,7 +66,7 @@ jest.mock('@mui/material', () => {
   const original = jest.requireActual('@mui/material');
   return {
     ...original,
-    Skeleton: () => <div role="progressbar">Loading...</div>
+    Skeleton: () => <div role="progress">Loading...</div>
   };
 });
 
@@ -107,7 +105,7 @@ describe('LiatoshynskyFoundation', () => {
   it('should render skeleton when block is missing', () => {
     usePageBlocksMock.mockReturnValue({ blocks: {} });
     render(<LiatoshynskyFoundation />);
-    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    expect(screen.getByRole('progress')).toBeInTheDocument();
   });
 
   it('should render CollapsibleBlock with title', () => {

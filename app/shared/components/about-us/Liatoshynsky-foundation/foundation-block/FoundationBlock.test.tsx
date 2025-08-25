@@ -11,7 +11,7 @@ jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
         type="file"
         aria-label="Upload image"
         onChange={(e: ChangeEvent<HTMLInputElement>) => {
-          if (e.target.files && e.target.files[0]) onChangeImage(e.target.files[0]);
+          if (e.target.files?.[0]) onChangeImage(e.target.files?.[0]);
         }}
       />
     </div>

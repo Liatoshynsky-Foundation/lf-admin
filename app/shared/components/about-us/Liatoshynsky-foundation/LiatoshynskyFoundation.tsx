@@ -66,8 +66,8 @@ export const LiatoshynskyFoundation = () => {
       <FoundationBlock
         mainText={mainText}
         paragraphs={paragraphs}
-        imageUrl={`/images/${block.image?.src}.png` || ''}
-        fileName={block.image?.caption?.[currentLocale] || ''}
+        imageUrl={`/images/${block.image?.src}.png`}
+        fileName={block.image?.caption?.[currentLocale]}
         onMainTextChange={handleMainTextChange}
         onParagraphChange={handleParagraphChange}
         onImageChange={handleImageChange}

@@ -3,7 +3,7 @@ import type { ProseDoc } from '~/types/store/pages/about-us';
 
 describe('proseToText', () => {
   it('should return empty string for undefined doc', () => {
-    expect(proseToText(undefined)).toBe('');
+    expect(proseToText()).toBe('');
   });
 
   it('should return empty string for doc with empty content', () => {
