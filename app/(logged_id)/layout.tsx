@@ -14,9 +14,7 @@ export default async function RootLayout({
   return (
     <BodyProvider>
       <SideBarNavigation />
-      <Container maxWidth="md" sx={{ padding: '20px' }}>
-        {children}
-      </Container>
+      <Container sx={{ padding: '20px', maxWidth: '1098px' }}>{children}</Container>
     </BodyProvider>
   );
 }
