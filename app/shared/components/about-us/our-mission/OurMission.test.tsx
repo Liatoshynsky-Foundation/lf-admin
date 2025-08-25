@@ -1,151 +1,142 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
+import type { ChangeEvent } from 'react';
 
+import type { MissionPoint } from './OurMission';
 import OurMission from './OurMission';
+import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 
-jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => {
-  const MockCollapsibleBlock = ({ children, title }: { children: React.ReactNode; title: string }) => (
-    <div data-testid="collapsible-block">
+const setFieldMock = jest.fn();
+jest.mock('~/store', () => ({
+  useStore: (selector: (s: { locale: 'uk'; setField: typeof setFieldMock }) => unknown) =>
+    selector({ locale: 'uk', setField: setFieldMock })
+}));
+
+const usePageBlocksMock = jest.fn();
+jest.mock('~/shared/hooks/use-page-blocks/usePageBlocks', () => ({
+  usePageBlocks: (...args: unknown[]) => usePageBlocksMock(...args)
+}));
+
+jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
+  __esModule: true,
+  default: ({ children, title }: { children: React.ReactNode; title: string }) => (
+    <section data-testid="collapsible-block">
       <h2>{title}</h2>
       {children}
-    </div>
-  );
-  MockCollapsibleBlock.displayName = 'MockCollapsibleBlock';
-  return MockCollapsibleBlock;
-});
+    </section>
+  )
+}));
 
-jest.mock('~/ds-components/text-field/TextField', () => {
-  return {
-    CustomTextField: ({
-      title,
-      value,
-      defaultValue,
-      onChange,
-      label,
-      placeholder,
-      multiline,
-      disabled,
-      ...props
-    }: any) => {
-      const Element = multiline ? 'textarea' : 'input';
-      const inputValue = value !== undefined ? value : undefined;
-      const inputDefaultValue = value === undefined ? defaultValue : undefined;
-
-      return (
-        <div data-testid="custom-text-field">
-          {title && <span data-testid="field-title">{title}</span>}
-          <Element
-            data-testid={props['data-testid'] || 'text-field-input'}
-            value={inputValue}
-            defaultValue={inputDefaultValue}
-            onChange={onChange || (() => {})}
-            placeholder={placeholder || label}
-            disabled={disabled}
-          />
+jest.mock('~/components/configurable-list/ConfigurableList', () => ({
+  __esModule: true,
+  default: ({
+    items,
+    onChange,
+    onCreate,
+    onDelete,
+    renderItem,
+    addBtnLabel
+  }: {
+    items: MissionPoint[];
+    onChange: (item: MissionPoint) => void;
+    onCreate: () => void;
+    onDelete: (id: string | number) => void;
+    renderItem: ({ item, onChange }: { item: MissionPoint; onChange: (item: MissionPoint) => void }) => React.ReactNode;
+    addBtnLabel: string;
+  }) => (
+    <div data-testid="configurable-list">
+      {items.map((item) => (
+        <div key={item.id} data-testid="configurable-list-item">
+          {renderItem({ item, onChange })}
+          <button data-testid="delete-btn" onClick={() => onDelete?.(item.id)}>
+            Delete
+          </button>
         </div>
-      );
-    }
-  };
-});
+      ))}
+      <button data-testid="add-btn" onClick={() => onCreate?.()}>
+        {addBtnLabel}
+      </button>
+    </div>
+  )
+}));
 
-jest.mock('~/components/configurable-list/ConfigurableList', () => {
-  return function ConfigurableListMock(props: any) {
-    return (
-      <div data-testid="configurable-list">
-        {props.items.map((item: any) => (
-          <div key={item.id} data-testid="configurable-list-item">
-            {props.renderItem({
-              item,
-              onChange: (updatedItem: any) => props.onChange?.(updatedItem)
-            })}
-            <button data-testid="delete-btn" onClick={() => props.onDelete?.(item.id)}>
-              Delete
-            </button>
-          </div>
-        ))}
-        <button data-testid="add-btn" onClick={() => props.onCreate?.()}>
-          Додати пункт
-        </button>
-      </div>
-    );
-  };
-});
+jest.mock('~/ds-components/text-field/TextField', () => ({
+  CustomTextField: ({
+    title,
+    value,
+    onChange
+  }: {
+    title: string;
+    value: string;
+    onChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  }) => (
+    <div data-testid={`textfield-${title}`}>
+      <input value={value} onChange={onChange} data-testid={`input-${title}`} />
+    </div>
+  )
+}));
 
 jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
-  ImagePreviewBlock: (props: any) => (
+  ImagePreviewBlock: ({ imageUrl, onChangeImage }: { imageUrl: string; onChangeImage: (file: File) => void }) => (
     <div data-testid="image-preview-block">
-      <img src={props.imageUrl} alt={props.title || 'preview'} />
-      <input
-        type="file"
-        data-testid="image-upload"
-        onChange={(e: any) => {
-          if (e.target.files?.[0] && props.onChangeImage) {
-            props.onChangeImage(e.target.files[0]);
-          }
-        }}
-      />
+      <button onClick={() => onChangeImage(new File([''], 'test.png'))}>Upload Image</button>
+      <span>{imageUrl}</span>
     </div>
   )
 }));
 
 beforeAll(() => {
   let counter = 0;
-  crypto.randomUUID = jest.fn(() => `test-uuid-${counter++}`) as typeof crypto.randomUUID;
+  crypto.randomUUID = jest.fn(() => `uuid-${counter++}`) as typeof crypto.randomUUID;
   URL.createObjectURL = jest.fn(() => 'mocked-url');
 });
 
-describe('OurMission Component', () => {
+describe('OurMission', () => {
   beforeEach(() => {
-    (crypto.randomUUID as jest.Mock).mockClear();
     jest.clearAllMocks();
+
+    usePageBlocksMock.mockReturnValue({
+      blocks: {
+        [BLOCK_IDS.OUR_MISSION]: {
+          title: { uk: 'Initial title' },
+          list: [
+            { id: '1', value: 'Initial mission', uk: { type: 'doc', content: [] }, en: { type: 'doc', content: [] } }
+          ],
+          smallImage: { src: 'small', generatedSrc: '', caption: { uk: 'caption', en: '' }, alt: { uk: '', en: '' } },
+          bigImage: { src: 'big', generatedSrc: '', caption: { uk: 'caption', en: '' }, alt: { uk: '', en: '' } }
+        }
+      }
+    });
   });
 
-  it('should render add button with label "Додати пункт"', () => {
+  it('should render collapsible block and title input', () => {
+    render(<OurMission />);
+    expect(screen.getByTestId('collapsible-block')).toBeInTheDocument();
+    expect(screen.getByTestId('input-Заголовок секції')).toHaveValue('Initial title');
+  });
+
+  it('should render add button', () => {
     render(<OurMission />);
     const addButton = screen.getByTestId('add-btn');
     expect(addButton).toBeInTheDocument();
     expect(addButton).toHaveTextContent('Додати пункт');
   });
 
-  it('should add new mission point when add button is clicked', () => {
+  it('should add a mission point when add button clicked', () => {
     render(<OurMission />);
-    const initialItemsCount = screen.getAllByTestId('configurable-list-item').length;
     fireEvent.click(screen.getByTestId('add-btn'));
-    const updatedItemsCount = screen.getAllByTestId('configurable-list-item').length;
-    expect(updatedItemsCount).toBe(initialItemsCount + 1);
+    expect(setFieldMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_MISSION, 'list', expect.any(Array));
   });
 
-  it('should update mission point value when text field changes', () => {
+  it('should upload image', () => {
     render(<OurMission />);
-    const textFields = screen.getAllByPlaceholderText('Текст пункту');
-    if (textFields.length > 0) {
-      const firstTextField = textFields[0];
-      fireEvent.change(firstTextField, { target: { value: 'Updated mission point' } });
-      expect(firstTextField).toHaveValue('Updated mission point');
-    } else {
-      expect(screen.getByTestId('configurable-list')).toBeInTheDocument();
-    }
+    fireEvent.click(screen.getAllByText('Upload Image')[0]);
+    expect(setFieldMock).toHaveBeenCalled();
   });
 
-  it('should handle image upload correctly', () => {
+  it('should delete mission point', () => {
     render(<OurMission />);
-    const imageUploads = screen.getAllByTestId('image-upload');
-    if (imageUploads.length > 0) {
-      const imageUpload = imageUploads[0];
-      const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
-      fireEvent.change(imageUpload, { target: { files: [mockFile] } });
-      expect(URL.createObjectURL).toHaveBeenCalledWith(mockFile);
-    }
-  });
-
-  it('should delete mission point when delete button is clicked', () => {
-    render(<OurMission />);
-    const initialItemsCount = screen.getAllByTestId('configurable-list-item').length;
-    const deleteButtons = screen.getAllByTestId('delete-btn');
-    if (deleteButtons.length > 0) {
-      fireEvent.click(deleteButtons[0]);
-      const updatedItemsCount = screen.getAllByTestId('configurable-list-item').length;
-      expect(updatedItemsCount).toBe(initialItemsCount - 1);
-    }
+    const deleteBtn = screen.getByTestId('delete-btn');
+    fireEvent.click(deleteBtn);
+    expect(setFieldMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_MISSION, 'list', expect.any(Array));
   });
 });

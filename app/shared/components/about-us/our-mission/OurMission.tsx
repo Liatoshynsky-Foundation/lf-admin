@@ -1,166 +1,195 @@
 'use client';
 
+import { Skeleton } from '@mui/material';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 
-import { DEFAULT_MISSION_POINTS, IMAGE_BLOCKS_INITIAL, OUR_MISSION_TEXT } from './OurMission.contants';
 import { styles } from './OurMission.styles';
 import ConfigurableList from '~/components/configurable-list/ConfigurableList';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { ImagePreviewBlock } from '~/ds-components/photo-block/PhotoBlock';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
-import useInitBlock from '~/shared/hooks/use-init-block/useInitBlock';
+import { ensureIds } from '~/lib/utils/ensureIds';
+import { proseToText, textToProse } from '~/lib/utils/prose';
+import { usePageBlocks } from '~/shared/hooks/use-page-blocks/usePageBlocks';
 import { useStore } from '~/store';
 import { ConfigurableListItem } from '~/types/accordionBlocks';
+import { MissionListItem, MissionListItemWithId } from '~/types/store/pages/about-us/blocks/missionBlock';
+
+export type MissionPoint = ConfigurableListItem & { value: string };
 
 export type MissionImage = {
-  id: string;
-  imageUrl: string;
-  title?: string;
-  fileName?: string;
-  caption: string;
-  cropWidth: number;
-  cropHeight: number;
+  src: string;
+  generatedSrc: string;
+  caption: { uk: string; en: string };
+  alt: { uk: string; en: string };
 };
 
-export type MissionPoint = ConfigurableListItem & {
-  value: string;
+type MissionImageBlockProps = {
+  image: MissionImage;
+  locale: 'uk' | 'en';
+  title: string;
+  onChangeCaption: (value: string, file?: File) => void;
+  onChangeImage: (file: File) => void;
+  cropWidth?: number;
+  cropHeight?: number;
 };
 
 const MissionImageBlock = ({
-  imageData,
+  image,
+  locale,
+  title,
+  onChangeCaption,
   onChangeImage,
-  onChangeCaption
-}: {
-  imageData: MissionImage;
-  onChangeImage: (id: string, file: File) => void;
-  onChangeCaption: (id: string, caption: string) => void;
-}) => {
-  return (
-    <Box sx={styles.imageBlockWrapper}>
-      <ImagePreviewBlock
-        imageUrl={imageData.imageUrl}
-        title={imageData.title}
-        fileName={imageData.fileName}
-        cropWidth={imageData.cropWidth}
-        cropHeight={imageData.cropHeight}
-        onChangeImage={(file) => onChangeImage(imageData.id, file)}
-      />
-      <CustomTextField
-        title={OUR_MISSION_TEXT.imageCaptionTitle}
-        label={OUR_MISSION_TEXT.imageCaptionLabel}
-        value={imageData.caption}
-        fullWidth
-        multiline
-        onChange={(e) => onChangeCaption(imageData.id, e.target.value)}
-      />
-    </Box>
-  );
-};
+  cropWidth = 350,
+  cropHeight = 300
+}: MissionImageBlockProps) => (
+  <Box sx={styles.imageBlockWrapper}>
+    <ImagePreviewBlock
+      imageUrl={`/images/${image.src}.png`}
+      title={title}
+      fileName={image.src || ''}
+      cropWidth={cropWidth}
+      cropHeight={cropHeight}
+      onChangeImage={onChangeImage}
+    />
+    <CustomTextField
+      title="Підпис до зображення"
+      label="Підпис"
+      value={image.caption[locale]}
+      fullWidth
+      multiline
+      onChange={(e) => onChangeCaption(e.target.value)}
+    />
+  </Box>
+);
 
 const OurMission = () => {
   const pageId = PAGE_IDS.ABOUT_US;
   const blockId = BLOCK_IDS.OUR_MISSION;
-
-  const block = useInitBlock(pageId, blockId, {
-    title: OUR_MISSION_TEXT.sectionTitle,
-    missionPoints: DEFAULT_MISSION_POINTS.map((point) => ({
-      id: crypto.randomUUID(),
-      value: point
-    })),
-    imageBlocks: IMAGE_BLOCKS_INITIAL
-  });
-
+  const currentLocale: 'uk' | 'en' = useStore((state) => state.locale);
+  const { blocks } = usePageBlocks(pageId);
   const setField = useStore((state) => state.setField);
+  const block = blocks[blockId];
 
-  const handleChangeImage = (id: string, file: File) => {
-    const newUrl = URL.createObjectURL(file);
-    const updated = block.imageBlocks.map((img: MissionImage) =>
-      img.id === id ? { ...img, imageUrl: newUrl, fileName: file.name } : img
+  if (!block) return <Skeleton sx={{ height: '60px' }} />;
+
+  const missionList: MissionListItemWithId[] = ensureIds(block.list);
+
+  const missionPoints: MissionPoint[] = missionList.map((item) => ({
+    id: item.id,
+    value: proseToText(item[currentLocale])
+  }));
+
+  const handleChangeMissionPoint = (id: string | number, value: string) => {
+    const updatedList: MissionListItem[] = missionList.map((item) =>
+      item.id === id ? { uk: item.uk, en: item.en, [currentLocale]: textToProse(value) } : item
     );
-    setField(pageId, blockId, 'imageBlocks', updated);
+    setField(pageId, blockId, 'list', updatedList);
   };
-
-  const handleChangeCaption = (id: string, caption: string) => {
-    const updated = block.imageBlocks.map((img: MissionImage) => (img.id === id ? { ...img, caption } : img));
-    setField(pageId, blockId, 'imageBlocks', updated);
-  };
-
-  const handleChangeMissionPoint = (updatedPoint: MissionPoint) => {
-    const updated = block.missionPoints.map((point: MissionPoint) =>
-      point.id === updatedPoint.id ? updatedPoint : point
-    );
-    setField(pageId, blockId, 'missionPoints', updated);
+  const handleAddMissionPoint = (): MissionPoint => {
+    const newItem: MissionListItemWithId = {
+      uk: { type: 'doc', content: [] },
+      en: { type: 'doc', content: [] },
+      id: crypto.randomUUID()
+    };
+    const newList = [...missionList, newItem];
+    setField(pageId, blockId, 'list', newList);
+    return { id: newItem.id, value: '' };
   };
 
   const handleDeleteMissionPoint = (id: string | number) => {
-    setField(
-      pageId,
-      blockId,
-      'missionPoints',
-      block.missionPoints.filter((point: MissionPoint) => point.id !== id)
-    );
+    const newList = missionList.filter((item) => item.id !== id);
+    setField(pageId, blockId, 'list', newList);
   };
 
-  const handleCreateMissionPoint = () => {
-    const newPoint: MissionPoint = {
-      id: crypto.randomUUID(),
-      value: ''
+  const handleImageChange = (key: 'smallImage' | 'bigImage', value: string, file?: File) => {
+    const image = block[key];
+    if (!image) return;
+
+    const updated = {
+      ...image,
+      caption: { ...image.caption, [currentLocale]: value },
+      ...(file && { src: file.name, generatedSrc: `/api/blob-url?folderName=photos&blobName=${file.name}` })
     };
-    const updated = [...block.missionPoints, newPoint];
-    setField(pageId, blockId, 'missionPoints', updated);
-    return newPoint;
+
+    setField(pageId, blockId, key, updated);
+  };
+
+  const handleImageFileChange = (key: 'smallImage' | 'bigImage', file: File) => {
+    const image = block[key];
+    if (!image) return;
+
+    const newSrc = URL.createObjectURL(file);
+
+    setField(pageId, blockId, key, {
+      ...image,
+      src: newSrc,
+      generatedSrc: newSrc
+    });
   };
 
   return (
-    <CollapsibleBlock title={OUR_MISSION_TEXT.sectionTitle}>
+    <CollapsibleBlock title="Наша місія">
       <Box sx={styles.wrapper}>
         <CustomTextField
-          title={OUR_MISSION_TEXT.titleFieldTitle}
-          label={OUR_MISSION_TEXT.titleFieldLabel}
-          value={block.title || ''}
+          title="Заголовок секції"
+          label="Текст заголовка"
+          value={block.title?.[currentLocale] || ''}
           fullWidth
           multiline
-          onChange={(e) => setField(pageId, blockId, 'title', e.target.value)}
+          onChange={(e) => setField(pageId, blockId, 'title', { ...block.title, [currentLocale]: e.target.value })}
         />
       </Box>
 
-      {block.missionPoints?.length > 0 && (
-        <Box component="h4" sx={styles.pointHeader}>
-          {OUR_MISSION_TEXT.pointFieldTitle}
-        </Box>
-      )}
-
-      <ConfigurableList<MissionPoint>
-        items={block.missionPoints || []}
-        addBtnLabel={OUR_MISSION_TEXT.addPointButton}
-        editable
-        onCreate={handleCreateMissionPoint}
-        onChange={handleChangeMissionPoint}
-        onDelete={handleDeleteMissionPoint}
-        renderItem={({ item, onChange }) => (
-          <CustomTextField
-            label={OUR_MISSION_TEXT.pointFieldLabel}
-            value={item.value}
-            fullWidth
-            multiline
-            onChange={(e) => onChange({ ...item, value: e.target.value })}
+      {missionPoints.length > 0 && (
+        <>
+          <Box component="h4" sx={styles.pointHeader}>
+            Текст секції:
+          </Box>
+          <ConfigurableList<MissionPoint>
+            items={missionPoints}
+            addBtnLabel="Додати пункт"
+            editable
+            onChange={({ id, value }) => handleChangeMissionPoint(id, value)}
+            onDelete={handleDeleteMissionPoint}
+            onCreate={handleAddMissionPoint}
+            renderItem={({ item, onChange }) => (
+              <CustomTextField
+                label="Пункт місії"
+                value={item.value}
+                fullWidth
+                multiline
+                onChange={(e) => onChange({ ...item, value: e.target.value })}
+              />
+            )}
+            separator={false}
           />
-        )}
-        separator={false}
-      />
+        </>
+      )}
 
       <Divider sx={styles.divider} />
 
-      {block.imageBlocks?.map((image: MissionImage) => (
+      {block.smallImage && (
         <MissionImageBlock
-          key={image.id}
-          imageData={image}
-          onChangeImage={handleChangeImage}
-          onChangeCaption={handleChangeCaption}
+          image={block.smallImage}
+          locale={currentLocale}
+          title="Перше зображення секції"
+          onChangeCaption={(value, file) => handleImageChange('smallImage', value, file)}
+          onChangeImage={(file) => handleImageFileChange('smallImage', file)}
         />
-      ))}
+      )}
+
+      {block.bigImage && (
+        <MissionImageBlock
+          image={block.bigImage}
+          locale={currentLocale}
+          title="Друге зображення секції"
+          onChangeCaption={(value, file) => handleImageChange('bigImage', value, file)}
+          onChangeImage={(file) => handleImageFileChange('bigImage', file)}
+        />
+      )}
     </CollapsibleBlock>
   );
 };
