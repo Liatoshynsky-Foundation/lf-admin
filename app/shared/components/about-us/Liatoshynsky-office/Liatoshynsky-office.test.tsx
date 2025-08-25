@@ -5,19 +5,16 @@ import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 
 const setFieldMock = jest.fn();
 
-// 🔹 Мок стора
 jest.mock('~/store', () => ({
   useStore: (selector: (s: { locale: 'uk'; setField: typeof setFieldMock }) => unknown) =>
     selector({ locale: 'uk', setField: setFieldMock })
 }));
 
-// 🔹 Мок usePageBlocks
 const usePageBlocksMock = jest.fn();
 jest.mock('~/shared/hooks/use-page-blocks/usePageBlocks', () => ({
   usePageBlocks: (...args: unknown[]) => usePageBlocksMock(...args)
 }));
 
-// 🔹 Мок CollapsibleBlock
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
   default: ({ title, children }: { title: string; children: React.ReactNode }) => (
@@ -28,7 +25,6 @@ jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
   )
 }));
 
-// 🔹 Мок QuoteBlock
 jest.mock('./quote-block/QuoteBlock', () => ({
   QuoteBlock: ({
     title,
@@ -59,6 +55,10 @@ describe('LiatoshynskyOffice', () => {
     description: 'Це опис цитати'
   };
 
+  const renderComponent = () => render(<LiatoshynskyOffice />);
+  const getTitleInput = () => screen.getByTestId('quote-title') as HTMLInputElement;
+  const getDescriptionInput = () => screen.getByTestId('quote-description') as HTMLTextAreaElement;
+
   beforeEach(() => {
     jest.clearAllMocks();
 
@@ -74,22 +74,21 @@ describe('LiatoshynskyOffice', () => {
     });
   });
 
-  it('renders collapsible block with title', () => {
-    render(<LiatoshynskyOffice />);
+  it('should render collapsible block with title', () => {
+    renderComponent();
     expect(screen.getByTestId('collapsible-block')).toBeInTheDocument();
     expect(screen.getByText(hardcodedData.title)).toBeInTheDocument();
   });
 
-  it('renders QuoteBlock with correct values', () => {
-    render(<LiatoshynskyOffice />);
-    expect(screen.getByTestId('quote-title')).toHaveValue(hardcodedData.mainQuote);
-    expect(screen.getByTestId('quote-description')).toHaveValue(hardcodedData.description);
+  it('should render QuoteBlock with correct values', () => {
+    renderComponent();
+    expect(getTitleInput()).toHaveValue(hardcodedData.mainQuote);
+    expect(getDescriptionInput()).toHaveValue(hardcodedData.description);
   });
 
-  it('updates quote title', () => {
-    render(<LiatoshynskyOffice />);
-    const titleInput = screen.getByTestId('quote-title');
-    fireEvent.change(titleInput, { target: { value: 'Нова цитата' } });
+  it('should update quote title', () => {
+    renderComponent();
+    fireEvent.change(getTitleInput(), { target: { value: 'Нова цитата' } });
     expect(setFieldMock).toHaveBeenCalledWith(
       PAGE_IDS.ABOUT_US,
       BLOCK_IDS.LIATOSHYNSKY_OFFICE,
@@ -101,10 +100,9 @@ describe('LiatoshynskyOffice', () => {
     );
   });
 
-  it('updates quote description', () => {
-    render(<LiatoshynskyOffice />);
-    const descInput = screen.getByTestId('quote-description');
-    fireEvent.change(descInput, { target: { value: 'Новий опис' } });
+  it('should update quote description', () => {
+    renderComponent();
+    fireEvent.change(getDescriptionInput(), { target: { value: 'Новий опис' } });
     expect(setFieldMock).toHaveBeenCalledWith(
       PAGE_IDS.ABOUT_US,
       BLOCK_IDS.LIATOSHYNSKY_OFFICE,

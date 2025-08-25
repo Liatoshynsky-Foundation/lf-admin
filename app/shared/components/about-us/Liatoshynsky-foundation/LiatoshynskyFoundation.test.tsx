@@ -42,7 +42,7 @@ jest.mock('./foundation-block/FoundationBlock', () => ({
       <textarea aria-label="Main text" value={mainText} onChange={(e) => onMainTextChange(e.target.value)} />
       {paragraphs.map((p, i) => (
         <textarea
-          key={`paragraph-${i}`}
+          key={`${p.text}-${i}`}
           aria-label={`Paragraph ${i + 1}`}
           value={p.text}
           onChange={(e) => onParagraphChange(i, e.target.value)}
@@ -66,7 +66,11 @@ jest.mock('@mui/material', () => {
   const original = jest.requireActual('@mui/material');
   return {
     ...original,
-    Skeleton: () => <div role="progress">Loading...</div>
+    Skeleton: () => (
+      <div role="progressbar" aria-busy="true">
+        Loading...
+      </div>
+    )
   };
 });
 
@@ -105,7 +109,7 @@ describe('LiatoshynskyFoundation', () => {
   it('should render skeleton when block is missing', () => {
     usePageBlocksMock.mockReturnValue({ blocks: {} });
     render(<LiatoshynskyFoundation />);
-    expect(screen.getByRole('progress')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
 
   it('should render CollapsibleBlock with title', () => {
