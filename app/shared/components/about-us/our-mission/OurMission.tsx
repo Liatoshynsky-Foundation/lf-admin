@@ -12,7 +12,7 @@ import { ImagePreviewBlock } from '~/ds-components/photo-block/PhotoBlock';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { ensureIds } from '~/lib/utils/ensureIds';
 import { proseToText, textToProse } from '~/lib/utils/prose';
-import { usePageBlocks } from '~/shared/hooks/use-page-blocks/usePageBlocks';
+import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 import { ConfigurableListItem } from '~/types/accordionBlocks';
 import { MissionListItemWithId } from '~/types/store/pages/about-us/blocks/missionBlock';
@@ -69,9 +69,8 @@ const OurMission = () => {
   const pageId = PAGE_IDS.ABOUT_US;
   const blockId = BLOCK_IDS.OUR_MISSION;
   const currentLocale: 'uk' | 'en' = useStore((state) => state.locale);
-  const { blocks } = usePageBlocks(pageId);
+  const { block } = usePageBlock(pageId, blockId);
   const setField = useStore((state) => state.setField);
-  const block = blocks[blockId];
 
   if (!block) return <Skeleton sx={{ height: '60px' }} />;
 

@@ -1,26 +1,23 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import type { ChangeEvent } from 'react';
 
-import type { MissionPoint } from './OurMission';
 import OurMission from './OurMission';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 
-type StoreState = { locale: 'uk'; setField: typeof setFieldMock };
 const setFieldMock = jest.fn();
 
+type StoreState = { locale: 'uk'; setField: typeof setFieldMock };
 jest.mock('~/store', () => ({
   useStore: (selector: (state: StoreState) => unknown) => selector({ locale: 'uk', setField: setFieldMock })
 }));
 
-const usePageBlocksMock = jest.fn();
-jest.mock('~/shared/hooks/use-page-blocks/usePageBlocks', () => ({
-  usePageBlocks: (...args: unknown[]) => usePageBlocksMock(...args)
+const usePageBlockMock = jest.fn();
+jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
+  usePageBlock: (...args: unknown[]) => usePageBlockMock(...args)
 }));
 
-type CollapsibleBlockProps = { children: React.ReactNode; title: string };
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
-  default: ({ children, title }: CollapsibleBlockProps) => (
+  default: ({ children, title }: { children: React.ReactNode; title: string }) => (
     <section data-testid="collapsible-block">
       <h2>{title}</h2>
       {children}
@@ -28,22 +25,28 @@ jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
   )
 }));
 
-type ConfigurableListProps = {
-  items: MissionPoint[];
-  onChange: (item: MissionPoint) => void;
-  onCreate: () => void;
-  onDelete: (id: string | number) => void;
-  renderItem: ({ item, onChange }: { item: MissionPoint; onChange: (item: MissionPoint) => void }) => React.ReactNode;
-  addBtnLabel: string;
-};
 jest.mock('~/components/configurable-list/ConfigurableList', () => ({
   __esModule: true,
-  default: ({ items, onChange, onCreate, onDelete, renderItem, addBtnLabel }: ConfigurableListProps) => (
+  default: ({
+    items,
+    onCreate,
+    onDelete,
+    onChange,
+    renderItem,
+    addBtnLabel
+  }: {
+    items: { id: string }[];
+    onCreate: () => void;
+    onDelete: (id: string) => void;
+    onChange: (id: string, value: unknown) => void;
+    renderItem: (props: { item: { id: string }; onChange: (id: string, value: unknown) => void }) => React.ReactNode;
+    addBtnLabel: string;
+  }) => (
     <div data-testid="configurable-list">
-      {items.map((item) => (
-        <div key={item.id} data-testid="configurable-list-item">
+      {items.map((item: { id: string }) => (
+        <div key={item.id} data-testid="list-item">
           {renderItem({ item, onChange })}
-          <button data-testid="delete-btn" onClick={() => onDelete(item.id)}>
+          <button data-testid={`delete-${item.id}`} onClick={() => onDelete(item.id)}>
             Delete
           </button>
         </div>
@@ -55,81 +58,108 @@ jest.mock('~/components/configurable-list/ConfigurableList', () => ({
   )
 }));
 
-type TextFieldProps = {
-  title: string;
-  value: string;
-  onChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-};
 jest.mock('~/ds-components/text-field/TextField', () => ({
-  CustomTextField: ({ title, value, onChange }: TextFieldProps) => (
-    <div data-testid={`textfield-${title}`}>
-      <input value={value} onChange={onChange} data-testid={`input-${title}`} />
+  CustomTextField: ({
+    title,
+    label,
+    value,
+    onChange
+  }: {
+    title?: string;
+    label?: string;
+    value: string;
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  }) => (
+    <div data-testid={`textfield-${title || label}`}>
+      <input data-testid={`input-${title || label}`} value={value} onChange={onChange} />
     </div>
   )
 }));
 
-type ImagePreviewBlockProps = { imageUrl: string; onChangeImage: (file: File) => void };
 jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
-  ImagePreviewBlock: ({ onChangeImage, imageUrl }: ImagePreviewBlockProps) => (
-    <div data-testid="image-preview-block">
-      <button onClick={() => onChangeImage(new File([''], 'test.png'))}>Upload Image</button>
+  ImagePreviewBlock: ({
+    title,
+    imageUrl,
+    onChangeImage
+  }: {
+    title: string;
+    imageUrl: string;
+    onChangeImage: (file: File) => void;
+  }) => (
+    <div data-testid={`image-block-${title}`}>
       <span>{imageUrl}</span>
+      <button data-testid={`upload-${title}`} onClick={() => onChangeImage(new File([''], 'test.png'))}>
+        Upload
+      </button>
     </div>
   )
 }));
 
 beforeAll(() => {
-  let counter = 0;
-  crypto.randomUUID = jest.fn(() => `uuid-${counter++}`) as typeof crypto.randomUUID;
+  crypto.randomUUID = jest.fn(() => 'uuid-1') as typeof crypto.randomUUID;
   URL.createObjectURL = jest.fn(() => 'mocked-url');
 });
 
-const mockBlocks: Record<string, unknown> = {
-  [BLOCK_IDS.OUR_MISSION]: {
-    title: { uk: 'Initial title' },
-    list: [{ id: '1', value: 'Initial mission', uk: { type: 'doc', content: [] }, en: { type: 'doc', content: [] } }],
-    smallImage: { src: 'small', generatedSrc: '', caption: { uk: 'caption', en: '' }, alt: { uk: '', en: '' } },
-    bigImage: { src: 'big', generatedSrc: '', caption: { uk: 'caption', en: '' }, alt: { uk: '', en: '' } }
+const mockBlock = {
+  title: { uk: 'Initial title' },
+  list: [{ id: '1', uk: { type: 'doc', content: [] }, en: { type: 'doc', content: [] } }],
+  smallImage: {
+    src: 'small',
+    generatedSrc: '',
+    caption: { uk: 'caption', en: '' },
+    alt: { uk: '', en: '' }
+  },
+  bigImage: {
+    src: 'big',
+    generatedSrc: '',
+    caption: { uk: 'caption', en: '' },
+    alt: { uk: '', en: '' }
   }
 };
 
 describe('OurMission', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    usePageBlocksMock.mockReturnValue({ blocks: mockBlocks });
   });
 
-  it('should render collapsible block and title input', () => {
+  it('should render title and collapsible block', () => {
+    usePageBlockMock.mockReturnValue({ block: mockBlock });
     render(<OurMission />);
     expect(screen.getByTestId('collapsible-block')).toBeInTheDocument();
     expect(screen.getByTestId('input-Заголовок секції')).toHaveValue('Initial title');
   });
 
-  it('should call setField when section title changes', () => {
+  it('should change section title', () => {
+    usePageBlockMock.mockReturnValue({ block: mockBlock });
     render(<OurMission />);
-    fireEvent.change(screen.getByTestId('input-Заголовок секції'), { target: { value: 'New title' } });
+    fireEvent.change(screen.getByTestId('input-Заголовок секції'), {
+      target: { value: 'New title' }
+    });
     expect(setFieldMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_MISSION, 'title', { uk: 'New title' });
   });
 
-  it('should add and delete mission points', () => {
+  it('should add and deletes mission points', () => {
+    usePageBlockMock.mockReturnValue({ block: mockBlock });
     render(<OurMission />);
     fireEvent.click(screen.getByTestId('add-btn'));
     expect(setFieldMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_MISSION, 'list', expect.any(Array));
 
-    fireEvent.click(screen.getByTestId('delete-btn'));
+    fireEvent.click(screen.getByTestId('delete-1'));
     expect(setFieldMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_MISSION, 'list', expect.any(Array));
   });
 
-  it('should change mission point value', () => {
+  it('should update mission point value', () => {
+    usePageBlockMock.mockReturnValue({ block: mockBlock });
     render(<OurMission />);
-    const missionInput = screen.getByTestId('input-undefined');
-    fireEvent.change(missionInput, { target: { value: 'Updated mission' } });
+    fireEvent.change(screen.getByTestId('input-Пункт місії'), {
+      target: { value: 'Updated mission' }
+    });
     expect(setFieldMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_MISSION, 'list', expect.any(Array));
   });
 
   it.each([0, 1])('should upload image file for image index %i', (index) => {
     render(<OurMission />);
-    fireEvent.click(screen.getAllByText('Upload Image')[index]);
+    fireEvent.click(screen.getAllByText('Upload')[index]);
     expect(setFieldMock).toHaveBeenCalled();
   });
 });

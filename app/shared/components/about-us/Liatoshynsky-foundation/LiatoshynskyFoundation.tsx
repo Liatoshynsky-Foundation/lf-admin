@@ -7,7 +7,7 @@ import { FoundationBlock } from './foundation-block/FoundationBlock';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { proseToText, textToProse } from '~/lib/utils/prose';
-import { usePageBlocks } from '~/shared/hooks/use-page-blocks/usePageBlocks';
+import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 import { ProseDoc } from '~/types/store/pages/about-us';
 
@@ -15,8 +15,7 @@ export const LiatoshynskyFoundation = () => {
   const pageId = PAGE_IDS.ABOUT_US;
   const blockId = BLOCK_IDS.LIATOSHYNSKY_FOUNDATION;
 
-  const { blocks } = usePageBlocks(pageId);
-  const block = blocks.FoundationInfo;
+  const { block } = usePageBlock(pageId, blockId);
 
   const setField = useStore((state) => state.setField);
 

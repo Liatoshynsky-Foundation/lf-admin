@@ -1,23 +1,22 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import type { ChangeEvent, ReactNode } from 'react';
 
 import { EntrySection } from './EntrySection';
 
 const setFieldMock = jest.fn();
 
 jest.mock('~/store', () => ({
-  useStore: (selector: (s: { locale: string; setField: typeof setFieldMock }) => unknown) =>
+  useStore: (selector: (state: { locale: string; setField: typeof setFieldMock }) => void) =>
     selector({ locale: 'uk', setField: setFieldMock })
 }));
 
-const usePageBlocksMock = jest.fn();
-jest.mock('~/shared/hooks/use-page-blocks/usePageBlocks', () => ({
-  usePageBlocks: (...args: unknown[]) => usePageBlocksMock(...args)
+const usePageBlockMock = jest.fn();
+jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
+  usePageBlock: (pageId: string, blockId: string) => usePageBlockMock(pageId, blockId)
 }));
 
 jest.mock('../../design-system/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
-  default: ({ children, title }: { children: ReactNode; title: string }) => (
+  default: ({ children, title }: { children: React.ReactNode; title: string }) => (
     <section data-testid="collapsible">
       <h2>{title}</h2>
       {children}
@@ -51,11 +50,11 @@ jest.mock('../../design-system/text-field/TextField', () => ({
   }: {
     title: string;
     value: string;
-    onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   }) => (
     <label>
       {title}
-      <input data-testid={`textfield-${title}`} value={value} onChange={(e) => onChange(e)} />
+      <input data-testid={`textfield-${title}`} value={value} onChange={onChange} />
     </label>
   )
 }));
@@ -88,13 +87,11 @@ jest.mock('../Liatoshynsky-office/quote-block/QuoteBlock', () => ({
 describe('EntrySection', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    usePageBlocksMock.mockReturnValue({
-      blocks: {
-        IntroSection: {
-          title: { uk: 'Title' },
-          image: { src: 'test-image', caption: { uk: 'Caption' } },
-          quote: { source: { uk: 'Author' }, text: { uk: 'Quote' } }
-        }
+    usePageBlockMock.mockReturnValue({
+      block: {
+        title: { uk: 'Title' },
+        image: { src: 'test-image', caption: { uk: 'Caption' } },
+        quote: { source: { uk: 'Author' }, text: { uk: 'Quote' } }
       }
     });
   });
@@ -102,7 +99,10 @@ describe('EntrySection', () => {
   it('should render all fields when block exists', () => {
     render(<EntrySection />);
     expect(screen.getByText('Вступна секція')).toBeInTheDocument();
-    ['Title', 'Caption', 'Author', 'Quote'].forEach((val) => expect(screen.getByDisplayValue(val)).toBeInTheDocument());
+    expect(screen.getByDisplayValue('Title')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Caption')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Author')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Quote')).toBeInTheDocument();
   });
 
   it('should pass correct props to ImagePreviewBlock', () => {
@@ -120,9 +120,7 @@ describe('EntrySection', () => {
 
   it('should call setField when updating title', () => {
     render(<EntrySection />);
-    fireEvent.change(screen.getByTestId('textfield-Заголовок сторінки'), {
-      target: { value: 'New Title' }
-    });
+    fireEvent.change(screen.getByTestId('textfield-Заголовок сторінки'), { target: { value: 'New Title' } });
     expect(setFieldMock).toHaveBeenCalledWith(
       'about-us',
       'IntroSection',
@@ -144,9 +142,7 @@ describe('EntrySection', () => {
 
   it('should call setField when updating image caption', () => {
     render(<EntrySection />);
-    fireEvent.change(screen.getByTestId('textfield-Підпис до зображення'), {
-      target: { value: 'New Caption' }
-    });
+    fireEvent.change(screen.getByTestId('textfield-Підпис до зображення'), { target: { value: 'New Caption' } });
     expect(setFieldMock).toHaveBeenCalledWith(
       'about-us',
       'IntroSection',

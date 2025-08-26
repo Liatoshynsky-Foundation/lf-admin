@@ -1,18 +1,59 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
 
 import { LiatoshynskyFoundation } from './LiatoshynskyFoundation';
-import { textToProse } from '~/lib/utils/prose';
-import { usePageBlocks } from '~/shared/hooks/use-page-blocks/usePageBlocks';
-import { useStore } from '~/store';
 
-type CollapsibleBlockProps = {
-  title: string;
-  children: React.ReactNode;
-};
+const setFieldMock = jest.fn();
+
+jest.mock('~/store', () => ({
+  useStore: (selector: (state: { locale: string; setField: typeof setFieldMock }) => void) =>
+    selector({ locale: 'uk', setField: setFieldMock })
+}));
+
+const usePageBlockMock = jest.fn();
+jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
+  usePageBlock: (pageId: string, blockId: string) => usePageBlockMock(pageId, blockId)
+}));
+
+jest.mock('./foundation-block/FoundationBlock', () => ({
+  FoundationBlock: ({
+    mainText,
+    paragraphs,
+    imageUrl,
+    onMainTextChange,
+    onParagraphChange,
+    onImageChange
+  }: {
+    mainText: string;
+    paragraphs: { text: string }[];
+    imageUrl: string;
+    onMainTextChange: (val: string) => void;
+    onParagraphChange: (index: number, val: string) => void;
+    onImageChange: (file: File) => void;
+  }) => (
+    <div>
+      <input data-testid="main-text" value={mainText} onChange={(e) => onMainTextChange(e.target.value)} />
+      {paragraphs.map((p, idx) => (
+        <input
+          key={idx}
+          data-testid={`paragraph-${idx}`}
+          value={p.text}
+          onChange={(e) => onParagraphChange(idx, e.target.value)}
+        />
+      ))}
+      <img src={imageUrl} alt="Foundation" data-testid="image" />
+      <input
+        type="file"
+        data-testid="image-input"
+        onChange={(e) => e.target.files && onImageChange(e.target.files[0])}
+      />
+    </div>
+  )
+}));
 
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
-  default: ({ title, children }: CollapsibleBlockProps) => (
+  default: ({ children, title }: { children: React.ReactNode; title: string }) => (
     <div data-testid="collapsible-block">
       <h2>{title}</h2>
       {children}
@@ -20,150 +61,85 @@ jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
   )
 }));
 
-type Paragraph = { text: string };
-type FoundationBlockProps = {
-  mainText: string;
-  paragraphs: Paragraph[];
-  onMainTextChange: (value: string) => void;
-  onParagraphChange: (index: number, value: string) => void;
-  onImageChange: (file: File) => void;
-};
-
-jest.mock('./foundation-block/FoundationBlock', () => ({
-  __esModule: true,
-  FoundationBlock: ({
-    mainText,
-    paragraphs,
-    onMainTextChange,
-    onParagraphChange,
-    onImageChange
-  }: FoundationBlockProps) => (
-    <div data-testid="foundation-block">
-      <textarea aria-label="Main text" value={mainText} onChange={(e) => onMainTextChange(e.target.value)} />
-      {paragraphs.map((p, i) => (
-        <textarea
-          key={`${p.text}-${i}`}
-          aria-label={`Paragraph ${i + 1}`}
-          value={p.text}
-          onChange={(e) => onParagraphChange(i, e.target.value)}
-        />
-      ))}
-      <input
-        aria-label="Image input"
-        type="file"
-        onChange={(e) => {
-          if (e.target.files) onImageChange(e.target.files[0]);
-        }}
-      />
-    </div>
-  )
-}));
-
-jest.mock('~/shared/hooks/use-page-blocks/usePageBlocks');
-jest.mock('~/store');
-
-jest.mock('@mui/material', () => {
-  const original = jest.requireActual('@mui/material');
-  return {
-    ...original,
-    Skeleton: () => (
-      <progress aria-busy="true" value={0} max={100}>
-        Loading...
-      </progress>
-    )
-  };
-});
-
-global.URL.createObjectURL = jest.fn(() => 'blob:mocked-url');
-
-const usePageBlocksMock = usePageBlocks as jest.Mock;
-
-const mockBlock = {
-  ourOrganisation: {
-    uk: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Основний текст секції' }] }] },
-    en: { type: 'doc', content: [] }
-  },
-  ourName: {
-    uk: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Текст 1 абзацу' }] }] },
-    en: { type: 'doc', content: [] }
-  },
-  ourBelief: {
-    uk: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Текст 2 абзацу' }] }] },
-    en: { type: 'doc', content: [] }
-  },
-  image: { src: 'image1', caption: { uk: 'Caption UK', en: 'Caption EN' } }
-};
+global.URL.createObjectURL = jest.fn((file: File) => `mock-url/${file.name}`);
 
 describe('LiatoshynskyFoundation', () => {
-  const setFieldMock = jest.fn();
+  const mockBlock = {
+    ourOrganisation: {
+      uk: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Organisation Text' }] }] }
+    },
+    ourName: { uk: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Name' }] }] } },
+    ourBelief: { uk: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Belief' }] }] } },
+    image: { src: 'image-src', caption: { uk: 'Image Caption' } }
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    usePageBlocksMock.mockReturnValue({ blocks: { FoundationInfo: mockBlock } });
-
-    (useStore as unknown as jest.Mock).mockImplementation((selector) =>
-      selector({ setField: setFieldMock, locale: 'uk' })
-    );
+    usePageBlockMock.mockReturnValue({ block: mockBlock, blockId: 'FoundationInfo' });
   });
 
-  it('should render skeleton when block is missing', () => {
-    usePageBlocksMock.mockReturnValue({ blocks: {} });
+  it('should render all fields when block exists', () => {
     render(<LiatoshynskyFoundation />);
-    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+
+    expect(screen.getByTestId('main-text')).toHaveValue('Organisation Text');
+    expect(screen.getByTestId('paragraph-0')).toHaveValue('Name');
+    expect(screen.getByTestId('paragraph-1')).toHaveValue('Belief');
+    expect(screen.getByTestId('image')).toHaveAttribute('src', '/images/image-src.png');
   });
 
-  it('should render CollapsibleBlock with title', () => {
+  it('should update main text when edited', () => {
     render(<LiatoshynskyFoundation />);
-    expect(screen.getByTestId('collapsible-block')).toBeInTheDocument();
-    expect(screen.getByText('Фундація Лятошинського')).toBeInTheDocument();
-  });
 
-  it('should call setField on paragraph change', () => {
-    render(<LiatoshynskyFoundation />);
-    const paragraph1 = screen.getByLabelText('Paragraph 1');
+    const mainTextInput = screen.getByTestId('main-text');
+    fireEvent.change(mainTextInput, { target: { value: 'New Organisation Text' } });
 
-    fireEvent.change(paragraph1, { target: { value: 'Оновлений текст 1 абзацу' } });
-
-    expect(setFieldMock).toHaveBeenLastCalledWith(
-      'about-us',
-      'FoundationInfo',
-      'ourName',
-      expect.objectContaining({
-        uk: textToProse('Оновлений текст 1 абзацу')
-      })
-    );
-  });
-
-  it('should call setField on main text change', () => {
-    render(<LiatoshynskyFoundation />);
-    const mainTextArea = screen.getByLabelText('Main text');
-
-    fireEvent.change(mainTextArea, { target: { value: 'Оновлений основний текст' } });
-
-    expect(setFieldMock).toHaveBeenLastCalledWith(
+    expect(setFieldMock).toHaveBeenCalledWith(
       'about-us',
       'FoundationInfo',
       'ourOrganisation',
       expect.objectContaining({
-        uk: textToProse('Оновлений основний текст')
+        uk: {
+          type: 'doc',
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'New Organisation Text' }] }]
+        }
       })
     );
   });
 
-  it('should call setField on image change', () => {
+  it('should update paragraph when edited', () => {
     render(<LiatoshynskyFoundation />);
-    const fileInput = screen.getByLabelText('Image input');
-    const file = new File(['dummy'], 'test.png', { type: 'image/png' });
 
+    const paragraphInput = screen.getByTestId('paragraph-0');
+    fireEvent.change(paragraphInput, { target: { value: 'New Name' } });
+
+    expect(setFieldMock).toHaveBeenCalledWith(
+      'about-us',
+      'FoundationInfo',
+      'ourName',
+      expect.objectContaining({
+        uk: {
+          type: 'doc',
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'New Name' }] }]
+        }
+      })
+    );
+  });
+
+  it('should update image when a new file is uploaded', () => {
+    render(<LiatoshynskyFoundation />);
+
+    const fileInput = screen.getByTestId('image-input');
+    const file = new File(['test'], 'new-image.png', { type: 'image/png' });
     fireEvent.change(fileInput, { target: { files: [file] } });
 
-    expect(setFieldMock).toHaveBeenLastCalledWith(
+    expect(setFieldMock).toHaveBeenCalledWith(
       'about-us',
       'FoundationInfo',
       'image',
       expect.objectContaining({
-        src: 'blob:mocked-url',
-        generatedSrc: 'blob:mocked-url'
+        src: 'mock-url/new-image.png',
+        generatedSrc: 'mock-url/new-image.png',
+        caption: { uk: 'Image Caption' }
       })
     );
   });

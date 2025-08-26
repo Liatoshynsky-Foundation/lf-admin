@@ -5,7 +5,7 @@ import { Skeleton } from '@mui/material';
 import { QuoteBlock } from './quote-block/QuoteBlock';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
-import { usePageBlocks } from '~/shared/hooks/use-page-blocks/usePageBlocks';
+import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 import { LocalizedString } from '~/types/common';
 
@@ -13,12 +13,10 @@ export const LiatoshynskyOffice = () => {
   const pageId = PAGE_IDS.ABOUT_US;
   const blockId = BLOCK_IDS.LIATOSHYNSKY_OFFICE;
 
-  const { blocks } = usePageBlocks(pageId);
+  const { block } = usePageBlock(pageId, blockId);
   const setField = useStore((state) => state.setField);
 
   const currentLocale: keyof LocalizedString = useStore((state) => state.locale);
-
-  const block = blocks.LiatoshynskyOffice;
 
   if (!block) return <Skeleton sx={{ height: '60px' }} />;
 

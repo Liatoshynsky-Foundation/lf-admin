@@ -6,21 +6,20 @@ import { ImagePreviewBlock } from '../../design-system/photo-block/PhotoBlock';
 import { CustomTextField } from '../../design-system/text-field/TextField';
 import { QuoteBlock } from '../Liatoshynsky-office/quote-block/QuoteBlock';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
-import { usePageBlocks } from '~/shared/hooks/use-page-blocks/usePageBlocks';
+import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 import { LocalizedString } from '~/types/common';
-import { IntroSectionBlock } from '~/types/store/pages/about-us';
 
 export const EntrySection = () => {
   const pageId = PAGE_IDS.ABOUT_US;
   const blockId = BLOCK_IDS.INTRO_SECTION;
 
-  const { blocks } = usePageBlocks(pageId);
+  const { block } = usePageBlock(pageId, blockId);
 
   const currentLocale: keyof LocalizedString = useStore((state) => state.locale);
 
   const setField = useStore((state) => state.setField);
-  const block: IntroSectionBlock | undefined = blocks.IntroSection;
+
   if (!block) return <Skeleton sx={{ height: '60px' }} />;
 
   return (

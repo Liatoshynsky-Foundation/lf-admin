@@ -10,9 +10,9 @@ jest.mock('~/store', () => ({
     selector({ locale: 'uk', setField: setFieldMock })
 }));
 
-const usePageBlocksMock = jest.fn();
-jest.mock('~/shared/hooks/use-page-blocks/usePageBlocks', () => ({
-  usePageBlocks: (...args: unknown[]) => usePageBlocksMock(...args)
+const usePageBlockMock = jest.fn();
+jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
+  usePageBlock: (...args: unknown[]) => usePageBlockMock(...args)
 }));
 
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
@@ -62,13 +62,13 @@ describe('LiatoshynskyOffice', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    usePageBlocksMock.mockReturnValue({
-      blocks: {
-        LiatoshynskyOffice: {
-          quote: {
-            source: { uk: hardcodedData.mainQuote },
-            text: { uk: hardcodedData.description }
-          }
+    usePageBlockMock.mockReturnValue({
+      loading: false,
+      error: undefined,
+      block: {
+        quote: {
+          source: { uk: hardcodedData.mainQuote },
+          text: { uk: hardcodedData.description }
         }
       }
     });
