@@ -31,7 +31,7 @@ jest.mock('~/store', () => ({
 }));
 
 describe('About Page', () => {
-  it('renders the About page with all child components', () => {
+  it('should render the About page with all child components', () => {
     render(<About />);
 
     expect(screen.getByTestId('header')).toBeInTheDocument();
