@@ -1,13 +1,12 @@
-import mongoose from 'mongoose';
-
 import { BasePage } from '~/domain/entities/Page';
 import dbConnect from '~/infrastructure/db/connect';
+import PageModel from '~/infrastructure/models/page.model';
 
 export const PageRepository = () => ({
   getPageBySlug: async (slug: string): Promise<BasePage | null> => {
     await dbConnect();
-    const pageCollection = mongoose.connection.collection('pages');
-    const page = await pageCollection.findOne({ slug });
+
+    const page = await PageModel.findOne({ slug });
 
     if (!page) return null;
 

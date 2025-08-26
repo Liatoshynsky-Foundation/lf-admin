@@ -2,7 +2,7 @@
 import { Box } from '@mui/material';
 import React from 'react';
 
-import { EntrySection } from '~/shared/components/about-us/Entry-section/EntrySection';
+import { IntroSection } from '~/shared/components/about-us/Intro-section/IntroSection';
 import { LiatoshynskyFoundation } from '~/shared/components/about-us/Liatoshynsky-foundation/LiatoshynskyFoundation';
 import { LiatoshynskyOffice } from '~/shared/components/about-us/Liatoshynsky-office/Liatoshynsky-office';
 import OurMission from '~/shared/components/about-us/our-mission/OurMission';
@@ -21,7 +21,7 @@ const Page = () => {
         isSaving={false}
         onLanguageChange={(lang: 'uk' | 'en') => setLocale(lang)}
       />
-      <EntrySection />
+      <IntroSection />
       <LiatoshynskyFoundation />
       <OurMission />
       <LiatoshynskyOffice />

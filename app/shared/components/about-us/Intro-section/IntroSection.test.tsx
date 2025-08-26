@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 
-import { EntrySection } from './EntrySection';
+import { IntroSection } from './IntroSection';
 
 const setFieldMock = jest.fn();
 
@@ -107,7 +107,7 @@ describe('EntrySection', () => {
         quote: { source: { uk: 'Author' }, text: { uk: 'Quote' } }
       }
     });
-    render(<EntrySection />);
+    render(<IntroSection />);
   });
 
   it('should render all fields when block exists', () => {

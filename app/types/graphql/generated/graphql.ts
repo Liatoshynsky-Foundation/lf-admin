@@ -31,12 +31,6 @@ export type LocalizedString = {
   uk?: Maybe<Scalars['String']['output']>;
 };
 
-export type LocalizedTitle = {
-  __typename?: 'LocalizedTitle';
-  en: Scalars['String']['output'];
-  uk: Scalars['String']['output'];
-};
-
 export type LoginPayload = {
   __typename?: 'LoginPayload';
   adminId?: Maybe<Scalars['ID']['output']>;
@@ -66,7 +60,7 @@ export type Page = {
   pageType: Scalars['String']['output'];
   slug: Scalars['String']['output'];
   status: Scalars['String']['output'];
-  title: LocalizedTitle;
+  title: LocalizedString;
   updatedAt: Scalars['String']['output'];
 };
 

@@ -7,8 +7,8 @@ jest.mock('~/shared/components/header/Header', () => ({
   Header: ({ title }: { title: string }) => <div data-testid="header">{title}</div>
 }));
 
-jest.mock('~/shared/components/about-us/Entry-section/EntrySection', () => ({
-  EntrySection: () => <div data-testid="entry-section">EntrySection</div>
+jest.mock('~/shared/components/about-us/Intro-section/IntroSection', () => ({
+  IntroSection: () => <div data-testid="intro-section">IntroSection</div>
 }));
 
 jest.mock('~/shared/components/about-us/Liatoshynsky-foundation/LiatoshynskyFoundation', () => ({
@@ -35,7 +35,7 @@ describe('About Page', () => {
     render(<About />);
 
     expect(screen.getByTestId('header')).toBeInTheDocument();
-    expect(screen.getByTestId('entry-section')).toBeInTheDocument();
+    expect(screen.getByTestId('intro-section')).toBeInTheDocument();
     expect(screen.getByTestId('foundation')).toBeInTheDocument();
     expect(screen.getByTestId('our-mission')).toBeInTheDocument();
     expect(screen.getByTestId('office')).toBeInTheDocument();

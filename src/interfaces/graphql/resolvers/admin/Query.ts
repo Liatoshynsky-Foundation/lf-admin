@@ -15,7 +15,14 @@ export const Query = {
     }
     return { __typename: 'RefreshTokenPayload', success: true };
   },
-  pageBlocks: async (_: unknown, args: { slug: string }) => {
+  pageBlocks: async (_: unknown, args: { slug: string }, context: GraphQLContext) => {
+    if (!context.admin) {
+      throw new GraphQLError('You must be logged in to access this resource.', {
+        extensions: {
+          code: 'UNAUTHENTICATED'
+        }
+      });
+    }
     const service = PageService(PageRepository());
     const page = await service.getPage(args.slug);
 
