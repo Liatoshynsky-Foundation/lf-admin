@@ -16,24 +16,10 @@ jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
 }));
 
 jest.mock('./foundation-block/FoundationBlock', () => ({
-  FoundationBlock: ({
-    mainText,
-    paragraphs,
-    imageUrl,
-    onMainTextChange,
-    onParagraphChange,
-    onImageChange
-  }: {
-    mainText: string;
-    paragraphs: { text: string }[];
-    imageUrl: string;
-    onMainTextChange: (val: string) => void;
-    onParagraphChange: (index: number, val: string) => void;
-    onImageChange: (file: File) => void;
-  }) => (
+  FoundationBlock: ({ mainText, paragraphs, imageUrl, onMainTextChange, onParagraphChange, onImageChange }: any) => (
     <div>
       <input data-testid="main-text" value={mainText} onChange={(e) => onMainTextChange(e.target.value)} />
-      {paragraphs.map((p, idx) => (
+      {paragraphs.map((p: { text: string }, idx: number) => (
         <input
           key={`${p.text} ${idx}`}
           data-testid={`paragraph-${idx}`}
@@ -75,6 +61,17 @@ describe('LiatoshynskyFoundation', () => {
 
   const renderFoundation = () => render(<LiatoshynskyFoundation />);
 
+  const expectSetFieldCalled = (field: string, content: any) => {
+    expect(setFieldMock).toHaveBeenCalledWith(
+      'about-us',
+      'FoundationInfo',
+      field,
+      expect.objectContaining({
+        uk: expect.objectContaining(content)
+      })
+    );
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
     usePageBlockMock.mockReturnValue({ block: mockBlock, blockId: 'FoundationInfo' });
@@ -88,36 +85,22 @@ describe('LiatoshynskyFoundation', () => {
     expect(screen.getByTestId('image')).toHaveAttribute('src', '/images/image-src.png');
   });
 
-  it('should render update main text when edited', () => {
+  it('should update main text when edited', () => {
     renderFoundation();
     fireEvent.change(screen.getByTestId('main-text'), { target: { value: 'New Organisation Text' } });
 
-    expect(setFieldMock).toHaveBeenCalledWith(
-      'about-us',
-      'FoundationInfo',
-      'ourOrganisation',
-      expect.objectContaining({
-        uk: expect.objectContaining({
-          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'New Organisation Text' }] }]
-        })
-      })
-    );
+    expectSetFieldCalled('ourOrganisation', {
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'New Organisation Text' }] }]
+    });
   });
 
   it('should update paragraph when edited', () => {
     renderFoundation();
     fireEvent.change(screen.getByTestId('paragraph-0'), { target: { value: 'New Name' } });
 
-    expect(setFieldMock).toHaveBeenCalledWith(
-      'about-us',
-      'FoundationInfo',
-      'ourName',
-      expect.objectContaining({
-        uk: expect.objectContaining({
-          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'New Name' }] }]
-        })
-      })
-    );
+    expectSetFieldCalled('ourName', {
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'New Name' }] }]
+    });
   });
 
   it('should update image when a new file is uploaded', () => {

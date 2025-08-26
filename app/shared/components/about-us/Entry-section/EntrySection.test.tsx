@@ -84,9 +84,11 @@ jest.mock('../Liatoshynsky-office/quote-block/QuoteBlock', () => ({
   )
 }));
 
-const renderEntry = () => render(<EntrySection />);
 const expectSetField = (field: string, value: unknown) =>
   expect(setFieldMock).toHaveBeenCalledWith('about-us', 'IntroSection', field, expect.objectContaining(value));
+
+const updateField = (testId: string, value: string) =>
+  fireEvent.change(screen.getByTestId(testId), { target: { value } });
 
 describe('EntrySection', () => {
   beforeEach(() => {
@@ -98,10 +100,10 @@ describe('EntrySection', () => {
         quote: { source: { uk: 'Author' }, text: { uk: 'Quote' } }
       }
     });
+    render(<EntrySection />);
   });
 
   it('should render all fields when block exists', () => {
-    renderEntry();
     expect(screen.getByText('Вступна секція')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Title')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Caption')).toBeInTheDocument();
@@ -110,41 +112,34 @@ describe('EntrySection', () => {
   });
 
   it('should passe correct props to ImagePreviewBlock', () => {
-    renderEntry();
     const preview = screen.getByTestId('image-preview');
     expect(within(preview).getByTestId('image-url')).toHaveTextContent('/images/test-image.png');
     expect(within(preview).getByTestId('file-name')).toHaveTextContent('test-image');
   });
 
   it('should passe correct props to QuoteBlock', () => {
-    renderEntry();
     expect(screen.getByTestId('quote-title-prop')).toHaveTextContent('Author');
     expect(screen.getByTestId('quote-description-prop')).toHaveTextContent('Quote');
   });
 
   it('should call setField when updating title', () => {
-    renderEntry();
-    fireEvent.change(screen.getByTestId('textfield-Заголовок сторінки'), { target: { value: 'New Title' } });
+    updateField('textfield-Заголовок сторінки', 'New Title');
     expectSetField('title', { uk: 'New Title' });
   });
 
   it('should call setField when uploading new image', () => {
-    renderEntry();
     fireEvent.click(screen.getByText('Upload Image'));
     expectSetField('image', { src: 'new.png', generatedSrc: expect.stringContaining('new.png') });
   });
 
   it('should call setField when updating image caption', () => {
-    renderEntry();
-    fireEvent.change(screen.getByTestId('textfield-Підпис до зображення'), { target: { value: 'New Caption' } });
+    updateField('textfield-Підпис до зображення', 'New Caption');
     expectSetField('image', { caption: { uk: 'New Caption' } });
   });
 
   it('should call setField when updating quote fields', () => {
-    renderEntry();
-    fireEvent.change(screen.getByTestId('quote-title'), { target: { value: 'New Author' } });
-    fireEvent.change(screen.getByTestId('quote-description'), { target: { value: 'New Quote' } });
-
+    updateField('quote-title', 'New Author');
+    updateField('quote-description', 'New Quote');
     expectSetField('quote', { source: { uk: 'New Author' } });
     expectSetField('quote', { text: { uk: 'New Quote' } });
   });
