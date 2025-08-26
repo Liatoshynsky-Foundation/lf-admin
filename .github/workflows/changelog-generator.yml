@@ -3,7 +3,7 @@ name: Generate Changelog
 on:
   push:
     branches:
-      - chore/164/changelog-action
+      - develop
   workflow_dispatch:
 
 jobs:
