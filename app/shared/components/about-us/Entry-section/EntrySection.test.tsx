@@ -90,6 +90,13 @@ const expectSetField = (field: string, value: unknown) =>
 const updateField = (testId: string, value: string) =>
   fireEvent.change(screen.getByTestId(testId), { target: { value } });
 
+const updateMultipleFields = (updates: { testId: string; value: string; field: string; prop?: string }[]) => {
+  updates.forEach(({ testId, value, field, prop }) => {
+    updateField(testId, value);
+    expectSetField(field, prop ? { [prop]: { uk: value } } : { uk: value });
+  });
+};
+
 describe('EntrySection', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -105,19 +112,16 @@ describe('EntrySection', () => {
 
   it('should render all fields when block exists', () => {
     expect(screen.getByText('Вступна секція')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('Title')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('Caption')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('Author')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('Quote')).toBeInTheDocument();
+    ['Title', 'Caption', 'Author', 'Quote'].forEach((val) => expect(screen.getByDisplayValue(val)).toBeInTheDocument());
   });
 
-  it('should passe correct props to ImagePreviewBlock', () => {
+  it('should pass correct props to ImagePreviewBlock', () => {
     const preview = screen.getByTestId('image-preview');
     expect(within(preview).getByTestId('image-url')).toHaveTextContent('/images/test-image.png');
     expect(within(preview).getByTestId('file-name')).toHaveTextContent('test-image');
   });
 
-  it('should passe correct props to QuoteBlock', () => {
+  it('should pass correct props to QuoteBlock', () => {
     expect(screen.getByTestId('quote-title-prop')).toHaveTextContent('Author');
     expect(screen.getByTestId('quote-description-prop')).toHaveTextContent('Quote');
   });
@@ -138,9 +142,9 @@ describe('EntrySection', () => {
   });
 
   it('should call setField when updating quote fields', () => {
-    updateField('quote-title', 'New Author');
-    updateField('quote-description', 'New Quote');
-    expectSetField('quote', { source: { uk: 'New Author' } });
-    expectSetField('quote', { text: { uk: 'New Quote' } });
+    updateMultipleFields([
+      { testId: 'quote-title', value: 'New Author', field: 'quote', prop: 'source' },
+      { testId: 'quote-description', value: 'New Quote', field: 'quote', prop: 'text' }
+    ]);
   });
 });

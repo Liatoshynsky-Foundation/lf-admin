@@ -15,13 +15,33 @@ jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: (pageId: string, blockId: string) => usePageBlockMock(pageId, blockId)
 }));
 
+interface Paragraph {
+  text: string;
+}
+
+interface FoundationBlockProps {
+  mainText: string;
+  paragraphs: Paragraph[];
+  imageUrl: string;
+  onMainTextChange: (value: string) => void;
+  onParagraphChange: (idx: number, value: string) => void;
+  onImageChange: (file: File) => void;
+}
+
 jest.mock('./foundation-block/FoundationBlock', () => ({
-  FoundationBlock: ({ mainText, paragraphs, imageUrl, onMainTextChange, onParagraphChange, onImageChange }: any) => (
+  FoundationBlock: ({
+    mainText,
+    paragraphs,
+    imageUrl,
+    onMainTextChange,
+    onParagraphChange,
+    onImageChange
+  }: FoundationBlockProps) => (
     <div>
       <input data-testid="main-text" value={mainText} onChange={(e) => onMainTextChange(e.target.value)} />
-      {paragraphs.map((p: { text: string }, idx: number) => (
+      {paragraphs.map((p, idx) => (
         <input
-          key={`${p.text} ${idx}`}
+          key={`${p.text}-${idx}`}
           data-testid={`paragraph-${idx}`}
           value={p.text}
           onChange={(e) => onParagraphChange(idx, e.target.value)}
@@ -61,13 +81,32 @@ describe('LiatoshynskyFoundation', () => {
 
   const renderFoundation = () => render(<LiatoshynskyFoundation />);
 
-  const expectSetFieldCalled = (field: string, content: any) => {
+  const expectSetFieldCalled = (field: string, content: object) => {
+    expect(setFieldMock).toHaveBeenCalledWith(
+      'about-us',
+      'FoundationInfo',
+      field,
+      expect.objectContaining({ uk: expect.objectContaining(content) })
+    );
+  };
+
+  const changeInputAndExpect = (testId: string, value: string, field: string) => {
+    fireEvent.change(screen.getByTestId(testId), { target: { value } });
+    expectSetFieldCalled(field, {
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: value }] }]
+    });
+  };
+
+  const uploadFileAndExpect = (file: File, field: string, caption = 'Image Caption') => {
+    fireEvent.change(screen.getByTestId('image-input'), { target: { files: [file] } });
     expect(setFieldMock).toHaveBeenCalledWith(
       'about-us',
       'FoundationInfo',
       field,
       expect.objectContaining({
-        uk: expect.objectContaining(content)
+        src: `mock-url/${file.name}`,
+        generatedSrc: `mock-url/${file.name}`,
+        caption: { uk: caption }
       })
     );
   };
@@ -80,43 +119,27 @@ describe('LiatoshynskyFoundation', () => {
   it('should render all fields when block exists', () => {
     renderFoundation();
     expect(screen.getByTestId('main-text')).toHaveValue('Organisation Text');
-    expect(screen.getByTestId('paragraph-0')).toHaveValue('Name');
-    expect(screen.getByTestId('paragraph-1')).toHaveValue('Belief');
+
+    ['Name', 'Belief'].forEach((val, idx) => {
+      expect(screen.getByTestId(`paragraph-${idx}`)).toHaveValue(val);
+    });
+
     expect(screen.getByTestId('image')).toHaveAttribute('src', '/images/image-src.png');
   });
 
   it('should update main text when edited', () => {
     renderFoundation();
-    fireEvent.change(screen.getByTestId('main-text'), { target: { value: 'New Organisation Text' } });
-
-    expectSetFieldCalled('ourOrganisation', {
-      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'New Organisation Text' }] }]
-    });
+    changeInputAndExpect('main-text', 'New Organisation Text', 'ourOrganisation');
   });
 
   it('should update paragraph when edited', () => {
     renderFoundation();
-    fireEvent.change(screen.getByTestId('paragraph-0'), { target: { value: 'New Name' } });
-
-    expectSetFieldCalled('ourName', {
-      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'New Name' }] }]
-    });
+    changeInputAndExpect('paragraph-0', 'New Name', 'ourName');
   });
 
   it('should update image when a new file is uploaded', () => {
     renderFoundation();
     const file = new File(['test'], 'new-image.png', { type: 'image/png' });
-    fireEvent.change(screen.getByTestId('image-input'), { target: { files: [file] } });
-
-    expect(setFieldMock).toHaveBeenCalledWith(
-      'about-us',
-      'FoundationInfo',
-      'image',
-      expect.objectContaining({
-        src: 'mock-url/new-image.png',
-        generatedSrc: 'mock-url/new-image.png',
-        caption: { uk: 'Image Caption' }
-      })
-    );
+    uploadFileAndExpect(file, 'image');
   });
 });
