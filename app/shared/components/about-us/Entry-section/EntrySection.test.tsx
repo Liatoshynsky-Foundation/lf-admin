@@ -84,6 +84,10 @@ jest.mock('../Liatoshynsky-office/quote-block/QuoteBlock', () => ({
   )
 }));
 
+const renderEntry = () => render(<EntrySection />);
+const expectSetField = (field: string, value: unknown) =>
+  expect(setFieldMock).toHaveBeenCalledWith('about-us', 'IntroSection', field, expect.objectContaining(value));
+
 describe('EntrySection', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -97,7 +101,7 @@ describe('EntrySection', () => {
   });
 
   it('should render all fields when block exists', () => {
-    render(<EntrySection />);
+    renderEntry();
     expect(screen.getByText('Вступна секція')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Title')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Caption')).toBeInTheDocument();
@@ -105,68 +109,43 @@ describe('EntrySection', () => {
     expect(screen.getByDisplayValue('Quote')).toBeInTheDocument();
   });
 
-  it('should pass correct props to ImagePreviewBlock', () => {
-    render(<EntrySection />);
+  it('should passe correct props to ImagePreviewBlock', () => {
+    renderEntry();
     const preview = screen.getByTestId('image-preview');
     expect(within(preview).getByTestId('image-url')).toHaveTextContent('/images/test-image.png');
     expect(within(preview).getByTestId('file-name')).toHaveTextContent('test-image');
   });
 
-  it('should pass correct props to QuoteBlock', () => {
-    render(<EntrySection />);
+  it('should passe correct props to QuoteBlock', () => {
+    renderEntry();
     expect(screen.getByTestId('quote-title-prop')).toHaveTextContent('Author');
     expect(screen.getByTestId('quote-description-prop')).toHaveTextContent('Quote');
   });
 
   it('should call setField when updating title', () => {
-    render(<EntrySection />);
+    renderEntry();
     fireEvent.change(screen.getByTestId('textfield-Заголовок сторінки'), { target: { value: 'New Title' } });
-    expect(setFieldMock).toHaveBeenCalledWith(
-      'about-us',
-      'IntroSection',
-      'title',
-      expect.objectContaining({ uk: 'New Title' })
-    );
+    expectSetField('title', { uk: 'New Title' });
   });
 
   it('should call setField when uploading new image', () => {
-    render(<EntrySection />);
+    renderEntry();
     fireEvent.click(screen.getByText('Upload Image'));
-    expect(setFieldMock).toHaveBeenCalledWith(
-      'about-us',
-      'IntroSection',
-      'image',
-      expect.objectContaining({ src: 'new.png', generatedSrc: expect.stringContaining('new.png') })
-    );
+    expectSetField('image', { src: 'new.png', generatedSrc: expect.stringContaining('new.png') });
   });
 
   it('should call setField when updating image caption', () => {
-    render(<EntrySection />);
+    renderEntry();
     fireEvent.change(screen.getByTestId('textfield-Підпис до зображення'), { target: { value: 'New Caption' } });
-    expect(setFieldMock).toHaveBeenCalledWith(
-      'about-us',
-      'IntroSection',
-      'image',
-      expect.objectContaining({ caption: expect.objectContaining({ uk: 'New Caption' }) })
-    );
+    expectSetField('image', { caption: { uk: 'New Caption' } });
   });
 
   it('should call setField when updating quote fields', () => {
-    render(<EntrySection />);
+    renderEntry();
     fireEvent.change(screen.getByTestId('quote-title'), { target: { value: 'New Author' } });
     fireEvent.change(screen.getByTestId('quote-description'), { target: { value: 'New Quote' } });
 
-    expect(setFieldMock).toHaveBeenCalledWith(
-      'about-us',
-      'IntroSection',
-      'quote',
-      expect.objectContaining({ source: expect.objectContaining({ uk: 'New Author' }) })
-    );
-    expect(setFieldMock).toHaveBeenCalledWith(
-      'about-us',
-      'IntroSection',
-      'quote',
-      expect.objectContaining({ text: expect.objectContaining({ uk: 'New Quote' }) })
-    );
+    expectSetField('quote', { source: { uk: 'New Author' } });
+    expectSetField('quote', { text: { uk: 'New Quote' } });
   });
 });
