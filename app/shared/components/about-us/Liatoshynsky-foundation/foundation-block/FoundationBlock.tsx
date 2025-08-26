@@ -38,7 +38,7 @@ export const FoundationBlock = ({
 
       {paragraphs.map((paragraph, i) => (
         <CustomTextField
-          key={`${paragraph.text}-${i}`}
+          key={i}
           title={`Текст ${i + 1} абзацу`}
           label="Текст"
           value={paragraph.text}
