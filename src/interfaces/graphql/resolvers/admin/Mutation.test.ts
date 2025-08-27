@@ -1,4 +1,5 @@
 import { GraphQLError } from 'graphql';
+import { v4 as uuidv4 } from 'uuid';
 
 import { Mutation } from './Mutation';
 import { LoginError } from '~/back-constants/apolloCustomErrors/adminErrors';
@@ -34,10 +35,13 @@ beforeEach(() => {
 
 describe('GraphQL Mutations', () => {
   describe('login', () => {
-    const mockArgs = { email: 'test@test.com', password: process.env.TEST_ADMIN_PASSWORD };
+    const test = uuidv4();
+    const token = uuidv4();
+
+    const mockArgs = { email: 'test@test.com', password: test };
     const mockAdmin = { id: 'admin-1', type: 'admin' };
     const mockTokens = {
-      accessToken: process.env.TEST_ACCESS_TOKEN,
+      accessToken: token,
       refreshToken: 'new-refresh-token',
       refreshTokenJti: 'new-jti'
     };
@@ -119,13 +123,14 @@ describe('GraphQL Mutations', () => {
   });
 
   describe('refreshToken', () => {
+    const token = uuidv4();
     const mockContext = {
       ...baseMockContext,
       refreshTokenFromCookie: 'valid-refresh-token'
     };
     const oldPayload = { id: 'admin-1', type: 'admin', jti: 'old-jti' };
     const newTokens = {
-      accessToken: process.env.TEST_ACCESS_TOKEN,
+      accessToken: token,
       refreshToken: 'new-refresh-token',
       refreshTokenJti: 'new-jti'
     };
