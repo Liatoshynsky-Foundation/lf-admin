@@ -86,10 +86,6 @@ jobs:
           MONGO_DB: mongodb
           MONGO_USERNAME: admin
           MONGO_PASSWORD: password
-          TEST_JWT_SECRET: ${{ vars.TEST_JWT_SECRET }}
-          TEST_ADMIN_PASSWORD: ${{ vars.TEST_ADMIN_PASSWORD }}
-          TEST_ADMIN_EMAIL: ${{ vars.TEST_ADMIN_EMAIL }}
-          TEST_ACCESS_TOKEN: ${{ secrets.TEST_ACCESS_TOKEN }}
         run:
           npm run test
 
