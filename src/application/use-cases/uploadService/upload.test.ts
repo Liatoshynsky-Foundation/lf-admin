@@ -94,6 +94,7 @@ describe('azureStorageService', () => {
       expect(logger.error).toHaveBeenCalledWith(errors.FAILED_TO_DELETE_BLOB, deleteError);
     });
   });
+
   describe('constructBlobUrl', () => {
     it('should return the full, correctly formatted URL without checking for existence', () => {
       const url = blobStorageService().constructBlobUrl(folderName, blobName);
