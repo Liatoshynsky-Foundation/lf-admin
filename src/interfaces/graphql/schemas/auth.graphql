@@ -1,6 +1,6 @@
 union LoginResult = LoginPayload | ErrorPayload
 
-type Mutation {
+extend type Mutation {
   login(email: String!, password: String!): LoginResult!
   logout: Boolean!
   refreshToken: RefreshTokenPayload!
@@ -20,27 +20,4 @@ type ErrorPayload {
   success: Boolean!
   message: String!
   statusCode: Int!
-}
-scalar JSON
-
-type Page {
-  id: ID!
-  slug: String!
-  title: LocalizedString!
-  status: String!
-  pageType: String!
-  blocks: JSON!
-  createdAt: String!
-  updatedAt: String!
-}
-
-type LocalizedString {
-  uk: String
-  en: String
-}
-
-type Query {
-  _empty: String
-  test: RefreshTokenPayload!
-  pageBlocks(slug: String!): Page
 }

@@ -1,0 +1,17 @@
+mutation UploadBlob(
+    $folderName: String!
+    $blobName: String!
+    $buffer: String!
+    $contentType: String!
+) {
+    uploadBlob(
+        folderName: $folderName
+        blobName: $blobName
+        buffer: $buffer
+        contentType: $contentType
+    ) {
+        success
+        message
+        blobName
+    }
+}

@@ -1,6 +1,6 @@
 import { GraphQLError } from 'graphql';
 
-import { Mutation } from './Mutation';
+import { authMutation } from './AuthMutation';
 import { LoginError } from '~/back-constants/apolloCustomErrors/adminErrors';
 import { GraphQLContext } from '~/back-shared/types/container/types';
 
@@ -45,7 +45,7 @@ describe('GraphQL Mutations', () => {
     it('should successfully log in the admin, set cookies and return LoginPayload', async () => {
       mockLoginAdmin.execute.mockResolvedValue(mockAdmin);
       mockTokenService.generateTokens.mockReturnValue(mockTokens);
-      const result = await Mutation.login(null, mockArgs, baseMockContext as GraphQLContext);
+      const result = await authMutation.login(null, mockArgs, baseMockContext as GraphQLContext);
       expect(mockLoginAdmin.execute).toHaveBeenCalledWith(mockArgs.email, mockArgs.password);
       expect(mockTokenService.generateTokens).toHaveBeenCalledWith(mockAdmin);
       expect(mockRefreshTokenService.addJTI).toHaveBeenCalledWith(
@@ -67,7 +67,7 @@ describe('GraphQL Mutations', () => {
       const loginError = new LoginError();
       mockLoginAdmin.execute.mockRejectedValue(loginError);
 
-      const result = await Mutation.login(null, mockArgs, baseMockContext as GraphQLContext);
+      const result = await authMutation.login(null, mockArgs, baseMockContext as GraphQLContext);
 
       expect(result).toEqual({
         __typename: 'ErrorPayload',
@@ -81,7 +81,7 @@ describe('GraphQL Mutations', () => {
     it('should throw an error if it is not of type LoginError', async () => {
       const genericError = new Error('Database connection failed');
       mockLoginAdmin.execute.mockRejectedValue(genericError);
-      await expect(Mutation.login(null, mockArgs, baseMockContext as GraphQLContext)).rejects.toThrow(genericError);
+      await expect(authMutation.login(null, mockArgs, baseMockContext as GraphQLContext)).rejects.toThrow(genericError);
     });
   });
 
@@ -90,7 +90,7 @@ describe('GraphQL Mutations', () => {
       const mockContext = { ...baseMockContext, refreshTokenFromCookie: 'valid-refresh-token' };
       const mockPayload = { id: 'admin-1', jti: 'jti-to-delete' };
       mockTokenService.verifyRefreshToken.mockReturnValue(mockPayload);
-      const result = await Mutation.logout(null, {}, mockContext as GraphQLContext);
+      const result = await authMutation.logout(null, {}, mockContext as GraphQLContext);
       expect(mockTokenService.verifyRefreshToken).toHaveBeenCalledWith('valid-refresh-token');
       expect(mockRefreshTokenService.deleteJTI).toHaveBeenCalledWith(mockPayload.jti);
       expect(mockContext.deleteCookie).toHaveBeenCalledTimes(2);
@@ -98,7 +98,7 @@ describe('GraphQL Mutations', () => {
     });
 
     it('should only delete cookies if there is no token', async () => {
-      const result = await Mutation.logout(null, {}, baseMockContext as GraphQLContext);
+      const result = await authMutation.logout(null, {}, baseMockContext as GraphQLContext);
       expect(mockTokenService.verifyRefreshToken).not.toHaveBeenCalled();
       expect(mockRefreshTokenService.deleteJTI).not.toHaveBeenCalled();
       expect(baseMockContext.deleteCookie).toHaveBeenCalledTimes(2);
@@ -111,7 +111,7 @@ describe('GraphQL Mutations', () => {
         throw new Error('jwt expired');
       });
 
-      await Mutation.logout(null, {}, mockContext as GraphQLContext);
+      await authMutation.logout(null, {}, mockContext as GraphQLContext);
 
       expect(mockRefreshTokenService.deleteJTI).not.toHaveBeenCalled();
       expect(mockContext.deleteCookie).toHaveBeenCalledTimes(2);
@@ -135,7 +135,7 @@ describe('GraphQL Mutations', () => {
       mockRefreshTokenService.isExistsJTI.mockResolvedValue(true);
       mockTokenService.generateTokens.mockReturnValue(newTokens);
 
-      const result = await Mutation.refreshToken(null, {}, mockContext as GraphQLContext);
+      const result = await authMutation.refreshToken(null, {}, mockContext as GraphQLContext);
 
       expect(mockRefreshTokenService.isExistsJTI).toHaveBeenCalledWith(oldPayload.jti);
       expect(mockRefreshTokenService.deleteJTI).toHaveBeenCalledWith(oldPayload.jti);
@@ -148,7 +148,7 @@ describe('GraphQL Mutations', () => {
       mockTokenService.verifyRefreshToken.mockReturnValue(oldPayload);
       mockRefreshTokenService.isExistsJTI.mockResolvedValue(false);
 
-      await expect(Mutation.refreshToken(null, {}, mockContext as GraphQLContext)).rejects.toThrow(GraphQLError);
+      await expect(authMutation.refreshToken(null, {}, mockContext as GraphQLContext)).rejects.toThrow(GraphQLError);
 
       expect(mockRefreshTokenService.deleteAllForAdmin).toHaveBeenCalledWith(oldPayload.id);
       expect(mockContext.deleteCookie).toHaveBeenCalledTimes(2);
@@ -166,7 +166,7 @@ describe('GraphQL Mutations', () => {
         throw new Error('jwt expired');
       });
 
-      await expect(Mutation.refreshToken(null, {}, mockContext as GraphQLContext)).rejects.toThrow(GraphQLError);
+      await expect(authMutation.refreshToken(null, {}, mockContext as GraphQLContext)).rejects.toThrow(GraphQLError);
       expect(mockContext.deleteCookie).toHaveBeenCalledTimes(2);
     });
   });
