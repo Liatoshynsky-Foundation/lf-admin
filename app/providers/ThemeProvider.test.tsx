@@ -1,9 +1,13 @@
+<<<<<<< HEAD
 import { Typography } from '@mui/material';
+=======
+>>>>>>> c675860 (add tests for theme and themeProvider)
 import { render, screen } from '@testing-library/react';
 
 import { ThemeProvider } from './ThemeProvider';
 
 describe('ThemeProvider', () => {
+<<<<<<< HEAD
   it('should render children components', () => {
     render(
       <ThemeProvider>
@@ -26,5 +30,16 @@ describe('ThemeProvider', () => {
     expect(styles.fontWeight).toBe('700');
     expect(styles.fontSize).toBe('32px');
     expect(styles.lineHeight).toBe('140%');
+=======
+  test('renders children correctly', () => {
+    render(
+      <ThemeProvider>
+        <div data-testid="test-child">Test Content</div>
+      </ThemeProvider>
+    );
+
+    expect(screen.getByTestId('test-child')).toBeInTheDocument();
+    expect(screen.getByText('Test Content')).toBeInTheDocument();
+>>>>>>> c675860 (add tests for theme and themeProvider)
   });
 });
