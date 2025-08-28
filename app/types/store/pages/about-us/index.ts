@@ -1,16 +1,15 @@
-export * from './blocks/entrySectionBlock';
+export * from './blocks/introSectionBlock';
 export * from './blocks/liatoshynskyFoundationBlock';
 export * from './blocks/liatoshynskyOfficeBlock';
-export * from './blocks/missionBlock';
 
-import type { EntrySectionBlock } from './blocks/entrySectionBlock';
-import type { LiatoshynskyFoundationBlock } from './blocks/liatoshynskyFoundationBlock';
+import type { IntroSectionBlock } from './blocks/introSectionBlock';
+import { FoundationInfo } from './blocks/liatoshynskyFoundationBlock';
 import type { LiatoshynskyOfficeBlock } from './blocks/liatoshynskyOfficeBlock';
-import type { MissionBlock } from './blocks/missionBlock';
+import { OurMissionBlock } from './blocks/missionBlock';
 
 export interface BlocksMap {
-  ourMission: MissionBlock;
-  entrySection: EntrySectionBlock;
-  liatoshynskyFoundation: LiatoshynskyFoundationBlock;
-  liatoshynskyOffice: LiatoshynskyOfficeBlock;
+  OurMission: OurMissionBlock;
+  IntroSection: IntroSectionBlock;
+  FoundationInfo: FoundationInfo;
+  LiatoshynskyOffice: LiatoshynskyOfficeBlock;
 }

@@ -1,4 +1,5 @@
+import { QuoteBlock } from '~/types/common';
+
 export interface LiatoshynskyOfficeBlock {
-  mainQuote: string;
-  caption: string;
+  quote: QuoteBlock;
 }

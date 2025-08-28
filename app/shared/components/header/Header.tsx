@@ -12,7 +12,7 @@ type HeaderProps = {
   onPreview: () => void;
   onSave: () => void;
   isSaving: boolean;
-  onLanguageChange: (lang: 'ua' | 'en') => void;
+  onLanguageChange: (lang: 'uk' | 'en') => void;
 };
 
 export const Header = ({ title, onPreview, onSave, isSaving, onLanguageChange }: HeaderProps) => {

@@ -1,9 +1,21 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import { LiatoshynskyOffice } from './Liatoshynsky-office';
-import { hardcodedData } from './Liatoshynsky-office.const';
+import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 
-jest.mock('../../design-system/collapsible-block/CollapsibleBlock', () => ({
+const setFieldMock = jest.fn();
+
+jest.mock('~/store', () => ({
+  useStore: (selector: (s: { locale: 'uk'; setField: typeof setFieldMock }) => unknown) =>
+    selector({ locale: 'uk', setField: setFieldMock })
+}));
+
+const usePageBlockMock = jest.fn();
+jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
+  usePageBlock: (...args: unknown[]) => usePageBlockMock(...args)
+}));
+
+jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
   default: ({ title, children }: { title: string; children: React.ReactNode }) => (
     <div data-testid="collapsible-block">
@@ -13,11 +25,92 @@ jest.mock('../../design-system/collapsible-block/CollapsibleBlock', () => ({
   )
 }));
 
-describe('Liatoshynsky-office', () => {
-  it('should render Liatoshynsky-office block with title and quote data', () => {
-    render(<LiatoshynskyOffice />);
-    expect(screen.getByText('Кабінет Лятошинського')).toBeInTheDocument();
-    expect(screen.getByDisplayValue(hardcodedData.mainQuote)).toBeInTheDocument();
-    expect(screen.getByDisplayValue(hardcodedData.caption)).toBeInTheDocument();
+jest.mock('./quote-block/QuoteBlock', () => ({
+  QuoteBlock: ({
+    title,
+    description,
+    onTitleChange,
+    onDescriptionChange
+  }: {
+    title: string;
+    description: string;
+    onTitleChange: (val: string) => void;
+    onDescriptionChange: (val: string) => void;
+  }) => (
+    <div data-testid="quote-block">
+      <input value={title} data-testid="quote-title" onChange={(e) => onTitleChange(e.target.value)} />
+      <textarea
+        value={description}
+        data-testid="quote-description"
+        onChange={(e) => onDescriptionChange(e.target.value)}
+      />
+    </div>
+  )
+}));
+
+describe('LiatoshynskyOffice', () => {
+  const hardcodedData = {
+    title: 'Кабінет Лятошинського',
+    mainQuote: 'Це основна цитата',
+    description: 'Це опис цитати'
+  };
+
+  const renderComponent = () => render(<LiatoshynskyOffice />);
+  const getTitleInput = () => screen.getByTestId('quote-title') as HTMLInputElement;
+  const getDescriptionInput = () => screen.getByTestId('quote-description') as HTMLTextAreaElement;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    usePageBlockMock.mockReturnValue({
+      loading: false,
+      error: undefined,
+      block: {
+        quote: {
+          source: { uk: hardcodedData.mainQuote },
+          text: { uk: hardcodedData.description }
+        }
+      }
+    });
+  });
+
+  it('should render collapsible block with title', () => {
+    renderComponent();
+    expect(screen.getByTestId('collapsible-block')).toBeInTheDocument();
+    expect(screen.getByText(hardcodedData.title)).toBeInTheDocument();
+  });
+
+  it('should render QuoteBlock with correct values', () => {
+    renderComponent();
+    expect(getTitleInput()).toHaveValue(hardcodedData.mainQuote);
+    expect(getDescriptionInput()).toHaveValue(hardcodedData.description);
+  });
+
+  it('should update quote title', () => {
+    renderComponent();
+    fireEvent.change(getTitleInput(), { target: { value: 'Нова цитата' } });
+    expect(setFieldMock).toHaveBeenCalledWith(
+      PAGE_IDS.ABOUT_US,
+      BLOCK_IDS.LIATOSHYNSKY_OFFICE,
+      'quote',
+      expect.objectContaining({
+        source: expect.objectContaining({ uk: 'Нова цитата' }),
+        text: expect.any(Object)
+      })
+    );
+  });
+
+  it('should update quote description', () => {
+    renderComponent();
+    fireEvent.change(getDescriptionInput(), { target: { value: 'Новий опис' } });
+    expect(setFieldMock).toHaveBeenCalledWith(
+      PAGE_IDS.ABOUT_US,
+      BLOCK_IDS.LIATOSHYNSKY_OFFICE,
+      'quote',
+      expect.objectContaining({
+        source: expect.any(Object),
+        text: expect.objectContaining({ uk: 'Новий опис' })
+      })
+    );
   });
 });

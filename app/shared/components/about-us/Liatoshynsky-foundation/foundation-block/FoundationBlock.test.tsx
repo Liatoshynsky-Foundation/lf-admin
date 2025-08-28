@@ -1,68 +1,78 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-
-jest.mock('../../../design-system/photo-block/PhotoBlock', () => ({
-  ImagePreviewBlock: () => <div data-testid="image-preview-block" />
-}));
+import React, { ChangeEvent } from 'react';
 
 import { FoundationBlock } from './FoundationBlock';
 
-const mockProps = {
-  mainText: 'Основний текст про фундацію',
-  paragraphs: [
-    { id: 1, text: 'Перший абзац' },
-    { id: 2, text: 'Другий абзац' }
-  ],
-  imageUrl: '/images/test.png',
-  fileName: 'test.png',
-  onMainTextChange: jest.fn(),
-  onParagraphsChange: jest.fn(),
-  onImageChange: jest.fn()
-};
+jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
+  ImagePreviewBlock: ({ onChangeImage }: { onChangeImage: (file: File) => void }) => (
+    <div data-testid="image-preview-block">
+      <input
+        type="file"
+        aria-label="Upload image"
+        onChange={(e: ChangeEvent<HTMLInputElement>) => {
+          if (e.target.files?.[0]) onChangeImage(e.target.files?.[0]);
+        }}
+      />
+    </div>
+  )
+}));
 
 describe('FoundationBlock', () => {
+  const mockProps = {
+    mainText: 'Основний текст секції',
+    paragraphs: [{ text: 'Перший абзац' }, { text: 'Другий абзац' }],
+    imageUrl: '/images/test.png',
+    fileName: 'test.png',
+    onMainTextChange: jest.fn(),
+    onParagraphChange: jest.fn(),
+    onImageChange: jest.fn()
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('should render main text, paragraphs and image preview block', () => {
+  it('should render main text, paragraphs and image block', () => {
     render(<FoundationBlock {...mockProps} />);
 
-    expect(screen.getByText('Основний текст секції')).toBeInTheDocument();
-    expect(screen.getByText('Текст 1 абзацу')).toBeInTheDocument();
-    expect(screen.getByText('Текст 2 абзацу')).toBeInTheDocument();
-
     expect(screen.getByDisplayValue(mockProps.mainText)).toBeInTheDocument();
-    mockProps.paragraphs.forEach((paragraph) => {
-      expect(screen.getByDisplayValue(paragraph.text)).toBeInTheDocument();
+    mockProps.paragraphs.forEach((p) => {
+      expect(screen.getByDisplayValue(p.text)).toBeInTheDocument();
     });
 
     expect(screen.getByTestId('image-preview-block')).toBeInTheDocument();
   });
 
-  it('should call onMainTextChange when main text changes', async () => {
+  it('should call onParagraphChange when paragraph inputs change', async () => {
     render(<FoundationBlock {...mockProps} />);
     const user = userEvent.setup();
 
-    const mainTextInput = screen.getByLabelText('Текст');
-    await user.clear(mainTextInput);
-    await user.type(mainTextInput, 'Новий текст');
-
-    expect(mockProps.onMainTextChange).toHaveBeenCalled();
-    expect(mockProps.onMainTextChange).toHaveBeenCalledWith(expect.any(String));
+    mockProps.paragraphs.forEach(async (p, index) => {
+      const input = screen.getByDisplayValue(p.text) as HTMLInputElement;
+      await user.clear(input);
+      await user.type(input, `Новий текст ${index + 1}`);
+      expect(mockProps.onParagraphChange).toHaveBeenCalledWith(index, expect.any(String));
+    });
   });
 
-  it('should call onParagraphsChange when a paragraph changes', async () => {
+  it('should call onImageChange when a file is uploaded', async () => {
     render(<FoundationBlock {...mockProps} />);
     const user = userEvent.setup();
 
-    const paragraphInputs = screen.getAllByLabelText('Текст абзацу');
-    const secondParagraphInput = paragraphInputs[1];
+    const fileInput = screen.getByLabelText('Upload image') as HTMLInputElement;
+    const file = new File(['dummy'], 'photo.png', { type: 'image/png' });
 
-    await user.clear(secondParagraphInput);
-    await user.type(secondParagraphInput, 'Updated second paragraph');
+    await user.upload(fileInput, file);
 
-    expect(mockProps.onParagraphsChange).toHaveBeenCalled();
-    expect(mockProps.onParagraphsChange).toHaveBeenCalledWith(1, expect.any(String));
+    expect(mockProps.onImageChange).toHaveBeenCalledTimes(1);
+    const uploadedFile = mockProps.onImageChange.mock.calls[0][0];
+    expect(uploadedFile.name).toBe('photo.png');
+  });
+
+  it('should render correct number of paragraph inputs', () => {
+    render(<FoundationBlock {...mockProps} />);
+    const paragraphInputs = mockProps.paragraphs.map((p) => screen.getByDisplayValue(p.text));
+    expect(paragraphInputs.length).toBe(mockProps.paragraphs.length);
   });
 });

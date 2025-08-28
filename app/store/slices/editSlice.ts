@@ -6,6 +6,7 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
   isChanged: false,
   isInitialized: false,
   blocks: {},
+  locale: 'uk',
 
   setField: (pageId, blockId, field, value) => {
     const prevPageBlocks = get().blocks[pageId] || {};
@@ -50,6 +51,21 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
       isInitialized: isInit ? true : get().isInitialized
     });
   },
+  setPageData: <T extends Record<string, BlockData>>(pageId: string, blocks: T, isInit = false) => {
+    const prevPageBlocks = get().blocks[pageId] || {};
+
+    set({
+      blocks: {
+        ...get().blocks,
+        [pageId]: {
+          ...prevPageBlocks,
+          ...blocks
+        }
+      },
+      isChanged: isInit ? get().isChanged : true,
+      isInitialized: isInit ? true : get().isInitialized
+    });
+  },
   saveAsDraft: (pageId: string) => {
     const _pageBlocks = get().blocks[pageId];
 
@@ -59,5 +75,6 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
     const _pageBlocks = get().blocks[pageId];
 
     set({ isChanged: false });
-  }
+  },
+  setLocale: (locale: 'uk' | 'en') => set({ locale })
 });

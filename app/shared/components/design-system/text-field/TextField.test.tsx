@@ -39,4 +39,17 @@ describe('CustomTextField', () => {
     const input = screen.getByDisplayValue('Test value');
     expect(input).toBeInTheDocument();
   });
+  it('should call onFocus and onBlur events', () => {
+    const handleFocus = jest.fn();
+    const handleBlur = jest.fn();
+
+    render(<CustomTextField onFocus={handleFocus} onBlur={handleBlur} />);
+    const input = screen.getByRole('textbox');
+
+    fireEvent.focus(input);
+    expect(handleFocus).toHaveBeenCalled();
+
+    fireEvent.blur(input);
+    expect(handleBlur).toHaveBeenCalled();
+  });
 });

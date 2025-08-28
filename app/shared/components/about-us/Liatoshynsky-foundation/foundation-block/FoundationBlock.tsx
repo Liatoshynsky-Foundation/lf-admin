@@ -5,15 +5,14 @@ import React from 'react';
 
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { ImagePreviewBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
-import { Paragraph } from '~/types/accordionBlocks';
 
 interface FoundationBlockProps {
   mainText: string;
-  paragraphs: Paragraph[];
+  paragraphs: { text: string }[];
   imageUrl: string;
   fileName?: string;
   onMainTextChange: (val: string) => void;
-  onParagraphsChange: (index: number, val: string) => void;
+  onParagraphChange: (index: number, val: string) => void;
   onImageChange: (file: File) => void;
 }
 
@@ -23,7 +22,7 @@ export const FoundationBlock = ({
   imageUrl,
   fileName,
   onMainTextChange,
-  onParagraphsChange,
+  onParagraphChange,
   onImageChange
 }: FoundationBlockProps) => {
   return (
@@ -36,17 +35,19 @@ export const FoundationBlock = ({
         fullWidth
         multiline
       />
-      {paragraphs.map((paragraph, index) => (
+
+      {paragraphs.map((paragraph, i) => (
         <CustomTextField
-          key={paragraph.id}
-          title={`Текст ${index + 1} абзацу`}
-          label="Текст абзацу"
+          key={i}
+          title={`Текст ${i + 1} абзацу`}
+          label="Текст"
           value={paragraph.text}
-          onChange={(e) => onParagraphsChange(index, e.target.value)}
+          onChange={(e) => onParagraphChange(i, e.target.value)}
           fullWidth
           multiline
         />
       ))}
+
       <ImagePreviewBlock
         imageUrl={imageUrl}
         fileName={fileName}
