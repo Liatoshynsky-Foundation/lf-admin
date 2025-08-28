@@ -1,8 +1,10 @@
+import { ThemeProvider } from '@mui/material/styles';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono, Mulish } from 'next/font/google';
 
 import { ApolloClientProvider } from '~/providers/apollo-client-provider/apolloClientProvider';
 import EmotionProvider from '~/providers/EmotionProvider';
+import { adminTheme } from '~/shared/theme/theme';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -30,7 +32,9 @@ export default function BodyProvider({ children }: Readonly<{ children: React.Re
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${mulish.variable}`}>
       <body className={`${geistSans.variable} ${geistMono.variable} ${mulish.variable}`}>
         <EmotionProvider>
-          <ApolloClientProvider>{children}</ApolloClientProvider>
+          <ThemeProvider theme={adminTheme}>
+            <ApolloClientProvider>{children}</ApolloClientProvider>
+          </ThemeProvider>
         </EmotionProvider>
       </body>
     </html>
