@@ -1,30 +1,30 @@
-import { render, screen } from '@testing-library/react';
-import { ThemeProvider } from './ThemeProvider';
 import { Typography } from '@mui/material';
+import { render, screen } from '@testing-library/react';
+
+import { ThemeProvider } from './ThemeProvider';
 
 describe('ThemeProvider', () => {
-  it('applies the adminTheme correctly', () => {
+  it('should render children components', () => {
     render(
       <ThemeProvider>
-        <Typography variant="customBold32">Test Theme</Typography>
+        <div>Test Child</div>
       </ThemeProvider>
     );
-
-    const element = screen.getByText('Test Theme');
-    expect(element).toHaveStyle({
-      fontWeight: 700,
-      fontSize: '32px',
-      lineHeight: '140%',
-    });
+    expect(screen.getByText('Test Child')).toBeInTheDocument();
   });
 
-  it('renders children without crashing', () => {
+  it('should apply the adminTheme to children components', () => {
     render(
       <ThemeProvider>
-        <div>Child Component</div>
+        <Typography variant="customBold32">Themed Text</Typography>
       </ThemeProvider>
     );
 
-    expect(screen.getByText('Child Component')).toBeInTheDocument();
+    const textElement = screen.getByText('Themed Text');
+    const styles = window.getComputedStyle(textElement);
+
+    expect(styles.fontWeight).toBe('700');
+    expect(styles.fontSize).toBe('32px');
+    expect(styles.lineHeight).toBe('140%');
   });
 });
