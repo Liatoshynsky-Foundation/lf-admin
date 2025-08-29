@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - chore/164/changelog-action
+  workflow_dispatch:
 
 permissions:
   contents: write
