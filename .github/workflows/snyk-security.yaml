@@ -17,6 +17,9 @@ jobs:
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
       actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
     runs-on: ubuntu-latest
+    env:
+      # Make Snyk token available to all steps
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - name: Set up Snyk CLI to check for security issues
@@ -30,23 +33,30 @@ jobs:
         with:
           node-version: 22
 
-        env:
-          # This is where you will need to introduce the Snyk API token created with your Snyk account
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      - name: Prepare SARIF directory
+        run: mkdir -p sarif
 
         # Runs Snyk Code (SAST) analysis and uploads result into GitHub.
         # Use || true to not fail the pipeline
-      - name: Snyk Code test
-        run: snyk code test --sarif > snyk-code.sarif # || true
+      - name: Snyk Code test (SARIF)
+        run: snyk code test --sarif-file-output=./sarif/snyk-code.sarif || true
 
         # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
       - name: Snyk Open Source monitor
         run: snyk monitor --all-projects
 
+      # Run Snyk Open Source test and produce SARIF for GitHub Code Scanning
+      - name: Snyk Open Source test (SARIF)
+        run: snyk test --all-projects --sarif-file-output=./sarif/snyk-oss.sarif || true
+
         # Runs Snyk Infrastructure as Code (IaC) analysis and uploads result to Snyk.
         # Use || true to not fail the pipeline.
       - name: Snyk IaC test and report
-        run: snyk iac test --report # || true
+        run: snyk iac test --report || true
+
+      # Also produce SARIF for IaC to surface in GitHub Security
+      - name: Snyk IaC test (SARIF)
+        run: snyk iac test --sarif-file-output=./sarif/snyk-iac.sarif || true
 
         # Build the docker image for testing
       - name: Build a Docker image
@@ -55,8 +65,13 @@ jobs:
       - name: Snyk Container monitor
         run: snyk container monitor lf-admin:latest --file=Dockerfile
 
+      # Run Snyk Container test to generate SARIF for GitHub Code Scanning
+      - name: Snyk Container test (SARIF)
+        run: snyk container test lf-admin:latest --file=Dockerfile --sarif-file-output=./sarif/snyk-container.sarif || true
+
         # Push the Snyk Code results into GitHub Code Scanning tab
-      - name: Upload result to GitHub Code Scanning
+      - name: Upload results to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: snyk-code.sarif
+          # Upload all generated SARIF files
+          sarif_file: ./sarif
