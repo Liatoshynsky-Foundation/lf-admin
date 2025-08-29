@@ -1,4 +1,4 @@
-name: Backup MongoDB Atlas
+name: Backup MongoDB
 
 on:
   # workflow_dispatch:
