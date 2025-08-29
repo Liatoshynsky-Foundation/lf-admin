@@ -1,4 +1,4 @@
-name: Snyk Security
+name: Security Snyk
 
 on:
   workflow_dispatch:
