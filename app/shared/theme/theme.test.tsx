@@ -178,4 +178,25 @@ describe('Admin Theme Configuration', () => {
     expect(customBold32.fontFamily).toBeDefined();
     expect(customItalic16.fontFamily).toBeDefined();
   });
+
+  it('should have standard MUI typography variants', () => {
+    expect(adminTheme.typography.h1).toBeDefined();
+    expect(adminTheme.typography.h2).toBeDefined();
+    expect(adminTheme.typography.h3).toBeDefined();
+    expect(adminTheme.typography.h4).toBeDefined();
+  });
+
+  it('should have correct properties for standard variants', () => {
+    expect(adminTheme.typography.h1).toMatchObject({
+      fontWeight: 700,
+      fontSize: '116px',
+      lineHeight: '100%'
+    });
+
+    expect(adminTheme.typography.h4).toMatchObject({
+      fontWeight: 700,
+      fontSize: '28px',
+      lineHeight: '160%'
+    });
+  });
 });
