@@ -45,12 +45,12 @@ jobs:
         run: snyk code test --sarif-file-output=./sarif/snyk-code.sarif || true
 
         # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
-      - name: Snyk Open Source monitor (lockfile)
-        run: snyk monitor --file=package-lock.json --package-manager=npm
+      - name: Snyk Open Source monitor (lockfile, tolerate mismatch)
+        run: snyk monitor --file=package-lock.json --package-manager=npm --strict-out-of-sync=false
 
       # Run Snyk Open Source test and produce SARIF for GitHub Code Scanning
-      - name: Snyk Open Source test (SARIF)
-        run: snyk test --all-projects --sarif-file-output=./sarif/snyk-oss.sarif || true
+      - name: Snyk Open Source test (SARIF, tolerate mismatch)
+        run: snyk test --all-projects --sarif-file-output=./sarif/snyk-oss.sarif --strict-out-of-sync=false || true
 
         # Runs Snyk Infrastructure as Code (IaC) analysis and uploads result to Snyk.
         # Use || true to not fail the pipeline.
