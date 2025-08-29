@@ -49,120 +49,125 @@ declare module '@mui/material/Typography' {
   }
 }
 
-export const adminTheme = createTheme({
-  typography: {
-    fontFamily: mulish.style.fontFamily,
-    h1: {
-      fontFamily: oswald.style.fontFamily,
-      fontWeight: 700,
-      fontSize: '116px',
-      lineHeight: '100%'
-    },
-    h2: {
-      fontFamily: oswald.style.fontFamily,
-      fontWeight: 600,
-      fontSize: '64px',
-      lineHeight: '100%'
-    },
-    h3: {
-      fontFamily: oswald.style.fontFamily,
-      fontWeight: 400,
-      fontSize: '64px',
-      lineHeight: '100%'
-    },
-    h4: {
-      fontFamily: oswald.style.fontFamily,
-      fontWeight: 700,
-      fontSize: '28px',
-      lineHeight: '160%'
-    },
-    customBold32: {
+// Create theme inside a function to avoid serialization issues
+export const createAdminTheme = () =>
+  createTheme({
+    typography: {
       fontFamily: mulish.style.fontFamily,
-      fontWeight: 700,
-      fontSize: '32px',
-      lineHeight: '140%',
-      letterSpacing: '0px'
+      h1: {
+        fontFamily: oswald.style.fontFamily,
+        fontWeight: 700,
+        fontSize: '116px',
+        lineHeight: '100%'
+      },
+      h2: {
+        fontFamily: oswald.style.fontFamily,
+        fontWeight: 600,
+        fontSize: '64px',
+        lineHeight: '100%'
+      },
+      h3: {
+        fontFamily: oswald.style.fontFamily,
+        fontWeight: 400,
+        fontSize: '64px',
+        lineHeight: '100%'
+      },
+      h4: {
+        fontFamily: oswald.style.fontFamily,
+        fontWeight: 700,
+        fontSize: '28px',
+        lineHeight: '160%'
+      },
+      customBold32: {
+        fontFamily: mulish.style.fontFamily,
+        fontWeight: 700,
+        fontSize: '32px',
+        lineHeight: '140%',
+        letterSpacing: '0px'
+      },
+      customMedium22Tight: {
+        fontFamily: mulish.style.fontFamily,
+        fontWeight: 500,
+        fontSize: '22px',
+        lineHeight: '135%'
+      },
+      customRegular20Tight: {
+        fontFamily: mulish.style.fontFamily,
+        fontWeight: 400,
+        fontSize: '20px',
+        lineHeight: '140%'
+      },
+      customMedium18Tight: {
+        fontFamily: mulish.style.fontFamily,
+        fontWeight: 500,
+        fontSize: '18px',
+        lineHeight: '135%'
+      },
+      customMedium18Loose: {
+        fontFamily: mulish.style.fontFamily,
+        fontWeight: 500,
+        fontSize: '18px',
+        lineHeight: '155%'
+      },
+      customSemiBold18: {
+        fontFamily: mulish.style.fontFamily,
+        fontWeight: 600,
+        fontSize: '18px',
+        lineHeight: '155%'
+      },
+      customBold16: {
+        fontFamily: mulish.style.fontFamily,
+        fontWeight: 700,
+        fontSize: '16px',
+        lineHeight: '100%'
+      },
+      customRegular16: {
+        fontFamily: mulish.style.fontFamily,
+        fontWeight: 400,
+        fontSize: '16px',
+        lineHeight: '150%'
+      },
+      customMedium16: {
+        fontFamily: mulish.style.fontFamily,
+        fontWeight: 500,
+        fontSize: '16px',
+        lineHeight: '150%'
+      },
+      customItalic16: {
+        fontFamily: mulish.style.fontFamily,
+        fontStyle: 'italic',
+        fontSize: '16px',
+        lineHeight: '140%'
+      },
+      customItalic14: {
+        fontFamily: mulish.style.fontFamily,
+        fontStyle: 'italic',
+        fontSize: '14px',
+        lineHeight: '140%'
+      }
     },
-    customMedium22Tight: {
-      fontFamily: mulish.style.fontFamily,
-      fontWeight: 500,
-      fontSize: '22px',
-      lineHeight: '135%'
-    },
-    customRegular20Tight: {
-      fontFamily: mulish.style.fontFamily,
-      fontWeight: 400,
-      fontSize: '20px',
-      lineHeight: '140%'
-    },
-    customMedium18Tight: {
-      fontFamily: mulish.style.fontFamily,
-      fontWeight: 500,
-      fontSize: '18px',
-      lineHeight: '135%'
-    },
-    customMedium18Loose: {
-      fontFamily: mulish.style.fontFamily,
-      fontWeight: 500,
-      fontSize: '18px',
-      lineHeight: '155%'
-    },
-    customSemiBold18: {
-      fontFamily: mulish.style.fontFamily,
-      fontWeight: 600,
-      fontSize: '18px',
-      lineHeight: '155%'
-    },
-    customBold16: {
-      fontFamily: mulish.style.fontFamily,
-      fontWeight: 700,
-      fontSize: '16px',
-      lineHeight: '100%'
-    },
-    customRegular16: {
-      fontFamily: mulish.style.fontFamily,
-      fontWeight: 400,
-      fontSize: '16px',
-      lineHeight: '150%'
-    },
-    customMedium16: {
-      fontFamily: mulish.style.fontFamily,
-      fontWeight: 500,
-      fontSize: '16px',
-      lineHeight: '150%'
-    },
-    customItalic16: {
-      fontFamily: mulish.style.fontFamily,
-      fontStyle: 'italic',
-      fontSize: '16px',
-      lineHeight: '140%'
-    },
-    customItalic14: {
-      fontFamily: mulish.style.fontFamily,
-      fontStyle: 'italic',
-      fontSize: '14px',
-      lineHeight: '140%'
-    }
-  },
-  components: {
-    MuiTypography: {
-      defaultProps: {
-        variantMapping: {
-          customBold32: 'p',
-          customMedium22Tight: 'p',
-          customRegular20Tight: 'p',
-          customMedium18Tight: 'p',
-          customMedium18Loose: 'p',
-          customSemiBold18: 'p',
-          customRegular16: 'p',
-          customBold16: 'p',
-          customMedium16: 'p',
-          customItalic16: 'p',
-          customItalic14: 'p'
+    components: {
+      MuiTypography: {
+        defaultProps: {
+          variantMapping: {
+            customBold32: 'p',
+            customMedium22Tight: 'p',
+            customRegular20Tight: 'p',
+            customMedium18Tight: 'p',
+            customMedium18Loose: 'p',
+            customSemiBold18: 'p',
+            customRegular16: 'p',
+            customBold16: 'p',
+            customMedium16: 'p',
+            customItalic16: 'p',
+            customItalic14: 'p'
+          }
         }
       }
     }
-  }
-});
+  });
 
-export type AdminTheme = typeof adminTheme;
+// Export a single instance for consistency
+export const adminTheme = createAdminTheme();
+
+export type AdminTheme = ReturnType<typeof createAdminTheme>;
