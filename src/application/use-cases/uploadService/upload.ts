@@ -60,6 +60,47 @@ export const blobStorageService = () => {
         logger.error(errors.FAILED_TO_DELETE_BLOB, error);
         throw error;
       }
+    },
+    constructBlobUrl: (folderName: string, blobName: string): string => {
+      try {
+        zFolderNameSchema.parse(folderName);
+        const blobNameHash = createHash('sha256').update(blobName).digest('hex');
+        const containerClient = getContainerClient();
+        const blockBlobClient = getFullPathToBlob(containerClient, folderName, blobNameHash);
+        return blockBlobClient.url;
+      } catch (error) {
+        logger.error(errors.BLOB_DOES_NOT_EXIST, error);
+        throw error;
+      }
+    },
+    streamBlob: async (url: string, rangeHeader: string | null): Promise<Response> => {
+      const azureResponse = await fetch(url, {
+        method: 'GET',
+        headers: rangeHeader ? { Range: rangeHeader } : {},
+        next: { revalidate: 0 }
+      });
+
+      if (!azureResponse.ok) {
+        return new Response(azureResponse.body, {
+          status: azureResponse.status,
+          statusText: azureResponse.statusText
+        });
+      }
+
+      const headers = new Headers();
+      headers.set('Content-Type', azureResponse.headers.get('Content-Type') ?? 'application/octet-stream');
+      headers.set('Content-Length', azureResponse.headers.get('Content-Length') ?? '');
+      if (azureResponse.headers.has('Content-Range')) {
+        headers.set('Content-Range', azureResponse.headers.get('Content-Range')!);
+      }
+      headers.set('Accept-Ranges', 'bytes');
+      headers.set('Cache-Control', 'public, max-age=604800, immutable');
+
+      return new Response(azureResponse.body, {
+        status: azureResponse.status,
+        statusText: azureResponse.statusText,
+        headers
+      });
     }
   };
 };
