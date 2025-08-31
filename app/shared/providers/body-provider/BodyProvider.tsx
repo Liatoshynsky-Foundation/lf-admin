@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono, Mulish } from 'next/font/google';
 
+import ThemeProvider from '../ThemeProvider';
 import { ApolloClientProvider } from '~/providers/apollo-client-provider/apolloClientProvider';
 import EmotionProvider from '~/providers/EmotionProvider';
 
@@ -30,7 +31,9 @@ export default function BodyProvider({ children }: Readonly<{ children: React.Re
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${mulish.variable}`}>
       <body className={`${geistSans.variable} ${geistMono.variable} ${mulish.variable}`}>
         <EmotionProvider>
-          <ApolloClientProvider>{children}</ApolloClientProvider>
+          <ThemeProvider>
+            <ApolloClientProvider>{children}</ApolloClientProvider>
+          </ThemeProvider>
         </EmotionProvider>
       </body>
     </html>

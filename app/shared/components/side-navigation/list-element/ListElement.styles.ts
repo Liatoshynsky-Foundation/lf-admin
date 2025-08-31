@@ -12,9 +12,5 @@ export const styles = {
   listItemIcon: {
     minWidth: '24px',
     mx: '16px'
-  },
-  listItemText: {
-    fontFamily: 'Mulish',
-    fontSize: '16px'
   }
 };

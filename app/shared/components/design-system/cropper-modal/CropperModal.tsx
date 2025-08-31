@@ -60,8 +60,8 @@ export const CropperModal: React.FC<CropperModalProps> = ({
         )}
         <Box sx={styles.topSection}>
           <Box sx={styles.textSection}>
-            <Typography sx={styles.mainTitle}>Редагування зображення</Typography>
-            <Typography sx={styles.subTitle}>{imageName}</Typography>
+            <Typography variant="subtitle1">Редагування зображення</Typography>
+            <Typography variant="subtitle2">{imageName}</Typography>
           </Box>
           <Box sx={styles.buttonSection}>
             <Button

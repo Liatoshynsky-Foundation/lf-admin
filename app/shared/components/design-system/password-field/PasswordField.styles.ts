@@ -59,8 +59,5 @@ export const overwrites = {
         color: '#52545a'
       }
     }
-  },
-  helperText: {
-    color: '#E53D11'
   }
 };

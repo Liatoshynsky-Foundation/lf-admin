@@ -10,24 +10,13 @@ export const styles = {
     }
   },
   title: {
-    fontSize: '24px',
-    fontWeight: 700,
-    lineHeight: '140%',
-    letterSpacing: '0px',
-    fontFamily: 'Mulish',
     textAlign: 'center',
     color: '#190D03',
     marginBottom: '11px'
   },
   subtitle: {
-    fontSize: '18px',
-    fontWeight: 400,
-    lineHeight: '160%',
-    letterSpacing: '0px',
-    fontFamily: 'Mulish',
     marginTop: '0px',
-    textAlign: 'center',
-    color: '#474D5A'
+    textAlign: 'center'
   },
   textField: {
     backgroundColor: 'transparent',
@@ -58,9 +47,7 @@ export const styles = {
     width: '100%'
   },
   errorText: {
-    color: '#E53D11',
     textAlign: 'center',
-    marginTop: '0px',
-    fontSize: '1rem'
+    marginTop: '0px'
   }
 };

@@ -38,10 +38,6 @@ export const styles = {
     }
   },
   titleStyles: {
-    mb: '11px',
-    color: '#4a4a4a',
-    fontFamily: 'Mulish, sans-serif',
-    fontSize: 18,
-    fontWeight: 500
+    mb: '11px'
   }
 };

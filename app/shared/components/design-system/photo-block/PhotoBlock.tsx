@@ -62,7 +62,7 @@ export const ImagePreviewBlock = ({
   return (
     <Box sx={styles.container}>
       {title && (
-        <Typography variant="subtitle1" sx={styles.sectionTitle}>
+        <Typography variant="subtitle2" sx={styles.sectionTitle}>
           {title}
         </Typography>
       )}
@@ -71,7 +71,7 @@ export const ImagePreviewBlock = ({
         <Stack spacing={stackSpacing} maxWidth="200px">
           <Stack spacing={typographySpacing}>
             <Typography
-              variant="body1"
+              variant="subtitle2"
               sx={{
                 ...styles.fileNameText,
                 ...styles.trimmedTypography
@@ -81,7 +81,7 @@ export const ImagePreviewBlock = ({
             </Typography>
 
             {dimensions && (
-              <Typography variant="body2" color="text.secondary" sx={styles.imageSizeText}>
+              <Typography variant="custom16medium" color="textSecondary" sx={styles.imageSizeText}>
                 Розмір: {dimensions.width} × {dimensions.height}
               </Typography>
             )}

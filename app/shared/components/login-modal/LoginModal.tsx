@@ -57,10 +57,10 @@ const LoginModal = ({ onSubmit, submitError }: LoginModalProps) => {
     <Box sx={styles.outerContainer}>
       <Image src="./icons/logo.svg" alt="logo" width={96} height={80} />
       <Box sx={styles.container}>
-        <Typography sx={styles.title} variant="h5">
+        <Typography sx={styles.title} variant="h2">
           Вхід до адмін-панелі
         </Typography>
-        <Typography sx={styles.subtitle} variant="subtitle1">
+        <Typography sx={styles.subtitle} variant="custom18regular" color="textSecondary">
           Для редагування сайту увійдіть у свій обліковий запис.
         </Typography>
         <CustomTextField
@@ -79,7 +79,7 @@ const LoginModal = ({ onSubmit, submitError }: LoginModalProps) => {
           helperText={passwordError}
         />
         {submitError && (
-          <Typography sx={styles.errorText} variant="body2">
+          <Typography sx={styles.errorText} variant="body1" color="error">
             {submitError}
           </Typography>
         )}

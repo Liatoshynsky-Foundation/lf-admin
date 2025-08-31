@@ -19,9 +19,9 @@ const DiscardChangesModal: React.FC<DiscardChangesModalProps> = ({ open, handleC
       <Box sx={styles.contentWrapper}>
         <Box sx={styles.modalHeader}>
           <Image src="/icons/warning.svg" alt="warning" width={40} height={40} />
-          <Typography sx={styles.headerTitle}>Скасувати зміни?</Typography>
+          <Typography variant="h1">Скасувати зміни?</Typography>
         </Box>
-        <Typography sx={styles.mainContent}>
+        <Typography variant="custom18regular" sx={styles.mainContent}>
           Усі внесені зміни буде втрачено. Ви впевнені, що хочете вийти без збереження?
         </Typography>
         <Box sx={styles.modalFooter}>

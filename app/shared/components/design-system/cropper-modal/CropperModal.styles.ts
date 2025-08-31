@@ -25,19 +25,6 @@ export const styles = {
     color: 'white',
     gap: '8px'
   },
-  mainTitle: {
-    fontFamily: 'Mulish',
-    fontWeight: '400',
-    fontSize: '20px',
-    lineHeight: '140%'
-  },
-  subTitle: {
-    fontFamily: 'Mulish',
-    fontWeight: '500',
-    fontSize: '18px',
-    lineHeight: '135%',
-    color: '#C1C9D6'
-  },
   buttonSection: {
     display: 'flex',
     flexDirection: 'row',

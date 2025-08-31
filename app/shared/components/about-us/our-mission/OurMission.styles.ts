@@ -7,10 +7,7 @@ export const styles = {
 
   pointHeader: {
     mb: '11px',
-    color: '#4a4a4a',
-    fontFamily: 'Mulish, sans-serif',
-    fontSize: 18,
-    fontWeight: 500
+    color: '#4a4a4a'
   },
 
   divider: {

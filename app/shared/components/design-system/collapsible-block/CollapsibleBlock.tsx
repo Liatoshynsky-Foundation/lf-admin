@@ -1,4 +1,4 @@
-import { Accordion, AccordionDetails, AccordionProps, AccordionSummary, Box } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionProps, AccordionSummary, Box, Typography } from '@mui/material';
 import React from 'react';
 
 import { styles } from './CollapsibleBlock.styles';
@@ -13,7 +13,9 @@ const CollapsibleBlock = ({ title, children, ...props }: CollapsibleBlockProps) 
     <Box component="div" sx={styles.container}>
       <Accordion sx={styles.accorditionOverWrite} {...props}>
         <AccordionSummary sx={styles.title} expandIcon={<ChevronIcon width={24} height={24} aria-label="Expand" />}>
-          {title}
+          <Typography variant="h2" component="h2">
+            {title}
+          </Typography>
         </AccordionSummary>
         <AccordionDetails data-testid="inserted-container">{children}</AccordionDetails>
       </Accordion>

@@ -5,7 +5,8 @@ import {
   AlertProps as MuiAlertProps,
   AlertTitle as MuiAlertTitle,
   AlertTitleProps,
-  Box
+  Box,
+  Typography
 } from '@mui/material';
 import { ButtonHTMLAttributes, forwardRef, SyntheticEvent, useCallback } from 'react';
 
@@ -16,7 +17,7 @@ export type AlertColor = 'success' | 'info' | 'warning' | 'error';
 export const AlertTitle = ({ children, ...props }: AlertTitleProps) => {
   return (
     <MuiAlertTitle sx={styles.title} {...props}>
-      {children}
+      <Typography variant="caption">{children}</Typography>
     </MuiAlertTitle>
   );
 };
@@ -94,9 +95,9 @@ const Alert = forwardRef<HTMLDivElement, AlertProps>(
       >
         {title && <AlertTitle>{title}</AlertTitle>}
         {description && (
-          <Box component="p" sx={styles.description}>
+          <Typography variant="body1" component="p" sx={styles.description}>
             {description}
-          </Box>
+          </Typography>
         )}
       </MuiAlert>
     );

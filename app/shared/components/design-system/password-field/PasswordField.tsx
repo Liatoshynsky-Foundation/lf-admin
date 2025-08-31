@@ -57,7 +57,7 @@ const PasswordField = ({ helperText, sx, ...props }: PasswordFieldProps) => {
         sx={{ ...sx, ...overwrites.input }}
         {...props}
       />
-      {helperText && <FormHelperText sx={overwrites.helperText}>{helperText}</FormHelperText>}
+      {helperText && <FormHelperText error>{helperText}</FormHelperText>}
     </FormControl>
   );
 };

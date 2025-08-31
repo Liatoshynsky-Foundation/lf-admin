@@ -5,11 +5,8 @@ export const styles = {
   },
 
   sectionTitle: {
-    fontSize: '18px',
-    fontWeight: 500,
     color: 'rgba(71, 77, 90, 1)',
-    mb: 1,
-    fontFamily: 'Mulish'
+    mb: 1
   },
 
   imageBlock: {
@@ -24,13 +21,11 @@ export const styles = {
   },
   fileNameText: {
     color: 'rgba(71, 77, 90, 1)',
-    fontFamily: 'Mulish',
     mb: '8px'
   },
 
   imageSizeText: {
-    mb: 4,
-    fontFamily: 'Mulish'
+    mb: 4
   },
   editButton: {
     width: '127px'

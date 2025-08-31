@@ -21,21 +21,8 @@ export const styles = {
     gap: '16px'
   },
 
-  headerTitle: {
-    fontSize: '32px',
-    fontWeight: '700',
-    color: '#190D03',
-    lineHeight: '140%',
-    fontFamily: 'Mulish'
-  },
-
   mainContent: {
-    fontSize: '18px',
-    fontWeight: '400',
-    color: '#190D03',
-    lineHeight: '160%',
-    marginTop: '16px',
-    fontFamily: 'Mulish'
+    marginTop: '16px'
   },
 
   modalFooter: {

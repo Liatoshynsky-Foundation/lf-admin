@@ -23,9 +23,6 @@ const alertColors = {
 export const styles = {
   alert: {
     position: 'relative',
-    fontSize: '18px',
-    lineHeight: '135%',
-    fontFamily: 'Mulish',
     borderWidth: 1,
     borderRadius: '12px',
     boxShadow: `0 1px 3px ${alertColors.shadow}`,
@@ -116,19 +113,11 @@ export const styles = {
   }),
 
   title: {
-    fontFamily: 'Mulish',
-    fontWeight: 500,
-    fontSize: '22px',
-    lineHeight: '135%',
-    margin: 0,
     marginBottom: '4px'
   },
 
   description: {
-    fontFamily: 'Mulish',
-    margin: 0,
-    fontSize: '16px',
-    lineHeight: '150%'
+    margin: 0
   },
 
   closeButton: (variant: 'filled' | 'outlined') => ({

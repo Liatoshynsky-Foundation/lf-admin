@@ -11,11 +11,6 @@ export const styles = {
     border: 'none'
   },
   title: {
-    fontFamily: 'Mulish',
-    fontWeight: 700,
-    fontSize: '24px',
-    lineHeight: '120%',
-    letterSpacing: '0px',
     verticalAlign: 'middle'
   }
 };

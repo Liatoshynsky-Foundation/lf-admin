@@ -23,7 +23,10 @@ export const ListElement: React.FC<LinkElementProps> = ({ element, open, handleC
       <ListItemText
         sx={SideNavigationStyles.hideInClosed(open)}
         slotProps={{
-          primary: styles.listItemText
+          primary: {
+            typography: 'body1',
+            color: 'primary'
+          }
         }}
         primary={title}
         inset={!iconSrc}
