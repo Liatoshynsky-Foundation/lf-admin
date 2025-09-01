@@ -2,13 +2,16 @@
 import { Box, Skeleton } from '@mui/material';
 
 import CollapsibleBlock from '../../design-system/collapsible-block/CollapsibleBlock';
-import { ImagePreviewBlock } from '../../design-system/photo-block/PhotoBlock';
-import { CustomTextField } from '../../design-system/text-field/TextField';
 import { QuoteBlock } from '../Liatoshynsky-office/quote-block/QuoteBlock';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
+import { ImagePreviewBlock } from '~/ds-components/photo-block/PhotoBlock';
+import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 import { LocalizedString } from '~/types/common';
+import { useUploadBlobMutation } from '~/types/graphql/generated/graphql';
+import { getImageUrl } from '~/utils/getImageUrl';
+import { handleUploadImage } from '~/utils/uploadToTmpFolder';
 
 export const IntroSection = () => {
   const pageId = PAGE_IDS.ABOUT_US;
@@ -17,6 +20,7 @@ export const IntroSection = () => {
   const { block } = usePageBlock(pageId, blockId);
 
   const currentLocale: keyof LocalizedString = useStore((state) => state.locale);
+  const [uploadBlob] = useUploadBlobMutation();
 
   const setField = useStore((state) => state.setField);
 
@@ -39,16 +43,12 @@ export const IntroSection = () => {
 
       <Box sx={{ marginLeft: '-16px', marginTop: '15px' }}>
         <ImagePreviewBlock
-          imageUrl={`/images/${block.image.src}.png`}
+          imageUrl={getImageUrl(block.image)}
           fileName={block.image.src || ''}
           cropHeight={50}
           cropWidth={50}
           onChangeImage={(file) =>
-            setField(pageId, blockId, 'image', {
-              ...block.image,
-              src: file.name,
-              generatedSrc: `/api/blob-url?folderName=photos&blobName=${file.name}`
-            })
+            handleUploadImage(file, PAGE_IDS.ABOUT_US, BLOCK_IDS.INTRO_SECTION, 'tmp', 'image', uploadBlob)
           }
         />
       </Box>
@@ -61,7 +61,8 @@ export const IntroSection = () => {
         onChange={(e) =>
           setField(pageId, blockId, 'image', {
             ...block.image,
-            caption: { ...block.image.caption, [currentLocale]: e.target.value }
+            caption: { ...block.image.caption, [currentLocale]: e.target.value },
+            alt: { ...block.image.alt, [currentLocale]: e.target.value }
           })
         }
       />

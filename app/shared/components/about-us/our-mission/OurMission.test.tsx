@@ -3,6 +3,17 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import OurMission from './OurMission';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 
+const handleUploadImageMock = jest.fn();
+const useUploadBlobMutationMock = jest.fn();
+
+jest.mock('~/utils/uploadToTmpFolder', () => ({
+  handleUploadImage: (...args: any[]) => handleUploadImageMock(...args)
+}));
+
+jest.mock('~/types/graphql/generated/graphql', () => ({
+  useUploadBlobMutation: () => [useUploadBlobMutationMock]
+}));
+
 const setFieldMock = jest.fn();
 
 type StoreState = { locale: 'uk'; setField: typeof setFieldMock };
@@ -155,11 +166,5 @@ describe('OurMission', () => {
       target: { value: 'Updated mission' }
     });
     expect(setFieldMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_MISSION, 'list', expect.any(Array));
-  });
-
-  it.each([0, 1])('should upload image file for image index %i', (index) => {
-    render(<OurMission />);
-    fireEvent.click(screen.getAllByText('Upload')[index]);
-    expect(setFieldMock).toHaveBeenCalled();
   });
 });

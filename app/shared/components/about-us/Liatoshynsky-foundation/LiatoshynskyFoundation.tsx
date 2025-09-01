@@ -9,11 +9,15 @@ import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock
 import { proseToText, textToProse } from '~/lib/utils/prose';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
+import { useUploadBlobMutation } from '~/types/graphql/generated/graphql';
 import { ProseDoc } from '~/types/store/pages/about-us';
+import { getImageUrl } from '~/utils/getImageUrl';
+import { handleUploadImage } from '~/utils/uploadToTmpFolder';
 
 export const LiatoshynskyFoundation = () => {
   const pageId = PAGE_IDS.ABOUT_US;
   const blockId = BLOCK_IDS.LIATOSHYNSKY_FOUNDATION;
+  const [uploadBlob] = useUploadBlobMutation();
 
   const { block } = usePageBlock(pageId, blockId);
 
@@ -50,26 +54,16 @@ export const LiatoshynskyFoundation = () => {
     });
   };
 
-  const handleImageChange = (file: File) => {
-    const newUrl = URL.createObjectURL(file);
-
-    setField(pageId, blockId, 'image', {
-      ...block.image,
-      src: newUrl,
-      generatedSrc: newUrl
-    });
-  };
-
   return (
     <CollapsibleBlock title="Фундація Лятошинського">
       <FoundationBlock
         mainText={mainText}
         paragraphs={paragraphs}
-        imageUrl={`/images/${block.image?.src}.png`}
+        imageUrl={getImageUrl(block.image)}
         fileName={block.image?.caption?.[currentLocale]}
         onMainTextChange={handleMainTextChange}
         onParagraphChange={handleParagraphChange}
-        onImageChange={handleImageChange}
+        onImageChange={(file) => handleUploadImage(file, pageId, blockId, 'tmp', 'image', uploadBlob)}
       />
     </CollapsibleBlock>
   );

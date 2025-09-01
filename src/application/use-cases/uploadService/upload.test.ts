@@ -16,6 +16,7 @@ const mockHeaders = jest.fn().mockImplementation(() => ({
   get: jest.fn(),
   has: jest.fn()
 }));
+const mockFolderNameSchemaParse = jest.fn();
 
 global.fetch = mockFetch;
 global.Response = mockResponse;
@@ -32,7 +33,11 @@ jest.mock('@azure/storage-blob', () => {
           uploadData: mockUploadData,
           deleteIfExists: mockDeleteIfExists,
           exists: mockExists,
-          url: `https://mockstorage.blob.core.windows.net/${CONTAINER_NAME}/${path}`
+          url: `https://mockstorage.blob.core.windows.net/${CONTAINER_NAME}/${path}`,
+          name: path,
+          beginCopyFromURL: jest.fn(() => ({
+            pollUntilDone: jest.fn().mockResolvedValue(undefined)
+          }))
         }))
       }))
     }))
@@ -94,11 +99,27 @@ describe('azureStorageService', () => {
       expect(logger.error).toHaveBeenCalledWith(errors.FAILED_TO_DELETE_BLOB, deleteError);
     });
   });
+
   describe('constructBlobUrl', () => {
     it('should return the full, correctly formatted URL without checking for existence', () => {
       const url = blobStorageService().constructBlobUrl(folderName, blobName);
       expect(url).toBe(expectedUrl);
       expect(mockExists).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('copyBlobsToNewFolder', () => {
+    const oldFolderName = 'old-photos';
+    const newFolderName = 'new-photos';
+    const blobNames = ['image1.jpg', 'image2.png'];
+    const hashedBlobNames = blobNames.map((name) => createHash('sha256').update(name).digest('hex'));
+    const expectedNewBlobPaths = hashedBlobNames.map((hash) => `${newFolderName}/${hash}`);
+
+    it('should copy blobs to new folder successfully', async () => {
+      mockFolderNameSchemaParse.mockReturnValue(undefined);
+      const result = await blobStorageService().copyBlobsToNewFolder(oldFolderName, newFolderName, blobNames);
+      expect(result).toEqual(expectedNewBlobPaths);
+      expect(logger.error).not.toHaveBeenCalled();
     });
   });
 

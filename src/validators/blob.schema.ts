@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const zFolderNameSchema = z.enum(['photos', 'notes', 'compositions', 'works']);
+export const zFolderNameSchema = z.enum(['photos', 'notes', 'compositions', 'works', 'tmp']);
 export const zContentTypeSchema = z.enum([
   'image/jpeg',
   'image/jpg',

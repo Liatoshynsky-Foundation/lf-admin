@@ -15,7 +15,10 @@ import { proseToText, textToProse } from '~/lib/utils/prose';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 import { ConfigurableListItem } from '~/types/accordionBlocks';
+import { useUploadBlobMutation } from '~/types/graphql/generated/graphql';
 import { MissionListItemWithId } from '~/types/store/pages/about-us/blocks/missionBlock';
+import { getImageUrl } from '~/utils/getImageUrl';
+import { handleUploadImage } from '~/utils/uploadToTmpFolder';
 
 export type MissionPoint = ConfigurableListItem & { value: string };
 
@@ -47,7 +50,7 @@ const MissionImageBlock = ({
 }: MissionImageBlockProps) => (
   <Box sx={styles.imageBlockWrapper}>
     <ImagePreviewBlock
-      imageUrl={`/images/${image.src}.png`}
+      imageUrl={getImageUrl(image)}
       title={title}
       fileName={image.src || ''}
       cropWidth={cropWidth}
@@ -69,6 +72,8 @@ const OurMission = () => {
   const pageId = PAGE_IDS.ABOUT_US;
   const blockId = BLOCK_IDS.OUR_MISSION;
   const currentLocale: 'uk' | 'en' = useStore((state) => state.locale);
+  const [uploadBlob] = useUploadBlobMutation();
+
   const { block } = usePageBlock(pageId, blockId);
   const setField = useStore((state) => state.setField);
 
@@ -114,19 +119,6 @@ const OurMission = () => {
     };
 
     setField(pageId, blockId, key, updated);
-  };
-
-  const handleImageFileChange = (key: 'smallImage' | 'bigImage', file: File) => {
-    const image = block[key];
-    if (!image) return;
-
-    const newSrc = URL.createObjectURL(file);
-
-    setField(pageId, blockId, key, {
-      ...image,
-      src: newSrc,
-      generatedSrc: newSrc
-    });
   };
 
   return (
@@ -176,7 +168,7 @@ const OurMission = () => {
           locale={currentLocale}
           title="Перше зображення секції"
           onChangeCaption={(value, file) => handleImageChange('smallImage', value, file)}
-          onChangeImage={(file) => handleImageFileChange('smallImage', file)}
+          onChangeImage={(file) => handleUploadImage(file, pageId, blockId, 'tmp', 'smallImage', uploadBlob)}
         />
       )}
 
@@ -186,7 +178,7 @@ const OurMission = () => {
           locale={currentLocale}
           title="Друге зображення секції"
           onChangeCaption={(value, file) => handleImageChange('bigImage', value, file)}
-          onChangeImage={(file) => handleImageFileChange('bigImage', file)}
+          onChangeImage={(file) => handleUploadImage(file, pageId, blockId, 'tmp', 'bigImage', uploadBlob)}
         />
       )}
     </CollapsibleBlock>
