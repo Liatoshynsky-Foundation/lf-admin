@@ -21,7 +21,8 @@ const config: Config = {
     '!src/domain/**/*.{js,ts}',
     '!src/constants/**/*.{js,ts}',
     '!src/shared/types/**/*.{js,ts}',
-    '!src/infrastructure/models/**/*.{js,ts}'
+    '!src/infrastructure/models/**/*.{js,ts}',
+    '!src/validators/**/*.{js,ts}'
   ],
   coverageDirectory: 'coverage',
   coverageProvider: 'v8',

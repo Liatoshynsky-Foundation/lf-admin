@@ -1,0 +1,8 @@
+type Query {
+    _empty: String
+    test: RefreshTokenPayload!
+}
+
+type Mutation {
+    _empty: String
+}

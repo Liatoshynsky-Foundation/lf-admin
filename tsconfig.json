@@ -37,6 +37,7 @@
       "~/infrastructure/*": ["./src/infrastructure/*"],
       "~/interfaces/*": ["./src/interfaces/*"],
       "~/back-shared/*": ["./src/shared/*"],
+      "~/validators/*": ["./src/validators/*"],
       "~/public/*": ["./public/*"] // Path alias for easier imports
     }
   },

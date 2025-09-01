@@ -1,0 +1,18 @@
+extend type Mutation {
+    uploadBlob(
+        folderName: String!
+        blobName: String!
+        buffer: String!
+        contentType: String!
+    ): BlobPayload!
+    deleteBlob(
+        folderName: String!
+        blobName: String!
+    ): BlobPayload!
+}
+
+type BlobPayload {
+    success: Boolean!
+    message: String
+    blobName: String
+}

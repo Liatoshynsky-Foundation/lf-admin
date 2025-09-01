@@ -12,7 +12,7 @@ import {
 import { LoginArgs } from '~/back-shared/types/admin/types';
 import { GraphQLContext } from '~/back-shared/types/container/types';
 
-export const Mutation = {
+export const authMutation = {
   login: async (_: unknown, args: LoginArgs, context: GraphQLContext) => {
     const loginAdmin = context.requestContainer.resolve('loginAdmin');
     const createTokenService = context.requestContainer.resolve('createTokenService');

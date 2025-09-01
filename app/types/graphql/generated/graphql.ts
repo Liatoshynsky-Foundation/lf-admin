@@ -18,6 +18,13 @@ export type Scalars = {
   JSON: { input: any; output: any };
 };
 
+export type BlobPayload = {
+  __typename?: 'BlobPayload';
+  blobName?: Maybe<Scalars['String']['output']>;
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type ErrorPayload = {
   __typename?: 'ErrorPayload';
   message: Scalars['String']['output'];
@@ -42,14 +49,29 @@ export type LoginResult = ErrorPayload | LoginPayload;
 
 export type Mutation = {
   __typename?: 'Mutation';
+  _empty?: Maybe<Scalars['String']['output']>;
+  deleteBlob: BlobPayload;
   login: LoginResult;
   logout: Scalars['Boolean']['output'];
   refreshToken: RefreshTokenPayload;
+  uploadBlob: BlobPayload;
+};
+
+export type MutationDeleteBlobArgs = {
+  blobName: Scalars['String']['input'];
+  folderName: Scalars['String']['input'];
 };
 
 export type MutationLoginArgs = {
   email: Scalars['String']['input'];
   password: Scalars['String']['input'];
+};
+
+export type MutationUploadBlobArgs = {
+  blobName: Scalars['String']['input'];
+  buffer: Scalars['String']['input'];
+  contentType: Scalars['String']['input'];
+  folderName: Scalars['String']['input'];
 };
 
 export type Page = {
@@ -90,6 +112,28 @@ export type LoginMutation = {
   login:
     | { __typename: 'ErrorPayload'; success: boolean; message: string; statusCode: number }
     | { __typename: 'LoginPayload'; success: boolean; adminId?: string | null; adminType?: string | null };
+};
+
+export type DeleteBlobMutationVariables = Exact<{
+  folderName: Scalars['String']['input'];
+  blobName: Scalars['String']['input'];
+}>;
+
+export type DeleteBlobMutation = {
+  __typename?: 'Mutation';
+  deleteBlob: { __typename?: 'BlobPayload'; success: boolean; message?: string | null; blobName?: string | null };
+};
+
+export type UploadBlobMutationVariables = Exact<{
+  folderName: Scalars['String']['input'];
+  blobName: Scalars['String']['input'];
+  buffer: Scalars['String']['input'];
+  contentType: Scalars['String']['input'];
+}>;
+
+export type UploadBlobMutation = {
+  __typename?: 'Mutation';
+  uploadBlob: { __typename?: 'BlobPayload'; success: boolean; message?: string | null; blobName?: string | null };
 };
 
 export type GetAdminProfileQueryVariables = Exact<{ [key: string]: never }>;
@@ -149,6 +193,84 @@ export function useLoginMutation(baseOptions?: Apollo.MutationHookOptions<LoginM
 export type LoginMutationHookResult = ReturnType<typeof useLoginMutation>;
 export type LoginMutationResult = Apollo.MutationResult<LoginMutation>;
 export type LoginMutationOptions = Apollo.BaseMutationOptions<LoginMutation, LoginMutationVariables>;
+export const DeleteBlobDocument = gql`
+  mutation DeleteBlob($folderName: String!, $blobName: String!) {
+    deleteBlob(folderName: $folderName, blobName: $blobName) {
+      success
+      message
+      blobName
+    }
+  }
+`;
+export type DeleteBlobMutationFn = Apollo.MutationFunction<DeleteBlobMutation, DeleteBlobMutationVariables>;
+
+/**
+ * __useDeleteBlobMutation__
+ *
+ * To run a mutation, you first call `useDeleteBlobMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteBlobMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteBlobMutation, { data, loading, error }] = useDeleteBlobMutation({
+ *   variables: {
+ *      folderName: // value for 'folderName'
+ *      blobName: // value for 'blobName'
+ *   },
+ * });
+ */
+export function useDeleteBlobMutation(
+  baseOptions?: Apollo.MutationHookOptions<DeleteBlobMutation, DeleteBlobMutationVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<DeleteBlobMutation, DeleteBlobMutationVariables>(DeleteBlobDocument, options);
+}
+export type DeleteBlobMutationHookResult = ReturnType<typeof useDeleteBlobMutation>;
+export type DeleteBlobMutationResult = Apollo.MutationResult<DeleteBlobMutation>;
+export type DeleteBlobMutationOptions = Apollo.BaseMutationOptions<DeleteBlobMutation, DeleteBlobMutationVariables>;
+export const UploadBlobDocument = gql`
+  mutation UploadBlob($folderName: String!, $blobName: String!, $buffer: String!, $contentType: String!) {
+    uploadBlob(folderName: $folderName, blobName: $blobName, buffer: $buffer, contentType: $contentType) {
+      success
+      message
+      blobName
+    }
+  }
+`;
+export type UploadBlobMutationFn = Apollo.MutationFunction<UploadBlobMutation, UploadBlobMutationVariables>;
+
+/**
+ * __useUploadBlobMutation__
+ *
+ * To run a mutation, you first call `useUploadBlobMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUploadBlobMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [uploadBlobMutation, { data, loading, error }] = useUploadBlobMutation({
+ *   variables: {
+ *      folderName: // value for 'folderName'
+ *      blobName: // value for 'blobName'
+ *      buffer: // value for 'buffer'
+ *      contentType: // value for 'contentType'
+ *   },
+ * });
+ */
+export function useUploadBlobMutation(
+  baseOptions?: Apollo.MutationHookOptions<UploadBlobMutation, UploadBlobMutationVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<UploadBlobMutation, UploadBlobMutationVariables>(UploadBlobDocument, options);
+}
+export type UploadBlobMutationHookResult = ReturnType<typeof useUploadBlobMutation>;
+export type UploadBlobMutationResult = Apollo.MutationResult<UploadBlobMutation>;
+export type UploadBlobMutationOptions = Apollo.BaseMutationOptions<UploadBlobMutation, UploadBlobMutationVariables>;
 export const GetAdminProfileDocument = gql`
   query GetAdminProfile {
     test {
