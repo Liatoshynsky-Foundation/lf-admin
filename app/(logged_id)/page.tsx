@@ -4,6 +4,7 @@ import { Box } from '@mui/material';
 import React from 'react';
 
 import { fetchPreview } from '~/lib/utils/fetchPreview';
+import Team from '~/shared/components/accordion-blocks/team/Team';
 import { Header } from '~/shared/components/header/Header';
 
 export default function Home() {
@@ -31,6 +32,14 @@ export default function Home() {
         onLanguageChange={onLanguageChange}
         onSave={onSave}
         isSaving
+      />
+      <Team
+        introText="Вступний текст секції"
+        sectionTitle="Заголовок секції"
+        contributors={[
+          { name: 'Тетяна Гоман', description: 'Опис учасника' },
+          { name: 'Тетяна Гоман', description: 'Опис учасника' }
+        ]}
       />
     </Box>
   );
