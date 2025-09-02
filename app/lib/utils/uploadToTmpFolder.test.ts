@@ -35,7 +35,7 @@ describe('handleUploadImage', () => {
       }
     });
 
-    const result = await handleUploadImage(file, 'page1', BLOCK_IDS.INTRO_SECTION, 'tmp', 'image', uploadBlobMock);
+    const result = await handleUploadImage(file, 'page1', BLOCK_IDS.INTRO_SECTION, 'image', uploadBlobMock, 'tmp');
 
     expect(file.arrayBuffer).toHaveBeenCalled();
     expect(uploadBlobMock).toHaveBeenCalledWith({
@@ -76,7 +76,7 @@ describe('handleUploadImage', () => {
       }
     });
 
-    const result = await handleUploadImage(file, 'page1', BLOCK_IDS.INTRO_SECTION, 'tmp', 'image', uploadBlobMock);
+    const result = await handleUploadImage(file, 'page1', BLOCK_IDS.INTRO_SECTION, 'image', uploadBlobMock, 'tmp');
 
     expect(setFieldMock).not.toHaveBeenCalled();
     expect(result).toBeUndefined();
