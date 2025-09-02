@@ -6,9 +6,9 @@ export const handleUploadImage = async <K extends keyof BlocksMap, F extends key
   file: File,
   pageId: string,
   blockId: K,
-  folderName = 'tmp',
   key: F,
-  uploadBlob: UploadBlobMutationFn
+  uploadBlob: UploadBlobMutationFn,
+  folderName: string = 'tmp'
 ) => {
   const buffer = await file.arrayBuffer();
   const base64 = Buffer.from(buffer).toString('base64');

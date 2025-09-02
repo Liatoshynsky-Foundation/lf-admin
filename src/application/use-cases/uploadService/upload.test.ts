@@ -25,24 +25,24 @@ global.Headers = mockHeaders;
 const MOCK_AZURE_SAS_URL = 'url-test';
 process.env.AZURE_SAS_URL = MOCK_AZURE_SAS_URL;
 
-jest.mock('@azure/storage-blob', () => {
-  return {
-    BlobServiceClient: jest.fn().mockImplementation(() => ({
-      getContainerClient: jest.fn(() => ({
-        getBlockBlobClient: jest.fn((path: string) => ({
-          uploadData: mockUploadData,
-          deleteIfExists: mockDeleteIfExists,
-          exists: mockExists,
-          url: `https://mockstorage.blob.core.windows.net/${CONTAINER_NAME}/${path}`,
-          name: path,
-          beginCopyFromURL: jest.fn(() => ({
-            pollUntilDone: jest.fn().mockResolvedValue(undefined)
-          }))
-        }))
-      }))
+const mockContainerClient = {
+  getBlockBlobClient: jest.fn((path: string) => ({
+    uploadData: mockUploadData,
+    deleteIfExists: mockDeleteIfExists,
+    exists: mockExists,
+    name: path,
+    url: `https://mockstorage.blob.core.windows.net/${CONTAINER_NAME}/${path}`,
+    beginCopyFromURL: jest.fn(() => ({
+      pollUntilDone: jest.fn().mockResolvedValue(undefined)
     }))
-  };
-});
+  }))
+};
+
+jest.mock('@azure/storage-blob', () => ({
+  BlobServiceClient: jest.fn().mockImplementation(() => ({
+    getContainerClient: jest.fn(() => mockContainerClient)
+  }))
+}));
 
 jest.mock('../../../validators/blob.schema', () => ({
   zFolderNameSchema: { parse: jest.fn() },
