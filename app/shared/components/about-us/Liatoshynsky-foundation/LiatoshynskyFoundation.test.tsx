@@ -94,63 +94,76 @@ describe('LiatoshynskyFoundation', () => {
     image: { src: 'image-src', caption: { uk: 'Image Caption' } }
   };
 
-  const renderFoundation = () => render(<LiatoshynskyFoundation />);
+  let mainTextInput: HTMLElement;
+  let paragraph0Input: HTMLElement;
+  let paragraph1Input: HTMLElement;
+  let image: HTMLElement;
+  let fileNameSpan: HTMLElement;
+  let imageInput: HTMLElement;
 
   beforeEach(() => {
     jest.clearAllMocks();
     usePageBlockMock.mockReturnValue({ block: mockBlock, blockId: 'FoundationInfo' });
+
+    render(<LiatoshynskyFoundation />);
+
+    mainTextInput = screen.getByTestId('main-text');
+    paragraph0Input = screen.getByTestId('paragraph-0');
+    paragraph1Input = screen.getByTestId('paragraph-1');
+    image = screen.getByTestId('image');
+    fileNameSpan = screen.getByTestId('file-name');
+    imageInput = screen.getByTestId('image-input');
   });
 
-  it('should render all fields when block exists', () => {
-    renderFoundation();
-    expect(screen.getByTestId('main-text')).toHaveValue('Organisation Text');
-    expect(screen.getByTestId('paragraph-0')).toHaveValue('Name');
-    expect(screen.getByTestId('paragraph-1')).toHaveValue('Belief');
-
-    expect(screen.getByTestId('image')).toHaveAttribute('src', '/api/blob-url?folderName=photos&blobName=image-src');
-
-    expect(screen.getByTestId('file-name')).toHaveTextContent('Image Caption');
+  it('should render all fields with initial data from the block', () => {
+    expect(mainTextInput).toHaveValue('Organisation Text');
+    expect(paragraph0Input).toHaveValue('Name');
+    expect(paragraph1Input).toHaveValue('Belief');
+    expect(image).toHaveAttribute('src', '/api/blob-url?folderName=photos&blobName=image-src');
+    expect(fileNameSpan).toHaveTextContent('Image Caption');
   });
 
-  it('should update main text when edited', () => {
-    renderFoundation();
-    fireEvent.change(screen.getByTestId('main-text'), { target: { value: 'New Organisation Text' } });
-
-    expect(setFieldMock).toHaveBeenCalledWith(
-      'about-us',
-      'FoundationInfo',
-      'ourOrganisation',
-      expect.objectContaining({
+  describe('when updating text fields', () => {
+    const expectSetFieldMockToHaveBeenCalledWith = (fieldId: string, text: string) => {
+      const expectedPayload = {
         uk: {
           type: 'doc',
-          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'New Organisation Text' }] }]
+          content: [{ type: 'paragraph', content: [{ type: 'text', text }] }]
         }
-      })
-    );
+      };
+      expect(setFieldMock).toHaveBeenCalledWith(
+        'about-us',
+        'FoundationInfo',
+        fieldId,
+        expect.objectContaining(expectedPayload)
+      );
+    };
+
+    const testCases = [
+      {
+        description: 'main text',
+        element: () => mainTextInput, // Використовуємо функцію, щоб отримати елемент в момент виконання тесту
+        newValue: 'New Organisation Text',
+        fieldId: 'ourOrganisation'
+      },
+      {
+        description: 'first paragraph',
+        element: () => paragraph0Input,
+        newValue: 'New Name',
+        fieldId: 'ourName'
+      }
+    ];
+
+    it.each(testCases)('should update the store when the $description is edited', ({ element, newValue, fieldId }) => {
+      fireEvent.change(element(), { target: { value: newValue } });
+      expectSetFieldMockToHaveBeenCalledWith(fieldId, newValue);
+    });
   });
 
-  it('should update paragraph when edited', () => {
-    renderFoundation();
-    fireEvent.change(screen.getByTestId('paragraph-0'), { target: { value: 'New Name' } });
-
-    expect(setFieldMock).toHaveBeenCalledWith(
-      'about-us',
-      'FoundationInfo',
-      'ourName',
-      expect.objectContaining({
-        uk: {
-          type: 'doc',
-          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'New Name' }] }]
-        }
-      })
-    );
-  });
-
-  it('should call handleUploadImage when a new file is uploaded', () => {
-    renderFoundation();
+  it('should call handleUploadImage when a new file is selected', () => {
     const file = new File(['test'], 'new-image.png', { type: 'image/png' });
 
-    fireEvent.change(screen.getByTestId('image-input'), { target: { files: [file] } });
+    fireEvent.change(imageInput, { target: { files: [file] } });
 
     expect(handleUploadImageMock).toHaveBeenCalledWith(
       file,

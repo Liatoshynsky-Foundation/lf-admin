@@ -48,7 +48,7 @@ describe('GET /api/blob-url', () => {
       errors: validationErrors
     });
 
-    const request = new Request('http://localhost/api/blob-url?blobName=&folderName=test');
+    const request = new Request('https://localhost/api/blob-url?blobName=&folderName=test');
     const response = await GET(request);
 
     expect(response.status).toBe(400);
@@ -58,7 +58,7 @@ describe('GET /api/blob-url', () => {
   });
 
   it('should return a streamed blob if validation passes and service call is successful', async () => {
-    const mockBlobUrl = 'http://mock.blob.url/test-folder/test-blob';
+    const mockBlobUrl = 'https://mock.blob.url/test-folder/test-blob';
     const mockStreamResponse = new Response('mock-blob-data', { status: 200 });
 
     mockValidateWithZod.mockReturnValue({
@@ -89,7 +89,7 @@ describe('GET /api/blob-url', () => {
       throw mockError;
     });
 
-    const request = new Request('http://localhost/api/blob-url?blobName=test-blob&folderName=test-folder');
+    const request = new Request('https://localhost/api/blob-url?blobName=test-blob&folderName=test-folder');
     const response = await GET(request);
 
     expect(response.status).toBe(503);
@@ -97,7 +97,7 @@ describe('GET /api/blob-url', () => {
   });
 
   it('should pass no range header if not present in request', async () => {
-    const mockBlobUrl = 'http://mock.blob.url/test-folder/test-blob';
+    const mockBlobUrl = 'https://mock.blob.url/test-folder/test-blob';
     const mockStreamResponse = new Response('mock-blob-data', { status: 200 });
 
     mockValidateWithZod.mockReturnValue({
@@ -107,7 +107,7 @@ describe('GET /api/blob-url', () => {
     mockConstructBlobUrl.mockReturnValue(mockBlobUrl);
     mockStreamBlob.mockResolvedValue(mockStreamResponse);
 
-    const request = new Request('http://localhost/api/blob-url?blobName=test-blob&folderName=test-folder');
+    const request = new Request('https://localhost/api/blob-url?blobName=test-blob&folderName=test-folder');
     const response = await GET(request);
 
     expect(response).toEqual(mockStreamResponse);
