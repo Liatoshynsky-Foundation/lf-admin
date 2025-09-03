@@ -2,7 +2,6 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 
 import DiscardModalProvider from './DiscardModalProvider';
 
-// --- mocks ---
 jest.mock('~/store', () => ({
   useStore: () => ({
     __esModule: true,
@@ -39,7 +38,6 @@ jest.mock('~/shared/components/design-system/discard-changes-modal/DiscardChange
     ) : null
 }));
 
-// --- tests ---
 describe('DiscardModalProvider', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -83,7 +81,7 @@ describe('DiscardModalProvider', () => {
     fireEvent.click(screen.getByText('Cancel'));
 
     expect(cancelNavigation).toHaveBeenCalled();
-    expect(screen.queryByText('Cancel')).not.toBeInTheDocument(); // modal closed
+    expect(screen.queryByText('Cancel')).not.toBeInTheDocument();
   });
 
   it('calls confirmNavigation when confirm is clicked', () => {

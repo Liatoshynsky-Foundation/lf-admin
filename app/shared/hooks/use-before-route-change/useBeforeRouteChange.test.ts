@@ -10,8 +10,8 @@ jest.mock('next/navigation', () => ({
 
 describe('useBeforeRouteChange', () => {
   beforeEach(() => {
-    pathnameMock = '/initial'; // reset pathname
-    jest.clearAllMocks(); // reset mock calls
+    pathnameMock = '/initial';
+    jest.clearAllMocks();
   });
 
   it('should not call callback on initial render', () => {

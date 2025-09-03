@@ -1,5 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 
+import { useHasUnsavedChanges } from '../use-has-unsaved-changes/useHasUnsavedChanges';
 import { useStayPage } from './useStayPage';
 
 const pushMock = jest.fn();
@@ -10,64 +11,76 @@ jest.mock('next/navigation', () => ({
   usePathname: () => pathnameMock
 }));
 
+jest.mock('../use-has-unsaved-changes/useHasUnsavedChanges');
+
+const mockedUseHasUnsavedChanges = jest.mocked(useHasUnsavedChanges);
 describe('useStayPage', () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     pathnameMock = '/';
-    pushMock.mockClear();
   });
 
-  it('should not block navigation when shouldBlock = false', () => {
-    const { result, rerender } = renderHook(({ shouldBlock }) => useStayPage(shouldBlock), {
-      initialProps: { shouldBlock: false }
-    });
+  it('should not block navigation when hasUnsavedChanges = false', () => {
+    mockedUseHasUnsavedChanges.mockReturnValue(false);
 
-    pathnameMock = '/new-path';
-    rerender({ shouldBlock: false });
+    const { result, rerender } = renderHook(() => useStayPage());
+
+    act(() => {
+      pathnameMock = '/next';
+      rerender();
+    });
 
     expect(result.current.pendingPath).toBe(null);
     expect(pushMock).not.toHaveBeenCalled();
   });
 
-  it('should block navigation when shouldBlock = true', () => {
-    const { result, rerender } = renderHook(({ shouldBlock }) => useStayPage(shouldBlock), {
-      initialProps: { shouldBlock: true }
+  it('should block navigation when hasUnsavedChanges = true', () => {
+    mockedUseHasUnsavedChanges.mockReturnValue(true);
+
+    const { result, rerender } = renderHook(() => useStayPage());
+
+    act(() => {
+      pathnameMock = '/next';
+      rerender();
     });
 
-    pathnameMock = '/new-path';
-    rerender({ shouldBlock: true });
-
-    expect(result.current.pendingPath).toBe('/new-path');
+    expect(result.current.pendingPath).toBe('/next');
     expect(pushMock).toHaveBeenCalledWith('/');
   });
 
-  it('should confirm navigation', () => {
-    const { result, rerender } = renderHook(({ shouldBlock }) => useStayPage(shouldBlock), {
-      initialProps: { shouldBlock: true }
+  it('should confirm navigation and go to pending path', () => {
+    mockedUseHasUnsavedChanges.mockReturnValue(true);
+
+    const { result, rerender } = renderHook(() => useStayPage());
+
+    act(() => {
+      pathnameMock = '/next';
+      rerender();
     });
 
-    pathnameMock = '/new-path';
-    rerender({ shouldBlock: true });
+    expect(result.current.pendingPath).toBe('/next');
 
     act(() => {
       result.current.confirmNavigation();
     });
 
-    expect(pushMock).toHaveBeenCalledWith('/new-path');
+    expect(pushMock).toHaveBeenCalledWith('/next');
     expect(result.current.pendingPath).toBe(null);
   });
 
-  it('should cancel navigation', () => {
-    const { result, rerender } = renderHook(({ shouldBlock }) => useStayPage(shouldBlock), {
-      initialProps: { shouldBlock: true }
-    });
+  it('should cancel navigation and clear pendingPath', () => {
+    mockedUseHasUnsavedChanges.mockReturnValue(true);
 
-    pathnameMock = '/new-path';
-    rerender({ shouldBlock: true });
+    const { result, rerender } = renderHook(() => useStayPage());
+
+    pathnameMock = '/next';
+    rerender();
+
+    expect(result.current.pendingPath).toBe('/next');
 
     act(() => {
       result.current.cancelNavigation();
     });
-
     expect(pushMock).toHaveBeenCalledWith('/');
   });
 });

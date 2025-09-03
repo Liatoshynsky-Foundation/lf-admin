@@ -3,24 +3,24 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
-export function useStayPage(shouldBlock: boolean, checkPaths: any[] = []) {
+import { useHasUnsavedChanges } from '../use-has-unsaved-changes/useHasUnsavedChanges';
+
+export function useStayPage() {
   const router = useRouter();
   const pathname = usePathname();
   const prevPath = useRef(pathname);
   const [pendingPath, setPendingPath] = useState<string | null>(null);
-
+  const shouldBlock = useHasUnsavedChanges(prevPath.current);
   useEffect(() => {
     if (pathname !== prevPath.current) {
-      const temp = prevPath.current.split('/').filter(Boolean).pop() as string;
-      const check = Object.keys(checkPaths).length > 0 ? checkPaths.hasOwnProperty(temp) : true;
-      if (shouldBlock && check) {
+      if (shouldBlock) {
         setPendingPath(pathname);
         router.push(prevPath.current);
       } else {
         prevPath.current = pathname;
       }
     }
-  }, [pathname, checkPaths, shouldBlock, router]);
+  }, [pathname, shouldBlock, router]);
 
   const confirmNavigation = () => {
     if (pendingPath) {
