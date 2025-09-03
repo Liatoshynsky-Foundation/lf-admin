@@ -67,7 +67,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "auto": "^11.3.0",
-    "babel-jest": "^29.7.0",
+    "babel-jest": "^30.1.2",
     "commitlint": "^19.8.1",
     "eslint": "^9.26.0",
     "eslint-config-next": "15.3.1",
