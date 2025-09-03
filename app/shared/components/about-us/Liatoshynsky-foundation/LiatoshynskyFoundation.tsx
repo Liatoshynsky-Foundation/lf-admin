@@ -63,7 +63,7 @@ export const LiatoshynskyFoundation = () => {
         fileName={block.image?.caption?.[currentLocale]}
         onMainTextChange={handleMainTextChange}
         onParagraphChange={handleParagraphChange}
-        onImageChange={(file) => handleUploadImage(file, pageId, blockId, 'tmp', 'image', uploadBlob)}
+        onImageChange={(file) => handleUploadImage(file, pageId, blockId, 'image', uploadBlob, 'tmp')}
       />
     </CollapsibleBlock>
   );

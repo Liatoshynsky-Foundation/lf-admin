@@ -168,7 +168,7 @@ const OurMission = () => {
           locale={currentLocale}
           title="Перше зображення секції"
           onChangeCaption={(value, file) => handleImageChange('smallImage', value, file)}
-          onChangeImage={(file) => handleUploadImage(file, pageId, blockId, 'tmp', 'smallImage', uploadBlob)}
+          onChangeImage={(file) => handleUploadImage(file, pageId, blockId, 'smallImage', uploadBlob, 'tmp')}
         />
       )}
 
@@ -178,7 +178,7 @@ const OurMission = () => {
           locale={currentLocale}
           title="Друге зображення секції"
           onChangeCaption={(value, file) => handleImageChange('bigImage', value, file)}
-          onChangeImage={(file) => handleUploadImage(file, pageId, blockId, 'tmp', 'bigImage', uploadBlob)}
+          onChangeImage={(file) => handleUploadImage(file, pageId, blockId, 'bigImage', uploadBlob, 'tmp')}
         />
       )}
     </CollapsibleBlock>
