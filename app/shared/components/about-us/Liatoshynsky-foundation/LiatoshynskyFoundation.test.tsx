@@ -169,9 +169,9 @@ describe('LiatoshynskyFoundation', () => {
       file,
       'about-us',
       'FoundationInfo',
-      'tmp',
       'image',
-      useUploadBlobMutationMock
+      useUploadBlobMutationMock,
+      'tmp'
     );
   });
 });
