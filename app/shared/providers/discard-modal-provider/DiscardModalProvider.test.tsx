@@ -44,7 +44,7 @@ describe('DiscardModalProvider', () => {
     beforeRouteChangeCb = null;
   });
 
-  it('renders children', () => {
+  it('should render children', () => {
     render(
       <DiscardModalProvider>
         <div data-testid="child">Hello</div>
@@ -54,7 +54,7 @@ describe('DiscardModalProvider', () => {
     expect(screen.getByTestId('child')).toBeInTheDocument();
   });
 
-  it('opens modal when pendingPath exists and route change occurs', () => {
+  it('should open modal when pendingPath exists and route change occurs', () => {
     render(
       <DiscardModalProvider>
         <div>child</div>
@@ -69,7 +69,7 @@ describe('DiscardModalProvider', () => {
     expect(screen.getByText('Confirm')).toBeInTheDocument();
   });
 
-  it('calls cancelNavigation when cancel is clicked', () => {
+  it('should call cancelNavigation when cancel is clicked', () => {
     render(
       <DiscardModalProvider>
         <div>child</div>
@@ -84,7 +84,7 @@ describe('DiscardModalProvider', () => {
     expect(screen.queryByText('Cancel')).not.toBeInTheDocument();
   });
 
-  it('calls confirmNavigation when confirm is clicked', () => {
+  it('should call confirmNavigation when confirm is clicked', () => {
     render(
       <DiscardModalProvider>
         <div>child</div>
@@ -96,6 +96,6 @@ describe('DiscardModalProvider', () => {
     fireEvent.click(screen.getByText('Confirm'));
 
     expect(confirmNavigation).toHaveBeenCalled();
-    expect(screen.queryByText('Confirm')).not.toBeInTheDocument(); // modal closed
+    expect(screen.queryByText('Confirm')).not.toBeInTheDocument();
   });
 });

@@ -6,7 +6,7 @@ import { useStore } from '~/store';
 jest.mock('~/store');
 const mockedUseStore = jest.mocked(useStore);
 describe('useHasUnsavedChanges', () => {
-  it('shoudl return false when isChanged = false', () => {
+  it('should return false when isChanged = false', () => {
     mockedUseStore.mockImplementation((selector) => selector({ isChanged: false, blocks: {} } as any));
 
     const { result } = renderHook(() => useHasUnsavedChanges('/page1'));
