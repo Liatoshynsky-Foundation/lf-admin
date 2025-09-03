@@ -6,7 +6,7 @@ import { useBeforeRouteChange } from '~/shared/hooks/use-before-route-change/use
 import { useStayPage } from '~/shared/hooks/use-stay-page/useStayPage';
 import { useStore } from '~/store';
 
-export default function DiscardModalProvider({ children }: { children: ReactNode }) {
+export default function DiscardModalProvider({ children }: { readonly children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const isChanged = useStore((state) => state.isChanged);
   const blocks = useStore((state) => state.blocks);

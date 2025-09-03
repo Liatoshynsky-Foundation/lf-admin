@@ -12,7 +12,7 @@ export function useStayPage(shouldBlock: boolean, checkPaths: any[] = []) {
   useEffect(() => {
     if (pathname !== prevPath.current) {
       const temp = prevPath.current.split('/').filter(Boolean).pop() as string;
-      const check = checkPaths.length !== 0 ? temp in checkPaths : true;
+      const check = Object.keys(checkPaths).length > 0 ? checkPaths.hasOwnProperty(temp) : true;
       if (shouldBlock && check) {
         setPendingPath(pathname);
         router.push(prevPath.current);

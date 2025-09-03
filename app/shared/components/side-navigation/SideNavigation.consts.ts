@@ -12,7 +12,7 @@ export const NAVIGATION_DATA = {
     },
     {
       element: { title: 'Про фундацію', iconSrc: 'aboutFoundation' },
-      collapseElements: [{ title: 'Про нас', href: '/about' }]
+      collapseElements: [{ title: 'Про нас', href: '/about-us' }]
     },
     { title: 'Кабінет-Архів', iconSrc: 'archive', href: '/archive' }
   ],
