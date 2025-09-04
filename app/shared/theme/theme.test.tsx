@@ -16,7 +16,7 @@ describe('Custom Typography Variants', () => {
       </ThemeProvider>
     );
 
-  it('renders customBold32 variant correctly', () => {
+  it('should render customBold32 variant correctly', () => {
     const { getByText } = renderWithTheme('customBold32');
     const element = getByText('Test');
     expect(element).toHaveStyle({
@@ -27,7 +27,7 @@ describe('Custom Typography Variants', () => {
     });
   });
 
-  it('renders customMedium22Tight variant correctly', () => {
+  it('should render customMedium22Tight variant correctly', () => {
     const { getByText } = renderWithTheme('customMedium22Tight');
     const element = getByText('Test');
     expect(element).toHaveStyle({
@@ -37,7 +37,7 @@ describe('Custom Typography Variants', () => {
     });
   });
 
-  it('renders customRegular20Tight variant correctly', () => {
+  it('should render customRegular20Tight variant correctly', () => {
     const { getByText } = renderWithTheme('customRegular20Tight');
     const element = getByText('Test');
     expect(element).toHaveStyle({
@@ -47,7 +47,7 @@ describe('Custom Typography Variants', () => {
     });
   });
 
-  it('renders customMedium18Tight variant correctly', () => {
+  it('should render customMedium18Tight variant correctly', () => {
     const { getByText } = renderWithTheme('customMedium18Tight');
     const element = getByText('Test');
     expect(element).toHaveStyle({
@@ -57,7 +57,7 @@ describe('Custom Typography Variants', () => {
     });
   });
 
-  it('renders customMedium18Loose variant correctly', () => {
+  it('should render customMedium18Loose variant correctly', () => {
     const { getByText } = renderWithTheme('customMedium18Loose');
     const element = getByText('Test');
     expect(element).toHaveStyle({
@@ -67,7 +67,7 @@ describe('Custom Typography Variants', () => {
     });
   });
 
-  it('renders customSemiBold18 variant correctly', () => {
+  it('should render customSemiBold18 variant correctly', () => {
     const { getByText } = renderWithTheme('customSemiBold18');
     const element = getByText('Test');
     expect(element).toHaveStyle({
@@ -77,7 +77,7 @@ describe('Custom Typography Variants', () => {
     });
   });
 
-  it('renders customRegular16 variant correctly', () => {
+  it('should render customRegular16 variant correctly', () => {
     const { getByText } = renderWithTheme('customRegular16');
     const element = getByText('Test');
     expect(element).toHaveStyle({
@@ -87,7 +87,7 @@ describe('Custom Typography Variants', () => {
     });
   });
 
-  it('renders customBold16 variant correctly', () => {
+  it('should render customBold16 variant correctly', () => {
     const { getByText } = renderWithTheme('customBold16');
     const element = getByText('Test');
     expect(element).toHaveStyle({
@@ -97,7 +97,7 @@ describe('Custom Typography Variants', () => {
     });
   });
 
-  it('renders customMedium16 variant correctly', () => {
+  it('should render customMedium16 variant correctly', () => {
     const { getByText } = renderWithTheme('customMedium16');
     const element = getByText('Test');
     expect(element).toHaveStyle({
@@ -107,7 +107,7 @@ describe('Custom Typography Variants', () => {
     });
   });
 
-  it('renders customItalic16 variant correctly', () => {
+  it('should render customItalic16 variant correctly', () => {
     const { getByText } = renderWithTheme('customItalic16');
     const element = getByText('Test');
     expect(element).toHaveStyle({
@@ -117,7 +117,7 @@ describe('Custom Typography Variants', () => {
     });
   });
 
-  it('renders customItalic14 variant correctly', () => {
+  it('should render customItalic14 variant correctly', () => {
     const { getByText } = renderWithTheme('customItalic14');
     const element = getByText('Test');
     expect(element).toHaveStyle({
