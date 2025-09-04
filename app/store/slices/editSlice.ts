@@ -1,6 +1,7 @@
 import { StateCreator } from 'zustand';
 
 import type { BlockData, EditState } from '../types';
+import { BlocksMap } from '~/types/store/pages';
 
 export const createEditSlice: StateCreator<EditState> = (set, get) => ({
   isChanged: false,
@@ -8,21 +9,29 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
   blocks: {},
   locale: 'uk',
 
-  setField: (pageId, blockId, field, value) => {
+  setField: <K extends keyof BlocksMap, F extends keyof BlocksMap[K]>(
+    pageId: string,
+    blockId: K,
+    field: F,
+    value: BlocksMap[K][F]
+  ) => {
     const prevPageBlocks = get().blocks[pageId] || {};
-    const prevBlock = (prevPageBlocks[blockId] ?? {}) as BlockData<typeof blockId>;
+    const prevBlock = (prevPageBlocks[blockId] ?? {}) as BlocksMap[K];
 
     if (prevBlock[field] === value) return;
+
+    const newBlock = {
+      ...prevBlock,
+      [field]: value,
+      isTmp: field === 'image' && value && typeof value === 'object' && 'src' in value
+    };
 
     set({
       blocks: {
         ...get().blocks,
         [pageId]: {
           ...prevPageBlocks,
-          [blockId]: {
-            ...prevBlock,
-            [field]: value
-          }
+          [blockId]: newBlock
         }
       },
       isChanged: true
@@ -35,16 +44,21 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
 
     const isDifferent = Object.entries(data).some(([key, val]) => prevBlock[key as keyof typeof data] !== val);
     if (!isDifferent) return;
+    let newBlock = { ...prevBlock, ...data };
+
+    if ('image' in data) {
+      const img = data.image;
+      if (img && typeof img === 'object' && 'src' in img) {
+        newBlock = { ...newBlock, isTmp: true };
+      }
+    }
 
     set({
       blocks: {
         ...get().blocks,
         [pageId]: {
           ...prevPageBlocks,
-          [blockId]: {
-            ...prevBlock,
-            ...data
-          }
+          [blockId]: newBlock
         }
       },
       isChanged: isInit ? get().isChanged : true,

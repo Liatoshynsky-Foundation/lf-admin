@@ -44,14 +44,15 @@ const config: Config = {
     '^~/ds-components/(.*)$': '<rootDir>/app/shared/components/design-system/$1',
     '^~/components/(.*)$': '<rootDir>/app/shared/components/$1',
     '^~/hooks/(.*)$': '<rootDir>/app/shared/hooks/$1',
+    '^~/src/(.*)$': '<rootDir>/src/$1',
     '^~/(.*)$': '<rootDir>/app/$1'
   },
-  modulePaths: ['<rootDir>/app'],
+  modulePaths: ['<rootDir>/app', '<rootDir>/src'],
   testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/dist/', '<rootDir>/coverage/'],
   transform: {
     '^.+\\.(js|jsx|ts|tsx)$': 'ts-jest'
   },
-  transformIgnorePatterns: ['node_modules/(?!(lodash-es)/)'],
+  transformIgnorePatterns: ['node_modules/(?!(lodash-es|bson|mongodb)/)'],
   setupFilesAfterEnv: ['@testing-library/jest-dom']
 };
 

@@ -4,15 +4,25 @@ import React from 'react';
 import { LiatoshynskyFoundation } from './LiatoshynskyFoundation';
 
 const setFieldMock = jest.fn();
+const handleUploadImageMock = jest.fn();
+const useUploadBlobMutationMock = jest.fn();
 
 jest.mock('~/store', () => ({
-  useStore: (selector: (state: { locale: string; setField: typeof setFieldMock }) => void) =>
+  useStore: (selector: (state: { locale: 'uk'; setField: typeof setFieldMock }) => void) =>
     selector({ locale: 'uk', setField: setFieldMock })
 }));
 
 const usePageBlockMock = jest.fn();
 jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: (pageId: string, blockId: string) => usePageBlockMock(pageId, blockId)
+}));
+
+jest.mock('~/utils/uploadToTmpFolder', () => ({
+  handleUploadImage: (...args: any[]) => handleUploadImageMock(...args)
+}));
+
+jest.mock('~/types/graphql/generated/graphql', () => ({
+  useUploadBlobMutation: () => [useUploadBlobMutationMock]
 }));
 
 interface Paragraph {
@@ -23,6 +33,7 @@ interface FoundationBlockProps {
   mainText: string;
   paragraphs: Paragraph[];
   imageUrl: string;
+  fileName: string;
   onMainTextChange: (value: string) => void;
   onParagraphChange: (idx: number, value: string) => void;
   onImageChange: (file: File) => void;
@@ -33,13 +44,14 @@ jest.mock('./foundation-block/FoundationBlock', () => ({
     mainText,
     paragraphs,
     imageUrl,
+    fileName,
     onMainTextChange,
     onParagraphChange,
     onImageChange
   }: FoundationBlockProps) => (
     <div>
       <input data-testid="main-text" value={mainText} onChange={(e) => onMainTextChange(e.target.value)} />
-      {paragraphs.map((p, idx) => (
+      {paragraphs.map((p: any, idx: number) => (
         <input
           key={`${p.text}-${idx}`}
           data-testid={`paragraph-${idx}`}
@@ -48,6 +60,7 @@ jest.mock('./foundation-block/FoundationBlock', () => ({
         />
       ))}
       <img src={imageUrl} alt="Foundation" data-testid="image" />
+      <span data-testid="file-name">{fileName}</span>
       <input
         type="file"
         data-testid="image-input"
@@ -67,79 +80,98 @@ jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
   )
 }));
 
-global.URL.createObjectURL = jest.fn((file: File) => `mock-url/${file.name}`);
-
 describe('LiatoshynskyFoundation', () => {
   const mockBlock = {
     ourOrganisation: {
       uk: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Organisation Text' }] }] }
     },
-    ourName: { uk: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Name' }] }] } },
-    ourBelief: { uk: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Belief' }] }] } },
+    ourName: {
+      uk: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Name' }] }] }
+    },
+    ourBelief: {
+      uk: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Belief' }] }] }
+    },
     image: { src: 'image-src', caption: { uk: 'Image Caption' } }
   };
 
-  const renderFoundation = () => render(<LiatoshynskyFoundation />);
-
-  const expectSetFieldCalled = (field: string, content: object) => {
-    expect(setFieldMock).toHaveBeenCalledWith(
-      'about-us',
-      'FoundationInfo',
-      field,
-      expect.objectContaining({ uk: expect.objectContaining(content) })
-    );
-  };
-
-  const changeInputAndExpect = (testId: string, value: string, field: string) => {
-    fireEvent.change(screen.getByTestId(testId), { target: { value } });
-    expectSetFieldCalled(field, {
-      content: [{ type: 'paragraph', content: [{ type: 'text', text: value }] }]
-    });
-  };
-
-  const uploadFileAndExpect = (file: File, field: string, caption = 'Image Caption') => {
-    fireEvent.change(screen.getByTestId('image-input'), { target: { files: [file] } });
-    expect(setFieldMock).toHaveBeenCalledWith(
-      'about-us',
-      'FoundationInfo',
-      field,
-      expect.objectContaining({
-        src: `mock-url/${file.name}`,
-        generatedSrc: `mock-url/${file.name}`,
-        caption: { uk: caption }
-      })
-    );
-  };
+  let mainTextInput: HTMLElement;
+  let paragraph0Input: HTMLElement;
+  let paragraph1Input: HTMLElement;
+  let image: HTMLElement;
+  let fileNameSpan: HTMLElement;
+  let imageInput: HTMLElement;
 
   beforeEach(() => {
     jest.clearAllMocks();
     usePageBlockMock.mockReturnValue({ block: mockBlock, blockId: 'FoundationInfo' });
+
+    render(<LiatoshynskyFoundation />);
+
+    mainTextInput = screen.getByTestId('main-text');
+    paragraph0Input = screen.getByTestId('paragraph-0');
+    paragraph1Input = screen.getByTestId('paragraph-1');
+    image = screen.getByTestId('image');
+    fileNameSpan = screen.getByTestId('file-name');
+    imageInput = screen.getByTestId('image-input');
   });
 
-  it('should render all fields when block exists', () => {
-    renderFoundation();
-    expect(screen.getByTestId('main-text')).toHaveValue('Organisation Text');
+  it('should render all fields with initial data from the block', () => {
+    expect(mainTextInput).toHaveValue('Organisation Text');
+    expect(paragraph0Input).toHaveValue('Name');
+    expect(paragraph1Input).toHaveValue('Belief');
+    expect(image).toHaveAttribute('src', '/api/blob-url?folderName=photos&blobName=image-src');
+    expect(fileNameSpan).toHaveTextContent('Image Caption');
+  });
 
-    ['Name', 'Belief'].forEach((val, idx) => {
-      expect(screen.getByTestId(`paragraph-${idx}`)).toHaveValue(val);
+  describe('when updating text fields', () => {
+    const expectSetFieldMockToHaveBeenCalledWith = (fieldId: string, text: string) => {
+      const expectedPayload = {
+        uk: {
+          type: 'doc',
+          content: [{ type: 'paragraph', content: [{ type: 'text', text }] }]
+        }
+      };
+      expect(setFieldMock).toHaveBeenCalledWith(
+        'about-us',
+        'FoundationInfo',
+        fieldId,
+        expect.objectContaining(expectedPayload)
+      );
+    };
+
+    const testCases = [
+      {
+        description: 'main text',
+        element: () => mainTextInput,
+        newValue: 'New Organisation Text',
+        fieldId: 'ourOrganisation'
+      },
+      {
+        description: 'first paragraph',
+        element: () => paragraph0Input,
+        newValue: 'New Name',
+        fieldId: 'ourName'
+      }
+    ];
+
+    it.each(testCases)('should update the store when the $description is edited', ({ element, newValue, fieldId }) => {
+      fireEvent.change(element(), { target: { value: newValue } });
+      expectSetFieldMockToHaveBeenCalledWith(fieldId, newValue);
     });
-
-    expect(screen.getByTestId('image')).toHaveAttribute('src', '/images/image-src.png');
   });
 
-  it('should update main text when edited', () => {
-    renderFoundation();
-    changeInputAndExpect('main-text', 'New Organisation Text', 'ourOrganisation');
-  });
-
-  it('should update paragraph when edited', () => {
-    renderFoundation();
-    changeInputAndExpect('paragraph-0', 'New Name', 'ourName');
-  });
-
-  it('should update image when a new file is uploaded', () => {
-    renderFoundation();
+  it('should call handleUploadImage when a new file is selected', () => {
     const file = new File(['test'], 'new-image.png', { type: 'image/png' });
-    uploadFileAndExpect(file, 'image');
+
+    fireEvent.change(imageInput, { target: { files: [file] } });
+
+    expect(handleUploadImageMock).toHaveBeenCalledWith(
+      file,
+      'about-us',
+      'FoundationInfo',
+      'image',
+      useUploadBlobMutationMock,
+      'tmp'
+    );
   });
 });

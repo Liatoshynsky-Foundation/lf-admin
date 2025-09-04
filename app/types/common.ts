@@ -7,7 +7,7 @@ export interface ImageBlock {
   src: string;
   alt: LocalizedString;
   caption: LocalizedString;
-  generatedSrc: string;
+  isTmp?: boolean;
 }
 
 export interface QuoteBlock {

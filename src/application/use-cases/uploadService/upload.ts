@@ -73,6 +73,35 @@ export const blobStorageService = () => {
         throw error;
       }
     },
+    copyBlobsToNewFolder: async (
+      oldFolderName: string,
+      newFolderName: string,
+      blobNames: string[]
+    ): Promise<string[]> => {
+      try {
+        zFolderNameSchema.parse(oldFolderName);
+        zFolderNameSchema.parse(newFolderName);
+
+        const containerClient = getContainerClient();
+
+        return await Promise.all(
+          blobNames.map(async (blobName) => {
+            const blobNameHash = createHash('sha256').update(blobName).digest('hex');
+
+            const sourceBlobClient = getFullPathToBlob(containerClient, oldFolderName, blobNameHash);
+            const targetBlobClient = getFullPathToBlob(containerClient, newFolderName, blobNameHash);
+
+            const copyPoller = await targetBlobClient.beginCopyFromURL(sourceBlobClient.url);
+            await copyPoller.pollUntilDone();
+
+            return targetBlobClient.name;
+          })
+        );
+      } catch (error) {
+        logger.error(errors.BLOB_DOES_NOT_EXIST, error);
+        throw error;
+      }
+    },
     streamBlob: async (url: string, rangeHeader: string | null): Promise<Response> => {
       const azureResponse = await fetch(url, {
         method: 'GET',

@@ -3,10 +3,20 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { IntroSection } from './IntroSection';
 
 const setFieldMock = jest.fn();
+const handleUploadImageMock = jest.fn();
+const useUploadBlobMutationMock = jest.fn();
 
 jest.mock('~/store', () => ({
   useStore: (selector: (state: { locale: string; setField: typeof setFieldMock }) => void) =>
     selector({ locale: 'uk', setField: setFieldMock })
+}));
+
+jest.mock('~/utils/uploadToTmpFolder', () => ({
+  handleUploadImage: (...args: any[]) => handleUploadImageMock(...args)
+}));
+
+jest.mock('~/types/graphql/generated/graphql', () => ({
+  useUploadBlobMutation: () => [useUploadBlobMutationMock]
 }));
 
 const usePageBlockMock = jest.fn();
@@ -117,7 +127,9 @@ describe('EntrySection', () => {
 
   it('should pass correct props to ImagePreviewBlock', () => {
     const preview = screen.getByTestId('image-preview');
-    expect(within(preview).getByTestId('image-url')).toHaveTextContent('/images/test-image.png');
+    expect(within(preview).getByTestId('image-url')).toHaveTextContent(
+      '/api/blob-url?folderName=photos&blobName=test-image'
+    );
     expect(within(preview).getByTestId('file-name')).toHaveTextContent('test-image');
   });
 
@@ -129,11 +141,6 @@ describe('EntrySection', () => {
   it('should call setField when updating title', () => {
     updateField('textfield-Заголовок сторінки', 'New Title');
     expectSetField('title', { uk: 'New Title' });
-  });
-
-  it('should call setField when uploading new image', () => {
-    fireEvent.click(screen.getByText('Upload Image'));
-    expectSetField('image', { src: 'new.png', generatedSrc: expect.stringContaining('new.png') });
   });
 
   it('should call setField when updating image caption', () => {

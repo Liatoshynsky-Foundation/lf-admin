@@ -16,6 +16,7 @@ const mockHeaders = jest.fn().mockImplementation(() => ({
   get: jest.fn(),
   has: jest.fn()
 }));
+const mockFolderNameSchemaParse = jest.fn();
 
 global.fetch = mockFetch;
 global.Response = mockResponse;
@@ -24,20 +25,24 @@ global.Headers = mockHeaders;
 const MOCK_AZURE_SAS_URL = 'url-test';
 process.env.AZURE_SAS_URL = MOCK_AZURE_SAS_URL;
 
-jest.mock('@azure/storage-blob', () => {
-  return {
-    BlobServiceClient: jest.fn().mockImplementation(() => ({
-      getContainerClient: jest.fn(() => ({
-        getBlockBlobClient: jest.fn((path: string) => ({
-          uploadData: mockUploadData,
-          deleteIfExists: mockDeleteIfExists,
-          exists: mockExists,
-          url: `https://mockstorage.blob.core.windows.net/${CONTAINER_NAME}/${path}`
-        }))
-      }))
+const mockContainerClient = {
+  getBlockBlobClient: jest.fn((path: string) => ({
+    uploadData: mockUploadData,
+    deleteIfExists: mockDeleteIfExists,
+    exists: mockExists,
+    name: path,
+    url: `https://mockstorage.blob.core.windows.net/${CONTAINER_NAME}/${path}`,
+    beginCopyFromURL: jest.fn(() => ({
+      pollUntilDone: jest.fn().mockResolvedValue(undefined)
     }))
-  };
-});
+  }))
+};
+
+jest.mock('@azure/storage-blob', () => ({
+  BlobServiceClient: jest.fn().mockImplementation(() => ({
+    getContainerClient: jest.fn(() => mockContainerClient)
+  }))
+}));
 
 jest.mock('../../../validators/blob.schema', () => ({
   zFolderNameSchema: { parse: jest.fn() },
@@ -94,11 +99,27 @@ describe('azureStorageService', () => {
       expect(logger.error).toHaveBeenCalledWith(errors.FAILED_TO_DELETE_BLOB, deleteError);
     });
   });
+
   describe('constructBlobUrl', () => {
     it('should return the full, correctly formatted URL without checking for existence', () => {
       const url = blobStorageService().constructBlobUrl(folderName, blobName);
       expect(url).toBe(expectedUrl);
       expect(mockExists).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('copyBlobsToNewFolder', () => {
+    const oldFolderName = 'old-photos';
+    const newFolderName = 'new-photos';
+    const blobNames = ['image1.jpg', 'image2.png'];
+    const hashedBlobNames = blobNames.map((name) => createHash('sha256').update(name).digest('hex'));
+    const expectedNewBlobPaths = hashedBlobNames.map((hash) => `${newFolderName}/${hash}`);
+
+    it('should copy blobs to new folder successfully', async () => {
+      mockFolderNameSchemaParse.mockReturnValue(undefined);
+      const result = await blobStorageService().copyBlobsToNewFolder(oldFolderName, newFolderName, blobNames);
+      expect(result).toEqual(expectedNewBlobPaths);
+      expect(logger.error).not.toHaveBeenCalled();
     });
   });
 
