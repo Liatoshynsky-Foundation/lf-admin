@@ -49,7 +49,6 @@ declare module '@mui/material/Typography' {
   }
 }
 
-// Create theme inside a function to avoid serialization issues
 export const createAdminTheme = () =>
   createTheme({
     typography: {
@@ -167,7 +166,6 @@ export const createAdminTheme = () =>
     }
   });
 
-// Export a single instance for consistency
 export const adminTheme = createAdminTheme();
 
 export type AdminTheme = ReturnType<typeof createAdminTheme>;
