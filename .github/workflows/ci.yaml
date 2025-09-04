@@ -1,9 +1,10 @@
-name: PR (develop)
+name: CI
 
 on:
   pull_request:
     branches:
       - develop
+      - main
 
 permissions:
   contents: read

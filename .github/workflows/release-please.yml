@@ -1,18 +1,15 @@
-name: release-please
+name: Changelog
 
 on:
-  push:
-    branches:
-      - chore/164/changelog-action
   workflow_dispatch:
-
-permissions:
-  contents: write
-  pull-requests: write
+  pull_request:
+    branches:
+      - main
 
 jobs:
   release-please:
     runs-on: ubuntu-latest
+
     permissions:
       contents: write   
       pull-requests: write  
