@@ -25,7 +25,6 @@ export const styles = {
     color: 'white',
     gap: '8px'
   },
-  mainTitle: {},
   subTitle: {
     color: '#C1C9D6'
   },
