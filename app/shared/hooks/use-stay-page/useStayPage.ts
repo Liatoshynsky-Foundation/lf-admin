@@ -20,7 +20,7 @@ export function useStayPage() {
         prevPath.current = pathname;
       }
     }
-  }, [pathname, shouldBlock, router]);
+  }, [pathname, router, prevPath]);
 
   const confirmNavigation = () => {
     if (pendingPath) {
