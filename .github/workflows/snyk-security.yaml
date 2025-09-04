@@ -12,23 +12,20 @@ permissions:
 
 jobs:
   snyk:
-    permissions:
-      contents: read # for actions/checkout to fetch code
-      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
-      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
     runs-on: ubuntu-latest
+    permissions:
+      contents: read          
+      security-events: write  
+      actions: read           
     env:
-      # Make Snyk token available to all steps
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Snyk CLI to check for security issues
-        # Snyk can be used to break the build when it detects security issues.
-        # In this case we want to upload the SAST issues to GitHub Code Scanning
+
+      - name: Set up Snyk CLI
         uses: snyk/actions/setup@806182742461562b67788a64410098c9d9b96adb
 
-        # For Snyk Open Source you must first set up the development environment for your application's dependencies
-        # For example for Node
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -39,41 +36,30 @@ jobs:
       - name: Prepare SARIF directory
         run: mkdir -p sarif
 
-        # Runs Snyk Code (SAST) analysis and uploads result into GitHub.
-        # Use || true to not fail the pipeline
       - name: Snyk Code test (SARIF)
         run: snyk code test --sarif-file-output=./sarif/snyk-code.sarif || true
 
-        # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
       - name: Snyk Open Source monitor (lockfile, tolerate mismatch)
         run: snyk monitor --file=package-lock.json --package-manager=npm --strict-out-of-sync=false
 
-      # Run Snyk Open Source test and produce SARIF for GitHub Code Scanning
       - name: Snyk Open Source test (SARIF, tolerate mismatch)
         run: snyk test --all-projects --sarif-file-output=./sarif/snyk-oss.sarif --strict-out-of-sync=false || true
 
-        # Runs Snyk Infrastructure as Code (IaC) analysis and uploads result to Snyk.
-        # Use || true to not fail the pipeline.
       - name: Snyk IaC test and report
         run: snyk iac test --report || true
 
-      # Also produce SARIF for IaC to surface in GitHub Security
       - name: Snyk IaC test (SARIF)
         run: snyk iac test --sarif-file-output=./sarif/snyk-iac.sarif || true
 
-        # Build the docker image for testing
       - name: Build a Docker image
         run: docker build -t lf-admin:latest .
 
-        # Runs Snyk Container (Container and SCA) analysis and uploads result to Snyk.
       - name: Snyk Container monitor
         run: snyk container monitor lf-admin:latest --file=Dockerfile
 
-      # Run Snyk Container test to generate SARIF for GitHub Code Scanning
       - name: Snyk Container test (SARIF)
         run: snyk container test lf-admin:latest --file=Dockerfile --exclude-app-vulns --sarif-file-output=./sarif/snyk-container.sarif || true
 
-        # Push the Snyk Code results into GitHub Code Scanning tab
       - name: Upload Snyk Code SARIF
         if: hashFiles('sarif/snyk-code.sarif') != ''
         uses: github/codeql-action/upload-sarif@v3
@@ -101,3 +87,32 @@ jobs:
         with:
           sarif_file: sarif/snyk-container.sarif
           category: snyk-container
+
+      - name: Run Snyk test (JSON for PR comment)
+        run: snyk test --json > snyk-report.json || true
+
+      - name: Upload JSON report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-json-report
+          path: snyk-report.json
+
+      - name: Format Snyk Report for PR
+        if: github.event_name == 'pull_request'
+        id: snyk-report
+        run: |
+          echo "## 🛡️ Snyk Security Report" > report.md
+          echo "" >> report.md
+          if [ -s snyk-report.json ]; then
+            jq -r '.vulnerabilities[] | "- **\(.severity | ascii_upcase)**: \(.title) (\(.packageName)@\(.version))"' snyk-report.json >> report.md || echo "⚠️ Failed to parse snyk-report.json" >> report.md
+          else
+            echo "✅ No vulnerabilities found" >> report.md
+          fi
+          echo "" >> report.md
+          echo "🔗 [Full report attached in Actions artifacts]" >> report.md
+
+      - name: Comment on PR with Snyk results
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          path: report.md
