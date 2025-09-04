@@ -31,7 +31,7 @@ export interface ConfigurableListItem {
   [key: string]: any;
 }
 
-export interface ContributorData {
+export interface ContributorData extends ConfigurableListItem {
   name: string;
   description: string;
 }

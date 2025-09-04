@@ -1,15 +1,11 @@
-import { debounce, IconButton, Typography } from '@mui/material';
-import { Box } from '@mui/system';
+import { debounce, Typography } from '@mui/material';
 import React, { useState } from 'react';
 
 import { styles } from './Team.styles';
+import ConfigurableList from '~/components/configurable-list/ConfigurableList';
 import { ContributorCard } from '~/components/contributor-card/ContributorCard';
-import Button from '~/ds-components/button/Button';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
-import { Svg } from '~/ds-components/colored-svg/ColoredSvg';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
-import Plus from '~/public/icons/plus.svg';
-import TrashIcon from '~/public/icons/trash.svg';
 import { ContributorData } from '~/types/accordionBlocks';
 
 type TeamProps = {
@@ -27,7 +23,13 @@ const Team = ({ introText, sectionTitle, contributors }: TeamProps) => {
   const editSectionWithDelay = debounce(setEditedSectionTitle, 500);
 
   const addContributor = () => {
-    setEditedContributors([...editedContributors, { name: 'name', description: 'desc' }]);
+    const newContributor = {
+      id: Date.now().toString(),
+      name: 'Placeholder Name',
+      description: 'Placeholder Description'
+    };
+    setEditedContributors((prev) => [...prev, newContributor]);
+    return newContributor;
   };
 
   const removeContributor = (index: number) => {
@@ -53,20 +55,29 @@ const Team = ({ introText, sectionTitle, contributors }: TeamProps) => {
       <Typography sx={styles.contributorsTitle} variant="subtitle1">
         Учасники Команди:
       </Typography>
-      {editedContributors.map((contributor, index) => (
-        <Box key={contributor.name + index} sx={styles.contributorContainer}>
+      <ConfigurableList
+        items={editedContributors}
+        addBtnLabel="Додати учасника"
+        editable
+        onCreate={addContributor}
+        onChange={(newValue) => {
+          setEditedContributors((prev) =>
+            prev.map((contributor) => (contributor.id === newValue.id ? newValue : contributor))
+          );
+        }}
+        onDelete={(id) => {
+          const index = editedContributors.findIndex((contributor) => contributor.id === id);
+          if (index !== -1) {
+            removeContributor(index);
+          }
+        }}
+        renderItem={(params) => (
           <ContributorCard
-            contributorNameValue={contributor.name}
-            contributorDescriptionValue={contributor.description}
+            contributorNameValue={params.item.name}
+            contributorDescriptionValue={params.item.description}
           />
-          <IconButton sx={styles.svgContainer} onClick={() => removeContributor(index)}>
-            <Svg Component={TrashIcon} alt="Видалити учасника" stroke="#E53D11" />
-          </IconButton>
-        </Box>
-      ))}
-      <Button variant="outlined" color="primary" sx={styles.addBtn} onClick={addContributor} startIcon={<Plus />}>
-        Додати учасника
-      </Button>
+        )}
+      />
     </CollapsibleBlock>
   );
 };

@@ -12,6 +12,37 @@ jest.mock('~/components/contributor-card/ContributorCard', () => ({
   )
 }));
 
+jest.mock('~/components/configurable-list/ConfigurableList', () => ({
+  __esModule: true,
+  default: (props: {
+    items: any[];
+    addBtnLabel?: string;
+    editable?: boolean;
+    onCreate?: () => void;
+    onChange?: (item: any) => void;
+    onDelete?: (id: string) => void;
+    renderItem: (args: { item: any; onChange: (item: any) => void }) => React.ReactNode;
+  }) => (
+    <div data-testid="configurable-list">
+      {props.items.map((item, idx) => (
+        <div key={item.id || idx}>
+          {props.renderItem({ item, onChange: props.onChange || (() => {}) })}
+          {props.editable && props.onDelete && (
+            <button type="button" onClick={() => props.onDelete?.(item.id)} aria-label="delete">
+              Delete
+            </button>
+          )}
+        </div>
+      ))}
+      {props.editable && props.onCreate && (
+        <button type="button" onClick={props.onCreate}>
+          {props.addBtnLabel || 'Add'}
+        </button>
+      )}
+    </div>
+  )
+}));
+
 jest.mock('~/ds-components/button/Button');
 
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
@@ -40,8 +71,8 @@ jest.mock('~/public/icons/trash.svg', () => ({
 }));
 
 const contributors = [
-  { name: 'John Doe', description: 'smth' },
-  { name: 'Jane Doe', description: 'smth' }
+  { id: '1', name: 'John Doe', description: 'smth' },
+  { id: '2', name: 'Jane Doe', description: 'smth' }
 ];
 
 describe('Team block', () => {
@@ -51,7 +82,7 @@ describe('Team block', () => {
     render(<Team introText="Intro" sectionTitle="Section" contributors={contributors} />);
   });
 
-  it('renders intro text, section title, and contributors', () => {
+  it('should render intro text, section title, and contributors', () => {
     expect(screen.getByTestId('collapsible-block')).toBeInTheDocument();
     expect(screen.getByTestId('Вступний текст секції')).toHaveValue('Intro');
     expect(screen.getByTestId('Заголовок секції')).toHaveValue('Section');
@@ -60,15 +91,15 @@ describe('Team block', () => {
     expect(screen.getByText(contributors[1].name)).toBeInTheDocument();
   });
 
-  it('calls addContributor when add button is clicked', () => {
+  it('should call addContributor when add button is clicked', () => {
     fireEvent.click(screen.getByText(/Додати учасника/i));
 
     expect(screen.getAllByTestId('contributor-card')).toHaveLength(3);
-    expect(screen.getByText('name')).toBeInTheDocument();
-    expect(screen.getByText('desc')).toBeInTheDocument();
+    expect(screen.getByText('Placeholder Name')).toBeInTheDocument();
+    expect(screen.getByText('Placeholder Description')).toBeInTheDocument();
   });
 
-  it('removes a contributor when trash icon is clicked', () => {
+  it('should remove a contributor when trash icon is clicked', () => {
     const trashButtons = screen.getAllByRole('button');
 
     fireEvent.click(trashButtons[0]);
@@ -78,7 +109,7 @@ describe('Team block', () => {
     expect(screen.getByText(contributors[1].name)).toBeInTheDocument();
   });
 
-  it('updates intro and section text fields with debounce', async () => {
+  it('should update intro and section text fields with debounce', async () => {
     jest.useFakeTimers();
 
     const introInput = screen.getByTestId('Вступний текст секції');
