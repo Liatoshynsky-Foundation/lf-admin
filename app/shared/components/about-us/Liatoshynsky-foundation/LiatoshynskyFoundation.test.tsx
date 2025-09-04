@@ -142,7 +142,7 @@ describe('LiatoshynskyFoundation', () => {
     const testCases = [
       {
         description: 'main text',
-        element: () => mainTextInput, // Використовуємо функцію, щоб отримати елемент в момент виконання тесту
+        element: () => mainTextInput,
         newValue: 'New Organisation Text',
         fieldId: 'ourOrganisation'
       },
