@@ -6,7 +6,8 @@ import { Size } from '~/types/cropper';
 export default async function getCroppedImg(
   imageSrc: string,
   crop: PixelCrop,
-  outputSize: Size
+  outputSize: Size,
+  oval: boolean
 ): Promise<{ dataUrl: string; blobUrl: string }> {
   if (crop.width === 0 || crop.height === 0) {
     throw new Error(cropperErrors.NO_FRAME);
@@ -18,6 +19,19 @@ export default async function getCroppedImg(
   const ctx = canvas.getContext('2d');
   const scaleX = image.naturalWidth / image.width;
   const scaleY = image.naturalHeight / image.height;
+  if (oval) {
+    const tiltDeg = -20;
+    const centerX = outputSize.width / 2;
+    const centerY = outputSize.height / 2;
+    const radiusX = outputSize.width / 2;
+    const radiusY = (outputSize.height - 5) / 2;
+    const rotation = (tiltDeg * Math.PI) / 180;
+
+    ctx?.beginPath();
+    ctx?.ellipse(centerX, centerY, radiusX, radiusY, rotation, 0, Math.PI * 2);
+    ctx?.closePath();
+    ctx?.clip();
+  }
 
   ctx?.drawImage(
     image,
@@ -31,7 +45,7 @@ export default async function getCroppedImg(
     canvas.height
   );
 
-  const dataUrl = canvas.toDataURL('image/jpeg');
+  const dataUrl = canvas.toDataURL('image/png');
 
   return new Promise((resolve) => {
     canvas.toBlob((blob) => {
@@ -40,7 +54,7 @@ export default async function getCroppedImg(
       }
       const blobUrl = URL.createObjectURL(blob);
       resolve({ dataUrl, blobUrl });
-    }, 'image/jpeg');
+    }, 'image/png');
   });
 }
 

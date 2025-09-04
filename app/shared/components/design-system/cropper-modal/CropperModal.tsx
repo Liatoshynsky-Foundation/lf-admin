@@ -13,6 +13,7 @@ interface CropperModalProps {
   width: number;
   height: number;
   imageUrl: string;
+  oval?: boolean;
   open: boolean;
   handleClose: () => void;
   handleSetNewPic: (newImage: string) => void;
@@ -23,6 +24,7 @@ export const CropperModal: React.FC<CropperModalProps> = ({
   height,
   imageUrl,
   open,
+  oval = false,
   handleClose,
   handleSetNewPic
 }) => {
@@ -35,7 +37,7 @@ export const CropperModal: React.FC<CropperModalProps> = ({
 
   const handleSave = async () => {
     try {
-      const result = await getCroppedImg(imageUrl, crop as PixelCrop, { width, height });
+      const result = await getCroppedImg(imageUrl, crop as PixelCrop, { width, height }, oval);
       handleSetNewPic(result.dataUrl);
       handleClose();
     } catch (error) {
@@ -87,7 +89,13 @@ export const CropperModal: React.FC<CropperModalProps> = ({
             </Button>
           </Box>
         </Box>
-        <ImageCropper width={width} height={height} onCropComplete={handleCroppedImage} imageUrl={imageUrl} />
+        <ImageCropper
+          width={width}
+          height={height}
+          onCropComplete={handleCroppedImage}
+          imageUrl={imageUrl}
+          oval={oval}
+        />
       </Box>
     </Modal>
   );

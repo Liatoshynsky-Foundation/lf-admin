@@ -29,6 +29,7 @@ export const ContributorCard = ({ contributorNameValue, contributorDescriptionVa
         direction="column"
         buttonSpacing="8px"
         stackSpacing="24px"
+        oval
       />
       <Stack direction="column" gap={2} width="100%" mt={2}>
         <CustomTextField label="Ім`я" defaultValue={contributorNameValue} fullWidth />
