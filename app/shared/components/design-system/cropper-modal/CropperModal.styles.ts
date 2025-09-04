@@ -25,6 +25,12 @@ export const styles = {
     color: 'white',
     gap: '8px'
   },
+  mainTitle: {
+    fontSize: '1.5rem',
+    fontWeight: 'bold',
+    marginBottom: '1rem',
+    textAlign: 'center'
+  },
   subTitle: {
     color: '#C1C9D6'
   },
