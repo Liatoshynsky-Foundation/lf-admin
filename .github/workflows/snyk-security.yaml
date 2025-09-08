@@ -4,20 +4,18 @@ on:
   workflow_dispatch:
   push:
     branches: 'feature/999/snyk-report-on-pull-request'
-  pull_request:
+  pull_request_target:
     branches: 'feature/999/snyk-report-on-pull-request'
 
 permissions:
   contents: read
+  security-events: write
+  pull-requests: write
+  actions: read
 
 jobs:
   snyk:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read          
-      security-events: write  
-      actions: read      
-      pull-requests: write     
     env:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
@@ -99,7 +97,7 @@ jobs:
           path: snyk-report.json
 
       - name: Format Snyk Report for PR
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request_target'
         id: snyk-report
         run: |
           echo "## 🛡️ Snyk Security Report" > report.md
@@ -111,6 +109,10 @@ jobs:
           fi
           echo "" >> report.md
           echo "🔗 [Full report attached in Actions artifacts]" >> report.md
+
+      - name: Check report.md
+        if: github.event_name == 'pull_request_target'
+        run: cat report.md
 
       - name: Comment on PR with Snyk results
         if: github.event_name == 'pull_request_target'
