@@ -3,9 +3,9 @@ name: Security Snyk
 on:
   workflow_dispatch:
   push:
-    branches: ["develop", "main"]
+    branches: 'feature/999/snyk-report-on-pull-request'
   pull_request:
-    branches: ["develop"]
+    branches: 'feature/999/snyk-report-on-pull-request'
 
 permissions:
   contents: read
