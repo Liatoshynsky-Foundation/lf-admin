@@ -113,8 +113,16 @@ jobs:
           echo "🔗 [Full report attached in Actions artifacts]" >> report.md
 
       - name: Comment on PR with Snyk results
-        if: github.event_name == 'pull_request'
-        uses: marocchino/sticky-pull-request-comment@v2
+        if: github.event_name == 'pull_request_target'
+        uses: actions/github-script@v7
         with:
-          path: report.md
-          GITHUB_TOKEN: ${{ github.token }}
+          github-token: ${{ github.token }}
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('report.md', 'utf8');
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: report
+            });
