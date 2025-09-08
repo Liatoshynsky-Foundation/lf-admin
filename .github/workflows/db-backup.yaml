@@ -1,7 +1,6 @@
-name: Backup MongoDB Atlas
+name: Backup MongoDB
 
 on:
-  # workflow_dispatch:
   schedule:
     - cron: '0 2 * * *' # Run the workflow at 2:00 AM UTC every day
 
@@ -24,7 +23,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          sudo apt update         
+          sudo apt update
           wget https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2404-x86_64-100.10.0.deb -O mongodb-mongotools.deb
           sudo dpkg -i mongodb-mongotools.deb || sudo apt install -f -y openssl
           curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
