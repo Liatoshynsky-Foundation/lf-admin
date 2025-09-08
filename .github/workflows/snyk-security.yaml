@@ -117,4 +117,4 @@ jobs:
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           path: report.md
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
