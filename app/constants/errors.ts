@@ -18,3 +18,10 @@ export const loginErrors = {
 export const cropperErrors = {
   NO_FRAME: 'Оберіть необхідну зону'
 };
+
+export const graphqlErrors = {
+  UNAUTHENTICATED: {
+    message: 'You must be logged in to access this resource.',
+    code: 'UNAUTHENTICATED'
+  }
+};

@@ -19,3 +19,12 @@ type LocalizedString {
 extend type Query {
     pageBlocks(slug: String!): Page
 }
+
+input UpdatePageBlocksInput {
+  slug: String!
+  blocks: JSON!
+}
+
+extend type Mutation {
+  updatePageBlocks(input: UpdatePageBlocksInput!): Page!
+}
