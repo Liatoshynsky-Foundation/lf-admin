@@ -30,3 +30,8 @@ export interface ConfigurableListItem {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
+
+export interface ContributorData extends ConfigurableListItem {
+  name: string;
+  description: string;
+}
