@@ -29,7 +29,7 @@ export const usePageEditor = (pageSlug: string) => {
       const draftId = data?.upsertPageDraft?.id;
       if (!draftId) throw new Error('Draft ID is missing');
 
-      await fetchPreview({ slug: '/', lang: locale, draftId }); //TODO: Change to pageSlug
+      await fetchPreview({ slug: '/', lang: locale, draftId }); //Change to pageSlug
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed to create draft';
       throw new Error(msg);
