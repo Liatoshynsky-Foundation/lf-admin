@@ -18,7 +18,7 @@ jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
 
 jest.mock('@mui/material/Skeleton', () => ({
   __esModule: true,
-  default: (props: { [key: string]: unknown }) => <span role="progressbar" {...props} />
+  default: (props: { [key: string]: unknown }) => <progress {...props} />
 }));
 
 jest.mock('~/components/accordion-blocks/editable-section-list/EditableSectionList', () => ({
