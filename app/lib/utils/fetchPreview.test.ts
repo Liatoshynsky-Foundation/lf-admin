@@ -14,15 +14,16 @@ describe('fetchPreview', () => {
   afterEach(() => {
     process.env = OLD_ENV;
     jest.restoreAllMocks();
+    jest.clearAllMocks();
   });
 
-  it('should open previewUrl in a new tab and then reject with error on success', async () => {
+  it('should open previewUrl in a new tab and resolve on success', async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ previewUrl: 'http://localhost:3000/uk/about?draftId=123' })
     });
 
-    await expect(fetchPreview({ slug: 'about', lang: 'uk', draftId: 123 })).rejects.toThrow('Failed to start preview');
+    await expect(fetchPreview({ slug: 'about', lang: 'uk', draftId: 123 })).resolves.toBeUndefined();
 
     expect(global.fetch).toHaveBeenCalledWith('http://localhost:3000/api/preview?lang=uk&slug=about&draftId=123', {
       method: 'GET',
@@ -31,13 +32,24 @@ describe('fetchPreview', () => {
     expect(window.open).toHaveBeenCalledWith('http://localhost:3000/uk/about?draftId=123', '_blank');
   });
 
-  it('should resolve to undefined and not open tab when fetch fails or response is invalid', async () => {
+  it('should throw when response is not ok', async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
       json: async () => ({ message: 'Not found' })
     });
 
-    await expect(fetchPreview({ slug: 'about', lang: 'en', draftId: 456 })).resolves.toBeUndefined();
+    await expect(fetchPreview({ slug: 'about', lang: 'en', draftId: 456 })).rejects.toThrow('Failed to start preview');
+
+    expect(window.open).not.toHaveBeenCalled();
+  });
+
+  it('should throw when previewUrl is missing', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({})
+    });
+
+    await expect(fetchPreview({ slug: 'about', lang: 'uk', draftId: 789 })).rejects.toThrow('Failed to start preview');
 
     expect(window.open).not.toHaveBeenCalled();
   });
