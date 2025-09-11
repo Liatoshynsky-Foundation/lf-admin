@@ -1,4 +1,4 @@
-import { ProseDoc } from './liatoshynskyFoundationBlock';
+import { ProseDoc } from '~/types/common';
 
 export type MissionListItem = {
   uk: ProseDoc;
