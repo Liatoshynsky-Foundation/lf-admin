@@ -1,5 +1,5 @@
 import { proseToText, textToProse } from './prose';
-import type { ProseDoc } from '~/types/store/pages/about-us';
+import type { ProseDoc } from '~/types/common';
 
 describe('proseToText', () => {
   it('should return empty string for undefined doc', () => {

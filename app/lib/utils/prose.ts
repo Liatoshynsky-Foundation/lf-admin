@@ -1,4 +1,4 @@
-import type { ProseDoc, ProseNode, ProseTextNode } from '~/types/store/pages/about-us';
+import { ProseDoc, ProseNode, ProseTextNode } from '~/types/common';
 
 export const proseToText = (doc?: ProseDoc): string => {
   if (!doc?.content) return '';
