@@ -1,6 +1,6 @@
 import { Box, Typography } from '@mui/material';
 
-import { styles } from './BulletPointsSection.styles';
+import { styles } from './EditableSectionList.styles';
 import ConfigurableList from '~/components/configurable-list/ConfigurableList';
 import { CustomTextField } from '~/components/design-system/text-field/TextField';
 import { ConfigurableListItem } from '~/types/accordionBlocks';

@@ -1,6 +1,6 @@
 import { Skeleton } from '@mui/material';
 
-import { EditableSectionList, SectionListItem } from '../../accordion-blocks/bullet-points-section/EditableSectionList';
+import { EditableSectionList, SectionListItem } from '../../accordion-blocks/editable-section-list/EditableSectionList';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { ensureIds } from '~/lib/utils/ensureIds';
