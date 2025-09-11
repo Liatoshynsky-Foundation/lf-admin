@@ -4,7 +4,7 @@ import { BasePage } from '~/domain/entities/Page';
 
 const pageBaseSchema = new Schema<BasePage>(
   {
-    slug: { type: String, required: true, unique: true, index: true },
+    slug: { type: String, required: true, index: true },
     title: {
       uk: { type: String, required: true },
       en: { type: String, required: true }
@@ -22,6 +22,8 @@ const pageBaseSchema = new Schema<BasePage>(
     discriminatorKey: 'pageType'
   }
 );
+
+pageBaseSchema.index({ slug: 1, status: 1 }, { unique: true });
 
 const PageModel: Model<BasePage> = mongoose.models.Page || mongoose.model<BasePage>('Page', pageBaseSchema);
 

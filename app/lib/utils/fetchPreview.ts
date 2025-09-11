@@ -14,8 +14,7 @@ export const fetchPreview = async ({ slug, lang, draftId }: PreviewProps) => {
   const data = await res.json();
 
   if (res.ok && data.previewUrl) {
-    window.location.href = data.previewUrl;
-  } else {
+    window.open(data.previewUrl, '_blank');
     throw new Error('Failed to start preview');
   }
 };

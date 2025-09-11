@@ -11,11 +11,12 @@ type HeaderProps = {
   title: string;
   onPreview: () => void;
   onSave: () => void;
+  onCancel: () => void;
   isSaving: boolean;
   onLanguageChange: (lang: 'uk' | 'en') => void;
 };
 
-export const Header = ({ title, onPreview, onSave, isSaving, onLanguageChange }: HeaderProps) => {
+export const Header = ({ title, onPreview, onSave, onCancel, isSaving, onLanguageChange }: HeaderProps) => {
   return (
     <Box sx={styles.container}>
       <Box>
@@ -43,7 +44,7 @@ export const Header = ({ title, onPreview, onSave, isSaving, onLanguageChange }:
         </Stack>
 
         <Stack direction="row" spacing={2}>
-          <Button variant="outlined" color="primary">
+          <Button variant="outlined" color="primary" onClick={onCancel}>
             Скасувати зміни
           </Button>
           <Button variant="filled" color="primary" onClick={onSave} disabled={isSaving}>

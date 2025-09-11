@@ -53,8 +53,11 @@ export type Mutation = {
   deleteBlob: BlobPayload;
   login: LoginResult;
   logout: Scalars['Boolean']['output'];
+  publishPage: Page;
   refreshToken: RefreshTokenPayload;
+  updatePageBlocks: Page;
   uploadBlob: BlobPayload;
+  upsertPageDraft: Page;
 };
 
 export type MutationDeleteBlobArgs = {
@@ -67,11 +70,23 @@ export type MutationLoginArgs = {
   password: Scalars['String']['input'];
 };
 
+export type MutationPublishPageArgs = {
+  input: PublishPageInput;
+};
+
+export type MutationUpdatePageBlocksArgs = {
+  input: UpdatePageBlocksInput;
+};
+
 export type MutationUploadBlobArgs = {
   blobName: Scalars['String']['input'];
   buffer: Scalars['String']['input'];
   contentType: Scalars['String']['input'];
   folderName: Scalars['String']['input'];
+};
+
+export type MutationUpsertPageDraftArgs = {
+  input: UpsertPageDraftInput;
 };
 
 export type Page = {
@@ -86,6 +101,11 @@ export type Page = {
   updatedAt: Scalars['String']['output'];
 };
 
+export type PublishPageInput = {
+  blocks?: InputMaybe<Scalars['JSON']['input']>;
+  slug: Scalars['String']['input'];
+};
+
 export type Query = {
   __typename?: 'Query';
   _empty?: Maybe<Scalars['String']['output']>;
@@ -95,11 +115,22 @@ export type Query = {
 
 export type QueryPageBlocksArgs = {
   slug: Scalars['String']['input'];
+  status?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type RefreshTokenPayload = {
   __typename?: 'RefreshTokenPayload';
   success: Scalars['Boolean']['output'];
+};
+
+export type UpdatePageBlocksInput = {
+  blocks: Scalars['JSON']['input'];
+  slug: Scalars['String']['input'];
+};
+
+export type UpsertPageDraftInput = {
+  blocks: Scalars['JSON']['input'];
+  slug: Scalars['String']['input'];
 };
 
 export type LoginMutationVariables = Exact<{
@@ -124,6 +155,15 @@ export type DeleteBlobMutation = {
   deleteBlob: { __typename?: 'BlobPayload'; success: boolean; message?: string | null; blobName?: string | null };
 };
 
+export type PublishPageMutationVariables = Exact<{
+  input: PublishPageInput;
+}>;
+
+export type PublishPageMutation = {
+  __typename?: 'Mutation';
+  publishPage: { __typename: 'Page'; id: string; slug: string; status: string; blocks: any; updatedAt: string };
+};
+
 export type UploadBlobMutationVariables = Exact<{
   folderName: Scalars['String']['input'];
   blobName: Scalars['String']['input'];
@@ -134,6 +174,15 @@ export type UploadBlobMutationVariables = Exact<{
 export type UploadBlobMutation = {
   __typename?: 'Mutation';
   uploadBlob: { __typename?: 'BlobPayload'; success: boolean; message?: string | null; blobName?: string | null };
+};
+
+export type UpsertPageDraftMutationVariables = Exact<{
+  input: UpsertPageDraftInput;
+}>;
+
+export type UpsertPageDraftMutation = {
+  __typename?: 'Mutation';
+  upsertPageDraft: { __typename: 'Page'; id: string; slug: string; status: string; blocks: any; updatedAt: string };
 };
 
 export type GetAdminProfileQueryVariables = Exact<{ [key: string]: never }>;
@@ -231,6 +280,46 @@ export function useDeleteBlobMutation(
 export type DeleteBlobMutationHookResult = ReturnType<typeof useDeleteBlobMutation>;
 export type DeleteBlobMutationResult = Apollo.MutationResult<DeleteBlobMutation>;
 export type DeleteBlobMutationOptions = Apollo.BaseMutationOptions<DeleteBlobMutation, DeleteBlobMutationVariables>;
+export const PublishPageDocument = gql`
+  mutation PublishPage($input: PublishPageInput!) {
+    publishPage(input: $input) {
+      id
+      slug
+      status
+      blocks
+      updatedAt
+      __typename
+    }
+  }
+`;
+export type PublishPageMutationFn = Apollo.MutationFunction<PublishPageMutation, PublishPageMutationVariables>;
+
+/**
+ * __usePublishPageMutation__
+ *
+ * To run a mutation, you first call `usePublishPageMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `usePublishPageMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [publishPageMutation, { data, loading, error }] = usePublishPageMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function usePublishPageMutation(
+  baseOptions?: Apollo.MutationHookOptions<PublishPageMutation, PublishPageMutationVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<PublishPageMutation, PublishPageMutationVariables>(PublishPageDocument, options);
+}
+export type PublishPageMutationHookResult = ReturnType<typeof usePublishPageMutation>;
+export type PublishPageMutationResult = Apollo.MutationResult<PublishPageMutation>;
+export type PublishPageMutationOptions = Apollo.BaseMutationOptions<PublishPageMutation, PublishPageMutationVariables>;
 export const UploadBlobDocument = gql`
   mutation UploadBlob($folderName: String!, $blobName: String!, $buffer: String!, $contentType: String!) {
     uploadBlob(folderName: $folderName, blobName: $blobName, buffer: $buffer, contentType: $contentType) {
@@ -271,6 +360,55 @@ export function useUploadBlobMutation(
 export type UploadBlobMutationHookResult = ReturnType<typeof useUploadBlobMutation>;
 export type UploadBlobMutationResult = Apollo.MutationResult<UploadBlobMutation>;
 export type UploadBlobMutationOptions = Apollo.BaseMutationOptions<UploadBlobMutation, UploadBlobMutationVariables>;
+export const UpsertPageDraftDocument = gql`
+  mutation UpsertPageDraft($input: UpsertPageDraftInput!) {
+    upsertPageDraft(input: $input) {
+      id
+      slug
+      status
+      blocks
+      updatedAt
+      __typename
+    }
+  }
+`;
+export type UpsertPageDraftMutationFn = Apollo.MutationFunction<
+  UpsertPageDraftMutation,
+  UpsertPageDraftMutationVariables
+>;
+
+/**
+ * __useUpsertPageDraftMutation__
+ *
+ * To run a mutation, you first call `useUpsertPageDraftMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpsertPageDraftMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [upsertPageDraftMutation, { data, loading, error }] = useUpsertPageDraftMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpsertPageDraftMutation(
+  baseOptions?: Apollo.MutationHookOptions<UpsertPageDraftMutation, UpsertPageDraftMutationVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<UpsertPageDraftMutation, UpsertPageDraftMutationVariables>(
+    UpsertPageDraftDocument,
+    options
+  );
+}
+export type UpsertPageDraftMutationHookResult = ReturnType<typeof useUpsertPageDraftMutation>;
+export type UpsertPageDraftMutationResult = Apollo.MutationResult<UpsertPageDraftMutation>;
+export type UpsertPageDraftMutationOptions = Apollo.BaseMutationOptions<
+  UpsertPageDraftMutation,
+  UpsertPageDraftMutationVariables
+>;
 export const GetAdminProfileDocument = gql`
   query GetAdminProfile {
     test {

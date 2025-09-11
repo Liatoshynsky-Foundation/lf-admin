@@ -1,68 +1,88 @@
-import { act, renderHook } from '@testing-library/react';
+import { ApolloError } from '@apollo/client';
+import { renderHook } from '@testing-library/react';
+import { GraphQLError } from 'graphql';
 
 import { useSavePageBlocks } from './UseSavePage';
 
-const markSavedMock = jest.fn();
 const mutateMock = jest.fn();
-const useStoreMock = jest.fn();
+const markSavedMock = jest.fn();
 
-jest.mock('@apollo/client', () => {
-  const actual = jest.requireActual('@apollo/client');
-  return {
-    ...actual,
-    useMutation: () => [mutateMock, { loading: false, error: null, data: null }]
-  };
-});
+type StoreState = {
+  blocks: Record<string, unknown>;
+  isChanged: boolean;
+  saveAsDraft: (slug: string) => void;
+};
+
+let storeState: StoreState;
 
 jest.mock('~/store', () => ({
-  useStore: (selector: (state: any) => unknown) => useStoreMock(selector)
+  useStore: (selector: (state: StoreState) => unknown) => selector(storeState)
+}));
+
+jest.mock('~/types/graphql/generated/graphql', () => ({
+  usePublishPageMutation: () => [mutateMock, { loading: false, error: null, data: null }]
 }));
 
 describe('useSavePageBlocks', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    useStoreMock.mockImplementation((selector) =>
-      selector({ blocks: { 'about-us': { Intro: 'text' } }, isChanged: true, saveAsDraft: markSavedMock })
-    );
+    storeState = {
+      blocks: { testPage: { IntroSection: { title: 'test' } } },
+      isChanged: true,
+      saveAsDraft: markSavedMock
+    };
   });
 
   it('should throw if no pageBlocks', async () => {
-    useStoreMock.mockImplementation((selector) =>
-      selector({ blocks: {}, isChanged: true, saveAsDraft: markSavedMock })
-    );
-    const { result } = renderHook(() => useSavePageBlocks('about-us'));
+    storeState.blocks = {};
+    const { result } = renderHook(() => useSavePageBlocks('testPage'));
     await expect(result.current.save()).rejects.toThrow('No page blocks found');
   });
 
   it('should throw if not changed', async () => {
-    useStoreMock.mockImplementation((selector) =>
-      selector({ blocks: { 'about-us': {} }, isChanged: false, saveAsDraft: markSavedMock })
-    );
-    const { result } = renderHook(() => useSavePageBlocks('about-us'));
-    await expect(result.current.save()).rejects.toThrow('Nothing to save');
+    storeState.isChanged = false;
+    const { result } = renderHook(() => useSavePageBlocks('testPage'));
+    await expect(result.current.save()).rejects.toThrow('Nothing to publish');
   });
 
-  it('should save and return updated page when mutate returns data', async () => {
-    const updatedPage = { id: '1', slug: 'about-us', blocks: {} };
-    mutateMock.mockResolvedValueOnce({ data: { updatePageBlocks: updatedPage } });
-    const { result } = renderHook(() => useSavePageBlocks('about-us'));
-    const res = await act(() => result.current.save());
+  it('should save and return published page', async () => {
+    const publishedPage = {
+      id: '1',
+      slug: 'testPage',
+      blocks: {},
+      updatedAt: new Date().toISOString(),
+      __typename: 'Page'
+    };
+    mutateMock.mockResolvedValueOnce({ data: { publishPage: publishedPage } });
+
+    const { result } = renderHook(() => useSavePageBlocks('testPage'));
+    const res = await result.current.save();
+
     expect(mutateMock).toHaveBeenCalledWith({
-      variables: { input: { slug: 'about-us', blocks: { Intro: 'text' } } }
+      variables: { input: { slug: 'testPage', blocks: { IntroSection: { title: 'test' } } } }
     });
-    expect(markSavedMock).toHaveBeenCalledWith('about-us');
-    expect(res).toEqual(updatedPage);
+    expect(markSavedMock).toHaveBeenCalledWith('testPage');
+    expect(res).toEqual(publishedPage);
   });
 
-  it('should throw if mutate returns no updatePageBlocks', async () => {
+  it('should throw if server returns no publishPage', async () => {
     mutateMock.mockResolvedValueOnce({ data: {} });
-    const { result } = renderHook(() => useSavePageBlocks('about-us'));
-    await expect(result.current.save()).rejects.toThrow('Server did not return updated page');
+    const { result } = renderHook(() => useSavePageBlocks('testPage'));
+    await expect(result.current.save()).rejects.toThrow('Server did not return published page');
   });
 
-  it('should throw if mutate rejects', async () => {
-    mutateMock.mockRejectedValueOnce(new Error('Network fail'));
-    const { result } = renderHook(() => useSavePageBlocks('about-us'));
-    await expect(result.current.save()).rejects.toThrow('Failed to save page blocks');
+  it('should throw on mutate reject', async () => {
+    mutateMock.mockRejectedValueOnce(new Error('network'));
+    const { result } = renderHook(() => useSavePageBlocks('testPage'));
+    await expect(result.current.save()).rejects.toThrow('Failed to publish page');
+  });
+
+  it('should map ApolloError to meaningful message', async () => {
+    const gqlErr = new GraphQLError('BAD_USER_INPUT: invalid blocks');
+    const apolloErr = new ApolloError({ graphQLErrors: [gqlErr] });
+    mutateMock.mockRejectedValueOnce(apolloErr);
+
+    const { result } = renderHook(() => useSavePageBlocks('testPage'));
+    await expect(result.current.save()).rejects.toThrow('BAD_USER_INPUT: invalid blocks');
   });
 });

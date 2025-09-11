@@ -32,6 +32,13 @@ export interface EditState {
       [blockId in keyof BlocksMap]?: BlocksMap[blockId];
     };
   };
+
+  originalBlocks: {
+    [pageId: string]: {
+      [blockId in keyof BlocksMap]?: BlocksMap[blockId];
+    };
+  };
+
   locale: 'uk' | 'en';
   setLocale: (locale: 'uk' | 'en') => void;
   setField: <P extends string, K extends keyof BlocksMap, F extends keyof BlocksMap[K]>(
@@ -49,6 +56,7 @@ export interface EditState {
   setPageData: <T extends Record<string, BlockData>>(pageId: string, blocks: T, isInit?: boolean) => void;
   saveAsDraft: (pageId: string) => void;
   publishPage: (pageId: string) => void;
+  discardChanges: (pageId: string) => void;
 }
 
 export type BlockData<K extends keyof BlocksMap = keyof BlocksMap> = BlocksMap[K];
