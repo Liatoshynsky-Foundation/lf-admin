@@ -9,7 +9,7 @@ import {
   useUpsertPageDraftMutation
 } from '~/types/graphql/generated/graphql';
 
-export const usePageEditor = (pageSlug: string) => {
+export const usePageEditor = (slug: string) => {
   const locale = useStore((s) => s.locale);
   const isChanged = useStore((s) => s.isChanged);
   const markSaved = useStore((s) => s.saveAsDraft);
@@ -18,18 +18,18 @@ export const usePageEditor = (pageSlug: string) => {
   const [publishMutate, { loading: publishing, error, data }] = usePublishPageMutation();
 
   const preview = async () => {
-    const blocks = useStore.getState().blocks[pageSlug];
+    const blocks = useStore.getState().blocks[slug];
     if (!blocks) throw new Error('No page blocks found');
 
     try {
       const { data } = await upsertDraft({
-        variables: { input: { slug: pageSlug, blocks } }
+        variables: { input: { slug: slug, blocks } }
       });
 
       const draftId = data?.upsertPageDraft?.id;
       if (!draftId) throw new Error('Draft ID is missing');
 
-      await fetchPreview({ slug: '/', lang: locale, draftId }); //Change to pageSlug
+      await fetchPreview({ slug: '/', lang: locale, draftId }); //Change to slug
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed to create draft';
       throw new Error(msg);
@@ -38,14 +38,14 @@ export const usePageEditor = (pageSlug: string) => {
 
   const publish = async () => {
     const state = useStore.getState();
-    const current = state.blocks[pageSlug];
-    const baseline = state.originalBlocks?.[pageSlug] ?? {};
+    const current = state.blocks[slug];
+    const baseline = state.originalBlocks?.[slug] ?? {};
     const changedNow = state.isChanged || JSON.stringify(current ?? {}) !== JSON.stringify(baseline ?? {});
 
     if (!current) throw new Error('No page blocks found');
     if (!changedNow) throw new Error('Nothing to publish');
 
-    const variables: PublishPageMutationVariables = { input: { slug: pageSlug, blocks: current } };
+    const variables: PublishPageMutationVariables = { input: { slug: slug, blocks: current } };
 
     const res = await publishMutate({ variables }).catch((e: unknown) => {
       if (e instanceof ApolloError) {
@@ -57,7 +57,7 @@ export const usePageEditor = (pageSlug: string) => {
 
     if (!res?.data?.publishPage) throw new Error('Server did not return published page');
 
-    markSaved(pageSlug);
+    markSaved(slug);
     return res.data.publishPage;
   };
 

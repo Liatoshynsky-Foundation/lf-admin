@@ -1,6 +1,7 @@
 import mongoose, { Model, Schema } from 'mongoose';
 
 import { BasePage } from '~/domain/entities/Page';
+import { PageStatus } from '~/types/enums/common.enums';
 
 const pageBaseSchema = new Schema<BasePage>(
   {
@@ -11,9 +12,9 @@ const pageBaseSchema = new Schema<BasePage>(
     },
     status: {
       type: String,
-      enum: ['draft', 'published'],
+      enum: [PageStatus.Draft, PageStatus.Published] as const,
       required: true,
-      default: 'draft'
+      default: PageStatus.Draft
     }
   },
   {
