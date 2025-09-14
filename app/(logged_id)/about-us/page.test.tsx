@@ -20,8 +20,18 @@ jest.mock('~/shared/components/about-us/our-mission/OurMission', () => ({
   default: () => <div data-testid="our-mission">OurMission</div>
 }));
 
+jest.mock('~/shared/components/about-us/our-goals/OurGoals', () => ({
+  __esModule: true,
+  default: () => <div data-testid="our-goals">OurGoals</div>
+}));
+
 jest.mock('~/shared/components/about-us/Liatoshynsky-office/Liatoshynsky-office', () => ({
   LiatoshynskyOffice: () => <div data-testid="office">LiatoshynskyOffice</div>
+}));
+
+jest.mock('~/shared/components/about-us/what-we-do/WhatWeDo', () => ({
+  __esModule: true,
+  default: () => <div data-testid="what-we-do">WhatWeDo</div>
 }));
 
 const setLocaleMock = jest.fn();
@@ -38,6 +48,8 @@ describe('About Page', () => {
     expect(screen.getByTestId('intro-section')).toBeInTheDocument();
     expect(screen.getByTestId('foundation')).toBeInTheDocument();
     expect(screen.getByTestId('our-mission')).toBeInTheDocument();
+    expect(screen.getByTestId('our-goals')).toBeInTheDocument();
     expect(screen.getByTestId('office')).toBeInTheDocument();
+    expect(screen.getByTestId('what-we-do')).toBeInTheDocument();
   });
 });

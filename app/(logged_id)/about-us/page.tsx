@@ -1,11 +1,12 @@
 'use client';
 import { Box } from '@mui/material';
-import React from 'react';
 
 import { IntroSection } from '~/shared/components/about-us/Intro-section/IntroSection';
 import { LiatoshynskyFoundation } from '~/shared/components/about-us/Liatoshynsky-foundation/LiatoshynskyFoundation';
 import { LiatoshynskyOffice } from '~/shared/components/about-us/Liatoshynsky-office/Liatoshynsky-office';
+import OurGoals from '~/shared/components/about-us/our-goals/OurGoals';
 import OurMission from '~/shared/components/about-us/our-mission/OurMission';
+import WhatWeDo from '~/shared/components/about-us/what-we-do/WhatWeDo';
 import { Header } from '~/shared/components/header/Header';
 import { useStore } from '~/store';
 
@@ -24,7 +25,9 @@ const Page = () => {
       <IntroSection />
       <LiatoshynskyFoundation />
       <OurMission />
+      <OurGoals />
       <LiatoshynskyOffice />
+      <WhatWeDo />
     </Box>
   );
 };

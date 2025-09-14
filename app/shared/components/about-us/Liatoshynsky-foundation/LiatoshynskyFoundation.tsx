@@ -9,8 +9,8 @@ import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock
 import { proseToText, textToProse } from '~/lib/utils/prose';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
+import { ProseDoc } from '~/types/common';
 import { useUploadBlobMutation } from '~/types/graphql/generated/graphql';
-import { ProseDoc } from '~/types/store/pages/about-us';
 import { getImageUrl } from '~/utils/getImageUrl';
 import { handleUploadImage } from '~/utils/uploadToTmpFolder';
 
