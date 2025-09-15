@@ -3,30 +3,28 @@ import { PageRepository as PageRepositoryFactory } from '~/infrastructure/reposi
 import { PageStatus } from '~/types/enums/common.enums';
 import type { Scalars } from '~/types/graphql/generated/graphql';
 
-export type Patch = {
-  $set?: { blocks?: Scalars['JSON']['input'] };
-  $unset?: { [key: string]: unknown };
-};
+type Repo = ReturnType<typeof PageRepositoryFactory>;
 
-export const PageService = ({ pageRepository }: { pageRepository: ReturnType<typeof PageRepositoryFactory> }) => ({
+export const PageService = ({ pageRepository }: { pageRepository: Repo }) => ({
   getPage: async (slug: string): Promise<BasePage | null> => {
-    return pageRepository.getPageBySlugAndStatus(slug, PageStatus.Published);
+    return pageRepository.getPublishedBySlug(slug);
   },
 
   getPageByStatus: async (slug: string, status: PageStatus): Promise<BasePage | null> => {
-    return pageRepository.getPageBySlugAndStatus(slug, status);
+    if (status === PageStatus.Published) return pageRepository.getPublishedBySlug(slug);
+    if (status === PageStatus.Draft) return pageRepository.getDraftBySlug(slug);
+    return null;
   },
 
   updatePageBlocks: async (input: { slug: string; blocks: Scalars['JSON']['input'] }): Promise<BasePage> => {
-    const patch: Patch = { $set: { blocks: input.blocks } };
-    return pageRepository.partialUpdateBySlugAndStatus(input.slug, PageStatus.Published, patch);
+    return pageRepository.upsertDraftBySlug(input.slug, input.blocks);
   },
 
   upsertDraft: async (input: { slug: string; blocks: Scalars['JSON']['input'] }): Promise<BasePage> => {
-    return pageRepository.upsertDraft(input.slug, input.blocks);
+    return pageRepository.upsertDraftBySlug(input.slug, input.blocks);
   },
 
   publishPage: async (input: { slug: string; blocks?: Scalars['JSON']['input'] }): Promise<BasePage> => {
-    return pageRepository.publishFromBlocks(input.slug, input.blocks);
+    return pageRepository.publishBySlug(input.slug, input.blocks);
   }
 });

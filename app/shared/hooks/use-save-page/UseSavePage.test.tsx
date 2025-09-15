@@ -1,88 +1,91 @@
-import { ApolloError } from '@apollo/client';
-import { renderHook } from '@testing-library/react';
-import { GraphQLError } from 'graphql';
+import { cleanup, renderHook } from '@testing-library/react';
 
-import { useSavePageBlocks } from './UseSavePage';
+import { usePageEditor } from '~/shared/hooks/use-page-editor/usePageEditor';
 
-const mutateMock = jest.fn();
+const upsertMock = jest.fn();
+const publishMock = jest.fn();
+const fetchPreviewMock = jest.fn().mockResolvedValue(undefined);
 const markSavedMock = jest.fn();
 
 type StoreState = {
   blocks: Record<string, unknown>;
-  isChanged: boolean;
+  originalBlocks?: Record<string, unknown>;
+  locale: 'uk' | 'en';
+  isChanged?: boolean;
   saveAsDraft: (slug: string) => void;
 };
 
 let storeState: StoreState;
 
-jest.mock('~/store', () => ({
-  useStore: (selector: (state: StoreState) => unknown) => selector(storeState)
+type UseStore = (<T>(selector: (s: StoreState) => T) => T) & { getState: () => StoreState };
+
+jest.mock('~/lib/utils/fetchPreview', () => ({
+  fetchPreview: (...args: unknown[]) => fetchPreviewMock(...args)
 }));
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
-  usePublishPageMutation: () => [mutateMock, { loading: false, error: null, data: null }]
+  useUpsertPageDraftMutation: () => [upsertMock, { loading: false, error: null, data: null }],
+  usePublishPageMutation: () => [publishMock, { loading: false, error: null, data: null }]
 }));
 
-describe('useSavePageBlocks', () => {
+jest.mock('~/store', () => {
+  const useStore: UseStore = ((selector: (s: StoreState) => unknown) => selector(storeState)) as UseStore;
+  useStore.getState = () => storeState;
+  return { useStore };
+});
+
+afterEach(() => {
+  cleanup();
+  jest.clearAllMocks();
+  jest.useRealTimers();
+});
+
+describe('usePageEditor › preview', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
     storeState = {
-      blocks: { testPage: { IntroSection: { title: 'test' } } },
-      isChanged: true,
+      blocks: { test: { IntroSection: { title: 't' } } },
+      originalBlocks: {},
+      locale: 'uk',
       saveAsDraft: markSavedMock
     };
   });
 
-  it('should throw if no pageBlocks', async () => {
-    storeState.blocks = {};
-    const { result } = renderHook(() => useSavePageBlocks('testPage'));
-    await expect(result.current.save()).rejects.toThrow('No page blocks found');
-  });
+  it('should upsert draft and call fetchPreview', async () => {
+    upsertMock.mockResolvedValueOnce({ data: { upsertPageDraft: { id: '123' } } });
 
-  it('should throw if not changed', async () => {
-    storeState.isChanged = false;
-    const { result } = renderHook(() => useSavePageBlocks('testPage'));
-    await expect(result.current.save()).rejects.toThrow('Nothing to publish');
-  });
+    const { result } = renderHook(() => usePageEditor('test'));
+    await result.current.preview();
 
-  it('should save and return published page', async () => {
-    const publishedPage = {
-      id: '1',
-      slug: 'testPage',
-      blocks: {},
-      updatedAt: new Date().toISOString(),
-      __typename: 'Page'
-    };
-    mutateMock.mockResolvedValueOnce({ data: { publishPage: publishedPage } });
-
-    const { result } = renderHook(() => useSavePageBlocks('testPage'));
-    const res = await result.current.save();
-
-    expect(mutateMock).toHaveBeenCalledWith({
-      variables: { input: { slug: 'testPage', blocks: { IntroSection: { title: 'test' } } } }
+    expect(upsertMock).toHaveBeenCalledWith({
+      variables: { input: { slug: 'test', blocks: { IntroSection: { title: 't' } } } }
     });
-    expect(markSavedMock).toHaveBeenCalledWith('testPage');
-    expect(res).toEqual(publishedPage);
+    expect(fetchPreviewMock).toHaveBeenCalledWith({ slug: 'test', lang: 'uk', draftId: '123' });
   });
 
-  it('should throw if server returns no publishPage', async () => {
-    mutateMock.mockResolvedValueOnce({ data: {} });
-    const { result } = renderHook(() => useSavePageBlocks('testPage'));
-    await expect(result.current.save()).rejects.toThrow('Server did not return published page');
+  it('should throw if no page blocks', async () => {
+    storeState.blocks = {};
+    const { result } = renderHook(() => usePageEditor('test'));
+    await expect(result.current.preview()).rejects.toThrow('No page blocks found');
   });
 
-  it('should throw on mutate reject', async () => {
-    mutateMock.mockRejectedValueOnce(new Error('network'));
-    const { result } = renderHook(() => useSavePageBlocks('testPage'));
-    await expect(result.current.save()).rejects.toThrow('Failed to publish page');
+  it('should throw if draft id is missing', async () => {
+    upsertMock.mockResolvedValueOnce({ data: { upsertPageDraft: null } });
+    const { result } = renderHook(() => usePageEditor('test'));
+    await expect(result.current.preview()).rejects.toThrow('Draft ID is missing');
+    expect(fetchPreviewMock).not.toHaveBeenCalled();
   });
 
-  it('should map ApolloError to meaningful message', async () => {
-    const gqlErr = new GraphQLError('BAD_USER_INPUT: invalid blocks');
-    const apolloErr = new ApolloError({ graphQLErrors: [gqlErr] });
-    mutateMock.mockRejectedValueOnce(apolloErr);
+  it('should propagate upsert error message', async () => {
+    upsertMock.mockRejectedValueOnce(new Error('Failed to create draft'));
+    const { result } = renderHook(() => usePageEditor('test'));
+    await expect(result.current.preview()).rejects.toThrow('Failed to create draft');
+    expect(fetchPreviewMock).not.toHaveBeenCalled();
+  });
 
-    const { result } = renderHook(() => useSavePageBlocks('testPage'));
-    await expect(result.current.save()).rejects.toThrow('BAD_USER_INPUT: invalid blocks');
+  it('should propagate fetchPreview error message', async () => {
+    upsertMock.mockResolvedValueOnce({ data: { upsertPageDraft: { id: '123' } } });
+    fetchPreviewMock.mockRejectedValueOnce(new Error('preview boom'));
+    const { result } = renderHook(() => usePageEditor('test'));
+    await expect(result.current.preview()).rejects.toThrow('preview boom');
   });
 });

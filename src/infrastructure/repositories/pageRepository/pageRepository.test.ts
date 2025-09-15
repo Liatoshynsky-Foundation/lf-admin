@@ -1,399 +1,314 @@
-jest.mock('../../db/connect', () => jest.fn().mockResolvedValue(undefined));
-
-const findOneMock = jest.fn();
-const findOneAndUpdateMock = jest.fn();
-const deleteOneMock = jest.fn();
-
-jest.mock('../../models/page.model', () => {
-  const DiscriminatorCtor = function (this: unknown, payload: Record<string, unknown>) {
-    return {
-      save: async () => {
-        const createdAt = new Date('2024-04-01T00:00:00.000Z');
-        const updatedAt = new Date('2024-04-01T00:00:00.000Z');
-        return {
-          toObject: () => ({
-            _id: '65b8d6c7f1e7b9a9a9a9a9a9',
-            ...payload,
-            createdAt,
-            updatedAt
-          })
-        };
-      }
-    };
-  };
-
-  return {
-    __esModule: true,
-    default: {
-      findOne: (...args: unknown[]) => findOneMock(...args),
-      findOneAndUpdate: (...args: unknown[]) => findOneAndUpdateMock(...args),
-      deleteOne: (...args: unknown[]) => deleteOneMock(...args),
-      discriminators: { static: DiscriminatorCtor }
-    }
-  };
-});
-
 import { PageRepository } from './pageRepository';
+import type { BasePage } from '~/domain/entities/Page';
+import dbConnect from '~/infrastructure/db/connect';
+import PageModel from '~/infrastructure/models/page.model';
+import { PageStatus } from '~/types/enums/common.enums';
 
-type JSONValue = string | number | boolean | null | { [k: string]: JSONValue } | JSONValue[];
-type Patch = { $set?: { blocks?: JSONValue }; $unset?: Record<string, unknown> };
+jest.mock('../../db/connect', () => ({
+  __esModule: true,
+  default: jest.fn().mockResolvedValue(undefined)
+}));
+
+jest.mock('../../models/page.model', () => ({
+  __esModule: true,
+  default: {
+    findOne: jest.fn(),
+    findOneAndUpdate: jest.fn()
+  }
+}));
+
+jest.mock('../../models/draftPage.model', () => ({
+  __esModule: true,
+  default: {
+    findOne: jest.fn(),
+    findOneAndUpdate: jest.fn()
+  }
+}));
+
+const mockedConnect = dbConnect as unknown as jest.Mock;
+const mockedPageFindOne = (PageModel as unknown as { findOne: jest.Mock }).findOne;
+const mockedPageFindOneAndUpdate = (PageModel as unknown as { findOneAndUpdate: jest.Mock }).findOneAndUpdate;
+
+const draftModelMock = jest.requireMock('../../models/draftPage.model') as {
+  default: { findOne: jest.Mock; findOneAndUpdate: jest.Mock };
+};
+const mockedDraftFindOne = draftModelMock.default.findOne;
+const mockedDraftFindOneAndUpdate = draftModelMock.default.findOneAndUpdate;
+
+type LeanRet<T> = { lean: jest.Mock<Promise<T>, []> };
+const leanResolved = <T>(val: T): LeanRet<T> => ({ lean: jest.fn().mockResolvedValue(val) });
 
 describe('PageRepository', () => {
-  const repo = PageRepository();
+  const repo = PageRepository({
+    PageModel: PageModel as unknown as import('mongoose').Model<BasePage>,
+    DraftPageModel: draftModelMock.default as unknown as import('mongoose').Model<BasePage>
+  });
 
   const _id = '507f1f77bcf86cd799439011';
-  const baseDoc = {
+  const createdAt = new Date('2024-01-01T00:00:00.000Z');
+  const updatedAt = new Date('2024-02-01T00:00:00.000Z');
+
+  const publishedDoc = {
     _id,
     slug: 'about-us',
     title: { uk: 'Про нас', en: 'About us' },
-    status: 'published' as const,
-    pageType: 'static',
-    blocks: { IntroSection: {}, Other: {} },
-    createdAt: new Date('2024-01-01T00:00:00.000Z'),
-    updatedAt: new Date('2024-02-01T00:00:00.000Z')
+    status: PageStatus.Published,
+    pageType: 'AboutUsPage',
+    blocks: { IntroSection: { a: 1 } },
+    createdAt,
+    updatedAt
+  };
+
+  const draftDoc = {
+    _id: '60b8d6c7f1e7b9a9a9a9a9a9',
+    slug: 'about-us',
+    title: { uk: 'Про нас', en: 'About us' },
+    status: PageStatus.Draft,
+    pageType: 'AboutUsPage',
+    blocks: { IntroSection: { draft: true } },
+    createdAt,
+    updatedAt
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('getPageBySlugAndStatus', () => {
-    it('should return mapped entity when found', async () => {
-      findOneMock.mockReturnValueOnce({
-        lean: jest.fn().mockResolvedValueOnce(baseDoc)
-      });
+  describe('getPublishedBySlug', () => {
+    it('should return mapped published page when found', async () => {
+      mockedPageFindOne.mockReturnValueOnce(leanResolved(publishedDoc));
 
-      const res = await repo.getPageBySlugAndStatus('about-us', 'published');
+      const res = await repo.getPublishedBySlug('about-us');
 
-      expect(findOneMock).toHaveBeenCalledWith({
-        slug: 'about-us',
-        status: 'published'
-      });
+      expect(mockedConnect).toHaveBeenCalled();
+      expect(mockedPageFindOne).toHaveBeenCalledWith({ slug: 'about-us' });
       expect(res).toEqual({
         id: _id,
         slug: 'about-us',
-        title: baseDoc.title,
-        status: 'published',
-        pageType: 'static',
-        blocks: baseDoc.blocks,
+        title: publishedDoc.title,
+        status: PageStatus.Published,
+        pageType: 'AboutUsPage',
+        blocks: { IntroSection: { a: 1 } },
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-02-01T00:00:00.000Z'
       });
     });
 
-    it('should return null when not found', async () => {
-      findOneMock.mockReturnValueOnce({
-        lean: jest.fn().mockResolvedValueOnce(null)
-      });
+    it('should return null when published page not found', async () => {
+      mockedPageFindOne.mockReturnValueOnce(leanResolved(null));
 
-      const res = await repo.getPageBySlugAndStatus('missing', 'draft');
+      const res = await repo.getPublishedBySlug('missing');
 
-      expect(findOneMock).toHaveBeenCalledWith({
-        slug: 'missing',
-        status: 'draft'
-      });
+      expect(mockedPageFindOne).toHaveBeenCalledWith({ slug: 'missing' });
       expect(res).toBeNull();
     });
   });
 
-  describe('partialUpdateBySlugAndStatus', () => {
-    it('should update via $set and returns mapped entity', async () => {
-      const patch: Patch = { $set: { blocks: { IntroSection: { a: 1 } } } };
-      const updatedAt = new Date('2024-03-01T00:00:00.000Z');
+  describe('getDraftBySlug', () => {
+    it('should return mapped draft page when found', async () => {
+      mockedDraftFindOne.mockReturnValueOnce(leanResolved(draftDoc));
 
-      findOneAndUpdateMock.mockReturnValueOnce({
-        lean: jest.fn().mockResolvedValueOnce({
-          ...baseDoc,
-          blocks: { IntroSection: { a: 1 } },
-          updatedAt
-        })
-      });
+      const res = await repo.getDraftBySlug('about-us');
 
-      const res = await repo.partialUpdateBySlugAndStatus('about-us', 'published', patch);
-
-      expect(findOneAndUpdateMock).toHaveBeenCalledWith({ slug: 'about-us', status: 'published' }, patch, {
-        new: true,
-        strict: false,
-        runValidators: true,
-        context: 'query'
-      });
+      expect(mockedDraftFindOne).toHaveBeenCalledWith({ slug: 'about-us' });
       expect(res).toEqual({
-        id: _id,
+        id: draftDoc._id,
         slug: 'about-us',
-        title: { uk: 'Про нас', en: 'About us' },
-        status: 'published',
-        pageType: 'static',
-        blocks: { IntroSection: { a: 1 } },
+        title: draftDoc.title,
+        status: PageStatus.Draft,
+        pageType: 'AboutUsPage',
+        blocks: { IntroSection: { draft: true } },
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-02-01T00:00:00.000Z'
+      });
+    });
+
+    it('should return null when draft page not found', async () => {
+      mockedDraftFindOne.mockReturnValueOnce(leanResolved(null));
+
+      const res = await repo.getDraftBySlug('missing');
+
+      expect(mockedDraftFindOne).toHaveBeenCalledWith({ slug: 'missing' });
+      expect(res).toBeNull();
+    });
+  });
+
+  describe('upsertDraftBySlug', () => {
+    it('should throw if blocks are null/undefined', async () => {
+      await expect(repo.upsertDraftBySlug('about-us', undefined)).rejects.toThrow('Draft blocks payload is required');
+    });
+
+    it('should upsert existing draft and return mapped entity', async () => {
+      mockedDraftFindOne.mockReturnValueOnce(leanResolved(draftDoc));
+      mockedPageFindOne.mockReturnValueOnce(leanResolved(publishedDoc));
+
+      const updatedDraft = {
+        ...draftDoc,
+        blocks: { IntroSection: { updated: true } },
+        updatedAt: new Date('2024-03-01T00:00:00.000Z')
+      };
+      mockedDraftFindOneAndUpdate.mockReturnValueOnce(leanResolved(updatedDraft));
+
+      const res = await repo.upsertDraftBySlug('about-us', { IntroSection: { updated: true } });
+
+      expect(mockedDraftFindOne).toHaveBeenCalledWith({ slug: 'about-us' });
+      expect(mockedPageFindOne).toHaveBeenCalledWith({ slug: 'about-us' });
+      expect(mockedDraftFindOneAndUpdate).toHaveBeenCalledWith(
+        { slug: 'about-us' },
+        {
+          $set: {
+            slug: 'about-us',
+            status: PageStatus.Draft,
+            title: draftDoc.title,
+            pageType: draftDoc.pageType,
+            blocks: { IntroSection: { updated: true } }
+          }
+        },
+        { new: true, upsert: true, runValidators: true, context: 'query' }
+      );
+
+      expect(res).toEqual({
+        id: draftDoc._id,
+        slug: 'about-us',
+        title: draftDoc.title,
+        status: PageStatus.Draft,
+        pageType: 'AboutUsPage',
+        blocks: { IntroSection: { updated: true } },
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-03-01T00:00:00.000Z'
       });
     });
 
-    it('should support $unset and throws when not found', async () => {
-      const patch: Patch = { $unset: { blocks: '' } };
+    it('should create draft from published meta when no existing draft', async () => {
+      mockedDraftFindOne.mockReturnValueOnce(leanResolved(null));
+      mockedPageFindOne.mockReturnValueOnce(leanResolved(publishedDoc));
 
-      findOneAndUpdateMock.mockReturnValueOnce({
-        lean: jest.fn().mockResolvedValueOnce(undefined)
-      });
-
-      await expect(repo.partialUpdateBySlugAndStatus('missing', 'draft', patch)).rejects.toThrow(
-        'Page not found by slug="missing" & status="draft"'
-      );
-
-      expect(findOneAndUpdateMock).toHaveBeenCalledWith({ slug: 'missing', status: 'draft' }, patch, {
-        new: true,
-        strict: false,
-        runValidators: true,
-        context: 'query'
-      });
-    });
-  });
-
-  describe('upsertDraft', () => {
-    it('should throw if blocks are null/undefined', async () => {
-      await expect(repo.upsertDraft('about-us', undefined)).rejects.toThrow('Draft blocks payload is required');
-    });
-
-    it('should throw if no published source', async () => {
-      findOneMock.mockReturnValueOnce({
-        lean: jest.fn().mockResolvedValueOnce(null)
-      });
-
-      await expect(repo.upsertDraft('about-us', { IntroSection: {} })).rejects.toThrow(
-        'Published page not found by slug="about-us"'
-      );
-
-      expect(findOneMock).toHaveBeenCalledWith({
-        slug: 'about-us',
-        status: 'published'
-      });
-    });
-
-    it('should update existing draft if present', async () => {
-      const publishedLean = { ...baseDoc };
-      const draftSaved = {
-        toObject: () => ({
-          _id: '60b8d6c7f1e7b9a9a9a9a9a9',
-          slug: 'about-us',
-          status: 'draft' as const,
-          title: publishedLean.title,
-          pageType: publishedLean.pageType,
-          blocks: { IntroSection: { x: 1 } },
-          createdAt: new Date('2024-04-01T00:00:00.000Z'),
-          updatedAt: new Date('2024-04-02T00:00:00.000Z')
-        })
+      const createdDraft = {
+        ...draftDoc,
+        blocks: { IntroSection: { created: true } },
+        createdAt: new Date('2024-04-01T00:00:00.000Z'),
+        updatedAt: new Date('2024-04-01T00:00:00.000Z')
       };
+      mockedDraftFindOneAndUpdate.mockReturnValueOnce(leanResolved(createdDraft));
 
-      const draftDoc = {
-        set: (_: Record<string, unknown>) => void 0,
-        save: async () => draftSaved
-      };
+      const res = await repo.upsertDraftBySlug('about-us', { IntroSection: { created: true } });
 
-      findOneMock
-        .mockReturnValueOnce({
-          lean: jest.fn().mockResolvedValueOnce(publishedLean)
-        })
-        .mockReturnValueOnce(draftDoc);
-
-      const result = await repo.upsertDraft('about-us', {
-        IntroSection: { x: 1 }
-      });
-
-      expect(findOneMock.mock.calls[0][0]).toEqual({
-        slug: 'about-us',
-        status: 'published'
-      });
-      expect(findOneMock.mock.calls[1][0]).toEqual({
-        slug: 'about-us',
-        status: 'draft'
-      });
-
-      expect(result).toEqual({
-        id: '60b8d6c7f1e7b9a9a9a9a9a9',
-        slug: 'about-us',
-        status: 'draft',
-        title: publishedLean.title,
-        pageType: publishedLean.pageType,
-        blocks: { IntroSection: { x: 1 } },
-        createdAt: '2024-04-01T00:00:00.000Z',
-        updatedAt: '2024-04-02T00:00:00.000Z'
-      });
-    });
-
-    it('should create new draft using discriminator of published pageType', async () => {
-      const publishedLean = { ...baseDoc };
-
-      findOneMock
-        .mockReturnValueOnce({
-          lean: jest.fn().mockResolvedValueOnce(publishedLean)
-        })
-        .mockReturnValueOnce(null);
-
-      const result = await repo.upsertDraft('about-us', {
-        IntroSection: { y: 2 }
-      });
-
-      expect(findOneMock.mock.calls[0][0]).toEqual({
-        slug: 'about-us',
-        status: 'published'
-      });
-      expect(findOneMock.mock.calls[1][0]).toEqual({
-        slug: 'about-us',
-        status: 'draft'
-      });
-
-      expect(result.slug).toBe('about-us');
-      expect(result.status).toBe('draft');
-      expect(result.pageType).toBe('static');
-      expect(result.blocks).toEqual({ IntroSection: { y: 2 } });
-      expect(result.createdAt).toBe('2024-04-01T00:00:00.000Z');
-      expect(result.updatedAt).toBe('2024-04-01T00:00:00.000Z');
-    });
-  });
-
-  describe('publishFromBlocks', () => {
-    it('should publish using provided blocks and deletes draft', async () => {
-      const providedBlocks = { IntroSection: { a: 1 } };
-
-      findOneMock
-        .mockReturnValueOnce({
-          lean: jest.fn().mockResolvedValueOnce(null)
-        })
-        .mockReturnValueOnce({
-          lean: jest.fn().mockResolvedValueOnce(baseDoc)
-        });
-
-      findOneAndUpdateMock.mockReturnValueOnce({
-        lean: jest.fn().mockResolvedValueOnce({
-          ...baseDoc,
-          status: 'published' as const,
-          blocks: providedBlocks,
-          updatedAt: new Date('2024-05-01T00:00:00.000Z')
-        })
-      });
-
-      const res = await repo.publishFromBlocks('about-us', providedBlocks);
-
-      expect(findOneAndUpdateMock).toHaveBeenCalledWith(
-        { slug: 'about-us', status: 'published' },
+      expect(mockedDraftFindOneAndUpdate).toHaveBeenCalledWith(
+        { slug: 'about-us' },
         {
           $set: {
-            blocks: providedBlocks,
-            title: baseDoc.title,
-            pageType: baseDoc.pageType
-          },
-          $setOnInsert: { slug: 'about-us', status: 'published' }
+            slug: 'about-us',
+            status: PageStatus.Draft,
+            title: publishedDoc.title,
+            pageType: publishedDoc.pageType,
+            blocks: { IntroSection: { created: true } }
+          }
+        },
+        { new: true, upsert: true, runValidators: true, context: 'query' }
+      );
+
+      expect(res.slug).toBe('about-us');
+      expect(res.status).toBe(PageStatus.Draft);
+      expect(res.pageType).toBe('AboutUsPage');
+      expect(res.blocks).toEqual({ IntroSection: { created: true } });
+      expect(res.createdAt).toBe('2024-04-01T00:00:00.000Z');
+      expect(res.updatedAt).toBe('2024-04-01T00:00:00.000Z');
+    });
+
+    it('should throw when no source meta available', async () => {
+      mockedDraftFindOne.mockReturnValueOnce(leanResolved(null));
+      mockedPageFindOne.mockReturnValueOnce(leanResolved(null));
+
+      await expect(repo.upsertDraftBySlug('about-us', { x: 1 })).rejects.toThrow(
+        'Cannot upsert draft: no source (draft or published) for slug="about-us"'
+      );
+    });
+  });
+
+  describe('publishBySlug', () => {
+    it('should publish from provided blocks when no draft', async () => {
+      mockedDraftFindOne.mockReturnValueOnce(leanResolved(null));
+      mockedPageFindOne.mockReturnValueOnce(leanResolved(publishedDoc));
+
+      const updated = {
+        ...publishedDoc,
+        blocks: { IntroSection: { provided: true } },
+        status: PageStatus.Published,
+        updatedAt: new Date('2024-05-01T00:00:00.000Z')
+      };
+      mockedPageFindOneAndUpdate.mockReturnValueOnce(leanResolved(updated));
+
+      const res = await repo.publishBySlug('about-us', { IntroSection: { provided: true } });
+
+      expect(mockedPageFindOneAndUpdate).toHaveBeenCalledWith(
+        { slug: 'about-us' },
+        {
+          $set: {
+            status: PageStatus.Published,
+            title: publishedDoc.title,
+            pageType: publishedDoc.pageType,
+            blocks: { IntroSection: { provided: true } }
+          }
         },
         { new: true, upsert: true, runValidators: true, context: 'query', strict: false }
       );
 
-      expect(deleteOneMock).toHaveBeenCalledWith({
-        slug: 'about-us',
-        status: 'draft'
-      });
-
       expect(res).toEqual({
         id: _id,
         slug: 'about-us',
-        title: baseDoc.title,
-        status: 'published',
-        pageType: baseDoc.pageType,
-        blocks: providedBlocks,
+        title: publishedDoc.title,
+        status: PageStatus.Published,
+        pageType: 'AboutUsPage',
+        blocks: { IntroSection: { provided: true } },
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-05-01T00:00:00.000Z'
       });
     });
 
-    it('should publish from existing draft when blocks not provided', async () => {
-      const draftLean = {
-        ...baseDoc,
-        status: 'draft' as const,
-        blocks: { IntroSection: { fromDraft: true } }
+    it('should publish from draft when blocksOverride not provided', async () => {
+      mockedDraftFindOne.mockReturnValueOnce(leanResolved(draftDoc));
+
+      const updated = {
+        ...publishedDoc,
+        blocks: draftDoc.blocks,
+        status: PageStatus.Published,
+        updatedAt: new Date('2024-06-01T00:00:00.000Z')
       };
+      mockedPageFindOneAndUpdate.mockReturnValueOnce(leanResolved(updated));
 
-      findOneMock
-        .mockReturnValueOnce({
-          lean: jest.fn().mockResolvedValueOnce(draftLean)
-        })
-        .mockReturnValueOnce({
-          lean: jest.fn().mockResolvedValueOnce(draftLean)
-        });
+      const res = await repo.publishBySlug('about-us');
 
-      findOneAndUpdateMock.mockReturnValueOnce({
-        lean: jest.fn().mockResolvedValueOnce({
-          ...baseDoc,
-          status: 'published' as const,
-          blocks: draftLean.blocks,
-          updatedAt: new Date('2024-06-01T00:00:00.000Z')
-        })
-      });
-
-      const res = await repo.publishFromBlocks('about-us');
-
-      expect(findOneMock.mock.calls[0][0]).toEqual({
-        slug: 'about-us',
-        status: 'draft'
-      });
-      expect(findOneMock.mock.calls[1][0]).toEqual({
-        slug: 'about-us',
-        status: 'draft'
-      });
-
-      expect(findOneAndUpdateMock).toHaveBeenCalledWith(
-        { slug: 'about-us', status: 'published' },
+      expect(mockedDraftFindOne).toHaveBeenCalledWith({ slug: 'about-us' });
+      expect(mockedPageFindOneAndUpdate).toHaveBeenCalledWith(
+        { slug: 'about-us' },
         {
           $set: {
-            blocks: { IntroSection: { fromDraft: true } },
-            title: draftLean.title,
-            pageType: draftLean.pageType
-          },
-          $setOnInsert: { slug: 'about-us', status: 'published' }
+            status: PageStatus.Published,
+            title: draftDoc.title,
+            pageType: draftDoc.pageType,
+            blocks: draftDoc.blocks
+          }
         },
         { new: true, upsert: true, runValidators: true, context: 'query', strict: false }
       );
 
-      expect(deleteOneMock).toHaveBeenCalledWith({
-        slug: 'about-us',
-        status: 'draft'
-      });
-
-      expect(res).toEqual({
-        id: _id,
-        slug: 'about-us',
-        title: baseDoc.title,
-        status: 'published',
-        pageType: baseDoc.pageType,
-        blocks: { IntroSection: { fromDraft: true } },
-        createdAt: '2024-01-01T00:00:00.000Z',
-        updatedAt: '2024-06-01T00:00:00.000Z'
-      });
+      expect(res.updatedAt).toBe('2024-06-01T00:00:00.000Z');
+      expect(res.blocks).toEqual(draftDoc.blocks);
     });
 
-    it('should throw if no draft for implicit blocks', async () => {
-      findOneMock.mockReturnValueOnce({
-        lean: jest.fn().mockResolvedValueOnce(null)
-      });
+    it('should throw when no draft and no override provided', async () => {
+      mockedDraftFindOne.mockReturnValueOnce(leanResolved(null));
 
-      await expect(repo.publishFromBlocks('missing')).rejects.toThrow('Draft page not found by slug="missing"');
+      await expect(repo.publishBySlug('missing')).rejects.toThrow('Draft not found by slug="missing"');
     });
 
-    it('throws if no source when blocks provided', async () => {
-      const providedBlocks = { IntroSection: { a: 1 } };
+    it('should throw when cannot resolve title/pageType', async () => {
+      mockedDraftFindOne.mockReturnValueOnce(leanResolved(null));
+      mockedPageFindOne.mockReturnValueOnce(leanResolved(null));
 
-      findOneMock
-        .mockReturnValueOnce({
-          lean: jest.fn().mockResolvedValueOnce(null)
-        })
-        .mockReturnValueOnce({
-          lean: jest.fn().mockResolvedValueOnce(null)
-        });
-
-      await expect(repo.publishFromBlocks('no-source', providedBlocks)).rejects.toThrow(
-        'No source page found by slug="no-source"'
+      await expect(repo.publishBySlug('about-us', { x: 1 })).rejects.toThrow(
+        'Cannot publish: missing title/pageType for slug="about-us"'
       );
-
-      expect(deleteOneMock).not.toHaveBeenCalled();
-      expect(findOneAndUpdateMock).not.toHaveBeenCalled();
     });
   });
 });

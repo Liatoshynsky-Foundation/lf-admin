@@ -1,9 +1,7 @@
-import mongoose, { Types } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
-import type { Patch } from '~/application/use-cases/pageService/pageService';
 import { BasePage } from '~/domain/entities/Page';
 import dbConnect from '~/infrastructure/db/connect';
-import PageModel from '~/infrastructure/models/page.model';
 import { PageStatus } from '~/types/enums/common.enums';
 
 type DbPage = {
@@ -17,8 +15,12 @@ type DbPage = {
   updatedAt: Date | string;
 };
 
-const toIso = (d: Date | string): string => (d instanceof Date ? d.toISOString() : d);
+type PageRepoDeps = Readonly<{
+  PageModel: Model<BasePage>;
+  DraftPageModel: Model<BasePage>;
+}>;
 
+const toIso = (d: Date | string): string => (d instanceof Date ? d.toISOString() : d);
 const toEntity = (doc: DbPage): BasePage => ({
   id: doc._id.toString(),
   slug: doc.slug,
@@ -30,97 +32,80 @@ const toEntity = (doc: DbPage): BasePage => ({
   updatedAt: toIso(doc.updatedAt) as unknown as BasePage['updatedAt']
 });
 
-export const PageRepository = () => ({
-  getPageBySlugAndStatus: async (slug: string, status: PageStatus): Promise<BasePage | null> => {
-    await dbConnect();
-    const page = await PageModel.findOne({ slug, status }).lean<DbPage>();
-    return page ? toEntity(page) : null;
-  },
+const getBySlug = async (model: Model<BasePage>, slug: string): Promise<BasePage | null> => {
+  await dbConnect();
+  const doc = await model.findOne({ slug }).lean<DbPage>();
+  return doc ? toEntity(doc) : null;
+};
 
-  partialUpdateBySlugAndStatus: async (slug: string, status: PageStatus, patch: Patch): Promise<BasePage> => {
-    await dbConnect();
-    const updated = await PageModel.findOneAndUpdate({ slug, status }, patch, {
-      new: true,
-      strict: false,
-      runValidators: true,
-      context: 'query'
-    }).lean<DbPage>();
+export const PageRepository = ({ PageModel, DraftPageModel }: PageRepoDeps) => {
+  return {
+    getPublishedBySlug: (slug: string) => getBySlug(PageModel, slug),
+    getDraftBySlug: (slug: string) => getBySlug(DraftPageModel, slug),
 
-    if (!updated) throw new Error(`Page not found by slug="${slug}" & status="${status}"`);
-    return toEntity(updated);
-  },
+    upsertDraftBySlug: async (slug: string, blocks: unknown): Promise<BasePage> => {
+      await dbConnect();
+      if (blocks == null) throw new Error('Draft blocks payload is required');
 
-  upsertDraft: async (slug: string, blocks: unknown): Promise<BasePage> => {
-    await dbConnect();
+      const [draft, published] = await Promise.all([
+        DraftPageModel.findOne({ slug }).lean<DbPage>(),
+        PageModel.findOne({ slug }).lean<DbPage>()
+      ]);
 
-    if (blocks == null) {
-      throw new Error('Draft blocks payload is required');
-    }
+      const title = draft?.title ?? published?.title;
+      const pageType = draft?.pageType ?? published?.pageType;
 
-    const published = await PageModel.findOne({ slug, status: PageStatus.Published }).lean<DbPage>();
-    if (!published) {
-      throw new Error(`Published page not found by slug="${slug}"`);
-    }
-
-    const existingDraft = await PageModel.findOne({ slug, status: PageStatus.Draft });
-    if (existingDraft) {
-      existingDraft.set({ blocks });
-      const saved = await existingDraft.save();
-      return toEntity(saved.toObject() as unknown as DbPage);
-    }
-
-    const pageType = published.pageType;
-
-    const discriminators = (
-      PageModel as mongoose.Model<any> & {
-        discriminators?: Record<string, mongoose.Model<any>>;
+      if (!title || !pageType) {
+        throw new Error(`Cannot upsert draft: no source (draft or published) for slug="${slug}"`);
       }
-    ).discriminators;
 
-    const DiscriminatorModel = discriminators?.[pageType] ?? PageModel;
-
-    const created = await new DiscriminatorModel({
-      slug,
-      status: PageStatus.Draft,
-      title: published.title,
-      pageType,
-      blocks
-    }).save();
-
-    return toEntity(created.toObject() as unknown as DbPage);
-  },
-
-  publishFromBlocks: async (slug: string, blocks?: unknown): Promise<BasePage> => {
-    await dbConnect();
-
-    let finalBlocks = blocks;
-    if (finalBlocks === undefined) {
-      const draft = await PageModel.findOne({ slug, status: PageStatus.Draft }).lean<DbPage>();
-      if (!draft) throw new Error(`Draft page not found by slug="${slug}"`);
-      finalBlocks = draft.blocks;
-    }
-
-    const source =
-      (await PageModel.findOne({ slug, status: PageStatus.Draft }).lean<DbPage>()) ??
-      (await PageModel.findOne({ slug, status: PageStatus.Published }).lean<DbPage>());
-
-    if (!source) throw new Error(`No source page found by slug="${slug}"`);
-
-    const updated = await PageModel.findOneAndUpdate(
-      { slug, status: PageStatus.Published },
-      {
-        $set: {
-          blocks: finalBlocks,
-          title: source.title,
-          pageType: source.pageType
+      const updated = await DraftPageModel.findOneAndUpdate(
+        { slug },
+        {
+          $set: {
+            slug,
+            status: PageStatus.Draft,
+            title,
+            pageType,
+            blocks
+          }
         },
-        $setOnInsert: { slug, status: PageStatus.Published }
-      },
-      { new: true, upsert: true, runValidators: true, context: 'query', strict: false }
-    ).lean<DbPage>();
+        { new: true, upsert: true, runValidators: true, context: 'query' }
+      ).lean<DbPage>();
 
-    await PageModel.deleteOne({ slug, status: PageStatus.Draft });
+      return toEntity(updated as DbPage);
+    },
 
-    return toEntity(updated);
-  }
-});
+    publishBySlug: async (slug: string, blocksOverride?: unknown): Promise<BasePage> => {
+      await dbConnect();
+      const draft = await DraftPageModel.findOne({ slug }).lean<DbPage>();
+      if (!draft && blocksOverride === undefined) {
+        throw new Error(`Draft not found by slug="${slug}"`);
+      }
+
+      const finalBlocks = blocksOverride ?? draft!.blocks;
+      const published = draft ? null : await PageModel.findOne({ slug }).lean<DbPage>();
+      const title = draft?.title ?? published?.title;
+      const pageType = draft?.pageType ?? published?.pageType;
+
+      if (!title || !pageType) {
+        throw new Error(`Cannot publish: missing title/pageType for slug="${slug}"`);
+      }
+
+      const updated = await PageModel.findOneAndUpdate(
+        { slug },
+        {
+          $set: {
+            status: PageStatus.Published,
+            title,
+            pageType,
+            blocks: finalBlocks
+          }
+        },
+        { new: true, upsert: true, runValidators: true, context: 'query', strict: false }
+      ).lean<DbPage>();
+
+      return toEntity(updated as DbPage);
+    }
+  };
+};

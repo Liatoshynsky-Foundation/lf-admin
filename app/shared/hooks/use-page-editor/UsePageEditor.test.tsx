@@ -1,5 +1,5 @@
 import { ApolloError } from '@apollo/client';
-import { renderHook } from '@testing-library/react';
+import { cleanup, renderHook } from '@testing-library/react';
 import { GraphQLError } from 'graphql';
 
 import { usePageEditor } from './usePageEditor';
@@ -35,15 +35,20 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
 }));
 
 jest.mock('~/lib/utils/fetchPreview', () => ({
-  fetchPreview: jest.fn()
+  fetchPreview: jest.fn().mockResolvedValue(undefined)
 }));
 
 import { fetchPreview } from '~/lib/utils/fetchPreview';
 const fetchPreviewMock = fetchPreview as jest.MockedFunction<typeof fetchPreview>;
 
+afterEach(() => {
+  cleanup();
+  jest.clearAllMocks();
+  jest.useRealTimers();
+});
+
 describe('usePageEditor', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
     storeState = {
       locale: 'uk',
       isChanged: true,
@@ -73,7 +78,7 @@ describe('usePageEditor', () => {
       expect(upsertDraftMock).toHaveBeenCalledWith({
         variables: { input: { slug: 'test', blocks: { IntroSection: { title: 't' } } } }
       });
-      expect(fetchPreviewMock).toHaveBeenCalledWith({ slug: '/', lang: 'uk', draftId: '123' });
+      expect(fetchPreviewMock).toHaveBeenCalledWith({ slug: 'test', lang: 'uk', draftId: '123' });
     });
   });
 

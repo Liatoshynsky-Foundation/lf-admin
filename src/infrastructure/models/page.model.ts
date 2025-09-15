@@ -5,7 +5,7 @@ import { PageStatus } from '~/types/enums/common.enums';
 
 const pageBaseSchema = new Schema<BasePage>(
   {
-    slug: { type: String, required: true, index: true },
+    slug: { type: String, required: true, index: true, unique: true },
     title: {
       uk: { type: String, required: true },
       en: { type: String, required: true }
@@ -14,7 +14,7 @@ const pageBaseSchema = new Schema<BasePage>(
       type: String,
       enum: [PageStatus.Draft, PageStatus.Published] as const,
       required: true,
-      default: PageStatus.Draft
+      default: PageStatus.Published
     }
   },
   {
@@ -23,8 +23,6 @@ const pageBaseSchema = new Schema<BasePage>(
     discriminatorKey: 'pageType'
   }
 );
-
-pageBaseSchema.index({ slug: 1, status: 1 }, { unique: true });
 
 const PageModel: Model<BasePage> = mongoose.models.Page || mongoose.model<BasePage>('Page', pageBaseSchema);
 

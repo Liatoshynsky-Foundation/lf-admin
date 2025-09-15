@@ -5,8 +5,8 @@ import React from 'react';
 import Page from './page';
 import { PAGE_IDS } from '~/constants/pageBlocks';
 
-const publishMock = jest.fn();
 const previewMock = jest.fn();
+const saveMock = jest.fn();
 const setLocaleMock = jest.fn();
 const discardChangesMock = jest.fn();
 
@@ -84,9 +84,17 @@ jest.mock('~/store', () => ({
 
 jest.mock('~/shared/hooks/use-page-editor/usePageEditor', () => ({
   usePageEditor: jest.fn((_slug: string) => ({
-    publish: publishMock,
     preview: previewMock,
     loading: false
+  }))
+}));
+
+jest.mock('~/shared/hooks/use-save-page/UseSavePage', () => ({
+  useSavePageBlocks: jest.fn((_slug: string) => ({
+    save: saveMock,
+    loading: false,
+    error: null,
+    data: null
   }))
 }));
 
@@ -106,10 +114,10 @@ describe('About Page', () => {
     expect(screen.getByTestId('what-we-do')).toBeInTheDocument();
   });
 
-  it('should call publish when save button is clicked', () => {
+  it('should call save when save button is clicked', () => {
     render(<Page />);
     fireEvent.click(screen.getByTestId('save-btn'));
-    expect(publishMock).toHaveBeenCalledTimes(1);
+    expect(saveMock).toHaveBeenCalledTimes(1);
   });
 
   it('should call preview when preview button is clicked', () => {
@@ -118,19 +126,32 @@ describe('About Page', () => {
     expect(previewMock).toHaveBeenCalledTimes(1);
   });
 
-  it('should display saving flag from hook (false by default)', () => {
+  it('should display saving flag from hooks (false by default)', () => {
     render(<Page />);
     expect(screen.getByTestId('saving-flag')).toHaveTextContent('false');
   });
 
-  it('should display saving flag = true when hook loading is true', () => {
+  it('should display saving flag = true when editor loading is true', () => {
     const { usePageEditor } = jest.requireMock('~/shared/hooks/use-page-editor/usePageEditor') as {
       usePageEditor: jest.Mock;
     };
     usePageEditor.mockImplementationOnce((_slug: string) => ({
-      publish: publishMock,
       preview: previewMock,
       loading: true
+    }));
+    render(<Page />);
+    expect(screen.getByTestId('saving-flag')).toHaveTextContent('true');
+  });
+
+  it('should display saving flag = true when save loading is true', () => {
+    const { useSavePageBlocks } = jest.requireMock('~/shared/hooks/use-save-page/UseSavePage') as {
+      useSavePageBlocks: jest.Mock;
+    };
+    useSavePageBlocks.mockImplementationOnce((_slug: string) => ({
+      save: saveMock,
+      loading: true,
+      error: null,
+      data: null
     }));
     render(<Page />);
     expect(screen.getByTestId('saving-flag')).toHaveTextContent('true');
@@ -154,5 +175,13 @@ describe('About Page', () => {
     };
     render(<Page />);
     expect(usePageEditor).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US);
+  });
+
+  it('should call useSavePageBlocks with ABOUT_US page id', () => {
+    const { useSavePageBlocks } = jest.requireMock('~/shared/hooks/use-save-page/UseSavePage') as {
+      useSavePageBlocks: jest.Mock;
+    };
+    render(<Page />);
+    expect(useSavePageBlocks).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US);
   });
 });

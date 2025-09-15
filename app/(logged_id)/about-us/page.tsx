@@ -10,22 +10,25 @@ import OurMission from '~/shared/components/about-us/our-mission/OurMission';
 import WhatWeDo from '~/shared/components/about-us/what-we-do/WhatWeDo';
 import { Header } from '~/shared/components/header/Header';
 import { usePageEditor } from '~/shared/hooks/use-page-editor/usePageEditor';
+import { useSavePageBlocks } from '~/shared/hooks/use-save-page/UseSavePage';
 import { useStore } from '~/store';
 
 const Page = () => {
   const pageSlug = PAGE_IDS.ABOUT_US;
   const setLocale = useStore((s) => s.setLocale);
   const discardChanges = useStore((s) => s.discardChanges);
-  const { publish, preview, loading } = usePageEditor(pageSlug);
+
+  const { preview, loading: editorLoading } = usePageEditor(pageSlug);
+  const { save, loading: saveLoading } = useSavePageBlocks(pageSlug);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
       <Header
         title="Про нас"
         onPreview={preview}
-        onSave={publish}
+        onSave={save}
         onCancel={() => discardChanges(pageSlug)}
-        isSaving={loading}
+        isSaving={editorLoading || saveLoading}
         onLanguageChange={(lang: 'uk' | 'en') => setLocale(lang)}
       />
       <IntroSection />

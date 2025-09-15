@@ -5,6 +5,7 @@ import { fetchPreview } from '~/lib/utils/fetchPreview';
 import { useStore } from '~/store';
 import {
   type PublishPageMutationVariables,
+  type UpsertPageDraftMutationVariables,
   usePublishPageMutation,
   useUpsertPageDraftMutation
 } from '~/types/graphql/generated/graphql';
@@ -22,14 +23,11 @@ export const usePageEditor = (slug: string) => {
     if (!blocks) throw new Error('No page blocks found');
 
     try {
-      const { data } = await upsertDraft({
-        variables: { input: { slug: slug, blocks } }
-      });
-
+      const variables: UpsertPageDraftMutationVariables = { input: { slug, blocks } };
+      const { data } = await upsertDraft({ variables });
       const draftId = data?.upsertPageDraft?.id;
       if (!draftId) throw new Error('Draft ID is missing');
-
-      await fetchPreview({ slug: '/', lang: locale, draftId }); //Change to slug
+      await fetchPreview({ slug, lang: locale, draftId });
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed to create draft';
       throw new Error(msg);
@@ -45,7 +43,7 @@ export const usePageEditor = (slug: string) => {
     if (!current) throw new Error('No page blocks found');
     if (!changedNow) throw new Error('Nothing to publish');
 
-    const variables: PublishPageMutationVariables = { input: { slug: slug, blocks: current } };
+    const variables: PublishPageMutationVariables = { input: { slug, blocks: current } };
 
     const res = await publishMutate({ variables }).catch((e: unknown) => {
       if (e instanceof ApolloError) {
