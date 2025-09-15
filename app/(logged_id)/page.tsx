@@ -5,9 +5,11 @@ import React from 'react';
 
 import { fetchPreview } from '~/lib/utils/fetchPreview';
 import { Header } from '~/shared/components/header/Header';
+import { useStore } from '~/store';
 
 export default function Home() {
   const pageData = { title: 'Про нас', url: '/' };
+  const discardChanges = useStore((s) => s.discardChanges);
 
   const saveDraft = () => {};
 
@@ -16,12 +18,13 @@ export default function Home() {
     fetchPreview({
       slug: pageData.url,
       lang: 'uk',
-      draftId: 1
+      draftId: '1'
     });
   };
 
   const onLanguageChange = () => {};
   const onSave = () => {};
+  const onCancel = () => discardChanges(pageData.url);
 
   return (
     <Box>
@@ -30,6 +33,7 @@ export default function Home() {
         onPreview={onPreview}
         onLanguageChange={onLanguageChange}
         onSave={onSave}
+        onCancel={onCancel}
         isSaving
       />
     </Box>

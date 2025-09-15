@@ -36,7 +36,7 @@ const getPublishedOrThrow = (res: PublishResponse) => {
   return page;
 };
 
-export const useSavePageBlocks = (pageSlug: string) => {
+export const useSavePageBlocks = (slug: string) => {
   const markSaved = useStore((s) => s.saveAsDraft);
 
   const [upsertDraft, upsertState] = useUpsertPageDraftMutation();
@@ -44,16 +44,16 @@ export const useSavePageBlocks = (pageSlug: string) => {
 
   const save = async () => {
     const state = useStore.getState();
-    const current = state.blocks[pageSlug];
-    const baseline = state.originalBlocks?.[pageSlug];
+    const current = state.blocks[slug];
+    const baseline = state.originalBlocks?.[slug];
 
     if (current == null) throw new Error('No page blocks found');
     if (!hasChanged(current, baseline)) throw new Error('Nothing to save');
 
-    const draftVars: UpsertPageDraftMutationVariables = { input: { slug: pageSlug, blocks: current } };
+    const draftVars: UpsertPageDraftMutationVariables = { input: { slug: slug, blocks: current } };
     await safeMutate(upsertDraft, draftVars, 'Network error while saving draft', 'Failed to save draft');
 
-    const publishVars: PublishPageMutationVariables = { input: { slug: pageSlug, blocks: current } };
+    const publishVars: PublishPageMutationVariables = { input: { slug: slug, blocks: current } };
     const res = await safeMutate<PublishPageMutationVariables, PublishResponse>(
       publishMutate as unknown as (o: { variables: PublishPageMutationVariables }) => Promise<PublishResponse>,
       publishVars,
@@ -62,7 +62,7 @@ export const useSavePageBlocks = (pageSlug: string) => {
     );
 
     const published = getPublishedOrThrow(res);
-    markSaved(pageSlug);
+    markSaved(slug);
     return published;
   };
 
