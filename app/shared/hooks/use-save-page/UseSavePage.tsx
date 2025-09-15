@@ -36,14 +36,14 @@ export const useSavePageBlocks = (slug: string) => {
       'Failed to save draft'
     );
 
-    const res = await safeMutate<PublishPageMutation, PublishPageMutationVariables>(
+    const response = await safeMutate<PublishPageMutation, PublishPageMutationVariables>(
       publishMutate,
       { input: { slug, blocks: current } },
       'Network error while publishing',
       'Failed to publish page'
     );
 
-    const published = res.data?.publishPage;
+    const published = response.data?.publishPage;
     if (!published) throw new Error('Server did not return published page');
 
     markSaved(slug);

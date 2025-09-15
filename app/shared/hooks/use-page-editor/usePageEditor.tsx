@@ -28,14 +28,14 @@ export const usePageEditor = (slug: string) => {
     const blocks = useStore.getState().blocks[slug];
     if (!blocks) throw new Error('No page blocks found');
 
-    const draftRes = await safeMutate<UpsertPageDraftMutation, UpsertPageDraftMutationVariables>(
+    const response = await safeMutate<UpsertPageDraftMutation, UpsertPageDraftMutationVariables>(
       upsertDraft,
       { input: { slug, blocks } },
       'Network error while creating draft',
       'Failed to create draft'
     );
 
-    const draftId = draftRes.data?.upsertPageDraft?.id;
+    const draftId = response.data?.upsertPageDraft?.id;
     if (!draftId) throw new Error('Draft ID is missing');
 
     await fetchPreview({ slug, lang: locale, draftId });
@@ -49,14 +49,14 @@ export const usePageEditor = (slug: string) => {
     if (!current) throw new Error('No page blocks found');
     if (!changedNow(current, baseline, state.isChanged)) throw new Error('Nothing to publish');
 
-    const res = await safeMutate<PublishPageMutation, PublishPageMutationVariables>(
+    const response = await safeMutate<PublishPageMutation, PublishPageMutationVariables>(
       publishMutate,
       { input: { slug, blocks: current } },
       'Network error while publishing',
       'Failed to publish page'
     );
 
-    const published = res.data?.publishPage;
+    const published = response.data?.publishPage;
     if (!published) throw new Error('Server did not return published page');
 
     markSaved(slug);
