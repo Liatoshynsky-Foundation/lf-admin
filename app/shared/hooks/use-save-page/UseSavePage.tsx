@@ -1,10 +1,12 @@
 'use client';
-import { ApolloError } from '@apollo/client';
 import isEqual from 'fast-deep-equal';
 
+import { safeMutate } from '~/lib/utils/safeMutate';
 import { useStore } from '~/store';
 import {
+  type PublishPageMutation,
   type PublishPageMutationVariables,
+  type UpsertPageDraftMutation,
   type UpsertPageDraftMutationVariables,
   usePublishPageMutation,
   useUpsertPageDraftMutation
@@ -12,29 +14,6 @@ import {
 
 const hasChanged = (current: unknown, baseline: unknown): boolean =>
   baseline === undefined || (current !== baseline && !isEqual(current, baseline));
-
-const apolloMessage = (e: ApolloError, networkMsg: string): string =>
-  e.graphQLErrors[0]?.message ?? (e.networkError ? networkMsg : e.message);
-
-const safeMutate = <V, R>(
-  mutate: (options: { variables: V }) => Promise<R>,
-  variables: V,
-  networkMsg: string,
-  fallbackMsg: string
-): Promise<R> => {
-  return mutate({ variables }).catch((e: unknown) => {
-    if (e instanceof ApolloError) throw new Error(apolloMessage(e, networkMsg));
-    throw new Error(fallbackMsg);
-  });
-};
-
-type PublishResponse = { data?: { publishPage?: unknown } };
-
-const getPublishedOrThrow = (res: PublishResponse) => {
-  const page = res?.data?.publishPage;
-  if (!page) throw new Error('Server did not return published page');
-  return page;
-};
 
 export const useSavePageBlocks = (slug: string) => {
   const markSaved = useStore((s) => s.saveAsDraft);
@@ -50,18 +29,23 @@ export const useSavePageBlocks = (slug: string) => {
     if (current == null) throw new Error('No page blocks found');
     if (!hasChanged(current, baseline)) throw new Error('Nothing to save');
 
-    const draftVars: UpsertPageDraftMutationVariables = { input: { slug: slug, blocks: current } };
-    await safeMutate(upsertDraft, draftVars, 'Network error while saving draft', 'Failed to save draft');
+    await safeMutate<UpsertPageDraftMutation, UpsertPageDraftMutationVariables>(
+      upsertDraft,
+      { input: { slug, blocks: current } },
+      'Network error while saving draft',
+      'Failed to save draft'
+    );
 
-    const publishVars: PublishPageMutationVariables = { input: { slug: slug, blocks: current } };
-    const res = await safeMutate<PublishPageMutationVariables, PublishResponse>(
-      publishMutate as unknown as (o: { variables: PublishPageMutationVariables }) => Promise<PublishResponse>,
-      publishVars,
+    const res = await safeMutate<PublishPageMutation, PublishPageMutationVariables>(
+      publishMutate,
+      { input: { slug, blocks: current } },
       'Network error while publishing',
       'Failed to publish page'
     );
 
-    const published = getPublishedOrThrow(res);
+    const published = res.data?.publishPage;
+    if (!published) throw new Error('Server did not return published page');
+
     markSaved(slug);
     return published;
   };
