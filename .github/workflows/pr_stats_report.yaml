@@ -1,0 +1,61 @@
+name: PR Review Report
+
+on:
+  workflow_dispatch:   
+  schedule:
+    - cron: "0 0 1 * *"   
+
+jobs:
+  pr-report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install gh jq -y
+
+      - name: Collect PR and review stats
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api repos/${{ github.repository }}/pulls?state=all --paginate > pulls.json
+
+          echo -e "User      Created PRs  Reviewed PRs  Approved  Changes  Commented  Dismissed" > table.txt
+
+          USERS=$(jq -r '.[].user.login' pulls.json | sort | uniq)
+          for user in $USERS; do
+            CREATED=$(jq --arg u "$user" '[.[] | select(.user.login==$u)] | length' pulls.json)
+
+            REVIEWS=$(jq --arg u "$user" '.[].number as $num | ("https://api.github.com/repos/${{ github.repository }}/pulls/"+($num|tostring)+"/reviews")' pulls.json)
+            APPROVED=0
+            CHANGES=0
+            COMMENTED=0
+            DISMISSED=0
+            REVIEWED_PR=()
+            for r in $REVIEWS; do
+              DATA=$(gh api $r)
+              COUNT=$(echo "$DATA" | jq --arg u "$user" '[.[] | select(.user.login==$u)] | length')
+              if [ $COUNT -gt 0 ]; then
+                REVIEWED_PR+=($(echo "$DATA" | jq --arg u "$user" '[.[] | select(.user.login==$u) | .state]' | jq -r '.[]'))
+                APPROVED=$((APPROVED + $(echo "$DATA" | jq --arg u "$user" '[.[] | select(.user.login==$u and .state=="APPROVED")] | length')))
+                CHANGES=$((CHANGES + $(echo "$DATA" | jq --arg u "$user" '[.[] | select(.user.login==$u and .state=="CHANGES_REQUESTED")] | length')))
+                COMMENTED=$((COMMENTED + $(echo "$DATA" | jq --arg u "$user" '[.[] | select(.user.login==$u and .state=="COMMENTED")] | length')))
+                DISMISSED=$((DISMISSED + $(echo "$DATA" | jq --arg u "$user" '[.[] | select(.user.login==$u and .state=="DISMISSED")] | length')))
+              fi
+            done
+            REVIEWED_COUNT=${#REVIEWED_PR[@]}
+            echo -e "$user      $CREATED      $REVIEWED_COUNT      $APPROVED      $CHANGES      $COMMENTED      $DISMISSED" >> table.txt
+          done
+
+      - name: Send report to Discord
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          CONTENT=$(cat table.txt)
+          curl -H "Content-Type: application/json" \
+               -d "{\"content\":\"📊 PR Review Report\n\`\`\`\n$CONTENT\n\`\`\`\"}" \
+               $DISCORD_WEBHOOK
