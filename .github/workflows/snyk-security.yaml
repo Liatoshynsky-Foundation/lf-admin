@@ -1,14 +1,17 @@
 name: Security Snyk
 
 on:
-  workflow_dispatch:
-  push:
-    branches: ["develop", "main"]
-  pull_request:
-    branches: ["develop"]
-
-permissions:
-  contents: read
+  workflow_call:
+    secrets:
+      SNYK_TOKEN:
+        required: true
+    inputs:
+      node-version:
+        required: true
+        type: string
+      docker-image-name:
+        required: true
+        type: string
 
 jobs:
   snyk:
