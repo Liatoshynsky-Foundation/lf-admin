@@ -123,7 +123,7 @@ jobs:
             be-app
 
   snyk-scan:
-    uses: .github/workflows/snyk-reusable.yml
+    uses: .github/workflows/snyk-security.yaml
     needs: docker-build
     with:
       node-version: 22
