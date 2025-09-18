@@ -136,3 +136,4 @@ jobs:
     needs: [run-lint, run-tests]
     secrets:
       GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
