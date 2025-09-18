@@ -134,3 +134,5 @@ jobs:
   gitleaks-scan:
     uses: ./.github/workflows/gitleaks.yaml
     needs: [run-lint, run-tests]
+    secrets:
+      GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
