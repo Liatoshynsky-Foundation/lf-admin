@@ -1,0 +1,10 @@
+mutation UpsertPageDraft($input: UpsertPageDraftInput!) {
+  upsertPageDraft(input: $input) {
+    id
+    slug
+    status
+    blocks
+    updatedAt
+    __typename
+  }
+}

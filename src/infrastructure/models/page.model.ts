@@ -1,19 +1,20 @@
 import mongoose, { Model, Schema } from 'mongoose';
 
 import { BasePage } from '~/domain/entities/Page';
+import { PageStatus } from '~/types/enums/common.enums';
 
 const pageBaseSchema = new Schema<BasePage>(
   {
-    slug: { type: String, required: true, unique: true, index: true },
+    slug: { type: String, required: true, index: true, unique: true },
     title: {
       uk: { type: String, required: true },
       en: { type: String, required: true }
     },
     status: {
       type: String,
-      enum: ['draft', 'published'],
+      enum: [PageStatus.Draft, PageStatus.Published] as const,
       required: true,
-      default: 'draft'
+      default: PageStatus.Published
     }
   },
   {

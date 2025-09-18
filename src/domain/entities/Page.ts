@@ -1,4 +1,5 @@
 import { BlockData } from '~/store/types';
+import { PageStatus } from '~/types/enums/common.enums';
 
 export type LocalizedTitle = {
   uk: string;
@@ -9,7 +10,7 @@ export type BasePage = {
   id: string;
   slug: string;
   title: LocalizedTitle;
-  status: 'draft' | 'published';
+  status: PageStatus;
   pageType: string;
   blocks: Record<string, BlockData>;
   createdAt: string;

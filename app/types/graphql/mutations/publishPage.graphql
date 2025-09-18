@@ -1,0 +1,10 @@
+mutation PublishPage($input: PublishPageInput!) {
+  publishPage(input: $input) {
+    id
+    slug
+    status
+    blocks
+    updatedAt
+    __typename
+  }
+}

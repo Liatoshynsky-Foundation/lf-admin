@@ -1,21 +1,42 @@
 scalar JSON
 
-type Page {
-    id: ID!
-    slug: String!
-    title: LocalizedString!
-    status: String!
-    pageType: String!
-    blocks: JSON!
-    createdAt: String!
-    updatedAt: String!
+type LocalizedString {
+  uk: String
+  en: String
 }
 
-type LocalizedString {
-    uk: String
-    en: String
+type Page {
+  id: ID!
+  slug: String!
+  title: LocalizedString!
+  status: String!
+  pageType: String!
+  blocks: JSON!
+  createdAt: String!
+  updatedAt: String!
 }
 
 extend type Query {
-    pageBlocks(slug: String!): Page
+  pageBlocks(slug: String!, status: String = "published"): Page
+}
+
+input UpdatePageBlocksInput {
+  slug: String!
+  blocks: JSON!
+}
+
+input UpsertPageDraftInput {
+  slug: String!
+  blocks: JSON!
+}
+
+input PublishPageInput {
+  slug: String!
+  blocks: JSON
+}
+
+extend type Mutation {
+  updatePageBlocks(input: UpdatePageBlocksInput!): Page!
+  upsertPageDraft(input: UpsertPageDraftInput!): Page!
+  publishPage(input: PublishPageInput!): Page!
 }
