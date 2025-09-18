@@ -130,7 +130,7 @@ jobs:
       docker-image-name: be-app
     secrets:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      
+
   gitleaks-scan:
-    uses: ./.github/workflows/gitleaks-scan.yml
+    uses: ./.github/workflows/gitleaks.yaml
     needs: [run-lint, run-tests]
