@@ -30,7 +30,10 @@ describe('extractImageSrcs', () => {
       { id: 3, image: { src: 'array-image-2.webp', isTmp: true } }
     ];
     const expected = ['array-image-1.gif', 'array-image-2.webp'];
-    expect(extractImageSrcs(data).sort(compareFn)).toEqual(expected.sort(compareFn));
+    const sortedResult = extractImageSrcs(data).toSorted(compareFn);
+    const sortedExpected = expected.toSorted(compareFn);
+
+    expect(sortedResult).toEqual(sortedExpected);
   });
 
   it('should NOT extract src if isTmp is false', () => {
@@ -67,7 +70,10 @@ describe('extractImageSrcs', () => {
       }
     };
     const expected = ['logo.svg', 'content-img.png', 'gallery-2.jpg'];
-    expect(extractImageSrcs(data).sort(compareFn)).toEqual(expected.sort(compareFn));
+    const sortedResult = extractImageSrcs(data).toSorted(compareFn);
+    const sortedExpected = expected.toSorted(compareFn);
+
+    expect(sortedResult).toEqual(sortedExpected);
   });
 
   it('should return unique sources even if duplicates exist', () => {
@@ -77,7 +83,10 @@ describe('extractImageSrcs', () => {
       image3: { src: 'duplicate.jpg', isTmp: true }
     };
     const expected = ['duplicate.jpg', 'unique.png'];
-    expect(extractImageSrcs(data).sort(compareFn)).toEqual(expected.sort(compareFn));
+    const sortedResult = extractImageSrcs(data).toSorted(compareFn);
+    const sortedExpected = expected.toSorted(compareFn);
+
+    expect(sortedResult).toEqual(sortedExpected);
   });
 
   describe('Edge cases', () => {
