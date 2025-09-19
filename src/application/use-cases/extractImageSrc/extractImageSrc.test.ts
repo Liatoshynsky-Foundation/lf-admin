@@ -1,6 +1,8 @@
 import { extractImageSrcs } from './extractImageSrc';
 import { JsonValue } from '~/back-shared/types/pages/types';
 
+const compareFn = (a: string, b: string) => a.localeCompare(b);
+
 describe('extractImageSrcs', () => {
   it('should find a single src at the top level of an object', () => {
     const data: JsonValue = {
@@ -27,7 +29,8 @@ describe('extractImageSrcs', () => {
       { id: 2, text: 'No image here' },
       { id: 3, image: { src: 'array-image-2.webp', isTmp: true } }
     ];
-    expect(extractImageSrcs(data).sort()).toEqual(['array-image-1.gif', 'array-image-2.webp'].sort());
+    const expected = ['array-image-1.gif', 'array-image-2.webp'];
+    expect(extractImageSrcs(data).sort(compareFn)).toEqual(expected.sort(compareFn));
   });
 
   it('should NOT extract src if isTmp is false', () => {
@@ -64,7 +67,7 @@ describe('extractImageSrcs', () => {
       }
     };
     const expected = ['logo.svg', 'content-img.png', 'gallery-2.jpg'];
-    expect(extractImageSrcs(data).sort()).toEqual(expected.sort());
+    expect(extractImageSrcs(data).sort(compareFn)).toEqual(expected.sort(compareFn));
   });
 
   it('should return unique sources even if duplicates exist', () => {
@@ -74,7 +77,7 @@ describe('extractImageSrcs', () => {
       image3: { src: 'duplicate.jpg', isTmp: true }
     };
     const expected = ['duplicate.jpg', 'unique.png'];
-    expect(extractImageSrcs(data).sort()).toEqual(expected.sort());
+    expect(extractImageSrcs(data).sort(compareFn)).toEqual(expected.sort(compareFn));
   });
 
   describe('Edge cases', () => {

@@ -89,7 +89,7 @@ export const PageRepository = ({ PageModel, DraftPageModel }: PageRepoDeps) => {
       await dbConnect();
       const updateQuery = buildMongoUpdateQuery('blocks', patch);
 
-      if (!updateQuery.$set) updateQuery.$set = {};
+      updateQuery.$set ??= {};
       updateQuery.$set.title = title;
       updateQuery.$set.pageType = pageType;
       updateQuery.$set.status = PageStatus.Published;
