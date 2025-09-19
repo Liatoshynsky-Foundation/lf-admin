@@ -123,7 +123,7 @@ jobs:
             be-app
 
   snyk-scan:
-    uses: ./.github/reusable_workflows/snyk-security.yaml
+    uses: ./.github/reusable_workflows/snyk-security.yaml@main
     needs: docker-build
     with:
       node-version: 22
@@ -132,16 +132,15 @@ jobs:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
   gitleaks-scan:
-    uses: ./.github/reusable_workflows/gitleaks.yaml
+    uses: ./.github/reusable_workflows/gitleaks.yaml@main
     needs: [run-lint, run-tests]
     secrets:
       GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
-  
+
   pre-release-changelog:
-    uses: ./.github/reusable_workflows/release-please.yml
+    uses: ./.github/reusable_workflows/release-please.yml@main
     needs: [run-lint, run-tests]
     if: github.ref == 'refs/heads/develop'
-
     secrets:
       GITHUB_TOKEN: ${{ github.token }}
 
