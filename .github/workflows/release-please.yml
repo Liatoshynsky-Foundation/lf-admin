@@ -25,5 +25,5 @@ jobs:
       - uses: googleapis/release-please-action@v4
         id: release
         with:
-          token: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
           release-type: simple
