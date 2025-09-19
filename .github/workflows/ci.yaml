@@ -136,4 +136,12 @@ jobs:
     needs: [run-lint, run-tests]
     secrets:
       GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+  
+  pre-release-changelog:
+    uses: ./.github/workflows/release-please.yml
+    needs: [run-lint, run-tests]
+    if: github.ref == 'refs/heads/develop'
+    
+    secrets:
+      GITHUB_TOKEN: ${{ github.token }}
 

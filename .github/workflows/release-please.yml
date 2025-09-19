@@ -2,9 +2,11 @@ name: Changelog
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches:
-      - main
+  workflow_call:
+
+permissions:
+  contents: read  
+  pull-requests: write
 
 jobs:
   release-please:
@@ -18,5 +20,14 @@ jobs:
       - uses: googleapis/release-please-action@v4
         id: release
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ github.token }}
           release-type: simple
+  
+  comment:
+    name: Comment on PR
+    uses: marocchino/sticky-pull-request-comment@v2
+    with:
+      header: Changelog
+      message: ${{ steps.release.outputs.changelog }}
+    if: steps.release.outputs.changelog != ''
+    needs: release-please
