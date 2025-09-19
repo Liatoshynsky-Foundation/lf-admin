@@ -3,18 +3,23 @@ name: Changelog
 on:
   workflow_dispatch:
   workflow_call:
+    outputs:
+      changelog:
+        description: "Generated changelog"
+        value: ${{ jobs.release-please.outputs.changelog }}
 
 permissions:
-  contents: read  
+  contents: read
   pull-requests: write
 
 jobs:
   release-please:
     runs-on: ubuntu-latest
-
     permissions:
-      contents: write   
-      pull-requests: write  
+      contents: write
+      pull-requests: write
+    outputs:
+      changelog: ${{ steps.release.outputs.changelog }}
 
     steps:
       - uses: googleapis/release-please-action@v4
@@ -22,12 +27,3 @@ jobs:
         with:
           token: ${{ github.token }}
           release-type: simple
-  
-  comment:
-    name: Comment on PR
-    uses: marocchino/sticky-pull-request-comment@v2
-    with:
-      header: Changelog
-      message: ${{ steps.release.outputs.changelog }}
-    if: steps.release.outputs.changelog != ''
-    needs: release-please
