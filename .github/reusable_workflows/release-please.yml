@@ -1,0 +1,29 @@
+name: Changelog
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    outputs:
+      changelog:
+        description: "Generated changelog"
+        value: ${{ jobs.release-please.outputs.changelog }}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      changelog: ${{ steps.release.outputs.changelog }}
+
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          GITHUB_TOKEN: ${{ github.token }}
+          release-type: simple
