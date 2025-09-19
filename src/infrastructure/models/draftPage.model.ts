@@ -16,7 +16,8 @@ const draftPageSchema = new Schema<BasePage>(
       required: true,
       default: PageStatus.Draft
     },
-    blocks: { type: Schema.Types.Mixed, required: true }
+    blocks: { type: Schema.Types.Mixed, required: true },
+    pageType: { type: String, required: true }
   },
   {
     timestamps: true,
