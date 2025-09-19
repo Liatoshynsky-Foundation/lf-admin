@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  contents: write
   security-events: write
   pull-requests: write
   actions: read
@@ -141,7 +142,7 @@ jobs:
     uses: ./.github/workflows/release-please.yml
     needs: [run-lint, run-tests]
     if: github.ref == 'refs/heads/develop'
-    
+
     secrets:
       GITHUB_TOKEN: ${{ github.token }}
 
