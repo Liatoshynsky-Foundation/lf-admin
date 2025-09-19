@@ -9,7 +9,7 @@ on:
         value: ${{ jobs.release-please.outputs.changelog }}
 
 permissions:
-  contents: ['read','write']
+  contents: write
   pull-requests: write
 
 jobs:
