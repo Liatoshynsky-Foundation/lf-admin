@@ -140,7 +140,6 @@ jobs:
   pre-release-changelog:
     uses: Liatoshynsky-Foundation/lf-devops/.github/workflows/release-please.yaml@feature/999/reusable-workflows
     needs: [run-lint, run-tests]
-    if: github.ref == 'refs/heads/develop'
-    secrets:
-      GITHUB_TOKEN: ${{ github.token }}
+    if: github.ref == 'refs/heads/develop' || github.event_name == 'pull_request'
+
 
