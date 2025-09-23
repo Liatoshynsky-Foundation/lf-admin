@@ -121,13 +121,15 @@ jobs:
             -e MONGO_USERNAME=admin \
             -e MONGO_PASSWORD=password \
             be-app
-
+  image-build:
+    uses: ./.github/workflows/docker-image.yml
+    
   snyk-scan:
     uses: Liatoshynsky-Foundation/lf-devops/.github/workflows/snyk-security.yaml@feature/999/reusable-workflows
-    needs: docker-build
+    needs: image-build
     with:
       node-version: 22
-      docker-image-name: be-app
+      docker-image-name: lf-admin
     secrets:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
