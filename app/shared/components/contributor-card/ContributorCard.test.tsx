@@ -4,10 +4,18 @@ import React from 'react';
 import { ContributorCard } from './ContributorCard';
 
 jest.mock('~/ds-components/text-field/TextField', () => ({
-  CustomTextField: ({ label, defaultValue }: { label: string; defaultValue: string }) => (
+  CustomTextField: ({
+    label,
+    value,
+    onChange
+  }: {
+    label: string;
+    value: string;
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  }) => (
     <div>
       <label>{label}</label>
-      <input defaultValue={defaultValue} aria-label={label} />
+      <input value={value} aria-label={label} onChange={onChange} />
     </div>
   )
 }));
@@ -24,7 +32,7 @@ jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
   }) => (
     <div>
       <img src={imageUrl} alt="Preview" data-testid="preview-img" />
-      <span>{fileName}</span>
+      <span data-testid="file-name">{fileName}</span>
       <input type="file" onChange={(e) => onChangeImage(e.target.files?.[0])} data-testid="image-upload" />
     </div>
   )
@@ -35,39 +43,71 @@ beforeAll(() => {
 });
 
 describe('ContributorCard', () => {
-  const name = 'John Doe';
-  const description = 'Team leader';
+  const baseContributor = {
+    name: { uk: 'John Doe', en: '' },
+    description: { uk: 'Team leader', en: '' },
+    photo: { generatedSrc: '', alt: { uk: '', en: '' } }
+  };
 
-  it('should render contributor name and description fields with default values', () => {
-    render(<ContributorCard contributorNameValue={name} contributorDescriptionValue={description} />);
+  const renderCard = (overrides: any = {}) => {
+    const onChangeName = jest.fn();
+    const onChangeDescription = jest.fn();
+    const onChangePhoto = jest.fn();
 
-    expect(screen.getByLabelText('Ім`я')).toHaveValue(name);
-    expect(screen.getByLabelText('Опис учасника')).toHaveValue(description);
+    render(
+      <ContributorCard
+        contributor={{ ...baseContributor, ...overrides }}
+        currentLocale="uk"
+        onChangeName={onChangeName}
+        onChangeDescription={onChangeDescription}
+        onChangePhoto={onChangePhoto}
+      />
+    );
+
+    return { onChangeName, onChangeDescription, onChangePhoto };
+  };
+
+  it('renders contributor name and description fields with default values', () => {
+    renderCard();
+
+    expect(screen.getByLabelText('Ім`я')).toHaveValue('John Doe');
+    expect(screen.getByLabelText('Опис учасника')).toHaveValue('Team leader');
   });
 
-  it('should render image preview with default image', () => {
-    render(<ContributorCard contributorNameValue={name} contributorDescriptionValue={description} />);
+  it('renders image preview with default placeholder image', () => {
+    renderCard();
 
     const img = screen.getByTestId('preview-img') as HTMLImageElement;
     expect(img.src).toContain('/images/oval-contributor-card.png');
   });
-  it('should update image preview and fileName when uploading a file', () => {
-    render(<ContributorCard contributorNameValue={name} contributorDescriptionValue={description} />);
+
+  it('calls onChangePhoto with updated photo when uploading a file', () => {
+    const { onChangePhoto } = renderCard();
 
     const fileInput = screen.getByTestId('image-upload') as HTMLInputElement;
     const file = new File(['dummy'], 'photo.png', { type: 'image/png' });
 
     fireEvent.change(fileInput, { target: { files: [file] } });
 
-    const img = screen.getByTestId('preview-img') as HTMLImageElement;
-    expect(img.src).toContain('mocked-url');
-
-    expect(screen.getByText('photo.png')).toBeInTheDocument();
+    expect(onChangePhoto).toHaveBeenCalledWith(
+      expect.objectContaining({
+        generatedSrc: 'mocked-url',
+        alt: expect.objectContaining({ uk: 'photo.png' })
+      })
+    );
   });
 
-  it('should render horizontal layout with spacing', () => {
-    const { container } = render(<ContributorCard contributorNameValue="Test" contributorDescriptionValue="Desc" />);
-    const stack = container.querySelector('.MuiStack-root');
-    expect(stack).toHaveStyle('flex-direction: row');
+  it('calls onChangeName when typing in name field', () => {
+    const { onChangeName } = renderCard();
+    const input = screen.getByLabelText('Ім`я');
+    fireEvent.change(input, { target: { value: 'New Name' } });
+    expect(onChangeName).toHaveBeenCalledWith('New Name');
+  });
+
+  it('calls onChangeDescription when typing in description field', () => {
+    const { onChangeDescription } = renderCard();
+    const input = screen.getByLabelText('Опис учасника');
+    fireEvent.change(input, { target: { value: 'New Description' } });
+    expect(onChangeDescription).toHaveBeenCalledWith('New Description');
   });
 });

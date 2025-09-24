@@ -5,6 +5,7 @@ export * from './blocks/missionBlock';
 export * from './blocks/ourGoalsBlock';
 export * from './blocks/whatWeDoBlock';
 
+import type { FoundationFoundersBlock } from './blocks/foundationFounderBlock';
 import type { IntroSectionBlock } from './blocks/introSectionBlock';
 import type { FoundationInfo } from './blocks/liatoshynskyFoundationBlock';
 import type { LiatoshynskyOfficeBlock } from './blocks/liatoshynskyOfficeBlock';
@@ -19,4 +20,5 @@ export interface BlocksMap {
   LiatoshynskyOffice: LiatoshynskyOfficeBlock;
   OurGoals: OurGoalsBlock;
   WhatWeDo: WhatWeDoBlock;
+  FoundationFounders: FoundationFoundersBlock;
 }

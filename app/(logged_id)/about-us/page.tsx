@@ -2,6 +2,7 @@
 import { Box } from '@mui/material';
 
 import { PAGE_IDS } from '~/constants/pageBlocks';
+import { FoundationFounders } from '~/shared/components/about-us/foundation-founders/FoundationFounders';
 import { IntroSection } from '~/shared/components/about-us/Intro-section/IntroSection';
 import { LiatoshynskyFoundation } from '~/shared/components/about-us/Liatoshynsky-foundation/LiatoshynskyFoundation';
 import { LiatoshynskyOffice } from '~/shared/components/about-us/Liatoshynsky-office/Liatoshynsky-office';
@@ -37,6 +38,7 @@ const Page = () => {
       <OurGoals />
       <LiatoshynskyOffice />
       <WhatWeDo />
+      <FoundationFounders />
     </Box>
   );
 };

@@ -15,12 +15,20 @@ export const styles = {
   imageBlock: {
     display: 'flex',
     gap: 2,
-    alignItems: 'flex-start'
+    alignItems: 'flex-start',
+    minWidth: '366px'
   },
 
   imagePreview: {
     maxWidth: '500px',
     maxHeight: '300px'
+  },
+
+  imageOvalPreview: {
+    objectFit: 'cover',
+    maxWidth: '150px',
+    maxHeight: '136px',
+    borderRadius: '60% 40% 60% 40% / 55% 45% 55% 45%'
   },
   fileNameText: {
     color: 'rgba(71, 77, 90, 1)',

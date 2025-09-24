@@ -72,6 +72,10 @@ jest.mock('~/shared/components/about-us/what-we-do/WhatWeDo', () => ({
   default: () => <div data-testid="what-we-do">WhatWeDo</div>
 }));
 
+jest.mock('~/shared/components/about-us/foundation-founders/FoundationFounders', () => ({
+  FoundationFounders: () => <div data-testid="foundation-founders">FoundationFounders</div>
+}));
+
 jest.mock('~/store', () => ({
   useStore: (
     selector: (state: { setLocale: (l: 'uk' | 'en') => void; discardChanges: (slug: string) => void }) => unknown
@@ -112,6 +116,7 @@ describe('About Page', () => {
     expect(screen.getByTestId('our-goals')).toBeInTheDocument();
     expect(screen.getByTestId('office')).toBeInTheDocument();
     expect(screen.getByTestId('what-we-do')).toBeInTheDocument();
+    expect(screen.getByTestId('foundation-founders')).toBeInTheDocument();
   });
 
   it('should call save when save button is clicked', () => {

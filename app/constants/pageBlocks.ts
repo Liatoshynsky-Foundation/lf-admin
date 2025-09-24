@@ -8,5 +8,6 @@ export const BLOCK_IDS = {
   LIATOSHYNSKY_OFFICE: 'LiatoshynskyOffice',
   OUR_MISSION: 'OurMission',
   OUR_GOALS: 'OurGoals',
-  WHAT_WE_DO: 'WhatWeDo'
+  WHAT_WE_DO: 'WhatWeDo',
+  FOUNDATION_FOUNDERS: 'FoundationFounders'
 } as const;

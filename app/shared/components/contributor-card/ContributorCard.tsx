@@ -1,28 +1,48 @@
 'use client';
 import { Stack } from '@mui/material';
-import React, { useState } from 'react';
+import React from 'react';
 
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { ImagePreviewBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
-type ContributorCardProps = {
-  contributorNameValue: string;
-  contributorDescriptionValue: string;
-};
-export const ContributorCard = ({ contributorNameValue, contributorDescriptionValue }: ContributorCardProps) => {
-  const [imageUrl, setImageUrl] = useState('/images/oval-contributor-card.png');
-  const [fileName, setFileName] = useState<string | undefined>(undefined);
+import { ImageType, LocalizedString } from '~/types/common';
 
+type ContributorCardProps = {
+  contributor: {
+    name: LocalizedString;
+    description: LocalizedString;
+    photo: ImageType;
+  };
+  currentLocale: keyof LocalizedString;
+  onChangeName: (name: string) => void;
+  onChangeDescription: (description: string) => void;
+  onChangePhoto: (photo: ImageType) => void;
+};
+
+export const ContributorCard = ({
+  contributor,
+  currentLocale,
+  onChangeName,
+  onChangeDescription,
+  onChangePhoto
+}: ContributorCardProps) => {
   const handleChangeImage = (file: File) => {
-    const newImageUrl = URL.createObjectURL(file);
-    setImageUrl(newImageUrl);
-    setFileName(file.name);
+    const previewUrl = URL.createObjectURL(file);
+
+    const updatedPhoto: ImageType = {
+      ...contributor.photo,
+
+      generatedSrc: previewUrl,
+      alt: { ...contributor.photo.alt, [currentLocale]: contributor.photo.alt[currentLocale] || file.name }
+    };
+
+    onChangePhoto(updatedPhoto);
   };
 
   return (
     <Stack display="flex" flexDirection="row" gap="16px" width="100%">
       <ImagePreviewBlock
-        imageUrl={imageUrl}
-        fileName={fileName}
+        imageUrl={contributor.photo.generatedSrc || '/images/oval-contributor-card.png'}
+        fileName={contributor.photo.alt[currentLocale] || ''}
         cropWidth={150}
         cropHeight={130}
         onChangeImage={handleChangeImage}
@@ -32,13 +52,19 @@ export const ContributorCard = ({ contributorNameValue, contributorDescriptionVa
         oval
       />
       <Stack direction="column" gap={2} width="100%" mt={2}>
-        <CustomTextField label="Ім`я" defaultValue={contributorNameValue} fullWidth />
+        <CustomTextField
+          label="Ім`я"
+          value={contributor.name[currentLocale] || ''}
+          fullWidth
+          onChange={(e) => onChangeName(e.target.value)}
+        />
         <CustomTextField
           label="Опис учасника"
-          defaultValue={contributorDescriptionValue}
+          value={contributor.description[currentLocale] || ''}
           fullWidth
           multiline
           margin="none"
+          onChange={(e) => onChangeDescription(e.target.value)}
         />
       </Stack>
     </Stack>
