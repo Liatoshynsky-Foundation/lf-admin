@@ -67,21 +67,21 @@ describe('ContributorCard', () => {
     return { onChangeName, onChangeDescription, onChangePhoto };
   };
 
-  it('renders contributor name and description fields with default values', () => {
+  it('should render contributor name and description fields with default values', () => {
     renderCard();
 
     expect(screen.getByLabelText('Ім`я')).toHaveValue('John Doe');
     expect(screen.getByLabelText('Опис учасника')).toHaveValue('Team leader');
   });
 
-  it('renders image preview with default placeholder image', () => {
+  it('should render image preview with default placeholder image', () => {
     renderCard();
 
     const img = screen.getByTestId('preview-img') as HTMLImageElement;
     expect(img.src).toContain('/images/oval-contributor-card.png');
   });
 
-  it('calls onChangePhoto with updated photo when uploading a file', () => {
+  it('should call onChangePhoto with updated photo when uploading a file', () => {
     const { onChangePhoto } = renderCard();
 
     const fileInput = screen.getByTestId('image-upload') as HTMLInputElement;
@@ -97,14 +97,14 @@ describe('ContributorCard', () => {
     );
   });
 
-  it('calls onChangeName when typing in name field', () => {
+  it('should call onChangeName when typing in name field', () => {
     const { onChangeName } = renderCard();
     const input = screen.getByLabelText('Ім`я');
     fireEvent.change(input, { target: { value: 'New Name' } });
     expect(onChangeName).toHaveBeenCalledWith('New Name');
   });
 
-  it('calls onChangeDescription when typing in description field', () => {
+  it('should call onChangeDescription when typing in description field', () => {
     const { onChangeDescription } = renderCard();
     const input = screen.getByLabelText('Опис учасника');
     fireEvent.change(input, { target: { value: 'New Description' } });
