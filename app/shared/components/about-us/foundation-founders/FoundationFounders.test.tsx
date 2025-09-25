@@ -94,7 +94,7 @@ const updateField = (testId: string, value: string) =>
   fireEvent.change(screen.getByTestId(testId), { target: { value } });
 
 beforeAll(() => {
-  global.crypto.randomUUID = jest.fn(() => 'test-id') as unknown as typeof crypto.randomUUID;
+  globalThis.crypto.randomUUID = jest.fn(() => 'test-id') as unknown as typeof crypto.randomUUID;
 });
 
 describe('FoundationFounders', () => {
