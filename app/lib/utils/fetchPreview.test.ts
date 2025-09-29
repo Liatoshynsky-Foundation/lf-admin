@@ -1,56 +1,50 @@
 import { fetchPreview } from './fetchPreview';
 
-describe('fetchPreview', () => {
-  const OLD_ENV = process.env;
+interface PreviewProps {
+  slug: string;
+  lang: 'uk' | 'en';
+  draftId: string | number;
+}
 
+describe('fetchPreview', () => {
   beforeEach(() => {
-    jest.resetModules();
-    process.env = { ...OLD_ENV };
-    process.env.NEXT_PUBLIC_CLIENT_BASE_URL = 'http://localhost:3000';
     global.fetch = jest.fn();
-    (window as unknown as { open: unknown }).open = jest.fn();
+    (window as any).open = jest.fn();
   });
 
   afterEach(() => {
-    process.env = OLD_ENV;
     jest.restoreAllMocks();
-    jest.clearAllMocks();
   });
 
-  it('should open previewUrl in a new tab and resolve on success', async () => {
+  it('should fetch config and open the constructed preview URL in a new tab', async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ previewUrl: 'http://localhost:3000/uk/about?draftId=123' })
+      json: async () => ({ clientAppUrl: 'http://localhost:3000' })
     });
 
-    await expect(fetchPreview({ slug: 'about', lang: 'uk', draftId: 123 })).resolves.toBeUndefined();
+    const props: PreviewProps = { slug: 'about', lang: 'uk', draftId: 123 };
 
-    expect(global.fetch).toHaveBeenCalledWith('http://localhost:3000/api/preview?lang=uk&slug=about&draftId=123', {
-      method: 'GET',
-      credentials: 'include'
-    });
-    expect(window.open).toHaveBeenCalledWith('http://localhost:3000/uk/about?draftId=123', '_blank');
+    await fetchPreview(props);
+
+    expect(global.fetch).toHaveBeenCalledWith('/api/config');
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+
+    const expectedUrl = 'http://localhost:3000/api/preview?lang=uk&slug=about&draftId=123';
+    expect(window.open).toHaveBeenCalledWith(expectedUrl, '_blank');
   });
 
-  it('should throw when response is not ok', async () => {
+  it('should throw an error if fetching the config fails', async () => {
+    const fetchError = new Error('Failed to parse JSON');
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
-      json: async () => ({ message: 'Not found' })
+      json: async () => {
+        throw fetchError;
+      }
     });
 
-    await expect(fetchPreview({ slug: 'about', lang: 'en', draftId: 456 })).rejects.toThrow('Failed to start preview');
+    const props: PreviewProps = { slug: 'about', lang: 'en', draftId: 456 };
 
-    expect(window.open).not.toHaveBeenCalled();
-  });
-
-  it('should throw when previewUrl is missing', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({})
-    });
-
-    await expect(fetchPreview({ slug: 'about', lang: 'uk', draftId: 789 })).rejects.toThrow('Failed to start preview');
-
+    await expect(fetchPreview(props)).rejects.toThrow('Failed to parse JSON');
     expect(window.open).not.toHaveBeenCalled();
   });
 });

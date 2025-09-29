@@ -4,18 +4,12 @@ interface PreviewProps {
   draftId: string | number;
 }
 
+type ConfigResponse = {
+  clientAppUrl: string;
+};
+
 export const fetchPreview = async ({ slug, lang, draftId }: PreviewProps) => {
-  const clientUrl = process.env.NEXT_PUBLIC_CLIENT_BASE_URL;
-  const res = await fetch(`${clientUrl}/api/preview?lang=${lang}&slug=${slug}&draftId=${draftId}`, {
-    method: 'GET',
-    credentials: 'include'
-  });
-
-  const data = await res.json();
-
-  if (!res.ok || !data.previewUrl) {
-    throw new Error('Failed to start preview');
-  }
-
-  window.open(data.previewUrl, '_blank');
+  const response = await fetch('/api/config');
+  const data: ConfigResponse = await response.json();
+  window.open(`${data.clientAppUrl}/api/preview?lang=${lang}&slug=${slug}&draftId=${draftId}`, '_blank');
 };
