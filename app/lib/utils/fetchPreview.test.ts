@@ -9,7 +9,7 @@ interface PreviewProps {
 describe('fetchPreview', () => {
   beforeEach(() => {
     global.fetch = jest.fn();
-    (window as any).open = jest.fn();
+    (globalThis.window as any).open = jest.fn();
   });
 
   afterEach(() => {
@@ -26,8 +26,8 @@ describe('fetchPreview', () => {
 
     await fetchPreview(props);
 
-    expect(global.fetch).toHaveBeenCalledWith('/api/config');
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(globalThis.global.fetch).toHaveBeenCalledWith('/api/config');
+    expect(globalThis.global.fetch).toHaveBeenCalledTimes(1);
 
     const expectedUrl = 'http://localhost:3000/api/preview?lang=uk&slug=about&draftId=123';
     expect(window.open).toHaveBeenCalledWith(expectedUrl, '_blank');
