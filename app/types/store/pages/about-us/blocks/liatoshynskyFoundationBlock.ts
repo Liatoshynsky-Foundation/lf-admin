@@ -1,11 +1,4 @@
-import { ProseDoc } from '~/types/common';
-
-export type ImageType = {
-  src: string;
-  alt: { uk: string; en: string };
-  caption: { uk: string; en: string };
-  generatedSrc: string;
-};
+import { ImageType, ProseDoc } from '~/types/common';
 
 export type FoundationInfo = {
   ourOrganisation: Record<'uk' | 'en', ProseDoc>;

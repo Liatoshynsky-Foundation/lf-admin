@@ -10,6 +10,13 @@ export interface ImageBlock {
   isTmp?: boolean;
 }
 
+export type ImageType = {
+  src: string;
+  alt: { uk: string; en: string };
+  caption: { uk: string; en: string };
+  generatedSrc: string;
+};
+
 export interface QuoteBlock {
   text: LocalizedString;
   source: LocalizedString;

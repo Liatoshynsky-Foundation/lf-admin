@@ -69,7 +69,12 @@ export const ImagePreviewBlock = ({
         </Typography>
       )}
       <Box sx={styles.imageBlock}>
-        <Box component="img" src={previewImage} alt="Preview" sx={styles.imagePreview} />
+        <Box
+          component="img"
+          src={previewImage}
+          alt="Preview"
+          sx={oval ? styles.imageOvalPreview : styles.imagePreview}
+        />
         <Stack spacing={stackSpacing} maxWidth="200px">
           <Stack spacing={typographySpacing}>
             <Typography
