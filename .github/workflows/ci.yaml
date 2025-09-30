@@ -126,7 +126,7 @@ jobs:
     uses: ./.github/workflows/docker-image.yml
     
   snyk-scan:
-    uses: Liatoshynsky-Foundation/lf-devops/.github/workflows/snyk-security.yaml@8574dbf4465aca32b3a35a27ff70a31411bf1a1a
+    uses: Liatoshynsky-Foundation/lf-devops/.github/workflows/snyk-security.yaml@a2ca7fc887c343dfa0870897111e3a3f74a14f19
     needs: image-build
     with:
       node-version: 22
@@ -135,13 +135,13 @@ jobs:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
   gitleaks-scan:
-    uses: Liatoshynsky-Foundation/lf-devops/.github/workflows/gitleaks.yaml@8574dbf4465aca32b3a35a27ff70a31411bf1a1a
+    uses: Liatoshynsky-Foundation/lf-devops/.github/workflows/gitleaks.yaml@a2ca7fc887c343dfa0870897111e3a3f74a14f19
     needs: [run-lint, run-tests]
     secrets:
       GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
   pre-release-changelog:
-    uses: Liatoshynsky-Foundation/lf-devops/.github/workflows/release-please.yaml@8574dbf4465aca32b3a35a27ff70a31411bf1a1a
+    uses: Liatoshynsky-Foundation/lf-devops/.github/workflows/release-please.yaml@a2ca7fc887c343dfa0870897111e3a3f74a14f19
     needs: [run-lint, run-tests]
     if: github.ref == 'refs/heads/develop' || github.event_name == 'pull_request'
 
