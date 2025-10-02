@@ -15,7 +15,7 @@ describe('fetchPreview', () => {
   const expectedUrl = 'http://localhost:3000/api/preview?lang=uk&slug=about&draftId=123';
 
   beforeEach(() => {
-    global.fetch = mockFetch;
+    globalThis.fetch = mockFetch;
     window.open = mockWindowOpen;
   });
 
