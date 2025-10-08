@@ -21,7 +21,7 @@ describe('ThemeProvider', () => {
     );
 
     const textElement = screen.getByText('Themed Text');
-    const styles = window.getComputedStyle(textElement);
+    const styles = globalThis.getComputedStyle(textElement);
 
     expect(styles.fontWeight).toBe('700');
     expect(styles.fontSize).toBe('32px');
@@ -46,7 +46,7 @@ describe('ThemeProvider', () => {
     const themedElement = screen.getByTestId('themed-component');
     expect(themedElement).toBeInTheDocument();
 
-    const styles = window.getComputedStyle(themedElement);
+    const styles = globalThis.getComputedStyle(themedElement);
     expect(styles.fontSize).toBe('18px');
     expect(styles.fontWeight).toBe('500');
   });
@@ -67,8 +67,8 @@ describe('ThemeProvider', () => {
     const firstChild = screen.getByText('First Child');
     const secondChild = screen.getByText('Second Child');
 
-    const firstStyles = window.getComputedStyle(firstChild);
-    const secondStyles = window.getComputedStyle(secondChild);
+    const firstStyles = globalThis.getComputedStyle(firstChild);
+    const secondStyles = globalThis.getComputedStyle(secondChild);
 
     expect(firstStyles.fontSize).toBe('16px');
     expect(firstStyles.fontWeight).toBe('400');
