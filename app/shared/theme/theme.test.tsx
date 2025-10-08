@@ -147,7 +147,6 @@ describe('Admin Theme Configuration', () => {
     for (const variant of customVariants) {
       expect((adminTheme.typography as any)[variant]).toBeDefined();
     }
-
   });
 
   it('should have correct variant mapping for custom typography', () => {
