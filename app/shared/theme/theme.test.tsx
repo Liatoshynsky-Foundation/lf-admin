@@ -144,9 +144,10 @@ describe('Admin Theme Configuration', () => {
       'customItalic14'
     ];
 
-    customVariants.forEach((variant: string) => {
+    for (const variant of customVariants) {
       expect((adminTheme.typography as any)[variant]).toBeDefined();
-    });
+    }
+
   });
 
   it('should have correct variant mapping for custom typography', () => {
