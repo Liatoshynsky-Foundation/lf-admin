@@ -2,23 +2,34 @@
   "compilerOptions": {
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true, // Allow JavaScript files alongside TypeScript files
-    "skipLibCheck": true, // Skip checking library types for faster builds
-    "strict": true, // Enable strict type-checking options
-    "noEmit": true, // Do not emit output files (used for type-checking only)
-    "esModuleInterop": true, // Enables compatibility between CommonJS and ES Modules
-    "module": "esnext", // Use ESNext module resolution
-    "moduleResolution": "node", // Use Node module resolution strategy
-    "resolveJsonModule": true, // Allow importing JSON modules
-    "isolatedModules": true, // Ensure each file is treated as an isolated module
-    "incremental": true, // Enable incremental compilation for faster builds
+    "allowJs": true,
+    // Allow JavaScript files alongside TypeScript files
+    "skipLibCheck": true,
+    // Skip checking library types for faster builds
+    "strict": true,
+    // Enable strict type-checking options
+    "noEmit": true,
+    // Do not emit output files (used for type-checking only)
+    "esModuleInterop": true,
+    // Enables compatibility between CommonJS and ES Modules
+    "module": "esnext",
+    // Use ESNext module resolution
+    "moduleResolution": "bundler",
+    // Use Node module resolution strategy
+    "resolveJsonModule": true,
+    // Allow importing JSON modules
+    "isolatedModules": true,
+    // Ensure each file is treated as an isolated module
+    "incremental": true,
+    // Enable incremental compilation for faster builds
     "jsx": "preserve",
     "plugins": [
       {
         "name": "next"
       }
     ],
-    "baseUrl": ".", // Base URL for module resolution
+    "baseUrl": ".",
+    // Base URL for module resolution
     "paths": {
       "~/*": ["./app/*"],
       "~/ds-components/*": ["app/shared/components/design-system/*"],
@@ -38,7 +49,8 @@
       "~/interfaces/*": ["./src/interfaces/*"],
       "~/back-shared/*": ["./src/shared/*"],
       "~/validators/*": ["./src/validators/*"],
-      "~/public/*": ["./public/*"] // Path alias for easier imports
+      "~/public/*": ["./public/*"]
+      // Path alias for easier imports
     }
   },
   "include": [
@@ -46,7 +58,9 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "jest.config.ts" // Include Jest config file for TypeScript support
+    "jest.config.ts"
+    // Include Jest config file for TypeScript support
   ],
-  "exclude": ["node_modules"] // Exclude node_modules from compilation
+  "exclude": ["node_modules"]
+  // Exclude node_modules from compilation
 }
