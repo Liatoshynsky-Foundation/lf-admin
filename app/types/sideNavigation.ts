@@ -4,6 +4,7 @@ export interface ListElementType {
   title: string;
   iconSrc?: string;
   href?: string;
+  disabled?: boolean;
 }
 export interface AdditionalElement {
   element: ListElementType;
