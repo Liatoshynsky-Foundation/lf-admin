@@ -35,6 +35,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set lowercase repository owner
+        run: echo "REPO_OWNER_LOWER=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
       - name: Build and push container image to registries
         uses: docker/build-push-action@v6
         with:
@@ -42,8 +45,8 @@ jobs:
           push: true
           tags: |
             lfacrstage-bkg7bmd7gacxh9e5.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_960c1c49b72746a985193b504f55b231 }}/lf-stage-admin:${{ github.sha }}
-            ghcr.io/${{ github.repository_owner }}/lf-admin:${{ github.sha }}
-            ghcr.io/${{ github.repository_owner }}/lf-admin:latest
+            ghcr.io/${{ env.REPO_OWNER_LOWER }}/lf-admin:${{ github.sha }}
+            ghcr.io/${{ env.REPO_OWNER_LOWER }}/lf-admin:latest
           file: ./Dockerfile
 
   deploy-azure:
