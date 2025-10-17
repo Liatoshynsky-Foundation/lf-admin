@@ -5,9 +5,6 @@ on:
     branches:
       - develop
       - main
-  push:
-    branches:
-      - feat/165/add-snyk
 
 permissions:
   contents: read
@@ -124,7 +121,7 @@ jobs:
       #       type=sha,enable={{is_default_branch || is_develop_branch}}
 
       - name: Build Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           tags: lf-admin:test
@@ -207,7 +204,7 @@ jobs:
 
       # - name: Build and push production image
       #   if: success()
-      #   uses: docker/build-push-action@v5
+      #   uses: docker/build-push-action@v6
       #   with:
       #     context: .
       #     tags: ${{ steps.meta.outputs.tags }}
