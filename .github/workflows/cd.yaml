@@ -168,4 +168,5 @@ jobs:
             echo "Current service status:"
             docker-compose ps
 
-            echo "vps-url=https://admin.tail6afd63.ts.net" >> $GITHUB_OUTPUT
+      - name: Set deployment URL
+        run: echo "vps-url=https://admin.tail6afd63.ts.net" >> $GITHUB_OUTPUT
