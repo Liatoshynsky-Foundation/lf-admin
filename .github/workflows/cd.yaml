@@ -76,6 +76,8 @@ jobs:
       url: ${{ steps.deploy-to-vps.outputs.vps-url }}
 
     steps:
+      - name: Set lowercase repository owner
+        run: echo "REPO_OWNER_LOWER=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
       - name: Deploy to VPS with Docker Compose
         id: deploy-to-vps
         uses: appleboy/ssh-action@v1.0.3
@@ -87,18 +89,30 @@ jobs:
           script: |
             set -e
 
+            echo "🔐 Logging into GitHub Container Registry..."
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
+            echo "📁 Changing to project directory..."
             cd /root/docker/lf-prj
 
+            echo "📊 Debug info:"
+            echo "Repository owner: ${{ github.repository_owner }}"
+            echo "Lowercase owner: ${{ env.REPO_OWNER_LOWER }}"
+            echo "Git commit: ${{ github.sha }}"
+
+            echo "📦 Pulling new admin image..."
             docker pull ghcr.io/${{ env.REPO_OWNER_LOWER }}/lf-admin:${{ github.sha }}
 
+            echo "🏷️  Tagging image as latest..."
             docker tag ghcr.io/${{ env.REPO_OWNER_LOWER }}/lf-admin:${{ github.sha }} ghcr.io/${{ env.REPO_OWNER_LOWER }}/lf-admin:latest
 
+            echo "🛑 Stopping admin services..."
             docker-compose stop admin admin-tailscale
 
+            echo "🗑️  Removing old containers..."
             docker-compose rm -f admin admin-tailscale
 
+            echo "🚀 Starting updated admin services..."
             docker-compose up -d admin admin-tailscale
 
             echo "Waiting for admin services to start..."
