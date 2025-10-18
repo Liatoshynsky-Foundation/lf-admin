@@ -9,7 +9,7 @@ updates:
       time: "00:00"
       timezone: "Europe/Kyiv"
     commit-message:
-      prefix: "[DEPENDABOT]"
+      prefix: "deps(dependabot):"
     labels:
       - "dependencies"
       - "dependabot"
@@ -24,7 +24,7 @@ updates:
       time: "00:00"
       timezone: "Europe/Kyiv"
     commit-message:
-      prefix: "[DEPENDABOT]"
+      prefix: "deps(dependabot):"
     labels:
       - "dependencies"
       - "dependabot"
@@ -39,7 +39,7 @@ updates:
       time: "00:00"
       timezone: "Europe/Kyiv"
     commit-message:
-      prefix: "[DEPENDABOT]"
+      prefix: "deps(dependabot):"
     labels:
       - "dependencies"
       - "dependabot"
