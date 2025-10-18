@@ -73,7 +73,7 @@ jobs:
     needs: build
     environment:
       name: "production"
-      url: ${{ steps.deploy-to-vps.outputs.vps-url }}
+      url: ${{ steps.set-vps-url.outputs.vps-url }}
 
     steps:
       - name: Set lowercase repository owner
@@ -168,5 +168,9 @@ jobs:
             echo "Current service status:"
             docker-compose ps
 
-      - name: Set deployment URL
+            echo "Deployment completed successfully!"
+            echo "Admin URL: https://admin.tail6afd63.ts.net"
+
+      - name: Set VPS deployment URL
+        id: set-vps-url
         run: echo "vps-url=https://admin.tail6afd63.ts.net" >> $GITHUB_OUTPUT
