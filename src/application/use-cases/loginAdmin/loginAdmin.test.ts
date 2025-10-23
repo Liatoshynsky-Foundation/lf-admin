@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import { v4 as uuidv4 } from 'uuid';
 
 import { loginAdmin } from './loginAdmin';
 import { LoginError } from '~/back-constants/apolloCustomErrors/adminErrors';
@@ -17,7 +18,8 @@ describe('loginAdmin', () => {
   });
 
   it('should return id and type if all valid', async () => {
-    const fakeAdmin = { id: '123', type: 'admin', password: 'hashedPassword' }; //NOSONAR
+    const password = uuidv4();
+    const fakeAdmin = { id: '123', type: 'admin', password: password };
     mockAdminRepository.findByEmail.mockResolvedValue(fakeAdmin);
 
     (bcrypt.compare as jest.Mock).mockResolvedValue(true);
@@ -36,7 +38,8 @@ describe('loginAdmin', () => {
   });
 
   it('should throw LoginError if incorrect password', async () => {
-    const fakeAdmin = { id: '123', type: 'admin', password: 'hashedPassword' }; //NOSONAR
+    const password = uuidv4();
+    const fakeAdmin = { id: '123', type: 'admin', password: password };
     mockAdminRepository.findByEmail.mockResolvedValue(fakeAdmin);
 
     (bcrypt.compare as jest.Mock).mockResolvedValue(false);

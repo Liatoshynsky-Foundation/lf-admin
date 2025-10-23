@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@apollo/client": "^3.13.8",
-    "@apollo/server": "^4.12.2",
+    "@apollo/server": "^5.0.0",
     "@azure/storage-blob": "^12.28.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
@@ -25,6 +25,7 @@
     "@graphql-codegen/typescript": "^4.1.6",
     "@graphql-codegen/typescript-operations": "^4.6.1",
     "@graphql-codegen/typescript-react-apollo": "^4.3.3",
+    "@graphql-codegen/visitor-plugin-common": "^5.8.0",
     "@graphql-tools/load-files": "^7.0.1",
     "@graphql-tools/merge": "^9.1.0",
     "@graphql-tools/schema": "^10.0.24",
@@ -37,9 +38,11 @@
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-unused-imports": "^4.1.4",
     "graphql": "^16.11.0",
+    "graphql-depth-limit": "^1.1.0",
+    "graphql-validation-complexity": "^0.4.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.16.3",
-    "next": "15.3.1",
+    "next": "^15.3.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-image-crop": "^11.0.10",
@@ -61,6 +64,8 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/bcrypt": "^6.0.0",
     "@types/cookie": "^0.6.0",
+    "@types/graphql-depth-limit": "^1.1.6",
+    "@types/graphql-validation-complexity": "^0.4.4",
     "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20",
@@ -86,5 +91,8 @@
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": "eslint --fix"
+  },
+  "overrides": {
+    "tmp": "0.2.4"
   }
 }
