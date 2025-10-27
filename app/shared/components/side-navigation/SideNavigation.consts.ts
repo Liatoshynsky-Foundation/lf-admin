@@ -14,7 +14,7 @@ export const NAVIGATION_DATA = {
       element: { title: 'Про фундацію', iconSrc: 'aboutFoundation' },
       collapseElements: [{ title: 'Про нас', href: '/about-us' }]
     },
-    { title: 'Кабінет-Архів', iconSrc: 'archive', href: '/archive', disabled: true }
+    { title: 'Архів', iconSrc: 'archive', href: '/archive', disabled: true }
   ],
   settings: [
     { title: 'Контакти', iconSrc: 'contacts', href: '/contacts', disabled: true },

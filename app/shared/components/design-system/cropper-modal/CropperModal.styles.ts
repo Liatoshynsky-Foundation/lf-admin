@@ -26,16 +26,12 @@ export const styles = {
     gap: '8px'
   },
   mainTitle: {
-    fontFamily: 'Mulish',
-    fontWeight: '400',
-    fontSize: '20px',
-    lineHeight: '140%'
+    fontSize: '1.5rem',
+    fontWeight: 'bold',
+    marginBottom: '1rem',
+    textAlign: 'center'
   },
   subTitle: {
-    fontFamily: 'Mulish',
-    fontWeight: '500',
-    fontSize: '18px',
-    lineHeight: '135%',
     color: '#C1C9D6'
   },
   buttonSection: {
@@ -47,10 +43,6 @@ export const styles = {
   buttons: {
     borderColor: 'white',
     borderRadius: '28px',
-    textTransform: 'none',
-    fontFamily: 'Mulish',
-    fontWeight: '500',
-    fontSize: '16px',
-    lineHeight: '150%'
+    textTransform: 'none'
   }
 };
