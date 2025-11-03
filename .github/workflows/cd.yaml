@@ -50,7 +50,7 @@ jobs:
           file: ./Dockerfile
 
   deploy-azure:
-    name: Deploy to Azure Web App
+    name: Deploy to Azure Web App(Dev)
     runs-on: ubuntu-latest
     needs: build
     if: github.ref == 'refs/heads/develop'
@@ -68,6 +68,24 @@ jobs:
           publish-profile: ${{ secrets.AzureAppService_PublishProfile_d5b9cec1e4254c8a8fcc7b0ef69249ad }}
           images: "lfacrstage-bkg7bmd7gacxh9e5.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_960c1c49b72746a985193b504f55b231 }}/lf-stage-admin:${{ github.sha }}"
 
+  deploy-azure-qa:
+      name: Deploy to Azure Web App(QA)
+      runs-on: ubuntu-latest
+      needs: build
+      environment:
+        name: "qa"
+        url: ${{ steps.deploy-to-qa-webapp.outputs.webapp-url }}
+      if: github.ref == 'refs/heads/develop'
+      
+      steps:
+        - name: Deploy to lf-client-qa-admin
+          id: deploy-to-qa-webapp
+          uses: azure/webapps-deploy@v3
+          with:
+            app-name: "lf-client-qa-admin" 
+            slot-name: "production"
+            publish-profile: ${{ secrets.AzureAppService_PublishProfile_QA }} 
+            images: "lfacrstage-bkg7bmd7gacxh9e5.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_b9f545afba4f47a2a25a9fb5462ebe38 }}/lf-stage-admin:${{ github.sha }}"
   deploy-vps:
     name: Deploy to VPS
     runs-on: ubuntu-latest
