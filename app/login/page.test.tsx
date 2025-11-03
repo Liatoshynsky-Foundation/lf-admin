@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { act } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import LoginPage from './page';
 import { type LoginMutation, useLoginMutation } from '~/types/graphql/generated/graphql';
@@ -68,7 +69,7 @@ const mockLoginWithNetworkError = (onError: (err: Error) => void) => {
   return [mockLoginFn, { loading: false }];
 };
 
-const submitFormHelper = () => {
+const submitFormHelper = (password: string) => {
   render(<LoginPage />);
 
   const emailInput = screen.getByLabelText(/Логін/i);
@@ -76,7 +77,7 @@ const submitFormHelper = () => {
   const submitButton = screen.getByRole('button', { name: 'Увійти' });
 
   fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-  fireEvent.change(passwordInput, { target: { value: 'password123' } });
+  fireEvent.change(passwordInput, { target: { value: password } });
   fireEvent.click(submitButton);
 };
 
@@ -95,38 +96,42 @@ describe('LoginPage', () => {
 
   it('should call the mutation on form submission with correct data', () => {
     const mockLoginFn = jest.fn();
+    const test = uuidv4();
     mockedUseLoginMutation.mockReturnValue([mockLoginFn, { loading: false }]);
 
-    submitFormHelper();
+    submitFormHelper(test);
 
     expect(mockLoginFn).toHaveBeenCalledWith({
       variables: {
         email: 'test@example.com',
-        password: 'password123' //NOSONAR
+        password: test
       }
     });
   });
 
   it('should handle successful login and redirect', () => {
     mockedUseLoginMutation.mockImplementation(({ onCompleted }) => mockLoginWithSuccess(onCompleted));
+    const test = uuidv4();
 
-    submitFormHelper();
+    submitFormHelper(test);
 
     expect(routerMockPush).toHaveBeenCalledWith('/');
   });
 
   it('should handle login failure and display error message', () => {
     mockedUseLoginMutation.mockImplementation(({ onCompleted }) => mockLoginWithError(onCompleted));
+    const test = uuidv4();
 
-    submitFormHelper();
+    submitFormHelper(test);
 
     expect(screen.getByText('Invalid credentials')).toBeInTheDocument();
   });
 
   it('should handle unexpected errors gracefully', () => {
     mockedUseLoginMutation.mockImplementation(({ onError }) => mockLoginWithNetworkError(onError));
+    const test = uuidv4();
 
-    submitFormHelper();
+    submitFormHelper(test);
 
     expect(screen.getByText('Непередбачена помилка. Спробуйте ще раз.')).toBeInTheDocument();
   });

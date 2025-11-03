@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import LoginModal from './LoginModal';
 
@@ -89,14 +90,15 @@ describe('LoginModal', () => {
     const usernameInput = screen.getByLabelText('Логін');
     const passwordInput = screen.getByLabelText('Пароль');
     const submitButton = screen.getByRole('button', { name: 'Увійти' });
+    const test = uuidv4();
 
     fireEvent.change(usernameInput, { target: { value: 'testuser' } });
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
+    fireEvent.change(passwordInput, { target: { value: test } });
     fireEvent.click(submitButton);
 
     expect(mockOnSubmit).toHaveBeenCalledWith({
       login: 'testuser',
-      password: 'password123' // NOSONAR
+      password: test
     });
   });
 });
