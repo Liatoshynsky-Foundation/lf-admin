@@ -65,9 +65,9 @@ jobs:
         with:
           app-name: "lf-admin-stage"
           slot-name: "production"
-          publish-profile: ${{ secrets.AzureAppService_PublishProfile_33658204638a4070adadb0337bf888b8 }}
-          images: "lfacrstage-bkg7bmd7gacxh9e5.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_b9f545afba4f47a2a25a9fb5462ebe38 }}/lf-stage-admin:${{ github.sha }}"
-
+          publish-profile: ${{ secrets.AzureAppService_PublishProfile_d5b9cec1e4254c8a8fcc7b0ef69249ad }}
+          images: "lfacrstage-bkg7bmd7gacxh9e5.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_960c1c49b72746a985193b504f55b231 }}/lf-stage-admin:${{ github.sha }}"
+  
   deploy-azure-qa:
       name: Deploy to Azure Web App(QA)
       runs-on: ubuntu-latest
