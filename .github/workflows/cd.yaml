@@ -59,7 +59,7 @@ jobs:
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
     steps:
-      - name: Deploy to Azure Web App(Dev)
+      - name: Deploy to lf-admin-stage
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
