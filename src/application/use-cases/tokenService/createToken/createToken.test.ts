@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { v4 as uuidv4 } from 'uuid';
 
 import { getJWT } from '../../../../config';
 import { createTokenService } from './createToken.service';
@@ -52,7 +53,8 @@ describe('createTokenService', () => {
     });
 
     it('should throw an error for a token signed with an invalid key', () => {
-      const maliciousToken = jwt.sign({ id: 'hacker' }, 'this-is-a-wrong-secret');
+      const token = uuidv4();
+      const maliciousToken = jwt.sign({ id: 'hacker' }, token);
 
       expect(() => {
         tokenService.verifyAccessToken(maliciousToken);
@@ -83,7 +85,8 @@ describe('createTokenService', () => {
     });
 
     it('should throw an error for a token signed with an invalid key', () => {
-      const maliciousToken = jwt.sign({ id: 'hacker' }, 'this-is-a-wrong-secret');
+      const token = uuidv4();
+      const maliciousToken = jwt.sign({ id: 'hacker' }, token);
 
       expect(() => {
         tokenService.verifyRefreshToken(maliciousToken);
