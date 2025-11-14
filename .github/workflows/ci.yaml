@@ -81,11 +81,7 @@ jobs:
       - name: Run Tests
         env:
           NODE_OPTIONS: --max_old_space_size=4096
-          MONGO_HOST: mongodb
-          MONGO_PORT: 2017
-          MONGO_DB: mongodb
-          MONGO_USERNAME: admin
-          MONGO_PASSWORD: password
+          MONGO_URL: mongodb://admin:password@mongodb:27017/mongodb
         run: npm run test
 
   build-and-test-docker:
