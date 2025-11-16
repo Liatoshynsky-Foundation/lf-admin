@@ -24,14 +24,15 @@ const logFormat = printf((info: TransformableInfo): string => {
   return `🕒 ${timestamp} ${level}: ${message}${metaBlock}${formatStack(stack)}`;
 });
 
-const logger = createLogger({
-  format: combine(errors({ stack: true }), timestamp(), logFormat),
-  transports: [
-    new transports.Console({
-      format: combine(format.colorize(), logFormat),
-      handleExceptions: true
-    }),
+const transportsList: any[] = [
+  new transports.Console({
+    format: combine(format.colorize(), logFormat),
+    handleExceptions: true
+  })
+];
 
+if (mongoUrl) {
+  transportsList.push(
     new MongoDB({
       level: 'error',
       db: mongoUrl,
@@ -39,7 +40,12 @@ const logger = createLogger({
       expireAfterSeconds: SEVEN_DAYS_IN_SECONDS,
       format: combine(errors({ stack: true }), timestamp(), json())
     })
-  ]
+  );
+}
+
+const logger = createLogger({
+  format: combine(errors({ stack: true }), timestamp(), logFormat),
+  transports: transportsList
 });
 
 export default logger;
