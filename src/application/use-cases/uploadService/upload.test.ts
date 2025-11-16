@@ -19,7 +19,7 @@ const mockHeaders = jest.fn().mockImplementation(() => ({
 const mockFolderNameSchemaParse = jest.fn();
 
 global.fetch = mockFetch;
-global.Response = mockResponse;
+global.Response = mockResponse as any;
 global.Headers = mockHeaders;
 
 const MOCK_AZURE_SAS_URL = 'url-test';
