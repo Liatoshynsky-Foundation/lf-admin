@@ -110,7 +110,10 @@ describe('LoginModal', () => {
     fireEvent.change(usernameInput, { target: { value: 'testuser' } });
     fireEvent.change(passwordInput, { target: { value: test } });
 
-    fireEvent.submit(passwordInput.closest('form')!);
+    const form = passwordInput.closest('form');
+    expect(form).not.toBeNull();
+
+    fireEvent.submit(form!);
 
     expect(mockOnSubmit).toHaveBeenCalledWith({
       login: 'testuser',
