@@ -1,9 +1,10 @@
 import type { TransformableInfo } from 'logform';
 import { createLogger, format, transports } from 'winston';
 import { MongoDB } from 'winston-mongodb';
+import type Transport from 'winston-transport';
 
-import { SEVEN_DAYS_IN_SECONDS } from '../../../app/constants';
 import { mongoUrl } from '../../config';
+import { SEVEN_DAYS_IN_SECONDS } from '~/constants';
 
 const { combine, timestamp, printf, errors, json } = format;
 
@@ -24,7 +25,7 @@ const logFormat = printf((info: TransformableInfo): string => {
   return `🕒 ${timestamp} ${level}: ${message}${metaBlock}${formatStack(stack)}`;
 });
 
-const transportsList: any[] = [
+const transportsList: Transport[] = [
   new transports.Console({
     format: combine(format.colorize(), logFormat),
     handleExceptions: true
