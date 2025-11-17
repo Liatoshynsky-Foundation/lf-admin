@@ -101,4 +101,20 @@ describe('LoginModal', () => {
       password: test
     });
   });
+
+  it('should login user by pressing Enter', () => {
+    const usernameInput = screen.getByLabelText('Логін');
+    const passwordInput = screen.getByLabelText('Пароль');
+    const test = uuidv4();
+
+    fireEvent.change(usernameInput, { target: { value: 'testuser' } });
+    fireEvent.change(passwordInput, { target: { value: test } });
+
+    fireEvent.submit(passwordInput.closest('form')!);
+
+    expect(mockOnSubmit).toHaveBeenCalledWith({
+      login: 'testuser',
+      password: test
+    });
+  });
 });

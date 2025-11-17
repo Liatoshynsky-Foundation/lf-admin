@@ -44,7 +44,9 @@ const LoginModal = ({ onSubmit, submitError }: LoginModalProps) => {
     if (passwordError) validatePassword();
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
     const isUsernameValid = validateUsername();
     const isPasswordValid = validatePassword();
 
@@ -56,7 +58,7 @@ const LoginModal = ({ onSubmit, submitError }: LoginModalProps) => {
   return (
     <Box sx={styles.outerContainer}>
       <Image src="./icons/logo.svg" alt="logo" width={96} height={80} />
-      <Box sx={styles.container}>
+      <Box component="form" onSubmit={handleSubmit} sx={styles.container}>
         <Typography sx={styles.title} variant="h5">
           Вхід до адмін-панелі
         </Typography>
@@ -83,7 +85,7 @@ const LoginModal = ({ onSubmit, submitError }: LoginModalProps) => {
             {submitError}
           </Typography>
         )}
-        <Button variant="contained" sx={styles.button} onClick={handleSubmit} disabled={!username || !password}>
+        <Button variant="contained" sx={styles.button} type="submit" disabled={!username || !password}>
           Увійти
         </Button>
       </Box>
