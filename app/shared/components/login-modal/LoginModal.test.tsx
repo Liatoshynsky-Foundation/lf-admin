@@ -111,9 +111,11 @@ describe('LoginModal', () => {
     fireEvent.change(passwordInput, { target: { value: test } });
 
     const form = passwordInput.closest('form');
-    expect(form).not.toBeNull();
+    if (!form) {
+      throw new Error('Form element not found');
+    }
 
-    fireEvent.submit(form!);
+    fireEvent.submit(form);
 
     expect(mockOnSubmit).toHaveBeenCalledWith({
       login: 'testuser',
