@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 
+import { newsErrors } from '~/constants/errors';
 import { safeMutate } from '~/lib/utils/safeMutate';
 import {
   type AllNewsQueryVariables,
@@ -69,8 +70,8 @@ export const useNewsMutations = () => {
       return safeMutate<CreateNewsMutation, CreateNewsMutationVariables>(
         createMutate,
         variables,
-        'Network error while creating news',
-        'Failed to create news'
+        newsErrors.NETWORK_ERROR_CREATE,
+        newsErrors.FAILED_TO_CREATE
       );
     },
     [createMutate]
@@ -81,8 +82,8 @@ export const useNewsMutations = () => {
       return safeMutate<UpdateNewsMutation, UpdateNewsMutationVariables>(
         updateMutate,
         variables,
-        'Network error while updating news',
-        'Failed to update news'
+        newsErrors.NETWORK_ERROR_UPDATE,
+        newsErrors.FAILED_TO_UPDATE
       );
     },
     [updateMutate]
@@ -93,8 +94,8 @@ export const useNewsMutations = () => {
       return safeMutate<PublishNewsMutation, PublishNewsMutationVariables>(
         publishMutate,
         variables,
-        'Network error while publishing news',
-        'Failed to publish news'
+        newsErrors.NETWORK_ERROR_PUBLISH,
+        newsErrors.FAILED_TO_PUBLISH
       );
     },
     [publishMutate]
@@ -102,21 +103,21 @@ export const useNewsMutations = () => {
 
   const unpublishNews = useCallback(
     async (id: string) => {
-      return safeMutate(unpublishMutate, { id }, 'Network error while unpublishing news', 'Failed to unpublish news');
+      return safeMutate(unpublishMutate, { id }, newsErrors.NETWORK_ERROR_UNPUBLISH, newsErrors.FAILED_TO_UNPUBLISH);
     },
     [unpublishMutate]
   );
 
   const archiveNews = useCallback(
     async (id: string) => {
-      return safeMutate(archiveMutate, { id }, 'Network error while archiving news', 'Failed to archive news');
+      return safeMutate(archiveMutate, { id }, newsErrors.NETWORK_ERROR_ARCHIVE, newsErrors.FAILED_TO_ARCHIVE);
     },
     [archiveMutate]
   );
 
   const hideNews = useCallback(
     async (id: string) => {
-      return safeMutate(hideMutate, { id }, 'Network error while hiding news', 'Failed to hide news');
+      return safeMutate(hideMutate, { id }, newsErrors.NETWORK_ERROR_HIDE, newsErrors.FAILED_TO_HIDE);
     },
     [hideMutate]
   );
@@ -126,8 +127,8 @@ export const useNewsMutations = () => {
       return safeMutate<DeleteNewsMutation, DeleteNewsMutationVariables>(
         deleteMutate,
         variables,
-        'Network error while deleting news',
-        'Failed to delete news'
+        newsErrors.NETWORK_ERROR_DELETE,
+        newsErrors.FAILED_TO_DELETE
       );
     },
     [deleteMutate]

@@ -1,3 +1,4 @@
+import { newsServiceErrors } from '~/back-constants/errors';
 import { News } from '~/domain/entities/News';
 import { CreateNewsInput, NewsFilters, NewsRepository, UpdateNewsInput } from '~/domain/repositories/newsRepository';
 import { NewsStatus } from '~/types/enums/common.enums';
@@ -21,7 +22,7 @@ export const NewsService = ({ newsRepository }: { newsRepository: Repo }) => ({
     const existingNews = await newsRepository.findBySlug(input.slug);
 
     if (existingNews) {
-      throw new Error(`News with slug "${input.slug}" already exists`);
+      throw new Error(newsServiceErrors.SLUG_ALREADY_EXISTS(input.slug));
     }
 
     const newsData: CreateNewsInput = {
@@ -59,13 +60,13 @@ export const NewsService = ({ newsRepository }: { newsRepository: Repo }) => ({
     if (input.slug) {
       const existingNews = await newsRepository.findBySlug(input.slug);
       if (existingNews && existingNews.id !== id) {
-        throw new Error(`News with slug "${input.slug}" already exists`);
+        throw new Error(newsServiceErrors.SLUG_ALREADY_EXISTS(input.slug));
       }
     }
 
     const updated = await newsRepository.update(id, input);
     if (!updated) {
-      throw new Error(`News with id "${id}" not found`);
+      throw new Error(newsServiceErrors.NEWS_NOT_FOUND(id));
     }
 
     return updated;
@@ -76,7 +77,7 @@ export const NewsService = ({ newsRepository }: { newsRepository: Repo }) => ({
 
     const news = await newsRepository.findById(id);
     if (!news) {
-      throw new Error(`News with id "${id}" not found`);
+      throw new Error(newsServiceErrors.NEWS_NOT_FOUND(id));
     }
 
     const updateData: UpdateNewsInput = {
@@ -86,7 +87,7 @@ export const NewsService = ({ newsRepository }: { newsRepository: Repo }) => ({
 
     const updated = await newsRepository.update(id, updateData);
     if (!updated) {
-      throw new Error(`Failed to publish news with id "${id}"`);
+      throw new Error(newsServiceErrors.FAILED_TO_PUBLISH(id));
     }
 
     return updated;
@@ -95,7 +96,7 @@ export const NewsService = ({ newsRepository }: { newsRepository: Repo }) => ({
   unpublishNews: async (id: string): Promise<News> => {
     const news = await newsRepository.findById(id);
     if (!news) {
-      throw new Error(`News with id "${id}" not found`);
+      throw new Error(newsServiceErrors.NEWS_NOT_FOUND(id));
     }
 
     const updated = await newsRepository.update(id, {
@@ -104,7 +105,7 @@ export const NewsService = ({ newsRepository }: { newsRepository: Repo }) => ({
     });
 
     if (!updated) {
-      throw new Error(`Failed to unpublish news with id "${id}"`);
+      throw new Error(newsServiceErrors.FAILED_TO_UNPUBLISH(id));
     }
 
     return updated;
@@ -113,7 +114,7 @@ export const NewsService = ({ newsRepository }: { newsRepository: Repo }) => ({
   archiveNews: async (id: string): Promise<News> => {
     const news = await newsRepository.findById(id);
     if (!news) {
-      throw new Error(`News with id "${id}" not found`);
+      throw new Error(newsServiceErrors.NEWS_NOT_FOUND(id));
     }
 
     const updated = await newsRepository.update(id, {
@@ -121,7 +122,7 @@ export const NewsService = ({ newsRepository }: { newsRepository: Repo }) => ({
     });
 
     if (!updated) {
-      throw new Error(`Failed to archive news with id "${id}"`);
+      throw new Error(newsServiceErrors.FAILED_TO_ARCHIVE(id));
     }
 
     return updated;
@@ -130,7 +131,7 @@ export const NewsService = ({ newsRepository }: { newsRepository: Repo }) => ({
   hideNews: async (id: string): Promise<News> => {
     const news = await newsRepository.findById(id);
     if (!news) {
-      throw new Error(`News with id "${id}" not found`);
+      throw new Error(newsServiceErrors.NEWS_NOT_FOUND(id));
     }
 
     const updated = await newsRepository.update(id, {
@@ -138,7 +139,7 @@ export const NewsService = ({ newsRepository }: { newsRepository: Repo }) => ({
     });
 
     if (!updated) {
-      throw new Error(`Failed to hide news with id "${id}"`);
+      throw new Error(newsServiceErrors.FAILED_TO_HIDE(id));
     }
 
     return updated;
@@ -147,7 +148,7 @@ export const NewsService = ({ newsRepository }: { newsRepository: Repo }) => ({
   deleteNews: async (id: string): Promise<boolean> => {
     const deleted = await newsRepository.delete(id);
     if (!deleted) {
-      throw new Error(`News with id "${id}" not found or could not be deleted`);
+      throw new Error(newsServiceErrors.FAILED_TO_DELETE(id));
     }
     return deleted;
   },
@@ -159,7 +160,7 @@ export const NewsService = ({ newsRepository }: { newsRepository: Repo }) => ({
   incrementViews: async (id: string): Promise<News> => {
     const updated = await newsRepository.incrementViews(id);
     if (!updated) {
-      throw new Error(`News with id "${id}" not found`);
+      throw new Error(newsServiceErrors.NEWS_NOT_FOUND(id));
     }
     return updated;
   },
