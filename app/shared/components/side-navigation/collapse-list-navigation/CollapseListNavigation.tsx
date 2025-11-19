@@ -10,18 +10,22 @@ import { styles } from './CollapeListNavigation.styles';
 
 export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({ openNavbar, elementProps }) => {
   const { element, collapseElements } = elementProps;
-  const [pageOpen, setPageOpen] = useState(false);
+  const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
+
   const handleClick = () => {
-    setPageOpen(!pageOpen);
+    setIsSubmenuOpen(!isSubmenuOpen);
   };
+
   useEffect(() => {
     if (!openNavbar) {
-      setPageOpen(false);
+      setIsSubmenuOpen(false);
     }
   }, [openNavbar]);
+
   const collapseContent = collapseElements?.map((item) => (
     <LinkElement element={item} open={openNavbar} key={item.href} sxItem={{ mb: '0' }} />
   ));
+
   return (
     <>
       <ListElement element={element} open={openNavbar} handleClick={handleClick} sxItem={{ mb: '0' }}>
@@ -31,14 +35,14 @@ export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({ 
             ...styles.listBox
           }}
         >
-          {pageOpen ? (
+          {isSubmenuOpen ? (
             <Image src="/icons/chevronDown.svg" alt="open list" width={24} height={24} />
           ) : (
             <Image src="/icons/chevronRight.svg" alt="close list" width={24} height={24} />
           )}
         </Box>
       </ListElement>
-      <Collapse in={openNavbar && pageOpen} timeout="auto" unmountOnExit sx={styles.collapse}>
+      <Collapse in={isSubmenuOpen} timeout="auto" unmountOnExit sx={styles.collapse}>
         <List component="div" disablePadding>
           {collapseContent}
         </List>
