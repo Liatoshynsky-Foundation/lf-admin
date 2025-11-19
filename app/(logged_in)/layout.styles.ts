@@ -1,10 +1,18 @@
-export const styles = {
-  container: {
+import { SxProps } from '@mui/material';
+
+export const styles: Record<string, SxProps> = {
+  body: {
     margin: '0 auto',
-    padding: '20px',
     display: 'flex',
     gap: '20px',
     alignItems: 'flex-start',
     justifyContent: 'flex-start'
+  },
+  container: {
+    display: 'flex',
+    flexGrow: 1,
+    alignItems: 'center',
+    flexDirection: 'column',
+    padding: '20px'
   }
 };

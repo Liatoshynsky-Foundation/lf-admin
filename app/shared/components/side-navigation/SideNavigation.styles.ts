@@ -1,16 +1,16 @@
 export const styles = {
   drawerPaper: {
-    '& .MuiDrawer-paper': {
-      backgroundColor: '#F3F2F2',
-      border: 'none',
-      maxWidth: '280px',
-      padding: '16px 24px',
-      overflowY: 'scroll',
-      scrollbarWidth: 'none',
-      msOverflowStyle: 'none',
-      '&::-webkit-scrollbar': {
-        display: 'none'
-      }
+    backgroundColor: '#F1F2F7',
+    border: 'border-right: 1px solid #DCDDE5',
+    position: 'fixed',
+    maxWidth: '280px',
+    padding: '16px 24px',
+    overflowY: 'scroll',
+    scrollbarWidth: 'none',
+    msOverflowStyle: 'none',
+    height: '100vh',
+    '&::-webkit-scrollbar': {
+      display: 'none'
     }
   },
   topSection: {
@@ -28,5 +28,15 @@ export const styles = {
   },
   hideInClosed: (open: boolean) => ({
     display: open ? 'block' : 'none'
-  })
+  }),
+  subheader: {
+    background: 'transparent',
+    padding: '0',
+    lineHeight: '140%',
+    fontFamily: 'Mulish',
+    position: 'relative'
+  },
+  divider: {
+    my: '16px'
+  }
 };
