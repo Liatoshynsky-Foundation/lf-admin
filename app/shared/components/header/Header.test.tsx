@@ -35,6 +35,7 @@ describe('Header', () => {
     title: 'Про нас',
     onPreview: jest.fn(),
     onSave: jest.fn(),
+    onCancel: jest.fn(),
     isSaving: false,
     onLanguageChange: jest.fn()
   };
