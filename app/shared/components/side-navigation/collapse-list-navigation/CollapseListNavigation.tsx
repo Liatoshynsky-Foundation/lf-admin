@@ -23,7 +23,22 @@ export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({ 
   }, [openNavbar]);
 
   const collapseContent = collapseElements?.map((item) => (
-    <LinkElement element={item} open={isSubmenuOpen} key={item.href} sxItem={{ mb: '0' }} />
+    <LinkElement
+      element={item}
+      open={isSubmenuOpen}
+      key={item.href}
+      sxItem={{
+        mb: '0',
+        justifyContent: 'center',
+        '& .MuiListItemText-root': {
+          textAlign: 'center',
+          pl: 0
+        },
+        '& .MuiListItemText-primary': {
+          textAlign: 'center'
+        }
+      }}
+    />
   ));
 
   return (
