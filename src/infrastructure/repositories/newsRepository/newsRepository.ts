@@ -15,7 +15,7 @@ type DbNews = {
   publishedAt: Date | null;
   newsDate?: Date | null;
   title: News['title'];
-  subtitle?: News['subtitle'];
+  description?: News['description'];
   content: News['content'];
   slug: string;
   coverImage: string;
@@ -39,7 +39,7 @@ const toEntity = (doc: DbNews): News => ({
   publishedAt: doc.publishedAt,
   newsDate: doc.newsDate ?? null,
   title: doc.title,
-  subtitle: doc.subtitle,
+  description: doc.description,
   content: doc.content,
   slug: doc.slug,
   coverImage: doc.coverImage,

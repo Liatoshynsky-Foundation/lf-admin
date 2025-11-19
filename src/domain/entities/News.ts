@@ -1,8 +1,8 @@
 import { NewsStatus } from '~/types/enums/common.enums';
 
 export type LocalizedContent = {
-  uk: string;
-  en: string;
+  uk: any;
+  en: any;
 };
 
 export type NewsMeta = {
@@ -16,7 +16,7 @@ export type News = {
   createdAt: Date;
   updatedAt: Date;
   title: LocalizedContent;
-  subtitle?: LocalizedContent;
+  description?: LocalizedContent;
   content: LocalizedContent;
   slug: string;
   coverImage: string;

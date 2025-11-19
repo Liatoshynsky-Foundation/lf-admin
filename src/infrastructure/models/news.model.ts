@@ -11,13 +11,13 @@ const newsSchema = new Schema<News>(
       uk: { type: String, required: true },
       en: { type: String, required: true }
     },
-    subtitle: {
+    description: {
       uk: { type: String },
       en: { type: String }
     },
     content: {
-      uk: { type: String, required: true },
-      en: { type: String, required: true }
+      uk: { type: Object, required: true },
+      en: { type: Object, required: true }
     },
     slug: { type: String, required: true, index: true, unique: true },
     coverImage: { type: String, required: true },
