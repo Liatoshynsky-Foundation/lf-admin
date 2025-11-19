@@ -1,6 +1,7 @@
 import '../globals.css';
-import { Container } from '@mui/material';
+import { Box } from '@mui/material';
 
+import { styles } from './layout.styles';
 import BodyProvider from '~/providers/body-provider/BodyProvider';
 import { SideBarNavigation } from '~/shared/components/side-navigation/SideNavigation';
 import DiscardModalProvider from '~/shared/providers/discard-modal-provider/DiscardModalProvider';
@@ -14,9 +15,11 @@ export default async function RootLayout({
 }>) {
   return (
     <BodyProvider>
-      <SideBarNavigation />
       <DiscardModalProvider>
-        <Container sx={{ padding: '20px', maxWidth: '1098px' }}>{children}</Container>
+        <Box sx={styles.container}>
+          <SideBarNavigation />
+          <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>{children}</Box>
+        </Box>
       </DiscardModalProvider>
     </BodyProvider>
   );

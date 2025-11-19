@@ -1,5 +1,5 @@
 'use client';
-import { Box, Drawer, IconButton, List } from '@mui/material';
+import { Box, IconButton, List } from '@mui/material';
 import { ListElementType } from 'app/types/sideNavigation';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -31,11 +31,8 @@ export const SideBarNavigation = () => {
   ));
 
   return (
-    <Drawer
-      anchor="left"
-      variant="permanent"
-      open={open}
-      hideBackdrop
+    <Box
+      component="nav"
       sx={{
         width: open ? '280px' : '105px',
         ...styles.drawerPaper
@@ -58,6 +55,6 @@ export const SideBarNavigation = () => {
         <Divider text="Налаштування сайту" open={open} />
         {settingsContent}
       </List>
-    </Drawer>
+    </Box>
   );
 };

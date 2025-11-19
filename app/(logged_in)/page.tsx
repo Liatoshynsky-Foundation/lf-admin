@@ -27,7 +27,7 @@ export default function Home() {
   const onCancel = () => discardChanges(pageData.url);
 
   return (
-    <Box>
+    <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <Header
         title={pageData.title}
         onPreview={onPreview}
