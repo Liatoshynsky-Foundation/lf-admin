@@ -11,20 +11,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-  pull-requests: write
-  security-events: write
-  packages: write
-
 env:
   NODE_VERSION: "22"
   MONGO_VERSION: "8"
-  MONGO_CONTAINER: "mongodb"
-  MONGO_PORT: "27017"
-  MONGO_DB: "mongodb"
-  MONGO_USERNAME: "admin"
-  MONGO_PASSWORD: "password"
   MONGO_URL: "mongodb://admin:password@mongodb:27017/mongodb"
 
 jobs:
@@ -32,6 +21,8 @@ jobs:
     name: Run ESLint
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout repository
@@ -49,6 +40,8 @@ jobs:
     name: Type Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout repository
@@ -66,6 +59,8 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout repository
@@ -83,6 +78,8 @@ jobs:
     name: Run Tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout repository
@@ -97,11 +94,6 @@ jobs:
         uses: ./.github/actions/setup-mongodb
         with:
           mongodb-version: ${{ env.MONGO_VERSION }}
-          mongodb-container-name: ${{ env.MONGO_CONTAINER }}
-          mongodb-port: ${{ env.MONGO_PORT }}
-          mongodb-db: ${{ env.MONGO_DB }}
-          mongodb-username: ${{ env.MONGO_USERNAME }}
-          mongodb-password: ${{ env.MONGO_PASSWORD }}
 
       - name: Run Tests
         env:
@@ -113,8 +105,10 @@ jobs:
     name: Build and Test Docker Container
     runs-on: ubuntu-latest
     needs: [lint, type-check, build, tests]
+    if: always() && (needs.lint.result == 'success' && needs.type-check.result == 'success' && needs.build.result == 'success' && needs.tests.result == 'success')
     timeout-minutes: 30
     permissions:
+      contents: read
       security-events: write
       packages: write
 
@@ -181,6 +175,7 @@ jobs:
     if: github.event_name == 'pull_request' && github.base_ref == 'main'
     timeout-minutes: 15
     permissions:
+      contents: read
       security-events: write
 
     steps:
