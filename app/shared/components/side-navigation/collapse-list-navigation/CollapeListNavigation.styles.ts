@@ -1,4 +1,4 @@
-export const linStyles = {
+export const linkStyles = {
   mb: '0',
   justifyContent: 'center',
   '& .MuiListItemText-root': {
