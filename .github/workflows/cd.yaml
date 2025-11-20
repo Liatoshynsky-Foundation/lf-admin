@@ -24,5 +24,3 @@ jobs:
       azure-qa-app-name: lf-admin-qa-stage
       azure-qa-publish-profile-secret: AzureAppService_PublishProfile_QA
       azure-qa-username-secret: AzureAppService_ContainerUsername_960c1c49b72746a985193b504f55b231
-    secrets:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
