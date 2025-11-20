@@ -59,27 +59,20 @@ export const createBaseService = <TEntity extends BaseEntity, TFilters extends B
     ): Promise<{ items: TEntity[]; total: number; page: number; totalPages: number }> => {
       const skip = (page - 1) * limit;
 
+      const queryFilters = {
+        ...filters,
+        limit,
+        skip
+      } as TFilters;
+
       /* eslint-disable indent */
       const countFilters = filters
-        ? (Object.keys(filters).reduce(
-            (acc, key) => {
-              if (key !== 'sortBy' && key !== 'sortOrder') {
-                acc[key as keyof typeof acc] = filters[key as keyof typeof filters];
-              }
-              return acc;
-            },
-            {} as Record<string, unknown>
+        ? (Object.fromEntries(
+            Object.entries(filters).filter(([key]) => key !== 'sortBy' && key !== 'sortOrder')
           ) as Omit<TFilters, 'limit' | 'skip' | 'sortBy' | 'sortOrder'>)
         : undefined;
 
-      const [items, total] = await Promise.all([
-        repository.findAll({
-          ...filters,
-          limit,
-          skip
-        } as TFilters),
-        repository.count(countFilters)
-      ]);
+      const [items, total] = await Promise.all([repository.findAll(queryFilters), repository.count(countFilters)]);
 
       return {
         items,
