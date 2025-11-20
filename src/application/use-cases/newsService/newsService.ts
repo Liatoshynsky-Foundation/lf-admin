@@ -1,3 +1,4 @@
+import { createBaseService } from '../baseService';
 import { newsServiceErrors } from '~/back-constants/errors';
 import { News } from '~/domain/entities/News';
 import { CreateNewsInput, NewsFilters, NewsRepository, UpdateNewsInput } from '~/domain/repositories/newsRepository';
@@ -17,175 +18,152 @@ export type PublishNewsInput = {
   publishedAt?: Date;
 };
 
-export const NewsService = ({ newsRepository }: { newsRepository: Repo }) => ({
-  createNews: async (input: CreateNewsServiceInput): Promise<News> => {
-    const existingNews = await newsRepository.findBySlug(input.slug);
+export const NewsService = ({ newsRepository }: { newsRepository: Repo }) => {
+  const baseService = createBaseService<News, NewsFilters>({
+    repository: newsRepository,
+    entityName: 'News'
+  });
 
-    if (existingNews) {
-      throw new Error(newsServiceErrors.SLUG_ALREADY_EXISTS(input.slug));
-    }
+  return {
+    getNewsById: baseService.getById,
+    getAllNews: baseService.getAll,
+    getNewsCount: baseService.getCount,
+    deleteNews: baseService.delete,
 
-    const newsData: CreateNewsInput = {
-      ...input,
-      status: input.status ?? NewsStatus.Draft,
-      publishedAt: input.publishedAt ?? null,
-      meta: {
-        views: 0
+    updateNews: async (id: string, input: UpdateNewsServiceInput): Promise<News> => {
+      if (input.slug) {
+        const existingNews = await newsRepository.findBySlug(input.slug);
+        if (existingNews && existingNews.id !== id) {
+          throw new Error(newsServiceErrors.SLUG_ALREADY_EXISTS(input.slug));
+        }
       }
-    };
 
-    return newsRepository.create(newsData);
-  },
+      return baseService.update(id, input);
+    },
 
-  getNewsById: async (id: string): Promise<News | null> => {
-    return newsRepository.findById(id);
-  },
+    getPaginatedNews: async (
+      page: number = 1,
+      limit: number = 10,
+      filters?: Omit<NewsFilters, 'limit' | 'skip'>
+    ): Promise<{ news: News[]; total: number; page: number; totalPages: number }> => {
+      const result = await baseService.getPaginated(page, limit, filters);
+      return {
+        news: result.items,
+        total: result.total,
+        page: result.page,
+        totalPages: result.totalPages
+      };
+    },
 
-  getNewsBySlug: async (slug: string): Promise<News | null> => {
-    return newsRepository.findBySlug(slug);
-  },
-
-  getAllNews: async (filters?: NewsFilters): Promise<News[]> => {
-    return newsRepository.findAll(filters);
-  },
-
-  getPublishedNews: async (filters?: Omit<NewsFilters, 'status'>): Promise<News[]> => {
-    return newsRepository.findAll({
-      ...filters,
-      status: NewsStatus.Published
-    });
-  },
-
-  updateNews: async (id: string, input: UpdateNewsServiceInput): Promise<News> => {
-    if (input.slug) {
+    createNews: async (input: CreateNewsServiceInput): Promise<News> => {
       const existingNews = await newsRepository.findBySlug(input.slug);
-      if (existingNews && existingNews.id !== id) {
+
+      if (existingNews) {
         throw new Error(newsServiceErrors.SLUG_ALREADY_EXISTS(input.slug));
       }
-    }
 
-    const updated = await newsRepository.update(id, input);
-    if (!updated) {
-      throw new Error(newsServiceErrors.NEWS_NOT_FOUND(id));
-    }
+      const newsData: CreateNewsInput = {
+        ...input,
+        status: input.status ?? NewsStatus.Draft,
+        publishedAt: input.publishedAt ?? null,
+        meta: {
+          views: 0
+        }
+      };
 
-    return updated;
-  },
+      return newsRepository.create(newsData);
+    },
 
-  publishNews: async (input: PublishNewsInput): Promise<News> => {
-    const { id, publishedAt } = input;
+    getNewsBySlug: async (slug: string): Promise<News | null> => {
+      return newsRepository.findBySlug(slug);
+    },
 
-    const news = await newsRepository.findById(id);
-    if (!news) {
-      throw new Error(newsServiceErrors.NEWS_NOT_FOUND(id));
-    }
-
-    const updateData: UpdateNewsInput = {
-      status: NewsStatus.Published,
-      publishedAt: publishedAt ?? new Date()
-    };
-
-    const updated = await newsRepository.update(id, updateData);
-    if (!updated) {
-      throw new Error(newsServiceErrors.FAILED_TO_PUBLISH(id));
-    }
-
-    return updated;
-  },
-
-  unpublishNews: async (id: string): Promise<News> => {
-    const news = await newsRepository.findById(id);
-    if (!news) {
-      throw new Error(newsServiceErrors.NEWS_NOT_FOUND(id));
-    }
-
-    const updated = await newsRepository.update(id, {
-      status: NewsStatus.Draft,
-      publishedAt: null
-    });
-
-    if (!updated) {
-      throw new Error(newsServiceErrors.FAILED_TO_UNPUBLISH(id));
-    }
-
-    return updated;
-  },
-
-  archiveNews: async (id: string): Promise<News> => {
-    const news = await newsRepository.findById(id);
-    if (!news) {
-      throw new Error(newsServiceErrors.NEWS_NOT_FOUND(id));
-    }
-
-    const updated = await newsRepository.update(id, {
-      status: NewsStatus.Archived
-    });
-
-    if (!updated) {
-      throw new Error(newsServiceErrors.FAILED_TO_ARCHIVE(id));
-    }
-
-    return updated;
-  },
-
-  hideNews: async (id: string): Promise<News> => {
-    const news = await newsRepository.findById(id);
-    if (!news) {
-      throw new Error(newsServiceErrors.NEWS_NOT_FOUND(id));
-    }
-
-    const updated = await newsRepository.update(id, {
-      status: NewsStatus.Hidden
-    });
-
-    if (!updated) {
-      throw new Error(newsServiceErrors.FAILED_TO_HIDE(id));
-    }
-
-    return updated;
-  },
-
-  deleteNews: async (id: string): Promise<boolean> => {
-    const deleted = await newsRepository.delete(id);
-    if (!deleted) {
-      throw new Error(newsServiceErrors.FAILED_TO_DELETE(id));
-    }
-    return deleted;
-  },
-
-  getNewsCount: async (filters?: Omit<NewsFilters, 'limit' | 'skip' | 'sortBy' | 'sortOrder'>): Promise<number> => {
-    return newsRepository.count(filters);
-  },
-
-  incrementViews: async (id: string): Promise<News> => {
-    const updated = await newsRepository.incrementViews(id);
-    if (!updated) {
-      throw new Error(newsServiceErrors.NEWS_NOT_FOUND(id));
-    }
-    return updated;
-  },
-
-  getPaginatedNews: async (
-    page: number = 1,
-    limit: number = 10,
-    filters?: Omit<NewsFilters, 'limit' | 'skip'>
-  ): Promise<{ news: News[]; total: number; page: number; totalPages: number }> => {
-    const skip = (page - 1) * limit;
-
-    const [news, total] = await Promise.all([
-      newsRepository.findAll({
+    getPublishedNews: async (filters?: Omit<NewsFilters, 'status'>): Promise<News[]> => {
+      return newsRepository.findAll({
         ...filters,
-        limit,
-        skip
-      }),
-      newsRepository.count(filters)
-    ]);
+        status: NewsStatus.Published
+      });
+    },
 
-    return {
-      news,
-      total,
-      page,
-      totalPages: Math.ceil(total / limit)
-    };
-  }
-});
+    publishNews: async (input: PublishNewsInput): Promise<News> => {
+      const { id, publishedAt } = input;
+
+      const news = await newsRepository.findById(id);
+      if (!news) {
+        throw new Error(newsServiceErrors.NEWS_NOT_FOUND(id));
+      }
+
+      const updateData: UpdateNewsInput = {
+        status: NewsStatus.Published,
+        publishedAt: publishedAt ?? new Date()
+      };
+
+      const updated = await newsRepository.update(id, updateData);
+      if (!updated) {
+        throw new Error(newsServiceErrors.FAILED_TO_PUBLISH(id));
+      }
+
+      return updated;
+    },
+
+    unpublishNews: async (id: string): Promise<News> => {
+      const news = await newsRepository.findById(id);
+      if (!news) {
+        throw new Error(newsServiceErrors.NEWS_NOT_FOUND(id));
+      }
+
+      const updated = await newsRepository.update(id, {
+        status: NewsStatus.Draft,
+        publishedAt: null
+      });
+
+      if (!updated) {
+        throw new Error(newsServiceErrors.FAILED_TO_UNPUBLISH(id));
+      }
+
+      return updated;
+    },
+
+    archiveNews: async (id: string): Promise<News> => {
+      const news = await newsRepository.findById(id);
+      if (!news) {
+        throw new Error(newsServiceErrors.NEWS_NOT_FOUND(id));
+      }
+
+      const updated = await newsRepository.update(id, {
+        status: NewsStatus.Archived
+      });
+
+      if (!updated) {
+        throw new Error(newsServiceErrors.FAILED_TO_ARCHIVE(id));
+      }
+
+      return updated;
+    },
+
+    hideNews: async (id: string): Promise<News> => {
+      const news = await newsRepository.findById(id);
+      if (!news) {
+        throw new Error(newsServiceErrors.NEWS_NOT_FOUND(id));
+      }
+
+      const updated = await newsRepository.update(id, {
+        status: NewsStatus.Hidden
+      });
+
+      if (!updated) {
+        throw new Error(newsServiceErrors.FAILED_TO_HIDE(id));
+      }
+
+      return updated;
+    },
+
+    incrementViews: async (id: string): Promise<News> => {
+      const updated = await newsRepository.incrementViews(id);
+      if (!updated) {
+        throw new Error(newsServiceErrors.NEWS_NOT_FOUND(id));
+      }
+      return updated;
+    }
+  };
+};
