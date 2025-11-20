@@ -1,19 +1,20 @@
 name: Backup MongoDB Atlas
 
 on:
-  # workflow_dispatch:
+  workflow_dispatch:
   schedule:
     - cron: "0 2 * * *" # Run the workflow at 2:00 AM UTC every day
 
 jobs:
   dev-db-backup:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     environment: dev-db-backup
+    permissions:
+      contents: read
     env:
       DB_SOURCE: ${{ vars.DB_SOURCE }}
       DB_SOURCE_URL: ${{ secrets.DB_SOURCE_URL }}
-      # DB_TEST: ${{ vars.DB_TEST }}
-      # DB_TEST_URL: ${{ secrets.DB_TEST_URL }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v5
@@ -33,22 +34,23 @@ jobs:
         env:
           TODAY: ${{ steps.set-date.outputs.date }}
         run: |
-          mongodump \
-          --out=backup-$DB_SOURCE-$TODAY \
-          --uri="$DB_SOURCE_URL" \
-          -d $DB_SOURCE
-
-      # - name: Restore Dump to MongoDB Atlas Test Cluster
-      #   env:
-      #     TODAY: ${{ steps.set-date.outputs.date }}
-      #   run: |
-      #     mongorestore \
-      #     backup-$DB_SOURCE-$TODAY \
-      #     --uri="$DB_TEST_URL" \
-      #     --nsInclude="$DB_SOURCE.*" \
-      #     --nsFrom="$DB_SOURCE.*" \
-      #     --nsTo="$DB_TEST.*" \
-      #     --drop
+          set -e
+          for i in {1..3}; do
+            if mongodump \
+              --out=backup-$DB_SOURCE-$TODAY \
+              --uri="$DB_SOURCE_URL" \
+              -d $DB_SOURCE; then
+              echo "MongoDB dump created successfully (attempt $i)"
+              break
+            else
+              echo "MongoDB dump failed (attempt $i)"
+              if [ $i -eq 3 ]; then
+                echo "All dump attempts failed"
+                exit 1
+              fi
+              sleep 10
+            fi
+          done
 
       - name: Encrypt Dump
         env:
@@ -66,12 +68,24 @@ jobs:
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
           TODAY: ${{ steps.set-date.outputs.date }}
         run: |
-          az storage blob upload \
-            --container-name "$AZURE_BLOB_CONTAINER" \
-            --file "backup-$DB_SOURCE-$TODAY.tar.gz.enc" \
-            --name "backup-$DB_SOURCE-$TODAY.tar.gz.enc" \
-            --overwrite \
-            --connection-string "$AZURE_STORAGE_CONNECTION_STRING"
+          for i in {1..3}; do
+            if az storage blob upload \
+              --container-name "$AZURE_BLOB_CONTAINER" \
+              --file "backup-$DB_SOURCE-$TODAY.tar.gz.enc" \
+              --name "backup-$DB_SOURCE-$TODAY.tar.gz.enc" \
+              --overwrite \
+              --connection-string "$AZURE_STORAGE_CONNECTION_STRING"; then
+              echo "Azure upload successful (attempt $i)"
+              break
+            else
+              echo "Azure upload failed (attempt $i)"
+              if [ $i -eq 3 ]; then
+                echo "All Azure upload attempts failed"
+                exit 1
+              fi
+              sleep 10
+            fi
+          done
 
       - name: Upload to GitHub Artifact (secondary)
         uses: actions/upload-artifact@v4
@@ -124,12 +138,3 @@ jobs:
             echo '--drop'
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-
-      # - name: Create Issue on Failure
-      #   # if: ${{ failure() }}
-      #   uses: JasonEtco/create-an-issue@v2
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #     DB_NAME: 'dev-db'
-      #   with:
-      #     filename: .github/db-issue-template.md
