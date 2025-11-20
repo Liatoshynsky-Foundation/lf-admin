@@ -14,10 +14,10 @@ jobs:
       project-name: lf-admin
       azure-registry: https://lfacrstage-bkg7bmd7gacxh9e5.azurecr.io/
       azure-image-name: lf-stage-admin
-      deploy-azure: ${{ github.ref == 'refs/heads/develop' }}
+      deploy-azure: ${{ github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/feat/0/rework-ci-cd' }}
       azure-app-name: lf-admin-stage
       azure-slot-name: production
-      deploy-azure-qa: ${{ github.ref == 'refs/heads/develop' }}
+      deploy-azure-qa: ${{ github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/feat/0/rework-ci-cd' }}
       azure-qa-app-name: lf-admin-qa-stage
     secrets:
       azure-username: ${{ secrets.AzureAppService_ContainerUsername_960c1c49b72746a985193b504f55b231 }}
