@@ -7,6 +7,8 @@ export const styles = {
     padding: '32px 0',
     scrollbarWidth: 'none',
     height: '100vh',
+    overflowY: 'scroll',
+    overflowX: 'visible',
     '&::-webkit-scrollbar': {
       display: 'none'
     }
@@ -14,7 +16,6 @@ export const styles = {
   topSection: {
     display: 'flex',
     justifyContent: 'center',
-    position: 'relative',
     alignItems: 'center'
   },
   hideBtn: {
@@ -23,8 +24,7 @@ export const styles = {
     height: 32,
     backgroundColor: '#F1F2F7',
     position: 'absolute',
-    right: '-16px',
-    top: '50%',
+    top: '60px',
     border: '1px solid #DCDDE5',
     transform: 'translateY(-50%)',
     zIndex: 1,

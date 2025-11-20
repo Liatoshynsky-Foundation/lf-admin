@@ -35,10 +35,14 @@ export const SideBarNavigation = () => {
   }
 
   const w = open ? '264px' : '80px';
+  const l = open ? 264 - 16 : 80 - 16;
 
   return (
     <>
       <Box sx={{ height: '100vh', width: w, flexShrink: 0 }} />
+      <IconButton onClick={handleToggle} sx={{ ...styles.hideBtn, left: l }}>
+        <Image src={`/icons/chevron${open ? 'Left' : 'Right'}.svg`} alt="close button" width={24} height={24} />
+      </IconButton>
       <Box component="nav" sx={{ ...styles.drawerPaper, width: w, pt: open ? '32px' : '40px' }}>
         <Box sx={styles.topSection}>
           <IconButton onClick={handleToggle} size="small" sx={styles.logoBlock}>
@@ -49,9 +53,6 @@ export const SideBarNavigation = () => {
                 <Image src="/icons/foundation-text.svg" alt="Foundation" width={63.85} height={24.22} />
               </Box>
             )}
-          </IconButton>
-          <IconButton onClick={handleToggle} sx={styles.hideBtn}>
-            <Image src={`/icons/chevron${open ? 'Left' : 'Right'}.svg`} alt="close button" width={24} height={24} />
           </IconButton>
         </Box>
         <Box sx={{ height: open ? 40 : 64 }} />
