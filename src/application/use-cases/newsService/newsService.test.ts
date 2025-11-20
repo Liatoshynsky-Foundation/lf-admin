@@ -212,9 +212,7 @@ describe('NewsService', () => {
     it('should throw error if news not found', async () => {
       mockNewsRepository.update.mockResolvedValue(null);
 
-      await expect(newsService.updateNews('nonexistent-id', {})).rejects.toThrow(
-        'News with id "nonexistent-id" not found'
-      );
+      await expect(newsService.updateNews('nonexistent-id', {})).rejects.toThrow('News not found: nonexistent-id');
     });
 
     it('should check for slug uniqueness when updating', async () => {
@@ -335,9 +333,7 @@ describe('NewsService', () => {
     it('should throw error if news not found', async () => {
       mockNewsRepository.delete.mockResolvedValue(false);
 
-      await expect(newsService.deleteNews('nonexistent-id')).rejects.toThrow(
-        'News with id "nonexistent-id" not found or could not be deleted'
-      );
+      await expect(newsService.deleteNews('nonexistent-id')).rejects.toThrow('Failed to delete News: nonexistent-id');
     });
   });
 
