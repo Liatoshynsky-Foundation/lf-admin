@@ -20,7 +20,7 @@ export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({ 
     }
   }, [openNavbar]);
   const collapseContent = collapseElements?.map((item) => (
-    <LinkElement element={item} open={openNavbar} key={item.href} sxItem={{ mb: '0' }} />
+    <LinkElement element={item} open={openNavbar} key={item.title} sxItem={{ mb: '0' }} />
   ));
   return (
     <>
@@ -39,9 +39,7 @@ export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({ 
         </Box>
       </ListElement>
       <Collapse in={openNavbar && pageOpen} timeout="auto" unmountOnExit sx={styles.collapse}>
-        <List component="div" disablePadding>
-          {collapseContent}
-        </List>
+        <List disablePadding>{collapseContent}</List>
       </Collapse>
     </>
   );

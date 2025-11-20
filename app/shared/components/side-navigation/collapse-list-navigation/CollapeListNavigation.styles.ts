@@ -3,6 +3,9 @@ export const styles = {
     alignSelf: 'center'
   },
   collapse: {
-    transition: 'ease-in 0.3s'
+    transition: 'ease-in 0.3s',
+    '& ul>div>div': {
+      pl: '32px'
+    }
   }
 };
