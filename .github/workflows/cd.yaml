@@ -13,14 +13,15 @@ jobs:
     with:
       project-name: lf-admin
       azure-registry: https://lfacrstage-bkg7bmd7gacxh9e5.azurecr.io/
-      azure-username-secret: AzureAppService_ContainerUsername_960c1c49b72746a985193b504f55b231
-      azure-password-secret: AzureAppService_ContainerPassword_598f38b8ca0445c7acbcc7d7ac3d30a6
       azure-image-name: lf-stage-admin
       deploy-azure: ${{ github.ref == 'refs/heads/develop' }}
       azure-app-name: lf-admin-stage
-      azure-publish-profile-secret: AzureAppService_PublishProfile_d5b9cec1e4254c8a8fcc7b0ef69249ad
       azure-slot-name: production
       deploy-azure-qa: ${{ github.ref == 'refs/heads/develop' }}
       azure-qa-app-name: lf-admin-qa-stage
-      azure-qa-publish-profile-secret: AzureAppService_PublishProfile_QA
-      azure-qa-username-secret: AzureAppService_ContainerUsername_960c1c49b72746a985193b504f55b231
+    secrets:
+      azure-username: ${{ secrets.AzureAppService_ContainerUsername_960c1c49b72746a985193b504f55b231 }}
+      azure-password: ${{ secrets.AzureAppService_ContainerPassword_598f38b8ca0445c7acbcc7d7ac3d30a6 }}
+      azure-publish-profile: ${{ secrets.AzureAppService_PublishProfile_d5b9cec1e4254c8a8fcc7b0ef69249ad }}
+      azure-qa-publish-profile: ${{ secrets.AzureAppService_PublishProfile_QA }}
+      azure-qa-username: ${{ secrets.AzureAppService_ContainerUsername_960c1c49b72746a985193b504f55b231 }}
