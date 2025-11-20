@@ -2,7 +2,7 @@ import { GraphQLError } from 'graphql';
 
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
-import type { News } from '~/domain/entities/News';
+import type { News, NewsImageBlock } from '~/domain/entities/News';
 import { NewsStatus } from '~/types/enums/common.enums';
 
 type CreateNewsInput = {
@@ -10,7 +10,7 @@ type CreateNewsInput = {
   description?: any;
   content: any;
   slug: string;
-  coverImage: string;
+  coverImage: any;
   newsDate?: string;
   status?: string;
   publishedAt?: string;
@@ -21,7 +21,7 @@ type UpdateNewsInput = {
   description?: any;
   content?: any;
   slug?: string;
-  coverImage?: string;
+  coverImage?: any;
   newsDate?: string;
   status?: string;
   publishedAt?: string;
@@ -58,7 +58,7 @@ export const NewsMutation = {
       description: input.description,
       content: input.content,
       slug: input.slug,
-      coverImage: input.coverImage,
+      coverImage: input.coverImage as NewsImageBlock,
       newsDate: parseDate(input.newsDate),
       status: input.status as NewsStatus | undefined,
       publishedAt: parseDate(input.publishedAt)
@@ -81,7 +81,7 @@ export const NewsMutation = {
       description: input.description,
       content: input.content,
       slug: input.slug,
-      coverImage: input.coverImage,
+      coverImage: input.coverImage ? (input.coverImage as NewsImageBlock) : undefined,
       newsDate: parseDate(input.newsDate),
       status: input.status as NewsStatus | undefined,
       publishedAt: parseDate(input.publishedAt)
@@ -146,11 +146,13 @@ export const NewsMutation = {
     }
 
     const { newsService } = context.requestContainer.cradle;
+
     return newsService.deleteNews(id);
   },
 
   incrementNewsViews: async (_: unknown, { id }: IdArgs, context: GraphQLContext): Promise<News> => {
     const { newsService } = context.requestContainer.cradle;
+
     return newsService.incrementViews(id);
   }
 };

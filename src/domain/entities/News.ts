@@ -1,12 +1,19 @@
 import { NewsStatus } from '~/types/enums/common.enums';
 
 export type LocalizedContent = {
-  uk: any;
-  en: any;
+  uk: unknown;
+  en: unknown;
 };
 
 export type NewsMeta = {
   views: number;
+};
+
+export type NewsImageBlock = {
+  src: string;
+  alt: LocalizedContent;
+  caption: LocalizedContent;
+  isTmp?: boolean;
 };
 
 export type News = {
@@ -19,7 +26,7 @@ export type News = {
   description?: LocalizedContent;
   content: LocalizedContent;
   slug: string;
-  coverImage: string;
+  coverImage: NewsImageBlock;
   status: NewsStatus;
   meta: NewsMeta;
 };

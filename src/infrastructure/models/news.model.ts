@@ -20,7 +20,18 @@ const newsSchema = new Schema<News>(
       en: { type: Object, required: true }
     },
     slug: { type: String, required: true, index: true, unique: true },
-    coverImage: { type: String, required: true },
+    coverImage: {
+      src: { type: String, required: true },
+      alt: {
+        uk: { type: String, required: true },
+        en: { type: String, required: true }
+      },
+      caption: {
+        uk: { type: String, required: true },
+        en: { type: String, required: true }
+      },
+      isTmp: { type: Boolean, default: false }
+    },
     status: {
       type: String,
       enum: [

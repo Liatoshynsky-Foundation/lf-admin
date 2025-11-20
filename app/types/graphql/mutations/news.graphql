@@ -18,7 +18,18 @@ mutation CreateNews($input: CreateNewsInput!) {
       en
     }
     slug
-    coverImage
+    coverImage {
+      src
+      alt {
+        uk
+        en
+      }
+      caption {
+        uk
+        en
+      }
+      isTmp
+    }
     status
     meta {
       views
@@ -46,7 +57,18 @@ mutation UpdateNews($id: ID!, $input: UpdateNewsInput!) {
       en
     }
     slug
-    coverImage
+    coverImage {
+      src
+      alt {
+        uk
+        en
+      }
+      caption {
+        uk
+        en
+      }
+      isTmp
+    }
     status
     meta {
       views
@@ -74,7 +96,18 @@ mutation PublishNews($input: PublishNewsInput!) {
       en
     }
     slug
-    coverImage
+    coverImage {
+      src
+      alt {
+        uk
+        en
+      }
+      caption {
+        uk
+        en
+      }
+      isTmp
+    }
     status
     meta {
       views
@@ -102,7 +135,18 @@ mutation UnpublishNews($id: ID!) {
       en
     }
     slug
-    coverImage
+    coverImage {
+      src
+      alt {
+        uk
+        en
+      }
+      caption {
+        uk
+        en
+      }
+      isTmp
+    }
     status
     meta {
       views
@@ -130,7 +174,18 @@ mutation ArchiveNews($id: ID!) {
       en
     }
     slug
-    coverImage
+    coverImage {
+      src
+      alt {
+        uk
+        en
+      }
+      caption {
+        uk
+        en
+      }
+      isTmp
+    }
     status
     meta {
       views
@@ -158,7 +213,18 @@ mutation HideNews($id: ID!) {
       en
     }
     slug
-    coverImage
+    coverImage {
+      src
+      alt {
+        uk
+        en
+      }
+      caption {
+        uk
+        en
+      }
+      isTmp
+    }
     status
     meta {
       views

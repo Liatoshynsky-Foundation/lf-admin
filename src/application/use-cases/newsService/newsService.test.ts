@@ -17,16 +17,21 @@ describe('NewsService', () => {
       uk: 'Тестова новина',
       en: 'Test News'
     },
-    subtitle: {
-      uk: 'Підзаголовок',
-      en: 'Subtitle'
+    description: {
+      uk: 'Опис',
+      en: 'Description'
     },
     content: {
       uk: 'Контент',
       en: 'Content'
     },
     slug: 'test-news',
-    coverImage: 'https://example.com/image.jpg',
+    coverImage: {
+      src: 'test-image.jpg',
+      alt: { uk: 'Альт текст', en: 'Alt text' },
+      caption: { uk: 'Підпис', en: 'Caption' },
+      isTmp: false
+    },
     status: NewsStatus.Published,
     meta: {
       views: 0

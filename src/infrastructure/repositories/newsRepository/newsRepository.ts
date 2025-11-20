@@ -18,7 +18,7 @@ type DbNews = {
   description?: News['description'];
   content: News['content'];
   slug: string;
-  coverImage: string;
+  coverImage: News['coverImage'];
   status: NewsStatus;
   meta: News['meta'];
   createdAt: Date | string;

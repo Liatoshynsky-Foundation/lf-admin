@@ -18,7 +18,18 @@ query NewsById($id: ID!) {
       en
     }
     slug
-    coverImage
+    coverImage {
+      src
+      alt {
+        uk
+        en
+      }
+      caption {
+        uk
+        en
+      }
+      isTmp
+    }
     status
     meta {
       views
@@ -46,7 +57,18 @@ query NewsBySlug($slug: String!) {
       en
     }
     slug
-    coverImage
+    coverImage {
+      src
+      alt {
+        uk
+        en
+      }
+      caption {
+        uk
+        en
+      }
+      isTmp
+    }
     status
     meta {
       views
@@ -74,7 +96,18 @@ query AllNews($filters: NewsFiltersInput) {
       en
     }
     slug
-    coverImage
+    coverImage {
+      src
+      alt {
+        uk
+        en
+      }
+      caption {
+        uk
+        en
+      }
+      isTmp
+    }
     status
     meta {
       views
@@ -102,7 +135,18 @@ query PublishedNews($filters: NewsFiltersInput) {
       en
     }
     slug
-    coverImage
+    coverImage {
+      src
+      alt {
+        uk
+        en
+      }
+      caption {
+        uk
+        en
+      }
+      isTmp
+    }
     status
     meta {
       views
@@ -131,7 +175,18 @@ query PaginatedNews($page: Int = 1, $limit: Int = 10, $filters: NewsFiltersInput
         en
       }
       slug
-      coverImage
+      coverImage {
+        src
+        alt {
+          uk
+          en
+        }
+        caption {
+          uk
+          en
+        }
+        isTmp
+      }
       status
       meta {
         views

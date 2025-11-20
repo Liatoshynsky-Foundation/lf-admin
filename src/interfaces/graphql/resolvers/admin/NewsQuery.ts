@@ -33,7 +33,9 @@ export const NewsQuery = {
         extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
       });
     }
+
     const { newsService } = context.requestContainer.cradle;
+
     return newsService.getNewsById(id);
   },
 
@@ -43,7 +45,9 @@ export const NewsQuery = {
         extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
       });
     }
+
     const { newsService } = context.requestContainer.cradle;
+
     return newsService.getNewsBySlug(slug);
   },
 
@@ -53,12 +57,15 @@ export const NewsQuery = {
         extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
       });
     }
+
     const { newsService } = context.requestContainer.cradle;
+
     return newsService.getAllNews(mapFilters(filters));
   },
 
   publishedNews: async (_: unknown, { filters }: NewsFiltersArgs, context: GraphQLContext) => {
     const { newsService } = context.requestContainer.cradle;
+
     return newsService.getPublishedNews(mapFilters(filters));
   },
 
@@ -68,7 +75,9 @@ export const NewsQuery = {
         extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
       });
     }
+
     const { newsService } = context.requestContainer.cradle;
+
     return newsService.getPaginatedNews(page, limit, mapFilters(filters));
   },
 
@@ -78,7 +87,9 @@ export const NewsQuery = {
         extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
       });
     }
+
     const { newsService } = context.requestContainer.cradle;
+
     return newsService.getNewsCount(status ? { status } : undefined);
   }
 };

@@ -9,6 +9,13 @@ type NewsMeta {
   views: Int!
 }
 
+type NewsImageBlock {
+  src: String!
+  alt: LocalizedNewsContent!
+  caption: LocalizedNewsContent!
+  isTmp: Boolean
+}
+
 enum NewsStatus {
   draft
   published
@@ -27,7 +34,7 @@ type News {
   description: LocalizedNewsContent
   content: LocalizedNewsContent!
   slug: String!
-  coverImage: String!
+  coverImage: NewsImageBlock!
   status: NewsStatus!
   meta: NewsMeta!
 }
@@ -63,7 +70,7 @@ input CreateNewsInput {
   description: JSON
   content: JSON!
   slug: String!
-  coverImage: String!
+  coverImage: JSON!
   newsDate: String
   status: NewsStatus
   publishedAt: String
@@ -74,7 +81,7 @@ input UpdateNewsInput {
   description: JSON
   content: JSON
   slug: String
-  coverImage: String
+  coverImage: JSON
   newsDate: String
   status: NewsStatus
   publishedAt: String
