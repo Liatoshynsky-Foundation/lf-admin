@@ -1,4 +1,4 @@
-import { FilterQuery, Model, Types } from 'mongoose';
+import { FilterQuery, Model, Types, UpdateQuery } from 'mongoose';
 
 import dbConnect from '~/infrastructure/db/connect';
 
@@ -24,9 +24,9 @@ export type BaseRepository<TEntity extends BaseEntity, TFilters extends BaseFilt
 };
 
 type CreateBaseRepositoryOptions<TEntity extends BaseEntity, TDbDoc, TFilters extends BaseFilters> = {
-  model: Model<any>;
+  model: Model<TDbDoc>;
   toEntity: (doc: TDbDoc) => TEntity;
-  buildQuery?: (filters?: Omit<TFilters, 'limit' | 'skip' | 'sortBy' | 'sortOrder'>) => FilterQuery<any>;
+  buildQuery?: (filters?: Omit<TFilters, 'limit' | 'skip' | 'sortBy' | 'sortOrder'>) => FilterQuery<TDbDoc>;
   getDefaultSort?: (filters?: TFilters) => Record<string, 1 | -1>;
 };
 
@@ -59,7 +59,7 @@ export const createBaseRepository = <TEntity extends BaseEntity, TDbDoc, TFilter
             [filters?.sortBy ?? 'createdAt']: filters?.sortOrder === 'asc' ? (1 as const) : (-1 as const)
           };
 
-      const queryBuilder = model.find(query).sort(sort as any);
+      const queryBuilder = model.find(query).sort(sort);
 
       if (filters?.skip) {
         queryBuilder.skip(filters.skip);
@@ -84,7 +84,7 @@ export const createBaseRepository = <TEntity extends BaseEntity, TDbDoc, TFilter
       }
 
       const updated = await model
-        .findByIdAndUpdate(id, input, {
+        .findByIdAndUpdate(id, input as unknown as UpdateQuery<TDbDoc>, {
           new: true,
           runValidators: true
         })

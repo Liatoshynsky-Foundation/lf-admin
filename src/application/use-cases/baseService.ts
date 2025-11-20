@@ -61,12 +61,15 @@ export const createBaseService = <TEntity extends BaseEntity, TFilters extends B
 
       /* eslint-disable indent */
       const countFilters = filters
-        ? (Object.keys(filters).reduce((acc, key) => {
-            if (key !== 'sortBy' && key !== 'sortOrder') {
-              acc[key as keyof typeof acc] = filters[key as keyof typeof filters];
-            }
-            return acc;
-          }, {} as any) as Omit<TFilters, 'limit' | 'skip' | 'sortBy' | 'sortOrder'>)
+        ? (Object.keys(filters).reduce(
+            (acc, key) => {
+              if (key !== 'sortBy' && key !== 'sortOrder') {
+                acc[key as keyof typeof acc] = filters[key as keyof typeof filters];
+              }
+              return acc;
+            },
+            {} as Record<string, unknown>
+          ) as Omit<TFilters, 'limit' | 'skip' | 'sortBy' | 'sortOrder'>)
         : undefined;
 
       const [items, total] = await Promise.all([
