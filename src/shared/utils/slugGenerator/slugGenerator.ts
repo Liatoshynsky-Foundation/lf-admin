@@ -25,9 +25,7 @@ type SlugGeneratorOptions = {
 };
 
 function normalizeSlug(slug: string): string {
-  const replaced = slug.replaceAll(/-+/g, '-');
-
-  return replaced.replace(/^(?:(-+))|(?:(-+))$/g, '');
+  return slug.replaceAll(/-+/g, '-').replaceAll(/^-+|-+$/g, '');
 }
 
 export async function generateUniqueSlug(title: string, options: SlugGeneratorOptions): Promise<string> {
