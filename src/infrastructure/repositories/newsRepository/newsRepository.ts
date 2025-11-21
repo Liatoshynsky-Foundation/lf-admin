@@ -69,7 +69,7 @@ const getNewsSort = (filters?: NewsFilters): Record<string, 1 | -1> => {
 
 export const NewsRepository = ({ NewsModel }: NewsRepoDeps): INewsRepository => {
   const baseRepo = createBaseRepository<News, DbNews, NewsFilters>({
-    model: NewsModel,
+    model: NewsModel as unknown as Model<DbNews>,
     toEntity,
     buildQuery: buildNewsQuery,
     getDefaultSort: getNewsSort
