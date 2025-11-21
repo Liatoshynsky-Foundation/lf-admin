@@ -2,9 +2,11 @@ import { generateUniqueSlug } from './slugGenerator';
 import { utilsErrors } from '~/back-constants/errors';
 
 describe('generateUniqueSlug', () => {
+  const createMockCheckExists = (exists: boolean = false) => jest.fn().mockResolvedValue(exists);
+
   describe('basic slug generation', () => {
     it('should generate a simple slug from a title', async () => {
-      const checkExists = jest.fn().mockResolvedValue(false);
+      const checkExists = createMockCheckExists();
       const slug = await generateUniqueSlug('My Article Title', { checkExists });
 
       expect(slug).toBe('my-article-title');
@@ -13,28 +15,28 @@ describe('generateUniqueSlug', () => {
     });
 
     it('should handle special characters', async () => {
-      const checkExists = jest.fn().mockResolvedValue(false);
+      const checkExists = createMockCheckExists();
       const slug = await generateUniqueSlug('Hello @ World! #2025', { checkExists });
 
       expect(slug).toBe('hello-world-2025');
     });
 
     it('should handle unicode characters', async () => {
-      const checkExists = jest.fn().mockResolvedValue(false);
+      const checkExists = createMockCheckExists();
       const slug = await generateUniqueSlug('Привіт Світ', { checkExists });
 
       expect(slug).toBe('privit-svit');
     });
 
     it('should trim whitespace', async () => {
-      const checkExists = jest.fn().mockResolvedValue(false);
+      const checkExists = createMockCheckExists();
       const slug = await generateUniqueSlug('  Spaced Out  ', { checkExists });
 
       expect(slug).toBe('spaced-out');
     });
 
     it('should handle empty or very short titles', async () => {
-      const checkExists = jest.fn().mockResolvedValue(false);
+      const checkExists = createMockCheckExists();
       const slug = await generateUniqueSlug('a', { checkExists });
 
       expect(slug).toBe('a');
@@ -89,7 +91,7 @@ describe('generateUniqueSlug', () => {
 
   describe('custom options', () => {
     it('should respect custom slugify options', async () => {
-      const checkExists = jest.fn().mockResolvedValue(false);
+      const checkExists = createMockCheckExists();
       const slug = await generateUniqueSlug('Test Title', {
         checkExists,
         slugifyOptions: {
@@ -101,7 +103,7 @@ describe('generateUniqueSlug', () => {
     });
 
     it('should allow custom locale', async () => {
-      const checkExists = jest.fn().mockResolvedValue(false);
+      const checkExists = createMockCheckExists();
       const slug = await generateUniqueSlug('Ä, Ö, Ü', {
         checkExists,
         slugifyOptions: {
@@ -113,7 +115,7 @@ describe('generateUniqueSlug', () => {
     });
 
     it('should handle strict mode', async () => {
-      const checkExists = jest.fn().mockResolvedValue(false);
+      const checkExists = createMockCheckExists();
       const slug = await generateUniqueSlug('Test & Title', {
         checkExists,
         slugifyOptions: {
@@ -128,7 +130,7 @@ describe('generateUniqueSlug', () => {
 
   describe('edge cases', () => {
     it('should handle very long titles', async () => {
-      const checkExists = jest.fn().mockResolvedValue(false);
+      const checkExists = createMockCheckExists();
       const longTitle = 'A'.repeat(300);
       const slug = await generateUniqueSlug(longTitle, { checkExists });
 
@@ -136,21 +138,21 @@ describe('generateUniqueSlug', () => {
     });
 
     it('should handle titles with only special characters', async () => {
-      const checkExists = jest.fn().mockResolvedValue(false);
+      const checkExists = createMockCheckExists();
       const slug = await generateUniqueSlug('!@#$%^&*()', { checkExists });
 
       expect(slug).toBe('dollarpercentand');
     });
 
     it('should handle titles with numbers', async () => {
-      const checkExists = jest.fn().mockResolvedValue(false);
+      const checkExists = createMockCheckExists();
       const slug = await generateUniqueSlug('Article 123', { checkExists });
 
       expect(slug).toBe('article-123');
     });
 
     it('should handle titles with multiple consecutive spaces', async () => {
-      const checkExists = jest.fn().mockResolvedValue(false);
+      const checkExists = createMockCheckExists();
       const slug = await generateUniqueSlug('Multiple    Spaces    Here', { checkExists });
 
       expect(slug).toBe('multiple-spaces-here');
@@ -187,14 +189,14 @@ describe('generateUniqueSlug', () => {
     });
 
     it('should use fallback slug when title produces empty slug', async () => {
-      const checkExists = jest.fn().mockResolvedValue(false);
+      const checkExists = createMockCheckExists();
       const slug = await generateUniqueSlug('---', { checkExists });
 
       expect(slug).toBe('untitled');
     });
 
     it('should use custom fallback slug when provided', async () => {
-      const checkExists = jest.fn().mockResolvedValue(false);
+      const checkExists = createMockCheckExists();
       const slug = await generateUniqueSlug('!!!', {
         checkExists,
         fallbackSlug: 'default-item'
@@ -217,21 +219,21 @@ describe('generateUniqueSlug', () => {
 
   describe('normalization', () => {
     it('should normalize multiple consecutive hyphens to single hyphen', async () => {
-      const checkExists = jest.fn().mockResolvedValue(false);
+      const checkExists = createMockCheckExists();
       const slug = await generateUniqueSlug('Test---Multiple--Hyphens', { checkExists });
 
       expect(slug).toBe('test-multiple-hyphens');
     });
 
     it('should remove leading hyphens', async () => {
-      const checkExists = jest.fn().mockResolvedValue(false);
+      const checkExists = createMockCheckExists();
       const slug = await generateUniqueSlug('---Test', { checkExists });
 
       expect(slug).toBe('test');
     });
 
     it('should remove trailing hyphens', async () => {
-      const checkExists = jest.fn().mockResolvedValue(false);
+      const checkExists = createMockCheckExists();
       const slug = await generateUniqueSlug('Test---', { checkExists });
 
       expect(slug).toBe('test');
@@ -248,7 +250,7 @@ describe('generateUniqueSlug', () => {
 
   describe('max attempts', () => {
     it('should throw error when max attempts is reached', async () => {
-      const checkExists = jest.fn().mockResolvedValue(true);
+      const checkExists = createMockCheckExists(true);
 
       await expect(
         generateUniqueSlug('Test', {
@@ -261,7 +263,7 @@ describe('generateUniqueSlug', () => {
     });
 
     it('should respect custom maxAttempts', async () => {
-      const checkExists = jest.fn().mockResolvedValue(true);
+      const checkExists = createMockCheckExists(true);
 
       await expect(
         generateUniqueSlug('Test', {
