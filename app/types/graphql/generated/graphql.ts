@@ -31,7 +31,6 @@ export type CreateNewsInput = {
   description?: InputMaybe<Scalars['JSON']['input']>;
   newsDate?: InputMaybe<Scalars['String']['input']>;
   publishedAt?: InputMaybe<Scalars['String']['input']>;
-  slug: Scalars['String']['input'];
   status?: InputMaybe<NewsStatus>;
   title: Scalars['JSON']['input'];
 };
@@ -288,7 +287,6 @@ export type UpdateNewsInput = {
   description?: InputMaybe<Scalars['JSON']['input']>;
   newsDate?: InputMaybe<Scalars['String']['input']>;
   publishedAt?: InputMaybe<Scalars['String']['input']>;
-  slug?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<NewsStatus>;
   title?: InputMaybe<Scalars['JSON']['input']>;
 };

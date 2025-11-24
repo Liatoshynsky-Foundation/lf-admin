@@ -1,17 +1,18 @@
 import { createBaseService } from '../baseService';
 import { newsServiceErrors } from '~/back-constants/errors';
+import { generateUniqueSlug } from '~/back-shared/utils';
 import { News } from '~/domain/entities/News';
 import { CreateNewsInput, NewsFilters, NewsRepository, UpdateNewsInput } from '~/domain/repositories/newsRepository';
 import { NewsStatus } from '~/types/enums/common.enums';
 
 type Repo = NewsRepository;
 
-export type CreateNewsServiceInput = Omit<CreateNewsInput, 'status' | 'publishedAt'> & {
+export type CreateNewsServiceInput = Omit<CreateNewsInput, 'status' | 'publishedAt' | 'slug'> & {
   status?: NewsStatus;
   publishedAt?: Date | null;
 };
 
-export type UpdateNewsServiceInput = UpdateNewsInput;
+export type UpdateNewsServiceInput = Omit<UpdateNewsInput, 'slug'>;
 
 export type PublishNewsInput = {
   id: string;
@@ -31,14 +32,34 @@ export const NewsService = ({ newsRepository }: { newsRepository: Repo }) => {
     deleteNews: baseService.delete,
 
     updateNews: async (id: string, input: UpdateNewsServiceInput): Promise<News> => {
-      if (input.slug) {
-        const existingNews = await newsRepository.findBySlug(input.slug);
-        if (existingNews && existingNews.id !== id) {
-          throw new Error(newsServiceErrors.SLUG_ALREADY_EXISTS(input.slug));
+      const updateData: UpdateNewsInput = { ...input };
+
+      if (input.title) {
+        const news = await newsRepository.findById(id);
+        if (!news) {
+          throw new Error(newsServiceErrors.NEWS_NOT_FOUND(id));
+        }
+
+        const titleForSlug =
+          typeof input.title === 'object' && 'uk' in input.title
+            ? (input.title.uk as string)
+            : typeof input.title === 'string'
+              ? input.title
+              : '';
+
+        if (titleForSlug) {
+          const newSlug = await generateUniqueSlug(titleForSlug, {
+            checkExists: async (slug: string) => {
+              const existing = await newsRepository.findBySlug(slug);
+              return existing !== null && existing.id !== id;
+            }
+          });
+
+          updateData.slug = newSlug;
         }
       }
 
-      return baseService.update(id, input);
+      return baseService.update(id, updateData);
     },
 
     getPaginatedNews: async (
@@ -56,14 +77,27 @@ export const NewsService = ({ newsRepository }: { newsRepository: Repo }) => {
     },
 
     createNews: async (input: CreateNewsServiceInput): Promise<News> => {
-      const existingNews = await newsRepository.findBySlug(input.slug);
+      const titleForSlug =
+        typeof input.title === 'object' && 'uk' in input.title
+          ? (input.title.uk as string)
+          : typeof input.title === 'string'
+            ? input.title
+            : '';
 
-      if (existingNews) {
-        throw new Error(newsServiceErrors.SLUG_ALREADY_EXISTS(input.slug));
+      if (!titleForSlug) {
+        throw new Error(newsServiceErrors.TITLE_REQUIRED_FOR_SLUG);
       }
+
+      const slug = await generateUniqueSlug(titleForSlug, {
+        checkExists: async (slug: string) => {
+          const existing = await newsRepository.findBySlug(slug);
+          return existing !== null;
+        }
+      });
 
       const newsData: CreateNewsInput = {
         ...input,
+        slug,
         status: input.status ?? NewsStatus.Draft,
         publishedAt: input.publishedAt ?? null,
         meta: {

@@ -69,7 +69,6 @@ input CreateNewsInput {
   title: JSON!
   description: JSON
   content: JSON!
-  slug: String!
   coverImage: JSON!
   newsDate: String
   status: NewsStatus
@@ -80,7 +79,6 @@ input UpdateNewsInput {
   title: JSON
   description: JSON
   content: JSON
-  slug: String
   coverImage: JSON
   newsDate: String
   status: NewsStatus

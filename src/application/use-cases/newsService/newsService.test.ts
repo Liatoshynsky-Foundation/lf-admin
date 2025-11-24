@@ -1,7 +1,14 @@
+import { generateUniqueSlug } from '../../../shared/utils';
 import { NewsService } from './newsService';
 import { News } from '~/domain/entities/News';
 import { NewsRepository } from '~/domain/repositories/newsRepository';
 import { NewsStatus } from '~/types/enums/common.enums';
+
+jest.mock('../../../shared/utils', () => ({
+  generateUniqueSlug: jest.fn()
+}));
+
+const mockedGenerateUniqueSlug = generateUniqueSlug as jest.MockedFunction<typeof generateUniqueSlug>;
 
 describe('NewsService', () => {
   let mockNewsRepository: jest.Mocked<NewsRepository>;
@@ -62,19 +69,21 @@ describe('NewsService', () => {
       const input = {
         title: mockNews.title,
         content: mockNews.content,
-        slug: 'new-news',
         coverImage: mockNews.coverImage,
         newsDate: new Date('2024-01-01')
       };
 
-      mockNewsRepository.findBySlug.mockResolvedValue(null);
-      mockNewsRepository.create.mockResolvedValue({ ...mockNews, ...input, status: NewsStatus.Draft });
+      mockedGenerateUniqueSlug.mockResolvedValue('testova-nova');
+      mockNewsRepository.create.mockResolvedValue({ ...mockNews, slug: 'testova-nova', status: NewsStatus.Draft });
 
       const result = await newsService.createNews(input);
 
-      expect(mockNewsRepository.findBySlug).toHaveBeenCalledWith('new-news');
+      expect(mockedGenerateUniqueSlug).toHaveBeenCalledWith('Тестова новина', {
+        checkExists: expect.any(Function)
+      });
       expect(mockNewsRepository.create).toHaveBeenCalledWith({
         ...input,
+        slug: 'testova-nova',
         status: NewsStatus.Draft,
         publishedAt: null,
         meta: { views: 0 }
@@ -82,38 +91,35 @@ describe('NewsService', () => {
       expect(result.status).toBe(NewsStatus.Draft);
     });
 
-    it('should throw error if slug already exists', async () => {
+    it('should throw error if title is missing', async () => {
       const input = {
-        title: mockNews.title,
+        title: { uk: '', en: '' },
         content: mockNews.content,
-        slug: 'test-news',
         coverImage: mockNews.coverImage,
         newsDate: new Date('2024-01-01')
       };
 
-      mockNewsRepository.findBySlug.mockResolvedValue(mockNews);
-
-      await expect(newsService.createNews(input)).rejects.toThrow('News with slug "test-news" already exists');
+      await expect(newsService.createNews(input)).rejects.toThrow('Title is required to generate a slug');
     });
 
     it('should create news with custom status', async () => {
       const input = {
         title: mockNews.title,
         content: mockNews.content,
-        slug: 'new-news',
         coverImage: mockNews.coverImage,
         status: NewsStatus.Published,
         publishedAt: new Date('2024-01-01'),
         newsDate: new Date('2024-01-01')
       };
 
-      mockNewsRepository.findBySlug.mockResolvedValue(null);
-      mockNewsRepository.create.mockResolvedValue({ ...mockNews, ...input });
+      mockedGenerateUniqueSlug.mockResolvedValue('testova-nova');
+      mockNewsRepository.create.mockResolvedValue({ ...mockNews, slug: 'testova-nova', ...input });
 
       const result = await newsService.createNews(input);
 
       expect(mockNewsRepository.create).toHaveBeenCalledWith({
         ...input,
+        slug: 'testova-nova',
         meta: { views: 0 }
       });
       expect(result).toBeDefined();
@@ -199,42 +205,49 @@ describe('NewsService', () => {
   });
 
   describe('updateNews', () => {
-    it('should update news successfully', async () => {
-      const updateData = { title: { uk: 'Оновлена', en: 'Updated' } };
+    it('should update news successfully without title change', async () => {
+      const updateData = { newsDate: new Date('2024-02-01') };
       mockNewsRepository.update.mockResolvedValue({ ...mockNews, ...updateData });
 
       const result = await newsService.updateNews('507f1f77bcf86cd799439011', updateData);
 
       expect(mockNewsRepository.update).toHaveBeenCalledWith('507f1f77bcf86cd799439011', updateData);
-      expect(result.title).toEqual(updateData.title);
+      expect(result).toBeDefined();
     });
 
-    it('should throw error if news not found', async () => {
-      mockNewsRepository.update.mockResolvedValue(null);
+    it('should regenerate slug when title is updated', async () => {
+      const updateData = { title: { uk: 'Оновлена', en: 'Updated' } };
 
-      await expect(newsService.updateNews('nonexistent-id', {})).rejects.toThrow('News not found: nonexistent-id');
-    });
-
-    it('should check for slug uniqueness when updating', async () => {
-      const updateData = { slug: 'another-news' };
-      const anotherNews = { ...mockNews, id: 'another-id', slug: 'another-news' };
-
-      mockNewsRepository.findBySlug.mockResolvedValue(anotherNews);
-
-      await expect(newsService.updateNews('507f1f77bcf86cd799439011', updateData)).rejects.toThrow(
-        'News with slug "another-news" already exists'
-      );
-    });
-
-    it('should allow updating same news slug', async () => {
-      const updateData = { slug: 'test-news' };
-      mockNewsRepository.findBySlug.mockResolvedValue(mockNews);
-      mockNewsRepository.update.mockResolvedValue(mockNews);
+      mockNewsRepository.findById.mockResolvedValue(mockNews);
+      mockedGenerateUniqueSlug.mockResolvedValue('onovlena');
+      mockNewsRepository.update.mockResolvedValue({ ...mockNews, ...updateData, slug: 'onovlena' });
 
       const result = await newsService.updateNews('507f1f77bcf86cd799439011', updateData);
 
-      expect(mockNewsRepository.update).toHaveBeenCalled();
-      expect(result).toEqual(mockNews);
+      expect(mockNewsRepository.findById).toHaveBeenCalledWith('507f1f77bcf86cd799439011');
+      expect(mockedGenerateUniqueSlug).toHaveBeenCalledWith('Оновлена', {
+        checkExists: expect.any(Function)
+      });
+      expect(mockNewsRepository.update).toHaveBeenCalledWith('507f1f77bcf86cd799439011', {
+        ...updateData,
+        slug: 'onovlena'
+      });
+      expect(result.slug).toBe('onovlena');
+    });
+
+    it('should throw error if news not found when updating with title', async () => {
+      const updateData = { title: { uk: 'Оновлена', en: 'Updated' } };
+      mockNewsRepository.findById.mockResolvedValue(null);
+
+      await expect(newsService.updateNews('nonexistent-id', updateData)).rejects.toThrow(
+        'News with id "nonexistent-id" not found'
+      );
+    });
+
+    it('should throw error if news not found during update', async () => {
+      mockNewsRepository.update.mockResolvedValue(null);
+
+      await expect(newsService.updateNews('nonexistent-id', {})).rejects.toThrow('News not found: nonexistent-id');
     });
   });
 

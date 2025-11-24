@@ -27,5 +27,6 @@ export const newsServiceErrors = {
   FAILED_TO_UNPUBLISH: (id: string) => `Failed to unpublish news with id "${id}"`,
   FAILED_TO_ARCHIVE: (id: string) => `Failed to archive news with id "${id}"`,
   FAILED_TO_HIDE: (id: string) => `Failed to hide news with id "${id}"`,
-  FAILED_TO_DELETE: (id: string) => `News with id "${id}" not found or could not be deleted`
+  FAILED_TO_DELETE: (id: string) => `News with id "${id}" not found or could not be deleted`,
+  TITLE_REQUIRED_FOR_SLUG: 'Title is required to generate a slug'
 };

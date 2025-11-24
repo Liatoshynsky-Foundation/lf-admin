@@ -9,7 +9,6 @@ type CreateNewsInput = {
   title: any;
   description?: any;
   content: any;
-  slug: string;
   coverImage: any;
   newsDate?: string;
   status?: string;
@@ -20,7 +19,6 @@ type UpdateNewsInput = {
   title?: any;
   description?: any;
   content?: any;
-  slug?: string;
   coverImage?: any;
   newsDate?: string;
   status?: string;
@@ -57,7 +55,6 @@ export const NewsMutation = {
       title: input.title,
       description: input.description,
       content: input.content,
-      slug: input.slug,
       coverImage: input.coverImage as NewsImageBlock,
       newsDate: parseDate(input.newsDate),
       status: input.status as NewsStatus | undefined,
@@ -80,7 +77,6 @@ export const NewsMutation = {
       title: input.title,
       description: input.description,
       content: input.content,
-      slug: input.slug,
       coverImage: input.coverImage ? (input.coverImage as NewsImageBlock) : undefined,
       newsDate: parseDate(input.newsDate),
       status: input.status as NewsStatus | undefined,
