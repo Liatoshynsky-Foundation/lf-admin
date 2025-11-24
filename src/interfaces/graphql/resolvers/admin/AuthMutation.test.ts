@@ -1,5 +1,6 @@
 import { GraphQLError } from 'graphql';
 import { v4 as uuidv4 } from 'uuid';
+import { ZodError } from 'zod';
 
 import { authMutation } from './AuthMutation';
 import { LoginError } from '~/back-constants/apolloCustomErrors/adminErrors';
@@ -82,7 +83,29 @@ describe('GraphQL Mutations', () => {
       expect(baseMockContext.setCookie).not.toHaveBeenCalled();
     });
 
-    it('should throw an error if it is not of type LoginError', async () => {
+    it('should return ErrorPayload if email validation fails', async () => {
+      const invalidEmailArgs = { email: 'invalid-email', password: test };
+      const zodError = new ZodError([
+        {
+          code: 'custom',
+          message: 'Invalid email format',
+          path: ['email']
+        }
+      ]);
+      mockLoginAdmin.execute.mockRejectedValue(zodError);
+
+      const result = await authMutation.login(null, invalidEmailArgs, baseMockContext as GraphQLContext);
+
+      expect(result).toEqual({
+        __typename: 'ErrorPayload',
+        success: false,
+        message: 'Invalid email format',
+        statusCode: 400
+      });
+      expect(baseMockContext.setCookie).not.toHaveBeenCalled();
+    });
+
+    it('should throw an error if it is not of type LoginError or ZodError', async () => {
       const genericError = new Error('Database connection failed');
       mockLoginAdmin.execute.mockRejectedValue(genericError);
       await expect(authMutation.login(null, mockArgs, baseMockContext as GraphQLContext)).rejects.toThrow(genericError);

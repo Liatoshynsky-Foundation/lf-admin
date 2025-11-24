@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
+import { ZodError } from 'zod';
 
 import { loginAdmin } from './loginAdmin';
 import { LoginError } from '~/back-constants/apolloCustomErrors/adminErrors';
@@ -29,6 +30,27 @@ describe('loginAdmin', () => {
     expect(mockAdminRepository.findByEmail).toHaveBeenCalledWith('admin@example.com');
     expect(bcrypt.compare).toHaveBeenCalledWith('plainPassword', fakeAdmin.password);
     expect(result).toEqual({ id: '123', type: 'admin' });
+  });
+
+  it('should trim and lowercase email before processing', async () => {
+    const password = uuidv4();
+    const fakeAdmin = { id: '123', type: 'admin', password: password };
+    mockAdminRepository.findByEmail.mockResolvedValue(fakeAdmin);
+
+    (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+
+    const result = await useCase.execute('  Admin@Example.COM  ', 'plainPassword');
+
+    expect(mockAdminRepository.findByEmail).toHaveBeenCalledWith('admin@example.com');
+    expect(result).toEqual({ id: '123', type: 'admin' });
+  });
+
+  it('should throw ZodError if email is invalid', async () => {
+    await expect(useCase.execute('invalid-email', 'anyPassword')).rejects.toThrow(ZodError);
+  });
+
+  it('should throw ZodError if email is empty', async () => {
+    await expect(useCase.execute('', 'anyPassword')).rejects.toThrow(ZodError);
   });
 
   it('should throw LoginError if admin not found', async () => {

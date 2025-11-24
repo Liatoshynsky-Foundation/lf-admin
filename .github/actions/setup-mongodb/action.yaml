@@ -1,0 +1,72 @@
+name: "Setup MongoDB"
+description: "Setup MongoDB service and wait for it to be ready"
+
+inputs:
+  mongodb-version:
+    description: "MongoDB version"
+    required: false
+    default: "8"
+  mongodb-container-name:
+    description: "MongoDB container name"
+    required: false
+    default: "mongodb"
+  mongodb-port:
+    description: "MongoDB port"
+    required: false
+    default: "27017"
+  mongodb-db:
+    description: "MongoDB database name"
+    required: false
+    default: "mongodb"
+  mongodb-username:
+    description: "MongoDB username"
+    required: false
+    default: "admin"
+  mongodb-password:
+    description: "MongoDB password"
+    required: false
+    default: "password"
+
+outputs:
+  connection-string:
+    description: "MongoDB connection string"
+    value: ${{ steps.setup.outputs.connection-string }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install MongoDB
+      id: setup
+      uses: supercharge/mongodb-github-action@1.12.0
+      with:
+        mongodb-version: ${{ inputs.mongodb-version }}
+        mongodb-container-name: ${{ inputs.mongodb-container-name }}
+        mongodb-port: ${{ inputs.mongodb-port }}
+        mongodb-db: ${{ inputs.mongodb-db }}
+        mongodb-username: ${{ inputs.mongodb-username }}
+        mongodb-password: ${{ inputs.mongodb-password }}
+
+    - name: Wait for MongoDB to be ready
+      shell: bash
+      run: |
+        # Install mongosh if not available
+        if ! command -v mongosh &> /dev/null; then
+          sudo apt-get update
+          sudo apt-get install -y gnupg curl
+          curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc | \
+          sudo gpg -o /usr/share/keyrings/mongodb-server-8.0.gpg --dearmor
+          echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/8.0 multiverse" | \
+          sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
+          sudo apt-get update && sudo apt-get install -y mongodb-mongosh
+        fi
+
+        # Wait for MongoDB to be ready
+        for i in {1..30}; do
+          if mongosh --eval "db.runCommand({ ping: 1 })" localhost:${{ inputs.mongodb-port }} --quiet > /dev/null 2>&1; then
+            echo "MongoDB is up (attempt $i)"
+            exit 0
+          fi
+          echo "Waiting for MongoDB... (attempt $i)"
+          sleep 2
+        done
+        echo "MongoDB did not start in time!" && exit 1

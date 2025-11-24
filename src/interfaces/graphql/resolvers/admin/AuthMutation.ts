@@ -1,4 +1,5 @@
 import { GraphQLError } from 'graphql/error';
+import { ZodError } from 'zod';
 
 import { LoginError } from '~/back-constants/apolloCustomErrors/adminErrors';
 import { errors } from '~/back-constants/errors';
@@ -38,6 +39,15 @@ export const authMutation = {
         adminType: admin.type
       };
     } catch (err) {
+      if (err instanceof ZodError) {
+        const firstError = err.issues[0];
+        return {
+          __typename: 'ErrorPayload',
+          success: false,
+          message: firstError?.message || 'Invalid email format',
+          statusCode: 400
+        };
+      }
       if (err instanceof LoginError) {
         return {
           __typename: 'ErrorPayload',
