@@ -90,5 +90,5 @@ export async function generateUniqueSlug(title: string, options: SlugGeneratorOp
     attempts++;
   }
 
-  throw new Error(utilsErrors.UNABLE_GENERATE_UNIQUE_SLUG);
+  throw new Error(utilsErrors.SLUG_GENERATION_ERROR);
 }

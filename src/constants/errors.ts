@@ -17,5 +17,5 @@ export const utilsErrors = {
   EMPTY_TITLE_FOR_SLUG: 'Title must be a non-empty string',
   NO_BASE_SLUG_AVAILABLE: 'Title produces an empty slug and no fallback slug is provided',
   EMPTY_SLUG: 'Normalized slug is empty',
-  UNABLE_GENERATE_UNIQUE_SLUG: 'Unable to generate unique slug after max attempts'
+  SLUG_GENERATION_ERROR: 'Unable to generate unique slug after max attempts'
 };

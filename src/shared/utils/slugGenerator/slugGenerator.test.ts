@@ -147,7 +147,7 @@ describe('generateUniqueSlug', () => {
     ])('should throw error when max attempts (%i) is reached', async (maxAttempts, expectedCalls) => {
       const checkExists = createMockCheckExists(true);
       await expect(generateUniqueSlug('Test', { checkExists, maxAttempts })).rejects.toThrow(
-        utilsErrors.UNABLE_GENERATE_UNIQUE_SLUG
+        utilsErrors.SLUG_GENERATION_ERROR
       );
       expect(checkExists).toHaveBeenCalledTimes(expectedCalls);
     });
