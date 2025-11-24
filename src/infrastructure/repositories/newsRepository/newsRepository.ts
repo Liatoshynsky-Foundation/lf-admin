@@ -1,6 +1,6 @@
 import { FilterQuery, Model, Types } from 'mongoose';
 
-import { createBaseRepository } from '../baseRepository';
+import { createBaseRepository } from '../baseRepository/baseRepository';
 import { News } from '~/domain/entities/News';
 import { CreateNewsInput, NewsFilters, NewsRepository as INewsRepository } from '~/domain/repositories/newsRepository';
 import dbConnect from '~/infrastructure/db/connect';
@@ -76,7 +76,11 @@ export const NewsRepository = ({ NewsModel }: NewsRepoDeps): INewsRepository => 
   });
 
   return {
-    ...baseRepo,
+    findById: baseRepo.findById,
+    findAll: baseRepo.findAll,
+    update: baseRepo.update,
+    delete: baseRepo.delete,
+    count: baseRepo.count,
 
     create: async (input: CreateNewsInput): Promise<News> => {
       await dbConnect();

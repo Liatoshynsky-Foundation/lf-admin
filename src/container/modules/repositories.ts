@@ -16,6 +16,6 @@ export const registerRepositories = () => ({
   adminRepository: asFunction(() => AdminRepository()).scoped(),
   refreshTokenRepository: asFunction(() => RefreshTokenRepository()).scoped(),
 
-  pageRepository: asFunction(({ PageModel, DraftPageModel }) => PageRepository({ PageModel, DraftPageModel })).scoped(),
+  pageRepository: asFunction(PageRepository).scoped(),
   newsRepository: asFunction(NewsRepository).scoped()
 });

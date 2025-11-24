@@ -1,4 +1,4 @@
-import { createBaseService } from '../baseService';
+import { createBaseService } from '../baseService/baseService';
 import { newsServiceErrors } from '~/back-constants/errors';
 import { generateUniqueSlug } from '~/back-shared/utils';
 import { News } from '~/domain/entities/News';

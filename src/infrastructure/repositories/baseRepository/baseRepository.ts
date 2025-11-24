@@ -8,25 +8,33 @@ export type BaseEntity = {
   updatedAt: Date | string;
 };
 
-export type BaseFilters = {
+export interface PaginationFilters {
   limit?: number;
   skip?: number;
+}
+
+export interface BaseFilters extends PaginationFilters {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
-};
+}
+
+export type QueryFilters<TFilters extends BaseFilters> = Omit<
+  TFilters,
+  keyof PaginationFilters | 'sortBy' | 'sortOrder'
+>;
 
 export type BaseRepository<TEntity extends BaseEntity, TFilters extends BaseFilters = BaseFilters> = {
   findById(id: string): Promise<TEntity | null>;
   findAll(filters?: TFilters): Promise<TEntity[]>;
-  update(id: string, input: Partial<Omit<TEntity, 'id' | 'createdAt' | 'updatedAt'>>): Promise<TEntity | null>;
+  update(id: string, input: Partial<Omit<TEntity, keyof BaseEntity>>): Promise<TEntity | null>;
   delete(id: string): Promise<boolean>;
-  count(filters?: Omit<TFilters, 'limit' | 'skip' | 'sortBy' | 'sortOrder'>): Promise<number>;
+  count(filters?: QueryFilters<TFilters>): Promise<number>;
 };
 
 type CreateBaseRepositoryOptions<TEntity extends BaseEntity, TDbDoc, TFilters extends BaseFilters> = {
   model: Model<TDbDoc>;
   toEntity: (doc: TDbDoc) => TEntity;
-  buildQuery?: (filters?: Omit<TFilters, 'limit' | 'skip' | 'sortBy' | 'sortOrder'>) => FilterQuery<TDbDoc>;
+  buildQuery?: (filters?: QueryFilters<TFilters>) => FilterQuery<TDbDoc>;
   getDefaultSort?: (filters?: TFilters) => Record<string, 1 | -1>;
 };
 
@@ -34,6 +42,14 @@ export const createBaseRepository = <TEntity extends BaseEntity, TDbDoc, TFilter
   options: CreateBaseRepositoryOptions<TEntity, TDbDoc, TFilters>
 ): BaseRepository<TEntity, TFilters> => {
   const { model, toEntity, buildQuery = () => ({}), getDefaultSort } = options;
+
+  const extractQueryFilters = (filters?: TFilters): QueryFilters<TFilters> | undefined => {
+    if (!filters) return undefined;
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { limit, skip, sortBy, sortOrder, ...queryFilters } = filters;
+    return queryFilters as QueryFilters<TFilters>;
+  };
 
   return {
     findById: async (id: string): Promise<TEntity | null> => {
@@ -50,7 +66,7 @@ export const createBaseRepository = <TEntity extends BaseEntity, TDbDoc, TFilter
     findAll: async (filters?: TFilters): Promise<TEntity[]> => {
       await dbConnect();
 
-      const query = buildQuery ? buildQuery(filters) : {};
+      const query = buildQuery ? buildQuery(extractQueryFilters(filters)) : {};
 
       /* eslint-disable indent */
       const sort = getDefaultSort
@@ -73,10 +89,7 @@ export const createBaseRepository = <TEntity extends BaseEntity, TDbDoc, TFilter
       return docs.map(toEntity);
     },
 
-    update: async (
-      id: string,
-      input: Partial<Omit<TEntity, 'id' | 'createdAt' | 'updatedAt'>>
-    ): Promise<TEntity | null> => {
+    update: async (id: string, input: Partial<Omit<TEntity, keyof BaseEntity>>): Promise<TEntity | null> => {
       await dbConnect();
 
       if (!Types.ObjectId.isValid(id)) {
@@ -104,7 +117,7 @@ export const createBaseRepository = <TEntity extends BaseEntity, TDbDoc, TFilter
       return result !== null;
     },
 
-    count: async (filters?: Omit<TFilters, 'limit' | 'skip' | 'sortBy' | 'sortOrder'>): Promise<number> => {
+    count: async (filters?: QueryFilters<TFilters>): Promise<number> => {
       await dbConnect();
 
       const query = buildQuery ? buildQuery(filters) : {};
