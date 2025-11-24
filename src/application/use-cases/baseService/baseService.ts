@@ -1,4 +1,4 @@
-import { BaseEntity, BaseFilters, BaseRepository } from '~/infrastructure/repositories/baseRepository';
+import { BaseEntity, BaseFilters, BaseRepository } from '~/infrastructure/repositories/baseRepository/baseRepository';
 
 export type BaseService<TEntity extends BaseEntity, TFilters extends BaseFilters = BaseFilters> = {
   getById(id: string): Promise<TEntity | null>;
