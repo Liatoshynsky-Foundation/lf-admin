@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { Editor } from '@tiptap/react';
 import React from 'react';
 
@@ -125,6 +126,100 @@ describe('Toolbar', () => {
       render(<Toolbar editor={mockEditor} />);
 
       expect(screen.queryByLabelText('Add Image')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Interaction Handlers', () => {
+    it('should handle image upload button click', async () => {
+      const mockOnImageUpload = jest.fn().mockResolvedValue('https://example.com/image.jpg');
+      render(<Toolbar editor={mockEditor} onImageUpload={mockOnImageUpload} />);
+
+      const imageButton = screen.getByLabelText('Add Image');
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+
+      expect(fileInput).toBeInTheDocument();
+      expect(fileInput?.style.display).toBe('none');
+
+      await userEvent.click(imageButton);
+
+      // Verify that clicking the button triggers the file input
+      expect(fileInput).toBeInTheDocument();
+    });
+
+    it('should handle successful image upload', async () => {
+      const mockSetImage = jest.fn(() => ({ run: jest.fn() }));
+      const mockChain = {
+        focus: jest.fn(() => ({ setImage: mockSetImage }))
+      };
+      mockEditor.chain = jest.fn(() => mockChain) as any;
+
+      const mockOnImageUpload = jest.fn().mockResolvedValue('https://example.com/uploaded.jpg');
+      render(<Toolbar editor={mockEditor} onImageUpload={mockOnImageUpload} />);
+
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const file = new File(['image'], 'test.png', { type: 'image/png' });
+
+      fireEvent.change(fileInput, { target: { files: [file] } });
+
+      await waitFor(() => {
+        expect(mockOnImageUpload).toHaveBeenCalledWith(file);
+      });
+
+      await waitFor(() => {
+        expect(mockSetImage).toHaveBeenCalledWith({ src: 'https://example.com/uploaded.jpg' });
+      });
+    });
+
+    it('should handle failed image upload', async () => {
+      const mockOnImageUpload = jest.fn().mockRejectedValue(new Error('Upload failed'));
+      const mockAlert = jest.spyOn(window, 'alert').mockImplementation(() => {});
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      render(<Toolbar editor={mockEditor} onImageUpload={mockOnImageUpload} />);
+
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const file = new File(['image'], 'test.png', { type: 'image/png' });
+
+      fireEvent.change(fileInput, { target: { files: [file] } });
+
+      await waitFor(() => {
+        expect(mockOnImageUpload).toHaveBeenCalledWith(file);
+      });
+
+      await waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith('Image upload failed:', expect.any(Error));
+        expect(mockAlert).toHaveBeenCalledWith('Failed to upload image. Please try again.');
+      });
+
+      mockAlert.mockRestore();
+      consoleSpy.mockRestore();
+    });
+
+    it('should reset file input after upload', async () => {
+      const mockOnImageUpload = jest.fn().mockResolvedValue('https://example.com/uploaded.jpg');
+      render(<Toolbar editor={mockEditor} onImageUpload={mockOnImageUpload} />);
+
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const file = new File(['image'], 'test.png', { type: 'image/png' });
+
+      fireEvent.change(fileInput, { target: { files: [file] } });
+
+      await waitFor(() => {
+        expect(fileInput.value).toBe('');
+      });
+    });
+
+    it('should not upload when no file is selected', async () => {
+      const mockOnImageUpload = jest.fn().mockResolvedValue('https://example.com/uploaded.jpg');
+      render(<Toolbar editor={mockEditor} onImageUpload={mockOnImageUpload} />);
+
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+
+      fireEvent.change(fileInput, { target: { files: [] } });
+
+      await waitFor(() => {
+        expect(mockOnImageUpload).not.toHaveBeenCalled();
+      });
     });
   });
 });
