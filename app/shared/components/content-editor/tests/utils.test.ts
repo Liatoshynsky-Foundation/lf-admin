@@ -1,6 +1,6 @@
 import type { JSONContent } from '@tiptap/react';
 
-import { getAllImages, getFirstImage, isContentEmpty, validateImageFile } from './utils';
+import { getAllImages, getFirstImage, isContentEmpty, validateImageFile } from '../helpers/utils';
 
 describe('Content Editor Utils', () => {
   describe('isContentEmpty', () => {

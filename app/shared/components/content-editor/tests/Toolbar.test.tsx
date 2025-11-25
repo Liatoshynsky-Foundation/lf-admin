@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import type { Editor } from '@tiptap/react';
 import React from 'react';
 
-import { Toolbar } from './Toolbar';
+import { Toolbar } from '../editor/Toolbar';
 
 const createMockEditor = (overrides?: Partial<Editor>): Editor => {
   const mockFocus = () => ({

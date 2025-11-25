@@ -3,7 +3,7 @@ import type { JSONContent } from '@tiptap/react';
 import { useEditor } from '@tiptap/react';
 import React from 'react';
 
-import { Editor, useContentEditor } from './Editor';
+import { Editor, useContentEditor } from '../editor/Editor';
 
 const mockEditor = {
   commands: {
@@ -50,7 +50,7 @@ jest.mock('@tiptap/react', () => ({
   )
 }));
 
-jest.mock('./Toolbar', () => ({
+jest.mock('../editor/Toolbar', () => ({
   Toolbar: ({ editor, onImageUpload }: { editor: unknown; onImageUpload?: (file: File) => Promise<string> }) => (
     <div data-testid="toolbar">
       Toolbar {editor ? 'with editor' : 'without editor'}
