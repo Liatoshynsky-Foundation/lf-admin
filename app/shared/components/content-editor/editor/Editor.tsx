@@ -9,7 +9,7 @@ import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import React, { useEffect } from 'react';
 
-import { ImageUploadExtension } from '../extensions/ImageUpload';
+import { ImageUploadExtension } from '../helpers/ImageUpload';
 import { EditorContainer, EditorContent as StyledEditorContent, SaveButtonContainer } from '../styles';
 import type { ContentEditorProps } from '../types';
 import { Toolbar } from './Toolbar';
