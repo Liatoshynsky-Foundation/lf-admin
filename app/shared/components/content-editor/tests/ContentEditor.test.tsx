@@ -64,48 +64,46 @@ describe('ContentEditor', () => {
 
   describe('Rendering', () => {
     it('should render the page title', () => {
-      render(<ContentEditor />);
+      render(<ContentEditor editorTitle="Test Editor" />);
 
-      expect(screen.getByText('Content Page Editor')).toBeInTheDocument();
+      expect(screen.getByText('Test Editor')).toBeInTheDocument();
     });
 
     it('should render title input field', () => {
-      render(<ContentEditor />);
+      render(<ContentEditor editorTitle="Test Editor" />);
 
-      expect(screen.getByLabelText('Event Title')).toBeInTheDocument();
+      expect(screen.getByLabelText('Content Title')).toBeInTheDocument();
     });
 
     it('should render short description textarea', () => {
-      render(<ContentEditor />);
+      render(<ContentEditor editorTitle="Test Editor" />);
 
-      expect(screen.getByLabelText('Short Description')).toBeInTheDocument();
+      expect(screen.getByLabelText('Короткий опис')).toBeInTheDocument();
     });
 
     it('should render the Editor component', () => {
-      render(<ContentEditor />);
+      render(<ContentEditor editorTitle="Test Editor" />);
 
       expect(screen.getByTestId('mock-editor')).toBeInTheDocument();
     });
 
     it('should render publish and save draft buttons', () => {
-      render(<ContentEditor />);
+      render(<ContentEditor editorTitle="Test Editor" />);
 
-      expect(screen.getByText('Publish Content')).toBeInTheDocument();
-      expect(screen.getByText('Save Draft')).toBeInTheDocument();
+      expect(screen.getByText('Опублікувати')).toBeInTheDocument();
+      expect(screen.getByText('Зберегти чернетку')).toBeInTheDocument();
     });
 
     it('should display initial save status message', () => {
-      render(<ContentEditor />);
+      render(<ContentEditor editorTitle="Test Editor" />);
 
-      expect(screen.getByText('Start typing to auto-save')).toBeInTheDocument();
+      expect(screen.getByText('Почніть вводити текст для автоматичного збереження')).toBeInTheDocument();
     });
 
     it('should pass correct props to Editor component', () => {
-      render(<ContentEditor />);
+      render(<ContentEditor editorTitle="Test Editor" />);
 
-      expect(screen.getByTestId('editor-placeholder')).toHaveTextContent(
-        'Describe your event in detail... Include the date, time, location, agenda, speakers, and any other relevant information.'
-      );
+      expect(screen.getByTestId('editor-placeholder')).toHaveTextContent('Введіть деталі контенту...');
       expect(screen.getByTestId('editor-show-save-button')).toHaveTextContent('false');
       expect(screen.getByTestId('editor-min-height')).toHaveTextContent('500px');
     });
@@ -113,46 +111,46 @@ describe('ContentEditor', () => {
 
   describe('Form Interactions', () => {
     it('should update title value when user types', () => {
-      render(<ContentEditor />);
+      render(<ContentEditor editorTitle="Test Editor" />);
 
-      const titleInput = screen.getByLabelText('Event Title') as HTMLInputElement;
+      const titleInput = screen.getByLabelText('Content Title') as HTMLInputElement;
       fireEvent.change(titleInput, { target: { value: 'Annual Charity Concert 2024' } });
 
       expect(titleInput.value).toBe('Annual Charity Concert 2024');
     });
 
     it('should update short description value when user types', () => {
-      render(<ContentEditor />);
+      render(<ContentEditor editorTitle="Test Editor" />);
 
-      const descriptionInput = screen.getByLabelText('Short Description') as HTMLTextAreaElement;
+      const descriptionInput = screen.getByLabelText('Короткий опис') as HTMLTextAreaElement;
       fireEvent.change(descriptionInput, { target: { value: 'A wonderful charity event' } });
 
       expect(descriptionInput.value).toBe('A wonderful charity event');
     });
 
     it('should display character count for short description', () => {
-      render(<ContentEditor />);
+      render(<ContentEditor editorTitle="Test Editor" />);
 
-      const descriptionInput = screen.getByLabelText('Short Description') as HTMLTextAreaElement;
+      const descriptionInput = screen.getByLabelText('Короткий опис') as HTMLTextAreaElement;
       fireEvent.change(descriptionInput, { target: { value: 'Test description' } });
 
-      expect(screen.getByText('16/160 characters')).toBeInTheDocument();
+      expect(screen.getByText('16/160 символів')).toBeInTheDocument();
     });
 
     it('should update character count when description changes', () => {
-      render(<ContentEditor />);
+      render(<ContentEditor editorTitle="Test Editor" />);
 
-      const descriptionInput = screen.getByLabelText('Short Description') as HTMLTextAreaElement;
+      const descriptionInput = screen.getByLabelText('Короткий опис') as HTMLTextAreaElement;
 
       fireEvent.change(descriptionInput, { target: { value: 'Short' } });
-      expect(screen.getByText('5/160 characters')).toBeInTheDocument();
+      expect(screen.getByText('5/160 символів')).toBeInTheDocument();
 
       fireEvent.change(descriptionInput, { target: { value: 'A much longer description text' } });
-      expect(screen.getByText('30/160 characters')).toBeInTheDocument();
+      expect(screen.getByText('30/160 символів')).toBeInTheDocument();
     });
 
     it('should update content when editor onChange is triggered', () => {
-      render(<ContentEditor />);
+      render(<ContentEditor editorTitle="Test Editor" />);
 
       const triggerButton = screen.getByTestId('trigger-change');
       fireEvent.click(triggerButton);
@@ -164,37 +162,37 @@ describe('ContentEditor', () => {
 
   describe('Auto-save Functionality', () => {
     it('should show "Saving..." status when auto-saving', async () => {
-      render(<ContentEditor />);
+      render(<ContentEditor editorTitle="Test Editor" />);
 
-      const titleInput = screen.getByLabelText('Event Title');
+      const titleInput = screen.getByLabelText('Content Title');
       fireEvent.change(titleInput, { target: { value: 'Test Event' } });
 
       jest.advanceTimersByTime(2000);
 
       await waitFor(() => {
-        expect(screen.getByText('Saving...')).toBeInTheDocument();
+        expect(screen.getByText('Збереження...')).toBeInTheDocument();
       });
     });
 
     it('should show last saved time after successful save', async () => {
-      render(<ContentEditor />);
+      render(<ContentEditor editorTitle="Test Editor" />);
 
-      const titleInput = screen.getByLabelText('Event Title');
+      const titleInput = screen.getByLabelText('Content Title');
       fireEvent.change(titleInput, { target: { value: 'Test Event' } });
 
       jest.advanceTimersByTime(2000);
 
       await waitFor(() => {
-        expect(screen.getByText(/Last saved at/)).toBeInTheDocument();
+        expect(screen.getByText(/Останнє збереження о/)).toBeInTheDocument();
       });
     });
 
     it('should auto-save when title changes', async () => {
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
 
-      render(<ContentEditor />);
+      render(<ContentEditor editorTitle="Test Editor" />);
 
-      const titleInput = screen.getByLabelText('Event Title');
+      const titleInput = screen.getByLabelText('Content Title');
       fireEvent.change(titleInput, { target: { value: 'Test Event' } });
 
       jest.advanceTimersByTime(2000);
@@ -214,9 +212,9 @@ describe('ContentEditor', () => {
     it('should auto-save when short description changes', async () => {
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
 
-      render(<ContentEditor />);
+      render(<ContentEditor editorTitle="Test Editor" />);
 
-      const descInput = screen.getByLabelText('Short Description');
+      const descInput = screen.getByLabelText('Короткий опис');
       fireEvent.change(descInput, { target: { value: 'Test description' } });
 
       jest.advanceTimersByTime(2000);
@@ -236,7 +234,7 @@ describe('ContentEditor', () => {
     it('should auto-save when content changes', async () => {
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
 
-      render(<ContentEditor />);
+      render(<ContentEditor editorTitle="Test Editor" />);
 
       const triggerButton = screen.getByTestId('trigger-change');
       fireEvent.click(triggerButton);
@@ -258,9 +256,9 @@ describe('ContentEditor', () => {
     it('should debounce auto-save calls', async () => {
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
 
-      render(<ContentEditor />);
+      render(<ContentEditor editorTitle="Test Editor" />);
 
-      const titleInput = screen.getByLabelText('Event Title');
+      const titleInput = screen.getByLabelText('Content Title');
 
       fireEvent.change(titleInput, { target: { value: 'T' } });
       jest.advanceTimersByTime(500);
@@ -284,12 +282,12 @@ describe('ContentEditor', () => {
     it('should save when Save Draft button is clicked', async () => {
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
 
-      render(<ContentEditor />);
+      render(<ContentEditor editorTitle="Test Editor" />);
 
-      const titleInput = screen.getByLabelText('Event Title');
+      const titleInput = screen.getByLabelText('Content Title');
       fireEvent.change(titleInput, { target: { value: 'Manual Save Test' } });
 
-      const saveButton = screen.getByText('Save Draft');
+      const saveButton = screen.getByText('Зберегти чернетку');
       fireEvent.click(saveButton);
 
       await waitFor(() => {
@@ -305,37 +303,37 @@ describe('ContentEditor', () => {
     });
 
     it('should show saving status when Save Draft is clicked', async () => {
-      render(<ContentEditor />);
+      render(<ContentEditor editorTitle="Test Editor" />);
 
-      const saveButton = screen.getByText('Save Draft');
+      const saveButton = screen.getByText('Зберегти чернетку');
       fireEvent.click(saveButton);
 
       await waitFor(() => {
-        expect(screen.getByText('Saving...')).toBeInTheDocument();
+        expect(screen.getByText('Збереження...')).toBeInTheDocument();
       });
     });
   });
 
   describe('Publish Functionality', () => {
-    it('should log event data when Publish button is clicked', () => {
+    it('should log content data when Publish button is clicked', () => {
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
       const alertSpy = jest.spyOn(window, 'alert').mockImplementation();
 
-      render(<ContentEditor />);
+      render(<ContentEditor editorTitle="Test Editor" />);
 
-      const titleInput = screen.getByLabelText('Event Title');
+      const titleInput = screen.getByLabelText('Content Title');
       fireEvent.change(titleInput, { target: { value: 'Published Event' } });
 
-      const publishButton = screen.getByText('Publish Content');
+      const publishButton = screen.getByText('Опублікувати');
       fireEvent.click(publishButton);
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        'Publishing event:',
+        'Publishing content:',
         expect.objectContaining({
           title: 'Published Event'
         })
       );
-      expect(alertSpy).toHaveBeenCalledWith('Event published! (This is a demo)');
+      expect(alertSpy).toHaveBeenCalledWith('Content published! (This is a demo)');
 
       consoleSpy.mockRestore();
       alertSpy.mockRestore();
@@ -344,33 +342,33 @@ describe('ContentEditor', () => {
     it('should show alert when Publish button is clicked', () => {
       const alertSpy = jest.spyOn(window, 'alert').mockImplementation();
 
-      render(<ContentEditor />);
+      render(<ContentEditor editorTitle="Test Editor" />);
 
-      const publishButton = screen.getByText('Publish Content');
+      const publishButton = screen.getByText('Опублікувати');
       fireEvent.click(publishButton);
 
-      expect(alertSpy).toHaveBeenCalledWith('Event published! (This is a demo)');
+      expect(alertSpy).toHaveBeenCalledWith('Content published! (This is a demo)');
 
       alertSpy.mockRestore();
     });
   });
 
   describe('Initial State', () => {
-    it('should initialize with empty event data', () => {
-      render(<ContentEditor />);
+    it('should initialize with empty content data', () => {
+      render(<ContentEditor editorTitle="Test Editor" />);
 
-      const titleInput = screen.getByLabelText('Event Title') as HTMLInputElement;
-      const descInput = screen.getByLabelText('Short Description') as HTMLTextAreaElement;
+      const titleInput = screen.getByLabelText('Content Title') as HTMLInputElement;
+      const descInput = screen.getByLabelText('Короткий опис') as HTMLTextAreaElement;
 
       expect(titleInput.value).toBe('');
       expect(descInput.value).toBe('');
-      expect(screen.getByText('0/160 characters')).toBeInTheDocument();
+      expect(screen.getByText('0/160 символів')).toBeInTheDocument();
     });
 
     it('should not trigger auto-save on initial render', async () => {
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
 
-      render(<ContentEditor />);
+      render(<ContentEditor editorTitle="Test Editor" />);
 
       jest.advanceTimersByTime(3000);
 
@@ -380,6 +378,17 @@ describe('ContentEditor', () => {
       });
 
       consoleSpy.mockRestore();
+    });
+
+    it('should render with initial content when provided', () => {
+      const initialContent = {
+        type: 'doc',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Initial content' }] }]
+      };
+
+      render(<ContentEditor editorTitle="Test Editor" initialContent={initialContent} />);
+
+      expect(screen.getByTestId('mock-editor')).toBeInTheDocument();
     });
   });
 });
