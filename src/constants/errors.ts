@@ -1,3 +1,5 @@
+import { newError } from '~/interfaces/error';
+
 export const errors = {
   REFRESH_TOKEN_REVOKED: 'Refresh token has been revoked',
   EXPIRED_ACCESS_TOKEN: 'You must be logged in to access this resource',
@@ -29,4 +31,12 @@ export const newsServiceErrors = {
   FAILED_TO_HIDE: (id: string) => `Failed to hide news with id "${id}"`,
   FAILED_TO_DELETE: (id: string) => `News with id "${id}" not found or could not be deleted`,
   TITLE_REQUIRED_FOR_SLUG: 'Title is required to generate a slug'
+};
+
+export const MediaMentionsServiceErrors = {
+  INVALID_URL: newError('The provided URL is invalid'),
+  NOT_FOUND: newError('Media mention not found'),
+  ALREADY_PUBLISHED: newError('Media mention is already published'),
+  ALREADY_DRAFT: newError('Media mention is already in draft status'),
+  INVALID_ID: newError('The provided ID is invalid')
 };
