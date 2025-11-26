@@ -1,41 +1,47 @@
 'use client';
 
-import { Box, Button, Container, Stack, TextField, Typography } from '@mui/material';
+import { Box, Container, Stack, TextField, Typography } from '@mui/material';
 import type { JSONContent } from '@tiptap/react';
 import React, { useEffect, useState } from 'react';
 
 import { Editor } from '~/components/content-editor';
+import Button from '~/shared/components/design-system/button/Button';
 
-interface EventData {
+interface ContentEditorProps {
+  editorTitle: string;
+  initialContent?: JSONContent | null;
+}
+
+interface ContentData {
   title: string;
   shortDescription: string;
   content: JSONContent | null;
 }
 
-export default function ContentEditor() {
-  const [eventData, setEventData] = useState<EventData>({
+const ContentEditor: React.FC<ContentEditorProps> = ({ editorTitle, initialContent }) => {
+  const [contentData, setContentData] = useState<ContentData>({
     title: '',
     shortDescription: '',
-    content: null
+    content: initialContent || null
   });
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const timeout = setTimeout(async () => {
-      if (eventData.content || eventData.title || eventData.shortDescription) {
+      if (contentData.content || contentData.title || contentData.shortDescription) {
         await saveEvent();
       }
     }, 2000);
 
     return () => clearTimeout(timeout);
-  }, [eventData]);
+  }, [contentData]);
 
   const saveEvent = async () => {
     setIsSaving(true);
 
     try {
-      console.log('Auto-saving event:', eventData);
+      console.log('Auto-saving event:', contentData);
 
       await new Promise((resolve) => setTimeout(resolve, 500));
 
@@ -54,8 +60,8 @@ export default function ContentEditor() {
   };
 
   const handlePublish = async () => {
-    console.log('Publishing event:', eventData);
-    alert('Event published! (This is a demo)');
+    console.log('Publishing content:', contentData);
+    alert('Content published! (This is a demo)');
   };
 
   return (
@@ -63,44 +69,44 @@ export default function ContentEditor() {
       <Stack spacing={3}>
         <Box>
           <Typography variant="h4" gutterBottom>
-            Content Page Editor
+            {editorTitle}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {isSaving && 'Saving...'}
-            {!isSaving && lastSaved && `Last saved at ${lastSaved.toLocaleTimeString()}`}
-            {!isSaving && !lastSaved && 'Start typing to auto-save'}
+            {isSaving && 'Збереження...'}
+            {!isSaving && lastSaved && `Останнє збереження о ${lastSaved.toLocaleTimeString()}`}
+            {!isSaving && !lastSaved && 'Почніть вводити текст для автоматичного збереження'}
           </Typography>
         </Box>
 
         <TextField
           fullWidth
-          label="Event Title"
+          label="Content Title"
           variant="outlined"
-          value={eventData.title}
-          onChange={(e) => setEventData({ ...eventData, title: e.target.value })}
-          placeholder="e.g., Annual Charity Concert 2024"
+          value={contentData.title}
+          onChange={(e) => setContentData({ ...contentData, title: e.target.value })}
+          placeholder="Заголовок"
         />
 
         <TextField
           fullWidth
-          label="Short Description"
+          label="Короткий опис"
           variant="outlined"
           multiline
           rows={2}
-          value={eventData.shortDescription}
-          onChange={(e) => setEventData({ ...eventData, shortDescription: e.target.value })}
-          placeholder="Brief description for event cards and previews"
-          helperText={`${eventData.shortDescription.length}/160 characters`}
+          value={contentData.shortDescription}
+          onChange={(e) => setContentData({ ...contentData, shortDescription: e.target.value })}
+          placeholder="Короткий опис контенту"
+          helperText={`${contentData.shortDescription.length}/160 символів`}
         />
 
         <Box>
           <Typography variant="h6" gutterBottom>
-            Content Details
+            Деталі контенту
           </Typography>
           <Editor
-            initialContent={eventData.content || undefined}
-            placeholder="Describe your event in detail... Include the date, time, location, agenda, speakers, and any other relevant information."
-            onChange={(content) => setEventData({ ...eventData, content })}
+            initialContent={contentData.content || undefined}
+            placeholder="Введіть деталі контенту..."
+            onChange={(content) => setContentData({ ...contentData, content })}
             onImageUpload={handleImageUpload}
             showSaveButton={false}
             minHeight="500px"
@@ -108,14 +114,16 @@ export default function ContentEditor() {
         </Box>
 
         <Box display="flex" gap={2}>
-          <Button variant="contained" color="primary" onClick={handlePublish}>
-            Publish Content
+          <Button variant="filled" color="primary" onClick={handlePublish}>
+            Опублікувати
           </Button>
-          <Button variant="outlined" onClick={() => saveEvent()}>
-            Save Draft
+          <Button variant="outlined" color="primary" onClick={() => saveEvent()}>
+            Зберегти чернетку
           </Button>
         </Box>
       </Stack>
     </Container>
   );
-}
+};
+
+export default ContentEditor;

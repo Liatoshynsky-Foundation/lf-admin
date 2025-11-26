@@ -16,7 +16,7 @@ export const ToolbarContainer = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexWrap: 'wrap',
   gap: theme.spacing(0.5),
-  backgroundColor: theme.palette.grey[50],
+  backgroundColor: '#F1F2F7',
   position: 'sticky',
   top: 0,
   zIndex: 10
@@ -98,7 +98,7 @@ export const EditorContent = styled(Box)<{ minHeight?: string }>(({ theme, minHe
     },
 
     '& code': {
-      backgroundColor: theme.palette.grey[100],
+      backgroundColor: '#F1F2F7',
       borderRadius: theme.shape.borderRadius,
       padding: theme.spacing(0.25, 0.5),
       fontSize: '0.9em',
@@ -173,5 +173,5 @@ export const SaveButtonContainer = styled(Box)(({ theme }) => ({
   padding: theme.spacing(1.5, 2),
   display: 'flex',
   justifyContent: 'flex-end',
-  backgroundColor: theme.palette.grey[50]
+  backgroundColor: '#F1F2F7'
 }));
