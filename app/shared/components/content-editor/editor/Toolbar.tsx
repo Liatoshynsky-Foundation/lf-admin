@@ -1,5 +1,9 @@
 import {
   Code,
+  FormatAlignCenter,
+  FormatAlignJustify,
+  FormatAlignLeft,
+  FormatAlignRight,
   FormatBold,
   FormatItalic,
   FormatListBulleted,
@@ -110,6 +114,33 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload }) => {
         disabled={!editor.can().chain().focus().toggleUnderline().run()}
         icon={<FormatUnderlined />}
         label="Underline"
+      />
+
+      <ToolbarDivider />
+
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setTextAlign('left').run()}
+        isActive={editor.isActive({ textAlign: 'left' })}
+        icon={<FormatAlignLeft />}
+        label="Align Left"
+      />
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setTextAlign('center').run()}
+        isActive={editor.isActive({ textAlign: 'center' })}
+        icon={<FormatAlignCenter />}
+        label="Align Center"
+      />
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setTextAlign('right').run()}
+        isActive={editor.isActive({ textAlign: 'right' })}
+        icon={<FormatAlignRight />}
+        label="Align Right"
+      />
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setTextAlign('justify').run()}
+        isActive={editor.isActive({ textAlign: 'justify' })}
+        icon={<FormatAlignJustify />}
+        label="Justify"
       />
 
       <ToolbarDivider />

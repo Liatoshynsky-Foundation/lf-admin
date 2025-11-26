@@ -1,3 +1,26 @@
+// Mock the tiptap-extension-resize-image module before importing
+jest.mock('tiptap-extension-resize-image', () => {
+  return {
+    __esModule: true,
+    default: {
+      name: 'image',
+      type: 'node',
+      extend: jest.fn((config) => ({
+        name: 'image',
+        type: 'node',
+        config,
+        options: config.addOptions ? config.addOptions() : {},
+        configure: jest.fn((options) => ({
+          name: 'image',
+          type: 'node',
+          options: { ...config.addOptions?.(), ...options },
+          config
+        }))
+      }))
+    }
+  };
+});
+
 import { render, screen, waitFor } from '@testing-library/react';
 import type { JSONContent } from '@tiptap/react';
 import { useEditor } from '@tiptap/react';

@@ -19,6 +19,7 @@ const createMockEditor = (overrides?: Partial<Editor>): Editor => {
     unsetLink: jest.fn(() => ({ run: jest.fn() })),
     setImage: jest.fn(() => ({ run: jest.fn() })),
     setHorizontalRule: jest.fn(() => ({ run: jest.fn() })),
+    setTextAlign: jest.fn(() => ({ run: jest.fn() })),
     undo: jest.fn(() => ({ run: jest.fn() })),
     redo: jest.fn(() => ({ run: jest.fn() }))
   });
@@ -35,6 +36,7 @@ const createMockEditor = (overrides?: Partial<Editor>): Editor => {
     setLink: jest.fn(() => ({ run: jest.fn(() => true) })),
     unsetLink: jest.fn(() => ({ run: jest.fn(() => true) })),
     setImage: jest.fn(() => ({ run: jest.fn(() => true) })),
+    setTextAlign: jest.fn(() => ({ run: jest.fn(() => true) })),
     setHorizontalRule: jest.fn(() => ({ run: jest.fn(() => true) }))
   });
 
@@ -94,6 +96,15 @@ describe('Toolbar', () => {
 
       expect(screen.getByLabelText('Bullet List')).toBeInTheDocument();
       expect(screen.getByLabelText('Numbered List')).toBeInTheDocument();
+    });
+
+    it('should render text alignment buttons', () => {
+      render(<Toolbar editor={mockEditor} />);
+
+      expect(screen.getByLabelText('Align Left')).toBeInTheDocument();
+      expect(screen.getByLabelText('Align Center')).toBeInTheDocument();
+      expect(screen.getByLabelText('Align Right')).toBeInTheDocument();
+      expect(screen.getByLabelText('Justify')).toBeInTheDocument();
     });
 
     it('should render block formatting buttons', () => {

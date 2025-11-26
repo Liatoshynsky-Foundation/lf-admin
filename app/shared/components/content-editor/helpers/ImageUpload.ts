@@ -1,16 +1,37 @@
-import Image from '@tiptap/extension-image';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { EditorView } from '@tiptap/pm/view';
+import ImageResize from 'tiptap-extension-resize-image';
 
 interface ImageUploadOptions {
   onImageUpload?: (file: File) => Promise<string>;
 }
 
-export const ImageUploadExtension = Image.extend<ImageUploadOptions>({
+export const ImageUploadExtension = ImageResize.extend<ImageUploadOptions>({
   addOptions() {
     return {
       ...this.parent?.(),
-      onImageUpload: undefined
+      onImageUpload: undefined,
+      inline: true,
+      allowBase64: true
+    };
+  },
+
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      'data-float': {
+        default: null,
+        parseHTML: (element) => element.getAttribute('data-float'),
+        renderHTML: (attributes) => {
+          if (!attributes['data-float']) {
+            return {};
+          }
+          return {
+            'data-float': attributes['data-float'],
+            style: `float: ${attributes['data-float']}; margin: 8px;`
+          };
+        }
+      }
     };
   },
 

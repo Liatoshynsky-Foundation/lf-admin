@@ -15,9 +15,10 @@ export const ToolbarButton: React.FC<ToolbarButtonProps> = ({ onClick, isActive,
           height: '32px',
           borderRadius: 1,
           ...(isActive && {
-            backgroundColor: 'primary.light',
+            backgroundColor: '#FFE099',
+            color: '#190D03',
             '&:hover': {
-              backgroundColor: 'primary.main'
+              backgroundColor: '#FFE099'
             }
           })
         }}

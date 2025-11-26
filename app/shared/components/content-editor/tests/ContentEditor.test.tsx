@@ -72,7 +72,7 @@ describe('ContentEditor', () => {
     it('should render title input field', () => {
       render(<ContentEditor editorTitle="Test Editor" />);
 
-      expect(screen.getByLabelText('Content Title')).toBeInTheDocument();
+      expect(screen.getByLabelText('Заголовок')).toBeInTheDocument();
     });
 
     it('should render short description textarea', () => {
@@ -113,7 +113,7 @@ describe('ContentEditor', () => {
     it('should update title value when user types', () => {
       render(<ContentEditor editorTitle="Test Editor" />);
 
-      const titleInput = screen.getByLabelText('Content Title') as HTMLInputElement;
+      const titleInput = screen.getByLabelText('Заголовок') as HTMLInputElement;
       fireEvent.change(titleInput, { target: { value: 'Annual Charity Concert 2024' } });
 
       expect(titleInput.value).toBe('Annual Charity Concert 2024');
@@ -164,7 +164,7 @@ describe('ContentEditor', () => {
     it('should show "Saving..." status when auto-saving', async () => {
       render(<ContentEditor editorTitle="Test Editor" />);
 
-      const titleInput = screen.getByLabelText('Content Title');
+      const titleInput = screen.getByLabelText('Заголовок');
       fireEvent.change(titleInput, { target: { value: 'Test Event' } });
 
       jest.advanceTimersByTime(2000);
@@ -177,7 +177,7 @@ describe('ContentEditor', () => {
     it('should show last saved time after successful save', async () => {
       render(<ContentEditor editorTitle="Test Editor" />);
 
-      const titleInput = screen.getByLabelText('Content Title');
+      const titleInput = screen.getByLabelText('Заголовок');
       fireEvent.change(titleInput, { target: { value: 'Test Event' } });
 
       jest.advanceTimersByTime(2000);
@@ -192,7 +192,7 @@ describe('ContentEditor', () => {
 
       render(<ContentEditor editorTitle="Test Editor" />);
 
-      const titleInput = screen.getByLabelText('Content Title');
+      const titleInput = screen.getByLabelText('Заголовок');
       fireEvent.change(titleInput, { target: { value: 'Test Event' } });
 
       jest.advanceTimersByTime(2000);
@@ -258,7 +258,7 @@ describe('ContentEditor', () => {
 
       render(<ContentEditor editorTitle="Test Editor" />);
 
-      const titleInput = screen.getByLabelText('Content Title');
+      const titleInput = screen.getByLabelText('Заголовок');
 
       fireEvent.change(titleInput, { target: { value: 'T' } });
       jest.advanceTimersByTime(500);
@@ -284,7 +284,7 @@ describe('ContentEditor', () => {
 
       render(<ContentEditor editorTitle="Test Editor" />);
 
-      const titleInput = screen.getByLabelText('Content Title');
+      const titleInput = screen.getByLabelText('Заголовок');
       fireEvent.change(titleInput, { target: { value: 'Manual Save Test' } });
 
       const saveButton = screen.getByText('Зберегти чернетку');
@@ -321,7 +321,7 @@ describe('ContentEditor', () => {
 
       render(<ContentEditor editorTitle="Test Editor" />);
 
-      const titleInput = screen.getByLabelText('Content Title');
+      const titleInput = screen.getByLabelText('Заголовок');
       fireEvent.change(titleInput, { target: { value: 'Published Event' } });
 
       const publishButton = screen.getByText('Опублікувати');
@@ -357,7 +357,7 @@ describe('ContentEditor', () => {
     it('should initialize with empty content data', () => {
       render(<ContentEditor editorTitle="Test Editor" />);
 
-      const titleInput = screen.getByLabelText('Content Title') as HTMLInputElement;
+      const titleInput = screen.getByLabelText('Заголовок') as HTMLInputElement;
       const descInput = screen.getByLabelText('Короткий опис') as HTMLTextAreaElement;
 
       expect(titleInput.value).toBe('');

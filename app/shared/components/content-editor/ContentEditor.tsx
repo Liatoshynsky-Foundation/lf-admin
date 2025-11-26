@@ -80,7 +80,7 @@ const ContentEditor: React.FC<ContentEditorProps> = ({ editorTitle, initialConte
 
         <TextField
           fullWidth
-          label="Content Title"
+          label="Заголовок"
           variant="outlined"
           value={contentData.title}
           onChange={(e) => setContentData({ ...contentData, title: e.target.value })}

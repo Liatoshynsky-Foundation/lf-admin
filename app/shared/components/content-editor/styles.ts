@@ -144,7 +144,22 @@ export const EditorContent = styled(Box)<{ minHeight?: string }>(({ theme, minHe
       height: 'auto',
       borderRadius: theme.shape.borderRadius,
       margin: theme.spacing(1, 0),
-      display: 'block'
+      display: 'inline-block',
+      verticalAlign: 'top',
+
+      '&[data-float="left"]': {
+        float: 'left',
+        marginRight: theme.spacing(2),
+        marginBottom: theme.spacing(1),
+        marginLeft: 0
+      },
+
+      '&[data-float="right"]': {
+        float: 'right',
+        marginLeft: theme.spacing(2),
+        marginBottom: theme.spacing(1),
+        marginRight: 0
+      }
     },
 
     '& hr': {
