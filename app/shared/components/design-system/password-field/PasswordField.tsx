@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  Box,
   FormControl,
   FormHelperText,
   IconButton,
@@ -11,7 +12,7 @@ import {
 } from '@mui/material';
 import React from 'react';
 
-import { overwrites } from './PasswordField.styles';
+import { autofillFix, overwrites } from './PasswordField.styles';
 import VisibilityOn from '~/public/icons/eye.svg';
 import VisibilityOff from '~/public/icons/eye-closed.svg';
 
@@ -33,32 +34,34 @@ const PasswordField = ({ helperText, sx, ...props }: PasswordFieldProps) => {
   };
 
   return (
-    <FormControl variant="outlined" fullWidth>
-      <InputLabel htmlFor="outlined-adornment-password" sx={overwrites.label}>
-        Пароль
-      </InputLabel>
-      <OutlinedInput
-        id="outlined-adornment-password"
-        label="Пароль"
-        type={showPassword ? 'text' : 'password'}
-        endAdornment={
-          <InputAdornment position="end">
-            <IconButton
-              aria-label={showPassword ? 'hide the password' : 'display the password'}
-              onClick={handleClickShowPassword}
-              onMouseDown={handleMouseDownPassword}
-              onMouseUp={handleMouseUpPassword}
-              edge="end"
-            >
-              {showPassword ? <VisibilityOn /> : <VisibilityOff />}
-            </IconButton>
-          </InputAdornment>
-        }
-        sx={{ ...sx, ...overwrites.input }}
-        {...props}
-      />
-      {helperText && <FormHelperText sx={overwrites.helperText}>{helperText}</FormHelperText>}
-    </FormControl>
+    <Box sx={autofillFix}>
+      <FormControl variant="outlined" fullWidth>
+        <InputLabel htmlFor="outlined-adornment-password" sx={overwrites.label}>
+          Пароль
+        </InputLabel>
+        <OutlinedInput
+          id="outlined-adornment-password"
+          label="Пароль"
+          type={showPassword ? 'text' : 'password'}
+          endAdornment={
+            <InputAdornment position="end">
+              <IconButton
+                aria-label={showPassword ? 'hide the password' : 'display the password'}
+                onClick={handleClickShowPassword}
+                onMouseDown={handleMouseDownPassword}
+                onMouseUp={handleMouseUpPassword}
+                edge="end"
+              >
+                {showPassword ? <VisibilityOn /> : <VisibilityOff />}
+              </IconButton>
+            </InputAdornment>
+          }
+          sx={{ ...sx, ...overwrites.input }}
+          {...props}
+        />
+        {helperText && <FormHelperText sx={overwrites.helperText}>{helperText}</FormHelperText>}
+      </FormControl>
+    </Box>
   );
 };
 

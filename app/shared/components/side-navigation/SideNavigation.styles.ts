@@ -1,32 +1,56 @@
 export const styles = {
   drawerPaper: {
-    '& .MuiDrawer-paper': {
-      backgroundColor: '#F3F2F2',
-      border: 'none',
-      maxWidth: '280px',
-      padding: '16px 24px',
-      overflowY: 'scroll',
-      scrollbarWidth: 'none',
-      msOverflowStyle: 'none',
-      '&::-webkit-scrollbar': {
-        display: 'none'
-      }
+    backgroundColor: '#F1F2F7',
+    border: 'border-right: 1px solid #DCDDE5',
+    position: 'fixed',
+    maxWidth: '280px',
+    padding: '32px 0',
+    scrollbarWidth: 'none',
+    height: '100vh',
+    overflowY: 'scroll',
+    overflowX: 'visible',
+    '&::-webkit-scrollbar': {
+      display: 'none'
     }
   },
   topSection: {
     display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between'
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   hideBtn: {
-    fontSize: 0,
     borderRadius: '50%',
-    width: 40,
-    height: 40,
-    backgroundColor: '#f0f0f0',
-    alignSelf: 'center'
+    width: 32,
+    height: 32,
+    backgroundColor: '#F1F2F7',
+    position: 'absolute',
+    top: '60px',
+    border: '1px solid #DCDDE5',
+    transform: 'translateY(-50%)',
+    zIndex: 1,
+    '&:hover': {
+      backgroundColor: '#E0E0E0'
+    }
   },
   hideInClosed: (open: boolean) => ({
     display: open ? 'block' : 'none'
-  })
+  }),
+  subheader: {
+    background: 'transparent',
+    pl: '24px',
+    lineHeight: '140%',
+    fontFamily: 'Mulish',
+    position: 'relative'
+  },
+  divider: {
+    my: '16px'
+  },
+  logoBlock: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    flexDirection: 'column',
+    borderRadius: '8px',
+    padding: 0
+  }
 };
