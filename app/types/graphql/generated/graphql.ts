@@ -1,4 +1,7 @@
-// NOSONAR
+// sonarignore:start
+/* eslint-disable */
+/* tslint:disable */
+/* This file was automatically generated and should not be edited. */
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 export type Maybe<T> = T | null;
@@ -1950,3 +1953,4 @@ export type NewsCountQueryHookResult = ReturnType<typeof useNewsCountQuery>;
 export type NewsCountLazyQueryHookResult = ReturnType<typeof useNewsCountLazyQuery>;
 export type NewsCountSuspenseQueryHookResult = ReturnType<typeof useNewsCountSuspenseQuery>;
 export type NewsCountQueryResult = Apollo.QueryResult<NewsCountQuery, NewsCountQueryVariables>;
+// sonarignore:end
