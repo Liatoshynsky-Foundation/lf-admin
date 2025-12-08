@@ -8,30 +8,42 @@ import { ListElement } from '../list-element/ListElement';
 import { styles as SideNavigationStyles } from '../SideNavigation.styles';
 import { styles } from './CollapeListNavigation.styles';
 
-export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({ openNavbar, elementProps }) => {
+export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({
+  openNavbar,
+  elementProps,
+  onExpansionChange
+}) => {
   const { element, collapseElements } = elementProps;
   const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
 
   const handleClick = () => {
-    setIsSubmenuOpen(!isSubmenuOpen);
+    const newState = !isSubmenuOpen;
+    setIsSubmenuOpen(newState);
+    if (!openNavbar) {
+      onExpansionChange?.(newState);
+    }
   };
 
   useEffect(() => {
     if (!openNavbar) {
-      setIsSubmenuOpen(false);
+      onExpansionChange?.(isSubmenuOpen);
+    } else {
+      onExpansionChange?.(false);
     }
-  }, [openNavbar]);
+  }, [openNavbar, isSubmenuOpen, onExpansionChange]);
+
+  const shouldShowContent = openNavbar || isSubmenuOpen;
 
   const collapseContent = collapseElements?.map((item) => (
-    <LinkElement element={item} open={isSubmenuOpen} key={item.title} sxItem={{ mb: '0' }} />
+    <LinkElement element={item} open={shouldShowContent} key={item.title} sxItem={{ mb: '0' }} />
   ));
 
   return (
     <>
-      <ListElement element={element} open={openNavbar} handleClick={handleClick} sxItem={{ mb: '0' }}>
+      <ListElement element={element} open={shouldShowContent} handleClick={handleClick} sxItem={{ mb: '0' }}>
         <Box
           sx={{
-            ...SideNavigationStyles.hideInClosed(openNavbar),
+            ...SideNavigationStyles.hideInClosed(shouldShowContent),
             ...styles.listBox
           }}
         >

@@ -20,6 +20,7 @@ export interface LinkElementProps {
 export interface CollapseListNavigationProps {
   openNavbar: boolean;
   elementProps: AdditionalElement;
+  onExpansionChange?: (isExpanded: boolean) => void;
 }
 export interface DividerProps {
   open: boolean;
