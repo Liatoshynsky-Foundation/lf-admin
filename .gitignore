@@ -45,3 +45,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Ignore generated GraphQL types
+app/types/graphql/generated/
