@@ -26,18 +26,18 @@ export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({
   };
 
   useEffect(() => {
-    // Only call onExpansionChange when openNavbar actually changes
     if (prevOpenNavbarRef.current !== openNavbar) {
       prevOpenNavbarRef.current = openNavbar;
 
-      if (!openNavbar) {
-        onExpansionChange?.(isSubmenuOpen);
+      if (openNavbar) {
+        onExpansionChange?.(false);
+        setIsSubmenuOpen(false);
       } else {
         onExpansionChange?.(false);
         setIsSubmenuOpen(false);
       }
     }
-  }, [openNavbar, isSubmenuOpen, onExpansionChange]);
+  }, [openNavbar, onExpansionChange]);
 
   const shouldShowContent = openNavbar || isSubmenuOpen;
 
