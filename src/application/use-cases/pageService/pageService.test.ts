@@ -3,10 +3,10 @@ import { createDotNotationPatch } from '~/application/use-cases/dotNotationPatch
 import { extractImageSrcs } from '~/application/use-cases/extractImageSrc/extractImageSrc';
 import { removeTmpFlagsRecursively } from '~/application/use-cases/removeTmpFlags/removeTmpFlags';
 import { blobStorageService } from '~/application/use-cases/uploadService/upload';
+import { PageStatus } from '~/back-shared/types/enums/common.enums';
 import type { Patch } from '~/back-shared/types/pages/types';
 import type { BasePage } from '~/domain/entities/Page';
 import { PageRepository } from '~/infrastructure/repositories/pageRepository/pageRepository';
-import { PageStatus } from '~/types/enums/common.enums';
 
 jest.mock('~/src/infrastructure/repositories/pageRepository/pageRepository', () => ({
   PageRepository: jest.fn()

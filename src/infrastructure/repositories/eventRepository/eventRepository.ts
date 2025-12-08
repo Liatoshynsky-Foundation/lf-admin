@@ -1,100 +1,135 @@
+import { FilterQuery, Model, Types } from 'mongoose';
+
+import { createBaseRepository } from '../baseRepository/baseRepository';
+import { EventStatus } from '~/back-shared/types/enums/common.enums';
 import type { CreateEventDTO, EventFilters, UpdateEventDTO } from '~/back-shared/types/events/types';
-import { generateUniqueSlug } from '~/back-shared/utils/slugGenerator/slugGenerator';
 import type { Event } from '~/domain/entities/Event';
 import type { EventRepository as IEventRepository } from '~/domain/repositories/eventRepository';
-import { Event as EventModel } from '~/infrastructure/models/event.model';
+import dbConnect from '~/infrastructure/db/connect';
+import EventModel from '~/infrastructure/models/event.model';
 
-const mapToEvent = (doc: any): Event => {
+type DbEvent = {
+  _id: Types.ObjectId;
+  eventDate: Date | null;
+  eventLink: string;
+  title: Event['title'];
+  description?: Event['description'];
+  content: Event['content'];
+  slug: string;
+  coverImage: Event['coverImage'];
+  status: EventStatus;
+  visits: Event['visits'];
+  createdAt: Date | string;
+  updatedAt: Date | string;
+};
+
+const toEntity = (doc: DbEvent): Event => ({
+  id: doc._id.toString(),
+  eventDate: doc.eventDate ?? null,
+  eventLink: doc.eventLink,
+  title: doc.title,
+  description: doc.description,
+  content: doc.content,
+  slug: doc.slug,
+  coverImage: doc.coverImage,
+  status: doc.status,
+  visits: doc.visits,
+  createdAt: (doc.createdAt instanceof Date ? doc.createdAt.toISOString() : doc.createdAt) as Event['createdAt'],
+  updatedAt: (doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : doc.updatedAt) as Event['updatedAt']
+});
+
+const buildEventQuery = (filters?: Omit<EventFilters, 'limit' | 'skip' | 'sortBy' | 'sortOrder'>): FilterQuery<any> => {
+  if (!filters) return {};
+
+  const query: Record<string, unknown> = {};
+
+  if (filters.status) {
+    query.status = filters.status;
+  }
+
+  if (filters.slug) {
+    query.slug = filters.slug;
+  }
+
+  if (filters.search) {
+    const regex = new RegExp(filters.search, 'i');
+    query.$or = [{ 'title.uk': regex }, { 'title.en': regex }];
+  }
+
+  if (filters.dateFrom || filters.dateTo) {
+    query.eventDate = {};
+    if (filters.dateFrom) {
+      (query.eventDate as any).$gte = filters.dateFrom;
+    }
+    if (filters.dateTo) {
+      (query.eventDate as any).$lte = filters.dateTo;
+    }
+  }
+
+  return query;
+};
+
+const getEventSort = (filters?: EventFilters): Record<string, 1 | -1> => {
+  const sortBy = filters?.sortBy ?? 'createdAt';
+  const sortOrder = filters?.sortOrder ?? 'desc';
+
   return {
-    id: doc._id.toString(),
-    eventLink: doc.eventLink,
-    title: doc.title,
-    description: doc.description,
-    content: doc.content,
-    slug: doc.slug,
-    coverImage: doc.coverImage,
-    status: doc.status,
-    visits: doc.visits,
-    createdAt: doc.createdAt,
-    updatedAt: doc.updatedAt
+    [sortBy]: sortOrder === 'asc' ? 1 : -1
   };
 };
 
+const baseRepo = createBaseRepository<Event, DbEvent, EventFilters>({
+  model: EventModel as unknown as Model<DbEvent>,
+  toEntity,
+  buildQuery: buildEventQuery,
+  getDefaultSort: getEventSort
+});
+
 export const EventRepository = (): IEventRepository => ({
-  findAll: async (filters?: EventFilters): Promise<Event[]> => {
-    const query: any = {};
+  findById: baseRepo.findById,
+  findAll: baseRepo.findAll,
+  delete: baseRepo.delete,
+  count: baseRepo.count,
 
-    if (filters?.status) {
-      query.status = filters.status;
-    }
-
-    if (filters?.search) {
-      query.$or = [
-        { 'title.uk': { $regex: filters.search, $options: 'i' } },
-        { 'title.en': { $regex: filters.search, $options: 'i' } }
-      ];
-    }
-
-    const sortField = filters?.sortBy || 'createdAt';
-    const sortOrder = filters?.sortOrder === 'asc' ? 1 : -1;
-
-    const events = await EventModel.find(query)
-      .sort({ [sortField]: sortOrder })
-      .limit(filters?.limit || 100)
-      .skip(filters?.offset || 0)
-      .lean();
-
-    return events.map(mapToEvent);
-  },
-
-  findById: async (id: string): Promise<Event | null> => {
-    const event = await EventModel.findById(id).lean();
-    return event ? mapToEvent(event) : null;
-  },
-
-  findBySlug: async (slug: string): Promise<Event | null> => {
-    const event = await EventModel.findOne({ slug }).lean();
-    return event ? mapToEvent(event) : null;
+  update: async (id: string, dto: UpdateEventDTO): Promise<Event | null> => {
+    return await baseRepo.update(id, dto as Partial<Omit<Event, 'id' | 'createdAt' | 'updatedAt'>>);
   },
 
   create: async (dto: CreateEventDTO): Promise<Event> => {
-    const slug =
-      dto.slug ||
-      (await generateUniqueSlug(dto.title.uk, {
-        checkExists: async (slug: string) => {
-          const existing = await EventModel.findOne({ slug }).lean();
-          return !!existing;
-        }
-      }));
+    await dbConnect();
 
-    const event = await EventModel.create({
+    const eventData = {
       ...dto,
-      slug,
-      status: dto.status || 'Draft',
-      visits: { views: 0 }
-    });
+      status: dto.status ?? EventStatus.Draft,
+      visits: {
+        views: 0
+      }
+    };
 
-    return mapToEvent(event.toObject());
+    const created = await new EventModel(eventData).save();
+    return toEntity(created.toObject() as unknown as DbEvent);
   },
 
-  update: async (id: string, dto: UpdateEventDTO): Promise<Event> => {
-    const event = await EventModel.findByIdAndUpdate(id, { $set: dto }, { new: true, runValidators: true }).lean();
+  findBySlug: async (slug: string): Promise<Event | null> => {
+    await dbConnect();
 
-    if (!event) {
-      throw new Error(`Event with id ${id} not found`);
+    const doc = await EventModel.findOne({ slug }).lean<DbEvent>();
+    return doc ? toEntity(doc) : null;
+  },
+
+  incrementViews: async (id: string): Promise<Event | null> => {
+    await dbConnect();
+
+    if (!Types.ObjectId.isValid(id)) {
+      return null;
     }
 
-    return mapToEvent(event);
-  },
+    const updated = await EventModel.findByIdAndUpdate(
+      id,
+      { $inc: { 'visits.views': 1 } },
+      { new: true }
+    ).lean<DbEvent>();
 
-  delete: async (id: string): Promise<boolean> => {
-    const result = await EventModel.findByIdAndDelete(id);
-    return !!result;
-  },
-
-  incrementViews: async (id: string): Promise<void> => {
-    await EventModel.findByIdAndUpdate(id, {
-      $inc: { 'visits.views': 1 }
-    });
+    return updated ? toEntity(updated) : null;
   }
 });

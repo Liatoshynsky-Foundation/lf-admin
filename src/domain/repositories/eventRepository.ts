@@ -6,7 +6,8 @@ export interface EventRepository {
   findById(id: string): Promise<Event | null>;
   findBySlug(slug: string): Promise<Event | null>;
   create(dto: CreateEventDTO): Promise<Event>;
-  update(id: string, dto: UpdateEventDTO): Promise<Event>;
+  update(id: string, dto: UpdateEventDTO): Promise<Event | null>;
   delete(id: string): Promise<boolean>;
-  incrementViews(id: string): Promise<void>;
+  incrementViews(id: string): Promise<Event | null>;
+  count(filters?: Omit<EventFilters, 'limit' | 'skip' | 'sortBy' | 'sortOrder'>): Promise<number>;
 }

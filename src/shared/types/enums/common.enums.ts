@@ -6,5 +6,7 @@ export enum PageStatus {
 export enum EventStatus {
   Draft = 'draft',
   Published = 'published',
-  Archived = 'archived'
+  Hidden = 'hidden',
+  Archived = 'archived',
+  Editing = 'editing'
 }

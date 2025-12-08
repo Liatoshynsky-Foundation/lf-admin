@@ -2,10 +2,10 @@ import { createDotNotationPatch } from '~/application/use-cases/dotNotationPatch
 import { extractImageSrcs } from '~/application/use-cases/extractImageSrc/extractImageSrc';
 import { removeTmpFlagsRecursively } from '~/application/use-cases/removeTmpFlags/removeTmpFlags';
 import { blobStorageService } from '~/application/use-cases/uploadService/upload';
+import { PageStatus } from '~/back-shared/types/enums/common.enums';
 import { JsonObject } from '~/back-shared/types/pages/types';
 import type { BasePage } from '~/domain/entities/Page';
 import { PageRepository as PageRepositoryFactory } from '~/infrastructure/repositories/pageRepository/pageRepository';
-import { PageStatus } from '~/types/enums/common.enums';
 import type { Scalars } from '~/types/graphql/generated/graphql';
 
 type Repo = ReturnType<typeof PageRepositoryFactory>;

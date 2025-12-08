@@ -1,33 +1,21 @@
+import { ImageBlock, LocalizedString } from '~/back-shared/types/common';
+import { EventStatus } from '~/back-shared/types/enums/common.enums';
 import { JsonValue } from '~/back-shared/types/pages/types';
-import { EventStatus } from '~/types/enums/common.enums';
+import type { BaseEntity } from '~/infrastructure/repositories/baseRepository/baseRepository';
 
-export interface TranslatedField {
-  uk: string;
-  en: string;
-}
-
-export interface CoverImage {
-  src: string;
-  alt: TranslatedField;
-  caption: TranslatedField;
-  isTmp?: boolean;
-}
-
-export interface Event {
-  id: string;
+export interface Event extends BaseEntity {
+  eventDate: Date | null;
   eventLink: string;
-  title: TranslatedField;
-  description?: TranslatedField;
+  title: LocalizedString;
+  description?: LocalizedString;
   content: {
     uk: JsonValue;
     en: JsonValue;
   };
   slug: string;
-  coverImage: CoverImage;
+  coverImage: ImageBlock;
   status: EventStatus;
   visits: {
     views: number;
   };
-  createdAt: Date;
-  updatedAt: Date;
 }

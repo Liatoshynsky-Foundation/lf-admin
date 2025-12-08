@@ -1,7 +1,7 @@
 import mongoose, { Model, Schema } from 'mongoose';
 
+import { PageStatus } from '~/back-shared/types/enums/common.enums';
 import { BasePage } from '~/domain/entities/Page';
-import { PageStatus } from '~/types/enums/common.enums';
 
 const pageBaseSchema = new Schema<BasePage>(
   {

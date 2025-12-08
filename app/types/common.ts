@@ -1,14 +1,7 @@
-export interface LocalizedString {
-  uk: string;
-  en: string;
-}
+import type { LocalizedString } from '~/back-shared/types/common';
 
-export interface ImageBlock {
-  src: string;
-  alt: LocalizedString;
-  caption: LocalizedString;
-  isTmp?: boolean;
-}
+export type { LocalizedString };
+export type { ImageBlock } from '~/back-shared/types/common';
 
 export type ImageType = {
   src: string;

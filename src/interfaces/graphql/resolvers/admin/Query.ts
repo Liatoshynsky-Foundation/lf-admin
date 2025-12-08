@@ -1,8 +1,8 @@
 import { GraphQLError } from 'graphql';
 
 import type { GraphQLContext } from '~/back-shared/types/container/types';
+import { PageStatus } from '~/back-shared/types/enums/common.enums';
 import { graphqlErrors } from '~/constants/errors';
-import { PageStatus } from '~/types/enums/common.enums';
 
 type PageBlocksArgs = { slug: string; status?: PageStatus };
 

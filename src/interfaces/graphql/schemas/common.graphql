@@ -1,3 +1,15 @@
+scalar JSON
+
+type LocalizedString {
+    uk: String!
+    en: String!
+}
+
+enum SortOrder {
+    asc
+    desc
+}
+
 type Query {
     _empty: String
     test: RefreshTokenPayload!

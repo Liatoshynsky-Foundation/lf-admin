@@ -1,38 +1,31 @@
+import { ImageBlock, LocalizedString } from '~/back-shared/types/common';
+import { EventStatus } from '~/back-shared/types/enums/common.enums';
 import { JsonValue } from '~/back-shared/types/pages/types';
-import type { CoverImage, TranslatedField } from '~/domain/entities/Event';
-import { EventStatus } from '~/types/enums/common.enums';
 
-export interface CreateEventDTO {
+export type CreateEventDTO = {
+  eventDate?: Date | null;
   eventLink: string;
-  title: TranslatedField;
-  description?: TranslatedField;
+  title: LocalizedString;
+  description?: LocalizedString;
   content: {
     uk: JsonValue;
     en: JsonValue;
   };
   slug?: string;
-  coverImage: CoverImage;
+  coverImage: ImageBlock;
   status?: EventStatus;
-}
+};
 
-export interface UpdateEventDTO {
-  eventLink?: string;
-  title?: TranslatedField;
-  description?: TranslatedField;
-  content?: {
-    uk: JsonValue;
-    en: JsonValue;
-  };
-  slug?: string;
-  coverImage?: CoverImage;
-  status?: EventStatus;
-}
+export type UpdateEventDTO = Partial<CreateEventDTO>;
 
-export interface EventFilters {
-  status?: EventStatus;
-  search?: string;
-  sortBy?: 'createdAt' | 'updatedAt' | 'visits.views';
-  sortOrder?: 'asc' | 'desc';
+export type EventFilters = {
   limit?: number;
-  offset?: number;
-}
+  skip?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  status?: EventStatus;
+  slug?: string;
+  search?: string;
+  dateFrom?: Date;
+  dateTo?: Date;
+};
