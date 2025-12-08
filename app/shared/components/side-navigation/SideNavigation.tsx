@@ -3,7 +3,7 @@ import { Box, Divider, IconButton, List } from '@mui/material';
 import ListSubheader from '@mui/material/ListSubheader';
 import { AdditionalElement, ListElementType } from 'app/types/sideNavigation';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { CollapseListNavigation } from './collapse-list-navigation/CollapseListNavigation';
 import { LinkElement } from './link-element/LinkElement';
@@ -24,7 +24,7 @@ export const SideBarNavigation = () => {
 
   const handleToggle = () => setOpen(!open);
 
-  const handleSubmenuExpansion = (key: string, isExpanded: boolean) => {
+  const handleSubmenuExpansion = useCallback((key: string, isExpanded: boolean) => {
     setExpandedSubmenus((prev) => {
       const newSet = new Set(prev);
       if (isExpanded) {
@@ -34,7 +34,7 @@ export const SideBarNavigation = () => {
       }
       return newSet;
     });
-  };
+  }, []);
 
   function renderItems(items: (ListElementType | AdditionalElement)[]) {
     return items.map((item) => {

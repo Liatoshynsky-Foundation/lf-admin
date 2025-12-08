@@ -1,7 +1,7 @@
 import { Box, Collapse, List } from '@mui/material';
 import { CollapseListNavigationProps } from 'app/types/sideNavigation';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { LinkElement } from '../link-element/LinkElement';
 import { ListElement } from '../list-element/ListElement';
@@ -15,6 +15,7 @@ export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({
 }) => {
   const { element, collapseElements } = elementProps;
   const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
+  const prevOpenNavbarRef = useRef(openNavbar);
 
   const handleClick = () => {
     const newState = !isSubmenuOpen;
@@ -25,10 +26,16 @@ export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({
   };
 
   useEffect(() => {
-    if (!openNavbar) {
-      onExpansionChange?.(isSubmenuOpen);
-    } else {
-      onExpansionChange?.(false);
+    // Only call onExpansionChange when openNavbar actually changes
+    if (prevOpenNavbarRef.current !== openNavbar) {
+      prevOpenNavbarRef.current = openNavbar;
+
+      if (!openNavbar) {
+        onExpansionChange?.(isSubmenuOpen);
+      } else {
+        onExpansionChange?.(false);
+        setIsSubmenuOpen(false);
+      }
     }
   }, [openNavbar, isSubmenuOpen, onExpansionChange]);
 
