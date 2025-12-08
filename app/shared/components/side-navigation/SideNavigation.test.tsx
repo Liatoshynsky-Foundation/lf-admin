@@ -7,27 +7,23 @@ describe('Side Navigation', () => {
     render(<SideBarNavigation />);
   });
 
-  it('should render side navigation open', () => {
-    expect(screen.getByAltText('logo')).toBeInTheDocument();
-    expect(screen.getByAltText('close button')).toBeInTheDocument();
-    expect(screen.getByText('Сторінки сайту')).toBeInTheDocument();
-    expect(screen.getByText('Налаштування сайту')).toBeInTheDocument();
-  });
-
-  it('should close the navigation', () => {
-    const closeBtn = screen.getByAltText('close button');
-    fireEvent.click(closeBtn);
-
-    expect(screen.queryByText('Сторінки сайту')).not.toBeInTheDocument();
-  });
-
   it('should work with togging logo', () => {
-    const logo = screen.getByAltText('logo');
+    const logoBtn = screen.getByRole('button', { name: /logo/i });
+    const closeBtn = screen.getByRole('button', { name: /close button/i });
 
-    fireEvent.click(logo);
-    expect(screen.queryByText('Сторінки сайту')).not.toBeInTheDocument();
+    expect(logoBtn).toBeInTheDocument();
+    expect(closeBtn).toBeInTheDocument();
 
-    fireEvent.click(logo);
-    expect(screen.getByText('Сторінки сайту')).toBeInTheDocument();
+    fireEvent.click(closeBtn);
+    expect(screen.queryByText('Контент')).not.toBeInTheDocument();
+    expect(screen.queryByText('Інше')).not.toBeInTheDocument();
+
+    fireEvent.click(logoBtn);
+    expect(screen.queryByText('Контент')).toBeInTheDocument();
+    expect(screen.queryByText('Інше')).toBeInTheDocument();
+
+    fireEvent.click(logoBtn);
+    expect(screen.queryByText('Контент')).not.toBeInTheDocument();
+    expect(screen.queryByText('Інше')).not.toBeInTheDocument();
   });
 });

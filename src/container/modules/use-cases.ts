@@ -1,4 +1,4 @@
-import { asFunction } from 'awilix';
+import { asFunction, AwilixContainer } from 'awilix';
 
 import { loginAdmin } from '~/application/use-cases/loginAdmin/loginAdmin';
 import { PageService } from '~/application/use-cases/pageService/pageService';
@@ -6,10 +6,20 @@ import { createTokenService } from '~/application/use-cases/tokenService/createT
 import { refreshTokenService } from '~/application/use-cases/tokenService/refreshToken/refreshToken.service';
 import { blobStorageService } from '~/application/use-cases/uploadService/upload';
 
-export const registerUseCases = () => ({
-  loginAdmin: asFunction(loginAdmin).scoped(),
-  createTokenService: asFunction(createTokenService).scoped(),
-  refreshTokenService: asFunction(refreshTokenService).scoped(),
-  uploadService: asFunction(blobStorageService).scoped(),
-  pageService: asFunction(PageService).scoped()
-});
+export type UseCasesModule = {
+  loginAdmin: ReturnType<typeof loginAdmin>;
+  createTokenService: ReturnType<typeof createTokenService>;
+  refreshTokenService: ReturnType<typeof refreshTokenService>;
+  uploadService: ReturnType<typeof blobStorageService>;
+  pageService: ReturnType<typeof PageService>;
+};
+
+export const registerUseCases = (container: AwilixContainer<UseCasesModule>) => {
+  container.register({
+    loginAdmin: asFunction(loginAdmin).scoped(),
+    createTokenService: asFunction(createTokenService).scoped(),
+    refreshTokenService: asFunction(refreshTokenService).scoped(),
+    uploadService: asFunction(blobStorageService).scoped(),
+    pageService: asFunction(PageService).scoped()
+  });
+};

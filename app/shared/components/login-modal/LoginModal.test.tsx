@@ -101,4 +101,25 @@ describe('LoginModal', () => {
       password: test
     });
   });
+
+  it('should login user by pressing Enter', () => {
+    const usernameInput = screen.getByLabelText('Логін');
+    const passwordInput = screen.getByLabelText('Пароль');
+    const test = uuidv4();
+
+    fireEvent.change(usernameInput, { target: { value: 'testuser' } });
+    fireEvent.change(passwordInput, { target: { value: test } });
+
+    const form = passwordInput.closest('form');
+    if (!form) {
+      throw new Error('Form element not found');
+    }
+
+    fireEvent.submit(form);
+
+    expect(mockOnSubmit).toHaveBeenCalledWith({
+      login: 'testuser',
+      password: test
+    });
+  });
 });

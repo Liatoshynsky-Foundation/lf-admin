@@ -41,7 +41,7 @@ describe('Cropper helper', () => {
       },
       configurable: true
     });
-    const result = await getCroppedImg('https://example.com/image.jpg', crop, outputSize);
+    const result = await getCroppedImg('https://example.com/image.jpg', crop, outputSize, false);
 
     expect(result.dataUrl).toMatch(/^data:image\/jpeg/);
     expect(result.blobUrl).toMatch(/^blob:/);
@@ -65,7 +65,9 @@ describe('Cropper helper', () => {
       },
       configurable: true
     });
-    await expect(getCroppedImg('https://example.com/image.jpg', crop, outputSize)).rejects.toThrow('Canvas is empty');
+    await expect(getCroppedImg('https://example.com/image.jpg', crop, outputSize, false)).rejects.toThrow(
+      'Canvas is empty'
+    );
   });
 
   it('should throw an error if image fails to load', async () => {
@@ -78,6 +80,8 @@ describe('Cropper helper', () => {
       setAttribute = () => {};
     } as any;
 
-    await expect(getCroppedImg('https://example.com/invalid.jpg', crop, outputSize)).rejects.toThrow('Load failed');
+    await expect(getCroppedImg('https://example.com/invalid.jpg', crop, outputSize, false)).rejects.toThrow(
+      'Load failed'
+    );
   });
 });

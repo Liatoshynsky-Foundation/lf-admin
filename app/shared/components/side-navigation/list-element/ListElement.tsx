@@ -6,12 +6,18 @@ import { usePathname } from 'next/navigation';
 import { styles as SideNavigationStyles } from '../SideNavigation.styles';
 import { styles } from './ListElement.styles';
 
-export const ListElement: React.FC<LinkElementProps> = ({ element, open, handleClick, sxItem = {}, children }) => {
+export const ListElement: React.FC<LinkElementProps> = ({
+  element,
+  open,
+  handleClick,
+  sxItem = { padding: '4px 16px' },
+  children
+}) => {
   const { title, href, iconSrc } = element;
   const pathName = usePathname();
   return (
     <ListItemButton
-      sx={{ ...styles.listItem, ...sxItem }}
+      sx={[styles.listItem as any, sxItem as any]}
       selected={href === pathName}
       onClick={handleClick ?? (() => {})}
     >

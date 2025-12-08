@@ -1,7 +1,9 @@
+import { colors } from '../design-system/button/Button.styles';
+
 export const styles = {
   container: {
-    border: '0.5px solid #190D0333',
-    background: '#190D030A',
+    border: '0.5px solid rgba(25, 13, 3, 0.2)',
+    background: colors.blue[100],
     borderRadius: '16px',
     padding: '20px 24px',
     maxWidth: '400px',

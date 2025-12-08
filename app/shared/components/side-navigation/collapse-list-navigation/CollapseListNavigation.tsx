@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { LinkElement } from '../link-element/LinkElement';
 import { ListElement } from '../list-element/ListElement';
 import { styles as SideNavigationStyles } from '../SideNavigation.styles';
-import { linkStyles, styles } from './CollapeListNavigation.styles';
+import { styles } from './CollapeListNavigation.styles';
 
 export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({ openNavbar, elementProps }) => {
   const { element, collapseElements } = elementProps;
@@ -23,7 +23,7 @@ export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({ 
   }, [openNavbar]);
 
   const collapseContent = collapseElements?.map((item) => (
-    <LinkElement element={item} open={isSubmenuOpen} key={item.href} sxItem={linkStyles} />
+    <LinkElement element={item} open={isSubmenuOpen} key={item.title} sxItem={{ mb: '0' }} />
   ));
 
   return (
@@ -43,9 +43,7 @@ export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({ 
         </Box>
       </ListElement>
       <Collapse in={isSubmenuOpen} timeout="auto" unmountOnExit sx={styles.collapse}>
-        <List component="div" disablePadding>
-          {collapseContent}
-        </List>
+        <List disablePadding>{collapseContent}</List>
       </Collapse>
     </>
   );
