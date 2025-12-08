@@ -14,7 +14,7 @@ import { usePageEditor } from '~/shared/hooks/use-page-editor/usePageEditor';
 import { useSavePageBlocks } from '~/shared/hooks/use-save-page/UseSavePage';
 import { useStore } from '~/store';
 
-const Page = () => {
+export default function Page() {
   const pageSlug = PAGE_IDS.ABOUT_US;
   const setLocale = useStore((s) => s.setLocale);
   const discardChanges = useStore((s) => s.discardChanges);
@@ -41,6 +41,4 @@ const Page = () => {
       <FoundationFounders />
     </Box>
   );
-};
-
-export default Page;
+}

@@ -56,3 +56,9 @@ export type LocalizedProse = {
   uk: ProseDoc;
   en: ProseDoc;
 };
+
+interface IWrapper {
+  children: React.ReactNode;
+}
+
+export type Wrapper = Readonly<IWrapper>;

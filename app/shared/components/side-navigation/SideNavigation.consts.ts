@@ -1,24 +1,52 @@
 export const NAVIGATION_DATA = {
-  mainGroup: [
-    { title: 'Головна', iconSrc: 'house', href: '/' },
-    { title: 'Новини', iconSrc: 'news', href: '/news', disabled: true },
-    { title: 'Архів творів', iconSrc: 'musicArchive', href: '/musicArchive', disabled: true },
-    { title: 'Медіатека', iconSrc: 'media', href: '/media', disabled: true }
-  ],
-  pages: [
+  main: [{ title: 'Головна', iconSrc: 'house', href: '/' }],
+  content: [
     {
-      element: { title: 'Борис Лятошинський', iconSrc: 'biography' },
-      collapseElements: [{ title: 'Дослідження та наукові роботи', href: '/research', disabled: true }]
+      title: 'Основні сторінки',
+      iconSrc: 'file-text',
+      href: '',
+      disabled: true
     },
     {
-      element: { title: 'Про фундацію', iconSrc: 'aboutFoundation' },
-      collapseElements: [{ title: 'Про нас', href: '/about-us' }]
+      title: 'Новини та події',
+      iconSrc: 'news',
+      href: '',
+      disabled: true
     },
-    { title: 'Архів', iconSrc: 'archive', href: '/archive', disabled: true }
+    {
+      element: { title: 'Каталоги', iconSrc: 'book-marked' },
+      collapseElements: [
+        { title: 'Твори', href: '', disabled: true },
+        { title: 'Дослідження та наукові праці', href: '', disabled: true },
+        { title: 'Архів кабінету-музею', href: '', disabled: true }
+      ]
+    },
+    {
+      element: { title: 'Секції сайту', iconSrc: 'siteMap' },
+      collapseElements: [
+        { title: 'Часті запитання', href: '', disabled: true },
+        { title: 'Команда фундації', href: '', disabled: true },
+        { title: 'Контакти', href: '/contacts', disabled: true },
+        { title: 'Футер', href: '', disabled: true }
+      ]
+    },
+    {
+      title: 'Файли',
+      iconSrc: 'folder-open',
+      href: '/archive',
+      disabled: true
+    }
   ],
-  settings: [
-    { title: 'Контакти', iconSrc: 'contacts', href: '/contacts', disabled: true },
-    { title: 'Футер сайту', iconSrc: 'footer', href: '/footer', disabled: true },
-    { title: 'Мапа сайту', iconSrc: 'siteMap', href: '/map', disabled: true }
+  other: [
+    { title: 'Звернення', iconSrc: 'contacts', href: '', disabled: true },
+    {
+      element: { title: 'Налаштування', iconSrc: 'settings' },
+      collapseElements: [
+        { title: 'Основні', href: '', disabled: true },
+        { title: 'SEO Налаштування', href: '', disabled: true },
+        { title: 'Користувачі та ролі', href: '', disabled: true },
+        { title: 'Історія змін', href: '', disabled: true }
+      ]
+    }
   ]
 };

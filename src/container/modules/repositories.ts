@@ -1,4 +1,4 @@
-import { asFunction, asValue } from 'awilix';
+import { asFunction, asValue, AwilixContainer } from 'awilix';
 
 import { DraftPageModel } from '~/infrastructure/models/draftPage.model';
 import NewsModel from '~/infrastructure/models/news.model';
@@ -8,14 +8,22 @@ import { NewsRepository } from '~/infrastructure/repositories/newsRepository/new
 import { PageRepository } from '~/infrastructure/repositories/pageRepository/pageRepository';
 import { RefreshTokenRepository } from '~/infrastructure/repositories/refreshTokenRepository/refreshTokenRepository';
 
-export const registerRepositories = () => ({
-  PageModel: asValue(PageModel),
-  DraftPageModel: asValue(DraftPageModel),
-  NewsModel: asValue(NewsModel),
+export type RepositoriesModule = {
+  adminRepository: ReturnType<typeof AdminRepository>;
+  refreshTokenRepository: ReturnType<typeof RefreshTokenRepository>;
+  pageRepository: ReturnType<typeof PageRepository>;
+};
 
-  adminRepository: asFunction(() => AdminRepository()).scoped(),
-  refreshTokenRepository: asFunction(() => RefreshTokenRepository()).scoped(),
+export const registerRepositories = (container: AwilixContainer) => {
+  container.register({
+    PageModel: asValue(PageModel),
+    DraftPageModel: asValue(DraftPageModel),
+    NewsModel: asValue(NewsModel),
 
-  pageRepository: asFunction(PageRepository).scoped(),
-  newsRepository: asFunction(NewsRepository).scoped()
-});
+    adminRepository: asFunction(AdminRepository).scoped(),
+    refreshTokenRepository: asFunction(RefreshTokenRepository).scoped(),
+
+    pageRepository: asFunction(PageRepository).scoped(),
+    newsRepository: asFunction(NewsRepository).scoped()
+  });
+};
