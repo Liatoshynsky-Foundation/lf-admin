@@ -17,7 +17,7 @@ const eslintConfig = [
   ...compat.extends('next/core-web-vitals', 'next/typescript', 'prettier'),
 
   {
-    ignores: ['node_modules', '.next', 'coverage', '.idea', '.vscode']
+    ignores: ['node_modules', '.next', 'coverage', '.idea', '.vscode', 'app/types/graphql/generated/']
   },
   {
     rules: {
