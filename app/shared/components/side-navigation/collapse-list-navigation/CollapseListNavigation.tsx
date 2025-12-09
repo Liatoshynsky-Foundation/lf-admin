@@ -1,44 +1,62 @@
 import { Box, Collapse, List } from '@mui/material';
 import { CollapseListNavigationProps } from 'app/types/sideNavigation';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { LinkElement } from '../link-element/LinkElement';
 import { ListElement } from '../list-element/ListElement';
 import { styles as SideNavigationStyles } from '../SideNavigation.styles';
 import { styles } from './CollapeListNavigation.styles';
 
-export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({ openNavbar, elementProps }) => {
+export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({
+  openNavbar,
+  elementProps,
+  onExpansionChange
+}) => {
   const { element, collapseElements } = elementProps;
-  const [pageOpen, setPageOpen] = useState(false);
+  const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
+  const prevOpenNavbarRef = useRef(openNavbar);
+
   const handleClick = () => {
-    setPageOpen(!pageOpen);
-  };
-  useEffect(() => {
+    const newState = !isSubmenuOpen;
+    setIsSubmenuOpen(newState);
     if (!openNavbar) {
-      setPageOpen(false);
+      onExpansionChange?.(newState);
     }
-  }, [openNavbar]);
+  };
+
+  useEffect(() => {
+    if (prevOpenNavbarRef.current !== openNavbar) {
+      prevOpenNavbarRef.current = openNavbar;
+
+      onExpansionChange?.(false);
+      setIsSubmenuOpen(false);
+    }
+  }, [openNavbar, onExpansionChange]);
+
+  const shouldShowContent = openNavbar || isSubmenuOpen;
+
   const collapseContent = collapseElements?.map((item) => (
-    <LinkElement element={item} open={openNavbar} key={item.title} sxItem={{ mb: '0' }} />
+    <LinkElement element={item} open={shouldShowContent} key={item.title} sxItem={{ mb: '0' }} />
   ));
+
   return (
     <>
-      <ListElement element={element} open={openNavbar} handleClick={handleClick} sxItem={{ mb: '0' }}>
+      <ListElement element={element} open={shouldShowContent} handleClick={handleClick} sxItem={{ mb: '0' }}>
         <Box
           sx={{
-            ...SideNavigationStyles.hideInClosed(openNavbar),
+            ...SideNavigationStyles.hideInClosed(shouldShowContent),
             ...styles.listBox
           }}
         >
-          {pageOpen ? (
+          {isSubmenuOpen ? (
             <Image src="/icons/chevronDown.svg" alt="open list" width={24} height={24} />
           ) : (
             <Image src="/icons/chevronRight.svg" alt="close list" width={24} height={24} />
           )}
         </Box>
       </ListElement>
-      <Collapse in={openNavbar && pageOpen} timeout="auto" unmountOnExit sx={styles.collapse}>
+      <Collapse in={isSubmenuOpen} timeout="auto" unmountOnExit sx={styles.collapse}>
         <List disablePadding>{collapseContent}</List>
       </Collapse>
     </>

@@ -1,3 +1,15 @@
+export const linkStyles = {
+  mb: '0',
+  justifyContent: 'center',
+  '& .MuiListItemText-root': {
+    textAlign: 'center',
+    pl: 0
+  },
+  '& .MuiListItemText-primary': {
+    textAlign: 'center'
+  }
+};
+
 export const styles = {
   listBox: {
     alignSelf: 'center'

@@ -3,7 +3,7 @@ import { Box, Divider, IconButton, List } from '@mui/material';
 import ListSubheader from '@mui/material/ListSubheader';
 import { AdditionalElement, ListElementType } from 'app/types/sideNavigation';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { CollapseListNavigation } from './collapse-list-navigation/CollapseListNavigation';
 import { LinkElement } from './link-element/LinkElement';
@@ -20,13 +20,33 @@ function isLinkElement(item: ListElementType | AdditionalElement): item is ListE
 
 export const SideBarNavigation = () => {
   const [open, setOpen] = useState(true);
+  const [expandedSubmenus, setExpandedSubmenus] = useState<Set<string>>(new Set());
 
   const handleToggle = () => setOpen(!open);
+
+  const handleSubmenuExpansion = useCallback((key: string, isExpanded: boolean) => {
+    setExpandedSubmenus((prev) => {
+      const newSet = new Set(prev);
+      if (isExpanded) {
+        newSet.add(key);
+      } else {
+        newSet.delete(key);
+      }
+      return newSet;
+    });
+  }, []);
 
   function renderItems(items: (ListElementType | AdditionalElement)[]) {
     return items.map((item) => {
       if (isAdditionalElement(item)) {
-        return <CollapseListNavigation key={item.element.title} openNavbar={open} elementProps={item} />;
+        return (
+          <CollapseListNavigation
+            key={item.element.title}
+            openNavbar={open}
+            elementProps={item}
+            onExpansionChange={(isExpanded) => handleSubmenuExpansion(item.element.title, isExpanded)}
+          />
+        );
       } else if (isLinkElement(item)) {
         return <LinkElement key={item.title} element={item} open={open} />;
       }
@@ -34,8 +54,9 @@ export const SideBarNavigation = () => {
     });
   }
 
-  const w = open ? '264px' : '80px';
-  const l = open ? 264 - 16 : 80 - 16;
+  const hasExpandedSubmenu = expandedSubmenus.size > 0;
+  const w = open || hasExpandedSubmenu ? '264px' : '80px';
+  const l = open || hasExpandedSubmenu ? 264 - 16 : 80 - 16;
 
   return (
     <>
