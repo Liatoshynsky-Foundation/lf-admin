@@ -68,6 +68,22 @@ AZURE_SAS_URL=
 JWT_ACCESS_TOKEN_SECRET=
 JWT_REFRESH_TOKEN_SECRET=
 NODE_ENV=development
+
+# Upload Module Configuration
+UPLOAD_STORAGE_TYPE=local
+UPLOAD_LOCAL_PATH=./public/uploads
+UPLOAD_BASE_URL=http://localhost:3000/uploads
+UPLOAD_DOCKER_VOLUME=/app/uploads
+UPLOAD_CLOUD_PROVIDER=aws
+UPLOAD_CLOUD_BUCKET=your-bucket-name
+UPLOAD_CLOUD_REGION=us-east-1
+UPLOAD_CLOUD_ENDPOINT=
+UPLOAD_CLOUD_ACCESS_KEY=your-access-key
+UPLOAD_CLOUD_SECRET_KEY=your-secret-key
+UPLOAD_CLOUD_PROJECT_ID=
+UPLOAD_CLOUD_BASE_URL=https://your-bucket.s3.amazonaws.com
+UPLOAD_MAX_FILE_SIZE=10485760
+UPLOAD_MAX_FILES=10
 ```
 
 ### 📦 Clone Repository
@@ -113,6 +129,58 @@ docker run --env-file .env -p 3001:3001 lf-admin:latest
 ---
 
 ## Usage
+
+### Uploads Module
+
+The Uploads module has been integrated for handling file uploads with support for multiple storage backends.
+
+#### Storage Types
+
+The module supports three storage types:
+
+1. **Local Storage** (default) - Stores files in `./public/uploads`
+2. **Docker Storage** - Uses Docker volumes for containerized environments
+3. **Cloud Storage** - Supports AWS S3, Google Cloud Storage, Azure Blob Storage, and Cloudflare R2
+
+#### API Endpoints
+
+- `POST /api/uploads/single` - Upload a single file
+- `POST /api/uploads/multiple` - Upload multiple files
+- `GET /api/uploads/[filename]` - Retrieve a file
+- `DELETE /api/uploads/[filename]` - Delete a file
+- `GET /api/uploads/[filename]/metadata` - Get file metadata
+
+#### Upload Example
+
+```javascript
+// Single file upload
+const formData = new FormData();
+formData.append('file', file);
+formData.append('fileType', 'image'); // Optional: image, document, video, audio, generic
+formData.append('validationRules', JSON.stringify({ maxSize: 5242880 })); // Optional
+formData.append('metadata', JSON.stringify({ author: 'Admin' })); // Optional
+
+const response = await fetch('/api/uploads/single', {
+  method: 'POST',
+  body: formData
+});
+
+const result = await response.json();
+// Returns: { success: true, data: { filename, originalName, url, size, mimeType, metadata } }
+```
+
+#### Configuration
+
+Configure the upload module via environment variables:
+
+- `UPLOAD_STORAGE_TYPE` - Storage backend: `local`, `docker`, or `cloud`
+- `UPLOAD_LOCAL_PATH` - Local storage path (default: `./public/uploads`)
+- `UPLOAD_BASE_URL` - Base URL for local/docker storage
+- `UPLOAD_CLOUD_PROVIDER` - Cloud provider: `aws`, `gcp`, `azure`, or `cloudflare`
+- `UPLOAD_MAX_FILE_SIZE` - Maximum file size in bytes (default: 10485760 = 10MB)
+- `UPLOAD_MAX_FILES` - Maximum number of files per upload (default: 10)
+
+For cloud storage, additional configuration is required (see `.env.example`).
 
 ### How to work with swagger UI
 
@@ -163,6 +231,15 @@ app/ (frontend part)
 ├── api/
 │ ├── graphql/
 │ │ └── route.ts # API for /api/graphql
+│ ├── uploads/ # Upload endpoints
+│ │ ├── single/
+│ │ │ └── route.ts # POST /api/uploads/single
+│ │ ├── multiple/
+│ │ │ └── route.ts # POST /api/uploads/multiple
+│ │ └── [filename]/
+│ │ ├── route.ts # GET/DELETE /api/uploads/[filename]
+│ │ └── metadata/
+│ │ └── route.ts # GET /api/uploads/[filename]/metadata
 ├── middleware/ # Middlewares for handling requests
 │ ├── logger.ts # Middleware for logging
 │ └── authentication.ts # Middleware for authentication checks
@@ -189,6 +266,31 @@ src/ (backend part)
 │ └── logger
 ├── shared
 │ └── types
+└── uploads # Upload module (NEW)
+├── index.ts
+├── initialize.ts
+├── types.ts
+├── utils.ts
+├── uploadService.ts
+├── uploadController.ts
+├── uploadRoutes.ts
+├── storage/
+│ ├── index.ts
+│ ├── types.ts
+│ ├── storageFactory.ts
+│ ├── localStorage.ts
+│ ├── dockerStorage.ts
+│ └── cloudStorage.ts
+├── validators/
+│ ├── index.ts
+│ ├── validatorFactory.ts
+│ ├── common.ts
+│ └── imageValidator.ts
+└── processors/
+├── index.ts
+├── processorFactory.ts
+├── common.ts
+└── imageProcessor.ts
 ```
 
 ---
