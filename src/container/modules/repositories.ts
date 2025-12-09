@@ -9,22 +9,22 @@ import { PageRepository } from '~/infrastructure/repositories/pageRepository/pag
 import { RefreshTokenRepository } from '~/infrastructure/repositories/refreshTokenRepository/refreshTokenRepository';
 
 export type RepositoriesModule = {
-    adminRepository: ReturnType<typeof AdminRepository>;
-    refreshTokenRepository: ReturnType<typeof RefreshTokenRepository>;
-    pageRepository: ReturnType<typeof PageRepository>;
-    eventRepository: ReturnType<typeof EventRepository>;
+  adminRepository: ReturnType<typeof AdminRepository>;
+  refreshTokenRepository: ReturnType<typeof RefreshTokenRepository>;
+  pageRepository: ReturnType<typeof PageRepository>;
+  eventRepository: ReturnType<typeof EventRepository>;
 };
 
 export const registerRepositories = (container: AwilixContainer) => {
   container.register({
-      PageModel: asValue(PageModel),
-      DraftPageModel: asValue(DraftPageModel),
-      EventModel: asValue(EventModel),
+    PageModel: asValue(PageModel),
+    DraftPageModel: asValue(DraftPageModel),
+    EventModel: asValue(EventModel),
 
-      adminRepository: asFunction(AdminRepository).scoped(),
-      refreshTokenRepository: asFunction(RefreshTokenRepository).scoped(),
+    adminRepository: asFunction(AdminRepository).scoped(),
+    refreshTokenRepository: asFunction(RefreshTokenRepository).scoped(),
 
-      pageRepository: asFunction(PageRepository).scoped(),
-      eventRepository: asFunction(EventRepository).scoped()
+    pageRepository: asFunction(PageRepository).scoped(),
+    eventRepository: asFunction(EventRepository).scoped()
   });
 };
