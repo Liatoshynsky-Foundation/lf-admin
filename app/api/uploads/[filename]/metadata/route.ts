@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { config as appConfig } from '../../../../../src/config';
-import { initializeUploadModule } from '../../../../../src/uploads/initialize';
+import { config as appConfig } from '~/back-config';
+import { initializeUploadModule } from '~/uploads/initialize';
 
 const uploadModule = initializeUploadModule(appConfig);
 

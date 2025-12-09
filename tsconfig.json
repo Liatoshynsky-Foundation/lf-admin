@@ -34,10 +34,14 @@
       "~/container/*": ["./src/container/*"],
       "~/generated-graphql": ["./src/generated/"],
       "~/back-constants/*": ["./src/constants/*"],
+      "~/back-config": ["./src/config"],
+      "~/back-config/*": ["./src/config/*"],
       "~/infrastructure/*": ["./src/infrastructure/*"],
       "~/interfaces/*": ["./src/interfaces/*"],
       "~/back-shared/*": ["./src/shared/*"],
       "~/validators/*": ["./src/validators/*"],
+      "~/uploads": ["./src/uploads"],
+      "~/uploads/*": ["./src/uploads/*"],
       "~/public/*": ["./public/*"] // Path alias for easier imports
     }
   },
