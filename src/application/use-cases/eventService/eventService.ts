@@ -55,8 +55,7 @@ export const EventService = ({ eventRepository }: { eventRepository: Repo }) => 
       }
 
       if (input.content) {
-        tmpImages.push(...extractImageSrcs(input.content.uk));
-        tmpImages.push(...extractImageSrcs(input.content.en));
+        tmpImages.push(...extractImageSrcs(input.content.uk), ...extractImageSrcs(input.content.en));
       }
 
       if (tmpImages.length) {
@@ -115,8 +114,7 @@ export const EventService = ({ eventRepository }: { eventRepository: Repo }) => 
         tmpImages.push(input.coverImage.src);
       }
 
-      tmpImages.push(...extractImageSrcs(input.content.uk));
-      tmpImages.push(...extractImageSrcs(input.content.en));
+      tmpImages.push(...extractImageSrcs(input.content.uk), ...extractImageSrcs(input.content.en));
 
       if (tmpImages.length) {
         await blobStorageService().copyBlobsToNewFolder('tmp', 'photos', tmpImages);
