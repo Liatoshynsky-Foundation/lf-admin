@@ -5,34 +5,37 @@ import { createUploadService } from '../uploads/uploadService';
 import { DEFAULT_IMAGE_RULES } from '../uploads/validators';
 
 export const initializeUploadModule = (config: Config) => {
+  // Select storage configuration based on environment
+  const currentStorageConfig =
+    config.environment === 'production' ? config.uploads.production : config.uploads.development;
+
   const storageConfig: StorageConfig = {
-    type: config.uploads.storageType
+    type: currentStorageConfig.type
   };
 
   /* prettier-ignore */
-  switch (config.uploads.storageType) {
+  switch (currentStorageConfig.type) {
   case 'local':
-    storageConfig.localPath = config.uploads.localPath;
-    storageConfig.baseUrl = config.uploads.baseUrl;
+    storageConfig.localPath = currentStorageConfig.localPath;
+    storageConfig.baseUrl = currentStorageConfig.baseUrl;
     break;
   case 'docker':
-    storageConfig.dockerVolume = config.uploads.dockerVolume;
-    storageConfig.baseUrl = config.uploads.baseUrl;
+    storageConfig.dockerVolume = currentStorageConfig.dockerVolume;
+    storageConfig.baseUrl = currentStorageConfig.baseUrl;
     break;
   case 'cloud':
-    storageConfig.cloudProvider = config.uploads.cloudProvider;
+    storageConfig.cloudProvider = currentStorageConfig.cloudProvider;
     storageConfig.cloudConfig = {
-      bucket: config.uploads.cloudConfig?.bucket || '',
-      region: config.uploads.cloudConfig?.region,
-      endpoint: config.uploads.cloudConfig?.endpoint,
+      bucket: currentStorageConfig.cloudConfig?.bucket || '',
+      region: currentStorageConfig.cloudConfig?.region,
+      endpoint: currentStorageConfig.cloudConfig?.endpoint,
       credentials: {
-        accessKeyId: config.uploads.cloudConfig?.accessKey,
-        secretAccessKey: config.uploads.cloudConfig?.secretKey,
-        projectId: config.uploads.cloudConfig?.projectId
+        accessKeyId: currentStorageConfig.cloudConfig?.accessKey,
+        secretAccessKey: currentStorageConfig.cloudConfig?.secretKey,
+        projectId: currentStorageConfig.cloudConfig?.projectId
       }
     };
-    // Only use cloudBaseUrl for cloud storage, not the local baseUrl
-    storageConfig.baseUrl = config.uploads.cloudBaseUrl;
+    storageConfig.baseUrl = currentStorageConfig.baseUrl;
     break;
   }
 
@@ -54,6 +57,11 @@ export const initializeUploadModule = (config: Config) => {
     uploadLimits: {
       fileSize: config.uploads.maxFileSize,
       files: config.uploads.maxFiles
+    },
+    storageInfo: {
+      environment: config.environment,
+      storageType: currentStorageConfig.type,
+      storageProvider: currentStorageConfig.type === 'cloud' ? currentStorageConfig.cloudProvider : undefined
     }
   };
 };

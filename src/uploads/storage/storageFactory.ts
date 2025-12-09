@@ -42,35 +42,37 @@ export const createStorageAdapter = (config: StorageConfig): StorageAdapter => {
   }
 };
 
-export const createStorageFromEnv = (): StorageAdapter => {
-  const storageType = (process.env.STORAGE_TYPE || 'local') as StorageType;
+export const createStorageFromEnv = (environment: 'development' | 'production' = 'development'): StorageAdapter => {
+  const envPrefix = environment === 'production' ? 'PROD' : 'DEV';
+  const storageType = (process.env[`${envPrefix}_STORAGE_TYPE`] ||
+    (environment === 'production' ? 'cloud' : 'local')) as StorageType;
 
   const config: StorageConfig = {
     type: storageType,
-    baseUrl: process.env.STORAGE_BASE_URL
+    baseUrl: process.env[`${envPrefix}_STORAGE_BASE_URL`]
   };
 
   /* prettier-ignore */
   switch (storageType) {
   case 'local':
-    config.localPath = process.env.STORAGE_LOCAL_PATH || './uploads';
+    config.localPath = process.env[`${envPrefix}_LOCAL_PATH`] || (environment === 'development' ? './public/uploads' : undefined);
     break;
 
   case 'docker':
-    config.dockerVolume = process.env.STORAGE_DOCKER_VOLUME || '/app/uploads';
+    config.dockerVolume = process.env[`${envPrefix}_DOCKER_VOLUME`] || '/app/uploads';
     break;
 
   case 'cloud':
-    config.cloudProvider = (process.env.STORAGE_CLOUD_PROVIDER || 'aws') as any;
+    config.cloudProvider = (process.env[`${envPrefix}_CLOUD_PROVIDER`] || 'aws') as any;
     config.cloudConfig = {
-      bucket: process.env.BUCKET_NAME,
-      region: process.env.STORAGE_CLOUD_REGION,
-      endpoint: process.env.S3_ENDPOINT,
+      bucket: process.env[`${envPrefix}_CLOUD_BUCKET`],
+      region: process.env[`${envPrefix}_CLOUD_REGION`],
+      endpoint: process.env[`${envPrefix}_CLOUD_ENDPOINT`],
       credentials: {
-        accessKeyId: process.env.S3_ACCESS_KEY_ID,
-        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
-        token: process.env.CLOUDFLARE_TOKEN,
-        projectId: process.env.STORAGE_CLOUD_PROJECT_ID
+        accessKeyId: process.env[`${envPrefix}_CLOUD_ACCESS_KEY`],
+        secretAccessKey: process.env[`${envPrefix}_CLOUD_SECRET_KEY`],
+        token: process.env[`${envPrefix}_CLOUDFLARE_TOKEN`],
+        projectId: process.env[`${envPrefix}_CLOUD_PROJECT_ID`]
       }
     };
     break;
