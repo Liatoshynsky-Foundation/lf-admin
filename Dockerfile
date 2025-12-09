@@ -19,6 +19,7 @@ RUN \
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
+COPY --from=deps /app/package.json ./package.json
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
@@ -29,8 +30,8 @@ COPY . .
 
 # Generate GraphQL types
 RUN rm -rf app/types/graphql/generated && \
-    yarn generate
-
+  npm run generate
+  
 # Build the Next.js app
 RUN \
   if [ -f yarn.lock ]; then yarn run build; \
