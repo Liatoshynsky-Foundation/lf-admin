@@ -5,9 +5,9 @@ import { initializeUploadModule } from '~/uploads/initialize';
 
 const uploadModule = initializeUploadModule(appConfig);
 
-export async function GET(req: NextRequest, { params }: { params: { filename: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ filename: string }> }) {
   try {
-    const { filename } = params;
+    const { filename } = await params;
 
     if (!filename) {
       return NextResponse.json({ success: false, error: 'Filename is required' }, { status: 400 });
@@ -35,9 +35,9 @@ export async function GET(req: NextRequest, { params }: { params: { filename: st
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { filename: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ filename: string }> }) {
   try {
-    const { filename } = params;
+    const { filename } = await params;
 
     if (!filename) {
       return NextResponse.json({ success: false, error: 'Filename is required' }, { status: 400 });
