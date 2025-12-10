@@ -135,11 +135,12 @@ describe('createCloudStorage', () => {
       expect(result.metadata.size).toBe(buffer.length);
       expect(MockPutObjectCommand).toHaveBeenCalledWith({
         Bucket: 'test-bucket',
-        Key: filename,
+        Key: `uploads/${filename}`,
         Body: buffer,
         ContentType: mimeType,
         Metadata: expect.objectContaining({
-          originalName: filename
+          originalName: filename,
+          uploadedAt: expect.any(String)
         })
       });
     });
@@ -193,12 +194,13 @@ describe('createCloudStorage', () => {
 
       expect(MockPutObjectCommand).toHaveBeenCalledWith({
         Bucket: 'test-bucket',
-        Key: filename,
+        Key: `uploads/${filename}`,
         Body: buffer,
         ContentType: mimeType,
         Metadata: expect.objectContaining({
           originalName: 'original.txt',
-          userId: '123'
+          userId: '123',
+          uploadedAt: expect.any(String)
         })
       });
     });
@@ -223,7 +225,7 @@ describe('createCloudStorage', () => {
 
       const result = await storage.store(buffer, filename, mimeType);
 
-      expect(result.metadata.url).toBe('https://test-bucket.s3.us-west-2.amazonaws.com/test.txt');
+      expect(result.metadata.url).toBe('https://test-bucket.s3.us-west-2.amazonaws.com/uploads/test.txt');
     });
 
     it('should handle storage errors', async () => {
@@ -292,7 +294,7 @@ describe('createCloudStorage', () => {
       expect(result).toEqual(expectedContent);
       expect(MockGetObjectCommand).toHaveBeenCalledWith({
         Bucket: 'test-bucket',
-        Key: filename
+        Key: `uploads/${filename}`
       });
     });
 
@@ -379,7 +381,7 @@ describe('createCloudStorage', () => {
       expect(result.success).toBe(true);
       expect(MockDeleteObjectCommand).toHaveBeenCalledWith({
         Bucket: 'test-bucket',
-        Key: filename
+        Key: `uploads/${filename}`
       });
     });
 
