@@ -1,3 +1,5 @@
+import { UPLOAD_ERRORS } from '../errors';
+
 export interface ValidationResult {
   valid: boolean;
   errors: string[];
@@ -26,7 +28,7 @@ export const validateFileSize = (buffer: Buffer, maxSize?: number): ValidationRe
   const errors: string[] = [];
 
   if (maxSize && buffer.length > maxSize) {
-    errors.push(`File size ${buffer.length} bytes exceeds maximum allowed size ${maxSize} bytes`);
+    errors.push(UPLOAD_ERRORS.FILE_SIZE_EXCEEDED(buffer.length, maxSize));
   }
 
   return {
@@ -39,7 +41,7 @@ export const validateMimeType = (mimeType: string, allowedMimeTypes?: string[]):
   const errors: string[] = [];
 
   if (allowedMimeTypes && !allowedMimeTypes.includes(mimeType)) {
-    errors.push(`MIME type ${mimeType} is not allowed. Allowed types: ${allowedMimeTypes.join(', ')}`);
+    errors.push(UPLOAD_ERRORS.MIME_TYPE_NOT_ALLOWED(mimeType, allowedMimeTypes));
   }
 
   return {
@@ -56,7 +58,7 @@ export const validateExtension = (filename: string, allowedExtensions?: string[]
     const normalizedAllowed = allowedExtensions.map((ext) => ext.toLowerCase());
 
     if (!normalizedAllowed.includes(extension)) {
-      errors.push(`File extension .${extension} is not allowed. Allowed extensions: ${allowedExtensions.join(', ')}`);
+      errors.push(UPLOAD_ERRORS.EXTENSION_NOT_ALLOWED(extension, allowedExtensions));
     }
   }
 

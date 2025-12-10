@@ -1,6 +1,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
+import { UPLOAD_ERRORS } from '../errors';
 import { DeleteResult, StorageAdapter, StorageMetadata, StorageResult } from './types';
 
 export interface LocalStorageOptions {
@@ -92,14 +93,14 @@ export const createLocalStorage = (options: LocalStorageOptions): StorageAdapter
         await fs.unlink(filePath);
       } catch (error) {
         console.log(error);
-        throw new Error('File not found or could not be deleted');
+        throw new Error(UPLOAD_ERRORS.FILE_NOT_FOUND_OR_COULD_NOT_BE_DELETED);
       }
 
       try {
         await fs.unlink(metadataPath);
       } catch (error) {
         console.log(error);
-        throw new Error('Metadata not found or could not be deleted');
+        throw new Error(UPLOAD_ERRORS.METADATA_NOT_FOUND_OR_COULD_NOT_BE_DELETED);
       }
 
       return { success: true };

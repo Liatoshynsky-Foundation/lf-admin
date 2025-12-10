@@ -1,3 +1,4 @@
+import { UPLOAD_ERRORS } from './errors';
 import { createProcessor, FileProcessor } from './processors';
 import { StorageAdapter } from './storage';
 import { UploadedFile, UploadOptions, UploadResult } from './types';
@@ -74,7 +75,7 @@ export const createUploadService = (config: UploadServiceConfig) => {
       if (!storageResult.success) {
         return {
           success: false,
-          errors: [storageResult.error || 'Storage failed']
+          errors: [storageResult.error || UPLOAD_ERRORS.STORAGE_FAILED]
         };
       }
 
@@ -90,7 +91,7 @@ export const createUploadService = (config: UploadServiceConfig) => {
     } catch (error) {
       return {
         success: false,
-        errors: [error instanceof Error ? error.message : 'Unknown error']
+        errors: [error instanceof Error ? error.message : UPLOAD_ERRORS.UNKNOWN_ERROR]
       };
     }
   };

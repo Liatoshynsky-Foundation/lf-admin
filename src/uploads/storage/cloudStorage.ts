@@ -6,6 +6,7 @@ import {
   S3Client
 } from '@aws-sdk/client-s3';
 
+import { UPLOAD_ERRORS } from '../errors';
 import { DeleteResult, StorageAdapter, StorageMetadata, StorageResult } from './types';
 
 export interface CloudStorageOptions {
@@ -30,7 +31,7 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
 
   if (provider === 'aws' || provider === 'cloudflare') {
     if (!credentials?.accessKeyId || !credentials?.secretAccessKey) {
-      throw new Error(`${provider} storage requires accessKeyId and secretAccessKey`);
+      throw new Error(UPLOAD_ERRORS.CLOUD_STORAGE_REQUIRES_CREDENTIALS(provider));
     }
 
     const clientConfig: any = {
@@ -43,7 +44,7 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
 
     if (provider === 'cloudflare') {
       if (!endpoint) {
-        throw new Error('Cloudflare R2 storage requires endpoint configuration');
+        throw new Error(UPLOAD_ERRORS.CLOUDFLARE_ENDPOINT_REQUIRED);
       }
       clientConfig.endpoint = endpoint;
     }
@@ -103,7 +104,7 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
           size: buffer.length,
           uploadedAt: new Date()
         },
-        error: error instanceof Error ? error.message : 'Unknown error occurred'
+        error: error instanceof Error ? error.message : UPLOAD_ERRORS.UNKNOWN_ERROR_OCCURRED
       };
     }
   };
@@ -112,7 +113,7 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
     try {
       if (provider === 'aws' || provider === 'cloudflare') {
         if (!s3Client) {
-          throw new Error('S3 client not initialized');
+          throw new Error(UPLOAD_ERRORS.S3_CLIENT_NOT_INITIALIZED);
         }
 
         const command = new GetObjectCommand({
@@ -134,7 +135,7 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
         return Buffer.concat(chunks);
       }
 
-      throw new Error(`Cloud storage for ${provider} not yet implemented`);
+      throw new Error(UPLOAD_ERRORS.CLOUD_STORAGE_NOT_IMPLEMENTED(provider));
     } catch (error) {
       console.error(`Failed to retrieve file ${filename}:`, error);
       return null;
@@ -145,7 +146,7 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
     try {
       if (provider === 'aws' || provider === 'cloudflare') {
         if (!s3Client) {
-          throw new Error('S3 client not initialized');
+          throw new Error(UPLOAD_ERRORS.S3_CLIENT_NOT_INITIALIZED);
         }
 
         const command = new DeleteObjectCommand({
@@ -160,11 +161,11 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
         };
       }
 
-      throw new Error(`Cloud storage for ${provider} not yet implemented`);
+      throw new Error(UPLOAD_ERRORS.CLOUD_STORAGE_NOT_IMPLEMENTED(provider));
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred'
+        error: error instanceof Error ? error.message : UPLOAD_ERRORS.UNKNOWN_ERROR_OCCURRED
       };
     }
   };
@@ -173,7 +174,7 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
     try {
       if (provider === 'aws' || provider === 'cloudflare') {
         if (!s3Client) {
-          throw new Error('S3 client not initialized');
+          throw new Error(UPLOAD_ERRORS.S3_CLIENT_NOT_INITIALIZED);
         }
 
         const command = new HeadObjectCommand({
@@ -185,7 +186,7 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
         return true;
       }
 
-      throw new Error(`Cloud storage for ${provider} not yet implemented`);
+      throw new Error(UPLOAD_ERRORS.CLOUD_STORAGE_NOT_IMPLEMENTED(provider));
     } catch (error) {
       console.log(error);
       return false;
@@ -196,7 +197,7 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
     try {
       if (provider === 'aws' || provider === 'cloudflare') {
         if (!s3Client) {
-          throw new Error('S3 client not initialized');
+          throw new Error(UPLOAD_ERRORS.S3_CLIENT_NOT_INITIALIZED);
         }
 
         const command = new HeadObjectCommand({
@@ -216,7 +217,7 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
         };
       }
 
-      throw new Error(`Cloud storage for ${provider} not yet implemented`);
+      throw new Error(UPLOAD_ERRORS.CLOUD_STORAGE_NOT_IMPLEMENTED(provider));
     } catch (error) {
       console.error(`Failed to get metadata for ${filename}:`, error);
       return null;

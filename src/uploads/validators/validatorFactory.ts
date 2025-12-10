@@ -1,3 +1,4 @@
+import { UPLOAD_ERRORS } from '../errors';
 import { FileValidationRules, FileValidator } from './common';
 import { createImageValidator, ImageValidationRules } from './imageValidator';
 
@@ -17,24 +18,24 @@ export const createValidator = (config: ValidatorConfig): FileValidator => {
   case 'document':
     // OPTIONAL: Implement document validator
     // return createDocumentValidator(config.rules);
-    throw new Error('Document validator not yet implemented');
+    throw new Error(UPLOAD_ERRORS.DOCUMENT_VALIDATOR_NOT_IMPLEMENTED);
 
   case 'video':
     // OPTIONAL: Implement video validator
     // return createVideoValidator(config.rules);
-    throw new Error('Video validator not yet implemented');
+    throw new Error(UPLOAD_ERRORS.VIDEO_VALIDATOR_NOT_IMPLEMENTED);
 
   case 'audio':
     // OPTIONAL: Implement audio validator
     // return createAudioValidator(config.rules);
-    throw new Error('Audio validator not yet implemented');
+    throw new Error(UPLOAD_ERRORS.AUDIO_VALIDATOR_NOT_IMPLEMENTED);
 
   case 'generic':
     // OPTIONAL: Implement generic file validator
     // return createGenericValidator(config.rules);
-    throw new Error('Generic validator not yet implemented');
+    throw new Error(UPLOAD_ERRORS.GENERIC_VALIDATOR_NOT_IMPLEMENTED);
 
   default:
-    throw new Error(`Unknown file type: ${config.fileType}`);
+    throw new Error(`${UPLOAD_ERRORS.UNKNOWN_FILE_TYPE}: ${config.fileType}`);
   }
 };

@@ -1,3 +1,4 @@
+import { UPLOAD_ERRORS } from '../errors';
 import { createIdentityProcessor, FileProcessor } from './common';
 import { createImageProcessor, ImageProcessingOptions } from './imageProcessor';
 
@@ -17,17 +18,17 @@ export const createProcessor = (config: ProcessorConfig): FileProcessor => {
   case 'document':
     // TODO: Implement document processor (e.g., PDF optimization)
     // return createDocumentProcessor(config.options);
-    throw new Error('Document processor not yet implemented');
+    throw new Error(UPLOAD_ERRORS.DOCUMENT_PROCESSOR_NOT_IMPLEMENTED);
 
   case 'video':
     // TODO: Implement video processor (e.g., transcoding, thumbnail generation)
     // return createVideoProcessor(config.options);
-    throw new Error('Video processor not yet implemented');
+    throw new Error(UPLOAD_ERRORS.VIDEO_PROCESSOR_NOT_IMPLEMENTED);
 
   case 'audio':
     // TODO: Implement audio processor (e.g., format conversion, normalization)
     // return createAudioProcessor(config.options);
-    throw new Error('Audio processor not yet implemented');
+    throw new Error(UPLOAD_ERRORS.AUDIO_PROCESSOR_NOT_IMPLEMENTED);
 
   case 'none':
     return createIdentityProcessor();

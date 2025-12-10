@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 
+import { UPLOAD_ERRORS } from './errors';
 import { UploadService } from './uploadService';
 import { convertMulterFile, formatMultipleUploadResults, formatUploadResult, parseUploadOptions } from './utils';
 
@@ -15,7 +16,7 @@ export const createUploadController = (config: UploadControllerConfig) => {
       const file = (req as any).file as Express.Multer.File;
 
       if (!file) {
-        res.status(400).json({ success: false, error: 'No file uploaded' });
+        res.status(400).json({ success: false, error: UPLOAD_ERRORS.NO_FILE_UPLOADED });
         return;
       }
 
@@ -39,7 +40,7 @@ export const createUploadController = (config: UploadControllerConfig) => {
       const files = (req as any).files as Express.Multer.File[];
 
       if (!files || files.length === 0) {
-        res.status(400).json({ success: false, error: 'No files uploaded' });
+        res.status(400).json({ success: false, error: UPLOAD_ERRORS.NO_FILES_UPLOADED });
         return;
       }
 
@@ -58,14 +59,14 @@ export const createUploadController = (config: UploadControllerConfig) => {
       const { filename } = req.params;
 
       if (!filename) {
-        res.status(400).json({ success: false, error: 'Filename is required' });
+        res.status(400).json({ success: false, error: UPLOAD_ERRORS.FILENAME_REQUIRED });
         return;
       }
 
       const buffer = await uploadService.retrieveFile(filename);
 
       if (!buffer) {
-        res.status(404).json({ success: false, error: 'File not found' });
+        res.status(404).json({ success: false, error: UPLOAD_ERRORS.FILE_NOT_FOUND });
         return;
       }
 
@@ -85,14 +86,14 @@ export const createUploadController = (config: UploadControllerConfig) => {
       const { filename } = req.params;
 
       if (!filename) {
-        res.status(400).json({ success: false, error: 'Filename is required' });
+        res.status(400).json({ success: false, error: UPLOAD_ERRORS.FILENAME_REQUIRED });
         return;
       }
 
       const deleted = await uploadService.deleteFile(filename);
 
       if (!deleted) {
-        res.status(404).json({ success: false, error: 'File not found or could not be deleted' });
+        res.status(404).json({ success: false, error: UPLOAD_ERRORS.FILE_NOT_FOUND_OR_DELETE_FAILED });
         return;
       }
 
@@ -107,14 +108,14 @@ export const createUploadController = (config: UploadControllerConfig) => {
       const { filename } = req.params;
 
       if (!filename) {
-        res.status(400).json({ success: false, error: 'Filename is required' });
+        res.status(400).json({ success: false, error: UPLOAD_ERRORS.FILENAME_REQUIRED });
         return;
       }
 
       const metadata = await uploadService.getFileMetadata(filename);
 
       if (!metadata) {
-        res.status(404).json({ success: false, error: 'File not found' });
+        res.status(404).json({ success: false, error: UPLOAD_ERRORS.FILE_NOT_FOUND });
         return;
       }
 

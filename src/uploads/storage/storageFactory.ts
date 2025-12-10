@@ -1,3 +1,4 @@
+import { UPLOAD_ERRORS } from '../errors';
 import { createAzureBlobStorage } from './azureBlobStorage';
 import { createCloudStorage } from './cloudStorage';
 import { createDockerStorage } from './dockerStorage';
@@ -9,7 +10,7 @@ export const createStorageAdapter = (config: StorageConfig): StorageAdapter => {
   switch (config.type) {
   case 'local':
     if (!config.localPath) {
-      throw new Error('Local storage requires localPath in config');
+      throw new Error(UPLOAD_ERRORS.LOCAL_STORAGE_REQUIRES_PATH);
     }
     return createLocalStorage({
       basePath: config.localPath,
@@ -18,7 +19,7 @@ export const createStorageAdapter = (config: StorageConfig): StorageAdapter => {
 
   case 'docker':
     if (!config.dockerVolume) {
-      throw new Error('Docker storage requires dockerVolume in config');
+      throw new Error(UPLOAD_ERRORS.DOCKER_STORAGE_REQUIRES_VOLUME);
     }
     return createDockerStorage({
       volumePath: config.dockerVolume,
@@ -35,7 +36,7 @@ export const createStorageAdapter = (config: StorageConfig): StorageAdapter => {
 
   case 'cloud':
     if (!config.cloudProvider || !config.cloudConfig) {
-      throw new Error('Cloud storage requires cloudProvider and cloudConfig');
+      throw new Error(UPLOAD_ERRORS.CLOUD_STORAGE_REQUIRES_CONFIG);
     }
     return createCloudStorage({
       provider: config.cloudProvider,
@@ -47,7 +48,7 @@ export const createStorageAdapter = (config: StorageConfig): StorageAdapter => {
     });
 
   default:
-    throw new Error(`Unknown storage type: ${config.type}`);
+    throw new Error(UPLOAD_ERRORS.UNKNOWN_STORAGE_TYPE(config.type));
   }
 };
 

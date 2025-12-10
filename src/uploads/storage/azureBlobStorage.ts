@@ -1,6 +1,7 @@
 import { BlobServiceClient, BlockBlobClient, ContainerClient } from '@azure/storage-blob';
 import { createHash } from 'crypto';
 
+import { UPLOAD_ERRORS } from '../errors';
 import { DeleteResult, StorageAdapter, StorageMetadata, StorageResult } from './types';
 import { errors } from '~/back-constants/errors';
 import { CONTAINER_NAME } from '~/back-constants/index';
@@ -32,7 +33,7 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
     }
     const { AZURE_SAS_URL } = process.env;
     if (!AZURE_SAS_URL) {
-      throw new Error(errors.AZURE_URL_NOT_DEFINED);
+      throw new Error(UPLOAD_ERRORS.AZURE_URL_NOT_DEFINED);
     }
     blobServiceClient = new BlobServiceClient(AZURE_SAS_URL);
     return blobServiceClient;
@@ -202,7 +203,7 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
           size: buffer.length,
           uploadedAt: new Date()
         },
-        error: error instanceof Error ? error.message : 'Unknown error occurred'
+        error: error instanceof Error ? error.message : UPLOAD_ERRORS.UNKNOWN_ERROR_OCCURRED
       };
     }
   };
@@ -233,7 +234,7 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred'
+        error: error instanceof Error ? error.message : UPLOAD_ERRORS.UNKNOWN_ERROR_OCCURRED
       };
     }
   };
@@ -250,8 +251,10 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
 
   const getMetadata = async (filename: string): Promise<StorageMetadata | null> => {
     try {
-      const url = constructBlobUrl(folderPrefix, filename);
-      const response = await streamBlob(url, null);
+      const url = buildUrl(filename);
+      const response = await fetch(url, {
+        method: 'HEAD'
+      });
 
       if (!response.ok) {
         return null;
@@ -267,7 +270,7 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
         size: contentLength,
         uploadedAt: new Date(),
         path: `${folderPrefix}/${filename}`,
-        url: buildUrl(filename)
+        url
       };
     } catch (error) {
       console.error(`Failed to get metadata for ${filename}:`, error);
@@ -277,6 +280,14 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
 
   const getUrl = (filename: string): string | null => {
     try {
+      if (!baseUrl) {
+        // constructBlobUrl might throw, wrap in try-catch
+        try {
+          return constructBlobUrl(folderPrefix, filename);
+        } catch {
+          return null;
+        }
+      }
       return buildUrl(filename);
     } catch (error) {
       console.error(`Failed to construct URL for ${filename}:`, error);
