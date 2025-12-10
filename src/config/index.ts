@@ -58,7 +58,9 @@ const developmentStorage: StorageConfig = {
   },
   azureContainerName: process.env.DEV_AZURE_CONTAINER_NAME,
   azureFolderPrefix: process.env.DEV_AZURE_FOLDER_PREFIX || 'uploads',
-  baseUrl: process.env.DEV_STORAGE_BASE_URL || 'http://localhost:3000/uploads'
+  baseUrl:
+    process.env.DEV_STORAGE_BASE_URL ||
+    ((process.env.DEV_STORAGE_TYPE as StorageType) === 'local' ? 'http://localhost:3000/uploads' : undefined)
 };
 
 const productionStorage: StorageConfig = {

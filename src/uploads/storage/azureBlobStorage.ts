@@ -62,11 +62,11 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
     return getFullPathToBlob(containerClient, folderName, blobNameHash);
   };
 
-  const buildUrl = (filename: string): string => {
+  const buildUrl = (filename: string, directory?: string): string => {
     if (baseUrl) {
       return `${baseUrl}/${filename}`;
     }
-    return constructBlobUrl(folderPrefix, filename);
+    return constructBlobUrl(directory || folderPrefix, filename);
   };
 
   const uploadFile = async (
@@ -174,12 +174,11 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
     metadata: Record<string, any> = {}
   ): Promise<StorageResult> => {
     try {
-      // Use directory from metadata if provided, otherwise fall back to folderPrefix
       const directory = metadata.directory || folderPrefix;
 
       await uploadFile(directory, filename, buffer, mimeType);
 
-      const url = buildUrl(filename);
+      const url = buildUrl(filename, directory);
 
       const storageMetadata: StorageMetadata = {
         filename,
