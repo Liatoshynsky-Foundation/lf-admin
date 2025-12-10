@@ -20,25 +20,31 @@ export const createLocalStorage = (options: LocalStorageOptions): StorageAdapter
     }
   };
 
-  const getFilePath = (filename: string): string => {
-    return path.join(basePath, filename);
+  const getFilePath = (filename: string, folder?: string): string => {
+    return folder ? path.join(basePath, folder, filename) : path.join(basePath, filename);
   };
 
-  const getMetadataPath = (filename: string): string => {
-    return path.join(basePath, `${filename}.meta.json`);
+  const getMetadataPath = (filename: string, folder?: string): string => {
+    return folder ? path.join(basePath, folder, `${filename}.meta.json`) : path.join(basePath, `${filename}.meta.json`);
   };
 
   const store = async (
     buffer: Buffer,
     filename: string,
     mimeType: string,
-    metadata: Record<string, any> = {}
+    metadata: Record<string, any> = {},
+    folder?: string
   ): Promise<StorageResult> => {
     try {
       await ensureDirectory();
 
-      const filePath = getFilePath(filename);
-      const metadataPath = getMetadataPath(filename);
+      if (folder) {
+        const folderPath = path.join(basePath, folder);
+        await fs.mkdir(folderPath, { recursive: true });
+      }
+
+      const filePath = getFilePath(filename, folder);
+      const metadataPath = getMetadataPath(filename, folder);
 
       await fs.writeFile(filePath, buffer);
 
@@ -49,7 +55,7 @@ export const createLocalStorage = (options: LocalStorageOptions): StorageAdapter
         size: buffer.length,
         uploadedAt: new Date(),
         path: filePath,
-        url: baseUrl ? `${baseUrl}/${filename}` : undefined,
+        url: baseUrl ? (folder ? `${baseUrl}/${folder}/${filename}` : `${baseUrl}/${filename}`) : undefined,
         ...metadata
       };
 
@@ -74,9 +80,9 @@ export const createLocalStorage = (options: LocalStorageOptions): StorageAdapter
     }
   };
 
-  const retrieve = async (filename: string): Promise<Buffer | null> => {
+  const retrieve = async (filename: string, folder?: string): Promise<Buffer | null> => {
     try {
-      const filePath = getFilePath(filename);
+      const filePath = getFilePath(filename, folder);
       const buffer = await fs.readFile(filePath);
       return buffer;
     } catch {
@@ -84,10 +90,10 @@ export const createLocalStorage = (options: LocalStorageOptions): StorageAdapter
     }
   };
 
-  const deleteFile = async (filename: string): Promise<DeleteResult> => {
+  const deleteFile = async (filename: string, folder?: string): Promise<DeleteResult> => {
     try {
-      const filePath = getFilePath(filename);
-      const metadataPath = getMetadataPath(filename);
+      const filePath = getFilePath(filename, folder);
+      const metadataPath = getMetadataPath(filename, folder);
 
       try {
         await fs.unlink(filePath);
@@ -112,9 +118,9 @@ export const createLocalStorage = (options: LocalStorageOptions): StorageAdapter
     }
   };
 
-  const exists = async (filename: string): Promise<boolean> => {
+  const exists = async (filename: string, folder?: string): Promise<boolean> => {
     try {
-      const filePath = getFilePath(filename);
+      const filePath = getFilePath(filename, folder);
       await fs.access(filePath);
       return true;
     } catch {
@@ -122,9 +128,9 @@ export const createLocalStorage = (options: LocalStorageOptions): StorageAdapter
     }
   };
 
-  const getMetadata = async (filename: string): Promise<StorageMetadata | null> => {
+  const getMetadata = async (filename: string, folder?: string): Promise<StorageMetadata | null> => {
     try {
-      const metadataPath = getMetadataPath(filename);
+      const metadataPath = getMetadataPath(filename, folder);
       const data = await fs.readFile(metadataPath, 'utf-8');
       return JSON.parse(data);
     } catch {

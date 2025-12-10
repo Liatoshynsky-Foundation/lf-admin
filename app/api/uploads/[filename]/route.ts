@@ -8,18 +8,27 @@ const uploadModule = initializeUploadModule(appConfig);
 export async function GET(req: NextRequest, { params }: { params: Promise<{ filename: string }> }) {
   try {
     const { filename } = await params;
+    const { searchParams } = new URL(req.url);
+    const folder = searchParams.get('folder');
 
     if (!filename) {
       return NextResponse.json({ success: false, error: 'Filename is required' }, { status: 400 });
     }
 
-    const fileBuffer = await uploadModule.uploadService.retrieveFile(filename);
+    if (!folder) {
+      return NextResponse.json(
+        { success: false, error: 'Folder parameter is required (e.g., ?folder=photos)' },
+        { status: 400 }
+      );
+    }
+
+    const fileBuffer = await uploadModule.uploadService.retrieveFile(filename, folder);
 
     if (!fileBuffer) {
       return NextResponse.json({ success: false, error: 'File not found' }, { status: 404 });
     }
 
-    const metadata = await uploadModule.uploadService.getFileMetadata(filename);
+    const metadata = await uploadModule.uploadService.getFileMetadata(filename, folder);
 
     return new NextResponse(new Uint8Array(fileBuffer), {
       status: 200,
@@ -38,12 +47,21 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ file
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ filename: string }> }) {
   try {
     const { filename } = await params;
+    const { searchParams } = new URL(req.url);
+    const folder = searchParams.get('folder');
 
     if (!filename) {
       return NextResponse.json({ success: false, error: 'Filename is required' }, { status: 400 });
     }
 
-    const success = await uploadModule.uploadService.deleteFile(filename);
+    if (!folder) {
+      return NextResponse.json(
+        { success: false, error: 'Folder parameter is required (e.g., ?folder=photos)' },
+        { status: 400 }
+      );
+    }
+
+    const success = await uploadModule.uploadService.deleteFile(filename, folder);
 
     if (!success) {
       return NextResponse.json({ success: false, error: 'Failed to delete file' }, { status: 400 });

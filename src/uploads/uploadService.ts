@@ -107,21 +107,21 @@ export const createUploadService = (config: UploadServiceConfig) => {
     return results;
   };
 
-  const retrieveFile = async (filename: string): Promise<Buffer | null> => {
-    return storage.retrieve(filename);
+  const retrieveFile = async (filename: string, folder?: string): Promise<Buffer | null> => {
+    return storage.retrieve(filename, folder);
   };
 
-  const deleteFile = async (filename: string): Promise<boolean> => {
-    const result = await storage.delete(filename);
+  const deleteFile = async (filename: string, folder?: string): Promise<boolean> => {
+    const result = await storage.delete(filename, folder);
     return result.success;
   };
 
-  const fileExists = async (filename: string): Promise<boolean> => {
-    return storage.exists(filename);
+  const fileExists = async (filename: string, folder?: string): Promise<boolean> => {
+    return storage.exists(filename, folder);
   };
 
-  const getFileMetadata = async (filename: string) => {
-    return storage.getMetadata(filename);
+  const getFileMetadata = async (filename: string, folder?: string) => {
+    return storage.getMetadata(filename, folder);
   };
 
   const getFileUrl = (filename: string): string | null => {

@@ -56,7 +56,8 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
     buffer: Buffer,
     filename: string,
     mimeType: string,
-    metadata: Record<string, any> = {}
+    metadata: Record<string, any> = {},
+    folder?: string
   ): Promise<StorageResult> => {
     try {
       if (provider === 'aws' || provider === 'cloudflare') {
@@ -64,9 +65,11 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
           throw new Error('S3 client not initialized');
         }
 
+        const key = folder ? `${folder}/${filename}` : filename;
+
         const command = new PutObjectCommand({
           Bucket: bucket,
-          Key: filename,
+          Key: key,
           Body: buffer,
           ContentType: mimeType,
           Metadata: {
@@ -84,7 +87,7 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
           mimeType,
           size: buffer.length,
           uploadedAt: new Date(),
-          url: getUrl(filename) || undefined
+          url: getUrl(key) || undefined
         };
 
         return {
@@ -109,16 +112,18 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
     }
   };
 
-  const retrieve = async (filename: string): Promise<Buffer | null> => {
+  const retrieve = async (filename: string, folder?: string): Promise<Buffer | null> => {
     try {
       if (provider === 'aws' || provider === 'cloudflare') {
         if (!s3Client) {
           throw new Error(UPLOAD_ERRORS.S3_CLIENT_NOT_INITIALIZED);
         }
 
+        const key = folder ? `${folder}/${filename}` : filename;
+
         const command = new GetObjectCommand({
           Bucket: bucket,
-          Key: filename
+          Key: key
         });
 
         const response = await s3Client.send(command);
@@ -142,16 +147,18 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
     }
   };
 
-  const deleteFile = async (filename: string): Promise<DeleteResult> => {
+  const deleteFile = async (filename: string, folder?: string): Promise<DeleteResult> => {
     try {
       if (provider === 'aws' || provider === 'cloudflare') {
         if (!s3Client) {
           throw new Error(UPLOAD_ERRORS.S3_CLIENT_NOT_INITIALIZED);
         }
 
+        const key = folder ? `${folder}/${filename}` : filename;
+
         const command = new DeleteObjectCommand({
           Bucket: bucket,
-          Key: filename
+          Key: key
         });
 
         await s3Client.send(command);
@@ -170,16 +177,18 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
     }
   };
 
-  const exists = async (filename: string): Promise<boolean> => {
+  const exists = async (filename: string, folder?: string): Promise<boolean> => {
     try {
       if (provider === 'aws' || provider === 'cloudflare') {
         if (!s3Client) {
           throw new Error(UPLOAD_ERRORS.S3_CLIENT_NOT_INITIALIZED);
         }
 
+        const key = folder ? `${folder}/${filename}` : filename;
+
         const command = new HeadObjectCommand({
           Bucket: bucket,
-          Key: filename
+          Key: key
         });
 
         await s3Client.send(command);
@@ -193,16 +202,18 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
     }
   };
 
-  const getMetadata = async (filename: string): Promise<StorageMetadata | null> => {
+  const getMetadata = async (filename: string, folder?: string): Promise<StorageMetadata | null> => {
     try {
       if (provider === 'aws' || provider === 'cloudflare') {
         if (!s3Client) {
           throw new Error(UPLOAD_ERRORS.S3_CLIENT_NOT_INITIALIZED);
         }
 
+        const key = folder ? `${folder}/${filename}` : filename;
+
         const command = new HeadObjectCommand({
           Bucket: bucket,
-          Key: filename
+          Key: key
         });
 
         const response = await s3Client.send(command);
@@ -213,7 +224,7 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
           mimeType: response.ContentType || 'application/octet-stream',
           size: response.ContentLength || 0,
           uploadedAt: response.LastModified || new Date(),
-          url: getUrl(filename) || undefined
+          url: getUrl(key) || undefined
         };
       }
 

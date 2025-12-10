@@ -47,7 +47,7 @@ export const initializeUploadModule = (config: Config) => {
 
   const storage = createStorageAdapter(storageConfig);
 
-  const storageDetails = `📦 Upload storage initialized: ${currentStorageConfig.type.toUpperCase()} (${config.environment})`;
+  const storageDetails = `📦 Upload storage: ${currentStorageConfig.type.toUpperCase()} (${config.environment})`;
 
   logger.info(storageDetails);
 

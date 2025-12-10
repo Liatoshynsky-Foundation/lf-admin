@@ -23,13 +23,13 @@ export interface DeleteResult {
 export interface StorageAdapter {
   store: (buffer: Buffer, filename: string, mimeType: string, metadata?: Record<string, any>) => Promise<StorageResult>;
 
-  retrieve: (filename: string) => Promise<Buffer | null>;
+  retrieve: (filename: string, folder?: string) => Promise<Buffer | null>;
 
-  delete: (filename: string) => Promise<DeleteResult>;
+  delete: (filename: string, folder?: string) => Promise<DeleteResult>;
 
-  exists: (filename: string) => Promise<boolean>;
+  exists: (filename: string, folder?: string) => Promise<boolean>;
 
-  getMetadata: (filename: string) => Promise<StorageMetadata | null>;
+  getMetadata: (filename: string, folder?: string) => Promise<StorageMetadata | null>;
 
   getUrl: (filename: string) => string | null;
 }

@@ -202,9 +202,10 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
     }
   };
 
-  const retrieve = async (filename: string): Promise<Buffer | null> => {
+  const retrieve = async (filename: string, folder?: string): Promise<Buffer | null> => {
     try {
-      const url = constructBlobUrl(folderPrefix, filename);
+      const targetFolder = folder || folderPrefix;
+      const url = constructBlobUrl(targetFolder, filename);
       const response = await streamBlob(url, null);
 
       if (!response.ok) {
@@ -219,9 +220,10 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
     }
   };
 
-  const deleteFile = async (filename: string): Promise<DeleteResult> => {
+  const deleteFile = async (filename: string, folder?: string): Promise<DeleteResult> => {
     try {
-      await deleteFileFromAzure(folderPrefix, filename);
+      const targetFolder = folder || folderPrefix;
+      await deleteFileFromAzure(targetFolder, filename);
       return {
         success: true
       };
@@ -233,9 +235,10 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
     }
   };
 
-  const exists = async (filename: string): Promise<boolean> => {
+  const exists = async (filename: string, folder?: string): Promise<boolean> => {
     try {
-      const blockBlobClient = getBlobClient(folderPrefix, filename);
+      const targetFolder = folder || folderPrefix;
+      const blockBlobClient = getBlobClient(targetFolder, filename);
       return await blockBlobClient.exists();
     } catch (error) {
       logger.error(`Failed to check existence of ${filename}:`, error);
@@ -243,9 +246,10 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
     }
   };
 
-  const getMetadata = async (filename: string): Promise<StorageMetadata | null> => {
+  const getMetadata = async (filename: string, folder?: string): Promise<StorageMetadata | null> => {
     try {
-      const url = buildUrl(filename);
+      const targetFolder = folder || folderPrefix;
+      const url = constructBlobUrl(targetFolder, filename);
       const response = await fetch(url, {
         method: 'HEAD'
       });
@@ -263,7 +267,7 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
         mimeType: contentType,
         size: contentLength,
         uploadedAt: new Date(),
-        path: `${folderPrefix}/${filename}`,
+        path: `${targetFolder}/${filename}`,
         url
       };
     } catch (error) {
