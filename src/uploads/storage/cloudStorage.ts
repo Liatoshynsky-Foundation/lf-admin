@@ -22,10 +22,11 @@ export interface CloudStorageOptions {
     [key: string]: any;
   };
   baseUrl?: string;
+  folderPrefix?: string;
 }
 
 export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter => {
-  const { provider, bucket, region, endpoint, credentials, baseUrl } = options;
+  const { provider, bucket, region, endpoint, credentials, baseUrl, folderPrefix = 'uploads' } = options;
 
   let s3Client: S3Client | null = null;
 
@@ -65,7 +66,8 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
           throw new Error('S3 client not initialized');
         }
 
-        const key = folder ? `${folder}/${filename}` : filename;
+        const targetFolder = folder || metadata.directory || folderPrefix;
+        const key = `${targetFolder}/${filename}`;
 
         const command = new PutObjectCommand({
           Bucket: bucket,
@@ -119,7 +121,8 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
           throw new Error(UPLOAD_ERRORS.S3_CLIENT_NOT_INITIALIZED);
         }
 
-        const key = folder ? `${folder}/${filename}` : filename;
+        const targetFolder = folder || folderPrefix;
+        const key = `${targetFolder}/${filename}`;
 
         const command = new GetObjectCommand({
           Bucket: bucket,
@@ -154,7 +157,8 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
           throw new Error(UPLOAD_ERRORS.S3_CLIENT_NOT_INITIALIZED);
         }
 
-        const key = folder ? `${folder}/${filename}` : filename;
+        const targetFolder = folder || folderPrefix;
+        const key = `${targetFolder}/${filename}`;
 
         const command = new DeleteObjectCommand({
           Bucket: bucket,
@@ -184,7 +188,8 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
           throw new Error(UPLOAD_ERRORS.S3_CLIENT_NOT_INITIALIZED);
         }
 
-        const key = folder ? `${folder}/${filename}` : filename;
+        const targetFolder = folder || folderPrefix;
+        const key = `${targetFolder}/${filename}`;
 
         const command = new HeadObjectCommand({
           Bucket: bucket,
@@ -209,7 +214,8 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
           throw new Error(UPLOAD_ERRORS.S3_CLIENT_NOT_INITIALIZED);
         }
 
-        const key = folder ? `${folder}/${filename}` : filename;
+        const targetFolder = folder || folderPrefix;
+        const key = `${targetFolder}/${filename}`;
 
         const command = new HeadObjectCommand({
           Bucket: bucket,
