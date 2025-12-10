@@ -41,7 +41,7 @@ export interface Config {
   environment: 'development' | 'production';
 }
 
-const isDevelopment = process.env.NODE_ENV !== 'production';
+const useProductionStorage = process.env.STORAGE_ENV === 'production';
 
 const developmentStorage: StorageConfig = {
   type: (process.env.DEV_STORAGE_TYPE as StorageType) || 'local',
@@ -90,5 +90,5 @@ export const config: Config = {
   mongoUrl,
   jwt: getJWT,
   uploads: uploadsConfig,
-  environment: isDevelopment ? 'development' : 'production'
+  environment: useProductionStorage ? 'production' : 'development'
 };

@@ -19,11 +19,13 @@ export async function POST(req: NextRequest) {
 
     const options: any = {};
     const fileType = formData.get('fileType');
+    const directory = formData.get('directory');
     const validationRules = formData.get('validationRules');
     const processingOptions = formData.get('processingOptions');
     const metadata = formData.get('metadata');
 
     if (fileType) options.fileType = fileType;
+    if (directory) options.directory = directory;
     if (validationRules) {
       try {
         options.validationRules = JSON.parse(validationRules as string);

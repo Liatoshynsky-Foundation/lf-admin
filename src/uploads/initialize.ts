@@ -1,4 +1,5 @@
 import { Config } from '../config';
+import logger from '../middleware/logger/logger';
 import { createStorageAdapter, StorageConfig } from '../uploads/storage';
 import { createUploadController } from '../uploads/uploadController';
 import { createUploadService } from '../uploads/uploadService';
@@ -45,6 +46,10 @@ export const initializeUploadModule = (config: Config) => {
   }
 
   const storage = createStorageAdapter(storageConfig);
+
+  const storageDetails = `📦 Upload storage initialized: ${currentStorageConfig.type.toUpperCase()} (${config.environment})`;
+
+  logger.info(storageDetails);
 
   const uploadService = createUploadService({
     storage,

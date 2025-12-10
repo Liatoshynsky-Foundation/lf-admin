@@ -66,11 +66,17 @@ export const createUploadService = (config: UploadServiceConfig) => {
       const generateFilename = options.generateFilename || generateUniqueFilename;
       const filename = generateFilename(file.originalname, file.mimetype);
 
-      const storageResult = await storage.store(processingResult.buffer, filename, file.mimetype, {
+      const storageMetadata: Record<string, any> = {
         originalName: file.originalname,
         ...options.metadata,
         ...processingResult.metadata
-      });
+      };
+
+      if (options.directory) {
+        storageMetadata.directory = options.directory;
+      }
+
+      const storageResult = await storage.store(processingResult.buffer, filename, file.mimetype, storageMetadata);
 
       if (!storageResult.success) {
         return {

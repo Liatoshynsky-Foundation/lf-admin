@@ -174,7 +174,10 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
     metadata: Record<string, any> = {}
   ): Promise<StorageResult> => {
     try {
-      await uploadFile(folderPrefix, filename, buffer, mimeType);
+      // Use directory from metadata if provided, otherwise fall back to folderPrefix
+      const directory = metadata.directory || folderPrefix;
+
+      await uploadFile(directory, filename, buffer, mimeType);
 
       const url = buildUrl(filename);
 
@@ -184,7 +187,7 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
         mimeType,
         size: buffer.length,
         uploadedAt: new Date(),
-        path: `${folderPrefix}/${filename}`,
+        path: `${directory}/${filename}`,
         url,
         ...metadata
       };
