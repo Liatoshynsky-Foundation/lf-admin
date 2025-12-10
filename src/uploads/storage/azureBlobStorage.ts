@@ -1,5 +1,4 @@
 import { BlobServiceClient, BlockBlobClient, ContainerClient } from '@azure/storage-blob';
-import { createHash } from 'crypto';
 
 import { UPLOAD_ERRORS } from '../errors';
 import { DeleteResult, StorageAdapter, StorageMetadata, StorageResult } from './types';
@@ -51,15 +50,10 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
     return containerClient.getBlockBlobClient(`${folderName}/${blobName}`);
   };
 
-  const hashBlobName = (blobName: string): string => {
-    return createHash('sha256').update(blobName).digest('hex');
-  };
-
   const getBlobClient = (folderName: string, blobName: string): BlockBlobClient => {
     zFolderNameSchema.parse(folderName);
-    const blobNameHash = hashBlobName(blobName);
     const containerClient = getContainerClient();
-    return getFullPathToBlob(containerClient, folderName, blobNameHash);
+    return getFullPathToBlob(containerClient, folderName, blobName);
   };
 
   const buildUrl = (filename: string, directory?: string): string => {
@@ -120,10 +114,8 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
 
       return await Promise.all(
         blobNames.map(async (blobName) => {
-          const blobNameHash = hashBlobName(blobName);
-
-          const sourceBlobClient = getFullPathToBlob(containerClient, oldFolderName, blobNameHash);
-          const targetBlobClient = getFullPathToBlob(containerClient, newFolderName, blobNameHash);
+          const sourceBlobClient = getFullPathToBlob(containerClient, oldFolderName, blobName);
+          const targetBlobClient = getFullPathToBlob(containerClient, newFolderName, blobName);
 
           const copyPoller = await targetBlobClient.beginCopyFromURL(sourceBlobClient.url);
           await copyPoller.pollUntilDone();
