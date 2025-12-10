@@ -34,7 +34,7 @@ export interface StorageAdapter {
   getUrl: (filename: string) => string | null;
 }
 
-export type StorageType = 'local' | 'docker' | 'cloud';
+export type StorageType = 'local' | 'docker' | 'cloud' | 'azure-blob';
 
 export interface StorageConfig {
   type: StorageType;
@@ -52,5 +52,7 @@ export interface StorageConfig {
       projectId?: string;
     };
   };
+  azureContainerName?: string;
+  azureFolderPrefix?: string;
   baseUrl?: string;
 }

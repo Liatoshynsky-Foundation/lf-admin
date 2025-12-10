@@ -1,3 +1,4 @@
+import { createAzureBlobStorage } from './azureBlobStorage';
 import { createCloudStorage } from './cloudStorage';
 import { createDockerStorage } from './dockerStorage';
 import { createLocalStorage } from './localStorage';
@@ -22,6 +23,14 @@ export const createStorageAdapter = (config: StorageConfig): StorageAdapter => {
     return createDockerStorage({
       volumePath: config.dockerVolume,
       baseUrl: config.baseUrl
+    });
+
+  case 'azure-blob':
+    // Use existing Azure blob storage service
+    return createAzureBlobStorage({
+      containerName: config.azureContainerName,
+      baseUrl: config.baseUrl,
+      folderPrefix: config.azureFolderPrefix || 'uploads'
     });
 
   case 'cloud':

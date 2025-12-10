@@ -4,9 +4,19 @@ import { createLocalStorage } from '../localStorage';
 import { createStorageAdapter, createStorageFromEnv } from '../storageFactory';
 import { StorageConfig } from '../types';
 
+jest.mock('@azure/storage-blob');
+jest.mock('../../../middleware/logger/logger', () => ({
+  default: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn()
+  }
+}));
 jest.mock('../cloudStorage');
 jest.mock('../dockerStorage');
 jest.mock('../localStorage');
+jest.mock('../azureBlobStorage');
 
 const mockCreateCloudStorage = createCloudStorage as jest.MockedFunction<typeof createCloudStorage>;
 const mockCreateDockerStorage = createDockerStorage as jest.MockedFunction<typeof createDockerStorage>;

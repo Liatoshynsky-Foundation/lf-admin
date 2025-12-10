@@ -6,7 +6,7 @@ export const getJWT = {
 };
 
 // Uploads Module Configuration
-export type StorageType = 'local' | 'docker' | 'cloud';
+export type StorageType = 'local' | 'docker' | 'cloud' | 'azure-blob';
 export type CloudProvider = 'aws' | 'gcp' | 'azure' | 'cloudflare';
 
 export interface StorageConfig {
@@ -22,6 +22,8 @@ export interface StorageConfig {
     secretKey?: string;
     projectId?: string;
   };
+  azureContainerName?: string;
+  azureFolderPrefix?: string;
   baseUrl?: string;
 }
 
@@ -54,6 +56,8 @@ const developmentStorage: StorageConfig = {
     secretKey: process.env.DEV_CLOUD_SECRET_KEY,
     projectId: process.env.DEV_CLOUD_PROJECT_ID
   },
+  azureContainerName: process.env.DEV_AZURE_CONTAINER_NAME,
+  azureFolderPrefix: process.env.DEV_AZURE_FOLDER_PREFIX || 'uploads',
   baseUrl: process.env.DEV_STORAGE_BASE_URL || 'http://localhost:3000/uploads'
 };
 
@@ -70,6 +74,8 @@ const productionStorage: StorageConfig = {
     secretKey: process.env.PROD_CLOUD_SECRET_KEY,
     projectId: process.env.PROD_CLOUD_PROJECT_ID
   },
+  azureContainerName: process.env.PROD_AZURE_CONTAINER_NAME,
+  azureFolderPrefix: process.env.PROD_AZURE_FOLDER_PREFIX || 'uploads',
   baseUrl: process.env.PROD_STORAGE_BASE_URL
 };
 

@@ -23,6 +23,11 @@ export const initializeUploadModule = (config: Config) => {
     storageConfig.dockerVolume = currentStorageConfig.dockerVolume;
     storageConfig.baseUrl = currentStorageConfig.baseUrl;
     break;
+  case 'azure-blob':
+    storageConfig.azureContainerName = currentStorageConfig.azureContainerName;
+    storageConfig.azureFolderPrefix = currentStorageConfig.azureFolderPrefix;
+    storageConfig.baseUrl = currentStorageConfig.baseUrl;
+    break;
   case 'cloud':
     storageConfig.cloudProvider = currentStorageConfig.cloudProvider;
     storageConfig.cloudConfig = {
