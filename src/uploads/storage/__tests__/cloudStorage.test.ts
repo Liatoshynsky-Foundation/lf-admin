@@ -133,6 +133,12 @@ describe('createCloudStorage', () => {
       expect(result.metadata.filename).toBe(filename);
       expect(result.metadata.mimeType).toBe(mimeType);
       expect(result.metadata.size).toBe(buffer.length);
+      expect(result.metadata.path).toBe('uploads/test.txt');
+      expect(result.metadata.directory).toBe('uploads');
+      expect(result.metadata.originalFilename).toBe(filename);
+      expect(result.metadata.originalMimeType).toBe(mimeType);
+      expect(result.metadata.processed).toBe(true);
+      expect(result.metadata.processingOptions).toEqual({});
       expect(MockPutObjectCommand).toHaveBeenCalledWith({
         Bucket: 'test-bucket',
         Key: `uploads/${filename}`,
@@ -166,6 +172,12 @@ describe('createCloudStorage', () => {
       const result = await storage.store(buffer, filename, mimeType);
 
       expect(result.success).toBe(true);
+      expect(result.metadata.path).toBe('uploads/test.txt');
+      expect(result.metadata.directory).toBe('uploads');
+      expect(result.metadata.originalFilename).toBe(filename);
+      expect(result.metadata.originalMimeType).toBe(mimeType);
+      expect(result.metadata.processed).toBe(true);
+      expect(result.metadata.processingOptions).toEqual({});
       expect(MockPutObjectCommand).toHaveBeenCalled();
     });
 
@@ -517,7 +529,13 @@ describe('createCloudStorage', () => {
         filename: 'test.txt',
         originalName: 'original.txt',
         mimeType: 'text/plain',
-        size: 100
+        size: 100,
+        path: 'uploads/test.txt',
+        directory: 'uploads',
+        originalFilename: 'original.txt',
+        originalMimeType: 'text/plain',
+        processed: true,
+        processingOptions: {}
       });
       consoleSpy.mockRestore();
     });

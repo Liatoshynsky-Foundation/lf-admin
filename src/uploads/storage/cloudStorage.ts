@@ -89,7 +89,14 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
           mimeType,
           size: buffer.length,
           uploadedAt: new Date(),
-          url: getUrl(key) || undefined
+          path: `${targetFolder}/${filename}`,
+          url: getUrl(key) || undefined,
+          originalFilename: metadata.originalName || filename,
+          originalMimeType: mimeType,
+          processed: metadata.processed !== undefined ? metadata.processed : true,
+          processingOptions: metadata.processingOptions || {},
+          directory: targetFolder,
+          ...metadata
         };
 
         return {
@@ -230,7 +237,15 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
           mimeType: response.ContentType || 'application/octet-stream',
           size: response.ContentLength || 0,
           uploadedAt: response.LastModified || new Date(),
-          url: getUrl(key) || undefined
+          path: key,
+          url: getUrl(key) || undefined,
+          originalFilename: response.Metadata?.originalName || filename,
+          originalMimeType: response.ContentType || 'application/octet-stream',
+          processed: response.Metadata?.processed === 'true' || true,
+          processingOptions: response.Metadata?.processingOptions
+            ? JSON.parse(response.Metadata.processingOptions)
+            : {},
+          directory: targetFolder
         };
       }
 
