@@ -1,4 +1,5 @@
 import { createBaseService } from '../baseService/baseService';
+import { processNewsContent } from './processNewsContent/processNewsContent';
 import { newsServiceErrors } from '~/back-constants/errors';
 import { generateUniqueSlug } from '~/back-shared/utils';
 import { News } from '~/domain/entities/News';
@@ -33,6 +34,26 @@ export const NewsService = ({ newsRepository }: { newsRepository: Repo }) => {
 
     updateNews: async (id: string, input: UpdateNewsServiceInput): Promise<News> => {
       const updateData: UpdateNewsInput = { ...input };
+
+      if (input.content || input.description || input.coverImage) {
+        const contentToProcess = {
+          content: input.content || { uk: null, en: null },
+          description: input.description,
+          coverImage: input.coverImage
+        };
+
+        const processedContent = await processNewsContent(contentToProcess);
+
+        if (input.content) {
+          updateData.content = processedContent.content;
+        }
+        if (input.description) {
+          updateData.description = processedContent.description;
+        }
+        if (input.coverImage) {
+          updateData.coverImage = processedContent.coverImage as UpdateNewsInput['coverImage'];
+        }
+      }
 
       if (input.title) {
         const news = await newsRepository.findById(id);
@@ -95,8 +116,11 @@ export const NewsService = ({ newsRepository }: { newsRepository: Repo }) => {
         }
       });
 
+      // Process images: upload to photos storage, replace URLs, remove tmp flags
+      const processedInput = await processNewsContent(input);
+
       const newsData: CreateNewsInput = {
-        ...input,
+        ...processedInput,
         slug,
         status: input.status ?? NewsStatus.Draft,
         publishedAt: input.publishedAt ?? null,
