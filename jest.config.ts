@@ -53,7 +53,7 @@ const config: Config = {
     '^.+\\.(js|jsx|ts|tsx)$': 'ts-jest'
   },
   transformIgnorePatterns: ['node_modules/(?!(lodash-es|bson|mongodb|@azure)/)'],
-  setupFilesAfterEnv: ['@testing-library/jest-dom']
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts']
 };
 
 export default createJestConfig(config);

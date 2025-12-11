@@ -20,6 +20,61 @@ export type PublishNewsInput = {
   publishedAt?: Date;
 };
 
+const processContentFields = async (input: UpdateNewsServiceInput, updateData: UpdateNewsInput): Promise<void> => {
+  const contentToProcess = {
+    content: input.content || { uk: null, en: null },
+    description: input.description,
+    coverImage: input.coverImage
+  };
+
+  const processedContent = await processNewsContent(contentToProcess);
+
+  if (input.content) {
+    updateData.content = processedContent.content;
+  }
+  if (input.description) {
+    updateData.description = processedContent.description;
+  }
+  if (input.coverImage) {
+    updateData.coverImage = processedContent.coverImage;
+  }
+};
+
+const extractTitleForSlug = (title: UpdateNewsServiceInput['title']): string => {
+  if (typeof title === 'object' && title && 'uk' in title) {
+    return title.uk as string;
+  }
+  if (typeof title === 'string') {
+    return title;
+  }
+  return '';
+};
+
+const processSlugUpdate = async (
+  id: string,
+  title: UpdateNewsServiceInput['title'],
+  newsRepository: NewsRepository,
+  updateData: UpdateNewsInput
+): Promise<void> => {
+  const news = await newsRepository.findById(id);
+  if (!news) {
+    throw new Error(newsServiceErrors.NEWS_NOT_FOUND(id));
+  }
+
+  const titleForSlug = extractTitleForSlug(title);
+
+  if (titleForSlug) {
+    const newSlug = await generateUniqueSlug(titleForSlug, {
+      checkExists: async (slug: string) => {
+        const existing = await newsRepository.findBySlug(slug);
+        return existing !== null && existing.id !== id;
+      }
+    });
+
+    updateData.slug = newSlug;
+  }
+};
+
 export const NewsService = ({ newsRepository }: { newsRepository: Repo }) => {
   const baseService = createBaseService<News, NewsFilters>({
     repository: newsRepository,
@@ -36,48 +91,11 @@ export const NewsService = ({ newsRepository }: { newsRepository: Repo }) => {
       const updateData: UpdateNewsInput = { ...input };
 
       if (input.content || input.description || input.coverImage) {
-        const contentToProcess = {
-          content: input.content || { uk: null, en: null },
-          description: input.description,
-          coverImage: input.coverImage
-        };
-
-        const processedContent = await processNewsContent(contentToProcess);
-
-        if (input.content) {
-          updateData.content = processedContent.content;
-        }
-        if (input.description) {
-          updateData.description = processedContent.description;
-        }
-        if (input.coverImage) {
-          updateData.coverImage = processedContent.coverImage as UpdateNewsInput['coverImage'];
-        }
+        await processContentFields(input, updateData);
       }
 
       if (input.title) {
-        const news = await newsRepository.findById(id);
-        if (!news) {
-          throw new Error(newsServiceErrors.NEWS_NOT_FOUND(id));
-        }
-
-        const titleForSlug =
-          typeof input.title === 'object' && 'uk' in input.title
-            ? (input.title.uk as string)
-            : typeof input.title === 'string'
-              ? input.title
-              : '';
-
-        if (titleForSlug) {
-          const newSlug = await generateUniqueSlug(titleForSlug, {
-            checkExists: async (slug: string) => {
-              const existing = await newsRepository.findBySlug(slug);
-              return existing !== null && existing.id !== id;
-            }
-          });
-
-          updateData.slug = newSlug;
-        }
+        await processSlugUpdate(id, input.title, newsRepository, updateData);
       }
 
       return baseService.update(id, updateData);
@@ -116,7 +134,6 @@ export const NewsService = ({ newsRepository }: { newsRepository: Repo }) => {
         }
       });
 
-      // Process images: upload to photos storage, replace URLs, remove tmp flags
       const processedInput = await processNewsContent(input);
 
       const newsData: CreateNewsInput = {

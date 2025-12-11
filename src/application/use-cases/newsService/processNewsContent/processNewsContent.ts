@@ -88,42 +88,33 @@ const extractAllImageSources = (input: NewsContentInput): string[] => {
   return Array.from(allImages);
 };
 
-export const processNewsContent = async <T extends NewsContentInput>(input: T): Promise<T> => {
-  const imageSources = extractAllImageSources(input);
-
-  if (imageSources.length === 0) {
-    return input;
+const processImageUpload = async (
+  oldSrc: string,
+  uploadService: ReturnType<typeof blobStorageService>,
+  replacementMap: Map<string, string>
+): Promise<void> => {
+  if (!shouldProcessImageSource(oldSrc)) {
+    return;
   }
 
-  const uploadService = blobStorageService();
-  const replacementMap = new Map<string, string>();
+  try {
+    await uploadService.copyBlobsToNewFolder('tmp', 'photos', [oldSrc]);
 
-  for (const oldSrc of imageSources) {
-    if (!shouldProcessImageSource(oldSrc)) {
-      continue;
-    }
+    const newUrl = uploadService.constructBlobUrl('photos', oldSrc);
+    replacementMap.set(oldSrc, newUrl);
 
     try {
-      await uploadService.copyBlobsToNewFolder('tmp', 'photos', [oldSrc]);
-
-      const newUrl = uploadService.constructBlobUrl('photos', oldSrc);
-      replacementMap.set(oldSrc, newUrl);
-
-      try {
-        await uploadService.deleteFile('tmp', oldSrc);
-      } catch (deleteError) {
-        console.error(`Failed to delete tmp blob ${oldSrc}:`, deleteError);
-      }
-    } catch (error) {
-      console.error(`Failed to process image ${oldSrc}:`, error);
+      await uploadService.deleteFile('tmp', oldSrc);
+    } catch (deleteError) {
+      console.error(`Failed to delete tmp blob ${oldSrc}:`, deleteError);
     }
+  } catch (error) {
+    console.error(`Failed to process image ${oldSrc}:`, error);
   }
+};
 
-  if (replacementMap.size === 0) {
-    return input;
-  }
-
-  const updatedInput = JSON.parse(JSON.stringify(input)) as T;
+const applyImageReplacements = <T extends NewsContentInput>(input: T, replacementMap: Map<string, string>): T => {
+  const updatedInput = structuredClone(input);
 
   if (updatedInput.content.uk) {
     updatedInput.content.uk = replaceImageSources(updatedInput.content.uk as JsonValue, replacementMap);
@@ -148,6 +139,28 @@ export const processNewsContent = async <T extends NewsContentInput>(input: T): 
     }
   }
 
+  return updatedInput;
+};
+
+export const processNewsContent = async <T extends NewsContentInput>(input: T): Promise<T> => {
+  const imageSources = extractAllImageSources(input);
+
+  if (imageSources.length === 0) {
+    return input;
+  }
+
+  const uploadService = blobStorageService();
+  const replacementMap = new Map<string, string>();
+
+  for (const oldSrc of imageSources) {
+    await processImageUpload(oldSrc, uploadService, replacementMap);
+  }
+
+  if (replacementMap.size === 0) {
+    return input;
+  }
+
+  const updatedInput = applyImageReplacements(input, replacementMap);
   const cleanedInput = removeTmpFlagsRecursively(updatedInput);
 
   return cleanedInput;
