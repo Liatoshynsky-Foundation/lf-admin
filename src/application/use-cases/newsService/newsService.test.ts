@@ -8,6 +8,14 @@ jest.mock('../../../shared/utils', () => ({
   generateUniqueSlug: jest.fn()
 }));
 
+jest.mock('../uploadService/upload', () => ({
+  blobStorageService: jest.fn()
+}));
+
+jest.mock('./processNewsContent/processNewsContent', () => ({
+  processNewsContent: jest.fn((content) => Promise.resolve(content))
+}));
+
 const mockedGenerateUniqueSlug = generateUniqueSlug as jest.MockedFunction<typeof generateUniqueSlug>;
 
 describe('NewsService', () => {
