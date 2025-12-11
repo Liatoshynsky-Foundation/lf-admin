@@ -1,9 +1,9 @@
 import { PageRepository } from './pageRepository';
+import { PageStatus } from '~/back-shared/types/enums/common.enums';
 import type { Patch } from '~/back-shared/types/pages/types';
 import type { BasePage } from '~/domain/entities/Page';
 import dbConnect from '~/infrastructure/db/connect';
 import PageModel from '~/infrastructure/models/page.model';
-import { PageStatus } from '~/types/enums/common.enums';
 
 jest.mock('../../db/connect', () => ({
   __esModule: true,

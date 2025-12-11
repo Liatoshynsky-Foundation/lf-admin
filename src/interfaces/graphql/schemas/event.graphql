@@ -1,0 +1,97 @@
+type EventVisits {
+    views: Int!
+}
+
+type EventImageBlock {
+    src: String!
+    alt: LocalizedString!
+    caption: LocalizedString!
+    isTmp: Boolean
+}
+
+enum EventStatus {
+    draft
+    published
+    hidden
+    archived
+    editing
+}
+
+type Event {
+    id: ID!
+    eventDate: String
+    eventLink: String!
+    title: LocalizedString!
+    description: LocalizedString
+    content: JSON!
+    slug: String!
+    coverImage: EventImageBlock!
+    status: EventStatus!
+    visits: EventVisits!
+    createdAt: String!
+    updatedAt: String!
+}
+
+type PaginatedEvents {
+    events: [Event!]!
+    total: Int!
+    page: Int!
+    totalPages: Int!
+}
+
+enum EventSortBy {
+    createdAt
+    updatedAt
+    eventDate
+}
+
+input EventFiltersInput {
+    status: EventStatus
+    slug: String
+    sortBy: EventSortBy
+    sortOrder: SortOrder
+    search: String
+    dateFrom: String
+    dateTo: String
+}
+
+input CreateEventInput {
+    eventDate: String
+    eventLink: String!
+    title: JSON!
+    description: JSON
+    content: JSON!
+    coverImage: JSON!
+    status: EventStatus
+}
+
+input UpdateEventInput {
+    eventDate: String
+    eventLink: String
+    title: JSON
+    description: JSON
+    content: JSON
+    coverImage: JSON
+    status: EventStatus
+}
+
+extend type Query {
+    eventById(id: ID!): Event
+    eventBySlug(slug: String!): Event
+    allEvents(filters: EventFiltersInput): [Event!]!
+    publishedEvents(filters: EventFiltersInput): [Event!]!
+    paginatedEvents(page: Int = 1, limit: Int = 10, filters: EventFiltersInput): PaginatedEvents!
+    eventsCount(status: EventStatus): Int!
+}
+
+extend type Mutation {
+    createEvent(input: CreateEventInput!): Event!
+    updateEvent(id: ID!, input: UpdateEventInput!): Event!
+    publishEvent(id: ID!): Event!
+    unpublishEvent(id: ID!): Event!
+    archiveEvent(id: ID!): Event!
+    hideEvent(id: ID!): Event!
+    markEditingEvent(id: ID!): Event!
+    deleteEvent(id: ID!): Boolean!
+    incrementEventViews(id: ID!): Event!
+}

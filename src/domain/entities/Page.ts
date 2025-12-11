@@ -1,5 +1,5 @@
+import { PageStatus } from '~/back-shared/types/enums/common.enums';
 import { BlockData } from '~/store/types';
-import { PageStatus } from '~/types/enums/common.enums';
 
 export type LocalizedTitle = {
   uk: string;

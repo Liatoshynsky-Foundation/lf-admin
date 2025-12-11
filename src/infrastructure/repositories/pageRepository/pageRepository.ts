@@ -1,9 +1,9 @@
 import { Model, Types } from 'mongoose';
 
+import { PageStatus } from '~/back-shared/types/enums/common.enums';
 import { JsonObject, Patch } from '~/back-shared/types/pages/types';
 import { BasePage, LocalizedTitle } from '~/domain/entities/Page';
 import dbConnect from '~/infrastructure/db/connect';
-import { PageStatus } from '~/types/enums/common.enums';
 
 type DbPage = {
   _id: Types.ObjectId;
