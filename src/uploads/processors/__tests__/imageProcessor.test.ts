@@ -1,6 +1,12 @@
 import { FileProcessor, ProcessingResult } from '../common';
 import { createImageProcessor, ImageProcessingOptions } from '../imageProcessor';
 
+const createTestFile = () => ({
+  buffer: Buffer.from('fake image data'),
+  filename: 'image.jpg',
+  mimeType: 'image/jpeg'
+});
+
 describe('createImageProcessor', () => {
   let processor: FileProcessor;
 
@@ -10,9 +16,7 @@ describe('createImageProcessor', () => {
 
   describe('process', () => {
     it('should process image successfully', async () => {
-      const buffer = Buffer.from('fake image data');
-      const filename = 'image.jpg';
-      const mimeType = 'image/jpeg';
+      const { buffer, filename, mimeType } = createTestFile();
 
       const result: ProcessingResult = await processor.process(buffer, filename, mimeType);
 
@@ -20,9 +24,7 @@ describe('createImageProcessor', () => {
     });
 
     it('should return buffer (placeholder implementation)', async () => {
-      const buffer = Buffer.from('fake image data');
-      const filename = 'image.jpg';
-      const mimeType = 'image/jpeg';
+      const { buffer, filename, mimeType } = createTestFile();
 
       const result: ProcessingResult = await processor.process(buffer, filename, mimeType);
 
@@ -40,9 +42,7 @@ describe('createImageProcessor', () => {
     });
 
     it('should include original mime type in metadata', async () => {
-      const buffer = Buffer.from('fake image data');
-      const filename = 'image.jpg';
-      const mimeType = 'image/jpeg';
+      const { buffer, filename, mimeType } = createTestFile();
 
       const result: ProcessingResult = await processor.process(buffer, filename, mimeType);
 
@@ -50,9 +50,7 @@ describe('createImageProcessor', () => {
     });
 
     it('should mark as processed in metadata', async () => {
-      const buffer = Buffer.from('fake image data');
-      const filename = 'image.jpg';
-      const mimeType = 'image/jpeg';
+      const { buffer, filename, mimeType } = createTestFile();
 
       const result: ProcessingResult = await processor.process(buffer, filename, mimeType);
 
@@ -60,9 +58,7 @@ describe('createImageProcessor', () => {
     });
 
     it('should return empty errors array on success', async () => {
-      const buffer = Buffer.from('fake image data');
-      const filename = 'image.jpg';
-      const mimeType = 'image/jpeg';
+      const { buffer, filename, mimeType } = createTestFile();
 
       const result: ProcessingResult = await processor.process(buffer, filename, mimeType);
 
@@ -71,9 +67,7 @@ describe('createImageProcessor', () => {
     });
 
     it('should include processing options in metadata', async () => {
-      const buffer = Buffer.from('fake image data');
-      const filename = 'image.jpg';
-      const mimeType = 'image/jpeg';
+      const { buffer, filename, mimeType } = createTestFile();
       const options: ImageProcessingOptions = {
         resize: { width: 800, height: 600, fit: 'cover' },
         format: 'jpeg',
@@ -92,9 +86,7 @@ describe('createImageProcessor', () => {
       };
       const processorWithDefaults = createImageProcessor(defaultOptions);
 
-      const buffer = Buffer.from('fake image data');
-      const filename = 'image.jpg';
-      const mimeType = 'image/jpeg';
+      const { buffer, filename, mimeType } = createTestFile();
       const runtimeOptions: ImageProcessingOptions = {
         resize: { width: 500 }
       };
@@ -113,9 +105,7 @@ describe('createImageProcessor', () => {
       };
       const processorWithDefaults = createImageProcessor(defaultOptions);
 
-      const buffer = Buffer.from('fake image data');
-      const filename = 'image.jpg';
-      const mimeType = 'image/jpeg';
+      const { buffer, filename, mimeType } = createTestFile();
       const runtimeOptions: ImageProcessingOptions = {
         quality: 50,
         format: 'webp'
@@ -128,9 +118,7 @@ describe('createImageProcessor', () => {
     });
 
     it('should handle resize options with width only', async () => {
-      const buffer = Buffer.from('fake image data');
-      const filename = 'image.jpg';
-      const mimeType = 'image/jpeg';
+      const { buffer, filename, mimeType } = createTestFile();
       const options: ImageProcessingOptions = {
         resize: { width: 1000 }
       };
@@ -142,9 +130,7 @@ describe('createImageProcessor', () => {
     });
 
     it('should handle resize options with height only', async () => {
-      const buffer = Buffer.from('fake image data');
-      const filename = 'image.jpg';
-      const mimeType = 'image/jpeg';
+      const { buffer, filename, mimeType } = createTestFile();
       const options: ImageProcessingOptions = {
         resize: { height: 800 }
       };
@@ -156,9 +142,7 @@ describe('createImageProcessor', () => {
     });
 
     it('should handle all fit options', async () => {
-      const buffer = Buffer.from('fake image data');
-      const filename = 'image.jpg';
-      const mimeType = 'image/jpeg';
+      const { buffer, filename, mimeType } = createTestFile();
       const fitOptions: Array<'cover' | 'contain' | 'fill' | 'inside' | 'outside'> = [
         'cover',
         'contain',
@@ -180,9 +164,7 @@ describe('createImageProcessor', () => {
     });
 
     it('should handle all format options', async () => {
-      const buffer = Buffer.from('fake image data');
-      const filename = 'image.jpg';
-      const mimeType = 'image/jpeg';
+      const { buffer, filename, mimeType } = createTestFile();
       const formats: Array<'jpeg' | 'png' | 'webp' | 'gif'> = ['jpeg', 'png', 'webp', 'gif'];
 
       for (const format of formats) {
@@ -195,9 +177,7 @@ describe('createImageProcessor', () => {
     });
 
     it('should handle quality values', async () => {
-      const buffer = Buffer.from('fake image data');
-      const filename = 'image.jpg';
-      const mimeType = 'image/jpeg';
+      const { buffer, filename, mimeType } = createTestFile();
       const qualities = [1, 50, 100];
 
       for (const quality of qualities) {
@@ -210,9 +190,7 @@ describe('createImageProcessor', () => {
     });
 
     it('should handle optimize option', async () => {
-      const buffer = Buffer.from('fake image data');
-      const filename = 'image.jpg';
-      const mimeType = 'image/jpeg';
+      const { buffer, filename, mimeType } = createTestFile();
       const options: ImageProcessingOptions = {
         optimize: true
       };
@@ -224,9 +202,7 @@ describe('createImageProcessor', () => {
     });
 
     it('should work without any options', async () => {
-      const buffer = Buffer.from('fake image data');
-      const filename = 'image.jpg';
-      const mimeType = 'image/jpeg';
+      const { buffer, filename, mimeType } = createTestFile();
 
       const result: ProcessingResult = await processor.process(buffer, filename, mimeType);
 
@@ -257,7 +233,7 @@ describe('createImageProcessor', () => {
     });
 
     it('should handle various image mime types', async () => {
-      const buffer = Buffer.from('fake image data');
+      const { buffer } = createTestFile();
       const mimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
 
       for (const mimeType of mimeTypes) {
@@ -268,9 +244,7 @@ describe('createImageProcessor', () => {
     });
 
     it('should handle complex processing options combination', async () => {
-      const buffer = Buffer.from('fake image data');
-      const filename = 'complex.jpg';
-      const mimeType = 'image/jpeg';
+      const { buffer, filename, mimeType } = createTestFile();
       const options: ImageProcessingOptions = {
         resize: {
           width: 1920,

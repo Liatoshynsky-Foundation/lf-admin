@@ -7,6 +7,9 @@ import {
   ValidationResult
 } from '../common';
 
+const createValidResult = (): ValidationResult => ({ valid: true, errors: [] });
+const createInvalidResult = (errors: string[]): ValidationResult => ({ valid: false, errors });
+
 describe('getFileExtension', () => {
   it('should extract file extension correctly', () => {
     expect(getFileExtension('image.jpg')).toBe('jpg');
@@ -183,20 +186,18 @@ describe('validateExtension', () => {
 
 describe('combineValidationResults', () => {
   it('should return valid when all results are valid', () => {
-    const result1: ValidationResult = { valid: true, errors: [] };
-    const result2: ValidationResult = { valid: true, errors: [] };
-    const result3: ValidationResult = { valid: true, errors: [] };
+    const results = [createValidResult(), createValidResult(), createValidResult()];
 
-    const combined = combineValidationResults(result1, result2, result3);
+    const combined = combineValidationResults(...results);
 
     expect(combined.valid).toBe(true);
     expect(combined.errors).toHaveLength(0);
   });
 
   it('should return invalid when any result is invalid', () => {
-    const result1: ValidationResult = { valid: true, errors: [] };
-    const result2: ValidationResult = { valid: false, errors: ['Error 1'] };
-    const result3: ValidationResult = { valid: true, errors: [] };
+    const result1 = createValidResult();
+    const result2 = createInvalidResult(['Error 1']);
+    const result3 = createValidResult();
 
     const combined = combineValidationResults(result1, result2, result3);
 
@@ -206,9 +207,9 @@ describe('combineValidationResults', () => {
   });
 
   it('should combine all errors from multiple results', () => {
-    const result1: ValidationResult = { valid: false, errors: ['Error 1'] };
-    const result2: ValidationResult = { valid: false, errors: ['Error 2', 'Error 3'] };
-    const result3: ValidationResult = { valid: false, errors: ['Error 4'] };
+    const result1 = createInvalidResult(['Error 1']);
+    const result2 = createInvalidResult(['Error 2', 'Error 3']);
+    const result3 = createInvalidResult(['Error 4']);
 
     const combined = combineValidationResults(result1, result2, result3);
 
@@ -225,7 +226,7 @@ describe('combineValidationResults', () => {
   });
 
   it('should handle single result', () => {
-    const result: ValidationResult = { valid: false, errors: ['Single error'] };
+    const result = createInvalidResult(['Single error']);
     const combined = combineValidationResults(result);
 
     expect(combined.valid).toBe(false);
@@ -234,9 +235,9 @@ describe('combineValidationResults', () => {
   });
 
   it('should preserve error order', () => {
-    const result1: ValidationResult = { valid: false, errors: ['First'] };
-    const result2: ValidationResult = { valid: false, errors: ['Second'] };
-    const result3: ValidationResult = { valid: false, errors: ['Third'] };
+    const result1 = createInvalidResult(['First']);
+    const result2 = createInvalidResult(['Second']);
+    const result3 = createInvalidResult(['Third']);
 
     const combined = combineValidationResults(result1, result2, result3);
 

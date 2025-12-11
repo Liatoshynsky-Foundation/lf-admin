@@ -6,6 +6,14 @@ import {
   ImageValidationRules
 } from '../imageValidator';
 
+// Helper functions to reduce code duplication
+const createTestBuffer = (sizeInBytes: number) => Buffer.alloc(sizeInBytes);
+const createValidImageFile = () => ({
+  buffer: createTestBuffer(1024),
+  filename: 'test-image.jpg',
+  mimeType: 'image/jpeg'
+});
+
 describe('IMAGE_MIME_TYPES', () => {
   it('should contain common image mime types', () => {
     expect(IMAGE_MIME_TYPES).toContain('image/jpeg');
@@ -44,9 +52,7 @@ describe('createImageValidator', () => {
   describe('with default rules', () => {
     it('should validate a valid image file', async () => {
       const validator = createImageValidator();
-      const buffer = Buffer.alloc(1024); // 1KB
-      const filename = 'test-image.jpg';
-      const mimeType = 'image/jpeg';
+      const { buffer, filename, mimeType } = createValidImageFile();
 
       const result = await validator.validate(buffer, filename, mimeType);
 
@@ -56,7 +62,7 @@ describe('createImageValidator', () => {
 
     it('should accept all supported image mime types', async () => {
       const validator = createImageValidator();
-      const buffer = Buffer.alloc(1024);
+      const buffer = createTestBuffer(1024);
       const mimeTypes = [
         { mime: 'image/jpeg', filename: 'test.jpg' },
         { mime: 'image/png', filename: 'test.png' },
@@ -74,7 +80,7 @@ describe('createImageValidator', () => {
 
     it('should reject files exceeding max size', async () => {
       const validator = createImageValidator();
-      const buffer = Buffer.alloc(11 * 1024 * 1024); // 11MB
+      const buffer = createTestBuffer(11 * 1024 * 1024); // 11MB
       const filename = 'large-image.jpg';
       const mimeType = 'image/jpeg';
 
@@ -87,7 +93,7 @@ describe('createImageValidator', () => {
 
     it('should reject unsupported mime types', async () => {
       const validator = createImageValidator();
-      const buffer = Buffer.alloc(1024);
+      const buffer = createTestBuffer(1024);
       const filename = 'document.pdf';
       const mimeType = 'application/pdf';
 
@@ -100,7 +106,7 @@ describe('createImageValidator', () => {
 
     it('should reject unsupported file extensions', async () => {
       const validator = createImageValidator();
-      const buffer = Buffer.alloc(1024);
+      const buffer = createTestBuffer(1024);
       const filename = 'document.txt';
       const mimeType = 'image/jpeg'; // Valid mime but wrong extension
 
@@ -113,7 +119,7 @@ describe('createImageValidator', () => {
 
     it('should accumulate multiple validation errors', async () => {
       const validator = createImageValidator();
-      const buffer = Buffer.alloc(11 * 1024 * 1024); // Too large
+      const buffer = createTestBuffer(11 * 1024 * 1024); // Too large
       const filename = 'document.txt'; // Wrong extension
       const mimeType = 'application/pdf'; // Wrong mime type
 
@@ -131,7 +137,7 @@ describe('createImageValidator', () => {
         maxSize: 500
       };
       const validator = createImageValidator(customRules);
-      const buffer = Buffer.alloc(1000);
+      const buffer = createTestBuffer(1000);
       const filename = 'test.jpg';
       const mimeType = 'image/jpeg';
 
@@ -147,7 +153,7 @@ describe('createImageValidator', () => {
         allowedMimeTypes: ['image/png']
       };
       const validator = createImageValidator(customRules);
-      const buffer = Buffer.alloc(1024);
+      const buffer = createTestBuffer(1024);
       const filename = 'test.jpg';
       const mimeType = 'image/jpeg';
 
@@ -163,7 +169,7 @@ describe('createImageValidator', () => {
         allowedExtensions: ['png', 'gif']
       };
       const validator = createImageValidator(customRules);
-      const buffer = Buffer.alloc(1024);
+      const buffer = createTestBuffer(1024);
       const filename = 'test.jpg';
       const mimeType = 'image/jpeg';
 
@@ -178,7 +184,7 @@ describe('createImageValidator', () => {
         maxSize: 2048
       };
       const validator = createImageValidator(customRules);
-      const buffer = Buffer.alloc(1024);
+      const buffer = createTestBuffer(1024);
       const filename = 'test.jpg';
       const mimeType = 'image/jpeg';
 
@@ -191,7 +197,7 @@ describe('createImageValidator', () => {
     it('should validate with no restrictions', async () => {
       const customRules: ImageValidationRules = {};
       const validator = createImageValidator(customRules);
-      const buffer = Buffer.alloc(100 * 1024 * 1024); // Very large
+      const buffer = createTestBuffer(100 * 1024 * 1024); // Very large
       const filename = 'any-file.xyz';
       const mimeType = 'application/octet-stream';
 
@@ -205,7 +211,7 @@ describe('createImageValidator', () => {
   describe('edge cases', () => {
     it('should handle empty buffer', async () => {
       const validator = createImageValidator();
-      const buffer = Buffer.alloc(0);
+      const buffer = createTestBuffer(0);
       const filename = 'empty.jpg';
       const mimeType = 'image/jpeg';
 
@@ -221,7 +227,7 @@ describe('createImageValidator', () => {
         maxSize
       };
       const validator = createImageValidator(customRules);
-      const buffer = Buffer.alloc(maxSize);
+      const buffer = createTestBuffer(maxSize);
       const filename = 'exact.jpg';
       const mimeType = 'image/jpeg';
 
@@ -233,7 +239,7 @@ describe('createImageValidator', () => {
 
     it('should handle uppercase file extensions', async () => {
       const validator = createImageValidator();
-      const buffer = Buffer.alloc(1024);
+      const buffer = createTestBuffer(1024);
       const filename = 'IMAGE.JPG';
       const mimeType = 'image/jpeg';
 
@@ -245,7 +251,7 @@ describe('createImageValidator', () => {
 
     it('should handle files with multiple dots in name', async () => {
       const validator = createImageValidator();
-      const buffer = Buffer.alloc(1024);
+      const buffer = createTestBuffer(1024);
       const filename = 'my.test.image.v2.jpg';
       const mimeType = 'image/jpeg';
 
@@ -257,7 +263,7 @@ describe('createImageValidator', () => {
 
     it('should handle filename without extension', async () => {
       const validator = createImageValidator();
-      const buffer = Buffer.alloc(1024);
+      const buffer = createTestBuffer(1024);
       const filename = 'image';
       const mimeType = 'image/jpeg';
 

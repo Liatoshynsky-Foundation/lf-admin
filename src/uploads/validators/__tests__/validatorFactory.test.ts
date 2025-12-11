@@ -1,6 +1,12 @@
 import { ImageValidationRules } from '../imageValidator';
 import { createValidator, FileType, ValidatorConfig } from '../validatorFactory';
 
+const createTestFile = () => ({
+  buffer: Buffer.alloc(1024),
+  filename: 'test.jpg',
+  mimeType: 'image/jpeg'
+});
+
 describe('createValidator', () => {
   describe('image validator', () => {
     it('should create an image validator with default rules', async () => {
@@ -9,9 +15,7 @@ describe('createValidator', () => {
       };
 
       const validator = createValidator(config);
-      const buffer = Buffer.alloc(1024);
-      const filename = 'test.jpg';
-      const mimeType = 'image/jpeg';
+      const { buffer, filename, mimeType } = createTestFile();
 
       const result = await validator.validate(buffer, filename, mimeType);
 
@@ -48,9 +52,10 @@ describe('createValidator', () => {
       };
 
       const validator = createValidator(config);
+      const testFile = createTestFile();
 
       // First file
-      const result1 = await validator.validate(Buffer.alloc(1024), 'image1.jpg', 'image/jpeg');
+      const result1 = await validator.validate(testFile.buffer, 'image1.jpg', 'image/jpeg');
       expect(result1.valid).toBe(true);
 
       // Second file
@@ -58,7 +63,7 @@ describe('createValidator', () => {
       expect(result2.valid).toBe(true);
 
       // Invalid file
-      const result3 = await validator.validate(Buffer.alloc(1024), 'doc.pdf', 'application/pdf');
+      const result3 = await validator.validate(testFile.buffer, 'doc.pdf', 'application/pdf');
       expect(result3.valid).toBe(false);
     });
   });
@@ -149,9 +154,7 @@ describe('createValidator', () => {
       const validator1 = createValidator(config);
       const validator2 = createValidator(config);
 
-      const buffer = Buffer.alloc(1024);
-      const filename = 'test.jpg';
-      const mimeType = 'image/jpeg';
+      const { buffer, filename, mimeType } = createTestFile();
 
       const result1 = await validator1.validate(buffer, filename, mimeType);
       const result2 = await validator2.validate(buffer, filename, mimeType);

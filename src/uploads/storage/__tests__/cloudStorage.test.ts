@@ -23,6 +23,36 @@ const MockGetObjectCommand = GetObjectCommand as jest.MockedClass<typeof GetObje
 const MockDeleteObjectCommand = DeleteObjectCommand as jest.MockedClass<typeof DeleteObjectCommand>;
 const MockHeadObjectCommand = HeadObjectCommand as jest.MockedClass<typeof HeadObjectCommand>;
 
+const createAwsOptions = (overrides?: Partial<CloudStorageOptions>): CloudStorageOptions => ({
+  provider: 'aws',
+  bucket: 'test-bucket',
+  credentials: {
+    accessKeyId: 'test-key',
+    secretAccessKey: 'test-secret'
+  },
+  ...overrides
+});
+
+const createCloudflareOptions = (overrides?: Partial<CloudStorageOptions>): CloudStorageOptions => ({
+  provider: 'cloudflare',
+  bucket: 'test-bucket',
+  endpoint: 'https://abc123.r2.cloudflarestorage.com',
+  credentials: {
+    accessKeyId: 'test-key',
+    secretAccessKey: 'test-secret'
+  },
+  ...overrides
+});
+
+const createTestFile = () => ({
+  buffer: Buffer.from('test content'),
+  filename: 'test.txt',
+  mimeType: 'text/plain'
+});
+
+const mockConsoleError = () => jest.spyOn(console, 'error').mockImplementation();
+const mockConsoleLog = () => jest.spyOn(console, 'log').mockImplementation();
+
 describe('createCloudStorage', () => {
   let mockSend: jest.Mock;
 
@@ -34,15 +64,7 @@ describe('createCloudStorage', () => {
 
   describe('initialization', () => {
     it('should create AWS storage successfully', () => {
-      const options: CloudStorageOptions = {
-        provider: 'aws',
-        bucket: 'test-bucket',
-        region: 'us-east-1',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
+      const options = createAwsOptions({ region: 'us-east-1' });
 
       const storage = createCloudStorage(options);
 
@@ -57,15 +79,7 @@ describe('createCloudStorage', () => {
     });
 
     it('should create Cloudflare R2 storage successfully', () => {
-      const options: CloudStorageOptions = {
-        provider: 'cloudflare',
-        bucket: 'test-bucket',
-        endpoint: 'https://abc123.r2.cloudflarestorage.com',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
+      const options = createCloudflareOptions();
 
       const storage = createCloudStorage(options);
 
@@ -81,34 +95,19 @@ describe('createCloudStorage', () => {
     });
 
     it('should throw error if AWS credentials are missing', () => {
-      const options: CloudStorageOptions = {
-        provider: 'aws',
-        bucket: 'test-bucket',
-        credentials: {}
-      };
+      const options = createAwsOptions({ credentials: {} });
 
       expect(() => createCloudStorage(options)).toThrow('aws storage requires accessKeyId and secretAccessKey');
     });
 
     it('should throw error if Cloudflare credentials are missing', () => {
-      const options: CloudStorageOptions = {
-        provider: 'cloudflare',
-        bucket: 'test-bucket',
-        credentials: {}
-      };
+      const options = createCloudflareOptions({ credentials: {} });
 
       expect(() => createCloudStorage(options)).toThrow('cloudflare storage requires accessKeyId and secretAccessKey');
     });
 
     it('should throw error if Cloudflare endpoint is missing', () => {
-      const options: CloudStorageOptions = {
-        provider: 'cloudflare',
-        bucket: 'test-bucket',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
+      const options = createCloudflareOptions({ endpoint: undefined });
 
       expect(() => createCloudStorage(options)).toThrow('Cloudflare R2 storage requires endpoint configuration');
     });
@@ -116,20 +115,9 @@ describe('createCloudStorage', () => {
 
   describe('store', () => {
     it('should store file to AWS successfully', async () => {
-      const options: CloudStorageOptions = {
-        provider: 'aws',
-        bucket: 'test-bucket',
-        region: 'us-east-1',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
-
+      const options = createAwsOptions({ region: 'us-east-1' });
       const storage = createCloudStorage(options);
-      const buffer = Buffer.from('test content');
-      const filename = 'test.txt';
-      const mimeType = 'text/plain';
+      const { buffer, filename, mimeType } = createTestFile();
 
       mockSend.mockResolvedValue({});
 
@@ -158,20 +146,9 @@ describe('createCloudStorage', () => {
     });
 
     it('should store file to Cloudflare R2 successfully', async () => {
-      const options: CloudStorageOptions = {
-        provider: 'cloudflare',
-        bucket: 'test-bucket',
-        endpoint: 'https://abc123.r2.cloudflarestorage.com',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
-
+      const options = createCloudflareOptions();
       const storage = createCloudStorage(options);
-      const buffer = Buffer.from('test content');
-      const filename = 'test.txt';
-      const mimeType = 'text/plain';
+      const { buffer, filename, mimeType } = createTestFile();
 
       mockSend.mockResolvedValue({});
 
@@ -188,19 +165,9 @@ describe('createCloudStorage', () => {
     });
 
     it('should include custom metadata', async () => {
-      const options: CloudStorageOptions = {
-        provider: 'aws',
-        bucket: 'test-bucket',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
-
+      const options = createAwsOptions();
       const storage = createCloudStorage(options);
-      const buffer = Buffer.from('test content');
-      const filename = 'test.txt';
-      const mimeType = 'text/plain';
+      const { buffer, filename, mimeType } = createTestFile();
       const metadata = {
         originalName: 'original.txt',
         userId: '123'
@@ -224,20 +191,9 @@ describe('createCloudStorage', () => {
     });
 
     it('should include URL in metadata', async () => {
-      const options: CloudStorageOptions = {
-        provider: 'aws',
-        bucket: 'test-bucket',
-        region: 'us-west-2',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
-
+      const options = createAwsOptions({ region: 'us-west-2' });
       const storage = createCloudStorage(options);
-      const buffer = Buffer.from('test content');
-      const filename = 'test.txt';
-      const mimeType = 'text/plain';
+      const { buffer, filename, mimeType } = createTestFile();
 
       mockSend.mockResolvedValue({});
 
@@ -247,19 +203,9 @@ describe('createCloudStorage', () => {
     });
 
     it('should handle storage errors', async () => {
-      const options: CloudStorageOptions = {
-        provider: 'aws',
-        bucket: 'test-bucket',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
-
+      const options = createAwsOptions();
       const storage = createCloudStorage(options);
-      const buffer = Buffer.from('test content');
-      const filename = 'test.txt';
-      const mimeType = 'text/plain';
+      const { buffer, filename, mimeType } = createTestFile();
 
       mockSend.mockRejectedValue(new Error('Network error'));
 
@@ -270,17 +216,9 @@ describe('createCloudStorage', () => {
     });
 
     it('should throw error for unsupported providers', async () => {
-      const options: CloudStorageOptions = {
-        provider: 'gcp',
-        bucket: 'test-bucket',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
-
+      const options = createAwsOptions({ provider: 'gcp' as any });
       const storage = createCloudStorage(options);
-      const buffer = Buffer.from('test content');
+      const { buffer } = createTestFile();
 
       const result = await storage.store(buffer, 'test.txt', 'text/plain');
 
@@ -291,17 +229,9 @@ describe('createCloudStorage', () => {
 
   describe('retrieve', () => {
     it('should retrieve file from AWS successfully', async () => {
-      const options: CloudStorageOptions = {
-        provider: 'aws',
-        bucket: 'test-bucket',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
-
+      const options = createAwsOptions();
       const storage = createCloudStorage(options);
-      const filename = 'test.txt';
+      const { filename } = createTestFile();
       const expectedContent = Buffer.from('test content');
 
       const mockStream = Readable.from([expectedContent]);
@@ -317,17 +247,9 @@ describe('createCloudStorage', () => {
     });
 
     it('should return null if file body is empty', async () => {
-      const options: CloudStorageOptions = {
-        provider: 'aws',
-        bucket: 'test-bucket',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
-
+      const options = createAwsOptions();
       const storage = createCloudStorage(options);
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const consoleSpy = mockConsoleError();
 
       mockSend.mockResolvedValue({ Body: null });
 
@@ -338,17 +260,9 @@ describe('createCloudStorage', () => {
     });
 
     it('should handle retrieve errors', async () => {
-      const options: CloudStorageOptions = {
-        provider: 'aws',
-        bucket: 'test-bucket',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
-
+      const options = createAwsOptions();
       const storage = createCloudStorage(options);
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const consoleSpy = mockConsoleError();
 
       mockSend.mockRejectedValue(new Error('File not found'));
 
@@ -359,17 +273,9 @@ describe('createCloudStorage', () => {
     });
 
     it('should throw error for unsupported providers', async () => {
-      const options: CloudStorageOptions = {
-        provider: 'azure',
-        bucket: 'test-bucket',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
-
+      const options = createAwsOptions({ provider: 'azure' as any });
       const storage = createCloudStorage(options);
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const consoleSpy = mockConsoleError();
 
       const result = await storage.retrieve('test.txt');
 
@@ -380,17 +286,9 @@ describe('createCloudStorage', () => {
 
   describe('delete', () => {
     it('should delete file from AWS successfully', async () => {
-      const options: CloudStorageOptions = {
-        provider: 'aws',
-        bucket: 'test-bucket',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
-
+      const options = createAwsOptions();
       const storage = createCloudStorage(options);
-      const filename = 'test.txt';
+      const { filename } = createTestFile();
 
       mockSend.mockResolvedValue({});
 
@@ -404,15 +302,7 @@ describe('createCloudStorage', () => {
     });
 
     it('should handle delete errors', async () => {
-      const options: CloudStorageOptions = {
-        provider: 'aws',
-        bucket: 'test-bucket',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
-
+      const options = createAwsOptions();
       const storage = createCloudStorage(options);
 
       mockSend.mockRejectedValue(new Error('Access denied'));
@@ -444,17 +334,9 @@ describe('createCloudStorage', () => {
 
   describe('exists', () => {
     it('should return true if file exists', async () => {
-      const options: CloudStorageOptions = {
-        provider: 'aws',
-        bucket: 'test-bucket',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
-
+      const options = createAwsOptions();
       const storage = createCloudStorage(options);
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const consoleSpy = mockConsoleLog();
 
       mockSend.mockResolvedValue({});
 
@@ -466,17 +348,9 @@ describe('createCloudStorage', () => {
     });
 
     it('should return false if file does not exist', async () => {
-      const options: CloudStorageOptions = {
-        provider: 'aws',
-        bucket: 'test-bucket',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
-
+      const options = createAwsOptions();
       const storage = createCloudStorage(options);
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const consoleSpy = mockConsoleLog();
 
       mockSend.mockRejectedValue(new Error('Not found'));
 
@@ -487,17 +361,9 @@ describe('createCloudStorage', () => {
     });
 
     it('should return false for unsupported providers', async () => {
-      const options: CloudStorageOptions = {
-        provider: 'gcp',
-        bucket: 'test-bucket',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
-
+      const options = createAwsOptions({ provider: 'gcp' as any });
       const storage = createCloudStorage(options);
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const consoleSpy = mockConsoleLog();
 
       const result = await storage.exists('test.txt');
 
@@ -508,17 +374,9 @@ describe('createCloudStorage', () => {
 
   describe('getMetadata', () => {
     it('should retrieve metadata successfully', async () => {
-      const options: CloudStorageOptions = {
-        provider: 'aws',
-        bucket: 'test-bucket',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
-
+      const options = createAwsOptions();
       const storage = createCloudStorage(options);
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const consoleSpy = mockConsoleError();
 
       mockSend.mockResolvedValue({
         ContentType: 'text/plain',
@@ -547,17 +405,9 @@ describe('createCloudStorage', () => {
     });
 
     it('should use default values for missing metadata', async () => {
-      const options: CloudStorageOptions = {
-        provider: 'aws',
-        bucket: 'test-bucket',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
-
+      const options = createAwsOptions();
       const storage = createCloudStorage(options);
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const consoleSpy = mockConsoleError();
 
       mockSend.mockResolvedValue({});
 
@@ -569,17 +419,9 @@ describe('createCloudStorage', () => {
     });
 
     it('should return null on error', async () => {
-      const options: CloudStorageOptions = {
-        provider: 'aws',
-        bucket: 'test-bucket',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
-
+      const options = createAwsOptions();
       const storage = createCloudStorage(options);
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const consoleSpy = mockConsoleError();
 
       mockSend.mockRejectedValue(new Error('Not found'));
 
@@ -590,17 +432,9 @@ describe('createCloudStorage', () => {
     });
 
     it('should return null for unsupported providers', async () => {
-      const options: CloudStorageOptions = {
-        provider: 'azure',
-        bucket: 'test-bucket',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
-
+      const options = createAwsOptions({ provider: 'azure' as any });
       const storage = createCloudStorage(options);
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const consoleSpy = mockConsoleError();
 
       const result = await storage.getMetadata('test.txt');
 
@@ -611,16 +445,7 @@ describe('createCloudStorage', () => {
 
   describe('getUrl', () => {
     it('should generate correct URL for AWS with custom baseUrl', () => {
-      const options: CloudStorageOptions = {
-        provider: 'aws',
-        bucket: 'test-bucket',
-        baseUrl: 'https://cdn.example.com',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
-
+      const options = createAwsOptions({ baseUrl: 'https://cdn.example.com' });
       const storage = createCloudStorage(options);
       const url = storage.getUrl('test.txt');
 
@@ -628,16 +453,7 @@ describe('createCloudStorage', () => {
     });
 
     it('should generate default AWS S3 URL', () => {
-      const options: CloudStorageOptions = {
-        provider: 'aws',
-        bucket: 'test-bucket',
-        region: 'us-west-2',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
-
+      const options = createAwsOptions({ region: 'us-west-2' });
       const storage = createCloudStorage(options);
       const url = storage.getUrl('test.txt');
 
@@ -645,15 +461,7 @@ describe('createCloudStorage', () => {
     });
 
     it('should use us-east-1 as default region for AWS', () => {
-      const options: CloudStorageOptions = {
-        provider: 'aws',
-        bucket: 'test-bucket',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
-
+      const options = createAwsOptions();
       const storage = createCloudStorage(options);
       const url = storage.getUrl('test.txt');
 
@@ -661,17 +469,7 @@ describe('createCloudStorage', () => {
     });
 
     it('should generate correct URL for Cloudflare R2 with custom baseUrl', () => {
-      const options: CloudStorageOptions = {
-        provider: 'cloudflare',
-        bucket: 'test-bucket',
-        endpoint: 'https://abc123.r2.cloudflarestorage.com',
-        baseUrl: 'https://r2.example.com',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
-
+      const options = createCloudflareOptions({ baseUrl: 'https://r2.example.com' });
       const storage = createCloudStorage(options);
       const url = storage.getUrl('test.txt');
 
@@ -679,16 +477,7 @@ describe('createCloudStorage', () => {
     });
 
     it('should generate Cloudflare R2 endpoint URL', () => {
-      const options: CloudStorageOptions = {
-        provider: 'cloudflare',
-        bucket: 'test-bucket',
-        endpoint: 'https://abc123.r2.cloudflarestorage.com',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
-
+      const options = createCloudflareOptions();
       const storage = createCloudStorage(options);
       const url = storage.getUrl('test.txt');
 
@@ -696,16 +485,7 @@ describe('createCloudStorage', () => {
     });
 
     it('should generate default Cloudflare R2 dev URL', () => {
-      const options: CloudStorageOptions = {
-        provider: 'cloudflare',
-        bucket: 'test-bucket',
-        endpoint: 'https://invalid-endpoint.com',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      };
-
+      const options = createCloudflareOptions({ endpoint: 'https://invalid-endpoint.com' });
       const storage = createCloudStorage(options);
       const url = storage.getUrl('test.txt');
 
@@ -713,12 +493,7 @@ describe('createCloudStorage', () => {
     });
 
     it('should generate correct URL for GCP', () => {
-      const options: CloudStorageOptions = {
-        provider: 'gcp',
-        bucket: 'test-bucket',
-        credentials: {}
-      };
-
+      const options = createAwsOptions({ provider: 'gcp' as any, credentials: {} });
       const storage = createCloudStorage(options);
       const url = storage.getUrl('test.txt');
 
@@ -726,13 +501,11 @@ describe('createCloudStorage', () => {
     });
 
     it('should generate correct URL for GCP with custom baseUrl', () => {
-      const options: CloudStorageOptions = {
-        provider: 'gcp',
-        bucket: 'test-bucket',
+      const options = createAwsOptions({
+        provider: 'gcp' as any,
         baseUrl: 'https://cdn.gcp.example.com',
         credentials: {}
-      };
-
+      });
       const storage = createCloudStorage(options);
       const url = storage.getUrl('test.txt');
 
@@ -740,12 +513,7 @@ describe('createCloudStorage', () => {
     });
 
     it('should generate correct URL for Azure', () => {
-      const options: CloudStorageOptions = {
-        provider: 'azure',
-        bucket: 'test-bucket',
-        credentials: {}
-      };
-
+      const options = createAwsOptions({ provider: 'azure' as any, credentials: {} });
       const storage = createCloudStorage(options);
       const url = storage.getUrl('test.txt');
 
@@ -753,13 +521,11 @@ describe('createCloudStorage', () => {
     });
 
     it('should generate correct URL for Azure with custom baseUrl', () => {
-      const options: CloudStorageOptions = {
-        provider: 'azure',
-        bucket: 'test-bucket',
+      const options = createAwsOptions({
+        provider: 'azure' as any,
         baseUrl: 'https://cdn.azure.example.com',
         credentials: {}
-      };
-
+      });
       const storage = createCloudStorage(options);
       const url = storage.getUrl('test.txt');
 

@@ -5,9 +5,9 @@ import { initializeUploadModule } from '~/uploads/initialize';
 
 const uploadModule = initializeUploadModule(appConfig);
 
-export async function GET(req: NextRequest, { params }: { params: { filename: string } }) {
+export async function GET(req: NextRequest, context: { params: Promise<{ filename: string }> }) {
   try {
-    const { filename } = params;
+    const { filename } = await context.params;
 
     if (!filename) {
       return NextResponse.json({ success: false, error: 'Filename is required' }, { status: 400 });
