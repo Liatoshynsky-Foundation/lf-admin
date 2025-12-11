@@ -6,7 +6,6 @@ import { createUploadService } from '../uploads/uploadService';
 import { DEFAULT_IMAGE_RULES } from '../uploads/validators';
 
 export const initializeUploadModule = (config: Config) => {
-  // Select storage configuration based on environment
   const currentStorageConfig =
     config.environment === 'production' ? config.uploads.production : config.uploads.development;
 

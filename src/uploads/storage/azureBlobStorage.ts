@@ -279,7 +279,6 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
   const getUrl = (filename: string): string | null => {
     try {
       if (!baseUrl) {
-        // constructBlobUrl might throw, wrap in try-catch
         try {
           return constructBlobUrl(folderPrefix, filename);
         } catch {

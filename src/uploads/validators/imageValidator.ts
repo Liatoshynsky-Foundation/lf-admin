@@ -39,7 +39,7 @@ const validateImageDimensions = async (_buffer: Buffer, _rules: ImageValidationR
   const errors: string[] = [];
 
   // Note: This is a basic implementation
-  // For production, install and use 'sharp' library for proper image processing:
+  // For production, install and use some library for proper image processing
 
   return {
     valid: errors.length === 0,

@@ -25,8 +25,6 @@ export const createImageProcessor = (defaultOptions: ImageProcessingOptions = {}
 
     try {
       // Placeholder for actual image processing
-      // For production, implement using 'sharp' library:
-
       // For now, return the original buffer
       const processedBuffer = buffer;
 

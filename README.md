@@ -62,28 +62,54 @@ This guide will help you run the Liatoshynsky Foundation Admin Panel locally usi
 MONGO_USERNAME=
 MONGO_PASSWORD=
 MONGO_DB=
+MONGO_URL=
 MONGO_HOST=
 MONGO_PORT=
-AZURE_SAS_URL=
 JWT_ACCESS_TOKEN_SECRET=
 JWT_REFRESH_TOKEN_SECRET=
-NODE_ENV=development
 
-# Upload Module Configuration
-UPLOAD_STORAGE_TYPE=local
-UPLOAD_LOCAL_PATH=./public/uploads
-UPLOAD_BASE_URL=http://localhost:3000/uploads
-UPLOAD_DOCKER_VOLUME=/app/uploads
-UPLOAD_CLOUD_PROVIDER=aws
-UPLOAD_CLOUD_BUCKET=your-bucket-name
-UPLOAD_CLOUD_REGION=us-east-1
-UPLOAD_CLOUD_ENDPOINT=
-UPLOAD_CLOUD_ACCESS_KEY=your-access-key
-UPLOAD_CLOUD_SECRET_KEY=your-secret-key
-UPLOAD_CLOUD_PROJECT_ID=
-UPLOAD_CLOUD_BASE_URL=https://your-bucket.s3.amazonaws.com
-UPLOAD_MAX_FILE_SIZE=10485760
+# Storage Environment - determines which storage config to use
+# Set to 'production' to use PROD_* variables, otherwise uses DEV_* variables
+STORAGE_ENV=development
+
+# Upload Limits
+UPLOAD_MAX_FILE_SIZE=10485760 # 10MB in bytes
 UPLOAD_MAX_FILES=10
+
+# Development Storage Configuration
+# Storage type options: 'local' | 'docker' | 'cloud' | 'azure-blob'
+DEV_STORAGE_TYPE=local
+
+# Development - Local Storage
+DEV_LOCAL_PATH=./public/uploads
+DEV_STORAGE_BASE_URL=http://localhost:3000/uploads
+
+# Development - Azure Blob Storage
+AZURE_SAS_URL=
+DEV_AZURE_FOLDER_PREFIX=uploads
+# DEV_STORAGE_BASE_URL=http://localhost:3000/api/blob-url
+
+# Development - Docker Storage
+# DEV_DOCKER_VOLUME=/app/uploads
+
+# Development - Cloud Storage (AWS/GCP/Cloudflare R2)
+# DEV_CLOUD_PROVIDER=aws # or gcp, cloudflare
+# DEV_CLOUD_BUCKET=your-dev-bucket
+# DEV_CLOUD_REGION=us-east-1
+# DEV_CLOUD_ENDPOINT=
+# DEV_CLOUD_ACCESS_KEY=
+# DEV_CLOUD_SECRET_KEY=
+# DEV_CLOUD_PROJECT_ID=
+
+# Production Storage Configuration
+PROD_STORAGE_TYPE=cloud
+PROD_CLOUD_PROVIDER=aws
+PROD_CLOUD_BUCKET=
+PROD_CLOUD_REGION=us-east-1
+PROD_CLOUD_ENDPOINT=
+PROD_CLOUD_ACCESS_KEY=
+PROD_CLOUD_SECRET_KEY=
+PROD_STORAGE_BASE_URL=
 ```
 
 ### 📦 Clone Repository
@@ -132,15 +158,25 @@ docker run --env-file .env -p 3001:3001 lf-admin:latest
 
 ### Uploads Module
 
-The Uploads module has been integrated for handling file uploads with support for multiple storage backends.
+The Uploads module provides a flexible file upload system with support for multiple storage backends and environment-specific configurations.
 
 #### Storage Types
 
-The module supports three storage types:
+The module supports four storage types:
 
-1. **Local Storage** (default) - Stores files in `./public/uploads`
+1. **Local Storage** - Stores files in `./public/uploads` (default for development)
 2. **Docker Storage** - Uses Docker volumes for containerized environments
-3. **Cloud Storage** - Supports AWS S3, Google Cloud Storage, Azure Blob Storage, and Cloudflare R2
+3. **Azure Blob Storage** - Integrates with Azure Blob Storage with SAS token authentication
+4. **Cloud Storage** - Supports AWS S3, Google Cloud Storage, and Cloudflare R2
+
+#### Environment-Based Configuration
+
+The module uses separate configurations for development and production environments:
+
+- Set `STORAGE_ENV=development` to use `DEV_*` environment variables
+- Set `STORAGE_ENV=production` to use `PROD_*` environment variables
+
+This allows you to use local storage during development while automatically switching to cloud storage in production.
 
 #### API Endpoints
 
@@ -169,18 +205,68 @@ const result = await response.json();
 // Returns: { success: true, data: { filename, originalName, url, size, mimeType, metadata } }
 ```
 
-#### Configuration
+#### Configuration Examples
 
-Configure the upload module via environment variables:
+**Local Storage (Development)**
 
-- `UPLOAD_STORAGE_TYPE` - Storage backend: `local`, `docker`, or `cloud`
-- `UPLOAD_LOCAL_PATH` - Local storage path (default: `./public/uploads`)
-- `UPLOAD_BASE_URL` - Base URL for local/docker storage
-- `UPLOAD_CLOUD_PROVIDER` - Cloud provider: `aws`, `gcp`, `azure`, or `cloudflare`
-- `UPLOAD_MAX_FILE_SIZE` - Maximum file size in bytes (default: 10485760 = 10MB)
-- `UPLOAD_MAX_FILES` - Maximum number of files per upload (default: 10)
+```env
+STORAGE_ENV=development
+DEV_STORAGE_TYPE=local
+DEV_LOCAL_PATH=./public/uploads
+DEV_STORAGE_BASE_URL=http://localhost:3000/uploads
+```
 
-For cloud storage, additional configuration is required (see `.env.example`).
+**Azure Blob Storage (Development)**
+
+```env
+STORAGE_ENV=development
+DEV_STORAGE_TYPE=azure-blob
+AZURE_SAS_URL=https://youraccount.blob.core.windows.net/container?sas-token
+DEV_AZURE_FOLDER_PREFIX=uploads
+```
+
+**Cloudflare R2 (Production)**
+
+```env
+STORAGE_ENV=production
+PROD_STORAGE_TYPE=cloud
+PROD_CLOUD_PROVIDER=cloudflare
+PROD_CLOUD_BUCKET=your-bucket
+PROD_CLOUD_ENDPOINT=https://account-id.r2.cloudflarestorage.com
+PROD_CLOUD_ACCESS_KEY=your-access-key
+PROD_CLOUD_SECRET_KEY=your-secret-key
+PROD_STORAGE_BASE_URL=https://your-public-domain.r2.dev
+```
+
+**AWS S3 (Production)**
+
+```env
+STORAGE_ENV=production
+PROD_STORAGE_TYPE=cloud
+PROD_CLOUD_PROVIDER=aws
+PROD_CLOUD_BUCKET=your-bucket
+PROD_CLOUD_REGION=us-east-1
+PROD_CLOUD_ACCESS_KEY=your-access-key
+PROD_CLOUD_SECRET_KEY=your-secret-key
+PROD_STORAGE_BASE_URL=https://your-bucket.s3.amazonaws.com
+```
+
+#### File Validation and Processing
+
+The module includes built-in validators and processors:
+
+- **Validators**: Check file size, type, and format based on file type (image, document, video, audio)
+- **Processors**: Process files before storage (e.g., image optimization, metadata extraction)
+
+Configure validation rules per upload:
+
+```javascript
+const validationRules = {
+  maxSize: 5242880, // 5MB
+  allowedExtensions: ['.jpg', '.png', '.webp'],
+  allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp']
+};
+```
 
 ### How to work with swagger UI
 
@@ -266,11 +352,12 @@ src/ (backend part)
 │ └── logger
 ├── shared
 │ └── types
-└── uploads # Upload module (NEW)
+└── uploads # Upload module
 ├── index.ts
-├── initialize.ts
+├── initialize.ts # Module initialization with config
 ├── types.ts
 ├── utils.ts
+├── errors.ts
 ├── uploadService.ts
 ├── uploadController.ts
 ├── uploadRoutes.ts
@@ -278,9 +365,10 @@ src/ (backend part)
 │ ├── index.ts
 │ ├── types.ts
 │ ├── storageFactory.ts
-│ ├── localStorage.ts
-│ ├── dockerStorage.ts
-│ └── cloudStorage.ts
+│ ├── localStorage.ts # Local filesystem storage
+│ ├── dockerStorage.ts # Docker volume storage
+│ ├── azureBlobStorage.ts # Azure Blob Storage integration
+│ └── cloudStorage.ts # AWS S3, GCP, Cloudflare R2
 ├── validators/
 │ ├── index.ts
 │ ├── validatorFactory.ts

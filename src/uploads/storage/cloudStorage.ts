@@ -8,6 +8,7 @@ import {
 
 import { UPLOAD_ERRORS } from '../errors';
 import { DeleteResult, StorageAdapter, StorageMetadata, StorageResult } from './types';
+import logger from '~/middleware/logger/logger';
 
 export interface CloudStorageOptions {
   provider: 'aws' | 'gcp' | 'azure' | 'cloudflare';
@@ -105,7 +106,7 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
         };
       }
 
-      throw new Error(`Cloud storage for ${provider} not yet implemented`);
+      throw new Error(UPLOAD_ERRORS.CLOUD_STORAGE_NOT_IMPLEMENTED(provider));
     } catch (error) {
       return {
         success: false,
@@ -142,7 +143,6 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
           return null;
         }
 
-        // Convert stream to buffer
         const chunks: Uint8Array[] = [];
         for await (const chunk of response.Body as any) {
           chunks.push(chunk);
@@ -152,7 +152,7 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
 
       throw new Error(UPLOAD_ERRORS.CLOUD_STORAGE_NOT_IMPLEMENTED(provider));
     } catch (error) {
-      console.error(`Failed to retrieve file ${filename}:`, error);
+      logger.error(`Failed to retrieve file ${filename}:`, error);
       return null;
     }
   };
@@ -209,7 +209,7 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
 
       throw new Error(UPLOAD_ERRORS.CLOUD_STORAGE_NOT_IMPLEMENTED(provider));
     } catch (error) {
-      console.log(error);
+      logger.error(UPLOAD_ERRORS.FILE_NOT_FOUND, error);
       return false;
     }
   };
@@ -251,7 +251,7 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
 
       throw new Error(UPLOAD_ERRORS.CLOUD_STORAGE_NOT_IMPLEMENTED(provider));
     } catch (error) {
-      console.error(`Failed to get metadata for ${filename}:`, error);
+      logger.error(UPLOAD_ERRORS.FAILED_TO_GET_METADATA, error);
       return null;
     }
   };

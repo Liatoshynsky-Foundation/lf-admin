@@ -32,6 +32,7 @@ export const UPLOAD_ERRORS = {
   S3_CLIENT_NOT_INITIALIZED: 'S3 client not initialized',
   CLOUDFLARE_ENDPOINT_REQUIRED: 'Cloudflare R2 storage requires endpoint configuration',
   UNKNOWN_ERROR_OCCURRED: 'Unknown error occurred',
+  FAILED_TO_GET_METADATA: 'Failed to get file metadata',
 
   // Storage errors - Local/Docker
   FILE_NOT_FOUND_OR_COULD_NOT_BE_DELETED: 'File not found or could not be deleted',

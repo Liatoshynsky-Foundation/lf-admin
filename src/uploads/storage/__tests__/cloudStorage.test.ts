@@ -10,6 +10,12 @@ import { Readable } from 'stream';
 import { CloudStorageOptions, createCloudStorage } from '../cloudStorage';
 
 jest.mock('@aws-sdk/client-s3');
+jest.mock('~/src/middleware/logger/logger', () => ({
+  __esModule: true,
+  default: {
+    error: jest.fn()
+  }
+}));
 
 const MockS3Client = S3Client as jest.MockedClass<typeof S3Client>;
 const MockPutObjectCommand = PutObjectCommand as jest.MockedClass<typeof PutObjectCommand>;
