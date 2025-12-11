@@ -155,7 +155,7 @@ describe('processNewsContent', () => {
       mockUploadService.constructBlobUrl.mockReturnValue(newUrl);
       mockUploadService.deleteFile.mockResolvedValue(undefined);
       mockRemoveTmpFlagsRecursively.mockImplementation((data: any) => {
-        const cleaned = JSON.parse(JSON.stringify(data));
+        const cleaned = structuredClone(data);
         if (cleaned.content?.uk?.content?.[0]?.attrs) {
           cleaned.content.uk.content[0].attrs.isTmp = false;
         }
@@ -248,7 +248,7 @@ describe('processNewsContent', () => {
       mockUploadService.constructBlobUrl.mockReturnValue(newUrl);
       mockUploadService.deleteFile.mockResolvedValue(undefined);
       mockRemoveTmpFlagsRecursively.mockImplementation((data: any) => {
-        const cleaned = JSON.parse(JSON.stringify(data));
+        const cleaned = structuredClone(data);
         if (cleaned.coverImage) {
           cleaned.coverImage.isTmp = false;
         }

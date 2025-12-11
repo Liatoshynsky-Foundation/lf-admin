@@ -116,12 +116,7 @@ export const NewsService = ({ newsRepository }: { newsRepository: Repo }) => {
     },
 
     createNews: async (input: CreateNewsServiceInput): Promise<News> => {
-      const titleForSlug =
-        typeof input.title === 'object' && 'uk' in input.title
-          ? (input.title.uk as string)
-          : typeof input.title === 'string'
-            ? input.title
-            : '';
+      const titleForSlug = extractTitleForSlug(input.title);
 
       if (!titleForSlug) {
         throw new Error(newsServiceErrors.TITLE_REQUIRED_FOR_SLUG);
