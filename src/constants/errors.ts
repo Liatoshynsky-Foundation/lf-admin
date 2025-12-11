@@ -23,6 +23,7 @@ export const utilsErrors = {
 export const eventServiceErrors = {
   SLUG_ALREADY_EXISTS: (slug: string) => `Event with slug "${slug}" already exists`,
   EVENT_NOT_FOUND: (id: string) => `Event with id "${id}" not found`,
+  EVENT_NOT_FOUND_BY_SLUG: (slug: string) => `Event with slug "${slug}" not found`,
   FAILED_TO_PUBLISH: (id: string) => `Failed to publish event with id "${id}"`,
   FAILED_TO_UNPUBLISH: (id: string) => `Failed to unpublish event with id "${id}"`,
   FAILED_TO_ARCHIVE: (id: string) => `Failed to archive event with id "${id}"`,

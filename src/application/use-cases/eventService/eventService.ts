@@ -36,9 +36,20 @@ export const EventService = ({ eventRepository }: { eventRepository: Repo }) => 
           throw new Error(eventServiceErrors.EVENT_NOT_FOUND(id));
         }
 
-        const titleForSlug = typeof input.title === 'object' && 'uk' in input.title ? input.title.uk : undefined;
+        const mergedTitle = {
+          ...event.title,
+          ...input.title
+        };
 
-        if (titleForSlug) {
+        if (!mergedTitle.uk) {
+          throw new Error(eventServiceErrors.TITLE_REQUIRED_FOR_SLUG);
+        }
+
+        updateData.title = mergedTitle;
+
+        const titleForSlug = mergedTitle.uk;
+
+        if (titleForSlug && titleForSlug !== event.title.uk) {
           updateData.slug = await generateUniqueSlug(titleForSlug, {
             checkExists: async (slug: string) => {
               const existing = await eventRepository.findBySlug(slug);
@@ -135,8 +146,14 @@ export const EventService = ({ eventRepository }: { eventRepository: Repo }) => 
       return eventRepository.create(eventData);
     },
 
-    getEventBySlug: async (slug: string): Promise<Event | null> => {
-      return eventRepository.findBySlug(slug);
+    getEventBySlug: async (slug: string): Promise<Event> => {
+      const event = await eventRepository.findBySlug(slug);
+
+      if (!event) {
+        throw new Error(eventServiceErrors.EVENT_NOT_FOUND_BY_SLUG(slug));
+      }
+
+      return event;
     },
 
     getPublishedEvents: async (filters?: Omit<EventFilters, 'status'>): Promise<Event[]> => {

@@ -44,6 +44,8 @@ const config: Config = {
     '^~/ds-components/(.*)$': '<rootDir>/app/shared/components/design-system/$1',
     '^~/components/(.*)$': '<rootDir>/app/shared/components/$1',
     '^~/hooks/(.*)$': '<rootDir>/app/shared/hooks/$1',
+    '^~/back-constants/(.*)$': '<rootDir>/src/constants/$1',
+    '^~/back-shared/(.*)$': '<rootDir>/src/shared/$1',
     '^~/src/(.*)$': '<rootDir>/src/$1',
     '^~/(.*)$': '<rootDir>/app/$1'
   },
