@@ -76,23 +76,16 @@ STORAGE_ENV=development
 UPLOAD_MAX_FILE_SIZE=10485760 # 10MB in bytes
 UPLOAD_MAX_FILES=10
 
-# Storage Configuration (same variables for both dev and prod)
-# Storage type options: 'local' | 'docker' | 'cloud' | 'azure-blob'
-# Defaults: 'local' for development, 'cloud' for production
-STORAGE_TYPE=local
-
-# Local Storage (for STORAGE_TYPE=local)
-LOCAL_PATH=./public/uploads
-STORAGE_BASE_URL=http://localhost:3000/uploads
+# Storage Configuration
+# Storage type options: 'cloud' | 'azure-blob'
+# Default: 'cloud' for all environments
+STORAGE_TYPE=cloud
 
 # Azure Blob Storage (for STORAGE_TYPE=azure-blob)
 AZURE_SAS_URL=
 AZURE_CONTAINER_NAME=
 AZURE_FOLDER_PREFIX=uploads
 # STORAGE_BASE_URL=http://localhost:3000/api/blob-url
-
-# Docker Storage (for STORAGE_TYPE=docker)
-# DOCKER_VOLUME=/app/uploads
 
 # Cloud Storage (for STORAGE_TYPE=cloud - AWS/GCP/Cloudflare R2)
 # CLOUD_PROVIDER=aws # or gcp, cloudflare
@@ -200,15 +193,6 @@ const result = await response.json();
 ```
 
 #### Configuration Examples
-
-**Local Storage (Development)**
-
-```env
-STORAGE_ENV=development
-STORAGE_TYPE=local
-LOCAL_PATH=./public/uploads
-STORAGE_BASE_URL=http://localhost:3000/uploads
-```
 
 **Azure Blob Storage (Development)**
 

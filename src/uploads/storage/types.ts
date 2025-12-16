@@ -34,12 +34,10 @@ export interface StorageAdapter {
   getUrl: (filename: string) => string | null;
 }
 
-export type StorageType = 'local' | 'docker' | 'cloud' | 'azure-blob';
+export type StorageType = 'cloud' | 'azure-blob';
 
 export interface StorageConfig {
   type: StorageType;
-  localPath?: string;
-  dockerVolume?: string;
   cloudProvider?: 'aws' | 'gcp' | 'azure' | 'cloudflare';
   cloudConfig?: {
     bucket?: string;

@@ -1,6 +1,4 @@
 import { createCloudStorage } from '../cloudStorage';
-import { createDockerStorage } from '../dockerStorage';
-import { createLocalStorage } from '../localStorage';
 import { createStorageAdapter, createStorageFromEnv } from '../storageFactory';
 import { StorageConfig } from '../types';
 
@@ -14,13 +12,9 @@ jest.mock('../../../middleware/logger/logger', () => ({
   }
 }));
 jest.mock('../cloudStorage');
-jest.mock('../dockerStorage');
-jest.mock('../localStorage');
 jest.mock('../azureBlobStorage');
 
 const mockCreateCloudStorage = createCloudStorage as jest.MockedFunction<typeof createCloudStorage>;
-const mockCreateDockerStorage = createDockerStorage as jest.MockedFunction<typeof createDockerStorage>;
-const mockCreateLocalStorage = createLocalStorage as jest.MockedFunction<typeof createLocalStorage>;
 
 describe('storageFactory', () => {
   beforeEach(() => {
@@ -36,94 +30,6 @@ describe('storageFactory', () => {
       getMetadata: jest.fn(),
       getUrl: jest.fn()
     };
-
-    describe('local storage', () => {
-      it('should create local storage adapter', () => {
-        const config: StorageConfig = {
-          type: 'local',
-          localPath: '/tmp/uploads',
-          baseUrl: 'http://localhost:3000/uploads'
-        };
-
-        mockCreateLocalStorage.mockReturnValue(mockAdapter);
-
-        const adapter = createStorageAdapter(config);
-
-        expect(createLocalStorage).toHaveBeenCalledWith({
-          basePath: '/tmp/uploads',
-          baseUrl: 'http://localhost:3000/uploads'
-        });
-        expect(adapter).toBe(mockAdapter);
-      });
-
-      it('should throw error if localPath is missing', () => {
-        const config: StorageConfig = {
-          type: 'local'
-        };
-
-        expect(() => createStorageAdapter(config)).toThrow('Local storage requires localPath in config');
-      });
-
-      it('should create local storage without baseUrl', () => {
-        const config: StorageConfig = {
-          type: 'local',
-          localPath: '/tmp/uploads'
-        };
-
-        mockCreateLocalStorage.mockReturnValue(mockAdapter);
-
-        createStorageAdapter(config);
-
-        expect(createLocalStorage).toHaveBeenCalledWith({
-          basePath: '/tmp/uploads',
-          baseUrl: undefined
-        });
-      });
-    });
-
-    describe('docker storage', () => {
-      it('should create docker storage adapter', () => {
-        const config: StorageConfig = {
-          type: 'docker',
-          dockerVolume: '/app/uploads',
-          baseUrl: 'http://localhost:3000/uploads'
-        };
-
-        mockCreateDockerStorage.mockReturnValue(mockAdapter);
-
-        const adapter = createStorageAdapter(config);
-
-        expect(createDockerStorage).toHaveBeenCalledWith({
-          volumePath: '/app/uploads',
-          baseUrl: 'http://localhost:3000/uploads'
-        });
-        expect(adapter).toBe(mockAdapter);
-      });
-
-      it('should throw error if dockerVolume is missing', () => {
-        const config: StorageConfig = {
-          type: 'docker'
-        };
-
-        expect(() => createStorageAdapter(config)).toThrow('Docker storage requires dockerVolume in config');
-      });
-
-      it('should create docker storage without baseUrl', () => {
-        const config: StorageConfig = {
-          type: 'docker',
-          dockerVolume: '/app/uploads'
-        };
-
-        mockCreateDockerStorage.mockReturnValue(mockAdapter);
-
-        createStorageAdapter(config);
-
-        expect(createDockerStorage).toHaveBeenCalledWith({
-          volumePath: '/app/uploads',
-          baseUrl: undefined
-        });
-      });
-    });
 
     describe('cloud storage', () => {
       it('should create AWS cloud storage adapter', () => {
@@ -316,61 +222,16 @@ describe('storageFactory', () => {
     });
 
     describe('development environment', () => {
-      it('should create local storage by default in development', () => {
-        mockCreateLocalStorage.mockReturnValue(mockAdapter);
+      it('should create cloud storage by default in development', () => {
+        mockCreateCloudStorage.mockReturnValue(mockAdapter);
 
-        const adapter = createStorageFromEnv('development');
+        const adapter = createStorageFromEnv();
 
-        expect(createLocalStorage).toHaveBeenCalledWith({
-          basePath: './public/uploads',
-          baseUrl: undefined
-        });
+        expect(createCloudStorage).toHaveBeenCalled();
         expect(adapter).toBe(mockAdapter);
       });
 
-      it('should use non-prefixed environment variables', () => {
-        process.env.STORAGE_TYPE = 'local';
-        process.env.LOCAL_PATH = '/custom/dev/path';
-        process.env.STORAGE_BASE_URL = 'http://dev.example.com';
-
-        mockCreateLocalStorage.mockReturnValue(mockAdapter);
-
-        createStorageFromEnv('development');
-
-        expect(createLocalStorage).toHaveBeenCalledWith({
-          basePath: '/custom/dev/path',
-          baseUrl: 'http://dev.example.com'
-        });
-      });
-
-      it('should create docker storage in development', () => {
-        process.env.STORAGE_TYPE = 'docker';
-        process.env.DOCKER_VOLUME = '/app/uploads';
-
-        mockCreateDockerStorage.mockReturnValue(mockAdapter);
-
-        createStorageFromEnv('development');
-
-        expect(createDockerStorage).toHaveBeenCalledWith({
-          volumePath: '/app/uploads',
-          baseUrl: undefined
-        });
-      });
-
-      it('should use default docker volume if not specified', () => {
-        process.env.STORAGE_TYPE = 'docker';
-
-        mockCreateDockerStorage.mockReturnValue(mockAdapter);
-
-        createStorageFromEnv('development');
-
-        expect(createDockerStorage).toHaveBeenCalledWith({
-          volumePath: '/app/uploads',
-          baseUrl: undefined
-        });
-      });
-
-      it('should create cloud storage in development', () => {
+      it('should create cloud storage with environment variables', () => {
         process.env.STORAGE_TYPE = 'cloud';
         process.env.CLOUD_PROVIDER = 'aws';
         process.env.CLOUD_BUCKET = 'dev-bucket';
@@ -380,7 +241,7 @@ describe('storageFactory', () => {
 
         mockCreateCloudStorage.mockReturnValue(mockAdapter);
 
-        createStorageFromEnv('development');
+        createStorageFromEnv();
 
         expect(createCloudStorage).toHaveBeenCalledWith({
           provider: 'aws',
@@ -403,7 +264,7 @@ describe('storageFactory', () => {
 
         mockCreateCloudStorage.mockReturnValue(mockAdapter);
 
-        createStorageFromEnv('development');
+        createStorageFromEnv();
 
         expect(createCloudStorage).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -420,12 +281,12 @@ describe('storageFactory', () => {
 
         mockCreateCloudStorage.mockReturnValue(mockAdapter);
 
-        createStorageFromEnv('production');
+        createStorageFromEnv();
 
         expect(createCloudStorage).toHaveBeenCalled();
       });
 
-      it('should use non-prefixed environment variables in production', () => {
+      it('should use environment variables in production', () => {
         process.env.STORAGE_TYPE = 'cloud';
         process.env.CLOUD_PROVIDER = 'cloudflare';
         process.env.CLOUD_BUCKET = 'prod-bucket';
@@ -436,7 +297,7 @@ describe('storageFactory', () => {
 
         mockCreateCloudStorage.mockReturnValue(mockAdapter);
 
-        createStorageFromEnv('production');
+        createStorageFromEnv();
 
         expect(createCloudStorage).toHaveBeenCalledWith({
           provider: 'cloudflare',
@@ -453,34 +314,6 @@ describe('storageFactory', () => {
         });
       });
 
-      it('should create local storage in production if specified', () => {
-        process.env.STORAGE_TYPE = 'local';
-        process.env.LOCAL_PATH = '/var/www/uploads';
-
-        mockCreateLocalStorage.mockReturnValue(mockAdapter);
-
-        createStorageFromEnv('production');
-
-        expect(createLocalStorage).toHaveBeenCalledWith({
-          basePath: '/var/www/uploads',
-          baseUrl: undefined
-        });
-      });
-
-      it('should create docker storage in production', () => {
-        process.env.STORAGE_TYPE = 'docker';
-        process.env.DOCKER_VOLUME = '/prod/uploads';
-
-        mockCreateDockerStorage.mockReturnValue(mockAdapter);
-
-        createStorageFromEnv('production');
-
-        expect(createDockerStorage).toHaveBeenCalledWith({
-          volumePath: '/prod/uploads',
-          baseUrl: undefined
-        });
-      });
-
       it('should include all cloud credentials', () => {
         process.env.STORAGE_TYPE = 'cloud';
         process.env.CLOUD_PROVIDER = 'gcp';
@@ -490,7 +323,7 @@ describe('storageFactory', () => {
 
         mockCreateCloudStorage.mockReturnValue(mockAdapter);
 
-        createStorageFromEnv('production');
+        createStorageFromEnv();
 
         expect(createCloudStorage).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -505,35 +338,21 @@ describe('storageFactory', () => {
 
     describe('default environment', () => {
       it('should default to development if no environment specified', () => {
-        mockCreateLocalStorage.mockReturnValue(mockAdapter);
+        mockCreateCloudStorage.mockReturnValue(mockAdapter);
 
         createStorageFromEnv();
 
-        expect(createLocalStorage).toHaveBeenCalledWith({
-          basePath: './public/uploads',
-          baseUrl: undefined
-        });
+        expect(createCloudStorage).toHaveBeenCalled();
       });
     });
 
     describe('edge cases', () => {
       it('should handle missing environment variables gracefully', () => {
-        mockCreateLocalStorage.mockReturnValue(mockAdapter);
+        mockCreateCloudStorage.mockReturnValue(mockAdapter);
 
-        const adapter = createStorageFromEnv('development');
+        const adapter = createStorageFromEnv();
 
         expect(adapter).toBeDefined();
-      });
-
-      it('should handle empty environment variables', () => {
-        process.env.STORAGE_TYPE = '';
-        process.env.LOCAL_PATH = '';
-
-        mockCreateLocalStorage.mockReturnValue(mockAdapter);
-
-        createStorageFromEnv('development');
-
-        expect(createLocalStorage).toHaveBeenCalled();
       });
     });
   });

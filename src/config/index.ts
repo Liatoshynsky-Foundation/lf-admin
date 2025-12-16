@@ -6,13 +6,11 @@ export const getJWT = {
 };
 
 // Uploads Module Configuration
-export type StorageType = 'local' | 'docker' | 'cloud' | 'azure-blob';
+export type StorageType = 'cloud' | 'azure-blob';
 export type CloudProvider = 'aws' | 'gcp' | 'azure' | 'cloudflare';
 
 export interface StorageConfig {
   type: StorageType;
-  localPath?: string;
-  dockerVolume?: string;
   cloudProvider?: CloudProvider;
   cloudConfig?: {
     bucket?: string;
@@ -37,21 +35,14 @@ export interface Config {
   mongoUrl: string;
   jwt: typeof getJWT;
   uploads: UploadConfig;
-  environment: 'development' | 'production';
 }
 
-const environment = process.env.STORAGE_ENV === 'production' ? 'production' : 'development';
-
-const defaultStorageType: StorageType = environment === 'production' ? 'cloud' : 'local';
-const defaultLocalPath = environment === 'development' ? './public/uploads' : undefined;
+const defaultStorageType: StorageType = 'cloud';
 const defaultCloudProvider: CloudProvider = 'aws';
 
 const storageConfig: StorageConfig = {
   type: (process.env.STORAGE_TYPE as StorageType) || defaultStorageType,
-  localPath: process.env.LOCAL_PATH || defaultLocalPath,
-  dockerVolume: process.env.DOCKER_VOLUME,
-  cloudProvider:
-    (process.env.CLOUD_PROVIDER as CloudProvider) || (environment === 'production' ? defaultCloudProvider : undefined),
+  cloudProvider: (process.env.CLOUD_PROVIDER as CloudProvider) || defaultCloudProvider,
   cloudConfig: {
     bucket: process.env.CLOUD_BUCKET,
     region: process.env.CLOUD_REGION,
@@ -62,11 +53,7 @@ const storageConfig: StorageConfig = {
   },
   azureContainerName: process.env.AZURE_CONTAINER_NAME,
   azureFolderPrefix: process.env.AZURE_FOLDER_PREFIX || 'uploads',
-  baseUrl:
-    process.env.STORAGE_BASE_URL ||
-    (environment === 'development' && (process.env.STORAGE_TYPE as StorageType) === 'local'
-      ? 'http://localhost:3000/uploads'
-      : undefined)
+  baseUrl: process.env.STORAGE_BASE_URL
 };
 
 const uploadsConfig: UploadConfig = {
@@ -78,6 +65,5 @@ const uploadsConfig: UploadConfig = {
 export const config: Config = {
   mongoUrl,
   jwt: getJWT,
-  uploads: uploadsConfig,
-  environment
+  uploads: uploadsConfig
 };

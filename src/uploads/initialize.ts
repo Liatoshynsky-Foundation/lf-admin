@@ -10,8 +10,6 @@ export const initializeUploadModule = (config: Config) => {
 
   const adapterConfig: StorageConfig = {
     type: storageConfig.type,
-    localPath: storageConfig.localPath,
-    dockerVolume: storageConfig.dockerVolume,
     azureContainerName: storageConfig.azureContainerName,
     azureFolderPrefix: storageConfig.azureFolderPrefix,
     cloudProvider: storageConfig.cloudProvider,
@@ -34,7 +32,7 @@ export const initializeUploadModule = (config: Config) => {
 
   const storage = createStorageAdapter(adapterConfig);
 
-  const storageDetails = `📦 Upload storage: ${storageConfig.type.toUpperCase()} (${config.environment})`;
+  const storageDetails = `📦 Upload storage: ${storageConfig.type.toUpperCase()}`;
 
   logger.info(storageDetails);
 
@@ -56,7 +54,6 @@ export const initializeUploadModule = (config: Config) => {
       files: config.uploads.maxFiles
     },
     storageInfo: {
-      environment: config.environment,
       storageType: storageConfig.type,
       storageProvider: storageConfig.type === 'cloud' ? storageConfig.cloudProvider : undefined
     }

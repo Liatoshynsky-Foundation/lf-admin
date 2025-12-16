@@ -1,31 +1,11 @@
 import { UPLOAD_ERRORS } from '../errors';
 import { createAzureBlobStorage } from './azureBlobStorage';
 import { createCloudStorage } from './cloudStorage';
-import { createDockerStorage } from './dockerStorage';
-import { createLocalStorage } from './localStorage';
-import { StorageAdapter, StorageConfig, StorageType } from './types';
+import { StorageAdapter, StorageConfig } from './types';
 
 export const createStorageAdapter = (config: StorageConfig): StorageAdapter => {
   /* prettier-ignore */
   switch (config.type) {
-  case 'local':
-    if (!config.localPath) {
-      throw new Error(UPLOAD_ERRORS.LOCAL_STORAGE_REQUIRES_PATH);
-    }
-    return createLocalStorage({
-      basePath: config.localPath,
-      baseUrl: config.baseUrl
-    });
-
-  case 'docker':
-    if (!config.dockerVolume) {
-      throw new Error(UPLOAD_ERRORS.DOCKER_STORAGE_REQUIRES_VOLUME);
-    }
-    return createDockerStorage({
-      volumePath: config.dockerVolume,
-      baseUrl: config.baseUrl
-    });
-
   case 'azure-blob':
     return createAzureBlobStorage({
       containerName: config.azureContainerName,
@@ -51,8 +31,8 @@ export const createStorageAdapter = (config: StorageConfig): StorageAdapter => {
   }
 };
 
-export const createStorageFromEnv = (environment: 'development' | 'production' = 'development'): StorageAdapter => {
-  const storageType = (process.env.STORAGE_TYPE || (environment === 'production' ? 'cloud' : 'local')) as StorageType;
+export const createStorageFromEnv = (): StorageAdapter => {
+  const storageType = (process.env.STORAGE_TYPE || 'cloud') as 'cloud' | 'azure-blob';
 
   const config: StorageConfig = {
     type: storageType,
@@ -61,12 +41,9 @@ export const createStorageFromEnv = (environment: 'development' | 'production' =
 
   /* prettier-ignore */
   switch (storageType) {
-  case 'local':
-    config.localPath = process.env.LOCAL_PATH || (environment === 'development' ? './public/uploads' : undefined);
-    break;
-
-  case 'docker':
-    config.dockerVolume = process.env.DOCKER_VOLUME || '/app/uploads';
+  case 'azure-blob':
+    config.azureContainerName = process.env.AZURE_CONTAINER_NAME;
+    config.azureFolderPrefix = process.env.AZURE_FOLDER_PREFIX || 'uploads';
     break;
 
   case 'cloud':

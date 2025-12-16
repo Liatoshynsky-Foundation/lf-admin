@@ -29,13 +29,7 @@ export const UPLOAD_ERRORS = {
   UNKNOWN_ERROR_OCCURRED: 'Unknown error occurred',
   FAILED_TO_GET_METADATA: 'Failed to get file metadata',
 
-  // Storage errors - Local/Docker
-  FILE_NOT_FOUND_OR_COULD_NOT_BE_DELETED: 'File not found or could not be deleted',
-  METADATA_NOT_FOUND_OR_COULD_NOT_BE_DELETED: 'Metadata not found or could not be deleted',
-
   // Storage factory errors
-  LOCAL_STORAGE_REQUIRES_PATH: 'Local storage requires localPath in config',
-  DOCKER_STORAGE_REQUIRES_VOLUME: 'Docker storage requires dockerVolume in config',
   CLOUD_STORAGE_REQUIRES_CONFIG: 'Cloud storage requires cloudProvider and cloudConfig',
 
   // Validation error templates
