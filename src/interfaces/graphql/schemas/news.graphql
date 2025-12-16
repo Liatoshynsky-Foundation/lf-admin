@@ -1,5 +1,3 @@
-scalar JSON
-
 type LocalizedNewsContent {
   uk: String!
   en: String!
