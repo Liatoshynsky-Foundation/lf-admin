@@ -28,8 +28,7 @@ export interface StorageConfig {
 }
 
 export interface UploadConfig {
-  development: StorageConfig;
-  production: StorageConfig;
+  storage: StorageConfig;
   maxFileSize: number;
   maxFiles: number;
 }
@@ -41,49 +40,37 @@ export interface Config {
   environment: 'development' | 'production';
 }
 
-const useProductionStorage = process.env.STORAGE_ENV === 'production';
+const environment = process.env.STORAGE_ENV === 'production' ? 'production' : 'development';
 
-const developmentStorage: StorageConfig = {
-  type: (process.env.DEV_STORAGE_TYPE as StorageType) || 'local',
-  localPath: process.env.DEV_LOCAL_PATH || './public/uploads',
-  dockerVolume: process.env.DEV_DOCKER_VOLUME,
-  cloudProvider: process.env.DEV_CLOUD_PROVIDER as CloudProvider,
+const defaultStorageType: StorageType = environment === 'production' ? 'cloud' : 'local';
+const defaultLocalPath = environment === 'development' ? './public/uploads' : undefined;
+const defaultCloudProvider: CloudProvider = 'aws';
+
+const storageConfig: StorageConfig = {
+  type: (process.env.STORAGE_TYPE as StorageType) || defaultStorageType,
+  localPath: process.env.LOCAL_PATH || defaultLocalPath,
+  dockerVolume: process.env.DOCKER_VOLUME,
+  cloudProvider:
+    (process.env.CLOUD_PROVIDER as CloudProvider) || (environment === 'production' ? defaultCloudProvider : undefined),
   cloudConfig: {
-    bucket: process.env.DEV_CLOUD_BUCKET,
-    region: process.env.DEV_CLOUD_REGION,
-    endpoint: process.env.DEV_CLOUD_ENDPOINT,
-    accessKey: process.env.DEV_CLOUD_ACCESS_KEY,
-    secretKey: process.env.DEV_CLOUD_SECRET_KEY,
-    projectId: process.env.DEV_CLOUD_PROJECT_ID
+    bucket: process.env.CLOUD_BUCKET,
+    region: process.env.CLOUD_REGION,
+    endpoint: process.env.CLOUD_ENDPOINT,
+    accessKey: process.env.CLOUD_ACCESS_KEY,
+    secretKey: process.env.CLOUD_SECRET_KEY,
+    projectId: process.env.CLOUD_PROJECT_ID
   },
-  azureContainerName: process.env.DEV_AZURE_CONTAINER_NAME,
-  azureFolderPrefix: process.env.DEV_AZURE_FOLDER_PREFIX || 'uploads',
+  azureContainerName: process.env.AZURE_CONTAINER_NAME,
+  azureFolderPrefix: process.env.AZURE_FOLDER_PREFIX || 'uploads',
   baseUrl:
-    process.env.DEV_STORAGE_BASE_URL ||
-    ((process.env.DEV_STORAGE_TYPE as StorageType) === 'local' ? 'http://localhost:3000/uploads' : undefined)
-};
-
-const productionStorage: StorageConfig = {
-  type: (process.env.PROD_STORAGE_TYPE as StorageType) || 'cloud',
-  localPath: process.env.PROD_LOCAL_PATH,
-  dockerVolume: process.env.PROD_DOCKER_VOLUME,
-  cloudProvider: (process.env.PROD_CLOUD_PROVIDER as CloudProvider) || 'aws',
-  cloudConfig: {
-    bucket: process.env.PROD_CLOUD_BUCKET,
-    region: process.env.PROD_CLOUD_REGION,
-    endpoint: process.env.PROD_CLOUD_ENDPOINT,
-    accessKey: process.env.PROD_CLOUD_ACCESS_KEY,
-    secretKey: process.env.PROD_CLOUD_SECRET_KEY,
-    projectId: process.env.PROD_CLOUD_PROJECT_ID
-  },
-  azureContainerName: process.env.PROD_AZURE_CONTAINER_NAME,
-  azureFolderPrefix: process.env.PROD_AZURE_FOLDER_PREFIX || 'uploads',
-  baseUrl: process.env.PROD_STORAGE_BASE_URL
+    process.env.STORAGE_BASE_URL ||
+    (environment === 'development' && (process.env.STORAGE_TYPE as StorageType) === 'local'
+      ? 'http://localhost:3000/uploads'
+      : undefined)
 };
 
 const uploadsConfig: UploadConfig = {
-  development: developmentStorage,
-  production: productionStorage,
+  storage: storageConfig,
   maxFileSize: parseInt(process.env.UPLOAD_MAX_FILE_SIZE || '10485760', 10), // 10MB default
   maxFiles: parseInt(process.env.UPLOAD_MAX_FILES || '10', 10)
 };
@@ -92,5 +79,5 @@ export const config: Config = {
   mongoUrl,
   jwt: getJWT,
   uploads: uploadsConfig,
-  environment: useProductionStorage ? 'production' : 'development'
+  environment
 };

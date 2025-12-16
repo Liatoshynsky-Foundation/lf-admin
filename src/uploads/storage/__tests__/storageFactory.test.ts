@@ -328,10 +328,10 @@ describe('storageFactory', () => {
         expect(adapter).toBe(mockAdapter);
       });
 
-      it('should use DEV_ prefixed environment variables', () => {
-        process.env.DEV_STORAGE_TYPE = 'local';
-        process.env.DEV_LOCAL_PATH = '/custom/dev/path';
-        process.env.DEV_STORAGE_BASE_URL = 'http://dev.example.com';
+      it('should use non-prefixed environment variables', () => {
+        process.env.STORAGE_TYPE = 'local';
+        process.env.LOCAL_PATH = '/custom/dev/path';
+        process.env.STORAGE_BASE_URL = 'http://dev.example.com';
 
         mockCreateLocalStorage.mockReturnValue(mockAdapter);
 
@@ -344,8 +344,8 @@ describe('storageFactory', () => {
       });
 
       it('should create docker storage in development', () => {
-        process.env.DEV_STORAGE_TYPE = 'docker';
-        process.env.DEV_DOCKER_VOLUME = '/app/uploads';
+        process.env.STORAGE_TYPE = 'docker';
+        process.env.DOCKER_VOLUME = '/app/uploads';
 
         mockCreateDockerStorage.mockReturnValue(mockAdapter);
 
@@ -358,7 +358,7 @@ describe('storageFactory', () => {
       });
 
       it('should use default docker volume if not specified', () => {
-        process.env.DEV_STORAGE_TYPE = 'docker';
+        process.env.STORAGE_TYPE = 'docker';
 
         mockCreateDockerStorage.mockReturnValue(mockAdapter);
 
@@ -371,12 +371,12 @@ describe('storageFactory', () => {
       });
 
       it('should create cloud storage in development', () => {
-        process.env.DEV_STORAGE_TYPE = 'cloud';
-        process.env.DEV_CLOUD_PROVIDER = 'aws';
-        process.env.DEV_CLOUD_BUCKET = 'dev-bucket';
-        process.env.DEV_CLOUD_REGION = 'us-west-1';
-        process.env.DEV_CLOUD_ACCESS_KEY = 'dev-key';
-        process.env.DEV_CLOUD_SECRET_KEY = 'dev-secret';
+        process.env.STORAGE_TYPE = 'cloud';
+        process.env.CLOUD_PROVIDER = 'aws';
+        process.env.CLOUD_BUCKET = 'dev-bucket';
+        process.env.CLOUD_REGION = 'us-west-1';
+        process.env.CLOUD_ACCESS_KEY = 'dev-key';
+        process.env.CLOUD_SECRET_KEY = 'dev-secret';
 
         mockCreateCloudStorage.mockReturnValue(mockAdapter);
 
@@ -398,8 +398,8 @@ describe('storageFactory', () => {
       });
 
       it('should default to aws for cloud provider', () => {
-        process.env.DEV_STORAGE_TYPE = 'cloud';
-        process.env.DEV_CLOUD_BUCKET = 'dev-bucket';
+        process.env.STORAGE_TYPE = 'cloud';
+        process.env.CLOUD_BUCKET = 'dev-bucket';
 
         mockCreateCloudStorage.mockReturnValue(mockAdapter);
 
@@ -415,8 +415,8 @@ describe('storageFactory', () => {
 
     describe('production environment', () => {
       it('should create cloud storage by default in production', () => {
-        process.env.PROD_CLOUD_PROVIDER = 'aws';
-        process.env.PROD_CLOUD_BUCKET = 'prod-bucket';
+        process.env.CLOUD_PROVIDER = 'aws';
+        process.env.CLOUD_BUCKET = 'prod-bucket';
 
         mockCreateCloudStorage.mockReturnValue(mockAdapter);
 
@@ -425,14 +425,14 @@ describe('storageFactory', () => {
         expect(createCloudStorage).toHaveBeenCalled();
       });
 
-      it('should use PROD_ prefixed environment variables', () => {
-        process.env.PROD_STORAGE_TYPE = 'cloud';
-        process.env.PROD_CLOUD_PROVIDER = 'cloudflare';
-        process.env.PROD_CLOUD_BUCKET = 'prod-bucket';
-        process.env.PROD_CLOUD_ENDPOINT = 'https://prod.r2.cloudflarestorage.com';
-        process.env.PROD_CLOUD_ACCESS_KEY = 'prod-key';
-        process.env.PROD_CLOUD_SECRET_KEY = 'prod-secret';
-        process.env.PROD_STORAGE_BASE_URL = 'https://cdn.example.com';
+      it('should use non-prefixed environment variables in production', () => {
+        process.env.STORAGE_TYPE = 'cloud';
+        process.env.CLOUD_PROVIDER = 'cloudflare';
+        process.env.CLOUD_BUCKET = 'prod-bucket';
+        process.env.CLOUD_ENDPOINT = 'https://prod.r2.cloudflarestorage.com';
+        process.env.CLOUD_ACCESS_KEY = 'prod-key';
+        process.env.CLOUD_SECRET_KEY = 'prod-secret';
+        process.env.STORAGE_BASE_URL = 'https://cdn.example.com';
 
         mockCreateCloudStorage.mockReturnValue(mockAdapter);
 
@@ -454,8 +454,8 @@ describe('storageFactory', () => {
       });
 
       it('should create local storage in production if specified', () => {
-        process.env.PROD_STORAGE_TYPE = 'local';
-        process.env.PROD_LOCAL_PATH = '/var/www/uploads';
+        process.env.STORAGE_TYPE = 'local';
+        process.env.LOCAL_PATH = '/var/www/uploads';
 
         mockCreateLocalStorage.mockReturnValue(mockAdapter);
 
@@ -468,8 +468,8 @@ describe('storageFactory', () => {
       });
 
       it('should create docker storage in production', () => {
-        process.env.PROD_STORAGE_TYPE = 'docker';
-        process.env.PROD_DOCKER_VOLUME = '/prod/uploads';
+        process.env.STORAGE_TYPE = 'docker';
+        process.env.DOCKER_VOLUME = '/prod/uploads';
 
         mockCreateDockerStorage.mockReturnValue(mockAdapter);
 
@@ -482,11 +482,11 @@ describe('storageFactory', () => {
       });
 
       it('should include all cloud credentials', () => {
-        process.env.PROD_STORAGE_TYPE = 'cloud';
-        process.env.PROD_CLOUD_PROVIDER = 'gcp';
-        process.env.PROD_CLOUD_BUCKET = 'prod-bucket';
-        process.env.PROD_CLOUDFLARE_TOKEN = 'cf-token';
-        process.env.PROD_CLOUD_PROJECT_ID = 'gcp-project-123';
+        process.env.STORAGE_TYPE = 'cloud';
+        process.env.CLOUD_PROVIDER = 'gcp';
+        process.env.CLOUD_BUCKET = 'prod-bucket';
+        process.env.CLOUDFLARE_TOKEN = 'cf-token';
+        process.env.CLOUD_PROJECT_ID = 'gcp-project-123';
 
         mockCreateCloudStorage.mockReturnValue(mockAdapter);
 
@@ -526,8 +526,8 @@ describe('storageFactory', () => {
       });
 
       it('should handle empty environment variables', () => {
-        process.env.DEV_STORAGE_TYPE = '';
-        process.env.DEV_LOCAL_PATH = '';
+        process.env.STORAGE_TYPE = '';
+        process.env.LOCAL_PATH = '';
 
         mockCreateLocalStorage.mockReturnValue(mockAdapter);
 

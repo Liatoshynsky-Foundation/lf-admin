@@ -27,7 +27,6 @@ export const createStorageAdapter = (config: StorageConfig): StorageAdapter => {
     });
 
   case 'azure-blob':
-    // Use existing Azure blob storage service
     return createAzureBlobStorage({
       containerName: config.azureContainerName,
       baseUrl: config.baseUrl,
@@ -53,36 +52,34 @@ export const createStorageAdapter = (config: StorageConfig): StorageAdapter => {
 };
 
 export const createStorageFromEnv = (environment: 'development' | 'production' = 'development'): StorageAdapter => {
-  const envPrefix = environment === 'production' ? 'PROD' : 'DEV';
-  const storageType = (process.env[`${envPrefix}_STORAGE_TYPE`] ||
-    (environment === 'production' ? 'cloud' : 'local')) as StorageType;
+  const storageType = (process.env.STORAGE_TYPE || (environment === 'production' ? 'cloud' : 'local')) as StorageType;
 
   const config: StorageConfig = {
     type: storageType,
-    baseUrl: process.env[`${envPrefix}_STORAGE_BASE_URL`]
+    baseUrl: process.env.STORAGE_BASE_URL
   };
 
   /* prettier-ignore */
   switch (storageType) {
   case 'local':
-    config.localPath = process.env[`${envPrefix}_LOCAL_PATH`] || (environment === 'development' ? './public/uploads' : undefined);
+    config.localPath = process.env.LOCAL_PATH || (environment === 'development' ? './public/uploads' : undefined);
     break;
 
   case 'docker':
-    config.dockerVolume = process.env[`${envPrefix}_DOCKER_VOLUME`] || '/app/uploads';
+    config.dockerVolume = process.env.DOCKER_VOLUME || '/app/uploads';
     break;
 
   case 'cloud':
-    config.cloudProvider = (process.env[`${envPrefix}_CLOUD_PROVIDER`] || 'aws') as any;
+    config.cloudProvider = (process.env.CLOUD_PROVIDER || 'aws') as any;
     config.cloudConfig = {
-      bucket: process.env[`${envPrefix}_CLOUD_BUCKET`],
-      region: process.env[`${envPrefix}_CLOUD_REGION`],
-      endpoint: process.env[`${envPrefix}_CLOUD_ENDPOINT`],
+      bucket: process.env.CLOUD_BUCKET,
+      region: process.env.CLOUD_REGION,
+      endpoint: process.env.CLOUD_ENDPOINT,
       credentials: {
-        accessKeyId: process.env[`${envPrefix}_CLOUD_ACCESS_KEY`],
-        secretAccessKey: process.env[`${envPrefix}_CLOUD_SECRET_KEY`],
-        token: process.env[`${envPrefix}_CLOUDFLARE_TOKEN`],
-        projectId: process.env[`${envPrefix}_CLOUD_PROJECT_ID`]
+        accessKeyId: process.env.CLOUD_ACCESS_KEY,
+        secretAccessKey: process.env.CLOUD_SECRET_KEY,
+        token: process.env.CLOUDFLARE_TOKEN,
+        projectId: process.env.CLOUD_PROJECT_ID
       }
     };
     break;

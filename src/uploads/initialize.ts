@@ -6,47 +6,35 @@ import { createUploadService } from '../uploads/uploadService';
 import { DEFAULT_IMAGE_RULES } from '../uploads/validators';
 
 export const initializeUploadModule = (config: Config) => {
-  const currentStorageConfig =
-    config.environment === 'production' ? config.uploads.production : config.uploads.development;
+  const storageConfig = config.uploads.storage;
 
-  const storageConfig: StorageConfig = {
-    type: currentStorageConfig.type
+  const adapterConfig: StorageConfig = {
+    type: storageConfig.type,
+    localPath: storageConfig.localPath,
+    dockerVolume: storageConfig.dockerVolume,
+    azureContainerName: storageConfig.azureContainerName,
+    azureFolderPrefix: storageConfig.azureFolderPrefix,
+    cloudProvider: storageConfig.cloudProvider,
+    /* eslint-disable */
+    cloudConfig: storageConfig.cloudConfig
+      ? {
+          bucket: storageConfig.cloudConfig.bucket || '',
+          region: storageConfig.cloudConfig.region,
+          endpoint: storageConfig.cloudConfig.endpoint,
+          credentials: {
+            accessKeyId: storageConfig.cloudConfig.accessKey,
+            secretAccessKey: storageConfig.cloudConfig.secretKey,
+            projectId: storageConfig.cloudConfig.projectId
+          }
+        }
+      : undefined,
+    /* eslint-enable */
+    baseUrl: storageConfig.baseUrl
   };
 
-  /* prettier-ignore */
-  switch (currentStorageConfig.type) {
-  case 'local':
-    storageConfig.localPath = currentStorageConfig.localPath;
-    storageConfig.baseUrl = currentStorageConfig.baseUrl;
-    break;
-  case 'docker':
-    storageConfig.dockerVolume = currentStorageConfig.dockerVolume;
-    storageConfig.baseUrl = currentStorageConfig.baseUrl;
-    break;
-  case 'azure-blob':
-    storageConfig.azureContainerName = currentStorageConfig.azureContainerName;
-    storageConfig.azureFolderPrefix = currentStorageConfig.azureFolderPrefix;
-    storageConfig.baseUrl = currentStorageConfig.baseUrl;
-    break;
-  case 'cloud':
-    storageConfig.cloudProvider = currentStorageConfig.cloudProvider;
-    storageConfig.cloudConfig = {
-      bucket: currentStorageConfig.cloudConfig?.bucket || '',
-      region: currentStorageConfig.cloudConfig?.region,
-      endpoint: currentStorageConfig.cloudConfig?.endpoint,
-      credentials: {
-        accessKeyId: currentStorageConfig.cloudConfig?.accessKey,
-        secretAccessKey: currentStorageConfig.cloudConfig?.secretKey,
-        projectId: currentStorageConfig.cloudConfig?.projectId
-      }
-    };
-    storageConfig.baseUrl = currentStorageConfig.baseUrl;
-    break;
-  }
+  const storage = createStorageAdapter(adapterConfig);
 
-  const storage = createStorageAdapter(storageConfig);
-
-  const storageDetails = `📦 Upload storage: ${currentStorageConfig.type.toUpperCase()} (${config.environment})`;
+  const storageDetails = `📦 Upload storage: ${storageConfig.type.toUpperCase()} (${config.environment})`;
 
   logger.info(storageDetails);
 
@@ -69,8 +57,8 @@ export const initializeUploadModule = (config: Config) => {
     },
     storageInfo: {
       environment: config.environment,
-      storageType: currentStorageConfig.type,
-      storageProvider: currentStorageConfig.type === 'cloud' ? currentStorageConfig.cloudProvider : undefined
+      storageType: storageConfig.type,
+      storageProvider: storageConfig.type === 'cloud' ? storageConfig.cloudProvider : undefined
     }
   };
 };

@@ -68,48 +68,41 @@ MONGO_PORT=
 JWT_ACCESS_TOKEN_SECRET=
 JWT_REFRESH_TOKEN_SECRET=
 
-# Storage Environment - determines which storage config to use
-# Set to 'production' to use PROD_* variables, otherwise uses DEV_* variables
+# Storage Environment - determines the environment context
+# Set to 'production' for production, 'development' (default) for development
 STORAGE_ENV=development
 
 # Upload Limits
 UPLOAD_MAX_FILE_SIZE=10485760 # 10MB in bytes
 UPLOAD_MAX_FILES=10
 
-# Development Storage Configuration
+# Storage Configuration (same variables for both dev and prod)
 # Storage type options: 'local' | 'docker' | 'cloud' | 'azure-blob'
-DEV_STORAGE_TYPE=local
+# Defaults: 'local' for development, 'cloud' for production
+STORAGE_TYPE=local
 
-# Development - Local Storage
-DEV_LOCAL_PATH=./public/uploads
-DEV_STORAGE_BASE_URL=http://localhost:3000/uploads
+# Local Storage (for STORAGE_TYPE=local)
+LOCAL_PATH=./public/uploads
+STORAGE_BASE_URL=http://localhost:3000/uploads
 
-# Development - Azure Blob Storage
+# Azure Blob Storage (for STORAGE_TYPE=azure-blob)
 AZURE_SAS_URL=
-DEV_AZURE_FOLDER_PREFIX=uploads
-# DEV_STORAGE_BASE_URL=http://localhost:3000/api/blob-url
+AZURE_CONTAINER_NAME=
+AZURE_FOLDER_PREFIX=uploads
+# STORAGE_BASE_URL=http://localhost:3000/api/blob-url
 
-# Development - Docker Storage
-# DEV_DOCKER_VOLUME=/app/uploads
+# Docker Storage (for STORAGE_TYPE=docker)
+# DOCKER_VOLUME=/app/uploads
 
-# Development - Cloud Storage (AWS/GCP/Cloudflare R2)
-# DEV_CLOUD_PROVIDER=aws # or gcp, cloudflare
-# DEV_CLOUD_BUCKET=your-dev-bucket
-# DEV_CLOUD_REGION=us-east-1
-# DEV_CLOUD_ENDPOINT=
-# DEV_CLOUD_ACCESS_KEY=
-# DEV_CLOUD_SECRET_KEY=
-# DEV_CLOUD_PROJECT_ID=
-
-# Production Storage Configuration
-PROD_STORAGE_TYPE=cloud
-PROD_CLOUD_PROVIDER=aws
-PROD_CLOUD_BUCKET=
-PROD_CLOUD_REGION=us-east-1
-PROD_CLOUD_ENDPOINT=
-PROD_CLOUD_ACCESS_KEY=
-PROD_CLOUD_SECRET_KEY=
-PROD_STORAGE_BASE_URL=
+# Cloud Storage (for STORAGE_TYPE=cloud - AWS/GCP/Cloudflare R2)
+# CLOUD_PROVIDER=aws # or gcp, cloudflare
+# CLOUD_BUCKET=your-bucket
+# CLOUD_REGION=us-east-1
+# CLOUD_ENDPOINT=
+# CLOUD_ACCESS_KEY=
+# CLOUD_SECRET_KEY=
+# CLOUDFLARE_TOKEN=
+# CLOUD_PROJECT_ID=
 ```
 
 ### 📦 Clone Repository
@@ -171,12 +164,13 @@ The module supports four storage types:
 
 #### Environment-Based Configuration
 
-The module uses separate configurations for development and production environments:
+The module uses a unified configuration with a single set of environment variables:
 
-- Set `STORAGE_ENV=development` to use `DEV_*` environment variables
-- Set `STORAGE_ENV=production` to use `PROD_*` environment variables
+- Set `STORAGE_ENV=development` for development environment (defaults to local storage)
+- Set `STORAGE_ENV=production` for production environment (defaults to cloud storage)
+- Use the same environment variable names in both environments, just with different values
 
-This allows you to use local storage during development while automatically switching to cloud storage in production.
+This simplifies configuration management - you maintain the same variable names across environments, changing only their values based on your deployment context.
 
 #### API Endpoints
 
@@ -211,44 +205,45 @@ const result = await response.json();
 
 ```env
 STORAGE_ENV=development
-DEV_STORAGE_TYPE=local
-DEV_LOCAL_PATH=./public/uploads
-DEV_STORAGE_BASE_URL=http://localhost:3000/uploads
+STORAGE_TYPE=local
+LOCAL_PATH=./public/uploads
+STORAGE_BASE_URL=http://localhost:3000/uploads
 ```
 
 **Azure Blob Storage (Development)**
 
 ```env
 STORAGE_ENV=development
-DEV_STORAGE_TYPE=azure-blob
+STORAGE_TYPE=azure-blob
 AZURE_SAS_URL=https://youraccount.blob.core.windows.net/container?sas-token
-DEV_AZURE_FOLDER_PREFIX=uploads
+AZURE_CONTAINER_NAME=your-container
+AZURE_FOLDER_PREFIX=uploads
 ```
 
 **Cloudflare R2 (Production)**
 
 ```env
 STORAGE_ENV=production
-PROD_STORAGE_TYPE=cloud
-PROD_CLOUD_PROVIDER=cloudflare
-PROD_CLOUD_BUCKET=your-bucket
-PROD_CLOUD_ENDPOINT=https://account-id.r2.cloudflarestorage.com
-PROD_CLOUD_ACCESS_KEY=your-access-key
-PROD_CLOUD_SECRET_KEY=your-secret-key
-PROD_STORAGE_BASE_URL=https://your-public-domain.r2.dev
+STORAGE_TYPE=cloud
+CLOUD_PROVIDER=cloudflare
+CLOUD_BUCKET=your-bucket
+CLOUD_ENDPOINT=https://account-id.r2.cloudflarestorage.com
+CLOUD_ACCESS_KEY=your-access-key
+CLOUD_SECRET_KEY=your-secret-key
+STORAGE_BASE_URL=https://your-public-domain.r2.dev
 ```
 
 **AWS S3 (Production)**
 
 ```env
 STORAGE_ENV=production
-PROD_STORAGE_TYPE=cloud
-PROD_CLOUD_PROVIDER=aws
-PROD_CLOUD_BUCKET=your-bucket
-PROD_CLOUD_REGION=us-east-1
-PROD_CLOUD_ACCESS_KEY=your-access-key
-PROD_CLOUD_SECRET_KEY=your-secret-key
-PROD_STORAGE_BASE_URL=https://your-bucket.s3.amazonaws.com
+STORAGE_TYPE=cloud
+CLOUD_PROVIDER=aws
+CLOUD_BUCKET=your-bucket
+CLOUD_REGION=us-east-1
+CLOUD_ACCESS_KEY=your-access-key
+CLOUD_SECRET_KEY=your-secret-key
+STORAGE_BASE_URL=https://your-bucket.s3.amazonaws.com
 ```
 
 #### File Validation and Processing
