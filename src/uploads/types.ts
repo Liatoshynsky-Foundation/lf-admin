@@ -22,7 +22,6 @@ export interface UploadOptions {
   fileType?: 'image' | 'document' | 'video' | 'audio' | 'generic';
   directory?: string;
   validationRules?: Record<string, any>;
-  processingOptions?: Record<string, any>;
   generateFilename?: (originalName: string, mimeType: string) => string;
   metadata?: Record<string, any>;
 }

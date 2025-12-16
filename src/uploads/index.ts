@@ -1,6 +1,4 @@
 export * from './errors';
-export type { FileProcessor, ProcessingResult } from './processors';
-export * from './processors';
 export type { StorageAdapter, StorageConfig, StorageType } from './storage';
 export * from './storage';
 export * from './types';

@@ -1,5 +1,4 @@
 import { UPLOAD_ERRORS } from './errors';
-import { createProcessor, FileProcessor } from './processors';
 import { StorageAdapter } from './storage';
 import { UploadedFile, UploadOptions, UploadResult } from './types';
 import { generateUniqueFilename } from './utils';
@@ -9,11 +8,10 @@ export interface UploadServiceConfig {
   storage: StorageAdapter;
   defaultFileType?: 'image' | 'document' | 'video' | 'audio' | 'generic';
   defaultValidationRules?: Record<string, any>;
-  defaultProcessingOptions?: Record<string, any>;
 }
 
 export const createUploadService = (config: UploadServiceConfig) => {
-  const { storage, defaultFileType = 'image', defaultValidationRules, defaultProcessingOptions } = config;
+  const { storage, defaultFileType = 'image', defaultValidationRules } = config;
 
   const uploadFile = async (file: UploadedFile, options: UploadOptions = {}): Promise<UploadResult> => {
     try {
@@ -37,46 +35,19 @@ export const createUploadService = (config: UploadServiceConfig) => {
         };
       }
 
-      const processingOptions = {
-        ...defaultProcessingOptions,
-        ...options.processingOptions
-      };
-
-      const processorType = fileType === 'generic' ? 'none' : fileType;
-
-      const processor: FileProcessor = createProcessor({
-        type: processorType,
-        options: processingOptions
-      });
-
-      const processingResult = await processor.process(
-        file.buffer,
-        file.originalname,
-        file.mimetype,
-        processingOptions
-      );
-
-      if (!processingResult.success) {
-        return {
-          success: false,
-          errors: processingResult.errors
-        };
-      }
-
       const generateFilename = options.generateFilename || generateUniqueFilename;
       const filename = generateFilename(file.originalname, file.mimetype);
 
       const storageMetadata: Record<string, any> = {
         originalName: file.originalname,
-        ...options.metadata,
-        ...processingResult.metadata
+        ...options.metadata
       };
 
       if (options.directory) {
         storageMetadata.directory = options.directory;
       }
 
-      const storageResult = await storage.store(processingResult.buffer, filename, file.mimetype, storageMetadata);
+      const storageResult = await storage.store(file.buffer, filename, file.mimetype, storageMetadata);
 
       if (!storageResult.success) {
         return {

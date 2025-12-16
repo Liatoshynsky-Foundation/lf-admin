@@ -17,11 +17,6 @@ export const UPLOAD_ERRORS = {
   GENERIC_VALIDATOR_NOT_IMPLEMENTED: 'Generic validator not yet implemented',
   UNKNOWN_FILE_TYPE: 'Unknown file type',
 
-  // Processor errors
-  DOCUMENT_PROCESSOR_NOT_IMPLEMENTED: 'Document processor not yet implemented',
-  VIDEO_PROCESSOR_NOT_IMPLEMENTED: 'Video processor not yet implemented',
-  AUDIO_PROCESSOR_NOT_IMPLEMENTED: 'Audio processor not yet implemented',
-
   // Storage errors - Azure
   AZURE_URL_NOT_DEFINED: 'Azure SAS URL is not defined',
   FAILED_TO_UPLOAD_BLOB: 'Failed to upload blob to Azure',

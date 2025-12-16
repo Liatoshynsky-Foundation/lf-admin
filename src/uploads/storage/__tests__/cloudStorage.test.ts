@@ -132,7 +132,6 @@ describe('createCloudStorage', () => {
       expect(result.metadata.originalFilename).toBe(filename);
       expect(result.metadata.originalMimeType).toBe(mimeType);
       expect(result.metadata.processed).toBe(true);
-      expect(result.metadata.processingOptions).toEqual({});
       expect(MockPutObjectCommand).toHaveBeenCalledWith({
         Bucket: 'test-bucket',
         Key: `uploads/${filename}`,
@@ -160,7 +159,6 @@ describe('createCloudStorage', () => {
       expect(result.metadata.originalFilename).toBe(filename);
       expect(result.metadata.originalMimeType).toBe(mimeType);
       expect(result.metadata.processed).toBe(true);
-      expect(result.metadata.processingOptions).toEqual({});
       expect(MockPutObjectCommand).toHaveBeenCalled();
     });
 
@@ -398,8 +396,7 @@ describe('createCloudStorage', () => {
         directory: 'uploads',
         originalFilename: 'original.txt',
         originalMimeType: 'text/plain',
-        processed: true,
-        processingOptions: {}
+        processed: true
       });
       consoleSpy.mockRestore();
     });
