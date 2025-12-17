@@ -1,3 +1,6 @@
 # Ignore YAML files to avoid singleQuote issues
 *.yml
 *.yaml
+
+# Ignore generated GraphQL types
+app/types/graphql/generated/

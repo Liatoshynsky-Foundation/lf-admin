@@ -2,3 +2,6 @@ node_modules
 .next
 .github
 coverage
+
+# Ignore generated GraphQL types
+app/types/graphql/generated/

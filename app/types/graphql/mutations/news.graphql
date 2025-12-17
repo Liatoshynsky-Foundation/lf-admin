@@ -1,0 +1,246 @@
+mutation CreateNews($input: CreateNewsInput!) {
+  createNews(input: $input) {
+    id
+    publishedAt
+    newsDate
+    createdAt
+    updatedAt
+    title {
+      uk
+      en
+    }
+    description {
+      uk
+      en
+    }
+    content {
+      uk
+      en
+    }
+    slug
+    coverImage {
+      src
+      alt {
+        uk
+        en
+      }
+      caption {
+        uk
+        en
+      }
+      isTmp
+    }
+    status
+    meta {
+      views
+    }
+  }
+}
+
+mutation UpdateNews($id: ID!, $input: UpdateNewsInput!) {
+  updateNews(id: $id, input: $input) {
+    id
+    publishedAt
+    newsDate
+    createdAt
+    updatedAt
+    title {
+      uk
+      en
+    }
+    description {
+      uk
+      en
+    }
+    content {
+      uk
+      en
+    }
+    slug
+    coverImage {
+      src
+      alt {
+        uk
+        en
+      }
+      caption {
+        uk
+        en
+      }
+      isTmp
+    }
+    status
+    meta {
+      views
+    }
+  }
+}
+
+mutation PublishNews($input: PublishNewsInput!) {
+  publishNews(input: $input) {
+    id
+    publishedAt
+    newsDate
+    createdAt
+    updatedAt
+    title {
+      uk
+      en
+    }
+    description {
+      uk
+      en
+    }
+    content {
+      uk
+      en
+    }
+    slug
+    coverImage {
+      src
+      alt {
+        uk
+        en
+      }
+      caption {
+        uk
+        en
+      }
+      isTmp
+    }
+    status
+    meta {
+      views
+    }
+  }
+}
+
+mutation UnpublishNews($id: ID!) {
+  unpublishNews(id: $id) {
+    id
+    publishedAt
+    newsDate
+    createdAt
+    updatedAt
+    title {
+      uk
+      en
+    }
+    description {
+      uk
+      en
+    }
+    content {
+      uk
+      en
+    }
+    slug
+    coverImage {
+      src
+      alt {
+        uk
+        en
+      }
+      caption {
+        uk
+        en
+      }
+      isTmp
+    }
+    status
+    meta {
+      views
+    }
+  }
+}
+
+mutation ArchiveNews($id: ID!) {
+  archiveNews(id: $id) {
+    id
+    publishedAt
+    newsDate
+    createdAt
+    updatedAt
+    title {
+      uk
+      en
+    }
+    description {
+      uk
+      en
+    }
+    content {
+      uk
+      en
+    }
+    slug
+    coverImage {
+      src
+      alt {
+        uk
+        en
+      }
+      caption {
+        uk
+        en
+      }
+      isTmp
+    }
+    status
+    meta {
+      views
+    }
+  }
+}
+
+mutation HideNews($id: ID!) {
+  hideNews(id: $id) {
+    id
+    publishedAt
+    newsDate
+    createdAt
+    updatedAt
+    title {
+      uk
+      en
+    }
+    description {
+      uk
+      en
+    }
+    content {
+      uk
+      en
+    }
+    slug
+    coverImage {
+      src
+      alt {
+        uk
+        en
+      }
+      caption {
+        uk
+        en
+      }
+      isTmp
+    }
+    status
+    meta {
+      views
+    }
+  }
+}
+
+mutation DeleteNews($id: ID!) {
+  deleteNews(id: $id)
+}
+
+mutation IncrementNewsViews($id: ID!) {
+  incrementNewsViews(id: $id) {
+    id
+    meta {
+      views
+    }
+  }
+}
