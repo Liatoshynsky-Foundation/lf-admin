@@ -38,5 +38,6 @@ export const MediaMentionsServiceErrors = {
   NOT_FOUND: newError('Media mention not found'),
   ALREADY_PUBLISHED: newError('Media mention is already published'),
   ALREADY_DRAFT: newError('Media mention is already in draft status'),
-  INVALID_ID: newError('The provided ID is invalid')
+  INVALID_ID: newError('The provided ID is invalid'),
+  NO_PUBLISHED_MEDIA: newError('No published media mentions found')
 };

@@ -1,0 +1,94 @@
+query MediaMentionById($id: ID!) {
+  mediaMentionById(id: $id) {
+    id
+    url
+    title
+    description
+    coverImageUrl
+    slug
+    status
+    publishedAt
+    createdAt
+    updatedAt
+    meta {
+      views
+    }
+  }
+}
+
+query MediaMentionBySlug($slug: String!) {
+  mediaMentionBySlug(slug: $slug) {
+    id
+    url
+    title
+    description
+    coverImageUrl
+    slug
+    status
+    publishedAt
+    createdAt
+    updatedAt
+    meta {
+      views
+    }
+  }
+}
+
+query AllMediaMentions($filters: MediaMentionsFiltersInput) {
+  allMediaMentions(filters: $filters) {
+    id
+    url
+    title
+    description
+    coverImageUrl
+    slug
+    status
+    publishedAt
+    createdAt
+    updatedAt
+    meta {
+      views
+    }
+  }
+}
+
+query PublishedMediaMentions($filters: MediaMentionsFiltersInput) {
+  publishedMediaMentions(filters: $filters) {
+    id
+    url
+    title
+    description
+    coverImageUrl
+    slug
+    status
+    publishedAt
+    createdAt
+    updatedAt
+    meta {
+      views
+    }
+  }
+}
+
+query PaginatedMediaMentions($page: Int = 1, $limit: Int = 10, $filters: MediaMentionsFiltersInput) {
+  paginatedMediaMentions(page: $page, limit: $limit, filters: $filters) {
+    items {
+      id
+      url
+      title
+      slug
+      status
+      publishedAt
+      createdAt
+      updatedAt
+      meta { views }
+    }
+    total
+    page
+    totalPages
+  }
+}
+
+query MediaMentionsCount($status: MediaStatus) {
+  mediaMentionsCount(status: $status)
+}

@@ -1,7 +1,7 @@
 import { createBaseService } from '../baseService/baseService';
 import { MediaMentionsServiceErrors } from '~/back-constants/errors';
 import { generateUniqueSlug } from '~/back-shared/utils';
-import { MediaMentionEntity } from '~/domain/entities/MediaMentions';
+import { MediaMentionEntity, MediaMentionFilters, MediaStatus } from '~/domain/entities/MediaMentions';
 import { MediaMentionsRepository } from '~/domain/repositories/mediaMentionsRepository';
 import { parseMediaMention } from '~/lib/parser/mediaMentionsParser';
 import { isError, Result } from '~/types/common';
@@ -42,6 +42,9 @@ export function newMediaMentionsService({ mediaMentionsRepository: repo }: Media
           slug
         })
       );
+    },
+    async getPublishedPaginated(filters?: Omit<MediaMentionFilters, 'status'>): Promise<MediaMentionEntity[]> {
+      return await repo.findAll({ ...filters, status: MediaStatus.PUBLISHED });
     },
     async publish(id: string): Promise<void> {
       return Unwrapper(await repo.publish(id));

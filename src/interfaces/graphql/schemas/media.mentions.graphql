@@ -1,0 +1,58 @@
+type MediaMeta {
+  views: Int!
+}
+
+enum MediaStatus {
+  draft
+  published
+  hidden
+  archived
+  editing
+}
+
+type MediaMention {
+  id: ID!
+  url: String!
+  title: String!
+  description: String
+  coverImageUrl: String
+  slug: String!
+  status: MediaStatus!
+  publishedAt: String
+  createdAt: String!
+  updatedAt: String!
+  meta: MediaMeta!
+}
+
+type PaginatedMediaMentions {
+  items: [MediaMention!]!
+  total: Int!
+  page: Int!
+  totalPages: Int!
+}
+
+input MediaMentionsFiltersInput {
+  status: MediaStatus
+  slug: String
+}
+
+input CreateMediaMentionInput {
+  url: String!
+}
+
+extend type Query {
+  mediaMentionById(id: ID!): MediaMention
+  mediaMentionBySlug(slug: String!): MediaMention
+  allMediaMentions(filters: MediaMentionsFiltersInput): [MediaMention!]!
+  publishedMediaMentions(filters: MediaMentionsFiltersInput): [MediaMention!]!
+  paginatedMediaMentions(page: Int = 1, limit: Int = 10, filters: MediaMentionsFiltersInput): PaginatedMediaMentions!
+  mediaMentionsCount(status: MediaStatus): Int!
+}
+
+extend type Mutation {
+  createMediaMention(input: CreateMediaMentionInput!): MediaMention!
+  publishMediaMention(id: ID!): MediaMention!
+  unpublishMediaMention(id: ID!): MediaMention!
+  addMediaMentionView(id: ID!): MediaMention!
+  deleteMediaMention(id: ID!): Boolean!
+}

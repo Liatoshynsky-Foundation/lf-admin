@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getJWT } from '../../../../config';
 import { JWT_ACCESS_TOKEN_LIFETIME, JWT_REFRESH_TOKEN_LIFETIME } from '~/back-constants/index';
-import { AdminTokenPayload, RefreshTokenPayload } from '~/back-shared/types/tokens/types';
+import { AdminTokenPayload, HasJTI, RefreshTokenPayload } from '~/back-shared/types/tokens/types';
 
 export const createTokenService = () => ({
   generateTokens: (admin: { id: string; type: string }) => {
@@ -40,7 +40,7 @@ export const createTokenService = () => ({
     return jwt.verify(token, getJWT.JWT_ACCESS_TOKEN_SECRET) as AdminTokenPayload;
   },
 
-  verifyRefreshToken: (token: string): RefreshTokenPayload => {
-    return jwt.verify(token, getJWT.JWT_REFRESH_TOKEN_SECRET) as RefreshTokenPayload;
+  verifyRefreshToken: (token: string): RefreshTokenPayload & HasJTI => {
+    return jwt.verify(token, getJWT.JWT_REFRESH_TOKEN_SECRET) as RefreshTokenPayload & HasJTI;
   }
 });

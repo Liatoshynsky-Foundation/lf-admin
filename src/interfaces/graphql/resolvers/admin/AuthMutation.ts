@@ -5,6 +5,7 @@ import { LoginError } from '~/back-constants/apolloCustomErrors/adminErrors';
 import { errors } from '~/back-constants/errors';
 import {
   ACCESS_TOKEN_COOKIE_NAME,
+  adminTypes,
   commonCookieOptions,
   JWT_ACCESS_TOKEN_LIFETIME,
   JWT_REFRESH_TOKEN_LIFETIME,
@@ -94,7 +95,7 @@ export const authMutation = {
 
       await refreshTokenService.deleteJTI(oldPayload.jti);
 
-      const adminData = { id: oldPayload.id, type: admin?.type ?? 'admin' };
+      const adminData = { id: oldPayload.id, type: admin?.type ?? 'admin' } as { id: string; type: adminTypes };
       const { accessToken, refreshToken, refreshTokenJti } = tokenService.generateTokens(adminData);
 
       await refreshTokenService.addJTI(adminData.id, refreshTokenJti, JWT_REFRESH_TOKEN_LIFETIME, adminData.type);
