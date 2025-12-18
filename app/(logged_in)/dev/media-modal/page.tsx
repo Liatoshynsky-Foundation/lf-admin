@@ -13,7 +13,7 @@ import type {
 export default function MediaModalPlaygroundPage() {
   const [open, setOpen] = useState(false);
   const [result, setResult] = useState<MediaModalResult | null>(null);
-  const [initial, setInitial] = useState<MediaModalOpenState>({ tab: 'LIBRARY' });
+  const [initial, setInitial] = useState<MediaModalOpenState>({ tab: 'GALLERY' });
 
   const openWith = (next: MediaModalOpenState) => () => {
     setInitial(next);
@@ -25,16 +25,17 @@ export default function MediaModalPlaygroundPage() {
       <Typography variant="h4">MediaModal playground</Typography>
 
       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-        <Button color="primary" variant="filled" label="Open Gallery" onClick={openWith({ tab: 'LIBRARY' })} />
+        <Button color="primary" variant="filled" label="Open Gallery" onClick={openWith({ tab: 'GALLERY' })} />
         <Button color="primary" variant="filled" label="Open Upload" onClick={openWith({ tab: 'UPLOAD' })} />
+        <Button color="primary" variant="filled" label="Open Used" onClick={openWith({ tab: 'USED' })} />
         <Button
           color="primary"
           variant="filled"
-          label="Open Crop"
+          label="Open Crop (demo)"
           onClick={openWith({
-            tab: 'LIBRARY',
+            tab: 'GALLERY',
             step: 'CROP',
-            selected: { kind: 'library', name: 'demo.png' }
+            selected: { kind: 'gallery', name: 'gallery-1.png', locale: 'UA' }
           })}
         />
         <Button

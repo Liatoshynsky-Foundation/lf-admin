@@ -1,33 +1,27 @@
 'use client';
 
-import { Box, Typography } from '@mui/material';
-import React, { useRef } from 'react';
+import { Box } from '@mui/material';
+import { useRef } from 'react';
 
+import type { SelectedMedia } from '../../MediaModal.types';
 import Button from '~/shared/components/design-system/button/Button';
 
 type Props = {
-  selectedName: string | null;
-  onSelect: (name: string) => void;
+  onPick: (selected: SelectedMedia) => void;
 };
 
-export function UploadView({ selectedName, onSelect }: Props) {
+export function UploadView({ onPick }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <Box data-testid="UploadView">
-      <Box data-testid="UploadView-dropzone">
-        <Typography variant="body2">Перетягніть файл сюди або оберіть вручну</Typography>
-
-        <Button
-          color="secondary"
-          variant="filled"
-          label="Обрати файл"
-          data-testid="UploadView-chooseFileButton"
-          onClick={() => inputRef.current?.click()}
-        />
-
-        {selectedName ? <Typography variant="body2">Selected: {selectedName}</Typography> : null}
-      </Box>
+    <Box data-testid="UploadView" sx={{ height: '100%' }}>
+      <Button
+        color="secondary"
+        variant="filled"
+        label="Обрати файл"
+        data-testid="UploadView-chooseFileButton"
+        onClick={() => inputRef.current?.click()}
+      />
 
       <input
         ref={inputRef}
@@ -37,7 +31,11 @@ export function UploadView({ selectedName, onSelect }: Props) {
         data-testid="UploadView-fileInput"
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file) onSelect(file.name);
+          if (!file) return;
+
+          e.currentTarget.value = '';
+
+          onPick({ kind: 'upload', name: file.name });
         }}
       />
     </Box>

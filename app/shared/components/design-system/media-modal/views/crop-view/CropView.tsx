@@ -1,18 +1,26 @@
 'use client';
 
-import { Box, Typography } from '@mui/material';
-import React from 'react';
+import { Box } from '@mui/material';
 
-export function CropView({ selectedName }: { selectedName: string }) {
+type Props = {
+  cropState: 'INITIAL' | 'RESIZED';
+  onSimulateResize: () => void;
+};
+
+export function CropView({ cropState, onSimulateResize }: Props) {
   return (
-    <Box data-testid="CropView">
-      <Typography variant="body2" data-testid="CropView-cropArea">
-        Crop area placeholder
-      </Typography>
-
-      <Typography variant="body2" data-testid="CropView-selectedName">
-        Selected: {selectedName}
-      </Typography>
+    <Box data-testid="CropView" sx={{ height: '100%' }}>
+      <Box
+        data-testid="CropView-cropArea"
+        role="button"
+        tabIndex={0}
+        onClick={onSimulateResize}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') onSimulateResize();
+        }}
+      >
+        Crop placeholder ({cropState})
+      </Box>
     </Box>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Checkbox, FormControlLabel, Typography } from '@mui/material';
+import { Box, IconButton } from '@mui/material';
 import React, { useEffect, useReducer, useRef } from 'react';
 
 import { MediaModalContainer } from './components/container/MediaModalContainer';
@@ -14,11 +14,14 @@ import type {
   SelectedMedia
 } from './MediaModal.types';
 import { CropView } from './views/crop-view/CropView';
-import { LibraryView } from './views/library-view/LibraryView';
+import { GalleryView } from './views/gallery-view/GalleryView';
 import { UploadView } from './views/upload-view/UploadView';
-import CheckCircleOutlineIcon from '~/public/icons/checkCircleOutline.svg';
-import ChevronRightIcon from '~/public/icons/chevronRight.svg';
+import { UsedView } from './views/used-view/UsedView';
+import ArrowLeftIcon from '~/public/icons/arrowLeft.svg';
+import IterationIcon from '~/public/icons/iteration.svg';
 import Button from '~/shared/components/design-system/button/Button';
+
+type CropState = 'INITIAL' | 'RESIZED';
 
 export type MediaModalProps = {
   open: boolean;
@@ -32,71 +35,61 @@ type State = {
   step: MediaModalStep;
   selected: SelectedMedia | null;
   applyForAllLocales: boolean;
+  cropState: CropState;
 };
 
 type Action =
   | { type: 'OPEN'; initial?: MediaModalOpenState }
   | { type: 'SET_TAB'; tab: MediaModalTab }
-  | { type: 'SELECT'; selected: SelectedMedia }
-  | { type: 'RESET_SELECTION' }
-  | { type: 'GO_CROP' }
+  | { type: 'PICK_AND_CROP'; selected: SelectedMedia }
   | { type: 'BACK' }
-  | { type: 'SET_APPLY_ALL'; value: boolean };
+  | { type: 'RESET_CROP' }
+  | { type: 'MARK_CROP_RESIZED' };
 
 const tabFromSelected = (s: SelectedMedia | null): MediaModalTab | null => {
   if (!s) return null;
-  return s.kind === 'upload' ? 'UPLOAD' : 'LIBRARY';
+  if (s.kind === 'upload') return 'UPLOAD';
+  if (s.kind === 'used') return 'USED';
+  return 'GALLERY';
 };
 
 const buildInitialState = (initial?: MediaModalOpenState): State => {
   const initialSelected = initial?.selected ?? null;
-  const tab: MediaModalTab = tabFromSelected(initialSelected) ?? initial?.tab ?? 'LIBRARY';
+  const tab: MediaModalTab = tabFromSelected(initialSelected) ?? initial?.tab ?? 'GALLERY';
 
-  const stepRequested: MediaModalStep = initial?.step ?? 'SELECT';
-  const step: MediaModalStep = stepRequested === 'CROP' && !initialSelected ? 'SELECT' : stepRequested;
-
-  const selected =
-    step === 'SELECT'
-      ? initialSelected && tabFromSelected(initialSelected) === tab
-        ? initialSelected
-        : null
-      : initialSelected;
+  const requestedStep: MediaModalStep = initial?.step ?? 'SELECT';
+  const step: MediaModalStep = requestedStep === 'CROP' && !initialSelected ? 'SELECT' : requestedStep;
 
   return {
     tab,
     step,
-    selected,
-    applyForAllLocales: initial?.applyForAllLocales ?? true
+    selected: initialSelected,
+    applyForAllLocales: initial?.applyForAllLocales ?? true,
+    cropState: 'INITIAL'
   };
 };
 
 function reducer(state: State, action: Action): State {
-  if (action.type === 'OPEN') {
-    return buildInitialState(action.initial);
-  }
+  if (action.type === 'OPEN') return buildInitialState(action.initial);
 
   if (action.type === 'SET_TAB') {
-    return { ...state, tab: action.tab, step: 'SELECT', selected: null };
+    return { ...state, tab: action.tab, step: 'SELECT', selected: null, cropState: 'INITIAL' };
   }
 
-  if (action.type === 'SELECT') {
-    return { ...state, selected: action.selected };
-  }
-
-  if (action.type === 'RESET_SELECTION') {
-    return { ...state, selected: null };
-  }
-
-  if (action.type === 'GO_CROP') {
-    return state.selected ? { ...state, step: 'CROP' } : state;
+  if (action.type === 'PICK_AND_CROP') {
+    return { ...state, selected: action.selected, step: 'CROP', cropState: 'INITIAL' };
   }
 
   if (action.type === 'BACK') {
     return { ...state, step: 'SELECT' };
   }
 
-  if (action.type === 'SET_APPLY_ALL') {
-    return { ...state, applyForAllLocales: action.value };
+  if (action.type === 'RESET_CROP') {
+    return { ...state, cropState: 'INITIAL' };
+  }
+
+  if (action.type === 'MARK_CROP_RESIZED') {
+    return state.cropState === 'RESIZED' ? state : { ...state, cropState: 'RESIZED' };
   }
 
   return state;
@@ -105,7 +98,7 @@ function reducer(state: State, action: Action): State {
 export function MediaModal({ open, onClose, onApply, initial }: MediaModalProps) {
   const [state, dispatch] = useReducer(reducer, initial, buildInitialState);
 
-  const latestInitialRef = useRef(initial);
+  const latestInitialRef = useRef<MediaModalOpenState | undefined>(initial);
   useEffect(() => {
     latestInitialRef.current = initial;
   }, [initial]);
@@ -134,31 +127,28 @@ export function MediaModal({ open, onClose, onApply, initial }: MediaModalProps)
     <MediaModalSwitcher value={state.tab} onChange={(tab) => dispatch({ type: 'SET_TAB', tab })} />
   );
 
-  const footerTop =
-    !isCrop && state.selected ? (
-      <Box sx={styles.selectedFileRow} data-testid="MediaModal-selectedFileRow">
-        <CheckCircleOutlineIcon sx={styles.selectedFileIcon} aria-hidden />
-        <Typography sx={styles.selectedFileName} data-testid="MediaModal-selectedFileName">
-          {state.selected.name}
-        </Typography>
-      </Box>
-    ) : null;
+  const headerRight = isCrop ? (
+    <IconButton
+      onClick={() => dispatch({ type: 'RESET_CROP' })}
+      aria-label="reverse"
+      data-testid="MediaModal-reverseButton"
+      sx={styles.headerIconButton}
+    >
+      <IterationIcon aria-hidden focusable={false} width={24} height={24} />
+    </IconButton>
+  ) : null;
 
-  const footerLeft =
-    state.tab === 'LIBRARY' || isCrop ? (
-      <FormControlLabel
-        sx={styles.checkboxLabel}
-        data-testid="MediaModal-applyForAllLocales"
-        control={
-          <Checkbox
-            checked={state.applyForAllLocales}
-            onChange={(e) => dispatch({ type: 'SET_APPLY_ALL', value: e.target.checked })}
-            sx={styles.checkbox}
-          />
-        }
-        label="Застосувати для всіх мовних версій"
-      />
-    ) : null;
+  const footerLeft = isCrop ? (
+    <Button
+      color="secondary"
+      variant="outlined"
+      label="Повернутись назад"
+      data-testid="MediaModal-backButton"
+      sx={styles.footerBackButton}
+      startIcon={<ArrowLeftIcon width={12} height={12} aria-hidden focusable={false} />}
+      onClick={() => dispatch({ type: 'BACK' })}
+    />
+  ) : null;
 
   const footerRight = isCrop ? (
     <>
@@ -167,15 +157,14 @@ export function MediaModal({ open, onClose, onApply, initial }: MediaModalProps)
         variant="outlined"
         label="Скасувати"
         data-testid="MediaModal-cancelButton"
-        sx={styles.footerActionButton}
-        onClick={() => dispatch({ type: 'BACK' })}
+        onClick={onClose}
       />
+
       <Button
-        color="secondary"
+        color="tertiary"
         variant="filled"
-        label="Зберегти"
-        data-testid="MediaModal-saveButton"
-        sx={styles.footerActionButton}
+        label="Застосувати"
+        data-testid="MediaModal-applyButton"
         disabled={!state.selected}
         onClick={async () => {
           if (!state.selected) return;
@@ -189,41 +178,21 @@ export function MediaModal({ open, onClose, onApply, initial }: MediaModalProps)
         }}
       />
     </>
-  ) : (
-    <>
-      <Button
-        color="secondary"
-        variant="outlined"
-        label="Скинути"
-        data-testid="MediaModal-resetButton"
-        sx={styles.footerActionButton}
-        disabled={!state.selected}
-        onClick={() => dispatch({ type: 'RESET_SELECTION' })}
-      />
-      <Button
-        color="secondary"
-        variant="filled"
-        label="Застосувати"
-        data-testid="MediaModal-applyButton"
-        sx={styles.footerActionButton}
-        endIcon={<ChevronRightIcon width={24} height={24} aria-hidden focusable={false} />}
-        disabled={!state.selected}
-        onClick={() => dispatch({ type: 'GO_CROP' })}
-      />
-    </>
-  );
+  ) : null;
 
   const body = isCrop ? (
-    <CropView selectedName={selectedName} />
-  ) : state.tab === 'LIBRARY' ? (
-    <LibraryView
-      selectedName={state.selected?.kind === 'library' ? state.selected.name : null}
-      onSelect={(name) => dispatch({ type: 'SELECT', selected: { kind: 'library', name } })}
+    <CropView cropState={state.cropState} onSimulateResize={() => dispatch({ type: 'MARK_CROP_RESIZED' })} />
+  ) : state.tab === 'GALLERY' ? (
+    <GalleryView
+      selected={state.selected?.kind === 'gallery' ? state.selected : null}
+      onPick={(selected) => dispatch({ type: 'PICK_AND_CROP', selected })}
     />
+  ) : state.tab === 'UPLOAD' ? (
+    <UploadView onPick={(selected) => dispatch({ type: 'PICK_AND_CROP', selected })} />
   ) : (
-    <UploadView
-      selectedName={state.selected?.kind === 'upload' ? state.selected.name : null}
-      onSelect={(name) => dispatch({ type: 'SELECT', selected: { kind: 'upload', name } })}
+    <UsedView
+      selected={state.selected?.kind === 'used' ? state.selected : null}
+      onPick={(selected) => dispatch({ type: 'PICK_AND_CROP', selected })}
     />
   );
 
@@ -234,7 +203,7 @@ export function MediaModal({ open, onClose, onApply, initial }: MediaModalProps)
       dataTestId="MediaModal"
       headerLeft={headerLeft}
       headerCenter={headerCenter}
-      footerTop={footerTop}
+      headerRight={headerRight}
       footerLeft={footerLeft}
       footerRight={footerRight}
     >

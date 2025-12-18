@@ -11,27 +11,23 @@ export const styles = {
     width: 'fit-content'
   },
 
-  tabButton: (active: boolean) => {
-    const base = {
-      minWidth: 0,
-      height: '36px',
-      padding: '6px 16px',
-      borderRadius: '999px',
+  tabButton: (active: boolean) => ({
+    minWidth: 0,
+    height: '36px',
+    padding: '6px 16px',
+    borderRadius: '999px',
 
-      '& svg': {
-        width: 20,
-        height: 20,
-        display: 'block'
-      }
-    } as const;
+    backgroundColor: active ? t.text : 'transparent',
+    color: active ? t.surface : t.text,
 
-    if (active) return base;
+    '& svg': {
+      width: 20,
+      height: 20,
+      display: 'block'
+    },
 
-    return {
-      ...base,
-      '&:hover': {
-        backgroundColor: t.hoverSoft
-      }
-    };
-  }
+    '&:hover': {
+      backgroundColor: active ? t.text : t.hoverSoft
+    }
+  })
 };

@@ -35,7 +35,7 @@ export const styles = {
     flexShrink: 0,
     display: 'grid',
     gridTemplateColumns: '1fr auto 1fr',
-    alignItems: 'center',
+    alignItems: 'start',
     gap: '16px',
     minHeight: '40px'
   },
@@ -51,10 +51,10 @@ export const styles = {
     justifySelf: 'end',
     display: 'inline-flex',
     alignItems: 'center',
-    gap: '12px'
+    gap: '24px'
   },
 
-  closeButton: {
+  closeIcon: {
     color: t.text,
     '&:hover': {
       backgroundColor: t.hoverSoft

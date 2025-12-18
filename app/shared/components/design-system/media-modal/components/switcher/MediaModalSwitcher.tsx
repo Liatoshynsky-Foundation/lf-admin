@@ -5,6 +5,7 @@ import React from 'react';
 
 import type { MediaModalTab } from '../../MediaModal.types';
 import { styles } from './MediaModalSwitcher.styles';
+import FileClockIcon from '~/public/icons/fileClock.svg';
 import GalleryIcon from '~/public/icons/gallery.svg';
 import UploadIcon from '~/public/icons/upload.svg';
 import Button from '~/shared/components/design-system/button/Button';
@@ -15,23 +16,24 @@ type Props = {
 };
 
 export function MediaModalSwitcher({ value, onChange }: Props) {
-  const isLibrary = value === 'LIBRARY';
+  const isGallery = value === 'GALLERY';
   const isUpload = value === 'UPLOAD';
+  const isUsed = value === 'USED';
 
   return (
     <Box sx={styles.root} role="tablist" aria-label="media modal switcher" data-testid="MediaModalSwitcher">
       <Button
         color="secondary"
-        variant={isLibrary ? 'filled' : 'text'}
+        variant="text"
         disableRipple
         disableFocusRipple
         disableElevation
-        onClick={() => onChange('LIBRARY')}
+        onClick={() => onChange('GALLERY')}
         role="tab"
-        aria-selected={isLibrary}
-        tabIndex={isLibrary ? 0 : -1}
-        data-testid="MediaModalSwitcher-libraryTab"
-        sx={styles.tabButton(isLibrary)}
+        aria-selected={isGallery}
+        tabIndex={isGallery ? 0 : -1}
+        data-testid="MediaModalSwitcher-galleryTab"
+        sx={styles.tabButton(isGallery)}
       >
         <GalleryIcon aria-hidden focusable={false} />
         Галерея
@@ -39,7 +41,7 @@ export function MediaModalSwitcher({ value, onChange }: Props) {
 
       <Button
         color="secondary"
-        variant={isUpload ? 'filled' : 'text'}
+        variant="text"
         disableRipple
         disableFocusRipple
         disableElevation
@@ -51,7 +53,24 @@ export function MediaModalSwitcher({ value, onChange }: Props) {
         sx={styles.tabButton(isUpload)}
       >
         <UploadIcon aria-hidden focusable={false} />
-        Завантажити
+        Завантаження
+      </Button>
+
+      <Button
+        color="secondary"
+        variant="text"
+        disableRipple
+        disableFocusRipple
+        disableElevation
+        onClick={() => onChange('USED')}
+        role="tab"
+        aria-selected={isUsed}
+        tabIndex={isUsed ? 0 : -1}
+        data-testid="MediaModalSwitcher-usedTab"
+        sx={styles.tabButton(isUsed)}
+      >
+        <FileClockIcon aria-hidden focusable={false} />
+        Використані
       </Button>
     </Box>
   );
