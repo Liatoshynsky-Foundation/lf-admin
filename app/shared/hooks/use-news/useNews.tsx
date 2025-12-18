@@ -8,7 +8,6 @@ import {
   type AllNewsQueryVariables,
   type CreateNewsMutation,
   type CreateNewsMutationVariables,
-  type DeleteNewsMutation,
   type DeleteNewsMutationVariables,
   type NewsCountQueryVariables,
   type PaginatedNewsQueryVariables,
@@ -124,12 +123,7 @@ export const useNewsMutations = () => {
 
   const deleteNews = useCallback(
     async (variables: DeleteNewsMutationVariables) => {
-      return safeMutate<DeleteNewsMutation, DeleteNewsMutationVariables>(
-        deleteMutate,
-        variables,
-        newsErrors.NETWORK_ERROR_DELETE,
-        newsErrors.FAILED_TO_DELETE
-      );
+      return safeMutate(deleteMutate, variables, newsErrors.NETWORK_ERROR_DELETE, newsErrors.FAILED_TO_DELETE);
     },
     [deleteMutate]
   );

@@ -46,3 +46,20 @@ export const newsErrors = {
   NETWORK_ERROR_DELETE: 'Network error while deleting news',
   FAILED_TO_DELETE: 'Failed to delete news'
 };
+
+export const MediaMentionsErrors = {
+  NETWORK_ERROR_CREATE: 'Network error while creating media mention',
+  FAILED_TO_CREATE: 'Failed to create media mention',
+  NETWORK_ERROR_UPDATE: 'Network error while updating media mention',
+  FAILED_TO_UPDATE: 'Failed to update media mention',
+  NETWORK_ERROR_PUBLISH: 'Network error while publishing media mention',
+  FAILED_TO_PUBLISH: 'Failed to publish media mention',
+  NETWORK_ERROR_UNPUBLISH: 'Network error while unpublishing media mention',
+  FAILED_TO_UNPUBLISH: 'Failed to unpublish media mention',
+  NETWORK_ERROR_ARCHIVE: 'Network error while archiving media mention',
+  FAILED_TO_ARCHIVE: 'Failed to archive media mention',
+  NETWORK_ERROR_HIDE: 'Network error while hiding media mention',
+  FAILED_TO_HIDE: 'Failed to hide media mention',
+  NETWORK_ERROR_DELETE: 'Network error while deleting media mention',
+  FAILED_TO_DELETE: 'Failed to delete media mention'
+};
