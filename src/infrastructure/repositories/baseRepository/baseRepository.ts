@@ -25,6 +25,7 @@ export type QueryFilters<TFilters extends BaseFilters> = Omit<
 
 export type BaseRepository<TEntity extends BaseEntity, TFilters extends BaseFilters = BaseFilters> = {
   findById(id: string): Promise<TEntity | null>;
+  findBySlug(slug: string): Promise<TEntity | null>;
   findAll(filters?: TFilters): Promise<TEntity[]>;
   update(id: string, input: Partial<Omit<TEntity, keyof BaseEntity>>): Promise<TEntity | null>;
   delete(id: string): Promise<boolean>;
@@ -60,6 +61,17 @@ export const createBaseRepository = <TEntity extends BaseEntity, TDbDoc, TFilter
       }
 
       const doc = await model.findById(id).lean<TDbDoc>();
+      return doc ? toEntity(doc) : null;
+    },
+
+    findBySlug: async (slug: string): Promise<TEntity | null> => {
+      await dbConnect();
+
+      if (!slug) {
+        return null;
+      }
+
+      const doc = await model.findOne({ slug } as FilterQuery<TDbDoc>).lean<TDbDoc>();
       return doc ? toEntity(doc) : null;
     },
 

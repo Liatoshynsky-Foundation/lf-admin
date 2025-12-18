@@ -10,7 +10,8 @@ import {
   MediaStatus
 } from '~/domain/entities/MediaMentions';
 import { MediaMentionsRepository } from '~/domain/repositories/mediaMentionsRepository';
-import { error, newError } from '~/interfaces/error';
+import { newError } from '~/interfaces/error';
+import { Result, WrapError, WrapSuccess } from '~/types/common';
 
 type MediaMentionDoc = {
   _id: Types.ObjectId;
@@ -75,47 +76,46 @@ export function newMediaMentionRepository({ model }: MediaMentionRepoDeps): Medi
     getDefaultSort: defaultSorting
   });
 
-  async function changeStatus(id: string, status: MediaStatus): Promise<void | error> {
+  async function changeStatus(id: string, status: MediaStatus): Promise<Result<void>> {
     try {
-      if (!Types.ObjectId.isValid(id)) return MediaMentionsServiceErrors.INVALID_ID;
+      if (!Types.ObjectId.isValid(id)) return WrapError(MediaMentionsServiceErrors.INVALID_ID);
 
       const res = await model.updateOne({ _id: id }, { $set: { status, updatedAt: new Date() } }).exec();
-      if (res.matchedCount === 0) return MediaMentionsServiceErrors.NOT_FOUND;
+      if (res.matchedCount === 0) return WrapError(MediaMentionsServiceErrors.NOT_FOUND);
       if (res.modifiedCount === 0)
         return status === MediaStatus.PUBLISHED
-          ? MediaMentionsServiceErrors.ALREADY_PUBLISHED
-          : MediaMentionsServiceErrors.ALREADY_DRAFT;
-
-      return;
+          ? WrapError(MediaMentionsServiceErrors.ALREADY_PUBLISHED)
+          : WrapError(MediaMentionsServiceErrors.ALREADY_DRAFT);
+      return WrapSuccess(undefined);
     } catch (e: any) {
-      return newError(e?.message ?? 'Unknown error during changeStatus');
+      return WrapError(newError(e?.message ?? 'Unknown error during changeStatus'));
     }
   }
 
   return {
-    async create(url: string): Promise<MediaMentionEntity | error> {
+    async create(mention: Omit<MediaMentionEntityRaw, 'status'>): Promise<Result<MediaMentionEntity>> {
       try {
         const doc = new model({
-          url,
+          ...mention,
           status: MediaStatus.DRAFT,
           createdAt: new Date(),
           updatedAt: new Date()
         } as Partial<MediaMentionDoc>);
         const saved = await doc.save();
-        return toEntity(saved as MediaMentionDoc);
+        return WrapSuccess(toEntity(saved as MediaMentionDoc));
       } catch (e: any) {
-        return newError(e?.message ?? 'Unknown error during create');
+        return WrapError(newError(e?.message ?? 'Unknown error during create'));
       }
     },
-    async publish(id: string): Promise<void | error> {
+    async publish(id: string): Promise<Result<void>> {
       return changeStatus(id, MediaStatus.PUBLISHED);
     },
-    async unpublish(id: string): Promise<void | error> {
+    async unpublish(id: string): Promise<Result<void>> {
       return changeStatus(id, MediaStatus.DRAFT);
     },
-    async addView(id: string): Promise<void | error> {
+    async addView(id: string): Promise<Result<void>> {
       try {
-        if (!Types.ObjectId.isValid(id)) return MediaMentionsServiceErrors.INVALID_ID;
+        if (!Types.ObjectId.isValid(id)) return WrapError(MediaMentionsServiceErrors.INVALID_ID);
         const res = await model
           .updateOne(
             { _id: id },
@@ -126,10 +126,10 @@ export function newMediaMentionRepository({ model }: MediaMentionRepoDeps): Medi
           )
           .exec();
 
-        if (res.matchedCount === 0) return MediaMentionsServiceErrors.NOT_FOUND;
-        return;
+        if (res.matchedCount === 0) return WrapError(MediaMentionsServiceErrors.NOT_FOUND);
+        return WrapSuccess(undefined);
       } catch (e: any) {
-        return newError(e?.message ?? 'Unknown error during addView');
+        return WrapError(newError(e?.message ?? 'Unknown error during addView'));
       }
     },
     ...baseRepo

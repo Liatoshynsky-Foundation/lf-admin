@@ -1,10 +1,10 @@
-import { MediaMentionEntity, MediaMentionFilters } from '../entities/MediaMentions';
+import { MediaMentionEntity, MediaMentionEntityRaw, MediaMentionFilters } from '../entities/MediaMentions';
 import { BaseRepository } from '~/infrastructure/repositories/baseRepository/baseRepository';
-import { error } from '~/interfaces/error';
+import { Result } from '~/types/common';
 
 export interface MediaMentionsRepository extends BaseRepository<MediaMentionEntity, MediaMentionFilters> {
-  create(url: string): Promise<MediaMentionEntity | error>;
-  publish(id: string): Promise<void | error>;
-  unpublish(id: string): Promise<void | error>;
-  addView(id: string): Promise<void | error>;
+  create(mention: Omit<MediaMentionEntityRaw, 'status'>): Promise<Result<MediaMentionEntity>>;
+  publish(id: string): Promise<Result<void>>;
+  unpublish(id: string): Promise<Result<void>>;
+  addView(id: string): Promise<Result<void>>;
 }
