@@ -44,6 +44,7 @@ describe('createBaseService', () => {
 
   beforeEach(() => {
     mockRepository = {
+      findBySlug: jest.fn(),
       findById: jest.fn(),
       findAll: jest.fn(),
       update: jest.fn(),
@@ -80,6 +81,29 @@ describe('createBaseService', () => {
 
       expect(result).toBeNull();
       expect(mockRepository.findById).toHaveBeenCalledWith(nonexistentId);
+    });
+  });
+
+  describe('getBySlug', () => {
+    it('should return entity when found', async () => {
+      const slug = 'test-slug';
+      mockRepository.findBySlug.mockResolvedValue(testEntity);
+
+      const result = await service.getBySlug(slug);
+
+      expect(result).toEqual(testEntity);
+      expect(mockRepository.findBySlug).toHaveBeenCalledWith(slug);
+      expect(mockRepository.findBySlug).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return null when entity not found', async () => {
+      const slug = 'nonexistent-slug';
+      mockRepository.findBySlug.mockResolvedValue(null);
+
+      const result = await service.getBySlug(slug);
+
+      expect(result).toBeNull();
+      expect(mockRepository.findBySlug).toHaveBeenCalledWith(slug);
     });
   });
 

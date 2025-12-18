@@ -72,6 +72,7 @@ describe('createBaseRepository', () => {
 
     mockModel = {
       findById: jest.fn(),
+      findOne: jest.fn(),
       find: jest.fn(),
       findByIdAndUpdate: jest.fn(),
       findByIdAndDelete: jest.fn(),
@@ -122,6 +123,48 @@ describe('createBaseRepository', () => {
 
       expect(mockedConnect).toHaveBeenCalled();
       expect(mockModel.findById).toHaveBeenCalledWith(mockId.toString());
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('findBySlug', () => {
+    it('should return entity when document is found by slug', async () => {
+      const mockSlug = 'john-doe';
+      const mockDoc = createMockDoc({
+        _id: createMockObjectId('507f1f77bc86cd799439011'),
+        name: 'John Doe'
+      });
+
+      const leanMock = jest.fn().mockResolvedValue(mockDoc);
+      (mockModel.findOne as jest.Mock).mockReturnValue({ lean: leanMock });
+
+      const repository = createBaseRepository({ model: mockModel, toEntity });
+      const result = await repository.findBySlug(mockSlug);
+
+      expect(mockedConnect).toHaveBeenCalled();
+      expect(mockModel.findOne).toHaveBeenCalledWith({ slug: mockSlug });
+      expect(leanMock).toHaveBeenCalled();
+      expect(result).toEqual({
+        id: mockDoc._id.toString(),
+        name: 'John Doe',
+        email: mockDoc.email,
+        age: mockDoc.age,
+        createdAt: mockDoc.createdAt.toISOString(),
+        updatedAt: mockDoc.updatedAt.toISOString()
+      });
+    });
+
+    it('should return null when document is not found by slug', async () => {
+      const mockSlug = 'nonexistent-slug';
+      const leanMock = jest.fn().mockResolvedValue(null);
+
+      (mockModel.findOne as jest.Mock).mockReturnValue({ lean: leanMock });
+
+      const repository = createBaseRepository({ model: mockModel, toEntity });
+      const result = await repository.findBySlug(mockSlug);
+
+      expect(mockedConnect).toHaveBeenCalled();
+      expect(mockModel.findOne).toHaveBeenCalledWith({ slug: mockSlug });
       expect(result).toBeNull();
     });
   });

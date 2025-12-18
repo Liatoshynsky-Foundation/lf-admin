@@ -7,6 +7,7 @@ import {
 
 export type BaseService<TEntity extends BaseEntity, TFilters extends BaseFilters = BaseFilters> = {
   getById(id: string): Promise<TEntity | null>;
+  getBySlug(slug: string): Promise<TEntity | null>;
   getAll(filters?: TFilters): Promise<TEntity[]>;
   update(id: string, input: Partial<Omit<TEntity, keyof BaseEntity>>): Promise<TEntity>;
   delete(id: string): Promise<boolean>;
@@ -35,6 +36,10 @@ export const createBaseService = <TEntity extends BaseEntity, TFilters extends B
 
     getAll: async (filters?: TFilters): Promise<TEntity[]> => {
       return repository.findAll(filters);
+    },
+
+    getBySlug: async (slug: string): Promise<TEntity | null> => {
+      return repository.findBySlug(slug);
     },
 
     update: async (id: string, input: Partial<Omit<TEntity, keyof BaseEntity>>): Promise<TEntity> => {

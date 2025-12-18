@@ -83,6 +83,7 @@ export const NewsService = ({ newsRepository }: { newsRepository: Repo }) => {
 
   return {
     getNewsById: baseService.getById,
+    getNewsBySlug: baseService.getBySlug,
     getAllNews: baseService.getAll,
     getNewsCount: baseService.getCount,
     deleteNews: baseService.delete,
@@ -142,10 +143,6 @@ export const NewsService = ({ newsRepository }: { newsRepository: Repo }) => {
       };
 
       return newsRepository.create(newsData);
-    },
-
-    getNewsBySlug: async (slug: string): Promise<News | null> => {
-      return newsRepository.findBySlug(slug);
     },
 
     getPublishedNews: async (filters?: Omit<NewsFilters, 'status'>): Promise<News[]> => {

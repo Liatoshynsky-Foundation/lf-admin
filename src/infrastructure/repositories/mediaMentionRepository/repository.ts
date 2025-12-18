@@ -101,7 +101,9 @@ export function newMediaMentionRepository({ model }: MediaMentionRepoDeps): Medi
           createdAt: new Date(),
           updatedAt: new Date()
         } as Partial<MediaMentionDoc>);
+
         const saved = await doc.save();
+
         return WrapSuccess(toEntity(saved as MediaMentionDoc));
       } catch (e: any) {
         return WrapError(newError(e?.message ?? 'Unknown error during create'));
