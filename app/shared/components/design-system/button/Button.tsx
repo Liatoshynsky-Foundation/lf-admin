@@ -5,6 +5,7 @@ import { forwardRef, ReactNode } from 'react';
 import { buttonBaseStyles, sizeStyles, typographyStyles, variantStyles } from './Button.styles';
 
 type Size = 'large' | 'medium' | 'small';
+
 type Variant = 'filled' | 'outlined' | 'text';
 
 type BaseButtonProps = {
@@ -44,7 +45,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    const isDisabled = Boolean(disabled) || Boolean(loading);
+    const isDisabled = disabled ?? loading;
 
     const buttonContent = label ?? children;
 
