@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, IconButton } from '@mui/material';
-import React, { useEffect, useReducer, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 
 import { MediaModalContainer } from './components/container/MediaModalContainer';
 import { MediaModalSwitcher } from './components/switcher/MediaModalSwitcher';
@@ -21,8 +21,6 @@ import ArrowLeftIcon from '~/public/icons/arrowLeft.svg';
 import IterationIcon from '~/public/icons/iteration.svg';
 import Button from '~/shared/components/design-system/button/Button';
 
-type CropState = 'INITIAL' | 'RESIZED';
-
 export type MediaModalProps = {
   open: boolean;
   onClose: () => void;
@@ -34,7 +32,8 @@ type State = {
   tab: MediaModalTab;
   step: MediaModalStep;
   selected: SelectedMedia | null;
-  cropState: CropState;
+  hasCropChanges: boolean;
+  resetSeq: number;
 };
 
 type Action =
@@ -43,7 +42,7 @@ type Action =
   | { type: 'PICK_AND_CROP'; selected: SelectedMedia }
   | { type: 'BACK' }
   | { type: 'RESET_CROP' }
-  | { type: 'MARK_CROP_RESIZED' };
+  | { type: 'SET_CROP_CHANGES'; hasCropChanges: boolean };
 
 const tabFromSelected = (s: SelectedMedia | null): MediaModalTab | null => {
   if (!s) return null;
@@ -63,7 +62,8 @@ const buildInitialState = (initial?: MediaModalOpenState): State => {
     tab,
     step,
     selected: initialSelected,
-    cropState: 'INITIAL'
+    hasCropChanges: false,
+    resetSeq: 0
   };
 };
 
@@ -71,23 +71,23 @@ function reducer(state: State, action: Action): State {
   if (action.type === 'OPEN') return buildInitialState(action.initial);
 
   if (action.type === 'SET_TAB') {
-    return { ...state, tab: action.tab, step: 'SELECT', selected: null, cropState: 'INITIAL' };
+    return { ...state, tab: action.tab, step: 'SELECT', selected: null, hasCropChanges: false, resetSeq: 0 };
   }
 
   if (action.type === 'PICK_AND_CROP') {
-    return { ...state, selected: action.selected, step: 'CROP', cropState: 'INITIAL' };
+    return { ...state, selected: action.selected, step: 'CROP', hasCropChanges: false, resetSeq: 0 };
   }
 
   if (action.type === 'BACK') {
-    return { ...state, step: 'SELECT' };
+    return { ...state, step: 'SELECT', hasCropChanges: false };
   }
 
   if (action.type === 'RESET_CROP') {
-    return { ...state, cropState: 'INITIAL' };
+    return { ...state, hasCropChanges: false, resetSeq: state.resetSeq + 1 };
   }
 
-  if (action.type === 'MARK_CROP_RESIZED') {
-    return state.cropState === 'RESIZED' ? state : { ...state, cropState: 'RESIZED' };
+  if (action.type === 'SET_CROP_CHANGES') {
+    return state.hasCropChanges === action.hasCropChanges ? state : { ...state, hasCropChanges: action.hasCropChanges };
   }
 
   return state;
@@ -108,6 +108,11 @@ export function MediaModal({ open, onClose, onApply, initial }: MediaModalProps)
   useEffect(() => {
     latestInitialRef.current = initial;
   }, [initial]);
+
+  const isApplyingRef = useRef(isApplying);
+  useEffect(() => {
+    isApplyingRef.current = isApplying;
+  }, [isApplying]);
 
   const applySeqRef = useRef(0);
 
@@ -166,6 +171,11 @@ export function MediaModal({ open, onClose, onApply, initial }: MediaModalProps)
     }
   };
 
+  const handleCropChanges = useCallback((hasCropChanges: boolean) => {
+    if (isApplyingRef.current) return;
+    dispatch({ type: 'SET_CROP_CHANGES', hasCropChanges });
+  }, []);
+
   const isCrop = state.step === 'CROP';
   const selectedName = state.selected?.name ?? '';
 
@@ -189,14 +199,17 @@ export function MediaModal({ open, onClose, onApply, initial }: MediaModalProps)
     />
   );
 
+  const isResetDisabled = isApplying || !state.hasCropChanges;
+
   const headerRight = isCrop ? (
     <IconButton
+      disabled={isResetDisabled}
       onClick={() => {
-        if (isApplying) return;
+        if (isResetDisabled) return;
         dispatch({ type: 'RESET_CROP' });
       }}
-      aria-label="reverse"
-      data-testid="MediaModal-reverseButton"
+      aria-label="reset"
+      data-testid="MediaModal-resetButton"
       sx={styles.headerIconButton}
     >
       <IterationIcon aria-hidden focusable={false} width={24} height={24} />
@@ -242,13 +255,7 @@ export function MediaModal({ open, onClose, onApply, initial }: MediaModalProps)
   ) : null;
 
   const body = isCrop ? (
-    <CropView
-      cropState={state.cropState}
-      onSimulateResize={() => {
-        if (isApplying) return;
-        dispatch({ type: 'MARK_CROP_RESIZED' });
-      }}
-    />
+    <CropView resetSeq={state.resetSeq} onCropChanges={handleCropChanges} />
   ) : state.tab === 'GALLERY' ? (
     <GalleryView
       selected={state.selected?.kind === 'gallery' ? state.selected : null}

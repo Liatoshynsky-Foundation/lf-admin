@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MouseEventHandler, ReactNode, SVGProps } from 'react';
+import React, { MouseEventHandler, ReactNode, SVGProps } from 'react';
 
 import type { MediaModalTab } from '../../MediaModal.types';
 import { MediaModalSwitcher } from './MediaModalSwitcher';
@@ -84,10 +84,10 @@ describe('MediaModalSwitcher', () => {
     expect(screen.getByTestId('MediaModalSwitcher-uploadTab')).toHaveAttribute('aria-selected', 'false');
     expect(screen.getByTestId('MediaModalSwitcher-usedTab')).toHaveAttribute('aria-selected', 'false');
 
-    await user.click(screen.getByRole('tab', { name: 'Завантаження' }));
+    await user.click(screen.getByTestId('MediaModalSwitcher-uploadTab'));
     expect(onChange).toHaveBeenCalledWith('UPLOAD');
 
-    await user.click(screen.getByRole('tab', { name: 'Використані' }));
+    await user.click(screen.getByTestId('MediaModalSwitcher-usedTab'));
     expect(onChange).toHaveBeenCalledWith('USED');
   });
 });

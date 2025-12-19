@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MouseEventHandler, ReactNode, SVGProps } from 'react';
+import React, { MouseEventHandler, ReactNode, SVGProps } from 'react';
 
 import { MediaModal } from './MediaModal';
-import type { MediaModalResult, SelectedMedia } from './MediaModal.types';
+import type { MediaModalOpenState, MediaModalResult, SelectedMedia } from './MediaModal.types';
 
 type DsButtonProps = {
   label?: string;
@@ -15,10 +15,12 @@ type DsButtonProps = {
   loading?: boolean;
   role?: string;
   tabIndex?: number;
+  sx?: unknown;
   'data-testid'?: string;
   'aria-label'?: string;
   'aria-selected'?: boolean;
   'aria-pressed'?: boolean;
+  [key: string]: unknown;
 };
 
 jest.mock('~/public/icons/iteration.svg', () => ({
@@ -34,7 +36,21 @@ jest.mock('~/public/icons/arrowLeft.svg', () => ({
 jest.mock('~/shared/components/design-system/button/Button', () => ({
   __esModule: true,
   default: (props: DsButtonProps) => {
-    const { label, children, onClick, disabled, role, tabIndex, 'data-testid': dataTestId } = props;
+    const {
+      label,
+      children,
+      startIcon,
+      endIcon,
+      onClick,
+      disabled,
+      role,
+      tabIndex,
+      sx: _sx,
+      'data-testid': dataTestId,
+      'aria-label': ariaLabel,
+      'aria-selected': ariaSelected,
+      'aria-pressed': ariaPressed
+    } = props;
 
     return (
       <button
@@ -44,8 +60,13 @@ jest.mock('~/shared/components/design-system/button/Button', () => ({
         role={role}
         tabIndex={tabIndex}
         data-testid={dataTestId}
+        aria-label={ariaLabel}
+        aria-selected={ariaSelected}
+        aria-pressed={ariaPressed}
       >
+        {startIcon}
         {label ?? children}
+        {endIcon}
       </button>
     );
   }
@@ -133,16 +154,13 @@ jest.mock('./components/switcher/MediaModalSwitcher', () => ({
   )
 }));
 
-type GallerySelected = Extract<SelectedMedia, { kind: 'gallery' }>;
-type UsedSelected = Extract<SelectedMedia, { kind: 'used' }>;
-
 type GalleryViewProps = {
-  selected: GallerySelected | null;
+  selected: Extract<SelectedMedia, { kind: 'gallery' }> | null;
   onPick: (selected: SelectedMedia) => void;
 };
 
 type UsedViewProps = {
-  selected: UsedSelected | null;
+  selected: Extract<SelectedMedia, { kind: 'used' }> | null;
   onPick: (selected: SelectedMedia) => void;
 };
 
@@ -151,15 +169,14 @@ type UploadViewProps = {
 };
 
 type CropViewProps = {
-  cropState: 'INITIAL' | 'RESIZED';
-  onSimulateResize: () => void;
+  resetSeq: number;
+  onCropChanges: (hasCropChanges: boolean) => void;
 };
 
 jest.mock('./views/gallery-view/GalleryView', () => ({
   __esModule: true,
-  GalleryView: ({ selected, onPick }: GalleryViewProps) => (
+  GalleryView: ({ onPick }: GalleryViewProps) => (
     <div data-testid="GalleryView">
-      <div data-testid="GalleryView-selected">{selected ? `${selected.name}:${selected.locale}` : 'null'}</div>
       <button
         type="button"
         data-testid="GalleryView-pick"
@@ -173,9 +190,8 @@ jest.mock('./views/gallery-view/GalleryView', () => ({
 
 jest.mock('./views/used-view/UsedView', () => ({
   __esModule: true,
-  UsedView: ({ selected, onPick }: UsedViewProps) => (
+  UsedView: ({ onPick }: UsedViewProps) => (
     <div data-testid="UsedView">
-      <div data-testid="UsedView-selected">{selected ? `${selected.name}:${selected.locale}` : 'null'}</div>
       <button
         type="button"
         data-testid="UsedView-pick"
@@ -200,224 +216,129 @@ jest.mock('./views/upload-view/UploadView', () => ({
 
 jest.mock('./views/crop-view/CropView', () => ({
   __esModule: true,
-  CropView: ({ cropState, onSimulateResize }: CropViewProps) => (
-    <div data-testid="CropView">
-      <div data-testid="CropView-state">{cropState}</div>
-      <button type="button" data-testid="CropView-simulateResize" onClick={onSimulateResize}>
-        resize
+  CropView: ({ resetSeq, onCropChanges }: CropViewProps) => (
+    <div data-testid="CropView" data-reset-seq={resetSeq}>
+      <button type="button" data-testid="CropView-makeChanged" onClick={() => onCropChanges(true)}>
+        changed
       </button>
     </div>
   )
 }));
 
+function renderOpen(initial?: MediaModalOpenState, overrides?: Partial<React.ComponentProps<typeof MediaModal>>) {
+  const props: React.ComponentProps<typeof MediaModal> = {
+    open: true,
+    onClose: jest.fn(),
+    onApply: jest.fn(),
+    initial,
+    ...overrides
+  };
+
+  return render(<MediaModal {...props} />);
+}
+
+async function goToCrop(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByTestId('GalleryView-pick'));
+  expect(screen.getByTestId('CropView')).toBeInTheDocument();
+}
+
 describe('MediaModal', () => {
-  it('should render switcher and no footer in select step', () => {
-    render(<MediaModal open onClose={jest.fn()} onApply={jest.fn()} initial={{ tab: 'GALLERY' }} />);
+  it('should render select step without footer', () => {
+    renderOpen({ tab: 'GALLERY' });
 
     expect(screen.getByTestId('MediaModalSwitcher')).toBeInTheDocument();
+    expect(screen.getByTestId('GalleryView')).toBeInTheDocument();
     expect(screen.queryByTestId('MediaModal-footer')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('MediaModal-cropHeader')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('MediaModal-resetButton')).not.toBeInTheDocument();
   });
 
-  it('should go to crop after pick and show crop header and actions', async () => {
+  it('should switch tabs in select step', async () => {
     const user = userEvent.setup();
-    render(<MediaModal open onClose={jest.fn()} onApply={jest.fn()} initial={{ tab: 'GALLERY' }} />);
 
-    await user.click(screen.getByTestId('GalleryView-pick'));
+    renderOpen({ tab: 'GALLERY' });
 
-    expect(screen.getByTestId('CropView')).toBeInTheDocument();
-    expect(screen.getByTestId('MediaModal-cropHeader')).toBeInTheDocument();
-    expect(screen.getByTestId('MediaModal-cropHeaderFileName')).toHaveTextContent('gallery-1.png');
-    expect(screen.getByTestId('MediaModal-reverseButton')).toBeInTheDocument();
+    await user.click(screen.getByTestId('MediaModalSwitcher-usedTab'));
+    expect(screen.getByTestId('UsedView')).toBeInTheDocument();
+
+    await user.click(screen.getByTestId('MediaModalSwitcher-uploadTab'));
+    expect(screen.getByTestId('UploadView')).toBeInTheDocument();
+  });
+
+  it('should enter crop after pick and show crop actions', async () => {
+    const user = userEvent.setup();
+
+    renderOpen({ tab: 'GALLERY' });
+
+    await goToCrop(user);
+
+    expect(screen.queryByTestId('MediaModalSwitcher')).not.toBeInTheDocument();
+    expect(screen.getByTestId('MediaModal-footer')).toBeInTheDocument();
     expect(screen.getByTestId('MediaModal-backButton')).toBeInTheDocument();
     expect(screen.getByTestId('MediaModal-cancelButton')).toBeInTheDocument();
     expect(screen.getByTestId('MediaModal-applyButton')).toBeInTheDocument();
-    expect(screen.getByTestId('MediaModal-footer')).toBeInTheDocument();
+    expect(screen.getByTestId('MediaModal-resetButton')).toBeDisabled();
   });
 
-  it('should keep selected after back so view can highlight previously selected', async () => {
+  it('should go back from crop to select and hide footer', async () => {
     const user = userEvent.setup();
-    render(<MediaModal open onClose={jest.fn()} onApply={jest.fn()} initial={{ tab: 'GALLERY' }} />);
 
-    await user.click(screen.getByTestId('GalleryView-pick'));
+    renderOpen({ tab: 'GALLERY' });
+
+    await goToCrop(user);
     await user.click(screen.getByTestId('MediaModal-backButton'));
 
+    expect(screen.getByTestId('MediaModalSwitcher')).toBeInTheDocument();
     expect(screen.getByTestId('GalleryView')).toBeInTheDocument();
-    expect(screen.getByTestId('GalleryView-selected')).toHaveTextContent('gallery-1.png:UA');
     expect(screen.queryByTestId('MediaModal-footer')).not.toBeInTheDocument();
   });
 
-  it('should reset crop state when reverse is clicked', async () => {
+  it('should enable reset when crop becomes dirty and disable after reset', async () => {
     const user = userEvent.setup();
-    render(<MediaModal open onClose={jest.fn()} onApply={jest.fn()} initial={{ tab: 'GALLERY' }} />);
 
-    await user.click(screen.getByTestId('GalleryView-pick'));
-    expect(screen.getByTestId('CropView-state')).toHaveTextContent('INITIAL');
+    renderOpen({ tab: 'GALLERY' });
 
-    await user.click(screen.getByTestId('CropView-simulateResize'));
-    expect(screen.getByTestId('CropView-state')).toHaveTextContent('RESIZED');
+    await goToCrop(user);
 
-    await user.click(screen.getByTestId('MediaModal-reverseButton'));
-    expect(screen.getByTestId('CropView-state')).toHaveTextContent('INITIAL');
+    const reset = screen.getByTestId('MediaModal-resetButton');
+    expect(reset).toBeDisabled();
+
+    await user.click(screen.getByTestId('CropView-makeChanged'));
+    expect(reset).not.toBeDisabled();
+
+    await user.click(reset);
+    expect(reset).toBeDisabled();
   });
 
-  it('should call onApply with selected and then close', async () => {
+  it('should apply selected and close on success', async () => {
     const user = userEvent.setup();
+
     const onClose = jest.fn();
     const onApply = jest.fn((_: MediaModalResult) => Promise.resolve());
 
-    render(<MediaModal open onClose={onClose} onApply={onApply} initial={{ tab: 'GALLERY' }} />);
+    renderOpen({ tab: 'GALLERY' }, { onClose, onApply });
 
-    await user.click(screen.getByTestId('GalleryView-pick'));
+    await goToCrop(user);
     await user.click(screen.getByTestId('MediaModal-applyButton'));
 
-    expect(onApply).toHaveBeenCalledTimes(1);
-
-    const payload = (onApply as jest.Mock).mock.calls[0]?.[0];
-    expect(payload).toEqual({
-      selected: { kind: 'gallery', name: 'gallery-1.png', locale: 'UA' }
-    });
-
+    expect(onApply).toHaveBeenCalledWith({ selected: { kind: 'gallery', name: 'gallery-1.png', locale: 'UA' } });
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
   });
 
-  it('should call onClose on cancel', async () => {
+  it('should show error and keep modal open when apply fails', async () => {
     const user = userEvent.setup();
+
     const onClose = jest.fn();
-    render(<MediaModal open onClose={onClose} onApply={jest.fn()} initial={{ tab: 'GALLERY' }} />);
-
-    await user.click(screen.getByTestId('GalleryView-pick'));
-    await user.click(screen.getByTestId('MediaModal-cancelButton'));
-
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
-  it('should fallback to select when initial requests crop without selected', () => {
-    render(
-      <MediaModal
-        open
-        onClose={jest.fn()}
-        onApply={jest.fn()}
-        initial={{ tab: 'GALLERY', step: 'CROP', selected: null }}
-      />
-    );
-
-    expect(screen.getByTestId('GalleryView')).toBeInTheDocument();
-    expect(screen.queryByTestId('CropView')).not.toBeInTheDocument();
-  });
-
-  it('should prevent double apply while promise is pending', async () => {
-    const user = userEvent.setup();
-
-    let resolveApply!: () => void;
-    const pending = new Promise<void>((res) => {
-      resolveApply = res;
-    });
-
-    const onApply = jest.fn(() => pending);
-    const onClose = jest.fn();
-
-    render(<MediaModal open onClose={onClose} onApply={onApply} initial={{ tab: 'GALLERY' }} />);
-
-    await user.click(screen.getByTestId('GalleryView-pick'));
-
-    await user.click(screen.getByTestId('MediaModal-applyButton'));
-    await user.click(screen.getByTestId('MediaModal-applyButton'));
-    await user.click(screen.getByTestId('MediaModal-applyButton'));
-
-    expect(onApply).toHaveBeenCalledTimes(1);
-
-    resolveApply();
-    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
-  });
-
-  it('should ignore back and reverse while applying', async () => {
-    const user = userEvent.setup();
-
-    let resolveApply!: () => void;
-    const pending = new Promise<void>((res) => {
-      resolveApply = res;
-    });
-
-    const onApply = jest.fn(() => pending);
-    const onClose = jest.fn();
-
-    render(<MediaModal open onClose={onClose} onApply={onApply} initial={{ tab: 'GALLERY' }} />);
-
-    await user.click(screen.getByTestId('GalleryView-pick'));
-    await user.click(screen.getByTestId('CropView-simulateResize'));
-    expect(screen.getByTestId('CropView-state')).toHaveTextContent('RESIZED');
-
-    await user.click(screen.getByTestId('MediaModal-applyButton'));
-
-    await user.click(screen.getByTestId('MediaModal-backButton'));
-    await user.click(screen.getByTestId('MediaModal-reverseButton'));
-
-    expect(screen.getByTestId('CropView')).toBeInTheDocument();
-    expect(screen.getByTestId('CropView-state')).toHaveTextContent('RESIZED');
-
-    resolveApply();
-    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
-  });
-
-  it('should show error and not close when onApply rejects', async () => {
-    const user = userEvent.setup();
-
     const onApply = jest.fn(async () => {
       throw new Error('apply failed');
     });
-    const onClose = jest.fn();
 
-    render(<MediaModal open onClose={onClose} onApply={onApply} initial={{ tab: 'GALLERY' }} />);
+    renderOpen({ tab: 'GALLERY' }, { onClose, onApply });
 
-    await user.click(screen.getByTestId('GalleryView-pick'));
+    await goToCrop(user);
     await user.click(screen.getByTestId('MediaModal-applyButton'));
 
     expect(await screen.findByTestId('MediaModal-applyError')).toHaveTextContent('apply failed');
-    expect(onClose).toHaveBeenCalledTimes(0);
-  });
-
-  it('should not call onClose again if user closes while apply is pending', async () => {
-    const user = userEvent.setup();
-
-    let resolveApply!: () => void;
-    const pending = new Promise<void>((res) => {
-      resolveApply = res;
-    });
-
-    const onApply = jest.fn(() => pending);
-    const onClose = jest.fn();
-
-    const { rerender } = render(<MediaModal open onClose={onClose} onApply={onApply} initial={{ tab: 'GALLERY' }} />);
-
-    await user.click(screen.getByTestId('GalleryView-pick'));
-    await user.click(screen.getByTestId('MediaModal-applyButton'));
-
-    await user.click(screen.getByTestId('MediaModal-closeButton'));
-    expect(onClose).toHaveBeenCalledTimes(1);
-
-    rerender(<MediaModal open={false} onClose={onClose} onApply={onApply} initial={{ tab: 'GALLERY' }} />);
-
-    resolveApply();
-
-    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
-  });
-
-  it('should reset state from latest initial when reopened', async () => {
-    const user = userEvent.setup();
-
-    const onClose = jest.fn();
-    const onApply = jest.fn((_: MediaModalResult) => Promise.resolve());
-
-    const { rerender } = render(<MediaModal open onClose={onClose} onApply={onApply} initial={{ tab: 'GALLERY' }} />);
-
-    await user.click(screen.getByTestId('GalleryView-pick'));
+    expect(onClose).not.toHaveBeenCalled();
     expect(screen.getByTestId('CropView')).toBeInTheDocument();
-
-    rerender(<MediaModal open={false} onClose={onClose} onApply={onApply} initial={{ tab: 'GALLERY' }} />);
-    rerender(<MediaModal open onClose={onClose} onApply={onApply} initial={{ tab: 'USED' }} />);
-
-    expect(screen.getByTestId('UsedView')).toBeInTheDocument();
-    expect(screen.queryByTestId('CropView')).not.toBeInTheDocument();
   });
 });

@@ -23,6 +23,9 @@ export const styles = {
     color: '#FCFCFC',
     '&:hover': {
       backgroundColor: 'rgba(255,255,255,0.08)'
+    },
+    '&.Mui-disabled': {
+      color: 'rgba(193, 201, 214, 0.6)'
     }
   },
 
