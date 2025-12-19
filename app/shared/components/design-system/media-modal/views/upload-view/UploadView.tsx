@@ -3,14 +3,15 @@
 import { Box } from '@mui/material';
 import { useRef } from 'react';
 
-import type { SelectedMedia } from '../../MediaModal.types';
+import type { UploadMedia } from '../../MediaModal.types';
 import Button from '~/shared/components/design-system/button/Button';
 
 type Props = {
-  onPick: (selected: SelectedMedia) => void;
+  selected: UploadMedia | null;
+  onPick: (selected: UploadMedia) => void;
 };
 
-export function UploadView({ onPick }: Props) {
+export function UploadView({ selected: _selected, onPick }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -30,12 +31,19 @@ export function UploadView({ onPick }: Props) {
         accept="image/*"
         data-testid="UploadView-fileInput"
         onChange={(e) => {
-          const file = e.target.files?.[0];
+          const file = e.currentTarget.files?.[0];
           if (!file) return;
 
           e.currentTarget.value = '';
 
-          onPick({ kind: 'upload', name: file.name });
+          const id = `${file.lastModified}-${file.name}`;
+
+          onPick({
+            kind: 'upload',
+            id,
+            fileName: file.name,
+            file
+          });
         }}
       />
     </Box>

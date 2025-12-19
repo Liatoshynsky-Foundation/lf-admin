@@ -2,20 +2,18 @@
 
 import { Box } from '@mui/material';
 
-import type { MediaLocale, SelectedMedia } from '../../MediaModal.types';
+import type { GalleryMedia } from '../../MediaModal.types';
 import Button from '~/shared/components/design-system/button/Button';
 
-type SelectedGallery = { kind: 'gallery'; name: string; locale: MediaLocale };
-
 type Props = {
-  selected: SelectedGallery | null;
-  onPick: (selected: SelectedMedia) => void;
+  selected: GalleryMedia | null;
+  onPick: (selected: GalleryMedia) => void;
 };
 
-const demoItems: Array<{ name: string; locale: MediaLocale }> = [
-  { name: 'gallery-1.png', locale: 'UA' },
-  { name: 'gallery-1.png', locale: 'EN' },
-  { name: 'gallery-2.png', locale: 'UA' }
+const demoItems: Array<GalleryMedia> = [
+  { kind: 'gallery', id: 'gallery-1-uk', fileName: 'gallery-1.png', src: '/demo/gallery-1.png', locale: 'uk' },
+  { kind: 'gallery', id: 'gallery-1-en', fileName: 'gallery-1.png', src: '/demo/gallery-1.png', locale: 'en' },
+  { kind: 'gallery', id: 'gallery-2-uk', fileName: 'gallery-2.png', src: '/demo/gallery-2.png', locale: 'uk' }
 ];
 
 export function GalleryView({ selected, onPick }: Props) {
@@ -23,17 +21,17 @@ export function GalleryView({ selected, onPick }: Props) {
     <Box data-testid="GalleryView" sx={{ height: '100%' }}>
       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
         {demoItems.map((it) => {
-          const isActive = Boolean(selected && selected.name === it.name && selected.locale === it.locale);
+          const isActive = Boolean(selected && selected.id === it.id);
 
           return (
             <Button
-              key={`${it.name}-${it.locale}`}
+              key={it.id}
               color="secondary"
               variant={isActive ? 'filled' : 'outlined'}
-              label={`${it.name} (${it.locale})`}
-              data-testid={`GalleryView-item-${it.name}-${it.locale}`}
+              label={`${it.fileName} (${it.locale})`}
+              data-testid={`GalleryView-item-${it.id}`}
               aria-pressed={isActive}
-              onClick={() => onPick({ kind: 'gallery', name: it.name, locale: it.locale })}
+              onClick={() => onPick(it)}
             />
           );
         })}

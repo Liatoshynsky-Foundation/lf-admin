@@ -35,7 +35,14 @@ export default function MediaModalPlaygroundPage() {
           onClick={openWith({
             tab: 'GALLERY',
             step: 'CROP',
-            selected: { kind: 'gallery', name: 'gallery-1.png', locale: 'UA' }
+            selected: {
+              kind: 'gallery',
+              id: 'gallery-1-uk',
+              fileName: 'gallery-1.png',
+              src: '/demo/gallery-1.png',
+              locale: 'uk'
+            },
+            crop: null
           })}
         />
         <Button

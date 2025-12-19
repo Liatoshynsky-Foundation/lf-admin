@@ -2,8 +2,9 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { MouseEventHandler, ReactNode, SVGProps } from 'react';
 
-import { MediaModal } from './MediaModal';
-import type { MediaModalOpenState, MediaModalResult, SelectedMedia } from './MediaModal.types';
+import type { MediaModalRenderers } from './MediaModal.renderers';
+import type { CropResult, MediaModalOpenState, MediaModalResult, MediaModalTab } from './MediaModal.types';
+import { MediaModalFlow } from './MediaModalFlow';
 
 type DsButtonProps = {
   label?: string;
@@ -20,6 +21,9 @@ type DsButtonProps = {
   'aria-label'?: string;
   'aria-selected'?: boolean;
   'aria-pressed'?: boolean;
+  disableRipple?: boolean;
+  disableFocusRipple?: boolean;
+  disableElevation?: boolean;
   [key: string]: unknown;
 };
 
@@ -133,8 +137,8 @@ jest.mock('./components/container/MediaModalContainer', () => ({
 }));
 
 type SwitcherProps = {
-  value: string;
-  onChange: (v: string) => void;
+  value: MediaModalTab;
+  onChange: (v: MediaModalTab) => void;
 };
 
 jest.mock('./components/switcher/MediaModalSwitcher', () => ({
@@ -154,95 +158,118 @@ jest.mock('./components/switcher/MediaModalSwitcher', () => ({
   )
 }));
 
-type GalleryViewProps = {
-  selected: Extract<SelectedMedia, { kind: 'gallery' }> | null;
-  onPick: (selected: SelectedMedia) => void;
+const changedCrop: CropResult = {
+  rect: { x: 10, y: 20, width: 100, height: 120 }
 };
 
-type UsedViewProps = {
-  selected: Extract<SelectedMedia, { kind: 'used' }> | null;
-  onPick: (selected: SelectedMedia) => void;
+const baselineCrop: CropResult = {
+  rect: { x: 1, y: 2, width: 3, height: 4 }
 };
 
-type UploadViewProps = {
-  onPick: (selected: SelectedMedia) => void;
-};
-
-type CropViewProps = {
-  resetSeq: number;
-  onCropChanges: (hasCropChanges: boolean) => void;
-};
-
-jest.mock('./views/gallery-view/GalleryView', () => ({
-  __esModule: true,
-  GalleryView: ({ onPick }: GalleryViewProps) => (
+const createRenderers = (): MediaModalRenderers => ({
+  gallery: ({ onPick }) => (
     <div data-testid="GalleryView">
       <button
         type="button"
         data-testid="GalleryView-pick"
-        onClick={() => onPick({ kind: 'gallery', name: 'gallery-1.png', locale: 'UA' })}
+        onClick={() =>
+          onPick({
+            kind: 'gallery',
+            id: 'gallery-1-uk',
+            fileName: 'gallery-1.png',
+            src: '/demo/gallery-1.png',
+            locale: 'uk'
+          })
+        }
       >
         pick
       </button>
     </div>
-  )
-}));
+  ),
 
-jest.mock('./views/used-view/UsedView', () => ({
-  __esModule: true,
-  UsedView: ({ onPick }: UsedViewProps) => (
+  upload: ({ selected, onPick }) => (
+    <div data-testid="UploadView" data-selected={selected ? selected.fileName : 'none'}>
+      <button
+        type="button"
+        data-testid="UploadView-pick"
+        onClick={() =>
+          onPick({
+            kind: 'upload',
+            id: 'upload-1',
+            fileName: 'a.png',
+            file: new File(['x'], 'a.png', { type: 'image/png' })
+          })
+        }
+      >
+        pick
+      </button>
+    </div>
+  ),
+
+  used: ({ onPick }) => (
     <div data-testid="UsedView">
       <button
         type="button"
         data-testid="UsedView-pick"
-        onClick={() => onPick({ kind: 'used', name: 'used-1.png', locale: 'EN' })}
+        onClick={() =>
+          onPick({
+            kind: 'used',
+            id: 'used-1-en',
+            fileName: 'used-1.png',
+            src: '/demo/used-1.png',
+            locale: 'en'
+          })
+        }
       >
         pick
       </button>
     </div>
-  )
-}));
+  ),
 
-jest.mock('./views/upload-view/UploadView', () => ({
-  __esModule: true,
-  UploadView: ({ onPick }: UploadViewProps) => (
-    <div data-testid="UploadView">
-      <button type="button" data-testid="UploadView-pick" onClick={() => onPick({ kind: 'upload', name: 'a.png' })}>
-        pick
+  crop: ({ crop, resetSeq, onBaseline, onChange }) => (
+    <div
+      data-testid="CropView"
+      data-reset-seq={resetSeq}
+      data-crop={crop ? JSON.stringify(crop) : 'null'}
+      data-crop-state={crop ? 'set' : 'empty'}
+    >
+      <button type="button" data-testid="CropView-setBaseline" onClick={() => onBaseline(baselineCrop)}>
+        baseline
       </button>
-    </div>
-  )
-}));
-
-jest.mock('./views/crop-view/CropView', () => ({
-  __esModule: true,
-  CropView: ({ resetSeq, onCropChanges }: CropViewProps) => (
-    <div data-testid="CropView" data-reset-seq={resetSeq}>
-      <button type="button" data-testid="CropView-makeChanged" onClick={() => onCropChanges(true)}>
+      <button type="button" data-testid="CropView-setCrop" onClick={() => onChange(changedCrop)}>
         changed
       </button>
+      <button type="button" data-testid="CropView-clearCrop" onClick={() => onChange(null)}>
+        clear
+      </button>
     </div>
   )
-}));
+});
 
-function renderOpen(initial?: MediaModalOpenState, overrides?: Partial<React.ComponentProps<typeof MediaModal>>) {
-  const props: React.ComponentProps<typeof MediaModal> = {
+function renderOpen(initial?: MediaModalOpenState, overrides?: Partial<React.ComponentProps<typeof MediaModalFlow>>) {
+  const props: React.ComponentProps<typeof MediaModalFlow> = {
     open: true,
     onClose: jest.fn(),
     onApply: jest.fn(),
     initial,
+    renderers: createRenderers(),
     ...overrides
   };
 
-  return render(<MediaModal {...props} />);
+  return render(<MediaModalFlow {...props} />);
 }
 
-async function goToCrop(user: ReturnType<typeof userEvent.setup>) {
+async function pickFromGalleryAndGoToCrop(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByTestId('GalleryView-pick'));
   expect(screen.getByTestId('CropView')).toBeInTheDocument();
 }
 
-describe('MediaModal', () => {
+async function pickFromUsedAndGoToCrop(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByTestId('UsedView-pick'));
+  expect(screen.getByTestId('CropView')).toBeInTheDocument();
+}
+
+describe('MediaModalFlow', () => {
   it('should render select step without footer', () => {
     renderOpen({ tab: 'GALLERY' });
 
@@ -250,6 +277,29 @@ describe('MediaModal', () => {
     expect(screen.getByTestId('GalleryView')).toBeInTheDocument();
     expect(screen.queryByTestId('MediaModal-footer')).not.toBeInTheDocument();
     expect(screen.queryByTestId('MediaModal-resetButton')).not.toBeInTheDocument();
+  });
+
+  it('should ignore initial CROP when selected is missing', () => {
+    renderOpen({ tab: 'GALLERY', step: 'CROP', selected: null, crop: null });
+
+    expect(screen.getByTestId('MediaModalSwitcher')).toBeInTheDocument();
+    expect(screen.getByTestId('GalleryView')).toBeInTheDocument();
+    expect(screen.queryByTestId('CropView')).not.toBeInTheDocument();
+  });
+
+  it('should derive tab from initial selected (upload -> UPLOAD tab)', () => {
+    renderOpen({
+      selected: {
+        kind: 'upload',
+        id: 'upload-1',
+        fileName: 'a.png',
+        file: new File(['x'], 'a.png', { type: 'image/png' })
+      }
+    });
+
+    expect(screen.getByTestId('MediaModalSwitcher')).toHaveAttribute('data-value', 'UPLOAD');
+    expect(screen.getByTestId('UploadView')).toBeInTheDocument();
+    expect(screen.getByTestId('UploadView')).toHaveAttribute('data-selected', 'a.png');
   });
 
   it('should switch tabs in select step', async () => {
@@ -262,6 +312,7 @@ describe('MediaModal', () => {
 
     await user.click(screen.getByTestId('MediaModalSwitcher-uploadTab'));
     expect(screen.getByTestId('UploadView')).toBeInTheDocument();
+    expect(screen.getByTestId('UploadView')).toHaveAttribute('data-selected', 'none');
   });
 
   it('should enter crop after pick and show crop actions', async () => {
@@ -269,7 +320,7 @@ describe('MediaModal', () => {
 
     renderOpen({ tab: 'GALLERY' });
 
-    await goToCrop(user);
+    await pickFromGalleryAndGoToCrop(user);
 
     expect(screen.queryByTestId('MediaModalSwitcher')).not.toBeInTheDocument();
     expect(screen.getByTestId('MediaModal-footer')).toBeInTheDocument();
@@ -279,12 +330,27 @@ describe('MediaModal', () => {
     expect(screen.getByTestId('MediaModal-resetButton')).toBeDisabled();
   });
 
+  it('should preserve originating tab after pick (USED -> crop -> back returns to USED)', async () => {
+    const user = userEvent.setup();
+
+    renderOpen({ tab: 'USED' });
+
+    expect(screen.getByTestId('UsedView')).toBeInTheDocument();
+
+    await pickFromUsedAndGoToCrop(user);
+    await user.click(screen.getByTestId('MediaModal-backButton'));
+
+    expect(screen.getByTestId('MediaModalSwitcher')).toBeInTheDocument();
+    expect(screen.getByTestId('UsedView')).toBeInTheDocument();
+    expect(screen.queryByTestId('MediaModal-footer')).not.toBeInTheDocument();
+  });
+
   it('should go back from crop to select and hide footer', async () => {
     const user = userEvent.setup();
 
     renderOpen({ tab: 'GALLERY' });
 
-    await goToCrop(user);
+    await pickFromGalleryAndGoToCrop(user);
     await user.click(screen.getByTestId('MediaModal-backButton'));
 
     expect(screen.getByTestId('MediaModalSwitcher')).toBeInTheDocument();
@@ -292,24 +358,67 @@ describe('MediaModal', () => {
     expect(screen.queryByTestId('MediaModal-footer')).not.toBeInTheDocument();
   });
 
-  it('should enable reset when crop becomes dirty and disable after reset', async () => {
+  it('should treat baseline as reset target', async () => {
     const user = userEvent.setup();
 
     renderOpen({ tab: 'GALLERY' });
 
-    await goToCrop(user);
+    await pickFromGalleryAndGoToCrop(user);
 
     const reset = screen.getByTestId('MediaModal-resetButton');
-    expect(reset).toBeDisabled();
+    const cropView = screen.getByTestId('CropView');
 
-    await user.click(screen.getByTestId('CropView-makeChanged'));
+    await user.click(screen.getByTestId('CropView-setBaseline'));
+
+    expect(reset).toBeDisabled();
+    expect(cropView).toHaveAttribute('data-crop', JSON.stringify(baselineCrop));
+
+    await user.click(screen.getByTestId('CropView-setCrop'));
+
     expect(reset).not.toBeDisabled();
+    expect(cropView).toHaveAttribute('data-crop', JSON.stringify(changedCrop));
+
+    const beforeSeq = cropView.getAttribute('data-reset-seq');
+
+    await user.click(reset);
+
+    expect(reset).toBeDisabled();
+    expect(cropView).toHaveAttribute('data-crop', JSON.stringify(baselineCrop));
+
+    const afterSeq = cropView.getAttribute('data-reset-seq');
+    expect(afterSeq).not.toBe(beforeSeq);
+  });
+
+  it('should enable reset when crop changes and reset to baseline (null baseline)', async () => {
+    const user = userEvent.setup();
+
+    renderOpen({ tab: 'GALLERY' });
+
+    await pickFromGalleryAndGoToCrop(user);
+
+    const reset = screen.getByTestId('MediaModal-resetButton');
+    const cropView = screen.getByTestId('CropView');
+
+    expect(reset).toBeDisabled();
+    expect(cropView).toHaveAttribute('data-crop-state', 'empty');
+
+    await user.click(screen.getByTestId('CropView-setCrop'));
+    expect(reset).not.toBeDisabled();
+    expect(cropView).toHaveAttribute('data-crop', JSON.stringify(changedCrop));
+
+    const beforeSeq = cropView.getAttribute('data-reset-seq');
 
     await user.click(reset);
     expect(reset).toBeDisabled();
+
+    const afterSeq = cropView.getAttribute('data-reset-seq');
+    expect(afterSeq).not.toBe(beforeSeq);
+
+    expect(cropView).toHaveAttribute('data-crop-state', 'empty');
+    expect(cropView).toHaveAttribute('data-crop', 'null');
   });
 
-  it('should apply selected and close on success', async () => {
+  it('should apply selected and crop and close on success', async () => {
     const user = userEvent.setup();
 
     const onClose = jest.fn();
@@ -317,24 +426,52 @@ describe('MediaModal', () => {
 
     renderOpen({ tab: 'GALLERY' }, { onClose, onApply });
 
-    await goToCrop(user);
+    await pickFromGalleryAndGoToCrop(user);
+    await user.click(screen.getByTestId('CropView-setCrop'));
     await user.click(screen.getByTestId('MediaModal-applyButton'));
 
-    expect(onApply).toHaveBeenCalledWith({ selected: { kind: 'gallery', name: 'gallery-1.png', locale: 'UA' } });
+    expect(onApply).toHaveBeenCalledWith({
+      selected: {
+        kind: 'gallery',
+        id: 'gallery-1-uk',
+        fileName: 'gallery-1.png',
+        src: '/demo/gallery-1.png',
+        locale: 'uk'
+      },
+      crop: changedCrop
+    });
+
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+  });
+
+  it('should show fallback message when apply rejects with non-Error', async () => {
+    const user = userEvent.setup();
+
+    const onClose = jest.fn();
+    const onApply = jest.fn(() => Promise.reject('boom'));
+
+    renderOpen({ tab: 'GALLERY' }, { onClose, onApply });
+
+    await pickFromGalleryAndGoToCrop(user);
+    await user.click(screen.getByTestId('MediaModal-applyButton'));
+
+    expect(await screen.findByTestId('MediaModal-applyError')).toHaveTextContent(
+      'Не вдалося застосувати зміни. Спробуйте ще раз.'
+    );
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByTestId('CropView')).toBeInTheDocument();
   });
 
   it('should show error and keep modal open when apply fails', async () => {
     const user = userEvent.setup();
 
     const onClose = jest.fn();
-    const onApply = jest.fn(async () => {
-      throw new Error('apply failed');
-    });
+    const onApply = jest.fn(() => Promise.reject(new Error('apply failed')));
 
     renderOpen({ tab: 'GALLERY' }, { onClose, onApply });
 
-    await goToCrop(user);
+    await pickFromGalleryAndGoToCrop(user);
+    await user.click(screen.getByTestId('CropView-setCrop'));
     await user.click(screen.getByTestId('MediaModal-applyButton'));
 
     expect(await screen.findByTestId('MediaModal-applyError')).toHaveTextContent('apply failed');

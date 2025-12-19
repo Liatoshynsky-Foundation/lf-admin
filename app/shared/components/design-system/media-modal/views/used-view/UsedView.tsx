@@ -2,19 +2,17 @@
 
 import { Box } from '@mui/material';
 
-import type { MediaLocale, SelectedMedia } from '../../MediaModal.types';
+import type { UsedMedia } from '../../MediaModal.types';
 import Button from '~/shared/components/design-system/button/Button';
 
-type SelectedUsed = { kind: 'used'; name: string; locale: MediaLocale };
-
 type Props = {
-  selected: SelectedUsed | null;
-  onPick: (selected: SelectedMedia) => void;
+  selected: UsedMedia | null;
+  onPick: (selected: UsedMedia) => void;
 };
 
-const demoItems: Array<{ name: string; locale: MediaLocale }> = [
-  { name: 'used-1.png', locale: 'UA' },
-  { name: 'used-1.png', locale: 'EN' }
+const demoItems: Array<UsedMedia> = [
+  { kind: 'used', id: 'used-1-uk', fileName: 'used-1.png', src: '/demo/used-1.png', locale: 'uk' },
+  { kind: 'used', id: 'used-1-en', fileName: 'used-1.png', src: '/demo/used-1.png', locale: 'en' }
 ];
 
 export function UsedView({ selected, onPick }: Props) {
@@ -22,17 +20,17 @@ export function UsedView({ selected, onPick }: Props) {
     <Box data-testid="UsedView" sx={{ height: '100%' }}>
       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
         {demoItems.map((it) => {
-          const isActive = Boolean(selected && selected.name === it.name && selected.locale === it.locale);
+          const isActive = Boolean(selected && selected.id === it.id);
 
           return (
             <Button
-              key={`${it.name}-${it.locale}`}
+              key={it.id}
               color="secondary"
               variant={isActive ? 'filled' : 'outlined'}
-              label={`${it.name} (${it.locale})`}
-              data-testid={`UsedView-item-${it.name}-${it.locale}`}
+              label={`${it.fileName} (${it.locale})`}
+              data-testid={`UsedView-item-${it.id}`}
               aria-pressed={isActive}
-              onClick={() => onPick({ kind: 'used', name: it.name, locale: it.locale })}
+              onClick={() => onPick(it)}
             />
           );
         })}
