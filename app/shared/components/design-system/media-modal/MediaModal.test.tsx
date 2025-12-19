@@ -1,15 +1,16 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MouseEventHandler, ReactNode, SVGProps } from 'react';
 
 import { MediaModal } from './MediaModal';
 import type { MediaModalResult, SelectedMedia } from './MediaModal.types';
 
 type DsButtonProps = {
   label?: string;
-  children?: React.ReactNode;
-  startIcon?: React.ReactNode;
-  endIcon?: React.ReactNode;
-  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  children?: ReactNode;
+  startIcon?: ReactNode;
+  endIcon?: ReactNode;
+  onClick?: MouseEventHandler<HTMLButtonElement>;
   disabled?: boolean;
   loading?: boolean;
   role?: string;
@@ -22,12 +23,12 @@ type DsButtonProps = {
 
 jest.mock('~/public/icons/iteration.svg', () => ({
   __esModule: true,
-  default: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />
+  default: (props: SVGProps<SVGSVGElement>) => <svg {...props} />
 }));
 
 jest.mock('~/public/icons/arrowLeft.svg', () => ({
   __esModule: true,
-  default: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />
+  default: (props: SVGProps<SVGSVGElement>) => <svg {...props} />
 }));
 
 jest.mock('~/shared/components/design-system/button/Button', () => ({
@@ -54,13 +55,13 @@ type ContainerProps = {
   open: boolean;
   onClose: () => void;
   dataTestId?: string;
-  headerLeft?: React.ReactNode;
-  headerCenter?: React.ReactNode;
-  headerRight?: React.ReactNode;
-  footerTop?: React.ReactNode;
-  footerLeft?: React.ReactNode;
-  footerRight?: React.ReactNode;
-  children: React.ReactNode;
+  headerLeft?: ReactNode;
+  headerCenter?: ReactNode;
+  headerRight?: ReactNode;
+  footerTop?: ReactNode;
+  footerLeft?: ReactNode;
+  footerRight?: ReactNode;
+  children: ReactNode;
 };
 
 jest.mock('./components/container/MediaModalContainer', () => ({
@@ -260,7 +261,7 @@ describe('MediaModal', () => {
     expect(screen.getByTestId('CropView-state')).toHaveTextContent('INITIAL');
   });
 
-  it('should call onApply with selected and applyForAllLocales and then close', async () => {
+  it('should call onApply with selected and then close', async () => {
     const user = userEvent.setup();
     const onClose = jest.fn();
     const onApply = jest.fn((_: MediaModalResult) => Promise.resolve());
@@ -273,8 +274,9 @@ describe('MediaModal', () => {
     expect(onApply).toHaveBeenCalledTimes(1);
 
     const payload = (onApply as jest.Mock).mock.calls[0]?.[0];
-    expect(payload?.applyForAllLocales).toBe(true);
-    expect(payload?.selected).toEqual({ kind: 'gallery', name: 'gallery-1.png', locale: 'UA' } as SelectedMedia);
+    expect(payload).toEqual({
+      selected: { kind: 'gallery', name: 'gallery-1.png', locale: 'UA' }
+    });
 
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
   });

@@ -10,7 +10,6 @@ export type SelectedMedia =
 
 export type MediaModalResult = {
   selected: SelectedMedia;
-  applyForAllLocales: boolean;
   crop?: unknown;
 };
 
@@ -18,5 +17,4 @@ export type MediaModalOpenState = {
   tab?: MediaModalTab;
   step?: MediaModalStep;
   selected?: SelectedMedia | null;
-  applyForAllLocales?: boolean;
 };

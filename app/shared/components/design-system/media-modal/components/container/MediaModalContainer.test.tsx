@@ -1,11 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { ReactNode, SVGProps } from 'react';
 
 import { MediaModalContainer } from './MediaModalContainer';
 
 jest.mock('~/public/icons/close.svg', () => ({
   __esModule: true,
-  default: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />
+  default: (props: SVGProps<SVGSVGElement>) => <svg {...props} />
 }));
 
 jest.mock('@mui/material', () => {
@@ -13,7 +14,7 @@ jest.mock('@mui/material', () => {
 
   type DialogProps = {
     open: boolean;
-    children: React.ReactNode;
+    children: ReactNode;
   } & Record<string, unknown>;
 
   return {

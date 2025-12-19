@@ -1,15 +1,16 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MouseEventHandler, ReactNode, SVGProps } from 'react';
 
 import type { MediaModalTab } from '../../MediaModal.types';
 import { MediaModalSwitcher } from './MediaModalSwitcher';
 
 type DsButtonProps = {
   label?: string;
-  children?: React.ReactNode;
-  startIcon?: React.ReactNode;
-  endIcon?: React.ReactNode;
-  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  children?: ReactNode;
+  startIcon?: ReactNode;
+  endIcon?: ReactNode;
+  onClick?: MouseEventHandler<HTMLButtonElement>;
   disabled?: boolean;
   role?: string;
   tabIndex?: number;
@@ -21,17 +22,17 @@ type DsButtonProps = {
 
 jest.mock('~/public/icons/gallery.svg', () => ({
   __esModule: true,
-  default: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />
+  default: (props: SVGProps<SVGSVGElement>) => <svg {...props} />
 }));
 
 jest.mock('~/public/icons/upload.svg', () => ({
   __esModule: true,
-  default: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />
+  default: (props: SVGProps<SVGSVGElement>) => <svg {...props} />
 }));
 
 jest.mock('~/public/icons/fileClock.svg', () => ({
   __esModule: true,
-  default: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />
+  default: (props: SVGProps<SVGSVGElement>) => <svg {...props} />
 }));
 
 jest.mock('~/shared/components/design-system/button/Button', () => ({

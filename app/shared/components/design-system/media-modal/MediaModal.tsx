@@ -34,7 +34,6 @@ type State = {
   tab: MediaModalTab;
   step: MediaModalStep;
   selected: SelectedMedia | null;
-  applyForAllLocales: boolean;
   cropState: CropState;
 };
 
@@ -64,7 +63,6 @@ const buildInitialState = (initial?: MediaModalOpenState): State => {
     tab,
     step,
     selected: initialSelected,
-    applyForAllLocales: initial?.applyForAllLocales ?? true,
     cropState: 'INITIAL'
   };
 };
@@ -148,8 +146,7 @@ export function MediaModal({ open, onClose, onApply, initial }: MediaModalProps)
 
     try {
       await onApply({
-        selected: state.selected,
-        applyForAllLocales: state.applyForAllLocales
+        selected: state.selected
       });
 
       if (applySeqRef.current !== seq) return;
