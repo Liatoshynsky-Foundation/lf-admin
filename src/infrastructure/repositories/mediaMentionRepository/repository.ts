@@ -34,10 +34,6 @@ function mediaMentionQueryBuilder(filters?: MediaMentionFiltersRaw): FilterQuery
     query.status = filters.status;
   }
 
-  if (filters.slug) {
-    query.slug = filters.slug;
-  }
-
   return query;
 }
 
@@ -76,23 +72,8 @@ export function newMediaMentionRepository({ model }: MediaMentionRepoDeps): Medi
     getDefaultSort: defaultSorting
   });
 
-  async function changeStatus(id: string, status: MediaStatus): Promise<Result<void>> {
-    try {
-      if (!Types.ObjectId.isValid(id)) return WrapError(MediaMentionsServiceErrors.INVALID_ID);
-
-      const res = await model.updateOne({ _id: id }, { $set: { status, updatedAt: new Date() } }).exec();
-      if (res.matchedCount === 0) return WrapError(MediaMentionsServiceErrors.NOT_FOUND);
-      if (res.modifiedCount === 0)
-        return status === MediaStatus.PUBLISHED
-          ? WrapError(MediaMentionsServiceErrors.ALREADY_PUBLISHED)
-          : WrapError(MediaMentionsServiceErrors.ALREADY_DRAFT);
-      return WrapSuccess(undefined);
-    } catch (e: any) {
-      return WrapError(newError(e?.message ?? 'Unknown error during changeStatus'));
-    }
-  }
-
   return {
+    ...baseRepo,
     async create(mention: Omit<MediaMentionEntityRaw, 'status'>): Promise<Result<MediaMentionEntity>> {
       try {
         const doc = new model({
@@ -108,12 +89,6 @@ export function newMediaMentionRepository({ model }: MediaMentionRepoDeps): Medi
       } catch (e: any) {
         return WrapError(newError(e?.message ?? 'Unknown error during create'));
       }
-    },
-    async publish(id: string): Promise<Result<void>> {
-      return changeStatus(id, MediaStatus.PUBLISHED);
-    },
-    async unpublish(id: string): Promise<Result<void>> {
-      return changeStatus(id, MediaStatus.DRAFT);
     },
     async addView(id: string): Promise<Result<void>> {
       try {
@@ -133,7 +108,6 @@ export function newMediaMentionRepository({ model }: MediaMentionRepoDeps): Medi
       } catch (e: any) {
         return WrapError(newError(e?.message ?? 'Unknown error during addView'));
       }
-    },
-    ...baseRepo
+    }
   };
 }

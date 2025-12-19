@@ -1,123 +1,94 @@
 import { useCallback } from 'react';
 
-import { MediaMentionsErrors } from '~/constants/errors';
-import { safeMutate } from '~/lib/utils/safeMutate';
 import {
   AllMediaMentionsQueryVariables,
-  CreateMediaMentionMutationVariables,
-  DeleteMediaMentionMutationVariables,
   MediaMentionsCountQueryVariables,
-  PaginatedMediaMentionsQueryVariables,
-  PublishedMediaMentionsQueryVariables,
+  MediaMentionsFiltersInput,
+  MediaStatus,
+  UpdateMediaMentionInput,
   useAddMediaMentionViewMutation,
   useAllMediaMentionsQuery,
   useCreateMediaMentionMutation,
   useDeleteMediaMentionMutation,
   useMediaMentionsCountQuery,
   usePaginatedMediaMentionsQuery,
-  usePublishedMediaMentionsQuery,
-  usePublishMediaMentionMutation,
-  useUnpublishMediaMentionMutation
+  useUpdateMediaMentionMutation
 } from '~/types/graphql/generated/graphql';
 
-export const useMediaMentionsQuery = () => {
-  const useAllMediaMentions = (variables?: AllMediaMentionsQueryVariables) => {
-    return useAllMediaMentionsQuery({ variables, fetchPolicy: 'network-only' });
-  };
+// We should discuss on cache policy
+export const useAllMediaMentions = (status?: MediaStatus) => {
+  return useAllMediaMentionsQuery({
+    variables: { status } as AllMediaMentionsQueryVariables,
+    fetchPolicy: 'network-only'
+  });
+};
 
-  const usePublishedMediaMentions = (variables?: PublishedMediaMentionsQueryVariables) => {
-    return usePublishedMediaMentionsQuery({ variables, fetchPolicy: 'cache-first' });
-  };
+export const usePublishedMediaMentions = () => {
+  return useAllMediaMentionsQuery({
+    variables: { status: MediaStatus.Published } as AllMediaMentionsQueryVariables,
+    fetchPolicy: 'cache-first'
+  });
+};
 
-  const usePaginatedMediaMentions = (variables?: PaginatedMediaMentionsQueryVariables) => {
-    return usePaginatedMediaMentionsQuery({ variables, fetchPolicy: 'network-only' });
-  };
+export const usePaginatedMediaMentions = (page = 1, limit = 10, opts?: MediaMentionsFiltersInput) => {
+  return usePaginatedMediaMentionsQuery({ variables: { page, limit, ...opts }, fetchPolicy: 'network-only' });
+};
 
-  const useMediaMentionsCount = (variables?: MediaMentionsCountQueryVariables) => {
-    return useMediaMentionsCountQuery({ variables });
-  };
+export const useMediaMentionsCount = (status?: MediaStatus) => {
+  return useMediaMentionsCountQuery({
+    variables: { status } as MediaMentionsCountQueryVariables,
+    fetchPolicy: 'network-only'
+  });
+};
+
+export const useCreateMediaMention = () => {
+  const [mutate, { loading }] = useCreateMediaMentionMutation();
+  const createMediaMention = useCallback(async (url: string) => mutate({ variables: { input: { url } } }), [mutate]);
+  return { createMediaMention, loading };
+};
+
+export const useDeleteMediaMention = () => {
+  const [mutate, { loading }] = useDeleteMediaMentionMutation();
+  const deleteMediaMention = useCallback(async (id: string) => mutate({ variables: { id } }), [mutate]);
+  return { deleteMediaMention, loading };
+};
+
+export const useUpdateMediaMention = () => {
+  const [mutate, { loading }] = useUpdateMediaMentionMutation();
+  const updateMediaMention = useCallback(
+    async (id: string, input: UpdateMediaMentionInput) => mutate({ variables: { id, input } }),
+    [mutate]
+  );
+  return { updateMediaMention, loading };
+};
+
+// TODO: add current status as exported member to indicate current status in the UI
+export const useUpdateMediaMentionStatus = () => {
+  const [mutate] = useUpdateMediaMentionMutation();
+
+  const makeStatusUpdater = useCallback(
+    (status: MediaStatus) => {
+      return async (id: string, input?: { publishedAt?: string | null }) => {
+        const payload: UpdateMediaMentionInput = { status };
+        if (status === MediaStatus.Published) {
+          payload.publishedAt = input?.publishedAt ?? new Date().toISOString();
+        }
+        return mutate({ variables: { id, input: payload } });
+      };
+    },
+    [mutate]
+  );
 
   return {
-    useAllMediaMentions,
-    usePublishedMediaMentions,
-    usePaginatedMediaMentions,
-    useMediaMentionsCount
+    publishMediaMention: makeStatusUpdater(MediaStatus.Published),
+    hideMediaMention: makeStatusUpdater(MediaStatus.Hidden),
+    draftMediaMention: makeStatusUpdater(MediaStatus.Draft),
+    archiveMediaMention: makeStatusUpdater(MediaStatus.Archived)
   };
 };
 
-export const useMediaMentionsMutations = () => {
-  const [createMutate, { loading: creating }] = useCreateMediaMentionMutation();
-  const [publishMutate, { loading: publishing }] = usePublishMediaMentionMutation();
-  const [unpublishMutate, { loading: unpublishing }] = useUnpublishMediaMentionMutation();
-  const [deleteMutate, { loading: deleting }] = useDeleteMediaMentionMutation();
-  const [addViewMutate, { loading: addingView }] = useAddMediaMentionViewMutation();
-
-  const createMediaMentions = useCallback(
-    async (variables: CreateMediaMentionMutationVariables) => {
-      return safeMutate(
-        createMutate,
-        variables,
-        MediaMentionsErrors.NETWORK_ERROR_CREATE,
-        MediaMentionsErrors.FAILED_TO_CREATE
-      );
-    },
-    [createMutate]
-  );
-
-  const publishMediaMentions = useCallback(
-    async (id: string) => {
-      return safeMutate(
-        publishMutate,
-        { id },
-        MediaMentionsErrors.NETWORK_ERROR_PUBLISH,
-        MediaMentionsErrors.FAILED_TO_PUBLISH
-      );
-    },
-    [publishMutate]
-  );
-
-  const unpublishMediaMentions = useCallback(
-    async (id: string) => {
-      return safeMutate(
-        unpublishMutate,
-        { id },
-        MediaMentionsErrors.NETWORK_ERROR_UNPUBLISH,
-        MediaMentionsErrors.FAILED_TO_UNPUBLISH
-      );
-    },
-    [unpublishMutate]
-  );
-
-  const deleteMediaMentions = useCallback(
-    async (variables: DeleteMediaMentionMutationVariables) => {
-      return safeMutate(
-        deleteMutate,
-        variables,
-        MediaMentionsErrors.NETWORK_ERROR_DELETE,
-        MediaMentionsErrors.FAILED_TO_DELETE
-      );
-    },
-    [deleteMutate]
-  );
-
-  const addViews = useCallback(
-    async (id: string) => {
-      return safeMutate(
-        addViewMutate,
-        { id },
-        MediaMentionsErrors.NETWORK_ERROR_UPDATE,
-        MediaMentionsErrors.FAILED_TO_UPDATE
-      );
-    },
-    [addViewMutate]
-  );
-
-  return {
-    createMediaMentions,
-    publishMediaMentions,
-    unpublishMediaMentions,
-    deleteMediaMentions,
-    addViews,
-    loading: creating || publishing || unpublishing || deleting || addingView
-  };
+export const useAddMediaMentionView = () => {
+  const [mutate, { loading }] = useAddMediaMentionViewMutation();
+  const addViews = useCallback(async (id: string) => mutate({ variables: { id } }), [mutate]);
+  return { addViews, loading };
 };

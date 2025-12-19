@@ -6,7 +6,6 @@ import { MediaStatus } from '~/domain/entities/MediaMentions';
 
 type MediaFiltersInput = {
   status?: string;
-  slug?: string;
 };
 
 type MediaFiltersArgs = { filters?: MediaFiltersInput };
@@ -16,8 +15,7 @@ const mapFilters = (filters?: MediaFiltersInput) => {
   if (!filters) return undefined;
 
   return {
-    status: filters.status as MediaStatus | undefined,
-    slug: filters.slug
+    status: filters.status as MediaStatus | undefined
   };
 };
 
@@ -56,12 +54,6 @@ export const MediaMentionsQuery = {
     const { mediaMentionsService } = context.requestContainer.cradle;
 
     return mediaMentionsService.getAll(mapFilters(filters));
-  },
-
-  publishedMediaMentions: async (_: unknown, { filters }: MediaFiltersArgs, context: GraphQLContext) => {
-    const { mediaMentionsService } = context.requestContainer.cradle;
-
-    return mediaMentionsService.getPublishedPaginated(mapFilters(filters));
   },
 
   paginatedMediaMentions: async (

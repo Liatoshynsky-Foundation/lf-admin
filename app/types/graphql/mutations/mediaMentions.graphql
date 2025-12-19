@@ -1,5 +1,11 @@
 mutation CreateMediaMention($input: CreateMediaMentionInput!) {
   createMediaMention(input: $input) {
+    url
+  }
+}
+
+mutation UpdateMediaMention($id: ID!, $input: UpdateMediaMentionInput!) {
+  updateMediaMention(id: $id, input: $input) {
     id
     url
     title
@@ -10,22 +16,9 @@ mutation CreateMediaMention($input: CreateMediaMentionInput!) {
     publishedAt
     createdAt
     updatedAt
-    meta { views }
-  }
-}
-
-mutation PublishMediaMention($id: ID!) {
-  publishMediaMention(id: $id) {
-    id
-    status
-    publishedAt
-  }
-}
-
-mutation UnpublishMediaMention($id: ID!) {
-  unpublishMediaMention(id: $id) {
-    id
-    status
+    meta {
+      views
+    }
   }
 }
 

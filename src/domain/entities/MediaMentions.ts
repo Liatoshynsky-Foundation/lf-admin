@@ -25,7 +25,6 @@ export type MediaMentionEntity = BaseEntity & MediaMentionEntityRaw;
 
 export type MediaMentionFiltersRaw = {
   status?: MediaStatus;
-  slug?: string;
 };
 
 export type MediaMentionFilters = BaseFilters & MediaMentionFiltersRaw;

@@ -2,12 +2,17 @@ type MediaMeta {
   views: Int!
 }
 
+enum SortDirection {
+  ASC
+  DESC
+}
+
 enum MediaStatus {
-  draft
-  published
-  hidden
-  archived
-  editing
+  DRAFT
+  PUBLISHED
+  HIDDEN
+  ARCHIVED
+  EDITING
 }
 
 type MediaMention {
@@ -33,11 +38,22 @@ type PaginatedMediaMentions {
 
 input MediaMentionsFiltersInput {
   status: MediaStatus
-  slug: String
+  sortBy: String
+  sortOrder: SortDirection
 }
 
 input CreateMediaMentionInput {
   url: String!
+}
+
+input UpdateMediaMentionInput {
+  url: String # Will need to re-fetch metadata if URL is changed
+  title: String
+  description: String
+  coverImageUrl: String
+  slug: String
+  status: MediaStatus
+  publishedAt: String
 }
 
 extend type Query {
@@ -45,14 +61,13 @@ extend type Query {
   mediaMentionBySlug(slug: String!): MediaMention
   allMediaMentions(filters: MediaMentionsFiltersInput): [MediaMention!]!
   publishedMediaMentions(filters: MediaMentionsFiltersInput): [MediaMention!]!
-  paginatedMediaMentions(page: Int = 1, limit: Int = 10, filters: MediaMentionsFiltersInput): PaginatedMediaMentions!
+  paginatedMediaMentions(page: Int!, limit: Int!, filters: MediaMentionsFiltersInput): PaginatedMediaMentions!
   mediaMentionsCount(status: MediaStatus): Int!
 }
 
 extend type Mutation {
   createMediaMention(input: CreateMediaMentionInput!): MediaMention!
-  publishMediaMention(id: ID!): MediaMention!
-  unpublishMediaMention(id: ID!): MediaMention!
+  updateMediaMention(id: ID!, input: UpdateMediaMentionInput!): MediaMention!
   addMediaMentionView(id: ID!): MediaMention!
   deleteMediaMention(id: ID!): Boolean!
 }
