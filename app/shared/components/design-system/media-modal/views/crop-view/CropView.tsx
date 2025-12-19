@@ -1,17 +1,23 @@
 'use client';
 
 import { Box } from '@mui/material';
-import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { CropRendererProps } from '../../MediaModal.renderers';
+import type { CropResult } from '../../MediaModal.types';
 import Button from '~/shared/components/design-system/button/Button';
-
-const mockCrop = () => ({
-  rect: { x: 10, y: 10, width: 200, height: 200 }
-});
 
 const canCreateObjectUrl = () => typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function';
 const canRevokeObjectUrl = () => typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function';
+
+const initialCropForPlaceholder = (): CropResult => ({
+  rect: { x: 0, y: 0, width: 200, height: 200 }
+});
+
+const resizedCropForPlaceholder = (): CropResult => ({
+  rect: { x: 24, y: 18, width: 160, height: 220 }
+});
 
 export function CropView({ selected, resetSeq, onBaseline, onChange }: CropRendererProps) {
   const uploadFile = selected.kind === 'upload' ? selected.file : null;
@@ -43,6 +49,15 @@ export function CropView({ selected, resetSeq, onBaseline, onChange }: CropRende
     return selected.src;
   }, [selected, uploadObjectUrl]);
 
+  const didInitForSelectedRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (didInitForSelectedRef.current === selected.id) return;
+    didInitForSelectedRef.current = selected.id;
+
+    onBaseline(initialCropForPlaceholder());
+  }, [onBaseline, selected.id]);
+
   return (
     <Box data-testid="CropView" data-reset-seq={resetSeq} sx={{ height: '100%', display: 'grid', gap: 2 }}>
       <Box data-testid="CropView-placeholder" sx={{ opacity: 0.7 }}>
@@ -51,7 +66,15 @@ export function CropView({ selected, resetSeq, onBaseline, onChange }: CropRende
 
       {previewSrc ? (
         <Box sx={{ width: '100%', maxWidth: 420 }}>
-          <img src={previewSrc} alt="" style={{ width: '100%', height: 'auto', display: 'block' }} />
+          <Image
+            src={previewSrc}
+            alt=""
+            width={420}
+            height={280}
+            sizes="(max-width: 600px) 100vw, 420px"
+            style={{ width: '100%', height: 'auto', display: 'block' }}
+            unoptimized
+          />
         </Box>
       ) : null}
 
@@ -59,23 +82,9 @@ export function CropView({ selected, resetSeq, onBaseline, onChange }: CropRende
         <Button
           color="secondary"
           variant="outlined"
-          label="Set baseline"
-          data-testid="CropView-setBaseline"
-          onClick={() => onBaseline(mockCrop())}
-        />
-        <Button
-          color="secondary"
-          variant="outlined"
-          label="Mock crop"
-          data-testid="CropView-setCrop"
-          onClick={() => onChange(mockCrop())}
-        />
-        <Button
-          color="secondary"
-          variant="outlined"
-          label="Clear crop"
-          data-testid="CropView-clearCrop"
-          onClick={() => onChange(null)}
+          label="Mock resize"
+          data-testid="CropView-resize"
+          onClick={() => onChange(resizedCropForPlaceholder())}
         />
       </Box>
     </Box>

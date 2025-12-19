@@ -18,6 +18,12 @@ type DsButtonProps = {
   'aria-label'?: string;
   'aria-selected'?: boolean;
   'aria-pressed'?: boolean;
+  disableRipple?: boolean;
+  disableFocusRipple?: boolean;
+  disableElevation?: boolean;
+  sx?: unknown;
+  color?: unknown;
+  variant?: unknown;
 };
 
 jest.mock('~/public/icons/gallery.svg', () => ({
@@ -80,6 +86,12 @@ describe('MediaModalSwitcher', () => {
 
     render(<MediaModalSwitcher value="GALLERY" onChange={onChange} />);
 
+    expect(screen.getByTestId('MediaModalSwitcher')).toHaveAttribute('role', 'tablist');
+
+    expect(screen.getByTestId('MediaModalSwitcher-galleryTab')).toHaveAttribute('role', 'tab');
+    expect(screen.getByTestId('MediaModalSwitcher-uploadTab')).toHaveAttribute('role', 'tab');
+    expect(screen.getByTestId('MediaModalSwitcher-usedTab')).toHaveAttribute('role', 'tab');
+
     expect(screen.getByTestId('MediaModalSwitcher-galleryTab')).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByTestId('MediaModalSwitcher-uploadTab')).toHaveAttribute('aria-selected', 'false');
     expect(screen.getByTestId('MediaModalSwitcher-usedTab')).toHaveAttribute('aria-selected', 'false');
@@ -89,5 +101,15 @@ describe('MediaModalSwitcher', () => {
 
     await user.click(screen.getByTestId('MediaModalSwitcher-usedTab'));
     expect(onChange).toHaveBeenCalledWith('USED');
+  });
+
+  it('should set correct tabIndex for active/inactive tabs', () => {
+    const onChange = jest.fn<void, [MediaModalTab]>();
+
+    render(<MediaModalSwitcher value="USED" onChange={onChange} />);
+
+    expect(screen.getByTestId('MediaModalSwitcher-usedTab')).toHaveAttribute('tabindex', '0');
+    expect(screen.getByTestId('MediaModalSwitcher-galleryTab')).toHaveAttribute('tabindex', '-1');
+    expect(screen.getByTestId('MediaModalSwitcher-uploadTab')).toHaveAttribute('tabindex', '-1');
   });
 });

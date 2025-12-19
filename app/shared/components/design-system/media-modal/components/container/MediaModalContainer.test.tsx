@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ReactNode, SVGProps } from 'react';
+import type { ReactNode, SVGProps } from 'react';
 
 import { MediaModalContainer } from './MediaModalContainer';
 
@@ -15,11 +15,11 @@ jest.mock('@mui/material', () => {
   type DialogProps = {
     open: boolean;
     children: ReactNode;
-  } & Record<string, unknown>;
+  };
 
   return {
     ...actual,
-    Dialog: ({ open, children, ...rest }: DialogProps) => (open ? <div {...rest}>{children}</div> : null)
+    Dialog: ({ open, children }: DialogProps) => (open ? <div data-testid="Dialog">{children}</div> : null)
   };
 });
 
@@ -38,6 +38,7 @@ describe('MediaModalContainer', () => {
       </MediaModalContainer>
     );
 
+    expect(screen.getByTestId('Dialog')).toBeInTheDocument();
     expect(screen.getByTestId('MediaModal-headerLeft')).toContainElement(screen.getByTestId('left'));
     expect(screen.getByTestId('MediaModal-headerCenter')).toContainElement(screen.getByTestId('center'));
     expect(screen.getByTestId('MediaModal-headerRight')).toContainElement(screen.getByTestId('right'));
@@ -45,7 +46,7 @@ describe('MediaModalContainer', () => {
     expect(screen.getByTestId('MediaModal-closeButton')).toBeInTheDocument();
   });
 
-  it('should not render footer when footer props are missing', () => {
+  it('should not render footer when footer slots are missing', () => {
     render(
       <MediaModalContainer open onClose={() => {}} dataTestId="MediaModal">
         <div />
