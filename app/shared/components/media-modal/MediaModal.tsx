@@ -2,9 +2,9 @@
 
 import React, { useMemo } from 'react';
 
+import type { MediaModalFlowProps } from './flow/MediaModalFlow';
+import { MediaModalFlow } from './flow/MediaModalFlow';
 import type { MediaModalRenderers } from './MediaModal.renderers';
-import type { MediaModalFlowProps } from './MediaModalFlow';
-import { MediaModalFlow } from './MediaModalFlow';
 import { CropView } from './views/crop-view/CropView';
 import { GalleryView } from './views/gallery-view/GalleryView';
 import { UploadView } from './views/upload-view/UploadView';

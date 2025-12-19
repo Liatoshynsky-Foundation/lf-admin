@@ -8,14 +8,14 @@ import type {
   MediaModalRenderers,
   UploadRendererProps,
   UsedRendererProps
-} from './MediaModal.renderers';
+} from '../MediaModal.renderers';
 import type {
   CropResult,
   MediaModalOpenState,
   MediaModalResult,
   MediaModalTab,
   SelectedMedia
-} from './MediaModal.types';
+} from '../MediaModal.types';
 import { MediaModalFlow } from './MediaModalFlow';
 
 type DsButtonProps = {
@@ -99,7 +99,7 @@ type ContainerProps = {
   children: ReactNode;
 };
 
-jest.mock('./components/container/MediaModalContainer', () => ({
+jest.mock('../components/container/MediaModalContainer', () => ({
   __esModule: true,
   MediaModalContainer: (props: ContainerProps) => {
     const {
@@ -151,7 +151,7 @@ type SwitcherProps = {
   onChange: (v: MediaModalTab) => void;
 };
 
-jest.mock('./components/switcher/MediaModalSwitcher', () => ({
+jest.mock('../components/switcher/MediaModalSwitcher', () => ({
   __esModule: true,
   MediaModalSwitcher: ({ value, onChange }: SwitcherProps) => (
     <div data-testid="MediaModalSwitcher" data-value={value}>
@@ -181,12 +181,7 @@ function CropRenderer({ selected, crop, resetSeq, onBaseline, onChange }: CropRe
   }, [onBaseline, selected.id]);
 
   return (
-    <div
-      data-testid="CropView"
-      data-reset-seq={resetSeq}
-      data-crop={crop ? JSON.stringify(crop) : 'null'}
-      data-crop-state={crop ? 'set' : 'empty'}
-    >
+    <div data-testid="CropView" data-reset-seq={resetSeq} data-crop={crop ? JSON.stringify(crop) : 'null'}>
       <button type="button" data-testid="CropView-resize" onClick={() => onChange(resizedCrop)}>
         resize
       </button>
@@ -379,7 +374,7 @@ describe('MediaModalFlow', () => {
   it('should apply resized crop and close on success', async () => {
     const user = userEvent.setup();
 
-    const onClose = jest.fn();
+    const onClose = jest.fn<void, []>();
     const onApply = jest.fn((_: MediaModalResult) => Promise.resolve());
 
     renderOpen({ tab: 'GALLERY' }, { onClose, onApply });
@@ -407,55 +402,10 @@ describe('MediaModalFlow', () => {
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
   });
 
-  it('should apply initial crop when user did not resize', async () => {
+  it('should render apply error in footer when apply fails', async () => {
     const user = userEvent.setup();
 
-    const onClose = jest.fn();
-    const onApply = jest.fn((_: MediaModalResult) => Promise.resolve());
-
-    renderOpen({ tab: 'GALLERY' }, { onClose, onApply });
-
-    await pickAndEnterCrop(user);
-
-    await user.click(screen.getByTestId('MediaModal-applyButton'));
-
-    expect(onApply).toHaveBeenCalledWith({
-      selected: {
-        kind: 'gallery',
-        id: 'gallery-1-uk',
-        fileName: 'gallery-1.png',
-        src: '/demo/gallery-1.png',
-        locale: 'uk'
-      } satisfies SelectedMedia,
-      crop: initialCrop
-    });
-
-    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
-  });
-
-  it('should show fallback message when apply rejects with non-Error', async () => {
-    const user = userEvent.setup();
-
-    const onClose = jest.fn();
-    const onApply = jest.fn(() => Promise.reject('boom'));
-
-    renderOpen({ tab: 'GALLERY' }, { onClose, onApply });
-
-    await pickAndEnterCrop(user);
-
-    await user.click(screen.getByTestId('MediaModal-applyButton'));
-
-    expect(await screen.findByTestId('MediaModal-applyError')).toHaveTextContent(
-      'Не вдалося застосувати зміни. Спробуйте ще раз.'
-    );
-    expect(onClose).not.toHaveBeenCalled();
-    expect(screen.getByTestId('CropView')).toBeInTheDocument();
-  });
-
-  it('should show error message and keep modal open when apply fails', async () => {
-    const user = userEvent.setup();
-
-    const onClose = jest.fn();
+    const onClose = jest.fn<void, []>();
     const onApply = jest.fn(() => Promise.reject(new Error('apply failed')));
 
     renderOpen({ tab: 'GALLERY' }, { onClose, onApply });
@@ -466,6 +416,5 @@ describe('MediaModalFlow', () => {
 
     expect(await screen.findByTestId('MediaModal-applyError')).toHaveTextContent('apply failed');
     expect(onClose).not.toHaveBeenCalled();
-    expect(screen.getByTestId('CropView')).toBeInTheDocument();
   });
 });

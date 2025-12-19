@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { MediaModalFlow } from './flow/MediaModalFlow';
 import { MediaModal } from './MediaModal';
-import { MediaModalFlow } from './MediaModalFlow';
 
-jest.mock('./MediaModalFlow', () => ({
+jest.mock('./flow/MediaModalFlow', () => ({
   __esModule: true,
   MediaModalFlow: jest.fn(() => null)
 }));
