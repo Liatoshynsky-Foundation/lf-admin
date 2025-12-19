@@ -1,5 +1,3 @@
-import { mediaModalTokens as t } from '../../MediaModal.tokens';
-
 export const styles = {
   root: {
     display: 'inline-flex',
@@ -7,7 +5,7 @@ export const styles = {
     gap: '2px',
     p: '2px',
     borderRadius: '999px',
-    backgroundColor: t.pillBg,
+    backgroundColor: '#190D03',
     width: 'fit-content'
   },
 
@@ -17,8 +15,8 @@ export const styles = {
     padding: '6px 16px',
     borderRadius: '999px',
 
-    backgroundColor: active ? t.text : 'transparent',
-    color: active ? t.surface : t.text,
+    backgroundColor: active ? '#FCFCFC' : 'transparent',
+    color: active ? '#232529' : '#FCFCFC',
 
     '& svg': {
       width: 20,
@@ -27,7 +25,7 @@ export const styles = {
     },
 
     '&:hover': {
-      backgroundColor: active ? t.text : t.hoverSoft
+      backgroundColor: active ? '#FCFCFC' : 'rgba(255,255,255,0.08)'
     }
   })
 };

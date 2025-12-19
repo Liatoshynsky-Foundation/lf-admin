@@ -1,9 +1,7 @@
-import { mediaModalTokens as t } from '../../MediaModal.tokens';
-
 export const styles = {
   dialog: {
     '& .MuiBackdrop-root': {
-      backgroundColor: t.backdrop
+      backgroundColor: 'rgba(0,0,0,0.6)'
     }
   },
 
@@ -27,8 +25,8 @@ export const styles = {
     gap: '24px',
     overflow: 'hidden',
 
-    backgroundColor: t.surface,
-    color: t.text
+    backgroundColor: '#232529',
+    color: '#FCFCFC'
   },
 
   header: {
@@ -55,9 +53,9 @@ export const styles = {
   },
 
   closeIcon: {
-    color: t.text,
+    color: '#FCFCFC',
     '&:hover': {
-      backgroundColor: t.hoverSoft
+      backgroundColor: 'rgba(255,255,255,0.08)'
     }
   },
 
@@ -85,6 +83,7 @@ export const styles = {
   footerLeft: {
     minWidth: 0
   },
+
   footerRight: {
     display: 'flex',
     gap: '16px'

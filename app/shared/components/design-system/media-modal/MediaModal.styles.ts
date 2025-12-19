@@ -1,5 +1,3 @@
-import { mediaModalTokens as t } from './MediaModal.tokens';
-
 export const styles = {
   cropHeader: {
     display: 'grid',
@@ -11,7 +9,7 @@ export const styles = {
     fontWeight: 700,
     fontSize: '24px',
     lineHeight: '140%',
-    color: t.text
+    color: '#FCFCFC'
   },
 
   cropHeaderSubtitle: {
@@ -22,36 +20,13 @@ export const styles = {
   },
 
   headerIconButton: {
-    color: t.text,
+    color: '#FCFCFC',
     '&:hover': {
-      backgroundColor: t.hoverSoft
+      backgroundColor: 'rgba(255,255,255,0.08)'
     }
   },
 
   footerBackButton: {
     padding: '8px 24px'
-  },
-
-  splitApply: {
-    display: 'inline-flex',
-    alignItems: 'stretch',
-    gap: 0
-  },
-
-  splitApplyMenuButton: {
-    borderRadius: '0 999px 999px 0',
-    border: `1px solid ${t.accent}`,
-    borderLeft: 'none',
-    minWidth: 52,
-    px: 1.5,
-    color: '#232529',
-    backgroundColor: t.accent,
-    '&:hover': {
-      backgroundColor: t.accent
-    }
-  },
-
-  splitApplyMainButtonSx: {
-    borderRadius: '999px 0 0 999px'
   }
 };
