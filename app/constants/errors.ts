@@ -44,7 +44,9 @@ export const newsErrors = {
   NETWORK_ERROR_HIDE: 'Network error while hiding news',
   FAILED_TO_HIDE: 'Failed to hide news',
   NETWORK_ERROR_DELETE: 'Network error while deleting news',
-  FAILED_TO_DELETE: 'Failed to delete news'
+  FAILED_TO_DELETE: 'Failed to delete news',
+  NETWORK_ERROR_STATUS_UPDATE: 'Network error while updating news status',
+  FAILED_TO_UPDATE_STATUS: 'Failed to update news status'
 };
 
 export const MediaMentionsErrors = {

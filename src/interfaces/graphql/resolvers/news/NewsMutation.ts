@@ -5,7 +5,6 @@ import { processNewsContent } from './processNewsContent/processNewsContent';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
 import type { LocalizedContent, News, NewsImageBlock } from '~/domain/entities/News';
-import { UpdateNewsServiceInput } from '~/src/application/use-cases/newsService/newsService';
 import { newsServiceErrors } from '~/src/constants/errors';
 import { CreateNewsInput, NewsRepository, UpdateNewsInput } from '~/src/domain/repositories/newsRepository';
 import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerator';
@@ -39,7 +38,7 @@ const parseDate = (dateStr?: string | null): Date | undefined => {
   return new Date(dateStr);
 };
 
-const extractTitleForSlug = (title: UpdateNewsServiceInput['title']): string => {
+const extractTitleForSlug = (title: UpdateNewsGQLInput['title']): string => {
   if (typeof title === 'object' && title && 'uk' in title) {
     return title.uk as string;
   }
@@ -51,7 +50,7 @@ const extractTitleForSlug = (title: UpdateNewsServiceInput['title']): string => 
 
 const processSlugUpdate = async (
   id: string,
-  title: UpdateNewsServiceInput['title'],
+  title: UpdateNewsGQLInput['title'],
   newsRepository: NewsRepository,
   updateData: UpdateNewsInput
 ): Promise<void> => {

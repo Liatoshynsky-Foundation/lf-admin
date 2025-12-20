@@ -93,17 +93,13 @@ extend type Query {
   newsBySlug(slug: String!): News
   allNews(filters: NewsFiltersInput): [News!]!
   publishedNews(filters: NewsFiltersInput): [News!]!
-  paginatedNews(page: Int = 1, limit: Int = 10, filters: NewsFiltersInput): PaginatedNews!
+  paginatedNews(page: Int!, limit: Int!, filters: NewsFiltersInput): PaginatedNews!
   newsCount(status: NewsStatus): Int!
 }
 
 extend type Mutation {
   createNews(input: CreateNewsInput!): News!
   updateNews(id: ID!, input: UpdateNewsInput!): News!
-  publishNews(input: PublishNewsInput!): News!
-  unpublishNews(id: ID!): News!
-  archiveNews(id: ID!): News!
-  hideNews(id: ID!): News!
   deleteNews(id: ID!): Boolean!
   incrementNewsViews(id: ID!): News!
 }

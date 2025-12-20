@@ -44,13 +44,13 @@ export const useMediaMentionsCount = (status?: MediaStatus) => {
 export const useCreateMediaMention = () => {
   const [mutate, { loading }] = useCreateMediaMentionMutation();
   const createMediaMention = useCallback(async (url: string) => mutate({ variables: { input: { url } } }), [mutate]);
-  return { createMediaMention, loading };
+  return [createMediaMention, { loading }];
 };
 
 export const useDeleteMediaMention = () => {
   const [mutate, { loading }] = useDeleteMediaMentionMutation();
   const deleteMediaMention = useCallback(async (id: string) => mutate({ variables: { id } }), [mutate]);
-  return { deleteMediaMention, loading };
+  return [deleteMediaMention, { loading }];
 };
 
 export const useUpdateMediaMention = () => {
@@ -59,12 +59,13 @@ export const useUpdateMediaMention = () => {
     async (id: string, input: UpdateMediaMentionInput) => mutate({ variables: { id, input } }),
     [mutate]
   );
-  return { updateMediaMention, loading };
+  return [updateMediaMention, { loading }];
 };
 
 // TODO: add current status as exported member to indicate current status in the UI
 export const useUpdateMediaMentionStatus = () => {
-  const [mutate] = useUpdateMediaMentionMutation();
+  const [mutate, { data, loading, error }] = useUpdateMediaMentionMutation();
+  const status = data?.updateMediaMention.status; // Placeholder for current status
 
   const makeStatusUpdater = useCallback(
     (status: MediaStatus) => {
@@ -79,16 +80,20 @@ export const useUpdateMediaMentionStatus = () => {
     [mutate]
   );
 
-  return {
-    publishMediaMention: makeStatusUpdater(MediaStatus.Published),
-    hideMediaMention: makeStatusUpdater(MediaStatus.Hidden),
-    draftMediaMention: makeStatusUpdater(MediaStatus.Draft),
-    archiveMediaMention: makeStatusUpdater(MediaStatus.Archived)
-  };
+  return [
+    status,
+    {
+      publish: makeStatusUpdater(MediaStatus.Published),
+      hide: makeStatusUpdater(MediaStatus.Hidden),
+      draft: makeStatusUpdater(MediaStatus.Draft),
+      archive: makeStatusUpdater(MediaStatus.Archived)
+    },
+    { loading, error }
+  ];
 };
 
 export const useAddMediaMentionView = () => {
   const [mutate, { loading }] = useAddMediaMentionViewMutation();
   const addViews = useCallback(async (id: string) => mutate({ variables: { id } }), [mutate]);
-  return { addViews, loading };
+  return [addViews, { loading }];
 };

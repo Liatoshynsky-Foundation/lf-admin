@@ -28,7 +28,7 @@ export const NewsQuery = {
 
   allNews: endpointHandler(async ({ args: { filters }, repo }) => repo.findAll(mapFilters(filters))),
 
-  paginatedNews: endpointHandler(async ({ args: { page = 1, limit = 10, filters }, repo }) =>
+  paginatedNews: endpointHandler(async ({ args: { page, limit, filters }, repo }) =>
     repo.findPaginated(page, limit, mapFilters(filters))
   ),
 
