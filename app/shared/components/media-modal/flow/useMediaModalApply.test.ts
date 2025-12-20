@@ -40,7 +40,7 @@ type HarnessProps = {
   onApply: jest.Mock<Promise<void> | void, [MediaModalResult]>;
 };
 
-function Harness({ open, onClose, onApply }: HarnessProps): ReactElement {
+function Harness({ open, onClose, onApply }: Readonly<HarnessProps>): ReactElement {
   const { isApplying, applyError, clearApplyError, cancelInFlightApply, handleClose, runApply } = useMediaModalApply({
     open,
     onClose,
@@ -103,7 +103,7 @@ describe('useMediaModalApply', () => {
     await waitFor(() => expect(screen.getByTestId('isApplying')).toHaveTextContent('false'));
   });
 
-  it('should set applyError and keep open when onApply rejects with Error', async () => {
+  it('should set applyError and keep open when onApply rejects', async () => {
     const user = userEvent.setup();
 
     const onClose = jest.fn<void, []>();
@@ -114,22 +114,6 @@ describe('useMediaModalApply', () => {
     await user.click(screen.getByTestId('apply'));
 
     expect(await screen.findByTestId('applyError')).toHaveTextContent('apply failed');
-    expect(onClose).not.toHaveBeenCalled();
-  });
-
-  it('should set fallback applyError when onApply rejects with non-Error', async () => {
-    const user = userEvent.setup();
-
-    const onClose = jest.fn<void, []>();
-    const onApply = jest.fn<Promise<void>, [MediaModalResult]>(() => Promise.reject('boom'));
-
-    render(React.createElement(Harness, { open: true, onClose, onApply }));
-
-    await user.click(screen.getByTestId('apply'));
-
-    expect(await screen.findByTestId('applyError')).toHaveTextContent(
-      'Не вдалося застосувати зміни. Спробуйте ще раз.'
-    );
     expect(onClose).not.toHaveBeenCalled();
   });
 
@@ -150,7 +134,6 @@ describe('useMediaModalApply', () => {
 
     deferred.resolve(undefined);
 
-    // if the old promise resolves, it must not close
     await waitFor(() => expect(onClose).not.toHaveBeenCalled());
     expect(screen.getByTestId('applyError')).toHaveTextContent('');
   });

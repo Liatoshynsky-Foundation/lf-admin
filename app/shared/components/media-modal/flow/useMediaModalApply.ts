@@ -20,7 +20,7 @@ type Return = {
   runApply: (result: MediaModalResult) => Promise<void>;
 };
 
-export function useMediaModalApply({ open, onClose, onApply }: Args): Return {
+export function useMediaModalApply({ open, onClose, onApply }: Readonly<Args>): Return {
   const [isApplying, setIsApplying] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
 
@@ -55,6 +55,7 @@ export function useMediaModalApply({ open, onClose, onApply }: Args): Return {
       if (isApplying) return;
 
       const seq = ++applySeqRef.current;
+      const isCurrent = () => applySeqRef.current === seq && openRef.current;
 
       setIsApplying(true);
       setApplyError(null);
@@ -62,20 +63,17 @@ export function useMediaModalApply({ open, onClose, onApply }: Args): Return {
       try {
         await onApply(result);
 
-        if (applySeqRef.current !== seq) return;
-        if (!openRef.current) return;
-
-        handleClose();
+        if (isCurrent()) {
+          handleClose();
+        }
       } catch (e: unknown) {
-        if (applySeqRef.current !== seq) return;
-        if (!openRef.current) return;
-
-        setApplyError(e instanceof Error ? e.message : 'Не вдалося застосувати зміни. Спробуйте ще раз.');
+        if (isCurrent()) {
+          setApplyError(e instanceof Error ? e.message : 'Не вдалося застосувати зміни. Спробуйте ще раз.');
+        }
       } finally {
-        if (applySeqRef.current !== seq) return;
-        if (!openRef.current) return;
-
-        setIsApplying(false);
+        if (isCurrent()) {
+          setIsApplying(false);
+        }
       }
     },
     [handleClose, isApplying, onApply]

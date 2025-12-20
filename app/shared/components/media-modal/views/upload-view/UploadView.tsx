@@ -11,7 +11,7 @@ type Props = {
   onPick: (selected: UploadMedia) => void;
 };
 
-export function UploadView({ selected: _selected, onPick }: Props) {
+export function UploadView({ selected: _selected, onPick }: Readonly<Props>) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (

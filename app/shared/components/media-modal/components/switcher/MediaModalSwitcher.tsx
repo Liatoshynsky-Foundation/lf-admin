@@ -10,10 +10,10 @@ import GalleryIcon from '~/public/icons/gallery.svg';
 import UploadIcon from '~/public/icons/upload.svg';
 import Button from '~/shared/components/design-system/button/Button';
 
-type Props = {
+type Props = Readonly<{
   value: MediaModalTab;
   onChange: (v: MediaModalTab) => void;
-};
+}>;
 
 export function MediaModalSwitcher({ value, onChange }: Props) {
   const isGallery = value === 'GALLERY';

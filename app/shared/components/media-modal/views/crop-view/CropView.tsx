@@ -19,7 +19,7 @@ const resizedCropForPlaceholder = (): CropResult => ({
   rect: { x: 24, y: 18, width: 160, height: 220 }
 });
 
-export function CropView({ selected, resetSeq, onBaseline, onChange }: CropRendererProps) {
+export function CropView({ selected, resetSeq, onBaseline, onChange }: Readonly<CropRendererProps>) {
   const uploadFile = selected.kind === 'upload' ? selected.file : null;
   const [uploadObjectUrl, setUploadObjectUrl] = useState('');
 

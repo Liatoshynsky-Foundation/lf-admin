@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type MouseEventHandler, type ReactNode, type SVGProps, useEffect, useRef } from 'react';
+import { ComponentProps, type ReactNode, type SVGProps, useEffect, useRef } from 'react';
 
 import type {
   CropRendererProps,
@@ -16,27 +16,8 @@ import type {
   MediaModalTab,
   SelectedMedia
 } from '../MediaModal.types';
+import { MockDsButton } from '../test-utils/mockDsButton';
 import { MediaModalFlow } from './MediaModalFlow';
-
-type DsButtonProps = {
-  label?: string;
-  children?: ReactNode;
-  startIcon?: ReactNode;
-  endIcon?: ReactNode;
-  onClick?: MouseEventHandler<HTMLButtonElement>;
-  disabled?: boolean;
-  loading?: boolean;
-  role?: string;
-  tabIndex?: number;
-  sx?: unknown;
-  'data-testid'?: string;
-  'aria-label'?: string;
-  'aria-selected'?: boolean;
-  'aria-pressed'?: boolean;
-  disableRipple?: boolean;
-  disableFocusRipple?: boolean;
-  disableElevation?: boolean;
-};
 
 jest.mock('~/public/icons/iteration.svg', () => ({
   __esModule: true,
@@ -50,40 +31,7 @@ jest.mock('~/public/icons/arrowLeft.svg', () => ({
 
 jest.mock('~/shared/components/design-system/button/Button', () => ({
   __esModule: true,
-  default: (props: DsButtonProps) => {
-    const {
-      label,
-      children,
-      startIcon,
-      endIcon,
-      onClick,
-      disabled,
-      role,
-      tabIndex,
-      'data-testid': dataTestId,
-      'aria-label': ariaLabel,
-      'aria-selected': ariaSelected,
-      'aria-pressed': ariaPressed
-    } = props;
-
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        disabled={disabled}
-        role={role}
-        tabIndex={tabIndex}
-        data-testid={dataTestId}
-        aria-label={ariaLabel}
-        aria-selected={ariaSelected}
-        aria-pressed={ariaPressed}
-      >
-        {startIcon}
-        {label ?? children}
-        {endIcon}
-      </button>
-    );
-  }
+  default: MockDsButton
 }));
 
 type ContainerProps = {
@@ -171,7 +119,7 @@ jest.mock('../components/switcher/MediaModalSwitcher', () => ({
 const initialCrop: CropResult = { rect: { x: 0, y: 0, width: 200, height: 200 } };
 const resizedCrop: CropResult = { rect: { x: 24, y: 18, width: 160, height: 220 } };
 
-function CropRenderer({ selected, crop, resetSeq, onBaseline, onChange }: CropRendererProps) {
+function CropRenderer({ selected, crop, resetSeq, onBaseline, onChange }: Readonly<CropRendererProps>) {
   const didInitForSelectedRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -189,7 +137,7 @@ function CropRenderer({ selected, crop, resetSeq, onBaseline, onChange }: CropRe
   );
 }
 
-function GalleryRenderer({ selected, onPick }: GalleryRendererProps) {
+function GalleryRenderer({ selected, onPick }: Readonly<GalleryRendererProps>) {
   return (
     <div data-testid="GalleryView" data-selected={selected ? selected.id : 'none'}>
       <button
@@ -211,7 +159,7 @@ function GalleryRenderer({ selected, onPick }: GalleryRendererProps) {
   );
 }
 
-function UploadRenderer({ selected, onPick }: UploadRendererProps) {
+function UploadRenderer({ selected, onPick }: Readonly<UploadRendererProps>) {
   return (
     <div data-testid="UploadView" data-selected={selected ? selected.fileName : 'none'}>
       <button
@@ -232,7 +180,7 @@ function UploadRenderer({ selected, onPick }: UploadRendererProps) {
   );
 }
 
-function UsedRenderer({ selected, onPick }: UsedRendererProps) {
+function UsedRenderer({ selected, onPick }: Readonly<UsedRendererProps>) {
   return (
     <div data-testid="UsedView" data-selected={selected ? selected.id : 'none'}>
       <button
@@ -261,8 +209,8 @@ const createRenderers = (): MediaModalRenderers => ({
   crop: (props) => <CropRenderer {...props} />
 });
 
-function renderOpen(initial?: MediaModalOpenState, overrides?: Partial<React.ComponentProps<typeof MediaModalFlow>>) {
-  const props: React.ComponentProps<typeof MediaModalFlow> = {
+function renderOpen(initial?: MediaModalOpenState, overrides?: Partial<ComponentProps<typeof MediaModalFlow>>) {
+  const props: ComponentProps<typeof MediaModalFlow> = {
     open: true,
     onClose: jest.fn(),
     onApply: jest.fn(),
@@ -360,14 +308,14 @@ describe('MediaModalFlow', () => {
     await waitFor(() => expect(cropView).toHaveAttribute('data-crop', JSON.stringify(resizedCrop)));
     expect(reset).not.toBeDisabled();
 
-    const beforeSeq = cropView.getAttribute('data-reset-seq');
+    const beforeSeq = cropView.dataset.resetSeq;
 
     await user.click(reset);
 
     await waitFor(() => expect(cropView).toHaveAttribute('data-crop', JSON.stringify(initialCrop)));
     expect(reset).toBeDisabled();
 
-    const afterSeq = cropView.getAttribute('data-reset-seq');
+    const afterSeq = cropView.dataset.resetSeq;
     expect(afterSeq).not.toBe(beforeSeq);
   });
 

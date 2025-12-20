@@ -6,7 +6,7 @@ import React, { ReactNode } from 'react';
 import { styles } from './MediaModalContainer.styles';
 import CloseIcon from '~/public/icons/close.svg';
 
-type Props = {
+type Props = Readonly<{
   open: boolean;
   onClose: () => void;
   dataTestId?: string;
@@ -17,7 +17,7 @@ type Props = {
   footerTop?: ReactNode;
   footerLeft?: ReactNode;
   footerRight?: ReactNode;
-};
+}>;
 
 export function MediaModalContainer({
   open,

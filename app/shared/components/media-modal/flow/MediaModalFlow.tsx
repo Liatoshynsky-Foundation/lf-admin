@@ -28,7 +28,7 @@ export type MediaModalFlowProps = {
   renderers: MediaModalRenderers;
 };
 
-export function MediaModalFlow({ open, onClose, onApply, initial, renderers }: MediaModalFlowProps) {
+export function MediaModalFlow({ open, onClose, onApply, initial, renderers }: Readonly<MediaModalFlowProps>) {
   const [state, dispatch] = useReducer(reducer, initial, buildInitialState);
 
   const { isApplying, applyError, clearApplyState, clearApplyError, cancelInFlightApply, handleClose, runApply } =

@@ -3,12 +3,12 @@
 import { Box } from '@mui/material';
 
 import type { GalleryMedia } from '../../MediaModal.types';
-import Button from '~/shared/components/design-system/button/Button';
+import { MediaPickList } from '../MediaPickList';
 
-type Props = {
+type Props = Readonly<{
   selected: GalleryMedia | null;
   onPick: (selected: GalleryMedia) => void;
-};
+}>;
 
 const demoItems: Array<GalleryMedia> = [
   { kind: 'gallery', id: 'gallery-1-uk', fileName: 'gallery-1.png', src: '/demo/gallery-1.png', locale: 'uk' },
@@ -19,23 +19,12 @@ const demoItems: Array<GalleryMedia> = [
 export function GalleryView({ selected, onPick }: Props) {
   return (
     <Box data-testid="GalleryView" sx={{ height: '100%' }}>
-      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-        {demoItems.map((it) => {
-          const isActive = Boolean(selected && selected.id === it.id);
-
-          return (
-            <Button
-              key={it.id}
-              color="secondary"
-              variant={isActive ? 'filled' : 'outlined'}
-              label={`${it.fileName} (${it.locale})`}
-              data-testid={`GalleryView-item-${it.id}`}
-              aria-pressed={isActive}
-              onClick={() => onPick(it)}
-            />
-          );
-        })}
-      </Box>
+      <MediaPickList
+        items={demoItems}
+        selectedId={selected?.id ?? null}
+        testIdPrefix="GalleryView-item"
+        onPick={onPick}
+      />
     </Box>
   );
 }

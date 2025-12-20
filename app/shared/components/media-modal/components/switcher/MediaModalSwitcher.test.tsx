@@ -1,30 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { MouseEventHandler, ReactNode, SVGProps } from 'react';
+import React, { SVGProps } from 'react';
 
 import type { MediaModalTab } from '../../MediaModal.types';
+import { MockDsButton } from '../../test-utils/mockDsButton';
 import { MediaModalSwitcher } from './MediaModalSwitcher';
-
-type DsButtonProps = {
-  label?: string;
-  children?: ReactNode;
-  startIcon?: ReactNode;
-  endIcon?: ReactNode;
-  onClick?: MouseEventHandler<HTMLButtonElement>;
-  disabled?: boolean;
-  role?: string;
-  tabIndex?: number;
-  'data-testid'?: string;
-  'aria-label'?: string;
-  'aria-selected'?: boolean;
-  'aria-pressed'?: boolean;
-  disableRipple?: boolean;
-  disableFocusRipple?: boolean;
-  disableElevation?: boolean;
-  sx?: unknown;
-  color?: unknown;
-  variant?: unknown;
-};
 
 jest.mock('~/public/icons/gallery.svg', () => ({
   __esModule: true,
@@ -43,40 +23,7 @@ jest.mock('~/public/icons/fileClock.svg', () => ({
 
 jest.mock('~/shared/components/design-system/button/Button', () => ({
   __esModule: true,
-  default: (props: DsButtonProps) => {
-    const {
-      label,
-      children,
-      startIcon,
-      endIcon,
-      onClick,
-      disabled,
-      role,
-      tabIndex,
-      'data-testid': dataTestId,
-      'aria-label': ariaLabel,
-      'aria-selected': ariaSelected,
-      'aria-pressed': ariaPressed
-    } = props;
-
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        disabled={disabled}
-        role={role}
-        tabIndex={tabIndex}
-        data-testid={dataTestId}
-        aria-label={ariaLabel}
-        aria-selected={ariaSelected}
-        aria-pressed={ariaPressed}
-      >
-        {startIcon}
-        {label ?? children}
-        {endIcon}
-      </button>
-    );
-  }
+  default: MockDsButton
 }));
 
 describe('MediaModalSwitcher', () => {
