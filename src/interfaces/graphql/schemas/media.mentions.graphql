@@ -38,6 +38,8 @@ type PaginatedMediaMentions {
 
 input MediaMentionsFiltersInput {
   status: MediaStatus
+  limit: Int
+  skip: Int
   sortBy: String
   sortOrder: SortDirection
 }

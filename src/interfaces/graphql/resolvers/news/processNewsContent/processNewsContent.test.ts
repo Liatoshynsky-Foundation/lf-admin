@@ -4,9 +4,9 @@ jest.mock('../../uploadService/upload', () => ({
   blobStorageService: jest.fn()
 }));
 
-import { extractImageSrcs } from '../../extractImageSrc/extractImageSrc';
-import { removeTmpFlagsRecursively } from '../../removeTmpFlags/removeTmpFlags';
-import { blobStorageService } from '../../uploadService/upload';
+import { extractImageSrcs } from '../../../../../application/use-cases/extractImageSrc/extractImageSrc';
+import { removeTmpFlagsRecursively } from '../../../../../application/use-cases/removeTmpFlags/removeTmpFlags';
+import { blobStorageService } from '../../../../../application/use-cases/uploadService/upload';
 import { NewsContentInput, processNewsContent } from './processNewsContent';
 
 const mockExtractImageSrcs = extractImageSrcs as jest.MockedFunction<typeof extractImageSrcs>;

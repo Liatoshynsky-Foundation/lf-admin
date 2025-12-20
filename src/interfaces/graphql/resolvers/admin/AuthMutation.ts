@@ -15,20 +15,21 @@ import { LoginArgs } from '~/back-shared/types/admin/types';
 import { GraphQLContext } from '~/back-shared/types/container/types';
 
 export const authMutation = {
-  login: async (_: unknown, args: LoginArgs, context: GraphQLContext) => {
-    const loginAdmin = context.requestContainer.resolve('loginAdmin');
-    const createTokenService = context.requestContainer.resolve('createTokenService');
-    const refreshTokenService = context.requestContainer.resolve('refreshTokenService');
+  login: async (_: unknown, args: LoginArgs, { requestContainer, setCookie }: GraphQLContext) => {
+    const loginAdmin = requestContainer.cradle.loginAdmin;
+    const createTokenService = requestContainer.cradle.createTokenService;
+    const refreshTokenRepo = requestContainer.cradle.refreshTokenRepository;
     try {
       const admin = await loginAdmin.execute(args.email, args.password);
       const { accessToken, refreshToken, refreshTokenJti } = createTokenService.generateTokens(admin);
-      await refreshTokenService.addJTI(admin.id, refreshTokenJti, JWT_REFRESH_TOKEN_LIFETIME, admin.type);
-      context.setCookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, {
+
+      await refreshTokenRepo.add(admin.id, refreshTokenJti, JWT_REFRESH_TOKEN_LIFETIME, admin.type);
+      setCookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, {
         ...commonCookieOptions,
         maxAge: JWT_ACCESS_TOKEN_LIFETIME
       });
 
-      context.setCookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
+      setCookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
         ...commonCookieOptions,
         maxAge: JWT_REFRESH_TOKEN_LIFETIME
       });
@@ -60,15 +61,17 @@ export const authMutation = {
       throw err;
     }
   },
-  logout: async (_: unknown, __: unknown, context: GraphQLContext) => {
-    const { requestContainer, refreshTokenFromCookie, deleteCookie } = context;
-
+  logout: async (
+    _: unknown,
+    __: unknown,
+    { requestContainer, refreshTokenFromCookie, deleteCookie }: GraphQLContext
+  ) => {
     if (refreshTokenFromCookie) {
-      const tokenService = requestContainer.resolve('createTokenService');
-      const refreshTokenService = requestContainer.resolve('refreshTokenService');
+      const tokenService = requestContainer.cradle.createTokenService;
+      const refreshTokenRepo = requestContainer.cradle.refreshTokenRepository;
       try {
         const payload = tokenService.verifyRefreshToken(refreshTokenFromCookie);
-        await refreshTokenService.deleteJTI(payload.jti);
+        await refreshTokenRepo.deleteByJti(payload.jti);
       } catch {}
     }
 
@@ -76,29 +79,31 @@ export const authMutation = {
     deleteCookie(REFRESH_TOKEN_COOKIE_NAME, { path: '/' });
     return true;
   },
-  refreshToken: async (_: unknown, __: unknown, context: GraphQLContext) => {
-    const { requestContainer, refreshTokenFromCookie, setCookie, deleteCookie, admin } = context;
-
+  refreshToken: async (
+    _: unknown,
+    __: unknown,
+    { requestContainer, refreshTokenFromCookie, setCookie, deleteCookie, admin }: GraphQLContext
+  ) => {
     if (!refreshTokenFromCookie) {
       throw new GraphQLError('Refresh token is missing.', { extensions: { code: 'UNAUTHENTICATED' } });
     }
 
-    const tokenService = requestContainer.resolve('createTokenService');
-    const refreshTokenService = requestContainer.resolve('refreshTokenService');
+    const tokenService = requestContainer.cradle.createTokenService;
+    const refreshTokenRepo = requestContainer.cradle.refreshTokenRepository;
     try {
       const oldPayload = tokenService.verifyRefreshToken(refreshTokenFromCookie);
-      const isJtiValid = await refreshTokenService.isExistsJTI(oldPayload.jti);
+      const isJtiValid = await refreshTokenRepo.exists(oldPayload.jti);
       if (!isJtiValid) {
-        await refreshTokenService.deleteAllForAdmin(oldPayload.id);
+        await refreshTokenRepo.deleteAllForAdmin(oldPayload.id);
         throw new Error(errors.REFRESH_TOKEN_REVOKED);
       }
 
-      await refreshTokenService.deleteJTI(oldPayload.jti);
+      await refreshTokenRepo.deleteByJti(oldPayload.jti);
 
       const adminData = { id: oldPayload.id, type: admin?.type ?? 'admin' } as { id: string; type: adminTypes };
       const { accessToken, refreshToken, refreshTokenJti } = tokenService.generateTokens(adminData);
 
-      await refreshTokenService.addJTI(adminData.id, refreshTokenJti, JWT_REFRESH_TOKEN_LIFETIME, adminData.type);
+      await refreshTokenRepo.add(adminData.id, refreshTokenJti, JWT_REFRESH_TOKEN_LIFETIME, adminData.type);
 
       setCookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, { ...commonCookieOptions, maxAge: JWT_ACCESS_TOKEN_LIFETIME });
       setCookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, {

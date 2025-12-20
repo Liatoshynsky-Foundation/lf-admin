@@ -1,45 +1,100 @@
 import { GraphQLError } from 'graphql';
 
+import { endpointRepositoryHandler } from '../helpers';
+import { processNewsContent } from './processNewsContent/processNewsContent';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
-import type { News, NewsImageBlock } from '~/domain/entities/News';
+import type { LocalizedContent, News, NewsImageBlock } from '~/domain/entities/News';
+import { UpdateNewsServiceInput } from '~/src/application/use-cases/newsService/newsService';
+import { newsServiceErrors } from '~/src/constants/errors';
+import { CreateNewsInput, NewsRepository, UpdateNewsInput } from '~/src/domain/repositories/newsRepository';
+import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerator';
 import { NewsStatus } from '~/types/enums/common.enums';
 
-type CreateNewsInput = {
-  title: any;
-  description?: any;
-  content: any;
-  coverImage: any;
+type CreateNewsGQLInput = {
+  title: LocalizedContent;
+  description?: LocalizedContent;
+  content: LocalizedContent;
+  coverImage: NewsImageBlock;
   newsDate?: string;
   status?: string;
   publishedAt?: string;
 };
 
-type UpdateNewsInput = {
-  title?: any;
-  description?: any;
-  content?: any;
-  coverImage?: any;
+type UpdateNewsGQLInput = {
+  title?: LocalizedContent;
+  description?: LocalizedContent;
+  content?: LocalizedContent;
+  coverImage?: NewsImageBlock;
   newsDate?: string;
   status?: string;
   publishedAt?: string;
 };
 
-type PublishNewsInput = {
-  id: string;
-  publishedAt?: string;
-};
+type CreateNewsArgs = { input: CreateNewsGQLInput };
+type UpdateNewsArgs = { id: string; input: UpdateNewsGQLInput };
 
-type CreateNewsArgs = { input: CreateNewsInput };
-type UpdateNewsArgs = { id: string; input: UpdateNewsInput };
-type PublishNewsArgs = { input: PublishNewsInput };
-type IdArgs = { id: string };
-
-const parseDate = (dateStr?: string | null): Date | null | undefined => {
-  if (dateStr === undefined) return undefined;
-  if (dateStr === null) return null;
+const parseDate = (dateStr?: string | null): Date | undefined => {
+  if (!dateStr) return undefined;
   return new Date(dateStr);
 };
+
+const extractTitleForSlug = (title: UpdateNewsServiceInput['title']): string => {
+  if (typeof title === 'object' && title && 'uk' in title) {
+    return title.uk as string;
+  }
+  if (typeof title === 'string') {
+    return title;
+  }
+  return '';
+};
+
+const processSlugUpdate = async (
+  id: string,
+  title: UpdateNewsServiceInput['title'],
+  newsRepository: NewsRepository,
+  updateData: UpdateNewsInput
+): Promise<void> => {
+  const news = await newsRepository.findById(id);
+  if (!news) {
+    throw new Error(newsServiceErrors.NEWS_NOT_FOUND(id));
+  }
+
+  const titleForSlug = extractTitleForSlug(title);
+
+  if (titleForSlug) {
+    const newSlug = await generateUniqueSlug(titleForSlug, {
+      checkExists: async (slug: string) => {
+        const existing = await newsRepository.findBySlug(slug);
+        return existing !== null && existing.id !== id;
+      }
+    });
+
+    updateData.slug = newSlug;
+  }
+};
+
+const processContentFields = async (input: UpdateNewsGQLInput, updateData: UpdateNewsInput): Promise<void> => {
+  const contentToProcess = {
+    content: input.content || { uk: null, en: null },
+    description: input.description,
+    coverImage: input.coverImage
+  };
+
+  const processedContent = await processNewsContent(contentToProcess);
+
+  if (input.content) {
+    updateData.content = processedContent.content;
+  }
+  if (input.description) {
+    updateData.description = processedContent.description;
+  }
+  if (input.coverImage) {
+    updateData.coverImage = processedContent.coverImage;
+  }
+};
+
+const endpointHandler = endpointRepositoryHandler('newsRepository');
 
 export const NewsMutation = {
   createNews: async (_: unknown, { input }: CreateNewsArgs, context: GraphQLContext): Promise<News> => {
@@ -49,19 +104,38 @@ export const NewsMutation = {
       });
     }
 
-    const { newsService } = context.requestContainer.cradle;
+    const repo = context.requestContainer.cradle.newsRepository;
 
-    const serviceInput = {
-      title: input.title,
-      description: input.description,
-      content: input.content,
-      coverImage: input.coverImage as NewsImageBlock,
+    const titleForSlug = extractTitleForSlug(input.title);
+
+    if (!titleForSlug) {
+      throw new Error(newsServiceErrors.TITLE_REQUIRED_FOR_SLUG);
+    }
+
+    const slug = await generateUniqueSlug(titleForSlug, {
+      checkExists: async (slug: string) => {
+        const existing = await repo.findBySlug(slug);
+        return existing !== null;
+      }
+    });
+
+    const processedInput = await processNewsContent(input);
+
+    const newsData: CreateNewsInput = {
+      title: processedInput.title,
+      description: processedInput.description,
+      content: processedInput.content,
+      coverImage: processedInput.coverImage,
       newsDate: parseDate(input.newsDate),
-      status: input.status as NewsStatus | undefined,
-      publishedAt: parseDate(input.publishedAt)
+      slug,
+      status: input.status as NewsStatus,
+      publishedAt: parseDate(input.publishedAt),
+      meta: {
+        views: 0
+      }
     };
 
-    return newsService.createNews(serviceInput);
+    return repo.create(newsData);
   },
 
   updateNews: async (_: unknown, { id, input }: UpdateNewsArgs, context: GraphQLContext): Promise<News> => {
@@ -71,84 +145,35 @@ export const NewsMutation = {
       });
     }
 
-    const { newsService } = context.requestContainer.cradle;
+    const repo = context.requestContainer.cradle.newsRepository;
 
-    const serviceInput = {
+    const updateData: UpdateNewsInput = {
       title: input.title,
       description: input.description,
-      content: input.content,
-      coverImage: input.coverImage ? (input.coverImage as NewsImageBlock) : undefined,
       newsDate: parseDate(input.newsDate),
       status: input.status as NewsStatus | undefined,
       publishedAt: parseDate(input.publishedAt)
     };
 
-    return newsService.updateNews(id, serviceInput);
-  },
+    if (input.content || input.description || input.coverImage) {
+      await processContentFields(input, updateData);
+    }
 
-  publishNews: async (_: unknown, { input }: PublishNewsArgs, context: GraphQLContext): Promise<News> => {
-    if (!context.admin) {
-      throw new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
-        extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
+    if (input.title) {
+      await processSlugUpdate(id, input.title, repo, updateData);
+    }
+
+    const res = await repo.update(id, updateData);
+    if (!res) {
+      throw new GraphQLError(newsServiceErrors.NEWS_NOT_FOUND(id), {
+        extensions: { code: 'NEWS_NOT_FOUND' }
       });
     }
 
-    const { newsService } = context.requestContainer.cradle;
-
-    return newsService.publishNews({
-      id: input.id,
-      publishedAt: parseDate(input.publishedAt) as Date | undefined
-    });
+    return res;
   },
 
-  unpublishNews: async (_: unknown, { id }: IdArgs, context: GraphQLContext): Promise<News> => {
-    if (!context.admin) {
-      throw new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
-        extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
-      });
-    }
+  deleteNews: endpointHandler(async ({ args: { id }, repo }) => repo.delete(id)),
 
-    const { newsService } = context.requestContainer.cradle;
-    return newsService.unpublishNews(id);
-  },
-
-  archiveNews: async (_: unknown, { id }: IdArgs, context: GraphQLContext): Promise<News> => {
-    if (!context.admin) {
-      throw new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
-        extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
-      });
-    }
-
-    const { newsService } = context.requestContainer.cradle;
-    return newsService.archiveNews(id);
-  },
-
-  hideNews: async (_: unknown, { id }: IdArgs, context: GraphQLContext): Promise<News> => {
-    if (!context.admin) {
-      throw new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
-        extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
-      });
-    }
-
-    const { newsService } = context.requestContainer.cradle;
-    return newsService.hideNews(id);
-  },
-
-  deleteNews: async (_: unknown, { id }: IdArgs, context: GraphQLContext): Promise<boolean> => {
-    if (!context.admin) {
-      throw new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
-        extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
-      });
-    }
-
-    const { newsService } = context.requestContainer.cradle;
-
-    return newsService.deleteNews(id);
-  },
-
-  incrementNewsViews: async (_: unknown, { id }: IdArgs, context: GraphQLContext): Promise<News> => {
-    const { newsService } = context.requestContainer.cradle;
-
-    return newsService.incrementViews(id);
-  }
+  incrementNewsViews: endpointHandler(async ({ args: { id }, repo }) => repo.incrementViews(id))
 };

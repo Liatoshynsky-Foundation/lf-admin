@@ -32,8 +32,8 @@ const dateToIso = (date: Date | string | null | undefined): string | null => {
 
 const toEntity = (doc: DbNews): News => ({
   id: doc._id.toString(),
-  publishedAt: doc.publishedAt,
-  newsDate: doc.newsDate ?? null,
+  publishedAt: doc.publishedAt ? new Date(doc.publishedAt) : undefined,
+  newsDate: doc.newsDate ? new Date(doc.newsDate) : undefined,
   title: doc.title,
   description: doc.description,
   content: doc.content,
@@ -76,13 +76,7 @@ export const NewsRepository = ({ NewsModel }: NewsRepoDeps): INewsRepository => 
   });
 
   return {
-    findBySlug: baseRepo.findBySlug,
-    findById: baseRepo.findById,
-    findAll: baseRepo.findAll,
-    update: baseRepo.update,
-    delete: baseRepo.delete,
-    count: baseRepo.count,
-
+    ...baseRepo,
     create: async (input: CreateNewsInput): Promise<News> => {
       await dbConnect();
 

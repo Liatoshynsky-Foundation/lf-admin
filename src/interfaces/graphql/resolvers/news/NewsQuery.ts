@@ -1,7 +1,4 @@
-import { GraphQLError } from 'graphql';
-
-import type { GraphQLContext } from '~/back-shared/types/container/types';
-import { graphqlErrors } from '~/constants/errors';
+import { endpointRepositoryHandler } from '../helpers';
 import { NewsStatus } from '~/types/enums/common.enums';
 
 type NewsFiltersInput = {
@@ -10,10 +7,6 @@ type NewsFiltersInput = {
   sortBy?: string;
   sortOrder?: string;
 };
-
-type NewsFiltersArgs = { filters?: NewsFiltersInput };
-type PaginatedNewsArgs = { page?: number; limit?: number; filters?: NewsFiltersInput };
-type NewsCountArgs = { status?: NewsStatus };
 
 const mapFilters = (filters?: NewsFiltersInput) => {
   if (!filters) return undefined;
@@ -26,70 +19,18 @@ const mapFilters = (filters?: NewsFiltersInput) => {
   };
 };
 
+const endpointHandler = endpointRepositoryHandler('newsRepository');
+
 export const NewsQuery = {
-  newsById: async (_: unknown, { id }: { id: string }, context: GraphQLContext) => {
-    if (!context.admin) {
-      throw new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
-        extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
-      });
-    }
+  newsById: endpointHandler(async ({ args: { id }, repo }) => repo.findById(id)),
 
-    const { newsService } = context.requestContainer.cradle;
+  newsBySlug: endpointHandler(async ({ args: { slug }, repo }) => repo.findBySlug(slug)),
 
-    return newsService.getNewsById(id);
-  },
+  allNews: endpointHandler(async ({ args: { filters }, repo }) => repo.findAll(mapFilters(filters))),
 
-  newsBySlug: async (_: unknown, { slug }: { slug: string }, context: GraphQLContext) => {
-    if (!context.admin) {
-      throw new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
-        extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
-      });
-    }
+  paginatedNews: endpointHandler(async ({ args: { page = 1, limit = 10, filters }, repo }) =>
+    repo.findPaginated(page, limit, mapFilters(filters))
+  ),
 
-    const { newsService } = context.requestContainer.cradle;
-
-    return newsService.getNewsBySlug(slug);
-  },
-
-  allNews: async (_: unknown, { filters }: NewsFiltersArgs, context: GraphQLContext) => {
-    if (!context.admin) {
-      throw new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
-        extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
-      });
-    }
-
-    const { newsService } = context.requestContainer.cradle;
-
-    return newsService.getAllNews(mapFilters(filters));
-  },
-
-  publishedNews: async (_: unknown, { filters }: NewsFiltersArgs, context: GraphQLContext) => {
-    const { newsService } = context.requestContainer.cradle;
-
-    return newsService.getPublishedNews(mapFilters(filters));
-  },
-
-  paginatedNews: async (_: unknown, { page = 1, limit = 10, filters }: PaginatedNewsArgs, context: GraphQLContext) => {
-    if (!context.admin) {
-      throw new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
-        extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
-      });
-    }
-
-    const { newsService } = context.requestContainer.cradle;
-
-    return newsService.getPaginatedNews(page, limit, mapFilters(filters));
-  },
-
-  newsCount: async (_: unknown, { status }: NewsCountArgs, context: GraphQLContext) => {
-    if (!context.admin) {
-      throw new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
-        extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
-      });
-    }
-
-    const { newsService } = context.requestContainer.cradle;
-
-    return newsService.getNewsCount(status ? { status } : undefined);
-  }
+  newsCount: endpointHandler(async ({ args: { status }, repo }) => repo.count({ status }))
 };

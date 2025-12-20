@@ -13,8 +13,11 @@ export const Query = {
         extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
       });
     }
-    const { pageService } = context.requestContainer.cradle;
-    const page = await pageService.getPageByStatus(slug, status);
+    const repo = context.requestContainer.cradle.pageRepository;
+
+    const pageCallback = status === PageStatus.Draft ? repo.getDraftBySlug : repo.getPublishedBySlug;
+
+    const page = await pageCallback(slug);
     if (!page) {
       throw new GraphQLError('Page not found', { extensions: { code: 'NOT_FOUND' } });
     }

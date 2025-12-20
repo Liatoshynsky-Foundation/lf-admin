@@ -1,55 +1,56 @@
 import { GraphQLError } from 'graphql';
 
+import { endpointRepositoryHandler } from '../helpers';
+import { MediaMentionsServiceErrors } from '~/back-constants/errors';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
+import { generateUniqueSlug } from '~/back-shared/utils';
 import { graphqlErrors } from '~/constants/errors';
-import { MediaMentionEntityRaw } from '~/domain/entities/MediaMentions';
+import { parseMediaMention } from '~/lib/parser/mediaMentionsParser';
 
-type UpdateMediaMentionInput = Partial<Omit<MediaMentionEntityRaw, 'meta'>>;
-
-type IdArgs = { id: string };
 type CreateMediaMentionArgs = { url: string };
-type UpdateMediaMentionArgs = { input: UpdateMediaMentionInput } & IdArgs;
+
+const enpointHandler = endpointRepositoryHandler('mediaMentionsRepository');
 
 export const MediaMentionsMutation = {
-  createMediaMention: async (_: unknown, { url }: CreateMediaMentionArgs, context: GraphQLContext) => {
-    if (!context.admin) {
+  createMediaMention: async (
+    _: unknown,
+    { url }: CreateMediaMentionArgs,
+    { requestContainer, admin }: GraphQLContext
+  ) => {
+    if (!admin) {
       throw new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
         extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
       });
     }
 
-    const { mediaMentionsService } = context.requestContainer.cradle;
+    const repo = requestContainer.cradle.mediaMentionsRepository;
 
-    return mediaMentionsService.create(url);
-  },
-
-  updateMediaMention: async (_: unknown, { id, input }: UpdateMediaMentionArgs, context: GraphQLContext) => {
-    if (!context.admin) {
-      throw new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
-        extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
-      });
+    const entity = await parseMediaMention(url);
+    if (!entity) {
+      throw new GraphQLError(MediaMentionsServiceErrors.INVALID_URL.Error());
     }
 
-    const { mediaMentionsService } = context.requestContainer.cradle;
-
-    return mediaMentionsService.update(id, input);
-  },
-
-  addMediaMentionView: async (_: unknown, { id }: IdArgs, context: GraphQLContext) => {
-    const { mediaMentionsService } = context.requestContainer.cradle;
-
-    return mediaMentionsService.addView(id);
-  },
-
-  deleteMediaMention: async (_: unknown, { id }: IdArgs, context: GraphQLContext) => {
-    if (!context.admin) {
-      throw new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
-        extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
+    let slug;
+    try {
+      slug = await generateUniqueSlug(entity.title, {
+        checkExists: async (slug: string) => !!(await repo.findBySlug(slug))
       });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new GraphQLError(`Failed to generate unique slug ${error.toString()}`);
+      }
+      throw new GraphQLError('Failed to generate unique slug due to unknown error');
     }
 
-    const { mediaMentionsService } = context.requestContainer.cradle;
+    return repo.create({
+      ...entity,
+      slug
+    });
+  },
 
-    return mediaMentionsService.delete(id);
-  }
+  updateMediaMention: enpointHandler(async ({ args: { id, input }, repo }) => repo.update(id, input)),
+
+  addMediaMentionView: enpointHandler(async ({ args: { id }, repo }) => repo.addView(id)),
+
+  deleteMediaMention: enpointHandler(async ({ args: { id }, repo }) => repo.delete(id))
 };

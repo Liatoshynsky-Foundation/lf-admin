@@ -1,9 +1,9 @@
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 
-import { getJWT } from '../../../../config';
 import { JWT_ACCESS_TOKEN_LIFETIME, JWT_REFRESH_TOKEN_LIFETIME } from '~/back-constants/index';
 import { AdminTokenPayload, HasJTI, RefreshTokenPayload } from '~/back-shared/types/tokens/types';
+import { getJWT } from '~/src/config';
 
 export const createTokenService = () => ({
   generateTokens: (admin: { id: string; type: string }) => {

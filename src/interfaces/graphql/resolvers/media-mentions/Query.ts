@@ -1,17 +1,7 @@
-import { GraphQLError } from 'graphql';
+import { endpointRepositoryHandler } from '../helpers';
+import { MediaMentionFilters, MediaStatus } from '~/domain/entities/MediaMentions';
 
-import type { GraphQLContext } from '~/back-shared/types/container/types';
-import { graphqlErrors } from '~/constants/errors';
-import { MediaStatus } from '~/domain/entities/MediaMentions';
-
-type MediaFiltersInput = {
-  status?: string;
-};
-
-type MediaFiltersArgs = { filters?: MediaFiltersInput };
-type PaginatedMediaArgs = { page?: number; limit?: number; filters?: MediaFiltersInput };
-
-const mapFilters = (filters?: MediaFiltersInput) => {
+const mapFilters = (filters?: MediaMentionFilters) => {
   if (!filters) return undefined;
 
   return {
@@ -19,68 +9,18 @@ const mapFilters = (filters?: MediaFiltersInput) => {
   };
 };
 
+const endpointHandler = endpointRepositoryHandler('mediaMentionsRepository');
+
 export const MediaMentionsQuery = {
-  mediaMentionById: async (_: unknown, { id }: { id: string }, context: GraphQLContext) => {
-    if (!context.admin) {
-      throw new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
-        extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
-      });
-    }
+  mediaMentionById: endpointHandler(async ({ args: { id }, repo }) => repo.findById(id)),
 
-    const { mediaMentionsService } = context.requestContainer.cradle;
+  mediaMentionBySlug: endpointHandler(async ({ args: { slug }, repo }) => repo.findBySlug(slug)),
 
-    return mediaMentionsService.getById(id);
-  },
+  allMediaMentions: endpointHandler(async ({ args: { filters }, repo }) => repo.findAll(mapFilters(filters))),
 
-  mediaMentionBySlug: async (_: unknown, { slug }: { slug: string }, context: GraphQLContext) => {
-    if (!context.admin) {
-      throw new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
-        extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
-      });
-    }
+  paginatedMediaMentions: endpointHandler(async ({ args: { page = 1, limit = 10, filters }, repo }) =>
+    repo.findPaginated(page, limit, mapFilters(filters))
+  ),
 
-    const { mediaMentionsService } = context.requestContainer.cradle;
-
-    return mediaMentionsService.getBySlug(slug);
-  },
-
-  allMediaMentions: async (_: unknown, { filters }: MediaFiltersArgs, context: GraphQLContext) => {
-    if (!context.admin) {
-      throw new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
-        extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
-      });
-    }
-
-    const { mediaMentionsService } = context.requestContainer.cradle;
-
-    return mediaMentionsService.getAll(mapFilters(filters));
-  },
-
-  paginatedMediaMentions: async (
-    _: unknown,
-    { page = 1, limit = 10, filters }: PaginatedMediaArgs,
-    context: GraphQLContext
-  ) => {
-    if (!context.admin) {
-      throw new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
-        extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
-      });
-    }
-
-    const { mediaMentionsService } = context.requestContainer.cradle;
-
-    return mediaMentionsService.getPaginated(page, limit, mapFilters(filters));
-  },
-
-  mediaMentionsCount: async (_: unknown, { status }: { status?: MediaStatus }, context: GraphQLContext) => {
-    if (!context.admin) {
-      throw new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
-        extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
-      });
-    }
-
-    const { mediaMentionsService } = context.requestContainer.cradle;
-
-    return mediaMentionsService.getCount(status ? { status } : undefined);
-  }
+  mediaMentionsCount: endpointHandler(async ({ args: { status }, repo }) => repo.count(status ? { status } : undefined))
 };
