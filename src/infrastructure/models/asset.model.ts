@@ -13,7 +13,7 @@ const assetSchema = new Schema(
     type: { type: String, required: true, enum: ['image', 'pdf', 'audio'], index: true },
     tags: {
       type: [String],
-      enum: ['page', 'news', 'events', 'opus'],
+      enum: ['page', 'news', 'events', 'opus', 'artistry', 'archive', 'works'],
       default: []
     },
 
@@ -34,7 +34,7 @@ const assetSchema = new Schema(
   {
     timestamps: true,
     versionKey: false,
-    collection: 'image_assets'
+    collection: 'assets'
   }
 );
 
@@ -47,6 +47,6 @@ export type assetDocument = InferSchemaType<typeof assetSchema> & {
 };
 
 export const assetModel: Model<assetDocument> = model<assetDocument>(
-  'ImageAsset',
+  'asset',
   assetSchema
 ) as unknown as Model<assetDocument>;

@@ -40,7 +40,24 @@ const imageCropSchema = new Schema(
 
 imageCropSchema.index(
   { imageAssetId: 1, pageId: 1, blockId: 1, locale: 1 },
-  { unique: true, partialFilterExpression: { blockId: { $type: 'string' } } }
+  {
+    unique: true,
+    partialFilterExpression: {
+      pageId: { $type: 'string' },
+      blockId: { $type: 'string' }
+    }
+  }
+);
+
+imageCropSchema.index(
+  { imageAssetId: 1, pageId: 1, locale: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      pageId: { $type: 'string' },
+      blockId: null
+    }
+  }
 );
 
 imageCropSchema.index(
