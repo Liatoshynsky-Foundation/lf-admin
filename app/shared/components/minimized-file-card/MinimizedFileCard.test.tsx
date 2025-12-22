@@ -57,8 +57,7 @@ describe('MinimizedFileCard', () => {
     const handleClick = jest.fn();
     render(<MinimizedFileCard {...defaultProps} onClick={handleClick} />);
 
-    await userEvent.click(screen.getByRole('button', { hidden: true }).closest('div')!);
-
+    await userEvent.click(screen.getByText('Test File'));
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 
