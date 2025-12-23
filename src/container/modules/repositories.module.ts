@@ -8,6 +8,7 @@ import { newMediaMentionRepository } from '~/infrastructure/repositories/mediaMe
 import { NewsRepository } from '~/infrastructure/repositories/newsRepository/newsRepository';
 import { PageRepository } from '~/infrastructure/repositories/pageRepository/pageRepository';
 import { RefreshTokenRepository } from '~/infrastructure/repositories/refreshTokenRepository/refreshTokenRepository';
+import { MediaMentionModel } from '~/src/infrastructure/models/mediaMention.model';
 
 export type RepositoriesModule = {
   adminRepository: ReturnType<typeof AdminRepository>;
@@ -22,6 +23,7 @@ export const registerRepositories = (container: AwilixContainer) => {
     PageModel: asValue(PageModel),
     DraftPageModel: asValue(DraftPageModel),
     NewsModel: asValue(NewsModel),
+    MediaMentionsModel: asValue(MediaMentionModel),
 
     adminRepository: asFunction(AdminRepository).scoped(),
     refreshTokenRepository: asFunction(RefreshTokenRepository).scoped(),

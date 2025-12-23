@@ -16,7 +16,7 @@ enum MediaStatus {
 }
 
 type CoverImage {
-  url: String!
+  src: String!
   alt: String
   width: Int
   height: Int
@@ -55,11 +55,18 @@ input CreateMediaMentionInput {
   url: String!
 }
 
+input CoverImageInput {
+  src: String!
+  alt: String
+  width: Int
+  height: Int
+}
+
 input UpdateMediaMentionInput {
   url: String # Will need to re-fetch metadata if URL is changed
   title: String
   description: String
-  coverImage: CoverImage
+  coverImage: CoverImageInput
   slug: String
   status: MediaStatus
   publishedAt: String
@@ -77,6 +84,6 @@ extend type Query {
 extend type Mutation {
   createMediaMention(input: CreateMediaMentionInput!): MediaMention!
   updateMediaMention(id: ID!, input: UpdateMediaMentionInput!): MediaMention!
-  addMediaMentionView(id: ID!): MediaMention!
+  addMediaMentionView(id: ID!): Int!
   deleteMediaMention(id: ID!): Boolean!
 }

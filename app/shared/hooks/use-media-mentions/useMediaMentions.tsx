@@ -1,11 +1,17 @@
+import { FetchResult } from '@apollo/client';
 import { useCallback } from 'react';
 
 import {
+  AddMediaMentionViewMutation,
+  AllMediaMentionsQueryResult,
   AllMediaMentionsQueryVariables,
+  CreateMediaMentionMutation,
+  DeleteMediaMentionMutation,
   MediaMentionsCountQueryVariables,
   MediaMentionsFiltersInput,
   MediaStatus,
   UpdateMediaMentionInput,
+  UpdateMediaMentionMutation,
   useAddMediaMentionViewMutation,
   useAllMediaMentionsQuery,
   useCreateMediaMentionMutation,
@@ -14,6 +20,30 @@ import {
   usePaginatedMediaMentionsQuery,
   useUpdateMediaMentionMutation
 } from '~/types/graphql/generated/graphql';
+
+// simpler, explicit hook result types for clarity
+export type SimpleQueryResult<TData = unknown> = {
+  data?: TData | null;
+  loading: boolean;
+  error?: Error | null;
+  refetch?: () => Promise<AllMediaMentionsQueryResult>;
+};
+
+export type MutationTuple<Args extends unknown[] = unknown[], TResult = unknown> = [
+  (...args: Args) => Promise<FetchResult<TResult>>,
+  { loading: boolean; error?: Error | null }
+];
+
+export type StatusUpdater = (
+  id: string,
+  input?: { publishedAt?: string | null }
+) => Promise<FetchResult<UpdateMediaMentionMutation>>;
+export type MediaStatusActions = {
+  publish: StatusUpdater;
+  hide: StatusUpdater;
+  draft: StatusUpdater;
+  archive: StatusUpdater;
+};
 
 // We should discuss on cache policy
 export const useAllMediaMentions = (status?: MediaStatus) => {
@@ -41,19 +71,22 @@ export const useMediaMentionsCount = (status?: MediaStatus) => {
   });
 };
 
-export const useCreateMediaMention = () => {
+export const useCreateMediaMention = (): MutationTuple<[string], CreateMediaMentionMutation> => {
   const [mutate, { loading }] = useCreateMediaMentionMutation();
   const createMediaMention = useCallback(async (url: string) => mutate({ variables: { input: { url } } }), [mutate]);
   return [createMediaMention, { loading }];
 };
 
-export const useDeleteMediaMention = () => {
+export const useDeleteMediaMention = (): MutationTuple<[string], DeleteMediaMentionMutation> => {
   const [mutate, { loading }] = useDeleteMediaMentionMutation();
   const deleteMediaMention = useCallback(async (id: string) => mutate({ variables: { id } }), [mutate]);
   return [deleteMediaMention, { loading }];
 };
 
-export const useUpdateMediaMention = () => {
+export const useUpdateMediaMention = (): MutationTuple<
+  [string, UpdateMediaMentionInput],
+  UpdateMediaMentionMutation
+> => {
   const [mutate, { loading }] = useUpdateMediaMentionMutation();
   const updateMediaMention = useCallback(
     async (id: string, input: UpdateMediaMentionInput) => mutate({ variables: { id, input } }),
@@ -63,7 +96,13 @@ export const useUpdateMediaMention = () => {
 };
 
 // TODO: add current status as exported member to indicate current status in the UI
-export const useUpdateMediaMentionStatus = () => {
+export const useUpdateMediaMentionStatus = (): [
+  Record<
+    string,
+    (id: string, input?: { publishedAt?: string | null }) => Promise<FetchResult<UpdateMediaMentionMutation>>
+  >,
+  { status?: MediaStatus; loading: boolean; error?: Error }
+] => {
   const [mutate, { data, loading, error }] = useUpdateMediaMentionMutation();
   const status = data?.updateMediaMention.status; // Placeholder for current status
 
@@ -81,18 +120,17 @@ export const useUpdateMediaMentionStatus = () => {
   );
 
   return [
-    status,
     {
       publish: makeStatusUpdater(MediaStatus.Published),
       hide: makeStatusUpdater(MediaStatus.Hidden),
       draft: makeStatusUpdater(MediaStatus.Draft),
       archive: makeStatusUpdater(MediaStatus.Archived)
     },
-    { loading, error }
+    { status, loading, error }
   ];
 };
 
-export const useAddMediaMentionView = () => {
+export const useAddMediaMentionView = (): MutationTuple<[string], AddMediaMentionViewMutation> => {
   const [mutate, { loading }] = useAddMediaMentionViewMutation();
   const addViews = useCallback(async (id: string) => mutate({ variables: { id } }), [mutate]);
   return [addViews, { loading }];

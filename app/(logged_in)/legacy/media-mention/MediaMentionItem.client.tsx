@@ -1,0 +1,158 @@
+'use client';
+
+import React, { useState } from 'react';
+
+import {
+  useAddMediaMentionView,
+  useDeleteMediaMention,
+  useUpdateMediaMention
+} from '~/shared/hooks/use-media-mentions/useMediaMentions';
+import type { MediaMention, MediaStatus, UpdateMediaMentionInput } from '~/types/graphql/generated/graphql';
+
+type Props = {
+  item: MediaMention;
+  onRefetch: () => Promise<unknown>;
+};
+
+export default function MediaMentionItem({ item, onRefetch }: Props) {
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+
+  const [updateMedia, { loading: updating }] = useUpdateMediaMention();
+  const [deleteMedia, { loading: deleting }] = useDeleteMediaMention();
+  const [addView] = useAddMediaMentionView();
+
+  const initialDraft: UpdateMediaMentionInput = {
+    title: item.title,
+    description: item.description ?? undefined,
+    slug: item.slug,
+    status: item.status as MediaStatus,
+    publishedAt: item.publishedAt ?? undefined
+  };
+
+  const [draft, setDraft] = useState<UpdateMediaMentionInput>(initialDraft);
+
+  function resetDraft(): void {
+    setDraft({ ...initialDraft });
+  }
+
+  async function handleSave(): Promise<void> {
+    await updateMedia(item.id, draft);
+    await onRefetch();
+    setIsEditing(false);
+  }
+
+  async function handleDelete(): Promise<void> {
+    await deleteMedia(item.id);
+    await onRefetch();
+  }
+
+  async function handleAddView(): Promise<void> {
+    await addView(item.id);
+    await onRefetch();
+  }
+
+  const hasCover =
+    item.coverImage !== null &&
+    item.coverImage !== undefined &&
+    item.coverImage.src !== undefined &&
+    item.coverImage.src !== null &&
+    item.coverImage.src.length > 0;
+  const imgSrc = hasCover ? item!.coverImage!.src : undefined;
+  const imgWidth =
+    hasCover && item!.coverImage!.width !== undefined && item!.coverImage!.width !== null
+      ? item!.coverImage!.width
+      : 160;
+  const imgHeight =
+    hasCover && item!.coverImage!.height !== undefined && item!.coverImage!.height !== null
+      ? item!.coverImage!.height
+      : 90;
+
+  return (
+    <div style={{ padding: 8, border: '1px solid #ddd', display: 'flex', gap: 12 }}>
+      <div style={{ width: imgWidth, height: imgHeight, flex: '0 0 auto' }}>
+        {imgSrc !== undefined ? (
+          <img
+            src={imgSrc}
+            alt={item.coverImage?.alt ?? item.title}
+            width={imgWidth}
+            height={imgHeight}
+            style={{ objectFit: 'cover' }}
+          />
+        ) : (
+          <div
+            style={{
+              width: imgWidth,
+              height: imgHeight,
+              background: '#f3f3f3',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#888'
+            }}
+          >
+            No image
+          </div>
+        )}
+      </div>
+
+      <div style={{ flex: 1 }}>
+        {isEditing ? (
+          <div style={{ display: 'grid', gap: 8 }}>
+            <input value={draft.title ?? ''} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
+            <textarea
+              value={draft.description ?? ''}
+              onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+            />
+            <input value={draft.slug ?? ''} onChange={(e) => setDraft({ ...draft, slug: e.target.value })} />
+            <select
+              value={String(draft.status)}
+              onChange={(e) => setDraft({ ...draft, status: e.target.value as MediaStatus })}
+            >
+              <option value="DRAFT">DRAFT</option>
+              <option value="PUBLISHED">PUBLISHED</option>
+              <option value="HIDDEN">HIDDEN</option>
+              <option value="ARCHIVED">ARCHIVED</option>
+              <option value="EDITING">EDITING</option>
+            </select>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={handleSave} disabled={updating}>
+                {updating ? 'Saving...' : 'Save'}
+              </button>
+              <button
+                onClick={() => {
+                  resetDraft();
+                  setIsEditing(false);
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div style={{ fontWeight: 600 }}>{item.title}</div>
+            <div style={{ fontSize: 12, color: '#666' }}>{item.description ?? item.url}</div>
+            <div style={{ fontSize: 12, color: '#666' }}>status: {item.status}</div>
+          </>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', gap: 6, alignItems: 'start' }}>
+        {isEditing === false ? (
+          <button
+            onClick={() => {
+              setIsEditing(true);
+              resetDraft();
+            }}
+          >
+            Edit
+          </button>
+        ) : null}
+        <button onClick={handleAddView}>+view</button>
+        <button onClick={handleDelete} style={{ color: '#900' }} disabled={deleting}>
+          {deleting ? 'Deleting...' : 'Delete'}
+        </button>
+      </div>
+    </div>
+  );
+}

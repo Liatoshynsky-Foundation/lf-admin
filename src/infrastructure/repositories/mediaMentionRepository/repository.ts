@@ -20,7 +20,7 @@ type MediaMentionDoc = {
 } & MediaMentionEntityRaw;
 
 type MediaMentionRepoDeps = Readonly<{
-  model: Model<MediaMentionDoc>;
+  MediaMentionsModel: Model<MediaMentionDoc>;
 }>;
 
 function mediaMentionQueryBuilder(filters?: MediaMentionFiltersRaw): FilterQuery<MediaMentionDoc> {
@@ -55,7 +55,7 @@ function toEntity(doc: MediaMentionDoc): MediaMentionEntity {
     title: doc.title,
     description: doc.description,
     slug: doc.slug,
-    coverImageUrl: doc.coverImageUrl,
+    coverImage: doc.coverImage,
     status: doc.status,
     meta: doc.meta,
     publishedAt: doc.publishedAt,
@@ -64,9 +64,9 @@ function toEntity(doc: MediaMentionDoc): MediaMentionEntity {
   };
 }
 
-export function newMediaMentionRepository({ model }: MediaMentionRepoDeps): MediaMentionsRepository {
+export function newMediaMentionRepository({ MediaMentionsModel }: MediaMentionRepoDeps): MediaMentionsRepository {
   const baseRepo = createBaseRepository<MediaMentionEntity, MediaMentionDoc, MediaMentionFilters>({
-    model,
+    model: MediaMentionsModel,
     toEntity,
     buildQuery: mediaMentionQueryBuilder,
     getDefaultSort: defaultSorting
@@ -76,8 +76,9 @@ export function newMediaMentionRepository({ model }: MediaMentionRepoDeps): Medi
     ...baseRepo,
     async create(mention: Omit<MediaMentionEntityRaw, 'status'>): Promise<Result<MediaMentionEntity>> {
       try {
-        const doc = new model({
+        const doc = new MediaMentionsModel({
           ...mention,
+          publishedAt: mention.publishedAt || new Date(0),
           status: MediaStatus.DRAFT,
           createdAt: new Date(),
           updatedAt: new Date()
@@ -86,27 +87,35 @@ export function newMediaMentionRepository({ model }: MediaMentionRepoDeps): Medi
         const saved = await doc.save();
 
         return WrapSuccess(toEntity(saved as MediaMentionDoc));
-      } catch (e: any) {
-        return WrapError(newError(e?.message ?? 'Unknown error during create'));
+      } catch (e: unknown) {
+        if (e instanceof Error) {
+          return WrapError(newError(e.message));
+        }
+        return WrapError(newError('Unknown error during create'));
       }
     },
-    async addView(id: string): Promise<Result<void>> {
+    async addView(id: string): Promise<Result<number>> {
       try {
         if (!Types.ObjectId.isValid(id)) return WrapError(MediaMentionsServiceErrors.INVALID_ID);
-        const res = await model
-          .updateOne(
-            { _id: id },
-            {
-              $inc: { 'meta.views': 1 },
-              $set: { updatedAt: new Date() }
-            }
-          )
+        const updated = await MediaMentionsModel.findByIdAndUpdate(
+          id,
+          {
+            $inc: { 'meta.views': 1 },
+            $set: { updatedAt: new Date() }
+          },
+          { new: true, projection: { 'meta.views': 1 } }
+        )
+          .lean()
           .exec();
 
-        if (res.matchedCount === 0) return WrapError(MediaMentionsServiceErrors.NOT_FOUND);
-        return WrapSuccess(undefined);
-      } catch (e: any) {
-        return WrapError(newError(e?.message ?? 'Unknown error during addView'));
+        if (!updated) return WrapError(MediaMentionsServiceErrors.NOT_FOUND);
+        const views = updated.meta?.views ?? 0;
+        return WrapSuccess(views);
+      } catch (e: unknown) {
+        if (e instanceof Error) {
+          return WrapError(newError(e.message));
+        }
+        return WrapError(newError('Unknown error during addView'));
       }
     }
   };
