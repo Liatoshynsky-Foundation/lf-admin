@@ -55,7 +55,7 @@ type MetaTag = {
 
 function parseMetaTags(html: string): MetaTag[] {
   const metaTagRe = /<meta\b([^>]*)>/gi;
-  const attrRe = /([A-Za-z0-9:_-]+)\s*=\s*['"]([^'"`]*)['"]/gi;
+  const attrRe = /([A-Za-z0-9:-]+)\s*=\s*(?:'([^'])'|"([^"])")/gi;
   const tags: MetaTag[] = [];
   let m: RegExpExecArray | null;
   while ((m = metaTagRe.exec(html)) !== null) {
@@ -109,7 +109,49 @@ function unescapeEntities(s: string): string {
   return s;
 }
 
-function parseJsonLd(html: string): Record<string, any> | null {
+function extractFirstJSONBlock(s: string): string | null {
+  const start = s.indexOf('{');
+  if (start === -1) return null;
+
+  let i = start;
+  let depth = 0;
+  let inString = false;
+  let stringChar = '';
+  let escaped = false;
+
+  for (; i < s.length; i++) {
+    const ch = s[i];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (ch === '\\') {
+        escaped = true;
+      } else if (ch === stringChar) {
+        inString = false;
+        stringChar = '';
+      }
+      continue;
+    }
+
+    if (ch === '"' || ch === "'") {
+      inString = true;
+      stringChar = ch;
+      continue;
+    }
+
+    if (ch === '{') {
+      depth++;
+    } else if (ch === '}') {
+      depth--;
+      if (depth === 0) {
+        return s.slice(start, i + 1);
+      }
+    }
+  }
+  return null;
+}
+
+function parseJsonLd(html: string): Record<string, unknown> | null {
   const re = /<script\b[^>]*type=['"]application\/ld\+json['"][^>]*>([\s\S]*?)<\/script>/i;
   const m = re.exec(html);
   if (!m) return null;
@@ -122,8 +164,8 @@ function parseJsonLd(html: string): Record<string, any> | null {
     // try to repair by trimming surrounding junk
     try {
       // sometimes sites put multiple objects; try to find first {...}
-      const firstObj = raw.match(/\{[\s\S]*\}/);
-      if (firstObj) return JSON.parse(firstObj[0]);
+      const firstObj = extractFirstJSONBlock(raw);
+      if (firstObj) return JSON.parse(firstObj);
     } catch {
       return null;
     }
@@ -224,7 +266,10 @@ export function Parser(html_content: string): ParsedData {
   else if (jsonld && jsonld['author']) {
     const a = jsonld['author'];
     if (typeof a === 'string') data.author = a;
-    else if (typeof a === 'object' && a && typeof a['name'] === 'string') data.author = a['name'];
+    else if (a && typeof a === 'object') {
+      const ao = a as Record<string, unknown>;
+      if (typeof ao['name'] === 'string') data.author = ao['name'] as string;
+    }
   }
 
   // Published time
@@ -244,7 +289,10 @@ export function Parser(html_content: string): ParsedData {
     const im = jsonld['image'];
     if (typeof im === 'string') data.image.src = im;
     else if (Array.isArray(im) && im.length > 0 && typeof im[0] === 'string') data.image.src = im[0];
-    else if (typeof im === 'object' && im && typeof im['url'] === 'string') data.image.src = im['url'];
+    else if (im && typeof im === 'object') {
+      const imObj = im as Record<string, unknown>;
+      if (typeof imObj['url'] === 'string') data.image.src = imObj['url'] as string;
+    }
   }
 
   const imgAlt = pickFirst(metaMap, ['og:image:alt', 'twitter:image:alt']);
