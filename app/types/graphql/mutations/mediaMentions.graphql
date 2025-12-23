@@ -10,7 +10,12 @@ mutation UpdateMediaMention($id: ID!, $input: UpdateMediaMentionInput!) {
     url
     title
     description
-    coverImageUrl
+    coverImage {
+      url
+      alt
+      width
+      height
+    }
     slug
     status
     publishedAt

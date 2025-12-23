@@ -8,12 +8,19 @@ export enum MediaStatus {
   EDITING = 'EDITING'
 }
 
+export type MediaMentionImage = {
+  src: string;
+  alt: string;
+  width: number | null;
+  height: number | null;
+};
+
 export type MediaMentionEntityRaw = {
   url: string;
   title: string;
   description: string;
   slug: string;
-  coverImageUrl: string;
+  coverImage: MediaMentionImage;
   status: MediaStatus;
   publishedAt: Date;
   meta: {

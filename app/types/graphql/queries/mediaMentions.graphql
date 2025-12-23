@@ -22,7 +22,12 @@ query MediaMentionBySlug($slug: String!) {
     url
     title
     description
-    coverImageUrl
+    coverImage {
+      url
+      alt
+      width
+      height
+    }
     slug
     status
     publishedAt
@@ -40,7 +45,12 @@ query AllMediaMentions($filters: MediaMentionsFiltersInput) {
     url
     title
     description
-    coverImageUrl
+    coverImage {
+      url
+      alt
+      width
+      height
+    }
     slug
     status
     publishedAt
@@ -58,7 +68,12 @@ query PublishedMediaMentions($filters: MediaMentionsFiltersInput) {
     url
     title
     description
-    coverImageUrl
+    coverImage {
+      url
+      alt
+      width
+      height
+    }
     slug
     status
     publishedAt
@@ -76,6 +91,13 @@ query PaginatedMediaMentions($page: Int = 1, $limit: Int = 10, $filters: MediaMe
       id
       url
       title
+      description
+      coverImage {
+        url
+        alt
+        width
+        height
+      }
       slug
       status
       publishedAt

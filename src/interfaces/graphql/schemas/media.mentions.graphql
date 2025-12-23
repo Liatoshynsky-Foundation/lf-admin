@@ -15,12 +15,19 @@ enum MediaStatus {
   EDITING
 }
 
+type CoverImage {
+  url: String!
+  alt: String
+  width: Int
+  height: Int
+}
+
 type MediaMention {
   id: ID!
   url: String!
   title: String!
   description: String
-  coverImageUrl: String
+  coverImage: CoverImage
   slug: String!
   status: MediaStatus!
   publishedAt: String
@@ -52,7 +59,7 @@ input UpdateMediaMentionInput {
   url: String # Will need to re-fetch metadata if URL is changed
   title: String
   description: String
-  coverImageUrl: String
+  coverImage: CoverImage
   slug: String
   status: MediaStatus
   publishedAt: String
