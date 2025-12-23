@@ -17,7 +17,11 @@ export default function MediaMentionsTest() {
 
   async function handleCreate(): Promise<void> {
     if (newUrl.trim().length === 0) return;
-    await createMedia(newUrl.trim());
+    const { errors } = await createMedia(newUrl.trim());
+    if (errors && errors.length > 0) {
+      console.error('Error creating media mention:', errors);
+      return;
+    }
     await refetch();
     setNewUrl('');
   }
@@ -56,7 +60,7 @@ export default function MediaMentionsTest() {
 
       <details style={{ marginTop: 12 }}>
         <summary>Raw query result</summary>
-        <pre style={{ maxHeight: 300, overflow: 'auto' }}>{JSON.stringify(data, null, 2)}</pre>
+        <pre style={{ maxHeight: 500, overflow: 'auto' }}>{JSON.stringify(data, null, 2)}</pre>
       </details>
     </div>
   );

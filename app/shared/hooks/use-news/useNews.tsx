@@ -36,7 +36,7 @@ export const usePaginatedNews = (page = 1, limit = 10, filters?: NewsFiltersInpu
 export const useNewsCount = (status?: NewsStatus) => useNewsCountQuery({ variables: { status } });
 
 export const useCreateNews = () => {
-  const [mutate, { loading }] = useCreateNewsMutation();
+  const [mutate, meta] = useCreateNewsMutation();
   const createNews = useCallback(
     async (news: CreateNewsInput) =>
       safeMutate<CreateNewsMutation, CreateNewsMutationVariables>(
@@ -47,11 +47,11 @@ export const useCreateNews = () => {
       ),
     [mutate]
   );
-  return [createNews, { loading }];
+  return [createNews, meta] as const;
 };
 
 export const useUpdateNews = () => {
-  const [mutate, { loading }] = useUpdateNewsMutation();
+  const [mutate, meta] = useUpdateNewsMutation();
   const updateNews = useCallback(
     async (variables: UpdateNewsMutationVariables) =>
       safeMutate<UpdateNewsMutation, UpdateNewsMutationVariables>(
@@ -62,7 +62,7 @@ export const useUpdateNews = () => {
       ),
     [mutate]
   );
-  return [updateNews, { loading }];
+  return [updateNews, meta] as const;
 };
 
 export const useUpdateNewsStatus = () => {
@@ -83,29 +83,28 @@ export const useUpdateNewsStatus = () => {
   );
 
   return [
-    status,
     {
       publish: makeStatusUpdater(NewsStatus.Published),
       unpublish: makeStatusUpdater(NewsStatus.Draft),
       archive: makeStatusUpdater(NewsStatus.Archived),
       hide: makeStatusUpdater(NewsStatus.Hidden)
     },
-    { loading, error }
-  ];
+    { status, loading, error }
+  ] as const;
 };
 
 export const useDeleteNews = () => {
-  const [mutate, { loading }] = useDeleteNewsMutation();
+  const [mutate, meta] = useDeleteNewsMutation();
   const deleteNews = useCallback(
     async (variables: DeleteNewsMutationVariables) =>
       safeMutate(mutate, variables, newsErrors.NETWORK_ERROR_DELETE, newsErrors.FAILED_TO_DELETE),
     [mutate]
   );
-  return [deleteNews, { loading }];
+  return [deleteNews, meta] as const;
 };
 
 export const useIncrementNewsViews = () => {
-  const [mutate, { loading }] = useIncrementNewsViewsMutation();
+  const [mutate, meta] = useIncrementNewsViewsMutation();
   const incrementViews = useCallback(async (id: string) => mutate({ variables: { id } }), [mutate]);
-  return [incrementViews, { loading }];
+  return [incrementViews, meta] as const;
 };

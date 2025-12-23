@@ -36,18 +36,30 @@ export default function MediaMentionItem({ item, onRefetch }: Props) {
   }
 
   async function handleSave(): Promise<void> {
-    await updateMedia(item.id, draft);
+    const { errors } = await updateMedia(item.id, draft);
+    if (errors && errors.length > 0) {
+      console.error('Error updating media mention:', errors);
+      return;
+    }
     await onRefetch();
     setIsEditing(false);
   }
 
   async function handleDelete(): Promise<void> {
-    await deleteMedia(item.id);
+    const { errors } = await deleteMedia(item.id);
+    if (errors && errors.length > 0) {
+      console.error('Error deleting media mention:', errors);
+      return;
+    }
     await onRefetch();
   }
 
   async function handleAddView(): Promise<void> {
-    await addView(item.id);
+    const { errors } = await addView(item.id);
+    if (errors && errors.length > 0) {
+      console.error('Error adding view:', errors);
+      return;
+    }
     await onRefetch();
   }
 
