@@ -91,4 +91,83 @@ describe('MediaModal', () => {
     expect(screen.queryByTestId('GalleryView')).not.toBeInTheDocument();
     expect(screen.getByTestId('UsedView')).toBeInTheDocument();
   });
+
+  it('should pass open prop to MediaModalFlow', () => {
+    render(<MediaModal open={true} onClose={jest.fn()} onApply={jest.fn()} />);
+
+    const { open } = getFlowProps();
+    expect(open).toBe(true);
+  });
+
+  it('should pass onClose prop to MediaModalFlow', () => {
+    const mockOnClose = jest.fn();
+    render(<MediaModal open onClose={mockOnClose} onApply={jest.fn()} />);
+
+    const { onClose } = getFlowProps();
+    expect(onClose).toBe(mockOnClose);
+  });
+
+  it('should pass onApply prop to MediaModalFlow', () => {
+    const mockOnApply = jest.fn();
+    render(<MediaModal open onClose={jest.fn()} onApply={mockOnApply} />);
+
+    const { onApply } = getFlowProps();
+    expect(onApply).toBe(mockOnApply);
+  });
+
+  it('should pass initial state to MediaModalFlow', () => {
+    const initialState = { tab: 'UPLOAD' as const };
+    render(<MediaModal open onClose={jest.fn()} onApply={jest.fn()} initial={initialState} />);
+
+    const { initial } = getFlowProps();
+    expect(initial).toEqual(initialState);
+  });
+
+  it('should render with all default renderers when no overrides provided', () => {
+    render(<MediaModal open onClose={jest.fn()} onApply={jest.fn()} />);
+
+    const { renderers } = getFlowProps();
+
+    expect(renderers.gallery).toBeDefined();
+    expect(renderers.upload).toBeDefined();
+    expect(renderers.used).toBeDefined();
+    expect(renderers.crop).toBeDefined();
+  });
+
+  it('should handle closed state', () => {
+    render(<MediaModal open={false} onClose={jest.fn()} onApply={jest.fn()} />);
+
+    const { open } = getFlowProps();
+    expect(open).toBe(false);
+  });
+
+  it('should allow partial renderer overrides', () => {
+    const customUpload = () => <div data-testid="CustomUpload" />;
+
+    render(<MediaModal open onClose={jest.fn()} onApply={jest.fn()} renderers={{ upload: customUpload }} />);
+
+    const { renderers } = getFlowProps();
+
+    expect(renderers.upload).toBe(customUpload);
+    expect(renderers.gallery).toBeDefined();
+    expect(renderers.used).toBeDefined();
+    expect(renderers.crop).toBeDefined();
+  });
+
+  it('should render multiple views from renderers', () => {
+    render(<MediaModal open onClose={jest.fn()} onApply={jest.fn()} />);
+
+    const { renderers } = getFlowProps();
+
+    const views = (
+      <>
+        {renderers.gallery({ selected: null, onPick: jest.fn() })}
+        {renderers.upload({ selected: null, onPick: jest.fn() })}
+        {renderers.used({ selected: null, onPick: jest.fn() })}
+      </>
+    );
+
+    const { container } = render(views);
+    expect(container).toBeInTheDocument();
+  });
 });
