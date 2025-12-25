@@ -7,14 +7,14 @@ import { MediaCard } from './MediaCard';
 import LinkIcon from '~/public/icons/link.svg';
 import StarIcon from '~/public/icons/star.svg';
 
-type GalleryCardProps = {
+type GalleryCardProps = Readonly<{
   src: string;
   fileName: string;
   isStarred: boolean;
   usageLocations?: string[];
   onClick: () => void;
   testId?: string;
-};
+}>;
 
 export function GalleryCard({ src, fileName, isStarred, usageLocations = [], onClick, testId }: GalleryCardProps) {
   const isUsed = usageLocations.length > 0;
@@ -26,8 +26,8 @@ export function GalleryCard({ src, fileName, isStarred, usageLocations = [], onC
           title={
             <Box>
               <Box sx={{ fontWeight: 600, marginBottom: '4px' }}>Використовується на:</Box>
-              {usageLocations.map((location, i) => (
-                <Box key={i}>{location}</Box>
+              {usageLocations.map((location) => (
+                <Box key={location}>{location}</Box>
               ))}
             </Box>
           }

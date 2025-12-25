@@ -6,12 +6,12 @@ import { useRef, useState } from 'react';
 import { getInputStyle, iconWrapperStyles, inputAdornmentStyles, textFieldStyles } from './SearchButton.styles';
 import SearchIcon from '~/public/icons/search.svg';
 
-type SearchButtonProps = {
+type SearchButtonProps = Readonly<{
   value: string;
   onSearch: (value: string) => void;
   placeholder?: string;
   testId?: string;
-};
+}>;
 
 export function SearchButton({ value, onSearch, placeholder = 'Пошук...', testId }: SearchButtonProps) {
   const inputRef = useRef<HTMLInputElement>(null);

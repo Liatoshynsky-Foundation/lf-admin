@@ -5,7 +5,7 @@ import { ReactNode } from 'react';
 
 import { mediaCardStyles } from './MediaCard.styles';
 
-type MediaCardProps = {
+type MediaCardProps = Readonly<{
   src: string;
   alt: string;
   onClick?: () => void;
@@ -13,7 +13,7 @@ type MediaCardProps = {
   topRightContent?: ReactNode;
   bottomContent?: ReactNode;
   testId?: string;
-};
+}>;
 
 export function MediaCard({
   src,
