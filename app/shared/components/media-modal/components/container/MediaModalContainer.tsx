@@ -35,7 +35,17 @@ export function MediaModalContainer({
   const hasFooter = Boolean(footerTop || footerLeft || footerRight);
 
   return (
-    <Dialog open={open} onClose={onClose} sx={styles.dialog} maxWidth={false} PaperProps={{ sx: styles.paper }}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      disableScrollLock
+      sx={styles.dialog}
+      maxWidth={false}
+      data-testid={baseTestId}
+      slotProps={{
+        paper: { sx: styles.paper }
+      }}
+    >
       <Box sx={styles.header} data-testid={`${baseTestId}-header`}>
         <Box sx={styles.headerLeft} data-testid={`${baseTestId}-headerLeft`}>
           {headerLeft ?? null}
