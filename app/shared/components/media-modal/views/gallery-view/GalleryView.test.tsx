@@ -19,7 +19,7 @@ jest.mock('../../components/filter-button/FilterButton', () => ({
 
 jest.mock('../../components/media-grid/MediaGrid', () => ({
   MediaGrid: ({ items, renderCard }: any) => (
-    <div data-testid="mocked-media-grid">
+    <div data-testid="mocked-media-grid" role="grid">
       {items.map((item: any, index: number) => (
         <div key={item._id}>{renderCard(item, index)}</div>
       ))}
@@ -29,9 +29,9 @@ jest.mock('../../components/media-grid/MediaGrid', () => ({
 
 jest.mock('../../components/media-card/GalleryCard', () => ({
   GalleryCard: ({ fileName, onClick, testId }: any) => (
-    <div data-testid={testId} onClick={onClick}>
+    <button data-testid={testId} onClick={onClick}>
       {fileName}
-    </div>
+    </button>
   )
 }));
 

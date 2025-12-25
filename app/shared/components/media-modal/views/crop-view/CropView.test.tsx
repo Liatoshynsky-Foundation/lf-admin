@@ -14,7 +14,7 @@ jest.mock('~/shared/components/design-system/button/Button', () => ({
 
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: (props: any) => <img {...props} />
+  default: ({ alt = '', ...props }: any) => <img alt={alt} {...props} />
 }));
 
 describe('CropView', () => {
