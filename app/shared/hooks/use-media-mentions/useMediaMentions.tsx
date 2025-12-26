@@ -64,7 +64,6 @@ export const useUpdateMediaMention = () => {
   return [updateMediaMention, meta] as const;
 };
 
-// TODO: add current status as exported member to indicate current status in the UI
 export const useUpdateMediaMentionStatus = (): [
   Record<
     string,

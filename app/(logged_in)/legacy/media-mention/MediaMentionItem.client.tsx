@@ -14,7 +14,7 @@ type Props = {
   onRefetch: () => Promise<unknown>;
 };
 
-export default function MediaMentionItem({ item, onRefetch }: Props) {
+export default function MediaMentionItem({ item, onRefetch }: Readonly<Props>) {
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
   const [updateMedia, { loading: updating }] = useUpdateMediaMention();
@@ -63,26 +63,14 @@ export default function MediaMentionItem({ item, onRefetch }: Props) {
     await onRefetch();
   }
 
-  const hasCover =
-    item.coverImage !== null &&
-    item.coverImage !== undefined &&
-    item.coverImage.src !== undefined &&
-    item.coverImage.src !== null &&
-    item.coverImage.src.length > 0;
-  const imgSrc = hasCover ? item!.coverImage!.src : undefined;
-  const imgWidth =
-    hasCover && item!.coverImage!.width !== undefined && item!.coverImage!.width !== null
-      ? item!.coverImage!.width
-      : 160;
-  const imgHeight =
-    hasCover && item!.coverImage!.height !== undefined && item!.coverImage!.height !== null
-      ? item!.coverImage!.height
-      : 90;
+  const imgSrc = item.coverImage?.src?.length ? item.coverImage!.src : undefined;
+  const imgWidth = item.coverImage?.width ?? 160;
+  const imgHeight = item.coverImage?.height ?? 90;
 
   return (
     <div style={{ padding: 8, border: '1px solid #ddd', display: 'flex', gap: 12 }}>
       <div style={{ width: imgWidth, height: imgHeight, flex: '0 0 auto' }}>
-        {imgSrc !== undefined ? (
+        {imgSrc ? (
           <img
             src={imgSrc}
             alt={item.coverImage?.alt ?? item.title}
@@ -150,7 +138,7 @@ export default function MediaMentionItem({ item, onRefetch }: Props) {
       </div>
 
       <div style={{ display: 'flex', gap: 6, alignItems: 'start' }}>
-        {isEditing === false ? (
+        {!isEditing ? (
           <button
             onClick={() => {
               setIsEditing(true);

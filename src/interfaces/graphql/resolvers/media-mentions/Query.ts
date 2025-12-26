@@ -1,11 +1,11 @@
 import { endpointRepositoryHandler } from '../helpers';
-import { MediaMentionFilters, MediaStatus } from '~/domain/entities/MediaMentions';
+import { MediaMentionFilters } from '~/domain/entities/MediaMentions';
 
 const mapFilters = (filters?: MediaMentionFilters) => {
   if (!filters) return undefined;
 
   return {
-    status: filters.status as MediaStatus | undefined
+    status: filters.status
   };
 };
 
