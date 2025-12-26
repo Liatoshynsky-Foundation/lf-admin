@@ -1,3 +1,4 @@
+import { parseMaybeInt, pickFirst } from './parserUtils';
 import { MediaMentionEntityRaw } from '~/domain/entities/MediaMentions';
 
 export async function parseMediaMention(url: string): Promise<Omit<MediaMentionEntityRaw, 'status' | 'slug'>> {
@@ -83,7 +84,7 @@ function parseAttributes(attrStr: string): Record<string, string> {
     if (i < len && attrStr[i] === '=') {
       i++; // skip '='
       while (i < len && isSpace(attrStr[i])) i++;
-
+      // 0x22 = ", 0x27 = '
       if (i < len && (attrStr[i] === String(0x22) || attrStr[i] === String(0x27))) {
         const quote = attrStr[i++];
         const valStart = i;
@@ -110,8 +111,6 @@ function parseAttributes(attrStr: string): Record<string, string> {
         while (i < len && !isSpace(attrStr[i]) && attrStr[i] !== '>') i++;
         value = attrStr.slice(valStart, i);
       }
-    } else {
-      value = '';
     }
 
     out[name] = value;
@@ -140,30 +139,30 @@ function parseMetaTags(html: string): MetaTag[] {
 // Unescape HTML entities and \uXXXX escapes and double-escaped forms like u0026#x430;
 function unescapeEntities(s: string): string {
   // normalize double-escaped JSON forms"
-  s = s.replace(/\\u0026/g, '&');
-  s = s.replace(/u0026/g, '&');
+  s = s.replaceAll(/\\u0026/g, '&');
+  s = s.replaceAll(/u0026/g, '&');
 
   // decode \uXXXX escapes
-  s = s.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => {
-    const code = parseInt(hex, 16);
+  s = s.replaceAll(/\\u([0-9a-fA-F]{4})/g, (_, hex) => {
+    const code = Number.parseInt(hex, 16);
     if (!Number.isNaN(code)) return String.fromCharCode(code);
     return _;
   });
 
   // decode numeric entities like &#x430
-  s = s.replace(/&#x([0-9a-fA-F]+);?/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
-  s = s.replace(/&#(\d+);?/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)));
+  s = s.replaceAll(/&#x([0-9a-fA-F]+);?/g, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16)));
+  s = s.replaceAll(/&#(\d+);?/g, (_, dec) => String.fromCodePoint(Number.parseInt(dec, 10)));
 
   // decode named entities
   const named: Record<string, string> = {
     amp: '&',
     lt: '<',
     gt: '>',
-    quot: '"',
-    apos: "'", // eslint-disable-line quotes
+    quot: String(0x22), // "
+    apos: String(0x27), // '
     nbsp: ' '
   };
-  s = s.replace(/&([a-zA-Z]+);/g, (m, name) => (named[name] !== undefined ? named[name] : m));
+  s = s.replaceAll(/&([a-zA-Z]+);/g, (m, name) => named[name] ?? m);
 
   return s;
 }
@@ -232,34 +231,21 @@ function parseJsonLd(html: string): Record<string, unknown> | null {
   return null;
 }
 
-function pickFirst(map: Map<string, string>, keys: string[]): string | null {
-  for (const k of keys) {
-    const v = map.get(k);
-    if (v && v.trim() !== '') return v.trim();
-  }
-  return null;
-}
-
-function parseMaybeInt(v: string | null): number | null {
-  if (!v) return null;
-  const n = parseInt(v, 10);
-  return Number.isNaN(n) ? null : n;
-}
-
 function parseDateFlexible(input: string): Date | null {
   if (!input) return null;
   input = input.trim();
   const d1 = new Date(input);
-  if (!isNaN(d1.getTime())) return d1;
+  if (!Number.isNaN(d1.getTime())) return d1;
 
   // try dd.MM.yyyy HH:mm or dd.MM.yyyy
-  const m = input.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:[ T](\d{1,2}):(\d{2}))?/);
+  const m = /^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:[ T](\d{1,2}):(\d{2}))?/.exec(input);
+
   if (m) {
-    const day = parseInt(m[1], 10);
-    const month = parseInt(m[2], 10) - 1;
-    const year = parseInt(m[3], 10);
-    const hour = m[4] ? parseInt(m[4], 10) : 0;
-    const min = m[5] ? parseInt(m[5], 10) : 0;
+    const day = Number.parseInt(m[1], 10);
+    const month = Number.parseInt(m[2], 10) - 1;
+    const year = Number.parseInt(m[3], 10);
+    const hour = m[4] ? Number.parseInt(m[4], 10) : 0;
+    const min = m[5] ? Number.parseInt(m[5], 10) : 0;
     const dt = new Date(Date.UTC(year, month, day, hour, min, 0));
     return dt;
   }
@@ -300,11 +286,11 @@ export function Parser(html_content: string): ParsedData {
     else if (typeof jsonld['name'] === 'string' && jsonld['name']) data.title = jsonld['name'];
   }
   if (data.title === UNKNOWN) {
-    const t = (content.match(/<title>([\s\S]*?)<\/title>/i) || [])[1];
+    const t = (/<title>([\s\S]*?)<\/title>/i.exec(content) || [])[1];
     if (t) data.title = unescapeEntities(t.trim());
   }
   if (data.title === UNKNOWN) {
-    const t = (content.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i) || [])[1];
+    const t = (/<h1\b[^>]*>([\s\S]*?)<\/h1>/i.exec(content) || [])[1];
     if (t) data.title = unescapeEntities(t.trim());
   }
 
@@ -322,12 +308,12 @@ export function Parser(html_content: string): ParsedData {
   // Author
   const author = pickFirst(metaMap, ['author', 'article:author', 'dc.creator', 'byline']);
   if (author) data.author = author;
-  else if (jsonld && jsonld['author']) {
+  else if (jsonld?.['author']) {
     const a = jsonld['author'];
     if (typeof a === 'string') data.author = a;
     else if (a && typeof a === 'object') {
       const ao = a as Record<string, unknown>;
-      if (typeof ao['name'] === 'string') data.author = ao['name'] as string;
+      if (typeof ao['name'] === 'string') data.author = ao['name'];
     }
   }
 
@@ -336,7 +322,7 @@ export function Parser(html_content: string): ParsedData {
   if (pub) {
     const d = parseDateFlexible(pub);
     if (d) data.published_time = d.toISOString();
-  } else if (jsonld && typeof jsonld['datePublished'] === 'string') {
+  } else if (jsonld?.['datePublished'] && typeof jsonld['datePublished'] === 'string') {
     const d = parseDateFlexible(jsonld['datePublished']);
     if (d) data.published_time = d.toISOString();
   }
@@ -344,13 +330,13 @@ export function Parser(html_content: string): ParsedData {
   // Image
   const img = pickFirst(metaMap, ['og:image', 'twitter:image', 'image']);
   if (img) data.image.src = img;
-  else if (jsonld && jsonld['image']) {
+  else if (jsonld?.['image']) {
     const im = jsonld['image'];
     if (typeof im === 'string') data.image.src = im;
     else if (Array.isArray(im) && im.length > 0 && typeof im[0] === 'string') data.image.src = im[0];
     else if (im && typeof im === 'object') {
       const imObj = im as Record<string, unknown>;
-      if (typeof imObj['url'] === 'string') data.image.src = imObj['url'] as string;
+      if (typeof imObj['url'] === 'string') data.image.src = imObj['url'];
     }
   }
 
@@ -360,23 +346,23 @@ export function Parser(html_content: string): ParsedData {
   const imgH = pickFirst(metaMap, ['og:image:height', 'twitter:image:height']);
   const wi = parseMaybeInt(imgW);
   const hi = parseMaybeInt(imgH);
-  if (wi !== null) data.image.width = wi;
-  if (hi !== null) data.image.height = hi;
+  data.image.width = wi;
+  data.image.height = hi;
 
   // Canonical link fallback for site_name
-  const canon = (content.match(/<link\b[^>]*rel=["']canonical["'][^>]*href=["']([^"']+)["'][^>]*>/i) || [])[1];
+  const canon = (/<link\b[^>]*rel=["']canonical["'][^>]*href=["']([^"']+)["'][^>]*>/i.exec(content) || [])[1];
   if (canon && data.site_name === UNKNOWN) data.site_name = canon.trim();
 
   // Time tag fallback
   if (!data.published_time) {
-    const td = (content.match(/<time\b[^>]*\bdatetime\s*=\s*["']([^"']+)["'][^>]*>/i) || [])[1];
+    const td = (/<time\b[^>]*\bdatetime\s*=\s*["']([^"']+)["'][^>]*>/i.exec(content) || [])[1];
     if (td) {
       const d = parseDateFlexible(td.trim());
       if (d) data.published_time = d.toISOString();
     }
   }
   if (!data.published_time) {
-    const tt = (content.match(/<time\b[^>]*>([\s\S]*?)<\/time>/i) || [])[1];
+    const tt = (/<time\b[^>]*>([\s\S]*?)<\/time>/i.exec(content) || [])[1];
     if (tt) {
       const txt = unescapeEntities(tt.trim());
       const d = parseDateFlexible(txt);
