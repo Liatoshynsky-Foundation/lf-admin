@@ -1,5 +1,7 @@
 import { newMediaMentionRepository } from './repository';
 
+jest.mock('../../db/connect', () => ({ __esModule: true, default: jest.fn().mockResolvedValue(undefined) }));
+
 jest.mock('mongodb', () => ({
   ObjectId: { isValid: (id: string) => /^[a-fA-F0-9]{24}$/.test(id) }
 }));

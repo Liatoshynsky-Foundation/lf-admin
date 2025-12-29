@@ -1,6 +1,7 @@
 import { ObjectId } from 'mongodb';
 import type { FilterQuery, Model } from 'mongoose';
 
+import dbConnect from '../../db/connect';
 import { createBaseRepository } from '../baseRepository/baseRepository';
 import { MediaMentionsServiceErrors } from '~/back-constants/errors';
 import {
@@ -15,13 +16,13 @@ import { newError } from '~/interfaces/error';
 import { Result, WrapError, WrapSuccess } from '~/types/common';
 
 type MediaMentionDoc = {
-  _id: ObjectId;
-  createdAt: Date;
-  updatedAt: Date;
+    _id: ObjectId;
+    createdAt: Date;
+    updatedAt: Date;
 } & MediaMentionEntityRaw;
 
 type MediaMentionRepoDeps = Readonly<{
-  MediaMentionsModel: Model<MediaMentionDoc>;
+    MediaMentionsModel: Model<MediaMentionDoc>;
 }>;
 
 function mediaMentionQueryBuilder(filters?: MediaMentionFiltersRaw): FilterQuery<MediaMentionDoc> {
@@ -77,13 +78,14 @@ export function newMediaMentionRepository({ MediaMentionsModel }: MediaMentionRe
     ...baseRepo,
     async create(mention: Omit<MediaMentionEntityRaw, 'status'>): Promise<Result<MediaMentionEntity>> {
       try {
+        await dbConnect();
         const doc = new MediaMentionsModel({
           ...mention,
           publishedAt: mention.publishedAt || new Date(0),
           status: MediaStatus.DRAFT,
           createdAt: new Date(),
           updatedAt: new Date()
-        } as Partial<MediaMentionDoc>);
+        });
 
         const saved = await doc.save();
 
@@ -97,6 +99,7 @@ export function newMediaMentionRepository({ MediaMentionsModel }: MediaMentionRe
     },
     async addView(id: string): Promise<Result<number>> {
       try {
+        await dbConnect();
         if (!ObjectId.isValid(id)) return WrapError(MediaMentionsServiceErrors.INVALID_ID);
         const updated = await MediaMentionsModel.findByIdAndUpdate(
           id,
