@@ -45,9 +45,9 @@ describe('media-mentions Mutation', () => {
     };
     const ctx = { admin: true, requestContainer: { cradle: { mediaMentionsRepository: repo } } } as any;
 
-    const res = await MediaMentionsMutation.createMediaMention({}, { input: { url: 'http://x' } }, ctx);
+    const res = await MediaMentionsMutation.createMediaMention({}, { input: { url: 'https://x' } }, ctx);
 
-    expect(parser).toHaveBeenCalledWith('http://x');
+    expect(parser).toHaveBeenCalledWith('https://x');
     expect(slugGenerator).toHaveBeenCalled();
     expect(repo.create).toHaveBeenCalled();
     expect(res).toEqual({ id: '1' });

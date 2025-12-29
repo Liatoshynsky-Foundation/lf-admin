@@ -99,6 +99,15 @@ export function ParseImage(metaMap: Map<string, string>, jsonld: Record<string, 
     height: null as number | null
   };
 
+  const imgAlt = pickFirst(metaMap, ['og:image:alt', 'twitter:image:alt']);
+  if (imgAlt) image.alt = imgAlt;
+  const imgW = pickFirst(metaMap, ['og:image:width', 'twitter:image:width']);
+  const imgH = pickFirst(metaMap, ['og:image:height', 'twitter:image:height']);
+  const wi = parseMaybeInt(imgW);
+  const hi = parseMaybeInt(imgH);
+  image.width = wi;
+  image.height = hi;
+
   const img = pickFirst(metaMap, ['og:image', 'twitter:image', 'image']);
   if (img) {
     image.src = img;
@@ -130,15 +139,6 @@ export function ParseImage(metaMap: Map<string, string>, jsonld: Record<string, 
     if (parsed.width !== undefined) image.width = parsed.width ?? null;
     if (parsed.height !== undefined) image.height = parsed.height ?? null;
   }
-
-  const imgAlt = pickFirst(metaMap, ['og:image:alt', 'twitter:image:alt']);
-  if (imgAlt) image.alt = imgAlt;
-  const imgW = pickFirst(metaMap, ['og:image:width', 'twitter:image:width']);
-  const imgH = pickFirst(metaMap, ['og:image:height', 'twitter:image:height']);
-  const wi = parseMaybeInt(imgW);
-  const hi = parseMaybeInt(imgH);
-  image.width = wi;
-  image.height = hi;
 
   return image;
 }

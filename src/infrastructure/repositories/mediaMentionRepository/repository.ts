@@ -1,4 +1,5 @@
-import { FilterQuery, Model, Types } from 'mongoose';
+import { ObjectId } from 'mongodb';
+import type { FilterQuery, Model } from 'mongoose';
 
 import { createBaseRepository } from '../baseRepository/baseRepository';
 import { MediaMentionsServiceErrors } from '~/back-constants/errors';
@@ -14,7 +15,7 @@ import { newError } from '~/interfaces/error';
 import { Result, WrapError, WrapSuccess } from '~/types/common';
 
 type MediaMentionDoc = {
-  _id: Types.ObjectId;
+  _id: ObjectId;
   createdAt: Date;
   updatedAt: Date;
 } & MediaMentionEntityRaw;
@@ -96,7 +97,7 @@ export function newMediaMentionRepository({ MediaMentionsModel }: MediaMentionRe
     },
     async addView(id: string): Promise<Result<number>> {
       try {
-        if (!Types.ObjectId.isValid(id)) return WrapError(MediaMentionsServiceErrors.INVALID_ID);
+        if (!ObjectId.isValid(id)) return WrapError(MediaMentionsServiceErrors.INVALID_ID);
         const updated = await MediaMentionsModel.findByIdAndUpdate(
           id,
           {

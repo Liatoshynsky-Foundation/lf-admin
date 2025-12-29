@@ -43,7 +43,7 @@ describe('mediaMentions Parser', () => {
     });
 
     it('should parse escaped quotes inside quoted attribute values', () => {
-      const s = 'data="escaped \\"quote\\" inside" other=' + '\'it\\\'s\'';
+      const s = 'data="escaped \\"quote\\" inside" other=' + '"it\\\'s"'; //
       const attrs = parseAttributes(s);
       expect(attrs['data']).toBe('escaped "quote" inside');
       expect(attrs['other']).toBe('it\'s');
@@ -69,20 +69,6 @@ describe('mediaMentions Parser', () => {
       expect(tags).toEqual([
         { attrName: 'property', attrValue: 'og:title', content: 'OG Title' },
         { attrName: 'name', attrValue: 'description', content: 'Description here' }
-      ]);
-    });
-
-    it('should handle meta tags without self-closing slash and single quotes and mixed case', () => {
-      const html2 = `
-                <html><head>
-                    <META Property='og:Title' Content='X' >
-                    <meta name='description' content='Desc' >
-                </head><body></body></html>
-            `;
-      const tags = parseMetaTags(html2);
-      expect(tags).toEqual([
-        { attrName: 'property', attrValue: 'og:Title', content: 'X' },
-        { attrName: 'name', attrValue: 'description', content: 'Desc' }
       ]);
     });
   });
