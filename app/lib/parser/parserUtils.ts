@@ -22,7 +22,7 @@ export function unescapeEntities(s: string): string {
 
   s = s.replaceAll(/\\u([0-9a-fA-F]{4})/g, (_, hex) => {
     const code = Number.parseInt(hex, 16);
-    if (!Number.isNaN(code)) return String.fromCharCode(code);
+    if (!Number.isNaN(code)) return String.fromCodePoint(code);
     return _;
   });
 
