@@ -3,9 +3,9 @@ import { GraphQLError } from 'graphql';
 import { endpointRepositoryHandler } from '../helpers';
 import { MediaMentionsServiceErrors } from '~/back-constants/errors';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
-import { generateUniqueSlug } from '~/back-shared/utils';
 import { graphqlErrors } from '~/constants/errors';
-import { parseMediaMention } from '~/lib/parser/mediaMentionsParser';
+import parseMediaMention from '~/lib/parser/mediaMentionsParser';
+import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerator';
 import { Result } from '~/types/common';
 
 function Unwrapper<T>(result: Result<T>): T {
@@ -55,7 +55,10 @@ export const MediaMentionsMutation = {
     return Unwrapper(
       await repo.create({
         ...entity,
-        slug
+        slug,
+        meta: {
+          views: 0
+        }
       })
     );
   },

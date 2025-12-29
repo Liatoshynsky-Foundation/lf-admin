@@ -14,31 +14,29 @@ export function parseMaybeInt(v: string | null): number | null {
 
 // Unescape HTML entities and \uXXXX escapes and double-escaped forms like u0026#x430;
 export function unescapeEntities(s: string): string {
-  // normalize double-escaped JSON forms"
-  s = s.replaceAll(/\\u0026/g, '&');
-  s = s.replaceAll(/u0026/g, '&');
+  s = s.replaceAll('\u0026', '&');
+  s = s.replaceAll('\u0026', '&');
 
-  // decode \uXXXX escapes
-  s = s.replaceAll(/\\u([0-9a-fA-F]{4})/g, (_, hex) => {
+  s = s.replaceAll(new RegExp(String.raw`\u([0-9a-fA-F]{4})`, 'g'), (_, hex) => {
     const code = Number.parseInt(hex, 16);
     if (!Number.isNaN(code)) return String.fromCharCode(code);
     return _;
   });
 
-  // decode numeric entities like &#x430
-  s = s.replaceAll(/&#x([0-9a-fA-F]+);?/g, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16)));
-  s = s.replaceAll(/&#(\d+);?/g, (_, dec) => String.fromCodePoint(Number.parseInt(dec, 10)));
+  s = s.replaceAll(new RegExp(String.raw`&#x([0-9a-fA-F]+);?`, 'g'), (_, hex) =>
+    String.fromCodePoint(Number.parseInt(hex, 16))
+  );
+  s = s.replaceAll(new RegExp(String.raw`&#(\d+);?`, 'g'), (_, dec) => String.fromCodePoint(Number.parseInt(dec, 10)));
 
-  // decode named entities
   const named: Record<string, string> = {
     amp: '&',
     lt: '<',
     gt: '>',
-    quot: String(0x22), // "
-    apos: String(0x27), // '
+    quot: String.fromCodePoint(0x22), // "
+    apos: String.fromCodePoint(0x27), // '
     nbsp: ' '
   };
-  s = s.replaceAll(/&([a-zA-Z]+);/g, (m, name) => named[name] ?? m);
+  s = s.replaceAll(new RegExp(String.raw`&([a-zA-Z]+);`, 'g'), (m, name) => named[name] ?? m);
 
   return s;
 }
@@ -47,15 +45,17 @@ export function parseJsonLd(html: string): Record<string, unknown> | null {
   const re = /<script\b[^>]*type=['"]application\/ld\+json['"][^>]*>([\s\S]*?)<\/script>/i;
   const m = re.exec(html);
   if (!m) return null;
-  const raw = m[1].trim();
+  const raw = m[1]
+    .trim()
+    .replaceAll(/,\s*(?=[}\]])/g, '')
+    .replaceAll(String.fromCodePoint(0x27), String.fromCodePoint(0x22));
+
   try {
     const v = JSON.parse(raw);
     if (Array.isArray(v)) return v.length > 0 && typeof v[0] === 'object' ? v[0] : null;
     if (typeof v === 'object' && v !== null) return v;
   } catch {
-    // try to repair by trimming surrounding junk
     try {
-      // sometimes sites put multiple objects; try to find first {...}
       const firstObj = extractFirstJSONBlock(raw);
       if (firstObj) return JSON.parse(firstObj);
     } catch {
@@ -68,40 +68,45 @@ export function parseJsonLd(html: string): Record<string, unknown> | null {
 function extractFirstJSONBlock(s: string): string | null {
   const start = s.indexOf('{');
   if (start === -1) return null;
-
-  let i = start;
   let depth = 0;
   let inString = false;
   let stringChar = '';
   let escaped = false;
 
-  for (; i < s.length; i++) {
+  for (let i = start; i < s.length; i++) {
     const ch = s[i];
+
     if (inString) {
       if (escaped) {
         escaped = false;
-      } else if (ch === '\\') {
+        continue;
+      }
+      if (ch === '\\') {
         escaped = true;
-      } else if (ch === stringChar) {
+        continue;
+      }
+      if (ch === stringChar) {
         inString = false;
         stringChar = '';
       }
       continue;
     }
 
-    if (ch === String(0x22) || ch === String(0x27)) {
+    switch (ch) {
+    case String.fromCodePoint(0x22):
+    case String.fromCodePoint(0x27):
       inString = true;
-      stringChar = ch;
-      continue;
-    }
-
-    if (ch === '{') {
+        stringChar = ch;
+      break;
+    case '{':
       depth++;
-    } else if (ch === '}') {
+      break;
+    case '}':
       depth--;
-      if (depth === 0) {
-        return s.slice(start, i + 1);
-      }
+      if (depth === 0) return s.slice(start, i + 1);
+        break;
+    default:
+      break;
     }
   }
   return null;

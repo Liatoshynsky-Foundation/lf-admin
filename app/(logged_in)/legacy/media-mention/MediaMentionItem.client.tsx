@@ -138,7 +138,7 @@ export default function MediaMentionItem({ item, onRefetch }: Readonly<Props>) {
       </div>
 
       <div style={{ display: 'flex', gap: 6, alignItems: 'start' }}>
-        {!isEditing ? (
+        {isEditing ? null : (
           <button
             onClick={() => {
               setIsEditing(true);
@@ -147,7 +147,7 @@ export default function MediaMentionItem({ item, onRefetch }: Readonly<Props>) {
           >
             Edit
           </button>
-        ) : null}
+        )}
         <button onClick={handleAddView}>+view</button>
         <button onClick={handleDelete} style={{ color: '#900' }} disabled={deleting}>
           {deleting ? 'Deleting...' : 'Delete'}

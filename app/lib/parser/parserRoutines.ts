@@ -6,11 +6,15 @@ export function ParseTitle(
   content: string
 ): string | undefined {
   const title = pickFirst(metaMap, ['og:title', 'twitter:title', 'title', 'name']);
-  if (title) return title;
-  else if (jsonld) {
+  if (title) {
+    return title;
+  }
+
+  if (jsonld) {
     if (typeof jsonld['headline'] === 'string' && jsonld['headline']) return jsonld['headline'];
     else if (typeof jsonld['name'] === 'string' && jsonld['name']) return jsonld['name'];
   }
+
   let t = (/<title>([\s\S]*?)<\/title>/i.exec(content) || [])[1];
   if (t) return unescapeEntities(t.trim());
 
@@ -31,7 +35,9 @@ export function ParseDescription(metaMap: Map<string, string>, jsonld: Record<st
 export function ParseSiteName(metaMap: Map<string, string>, jsonld: Record<string, unknown>): string | undefined {
   const sname = pickFirst(metaMap, ['og:site_name', 'application-name']);
   if (sname) return sname;
-  else if (jsonld && typeof jsonld['name'] === 'string') return jsonld['name'];
+
+  if (!jsonld) return undefined;
+  if (typeof jsonld['name'] === 'string') return jsonld['name'];
 
   return undefined;
 }
@@ -94,15 +100,35 @@ export function ParseImage(metaMap: Map<string, string>, jsonld: Record<string, 
   };
 
   const img = pickFirst(metaMap, ['og:image', 'twitter:image', 'image']);
-  if (img) image.src = img;
-  else if (jsonld?.['image']) {
+  if (img) {
+    image.src = img;
+  } else if (jsonld?.['image']) {
     const im = jsonld['image'];
-    if (typeof im === 'string') image.src = im;
-    else if (Array.isArray(im) && im.length > 0 && typeof im[0] === 'string') image.src = im[0];
-    else if (im && typeof im === 'object') {
-      const imObj = im as Record<string, unknown>;
-      if (typeof imObj['url'] === 'string') image.src = imObj['url'];
-    }
+
+    const parseJsonImage = (val: unknown) => {
+      const out: { src?: string; width?: number | null; height?: number | null } = {};
+      if (typeof val === 'string') {
+        out.src = val;
+        return out;
+      }
+      if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'string') {
+        out.src = val[0];
+        return out;
+      }
+      if (val && typeof val === 'object') {
+        const o = val as Record<string, unknown>;
+        if (typeof o['url'] === 'string') out.src = o['url'];
+        else if (typeof o['src'] === 'string') out.src = o['src'];
+        if (typeof o['width'] === 'number') out.width = o['width'];
+        if (typeof o['height'] === 'number') out.height = o['height'];
+      }
+      return out;
+    };
+
+    const parsed = parseJsonImage(im);
+    if (parsed.src) image.src = parsed.src;
+    if (parsed.width !== undefined) image.width = parsed.width ?? null;
+    if (parsed.height !== undefined) image.height = parsed.height ?? null;
   }
 
   const imgAlt = pickFirst(metaMap, ['og:image:alt', 'twitter:image:alt']);

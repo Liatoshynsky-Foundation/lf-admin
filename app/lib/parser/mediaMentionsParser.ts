@@ -10,7 +10,9 @@ import {
 import { parseJsonLd, unescapeEntities } from './parserUtils';
 import { MediaMentionEntityRaw } from '~/domain/entities/MediaMentions';
 
-export async function parseMediaMention(url: string): Promise<Omit<MediaMentionEntityRaw, 'status' | 'slug' | 'meta'>> {
+export default async function parseMediaMention(
+  url: string
+): Promise<Omit<MediaMentionEntityRaw, 'status' | 'slug' | 'meta'>> {
   const resp = await fetch(url, {
     method: 'GET',
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; MediaMentionsParser/1.0)' }
@@ -60,73 +62,22 @@ type MetaTag = {
   content: string;
 };
 
-function parseAttributes(attrStr: string): Record<string, string> {
+export function parseAttributes(attrStr: string): Record<string, string> {
   const out: Record<string, string> = {};
-  let i = 0;
-  const len = attrStr.length;
-
-  const isNameChar = (ch: string) => /[A-Za-z0-9:_-]/.test(ch);
-  const isSpace = (ch: string) => /\s/.test(ch);
-
-  while (i < len) {
-    // skip whitespace
-    while (i < len && isSpace(attrStr[i])) i++;
-    if (i >= len) break;
-
-    // read name
-    const nameStart = i;
-    while (i < len && isNameChar(attrStr[i])) i++;
-    if (i === nameStart) {
-      // skip a char to avoid infinite loop on unexpected input
-      i++;
-      continue;
-    }
-    const name = attrStr.slice(nameStart, i).toLowerCase();
-
-    // skip whitespace
-    while (i < len && isSpace(attrStr[i])) i++;
-
-    let value = '';
-    if (i < len && attrStr[i] === '=') {
-      i++; // skip '='
-      while (i < len && isSpace(attrStr[i])) i++;
-      // 0x22 = ", 0x27 = '
-      if (i < len && (attrStr[i] === String(0x22) || attrStr[i] === String(0x27))) {
-        const quote = attrStr[i++];
-        const valStart = i;
-        let escaped = false;
-        while (i < len) {
-          const ch = attrStr[i];
-          if (escaped) {
-            escaped = false;
-            i++;
-            continue;
-          }
-          if (ch === '\\') {
-            escaped = true;
-            i++;
-            continue;
-          }
-          if (ch === quote) break;
-          i++;
-        }
-        value = attrStr.slice(valStart, i);
-        if (i < len && attrStr[i] === quote) i++; // skip closing quote
-      } else {
-        const valStart = i;
-        while (i < len && !isSpace(attrStr[i]) && attrStr[i] !== '>') i++;
-        value = attrStr.slice(valStart, i);
-      }
-    }
-
+  const re = /([A-Za-z0-9:_-]+)\s*(?:=\s*(?:"((?:\\.|[^"\\])*)"|([^\s"'>]+)))?/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(attrStr)) !== null) {
+    const name = m[1].toLowerCase();
+    const raw = m[2] ?? m[3] ?? m[4] ?? '';
+    // unescape backslash escapes
+    const value = raw.replaceAll(/\\(["'\\])/g, '$1');
     out[name] = value;
   }
-
   return out;
 }
 
-function parseMetaTags(html: string): MetaTag[] {
-  const metaTagRe = /<meta\b([^>]*)>/gi;
+export function parseMetaTags(html: string): MetaTag[] {
+  const metaTagRe = /<meta\s+\b([^>]*)\/?>/gi;
 
   const tags: MetaTag[] = [];
   let m: RegExpExecArray | null;
