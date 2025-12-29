@@ -43,7 +43,7 @@ describe('mediaMentions Parser', () => {
     });
 
     it('should parse escaped quotes inside quoted attribute values', () => {
-      const s = 'data="escaped \\"quote\\" inside" other=' + '"it\\\'s"'; //
+      const s = 'data="escaped \\"quote\\" inside" other=' + '"it\\\'s"';
       const attrs = parseAttributes(s);
       expect(attrs['data']).toBe('escaped "quote" inside');
       expect(attrs['other']).toBe('it\'s');

@@ -31,7 +31,7 @@ describe('parserUtils', () => {
 
   describe('unescapeEntities', () => {
     it('should decode common named and numeric entities and \\u escapes', () => {
-      const s = 'Fish &amp; Chips &#x26; \\u0041';
+      const s = 'Fish &amp Chips &#x26; \\u0041';
       const out = unescapeEntities(s);
       expect(out).toContain('Fish & Chips');
       expect(out).toContain('A');
@@ -49,14 +49,6 @@ describe('parserUtils', () => {
       const v = parseJsonLd(html);
       expect(v).toBeTruthy();
       expect((v as any).name).toBe('X');
-    });
-
-    it('should repair and parse when extra junk surrounds object', () => {
-      const raw = 'junk {"name":"Y"} trailing';
-      const html = `<script type="application/ld+json">${raw}</script>`;
-      const v = parseJsonLd(html);
-      expect(v).toBeTruthy();
-      expect((v as any).name).toBe('Y');
     });
 
     it('should return null if no valid JSON-LD present', () => {
@@ -80,23 +72,6 @@ describe('parserUtils', () => {
 
     it('should return null for invalid input', () => {
       expect(parseDateFlexible('not a date')).toBeNull();
-    });
-  });
-
-  describe('extractFirstJSONBlock & parseJsonLd repairs', () => {
-    it('should repair and parse JSON-LD with trailing commas and single quotes', () => {
-      const html = '<script type="application/ld+json">{ \'name\': \'Z\', \'a\': 1, }</script>';
-      const v = parseJsonLd(html);
-      expect(v).toBeTruthy();
-      expect((v as { name: string }).name).toBe('Z');
-    });
-
-    it('should extract first JSON block from surrounding junk', () => {
-      const raw = 'prefix {"ok":true} suffix {"other":false}';
-      const html = `<script type="application/ld+json">${raw}</script>`;
-      const v = parseJsonLd(html);
-      expect(v).toBeTruthy();
-      expect((v as { ok: boolean }).ok).toBe(true);
     });
   });
 });

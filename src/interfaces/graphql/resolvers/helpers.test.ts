@@ -13,7 +13,7 @@ describe('endpointRepositoryHandler', () => {
 
   it('should call handler and return value when admin is true', async () => {
     const handler = endpointRepositoryHandler('mediaMentionsRepository')(async ({ args, repo }) =>
-      repo.findById((args as any).id)
+      repo.findById(args.id)
     );
     const res = await handler({}, { id: '1' } as any, { requestContainer: rc, admin: true } as any);
     expect(res).toEqual({ id: '1' });

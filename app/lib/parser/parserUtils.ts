@@ -1,3 +1,6 @@
+const SINGLE_QUOTE = String.fromCodePoint(0x27);
+const DOUBLE_QUOTE = String.fromCodePoint(0x22);
+
 export function pickFirst(map: Map<string, string>, keys: string[]): string | null {
   for (const k of keys) {
     const v = map.get(k);
@@ -17,97 +20,45 @@ export function unescapeEntities(s: string): string {
   s = s.replaceAll('\u0026', '&');
   s = s.replaceAll('\u0026', '&');
 
-  s = s.replaceAll(new RegExp(String.raw`\u([0-9a-fA-F]{4})`, 'g'), (_, hex) => {
+  s = s.replaceAll(/\\u([0-9a-fA-F]{4})/g, (_, hex) => {
     const code = Number.parseInt(hex, 16);
     if (!Number.isNaN(code)) return String.fromCharCode(code);
     return _;
   });
 
-  s = s.replaceAll(new RegExp(String.raw`&#x([0-9a-fA-F]+);?`, 'g'), (_, hex) =>
+  s = s.replaceAll(/&#x([0-9a-fA-F]+);?/g, (_, hex) =>
     String.fromCodePoint(Number.parseInt(hex, 16))
   );
-  s = s.replaceAll(new RegExp(String.raw`&#(\d+);?`, 'g'), (_, dec) => String.fromCodePoint(Number.parseInt(dec, 10)));
+  s = s.replaceAll(/&#(\d+);?/g, (_, dec) => String.fromCodePoint(Number.parseInt(dec, 10)));
 
   const named: Record<string, string> = {
     amp: '&',
     lt: '<',
     gt: '>',
-    quot: String.fromCodePoint(0x22), // "
-    apos: String.fromCodePoint(0x27), // '
+    quot: DOUBLE_QUOTE,
+    apos: SINGLE_QUOTE,
     nbsp: ' '
   };
-  s = s.replaceAll(new RegExp(String.raw`&([a-zA-Z]+);`, 'g'), (m, name) => named[name] ?? m);
+  s = s.replaceAll(/&([a-zA-Z]+)/g, (m, name) => named[name] ?? m);
 
   return s;
 }
 
 export function parseJsonLd(html: string): Record<string, unknown> | null {
-  const re = /<script\b[^>]*type=['"]application\/ld\+json['"][^>]*>([\s\S]*?)<\/script>/i;
+  const re = /<script\b[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/i;
   const m = re.exec(html);
   if (!m) return null;
   const raw = m[1]
     .trim()
     .replaceAll(/,\s*(?=[}\]])/g, '')
-    .replaceAll(String.fromCodePoint(0x27), String.fromCodePoint(0x22));
+    .replaceAll(SINGLE_QUOTE, DOUBLE_QUOTE);
 
   try {
     const v = JSON.parse(raw);
     if (Array.isArray(v)) return v.length > 0 && typeof v[0] === 'object' ? v[0] : null;
     if (typeof v === 'object' && v !== null) return v;
   } catch {
-    try {
-      const firstObj = extractFirstJSONBlock(raw);
-      if (firstObj) return JSON.parse(firstObj);
-    } catch {
-      return null;
-    }
-  }
-  return null;
-}
-
-function extractFirstJSONBlock(s: string): string | null {
-  const start = s.indexOf('{');
-  if (start === -1) return null;
-  let depth = 0;
-  let inString = false;
-  let stringChar = '';
-  let escaped = false;
-
-  for (let i = start; i < s.length; i++) {
-    const ch = s[i];
-
-    if (inString) {
-      if (escaped) {
-        escaped = false;
-        continue;
-      }
-      if (ch === '\\') {
-        escaped = true;
-        continue;
-      }
-      if (ch === stringChar) {
-        inString = false;
-        stringChar = '';
-      }
-      continue;
-    }
-
-    switch (ch) {
-    case String.fromCodePoint(0x22):
-    case String.fromCodePoint(0x27):
-      inString = true;
-        stringChar = ch;
-      break;
-    case '{':
-      depth++;
-      break;
-    case '}':
-      depth--;
-      if (depth === 0) return s.slice(start, i + 1);
-        break;
-    default:
-      break;
-    }
+    return null;
   }
   return null;
 }

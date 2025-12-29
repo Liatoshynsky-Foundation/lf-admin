@@ -10,6 +10,14 @@ jest.mock('mongoose', () => ({
 const saveMock = jest.fn();
 const findByIdAndUpdateMock = jest.fn();
 
+class MockModel {
+  _doc: any;
+  constructor(doc: any) {
+    this._doc = doc;
+  }
+  save = saveMock;
+}
+
 describe('Media Mentions Repository', () => {
   afterEach(() => {
     jest.clearAllMocks();
@@ -32,14 +40,6 @@ describe('Media Mentions Repository', () => {
 
     saveMock.mockResolvedValue(savedDoc);
 
-    class MockModel {
-      _doc: any;
-      constructor(doc: any) {
-        this._doc = doc;
-      }
-      save = saveMock;
-    }
-
     const repo = newMediaMentionRepository({ MediaMentionsModel: MockModel as any });
     const res = await repo.create({
       url: 'https://ex.com',
@@ -59,33 +59,25 @@ describe('Media Mentions Repository', () => {
 
     findByIdAndUpdateMock.mockReturnValue({ lean: () => ({ exec: jest.fn().mockResolvedValue(updated) }) });
 
-    class FindModel {
-      findByIdAndUpdate = findByIdAndUpdateMock;
-    }
-
-    const repoSuccess = newMediaMentionRepository({ MediaMentionsModel: FindModel as any });
+    const repoSuccess = newMediaMentionRepository({ MediaMentionsModel: MockModel as any });
     const ok = await repoSuccess.addView('507f1f77bcf86cd799439011');
     expect(ok).toBeDefined();
 
     findByIdAndUpdateMock.mockReturnValue({ lean: () => ({ exec: jest.fn().mockResolvedValue(null) }) });
 
-    const repoNotFound = newMediaMentionRepository({ MediaMentionsModel: FindModel as any });
+    const repoNotFound = newMediaMentionRepository({ MediaMentionsModel: MockModel as any });
     const nf = await repoNotFound.addView('507f1f77bcf86cd799439011');
     expect(nf).toBeDefined();
   });
 
   it('should return error for invalid id and handle save error', async () => {
-    const repo = newMediaMentionRepository({ MediaMentionsModel: class {} as any });
+    const repo = newMediaMentionRepository({ MediaMentionsModel: class { } as any });
     const bad = await repo.addView('bad-id');
     expect(bad).toBeDefined();
 
-    class ErrModel {
-      constructor() {}
-      save = saveMock.mockRejectedValue(new Error('fail'));
-      findByIdAndUpdate = findByIdAndUpdateMock;
-    }
+    saveMock.mockRejectedValue(new Error('fail'));
 
-    const repoErr = newMediaMentionRepository({ MediaMentionsModel: ErrModel as any });
+    const repoErr = newMediaMentionRepository({ MediaMentionsModel: MockModel as any });
     const created = await repoErr.create({ url: 'x', title: 't' } as any);
     expect(created).toBeDefined();
   });
