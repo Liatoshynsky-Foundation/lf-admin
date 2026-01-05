@@ -4,12 +4,26 @@ import userEvent from '@testing-library/user-event';
 import { UsedCard } from './UsedCard';
 
 jest.mock('../media-card/MediaCard', () => ({
-  MediaCard: ({ src, alt, onClick, topRightContent, bottomContent, testId }: any) => (
-    <div data-testid={testId} onClick={onClick}>
-      <img src={src} alt={alt} />
+  MediaCard: ({
+    src,
+    alt,
+    onClick,
+    topRightContent,
+    bottomContent,
+    testId
+  }: {
+    src: string;
+    alt: string;
+    onClick?: () => void;
+    topRightContent?: React.ReactNode;
+    bottomContent?: React.ReactNode;
+    testId?: string;
+  }) => (
+    <button data-testid={testId} onClick={onClick}>
+      <div data-testid="mock-image" data-src={src} data-alt={alt} />
       {topRightContent}
       {bottomContent}
-    </div>
+    </button>
   )
 }));
 
@@ -23,7 +37,9 @@ describe('UsedCard', () => {
   it('should render image with correct src and fileName', () => {
     render(<UsedCard src="/test.jpg" fileName="test-image.jpg" locale="uk" onClick={mockOnClick} />);
 
-    expect(screen.getByAltText('test-image.jpg')).toHaveAttribute('src', '/test.jpg');
+    const mockImage = screen.getByTestId('mock-image');
+    expect(mockImage).toHaveAttribute('data-src', '/test.jpg');
+    expect(mockImage).toHaveAttribute('data-alt', 'test-image.jpg');
     expect(screen.getByText('test-image.jpg')).toBeInTheDocument();
   });
 
