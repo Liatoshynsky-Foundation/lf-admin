@@ -2,8 +2,8 @@
 
 import { Box, Tooltip } from '@mui/material';
 
+import { MediaCard } from '../media-card/MediaCard';
 import { galleryCardStyles } from './GalleryCard.styles';
-import { MediaCard } from './MediaCard';
 import LinkIcon from '~/public/icons/link.svg';
 import StarIcon from '~/public/icons/star.svg';
 
