@@ -72,7 +72,8 @@ export const styles = {
     width: 28,
     height: 28,
     p: 0,
-    alignSelf: 'start'
+    alignSelf: 'start',
+    cursor: 'pointer'
   },
   actionsRow: {
     display: 'flex',
@@ -102,7 +103,9 @@ export const styles = {
     alignItems: 'center',
     justifyContent: 'center',
 
-    bgcolor: 'transparent'
+    bgcolor: 'transparent',
+    position: 'relative',
+    '&:hover .previewOverlay': { opacity: 1, pointerEvents: 'auto' }
   },
 
   previewImg: {
@@ -180,6 +183,10 @@ export const styles = {
     '& .MuiOutlinedInput-notchedOutline': {
       borderColor: '#A7A8B4'
     },
+    '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+      borderColor: '#A7A8B4',
+      borderWidth: '1px'
+    },
 
     '& .MuiInputBase-inputMultiline': {
       fontFamily: 'Mulish, sans-serif',
@@ -194,5 +201,10 @@ export const styles = {
       color: '#00000061',
       opacity: 1
     }
+  },
+  starFilled: {
+    '& svg': { display: 'block' },
+    '& svg path': { fill: '#000' },
+    '& svg *': { stroke: '#000' } // optional if your icon uses stroke
   }
 } as const;
