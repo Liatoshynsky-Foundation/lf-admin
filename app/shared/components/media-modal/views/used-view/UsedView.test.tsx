@@ -1,14 +1,21 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { UsedView } from './UsedView';
 
-jest.mock('../MediaPickList', () => ({
-  MediaPickList: ({ items, testIdPrefix }: any) => (
-    <div data-testid="MediaPickList">
+jest.mock('../../components/used-card/UsedCard', () => ({
+  UsedCard: ({ fileName, onClick, testId }: any) => (
+    <button data-testid={testId} onClick={onClick}>
+      {fileName}
+    </button>
+  )
+}));
+
+jest.mock('../../components/media-grid/MediaGrid', () => ({
+  MediaGrid: ({ items, renderCard }: any) => (
+    <div data-testid="mocked-media-grid" role="grid">
       {items.map((item: any) => (
-        <div key={item.id} data-testid={`${testIdPrefix}-${item.id}`}>
-          {item.fileName}
-        </div>
+        <div key={item._id}>{renderCard(item)}</div>
       ))}
     </div>
   )
@@ -27,29 +34,41 @@ describe('UsedView', () => {
     expect(screen.getByTestId('UsedView')).toBeInTheDocument();
   });
 
-  it('should render MediaPickList', () => {
+  it('should render title', () => {
     render(<UsedView selected={null} onPick={mockOnPick} />);
 
-    expect(screen.getByTestId('MediaPickList')).toBeInTheDocument();
+    expect(screen.getByText('Зображення на сторінці')).toBeInTheDocument();
   });
 
-  it('should render demo items', () => {
+  it('should render media grid', () => {
     render(<UsedView selected={null} onPick={mockOnPick} />);
 
-    expect(screen.getByTestId('UsedView-item-used-1-uk')).toBeInTheDocument();
-    expect(screen.getByTestId('UsedView-item-used-1-en')).toBeInTheDocument();
+    expect(screen.getByTestId('mocked-media-grid')).toBeInTheDocument();
   });
 
-  it('should pass selected item to MediaPickList', () => {
-    const selected = {
-      kind: 'used' as const,
-      id: 'used-1-uk',
-      fileName: 'test.png',
-      src: '/test.png',
-      locale: 'uk' as const
-    };
-    render(<UsedView selected={selected} onPick={mockOnPick} />);
+  it('should render multiple used cards', () => {
+    render(<UsedView selected={null} onPick={mockOnPick} />);
 
-    expect(screen.getByTestId('UsedView')).toBeInTheDocument();
+    const pianoCards = screen.getAllByText('piano-studio.jpg');
+    const composerCards = screen.getAllByText('composer-portrait.jpg');
+
+    expect(pianoCards.length).toBeGreaterThan(0);
+    expect(composerCards.length).toBeGreaterThan(0);
+  });
+
+  it('should call onPick when card is clicked', async () => {
+    const user = userEvent.setup();
+    render(<UsedView selected={null} onPick={mockOnPick} />);
+
+    const firstCard = screen.getByTestId('UsedCard-1');
+    await user.click(firstCard);
+
+    expect(mockOnPick).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'used',
+        fileName: 'piano-studio.jpg',
+        locale: 'uk'
+      })
+    );
   });
 });

@@ -27,7 +27,7 @@ jest.mock('../../components/media-grid/MediaGrid', () => ({
   )
 }));
 
-jest.mock('../../components/media-card/GalleryCard', () => ({
+jest.mock('../../components/gallery-card/GalleryCard', () => ({
   GalleryCard: ({ fileName, onClick, testId }: any) => (
     <button data-testid={testId} onClick={onClick}>
       {fileName}

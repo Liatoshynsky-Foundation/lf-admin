@@ -4,7 +4,7 @@ import { Box } from '@mui/material';
 import { useState } from 'react';
 
 import { FilterButton } from '../../components/filter-button/FilterButton';
-import { GalleryCard } from '../../components/media-card/GalleryCard';
+import { GalleryCard } from '../../components/gallery-card/GalleryCard';
 import { MediaGrid } from '../../components/media-grid/MediaGrid';
 import { SearchButton } from '../../components/search-button/SearchButton';
 import type { GalleryMedia } from '../../MediaModal.types';
@@ -110,7 +110,7 @@ export function GalleryView({ selected: _selected, onPick }: Props) {
       <MediaGrid
         items={mockAssets}
         sx={galleryViewStyles.gridContainer}
-        renderCard={(asset) => (
+        renderCard={(asset: MockAsset) => (
           <GalleryCard
             src={asset.url}
             fileName={asset.filename}
