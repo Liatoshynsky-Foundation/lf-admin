@@ -4,7 +4,6 @@ import { Box } from '@mui/material';
 import React from 'react';
 
 import { fetchPreview } from '~/lib/utils/fetchPreview';
-import { BlockNoteEditorExample } from '~/shared/components/block-note-editor/BlockNoteEditorExample';
 import { Header } from '~/shared/components/header/Header';
 import { useStore } from '~/store';
 
@@ -37,7 +36,6 @@ export default function Home() {
         onCancel={onCancel}
         isSaving
       />
-      <BlockNoteEditorExample />
     </Box>
   );
 }
