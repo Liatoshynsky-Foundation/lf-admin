@@ -44,15 +44,16 @@ export const BlockNoteEditorExample = () => {
       <Stack spacing={3}>
         <Box>
           <Typography variant="h4" gutterBottom>
-            Приклад використання BlockNote Editor
+            Редагування контенту
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Демонстрація функціональності редактора контенту
+            Використовуйте цей редактор для створення та редагування контенту. Ви можете форматувати текст, додавати
+            зображення, таблиці та інші елементи. Натисніть &quot;/&quot; для доступу до команд.
           </Typography>
         </Box>
 
         <Stack direction="row" spacing={2} flexWrap="wrap">
-          <Button variant="outlined" color="secondary" onClick={handleClear}>
+          <Button variant="filled" color="secondary" onClick={handleClear}>
             Очистити
           </Button>
           <Button
