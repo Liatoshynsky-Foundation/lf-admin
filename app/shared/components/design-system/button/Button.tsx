@@ -1,11 +1,12 @@
 'use client';
+
 import { Button as MuiButton, ButtonProps as MuiButtonProps, CircularProgress } from '@mui/material';
-import { forwardRef, ReactNode } from 'react';
+import { forwardRef, type ReactNode } from 'react';
 
 import { buttonBaseStyles, sizeStyles, typographyStyles, variantStyles } from './Button.styles';
+import { sxToArray } from '~/lib/utils/sxToArray';
 
 type Size = 'large' | 'medium' | 'small';
-
 type Variant = 'filled' | 'outlined' | 'text';
 
 type BaseButtonProps = {
@@ -45,28 +46,35 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    const isDisabled = disabled ?? loading;
+    const isDisabled = Boolean(disabled) || Boolean(loading);
+    const content = label ?? children;
 
-    const buttonContent = label ?? children;
+    const muiVariant: MuiButtonProps['variant'] = (
+      { filled: 'contained', outlined: 'outlined', text: 'text' } as const
+    )[variant];
+
+    const visualSx = color === 'tertiary' ? variantStyles.tertiary.filled : variantStyles[color][variant];
+
+    const mergedSx: MuiButtonProps['sx'] = [
+      buttonBaseStyles,
+      sizeStyles[size],
+      typographyStyles[color][size],
+      visualSx,
+      ...sxToArray(sx)
+    ];
 
     return (
       <MuiButton
         ref={ref}
         size={size}
-        variant="contained"
+        variant={muiVariant}
+        disabled={isDisabled}
         startIcon={!loading ? startIcon : undefined}
         endIcon={!loading ? endIcon : undefined}
-        disabled={isDisabled}
-        sx={{
-          ...buttonBaseStyles,
-          ...sizeStyles[size],
-          ...typographyStyles[color]?.[size],
-          ...(color === 'tertiary' ? variantStyles.tertiary.filled : variantStyles[color]?.[variant]),
-          ...(sx as object)
-        }}
+        sx={mergedSx}
         {...props}
       >
-        {loading ? <CircularProgress size={25} color="inherit" data-testid="loader" /> : buttonContent}
+        {loading ? <CircularProgress size={25} color="inherit" data-testid="loader" /> : content}
       </MuiButton>
     );
   }
