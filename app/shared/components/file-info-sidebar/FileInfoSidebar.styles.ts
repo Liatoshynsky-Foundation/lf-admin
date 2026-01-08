@@ -1,4 +1,6 @@
-import { colors } from '../design-system/button/Button.styles';
+import { alpha } from '@mui/material';
+
+import { colors } from '~/shared/components/design-system/button/Button.styles';
 
 export const SIDEBAR_WIDTH = 320;
 
@@ -18,28 +20,23 @@ export const styles = {
     py: '32px',
     px: '24px',
     gap: '16px',
+    pt: 0,
 
-    overflowY: 'scroll',
-    scrollbarWidth: 'thin',
-    scrollbarColor: 'rgba(0,0,0,0.18) transparent',
-
-    '&::-webkit-scrollbar': {
-      width: '8px'
-    },
-    '&::-webkit-scrollbar-track': {
-      background: 'transparent'
-    },
-    '&::-webkit-scrollbar-thumb': {
-      backgroundColor: 'rgba(0,0,0,0.18)',
-      borderRadius: '999px',
-      border: '2px solid transparent',
-      backgroundClip: 'content-box'
-    },
-    '&::-webkit-scrollbar-thumb:hover': {
-      backgroundColor: 'rgba(0,0,0,0.28)'
-    }
+    overflowY: 'auto',
+    scrollbarWidth: 'none'
   },
   header: {
+    position: 'sticky',
+    top: 0,
+    zIndex: 2,
+
+    bgcolor: colors.blue[100],
+
+    mx: '-24px',
+    px: '24px',
+    pt: '30px',
+    pb: '10px',
+
     display: 'grid',
     gridTemplateColumns: '28px 1fr 28px',
     columnGap: '4px',
@@ -73,24 +70,26 @@ export const styles = {
     height: 28,
     p: 0,
     alignSelf: 'start',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   actionsRow: {
     display: 'flex',
     alignItems: 'center',
-    gap: '16px'
+    gap: '16px',
+    mt: '-10px'
   },
-
   actionBtn: {
     width: 32,
     height: 32,
     p: 0
   },
-
   actionsSpacer: {
     flex: 1
   },
-  preview: {
+  preview: (isImagePreview: boolean) => ({
     height: '224px',
     flexShrink: 0,
     border: '1px solid',
@@ -105,8 +104,12 @@ export const styles = {
 
     bgcolor: 'transparent',
     position: 'relative',
-    '&:hover .previewOverlay': { opacity: 1, pointerEvents: 'auto' }
-  },
+    '&:hover .previewOverlay': { opacity: 1, pointerEvents: 'auto' },
+
+    userSelect: 'none',
+    outline: 'none',
+    cursor: isImagePreview ? 'pointer' : 'default'
+  }),
 
   previewImg: {
     width: '100%',
@@ -205,6 +208,18 @@ export const styles = {
   starFilled: {
     '& svg': { display: 'block' },
     '& svg path': { fill: '#000' },
-    '& svg *': { stroke: '#000' } // optional if your icon uses stroke
+    '& svg *': { stroke: '#000' }
+  },
+  previewOverlay: {
+    position: 'absolute',
+    inset: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    bgcolor: alpha(colors.blue[900], 0.4),
+    opacity: 0,
+    transition: 'opacity 300ms ease-out',
+    pointerEvents: 'none',
+    borderRadius: 'inherit'
   }
-} as const;
+};
