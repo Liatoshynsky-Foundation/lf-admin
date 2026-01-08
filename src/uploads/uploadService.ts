@@ -99,6 +99,10 @@ export const createUploadService = (config: UploadServiceConfig) => {
     return storage.getUrl(filename);
   };
 
+  const listFiles = async (folder?: string) => {
+    return storage.list(folder);
+  };
+
   return {
     uploadFile,
     uploadFiles,
@@ -106,7 +110,8 @@ export const createUploadService = (config: UploadServiceConfig) => {
     deleteFile,
     fileExists,
     getFileMetadata,
-    getFileUrl
+    getFileUrl,
+    listFiles
   };
 };
 

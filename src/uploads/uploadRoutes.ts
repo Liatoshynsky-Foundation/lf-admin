@@ -30,6 +30,8 @@ export const createUploadRoutes = (config: UploadRoutesConfig): Router => {
 
   router.post('/multiple', upload.array('files'), controller.uploadMultipleFiles);
 
+  router.get('/', controller.getAllFiles);
+
   router.get('/:filename', controller.getFile);
 
   router.delete('/:filename', controller.deleteFile);

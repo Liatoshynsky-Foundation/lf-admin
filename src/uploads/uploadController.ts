@@ -103,6 +103,17 @@ export const createUploadController = (config: UploadControllerConfig) => {
     }
   };
 
+  const getAllFiles = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const folder = typeof req.query.folder === 'string' ? req.query.folder : undefined;
+      const files = await uploadService.listFiles(folder);
+
+      res.json({ success: true, data: files });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   const getFileMetadata = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { filename } = req.params;
@@ -130,6 +141,7 @@ export const createUploadController = (config: UploadControllerConfig) => {
     uploadMultipleFiles,
     getFile,
     deleteFile,
+    getAllFiles,
     getFileMetadata
   };
 };

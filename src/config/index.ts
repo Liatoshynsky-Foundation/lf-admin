@@ -38,7 +38,7 @@ export interface Config {
 }
 
 const defaultStorageType: StorageType = 'cloud';
-const defaultCloudProvider: CloudProvider = 'aws';
+const defaultCloudProvider: CloudProvider = 'cloudflare';
 
 const storageConfig: StorageConfig = {
   type: (process.env.STORAGE_TYPE as StorageType) || defaultStorageType,

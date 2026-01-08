@@ -2,6 +2,7 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
+  ListObjectsV2Command,
   PutObjectCommand,
   S3Client
 } from '@aws-sdk/client-s3';
@@ -256,6 +257,51 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
     }
   };
 
+  const list = async (folder?: string): Promise<StorageMetadata[]> => {
+    try {
+      if (provider === 'aws' || provider === 'cloudflare') {
+        if (!s3Client) {
+          throw new Error('S3 client not initialized');
+        }
+
+        const prefix = folder ? (folder.endsWith('/') ? folder : `${folder}/`) : '';
+
+        const command = new ListObjectsV2Command({
+          Bucket: bucket,
+          Prefix: prefix
+        });
+
+        const response = await s3Client.send(command);
+
+        if (!response.Contents) {
+          return [];
+        }
+
+        return response.Contents.map((item) => {
+          const itemKey = item.Key || '';
+          const filename = itemKey.split('/').pop() || itemKey;
+          const directory = itemKey.substring(0, itemKey.lastIndexOf('/'));
+
+          return {
+            filename,
+            originalName: filename,
+            mimeType: 'application/octet-stream',
+            size: item.Size || 0,
+            uploadedAt: item.LastModified || new Date(),
+            path: itemKey,
+            url: getUrl(itemKey) || undefined,
+            directory
+          };
+        });
+      }
+
+      throw new Error(UPLOAD_ERRORS.CLOUD_STORAGE_NOT_IMPLEMENTED(provider));
+    } catch (error) {
+      logger.error('Failed to list files', error);
+      return [];
+    }
+  };
+
   const getUrl = (filename: string): string | null => {
     /* prettier-ignore */
     switch (provider) {
@@ -297,6 +343,7 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
     delete: deleteFile,
     exists,
     getMetadata,
-    getUrl
+    getUrl,
+    list
   };
 };

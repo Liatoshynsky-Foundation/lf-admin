@@ -276,6 +276,38 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
     }
   };
 
+  const list = async (folder?: string): Promise<StorageMetadata[]> => {
+    try {
+      const containerClient = getContainerClient();
+      const prefix = folder ? (folder.endsWith('/') ? folder : `${folder}/`) : undefined;
+
+      const blobs: StorageMetadata[] = [];
+
+      for await (const blob of containerClient.listBlobsFlat({ prefix })) {
+        const fullPath = blob.name;
+        const filename = fullPath.split('/').pop() || fullPath;
+        const directory = fullPath.substring(0, fullPath.lastIndexOf('/'));
+        const url = containerClient.getBlockBlobClient(blob.name).url;
+
+        blobs.push({
+          filename,
+          originalName: filename,
+          mimeType: blob.properties.contentType || 'application/octet-stream',
+          size: blob.properties.contentLength || 0,
+          uploadedAt: blob.properties.lastModified || new Date(),
+          path: fullPath,
+          url,
+          directory
+        });
+      }
+
+      return blobs;
+    } catch (error) {
+      logger.error('Failed to list blobs', error);
+      return [];
+    }
+  };
+
   const getUrl = (filename: string): string | null => {
     try {
       if (!baseUrl) {
@@ -303,6 +335,7 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
     deleteFileFromAzure,
     constructBlobUrl,
     copyBlobsToNewFolder,
-    streamBlob
+    streamBlob,
+    list
   };
 };

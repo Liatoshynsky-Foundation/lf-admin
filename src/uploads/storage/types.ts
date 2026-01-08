@@ -32,6 +32,8 @@ export interface StorageAdapter {
   getMetadata: (filename: string, folder?: string) => Promise<StorageMetadata | null>;
 
   getUrl: (filename: string) => string | null;
+
+  list: (folder?: string) => Promise<StorageMetadata[]>;
 }
 
 export type StorageType = 'cloud' | 'azure-blob';
