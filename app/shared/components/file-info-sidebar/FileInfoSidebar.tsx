@@ -7,10 +7,10 @@ import { useAutosavedDescription } from './useAutosavedDescription';
 import { formatUsageCount } from '~/lib/utils/formatUsageCount';
 import CloseIcon from '~/public/icons/close.svg';
 import DownloadOutlinedIcon from '~/public/icons/download.svg';
-import DeleteOutlineIcon from '~/public/icons/empty_trash.svg';
-import EditOutlinedIcon from '~/public/icons/pen_line.svg';
+import DeleteOutlineIcon from '~/public/icons/empty-trash.svg';
+import EditOutlinedIcon from '~/public/icons/pen-line.svg';
 import PictureIcon from '~/public/icons/picture.svg';
-import StarBorderIcon from '~/public/icons/star.svg';
+import StarBorderIcon from '~/public/icons/small-star.svg';
 import AudioIcon from '~/public/icons/type-audio.svg';
 import PdfIcon from '~/public/icons/type-pdf.svg';
 import ZoomIn from '~/public/icons/zoom-in.svg';
@@ -80,7 +80,7 @@ export function FileInfoSidebar({
   onToggleStar,
   onDescriptionSave,
   onRequestAction
-}: FileInfoSidebarProps) {
+}: Readonly<FileInfoSidebarProps>) {
   const fileId = file?.id;
   const filename = file?.filename ?? '—';
   const usageLinks = file?.usageLinks ?? [];
@@ -121,7 +121,7 @@ export function FileInfoSidebar({
         </Typography>
 
         <Box sx={styles.closeBtn} onClick={onClose} aria-label="Close sidebar">
-          <CloseIcon />
+          <CloseIcon height={24} width={24} />
         </Box>
       </Box>
 

@@ -36,8 +36,8 @@ export function useAutosavedDescription(opts: {
     if (!fileId || !onSave) return;
     if (draft === lastCommitted) return;
 
-    const t = window.setTimeout(() => void commit(draft), debounceMs);
-    return () => window.clearTimeout(t);
+    const t = globalThis.setTimeout(() => commit(draft), debounceMs);
+    return () => globalThis.clearTimeout(t);
   }, [draft, lastCommitted, commit, debounceMs, fileId, onSave]);
 
   return { draft, setDraft, commit, lastCommitted };

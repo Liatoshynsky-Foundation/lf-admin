@@ -17,7 +17,7 @@ jest.mock('~/shared/components/design-system/text-field/TextField', () => ({
 
 jest.mock('~/lib/utils/formatUsageCount', () => ({
   __esModule: true,
-  formatUsageCount: (n: number) => String(n)
+  formatUsageCount: String
 }));
 
 jest.mock('~/public/icons/close.svg', () => ({ __esModule: true, default: () => <svg data-testid="CloseIcon" /> }));
