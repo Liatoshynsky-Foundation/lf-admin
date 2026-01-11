@@ -9,11 +9,11 @@ jest.mock('../../components/search-button/SearchButton', () => ({
   )
 }));
 
-jest.mock('../../components/filter-button/FilterButton', () => ({
-  FilterButton: ({ label, onClick, testId }: any) => (
-    <button data-testid={testId} onClick={onClick}>
-      {label}
-    </button>
+jest.mock('../../components/filter-dropdown/FilterDropdown', () => ({
+  FilterDropdown: ({ label, value, onChange, testId }: any) => (
+    <select data-testid={testId} value={value} onChange={(e) => onChange(e.target.value)}>
+      <option value="">{label}</option>
+    </select>
   )
 }));
 
@@ -54,11 +54,11 @@ describe('GalleryView', () => {
     expect(screen.getByTestId('GalleryView-search')).toBeInTheDocument();
   });
 
-  it('should render filter buttons', () => {
+  it('should render filter dropdowns', () => {
     render(<GalleryView selected={null} onPick={mockOnPick} />);
 
-    expect(screen.getByTestId('GalleryView-filterFavorites')).toBeInTheDocument();
-    expect(screen.getByTestId('GalleryView-filterUsage')).toBeInTheDocument();
+    expect(screen.getByTestId('GalleryView-favoritesFilter')).toBeInTheDocument();
+    expect(screen.getByTestId('GalleryView-usageFilter')).toBeInTheDocument();
   });
 
   it('should render media grid with mock assets', () => {

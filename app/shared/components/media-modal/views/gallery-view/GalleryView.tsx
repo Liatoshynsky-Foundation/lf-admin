@@ -1,14 +1,16 @@
 'use client';
 
 import { Box } from '@mui/material';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import { FilterButton } from '../../components/filter-button/FilterButton';
+import { FilterDropdown } from '../../components/filter-dropdown/FilterDropdown';
 import { GalleryCard } from '../../components/gallery-card/GalleryCard';
 import { MediaGrid } from '../../components/media-grid/MediaGrid';
 import { SearchButton } from '../../components/search-button/SearchButton';
 import type { GalleryMedia } from '../../MediaModal.types';
-import { galleryViewStyles } from './GalleryView.styles';
+import { sharedViewStyles } from '../shared-view.styles';
+import { useDebounce } from '~/hooks/use-debounce/useDebounce';
+import { matchesSearch, sortByDateAndName } from '~/lib/utils/filterHelpers';
 
 type Props = Readonly<{
   selected: GalleryMedia | null;
@@ -22,6 +24,7 @@ type MockAsset = {
   isStarred: boolean;
   tags: ('page' | 'news' | 'events' | 'opus')[];
   usageRefs: { pageId: string; blockId?: string }[];
+  createdAt: string;
 };
 
 const mockAssets: MockAsset[] = [
@@ -34,7 +37,8 @@ const mockAssets: MockAsset[] = [
     usageRefs: [
       { pageId: 'about', blockId: 'hero' },
       { pageId: 'collaboration', blockId: 'partners' }
-    ]
+    ],
+    createdAt: '2025-01-08T10:30:00Z'
   },
   {
     _id: '2',
@@ -42,7 +46,8 @@ const mockAssets: MockAsset[] = [
     url: '/images/foundation-first.png',
     isStarred: false,
     tags: ['opus'],
-    usageRefs: []
+    usageRefs: [],
+    createdAt: '2025-01-09T14:20:00Z'
   },
   {
     _id: '3',
@@ -50,7 +55,8 @@ const mockAssets: MockAsset[] = [
     url: '/images/mission-1.png',
     isStarred: true,
     tags: ['news', 'events'],
-    usageRefs: []
+    usageRefs: [],
+    createdAt: '2025-01-10T09:15:00Z'
   },
   {
     _id: '4',
@@ -58,8 +64,23 @@ const mockAssets: MockAsset[] = [
     url: '/images/foundation-first.png',
     isStarred: false,
     tags: ['events'],
-    usageRefs: []
+    usageRefs: [],
+    createdAt: '2025-01-07T16:45:00Z'
   }
+];
+
+const favoritesFilterOptions = [
+  { value: 'starred', label: 'Із зірочкою' },
+  { value: 'not-starred', label: 'Без зірочки' }
+];
+
+const usageFilterOptions = [
+  { value: 'page', label: 'Основні сторінки' },
+  { value: 'news', label: 'Новини' },
+  { value: 'events', label: 'Події' },
+  { value: 'opus', label: 'Опуси' },
+  { value: 'archive', label: 'Архів' },
+  { value: 'unused', label: 'Не використані' }
 ];
 
 const getPageNames = (usageRefs: MockAsset['usageRefs']): string[] => {
@@ -71,6 +92,19 @@ const getPageNames = (usageRefs: MockAsset['usageRefs']): string[] => {
   };
 
   return usageRefs.map((ref) => pageNameMap[ref.pageId] || ref.pageId);
+};
+
+const matchesFavoritesFilter = (asset: MockAsset, filter: string): boolean => {
+  if (!filter) return true;
+  if (filter === 'starred') return asset.isStarred;
+  if (filter === 'not-starred') return !asset.isStarred;
+  return true;
+};
+
+const matchesUsageFilter = (asset: MockAsset, filter: string): boolean => {
+  if (!filter) return true;
+  if (filter === 'unused') return asset.usageRefs.length === 0;
+  return asset.tags.includes(filter as MockAsset['tags'][number]);
 };
 
 export function GalleryView({ selected: _selected, onPick }: Props) {
@@ -87,13 +121,30 @@ export function GalleryView({ selected: _selected, onPick }: Props) {
   };
 
   const [searchValue, setSearchValue] = useState('');
+  const debouncedSearchValue = useDebounce(searchValue, 200);
+  const [favoritesFilter, setFavoritesFilter] = useState('');
+  const [usageFilter, setUsageFilter] = useState('');
+
+  const filteredAndSortedAssets = useMemo(
+    () =>
+      sortByDateAndName(
+        mockAssets.filter((asset) => {
+          return (
+            matchesSearch(asset, debouncedSearchValue, ['filename']) &&
+            matchesFavoritesFilter(asset, favoritesFilter) &&
+            matchesUsageFilter(asset, usageFilter)
+          );
+        })
+      ),
+    [debouncedSearchValue, favoritesFilter, usageFilter]
+  );
 
   return (
-    <Box data-testid="GalleryView" sx={galleryViewStyles.container}>
-      <Box sx={galleryViewStyles.header}>
-        <Box sx={galleryViewStyles.title}>Усі зображення</Box>
+    <Box data-testid="GalleryView" sx={sharedViewStyles.container}>
+      <Box sx={sharedViewStyles.header}>
+        <Box sx={sharedViewStyles.title}>Усі зображення</Box>
 
-        <Box sx={galleryViewStyles.controlsGroup}>
+        <Box sx={sharedViewStyles.controlsGroup}>
           <SearchButton
             value={searchValue}
             onSearch={setSearchValue}
@@ -101,15 +152,27 @@ export function GalleryView({ selected: _selected, onPick }: Props) {
             testId="GalleryView-search"
           />
 
-          <FilterButton label="Позначення" onClick={() => {}} testId="GalleryView-filterFavorites" />
+          <FilterDropdown
+            label="Позначення"
+            value={favoritesFilter}
+            options={favoritesFilterOptions}
+            onChange={setFavoritesFilter}
+            testId="GalleryView-favoritesFilter"
+          />
 
-          <FilterButton label="Використання" onClick={() => {}} testId="GalleryView-filterUsage" />
+          <FilterDropdown
+            label="Використання"
+            value={usageFilter}
+            options={usageFilterOptions}
+            onChange={setUsageFilter}
+            testId="GalleryView-usageFilter"
+          />
         </Box>
       </Box>
 
       <MediaGrid
-        items={mockAssets}
-        sx={galleryViewStyles.gridContainer}
+        items={filteredAndSortedAssets}
+        sx={sharedViewStyles.gridContainer}
         renderCard={(asset: MockAsset) => (
           <GalleryCard
             src={asset.url}

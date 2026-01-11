@@ -48,6 +48,6 @@ export const textFieldStyles = {
 
 export const getInputStyle = (focused: boolean): CSSProperties => ({
   ...searchInputStyles,
-  width: focused ? 220 : 40,
+  width: focused ? 200 : 40,
   borderRadius: focused ? '10px' : '60px'
 });
