@@ -6,7 +6,7 @@ import { MediaCard } from '../media-card/MediaCard';
 import { galleryCardStyles } from './GalleryCard.styles';
 import LinkIcon from '~/public/icons/link.svg';
 import StarIcon from '~/public/icons/star.svg';
-import { CustomTooltip } from '~/shared/components/design-system/tooltip/CustomTooltip';
+import TooltipCustom from '~/shared/components/design-system/tooltip/Tooltip';
 
 type GalleryCardProps = Readonly<{
   src: string;
@@ -23,7 +23,7 @@ export function GalleryCard({ src, fileName, isStarred, usageLocations = [], onC
   const topRightContent = (isUsed || isStarred) && (
     <Box sx={galleryCardStyles.iconsWrapper}>
       {isUsed && (
-        <CustomTooltip
+        <TooltipCustom
           title={
             <Box>
               <Box sx={{ fontWeight: 600, marginBottom: '4px' }}>Використовується на:</Box>
@@ -32,6 +32,7 @@ export function GalleryCard({ src, fileName, isStarred, usageLocations = [], onC
               ))}
             </Box>
           }
+          showArrow={true}
         >
           <Box
             component="span"
@@ -43,11 +44,11 @@ export function GalleryCard({ src, fileName, isStarred, usageLocations = [], onC
           >
             <LinkIcon width={12} height={12} aria-hidden focusable={false} />
           </Box>
-        </CustomTooltip>
+        </TooltipCustom>
       )}
 
       {isStarred && (
-        <CustomTooltip title="В обраних">
+        <TooltipCustom title="В обраних" showArrow={true}>
           <Box
             component="span"
             sx={{
@@ -58,7 +59,7 @@ export function GalleryCard({ src, fileName, isStarred, usageLocations = [], onC
           >
             <StarIcon width={12} height={12} aria-hidden focusable={false} />
           </Box>
-        </CustomTooltip>
+        </TooltipCustom>
       )}
     </Box>
   );
