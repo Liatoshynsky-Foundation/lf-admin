@@ -13,6 +13,13 @@ export const styles: Record<string, SxProps> = {
     },
     '& .bn-editor': {
       minHeight: '400px'
+    },
+    // Hide native file input when using custom file picker
+    '&.custom-file-picker-enabled': {
+      '& input[type="file"]': {
+        display: 'none !important',
+        pointerEvents: 'none'
+      }
     }
   },
   loadingPlaceholder: {

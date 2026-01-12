@@ -5,6 +5,7 @@ export interface FilePickerModalProps {
   isOpen: boolean;
   onFileSelected: (fileUrl: string) => void;
   onCancel: () => void;
+  onDeviceFilePick?: () => Promise<File | null>;
 }
 
 export interface BlockNoteEditorProps {

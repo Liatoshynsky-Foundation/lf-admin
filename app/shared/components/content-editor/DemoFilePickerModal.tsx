@@ -4,7 +4,36 @@ import { Box } from '@mui/material';
 
 import { FilePickerModalProps } from './types';
 
-export const DemoFilePickerModal = ({ isOpen, onFileSelected, onCancel }: FilePickerModalProps) => {
+export const DemoFilePickerModal = ({ isOpen, onFileSelected, onCancel, onDeviceFilePick }: FilePickerModalProps) => {
+  const handleSelectFile = async () => {
+    console.log('Select file clicked');
+
+    if (!onDeviceFilePick) {
+      console.error('onDeviceFilePick callback not provided');
+      return;
+    }
+
+    try {
+      const file = await onDeviceFilePick();
+      console.log('File selected from device:', file);
+
+      if (file) {
+        console.log('File selected:', file.name, file.type);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const fileUrl = e.target?.result as string;
+          console.log('File loaded, URL length:', fileUrl.length);
+          onFileSelected(fileUrl);
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (error) {
+      console.error('Error selecting file:', error);
+    }
+  };
+
+  console.log('DemoFilePickerModal render, isOpen:', isOpen);
+
   if (!isOpen) return null;
 
   return (
@@ -31,11 +60,12 @@ export const DemoFilePickerModal = ({ isOpen, onFileSelected, onCancel }: FilePi
           width: '90%'
         }}
       >
-        <h2>Demo File Picker Modal</h2>
-        <p>This is a placeholder modal.</p>
+        <h2>Test Modal</h2>
+        <p>This is a test modal.</p>
+
         <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
           <button
-            onClick={() => onFileSelected('https://via.placeholder.com/400')}
+            onClick={handleSelectFile}
             style={{
               padding: '0.5rem 1rem',
               backgroundColor: '#1976d2',
@@ -45,7 +75,7 @@ export const DemoFilePickerModal = ({ isOpen, onFileSelected, onCancel }: FilePi
               cursor: 'pointer'
             }}
           >
-            Select File (Demo)
+            Select File
           </button>
           <button
             onClick={onCancel}

@@ -28,40 +28,106 @@ export const BlockNoteEditor = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isFilePickerOpen, setIsFilePickerOpen] = useState(false);
   const fileUploadResolveRef = useRef<((url: string) => void) | null>(null);
-  const hasCustomFilePicker = !!customFilePickerModal;
+  const fileUploadRejectRef = useRef<((error: Error) => void) | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const defaultHandleUploadFile = useCallback(async (file: File): Promise<string> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
-        resolve(e.target?.result as string);
+        const result = e.target?.result;
+        if (result) {
+          resolve(result as string);
+        } else {
+          reject(new Error('Failed to read file'));
+        }
+      };
+      reader.onerror = () => {
+        reject(new Error('Failed to read file'));
       };
       reader.readAsDataURL(file);
     });
   }, []);
 
-  const openCustomFilePicker = useCallback(() => {
-    setIsFilePickerOpen(true);
+  const openDeviceFilePicker = useCallback(async (): Promise<File | null> => {
+    console.log('openDeviceFilePicker called');
+    return new Promise((resolve) => {
+      if (!fileInputRef.current) {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.style.display = 'none';
+        input.setAttribute('data-custom-file-picker', 'true');
+        fileInputRef.current = input;
+        document.body.appendChild(input);
+      }
 
-    return new Promise<string>((resolve) => {
+      const input = fileInputRef.current;
+
+      const handleChange = () => {
+        const file = input.files?.[0] || null;
+        resolve(file);
+        input.value = '';
+        input.removeEventListener('change', handleChange);
+      };
+
+      const handleCancel = () => {
+        resolve(null);
+        input.removeEventListener('cancel', handleCancel);
+      };
+
+      input.addEventListener('change', handleChange);
+      input.addEventListener('cancel', handleCancel);
+      input.click();
+    });
+  }, []);
+
+  /**
+   * Custom upload handler
+   */
+  //eslint-disable-next-line
+  const customUploadHandler = useCallback(async (file: File): Promise<string> => {
+    if (fileUploadResolveRef.current) {
+      throw new Error('File picker already open');
+    }
+
+    return new Promise<string>((resolve, reject) => {
       fileUploadResolveRef.current = resolve;
+      fileUploadRejectRef.current = reject;
+      setIsFilePickerOpen(true);
     });
   }, []);
 
   const handleFileSelected = useCallback((fileUrl: string) => {
     if (fileUploadResolveRef.current) {
-      fileUploadResolveRef.current(fileUrl);
-      fileUploadResolveRef.current = null;
+      if (fileUrl?.trim()) {
+        fileUploadResolveRef.current(fileUrl);
+      } else {
+        fileUploadRejectRef.current?.(new Error('No file URL provided'));
+      }
     }
+
+    fileUploadResolveRef.current = null;
+    fileUploadRejectRef.current = null;
     setIsFilePickerOpen(false);
   }, []);
 
   const handleFilePickerCancel = useCallback(() => {
-    if (fileUploadResolveRef.current) {
-      fileUploadResolveRef.current('');
-      fileUploadResolveRef.current = null;
+    if (fileUploadRejectRef.current) {
+      fileUploadRejectRef.current(new Error('File selection cancelled'));
     }
+
+    fileUploadResolveRef.current = null;
+    fileUploadRejectRef.current = null;
     setIsFilePickerOpen(false);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (fileInputRef.current && document.body.contains(fileInputRef.current)) {
+        document.body.removeChild(fileInputRef.current);
+      }
+    };
   }, []);
 
   const schema = withMultiColumn(
@@ -80,9 +146,17 @@ export const BlockNoteEditor = ({
 
   const editor = useCreateBlockNote({
     schema,
-    uploadFile: uploadFile || defaultHandleUploadFile,
+    uploadFile: customFilePickerModal ? customUploadHandler : uploadFile || defaultHandleUploadFile,
     initialContent: initialContent || undefined,
-    dropCursor: multiColumnDropCursor
+    dropCursor: multiColumnDropCursor,
+
+    ...(customFilePickerModal && {
+      domAttributes: {
+        editor: {
+          class: 'custom-file-picker-enabled'
+        }
+      }
+    })
   });
 
   const handleEditorChange = () => {
@@ -91,7 +165,6 @@ export const BlockNoteEditor = ({
     onChange?.(content);
   };
 
-  // Handle keyboard shortcuts for save
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Cmd+S (Mac) or Ctrl+S (Windows/Linux) to save
@@ -111,45 +184,62 @@ export const BlockNoteEditor = ({
     setIsLoading(false);
   }, []);
 
-  /**
-   * Override native file inputs
-   * If no custom modal, use the editor's default file picker behavior
-   */
+  // Intercept and block BlockNote's native file input when using custom modal
   useEffect(() => {
-    if (!editor || !hasCustomFilePicker) return;
+    if (!customFilePickerModal) return;
 
-    const handleFileInputClick = (e: Event) => {
+    const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
 
-      if (target.tagName === 'INPUT' && (target as HTMLInputElement).type === 'file') {
+      // Check if this is our custom file picker input - if so, allow it
+      if (target && target.hasAttribute && target.hasAttribute('data-custom-file-picker')) {
+        console.log('Allowing custom file picker click');
+        return; // Allow our custom file picker to work
+      }
+
+      // Block clicks on BlockNote's file input elements only
+      if (target && target.tagName === 'INPUT' && (target as HTMLInputElement).type === 'file') {
+        console.log('Blocking BlockNote file input click');
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
 
-        openCustomFilePicker().then((fileUrl) => {
-          if (fileUrl) {
-            editor.insertBlocks(
-              [
-                {
-                  type: 'image',
-                  props: {
-                    url: fileUrl
+        // Open custom modal instead
+        if (!fileUploadResolveRef.current) {
+          setIsFilePickerOpen(true);
+
+          // Create promise for file upload
+          new Promise<string>((resolve, reject) => {
+            fileUploadResolveRef.current = resolve;
+            fileUploadRejectRef.current = reject;
+          })
+            .then((url) => {
+              // Insert image block programmatically with the URL
+              editor.insertBlocks(
+                [
+                  {
+                    type: 'image',
+                    props: {
+                      url: url
+                    }
                   }
-                }
-              ],
-              editor.getTextCursorPosition().block,
-              'after'
-            );
-          }
-        });
+                ],
+                editor.getTextCursorPosition().block,
+                'after'
+              );
+            })
+            .catch(() => {
+              // User cancelled, do nothing
+            });
+        }
+
+        return false;
       }
     };
 
-    document.addEventListener('click', handleFileInputClick, true);
-
-    return () => {
-      document.removeEventListener('click', handleFileInputClick, true);
-    };
-  }, [editor, hasCustomFilePicker, openCustomFilePicker]);
+    document.addEventListener('click', handleClick, true);
+    return () => document.removeEventListener('click', handleClick, true);
+  }, [customFilePickerModal, editor]);
 
   if (isLoading) {
     return (
@@ -160,7 +250,7 @@ export const BlockNoteEditor = ({
   }
 
   return (
-    <Box sx={{ ...styles.container, minHeight }}>
+    <Box sx={{ ...styles.container, minHeight }} className={customFilePickerModal ? 'custom-file-picker-enabled' : ''}>
       <BlockNoteView
         editor={editor}
         editable={editable}
@@ -170,11 +260,13 @@ export const BlockNoteEditor = ({
         sideMenu={true}
       />
 
-      {hasCustomFilePicker &&
+      {customFilePickerModal &&
+        isFilePickerOpen &&
         customFilePickerModal({
           isOpen: isFilePickerOpen,
           onFileSelected: handleFileSelected,
-          onCancel: handleFilePickerCancel
+          onCancel: handleFilePickerCancel,
+          onDeviceFilePick: openDeviceFilePicker
         })}
     </Box>
   );
