@@ -6,8 +6,10 @@ import { useState } from 'react';
 
 import Button from '../design-system/button/Button';
 import { BlockNoteEditor } from './BlockNoteEditor';
+import { DemoFilePickerModal } from './DemoFilePickerModal';
+import { FilePickerModalProps } from './types';
 
-export const BlockNoteEditorExample = () => {
+export const ContentEditor = () => {
   const [content, setContent] = useState<Block[] | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -39,6 +41,11 @@ export const BlockNoteEditorExample = () => {
     }
   };
 
+  // Custom file picker modal for ContentEditor
+  const renderCustomFilePicker = (props: FilePickerModalProps) => {
+    return <DemoFilePickerModal {...props} />;
+  };
+
   return (
     <Box sx={{ padding: 3, maxWidth: '1200px', margin: '0 auto' }}>
       <Stack spacing={3}>
@@ -47,8 +54,7 @@ export const BlockNoteEditorExample = () => {
             Редагування контенту
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Використовуйте цей редактор для створення та редагування контенту. Ви можете форматувати текст, додавати
-            зображення, таблиці та інші елементи. Натисніть &quot;/&quot; для доступу до команд.
+            Редактор контенту
           </Typography>
         </Box>
 
@@ -67,25 +73,13 @@ export const BlockNoteEditorExample = () => {
           </Button>
         </Stack>
 
-        <Box
-          sx={{
-            padding: 2,
-            backgroundColor: '#f5f5f5',
-            borderRadius: 1,
-            border: '1px solid #e0e0e0'
-          }}
-        >
-          <Typography variant="body2">
-            💡 <strong>Підказка:</strong> Натисніть Cmd+S (Mac) або Ctrl+S (Windows) для швидкого збереження
-          </Typography>
-        </Box>
-
         <BlockNoteEditor
           onChange={handleContentChange}
           onSave={handleSave}
           placeholder="Почніть вводити текст або натисніть '/' для команд..."
           editable={true}
           minHeight="600px"
+          customFilePickerModal={renderCustomFilePicker}
         />
       </Stack>
     </Box>
