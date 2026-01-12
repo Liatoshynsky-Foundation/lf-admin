@@ -4,31 +4,24 @@ import { Box } from '@mui/material';
 
 import { FilePickerModalProps } from './types';
 
+//eslint-disable-next-line
 export const DemoFilePickerModal = ({ isOpen, onFileSelected, onCancel, onDeviceFilePick }: FilePickerModalProps) => {
-  const handleSelectFile = async () => {
-    console.log('Select file clicked');
+  const handleSelectFile = async (e: React.MouseEvent) => {
+    console.log('[DemoFilePickerModal] Select file clicked');
+
+    e.stopPropagation();
 
     if (!onDeviceFilePick) {
-      console.error('onDeviceFilePick callback not provided');
+      console.error('[DemoFilePickerModal] onDeviceFilePick callback not provided');
       return;
     }
 
     try {
-      const file = await onDeviceFilePick();
-      console.log('File selected from device:', file);
-
-      if (file) {
-        console.log('File selected:', file.name, file.type);
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const fileUrl = e.target?.result as string;
-          console.log('File loaded, URL length:', fileUrl.length);
-          onFileSelected(fileUrl);
-        };
-        reader.readAsDataURL(file);
-      }
+      console.log('[DemoFilePickerModal] Calling onDeviceFilePick');
+      await onDeviceFilePick();
+      console.log('[DemoFilePickerModal] Device file picker completed');
     } catch (error) {
-      console.error('Error selecting file:', error);
+      console.error('[DemoFilePickerModal] Error selecting file:', error);
     }
   };
 

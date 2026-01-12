@@ -7,33 +7,47 @@ interface UseFilePickerUploadProps {
 }
 
 interface UseFilePickerUploadReturn {
-  uploadHandler: ((file: File) => Promise<string>) | null;
+  openCustomPicker: (() => Promise<File | null>) | null;
   modalProps: FilePickerModalProps | null;
 }
 
 export const useFilePickerUpload = ({ customFilePickerModal }: UseFilePickerUploadProps): UseFilePickerUploadReturn => {
   const [isFilePickerOpen, setIsFilePickerOpen] = useState(false);
-  const pendingUploadRef = useRef<{
-    resolve: (url: string) => void;
+  const pendingSelectionRef = useRef<{
+    resolve: (file: File | null) => void;
     reject: (error: Error) => void;
     //eslint-disable-next-line
   } | null>(null);
 
-  const openDeviceFilePicker = useCallback(async (): Promise<File | null> => {
+  //eslint-disable-next-line
+  const handleFileSelected = useCallback((file: File | null, fileUrl?: string) => {
+    if (!pendingSelectionRef.current) {
+      return;
+    }
+
+    pendingSelectionRef.current.resolve(file);
+    pendingSelectionRef.current = null;
+    setIsFilePickerOpen(false);
+  }, []);
+
+  const openDeviceFilePicker = useCallback(async (): Promise<void> => {
     return new Promise((resolve) => {
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'image/*,video/*';
       input.style.display = 'none';
+      input.dataset.customFilePicker = 'true';
 
       const handleChange = () => {
         const file = input.files?.[0] || null;
-        resolve(file);
+
+        handleFileSelected(file);
+        resolve();
         cleanup();
       };
 
       const handleCancel = () => {
-        resolve(null);
+        resolve();
         cleanup();
       };
 
@@ -47,52 +61,37 @@ export const useFilePickerUpload = ({ customFilePickerModal }: UseFilePickerUplo
       input.addEventListener('cancel', handleCancel);
 
       document.body.appendChild(input);
-      input.click();
+
+      setTimeout(() => {
+        input.click();
+      }, 0);
     });
-  }, []);
-
-  const handleFileSelected = useCallback((fileUrl: string) => {
-    if (!pendingUploadRef.current) {
-      console.warn('handleFileSelected called but no pending upload');
-      return;
-    }
-
-    if (fileUrl?.trim()) {
-      pendingUploadRef.current.resolve(fileUrl);
-    } else {
-      pendingUploadRef.current.reject(new Error('No file URL provided'));
-    }
-
-    pendingUploadRef.current = null;
-    setIsFilePickerOpen(false);
-  }, []);
+  }, [handleFileSelected]);
 
   const handleCancel = useCallback(() => {
-    if (!pendingUploadRef.current) {
-      console.warn('handleCancel called but no pending upload');
+    if (!pendingSelectionRef.current) {
       return;
     }
 
-    pendingUploadRef.current.reject(new Error('File selection cancelled'));
-    pendingUploadRef.current = null;
+    pendingSelectionRef.current.resolve(null);
+    pendingSelectionRef.current = null;
     setIsFilePickerOpen(false);
   }, []);
 
-  //eslint-disable-next-line
-  const uploadHandler = useCallback(async (file: File): Promise<string> => {
-    if (pendingUploadRef.current) {
-      throw new Error('File picker is already open');
+  const openCustomPicker = useCallback(async (): Promise<File | null> => {
+    if (pendingSelectionRef.current) {
+      return null;
     }
 
-    return new Promise<string>((resolve, reject) => {
-      pendingUploadRef.current = { resolve, reject };
+    return new Promise<File | null>((resolve, reject) => {
+      pendingSelectionRef.current = { resolve, reject };
       setIsFilePickerOpen(true);
     });
   }, []);
 
   if (!customFilePickerModal) {
     return {
-      uploadHandler: null,
+      openCustomPicker: null,
       modalProps: null
     };
   }
@@ -105,7 +104,7 @@ export const useFilePickerUpload = ({ customFilePickerModal }: UseFilePickerUplo
   };
 
   return {
-    uploadHandler,
+    openCustomPicker,
     modalProps: isFilePickerOpen ? modalProps : null
   };
 };

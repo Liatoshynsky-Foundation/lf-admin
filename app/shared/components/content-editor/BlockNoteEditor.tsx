@@ -29,7 +29,7 @@ export const BlockNoteEditor = ({
   const [isLoading, setIsLoading] = useState(true);
 
   /**
-   * Default file upload handler - converts file to base64 data URL
+   * Default file upload handler
    */
   const defaultHandleUploadFile = useCallback(async (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -49,32 +49,121 @@ export const BlockNoteEditor = ({
     });
   }, []);
 
-  const { uploadHandler: customUploadHandler, modalProps } = useFilePickerUpload({
+  const { openCustomPicker, modalProps } = useFilePickerUpload({
     customFilePickerModal
   });
 
-  const finalUploadHandler = customUploadHandler || uploadFile || defaultHandleUploadFile;
-
-  const schema = withMultiColumn(
-    BlockNoteSchema.create({
-      blockSpecs: {
-        ...defaultBlockSpecs
-      },
-      inlineContentSpecs: {
-        ...defaultInlineContentSpecs
-      },
-      styleSpecs: {
-        ...defaultStyleSpecs
-      }
-    })
+  const handleFileUpload = useCallback(
+    async (file: File): Promise<string> => {
+      const handler = uploadFile || defaultHandleUploadFile;
+      return handler(file);
+    },
+    [uploadFile, defaultHandleUploadFile]
   );
 
+  const schema = BlockNoteSchema.create({
+    blockSpecs: {
+      ...defaultBlockSpecs
+    },
+    inlineContentSpecs: {
+      ...defaultInlineContentSpecs
+    },
+    styleSpecs: {
+      ...defaultStyleSpecs
+    }
+  });
+
+  const wrappedSchema = withMultiColumn(schema);
+
   const editor = useCreateBlockNote({
-    schema,
-    uploadFile: finalUploadHandler,
+    schema: wrappedSchema,
+    uploadFile: async (file: File) => {
+      return handleFileUpload(file);
+    },
     initialContent: initialContent || undefined,
     dropCursor: multiColumnDropCursor
   });
+
+  useEffect(() => {
+    if (!openCustomPicker || !editor) {
+      return;
+    }
+
+    const handleClick = async (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+
+      if (target instanceof HTMLInputElement && target.type === 'file') {
+        if (target.getAttribute('data-custom-file-picker') === 'true') {
+          return;
+        }
+
+        const isBlockNoteFileInput =
+          target.accept?.includes('image') ||
+          target.closest('[data-node-type]') ||
+          target.id?.includes('blocknote') ||
+          target.closest('.bn-');
+
+        if (isBlockNoteFileInput) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+
+          try {
+            const selectedFile = await openCustomPicker();
+            if (selectedFile) {
+              const fileUrl = await handleFileUpload(selectedFile);
+
+              const currentBlock = editor.getTextCursorPosition().block;
+              editor.insertBlocks(
+                [
+                  {
+                    type: 'image',
+                    props: {
+                      url: fileUrl,
+                      name: selectedFile.name
+                    }
+                  } as any
+                ],
+                currentBlock,
+                'after'
+              );
+            }
+          } catch (error) {
+            console.error('Error handling file selection:', error);
+          }
+        }
+      }
+    };
+
+    document.addEventListener('click', handleClick, true);
+
+    const handleFocus = (event: FocusEvent) => {
+      const target = event.target as HTMLElement;
+
+      if (
+        target instanceof HTMLInputElement &&
+        target.type === 'file' &&
+        target.getAttribute('data-custom-file-picker') === 'true'
+      ) {
+        return;
+      }
+
+      if (
+        target instanceof HTMLInputElement &&
+        target.type === 'file' &&
+        (target.accept?.includes('image') || target.closest('[data-node-type]'))
+      ) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    };
+
+    document.addEventListener('focus', handleFocus, true);
+
+    return () => {
+      document.removeEventListener('click', handleClick, true);
+      document.removeEventListener('focus', handleFocus, true);
+    };
+  }, [openCustomPicker, handleFileUpload, editor]);
 
   const handleEditorChange = () => {
     const content = editor.document;
