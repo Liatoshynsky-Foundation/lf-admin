@@ -74,9 +74,10 @@ describe('FileCard', () => {
   it('should call onClick when image section is clicked', () => {
     render(<FileCard fileType="image" fileData={defaultFileData} onClick={mockOnClick} />);
 
-    const imageSection = screen.getByAltText('Test Image.jpg').closest('div');
-    if (imageSection?.parentElement) {
-      fireEvent.click(imageSection.parentElement);
+    const image = screen.getByAltText('Test Image.jpg');
+    const imageSection = image.closest('div');
+    if (imageSection) {
+      fireEvent.click(imageSection);
     }
 
     expect(mockOnClick).toHaveBeenCalledTimes(1);
