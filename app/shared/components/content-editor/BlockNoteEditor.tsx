@@ -22,7 +22,7 @@ export const BlockNoteEditor = ({
   //eslint-disable-next-line
   placeholder = 'Почніть вводити текст або використайте "/" для команд...',
   editable = true,
-  minHeight = '500px',
+  minHeight = '800px',
   uploadFile,
   customFilePickerModal
 }: BlockNoteEditorProps) => {

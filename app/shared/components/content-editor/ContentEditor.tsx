@@ -78,7 +78,7 @@ export const ContentEditor = () => {
           onSave={handleSave}
           placeholder="Почніть вводити текст або натисніть '/' для команд..."
           editable={true}
-          minHeight="600px"
+          minHeight="800px"
           customFilePickerModal={renderCustomFilePicker}
         />
       </Stack>
