@@ -1,8 +1,9 @@
 import { Avatar, Box, IconButton, Link, Typography } from '@mui/material';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import TooltipCustom from '../design-system/tooltip/Tooltip';
 import { styles } from './FileInfoSidebar.styles';
+import { ImagePreviewModal } from './image-preview-modal/ImagePreviewModal';
 import { useAutosavedDescription } from './useAutosavedDescription';
 import { formatUsageCount } from '~/lib/utils/formatUsageCount';
 import CloseIcon from '~/public/icons/close.svg';
@@ -90,6 +91,14 @@ export function FileInfoSidebar({
   const isImagePreview = file?.type === 'image' && !!file?.previewUrl;
   const TypeIcon = file?.type ? TYPE_ICON[file.type] : PictureIcon;
 
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  const openPreview = useCallback(() => {
+    if (isImagePreview) setIsPreviewOpen(true);
+  }, [isImagePreview]);
+
+  const closePreview = useCallback(() => setIsPreviewOpen(false), []);
+
   const {
     draft: descDraft,
     setDraft: setDescDraft,
@@ -171,14 +180,38 @@ export function FileInfoSidebar({
         </TooltipCustom>
       </Box>
 
-      <Box sx={styles.preview(isImagePreview)}>
+      <Box
+        sx={{
+          ...styles.preview(isImagePreview),
+          cursor: isImagePreview ? 'pointer' : 'default'
+        }}
+        onClick={openPreview}
+        role={isImagePreview ? 'button' : undefined}
+        tabIndex={isImagePreview ? 0 : -1}
+        onKeyDown={(e) => {
+          if (!isImagePreview) return;
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            openPreview();
+          }
+        }}
+      >
         {file?.previewUrl ? (
           <>
             <Box component="img" src={file.previewUrl} alt={filename} sx={styles.previewImg} />
 
             {isImagePreview && (
               <Box className="previewOverlay" sx={styles.previewOverlay}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Box
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openPreview();
+                  }}
+                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  aria-label="Open image preview"
+                  role="button"
+                  tabIndex={-1}
+                >
                   <ZoomIn />
                 </Box>
               </Box>
@@ -190,6 +223,10 @@ export function FileInfoSidebar({
           </Typography>
         )}
       </Box>
+
+      {isImagePreview && (
+        <ImagePreviewModal open={isPreviewOpen} src={file?.previewUrl ?? ''} alt={filename} onClose={closePreview} />
+      )}
 
       <Box sx={styles.lastBlock}>
         <Section title="Хто додав">
