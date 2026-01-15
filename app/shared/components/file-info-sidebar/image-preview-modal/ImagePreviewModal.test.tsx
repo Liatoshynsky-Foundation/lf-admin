@@ -51,19 +51,6 @@ jest.mock('~/shared/hooks/use-zoom-pan/useZoomPan', () => ({
   useZoomPan: () => zoomPanMock
 }));
 
-type NonPassiveWheelArgs = {
-  enabled: boolean;
-  onWheel: (e: WheelEvent) => void;
-};
-
-let lastWheelArgs: NonPassiveWheelArgs | null = null;
-
-jest.mock('./useNonPassiveWheel', () => ({
-  useNonPassiveWheel: (_ref: React.RefObject<HTMLElement | null>, opts: NonPassiveWheelArgs) => {
-    lastWheelArgs = opts;
-  }
-}));
-
 function renderModal(props?: Partial<React.ComponentProps<typeof ImagePreviewModal>>) {
   const defaultProps: React.ComponentProps<typeof ImagePreviewModal> = {
     open: true,
@@ -79,22 +66,43 @@ function renderModal(props?: Partial<React.ComponentProps<typeof ImagePreviewMod
 }
 
 describe('ImagePreviewModal', () => {
+  let addSpy: jest.SpyInstance;
+  let removeSpy: jest.SpyInstance;
+
+  let wheelHandler: ((e: WheelEvent) => void) | null = null;
+  let wheelOptions: AddEventListenerOptions | boolean | undefined;
+
   beforeEach(() => {
     jest.clearAllMocks();
-    lastWheelArgs = null;
+    wheelHandler = null;
+    wheelOptions = undefined;
+
+    addSpy = jest.spyOn(globalThis, 'addEventListener').mockImplementation((type: any, listener: any, options: any) => {
+      if (type === 'wheel') {
+        wheelHandler = listener as (e: WheelEvent) => void;
+        wheelOptions = options;
+      }
+    });
+
+    removeSpy = jest.spyOn(globalThis, 'removeEventListener').mockImplementation(() => {});
   });
 
-  test('renders image when open', () => {
+  afterEach(() => {
+    addSpy.mockRestore();
+    removeSpy.mockRestore();
+  });
+
+  test('should render image when open', () => {
     renderModal({ open: true });
     expect(screen.getByRole('img', { name: 'Preview image' })).toBeInTheDocument();
   });
 
-  test('does not render image when closed', () => {
+  test('should not render image when closed', () => {
     renderModal({ open: false });
     expect(screen.queryByRole('img', { name: 'Preview image' })).not.toBeInTheDocument();
   });
 
-  test('calls reset on open', () => {
+  test('should call reset on open', () => {
     const { rerender } = render(
       <ImagePreviewModal open={false} src="/x.png" alt="Preview image" onClose={jest.fn()} />
     );
@@ -105,15 +113,58 @@ describe('ImagePreviewModal', () => {
     expect(zoomPanMock.reset).toHaveBeenCalledTimes(1);
   });
 
-  test('useNonPassiveWheel enabled follows open', () => {
+  test('should register window wheel listener when open', () => {
     renderModal({ open: true });
-    expect(lastWheelArgs?.enabled).toBe(true);
 
-    renderModal({ open: false });
-    expect(lastWheelArgs?.enabled).toBe(false);
+    expect(addSpy).toHaveBeenCalled();
+    expect(wheelHandler).toBeTruthy();
+
+    expect(wheelOptions).toEqual(expect.objectContaining({ passive: false }));
   });
 
-  test('click outside imageWrap closes modal (viewer click)', () => {
+  test('should not register wheel listener when closed', () => {
+    renderModal({ open: false });
+
+    expect(wheelHandler).toBeNull();
+    expect(addSpy).not.toHaveBeenCalledWith('wheel', expect.any(Function), expect.anything());
+  });
+
+  test('should remove wheel listener on close (open true -> false)', () => {
+    const { rerender } = renderModal({ open: true });
+
+    const registered = wheelHandler;
+    expect(registered).toBeTruthy();
+
+    rerender(<ImagePreviewModal open={false} src="/x.png" alt="Preview image" onClose={jest.fn()} />);
+
+    expect(removeSpy).toHaveBeenCalledWith('wheel', registered);
+  });
+
+  test('wheel handler should prevent default and zooms in/out', () => {
+    renderModal({ open: true });
+
+    expect(wheelHandler).toBeTruthy();
+
+    const preventDefault = jest.fn();
+
+    wheelHandler!({
+      deltaY: -10,
+      preventDefault
+    } as unknown as WheelEvent);
+
+    expect(preventDefault).toHaveBeenCalledTimes(1);
+    expect(zoomPanMock.zoomIn).toHaveBeenCalledTimes(1);
+    expect(zoomPanMock.zoomOut).toHaveBeenCalledTimes(0);
+
+    wheelHandler!({
+      deltaY: 10,
+      preventDefault
+    } as unknown as WheelEvent);
+
+    expect(zoomPanMock.zoomOut).toHaveBeenCalledTimes(1);
+  });
+
+  test('should click outside imageWrap closes modal (viewer click)', () => {
     const onClose = jest.fn();
     renderModal({ onClose, open: true });
 
@@ -129,7 +180,7 @@ describe('ImagePreviewModal', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  test('click inside imageWrap does not close (image click bubbles but guarded)', () => {
+  test('should click inside imageWrap does not close', () => {
     const onClose = jest.fn();
     renderModal({ onClose, open: true });
 
@@ -139,7 +190,7 @@ describe('ImagePreviewModal', () => {
     expect(onClose).toHaveBeenCalledTimes(0);
   });
 
-  test('close button click stops propagation and closes', () => {
+  test('should close button click closes modal', () => {
     const onClose = jest.fn();
     renderModal({ onClose, open: true });
 
@@ -147,28 +198,5 @@ describe('ImagePreviewModal', () => {
     fireEvent.click(btn);
 
     expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
-  test('wheel handler prevents default and zooms in/out', () => {
-    renderModal({ open: true });
-
-    expect(lastWheelArgs).not.toBeNull();
-
-    const evIn = new WheelEvent('wheel', { deltaY: -10 });
-    const preventSpyIn = jest.spyOn(evIn, 'preventDefault');
-
-    lastWheelArgs!.onWheel(evIn);
-
-    expect(preventSpyIn).toHaveBeenCalledTimes(1);
-    expect(zoomPanMock.zoomIn).toHaveBeenCalledTimes(1);
-    expect(zoomPanMock.zoomOut).toHaveBeenCalledTimes(0);
-
-    const evOut = new WheelEvent('wheel', { deltaY: 10 });
-    const preventSpyOut = jest.spyOn(evOut, 'preventDefault');
-
-    lastWheelArgs!.onWheel(evOut);
-
-    expect(preventSpyOut).toHaveBeenCalledTimes(1);
-    expect(zoomPanMock.zoomOut).toHaveBeenCalledTimes(1);
   });
 });

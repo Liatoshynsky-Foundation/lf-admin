@@ -4,7 +4,6 @@ import { alpha, Box, Fade, IconButton, Modal } from '@mui/material';
 import React, { useEffect, useRef } from 'react';
 
 import { styles } from './ImagePreviewModal.styles';
-import { useNonPassiveWheel } from './useNonPassiveWheel';
 import CloseIcon from '~/public/icons/close.svg';
 import { colors } from '~/shared/components/design-system/button/Button.styles';
 import { useZoomPan } from '~/shared/hooks/use-zoom-pan/useZoomPan';
@@ -28,14 +27,21 @@ export function ImagePreviewModal({ open, src, alt, onClose, padding = 40 }: Rea
     if (open) reset();
   }, [open, reset]);
 
-  useNonPassiveWheel(viewerRef, {
-    enabled: open,
-    onWheel: (ev) => {
+  useEffect(() => {
+    if (!open) return;
+
+    const handler = (ev: WheelEvent) => {
       ev.preventDefault();
       if (ev.deltaY < 0) zoomIn();
       else zoomOut();
-    }
-  });
+    };
+
+    window.addEventListener('wheel', handler, { passive: false });
+
+    return () => {
+      window.removeEventListener('wheel', handler);
+    };
+  }, [open, zoomIn, zoomOut]);
 
   return (
     <Modal
