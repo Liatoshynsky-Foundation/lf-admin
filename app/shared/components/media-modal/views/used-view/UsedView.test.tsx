@@ -21,6 +21,20 @@ jest.mock('../../components/media-grid/MediaGrid', () => ({
   )
 }));
 
+jest.mock('../../components/search-button/SearchButton', () => ({
+  SearchButton: ({ value, onSearch, testId }: any) => (
+    <input data-testid={testId} value={value} onChange={(e) => onSearch(e.target.value)} placeholder="Search" />
+  )
+}));
+
+jest.mock('../../components/filter-dropdown/FilterDropdown', () => ({
+  FilterDropdown: ({ label, value, onChange, testId }: any) => (
+    <select data-testid={testId} value={value} onChange={(e) => onChange(e.target.value)}>
+      <option value="">{label}</option>
+    </select>
+  )
+}));
+
 describe('UsedView', () => {
   const mockOnPick = jest.fn();
 
@@ -60,13 +74,13 @@ describe('UsedView', () => {
     const user = userEvent.setup();
     render(<UsedView selected={null} onPick={mockOnPick} />);
 
-    const firstCard = screen.getByTestId('UsedCard-1');
+    const firstCard = screen.getByText('2025-01-10-newest.jpg');
     await user.click(firstCard);
 
     expect(mockOnPick).toHaveBeenCalledWith(
       expect.objectContaining({
         kind: 'used',
-        fileName: 'piano-studio.jpg',
+        fileName: '2025-01-10-newest.jpg',
         locale: 'uk'
       })
     );

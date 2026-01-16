@@ -5,7 +5,7 @@ import React from 'react';
 import { arrowStyles, tooltipStyles } from './Tooltip.styles';
 
 interface TooltipCustomProps extends Omit<TooltipProps, 'children' | 'title'> {
-  title?: string;
+  title?: React.ReactNode;
   showArrow?: boolean;
   text?: string;
   wrapperProps?: BoxProps;
