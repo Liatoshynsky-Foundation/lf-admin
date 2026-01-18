@@ -123,10 +123,6 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
     onPick(galleryMedia);
   };
 
-  // const [searchValue, setSearchValue] = useState('');
-  // const debouncedSearchValue = useDebounce(searchValue, 200);
-  // const [favoritesFilter, setFavoritesFilter] = useState('');
-  // const [usageFilter, setUsageFilter] = useState('');
   const debouncedSearchValue = useDebounce(filters.search, 200);
 
   const filteredAndSortedAssets = useMemo(

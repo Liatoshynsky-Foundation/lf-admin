@@ -65,9 +65,6 @@ const languageFilterOptions = [
 ];
 
 export function UsedView({ onPick, filters, onFiltersChange }: Props) {
-  // const [searchValue, setSearchValue] = useState('');
-  // const debouncedSearchValue = useDebounce(searchValue, 200);
-  // const [languageFilter, setLanguageFilter] = useState('');
   const debouncedSearchValue = useDebounce(filters.search, 200);
 
   const handleCardClick = (asset: MockUsedAsset) => {
