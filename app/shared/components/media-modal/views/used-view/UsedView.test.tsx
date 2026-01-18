@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { UsedView } from './UsedView';
 
 jest.mock('../../components/used-card/UsedCard', () => ({
-  UsedCard: ({ fileName, onClick, testId }: any) => (
+  UsedCard: ({ fileName, onClick, testId }: { fileName: string; onClick: () => void; testId: string }) => (
     <button data-testid={testId} onClick={onClick}>
       {fileName}
     </button>
@@ -12,23 +12,33 @@ jest.mock('../../components/used-card/UsedCard', () => ({
 }));
 
 jest.mock('../../components/media-grid/MediaGrid', () => ({
-  MediaGrid: ({ items, renderCard }: any) => (
+  MediaGrid: ({ items, renderCard }: { items: unknown[]; renderCard: (item: unknown) => React.ReactNode }) => (
     <div data-testid="mocked-media-grid" role="grid">
-      {items.map((item: any) => (
-        <div key={item._id}>{renderCard(item)}</div>
+      {items.map((item: unknown) => (
+        <div key={(item as { _id: string })._id}>{renderCard(item)}</div>
       ))}
     </div>
   )
 }));
 
 jest.mock('../../components/search-button/SearchButton', () => ({
-  SearchButton: ({ value, onSearch, testId }: any) => (
+  SearchButton: ({ value, onSearch, testId }: { value: string; onSearch: (v: string) => void; testId: string }) => (
     <input data-testid={testId} value={value} onChange={(e) => onSearch(e.target.value)} placeholder="Search" />
   )
 }));
 
 jest.mock('../../components/filter-dropdown/FilterDropdown', () => ({
-  FilterDropdown: ({ label, value, onChange, testId }: any) => (
+  FilterDropdown: ({
+    label,
+    value,
+    onChange,
+    testId
+  }: {
+    label: string;
+    value: string;
+    onChange: (v: string) => void;
+    testId: string;
+  }) => (
     <select data-testid={testId} value={value} onChange={(e) => onChange(e.target.value)}>
       <option value="">{label}</option>
     </select>
