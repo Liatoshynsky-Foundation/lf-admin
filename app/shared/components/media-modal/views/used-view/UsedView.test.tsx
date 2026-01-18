@@ -37,31 +37,45 @@ jest.mock('../../components/filter-dropdown/FilterDropdown', () => ({
 
 describe('UsedView', () => {
   const mockOnPick = jest.fn();
+  const mockOnFiltersChange = jest.fn();
+  const mockFilters = {
+    search: '',
+    language: ''
+  };
 
   beforeEach(() => {
     mockOnPick.mockClear();
+    mockOnFiltersChange.mockClear();
   });
 
   it('should render used view component', () => {
-    render(<UsedView selected={null} onPick={mockOnPick} />);
+    render(
+      <UsedView selected={null} onPick={mockOnPick} filters={mockFilters} onFiltersChange={mockOnFiltersChange} />
+    );
 
     expect(screen.getByTestId('UsedView')).toBeInTheDocument();
   });
 
   it('should render title', () => {
-    render(<UsedView selected={null} onPick={mockOnPick} />);
+    render(
+      <UsedView selected={null} onPick={mockOnPick} filters={mockFilters} onFiltersChange={mockOnFiltersChange} />
+    );
 
     expect(screen.getByText('Зображення на сторінці')).toBeInTheDocument();
   });
 
   it('should render media grid', () => {
-    render(<UsedView selected={null} onPick={mockOnPick} />);
+    render(
+      <UsedView selected={null} onPick={mockOnPick} filters={mockFilters} onFiltersChange={mockOnFiltersChange} />
+    );
 
     expect(screen.getByTestId('mocked-media-grid')).toBeInTheDocument();
   });
 
   it('should render multiple used cards', () => {
-    render(<UsedView selected={null} onPick={mockOnPick} />);
+    render(
+      <UsedView selected={null} onPick={mockOnPick} filters={mockFilters} onFiltersChange={mockOnFiltersChange} />
+    );
 
     const pianoCards = screen.getAllByText('piano-studio.jpg');
     const composerCards = screen.getAllByText('composer-portrait.jpg');
@@ -72,7 +86,9 @@ describe('UsedView', () => {
 
   it('should call onPick when card is clicked', async () => {
     const user = userEvent.setup();
-    render(<UsedView selected={null} onPick={mockOnPick} />);
+    render(
+      <UsedView selected={null} onPick={mockOnPick} filters={mockFilters} onFiltersChange={mockOnFiltersChange} />
+    );
 
     const firstCard = screen.getByText('2025-01-10-newest.jpg');
     await user.click(firstCard);

@@ -1,12 +1,13 @@
 'use client';
 
 import { Box } from '@mui/material';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import { FilterDropdown } from '../../components/filter-dropdown/FilterDropdown';
 import { MediaGrid } from '../../components/media-grid/MediaGrid';
 import { SearchButton } from '../../components/search-button/SearchButton';
 import { UsedCard } from '../../components/used-card/UsedCard';
+import type { UsedFilters } from '../../flow/MediaModalFlowState';
 import type { UsedMedia } from '../../MediaModal.types';
 import { sharedViewStyles } from '../shared-view.styles';
 import { useDebounce } from '~/hooks/use-debounce/useDebounce';
@@ -15,6 +16,8 @@ import { matchesSearch, sortByDateAndName } from '~/lib/utils/filterHelpers';
 type Props = Readonly<{
   selected: UsedMedia | null;
   onPick: (selected: UsedMedia) => void;
+  filters: UsedFilters;
+  onFiltersChange: (filters: Partial<UsedFilters>) => void;
 }>;
 
 type MockUsedAsset = {
@@ -61,10 +64,11 @@ const languageFilterOptions = [
   { value: 'en', label: 'English' }
 ];
 
-export function UsedView({ onPick }: Props) {
-  const [searchValue, setSearchValue] = useState('');
-  const debouncedSearchValue = useDebounce(searchValue, 200);
-  const [languageFilter, setLanguageFilter] = useState('');
+export function UsedView({ onPick, filters, onFiltersChange }: Props) {
+  // const [searchValue, setSearchValue] = useState('');
+  // const debouncedSearchValue = useDebounce(searchValue, 200);
+  // const [languageFilter, setLanguageFilter] = useState('');
+  const debouncedSearchValue = useDebounce(filters.search, 200);
 
   const handleCardClick = (asset: MockUsedAsset) => {
     const usedMedia: UsedMedia = {
@@ -86,14 +90,14 @@ export function UsedView({ onPick }: Props) {
             return false;
           }
 
-          if (languageFilter && asset.locale !== languageFilter) {
+          if (filters.language && asset.locale !== filters.language) {
             return false;
           }
 
           return true;
         })
       ),
-    [debouncedSearchValue, languageFilter]
+    [debouncedSearchValue, filters.language]
   );
 
   return (
@@ -102,13 +106,17 @@ export function UsedView({ onPick }: Props) {
         <Box sx={sharedViewStyles.title}>Зображення на сторінці</Box>
 
         <Box sx={sharedViewStyles.controlsGroup}>
-          <SearchButton value={searchValue} onSearch={setSearchValue} placeholder="Пошук..." testId="UsedView-search" />
-
+          <SearchButton
+            value={filters.search}
+            onSearch={(search) => onFiltersChange({ search })}
+            placeholder="Пошук..."
+            testId="UsedView-search"
+          />
           <FilterDropdown
             label="Мова"
-            value={languageFilter}
+            value={filters.language}
             options={languageFilterOptions}
-            onChange={setLanguageFilter}
+            onChange={(language) => onFiltersChange({ language })}
             testId="UsedView-languageFilter"
           />
         </Box>

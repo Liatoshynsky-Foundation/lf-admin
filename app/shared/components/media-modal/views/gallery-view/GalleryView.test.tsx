@@ -37,39 +37,56 @@ jest.mock('../../components/gallery-card/GalleryCard', () => ({
 
 describe('GalleryView', () => {
   const mockOnPick = jest.fn();
+  const mockOnFiltersChange = jest.fn();
+  const mockFilters = {
+    search: '',
+    favorites: '',
+    usage: ''
+  };
 
   beforeEach(() => {
     mockOnPick.mockClear();
+    mockOnFiltersChange.mockClear();
   });
 
   it('should render gallery view with title', () => {
-    render(<GalleryView selected={null} onPick={mockOnPick} />);
+    render(
+      <GalleryView selected={null} onPick={mockOnPick} filters={mockFilters} onFiltersChange={mockOnFiltersChange} />
+    );
 
     expect(screen.getByText('Усі зображення')).toBeInTheDocument();
   });
 
   it('should render search button', () => {
-    render(<GalleryView selected={null} onPick={mockOnPick} />);
+    render(
+      <GalleryView selected={null} onPick={mockOnPick} filters={mockFilters} onFiltersChange={mockOnFiltersChange} />
+    );
 
     expect(screen.getByTestId('GalleryView-search')).toBeInTheDocument();
   });
 
   it('should render filter dropdowns', () => {
-    render(<GalleryView selected={null} onPick={mockOnPick} />);
+    render(
+      <GalleryView selected={null} onPick={mockOnPick} filters={mockFilters} onFiltersChange={mockOnFiltersChange} />
+    );
 
     expect(screen.getByTestId('GalleryView-favoritesFilter')).toBeInTheDocument();
     expect(screen.getByTestId('GalleryView-usageFilter')).toBeInTheDocument();
   });
 
   it('should render media grid with mock assets', () => {
-    render(<GalleryView selected={null} onPick={mockOnPick} />);
+    render(
+      <GalleryView selected={null} onPick={mockOnPick} filters={mockFilters} onFiltersChange={mockOnFiltersChange} />
+    );
 
     expect(screen.getByTestId('mocked-media-grid')).toBeInTheDocument();
   });
 
   it('should call onPick when card is clicked', async () => {
     const user = userEvent.setup();
-    render(<GalleryView selected={null} onPick={mockOnPick} />);
+    render(
+      <GalleryView selected={null} onPick={mockOnPick} filters={mockFilters} onFiltersChange={mockOnFiltersChange} />
+    );
 
     const firstCard = screen.getByText('piano-studio.jpg');
     await user.click(firstCard);
@@ -83,18 +100,22 @@ describe('GalleryView', () => {
     );
   });
 
-  it('should update search value when typing', async () => {
+  it('should call onFiltersChange when typing in search', async () => {
     const user = userEvent.setup();
-    render(<GalleryView selected={null} onPick={mockOnPick} />);
+    render(
+      <GalleryView selected={null} onPick={mockOnPick} filters={mockFilters} onFiltersChange={mockOnFiltersChange} />
+    );
 
     const searchInput = screen.getByTestId('GalleryView-search');
-    await user.type(searchInput, 'test search');
+    await user.type(searchInput, 'a');
 
-    expect(searchInput).toHaveValue('test search');
+    expect(mockOnFiltersChange).toHaveBeenCalledWith({ search: 'a' });
   });
 
   it('should render multiple gallery cards', () => {
-    render(<GalleryView selected={null} onPick={mockOnPick} />);
+    render(
+      <GalleryView selected={null} onPick={mockOnPick} filters={mockFilters} onFiltersChange={mockOnFiltersChange} />
+    );
 
     expect(screen.getByText('piano-studio.jpg')).toBeInTheDocument();
     expect(screen.getByText('composer-portrait.jpg')).toBeInTheDocument();
@@ -103,7 +124,9 @@ describe('GalleryView', () => {
 
   it('should handle multiple card clicks', async () => {
     const user = userEvent.setup();
-    render(<GalleryView selected={null} onPick={mockOnPick} />);
+    render(
+      <GalleryView selected={null} onPick={mockOnPick} filters={mockFilters} onFiltersChange={mockOnFiltersChange} />
+    );
 
     const firstCard = screen.getByText('piano-studio.jpg');
     const secondCard = screen.getByText('composer-portrait.jpg');
@@ -114,14 +137,21 @@ describe('GalleryView', () => {
     expect(mockOnPick).toHaveBeenCalledTimes(2);
   });
 
-  it('should clear search value', async () => {
+  it('should call onFiltersChange when clearing search', async () => {
     const user = userEvent.setup();
-    render(<GalleryView selected={null} onPick={mockOnPick} />);
+    const filtersWithSearch = { search: 'test', favorites: '', usage: '' };
+    render(
+      <GalleryView
+        selected={null}
+        onPick={mockOnPick}
+        filters={filtersWithSearch}
+        onFiltersChange={mockOnFiltersChange}
+      />
+    );
 
     const searchInput = screen.getByTestId('GalleryView-search');
-    await user.type(searchInput, 'test');
     await user.clear(searchInput);
 
-    expect(searchInput).toHaveValue('');
+    expect(mockOnFiltersChange).toHaveBeenCalledWith({ search: '' });
   });
 });
