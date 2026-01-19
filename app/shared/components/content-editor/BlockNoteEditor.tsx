@@ -19,7 +19,7 @@ export const BlockNoteEditor = ({
   initialContent,
   onChange,
   onSave,
-  //eslint-disable-next-line
+
   placeholder = 'Почніть вводити текст або використайте "/" для команд...',
   editable = true,
   minHeight = '800px',
@@ -81,7 +81,8 @@ export const BlockNoteEditor = ({
       return handleFileUpload(file);
     },
     initialContent: initialContent || undefined,
-    dropCursor: multiColumnDropCursor
+    dropCursor: multiColumnDropCursor,
+    placeholderText: placeholder
   });
 
   useEffect(() => {
