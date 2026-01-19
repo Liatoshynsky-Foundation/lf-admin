@@ -5,9 +5,10 @@ import { MouseEvent, useState } from 'react';
 
 import { styles } from './FileCard.styles';
 import TooltipCustom from '~/ds-components/tooltip/Tooltip';
+import { formatUsageCount } from '~/lib/utils/formatUsageCount';
 
 const ICON_SIZE = 20;
-const FILE_TYPE_ICON_SIZE = 32;
+const ICON_SIZE_2 = 32;
 
 const FILE_TYPES = {
   image: 'img',
@@ -35,20 +36,15 @@ const FileCard = ({ fileType, fileData, onClick }: FileCardProps) => {
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
   const { name, dateAdded, isStarred = false, usageLinks, imageSrc } = fileData;
 
-  const handleImageClick = () => {
-    onClick?.();
-  };
-
   const handleMenuClick = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
-    onClick?.();
   };
 
   const fileTypeIcon = FILE_TYPES[fileType] || FILE_TYPES.image;
 
   return (
-    <Paper variant="outlined" sx={styles.container}>
-      <Box sx={styles.imageSection} onClick={handleImageClick}>
+    <Paper variant="outlined" sx={styles.container} onClick={onClick}>
+      <Box sx={styles.imageSection}>
         {fileType === 'image' && imageSrc ? (
           <Image src={imageSrc} alt={name} fill style={{ objectFit: 'cover' }} sizes="301px" />
         ) : (
@@ -62,9 +58,10 @@ const FileCard = ({ fileType, fileData, onClick }: FileCardProps) => {
         <Stack direction="row" alignItems="center" gap="8px" flex={1} minWidth={0}>
           <Image
             src={`/icons/${fileTypeIcon}.svg`}
-            width={FILE_TYPE_ICON_SIZE}
-            height={FILE_TYPE_ICON_SIZE}
+            width={ICON_SIZE}
+            height={ICON_SIZE}
             alt={`${fileType} icon`}
+            style={{ width: ICON_SIZE, height: ICON_SIZE }}
           />
           <Typography variant="customMedium16" noWrap>
             {name}
@@ -72,7 +69,7 @@ const FileCard = ({ fileType, fileData, onClick }: FileCardProps) => {
         </Stack>
 
         <IconButton size="small" aria-label="Open file menu" onClick={handleMenuClick}>
-          <Image src="/icons/menu.svg" width={ICON_SIZE} height={ICON_SIZE} alt="Menu icon" aria-hidden />
+          <Image src="/icons/menu.svg" width={ICON_SIZE_2} height={32} alt="Menu icon" aria-hidden />
         </IconButton>
       </Stack>
 
@@ -90,7 +87,7 @@ const FileCard = ({ fileType, fileData, onClick }: FileCardProps) => {
 
           {usageLinks !== undefined && usageLinks > 0 && (
             <TooltipCustom
-              title={`${usageLinks} usage link${usageLinks > 1 ? 's' : ''}`}
+              title={`Використовується на сайті: ${formatUsageCount(usageLinks)}`}
               placement="top"
               showArrow={false}
               isOpen={isTooltipOpen}
