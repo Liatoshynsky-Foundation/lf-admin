@@ -83,13 +83,13 @@ describe('FileCard', () => {
     expect(mockOnClick).toHaveBeenCalledTimes(1);
   });
 
-  it('should call onClick when menu button is clicked', () => {
+  it('should stop propagation when menu button is clicked', () => {
     render(<FileCard fileType="image" fileData={defaultFileData} onClick={mockOnClick} />);
 
     const menuButton = screen.getByLabelText('Open file menu');
     fireEvent.click(menuButton);
 
-    expect(mockOnClick).toHaveBeenCalledTimes(1);
+    expect(mockOnClick).not.toHaveBeenCalled();
   });
 
   it('should render correct file type icon for different file types', () => {
@@ -109,7 +109,7 @@ describe('FileCard', () => {
     const linkIcon = screen.getByAltText('Linked file').closest('div');
     if (linkIcon) {
       fireEvent.mouseEnter(linkIcon);
-      expect(screen.getByText('1 usage link')).toBeInTheDocument();
+      expect(screen.getByText('Використовується на сайті: 1 звʼязка')).toBeInTheDocument();
     }
   });
 
@@ -120,7 +120,7 @@ describe('FileCard', () => {
     const linkIcon = screen.getByAltText('Linked file').closest('div');
     if (linkIcon) {
       fireEvent.mouseEnter(linkIcon);
-      expect(screen.getByText('5 usage links')).toBeInTheDocument();
+      expect(screen.getByText('Використовується на сайті: 5 звʼязок')).toBeInTheDocument();
     }
   });
 
