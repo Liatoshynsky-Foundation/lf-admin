@@ -14,7 +14,7 @@ import type {
   MediaModalTab,
   SelectedMedia
 } from '../MediaModal.types';
-import { buildInitialState, isSameCrop, reducer } from './MediaModalFlowState';
+import { buildInitialState, GalleryFilters, isSameCrop, reducer, UsedFilters } from './MediaModalFlowState';
 import { useMediaModalApply } from './useMediaModalApply';
 import ArrowLeftIcon from '~/public/icons/arrowLeft.svg';
 import IterationIcon from '~/public/icons/iteration.svg';
@@ -107,6 +107,14 @@ export function MediaModalFlow({ open, onClose, onApply, initial, renderers }: R
     [clearApplyError, isApplying]
   );
 
+  const handleGalleryFiltersChange = useCallback((filters: Partial<GalleryFilters>) => {
+    dispatch({ type: 'SET_GALLERY_FILTERS', filters });
+  }, []);
+
+  const handleUsedFiltersChange = useCallback((filters: Partial<UsedFilters>) => {
+    dispatch({ type: 'SET_USED_FILTERS', filters });
+  }, []);
+
   const handleApply = useCallback(() => {
     if (!state.selected) return;
     if (isApplying) return;
@@ -187,7 +195,9 @@ export function MediaModalFlow({ open, onClose, onApply, initial, renderers }: R
     if (state.tab === 'GALLERY') {
       return renderers.gallery({
         selected: state.selected?.kind === 'gallery' ? state.selected : null,
-        onPick: pickAndCrop
+        onPick: pickAndCrop,
+        filters: state.filters.gallery,
+        onFiltersChange: handleGalleryFiltersChange
       });
     }
 
@@ -200,7 +210,9 @@ export function MediaModalFlow({ open, onClose, onApply, initial, renderers }: R
 
     return renderers.used({
       selected: state.selected?.kind === 'used' ? state.selected : null,
-      onPick: pickAndCrop
+      onPick: pickAndCrop,
+      filters: state.filters.used,
+      onFiltersChange: handleUsedFiltersChange
     });
   };
 

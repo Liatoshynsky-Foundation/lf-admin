@@ -1,12 +1,13 @@
 'use client';
 
 import { Box } from '@mui/material';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import { FilterDropdown } from '../../components/filter-dropdown/FilterDropdown';
 import { GalleryCard } from '../../components/gallery-card/GalleryCard';
 import { MediaGrid } from '../../components/media-grid/MediaGrid';
 import { SearchButton } from '../../components/search-button/SearchButton';
+import type { GalleryFilters } from '../../flow/MediaModalFlowState';
 import type { GalleryMedia } from '../../MediaModal.types';
 import { sharedViewStyles } from '../shared-view.styles';
 import { useDebounce } from '~/hooks/use-debounce/useDebounce';
@@ -15,6 +16,8 @@ import { matchesSearch, sortByDateAndName } from '~/lib/utils/filterHelpers';
 type Props = Readonly<{
   selected: GalleryMedia | null;
   onPick: (selected: GalleryMedia) => void;
+  filters: GalleryFilters;
+  onFiltersChange: (filters: Partial<GalleryFilters>) => void;
 }>;
 
 type MockAsset = {
@@ -107,7 +110,7 @@ const matchesUsageFilter = (asset: MockAsset, filter: string): boolean => {
   return asset.tags.includes(filter as MockAsset['tags'][number]);
 };
 
-export function GalleryView({ selected: _selected, onPick }: Props) {
+export function GalleryView({ selected: _selected, onPick, filters, onFiltersChange }: Props) {
   const handleCardClick = (asset: MockAsset) => {
     const galleryMedia: GalleryMedia = {
       kind: 'gallery',
@@ -120,10 +123,7 @@ export function GalleryView({ selected: _selected, onPick }: Props) {
     onPick(galleryMedia);
   };
 
-  const [searchValue, setSearchValue] = useState('');
-  const debouncedSearchValue = useDebounce(searchValue, 200);
-  const [favoritesFilter, setFavoritesFilter] = useState('');
-  const [usageFilter, setUsageFilter] = useState('');
+  const debouncedSearchValue = useDebounce(filters.search, 200);
 
   const filteredAndSortedAssets = useMemo(
     () =>
@@ -131,12 +131,12 @@ export function GalleryView({ selected: _selected, onPick }: Props) {
         mockAssets.filter((asset) => {
           return (
             matchesSearch(asset, debouncedSearchValue, ['filename']) &&
-            matchesFavoritesFilter(asset, favoritesFilter) &&
-            matchesUsageFilter(asset, usageFilter)
+            matchesFavoritesFilter(asset, filters.favorites) &&
+            matchesUsageFilter(asset, filters.usage)
           );
         })
       ),
-    [debouncedSearchValue, favoritesFilter, usageFilter]
+    [debouncedSearchValue, filters.favorites, filters.usage]
   );
 
   return (
@@ -146,25 +146,25 @@ export function GalleryView({ selected: _selected, onPick }: Props) {
 
         <Box sx={sharedViewStyles.controlsGroup}>
           <SearchButton
-            value={searchValue}
-            onSearch={setSearchValue}
+            value={filters.search}
+            onSearch={(search) => onFiltersChange({ search })}
             placeholder="Пошук..."
             testId="GalleryView-search"
           />
 
           <FilterDropdown
             label="Позначення"
-            value={favoritesFilter}
+            value={filters.favorites}
             options={favoritesFilterOptions}
-            onChange={setFavoritesFilter}
+            onChange={(favorites) => onFiltersChange({ favorites })}
             testId="GalleryView-favoritesFilter"
           />
 
           <FilterDropdown
             label="Використання"
-            value={usageFilter}
+            value={filters.usage}
             options={usageFilterOptions}
-            onChange={setUsageFilter}
+            onChange={(usage) => onFiltersChange({ usage })}
             testId="GalleryView-usageFilter"
           />
         </Box>

@@ -4,6 +4,17 @@ import React from 'react';
 import { MediaModalFlow } from './flow/MediaModalFlow';
 import { MediaModal } from './MediaModal';
 
+const mockGalleryFilters = {
+  search: '',
+  favorites: '',
+  usage: ''
+};
+
+const mockUsedFilters = {
+  search: '',
+  language: ''
+};
+
 jest.mock('./flow/MediaModalFlow', () => ({
   __esModule: true,
   MediaModalFlow: jest.fn(() => null)
@@ -47,9 +58,14 @@ describe('MediaModal', () => {
 
     render(
       <>
-        {renderers.gallery({ selected: null, onPick: jest.fn() })}
+        {renderers.gallery({
+          selected: null,
+          onPick: jest.fn(),
+          filters: mockGalleryFilters,
+          onFiltersChange: jest.fn()
+        })}
         {renderers.upload({ selected: null, onPick: jest.fn() })}
-        {renderers.used({ selected: null, onPick: jest.fn() })}
+        {renderers.used({ selected: null, onPick: jest.fn(), filters: mockUsedFilters, onFiltersChange: jest.fn() })}
         {renderers.crop({
           selected: { kind: 'gallery', id: '1', fileName: 'a.png', src: '/x', locale: 'uk' },
           crop: null,
@@ -82,8 +98,13 @@ describe('MediaModal', () => {
 
     render(
       <>
-        {renderers.gallery({ selected: null, onPick: jest.fn() })}
-        {renderers.used({ selected: null, onPick: jest.fn() })}
+        {renderers.gallery({
+          selected: null,
+          onPick: jest.fn(),
+          filters: mockGalleryFilters,
+          onFiltersChange: jest.fn()
+        })}
+        {renderers.used({ selected: null, onPick: jest.fn(), filters: mockUsedFilters, onFiltersChange: jest.fn() })}
       </>
     );
 
@@ -161,9 +182,14 @@ describe('MediaModal', () => {
 
     const views = (
       <>
-        {renderers.gallery({ selected: null, onPick: jest.fn() })}
+        {renderers.gallery({
+          selected: null,
+          onPick: jest.fn(),
+          filters: mockGalleryFilters,
+          onFiltersChange: jest.fn()
+        })}
         {renderers.upload({ selected: null, onPick: jest.fn() })}
-        {renderers.used({ selected: null, onPick: jest.fn() })}
+        {renderers.used({ selected: null, onPick: jest.fn(), filters: mockUsedFilters, onFiltersChange: jest.fn() })}
       </>
     );
 
