@@ -17,8 +17,7 @@ const MOCK_SERVER_DATA = {
   y: 50
 };
 
-const forCropAngle =
-  (MOCK_SERVER_DATA.width < MOCK_SERVER_DATA.height ? MOCK_SERVER_DATA.width : MOCK_SERVER_DATA.height) * 0.2;
+const forCropAngle = Math.min(MOCK_SERVER_DATA.width, MOCK_SERVER_DATA.height) * 0.2;
 
 export function CropView({ selected, resetSeq, onBaseline, onChange }: Readonly<CropRendererProps>) {
   const uploadFile = selected.kind === 'upload' ? selected.file : null;

@@ -4,8 +4,8 @@ import { SelectedMedia } from '../../MediaModal.types';
 import { CropView } from './CropView';
 
 beforeAll(() => {
-  global.URL.createObjectURL = jest.fn(() => 'blob:test-url');
-  global.URL.revokeObjectURL = jest.fn();
+  globalThis.URL.createObjectURL = jest.fn(() => 'blob:test-url');
+  globalThis.URL.revokeObjectURL = jest.fn();
 });
 
 afterEach(() => {
@@ -131,7 +131,7 @@ describe('CropView', () => {
       <CropView selected={uploadSelected} crop={null} resetSeq={0} onBaseline={jest.fn()} onChange={jest.fn()} />
     );
 
-    expect(global.URL.createObjectURL).toHaveBeenCalledWith(file);
+    expect(globalThis.URL.createObjectURL).toHaveBeenCalledWith(file);
 
     rerender(
       <CropView
@@ -143,7 +143,7 @@ describe('CropView', () => {
       />
     );
     unmount();
-    expect(global.URL.revokeObjectURL).toHaveBeenCalled();
+    expect(globalThis.URL.revokeObjectURL).toHaveBeenCalled();
   });
 
   it('should set data-reset-seq attribute', () => {
