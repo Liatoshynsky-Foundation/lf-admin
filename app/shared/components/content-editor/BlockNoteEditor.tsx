@@ -27,10 +27,8 @@ export const BlockNoteEditor = ({
   customFilePickerModal
 }: BlockNoteEditorProps) => {
   const [isLoading, setIsLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
-  /**
-   * Default file upload handler
-   */
   const defaultHandleUploadFile = useCallback(async (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -75,15 +73,26 @@ export const BlockNoteEditor = ({
 
   const wrappedSchema = withMultiColumn(schema);
 
-  const editor = useCreateBlockNote({
-    schema: wrappedSchema,
-    uploadFile: async (file: File) => {
-      return handleFileUpload(file);
+  const editor = useCreateBlockNote(
+    {
+      schema: wrappedSchema,
+      uploadFile: async (file: File) => {
+        return handleFileUpload(file);
+      },
+      initialContent: initialContent || undefined,
+      dropCursor: multiColumnDropCursor,
+      placeholderText: placeholder
     },
-    initialContent: initialContent || undefined,
-    dropCursor: multiColumnDropCursor,
-    placeholderText: placeholder
-  });
+    [isMounted]
+  );
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!openCustomPicker || !editor) {
@@ -193,7 +202,7 @@ export const BlockNoteEditor = ({
     setIsLoading(false);
   }, []);
 
-  if (isLoading) {
+  if (!isMounted || isLoading) {
     return (
       <Box sx={{ ...styles.container, minHeight }}>
         <Box sx={styles.loadingPlaceholder}>Завантаження редактора...</Box>

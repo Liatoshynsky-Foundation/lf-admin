@@ -3,21 +3,8 @@ import { ReactElement } from 'react';
 
 export interface FilePickerModalProps {
   isOpen: boolean;
-  /**
-   * Call this when a file is selected from any source (gallery, cloud storage, etc.)
-   * @param file - The selected File object (required)
-   * @param fileUrl - Optional preview URL (not currently used)
-   */
   onFileSelected: (file: File | null, fileUrl?: string) => void;
-  /**
-   * Call this to cancel the file selection and close the modal
-   */
   onCancel: () => void;
-  /**
-   * Call this to open the device's native file picker.
-   * When a file is selected, it will automatically be handled (modal will close).
-   * When cancelled, the modal stays open so the user can try another option.
-   */
   onDeviceFilePick?: () => Promise<void>;
 }
 
