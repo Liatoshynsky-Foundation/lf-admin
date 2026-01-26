@@ -1,8 +1,6 @@
 'use client';
 
-// @ts-expect-error - CSS import without type declarations
 import '@blocknote/core/fonts/inter.css';
-// @ts-expect-error - CSS import without type declarations
 import '@blocknote/mantine/style.css';
 import {
   Block,
