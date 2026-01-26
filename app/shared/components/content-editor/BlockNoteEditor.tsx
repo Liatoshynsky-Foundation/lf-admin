@@ -1,94 +1,102 @@
 'use client';
 
-// @ts-expect-error editor type error
+// @ts-expect-error - CSS import without type declarations
 import '@blocknote/core/fonts/inter.css';
-// @ts-expect-error editor type error
+// @ts-expect-error - CSS import without type declarations
 import '@blocknote/mantine/style.css';
-import { BlockNoteSchema, defaultBlockSpecs, defaultInlineContentSpecs, defaultStyleSpecs } from '@blocknote/core';
+import {
+  Block,
+  BlockNoteSchema,
+  defaultBlockSpecs,
+  defaultInlineContentSpecs,
+  defaultStyleSpecs
+} from '@blocknote/core';
 import { BlockNoteView } from '@blocknote/mantine';
 import { useCreateBlockNote } from '@blocknote/react';
 import { multiColumnDropCursor, withMultiColumn } from '@blocknote/xl-multi-column';
 import { Box } from '@mui/material';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { styles } from './BlockNoteEditor.styles';
 import { BlockNoteEditorProps } from './types';
 import { useFilePickerUpload } from './useFilePickerUpload';
 
+const defaultFileUploadHandler = async (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result;
+      if (result) {
+        resolve(result as string);
+      } else {
+        reject(new Error('Failed to read file'));
+      }
+    };
+    reader.onerror = () => {
+      reject(new Error('Failed to read file'));
+    };
+    reader.readAsDataURL(file);
+  });
+};
+
 export const BlockNoteEditor = ({
   initialContent,
   onChange,
-  onSave,
-
   placeholder = 'Почніть вводити текст або використайте "/" для команд...',
   editable = true,
   minHeight = '800px',
-  uploadFile,
-  customFilePickerModal
+  fileUpload,
+  keyboardShortcuts
 }: BlockNoteEditorProps) => {
-  const [isLoading, setIsLoading] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
 
-  const defaultHandleUploadFile = useCallback(async (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result;
-        if (result) {
-          resolve(result as string);
-        } else {
-          reject(new Error('Failed to read file'));
-        }
-      };
-      reader.onerror = () => {
-        reject(new Error('Failed to read file'));
-      };
-      reader.readAsDataURL(file);
-    });
-  }, []);
+  const uploadHandler = useMemo(() => fileUpload?.handler || defaultFileUploadHandler, [fileUpload?.handler]);
 
   const { openCustomPicker, modalProps } = useFilePickerUpload({
-    customFilePickerModal
+    customFilePickerModal: fileUpload?.customModal
   });
 
   const handleFileUpload = useCallback(
     async (file: File): Promise<string> => {
-      const handler = uploadFile || defaultHandleUploadFile;
-      return handler(file);
+      if (fileUpload?.maxFileSize && file.size > fileUpload.maxFileSize) {
+        throw new Error(`File size exceeds maximum allowed size of ${fileUpload.maxFileSize} bytes`);
+      }
+
+      if (fileUpload?.allowedMimeTypes && !fileUpload.allowedMimeTypes.includes(file.type)) {
+        throw new Error(`File type ${file.type} is not allowed`);
+      }
+
+      return uploadHandler(file);
     },
-    [uploadFile, defaultHandleUploadFile]
+    [uploadHandler, fileUpload?.maxFileSize, fileUpload?.allowedMimeTypes]
   );
 
-  const schema = BlockNoteSchema.create({
-    blockSpecs: {
-      ...defaultBlockSpecs
-    },
-    inlineContentSpecs: {
-      ...defaultInlineContentSpecs
-    },
-    styleSpecs: {
-      ...defaultStyleSpecs
-    }
-  });
+  const schema = useMemo(() => {
+    const baseSchema = BlockNoteSchema.create({
+      blockSpecs: {
+        ...defaultBlockSpecs
+      },
+      inlineContentSpecs: {
+        ...defaultInlineContentSpecs
+      },
+      styleSpecs: {
+        ...defaultStyleSpecs
+      }
+    });
 
-  const wrappedSchema = withMultiColumn(schema);
+    return withMultiColumn(baseSchema);
+  }, []);
 
   const editor = useCreateBlockNote(
     {
-      schema: wrappedSchema,
-      uploadFile: async (file: File) => {
-        return handleFileUpload(file);
-      },
+      schema,
+      uploadFile: handleFileUpload,
       initialContent: initialContent || undefined,
       dropCursor: multiColumnDropCursor,
       placeholderText: placeholder
     },
     [isMounted]
   );
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   useEffect(() => {
     setIsMounted(true);
@@ -103,7 +111,7 @@ export const BlockNoteEditor = ({
       const target = event.target as HTMLElement;
 
       if (target instanceof HTMLInputElement && target.type === 'file') {
-        if (target.getAttribute('data-custom-file-picker') === 'true') {
+        if (target.dataset.customFilePicker === 'true') {
           return;
         }
 
@@ -131,7 +139,7 @@ export const BlockNoteEditor = ({
                       url: fileUrl,
                       name: selectedFile.name
                     }
-                  } as any
+                  }
                 ],
                 currentBlock,
                 'after'
@@ -144,16 +152,10 @@ export const BlockNoteEditor = ({
       }
     };
 
-    document.addEventListener('click', handleClick, true);
-
     const handleFocus = (event: FocusEvent) => {
       const target = event.target as HTMLElement;
 
-      if (
-        target instanceof HTMLInputElement &&
-        target.type === 'file' &&
-        target.getAttribute('data-custom-file-picker') === 'true'
-      ) {
+      if (target instanceof HTMLInputElement && target.type === 'file' && target.dataset.customFilePicker === 'true') {
         return;
       }
 
@@ -167,6 +169,7 @@ export const BlockNoteEditor = ({
       }
     };
 
+    document.addEventListener('click', handleClick, true);
     document.addEventListener('focus', handleFocus, true);
 
     return () => {
@@ -175,34 +178,31 @@ export const BlockNoteEditor = ({
     };
   }, [openCustomPicker, handleFileUpload, editor]);
 
-  const handleEditorChange = () => {
-    const content = editor.document;
-    // @ts-expect-error - Type mismatch between custom schema and generic Block type
-    onChange?.(content);
-  };
+  const handleEditorChange = useCallback(() => {
+    if (onChange) {
+      const content = editor.document;
+      onChange(content as Block[]);
+    }
+  }, [editor, onChange]);
 
-  /**
-   * Handle keyboard shortcuts (Cmd/Ctrl + S to save)
-   */
   useEffect(() => {
+    if (!keyboardShortcuts?.onSave) {
+      return;
+    }
+
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + S to save
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault();
-        const content = editor.document;
-        // @ts-expect-error - Type mismatch between custom schema and generic Block type
-        onSave?.(content);
+        keyboardShortcuts.onSave?.();
       }
     };
 
     globalThis.addEventListener('keydown', handleKeyDown);
     return () => globalThis.removeEventListener('keydown', handleKeyDown);
-  }, [editor, onSave]);
+  }, [keyboardShortcuts]);
 
-  useEffect(() => {
-    setIsLoading(false);
-  }, []);
-
-  if (!isMounted || isLoading) {
+  if (!isMounted) {
     return (
       <Box sx={{ ...styles.container, minHeight }}>
         <Box sx={styles.loadingPlaceholder}>Завантаження редактора...</Box>
@@ -221,7 +221,7 @@ export const BlockNoteEditor = ({
         sideMenu={true}
       />
 
-      {modalProps && customFilePickerModal?.(modalProps)}
+      {modalProps && fileUpload?.customModal?.(modalProps)}
     </Box>
   );
 };

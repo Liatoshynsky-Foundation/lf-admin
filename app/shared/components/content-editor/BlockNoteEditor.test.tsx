@@ -52,10 +52,12 @@ describe('BlockNoteEditor', () => {
     render(
       <BlockNoteEditor
         onChange={onChange}
-        onSave={onSave}
         placeholder="Custom placeholder"
         editable={false}
         minHeight="500px"
+        keyboardShortcuts={{
+          onSave
+        }}
       />
     );
 
