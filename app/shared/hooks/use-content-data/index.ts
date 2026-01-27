@@ -1,0 +1,1 @@
+export { useContentData } from './useContentData';
