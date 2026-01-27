@@ -11,8 +11,7 @@ export const styles: Record<string, SxProps> = {
   container: {
     display: 'flex',
     flexGrow: 1,
-    alignItems: 'center',
     flexDirection: 'column',
-    padding: '20px'
+    minHeight: '100vh'
   }
 };

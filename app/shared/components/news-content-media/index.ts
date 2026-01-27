@@ -1,0 +1,1 @@
+export { NewsContentMedia } from './NewsContentMedia';

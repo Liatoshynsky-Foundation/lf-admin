@@ -1,6 +1,13 @@
-type LocalizedNewsContent {
+scalar JSON
+
+type LocalizedString {
   uk: String!
   en: String!
+}
+
+type LocalizedJSON {
+  uk: JSON!
+  en: JSON!
 }
 
 type NewsMeta {
@@ -9,8 +16,8 @@ type NewsMeta {
 
 type NewsImageBlock {
   src: String!
-  alt: LocalizedNewsContent!
-  caption: LocalizedNewsContent!
+  alt: LocalizedString!
+  caption: LocalizedString!
   isTmp: Boolean
 }
 
@@ -28,9 +35,9 @@ type News {
   newsDate: String
   createdAt: String!
   updatedAt: String!
-  title: LocalizedNewsContent!
-  description: LocalizedNewsContent
-  content: LocalizedNewsContent!
+  title: LocalizedString!
+  description: LocalizedString
+  content: LocalizedJSON!
   slug: String!
   coverImage: NewsImageBlock!
   status: NewsStatus!
