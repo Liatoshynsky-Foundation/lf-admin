@@ -1,19 +1,13 @@
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 
 import { ContentGrid } from '~/shared/components/content-grid';
+import { ContentPageHeader } from '~/shared/components/content-page-header/ContentPageHeader';
 import { ContentType } from '~/types/contentGrid';
 
 export default function News() {
   return (
     <Box>
-      <Box sx={{ p: 3, pb: 1 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Новини та події
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Останні новини та оновлення
-        </Typography>
-      </Box>
+      <ContentPageHeader title="Новини та події" />
 
       <ContentGrid contentType={ContentType.NEWS} limit={12} />
     </Box>
