@@ -7,7 +7,7 @@ import { styles } from './NewsContentMedia.styles';
 type NewsContent = {
   title: string;
   description: string;
-  content: string;
+  content: any; // JSON content with blocks structure
 };
 
 type NewsContentMediaProps = {
@@ -48,7 +48,9 @@ const ContentLanguageSection = ({
 
       <Box sx={styles.contentBlock}>
         <Typography sx={styles.fieldLabel}>Контент</Typography>
-        <Typography sx={styles.contentText}>{content.content || 'Не вказано'}</Typography>
+        <Typography sx={styles.contentText} component="pre">
+          {content.content ? JSON.stringify(content.content, null, 2) : 'Не вказано'}
+        </Typography>
       </Box>
 
       <Box sx={styles.coverImageContainer}>
