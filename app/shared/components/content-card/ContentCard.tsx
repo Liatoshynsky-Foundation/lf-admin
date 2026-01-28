@@ -4,125 +4,70 @@ import { Box, Card, CardActionArea, CardContent, CardMedia, Typography } from '@
 import { useRouter } from 'next/navigation';
 
 import Button from '../design-system/button/Button';
+import { styles } from './ContentCard.styles';
+import { ContentCardChips } from './ContentCardChips';
 import { NewsItem } from '~/types/contentGrid';
 
 interface NewsCardProps {
   item: NewsItem;
+  contentType?: 'news' | 'event' | 'media';
 }
 
-export function ContentCard({ item }: Readonly<NewsCardProps>) {
+const formatDate = (dateString?: string): string => {
+  if (!dateString) return '';
+
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('uk-UA', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  } catch {
+    return '';
+  }
+};
+
+export function ContentCard({ item, contentType = 'news' }: Readonly<NewsCardProps>) {
   const router = useRouter();
 
   const handleClick = () => {
     router.push(`/news/${item.slug}`);
   };
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return '';
-
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('uk-UA', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    } catch {
-      return '';
-    }
-  };
-
   return (
-    <Card
-      sx={{
-        height: '344px',
-        width: '301px',
-        display: 'flex',
-        flexDirection: 'column',
-        borderRadius: '16px',
-        transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-        '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: 4
-        }
-      }}
-    >
-      <CardActionArea
-        sx={{
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'stretch',
-          justifyContent: 'flex-start',
-          p: 0
-        }}
-      >
+    <Card sx={styles.card}>
+      <CardActionArea sx={styles.cardActionArea}>
         {item.coverImage && (
           <CardMedia
             component="img"
             height="140"
             image={item.coverImage.src}
             alt={item.coverImage.alt}
-            sx={{
-              objectFit: 'cover',
-              flexShrink: 0
-            }}
+            sx={styles.cardMedia}
           />
         )}
 
-        <CardContent
-          sx={{
-            flexGrow: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            p: 2,
-            pb: '12px !important',
-            height: 'calc(100% - 140px)',
-            overflow: 'hidden'
-          }}
-        >
-          <Typography
-            variant="h6"
-            component="h2"
-            sx={{
-              fontWeight: 600,
-              fontSize: '0.95rem',
-              lineHeight: 1.3,
-              mb: 1,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              minHeight: '2.47em',
-              flexShrink: 0
-            }}
-          >
+        <ContentCardChips contentType={contentType} status={item.status} />
+
+        <CardContent sx={styles.cardContent}>
+          <Typography variant="h6" component="h2" sx={styles.title}>
             {item.title}
           </Typography>
 
-          <Box sx={{ mt: 'auto', mb: 1, flexShrink: 0 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+          <Box sx={styles.metaContainer}>
+            <Typography variant="caption" color="text.secondary" sx={styles.caption}>
               {formatDate(item.publishedAt || item.newsDate || item.createdAt)}
             </Typography>
 
             {item.views > 0 && (
-              <Typography variant="caption" color="text.secondary" sx={{ ml: 1.5, fontSize: '0.7rem' }}>
+              <Typography variant="caption" color="text.secondary" sx={styles.viewsCaption}>
                 {item.views.toLocaleString()} переглядів
               </Typography>
             )}
           </Box>
 
-          <Button
-            variant="filled"
-            color="primary"
-            onClick={handleClick}
-            sx={{
-              flexShrink: 0,
-              py: 0.75,
-              fontSize: '0.875rem'
-            }}
-          >
+          <Button variant="filled" color="primary" onClick={handleClick} sx={styles.button}>
             Редагувати
           </Button>
         </CardContent>
