@@ -44,7 +44,7 @@ describe('NewsDetailHeader', () => {
     const user = userEvent.setup();
     render(<NewsDetailHeader title="Test News" newsId="123" />);
 
-    const editButton = screen.getByRole('button', { name: /редагувати/i });
+    const editButton = screen.getByRole('button', { name: /перейти до редагування/i });
     await user.click(editButton);
 
     expect(mockPush).toHaveBeenCalledWith('/news/123/edit');
