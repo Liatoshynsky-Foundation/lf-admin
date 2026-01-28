@@ -28,7 +28,8 @@ describe('storageFactory', () => {
       delete: jest.fn(),
       exists: jest.fn(),
       getMetadata: jest.fn(),
-      getUrl: jest.fn()
+      getUrl: jest.fn(),
+      list: jest.fn()
     };
 
     describe('cloud storage', () => {
@@ -209,7 +210,8 @@ describe('storageFactory', () => {
       delete: jest.fn(),
       exists: jest.fn(),
       getMetadata: jest.fn(),
-      getUrl: jest.fn()
+      getUrl: jest.fn(),
+      list: jest.fn()
     };
 
     beforeEach(() => {
