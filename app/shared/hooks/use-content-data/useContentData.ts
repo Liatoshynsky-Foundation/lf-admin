@@ -69,7 +69,6 @@ export function useContentData(contentType: ContentType, limit: number = 12): Us
               page: 1,
               limit,
               filters: {
-                status: 'published',
                 sortBy: 'publishedAt',
                 sortOrder: 'desc'
               }

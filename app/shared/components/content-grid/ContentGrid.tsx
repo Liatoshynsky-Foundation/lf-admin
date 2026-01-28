@@ -2,7 +2,7 @@
 
 import { Alert, Box, CircularProgress, Typography } from '@mui/material';
 
-import { NewsCard } from '~/shared/components/news-card';
+import { ContentCard } from '~/shared/components/content-card';
 import { useContentData } from '~/shared/hooks/use-content-data';
 import { ContentGridProps, ContentType } from '~/types/contentGrid';
 
@@ -92,7 +92,7 @@ export function ContentGrid({ contentType, limit = 12 }: Readonly<ContentGridPro
     /* eslint-disable */
     switch (contentType) {
       case ContentType.NEWS:
-        return <NewsCard key={item.id} item={item} />;
+        return <ContentCard key={item.id} item={item} />;
       case ContentType.EVENTS:
         return (
           <Box key={item.id} sx={{ p: 2, border: '1px dashed grey' }}>

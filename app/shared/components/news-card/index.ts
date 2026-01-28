@@ -1,1 +1,0 @@
-export { NewsCard } from './NewsCard';
