@@ -22,6 +22,7 @@ jobs:
       mongodb-version: "8"
       run-build: true
       run-tests: true
+      run-graphql-generate: true
       run-security-scan: true
       security-scan-on-main-only: true
     secrets:

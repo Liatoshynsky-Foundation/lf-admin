@@ -1,0 +1,109 @@
+type LocalizedNewsContent {
+  uk: String!
+  en: String!
+}
+
+type NewsMeta {
+  views: Int!
+}
+
+type NewsImageBlock {
+  src: String!
+  alt: LocalizedNewsContent!
+  caption: LocalizedNewsContent!
+  isTmp: Boolean
+}
+
+enum NewsStatus {
+  draft
+  published
+  hidden
+  archived
+  editing
+}
+
+type News {
+  id: ID!
+  publishedAt: String
+  newsDate: String
+  createdAt: String!
+  updatedAt: String!
+  title: LocalizedNewsContent!
+  description: LocalizedNewsContent
+  content: LocalizedNewsContent!
+  slug: String!
+  coverImage: NewsImageBlock!
+  status: NewsStatus!
+  meta: NewsMeta!
+}
+
+type PaginatedNews {
+  news: [News!]!
+  total: Int!
+  page: Int!
+  totalPages: Int!
+}
+
+enum NewsSortBy {
+  createdAt
+  updatedAt
+  publishedAt
+  newsDate
+}
+
+enum SortOrder {
+  asc
+  desc
+}
+
+input NewsFiltersInput {
+  status: NewsStatus
+  slug: String
+  sortBy: NewsSortBy
+  sortOrder: SortOrder
+}
+
+input CreateNewsInput {
+  title: JSON!
+  description: JSON
+  content: JSON!
+  coverImage: JSON!
+  newsDate: String
+  status: NewsStatus
+  publishedAt: String
+}
+
+input UpdateNewsInput {
+  title: JSON
+  description: JSON
+  content: JSON
+  coverImage: JSON
+  newsDate: String
+  status: NewsStatus
+  publishedAt: String
+}
+
+input PublishNewsInput {
+  id: ID!
+  publishedAt: String
+}
+
+extend type Query {
+  newsById(id: ID!): News
+  newsBySlug(slug: String!): News
+  allNews(filters: NewsFiltersInput): [News!]!
+  publishedNews(filters: NewsFiltersInput): [News!]!
+  paginatedNews(page: Int = 1, limit: Int = 10, filters: NewsFiltersInput): PaginatedNews!
+  newsCount(status: NewsStatus): Int!
+}
+
+extend type Mutation {
+  createNews(input: CreateNewsInput!): News!
+  updateNews(id: ID!, input: UpdateNewsInput!): News!
+  publishNews(input: PublishNewsInput!): News!
+  unpublishNews(id: ID!): News!
+  archiveNews(id: ID!): News!
+  hideNews(id: ID!): News!
+  deleteNews(id: ID!): Boolean!
+  incrementNewsViews(id: ID!): News!
+}

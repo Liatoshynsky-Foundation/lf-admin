@@ -9,7 +9,7 @@ export const colors = {
     600: '#989CAB',
     700: '#868A9C',
     800: '#696C7D',
-    900: '#4E5061'
+    900: '#3F444A'
   },
   yellow: {
     100: '#FFF8E9',
@@ -109,6 +109,8 @@ export const typographyStyles = {
   }
 };
 
+const focusVisible = '&.Mui-focusVisible, &:focus-visible';
+
 export const buttonBaseStyles = {
   borderRadius: '28px',
   textTransform: 'none',
@@ -146,7 +148,7 @@ export const variantStyles = {
       '&:hover': {
         backgroundColor: colors.primaryFilledHovered
       },
-      '&:focus': {
+      [focusVisible]: {
         backgroundColor: colors.black
       },
       '&:active': {
@@ -165,7 +167,7 @@ export const variantStyles = {
       '&:hover': {
         backgroundColor: colors.primaryOutlinedHovered
       },
-      '&:focus': {
+      [focusVisible]: {
         backgroundColor: colors.white
       },
       '&:active': {
@@ -183,7 +185,7 @@ export const variantStyles = {
       '&:hover': {
         backgroundColor: colors.primaryOutlinedHovered
       },
-      '&:focus': {
+      [focusVisible]: {
         backgroundColor: colors.primaryOutlinedPressed
       },
       '&:active': {
@@ -203,7 +205,7 @@ export const variantStyles = {
       '&:hover': {
         boxShadow: `inset 0 0 0 1000px ${colors.secondaryFilledHovered}`
       },
-      '&:focus': {
+      [focusVisible]: {
         backgroundColor: colors.brown[200]
       },
       '&:active': {
@@ -222,7 +224,7 @@ export const variantStyles = {
       '&:hover': {
         backgroundColor: colors.secondaryHovered
       },
-      '&:focus': {
+      [focusVisible]: {
         backgroundColor: colors.secondaryPressed
       },
       '&:active': {
@@ -240,7 +242,7 @@ export const variantStyles = {
       '&:hover': {
         backgroundColor: colors.secondaryHovered
       },
-      '&:focus': {
+      [focusVisible]: {
         backgroundColor: colors.secondaryPressed
       },
       '&:active': {
@@ -260,7 +262,7 @@ export const variantStyles = {
         backgroundColor: colors.black,
         color: colors.white
       },
-      '&:focus': {
+      [focusVisible]: {
         backgroundColor: colors.black,
         color: colors.white
       },

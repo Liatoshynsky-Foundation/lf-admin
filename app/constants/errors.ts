@@ -29,3 +29,20 @@ export const graphqlErrors = {
     code: 'BAD_USER_INPUT'
   }
 };
+
+export const newsErrors = {
+  NETWORK_ERROR_CREATE: 'Network error while creating news',
+  FAILED_TO_CREATE: 'Failed to create news',
+  NETWORK_ERROR_UPDATE: 'Network error while updating news',
+  FAILED_TO_UPDATE: 'Failed to update news',
+  NETWORK_ERROR_PUBLISH: 'Network error while publishing news',
+  FAILED_TO_PUBLISH: 'Failed to publish news',
+  NETWORK_ERROR_UNPUBLISH: 'Network error while unpublishing news',
+  FAILED_TO_UNPUBLISH: 'Failed to unpublish news',
+  NETWORK_ERROR_ARCHIVE: 'Network error while archiving news',
+  FAILED_TO_ARCHIVE: 'Failed to archive news',
+  NETWORK_ERROR_HIDE: 'Network error while hiding news',
+  FAILED_TO_HIDE: 'Failed to hide news',
+  NETWORK_ERROR_DELETE: 'Network error while deleting news',
+  FAILED_TO_DELETE: 'Failed to delete news'
+};

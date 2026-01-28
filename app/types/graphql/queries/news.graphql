@@ -1,0 +1,203 @@
+query NewsById($id: ID!) {
+  newsById(id: $id) {
+    id
+    publishedAt
+    newsDate
+    createdAt
+    updatedAt
+    title {
+      uk
+      en
+    }
+    description {
+      uk
+      en
+    }
+    content {
+      uk
+      en
+    }
+    slug
+    coverImage {
+      src
+      alt {
+        uk
+        en
+      }
+      caption {
+        uk
+        en
+      }
+      isTmp
+    }
+    status
+    meta {
+      views
+    }
+  }
+}
+
+query NewsBySlug($slug: String!) {
+  newsBySlug(slug: $slug) {
+    id
+    publishedAt
+    newsDate
+    createdAt
+    updatedAt
+    title {
+      uk
+      en
+    }
+    description {
+      uk
+      en
+    }
+    content {
+      uk
+      en
+    }
+    slug
+    coverImage {
+      src
+      alt {
+        uk
+        en
+      }
+      caption {
+        uk
+        en
+      }
+      isTmp
+    }
+    status
+    meta {
+      views
+    }
+  }
+}
+
+query AllNews($filters: NewsFiltersInput) {
+  allNews(filters: $filters) {
+    id
+    publishedAt
+    newsDate
+    createdAt
+    updatedAt
+    title {
+      uk
+      en
+    }
+    description {
+      uk
+      en
+    }
+    content {
+      uk
+      en
+    }
+    slug
+    coverImage {
+      src
+      alt {
+        uk
+        en
+      }
+      caption {
+        uk
+        en
+      }
+      isTmp
+    }
+    status
+    meta {
+      views
+    }
+  }
+}
+
+query PublishedNews($filters: NewsFiltersInput) {
+  publishedNews(filters: $filters) {
+    id
+    publishedAt
+    newsDate
+    createdAt
+    updatedAt
+    title {
+      uk
+      en
+    }
+    description {
+      uk
+      en
+    }
+    content {
+      uk
+      en
+    }
+    slug
+    coverImage {
+      src
+      alt {
+        uk
+        en
+      }
+      caption {
+        uk
+        en
+      }
+      isTmp
+    }
+    status
+    meta {
+      views
+    }
+  }
+}
+
+query PaginatedNews($page: Int = 1, $limit: Int = 10, $filters: NewsFiltersInput) {
+  paginatedNews(page: $page, limit: $limit, filters: $filters) {
+    news {
+      id
+      publishedAt
+      newsDate
+      createdAt
+      updatedAt
+      title {
+        uk
+        en
+      }
+      description {
+        uk
+        en
+      }
+      content {
+        uk
+        en
+      }
+      slug
+      coverImage {
+        src
+        alt {
+          uk
+          en
+        }
+        caption {
+          uk
+          en
+        }
+        isTmp
+      }
+      status
+      meta {
+        views
+      }
+    }
+    total
+    page
+    totalPages
+  }
+}
+
+query NewsCount($status: NewsStatus) {
+  newsCount(status: $status)
+}

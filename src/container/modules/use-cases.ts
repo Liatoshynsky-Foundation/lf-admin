@@ -1,6 +1,7 @@
 import { asFunction, AwilixContainer } from 'awilix';
 
 import { loginAdmin } from '~/application/use-cases/loginAdmin/loginAdmin';
+import { NewsService } from '~/application/use-cases/newsService/newsService';
 import { PageService } from '~/application/use-cases/pageService/pageService';
 import { createTokenService } from '~/application/use-cases/tokenService/createToken/createToken.service';
 import { refreshTokenService } from '~/application/use-cases/tokenService/refreshToken/refreshToken.service';
@@ -12,6 +13,7 @@ export type UseCasesModule = {
   refreshTokenService: ReturnType<typeof refreshTokenService>;
   uploadService: ReturnType<typeof blobStorageService>;
   pageService: ReturnType<typeof PageService>;
+  newsService: ReturnType<typeof NewsService>;
 };
 
 export const registerUseCases = (container: AwilixContainer<UseCasesModule>) => {
@@ -20,6 +22,7 @@ export const registerUseCases = (container: AwilixContainer<UseCasesModule>) => 
     createTokenService: asFunction(createTokenService).scoped(),
     refreshTokenService: asFunction(refreshTokenService).scoped(),
     uploadService: asFunction(blobStorageService).scoped(),
-    pageService: asFunction(PageService).scoped()
+    pageService: asFunction(PageService).scoped(),
+    newsService: asFunction(NewsService).scoped()
   });
 };
