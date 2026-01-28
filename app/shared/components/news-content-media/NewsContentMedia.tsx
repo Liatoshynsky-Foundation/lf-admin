@@ -46,13 +46,6 @@ const ContentLanguageSection = ({
         <Typography sx={styles.contentText}>{content.description || 'Не вказано'}</Typography>
       </Box>
 
-      <Box sx={styles.contentBlock}>
-        <Typography sx={styles.fieldLabel}>Контент</Typography>
-        <Typography sx={styles.contentText} component="pre">
-          {content.content ? JSON.stringify(content.content, null, 2) : 'Не вказано'}
-        </Typography>
-      </Box>
-
       <Box sx={styles.coverImageContainer}>
         {coverImage?.src ? (
           <img src={coverImage.src} alt={coverImage.alt} style={styles.coverImage as React.CSSProperties} />

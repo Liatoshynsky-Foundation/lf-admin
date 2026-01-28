@@ -6,8 +6,7 @@ export const styles = {
     borderRadius: '8px',
     display: 'flex',
     flexDirection: 'column',
-    gap: 2,
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+    gap: 2
   },
   metadataRow: {
     display: 'flex',

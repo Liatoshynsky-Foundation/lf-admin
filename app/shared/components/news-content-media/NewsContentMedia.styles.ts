@@ -4,7 +4,8 @@ export const styles = {
     flexDirection: 'row',
     gap: 3,
     flexWrap: 'wrap',
-    alignItems: 'flex-start'
+    alignItems: 'flex-start',
+    px: 4
   },
   section: {
     flex: 1,
@@ -12,7 +13,8 @@ export const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: 3,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fafafa',
+    border: '1px solid #e0e0e0',
     borderRadius: '8px',
     p: 3,
     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
@@ -25,7 +27,8 @@ export const styles = {
   },
   contentBlock: {
     p: 2,
-    backgroundColor: '#fafafa',
+    backgroundColor: '#ffffff',
+
     borderRadius: '8px',
     border: '1px solid #e0e0e0'
   },

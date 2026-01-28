@@ -80,7 +80,7 @@ export default function NewsItem({ params }: Props) {
   return (
     <Box sx={{ mb: 4 }}>
       <Box sx={{ ml: '-20px', mb: 4 }}>
-        <NewsDetailHeader title={newsData.title.uk} newsId={newsData.id} />
+        <NewsDetailHeader newsId={newsData.id} />
       </Box>
 
       <Box>

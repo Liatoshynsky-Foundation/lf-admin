@@ -8,11 +8,10 @@ import { styles } from './NewsDetailHeader.styles';
 import ArrowLeftIcon from '~/public/icons/arrowLeft.svg';
 
 type NewsDetailHeaderProps = {
-  title: string;
   newsId: string;
 };
 
-export const NewsDetailHeader = ({ title, newsId }: NewsDetailHeaderProps) => {
+export const NewsDetailHeader = ({ newsId }: NewsDetailHeaderProps) => {
   const router = useRouter();
 
   const handleBack = () => {
@@ -30,7 +29,7 @@ export const NewsDetailHeader = ({ title, newsId }: NewsDetailHeaderProps) => {
           <ArrowLeftIcon />
         </IconButton>
         <Typography variant="h5" fontWeight="bold">
-          {title}
+          Редагування новини
         </Typography>
       </Box>
 
