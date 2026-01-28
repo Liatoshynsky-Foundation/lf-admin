@@ -3,7 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { config as appConfig } from '~/back-config';
 import { initializeUploadModule } from '~/uploads/initialize';
 
-const uploadModule = initializeUploadModule(appConfig);
+let uploadModule: ReturnType<typeof initializeUploadModule> | null = null;
+
+const getUploadModule = () => {
+  uploadModule ??= initializeUploadModule(appConfig);
+  return uploadModule;
+};
 
 export async function POST(req: NextRequest) {
   try {
@@ -57,7 +62,7 @@ export async function POST(req: NextRequest) {
           size: file.size
         };
 
-        return uploadModule.uploadService.uploadFile(uploadedFile, options);
+        return getUploadModule().uploadService.uploadFile(uploadedFile, options);
       })
     );
 
@@ -75,7 +80,7 @@ export async function POST(req: NextRequest) {
           mimeType: r.mimeType,
           metadata: r.metadata
         })),
-        errors: failedUploads.map((r) => r.errors).flat()
+        errors: failedUploads.flatMap((r) => r.errors)
       },
       { status: failedUploads.length === 0 ? 201 : 207 }
     );

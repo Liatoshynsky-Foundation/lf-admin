@@ -3,7 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { config as appConfig } from '~/back-config';
 import { initializeUploadModule } from '~/uploads/initialize';
 
-const uploadModule = initializeUploadModule(appConfig);
+let uploadModule: ReturnType<typeof initializeUploadModule> | null = null;
+
+const getUploadModule = () => {
+  uploadModule ??= initializeUploadModule(appConfig);
+  return uploadModule;
+};
 
 export async function GET(req: NextRequest, context: { params: Promise<{ filename: string }> }) {
   try {
@@ -13,7 +18,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ filenam
       return NextResponse.json({ success: false, error: 'Filename is required' }, { status: 400 });
     }
 
-    const metadata = await uploadModule.uploadService.getFileMetadata(filename);
+    const metadata = await getUploadModule().uploadService.getFileMetadata(filename);
 
     if (!metadata) {
       return NextResponse.json({ success: false, error: 'File not found' }, { status: 404 });

@@ -3,7 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { config as appConfig } from '~/back-config';
 import { initializeUploadModule } from '~/uploads/initialize';
 
-const uploadModule = initializeUploadModule(appConfig);
+let uploadModule: ReturnType<typeof initializeUploadModule> | null = null;
+
+const getUploadModule = () => {
+  uploadModule ??= initializeUploadModule(appConfig);
+  return uploadModule;
+};
 
 export async function POST(req: NextRequest) {
   try {
@@ -57,7 +62,7 @@ export async function POST(req: NextRequest) {
       size: file.size
     };
 
-    const result = await uploadModule.uploadService.uploadFile(uploadedFile, options);
+    const result = await getUploadModule().uploadService.uploadFile(uploadedFile, options);
 
     if (!result.success) {
       return NextResponse.json({ success: false, errors: result.errors }, { status: 400 });

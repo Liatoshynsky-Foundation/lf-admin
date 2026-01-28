@@ -3,7 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { config as appConfig } from '~/back-config';
 import { initializeUploadModule } from '~/uploads/initialize';
 
-const uploadModule = initializeUploadModule(appConfig);
+let uploadModule: ReturnType<typeof initializeUploadModule> | null = null;
+
+const getUploadModule = () => {
+  uploadModule ??= initializeUploadModule(appConfig);
+  return uploadModule;
+};
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ filename: string }> }) {
   try {
@@ -22,13 +27,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ file
       );
     }
 
-    const fileBuffer = await uploadModule.uploadService.retrieveFile(filename, folder);
+    const fileBuffer = await getUploadModule().uploadService.retrieveFile(filename, folder);
 
     if (!fileBuffer) {
       return NextResponse.json({ success: false, error: 'File not found' }, { status: 404 });
     }
 
-    const metadata = await uploadModule.uploadService.getFileMetadata(filename, folder);
+    const metadata = await getUploadModule().uploadService.getFileMetadata(filename, folder);
 
     return new NextResponse(new Uint8Array(fileBuffer), {
       status: 200,
@@ -61,7 +66,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ f
       );
     }
 
-    const success = await uploadModule.uploadService.deleteFile(filename, folder);
+    const success = await getUploadModule().uploadService.deleteFile(filename, folder);
 
     if (!success) {
       return NextResponse.json({ success: false, error: 'Failed to delete file' }, { status: 400 });
