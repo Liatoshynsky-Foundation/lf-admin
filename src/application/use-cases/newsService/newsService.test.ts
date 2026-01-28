@@ -24,10 +24,10 @@ describe('NewsService', () => {
 
   const mockNews: News = {
     id: '507f1f77bcf86cd799439011',
-    publishedAt: new Date('2024-01-01'),
-    newsDate: new Date('2024-01-01'),
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01'),
+    publishedAt: '2024-01-01T00:00:00.000Z',
+    newsDate: '2024-01-01T00:00:00.000Z',
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
     title: {
       uk: 'Тестова новина',
       en: 'Test News'

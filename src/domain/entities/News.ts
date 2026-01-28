@@ -18,10 +18,10 @@ export type NewsImageBlock = {
 
 export type News = {
   id: string;
-  publishedAt: Date | null;
-  newsDate?: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
+  publishedAt: string | null;
+  newsDate?: string | null;
+  createdAt: string;
+  updatedAt: string;
   title: LocalizedContent;
   description?: LocalizedContent;
   content: LocalizedContent;

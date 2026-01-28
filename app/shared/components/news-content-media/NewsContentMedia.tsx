@@ -3,6 +3,7 @@
 import { Box, Typography } from '@mui/material';
 
 import { styles } from './NewsContentMedia.styles';
+import { InlineEditableText } from '~/shared/components/inline-editable-text/InlineEditableText';
 
 type NewsContent = {
   title: string;
@@ -17,16 +18,24 @@ type NewsContentMediaProps = {
     src: string;
     alt: string;
   };
+  onUkrainianTitleChange?: (newTitle: string) => Promise<void>;
+  onEnglishTitleChange?: (newTitle: string) => Promise<void>;
+  onUkrainianDescriptionChange?: (newDescription: string) => Promise<void>;
+  onEnglishDescriptionChange?: (newDescription: string) => Promise<void>;
 };
 
 const ContentLanguageSection = ({
   language,
   content,
-  coverImage
+  coverImage,
+  onTitleChange,
+  onDescriptionChange
 }: {
   language: string;
   content: NewsContent;
   coverImage?: { src: string; alt: string };
+  onTitleChange?: (newTitle: string) => Promise<void>;
+  onDescriptionChange?: (newDescription: string) => Promise<void>;
 }) => {
   return (
     <Box sx={styles.section}>
@@ -38,12 +47,32 @@ const ContentLanguageSection = ({
 
       <Box sx={styles.contentBlock}>
         <Typography sx={styles.fieldLabel}>Заголовок</Typography>
-        <Typography sx={styles.contentText}>{content.title || 'Не вказано'}</Typography>
+        {onTitleChange ? (
+          <InlineEditableText
+            value={content.title}
+            onSave={onTitleChange}
+            variant="body1"
+            placeholder="Введіть заголовок"
+          />
+        ) : (
+          <Typography sx={styles.contentText}>{content.title || 'Не вказано'}</Typography>
+        )}
       </Box>
 
       <Box sx={styles.contentBlock}>
         <Typography sx={styles.fieldLabel}>Опис</Typography>
-        <Typography sx={styles.contentText}>{content.description || 'Не вказано'}</Typography>
+        {onDescriptionChange ? (
+          <InlineEditableText
+            value={content.description}
+            onSave={onDescriptionChange}
+            variant="body1"
+            multiline
+            rows={4}
+            placeholder="Введіть опис"
+          />
+        ) : (
+          <Typography sx={styles.contentText}>{content.description || 'Не вказано'}</Typography>
+        )}
       </Box>
 
       <Box sx={styles.coverImageContainer}>
@@ -57,12 +86,32 @@ const ContentLanguageSection = ({
   );
 };
 
-export const NewsContentMedia = ({ englishContent, ukrainianContent, coverImage }: NewsContentMediaProps) => {
+export const NewsContentMedia = ({
+  englishContent,
+  ukrainianContent,
+  coverImage,
+  onUkrainianTitleChange,
+  onEnglishTitleChange,
+  onUkrainianDescriptionChange,
+  onEnglishDescriptionChange
+}: NewsContentMediaProps) => {
   return (
     <Box sx={styles.container}>
-      <ContentLanguageSection language="UK" content={ukrainianContent} coverImage={coverImage} />
+      <ContentLanguageSection
+        language="UK"
+        content={ukrainianContent}
+        coverImage={coverImage}
+        onTitleChange={onUkrainianTitleChange}
+        onDescriptionChange={onUkrainianDescriptionChange}
+      />
 
-      <ContentLanguageSection language="EN" content={englishContent} coverImage={coverImage} />
+      <ContentLanguageSection
+        language="EN"
+        content={englishContent}
+        coverImage={coverImage}
+        onTitleChange={onEnglishTitleChange}
+        onDescriptionChange={onEnglishDescriptionChange}
+      />
     </Box>
   );
 };

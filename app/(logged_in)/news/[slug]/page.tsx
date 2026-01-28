@@ -7,7 +7,15 @@ import { client } from '~/lib/utils/apollo-client';
 import { NewsContentMedia } from '~/shared/components/news-content-media/NewsContentMedia';
 import { NewsDetailHeader } from '~/shared/components/news-detail-header/NewsDetailHeader';
 import { NewsDetails } from '~/shared/components/news-details/NewsDetails';
-import { NewsBySlugDocument, NewsBySlugQuery, NewsBySlugQueryVariables } from '~/types/graphql/generated/graphql';
+import { NewsStatus } from '~/types/enums/common.enums';
+import {
+  NewsBySlugDocument,
+  NewsBySlugQuery,
+  NewsBySlugQueryVariables,
+  UpdateNewsDocument,
+  UpdateNewsMutation,
+  UpdateNewsMutationVariables
+} from '~/types/graphql/generated/graphql';
 
 interface Props {
   params: Promise<{
@@ -33,7 +41,8 @@ export default function NewsItem({ params }: Props) {
         setLoading(true);
         const { data, error } = await client.query<NewsBySlugQuery, NewsBySlugQueryVariables>({
           query: NewsBySlugDocument,
-          variables: { slug }
+          variables: { slug },
+          fetchPolicy: 'network-only' // Always fetch fresh data
         });
 
         if (error) {
@@ -50,6 +59,76 @@ export default function NewsItem({ params }: Props) {
 
     fetchNews();
   }, [slug]);
+
+  const updateNewsField = async (field: string, value: any) => {
+    if (!newsData) return;
+
+    try {
+      const { data, errors } = await client.mutate<UpdateNewsMutation, UpdateNewsMutationVariables>({
+        mutation: UpdateNewsDocument,
+        variables: {
+          id: newsData.id,
+          input: {
+            [field]: value
+          }
+        }
+      });
+
+      if (errors && errors.length > 0) {
+        throw new Error(errors[0].message);
+      }
+
+      if (data?.updateNews) {
+        setNewsData(data.updateNews);
+      }
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Failed to update news');
+    }
+  };
+
+  const handleUkrainianTitleChange = async (newTitle: string) => {
+    if (!newsData) return;
+
+    await updateNewsField('title', {
+      uk: newTitle,
+      en: newsData.title.en
+    });
+  };
+
+  const handleEnglishTitleChange = async (newTitle: string) => {
+    if (!newsData) return;
+
+    await updateNewsField('title', {
+      uk: newsData.title.uk,
+      en: newTitle
+    });
+  };
+
+  const handleUkrainianDescriptionChange = async (newDescription: string) => {
+    if (!newsData) return;
+
+    await updateNewsField('description', {
+      uk: newDescription,
+      en: newsData.description?.en || ''
+    });
+  };
+
+  const handleEnglishDescriptionChange = async (newDescription: string) => {
+    if (!newsData) return;
+
+    await updateNewsField('description', {
+      uk: newsData.description?.uk || '',
+      en: newDescription
+    });
+  };
+
+  const handleStatusChange = async (newStatus: NewsStatus) => {
+    await updateNewsField('status', newStatus);
+  };
+
+  const handlePublicationDateChange = async (newDate: string) => {
+    await updateNewsField('publishedAt', newDate);
+  };
 
   if (loading) {
     return (
@@ -88,6 +167,9 @@ export default function NewsItem({ params }: Props) {
           title={newsData.title.uk}
           status={newsData.status}
           publicationDate={newsData.publishedAt ?? undefined}
+          onTitleChange={handleUkrainianTitleChange}
+          onStatusChange={handleStatusChange}
+          onPublicationDateChange={handlePublicationDateChange}
         />
 
         <NewsContentMedia
@@ -105,6 +187,10 @@ export default function NewsItem({ params }: Props) {
             src: newsData.coverImage.src,
             alt: newsData.coverImage.alt.uk
           }}
+          onUkrainianTitleChange={handleUkrainianTitleChange}
+          onEnglishTitleChange={handleEnglishTitleChange}
+          onUkrainianDescriptionChange={handleUkrainianDescriptionChange}
+          onEnglishDescriptionChange={handleEnglishDescriptionChange}
         />
       </Box>
     </Box>

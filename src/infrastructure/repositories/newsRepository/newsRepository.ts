@@ -32,8 +32,8 @@ const dateToIso = (date: Date | string | null | undefined): string | null => {
 
 const toEntity = (doc: DbNews): News => ({
   id: doc._id.toString(),
-  publishedAt: doc.publishedAt,
-  newsDate: doc.newsDate ?? null,
+  publishedAt: dateToIso(doc.publishedAt),
+  newsDate: dateToIso(doc.newsDate),
   title: doc.title,
   description: doc.description,
   content: doc.content,
@@ -41,8 +41,8 @@ const toEntity = (doc: DbNews): News => ({
   coverImage: doc.coverImage,
   status: doc.status,
   meta: doc.meta,
-  createdAt: dateToIso(doc.createdAt) as unknown as News['createdAt'],
-  updatedAt: dateToIso(doc.updatedAt) as unknown as News['updatedAt']
+  createdAt: dateToIso(doc.createdAt) as string,
+  updatedAt: dateToIso(doc.updatedAt) as string
 });
 
 const buildNewsQuery = (filters?: Omit<NewsFilters, 'limit' | 'skip' | 'sortBy' | 'sortOrder'>): FilterQuery<any> => {
