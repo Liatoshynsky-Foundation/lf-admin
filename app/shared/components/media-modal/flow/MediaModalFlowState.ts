@@ -6,6 +6,22 @@ import type {
   SelectedMedia
 } from '../MediaModal.types';
 
+export type GalleryFilters = {
+  search: string;
+  favorites: string;
+  usage: string;
+};
+
+export type UsedFilters = {
+  search: string;
+  language: string;
+};
+
+export type TabFilters = {
+  gallery: GalleryFilters;
+  used: UsedFilters;
+};
+
 export type State = {
   tab: MediaModalTab;
   step: MediaModalStep;
@@ -13,6 +29,7 @@ export type State = {
   crop: CropResult | null;
   baselineCrop: CropResult | null;
   resetSeq: number;
+  filters: TabFilters;
 };
 
 export type Action =
@@ -22,7 +39,9 @@ export type Action =
   | { type: 'BACK' }
   | { type: 'RESET_CROP' }
   | { type: 'SET_BASELINE_CROP'; crop: CropResult | null }
-  | { type: 'SET_CROP'; crop: CropResult | null };
+  | { type: 'SET_CROP'; crop: CropResult | null }
+  | { type: 'SET_GALLERY_FILTERS'; filters: Partial<GalleryFilters> }
+  | { type: 'SET_USED_FILTERS'; filters: Partial<UsedFilters> };
 
 export const tabFromSelected = (s: SelectedMedia | null): MediaModalTab | null => {
   if (!s) return null;
@@ -55,7 +74,11 @@ export const buildInitialState = (initial?: MediaModalOpenState): State => {
     selected: initialSelected,
     crop,
     baselineCrop: crop,
-    resetSeq: 0
+    resetSeq: 0,
+    filters: {
+      gallery: { search: '', favorites: '', usage: '' },
+      used: { search: '', language: '' }
+    }
   };
 };
 
@@ -114,7 +137,23 @@ const handlers = {
 
   SET_BASELINE_CROP: (state, action) => setBaselineCrop(state, action.crop),
 
-  SET_CROP: (state, action) => (isSameCrop(state.crop, action.crop) ? state : { ...state, crop: action.crop })
+  SET_CROP: (state, action) => (isSameCrop(state.crop, action.crop) ? state : { ...state, crop: action.crop }),
+
+  SET_GALLERY_FILTERS: (state, action) => ({
+    ...state,
+    filters: {
+      ...state.filters,
+      gallery: { ...state.filters.gallery, ...action.filters }
+    }
+  }),
+
+  SET_USED_FILTERS: (state, action) => ({
+    ...state,
+    filters: {
+      ...state.filters,
+      used: { ...state.filters.used, ...action.filters }
+    }
+  })
 } satisfies {
   [K in Action['type']]: ActionHandler<K>;
 };
