@@ -5,151 +5,106 @@ import { useCallback } from 'react';
 import { newsErrors } from '~/constants/errors';
 import { safeMutate } from '~/lib/utils/safeMutate';
 import {
-  type AllNewsQueryVariables,
+  type CreateNewsInput,
   type CreateNewsMutation,
   type CreateNewsMutationVariables,
-  type DeleteNewsMutation,
   type DeleteNewsMutationVariables,
-  type NewsCountQueryVariables,
-  type PaginatedNewsQueryVariables,
-  type PublishNewsMutation,
-  type PublishNewsMutationVariables,
+  NewsFiltersInput,
+  NewsStatus,
+  type UpdateNewsInput,
   type UpdateNewsMutation,
   type UpdateNewsMutationVariables,
   useAllNewsQuery,
-  useArchiveNewsMutation,
   useCreateNewsMutation,
   useDeleteNewsMutation,
-  useHideNewsMutation,
   useIncrementNewsViewsMutation,
   useNewsCountQuery,
   usePaginatedNewsQuery,
   usePublishedNewsQuery,
-  usePublishNewsMutation,
-  useUnpublishNewsMutation,
   useUpdateNewsMutation
 } from '~/types/graphql/generated/graphql';
 
-export const useNewsQueries = () => {
-  const useAllNews = (variables?: AllNewsQueryVariables) => {
-    return useAllNewsQuery({ variables, fetchPolicy: 'network-only' });
-  };
+export const useAllNews = (filters?: NewsFiltersInput) =>
+  useAllNewsQuery({ variables: { filters }, fetchPolicy: 'network-only' });
 
-  const usePublishedNews = (variables?: AllNewsQueryVariables) => {
-    return usePublishedNewsQuery({ variables, fetchPolicy: 'cache-first' });
-  };
+export const usePublishedNews = (filters?: NewsFiltersInput) =>
+  usePublishedNewsQuery({ variables: { filters }, fetchPolicy: 'cache-first' });
 
-  const usePaginatedNews = (variables?: PaginatedNewsQueryVariables) => {
-    return usePaginatedNewsQuery({ variables, fetchPolicy: 'network-only' });
-  };
+export const usePaginatedNews = (page = 1, limit = 10, filters?: NewsFiltersInput) =>
+  usePaginatedNewsQuery({ variables: { page, limit, filters }, fetchPolicy: 'network-only' });
 
-  const useNewsCount = (variables?: NewsCountQueryVariables) => {
-    return useNewsCountQuery({ variables });
-  };
+export const useNewsCount = (status?: NewsStatus) => useNewsCountQuery({ variables: { status } });
 
-  return {
-    useAllNews,
-    usePublishedNews,
-    usePaginatedNews,
-    useNewsCount
-  };
-};
-
-export const useNewsMutations = () => {
-  const [createMutate, { loading: creating }] = useCreateNewsMutation();
-  const [updateMutate, { loading: updating }] = useUpdateNewsMutation();
-  const [publishMutate, { loading: publishing }] = usePublishNewsMutation();
-  const [unpublishMutate, { loading: unpublishing }] = useUnpublishNewsMutation();
-  const [archiveMutate, { loading: archiving }] = useArchiveNewsMutation();
-  const [hideMutate, { loading: hiding }] = useHideNewsMutation();
-  const [deleteMutate, { loading: deleting }] = useDeleteNewsMutation();
-  const [incrementViewsMutate] = useIncrementNewsViewsMutation();
-
+export const useCreateNews = () => {
+  const [mutate, meta] = useCreateNewsMutation();
   const createNews = useCallback(
-    async (variables: CreateNewsMutationVariables) => {
-      return safeMutate<CreateNewsMutation, CreateNewsMutationVariables>(
-        createMutate,
-        variables,
+    async (news: CreateNewsInput) =>
+      safeMutate<CreateNewsMutation, CreateNewsMutationVariables>(
+        mutate,
+        { input: news },
         newsErrors.NETWORK_ERROR_CREATE,
         newsErrors.FAILED_TO_CREATE
-      );
-    },
-    [createMutate]
+      ),
+    [mutate]
   );
+  return [createNews, meta] as const;
+};
 
+export const useUpdateNews = () => {
+  const [mutate, meta] = useUpdateNewsMutation();
   const updateNews = useCallback(
-    async (variables: UpdateNewsMutationVariables) => {
-      return safeMutate<UpdateNewsMutation, UpdateNewsMutationVariables>(
-        updateMutate,
+    async (variables: UpdateNewsMutationVariables) =>
+      safeMutate<UpdateNewsMutation, UpdateNewsMutationVariables>(
+        mutate,
         variables,
         newsErrors.NETWORK_ERROR_UPDATE,
         newsErrors.FAILED_TO_UPDATE
-      );
+      ),
+    [mutate]
+  );
+  return [updateNews, meta] as const;
+};
+
+export const useUpdateNewsStatus = () => {
+  const [mutate, { loading, data, error }] = useUpdateNewsMutation();
+  const status = data?.updateNews.status; // Placeholder for current status
+
+  const makeStatusUpdater = useCallback(
+    (status: NewsStatus) => {
+      return async (id: string, input?: { publishedAt?: string | null }) => {
+        const payload: UpdateNewsInput = { status };
+        if (status === NewsStatus.Published) {
+          payload.publishedAt = input?.publishedAt ?? new Date().toISOString();
+        }
+        return mutate({ variables: { id, input: payload } });
+      };
     },
-    [updateMutate]
+    [mutate]
   );
 
-  const publishNews = useCallback(
-    async (variables: PublishNewsMutationVariables) => {
-      return safeMutate<PublishNewsMutation, PublishNewsMutationVariables>(
-        publishMutate,
-        variables,
-        newsErrors.NETWORK_ERROR_PUBLISH,
-        newsErrors.FAILED_TO_PUBLISH
-      );
+  return [
+    {
+      publish: makeStatusUpdater(NewsStatus.Published),
+      unpublish: makeStatusUpdater(NewsStatus.Draft),
+      archive: makeStatusUpdater(NewsStatus.Archived),
+      hide: makeStatusUpdater(NewsStatus.Hidden)
     },
-    [publishMutate]
-  );
+    { status, loading, error }
+  ] as const;
+};
 
-  const unpublishNews = useCallback(
-    async (id: string) => {
-      return safeMutate(unpublishMutate, { id }, newsErrors.NETWORK_ERROR_UNPUBLISH, newsErrors.FAILED_TO_UNPUBLISH);
-    },
-    [unpublishMutate]
-  );
-
-  const archiveNews = useCallback(
-    async (id: string) => {
-      return safeMutate(archiveMutate, { id }, newsErrors.NETWORK_ERROR_ARCHIVE, newsErrors.FAILED_TO_ARCHIVE);
-    },
-    [archiveMutate]
-  );
-
-  const hideNews = useCallback(
-    async (id: string) => {
-      return safeMutate(hideMutate, { id }, newsErrors.NETWORK_ERROR_HIDE, newsErrors.FAILED_TO_HIDE);
-    },
-    [hideMutate]
-  );
-
+export const useDeleteNews = () => {
+  const [mutate, meta] = useDeleteNewsMutation();
   const deleteNews = useCallback(
-    async (variables: DeleteNewsMutationVariables) => {
-      return safeMutate<DeleteNewsMutation, DeleteNewsMutationVariables>(
-        deleteMutate,
-        variables,
-        newsErrors.NETWORK_ERROR_DELETE,
-        newsErrors.FAILED_TO_DELETE
-      );
-    },
-    [deleteMutate]
+    async (variables: DeleteNewsMutationVariables) =>
+      safeMutate(mutate, variables, newsErrors.NETWORK_ERROR_DELETE, newsErrors.FAILED_TO_DELETE),
+    [mutate]
   );
+  return [deleteNews, meta] as const;
+};
 
-  const incrementViews = useCallback(
-    async (id: string) => {
-      return incrementViewsMutate({ variables: { id } });
-    },
-    [incrementViewsMutate]
-  );
-
-  return {
-    createNews,
-    updateNews,
-    publishNews,
-    unpublishNews,
-    archiveNews,
-    hideNews,
-    deleteNews,
-    incrementViews,
-    loading: creating || updating || publishing || unpublishing || archiving || hiding || deleting
-  };
+export const useIncrementNewsViews = () => {
+  const [mutate, meta] = useIncrementNewsViewsMutation();
+  const incrementViews = useCallback(async (id: string) => mutate({ variables: { id } }), [mutate]);
+  return [incrementViews, meta] as const;
 };

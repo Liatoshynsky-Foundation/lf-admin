@@ -1,9 +1,9 @@
 import { AwilixContainer, createContainer } from 'awilix';
 
-import { registerRepositories, RepositoriesModule } from './modules/repositories';
-import { registerUseCases, UseCasesModule } from './modules/use-cases';
+import { registerRepositories, RepositoriesModule } from './modules/repositories.module';
+import { registerUseCases, UseCasesModule } from './modules/use-cases.module';
 
-type AwilixContainerType = AwilixContainer<RepositoriesModule & UseCasesModule>;
+export type AwilixContainerType = AwilixContainer<RepositoriesModule & UseCasesModule>;
 
 let container: AwilixContainerType | null = null;
 

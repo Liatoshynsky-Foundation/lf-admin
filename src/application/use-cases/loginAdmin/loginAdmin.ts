@@ -7,7 +7,7 @@ import { zEmailSchema } from '~/validators/auth.schema';
 
 export const loginAdmin = ({ adminRepository }: { adminRepository: AdminRepository }) => {
   return {
-    execute: async (email: string, password: string): Promise<{ id: string; type: adminTypes } | null> => {
+    execute: async (email: string, password: string): Promise<{ id: string; type: adminTypes }> => {
       const validatedEmail = zEmailSchema.parse(email);
 
       const admin = await adminRepository.findByEmail(validatedEmail);

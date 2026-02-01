@@ -1,13 +1,13 @@
-jest.mock('../../extractImageSrc/extractImageSrc');
-jest.mock('../../removeTmpFlags/removeTmpFlags');
-jest.mock('../../uploadService/upload', () => ({
+jest.mock('~/src/application/use-cases/extractImageSrc/extractImageSrc');
+jest.mock('~/src/application/use-cases/removeTmpFlags/removeTmpFlags');
+jest.mock('~/src/application/use-cases/uploadService/upload', () => ({
   blobStorageService: jest.fn()
 }));
 
-import { extractImageSrcs } from '../../extractImageSrc/extractImageSrc';
-import { removeTmpFlagsRecursively } from '../../removeTmpFlags/removeTmpFlags';
-import { blobStorageService } from '../../uploadService/upload';
 import { NewsContentInput, processNewsContent } from './processNewsContent';
+import { extractImageSrcs } from '~/src/application/use-cases/extractImageSrc/extractImageSrc';
+import { removeTmpFlagsRecursively } from '~/src/application/use-cases/removeTmpFlags/removeTmpFlags';
+import { blobStorageService } from '~/src/application/use-cases/uploadService/upload';
 
 const mockExtractImageSrcs = extractImageSrcs as jest.MockedFunction<typeof extractImageSrcs>;
 const mockRemoveTmpFlagsRecursively = removeTmpFlagsRecursively as jest.MockedFunction<

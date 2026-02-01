@@ -1,11 +1,11 @@
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 
-import { getJWT } from '../../../../config';
 import { createTokenService } from './createToken.service';
 import { AdminTokenPayload, RefreshTokenPayload } from '~/back-shared/types/tokens/types';
+import { getJWT } from '~/src/config';
 
-jest.mock('../../../../config', () => ({
+jest.mock('~/src/config', () => ({
   getJWT: {
     JWT_ACCESS_TOKEN_SECRET: 'test-access-secret-from-mock',
     JWT_REFRESH_TOKEN_SECRET: 'test-refresh-secret-from-mock'

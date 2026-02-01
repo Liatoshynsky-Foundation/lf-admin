@@ -1,0 +1,36 @@
+mutation CreateMediaMention($input: CreateMediaMentionInput!) {
+  createMediaMention(input: $input) {
+    url
+  }
+}
+
+mutation UpdateMediaMention($id: ID!, $input: UpdateMediaMentionInput!) {
+  updateMediaMention(id: $id, input: $input) {
+    id
+    url
+    title
+    description
+    coverImage {
+      src
+      alt
+      width
+      height
+    }
+    slug
+    status
+    publishedAt
+    createdAt
+    updatedAt
+    meta {
+      views
+    }
+  }
+}
+
+mutation AddMediaMentionView($id: ID!) {
+  addMediaMentionView(id: $id)
+}
+
+mutation DeleteMediaMention($id: ID!) {
+  deleteMediaMention(id: $id)
+}
