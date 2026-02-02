@@ -4,12 +4,13 @@ export const styles = {
     flexDirection: 'row',
     gap: 3,
     flexWrap: 'wrap',
-    alignItems: 'flex-start',
+    alignItems: 'stretch',
     px: 4
   },
   section: {
-    flex: 1,
+    flex: '1 1 0',
     minWidth: '400px',
+    maxWidth: '50%',
     display: 'flex',
     flexDirection: 'column',
     gap: 3,
@@ -28,9 +29,11 @@ export const styles = {
   contentBlock: {
     p: 2,
     backgroundColor: '#ffffff',
-
     borderRadius: '8px',
-    border: '1px solid #e0e0e0'
+    border: '1px solid #e0e0e0',
+    minHeight: '120px',
+    display: 'flex',
+    flexDirection: 'column'
   },
   coverImageContainer: {
     position: 'relative',
