@@ -8,20 +8,21 @@ import { GraphQLContext } from '~/back-shared/types/container/types';
 
 const mockLoginAdmin = { execute: jest.fn() };
 const mockTokenService = { generateTokens: jest.fn(), verifyRefreshToken: jest.fn() };
-const mockRefreshTokenService = {
-  addJTI: jest.fn(),
-  isExistsJTI: jest.fn(),
-  deleteJTI: jest.fn(),
+const mockRefreshTokenRepo = {
+  add: jest.fn(),
+  exists: jest.fn(),
+  deleteByJti: jest.fn(),
   deleteAllForAdmin: jest.fn()
 };
+
 const mockRequestContainer = {
-  resolve: jest.fn((dependencyName: string) => {
-    if (dependencyName === 'loginAdmin') return mockLoginAdmin;
-    if (dependencyName === 'createTokenService') return mockTokenService;
-    if (dependencyName === 'refreshTokenService') return mockRefreshTokenService;
-    return undefined;
-  })
+  cradle: {
+    loginAdmin: mockLoginAdmin,
+    createTokenService: mockTokenService,
+    refreshTokenRepository: mockRefreshTokenRepo
+  }
 };
+
 const baseMockContext: Partial<GraphQLContext> = {
   requestContainer: mockRequestContainer as any,
   setCookie: jest.fn(),
@@ -53,7 +54,7 @@ describe('GraphQL Mutations', () => {
       const result = await authMutation.login(null, mockArgs, baseMockContext as GraphQLContext);
       expect(mockLoginAdmin.execute).toHaveBeenCalledWith(mockArgs.email, mockArgs.password);
       expect(mockTokenService.generateTokens).toHaveBeenCalledWith(mockAdmin);
-      expect(mockRefreshTokenService.addJTI).toHaveBeenCalledWith(
+      expect(mockRefreshTokenRepo.add).toHaveBeenCalledWith(
         mockAdmin.id,
         mockTokens.refreshTokenJti,
         expect.any(Number),
@@ -119,7 +120,7 @@ describe('GraphQL Mutations', () => {
       mockTokenService.verifyRefreshToken.mockReturnValue(mockPayload);
       const result = await authMutation.logout(null, {}, mockContext as GraphQLContext);
       expect(mockTokenService.verifyRefreshToken).toHaveBeenCalledWith('valid-refresh-token');
-      expect(mockRefreshTokenService.deleteJTI).toHaveBeenCalledWith(mockPayload.jti);
+      expect(mockRefreshTokenRepo.deleteByJti).toHaveBeenCalledWith(mockPayload.jti);
       expect(mockContext.deleteCookie).toHaveBeenCalledTimes(2);
       expect(result).toBe(true);
     });
@@ -127,7 +128,7 @@ describe('GraphQL Mutations', () => {
     it('should only delete cookies if there is no token', async () => {
       const result = await authMutation.logout(null, {}, baseMockContext as GraphQLContext);
       expect(mockTokenService.verifyRefreshToken).not.toHaveBeenCalled();
-      expect(mockRefreshTokenService.deleteJTI).not.toHaveBeenCalled();
+      expect(mockRefreshTokenRepo.deleteByJti).not.toHaveBeenCalled();
       expect(baseMockContext.deleteCookie).toHaveBeenCalledTimes(2);
       expect(result).toBe(true);
     });
@@ -140,7 +141,7 @@ describe('GraphQL Mutations', () => {
 
       await authMutation.logout(null, {}, mockContext as GraphQLContext);
 
-      expect(mockRefreshTokenService.deleteJTI).not.toHaveBeenCalled();
+      expect(mockRefreshTokenRepo.deleteByJti).not.toHaveBeenCalled();
       expect(mockContext.deleteCookie).toHaveBeenCalledTimes(2);
     });
   });
@@ -160,25 +161,25 @@ describe('GraphQL Mutations', () => {
 
     it('should successfully refresh tokens if the old token and JTI are valid', async () => {
       mockTokenService.verifyRefreshToken.mockReturnValue(oldPayload);
-      mockRefreshTokenService.isExistsJTI.mockResolvedValue(true);
+      mockRefreshTokenRepo.exists.mockResolvedValue(true);
       mockTokenService.generateTokens.mockReturnValue(newTokens);
 
       const result = await authMutation.refreshToken(null, {}, mockContext as GraphQLContext);
 
-      expect(mockRefreshTokenService.isExistsJTI).toHaveBeenCalledWith(oldPayload.jti);
-      expect(mockRefreshTokenService.deleteJTI).toHaveBeenCalledWith(oldPayload.jti);
-      expect(mockRefreshTokenService.addJTI).toHaveBeenCalled();
+      expect(mockRefreshTokenRepo.exists).toHaveBeenCalledWith(oldPayload.jti);
+      expect(mockRefreshTokenRepo.deleteByJti).toHaveBeenCalledWith(oldPayload.jti);
+      expect(mockRefreshTokenRepo.add).toHaveBeenCalled();
       expect(mockContext.setCookie).toHaveBeenCalledTimes(2);
       expect(result).toEqual({ __typename: 'RefreshTokenPayload', success: true });
     });
 
     it('should delete all sessions and throw an error if the JTI is not valid', async () => {
       mockTokenService.verifyRefreshToken.mockReturnValue(oldPayload);
-      mockRefreshTokenService.isExistsJTI.mockResolvedValue(false);
+      mockRefreshTokenRepo.exists.mockResolvedValue(false);
 
       await expect(authMutation.refreshToken(null, {}, mockContext as GraphQLContext)).rejects.toThrow(GraphQLError);
 
-      expect(mockRefreshTokenService.deleteAllForAdmin).toHaveBeenCalledWith(oldPayload.id);
+      expect(mockRefreshTokenRepo.deleteAllForAdmin).toHaveBeenCalledWith(oldPayload.id);
       expect(mockContext.deleteCookie).toHaveBeenCalledTimes(2);
       expect(mockTokenService.generateTokens).not.toHaveBeenCalled();
       expect(mockContext.setCookie).not.toHaveBeenCalled();

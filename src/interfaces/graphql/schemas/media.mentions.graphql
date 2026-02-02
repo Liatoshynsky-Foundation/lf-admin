@@ -1,0 +1,89 @@
+type MediaMeta {
+  views: Int!
+}
+
+enum SortDirection {
+  ASC
+  DESC
+}
+
+enum MediaStatus {
+  DRAFT
+  PUBLISHED
+  HIDDEN
+  ARCHIVED
+  EDITING
+}
+
+type CoverImage {
+  src: String!
+  alt: String
+  width: Int
+  height: Int
+}
+
+type MediaMention {
+  id: ID!
+  url: String!
+  title: String!
+  description: String
+  coverImage: CoverImage
+  slug: String!
+  status: MediaStatus!
+  publishedAt: String
+  createdAt: String!
+  updatedAt: String!
+  meta: MediaMeta!
+}
+
+type PaginatedMediaMentions {
+  items: [MediaMention!]!
+  total: Int!
+  page: Int!
+  totalPages: Int!
+}
+
+input MediaMentionsFiltersInput {
+  status: MediaStatus
+  limit: Int
+  skip: Int
+  sortBy: String
+  sortOrder: SortDirection
+}
+
+input CreateMediaMentionInput {
+  url: String!
+}
+
+input CoverImageInput {
+  src: String!
+  alt: String
+  width: Int
+  height: Int
+}
+
+input UpdateMediaMentionInput {
+  url: String # Will need to re-fetch metadata if URL is changed
+  title: String
+  description: String
+  coverImage: CoverImageInput
+  slug: String
+  status: MediaStatus
+  publishedAt: String
+}
+
+extend type Query {
+  mediaMentionById(id: ID!): MediaMention
+  mediaMentionBySlug(slug: String!): MediaMention
+  allMediaMentions(filters: MediaMentionsFiltersInput): [MediaMention!]!
+  publishedMediaMentions(filters: MediaMentionsFiltersInput): [MediaMention!]!
+  paginatedMediaMentions(page: Int!, limit: Int!, filters: MediaMentionsFiltersInput): PaginatedMediaMentions!
+  mediaMentionsCount(status: MediaStatus): Int!
+}
+
+extend type Mutation {
+  createMediaMention(input: CreateMediaMentionInput!): MediaMention!
+  updateMediaMention(id: ID!, input: UpdateMediaMentionInput!): MediaMention!
+  addMediaMentionView(id: ID!): Int!
+  deleteMediaMention(id: ID!): Boolean!
+}

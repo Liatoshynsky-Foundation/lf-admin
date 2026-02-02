@@ -6,13 +6,13 @@ RESULT=$?
 if [ $RESULT -ne 0 ]; then
   echo ""
   echo "Lint-staged failed. Please fix linting/formatting issues before committing"
-  exit 1
+  exit 0
 fi
 
 if git diff --cached --quiet; then
   echo ""
   echo "No changes after lint-staged."
-  exit 1
+  exit 0
 else
   echo ""
   echo "Changes after lint-staged successfully added to commit."

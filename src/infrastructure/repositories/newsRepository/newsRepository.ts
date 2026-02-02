@@ -76,12 +76,7 @@ export const NewsRepository = ({ NewsModel }: NewsRepoDeps): INewsRepository => 
   });
 
   return {
-    findById: baseRepo.findById,
-    findAll: baseRepo.findAll,
-    update: baseRepo.update,
-    delete: baseRepo.delete,
-    count: baseRepo.count,
-
+    ...baseRepo,
     create: async (input: CreateNewsInput): Promise<News> => {
       await dbConnect();
 
@@ -94,13 +89,6 @@ export const NewsRepository = ({ NewsModel }: NewsRepoDeps): INewsRepository => 
 
       const newNews = await new NewsModel(newsData).save();
       return toEntity(newNews.toObject() as unknown as DbNews);
-    },
-
-    findBySlug: async (slug: string): Promise<News | null> => {
-      await dbConnect();
-
-      const doc = await NewsModel.findOne({ slug }).lean<DbNews>();
-      return doc ? toEntity(doc) : null;
     },
 
     incrementViews: async (id: string): Promise<News | null> => {

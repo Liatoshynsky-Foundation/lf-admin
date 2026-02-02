@@ -7,3 +7,7 @@ export interface AdminTokenPayload {
 export interface RefreshTokenPayload {
   id: string;
 }
+
+export interface HasJTI {
+  jti: string;
+}
