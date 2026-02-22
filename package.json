@@ -78,7 +78,7 @@
     "@types/graphql-validation-complexity": "^0.4.4",
     "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^20",
+    "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "auto": "^11.3.0",
