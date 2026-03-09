@@ -1,32 +1,12 @@
-import { NewsStatus } from '~/types/enums/common.enums';
+import {BaseContentFields} from '~/domain/entities/BaseContent';
+import {NewsStatus} from '~/types/enums/common.enums';
 
-export type LocalizedContent = {
-  uk: unknown;
-  en: unknown;
-};
-
-export type NewsMeta = {
-  views: number;
-};
-
-export type NewsImageBlock = {
-  src: string;
-  alt: LocalizedContent;
-  caption: LocalizedContent;
-  isTmp?: boolean;
-};
-
-export type News = {
+export type News = BaseContentFields & {
   id: string;
-  publishedAt?: Date;
   newsDate?: Date;
-  createdAt: Date;
-  updatedAt: Date;
-  title: LocalizedContent;
-  description?: LocalizedContent;
-  content: LocalizedContent;
-  slug: string;
-  coverImage: NewsImageBlock;
+  content: {
+    uk: unknown;
+    en: unknown;
+  };
   status: NewsStatus;
-  meta: NewsMeta;
 };
