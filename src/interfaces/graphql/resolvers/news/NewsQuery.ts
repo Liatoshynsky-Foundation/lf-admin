@@ -1,36 +1,31 @@
-import { endpointRepositoryHandler } from '../helpers';
-import { NewsStatus } from '~/types/enums/common.enums';
-
-type NewsFiltersInput = {
-  status?: string;
-  slug?: string;
-  sortBy?: string;
-  sortOrder?: string;
-};
-
-const mapFilters = (filters?: NewsFiltersInput) => {
-  if (!filters) return undefined;
-
-  return {
-    status: filters.status as NewsStatus | undefined,
-    slug: filters.slug,
-    sortBy: filters.sortBy as 'createdAt' | 'updatedAt' | 'publishedAt' | 'newsDate' | undefined,
-    sortOrder: filters.sortOrder as 'asc' | 'desc' | undefined
-  };
-};
+import {endpointRepositoryHandler, mapFilters} from '../helpers';
+import { NewsFilters } from '~/domain/repositories/newsRepository';
+import {NewsStatus} from '~/types/enums/common.enums';
 
 const endpointHandler = endpointRepositoryHandler('newsRepository');
 
 export const NewsQuery = {
-  newsById: endpointHandler(async ({ args: { id }, repo }) => repo.findById(id)),
+  newsById: endpointHandler(async ({args: {id}, repo}) => repo.findById(id)),
 
-  newsBySlug: endpointHandler(async ({ args: { slug }, repo }) => repo.findBySlug(slug)),
+  newsBySlug: endpointHandler(async ({args: {slug}, repo}) => repo.findBySlug(slug)),
 
-  allNews: endpointHandler(async ({ args: { filters }, repo }) => repo.findAll(mapFilters(filters))),
-
-  paginatedNews: endpointHandler(async ({ args: { page, limit, filters }, repo }) =>
-    repo.findPaginated(page, limit, mapFilters(filters))
+  allNews: endpointHandler(async ({args: {filters}, repo}) =>
+    repo.findAll(mapFilters<NewsFilters>(filters))
   ),
 
-  newsCount: endpointHandler(async ({ args: { status }, repo }) => repo.count({ status }))
+  paginatedNews: endpointHandler(async ({args: {page, limit, filters}, repo}) =>
+    repo.findPaginated(page, limit, mapFilters<NewsFilters>(filters))
+  ),
+
+  publishedNews: endpointHandler(async ({args: {filters}, repo}) =>
+    repo.findAll(mapFilters<NewsFilters>({...filters, status: NewsStatus.Published}))
+  ),
+
+  draftNews: endpointHandler(async ({args: {filters}, repo}) =>
+    repo.findAll(mapFilters<NewsFilters>({...filters, status: NewsStatus.Draft}))
+  ),
+
+  newsCount: endpointHandler(async ({args: {status}, repo}) =>
+    repo.count(status ? {status: status as NewsStatus} : undefined)
+  )
 };

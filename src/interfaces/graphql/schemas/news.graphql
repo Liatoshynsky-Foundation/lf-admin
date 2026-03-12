@@ -38,11 +38,17 @@ enum NewsSortBy {
   newsDate
 }
 
+input NewsSortOptions {
+  field: NewsSortBy!
+  order: SortOrder!
+}
+
 input NewsFiltersInput {
   status: NewsStatus
+  limit: Int
+  skip: Int
   slug: String
-  sortBy: NewsSortBy
-  sortOrder: SortOrder
+  sort: [NewsSortOptions!]
 }
 
 input CreateNewsInput {
@@ -81,6 +87,7 @@ extend type Query {
   newsBySlug(slug: String!): News
   allNews(filters: NewsFiltersInput): [News!]!
   publishedNews(filters: NewsFiltersInput): [News!]!
+  draftNews(filters: NewsFiltersInput): [News!]!
   paginatedNews(page: Int!, limit: Int!, filters: NewsFiltersInput): PaginatedNews!
   newsCount(status: NewsStatus): Int!
 }

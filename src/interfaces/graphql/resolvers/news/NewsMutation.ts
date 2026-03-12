@@ -4,39 +4,30 @@ import { endpointRepositoryHandler } from '../helpers';
 import { processNewsContent } from './processNewsContent/processNewsContent';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
-import type { LocalizedContent, News, NewsImageBlock } from '~/domain/entities/News';
+import {LocalizedBoolean, LocalizedContent, LocalizedImage, LocalizedString} from '~/domain/entities/BaseContent';
+import type { News } from '~/domain/entities/News';
 import { newsServiceErrors } from '~/src/constants/errors';
 import { CreateNewsInput, NewsRepository, UpdateNewsInput } from '~/src/domain/repositories/newsRepository';
 import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerator';
 import { NewsStatus } from '~/types/enums/common.enums';
 
-type CreateNewsGQLInput = {
-  title: LocalizedContent;
-  description?: LocalizedContent;
+export type CreateNewsGQLInput = {
+  adminTitle: string;
+  title: LocalizedString;
+  description: LocalizedString;
+  keywords: LocalizedString;
+  allowIndexation: LocalizedBoolean;
   content: LocalizedContent;
-  coverImage: NewsImageBlock;
+  coverImage: LocalizedImage;
   newsDate?: string;
-  status?: string;
+  status?: NewsStatus;
   publishedAt?: string;
 };
 
-type UpdateNewsGQLInput = {
-  title?: LocalizedContent;
-  description?: LocalizedContent;
-  content?: LocalizedContent;
-  coverImage?: NewsImageBlock;
-  newsDate?: string;
-  status?: string;
-  publishedAt?: string;
-};
+export type UpdateNewsGQLInput = Partial<CreateNewsGQLInput>;
 
 type CreateNewsArgs = { input: CreateNewsGQLInput };
 type UpdateNewsArgs = { id: string; input: UpdateNewsGQLInput };
-
-const parseDate = (dateStr?: string | null): Date | undefined => {
-  if (!dateStr) return undefined;
-  return new Date(dateStr);
-};
 
 const extractTitleForSlug = (title: UpdateNewsGQLInput['title']): string => {
   if (typeof title === 'object' && title && 'uk' in title) {
@@ -121,17 +112,12 @@ export const NewsMutation = {
     const processedInput = await processNewsContent(input);
 
     const newsData: CreateNewsInput = {
-      title: processedInput.title,
-      description: processedInput.description,
-      content: processedInput.content,
-      coverImage: processedInput.coverImage,
-      newsDate: parseDate(input.newsDate),
+      ...processedInput,
       slug,
-      status: input.status as NewsStatus,
-      publishedAt: parseDate(input.publishedAt),
-      meta: {
-        views: 0
-      }
+      newsDate: input.newsDate,
+      status: input.status || NewsStatus.Draft,
+      publishedAt: input.publishedAt,
+      meta: { views: 0 }
     };
 
     return repo.create(newsData);
@@ -147,11 +133,7 @@ export const NewsMutation = {
     const repo = context.requestContainer.cradle.newsRepository;
 
     const updateData: UpdateNewsInput = {
-      title: input.title,
-      description: input.description,
-      newsDate: parseDate(input.newsDate),
-      status: input.status as NewsStatus | undefined,
-      publishedAt: parseDate(input.publishedAt)
+      ...input
     };
 
     if (input.content || input.description || input.coverImage) {

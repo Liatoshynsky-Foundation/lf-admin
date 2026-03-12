@@ -2,11 +2,14 @@ query MediaMentionById($id: ID!) {
   mediaMentionById(id: $id) {
     id
     url
-    title
-    description
+    adminTitle
+    title { uk en }
+    description { uk en }
+    keywords { uk en }
+    allowIndexation { uk en }
     coverImage {
       src
-      alt
+      alt { uk en }
       width
       height
     }
@@ -15,9 +18,7 @@ query MediaMentionById($id: ID!) {
     publishedAt
     createdAt
     updatedAt
-    meta {
-      views
-    }
+    meta { views }
   }
 }
 
@@ -25,11 +26,14 @@ query MediaMentionBySlug($slug: String!) {
   mediaMentionBySlug(slug: $slug) {
     id
     url
-    title
-    description
+    adminTitle
+    title { uk en }
+    description { uk en }
+    keywords { uk en }
+    allowIndexation { uk en }
     coverImage {
       src
-      alt
+      alt { uk en }
       width
       height
     }
@@ -38,9 +42,7 @@ query MediaMentionBySlug($slug: String!) {
     publishedAt
     createdAt
     updatedAt
-    meta {
-      views
-    }
+    meta { views }
   }
 }
 
@@ -48,11 +50,12 @@ query AllMediaMentions($filters: MediaMentionsFiltersInput) {
   allMediaMentions(filters: $filters) {
     id
     url
-    title
-    description
+    adminTitle
+    title { uk en }
+    description { uk en }
     coverImage {
       src
-      alt
+      alt { uk en }
       width
       height
     }
@@ -61,9 +64,7 @@ query AllMediaMentions($filters: MediaMentionsFiltersInput) {
     publishedAt
     createdAt
     updatedAt
-    meta {
-      views
-    }
+    meta { views }
   }
 }
 
@@ -71,11 +72,12 @@ query PublishedMediaMentions($filters: MediaMentionsFiltersInput) {
   publishedMediaMentions(filters: $filters) {
     id
     url
-    title
-    description
+    adminTitle
+    title { uk en }
+    description { uk en }
     coverImage {
-      src  
-      alt
+      src
+      alt { uk en }
       width
       height
     }
@@ -84,9 +86,7 @@ query PublishedMediaMentions($filters: MediaMentionsFiltersInput) {
     publishedAt
     createdAt
     updatedAt
-    meta {
-      views
-    }
+    meta { views }
   }
 }
 
@@ -95,11 +95,12 @@ query PaginatedMediaMentions($page: Int = 1, $limit: Int = 10, $filters: MediaMe
     items {
       id
       url
-      title
-      description
+      adminTitle
+      title { uk en }
+      description { uk en }
       coverImage {
         src
-        alt
+        alt { uk en }
         width
         height
       }

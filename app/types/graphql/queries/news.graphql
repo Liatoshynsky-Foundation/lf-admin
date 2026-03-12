@@ -1,15 +1,17 @@
 query NewsById($id: ID!) {
   newsById(id: $id) {
     id
-    publishedAt
-    newsDate
-    createdAt
-    updatedAt
+    adminTitle
     title {
       uk
       en
     }
+    slug
     description {
+      uk
+      en
+    }
+    keywords {
       uk
       en
     }
@@ -17,7 +19,6 @@ query NewsById($id: ID!) {
       uk
       en
     }
-    slug
     coverImage {
       src
       alt {
@@ -29,8 +30,18 @@ query NewsById($id: ID!) {
         en
       }
       isTmp
+      width
+      height
     }
     status
+    allowIndexation {
+      uk
+      en
+    }
+    newsDate
+    publishedAt
+    createdAt
+    updatedAt
     meta {
       views
     }
@@ -40,15 +51,17 @@ query NewsById($id: ID!) {
 query NewsBySlug($slug: String!) {
   newsBySlug(slug: $slug) {
     id
-    publishedAt
-    newsDate
-    createdAt
-    updatedAt
+    adminTitle
     title {
       uk
       en
     }
+    slug
     description {
+      uk
+      en
+    }
+    keywords {
       uk
       en
     }
@@ -56,7 +69,6 @@ query NewsBySlug($slug: String!) {
       uk
       en
     }
-    slug
     coverImage {
       src
       alt {
@@ -70,6 +82,8 @@ query NewsBySlug($slug: String!) {
       isTmp
     }
     status
+    newsDate
+    publishedAt
     meta {
       views
     }
@@ -79,36 +93,15 @@ query NewsBySlug($slug: String!) {
 query AllNews($filters: NewsFiltersInput) {
   allNews(filters: $filters) {
     id
-    publishedAt
-    newsDate
-    createdAt
-    updatedAt
+    adminTitle
     title {
       uk
       en
     }
-    description {
-      uk
-      en
-    }
-    content {
-      uk
-      en
-    }
     slug
-    coverImage {
-      src
-      alt {
-        uk
-        en
-      }
-      caption {
-        uk
-        en
-      }
-      isTmp
-    }
     status
+    newsDate
+    publishedAt
     meta {
       views
     }
@@ -118,19 +111,7 @@ query AllNews($filters: NewsFiltersInput) {
 query PublishedNews($filters: NewsFiltersInput) {
   publishedNews(filters: $filters) {
     id
-    publishedAt
-    newsDate
-    createdAt
-    updatedAt
     title {
-      uk
-      en
-    }
-    description {
-      uk
-      en
-    }
-    content {
       uk
       en
     }
@@ -141,55 +122,38 @@ query PublishedNews($filters: NewsFiltersInput) {
         uk
         en
       }
-      caption {
-        uk
-        en
-      }
-      isTmp
     }
-    status
+    newsDate
+    publishedAt
     meta {
       views
     }
   }
 }
 
-query PaginatedNews($page: Int = 1, $limit: Int = 10, $filters: NewsFiltersInput) {
+query DraftNews($filters: NewsFiltersInput) {
+  draftNews(filters: $filters) {
+    id
+    adminTitle
+    updatedAt
+  }
+}
+
+query PaginatedNews($page: Int!, $limit: Int!, $filters: NewsFiltersInput) {
   paginatedNews(page: $page, limit: $limit, filters: $filters) {
     news {
       id
-      publishedAt
-      newsDate
-      createdAt
-      updatedAt
+      adminTitle
       title {
         uk
         en
       }
-      description {
-        uk
-        en
-      }
-      content {
-        uk
-        en
-      }
       slug
+      status
+      newsDate
+      publishedAt
       coverImage {
         src
-        alt {
-          uk
-          en
-        }
-        caption {
-          uk
-          en
-        }
-        isTmp
-      }
-      status
-      meta {
-        views
       }
     }
     total

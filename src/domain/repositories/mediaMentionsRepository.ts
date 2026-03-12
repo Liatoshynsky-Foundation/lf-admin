@@ -1,8 +1,18 @@
-import { MediaMentionEntity, MediaMentionEntityRaw, MediaMentionFilters } from '../entities/MediaMentions';
-import { BaseRepository } from '~/infrastructure/repositories/baseRepository/baseRepository';
-import { Result } from '~/types/common';
+import { MediaMentionEntity, MediaMentionFilters } from '../entities/MediaMentions';
+import {FiltersInput, IBaseRepository} from '~/domain/repositories/baseRepository';
+import {MediaStatus} from '~/types/enums/common.enums';
 
-export interface MediaMentionsRepository extends BaseRepository<MediaMentionEntity, MediaMentionFilters> {
-  create(mention: Omit<MediaMentionEntityRaw, 'status'>): Promise<Result<MediaMentionEntity>>;
-  addView(id: string): Promise<Result<number>>;
+export type MediaMentionFilters = FiltersInput & {
+  status?: MediaStatus;
+};
+
+export type CreateMediaMentionInput = Omit<MediaMentionEntity, 'id' | 'createdAt' | 'updatedAt' | 'meta'> & {
+  meta?: Partial<MediaMentionEntity['meta']>;
+};
+
+export type UpdateMediaMentionInput = Partial<Omit<MediaMentionEntity, 'id' | 'createdAt' | 'updatedAt'>>;
+
+export interface MediaMentionsRepository extends IBaseRepository<MediaMentionEntity, MediaMentionFilters> {
+  create(input: CreateMediaMentionInput): Promise<MediaMentionEntity>;
+  incrementViews(id: string): Promise<number>;
 }

@@ -1,0 +1,38 @@
+mutation CreateEvent($input: CreateEventInput!) {
+    createEvent(input: $input) {
+        id
+        adminTitle
+        slug
+        status
+        title { uk en }
+    }
+}
+
+mutation UpdateEvent($id: ID!, $input: UpdateEventInput!) {
+    updateEvent(id: $id, input: $input) {
+        id
+        adminTitle
+        slug
+        status
+        title { uk en }
+        description { uk en }
+        content { uk en }
+        coverImage {
+            src
+            alt { uk en }
+        }
+    }
+}
+
+mutation IncrementEventViews($id: ID!) {
+    incrementEventViews(id: $id) {
+        id
+        meta {
+            views
+        }
+    }
+}
+
+mutation DeleteEvent($id: ID!) {
+    deleteEvent(id: $id)
+}

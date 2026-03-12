@@ -9,6 +9,12 @@ import {
 } from './parserRoutines';
 import { parseJsonLd, unescapeEntities } from './parserUtils';
 import { MediaMentionEntityRaw } from '~/domain/entities/MediaMentions';
+import { LocalizedString } from '~/types/common';
+
+const toLocalized = (value: string): LocalizedString => ({
+  uk: value,
+  en: value,
+});
 
 export default async function parseMediaMention(
   url: string
@@ -17,19 +23,21 @@ export default async function parseMediaMention(
     method: 'GET',
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; MediaMentionsParser/1.0)' }
   });
+
   if (!resp.ok) {
     throw new Error(`Failed to fetch URL: ${resp.status} ${resp.statusText}`);
   }
+
   const html = await resp.text();
   const parsed = Parser(html);
 
   return {
     url,
-    title: parsed.title,
-    description: parsed.description,
+    title: toLocalized(parsed.title),
+    description: toLocalized(parsed.description),
     coverImage: {
       src: parsed.image.src,
-      alt: parsed.image.alt,
+      alt: toLocalized(parsed.image.alt),
       width: parsed.image.width,
       height: parsed.image.height
     },
@@ -69,7 +77,6 @@ export function parseAttributes(attrStr: string): Record<string, string> {
   while ((m = re.exec(attrStr)) !== null) {
     const name = m[1].toLowerCase();
     const raw = m[2] ?? m[3] ?? m[4] ?? '';
-    // unescape backslash escapes
     const value = raw.replaceAll(/\\(["'\\])/g, '$1');
     out[name] = value;
   }
@@ -106,7 +113,7 @@ export function Parser(html_content: string): ParsedData {
     }
   }
 
-  const jsonld = parseJsonLd(content) ?? {};
+  const jsonld = (parseJsonLd(content) as Record<string, unknown>) ?? {};
 
   return {
     type: ParseType(metaMap, jsonld) || UNKNOWN,

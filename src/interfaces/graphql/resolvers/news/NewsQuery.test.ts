@@ -1,25 +1,96 @@
 import { NewsQuery } from './NewsQuery';
+import type { GraphQLContext } from '~/back-shared/types/container/types';
+import type { NewsRepository } from '~/domain/repositories/newsRepository';
+import { NewsStatus } from '~/types/enums/common.enums';
+import { NewsFiltersInput } from '~/types/graphql/generated/graphql';
 
-describe('NewsQuery', () => {
-  it('should map filters and call findAll', async () => {
-    const repo = { findAll: jest.fn().mockResolvedValue(['n']) };
-    const ctx = { admin: true, requestContainer: { cradle: { newsRepository: repo } } } as any;
+describe('NewsQuery Resolvers', () => {
+  const mockRepo: jest.Mocked<Partial<NewsRepository>> = {
+    findAll: jest.fn(),
+    findPaginated: jest.fn(),
+    count: jest.fn(),
+    findById: jest.fn(),
+    findBySlug: jest.fn()
+  };
 
-    const res = await NewsQuery.allNews(
-      {},
-      { filters: { status: 'PUBLISHED', slug: 's', sortBy: 'createdAt', sortOrder: 'asc' } },
-      ctx
-    );
-    expect(res).toEqual(['n']);
-    expect(repo.findAll).toHaveBeenCalledWith({
-      status: 'PUBLISHED',
-      slug: 's',
-      sortBy: 'createdAt',
-      sortOrder: 'asc'
+  const context = {
+    admin: true,
+    requestContainer: {
+      cradle: { newsRepository: mockRepo as NewsRepository }
+    }
+  } as unknown as GraphQLContext;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('allNews & Complex Filtering', () => {
+    it('should map full filters input including slug and status', async () => {
+      const args = {
+        filters: {
+          slug: 'test-slug',
+          status: NewsStatus.Published,
+          limit: 10,
+          skip: 0
+        } as NewsFiltersInput
+      };
+
+      await NewsQuery.allNews({}, args, context);
+
+      expect(mockRepo.findAll).toHaveBeenCalledWith({
+        slug: 'test-slug',
+        status: NewsStatus.Published,
+        limit: 10,
+        skip: 0,
+        sort: undefined
+      });
+    });
+
+    it('publishedNews: should force published status even if filters provide another', async () => {
+      const args = { filters: { status: NewsStatus.Draft } as NewsFiltersInput };
+
+      await NewsQuery.publishedNews({}, args, context);
+
+      expect(mockRepo.findAll).toHaveBeenCalledWith(expect.objectContaining({
+        status: NewsStatus.Published
+      }));
+    });
+  });
+
+  describe('paginatedNews', () => {
+    it('should pass page and limit parameters correctly', async () => {
+      const args = {
+        page: 2,
+        limit: 5,
+        filters: { slug: 'search' } as NewsFiltersInput
+      };
+
+      await NewsQuery.paginatedNews({}, args, context);
+
+      expect(mockRepo.findPaginated).toHaveBeenCalledWith(
+        2,
+        5,
+        expect.objectContaining({ slug: 'search' })
+      );
     });
   });
 
   it('should throw when admin missing', async () => {
-    await expect(NewsQuery.allNews({}, { filters: {} } as any, { admin: false } as any)).rejects.toThrow();
+    const invalidContext = { admin: false } as unknown as GraphQLContext;
+    const args = { filters: {} as NewsFiltersInput };
+
+    await expect(NewsQuery.allNews({}, args, invalidContext)).rejects.toThrow();
+  });
+
+  describe('newsCount', () => {
+    it('should call count without status if not provided', async () => {
+      await NewsQuery.newsCount({}, { status: undefined }, context);
+      expect(mockRepo.count).toHaveBeenCalledWith(undefined);
+    });
+
+    it('should call count with specific status', async () => {
+      await NewsQuery.newsCount({}, { status: NewsStatus.Archived }, context);
+      expect(mockRepo.count).toHaveBeenCalledWith({ status: NewsStatus.Archived });
+    });
   });
 });

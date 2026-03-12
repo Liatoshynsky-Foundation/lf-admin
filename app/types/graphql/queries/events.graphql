@@ -1,0 +1,77 @@
+query EventById($id: ID!) {
+    eventById(id: $id) {
+        id
+        adminTitle
+        eventLink
+        slug
+        status
+        title { uk en }
+        description { uk en }
+        keywords { uk en }
+        allowIndexation { uk en }
+        content { uk en }
+        coverImage {
+            src
+            width
+            height
+            alt { uk en }
+            caption { uk en }
+        }
+        publishedAt
+        createdAt
+        updatedAt
+        meta { views }
+    }
+}
+
+query EventBySlug($slug: String!) {
+    eventBySlug(slug: $slug) {
+        id
+        adminTitle
+        eventLink
+        slug
+        status
+        title { uk en }
+        description { uk en }
+        keywords { uk en }
+        allowIndexation { uk en }
+        content { uk en }
+        coverImage {
+            src
+            width
+            height
+            alt { uk en }
+            caption { uk en }
+        }
+        publishedAt
+        createdAt
+        updatedAt
+        meta { views }
+    }
+}
+
+query PaginatedEvents($page: Int!, $limit: Int!, $filters: EventFiltersInput) {
+    paginatedEvents(page: $page, limit: $limit, filters: $filters) {
+        items {
+            id
+            adminTitle
+            eventLink
+            slug
+            status
+            title { uk en }
+            coverImage {
+                src
+                alt { uk en }
+            }
+            publishedAt
+            meta { views }
+        }
+        total
+        page
+        totalPages
+    }
+}
+
+query EventsCount($status: EventStatus) {
+    eventsCount(status: $status)
+}

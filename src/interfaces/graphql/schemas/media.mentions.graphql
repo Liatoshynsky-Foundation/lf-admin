@@ -34,8 +34,8 @@ input MediaMentionsFiltersInput {
   status: MediaStatus
   limit: Int
   skip: Int
-  sortBy: String
-  sortOrder: SortOrder
+  slug: String
+  sort: [SortOptions!]
 }
 
 input CreateMediaMentionInput {

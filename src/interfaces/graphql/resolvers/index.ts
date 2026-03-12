@@ -1,7 +1,9 @@
 import { authMutation as AdminMutation } from './admin/AuthMutation';
 import { blobMutations as BlobMutation } from './blobStorage/blobMutation';
-import { MediaMentionsMutation } from './media-mentions/Mutation';
-import { MediaMentionsQuery } from './media-mentions/Query';
+import { EventsMutation } from './events/EventsMutation';
+import { EventsQuery } from './events/EventsQuery';
+import { MediaMentionsMutation } from './media-mentions/MedeaMentionMutation';
+import { MediaMentionsQuery } from './media-mentions/MedeaMentionQuery';
 import { NewsMutation } from './news/NewsMutation';
 import { NewsQuery } from './news/NewsQuery';
 import { PageMutation } from './page/PageMutation';
@@ -13,11 +15,13 @@ export const resolvers = {
     ...BlobMutation,
     ...PageMutation,
     ...NewsMutation,
-    ...MediaMentionsMutation
+    ...MediaMentionsMutation,
+    ...EventsMutation
   },
   Query: {
     ...AdminQuery,
     ...NewsQuery,
-    ...MediaMentionsQuery
+    ...MediaMentionsQuery,
+    ...EventsQuery
   }
 };

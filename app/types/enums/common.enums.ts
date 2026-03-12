@@ -19,3 +19,15 @@ export type MediaStatus = BaseContentStatuses;
 
 export const EventStatus = BaseContentStatuses;
 export type EventStatus = BaseContentStatuses;
+
+export enum SortOrder {
+  Asc = 'asc',
+  Desc = 'desc'
+}
+
+export enum SortByDate {
+  CreatedAt = 'createdAt',
+  UpdatedAt = 'updatedAt',
+  PublishedAt = 'publishedAt',
+  AdminTitle = 'adminTitle'
+}

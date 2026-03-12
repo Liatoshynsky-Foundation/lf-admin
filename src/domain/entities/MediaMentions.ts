@@ -1,5 +1,5 @@
 import {BaseContentFields} from '~/domain/entities/BaseContent';
-import { BaseEntity, BaseFilters } from '~/infrastructure/repositories/baseRepository/baseRepository';
+import {BaseEntity} from '~/domain/repositories/baseRepository';
 import {MediaStatus} from '~/types/enums/common.enums';
 
 export type MediaMentionEntityRaw = BaseContentFields & {
@@ -9,8 +9,7 @@ export type MediaMentionEntityRaw = BaseContentFields & {
 
 export type MediaMentionEntity = BaseEntity & MediaMentionEntityRaw;
 
-export type MediaMentionFiltersRaw = {
+export type MediaMentionFilters = {
   status?: MediaStatus;
 };
 
-export type MediaMentionFilters = BaseFilters & MediaMentionFiltersRaw;

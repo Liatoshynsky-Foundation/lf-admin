@@ -64,11 +64,17 @@ input UpdateEventInput {
     publishedAt: String
 }
 
+input EventSortOptions {
+    field: EventSortBy!
+    order: SortOrder!
+}
+
 input EventFiltersInput {
+    limit: Int
+    skip: Int
     status: EventStatus
     slug: String
-    sortBy: EventSortBy
-    sortOrder: SortOrder
+    sort: [EventSortOptions!]
 }
 
 extend type Query {

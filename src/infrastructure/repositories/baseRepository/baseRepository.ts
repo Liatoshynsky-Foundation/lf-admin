@@ -1,51 +1,24 @@
 import { FilterQuery, Model, Types, UpdateQuery } from 'mongoose';
 
+import {
+  BaseEntity,
+  FiltersInput,
+  IBaseRepository, PaginationFilters,
+  QueryFilters,
+  SortCriteria
+} from '~/domain/repositories/baseRepository';
 import dbConnect from '~/infrastructure/db/connect';
 
-export type BaseEntity = {
-  id: string;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-};
-
-export type PaginationFilters = {
-  limit?: number;
-  skip?: number;
-};
-
-export type SortingFilters = {
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-};
-
-export type BaseFilters = PaginationFilters & SortingFilters;
-
-export type QueryFilters<TFilters extends BaseFilters> = Omit<TFilters, keyof PaginationFilters | keyof SortingFilters>;
-
-export type BaseRepository<TEntity extends BaseEntity, TFilters extends BaseFilters = BaseFilters> = {
-  findById(id: string): Promise<TEntity | null>;
-  findBySlug(slug: string): Promise<TEntity | null>;
-  findAll(filters?: TFilters): Promise<TEntity[]>;
-  update(id: string, input: Partial<Omit<TEntity, keyof BaseEntity>>): Promise<TEntity | null>;
-  delete(id: string): Promise<boolean>;
-  count(filters?: QueryFilters<TFilters>): Promise<number>;
-  findPaginated(
-    page: number,
-    limit: number,
-    filters?: Omit<TFilters, keyof PaginationFilters>
-  ): Promise<{ items: TEntity[]; total: number; page: number; totalPages: number }>;
-};
-
-type CreateBaseRepositoryOptions<TEntity extends BaseEntity, TDbDoc, TFilters extends BaseFilters> = {
+export const createBaseRepository = <
+    TEntity extends BaseEntity,
+    TDbDoc,
+    TFilters extends FiltersInput
+>(options: {
   model: Model<TDbDoc>;
   toEntity: (doc: TDbDoc) => TEntity;
   buildQuery?: (filters?: QueryFilters<TFilters>) => FilterQuery<TDbDoc>;
   getDefaultSort?: (filters?: TFilters) => Record<string, 1 | -1>;
-};
-
-export const createBaseRepository = <TEntity extends BaseEntity, TDbDoc, TFilters extends BaseFilters = BaseFilters>(
-  options: CreateBaseRepositoryOptions<TEntity, TDbDoc, TFilters>
-): BaseRepository<TEntity, TFilters> => {
+}): IBaseRepository<TEntity, TFilters> => {
   const { model, toEntity, buildQuery = () => ({}), getDefaultSort } = options;
 
   const extractQueryFilters = (filters?: TFilters): QueryFilters<TFilters> | undefined => {
@@ -82,14 +55,18 @@ export const createBaseRepository = <TEntity extends BaseEntity, TDbDoc, TFilter
     findAll: async (filters?: TFilters): Promise<TEntity[]> => {
       await dbConnect();
 
-      const query = buildQuery ? buildQuery(extractQueryFilters(filters)) : {};
+      const query = buildQuery ? buildQuery(extractQueryFilters(filters as QueryFilters<TFilters>)) : {};
 
-      /* eslint-disable indent */
-      const sort = getDefaultSort
-        ? getDefaultSort(filters)
-        : {
-            [filters?.sortBy ?? 'createdAt']: filters?.sortOrder === 'asc' ? (1 as const) : (-1 as const)
-          };
+      let sort: { [p: string]: number } = { createdAt: -1 };
+
+      if (filters?.sort && filters.sort.length > 0) {
+        sort = {};
+        filters.sort.forEach((item: SortCriteria) => {
+          sort[item.sortBy] = item.sortOrder === 'asc' ? 1 : -1;
+        });
+      } else if (getDefaultSort) {
+        sort = getDefaultSort(filters);
+      }
 
       const queryBuilder = model.find(query).sort(sort);
 
@@ -102,7 +79,7 @@ export const createBaseRepository = <TEntity extends BaseEntity, TDbDoc, TFilter
       }
 
       const docs = await queryBuilder.lean<TDbDoc[]>();
-      return docs.map(toEntity);
+      return docs.map(doc => toEntity(doc as TDbDoc));
     },
 
     findPaginated: async (
@@ -124,7 +101,7 @@ export const createBaseRepository = <TEntity extends BaseEntity, TDbDoc, TFilter
       const countFilters = filters
         ? (Object.fromEntries(
             Object.entries(filters).filter(([key]) => key !== 'sortBy' && key !== 'sortOrder')
-          ) as Omit<TFilters, keyof BaseFilters>)
+          ) as Omit<TFilters, keyof FiltersInput>)
         : undefined;
 
       const [items, total] = await Promise.all([repository.findAll(queryFilters), repository.count(countFilters)]);
@@ -144,8 +121,13 @@ export const createBaseRepository = <TEntity extends BaseEntity, TDbDoc, TFilter
         return null;
       }
 
+      const dataWithTimestamp = {
+        ...input,
+        updatedAt: new Date().toISOString()
+      };
+
       const updated = await model
-        .findByIdAndUpdate(id, input as unknown as UpdateQuery<TDbDoc>, {
+        .findByIdAndUpdate(id, dataWithTimestamp as unknown as UpdateQuery<TDbDoc>, {
           new: true,
           runValidators: true
         })

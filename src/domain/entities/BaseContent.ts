@@ -8,6 +8,11 @@ export type LocalizedBoolean = {
     en: boolean;
 };
 
+export type LocalizedContent = {
+    uk: unknown;
+    en: unknown;
+};
+
 export type LocalizedImage = {
     src: string;
     alt: LocalizedString;
@@ -25,9 +30,9 @@ export type BaseContentFields = {
     allowIndexation: LocalizedBoolean;
     slug: string;
     coverImage: LocalizedImage;
-    publishedAt?: Date;
-    createdAt: Date;
-    updatedAt: Date;
+    publishedAt?: string;
+    createdAt: string;
+    updatedAt: string;
     meta: {
         views: number;
     };

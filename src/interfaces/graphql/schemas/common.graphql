@@ -53,3 +53,8 @@ enum SortOrder {
     asc
     desc
 }
+
+input SortOptions {
+    field: String!
+    order: SortOrder!
+}
