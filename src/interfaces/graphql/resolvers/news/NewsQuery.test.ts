@@ -1,11 +1,11 @@
 import { NewsQuery } from './NewsQuery';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
-import type { NewsRepository } from '~/domain/repositories/newsRepository';
+import {INewsRepository} from '~/domain/repositories/newsRepository';
 import { NewsStatus } from '~/types/enums/common.enums';
 import { NewsFiltersInput } from '~/types/graphql/generated/graphql';
 
 describe('NewsQuery Resolvers', () => {
-  const mockRepo: jest.Mocked<Partial<NewsRepository>> = {
+  const mockRepo: jest.Mocked<Partial<INewsRepository>> = {
     findAll: jest.fn(),
     findPaginated: jest.fn(),
     count: jest.fn(),
@@ -16,7 +16,7 @@ describe('NewsQuery Resolvers', () => {
   const context = {
     admin: true,
     requestContainer: {
-      cradle: { newsRepository: mockRepo as NewsRepository }
+      cradle: { newsRepository: mockRepo as INewsRepository }
     }
   } as unknown as GraphQLContext;
 
@@ -32,7 +32,7 @@ describe('NewsQuery Resolvers', () => {
           status: NewsStatus.Published,
           limit: 10,
           skip: 0
-        } as NewsFiltersInput
+        } as unknown as NewsFiltersInput
       };
 
       await NewsQuery.allNews({}, args, context);
@@ -47,7 +47,9 @@ describe('NewsQuery Resolvers', () => {
     });
 
     it('publishedNews: should force published status even if filters provide another', async () => {
-      const args = { filters: { status: NewsStatus.Draft } as NewsFiltersInput };
+      const args = {
+        filters: { status: NewsStatus.Draft } as unknown as NewsFiltersInput
+      };
 
       await NewsQuery.publishedNews({}, args, context);
 
@@ -84,8 +86,8 @@ describe('NewsQuery Resolvers', () => {
 
   describe('newsCount', () => {
     it('should call count without status if not provided', async () => {
-      await NewsQuery.newsCount({}, { status: undefined }, context);
-      expect(mockRepo.count).toHaveBeenCalledWith(undefined);
+      await NewsQuery.newsCount({}, { status: NewsStatus.Archived as any }, context);
+      expect(mockRepo.count).toHaveBeenCalledWith({ status: NewsStatus.Archived });
     });
 
     it('should call count with specific status', async () => {

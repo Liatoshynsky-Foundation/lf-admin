@@ -2,7 +2,7 @@ import { Model } from 'mongoose';
 
 import {DbNews, NewsRepository} from './newsRepository';
 import { News } from '~/domain/entities/News';
-import { CreateNewsInput, NewsRepository as INewsRepository } from '~/domain/repositories/newsRepository';
+import {CreateNewsInput, INewsRepository} from '~/domain/repositories/newsRepository';
 import { NewsStatus, SortByDate, SortOrder } from '~/types/enums/common.enums';
 
 jest.mock('mongoose', () => ({
@@ -53,10 +53,13 @@ describe('NewsRepository - Advanced Filtering Logic', () => {
         if (Object.keys(this.state.sort).length > 0) {
           result.sort((a, b) => {
             for (const [field, order] of Object.entries(this.state.sort)) {
-              const valA = (a as unknown as Record<string, unknown>)[field];
-              const valB = (b as unknown as Record<string, unknown>)[field];
+              const valA = (a as unknown as Record<string, string | number>)[field];
+              const valB = (b as unknown as Record<string, string | number>)[field];
+
               if (valA === valB) continue;
-              return valA > valB ? order : -order;
+
+              if (valA > valB) return order;
+              if (valA < valB) return -order;
             }
             return 0;
           });

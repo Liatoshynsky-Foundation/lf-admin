@@ -1,11 +1,11 @@
 import { MediaMentionsQuery } from './MedeaMentionQuery';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
-import type { MediaMentionsRepository } from '~/domain/repositories/mediaMentionsRepository';
+import type { IMediaMentionsRepository } from '~/domain/repositories/mediaMentionsRepository';
 import {  SortOrder } from '~/types/enums/common.enums';
 import type { MediaMentionsFiltersInput } from '~/types/graphql/generated/graphql';
 
 describe('MediaMentionsQuery Resolvers', () => {
-  const mockRepo: jest.Mocked<Partial<MediaMentionsRepository>> = {
+  const mockRepo: jest.Mocked<Partial<IMediaMentionsRepository>> = {
     findAll: jest.fn(),
     findPaginated: jest.fn(),
     findById: jest.fn(),
@@ -15,15 +15,15 @@ describe('MediaMentionsQuery Resolvers', () => {
   const context = {
     admin: true,
     requestContainer: {
-      cradle: { mediaMentionsRepository: mockRepo as MediaMentionsRepository }
+      cradle: { mediaMentionsRepository: mockRepo as IMediaMentionsRepository }
     }
   } as unknown as GraphQLContext;
 
   it('allMediaMentions: should map complex sort array accurately', async () => {
-    const args: { filters: MediaMentionsFiltersInput } = {
+    const args = {
       filters: {
         sort: [{ field: 'adminTitle', order: SortOrder.Desc }]
-      }
+      } as unknown as MediaMentionsFiltersInput
     };
 
     await MediaMentionsQuery.allMediaMentions({}, args, context);

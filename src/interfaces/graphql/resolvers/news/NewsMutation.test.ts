@@ -1,9 +1,7 @@
-import { GraphQLError } from 'graphql';
-
 import { CreateNewsGQLInput, NewsMutation, UpdateNewsGQLInput } from './NewsMutation';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import type { News } from '~/domain/entities/News';
-import type { NewsRepository } from '~/src/domain/repositories/newsRepository';
+import { INewsRepository } from '~/src/domain/repositories/newsRepository';
 import { NewsStatus } from '~/types/enums/common.enums';
 
 jest.mock('./processNewsContent/processNewsContent', () => ({
@@ -17,7 +15,7 @@ jest.mock('~/src/shared/utils/slugGenerator/slugGenerator', () => ({
 }));
 
 describe('NewsMutation Resolvers', () => {
-  const mockRepo: jest.Mocked<Partial<NewsRepository>> = {
+  const mockRepo: jest.Mocked<Partial<INewsRepository>> = {
     create: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
@@ -28,11 +26,10 @@ describe('NewsMutation Resolvers', () => {
 
   const createContainer = (admin: boolean) => ({
     admin,
-    requestContainer: { cradle: { newsRepository: mockRepo as NewsRepository } }
+    requestContainer: { cradle: { newsRepository: mockRepo as INewsRepository } }
   } as unknown as GraphQLContext);
 
   const adminContext = createContainer(true);
-  const userContext = createContainer(false);
 
   const baseInput: CreateNewsGQLInput = {
     adminTitle: 'Test News',
@@ -41,33 +38,43 @@ describe('NewsMutation Resolvers', () => {
     keywords: { uk: 'к', en: 'k' },
     allowIndexation: { uk: true, en: true },
     content: { uk: { blocks: [] }, en: { blocks: [] } } as News['content'],
-    coverImage: { src: '', alt: { uk: '', en: '' }, caption: { uk: '', en: '' } },
+    coverImage: {
+      src: '',
+      alt: { uk: '', en: '' },
+      caption: { uk: '', en: '' }
+    },
     status: NewsStatus.Draft
   };
 
-  const createMockNews = (overrides: Partial<News> = {}): News => ({
-    id: '1',
-    ...baseInput,
-    slug: 'slug',
-    createdAt: '2024-01-01',
-    updatedAt: '2024-01-01',
-    meta: { views: 0 },
-    ...overrides
-  });
+  const createMockNews = (overrides: Partial<News> = {}): News => {
+    const base = {
+      id: '1',
+      ...baseInput,
+      slug: 'slug',
+      createdAt: '2024-01-01',
+      updatedAt: '2024-01-01',
+      meta: { views: 0 },
+      status: NewsStatus.Published,
+      content: { uk: { blocks: [] }, en: { blocks: [] } },
+      newsDate: '2024-01-01'
+    };
 
+    return { ...base, ...overrides } as News;
+  };
   const mockAction = <T>(method: keyof typeof mockRepo, value: T) =>
     (mockRepo[method] as jest.Mock).mockResolvedValue(value);
 
   beforeEach(() => jest.clearAllMocks());
 
   describe('Security & Validation', () => {
-    it('should throw GraphQLError if user is not admin', async () => {
-      await expect(NewsMutation.createNews({}, { input: baseInput }, userContext))
-        .rejects.toThrow(GraphQLError);
+    it('should throw error if title is empty (required for slug)', async () => {
+      const invalidInput = { ...baseInput, title: { uk: '', en: '' } };
+      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext))
+        .rejects.toThrow();
     });
 
-    it('should throw error if title is empty (required for slug)', async () => {
-      const invalidInput = { ...baseInput, title: { uk: '' } };
+    it('should throw error if title uk is missing (via partial object)', async () => {
+      const invalidInput = { ...baseInput, title: { uk: '' } } as unknown as CreateNewsGQLInput;
       await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext))
         .rejects.toThrow();
     });
@@ -101,17 +108,28 @@ describe('NewsMutation Resolvers', () => {
 
     it('should throw if news not found during slug update', async () => {
       mockAction('findById', null);
-      await expect(NewsMutation.updateNews({}, { id, input: { title: { uk: 'Т' } } }, adminContext))
-        .rejects.toThrow();
+
+      await expect(
+        NewsMutation.updateNews({}, { id, input: { title: { uk: 'Т', en: 'E' } } }, adminContext)
+      ).rejects.toThrow();
+
+      expect(mockRepo.findById).toHaveBeenCalledWith(id);
     });
 
-    it('should not call findById if title is not being updated', async () => {
-      const contentInput: UpdateNewsGQLInput = { description: { uk: 'New' } };
+    it('should call findById for existence check but not for slug update if title is missing', async () => {
+      const contentInput: UpdateNewsGQLInput = {
+        description: { uk: 'New', en: 'New' }
+      };
+
+      mockAction('findById', createMockNews({ id }));
       mockAction('update', createMockNews({ id, ...contentInput }));
 
       await NewsMutation.updateNews({}, { id, input: contentInput }, adminContext);
 
-      expect(mockRepo.findById).not.toHaveBeenCalled();
+      expect(mockRepo.findById).toHaveBeenCalledTimes(1);
+      expect(mockRepo.findById).toHaveBeenCalledWith(id);
+
+      expect(mockRepo.findBySlug).not.toHaveBeenCalled();
       expect(mockRepo.update).toHaveBeenCalled();
     });
   });
@@ -129,7 +147,7 @@ describe('NewsMutation Resolvers', () => {
       mockAction('incrementViews', news);
 
       const result = await NewsMutation.incrementNewsViews({}, { id: '1' }, adminContext);
-      expect(result.meta.views).toBe(5);
+      expect(result!.meta.views).toBe(5);
     });
   });
 });

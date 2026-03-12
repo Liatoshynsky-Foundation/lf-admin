@@ -16,7 +16,7 @@ export type LocalizedContent = {
 export type LocalizedImage = {
     src: string;
     alt: LocalizedString;
-    caption: LocalizedString;
+    caption?: LocalizedString;
     isTmp?: boolean;
     width?: number | null;
     height?: number | null;
@@ -30,7 +30,7 @@ export type BaseContentFields = {
     allowIndexation: LocalizedBoolean;
     slug: string;
     coverImage: LocalizedImage;
-    publishedAt?: string;
+    publishedAt?: string | null;
     createdAt: string;
     updatedAt: string;
     meta: {

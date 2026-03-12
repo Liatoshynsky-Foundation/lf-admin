@@ -2,7 +2,9 @@ import { Model } from 'mongoose';
 
 import { createBaseRepository } from '../baseRepository/baseRepository';
 import {MediaMentionEntity} from '~/domain/entities/MediaMentions';
-import {    CreateMediaMentionInput,
+import {
+  CreateMediaMentionInput,
+  IMediaMentionsRepository,
   MediaMentionFilters
 } from '~/domain/repositories/mediaMentionsRepository';
 import dbConnect from '~/infrastructure/db/connect';
@@ -45,7 +47,7 @@ const toEntity = (doc: DbMediaMention): MediaMentionEntity =>
     publishedAt: doc.publishedAt ?? undefined,
   });
 
-export const MediaMentionsRepository = ({ MediaMentionsModel }: MediaMentionRepoDeps) => {
+export const MediaMentionsRepository = ({ MediaMentionsModel }: MediaMentionRepoDeps): IMediaMentionsRepository => {
   const baseRepo = createBaseRepository<MediaMentionEntity, DbMediaMention, MediaMentionFilters>({
     model: MediaMentionsModel,
     toEntity,
@@ -71,12 +73,9 @@ export const MediaMentionsRepository = ({ MediaMentionsModel }: MediaMentionRepo
       return toEntity(newMention.toObject() as unknown as DbMediaMention);
     },
 
-    incrementViews: async (id: string): Promise<number> => {
+    incrementViews: async (id: string): Promise<MediaMentionEntity | null> => {
       await dbConnect();
-
-      if (!/^[0-9a-fA-F]{24}$/.test(id)) {
-        return 0;
-      }
+      if (!/^[0-9a-fA-F]{24}$/.test(id)) return null;
 
       const updated = await MediaMentionsModel.findByIdAndUpdate(
         id,
@@ -87,7 +86,7 @@ export const MediaMentionsRepository = ({ MediaMentionsModel }: MediaMentionRepo
         { new: true }
       ).lean<DbMediaMention>();
 
-      return updated?.meta?.views ?? 0;
+      return updated ? toEntity(updated) : null;
     }
   };
 };

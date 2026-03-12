@@ -7,7 +7,7 @@ import { NewsStatus } from '~/types/enums/common.enums';
 const newsSchema = new Schema<News>(
   {
     ...baseContentSchemaFields,
-    newsDate: { type: string, default: null },
+    newsDate: { type: String, default: null },
     content: {
       uk: { type: Object, required: true },
       en: { type: Object, required: true }

@@ -17,6 +17,8 @@ interface UpdateEventArgs {
     input: UpdateEventInput;
 }
 
+interface IncrementViewsArgs { id: string }
+
 const endpointHandler = endpointRepositoryHandler('eventsRepository');
 
 export const EventsMutation = {
@@ -54,7 +56,10 @@ export const EventsMutation = {
     }
 
     const repo = context.requestContainer.cradle.eventsRepository;
-    const updateData: UpdateEventInput = { ...input };
+    const updateData = { ...input };
+    if (updateData.meta && updateData.meta.views === undefined) {
+      delete updateData.meta;
+    }
 
     if (input.title?.uk) {
       updateData.slug = await generateUniqueSlug(input.title.uk, {
@@ -65,7 +70,7 @@ export const EventsMutation = {
       });
     }
 
-    const res = await repo.update(id, updateData);
+    const res = await repo.update(id, updateData as Parameters<typeof repo.update>[1]);
     if (!res) throw new GraphQLError('EVENT_NOT_FOUND', { extensions: { code: 'EVENT_NOT_FOUND' } });
     return res;
   },
@@ -81,5 +86,7 @@ export const EventsMutation = {
     return repo.delete(id);
   },
 
-  incrementEventViews: endpointHandler(async ({ args: { id }, repo }) => repo.incrementViews(id))
+  incrementEventViews: endpointHandler<IncrementViewsArgs, EventsEntity | null>(
+    async ({ args: { id }, repo }) => repo.incrementViews(id)
+  )
 };

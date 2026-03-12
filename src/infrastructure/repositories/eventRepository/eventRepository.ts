@@ -2,7 +2,7 @@ import { Model } from 'mongoose';
 
 import { createBaseRepository } from '../baseRepository/baseRepository';
 import { EventsEntity } from '~/domain/entities/Events';
-import { CreateEventInput, EventFilters, EventsRepository as IEventsRepository } from '~/domain/repositories/eventsRepository';
+import { CreateEventInput, EventFilters, IEventsRepository } from '~/domain/repositories/eventsRepository';
 import dbConnect from '~/infrastructure/db/connect';
 import {buildBaseQuery, createToEntity, getBaseSort} from '~/infrastructure/repositories/helpers';
 import { EventStatus } from '~/types/enums/common.enums';

@@ -3,7 +3,7 @@ import { GraphQLError } from 'graphql';
 import { CreateMediaMentionGQLInput, MediaMentionsMutation, UpdateMediaMentionGQLInput } from './MedeaMentionMutation';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { MediaMentionEntity } from '~/domain/entities/MediaMentions';
-import type { MediaMentionsRepository } from '~/domain/repositories/mediaMentionsRepository';
+import type { IMediaMentionsRepository } from '~/domain/repositories/mediaMentionsRepository';
 import { MediaStatus } from '~/types/enums/common.enums';
 
 jest.mock('~/src/shared/utils/slugGenerator/slugGenerator', () => ({
@@ -11,7 +11,7 @@ jest.mock('~/src/shared/utils/slugGenerator/slugGenerator', () => ({
 }));
 
 describe('media-mentions Mutation', () => {
-  const mockRepo: jest.Mocked<Partial<MediaMentionsRepository>> = {
+  const mockRepo: jest.Mocked<Partial<IMediaMentionsRepository>> = {
     create: jest.fn(),
     update: jest.fn(),
     findBySlug: jest.fn(),
@@ -22,7 +22,7 @@ describe('media-mentions Mutation', () => {
   const adminContext = {
     admin: true,
     requestContainer: {
-      cradle: { mediaMentionsRepository: mockRepo as MediaMentionsRepository }
+      cradle: { mediaMentionsRepository: mockRepo as IMediaMentionsRepository }
     }
   } as unknown as GraphQLContext;
 
@@ -127,7 +127,7 @@ describe('media-mentions Mutation', () => {
 
       const result = await MediaMentionsMutation.addMediaMentionView({}, { id: '1' }, adminContext);
 
-      expect(result.meta.views).toBe(1);
+      expect(result!.meta.views).toBe(1);
       expect(mockRepo.incrementViews).toHaveBeenCalledWith('1');
     });
   });

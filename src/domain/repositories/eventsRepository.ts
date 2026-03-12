@@ -11,10 +11,11 @@ export type CreateEventInput = Omit<EventsEntity, 'id' | 'createdAt' | 'updatedA
 };
 
 export type UpdateEventInput = Partial<CreateEventInput> & {
+    meta?: { views: number };
     slug?: string;
 };
 
-export type EventsRepository = IBaseRepository<EventsEntity, EventFilters> & {
+export type IEventsRepository = IBaseRepository<EventsEntity, EventFilters> & {
     create(input: CreateEventInput): Promise<EventsEntity>;
     incrementViews(id: string): Promise<EventsEntity | null>;
 };

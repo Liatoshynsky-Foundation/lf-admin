@@ -25,7 +25,7 @@ export const createBaseRepository = <
     if (!filters) return undefined;
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { limit, skip, sortBy, sortOrder, ...queryFilters } = filters;
+    const { limit, skip, sort, ...queryFilters } = filters;
     return queryFilters as QueryFilters<TFilters>;
   };
 
@@ -55,15 +55,17 @@ export const createBaseRepository = <
     findAll: async (filters?: TFilters): Promise<TEntity[]> => {
       await dbConnect();
 
-      const query = buildQuery ? buildQuery(extractQueryFilters(filters as QueryFilters<TFilters>)) : {};
+      const queryFilters = extractQueryFilters(filters);
+      const query = buildQuery(queryFilters);
 
-      let sort: { [p: string]: number } = { createdAt: -1 };
+      let sort: Record<string, 1 | -1> = { createdAt: -1 };
 
       if (filters?.sort && filters.sort.length > 0) {
-        sort = {};
+        const customSort: Record<string, 1 | -1> = {};
         filters.sort.forEach((item: SortCriteria) => {
-          sort[item.sortBy] = item.sortOrder === 'asc' ? 1 : -1;
+          customSort[item.sortBy as string] = item.sortOrder === 'asc' ? 1 : -1;
         });
+        sort = customSort;
       } else if (getDefaultSort) {
         sort = getDefaultSort(filters);
       }
@@ -97,14 +99,13 @@ export const createBaseRepository = <
         skip
       } as TFilters;
 
-      /* eslint-disable indent */
-      const countFilters = filters
-        ? (Object.fromEntries(
-            Object.entries(filters).filter(([key]) => key !== 'sortBy' && key !== 'sortOrder')
-          ) as Omit<TFilters, keyof FiltersInput>)
-        : undefined;
+       
+      const countFilters = extractQueryFilters(queryFilters);
 
-      const [items, total] = await Promise.all([repository.findAll(queryFilters), repository.count(countFilters)]);
+      const [items, total] = await Promise.all([
+        repository.findAll(queryFilters),
+        repository.count(countFilters)
+      ]);
 
       return {
         items,

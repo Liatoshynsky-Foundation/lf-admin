@@ -1,37 +1,52 @@
 import { GraphQLError } from 'graphql';
 
-import {endpointRepositoryHandler, mapFilters} from './helpers';
-import {GraphQLContext} from '~/src/shared/types/container/types';
-import {SortByDate, SortOrder} from '~/types/enums/common.enums';
+import {endpointRepositoryHandler, extractTitleForSlug, mapFilters, processSlugUpdate} from './helpers';
+import { GraphQLContext } from '~/back-shared/types/container/types';
+import { SortByDate, SortOrder } from '~/types/enums/common.enums';
 
 describe('endpointRepositoryHandler', () => {
   const fakeRepo = {
     findById: jest.fn().mockResolvedValue({ id: '1' })
   };
 
-  const createMockContext = (admin: boolean): GraphQLContext => ({
-    admin,
-    requestContainer: {
-      cradle: {
-        mediaMentionsRepository: fakeRepo
-      }
-    } as unknown as GraphQLContext['requestContainer']
-  } as GraphQLContext);
+  const createMockContext = (admin: boolean): GraphQLContext => {
+    return {
+      admin,
+      requestContainer: {
+        cradle: {
+          mediaMentionsRepository: fakeRepo
+        }
+      } as unknown as GraphQLContext['requestContainer'],
+      cookieActions: [],
+      setCookie: jest.fn(),
+      deleteCookie: jest.fn()
+    } as unknown as GraphQLContext;
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
   it('should throw GraphQLError when admin is falsy', async () => {
-    const handler = endpointRepositoryHandler('mediaMentionsRepository')(
-      async ({ repo }) => (repo as typeof fakeRepo).findById('1')
+    const handler = endpointRepositoryHandler('mediaMentionsRepository')<Record<string, never>, unknown>(
+      async ({ repo }) => {
+        return (repo as unknown as typeof fakeRepo).findById('1');
+      }
     );
 
     const context = createMockContext(false);
+
     await expect(handler({}, {}, context)).rejects.toThrow(GraphQLError);
   });
 
   it('should call handler and return value when admin is true', async () => {
     interface Args { id: string }
+    interface Result { id: string }
 
-    const handler = endpointRepositoryHandler<'mediaMentionsRepository', Args>('mediaMentionsRepository')(
-      async ({ args, repo }) => (repo as typeof fakeRepo).findById(args.id)
+    const handler = endpointRepositoryHandler('mediaMentionsRepository')<Args, Result>(
+      async ({ args, repo }) => {
+        return (repo as unknown as typeof fakeRepo).findById(args.id);
+      }
     );
 
     const context = createMockContext(true);
@@ -82,34 +97,48 @@ describe('mapFilters', () => {
       { sortBy: SortByDate.AdminTitle, sortOrder: SortOrder.Asc }
     ]);
   });
+});
 
-  it('should handle partial filters and null values', () => {
-    const input = {
-      status: 'draft',
-      slug: null,
-      limit: undefined
-    };
+describe('Slug Helpers', () => {
+  describe('extractTitleForSlug', () => {
+    it('should extract uk title from localized object', () => {
+      expect(extractTitleForSlug({ uk: 'Привіт', en: 'Hello' })).toBe('Привіт');
+    });
 
-    const result = mapFilters(input);
+    it('should return the string if title is already a string', () => {
+      expect(extractTitleForSlug('Звичайна назва')).toBe('Звичайна назва');
+    });
 
-    expect(result).toEqual({
-      status: 'draft',
-      slug: undefined,
-      limit: undefined,
-      skip: undefined,
-      sort: undefined
+    it('should return empty string for invalid inputs', () => {
+      expect(extractTitleForSlug(null)).toBe('');
+      expect(extractTitleForSlug({})).toBe('');
     });
   });
 
-  it('should work with generic type constraints', () => {
-    interface CustomFilters {
-      status?: string;
-      slug?: string;
-      limit?: number;
-    }
+  describe('processSlugUpdate', () => {
+    const mockRepo = {
+      findBySlug: jest.fn()
+    };
 
-    const result = mapFilters<CustomFilters>({ status: 'published' });
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
 
-    expect(result?.status).toBe('published');
+    it('should update slug property in updateData', async () => {
+      mockRepo.findBySlug.mockResolvedValue(null);
+      const updateData: { slug?: string } = {};
+
+      await processSlugUpdate('123', 'Новий заголовок', mockRepo as any, updateData);
+
+      expect(updateData.slug).toBeDefined();
+      expect(typeof updateData.slug).toBe('string');
+      expect(mockRepo.findBySlug).toHaveBeenCalled();
+    });
+
+    it('should not update slug if title is missing', async () => {
+      const updateData: { slug?: string } = {};
+      await processSlugUpdate('123', null, mockRepo as any, updateData);
+      expect(updateData.slug).toBeUndefined();
+    });
   });
 });

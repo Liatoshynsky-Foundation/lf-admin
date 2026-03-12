@@ -1,10 +1,10 @@
 import { EventsQuery } from './EventsQuery';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
-import type { EventsRepository } from '~/domain/repositories/eventsRepository';
+import type { IEventsRepository } from '~/domain/repositories/eventsRepository';
 import { EventStatus, SortOrder } from '~/types/enums/common.enums';
 
 describe('EventsQuery Resolvers', () => {
-  const mockRepo: jest.Mocked<Partial<EventsRepository>> = {
+  const mockRepo: jest.Mocked<Partial<IEventsRepository>> = {
     findAll: jest.fn(),
     findPaginated: jest.fn(),
     count: jest.fn(),
@@ -15,7 +15,7 @@ describe('EventsQuery Resolvers', () => {
   const context = {
     admin: true,
     requestContainer: {
-      cradle: { eventsRepository: mockRepo as EventsRepository }
+      cradle: { eventsRepository: mockRepo as IEventsRepository }
     }
   } as unknown as GraphQLContext;
 

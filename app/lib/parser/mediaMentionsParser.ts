@@ -31,17 +31,26 @@ export default async function parseMediaMention(
   const html = await resp.text();
   const parsed = Parser(html);
 
+  const now = new Date().toISOString();
+
   return {
     url,
+    adminTitle: parsed.title,
     title: toLocalized(parsed.title),
     description: toLocalized(parsed.description),
+    keywords: toLocalized(''),
+    allowIndexation: { uk: true, en: true },
     coverImage: {
       src: parsed.image.src,
       alt: toLocalized(parsed.image.alt),
       width: parsed.image.width,
       height: parsed.image.height
     },
-    publishedAt: parsed.published_time ? new Date(parsed.published_time) : new Date()
+    publishedAt: parsed.published_time
+      ? new Date(parsed.published_time).toISOString()
+      : now,
+    createdAt: now,
+    updatedAt: now,
   };
 }
 

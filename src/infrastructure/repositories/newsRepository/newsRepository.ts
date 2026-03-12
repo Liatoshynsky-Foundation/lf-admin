@@ -2,7 +2,7 @@ import { Model } from 'mongoose';
 
 import { createBaseRepository } from '../baseRepository/baseRepository';
 import { News } from '~/domain/entities/News';
-import { CreateNewsInput, NewsFilters, NewsRepository as INewsRepository } from '~/domain/repositories/newsRepository';
+import { CreateNewsInput, INewsRepository,NewsFilters } from '~/domain/repositories/newsRepository';
 import dbConnect from '~/infrastructure/db/connect';
 import {buildBaseQuery, createToEntity, getBaseSort} from '~/infrastructure/repositories/helpers';
 import { NewsStatus } from '~/types/enums/common.enums';

@@ -1,7 +1,8 @@
 import type { Model } from 'mongoose';
 
 import {createBaseRepository } from './baseRepository';
-import {BaseEntity, FiltersInput} from '~/domain/repositories/baseRepository';
+import {BaseEntity, FiltersInput, QueryFilters} from '~/domain/repositories/baseRepository';
+import {SortOrder} from '~/types/enums/common.enums';
 
 jest.mock('../../db/connect', () => ({
   __esModule: true,
@@ -37,7 +38,7 @@ describe('createBaseRepository', () => {
   let mockModel: jest.Mocked<Model<TestDbDoc>>;
   let toEntity: (doc: TestDbDoc) => TestEntity;
 
-  const createMockQueryBuilder = (resolvedValue) => ({
+  const createMockQueryBuilder = (resolvedValue: TestDbDoc[] | TestDbDoc | null) => ({
     sort: jest.fn().mockReturnThis(),
     skip: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
@@ -45,7 +46,7 @@ describe('createBaseRepository', () => {
   });
 
   const createMockDoc = (overrides?: Partial<TestDbDoc>): TestDbDoc => ({
-    _id: { toString: () => '507f1f77bcf86cd799439011' },
+    _id: '507f1f77bcf86cd799439011',
     name: 'John Doe',
     email: 'john@example.com',
     createdAt: '2024-01-01T10:00:00.000Z',
@@ -131,7 +132,7 @@ describe('createBaseRepository', () => {
       });
 
       await repository.findAll({
-        sort: [{ sortBy: 'email', sortOrder: 'asc' }]
+        sort: [{ sortBy: 'email', sortOrder: SortOrder.Asc }]
       });
 
       expect(mockQueryBuilder.sort).toHaveBeenCalledWith({ email: 1 });
@@ -148,8 +149,8 @@ describe('createBaseRepository', () => {
 
       await repository.findAll({
         sort: [
-          { sortBy: 'name', sortOrder: 'asc' },
-          { sortBy: 'createdAt', sortOrder: 'desc' }
+          { sortBy: 'name', sortOrder: SortOrder.Asc },
+          { sortBy: 'createdAt', sortOrder: SortOrder.Desc }
         ]
       });
 
@@ -164,7 +165,7 @@ describe('createBaseRepository', () => {
     it('should call countDocuments with filters through buildQuery', async () => {
       (mockModel.countDocuments as jest.Mock).mockResolvedValue(10);
 
-      const buildQuery = (f?) => f?.name ? { name: f.name } : {};
+      const buildQuery = (f?: QueryFilters<TestFilters>) => f?.name ? { name: f.name } : {};
       const repository = createBaseRepository<TestEntity, TestDbDoc, TestFilters>({
         model: mockModel,
         toEntity,

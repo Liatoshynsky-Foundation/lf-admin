@@ -1,6 +1,6 @@
 import { GraphQLError } from 'graphql';
 
-import { endpointRepositoryHandler } from '../helpers';
+import {endpointRepositoryHandler, extractTitleForSlug, processSlugUpdate} from '../helpers';
 import { MediaMentionsServiceErrors } from '~/back-constants/errors';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
@@ -8,8 +8,8 @@ import { LocalizedBoolean, LocalizedImage, LocalizedString } from '~/domain/enti
 import { MediaMentionEntity } from '~/domain/entities/MediaMentions';
 import {
   CreateMediaMentionInput,
-  MediaMentionsRepository,
-  UpdateMediaMentionInput} from '~/domain/repositories/mediaMentionsRepository';
+  UpdateMediaMentionInput
+} from '~/domain/repositories/mediaMentionsRepository';
 import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerator';
 import { MediaStatus } from '~/types/enums/common.enums';
 
@@ -32,32 +32,7 @@ export type UpdateMediaMentionGQLInput = Partial<CreateMediaMentionGQLInput> & {
 type CreateMediaMentionArgs = { input: CreateMediaMentionGQLInput };
 type UpdateMediaMentionArgs = { id: string; input: UpdateMediaMentionGQLInput };
 
-const extractTitleForSlug = (title: UpdateMediaMentionGQLInput['title']): string => {
-  if (typeof title === 'object' && title && 'uk' in title) {
-    return title.uk;
-  }
-  return '';
-};
-
-const processSlugUpdate = async (
-  id: string,
-  title: UpdateMediaMentionGQLInput['title'],
-  repo: MediaMentionsRepository,
-  updateData: UpdateMediaMentionInput
-): Promise<void> => {
-  const titleForSlug = extractTitleForSlug(title);
-
-  if (titleForSlug) {
-    const newSlug = await generateUniqueSlug(titleForSlug, {
-      checkExists: async (slug: string) => {
-        const existing = await repo.findBySlug(slug);
-        return existing !== null && existing.id !== id;
-      }
-    });
-
-    updateData.slug = newSlug;
-  }
-};
+interface IdArgs { id: string }
 
 const endpointHandler = endpointRepositoryHandler('mediaMentionsRepository');
 
@@ -123,7 +98,11 @@ export const MediaMentionsMutation = {
     return res;
   },
 
-  deleteMediaMention: endpointHandler(async ({ args: { id }, repo }) => repo.delete(id)),
+  deleteMediaMention: endpointHandler<IdArgs, boolean>(async ({ args: { id }, repo }) =>
+    repo.delete(id)
+  ),
 
-  addMediaMentionView: endpointHandler(async ({ args: { id }, repo }) => repo.incrementViews(id))
+  addMediaMentionView: endpointHandler<IdArgs, MediaMentionEntity | null>(async ({ args: { id }, repo }) =>
+    repo.incrementViews(id)
+  )
 };

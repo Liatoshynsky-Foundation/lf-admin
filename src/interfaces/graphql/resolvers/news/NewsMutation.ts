@@ -1,13 +1,13 @@
 import { GraphQLError } from 'graphql';
 
-import { endpointRepositoryHandler } from '../helpers';
+import {endpointRepositoryHandler, extractTitleForSlug, processSlugUpdate} from '../helpers';
 import { processNewsContent } from './processNewsContent/processNewsContent';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
 import {LocalizedBoolean, LocalizedContent, LocalizedImage, LocalizedString} from '~/domain/entities/BaseContent';
 import type { News } from '~/domain/entities/News';
 import { newsServiceErrors } from '~/src/constants/errors';
-import { CreateNewsInput, NewsRepository, UpdateNewsInput } from '~/src/domain/repositories/newsRepository';
+import { CreateNewsInput, UpdateNewsInput } from '~/src/domain/repositories/newsRepository';
 import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerator';
 import { NewsStatus } from '~/types/enums/common.enums';
 
@@ -28,41 +28,7 @@ export type UpdateNewsGQLInput = Partial<CreateNewsGQLInput>;
 
 type CreateNewsArgs = { input: CreateNewsGQLInput };
 type UpdateNewsArgs = { id: string; input: UpdateNewsGQLInput };
-
-const extractTitleForSlug = (title: UpdateNewsGQLInput['title']): string => {
-  if (typeof title === 'object' && title && 'uk' in title) {
-    return title.uk as string;
-  }
-  if (typeof title === 'string') {
-    return title;
-  }
-  return '';
-};
-
-const processSlugUpdate = async (
-  id: string,
-  title: UpdateNewsGQLInput['title'],
-  newsRepository: NewsRepository,
-  updateData: UpdateNewsInput
-): Promise<void> => {
-  const news = await newsRepository.findById(id);
-  if (!news) {
-    throw new Error(newsServiceErrors.NEWS_NOT_FOUND(id));
-  }
-
-  const titleForSlug = extractTitleForSlug(title);
-
-  if (titleForSlug) {
-    const newSlug = await generateUniqueSlug(titleForSlug, {
-      checkExists: async (slug: string) => {
-        const existing = await newsRepository.findBySlug(slug);
-        return existing !== null && existing.id !== id;
-      }
-    });
-
-    updateData.slug = newSlug;
-  }
-};
+interface IdArgs { id: string }
 
 const processContentFields = async (input: UpdateNewsGQLInput, updateData: UpdateNewsInput): Promise<void> => {
   const contentToProcess = {
@@ -132,6 +98,13 @@ export const NewsMutation = {
 
     const repo = context.requestContainer.cradle.newsRepository;
 
+    const existingNews = await repo.findById(id);
+    if (!existingNews) {
+      throw new GraphQLError(newsServiceErrors.NEWS_NOT_FOUND(id), {
+        extensions: { code: 'NEWS_NOT_FOUND' }
+      });
+    }
+
     const updateData: UpdateNewsInput = {
       ...input
     };
@@ -154,7 +127,7 @@ export const NewsMutation = {
     return res;
   },
 
-  deleteNews: endpointHandler(async ({ args: { id }, repo }) => repo.delete(id)),
+  deleteNews: endpointHandler<IdArgs, boolean>(async ({ args: { id }, repo }) => repo.delete(id)),
 
-  incrementNewsViews: endpointHandler(async ({ args: { id }, repo }) => repo.incrementViews(id))
+  incrementNewsViews: endpointHandler<IdArgs, News | null>(async ({ args: { id }, repo }) => repo.incrementViews(id))
 };

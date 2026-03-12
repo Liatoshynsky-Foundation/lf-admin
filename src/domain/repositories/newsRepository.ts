@@ -14,7 +14,7 @@ export type NewsFilters = FiltersInput & {
   status?: NewsStatus;
 };
 
-export interface NewsRepository extends IBaseRepository<News, NewsFilters> {
+export interface INewsRepository extends IBaseRepository<News, NewsFilters> {
   create(input: CreateNewsInput): Promise<News>;
   incrementViews(id: string): Promise<News | null>;
 }

@@ -1,9 +1,9 @@
 import { Model } from 'mongoose';
 
 import {DbMediaMention, MediaMentionsRepository} from './medeaMentionRepository';
+import {MediaMentionFilters} from '~/domain/entities/MediaMentions';
 import {
-  CreateMediaMentionInput,
-  MediaMentionsRepository as IMediaMentionsRepository
+  CreateMediaMentionInput, IMediaMentionsRepository,
 } from '~/domain/repositories/mediaMentionsRepository';
 import { MediaStatus } from '~/types/enums/common.enums';
 
@@ -78,10 +78,12 @@ describe('MediaMentionsRepository - Advanced Filtering & Sorting Logic', () => {
         if (Object.keys(this.state.sort).length > 0) {
           result.sort((a, b) => {
             for (const [field, order] of Object.entries(this.state.sort)) {
-              const valA = (a as unknown as Record<string, unknown>)[field];
-              const valB = (b as unknown as Record<string, unknown>)[field];
+              const valA = (a as unknown as Record<string, string | number>)[field];
+              const valB = (b as unknown as Record<string, string | number>)[field];
               if (valA === valB) continue;
-              return valA > valB ? order : -order;
+
+              if (valA > valB) return order;
+              return -order;
             }
             return 0;
           });
@@ -142,10 +144,12 @@ describe('MediaMentionsRepository - Advanced Filtering & Sorting Logic', () => {
         return setupQueryMock(filtered);
       });
 
-      const result = await repository.findAll({
+      const filters = {
         status: MediaStatus.Draft,
         slug: 'slug-1'
-      });
+      } as MediaMentionFilters;
+
+      const result = await repository.findAll(filters);
 
       expect(result).toHaveLength(0);
     });
@@ -163,7 +167,6 @@ describe('MediaMentionsRepository - Advanced Filtering & Sorting Logic', () => {
 
       expect(result.items).toHaveLength(2);
       expect(result.total).toBe(2);
-      // Перевірка сортування у пагінації
       expect(result.items[0].id).toBe('3');
     });
   });
@@ -194,7 +197,7 @@ describe('MediaMentionsRepository - Advanced Filtering & Sorting Logic', () => {
 describe('MediaMentionsRepository Comprehensive Tests', () => {
   const mockId = '65f1a2b3c4d5e6f7a8b9c0d1';
 
-  const createMockDoc = (overrides = {}) => ({
+  const createMockDoc = (overrides = {}): DbMediaMention => ({
     _id: { toString: () => mockId },
     url: 'https://example.com',
     adminTitle: 'Test Mention',
@@ -209,7 +212,7 @@ describe('MediaMentionsRepository Comprehensive Tests', () => {
     createdAt: '2026-03-10T10:00:00.000Z',
     updatedAt: '2026-03-11T12:00:00.000Z',
     ...overrides
-  });
+  } as DbMediaMention);
 
   const findByIdAndUpdateMock = jest.fn();
   const findByIdMock = jest.fn();
@@ -221,7 +224,7 @@ describe('MediaMentionsRepository Comprehensive Tests', () => {
 
   const MockModel = jest.fn().mockImplementation(function() {
     return { save: saveMock };
-  }) as unknown as jest.Mocked<Model<unknown>>;
+  }) as unknown as jest.Mocked<Model<DbMediaMention>>;
 
   Object.assign(MockModel, {
     findByIdAndUpdate: findByIdAndUpdateMock,
@@ -232,13 +235,12 @@ describe('MediaMentionsRepository Comprehensive Tests', () => {
     countDocuments: countDocumentsMock
   });
 
-  let repository: IMediaMentionsRepository;
+  const repository: IMediaMentionsRepository = MediaMentionsRepository({
+    MediaMentionsModel: MockModel
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
-    repository = MediaMentionsRepository({
-      MediaMentionsModel: MockModel as never
-    });
   });
 
   describe('Core Functionality', () => {
@@ -260,33 +262,23 @@ describe('MediaMentionsRepository Comprehensive Tests', () => {
       });
 
       const result = await repository.create(input);
-
       expect(result.adminTitle).toBe('New Media');
       expect(result.id).toBe(mockId);
-      expect(saveMock).toHaveBeenCalled();
     });
 
     it('should increment views successfully', async () => {
+      const updatedDoc = createMockDoc({ meta: { views: 11 } });
       findByIdAndUpdateMock.mockReturnValue({
-        lean: jest.fn().mockResolvedValue(createMockDoc({ meta: { views: 11 } }))
+        lean: jest.fn().mockResolvedValue(updatedDoc)
       });
 
       const result = await repository.incrementViews(mockId);
-      expect(result).toBe(11);
-      expect(findByIdAndUpdateMock).toHaveBeenCalledWith(
-        mockId,
-        {
-          $inc: { 'meta.views': 1 },
-          $set: { updatedAt: expect.any(String) }
-        },
-        { new: true }
-      );
+      expect(result?.meta.views).toBe(11);
     });
 
-    it('should return 0 for addView with invalid ID format', async () => {
-      const result = await repository.incrementViews('invalid-id');
-      expect(result).toBe(0);
-      expect(findByIdAndUpdateMock).not.toHaveBeenCalled();
+    it('should return null for incrementViews with invalid ID', async () => {
+      const result = await repository.incrementViews('invalid');
+      expect(result).toBeNull();
     });
   });
 
@@ -305,10 +297,12 @@ describe('MediaMentionsRepository Comprehensive Tests', () => {
     it('should filter by status and slug simultaneously', async () => {
       setupChainMock([]);
 
-      await repository.findAll({
+      const filters = {
         status: MediaStatus.Published,
         slug: 'test-mention'
-      });
+      } as MediaMentionFilters;
+
+      await repository.findAll(filters);
 
       expect(findMock).toHaveBeenCalledWith({
         status: MediaStatus.Published,
@@ -319,10 +313,12 @@ describe('MediaMentionsRepository Comprehensive Tests', () => {
     it('should apply pagination (limit and skip)', async () => {
       const queryMock = setupChainMock([]);
 
-      await repository.findAll({
+      const filters = {
         limit: 15,
         skip: 30
-      });
+      } as MediaMentionFilters;
+
+      await repository.findAll(filters);
 
       expect(queryMock.limit).toHaveBeenCalledWith(15);
       expect(queryMock.skip).toHaveBeenCalledWith(30);

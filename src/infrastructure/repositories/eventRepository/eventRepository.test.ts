@@ -2,7 +2,7 @@ import { Model} from 'mongoose';
 
 import {DbEvent, EventsRepository} from './eventRepository';
 import { EventsEntity } from '~/domain/entities/Events';
-import { CreateEventInput,EventsRepository as IEventsRepository } from '~/src/domain/repositories/eventsRepository';
+import {CreateEventInput, IEventsRepository} from '~/src/domain/repositories/eventsRepository';
 import { EventStatus, SortOrder } from '~/types/enums/common.enums';
 
 jest.mock('mongoose', () => ({
@@ -99,7 +99,7 @@ describe('EventsRepository - Advanced Filtering Logic', () => {
     findMock.mockImplementation((conditions: Record<string, unknown>) => {
       const filtered = mockDbEventsExtended.filter(e =>
         (!conditions.status || e.status === conditions.status) &&
-                (!conditions.slug || e.slug === conditions.slug)
+          (!conditions.slug || e.slug === conditions.slug)
       );
       return setupPaginatedMock(filtered);
     });
@@ -110,7 +110,12 @@ describe('EventsRepository - Advanced Filtering Logic', () => {
     });
 
     expect(result).toHaveLength(1);
+    expect(result[0].slug).toBe('event-c');
     expect(result[0].id).toBe('1');
+    expect(findMock).toHaveBeenCalledWith({
+      status: EventStatus.Published,
+      slug: 'event-c'
+    });
   });
 
   it('should sort filtered events by adminTitle ASC', async () => {

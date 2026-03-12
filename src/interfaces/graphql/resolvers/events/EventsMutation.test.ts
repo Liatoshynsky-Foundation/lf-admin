@@ -1,7 +1,7 @@
 import { EventsMutation } from './EventsMutation';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { EventsEntity } from '~/domain/entities/Events';
-import type { CreateEventInput, EventsRepository } from '~/domain/repositories/eventsRepository';
+import type { CreateEventInput, IEventsRepository } from '~/domain/repositories/eventsRepository';
 import { EventStatus } from '~/types/enums/common.enums';
 
 jest.mock('~/src/shared/utils/slugGenerator/slugGenerator', () => ({
@@ -11,7 +11,7 @@ jest.mock('~/src/shared/utils/slugGenerator/slugGenerator', () => ({
 }));
 
 describe('EventsMutation Resolvers', () => {
-  const mockRepo: jest.Mocked<Partial<EventsRepository>> = {
+  const mockRepo: jest.Mocked<Partial<IEventsRepository>> = {
     create: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
@@ -24,7 +24,7 @@ describe('EventsMutation Resolvers', () => {
     admin: isAdmin,
     requestContainer: {
       cradle: {
-        eventsRepository: mockRepo as EventsRepository
+        eventsRepository: mockRepo as IEventsRepository
       }
     }
   } as unknown as GraphQLContext);
@@ -62,7 +62,7 @@ describe('EventsMutation Resolvers', () => {
     status: EventStatus.Draft,
     meta: { views: 0 },
     ...overrides
-  });
+  } as Omit<CreateEventInput, 'slug'>);
 
   beforeEach(() => jest.clearAllMocks());
 
@@ -103,7 +103,7 @@ describe('EventsMutation Resolvers', () => {
 
     it('should allow the same slug if it belongs to the event being updated', async () => {
       const id = '123';
-      const updateInput = { title: { uk: 'Existing Title' } };
+      const updateInput = { title: { uk: 'Нова Назва', en: 'New Name' } };
 
       (mockRepo.findBySlug as jest.Mock).mockResolvedValue(createMockEntity({ id: '123', slug: 'slug-existing-title' }));
       (mockRepo.update as jest.Mock).mockResolvedValue(createMockEntity({ id, slug: 'slug-existing-title' }));
@@ -114,11 +114,12 @@ describe('EventsMutation Resolvers', () => {
     });
 
     it('should default to Draft status if no status is provided', async () => {
-      const { status: _status, ...inputWithoutStatus } = createMockInput({ status: undefined });
+      const input = createMockInput();
+      const { status: _status, ...inputWithoutStatus } = input;
 
       (mockRepo.create as jest.Mock).mockResolvedValue(createMockEntity({ status: EventStatus.Draft }));
 
-      await EventsMutation.createEvent({}, { input: inputWithoutStatus }, adminContext);
+      await EventsMutation.createEvent({}, { input: inputWithoutStatus as any }, adminContext);
 
       expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({
         status: EventStatus.Draft
@@ -138,7 +139,7 @@ describe('EventsMutation Resolvers', () => {
 
       const result = await EventsMutation.incrementEventViews({}, { id: '1' }, adminContext);
 
-      expect(result.meta.views).toBe(100);
+      expect(result!.meta.views).toBe(100);
       expect(mockRepo.incrementViews).toHaveBeenCalledWith('1');
     });
 
