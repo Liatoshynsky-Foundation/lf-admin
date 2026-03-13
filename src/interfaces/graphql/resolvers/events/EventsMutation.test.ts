@@ -1,4 +1,4 @@
-import { EventsMutation } from './EventsMutation';
+import {CreateEventArgs, EventsMutation} from './EventsMutation';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { EventsEntity } from '~/domain/entities/Events';
 import type { CreateEventInput, IEventsRepository } from '~/domain/repositories/eventsRepository';
@@ -116,10 +116,11 @@ describe('EventsMutation Resolvers', () => {
     it('should default to Draft status if no status is provided', async () => {
       const input = createMockInput();
       const { status: _status, ...inputWithoutStatus } = input;
+      const finalInput: CreateEventArgs['input'] = inputWithoutStatus as CreateEventArgs['input'];
 
       (mockRepo.create as jest.Mock).mockResolvedValue(createMockEntity({ status: EventStatus.Draft }));
 
-      await EventsMutation.createEvent({}, { input: inputWithoutStatus as any }, adminContext);
+      await EventsMutation.createEvent({}, { input: finalInput }, adminContext);
 
       expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({
         status: EventStatus.Draft

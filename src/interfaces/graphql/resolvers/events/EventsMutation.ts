@@ -8,7 +8,7 @@ import { CreateEventInput, UpdateEventInput } from '~/domain/repositories/events
 import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerator';
 import { EventStatus } from '~/types/enums/common.enums';
 
-interface CreateEventArgs {
+export interface CreateEventArgs {
     input: Omit<CreateEventInput, 'slug'>;
 }
 

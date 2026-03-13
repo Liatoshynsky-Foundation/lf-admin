@@ -128,7 +128,7 @@ describe('Slug Helpers', () => {
       mockRepo.findBySlug.mockResolvedValue(null);
       const updateData: { slug?: string } = {};
 
-      await processSlugUpdate('123', 'Новий заголовок', mockRepo as any, updateData);
+      await processSlugUpdate('123', 'Новий заголовок', mockRepo, updateData);
 
       expect(updateData.slug).toBeDefined();
       expect(typeof updateData.slug).toBe('string');
@@ -137,7 +137,7 @@ describe('Slug Helpers', () => {
 
     it('should not update slug if title is missing', async () => {
       const updateData: { slug?: string } = {};
-      await processSlugUpdate('123', null, mockRepo as any, updateData);
+      await processSlugUpdate('123', null, mockRepo, updateData);
       expect(updateData.slug).toBeUndefined();
     });
   });

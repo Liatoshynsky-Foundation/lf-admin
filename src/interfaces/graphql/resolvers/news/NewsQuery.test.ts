@@ -86,7 +86,7 @@ describe('NewsQuery Resolvers', () => {
 
   describe('newsCount', () => {
     it('should call count without status if not provided', async () => {
-      await NewsQuery.newsCount({}, { status: NewsStatus.Archived as any }, context);
+      await NewsQuery.newsCount({}, { status: NewsStatus.Archived }, context);
       expect(mockRepo.count).toHaveBeenCalledWith({ status: NewsStatus.Archived });
     });
 
