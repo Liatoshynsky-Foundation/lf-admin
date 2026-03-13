@@ -16,7 +16,7 @@ export function ViewToggle({ value, onChange }: ViewToggleProps) {
       <IconButton
         aria-label="Сітка"
         onClick={() => onChange('grid')}
-        sx={{ ...styles.button, ...(value === 'grid' ? styles.active : styles.inactive) }}
+        sx={[styles.button, value === 'grid' ? styles.active : styles.inactive]}
       >
         <GridViewOutlinedIcon sx={{ fontSize: 28, transform: 'scale(0.94)' }} />
       </IconButton>
@@ -24,7 +24,7 @@ export function ViewToggle({ value, onChange }: ViewToggleProps) {
       <IconButton
         aria-label="Список"
         onClick={() => onChange('list')}
-        sx={{ ...styles.button, ...(value === 'list' ? styles.active : styles.inactive) }}
+        sx={[styles.button, value === 'list' ? styles.active : styles.inactive]}
       >
         <MenuIcon sx={{ fontSize: 28 }} />
       </IconButton>

@@ -1,8 +1,16 @@
-import { SxProps, Theme } from '@mui/material';
+import { Theme } from '@mui/material';
+import { SystemStyleObject } from '@mui/system';
 
 import { colors } from '~/shared/components/design-system/button/Button.styles';
 
-export const styles: Record<string, SxProps<Theme>> = {
+type ViewToggleStyles = {
+  root: SystemStyleObject<Theme>;
+  button: SystemStyleObject<Theme>;
+  active: SystemStyleObject<Theme>;
+  inactive: SystemStyleObject<Theme>;
+};
+
+export const styles: ViewToggleStyles = {
   root: {
     display: 'flex',
     alignItems: 'center',
