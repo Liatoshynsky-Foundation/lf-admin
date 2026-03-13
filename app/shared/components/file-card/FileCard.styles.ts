@@ -2,7 +2,8 @@ import { SxProps, Theme } from '@mui/material';
 
 export const styles: Record<string, SxProps<Theme>> = {
   container: {
-    width: '301px',
+    width: '100%',
+    maxWidth: '100%',
     height: '325px',
     borderRadius: '16px',
     borderColor: '#C6C8D3',

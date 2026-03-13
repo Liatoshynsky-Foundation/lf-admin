@@ -1,4 +1,4 @@
-import { type InferSchemaType, type Model, model, Schema, Types } from 'mongoose';
+import { type InferSchemaType, type Model, model, models, Schema, Types } from 'mongoose';
 
 const usageRefSchema = new Schema(
   {
@@ -46,7 +46,5 @@ export type assetDocument = InferSchemaType<typeof assetSchema> & {
   _id: Types.ObjectId;
 };
 
-export const assetModel: Model<assetDocument> = model<assetDocument>(
-  'asset',
-  assetSchema
-) as unknown as Model<assetDocument>;
+export const assetModel: Model<assetDocument> =
+  (models.asset as Model<assetDocument>) ?? model<assetDocument>('asset', assetSchema);

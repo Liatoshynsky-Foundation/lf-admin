@@ -1,0 +1,47 @@
+enum AssetType {
+  image
+  pdf
+  audio
+}
+
+enum AssetSortBy {
+  createdAt
+  updatedAt
+  filename
+}
+
+type AssetUsageRef {
+  pageId: String
+  blockId: String
+}
+
+type Asset {
+  id: ID!
+  type: AssetType!
+  tags: [String!]!
+  usageRefs: [AssetUsageRef!]!
+  filename: String!
+  mimeType: String!
+  sizeBytes: Int!
+  url: String!
+  createdBy: String
+  description: String
+  isStarred: Boolean!
+  createdAt: String!
+  updatedAt: String!
+}
+
+input AssetsFiltersInput {
+  type: AssetType
+  isStarred: Boolean
+  tag: String
+  search: String
+  sortBy: AssetSortBy
+  sortOrder: SortOrder
+  limit: Int
+  skip: Int
+}
+
+extend type Query {
+  allAssets(filters: AssetsFiltersInput): [Asset!]!
+}
