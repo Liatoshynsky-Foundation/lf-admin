@@ -63,7 +63,7 @@ export const createBaseRepository = <
       if (filters?.sort && filters.sort.length > 0) {
         const customSort: Record<string, 1 | -1> = {};
         filters.sort.forEach((item: SortCriteria) => {
-          customSort[item.sortBy as string] = item.sortOrder === 'asc' ? 1 : -1;
+          customSort[item.sortBy] = item.sortOrder === 'asc' ? 1 : -1;
         });
         sort = customSort;
       } else if (getDefaultSort) {

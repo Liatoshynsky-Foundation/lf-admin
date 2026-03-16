@@ -32,10 +32,10 @@ export const buildBaseQuery = <TDb>(
 };
 
 export const getBaseSort = (filters?: FiltersInput): Record<string, 1 | -1> => {
-  if (filters?.sort && filters.sort.length > 0) {
+  if (filters?.sort?.length) {
     const { sortBy, sortOrder } = filters.sort[0];
     return {
-      [sortBy as string]: sortOrder === 'asc' ? 1 : -1
+      [sortBy]: sortOrder === 'asc' ? 1 : -1
     };
   }
 

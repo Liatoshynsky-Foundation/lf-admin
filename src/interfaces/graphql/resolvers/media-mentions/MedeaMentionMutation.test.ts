@@ -7,7 +7,7 @@ import type { IMediaMentionsRepository } from '~/domain/repositories/mediaMentio
 import { MediaStatus } from '~/types/enums/common.enums';
 
 jest.mock('~/src/shared/utils/slugGenerator/slugGenerator', () => ({
-  generateUniqueSlug: jest.fn((title: string) => Promise.resolve(title.toLowerCase().replace(/\s+/g, '-')))
+  generateUniqueSlug: jest.fn((title: string) => Promise.resolve(title.toLowerCase().replaceAll(/\s+/g, '-')))
 }));
 
 describe('media-mentions Mutation', () => {

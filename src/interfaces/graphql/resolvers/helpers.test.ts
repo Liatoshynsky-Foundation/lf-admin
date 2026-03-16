@@ -59,7 +59,7 @@ describe('endpointRepositoryHandler', () => {
 
 describe('mapFilters', () => {
   it('should return undefined if filters are not provided', () => {
-    expect(mapFilters(undefined)).toBeUndefined();
+    expect(mapFilters()).toBeUndefined();
     expect(mapFilters(null)).toBeUndefined();
   });
 

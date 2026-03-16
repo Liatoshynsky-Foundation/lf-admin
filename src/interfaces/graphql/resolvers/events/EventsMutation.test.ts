@@ -6,7 +6,7 @@ import { EventStatus } from '~/types/enums/common.enums';
 
 jest.mock('~/src/shared/utils/slugGenerator/slugGenerator', () => ({
   generateUniqueSlug: jest.fn((title: string) =>
-    Promise.resolve(`slug-${title.toLowerCase().replace(/\s+/g, '-')}`)
+    Promise.resolve(`slug-${title.toLowerCase().replaceAll(/\s+/g, '-')}`)
   )
 }));
 

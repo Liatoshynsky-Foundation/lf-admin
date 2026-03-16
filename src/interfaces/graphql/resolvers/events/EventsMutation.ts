@@ -57,7 +57,7 @@ export const EventsMutation = {
 
     const repo = context.requestContainer.cradle.eventsRepository;
     const updateData = { ...input };
-    if (updateData.meta && updateData.meta.views === undefined) {
+    if (updateData.meta?.views === undefined) {
       delete updateData.meta;
     }
 
@@ -76,7 +76,7 @@ export const EventsMutation = {
   },
 
   deleteEvent: async (_: unknown, { id }: { id: string }, context: GraphQLContext): Promise<boolean> => {
-    if (!context || !context.admin) {
+    if (!context?.admin) {
       throw new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
         extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
       });
