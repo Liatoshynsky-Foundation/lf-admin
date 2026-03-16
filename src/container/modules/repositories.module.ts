@@ -1,6 +1,7 @@
 import { asFunction, asValue, AwilixContainer } from 'awilix';
 
 import { DraftPageModel } from '~/infrastructure/models/draftPage.model';
+import EventModel from '~/infrastructure/models/event.model';
 import NewsModel from '~/infrastructure/models/news.model';
 import PageModel from '~/infrastructure/models/page.model';
 import { AdminRepository } from '~/infrastructure/repositories/adminRepository/adminRepository';
@@ -26,6 +27,7 @@ export const registerRepositories = (container: AwilixContainer) => {
     DraftPageModel: asValue(DraftPageModel),
     NewsModel: asValue(NewsModel),
     MediaMentionsModel: asValue(MediaMentionModel),
+    EventModel: asValue(EventModel),
 
     adminRepository: asFunction(AdminRepository).scoped(),
     refreshTokenRepository: asFunction(RefreshTokenRepository).scoped(),

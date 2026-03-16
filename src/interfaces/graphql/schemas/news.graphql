@@ -25,7 +25,7 @@ type News implements BaseContent {
 }
 
 type PaginatedNews {
-  news: [News!]!
+  items: [News!]!
   total: Int!
   page: Int!
   totalPages: Int!

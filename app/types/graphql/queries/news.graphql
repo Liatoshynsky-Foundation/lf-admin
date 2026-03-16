@@ -141,7 +141,7 @@ query DraftNews($filters: NewsFiltersInput) {
 
 query PaginatedNews($page: Int!, $limit: Int!, $filters: NewsFiltersInput) {
   paginatedNews(page: $page, limit: $limit, filters: $filters) {
-    news {
+    items {
       id
       adminTitle
       title {
