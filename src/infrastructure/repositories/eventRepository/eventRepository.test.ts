@@ -49,7 +49,7 @@ describe('EventsRepository - Advanced Filtering Logic', () => {
   const MockModel = {
     find: findMock,
     countDocuments: countDocumentsMock
-  } as unknown as Model<EventsEntity> & { countDocuments: jest.Mock };
+  } as unknown as Model<DbEvent> & { countDocuments: jest.Mock };
 
   const repository = EventsRepository({ EventModel: MockModel });
 
@@ -188,7 +188,7 @@ describe('EventsRepository Comprehensive Tests', () => {
 
     const MockModel = jest.fn().mockImplementation(() => ({
       save: saveMock
-    })) as unknown as Model<EventsEntity> & {
+    })) as unknown as Model<DbEvent> & {
         findByIdAndUpdate: jest.Mock;
         find: jest.Mock;
         countDocuments: jest.Mock;

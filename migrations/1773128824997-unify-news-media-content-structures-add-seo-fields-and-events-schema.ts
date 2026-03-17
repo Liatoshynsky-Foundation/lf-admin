@@ -1,8 +1,35 @@
-import type { Db } from 'mongodb';
+import type { Db, ObjectId } from 'mongodb';
+
+interface BaseDoc {
+  _id: ObjectId;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  publishedAt?: string | Date;
+  title?: string | { uk: string; en: string };
+  description?: string | { uk: string; en: string };
+  status?: string;
+}
+
+interface MediaMentionDoc extends BaseDoc {
+  coverImage?: {
+    alt?: string | { uk: string; en: string };
+    caption?: { uk: string; en: string };
+  };
+}
+
+interface NewsDoc extends BaseDoc {
+  newsDate?: string | Date;
+}
+
+interface EventDoc extends BaseDoc {
+  meta?: { views: number };
+  visits?: { views: number };
+}
 
 async function migrateMediaMentions(db: Db, now: string): Promise<void> {
-  const mediaMentions = await db.collection('mediamentions').find({}).toArray();
-  for (const doc of mediaMentions) {
+  const cursor = db.collection<MediaMentionDoc>('mediamentions').find({});
+
+  for await (const doc of cursor) {
     if (typeof doc.title !== 'string') continue;
 
     await db.collection('mediamentions').updateOne(
@@ -19,8 +46,8 @@ async function migrateMediaMentions(db: Db, now: string): Promise<void> {
           createdAt: doc.createdAt ? new Date(doc.createdAt).toISOString() : now,
           updatedAt: now,
           'coverImage.alt': {
-            uk: doc.coverImage?.alt || '',
-            en: doc.coverImage?.alt || ''
+            uk: typeof doc.coverImage?.alt === 'string' ? doc.coverImage.alt : '',
+            en: typeof doc.coverImage?.alt === 'string' ? doc.coverImage.alt : ''
           },
           'coverImage.caption': { uk: '', en: '' }
         }
@@ -30,13 +57,15 @@ async function migrateMediaMentions(db: Db, now: string): Promise<void> {
 }
 
 async function migrateNews(db: Db, now: string): Promise<void> {
-  const news = await db.collection('news').find({}).toArray();
-  for (const doc of news) {
+  const cursor = db.collection<NewsDoc>('news').find({});
+
+  for await (const doc of cursor) {
+    const titleUk = typeof doc.title === 'object' ? doc.title.uk : (doc.title || 'Untitled News');
     await db.collection('news').updateOne(
       { _id: doc._id },
       {
         $set: {
-          adminTitle: doc.title?.uk || 'Untitled News',
+          adminTitle: titleUk,
           keywords: { uk: '', en: '' },
           allowIndexation: { uk: true, en: true },
           newsDate: doc.newsDate ? new Date(doc.newsDate).toISOString() : null,
@@ -50,13 +79,15 @@ async function migrateNews(db: Db, now: string): Promise<void> {
 }
 
 async function migrateEvents(db: Db, now: string): Promise<void> {
-  const events = await db.collection('events').find({}).toArray();
-  for (const doc of events) {
+  const cursor = db.collection<EventDoc>('events').find({});
+
+  for await (const doc of cursor) {
+    const titleUk = typeof doc.title === 'object' ? doc.title.uk : (doc.title || 'Untitled Event');
     await db.collection('events').updateOne(
       { _id: doc._id },
       {
         $set: {
-          adminTitle: doc.title?.uk || 'Untitled Event',
+          adminTitle: titleUk,
           keywords: { uk: '', en: '' },
           allowIndexation: { uk: true, en: true },
           meta: { views: doc.visits?.views || 0 },
@@ -79,23 +110,24 @@ export async function up(db: Db): Promise<void> {
 }
 
 export async function down(db: Db): Promise<void> {
-  const mediaMentions = await db.collection('mediamentions').find({}).toArray();
-  for (const doc of mediaMentions) {
+  const mmCursor = db.collection<MediaMentionDoc>('mediamentions').find({});
+  for await (const doc of mmCursor) {
     if (doc.title && typeof doc.title === 'object') {
       await db.collection('mediamentions').updateOne(
         { _id: doc._id },
         {
           $set: {
             title: doc.title.uk,
-            description: doc.description.uk,
+            description: typeof doc.description === 'object' ? doc.description.uk : doc.description,
             status: (doc.status || '').toUpperCase(),
-            'coverImage.alt': doc.coverImage?.alt?.uk || ''
+            'coverImage.alt': typeof doc.coverImage?.alt === 'object' ? doc.coverImage.alt.uk : ''
           },
           $unset: {
             adminTitle: '',
             keywords: '',
             allowIndexation: '',
-            'coverImage.caption': ''
+            'coverImage.caption': '',
+            updatedAt: ''
           }
         }
       );
@@ -103,16 +135,27 @@ export async function down(db: Db): Promise<void> {
   }
 
   await db.collection('news').updateMany({}, {
-    $unset: { adminTitle: '', keywords: '', allowIndexation: '' }
+    $unset: {
+      adminTitle: '',
+      keywords: '',
+      allowIndexation: '',
+      updatedAt: ''
+    }
   });
 
-  const events = await db.collection('events').find({}).toArray();
-  for (const doc of events) {
+  const eventCursor = db.collection<EventDoc>('events').find({});
+  for await (const doc of eventCursor) {
     await db.collection('events').updateOne(
       { _id: doc._id },
       {
         $set: { visits: { views: doc.meta?.views || 0 } },
-        $unset: { adminTitle: '', keywords: '', allowIndexation: '', meta: '' }
+        $unset: {
+          adminTitle: '',
+          keywords: '',
+          allowIndexation: '',
+          meta: '',
+          updatedAt: ''
+        }
       }
     );
   }

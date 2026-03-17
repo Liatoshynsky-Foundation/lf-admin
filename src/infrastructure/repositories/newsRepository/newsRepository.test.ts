@@ -36,7 +36,7 @@ describe('NewsRepository - Advanced Filtering Logic', () => {
   ] as unknown as DbNews[];
 
   const findMock = jest.fn();
-  const MockModel = { find: findMock } as unknown as Model<News>;
+  const MockModel = { find: findMock } as unknown as Model<DbNews>;
   const repository = NewsRepository({ NewsModel: MockModel });
 
   const setupAdvancedMock = (data: DbNews[]) => {
@@ -146,7 +146,7 @@ describe('NewsRepository Comprehensive Tests', () => {
 
   const MockModel = jest.fn().mockImplementation(() => ({
     save: saveMock
-  })) as unknown as Model<News> & {
+  })) as unknown as Model<DbNews> & {
     findByIdAndUpdate: jest.Mock;
     findById: jest.Mock;
     findOne: jest.Mock;

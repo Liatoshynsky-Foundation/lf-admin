@@ -1,4 +1,4 @@
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 
 import { createBaseRepository } from '../baseRepository/baseRepository';
 import { News } from '~/domain/entities/News';
@@ -26,7 +26,7 @@ export type DbNews = {
 };
 
 type NewsRepoDeps = Readonly<{
-  NewsModel: Model<News>;
+  NewsModel: Model<DbNews>;
 }>;
 
 const toEntity = (doc: DbNews): News =>
@@ -47,7 +47,7 @@ const toEntity = (doc: DbNews): News =>
 
 export const NewsRepository = ({ NewsModel }: NewsRepoDeps): INewsRepository => {
   const baseRepo = createBaseRepository<News, DbNews, NewsFilters>({
-    model: NewsModel as unknown as Model<DbNews>,
+    model: NewsModel as Model<DbNews>,
     toEntity,
     buildQuery: buildBaseQuery,
     getDefaultSort: getBaseSort
@@ -72,9 +72,7 @@ export const NewsRepository = ({ NewsModel }: NewsRepoDeps): INewsRepository => 
     incrementViews: async (id: string): Promise<News | null> => {
       await dbConnect();
 
-      if (!/^[0-9a-fA-F]{24}$/.test(id)) {
-        return null;
-      }
+      if (!mongoose.Types.ObjectId.isValid(id)) return null;
 
       const updated = await NewsModel.findByIdAndUpdate(
         id,

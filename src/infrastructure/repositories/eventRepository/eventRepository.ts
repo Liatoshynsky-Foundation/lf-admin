@@ -1,4 +1,4 @@
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 
 import { createBaseRepository } from '../baseRepository/baseRepository';
 import { EventsEntity } from '~/domain/entities/Events';
@@ -26,7 +26,7 @@ export type DbEvent = {
 };
 
 type EventRepoDeps = Readonly<{
-    EventModel: Model<EventsEntity>;
+    EventModel: Model<DbEvent>;
 }>;
 
 const toEntity = (doc: DbEvent): EventsEntity =>
@@ -47,7 +47,7 @@ const toEntity = (doc: DbEvent): EventsEntity =>
 
 export const EventsRepository = ({ EventModel }: EventRepoDeps): IEventsRepository => {
   const baseRepo = createBaseRepository<EventsEntity, DbEvent, EventFilters>({
-    model: EventModel as unknown as Model<DbEvent>,
+    model: EventModel as Model<DbEvent>,
     toEntity,
     buildQuery: buildBaseQuery,
     getDefaultSort: getBaseSort
@@ -66,7 +66,7 @@ export const EventsRepository = ({ EventModel }: EventRepoDeps): IEventsReposito
     },
     incrementViews: async (id: string): Promise<EventsEntity | null> => {
       await dbConnect();
-      if (!/^[0-9a-fA-F]{24}$/.test(id)) return null;
+      if (!mongoose.Types.ObjectId.isValid(id)) return null;
       const updated = await EventModel.findByIdAndUpdate(
         id,
         { $inc: { 'meta.views': 1 } },

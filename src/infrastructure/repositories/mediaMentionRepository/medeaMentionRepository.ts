@@ -1,4 +1,4 @@
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 
 import { createBaseRepository } from '../baseRepository/baseRepository';
 import {MediaMentionEntity} from '~/domain/entities/MediaMentions';
@@ -49,7 +49,7 @@ const toEntity = (doc: DbMediaMention): MediaMentionEntity =>
 
 export const MediaMentionsRepository = ({ MediaMentionsModel }: MediaMentionRepoDeps): IMediaMentionsRepository => {
   const baseRepo = createBaseRepository<MediaMentionEntity, DbMediaMention, MediaMentionFilters>({
-    model: MediaMentionsModel,
+    model: MediaMentionsModel as Model<DbMediaMention>,
     toEntity,
     buildQuery: buildBaseQuery,
     getDefaultSort: getBaseSort
@@ -75,7 +75,7 @@ export const MediaMentionsRepository = ({ MediaMentionsModel }: MediaMentionRepo
 
     incrementViews: async (id: string): Promise<MediaMentionEntity | null> => {
       await dbConnect();
-      if (!/^[0-9a-fA-F]{24}$/.test(id)) return null;
+      if (!mongoose.Types.ObjectId.isValid(id)) return null;
 
       const updated = await MediaMentionsModel.findByIdAndUpdate(
         id,
