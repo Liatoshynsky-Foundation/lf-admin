@@ -28,8 +28,15 @@ export const metadata: Metadata = {
 
 export default function BodyProvider({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${mulish.variable}`}>
-      <body className={`${geistSans.variable} ${geistMono.variable} ${mulish.variable}`}>
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} ${mulish.variable}`}
+      suppressHydrationWarning
+    >
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} ${mulish.variable}`}
+        suppressHydrationWarning
+      >
         <EmotionProvider>
           <ThemeProvider>
             <ApolloClientProvider>{children}</ApolloClientProvider>

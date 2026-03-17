@@ -1,0 +1,20 @@
+query AllAssets($filters: AssetsFiltersInput) {
+  allAssets(filters: $filters) {
+    id
+    type
+    tags
+    usageRefs {
+      pageId
+      blockId
+    }
+    filename
+    mimeType
+    sizeBytes
+    url
+    createdBy
+    description
+    isStarred
+    createdAt
+    updatedAt
+  }
+}
