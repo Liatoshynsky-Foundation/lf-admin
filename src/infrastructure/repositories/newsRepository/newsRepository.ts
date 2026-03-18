@@ -47,7 +47,7 @@ const toEntity = (doc: DbNews): News =>
 
 export const NewsRepository = ({ NewsModel }: NewsRepoDeps): INewsRepository => {
   const baseRepo = createBaseRepository<News, DbNews, NewsFilters>({
-    model: NewsModel as Model<DbNews>,
+    model: NewsModel,
     toEntity,
     buildQuery: buildBaseQuery,
     getDefaultSort: getBaseSort

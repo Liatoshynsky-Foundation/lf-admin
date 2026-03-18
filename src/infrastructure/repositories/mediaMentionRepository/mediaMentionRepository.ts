@@ -49,7 +49,7 @@ const toEntity = (doc: DbMediaMention): MediaMentionEntity =>
 
 export const MediaMentionsRepository = ({ MediaMentionsModel }: MediaMentionRepoDeps): IMediaMentionsRepository => {
   const baseRepo = createBaseRepository<MediaMentionEntity, DbMediaMention, MediaMentionFilters>({
-    model: MediaMentionsModel as Model<DbMediaMention>,
+    model: MediaMentionsModel,
     toEntity,
     buildQuery: buildBaseQuery,
     getDefaultSort: getBaseSort

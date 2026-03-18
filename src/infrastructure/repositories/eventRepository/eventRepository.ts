@@ -47,7 +47,7 @@ const toEntity = (doc: DbEvent): EventsEntity =>
 
 export const EventsRepository = ({ EventModel }: EventRepoDeps): IEventsRepository => {
   const baseRepo = createBaseRepository<EventsEntity, DbEvent, EventFilters>({
-    model: EventModel as Model<DbEvent>,
+    model: EventModel,
     toEntity,
     buildQuery: buildBaseQuery,
     getDefaultSort: getBaseSort
