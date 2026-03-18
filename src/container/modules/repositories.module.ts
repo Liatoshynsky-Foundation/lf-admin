@@ -6,9 +6,9 @@ import EventModel from '~/infrastructure/models/event.model';
 import NewsModel from '~/infrastructure/models/news.model';
 import PageModel from '~/infrastructure/models/page.model';
 import { AdminRepository } from '~/infrastructure/repositories/adminRepository/adminRepository';
+import { AssetRepository } from '~/infrastructure/repositories/assetRepository/assetRepository';
 import {EventsRepository} from '~/infrastructure/repositories/eventRepository/eventRepository';
 import { MediaMentionsRepository } from '~/infrastructure/repositories/mediaMentionRepository/mediaMentionRepository';
-import { AssetRepository } from '~/infrastructure/repositories/assetRepository/assetRepository';
 import { NewsRepository } from '~/infrastructure/repositories/newsRepository/newsRepository';
 import { PageRepository } from '~/infrastructure/repositories/pageRepository/pageRepository';
 import { RefreshTokenRepository } from '~/infrastructure/repositories/refreshTokenRepository/refreshTokenRepository';
@@ -39,7 +39,7 @@ export const registerRepositories = (container: AwilixContainer) => {
     pageRepository: asFunction(PageRepository).scoped(),
     newsRepository: asFunction(NewsRepository).scoped(),
     mediaMentionsRepository: asFunction(MediaMentionsRepository).scoped(),
-    eventsRepository: asFunction(EventsRepository).scoped()
+    eventsRepository: asFunction(EventsRepository).scoped(),
     assetsRepository: asFunction(AssetRepository).scoped(),
   });
 };

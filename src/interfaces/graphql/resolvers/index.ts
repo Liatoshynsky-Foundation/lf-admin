@@ -23,7 +23,7 @@ export const resolvers = {
     ...AdminQuery,
     ...NewsQuery,
     ...MediaMentionsQuery,
-    ...EventsQuery
+    ...EventsQuery,
     ...AssetsQuery,
   }
 };
