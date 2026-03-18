@@ -1,4 +1,4 @@
-import { NewsQuery } from './NewsQuery';
+import { NewsQuery } from './newsQuery';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import {INewsRepository} from '~/domain/repositories/newsRepository';
 import { NewsStatus } from '~/types/enums/common.enums';

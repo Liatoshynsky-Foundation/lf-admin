@@ -1,4 +1,4 @@
-import { EventsQuery } from './EventsQuery';
+import { EventsQuery } from './eventsQuery';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import type { IEventsRepository } from '~/domain/repositories/eventsRepository';
 import { EventStatus, SortOrder } from '~/types/enums/common.enums';

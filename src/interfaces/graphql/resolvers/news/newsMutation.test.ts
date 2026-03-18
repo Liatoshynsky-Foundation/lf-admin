@@ -1,4 +1,4 @@
-import { CreateNewsGQLInput, NewsMutation, UpdateNewsGQLInput } from './NewsMutation';
+import { CreateNewsGQLInput, NewsMutation, UpdateNewsGQLInput } from './newsMutation';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import type { News } from '~/domain/entities/News';
 import { INewsRepository } from '~/src/domain/repositories/newsRepository';

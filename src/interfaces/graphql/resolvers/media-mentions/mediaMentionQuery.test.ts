@@ -1,4 +1,4 @@
-import { MediaMentionsQuery } from './MediaMentionQuery';
+import { MediaMentionsQuery } from './mediaMentionQuery';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import type { IMediaMentionsRepository } from '~/domain/repositories/mediaMentionsRepository';
 import {  SortOrder } from '~/types/enums/common.enums';

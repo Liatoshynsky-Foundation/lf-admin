@@ -1,4 +1,4 @@
-import {CreateEventArgs, EventsMutation} from './EventsMutation';
+import {CreateEventArgs, EventsMutation} from './eventsMutation';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { EventsEntity } from '~/domain/entities/Events';
 import type { CreateEventInput, IEventsRepository } from '~/domain/repositories/eventsRepository';

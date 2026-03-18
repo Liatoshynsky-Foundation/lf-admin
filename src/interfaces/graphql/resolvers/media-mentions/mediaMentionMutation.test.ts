@@ -1,6 +1,6 @@
 import { GraphQLError } from 'graphql';
 
-import { CreateMediaMentionGQLInput, MediaMentionsMutation, UpdateMediaMentionGQLInput } from './MediaMentionMutation';
+import { CreateMediaMentionGQLInput, MediaMentionsMutation, UpdateMediaMentionGQLInput } from './mediaMentionMutation';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { MediaMentionEntity } from '~/domain/entities/MediaMentions';
 import type { IMediaMentionsRepository } from '~/domain/repositories/mediaMentionsRepository';
