@@ -52,7 +52,7 @@ const config: Config = {
   transform: {
     '^.+\\.(js|jsx|ts|tsx)$': 'ts-jest'
   },
-  transformIgnorePatterns: ['node_modules/(?!(lodash-es|bson|mongodb|@azure|@blocknote|uuid)/)'],
+  transformIgnorePatterns: ['node_modules/(?!(lodash-es|bson|mongodb|@azure|@blocknote|uuid|@aws-sdk|@smithy)/)'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts']
 };
 
