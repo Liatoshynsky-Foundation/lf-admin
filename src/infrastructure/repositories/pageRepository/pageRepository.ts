@@ -3,6 +3,7 @@ import { Model, Types } from 'mongoose';
 import { JsonObject, Patch } from '~/back-shared/types/pages/types';
 import { BasePage, LocalizedTitle } from '~/domain/entities/Page';
 import dbConnect from '~/infrastructure/db/connect';
+import { PageRepository as PageRepositoryType } from '~/src/domain/repositories/pageRepository';
 import { PageStatus } from '~/types/enums/common.enums';
 
 type DbPage = {
@@ -52,10 +53,10 @@ const buildMongoUpdateQuery = (prefix: string, patch: Patch): { $set?: JsonObjec
   return updateQuery;
 };
 
-export const PageRepository = ({ PageModel, DraftPageModel }: PageRepoDeps) => {
+export const PageRepository = ({ PageModel, DraftPageModel }: PageRepoDeps): PageRepositoryType => {
   return {
-    getPublishedBySlug: (slug: string) => getBySlug(PageModel, slug),
     getDraftBySlug: (slug: string) => getBySlug(DraftPageModel, slug),
+    getPublishedBySlug: (slug: string) => getBySlug(PageModel, slug),
 
     createDraft: async (slug: string, blocks: unknown, source: BasePage): Promise<BasePage> => {
       await dbConnect();

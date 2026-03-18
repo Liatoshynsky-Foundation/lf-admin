@@ -9,9 +9,12 @@ export const sharedViewStyles = {
   } as SxProps<Theme>,
 
   header: {
+    position: 'sticky',
+    top: 0,
+    zIndex: 1,
+    paddingBottom: '24px',
     display: 'flex',
     alignItems: 'center',
-    marginBottom: '24px',
     '@media (max-width: 1023px)': {
       flexDirection: 'column',
       alignItems: 'flex-start',

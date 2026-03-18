@@ -1,4 +1,5 @@
 import { News } from '~/domain/entities/News';
+import { BaseRepository } from '~/src/infrastructure/repositories/baseRepository/baseRepository';
 import { NewsStatus } from '~/types/enums/common.enums';
 
 export type CreateNewsInput = Omit<News, 'id' | 'createdAt' | 'updatedAt' | 'meta'> & {
@@ -16,13 +17,7 @@ export type NewsFilters = {
   sortOrder?: 'asc' | 'desc';
 };
 
-export interface NewsRepository {
+export interface NewsRepository extends BaseRepository<News, NewsFilters> {
   create(input: CreateNewsInput): Promise<News>;
-  findById(id: string): Promise<News | null>;
-  findBySlug(slug: string): Promise<News | null>;
-  findAll(filters?: NewsFilters): Promise<News[]>;
-  update(id: string, input: UpdateNewsInput): Promise<News | null>;
-  delete(id: string): Promise<boolean>;
-  count(filters?: Omit<NewsFilters, 'limit' | 'skip' | 'sortBy' | 'sortOrder'>): Promise<number>;
   incrementViews(id: string): Promise<News | null>;
 }

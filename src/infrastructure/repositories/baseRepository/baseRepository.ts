@@ -8,27 +8,32 @@ export type BaseEntity = {
   updatedAt: Date | string;
 };
 
-export interface PaginationFilters {
+export type PaginationFilters = {
   limit?: number;
   skip?: number;
-}
+};
 
-export interface BaseFilters extends PaginationFilters {
+export type SortingFilters = {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
-}
+};
 
-export type QueryFilters<TFilters extends BaseFilters> = Omit<
-  TFilters,
-  keyof PaginationFilters | 'sortBy' | 'sortOrder'
->;
+export type BaseFilters = PaginationFilters & SortingFilters;
+
+export type QueryFilters<TFilters extends BaseFilters> = Omit<TFilters, keyof PaginationFilters | keyof SortingFilters>;
 
 export type BaseRepository<TEntity extends BaseEntity, TFilters extends BaseFilters = BaseFilters> = {
   findById(id: string): Promise<TEntity | null>;
+  findBySlug(slug: string): Promise<TEntity | null>;
   findAll(filters?: TFilters): Promise<TEntity[]>;
   update(id: string, input: Partial<Omit<TEntity, keyof BaseEntity>>): Promise<TEntity | null>;
   delete(id: string): Promise<boolean>;
   count(filters?: QueryFilters<TFilters>): Promise<number>;
+  findPaginated(
+    page: number,
+    limit: number,
+    filters?: Omit<TFilters, keyof PaginationFilters>
+  ): Promise<{ items: TEntity[]; total: number; page: number; totalPages: number }>;
 };
 
 type CreateBaseRepositoryOptions<TEntity extends BaseEntity, TDbDoc, TFilters extends BaseFilters> = {
@@ -51,7 +56,7 @@ export const createBaseRepository = <TEntity extends BaseEntity, TDbDoc, TFilter
     return queryFilters as QueryFilters<TFilters>;
   };
 
-  return {
+  const repository = {
     findById: async (id: string): Promise<TEntity | null> => {
       await dbConnect();
 
@@ -60,6 +65,17 @@ export const createBaseRepository = <TEntity extends BaseEntity, TDbDoc, TFilter
       }
 
       const doc = await model.findById(id).lean<TDbDoc>();
+      return doc ? toEntity(doc) : null;
+    },
+
+    findBySlug: async (slug: string): Promise<TEntity | null> => {
+      await dbConnect();
+
+      if (!slug) {
+        return null;
+      }
+
+      const doc = await model.findOne({ slug } as FilterQuery<TDbDoc>).lean<TDbDoc>();
       return doc ? toEntity(doc) : null;
     },
 
@@ -87,6 +103,38 @@ export const createBaseRepository = <TEntity extends BaseEntity, TDbDoc, TFilter
 
       const docs = await queryBuilder.lean<TDbDoc[]>();
       return docs.map(toEntity);
+    },
+
+    findPaginated: async (
+      page: number = 1,
+      limit: number = 10,
+      filters?: Omit<TFilters, keyof PaginationFilters>
+    ): Promise<{ items: TEntity[]; total: number; page: number; totalPages: number }> => {
+      await dbConnect();
+
+      const skip = (page - 1) * limit;
+
+      const queryFilters = {
+        ...filters,
+        limit,
+        skip
+      } as TFilters;
+
+      /* eslint-disable indent */
+      const countFilters = filters
+        ? (Object.fromEntries(
+            Object.entries(filters).filter(([key]) => key !== 'sortBy' && key !== 'sortOrder')
+          ) as Omit<TFilters, keyof BaseFilters>)
+        : undefined;
+
+      const [items, total] = await Promise.all([repository.findAll(queryFilters), repository.count(countFilters)]);
+
+      return {
+        items,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit)
+      };
     },
 
     update: async (id: string, input: Partial<Omit<TEntity, keyof BaseEntity>>): Promise<TEntity | null> => {
@@ -124,4 +172,6 @@ export const createBaseRepository = <TEntity extends BaseEntity, TDbDoc, TFilter
       return model.countDocuments(query);
     }
   };
+
+  return repository;
 };

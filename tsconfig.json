@@ -21,6 +21,7 @@
     "baseUrl": ".", // Base URL for module resolution
     "paths": {
       "~/*": ["./app/*"],
+      "~/src/*": ["./src/*"],
       "~/ds-components/*": ["app/shared/components/design-system/*"],
       "~/components/*": ["app/shared/components/*"],
       "~/constants/*": ["./app/constants/*"],
