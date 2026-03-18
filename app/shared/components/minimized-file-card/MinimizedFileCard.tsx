@@ -4,7 +4,7 @@ import { MouseEvent } from 'react';
 
 import { styles } from '~/components/minimized-file-card/MinimizedFileCard.styles';
 
-const ICON_SIZE = 32;
+const ICON_SIZE = 20;
 
 const FILE_TYPES = {
   img: 'img',
@@ -52,7 +52,7 @@ const MinimizedFileCard = ({
           {name}
         </Typography>
 
-        <Stack direction="row">
+        <Stack direction="row" gap={'10px'}>
           {starred && <Image src="/icons/star.svg" width={ICON_SIZE} height={ICON_SIZE} alt="Starred file" />}
           {linked && <Image src="/icons/link.svg" width={ICON_SIZE} height={ICON_SIZE} alt="Linked file" />}
         </Stack>

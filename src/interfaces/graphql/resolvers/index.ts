@@ -1,4 +1,5 @@
 import { authMutation as AdminMutation } from './admin/AuthMutation';
+import { AssetsQuery } from './assets/Query';
 import { blobMutations as BlobMutation } from './blobStorage/blobMutation';
 import { EventsMutation } from './events/EventsMutation';
 import { EventsQuery } from './events/EventsQuery';
@@ -23,5 +24,6 @@ export const resolvers = {
     ...NewsQuery,
     ...MediaMentionsQuery,
     ...EventsQuery
+    ...AssetsQuery,
   }
 };
