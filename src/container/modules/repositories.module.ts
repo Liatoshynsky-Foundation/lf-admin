@@ -6,7 +6,7 @@ import NewsModel from '~/infrastructure/models/news.model';
 import PageModel from '~/infrastructure/models/page.model';
 import { AdminRepository } from '~/infrastructure/repositories/adminRepository/adminRepository';
 import {EventsRepository} from '~/infrastructure/repositories/eventRepository/eventRepository';
-import { MediaMentionsRepository } from '~/infrastructure/repositories/mediaMentionRepository/medeaMentionRepository';
+import { MediaMentionsRepository } from '~/infrastructure/repositories/mediaMentionRepository/mediaMentionRepository';
 import { NewsRepository } from '~/infrastructure/repositories/newsRepository/newsRepository';
 import { PageRepository } from '~/infrastructure/repositories/pageRepository/pageRepository';
 import { RefreshTokenRepository } from '~/infrastructure/repositories/refreshTokenRepository/refreshTokenRepository';

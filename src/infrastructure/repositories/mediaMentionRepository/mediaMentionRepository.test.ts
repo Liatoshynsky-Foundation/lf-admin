@@ -1,6 +1,6 @@
 import { Model } from 'mongoose';
 
-import {DbMediaMention, MediaMentionsRepository} from './medeaMentionRepository';
+import {DbMediaMention, MediaMentionsRepository} from './mediaMentionRepository';
 import {MediaMentionFilters} from '~/domain/entities/MediaMentions';
 import {
   CreateMediaMentionInput, IMediaMentionsRepository,
