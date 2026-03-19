@@ -1,6 +1,25 @@
 mutation CreateMediaMention($input: CreateMediaMentionInput!) {
   createMediaMention(input: $input) {
+    id
     url
+    adminTitle
+    slug
+    status
+    title { uk en }
+    description { uk en }
+    keywords { uk en }
+    allowIndexation { uk en }
+    coverImage {
+      src
+      width
+      height
+      alt { uk en }
+      caption { uk en }
+    }
+    publishedAt
+    createdAt
+    updatedAt
+    meta { views }
   }
 }
 
@@ -8,22 +27,24 @@ mutation UpdateMediaMention($id: ID!, $input: UpdateMediaMentionInput!) {
   updateMediaMention(id: $id, input: $input) {
     id
     url
-    title
-    description
-    coverImage {
-      src
-      alt
-      width
-      height
-    }
+    adminTitle
     slug
     status
+    title { uk en }
+    description { uk en }
+    keywords { uk en }
+    allowIndexation { uk en }
+    coverImage {
+      src
+      width
+      height
+      alt { uk en }
+      caption { uk en }
+    }
     publishedAt
     createdAt
     updatedAt
-    meta {
-      views
-    }
+    meta { views }
   }
 }
 

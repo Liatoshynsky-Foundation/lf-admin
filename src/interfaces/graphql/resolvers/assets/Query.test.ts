@@ -1,4 +1,6 @@
 import { AssetsQuery } from './Query';
+import { SortOrder } from '~/types/enums/common.enums';
+import { AssetType } from '~/types/graphql/generated/graphql';
 
 describe('AssetsQuery', () => {
   it('should pass filters to assets repository', async () => {
@@ -6,10 +8,10 @@ describe('AssetsQuery', () => {
     const ctx = { admin: true, requestContainer: { cradle: { assetsRepository: repo } } } as never;
 
     const filters = {
-      type: 'image',
+      type: AssetType.Image,
       isStarred: true,
-      sortBy: 'createdAt',
-      sortOrder: 'desc',
+      sortBy: 'createdAt' as const,
+      sortOrder: SortOrder.Desc,
       limit: 20,
       skip: 0
     };

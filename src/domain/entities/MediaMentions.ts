@@ -1,37 +1,15 @@
-import { BaseEntity, BaseFilters } from '~/infrastructure/repositories/baseRepository/baseRepository';
+import {BaseContentFields} from '~/domain/entities/BaseContent';
+import {BaseEntity} from '~/domain/repositories/baseRepository';
+import {MediaStatus} from '~/types/enums/common.enums';
 
-export enum MediaStatus {
-  DRAFT = 'DRAFT',
-  PUBLISHED = 'PUBLISHED',
-  ARCHIVED = 'ARCHIVED',
-  HIDDEN = 'HIDDEN',
-  EDITING = 'EDITING'
-}
-
-export type MediaMentionImage = {
-  src: string;
-  alt: string;
-  width: number | null;
-  height: number | null;
-};
-
-export type MediaMentionEntityRaw = {
+export type MediaMentionEntityRaw = BaseContentFields & {
   url: string;
-  title: string;
-  description: string;
-  slug: string;
-  coverImage: MediaMentionImage;
   status: MediaStatus;
-  publishedAt: Date;
-  meta: {
-    views: number;
-  };
 };
 
 export type MediaMentionEntity = BaseEntity & MediaMentionEntityRaw;
 
-export type MediaMentionFiltersRaw = {
+export type MediaMentionFilters = {
   status?: MediaStatus;
 };
 
-export type MediaMentionFilters = BaseFilters & MediaMentionFiltersRaw;

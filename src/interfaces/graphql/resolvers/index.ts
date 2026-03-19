@@ -1,10 +1,12 @@
 import { authMutation as AdminMutation } from './admin/AuthMutation';
 import { AssetsQuery } from './assets/Query';
 import { blobMutations as BlobMutation } from './blobStorage/blobMutation';
-import { MediaMentionsMutation } from './media-mentions/Mutation';
-import { MediaMentionsQuery } from './media-mentions/Query';
-import { NewsMutation } from './news/NewsMutation';
-import { NewsQuery } from './news/NewsQuery';
+import { EventsMutation } from './events/eventsMutation';
+import { EventsQuery } from './events/eventsQuery';
+import { MediaMentionsMutation } from './media-mentions/mediaMentionMutation';
+import { MediaMentionsQuery } from './media-mentions/mediaMentionQuery';
+import { NewsMutation } from './news/newsMutation';
+import { NewsQuery } from './news/newsQuery';
 import { PageMutation } from './page/PageMutation';
 import { Query as AdminQuery } from './page/Query';
 
@@ -14,12 +16,14 @@ export const resolvers = {
     ...BlobMutation,
     ...PageMutation,
     ...NewsMutation,
-    ...MediaMentionsMutation
+    ...MediaMentionsMutation,
+    ...EventsMutation
   },
   Query: {
     ...AdminQuery,
     ...NewsQuery,
+    ...MediaMentionsQuery,
+    ...EventsQuery,
     ...AssetsQuery,
-    ...MediaMentionsQuery
   }
 };

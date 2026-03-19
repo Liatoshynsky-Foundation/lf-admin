@@ -1,20 +1,23 @@
 import mongoose, { Schema } from 'mongoose';
 
-import { MediaMentionEntity, MediaStatus } from '~/domain/entities/MediaMentions';
+import { MediaMentionEntity } from '~/domain/entities/MediaMentions';
+import {baseContentSchemaFields} from '~/infrastructure/models/commonSchemas';
+import {MediaStatus} from '~/types/enums/common.enums';
 
 const mediaMentionSchema = new Schema<MediaMentionEntity>(
   {
+    ...baseContentSchemaFields,
     url: { type: String, required: true, unique: true },
-    title: { type: String, required: true },
-    description: { type: String, required: true },
-    slug: { type: String, required: true, unique: true },
-    coverImage: { type: Object, required: true },
-    status: { type: String, required: true, enum: Array.from(Object.values(MediaStatus)) },
-    meta: {
-      views: { type: Number, default: 0 }
-    }
+    status: {
+      type: String,
+      required: true,
+      enum: Array.from(Object.values(MediaStatus))
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    collection: 'mediamentions'
+  }
 );
 
 export const MediaMentionModel =

@@ -1,78 +1,56 @@
-import { FilterQuery, Model, Types } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 
 import { createBaseRepository } from '../baseRepository/baseRepository';
 import { News } from '~/domain/entities/News';
-import { CreateNewsInput, NewsFilters, NewsRepository as INewsRepository } from '~/domain/repositories/newsRepository';
+import { CreateNewsInput, INewsRepository,NewsFilters } from '~/domain/repositories/newsRepository';
 import dbConnect from '~/infrastructure/db/connect';
+import {buildBaseQuery, createToEntity, getBaseSort} from '~/infrastructure/repositories/helpers';
 import { NewsStatus } from '~/types/enums/common.enums';
 
-type DbNews = {
-  _id: Types.ObjectId;
-  publishedAt: Date | null;
-  newsDate?: Date | null;
+export type DbNews = {
+  _id: { toString(): string };
+  publishedAt: string | null;
+  newsDate?: string | null;
   title: News['title'];
-  description?: News['description'];
+  adminTitle: News['adminTitle'];
+  description: News['description'];
+  keywords: News['keywords'];
+  allowIndexation: News['allowIndexation'];
   content: News['content'];
   slug: string;
   coverImage: News['coverImage'];
   status: NewsStatus;
   meta: News['meta'];
-  createdAt: Date | string;
-  updatedAt: Date | string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 type NewsRepoDeps = Readonly<{
-  NewsModel: Model<News>;
+  NewsModel: Model<DbNews>;
 }>;
 
-const dateToIso = (date: Date | string | null | undefined): string | null => {
-  if (!date) return null;
-  return date instanceof Date ? date.toISOString() : date;
-};
-
-const toEntity = (doc: DbNews): News => ({
-  id: doc._id.toString(),
-  publishedAt: doc.publishedAt ? new Date(doc.publishedAt) : undefined,
-  newsDate: doc.newsDate ? new Date(doc.newsDate) : undefined,
-  title: doc.title,
-  description: doc.description,
-  content: doc.content,
-  slug: doc.slug,
-  coverImage: doc.coverImage,
-  status: doc.status,
-  meta: doc.meta,
-  createdAt: dateToIso(doc.createdAt) as unknown as News['createdAt'],
-  updatedAt: dateToIso(doc.updatedAt) as unknown as News['updatedAt']
-});
-
-const buildNewsQuery = (filters?: Omit<NewsFilters, 'limit' | 'skip' | 'sortBy' | 'sortOrder'>): FilterQuery<any> => {
-  const query: Record<string, unknown> = {};
-
-  if (filters?.status) {
-    query.status = filters.status;
-  }
-
-  if (filters?.slug) {
-    query.slug = filters.slug;
-  }
-
-  return query;
-};
-
-const getNewsSort = (filters?: NewsFilters): Record<string, 1 | -1> => {
-  const sortBy = filters?.sortBy ?? 'createdAt';
-  const sortOrder = filters?.sortOrder ?? 'desc';
-  return {
-    [sortBy]: sortOrder === 'asc' ? 1 : -1
-  };
-};
+const toEntity = (doc: DbNews): News =>
+  createToEntity<News, DbNews>(doc, {
+    adminTitle: doc.adminTitle,
+    title: doc.title,
+    description: doc.description,
+    keywords: doc.keywords,
+    allowIndexation: doc.allowIndexation,
+    slug: doc.slug,
+    content: doc.content,
+    coverImage: doc.coverImage,
+    status: doc.status,
+    meta: doc.meta,
+    newsDate: doc.newsDate ?? undefined,
+    publishedAt: doc.publishedAt ?? undefined,
+  });
 
 export const NewsRepository = ({ NewsModel }: NewsRepoDeps): INewsRepository => {
   const baseRepo = createBaseRepository<News, DbNews, NewsFilters>({
-    model: NewsModel as unknown as Model<DbNews>,
+    model: NewsModel,
     toEntity,
-    buildQuery: buildNewsQuery,
-    getDefaultSort: getNewsSort
+    buildQuery: buildBaseQuery,
+    getDefaultSort: getBaseSort
   });
 
   return {
@@ -94,9 +72,7 @@ export const NewsRepository = ({ NewsModel }: NewsRepoDeps): INewsRepository => 
     incrementViews: async (id: string): Promise<News | null> => {
       await dbConnect();
 
-      if (!Types.ObjectId.isValid(id)) {
-        return null;
-      }
+      if (!mongoose.Types.ObjectId.isValid(id)) return null;
 
       const updated = await NewsModel.findByIdAndUpdate(
         id,
