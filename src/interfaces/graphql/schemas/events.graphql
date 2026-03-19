@@ -1,0 +1,94 @@
+enum EventStatus {
+    draft
+    published
+    hidden
+    archived
+    editing
+}
+
+type Event implements BaseContent {
+    id: ID!
+    adminTitle: String!
+    title: LocalizedString!
+    slug: String!
+    eventLink: String!
+    description: LocalizedString!
+    keywords: LocalizedString!
+    content: LocalizedJSON!
+    coverImage: LocalizedImage!
+    status: EventStatus!
+    allowIndexation: LocalizedBoolean!
+    publishedAt: String
+    createdAt: String!
+    updatedAt: String!
+    meta: ContentMeta!
+}
+
+enum EventSortBy {
+    createdAt
+    updatedAt
+    publishedAt
+    adminTitle
+}
+
+type PaginatedEvents {
+    items: [Event!]!
+    total: Int!
+    page: Int!
+    totalPages: Int!
+}
+
+input CreateEventInput {
+    adminTitle: String!
+    eventLink: String!
+    title: JSON!
+    description: JSON!
+    keywords: JSON!
+    allowIndexation: JSON!
+    content: JSON!
+    coverImage: JSON!
+    status: EventStatus
+    publishedAt: String
+}
+
+input UpdateEventInput {
+    adminTitle: String
+    eventLink: String
+    title: JSON
+    description: JSON
+    keywords: JSON
+    allowIndexation: JSON
+    content: JSON
+    coverImage: JSON
+    status: EventStatus
+    publishedAt: String
+}
+
+input EventSortOptions {
+    field: EventSortBy!
+    order: SortOrder!
+}
+
+input EventFiltersInput {
+    limit: Int
+    skip: Int
+    status: EventStatus
+    slug: String
+    sort: [EventSortOptions!]
+}
+
+extend type Query {
+    eventById(id: ID!): Event
+    eventBySlug(slug: String!): Event
+    allEvents(filters: EventFiltersInput): [Event!]!
+    publishedEvents(filters: EventFiltersInput): [Event!]!
+    paginatedEvents(page: Int!, limit: Int!, filters: EventFiltersInput): PaginatedEvents!
+    eventsCount(status: EventStatus): Int!
+}
+
+extend type Mutation {
+    createEvent(input: CreateEventInput!): Event!
+    updateEvent(id: ID!, input: UpdateEventInput!): Event!
+    deleteEvent(id: ID!): Boolean!
+    incrementEventViews(id: ID!): Event!
+}

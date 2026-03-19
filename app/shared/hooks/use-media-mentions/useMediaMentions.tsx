@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 
 import {
   AllMediaMentionsQueryVariables,
+  CreateMediaMentionInput,
   MediaMentionsCountQueryVariables,
   MediaMentionsFiltersInput,
   MediaStatus,
@@ -45,7 +46,12 @@ export const useMediaMentionsCount = (status?: MediaStatus) => {
 
 export const useCreateMediaMention = () => {
   const [mutate, meta] = useCreateMediaMentionMutation();
-  const createMediaMention = useCallback(async (url: string) => mutate({ variables: { input: { url } } }), [mutate]);
+
+  const createMediaMention = useCallback(
+    async (input: CreateMediaMentionInput) => mutate({ variables: { input } }),
+    [mutate]
+  );
+
   return [createMediaMention, meta] as const;
 };
 
