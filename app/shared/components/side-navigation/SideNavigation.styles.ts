@@ -1,13 +1,14 @@
 export const styles = {
   drawerPaper: {
     backgroundColor: '#F1F2F7',
-    border: 'border-right: 1px solid #DCDDE5',
-    position: 'fixed',
-    maxWidth: '280px',
+    borderRight: '1px solid #DCDDE5',
+    position: 'relative',
+    width: '280px',
+    minWidth: '280px',
     padding: '32px 0',
     scrollbarWidth: 'none',
     height: '100vh',
-    overflowY: 'scroll',
+    overflowY: 'auto',
     overflowX: 'visible',
     '&::-webkit-scrollbar': {
       display: 'none'

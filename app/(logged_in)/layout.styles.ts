@@ -5,14 +5,21 @@ export const styles: Record<string, SxProps> = {
     margin: '0 auto',
     display: 'flex',
     gap: '20px',
-    alignItems: 'flex-start',
-    justifyContent: 'flex-start'
+    alignItems: 'stretch',
+    justifyContent: 'flex-start',
+    height: '100vh',
+    overflow: 'hidden'
   },
   container: {
     display: 'flex',
     flexGrow: 1,
+    minWidth: 0,
+    minHeight: 0,
+    height: '100vh',
     alignItems: 'center',
     flexDirection: 'column',
-    padding: '20px'
+    padding: '20px',
+    overflowY: 'auto',
+    overflowX: 'hidden'
   }
 };
