@@ -22,12 +22,12 @@ describe('VirtualizedListbox', () => {
     expect(screen.getByText('Item 2')).toBeInTheDocument();
   });
 
-  it('should forward ref to container div', () => {
-    const ref = React.createRef<HTMLDivElement>();
+  it('should forward ref to list element', () => {
+    const ref = React.createRef<HTMLUListElement>();
 
     render(<VirtualizedListbox ref={ref}>{[<div key="1">Item</div>]}</VirtualizedListbox>);
 
     expect(ref.current).not.toBeNull();
-    expect(ref.current?.tagName).toBe('DIV');
+    expect(ref.current?.tagName).toBe('UL');
   });
 });

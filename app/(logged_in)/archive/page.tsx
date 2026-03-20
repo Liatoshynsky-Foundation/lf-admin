@@ -448,28 +448,30 @@ export default function ArchivePage() {
                     }
                   }}
                 >
-                  {activeFiltersCount !== 0 && <span>
-                    <IconButton
-                      aria-label="clear-filters"
-                      onClick={clearFilters}
-                      sx={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '8px',
-                        bgcolor: '#fff',
-                        color: '#190D03',
-                        '&:hover': {
-                          bgcolor: '#fff'
-                        },
-                        '&.Mui-disabled': {
-                          opacity: 0.5,
-                          color: '#190D03'
-                        }
-                      }}
-                    >
-                      <Image src="/icons/close.svg" alt="clear" width={20} height={20} />
-                    </IconButton>
-                  </span>}
+                  <span>
+                    {activeFiltersCount !== 0 ? (
+                      <IconButton
+                        aria-label="clear-filters"
+                        onClick={clearFilters}
+                        sx={{
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '8px',
+                          bgcolor: '#fff',
+                          color: '#190D03',
+                          '&:hover': {
+                            bgcolor: '#fff'
+                          },
+                          '&.Mui-disabled': {
+                            opacity: 0.5,
+                            color: '#190D03'
+                          }
+                        }}
+                      >
+                        <Image src="/icons/close.svg" alt="clear" width={20} height={20} />
+                      </IconButton>
+                    ) : null}
+                  </span>
                 </Tooltip>
               </Box>
 

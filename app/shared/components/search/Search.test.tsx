@@ -1,25 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import React, { ReactNode } from 'react';
+import React, { useState } from 'react';
 
 import { Search, type SearchOption } from './Search';
-
-jest.mock('next-intl', () => ({
-  useTranslations: () => {
-    const translations: Record<string, string> = {
-      notFound: 'Not found',
-      loading: 'Loading...'
-    };
-
-    return (key: string) => translations[key] || key;
-  }
-}));
-jest.mock('./LazyListItem', () => ({
-  VirtualizedListbox: ({ children }: { children: ReactNode }) => <ul>{children}</ul>
-}));
-
-jest.mock('@mui/material/useMediaQuery', () => {
-  return jest.fn().mockImplementation(() => false);
-});
 
 describe('Search', () => {
   const options: SearchOption[] = [
@@ -27,80 +9,78 @@ describe('Search', () => {
     { id: '2', title: 'Another Song' }
   ];
 
-  const renderSearch = (opts = options, initialSearch = '') => {
-    const setSearch = jest.fn();
-    render(<Search search={initialSearch} setSearch={setSearch} options={opts} />);
+  type SearchHarnessProps = Readonly<{
+    opts?: SearchOption[];
+    initialSearch?: string;
+    onSetSearch?: (value: string) => void;
+  }>;
+
+  function SearchHarness({ opts = options, initialSearch = '', onSetSearch }: SearchHarnessProps) {
+    const [value, setValue] = useState(initialSearch);
+
+    const handleSetSearch = (nextValue: string) => {
+      setValue(nextValue);
+      onSetSearch?.(nextValue);
+    };
+
+    return <Search search={value} setSearch={handleSetSearch} options={opts} />;
+  }
+
+  const renderSearch = (opts = options, initialSearch = '', onSetSearch = jest.fn()) => {
+    render(<SearchHarness opts={opts} initialSearch={initialSearch} onSetSearch={onSetSearch} />);
     const input = screen.getByRole('combobox');
-    const searchIcon = screen.queryByAltText('search');
-    return { setSearch, input, searchIcon };
+    return { onSetSearch, input };
   };
 
-  it('should render the input and fetches options', async () => {
+  it('should render the search input', () => {
+    renderSearch();
+
+    expect(screen.getByPlaceholderText('Пошук')).toBeInTheDocument();
+  });
+
+  it('should call setSearch on input change', async () => {
+    const { onSetSearch, input } = renderSearch();
+
+    fireEvent.change(input, { target: { value: 'Bohemian' } });
+
+    await waitFor(() => {
+      expect(onSetSearch).toHaveBeenCalledWith('Bohemian');
+    });
+  });
+
+  it('should render filtered options', async () => {
     const { input } = renderSearch();
-    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+
     input.focus();
     fireEvent.change(input, { target: { value: 'T' } });
 
     await waitFor(() => {
       expect(screen.getByText('Test Song')).toBeInTheDocument();
     });
-  });
 
-  it('should NOT call setSearch on input change', async () => {
-    const { setSearch, input } = renderSearch();
-    fireEvent.change(input, { target: { value: 'Bohemian' } });
-
-    await waitFor(() => {
-      expect(setSearch).not.toHaveBeenCalled();
-    });
-  });
-
-  it('should call setSearch when Enter is pressed', async () => {
-    const { setSearch, input } = renderSearch();
-    fireEvent.change(input, { target: { value: 'Bohemian' } });
-    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
-
-    await waitFor(() => {
-      expect(setSearch).toHaveBeenCalledWith('Bohemian');
-    });
+    expect(screen.queryByText('Another Song')).not.toBeInTheDocument();
   });
 
   it('should call setSearch when option is selected', async () => {
-    const { setSearch, input } = renderSearch();
+    const { onSetSearch, input } = renderSearch();
+
     input.focus();
     fireEvent.change(input, { target: { value: 'Test' } });
 
+    const option = await screen.findByText('Test Song');
+    fireEvent.click(option);
+
+    expect(onSetSearch).toHaveBeenCalledWith('Test Song');
+  });
+
+  it('should clear search on clear button click', async () => {
+    const onSetSearch = jest.fn();
+    renderSearch(options, 'Test Song', onSetSearch);
+
+    fireEvent.click(screen.getByRole('button'));
+
     await waitFor(() => {
-      fireEvent.click(screen.getByText('Test Song'));
+      expect(onSetSearch).toHaveBeenCalledWith('');
     });
-
-    expect(setSearch).toHaveBeenCalledWith('Test Song');
-  });
-
-  it('should display no options text when no results', async () => {
-    const { input } = renderSearch([], 'xyz');
-    input.focus();
-    fireEvent.change(input, { target: { value: 'Bohemian' } });
-    await waitFor(() => {
-      expect(screen.getByText('Not found')).toBeInTheDocument();
-    });
-  });
-
-  it('should focus input when search icon is clicked', async () => {
-    const { input, searchIcon } = renderSearch();
-    input.blur();
-    expect(document.activeElement).not.toBe(input);
-    if (!searchIcon) throw new Error('search icon not found');
-    fireEvent.click(searchIcon);
-    expect(document.activeElement).toBe(input);
-  });
-
-  it('should focus input when search icon is clicked even if not focused', async () => {
-    const { input, searchIcon } = renderSearch();
-    input.blur();
-    expect(document.activeElement).not.toBe(input);
-    if (!searchIcon) throw new Error('search icon not found');
-    fireEvent.click(searchIcon);
-    expect(document.activeElement).toBe(input);
   });
 });

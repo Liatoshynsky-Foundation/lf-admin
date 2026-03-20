@@ -16,7 +16,7 @@ interface FilterOption {
 
 interface FilterSelectProps {
   label: string;
-  options: FilterOption[];
+  options: readonly FilterOption[];
   defaultValues?: string[];
   variant?: 'filled' | 'outlined';
   disabled?: boolean;
