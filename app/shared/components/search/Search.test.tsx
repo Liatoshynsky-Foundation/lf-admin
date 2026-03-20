@@ -51,8 +51,8 @@ describe('Search', () => {
   it('should render filtered options', async () => {
     const { input } = renderSearch();
 
-    input.focus();
-    fireEvent.change(input, { target: { value: 'T' } });
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'Test' } });
 
     await waitFor(() => {
       expect(screen.getByText('Test Song')).toBeInTheDocument();
@@ -64,7 +64,7 @@ describe('Search', () => {
   it('should call setSearch when option is selected', async () => {
     const { onSetSearch, input } = renderSearch();
 
-    input.focus();
+    fireEvent.focus(input);
     fireEvent.change(input, { target: { value: 'Test' } });
 
     const option = await screen.findByText('Test Song');
