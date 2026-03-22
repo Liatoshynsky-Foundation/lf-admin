@@ -39,9 +39,6 @@ export const ImagePreviewBlock = ({
   oval = false,
   onChangeImage,
   editorMode = 'legacy',
-  direction = 'row',
-  buttonSpacing = '16px',
-  stackSpacing = '32px',
   typographySpacing = '8px'
 }: ImagePreviewBlockProps) => {
   const [previewImage, setPreviewImage] = useState<string>(imageUrl);
@@ -114,66 +111,67 @@ export const ImagePreviewBlock = ({
 
   return (
     <Box sx={styles.container}>
-      {title ? (
-        <Typography variant="subtitle1" sx={styles.sectionTitle}>
-          {title}
-        </Typography>
-      ) : null}
-
-      <Box sx={styles.imageBlock}>
-        <Box
-          component="img"
-          src={previewImage}
-          alt="Preview"
-          sx={oval ? styles.imageOvalPreview : styles.imagePreview}
-        />
-
-        <Stack spacing={stackSpacing} maxWidth="200px">
-          <Stack spacing={typographySpacing}>
-            <Typography
-              variant="body1"
-              sx={{
-                ...styles.fileNameText,
-                ...styles.trimmedTypography
-              }}
-            >
-              Назва файлу {finalFileName}
+      <Box sx={{ width: '196px', height: '100%' }}>
+        {previewImage ? (
+          <Box
+            component="img"
+            src={previewImage}
+            alt={title || 'Selected'}
+            sx={oval ? styles.imageOvalPreview : styles.imagePreview}
+          />
+        ) : (
+          <Box sx={styles.imagePreview}>
+            <Typography variant="body1" color="text.secondary" sx={styles.noImageText}>
+              No File
             </Typography>
+          </Box>
+        )}
+      </Box>
+      <Box sx={styles.imageBlock}>
+        <Stack spacing={typographySpacing}>
+          <Typography
+            variant="body1"
+            sx={{
+              ...styles.fileNameText,
+              ...styles.trimmedTypography
+            }}
+          >
+            Назва файлу {finalFileName}
+          </Typography>
 
-            {dimensions ? (
-              <Typography variant="body2" color="text.secondary" sx={styles.imageSizeText}>
-                Розмір: {dimensions.width} × {dimensions.height}
-              </Typography>
-            ) : null}
-          </Stack>
+          {dimensions ? (
+            <Typography variant="body2" color="text.secondary" sx={styles.imageSizeText}>
+              Розмір: {dimensions.width} × {dimensions.height}
+            </Typography>
+          ) : null}
+        </Stack>
 
-          <Stack direction={direction} spacing={buttonSpacing} mt={1} width="330px">
-            <Button
-              startIcon={<PencilIcon style={{ marginRight: '-8px' }} />}
-              variant="outlined"
-              color="primary"
-              size="small"
-              onClick={handleEditClick}
-              style={styles.editButton}
-            >
-              Редагувати
-            </Button>
+        <Stack sx={styles.imageBlockButtonsStack}>
+          <Button
+            startIcon={<PencilIcon style={{ marginRight: '-8px' }} />}
+            variant="outlined"
+            color="primary"
+            size="small"
+            onClick={handleEditClick}
+            style={styles.editButton}
+          >
+            Редагувати
+          </Button>
 
-            <Button
-              startIcon={<ImageIcon style={{ marginRight: '-8px' }} />}
-              variant="outlined"
-              color="primary"
-              size="small"
-              onClick={handleChangeClick}
-              sx={styles.changeButton}
-            >
-              Змінити зображення
-            </Button>
+          <Button
+            startIcon={<ImageIcon style={{ marginRight: '-8px' }} />}
+            variant="outlined"
+            color="primary"
+            size="small"
+            onClick={handleChangeClick}
+            sx={styles.changeButton}
+          >
+            Змінити зображення
+          </Button>
 
-            {editorMode === 'legacy' && (
-              <input ref={inputRef} type="file" accept="image/*" hidden onChange={handleFileChange} />
-            )}
-          </Stack>
+          {editorMode === 'legacy' && (
+            <input ref={inputRef} type="file" accept="image/*" hidden onChange={handleFileChange} />
+          )}
         </Stack>
       </Box>
 

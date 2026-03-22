@@ -4,6 +4,7 @@ import { Box } from '@mui/material';
 import React from 'react';
 
 import { fetchPreview } from '~/lib/utils/fetchPreview';
+import SeoMetadataBlock from '~/shared/components/forms/seo-metadata-form/SeoMetadataBlock';
 import { Header } from '~/shared/components/header/Header';
 import { useStore } from '~/store';
 
@@ -36,6 +37,7 @@ export default function Home() {
         onCancel={onCancel}
         isSaving
       />
+      <SeoMetadataBlock />
     </Box>
   );
 }

@@ -1,7 +1,10 @@
 export const styles = {
   container: {
-    p: 2,
-    maxWidth: '1050px'
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: '24px',
+    width: '100%'
   },
 
   sectionTitle: {
@@ -14,14 +17,28 @@ export const styles = {
 
   imageBlock: {
     display: 'flex',
-    gap: 2,
-    alignItems: 'flex-start',
-    minWidth: '366px'
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    maxWidth: '276px',
+    height: '164px',
+    width: '60%'
+  },
+  imageBlockButtonsStack: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 1
   },
 
   imagePreview: {
-    maxWidth: '500px',
-    maxHeight: '300px'
+    maxWidth: '196px',
+    maxHeight: '164px',
+    width: '100%',
+    height: '100%',
+    borderRadius: '6px',
+    border: '1px solid rgba(178, 179, 190, 1)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
 
   imageOvalPreview: {
@@ -33,12 +50,23 @@ export const styles = {
   fileNameText: {
     color: 'rgba(71, 77, 90, 1)',
     fontFamily: 'Mulish',
-    mb: '8px'
+    mb: '4px'
   },
 
   imageSizeText: {
-    mb: 4,
-    fontFamily: 'Mulish'
+    fontFamily: 'Mulish',
+    fontSize: '16px',
+    fontWeight: 500,
+    lineHeight: '140%',
+    fontStyle: 'italic',
+    color: 'rgba(82, 84, 90, 1)'
+  },
+  noImageText: {
+    fontFamily: 'Mulish',
+    fontSize: '16px',
+    fontWeight: 500,
+    lineHeight: '140%',
+    color: 'rgba(82, 84, 90, 1)'
   },
   editButton: {
     width: '127px'
@@ -46,9 +74,15 @@ export const styles = {
   changeButton: { width: '190px' },
   trimmedTypography: {
     display: '-webkit-box',
-    WebkitLineClamp: 1,
+    WebkitLineClamp: 2,
     WebkitBoxOrient: 'vertical',
     overflow: 'hidden',
-    textOverflow: 'ellipsis'
+    textOverflow: 'ellipsis',
+    fontSize: '18px',
+    fontWeight: 500,
+    lineHeight: '150%',
+    color: 'rgba(25, 13, 3, 1)',
+    fontFamily: 'Mulish',
+    letterSpacing: 0
   }
 };
