@@ -65,7 +65,8 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
                 kind: 'used',
                 id: '1',
                 fileName: 'test.jpg',
-                src: 'url'
+                src: 'url',
+                locale: 'uk'
               },
               crop: null
             })
