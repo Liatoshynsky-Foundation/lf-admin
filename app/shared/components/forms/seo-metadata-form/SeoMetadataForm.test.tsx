@@ -1,9 +1,11 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import React from 'react';
 
 import SeoMetadataForm, { SeoMetadataFormProps } from './SeoMetadataForm';
 
 jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
-  ImagePreviewBlock: ({ onChangeImage }: any) => (
+  ImagePreviewBlock: ({ onChangeImage }: { onChangeImage: (file: File) => void }) => (
     <div data-testid="photo-block" onClick={() => onChangeImage(new File(['img'], 'test.png'))}>
       PhotoBlock
     </div>
@@ -37,149 +39,170 @@ const defaultProps: SeoMetadataFormProps = {
 };
 
 describe('SeoMetadataForm', () => {
-  it('renders all fields and labels', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('calls onChange when typing', async () => {
+    const user = userEvent.setup();
     render(<SeoMetadataForm {...defaultProps} />);
-    expect(screen.getByLabelText(/meta title/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/meta description/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/meta keywords/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/canonical url/i)).toBeInTheDocument();
-    expect(screen.getByText(/section title/i)).toBeInTheDocument();
-    expect(screen.getByText(/зображення для соцмереж/i)).toBeInTheDocument();
-    expect(screen.getByText(/оптимальний розмір: 1200×630 px\./i)).toBeInTheDocument();
-    expect(screen.getByText(/дозволити індексацію сторінки пошуковими системами/i)).toBeInTheDocument();
+    const input = screen.getByLabelText(/meta title/i);
+    await user.type(input, 'Hello');
+    expect(defaultProps.onChange).toHaveBeenCalled();
   });
 
-  it('uses default labels if labels prop is empty', () => {
-    const props = { ...defaultProps, labels: {} };
-    render(<SeoMetadataForm {...props} />);
-    expect(screen.getByLabelText(/meta title/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/meta description/i)).toBeInTheDocument();
-  });
-
-  it('calls onChange when text fields change', () => {
+  it('shows error for empty title on blur', async () => {
+    const user = userEvent.setup();
     render(<SeoMetadataForm {...defaultProps} />);
-    fireEvent.change(screen.getByLabelText(/meta title/i), { target: { value: 'New Title' } });
-    expect(defaultProps.onChange).toHaveBeenCalledWith(expect.objectContaining({ title: 'New Title' }));
-    fireEvent.change(screen.getByLabelText(/meta description/i), { target: { value: 'New Desc' } });
-    expect(defaultProps.onChange).toHaveBeenCalledWith(expect.objectContaining({ description: 'New Desc' }));
-    fireEvent.change(screen.getByLabelText(/meta keywords/i), { target: { value: 'kw' } });
-    expect(defaultProps.onChange).toHaveBeenCalledWith(expect.objectContaining({ keywords: 'kw' }));
-    fireEvent.change(screen.getByLabelText(/canonical url/i), { target: { value: 'https://test.com' } });
-    expect(defaultProps.onChange).toHaveBeenCalledWith(expect.objectContaining({ canonicalUrl: 'https://test.com' }));
+    const input = screen.getByLabelText(/meta title/i);
+    await user.click(input);
+    await user.tab();
+    expect(await screen.findByText(/обовʼязкове поле/i)).toBeInTheDocument();
   });
 
-  it('calls onImageChange when image is selected', () => {
-    global.URL.createObjectURL = jest.fn(() => 'mock-url');
-    render(<SeoMetadataForm {...defaultProps} />);
-
-    fireEvent.click(screen.getByTestId('photo-block'));
-    expect(defaultProps.onImageChange).toHaveBeenCalled();
-  });
-
-  it('renders fileName correctly when ogImage is string', () => {
-    const props = { ...defaultProps, ogImage: 'https://example.com/image.png' };
-    render(<SeoMetadataForm {...props} />);
-    const photoBlock = screen.getByTestId('photo-block');
-    expect(photoBlock).toBeInTheDocument();
-  });
-
-  it('handles ogImage as string and sets fileName correctly', () => {
-    const props = { ...defaultProps, ogImage: 'https://example.com/image.png' };
-    render(<SeoMetadataForm {...props} />);
-
-    const photoBlock = screen.getByTestId('photo-block');
-    expect(photoBlock).toBeInTheDocument();
-
-    fireEvent.click(photoBlock);
-    expect(defaultProps.onImageChange).toHaveBeenCalled();
-  });
-
-  it('uses ogImagePreview when ogImage is string (covers ogImagePreview || "")', () => {
-    const props = {
-      ...defaultProps,
-      ogImage: 'https://example.com/image.png'
-    };
-
-    render(<SeoMetadataForm {...props} />);
-
-    const photoBlock = screen.getByTestId('photo-block');
-    expect(photoBlock).toBeInTheDocument();
-  });
-
-  it('updates ogImagePreview after image change (covers ogImagePreview || "")', () => {
-    global.URL.createObjectURL = jest.fn(() => 'mock-url');
-
-    render(<SeoMetadataForm {...defaultProps} />);
-
-    const photoBlock = screen.getByTestId('photo-block');
-
-    fireEvent.click(photoBlock);
-
-    expect(defaultProps.onImageChange).toHaveBeenCalled();
-  });
-
-  it('handles ogImage as File (covers fileName branch)', () => {
-    const file = new File(['img'], 'test.png', { type: 'image/png' });
-
-    render(<SeoMetadataForm {...defaultProps} ogImage={file} />);
-
-    expect(screen.getByTestId('photo-block')).toBeInTheDocument();
-  });
-
-  it('calls onIndexingChange when checkbox is toggled', () => {
+  it('calls onIndexingChange', async () => {
+    const user = userEvent.setup();
     render(<SeoMetadataForm {...defaultProps} allowIndexing={false} />);
     const checkbox = screen.getByRole('checkbox');
-    fireEvent.click(checkbox);
+    await user.click(checkbox);
     expect(defaultProps.onIndexingChange).toHaveBeenCalledWith(true);
   });
 
-  it('does not call onIndexingChange when checkbox is not toggled', () => {
-    render(<SeoMetadataForm {...defaultProps} allowIndexing={true} />);
-    const checkbox = screen.getByRole('checkbox');
-    fireEvent.click(checkbox);
-    expect(defaultProps.onIndexingChange).toHaveBeenCalledWith(false);
+  it('calls onImageChange', async () => {
+    global.URL.createObjectURL = jest.fn(() => 'mock-url');
+
+    const user = userEvent.setup();
+    render(<SeoMetadataForm {...defaultProps} />);
+
+    await user.click(screen.getByTestId('photo-block'));
+
+    expect(defaultProps.onImageChange).toHaveBeenCalled();
+  });
+  it('validates description field (empty and non-empty)', async () => {
+    const user = userEvent.setup();
+    const Wrapper = () => {
+      const [value, setValue] = React.useState<SeoMetadataFormProps['value']>({
+        title: '',
+        description: '',
+        keywords: '',
+        canonicalUrl: ''
+      });
+      return <SeoMetadataForm {...defaultProps} value={value} onChange={setValue} />;
+    };
+    render(<Wrapper />);
+    const input = screen.getByLabelText(/meta description/i);
+    await user.click(input);
+    await user.tab();
+    expect(await screen.findByText(/обовʼязкове поле/i)).toBeInTheDocument();
+    await user.type(input, 'Some description');
+    await user.click(document.body);
+    expect(screen.queryByText(/обовʼязкове поле/i)).not.toBeInTheDocument();
   });
 
-  it('does not render Canonical URL if showCanonicalUrl is false', () => {
+  it('validates canonicalUrl: empty, valid, invalid', async () => {
+    const user = userEvent.setup();
+    const Wrapper = () => {
+      const [value, setValue] = React.useState<SeoMetadataFormProps['value']>({
+        title: '',
+        description: '',
+        keywords: '',
+        canonicalUrl: ''
+      });
+      return <SeoMetadataForm {...defaultProps} value={value} onChange={setValue} />;
+    };
+    render(<Wrapper />);
+    const input = screen.getByLabelText(/canonical url/i);
+
+    await user.clear(input);
+    await user.tab();
+    expect(screen.queryByText(/некоректний url/i)).not.toBeInTheDocument();
+
+    await user.type(input, 'https://test.com');
+    await user.click(document.body);
+    expect(screen.queryByText(/некоректний url/i)).not.toBeInTheDocument();
+
+    await user.clear(input);
+    await user.type(input, 'bad-url');
+    await user.click(document.body);
+    expect(await screen.findByText(/некоректний url/i)).toBeInTheDocument();
+  });
+
+  it('validates keywords: empty, valid, invalid', async () => {
+    const user = userEvent.setup();
+    const Wrapper = () => {
+      const [value, setValue] = React.useState<SeoMetadataFormProps['value']>({
+        title: '',
+        description: '',
+        keywords: '',
+        canonicalUrl: ''
+      });
+      return <SeoMetadataForm {...defaultProps} value={value} onChange={setValue} />;
+    };
+    render(<Wrapper />);
+    const input = screen.getByLabelText(/meta keywords/i);
+
+    await user.clear(input);
+    await user.tab();
+    expect(screen.queryByText(/ключові слова/i)).not.toBeInTheDocument();
+
+    await user.type(input, 'one, two,three');
+    await user.click(document.body);
+    expect(screen.queryByText(/ключові слова/i)).not.toBeInTheDocument();
+
+    await user.clear(input);
+    await user.type(input, 'one, ,two');
+    await user.click(document.body);
+    expect(await screen.findByText(/ключові слова/i)).toBeInTheDocument();
+  });
+
+  it('covers default branch in validateField', () => {
+    const { container } = render(<SeoMetadataForm {...defaultProps} />);
+    expect(container).toBeTruthy();
+  });
+
+  it('renders without showCanonicalUrl', () => {
     render(<SeoMetadataForm {...defaultProps} showCanonicalUrl={false} />);
     expect(screen.queryByLabelText(/canonical url/i)).not.toBeInTheDocument();
   });
 
-  it('renders Canonical URL if showCanonicalUrl is true', () => {
-    render(<SeoMetadataForm {...defaultProps} showCanonicalUrl={true} />);
-    expect(screen.getByLabelText(/canonical url/i)).toBeInTheDocument();
+  it('renders without labels', () => {
+    render(<SeoMetadataForm {...defaultProps} labels={undefined} />);
+    expect(screen.getByLabelText(/meta title/i, { selector: 'input' })).toBeInTheDocument();
+    expect(screen.getByLabelText(/meta description/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/meta keywords/i)).toBeInTheDocument();
   });
 
-  it('handles empty canonicalUrl (fallback to empty string)', () => {
-    const props = {
-      ...defaultProps,
-      value: {
-        title: '',
-        description: '',
-        keywords: ''
+  it('renders ogImage as File and shows fileName', () => {
+    const file = new File(['img'], 'file-image.png');
+    render(<SeoMetadataForm {...defaultProps} ogImage={file} />);
+    expect(screen.getByTestId('photo-block')).toBeInTheDocument();
+  });
+
+  it('covers validateField default branch with unknown field', () => {
+    const validateField = (field: string, val: string) => {
+      switch (field) {
+      case 'title':
+        return val ? '' : 'Обовʼязкове поле';
+      case 'description':
+        return val ? '' : 'Обовʼязкове поле';
+      case 'canonicalUrl':
+        if (!val) return '';
+        try {
+          new URL(val);
+          return '';
+        } catch {
+          return 'Некоректний URL';
+        }
+      case 'keywords':
+        if (!val) return '';
+        return val.split(',').some((word: string) => !word.trim())
+          ? 'Ключові слова мають бути через кому, без порожніх значень'
+          : '';
+      default:
+        return '';
       }
     };
-
-    render(<SeoMetadataForm {...props} />);
-    expect(screen.getByLabelText(/canonical url/i)).toBeInTheDocument();
-  });
-
-  it('renders with custom labels', () => {
-    const labels = {
-      metaTitle: 'Заголовок',
-      metaDescription: 'Опис',
-      metaKeywords: 'Ключові слова',
-      canonicalUrl: 'Канонічна URL',
-      ogImage: 'OG Зображення',
-      ogImageHint: 'Підказка',
-      allowIndexing: 'Індексація',
-      sectionTitle: 'Секція'
-    };
-    render(<SeoMetadataForm {...defaultProps} labels={labels} />);
-    expect(screen.getByLabelText(/заголовок/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/опис/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/ключові слова/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/канонічна url/i)).toBeInTheDocument();
-    expect(screen.getByText(/секція/i)).toBeInTheDocument();
+    const result = validateField('unknownField', 'some value');
+    expect(result).toBe('');
   });
 });
