@@ -24,9 +24,9 @@ export const styles = {
     py: 3
   },
   textField: {
-    borderRadius: '8px',
     '& .MuiOutlinedInput-root': {
       '& fieldset': {
+        borderRadius: '8px',
         borderColor: colors.adminBlue[500],
         borderWidth: '1px'
       },
