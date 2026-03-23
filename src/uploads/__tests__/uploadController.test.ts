@@ -58,7 +58,7 @@ describe('UploadController', () => {
       mockService.uploadFile.mockResolvedValue({
         success: true,
         filename: 'new-test.jpg',
-        url: 'http://cdn.com/new-test.jpg'
+        url: 'https://cdn.com/new-test.jpg'
       });
 
       await controller.uploadSingleFile(req, mockRes as Response, next);
@@ -145,7 +145,7 @@ describe('UploadController', () => {
         success: true,
         metadata: {
           filename: '1.jpg',
-          url: 'http://cdn.com/1.jpg',
+          url: 'https://cdn.com/1.jpg',
           size: 1,
           mimeType: 'image/jpeg',
           originalName: '1.jpg',

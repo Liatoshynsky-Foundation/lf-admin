@@ -53,7 +53,7 @@ describe('UploadService', () => {
           mimeType: 'image/jpeg',
           uploadedAt: new Date(),
           originalName: 'test.jpg',
-          url: 'http://example.com/test.jpg'
+          url: 'https://example.com/test.jpg'
         } as StorageMetadata
       };
 
@@ -127,8 +127,8 @@ describe('UploadService', () => {
     });
 
     it('should delegate getFileUrl', () => {
-      mockStorage.getUrl.mockReturnValue('http://cdn.com/test.png');
-      expect(service.getFileUrl('test.png')).toBe('http://cdn.com/test.png');
+      mockStorage.getUrl.mockReturnValue('https://cdn.com/test.png');
+      expect(service.getFileUrl('test.png')).toBe('https://cdn.com/test.png');
     });
   });
 
@@ -158,9 +158,9 @@ describe('UploadService', () => {
     });
 
     it('should return file url from storage', () => {
-      mockStorage.getUrl.mockReturnValue('http://azure.com/img.jpg');
+      mockStorage.getUrl.mockReturnValue('https://azure.com/img.jpg');
       const url = service.getFileUrl('img.jpg');
-      expect(url).toBe('http://azure.com/img.jpg');
+      expect(url).toBe('https://azure.com/img.jpg');
     });
   });
 });
