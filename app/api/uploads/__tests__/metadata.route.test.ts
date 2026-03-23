@@ -2,23 +2,37 @@
  * @jest-environment node
  */
 import { NextRequest } from 'next/server';
-import { Headers as NodeHeaders,Request as NodeRequest, Response as NodeResponse } from 'undici';
+import { TextDecoder, TextEncoder } from 'node:util';
 
 import { GET } from '../[filename]/metadata/route';
 import { getUploadModule } from '../upload-handler';
 
-if (typeof globalThis.Request === 'undefined') {
-  Object.assign(globalThis, {
-    Request: NodeRequest,
-    Response: NodeResponse,
-    Headers: NodeHeaders
-  });
-}
+Object.assign(globalThis, { TextDecoder, TextEncoder });
 
 jest.mock('../upload-handler');
 
+interface UndiciWebGlobals {
+  fetch: typeof fetch;
+  Request: typeof Request;
+  Response: typeof Response;
+  Headers: typeof Headers;
+}
+
 describe('GET /api/uploads/[filename]/metadata', () => {
   const mockGetMetadata = jest.fn();
+
+  beforeAll(async () => {
+    if (globalThis.Request === undefined) {
+      const undici = (await import('undici')) as unknown as UndiciWebGlobals;
+
+      Object.assign(globalThis, {
+        Request: undici.Request,
+        Response: undici.Response,
+        Headers: undici.Headers,
+        fetch: undici.fetch
+      });
+    }
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -34,14 +48,17 @@ describe('GET /api/uploads/[filename]/metadata', () => {
       originalName: 'data.txt',
       mimeType: 'text/plain',
       size: 100,
-      uploadedAt: new Date()
+      uploadedAt: new Date(),
+      path: 'uploads/data.txt',
+      url: 'https://localhost/uploads/data.txt'
     };
 
     mockGetMetadata.mockResolvedValue(mockMeta);
 
     const req = new NextRequest('https://localhost/api/uploads/data.txt/metadata');
     const res = await GET(req, { params });
-    const json = await res.json() as { success: boolean; data: unknown };
+
+    const json = (await res.json()) as { success: boolean; data: Record<string, unknown> };
 
     expect(res.status).toBe(200);
     expect(json.success).toBe(true);

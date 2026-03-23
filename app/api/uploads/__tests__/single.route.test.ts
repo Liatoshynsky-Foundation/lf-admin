@@ -12,19 +12,19 @@ Object.assign(globalThis, { TextDecoder, TextEncoder });
 jest.mock('../upload-handler');
 
 interface UndiciWebGlobals {
-    fetch: typeof fetch;
-    Request: typeof Request;
-    Response: typeof Response;
-    Headers: typeof Headers;
-    FormData: typeof FormData;
-    Blob: typeof Blob;
+  fetch: typeof fetch;
+  Request: typeof Request;
+  Response: typeof Response;
+  Headers: typeof Headers;
+  FormData: typeof FormData;
+  Blob: typeof Blob;
 }
 
 describe('POST /api/uploads/single', () => {
   const mockUploadFile = jest.fn();
 
   beforeAll(async () => {
-    if (typeof globalThis.FormData === 'undefined' || typeof globalThis.Blob === 'undefined') {
+    if (globalThis.FormData === undefined || globalThis.Blob === undefined) {
       const undici = (await import('undici')) as unknown as UndiciWebGlobals;
 
       Object.assign(globalThis, {
