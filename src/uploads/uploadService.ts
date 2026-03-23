@@ -38,9 +38,9 @@ export const createUploadService = (config: UploadServiceConfig) => {
       const generateFilename = options.generateFilename || generateUniqueFilename;
       const filename = generateFilename(file.originalname, file.mimetype);
 
-      const storageMetadata: Record<string, any> = {
+      const storageMetadata: Record<string, unknown> = {
         originalName: file.originalname,
-        ...options.metadata
+        ...(options.metadata as Record<string, unknown> ?? {})
       };
 
       if (options.directory) {

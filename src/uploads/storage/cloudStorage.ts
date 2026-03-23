@@ -74,13 +74,17 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
 
       const key = getTargetKey(filename, undefined, metadata.directory);
 
+      const originalName = typeof metadata.originalName === 'string'
+        ? metadata.originalName
+        : filename;
+
       await s3Client.send(new PutObjectCommand({
         Bucket: bucket,
         Key: key,
         Body: buffer,
         ContentType: mimeType,
         Metadata: {
-          originalName: String(metadata.originalName || filename),
+          originalName,
           uploadedAt: new Date().toISOString(),
           ...Object.fromEntries(
             Object.entries(metadata).map(([k, v]) => [k, String(v)])
@@ -92,30 +96,36 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
         success: true,
         metadata: {
           filename,
-          originalName: String(metadata.originalName || filename),
+          originalName,
           mimeType,
           size: buffer.length,
           uploadedAt: new Date(),
           path: key,
           url: getUrl(key) || undefined,
           directory: key.substring(0, key.lastIndexOf('/')),
-          originalFilename: String(metadata.originalName || filename),
+          originalFilename: originalName,
           originalMimeType: mimeType,
           processed: true,
           ...metadata
         }
       };
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : UPLOAD_ERRORS.UNKNOWN_ERROR_OCCURRED;
+
+      const originalName = typeof metadata.originalName === 'string'
+        ? metadata.originalName
+        : filename;
+
       return {
         success: false,
         metadata: {
           filename,
-          originalName: String(metadata.originalName || filename),
+          originalName,
           mimeType,
           size: buffer.length,
           uploadedAt: new Date()
         },
-        error: error instanceof Error ? error.message : UPLOAD_ERRORS.UNKNOWN_ERROR_OCCURRED
+        error: errorMsg
       };
     }
   };
@@ -197,14 +207,21 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
   const list = async (folder?: string): Promise<StorageMetadata[]> => {
     try {
       if (!s3Client) return [];
-      const prefix = folder ? (folder.endsWith('/') ? folder : `${folder}/`) : '';
+
+      let prefix = '';
+      if (folder) {
+        prefix = folder.endsWith('/') ? folder : `${folder}/`;
+      }
+
       const response = await s3Client.send(new ListObjectsV2Command({ Bucket: bucket, Prefix: prefix }));
 
       return (response.Contents || []).map((item) => {
         const itemKey = item.Key || '';
+        const itemFilename = itemKey.split('/').pop() || itemKey;
+
         return {
-          filename: itemKey.split('/').pop() || itemKey,
-          originalName: itemKey.split('/').pop() || itemKey,
+          filename: itemFilename,
+          originalName: itemFilename,
           mimeType: 'application/octet-stream',
           size: item.Size || 0,
           uploadedAt: item.LastModified || new Date(),

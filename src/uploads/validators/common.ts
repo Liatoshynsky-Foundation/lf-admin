@@ -17,7 +17,7 @@ export interface FileValidator {
 
 export const getFileExtension = (filename: string): string => {
   const parts = filename.split('.');
-  return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : '';
+  return parts.length > 1 ? parts.at(-1)?.toLowerCase() ?? '' : '';
 };
 
 export const validateFileSize = (buffer: Buffer, maxSize?: number): ValidationResult => {

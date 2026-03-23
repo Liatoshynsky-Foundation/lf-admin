@@ -1,22 +1,7 @@
-import * as crypto from 'crypto';
-import * as path from 'path';
+import * as crypto from 'node:crypto';
+import * as path from 'node:path';
 
-import {UploadResult} from '~/uploads/types';
-
-export const generateUniqueFilename = (originalName: string, mimeType: string): string => {
-  const timestamp = Date.now();
-  const randomHash = crypto.randomBytes(8).toString('hex');
-  const extension = getExtensionFromMimeType(mimeType) || getExtensionFromFilename(originalName);
-
-  return `${timestamp}-${randomHash}${extension ? `.${extension}` : ''}`;
-};
-
-export const sanitizeFilename = (filename: string): string => {
-  return filename
-    .replace(/[^a-zA-Z0-9._-]/g, '_')
-    .replace(/_{2,}/g, '_')
-    .toLowerCase();
-};
+import { UploadResult } from '~/uploads/types';
 
 export const getExtensionFromFilename = (filename: string): string => {
   const ext = path.extname(filename);
@@ -49,7 +34,23 @@ export const getExtensionFromMimeType = (mimeType: string): string => {
     'audio/ogg': 'ogg'
   };
 
-  return mimeToExt[mimeType] || '';
+  return mimeToExt[mimeType] ?? '';
+};
+
+export const sanitizeFilename = (filename: string): string => {
+  return filename
+    .replaceAll(/[^a-zA-Z0-9._-]/g, '_')
+    .replaceAll(/_{2,}/g, '_')
+    .toLowerCase();
+};
+
+export const generateUniqueFilename = (originalName: string, mimeType: string): string => {
+  const timestamp = Date.now();
+  const randomHash = crypto.randomBytes(8).toString('hex');
+  const extension = getExtensionFromMimeType(mimeType) || getExtensionFromFilename(originalName);
+  const dotExtension = extension ? `.${extension}` : '';
+
+  return `${timestamp}-${randomHash}${dotExtension}`;
 };
 
 export const generateFilenameWithOriginal = (originalName: string, _mimeType: string): string => {
@@ -58,20 +59,22 @@ export const generateFilenameWithOriginal = (originalName: string, _mimeType: st
   const nameWithoutExt = path.basename(originalName, path.extname(originalName));
   const sanitized = sanitizeFilename(nameWithoutExt);
   const extension = getExtensionFromFilename(originalName);
+  const dotExtension = extension ? `.${extension}` : '';
 
-  return `${timestamp}-${randomHash}-${sanitized}${extension ? `.${extension}` : ''}`;
+  return `${timestamp}-${randomHash}-${sanitized}${dotExtension}`;
 };
 
 export const formatBytes = (bytes: number, decimals = 2): string => {
   if (bytes === 0) return '0 Bytes';
 
   const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
+  const dm = Math.max(0, decimals);
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
 
   const i = Math.floor(Math.log(bytes) / Math.log(k));
+  const value = Number.parseFloat((bytes / Math.pow(k, i)).toFixed(dm));
 
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  return `${value} ${sizes[i]}`;
 };
 
 export const convertMulterFile = (file: Express.Multer.File) => ({
@@ -84,7 +87,8 @@ export const convertMulterFile = (file: Express.Multer.File) => ({
 });
 
 export const parseUploadOptions = (body: Record<string, unknown>): Record<string, unknown> => {
-  return typeof body.options === 'string' ? JSON.parse(body.options) : {};
+  const options = body.options;
+  return typeof options === 'string' ? (JSON.parse(options) as Record<string, unknown>) : {};
 };
 
 export const formatUploadResult = (result: UploadResult) => ({
@@ -108,7 +112,7 @@ export const formatMultipleUploadResults = (results: UploadResult[]) => {
       files: successful.map(formatUploadResult),
       errors: failed.map((r) => ({
         originalName: r.originalName,
-        errors: r.errors || []
+        errors: r.errors ?? []
       }))
     }
   };

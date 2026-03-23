@@ -1,6 +1,6 @@
 import { BlobServiceClient, BlockBlobClient, ContainerClient } from '@azure/storage-blob';
 
-import { ensureError,UPLOAD_ERRORS } from '../errors';
+import { ensureError, UPLOAD_ERRORS } from '../errors';
 import { DeleteResult, StorageAdapter, StorageMetadata, StorageResult } from './types';
 import { errors } from '~/back-constants/errors';
 import { CONTAINER_NAME } from '~/back-constants/index';
@@ -170,7 +170,9 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
     metadata: Record<string, unknown> = {}
   ): Promise<StorageResult> => {
     try {
-      const directory = String(metadata.directory || folderPrefix);
+      const directory = typeof metadata.directory === 'string'
+        ? metadata.directory
+        : folderPrefix;
 
       await uploadFile(directory, filename, buffer, mimeType);
 
@@ -178,7 +180,9 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
 
       const storageMetadata: StorageMetadata = {
         filename,
-        originalName: String(metadata.originalName || filename),
+        originalName: typeof metadata.originalName === 'string'
+          ? metadata.originalName
+          : filename,
         mimeType,
         size: buffer.length,
         uploadedAt: new Date(),
@@ -197,7 +201,9 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
         success: false,
         metadata: {
           filename,
-          originalName: String(metadata.originalName || filename),
+          originalName: typeof metadata.originalName === 'string'
+            ? metadata.originalName
+            : filename,
           mimeType,
           size: buffer.length,
           uploadedAt: new Date()
@@ -265,7 +271,7 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
       }
 
       const contentType = response.headers.get('Content-Type') || 'application/octet-stream';
-      const contentLength = parseInt(response.headers.get('Content-Length') || '0', 10);
+      const contentLength = Number.parseInt(response.headers.get('Content-Length') || '0', 10);
 
       return {
         filename,
@@ -285,7 +291,10 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
   const list = async (folder?: string): Promise<StorageMetadata[]> => {
     try {
       const containerClient = getContainerClient();
-      const prefix = folder ? (folder.endsWith('/') ? folder : `${folder}/`) : undefined;
+      let prefix: string | undefined;
+      if (folder) {
+        prefix = folder.endsWith('/') ? folder : `${folder}/`;
+      }
 
       const blobs: StorageMetadata[] = [];
 

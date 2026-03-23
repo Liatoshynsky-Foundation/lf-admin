@@ -18,7 +18,7 @@ export const useFiles = (options: UseFilesOptions = {}) => {
       setLoading(true);
       setError(null);
       try {
-        const targetFolder = folderOverride !== undefined ? folderOverride : folder;
+        const targetFolder = folderOverride ?? folder;
         const queryParams = targetFolder ? `?folder=${encodeURIComponent(targetFolder)}` : '';
         const response = await fetch(`/api/uploads${queryParams}`);
         const data: FilesResponse = await response.json();

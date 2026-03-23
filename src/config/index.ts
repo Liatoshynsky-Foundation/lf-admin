@@ -50,8 +50,8 @@ const storageConfig: StorageConfig = {
 
 const uploadsConfig: UploadConfig = {
   storage: storageConfig,
-  maxFileSize: parseInt(process.env.UPLOAD_MAX_FILE_SIZE || String(DEFAULT_MAX_FILE_SIZE), 10),
-  maxFiles: parseInt(process.env.UPLOAD_MAX_FILES || String(DEFAULT_MAX_FILES), 10)
+  maxFileSize: Number.parseInt(process.env.UPLOAD_MAX_FILE_SIZE ?? String(DEFAULT_MAX_FILE_SIZE), 10),
+  maxFiles: Number.parseInt(process.env.UPLOAD_MAX_FILES ?? String(DEFAULT_MAX_FILES), 10)
 };
 
 export const config: Config = {

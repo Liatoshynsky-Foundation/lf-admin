@@ -14,10 +14,10 @@ jest.mock('~/src/middleware/logger/logger', () => ({
 }));
 jest.mock('../../../validators/blob.schema', () => ({
   zFolderNameSchema: {
-    parse: jest.fn((val) => val)
+    parse: jest.fn((val: string) => val)
   },
   zContentTypeSchema: {
-    parse: jest.fn((val) => val)
+    parse: jest.fn((val: string) => val)
   }
 }));
 
@@ -46,16 +46,19 @@ describe('createAzureBlobStorage', () => {
       uploadData: jest.fn().mockResolvedValue({}),
       deleteIfExists: jest.fn().mockResolvedValue({ succeeded: true }),
       exists: jest.fn().mockResolvedValue(true),
-      url: 'https://test.blob.core.windows.net/test-container/uploads/testfile.txt'
-    } as any;
+      url: 'https://test.blob.core.windows.net/test-container/uploads/testfile.txt',
+      beginCopyFromURL: jest.fn(),
+      name: 'testfile.txt'
+    } as unknown as jest.Mocked<BlockBlobClient>;
 
     mockContainerClient = {
-      getBlockBlobClient: jest.fn().mockReturnValue(mockBlockBlobClient)
-    } as any;
+      getBlockBlobClient: jest.fn().mockReturnValue(mockBlockBlobClient),
+      listBlobsFlat: jest.fn()
+    } as unknown as jest.Mocked<ContainerClient>;
 
     mockBlobServiceClient = {
       getContainerClient: jest.fn().mockReturnValue(mockContainerClient)
-    } as any;
+    } as unknown as jest.Mocked<BlobServiceClient>;
 
     (BlobServiceClient as unknown as jest.Mock).mockReturnValue(mockBlobServiceClient);
 
@@ -72,7 +75,7 @@ describe('createAzureBlobStorage', () => {
 
   describe('initialization', () => {
     it('should throw error if AZURE_SAS_URL is not defined', async () => {
-      (process.env as any).AZURE_SAS_URL = undefined;
+      process.env.AZURE_SAS_URL = undefined as unknown as string;
 
       const newStorage = createAzureBlobStorage();
       const buffer = Buffer.from('test');
@@ -120,7 +123,7 @@ describe('createAzureBlobStorage', () => {
 
       expect(result.success).toBe(true);
       expect(result.metadata.originalName).toBe('my-file.txt');
-      expect((result.metadata as any).custom).toBe('data');
+      expect((result.metadata as Record<string, unknown>).custom).toBe('data');
     });
 
     it('should construct correct URL when baseUrl is provided', async () => {
@@ -166,7 +169,7 @@ describe('createAzureBlobStorage', () => {
       const filename = 'test.txt';
       const fileContent = 'test content';
 
-      global.fetch = jest.fn().mockResolvedValue({
+      globalThis.fetch = jest.fn().mockResolvedValue({
         ok: true,
         status: 200,
         statusText: 'OK',
@@ -184,7 +187,7 @@ describe('createAzureBlobStorage', () => {
     it('should return null if file not found', async () => {
       const filename = 'nonexistent.txt';
 
-      global.fetch = jest.fn().mockResolvedValue({
+      globalThis.fetch = jest.fn().mockResolvedValue({
         ok: false,
         status: 404,
         statusText: 'Not Found',
@@ -200,7 +203,7 @@ describe('createAzureBlobStorage', () => {
     it('should return null on fetch error', async () => {
       const filename = 'test.txt';
 
-      global.fetch = jest.fn().mockRejectedValue(new Error('Fetch failed'));
+      globalThis.fetch = jest.fn().mockRejectedValue(new Error('Fetch failed'));
 
       const result = await storage.retrieve(filename);
 
@@ -279,7 +282,7 @@ describe('createAzureBlobStorage', () => {
       const contentType = 'text/plain';
       const contentLength = '12';
 
-      global.fetch = jest.fn().mockResolvedValue({
+      globalThis.fetch = jest.fn().mockResolvedValue({
         ok: true,
         headers: {
           get: jest.fn((key: string) => {
@@ -295,13 +298,13 @@ describe('createAzureBlobStorage', () => {
       expect(result).not.toBeNull();
       expect(result?.filename).toBe(filename);
       expect(result?.mimeType).toBe(contentType);
-      expect(result?.size).toBe(parseInt(contentLength));
+      expect(result?.size).toBe(Number.parseInt(contentLength, 10));
     });
 
     it('should return null if file not found', async () => {
       const filename = 'nonexistent.txt';
 
-      global.fetch = jest.fn().mockResolvedValue({
+      globalThis.fetch = jest.fn().mockResolvedValue({
         ok: false
       });
 
@@ -313,7 +316,7 @@ describe('createAzureBlobStorage', () => {
     it('should return null on error', async () => {
       const filename = 'test.txt';
 
-      global.fetch = jest.fn().mockRejectedValue(new Error('Fetch failed'));
+      globalThis.fetch = jest.fn().mockRejectedValue(new Error('Fetch failed'));
 
       const result = await storage.getMetadata(filename);
 
@@ -323,7 +326,7 @@ describe('createAzureBlobStorage', () => {
     it('should use default content type if not provided', async () => {
       const filename = 'test.txt';
 
-      global.fetch = jest.fn().mockResolvedValue({
+      globalThis.fetch = jest.fn().mockResolvedValue({
         ok: true,
         headers: {
           get: jest.fn(() => null)
@@ -348,13 +351,11 @@ describe('createAzureBlobStorage', () => {
     it('should return null on error', () => {
       const filename = 'test.txt';
 
-      // Create storage without baseUrl to trigger constructBlobUrl path
       const storageWithoutBase = createAzureBlobStorage({
         containerName,
         folderPrefix
       });
 
-      // Force an error by making getBlockBlobClient throw
       mockContainerClient.getBlockBlobClient.mockImplementation(() => {
         throw new Error('Failed to construct URL');
       });
@@ -363,7 +364,6 @@ describe('createAzureBlobStorage', () => {
 
       expect(result).toBeNull();
 
-      // Reset the mock for other tests
       mockContainerClient.getBlockBlobClient.mockReturnValue(mockBlockBlobClient);
     });
   });
@@ -430,7 +430,7 @@ describe('createAzureBlobStorage', () => {
       const url = 'https://test.blob.core.windows.net/test.txt';
       const mockBody = 'test content';
 
-      global.fetch = jest.fn().mockResolvedValue({
+      globalThis.fetch = jest.fn().mockResolvedValue({
         ok: true,
         status: 200,
         statusText: 'OK',
@@ -448,7 +448,7 @@ describe('createAzureBlobStorage', () => {
       const response = await storage.streamBlob(url, null);
 
       expect(response.status).toBe(200);
-      expect(global.fetch).toHaveBeenCalledWith(url, {
+      expect(globalThis.fetch).toHaveBeenCalledWith(url, {
         method: 'GET',
         headers: {},
         next: { revalidate: 0 }
@@ -459,7 +459,7 @@ describe('createAzureBlobStorage', () => {
       const url = 'https://test.blob.core.windows.net/test.txt';
       const rangeHeader = 'bytes=0-1023';
 
-      global.fetch = jest.fn().mockResolvedValue({
+      globalThis.fetch = jest.fn().mockResolvedValue({
         ok: true,
         status: 206,
         statusText: 'Partial Content',
@@ -478,7 +478,7 @@ describe('createAzureBlobStorage', () => {
       const response = await storage.streamBlob(url, rangeHeader);
 
       expect(response.status).toBe(206);
-      expect(global.fetch).toHaveBeenCalledWith(url, {
+      expect(globalThis.fetch).toHaveBeenCalledWith(url, {
         method: 'GET',
         headers: { Range: rangeHeader },
         next: { revalidate: 0 }

@@ -1,6 +1,4 @@
-import { RestError } from './core-rest-pipeline';
-
-export { RestError };
+export { RestError } from './core-rest-pipeline';
 
 export const BlobServiceClient = jest.fn().mockImplementation(() => ({
   getContainerClient: jest.fn().mockReturnValue({

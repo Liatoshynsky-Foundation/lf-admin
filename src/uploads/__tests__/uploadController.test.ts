@@ -1,4 +1,4 @@
-import { NextFunction,Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
 import { UPLOAD_ERRORS } from '../errors';
 import { StorageMetadata, StorageResult } from '../storage/types';
@@ -32,11 +32,13 @@ describe('UploadController', () => {
     next = jest.fn();
   });
 
+  const getMockRes = () => mockRes as unknown as Response;
+
   describe('uploadSingleFile', () => {
     it('should return 400 if no file is present in request', async () => {
       const req = { file: undefined } as unknown as Request;
 
-      await controller.uploadSingleFile(req, mockRes as Response, next);
+      await controller.uploadSingleFile(req, getMockRes(), next);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
@@ -61,7 +63,7 @@ describe('UploadController', () => {
         url: 'https://cdn.com/new-test.jpg'
       });
 
-      await controller.uploadSingleFile(req, mockRes as Response, next);
+      await controller.uploadSingleFile(req, getMockRes(), next);
 
       expect(mockRes.status).toHaveBeenCalledWith(201);
       expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
@@ -75,7 +77,7 @@ describe('UploadController', () => {
       const error = new Error('Database down');
       mockService.uploadFile.mockRejectedValue(error);
 
-      await controller.uploadSingleFile(req, mockRes as Response, next);
+      await controller.uploadSingleFile(req, getMockRes(), next);
 
       expect(next).toHaveBeenCalledWith(error);
     });
@@ -86,7 +88,7 @@ describe('UploadController', () => {
       const req = { params: { filename: 'ghost.jpg' } } as unknown as Request;
       mockService.retrieveFile.mockResolvedValue(null);
 
-      await controller.getFile(req, mockRes as Response, next);
+      await controller.getFile(req, getMockRes(), next);
 
       expect(mockRes.status).toHaveBeenCalledWith(404);
       expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
@@ -106,7 +108,7 @@ describe('UploadController', () => {
         uploadedAt: new Date()
       } as StorageMetadata);
 
-      await controller.getFile(req, mockRes as Response, next);
+      await controller.getFile(req, getMockRes(), next);
 
       expect(mockRes.setHeader).toHaveBeenCalledWith('Content-Type', 'image/jpeg');
       expect(mockRes.send).toHaveBeenCalledWith(expect.any(Buffer));
@@ -118,7 +120,7 @@ describe('UploadController', () => {
       const req = { params: { filename: 'delete-me.jpg' } } as unknown as Request;
       mockService.deleteFile.mockResolvedValue(true);
 
-      await controller.deleteFile(req, mockRes as Response, next);
+      await controller.deleteFile(req, getMockRes(), next);
 
       expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
         success: true,
@@ -130,7 +132,7 @@ describe('UploadController', () => {
   describe('uploadMultipleFiles', () => {
     it('should return 400 if no files are provided', async () => {
       const req = { files: [] } as unknown as Request;
-      await controller.uploadMultipleFiles(req, mockRes as Response, next);
+      await controller.uploadMultipleFiles(req, getMockRes(), next);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
     });
@@ -154,7 +156,7 @@ describe('UploadController', () => {
       }];
 
       mockService.uploadFiles.mockResolvedValue(mockResults);
-      await controller.uploadMultipleFiles(req, mockRes as Response, next);
+      await controller.uploadMultipleFiles(req, getMockRes(), next);
 
       expect(mockRes.status).toHaveBeenCalledWith(201);
       expect(mockRes.json).toHaveBeenCalled();
@@ -167,7 +169,7 @@ describe('UploadController', () => {
       const mockFiles: StorageMetadata[] = [];
 
       mockService.listFiles.mockResolvedValue(mockFiles);
-      await controller.getAllFiles(req, mockRes as Response, next);
+      await controller.getAllFiles(req, getMockRes(), next);
 
       expect(mockRes.json).toHaveBeenCalledWith({ success: true, data: mockFiles });
       expect(mockService.listFiles).toHaveBeenCalledWith('test');
@@ -179,7 +181,7 @@ describe('UploadController', () => {
       const req = { params: { filename: 'missing.jpg' } } as unknown as Request;
       mockService.getFileMetadata.mockResolvedValue(null);
 
-      await controller.getFileMetadata(req, mockRes as Response, next);
+      await controller.getFileMetadata(req, getMockRes(), next);
 
       expect(mockRes.status).toHaveBeenCalledWith(404);
     });
@@ -189,7 +191,7 @@ describe('UploadController', () => {
       const mockMeta = { filename: 'file.jpg' } as StorageMetadata;
 
       mockService.getFileMetadata.mockResolvedValue(mockMeta);
-      await controller.getFileMetadata(req, mockRes as Response, next);
+      await controller.getFileMetadata(req, getMockRes(), next);
 
       expect(mockRes.json).toHaveBeenCalledWith({ success: true, data: mockMeta });
     });

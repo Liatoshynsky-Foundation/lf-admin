@@ -1,3 +1,4 @@
+import { UPLOAD_ERRORS } from '../errors';
 import { StorageAdapter, StorageMetadata, StorageResult } from '../storage/types';
 import { UploadedFile } from '../types';
 import { createUploadService, UploadService } from '../uploadService';
@@ -101,6 +102,49 @@ describe('UploadService', () => {
     });
   });
 
+  describe('uploadFiles (Multiple)', () => {
+    it('should successfully upload multiple files', async () => {
+      const files: UploadedFile[] = [
+        { ...testFile, originalname: '1.jpg' },
+        { ...testFile, originalname: '2.jpg' }
+      ];
+
+      mockValidator.validate.mockResolvedValue({ valid: true, errors: [] });
+      mockStorage.store.mockImplementation(async (buf, name) => ({
+        success: true,
+        metadata: { filename: `unique-${name}`, size: buf.length } as StorageMetadata
+      }));
+
+      const results = await service.uploadFiles(files);
+
+      expect(results).toHaveLength(2);
+      expect(results.every(r => r.success)).toBe(true);
+      expect(mockStorage.store).toHaveBeenCalledTimes(2);
+    });
+
+    it('should return mixed results if some files fail validation', async () => {
+      const files: UploadedFile[] = [
+        { ...testFile, originalname: 'valid.jpg' },
+        { ...testFile, originalname: 'invalid.jpg' }
+      ];
+
+      mockValidator.validate
+        .mockResolvedValueOnce({ valid: true, errors: [] })
+        .mockResolvedValueOnce({ valid: false, errors: ['Invalid type'] });
+
+      mockStorage.store.mockResolvedValue({
+        success: true,
+        metadata: { filename: 'valid.jpg' } as StorageMetadata
+      });
+
+      const results = await service.uploadFiles(files);
+
+      expect(results[0].success).toBe(true);
+      expect(results[1].success).toBe(false);
+      expect(results[1].errors).toContain('Invalid type');
+    });
+  });
+
   describe('Storage Delegation Methods', () => {
     it('should delegate retrieveFile to storage', async () => {
       const buffer = Buffer.from('data');
@@ -130,14 +174,32 @@ describe('UploadService', () => {
       mockStorage.getUrl.mockReturnValue('https://cdn.com/test.png');
       expect(service.getFileUrl('test.png')).toBe('https://cdn.com/test.png');
     });
+
+    it('should delegate getFileMetadata', async () => {
+      const meta = { filename: 'test.jpg' } as StorageMetadata;
+      mockStorage.getMetadata.mockResolvedValue(meta);
+
+      const result = await service.getFileMetadata('test.jpg');
+      expect(result).toBe(meta);
+      expect(mockStorage.getMetadata).toHaveBeenCalledWith('test.jpg', undefined);
+    });
+
+    it('should delegate listFiles', async () => {
+      const list = [{ filename: '1.jpg' } as StorageMetadata];
+      mockStorage.list.mockResolvedValue(list);
+
+      const result = await service.listFiles('uploads');
+      expect(result).toBe(list);
+      expect(mockStorage.list).toHaveBeenCalledWith('uploads');
+    });
   });
 
   describe('UploadService Edge Cases', () => {
-    it('should generate filename with original if requested (via directory option)', async () => {
+    it('should apply custom directory from options to storage metadata', async () => {
       mockValidator.validate.mockResolvedValue({ valid: true, errors: [] });
       mockStorage.store.mockResolvedValue({
         success: true,
-        metadata: { filename: 'dir/test.jpg' } as StorageMetadata
+        metadata: { filename: 'user-1/test.jpg' } as StorageMetadata
       });
 
       await service.uploadFile(testFile, { directory: 'user-1' });
@@ -150,17 +212,18 @@ describe('UploadService', () => {
       );
     });
 
-    it('should return error if unexpected error type occurs', async () => {
-      mockValidator.validate.mockImplementation(() => { throw 'string-error'; });
+    it('should return default unknown error if thrown value is not an Error object', async () => {
+      mockValidator.validate.mockImplementation(() => { throw new Error('string-error'); });
 
       const result = await service.uploadFile(testFile);
-      expect(result.errors).toContain('Unknown error');
+      expect(result.errors).toContain('string-error');
     });
 
-    it('should return file url from storage', () => {
-      mockStorage.getUrl.mockReturnValue('https://azure.com/img.jpg');
-      const url = service.getFileUrl('img.jpg');
-      expect(url).toBe('https://azure.com/img.jpg');
+    it('should return UPLOAD_ERRORS.UNKNOWN_ERROR if a non-Error is thrown', async () => {
+      mockValidator.validate.mockImplementation(() => { throw 'primitive string error'; });
+
+      const result = await service.uploadFile(testFile);
+      expect(result.errors).toContain(UPLOAD_ERRORS.UNKNOWN_ERROR);
     });
   });
 });

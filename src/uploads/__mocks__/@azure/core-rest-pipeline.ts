@@ -1,8 +1,8 @@
 export class RestError extends Error {
   statusCode?: number;
   code?: string;
-  request?: any;
-  response?: any;
+  request?: unknown;
+  response?: unknown;
 
   constructor(message: string, options?: { statusCode?: number; code?: string }) {
     super(message);
