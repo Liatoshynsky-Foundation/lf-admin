@@ -1,14 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { config as appConfig } from '~/back-config';
-import { initializeUploadModule } from '~/uploads/initialize';
-
-let uploadModule: ReturnType<typeof initializeUploadModule> | null = null;
-
-const getUploadModule = () => {
-  uploadModule ??= initializeUploadModule(appConfig);
-  return uploadModule;
-};
+import { getUploadModule, parseFormDataOptions } from '~/api/uploads/upload-handler';
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,73 +11,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'No files uploaded' }, { status: 400 });
     }
 
-    const options: any = {};
-    const fileType = formData.get('fileType');
-    const validationRules = formData.get('validationRules');
-    const processingOptions = formData.get('processingOptions');
-    const metadata = formData.get('metadata');
-
-    if (fileType) options.fileType = fileType;
-    if (validationRules) {
-      try {
-        options.validationRules = JSON.parse(validationRules as string);
-      } catch (e) {
-        console.log(e);
-      }
-    }
-    if (processingOptions) {
-      try {
-        options.processingOptions = JSON.parse(processingOptions as string);
-      } catch (e) {
-        console.log(e);
-      }
-    }
-    if (metadata) {
-      try {
-        options.metadata = JSON.parse(metadata as string);
-      } catch (e) {
-        console.log(e);
-      }
-    }
-
+    const options = parseFormDataOptions(formData);
     const results = await Promise.all(
       files.map(async (file) => {
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-
-        const uploadedFile = {
+        const buffer = Buffer.from(await file.arrayBuffer());
+        return getUploadModule().uploadService.uploadFile({
           fieldname: 'files',
           originalname: file.name,
           encoding: '7bit',
           mimetype: file.type,
           buffer,
           size: file.size
-        };
-
-        return getUploadModule().uploadService.uploadFile(uploadedFile, options);
+        }, options);
       })
     );
 
-    const successfulUploads = results.filter((r) => r.success);
-    const failedUploads = results.filter((r) => !r.success);
+    const failed = results.filter((r) => !r.success);
 
-    return NextResponse.json(
-      {
-        success: failedUploads.length === 0,
-        data: successfulUploads.map((r) => ({
-          filename: r.filename,
-          originalName: r.originalName,
-          url: r.url,
-          size: r.size,
-          mimeType: r.mimeType,
-          metadata: r.metadata
-        })),
-        errors: failedUploads.flatMap((r) => r.errors)
-      },
-      { status: failedUploads.length === 0 ? 201 : 207 }
-    );
-  } catch (error) {
-    console.error('Upload error:', error);
+    return NextResponse.json({
+      success: failed.length === 0,
+      data: results.filter((r) => r.success),
+      errors: failed.flatMap((r) => r.errors)
+    }, { status: failed.length === 0 ? 201 : 207 });
+  } catch {
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

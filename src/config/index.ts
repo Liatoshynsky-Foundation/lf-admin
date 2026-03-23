@@ -1,7 +1,7 @@
-// src/config/index.ts
 import {
   StorageConfig,
-  StorageType} from '../uploads/storage/types';
+  StorageType
+} from '../uploads/storage/types';
 
 export const mongoUrl = process.env.MONGO_URL ?? '';
 

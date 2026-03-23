@@ -1,28 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { config as appConfig } from '~/back-config';
-import { initializeUploadModule } from '~/uploads/initialize';
+import { getUploadModule, RouteParams } from '../upload-handler';
 
-let uploadModule: ReturnType<typeof initializeUploadModule> | null = null;
-
-const getUploadModule = () => {
-  uploadModule ??= initializeUploadModule(appConfig);
-  return uploadModule;
-};
-
-export async function GET(req: NextRequest, { params }: { params: Promise<{ filename: string }> }) {
+export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
     const { filename } = await params;
     const { searchParams } = new URL(req.url);
     const folder = searchParams.get('folder');
 
-    if (!filename) {
-      return NextResponse.json({ success: false, error: 'Filename is required' }, { status: 400 });
-    }
-
     if (!folder) {
       return NextResponse.json(
-        { success: false, error: 'Folder parameter is required (e.g., ?folder=photos)' },
+        { success: false, error: 'Folder parameter is required' },
         { status: 400 }
       );
     }
@@ -43,28 +31,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ file
         'Cache-Control': 'public, max-age=31536000, immutable'
       }
     });
-  } catch (error) {
-    console.error('File retrieval error:', error);
+  } catch {
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ filename: string }> }) {
+export async function DELETE(req: NextRequest, { params }: RouteParams) {
   try {
     const { filename } = await params;
     const { searchParams } = new URL(req.url);
-    const folder = searchParams.get('folder');
-
-    if (!filename) {
-      return NextResponse.json({ success: false, error: 'Filename is required' }, { status: 400 });
-    }
-
-    if (!folder) {
-      return NextResponse.json(
-        { success: false, error: 'Folder parameter is required (e.g., ?folder=photos)' },
-        { status: 400 }
-      );
-    }
+    const folder = searchParams.get('folder') || undefined;
 
     const success = await getUploadModule().uploadService.deleteFile(filename, folder);
 
@@ -73,8 +49,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ f
     }
 
     return NextResponse.json({ success: true }, { status: 200 });
-  } catch (error) {
-    console.error('File deletion error:', error);
+  } catch {
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

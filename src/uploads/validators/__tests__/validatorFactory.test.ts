@@ -54,15 +54,12 @@ describe('createValidator', () => {
       const validator = createValidator(config);
       const testFile = createTestFile();
 
-      // First file
       const result1 = await validator.validate(testFile.buffer, 'image1.jpg', 'image/jpeg');
       expect(result1.valid).toBe(true);
 
-      // Second file
       const result2 = await validator.validate(Buffer.alloc(2048), 'image2.png', 'image/png');
       expect(result2.valid).toBe(true);
 
-      // Invalid file
       const result3 = await validator.validate(testFile.buffer, 'doc.pdf', 'application/pdf');
       expect(result3.valid).toBe(false);
     });
@@ -168,7 +165,6 @@ describe('createValidator', () => {
     it('should accept valid FileType values', () => {
       const fileTypes: FileType[] = ['image', 'document', 'video', 'audio', 'generic'];
 
-      // Only 'image' should work, others should throw
       expect(() => createValidator({ fileType: fileTypes[0] })).not.toThrow();
       expect(() => createValidator({ fileType: fileTypes[1] })).toThrow();
       expect(() => createValidator({ fileType: fileTypes[2] })).toThrow();

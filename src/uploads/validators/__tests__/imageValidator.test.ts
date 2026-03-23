@@ -6,7 +6,6 @@ import {
   ImageValidationRules
 } from '../imageValidator';
 
-// Helper functions to reduce code duplication
 const createTestBuffer = (sizeInBytes: number) => Buffer.alloc(sizeInBytes);
 const createValidImageFile = () => ({
   buffer: createTestBuffer(1024),

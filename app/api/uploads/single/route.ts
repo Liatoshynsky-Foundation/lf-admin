@@ -1,14 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { config as appConfig } from '~/back-config';
-import { initializeUploadModule } from '~/uploads/initialize';
-
-let uploadModule: ReturnType<typeof initializeUploadModule> | null = null;
-
-const getUploadModule = () => {
-  uploadModule ??= initializeUploadModule(appConfig);
-  return uploadModule;
-};
+import { getUploadModule, parseFormDataOptions } from '~/api/uploads/upload-handler';
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,39 +11,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'No file uploaded' }, { status: 400 });
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    const options: any = {};
-    const fileType = formData.get('fileType');
-    const directory = formData.get('directory');
-    const validationRules = formData.get('validationRules');
-    const processingOptions = formData.get('processingOptions');
-    const metadata = formData.get('metadata');
-
-    if (fileType) options.fileType = fileType;
-    if (directory) options.directory = directory;
-    if (validationRules) {
-      try {
-        options.validationRules = JSON.parse(validationRules as string);
-      } catch (e) {
-        console.log(e);
-      }
-    }
-    if (processingOptions) {
-      try {
-        options.processingOptions = JSON.parse(processingOptions as string);
-      } catch (e) {
-        console.log(e);
-      }
-    }
-    if (metadata) {
-      try {
-        options.metadata = JSON.parse(metadata as string);
-      } catch (e) {
-        console.log(e);
-      }
-    }
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const options = parseFormDataOptions(formData);
 
     const uploadedFile = {
       fieldname: 'file',
@@ -68,28 +29,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, errors: result.errors }, { status: 400 });
     }
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: {
-          filename: result.filename,
-          originalName: result.originalName,
-          url: result.url,
-          size: result.size,
-          mimeType: result.mimeType,
-          metadata: result.metadata
-        }
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error('Upload error:', error);
+    return NextResponse.json({
+      success: true,
+      data: result
+    }, { status: 201 });
+  } catch {
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
-
-export const config = {
-  api: {
-    bodyParser: false
-  }
-};

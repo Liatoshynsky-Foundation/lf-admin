@@ -1,38 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { config as appConfig } from '~/back-config';
-import { initializeUploadModule } from '~/uploads/initialize';
+import { getUploadModule, RouteParams } from '~/api/uploads/upload-handler';
 
-let uploadModule: ReturnType<typeof initializeUploadModule> | null = null;
-
-const getUploadModule = () => {
-  uploadModule ??= initializeUploadModule(appConfig);
-  return uploadModule;
-};
-
-export async function GET(req: NextRequest, context: { params: Promise<{ filename: string }> }) {
+export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
-    const { filename } = await context.params;
+    const { filename } = await params;
+    const { searchParams } = new URL(req.url);
+    const folder = searchParams.get('folder') || undefined;
 
-    if (!filename) {
-      return NextResponse.json({ success: false, error: 'Filename is required' }, { status: 400 });
-    }
-
-    const metadata = await getUploadModule().uploadService.getFileMetadata(filename);
+    const metadata = await getUploadModule().uploadService.getFileMetadata(filename, folder);
 
     if (!metadata) {
       return NextResponse.json({ success: false, error: 'File not found' }, { status: 404 });
     }
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: metadata
-      },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error('Metadata retrieval error:', error);
+    return NextResponse.json({ success: true, data: metadata }, { status: 200 });
+  } catch {
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
