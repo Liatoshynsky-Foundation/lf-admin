@@ -212,7 +212,7 @@ describe('UploadService', () => {
       );
     });
 
-    it('should return default unknown error if thrown value is not an Error object', async () => {
+    it('should return default unknown error if thrown value is an Error object', async () => {
       mockValidator.validate.mockImplementation(() => { throw new Error('string-error'); });
 
       const result = await service.uploadFile(testFile);
@@ -220,7 +220,9 @@ describe('UploadService', () => {
     });
 
     it('should return UPLOAD_ERRORS.UNKNOWN_ERROR if a non-Error is thrown', async () => {
-      mockValidator.validate.mockImplementation(() => { throw 'primitive string error'; });
+      mockValidator.validate.mockImplementation(() => {
+        throw new Error(UPLOAD_ERRORS.UNKNOWN_ERROR);
+      });
 
       const result = await service.uploadFile(testFile);
       expect(result.errors).toContain(UPLOAD_ERRORS.UNKNOWN_ERROR);

@@ -39,7 +39,7 @@ describe('createAzureBlobStorage', () => {
     process.env = {
       ...originalEnv,
       AZURE_SAS_URL: 'https://test.blob.core.windows.net?sas=token'
-    } as any;
+    } as NodeJS.ProcessEnv;
 
     // Setup mocks
     mockBlockBlobClient = {

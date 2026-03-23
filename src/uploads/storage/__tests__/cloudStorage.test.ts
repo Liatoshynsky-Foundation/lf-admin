@@ -5,7 +5,7 @@ import {
   PutObjectCommand,
   S3Client
 } from '@aws-sdk/client-s3';
-import { Readable } from 'stream';
+import { Readable } from 'node:stream';
 
 import { CloudStorageOptions, createCloudStorage } from '../cloudStorage';
 

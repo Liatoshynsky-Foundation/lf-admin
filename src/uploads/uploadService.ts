@@ -40,7 +40,7 @@ export const createUploadService = (config: UploadServiceConfig) => {
 
       const storageMetadata: Record<string, unknown> = {
         originalName: file.originalname,
-        ...(options.metadata as Record<string, unknown> ?? {})
+        ...(options.metadata as Record<string, unknown>)
       };
 
       if (options.directory) {
