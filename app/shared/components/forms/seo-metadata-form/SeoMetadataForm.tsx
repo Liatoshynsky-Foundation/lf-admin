@@ -49,8 +49,54 @@ export default function SeoMetadataForm({
 }: SeoMetadataFormProps) {
   const [ogImagePreview, setOgImagePreview] = useState<string | null>(typeof ogImage === 'string' ? ogImage : null);
 
+  const [touched, setTouched] = useState<{ [K in keyof LocalizedMeta]?: boolean }>({});
+  const [errors, setErrors] = useState<{ [K in keyof LocalizedMeta]?: string }>({});
+
+  const validateTitle = (val: string) => (!val.trim() ? 'Обовʼязкове поле' : '');
+  const validateDescription = (val: string) => (!val.trim() ? 'Обовʼязкове поле' : '');
+  const validateCanonicalUrl = (val: string) => {
+    if (!val) return '';
+    try {
+      new URL(val);
+      return '';
+    } catch {
+      return 'Некоректний URL';
+    }
+  };
+  const validateKeywords = (val: string) => {
+    if (!val) return '';
+    return val.split(',').some((word) => !word.trim())
+      ? 'Ключові слова мають бути через кому, без порожніх значень'
+      : '';
+  };
+
+  const validateField = (field: keyof LocalizedMeta, val: string) => {
+    switch (field) {
+    case 'title':
+      return validateTitle(val);
+    case 'description':
+      return validateDescription(val);
+    case 'canonicalUrl':
+      return validateCanonicalUrl(val);
+    case 'keywords':
+      return validateKeywords(val);
+    default:
+      return '';
+    }
+  };
+
+  const handleBlur = (field: keyof LocalizedMeta) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    const err = validateField(field, value[field] || '');
+    setErrors((prev) => ({ ...prev, [field]: err }));
+  };
+
   const handleFieldChange = (field: keyof LocalizedMeta, val: string) => {
     onChange({ ...value, [field]: val });
+    if (touched[field]) {
+      const err = validateField(field, val);
+      setErrors((prev) => ({ ...prev, [field]: err }));
+    }
   };
 
   const handleImageChange = (file: File) => {
@@ -68,6 +114,9 @@ export default function SeoMetadataForm({
           label={labels.metaTitle || 'Meta title'}
           value={value.title}
           onChange={(e) => handleFieldChange('title', e.target.value)}
+          onBlur={() => handleBlur('title')}
+          error={Boolean(errors.title)}
+          helperText={errors.title && touched.title ? errors.title : ''}
           fullWidth
           margin="normal"
           sx={styles.textField}
@@ -77,18 +126,24 @@ export default function SeoMetadataForm({
           label={labels.metaDescription || 'Meta description'}
           value={value.description}
           onChange={(e) => handleFieldChange('description', e.target.value)}
+          onBlur={() => handleBlur('description')}
+          error={Boolean(errors.description)}
+          helperText={errors.description && touched.description ? errors.description : ''}
           fullWidth
           margin="normal"
           required
           multiline
           minRows={2}
           sx={styles.textField}
-        />{' '}
+        />
         {showCanonicalUrl && (
           <TextField
             label={labels.canonicalUrl || 'Canonical URL'}
             value={value.canonicalUrl || ''}
             onChange={(e) => handleFieldChange('canonicalUrl', e.target.value)}
+            onBlur={() => handleBlur('canonicalUrl')}
+            error={Boolean(errors.canonicalUrl)}
+            helperText={errors.canonicalUrl && touched.canonicalUrl ? errors.canonicalUrl : ''}
             fullWidth
             margin="normal"
             sx={styles.textField}
@@ -98,6 +153,9 @@ export default function SeoMetadataForm({
           label={labels.metaKeywords || 'Meta keywords'}
           value={value.keywords}
           onChange={(e) => handleFieldChange('keywords', e.target.value)}
+          onBlur={() => handleBlur('keywords')}
+          error={Boolean(errors.keywords)}
+          helperText={errors.keywords && touched.keywords ? errors.keywords : ''}
           fullWidth
           margin="normal"
           sx={styles.textField}
