@@ -6,9 +6,9 @@ import SeoMetadataForm, { SeoMetadataFormProps } from './SeoMetadataForm';
 
 jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
   ImagePreviewBlock: ({ onChangeImage }: { onChangeImage: (file: File) => void }) => (
-    <div data-testid="photo-block" onClick={() => onChangeImage(new File(['img'], 'test.png'))}>
+    <button data-testid="photo-block" onClick={() => onChangeImage(new File(['img'], 'test.png'))}>
       PhotoBlock
-    </div>
+    </button>
   )
 }));
 
@@ -36,6 +36,21 @@ const defaultProps: SeoMetadataFormProps = {
     allowIndexing: 'Allow Indexing',
     sectionTitle: 'Section Title'
   }
+};
+
+const renderWithState = () => {
+  const Wrapper = () => {
+    const [value, setValue] = React.useState<SeoMetadataFormProps['value']>({
+      title: '',
+      description: '',
+      keywords: '',
+      canonicalUrl: ''
+    });
+
+    return <SeoMetadataForm {...defaultProps} value={value} onChange={setValue} />;
+  };
+
+  return render(<Wrapper />);
 };
 
 describe('SeoMetadataForm', () => {
@@ -69,7 +84,7 @@ describe('SeoMetadataForm', () => {
   });
 
   it('calls onImageChange', async () => {
-    global.URL.createObjectURL = jest.fn(() => 'mock-url');
+    globalThis.URL.createObjectURL = jest.fn(() => 'mock-url');
 
     const user = userEvent.setup();
     render(<SeoMetadataForm {...defaultProps} />);
@@ -80,16 +95,7 @@ describe('SeoMetadataForm', () => {
   });
   it('validates description field (empty and non-empty)', async () => {
     const user = userEvent.setup();
-    const Wrapper = () => {
-      const [value, setValue] = React.useState<SeoMetadataFormProps['value']>({
-        title: '',
-        description: '',
-        keywords: '',
-        canonicalUrl: ''
-      });
-      return <SeoMetadataForm {...defaultProps} value={value} onChange={setValue} />;
-    };
-    render(<Wrapper />);
+    renderWithState();
     const input = screen.getByLabelText(/meta description/i);
     await user.click(input);
     await user.tab();
@@ -101,16 +107,7 @@ describe('SeoMetadataForm', () => {
 
   it('validates canonicalUrl: empty, valid, invalid', async () => {
     const user = userEvent.setup();
-    const Wrapper = () => {
-      const [value, setValue] = React.useState<SeoMetadataFormProps['value']>({
-        title: '',
-        description: '',
-        keywords: '',
-        canonicalUrl: ''
-      });
-      return <SeoMetadataForm {...defaultProps} value={value} onChange={setValue} />;
-    };
-    render(<Wrapper />);
+    renderWithState();
     const input = screen.getByLabelText(/canonical url/i);
 
     await user.clear(input);
@@ -129,16 +126,7 @@ describe('SeoMetadataForm', () => {
 
   it('validates keywords: empty, valid, invalid', async () => {
     const user = userEvent.setup();
-    const Wrapper = () => {
-      const [value, setValue] = React.useState<SeoMetadataFormProps['value']>({
-        title: '',
-        description: '',
-        keywords: '',
-        canonicalUrl: ''
-      });
-      return <SeoMetadataForm {...defaultProps} value={value} onChange={setValue} />;
-    };
-    render(<Wrapper />);
+    renderWithState();
     const input = screen.getByLabelText(/meta keywords/i);
 
     await user.clear(input);
