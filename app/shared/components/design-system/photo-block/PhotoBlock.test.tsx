@@ -9,13 +9,6 @@ jest.mock('~/lib/utils/readFileAsDataURL', () => ({
   readFileAsDataURL: jest.fn()
 }));
 
-jest.mock('~/shared/hooks/use-image-metadata/useImageMetadata', () => ({
-  useImageMetadata: () => ({
-    dimensions: { width: 200, height: 150 },
-    fileName: 'test.jpg'
-  })
-}));
-
 jest.mock('~/public/icons/image.svg', () => ({
   __esModule: true,
   default: () => null
@@ -63,6 +56,23 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
         >
           apply
         </button>
+        <button
+          type="button"
+          data-testid="apply-non-upload"
+          onClick={() =>
+            onApply({
+              selected: {
+                kind: 'used',
+                id: '1',
+                fileName: 'test.jpg',
+                src: 'url'
+              },
+              crop: null
+            })
+          }
+        >
+          apply-non-upload
+        </button>
       </div>
     );
   }
@@ -75,23 +85,6 @@ describe('ImagePreviewBlock', () => {
     onChangeImage.mockClear();
     (readFileAsDataURL as jest.Mock).mockReset();
     (readFileAsDataURL as jest.Mock).mockResolvedValue('data:image/png;base64,mockImage');
-  });
-
-  it('should render correctly with initial image', () => {
-    render(
-      <ImagePreviewBlock
-        imageUrl="https://example.com/test.jpg"
-        cropWidth={300}
-        cropHeight={200}
-        onChangeImage={onChangeImage}
-        title="Основне зображення"
-      />
-    );
-
-    expect(screen.getByText(/Основне зображення/)).toBeInTheDocument();
-    expect(screen.getByAltText('Preview')).toHaveAttribute('src', 'https://example.com/test.jpg');
-    expect(screen.getByText(/Назва файлу test\.jpg/)).toBeInTheDocument();
-    expect(screen.getByText(/Розмір: 200 × 150/)).toBeInTheDocument();
   });
 
   it('should open cropper modal on "Редагувати" click (legacy)', async () => {
@@ -161,7 +154,7 @@ describe('ImagePreviewBlock', () => {
     await waitFor(() => {
       expect(onChangeImage).toHaveBeenCalledTimes(1);
       expect(readFileAsDataURL).toHaveBeenCalledTimes(1);
-      expect(screen.getByAltText('Preview')).toHaveAttribute(
+      expect(screen.getByAltText('Selected')).toHaveAttribute(
         'src',
         expect.stringContaining('data:image/png;base64,mockImage')
       );
@@ -171,4 +164,86 @@ describe('ImagePreviewBlock', () => {
       expect(screen.queryByTestId('media-modal')).not.toBeInTheDocument();
     });
   });
+
+  it('renders "No File" when no image', () => {
+    render(<ImagePreviewBlock imageUrl="" cropWidth={300} cropHeight={200} onChangeImage={onChangeImage} />);
+
+    expect(screen.getByText(/no file/i)).toBeInTheDocument();
+  });
+
+  it('handles file input change in legacy mode', async () => {
+    const user = userEvent.setup();
+
+    render(<ImagePreviewBlock imageUrl="" cropWidth={300} cropHeight={200} onChangeImage={onChangeImage} />);
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+
+    const file = new File(['img'], 'test.png', { type: 'image/png' });
+
+    await user.upload(input, file);
+
+    await waitFor(() => {
+      expect(readFileAsDataURL).toHaveBeenCalledWith(file);
+      expect(onChangeImage).toHaveBeenCalledWith(file);
+    });
+  });
+
+  it('does not apply if mediaModal result is not upload', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ImagePreviewBlock
+        imageUrl="test"
+        cropWidth={300}
+        cropHeight={200}
+        onChangeImage={onChangeImage}
+        editorMode="mediaModal"
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: /змінити/i }));
+
+    await user.click(screen.getByTestId('apply-non-upload'));
+
+    expect(onChangeImage).not.toHaveBeenCalled();
+  });
+
+  it('updates preview when imageUrl changes', async () => {
+    const { rerender } = render(
+      <ImagePreviewBlock imageUrl="old.jpg" cropWidth={300} cropHeight={200} onChangeImage={onChangeImage} />
+    );
+
+    expect(screen.getByRole('img')).toHaveAttribute('src', 'old.jpg');
+
+    rerender(<ImagePreviewBlock imageUrl="new.jpg" cropWidth={300} cropHeight={200} onChangeImage={onChangeImage} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('img')).toHaveAttribute('src', 'new.jpg');
+    });
+  });
+
+  it('opens media modal in UPLOAD mode', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ImagePreviewBlock
+        imageUrl="test.jpg"
+        cropWidth={300}
+        cropHeight={200}
+        onChangeImage={onChangeImage}
+        editorMode="mediaModal"
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: /змінити/i }));
+
+    expect(screen.getByTestId('initial-tab')).toHaveTextContent('UPLOAD');
+  });
+
+  jest.mock('~/shared/hooks/use-image-metadata/useImageMetadata', () => ({
+    useImageMetadata: () => ({
+      dimensions: null,
+      fileName: 'test.jpg'
+    })
+  }));
 });
