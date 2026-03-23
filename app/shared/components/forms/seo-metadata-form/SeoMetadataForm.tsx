@@ -16,23 +16,23 @@ export interface LocalizedMeta {
 }
 
 export interface SeoMetadataFormProps {
-  value: LocalizedMeta;
-  onChange: (value: LocalizedMeta) => void;
-  locale: 'ua' | 'en';
-  ogImage: File | string | null;
-  onImageChange: (file: File) => void;
-  allowIndexing: boolean;
-  onIndexingChange: (val: boolean) => void;
-  showCanonicalUrl?: boolean;
-  labels?: {
-    metaTitle?: string;
-    metaDescription?: string;
-    metaKeywords?: string;
-    canonicalUrl?: string;
-    ogImage?: string;
-    ogImageHint?: string;
-    allowIndexing?: string;
-    sectionTitle?: string;
+  readonly value: LocalizedMeta;
+  readonly onChange: (value: LocalizedMeta) => void;
+  readonly locale: 'ua' | 'en';
+  readonly ogImage: File | string | null;
+  readonly onImageChange: (file: File) => void;
+  readonly allowIndexing: boolean;
+  readonly onIndexingChange: (val: boolean) => void;
+  readonly showCanonicalUrl?: boolean;
+  readonly labels?: {
+    readonly metaTitle?: string;
+    readonly metaDescription?: string;
+    readonly metaKeywords?: string;
+    readonly canonicalUrl?: string;
+    readonly ogImage?: string;
+    readonly ogImageHint?: string;
+    readonly allowIndexing?: string;
+    readonly sectionTitle?: string;
   };
 }
 
@@ -52,8 +52,8 @@ export default function SeoMetadataForm({
   const [touched, setTouched] = useState<{ [K in keyof LocalizedMeta]?: boolean }>({});
   const [errors, setErrors] = useState<{ [K in keyof LocalizedMeta]?: string }>({});
 
-  const validateTitle = (val: string) => (!val.trim() ? 'Обовʼязкове поле' : '');
-  const validateDescription = (val: string) => (!val.trim() ? 'Обовʼязкове поле' : '');
+  const validateTitle = (val: string) => (val.trim() ? '' : 'Обовʼязкове поле');
+  const validateDescription = (val: string) => (val.trim() ? '' : 'Обовʼязкове поле');
   const validateCanonicalUrl = (val: string) => {
     if (!val) return '';
     try {
