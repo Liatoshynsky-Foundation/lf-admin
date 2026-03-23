@@ -22,9 +22,12 @@ describe('Upload Module Initialization', () => {
         cloudProvider: storageType === 'cloud' ? 'cloudflare' : undefined,
         cloudConfig: storageType === 'cloud' ? {
           bucket: 'my-bucket',
-          accessKey: 'key',
-          secretKey: 'secret',
-          endpoint: 'https://r2.com'
+          region: 'auto',
+          endpoint: 'https://r2.com',
+          credentials: {
+            accessKeyId: 'key',
+            secretAccessKey: 'secret'
+          }
         } : undefined,
         baseUrl: 'http://localhost'
       },

@@ -1,6 +1,7 @@
 import { NextFunction,Request, Response } from 'express';
 
 import { UPLOAD_ERRORS } from '../errors';
+import { StorageMetadata, StorageResult } from '../storage/types';
 import { createUploadController, UploadController } from '../uploadController';
 import { UploadService } from '../uploadService';
 
@@ -96,9 +97,14 @@ describe('UploadController', () => {
     it('should set Content-Type header if metadata exists', async () => {
       const req = { params: { filename: 'test.jpg' } } as unknown as Request;
       mockService.retrieveFile.mockResolvedValue(Buffer.from('content'));
+
       mockService.getFileMetadata.mockResolvedValue({
-        mimeType: 'image/jpeg'
-      } as Record<string, unknown>);
+        mimeType: 'image/jpeg',
+        filename: 'test.jpg',
+        originalName: 'test.jpg',
+        size: 7,
+        uploadedAt: new Date()
+      } as StorageMetadata);
 
       await controller.getFile(req, mockRes as Response, next);
 
@@ -118,6 +124,74 @@ describe('UploadController', () => {
         success: true,
         message: 'File deleted successfully'
       }));
+    });
+  });
+
+  describe('uploadMultipleFiles', () => {
+    it('should return 400 if no files are provided', async () => {
+      const req = { files: [] } as unknown as Request;
+      await controller.uploadMultipleFiles(req, mockRes as Response, next);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+    });
+
+    it('should return 201 and formatted results on success', async () => {
+      const req = {
+        files: [{ originalname: '1.jpg', buffer: Buffer.from('1') }],
+        body: {}
+      } as unknown as Request;
+
+      const mockResults: StorageResult[] = [{
+        success: true,
+        metadata: {
+          filename: '1.jpg',
+          url: 'http://cdn.com/1.jpg',
+          size: 1,
+          mimeType: 'image/jpeg',
+          originalName: '1.jpg',
+          uploadedAt: new Date()
+        }
+      }];
+
+      mockService.uploadFiles.mockResolvedValue(mockResults);
+      await controller.uploadMultipleFiles(req, mockRes as Response, next);
+
+      expect(mockRes.status).toHaveBeenCalledWith(201);
+      expect(mockRes.json).toHaveBeenCalled();
+    });
+  });
+
+  describe('getAllFiles', () => {
+    it('should return list of files', async () => {
+      const req = { query: { folder: 'test' } } as unknown as Request;
+      const mockFiles: StorageMetadata[] = [];
+
+      mockService.listFiles.mockResolvedValue(mockFiles);
+      await controller.getAllFiles(req, mockRes as Response, next);
+
+      expect(mockRes.json).toHaveBeenCalledWith({ success: true, data: mockFiles });
+      expect(mockService.listFiles).toHaveBeenCalledWith('test');
+    });
+  });
+
+  describe('getFileMetadata', () => {
+    it('should return 404 if metadata not found', async () => {
+      const req = { params: { filename: 'missing.jpg' } } as unknown as Request;
+      mockService.getFileMetadata.mockResolvedValue(null);
+
+      await controller.getFileMetadata(req, mockRes as Response, next);
+
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+    });
+
+    it('should return metadata on success', async () => {
+      const req = { params: { filename: 'file.jpg' } } as unknown as Request;
+      const mockMeta = { filename: 'file.jpg' } as StorageMetadata;
+
+      mockService.getFileMetadata.mockResolvedValue(mockMeta);
+      await controller.getFileMetadata(req, mockRes as Response, next);
+
+      expect(mockRes.json).toHaveBeenCalledWith({ success: true, data: mockMeta });
     });
   });
 });

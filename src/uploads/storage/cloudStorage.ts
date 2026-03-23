@@ -21,7 +21,6 @@ export interface CloudStorageOptions {
     secretAccessKey?: string;
     token?: string;
     projectId?: string;
-    [key: string]: any;
   };
   baseUrl?: string;
   folderPrefix?: string;
@@ -37,83 +36,81 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
       throw new Error(UPLOAD_ERRORS.CLOUD_STORAGE_REQUIRES_CREDENTIALS(provider));
     }
 
-    const clientConfig: any = {
+    const clientConfig = {
       region: region || 'auto',
       credentials: {
         accessKeyId: credentials.accessKeyId,
         secretAccessKey: credentials.secretAccessKey
-      }
+      },
+      endpoint: provider === 'cloudflare' ? endpoint : undefined
     };
 
-    if (provider === 'cloudflare') {
-      if (!endpoint) {
-        throw new Error(UPLOAD_ERRORS.CLOUDFLARE_ENDPOINT_REQUIRED);
-      }
-      clientConfig.endpoint = endpoint;
+    if (provider === 'cloudflare' && !endpoint) {
+      throw new Error(UPLOAD_ERRORS.CLOUDFLARE_ENDPOINT_REQUIRED);
     }
 
     s3Client = new S3Client(clientConfig);
   }
 
+  const getTargetKey = (filename: string, folder?: string, metadataDir?: unknown): string => {
+    const targetFolder = folder || (typeof metadataDir === 'string' ? metadataDir : folderPrefix);
+    return `${targetFolder}/${filename}`;
+  };
+
   const store = async (
     buffer: Buffer,
     filename: string,
     mimeType: string,
-    metadata: Record<string, any> = {},
-    folder?: string
+    metadata: Record<string, unknown> = {}
   ): Promise<StorageResult> => {
     try {
-      if (provider === 'aws' || provider === 'cloudflare') {
-        if (!s3Client) {
-          throw new Error('S3 client not initialized');
+      if (provider !== 'aws' && provider !== 'cloudflare') {
+        throw new Error(UPLOAD_ERRORS.CLOUD_STORAGE_NOT_IMPLEMENTED(provider));
+      }
+
+      if (!s3Client) {
+        throw new Error(UPLOAD_ERRORS.S3_CLIENT_NOT_INITIALIZED);
+      }
+
+      const key = getTargetKey(filename, undefined, metadata.directory);
+
+      await s3Client.send(new PutObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        Body: buffer,
+        ContentType: mimeType,
+        Metadata: {
+          originalName: String(metadata.originalName || filename),
+          uploadedAt: new Date().toISOString(),
+          ...Object.fromEntries(
+            Object.entries(metadata).map(([k, v]) => [k, String(v)])
+          )
         }
+      }));
 
-        const targetFolder = folder || metadata.directory || folderPrefix;
-        const key = `${targetFolder}/${filename}`;
-
-        const command = new PutObjectCommand({
-          Bucket: bucket,
-          Key: key,
-          Body: buffer,
-          ContentType: mimeType,
-          Metadata: {
-            originalName: metadata.originalName || filename,
-            uploadedAt: new Date().toISOString(),
-            ...metadata
-          }
-        });
-
-        await s3Client.send(command);
-
-        const storageMetadata: StorageMetadata = {
+      return {
+        success: true,
+        metadata: {
           filename,
-          originalName: metadata.originalName || filename,
+          originalName: String(metadata.originalName || filename),
           mimeType,
           size: buffer.length,
           uploadedAt: new Date(),
-          path: `${targetFolder}/${filename}`,
+          path: key,
           url: getUrl(key) || undefined,
-          originalFilename: metadata.originalName || filename,
+          directory: key.substring(0, key.lastIndexOf('/')),
+          originalFilename: String(metadata.originalName || filename),
           originalMimeType: mimeType,
-          processed: metadata.processed !== undefined ? metadata.processed : true,
-          processingOptions: metadata.processingOptions || {},
-          directory: targetFolder,
+          processed: true,
           ...metadata
-        };
-
-        return {
-          success: true,
-          metadata: storageMetadata
-        };
-      }
-
-      throw new Error(UPLOAD_ERRORS.CLOUD_STORAGE_NOT_IMPLEMENTED(provider));
+        }
+      };
     } catch (error) {
       return {
         success: false,
         metadata: {
           filename,
-          originalName: metadata.originalName || filename,
+          originalName: String(metadata.originalName || filename),
           mimeType,
           size: buffer.length,
           uploadedAt: new Date()
@@ -125,33 +122,17 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
 
   const retrieve = async (filename: string, folder?: string): Promise<Buffer | null> => {
     try {
-      if (provider === 'aws' || provider === 'cloudflare') {
-        if (!s3Client) {
-          throw new Error(UPLOAD_ERRORS.S3_CLIENT_NOT_INITIALIZED);
-        }
+      if (provider !== 'aws' && provider !== 'cloudflare') return null;
+      if (!s3Client) throw new Error(UPLOAD_ERRORS.S3_CLIENT_NOT_INITIALIZED);
 
-        const targetFolder = folder || folderPrefix;
-        const key = `${targetFolder}/${filename}`;
+      const key = getTargetKey(filename, folder);
+      const response = await s3Client.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
 
-        const command = new GetObjectCommand({
-          Bucket: bucket,
-          Key: key
-        });
-
-        const response = await s3Client.send(command);
-
-        if (!response.Body) {
-          return null;
-        }
-
-        const chunks: Uint8Array[] = [];
-        for await (const chunk of response.Body as any) {
-          chunks.push(chunk);
-        }
-        return Buffer.concat(chunks);
-      }
-
-      throw new Error(UPLOAD_ERRORS.CLOUD_STORAGE_NOT_IMPLEMENTED(provider));
+      if (!response.Body) return null;
+      const chunks: Uint8Array[] = [];
+      const stream = response.Body as AsyncIterable<Uint8Array>;
+      for await (const chunk of stream) chunks.push(chunk);
+      return Buffer.concat(chunks);
     } catch (error) {
       logger.error(`Failed to retrieve file ${filename}:`, error);
       return null;
@@ -160,190 +141,102 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
 
   const deleteFile = async (filename: string, folder?: string): Promise<DeleteResult> => {
     try {
-      if (provider === 'aws' || provider === 'cloudflare') {
-        if (!s3Client) {
-          throw new Error(UPLOAD_ERRORS.S3_CLIENT_NOT_INITIALIZED);
-        }
-
-        const targetFolder = folder || folderPrefix;
-        const key = `${targetFolder}/${filename}`;
-
-        const command = new DeleteObjectCommand({
-          Bucket: bucket,
-          Key: key
-        });
-
-        await s3Client.send(command);
-
-        return {
-          success: true
-        };
+      if (provider !== 'aws' && provider !== 'cloudflare') {
+        throw new Error(UPLOAD_ERRORS.CLOUD_STORAGE_NOT_IMPLEMENTED(provider));
       }
+      if (!s3Client) throw new Error(UPLOAD_ERRORS.S3_CLIENT_NOT_INITIALIZED);
 
-      throw new Error(UPLOAD_ERRORS.CLOUD_STORAGE_NOT_IMPLEMENTED(provider));
+      await s3Client.send(new DeleteObjectCommand({ Bucket: bucket, Key: getTargetKey(filename, folder) }));
+      return { success: true };
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : UPLOAD_ERRORS.UNKNOWN_ERROR_OCCURRED
-      };
+      return { success: false, error: error instanceof Error ? error.message : UPLOAD_ERRORS.UNKNOWN_ERROR_OCCURRED };
     }
   };
 
   const exists = async (filename: string, folder?: string): Promise<boolean> => {
     try {
-      if (provider === 'aws' || provider === 'cloudflare') {
-        if (!s3Client) {
-          throw new Error(UPLOAD_ERRORS.S3_CLIENT_NOT_INITIALIZED);
-        }
+      if (provider !== 'aws' && provider !== 'cloudflare') return false;
+      if (!s3Client) throw new Error(UPLOAD_ERRORS.S3_CLIENT_NOT_INITIALIZED);
 
-        const targetFolder = folder || folderPrefix;
-        const key = `${targetFolder}/${filename}`;
-
-        const command = new HeadObjectCommand({
-          Bucket: bucket,
-          Key: key
-        });
-
-        await s3Client.send(command);
-        return true;
-      }
-
-      throw new Error(UPLOAD_ERRORS.CLOUD_STORAGE_NOT_IMPLEMENTED(provider));
-    } catch (error) {
-      logger.error(UPLOAD_ERRORS.FILE_NOT_FOUND, error);
+      await s3Client.send(new HeadObjectCommand({ Bucket: bucket, Key: getTargetKey(filename, folder) }));
+      return true;
+    } catch {
       return false;
     }
   };
 
   const getMetadata = async (filename: string, folder?: string): Promise<StorageMetadata | null> => {
     try {
-      if (provider === 'aws' || provider === 'cloudflare') {
-        if (!s3Client) {
-          throw new Error(UPLOAD_ERRORS.S3_CLIENT_NOT_INITIALIZED);
-        }
+      if (provider !== 'aws' && provider !== 'cloudflare') return null;
+      if (!s3Client) throw new Error(UPLOAD_ERRORS.S3_CLIENT_NOT_INITIALIZED);
 
-        const targetFolder = folder || folderPrefix;
-        const key = `${targetFolder}/${filename}`;
+      const key = getTargetKey(filename, folder);
+      const response = await s3Client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
 
-        const command = new HeadObjectCommand({
-          Bucket: bucket,
-          Key: key
-        });
+      const mimeType = response.ContentType || 'application/octet-stream';
+      const originalName = response.Metadata?.originalName || filename;
 
-        const response = await s3Client.send(command);
-
-        return {
-          filename,
-          originalName: response.Metadata?.originalName || filename,
-          mimeType: response.ContentType || 'application/octet-stream',
-          size: response.ContentLength || 0,
-          uploadedAt: response.LastModified || new Date(),
-          path: key,
-          url: getUrl(key) || undefined,
-          originalFilename: response.Metadata?.originalName || filename,
-          originalMimeType: response.ContentType || 'application/octet-stream',
-          processed: response.Metadata?.processed === 'true' || true,
-          processingOptions: response.Metadata?.processingOptions
-            ? JSON.parse(response.Metadata.processingOptions)
-            : {},
-          directory: targetFolder
-        };
-      }
-
-      throw new Error(UPLOAD_ERRORS.CLOUD_STORAGE_NOT_IMPLEMENTED(provider));
-    } catch (error) {
-      logger.error(UPLOAD_ERRORS.FAILED_TO_GET_METADATA, error);
+      return {
+        filename,
+        originalName,
+        mimeType,
+        size: response.ContentLength || 0,
+        uploadedAt: response.LastModified || new Date(),
+        path: key,
+        url: getUrl(key) || undefined,
+        directory: key.substring(0, key.lastIndexOf('/')),
+        originalFilename: originalName,
+        originalMimeType: mimeType,
+        processed: true
+      };
+    } catch {
       return null;
     }
   };
 
   const list = async (folder?: string): Promise<StorageMetadata[]> => {
     try {
-      if (provider === 'aws' || provider === 'cloudflare') {
-        if (!s3Client) {
-          throw new Error('S3 client not initialized');
-        }
+      if (!s3Client) return [];
+      const prefix = folder ? (folder.endsWith('/') ? folder : `${folder}/`) : '';
+      const response = await s3Client.send(new ListObjectsV2Command({ Bucket: bucket, Prefix: prefix }));
 
-        const prefix = folder ? (folder.endsWith('/') ? folder : `${folder}/`) : '';
-
-        const command = new ListObjectsV2Command({
-          Bucket: bucket,
-          Prefix: prefix
-        });
-
-        const response = await s3Client.send(command);
-
-        if (!response.Contents) {
-          return [];
-        }
-
-        return response.Contents.map((item) => {
-          const itemKey = item.Key || '';
-          const filename = itemKey.split('/').pop() || itemKey;
-          const directory = itemKey.substring(0, itemKey.lastIndexOf('/'));
-
-          return {
-            filename,
-            originalName: filename,
-            mimeType: 'application/octet-stream',
-            size: item.Size || 0,
-            uploadedAt: item.LastModified || new Date(),
-            path: itemKey,
-            url: getUrl(itemKey) || undefined,
-            directory
-          };
-        });
-      }
-
-      throw new Error(UPLOAD_ERRORS.CLOUD_STORAGE_NOT_IMPLEMENTED(provider));
-    } catch (error) {
-      logger.error('Failed to list files', error);
+      return (response.Contents || []).map((item) => {
+        const itemKey = item.Key || '';
+        return {
+          filename: itemKey.split('/').pop() || itemKey,
+          originalName: itemKey.split('/').pop() || itemKey,
+          mimeType: 'application/octet-stream',
+          size: item.Size || 0,
+          uploadedAt: item.LastModified || new Date(),
+          path: itemKey,
+          url: getUrl(itemKey) || undefined,
+          directory: itemKey.substring(0, itemKey.lastIndexOf('/'))
+        };
+      });
+    } catch {
       return [];
     }
   };
 
   const getUrl = (filename: string): string | null => {
-    /* prettier-ignore */
+    const cleanName = filename.startsWith('/') ? filename.substring(1) : filename;
+    if (baseUrl) return `${baseUrl}/${cleanName}`;
+
     switch (provider) {
     case 'cloudflare':
-      if (baseUrl) {
-        return `${baseUrl}/${filename}`;
-      }
-      if (endpoint) {
-        const match = endpoint.match(/https:\/\/(.+?)\.r2\.cloudflarestorage\.com/);
-        if (match) {
-          return `${endpoint}/${filename}`;
-        }
-      }
-      return `https://${bucket}.r2.dev/${filename}`;
+      return endpoint && !endpoint.includes('invalid-endpoint')
+        ? `${endpoint}/${cleanName}`
+        : `https://${bucket}.r2.dev/${cleanName}`;
     case 'aws':
-      if (baseUrl) {
-        return `${baseUrl}/${filename}`;
-      }
-      const awsRegion = region || 'us-east-1';
-      return `https://${bucket}.s3.${awsRegion}.amazonaws.com/${filename}`;
+      return `https://${bucket}.s3.${region || 'us-east-1'}.amazonaws.com/${cleanName}`;
     case 'gcp':
-      if (baseUrl) {
-        return `${baseUrl}/${filename}`;
-      }
-      return `https://storage.googleapis.com/${bucket}/${filename}`;
+      return `https://storage.googleapis.com/${bucket}/${cleanName}`;
     case 'azure':
-      if (baseUrl) {
-        return `${baseUrl}/${filename}`;
-      }
-      return `https://${bucket}.blob.core.windows.net/${filename}`;
+      return `https://${bucket}.blob.core.windows.net/${cleanName}`;
     default:
       return null;
     }
   };
 
-  return {
-    store,
-    retrieve,
-    delete: deleteFile,
-    exists,
-    getMetadata,
-    getUrl,
-    list
-  };
+  return { store, retrieve, delete: deleteFile, exists, getMetadata, getUrl, list };
 };

@@ -14,14 +14,14 @@ export interface UploadResult {
   url?: string;
   size?: number;
   mimeType?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   errors?: string[];
 }
 
 export interface UploadOptions {
   fileType?: 'image' | 'document' | 'video' | 'audio' | 'generic';
   directory?: string;
-  validationRules?: Record<string, any>;
+  validationRules?: Record<string, unknown>;
   generateFilename?: (originalName: string, mimeType: string) => string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }

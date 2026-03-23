@@ -6,7 +6,10 @@ export interface StorageMetadata {
   uploadedAt: Date;
   path?: string;
   url?: string;
-  [key: string]: any;
+  directory?: string;
+  processed?: boolean;
+  processingOptions?: Record<string, unknown>;
+  [key: string]: unknown;
 }
 
 export interface StorageResult {
@@ -21,7 +24,7 @@ export interface DeleteResult {
 }
 
 export interface StorageAdapter {
-  store: (buffer: Buffer, filename: string, mimeType: string, metadata?: Record<string, any>) => Promise<StorageResult>;
+  store: (buffer: Buffer, filename: string, mimeType: string, metadata?: Record<string, unknown>) => Promise<StorageResult>;
 
   retrieve: (filename: string, folder?: string) => Promise<Buffer | null>;
 

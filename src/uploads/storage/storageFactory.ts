@@ -1,7 +1,7 @@
 import { UPLOAD_ERRORS } from '../errors';
 import { createAzureBlobStorage } from './azureBlobStorage';
 import { createCloudStorage } from './cloudStorage';
-import { StorageAdapter, StorageConfig } from './types';
+import {StorageAdapter, StorageConfig, StorageType} from './types';
 
 export const createStorageAdapter = (config: StorageConfig): StorageAdapter => {
   /* prettier-ignore */
@@ -17,12 +17,19 @@ export const createStorageAdapter = (config: StorageConfig): StorageAdapter => {
     if (!config.cloudProvider || !config.cloudConfig) {
       throw new Error(UPLOAD_ERRORS.CLOUD_STORAGE_REQUIRES_CONFIG);
     }
+    const creds = config.cloudConfig.credentials;
+
     return createCloudStorage({
       provider: config.cloudProvider,
       bucket: config.cloudConfig.bucket || '',
       region: config.cloudConfig.region,
       endpoint: config.cloudConfig.endpoint,
-      credentials: config.cloudConfig.credentials,
+      credentials: {
+        accessKeyId: creds?.accessKeyId,
+        secretAccessKey: creds?.secretAccessKey,
+        token: creds?.token,
+        projectId: creds?.projectId
+      },
       baseUrl: config.baseUrl
     });
 
@@ -32,7 +39,7 @@ export const createStorageAdapter = (config: StorageConfig): StorageAdapter => {
 };
 
 export const createStorageFromEnv = (): StorageAdapter => {
-  const storageType = (process.env.STORAGE_TYPE || 'cloud') as 'cloud' | 'azure-blob';
+  const storageType = (process.env.STORAGE_TYPE || 'cloud') as StorageType;
 
   const config: StorageConfig = {
     type: storageType,
@@ -47,7 +54,7 @@ export const createStorageFromEnv = (): StorageAdapter => {
     break;
 
   case 'cloud':
-    config.cloudProvider = (process.env.CLOUD_PROVIDER || 'aws') as any;
+    config.cloudProvider = (process.env.CLOUD_PROVIDER || 'aws') as StorageConfig['cloudProvider'];
     config.cloudConfig = {
       bucket: process.env.CLOUD_BUCKET,
       region: process.env.CLOUD_REGION,

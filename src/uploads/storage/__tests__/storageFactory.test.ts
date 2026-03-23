@@ -1,6 +1,6 @@
 import { createCloudStorage } from '../cloudStorage';
 import { createStorageAdapter, createStorageFromEnv } from '../storageFactory';
-import { StorageConfig } from '../types';
+import { StorageAdapter, StorageConfig, StorageType } from '../types';
 
 jest.mock('@azure/storage-blob');
 jest.mock('../../../middleware/logger/logger', () => ({
@@ -30,7 +30,7 @@ describe('storageFactory', () => {
       getMetadata: jest.fn(),
       getUrl: jest.fn(),
       list: jest.fn()
-    };
+    } as unknown as StorageAdapter;
 
     describe('cloud storage', () => {
       it('should create AWS cloud storage adapter', () => {
@@ -193,9 +193,9 @@ describe('storageFactory', () => {
 
     describe('unknown storage type', () => {
       it('should throw error for unknown storage type', () => {
-        const config: StorageConfig = {
-          type: 'unknown' as any
-        };
+        const config = {
+          type: 'unknown' as StorageType
+        } as StorageConfig;
 
         expect(() => createStorageAdapter(config)).toThrow('Unknown storage type: unknown');
       });
@@ -212,7 +212,7 @@ describe('storageFactory', () => {
       getMetadata: jest.fn(),
       getUrl: jest.fn(),
       list: jest.fn()
-    };
+    } as unknown as StorageAdapter;
 
     beforeEach(() => {
       jest.resetModules();

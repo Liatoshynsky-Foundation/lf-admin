@@ -4,6 +4,11 @@ import { UPLOAD_ERRORS } from './errors';
 import { UploadService } from './uploadService';
 import { convertMulterFile, formatMultipleUploadResults, formatUploadResult, parseUploadOptions } from './utils';
 
+interface RequestWithFile extends Request {
+  file?: Express.Multer.File;
+  files?: Express.Multer.File[];
+}
+
 export interface UploadControllerConfig {
   uploadService: UploadService;
 }
@@ -13,7 +18,7 @@ export const createUploadController = (config: UploadControllerConfig) => {
 
   const uploadSingleFile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const file = (req as any).file as Express.Multer.File;
+      const file = (req as RequestWithFile).file;
 
       if (!file) {
         res.status(400).json({ success: false, error: UPLOAD_ERRORS.NO_FILE_UPLOADED });
@@ -37,7 +42,7 @@ export const createUploadController = (config: UploadControllerConfig) => {
 
   const uploadMultipleFiles = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const files = (req as any).files as Express.Multer.File[];
+      const files = (req as RequestWithFile).files;
 
       if (!files || files.length === 0) {
         res.status(400).json({ success: false, error: UPLOAD_ERRORS.NO_FILES_UPLOADED });
@@ -56,7 +61,7 @@ export const createUploadController = (config: UploadControllerConfig) => {
 
   const getFile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { filename } = req.params;
+      const filename = req.params.filename as string;
 
       if (!filename) {
         res.status(400).json({ success: false, error: UPLOAD_ERRORS.FILENAME_REQUIRED });
@@ -83,7 +88,7 @@ export const createUploadController = (config: UploadControllerConfig) => {
 
   const deleteFile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { filename } = req.params;
+      const filename = req.params.filename as string;
 
       if (!filename) {
         res.status(400).json({ success: false, error: UPLOAD_ERRORS.FILENAME_REQUIRED });
@@ -116,7 +121,7 @@ export const createUploadController = (config: UploadControllerConfig) => {
 
   const getFileMetadata = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { filename } = req.params;
+      const filename = req.params.filename as string;
 
       if (!filename) {
         res.status(400).json({ success: false, error: UPLOAD_ERRORS.FILENAME_REQUIRED });

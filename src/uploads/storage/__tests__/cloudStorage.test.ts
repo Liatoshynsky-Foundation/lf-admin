@@ -214,7 +214,8 @@ describe('createCloudStorage', () => {
     });
 
     it('should throw error for unsupported providers', async () => {
-      const options = createAwsOptions({ provider: 'gcp' as any });
+      // Використовуємо unknown замість any для безпечного приведення типів
+      const options = createAwsOptions({ provider: 'gcp' as unknown as CloudStorageOptions['provider'] });
       const storage = createCloudStorage(options);
       const { buffer } = createTestFile();
 
@@ -271,7 +272,7 @@ describe('createCloudStorage', () => {
     });
 
     it('should throw error for unsupported providers', async () => {
-      const options = createAwsOptions({ provider: 'azure' as any });
+      const options = createAwsOptions({ provider: 'azure' as unknown as CloudStorageOptions['provider'] });
       const storage = createCloudStorage(options);
       const consoleSpy = mockConsoleError();
 
@@ -359,7 +360,7 @@ describe('createCloudStorage', () => {
     });
 
     it('should return false for unsupported providers', async () => {
-      const options = createAwsOptions({ provider: 'gcp' as any });
+      const options = createAwsOptions({ provider: 'gcp' as unknown as CloudStorageOptions['provider'] });
       const storage = createCloudStorage(options);
       const consoleSpy = mockConsoleLog();
 
@@ -429,7 +430,7 @@ describe('createCloudStorage', () => {
     });
 
     it('should return null for unsupported providers', async () => {
-      const options = createAwsOptions({ provider: 'azure' as any });
+      const options = createAwsOptions({ provider: 'azure' as unknown as CloudStorageOptions['provider'] });
       const storage = createCloudStorage(options);
       const consoleSpy = mockConsoleError();
 
@@ -490,7 +491,7 @@ describe('createCloudStorage', () => {
     });
 
     it('should generate correct URL for GCP', () => {
-      const options = createAwsOptions({ provider: 'gcp' as any, credentials: {} });
+      const options = createAwsOptions({ provider: 'gcp' as unknown as CloudStorageOptions['provider'], credentials: {} });
       const storage = createCloudStorage(options);
       const url = storage.getUrl('test.txt');
 
@@ -499,7 +500,7 @@ describe('createCloudStorage', () => {
 
     it('should generate correct URL for GCP with custom baseUrl', () => {
       const options = createAwsOptions({
-        provider: 'gcp' as any,
+        provider: 'gcp' as unknown as CloudStorageOptions['provider'],
         baseUrl: 'https://cdn.gcp.example.com',
         credentials: {}
       });
@@ -510,7 +511,7 @@ describe('createCloudStorage', () => {
     });
 
     it('should generate correct URL for Azure', () => {
-      const options = createAwsOptions({ provider: 'azure' as any, credentials: {} });
+      const options = createAwsOptions({ provider: 'azure' as unknown as CloudStorageOptions['provider'], credentials: {} });
       const storage = createCloudStorage(options);
       const url = storage.getUrl('test.txt');
 
@@ -519,7 +520,7 @@ describe('createCloudStorage', () => {
 
     it('should generate correct URL for Azure with custom baseUrl', () => {
       const options = createAwsOptions({
-        provider: 'azure' as any,
+        provider: 'azure' as unknown as CloudStorageOptions['provider'],
         baseUrl: 'https://cdn.azure.example.com',
         credentials: {}
       });

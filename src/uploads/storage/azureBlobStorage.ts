@@ -1,6 +1,6 @@
 import { BlobServiceClient, BlockBlobClient, ContainerClient } from '@azure/storage-blob';
 
-import { UPLOAD_ERRORS } from '../errors';
+import { ensureError,UPLOAD_ERRORS } from '../errors';
 import { DeleteResult, StorageAdapter, StorageMetadata, StorageResult } from './types';
 import { errors } from '~/back-constants/errors';
 import { CONTAINER_NAME } from '~/back-constants/index';
@@ -61,6 +61,10 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
       return `${baseUrl}/${filename}`;
     }
     return constructBlobUrl(directory || folderPrefix, filename);
+  };
+
+  const resolveTargetFolder = (folder?: string): string => {
+    return folder || folderPrefix;
   };
 
   const uploadFile = async (
@@ -163,10 +167,10 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
     buffer: Buffer,
     filename: string,
     mimeType: string,
-    metadata: Record<string, any> = {}
+    metadata: Record<string, unknown> = {}
   ): Promise<StorageResult> => {
     try {
-      const directory = metadata.directory || folderPrefix;
+      const directory = String(metadata.directory || folderPrefix);
 
       await uploadFile(directory, filename, buffer, mimeType);
 
@@ -174,7 +178,7 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
 
       const storageMetadata: StorageMetadata = {
         filename,
-        originalName: metadata.originalName || filename,
+        originalName: String(metadata.originalName || filename),
         mimeType,
         size: buffer.length,
         uploadedAt: new Date(),
@@ -188,23 +192,24 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
         metadata: storageMetadata
       };
     } catch (error) {
+      const err = ensureError(error);
       return {
         success: false,
         metadata: {
           filename,
-          originalName: metadata.originalName || filename,
+          originalName: String(metadata.originalName || filename),
           mimeType,
           size: buffer.length,
           uploadedAt: new Date()
         },
-        error: error instanceof Error ? error.message : UPLOAD_ERRORS.UNKNOWN_ERROR_OCCURRED
+        error: err.message
       };
     }
   };
 
   const retrieve = async (filename: string, folder?: string): Promise<Buffer | null> => {
     try {
-      const targetFolder = folder || folderPrefix;
+      const targetFolder = resolveTargetFolder(folder);
       const url = constructBlobUrl(targetFolder, filename);
       const response = await streamBlob(url, null);
 
@@ -222,22 +227,23 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
 
   const deleteFile = async (filename: string, folder?: string): Promise<DeleteResult> => {
     try {
-      const targetFolder = folder || folderPrefix;
+      const targetFolder = resolveTargetFolder(folder);
       await deleteFileFromAzure(targetFolder, filename);
       return {
         success: true
       };
     } catch (error) {
+      const err = ensureError(error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : UPLOAD_ERRORS.UNKNOWN_ERROR_OCCURRED
+        error: err.message
       };
     }
   };
 
   const exists = async (filename: string, folder?: string): Promise<boolean> => {
     try {
-      const targetFolder = folder || folderPrefix;
+      const targetFolder = resolveTargetFolder(folder);
       const blockBlobClient = getBlobClient(targetFolder, filename);
       return await blockBlobClient.exists();
     } catch (error) {
@@ -248,7 +254,7 @@ export const createAzureBlobStorage = (options: AzureBlobStorageOptions = {}): A
 
   const getMetadata = async (filename: string, folder?: string): Promise<StorageMetadata | null> => {
     try {
-      const targetFolder = folder || folderPrefix;
+      const targetFolder = resolveTargetFolder(folder);
       const url = constructBlobUrl(targetFolder, filename);
       const response = await fetch(url, {
         method: 'HEAD'

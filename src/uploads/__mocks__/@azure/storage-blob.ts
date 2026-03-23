@@ -1,3 +1,7 @@
+import { RestError } from './core-rest-pipeline';
+
+export { RestError };
+
 export const BlobServiceClient = jest.fn().mockImplementation(() => ({
   getContainerClient: jest.fn().mockReturnValue({
     createIfNotExists: jest.fn(),
@@ -30,10 +34,3 @@ export const BlockBlobClient = jest.fn().mockImplementation(() => ({
   url: 'https://mock-blob-url.com/test'
 }));
 
-export const RestError = class RestError extends Error {
-  statusCode?: number;
-  constructor(message: string, statusCode?: number) {
-    super(message);
-    this.statusCode = statusCode;
-  }
-};

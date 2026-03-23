@@ -131,4 +131,36 @@ describe('UploadService', () => {
       expect(service.getFileUrl('test.png')).toBe('http://cdn.com/test.png');
     });
   });
+
+  describe('UploadService Edge Cases', () => {
+    it('should generate filename with original if requested (via directory option)', async () => {
+      mockValidator.validate.mockResolvedValue({ valid: true, errors: [] });
+      mockStorage.store.mockResolvedValue({
+        success: true,
+        metadata: { filename: 'dir/test.jpg' } as StorageMetadata
+      });
+
+      await service.uploadFile(testFile, { directory: 'user-1' });
+
+      expect(mockStorage.store).toHaveBeenCalledWith(
+        expect.any(Buffer),
+        expect.any(String),
+        expect.any(String),
+        expect.objectContaining({ directory: 'user-1' })
+      );
+    });
+
+    it('should return error if unexpected error type occurs', async () => {
+      mockValidator.validate.mockImplementation(() => { throw 'string-error'; });
+
+      const result = await service.uploadFile(testFile);
+      expect(result.errors).toContain('Unknown error');
+    });
+
+    it('should return file url from storage', () => {
+      mockStorage.getUrl.mockReturnValue('http://azure.com/img.jpg');
+      const url = service.getFileUrl('img.jpg');
+      expect(url).toBe('http://azure.com/img.jpg');
+    });
+  });
 });

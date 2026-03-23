@@ -9,10 +9,6 @@ export interface FileValidationRules {
   maxSize?: number; // in bytes
   allowedMimeTypes?: string[];
   allowedExtensions?: string[];
-  minWidth?: number; // for images
-  minHeight?: number; // for images
-  maxWidth?: number; // for images
-  maxHeight?: number; // for images
 }
 
 export interface FileValidator {

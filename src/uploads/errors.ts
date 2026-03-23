@@ -46,3 +46,11 @@ export const UPLOAD_ERRORS = {
     `${provider} storage requires accessKeyId and secretAccessKey`,
   UNKNOWN_STORAGE_TYPE: (type: string) => `Unknown storage type: ${type}`
 } as const;
+
+export const ensureError = (error: unknown): Error => {
+  if (error instanceof Error) {
+    return error;
+  }
+
+  return new Error(UPLOAD_ERRORS.UNKNOWN_ERROR_OCCURRED);
+};

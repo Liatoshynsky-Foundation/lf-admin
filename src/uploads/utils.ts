@@ -1,6 +1,8 @@
 import * as crypto from 'crypto';
 import * as path from 'path';
 
+import {UploadResult} from '~/uploads/types';
+
 export const generateUniqueFilename = (originalName: string, mimeType: string): string => {
   const timestamp = Date.now();
   const randomHash = crypto.randomBytes(8).toString('hex');
@@ -81,11 +83,11 @@ export const convertMulterFile = (file: Express.Multer.File) => ({
   size: file.size
 });
 
-export const parseUploadOptions = (body: any): Record<string, any> => {
-  return body.options ? JSON.parse(body.options) : {};
+export const parseUploadOptions = (body: Record<string, unknown>): Record<string, unknown> => {
+  return typeof body.options === 'string' ? JSON.parse(body.options) : {};
 };
 
-export const formatUploadResult = (result: any) => ({
+export const formatUploadResult = (result: UploadResult) => ({
   filename: result.filename,
   originalName: result.originalName,
   url: result.url,
@@ -94,7 +96,7 @@ export const formatUploadResult = (result: any) => ({
   metadata: result.metadata
 });
 
-export const formatMultipleUploadResults = (results: any[]) => {
+export const formatMultipleUploadResults = (results: UploadResult[]) => {
   const successful = results.filter((r) => r.success);
   const failed = results.filter((r) => !r.success);
 
@@ -106,7 +108,7 @@ export const formatMultipleUploadResults = (results: any[]) => {
       files: successful.map(formatUploadResult),
       errors: failed.map((r) => ({
         originalName: r.originalName,
-        errors: r.errors
+        errors: r.errors || []
       }))
     }
   };
