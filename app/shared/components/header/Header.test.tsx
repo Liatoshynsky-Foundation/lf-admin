@@ -28,7 +28,7 @@ jest.mock('../language-switcher/LanguageSwitcher', () => ({
 
 jest.mock('../design-system/button/Button', () => ({
   __esModule: true,
-  default: ({ children, onClick, disabled }: any) => (
+  default: ({ children, onClick, disabled }) => (
     <button onClick={onClick} disabled={disabled}>
       {children}
     </button>
