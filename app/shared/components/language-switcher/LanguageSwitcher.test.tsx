@@ -1,12 +1,13 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { useLocale } from 'next-intl';
 import React from 'react';
 
 import LanguageSwitcher from './LanguageSwitcher';
 
-// Мокаємо навігацію
 const mockReplace = jest.fn();
 const mockPathname = '/dashboard';
+
+// Створюємо мок-функцію заздалегідь
+const mockUseLocale = jest.fn();
 
 jest.mock('~/../i18n/navigation', () => ({
   usePathname: () => mockPathname,
@@ -15,33 +16,34 @@ jest.mock('~/../i18n/navigation', () => ({
   })
 }));
 
-// Мокаємо useLocale
+// Використовуємо створену мок-функцію тут
 jest.mock('next-intl', () => ({
-  useLocale: jest.fn(() => 'uk')
+  useLocale: () => mockUseLocale()
 }));
 
-class MockResizeObserver implements ResizeObserver {
-  observe = jest.fn();
-  unobserve = jest.fn();
-  disconnect = jest.fn();
+class MockResizeObserver {
+  observe() { return; }
+  unobserve() { return; }
+  disconnect() { return; }
 }
 
-let OriginalResizeObserver: typeof global.ResizeObserver;
+let tempResizeObserver: typeof global.ResizeObserver;
 
 describe('LanguageSwitcher', () => {
   beforeAll(() => {
-    OriginalResizeObserver = global.ResizeObserver;
+    tempResizeObserver = global.ResizeObserver;
     global.ResizeObserver = MockResizeObserver;
   });
 
   afterAll(() => {
-    global.ResizeObserver = OriginalResizeObserver;
+    global.ResizeObserver = tempResizeObserver;
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (useLocale as jest.Mock).mockReturnValue('uk');
     document.cookie = 'NEXT_LOCALE=; Max-Age=0';
+    // Встановлюємо значення за замовчуванням перед кожним тестом
+    mockUseLocale.mockReturnValue('uk');
   });
 
   it('should render language buttons', () => {
@@ -61,7 +63,8 @@ describe('LanguageSwitcher', () => {
   });
 
   it('should set NEXT_LOCALE cookie and call router.replace when "Українська" is clicked', () => {
-    (useLocale as jest.Mock).mockReturnValue('en');
+    // Тепер це працює, бо ми викликаємо mockReturnValue на jest.fn()
+    mockUseLocale.mockReturnValue('en');
 
     render(<LanguageSwitcher />);
     const ukrainianButton = screen.getByText('Українська');
@@ -73,8 +76,10 @@ describe('LanguageSwitcher', () => {
   });
 
   it('should reflect active language in ButtonGroup', () => {
-    (useLocale as jest.Mock).mockReturnValue('en');
+    mockUseLocale.mockReturnValue('en');
+
     render(<LanguageSwitcher />);
+
     expect(screen.getByText('English')).toBeInTheDocument();
   });
 });

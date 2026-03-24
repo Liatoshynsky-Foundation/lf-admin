@@ -1,33 +1,29 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent,render, screen } from '@testing-library/react';
 import React from 'react';
 
 import Home from './page';
 import { fetchPreview } from '~/lib/utils/fetchPreview';
-import { useStore } from '~/store';
 
-// 1. Мокаємо fetchPreview
 jest.mock('~/lib/utils/fetchPreview', () => ({
   fetchPreview: jest.fn()
 }));
 
-// 2. Мокаємо next-intl
 jest.mock('next-intl', () => ({
   useLocale: () => 'uk',
   useTranslations: () => (key: string) => (key === 'title' ? 'Про нас' : key)
 }));
 
-// 3. Мокаємо useStore для Zustand
 const mockDiscardChanges = jest.fn();
 jest.mock('~/store', () => ({
-  useStore: jest.fn()
+  useStore: (fn) => fn({ discardChanges: mockDiscardChanges })
 }));
 
-// 4. Мокаємо Header
 jest.mock('~/shared/components/header/Header', () => ({
-  Header: jest.fn(({ title, onPreview, onCancel }) => (
+  Header: jest.fn(({ title, onPreview, onSave, onCancel }) => (
     <div data-testid="header">
       <h1>{title}</h1>
       <button onClick={onPreview} data-testid="preview-btn">Preview</button>
+      <button onClick={onSave} data-testid="save-btn">Save</button>
       <button onClick={onCancel} data-testid="cancel-btn">Cancel</button>
     </div>
   ))
@@ -38,9 +34,6 @@ describe('Home component', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (useStore as unknown as jest.Mock).mockImplementation((selector: (state: { discardChanges: jest.Mock }) => unknown) =>
-      selector({ discardChanges: mockDiscardChanges })
-    );
   });
 
   it('should render the Home component correctly', async () => {
@@ -63,10 +56,13 @@ describe('Home component', () => {
     const previewButton = await screen.findByTestId('preview-btn');
 
     await act(async () => {
-      previewButton.click();
+      fireEvent.click(previewButton);
     });
 
-    expect(fetchPreview).toHaveBeenCalled();
+    expect(fetchPreview).toHaveBeenCalledWith(expect.objectContaining({
+      lang: 'uk',
+      slug: '/'
+    }));
   });
 
   it('should call discardChanges when cancel button is clicked', async () => {
@@ -76,9 +72,7 @@ describe('Home component', () => {
 
     const cancelButton = await screen.findByTestId('cancel-btn');
 
-    await act(async () => {
-      cancelButton.click();
-    });
+    fireEvent.click(cancelButton);
 
     expect(mockDiscardChanges).toHaveBeenCalledWith('/');
   });

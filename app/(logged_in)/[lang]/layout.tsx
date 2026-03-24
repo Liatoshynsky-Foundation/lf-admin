@@ -14,7 +14,7 @@ import { Wrapper } from '~/types/common';
 export { metadata } from '~/providers/body-provider/BodyProvider';
 
 interface LocaleLayoutProps extends Wrapper {
-    params: Promise<{ lang: string }>;
+  params: Promise<{ lang: string }>;
 }
 
 export default async function RootLayout({ children, params }: Readonly<LocaleLayoutProps>) {
