@@ -5,21 +5,21 @@ import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import { Box, Button, InputAdornment, OutlinedInput, Typography } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 
-import { ControlPanel } from '~/shared/components/control-panel';
-import { colors } from '~/shared/components/design-system/button/Button.styles';
+import { ControlPanel } from '~/components/control-panel';
 import {
   type FileDetailsSidebarFile,
   FileInfoSidebar,
   type FileUsageLink
-} from '~/shared/components/file-info-sidebar/FileInfoSidebar';
-import { SIDEBAR_WIDTH } from '~/shared/components/file-info-sidebar/FileInfoSidebar.styles';
+} from '~/components/file-info-sidebar/FileInfoSidebar';
+import { SIDEBAR_WIDTH } from '~/components/file-info-sidebar/FileInfoSidebar.styles';
 import {
   FilesCardsLayout,
   type FilesCardsLayoutItem,
   type FilesCardsLayoutView
-} from '~/shared/components/files-cards-layout';
-import { ViewToggle } from '~/shared/components/view-toggle';
-import { useAllAssets } from '~/shared/hooks/use-assets/useAssets';
+} from '~/components/files-cards-layout';
+import { ViewToggle } from '~/components/view-toggle';
+import { colors } from '~/ds-components/button/Button.styles';
+import { useAllAssets } from '~/hooks/use-assets/useAssets';
 import { AssetType } from '~/types/graphql/generated/graphql';
 
 type ArchiveFileItem = FilesCardsLayoutItem & {

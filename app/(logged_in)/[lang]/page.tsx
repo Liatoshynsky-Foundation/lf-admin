@@ -1,28 +1,38 @@
 'use client';
 
 import { Box } from '@mui/material';
-import React from 'react';
+import { useLocale,useTranslations } from 'next-intl';
+import React, { use } from 'react';
 
 import { fetchPreview } from '~/lib/utils/fetchPreview';
 import { Header } from '~/shared/components/header/Header';
 import { useStore } from '~/store';
 
-export default function Home() {
-  const pageData = { title: 'Про нас', url: '/' };
+interface HomePageProps {
+  params: Promise<{ lang: string }>;
+}
+
+export default function Home({ params }: Readonly<HomePageProps>) {
+  const { lang: _lang } = use(params);
+
+  const t = useTranslations('header');
+  const locale = useLocale();
+
   const discardChanges = useStore((s) => s.discardChanges);
 
-  const saveDraft = () => {};
+  const pageData = {
+    title: t('title'),
+    url: '/'
+  };
 
-  const onPreview = () => {
-    saveDraft();
-    fetchPreview({
+  const onPreview = async () => {
+    await fetchPreview({
       slug: pageData.url,
-      lang: 'uk',
+      lang: locale as 'uk' | 'en',
       draftId: '1'
     });
   };
 
-  const onLanguageChange = () => {};
   const onSave = () => {};
   const onCancel = () => discardChanges(pageData.url);
 
@@ -31,7 +41,6 @@ export default function Home() {
       <Header
         title={pageData.title}
         onPreview={onPreview}
-        onLanguageChange={onLanguageChange}
         onSave={onSave}
         onCancel={onCancel}
         isSaving
