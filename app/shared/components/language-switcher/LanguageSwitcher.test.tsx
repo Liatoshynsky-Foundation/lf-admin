@@ -19,28 +19,24 @@ jest.mock('next-intl', () => ({
   useLocale: () => mockUseLocale()
 }));
 
-class MockResizeObserver {
-  observe() {
-    return;
-  }
+class MockResizeObserver implements ResizeObserver {
+  observe = jest.fn();
+  unobserve = jest.fn();
+  disconnect = jest.fn();
 }
 
-let tempResizeObserver: typeof globalThis.ResizeObserver;
+globalThis.ResizeObserver = MockResizeObserver;
 
 describe('LanguageSwitcher', () => {
+  let OriginalResizeObserver: typeof globalThis.ResizeObserver;
+
   beforeAll(() => {
-    tempResizeObserver = globalThis.ResizeObserver;
+    OriginalResizeObserver = globalThis.ResizeObserver;
     globalThis.ResizeObserver = MockResizeObserver;
   });
 
   afterAll(() => {
-    globalThis.ResizeObserver = tempResizeObserver;
-  });
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    document.cookie = 'NEXT_LOCALE=; Max-Age=0';
-    mockUseLocale.mockReturnValue('uk');
+    globalThis.ResizeObserver = OriginalResizeObserver;
   });
 
   it('should render language buttons', () => {
