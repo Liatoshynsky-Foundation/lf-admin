@@ -54,11 +54,7 @@ export const styles = {
   },
   closeButton: {
     padding: '4px',
-    color: 'inherit',
-    '& svg': {
-      width: '11.25px',
-      height: '11.25px'
-    }
+    color: 'inherit'
   },
   success: {
     backgroundColor: '#E2F2DC',
@@ -66,8 +62,8 @@ export const styles = {
     color: '#2C4D20'
   },
   error: {
-    backgroundColor: 'hsl(0, 86%, 95%)',
-    borderColor: 'hsl(0, 84%, 60%)',
-    color: 'hsl(0, 70%, 35%)'
+    backgroundColor: '#fde7e7',
+    borderColor: '#ef4343',
+    color: '#981b1b'
   }
 };

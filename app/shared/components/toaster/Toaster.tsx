@@ -1,12 +1,10 @@
 'use client';
 
 import { Box, IconButton, Typography } from '@mui/material';
-import { resolveValue,toast, Toaster as HotToaster } from 'react-hot-toast';
+import { CheckCircle2, X,XCircle } from 'lucide-react';
+import { resolveValue, toast, Toaster as HotToaster } from 'react-hot-toast';
 
-import { slideIn, slideOut,styles } from './Toaster.styles';
-import ToastClose from '~/public/icons/toast-close.svg';
-import ToastError from '~/public/icons/toast-error.svg';
-import ToastSuccess from '~/public/icons/toast-success.svg';
+import { slideIn, slideOut, styles } from './Toaster.styles';
 
 export const Toaster = () => {
   return (
@@ -29,11 +27,11 @@ export const Toaster = () => {
           <Box sx={styles.contentWrapper}>
             {t.type === 'success' ? (
               <Box sx={styles.icon} data-testid="success-icon">
-                <ToastSuccess />
+                <CheckCircle2 size={32} color="#696C7D" />
               </Box>
             ) : (
               <Box sx={styles.icon} data-testid="error-icon">
-                <ToastError />
+                <XCircle size={32} color="#696C7D" />
               </Box>
             )}
 
@@ -46,7 +44,7 @@ export const Toaster = () => {
             onClick={() => toast.dismiss(t.id)}
             sx={styles.closeButton}
           >
-            <ToastClose />
+            <X size={22} strokeWidth={1.25} />
           </IconButton>
         </Box>
       )}

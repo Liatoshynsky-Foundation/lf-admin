@@ -1,25 +1,7 @@
-import { act, cleanup,fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { toast } from 'react-hot-toast';
 
 import { Toaster } from './Toaster';
-
-jest.mock('~/public/icons/toast-success.svg', () => {
-  const ToastSuccessMock = () => <svg data-testid="toast-success-svg" />;
-  ToastSuccessMock.displayName = 'ToastSuccessMock';
-  return ToastSuccessMock;
-});
-
-jest.mock('~/public/icons/toast-error.svg', () => {
-  const ToastErrorMock = () => <svg data-testid="toast-error-svg" />;
-  ToastErrorMock.displayName = 'ToastErrorMock';
-  return ToastErrorMock;
-});
-
-jest.mock('~/public/icons/toast-close.svg', () => {
-  const ToastCloseMock = () => <svg data-testid="toast-close-svg" />;
-  ToastCloseMock.displayName = 'ToastCloseMock';
-  return ToastCloseMock;
-});
 
 describe('Toaster Component', () => {
   beforeEach(() => {
