@@ -14,8 +14,13 @@ jest.mock('next-intl', () => ({
 }));
 
 const mockDiscardChanges = jest.fn();
+
+interface StoreState {
+  discardChanges: (url: string) => void;
+}
+
 jest.mock('~/store', () => ({
-  useStore: (fn) => fn({ discardChanges: mockDiscardChanges })
+  useStore: (fn: (state: StoreState) => StoreState) => fn({ discardChanges: mockDiscardChanges })
 }));
 
 jest.mock('~/shared/components/header/Header', () => ({
