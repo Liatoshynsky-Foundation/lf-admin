@@ -16,9 +16,13 @@ const mockLanguageChange = jest.fn();
 jest.mock('../language-switcher/LanguageSwitcher', () => ({
   __esModule: true,
   default: () => (
-    <div data-testid="language-switcher" onClick={mockLanguageChange}>
-        Language Switcher
-    </div>
+    <button
+      type="button"
+      data-testid="language-switcher"
+      onClick={mockLanguageChange}
+    >
+      Language Switcher
+    </button>
   )
 }));
 
