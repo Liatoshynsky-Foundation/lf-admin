@@ -3,13 +3,6 @@ import { render, screen } from '@testing-library/react';
 
 import ContentCard from './ContentCard';
 
-jest.mock('next/image', () => ({
-  __esModule: true,
-  default: (props: any) => {
-    return <img {...props} onClick={props.onClick} />;
-  }
-}));
-
 jest.mock('./ContentCardBadge', () => ({
   __esModule: true,
   default: () => <div data-testid="badge-mock">Badge Mock</div>

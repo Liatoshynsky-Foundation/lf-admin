@@ -1,11 +1,12 @@
 import { Box, Chip } from '@mui/material';
 import Image from 'next/image';
 
+import { ContentType } from './ContentCard';
 import styles from './ContentCardBadge.styles';
 import { getLocalizations } from '~/lib/utils/localizations';
 
 interface ContentCardBadgeProps {
-  type: 'news' | 'event' | 'media';
+  type: ContentType;
   status: string;
   localizations: Array<string>;
 }
