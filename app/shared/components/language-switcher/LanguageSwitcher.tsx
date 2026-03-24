@@ -5,7 +5,7 @@ import React from 'react';
 
 import Button from '../design-system/button/Button';
 import ButtonGroup from '../design-system/button-group/ButtonGroup';
-import { usePathname, useRouter } from '~/../i18n/navigation';
+import { usePathname, useRouter } from '~/../i18n/navigation'; // Використовуй свій файл навігації
 
 const setLocaleCookie = (locale: string) => {
   document.cookie = `NEXT_LOCALE=${locale}; path=/; max-age=31536000; SameSite=Lax`;
