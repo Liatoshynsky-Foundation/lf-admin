@@ -4,9 +4,12 @@ import Image from 'next/image';
 import Button from '../design-system/button/Button';
 import styles from './ContentCard.styles';
 import ContentCardBadge from './ContentCardBadge';
+import { formatDate } from '~/lib/utils/formatDate';
+
+export type ContentType = 'news' | 'event' | 'media';
 
 interface ContentCardProps {
-  type: 'news' | 'event' | 'media';
+  type: ContentType;
   coverImage: {
     src: string;
     alt: {
@@ -37,10 +40,6 @@ const ContentCard = ({
   onClick,
   onClickMenu
 }: ContentCardProps) => {
-  function formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('uk-UA');
-  }
-
   function getStatus(status: string, createdAt: string, updatedAt?: string, publishedAt?: string): string {
     if (status === 'published') {
       if (updatedAt) {
@@ -67,14 +66,15 @@ const ContentCard = ({
           <Typography component="h3" sx={styles.title}>
             {title.uk}
           </Typography>
-          <Image
-            src="/icons/ellipsisVertical.svg"
-            alt="menu"
-            width={4}
-            height={14}
-            style={{ cursor: 'pointer' }}
-            onClick={onClickMenu}
-          ></Image>
+          <Box onClick={onClickMenu}>
+            <Image
+              src="/icons/ellipsisVertical.svg"
+              alt="menu"
+              width={4}
+              height={14}
+              style={{ cursor: 'pointer' }}
+            ></Image>
+          </Box>
         </Box>
         <Typography variant="body2" sx={styles.date}>
           {getStatus(status, createdAt, updatedAt, publishedAt)}

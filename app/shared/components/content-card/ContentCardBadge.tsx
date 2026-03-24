@@ -2,6 +2,7 @@ import { Box, Chip } from '@mui/material';
 import Image from 'next/image';
 
 import styles from './ContentCardBadge.styles';
+import { getLocalizations } from '~/lib/utils/localizations';
 
 interface ContentCardBadgeProps {
   type: 'news' | 'event' | 'media';
@@ -35,16 +36,6 @@ const ContentCardBadge = ({ type, status, localizations }: ContentCardBadgeProps
       return '#93CCF4';
     }
   };
-
-  function getLocalizations(locale: Array<string>) {
-    if (locale.includes('uk') && locale.includes('en')) {
-      return '';
-    } else if (locale.includes('en')) {
-      return 'EN';
-    } else {
-      return 'UK';
-    }
-  }
 
   return (
     <Box sx={styles.badgeContainer}>

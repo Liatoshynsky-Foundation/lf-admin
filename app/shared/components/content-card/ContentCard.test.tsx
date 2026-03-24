@@ -1,82 +1,99 @@
-import '@testing-library/jest-dom';
 import { fireEvent,render, screen } from '@testing-library/react';
 
-import ContentCard from './ContentCard';
+import ContentCard, { ContentType } from './ContentCard';
 
-jest.mock('next/image', () => ({
+jest.mock('~/lib/utils/formatDate', () => ({
+  formatDate: (date: string) => `formatted-${date}`
+}));
+
+jest.mock('../design-system/button/Button', () => ({
   __esModule: true,
-  default: (props: any) => {
-    return <img {...props} onClick={props.onClick} />;
-  }
+  default: ({ children, onClick }: any) => <button onClick={onClick}>{children}</button>
 }));
 
 jest.mock('./ContentCardBadge', () => ({
   __esModule: true,
-  default: () => <div data-testid="badge">Badge Mock</div>
+  default: () => <div data-testid="badge" />
 }));
 
-describe('ContentCard Component', () => {
-  const mockProps = {
-    type: 'news' as const,
+describe('ContentCard', () => {
+  const defaultProps = {
+    type: 'news' as ContentType,
     coverImage: {
-      src: '/img.jpg',
-      alt: { uk: 'Опис фото', en: 'Photo alt' }
+      src: '/image.png',
+      alt: {
+        uk: 'Image UA',
+        en: 'Image EN'
+      }
     },
-    title: { uk: 'Заголовок новини', en: 'News title' },
-    status: 'published',
-    createdAt: '2024-01-01T10:00:00Z',
-    publishedAt: '2024-01-02T10:00:00Z',
-    updatedAt: '2024-01-03T10:00:00Z',
+    title: {
+      uk: 'Test title',
+      en: 'Test title EN'
+    },
+    status: 'draft',
+    createdAt: '2024-01-01',
     onClick: jest.fn(),
     onClickMenu: jest.fn()
   };
 
-  beforeEach(() => {
+  afterEach(() => {
     jest.clearAllMocks();
   });
 
-  it('renders the Ukrainian title and the cover image correctly', () => {
-    render(<ContentCard {...mockProps} />);
+  it('should render title', () => {
+    render(<ContentCard {...defaultProps} />);
 
-    expect(screen.getByText('Заголовок новини')).toBeInTheDocument();
-    const image = screen.getByAltText('Опис фото');
-    expect(image).toHaveAttribute('src', '/img.jpg');
+    expect(screen.getByText('Test title')).toBeInTheDocument();
   });
 
-  it('calls onClickMenu when the menu icon (ellipsis) is clicked', () => {
-    render(<ContentCard {...mockProps} />);
+  it('should render badge component', () => {
+    render(<ContentCard {...defaultProps} />);
+
+    expect(screen.getByTestId('badge')).toBeInTheDocument();
+  });
+
+  it('should display draft status with created date', () => {
+    render(<ContentCard {...defaultProps} />);
+
+    expect(screen.getByText('Створено formatted-2024-01-01')).toBeInTheDocument();
+  });
+
+  it('should display published status with updated date', () => {
+    render(<ContentCard {...defaultProps} status="published" updatedAt="2024-02-01" />);
+
+    expect(screen.getByText('Редаговано formatted-2024-02-01')).toBeInTheDocument();
+  });
+
+  it('should display published status with published date', () => {
+    render(<ContentCard {...defaultProps} status="published" publishedAt="2024-03-01" />);
+
+    expect(screen.getByText('Опубліковано formatted-2024-03-01')).toBeInTheDocument();
+  });
+
+  it('should call onClick when edit button is clicked', () => {
+    render(<ContentCard {...defaultProps} />);
+
+    fireEvent.click(screen.getByText('Редагувати'));
+
+    expect(defaultProps.onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('should call onClickMenu when menu icon is clicked', () => {
+    render(<ContentCard {...defaultProps} />);
 
     const menuIcon = screen.getByAltText('menu');
+
     fireEvent.click(menuIcon);
 
-    expect(mockProps.onClickMenu).toHaveBeenCalledTimes(1);
+    expect(defaultProps.onClickMenu).toHaveBeenCalledTimes(1);
   });
 
-  it('calls onClick when the "Edit" (Редагувати) button is clicked', () => {
-    render(<ContentCard {...mockProps} />);
+  it('should render image with correct src and alt', () => {
+    render(<ContentCard {...defaultProps} />);
 
-    const editButton = screen.getByRole('button', { name: /редагувати/i });
-    fireEvent.click(editButton);
+    const img = screen.getByAltText('Image UA');
 
-    expect(mockProps.onClick).toHaveBeenCalledTimes(1);
-  });
-
-  describe('Status Logic', () => {
-    it('displays "Edited" (Редаговано) if status is published and updatedAt exists', () => {
-      render(<ContentCard {...mockProps} />);
-      // Matches the Ukrainian string rendered by the component logic
-      expect(screen.getByText(/Редаговано 03.01.2024/)).toBeInTheDocument();
-    });
-
-    it('displays "Published" (Опубліковано) if updatedAt is missing', () => {
-      const propsWithoutUpdate = { ...mockProps, updatedAt: undefined };
-      render(<ContentCard {...propsWithoutUpdate} />);
-      expect(screen.getByText(/Опубліковано 02.01.2024/)).toBeInTheDocument();
-    });
-
-    it('displays "Created" (Створено) if status is draft', () => {
-      render(<ContentCard {...mockProps} status="draft" />);
-      expect(screen.getByText(/Створено 01.01.2024/)).toBeInTheDocument();
-    });
+    expect(img).toHaveAttribute('src', '/image.png');
+    expect(img).toHaveAttribute('alt', 'Image UA');
   });
 });
