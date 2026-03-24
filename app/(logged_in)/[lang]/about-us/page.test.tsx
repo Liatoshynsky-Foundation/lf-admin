@@ -17,14 +17,12 @@ jest.mock('~/shared/components/header/Header', () => ({
     onSave,
     onCancel,
     isSaving,
-    onLanguageChange
   }: {
     title: string;
     onPreview: () => void;
     onSave: () => void;
     onCancel: () => void;
     isSaving: boolean;
-    onLanguageChange: (lang: 'uk' | 'en') => void;
   }) => (
     <div data-testid="header">
       <span data-testid="title">{title}</span>
@@ -38,9 +36,6 @@ jest.mock('~/shared/components/header/Header', () => ({
         cancel
       </button>
       <span data-testid="saving-flag">{String(isSaving)}</span>
-      <button data-testid="lang-en" onClick={() => onLanguageChange('en')}>
-        set-en
-      </button>
     </div>
   )
 }));
@@ -160,12 +155,6 @@ describe('About Page', () => {
     }));
     render(<Page />);
     expect(screen.getByTestId('saving-flag')).toHaveTextContent('true');
-  });
-
-  it('should call setLocale when language button is clicked', () => {
-    render(<Page />);
-    fireEvent.click(screen.getByTestId('lang-en'));
-    expect(setLocaleMock).toHaveBeenCalledWith('en');
   });
 
   it('should call discardChanges with page slug when cancel button is clicked', () => {

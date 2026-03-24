@@ -13,10 +13,9 @@ type HeaderProps = {
   onSave: () => void;
   onCancel: () => void;
   isSaving: boolean;
-  onLanguageChange: (lang: 'uk' | 'en') => void;
 };
 
-export const Header = ({ title, onPreview, onSave, onCancel, isSaving, onLanguageChange }: HeaderProps) => {
+export const Header = ({ title, onPreview, onSave, onCancel, isSaving }: HeaderProps) => {
   return (
     <Box sx={styles.container}>
       <Box>
@@ -37,7 +36,7 @@ export const Header = ({ title, onPreview, onSave, onCancel, isSaving, onLanguag
         flexWrap="wrap"
       >
         <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
-          <LanguageSwitcher languageSwitcher={onLanguageChange} />
+          <LanguageSwitcher/>
           <Button variant="outlined" color="primary" onClick={onPreview} startIcon={<ExternalLink />}>
             Попередній перегляд
           </Button>
