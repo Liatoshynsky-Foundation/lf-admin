@@ -100,13 +100,28 @@ export const ImagePreviewBlock = ({
   };
 
   const handleApplyMediaModal = async (result: MediaModalResult) => {
-    if (result.selected.kind !== 'upload') return;
+    const { selected } = result;
 
-    const dataUrl = await readFileAsDataURL(result.selected.file);
-    setPreviewImage(dataUrl);
-    onChangeImage(result.selected.file);
+    try {
+      if (selected.kind === 'upload') {
+        const dataUrl = await readFileAsDataURL(selected.file);
+        setPreviewImage(dataUrl);
+        onChangeImage(selected.file);
+      } else if (selected.kind === 'gallery' || selected.kind === 'used') {
+        const response = await fetch(selected.src);
+        const blob = await response.blob();
+        const file = new File([blob], selected.fileName || 'image.jpg', {
+          type: blob.type
+        });
 
-    closeMediaModal();
+        setPreviewImage(selected.src);
+        onChangeImage(file);
+      }
+    } catch (error) {
+      console.error('Помилка при обробці зображення з MediaModal:', error);
+    } finally {
+      closeMediaModal();
+    }
   };
 
   const handleEditClick = editorMode === 'mediaModal' ? openEditCrop : openLegacyCropper;
