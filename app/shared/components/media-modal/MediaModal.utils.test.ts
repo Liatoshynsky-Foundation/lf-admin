@@ -1,74 +1,34 @@
 import { isImageUploadFile } from './MediaModal.utils';
 
+const createFile = (name: string, type: string) => new File(['x'], name, { type });
+
 describe('isImageUploadFile', () => {
   describe('when file.type is set', () => {
-    it('should return true for image/png', () => {
-      const file = new File(['x'], 'photo.png', { type: 'image/png' });
-      expect(isImageUploadFile(file)).toBe(true);
-    });
-
-    it('should return true for image/jpeg', () => {
-      const file = new File(['x'], 'photo.jpg', { type: 'image/jpeg' });
-      expect(isImageUploadFile(file)).toBe(true);
-    });
-
-    it('should return true for image/gif', () => {
-      const file = new File(['x'], 'anim.gif', { type: 'image/gif' });
-      expect(isImageUploadFile(file)).toBe(true);
-    });
-
-    it('should return false for application/pdf', () => {
-      const file = new File(['x'], 'doc.pdf', { type: 'application/pdf' });
-      expect(isImageUploadFile(file)).toBe(false);
-    });
-
-    it('should return false for audio/mpeg', () => {
-      const file = new File(['x'], 'song.mp3', { type: 'audio/mpeg' });
-      expect(isImageUploadFile(file)).toBe(false);
+    it.each<readonly [boolean, string, string]>([
+      [true, 'image/png', 'photo.png'],
+      [true, 'image/jpeg', 'photo.jpg'],
+      [true, 'image/gif', 'anim.gif'],
+      [false, 'application/pdf', 'doc.pdf'],
+      [false, 'audio/mpeg', 'song.mp3']
+    ])('should return %s for MIME %s (%s)', (expected, mimeType, name) => {
+      expect(isImageUploadFile(createFile(name, mimeType))).toBe(expected);
     });
   });
 
   describe('when file.type is empty (fallback to filename)', () => {
-    const noType = (name: string) => new File(['x'], name, { type: '' });
-
-    it('should return true for .png extension', () => {
-      expect(isImageUploadFile(noType('photo.png'))).toBe(true);
-    });
-
-    it('should return true for .jpg extension', () => {
-      expect(isImageUploadFile(noType('photo.jpg'))).toBe(true);
-    });
-
-    it('should return true for .jpeg extension', () => {
-      expect(isImageUploadFile(noType('photo.jpeg'))).toBe(true);
-    });
-
-    it('should return true for .gif extension', () => {
-      expect(isImageUploadFile(noType('anim.gif'))).toBe(true);
-    });
-
-    it('should return true for .webp extension', () => {
-      expect(isImageUploadFile(noType('photo.webp'))).toBe(true);
-    });
-
-    it('should return true for .svg extension', () => {
-      expect(isImageUploadFile(noType('icon.svg'))).toBe(true);
-    });
-
-    it('should return true for uppercase extension (.PNG)', () => {
-      expect(isImageUploadFile(noType('PHOTO.PNG'))).toBe(true);
-    });
-
-    it('should return false for .pdf extension', () => {
-      expect(isImageUploadFile(noType('doc.pdf'))).toBe(false);
-    });
-
-    it('should return false for .mp3 extension', () => {
-      expect(isImageUploadFile(noType('song.mp3'))).toBe(false);
-    });
-
-    it('should return false for unknown extension', () => {
-      expect(isImageUploadFile(noType('data.csv'))).toBe(false);
+    it.each<readonly [boolean, string]>([
+      [true, 'photo.png'],
+      [true, 'photo.jpg'],
+      [true, 'photo.jpeg'],
+      [true, 'anim.gif'],
+      [true, 'photo.webp'],
+      [true, 'icon.svg'],
+      [true, 'PHOTO.PNG'],
+      [false, 'doc.pdf'],
+      [false, 'song.mp3'],
+      [false, 'data.csv']
+    ])('should return %s for extension %s', (expected, name) => {
+      expect(isImageUploadFile(createFile(name, ''))).toBe(expected);
     });
   });
 });
