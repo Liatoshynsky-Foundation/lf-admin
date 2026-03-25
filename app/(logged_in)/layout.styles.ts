@@ -20,6 +20,10 @@ export const styles: Record<string, SxProps> = {
     flexDirection: 'column',
     padding: '20px',
     overflowY: 'auto',
-    overflowX: 'hidden'
+    overflowX: 'hidden',
+    scrollbarWidth: 'none',
+    '&::-webkit-scrollbar': {
+      display: 'none'
+    }
   }
 };

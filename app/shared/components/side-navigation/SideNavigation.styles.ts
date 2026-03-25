@@ -4,7 +4,6 @@ export const styles = {
     borderRight: '1px solid #DCDDE5',
     position: 'relative',
     width: '280px',
-    minWidth: '280px',
     padding: '32px 0',
     scrollbarWidth: 'none',
     height: '100vh',
