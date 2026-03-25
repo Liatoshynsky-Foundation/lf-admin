@@ -163,6 +163,7 @@ describe('UploadView', () => {
     fireEvent.change(input, { target: { files: [file] } });
 
     expect(onPick).toHaveBeenCalledTimes(1);
-    expect(onPick.mock.calls[0]?.[0]).toMatchObject({ fileName: 'doc.pdf', file });
+    expect(onPick.mock.calls[0]?.[0]).toMatchObject({ fileName: 'doc.pdf' });
+    expect(onPick.mock.calls[0]?.[0]?.file).toBe(file);
   });
 });
