@@ -116,9 +116,11 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
         aria-haspopup="dialog"
         aria-expanded={Boolean(anchorEl)}
       >
-        <Typography sx={filterSelectStyles.label(disabled)}>{label}</Typography>
+        {(selectedOptionsCount === 0 || hideCounterChip) && (
+          <Typography sx={filterSelectStyles.label(disabled)}>{label}</Typography>
+        )}
         <Box sx={filterSelectStyles.chipContainer}>
-          {!hideCounterChip && selectedOptionsCount > 0 && (
+          {selectedOptionsCount > 0 && !hideCounterChip && (
             <Chip
               label={selectedOptionsLabel}
               variant={variant}
@@ -156,7 +158,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
         maxHeight={300}
         menuList={
           <Box sx={{ padding: '0 8px' }}>
-            <Box sx={{ maxHeight: 220, overflowY: 'auto' }}>
+            <Box sx={{ maxHeight: 220, overflowY: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
               {options.map((option) => {
                 const isSelected = selectedValues.includes(option.value);
                 const optionDisabled = !isSelected && isMaxReached;

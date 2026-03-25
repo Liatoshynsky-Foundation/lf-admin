@@ -55,11 +55,15 @@ const SORT_OPTIONS: ReadonlyArray<{ value: ArchiveSortValue; label: string }> = 
 ];
 
 const FORMAT_FILTER_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
-  { value: 'pdf', label: 'pdf' },
-  { value: 'mp3', label: 'mp3' },
   { value: 'jpeg', label: 'jpeg' },
+  { value: 'jpg', label: 'jpg' },
   { value: 'png', label: 'png' },
-  { value: 'gif', label: 'gif' }
+  { value: 'webp', label: 'webp' },
+  { value: 'gif', label: 'gif' },
+  { value: 'svg+xml', label: 'svg+xml' },
+  { value: 'pdf', label: 'pdf' },
+  { value: 'mpeg', label: 'mpeg' },
+  { value: 'wav', label: 'wav' }
 ];
 
 const USAGE_FILTER_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
@@ -186,7 +190,11 @@ export default function ArchivePage() {
   const [search, setSearch] = useState('');
   const [formatFilters, setFormatFilters] = useState<string[]>([]);
   const [usageFilters, setUsageFilters] = useState<string[]>([]);
-  const [sortValue, setSortValue] = useState<ArchiveSortValue>('date_desc');
+  const [sortValue, setSortValue] = useState<ArchiveSortValue>(() => {
+    if (typeof window === 'undefined') return 'date_desc';
+    const saved = localStorage.getItem('archive_sort');
+    return (SORT_OPTIONS.some((o) => o.value === saved) ? saved : 'date_desc') as ArchiveSortValue;
+  });
   const [sortMenuAnchorEl, setSortMenuAnchorEl] = useState<HTMLElement | null>(null);
   const sortTriggerRef = useRef<HTMLDivElement | null>(null);
   const { data, loading, error } = useAllAssets();
@@ -265,11 +273,19 @@ export default function ArchivePage() {
 
   const handleSortFieldChange = (field: SortFieldValue) => {
     if (field === 'date') {
-      setSortValue((previous) => (previous.startsWith('date') ? previous : 'date_desc'));
+      setSortValue((previous) => {
+        const next = previous.startsWith('date') ? previous : 'date_desc';
+        localStorage.setItem('archive_sort', next);
+        return next;
+      });
       return;
     }
 
-    setSortValue((previous) => (previous.startsWith('name') ? previous : 'name_asc'));
+    setSortValue((previous) => {
+      const next = previous.startsWith('name') ? previous : 'name_asc';
+      localStorage.setItem('archive_sort', next);
+      return next;
+    });
   };
 
   const clearFilters = () => {
@@ -557,6 +573,7 @@ export default function ArchivePage() {
                           selected={sortValue === option.value}
                           onClick={() => {
                             setSortValue(option.value);
+                            localStorage.setItem('archive_sort', option.value);
                             handleCloseSortMenu();
                           }}
                           sx={filterSelectStyles.menuItem}
