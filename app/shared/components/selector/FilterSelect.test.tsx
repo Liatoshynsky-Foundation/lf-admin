@@ -46,7 +46,7 @@ describe('FilterSelect', () => {
 
     render(<FilterSelect label="Remove" options={mockOptions} defaultValues={['first']} onRemove={onRemove} />);
 
-    fireEvent.click(screen.getByText('Remove'));
+    fireEvent.click(screen.getByRole('button', { name: /chevron-down/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Очистити' }));
 
     expect(onRemove).toHaveBeenCalledWith('first', 'First', []);
