@@ -12,8 +12,7 @@ export const slideOut = keyframes`
 
 export const styles = {
   toastContainer: {
-    minWidth: '320px',
-    maxWidth: '320px',
+    width: '320px',
     minHeight: '56px',
     padding: '12px 16px',
     borderRadius: '12px',
@@ -50,7 +49,8 @@ export const styles = {
     fontSize: '18px',
     fontWeight: 500,
     fontFamily: 'Mulish',
-    lineHeight: '1.5'
+    lineHeight: '1.5',
+    wordBreak: 'break-word'
   },
   closeButton: {
     padding: '4px',
