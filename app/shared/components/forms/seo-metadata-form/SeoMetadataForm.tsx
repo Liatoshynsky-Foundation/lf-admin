@@ -24,6 +24,7 @@ export interface SeoMetadataFormProps {
   readonly allowIndexing: boolean;
   readonly onIndexingChange: (val: boolean) => void;
   readonly showCanonicalUrl?: boolean;
+  readonly showAlternativeText?: boolean;
   readonly labels?: {
     readonly metaTitle?: string;
     readonly metaDescription?: string;
@@ -45,6 +46,7 @@ export default function SeoMetadataForm({
   allowIndexing,
   onIndexingChange,
   showCanonicalUrl = false,
+  showAlternativeText = false,
   labels = {}
 }: SeoMetadataFormProps) {
   const [ogImagePreview, setOgImagePreview] = useState<string | null>(typeof ogImage === 'string' ? ogImage : null);
@@ -179,6 +181,7 @@ export default function SeoMetadataForm({
           onChangeImage={handleImageChange}
           title={labels.ogImage || 'Назва файлу зображення'}
           editorMode="mediaModal"
+          showAlternativeText={showAlternativeText}
         />
         <Typography variant="body2" sx={styles.ogImageHint}>
           {'Оптимальний розмір: 1200×630 px.'}

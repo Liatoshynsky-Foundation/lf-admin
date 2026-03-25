@@ -1,3 +1,4 @@
+
 export const styles = {
   container: {
     display: 'flex',
@@ -20,7 +21,8 @@ export const styles = {
     flexDirection: 'column',
     justifyContent: 'space-between',
     maxWidth: '276px',
-    height: '164px',
+    minHeight: '164px',
+    gap: '16px',
     width: '60%'
   },
   imageBlockButtonsStack: {
@@ -34,8 +36,6 @@ export const styles = {
     maxHeight: '164px',
     width: '100%',
     height: '100%',
-    borderRadius: '6px',
-    border: '1px solid rgba(178, 179, 190, 1)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center'
@@ -84,5 +84,27 @@ export const styles = {
     color: 'rgba(25, 13, 3, 1)',
     fontFamily: 'Mulish',
     letterSpacing: 0
+  },
+  altTextField: {
+    '& .MuiOutlinedInput-root': {
+      '& fieldset': {
+        borderRadius: '8px',
+        borderColor: 'rgba(173, 174, 186, 1)',
+        borderWidth: '1px',
+        minHeight: '24px',
+        padding: '12px 16px',
+        fontSize: '16px',
+        fontWeight: 500,
+        lineHeight: '150%',
+        fontFamily: 'Mulish'
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: 'rgba(173, 174, 186, 1)',
+        borderWidth: '1px'
+      }
+    },
+    '& .MuiInputLabel-root.Mui-focused': {
+      color: '#52545A'
+    }
   }
 };

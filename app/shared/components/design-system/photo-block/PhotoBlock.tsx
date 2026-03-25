@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Stack, type StackProps, Typography } from '@mui/material';
+import { Box, Stack, type StackProps, TextField, Typography } from '@mui/material';
 import { type ChangeEvent, useEffect, useRef, useState } from 'react';
 
 import Button from '../button/Button';
@@ -28,6 +28,7 @@ interface ImagePreviewBlockProps extends StackProps {
   buttonSpacing?: string;
   stackSpacing?: string;
   typographySpacing?: string;
+  showAlternativeText?: boolean;
 }
 
 export const ImagePreviewBlock = ({
@@ -39,8 +40,10 @@ export const ImagePreviewBlock = ({
   oval = false,
   onChangeImage,
   editorMode = 'legacy',
-  typographySpacing = '8px'
+  typographySpacing = '8px',
+  showAlternativeText = true
 }: ImagePreviewBlockProps) => {
+  const [altText, setAltText] = useState('');
   const [previewImage, setPreviewImage] = useState<string>(imageUrl);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -111,7 +114,16 @@ export const ImagePreviewBlock = ({
 
   return (
     <Box sx={styles.container}>
-      <Box sx={{ width: '196px', height: '100%' }}>
+      <Box
+        sx={{
+          width: '196px',
+          height: '100%',
+          borderRadius: '6px',
+          border: '1px solid rgba(178, 179, 190, 1)',
+          display: 'flex',
+          alignItems: 'center'
+        }}
+      >
         {previewImage ? (
           <Box
             component="img"
@@ -145,6 +157,20 @@ export const ImagePreviewBlock = ({
             </Typography>
           ) : null}
         </Stack>
+        {showAlternativeText && (
+          <Stack>
+            <TextField
+              label="Alt текст зображення"
+              value={altText}
+              onChange={(e) => setAltText(e.target.value)}
+              fullWidth
+              margin="normal"
+              sx={styles.altTextField}
+              multiline
+              maxRows={4}
+            />
+          </Stack>
+        )}
 
         <Stack sx={styles.imageBlockButtonsStack}>
           <Button
