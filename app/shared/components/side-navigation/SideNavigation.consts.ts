@@ -33,8 +33,7 @@ export const NAVIGATION_DATA = {
     {
       title: 'Файли',
       iconSrc: 'folder-open',
-      href: '/archive',
-      disabled: true
+      href: '/archive'
     }
   ],
   other: [

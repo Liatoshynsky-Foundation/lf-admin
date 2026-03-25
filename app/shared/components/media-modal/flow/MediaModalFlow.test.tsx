@@ -275,6 +275,55 @@ describe('MediaModalFlow', () => {
     expect(screen.getByTestId('UploadView')).toHaveAttribute('data-selected', 'none');
   });
 
+  it('should apply non-image upload without crop step', async () => {
+    const user = userEvent.setup();
+
+    const onClose = jest.fn<void, []>();
+    const onApply = jest.fn((_: MediaModalResult) => Promise.resolve());
+
+    const renderers = createRenderers();
+    renderers.upload = ({ selected, onPick }: Readonly<UploadRendererProps>) => (
+      <div data-testid="UploadView" data-selected={selected ? selected.fileName : 'none'}>
+        <button
+          type="button"
+          data-testid="UploadView-pickPdf"
+          onClick={() =>
+            onPick({
+              kind: 'upload',
+              id: 'upload-pdf-1',
+              fileName: 'doc.pdf',
+              file: new File(['x'], 'doc.pdf', { type: 'application/pdf' })
+            })
+          }
+        >
+          pick
+        </button>
+      </div>
+    );
+
+    renderOpen({ tab: 'UPLOAD' }, { onClose, onApply, renderers });
+
+    await user.click(screen.getByTestId('UploadView-pickPdf'));
+
+    expect(screen.queryByTestId('CropView')).not.toBeInTheDocument();
+    expect(screen.getByTestId('MediaModal-footer')).toBeInTheDocument();
+    expect(screen.getByTestId('MediaModal-cancelButton')).toBeInTheDocument();
+    expect(screen.getByTestId('MediaModal-applyButton')).toBeInTheDocument();
+
+    await user.click(screen.getByTestId('MediaModal-applyButton'));
+
+    expect(onApply).toHaveBeenCalledWith({
+      selected: expect.objectContaining({
+        kind: 'upload',
+        id: 'upload-pdf-1',
+        fileName: 'doc.pdf'
+      }),
+      crop: null
+    });
+
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+  });
+
   it('should enter crop after pick and show crop actions', async () => {
     const user = userEvent.setup();
 

@@ -14,6 +14,7 @@ import type {
   MediaModalTab,
   SelectedMedia
 } from '../MediaModal.types';
+import { isImageUploadFile } from '../MediaModal.utils';
 import { buildInitialState, GalleryFilters, isSameCrop, reducer, UsedFilters } from './MediaModalFlowState';
 import { useMediaModalApply } from './useMediaModalApply';
 import ArrowLeftIcon from '~/public/icons/arrowLeft.svg';
@@ -26,6 +27,14 @@ export type MediaModalFlowProps = {
   onApply: (result: MediaModalResult) => void | Promise<void>;
   initial?: MediaModalOpenState;
   renderers: MediaModalRenderers;
+};
+
+const isNonImageUploadSelection = (selected: SelectedMedia | null): boolean => {
+  if (!selected || selected.kind !== 'upload') {
+    return false;
+  }
+
+  return !isImageUploadFile(selected.file);
 };
 
 export function MediaModalFlow({ open, onClose, onApply, initial, renderers }: Readonly<MediaModalFlowProps>) {
@@ -72,6 +81,12 @@ export function MediaModalFlow({ open, onClose, onApply, initial, renderers }: R
     (selected: SelectedMedia) => {
       if (isApplying) return;
       clearApplyError();
+
+      if (isNonImageUploadSelection(selected)) {
+        dispatch({ type: 'PICK', selected });
+        return;
+      }
+
       dispatch({ type: 'PICK_AND_CROP', selected });
     },
     [clearApplyError, isApplying]
@@ -123,6 +138,8 @@ export function MediaModalFlow({ open, onClose, onApply, initial, renderers }: R
     void runApply(result);
   }, [isApplying, runApply, state.crop, state.selected]);
 
+  const canApplySelectedUpload = state.step === 'SELECT' && isNonImageUploadSelection(state.selected);
+
   const headerLeft = isCrop ? (
     <Box sx={styles.cropHeader} data-testid="MediaModal-cropHeader">
       <Box sx={styles.cropHeaderTitle}>Редагування зображення</Box>
@@ -158,7 +175,7 @@ export function MediaModalFlow({ open, onClose, onApply, initial, renderers }: R
     />
   ) : null;
 
-  const footerRight = isCrop ? (
+  const footerRight = isCrop || canApplySelectedUpload ? (
     <>
       <Button
         color="secondary"

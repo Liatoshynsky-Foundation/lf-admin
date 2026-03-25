@@ -5,6 +5,7 @@ import type {
   MediaModalTab,
   SelectedMedia
 } from '../MediaModal.types';
+import { isImageUploadFile } from '../MediaModal.utils';
 
 export type GalleryFilters = {
   search: string;
@@ -35,6 +36,7 @@ export type State = {
 export type Action =
   | { type: 'OPEN'; initial?: MediaModalOpenState }
   | { type: 'SET_TAB'; tab: MediaModalTab }
+  | { type: 'PICK'; selected: SelectedMedia }
   | { type: 'PICK_AND_CROP'; selected: SelectedMedia }
   | { type: 'BACK' }
   | { type: 'RESET_CROP' }
@@ -92,14 +94,36 @@ const toSelectState = (state: State, tab: MediaModalTab): State => ({
   resetSeq: 0
 });
 
-const toCropState = (state: State, selected: SelectedMedia): State => ({
+const toPickedSelectState = (state: State, selected: SelectedMedia): State => ({
   ...state,
   tab: tabFromSelected(selected) ?? state.tab,
   selected,
-  step: 'CROP',
+  step: 'SELECT',
   crop: null,
   baselineCrop: null,
   resetSeq: 0
+});
+
+const shouldCropSelected = (selected: SelectedMedia): boolean => {
+  if (selected.kind !== 'upload') {
+    return true;
+  }
+
+  return isImageUploadFile(selected.file);
+};
+
+const toCropState = (state: State, selected: SelectedMedia): State => ({
+  ...(shouldCropSelected(selected)
+    ? {
+      ...state,
+      tab: tabFromSelected(selected) ?? state.tab,
+      selected,
+      step: 'CROP' as const,
+      crop: null,
+      baselineCrop: null,
+      resetSeq: 0
+    }
+    : toPickedSelectState(state, selected))
 });
 
 const setBaselineCrop = (state: State, crop: CropResult | null): State => {
@@ -124,6 +148,8 @@ const handlers = {
   OPEN: (_state, action) => buildInitialState(action.initial),
 
   SET_TAB: (state, action) => toSelectState(state, action.tab),
+
+  PICK: (state, action) => toPickedSelectState(state, action.selected),
 
   PICK_AND_CROP: (state, action) => toCropState(state, action.selected),
 

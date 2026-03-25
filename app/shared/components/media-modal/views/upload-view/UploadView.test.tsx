@@ -146,4 +146,23 @@ describe('UploadView', () => {
     expect(onPick).toHaveBeenCalledTimes(1);
     expect(onPick.mock.calls[0]?.[0]).toMatchObject({ fileName: 'by-name.png' });
   });
+
+  it('should support custom accept and validation rules', () => {
+    const onPick = jest.fn();
+    renderView({
+      onPick,
+      accept: 'image/*,application/pdf,audio/*',
+      invalidFileError: 'Підтримуються зображення, PDF та аудіо',
+      isAllowedFile: (file) => file.type === 'application/pdf'
+    });
+
+    const input = screen.getByTestId('UploadView-fileInput');
+    expect(input).toHaveAttribute('accept', 'image/*,application/pdf,audio/*');
+
+    const file = createFile('doc.pdf', 'application/pdf');
+    fireEvent.change(input, { target: { files: [file] } });
+
+    expect(onPick).toHaveBeenCalledTimes(1);
+    expect(onPick.mock.calls[0]?.[0]).toMatchObject({ fileName: 'doc.pdf', file });
+  });
 });

@@ -2,9 +2,11 @@
 
 import FilterListRoundedIcon from '@mui/icons-material/FilterListRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import { Box, Button, InputAdornment, OutlinedInput, Typography } from '@mui/material';
+import { Box, Button, InputAdornment, OutlinedInput, Tab, Tabs, Typography } from '@mui/material';
+import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 
+import { readFileAsDataURL } from '~/lib/utils/readFileAsDataURL';
 import { ControlPanel } from '~/shared/components/control-panel';
 import { colors } from '~/shared/components/design-system/button/Button.styles';
 import {
@@ -18,9 +20,13 @@ import {
   type FilesCardsLayoutItem,
   type FilesCardsLayoutView
 } from '~/shared/components/files-cards-layout';
+import { MediaModal } from '~/shared/components/media-modal/MediaModal';
+import type { MediaModalRenderers } from '~/shared/components/media-modal/MediaModal.renderers';
+import type { MediaModalOpenState, MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
+import { UploadView } from '~/shared/components/media-modal/views/upload-view/UploadView';
 import { ViewToggle } from '~/shared/components/view-toggle';
 import { useAllAssets } from '~/shared/hooks/use-assets/useAssets';
-import { AssetType } from '~/types/graphql/generated/graphql';
+import { AssetType, useUploadBlobMutation } from '~/types/graphql/generated/graphql';
 
 type ArchiveFileItem = FilesCardsLayoutItem & {
   description?: string;
@@ -36,6 +42,44 @@ const fileTypeMap: Record<AssetType, FilesCardsLayoutItem['type']> = {
   [AssetType.Pdf]: 'pdf',
   [AssetType.Audio]: 'audio'
 };
+
+type FilesTabValue = 'all' | 'image' | 'pdf' | 'audio' | 'favorites';
+
+const FILE_TABS: ReadonlyArray<{ value: FilesTabValue; label: string }> = [
+  { value: 'all', label: 'Всі' },
+  { value: 'image', label: 'Зображення' },
+  { value: 'pdf', label: 'PDF' },
+  { value: 'audio', label: 'Аудіо' },
+  { value: 'favorites', label: 'Обрані' }
+];
+
+const ARCHIVE_UPLOAD_ACCEPT = 'image/jpeg,image/jpg,image/png,application/pdf,audio/mpeg,audio/wav';
+const ARCHIVE_UPLOAD_ERROR = 'Підтримуються зображення, PDF та аудіо';
+
+const isArchiveSupportedFile = (file: File): boolean => {
+  if (file.type) {
+    return (
+      file.type === 'image/jpeg' ||
+      file.type === 'image/jpg' ||
+      file.type === 'image/png' ||
+      file.type === 'application/pdf' ||
+      file.type === 'audio/mpeg' ||
+      file.type === 'audio/wav'
+    );
+  }
+
+  return /\.(jpe?g|png|pdf|mp3|wav)$/i.test(file.name);
+};
+
+const renderArchiveUpload: MediaModalRenderers['upload'] = (props) => (
+  <UploadView
+    {...props}
+    accept={ARCHIVE_UPLOAD_ACCEPT}
+    invalidFileError={ARCHIVE_UPLOAD_ERROR}
+    isAllowedFile={isArchiveSupportedFile}
+    ariaLabel="Upload file"
+  />
+);
 
 const formatDateAdded = (value: string) => {
   const date = new Date(value);
@@ -79,9 +123,52 @@ const usageToLink = (pageId?: string | null) => {
 
 export default function ArchivePage() {
   const [view, setView] = useState<FilesCardsLayoutView>('grid');
+  const [activeTab, setActiveTab] = useState<FilesTabValue>('all');
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [hasInitializedSelection, setHasInitializedSelection] = useState(false);
-  const { data, loading, error } = useAllAssets();
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [uploadModalInitial, setUploadModalInitial] = useState<MediaModalOpenState | undefined>(undefined);
+  const { data, loading, error, refetch } = useAllAssets();
+  const [uploadBlob] = useUploadBlobMutation();
+
+  const handleOpenUploadFlow = () => {
+    setUploadModalInitial({ tab: 'UPLOAD' });
+    setIsUploadModalOpen(true);
+  };
+
+  const handleCloseUploadFlow = () => {
+    setIsUploadModalOpen(false);
+    setUploadModalInitial(undefined);
+  };
+
+  const handleUploadApply = async (result: MediaModalResult) => {
+    if (result.selected.kind !== 'upload') {
+      return;
+    }
+
+    const file = result.selected.file;
+    const dataUrl = await readFileAsDataURL(file);
+    const base64 = dataUrl.split(',')[1];
+
+    if (!base64) {
+      throw new Error('Не вдалося прочитати файл для завантаження.');
+    }
+
+    const uploadResult = await uploadBlob({
+      variables: {
+        folderName: 'tmp',
+        blobName: file.name,
+        buffer: base64,
+        contentType: file.type || 'application/octet-stream'
+      }
+    });
+
+    if (!uploadResult.data?.uploadBlob.success) {
+      throw new Error('Не вдалося завантажити файл. Спробуйте ще раз.');
+    }
+
+    await refetch();
+  };
 
   const files = useMemo<ArchiveFileItem[]>(() => {
     return (data?.allAssets ?? []).map((asset) => ({
@@ -105,25 +192,40 @@ export default function ArchivePage() {
     }));
   }, [data?.allAssets]);
 
+  const filteredFiles = useMemo(() => {
+    if (activeTab === 'all') {
+      return files;
+    }
+
+    if (activeTab === 'favorites') {
+      return files.filter((file) => file.isStarred);
+    }
+
+    return files.filter((file) => file.type === activeTab);
+  }, [activeTab, files]);
+
   useEffect(() => {
-    if (!files.length) {
+    if (!filteredFiles.length) {
       setSelectedFileId(null);
       setHasInitializedSelection(false);
       return;
     }
 
     if (!hasInitializedSelection) {
-      setSelectedFileId(files[0].id);
+      setSelectedFileId(filteredFiles[0].id);
       setHasInitializedSelection(true);
       return;
     }
 
-    if (selectedFileId && !files.some((file) => file.id === selectedFileId)) {
-      setSelectedFileId(files[0].id);
+    if (selectedFileId && !filteredFiles.some((file) => file.id === selectedFileId)) {
+      setSelectedFileId(filteredFiles[0].id);
     }
-  }, [files, hasInitializedSelection, selectedFileId]);
+  }, [filteredFiles, hasInitializedSelection, selectedFileId]);
 
-  const selectedFile = useMemo(() => files.find((file) => file.id === selectedFileId) ?? null, [files, selectedFileId]);
+  const selectedFile = useMemo(
+    () => filteredFiles.find((file) => file.id === selectedFileId) ?? null,
+    [filteredFiles, selectedFileId]
+  );
 
   const sidebarFile: FileDetailsSidebarFile | null = selectedFile
     ? {
@@ -157,7 +259,64 @@ export default function ArchivePage() {
     >
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
         <Typography variant="h4">Файли</Typography>
+
+        <Button
+          variant="contained"
+          onClick={handleOpenUploadFlow}
+          endIcon={<Image src="/icons/cloud-upload.svg" alt="upload icon" width={20} height={20} />}
+          sx={{
+            borderRadius: '999px',
+            px: '24px',
+            py: '8px',
+            minHeight: '40px',
+            textTransform: 'none',
+            color: colors.black,
+            boxShadow: 'none',
+            bgcolor: colors.yellow[500],
+            '&:hover': {
+              bgcolor: colors.yellow[600],
+              boxShadow: 'none'
+            }
+          }}
+        >
+          Завантажити файл
+        </Button>
       </Box>
+
+      <Tabs
+        value={activeTab}
+        onChange={(_, value: FilesTabValue) => setActiveTab(value)}
+        variant="scrollable"
+        scrollButtons={false}
+        sx={{
+          minHeight: '40px',
+          borderBottom: `1px solid ${colors.blue[300]}`,
+          '& .MuiTabs-indicator': {
+            backgroundColor: colors.black,
+            height: '2px'
+          }
+        }}
+      >
+        {FILE_TABS.map((tab) => (
+          <Tab
+            key={tab.value}
+            value={tab.value}
+            label={tab.label}
+            disableRipple
+            sx={{
+              textTransform: 'none',
+              minHeight: '40px',
+              px: '16px',
+              fontSize: '16px',
+              color: colors.blue[800],
+              '&.Mui-selected': {
+                color: colors.black,
+                fontWeight: 600
+              }
+            }}
+          />
+        ))}
+      </Tabs>
 
       <ControlPanel
         leftContent={
@@ -218,7 +377,7 @@ export default function ArchivePage() {
         }
       />
 
-      <FilesCardsLayout view={view} items={files} onItemClick={(item) => setSelectedFileId(item.id)} />
+      <FilesCardsLayout view={view} items={filteredFiles} onItemClick={(item) => setSelectedFileId(item.id)} />
 
       {loading && <Typography>Завантаження файлів…</Typography>}
       {error && <Typography color="error">Не вдалося завантажити файли.</Typography>}
@@ -229,6 +388,14 @@ export default function ArchivePage() {
           onClose={() => setSelectedFileId(null)}
         />
       )}
+
+      <MediaModal
+        open={isUploadModalOpen}
+        initial={uploadModalInitial}
+        onClose={handleCloseUploadFlow}
+        onApply={handleUploadApply}
+        renderers={{ upload: renderArchiveUpload }}
+      />
     </Box>
   );
 }
