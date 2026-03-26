@@ -24,18 +24,53 @@ type SearchProps = Readonly<{
   options: SearchOption[];
 }>;
 
-export function Search({ search, setSearch, options }: SearchProps) {
-  const getOptionLabel = (option: SearchOption): string => option.title;
+const filterAndSortOptions = (list: SearchOption[], inputValue: string): SearchOption[] => {
+  const trimmedInput = inputValue.trim().toLowerCase();
+  if (!trimmedInput) {
+    return list;
+  }
 
+  const words = trimmedInput.split(/\s+/).filter(Boolean);
+
+  const filtered = list.filter((option) => {
+    const label = option.title.toLowerCase();
+    return words.every((word) => label.includes(word));
+  });
+
+  return filtered.sort((a, b) => {
+    const aLabel = a.title.toLowerCase();
+    const bLabel = b.title.toLowerCase();
+
+    if (aLabel === trimmedInput) return -1;
+    if (bLabel === trimmedInput) return 1;
+
+    if (aLabel.startsWith(trimmedInput) && !bLabel.startsWith(trimmedInput)) return -1;
+    if (!aLabel.startsWith(trimmedInput) && bLabel.startsWith(trimmedInput)) return 1;
+
+    const aIndex = aLabel.indexOf(trimmedInput);
+    const bIndex = bLabel.indexOf(trimmedInput);
+
+    if (aIndex !== bIndex) return aIndex - bIndex;
+
+    return aLabel.localeCompare(bLabel, ['uk', 'en'], {
+      sensitivity: 'base',
+      numeric: true
+    });
+  });
+};
+
+export function Search({ search, setSearch, options }: SearchProps) {
   const selectedOption = useMemo(
     () => options.find((option) => option.title.toLowerCase() === search.toLowerCase()) ?? null,
     [options, search]
   );
 
+  const filteredOptions = useMemo(() => filterAndSortOptions(options, search), [options, search]);
+
   return (
     <Autocomplete<SearchOption, false, false, true>
       freeSolo
-      options={options}
+      options={filteredOptions}
       value={selectedOption}
       inputValue={search}
       onInputChange={(_, value) => setSearch(value)}
@@ -49,40 +84,7 @@ export function Search({ search, setSearch, options }: SearchProps) {
       }}
       getOptionLabel={(option) => (typeof option === 'string' ? option : option.title)}
       isOptionEqualToValue={(left, right) => left.id === right.id}
-      filterOptions={(list, state) => {
-        const trimmedInput = state.inputValue.trim().toLowerCase();
-        if (!trimmedInput) {
-          return list;
-        }
-
-        const words = trimmedInput.split(/\s+/).filter(Boolean);
-
-        const filtered = list.filter((option) => {
-          const label = getOptionLabel(option).toLowerCase();
-          return words.every((word) => label.includes(word));
-        });
-
-        return filtered.sort((a, b) => {
-          const aLabel = getOptionLabel(a).toLowerCase();
-          const bLabel = getOptionLabel(b).toLowerCase();
-
-          if (aLabel === trimmedInput) return -1;
-          if (bLabel === trimmedInput) return 1;
-
-          if (aLabel.startsWith(trimmedInput) && !bLabel.startsWith(trimmedInput)) return -1;
-          if (!aLabel.startsWith(trimmedInput) && bLabel.startsWith(trimmedInput)) return 1;
-
-          const aIndex = aLabel.indexOf(trimmedInput);
-          const bIndex = bLabel.indexOf(trimmedInput);
-
-          if (aIndex !== bIndex) return aIndex - bIndex;
-
-          return aLabel.localeCompare(bLabel, ['uk', 'en'], {
-            sensitivity: 'base',
-            numeric: true
-          });
-        });
-      }}
+      filterOptions={(list) => list}
       renderOption={(props, option) => {
         const { key, ...rest } = props;
 
