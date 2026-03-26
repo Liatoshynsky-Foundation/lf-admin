@@ -6,7 +6,7 @@ import { Box, Button, InputAdornment, OutlinedInput, Tab, Tabs, Typography } fro
 import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 
-import { FILE_TABS, FILES_UPLOAD_ACCEPT, FILES_UPLOAD_ERROR, type FilesTabValue } from '~/app/constants/files';
+import { FILE_TABS, FILES_UPLOAD_ACCEPT, FILES_UPLOAD_ERROR, type FilesTabValue } from '~/constants/files';
 import { readFileAsDataURL } from '~/lib/utils/readFileAsDataURL';
 import { ControlPanel } from '~/shared/components/control-panel';
 import { colors } from '~/shared/components/design-system/button/Button.styles';
