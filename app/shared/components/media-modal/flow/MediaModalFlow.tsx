@@ -30,7 +30,7 @@ export type MediaModalFlowProps = {
 };
 
 const isNonImageUploadSelection = (selected: SelectedMedia | null): boolean => {
-  if (!selected || selected.kind !== 'upload') {
+  if (selected?.kind !== 'upload') {
     return false;
   }
 

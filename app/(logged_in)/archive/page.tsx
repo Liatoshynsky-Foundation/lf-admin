@@ -6,6 +6,7 @@ import { Box, Button, InputAdornment, OutlinedInput, Tab, Tabs, Typography } fro
 import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 
+import { FILE_TABS, FILES_UPLOAD_ACCEPT, FILES_UPLOAD_ERROR, type FilesTabValue } from '~/app/constants/files';
 import { readFileAsDataURL } from '~/lib/utils/readFileAsDataURL';
 import { ControlPanel } from '~/shared/components/control-panel';
 import { colors } from '~/shared/components/design-system/button/Button.styles';
@@ -43,19 +44,6 @@ const fileTypeMap: Record<AssetType, FilesCardsLayoutItem['type']> = {
   [AssetType.Audio]: 'audio'
 };
 
-type FilesTabValue = 'all' | 'image' | 'pdf' | 'audio' | 'favorites';
-
-const FILE_TABS: ReadonlyArray<{ value: FilesTabValue; label: string }> = [
-  { value: 'all', label: 'Всі' },
-  { value: 'image', label: 'Зображення' },
-  { value: 'pdf', label: 'PDF' },
-  { value: 'audio', label: 'Аудіо' },
-  { value: 'favorites', label: 'Обрані' }
-];
-
-const ARCHIVE_UPLOAD_ACCEPT = 'image/jpeg,image/jpg,image/png,application/pdf,audio/mpeg,audio/wav';
-const ARCHIVE_UPLOAD_ERROR = 'Підтримуються зображення, PDF та аудіо';
-
 const isArchiveSupportedFile = (file: File): boolean => {
   if (file.type) {
     return (
@@ -74,8 +62,8 @@ const isArchiveSupportedFile = (file: File): boolean => {
 const renderArchiveUpload: MediaModalRenderers['upload'] = (props) => (
   <UploadView
     {...props}
-    accept={ARCHIVE_UPLOAD_ACCEPT}
-    invalidFileError={ARCHIVE_UPLOAD_ERROR}
+    accept={FILES_UPLOAD_ACCEPT}
+    invalidFileError={FILES_UPLOAD_ERROR}
     isAllowedFile={isArchiveSupportedFile}
     ariaLabel="Upload file"
   />
