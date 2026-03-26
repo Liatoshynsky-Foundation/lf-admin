@@ -191,7 +191,7 @@ export default function ArchivePage() {
   const [formatFilters, setFormatFilters] = useState<string[]>([]);
   const [usageFilters, setUsageFilters] = useState<string[]>([]);
   const [sortValue, setSortValue] = useState<ArchiveSortValue>(() => {
-    if (typeof window === 'undefined') return 'date_desc';
+    if (typeof globalThis.window === 'undefined') return 'date_desc';
     const saved = localStorage.getItem('archive_sort');
     return (SORT_OPTIONS.some((o) => o.value === saved) ? saved : 'date_desc') as ArchiveSortValue;
   });
@@ -465,7 +465,7 @@ export default function ArchivePage() {
                   }}
                 >
                   <span>
-                    {activeFiltersCount !== 0 ? (
+                    {activeFiltersCount > 0 ? (
                       <IconButton
                         aria-label="clear-filters"
                         onClick={clearFilters}
