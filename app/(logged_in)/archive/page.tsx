@@ -12,6 +12,15 @@ import {
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import {
+  type ArchiveSortValue,
+  FORMAT_FILTER_OPTIONS,
+  SORT_FIELD_OPTIONS,
+  SORT_OPTIONS,
+  SORT_ORDER_OPTIONS,
+  type SortFieldValue,
+  USAGE_FILTER_OPTIONS
+} from './constants';
 import { ControlPanel } from '~/shared/components/control-panel';
 import { colors } from '~/shared/components/design-system/button/Button.styles';
 import DropdownMenu from '~/shared/components/dropdown-menu/DropdownMenu';
@@ -45,56 +54,6 @@ type ArchiveFileItem = FilesCardsLayoutItem & {
   usage: FileUsageLink[];
 };
 
-type ArchiveSortValue = 'date_desc' | 'date_asc' | 'name_asc' | 'name_desc';
-
-const SORT_OPTIONS: ReadonlyArray<{ value: ArchiveSortValue; label: string }> = [
-  { value: 'date_desc', label: 'Нові спочатку' },
-  { value: 'date_asc', label: 'Старі спочатку' },
-  { value: 'name_asc', label: 'А→Я' },
-  { value: 'name_desc', label: 'Я→А' }
-];
-
-const FORMAT_FILTER_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
-  { value: 'jpeg', label: 'jpeg' },
-  { value: 'jpg', label: 'jpg' },
-  { value: 'png', label: 'png' },
-  { value: 'webp', label: 'webp' },
-  { value: 'gif', label: 'gif' },
-  { value: 'svg+xml', label: 'svg+xml' },
-  { value: 'pdf', label: 'pdf' },
-  { value: 'mpeg', label: 'mpeg' },
-  { value: 'wav', label: 'wav' }
-];
-
-const USAGE_FILTER_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
-  { value: 'main_pages', label: 'Основні сторінки' },
-  { value: 'news_media', label: 'Новини / медіа' },
-  { value: 'events', label: 'Події' },
-  { value: 'creativity', label: 'Творчість' },
-  { value: 'opus', label: 'Опуси' },
-  { value: 'archive', label: 'Архів' },
-  { value: 'research', label: 'Наукові праці' },
-  { value: 'unused', label: 'Не використані' }
-];
-
-type SortFieldValue = 'date' | 'name';
-
-const SORT_FIELD_OPTIONS: ReadonlyArray<{ value: SortFieldValue; label: string }> = [
-  { value: 'date', label: 'Дата додавання' },
-  { value: 'name', label: 'Назва файлу' }
-];
-
-const SORT_ORDER_OPTIONS: Readonly<Record<SortFieldValue, ReadonlyArray<{ value: ArchiveSortValue; label: string }>>> = {
-  date: [
-    { value: 'date_desc', label: 'Новіші-старіші' },
-    { value: 'date_asc', label: 'Старіші-новіші' }
-  ],
-  name: [
-    { value: 'name_asc', label: 'А-Я' },
-    { value: 'name_desc', label: 'Я-А' }
-  ]
-};
-
 const fileTypeMap: Record<AssetType, FilesCardsLayoutItem['type']> = {
   [AssetType.Image]: 'image',
   [AssetType.Pdf]: 'pdf',
@@ -126,11 +85,17 @@ const formatFileSize = (sizeBytes: number) => {
 };
 
 const formatFromMimeType = (mimeType: string, filename: string) => {
-  const byMime = mimeType.split('/')[1]?.toUpperCase();
+  const byMime = mimeType.split('/')[1]?.toLowerCase();
+  if (byMime === 'jpeg') return 'jpg';
+  if (byMime === 'mpeg' && filename.toLowerCase().endsWith('.mp3')) return 'mp3';
   if (byMime) return byMime;
 
-  const ext = filename.split('.').pop()?.toUpperCase();
+  const ext = filename.split('.').pop()?.toLowerCase();
   return ext || undefined;
+};
+
+const normalizeFormatFilterValue = (value: string): string => {
+  return value === 'jpeg' ? 'jpg' : value;
 };
 
 const usageToLink = (pageId?: string | null) => {
@@ -231,7 +196,10 @@ export default function ArchivePage() {
 
     const filtered = allFiles.filter((file) => {
       const matchesSearch = !normalizedSearch || file.name.toLowerCase().includes(normalizedSearch);
-      const matchesFormat = !formatFilters.length || formatFilters.includes(file.format?.toLowerCase() ?? '');
+      const normalizedFileFormat = normalizeFormatFilterValue(file.format?.toLowerCase() ?? '');
+      const matchesFormat =
+        !formatFilters.length ||
+        formatFilters.some((formatFilter) => normalizeFormatFilterValue(formatFilter) === normalizedFileFormat);
       const fileUsageFilterValues = getUsageFilterValues(file.usage);
       const matchesUsage = !usageFilters.length || usageFilters.some((usageFilter) => fileUsageFilterValues.includes(usageFilter));
 
@@ -379,8 +347,8 @@ export default function ArchivePage() {
                 }
                 onClick={() => setIsFiltersOpen((previous) => !previous)}
                 sx={{
-                  borderRadius: '999px',
-                  px: '16px',
+                  borderRadius: '28px',
+                  px: '24px',
                   py: '8px',
                   minHeight: '40px',
                   textTransform: 'none',
