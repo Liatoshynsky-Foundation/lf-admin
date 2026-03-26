@@ -4,6 +4,7 @@ import { Box } from '@mui/material';
 import { styles } from './layout.styles';
 import BodyProvider from '~/providers/body-provider/BodyProvider';
 import { SideBarNavigation } from '~/shared/components/side-navigation/SideNavigation';
+import { Toaster } from '~/shared/components/toaster/Toaster';
 import DiscardModalProvider from '~/shared/providers/discard-modal-provider/DiscardModalProvider';
 import { Wrapper } from '~/types/common';
 
@@ -18,6 +19,7 @@ export default async function RootLayout({ children }: Wrapper) {
           <Box sx={styles.container}>{children}</Box>
         </Box>
       </DiscardModalProvider>
+      <Toaster />
     </BodyProvider>
   );
 }
