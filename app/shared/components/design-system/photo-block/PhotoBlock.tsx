@@ -2,6 +2,7 @@
 
 import { Box, Stack, type StackProps, Typography } from '@mui/material';
 import { type ChangeEvent, useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import Button from '../button/Button';
 import { CropperModal } from '../cropper-modal/CropperModal';
@@ -117,8 +118,9 @@ export const ImagePreviewBlock = ({
         setPreviewImage(selected.src);
         onChangeImage(file);
       }
-    } catch (error) {
-      console.error('Помилка при обробці зображення з MediaModal:', error);
+      toast.success('Зображення змінено');
+    } catch {
+      toast.error('Не вдалося змінити');
     } finally {
       closeMediaModal();
     }
