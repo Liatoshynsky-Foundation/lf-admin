@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React, { useState } from 'react';
 
 import { Search, type SearchOption } from './Search';
@@ -71,6 +71,48 @@ describe('Search', () => {
     fireEvent.click(option);
 
     expect(onSetSearch).toHaveBeenCalledWith('Test Song');
+  });
+
+  it('should match options by all input words', async () => {
+    const multiWordOptions: SearchOption[] = [
+      { id: '1', title: 'Test Song' },
+      { id: '2', title: 'Another Song' },
+      { id: '3', title: 'Test Melody' }
+    ];
+
+    const { input } = renderSearch(multiWordOptions);
+
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'song test' } });
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Song')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('Another Song')).not.toBeInTheDocument();
+    expect(screen.queryByText('Test Melody')).not.toBeInTheDocument();
+  });
+
+  it('should rank exact match first, then startsWith, then contains', async () => {
+    const rankedOptions: SearchOption[] = [
+      { id: '1', title: 'My test file' },
+      { id: '2', title: 'Test' },
+      { id: '3', title: 'Testing docs' }
+    ];
+
+    const { input } = renderSearch(rankedOptions);
+
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'test' } });
+
+    await waitFor(() => {
+      const listbox = screen.getByRole('listbox');
+      const optionTexts = within(listbox)
+        .getAllByRole('option')
+        .map((option) => option.textContent?.trim());
+
+      expect(optionTexts).toEqual(['Test', 'Testing docs', 'My test file']);
+    });
   });
 
   it('should clear search on clear button click', async () => {

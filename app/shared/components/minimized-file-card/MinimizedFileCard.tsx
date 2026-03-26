@@ -4,7 +4,7 @@ import { MouseEvent } from 'react';
 
 import { styles } from '~/components/minimized-file-card/MinimizedFileCard.styles';
 
-const ICON_SIZE = 20;
+const ICON_SIZE = 21;
 
 const FILE_TYPES = {
   img: 'img',
