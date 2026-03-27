@@ -59,6 +59,33 @@ export function CropView({ selected, resetSeq, onBaseline, onChange }: Readonly<
     }
   }, [selected.id]);
 
+  useEffect(() => {
+    if (resetSeq > 0 && imgRef.current) {
+      const { width, height, naturalWidth, naturalHeight } = imgRef.current;
+      const scaleX = width / naturalWidth;
+      const scaleY = height / naturalHeight;
+
+      const resetPixelCrop: PixelCrop = {
+        unit: 'px',
+        x: MOCK_SERVER_DATA.x * scaleX,
+        y: MOCK_SERVER_DATA.y * scaleY,
+        width: MOCK_SERVER_DATA.width * scaleX,
+        height: MOCK_SERVER_DATA.height * scaleY
+      };
+
+      setCrop(resetPixelCrop);
+
+      onBaseline({
+        rect: {
+          x: MOCK_SERVER_DATA.x,
+          y: MOCK_SERVER_DATA.y,
+          width: MOCK_SERVER_DATA.width,
+          height: MOCK_SERVER_DATA.height
+        }
+      });
+    }
+  }, [resetSeq, onBaseline]);
+
   const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const { width, height, naturalWidth, naturalHeight } = e.currentTarget;
     const scaleX = width / naturalWidth;
