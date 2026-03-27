@@ -3,7 +3,7 @@
 import 'react-image-crop/dist/ReactCrop.css';
 import { Box } from '@mui/material';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import ReactCrop, { Crop, PixelCrop } from 'react-image-crop';
+import ReactCrop, { PixelCrop } from 'react-image-crop';
 
 import type { CropRendererProps } from '../../MediaModal.renderers';
 
@@ -23,7 +23,7 @@ export function CropView({ selected, resetSeq, onBaseline, onChange }: Readonly<
   const uploadFile = selected.kind === 'upload' ? selected.file : null;
   const [uploadObjectUrl, setUploadObjectUrl] = useState('');
 
-  const [crop, setCrop] = useState<Crop>();
+  const [crop, setCrop] = useState<PixelCrop>();
   const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
@@ -64,7 +64,7 @@ export function CropView({ selected, resetSeq, onBaseline, onChange }: Readonly<
     const scaleX = width / naturalWidth;
     const scaleY = height / naturalHeight;
 
-    const initialPixelCrop: Crop = {
+    const initialPixelCrop: PixelCrop = {
       unit: 'px',
       x: MOCK_SERVER_DATA.x * scaleX,
       y: MOCK_SERVER_DATA.y * scaleY,
@@ -85,11 +85,7 @@ export function CropView({ selected, resetSeq, onBaseline, onChange }: Readonly<
   };
 
   const handleCropChange = (pixelCrop: PixelCrop) => {
-    setCrop((prevCrop) => ({
-      ...pixelCrop,
-      width: prevCrop?.width || pixelCrop.width,
-      height: prevCrop?.height || pixelCrop.height
-    }));
+    setCrop(pixelCrop);
   };
 
   const handleComplete = (c: PixelCrop) => {
@@ -117,10 +113,6 @@ export function CropView({ selected, resetSeq, onBaseline, onChange }: Readonly<
         flexDirection: 'column',
         gap: 2,
         overflow: 'hidden',
-
-        '& .ReactCrop__drag-handle': {
-          display: 'none !important'
-        },
 
         '& .ReactCrop__crop-selection': {
           animation: 'none !important',
