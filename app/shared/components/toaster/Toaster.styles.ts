@@ -12,7 +12,7 @@ export const slideOut = keyframes`
 
 export const styles = {
   toastContainer: {
-    width: '320px',
+    width: '375px',
     minHeight: '56px',
     padding: '12px 16px',
     borderRadius: '12px',
@@ -58,12 +58,12 @@ export const styles = {
   },
   success: {
     backgroundColor: '#E2F2DC',
-    borderColor: '#579A40',
+    borderColor: '#E2F2DC',
     color: '#2C4D20'
   },
   error: {
-    backgroundColor: '#fde7e7',
-    borderColor: '#ef4343',
+    backgroundColor: '#FAE2DC',
+    borderColor: '#FAE2DC',
     color: '#981b1b'
   }
 };

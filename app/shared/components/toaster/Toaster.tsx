@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, IconButton, Typography } from '@mui/material';
-import { CheckCircle2, X,XCircle } from 'lucide-react';
+import { CheckCircle2, CircleAlert,X } from 'lucide-react';
 import { resolveValue, toast, Toaster as HotToaster } from 'react-hot-toast';
 
 import { slideIn, slideOut, styles } from './Toaster.styles';
@@ -31,7 +31,7 @@ export const Toaster = () => {
               </Box>
             ) : (
               <Box sx={styles.icon} data-testid="error-icon">
-                <XCircle size={32} color="#696C7D" />
+                <CircleAlert size={32} color="#696C7D" />
               </Box>
             )}
 
