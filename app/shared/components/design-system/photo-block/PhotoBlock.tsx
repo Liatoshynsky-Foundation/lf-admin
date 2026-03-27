@@ -2,6 +2,7 @@
 
 import { Box, Stack, type StackProps, Typography } from '@mui/material';
 import { type ChangeEvent, useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import Button from '../button/Button';
 import { CropperModal } from '../cropper-modal/CropperModal';
@@ -73,6 +74,7 @@ export const ImagePreviewBlock = ({
     const result = await readFileAsDataURL(file);
     setPreviewImage(result);
     onChangeImage(file);
+    setSavedCrop(null);
   };
 
   const openEditCrop = () => {
@@ -102,15 +104,31 @@ export const ImagePreviewBlock = ({
   };
 
   const handleApplyMediaModal = async (result: MediaModalResult) => {
-    setSavedCrop(result.crop);
+    const { selected, crop } = result;
 
-    if (result.selected.kind === 'upload') {
-      const dataUrl = await readFileAsDataURL(result.selected.file);
-      setPreviewImage(dataUrl);
-      onChangeImage(result.selected.file);
+    try {
+      if (selected.kind === 'upload') {
+        const dataUrl = await readFileAsDataURL(selected.file);
+        setPreviewImage(dataUrl);
+        onChangeImage(selected.file);
+      } else if (selected.kind === 'gallery' || selected.kind === 'used') {
+        const response = await fetch(selected.src);
+        const blob = await response.blob();
+        const file = new File([blob], selected.fileName || 'image.jpg', {
+          type: blob.type
+        });
+
+        setPreviewImage(selected.src);
+        onChangeImage(file);
+      }
+
+      setSavedCrop(crop);
+      toast.success('Зображення змінено');
+    } catch {
+      toast.error('Не вдалося змінити');
+    } finally {
+      closeMediaModal();
     }
-
-    closeMediaModal();
   };
 
   const handleEditClick = editorMode === 'mediaModal' ? openEditCrop : openLegacyCropper;
@@ -141,12 +159,12 @@ export const ImagePreviewBlock = ({
                 ...styles.trimmedTypography
               }}
             >
-              Назва файлу {finalFileName}
+                Назва файлу {finalFileName}
             </Typography>
 
             {dimensions ? (
               <Typography variant="body2" color="text.secondary" sx={styles.imageSizeText}>
-                Розмір: {dimensions.width} × {dimensions.height}
+                    Розмір: {dimensions.width} × {dimensions.height}
               </Typography>
             ) : null}
           </Stack>
@@ -160,7 +178,7 @@ export const ImagePreviewBlock = ({
               onClick={handleEditClick}
               style={styles.editButton}
             >
-              Редагувати
+                Редагувати
             </Button>
 
             <Button
@@ -171,7 +189,7 @@ export const ImagePreviewBlock = ({
               onClick={handleChangeClick}
               sx={styles.changeButton}
             >
-              Змінити зображення
+                Змінити зображення
             </Button>
 
             {editorMode === 'legacy' && (
