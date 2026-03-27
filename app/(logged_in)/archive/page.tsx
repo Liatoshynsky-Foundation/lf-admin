@@ -343,13 +343,13 @@ export default function ArchivePage() {
               <Button
                 variant="outlined"
                 startIcon={
-                  <Image src="/icons/filter-dark.svg" alt="filters" width={24} height={24} />
+                  <Image src="/icons/filter-dark.svg" alt="filters" width={18} height={18} />
                 }
                 onClick={() => setIsFiltersOpen((previous) => !previous)}
                 sx={{
                   borderRadius: '28px',
                   px: '24px',
-                  py: '8px',
+                  py: '6px',
                   minHeight: '40px',
                   textTransform: 'none',
                   borderColor: colors.black,
@@ -452,7 +452,7 @@ export default function ArchivePage() {
                           }
                         }}
                       >
-                        <Image src="/icons/close.svg" alt="clear" width={20} height={20} />
+                        <Image src="/icons/close.svg" alt="clear" width={22} height={22} />
                       </IconButton>
                     ) : null}
                   </span>

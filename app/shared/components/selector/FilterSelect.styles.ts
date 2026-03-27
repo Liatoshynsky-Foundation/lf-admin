@@ -41,7 +41,8 @@ export const filterSelectStyles = {
       fontWeight: 600,
       fontSize: '16px',
       lineHeight: '150%',
-      letterSpacing: '0%'
+      letterSpacing: '0%',
+      minWidth: '136px',
     };
   },
 
@@ -57,20 +58,24 @@ export const filterSelectStyles = {
   chipContainer: {
     display: 'flex',
     alignItems: 'center',
-    gap: '4px'
+    gap: '4px',
+    width: '100%',
+    justifyContent: 'space-between'
   },
 
   selectedOptionsChip: (disabled: boolean): SxProps => ({
     backgroundColor: FilterSelectColors.chipBg,
     height: '28px',
-    borderRadius: '6px',
+    borderRadius: '20px',
     marginRight: '8px',
     maxWidth: '260px',
+    py: '8px',
+    px: '4px',
     '& .MuiChip-label': {
       color: disabled ? FilterSelectColors.textDisabled : FilterSelectColors.text,
       fontFamily: 'Mulish',
       fontWeight: 600,
-      fontSize: '14px',
+      fontSize: '16px',
       fontStyle: 'italic',
       lineHeight: '150%',
       letterSpacing: '0%',
@@ -83,7 +88,7 @@ export const filterSelectStyles = {
       color: disabled ? FilterSelectColors.textDisabled : FilterSelectColors.text,
       width: '16px',
       height: '16px',
-      margin: '0 4px 0 -2px'
+      margin: '2px 9px 0 -2px'
     },
     '& .MuiChip-deleteIcon:hover': {
       color: disabled ? FilterSelectColors.textDisabled : FilterSelectColors.text

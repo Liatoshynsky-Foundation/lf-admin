@@ -98,7 +98,8 @@ export function Search({ search, setSearch, options }: SearchProps) {
         width: '100%',
         maxWidth: '300px',
         '& .MuiAutocomplete-inputRoot[class*="MuiOutlinedInput-root"]': {
-          paddingRight: '12px !important'
+          paddingRight: '12px !important',
+          paddingLeft: '16px !important'
         }
       }}
       renderInput={(params) => (
@@ -108,7 +109,11 @@ export function Search({ search, setSearch, options }: SearchProps) {
           placeholder="Пошук"
           fullWidth
           startAdornment={
-            <InputAdornment position="start">
+            <InputAdornment position="start"
+              sx={{
+                mr: '2px',
+              }}
+            >
               <Image src="/icons/search-dark.svg" alt="search" width={24} height={24} />
             </InputAdornment>
           }

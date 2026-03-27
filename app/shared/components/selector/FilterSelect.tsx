@@ -126,7 +126,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
               variant={variant}
               disabled={disabled}
               onDelete={clearAll}
-              deleteIcon={<CloseIcon width={16} height={20} data-testid="clear-all-icon" />}
+              deleteIcon={<CloseIcon width={12} height={12} data-testid="clear-all-icon" />}
               size="small"
               sx={filterSelectStyles.selectedOptionsChip(disabled)}
             />
@@ -135,8 +135,8 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
             <Image
               src="/icons/chevron-down-dark.svg"
               alt="chevron-down"
-              width={12}
-              height={12}
+              width={14}
+              height={14}
               style={{ transform: 'translateY(1px)' }}
             />
           </Box>
