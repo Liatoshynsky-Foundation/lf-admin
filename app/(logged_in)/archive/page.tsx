@@ -240,26 +240,36 @@ export default function ArchivePage() {
         overflowX: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        gap: '24px',
+        gap: '20px',
+        paddingTop: '12px',
         pr: { xs: 0, md: sidebarFile ? `${SIDEBAR_WIDTH + 24}px` : 0 },
         transition: 'padding-right 0.2s ease'
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-        <Typography variant="h4">Файли</Typography>
+        <Typography variant="h4"
+          sx={{
+            fontSize: '32px',
+            lineHeight: '32px',
+            fontFamily: 'Mulish, sans-serif',
+          }}
+        >
+          Файли
+        </Typography>
 
         <Button
           variant="contained"
           onClick={handleOpenUploadFlow}
           endIcon={<Image src="/icons/cloud-upload.svg" alt="upload icon" width={20} height={20} />}
           sx={{
-            borderRadius: '999px',
+            borderRadius: '20px',
             px: '24px',
-            py: '8px',
+            py: '6px',
             minHeight: '40px',
             textTransform: 'none',
             color: colors.black,
             boxShadow: 'none',
+            fontSize: '16px',
             bgcolor: colors.yellow[500],
             '&:hover': {
               bgcolor: colors.yellow[600],
@@ -343,7 +353,7 @@ export default function ArchivePage() {
               startIcon={<FilterListRoundedIcon />}
               disabled
               sx={{
-                borderRadius: '999px',
+                borderRadius: '28px',
                 px: '24px',
                 py: '10px',
                 minHeight: '56px',

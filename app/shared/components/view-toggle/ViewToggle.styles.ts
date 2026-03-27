@@ -15,14 +15,14 @@ export const styles: ViewToggleStyles = {
     display: 'flex',
     alignItems: 'center',
     p: '4px',
-    borderRadius: '999px',
+    borderRadius: '23px',
     bgcolor: colors.blue[100],
     width: 'fit-content'
   },
-  button: {
-    width: 38,
-    height: 38,
-    borderRadius: '999px',
+  button: { 
+    width: 32,
+    height: 32,
+    borderRadius: '19px',
     p: '4px',
   },
   active: {
