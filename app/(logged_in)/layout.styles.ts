@@ -4,7 +4,7 @@ export const styles: Record<string, SxProps> = {
   body: {
     margin: '0 auto',
     display: 'flex',
-    gap: '20px',
+    gap: '12px',
     alignItems: 'flex-start',
     justifyContent: 'flex-start'
   },

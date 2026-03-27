@@ -241,8 +241,8 @@ export default function ArchivePage() {
         display: 'flex',
         flexDirection: 'column',
         gap: '20px',
-        paddingTop: '12px',
-        pr: { xs: 0, md: sidebarFile ? `${SIDEBAR_WIDTH + 24}px` : 0 },
+        pt: '15px',
+        pr: { xs: 0, md: sidebarFile ? `${SIDEBAR_WIDTH + 12}px` : 0 },
         transition: 'padding-right 0.2s ease'
       }}
     >
@@ -304,8 +304,11 @@ export default function ArchivePage() {
             sx={{
               textTransform: 'none',
               minHeight: '40px',
-              px: '16px',
+              px: '28px',
+              pt: '6px',
+              pb: '14px',
               fontSize: '16px',
+              minWidth: '80px',
               color: colors.blue[800],
               '&.Mui-selected': {
                 color: colors.black,

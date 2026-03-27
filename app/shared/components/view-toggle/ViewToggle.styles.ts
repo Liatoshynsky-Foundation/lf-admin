@@ -17,7 +17,8 @@ export const styles: ViewToggleStyles = {
     p: '4px',
     borderRadius: '23px',
     bgcolor: colors.blue[100],
-    width: 'fit-content'
+    width: 'fit-content',
+    gap: '4px'
   },
   button: { 
     width: 32,
