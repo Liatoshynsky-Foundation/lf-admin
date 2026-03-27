@@ -51,6 +51,8 @@ export const ImagePreviewBlock = ({
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [mediaInitial, setMediaInitial] = useState<MediaModalOpenState | undefined>(undefined);
 
+  const [savedCrop, setSavedCrop] = useState<MediaModalResult['crop']>(null);
+
   useEffect(() => {
     setPreviewImage(imageUrl);
   }, [imageUrl]);
@@ -83,7 +85,7 @@ export const ImagePreviewBlock = ({
         src: previewImage,
         locale: 'uk'
       },
-      crop: null
+      crop: savedCrop
     });
 
     setIsMediaModalOpen(true);
@@ -100,11 +102,13 @@ export const ImagePreviewBlock = ({
   };
 
   const handleApplyMediaModal = async (result: MediaModalResult) => {
-    if (result.selected.kind !== 'upload') return;
+    setSavedCrop(result.crop);
 
-    const dataUrl = await readFileAsDataURL(result.selected.file);
-    setPreviewImage(dataUrl);
-    onChangeImage(result.selected.file);
+    if (result.selected.kind === 'upload') {
+      const dataUrl = await readFileAsDataURL(result.selected.file);
+      setPreviewImage(dataUrl);
+      onChangeImage(result.selected.file);
+    }
 
     closeMediaModal();
   };

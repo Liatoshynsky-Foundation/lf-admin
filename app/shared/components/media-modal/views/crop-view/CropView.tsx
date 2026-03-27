@@ -19,7 +19,7 @@ const MOCK_SERVER_DATA = {
 
 const forCropAngle = Math.min(MOCK_SERVER_DATA.width, MOCK_SERVER_DATA.height) * 0.2;
 
-export function CropView({ selected, resetSeq, onBaseline, onChange }: Readonly<CropRendererProps>) {
+export function CropView({ selected, crop: stateCrop, resetSeq, onBaseline, onChange }: Readonly<CropRendererProps>) {
   const uploadFile = selected.kind === 'upload' ? selected.file : null;
   const [uploadObjectUrl, setUploadObjectUrl] = useState('');
 
@@ -91,23 +91,20 @@ export function CropView({ selected, resetSeq, onBaseline, onChange }: Readonly<
     const scaleX = width / naturalWidth;
     const scaleY = height / naturalHeight;
 
+    const sourceRect = stateCrop?.rect ?? MOCK_SERVER_DATA;
+
     const initialPixelCrop: PixelCrop = {
       unit: 'px',
-      x: MOCK_SERVER_DATA.x * scaleX,
-      y: MOCK_SERVER_DATA.y * scaleY,
-      width: MOCK_SERVER_DATA.width * scaleX,
-      height: MOCK_SERVER_DATA.height * scaleY
+      x: sourceRect.x * scaleX,
+      y: sourceRect.y * scaleY,
+      width: sourceRect.width * scaleX,
+      height: sourceRect.height * scaleY
     };
 
     setCrop(initialPixelCrop);
 
     onBaseline({
-      rect: {
-        x: MOCK_SERVER_DATA.x,
-        y: MOCK_SERVER_DATA.y,
-        width: MOCK_SERVER_DATA.width,
-        height: MOCK_SERVER_DATA.height
-      }
+      rect: sourceRect
     });
   };
 
