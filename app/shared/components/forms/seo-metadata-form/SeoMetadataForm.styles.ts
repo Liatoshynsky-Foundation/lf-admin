@@ -13,6 +13,7 @@ export const styles = {
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
+    gap: '28px',
     borderRadius: '20px',
     backgroundColor: colors.white,
     border: `1px solid ${colors.blue[300]}`,
@@ -105,5 +106,19 @@ export const styles = {
     '&.Mui-checked': {
       color: colors.yellow[500]
     }
+  },
+  dateTimePicker: {
+    borderRadius: '8px',
+    fontSize: '16px',
+    fontFamily: 'Mulish',
+    lineHeight: '150%',
+    color: '#696C7D'
+  },
+  datetimePickerLabel: {
+    fontSize: '14px',
+    color: colors.blue[800],
+    lineHeight: '12px',
+    fontFamily: 'Mulish',
+    fontWeight: 500
   }
 };

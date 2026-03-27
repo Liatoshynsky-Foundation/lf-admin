@@ -5,7 +5,7 @@ import SeoMetadataBlock from '~/shared/components/forms/seo-metadata-form/SeoMet
 export default function PublicationsPage() {
   return (
     <Box>
-      <SeoMetadataBlock showAlternativeText />
+      <SeoMetadataBlock showCanonicalUrl={true} showAlternativeText={true} />
     </Box>
   );
 }
