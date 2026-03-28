@@ -8,7 +8,7 @@ import { useCallback } from 'react';
 
 import { styles } from './DateTimePicker.style';
 
-interface DateTimePickerProps {
+export interface DateTimePickerProps {
   startDateTime?: string;
   endDateTime?: string;
   onChange: (start: string | undefined, end: string | undefined) => void;
@@ -32,46 +32,47 @@ export default function DateTimePicker({ startDateTime, endDateTime, onChange, l
     },
     [onChange, startDateTime]
   );
+
+  const renderPicker = (value?: string, label?: string, onChangeCb?: (val: dayjs.Dayjs | null) => void) => (
+    <DesktopDateTimePicker
+      label={label}
+      value={value ? dayjs(value) : null}
+      onChange={onChangeCb}
+      ampm={false}
+      slotProps={{
+        popper: {
+          sx: {
+            '& .MuiMultiSectionDigitalClockSection-item.Mui-selected': {
+              backgroundColor: '#FCBD28',
+              color: '#190D03'
+            }
+          }
+        },
+        day: {
+          sx: {
+            '&.MuiPickersDay-root.Mui-selected': {
+              backgroundColor: '#FCBD28',
+              color: '#190D03'
+            }
+          }
+        },
+        textField: {
+          sx: {
+            '& label': { sx: styles.datetimePickerLabel },
+            width: { sm: '200px', xl: '223px' }
+          },
+          InputProps: { sx: styles.dateTimePicker }
+        }
+      }}
+    />
+  );
+
   return (
     <Box sx={{ width: '100%', mt: 2 }}>
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="uk">
         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Box sx={{ width: '45%' }}>
-            <DesktopDateTimePicker
-              label={labels.startDateTime || 'Початок події'}
-              value={startDateTime ? dayjs(startDateTime) : null}
-              onChange={handleStartChange}
-              ampm={false}
-              slotProps={{
-                popper: {
-                  sx: {
-                    '& .MuiMultiSectionDigitalClockSection-item.Mui-selected': {
-                      backgroundColor: '#FCBD28',
-                      color: '#190D03'
-                    }
-                  }
-                },
-                day: {
-                  sx: {
-                    '&.MuiPickersDay-root.Mui-selected': {
-                      backgroundColor: '#FCBD28',
-                      color: '#190D03'
-                    }
-                  }
-                },
-                textField: {
-                  sx: {
-                    '& label': {
-                      sx: styles.datetimePickerLabel
-                    },
-                    width: { sm: '200px', xl: '223px' }
-                  },
-                  InputProps: {
-                    sx: styles.dateTimePicker
-                  }
-                }
-              }}
-            />{' '}
+            {renderPicker(startDateTime, labels.startDateTime || 'Початок події', handleStartChange)}
           </Box>
           <Box
             sx={{
@@ -85,41 +86,7 @@ export default function DateTimePicker({ startDateTime, endDateTime, onChange, l
             —
           </Box>
           <Box sx={{ width: '45%' }}>
-            <DesktopDateTimePicker
-              label={labels.endDateTime || 'Закінчення події'}
-              value={endDateTime ? dayjs(endDateTime) : null}
-              onChange={handleEndChange}
-              ampm={false}
-              slotProps={{
-                popper: {
-                  sx: {
-                    '& .MuiMultiSectionDigitalClockSection-item.Mui-selected': {
-                      backgroundColor: '#FCBD28',
-                      color: '#190D03'
-                    }
-                  }
-                },
-                day: {
-                  sx: {
-                    '&.MuiPickersDay-root.Mui-selected': {
-                      backgroundColor: '#FCBD28',
-                      color: '#190D03'
-                    }
-                  }
-                },
-                textField: {
-                  sx: {
-                    '& label': {
-                      sx: styles.datetimePickerLabel
-                    },
-                    width: { sm: '200px', xl: '223px' }
-                  },
-                  InputProps: {
-                    sx: styles.dateTimePicker
-                  }
-                }
-              }}
-            />
+            {renderPicker(endDateTime, labels.endDateTime || 'Закінчення події', handleEndChange)}
           </Box>
         </Box>
       </LocalizationProvider>

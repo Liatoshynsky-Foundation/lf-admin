@@ -62,34 +62,24 @@ export default function SeoMetadataForm({
   const [touched, setTouched] = useState<{ [K in keyof LocalizedMeta]?: boolean }>({});
   const [errors, setErrors] = useState<{ [K in keyof LocalizedMeta]?: string }>({});
 
-  const validateTitle = (val: string) => (val.trim() ? '' : 'Обовʼязкове поле');
-  const validateDescription = (val: string) => (val.trim() ? '' : 'Обовʼязкове поле');
-  const validateCanonicalUrl = (val: string) => {
-    if (!val) return '';
-    try {
-      new URL(val);
-      return '';
-    } catch {
-      return 'Некоректний URL';
-    }
-  };
-  const validateKeywords = (val: string) => {
-    if (!val) return '';
-    return val.split(',').some((word) => !word.trim())
-      ? 'Ключові слова мають бути через кому, без порожніх значень'
-      : '';
-  };
-
   const validateField = (field: keyof LocalizedMeta, val: string) => {
     switch (field) {
     case 'title':
-      return validateTitle(val);
     case 'description':
-      return validateDescription(val);
+      return val.trim() ? '' : 'Обовʼязкове поле';
     case 'canonicalUrl':
-      return validateCanonicalUrl(val);
+      if (!val) return '';
+      try {
+        new URL(val);
+        return '';
+      } catch {
+        return 'Некоректний URL';
+      }
     case 'keywords':
-      return validateKeywords(val);
+      if (!val) return '';
+      return val.split(',').some((word) => !word.trim())
+        ? 'Ключові слова мають бути через кому, без порожніх значень'
+        : '';
     default:
       return '';
     }
@@ -97,16 +87,12 @@ export default function SeoMetadataForm({
 
   const handleBlur = (field: keyof LocalizedMeta) => {
     setTouched((prev) => ({ ...prev, [field]: true }));
-    const err = validateField(field, value[field] || '');
-    setErrors((prev) => ({ ...prev, [field]: err }));
+    setErrors((prev) => ({ ...prev, [field]: validateField(field, value[field] || '') }));
   };
 
   const handleFieldChange = (field: keyof LocalizedMeta, val: string) => {
     onChange({ ...value, [field]: val });
-    if (touched[field]) {
-      const err = validateField(field, val);
-      setErrors((prev) => ({ ...prev, [field]: err }));
-    }
+    if (touched[field]) setErrors((prev) => ({ ...prev, [field]: validateField(field, val) }));
   };
 
   const handleImageChange = (file: File) => {
@@ -114,9 +100,55 @@ export default function SeoMetadataForm({
     onImageChange(file);
   };
 
-  const handleDateTimeChange = (start: string | undefined, end: string | undefined) => {
+  const handleDateTimeChange = (start?: string, end?: string) => {
     onChange({ ...value, startDateTime: start, endDateTime: end });
   };
+
+  const fields: Array<{
+    key: keyof LocalizedMeta;
+    label: string;
+    required?: boolean;
+    multiline?: boolean;
+    minRows?: number;
+  }> = [
+    { key: 'title', label: labels.metaTitle || 'Meta title', required: true },
+    {
+      key: 'description',
+      label: labels.metaDescription || 'Meta description',
+      required: true,
+      multiline: true,
+      minRows: 2
+    },
+    showCanonicalUrl ? { key: 'canonicalUrl', label: labels.canonicalUrl || 'Canonical URL' } : null,
+    { key: 'keywords', label: labels.metaKeywords || 'Meta keywords' }
+  ].filter(Boolean) as any;
+
+  const renderPhotoBlock = () => (
+    <Stack sx={styles.photoBlock}>
+      <Box sx={styles.photoBlockHeader}>
+        <Typography variant="subtitle1" sx={styles.photoBlockTitle}>
+          {'Зображення для соцмереж'}
+        </Typography>
+        <TooltipCustom title={'Зображення для соцмереж'}>
+          <InfoOutlinedIcon sx={{ borderWidth: '1px', width: '16px', height: '16px' }} />
+        </TooltipCustom>
+        <Divider sx={styles.photoBlockHeaderDivider} />
+      </Box>
+      <PhotoBlock
+        imageUrl={ogImagePreview || ''}
+        fileName={typeof ogImage === 'string' ? ogImage : ogImage?.name}
+        cropWidth={1200}
+        cropHeight={630}
+        onChangeImage={handleImageChange}
+        title={labels.ogImage || 'Назва файлу зображення'}
+        editorMode="mediaModal"
+        showAlternativeText={showAlternativeText}
+      />
+      <Typography variant="body2" sx={styles.ogImageHint}>
+        {'Оптимальний розмір: 1200×630 px.'}
+      </Typography>
+    </Stack>
+  );
 
   return (
     <Box sx={styles.container}>
@@ -124,92 +156,33 @@ export default function SeoMetadataForm({
         {labels.sectionTitle || `Мета дані сторінки | ${locale.toUpperCase()}`}
       </Typography>
       <Stack sx={styles.formFields}>
-        <TextField
-          label={labels.metaTitle || 'Meta title'}
-          value={value.title}
-          onChange={(e) => handleFieldChange('title', e.target.value)}
-          onBlur={() => handleBlur('title')}
-          error={Boolean(errors.title)}
-          helperText={errors.title && touched.title ? errors.title : ''}
-          fullWidth
-          margin="normal"
-          sx={styles.textField}
-          required
-        />
-        <TextField
-          label={labels.metaDescription || 'Meta description'}
-          value={value.description}
-          onChange={(e) => handleFieldChange('description', e.target.value)}
-          onBlur={() => handleBlur('description')}
-          error={Boolean(errors.description)}
-          helperText={errors.description && touched.description ? errors.description : ''}
-          fullWidth
-          margin="normal"
-          required
-          multiline
-          minRows={2}
-          sx={styles.textField}
-        />
-        {showCanonicalUrl && (
+        {fields.map(({ key, label, required, multiline, minRows }) => (
           <TextField
-            label={labels.canonicalUrl || 'Canonical URL'}
-            value={value.canonicalUrl || ''}
-            onChange={(e) => handleFieldChange('canonicalUrl', e.target.value)}
-            onBlur={() => handleBlur('canonicalUrl')}
-            error={Boolean(errors.canonicalUrl)}
-            helperText={errors.canonicalUrl && touched.canonicalUrl ? errors.canonicalUrl : ''}
+            key={key}
+            label={label}
+            value={value[key] || ''}
+            onChange={(e) => handleFieldChange(key, e.target.value)}
+            onBlur={() => handleBlur(key)}
+            error={Boolean(errors[key])}
+            helperText={errors[key] && touched[key] ? errors[key] : ''}
             fullWidth
             margin="normal"
             sx={styles.textField}
+            required={required}
+            multiline={multiline}
+            minRows={minRows}
           />
-        )}
-        <TextField
-          label={labels.metaKeywords || 'Meta keywords'}
-          value={value.keywords}
-          onChange={(e) => handleFieldChange('keywords', e.target.value)}
-          onBlur={() => handleBlur('keywords')}
-          error={Boolean(errors.keywords)}
-          helperText={errors.keywords && touched.keywords ? errors.keywords : ''}
-          fullWidth
-          margin="normal"
-          sx={styles.textField}
-        />
+        ))}
         {showDatatimePickers && (
           <DateTimePicker
             startDateTime={value.startDateTime}
             endDateTime={value.endDateTime}
             onChange={handleDateTimeChange}
-            labels={{
-              startDateTime: labels.startDateTime,
-              endDateTime: labels.endDateTime
-            }}
+            labels={{ startDateTime: labels.startDateTime, endDateTime: labels.endDateTime }}
           />
         )}
       </Stack>
-      <Stack sx={styles.photoBlock}>
-        <Box sx={styles.photoBlockHeader}>
-          <Typography variant="subtitle1" sx={styles.photoBlockTitle}>
-            {'Зображення для соцмереж'}
-          </Typography>
-          <TooltipCustom title={'Зображення для соцмереж'}>
-            <InfoOutlinedIcon sx={{ borderWidth: '1px', width: '16px', height: '16px' }} />
-          </TooltipCustom>
-          <Divider sx={styles.photoBlockHeaderDivider} />
-        </Box>
-        <PhotoBlock
-          imageUrl={ogImagePreview || ''}
-          fileName={typeof ogImage === 'string' ? ogImage : ogImage?.name}
-          cropWidth={1200}
-          cropHeight={630}
-          onChangeImage={handleImageChange}
-          title={labels.ogImage || 'Назва файлу зображення'}
-          editorMode="mediaModal"
-          showAlternativeText={showAlternativeText}
-        />
-        <Typography variant="body2" sx={styles.ogImageHint}>
-          {'Оптимальний розмір: 1200×630 px.'}
-        </Typography>
-      </Stack>
+      {renderPhotoBlock()}
       <Divider sx={styles.divider} />
       <Box sx={styles.indexingCheckboxContainer}>
         <FormControlLabel

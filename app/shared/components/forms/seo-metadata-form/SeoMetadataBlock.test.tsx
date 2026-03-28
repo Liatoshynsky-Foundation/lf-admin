@@ -1,83 +1,61 @@
-jest.mock('./SeoMetadataForm', () => ({
-  __esModule: true,
-  default: ({ locale, onChange, onImageChange, onIndexingChange }: any) => (
-    <div>
-      <span>{locale}</span>
-
-      <button onClick={() => onChange({ title: 'test', description: '', keywords: '' })}>change-{locale}</button>
-
-      <button onClick={() => onImageChange('file')}>image-{locale}</button>
-
-      <button onClick={() => onIndexingChange(false)}>indexing-{locale}</button>
-    </div>
-  )
-}));
-
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import SeoMetadataBlock from './SeoMetadataBlock';
 
+jest.mock('./SeoMetadataForm', () => ({
+  __esModule: true,
+  default: ({ locale, onChange, onImageChange, onIndexingChange }: any) => (
+    <div>
+      <span>{locale}</span>
+      <button onClick={() => onChange({ title: 'test', description: '', keywords: '' })}>change-{locale}</button>
+      <button onClick={() => onImageChange('file')}>image-{locale}</button>
+      <button onClick={() => onIndexingChange(false)}>indexing-{locale}</button>
+    </div>
+  )
+}));
+
 describe('SeoMetadataBlock', () => {
+  const locales = ['ua', 'en'];
+
+  const renderBlock = (props = {}) => render(<SeoMetadataBlock {...props} />);
+
+  const clickButton = (text: string) => fireEvent.click(screen.getByText(text));
+
   it('renders two forms (ua and en)', () => {
-    render(<SeoMetadataBlock />);
+    renderBlock();
 
-    expect(screen.getByText('ua')).toBeInTheDocument();
-    expect(screen.getByText('en')).toBeInTheDocument();
+    locales.forEach((locale) => {
+      expect(screen.getByText(locale)).toBeInTheDocument();
+    });
   });
 
-  it('updates ua meta state on change', () => {
-    render(<SeoMetadataBlock />);
+  test.each(locales)('updates %s meta state on change', (locale) => {
+    renderBlock();
 
-    fireEvent.click(screen.getByText('change-ua'));
-
-    expect(screen.getByText('ua')).toBeInTheDocument();
+    clickButton(`change-${locale}`);
+    expect(screen.getByText(locale)).toBeInTheDocument();
   });
 
-  it('updates en meta state on change', () => {
-    render(<SeoMetadataBlock />);
+  test.each(locales)('updates %s image state', (locale) => {
+    renderBlock();
 
-    fireEvent.click(screen.getByText('change-en'));
-
-    expect(screen.getByText('en')).toBeInTheDocument();
+    clickButton(`image-${locale}`);
+    expect(screen.getByText(locale)).toBeInTheDocument();
   });
 
-  it('updates ua image state', () => {
-    render(<SeoMetadataBlock />);
+  test.each(locales)('updates %s indexing state', (locale) => {
+    renderBlock();
 
-    fireEvent.click(screen.getByText('image-ua'));
-
-    expect(screen.getByText('ua')).toBeInTheDocument();
-  });
-
-  it('updates en image state', () => {
-    render(<SeoMetadataBlock />);
-
-    fireEvent.click(screen.getByText('image-en'));
-
-    expect(screen.getByText('en')).toBeInTheDocument();
-  });
-
-  it('updates ua indexing state', () => {
-    render(<SeoMetadataBlock />);
-
-    fireEvent.click(screen.getByText('indexing-ua'));
-
-    expect(screen.getByText('ua')).toBeInTheDocument();
-  });
-
-  it('updates en indexing state', () => {
-    render(<SeoMetadataBlock />);
-
-    fireEvent.click(screen.getByText('indexing-en'));
-
-    expect(screen.getByText('en')).toBeInTheDocument();
+    clickButton(`indexing-${locale}`);
+    expect(screen.getByText(locale)).toBeInTheDocument();
   });
 
   it('passes props to both forms', () => {
-    render(<SeoMetadataBlock showCanonicalUrl showAlternativeText />);
+    renderBlock({ showCanonicalUrl: true, showAlternativeText: true });
 
-    expect(screen.getByText('ua')).toBeInTheDocument();
-    expect(screen.getByText('en')).toBeInTheDocument();
+    locales.forEach((locale) => {
+      expect(screen.getByText(locale)).toBeInTheDocument();
+    });
   });
 });

@@ -1,92 +1,76 @@
+import '@testing-library/jest-dom';
+import { fireEvent, render, screen } from '@testing-library/react';
 import dayjs from 'dayjs';
+
+import type { DateTimePickerProps } from './DateTimePicker';
+import DateTimePicker from './DateTimePicker';
 
 jest.mock('@mui/x-date-pickers/DesktopDateTimePicker', () => ({
   DesktopDateTimePicker: ({ label, value, onChange }: any) => (
     <input
       aria-label={label}
-      value={value ? value.toString() : ''}
-      onChange={(e) => onChange(e.target.value ? dayjs(e.target.value) : null)}
+      value={value ? value.format('YYYY-MM-DDTHH:mm:ss') : ''}
+      onChange={(e) => {
+        const val = e.target.value;
+        onChange(val ? dayjs(val) : null);
+      }}
     />
   )
 }));
 
-import '@testing-library/jest-dom';
-import { fireEvent, render, screen } from '@testing-library/react';
-
-import DateTimePicker from './DateTimePicker';
-
 describe('DateTimePicker', () => {
-  it('renders start and end labels', () => {
-    render(
-      <DateTimePicker
-        onChange={jest.fn()}
-        labels={{
-          startDateTime: 'Start',
-          endDateTime: 'End'
-        }}
-      />
-    );
+  const renderPicker = (props: Partial<DateTimePickerProps> = {}) => {
+    render(<DateTimePicker onChange={jest.fn()} {...props} />);
+    const startInput = screen.getByLabelText(props.labels?.startDateTime || 'Початок події');
+    const endInput = screen.getByLabelText(props.labels?.endDateTime || 'Закінчення події');
+    return { startInput, endInput };
+  };
 
-    expect(screen.getByLabelText('Start')).toBeInTheDocument();
-    expect(screen.getByLabelText('End')).toBeInTheDocument();
+  const changeInput = (input: HTMLElement, value: string) => {
+    fireEvent.change(input, { target: { value } });
+  };
+
+  it('renders default and custom labels', () => {
+    let inputs = renderPicker();
+    expect(inputs.startInput).toBeInTheDocument();
+    expect(inputs.endInput).toBeInTheDocument();
+
+    inputs = renderPicker({ labels: { startDateTime: 'Start', endDateTime: 'End' } });
+    expect(inputs.startInput).toBeInTheDocument();
+    expect(inputs.endInput).toBeInTheDocument();
   });
 
-  it('renders default labels if not provided', () => {
-    render(<DateTimePicker onChange={jest.fn()} />);
-
-    expect(screen.getByLabelText('Початок події')).toBeInTheDocument();
-    expect(screen.getByLabelText('Закінчення події')).toBeInTheDocument();
-  });
-
-  it('calls onChange when end date changes', () => {
+  test.each([
+    ['start', '2025-01-01T10:00:00', undefined],
+    ['end', undefined, '2025-01-02T10:00:00']
+  ])('calls onChange when %s date changes', (type, start, end) => {
     const handleChange = jest.fn();
-    render(<DateTimePicker onChange={handleChange} />);
-    const input = screen.getByLabelText('Закінчення події');
-    fireEvent.change(input, {
-      target: { value: '2025-01-02T10:00:00' }
-    });
+    const { startInput, endInput } = renderPicker({ startDateTime: start, endDateTime: end, onChange: handleChange });
 
-    expect(handleChange).toHaveBeenCalledWith(undefined, expect.any(String));
+    const input = type === 'start' ? startInput : endInput;
+    changeInput(input, type === 'start' ? '2025-01-02T12:00:00' : '2025-01-03T12:00:00');
+
+    if (type === 'start') {
+      expect(handleChange).toHaveBeenCalledWith(expect.any(String), end);
+    } else {
+      expect(handleChange).toHaveBeenCalledWith(start, expect.any(String));
+    }
   });
 
-  it('calls onChange when start date changes', () => {
-    const handleChange = jest.fn();
-    render(<DateTimePicker onChange={handleChange} />);
-    const input = screen.getByLabelText('Початок події');
-    fireEvent.change(input, {
-      target: { value: '2025-01-01T10:00:00' }
-    });
-
-    expect(handleChange).toHaveBeenCalledWith(expect.any(String), undefined);
-  });
-
-  it('calls onChange with correct values for start date', () => {
+  it('calls onChange with correct values for start and end dates', () => {
     const handleChange = jest.fn();
     const start = dayjs('2025-01-01T10:00:00').toISOString();
-    render(<DateTimePicker startDateTime={start} onChange={handleChange} />);
-    const inputs = screen.getAllByRole('textbox');
-    fireEvent.change(inputs[0], {
-      target: { value: '02.01.2025 12:00' }
-    });
-
-    expect(handleChange).toHaveBeenCalled();
-  });
-
-  it('calls onChange with correct values for end date', () => {
-    const handleChange = jest.fn();
     const end = dayjs('2025-01-02T10:00:00').toISOString();
-    render(<DateTimePicker endDateTime={end} onChange={handleChange} />);
-    const inputs = screen.getAllByRole('textbox');
-    fireEvent.change(inputs[1], {
-      target: { value: '03.01.2025 12:00' }
-    });
+    const { startInput, endInput } = renderPicker({ startDateTime: start, endDateTime: end, onChange: handleChange });
 
-    expect(handleChange).toHaveBeenCalled();
+    changeInput(startInput, '02.01.2025 12:00');
+    changeInput(endInput, '03.01.2025 12:00');
+
+    expect(handleChange).toHaveBeenCalledTimes(2);
   });
 
   it('renders dash separator', () => {
-    render(<DateTimePicker onChange={jest.fn()} />);
-
+    renderPicker();
     expect(screen.getByText('—')).toBeInTheDocument();
   });
 });

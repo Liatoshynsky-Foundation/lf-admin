@@ -54,12 +54,13 @@ const renderWithState = () => {
 };
 
 describe('SeoMetadataForm', () => {
+  let user: ReturnType<typeof userEvent.setup>;
   beforeEach(() => {
     jest.clearAllMocks();
+    user = userEvent.setup();
   });
 
   it('calls onChange when typing', async () => {
-    const user = userEvent.setup();
     render(<SeoMetadataForm {...defaultProps} />);
     const input = screen.getByLabelText(/meta title/i);
     await user.type(input, 'Hello');
@@ -67,7 +68,6 @@ describe('SeoMetadataForm', () => {
   });
 
   it('shows error for empty title on blur', async () => {
-    const user = userEvent.setup();
     render(<SeoMetadataForm {...defaultProps} />);
     const input = screen.getByLabelText(/meta title/i);
     await user.click(input);
@@ -76,7 +76,6 @@ describe('SeoMetadataForm', () => {
   });
 
   it('calls onIndexingChange', async () => {
-    const user = userEvent.setup();
     render(<SeoMetadataForm {...defaultProps} allowIndexing={false} />);
     const checkbox = screen.getByRole('checkbox');
     await user.click(checkbox);
@@ -86,7 +85,6 @@ describe('SeoMetadataForm', () => {
   it('calls onImageChange', async () => {
     globalThis.URL.createObjectURL = jest.fn(() => 'mock-url');
 
-    const user = userEvent.setup();
     render(<SeoMetadataForm {...defaultProps} />);
 
     await user.click(screen.getByTestId('photo-block'));
@@ -94,7 +92,6 @@ describe('SeoMetadataForm', () => {
     expect(defaultProps.onImageChange).toHaveBeenCalled();
   });
   it('validates description field (empty and non-empty)', async () => {
-    const user = userEvent.setup();
     renderWithState();
     const input = screen.getByLabelText(/meta description/i);
     await user.click(input);
@@ -106,7 +103,6 @@ describe('SeoMetadataForm', () => {
   });
 
   it('validates canonicalUrl: empty, valid, invalid', async () => {
-    const user = userEvent.setup();
     renderWithState();
     const input = screen.getByLabelText(/canonical url/i);
 
@@ -125,7 +121,6 @@ describe('SeoMetadataForm', () => {
   });
 
   it('validates keywords: empty, valid, invalid', async () => {
-    const user = userEvent.setup();
     renderWithState();
     const input = screen.getByLabelText(/meta keywords/i);
 
