@@ -3,12 +3,9 @@
 import 'dayjs/locale/uk';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { Box, Checkbox, Divider, FormControlLabel, Stack, TextField, Typography } from '@mui/material';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DesktopDateTimePicker } from '@mui/x-date-pickers/DesktopDateTimePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import dayjs from 'dayjs';
 import { useState } from 'react';
 
+import DateTimePicker from './date-time-picker/DateTimePicker';
 import { styles } from './SeoMetadataForm.styles';
 import { ImagePreviewBlock as PhotoBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
 import TooltipCustom from '~/shared/components/design-system/tooltip/Tooltip';
@@ -18,6 +15,8 @@ export interface LocalizedMeta {
   description: string;
   keywords: string;
   canonicalUrl?: string;
+  startDateTime?: string;
+  endDateTime?: string;
 }
 
 export interface SeoMetadataFormProps {
@@ -30,6 +29,7 @@ export interface SeoMetadataFormProps {
   readonly onIndexingChange: (val: boolean) => void;
   readonly showCanonicalUrl?: boolean;
   readonly showAlternativeText?: boolean;
+  readonly showDatatimePickers?: boolean;
   readonly labels?: {
     readonly metaTitle?: string;
     readonly metaDescription?: string;
@@ -39,6 +39,8 @@ export interface SeoMetadataFormProps {
     readonly ogImageHint?: string;
     readonly allowIndexing?: string;
     readonly sectionTitle?: string;
+    readonly startDateTime?: string;
+    readonly endDateTime?: string;
   };
 }
 
@@ -56,9 +58,6 @@ export default function SeoMetadataForm({
   labels = {}
 }: SeoMetadataFormProps) {
   const [ogImagePreview, setOgImagePreview] = useState<string | null>(typeof ogImage === 'string' ? ogImage : null);
-
-  const [startDate, setStartDate] = useState<dayjs.Dayjs | null>(null);
-  const [endDate, setEndDate] = useState<dayjs.Dayjs | null>(null);
 
   const [touched, setTouched] = useState<{ [K in keyof LocalizedMeta]?: boolean }>({});
   const [errors, setErrors] = useState<{ [K in keyof LocalizedMeta]?: string }>({});
@@ -113,6 +112,10 @@ export default function SeoMetadataForm({
   const handleImageChange = (file: File) => {
     setOgImagePreview(URL.createObjectURL(file));
     onImageChange(file);
+  };
+
+  const handleDateTimeChange = (start: string | undefined, end: string | undefined) => {
+    onChange({ ...value, startDateTime: start, endDateTime: end });
   };
 
   return (
@@ -172,97 +175,15 @@ export default function SeoMetadataForm({
           sx={styles.textField}
         />
         {showDatatimePickers && (
-          <Box sx={{ width: '100%', mt: 2 }}>
-            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="uk">
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Box sx={{ width: '45%' }}>
-                  <DesktopDateTimePicker
-                    label="Початок події"
-                    value={startDate}
-                    onChange={(newValue) => setStartDate(newValue)}
-                    ampm={false}
-                    slotProps={{
-                      popper: {
-                        sx: {
-                          '& .MuiMultiSectionDigitalClockSection-item.Mui-selected': {
-                            backgroundColor: '#FCBD28',
-                            color: '#190D03'
-                          }
-                        }
-                      },
-                      day: {
-                        sx: {
-                          '&.MuiPickersDay-root.Mui-selected': {
-                            backgroundColor: '#FCBD28',
-                            color: '#190D03'
-                          }
-                        }
-                      },
-                      textField: {
-                        sx: {
-                          '& label': {
-                            sx: styles.datetimePickerLabel
-                          },
-                          width: { sm: '200px', xl: '223px' }
-                        },
-                        InputProps: {
-                          sx: styles.dateTimePicker
-                        }
-                      }
-                    }}
-                  />{' '}
-                </Box>
-                <Box
-                  sx={{
-                    textAlign: 'center',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '10%'
-                  }}
-                >
-                  —
-                </Box>
-                <Box sx={{ width: '45%' }}>
-                  <DesktopDateTimePicker
-                    label="Закінчення події"
-                    value={endDate}
-                    onChange={(newValue) => setEndDate(newValue)}
-                    ampm={false}
-                    slotProps={{
-                      popper: {
-                        sx: {
-                          '& .MuiMultiSectionDigitalClockSection-item.Mui-selected': {
-                            backgroundColor: '#FCBD28',
-                            color: '#190D03'
-                          }
-                        }
-                      },
-                      day: {
-                        sx: {
-                          '&.MuiPickersDay-root.Mui-selected': {
-                            backgroundColor: '#FCBD28',
-                            color: '#190D03'
-                          }
-                        }
-                      },
-                      textField: {
-                        sx: {
-                          '& label': {
-                            sx: styles.datetimePickerLabel
-                          },
-                          width: { sm: '200px', xl: '223px' }
-                        },
-                        InputProps: {
-                          sx: styles.dateTimePicker
-                        }
-                      }
-                    }}
-                  />
-                </Box>
-              </Box>
-            </LocalizationProvider>
-          </Box>
+          <DateTimePicker
+            startDateTime={value.startDateTime}
+            endDateTime={value.endDateTime}
+            onChange={handleDateTimeChange}
+            labels={{
+              startDateTime: labels.startDateTime,
+              endDateTime: labels.endDateTime
+            }}
+          />
         )}
       </Stack>
       <Stack sx={styles.photoBlock}>
