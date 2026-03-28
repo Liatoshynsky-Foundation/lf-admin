@@ -28,10 +28,21 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
 }));
 
 jest.mock('~/shared/components/control-panel', () => ({
-  ControlPanel: ({ leftContent, rightContent }: { leftContent: React.ReactNode; rightContent: React.ReactNode }) => (
+  ControlPanel: ({
+    leftContent,
+    rightContent,
+    bottomContent,
+    isBottomOpen
+  }: {
+    leftContent: React.ReactNode;
+    rightContent: React.ReactNode;
+    bottomContent?: React.ReactNode;
+    isBottomOpen?: boolean;
+  }) => (
     <div data-testid="control-panel">
       <div data-testid="left-content">{leftContent}</div>
       <div data-testid="right-content">{rightContent}</div>
+      {isBottomOpen ? <div data-testid="bottom-content">{bottomContent}</div> : null}
     </div>
   )
 }));
@@ -206,7 +217,8 @@ describe('Files page', () => {
     const setItemSpy = jest.spyOn(Storage.prototype, 'setItem');
     render(<Page />);
 
-    fireEvent.click(screen.getByText('Нові спочатку'));
+    fireEvent.click(screen.getByRole('button', { name: /Фільтри/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Нові спочатку/i }));
 
     const dropdown = screen.getByTestId('dropdown-menu');
     fireEvent.click(within(dropdown).getByTestId('sort-option-А-Я'));
