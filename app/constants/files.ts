@@ -1,5 +1,17 @@
+export type FilesTabValue = 'all' | 'image' | 'docs' | 'audio' | 'favorites';
 export type ArchiveSortValue = 'date_desc' | 'date_asc' | 'name_asc' | 'name_desc';
 export type SortFieldValue = 'date' | 'name';
+
+export const FILE_TABS: ReadonlyArray<{ value: FilesTabValue; label: string; disabled?: boolean }> = [
+  { value: 'all', label: 'Всі' },
+  { value: 'image', label: 'Зображення' },
+  { value: 'docs', label: 'DOCS', disabled: true },
+  { value: 'audio', label: 'Аудіо' },
+  { value: 'favorites', label: 'Обрані' }
+];
+
+export const FILES_UPLOAD_ACCEPT = 'image/jpeg,image/jpg,image/png,application/pdf,audio/mpeg,audio/wav';
+export const FILES_UPLOAD_ERROR = 'Підтримуються зображення, PDF та аудіо';
 
 export const SORT_OPTIONS: ReadonlyArray<{ value: ArchiveSortValue; label: string }> = [
   { value: 'date_desc', label: 'Нові спочатку' },
@@ -7,28 +19,6 @@ export const SORT_OPTIONS: ReadonlyArray<{ value: ArchiveSortValue; label: strin
   { value: 'name_asc', label: 'А→Я' },
   { value: 'name_desc', label: 'Я→А' }
 ];
-
-export const ALL_FORMAT_FILTER_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
-  { value: 'jpg', label: 'jpg' },
-  { value: 'png', label: 'png' },
-  { value: 'gif', label: 'gif' },
-  { value: 'webp', label: 'webp' },
-  { value: 'svg+xml', label: 'svg+xml' },
-  { value: 'pdf', label: 'pdf' },
-  { value: 'msword', label: 'doc' },
-  { value: 'vnd.openxmlformats-officedocument.wordprocessingml.document', label: 'docx' },
-  { value: 'vnd.ms-excel', label: 'xls' },
-  { value: 'vnd.openxmlformats-officedocument.spreadsheetml.sheet', label: 'xlsx' },
-  { value: 'mp4', label: 'mp4' },
-  { value: 'mpeg', label: 'mpeg' },
-  { value: 'wav', label: 'wav' },
-  { value: 'mp3', label: 'mp3' }
-];
-
-export const VISIBLE_FORMAT_FILTER_VALUES = new Set<string>(['jpg', 'png', 'gif', 'webp', 'svg+xml']);
-export const FORMAT_FILTER_OPTIONS = ALL_FORMAT_FILTER_OPTIONS.filter((option) =>
-  VISIBLE_FORMAT_FILTER_VALUES.has(option.value)
-);
 
 export const USAGE_FILTER_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
   { value: 'main_pages', label: 'Основні сторінки' },

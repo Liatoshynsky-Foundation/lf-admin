@@ -51,7 +51,7 @@ export const filterDropdownStyles = {
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
     minWidth: 0,
-    paddingRight: '3px',
+    pr: '3px',
     marginRight: '4px'
   } as SxProps<Theme>,
 

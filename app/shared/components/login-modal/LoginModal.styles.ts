@@ -40,7 +40,7 @@ export const styles = {
   },
   button: {
     width: '100%',
-    borderRadius: '999px',
+    borderRadius: '28px',
     backgroundColor: '#190D03',
     padding: '14px 32px',
     fontFamily: 'Mulish',
