@@ -121,7 +121,13 @@ export default function SeoMetadataForm({
     },
     showCanonicalUrl ? { key: 'canonicalUrl', label: labels.canonicalUrl || 'Canonical URL' } : null,
     { key: 'keywords', label: labels.metaKeywords || 'Meta keywords' }
-  ].filter(Boolean) as any;
+  ].filter(Boolean) as Array<{
+    key: keyof LocalizedMeta;
+    label: string;
+    required?: boolean;
+    multiline?: boolean;
+    minRows?: number;
+  }>;
 
   const renderPhotoBlock = () => (
     <Stack sx={styles.photoBlock}>
