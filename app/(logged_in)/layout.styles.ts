@@ -5,10 +5,8 @@ export const styles: Record<string, SxProps> = {
     margin: '0 auto',
     display: 'flex',
     gap: '20px',
-    alignItems: 'stretch',
+    alignItems: 'flex-start',
     justifyContent: 'flex-start',
-    height: '100vh',
-    overflow: 'hidden'
   },
   container: {
     display: 'flex',
@@ -19,11 +17,5 @@ export const styles: Record<string, SxProps> = {
     alignItems: 'center',
     flexDirection: 'column',
     padding: '20px',
-    overflowY: 'auto',
-    overflowX: 'hidden',
-    scrollbarWidth: 'none',
-    '&::-webkit-scrollbar': {
-      display: 'none'
-    }
   }
 };

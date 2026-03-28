@@ -2,12 +2,12 @@ export const styles = {
   drawerPaper: {
     backgroundColor: '#F1F2F7',
     borderRight: '1px solid #DCDDE5',
-    position: 'relative',
-    width: '280px',
+    position: 'fixed',
+    maxWidth: '280px',
     padding: '32px 0',
     scrollbarWidth: 'none',
     height: '100vh',
-    overflowY: 'auto',
+    overflowY: 'scroll',
     overflowX: 'visible',
     '&::-webkit-scrollbar': {
       display: 'none'
