@@ -14,16 +14,19 @@ import {
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { FORMAT_FILTER_OPTIONS } from '~/constants/file-formats';
 import {
   type ArchiveSortValue,
-  FORMAT_FILTER_OPTIONS,
+  FILE_TABS,
+  FILES_UPLOAD_ACCEPT,
+  FILES_UPLOAD_ERROR,
+  type FilesTabValue,
   SORT_FIELD_OPTIONS,
   SORT_OPTIONS,
   SORT_ORDER_OPTIONS,
   type SortFieldValue,
   USAGE_FILTER_OPTIONS
-} from './constants';
-import { FILE_TABS, FILES_UPLOAD_ACCEPT, FILES_UPLOAD_ERROR, type FilesTabValue } from '~/constants/files';
+} from '~/constants/files';
 import { readFileAsDataURL } from '~/lib/utils/readFileAsDataURL';
 import { ControlPanel } from '~/shared/components/control-panel';
 import { colors } from '~/shared/components/design-system/button/Button.styles';
@@ -128,8 +131,38 @@ const formatFromMimeType = (mimeType: string, filename: string) => {
 };
 
 const normalizeFormatFilterValue = (value: string): string => {
-  return value === 'jpeg' ? 'jpg' : value;
+  if (value === 'jpeg') {
+    return 'jpg';
+  }
+
+  if (value === 'svg+xml') {
+    return 'svg';
+  }
+
+  if (value === 'msword') {
+    return 'doc';
+  }
+
+  if (value === 'vnd.openxmlformats-officedocument.wordprocessingml.document') {
+    return 'docx';
+  }
+
+  if (value === 'vnd.ms-excel') {
+    return 'xls';
+  }
+
+  if (value === 'vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+    return 'xlsx';
+  }
+
+  if (value === 'x-zip-compressed') {
+    return 'zip';
+  }
+
+  return value;
 };
+
+const DOCS_FORMAT_VALUES = new Set<string>(['pdf', 'zip', 'doc', 'docx', 'xls', 'xlsx']);
 
 const usageToLink = (pageId?: string | null) => {
   if (!pageId) {
@@ -346,6 +379,10 @@ export default function ArchivePage() {
       return files.filter((file) => file.isStarred);
     }
 
+    if (activeTab === 'docs') {
+      return files.filter((file) => DOCS_FORMAT_VALUES.has(normalizeFormatFilterValue(file.format?.toLowerCase() ?? '')));
+    }
+
     return files.filter((file) => file.type === activeTab);
   }, [activeTab, files]);
 
@@ -407,8 +444,8 @@ export default function ArchivePage() {
         <Typography variant="h4"
           sx={{
             fontSize: '32px',
-            lineHeight: '32px',
-            fontFamily: 'Mulish, sans-serif',
+            lineHeight: 1.5,
+            fontFamily: 'Mulish, sans-serif'
           }}
         >
           Файли
@@ -421,12 +458,13 @@ export default function ArchivePage() {
           sx={{
             borderRadius: '20px',
             px: '24px',
-            py: '6px',
+            py: '8px',
             minHeight: '40px',
             textTransform: 'none',
             color: colors.black,
             boxShadow: 'none',
             fontSize: '16px',
+            lineHeight: 1.5,
             bgcolor: colors.yellow[500],
             '&:hover': {
               bgcolor: colors.yellow[600],
@@ -457,6 +495,7 @@ export default function ArchivePage() {
             key={tab.value}
             value={tab.value}
             label={tab.label}
+            disabled={tab.disabled}
             disableRipple
             sx={{
               textTransform: 'none',
@@ -465,6 +504,8 @@ export default function ArchivePage() {
               pt: '6px',
               pb: '14px',
               fontSize: '16px',
+              fontWeight: 600,
+              lineHeight: 1.5,
               minWidth: '80px',
               color: colors.blue[800],
               '&.Mui-selected': {
