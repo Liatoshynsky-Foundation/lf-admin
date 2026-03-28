@@ -13,6 +13,6 @@ export const styles: Record<string, SxProps> = {
     flexGrow: 1,
     alignItems: 'center',
     flexDirection: 'column',
-    padding: '20px'
+    padding: '20px 32px 20px 20px'
   }
 };
