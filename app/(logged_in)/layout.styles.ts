@@ -6,16 +6,13 @@ export const styles: Record<string, SxProps> = {
     display: 'flex',
     gap: '20px',
     alignItems: 'flex-start',
-    justifyContent: 'flex-start',
+    justifyContent: 'flex-start'
   },
   container: {
     display: 'flex',
     flexGrow: 1,
-    minWidth: 0,
-    minHeight: 0,
-    height: '100vh',
     alignItems: 'center',
     flexDirection: 'column',
-    padding: '20px',
+    padding: '20px'
   }
 };
