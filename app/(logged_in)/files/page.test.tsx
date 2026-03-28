@@ -221,6 +221,7 @@ describe('Files page', () => {
     fireEvent.click(screen.getByRole('button', { name: /Нові спочатку/i }));
 
     const dropdown = screen.getByTestId('dropdown-menu');
+    fireEvent.click(within(dropdown).getByTestId('sort-option-Назва файлу'));
     fireEvent.click(within(dropdown).getByTestId('sort-option-А-Я'));
 
     expect(setItemSpy).toHaveBeenCalledWith('files_sort', 'name_asc');
