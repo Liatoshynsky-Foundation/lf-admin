@@ -10,7 +10,7 @@ body {
 }
 
 html {
-  scrollbar-width: none;
+  scrollbar-gutter: stable;
   height: 100%;
 }
 
