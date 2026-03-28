@@ -59,8 +59,7 @@ export const SideBarNavigation = () => {
   const l = open || hasExpandedSubmenu ? 264 - 16 : 80 - 16;
 
   return (
-    <>
-      <Box sx={{ height: '100vh', width: w, flexShrink: 0 }} />
+    <Box sx={{ height: '100vh', width: w, flexShrink: 0 }}>
       <IconButton onClick={handleToggle} sx={{ ...styles.hideBtn, left: l }}>
         <Image src={`/icons/chevron${open ? 'Left' : 'Right'}.svg`} alt="close button" width={24} height={24} />
       </IconButton>
@@ -86,6 +85,6 @@ export const SideBarNavigation = () => {
           {renderItems(NAVIGATION_DATA.other)}
         </List>
       </Box>
-    </>
+    </Box>
   );
 };

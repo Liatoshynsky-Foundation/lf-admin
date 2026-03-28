@@ -1,7 +1,7 @@
 export const styles = {
   drawerPaper: {
     backgroundColor: '#F1F2F7',
-    border: 'border-right: 1px solid #DCDDE5',
+    borderRight: '1px solid #DCDDE5',
     position: 'fixed',
     maxWidth: '280px',
     padding: '32px 0',
