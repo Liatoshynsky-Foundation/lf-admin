@@ -181,12 +181,13 @@ describe('Files page', () => {
     fireEvent.change(screen.getByTestId('search'), { target: { value: 'piano' } });
 
     expect(screen.getByTestId('items-count')).toHaveTextContent('1');
-    expect(screen.getByText('piano-studio.jpg')).toBeInTheDocument();
+    expect(screen.getByTestId('item-asset-image')).toBeInTheDocument();
   });
 
   it('updates list when format filter is applied', () => {
     render(<Page />);
 
+    fireEvent.click(screen.getByRole('button', { name: /Фільтри/i }));
     fireEvent.click(screen.getByTestId('filter-select-Формат'));
 
     expect(screen.getByTestId('items-count')).toHaveTextContent('1');
@@ -205,8 +206,7 @@ describe('Files page', () => {
     const setItemSpy = jest.spyOn(Storage.prototype, 'setItem');
     render(<Page />);
 
-    const sortTrigger = screen.getByRole('button', { name: /Нові спочатку/i });
-    fireEvent.click(sortTrigger);
+    fireEvent.click(screen.getByText('Нові спочатку'));
 
     const dropdown = screen.getByTestId('dropdown-menu');
     fireEvent.click(within(dropdown).getByTestId('sort-option-А-Я'));
