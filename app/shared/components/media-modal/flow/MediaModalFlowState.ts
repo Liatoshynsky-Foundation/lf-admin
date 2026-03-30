@@ -129,16 +129,10 @@ const toCropState = (state: State, selected: SelectedMedia): State => ({
 const setBaselineCrop = (state: State, crop: CropResult | null): State => {
   if (state.step !== 'CROP') return state;
 
-  const userHasChanged = !isSameCrop(state.crop, state.baselineCrop);
-  if (userHasChanged) return state;
-
-  const noChange = isSameCrop(state.baselineCrop, crop) && isSameCrop(state.crop, crop);
-  if (noChange) return state;
-
   return {
     ...state,
     baselineCrop: crop,
-    crop
+    crop: state.crop ?? crop
   };
 };
 
