@@ -58,6 +58,7 @@
     "next": "^15.3.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-hot-toast": "^2.6.0",
     "react-image-crop": "^11.0.10",
     "slugify": "^1.6.6",
     "ts-migrate-mongoose": "^4.0.9",

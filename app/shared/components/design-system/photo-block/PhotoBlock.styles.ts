@@ -1,11 +1,7 @@
-
 export const styles = {
   container: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: '24px',
-    width: '100%'
+    width: '100%',
+    maxWidth: '496px'
   },
 
   sectionTitle: {
@@ -18,27 +14,26 @@ export const styles = {
 
   imageBlock: {
     display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    maxWidth: '276px',
-    minHeight: '164px',
-    gap: '16px',
-    width: '60%'
-  },
-  imageBlockButtonsStack: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 1
+    gap: 3,
+    alignItems: 'flex-start',
+    minWidth: '366px'
   },
 
   imagePreview: {
-    maxWidth: '196px',
-    maxHeight: '164px',
-    width: '100%',
-    height: '100%',
+    width: '196px',
+    height: '120px',
+    flexShrink: 0,
+    border: '1px solid #B2B3BE',
+    display: 'grid',
+    placeItems: 'center'
+  },
+
+  rightBlock: {
+    flex: '1',
+    minWidth: 0,
     display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
+    flexDirection: 'column',
+    gap: 2
   },
 
   imageOvalPreview: {
@@ -48,50 +43,62 @@ export const styles = {
     borderRadius: '60% 40% 60% 40% / 55% 45% 55% 45%'
   },
   fileNameText: {
-    color: 'rgba(71, 77, 90, 1)',
+    color: '#190D03',
     fontFamily: 'Mulish',
-    mb: '4px'
+    fontWeight: 500,
+    fontSize: '18px',
+    lineHeight: '150%'
   },
 
   imageSizeText: {
     fontFamily: 'Mulish',
-    fontSize: '16px',
     fontWeight: 500,
-    lineHeight: '140%',
     fontStyle: 'italic',
-    color: 'rgba(82, 84, 90, 1)'
-  },
-  noImageText: {
-    fontFamily: 'Mulish',
     fontSize: '16px',
-    fontWeight: 500,
     lineHeight: '140%',
-    color: 'rgba(82, 84, 90, 1)'
+    letterSpacing: '0%',
+    color: '#52545A'
   },
   editButton: {
-    width: '127px'
+    width: '127px',
+    height: '32px',
+    padding: '4px 12px',
+    border: '1px solid #190D03',
+    color: '#190D03',
+    fontFamily: 'Mulish',
+    fontWeight: 400,
+    fontStyle: 'Regular',
+    fontSize: '14px',
+    lineHeight: '140%',
+    letterSpacing: '0px'
   },
-  changeButton: { width: '190px' },
+  changeButton: {
+    width: '190px',
+    height: '32px',
+    padding: '4px 12px',
+    border: '1px solid #190D03',
+    color: '#190D03',
+    fontFamily: 'Mulish',
+    fontWeight: 400,
+    fontStyle: 'Regular',
+    fontSize: '14px',
+    lineHeight: '140%',
+    letterSpacing: '0px'
+  },
   trimmedTypography: {
     display: '-webkit-box',
-    WebkitLineClamp: 2,
+    WebkitLineClamp: 1,
     WebkitBoxOrient: 'vertical',
     overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    fontSize: '18px',
-    fontWeight: 500,
-    lineHeight: '150%',
-    color: 'rgba(25, 13, 3, 1)',
-    fontFamily: 'Mulish',
-    letterSpacing: 0
+    textOverflow: 'ellipsis'
   },
   altTextField: {
+    minHeight: '48px',
     '& .MuiOutlinedInput-root': {
       '& fieldset': {
         borderRadius: '8px',
         borderColor: 'rgba(173, 174, 186, 1)',
         borderWidth: '1px',
-        minHeight: '24px',
         padding: '12px 16px',
         fontSize: '16px',
         fontWeight: 500,

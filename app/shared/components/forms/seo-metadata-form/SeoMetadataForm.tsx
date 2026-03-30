@@ -17,6 +17,7 @@ export interface LocalizedMeta {
   canonicalUrl?: string;
   startDateTime?: string;
   endDateTime?: string;
+  altText?: { uk: string; en: string };
 }
 
 export interface SeoMetadataFormProps {
@@ -58,7 +59,7 @@ export default function SeoMetadataForm({
   labels = {}
 }: SeoMetadataFormProps) {
   const [ogImagePreview, setOgImagePreview] = useState<string | null>(typeof ogImage === 'string' ? ogImage : null);
-
+  const altKey = locale === 'ua' ? 'uk' : 'en';
   const [touched, setTouched] = useState<{ [K in keyof LocalizedMeta]?: boolean }>({});
   const [errors, setErrors] = useState<{ [K in keyof LocalizedMeta]?: string }>({});
 
@@ -87,7 +88,8 @@ export default function SeoMetadataForm({
 
   const handleBlur = (field: keyof LocalizedMeta) => {
     setTouched((prev) => ({ ...prev, [field]: true }));
-    setErrors((prev) => ({ ...prev, [field]: validateField(field, value[field] || '') }));
+    const fieldValue = typeof value[field] === 'string' ? value[field] : '';
+    setErrors((prev) => ({ ...prev, [field]: validateField(field, fieldValue) }));
   };
 
   const handleFieldChange = (field: keyof LocalizedMeta, val: string) => {
@@ -146,9 +148,21 @@ export default function SeoMetadataForm({
         cropWidth={1200}
         cropHeight={630}
         onChangeImage={handleImageChange}
-        title={labels.ogImage || 'Назва файлу зображення'}
         editorMode="mediaModal"
+        buttonSpacing="8px"
+        stackSpacing="0"
+        typographySpacing="4px"
         showAlternativeText={showAlternativeText}
+        altText={value.altText?.[altKey] ?? ''}
+        onChangeAltText={(alt) =>
+          onChange({
+            ...value,
+            altText: {
+              uk: altKey === 'uk' ? alt : (value.altText?.uk ?? ''),
+              en: altKey === 'en' ? alt : (value.altText?.en ?? '')
+            }
+          })
+        }
       />
       <Typography variant="body2" sx={styles.ogImageHint}>
         {'Оптимальний розмір: 1200×630 px.'}
@@ -202,7 +216,7 @@ export default function SeoMetadataForm({
           }
           sx={{
             '& .MuiFormControlLabel-label': {
-              color: '#555',
+              color: '#52545A',
               fontSize: '18px',
               fontWeight: 500,
               fontFamily: 'Mulish',

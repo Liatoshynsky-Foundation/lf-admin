@@ -9,12 +9,12 @@ import { useCallback } from 'react';
 import { styles } from './DateTimePicker.style';
 
 export interface DateTimePickerProps {
-  startDateTime?: string;
-  endDateTime?: string;
-  onChange: (start: string | undefined, end: string | undefined) => void;
-  labels?: {
-    startDateTime?: string;
-    endDateTime?: string;
+  readonly startDateTime?: string;
+  readonly endDateTime?: string;
+  readonly onChange: (start: string | undefined, end: string | undefined) => void;
+  readonly labels?: {
+    readonly startDateTime?: string;
+    readonly endDateTime?: string;
   };
 }
 
@@ -85,7 +85,7 @@ export default function DateTimePicker({ startDateTime, endDateTime, onChange, l
           >
             —
           </Box>
-          <Box sx={{ width: '45%' }}>
+          <Box sx={{ width: '45%', fullWidth: true }}>
             {renderPicker(endDateTime, labels.endDateTime || 'Закінчення події', handleEndChange)}
           </Box>
         </Box>

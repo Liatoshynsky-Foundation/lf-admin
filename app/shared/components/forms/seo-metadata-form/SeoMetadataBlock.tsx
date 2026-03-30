@@ -6,8 +6,8 @@ import type { LocalizedMeta } from './SeoMetadataForm';
 import SeoMetadataForm from './SeoMetadataForm';
 
 export interface SeoMetadataBlockProps {
-  showCanonicalUrl?: boolean;
-  showAlternativeText?: boolean;
+  readonly showCanonicalUrl?: boolean;
+  readonly showAlternativeText?: boolean;
   [key: string]: any;
 }
 

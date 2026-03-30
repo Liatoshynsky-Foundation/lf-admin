@@ -93,7 +93,7 @@ export const styles = {
     fontWeight: 500,
     lineHeight: '140%',
     fontStyle: 'italic',
-    color: colors.darkGrafite
+    color: colors.blue[800]
   },
   divider: {
     colors: colors.blue[200]

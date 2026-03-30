@@ -1,9 +1,36 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import toast from 'react-hot-toast';
 
 import { ImagePreviewBlock } from './PhotoBlock';
 import { readFileAsDataURL } from '~/lib/utils/readFileAsDataURL';
 import type { MediaModalOpenState, MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
+
+/* -------------------- MOCKS -------------------- */
+
+jest.mock('../cropper-modal/CropperModal', () => ({
+  CropperModal: ({ open, handleClose }: any) => {
+    if (!open) return null;
+
+    return (
+      <div data-testid="cropper-modal">
+        <button onClick={handleClose}>close</button>
+      </div>
+    );
+  }
+}));
+
+jest.mock('react-hot-toast', () => {
+  const success = jest.fn();
+  const error = jest.fn();
+
+  return {
+    __esModule: true,
+    default: { success, error },
+    success,
+    error
+  };
+});
 
 jest.mock('~/lib/utils/readFileAsDataURL', () => ({
   readFileAsDataURL: jest.fn()
@@ -17,6 +44,13 @@ jest.mock('~/public/icons/image.svg', () => ({
 jest.mock('~/public/icons/pencil.svg', () => ({
   __esModule: true,
   default: () => null
+}));
+
+jest.mock('~/shared/hooks/use-image-metadata/useImageMetadata', () => ({
+  useImageMetadata: () => ({
+    dimensions: null,
+    fileName: 'test.jpg'
+  })
 }));
 
 type MediaModalProps = {
@@ -35,12 +69,11 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
         <div data-testid="initial-step">{initial?.step ?? ''}</div>
         <div data-testid="initial-tab">{initial?.tab ?? ''}</div>
 
-        <button type="button" data-testid="close" onClick={onClose}>
+        <button data-testid="close" onClick={onClose}>
           close
         </button>
 
         <button
-          type="button"
           data-testid="apply-upload"
           onClick={() =>
             onApply({
@@ -56,8 +89,8 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
         >
           apply
         </button>
+
         <button
-          type="button"
           data-testid="apply-non-upload"
           onClick={() =>
             onApply({
@@ -79,48 +112,57 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
   }
 }));
 
+/* -------------------- TESTS -------------------- */
+
 describe('ImagePreviewBlock', () => {
   const onChangeImage = jest.fn();
 
+  const renderComponent = (props = {}) =>
+    render(
+      <ImagePreviewBlock
+        imageUrl="test.jpg"
+        cropWidth={300}
+        cropHeight={200}
+        onChangeImage={onChangeImage}
+        {...props}
+      />
+    );
+
   beforeEach(() => {
-    onChangeImage.mockClear();
-    (readFileAsDataURL as jest.Mock).mockReset();
+    jest.clearAllMocks();
+
     (readFileAsDataURL as jest.Mock).mockResolvedValue('data:image/png;base64,mockImage');
   });
 
-  it('should open cropper modal on "Редагувати" click (legacy)', async () => {
+  it('opens cropper modal on "Редагувати" click (legacy)', async () => {
     const user = userEvent.setup();
 
-    render(
-      <ImagePreviewBlock
-        imageUrl="https://example.com/test.jpg"
-        cropWidth={300}
-        cropHeight={200}
-        onChangeImage={onChangeImage}
-      />
-    );
+    renderComponent();
 
-    await user.click(screen.getByRole('button', { name: /Редагувати/i }));
+    await user.click(screen.getByRole('button', { name: /редагувати/i }));
+
+    expect(screen.getByTestId('cropper-modal')).toBeInTheDocument();
+  });
+
+  it('closes cropper modal', async () => {
+    const user = userEvent.setup();
+
+    renderComponent();
+
+    await user.click(screen.getByRole('button', { name: /редагувати/i }));
+    await user.click(screen.getByRole('button', { name: /close/i }));
 
     await waitFor(() => {
-      expect(screen.getByText('Редагування зображення')).toBeInTheDocument();
+      expect(screen.queryByTestId('cropper-modal')).not.toBeInTheDocument();
     });
   });
 
-  it('should open MediaModal with CROP step in mediaModal mode and close it', async () => {
+  it('opens media modal in CROP mode and closes it', async () => {
     const user = userEvent.setup();
 
-    render(
-      <ImagePreviewBlock
-        imageUrl="https://example.com/test.jpg"
-        cropWidth={300}
-        cropHeight={200}
-        onChangeImage={onChangeImage}
-        editorMode="mediaModal"
-      />
-    );
+    renderComponent({ editorMode: 'mediaModal' });
 
-    await user.click(screen.getByRole('button', { name: /Редагувати/i }));
+    await user.click(screen.getByRole('button', { name: /редагувати/i }));
 
     expect(screen.getByTestId('media-modal')).toBeInTheDocument();
     expect(screen.getByTestId('initial-step')).toHaveTextContent('CROP');
@@ -132,24 +174,22 @@ describe('ImagePreviewBlock', () => {
     });
   });
 
-  it('should apply upload result in mediaModal mode (updates preview + calls onChangeImage + closes)', async () => {
+  it('opens media modal in UPLOAD mode', async () => {
     const user = userEvent.setup();
 
-    render(
-      <ImagePreviewBlock
-        imageUrl="https://example.com/test.jpg"
-        cropWidth={300}
-        cropHeight={200}
-        onChangeImage={onChangeImage}
-        editorMode="mediaModal"
-      />
-    );
+    renderComponent({ editorMode: 'mediaModal' });
 
-    await user.click(screen.getByRole('button', { name: /Змінити зображення/i }));
+    await user.click(screen.getByRole('button', { name: /змінити/i }));
 
-    expect(screen.getByTestId('media-modal')).toBeInTheDocument();
     expect(screen.getByTestId('initial-tab')).toHaveTextContent('UPLOAD');
+  });
 
+  it('applies upload result (updates preview + calls onChangeImage)', async () => {
+    const user = userEvent.setup();
+
+    renderComponent({ editorMode: 'mediaModal' });
+
+    await user.click(screen.getByRole('button', { name: /змінити/i }));
     await user.click(screen.getByTestId('apply-upload'));
 
     await waitFor(() => {
@@ -160,25 +200,61 @@ describe('ImagePreviewBlock', () => {
         expect.stringContaining('data:image/png;base64,mockImage')
       );
     });
+  });
+
+  it('applies non-upload result (used/gallery)', async () => {
+    const user = userEvent.setup();
+
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        blob: () => Promise.resolve(new Blob(['img'], { type: 'image/jpeg' }))
+      } as Response)
+    );
+
+    renderComponent({ editorMode: 'mediaModal' });
+
+    await user.click(screen.getByRole('button', { name: /змінити/i }));
+    await user.click(screen.getByTestId('apply-non-upload'));
 
     await waitFor(() => {
-      expect(screen.queryByTestId('media-modal')).not.toBeInTheDocument();
+      expect(onChangeImage).toHaveBeenCalledTimes(1);
     });
   });
 
-  it('renders "No File" when no image', () => {
-    render(<ImagePreviewBlock imageUrl="" cropWidth={300} cropHeight={200} onChangeImage={onChangeImage} />);
+  it('shows success toast on successful apply', async () => {
+    const user = userEvent.setup();
 
-    expect(screen.getByText(/no file/i)).toBeInTheDocument();
+    renderComponent({ editorMode: 'mediaModal' });
+
+    await user.click(screen.getByRole('button', { name: /змінити/i }));
+    await user.click(screen.getByTestId('apply-upload'));
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith('Зображення змінено');
+    });
+  });
+
+  it('shows error toast if apply fails', async () => {
+    const user = userEvent.setup();
+
+    (readFileAsDataURL as jest.Mock).mockRejectedValueOnce(new Error('fail'));
+
+    renderComponent({ editorMode: 'mediaModal' });
+
+    await user.click(screen.getByRole('button', { name: /змінити/i }));
+    await user.click(screen.getByTestId('apply-upload'));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Не вдалося змінити');
+    });
   });
 
   it('handles file input change in legacy mode', async () => {
     const user = userEvent.setup();
 
-    render(<ImagePreviewBlock imageUrl="" cropWidth={300} cropHeight={200} onChangeImage={onChangeImage} />);
+    renderComponent({ imageUrl: '' });
 
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
-
     const file = new File(['img'], 'test.png', { type: 'image/png' });
 
     await user.upload(input, file);
@@ -189,30 +265,14 @@ describe('ImagePreviewBlock', () => {
     });
   });
 
-  it('does not apply if mediaModal result is not upload', async () => {
-    const user = userEvent.setup();
+  it('renders placeholder when no image', () => {
+    renderComponent({ imageUrl: '' });
 
-    render(
-      <ImagePreviewBlock
-        imageUrl="test"
-        cropWidth={300}
-        cropHeight={200}
-        onChangeImage={onChangeImage}
-        editorMode="mediaModal"
-      />
-    );
-
-    await user.click(screen.getByRole('button', { name: /змінити/i }));
-
-    await user.click(screen.getByTestId('apply-non-upload'));
-
-    expect(onChangeImage).not.toHaveBeenCalled();
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
 
   it('updates preview when imageUrl changes', async () => {
-    const { rerender } = render(
-      <ImagePreviewBlock imageUrl="old.jpg" cropWidth={300} cropHeight={200} onChangeImage={onChangeImage} />
-    );
+    const { rerender } = renderComponent({ imageUrl: 'old.jpg' });
 
     expect(screen.getByRole('img')).toHaveAttribute('src', 'old.jpg');
 
@@ -223,28 +283,21 @@ describe('ImagePreviewBlock', () => {
     });
   });
 
-  it('opens media modal in UPLOAD mode', async () => {
+  it('renders and updates alt text', async () => {
     const user = userEvent.setup();
+    const onChangeAltText = jest.fn();
 
-    render(
-      <ImagePreviewBlock
-        imageUrl="test.jpg"
-        cropWidth={300}
-        cropHeight={200}
-        onChangeImage={onChangeImage}
-        editorMode="mediaModal"
-      />
-    );
+    renderComponent({
+      showAlternativeText: true,
+      altText: 'old',
+      onChangeAltText
+    });
 
-    await user.click(screen.getByRole('button', { name: /змінити/i }));
+    const input = screen.getByLabelText(/alt текст/i);
 
-    expect(screen.getByTestId('initial-tab')).toHaveTextContent('UPLOAD');
+    await user.clear(input);
+    await user.type(input, 'new alt');
+
+    expect(onChangeAltText).toHaveBeenCalled();
   });
-
-  jest.mock('~/shared/hooks/use-image-metadata/useImageMetadata', () => ({
-    useImageMetadata: () => ({
-      dimensions: null,
-      fileName: 'test.jpg'
-    })
-  }));
 });

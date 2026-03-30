@@ -2,6 +2,7 @@
 
 import { Box, Stack, type StackProps, TextField, Typography } from '@mui/material';
 import { type ChangeEvent, useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import Button from '../button/Button';
 import { CropperModal } from '../cropper-modal/CropperModal';
@@ -21,6 +22,8 @@ interface ImagePreviewBlockProps extends StackProps {
   title?: string;
   cropWidth: number;
   cropHeight: number;
+  altText?: string;
+  onChangeAltText?: (value: string) => void;
   oval?: boolean;
   onChangeImage: (file: File) => void;
   editorMode?: EditorMode;
@@ -40,10 +43,14 @@ export const ImagePreviewBlock = ({
   oval = false,
   onChangeImage,
   editorMode = 'legacy',
+  direction = 'column',
+  buttonSpacing = '16px',
+  stackSpacing = '32px',
   typographySpacing = '8px',
-  showAlternativeText = true
+  showAlternativeText = false,
+  altText,
+  onChangeAltText
 }: ImagePreviewBlockProps) => {
-  const [altText, setAltText] = useState('');
   const [previewImage, setPreviewImage] = useState<string>(imageUrl);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -100,13 +107,29 @@ export const ImagePreviewBlock = ({
   };
 
   const handleApplyMediaModal = async (result: MediaModalResult) => {
-    if (result.selected.kind !== 'upload') return;
+    const { selected } = result;
 
-    const dataUrl = await readFileAsDataURL(result.selected.file);
-    setPreviewImage(dataUrl);
-    onChangeImage(result.selected.file);
+    try {
+      if (selected.kind === 'upload') {
+        const dataUrl = await readFileAsDataURL(selected.file);
+        setPreviewImage(dataUrl);
+        onChangeImage(selected.file);
+      } else if (selected.kind === 'gallery' || selected.kind === 'used') {
+        const response = await fetch(selected.src);
+        const blob = await response.blob();
+        const file = new File([blob], selected.fileName || 'image.jpg', {
+          type: blob.type
+        });
 
-    closeMediaModal();
+        setPreviewImage(selected.src);
+        onChangeImage(file);
+      }
+      toast.success('Зображення змінено');
+    } catch {
+      toast.error('Не вдалося змінити');
+    } finally {
+      closeMediaModal();
+    }
   };
 
   const handleEditClick = editorMode === 'mediaModal' ? openEditCrop : openLegacyCropper;
@@ -114,16 +137,13 @@ export const ImagePreviewBlock = ({
 
   return (
     <Box sx={styles.container}>
-      <Box
-        sx={{
-          width: '196px',
-          height: '100%',
-          borderRadius: '6px',
-          border: '1px solid rgba(178, 179, 190, 1)',
-          display: 'flex',
-          alignItems: 'center'
-        }}
-      >
+      {title ? (
+        <Typography variant="subtitle1" sx={styles.sectionTitle}>
+          {title}
+        </Typography>
+      ) : null}
+
+      <Box sx={styles.imageBlock}>
         {previewImage ? (
           <Box
             component="img"
@@ -145,6 +165,7 @@ export const ImagePreviewBlock = ({
                 }
               }}
             >
+              {' '}
               <path
                 d="M82.0004 88.8335V143.5M82.0004 88.8335L54.6671 116.167M82.0004 88.8335L109.334 116.167M27.3335 101.81C22.2566 96.6231 18.4267 90.3487 16.1339 83.4622C13.8411 76.5758 13.1455 69.2578 14.0998 62.0627C15.0541 54.8676 17.6333 47.984 21.642 41.9333C25.6507 35.8826 30.9838 30.8236 37.2373 27.1393C43.4908 23.455 50.5008 21.2421 57.7362 20.6683C64.9716 20.0945 72.2427 21.1747 78.9988 23.8272C85.7548 26.4797 91.8187 30.6349 96.731 35.9781C101.643 41.3213 105.275 47.7123 107.352 54.667H119.584C126.181 54.6663 132.604 56.7875 137.904 60.7175C143.203 64.6475 147.098 70.1777 149.013 76.4913C150.928 82.805 150.762 89.5671 148.539 95.7789C146.315 101.991 142.153 107.323 136.667 110.987"
                 strokeWidth="5"
@@ -155,66 +176,68 @@ export const ImagePreviewBlock = ({
             </Box>
           </Box>
         )}
-      </Box>
-      <Box sx={styles.imageBlock}>
-        <Stack spacing={typographySpacing}>
-          <Typography
-            variant="body1"
-            sx={{
-              ...styles.fileNameText,
-              ...styles.trimmedTypography
-            }}
-          >
-            Назва файлу {finalFileName}
-          </Typography>
 
-          {dimensions ? (
-            <Typography variant="body2" color="text.secondary" sx={styles.imageSizeText}>
-              Розмір: {dimensions.width} × {dimensions.height}
+        <Stack spacing={stackSpacing} sx={styles.rightBlock}>
+          <Stack spacing={typographySpacing}>
+            <Typography
+              variant="body1"
+              sx={{
+                ...styles.fileNameText,
+                ...styles.trimmedTypography
+              }}
+            >
+              Назва файлу {finalFileName}
             </Typography>
-          ) : null}
-        </Stack>
-        {showAlternativeText && (
-          <Stack>
+
+            {dimensions ? (
+              <Typography variant="body2" sx={styles.imageSizeText}>
+                Розмір: {dimensions.width} × {dimensions.height}
+              </Typography>
+            ) : null}
+          </Stack>
+
+          {showAlternativeText && (
             <TextField
               label="Alt текст зображення"
-              value={altText}
-              onChange={(e) => setAltText(e.target.value)}
+              value={altText || ''}
+              onChange={(e) => onChangeAltText && onChangeAltText(e.target.value)}
               fullWidth
-              margin="normal"
+              margin="none"
               sx={styles.altTextField}
               multiline
               maxRows={4}
             />
-          </Stack>
-        )}
-
-        <Stack sx={styles.imageBlockButtonsStack}>
-          <Button
-            startIcon={<PencilIcon style={{ marginRight: '-8px' }} />}
-            variant="outlined"
-            color="primary"
-            size="small"
-            onClick={handleEditClick}
-            style={styles.editButton}
-          >
-            Редагувати
-          </Button>
-
-          <Button
-            startIcon={<ImageIcon style={{ marginRight: '-8px' }} />}
-            variant="outlined"
-            color="primary"
-            size="small"
-            onClick={handleChangeClick}
-            sx={styles.changeButton}
-          >
-            Змінити зображення
-          </Button>
-
-          {editorMode === 'legacy' && (
-            <input ref={inputRef} type="file" accept="image/*" hidden onChange={handleFileChange} />
           )}
+
+          <Stack direction={direction} spacing={buttonSpacing}>
+            <Button
+              startIcon={
+                <PencilIcon style={{ marginRight: '-8px', width: '16px', height: '24px', marginTop: '6px' }} />
+              }
+              variant="outlined"
+              color="primary"
+              size="small"
+              onClick={handleEditClick}
+              sx={styles.editButton}
+            >
+              Редагувати
+            </Button>
+
+            <Button
+              startIcon={<ImageIcon style={{ marginRight: '-8px', width: '16px', height: '24px', marginTop: '6px' }} />}
+              variant="outlined"
+              color="primary"
+              size="small"
+              onClick={handleChangeClick}
+              sx={styles.changeButton}
+            >
+              Змінити зображення
+            </Button>
+
+            {editorMode === 'legacy' && (
+              <input ref={inputRef} type="file" accept="image/*" hidden onChange={handleFileChange} />
+            )}
+          </Stack>
         </Stack>
       </Box>
 
