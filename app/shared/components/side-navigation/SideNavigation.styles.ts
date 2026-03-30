@@ -3,12 +3,23 @@ export const styles = {
     backgroundColor: '#F1F2F7',
     borderRight: '1px solid #DCDDE5',
     position: 'fixed',
+    display: 'flex',
+    flexDirection: 'column',
     maxWidth: '280px',
     padding: '32px 0',
-    scrollbarWidth: 'none',
     height: '100vh',
+    overflow: 'visible',
+    boxSizing: 'border-box',
+    '&::-webkit-scrollbar': {
+      display: 'none'
+    }
+  },
+  navigationContent: {
+    flex: 1,
+    minHeight: 0,
     overflowY: 'scroll',
     overflowX: 'visible',
+    scrollbarWidth: 'none',
     '&::-webkit-scrollbar': {
       display: 'none'
     }
@@ -24,7 +35,7 @@ export const styles = {
     height: 32,
     backgroundColor: '#F1F2F7',
     position: 'absolute',
-    top: '60px',
+    top: '90px',
     border: '1px solid #DCDDE5',
     transform: 'translateY(-50%)',
     zIndex: 1,
@@ -51,6 +62,7 @@ export const styles = {
     gap: '8px',
     flexDirection: 'column',
     borderRadius: '8px',
-    padding: 0
+    padding: 0,
+    cursor: 'pointer'
   }
 };
