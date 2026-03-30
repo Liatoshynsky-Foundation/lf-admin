@@ -205,7 +205,7 @@ describe('ImagePreviewBlock', () => {
   it('applies non-upload result (used/gallery)', async () => {
     const user = userEvent.setup();
 
-    global.fetch = jest.fn(() =>
+    globalThis.fetch = jest.fn(() =>
       Promise.resolve({
         blob: () => Promise.resolve(new Blob(['img'], { type: 'image/jpeg' }))
       } as Response)

@@ -200,7 +200,7 @@ export const ImagePreviewBlock = ({
             <TextField
               label="Alt текст зображення"
               value={altText || ''}
-              onChange={(e) => onChangeAltText && onChangeAltText(e.target.value)}
+              onChange={(e) => onChangeAltText?.(e.target.value)}
               fullWidth
               margin="none"
               sx={styles.altTextField}
