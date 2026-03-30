@@ -18,10 +18,14 @@ export type SearchOption = {
   title: string;
 };
 
-type SearchProps = Readonly<{
+export type SearchProps = Readonly<{
   search: string;
   setSearch: (value: string) => void;
   options: SearchOption[];
+  placeholder?: string;
+  maxWidth?: number | string;
+  noOptionsText?: string;
+  clearButtonAriaLabel?: string;
 }>;
 
 const filterAndSortOptions = (list: SearchOption[], inputValue: string): SearchOption[] => {
@@ -59,7 +63,15 @@ const filterAndSortOptions = (list: SearchOption[], inputValue: string): SearchO
   });
 };
 
-export function Search({ search, setSearch, options }: SearchProps) {
+export function Search({
+  search,
+  setSearch,
+  options,
+  placeholder = 'Пошук',
+  maxWidth = '300px',
+  noOptionsText = 'Нічого не знайдено',
+  clearButtonAriaLabel = 'Очистити пошук'
+}: SearchProps) {
   const selectedOption = useMemo(
     () => options.find((option) => option.title.toLowerCase() === search.toLowerCase()) ?? null,
     [options, search]
@@ -71,6 +83,7 @@ export function Search({ search, setSearch, options }: SearchProps) {
     <Autocomplete<SearchOption, false, false, true>
       freeSolo
       options={filteredOptions}
+      noOptionsText={noOptionsText}
       value={selectedOption}
       inputValue={search}
       onInputChange={(_, value) => setSearch(value)}
@@ -96,7 +109,7 @@ export function Search({ search, setSearch, options }: SearchProps) {
       }}
       sx={{
         width: '100%',
-        maxWidth: '300px',
+        maxWidth,
         '& .MuiAutocomplete-inputRoot[class*="MuiOutlinedInput-root"]': {
           paddingRight: '12px !important',
           paddingLeft: '16px !important'
@@ -106,7 +119,7 @@ export function Search({ search, setSearch, options }: SearchProps) {
         <OutlinedInput
           {...params.InputProps}
           inputProps={params.inputProps}
-          placeholder="Пошук"
+          placeholder={placeholder}
           fullWidth
           startAdornment={
             <InputAdornment position="start"
@@ -122,6 +135,7 @@ export function Search({ search, setSearch, options }: SearchProps) {
               <Box
                 component="button"
                 type="button"
+                aria-label={clearButtonAriaLabel}
                 onClick={() => setSearch('')}
                 sx={{
                   border: 'none',
