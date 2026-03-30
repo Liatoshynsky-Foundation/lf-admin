@@ -16,10 +16,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { FORMAT_FILTER_OPTIONS } from '~/constants/file-formats';
 import {
-  type ArchiveSortValue,
   FILE_TABS,
   FILES_UPLOAD_ACCEPT,
   FILES_UPLOAD_ERROR,
+  type FilesSortValue,
   type FilesTabValue,
   SORT_FIELD_OPTIONS,
   SORT_OPTIONS,
@@ -55,7 +55,7 @@ import { useAllAssets } from '~/shared/hooks/use-assets/useAssets';
 import { normalizeSearch } from '~/shared/utils/normalizeSearch';
 import { AssetType, useUploadBlobMutation } from '~/types/graphql/generated/graphql';
 
-type ArchiveFileItem = FilesCardsLayoutItem & {
+type FilesPageFileItem = FilesCardsLayoutItem & {
   description?: string;
   format?: string;
   createdAtRaw?: string;
@@ -71,7 +71,7 @@ const fileTypeMap: Record<AssetType, FilesCardsLayoutItem['type']> = {
   [AssetType.Audio]: 'audio'
 };
 
-const isArchiveSupportedFile = (file: File): boolean => {
+const isFilesSupportedFile = (file: File): boolean => {
   if (file.type) {
     return (
       file.type === 'image/jpeg' ||
@@ -86,12 +86,12 @@ const isArchiveSupportedFile = (file: File): boolean => {
   return /\.(jpe?g|png|pdf|mp3|wav)$/i.test(file.name);
 };
 
-const renderArchiveUpload: MediaModalRenderers['upload'] = (props) => (
+const renderFilesUpload: MediaModalRenderers['upload'] = (props) => (
   <UploadView
     {...props}
     accept={FILES_UPLOAD_ACCEPT}
     invalidFileError={FILES_UPLOAD_ERROR}
-    isAllowedFile={isArchiveSupportedFile}
+    isAllowedFile={isFilesSupportedFile}
     ariaLabel="Upload file"
   />
 );
@@ -197,8 +197,8 @@ const getUsageFilterValues = (usageLinks: FileUsageLink[]): string[] => {
       return;
     }
 
-    if (/архів|archive/.test(normalizedLabel)) {
-      categories.add('archive');
+    if (/файл|files/.test(normalizedLabel)) {
+      categories.add('files');
       return;
     }
 
@@ -213,7 +213,7 @@ const getUsageFilterValues = (usageLinks: FileUsageLink[]): string[] => {
   return Array.from(categories);
 };
 
-export default function ArchivePage() {
+export default function FilesPage() {
   const [view, setView] = useState<FilesCardsLayoutView>('grid');
   const [activeTab, setActiveTab] = useState<FilesTabValue>('all');
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
@@ -224,10 +224,10 @@ export default function ArchivePage() {
   const [search, setSearch] = useState('');
   const [formatFilters, setFormatFilters] = useState<string[]>([]);
   const [usageFilters, setUsageFilters] = useState<string[]>([]);
-  const [sortValue, setSortValue] = useState<ArchiveSortValue>(() => {
+  const [sortValue, setSortValue] = useState<FilesSortValue>(() => {
     if (globalThis.window === undefined) return 'date_desc';
-    const saved = localStorage.getItem('archive_sort');
-    return (SORT_OPTIONS.some((o) => o.value === saved) ? saved : 'date_desc') as ArchiveSortValue;
+    const saved = localStorage.getItem('files_sort');
+    return (SORT_OPTIONS.some((o) => o.value === saved) ? saved : 'date_desc') as FilesSortValue;
   });
   const [sortMenuAnchorEl, setSortMenuAnchorEl] = useState<HTMLElement | null>(null);
   const sortTriggerRef = useRef<HTMLDivElement | null>(null);
@@ -273,7 +273,7 @@ export default function ArchivePage() {
     await refetch();
   };
 
-  const allFiles = useMemo<ArchiveFileItem[]>(() => {
+  const allFiles = useMemo<FilesPageFileItem[]>(() => {
     return (data?.allAssets ?? []).map((asset) => ({
       id: asset.id,
       type: fileTypeMap[asset.type],
@@ -352,7 +352,7 @@ export default function ArchivePage() {
     if (field === 'date') {
       setSortValue((previous) => {
         const next = previous.startsWith('date') ? previous : 'date_desc';
-        localStorage.setItem('archive_sort', next);
+        localStorage.setItem('files_sort', next);
         return next;
       });
       return;
@@ -360,7 +360,7 @@ export default function ArchivePage() {
 
     setSortValue((previous) => {
       const next = previous.startsWith('name') ? previous : 'name_asc';
-      localStorage.setItem('archive_sort', next);
+      localStorage.setItem('files_sort', next);
       return next;
     });
   };
@@ -743,7 +743,7 @@ export default function ArchivePage() {
                           selected={sortValue === option.value}
                           onClick={() => {
                             setSortValue(option.value);
-                            localStorage.setItem('archive_sort', option.value);
+                            localStorage.setItem('files_sort', option.value);
                             handleCloseSortMenu();
                           }}
                           sx={filterSelectStyles.menuItem}
@@ -775,7 +775,7 @@ export default function ArchivePage() {
         initial={uploadModalInitial}
         onClose={handleCloseUploadFlow}
         onApply={handleUploadApply}
-        renderers={{ upload: renderArchiveUpload }}
+        renderers={{ upload: renderFilesUpload }}
       />
     </Box>
   );

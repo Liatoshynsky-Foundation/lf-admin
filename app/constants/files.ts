@@ -1,5 +1,5 @@
 export type FilesTabValue = 'all' | 'image' | 'docs' | 'audio' | 'favorites';
-export type ArchiveSortValue = 'date_desc' | 'date_asc' | 'name_asc' | 'name_desc';
+export type FilesSortValue = 'date_desc' | 'date_asc' | 'name_asc' | 'name_desc';
 export type SortFieldValue = 'date' | 'name';
 
 export const FILE_TABS: ReadonlyArray<{ value: FilesTabValue; label: string; disabled?: boolean }> = [
@@ -13,7 +13,7 @@ export const FILE_TABS: ReadonlyArray<{ value: FilesTabValue; label: string; dis
 export const FILES_UPLOAD_ACCEPT = 'image/jpeg,image/jpg,image/png,application/pdf,audio/mpeg,audio/wav';
 export const FILES_UPLOAD_ERROR = 'Підтримуються зображення, PDF та аудіо';
 
-export const SORT_OPTIONS: ReadonlyArray<{ value: ArchiveSortValue; label: string }> = [
+export const SORT_OPTIONS: ReadonlyArray<{ value: FilesSortValue; label: string }> = [
   { value: 'date_desc', label: 'Нові спочатку' },
   { value: 'date_asc', label: 'Старі спочатку' },
   { value: 'name_asc', label: 'А→Я' },
@@ -26,7 +26,7 @@ export const USAGE_FILTER_OPTIONS: ReadonlyArray<{ value: string; label: string 
   { value: 'events', label: 'Події' },
   { value: 'creativity', label: 'Творчість' },
   { value: 'opus', label: 'Опуси' },
-  { value: 'archive', label: 'Архів' },
+  { value: 'files', label: 'Файли' },
   { value: 'research', label: 'Наукові праці' },
   { value: 'unused', label: 'Не використані' }
 ];
@@ -37,7 +37,7 @@ export const SORT_FIELD_OPTIONS: ReadonlyArray<{ value: SortFieldValue; label: s
 ];
 
 export const SORT_ORDER_OPTIONS: Readonly<
-  Record<SortFieldValue, ReadonlyArray<{ value: ArchiveSortValue; label: string }>>
+  Record<SortFieldValue, ReadonlyArray<{ value: FilesSortValue; label: string }>>
 > = {
   date: [
     { value: 'date_desc', label: 'Новіші-старіші' },
