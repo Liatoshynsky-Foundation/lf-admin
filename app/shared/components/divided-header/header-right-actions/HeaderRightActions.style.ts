@@ -50,7 +50,7 @@ export const styles = {
 
   group: {
     gap: '2px',
-    '& .MuiButtonGroup-grouped': {
+    '& .MuiButtonGroup-grouped,  & .MuiIconButton-root': {
       bgcolor: COLORS.yellow,
       color: 'black',
       textTransform: 'none',
@@ -63,6 +63,5 @@ export const styles = {
   } as SxProps<Theme>,
 
   groupLeft: { borderRadius: '28px 0 0 28px', px: 3 } as SxProps<Theme>,
-  groupRight: { borderRadius: '0 28px 28px 0', p: '8px 24px 8px 14px' } as SxProps<Theme>,
-
+  groupRight: { borderRadius: '0 28px 28px 0', p: '8px 24px 8px 14px' } as SxProps<Theme>
 };
