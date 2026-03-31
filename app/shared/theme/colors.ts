@@ -121,23 +121,46 @@ const commonStates = {
   whiteAlpha: (opacity: number) => hexToRgba(mainHexPallete.white, opacity)
 };
 
-const sharedErrorState = {
-  errorFirstIcon: commonStates.functional.error,
-  errorSecondIcon: commonStates.functional.error,
-  errorUnderline: commonStates.functional.error,
-  errorLabel: commonStates.functional.error,
-  errorIcon: commonStates.functional.error,
-  errorOutline: commonStates.functional.error,
-  errorTextInfo: commonStates.functional.error,
-  errorTextInfoIcon: commonStates.functional.error,
-  errorValue: mainHexPallete.black
-};
-
-const baseButtonDisabled = {
+const createButtonBase = (mainColor: string, hover: string, focused: string, pressed: string, isWhite?: boolean) => ({
+  filledEnabledBg: mainColor,
+  filledNormalText: isWhite ? mainHexPallete.black : mainHexPallete.white,
+  filledHoveredBg: hover,
+  filledFocusedBg: focused,
+  filledPressedBg: pressed,
   filledDisabledBg: commonStates.disabled.bg,
+  outlinedEnabledBg: 'transparent',
+  outlinedNormalText: mainColor,
+  outlinedNormalBorder: mainColor,
+  outlinedHoveredBg: isWhite ? commonStates.whiteAlpha(0.08) : commonStates.blackAlpha(0.04),
+  outlinedFocusedBg: isWhite ? commonStates.whiteAlpha(0.16) : commonStates.blackAlpha(0.1),
+  outlinedPressedBg: isWhite ? commonStates.whiteAlpha(0.16) : commonStates.blackAlpha(0.1),
   outlinedDisabledBg: 'transparent',
   outlinedDisabledBorder: commonStates.disabled.border,
   disabledText: commonStates.disabled.text
+});
+
+const createInputBaseState = (isOutline: boolean) => {
+  const ds = isOutline ? commonStates.disabled.outline : commonStates.disabled;
+  const err = commonStates.functional.error;
+  return {
+    errorFirstIcon: err,
+    errorSecondIcon: err,
+    errorUnderline: err,
+    errorLabel: err,
+    errorIcon: err,
+    errorOutline: err,
+    errorTextInfo: err,
+    errorTextInfoIcon: err,
+    errorValue: mainHexPallete.black,
+    disabledFirstIcon: ds.icon,
+    disabledValue: ds.text,
+    disabledSecondIcon: ds.icon,
+    disabledUnderline: ds.border,
+    disabledLabel: ds.text,
+    disabledIcon: ds.icon,
+    disabledOutline: ds.border,
+    disabledTextInfo: ds.text
+  };
 };
 
 export const badgeColors = {
@@ -153,38 +176,19 @@ export const badgeColors = {
 };
 
 export const buttonColors = {
-  primary: {
-    ...baseButtonDisabled,
-    filledEnabledBg: mainHexPallete.black,
-    filledNormalText: mainHexPallete.white,
-    filledHoveredBg: commonStates.interaction.blackHover,
-    filledFocusedBg: commonStates.interaction.blackPressed,
-    filledPressedBg: commonStates.interaction.blackPressed,
-
-    outlinedEnabledBg: 'transparent',
-    outlinedNormalText: mainHexPallete.black,
-    outlinedNormalBorder: mainHexPallete.black,
-    outlinedHoveredBg: commonStates.blackAlpha(0.04),
-    outlinedFocusedBg: commonStates.blackAlpha(0.1),
-    outlinedPressedBg: commonStates.blackAlpha(0.1)
-  },
-
-  secondary: {
-    ...baseButtonDisabled,
-    filledEnabledBg: mainHexPallete.white,
-    filledNormalText: mainHexPallete.black,
-    filledHoveredBg: commonStates.interaction.whiteHover,
-    filledFocusedBg: commonStates.interaction.whitePressed,
-    filledPressedBg: '#DAD5CF',
-
-    outlinedEnabledBg: 'transparent',
-    outlinedNormalText: mainHexPallete.white,
-    outlinedNormalBorder: mainHexPallete.white,
-    outlinedHoveredBg: commonStates.whiteAlpha(0.08),
-    outlinedFocusedBg: commonStates.whiteAlpha(0.16),
-    outlinedPressedBg: commonStates.whiteAlpha(0.16)
-  },
-
+  primary: createButtonBase(
+    mainHexPallete.black,
+    commonStates.interaction.blackHover,
+    commonStates.interaction.blackPressed,
+    commonStates.interaction.blackPressed
+  ),
+  secondary: createButtonBase(
+    mainHexPallete.white,
+    commonStates.interaction.whiteHover,
+    commonStates.interaction.whitePressed,
+    '#DAD5CF',
+    true
+  ),
   tertiary: {
     enabledBg: mainHexPallete.yellow[500],
     normalText: mainHexPallete.black,
@@ -194,7 +198,6 @@ export const buttonColors = {
     disabledBg: commonStates.disabled.bg,
     disabledText: commonStates.disabled.text
   },
-
   error: {
     enabledBg: mainHexPallete.red[600],
     normalText: mainHexPallete.white,
@@ -278,53 +281,37 @@ export const selectorColors = {
 
 export const textFieldColors = {
   standard: {
-    ...sharedErrorState,
+    ...createInputBaseState(false),
     defaultFirstIcon: mainHexPallete.blue[800],
     defaultValue: mainHexPallete.blue[800],
     defaultSecondIcon: mainHexPallete.blue[700],
     defaultUnderline: commonStates.blackAlpha(0.25),
-
     hoveredFirstIcon: mainHexPallete.blue[800],
     hoveredValue: mainHexPallete.blue[800],
     hoveredSecondIcon: mainHexPallete.black,
     hoveredUnderline: commonStates.blackAlpha(0.5),
-
     focusedFirstIcon: mainHexPallete.black,
     focusedValue: mainHexPallete.black,
     focusedSecondIcon: mainHexPallete.black,
-    focusedUnderline: mainHexPallete.black,
-
-    disabledFirstIcon: commonStates.disabled.icon,
-    disabledValue: commonStates.disabled.text,
-    disabledSecondIcon: commonStates.disabled.icon,
-    disabledUnderline: commonStates.disabled.border
+    focusedUnderline: mainHexPallete.black
   },
-
   outline: {
-    ...sharedErrorState,
+    ...createInputBaseState(true),
     defaultLabel: mainHexPallete.blue[800],
     defaultIcon: mainHexPallete.blue[700],
     defaultValue: mainHexPallete.black,
     defaultOutline: mainHexPallete.adminBlue[500],
     defaultTextInfo: mainHexPallete.blue[800],
-
     hoveredLabel: mainHexPallete.blue[800],
     hoveredIcon: mainHexPallete.black,
     hoveredValue: mainHexPallete.black,
     hoveredOutline: commonStates.blackAlpha(0.5),
     hoveredTextInfo: mainHexPallete.blue[800],
-
     focusedLabel: mainHexPallete.black,
     focusedIcon: mainHexPallete.black,
     focusedValue: mainHexPallete.black,
     focusedOutline: mainHexPallete.black,
-    focusedTextInfo: mainHexPallete.black,
-
-    disabledLabel: commonStates.disabled.outline.text,
-    disabledIcon: commonStates.disabled.outline.icon,
-    disabledValue: commonStates.disabled.outline.text,
-    disabledOutline: commonStates.disabled.outline.border,
-    disabledTextInfo: commonStates.disabled.outline.text
+    focusedTextInfo: mainHexPallete.black
   }
 };
 
