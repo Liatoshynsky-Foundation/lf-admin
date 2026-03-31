@@ -17,8 +17,6 @@ interface ImagePreviewBlockProps extends StackProps {
   imageUrl: string;
   fileName?: string;
   title?: string;
-  cropWidth?: number;
-  cropHeight?: number;
   oval?: boolean;
   onChangeImage: (file: File) => void;
   direction?: 'row' | 'row-reverse' | 'column' | 'column-reverse';
