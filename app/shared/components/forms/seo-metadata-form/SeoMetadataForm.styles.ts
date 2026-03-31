@@ -28,39 +28,39 @@ export const styles = {
     '& .MuiOutlinedInput-root': {
       '& fieldset': {
         borderRadius: '8px',
-        borderColor: '#ADAEBA', // default
-        borderWidth: '1px'
+        borderColor: colors.adminBlue[500],
+        borderWidth: '1px',
+        borderStyle: 'solid'
       },
-
       '&:hover fieldset': {
-        borderColor: 'rgba(25, 13, 3, 0.5)' // hover
+        borderColor: 'rgba(25, 13, 3, 0.5)'
       },
-
       '&.Mui-focused fieldset': {
-        borderColor: '#190D03', // focused
+        borderColor: colors.black,
         borderWidth: '1px'
       },
-
-      '&.Mui-error fieldset': {
-        borderColor: '#E63C14' // error
-      },
-
       '&.Mui-disabled fieldset': {
-        borderColor: 'rgba(25, 13, 3, 0.25)' // disabled
+        borderColor: 'rgba(25, 13, 3, 0.25)'
+      },
+      '&.Mui-error fieldset': {
+        borderColor: '#E63C14'
       }
     },
-
     '& .MuiInputLabel-root': {
       color: colors.blue[800]
     },
-
     '& .MuiInputLabel-root.Mui-focused': {
       color: colors.blue[800]
     }
   },
   formFields: {
-    direction: 'column',
-    spacing: 2.5,
+    flexDirection: 'column',
+    gap: '20px',
+    width: '100%'
+  },
+  formFieldsContainer: {
+    flexDirection: 'column',
+    gap: '20px',
     width: '100%',
     minHeight: '324px'
   },

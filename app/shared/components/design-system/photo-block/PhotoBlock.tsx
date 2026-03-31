@@ -191,6 +191,7 @@ export const ImagePreviewBlock = ({
               sx={styles.altTextField}
               multiline
               maxRows={4}
+              disabled={!previewImage}
             />
           )}
 

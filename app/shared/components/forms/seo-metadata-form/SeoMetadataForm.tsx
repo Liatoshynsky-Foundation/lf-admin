@@ -2,10 +2,11 @@
 
 import 'dayjs/locale/uk';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { Box, Checkbox, Divider, FormControlLabel, Stack, TextField, Typography } from '@mui/material';
+import { Box, Checkbox, Divider, FormControlLabel, Stack, Typography } from '@mui/material';
+import type { ReactNode } from 'react';
 import { useState } from 'react';
 
-import DateTimePicker from './date-time-picker/DateTimePicker';
+import { SeoBaseFields } from './seo-base-fields/SeoBaseFields';
 import { styles } from './SeoMetadataForm.styles';
 import { ImagePreviewBlock as PhotoBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
 import TooltipCustom from '~/shared/components/design-system/tooltip/Tooltip';
@@ -28,20 +29,16 @@ export interface SeoMetadataFormProps {
   readonly onImageChange: (file: File) => void;
   readonly allowIndexing: boolean;
   readonly onIndexingChange: (val: boolean) => void;
-  readonly showCanonicalUrl?: boolean;
   readonly showAlternativeText?: boolean;
-  readonly showDatatimePickers?: boolean;
+  readonly extraFields?: ReactNode;
   readonly labels?: {
     readonly metaTitle?: string;
     readonly metaDescription?: string;
     readonly metaKeywords?: string;
-    readonly canonicalUrl?: string;
     readonly ogImage?: string;
     readonly ogImageHint?: string;
     readonly allowIndexing?: string;
     readonly sectionTitle?: string;
-    readonly startDateTime?: string;
-    readonly endDateTime?: string;
   };
 }
 
@@ -53,15 +50,13 @@ export default function SeoMetadataForm({
   onImageChange,
   allowIndexing,
   onIndexingChange,
-  showCanonicalUrl = false,
   showAlternativeText = false,
-  showDatatimePickers = false,
+  extraFields,
   labels = {}
 }: SeoMetadataFormProps) {
   const [ogImagePreview, setOgImagePreview] = useState<string | null>(typeof ogImage === 'string' ? ogImage : null);
-  const altKey = locale;
-  const [touched, setTouched] = useState<{ [K in keyof LocalizedMeta]?: boolean }>({});
-  const [errors, setErrors] = useState<{ [K in keyof LocalizedMeta]?: string }>({});
+  const [touched, setTouched] = useState<Partial<Record<keyof LocalizedMeta, boolean>>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof LocalizedMeta, string>>>({});
 
   const validateField = (field: keyof LocalizedMeta, val: string) => {
     switch (field) {
@@ -102,35 +97,6 @@ export default function SeoMetadataForm({
     onImageChange(file);
   };
 
-  const handleDateTimeChange = (start?: string, end?: string) => {
-    onChange({ ...value, startDateTime: start, endDateTime: end });
-  };
-
-  const fields: Array<{
-    key: keyof LocalizedMeta;
-    label: string;
-    required?: boolean;
-    multiline?: boolean;
-    minRows?: number;
-  }> = [
-    { key: 'title', label: labels.metaTitle || 'Meta title', required: true },
-    {
-      key: 'description',
-      label: labels.metaDescription || 'Meta description',
-      required: true,
-      multiline: true,
-      minRows: 2
-    },
-    showCanonicalUrl ? { key: 'canonicalUrl', label: labels.canonicalUrl || 'Canonical URL' } : null,
-    { key: 'keywords', label: labels.metaKeywords || 'Meta keywords' }
-  ].filter(Boolean) as Array<{
-    key: keyof LocalizedMeta;
-    label: string;
-    required?: boolean;
-    multiline?: boolean;
-    minRows?: number;
-  }>;
-
   const renderPhotoBlock = () => (
     <Stack sx={styles.photoBlock}>
       <Box sx={styles.photoBlockHeader}>
@@ -153,13 +119,13 @@ export default function SeoMetadataForm({
         stackSpacing="0"
         typographySpacing="4px"
         showAlternativeText={showAlternativeText}
-        altText={value.altText?.[altKey] ?? ''}
+        altText={value.altText?.[locale] ?? ''}
         onChangeAltText={(alt) =>
           onChange({
             ...value,
             altText: {
-              uk: altKey === 'uk' ? alt : (value.altText?.uk ?? ''),
-              en: altKey === 'en' ? alt : (value.altText?.en ?? '')
+              uk: locale === 'uk' ? alt : (value.altText?.uk ?? ''),
+              en: locale === 'en' ? alt : (value.altText?.en ?? '')
             }
           })
         }
@@ -173,34 +139,18 @@ export default function SeoMetadataForm({
   return (
     <Box sx={styles.container}>
       <Typography variant="h6" sx={styles.sectionTitle}>
-        {labels.sectionTitle || `Мета дані сторінки | ${locale.toUpperCase()}`}
+        {labels.sectionTitle || `Мета дані сторінки | ${locale === 'uk' ? 'UA' : 'EN'}`}
       </Typography>
-      <Stack sx={styles.formFields}>
-        {fields.map(({ key, label, required, multiline, minRows }) => (
-          <TextField
-            key={key}
-            label={label}
-            value={value[key] || ''}
-            onChange={(e) => handleFieldChange(key, e.target.value)}
-            onBlur={() => handleBlur(key)}
-            error={Boolean(errors[key])}
-            helperText={errors[key] && touched[key] ? errors[key] : ''}
-            fullWidth
-            margin="normal"
-            sx={styles.textField}
-            required={required}
-            multiline={multiline}
-            minRows={minRows}
-          />
-        ))}
-        {showDatatimePickers && (
-          <DateTimePicker
-            startDateTime={value.startDateTime}
-            endDateTime={value.endDateTime}
-            onChange={handleDateTimeChange}
-            labels={{ startDateTime: labels.startDateTime, endDateTime: labels.endDateTime }}
-          />
-        )}
+      <Stack sx={styles.formFieldsContainer}>
+        <SeoBaseFields
+          value={value}
+          errors={errors}
+          touched={touched}
+          onFieldChange={handleFieldChange}
+          onBlur={handleBlur}
+          labels={labels}
+        />
+        {extraFields}
       </Stack>
       {renderPhotoBlock()}
       <Divider sx={styles.divider} />

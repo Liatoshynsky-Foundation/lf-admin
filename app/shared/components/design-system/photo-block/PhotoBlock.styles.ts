@@ -105,6 +105,9 @@ export const styles = {
         lineHeight: '150%',
         fontFamily: 'Mulish'
       },
+      '&:hover fieldset': {
+        borderColor: 'rgba(25, 13, 3, 0.5)'
+      },
       '&.Mui-focused fieldset': {
         borderColor: '#190D03',
         borderWidth: '1px'

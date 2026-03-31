@@ -39,6 +39,26 @@ export default function DateTimePicker({ startDateTime, endDateTime, onChange, l
       value={value ? dayjs(value) : null}
       onChange={onChangeCb}
       ampm={false}
+      sx={{
+        '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
+          borderColor: '#ADAEBA',
+          borderWidth: '1px',
+          borderStyle: 'solid'
+        },
+        '& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline': {
+          borderColor: 'rgba(25, 13, 3, 0.5)'
+        },
+        '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+          borderColor: '#190D03',
+          borderWidth: '1px'
+        },
+        '& .MuiOutlinedInput-root.Mui-disabled .MuiOutlinedInput-notchedOutline': {
+          borderColor: 'rgba(25, 13, 3, 0.25)'
+        },
+        '& .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline': {
+          borderColor: '#E63C14'
+        }
+      }}
       slotProps={{
         popper: {
           sx: {
@@ -68,7 +88,7 @@ export default function DateTimePicker({ startDateTime, endDateTime, onChange, l
   );
 
   return (
-    <Box sx={{ width: '100%', mt: 2 }}>
+    <Box sx={{ width: '100%' }}>
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="uk">
         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Box sx={{ width: '45%' }}>
@@ -85,7 +105,7 @@ export default function DateTimePicker({ startDateTime, endDateTime, onChange, l
           >
             —
           </Box>
-          <Box sx={{ width: '45%', fullWidth: true }}>
+          <Box sx={{ width: '45%' }}>
             {renderPicker(endDateTime, labels.endDateTime || 'Закінчення події', handleEndChange)}
           </Box>
         </Box>

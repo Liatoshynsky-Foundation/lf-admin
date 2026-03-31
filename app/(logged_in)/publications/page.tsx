@@ -1,37 +1,55 @@
 'use client';
-import { Box, Button } from '@mui/material';
+import { Box } from '@mui/material';
 import { useState } from 'react';
 
+import { SeoCanonicalUrlField } from '~/shared/components/forms/seo-metadata-form/seo-base-fields/SeoCanonicalUrlField';
+import { SeoDateTimeFields } from '~/shared/components/forms/seo-metadata-form/seo-base-fields/SeoDateTimeFields';
 import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/SeoMetadataBlock';
 import SeoMetadataBlock from '~/shared/components/forms/seo-metadata-form/SeoMetadataBlock';
 
 const defaultSeoValue: SeoBlockValue = {
   meta: {
-    ua: { title: '', description: '', keywords: '' },
+    uk: { title: '', description: '', keywords: '' },
     en: { title: '', description: '', keywords: '' }
   },
-  ogImage: { ua: null, en: null },
-  allowIndexing: { ua: true, en: true }
+  ogImage: { uk: null, en: null },
+  allowIndexing: { uk: true, en: true }
 };
 
 export default function PublicationsPage() {
   const [seoData, setSeoData] = useState<SeoBlockValue>(defaultSeoValue);
-
-  const handleSubmit = () => {
-    // seoData містить всі дані форми — передай їх в API
-    console.log(seoData);
-  };
 
   return (
     <Box>
       <SeoMetadataBlock
         value={seoData}
         onChange={setSeoData}
-        showCanonicalUrl={true}
         showAlternativeText={true}
-        showDatatimePickers={true}
+        extraFields={(locale) => (
+          <>
+            <SeoCanonicalUrlField
+              value={seoData.meta[locale].canonicalUrl ?? ''}
+              onChange={(val) =>
+                setSeoData((prev) => ({
+                  ...prev,
+                  meta: { ...prev.meta, [locale]: { ...prev.meta[locale], canonicalUrl: val } }
+                }))
+              }
+              onBlur={() => {}}
+            />
+            <SeoDateTimeFields
+              startDateTime={seoData.meta[locale].startDateTime}
+              endDateTime={seoData.meta[locale].endDateTime}
+              onChange={(start, end) =>
+                setSeoData((prev) => ({
+                  ...prev,
+                  meta: { ...prev.meta, [locale]: { ...prev.meta[locale], startDateTime: start, endDateTime: end } }
+                }))
+              }
+            />
+          </>
+        )}
       />
-      <Button onClick={handleSubmit}>Зберегти</Button>
     </Box>
   );
 }

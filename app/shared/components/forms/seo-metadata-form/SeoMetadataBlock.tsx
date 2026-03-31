@@ -1,5 +1,6 @@
 'use client';
 import { Box } from '@mui/material';
+import type { ReactNode } from 'react';
 import { useState } from 'react';
 
 import type { LocalizedMeta } from './SeoMetadataForm';
@@ -21,19 +22,17 @@ const defaultValue: SeoBlockValue = {
 };
 
 export interface SeoMetadataBlockProps {
-  readonly showCanonicalUrl?: boolean;
   readonly showAlternativeText?: boolean;
-  readonly showDatatimePickers?: boolean;
   readonly value?: SeoBlockValue;
   readonly onChange?: (value: SeoBlockValue) => void;
+  readonly extraFields?: (locale: 'uk' | 'en') => ReactNode;
 }
 
 export default function SeoMetadataBlock({
-  showCanonicalUrl = false,
   showAlternativeText = false,
-  showDatatimePickers = false,
   value: externalValue,
-  onChange: externalOnChange
+  onChange: externalOnChange,
+  extraFields
 }: SeoMetadataBlockProps) {
   const [internalValue, setInternalValue] = useState<SeoBlockValue>(defaultValue);
 
@@ -58,9 +57,8 @@ export default function SeoMetadataBlock({
         onImageChange={(file) => handleChange({ ...value, ogImage: { ...value.ogImage, uk: file } })}
         allowIndexing={value.allowIndexing.uk}
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, uk: val } })}
-        showCanonicalUrl={showCanonicalUrl}
         showAlternativeText={showAlternativeText}
-        showDatatimePickers={showDatatimePickers}
+        extraFields={extraFields?.('uk')}
       />
       <SeoMetadataForm
         value={value.meta.en}
@@ -70,9 +68,8 @@ export default function SeoMetadataBlock({
         onImageChange={(file) => handleChange({ ...value, ogImage: { ...value.ogImage, en: file } })}
         allowIndexing={value.allowIndexing.en}
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, en: val } })}
-        showCanonicalUrl={showCanonicalUrl}
         showAlternativeText={showAlternativeText}
-        showDatatimePickers={showDatatimePickers}
+        extraFields={extraFields?.('en')}
       />
     </Box>
   );
