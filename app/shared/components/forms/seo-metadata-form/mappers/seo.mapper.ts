@@ -5,8 +5,6 @@ export type SeoData = {
       description: string;
       keywords: string;
       canonicalUrl?: string;
-      startDateTime?: string;
-      endDateTime?: string;
       altText?: { uk: string; en: string };
     };
     en: {
@@ -14,8 +12,6 @@ export type SeoData = {
       description: string;
       keywords: string;
       canonicalUrl?: string;
-      startDateTime?: string;
-      endDateTime?: string;
       altText?: { uk: string; en: string };
     };
   };
@@ -24,8 +20,8 @@ export type SeoData = {
     en: boolean;
   };
   ogImage: {
-    uk: File | string | null;
-    en: File | string | null;
+    uk: string | null;
+    en: string | null;
   };
 };
 
@@ -50,7 +46,7 @@ export const mapSeoBase = ({ meta, allowIndexing, ogImage }: SeoData) => ({
     en: allowIndexing.en
   },
   coverImage: {
-    src: typeof ogImage.uk === 'string' ? ogImage.uk : null,
+    src: ogImage.uk,
     alt: {
       uk: meta.uk.altText?.uk ?? '',
       en: meta.en.altText?.en ?? ''
