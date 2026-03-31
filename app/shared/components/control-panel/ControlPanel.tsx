@@ -18,11 +18,14 @@ export function ControlPanel({
   isBottomOpen = false,
   dataTestId = 'ControlPanel'
 }: ControlPanelProps) {
+  const hasLeftContent = leftContent !== undefined && leftContent !== null;
+  const hasRightContent = rightContent !== undefined && rightContent !== null;
+
   return (
     <Box sx={styles.wrapper} data-testid={dataTestId}>
       <Stack direction="row" sx={styles.root}>
-        <Box sx={styles.left}>{leftContent}</Box>
-        <Box sx={styles.right}>{rightContent}</Box>
+        {hasLeftContent ? <Box sx={styles.left}>{leftContent}</Box> : null}
+        {hasRightContent ? <Box sx={styles.right}>{rightContent}</Box> : null}
       </Stack>
 
       {bottomContent && (

@@ -9,14 +9,16 @@ import FilterSelectItem from './FilterSelectItem/FilterSelectItem';
 import CloseIcon from '~/public/icons/close.svg';
 import DropdownMenu from '~/shared/components/dropdown-menu/DropdownMenu';
 
-interface FilterOption {
+export interface FilterOption {
   value: string;
   label: string;
 }
 
-interface FilterSelectProps {
+export interface FilterSelectProps {
   label: string;
   options: readonly FilterOption[];
+  value?: string[];
+  defaultValue?: string[];
   defaultValues?: string[];
   variant?: 'filled' | 'outlined';
   disabled?: boolean;
@@ -24,6 +26,8 @@ interface FilterSelectProps {
   hideCounterChip?: boolean;
   hideClearAction?: boolean;
   menuMinWidth?: number;
+  clearLabel?: string;
+  onChange?: (allSelected: string[]) => void;
   onAdd?: (value: string, label: string, allSelected: string[]) => void;
   onRemove?: (value: string, label: string, allSelected: string[]) => void;
 }
@@ -31,6 +35,8 @@ interface FilterSelectProps {
 export const FilterSelect: React.FC<FilterSelectProps> = ({
   label,
   options,
+  value,
+  defaultValue,
   defaultValues,
   variant = 'filled',
   disabled = false,
@@ -38,16 +44,31 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
   hideCounterChip = false,
   hideClearAction = false,
   menuMinWidth,
+  clearLabel = 'Очистити',
+  onChange,
   onAdd,
   onRemove
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedValues, setSelectedValues] = useState<string[]>(() => defaultValues ?? []);
+  const [uncontrolledValues, setUncontrolledValues] = useState<string[]>(() => value ?? defaultValue ?? defaultValues ?? []);
   const triggerRef = useRef<HTMLDivElement | null>(null);
+  const selectedValues = value ?? uncontrolledValues;
 
   useEffect(() => {
-    setSelectedValues(defaultValues ?? []);
-  }, [defaultValues]);
+    if (value !== undefined) {
+      return;
+    }
+
+    setUncontrolledValues(defaultValue ?? defaultValues ?? []);
+  }, [defaultValue, defaultValues, value]);
+
+  const updateSelectedValues = (nextValues: string[]) => {
+    if (value === undefined) {
+      setUncontrolledValues(nextValues);
+    }
+
+    onChange?.(nextValues);
+  };
 
   const handleToggleMenu = () => {
     if (disabled) return;
@@ -82,7 +103,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
       return;
     }
 
-    setSelectedValues(newValues);
+    updateSelectedValues(newValues);
 
     if (maxSelections === 1) {
       handleCloseMenu();
@@ -91,7 +112,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
 
   const clearAll = () => {
     const removed = [...selectedValues];
-    setSelectedValues([]);
+    updateSelectedValues([]);
     removed.forEach((value) => {
       const option = options.find((item) => item.value === value);
       onRemove?.(value, option?.label ?? '', []);
@@ -179,7 +200,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
               <>
                 <Divider sx={{ my: 1 }} />
                 <Button variant="text" onClick={clearAll} sx={{ textTransform: 'none' }}>
-                  Очистити
+                  {clearLabel}
                 </Button>
               </>
             )}
