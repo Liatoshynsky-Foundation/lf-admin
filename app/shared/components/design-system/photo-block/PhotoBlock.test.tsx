@@ -81,8 +81,6 @@ describe('ImagePreviewBlock', () => {
     render(
       <ImagePreviewBlock
         imageUrl="https://example.com/test.jpg"
-        cropWidth={300}
-        cropHeight={200}
         onChangeImage={onChangeImage}
         title="Основне зображення"
       />
@@ -94,35 +92,13 @@ describe('ImagePreviewBlock', () => {
     expect(screen.getByText(/Розмір: 200 × 150/)).toBeInTheDocument();
   });
 
-  it('should open cropper modal on "Редагувати" click (legacy)', async () => {
+  it('should open MediaModal on "Редагувати" click', async () => {
     const user = userEvent.setup();
 
     render(
       <ImagePreviewBlock
         imageUrl="https://example.com/test.jpg"
-        cropWidth={300}
-        cropHeight={200}
         onChangeImage={onChangeImage}
-      />
-    );
-
-    await user.click(screen.getByRole('button', { name: /Редагувати/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText('Редагування зображення')).toBeInTheDocument();
-    });
-  });
-
-  it('should open MediaModal with CROP step in mediaModal mode and close it', async () => {
-    const user = userEvent.setup();
-
-    render(
-      <ImagePreviewBlock
-        imageUrl="https://example.com/test.jpg"
-        cropWidth={300}
-        cropHeight={200}
-        onChangeImage={onChangeImage}
-        editorMode="mediaModal"
       />
     );
 
@@ -130,6 +106,21 @@ describe('ImagePreviewBlock', () => {
 
     expect(screen.getByTestId('media-modal')).toBeInTheDocument();
     expect(screen.getByTestId('initial-step')).toHaveTextContent('CROP');
+  });
+
+  it('should open MediaModal and close it', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ImagePreviewBlock
+        imageUrl="https://example.com/test.jpg"
+        onChangeImage={onChangeImage}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: /Редагувати/i }));
+
+    expect(screen.getByTestId('media-modal')).toBeInTheDocument();
 
     await user.click(screen.getByTestId('close'));
 
@@ -138,16 +129,13 @@ describe('ImagePreviewBlock', () => {
     });
   });
 
-  it('should apply upload result in mediaModal mode (updates preview + calls onChangeImage + closes)', async () => {
+  it('should apply upload result in mediaModal (updates preview + calls onChangeImage + closes)', async () => {
     const user = userEvent.setup();
 
     render(
       <ImagePreviewBlock
         imageUrl="https://example.com/test.jpg"
-        cropWidth={300}
-        cropHeight={200}
         onChangeImage={onChangeImage}
-        editorMode="mediaModal"
       />
     );
 

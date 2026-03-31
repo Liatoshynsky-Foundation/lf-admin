@@ -55,7 +55,6 @@ export const FoundationBlock = ({
         cropHeight={300}
         onChangeImage={onImageChange}
         title="Основне зображення"
-        editorMode="mediaModal"
       />
     </Box>
   );
