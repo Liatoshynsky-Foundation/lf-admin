@@ -1,6 +1,6 @@
 'use client';
 import { Box } from '@mui/material';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { SeoCanonicalUrlField } from '~/shared/components/forms/seo-metadata-form/seo-canonicalurl-field/SeoCanonicalUrlField';
 import { SeoDateTimeFields } from '~/shared/components/forms/seo-metadata-form/seo-datetime-fields/SeoDateTimeFields';
@@ -49,13 +49,20 @@ function MediaMentionExtraFields({ locale, seoData, onChange }: MediaMentionExtr
 export default function PublicationsPage() {
   const [seoData, setSeoData] = useState<SeoBlockValue>(defaultSeoValue);
 
+  const renderExtraFields = useCallback(
+    (locale: 'uk' | 'en') => (
+      <MediaMentionExtraFields locale={locale} seoData={seoData} onChange={setSeoData} />
+    ),
+    [seoData]
+  );
+
   return (
     <Box>
       <SeoMetadataBlock
         value={seoData}
         onChange={setSeoData}
         showAlternativeText={true}
-        extraFields={(locale) => <MediaMentionExtraFields locale={locale} seoData={seoData} onChange={setSeoData} />}
+        extraFields={renderExtraFields}
       />
     </Box>
   );
