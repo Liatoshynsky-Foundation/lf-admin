@@ -1,11 +1,11 @@
 'use client';
-import { Box } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import { useState } from 'react';
 
-import { SeoCanonicalUrlField } from '~/shared/components/forms/seo-metadata-form/seo-base-fields/SeoCanonicalUrlField';
-import { SeoDateTimeFields } from '~/shared/components/forms/seo-metadata-form/seo-base-fields/SeoDateTimeFields';
-import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/SeoMetadataBlock';
-import SeoMetadataBlock from '~/shared/components/forms/seo-metadata-form/SeoMetadataBlock';
+import { SeoCanonicalUrlField } from '~/shared/components/forms/seo-metadata-form/seo-canonicalurl-field/SeoCanonicalUrlField';
+import { SeoDateTimeFields } from '~/shared/components/forms/seo-metadata-form/seo-datetime-fields/SeoDateTimeFields';
+import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
+import SeoMetadataBlock from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 
 const defaultSeoValue: SeoBlockValue = {
   meta: {
@@ -18,6 +18,11 @@ const defaultSeoValue: SeoBlockValue = {
 
 export default function PublicationsPage() {
   const [seoData, setSeoData] = useState<SeoBlockValue>(defaultSeoValue);
+
+  const handleSubmit = () => {
+    // eslint-disable-next-line no-console
+    console.log(seoData);
+  };
 
   return (
     <Box>
@@ -50,6 +55,7 @@ export default function PublicationsPage() {
           </>
         )}
       />
+      <Button onClick={handleSubmit}>Зберегти</Button>
     </Box>
   );
 }

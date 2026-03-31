@@ -1,7 +1,23 @@
 export type SeoData = {
   meta: {
-    uk: { title: string; description: string; keywords: string; canonicalUrl?: string };
-    en: { title: string; description: string; keywords: string; canonicalUrl?: string };
+    uk: {
+      title: string;
+      description: string;
+      keywords: string;
+      canonicalUrl?: string;
+      startDateTime?: string;
+      endDateTime?: string;
+      altText?: { uk: string; en: string };
+    };
+    en: {
+      title: string;
+      description: string;
+      keywords: string;
+      canonicalUrl?: string;
+      startDateTime?: string;
+      endDateTime?: string;
+      altText?: { uk: string; en: string };
+    };
   };
   allowIndexing: {
     uk: boolean;
@@ -20,7 +36,10 @@ export const mapSeoBase = ({ meta, allowIndexing, ogImage }: SeoData) => ({
   },
   description: {
     uk: meta.uk.description,
-    en: meta.en.description
+    en: meta.en.description,
+    meta: {
+      canonicalUrl: meta.uk.canonicalUrl ?? null
+    }
   },
   keywords: {
     uk: meta.uk.keywords,
@@ -31,7 +50,10 @@ export const mapSeoBase = ({ meta, allowIndexing, ogImage }: SeoData) => ({
     en: allowIndexing.en
   },
   coverImage: {
-    uk: typeof ogImage.uk === 'string' ? ogImage.uk : null,
-    en: typeof ogImage.en === 'string' ? ogImage.en : null
+    src: typeof ogImage.uk === 'string' ? ogImage.uk : null,
+    alt: {
+      uk: meta.uk.altText?.uk ?? '',
+      en: meta.en.altText?.en ?? ''
+    }
   }
 });

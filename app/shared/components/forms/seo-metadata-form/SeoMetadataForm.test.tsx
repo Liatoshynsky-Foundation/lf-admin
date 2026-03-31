@@ -2,13 +2,33 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { SeoCanonicalUrlField } from './seo-canonicalurl-field/SeoCanonicalUrlField';
 import SeoMetadataForm, { SeoMetadataFormProps } from './SeoMetadataForm';
 
 jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
-  ImagePreviewBlock: ({ onChangeImage }: { onChangeImage: (file: File) => void }) => (
-    <button data-testid="photo-block" onClick={() => onChangeImage(new File(['img'], 'test.png'))}>
-      PhotoBlock
-    </button>
+  ImagePreviewBlock: ({
+    onChangeImage,
+    showAlternativeText,
+    altText,
+    onChangeAltText
+  }: {
+    onChangeImage: (file: File) => void;
+    showAlternativeText?: boolean;
+    altText?: string;
+    onChangeAltText?: (val: string) => void;
+  }) => (
+    <div>
+      <button data-testid="photo-block" onClick={() => onChangeImage(new File(['img'], 'test.png'))}>
+        PhotoBlock
+      </button>
+      {showAlternativeText && (
+        <input
+          aria-label="Alt текст зображення"
+          value={altText || ''}
+          onChange={(e) => onChangeAltText?.(e.target.value)}
+        />
+      )}
+    </div>
   )
 }));
 
@@ -20,17 +40,15 @@ const defaultProps: SeoMetadataFormProps = {
     canonicalUrl: ''
   },
   onChange: jest.fn(),
-  locale: 'ua',
+  locale: 'uk',
   ogImage: null,
   onImageChange: jest.fn(),
   allowIndexing: true,
   onIndexingChange: jest.fn(),
-  showCanonicalUrl: true,
   labels: {
     metaTitle: 'Meta title',
     metaDescription: 'Meta description',
     metaKeywords: 'Meta keywords',
-    canonicalUrl: 'Canonical URL',
     ogImage: 'OG Image',
     ogImageHint: 'OG Image Hint',
     allowIndexing: 'Allow Indexing',
@@ -38,7 +56,7 @@ const defaultProps: SeoMetadataFormProps = {
   }
 };
 
-const renderWithState = () => {
+const renderWithState = (extraFields?: React.ReactNode) => {
   const Wrapper = () => {
     const [value, setValue] = React.useState<SeoMetadataFormProps['value']>({
       title: '',
@@ -47,7 +65,7 @@ const renderWithState = () => {
       canonicalUrl: ''
     });
 
-    return <SeoMetadataForm {...defaultProps} value={value} onChange={setValue} />;
+    return <SeoMetadataForm {...defaultProps} value={value} onChange={setValue} extraFields={extraFields} />;
   };
 
   return render(<Wrapper />);
@@ -91,6 +109,7 @@ describe('SeoMetadataForm', () => {
 
     expect(defaultProps.onImageChange).toHaveBeenCalled();
   });
+
   it('validates description field (empty and non-empty)', async () => {
     renderWithState();
     const input = screen.getByLabelText(/meta description/i);
@@ -103,7 +122,52 @@ describe('SeoMetadataForm', () => {
   });
 
   it('validates canonicalUrl: empty, valid, invalid', async () => {
-    renderWithState();
+    const validateCanonicalUrl = (val: string) => {
+      if (!val) return '';
+      try {
+        new URL(val);
+        return '';
+      } catch {
+        return 'Некоректний URL';
+      }
+    };
+
+    const CanonicalWrapper = () => {
+      const [value, setValue] = React.useState<SeoMetadataFormProps['value']>({
+        title: '',
+        description: '',
+        keywords: '',
+        canonicalUrl: ''
+      });
+      const [canonicalUrl, setCanonicalUrl] = React.useState('');
+      const [canonicalError, setCanonicalError] = React.useState('');
+      const [canonicalTouched, setCanonicalTouched] = React.useState(false);
+
+      return (
+        <SeoMetadataForm
+          {...defaultProps}
+          value={value}
+          onChange={setValue}
+          extraFields={
+            <SeoCanonicalUrlField
+              value={canonicalUrl}
+              error={canonicalError}
+              touched={canonicalTouched}
+              onChange={(val) => {
+                setCanonicalUrl(val);
+                if (canonicalTouched) setCanonicalError(validateCanonicalUrl(val));
+              }}
+              onBlur={() => {
+                setCanonicalTouched(true);
+                setCanonicalError(validateCanonicalUrl(canonicalUrl));
+              }}
+            />
+          }
+        />
+      );
+    };
+
+    render(<CanonicalWrapper />);
     const input = screen.getByLabelText(/canonical url/i);
 
     await user.clear(input);
@@ -138,13 +202,8 @@ describe('SeoMetadataForm', () => {
     expect(await screen.findByText(/ключові слова/i)).toBeInTheDocument();
   });
 
-  it('covers default branch in validateField', () => {
-    const { container } = render(<SeoMetadataForm {...defaultProps} />);
-    expect(container).toBeTruthy();
-  });
-
-  it('renders without showCanonicalUrl', () => {
-    render(<SeoMetadataForm {...defaultProps} showCanonicalUrl={false} />);
+  it('does not render canonicalUrl without extraFields', () => {
+    render(<SeoMetadataForm {...defaultProps} />);
     expect(screen.queryByLabelText(/canonical url/i)).not.toBeInTheDocument();
   });
 
@@ -159,6 +218,36 @@ describe('SeoMetadataForm', () => {
     const file = new File(['img'], 'file-image.png');
     render(<SeoMetadataForm {...defaultProps} ogImage={file} />);
     expect(screen.getByTestId('photo-block')).toBeInTheDocument();
+  });
+
+  test.each<'uk' | 'en'>(['uk', 'en'])('triggers onChangeAltText for %s locale', async (locale) => {
+    const onChange = jest.fn();
+    render(
+      <SeoMetadataForm
+        {...defaultProps}
+        locale={locale}
+        onChange={onChange}
+        showAlternativeText={true}
+        value={{ ...defaultProps.value, altText: { uk: '', en: '' } }}
+      />
+    );
+    const altInput = screen.getByLabelText(/alt текст/i);
+    await user.type(altInput, 'alt text');
+    expect(onChange).toHaveBeenCalled();
+  });
+
+  it('covers validateField canonicalUrl branch via handleBlur', async () => {
+    const Wrapper = () => {
+      const [value, setValue] = React.useState<SeoMetadataFormProps['value']>({
+        ...defaultProps.value,
+        canonicalUrl: 'bad-url'
+      });
+      return <SeoMetadataForm {...defaultProps} value={value} onChange={setValue} />;
+    };
+    render(<Wrapper />);
+    const titleInput = screen.getByLabelText(/meta title/i);
+    await user.click(titleInput);
+    await user.tab();
   });
 
   it('covers validateField default branch with unknown field', () => {

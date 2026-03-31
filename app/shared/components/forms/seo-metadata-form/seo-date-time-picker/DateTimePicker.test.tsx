@@ -30,43 +30,34 @@ describe('DateTimePicker', () => {
     fireEvent.change(input, { target: { value } });
   };
 
-  it('renders default and custom labels', () => {
-    let inputs = renderPicker();
-    expect(inputs.startInput).toBeInTheDocument();
-    expect(inputs.endInput).toBeInTheDocument();
-
-    inputs = renderPicker({ labels: { startDateTime: 'Start', endDateTime: 'End' } });
-    expect(inputs.startInput).toBeInTheDocument();
-    expect(inputs.endInput).toBeInTheDocument();
+  test.each([
+    [undefined, undefined],
+    ['Start', 'End']
+  ] as const)('renders with startDateTime label "%s" and endDateTime label "%s"', (startLabel, endLabel) => {
+    const labels = startLabel ? { startDateTime: startLabel, endDateTime: endLabel } : undefined;
+    const { startInput, endInput } = renderPicker({ labels });
+    expect(startInput).toBeInTheDocument();
+    expect(endInput).toBeInTheDocument();
   });
 
   test.each([
-    ['start', '2025-01-01T10:00:00', undefined],
-    ['end', undefined, '2025-01-02T10:00:00']
-  ])('calls onChange when %s date changes', (type, start, end) => {
+    ['start', '2025-01-01T10:00:00', undefined, 'startInput', '2025-01-02T12:00:00', [expect.any(String), undefined]],
+    ['end', undefined, '2025-01-02T10:00:00', 'endInput', '2025-01-03T12:00:00', [undefined, expect.any(String)]]
+  ] as const)('calls onChange when %s date changes', (_type, start, end, inputKey, newValue, expected) => {
     const handleChange = jest.fn();
-    const { startInput, endInput } = renderPicker({ startDateTime: start, endDateTime: end, onChange: handleChange });
-
-    const input = type === 'start' ? startInput : endInput;
-    changeInput(input, type === 'start' ? '2025-01-02T12:00:00' : '2025-01-03T12:00:00');
-
-    if (type === 'start') {
-      expect(handleChange).toHaveBeenCalledWith(expect.any(String), end);
-    } else {
-      expect(handleChange).toHaveBeenCalledWith(start, expect.any(String));
-    }
+    const inputs = renderPicker({ startDateTime: start, endDateTime: end, onChange: handleChange });
+    changeInput(inputs[inputKey], newValue);
+    expect(handleChange).toHaveBeenCalledWith(expected[0], expected[1]);
   });
 
-  it('calls onChange with correct values for start and end dates', () => {
+  test.each([
+    ['start', { startDateTime: '2025-01-01T10:00:00' }, 'startInput'],
+    ['end', { endDateTime: '2025-01-02T10:00:00' }, 'endInput']
+  ] as const)('calls onChange with undefined when %s date is cleared', (_type, props, inputKey) => {
     const handleChange = jest.fn();
-    const start = dayjs('2025-01-01T10:00:00').toISOString();
-    const end = dayjs('2025-01-02T10:00:00').toISOString();
-    const { startInput, endInput } = renderPicker({ startDateTime: start, endDateTime: end, onChange: handleChange });
-
-    changeInput(startInput, '02.01.2025 12:00');
-    changeInput(endInput, '03.01.2025 12:00');
-
-    expect(handleChange).toHaveBeenCalledTimes(2);
+    const inputs = renderPicker({ ...props, onChange: handleChange });
+    changeInput(inputs[inputKey], '');
+    expect(handleChange).toHaveBeenCalledWith(undefined, undefined);
   });
 
   it('renders dash separator', () => {

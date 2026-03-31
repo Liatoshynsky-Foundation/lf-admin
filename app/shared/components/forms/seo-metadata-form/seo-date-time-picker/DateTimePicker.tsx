@@ -52,6 +52,10 @@ export default function DateTimePicker({ startDateTime, endDateTime, onChange, l
           borderColor: '#190D03',
           borderWidth: '1px'
         },
+        '& .MuiOutlinedInput-root:focus-within .MuiOutlinedInput-notchedOutline': {
+          borderColor: '#190D03',
+          borderWidth: '1px'
+        },
         '& .MuiOutlinedInput-root.Mui-disabled .MuiOutlinedInput-notchedOutline': {
           borderColor: 'rgba(25, 13, 3, 0.25)'
         },
@@ -65,6 +69,9 @@ export default function DateTimePicker({ startDateTime, endDateTime, onChange, l
             '& .MuiMultiSectionDigitalClockSection-item.Mui-selected': {
               backgroundColor: '#FCBD28',
               color: '#190D03'
+            },
+            '& .MuiMultiSectionDigitalClockSection-item.Mui-selected:hover': {
+              backgroundColor: '#FCBD28'
             }
           }
         },

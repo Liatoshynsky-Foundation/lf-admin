@@ -21,7 +21,7 @@ export const styles = {
   },
   datetimePickerLabel: {
     fontSize: '14px',
-    color: colors.blue[800],
+    color: colors.yellow[500],
     lineHeight: '12px',
     fontFamily: 'Mulish',
     fontWeight: 500

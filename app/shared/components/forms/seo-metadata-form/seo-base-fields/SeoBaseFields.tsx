@@ -19,7 +19,13 @@ interface SeoBaseFieldsProps {
 export function SeoBaseFields({ value, errors, touched, onFieldChange, onBlur, labels = {} }: SeoBaseFieldsProps) {
   const fields = [
     { key: 'title' as const, label: labels.metaTitle || 'Meta title', required: true },
-    { key: 'description' as const, label: labels.metaDescription || 'Meta description', required: true, multiline: true, minRows: 2 },
+    {
+      key: 'description' as const,
+      label: labels.metaDescription || 'Meta description',
+      required: true,
+      multiline: true,
+      minRows: 2
+    },
     { key: 'keywords' as const, label: labels.metaKeywords || 'Meta keywords' }
   ];
 

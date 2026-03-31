@@ -3,8 +3,8 @@ import { Box } from '@mui/material';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 
-import type { LocalizedMeta } from './SeoMetadataForm';
-import SeoMetadataForm from './SeoMetadataForm';
+import type { LocalizedMeta } from '../SeoMetadataForm';
+import SeoMetadataForm from '../SeoMetadataForm';
 
 export interface SeoBlockValue {
   meta: { uk: LocalizedMeta; en: LocalizedMeta };
