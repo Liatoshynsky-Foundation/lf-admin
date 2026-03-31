@@ -2,14 +2,13 @@ import { SxProps, Theme } from '@mui/material';
 
 export const styles: Record<string, SxProps<Theme>> = {
   container: {
-    width: 'calc(100% + 20px)',
+    width: '100%',
     height: '104px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderBottom: '1px solid #190D0333',
-    p: '32px 24px',
-    ml: '-20px'
+    p: '32px 24px'
   },
   contentStack: {
     width: '100%'
@@ -27,7 +26,7 @@ export const styles: Record<string, SxProps<Theme>> = {
   proceedButton: {
     '&:hover, &:active, &:focus': {
       color: '#000',
-      backgroundColor: '#E0A01F'
+      backgroundColor: '#8A570C'
     }
   }
 };

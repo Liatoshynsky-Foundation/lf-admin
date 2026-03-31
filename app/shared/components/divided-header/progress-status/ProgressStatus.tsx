@@ -1,14 +1,13 @@
 import { Stack, Typography } from '@mui/material';
 import { CircleCheck,RefreshCcwDot } from 'lucide-react';
-import { FC } from 'react';
 
 import { styles } from './ProgressStatus.styles';
 
-type Props = {
+type ProgressStatusProps = {
   isSaved?: boolean;
 };
 
-const ProgressStatus: FC<Props> = ({ isSaved: isSaved = true }) => {
+const ProgressStatus = ({ isSaved = true }: ProgressStatusProps) => {
   const displayText = isSaved ? 'Зміни збережено' : 'Редагування';
 
   return (

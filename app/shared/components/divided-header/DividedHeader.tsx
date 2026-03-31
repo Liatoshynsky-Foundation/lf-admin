@@ -6,12 +6,12 @@ import { useRouter } from 'next/navigation';
 import { MouseEvent, ReactNode } from 'react';
 
 import { styles } from './DividedHeader.style';
-import HeaderRightActions from './HeaderRightActions/HeaderRightActions';
+import HeaderRightActions from './header-right-actions/HeaderRightActions';
 import { sxToArray } from '~/lib/utils/sxToArray';
 
 export type DividedHeaderProps = {
   mode: 'create' | 'edit' | 'seo';
-  returnUrl?: string;
+  originUrl?: string;
   onEdit?: () => void;
   onPublish?: () => void;
   onSave?: () => void;
@@ -23,7 +23,7 @@ export type DividedHeaderProps = {
 
 export default function DividedHeader({
   mode,
-  returnUrl = '/',
+  originUrl = '/',
   onEdit,
   onPublish,
   onSave,
@@ -31,15 +31,15 @@ export default function DividedHeader({
   onRightMenuOpen,
   children,
   sx
-}: DividedHeaderProps) {
+}: Readonly<DividedHeaderProps>) {
   const router = useRouter();
 
-  const handleReturn = () => router.push(returnUrl);
+  const handleReturn = () => router.push(originUrl);
 
   return (
     <Box sx={[styles.container, ...sxToArray(sx)]}>
       <Stack alignItems="center" justifyContent="space-between" direction={'row'} sx={styles.contentStack}>
-        <IconButton onClick={handleReturn} sx={styles.returnButton} aria-label={`Go back to ${handleReturn}`}>
+        <IconButton onClick={handleReturn} sx={styles.returnButton} aria-label={'Return to previous page'}>
           <ChevronLeft color="black" strokeWidth="1.5px" size={24} />
         </IconButton>
 
