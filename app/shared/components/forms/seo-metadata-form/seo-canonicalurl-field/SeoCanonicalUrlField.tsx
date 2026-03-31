@@ -3,12 +3,12 @@ import { TextField } from '@mui/material';
 import { styles } from '../SeoMetadataForm.styles';
 
 interface SeoCanonicalUrlFieldProps {
-  value: string;
-  error?: string;
-  touched?: boolean;
-  onChange: (val: string) => void;
-  onBlur: () => void;
-  label?: string;
+  readonly value: string;
+  readonly error?: string;
+  readonly touched?: boolean;
+  readonly onChange: (val: string) => void;
+  readonly onBlur: () => void;
+  readonly label?: string;
 }
 
 export function SeoCanonicalUrlField({ value, error, touched, onChange, onBlur, label }: SeoCanonicalUrlFieldProps) {

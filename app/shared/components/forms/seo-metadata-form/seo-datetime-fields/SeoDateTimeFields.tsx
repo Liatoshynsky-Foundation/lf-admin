@@ -1,12 +1,12 @@
 import DateTimePicker from '../seo-date-time-picker/DateTimePicker';
 
 interface SeoDateTimeFieldsProps {
-  startDateTime?: string;
-  endDateTime?: string;
-  onChange: (start?: string, end?: string) => void;
-  labels?: {
-    startDateTime?: string;
-    endDateTime?: string;
+  readonly startDateTime?: string;
+  readonly endDateTime?: string;
+  readonly onChange: (start?: string, end?: string) => void;
+  readonly labels?: {
+    readonly startDateTime?: string;
+    readonly endDateTime?: string;
   };
 }
 

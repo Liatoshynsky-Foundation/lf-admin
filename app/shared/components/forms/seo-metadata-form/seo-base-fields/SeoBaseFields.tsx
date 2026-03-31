@@ -4,15 +4,15 @@ import type { LocalizedMeta } from '../SeoMetadataForm';
 import { styles } from '../SeoMetadataForm.styles';
 
 interface SeoBaseFieldsProps {
-  value: LocalizedMeta;
-  errors: Partial<Record<keyof LocalizedMeta, string>>;
-  touched: Partial<Record<keyof LocalizedMeta, boolean>>;
-  onFieldChange: (field: keyof LocalizedMeta, val: string) => void;
-  onBlur: (field: keyof LocalizedMeta) => void;
-  labels?: {
-    metaTitle?: string;
-    metaDescription?: string;
-    metaKeywords?: string;
+  readonly value: LocalizedMeta;
+  readonly errors: Partial<Record<keyof LocalizedMeta, string>>;
+  readonly touched: Partial<Record<keyof LocalizedMeta, boolean>>;
+  readonly onFieldChange: (field: keyof LocalizedMeta, val: string) => void;
+  readonly onBlur: (field: keyof LocalizedMeta) => void;
+  readonly labels?: {
+    readonly metaTitle?: string;
+    readonly metaDescription?: string;
+    readonly metaKeywords?: string;
   };
 }
 

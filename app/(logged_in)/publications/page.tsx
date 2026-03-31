@@ -16,6 +16,36 @@ const defaultSeoValue: SeoBlockValue = {
   allowIndexing: { uk: true, en: true }
 };
 
+interface MediaMentionExtraFieldsProps {
+  readonly locale: 'uk' | 'en';
+  readonly seoData: SeoBlockValue;
+  readonly onChange: (val: SeoBlockValue) => void;
+}
+
+function MediaMentionExtraFields({ locale, seoData, onChange }: MediaMentionExtraFieldsProps) {
+  return (
+    <>
+      <SeoCanonicalUrlField
+        value={seoData.meta[locale].canonicalUrl ?? ''}
+        onChange={(val) =>
+          onChange({ ...seoData, meta: { ...seoData.meta, [locale]: { ...seoData.meta[locale], canonicalUrl: val } } })
+        }
+        onBlur={() => {}}
+      />
+      <SeoDateTimeFields
+        startDateTime={seoData.meta[locale].startDateTime}
+        endDateTime={seoData.meta[locale].endDateTime}
+        onChange={(start, end) =>
+          onChange({
+            ...seoData,
+            meta: { ...seoData.meta, [locale]: { ...seoData.meta[locale], startDateTime: start, endDateTime: end } }
+          })
+        }
+      />
+    </>
+  );
+}
+
 export default function PublicationsPage() {
   const [seoData, setSeoData] = useState<SeoBlockValue>(defaultSeoValue);
 
@@ -25,30 +55,7 @@ export default function PublicationsPage() {
         value={seoData}
         onChange={setSeoData}
         showAlternativeText={true}
-        extraFields={(locale) => (
-          <>
-            <SeoCanonicalUrlField
-              value={seoData.meta[locale].canonicalUrl ?? ''}
-              onChange={(val) =>
-                setSeoData((prev) => ({
-                  ...prev,
-                  meta: { ...prev.meta, [locale]: { ...prev.meta[locale], canonicalUrl: val } }
-                }))
-              }
-              onBlur={() => {}}
-            />
-            <SeoDateTimeFields
-              startDateTime={seoData.meta[locale].startDateTime}
-              endDateTime={seoData.meta[locale].endDateTime}
-              onChange={(start, end) =>
-                setSeoData((prev) => ({
-                  ...prev,
-                  meta: { ...prev.meta, [locale]: { ...prev.meta[locale], startDateTime: start, endDateTime: end } }
-                }))
-              }
-            />
-          </>
-        )}
+        extraFields={(locale) => <MediaMentionExtraFields locale={locale} seoData={seoData} onChange={setSeoData} />}
       />
     </Box>
   );
