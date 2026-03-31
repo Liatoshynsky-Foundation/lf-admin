@@ -52,10 +52,6 @@ export default function DateTimePicker({ startDateTime, endDateTime, onChange, l
           borderColor: '#190D03',
           borderWidth: '1px'
         },
-        '& .MuiOutlinedInput-root:focus-within .MuiOutlinedInput-notchedOutline': {
-          borderColor: '#190D03',
-          borderWidth: '1px'
-        },
         '& .MuiOutlinedInput-root.Mui-disabled .MuiOutlinedInput-notchedOutline': {
           borderColor: 'rgba(25, 13, 3, 0.25)'
         },
@@ -85,8 +81,15 @@ export default function DateTimePicker({ startDateTime, endDateTime, onChange, l
         },
         textField: {
           sx: {
+            '& .MuiInputLabel-root.Mui-focused': {
+              color: '#190D03'
+            },
             '& label': { sx: styles.datetimePickerLabel },
-            width: { sm: '200px', xl: '223px' }
+            width: { sm: '200px', xl: '223px' },
+            '& .MuiPickersOutlinedInput-root.Mui-focused:not(.Mui-error) .MuiPickersOutlinedInput-notchedOutline': {
+              borderColor: '#190D03',
+              borderWidth: '1px'
+            }
           },
           InputProps: { sx: styles.dateTimePicker }
         }

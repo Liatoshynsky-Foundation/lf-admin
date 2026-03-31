@@ -15,6 +15,7 @@ export const styles = {
     fontFamily: 'Mulish',
     lineHeight: '150%',
     color: '#696C7D',
+    borderColor: colors.black,
     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
       borderColor: colors.black
     }
