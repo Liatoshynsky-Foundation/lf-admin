@@ -1,7 +1,7 @@
 const hexToRgba = (hex: string, alpha: number) => {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
+  const r = Number.parseInt(hex.slice(1, 3), 16);
+  const g = Number.parseInt(hex.slice(3, 5), 16);
+  const b = Number.parseInt(hex.slice(5, 7), 16);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
@@ -121,6 +121,25 @@ const commonStates = {
   whiteAlpha: (opacity: number) => hexToRgba(mainHexPallete.white, opacity)
 };
 
+const sharedErrorState = {
+  errorFirstIcon: commonStates.functional.error,
+  errorSecondIcon: commonStates.functional.error,
+  errorUnderline: commonStates.functional.error,
+  errorLabel: commonStates.functional.error,
+  errorIcon: commonStates.functional.error,
+  errorOutline: commonStates.functional.error,
+  errorTextInfo: commonStates.functional.error,
+  errorTextInfoIcon: commonStates.functional.error,
+  errorValue: mainHexPallete.black
+};
+
+const baseButtonDisabled = {
+  filledDisabledBg: commonStates.disabled.bg,
+  outlinedDisabledBg: 'transparent',
+  outlinedDisabledBorder: commonStates.disabled.border,
+  disabledText: commonStates.disabled.text
+};
+
 export const badgeColors = {
   standardDefaultValue: commonStates.blackAlpha(0.56),
   standardPrimaryValue: mainHexPallete.white,
@@ -135,43 +154,35 @@ export const badgeColors = {
 
 export const buttonColors = {
   primary: {
+    ...baseButtonDisabled,
     filledEnabledBg: mainHexPallete.black,
     filledNormalText: mainHexPallete.white,
     filledHoveredBg: commonStates.interaction.blackHover,
     filledFocusedBg: commonStates.interaction.blackPressed,
     filledPressedBg: commonStates.interaction.blackPressed,
-    filledDisabledBg: commonStates.disabled.bg,
 
     outlinedEnabledBg: 'transparent',
     outlinedNormalText: mainHexPallete.black,
     outlinedNormalBorder: mainHexPallete.black,
     outlinedHoveredBg: commonStates.blackAlpha(0.04),
     outlinedFocusedBg: commonStates.blackAlpha(0.1),
-    outlinedPressedBg: commonStates.blackAlpha(0.1),
-    outlinedDisabledBg: 'transparent',
-    outlinedDisabledBorder: commonStates.disabled.border,
-
-    disabledText: commonStates.disabled.text
+    outlinedPressedBg: commonStates.blackAlpha(0.1)
   },
 
   secondary: {
+    ...baseButtonDisabled,
     filledEnabledBg: mainHexPallete.white,
     filledNormalText: mainHexPallete.black,
     filledHoveredBg: commonStates.interaction.whiteHover,
     filledFocusedBg: commonStates.interaction.whitePressed,
     filledPressedBg: '#DAD5CF',
-    filledDisabledBg: commonStates.disabled.bg,
 
     outlinedEnabledBg: 'transparent',
     outlinedNormalText: mainHexPallete.white,
     outlinedNormalBorder: mainHexPallete.white,
     outlinedHoveredBg: commonStates.whiteAlpha(0.08),
     outlinedFocusedBg: commonStates.whiteAlpha(0.16),
-    outlinedPressedBg: commonStates.whiteAlpha(0.16),
-    outlinedDisabledBg: 'transparent',
-    outlinedDisabledBorder: commonStates.disabled.border,
-
-    disabledText: commonStates.disabled.text
+    outlinedPressedBg: commonStates.whiteAlpha(0.16)
   },
 
   tertiary: {
@@ -267,6 +278,7 @@ export const selectorColors = {
 
 export const textFieldColors = {
   standard: {
+    ...sharedErrorState,
     defaultFirstIcon: mainHexPallete.blue[800],
     defaultValue: mainHexPallete.blue[800],
     defaultSecondIcon: mainHexPallete.blue[700],
@@ -285,15 +297,11 @@ export const textFieldColors = {
     disabledFirstIcon: commonStates.disabled.icon,
     disabledValue: commonStates.disabled.text,
     disabledSecondIcon: commonStates.disabled.icon,
-    disabledUnderline: commonStates.disabled.border,
-
-    errorFirstIcon: commonStates.functional.error,
-    errorValue: mainHexPallete.black,
-    errorSecondIcon: commonStates.functional.error,
-    errorUnderline: commonStates.functional.error
+    disabledUnderline: commonStates.disabled.border
   },
 
   outline: {
+    ...sharedErrorState,
     defaultLabel: mainHexPallete.blue[800],
     defaultIcon: mainHexPallete.blue[700],
     defaultValue: mainHexPallete.black,
@@ -316,14 +324,7 @@ export const textFieldColors = {
     disabledIcon: commonStates.disabled.outline.icon,
     disabledValue: commonStates.disabled.outline.text,
     disabledOutline: commonStates.disabled.outline.border,
-    disabledTextInfo: commonStates.disabled.outline.text,
-
-    errorLabel: commonStates.functional.error,
-    errorIcon: commonStates.functional.error,
-    errorValue: mainHexPallete.black,
-    errorOutline: commonStates.functional.error,
-    errorTextInfo: commonStates.functional.error,
-    errorTextInfoIcon: commonStates.functional.error
+    disabledTextInfo: commonStates.disabled.outline.text
   }
 };
 
