@@ -1,3 +1,10 @@
+const hexToRgba = (hex: string, alpha: number) => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 export const mainHexPallete = {
   blue: {
     50: '#F9FAFB',
@@ -77,77 +84,114 @@ export const mainHexPallete = {
   black: '#190d03'
 };
 
+const commonStates = {
+  disabled: {
+    bg: mainHexPallete.blue[200],
+    text: mainHexPallete.blue[700],
+    border: mainHexPallete.blue[700],
+    icon: mainHexPallete.blue[700],
+
+    outline: {
+      text: mainHexPallete.blue[600],
+      border: mainHexPallete.blue[600],
+      icon: mainHexPallete.blue[600]
+    }
+  },
+
+  functional: {
+    error: 'rgba(230, 60, 20, 1)',
+    primaryBadge: 'rgba(95, 14, 15, 1)'
+  },
+
+  ripple: hexToRgba(mainHexPallete.brown[100], 0.4),
+
+  interaction: {
+    blackHover: '#342A21',
+    blackPressed: '#5D554E',
+    yellowHover: '#EEAF23',
+    yellowPressed: '#E5A922',
+    redHover: '#AC2F0F',
+    redFocused: '#9A2A0E',
+    redPressed: '#9A2A0D',
+    whiteHover: '#EEECEA',
+    whitePressed: '#D3CDC6'
+  },
+
+  blackAlpha: (opacity: number) => hexToRgba(mainHexPallete.black, opacity),
+  whiteAlpha: (opacity: number) => hexToRgba(mainHexPallete.white, opacity)
+};
+
 export const badgeColors = {
-  standardDefaultValue: 'rgba(0, 0, 0, 0.56)',
+  standardDefaultValue: commonStates.blackAlpha(0.56),
   standardPrimaryValue: mainHexPallete.white,
-  standardPrimaryBg: 'rgba(95, 14, 15, 1)',
+  standardPrimaryBg: commonStates.functional.primaryBadge,
   standardSecondaryValue: mainHexPallete.black,
-  standardErrorBg: 'rgba(230, 60, 20, 1)',
+  standardErrorBg: commonStates.functional.error,
   standardErrorValue: mainHexPallete.white,
 
-  dotPrimaryBg: 'rgba(95, 14, 15, 1)',
-  dotErrorBg: 'rgba(230, 60, 20, 1)'
+  dotPrimaryBg: commonStates.functional.primaryBadge,
+  dotErrorBg: commonStates.functional.error
 };
 
 export const buttonColors = {
   primary: {
     filledEnabledBg: mainHexPallete.black,
     filledNormalText: mainHexPallete.white,
-    filledHoveredBg: 'rgb(52, 42, 33)',
-    filledFocusedBg: 'rgb(93, 85, 78)',
-    filledPressedBg: 'rgb(93, 85, 78)',
-    filledDisabledBg: mainHexPallete.blue[200],
+    filledHoveredBg: commonStates.interaction.blackHover,
+    filledFocusedBg: commonStates.interaction.blackPressed,
+    filledPressedBg: commonStates.interaction.blackPressed,
+    filledDisabledBg: commonStates.disabled.bg,
 
     outlinedEnabledBg: 'transparent',
     outlinedNormalText: mainHexPallete.black,
     outlinedNormalBorder: mainHexPallete.black,
-    outlinedHoveredBg: 'rgba(25, 13, 3, 0.04)',
-    outlinedFocusedBg: 'rgba(25, 13, 3, 0.1)',
-    outlinedPressedBg: 'rgba(25, 13, 3, 0.1)',
+    outlinedHoveredBg: commonStates.blackAlpha(0.04),
+    outlinedFocusedBg: commonStates.blackAlpha(0.1),
+    outlinedPressedBg: commonStates.blackAlpha(0.1),
     outlinedDisabledBg: 'transparent',
-    outlinedDisabledBorder: mainHexPallete.blue[700],
+    outlinedDisabledBorder: commonStates.disabled.border,
 
-    disabledText: mainHexPallete.blue[700]
+    disabledText: commonStates.disabled.text
   },
 
   secondary: {
     filledEnabledBg: mainHexPallete.white,
     filledNormalText: mainHexPallete.black,
-    filledHoveredBg: 'rgb(238, 236, 234)',
-    filledFocusedBg: 'rgb(211, 205, 198)',
-    filledPressedBg: 'rgb(218, 213, 207)',
-    filledDisabledBg: mainHexPallete.blue[200],
+    filledHoveredBg: commonStates.interaction.whiteHover,
+    filledFocusedBg: commonStates.interaction.whitePressed,
+    filledPressedBg: '#DAD5CF',
+    filledDisabledBg: commonStates.disabled.bg,
 
     outlinedEnabledBg: 'transparent',
     outlinedNormalText: mainHexPallete.white,
     outlinedNormalBorder: mainHexPallete.white,
-    outlinedHoveredBg: 'rgba(252, 252, 252, 0.08)',
-    outlinedFocusedBg: 'rgba(252, 252, 252, 0.16)',
-    outlinedPressedBg: 'rgba(252, 252, 252, 0.16)',
+    outlinedHoveredBg: commonStates.whiteAlpha(0.08),
+    outlinedFocusedBg: commonStates.whiteAlpha(0.16),
+    outlinedPressedBg: commonStates.whiteAlpha(0.16),
     outlinedDisabledBg: 'transparent',
-    outlinedDisabledBorder: mainHexPallete.blue[700],
+    outlinedDisabledBorder: commonStates.disabled.border,
 
-    disabledText: mainHexPallete.blue[700]
+    disabledText: commonStates.disabled.text
   },
 
   tertiary: {
     enabledBg: mainHexPallete.yellow[500],
     normalText: mainHexPallete.black,
-    hoveredBg: 'rgb(238, 175, 35)',
-    focusedBg: 'rgb(229, 169, 34)',
+    hoveredBg: commonStates.interaction.yellowHover,
+    focusedBg: commonStates.interaction.yellowPressed,
     pressedBg: mainHexPallete.yellow[800],
-    disabledBg: mainHexPallete.blue[200],
-    disabledText: mainHexPallete.blue[700]
+    disabledBg: commonStates.disabled.bg,
+    disabledText: commonStates.disabled.text
   },
 
   error: {
     enabledBg: mainHexPallete.red[600],
     normalText: mainHexPallete.white,
-    hoveredBg: 'rgb(172, 47, 15)',
-    focusedBg: 'rgb(154, 42, 14)',
-    pressedBg: 'rgb(154, 42, 13)',
-    disabledBg: mainHexPallete.blue[200],
-    disabledText: mainHexPallete.blue[700]
+    hoveredBg: commonStates.interaction.redHover,
+    focusedBg: commonStates.interaction.redFocused,
+    pressedBg: commonStates.interaction.redPressed,
+    disabledBg: commonStates.disabled.bg,
+    disabledText: commonStates.disabled.text
   }
 };
 
@@ -176,12 +220,12 @@ export const checkboxColors = {
   defaultIcon: mainHexPallete.blue[500],
 
   hoveredIcon: mainHexPallete.blue[500],
-  hoveredRipple: 'rgba(239, 233, 224, 0.4)',
+  hoveredRipple: commonStates.ripple,
 
   focusedIcon: mainHexPallete.brown[300],
-  focusedRipple: 'rgba(239, 233, 224, 0.4)',
+  focusedRipple: commonStates.ripple,
 
-  disabledIcon: mainHexPallete.blue[200],
+  disabledIcon: commonStates.disabled.bg,
 
   selectedIcon: 'rgba(255, 188, 33, 1)'
 };
@@ -194,19 +238,19 @@ export const chipsColors = {
   filledPressedBg: mainHexPallete.brown[200],
   filledDisabledBg: mainHexPallete.blue[50],
 
-  outlineHoveredBg: 'rgba(25, 13, 3, 0.08)',
-  outlinePressedBg: 'rgba(25, 13, 3, 0.24)',
+  outlineHoveredBg: commonStates.blackAlpha(0.08),
+  outlinePressedBg: commonStates.blackAlpha(0.24),
   outlineNormalBorder: mainHexPallete.black,
-  outlineDisabledBorder: mainHexPallete.blue[700],
-  outlineDisabledText: mainHexPallete.blue[700]
+  outlineDisabledBorder: commonStates.disabled.border,
+  outlineDisabledText: commonStates.disabled.text
 };
 
 export const menuItemColors = {
-  hoveredBg: 'rgba(25, 13, 3, 0.06)',
-  activeBg: 'rgba(25, 13, 3, 0.12)',
+  hoveredBg: commonStates.blackAlpha(0.06),
+  activeBg: commonStates.blackAlpha(0.12),
 
   defaultText: mainHexPallete.black,
-  disabledText: mainHexPallete.blue[700]
+  disabledText: commonStates.disabled.text
 };
 
 export const selectorColors = {
@@ -226,27 +270,27 @@ export const textFieldColors = {
     defaultFirstIcon: mainHexPallete.blue[800],
     defaultValue: mainHexPallete.blue[800],
     defaultSecondIcon: mainHexPallete.blue[700],
-    defaultUnderline: 'rgba(25, 13, 3, 0.25)',
+    defaultUnderline: commonStates.blackAlpha(0.25),
 
     hoveredFirstIcon: mainHexPallete.blue[800],
     hoveredValue: mainHexPallete.blue[800],
     hoveredSecondIcon: mainHexPallete.black,
-    hoveredUnderline: 'rgba(25, 13, 3, 0.5)',
+    hoveredUnderline: commonStates.blackAlpha(0.5),
 
     focusedFirstIcon: mainHexPallete.black,
     focusedValue: mainHexPallete.black,
     focusedSecondIcon: mainHexPallete.black,
     focusedUnderline: mainHexPallete.black,
 
-    disabledFirstIcon: mainHexPallete.blue[700],
-    disabledValue: mainHexPallete.blue[700],
-    disabledSecondIcon: mainHexPallete.blue[700],
-    disabledUnderline: mainHexPallete.blue[700],
+    disabledFirstIcon: commonStates.disabled.icon,
+    disabledValue: commonStates.disabled.text,
+    disabledSecondIcon: commonStates.disabled.icon,
+    disabledUnderline: commonStates.disabled.border,
 
-    errorFirstIcon: 'rgba(230, 60, 20, 1)',
+    errorFirstIcon: commonStates.functional.error,
     errorValue: mainHexPallete.black,
-    errorSecondIcon: 'rgba(230, 60, 20, 1)',
-    errorUnderline: 'rgba(230, 60, 20, 1)'
+    errorSecondIcon: commonStates.functional.error,
+    errorUnderline: commonStates.functional.error
   },
 
   outline: {
@@ -259,7 +303,7 @@ export const textFieldColors = {
     hoveredLabel: mainHexPallete.blue[800],
     hoveredIcon: mainHexPallete.black,
     hoveredValue: mainHexPallete.black,
-    hoveredOutline: 'rgba(25, 13, 3, 0.5)',
+    hoveredOutline: commonStates.blackAlpha(0.5),
     hoveredTextInfo: mainHexPallete.blue[800],
 
     focusedLabel: mainHexPallete.black,
@@ -268,18 +312,18 @@ export const textFieldColors = {
     focusedOutline: mainHexPallete.black,
     focusedTextInfo: mainHexPallete.black,
 
-    disabledLabel: mainHexPallete.blue[600],
-    disabledIcon: mainHexPallete.blue[600],
-    disabledValue: mainHexPallete.blue[600],
-    disabledOutline: mainHexPallete.blue[600],
-    disabledTextInfo: mainHexPallete.blue[600],
+    disabledLabel: commonStates.disabled.outline.text,
+    disabledIcon: commonStates.disabled.outline.icon,
+    disabledValue: commonStates.disabled.outline.text,
+    disabledOutline: commonStates.disabled.outline.border,
+    disabledTextInfo: commonStates.disabled.outline.text,
 
-    errorLabel: 'rgba(230, 60, 20, 1)',
-    errorIcon: 'rgba(230, 60, 20, 1)',
+    errorLabel: commonStates.functional.error,
+    errorIcon: commonStates.functional.error,
     errorValue: mainHexPallete.black,
-    errorOutline: 'rgba(230, 60, 20, 1)',
-    errorTextInfo: 'rgba(230, 60, 20, 1)',
-    errorTextInfoIcon: 'rgba(230, 60, 20, 1)'
+    errorOutline: commonStates.functional.error,
+    errorTextInfo: commonStates.functional.error,
+    errorTextInfoIcon: commonStates.functional.error
   }
 };
 
@@ -287,6 +331,6 @@ export const toolbarColors = {
   textColor: mainHexPallete.black,
   default: mainHexPallete.white,
   hovered: 'rgba(241, 242, 247, 1)',
-  focused: 'rgba(25, 13, 3, 0.06)',
+  focused: commonStates.blackAlpha(0.06),
   border: mainHexPallete.blue[200]
 };
