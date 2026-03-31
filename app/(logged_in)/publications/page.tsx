@@ -50,9 +50,7 @@ export default function PublicationsPage() {
   const [seoData, setSeoData] = useState<SeoBlockValue>(defaultSeoValue);
 
   const renderExtraFields = useCallback(
-    (locale: 'uk' | 'en') => (
-      <MediaMentionExtraFields locale={locale} seoData={seoData} onChange={setSeoData} />
-    ),
+    (locale: 'uk' | 'en') => <MediaMentionExtraFields locale={locale} seoData={seoData} onChange={setSeoData} />,
     [seoData]
   );
 
