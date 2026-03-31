@@ -1,37 +1,37 @@
 export type SeoData = {
   meta: {
-    ua: { title: string; description: string; keywords: string; canonicalUrl?: string };
+    uk: { title: string; description: string; keywords: string; canonicalUrl?: string };
     en: { title: string; description: string; keywords: string; canonicalUrl?: string };
   };
   allowIndexing: {
-    ua: boolean;
+    uk: boolean;
     en: boolean;
   };
   ogImage: {
-    ua: File | string | null;
+    uk: File | string | null;
     en: File | string | null;
   };
 };
 
 export const mapSeoBase = ({ meta, allowIndexing, ogImage }: SeoData) => ({
   title: {
-    ua: meta.ua.title,
+    uk: meta.uk.title,
     en: meta.en.title
   },
   description: {
-    ua: meta.ua.description,
+    uk: meta.uk.description,
     en: meta.en.description
   },
   keywords: {
-    ua: meta.ua.keywords,
+    uk: meta.uk.keywords,
     en: meta.en.keywords
   },
   allowIndexation: {
-    ua: allowIndexing.ua,
+    uk: allowIndexing.uk,
     en: allowIndexing.en
   },
   coverImage: {
-    ua: typeof ogImage.ua === 'string' ? ogImage.ua : null,
+    uk: typeof ogImage.uk === 'string' ? ogImage.uk : null,
     en: typeof ogImage.en === 'string' ? ogImage.en : null
   }
 });

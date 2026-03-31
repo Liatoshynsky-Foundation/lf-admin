@@ -3,7 +3,7 @@ import { mapSeoBase } from './seo.mapper';
 
 export const mapToUpdateNewsInput = (data: Readonly<SeoData>) => ({
   ...mapSeoBase(data),
-  adminTitle: data.meta.ua.title,
+  adminTitle: data.meta.uk.title,
   content: null,
   newsDate: null,
   status: null,

@@ -14,7 +14,10 @@ export const styles = {
     fontSize: '16px',
     fontFamily: 'Mulish',
     lineHeight: '150%',
-    color: '#696C7D'
+    color: '#696C7D',
+    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+      borderColor: colors.black
+    }
   },
   datetimePickerLabel: {
     fontSize: '14px',

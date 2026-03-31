@@ -28,20 +28,32 @@ export const styles = {
     '& .MuiOutlinedInput-root': {
       '& fieldset': {
         borderRadius: '8px',
-        borderColor: colors.adminBlue[500],
+        borderColor: '#ADAEBA', // default
         borderWidth: '1px'
       },
+
       '&:hover fieldset': {
-        borderColor: colors.adminBlue[500]
+        borderColor: 'rgba(25, 13, 3, 0.5)' // hover
       },
+
       '&.Mui-focused fieldset': {
-        borderColor: colors.adminBlue[500],
+        borderColor: '#190D03', // focused
         borderWidth: '1px'
+      },
+
+      '&.Mui-error fieldset': {
+        borderColor: '#E63C14' // error
+      },
+
+      '&.Mui-disabled fieldset': {
+        borderColor: 'rgba(25, 13, 3, 0.25)' // disabled
       }
     },
+
     '& .MuiInputLabel-root': {
       color: colors.blue[800]
     },
+
     '& .MuiInputLabel-root.Mui-focused': {
       color: colors.blue[800]
     }

@@ -97,7 +97,7 @@ export const styles = {
     '& .MuiOutlinedInput-root': {
       '& fieldset': {
         borderRadius: '8px',
-        borderColor: 'rgba(173, 174, 186, 1)',
+        borderColor: '#ADAEBA',
         borderWidth: '1px',
         padding: '12px 16px',
         fontSize: '16px',
@@ -106,7 +106,7 @@ export const styles = {
         fontFamily: 'Mulish'
       },
       '&.Mui-focused fieldset': {
-        borderColor: 'rgba(173, 174, 186, 1)',
+        borderColor: '#190D03',
         borderWidth: '1px'
       }
     },

@@ -3,8 +3,8 @@ import { mapSeoBase } from './seo.mapper';
 
 export const mapToUpdateMediaMentionInput = (data: Readonly<SeoData>) => ({
   ...mapSeoBase(data),
-  url: data.meta.ua.canonicalUrl || null,
-  adminTitle: data.meta.ua.title,
+  url: data.meta.uk.canonicalUrl || null,
+  adminTitle: data.meta.uk.title,
   slug: null,
   status: null,
   publishedAt: null

@@ -5,63 +5,74 @@ import { useState } from 'react';
 import type { LocalizedMeta } from './SeoMetadataForm';
 import SeoMetadataForm from './SeoMetadataForm';
 
+export interface SeoBlockValue {
+  meta: { uk: LocalizedMeta; en: LocalizedMeta };
+  ogImage: { uk: File | string | null; en: File | string | null };
+  allowIndexing: { uk: boolean; en: boolean };
+}
+
+const defaultValue: SeoBlockValue = {
+  meta: {
+    uk: { title: '', description: '', keywords: '', canonicalUrl: undefined },
+    en: { title: '', description: '', keywords: '', canonicalUrl: undefined }
+  },
+  ogImage: { uk: null, en: null },
+  allowIndexing: { uk: true, en: true }
+};
+
 export interface SeoMetadataBlockProps {
   readonly showCanonicalUrl?: boolean;
   readonly showAlternativeText?: boolean;
-  [key: string]: any;
+  readonly showDatatimePickers?: boolean;
+  readonly value?: SeoBlockValue;
+  readonly onChange?: (value: SeoBlockValue) => void;
 }
 
 export default function SeoMetadataBlock({
   showCanonicalUrl = false,
   showAlternativeText = false,
-  ...otherProps
+  showDatatimePickers = false,
+  value: externalValue,
+  onChange: externalOnChange
 }: SeoMetadataBlockProps) {
-  const [meta, setMeta] = useState<{
-    ua: LocalizedMeta;
-    en: LocalizedMeta;
-  }>({
-    ua: { title: '', description: '', keywords: '', canonicalUrl: undefined },
-    en: { title: '', description: '', keywords: '', canonicalUrl: undefined }
-  });
-  const [ogImage, setOgImage] = useState<{
-    ua: File | string | null;
-    en: File | string | null;
-  }>({
-    ua: null,
-    en: null
-  });
-  const [allowIndexing, setAllowIndexing] = useState<{
-    ua: boolean;
-    en: boolean;
-  }>({
-    ua: true,
-    en: true
-  });
+  const [internalValue, setInternalValue] = useState<SeoBlockValue>(defaultValue);
+
+  const isControlled = externalValue !== undefined && externalOnChange !== undefined;
+  const value = isControlled ? externalValue : internalValue;
+
+  const handleChange = (next: SeoBlockValue) => {
+    if (isControlled) {
+      externalOnChange(next);
+    } else {
+      setInternalValue(next);
+    }
+  };
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
       <SeoMetadataForm
-        value={meta.ua}
-        onChange={(newMeta) => setMeta((prev) => ({ ...prev, ua: newMeta }))}
-        locale="ua"
-        ogImage={ogImage.ua}
-        onImageChange={(file) => setOgImage((prev) => ({ ...prev, ua: file }))}
-        allowIndexing={allowIndexing.ua}
-        onIndexingChange={(value) => setAllowIndexing((prev) => ({ ...prev, ua: value }))}
+        value={value.meta.uk}
+        onChange={(newMeta) => handleChange({ ...value, meta: { ...value.meta, uk: newMeta } })}
+        locale="uk"
+        ogImage={value.ogImage.uk}
+        onImageChange={(file) => handleChange({ ...value, ogImage: { ...value.ogImage, uk: file } })}
+        allowIndexing={value.allowIndexing.uk}
+        onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, uk: val } })}
         showCanonicalUrl={showCanonicalUrl}
         showAlternativeText={showAlternativeText}
-        {...otherProps}
+        showDatatimePickers={showDatatimePickers}
       />
       <SeoMetadataForm
-        value={meta.en}
-        onChange={(newMeta) => setMeta((prev) => ({ ...prev, en: newMeta }))}
+        value={value.meta.en}
+        onChange={(newMeta) => handleChange({ ...value, meta: { ...value.meta, en: newMeta } })}
         locale="en"
-        ogImage={ogImage.en}
-        onImageChange={(file) => setOgImage((prev) => ({ ...prev, en: file }))}
-        allowIndexing={allowIndexing.en}
-        onIndexingChange={(value) => setAllowIndexing((prev) => ({ ...prev, en: value }))}
+        ogImage={value.ogImage.en}
+        onImageChange={(file) => handleChange({ ...value, ogImage: { ...value.ogImage, en: file } })}
+        allowIndexing={value.allowIndexing.en}
+        onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, en: val } })}
         showCanonicalUrl={showCanonicalUrl}
         showAlternativeText={showAlternativeText}
-        {...otherProps}
+        showDatatimePickers={showDatatimePickers}
       />
     </Box>
   );

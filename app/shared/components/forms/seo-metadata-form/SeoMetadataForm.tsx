@@ -23,7 +23,7 @@ export interface LocalizedMeta {
 export interface SeoMetadataFormProps {
   readonly value: LocalizedMeta;
   readonly onChange: (value: LocalizedMeta) => void;
-  readonly locale: 'ua' | 'en';
+  readonly locale: 'uk' | 'en';
   readonly ogImage: File | string | null;
   readonly onImageChange: (file: File) => void;
   readonly allowIndexing: boolean;
@@ -59,7 +59,7 @@ export default function SeoMetadataForm({
   labels = {}
 }: SeoMetadataFormProps) {
   const [ogImagePreview, setOgImagePreview] = useState<string | null>(typeof ogImage === 'string' ? ogImage : null);
-  const altKey = locale === 'ua' ? 'uk' : 'en';
+  const altKey = locale;
   const [touched, setTouched] = useState<{ [K in keyof LocalizedMeta]?: boolean }>({});
   const [errors, setErrors] = useState<{ [K in keyof LocalizedMeta]?: string }>({});
 
