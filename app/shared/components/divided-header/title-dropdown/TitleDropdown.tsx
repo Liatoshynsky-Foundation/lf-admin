@@ -36,7 +36,7 @@ export const TitleDropdown = (props: TitleDropdownProps) => {
       </Typography>
 
       <Typography variant="customBold20Tight">{contextLabel}</Typography>
-      <IconButton aria-label="Menu Open" sx={{ml: '-4px'}} onClick={onMenuOpen}>
+      <IconButton aria-label="Відкрити меню" sx={{ml: '-4px'}} onClick={onMenuOpen}>
         <ChevronDown size="20px" color="#190D03" strokeWidth="1.5px" />
       </IconButton>
     </Box>

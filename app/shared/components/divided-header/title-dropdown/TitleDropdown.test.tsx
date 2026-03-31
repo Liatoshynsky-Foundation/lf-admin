@@ -22,7 +22,7 @@ describe('TitleDropdown Component', () => {
 
     render(<TitleDropdown title="Про Фундацію" type="multilingual" language="EN" onMenuOpen={mockOnMenuOpen} />);
 
-    const triggerElement = screen.getByRole('button', {name: 'Open menu'});
+    const triggerElement = screen.getByRole('button', {name: 'Відкрити меню'});
 
     fireEvent.click(triggerElement);
 
