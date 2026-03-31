@@ -26,15 +26,16 @@ export type SeoData = {
 };
 
 export const mapSeoBase = ({ meta, allowIndexing, ogImage }: SeoData) => ({
-  title: {
-    uk: meta.uk.title,
-    en: meta.en.title
-  },
   description: {
     uk: meta.uk.description,
     en: meta.en.description,
     meta: {
-      canonicalUrl: meta.uk.canonicalUrl ?? null
+      description: { uk: meta.uk.description, en: meta.en.description },
+      canonicalUrl: {
+        uk: meta.uk.canonicalUrl ?? null,
+        en: meta.en.canonicalUrl ?? null
+      },
+      metaTitle: { uk: meta.uk.title, en: meta.en.title }
     }
   },
   keywords: {
@@ -46,7 +47,7 @@ export const mapSeoBase = ({ meta, allowIndexing, ogImage }: SeoData) => ({
     en: allowIndexing.en
   },
   coverImage: {
-    src: ogImage.uk,
+    src: { uk: ogImage.uk, en: ogImage.en },
     alt: {
       uk: meta.uk.altText?.uk ?? '',
       en: meta.en.altText?.en ?? ''

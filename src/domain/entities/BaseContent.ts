@@ -14,7 +14,7 @@ export type LocalizedContent = {
 };
 
 export type LocalizedImage = {
-    src: string;
+    src: { uk: string; en: string };
     alt: LocalizedString;
     caption?: LocalizedString;
     isTmp?: boolean;
@@ -25,7 +25,15 @@ export type LocalizedImage = {
 export type BaseContentFields = {
     adminTitle: string;
     title: LocalizedString;
-    description: LocalizedString;
+    description: {
+        uk: string;
+        en: string;
+        meta?: {
+            description?: { uk: string; en: string };
+            canonicalUrl?: { uk: string; en: string };
+            metaTitle?: { uk: string; en: string };
+        };
+    };
     keywords: LocalizedString;
     allowIndexation: LocalizedBoolean;
     slug: string;

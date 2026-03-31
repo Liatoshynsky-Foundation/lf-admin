@@ -1,5 +1,5 @@
 'use client';
-import { Box, Button } from '@mui/material';
+import { Box } from '@mui/material';
 import { useState } from 'react';
 
 import { SeoCanonicalUrlField } from '~/shared/components/forms/seo-metadata-form/seo-canonicalurl-field/SeoCanonicalUrlField';
@@ -18,11 +18,6 @@ const defaultSeoValue: SeoBlockValue = {
 
 export default function PublicationsPage() {
   const [seoData, setSeoData] = useState<SeoBlockValue>(defaultSeoValue);
-
-  const handleSubmit = () => {
-    // eslint-disable-next-line no-console
-    console.log(seoData);
-  };
 
   return (
     <Box>
@@ -55,7 +50,6 @@ export default function PublicationsPage() {
           </>
         )}
       />
-      <Button onClick={handleSubmit}>Зберегти</Button>
     </Box>
   );
 }
