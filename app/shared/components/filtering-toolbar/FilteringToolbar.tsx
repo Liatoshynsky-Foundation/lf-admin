@@ -7,7 +7,7 @@ import {
   IconButton,
   Tooltip
 } from '@mui/material';
-import Image from 'next/image';
+import { Filter, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { ControlPanel } from '~/shared/components/control-panel';
@@ -112,7 +112,7 @@ function renderFilterToggleButton({
     >
       <Button
         variant="outlined"
-        startIcon={<Image src="/icons/filter-dark.svg" alt="filters" width={18} height={18} />}
+        startIcon={<Filter size={18} strokeWidth={1.75} />}
         onClick={onToggleFilters}
         sx={{
           borderRadius: '28px',
@@ -227,7 +227,7 @@ function renderClearFiltersButton({
               }
             }}
           >
-            <Image src="/icons/close.svg" alt="clear" width={22} height={22} />
+            <X size={22} strokeWidth={1.75} />
           </IconButton>
         ) : null}
       </span>
