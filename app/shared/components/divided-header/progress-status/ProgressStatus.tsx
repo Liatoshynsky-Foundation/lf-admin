@@ -17,7 +17,7 @@ const ProgressStatus = ({ isSaved = true }: ProgressStatusProps) => {
         key={String(isSaved)}
         sx={{
           transition: 'opacity 0.3s ease',
-          animation: isSaved ? `${styles.blinkThenFade} 4s ease` : `${styles.blinkStay} 0.4s ease`,
+          animation: isSaved ? `${styles.blinkThenFade} 4s ease forwards` : `${styles.blinkStay} 0.4s ease`,
           opacity: isSaved ? 0 : 1
         }}
         variant="customMedium14Tight"

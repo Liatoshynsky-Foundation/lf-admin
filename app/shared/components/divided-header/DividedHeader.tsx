@@ -39,7 +39,7 @@ export default function DividedHeader({
   return (
     <Box sx={[styles.container, ...sxToArray(sx)]}>
       <Stack alignItems="center" justifyContent="space-between" direction={'row'} sx={styles.contentStack}>
-        <IconButton onClick={handleReturn} sx={styles.returnButton} aria-label={'Return to previous page'}>
+        <IconButton onClick={handleReturn} sx={styles.returnButton} aria-label={`Повернутись на сторінку ${originUrl}`}>
           <ChevronLeft color="black" strokeWidth="1.5px" size={24} />
         </IconButton>
 

@@ -4,14 +4,14 @@ import React, { MouseEvent } from 'react';
 
 import { styles } from './HeaderRightActions.style';
 
-interface HeaderRightActionsProps {
+export type HeaderRightActionsProps = {
   mode?: 'create' | 'edit' | 'seo';
   onEdit?: () => void;
   onPublish?: () => void;
   onSave?: () => void;
   onCancel?: () => void;
   onMenuOpen?: (event: MouseEvent<HTMLButtonElement>) => void;
-}
+};
 
 export default function HeaderRightActions({
   mode = 'create',
@@ -26,7 +26,7 @@ export default function HeaderRightActions({
     case 'create':
       return (
         <>
-          <IconButton sx={{ color: 'text.primary' }}>
+          <IconButton sx={{ color: 'text.primary' }} aria-label="Передогляд">
             <EyeIcon size={24} strokeWidth={1.5} />
           </IconButton>
           <Button onClick={onEdit} variant="contained" disableElevation sx={styles.pill('yellow')}>
@@ -38,22 +38,24 @@ export default function HeaderRightActions({
     case 'edit':
       return (
         <>
-          <IconButton sx={{ color: 'text.primary' }}>
+          <IconButton sx={{ color: 'text.primary' }} aria-label="Передогляд">
             <EyeIcon size={24} strokeWidth={1.5} />
           </IconButton>
 
-          <ButtonGroup variant="contained" disableElevation sx={styles.group}>
-            <Button onClick={onPublish} sx={styles.groupLeft}>Опублікувати</Button>
-            <Button onClick={onMenuOpen} sx={styles.groupRight}>
-              <ChevronDown width={20} />
+          <ButtonGroup variant="contained" disableElevation sx={styles.group} role="group" aria-label="Дії публікації">
+            <Button onClick={onPublish} sx={styles.groupLeft}>
+                Опублікувати
             </Button>
+            <IconButton aria-label="Відкрити меню параметрів" onClick={onMenuOpen} sx={styles.groupRight}>
+              <ChevronDown size={20} />
+            </IconButton>
           </ButtonGroup>
         </>
       );
 
     case 'seo':
       return (
-        <Stack spacing={'12px'} marginLeft={'8px'} direction={'row'}>
+        <Stack spacing={'12px'} marginLeft={'8px'} direction={'row'} role="group" aria-label="Дії збереження">
           <Button onClick={onCancel} variant="outlined" sx={styles.pill('outline')}>
               Скасувати
           </Button>
