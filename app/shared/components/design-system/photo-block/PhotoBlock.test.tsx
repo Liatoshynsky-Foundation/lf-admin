@@ -268,7 +268,9 @@ describe('ImagePreviewBlock', () => {
   it('renders placeholder when no image', () => {
     renderComponent({ imageUrl: '' });
 
-    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    const img = screen.queryByRole('img');
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute('src', '/icons/cloud-upload.svg');
   });
 
   it('updates preview when imageUrl changes', async () => {
