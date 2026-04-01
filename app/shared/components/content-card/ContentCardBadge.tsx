@@ -1,10 +1,9 @@
 import { Box, Chip } from '@mui/material';
-import Image from 'next/image';
+import { CircleCheckBig } from 'lucide-react';
 
 import { ContentType } from './ContentCard';
 import styles from './ContentCardBadge.styles';
 import { getLocalizations } from '~/lib/utils/localizations';
-
 interface ContentCardBadgeProps {
   type: ContentType;
   status: string;
@@ -34,6 +33,8 @@ const ContentCardBadge = ({ type, status, localizations }: ContentCardBadgeProps
     }
   };
 
+  const localizationLabel = getLocalizations(localizations);
+
   return (
     <Box sx={styles.badgeContainer}>
       <Chip
@@ -42,8 +43,13 @@ const ContentCardBadge = ({ type, status, localizations }: ContentCardBadgeProps
         variant="filled"
         sx={{ backgroundColor: getContentTypeColor(type) }}
       ></Chip>
-      <Box sx={styles.localizationsBadge}>
-        <Image src="/icons/circleCheckBig.svg" alt="check" width={15} height={15}></Image>
+      <Box
+        sx={{
+          ...styles.localizationsBadge,
+          padding: localizationLabel ? '4px 8px' : '4px 6px'
+        }}
+      >
+        <CircleCheckBig size={15} />
         {getLocalizations(localizations) && <Box>{getLocalizations(localizations)}</Box>}
       </Box>
       {status === 'draft' && <Box sx={styles.draftBadge}>Чернетка {getLocalizations(localizations)}</Box>}
