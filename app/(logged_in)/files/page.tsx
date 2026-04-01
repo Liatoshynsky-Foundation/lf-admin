@@ -246,9 +246,9 @@ export default function FilesPage() {
         overflowX: 'hidden',
         display: 'flex',
         flexDirection: 'column',
+        padding: '32px',
         gap: '20px',
-        pt: '15px',
-        pr: { xs: 0, md: sidebarFile ? `${SIDEBAR_WIDTH + 12}px` : 0 },
+        pr: { xs: '32px', md: sidebarFile ? `${SIDEBAR_WIDTH + 32}px` : '32px' },
         transition: 'padding-right 0.2s ease'
       }}
     >
