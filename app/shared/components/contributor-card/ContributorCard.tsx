@@ -43,8 +43,6 @@ export const ContributorCard = ({
       <ImagePreviewBlock
         imageUrl={contributor.photo.generatedSrc || '/images/oval-contributor-card.png'}
         fileName={contributor.photo.alt[currentLocale] || ''}
-        cropWidth={150}
-        cropHeight={130}
         onChangeImage={handleChangeImage}
         direction="column"
         buttonSpacing="8px"
