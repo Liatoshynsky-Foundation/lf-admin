@@ -8,7 +8,7 @@ import SeoMetadataForm from '../SeoMetadataForm';
 
 export interface SeoBlockValue {
   meta: { uk: LocalizedMeta; en: LocalizedMeta };
-  ogImage: { uk: File | string | null; en: File | string | null };
+  ogImage: File | string | null;
   allowIndexing: { uk: boolean; en: boolean };
 }
 
@@ -17,7 +17,7 @@ const defaultValue: SeoBlockValue = {
     uk: { title: '', description: '', keywords: '', canonicalUrl: undefined },
     en: { title: '', description: '', keywords: '', canonicalUrl: undefined }
   },
-  ogImage: { uk: null, en: null },
+  ogImage: null,
   allowIndexing: { uk: true, en: true }
 };
 
@@ -53,8 +53,8 @@ export default function SeoMetadataBlock({
         value={value.meta.uk}
         onChange={(newMeta) => handleChange({ ...value, meta: { ...value.meta, uk: newMeta } })}
         locale="uk"
-        ogImage={value.ogImage.uk}
-        onImageChange={(file) => handleChange({ ...value, ogImage: { ...value.ogImage, uk: file } })}
+        ogImage={value.ogImage}
+        onImageChange={(file) => handleChange({ ...value, ogImage: file })}
         allowIndexing={value.allowIndexing.uk}
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, uk: val } })}
         showAlternativeText={showAlternativeText}
@@ -64,8 +64,8 @@ export default function SeoMetadataBlock({
         value={value.meta.en}
         onChange={(newMeta) => handleChange({ ...value, meta: { ...value.meta, en: newMeta } })}
         locale="en"
-        ogImage={value.ogImage.en}
-        onImageChange={(file) => handleChange({ ...value, ogImage: { ...value.ogImage, en: file } })}
+        ogImage={value.ogImage}
+        onImageChange={(file) => handleChange({ ...value, ogImage: file })}
         allowIndexing={value.allowIndexing.en}
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, en: val } })}
         showAlternativeText={showAlternativeText}

@@ -12,7 +12,7 @@ const defaultSeoValue: SeoBlockValue = {
     uk: { title: '', description: '', keywords: '' },
     en: { title: '', description: '', keywords: '' }
   },
-  ogImage: { uk: null, en: null },
+  ogImage: null,
   allowIndexing: { uk: true, en: true }
 };
 
