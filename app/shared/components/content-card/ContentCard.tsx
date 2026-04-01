@@ -1,5 +1,5 @@
 import { Box, Card, CardContent, CardMedia, Typography } from '@mui/material';
-import Image from 'next/image';
+import { EllipsisVertical } from 'lucide-react';
 
 import Button from '../design-system/button/Button';
 import styles from './ContentCard.styles';
@@ -50,13 +50,7 @@ const ContentCard = ({
             {title.uk}
           </Typography>
           <Box onClick={onClickMenu}>
-            <Image
-              src="/icons/ellipsisVertical.svg"
-              alt="menu"
-              width={4}
-              height={14}
-              style={{ cursor: 'pointer' }}
-            ></Image>
+            <EllipsisVertical size={20} style={{ cursor: 'pointer' }} />
           </Box>
         </Box>
         <Typography variant="body2" sx={styles.date}>
