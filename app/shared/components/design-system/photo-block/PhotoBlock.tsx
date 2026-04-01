@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Stack, type StackProps, Typography } from '@mui/material';
+import { Box, Stack, type StackProps, TextField, Typography } from '@mui/material';
 import { type ChangeEvent, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -22,6 +22,8 @@ interface ImagePreviewBlockProps extends StackProps {
   title?: string;
   cropWidth: number;
   cropHeight: number;
+  altText?: string;
+  onChangeAltText?: (value: string) => void;
   oval?: boolean;
   onChangeImage: (file: File) => void;
   editorMode?: EditorMode;
@@ -29,6 +31,7 @@ interface ImagePreviewBlockProps extends StackProps {
   buttonSpacing?: string;
   stackSpacing?: string;
   typographySpacing?: string;
+  showAlternativeText?: boolean;
 }
 
 export const ImagePreviewBlock = ({
@@ -40,10 +43,13 @@ export const ImagePreviewBlock = ({
   oval = false,
   onChangeImage,
   editorMode = 'legacy',
-  direction = 'row',
+  direction = 'column',
   buttonSpacing = '16px',
   stackSpacing = '32px',
-  typographySpacing = '8px'
+  typographySpacing = '8px',
+  showAlternativeText = false,
+  altText,
+  onChangeAltText
 }: ImagePreviewBlockProps) => {
   const [previewImage, setPreviewImage] = useState<string>(imageUrl);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
@@ -143,14 +149,25 @@ export const ImagePreviewBlock = ({
       ) : null}
 
       <Box sx={styles.imageBlock}>
-        <Box
-          component="img"
-          src={previewImage}
-          alt="Preview"
-          sx={oval ? styles.imageOvalPreview : styles.imagePreview}
-        />
+        {previewImage ? (
+          <Box
+            component="img"
+            src={previewImage}
+            alt={title || 'Selected'}
+            sx={oval ? styles.imageOvalPreview : styles.imagePreview}
+          />
+        ) : (
+          <Box sx={styles.imagePreview}>
+            <Box
+              component="img"
+              src="/icons/cloud-upload.svg"
+              alt="cloud upload"
+              sx={{ width: 76, height: 76, opacity: 0.3 }}
+            />
+          </Box>
+        )}
 
-        <Stack spacing={stackSpacing} maxWidth="200px">
+        <Stack spacing={stackSpacing} sx={styles.rightBlock}>
           <Stack spacing={typographySpacing}>
             <Typography
               variant="body1"
@@ -163,26 +180,42 @@ export const ImagePreviewBlock = ({
             </Typography>
 
             {dimensions ? (
-              <Typography variant="body2" color="text.secondary" sx={styles.imageSizeText}>
+              <Typography variant="body2" sx={styles.imageSizeText}>
                 Розмір: {dimensions.width} × {dimensions.height}
               </Typography>
             ) : null}
           </Stack>
 
-          <Stack direction={direction} spacing={buttonSpacing} mt={1} width="330px">
+          {showAlternativeText && (
+            <TextField
+              label="Alt текст зображення"
+              value={altText || ''}
+              onChange={(e) => onChangeAltText?.(e.target.value)}
+              fullWidth
+              margin="none"
+              sx={styles.altTextField}
+              multiline
+              maxRows={4}
+              disabled={!previewImage}
+            />
+          )}
+
+          <Stack direction={direction} spacing={buttonSpacing}>
             <Button
-              startIcon={<PencilIcon style={{ marginRight: '-8px' }} />}
+              startIcon={
+                <PencilIcon style={{ marginRight: '-8px', width: '16px', height: '24px', marginTop: '6px' }} />
+              }
               variant="outlined"
               color="primary"
               size="small"
               onClick={handleEditClick}
-              style={styles.editButton}
+              sx={styles.editButton}
             >
               Редагувати
             </Button>
 
             <Button
-              startIcon={<ImageIcon style={{ marginRight: '-8px' }} />}
+              startIcon={<ImageIcon style={{ marginRight: '-8px', width: '16px', height: '24px', marginTop: '6px' }} />}
               variant="outlined"
               color="primary"
               size="small"

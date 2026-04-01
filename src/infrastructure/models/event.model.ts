@@ -1,8 +1,8 @@
-import mongoose, {Model, Schema} from 'mongoose';
+import mongoose, { Model, Schema } from 'mongoose';
 
 import { baseContentSchemaFields } from './commonSchemas';
-import {EventsEntity} from '~/domain/entities/Events';
-import {EventStatus} from '~/types/enums/common.enums';
+import { EventsEntity } from '~/domain/entities/Events';
+import { EventStatus } from '~/types/enums/common.enums';
 
 const eventSchema = new Schema<EventsEntity>(
   {
@@ -17,6 +17,14 @@ const eventSchema = new Schema<EventsEntity>(
       required: true,
       enum: Array.from(Object.values(EventStatus))
     },
+    eventDateTimeStart: {
+      type: Date,
+      default: null
+    },
+    eventDateTimeEnd: {
+      type: Date,
+      default: null
+    }
   },
   {
     timestamps: true,

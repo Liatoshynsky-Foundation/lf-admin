@@ -1,7 +1,7 @@
 export const styles = {
   container: {
-    p: 2,
-    maxWidth: '1050px'
+    width: '100%',
+    maxWidth: '496px'
   },
 
   sectionTitle: {
@@ -14,14 +14,26 @@ export const styles = {
 
   imageBlock: {
     display: 'flex',
-    gap: 2,
+    gap: 3,
     alignItems: 'flex-start',
     minWidth: '366px'
   },
 
   imagePreview: {
-    maxWidth: '500px',
-    maxHeight: '300px'
+    width: '196px',
+    height: '120px',
+    flexShrink: 0,
+    border: '1px solid #B2B3BE',
+    display: 'grid',
+    placeItems: 'center'
+  },
+
+  rightBlock: {
+    flex: '1',
+    minWidth: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 2
   },
 
   imageOvalPreview: {
@@ -31,24 +43,78 @@ export const styles = {
     borderRadius: '60% 40% 60% 40% / 55% 45% 55% 45%'
   },
   fileNameText: {
-    color: 'rgba(71, 77, 90, 1)',
+    color: '#190D03',
     fontFamily: 'Mulish',
-    mb: '8px'
+    fontWeight: 500,
+    fontSize: '18px',
+    lineHeight: '150%'
   },
 
   imageSizeText: {
-    mb: 4,
-    fontFamily: 'Mulish'
+    fontFamily: 'Mulish',
+    fontWeight: 500,
+    fontStyle: 'italic',
+    fontSize: '16px',
+    lineHeight: '140%',
+    letterSpacing: '0%',
+    color: '#52545A'
   },
   editButton: {
-    width: '127px'
+    width: '127px',
+    height: '32px',
+    padding: '4px 12px',
+    border: '1px solid #190D03',
+    color: '#190D03',
+    fontFamily: 'Mulish',
+    fontWeight: 400,
+    fontStyle: 'Regular',
+    fontSize: '14px',
+    lineHeight: '140%',
+    letterSpacing: '0px'
   },
-  changeButton: { width: '190px' },
+  changeButton: {
+    width: '190px',
+    height: '32px',
+    padding: '4px 12px',
+    border: '1px solid #190D03',
+    color: '#190D03',
+    fontFamily: 'Mulish',
+    fontWeight: 400,
+    fontStyle: 'Regular',
+    fontSize: '14px',
+    lineHeight: '140%',
+    letterSpacing: '0px'
+  },
   trimmedTypography: {
     display: '-webkit-box',
     WebkitLineClamp: 1,
     WebkitBoxOrient: 'vertical',
     overflow: 'hidden',
     textOverflow: 'ellipsis'
+  },
+  altTextField: {
+    minHeight: '48px',
+    '& .MuiOutlinedInput-root': {
+      '& fieldset': {
+        borderRadius: '8px',
+        borderColor: '#ADAEBA',
+        borderWidth: '1px',
+        padding: '12px 16px',
+        fontSize: '16px',
+        fontWeight: 500,
+        lineHeight: '150%',
+        fontFamily: 'Mulish'
+      },
+      '&:hover fieldset': {
+        borderColor: 'rgba(25, 13, 3, 0.5)'
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#190D03',
+        borderWidth: '1px'
+      }
+    },
+    '& .MuiInputLabel-root.Mui-focused': {
+      color: '#52545A'
+    }
   }
 };
