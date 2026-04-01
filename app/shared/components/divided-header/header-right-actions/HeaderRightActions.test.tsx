@@ -1,4 +1,4 @@
-import { fireEvent,render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import HeaderRightActions from './HeaderRightActions';
 
@@ -8,8 +8,8 @@ jest.mock('./HeaderRightActions.style', () => ({
     pill: jest.fn(() => ({})),
     group: {},
     groupLeft: {},
-    groupRight: {},
-  },
+    groupRight: {}
+  }
 }));
 
 describe('HeaderRightActions Component', () => {
@@ -36,7 +36,7 @@ describe('HeaderRightActions Component', () => {
 
     it('should trigger onEdit and onPreview when their respective buttons are clicked', () => {
       render(<HeaderRightActions mode="create" onEdit={mockOnEdit} onPreview={mockOnPreview} />);
-      
+
       fireEvent.click(screen.getByRole('button', { name: 'Передогляд' }));
       expect(mockOnPreview).toHaveBeenCalledTimes(1);
 
@@ -46,10 +46,10 @@ describe('HeaderRightActions Component', () => {
 
     it('should disable the edit button when disabled prop is true', () => {
       render(<HeaderRightActions mode="create" disabled={true} onEdit={mockOnEdit} />);
-      
+
       const editButton = screen.getByRole('button', { name: 'Редагувати' });
       expect(editButton).toBeDisabled();
-      
+
       fireEvent.click(editButton);
       expect(mockOnEdit).not.toHaveBeenCalled();
     });
@@ -66,11 +66,11 @@ describe('HeaderRightActions Component', () => {
 
     it('should trigger onPreview, onPublish, and onMenuOpen correctly', () => {
       render(
-        <HeaderRightActions 
-          mode="edit" 
+        <HeaderRightActions
+          mode="edit"
           onPreview={mockOnPreview}
-          onPublish={mockOnPublish} 
-          onMenuOpen={mockOnMenuOpen} 
+          onPublish={mockOnPublish}
+          onMenuOpen={mockOnMenuOpen}
         />
       );
 
@@ -86,7 +86,7 @@ describe('HeaderRightActions Component', () => {
 
     it('should disable the publish button when disabled prop is true', () => {
       render(<HeaderRightActions mode="edit" disabled={true} onPublish={mockOnPublish} />);
-      
+
       const publishButton = screen.getByRole('button', { name: 'Опублікувати' });
       expect(publishButton).toBeDisabled();
     });
@@ -101,13 +101,7 @@ describe('HeaderRightActions Component', () => {
     });
 
     it('should trigger onCancel and onSave correctly', () => {
-      render(
-        <HeaderRightActions 
-          mode="seo" 
-          onCancel={mockOnCancel} 
-          onSave={mockOnSave} 
-        />
-      );
+      render(<HeaderRightActions mode="seo" onCancel={mockOnCancel} onSave={mockOnSave} />);
 
       fireEvent.click(screen.getByRole('button', { name: 'Скасувати' }));
       expect(mockOnCancel).toHaveBeenCalledTimes(1);
@@ -118,18 +112,22 @@ describe('HeaderRightActions Component', () => {
 
     it('should disable only the save button when disabled prop is true', () => {
       render(<HeaderRightActions mode="seo" disabled={true} />);
-      
+
       expect(screen.getByRole('button', { name: 'Скасувати' })).not.toBeDisabled();
       expect(screen.getByRole('button', { name: 'Зберегти' })).toBeDisabled();
     });
   });
 
   describe('Edge Cases', () => {
-    it('should render nothing if an invalid mode is somehow passed', () => {
-      // @ts-expect-error - Intentionally passing an invalid mode string to test the default switch case fallback
-      const { container } = render(<HeaderRightActions mode="invalid" />);
+    it('should throw an error if an invalid mode is passed', () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
       
-      expect(container.firstChild).toBeEmptyDOMElement();
+      expect(() => {
+        render(<HeaderRightActions mode="invalid" />);
+      }).toThrow();
+
+      consoleSpy.mockRestore();
     });
   });
 });

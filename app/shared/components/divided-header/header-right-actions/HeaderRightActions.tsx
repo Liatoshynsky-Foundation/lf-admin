@@ -1,11 +1,13 @@
-import { Box, Button, ButtonGroup, IconButton, Stack } from '@mui/material';
+import { Box, Button, ButtonGroup, IconButton, Stack, SxProps, Theme } from '@mui/material';
 import { ChevronDown, EyeIcon } from 'lucide-react';
 import React, { MouseEvent } from 'react';
 
 import { styles } from './HeaderRightActions.style';
+import { sxToArray } from '~/lib/utils/sxToArray';
 
 type BaseProps = {
   disabled?: boolean;
+  sx?: SxProps<Theme>;
 };
 
 type CreateModeProps = BaseProps & {
@@ -30,10 +32,10 @@ type SeoModeProps = BaseProps & {
 export type HeaderRightActionsProps = CreateModeProps | EditModeProps | SeoModeProps;
 
 export default function HeaderRightActions(props: HeaderRightActionsProps) {
-  const { disabled = false } = props;
+  const { disabled = false, mode } = props;
 
   const renderContent = () => {
-    switch (props.mode) {
+    switch (mode) {
     case 'create':
       return (
         <>
@@ -95,9 +97,10 @@ export default function HeaderRightActions(props: HeaderRightActionsProps) {
       );
 
     default:
-      return null;
+      const _exhaustiveCheck: never = mode;
+      throw new Error(`Unhandled mode: ${_exhaustiveCheck}`);
     }
   };
 
-  return <Box sx={styles.container}>{renderContent()}</Box>;
+  return <Box sx={[styles.container, ...sxToArray(props.sx)]}>{renderContent()}</Box>;
 }
