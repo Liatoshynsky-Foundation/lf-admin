@@ -2,15 +2,33 @@ export type FilesTabValue = 'all' | 'image' | 'docs' | 'audio' | 'favorites';
 export type FilesSortValue = 'date_desc' | 'date_asc' | 'name_asc' | 'name_desc';
 export type SortFieldValue = 'date' | 'name';
 
-export const FILE_TABS: ReadonlyArray<{ value: FilesTabValue; label: string; disabled?: boolean }> = [
-  { value: 'all', label: 'Всі' },
-  { value: 'image', label: 'Зображення' },
-  { value: 'docs', label: 'DOCS', disabled: true },
-  { value: 'audio', label: 'Аудіо' },
-  { value: 'favorites', label: 'Обрані' }
+export type FilesTabConfig = Readonly<{
+  value: FilesTabValue;
+  label: string;
+  href: string;
+  disabled?: boolean;
+}>;
+
+export const FILE_TABS: ReadonlyArray<FilesTabConfig> = [
+  { value: 'all', label: 'Всі', href: '/files' },
+  { value: 'image', label: 'Зображення', href: '/files/image' },
+  { value: 'docs', label: 'DOCS', href: '/files/docs', disabled: true },
+  { value: 'audio', label: 'Аудіо', href: '/files/audio' },
+  { value: 'favorites', label: 'Обрані', href: '/files/favorites' }
 ];
 
-export const FILES_UPLOAD_ACCEPT = 'image/jpeg,image/jpg,image/png,application/pdf,audio/mpeg,audio/wav';
+export const FILES_UPLOAD_ALLOWED_MIME_TYPES = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'application/pdf',
+  'audio/mpeg',
+  'audio/wav'
+] as const;
+
+export const FILES_UPLOAD_ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'pdf', 'mp3', 'wav'] as const;
+
+export const FILES_UPLOAD_ACCEPT = FILES_UPLOAD_ALLOWED_MIME_TYPES.join(',');
 export const FILES_UPLOAD_ERROR = 'Підтримуються зображення, PDF та аудіо';
 
 export const SORT_OPTIONS: ReadonlyArray<{ value: FilesSortValue; label: string }> = [
@@ -48,3 +66,4 @@ export const SORT_ORDER_OPTIONS: Readonly<
     { value: 'name_desc', label: 'Я-А' }
   ]
 };
+
