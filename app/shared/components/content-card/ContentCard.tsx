@@ -49,8 +49,8 @@ const ContentCard = ({
           <Typography component="h3" sx={styles.title}>
             {title.uk}
           </Typography>
-          <Box onClick={onClickMenu}>
-            <EllipsisVertical size={20} style={{ cursor: 'pointer' }} />
+          <Box onClick={onClickMenu} data-testid="menu-button" sx={{ cursor: 'pointer' }}>
+            <EllipsisVertical size={20} />
           </Box>
         </Box>
         <Typography variant="body2" sx={styles.date}>

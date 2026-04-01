@@ -1,4 +1,4 @@
-import { fireEvent,render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import ContentCard, { ContentType } from './ContentCard';
 
@@ -81,9 +81,9 @@ describe('ContentCard', () => {
   it('should call onClickMenu when menu icon is clicked', () => {
     render(<ContentCard {...defaultProps} />);
 
-    const menuIcon = screen.getByAltText('menu');
+    const menuButton = screen.getByTestId('menu-button');
 
-    fireEvent.click(menuIcon);
+    fireEvent.click(menuButton);
 
     expect(defaultProps.onClickMenu).toHaveBeenCalledTimes(1);
   });
