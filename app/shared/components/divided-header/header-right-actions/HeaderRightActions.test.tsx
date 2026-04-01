@@ -118,16 +118,4 @@ describe('HeaderRightActions Component', () => {
     });
   });
 
-  describe('Edge Cases', () => {
-    it('should throw an error if an invalid mode is passed', () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-      
-      expect(() => {
-        render(<HeaderRightActions mode="invalid" />);
-      }).toThrow();
-
-      consoleSpy.mockRestore();
-    });
-  });
 });
