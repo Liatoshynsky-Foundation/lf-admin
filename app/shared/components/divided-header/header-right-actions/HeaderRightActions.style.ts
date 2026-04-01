@@ -1,13 +1,13 @@
 import { SxProps, Theme } from '@mui/material';
 
 const COLORS = {
+  textBlack: '#190D03',
   yellow: '#FCBD28',
   yellowHover: '#F59E0B',
   grayBg: '#E2E8F0',
   grayHover: '#CBD5E1',
-  textGray: '#4B5563',
-  borderGray: '#9CA3AF',
-  outlineBorder: '#63666E'
+  textGray: '#63666E',
+  borderGray: '#63666E'
 };
 
 export const styles = {
@@ -19,31 +19,29 @@ export const styles = {
     gap: '12px'
   } as SxProps<Theme>,
 
-  pill: (variant: 'yellow' | 'outline' | 'gray' = 'yellow'): SxProps<Theme> => {
+  pill: (variant: 'yellow' | 'outline' = 'yellow'): SxProps<Theme> => {
     const variants: Record<string, SxProps<Theme>> = {
       yellow: {
         bgcolor: COLORS.yellow,
-        color: 'black',
+        color: COLORS.textBlack,
         '&:hover': { bgcolor: COLORS.yellowHover }
       },
       outline: {
         color: COLORS.textGray,
-        borderColor: COLORS.borderGray,
-        '&:hover': { borderColor: COLORS.outlineBorder, bgcolor: 'transparent' }
-      },
-      gray: {
-        bgcolor: COLORS.grayBg,
-        color: COLORS.textGray,
-        '&:hover': { bgcolor: COLORS.grayHover }
+        borderColor: COLORS.borderGray
       }
     };
 
     return {
       borderRadius: '28px',
       textTransform: 'none',
-      px: 3,
-      py: 1,
+      height: '40px',
       fontSize: '16px',
+      '&.Mui-disabled': {
+        border: 'none',
+        bgcolor: COLORS.grayBg,
+        color: COLORS.textGray
+      },
       ...variants[variant]
     };
   },
@@ -52,12 +50,17 @@ export const styles = {
     gap: '2px',
     '& .MuiButtonGroup-grouped,  & .MuiIconButton-root': {
       bgcolor: COLORS.yellow,
-      color: 'black',
+      color: COLORS.textBlack,
       textTransform: 'none',
       fontSize: '16px',
       fontWeight: 500,
       lineHeight: '150%',
       border: 'none',
+      '&.Mui-disabled': {
+        border: 'none',
+        bgcolor: COLORS.grayBg,
+        color: COLORS.textGray
+      },
       '&:hover': { bgcolor: COLORS.yellowHover }
     }
   } as SxProps<Theme>,

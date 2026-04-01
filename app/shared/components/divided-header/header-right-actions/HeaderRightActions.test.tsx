@@ -2,71 +2,66 @@ import { fireEvent,render, screen } from '@testing-library/react';
 
 import HeaderRightActions from './HeaderRightActions';
 
-jest.mock('lucide-react', () => ({
-  EyeIcon: () => <svg data-testid="icon-eye" />,
-  ChevronDown: () => <svg data-testid="icon-chevron" />
+jest.mock('./HeaderRightActions.style', () => ({
+  styles: {
+    container: {},
+    pill: jest.fn(() => ({})),
+    group: {},
+    groupLeft: {},
+    groupRight: {}
+  }
 }));
 
 describe('HeaderRightActions Component', () => {
-  let mockOnEdit: jest.Mock;
-  let mockOnPublish: jest.Mock;
-  let mockOnSave: jest.Mock;
-  let mockOnCancel: jest.Mock;
-  let mockOnMenuOpen: jest.Mock;
+  const mockOnEdit = jest.fn();
+  const mockOnPublish = jest.fn();
+  const mockOnSave = jest.fn();
+  const mockOnCancel = jest.fn();
+  const mockOnMenuOpen = jest.fn();
 
   beforeEach(() => {
-    mockOnEdit = jest.fn();
-    mockOnPublish = jest.fn();
-    mockOnSave = jest.fn();
-    mockOnCancel = jest.fn();
-    mockOnMenuOpen = jest.fn();
-  });
-
-  afterEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('Mode: Create (Default)', () => {
-    it('should render the Create mode correctly by default', () => {
+  describe('Mode: "create"', () => {
+    it('should render the preview icon and edit button by default', () => {
       render(<HeaderRightActions onEdit={mockOnEdit} />);
 
       expect(screen.getByRole('button', { name: 'Передогляд' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Редагувати' })).toBeInTheDocument();
-      
-      expect(screen.queryByRole('button', { name: 'Опублікувати' })).not.toBeInTheDocument();
+      const editButton = screen.getByRole('button', { name: 'Редагувати' });
+      expect(editButton).toBeInTheDocument();
+      expect(editButton).not.toBeDisabled();
     });
 
-    it('should call onEdit when "Редагувати" is clicked', () => {
-      render(<HeaderRightActions mode="create" onEdit={mockOnEdit} />);
+    it('should trigger onEdit when the edit button is clicked', () => {
+      render(<HeaderRightActions onEdit={mockOnEdit} />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Редагувати' }));
+      expect(mockOnEdit).toHaveBeenCalledTimes(1);
+    });
+
+    it('should disable the edit button when disabled prop is true', () => {
+      render(<HeaderRightActions disabled={true} onEdit={mockOnEdit} />);
 
       const editButton = screen.getByRole('button', { name: 'Редагувати' });
-      fireEvent.click(editButton);
+      expect(editButton).toBeDisabled();
 
-      expect(mockOnEdit).toHaveBeenCalledTimes(1);
+      fireEvent.click(editButton);
+      expect(mockOnEdit).not.toHaveBeenCalled();
     });
   });
 
-  describe('Mode: Edit', () => {
-    it('should render the Edit mode correctly', () => {
+  describe('Mode: "edit"', () => {
+    it('should render the preview icon, publish button, and menu button', () => {
       render(<HeaderRightActions mode="edit" />);
 
       expect(screen.getByRole('button', { name: 'Передогляд' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Опублікувати' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Відкрити меню параметрів' })).toBeInTheDocument();
-
-      expect(screen.getByRole('group', { name: 'Дії публікації' })).toBeInTheDocument();
-
-      expect(screen.queryByRole('button', { name: 'Редагувати' })).not.toBeInTheDocument();
     });
 
-    it('should call onPublish and onMenuOpen when buttons are clicked', () => {
-      render(
-        <HeaderRightActions 
-          mode="edit" 
-          onPublish={mockOnPublish} 
-          onMenuOpen={mockOnMenuOpen} 
-        />
-      );
+    it('should trigger onPublish and onMenuOpen correctly', () => {
+      render(<HeaderRightActions mode="edit" onPublish={mockOnPublish} onMenuOpen={mockOnMenuOpen} />);
 
       fireEvent.click(screen.getByRole('button', { name: 'Опублікувати' }));
       expect(mockOnPublish).toHaveBeenCalledTimes(1);
@@ -74,46 +69,45 @@ describe('HeaderRightActions Component', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Відкрити меню параметрів' }));
       expect(mockOnMenuOpen).toHaveBeenCalledTimes(1);
     });
+
+    it('should disable the publish button when disabled prop is true', () => {
+      render(<HeaderRightActions mode="edit" disabled={true} onPublish={mockOnPublish} />);
+
+      const publishButton = screen.getByRole('button', { name: 'Опублікувати' });
+      expect(publishButton).toBeDisabled();
+    });
   });
 
-  describe('Mode: SEO', () => {
-    it('should render the SEO mode correctly and handle clicks', () => {
-      render(
-        <HeaderRightActions 
-          mode="seo" 
-          onCancel={mockOnCancel} 
-          onSave={mockOnSave} 
-        />
-      );
+  describe('Mode: "seo"', () => {
+    it('should render cancel and save buttons', () => {
+      render(<HeaderRightActions mode="seo" />);
 
-      const cancelButton = screen.getByRole('button', { name: 'Скасувати' });
-      const saveButton = screen.getByRole('button', { name: 'Зберегти' });
-      
-      expect(cancelButton).toBeInTheDocument();
-      expect(saveButton).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Скасувати' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Зберегти' })).toBeInTheDocument();
+    });
 
-      expect(screen.getByRole('group', { name: 'Дії збереження' })).toBeInTheDocument();
-      
-      expect(screen.queryByRole('button', { name: 'Передогляд' })).not.toBeInTheDocument();
+    it('should trigger onCancel and onSave correctly', () => {
+      render(<HeaderRightActions mode="seo" onCancel={mockOnCancel} onSave={mockOnSave} />);
 
-      fireEvent.click(cancelButton);
-      fireEvent.click(saveButton);
-
+      fireEvent.click(screen.getByRole('button', { name: 'Скасувати' }));
       expect(mockOnCancel).toHaveBeenCalledTimes(1);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
       expect(mockOnSave).toHaveBeenCalledTimes(1);
+    });
+
+    it('should disable only the save button when disabled prop is true', () => {
+      render(<HeaderRightActions mode="seo" disabled={true} />);
+
+      expect(screen.getByRole('button', { name: 'Скасувати' })).not.toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Зберегти' })).toBeDisabled();
     });
   });
 
   describe('Edge Cases', () => {
-    it('should return null (empty DOM) if an unknown mode is passed', () => {
-      const badMode = 'unknown' as unknown as 'create';
-      
-      const { container } = render(
-        <HeaderRightActions mode={badMode} />
-      );
-
+    it('should render nothing if an invalid mode is somehow passed', () => {
+      const { container } = render(<HeaderRightActions mode={'invalid' as 'edit' } />);
       expect(container.firstChild).toBeEmptyDOMElement();
     });
   });
 });
-

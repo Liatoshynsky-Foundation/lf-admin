@@ -21,12 +21,4 @@ export const styles: Record<string, SxProps<Theme>> = {
     px: '16px',
     gap: '16px'
   },
-  rightHeader: {},
-  discardButton: {},
-  proceedButton: {
-    '&:hover, &:active, &:focus': {
-      color: '#000',
-      backgroundColor: '#8A570C'
-    }
-  }
 };

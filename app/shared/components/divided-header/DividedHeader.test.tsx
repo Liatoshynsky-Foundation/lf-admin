@@ -1,123 +1,87 @@
 import { fireEvent,render, screen } from '@testing-library/react';
-import { MouseEvent } from 'react';
+import { useRouter } from 'next/navigation';
 
 import DividedHeader from './DividedHeader';
-import type { HeaderRightActionsProps } from './header-right-actions/HeaderRightActions';
-
-const mockPush = jest.fn();
 
 jest.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: mockPush,
-  }),
+  useRouter: jest.fn()
 }));
 
-jest.mock('lucide-react', () => ({
-  ChevronLeft: () => <span data-testid="icon-chevron-left" />
+jest.mock('~/lib/utils/sxToArray', () => ({
+  sxToArray: jest.fn(() => [])
 }));
-
-jest.mock('./header-right-actions/HeaderRightActions', () => {
-  return function MockHeaderRightActions(props: HeaderRightActionsProps) {
-    return (
-      <div data-testid="mock-header-right-actions">
-        <span data-testid="passed-mode">{props.mode}</span>
-        
-        <button aria-label="Trigger Edit" onClick={props.onEdit}>Edit</button>
-        <button aria-label="Trigger Publish" onClick={props.onPublish}>Publish</button>
-        <button aria-label="Trigger Save" onClick={props.onSave}>Save</button>
-        <button aria-label="Trigger Cancel" onClick={props.onCancel}>Cancel</button>
-        <button 
-          aria-label="Trigger Menu" 
-          onClick={(e: MouseEvent<HTMLButtonElement>) => props.onMenuOpen?.(e)}
-        >
-          Menu
-        </button>
-      </div>
-    );
-  };
-});
 
 describe('DividedHeader Component', () => {
+  const mockPush = jest.fn();
 
-  afterEach(() => {
+  beforeEach(() => {
     jest.clearAllMocks();
-  });
 
-  describe('1. Visuals and Children Rendering', () => {
-    it('should render the children passed into it', () => {
-      render(
-        <DividedHeader mode="create">
-          <div data-testid="custom-child">My Custom Title</div>
-        </DividedHeader>
-      );
-
-      expect(screen.getByTestId('custom-child')).toBeInTheDocument();
-      expect(screen.getByText('My Custom Title')).toBeInTheDocument();
-    });
-
-    it('should render the return button icon', () => {
-      render(<DividedHeader mode="create" />);
-      expect(screen.getByTestId('icon-chevron-left')).toBeInTheDocument();
+    (useRouter as jest.Mock).mockReturnValue({
+      push: mockPush
     });
   });
 
-  describe('2. Routing Logic (The Return Button)', () => {
-    it('should navigate to the default originUrl ("/") when no prop is provided', () => {
-      render(<DividedHeader mode="create" />);
+  it('should render children correctly', () => {
+    render(
+      <DividedHeader>
+        <h1 data-testid="child-element">My Header Title</h1>
+      </DividedHeader>
+    );
 
-      const returnBtn = screen.getByRole('button', { name: 'Повернутись на сторінку /' });
-      fireEvent.click(returnBtn);
-
-      expect(mockPush).toHaveBeenCalledTimes(1);
-      expect(mockPush).toHaveBeenCalledWith('/');
-    });
-
-    it('should navigate to a custom originUrl when provided', () => {
-      render(<DividedHeader mode="create" originUrl="/admin/publications" />);
-
-      const returnBtn = screen.getByRole('button', { name: 'Повернутись на сторінку /admin/publications' });
-      fireEvent.click(returnBtn);
-
-      expect(mockPush).toHaveBeenCalledTimes(1);
-      expect(mockPush).toHaveBeenCalledWith('/admin/publications');
-    });
+    expect(screen.getByTestId('child-element')).toBeInTheDocument();
+    expect(screen.getByText('My Header Title')).toBeInTheDocument();
   });
 
-  describe('3. Prop Drilling to HeaderRightActions', () => {
-    it('should pass the correct mode down to the child component', () => {
-      render(<DividedHeader mode="seo" />);
-      expect(screen.getByTestId('passed-mode')).toHaveTextContent('seo');
-    });
+  it('should render the rightActionsComponent when provided', () => {
+    render(
+      <DividedHeader rightActionsComponent={<button>Save Changes</button>}>
+        <h1>Title</h1>
+      </DividedHeader>
+    );
 
-    it('should pass all callback functions down to HeaderRightActions', () => {
-      const mockOnEdit = jest.fn();
-      const mockOnPublish = jest.fn();
-      const mockOnSave = jest.fn();
-      const mockOnCancel = jest.fn();
-      const mockOnRightMenuOpen = jest.fn();
+    expect(screen.getByText('Save Changes')).toBeInTheDocument();
+  });
 
-      render(
-        <DividedHeader 
-          mode="edit"
-          onEdit={mockOnEdit}
-          onPublish={mockOnPublish}
-          onSave={mockOnSave}
-          onCancel={mockOnCancel}
-          onRightMenuOpen={mockOnRightMenuOpen}
-        />
-      );
+  it('should navigate to the defailt originUrl ("/") when the back button is clicked', () => {
+    render(
+      <DividedHeader>
+        <h1>Title</h1>
+      </DividedHeader>
+    );
 
-      fireEvent.click(screen.getByRole('button', { name: 'Trigger Edit' }));
-      fireEvent.click(screen.getByRole('button', { name: 'Trigger Publish' }));
-      fireEvent.click(screen.getByRole('button', { name: 'Trigger Save' }));
-      fireEvent.click(screen.getByRole('button', { name: 'Trigger Cancel' }));
-      fireEvent.click(screen.getByRole('button', { name: 'Trigger Menu' }));
+    const backButton = screen.getByRole('button', { name: 'Повернутись на сторінку /' });
 
-      expect(mockOnEdit).toHaveBeenCalledTimes(1);
-      expect(mockOnPublish).toHaveBeenCalledTimes(1);
-      expect(mockOnSave).toHaveBeenCalledTimes(1);
-      expect(mockOnCancel).toHaveBeenCalledTimes(1);
-      expect(mockOnRightMenuOpen).toHaveBeenCalledTimes(1);
-    });
+    fireEvent.click(backButton);
+
+    expect(mockPush).toHaveBeenCalledTimes(1);
+    expect(mockPush).toHaveBeenCalledWith('/');
+  });
+
+  it('should navigate to a custom originUrl when one is provided', () => {
+    const customUrl = '/dashboard/profile';
+
+    render(
+      <DividedHeader originUrl={customUrl}>
+        <h1>Title</h1>
+      </DividedHeader>
+    );
+
+    const backButton = screen.getByRole('button', { name: `Повернутись на сторінку ${customUrl}` });
+    fireEvent.click(backButton);
+
+    expect(mockPush).toHaveBeenCalledTimes(1);
+    expect(mockPush).toHaveBeenCalledWith(customUrl);
+  });
+
+  it('should render without crashing when the sx prop is provided', () => {
+    render(
+      <DividedHeader sx={{ backgroundColor: 'red' }}>
+        <h1>Title</h1>
+      </DividedHeader>
+    );
+
+    const backButton = screen.getByRole('button');
+    expect(backButton).toBeInTheDocument();
   });
 });

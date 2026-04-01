@@ -6,6 +6,7 @@ import { styles } from './HeaderRightActions.style';
 
 export type HeaderRightActionsProps = {
   mode?: 'create' | 'edit' | 'seo';
+  disabled?: boolean;
   onEdit?: () => void;
   onPublish?: () => void;
   onSave?: () => void;
@@ -15,6 +16,7 @@ export type HeaderRightActionsProps = {
 
 export default function HeaderRightActions({
   mode = 'create',
+  disabled = false,
   onEdit,
   onPublish,
   onSave,
@@ -29,7 +31,13 @@ export default function HeaderRightActions({
           <IconButton sx={{ color: 'text.primary' }} aria-label="Передогляд">
             <EyeIcon size={24} strokeWidth={1.5} />
           </IconButton>
-          <Button onClick={onEdit} variant="contained" disableElevation sx={styles.pill('yellow')}>
+          <Button
+            disabled={disabled}
+            onClick={onEdit}
+            variant="contained"
+            disableElevation
+            sx={styles.pill('yellow')}
+          >
               Редагувати
           </Button>
         </>
@@ -42,8 +50,14 @@ export default function HeaderRightActions({
             <EyeIcon size={24} strokeWidth={1.5} />
           </IconButton>
 
-          <ButtonGroup variant="contained" disableElevation sx={styles.group} role="group" aria-label="Дії публікації">
-            <Button onClick={onPublish} sx={styles.groupLeft}>
+          <ButtonGroup
+            variant="contained"
+            disableElevation
+            sx={styles.group}
+            role="group"
+            aria-label="Дії публікації"
+          >
+            <Button disabled={disabled} onClick={onPublish} sx={styles.groupLeft}>
                 Опублікувати
             </Button>
             <IconButton aria-label="Відкрити меню параметрів" onClick={onMenuOpen} sx={styles.groupRight}>
@@ -59,7 +73,7 @@ export default function HeaderRightActions({
           <Button onClick={onCancel} variant="outlined" sx={styles.pill('outline')}>
               Скасувати
           </Button>
-          <Button onClick={onSave} variant="contained" disableElevation sx={styles.pill('gray')}>
+          <Button disabled={disabled} onClick={onSave} variant="contained" disableElevation sx={styles.pill('yellow')}>
               Зберегти
           </Button>
         </Stack>

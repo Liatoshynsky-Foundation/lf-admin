@@ -11,7 +11,7 @@ type BaseTitleDropdownProps = {
 
 type MultilingualProps = BaseTitleDropdownProps & {
   type?: 'multilingual';
-  language: 'UA' | 'EN';
+  language?: 'UA' | 'EN';
 };
 
 type SeoProps = BaseTitleDropdownProps & {
@@ -23,7 +23,7 @@ export type TitleDropdownProps = MultilingualProps | SeoProps;
 export const TitleDropdown = (props: TitleDropdownProps) => {
   const { title, type, onMenuOpen } = props;
 
-  const contextLabel = type === 'multilingual' ? props.language : 'SEO';
+  const contextLabel = type === 'multilingual' ? props.language ?? 'UA' : 'SEO';
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, whiteSpace: 'nowrap' }}>
