@@ -1,11 +1,10 @@
 'use client';
 
 import { Box, Stack, type StackProps, Typography } from '@mui/material';
-import { type ChangeEvent, useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import Button from '../button/Button';
-import { CropperModal } from '../cropper-modal/CropperModal';
 import { styles } from './PhotoBlock.styles';
 import { readFileAsDataURL } from '~/lib/utils/readFileAsDataURL';
 import ImageIcon from '~/public/icons/image.svg';
@@ -14,17 +13,12 @@ import { MediaModal } from '~/shared/components/media-modal/MediaModal';
 import type { MediaModalOpenState, MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import { useImageMetadata } from '~/shared/hooks/use-image-metadata/useImageMetadata';
 
-type EditorMode = 'legacy' | 'mediaModal';
-
 interface ImagePreviewBlockProps extends StackProps {
   imageUrl: string;
   fileName?: string;
   title?: string;
-  cropWidth: number;
-  cropHeight: number;
   oval?: boolean;
   onChangeImage: (file: File) => void;
-  editorMode?: EditorMode;
   direction?: 'row' | 'row-reverse' | 'column' | 'column-reverse';
   buttonSpacing?: string;
   stackSpacing?: string;
@@ -35,19 +29,14 @@ export const ImagePreviewBlock = ({
   imageUrl,
   fileName,
   title,
-  cropWidth,
-  cropHeight,
   oval = false,
   onChangeImage,
-  editorMode = 'legacy',
   direction = 'row',
   buttonSpacing = '16px',
   stackSpacing = '32px',
   typographySpacing = '8px'
 }: ImagePreviewBlockProps) => {
   const [previewImage, setPreviewImage] = useState<string>(imageUrl);
-  const [isCropperOpen, setIsCropperOpen] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [mediaInitial, setMediaInitial] = useState<MediaModalOpenState | undefined>(undefined);
@@ -59,23 +48,6 @@ export const ImagePreviewBlock = ({
   }, [imageUrl]);
 
   const { dimensions, fileName: finalFileName } = useImageMetadata(previewImage, fileName);
-
-  const openLegacyCropper = () => setIsCropperOpen(true);
-  const closeLegacyCropper = () => setIsCropperOpen(false);
-
-  const handleClickSelectImage = () => {
-    inputRef.current?.click();
-  };
-
-  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const result = await readFileAsDataURL(file);
-    setPreviewImage(result);
-    onChangeImage(file);
-    setSavedCrop(null);
-  };
 
   const openEditCrop = () => {
     setMediaInitial({
@@ -131,9 +103,6 @@ export const ImagePreviewBlock = ({
     }
   };
 
-  const handleEditClick = editorMode === 'mediaModal' ? openEditCrop : openLegacyCropper;
-  const handleChangeClick = editorMode === 'mediaModal' ? openChangeImage : handleClickSelectImage;
-
   return (
     <Box sx={styles.container}>
       {title ? (
@@ -159,12 +128,12 @@ export const ImagePreviewBlock = ({
                 ...styles.trimmedTypography
               }}
             >
-              Назва файлу {finalFileName}
+                Назва файлу {finalFileName}
             </Typography>
 
             {dimensions ? (
               <Typography variant="body2" color="text.secondary" sx={styles.imageSizeText}>
-                Розмір: {dimensions.width} × {dimensions.height}
+                    Розмір: {dimensions.width} × {dimensions.height}
               </Typography>
             ) : null}
           </Stack>
@@ -175,10 +144,10 @@ export const ImagePreviewBlock = ({
               variant="outlined"
               color="primary"
               size="small"
-              onClick={handleEditClick}
+              onClick={openEditCrop}
               style={styles.editButton}
             >
-              Редагувати
+                Редагувати
             </Button>
 
             <Button
@@ -186,39 +155,21 @@ export const ImagePreviewBlock = ({
               variant="outlined"
               color="primary"
               size="small"
-              onClick={handleChangeClick}
+              onClick={openChangeImage}
               sx={styles.changeButton}
             >
-              Змінити зображення
+                Змінити зображення
             </Button>
-
-            {editorMode === 'legacy' && (
-              <input ref={inputRef} type="file" accept="image/*" hidden onChange={handleFileChange} />
-            )}
           </Stack>
         </Stack>
       </Box>
 
-      {editorMode === 'legacy' && (
-        <CropperModal
-          open={isCropperOpen}
-          oval={oval}
-          imageUrl={imageUrl}
-          width={cropWidth}
-          height={cropHeight}
-          handleClose={closeLegacyCropper}
-          handleSetNewPic={setPreviewImage}
-        />
-      )}
-
-      {editorMode === 'mediaModal' && (
-        <MediaModal
-          open={isMediaModalOpen}
-          initial={mediaInitial}
-          onClose={closeMediaModal}
-          onApply={handleApplyMediaModal}
-        />
-      )}
+      <MediaModal
+        open={isMediaModalOpen}
+        initial={mediaInitial}
+        onClose={closeMediaModal}
+        onApply={handleApplyMediaModal}
+      />
     </Box>
   );
 };
