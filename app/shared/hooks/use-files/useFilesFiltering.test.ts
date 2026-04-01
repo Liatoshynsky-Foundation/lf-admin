@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 
 import { useFilesFiltering } from './useFilesFiltering';
+import type { FilesTabValue } from '~/constants/files';
 
 const items = [
   {
@@ -26,6 +27,10 @@ const items = [
 ];
 
 describe('useFilesFiltering', () => {
+  type HookProps = {
+    activeTab: FilesTabValue;
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
     localStorage.clear();
@@ -46,8 +51,8 @@ describe('useFilesFiltering', () => {
 
   it('applies filter, tab and sort state outside the page component', () => {
     const setItemSpy = jest.spyOn(Storage.prototype, 'setItem');
-    const { result, rerender } = renderHook(({ activeTab }) => useFilesFiltering(items, activeTab), {
-      initialProps: { activeTab: 'all' as const }
+    const { result, rerender } = renderHook(({ activeTab }: HookProps) => useFilesFiltering(items, activeTab), {
+      initialProps: { activeTab: 'all' }
     });
 
     act(() => {
@@ -61,7 +66,7 @@ describe('useFilesFiltering', () => {
       result.current.toolbarProps.onClearFilters?.();
     });
 
-    rerender({ activeTab: 'favorites' as const });
+    rerender({ activeTab: 'favorites' });
 
     expect(result.current.filteredFiles).toHaveLength(1);
     expect(result.current.filteredFiles[0]?.id).toBe('asset-image');
