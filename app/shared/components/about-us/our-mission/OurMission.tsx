@@ -45,16 +45,12 @@ const MissionImageBlock = ({
   title,
   onChangeCaption,
   onChangeImage,
-  cropWidth = 350,
-  cropHeight = 300
 }: MissionImageBlockProps) => (
   <Box sx={styles.imageBlockWrapper}>
     <ImagePreviewBlock
       imageUrl={getImageUrl(image)}
       title={title}
       fileName={image.src || ''}
-      cropWidth={cropWidth}
-      cropHeight={cropHeight}
       onChangeImage={onChangeImage}
     />
     <CustomTextField
