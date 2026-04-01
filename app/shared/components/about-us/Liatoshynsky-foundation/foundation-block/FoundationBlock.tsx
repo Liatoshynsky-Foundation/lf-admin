@@ -51,8 +51,11 @@ export const FoundationBlock = ({
       <ImagePreviewBlock
         imageUrl={imageUrl}
         fileName={fileName}
+        cropWidth={350}
+        cropHeight={300}
         onChangeImage={onImageChange}
         title="Основне зображення"
+        editorMode="mediaModal"
       />
     </Box>
   );

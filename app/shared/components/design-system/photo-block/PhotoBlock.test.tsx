@@ -120,13 +120,9 @@ describe('ImagePreviewBlock', () => {
   const renderComponent = (props = {}) =>
     render(
       <ImagePreviewBlock
-<<<<<<< feature/383/implement-metadata-seo-form-component
         imageUrl="test.jpg"
         cropWidth={300}
         cropHeight={200}
-=======
-        imageUrl="https://example.com/test.jpg"
->>>>>>> develop
         onChangeImage={onChangeImage}
         {...props}
       />
@@ -138,7 +134,6 @@ describe('ImagePreviewBlock', () => {
     (readFileAsDataURL as jest.Mock).mockResolvedValue('data:image/png;base64,mockImage');
   });
 
-<<<<<<< feature/383/implement-metadata-seo-form-component
   it('opens cropper modal on "Редагувати" click (legacy)', async () => {
     const user = userEvent.setup();
 
@@ -148,17 +143,6 @@ describe('ImagePreviewBlock', () => {
 
     expect(screen.getByTestId('cropper-modal')).toBeInTheDocument();
   });
-=======
-  it('should open MediaModal on "Редагувати" click', async () => {
-    const user = userEvent.setup();
-
-    render(
-      <ImagePreviewBlock
-        imageUrl="https://example.com/test.jpg"
-        onChangeImage={onChangeImage}
-      />
-    );
->>>>>>> develop
 
   it('closes cropper modal', async () => {
     const user = userEvent.setup();
@@ -168,7 +152,6 @@ describe('ImagePreviewBlock', () => {
     await user.click(screen.getByRole('button', { name: /редагувати/i }));
     await user.click(screen.getByRole('button', { name: /close/i }));
 
-<<<<<<< feature/383/implement-metadata-seo-form-component
     await waitFor(() => {
       expect(screen.queryByTestId('cropper-modal')).not.toBeInTheDocument();
     });
@@ -178,25 +161,11 @@ describe('ImagePreviewBlock', () => {
     const user = userEvent.setup();
 
     renderComponent({ editorMode: 'mediaModal' });
-=======
-    expect(screen.getByTestId('media-modal')).toBeInTheDocument();
-    expect(screen.getByTestId('initial-step')).toHaveTextContent('CROP');
-  });
-
-  it('should open MediaModal and close it', async () => {
-    const user = userEvent.setup();
-
-    render(
-      <ImagePreviewBlock
-        imageUrl="https://example.com/test.jpg"
-        onChangeImage={onChangeImage}
-      />
-    );
->>>>>>> develop
 
     await user.click(screen.getByRole('button', { name: /редагувати/i }));
 
     expect(screen.getByTestId('media-modal')).toBeInTheDocument();
+    expect(screen.getByTestId('initial-step')).toHaveTextContent('CROP');
 
     await user.click(screen.getByTestId('close'));
 
@@ -205,22 +174,10 @@ describe('ImagePreviewBlock', () => {
     });
   });
 
-<<<<<<< feature/383/implement-metadata-seo-form-component
   it('opens media modal in UPLOAD mode', async () => {
     const user = userEvent.setup();
 
     renderComponent({ editorMode: 'mediaModal' });
-=======
-  it('should apply upload result in mediaModal (updates preview + calls onChangeImage + closes)', async () => {
-    const user = userEvent.setup();
-
-    render(
-      <ImagePreviewBlock
-        imageUrl="https://example.com/test.jpg"
-        onChangeImage={onChangeImage}
-      />
-    );
->>>>>>> develop
 
     await user.click(screen.getByRole('button', { name: /змінити/i }));
 
@@ -276,7 +233,6 @@ describe('ImagePreviewBlock', () => {
       expect(toast.success).toHaveBeenCalledWith('Зображення змінено');
     });
   });
-<<<<<<< feature/383/implement-metadata-seo-form-component
 
   it('shows error toast if apply fails', async () => {
     const user = userEvent.setup();
@@ -347,6 +303,3 @@ describe('ImagePreviewBlock', () => {
     expect(onChangeAltText).toHaveBeenCalled();
   });
 });
-=======
-});
->>>>>>> develop
