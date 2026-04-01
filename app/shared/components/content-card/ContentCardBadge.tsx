@@ -20,8 +20,6 @@ const ContentCardBadge = ({ type, status, localizations }: ContentCardBadgeProps
       return 'Подія';
     case 'media':
       return 'Ми у ЗМІ';
-    default:
-      return 'Новини';
     }
   };
 
@@ -33,8 +31,6 @@ const ContentCardBadge = ({ type, status, localizations }: ContentCardBadgeProps
       return '#EC93F4';
     case 'media':
       return '#B6F7CF';
-    default:
-      return '#93CCF4';
     }
   };
 

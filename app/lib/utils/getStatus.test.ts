@@ -1,5 +1,5 @@
 import { formatDate } from './formatDate';
-import { getStatus } from './getStatusCard';
+import { getStatus } from './getStatus';
 
 jest.mock('./formatDate', () => ({
   formatDate: jest.fn()

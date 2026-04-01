@@ -19,7 +19,8 @@ const styles = {
     color: '#190D03'
   },
   date: {
-    color: '#898C95'
+    color: '#898C95',
+    fontStyle: 'italic'
   },
   mainInfo: {
     display: 'flex',

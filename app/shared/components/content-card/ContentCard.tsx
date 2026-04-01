@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Button from '../design-system/button/Button';
 import styles from './ContentCard.styles';
 import ContentCardBadge from './ContentCardBadge';
-import { formatDate } from '~/lib/utils/formatDate';
+import { getStatus } from '~/lib/utils/getStatus';
 
 export type ContentType = 'news' | 'event' | 'media';
 
@@ -40,23 +40,6 @@ const ContentCard = ({
   onClick,
   onClickMenu
 }: ContentCardProps) => {
-  function getStatus(status: string, createdAt: string, updatedAt?: string, publishedAt?: string): string {
-    if (status === 'published') {
-      if (updatedAt) {
-        return `Редаговано ${formatDate(updatedAt)}`;
-      }
-      if (publishedAt) {
-        return `Опубліковано ${formatDate(publishedAt)}`;
-      }
-      return 'Опубліковано';
-    }
-    if (status === 'draft') {
-      return `Створено ${formatDate(createdAt)}`;
-    }
-
-    return '';
-  }
-
   return (
     <Card sx={styles.card}>
       <CardMedia component="img" height="148" image={coverImage.src} alt={coverImage.alt.uk} />
