@@ -32,7 +32,7 @@ describe('useFilesFiltering', () => {
   });
 
   it('filters items by search query', () => {
-    const { result } = renderHook(() => useFilesFiltering(items));
+    const { result } = renderHook(() => useFilesFiltering(items, 'all'));
 
     expect(result.current.filteredFiles).toHaveLength(2);
 
@@ -46,7 +46,9 @@ describe('useFilesFiltering', () => {
 
   it('applies filter, tab and sort state outside the page component', () => {
     const setItemSpy = jest.spyOn(Storage.prototype, 'setItem');
-    const { result } = renderHook(() => useFilesFiltering(items));
+    const { result, rerender } = renderHook(({ activeTab }) => useFilesFiltering(items, activeTab), {
+      initialProps: { activeTab: 'all' as const }
+    });
 
     act(() => {
       result.current.toolbarProps.filters?.[0]?.onChange(['zip']);
@@ -57,8 +59,9 @@ describe('useFilesFiltering', () => {
 
     act(() => {
       result.current.toolbarProps.onClearFilters?.();
-      result.current.setActiveTab('favorites');
     });
+
+    rerender({ activeTab: 'favorites' as const });
 
     expect(result.current.filteredFiles).toHaveLength(1);
     expect(result.current.filteredFiles[0]?.id).toBe('asset-image');

@@ -1,4 +1,4 @@
-import { type Dispatch, type SetStateAction, useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { FORMAT_FILTER_OPTIONS } from '~/constants/file-formats';
 import {
@@ -40,8 +40,6 @@ export type FilesFilteringSortProps = Omit<
 >;
 
 export type UseFilesFilteringResult<Item extends UseFilesFilteringItem> = Readonly<{
-  activeTab: FilesTabValue;
-  setActiveTab: Dispatch<SetStateAction<FilesTabValue>>;
   filteredFiles: Item[];
   toolbarProps: FilesFilteringToolbarProps;
   sortProps: FilesFilteringSortProps;
@@ -122,8 +120,10 @@ const getUsageFilterValues = (usageLinks: ReadonlyArray<FilesFilteringUsageLink>
   return Array.from(categories);
 };
 
-export function useFilesFiltering<Item extends UseFilesFilteringItem>(allFiles: Item[]): UseFilesFilteringResult<Item> {
-  const [activeTab, setActiveTab] = useState<FilesTabValue>('all');
+export function useFilesFiltering<Item extends UseFilesFilteringItem>(
+  allFiles: Item[],
+  activeTab: FilesTabValue = 'all'
+): UseFilesFilteringResult<Item> {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [formatFilters, setFormatFilters] = useState<string[]>([]);
@@ -280,8 +280,6 @@ export function useFilesFiltering<Item extends UseFilesFilteringItem>(allFiles: 
   );
 
   return {
-    activeTab,
-    setActiveTab,
     filteredFiles,
     toolbarProps,
     sortProps

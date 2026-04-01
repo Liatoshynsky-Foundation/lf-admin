@@ -6,6 +6,18 @@ import { usePathname } from 'next/navigation';
 import { styles as SideNavigationStyles } from '../SideNavigation.styles';
 import { styles } from './ListElement.styles';
 
+const isActivePath = (href: string | undefined, pathName: string) => {
+  if (!href) {
+    return false;
+  }
+
+  if (href === '/') {
+    return pathName === href;
+  }
+
+  return pathName === href || pathName.startsWith(`${href}/`);
+};
+
 export const ListElement: React.FC<LinkElementProps> = ({
   element,
   open,
@@ -15,10 +27,11 @@ export const ListElement: React.FC<LinkElementProps> = ({
 }) => {
   const { title, href, iconSrc } = element;
   const pathName = usePathname();
+
   return (
     <ListItemButton
-      sx={[styles.listItem as any, sxItem as any]}
-      selected={href === pathName}
+      sx={[styles.listItem, sxItem]}
+      selected={isActivePath(href, pathName)}
       onClick={handleClick ?? (() => {})}
     >
       {iconSrc && (

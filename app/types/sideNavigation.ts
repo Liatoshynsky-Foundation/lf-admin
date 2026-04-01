@@ -1,4 +1,4 @@
-import { SxProps } from '@mui/material';
+import { SxProps, Theme } from '@mui/material';
 
 export interface ListElementType {
   title: string;
@@ -13,7 +13,7 @@ export interface AdditionalElement {
 export interface LinkElementProps {
   element: ListElementType;
   open: boolean;
-  sxItem?: SxProps;
+  sxItem?: SxProps<Theme>;
   handleClick?: () => void;
   children?: React.ReactNode;
 }
