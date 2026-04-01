@@ -7,7 +7,7 @@ import { styles } from './FileCard.styles';
 import TooltipCustom from '~/ds-components/tooltip/Tooltip';
 import { formatUsageCount } from '~/lib/utils/formatUsageCount';
 
-const ICON_SIZE = 20;
+const ICON_SIZE = 21;
 const ICON_SIZE_2 = 32;
 
 const FILE_TYPES = {

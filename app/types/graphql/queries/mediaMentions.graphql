@@ -1,114 +1,53 @@
+fragment MediaMentionFields on MediaMention {
+  id
+  url
+  adminTitle
+  title { uk en }
+  description { uk en }
+  keywords { uk en }
+  allowIndexation { uk en }
+  coverImage {
+    src
+    alt { uk en }
+    width
+    height
+  }
+  slug
+  status
+  publishedAt
+  createdAt
+  updatedAt
+  meta { views }
+}
+
 query MediaMentionById($id: ID!) {
   mediaMentionById(id: $id) {
-    id
-    url
-    title
-    description
-    coverImage {
-      src
-      alt
-      width
-      height
-    }
-    slug
-    status
-    publishedAt
-    createdAt
-    updatedAt
-    meta {
-      views
-    }
+    ...MediaMentionFields
   }
 }
 
 query MediaMentionBySlug($slug: String!) {
   mediaMentionBySlug(slug: $slug) {
-    id
-    url
-    title
-    description
-    coverImage {
-      src
-      alt
-      width
-      height
-    }
-    slug
-    status
-    publishedAt
-    createdAt
-    updatedAt
-    meta {
-      views
-    }
+    ...MediaMentionFields
   }
 }
 
 query AllMediaMentions($filters: MediaMentionsFiltersInput) {
   allMediaMentions(filters: $filters) {
-    id
-    url
-    title
-    description
-    coverImage {
-      src
-      alt
-      width
-      height
-    }
-    slug
-    status
-    publishedAt
-    createdAt
-    updatedAt
-    meta {
-      views
-    }
+    ...MediaMentionFields
   }
 }
 
 query PublishedMediaMentions($filters: MediaMentionsFiltersInput) {
   publishedMediaMentions(filters: $filters) {
-    id
-    url
-    title
-    description
-    coverImage {
-      src  
-      alt
-      width
-      height
-    }
-    slug
-    status
-    publishedAt
-    createdAt
-    updatedAt
-    meta {
-      views
-    }
+    ...MediaMentionFields
   }
 }
 
 query PaginatedMediaMentions($page: Int = 1, $limit: Int = 10, $filters: MediaMentionsFiltersInput) {
   paginatedMediaMentions(page: $page, limit: $limit, filters: $filters) {
     items {
-      id
-      url
-      title
-      description
-      coverImage {
-        src
-        alt
-        width
-        height
-      }
-      slug
-      status
-      publishedAt
-      createdAt
-      updatedAt
-      meta { views }
+      ...MediaMentionFields
     }
     total
     page

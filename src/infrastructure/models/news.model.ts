@@ -1,36 +1,16 @@
 import mongoose, { Model, Schema } from 'mongoose';
 
 import { News } from '~/domain/entities/News';
+import {baseContentSchemaFields} from '~/infrastructure/models/commonSchemas';
 import { NewsStatus } from '~/types/enums/common.enums';
 
 const newsSchema = new Schema<News>(
   {
-    publishedAt: { type: Date, default: null },
-    newsDate: { type: Date, default: null },
-    title: {
-      uk: { type: String, required: true },
-      en: { type: String, required: true }
-    },
-    description: {
-      uk: { type: String },
-      en: { type: String }
-    },
+    ...baseContentSchemaFields,
+    newsDate: { type: String, default: null },
     content: {
       uk: { type: Object, required: true },
       en: { type: Object, required: true }
-    },
-    slug: { type: String, required: true, index: true, unique: true },
-    coverImage: {
-      src: { type: String, required: true },
-      alt: {
-        uk: { type: String, required: true },
-        en: { type: String, required: true }
-      },
-      caption: {
-        uk: { type: String, required: true },
-        en: { type: String, required: true }
-      },
-      isTmp: { type: Boolean, default: false }
     },
     status: {
       type: String,
@@ -43,9 +23,6 @@ const newsSchema = new Schema<News>(
       ] as const,
       required: true,
       default: NewsStatus.Draft
-    },
-    meta: {
-      views: { type: Number, default: 0, required: true }
     }
   },
   {

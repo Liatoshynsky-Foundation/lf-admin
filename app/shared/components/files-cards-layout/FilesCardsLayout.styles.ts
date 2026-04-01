@@ -3,7 +3,8 @@ import { SxProps, Theme } from '@mui/material';
 export const styles: Record<string, SxProps<Theme>> = {
   root: {
     width: '100%',
-    minWidth: 0
+    minWidth: 0,
+    pt: '8px',
   },
   grid: {
     display: 'flex',

@@ -6,3 +6,55 @@ type Query {
 type Mutation {
     _empty: String
 }
+
+type LocalizedJSON {
+    uk: JSON!
+    en: JSON!
+}
+
+type LocalizedString {
+    uk: String!
+    en: String!
+}
+
+type LocalizedBoolean {
+    uk: Boolean!
+    en: Boolean!
+}
+
+type LocalizedImage {
+    src: String!
+    alt: LocalizedString!
+    caption: LocalizedString!
+    isTmp: Boolean
+    width: Int
+    height: Int
+}
+
+type ContentMeta {
+    views: Int!
+}
+
+interface BaseContent {
+    adminTitle: String!
+    title: LocalizedString!
+    description: LocalizedString!
+    keywords: LocalizedString!
+    allowIndexation: LocalizedBoolean!
+    slug: String!
+    coverImage: LocalizedImage!
+    meta: ContentMeta!
+    publishedAt: String
+    createdAt: String!
+    updatedAt: String!
+}
+
+enum SortOrder {
+    asc
+    desc
+}
+
+input SortOptions {
+    field: String!
+    order: SortOrder!
+}

@@ -4,14 +4,14 @@ export const filterDropdownStyles = {
   button: {
     height: '40px',
     letterSpacing: '0.03em',
-    padding: '6px 8px 6px 16px',
+    padding: '6px 12px 6px 16px',
     borderRadius: '8px',
     backgroundColor: '#D9DCE8',
     color: '#190D03',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: '8px',
+    gap: '12px',
     cursor: 'pointer',
     border: 'none',
     fontFamily: 'Mulish',
@@ -51,7 +51,7 @@ export const filterDropdownStyles = {
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
     minWidth: 0,
-    paddingRight: '3px',
+    pr: '3px',
     marginRight: '4px'
   } as SxProps<Theme>,
 

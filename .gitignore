@@ -45,5 +45,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# uploads
+/public/uploads/*
+!/public/uploads/.gitkeep
+
 # Ignore generated GraphQL types
 app/types/graphql/generated/

@@ -1,6 +1,6 @@
 import { BlocksMap } from '~/types/store/pages';
 
-export type StoreState = AdminUserState & EditState;
+export type StoreState = AdminUserState & EditState & NavigationState;
 
 export interface Admin {
   email: string;
@@ -58,5 +58,11 @@ export interface EditState {
   publishPage: (pageId: string) => void;
   discardChanges: (pageId: string) => void;
 }
+
+export interface NavigationState {
+  dirtyPaths: Record<string, boolean>;
+  setDirtyPath: (path: string, isDirty: boolean) => void;
+}
+
 
 export type BlockData<K extends keyof BlocksMap = keyof BlocksMap> = BlocksMap[K];

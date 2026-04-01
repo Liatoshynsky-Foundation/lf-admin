@@ -18,7 +18,7 @@ export function ViewToggle({ value, onChange }: ViewToggleProps) {
         onClick={() => onChange('grid')}
         sx={[styles.button, value === 'grid' ? styles.active : styles.inactive]}
       >
-        <GridViewOutlinedIcon sx={{ fontSize: 28, transform: 'scale(0.94)' }} />
+        <GridViewOutlinedIcon sx={{ fontSize: 24, transform: 'scale(0.94)' }} />
       </IconButton>
 
       <IconButton
@@ -26,7 +26,7 @@ export function ViewToggle({ value, onChange }: ViewToggleProps) {
         onClick={() => onChange('list')}
         sx={[styles.button, value === 'list' ? styles.active : styles.inactive]}
       >
-        <MenuIcon sx={{ fontSize: 28 }} />
+        <MenuIcon sx={{ fontSize: 24 }} />
       </IconButton>
     </Box>
   );

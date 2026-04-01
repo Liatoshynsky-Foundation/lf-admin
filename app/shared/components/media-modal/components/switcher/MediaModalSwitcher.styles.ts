@@ -4,7 +4,7 @@ export const styles = {
     alignItems: 'center',
     gap: '2px',
     p: '2px',
-    borderRadius: '999px',
+    borderRadius: '20px',
     backgroundColor: '#190D03',
     width: 'fit-content'
   },
@@ -13,7 +13,7 @@ export const styles = {
     minWidth: 0,
     height: '36px',
     padding: '6px 16px',
-    borderRadius: '999px',
+    borderRadius: '18px',
 
     backgroundColor: active ? '#FCFCFC' : 'transparent',
     color: active ? '#232529' : '#FCFCFC',

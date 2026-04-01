@@ -5,6 +5,7 @@ import type { ChangeEvent, DragEvent, KeyboardEvent, MouseEvent } from 'react';
 import { useCallback, useId, useRef, useState } from 'react';
 
 import type { UploadMedia } from '../../MediaModal.types';
+import { isImageUploadFile } from '../../MediaModal.utils';
 import { styles } from './UploadView.styles';
 import CloudUploadIcon from '~/public/icons/cloud-upload.svg';
 import Button from '~/shared/components/design-system/button/Button';
@@ -12,19 +13,24 @@ import Button from '~/shared/components/design-system/button/Button';
 type Props = Readonly<{
   selected: UploadMedia | null;
   onPick: (selected: UploadMedia) => void;
+  accept?: string;
+  invalidFileError?: string;
+  isAllowedFile?: (file: File) => boolean;
+  ariaLabel?: string;
 }>;
 
 const DROP_HINT = 'Перетягніть файл сюди або оберіть вручну';
 const ERROR_ONLY_IMAGES = 'Підтримуються лише зображення';
 
-const isImageFile = (file: File): boolean => {
-  if (file.type) return file.type.startsWith('image/');
-  return /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(file.name);
-};
-
 const buildUploadId = (file: File): string => `${file.lastModified}-${file.size}-${file.name}`;
 
-export function UploadView({ onPick }: Props) {
+export function UploadView({
+  onPick,
+  accept = 'image/*',
+  invalidFileError = ERROR_ONLY_IMAGES,
+  isAllowedFile = isImageUploadFile,
+  ariaLabel = 'Upload image'
+}: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const messageId = useId();
 
@@ -38,8 +44,8 @@ export function UploadView({ onPick }: Props) {
 
   const pickFile = useCallback(
     (file: File) => {
-      if (!isImageFile(file)) {
-        setError(ERROR_ONLY_IMAGES);
+      if (!isAllowedFile(file)) {
+        setError(invalidFileError);
         return;
       }
 
@@ -52,7 +58,7 @@ export function UploadView({ onPick }: Props) {
         file
       });
     },
-    [onPick]
+    [invalidFileError, isAllowedFile, onPick]
   );
 
   const handleFileChange = useCallback(
@@ -133,7 +139,7 @@ export function UploadView({ onPick }: Props) {
         data-testid="UploadView-dropzone"
         role="button"
         tabIndex={0}
-        aria-label="Upload image"
+        aria-label={ariaLabel}
         aria-describedby={messageId}
         sx={styles.dropzone(isDragging, hasError)}
         onClick={openPicker}
@@ -171,7 +177,7 @@ export function UploadView({ onPick }: Props) {
         ref={inputRef}
         hidden
         type="file"
-        accept="image/*"
+        accept={accept}
         data-testid="UploadView-fileInput"
         onChange={handleFileChange}
       />

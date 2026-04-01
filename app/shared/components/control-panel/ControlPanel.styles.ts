@@ -1,6 +1,10 @@
 import { SxProps, Theme } from '@mui/material';
 
 export const styles: Record<string, SxProps<Theme>> = {
+  wrapper: {
+    width: '100%',
+    minWidth: 0
+  },
   root: {
     display: 'flex',
     alignItems: 'center',
@@ -23,5 +27,9 @@ export const styles: Record<string, SxProps<Theme>> = {
     gap: '12px',
     marginLeft: 'auto',
     flexShrink: 0
+  },
+  bottom: {
+    pt: '12px',
+    width: '100%'
   }
 };
