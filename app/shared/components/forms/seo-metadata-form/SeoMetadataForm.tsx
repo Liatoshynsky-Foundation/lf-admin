@@ -115,6 +115,7 @@ export default function SeoMetadataForm({
         buttonSpacing="8px"
         stackSpacing="0"
         typographySpacing="4px"
+        direction="column"
         showAlternativeText={showAlternativeText}
         altText={value.altText?.[locale] ?? ''}
         onChangeAltText={(alt) =>
