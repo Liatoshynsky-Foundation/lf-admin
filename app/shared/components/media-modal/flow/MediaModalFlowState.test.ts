@@ -53,6 +53,24 @@ describe('MediaModalFlowState', () => {
     expect(state1.resetSeq).toBe(0);
   });
 
+  it('should keep select step for non-image upload on PICK_AND_CROP', () => {
+    const selected: SelectedMedia = {
+      kind: 'upload',
+      id: 'upload-doc-1',
+      fileName: 'doc.pdf',
+      file: new File(['x'], 'doc.pdf', { type: 'application/pdf' })
+    };
+
+    const state0 = buildInitialState({ tab: 'UPLOAD' });
+    const state1 = reducer(state0, { type: 'PICK_AND_CROP', selected });
+
+    expect(state1.step).toBe('SELECT');
+    expect(state1.tab).toBe('UPLOAD');
+    expect(state1.selected).toEqual(selected);
+    expect(state1.crop).toBeNull();
+    expect(state1.baselineCrop).toBeNull();
+  });
+
   it('should set baseline crop only when user has not changed crop', () => {
     const selected: SelectedMedia = {
       kind: 'gallery',

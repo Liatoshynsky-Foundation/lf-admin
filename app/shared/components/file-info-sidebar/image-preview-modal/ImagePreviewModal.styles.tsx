@@ -38,7 +38,7 @@ export const styles = {
     zIndex: 2,
     width: 32,
     height: 32,
-    borderRadius: '999px',
+    borderRadius: '16px',
     bgcolor: colors.yellow[500],
     boxShadow: '0 2px 10px rgba(0,0,0,0.12)',
     '&:hover': { bgcolor: '#d1a94cff' }

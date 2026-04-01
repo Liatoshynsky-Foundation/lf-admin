@@ -23,7 +23,7 @@ export default function Page() {
   const { save, loading: saveLoading } = useSavePageBlocks(pageSlug);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', p: '32px', width: '100%', gap: '32px' }}>
       <Header
         title="Про нас"
         onPreview={preview}

@@ -62,12 +62,40 @@ This guide will help you run the Liatoshynsky Foundation Admin Panel locally usi
 MONGO_USERNAME=
 MONGO_PASSWORD=
 MONGO_DB=
+MONGO_URL=
 MONGO_HOST=
 MONGO_PORT=
-AZURE_SAS_URL=
 JWT_ACCESS_TOKEN_SECRET=
 JWT_REFRESH_TOKEN_SECRET=
-NODE_ENV=development
+
+# Storage Environment - determines the environment context
+# Set to 'production' for production, 'development' (default) for development
+STORAGE_ENV=development
+
+# Upload Limits
+UPLOAD_MAX_FILE_SIZE=10485760 # 10MB in bytes
+UPLOAD_MAX_FILES=10
+
+# Storage Configuration
+# Storage type options: 'cloud' | 'azure-blob'
+# Default: 'cloud' for all environments
+STORAGE_TYPE=cloud
+
+# Azure Blob Storage (for STORAGE_TYPE=azure-blob)
+AZURE_SAS_URL=
+AZURE_CONTAINER_NAME=
+AZURE_FOLDER_PREFIX=uploads
+# STORAGE_BASE_URL=http://localhost:3000/api/blob-url
+
+# Cloud Storage (for STORAGE_TYPE=cloud - AWS/GCP/Cloudflare R2)
+# CLOUD_PROVIDER=aws # or gcp, cloudflare
+# CLOUD_BUCKET=your-bucket
+# CLOUD_REGION=us-east-1
+# CLOUD_ENDPOINT=
+# CLOUD_ACCESS_KEY=
+# CLOUD_SECRET_KEY=
+# CLOUDFLARE_TOKEN=
+# CLOUD_PROJECT_ID=
 ```
 
 ### 📦 Clone Repository
@@ -113,6 +141,111 @@ docker run --env-file .env -p 3001:3001 lf-admin:latest
 ---
 
 ## Usage
+
+### Uploads Module
+
+The Uploads module provides a flexible file upload system with support for multiple storage backends and environment-specific configurations.
+
+#### Storage Types
+
+The module supports four storage types:
+
+1. **Local Storage** - Stores files in `./public/uploads` (default for development)
+2. **Docker Storage** - Uses Docker volumes for containerized environments
+3. **Azure Blob Storage** - Integrates with Azure Blob Storage with SAS token authentication
+4. **Cloud Storage** - Supports AWS S3, Google Cloud Storage, and Cloudflare R2
+
+#### Environment-Based Configuration
+
+The module uses a unified configuration with a single set of environment variables:
+
+- Set `STORAGE_ENV=development` for development environment (defaults to local storage)
+- Set `STORAGE_ENV=production` for production environment (defaults to cloud storage)
+- Use the same environment variable names in both environments, just with different values
+
+This simplifies configuration management - you maintain the same variable names across environments, changing only their values based on your deployment context.
+
+#### API Endpoints
+
+- `POST /api/uploads/single` - Upload a single file
+- `POST /api/uploads/multiple` - Upload multiple files
+- `GET /api/uploads/[filename]` - Retrieve a file
+- `DELETE /api/uploads/[filename]` - Delete a file
+- `GET /api/uploads/[filename]/metadata` - Get file metadata
+
+#### Upload Example
+
+```javascript
+// Single file upload
+const formData = new FormData();
+formData.append('file', file);
+formData.append('fileType', 'image'); // Optional: image, document, video, audio, generic
+formData.append('validationRules', JSON.stringify({ maxSize: 5242880 })); // Optional
+formData.append('metadata', JSON.stringify({ author: 'Admin' })); // Optional
+
+const response = await fetch('/api/uploads/single', {
+  method: 'POST',
+  body: formData
+});
+
+const result = await response.json();
+// Returns: { success: true, data: { filename, originalName, url, size, mimeType, metadata } }
+```
+
+#### Configuration Examples
+
+**Azure Blob Storage (Development)**
+
+```env
+STORAGE_ENV=development
+STORAGE_TYPE=azure-blob
+AZURE_SAS_URL=https://youraccount.blob.core.windows.net/container?sas-token
+AZURE_CONTAINER_NAME=your-container
+AZURE_FOLDER_PREFIX=uploads
+```
+
+**Cloudflare R2 (Production)**
+
+```env
+STORAGE_ENV=production
+STORAGE_TYPE=cloud
+CLOUD_PROVIDER=cloudflare
+CLOUD_BUCKET=your-bucket
+CLOUD_ENDPOINT=https://account-id.r2.cloudflarestorage.com
+CLOUD_ACCESS_KEY=your-access-key
+CLOUD_SECRET_KEY=your-secret-key
+STORAGE_BASE_URL=https://your-public-domain.r2.dev
+```
+
+**AWS S3 (Production)**
+
+```env
+STORAGE_ENV=production
+STORAGE_TYPE=cloud
+CLOUD_PROVIDER=aws
+CLOUD_BUCKET=your-bucket
+CLOUD_REGION=us-east-1
+CLOUD_ACCESS_KEY=your-access-key
+CLOUD_SECRET_KEY=your-secret-key
+STORAGE_BASE_URL=https://your-bucket.s3.amazonaws.com
+```
+
+#### File Validation and Processing
+
+The module includes built-in validators and processors:
+
+- **Validators**: Check file size, type, and format based on file type (image, document, video, audio)
+- **Processors**: Process files before storage (e.g., image optimization, metadata extraction)
+
+Configure validation rules per upload:
+
+```javascript
+const validationRules = {
+  maxSize: 5242880, // 5MB
+  allowedExtensions: ['.jpg', '.png', '.webp'],
+  allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp']
+};
+```
 
 ### How to work with swagger UI
 
@@ -163,6 +296,15 @@ app/ (frontend part)
 ├── api/
 │ ├── graphql/
 │ │ └── route.ts # API for /api/graphql
+│ ├── uploads/ # Upload endpoints
+│ │ ├── single/
+│ │ │ └── route.ts # POST /api/uploads/single
+│ │ ├── multiple/
+│ │ │ └── route.ts # POST /api/uploads/multiple
+│ │ └── [filename]/
+│ │ ├── route.ts # GET/DELETE /api/uploads/[filename]
+│ │ └── metadata/
+│ │ └── route.ts # GET /api/uploads/[filename]/metadata
 ├── middleware/ # Middlewares for handling requests
 │ ├── logger.ts # Middleware for logging
 │ └── authentication.ts # Middleware for authentication checks
@@ -189,6 +331,33 @@ src/ (backend part)
 │ └── logger
 ├── shared
 │ └── types
+└── uploads # Upload module
+├── index.ts
+├── initialize.ts # Module initialization with config
+├── types.ts
+├── utils.ts
+├── errors.ts
+├── uploadService.ts
+├── uploadController.ts
+├── uploadRoutes.ts
+├── storage/
+│ ├── index.ts
+│ ├── types.ts
+│ ├── storageFactory.ts
+│ ├── localStorage.ts # Local filesystem storage
+│ ├── dockerStorage.ts # Docker volume storage
+│ ├── azureBlobStorage.ts # Azure Blob Storage integration
+│ └── cloudStorage.ts # AWS S3, GCP, Cloudflare R2
+├── validators/
+│ ├── index.ts
+│ ├── validatorFactory.ts
+│ ├── common.ts
+│ └── imageValidator.ts
+└── processors/
+├── index.ts
+├── processorFactory.ts
+├── common.ts
+└── imageProcessor.ts
 ```
 
 ---

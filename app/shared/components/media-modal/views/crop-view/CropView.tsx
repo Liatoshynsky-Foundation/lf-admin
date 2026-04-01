@@ -3,7 +3,7 @@
 import 'react-image-crop/dist/ReactCrop.css';
 import { Box } from '@mui/material';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import ReactCrop, { Crop, PixelCrop } from 'react-image-crop';
+import ReactCrop, { PixelCrop } from 'react-image-crop';
 
 import type { CropRendererProps } from '../../MediaModal.renderers';
 
@@ -19,11 +19,11 @@ const MOCK_SERVER_DATA = {
 
 const forCropAngle = Math.min(MOCK_SERVER_DATA.width, MOCK_SERVER_DATA.height) * 0.2;
 
-export function CropView({ selected, resetSeq, onBaseline, onChange }: Readonly<CropRendererProps>) {
+export function CropView({ selected, crop: stateCrop, resetSeq, onBaseline, onChange }: Readonly<CropRendererProps>) {
   const uploadFile = selected.kind === 'upload' ? selected.file : null;
   const [uploadObjectUrl, setUploadObjectUrl] = useState('');
 
-  const [crop, setCrop] = useState<Crop>();
+  const [crop, setCrop] = useState<PixelCrop>();
   const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
@@ -59,37 +59,57 @@ export function CropView({ selected, resetSeq, onBaseline, onChange }: Readonly<
     }
   }, [selected.id]);
 
+  useEffect(() => {
+    if (resetSeq > 0 && imgRef.current) {
+      const { width, height, naturalWidth, naturalHeight } = imgRef.current;
+      const scaleX = width / naturalWidth;
+      const scaleY = height / naturalHeight;
+
+      const resetPixelCrop: PixelCrop = {
+        unit: 'px',
+        x: MOCK_SERVER_DATA.x * scaleX,
+        y: MOCK_SERVER_DATA.y * scaleY,
+        width: MOCK_SERVER_DATA.width * scaleX,
+        height: MOCK_SERVER_DATA.height * scaleY
+      };
+
+      setCrop(resetPixelCrop);
+
+      onBaseline({
+        rect: {
+          x: MOCK_SERVER_DATA.x,
+          y: MOCK_SERVER_DATA.y,
+          width: MOCK_SERVER_DATA.width,
+          height: MOCK_SERVER_DATA.height
+        }
+      });
+    }
+  }, [resetSeq, onBaseline]);
+
   const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const { width, height, naturalWidth, naturalHeight } = e.currentTarget;
     const scaleX = width / naturalWidth;
     const scaleY = height / naturalHeight;
 
-    const initialPixelCrop: Crop = {
+    const sourceRect = stateCrop?.rect ?? MOCK_SERVER_DATA;
+
+    const initialPixelCrop: PixelCrop = {
       unit: 'px',
-      x: MOCK_SERVER_DATA.x * scaleX,
-      y: MOCK_SERVER_DATA.y * scaleY,
-      width: MOCK_SERVER_DATA.width * scaleX,
-      height: MOCK_SERVER_DATA.height * scaleY
+      x: sourceRect.x * scaleX,
+      y: sourceRect.y * scaleY,
+      width: sourceRect.width * scaleX,
+      height: sourceRect.height * scaleY
     };
 
     setCrop(initialPixelCrop);
 
     onBaseline({
-      rect: {
-        x: MOCK_SERVER_DATA.x,
-        y: MOCK_SERVER_DATA.y,
-        width: MOCK_SERVER_DATA.width,
-        height: MOCK_SERVER_DATA.height
-      }
+      rect: sourceRect
     });
   };
 
   const handleCropChange = (pixelCrop: PixelCrop) => {
-    setCrop((prevCrop) => ({
-      ...pixelCrop,
-      width: prevCrop?.width || pixelCrop.width,
-      height: prevCrop?.height || pixelCrop.height
-    }));
+    setCrop(pixelCrop);
   };
 
   const handleComplete = (c: PixelCrop) => {
@@ -117,10 +137,6 @@ export function CropView({ selected, resetSeq, onBaseline, onChange }: Readonly<
         flexDirection: 'column',
         gap: 2,
         overflow: 'hidden',
-
-        '& .ReactCrop__drag-handle': {
-          display: 'none !important'
-        },
 
         '& .ReactCrop__crop-selection': {
           animation: 'none !important',

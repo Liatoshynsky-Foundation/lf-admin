@@ -58,6 +58,8 @@ export const ImagePreviewBlock = ({
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [mediaInitial, setMediaInitial] = useState<MediaModalOpenState | undefined>(undefined);
 
+  const [savedCrop, setSavedCrop] = useState<MediaModalResult['crop']>(null);
+
   useEffect(() => {
     setPreviewImage(imageUrl);
   }, [imageUrl]);
@@ -78,6 +80,7 @@ export const ImagePreviewBlock = ({
     const result = await readFileAsDataURL(file);
     setPreviewImage(result);
     onChangeImage(file);
+    setSavedCrop(null);
   };
 
   const openEditCrop = () => {
@@ -90,7 +93,7 @@ export const ImagePreviewBlock = ({
         src: previewImage,
         locale: 'uk'
       },
-      crop: null
+      crop: savedCrop
     });
 
     setIsMediaModalOpen(true);
@@ -107,7 +110,7 @@ export const ImagePreviewBlock = ({
   };
 
   const handleApplyMediaModal = async (result: MediaModalResult) => {
-    const { selected } = result;
+    const { selected, crop } = result;
 
     try {
       if (selected.kind === 'upload') {
@@ -124,6 +127,8 @@ export const ImagePreviewBlock = ({
         setPreviewImage(selected.src);
         onChangeImage(file);
       }
+
+      setSavedCrop(crop);
       toast.success('Зображення змінено');
     } catch {
       toast.error('Не вдалося змінити');
