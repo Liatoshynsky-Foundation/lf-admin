@@ -17,10 +17,10 @@ import {
   useAllEventsQuery,
   useCreateEventMutation,
   useDeleteEventMutation,
+  useEventsCountQuery,
   usePaginatedEventsQuery,
   usePublishedEventsQuery,
-  useUpdateEventMutation
-} from '~/types/graphql/generated/graphql';
+  useUpdateEventMutation} from '~/types/graphql/generated/graphql';
 
 export const useAllEvents = (filters?: EventFiltersInput) =>
   useAllEventsQuery({ variables: { filters }, fetchPolicy: 'network-only' });
@@ -30,6 +30,8 @@ export const usePublishedEvents = (filters?: EventFiltersInput) =>
 
 export const usePaginatedEvents = (page = 1, limit = 10, filters?: EventFiltersInput) =>
   usePaginatedEventsQuery({ variables: { page, limit, filters }, fetchPolicy: 'network-only' });
+
+export const useEventsCount = (status?: EventStatus) => useEventsCountQuery({ variables: { status } });
 
 export const useCreateEvent = () => {
   const [mutate, meta] = useCreateEventMutation();
