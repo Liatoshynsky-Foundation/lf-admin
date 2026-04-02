@@ -96,9 +96,10 @@ export default function HeaderRightActions(props: HeaderRightActionsProps) {
         </Stack>
       );
 
-    default:
+    default: {
       const _exhaustiveCheck: never = mode;
       throw new Error(`Unhandled mode: ${_exhaustiveCheck}`);
+    }
     }
   };
 
