@@ -1,0 +1,99 @@
+import { fireEvent, render, screen } from '@testing-library/react';
+
+import ContentCard, { ContentType } from './ContentCard';
+
+jest.mock('~/lib/utils/formatDate', () => ({
+  formatDate: (date: string) => `formatted-${date}`
+}));
+
+jest.mock('../design-system/button/Button', () => ({
+  __esModule: true,
+  default: ({ children, onClick }: any) => <button onClick={onClick}>{children}</button>
+}));
+
+jest.mock('./ContentCardBadge', () => ({
+  __esModule: true,
+  default: () => <div data-testid="badge" />
+}));
+
+describe('ContentCard', () => {
+  const defaultProps = {
+    type: 'news' as ContentType,
+    coverImage: {
+      src: '/image.png',
+      alt: {
+        uk: 'Image UA',
+        en: 'Image EN'
+      }
+    },
+    title: {
+      uk: 'Test title',
+      en: 'Test title EN'
+    },
+    status: 'draft',
+    createdAt: '2024-01-01',
+    onClick: jest.fn(),
+    onClickMenu: jest.fn()
+  };
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should render title', () => {
+    render(<ContentCard {...defaultProps} />);
+
+    expect(screen.getByText('Test title')).toBeInTheDocument();
+  });
+
+  it('should render badge component', () => {
+    render(<ContentCard {...defaultProps} />);
+
+    expect(screen.getByTestId('badge')).toBeInTheDocument();
+  });
+
+  it('should display draft status with created date', () => {
+    render(<ContentCard {...defaultProps} />);
+
+    expect(screen.getByText('Створено formatted-2024-01-01')).toBeInTheDocument();
+  });
+
+  it('should display published status with updated date', () => {
+    render(<ContentCard {...defaultProps} status="published" updatedAt="2024-02-01" />);
+
+    expect(screen.getByText('Редаговано formatted-2024-02-01')).toBeInTheDocument();
+  });
+
+  it('should display published status with published date', () => {
+    render(<ContentCard {...defaultProps} status="published" publishedAt="2024-03-01" />);
+
+    expect(screen.getByText('Опубліковано formatted-2024-03-01')).toBeInTheDocument();
+  });
+
+  it('should call onClick when edit button is clicked', () => {
+    render(<ContentCard {...defaultProps} />);
+
+    fireEvent.click(screen.getByText('Редагувати'));
+
+    expect(defaultProps.onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('should call onClickMenu when menu icon is clicked', () => {
+    render(<ContentCard {...defaultProps} />);
+
+    const menuButton = screen.getByTestId('menu-button');
+
+    fireEvent.click(menuButton);
+
+    expect(defaultProps.onClickMenu).toHaveBeenCalledTimes(1);
+  });
+
+  it('should render image with correct src and alt', () => {
+    render(<ContentCard {...defaultProps} />);
+
+    const img = screen.getByAltText('Image UA');
+
+    expect(img).toHaveAttribute('src', '/image.png');
+    expect(img).toHaveAttribute('alt', 'Image UA');
+  });
+});
