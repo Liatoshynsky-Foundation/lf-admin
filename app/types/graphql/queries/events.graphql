@@ -1,96 +1,93 @@
 fragment EventFields on Event {
-  id
-  adminTitle
-  title { uk en }
-  slug
-  description { uk en }
-  keywords { uk en }
-  content { uk en }
-  coverImage {
-    src
-    alt { uk en }
-    caption { uk en }
-    isTmp
-    width
-    height
-  }
-  status
-  allowIndexation { uk en }
-  eventLink
-  eventDateTimeStart
-  eventDateTimeEnd
-  publishedAt
-  createdAt
-  updatedAt
-  meta { views }
+    id
+    adminTitle
+    eventLink
+    slug
+    status
+    title { uk en }
+    description { uk en }
+    keywords { uk en }
+    allowIndexation { uk en }
+    content { uk en }
+    coverImage {
+        src
+        width
+        height
+        alt { uk en }
+        caption { uk en }
+    }
+    publishedAt
+    createdAt
+    updatedAt
+    meta { views }
 }
 
 query EventById($id: ID!) {
-  eventById(id: $id) {
-    ...EventFields
-  }
+    eventById(id: $id) {
+        ...EventFields
+    }
 }
 
 query EventBySlug($slug: String!) {
-  eventBySlug(slug: $slug) {
-    ...EventFields
-  }
+    eventBySlug(slug: $slug) {
+        ...EventFields
+    }
 }
 
 query AllEvents($filters: EventFiltersInput) {
-  allEvents(filters: $filters) {
-    id
-    adminTitle
-    title { uk en }
-    slug
-    status
-    eventLink
-    eventDateTimeStart
-    eventDateTimeEnd
-    publishedAt
-    meta { views }
-  }
+    allEvents(filters: $filters) {
+        id
+        adminTitle
+        title { uk en }
+        slug
+        status
+        eventLink
+        eventDateTimeStart
+        eventDateTimeEnd
+        publishedAt
+        meta { views }
+    }
 }
 
 query PublishedEvents($filters: EventFiltersInput) {
-  publishedEvents(filters: $filters) {
-    id
-    title { uk en }
-    slug
-    coverImage {
-      src
-      alt { uk en }
+    publishedEvents(filters: $filters) {
+        id
+        title { uk en }
+        slug
+        coverImage {
+            src
+            alt { uk en }
+        }
+        eventLink
+        eventDateTimeStart
+        eventDateTimeEnd
+        publishedAt
+        meta { views }
     }
-    eventLink
-    eventDateTimeStart
-    eventDateTimeEnd
-    publishedAt
-    meta { views }
-  }
 }
 
 query PaginatedEvents($page: Int!, $limit: Int!, $filters: EventFiltersInput) {
-  paginatedEvents(page: $page, limit: $limit, filters: $filters) {
-    items {
-      id
-      adminTitle
-      title { uk en }
-      slug
-      status
-      eventLink
-      eventDateTimeStart
-      eventDateTimeEnd
-      publishedAt
-      coverImage {
-        src
-      }
+    paginatedEvents(page: $page, limit: $limit, filters: $filters) {
+        items {
+            id
+            adminTitle
+            eventLink
+            slug
+            status
+            title { uk en }
+            coverImage {
+                src
+                alt { uk en }
+            }
+            publishedAt
+            meta { views }
+        }
+        total
+        page
+        totalPages
     }
-    total
-    page
-    totalPages
-  }
 }
 
 query EventsCount($status: EventStatus) {
-  eventsCount(status: $status)
+    eventsCount(status: $status)
 }
