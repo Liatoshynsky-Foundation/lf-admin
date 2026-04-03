@@ -58,7 +58,7 @@ type PublicationCardItem = UsePublicationsFilteringItem & {
       en?: string;
     };
   };
-  createdAt: string;
+  createdAt?: string;
   updatedAt?: string;
   publishedAt?: string;
 };
@@ -395,11 +395,14 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
   const emptyStateTitle = hasActiveCriteria
     ? PUBLICATIONS_EMPTY_STATE_NO_RESULTS_TITLE
     : PUBLICATIONS_EMPTY_STATE_TITLE;
-  const emptyStateDescription = hasActiveCriteria
-    ? PUBLICATIONS_EMPTY_STATE_NO_RESULTS_DESCRIPTION
-    : activeTab === 'events'
-      ? PUBLICATIONS_EVENTS_EMPTY_STATE_DESCRIPTION
-      : PUBLICATIONS_EMPTY_STATE_DESCRIPTION;
+  let emptyStateDescription = PUBLICATIONS_EMPTY_STATE_DESCRIPTION;
+
+  if (hasActiveCriteria) {
+    emptyStateDescription = PUBLICATIONS_EMPTY_STATE_NO_RESULTS_DESCRIPTION;
+  } else if (activeTab === 'events') {
+    emptyStateDescription = PUBLICATIONS_EVENTS_EMPTY_STATE_DESCRIPTION;
+  }
+
   const content = (() => {
     if (shouldShowLoadingState) {
       return (

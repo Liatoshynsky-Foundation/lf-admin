@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
 
 import Page from './page';
+import { MediaStatus, NewsStatus } from '~/types/graphql/generated/graphql';
 
 const mockUseAllNews = jest.fn();
 const mockUseAllMediaMentions = jest.fn();
@@ -134,7 +135,7 @@ describe('Publications page', () => {
             id: 'news-1',
             slug: 'festival-news',
             title: { uk: 'Новина про фестиваль', en: 'Festival news' },
-            status: 'published',
+            status: NewsStatus.Published,
             createdAt: '2026-03-21T10:00:00.000Z',
             updatedAt: '2026-03-22T10:00:00.000Z',
             publishedAt: '2026-03-23T10:00:00.000Z',
@@ -153,7 +154,7 @@ describe('Publications page', () => {
             id: 'news-2',
             slug: 'chamber-evening',
             title: { uk: 'Вечір камерної музики', en: '' },
-            status: 'draft',
+            status: NewsStatus.Draft,
             createdAt: '2026-03-19T10:00:00.000Z',
             updatedAt: '2026-03-19T10:00:00.000Z',
             publishedAt: null,
@@ -181,7 +182,7 @@ describe('Publications page', () => {
             id: 'media-1',
             slug: 'interview-media',
             title: 'Інтерв’ю про нову постановку',
-            status: 'PUBLISHED',
+            status: MediaStatus.Published,
             createdAt: '2026-03-20T10:00:00.000Z',
             updatedAt: '2026-03-24T10:00:00.000Z',
             publishedAt: '2026-03-25T10:00:00.000Z',
@@ -198,7 +199,7 @@ describe('Publications page', () => {
             id: 'media-2',
             slug: 'residency-program',
             title: 'Програма резиденції оголошена',
-            status: 'DRAFT',
+            status: MediaStatus.Draft,
             createdAt: '2026-03-18T10:00:00.000Z',
             updatedAt: '2026-03-18T10:00:00.000Z',
             publishedAt: null,
