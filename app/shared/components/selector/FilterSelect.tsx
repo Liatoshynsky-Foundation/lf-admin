@@ -126,6 +126,8 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
       .map((value) => options.find((option) => option.value === value)?.label ?? value)
       .join(', ');
   }, [options, selectedValues]);
+  const triggerAriaLabel = selectedOptionsCount > 0 && !hideCounterChip ? `${label}: ${selectedOptionsLabel}` : label;
+
   return (
     <Box>
       <Box
@@ -136,6 +138,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
         tabIndex={disabled ? -1 : 0}
         aria-haspopup="dialog"
         aria-expanded={Boolean(anchorEl)}
+        aria-label={triggerAriaLabel}
       >
         {(selectedOptionsCount === 0 || hideCounterChip) && (
           <Typography sx={filterSelectStyles.label(disabled)}>{label}</Typography>
