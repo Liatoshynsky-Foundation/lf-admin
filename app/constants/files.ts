@@ -29,7 +29,14 @@ export const FILES_UPLOAD_ALLOWED_MIME_TYPES = [
 export const FILES_UPLOAD_ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'pdf', 'mp3', 'wav'] as const;
 
 export const FILES_UPLOAD_ACCEPT = FILES_UPLOAD_ALLOWED_MIME_TYPES.join(',');
+export const FILES_PAGE_TITLE = 'Файли';
+export const FILES_UPLOAD_BUTTON_LABEL = 'Завантажити файл';
 export const FILES_UPLOAD_ERROR = 'Підтримуються зображення, PDF та аудіо';
+export const FILES_UPLOAD_READ_ERROR = 'Не вдалося прочитати файл для завантаження.';
+export const FILES_UPLOAD_FAILED_ERROR = 'Не вдалося завантажити файл. Спробуйте ще раз.';
+export const FILES_UNKNOWN_SECTION_LABEL = 'Невідомий розділ';
+export const FILES_LOADING_STATE_TEXT = 'Завантаження файлів…';
+export const FILES_ERROR_STATE_TEXT = 'Не вдалося завантажити файли.';
 
 export const SORT_OPTIONS: ReadonlyArray<{ value: FilesSortValue; label: string }> = [
   { value: 'date_desc', label: 'Нові спочатку' },

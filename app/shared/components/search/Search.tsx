@@ -99,10 +99,10 @@ export function Search({
       isOptionEqualToValue={(left, right) => left.id === right.id}
       filterOptions={(list) => list}
       renderOption={(props, option) => {
-        const { key, ...rest } = props;
+        const { key: _key, ...rest } = props;
 
         return (
-          <ListItem key={key} {...rest} sx={{ py: '8px' }}>
+          <ListItem key={option.id} {...rest} sx={{ py: '8px' }}>
             <Typography variant="customMedium16">{option.title}</Typography>
           </ListItem>
         );

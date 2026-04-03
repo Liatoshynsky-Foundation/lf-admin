@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import type { MouseEventHandler, ReactNode } from 'react';
 
 import ContentCard, { ContentType } from './ContentCard';
 
@@ -8,7 +9,13 @@ jest.mock('~/lib/utils/formatDate', () => ({
 
 jest.mock('../design-system/button/Button', () => ({
   __esModule: true,
-  default: ({ children, onClick }: any) => <button onClick={onClick}>{children}</button>
+  default: ({
+    children,
+    onClick
+  }: {
+    children: ReactNode;
+    onClick?: MouseEventHandler<HTMLButtonElement>;
+  }) => <button onClick={onClick}>{children}</button>
 }));
 
 jest.mock('./ContentCardBadge', () => ({
@@ -95,5 +102,26 @@ describe('ContentCard', () => {
 
     expect(img).toHaveAttribute('src', '/image.png');
     expect(img).toHaveAttribute('alt', 'Image UA');
+  });
+
+  it('should fallback to default image when cover image fails to load', () => {
+    render(
+      <ContentCard
+        {...defaultProps}
+        coverImage={{
+          src: '/news-mock-images/image1.jpg',
+          alt: {
+            uk: 'Broken image',
+            en: 'Broken image'
+          }
+        }}
+      />
+    );
+
+    const img = screen.getByAltText('Broken image');
+
+    fireEvent.error(img);
+
+    expect(img).toHaveAttribute('src', '/images/image.png');
   });
 });

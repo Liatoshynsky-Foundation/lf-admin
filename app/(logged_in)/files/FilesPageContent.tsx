@@ -6,10 +6,17 @@ import { useEffect, useMemo, useState } from 'react';
 
 import {
   FILE_TABS,
+  FILES_ERROR_STATE_TEXT,
+  FILES_LOADING_STATE_TEXT,
+  FILES_PAGE_TITLE,
+  FILES_UNKNOWN_SECTION_LABEL,
   FILES_UPLOAD_ACCEPT,
   FILES_UPLOAD_ALLOWED_EXTENSIONS,
   FILES_UPLOAD_ALLOWED_MIME_TYPES,
+  FILES_UPLOAD_BUTTON_LABEL,
   FILES_UPLOAD_ERROR,
+  FILES_UPLOAD_FAILED_ERROR,
+  FILES_UPLOAD_READ_ERROR,
   type FilesTabValue
 } from '~/constants/files';
 import { readFileAsDataURL } from '~/lib/utils/readFileAsDataURL';
@@ -155,7 +162,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
     const base64 = dataUrl.split(',')[1];
 
     if (!base64) {
-      throw new Error('Не вдалося прочитати файл для завантаження.');
+      throw new Error(FILES_UPLOAD_READ_ERROR);
     }
 
     const uploadResult = await uploadBlob({
@@ -168,7 +175,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
     });
 
     if (!uploadResult.data?.uploadBlob.success) {
-      throw new Error('Не вдалося завантажити файл. Спробуйте ще раз.');
+      throw new Error(FILES_UPLOAD_FAILED_ERROR);
     }
 
     await refetch();
@@ -190,7 +197,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
       addedBy: asset.createdBy ? { name: asset.createdBy } : undefined,
       usage: asset.usageRefs.map((usageRef, index) => ({
         id: `${asset.id}-${index}`,
-        label: usageRef.pageId ?? 'Невідомий розділ',
+        label: usageRef.pageId ?? FILES_UNKNOWN_SECTION_LABEL,
         href: usageToLink(usageRef.pageId)
       })),
       description: asset.description ?? undefined
@@ -248,13 +255,12 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
         display: 'flex',
         flexDirection: 'column',
         gap: '20px',
-        pt: '15px',
         pr: { xs: 0, md: sidebarFile ? `${SIDEBAR_WIDTH + 12}px` : 0 },
         transition: 'padding-right 0.2s ease'
       }}
     >
       <PageHeader
-        title="Файли"
+        title={FILES_PAGE_TITLE}
         activeTab={activeTab}
         tabs={FILE_TABS}
         action={
@@ -279,7 +285,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
               }
             }}
           >
-            Завантажити файл
+            {FILES_UPLOAD_BUTTON_LABEL}
           </Button>
         }
       />
@@ -299,8 +305,8 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
 
       <FilesCardsLayout view={view} items={filteredFiles} onItemClick={(item) => setSelectedFileId(item.id)} />
 
-      {loading && <Typography>Завантаження файлів…</Typography>}
-      {error && <Typography color="error">Не вдалося завантажити файли.</Typography>}
+      {loading && <Typography>{FILES_LOADING_STATE_TEXT}</Typography>}
+      {error && <Typography color="error">{FILES_ERROR_STATE_TEXT}</Typography>}
 
       {sidebarFile && (
         <FileInfoSidebar

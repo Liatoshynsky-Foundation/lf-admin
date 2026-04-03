@@ -15,20 +15,21 @@ import {
   useDeleteMediaMentionMutation,
   useMediaMentionsCountQuery,
   usePaginatedMediaMentionsQuery,
+  usePublishedMediaMentionsQuery,
   useUpdateMediaMentionMutation
 } from '~/types/graphql/generated/graphql';
 
 // We should discuss on cache policy
-export const useAllMediaMentions = (status?: MediaStatus) => {
+export const useAllMediaMentions = (filters?: MediaMentionsFiltersInput) => {
   return useAllMediaMentionsQuery({
-    variables: { status } as AllMediaMentionsQueryVariables,
+    variables: { filters } as AllMediaMentionsQueryVariables,
     fetchPolicy: 'network-only'
   });
 };
 
-export const usePublishedMediaMentions = () => {
-  return useAllMediaMentionsQuery({
-    variables: { status: MediaStatus.Published } as AllMediaMentionsQueryVariables,
+export const usePublishedMediaMentions = (filters?: MediaMentionsFiltersInput) => {
+  return usePublishedMediaMentionsQuery({
+    variables: { filters } as AllMediaMentionsQueryVariables,
     fetchPolicy: 'cache-first'
   });
 };

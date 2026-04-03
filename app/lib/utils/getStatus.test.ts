@@ -45,6 +45,15 @@ describe('getStatus', () => {
     expect(mockedFormatDate).toHaveBeenCalledWith('2024-01-01');
   });
 
+  it('should treat published_with_draft as published content', () => {
+    mockedFormatDate.mockReturnValue('formatted-date');
+
+    const result = getStatus('published_with_draft', '2024-01-01', '2024-02-01');
+
+    expect(result).toBe('Редаговано formatted-date');
+    expect(mockedFormatDate).toHaveBeenCalledWith('2024-02-01');
+  });
+
   it('should return empty string for unknown status', () => {
     const result = getStatus('archived', '2024-01-01');
 

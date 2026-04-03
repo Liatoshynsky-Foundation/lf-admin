@@ -1,7 +1,7 @@
 import { formatDate } from './formatDate';
 
 export function getStatus(status: string, createdAt: string, updatedAt?: string, publishedAt?: string): string {
-  if (status === 'published') {
+  if (status === 'published' || status === 'published_with_draft') {
     if (updatedAt) {
       return `Редаговано ${formatDate(updatedAt)}`;
     }
