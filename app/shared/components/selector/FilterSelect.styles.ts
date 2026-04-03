@@ -59,8 +59,10 @@ export const filterSelectStyles = {
     display: 'flex',
     alignItems: 'center',
     gap: '4px',
-    width: '100%',
-    justifyContent: 'space-between'
+    flex: '1 1 auto',
+    minWidth: 0,
+    justifyContent: 'flex-end',
+    width: 'auto'
   },
 
   selectedOptionsChip: (disabled: boolean): SxProps => ({
@@ -112,7 +114,10 @@ export const filterSelectStyles = {
     cursor: disabled ? 'default' : 'pointer',
     opacity: disabled ? 0.5 : 1,
     display: 'flex',
-    justifyContent: 'center'
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    color: disabled ? FilterSelectColors.textDisabled : FilterSelectColors.text
   }),
 
   menuItem: {

@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Button, Chip, Divider, Typography } from '@mui/material';
-import Image from 'next/image';
+import { ChevronDown } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { filterSelectStyles } from './FilterSelect.styles';
@@ -153,13 +153,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
             />
           )}
           <Box sx={filterSelectStyles.dropdownIcon(disabled)}>
-            <Image
-              src="/icons/chevron-down-dark.svg"
-              alt="chevron-down"
-              width={14}
-              height={14}
-              style={{ transform: 'translateY(1px)' }}
-            />
+            <ChevronDown size={16} strokeWidth={2.25} aria-hidden="true" />
           </Box>
         </Box>
       </Box>

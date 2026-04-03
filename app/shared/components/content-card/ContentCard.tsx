@@ -1,5 +1,6 @@
 import { Box, Card, CardContent, CardMedia, Typography } from '@mui/material';
 import { EllipsisVertical } from 'lucide-react';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import Button from '../design-system/button/Button';
@@ -25,9 +26,10 @@ interface ContentCardProps {
   title: LocalizedCardValue;
   status: string;
   updatedAt?: string;
-  createdAt: string;
+  createdAt?: string;
   publishedAt?: string;
-  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  editHref?: string;
+  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
   onClickMenu: (event: React.MouseEvent<HTMLImageElement>) => void;
 }
 
@@ -39,6 +41,7 @@ const ContentCard = ({
   updatedAt,
   createdAt,
   publishedAt,
+  editHref,
   onClick,
   onClickMenu
 }: ContentCardProps) => {
@@ -75,7 +78,13 @@ const ContentCard = ({
         <Typography variant="body2" sx={styles.date}>
           {getStatus(status, createdAt, updatedAt, publishedAt)}
         </Typography>
-        <Button variant="filled" color="primary" onClick={onClick}>
+        <Button
+          variant="filled"
+          color="primary"
+          href={editHref}
+          LinkComponent={editHref ? Link : undefined}
+          onClick={editHref ? undefined : onClick}
+        >
           Редагувати
         </Button>
       </CardContent>

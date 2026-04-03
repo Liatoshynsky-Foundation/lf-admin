@@ -11,11 +11,13 @@ jest.mock('../design-system/button/Button', () => ({
   __esModule: true,
   default: ({
     children,
+    href,
     onClick
   }: {
     children: ReactNode;
+    href?: string;
     onClick?: MouseEventHandler<HTMLButtonElement>;
-  }) => <button onClick={onClick}>{children}</button>
+  }) => (href ? <a href={href}>{children}</a> : <button onClick={onClick}>{children}</button>)
 }));
 
 jest.mock('./ContentCardBadge', () => ({
@@ -83,6 +85,15 @@ describe('ContentCard', () => {
     fireEvent.click(screen.getByText('Редагувати'));
 
     expect(defaultProps.onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('should render edit button as link when href is provided', () => {
+    render(<ContentCard {...defaultProps} editHref="/publications/news/test-slug/edit" />);
+
+    expect(screen.getByRole('link', { name: 'Редагувати' })).toHaveAttribute(
+      'href',
+      '/publications/news/test-slug/edit'
+    );
   });
 
   it('should call onClickMenu when menu icon is clicked', () => {

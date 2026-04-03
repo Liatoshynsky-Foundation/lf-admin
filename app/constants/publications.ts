@@ -16,6 +16,7 @@ export type PublicationsTabConfig = Readonly<{
 export type PublicationsCreateOption = Readonly<{
   id: 'event' | 'news' | 'media';
   label: string;
+  href: string;
 }>;
 
 export type PublicationsFilterConfig = Readonly<{
@@ -44,9 +45,9 @@ export const PUBLICATIONS_TABS: ReadonlyArray<PublicationsTabConfig> = [
 ];
 
 export const PUBLICATIONS_CREATE_OPTIONS: ReadonlyArray<PublicationsCreateOption> = [
-  { id: 'event', label: 'Подію' },
-  { id: 'news', label: 'Новину' },
-  { id: 'media', label: 'Ми у ЗМІ' }
+  { id: 'event', label: 'Подію', href: '/publications/events/create' },
+  { id: 'news', label: 'Новину', href: '/publications/news/create' },
+  { id: 'media', label: 'Ми у ЗМІ', href: '/publications/media/create' }
 ];
 
 const PUBLICATIONS_STATUS_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [

@@ -45,6 +45,12 @@ describe('getStatus', () => {
     expect(mockedFormatDate).toHaveBeenCalledWith('2024-01-01');
   });
 
+  it('should return draft label when createdAt is missing', () => {
+    const result = getStatus('draft');
+
+    expect(result).toBe('Чернетка');
+  });
+
   it('should treat published_with_draft as published content', () => {
     mockedFormatDate.mockReturnValue('formatted-date');
 

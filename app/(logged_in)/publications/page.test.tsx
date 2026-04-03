@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
 
 import Page from './page';
@@ -16,11 +16,22 @@ jest.mock('~/shared/hooks/use-media-mentions/useMediaMentions', () => ({
 
 jest.mock('~/shared/components/content-card/ContentCard', () => ({
   __esModule: true,
-  default: ({ title, status, type }: { title: { uk?: string; en?: string }; status: string; type: string }) => (
+  default: ({
+    title,
+    status,
+    type,
+    editHref
+  }: {
+    title: { uk?: string; en?: string };
+    status: string;
+    type: string;
+    editHref?: string;
+  }) => (
     <div data-testid="publication-card">
       <span data-testid="publication-card-title">{title.uk || title.en}</span>
       <span>{status}</span>
       <span>{type}</span>
+      {editHref ? <a href={editHref}>Редагувати</a> : null}
     </div>
   )
 }));
@@ -223,19 +234,36 @@ describe('Publications page', () => {
     expect(screen.getByTestId('sort-select')).toHaveTextContent('Нові спочатку');
   });
 
-  it('shows dropdown options for the create action without navigation handlers', () => {
+  it('shows dropdown options for the create action as links', () => {
     render(<Page />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Створити' }));
 
-    expect(screen.getByTestId('dropdown-menu')).toBeInTheDocument();
-    expect(screen.getByText('Подію')).toBeInTheDocument();
-    expect(screen.getByText('Новину')).toBeInTheDocument();
-    expect(screen.getByText('Ми у ЗМІ')).toBeInTheDocument();
+    const dropdownMenu = screen.getByTestId('dropdown-menu');
 
-    fireEvent.click(screen.getByText('Подію'));
+    expect(dropdownMenu).toBeInTheDocument();
+    expect(within(dropdownMenu).getByText('Подію')).toBeInTheDocument();
+    expect(within(dropdownMenu).getByText('Новину')).toBeInTheDocument();
+    expect(within(dropdownMenu).getByText('Ми у ЗМІ')).toBeInTheDocument();
+
+    expect(within(dropdownMenu).getByText('Подію').closest('a')).toHaveAttribute('href', '/publications/events/create');
+    expect(within(dropdownMenu).getByText('Новину').closest('a')).toHaveAttribute('href', '/publications/news/create');
+    expect(within(dropdownMenu).getByText('Ми у ЗМІ').closest('a')).toHaveAttribute('href', '/publications/media/create');
+
+    fireEvent.click(within(dropdownMenu).getByText('Подію'));
 
     expect(screen.queryByTestId('dropdown-menu')).not.toBeInTheDocument();
+  });
+
+  it('passes edit links to rendered publication cards', () => {
+    render(<Page />);
+
+    const firstCard = screen.getAllByTestId('publication-card')[0];
+
+    expect(within(firstCard).getByRole('link', { name: 'Редагувати' })).toHaveAttribute(
+      'href',
+      '/publications/news/festival-news/edit'
+    );
   });
 
   it('filters cards by search value', () => {
@@ -263,7 +291,7 @@ describe('Publications page', () => {
 
     const beforeSort = screen.getAllByTestId('publication-card-title').map((element) => element.textContent);
 
-    expect(beforeSort[0]).toBe('Інтерв’ю про нову постановку');
+    expect(beforeSort[0]).toBe('Новина про фестиваль');
 
     fireEvent.click(screen.getByRole('button', { name: 'Фільтри' }));
     fireEvent.click(screen.getByTestId('sort-select'));

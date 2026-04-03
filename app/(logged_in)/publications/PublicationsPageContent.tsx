@@ -2,6 +2,7 @@
 
 import { Box, Button, MenuItem, Typography } from '@mui/material';
 import { ChevronDown } from 'lucide-react';
+import Link from 'next/link';
 import { useMemo, useRef, useState } from 'react';
 
 import {
@@ -64,9 +65,69 @@ type PublicationCardItem = UsePublicationsFilteringItem & {
 
 type NewsItem = AllNewsQuery['allNews'][number];
 type MediaMentionItem = AllMediaMentionsQuery['allMediaMentions'][number];
+type PublicationsTabStateMap<T> = {
+  news: T;
+  media: T;
+  events: T;
+};
+type LocalizedValue = {
+  uk?: string | null;
+  en?: string | null;
+};
+type LocalizedCardValue = {
+  uk?: string;
+  en?: string;
+};
+type MaybeLocalizedValue = string | LocalizedValue | null | undefined;
+type NewsItemCompat = NewsItem & {
+  adminTitle?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  coverImage?: {
+    src?: string | null;
+    alt?: LocalizedValue | null;
+  } | null;
+};
+type MediaMentionItemCompat = Omit<MediaMentionItem, 'title' | 'coverImage'> & {
+  adminTitle?: string | null;
+  title: MaybeLocalizedValue;
+  createdAt?: string;
+  updatedAt?: string;
+  coverImage?: {
+    src?: string | null;
+    alt?: MaybeLocalizedValue;
+  } | null;
+};
 
 const DEFAULT_COVER_IMAGE = '/images/image.png';
 const DEFAULT_COVER_ALT = 'Обкладинка матеріалу';
+const SORT_FALLBACK_DATE = '1970-01-01T00:00:00.000Z';
+
+const getPrimaryText = (value: MaybeLocalizedValue, fallback = ''): string => {
+  if (typeof value === 'string') {
+    return value || fallback;
+  }
+
+  return value?.uk || value?.en || fallback;
+};
+
+const toLocalizedCardValue = (value: MaybeLocalizedValue, fallback = ''): LocalizedCardValue => {
+  if (typeof value === 'string') {
+    return {
+      uk: value || fallback,
+      en: undefined
+    };
+  }
+
+  return {
+    uk: value?.uk ?? fallback,
+    en: value?.en ?? undefined
+  };
+};
+
+const getSortableDate = (...values: Array<string | null | undefined>): string => {
+  return values.find((value): value is string => Boolean(value)) ?? SORT_FALLBACK_DATE;
+};
 
 const getLanguageFromLocalizedValue = (value: { uk?: string | null; en?: string | null }): PublicationsLanguageValue => {
   const hasUk = Boolean(value.uk?.trim());
@@ -117,81 +178,92 @@ const mapCardType = (type: PublicationsItemType): ContentType => {
   return type;
 };
 
+const getPublicationEditHref = (item: Pick<PublicationCardItem, 'type' | 'slug'>): string => {
+  return `/publications/${item.type}/${item.slug}/edit`;
+};
+
 const mapNewsItem = (item: NewsItem): PublicationCardItem | null => {
+  const newsItem = item as NewsItemCompat;
   const normalizedStatus = getNormalizedNewsStatus(item.status);
 
   if (!normalizedStatus) {
     return null;
   }
 
-  const title = {
-    uk: item.title.uk,
-    en: item.title.en
-  };
+  const fallbackTitle = newsItem.adminTitle ?? '';
+  const title = toLocalizedCardValue(newsItem.title, fallbackTitle);
+  const titleText = getPrimaryText(newsItem.title, fallbackTitle);
+  const sortableDate = getSortableDate(newsItem.createdAt, newsItem.updatedAt, newsItem.publishedAt, newsItem.newsDate);
+  const coverImage = newsItem.coverImage;
 
   return {
     id: item.id,
     slug: item.slug,
-    title: item.title.uk || item.title.en,
-    searchTitle: [item.title.uk, item.title.en].filter(Boolean).join(' '),
+    title: titleText,
+    searchTitle: [title.uk, title.en, fallbackTitle].filter(Boolean).join(' '),
     titleData: title,
     type: 'news',
     cardType: mapCardType('news'),
-    dateAdded: item.createdAt,
-    createdAtRaw: item.createdAt,
-    createdAt: item.createdAt,
-    updatedAt: item.updatedAt,
-    publishedAt: item.publishedAt ?? undefined,
+    dateAdded: sortableDate,
+    createdAtRaw: sortableDate,
+    createdAt: newsItem.createdAt,
+    updatedAt: newsItem.updatedAt,
+    publishedAt: newsItem.publishedAt ?? undefined,
     status: normalizedStatus,
     cardStatus: normalizedStatus,
     language: getLanguageFromLocalizedValue(title),
     coverImage: {
-      src: item.coverImage.src || DEFAULT_COVER_IMAGE,
-      alt: {
-        uk: item.coverImage.alt.uk || item.title.uk || DEFAULT_COVER_ALT,
-        en: item.coverImage.alt.en || item.title.en || undefined
-      }
+      src: coverImage?.src || DEFAULT_COVER_IMAGE,
+      alt: toLocalizedCardValue(coverImage?.alt, titleText || DEFAULT_COVER_ALT)
     }
   };
 };
 
 const mapMediaMentionItem = (item: MediaMentionItem): PublicationCardItem | null => {
+  const mediaItem = item as MediaMentionItemCompat;
   const normalizedStatus = getNormalizedMediaStatus(item.status);
 
   if (!normalizedStatus) {
     return null;
   }
 
-  const titleData = { uk: item.title };
-  const coverAlt = item.coverImage?.alt || item.title || DEFAULT_COVER_ALT;
+  const fallbackTitle = mediaItem.adminTitle ?? '';
+  const titleData = toLocalizedCardValue(mediaItem.title, fallbackTitle);
+  const titleText = getPrimaryText(mediaItem.title, fallbackTitle);
+  const sortableDate = getSortableDate(mediaItem.createdAt, mediaItem.updatedAt, mediaItem.publishedAt);
 
   return {
     id: item.id,
     slug: item.slug,
-    title: item.title,
-    searchTitle: item.title,
+    title: titleText,
+    searchTitle: [titleData.uk, titleData.en, fallbackTitle].filter(Boolean).join(' '),
     titleData,
     type: 'media',
     cardType: mapCardType('media'),
-    dateAdded: item.createdAt,
-    createdAtRaw: item.createdAt,
-    createdAt: item.createdAt,
-    updatedAt: item.updatedAt,
-    publishedAt: item.publishedAt ?? undefined,
+    dateAdded: sortableDate,
+    createdAtRaw: sortableDate,
+    createdAt: mediaItem.createdAt,
+    updatedAt: mediaItem.updatedAt,
+    publishedAt: mediaItem.publishedAt ?? undefined,
     status: normalizedStatus,
     cardStatus: normalizedStatus,
-    language: 'uk',
+    language: getLanguageFromLocalizedValue(titleData),
     coverImage: {
-      src: item.coverImage?.src || DEFAULT_COVER_IMAGE,
-      alt: { uk: coverAlt }
+      src: mediaItem.coverImage?.src || DEFAULT_COVER_IMAGE,
+      alt: toLocalizedCardValue(mediaItem.coverImage?.alt, titleText || DEFAULT_COVER_ALT)
     }
   };
 };
 
-const getActiveTabLoadingState = (
+const getActiveTabState = <T,>(
   activeTab: PublicationsTabValue,
-  states: { news: boolean; media: boolean; events: boolean }
+  states: PublicationsTabStateMap<T>,
+  getAllState: (states: PublicationsTabStateMap<T>) => T
 ) => {
+  if (activeTab === 'all') {
+    return getAllState(states);
+  }
+
   if (activeTab === 'news') {
     return states.news;
   }
@@ -204,26 +276,7 @@ const getActiveTabLoadingState = (
     return states.events;
   }
 
-  return states.news || states.media || states.events;
-};
-
-const getActiveTabErrorState = (
-  activeTab: PublicationsTabValue,
-  states: { news?: Error; media?: Error; events?: Error }
-) => {
-  if (activeTab === 'news') {
-    return states.news;
-  }
-
-  if (activeTab === 'media') {
-    return states.media;
-  }
-
-  if (activeTab === 'events') {
-    return states.events;
-  }
-
-  return states.news || states.media || states.events;
+  return getAllState(states);
 };
 
 function PublicationsCreateAction() {
@@ -285,6 +338,8 @@ function PublicationsCreateAction() {
             {PUBLICATIONS_CREATE_OPTIONS.map((option) => (
               <MenuItem
                 key={option.id}
+                component={Link}
+                href={option.href}
                 onClick={handleCloseMenu}
                 sx={{
                   ...filterSelectStyles.menuItem,
@@ -327,16 +382,14 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
   const { filteredItems, toolbarProps, sortProps } = usePublicationsFiltering(allItems, activeTab);
   const hasActiveCriteria = Boolean(toolbarProps.search?.search.trim()) || Boolean(toolbarProps.activeFiltersCount);
   const hasBaseItems = allItems.length > 0;
-  const isLoading = getActiveTabLoadingState(activeTab, {
-    news: isNewsLoading,
-    media: isMediaLoading,
-    events: false
-  });
-  const activeError = getActiveTabErrorState(activeTab, {
-    news: newsError,
-    media: mediaError,
-    events: undefined
-  });
+  const isLoading = getActiveTabState(activeTab, { news: isNewsLoading, media: isMediaLoading, events: false }, (states) =>
+    states.news || states.media || states.events
+  );
+  const activeError = getActiveTabState(
+    activeTab,
+    { news: newsError, media: mediaError, events: undefined },
+    (states) => states.news ?? states.media ?? states.events
+  );
   const shouldShowLoadingState = activeTab === 'all' ? !hasBaseItems && isLoading : isLoading;
   const shouldShowErrorState = activeTab === 'all' ? !hasBaseItems && Boolean(activeError) : Boolean(activeError);
   const emptyStateTitle = hasActiveCriteria
@@ -347,6 +400,130 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
     : activeTab === 'events'
       ? PUBLICATIONS_EVENTS_EMPTY_STATE_DESCRIPTION
       : PUBLICATIONS_EMPTY_STATE_DESCRIPTION;
+  const content = (() => {
+    if (shouldShowLoadingState) {
+      return (
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+            p: '24px',
+            borderRadius: '20px',
+            border: `1px dashed ${colors.blue[300]}`,
+            bgcolor: colors.blue[50]
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{
+              fontSize: '22px',
+              lineHeight: 1.4,
+              fontWeight: 700,
+              color: colors.black
+            }}
+          >
+            {PUBLICATIONS_LOADING_STATE_TITLE}
+          </Typography>
+
+          <Typography sx={{ fontSize: '16px', lineHeight: 1.6, color: colors.blue[800] }}>
+            {PUBLICATIONS_LOADING_STATE_DESCRIPTION}
+          </Typography>
+        </Box>
+      );
+    }
+
+    if (shouldShowErrorState) {
+      return (
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+            p: '24px',
+            borderRadius: '20px',
+            border: `1px dashed ${colors.blue[300]}`,
+            bgcolor: colors.blue[50]
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{
+              fontSize: '22px',
+              lineHeight: 1.4,
+              fontWeight: 700,
+              color: colors.black
+            }}
+          >
+            {PUBLICATIONS_ERROR_STATE_TITLE}
+          </Typography>
+
+          <Typography sx={{ fontSize: '16px', lineHeight: 1.6, color: colors.blue[800] }}>
+            {PUBLICATIONS_ERROR_STATE_DESCRIPTION}
+          </Typography>
+        </Box>
+      );
+    }
+
+    if (filteredItems.length) {
+      return (
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '16px',
+            alignItems: 'stretch'
+          }}
+        >
+          {filteredItems.map((item) => (
+            <Box key={item.id}>
+              <ContentCard
+                type={item.cardType}
+                coverImage={item.coverImage}
+                title={item.titleData}
+                status={item.cardStatus}
+                updatedAt={item.updatedAt}
+                createdAt={item.createdAt}
+                publishedAt={item.publishedAt}
+                editHref={getPublicationEditHref(item)}
+                onClickMenu={() => undefined}
+              />
+            </Box>
+          ))}
+        </Box>
+      );
+    }
+
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px',
+          p: '24px',
+          borderRadius: '20px',
+          border: `1px dashed ${colors.blue[300]}`,
+          bgcolor: colors.blue[50]
+        }}
+      >
+        <Typography
+          variant="h6"
+          sx={{
+            fontSize: '22px',
+            lineHeight: 1.4,
+            fontWeight: 700,
+            color: colors.black
+          }}
+        >
+          {emptyStateTitle}
+        </Typography>
+
+        <Typography sx={{ fontSize: '16px', lineHeight: 1.6, color: colors.blue[800] }}>
+          {emptyStateDescription}
+        </Typography>
+      </Box>
+    );
+  })();
 
   return (
     <Box
@@ -378,116 +555,7 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
         }
       />
 
-      {shouldShowLoadingState ? (
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px',
-            p: '24px',
-            borderRadius: '20px',
-            border: `1px dashed ${colors.blue[300]}`,
-            bgcolor: colors.blue[50]
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{
-              fontSize: '22px',
-              lineHeight: 1.4,
-              fontWeight: 700,
-              color: colors.black
-            }}
-          >
-            {PUBLICATIONS_LOADING_STATE_TITLE}
-          </Typography>
-
-          <Typography sx={{ fontSize: '16px', lineHeight: 1.6, color: colors.blue[800] }}>
-            {PUBLICATIONS_LOADING_STATE_DESCRIPTION}
-          </Typography>
-        </Box>
-      ) : shouldShowErrorState ? (
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px',
-            p: '24px',
-            borderRadius: '20px',
-            border: `1px dashed ${colors.blue[300]}`,
-            bgcolor: colors.blue[50]
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{
-              fontSize: '22px',
-              lineHeight: 1.4,
-              fontWeight: 700,
-              color: colors.black
-            }}
-          >
-            {PUBLICATIONS_ERROR_STATE_TITLE}
-          </Typography>
-
-          <Typography sx={{ fontSize: '16px', lineHeight: 1.6, color: colors.blue[800] }}>
-            {PUBLICATIONS_ERROR_STATE_DESCRIPTION}
-          </Typography>
-        </Box>
-      ) : filteredItems.length ? (
-        <Box
-          sx={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '16px',
-            alignItems: 'stretch'
-          }}
-        >
-          {filteredItems.map((item) => (
-            <Box key={item.id} data-testid="publication-card">
-              <ContentCard
-                type={item.cardType}
-                coverImage={item.coverImage}
-                title={item.titleData}
-                status={item.cardStatus}
-                updatedAt={item.updatedAt}
-                createdAt={item.createdAt}
-                publishedAt={item.publishedAt}
-                onClick={() => undefined}
-                onClickMenu={() => undefined}
-              />
-            </Box>
-          ))}
-        </Box>
-      ) : (
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px',
-            p: '24px',
-            borderRadius: '20px',
-            border: `1px dashed ${colors.blue[300]}`,
-            bgcolor: colors.blue[50]
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{
-              fontSize: '22px',
-              lineHeight: 1.4,
-              fontWeight: 700,
-              color: colors.black
-            }}
-          >
-            {emptyStateTitle}
-          </Typography>
-
-          <Typography sx={{ fontSize: '16px', lineHeight: 1.6, color: colors.blue[800] }}>
-            {emptyStateDescription}
-          </Typography>
-        </Box>
-      )}
+      {content}
     </Box>
   );
 }
