@@ -298,6 +298,13 @@ export const textFieldColors = {
   }
 };
 
+export const tabsColors = {
+  active: mainHexPallete.black,
+  unactive: mainHexPallete.adminBlue[800],
+  disabled: mainHexPallete.adminBlue[300],
+  baseUnderline: mainHexPallete.adminBlue[300]
+};
+
 export const toolbarColors = {
   textColor: mainHexPallete.black,
   default: mainHexPallete.white,

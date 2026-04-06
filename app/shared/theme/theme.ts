@@ -1,5 +1,4 @@
 import { createTheme } from '@mui/material/styles';
-import { Mulish, Oswald } from 'next/font/google';
 
 import {
   badgeColors,
@@ -10,12 +9,15 @@ import {
   mainHexPallete,
   menuItemColors,
   selectorColors,
+  tabsColors,
   textFieldColors,
   toolbarColors
 } from './colors';
 
-const oswald = Oswald({ subsets: ['latin'] });
-const mulish = Mulish({ subsets: ['latin'] });
+const fontFamilies = {
+  body: 'var(--font-mulish), Arial, sans-serif',
+  display: 'var(--font-oswald), Arial, sans-serif'
+};
 
 declare module '@mui/material/styles' {
   interface BreakpointOverrides {
@@ -31,52 +33,38 @@ declare module '@mui/material/styles' {
 
 declare module '@mui/material/styles' {
   interface TypographyVariants {
-    customBold32: React.CSSProperties;
-    customMedium22Tight: React.CSSProperties;
-    customRegular20Tight: React.CSSProperties;
-    customBold20Tight: React.CSSProperties;
-    customMedium18Tight: React.CSSProperties;
-    customMedium18Loose: React.CSSProperties;
-    customSemiBold18: React.CSSProperties;
-    customRegular16: React.CSSProperties;
-    customBold16: React.CSSProperties;
-    customMedium16: React.CSSProperties;
-    customItalic16: React.CSSProperties;
-    customItalic14: React.CSSProperties;
-    customMedium14Tight: React.CSSProperties;
+    displayXl: React.CSSProperties;
+    displayLg: React.CSSProperties;
+    displayMd: React.CSSProperties;
+    bodyLg: React.CSSProperties;
+    bodyMd: React.CSSProperties;
+    bodySm: React.CSSProperties;
+    textMd: React.CSSProperties;
+    textSm: React.CSSProperties;
   }
+
   interface TypographyVariantsOptions {
-    customBold32?: React.CSSProperties;
-    customMedium22Tight?: React.CSSProperties;
-    customRegular20Tight?: React.CSSProperties;
-    customBold20Tight?: React.CSSProperties;
-    customMedium18Tight?: React.CSSProperties;
-    customMedium18Loose?: React.CSSProperties;
-    customSemiBold18?: React.CSSProperties;
-    customRegular16?: React.CSSProperties;
-    customBold16?: React.CSSProperties;
-    customMedium16?: React.CSSProperties;
-    customItalic16?: React.CSSProperties;
-    customItalic14?: React.CSSProperties;
-    customMedium14Tight?: React.CSSProperties;
+    displayXl?: React.CSSProperties;
+    displayLg?: React.CSSProperties;
+    displayMd?: React.CSSProperties;
+    bodyLg?: React.CSSProperties;
+    bodyMd?: React.CSSProperties;
+    bodySm?: React.CSSProperties;
+    textMd?: React.CSSProperties;
+    textSm?: React.CSSProperties;
   }
 }
 
 declare module '@mui/material/Typography' {
   interface TypographyPropsVariantOverrides {
-    customBold32: true;
-    customMedium22Tight: true;
-    customRegular20Tight: true;
-    customBold20Tight: true;
-    customMedium18Tight: true;
-    customMedium18Loose: true;
-    customSemiBold18: true;
-    customRegular16: true;
-    customBold16: true;
-    customMedium16: true;
-    customItalic16: true;
-    customItalic14: true;
-    customMedium14Tight: true;
+    displayXl: true;
+    displayLg: true;
+    displayMd: true;
+    bodyLg: true;
+    bodyMd: true;
+    bodySm: true;
+    textMd: true;
+    textSm: true;
   }
 }
 
@@ -108,29 +96,29 @@ export const buttonSizeStyles = {
     padding: '4px 12px',
     fontSize: '14px',
     fontWeight: 400,
-    lineHeight: '140%'
+    lineHeight: '1.4'
   },
   medium: {
     height: '40px',
     padding: '8px 24px',
     fontSize: '16px',
     fontWeight: 500,
-    lineHeight: '150%'
+    lineHeight: '1.5'
   },
   large: {
     height: '56px',
     padding: '14px 32px',
     fontSize: '18px',
     fontWeight: 500,
-    lineHeight: '155%'
+    lineHeight: '1.55'
   }
 };
 
 const baseTextStyles = {
+  fontFamily: fontFamilies.body,
   fontSize: '16px',
   fontWeight: 500,
-  lineHeight: '150%',
-  fontFamily: mulish.style.fontFamily
+  lineHeight: '1.5'
 };
 
 export const createAdminTheme = () =>
@@ -180,109 +168,101 @@ export const createAdminTheme = () =>
     },
 
     typography: {
-      fontFamily: mulish.style.fontFamily,
+      fontFamily: fontFamilies.body,
+      fontSize: 16,
+
+      displayXl: {
+        fontFamily: fontFamilies.display,
+        fontSize: '236px',
+        fontWeight: 500,
+        lineHeight: 1
+      },
+      displayLg: {
+        fontFamily: fontFamilies.display,
+        fontSize: '132px',
+        fontWeight: 500,
+        lineHeight: 1
+      },
+      displayMd: {
+        fontFamily: fontFamilies.display,
+        fontSize: '114px',
+        fontWeight: 500,
+        lineHeight: 1
+      },
+
       h1: {
-        fontFamily: oswald.style.fontFamily,
-        fontWeight: 700,
+        fontFamily: fontFamilies.display,
         fontSize: '116px',
-        lineHeight: '100%'
+        fontWeight: 700,
+        letterSpacing: '-2px',
+        lineHeight: 1
       },
       h2: {
-        fontFamily: oswald.style.fontFamily,
-        fontWeight: 600,
+        fontFamily: fontFamilies.display,
         fontSize: '64px',
-        lineHeight: '100%'
+        fontWeight: 600,
+        letterSpacing: '0.02em',
+        lineHeight: 1.2,
+        '@media (max-width:767px)': {
+          fontSize: '40px'
+        }
       },
       h3: {
-        fontFamily: oswald.style.fontFamily,
-        fontWeight: 400,
+        fontFamily: fontFamilies.display,
         fontSize: '64px',
-        lineHeight: '100%'
+        fontWeight: 400,
+        lineHeight: 1.2
       },
       h4: {
-        fontFamily: oswald.style.fontFamily,
-        fontWeight: 700,
-        fontSize: '28px',
-        lineHeight: '160%'
-      },
-      customBold32: {
-        fontFamily: mulish.style.fontFamily,
-        fontWeight: 700,
+        fontFamily: fontFamilies.body,
         fontSize: '32px',
-        lineHeight: '140%',
-        letterSpacing: '0px'
-      },
-      customMedium22Tight: {
-        fontFamily: mulish.style.fontFamily,
-        fontWeight: 500,
-        fontSize: '22px',
-        lineHeight: '135%'
-      },
-      customRegular20Tight: {
-        fontFamily: mulish.style.fontFamily,
-        fontWeight: 400,
-        fontSize: '20px',
-        lineHeight: '140%'
-      },
-      customBold20Tight: {
-        fontFamily: mulish.style.fontFamily,
         fontWeight: 700,
-        fontSize: '20px',
-        lineHeight: '140%'
+        lineHeight: 1.4
       },
-      customMedium18Tight: {
-        fontFamily: mulish.style.fontFamily,
-        fontWeight: 500,
-        fontSize: '18px',
-        lineHeight: '135%'
-      },
-      customMedium18Loose: {
-        fontFamily: mulish.style.fontFamily,
-        fontWeight: 500,
-        fontSize: '18px',
-        lineHeight: '155%'
-      },
-      customSemiBold18: {
-        fontFamily: mulish.style.fontFamily,
-        fontWeight: 600,
-        fontSize: '18px',
-        lineHeight: '155%'
-      },
-      customBold16: {
-        fontFamily: mulish.style.fontFamily,
+      h5: {
+        fontFamily: fontFamilies.display,
+        fontSize: '28px',
         fontWeight: 700,
-        fontSize: '16px',
-        lineHeight: '100%'
+        lineHeight: 1.6
       },
-      customRegular16: {
-        fontFamily: mulish.style.fontFamily,
+      h6: {
+        fontFamily: fontFamilies.body,
+        fontSize: '24px',
+        fontWeight: 700,
+        lineHeight: 1.4
+      },
+
+      bodyLg: {
+        fontFamily: fontFamilies.body,
+        fontSize: '24px',
         fontWeight: 400,
-        fontSize: '16px',
-        lineHeight: '150%'
+        lineHeight: 1.6
       },
-      customMedium16: {
-        fontFamily: mulish.style.fontFamily,
-        fontWeight: 500,
-        fontSize: '16px',
-        lineHeight: '150%'
+      bodyMd: {
+        fontFamily: fontFamilies.body,
+        fontSize: '20px',
+        fontWeight: 400,
+        lineHeight: 1.6
       },
-      customItalic16: {
-        fontFamily: mulish.style.fontFamily,
-        fontStyle: 'italic',
-        fontSize: '16px',
-        lineHeight: '140%'
+      bodySm: {
+        fontFamily: fontFamilies.body,
+        fontSize: '18px',
+        fontWeight: 400,
+        lineHeight: 1.6
       },
-      customItalic14: {
-        fontFamily: mulish.style.fontFamily,
-        fontStyle: 'italic',
+
+      textMd: baseTextStyles,
+      textSm: {
+        ...baseTextStyles,
         fontSize: '14px',
-        lineHeight: '140%'
+        letterSpacing: '0.17px',
+        lineHeight: 1.3
       },
-      customMedium14Tight: {
-        fontFamily: mulish.style.fontFamily,
-        fontWeight: '500',
+      caption: {
+        fontFamily: fontFamilies.body,
         fontSize: '14px',
-        lineHeight: '130%'
+        fontWeight: 400,
+        lineHeight: 1.4
       }
     },
 
@@ -290,18 +270,14 @@ export const createAdminTheme = () =>
       MuiTypography: {
         defaultProps: {
           variantMapping: {
-            customBold32: 'p',
-            customMedium22Tight: 'p',
-            customRegular20Tight: 'p',
-            customBold20Tight: 'p',
-            customMedium18Tight: 'p',
-            customMedium18Loose: 'p',
-            customSemiBold18: 'p',
-            customRegular16: 'p',
-            customBold16: 'p',
-            customMedium16: 'p',
-            customItalic16: 'p',
-            customItalic14: 'p'
+            displayXl: 'h2',
+            displayLg: 'h2',
+            displayMd: 'h2',
+            bodyLg: 'p',
+            bodyMd: 'p',
+            bodySm: 'p',
+            textMd: 'p',
+            textSm: 'p'
           }
         }
       },
@@ -315,7 +291,7 @@ export const createAdminTheme = () =>
               boxShadow: 'none'
             },
             whiteSpace: 'nowrap',
-            fontFamily: mulish.style.fontFamily
+            fontFamily: fontFamilies.body
           }
         },
         variants: [
@@ -630,12 +606,12 @@ export const createAdminTheme = () =>
             justifyContent: 'center',
             borderRadius: '9999px',
             padding: '2px',
-            fontFamily: mulish.style.fontFamily,
+            fontFamily: fontFamilies.body,
             position: 'relative',
             overflow: 'hidden',
             width: 'fit-content',
             border: 'none',
-            lineHeight: '150%',
+            lineHeight: '1.5',
 
             '& .MuiButtonGroup-grouped': {
               border: 'none',
@@ -976,6 +952,42 @@ export const createAdminTheme = () =>
             }
           }
         ]
+      },
+      MuiTabs: {
+        styleOverrides: {
+          root: {
+            minHeight: '40px',
+            borderBottom: `1px solid ${tabsColors.baseUnderline}`
+          },
+          indicator: {
+            backgroundColor: tabsColors.active,
+            height: '2px'
+          }
+        }
+      },
+      MuiTab: {
+        defaultProps: {
+          disableRipple: true
+        },
+        styleOverrides: {
+          root: {
+            ...baseTextStyles,
+            textTransform: 'none',
+            minHeight: '40px',
+            padding: '6px 28px 14px',
+            fontWeight: 600,
+            minWidth: '80px',
+            color: tabsColors.unactive,
+
+            '&.Mui-selected': {
+              color: tabsColors.active,
+              fontWeight: 600
+            },
+            '&.Mui-disabled': {
+              color: tabsColors.disabled
+            }
+          }
+        }
       }
     }
   });
