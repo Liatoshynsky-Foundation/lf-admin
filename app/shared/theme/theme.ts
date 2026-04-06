@@ -41,6 +41,34 @@ declare module '@mui/material/styles' {
     bodySm: React.CSSProperties;
     textMd: React.CSSProperties;
     textSm: React.CSSProperties;
+
+    // Legacy Variants (Backward Compatibility)
+    /** @deprecated Use one of the semantic variants instead */
+    customBold32: React.CSSProperties;
+    /** @deprecated Use one of the semantic variants instead */
+    customMedium22Tight: React.CSSProperties;
+    /** @deprecated Use one of the semantic variants instead */
+    customRegular20Tight: React.CSSProperties;
+    /** @deprecated Use one of the semantic variants instead */
+    customBold20Tight: React.CSSProperties;
+    /** @deprecated Use one of the semantic variants instead */
+    customMedium18Tight: React.CSSProperties;
+    /** @deprecated Use one of the semantic variants instead */
+    customMedium18Loose: React.CSSProperties;
+    /** @deprecated Use one of the semantic variants instead */
+    customSemiBold18: React.CSSProperties;
+    /** @deprecated Use one of the semantic variants instead */
+    customRegular16: React.CSSProperties;
+    /** @deprecated Use one of the semantic variants instead */
+    customBold16: React.CSSProperties;
+    /** @deprecated Use one of the semantic variants instead */
+    customMedium16: React.CSSProperties;
+    /** @deprecated Use one of the semantic variants instead */
+    customItalic16: React.CSSProperties;
+    /** @deprecated Use one of the semantic variants instead */
+    customItalic14: React.CSSProperties;
+    /** @deprecated Use one of the semantic variants instead */
+    customMedium14Tight: React.CSSProperties;
   }
 
   interface TypographyVariantsOptions {
@@ -52,6 +80,21 @@ declare module '@mui/material/styles' {
     bodySm?: React.CSSProperties;
     textMd?: React.CSSProperties;
     textSm?: React.CSSProperties;
+
+    // Legacy options
+    customBold32?: React.CSSProperties;
+    customMedium22Tight?: React.CSSProperties;
+    customRegular20Tight?: React.CSSProperties;
+    customBold20Tight?: React.CSSProperties;
+    customMedium18Tight?: React.CSSProperties;
+    customMedium18Loose?: React.CSSProperties;
+    customSemiBold18?: React.CSSProperties;
+    customRegular16?: React.CSSProperties;
+    customBold16?: React.CSSProperties;
+    customMedium16?: React.CSSProperties;
+    customItalic16?: React.CSSProperties;
+    customItalic14?: React.CSSProperties;
+    customMedium14Tight?: React.CSSProperties;
   }
 }
 
@@ -65,6 +108,21 @@ declare module '@mui/material/Typography' {
     bodySm: true;
     textMd: true;
     textSm: true;
+
+    // Legacy overrides for <Typography variant="..." /> component
+    customBold32: true;
+    customMedium22Tight: true;
+    customRegular20Tight: true;
+    customBold20Tight: true;
+    customMedium18Tight: true;
+    customMedium18Loose: true;
+    customSemiBold18: true;
+    customRegular16: true;
+    customBold16: true;
+    customMedium16: true;
+    customItalic16: true;
+    customItalic14: true;
+    customMedium14Tight: true;
   }
 }
 
@@ -263,6 +321,87 @@ export const createAdminTheme = () =>
         fontSize: '14px',
         fontWeight: 400,
         lineHeight: 1.4
+      },
+
+      // Legacy Variants
+      customBold32: {
+        fontFamily: fontFamilies.body,
+        fontWeight: 700,
+        fontSize: '32px',
+        lineHeight: '140%',
+        letterSpacing: '0px'
+      },
+      customMedium22Tight: {
+        fontFamily: fontFamilies.body,
+        fontWeight: 500,
+        fontSize: '22px',
+        lineHeight: '135%'
+      },
+      customRegular20Tight: {
+        fontFamily: fontFamilies.body,
+        fontWeight: 400,
+        fontSize: '20px',
+        lineHeight: '140%'
+      },
+      customBold20Tight: {
+        fontFamily: fontFamilies.body,
+        fontWeight: 700,
+        fontSize: '20px',
+        lineHeight: '140%'
+      },
+      customMedium18Tight: {
+        fontFamily: fontFamilies.body,
+        fontWeight: 500,
+        fontSize: '18px',
+        lineHeight: '135%'
+      },
+      customMedium18Loose: {
+        fontFamily: fontFamilies.body,
+        fontWeight: 500,
+        fontSize: '18px',
+        lineHeight: '155%'
+      },
+      customSemiBold18: {
+        fontFamily: fontFamilies.body,
+        fontWeight: 600,
+        fontSize: '18px',
+        lineHeight: '155%'
+      },
+      customBold16: {
+        fontFamily: fontFamilies.body,
+        fontWeight: 700,
+        fontSize: '16px',
+        lineHeight: '100%'
+      },
+      customRegular16: {
+        fontFamily: fontFamilies.body,
+        fontWeight: 400,
+        fontSize: '16px',
+        lineHeight: '150%'
+      },
+      customMedium16: {
+        fontFamily: fontFamilies.body,
+        fontWeight: 500,
+        fontSize: '16px',
+        lineHeight: '150%'
+      },
+      customItalic16: {
+        fontFamily: fontFamilies.body,
+        fontStyle: 'italic',
+        fontSize: '16px',
+        lineHeight: '140%'
+      },
+      customItalic14: {
+        fontFamily: fontFamilies.body,
+        fontStyle: 'italic',
+        fontSize: '14px',
+        lineHeight: '140%'
+      },
+      customMedium14Tight: {
+        fontFamily: fontFamilies.body,
+        fontWeight: '500',
+        fontSize: '14px',
+        lineHeight: '130%'
       }
     },
 
@@ -277,7 +416,21 @@ export const createAdminTheme = () =>
             bodyMd: 'p',
             bodySm: 'p',
             textMd: 'p',
-            textSm: 'p'
+            textSm: 'p',
+
+            //Legacy variants
+            customBold32: 'p',
+            customMedium22Tight: 'p',
+            customRegular20Tight: 'p',
+            customBold20Tight: 'p',
+            customMedium18Tight: 'p',
+            customMedium18Loose: 'p',
+            customSemiBold18: 'p',
+            customRegular16: 'p',
+            customBold16: 'p',
+            customMedium16: 'p',
+            customItalic16: 'p',
+            customItalic14: 'p'
           }
         }
       },
