@@ -111,13 +111,11 @@ export default function SeoMetadataForm({
       <PhotoBlock
         imageUrl={ogImagePreview || ''}
         fileName={typeof ogImage === 'string' ? ogImage : ogImage?.name}
-        cropWidth={1200}
-        cropHeight={630}
         onChangeImage={handleImageChange}
-        editorMode="mediaModal"
         buttonSpacing="8px"
         stackSpacing="0"
         typographySpacing="4px"
+        direction="column"
         showAlternativeText={showAlternativeText}
         altText={value.altText?.[locale] ?? ''}
         onChangeAltText={(alt) =>

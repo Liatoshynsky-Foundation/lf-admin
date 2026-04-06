@@ -45,8 +45,6 @@ export const IntroSection = () => {
         <ImagePreviewBlock
           imageUrl={getImageUrl(block.image)}
           fileName={block.image.src || ''}
-          cropHeight={50}
-          cropWidth={50}
           onChangeImage={(file) =>
             handleUploadImage(file, PAGE_IDS.ABOUT_US, BLOCK_IDS.INTRO_SECTION, 'image', uploadBlob, 'tmp')
           }
