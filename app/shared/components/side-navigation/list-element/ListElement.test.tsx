@@ -3,11 +3,18 @@ import userEvent from '@testing-library/user-event';
 
 import { ListElement } from './ListElement';
 
+let mockedPathname = '/test';
+
 jest.mock('next/navigation', () => ({
-  usePathname: () => '/test'
+  usePathname: () => mockedPathname
 }));
+
 describe('List Element', () => {
   const element = { title: 'TestTitle', iconSrc: 'icon.svg', href: '/test' };
+
+  beforeEach(() => {
+    mockedPathname = '/test';
+  });
 
   it('should render the element', () => {
     render(<ListElement element={element} open />);
@@ -30,6 +37,23 @@ describe('List Element', () => {
     render(<ListElement element={element} open={true} />);
     expect(screen.getByRole('button')).toHaveClass('Mui-selected');
   });
+
+  it('should be selected for nested routes', () => {
+    mockedPathname = '/files/image';
+
+    render(<ListElement element={{ title: 'Файли', iconSrc: 'folder-open', href: '/files' }} open={true} />);
+
+    expect(screen.getByRole('button')).toHaveClass('Mui-selected');
+  });
+
+  it('should not be selected for partial prefix matches', () => {
+    mockedPathname = '/files-other';
+
+    render(<ListElement element={{ title: 'Файли', iconSrc: 'folder-open', href: '/files' }} open={true} />);
+
+    expect(screen.getByRole('button')).not.toHaveClass('Mui-selected');
+  });
+
   it('should render children', () => {
     render(
       <ListElement element={element} open={true}>

@@ -7,23 +7,23 @@ describe('Side Navigation', () => {
     render(<SideBarNavigation />);
   });
 
-  it('should work with togging logo', () => {
-    const logoBtn = screen.getByRole('button', { name: /logo/i });
-    const closeBtn = screen.getByRole('button', { name: /close button/i });
+  it('toggles the sidebar only from the toggle button', () => {
+    const toggleBtn = screen.getByRole('button', { name: /toggle sidebar/i });
 
-    expect(logoBtn).toBeInTheDocument();
-    expect(closeBtn).toBeInTheDocument();
+    expect(toggleBtn).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /go to home page/i })).toHaveAttribute('href', '/');
 
-    fireEvent.click(closeBtn);
+    fireEvent.click(toggleBtn);
     expect(screen.queryByText('Контент')).not.toBeInTheDocument();
     expect(screen.queryByText('Інше')).not.toBeInTheDocument();
 
-    fireEvent.click(logoBtn);
+    fireEvent.click(toggleBtn);
     expect(screen.queryByText('Контент')).toBeInTheDocument();
     expect(screen.queryByText('Інше')).toBeInTheDocument();
+  });
 
-    fireEvent.click(logoBtn);
-    expect(screen.queryByText('Контент')).not.toBeInTheDocument();
-    expect(screen.queryByText('Інше')).not.toBeInTheDocument();
+  it('renders the logo as a home link instead of a button', () => {
+    expect(screen.getByRole('link', { name: /go to home page/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /logo/i })).not.toBeInTheDocument();
   });
 });

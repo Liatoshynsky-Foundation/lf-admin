@@ -9,6 +9,7 @@ declare module '@mui/material/styles' {
     customBold32: React.CSSProperties;
     customMedium22Tight: React.CSSProperties;
     customRegular20Tight: React.CSSProperties;
+    customBold20Tight: React.CSSProperties;
     customMedium18Tight: React.CSSProperties;
     customMedium18Loose: React.CSSProperties;
     customSemiBold18: React.CSSProperties;
@@ -17,11 +18,13 @@ declare module '@mui/material/styles' {
     customMedium16: React.CSSProperties;
     customItalic16: React.CSSProperties;
     customItalic14: React.CSSProperties;
+    customMedium14Tight: React.CSSProperties;
   }
   interface TypographyVariantsOptions {
     customBold32?: React.CSSProperties;
     customMedium22Tight?: React.CSSProperties;
     customRegular20Tight?: React.CSSProperties;
+    customBold20Tight?: React.CSSProperties;
     customMedium18Tight?: React.CSSProperties;
     customMedium18Loose?: React.CSSProperties;
     customSemiBold18?: React.CSSProperties;
@@ -30,6 +33,7 @@ declare module '@mui/material/styles' {
     customMedium16?: React.CSSProperties;
     customItalic16?: React.CSSProperties;
     customItalic14?: React.CSSProperties;
+    customMedium14Tight?: React.CSSProperties;
   }
 }
 
@@ -38,6 +42,7 @@ declare module '@mui/material/Typography' {
     customBold32: true;
     customMedium22Tight: true;
     customRegular20Tight: true;
+    customBold20Tight: true;
     customMedium18Tight: true;
     customMedium18Loose: true;
     customSemiBold18: true;
@@ -46,6 +51,7 @@ declare module '@mui/material/Typography' {
     customMedium16: true;
     customItalic16: true;
     customItalic14: true;
+    customMedium14Tight: true;
   }
 }
 
@@ -96,6 +102,12 @@ export const createAdminTheme = () =>
         fontSize: '20px',
         lineHeight: '140%'
       },
+      customBold20Tight: {
+        fontFamily: mulish.style.fontFamily,
+        fontWeight: 700,
+        fontSize: '20px',
+        lineHeight: '140%'
+      },
       customMedium18Tight: {
         fontFamily: mulish.style.fontFamily,
         fontWeight: 500,
@@ -143,6 +155,12 @@ export const createAdminTheme = () =>
         fontStyle: 'italic',
         fontSize: '14px',
         lineHeight: '140%'
+      },
+      customMedium14Tight: {
+        fontFamily: mulish.style.fontFamily,
+        fontWeight: '500',
+        fontSize: '14px',
+        lineHeight: '130%'
       }
     },
     components: {
@@ -152,6 +170,7 @@ export const createAdminTheme = () =>
             customBold32: 'p',
             customMedium22Tight: 'p',
             customRegular20Tight: 'p',
+            customBold20Tight: 'p',
             customMedium18Tight: 'p',
             customMedium18Loose: 'p',
             customSemiBold18: 'p',

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import Page from './page';
@@ -25,32 +25,6 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
     Audio: 'Audio'
   },
   useUploadBlobMutation: () => [mockUploadBlob]
-}));
-
-jest.mock('~/shared/components/control-panel', () => ({
-  ControlPanel: ({
-    leftContent,
-    rightContent,
-    bottomContent,
-    isBottomOpen
-  }: {
-    leftContent: React.ReactNode;
-    rightContent: React.ReactNode;
-    bottomContent?: React.ReactNode;
-    isBottomOpen?: boolean;
-  }) => (
-    <div data-testid="control-panel">
-      <div data-testid="left-content">{leftContent}</div>
-      <div data-testid="right-content">{rightContent}</div>
-      {isBottomOpen ? <div data-testid="bottom-content">{bottomContent}</div> : null}
-    </div>
-  )
-}));
-
-jest.mock('~/shared/components/dropdown-menu/DropdownMenu', () => ({
-  __esModule: true,
-  default: ({ open, menuList }: { open: boolean; menuList: React.ReactNode }) =>
-    open ? <div data-testid="dropdown-menu">{menuList}</div> : null
 }));
 
 jest.mock('~/shared/components/file-info-sidebar/FileInfoSidebar', () => ({
@@ -86,36 +60,82 @@ jest.mock('~/shared/components/media-modal/views/upload-view/UploadView', () => 
   UploadView: () => null
 }));
 
-jest.mock('~/shared/components/search/Search', () => ({
-  Search: ({ search, setSearch }: { search: string; setSearch: (value: string) => void }) => (
-    <input data-testid="search" value={search} onChange={(event) => setSearch(event.target.value)} />
-  )
-}));
-
-jest.mock('~/shared/components/selector/FilterSelect', () => ({
-  FilterSelect: ({
-    label,
-    options,
-    onAdd
+jest.mock('~/shared/components/filtering-toolbar', () => ({
+  FilteringToolbar: ({
+    search,
+    filters = [],
+    isFiltersOpen,
+    onToggleFilters,
+    rightSlot,
+    bottomTrailingContent
   }: {
-    label: string;
-    options: Array<{ value: string; label: string }>;
-    onAdd: (value: string, label: string, allSelected: string[]) => void;
+    search?: { search: string; setSearch: (value: string) => void };
+    filters?: Array<{
+      id: string;
+      label: string;
+      options: Array<{ value: string; label: string }>;
+      onChange: (value: string[]) => void;
+    }>;
+    isFiltersOpen?: boolean;
+    onToggleFilters?: () => void;
+    rightSlot?: React.ReactNode;
+    bottomTrailingContent?: React.ReactNode;
+  }) => (
+    <div data-testid="control-panel">
+      {search ? (
+        <input
+          data-testid="search"
+          value={search.search}
+          onChange={(event) => search.setSearch(event.target.value)}
+        />
+      ) : null}
+      {onToggleFilters ? (
+        <button type="button" onClick={onToggleFilters}>
+          Фільтри
+        </button>
+      ) : null}
+      {rightSlot}
+      {isFiltersOpen ? (
+        <div data-testid="bottom-content">
+          {filters.map((filter) => (
+            <button
+              key={filter.id}
+              data-testid={`filter-select-${filter.label}`}
+              onClick={() => filter.onChange([filter.options[0].value])}
+            >
+              {filter.label}
+            </button>
+          ))}
+          {bottomTrailingContent}
+        </div>
+      ) : null}
+    </div>
+  ),
+  SortSelect: ({
+    triggerLabel,
+    fieldOptions,
+    fieldValue,
+    orderOptions,
+    onFieldChange,
+    onValueChange
+  }: {
+    triggerLabel: string;
+    fieldOptions: Array<{ value: string; label: string }>;
+    fieldValue: string;
+    orderOptions: Record<string, Array<{ value: string; label: string }>>;
+    onFieldChange: (value: string) => void;
+    onValueChange: (value: string) => void;
   }) => (
     <button
-      data-testid={`filter-select-${label}`}
-      onClick={() => onAdd(options[0].value, options[0].label, [options[0].value])}
+      type="button"
+      data-testid="sort-select"
+      onClick={() => {
+        const nextField = fieldOptions.find((option) => option.value !== fieldValue) ?? fieldOptions[0];
+        onFieldChange(nextField.value);
+        onValueChange(orderOptions[nextField.value][0].value);
+      }}
     >
-      {label}
-    </button>
-  )
-}));
-
-jest.mock('~/shared/components/selector/FilterSelectItem/FilterSelectItem', () => ({
-  __esModule: true,
-  default: ({ label, onClick }: { label: string; onClick: () => void }) => (
-    <button data-testid={`sort-option-${label}`} onClick={onClick}>
-      {label}
+      {triggerLabel}
     </button>
   )
 }));
@@ -218,11 +238,7 @@ describe('Files page', () => {
     render(<Page />);
 
     fireEvent.click(screen.getByRole('button', { name: /Фільтри/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Нові спочатку/i }));
-
-    const dropdown = screen.getByTestId('dropdown-menu');
-    fireEvent.click(within(dropdown).getByTestId('sort-option-Назва файлу'));
-    fireEvent.click(within(dropdown).getByTestId('sort-option-А-Я'));
+    fireEvent.click(screen.getByTestId('sort-select'));
 
     expect(setItemSpy).toHaveBeenCalledWith('files_sort', 'name_asc');
   });

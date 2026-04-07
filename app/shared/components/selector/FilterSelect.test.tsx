@@ -60,4 +60,15 @@ describe('FilterSelect', () => {
 
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
   });
+
+  it('should call onChange in controlled mode', () => {
+    const onChange = jest.fn();
+
+    render(<FilterSelect label="Controlled" options={mockOptions} value={[]} onChange={onChange} />);
+
+    fireEvent.click(screen.getByText('Controlled'));
+    fireEvent.click(screen.getByText('Second'));
+
+    expect(onChange).toHaveBeenCalledWith(['second']);
+  });
 });
