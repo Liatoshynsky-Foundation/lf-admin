@@ -1,4 +1,6 @@
 export const mainHexPallete = {
+  white: '#FCFCFC',
+  black: '#190d03',
   blue: {
     50: '#F9FAFB',
     100: '#F0F2FB',
@@ -11,16 +13,17 @@ export const mainHexPallete = {
     800: '#52545A',
     900: '#3F444A'
   },
-  yellow: {
-    100: '#FFF8E9',
-    200: '#FFEABA',
-    300: '#FFE099',
-    400: '#FFD26A',
-    500: '#FCBD28',
-    600: '#E0A01F',
-    700: '#BF7D13',
-    800: '#8A570C',
-    900: '#673E0F'
+  adminBlue: {
+    50: '#F8F8FA',
+    100: '#F1F2F7',
+    200: '#E6E7ED',
+    300: '#DCDDE5',
+    400: '#C3C4CE',
+    500: '#ADAEBA',
+    600: '#989CAB',
+    700: '#868A9C',
+    800: '#696C7D',
+    900: '#4E5061'
   },
   brown: {
     50: '#F7F5F1',
@@ -33,6 +36,17 @@ export const mainHexPallete = {
     700: '#574139',
     800: '#412B21',
     900: '#2D1611'
+  },
+  yellow: {
+    100: '#FFF8E9',
+    200: '#FFEABA',
+    300: '#FFE099',
+    400: '#FFD26A',
+    500: '#FCBD28',
+    600: '#E0A01F',
+    700: '#BF7D13',
+    800: '#8A570C',
+    900: '#673E0F'
   },
   red: {
     50: '#FCF0ED',
@@ -58,23 +72,9 @@ export const mainHexPallete = {
     800: '#600e0f',
     900: '#3d0607'
   },
-  adminBlue: {
-    50: '#F8F8FA',
-    100: '#F1F2F7',
-    200: '#E6E7ED',
-    300: '#DCDDE5',
-    400: '#C3C4CE',
-    500: '#ADAEBA',
-    600: '#989CAB',
-    700: '#868A9C',
-    800: '#696C7D',
-    900: '#4E5061'
-  },
   green: {
     100: '#E2F2DC'
-  },
-  white: '#FCFCFC',
-  black: '#190d03'
+  }
 };
 
 const sharedTokens = {
@@ -180,19 +180,19 @@ export const buttonGroupColors = {
   primary: {
     selectedButton: mainHexPallete.black,
     selectedButtonText: mainHexPallete.white,
-    groupBackground: mainHexPallete.blue[50],
+    groupBackground: 'rgba(25, 13, 3, 0.08)',
     buttonText: mainHexPallete.black
   },
   secondary: {
     selectedButton: mainHexPallete.white,
     selectedButtonText: mainHexPallete.black,
-    groupBackground: mainHexPallete.yellow[500],
-    buttonText: mainHexPallete.black
+    groupBackground: mainHexPallete.black,
+    buttonText: mainHexPallete.white
   },
   tertiary: {
     selectedButton: mainHexPallete.white,
     selectedButtonText: mainHexPallete.black,
-    groupBackground: mainHexPallete.brown[200],
+    groupBackground: mainHexPallete.yellow[500],
     buttonText: mainHexPallete.black
   }
 };
