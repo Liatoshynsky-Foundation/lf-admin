@@ -7,7 +7,7 @@ const handleUploadImageMock = jest.fn();
 const useUploadBlobMutationMock = jest.fn();
 
 jest.mock('~/utils/uploadToTmpFolder', () => ({
-  handleUploadImage: (...args: any[]) => handleUploadImageMock(...args)
+  handleUploadImage: (...args: unknown[]) => handleUploadImageMock(...args)
 }));
 
 jest.mock('~/types/graphql/generated/graphql', () => ({

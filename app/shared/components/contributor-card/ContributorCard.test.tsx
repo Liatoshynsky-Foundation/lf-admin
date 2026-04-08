@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { ContributorCard } from './ContributorCard';
+import { ImageType } from '~/types/common';
 
 jest.mock('~/ds-components/text-field/TextField', () => ({
   CustomTextField: ({
@@ -46,10 +47,10 @@ describe('ContributorCard', () => {
   const baseContributor = {
     name: { uk: 'John Doe', en: '' },
     description: { uk: 'Team leader', en: '' },
-    photo: { generatedSrc: '', alt: { uk: '', en: '' } }
+    photo: { generatedSrc: '', src: '', alt: { uk: '', en: '' } } as ImageType
   };
 
-  const renderCard = (overrides: any = {}) => {
+  const renderCard = (overrides: Partial<typeof baseContributor> = {}) => {
     const onChangeName = jest.fn();
     const onChangeDescription = jest.fn();
     const onChangePhoto = jest.fn();
