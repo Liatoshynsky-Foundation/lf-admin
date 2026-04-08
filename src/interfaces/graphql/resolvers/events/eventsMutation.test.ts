@@ -1,8 +1,8 @@
-import {CreateEventArgs, EventsMutation} from './eventsMutation';
-import type { GraphQLContext } from '~/back-shared/types/container/types';
+import { CreateEventArgs, EventsMutation } from './eventsMutation';
 import { LocalizedImage } from '~/domain/entities/BaseContent';
 import { EventsEntity } from '~/domain/entities/Events';
 import type { CreateEventInput, IEventsRepository, UpdateEventInput } from '~/domain/repositories/eventsRepository';
+import { createMockContext } from '~/interfaces/graphql/resolvers/testUtils';
 import { EventStatus } from '~/types/enums/common.enums';
 
 jest.mock('mongoose', () => {
@@ -46,17 +46,8 @@ describe('EventsMutation Resolvers', () => {
     incrementViews: jest.fn()
   };
 
-  const createTestContext = (isAdmin: boolean): GraphQLContext => ({
-    admin: isAdmin,
-    requestContainer: {
-      cradle: {
-        eventsRepository: mockRepo as IEventsRepository
-      }
-    }
-  } as unknown as GraphQLContext);
-
-  const adminContext = createTestContext(true);
-  const userContext = createTestContext(false);
+  const adminContext = createMockContext(true, 'eventsRepository', mockRepo);
+  const userContext = createMockContext(false, 'eventsRepository', mockRepo);
 
   const createMockEntity = (overrides: Partial<EventsEntity> = {}): EventsEntity => ({
     id: '1',
@@ -122,7 +113,6 @@ describe('EventsMutation Resolvers', () => {
 
     it('should update event and call sync helpers when image changes', async () => {
       const id = '123';
-      // Додано обов'язкове поле 'alt' для відповідності типу LocalizedImage
       const updateInput: UpdateEventInput = {
         title: { uk: 'Нова Назва', en: 'New Name' },
         coverImage: {
@@ -156,7 +146,8 @@ describe('EventsMutation Resolvers', () => {
     it('should default to Draft status if no status is provided', async () => {
       const input = createMockInput();
       const { status: _status, ...inputWithoutStatus } = input;
-      const finalInput: CreateEventArgs['input'] = inputWithoutStatus as CreateEventArgs['input'];
+
+      const finalInput = inputWithoutStatus as unknown as CreateEventArgs['input'];
 
       (mockRepo.create as jest.Mock).mockResolvedValue(createMockEntity({ status: EventStatus.Draft }));
 
@@ -180,7 +171,7 @@ describe('EventsMutation Resolvers', () => {
 
       const result = await EventsMutation.incrementEventViews({}, { id: '1' }, adminContext);
 
-      expect(result!.meta.views).toBe(100);
+      expect(result?.meta.views).toBe(100);
       expect(mockRepo.incrementViews).toHaveBeenCalledWith('1');
     });
 

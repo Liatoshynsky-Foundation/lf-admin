@@ -1,5 +1,5 @@
-import { AssetsQuery } from './Query';
-import type { GraphQLContext } from '~/back-shared/types/container/types';
+import { createMockContext } from '../testUtils';
+import {AllAssetsArgs,AssetsQuery} from './Query';
 import { SortOrder } from '~/types/enums/common.enums';
 import { AssetType } from '~/types/graphql/generated/graphql';
 
@@ -29,15 +29,19 @@ jest.mock('~/infrastructure/models/imageCrop.model', () => ({
 }));
 
 describe('AssetsQuery', () => {
-  it('should pass filters to assets repository', async () => {
-    const repo = { findAll: jest.fn().mockResolvedValue(['asset']) };
+  const mockRepo = {
+    findAll: jest.fn()
+  };
 
-    const ctx = {
-      admin: true,
-      requestContainer: {
-        cradle: { assetsRepository: repo }
-      }
-    } as unknown as GraphQLContext;
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should pass filters to assets repository', async () => {
+    const expectedAssets = ['asset'];
+    mockRepo.findAll.mockResolvedValue(expectedAssets);
+
+    const ctx = createMockContext(true, 'assetsRepository', mockRepo);
 
     const filters = {
       type: AssetType.Image,
@@ -50,14 +54,18 @@ describe('AssetsQuery', () => {
 
     const res = await AssetsQuery.allAssets({}, { filters }, ctx);
 
-    expect(res).toEqual(['asset']);
-    expect(repo.findAll).toHaveBeenCalledWith(filters);
+    expect(res).toEqual(expectedAssets);
+    expect(mockRepo.findAll).toHaveBeenCalledWith(filters);
   });
 
   it('should throw when admin is missing', async () => {
-    const invalidCtx = { admin: false } as unknown as GraphQLContext;
-    const args = { filters: {} } as unknown as Parameters<typeof AssetsQuery.allAssets>[1];
+    const invalidCtx = createMockContext(false, 'assetsRepository', mockRepo);
 
-    await expect(AssetsQuery.allAssets({}, args, invalidCtx)).rejects.toThrow();
+    const args = {
+      filters: {}
+    } as unknown as { filters: AllAssetsArgs['filters'] };
+
+    await expect(AssetsQuery.allAssets({}, args as never, invalidCtx))
+      .rejects.toThrow();
   });
 });

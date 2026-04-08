@@ -1,6 +1,6 @@
 import { MediaMentionsQuery } from './mediaMentionQuery';
-import type { GraphQLContext } from '~/back-shared/types/container/types';
 import type { IMediaMentionsRepository } from '~/domain/repositories/mediaMentionsRepository';
+import { createMockContext } from '~/interfaces/graphql/resolvers/testUtils';
 import { MediaStatus, SortOrder } from '~/types/enums/common.enums';
 import type { MediaMentionsFiltersInput } from '~/types/graphql/generated/graphql';
 
@@ -38,12 +38,7 @@ describe('MediaMentionsQuery Resolvers', () => {
     count: jest.fn()
   };
 
-  const context = {
-    admin: true,
-    requestContainer: {
-      cradle: { mediaMentionsRepository: mockRepo as IMediaMentionsRepository }
-    }
-  } as unknown as GraphQLContext;
+  const context = createMockContext(true, 'mediaMentionsRepository', mockRepo);
 
   beforeEach(() => {
     jest.clearAllMocks();

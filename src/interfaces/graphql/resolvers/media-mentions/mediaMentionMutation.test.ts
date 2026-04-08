@@ -1,9 +1,9 @@
 import { GraphQLError } from 'graphql';
 
 import { CreateMediaMentionGQLInput, MediaMentionsMutation, UpdateMediaMentionGQLInput } from './mediaMentionMutation';
-import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { MediaMentionEntity } from '~/domain/entities/MediaMentions';
 import type { IMediaMentionsRepository } from '~/domain/repositories/mediaMentionsRepository';
+import { createMockContext } from '~/interfaces/graphql/resolvers/testUtils';
 import { MediaStatus } from '~/types/enums/common.enums';
 
 jest.mock('mongoose', () => {
@@ -33,7 +33,9 @@ jest.mock('../helpers', () => ({
 }));
 
 jest.mock('~/src/shared/utils/slugGenerator/slugGenerator', () => ({
-  generateUniqueSlug: jest.fn((title: string) => Promise.resolve(title.toLowerCase().replaceAll(/\s+/g, '-')))
+  generateUniqueSlug: jest.fn((title: string) =>
+    Promise.resolve(title.toLowerCase().replaceAll(/\s+/g, '-'))
+  )
 }));
 
 describe('media-mentions Mutation', () => {
@@ -45,12 +47,7 @@ describe('media-mentions Mutation', () => {
     incrementViews: jest.fn(),
   };
 
-  const adminContext = {
-    admin: true,
-    requestContainer: {
-      cradle: { mediaMentionsRepository: mockRepo as IMediaMentionsRepository }
-    }
-  } as unknown as GraphQLContext;
+  const adminContext = createMockContext(true, 'mediaMentionsRepository', mockRepo);
 
   const createMockEntity = (overrides: Partial<MediaMentionEntity> = {}): MediaMentionEntity => ({
     id: 'mock-id',
@@ -106,7 +103,7 @@ describe('media-mentions Mutation', () => {
     });
 
     it('should throw unauthenticated error if not admin', async () => {
-      const context = { admin: false } as unknown as GraphQLContext;
+      const context = createMockContext(false, 'mediaMentionsRepository', mockRepo);
       await expect(MediaMentionsMutation.createMediaMention({}, { input }, context))
         .rejects.toThrow(GraphQLError);
     });

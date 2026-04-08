@@ -1,6 +1,6 @@
 import { CreateNewsGQLInput, NewsMutation, UpdateNewsGQLInput } from './newsMutation';
-import type { GraphQLContext } from '~/back-shared/types/container/types';
 import type { News } from '~/domain/entities/News';
+import { createMockContext } from '~/interfaces/graphql/resolvers/testUtils';
 import { INewsRepository } from '~/src/domain/repositories/newsRepository';
 import { NewsStatus } from '~/types/enums/common.enums';
 
@@ -51,12 +51,7 @@ describe('NewsMutation Resolvers', () => {
     incrementViews: jest.fn()
   };
 
-  const createContainer = (admin: boolean) => ({
-    admin,
-    requestContainer: { cradle: { newsRepository: mockRepo as INewsRepository } }
-  } as unknown as GraphQLContext);
-
-  const adminContext = createContainer(true);
+  const adminContext = createMockContext(true, 'newsRepository', mockRepo);
 
   const baseInput: CreateNewsGQLInput = {
     adminTitle: 'Test News',

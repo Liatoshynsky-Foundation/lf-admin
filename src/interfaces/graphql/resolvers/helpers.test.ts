@@ -1,5 +1,7 @@
 import { GraphQLError } from 'graphql';
 
+import { createMockContext } from './testUtils';
+
 jest.mock('mongoose', () => {
   const MockSchema = jest.fn().mockImplementation(() => ({
     index: jest.fn(),
@@ -33,28 +35,13 @@ import {
   syncContentImagesCrops,
   syncCoverImageCrop
 } from './helpers';
-import { GraphQLContext } from '~/back-shared/types/container/types';
-import { LocalizedContent,LocalizedImage } from '~/domain/entities/BaseContent';
+import { LocalizedContent, LocalizedImage } from '~/domain/entities/BaseContent';
 import { ImageCropModel } from '~/infrastructure/models/imageCrop.model';
 import { SortByDate, SortOrder } from '~/types/enums/common.enums';
 
 describe('endpointRepositoryHandler', () => {
   const fakeRepo = {
     findById: jest.fn().mockResolvedValue({ id: '1' })
-  };
-
-  const createMockContext = (admin: boolean): GraphQLContext => {
-    return {
-      admin,
-      requestContainer: {
-        cradle: {
-          mediaMentionsRepository: fakeRepo
-        }
-      } as unknown as GraphQLContext['requestContainer'],
-      cookieActions: [],
-      setCookie: jest.fn(),
-      deleteCookie: jest.fn()
-    } as unknown as GraphQLContext;
   };
 
   beforeEach(() => {
@@ -68,7 +55,7 @@ describe('endpointRepositoryHandler', () => {
       }
     );
 
-    const context = createMockContext(false);
+    const context = createMockContext(false, 'mediaMentionsRepository', fakeRepo);
 
     await expect(handler({}, {}, context)).rejects.toThrow(GraphQLError);
   });
@@ -83,7 +70,7 @@ describe('endpointRepositoryHandler', () => {
       }
     );
 
-    const context = createMockContext(true);
+    const context = createMockContext(true, 'mediaMentionsRepository', fakeRepo);
     const res = await handler({}, { id: '1' }, context);
 
     expect(res).toEqual({ id: '1' });

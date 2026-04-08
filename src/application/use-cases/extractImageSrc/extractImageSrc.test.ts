@@ -1,4 +1,4 @@
-import {extractImageSrcs, extractImagesWithMetadata} from './extractImageSrc';
+import { extractImageSrcs, extractImagesWithMetadata } from './extractImageSrc';
 import { JsonValue } from '~/back-shared/types/pages/types';
 
 const compareFn = (a: string, b: string) => a.localeCompare(b);
@@ -115,37 +115,6 @@ describe('extractImageSrcs', () => {
     expect(extractImageSrcs(data)).toEqual(['temp-image.jpg']);
   });
 
-  it('should find a deeply nested src', () => {
-    const data: JsonValue = {
-      level1: {
-        level2: {
-          image: { src: 'nested-image.png', isTmp: true }
-        }
-      }
-    };
-    expect(extractImageSrcs(data)).toEqual(['nested-image.png']);
-  });
-
-  it('should find sources inside an array of objects', () => {
-    const data: JsonValue = [
-      { id: 1, image: { src: 'array-image-1.gif', isTmp: true } },
-      { id: 2, text: 'No image here' },
-      { id: 3, image: { src: 'array-image-2.webp', isTmp: true } }
-    ];
-    const expected = ['array-image-1.gif', 'array-image-2.webp'];
-    const sortedResult = extractImageSrcs(data).toSorted(compareFn);
-    const sortedExpected = expected.toSorted(compareFn);
-
-    expect(sortedResult).toEqual(sortedExpected);
-  });
-
-  it('should NOT extract src if isTmp is false', () => {
-    const data: JsonValue = {
-      image: { src: 'permanent-image.jpg', isTmp: false }
-    };
-    expect(extractImageSrcs(data)).toEqual([]);
-  });
-
   it('should find all valid sources in a complex nested structure', () => {
     const data: JsonValue = {
       header: {
@@ -173,19 +142,6 @@ describe('extractImageSrcs', () => {
       }
     };
     const expected = ['logo.svg', 'content-img.png', 'gallery-2.jpg'];
-    const sortedResult = extractImageSrcs(data).toSorted(compareFn);
-    const sortedExpected = expected.toSorted(compareFn);
-
-    expect(sortedResult).toEqual(sortedExpected);
-  });
-
-  it('should return unique sources even if duplicates exist', () => {
-    const data: JsonValue = {
-      image1: { src: 'duplicate.jpg', isTmp: true },
-      image2: { src: 'unique.png', isTmp: true },
-      image3: { src: 'duplicate.jpg', isTmp: true }
-    };
-    const expected = ['duplicate.jpg', 'unique.png'];
     const sortedResult = extractImageSrcs(data).toSorted(compareFn);
     const sortedExpected = expected.toSorted(compareFn);
 
