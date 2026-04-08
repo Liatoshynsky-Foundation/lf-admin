@@ -9,8 +9,7 @@ fragment MediaMentionFields on MediaMention {
   coverImage {
     src
     alt { uk en }
-    width
-    height
+    crop { x y width height }
   }
   slug
   status

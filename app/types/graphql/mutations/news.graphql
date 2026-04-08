@@ -9,6 +9,23 @@ mutation CreateNews($input: CreateNewsInput!) {
     slug
     status
     newsDate
+    coverImage {
+      src
+      alt {
+        uk
+        en
+      }
+      caption {
+        uk
+        en
+      }
+      crop {
+        x
+        y
+        width
+        height
+      }
+    }
     publishedAt
     createdAt
   }
@@ -26,6 +43,23 @@ mutation UpdateNews($id: ID!, $input: UpdateNewsInput!) {
     description {
       uk
       en
+    }
+    coverImage {
+      src
+      alt {
+        uk
+        en
+      }
+      caption {
+        uk
+        en
+      }
+      crop {
+        x
+        y
+        width
+        height
+      }
     }
     status
     newsDate

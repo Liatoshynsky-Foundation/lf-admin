@@ -11,10 +11,9 @@ mutation CreateMediaMention($input: CreateMediaMentionInput!) {
     allowIndexation { uk en }
     coverImage {
       src
-      width
-      height
       alt { uk en }
       caption { uk en }
+      crop { x y width height }
     }
     publishedAt
     createdAt
@@ -36,10 +35,9 @@ mutation UpdateMediaMention($id: ID!, $input: UpdateMediaMentionInput!) {
     allowIndexation { uk en }
     coverImage {
       src
-      width
-      height
       alt { uk en }
       caption { uk en }
+      crop { x y width height }
     }
     publishedAt
     createdAt
