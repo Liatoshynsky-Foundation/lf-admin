@@ -143,7 +143,7 @@ export const NewsMutation = {
       await syncCoverImageCrop(res.id, input.coverImage as unknown as LocalizedImage);
     }
     if (input.content) {
-      await syncContentImagesCrops(res.id, input.content as LocalizedContent);
+      await syncContentImagesCrops(res.id, input.content);
     }
 
     return res;

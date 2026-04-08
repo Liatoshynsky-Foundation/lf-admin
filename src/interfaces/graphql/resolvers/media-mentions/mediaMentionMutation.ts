@@ -102,7 +102,7 @@ export const MediaMentionsMutation = {
     }
 
     if (input.coverImage?.crop) {
-      await syncCoverImageCrop(res.id, input.coverImage as LocalizedImage);
+      await syncCoverImageCrop(res.id, input.coverImage);
     }
 
     return res;
