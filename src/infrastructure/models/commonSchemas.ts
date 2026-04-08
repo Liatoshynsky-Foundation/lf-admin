@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 
+import { cropRectSchema } from './imageCrop.model';
+
 export const translatedFieldSchema = new mongoose.Schema(
   {
     uk: { type: String, required: true },
@@ -50,8 +52,7 @@ export const localizedImageSchema = new mongoose.Schema(
     alt: translatedFieldSchema,
     caption: translatedFieldSchema,
     isTmp: { type: Boolean, default: false },
-    width: { type: Number, default: null },
-    height: { type: Number, default: null }
+    crop: { type: cropRectSchema, default: null }
   },
   { _id: false }
 );

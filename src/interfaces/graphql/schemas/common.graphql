@@ -34,8 +34,6 @@ type LocalizedImage {
     alt: LocalizedString!
     caption: LocalizedString!
     isTmp: Boolean
-    width: Int
-    height: Int
     crop: CropRect
 }
 

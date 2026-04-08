@@ -1,8 +1,11 @@
 import { GraphQLError } from 'graphql';
+import {Types} from 'mongoose';
 
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
+import {LocalizedContent, LocalizedImage} from '~/domain/entities/BaseContent';
 import {BaseEntity, FiltersInput} from '~/domain/repositories/baseRepository';
+import {ImageCropModel} from '~/infrastructure/models/imageCrop.model';
 import { RepositoriesModule } from '~/src/container/modules/repositories.module';
 import {generateUniqueSlug} from '~/src/shared/utils';
 import {SortByDate, SortOrder} from '~/types/enums/common.enums';
@@ -88,5 +91,72 @@ export const processSlugUpdate = async <
         return existing !== null && (id ? existing.id !== id : true);
       }
     });
+  }
+};
+
+export const syncCoverImageCrop = async (
+  contentId: string,
+  image: LocalizedImage,
+  locale: 'uk' | 'en' = 'uk'
+): Promise<void> => {
+  if (image.crop) {
+    await ImageCropModel.findOneAndUpdate(
+      {
+        pageId: contentId,
+        cropId: 'coverImage',
+        locale
+      },
+      {
+        crop: image.crop,
+        imageAssetId: new Types.ObjectId(),
+        pageId: contentId,
+        cropId: 'coverImage',
+        locale
+      },
+      { upsert: true }
+    );
+  }
+};
+
+export const syncContentImagesCrops = async (
+  contentId: string,
+  content: LocalizedContent,
+  blockPrefix: string = 'content'
+): Promise<void> => {
+  const locales: (keyof LocalizedContent)[] = ['uk', 'en'];
+
+  for (const locale of locales) {
+    const data = content[locale];
+    if (!data || typeof data !== 'object') continue;
+
+    const findAndSync = async (obj: Record<string, unknown>, path: string = ''): Promise<void> => {
+      const potentialImage = obj as unknown as LocalizedImage;
+
+      if (potentialImage.src && potentialImage.crop) {
+        await ImageCropModel.findOneAndUpdate(
+          {
+            pageId: contentId,
+            blockId: `${blockPrefix}${path}`,
+            locale
+          },
+          {
+            crop: potentialImage.crop,
+            imageAssetId: new Types.ObjectId(),
+            pageId: contentId,
+            blockId: `${blockPrefix}${path}`,
+            locale
+          },
+          { upsert: true }
+        );
+      }
+
+      for (const [key, value] of Object.entries(obj)) {
+        if (value && typeof value === 'object') {
+          await findAndSync(value as Record<string, unknown>, `${path}.${key}`);
+        }
+      }
+    };
+
+    await findAndSync(data as Record<string, unknown>);
   }
 };

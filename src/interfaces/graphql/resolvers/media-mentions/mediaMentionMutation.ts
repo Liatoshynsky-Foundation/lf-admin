@@ -1,6 +1,6 @@
 import { GraphQLError } from 'graphql';
 
-import {endpointRepositoryHandler, extractTitleForSlug, processSlugUpdate} from '../helpers';
+import {endpointRepositoryHandler, extractTitleForSlug, processSlugUpdate, syncCoverImageCrop} from '../helpers';
 import { MediaMentionsServiceErrors } from '~/back-constants/errors';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
@@ -69,7 +69,13 @@ export const MediaMentionsMutation = {
       meta: { views: 0 }
     };
 
-    return repo.create(mediaData);
+    const res = await repo.create(mediaData);
+
+    if (input.coverImage.crop) {
+      await syncCoverImageCrop(res.id, input.coverImage);
+    }
+
+    return res;
   },
 
   updateMediaMention: async (
@@ -93,6 +99,10 @@ export const MediaMentionsMutation = {
     const res = await repo.update(id, updateData);
     if (!res) {
       throw new GraphQLError(MediaMentionsServiceErrors.INVALID_URL.Error());
+    }
+
+    if (input.coverImage?.crop) {
+      await syncCoverImageCrop(res.id, input.coverImage as LocalizedImage);
     }
 
     return res;

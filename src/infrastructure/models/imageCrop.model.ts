@@ -9,7 +9,7 @@ export interface CropRect {
   height: number;
 }
 
-const cropRectSchema = new Schema<CropRect>(
+export const cropRectSchema = new Schema<CropRect>(
   {
     x: { type: Number, required: true },
     y: { type: Number, required: true },

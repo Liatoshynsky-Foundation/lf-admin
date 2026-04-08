@@ -1,3 +1,5 @@
+import {CropRect} from '~/types/common';
+
 export type LocalizedString = {
     uk: string;
     en: string;
@@ -18,8 +20,7 @@ export type LocalizedImage = {
     alt: LocalizedString;
     caption?: LocalizedString;
     isTmp?: boolean;
-    width?: number | null;
-    height?: number | null;
+    crop?: CropRect | null;
 };
 
 export type BaseContentFields = {

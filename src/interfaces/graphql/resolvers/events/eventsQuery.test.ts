@@ -3,6 +3,31 @@ import type { GraphQLContext } from '~/back-shared/types/container/types';
 import type { IEventsRepository } from '~/domain/repositories/eventsRepository';
 import { EventStatus, SortOrder } from '~/types/enums/common.enums';
 
+jest.mock('mongoose', () => {
+  const MockSchema = jest.fn().mockImplementation(() => ({
+    index: jest.fn(),
+  }));
+
+  (MockSchema as unknown as Record<string, unknown>).Types = {
+    ObjectId: String,
+  };
+
+  return {
+    Schema: MockSchema,
+    Types: {
+      ObjectId: jest.fn().mockImplementation(() => 'mocked-id'),
+    },
+    model: jest.fn().mockReturnValue({}),
+    models: {},
+  };
+});
+
+jest.mock('~/infrastructure/models/imageCrop.model', () => ({
+  ImageCropModel: {
+    findOneAndUpdate: jest.fn().mockResolvedValue({}),
+  },
+}));
+
 describe('EventsQuery Resolvers', () => {
   const mockRepo: jest.Mocked<Partial<IEventsRepository>> = {
     findAll: jest.fn(),
@@ -34,7 +59,10 @@ describe('EventsQuery Resolvers', () => {
   });
 
   it('publishedEvents: should force published status', async () => {
-    await EventsQuery.publishedEvents({}, { filters: { status: 'draft' } }, context);
+    await EventsQuery.publishedEvents({}, {
+      filters: { status: 'draft' } as unknown as Parameters<typeof EventsQuery.publishedEvents>[1]['filters']
+    }, context);
+
     expect(mockRepo.findAll).toHaveBeenCalledWith(expect.objectContaining({
       status: EventStatus.Published
     }));
@@ -49,7 +77,7 @@ describe('EventsQuery Resolvers', () => {
     const args = {
       page: 1,
       limit: 10,
-      filters: { slug: 'test' }
+      filters: { slug: 'test' } as unknown as Parameters<typeof EventsQuery.paginatedEvents>[1]['filters']
     };
     await EventsQuery.paginatedEvents({}, args, context);
     expect(mockRepo.findPaginated).toHaveBeenCalledWith(1, 10, expect.objectContaining({ slug: 'test' }));

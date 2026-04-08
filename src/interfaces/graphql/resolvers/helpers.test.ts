@@ -1,7 +1,41 @@
 import { GraphQLError } from 'graphql';
 
-import {endpointRepositoryHandler, extractTitleForSlug, mapFilters, processSlugUpdate} from './helpers';
+jest.mock('mongoose', () => {
+  const MockSchema = jest.fn().mockImplementation(() => ({
+    index: jest.fn(),
+  }));
+
+  (MockSchema as unknown as Record<string, unknown>).Types = {
+    ObjectId: String,
+  };
+
+  return {
+    Schema: MockSchema,
+    Types: {
+      ObjectId: jest.fn().mockImplementation(() => 'mocked-object-id'),
+    },
+    model: jest.fn().mockReturnValue({}),
+    models: {},
+  };
+});
+
+jest.mock('~/infrastructure/models/imageCrop.model', () => ({
+  ImageCropModel: {
+    findOneAndUpdate: jest.fn().mockResolvedValue({}),
+  },
+}));
+
+import {
+  endpointRepositoryHandler,
+  extractTitleForSlug,
+  mapFilters,
+  processSlugUpdate,
+  syncContentImagesCrops,
+  syncCoverImageCrop
+} from './helpers';
 import { GraphQLContext } from '~/back-shared/types/container/types';
+import { LocalizedContent,LocalizedImage } from '~/domain/entities/BaseContent';
+import { ImageCropModel } from '~/infrastructure/models/imageCrop.model';
 import { SortByDate, SortOrder } from '~/types/enums/common.enums';
 
 describe('endpointRepositoryHandler', () => {
@@ -139,6 +173,62 @@ describe('Slug Helpers', () => {
       const updateData: { slug?: string } = {};
       await processSlugUpdate('123', null, mockRepo, updateData);
       expect(updateData.slug).toBeUndefined();
+    });
+  });
+});
+
+describe('Synchronization Helpers', () => {
+  const contentId = 'test-id';
+
+  beforeEach(() => jest.clearAllMocks());
+
+  describe('syncCoverImageCrop', () => {
+    it('should call findOneAndUpdate if crop exists', async () => {
+      const image: LocalizedImage = {
+        src: 'test.jpg',
+        alt: { uk: 'опис', en: 'alt' },
+        crop: { x: 1, y: 2, width: 3, height: 4 }
+      };
+
+      await syncCoverImageCrop(contentId, image, 'uk');
+
+      expect(ImageCropModel.findOneAndUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ pageId: contentId, cropId: 'coverImage', locale: 'uk' }),
+        expect.objectContaining({ crop: image.crop }),
+        { upsert: true }
+      );
+    });
+
+    it('should not call findOneAndUpdate if crop is missing', async () => {
+      const imageWithoutCrop: LocalizedImage = {
+        src: '1.jpg',
+        alt: { uk: '', en: '' }
+      };
+
+      await syncCoverImageCrop(contentId, imageWithoutCrop);
+      expect(ImageCropModel.findOneAndUpdate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('syncContentImagesCrops', () => {
+    it('should recursively find and sync images in content', async () => {
+      const content: LocalizedContent = {
+        uk: {
+          block1: {
+            img: { src: '1.jpg', crop: { x: 0, y: 0, width: 1, height: 1 } }
+          }
+        },
+        en: {}
+      };
+
+      await syncContentImagesCrops(contentId, content as unknown as LocalizedContent);
+
+      expect(ImageCropModel.findOneAndUpdate).toHaveBeenCalledTimes(1);
+      expect(ImageCropModel.findOneAndUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ pageId: contentId, locale: 'uk' }),
+        expect.any(Object),
+        { upsert: true }
+      );
     });
   });
 });

@@ -1,8 +1,33 @@
 import { NewsQuery } from './newsQuery';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
-import {INewsRepository} from '~/domain/repositories/newsRepository';
+import { INewsRepository } from '~/domain/repositories/newsRepository';
 import { NewsStatus } from '~/types/enums/common.enums';
 import { NewsFiltersInput } from '~/types/graphql/generated/graphql';
+
+jest.mock('mongoose', () => {
+  const MockSchema = jest.fn().mockImplementation(() => ({
+    index: jest.fn(),
+  }));
+
+  (MockSchema as unknown as Record<string, unknown>).Types = {
+    ObjectId: String,
+  };
+
+  return {
+    Schema: MockSchema,
+    Types: {
+      ObjectId: jest.fn().mockImplementation(() => 'mocked-id'),
+    },
+    model: jest.fn().mockReturnValue({}),
+    models: {},
+  };
+});
+
+jest.mock('~/infrastructure/models/imageCrop.model', () => ({
+  ImageCropModel: {
+    findOneAndUpdate: jest.fn().mockResolvedValue({}),
+  },
+}));
 
 describe('NewsQuery Resolvers', () => {
   const mockRepo: jest.Mocked<Partial<INewsRepository>> = {
@@ -64,7 +89,7 @@ describe('NewsQuery Resolvers', () => {
       const args = {
         page: 2,
         limit: 5,
-        filters: { slug: 'search' } as NewsFiltersInput
+        filters: { slug: 'search' } as unknown as NewsFiltersInput
       };
 
       await NewsQuery.paginatedNews({}, args, context);
@@ -79,20 +104,20 @@ describe('NewsQuery Resolvers', () => {
 
   it('should throw when admin missing', async () => {
     const invalidContext = { admin: false } as unknown as GraphQLContext;
-    const args = { filters: {} as NewsFiltersInput };
+    const args = { filters: {} as unknown as NewsFiltersInput };
 
     await expect(NewsQuery.allNews({}, args, invalidContext)).rejects.toThrow();
   });
 
   describe('newsCount', () => {
-    it('should call count without status if not provided', async () => {
+    it('should call count with provided status', async () => {
       await NewsQuery.newsCount({}, { status: NewsStatus.Archived }, context);
       expect(mockRepo.count).toHaveBeenCalledWith({ status: NewsStatus.Archived });
     });
 
-    it('should call count with specific status', async () => {
-      await NewsQuery.newsCount({}, { status: NewsStatus.Archived }, context);
-      expect(mockRepo.count).toHaveBeenCalledWith({ status: NewsStatus.Archived });
+    it('should call count without status if none provided', async () => {
+      await NewsQuery.newsCount({}, { status: undefined }, context);
+      expect(mockRepo.count).toHaveBeenCalledWith(undefined);
     });
   });
 });

@@ -4,6 +4,27 @@ import type { News } from '~/domain/entities/News';
 import { INewsRepository } from '~/src/domain/repositories/newsRepository';
 import { NewsStatus } from '~/types/enums/common.enums';
 
+jest.mock('mongoose', () => {
+  const MockSchema = jest.fn().mockImplementation(() => ({
+    index: jest.fn(),
+  }));
+
+  (MockSchema as unknown as Record<string, unknown>).Types = {
+    ObjectId: String,
+  };
+
+  return {
+    Schema: MockSchema,
+    Types: {
+      ObjectId: jest.fn().mockImplementation(() => 'mocked-id'),
+    },
+    model: jest.fn().mockReturnValue({}),
+    models: {},
+  };
+});
+
+import * as helpers from '../helpers';
+
 jest.mock('./processNewsContent/processNewsContent', () => ({
   processNewsContent: jest.fn(<T>(input: T): Promise<T> => Promise.resolve(input)),
 }));
@@ -12,6 +33,12 @@ jest.mock('~/src/shared/utils/slugGenerator/slugGenerator', () => ({
   generateUniqueSlug: jest.fn((title: string) =>
     Promise.resolve(`slug-${title.toLowerCase()}`)
   ),
+}));
+
+jest.mock('../helpers', () => ({
+  ...jest.requireActual('../helpers'),
+  syncCoverImageCrop: jest.fn(),
+  syncContentImagesCrops: jest.fn(),
 }));
 
 describe('NewsMutation Resolvers', () => {
@@ -39,9 +66,10 @@ describe('NewsMutation Resolvers', () => {
     allowIndexation: { uk: true, en: true },
     content: { uk: { blocks: [] }, en: { blocks: [] } } as News['content'],
     coverImage: {
-      src: '',
+      src: 'test.jpg',
       alt: { uk: '', en: '' },
-      caption: { uk: '', en: '' }
+      caption: { uk: '', en: '' },
+      crop: { x: 0, y: 0, width: 100, height: 100 }
     },
     status: NewsStatus.Draft
   };
@@ -61,6 +89,7 @@ describe('NewsMutation Resolvers', () => {
 
     return { ...base, ...overrides } as News;
   };
+
   const mockAction = <T>(method: keyof typeof mockRepo, value: T) =>
     (mockRepo[method] as jest.Mock).mockResolvedValue(value);
 
@@ -89,6 +118,9 @@ describe('NewsMutation Resolvers', () => {
 
       expect(result.id).toBe('new-id');
       expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({ slug: 'slug-новина' }));
+
+      expect(helpers.syncCoverImageCrop).toHaveBeenCalledWith('new-id', baseInput.coverImage);
+      expect(helpers.syncContentImagesCrops).toHaveBeenCalledWith('new-id', baseInput.content);
     });
   });
 
@@ -96,7 +128,10 @@ describe('NewsMutation Resolvers', () => {
     const id = 'news-123';
 
     it('should update title and re-generate slug', async () => {
-      const updateInput: UpdateNewsGQLInput = { title: { uk: 'Оновлено', en: 'Updated' } };
+      const updateInput: UpdateNewsGQLInput = {
+        title: { uk: 'Оновлено', en: 'Updated' },
+        coverImage: { ...baseInput.coverImage, src: 'new.jpg' }
+      };
       mockAction('findById', createMockNews({ id }));
       mockAction('update', createMockNews({ id, slug: 'slug-оновлено' }));
 
@@ -104,6 +139,8 @@ describe('NewsMutation Resolvers', () => {
 
       expect(mockRepo.update).toHaveBeenCalledWith(id, expect.objectContaining({ slug: 'slug-оновлено' }));
       expect(result.slug).toBe('slug-оновлено');
+
+      expect(helpers.syncCoverImageCrop).toHaveBeenCalledWith(id, updateInput.coverImage);
     });
 
     it('should throw if news not found during slug update', async () => {

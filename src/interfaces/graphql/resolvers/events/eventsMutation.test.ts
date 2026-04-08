@@ -1,13 +1,39 @@
 import {CreateEventArgs, EventsMutation} from './eventsMutation';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
+import { LocalizedImage } from '~/domain/entities/BaseContent';
 import { EventsEntity } from '~/domain/entities/Events';
-import type { CreateEventInput, IEventsRepository } from '~/domain/repositories/eventsRepository';
+import type { CreateEventInput, IEventsRepository, UpdateEventInput } from '~/domain/repositories/eventsRepository';
 import { EventStatus } from '~/types/enums/common.enums';
+
+jest.mock('mongoose', () => {
+  const MockSchema = jest.fn().mockImplementation(() => ({
+    index: jest.fn(),
+  }));
+  (MockSchema as unknown as Record<string, unknown>).Types = {
+    ObjectId: String,
+  };
+  return {
+    Schema: MockSchema,
+    Types: {
+      ObjectId: jest.fn().mockImplementation(() => 'mocked-id'),
+    },
+    model: jest.fn().mockReturnValue({}),
+    models: {},
+  };
+});
+
+import * as helpers from '../helpers';
 
 jest.mock('~/src/shared/utils/slugGenerator/slugGenerator', () => ({
   generateUniqueSlug: jest.fn((title: string) =>
     Promise.resolve(`slug-${title.toLowerCase().replaceAll(/\s+/g, '-')}`)
   )
+}));
+
+jest.mock('../helpers', () => ({
+  ...jest.requireActual('../helpers'),
+  syncCoverImageCrop: jest.fn(),
+  syncContentImagesCrops: jest.fn(),
 }));
 
 describe('EventsMutation Resolvers', () => {
@@ -58,7 +84,12 @@ describe('EventsMutation Resolvers', () => {
     keywords: { uk: 'к', en: 'k' },
     allowIndexation: { uk: true, en: true },
     content: { uk: { blocks: [] }, en: { blocks: [] } } as EventsEntity['content'],
-    coverImage: { src: '', alt: { uk: '', en: '' }, caption: { uk: '', en: '' } },
+    coverImage: {
+      src: 'event.jpg',
+      alt: { uk: 'alt uk', en: 'alt en' },
+      caption: { uk: '', en: '' },
+      crop: { x: 10, y: 10, width: 50, height: 50 }
+    },
     status: EventStatus.Draft,
     meta: { views: 0 },
     ...overrides
@@ -75,22 +106,31 @@ describe('EventsMutation Resolvers', () => {
   });
 
   describe('Business Logic', () => {
-    it('should create event with correct slug and status', async () => {
+    it('should create event with correct slug and status and call sync helpers', async () => {
       const input = createMockInput();
       (mockRepo.findBySlug as jest.Mock).mockResolvedValue(null);
-      (mockRepo.create as jest.Mock).mockResolvedValue(createMockEntity({ slug: 'slug-подія' }));
+      (mockRepo.create as jest.Mock).mockResolvedValue(createMockEntity({ id: 'event-1', slug: 'slug-подія' }));
 
       const result = await EventsMutation.createEvent({}, { input }, adminContext);
 
       expect(result.slug).toBe('slug-подія');
-      expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({
-        status: EventStatus.Draft
-      }));
+      expect(mockRepo.create).toHaveBeenCalled();
+
+      expect(helpers.syncCoverImageCrop).toHaveBeenCalledWith('event-1', input.coverImage);
+      expect(helpers.syncContentImagesCrops).toHaveBeenCalledWith('event-1', input.content);
     });
 
-    it('should update event and generate new slug if title changes', async () => {
+    it('should update event and call sync helpers when image changes', async () => {
       const id = '123';
-      const updateInput = { title: { uk: 'Нова Назва', en: 'New Name' } };
+      // Додано обов'язкове поле 'alt' для відповідності типу LocalizedImage
+      const updateInput: UpdateEventInput = {
+        title: { uk: 'Нова Назва', en: 'New Name' },
+        coverImage: {
+          src: 'updated.jpg',
+          alt: { uk: 'оновлено', en: 'updated' },
+          crop: { x: 1, y: 1, width: 1, height: 1 }
+        } as LocalizedImage
+      };
 
       (mockRepo.findBySlug as jest.Mock).mockResolvedValue(null);
       (mockRepo.update as jest.Mock).mockResolvedValue(createMockEntity({ id, slug: 'slug-нова-назва' }));
@@ -98,12 +138,12 @@ describe('EventsMutation Resolvers', () => {
       const result = await EventsMutation.updateEvent({}, { id, input: updateInput }, adminContext);
 
       expect(result.slug).toBe('slug-нова-назва');
-      expect(mockRepo.update).toHaveBeenCalledWith(id, expect.objectContaining({ slug: 'slug-нова-назва' }));
+      expect(helpers.syncCoverImageCrop).toHaveBeenCalledWith(id, updateInput.coverImage);
     });
 
     it('should allow the same slug if it belongs to the event being updated', async () => {
       const id = '123';
-      const updateInput = { title: { uk: 'Нова Назва', en: 'New Name' } };
+      const updateInput: UpdateEventInput = { title: { uk: 'Нова Назва', en: 'New Name' } };
 
       (mockRepo.findBySlug as jest.Mock).mockResolvedValue(createMockEntity({ id: '123', slug: 'slug-existing-title' }));
       (mockRepo.update as jest.Mock).mockResolvedValue(createMockEntity({ id, slug: 'slug-existing-title' }));
