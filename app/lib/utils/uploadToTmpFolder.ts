@@ -24,12 +24,16 @@ export const handleUploadImage = async <K extends keyof BlocksMap, F extends key
 
   if (res.data?.uploadBlob.success) {
     const blobName = res.data.uploadBlob.blobName;
+
+    const blocks = useStore.getState().blocks[pageId] as Record<K, BlocksMap[K]> | undefined;
+    const currentField = blocks?.[blockId]?.[key];
+
     useStore.getState().setField(pageId, blockId, key, {
+      ...(currentField as object),
       src: blobName ?? '',
-      alt: { uk: '', en: '' },
-      caption: { uk: '', en: '' },
       isTmp: true
     } as BlocksMap[K][F]);
+
     return blobName;
   }
 };

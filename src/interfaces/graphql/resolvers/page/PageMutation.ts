@@ -1,9 +1,11 @@
 import { GraphQLError } from 'graphql';
+import { Types } from 'mongoose';
 
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
+import { ImageCropModel } from '~/infrastructure/models/imageCrop.model';
 import { createDotNotationPatch } from '~/src/application/use-cases/dotNotationPatch/dotNotationPatch';
-import { extractImageSrcs } from '~/src/application/use-cases/extractImageSrc/extractImageSrc';
+import { extractImageSrcs,extractImagesWithMetadata } from '~/src/application/use-cases/extractImageSrc/extractImageSrc';
 import { removeTmpFlagsRecursively } from '~/src/application/use-cases/removeTmpFlags/removeTmpFlags';
 import { blobStorageService } from '~/src/application/use-cases/uploadService/upload';
 import { JsonObject } from '~/src/shared/types/pages/types';
@@ -11,6 +13,27 @@ import type { Page, Scalars } from '~/types/graphql/generated/graphql';
 
 type UpsertPageDraftArgs = { input: { slug: string; blocks: Scalars['JSON']['input'] } };
 type PublishPageArgs = { input: { slug: string; blocks?: Scalars['JSON']['input'] } };
+
+async function syncImageCrops(blocks: Scalars['JSON']['input'], pageId: string) {
+  const imagesWithMetadata = extractImagesWithMetadata(blocks);
+
+  for (const item of imagesWithMetadata) {
+    if (item.crop) {
+      await ImageCropModel.findOneAndUpdate(
+        {
+          cropId: item.src,
+          pageId: pageId
+        },
+        {
+          crop: item.crop,
+          imageAssetId: new Types.ObjectId(),
+          locale: 'uk',
+        },
+        { upsert: true, new: true }
+      );
+    }
+  }
+}
 
 export const PageMutation = {
   async upsertPageDraft(
@@ -39,25 +62,32 @@ export const PageMutation = {
     }
 
     const cleanedBlocks = removeTmpFlagsRecursively(blocks);
+
     const existingDraft = await repo.getDraftBySlug(slug);
 
+    let resultPage: Page;
     if (!existingDraft) {
       const published = await repo.getPublishedBySlug(slug);
       if (!published) {
         throw new Error(`Cannot upsert draft: no source (draft or published) for slug="${slug}"`);
       }
-      return repo.createDraft(slug, cleanedBlocks, published);
+      resultPage = await repo.createDraft(slug, cleanedBlocks, published) as Page;
+    } else {
+      const changes = createDotNotationPatch(
+        (existingDraft.blocks as JsonObject) || {},
+        (cleanedBlocks as JsonObject) || {}
+      );
+
+      if (!Object.keys(changes.$set ?? {}).length && !Object.keys(changes.$unset ?? {}).length) {
+        resultPage = existingDraft as Page;
+      } else {
+        resultPage = await repo.applyPatchToDraft(slug, changes) as Page;
+      }
     }
 
-    const changes = createDotNotationPatch(
-      (existingDraft.blocks as JsonObject) || {},
-      (cleanedBlocks as JsonObject) || {}
-    );
-    if (!Object.keys(changes.$set ?? {}).length && !Object.keys(changes.$unset ?? {}).length) {
-      return existingDraft;
-    }
+    await syncImageCrops(blocks, resultPage.id);
 
-    return repo.applyPatchToDraft(slug, changes);
+    return resultPage;
   },
 
   async publishPage(
@@ -74,6 +104,7 @@ export const PageMutation = {
     const repo = requestContainer.cradle.pageRepository;
 
     const { slug, blocks } = input;
+
     let blocksToPublish = blocks;
 
     if (blocksToPublish === undefined) {
@@ -88,6 +119,7 @@ export const PageMutation = {
     if (imageSrcs.length) {
       await blobStorageService().copyBlobsToNewFolder('tmp', 'photos', imageSrcs);
     }
+
     const cleanedBlocks = removeTmpFlagsRecursively(blocksToPublish);
 
     const [publishedPage, draftPage] = await Promise.all([repo.getPublishedBySlug(slug), repo.getDraftBySlug(slug)]);
@@ -104,6 +136,10 @@ export const PageMutation = {
       (cleanedBlocks as JsonObject) || {}
     );
 
-    return await repo.applyPatchToPublished(slug, changes, title, pageType);
+    const resultPage = await repo.applyPatchToPublished(slug, changes, title, pageType) as Page;
+
+    await syncImageCrops(blocksToPublish, resultPage.id);
+
+    return resultPage;
   }
 };

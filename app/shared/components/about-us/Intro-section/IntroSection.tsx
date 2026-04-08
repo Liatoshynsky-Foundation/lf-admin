@@ -45,9 +45,17 @@ export const IntroSection = () => {
         <ImagePreviewBlock
           imageUrl={getImageUrl(block.image)}
           fileName={block.image.src || ''}
-          onChangeImage={(file) =>
-            handleUploadImage(file, PAGE_IDS.ABOUT_US, BLOCK_IDS.INTRO_SECTION, 'image', uploadBlob, 'tmp')
-          }
+          initialCrop={block.image.crop}
+          onChangeImage={async (file, crop) => {
+            setField(pageId, blockId, 'image', {
+              ...block.image,
+              src: file.name,
+              isTmp: true,
+              crop: crop ?? null
+            });
+
+            await handleUploadImage(file, pageId, blockId, 'image', uploadBlob, 'tmp');
+          }}
         />
       </Box>
 

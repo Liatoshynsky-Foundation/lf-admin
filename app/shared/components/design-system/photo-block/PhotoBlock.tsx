@@ -20,7 +20,8 @@ interface ImagePreviewBlockProps extends StackProps {
   altText?: string;
   onChangeAltText?: (value: string) => void;
   oval?: boolean;
-  onChangeImage: (file: File) => void;
+  onChangeImage: (file: File, crop?: MediaModalResult['crop']) => void;
+  initialCrop?: MediaModalResult['crop'];
   direction?: 'row' | 'row-reverse' | 'column' | 'column-reverse';
   buttonSpacing?: string;
   stackSpacing?: string;
@@ -34,6 +35,7 @@ export const ImagePreviewBlock = ({
   title,
   oval = false,
   onChangeImage,
+  initialCrop,
   direction = 'row',
   buttonSpacing = '16px',
   stackSpacing = '32px',
@@ -47,11 +49,15 @@ export const ImagePreviewBlock = ({
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [mediaInitial, setMediaInitial] = useState<MediaModalOpenState | undefined>(undefined);
 
-  const [savedCrop, setSavedCrop] = useState<MediaModalResult['crop']>(null);
+  const [savedCrop, setSavedCrop] = useState<MediaModalResult['crop']>(initialCrop || null);
 
   useEffect(() => {
     setPreviewImage(imageUrl);
   }, [imageUrl]);
+
+  useEffect(() => {
+    setSavedCrop(initialCrop || null);
+  }, [initialCrop]);
 
   const { dimensions, fileName: finalFileName } = useImageMetadata(previewImage, fileName);
 
@@ -85,22 +91,22 @@ export const ImagePreviewBlock = ({
     const { selected, crop } = result;
 
     try {
+      let file: File;
+
       if (selected.kind === 'upload') {
         const dataUrl = await readFileAsDataURL(selected.file);
         setPreviewImage(dataUrl);
-        onChangeImage(selected.file);
-      } else if (selected.kind === 'gallery' || selected.kind === 'used') {
+        file = selected.file;
+      } else {
         const response = await fetch(selected.src);
         const blob = await response.blob();
-        const file = new File([blob], selected.fileName || 'image.jpg', {
-          type: blob.type
-        });
-
+        file = new File([blob], selected.fileName || 'image.jpg', { type: blob.type });
         setPreviewImage(selected.src);
-        onChangeImage(file);
       }
 
       setSavedCrop(crop);
+      onChangeImage(file, crop);
+
       toast.success('Зображення змінено');
     } catch {
       toast.error('Не вдалося змінити');
