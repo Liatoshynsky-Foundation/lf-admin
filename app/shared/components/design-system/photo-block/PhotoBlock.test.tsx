@@ -43,10 +43,10 @@ jest.mock('~/shared/hooks/use-image-metadata/useImageMetadata', () => ({
 }));
 
 type MediaModalProps = {
-    open: boolean;
-    initial?: MediaModalOpenState;
-    onClose: () => void;
-    onApply: (result: MediaModalResult) => void;
+  open: boolean;
+  initial?: MediaModalOpenState;
+  onClose: () => void;
+  onApply: (result: MediaModalResult) => void;
 };
 
 jest.mock('~/shared/components/media-modal/MediaModal', () => ({
@@ -59,7 +59,7 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
         <div data-testid="initial-tab">{initial?.tab ?? ''}</div>
 
         <button data-testid="close" onClick={onClose}>
-                    close
+          close
         </button>
 
         <button
@@ -76,7 +76,7 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
             })
           }
         >
-                    apply
+          apply
         </button>
 
         <button
@@ -94,7 +94,7 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
             })
           }
         >
-                    apply-non-upload
+          apply-non-upload
         </button>
       </div>
     );

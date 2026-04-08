@@ -151,12 +151,12 @@ export const ImagePreviewBlock = ({
                 ...styles.trimmedTypography
               }}
             >
-                Назва файлу {finalFileName}
+              Назва файлу {finalFileName}
             </Typography>
 
             {dimensions ? (
               <Typography variant="body2" color="text.secondary" sx={styles.imageSizeText}>
-                    Розмір: {dimensions.width} × {dimensions.height}
+                Розмір: {dimensions.width} × {dimensions.height}
               </Typography>
             ) : null}
           </Stack>
@@ -186,7 +186,7 @@ export const ImagePreviewBlock = ({
               onClick={openEditCrop}
               style={styles.editButton}
             >
-                Редагувати
+              Редагувати
             </Button>
 
             <Button
@@ -197,7 +197,7 @@ export const ImagePreviewBlock = ({
               onClick={openChangeImage}
               sx={styles.changeButton}
             >
-                Змінити зображення
+              Змінити зображення
             </Button>
           </Stack>
         </Stack>
