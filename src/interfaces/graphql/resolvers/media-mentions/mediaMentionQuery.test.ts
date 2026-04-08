@@ -4,30 +4,8 @@ import { createMockContext } from '~/interfaces/graphql/resolvers/testUtils';
 import { MediaStatus, SortOrder } from '~/types/enums/common.enums';
 import type { MediaMentionsFiltersInput } from '~/types/graphql/generated/graphql';
 
-jest.mock('mongoose', () => {
-  const MockSchema = jest.fn().mockImplementation(() => ({
-    index: jest.fn(),
-  }));
-
-  (MockSchema as unknown as Record<string, unknown>).Types = {
-    ObjectId: String,
-  };
-
-  return {
-    Schema: MockSchema,
-    Types: {
-      ObjectId: jest.fn().mockImplementation(() => 'mocked-id'),
-    },
-    model: jest.fn().mockReturnValue({}),
-    models: {},
-  };
-});
-
-jest.mock('~/infrastructure/models/imageCrop.model', () => ({
-  ImageCropModel: {
-    findOneAndUpdate: jest.fn().mockResolvedValue({}),
-  },
-}));
+jest.mock('mongoose');
+jest.mock('~/infrastructure/models/imageCrop.model');
 
 describe('MediaMentionsQuery Resolvers', () => {
   const mockRepo: jest.Mocked<Partial<IMediaMentionsRepository>> = {

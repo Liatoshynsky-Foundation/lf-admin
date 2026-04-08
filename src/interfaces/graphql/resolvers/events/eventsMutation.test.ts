@@ -5,22 +5,7 @@ import type { CreateEventInput, IEventsRepository, UpdateEventInput } from '~/do
 import { createMockContext } from '~/interfaces/graphql/resolvers/testUtils';
 import { EventStatus } from '~/types/enums/common.enums';
 
-jest.mock('mongoose', () => {
-  const MockSchema = jest.fn().mockImplementation(() => ({
-    index: jest.fn(),
-  }));
-  (MockSchema as unknown as Record<string, unknown>).Types = {
-    ObjectId: String,
-  };
-  return {
-    Schema: MockSchema,
-    Types: {
-      ObjectId: jest.fn().mockImplementation(() => 'mocked-id'),
-    },
-    model: jest.fn().mockReturnValue({}),
-    models: {},
-  };
-});
+jest.mock('mongoose');
 
 import * as helpers from '../helpers';
 
@@ -106,7 +91,6 @@ describe('EventsMutation Resolvers', () => {
 
       expect(result.slug).toBe('slug-подія');
       expect(mockRepo.create).toHaveBeenCalled();
-
       expect(helpers.syncCoverImageCrop).toHaveBeenCalledWith('event-1', input.coverImage);
       expect(helpers.syncContentImagesCrops).toHaveBeenCalledWith('event-1', input.content);
     });
@@ -146,7 +130,6 @@ describe('EventsMutation Resolvers', () => {
     it('should default to Draft status if no status is provided', async () => {
       const input = createMockInput();
       const { status: _status, ...inputWithoutStatus } = input;
-
       const finalInput = inputWithoutStatus as unknown as CreateEventArgs['input'];
 
       (mockRepo.create as jest.Mock).mockResolvedValue(createMockEntity({ status: EventStatus.Draft }));

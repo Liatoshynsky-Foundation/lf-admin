@@ -6,24 +6,7 @@ import type { IMediaMentionsRepository } from '~/domain/repositories/mediaMentio
 import { createMockContext } from '~/interfaces/graphql/resolvers/testUtils';
 import { MediaStatus } from '~/types/enums/common.enums';
 
-jest.mock('mongoose', () => {
-  const MockSchema = jest.fn().mockImplementation(() => ({
-    index: jest.fn(),
-  }));
-
-  (MockSchema as unknown as Record<string, unknown>).Types = {
-    ObjectId: String,
-  };
-
-  return {
-    Schema: MockSchema,
-    Types: {
-      ObjectId: jest.fn().mockImplementation(() => 'mocked-id'),
-    },
-    model: jest.fn().mockReturnValue({}),
-    models: {},
-  };
-});
+jest.mock('mongoose');
 
 import * as helpers from '../helpers';
 
@@ -98,7 +81,6 @@ describe('media-mentions Mutation', () => {
         slug: 'тестова-стаття',
         meta: { views: 0 }
       }));
-
       expect(helpers.syncCoverImageCrop).toHaveBeenCalledWith('new-id', input.coverImage);
     });
 
@@ -137,7 +119,6 @@ describe('media-mentions Mutation', () => {
       expect(mockRepo.update).toHaveBeenCalledWith(id, expect.objectContaining({
         slug: 'оновлений-заголовок'
       }));
-
       expect(helpers.syncCoverImageCrop).toHaveBeenCalledWith(id, updateInput.coverImage);
     });
 

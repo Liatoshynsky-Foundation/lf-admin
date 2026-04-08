@@ -2,30 +2,8 @@ import { GraphQLError } from 'graphql';
 
 import { createMockContext } from './testUtils';
 
-jest.mock('mongoose', () => {
-  const MockSchema = jest.fn().mockImplementation(() => ({
-    index: jest.fn(),
-  }));
-
-  (MockSchema as unknown as Record<string, unknown>).Types = {
-    ObjectId: String,
-  };
-
-  return {
-    Schema: MockSchema,
-    Types: {
-      ObjectId: jest.fn().mockImplementation(() => 'mocked-object-id'),
-    },
-    model: jest.fn().mockReturnValue({}),
-    models: {},
-  };
-});
-
-jest.mock('~/infrastructure/models/imageCrop.model', () => ({
-  ImageCropModel: {
-    findOneAndUpdate: jest.fn().mockResolvedValue({}),
-  },
-}));
+jest.mock('mongoose');
+jest.mock('~/infrastructure/models/imageCrop.model');
 
 import {
   endpointRepositoryHandler,

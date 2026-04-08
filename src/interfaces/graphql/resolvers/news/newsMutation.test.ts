@@ -4,24 +4,7 @@ import { createMockContext } from '~/interfaces/graphql/resolvers/testUtils';
 import { INewsRepository } from '~/src/domain/repositories/newsRepository';
 import { NewsStatus } from '~/types/enums/common.enums';
 
-jest.mock('mongoose', () => {
-  const MockSchema = jest.fn().mockImplementation(() => ({
-    index: jest.fn(),
-  }));
-
-  (MockSchema as unknown as Record<string, unknown>).Types = {
-    ObjectId: String,
-  };
-
-  return {
-    Schema: MockSchema,
-    Types: {
-      ObjectId: jest.fn().mockImplementation(() => 'mocked-id'),
-    },
-    model: jest.fn().mockReturnValue({}),
-    models: {},
-  };
-});
+jest.mock('mongoose');
 
 import * as helpers from '../helpers';
 
@@ -113,7 +96,6 @@ describe('NewsMutation Resolvers', () => {
 
       expect(result.id).toBe('new-id');
       expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({ slug: 'slug-новина' }));
-
       expect(helpers.syncCoverImageCrop).toHaveBeenCalledWith('new-id', baseInput.coverImage);
       expect(helpers.syncContentImagesCrops).toHaveBeenCalledWith('new-id', baseInput.content);
     });
@@ -134,7 +116,6 @@ describe('NewsMutation Resolvers', () => {
 
       expect(mockRepo.update).toHaveBeenCalledWith(id, expect.objectContaining({ slug: 'slug-оновлено' }));
       expect(result.slug).toBe('slug-оновлено');
-
       expect(helpers.syncCoverImageCrop).toHaveBeenCalledWith(id, updateInput.coverImage);
     });
 
@@ -160,7 +141,6 @@ describe('NewsMutation Resolvers', () => {
 
       expect(mockRepo.findById).toHaveBeenCalledTimes(1);
       expect(mockRepo.findById).toHaveBeenCalledWith(id);
-
       expect(mockRepo.findBySlug).not.toHaveBeenCalled();
       expect(mockRepo.update).toHaveBeenCalled();
     });

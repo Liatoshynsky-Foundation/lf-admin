@@ -1,32 +1,10 @@
 import { createMockContext } from '../testUtils';
-import {AllAssetsArgs,AssetsQuery} from './Query';
+import { AllAssetsArgs, AssetsQuery } from './Query';
 import { SortOrder } from '~/types/enums/common.enums';
 import { AssetType } from '~/types/graphql/generated/graphql';
 
-jest.mock('mongoose', () => {
-  const MockSchema = jest.fn().mockImplementation(() => ({
-    index: jest.fn(),
-  }));
-
-  (MockSchema as unknown as Record<string, unknown>).Types = {
-    ObjectId: String,
-  };
-
-  return {
-    Schema: MockSchema,
-    Types: {
-      ObjectId: jest.fn().mockImplementation(() => 'mocked-id'),
-    },
-    model: jest.fn().mockReturnValue({}),
-    models: {},
-  };
-});
-
-jest.mock('~/infrastructure/models/imageCrop.model', () => ({
-  ImageCropModel: {
-    findOneAndUpdate: jest.fn().mockResolvedValue({}),
-  },
-}));
+jest.mock('mongoose');
+jest.mock('~/infrastructure/models/imageCrop.model');
 
 describe('AssetsQuery', () => {
   const mockRepo = {
