@@ -7,12 +7,203 @@ import { MediaStatus, NewsStatus } from '~/types/graphql/generated/graphql';
 const mockUseAllNews = jest.fn();
 const mockUseAllMediaMentions = jest.fn();
 
+type QuerySortOption = {
+  field: string;
+  order: 'asc' | 'desc';
+};
+
+type PublicationsQueryFilters = {
+  search?: string;
+  languages?: string[];
+  statuses?: string[];
+  sort?: readonly QuerySortOption[];
+};
+
+type QueryHookOptions = {
+  skip?: boolean;
+};
+
+const NEWS_ITEMS = [
+  {
+    id: 'news-1',
+    slug: 'festival-news',
+    adminTitle: 'Новина про фестиваль',
+    language: 'bilingual',
+    title: { uk: 'Новина про фестиваль', en: 'Festival news' },
+    status: NewsStatus.Published,
+    createdAt: '2026-03-21T10:00:00.000Z',
+    updatedAt: '2026-03-22T10:00:00.000Z',
+    publishedAt: '2026-03-23T10:00:00.000Z',
+    newsDate: null,
+    description: null,
+    content: { uk: 'Контент', en: 'Content' },
+    coverImage: {
+      src: '/news-1.png',
+      alt: { uk: 'Новина', en: 'News' },
+      caption: { uk: '', en: '' }
+    },
+    meta: { views: 10 },
+    __typename: 'News'
+  },
+  {
+    id: 'news-2',
+    slug: 'chamber-evening',
+    adminTitle: 'Вечір камерної музики',
+    language: 'uk',
+    title: { uk: 'Вечір камерної музики', en: '' },
+    status: NewsStatus.Draft,
+    createdAt: '2026-03-19T10:00:00.000Z',
+    updatedAt: '2026-03-19T10:00:00.000Z',
+    publishedAt: null,
+    newsDate: null,
+    description: null,
+    content: { uk: 'Контент', en: '' },
+    coverImage: {
+      src: '/news-2.png',
+      alt: { uk: 'Вечір', en: '' },
+      caption: { uk: '', en: '' }
+    },
+    meta: { views: 5 },
+    __typename: 'News'
+  }
+];
+
+const MEDIA_ITEMS = [
+  {
+    id: 'media-1',
+    slug: 'interview-media',
+    adminTitle: 'Інтерв’ю про нову постановку',
+    language: 'uk',
+    title: { uk: 'Інтерв’ю про нову постановку', en: '' },
+    status: MediaStatus.Published,
+    createdAt: '2026-03-20T10:00:00.000Z',
+    updatedAt: '2026-03-24T10:00:00.000Z',
+    publishedAt: '2026-03-25T10:00:00.000Z',
+    description: null,
+    url: 'https://example.com/media-1',
+    coverImage: {
+      src: '/media-1.png',
+      alt: { uk: 'Інтерв’ю', en: '' }
+    },
+    meta: { views: 8 },
+    __typename: 'MediaMention'
+  },
+  {
+    id: 'media-2',
+    slug: 'residency-program',
+    adminTitle: 'Програма резиденції оголошена',
+    language: 'uk',
+    title: { uk: 'Програма резиденції оголошена', en: '' },
+    status: MediaStatus.Draft,
+    createdAt: '2026-03-18T10:00:00.000Z',
+    updatedAt: '2026-03-18T10:00:00.000Z',
+    publishedAt: null,
+    description: null,
+    url: 'https://example.com/media-2',
+    coverImage: null,
+    meta: { views: 3 },
+    __typename: 'MediaMention'
+  }
+];
+
+const getSearchText = (title: string | { uk?: string; en?: string }, adminTitle?: string) => {
+  if (typeof title === 'string') {
+    return `${title} ${adminTitle ?? ''}`.trim().toLowerCase();
+  }
+
+  return [title.uk, title.en, adminTitle].filter(Boolean).join(' ').toLowerCase();
+};
+
+const getSortTitle = (item: { adminTitle?: string; title: string | { uk?: string; en?: string } }) => {
+  if (item.adminTitle) {
+    return item.adminTitle;
+  }
+
+  return typeof item.title === 'string' ? item.title : item.title.uk || item.title.en || '';
+};
+
+const compareBySort = (
+  left: { createdAt: string; adminTitle?: string; title: string | { uk?: string; en?: string } },
+  right: { createdAt: string; adminTitle?: string; title: string | { uk?: string; en?: string } },
+  sort: readonly QuerySortOption[]
+) => {
+  for (const criterion of sort) {
+    if (criterion.field === 'adminTitle') {
+      const comparison = getSortTitle(left).localeCompare(getSortTitle(right), 'uk');
+
+      if (comparison !== 0) {
+        return criterion.order === 'asc' ? comparison : -comparison;
+      }
+    }
+
+    if (criterion.field === 'createdAt') {
+      const comparison = new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+
+      if (comparison !== 0) {
+        return criterion.order === 'asc' ? comparison : -comparison;
+      }
+    }
+  }
+
+  return 0;
+};
+
+const applyFilters = <T extends { createdAt: string; adminTitle?: string; title: string | { uk?: string; en?: string }; status: string; language: string }>(
+  items: T[],
+  filters?: PublicationsQueryFilters
+) => {
+  const normalizedSearch = filters?.search?.trim().toLowerCase();
+
+  const filteredItems = items.filter((item) => {
+    const matchesSearch = !normalizedSearch || getSearchText(item.title, item.adminTitle).includes(normalizedSearch);
+    const matchesStatus = !filters?.statuses?.length || filters.statuses.includes(String(item.status).toLowerCase());
+    const matchesLanguage = !filters?.languages?.length || filters.languages.includes(item.language);
+
+    return matchesSearch && matchesStatus && matchesLanguage;
+  });
+
+  if (!filters?.sort?.length) {
+    return filteredItems;
+  }
+
+  return [...filteredItems].sort((left, right) => compareBySort(left, right, filters.sort ?? []));
+};
+
+const buildNewsResponse = (filters?: PublicationsQueryFilters, options?: QueryHookOptions) => {
+  if (options?.skip) {
+    return { data: undefined, loading: false, error: undefined };
+  }
+
+  return {
+    data: {
+      allNews: applyFilters(NEWS_ITEMS, filters)
+    },
+    loading: false,
+    error: undefined
+  };
+};
+
+const buildMediaResponse = (filters?: PublicationsQueryFilters, options?: QueryHookOptions) => {
+  if (options?.skip) {
+    return { data: undefined, loading: false, error: undefined };
+  }
+
+  return {
+    data: {
+      allMediaMentions: applyFilters(MEDIA_ITEMS, filters)
+    },
+    loading: false,
+    error: undefined
+  };
+};
+
 jest.mock('~/shared/hooks/use-news/useNews', () => ({
-  useAllNews: () => mockUseAllNews()
+  useAllNews: (filters?: PublicationsQueryFilters, options?: QueryHookOptions) => mockUseAllNews(filters, options)
 }));
 
 jest.mock('~/shared/hooks/use-media-mentions/useMediaMentions', () => ({
-  useAllMediaMentions: () => mockUseAllMediaMentions()
+  useAllMediaMentions: (filters?: PublicationsQueryFilters, options?: QueryHookOptions) =>
+    mockUseAllMediaMentions(filters, options)
 }));
 
 jest.mock('~/shared/components/content-card/ContentCard', () => ({
@@ -128,92 +319,13 @@ describe('Publications page', () => {
     jest.clearAllMocks();
     localStorage.clear();
 
-    mockUseAllNews.mockReturnValue({
-      data: {
-        allNews: [
-          {
-            id: 'news-1',
-            slug: 'festival-news',
-            title: { uk: 'Новина про фестиваль', en: 'Festival news' },
-            status: NewsStatus.Published,
-            createdAt: '2026-03-21T10:00:00.000Z',
-            updatedAt: '2026-03-22T10:00:00.000Z',
-            publishedAt: '2026-03-23T10:00:00.000Z',
-            newsDate: null,
-            description: null,
-            content: { uk: 'Контент', en: 'Content' },
-            coverImage: {
-              src: '/news-1.png',
-              alt: { uk: 'Новина', en: 'News' },
-              caption: { uk: '', en: '' }
-            },
-            meta: { views: 10 },
-            __typename: 'News'
-          },
-          {
-            id: 'news-2',
-            slug: 'chamber-evening',
-            title: { uk: 'Вечір камерної музики', en: '' },
-            status: NewsStatus.Draft,
-            createdAt: '2026-03-19T10:00:00.000Z',
-            updatedAt: '2026-03-19T10:00:00.000Z',
-            publishedAt: null,
-            newsDate: null,
-            description: null,
-            content: { uk: 'Контент', en: '' },
-            coverImage: {
-              src: '/news-2.png',
-              alt: { uk: 'Вечір', en: '' },
-              caption: { uk: '', en: '' }
-            },
-            meta: { views: 5 },
-            __typename: 'News'
-          }
-        ]
-      },
-      loading: false,
-      error: undefined
-    });
+    mockUseAllNews.mockImplementation((filters?: PublicationsQueryFilters, options?: QueryHookOptions) =>
+      buildNewsResponse(filters, options)
+    );
 
-    mockUseAllMediaMentions.mockReturnValue({
-      data: {
-        allMediaMentions: [
-          {
-            id: 'media-1',
-            slug: 'interview-media',
-            title: 'Інтерв’ю про нову постановку',
-            status: MediaStatus.Published,
-            createdAt: '2026-03-20T10:00:00.000Z',
-            updatedAt: '2026-03-24T10:00:00.000Z',
-            publishedAt: '2026-03-25T10:00:00.000Z',
-            description: null,
-            url: 'https://example.com/media-1',
-            coverImage: {
-              src: '/media-1.png',
-              alt: 'Інтерв’ю'
-            },
-            meta: { views: 8 },
-            __typename: 'MediaMention'
-          },
-          {
-            id: 'media-2',
-            slug: 'residency-program',
-            title: 'Програма резиденції оголошена',
-            status: MediaStatus.Draft,
-            createdAt: '2026-03-18T10:00:00.000Z',
-            updatedAt: '2026-03-18T10:00:00.000Z',
-            publishedAt: null,
-            description: null,
-            url: 'https://example.com/media-2',
-            coverImage: null,
-            meta: { views: 3 },
-            __typename: 'MediaMention'
-          }
-        ]
-      },
-      loading: false,
-      error: undefined
-    });
+    mockUseAllMediaMentions.mockImplementation((filters?: PublicationsQueryFilters, options?: QueryHookOptions) =>
+      buildMediaResponse(filters, options)
+    );
   });
 
   it('renders the configured page header and filtering controls', () => {
@@ -274,6 +386,10 @@ describe('Publications page', () => {
 
     expect(screen.getAllByTestId('publication-card')).toHaveLength(1);
     expect(screen.getByText('Новина про фестиваль')).toBeInTheDocument();
+    expect(mockUseAllNews).toHaveBeenLastCalledWith(
+      expect.objectContaining({ search: 'фестиваль' }),
+      expect.objectContaining({ skip: false })
+    );
   });
 
   it('filters cards by status', () => {
@@ -300,6 +416,15 @@ describe('Publications page', () => {
     const afterSort = screen.getAllByTestId('publication-card-title').map((element) => element.textContent);
 
     expect(afterSort[0]).toBe('Вечір камерної музики');
+    expect(mockUseAllNews).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        sort: [
+          { field: 'adminTitle', order: 'asc' },
+          { field: 'createdAt', order: 'desc' }
+        ]
+      }),
+      expect.objectContaining({ skip: false })
+    );
   });
 
   it('keeps rendering news on the all tab when media request fails', () => {

@@ -9,26 +9,21 @@ import {
 } from '~/constants/files';
 import {
   PUBLICATIONS_FILTERS,
-  type PublicationsItemType,
   type PublicationsLanguageValue,
-  type PublicationsStatusValue,
-  type PublicationsTabValue
+  type PublicationsStatusValue
 } from '~/constants/publications';
 import type { FilteringToolbarProps, SortSelectProps } from '~/shared/components/filtering-toolbar';
-import { normalizeSearch } from '~/shared/utils/normalizeSearch';
+import {
+  ContentLanguage,
+  type MediaMentionsFiltersInput,
+  MediaStatus,
+  type NewsFiltersInput,
+  NewsSortBy,
+  NewsStatus,
+  SortOrder
+} from '~/types/graphql/generated/graphql';
 
 const SORT_STORAGE_KEY = 'publications_sort';
-
-export type UsePublicationsFilteringItem = Readonly<{
-  id: string;
-  title: string;
-  searchTitle?: string;
-  type: PublicationsItemType;
-  dateAdded: string;
-  createdAtRaw?: string;
-  status: PublicationsStatusValue;
-  language: PublicationsLanguageValue;
-}>;
 
 export type PublicationsFilteringToolbarProps = Pick<
   FilteringToolbarProps,
@@ -40,6 +35,91 @@ export type PublicationsFilteringSortProps = Omit<
   'minWidth' | 'dataTestId'
 >;
 
+export type PublicationsRequestFilters = Readonly<{
+  news: NewsFiltersInput;
+  media: MediaMentionsFiltersInput;
+}>;
+
+const mapPublicationStatusToNewsStatus = (status: PublicationsStatusValue): NewsStatus => {
+  if (status === 'published_with_draft') {
+    return NewsStatus.Editing;
+  }
+
+  if (status === 'published') {
+    return NewsStatus.Published;
+  }
+
+  return NewsStatus.Draft;
+};
+
+const mapPublicationStatusToMediaStatus = (status: PublicationsStatusValue): MediaStatus => {
+  if (status === 'published_with_draft') {
+    return MediaStatus.Editing;
+  }
+
+  if (status === 'published') {
+    return MediaStatus.Published;
+  }
+
+  return MediaStatus.Draft;
+};
+
+const mapPublicationLanguageToApiLanguage = (language: PublicationsLanguageValue): ContentLanguage => {
+  if (language === 'bilingual') {
+    return ContentLanguage.Bilingual;
+  }
+
+  if (language === 'en') {
+    return ContentLanguage.En;
+  }
+
+  return ContentLanguage.Uk;
+};
+
+const getNewsSortOptions = (sortValue: FilesSortValue): NonNullable<NewsFiltersInput['sort']> => {
+  if (sortValue === 'name_asc') {
+    return [
+      { field: NewsSortBy.AdminTitle, order: SortOrder.Asc },
+      { field: NewsSortBy.CreatedAt, order: SortOrder.Desc }
+    ];
+  }
+
+  if (sortValue === 'name_desc') {
+    return [
+      { field: NewsSortBy.AdminTitle, order: SortOrder.Desc },
+      { field: NewsSortBy.CreatedAt, order: SortOrder.Desc }
+    ];
+  }
+
+  if (sortValue === 'date_asc') {
+    return [{ field: NewsSortBy.CreatedAt, order: SortOrder.Asc }];
+  }
+
+  return [{ field: NewsSortBy.CreatedAt, order: SortOrder.Desc }];
+};
+
+const getMediaSortOptions = (sortValue: FilesSortValue): NonNullable<MediaMentionsFiltersInput['sort']> => {
+  if (sortValue === 'name_asc') {
+    return [
+      { field: 'adminTitle', order: SortOrder.Asc },
+      { field: 'createdAt', order: SortOrder.Desc }
+    ];
+  }
+
+  if (sortValue === 'name_desc') {
+    return [
+      { field: 'adminTitle', order: SortOrder.Desc },
+      { field: 'createdAt', order: SortOrder.Desc }
+    ];
+  }
+
+  if (sortValue === 'date_asc') {
+    return [{ field: 'createdAt', order: SortOrder.Asc }];
+  }
+
+  return [{ field: 'createdAt', order: SortOrder.Desc }];
+};
+
 const getInitialSortValue = (): FilesSortValue => {
   if (globalThis.window === undefined) {
     return 'date_desc';
@@ -50,77 +130,39 @@ const getInitialSortValue = (): FilesSortValue => {
   return (SORT_OPTIONS.some((option) => option.value === saved) ? saved : 'date_desc') as FilesSortValue;
 };
 
-export function usePublicationsFiltering<Item extends UsePublicationsFilteringItem>(
-  allItems: Item[],
-  activeTab: PublicationsTabValue = 'all'
-): Readonly<{
-  filteredItems: Item[];
+export function usePublicationsFiltering(): Readonly<{
+  requestFilters: PublicationsRequestFilters;
+  sortValue: FilesSortValue;
   toolbarProps: PublicationsFilteringToolbarProps;
   sortProps: PublicationsFilteringSortProps;
 }> {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [statusFilters, setStatusFilters] = useState<string[]>([]);
-  const [languageFilters, setLanguageFilters] = useState<string[]>([]);
+  const [statusFilters, setStatusFilters] = useState<PublicationsStatusValue[]>([]);
+  const [languageFilters, setLanguageFilters] = useState<PublicationsLanguageValue[]>([]);
   const [sortValue, setSortValue] = useState<FilesSortValue>(getInitialSortValue);
-
-  const titleOptions = useMemo(() => {
-    const uniqueOptions = new Map<string, { id: string; title: string }>();
-
-    allItems.forEach((item) => {
-      const normalizedTitle = normalizeSearch(item.title);
-
-      if (!uniqueOptions.has(normalizedTitle)) {
-        uniqueOptions.set(normalizedTitle, { id: item.id, title: item.title });
-      }
-    });
-
-    return Array.from(uniqueOptions.values());
-  }, [allItems]);
-
-  const itemsAfterBaseFiltering = useMemo(() => {
-    const normalizedValue = normalizeSearch(search);
-
-    const filtered = allItems.filter((item) => {
-      const searchableTitle = item.searchTitle ?? item.title;
-      const matchesSearch = !normalizedValue || normalizeSearch(searchableTitle).includes(normalizedValue);
-      const matchesStatus = !statusFilters.length || statusFilters.includes(item.status);
-      const matchesLanguage = !languageFilters.length || languageFilters.includes(item.language);
-
-      return matchesSearch && matchesStatus && matchesLanguage;
-    });
-
-    return [...filtered].sort((left, right) => {
-      if (sortValue === 'name_asc') {
-        return left.title.localeCompare(right.title, 'uk');
-      }
-
-      if (sortValue === 'name_desc') {
-        return right.title.localeCompare(left.title, 'uk');
-      }
-
-      const leftDate = new Date(left.createdAtRaw ?? left.dateAdded).getTime();
-      const rightDate = new Date(right.createdAtRaw ?? right.dateAdded).getTime();
-
-      if (sortValue === 'date_asc') {
-        return leftDate - rightDate;
-      }
-
-      return rightDate - leftDate;
-    });
-  }, [allItems, languageFilters, search, sortValue, statusFilters]);
-
-  const filteredItems = useMemo<Item[]>(() => {
-    if (activeTab === 'all') {
-      return itemsAfterBaseFiltering;
-    }
-
-    return itemsAfterBaseFiltering.filter((item) => item.type === activeTab);
-  }, [activeTab, itemsAfterBaseFiltering]);
 
   const activeFiltersCount = statusFilters.length + languageFilters.length;
   const currentSortOption = SORT_OPTIONS.find((option) => option.value === sortValue) ?? SORT_OPTIONS[0];
   const currentSortField: SortFieldValue = sortValue.startsWith('date') ? 'date' : 'name';
+  const normalizedSearch = search.trim();
+  const requestFilters = useMemo<PublicationsRequestFilters>(
+    () => ({
+      news: {
+        search: normalizedSearch || undefined,
+        languages: languageFilters.length ? languageFilters.map(mapPublicationLanguageToApiLanguage) : undefined,
+        statuses: statusFilters.length ? statusFilters.map(mapPublicationStatusToNewsStatus) : undefined,
+        sort: getNewsSortOptions(sortValue)
+      },
+      media: {
+        search: normalizedSearch || undefined,
+        languages: languageFilters.length ? languageFilters.map(mapPublicationLanguageToApiLanguage) : undefined,
+        statuses: statusFilters.length ? statusFilters.map(mapPublicationStatusToMediaStatus) : undefined,
+        sort: getMediaSortOptions(sortValue)
+      }
+    }),
+    [languageFilters, normalizedSearch, sortValue, statusFilters]
+  );
 
   const toggleFilters = useCallback(() => {
     setIsFiltersOpen((previous) => !previous);
@@ -162,21 +204,24 @@ export function usePublicationsFiltering<Item extends UsePublicationsFilteringIt
         value: filter.id === 'status' ? statusFilters : languageFilters,
         hideClearAction: true,
         menuMinWidth: filter.menuMinWidth,
-        onChange: filter.id === 'status' ? setStatusFilters : setLanguageFilters
+        onChange:
+          filter.id === 'status'
+            ? (value: string[]) => setStatusFilters(value as PublicationsStatusValue[])
+            : (value: string[]) => setLanguageFilters(value as PublicationsLanguageValue[])
       })),
     [languageFilters, statusFilters]
   );
 
   const toolbarProps = useMemo<PublicationsFilteringToolbarProps>(
     () => ({
-      search: { search, setSearch, options: titleOptions },
+      search: { search, setSearch, options: [] },
       filters: filterConfigs,
       isFiltersOpen,
       onToggleFilters: toggleFilters,
       activeFiltersCount,
       onClearFilters: clearFilters
     }),
-    [activeFiltersCount, clearFilters, filterConfigs, isFiltersOpen, search, titleOptions, toggleFilters]
+    [activeFiltersCount, clearFilters, filterConfigs, isFiltersOpen, search, toggleFilters]
   );
 
   const sortProps = useMemo<PublicationsFilteringSortProps>(
@@ -193,7 +238,8 @@ export function usePublicationsFiltering<Item extends UsePublicationsFilteringIt
   );
 
   return {
-    filteredItems,
+    requestFilters,
+    sortValue,
     toolbarProps,
     sortProps
   };

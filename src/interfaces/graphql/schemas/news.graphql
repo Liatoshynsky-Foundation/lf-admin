@@ -32,6 +32,7 @@ type PaginatedNews {
 }
 
 enum NewsSortBy {
+  adminTitle
   createdAt
   updatedAt
   publishedAt
@@ -45,9 +46,12 @@ input NewsSortOptions {
 
 input NewsFiltersInput {
   status: NewsStatus
+  statuses: [NewsStatus!]
   limit: Int
   skip: Int
   slug: String
+  search: String
+  languages: [ContentLanguage!]
   sort: [NewsSortOptions!]
 }
 

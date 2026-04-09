@@ -24,11 +24,15 @@ import {
   useUpdateNewsMutation
 } from '~/types/graphql/generated/graphql';
 
-export const useAllNews = (filters?: NewsFiltersInput) =>
-  useAllNewsQuery({ variables: { filters }, fetchPolicy: 'network-only' });
+type QueryHookOptions = Readonly<{
+  skip?: boolean;
+}>;
 
-export const usePublishedNews = (filters?: NewsFiltersInput) =>
-  usePublishedNewsQuery({ variables: { filters }, fetchPolicy: 'cache-first' });
+export const useAllNews = (filters?: NewsFiltersInput, options: QueryHookOptions = {}) =>
+  useAllNewsQuery({ variables: { filters }, fetchPolicy: 'network-only', skip: options.skip });
+
+export const usePublishedNews = (filters?: NewsFiltersInput, options: QueryHookOptions = {}) =>
+  usePublishedNewsQuery({ variables: { filters }, fetchPolicy: 'cache-first', skip: options.skip });
 
 export const usePaginatedNews = (page = 1, limit = 10, filters?: NewsFiltersInput) =>
   usePaginatedNewsQuery({ variables: { page, limit, filters }, fetchPolicy: 'network-only' });

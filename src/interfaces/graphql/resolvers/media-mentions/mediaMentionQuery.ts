@@ -25,7 +25,7 @@ export const MediaMentionsQuery = {
   ),
 
   publishedMediaMentions: endpointHandler<FilterArgs, MediaMentionEntity[]>(async ({ args: { filters }, repo }) =>
-    repo.findAll(mapFilters<MediaMentionFilters>({ ...filters, status: MediaStatus.Published }))
+    repo.findAll(mapFilters<MediaMentionFilters>({ ...filters, statuses: undefined, status: MediaStatus.Published }))
   ),
 
   paginatedMediaMentions: endpointHandler<PaginatedArgs, { items: MediaMentionEntity[]; total: number; page: number; totalPages: number }>(

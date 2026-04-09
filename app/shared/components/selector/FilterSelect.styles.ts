@@ -90,7 +90,8 @@ export const filterSelectStyles = {
       color: disabled ? FilterSelectColors.textDisabled : FilterSelectColors.text,
       width: '16px',
       height: '16px',
-      margin: '2px 9px 0 -2px'
+      margin: '2px 9px 0 -2px',
+      flexShrink: 0
     },
     '& .MuiChip-deleteIcon:hover': {
       color: disabled ? FilterSelectColors.textDisabled : FilterSelectColors.text

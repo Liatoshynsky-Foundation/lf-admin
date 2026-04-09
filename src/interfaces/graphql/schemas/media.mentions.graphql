@@ -32,9 +32,12 @@ type PaginatedMediaMentions {
 
 input MediaMentionsFiltersInput {
   status: MediaStatus
+  statuses: [MediaStatus!]
   limit: Int
   skip: Int
   slug: String
+  search: String
+  languages: [ContentLanguage!]
   sort: [SortOptions!]
 }
 

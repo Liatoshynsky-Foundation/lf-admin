@@ -30,11 +30,11 @@ export const NewsQuery = {
   ),
 
   publishedNews: endpointHandler<FilterArgs, News[]>(async ({ args: { filters }, repo }) =>
-    repo.findAll(mapFilters<NewsFilters>({ ...filters, status: NewsStatus.Published }))
+    repo.findAll(mapFilters<NewsFilters>({ ...filters, statuses: undefined, status: NewsStatus.Published }))
   ),
 
   draftNews: endpointHandler<FilterArgs, News[]>(async ({ args: { filters }, repo }) =>
-    repo.findAll(mapFilters<NewsFilters>({ ...filters, status: NewsStatus.Draft }))
+    repo.findAll(mapFilters<NewsFilters>({ ...filters, statuses: undefined, status: NewsStatus.Draft }))
   ),
 
   newsCount: endpointHandler<CountArgs, number>(async ({ args: { status }, repo }) =>

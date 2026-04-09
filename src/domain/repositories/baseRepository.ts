@@ -5,8 +5,12 @@ export type SortCriteria = {
     sortOrder: SortOrder;
 };
 
+export type ContentLanguageFilter = 'uk' | 'en' | 'bilingual';
+
 export type FiltersInput = {
     slug?: string;
+    search?: string;
+    languages?: ContentLanguageFilter[];
     sort?: SortCriteria[];
     limit?: number;
     skip?: number;

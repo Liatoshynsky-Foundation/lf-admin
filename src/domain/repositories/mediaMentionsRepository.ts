@@ -4,6 +4,7 @@ import { MediaStatus } from '~/types/enums/common.enums';
 
 export type MediaMentionFilters = FiltersInput & {
   status?: MediaStatus;
+  statuses?: MediaStatus[];
 };
 
 export type CreateMediaMentionInput = Omit<MediaMentionEntity, 'id' | 'createdAt' | 'updatedAt' | 'meta'> & {
