@@ -8,7 +8,7 @@ const mockUseAllNews = jest.fn();
 const mockUseAllMediaMentions = jest.fn();
 
 type QuerySortOption = {
-  field: string;
+  field: 'adminTitle' | 'createdAt';
   order: 'asc' | 'desc';
 };
 
@@ -122,26 +122,46 @@ const getSortTitle = (item: { adminTitle?: string; title: string | { uk?: string
   return typeof item.title === 'string' ? item.title : item.title.uk || item.title.en || '';
 };
 
+type SortablePublicationItem = {
+  createdAt: string;
+  adminTitle?: string;
+  title: string | { uk?: string; en?: string };
+};
+
+const compareByAdminTitle = (left: SortablePublicationItem, right: SortablePublicationItem): number => {
+  return getSortTitle(left).localeCompare(getSortTitle(right), 'uk');
+};
+
+const compareByCreatedAt = (left: SortablePublicationItem, right: SortablePublicationItem): number => {
+  return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+};
+
+const getFieldComparison = (
+  left: SortablePublicationItem,
+  right: SortablePublicationItem,
+  field: QuerySortOption['field']
+): number => {
+  if (field === 'adminTitle') {
+    return compareByAdminTitle(left, right);
+  }
+
+  return compareByCreatedAt(left, right);
+};
+
+const applySortOrder = (comparison: number, order: QuerySortOption['order']): number => {
+  return order === 'asc' ? comparison : -comparison;
+};
+
 const compareBySort = (
-  left: { createdAt: string; adminTitle?: string; title: string | { uk?: string; en?: string } },
-  right: { createdAt: string; adminTitle?: string; title: string | { uk?: string; en?: string } },
+  left: SortablePublicationItem,
+  right: SortablePublicationItem,
   sort: readonly QuerySortOption[]
 ) => {
   for (const criterion of sort) {
-    if (criterion.field === 'adminTitle') {
-      const comparison = getSortTitle(left).localeCompare(getSortTitle(right), 'uk');
+    const comparison = getFieldComparison(left, right, criterion.field);
 
-      if (comparison !== 0) {
-        return criterion.order === 'asc' ? comparison : -comparison;
-      }
-    }
-
-    if (criterion.field === 'createdAt') {
-      const comparison = new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
-
-      if (comparison !== 0) {
-        return criterion.order === 'asc' ? comparison : -comparison;
-      }
+    if (comparison !== 0) {
+      return applySortOrder(comparison, criterion.order);
     }
   }
 

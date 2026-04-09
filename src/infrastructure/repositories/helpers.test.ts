@@ -71,6 +71,24 @@ describe('Repository Helpers', () => {
           const result = buildBaseQuery<MockDbModel>(filters);
           expect(result).toEqual({ status: 'draft', slug: 'my-post' });
         });
+
+        it('should combine base filters with search conditions using $and', () => {
+          const filters = { status: 'draft', slug: 'my-post', search: 'festival' };
+          const result = buildBaseQuery<MockDbModel>(filters);
+
+          expect(result).toEqual({
+            $and: [
+              { status: 'draft', slug: 'my-post' },
+              {
+                $or: [
+                  { adminTitle: /festival/i },
+                  { 'title.uk': /festival/i },
+                  { 'title.en': /festival/i }
+                ]
+              }
+            ]
+          });
+        });
   });
 
   describe('getBaseSort', () => {

@@ -5,7 +5,7 @@ import { BaseEntity, FiltersInput } from '~/domain/repositories/baseRepository';
 const NON_EMPTY_STRING_QUERY = { $nin: ['', null] } as const;
 const EMPTY_STRING_QUERY = { $in: ['', null] } as const;
 
-const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const escapeRegex = (value: string): string => value.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 
 const getLanguageCondition = <TDb>(language: string): FilterQuery<TDb> | null => {
   if (language === 'uk') {
@@ -54,28 +54,29 @@ export const createToEntity = <
 export const buildBaseQuery = <TDb>(
   filters?: FiltersInput & { status?: string; statuses?: string[] }
 ): FilterQuery<TDb> => {
-  const conditions: Array<Record<string, unknown>> = [];
+  const baseQuery: Record<string, unknown> = {};
+  const compoundConditions: FilterQuery<TDb>[] = [];
 
   if (filters?.statuses?.length) {
-    conditions.push({ status: { $in: filters.statuses } });
+    baseQuery.status = { $in: filters.statuses };
   } else if (filters?.status) {
-    conditions.push({ status: filters.status });
+    baseQuery.status = filters.status;
   }
 
   if (filters?.slug) {
-    conditions.push({ slug: filters.slug });
+    baseQuery.slug = filters.slug;
   }
 
   if (filters?.search?.trim()) {
     const searchRegex = new RegExp(escapeRegex(filters.search.trim()), 'i');
 
-    conditions.push({
+    compoundConditions.push({
       $or: [
         { adminTitle: searchRegex },
         { 'title.uk': searchRegex },
         { 'title.en': searchRegex }
       ]
-    });
+    } as FilterQuery<TDb>);
   }
 
   if (filters?.languages?.length) {
@@ -84,19 +85,30 @@ export const buildBaseQuery = <TDb>(
       .filter((condition): condition is FilterQuery<TDb> => Boolean(condition));
 
     if (languageConditions.length) {
-      conditions.push({ $or: languageConditions });
+      compoundConditions.push({ $or: languageConditions } as FilterQuery<TDb>);
     }
   }
 
-  if (!conditions.length) {
+  const hasBaseQuery = Object.keys(baseQuery).length > 0;
+
+  if (!hasBaseQuery && !compoundConditions.length) {
     return {} as FilterQuery<TDb>;
   }
 
-  if (conditions.length === 1) {
-    return conditions[0] as FilterQuery<TDb>;
+  if (!compoundConditions.length) {
+    return baseQuery as FilterQuery<TDb>;
   }
 
-  return { $and: conditions } as FilterQuery<TDb>;
+  if (!hasBaseQuery && compoundConditions.length === 1) {
+    return compoundConditions[0];
+  }
+
+  return {
+    $and: [
+      ...(hasBaseQuery ? [baseQuery as FilterQuery<TDb>] : []),
+      ...compoundConditions
+    ]
+  } as FilterQuery<TDb>;
 };
 
 export const getBaseSort = (filters?: FiltersInput): Record<string, 1 | -1> => {
