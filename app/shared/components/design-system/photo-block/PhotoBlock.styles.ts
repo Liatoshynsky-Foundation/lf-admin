@@ -1,7 +1,6 @@
 export const styles = {
   container: {
     width: '100%',
-    maxWidth: '496px'
   },
 
   sectionTitle: {
@@ -22,6 +21,7 @@ export const styles = {
   imagePreview: {
     width: '196px',
     height: '120px',
+    objectFit: 'cover',
     flexShrink: 0,
     border: '1px solid #B2B3BE',
     display: 'grid',
