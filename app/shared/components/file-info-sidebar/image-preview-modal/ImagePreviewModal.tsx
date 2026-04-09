@@ -47,6 +47,7 @@ export function ImagePreviewModal({ open, src, alt, onClose, padding = 40 }: Rea
     <Modal
       open={open}
       onClose={onClose}
+      disableScrollLock
       closeAfterTransition
       slotProps={{
         backdrop: { sx: { bgcolor: alpha(colors.blue[900], 0.4) } }
