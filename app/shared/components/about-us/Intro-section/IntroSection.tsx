@@ -41,7 +41,7 @@ export const IntroSection = () => {
         }
       />
 
-      <Box sx={{ marginLeft: '-16px', marginTop: '15px' }}>
+      <Box sx={{ marginTop: '15px' }}>
         <ImagePreviewBlock
           imageUrl={getImageUrl(block.image)}
           fileName={block.image.src || ''}
