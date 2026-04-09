@@ -12,7 +12,7 @@ import {
 } from '~/constants/files';
 import type { FilesCardsLayoutItem } from '~/shared/components/files-cards-layout';
 import type { FilteringToolbarFilterConfig, FilteringToolbarProps , SortSelectProps } from '~/shared/components/filtering-toolbar';
-import { normalizeSearch } from '~/shared/utils/normalizeSearch';
+import { normalizeSearch } from '~/utils/normalizeSearch';
 
 type FilesFilteringUsageLink = Readonly<{
   label: string;
