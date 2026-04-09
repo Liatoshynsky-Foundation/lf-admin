@@ -26,6 +26,15 @@ export type PublicationsFilterConfig = Readonly<{
   menuMinWidth?: number;
 }>;
 
+type PublicationsCategoryConfig = Readonly<{
+  tabValue: PublicationsItemType;
+  createId: PublicationsCreateOption['id'];
+  slug: string;
+  tabLabel: string;
+  createLabel: string;
+  disabled?: boolean;
+}>;
+
 export const PUBLICATIONS_PAGE_TITLE = 'Новини та події';
 export const PUBLICATIONS_EMPTY_STATE_TITLE = 'Матеріали відсутні';
 export const PUBLICATIONS_EMPTY_STATE_DESCRIPTION = 'Матеріали для цієї вкладки поки відсутні.';
@@ -37,18 +46,49 @@ export const PUBLICATIONS_LOADING_STATE_DESCRIPTION = 'Зачекайте, по�
 export const PUBLICATIONS_ERROR_STATE_TITLE = 'Не вдалося завантажити матеріали';
 export const PUBLICATIONS_ERROR_STATE_DESCRIPTION = 'Спробуйте оновити сторінку або повторити пізніше.';
 
-export const PUBLICATIONS_TABS: ReadonlyArray<PublicationsTabConfig> = [
-  { value: 'all', label: 'Всі', href: '/publications' },
-  { value: 'events', label: 'Події', href: '/publications/events' },
-  { value: 'news', label: 'Новини', href: '/publications/news' },
-  { value: 'media', label: 'Ми у ЗМІ', href: '/publications/media' }
+const PUBLICATIONS_BASE_PATH = '/publications';
+
+const PUBLICATIONS_CATEGORIES: ReadonlyArray<PublicationsCategoryConfig> = [
+  {
+    tabValue: 'events',
+    createId: 'event',
+    slug: 'events',
+    tabLabel: 'Події',
+    createLabel: 'Подію'
+  },
+  {
+    tabValue: 'news',
+    createId: 'news',
+    slug: 'news',
+    tabLabel: 'Новини',
+    createLabel: 'Новину'
+  },
+  {
+    tabValue: 'media',
+    createId: 'media',
+    slug: 'media',
+    tabLabel: 'Ми у ЗМІ',
+    createLabel: 'Ми у ЗМІ'
+  }
 ];
 
-export const PUBLICATIONS_CREATE_OPTIONS: ReadonlyArray<PublicationsCreateOption> = [
-  { id: 'event', label: 'Подію', href: '/publications/events/create' },
-  { id: 'news', label: 'Новину', href: '/publications/news/create' },
-  { id: 'media', label: 'Ми у ЗМІ', href: '/publications/media/create' }
+export const PUBLICATIONS_TABS: ReadonlyArray<PublicationsTabConfig> = [
+  { value: 'all', label: 'Всі', href: PUBLICATIONS_BASE_PATH },
+  ...PUBLICATIONS_CATEGORIES.map(({ tabValue, tabLabel, slug, disabled }) => ({
+    value: tabValue,
+    label: tabLabel,
+    href: `${PUBLICATIONS_BASE_PATH}/${slug}`,
+    disabled
+  }))
 ];
+
+export const PUBLICATIONS_CREATE_OPTIONS: ReadonlyArray<PublicationsCreateOption> = PUBLICATIONS_CATEGORIES.map(
+  ({ createId, createLabel, slug }) => ({
+    id: createId,
+    label: createLabel,
+    href: `${PUBLICATIONS_BASE_PATH}/${slug}/create`
+  })
+);
 
 const PUBLICATIONS_STATUS_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
   { value: 'draft', label: 'Чернетка' },

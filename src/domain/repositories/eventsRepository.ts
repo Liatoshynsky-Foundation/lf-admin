@@ -3,7 +3,7 @@ import {FiltersInput, IBaseRepository} from '~/domain/repositories/baseRepositor
 import { EventStatus } from '~/types/enums/common.enums';
 
 export type EventFilters = FiltersInput & {
-    status?: EventStatus;
+    statuses?: EventStatus[];
 };
 
 export type CreateEventInput = Omit<EventsEntity, 'id' | 'createdAt' | 'updatedAt' | 'meta'> & {

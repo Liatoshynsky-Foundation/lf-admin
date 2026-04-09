@@ -7,23 +7,18 @@ import Button from '../design-system/button/Button';
 import styles from './ContentCard.styles';
 import ContentCardBadge from './ContentCardBadge';
 import { getStatus } from '~/lib/utils/getStatus';
+import type { ImageBlock, LocalizedString } from '~/types/common';
 
 export type ContentType = 'news' | 'event' | 'media';
 
 const FALLBACK_IMAGE_SRC = '/images/image.png';
 
-type LocalizedCardValue = {
-  uk?: string;
-  en?: string;
-};
+type ContentCardImage = Pick<ImageBlock, 'src' | 'alt'>;
 
 interface ContentCardProps {
   type: ContentType;
-  coverImage: {
-    src: string;
-    alt: LocalizedCardValue;
-  };
-  title: LocalizedCardValue;
+  coverImage: ContentCardImage;
+  title: Partial<LocalizedString>;
   status: string;
   updatedAt?: string;
   createdAt?: string;

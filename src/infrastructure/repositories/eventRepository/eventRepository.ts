@@ -49,7 +49,7 @@ export const EventsRepository = ({ EventModel }: EventRepoDeps): IEventsReposito
   const baseRepo = createBaseRepository<EventsEntity, DbEvent, EventFilters>({
     model: EventModel,
     toEntity,
-    buildQuery: buildBaseQuery,
+    buildQuery: (filters) => buildBaseQuery(filters),
     getDefaultSort: getBaseSort
   });
 

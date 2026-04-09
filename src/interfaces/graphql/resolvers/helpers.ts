@@ -50,9 +50,13 @@ export const mapFilters = <T extends FiltersInput>(
 ): T | undefined => {
   if (!filters) return undefined;
 
+  const statuses = [
+    ...(filters.statuses?.filter((status): status is string => Boolean(status)) ?? []),
+    ...(filters.status ? [filters.status] : [])
+  ];
+
   const mapped = {
-    status: filters.status ?? undefined,
-    statuses: filters.statuses?.filter((status): status is string => Boolean(status)) ?? undefined,
+    statuses: statuses.length ? [...new Set(statuses)] : undefined,
     slug: filters.slug ?? undefined,
     search: filters.search ?? undefined,
     languages: filters.languages?.filter((language): language is string => Boolean(language)) ?? undefined,

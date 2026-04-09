@@ -35,15 +35,19 @@ import { useAllMediaMentions } from '~/shared/hooks/use-media-mentions/useMediaM
 import { useAllNews } from '~/shared/hooks/use-news/useNews';
 import { usePublicationsFiltering } from '~/shared/hooks/use-publications';
 import { normalizeSearch } from '~/shared/utils/normalizeSearch';
+import type { ImageBlock, LocalizedString } from '~/types/common';
 import {
   type AllMediaMentionsQuery,
   type AllNewsQuery,
   MediaStatus,
   NewsStatus
 } from '~/types/graphql/generated/graphql';
+
 type PublicationsPageContentProps = Readonly<{
   activeTab: PublicationsTabValue;
 }>;
+
+type PublicationCardImage = Pick<ImageBlock, 'src' | 'alt'>;
 
 type PublicationCardItem = {
   id: string;
@@ -57,17 +61,8 @@ type PublicationCardItem = {
   slug: string;
   cardType: ContentType;
   cardStatus: PublicationsStatusValue;
-  titleData: {
-    uk?: string;
-    en?: string;
-  };
-  coverImage: {
-    src: string;
-    alt: {
-      uk?: string;
-      en?: string;
-    };
-  };
+  titleData: Partial<LocalizedString>;
+  coverImage: PublicationCardImage;
   createdAt?: string;
   updatedAt?: string;
   publishedAt?: string;
@@ -80,15 +75,9 @@ type PublicationsTabStateMap<T> = {
   media: T;
   events: T;
 };
-type LocalizedValue = {
-  uk?: string | null;
-  en?: string | null;
-};
-type LocalizedCardValue = {
-  uk?: string;
-  en?: string;
-};
-type MaybeLocalizedValue = string | LocalizedValue | null | undefined;
+
+type NullableLocalizedString = Partial<Record<keyof LocalizedString, string | null>>;
+type MaybeLocalizedValue = string | NullableLocalizedString | null | undefined;
 
 const DEFAULT_COVER_IMAGE = '/images/image.png';
 const DEFAULT_COVER_ALT = 'Обкладинка матеріалу';
@@ -158,7 +147,7 @@ const getPrimaryText = (value: MaybeLocalizedValue, fallback = ''): string => {
   return value?.uk || value?.en || fallback;
 };
 
-const toLocalizedCardValue = (value: MaybeLocalizedValue, fallback = ''): LocalizedCardValue => {
+const toLocalizedCardValue = (value: MaybeLocalizedValue, fallback = ''): Partial<LocalizedString> => {
   if (typeof value === 'string') {
     return {
       uk: value || fallback,
@@ -172,11 +161,27 @@ const toLocalizedCardValue = (value: MaybeLocalizedValue, fallback = ''): Locali
   };
 };
 
+const toLocalizedString = (value: MaybeLocalizedValue, fallback = ''): LocalizedString => {
+  if (typeof value === 'string') {
+    const localizedValue = value.trim() || fallback;
+
+    return {
+      uk: localizedValue,
+      en: localizedValue
+    };
+  }
+
+  const uk = value?.uk?.trim() || value?.en?.trim() || fallback;
+  const en = value?.en?.trim() || value?.uk?.trim() || fallback;
+
+  return { uk, en };
+};
+
 const getSortableDate = (...values: Array<string | null | undefined>): string => {
   return values.find((value): value is string => Boolean(value)) ?? SORT_FALLBACK_DATE;
 };
 
-const getLanguageFromLocalizedValue = (value: { uk?: string | null; en?: string | null }): PublicationsLanguageValue => {
+const getLanguageFromLocalizedValue = (value: NullableLocalizedString): PublicationsLanguageValue => {
   const hasUk = Boolean(value.uk?.trim());
   const hasEn = Boolean(value.en?.trim());
 
@@ -253,7 +258,7 @@ const mapNewsItem = (item: NewsItem): PublicationCardItem | null => {
     language: getLanguageFromLocalizedValue(title),
     coverImage: {
       src: coverImage?.src || DEFAULT_COVER_IMAGE,
-      alt: toLocalizedCardValue(coverImage?.alt, titleText || DEFAULT_COVER_ALT)
+      alt: toLocalizedString(coverImage?.alt, titleText || DEFAULT_COVER_ALT)
     }
   };
 };
@@ -289,7 +294,7 @@ const mapMediaMentionItem = (item: MediaMentionItem): PublicationCardItem | null
     language: getLanguageFromLocalizedValue(titleData),
     coverImage: {
       src: item.coverImage?.src || DEFAULT_COVER_IMAGE,
-      alt: toLocalizedCardValue(item.coverImage?.alt, titleText || DEFAULT_COVER_ALT)
+      alt: toLocalizedString(item.coverImage?.alt, titleText || DEFAULT_COVER_ALT)
     }
   };
 };

@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 
 import { usePublicationsFiltering } from './usePublicationsFiltering';
+import { MediaMentionsSortBy, NewsSortBy } from '~/types/graphql/generated/graphql';
 
 describe('usePublicationsFiltering', () => {
   beforeEach(() => {
@@ -11,8 +12,8 @@ describe('usePublicationsFiltering', () => {
   it('builds backend request filters from toolbar state', () => {
     const { result } = renderHook(() => usePublicationsFiltering());
 
-    expect(result.current.requestFilters.news.sort).toEqual([{ field: 'createdAt', order: 'desc' }]);
-    expect(result.current.requestFilters.media.sort).toEqual([{ field: 'createdAt', order: 'desc' }]);
+    expect(result.current.requestFilters.news.sort).toEqual([{ field: NewsSortBy.CreatedAt, order: 'desc' }]);
+    expect(result.current.requestFilters.media.sort).toEqual([{ field: MediaMentionsSortBy.CreatedAt, order: 'desc' }]);
 
     act(() => {
       result.current.toolbarProps.search?.setSearch(' фестиваль ');
@@ -24,13 +25,13 @@ describe('usePublicationsFiltering', () => {
       search: 'фестиваль',
       languages: ['bilingual'],
       statuses: ['editing'],
-      sort: [{ field: 'createdAt', order: 'desc' }]
+      sort: [{ field: NewsSortBy.CreatedAt, order: 'desc' }]
     });
     expect(result.current.requestFilters.media).toEqual({
       search: 'фестиваль',
       languages: ['bilingual'],
       statuses: ['editing'],
-      sort: [{ field: 'createdAt', order: 'desc' }]
+      sort: [{ field: MediaMentionsSortBy.CreatedAt, order: 'desc' }]
     });
   });
 
@@ -45,8 +46,12 @@ describe('usePublicationsFiltering', () => {
     expect(setItemSpy).toHaveBeenCalledWith('publications_sort', 'name_asc');
     expect(result.current.sortProps.triggerLabel).toBe('А→Я');
     expect(result.current.requestFilters.news.sort).toEqual([
-      { field: 'adminTitle', order: 'asc' },
-      { field: 'createdAt', order: 'desc' }
+      { field: NewsSortBy.AdminTitle, order: 'asc' },
+      { field: NewsSortBy.CreatedAt, order: 'desc' }
+    ]);
+    expect(result.current.requestFilters.media.sort).toEqual([
+      { field: MediaMentionsSortBy.AdminTitle, order: 'asc' },
+      { field: MediaMentionsSortBy.CreatedAt, order: 'desc' }
     ]);
     expect(result.current.toolbarProps.search?.options).toEqual([]);
   });

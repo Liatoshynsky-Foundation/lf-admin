@@ -3,7 +3,6 @@ import { FiltersInput, IBaseRepository } from '~/domain/repositories/baseReposit
 import { MediaStatus } from '~/types/enums/common.enums';
 
 export type MediaMentionFilters = FiltersInput & {
-  status?: MediaStatus;
   statuses?: MediaStatus[];
 };
 

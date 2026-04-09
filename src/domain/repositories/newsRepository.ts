@@ -11,7 +11,6 @@ export type UpdateNewsInput = Partial<Omit<News, 'id' | 'createdAt' | 'updatedAt
 };
 
 export type NewsFilters = FiltersInput & {
-  status?: NewsStatus;
   statuses?: NewsStatus[];
 };
 

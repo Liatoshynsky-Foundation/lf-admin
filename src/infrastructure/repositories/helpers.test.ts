@@ -55,9 +55,9 @@ describe('Repository Helpers', () => {
         });
 
         it('should include status in query if provided', () => {
-          const filters = { status: 'published' };
+          const filters = { statuses: ['published'] };
           const result = buildBaseQuery<MockDbModel>(filters);
-          expect(result).toEqual({ status: 'published' });
+          expect(result).toEqual({ status: { $in: ['published'] } });
         });
 
         it('should include slug in query if provided', () => {
@@ -67,18 +67,24 @@ describe('Repository Helpers', () => {
         });
 
         it('should include both status and slug', () => {
-          const filters = { status: 'draft', slug: 'my-post' };
+          const filters = { statuses: ['draft'], slug: 'my-post' };
           const result = buildBaseQuery<MockDbModel>(filters);
-          expect(result).toEqual({ status: 'draft', slug: 'my-post' });
+          expect(result).toEqual({
+            $and: [
+              { status: { $in: ['draft'] } },
+              { slug: 'my-post' }
+            ]
+          });
         });
 
         it('should combine base filters with search conditions using $and', () => {
-          const filters = { status: 'draft', slug: 'my-post', search: 'festival' };
+          const filters = { statuses: ['draft'], slug: 'my-post', search: 'festival' };
           const result = buildBaseQuery<MockDbModel>(filters);
 
           expect(result).toEqual({
             $and: [
-              { status: 'draft', slug: 'my-post' },
+              { status: { $in: ['draft'] } },
+              { slug: 'my-post' },
               {
                 $or: [
                   { adminTitle: /festival/i },

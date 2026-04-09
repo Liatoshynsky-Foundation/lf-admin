@@ -25,7 +25,7 @@ export const EventsQuery = {
   ),
 
   publishedEvents: endpointHandler<FilterArgs, EventsEntity[]>(async ({ args: { filters }, repo }) =>
-    repo.findAll(mapFilters<EventFilters>({ ...filters, status: EventStatus.Published }))
+    repo.findAll(mapFilters<EventFilters>({ ...filters, statuses: [EventStatus.Published], status: undefined }))
   ),
 
   paginatedEvents: endpointHandler<PaginatedArgs, { items: EventsEntity[]; total: number; page: number; totalPages: number }>(
@@ -34,6 +34,6 @@ export const EventsQuery = {
   ),
 
   eventsCount: endpointHandler<CountArgs, number>(async ({ args: { status }, repo }) =>
-    repo.count(status ? { status: status as EventStatus } : undefined)
+    repo.count(status ? { statuses: [status as EventStatus] } : undefined)
   )
 };

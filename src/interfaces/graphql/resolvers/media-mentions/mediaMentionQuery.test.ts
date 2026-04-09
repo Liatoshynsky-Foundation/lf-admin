@@ -2,7 +2,7 @@ import { MediaMentionsQuery } from './mediaMentionQuery';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import type { IMediaMentionsRepository } from '~/domain/repositories/mediaMentionsRepository';
 import {  SortOrder } from '~/types/enums/common.enums';
-import type { MediaMentionsFiltersInput } from '~/types/graphql/generated/graphql';
+import { type MediaMentionsFiltersInput,MediaMentionsSortBy } from '~/types/graphql/generated/graphql';
 
 describe('MediaMentionsQuery Resolvers', () => {
   const mockRepo: jest.Mocked<Partial<IMediaMentionsRepository>> = {
@@ -22,7 +22,7 @@ describe('MediaMentionsQuery Resolvers', () => {
   it('allMediaMentions: should map complex sort array accurately', async () => {
     const args = {
       filters: {
-        sort: [{ field: 'adminTitle', order: SortOrder.Desc }]
+        sort: [{ field: MediaMentionsSortBy.AdminTitle, order: SortOrder.Desc }]
       } as unknown as MediaMentionsFiltersInput
     };
 

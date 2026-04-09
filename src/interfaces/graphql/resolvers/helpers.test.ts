@@ -74,7 +74,7 @@ describe('mapFilters', () => {
     const result = mapFilters(input);
 
     expect(result).toEqual({
-      status: 'published',
+      statuses: ['published'],
       slug: 'test-slug',
       limit: 10,
       skip: 0,

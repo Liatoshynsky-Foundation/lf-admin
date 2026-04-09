@@ -16,6 +16,7 @@ import type { FilteringToolbarProps, SortSelectProps } from '~/shared/components
 import {
   ContentLanguage,
   type MediaMentionsFiltersInput,
+  MediaMentionsSortBy,
   MediaStatus,
   type NewsFiltersInput,
   NewsSortBy,
@@ -40,28 +41,23 @@ export type PublicationsRequestFilters = Readonly<{
   media: MediaMentionsFiltersInput;
 }>;
 
-const mapPublicationStatusToNewsStatus = (status: PublicationsStatusValue): NewsStatus => {
-  if (status === 'published_with_draft') {
-    return NewsStatus.Editing;
-  }
+type PublicationStatusEnum<TStatus extends string> = Readonly<{
+  Draft: TStatus;
+  Published: TStatus;
+  Editing: TStatus;
+}>;
 
-  if (status === 'published') {
-    return NewsStatus.Published;
-  }
+const PUBLICATION_STATUS_TO_ENUM_KEY = {
+  draft: 'Draft',
+  published: 'Published',
+  published_with_draft: 'Editing'
+} as const satisfies Record<PublicationsStatusValue, keyof PublicationStatusEnum<string>>;
 
-  return NewsStatus.Draft;
-};
-
-const mapPublicationStatusToMediaStatus = (status: PublicationsStatusValue): MediaStatus => {
-  if (status === 'published_with_draft') {
-    return MediaStatus.Editing;
-  }
-
-  if (status === 'published') {
-    return MediaStatus.Published;
-  }
-
-  return MediaStatus.Draft;
+const mapPublicationStatus = <TStatus extends string>(
+  status: PublicationsStatusValue,
+  statusEnum: PublicationStatusEnum<TStatus>
+): TStatus => {
+  return statusEnum[PUBLICATION_STATUS_TO_ENUM_KEY[status]];
 };
 
 const mapPublicationLanguageToApiLanguage = (language: PublicationsLanguageValue): ContentLanguage => {
@@ -76,48 +72,39 @@ const mapPublicationLanguageToApiLanguage = (language: PublicationsLanguageValue
   return ContentLanguage.Uk;
 };
 
-const getNewsSortOptions = (sortValue: FilesSortValue): NonNullable<NewsFiltersInput['sort']> => {
+type BaseContentSortEnum<TField extends string> = Readonly<{
+  AdminTitle: TField;
+  CreatedAt: TField;
+}>;
+
+type BaseContentSortOption<TField extends string> = Readonly<{
+  field: TField;
+  order: SortOrder;
+}>;
+
+const getBaseContentSortOptions = <TField extends string>(
+  sortValue: FilesSortValue,
+  sortFields: BaseContentSortEnum<TField>
+): BaseContentSortOption<TField>[] => {
   if (sortValue === 'name_asc') {
     return [
-      { field: NewsSortBy.AdminTitle, order: SortOrder.Asc },
-      { field: NewsSortBy.CreatedAt, order: SortOrder.Desc }
+      { field: sortFields.AdminTitle, order: SortOrder.Asc },
+      { field: sortFields.CreatedAt, order: SortOrder.Desc }
     ];
   }
 
   if (sortValue === 'name_desc') {
     return [
-      { field: NewsSortBy.AdminTitle, order: SortOrder.Desc },
-      { field: NewsSortBy.CreatedAt, order: SortOrder.Desc }
+      { field: sortFields.AdminTitle, order: SortOrder.Desc },
+      { field: sortFields.CreatedAt, order: SortOrder.Desc }
     ];
   }
 
   if (sortValue === 'date_asc') {
-    return [{ field: NewsSortBy.CreatedAt, order: SortOrder.Asc }];
+    return [{ field: sortFields.CreatedAt, order: SortOrder.Asc }];
   }
 
-  return [{ field: NewsSortBy.CreatedAt, order: SortOrder.Desc }];
-};
-
-const getMediaSortOptions = (sortValue: FilesSortValue): NonNullable<MediaMentionsFiltersInput['sort']> => {
-  if (sortValue === 'name_asc') {
-    return [
-      { field: 'adminTitle', order: SortOrder.Asc },
-      { field: 'createdAt', order: SortOrder.Desc }
-    ];
-  }
-
-  if (sortValue === 'name_desc') {
-    return [
-      { field: 'adminTitle', order: SortOrder.Desc },
-      { field: 'createdAt', order: SortOrder.Desc }
-    ];
-  }
-
-  if (sortValue === 'date_asc') {
-    return [{ field: 'createdAt', order: SortOrder.Asc }];
-  }
-
-  return [{ field: 'createdAt', order: SortOrder.Desc }];
+  return [{ field: sortFields.CreatedAt, order: SortOrder.Desc }];
 };
 
 const getInitialSortValue = (): FilesSortValue => {
@@ -151,14 +138,14 @@ export function usePublicationsFiltering(): Readonly<{
       news: {
         search: normalizedSearch || undefined,
         languages: languageFilters.length ? languageFilters.map(mapPublicationLanguageToApiLanguage) : undefined,
-        statuses: statusFilters.length ? statusFilters.map(mapPublicationStatusToNewsStatus) : undefined,
-        sort: getNewsSortOptions(sortValue)
+        statuses: statusFilters.length ? statusFilters.map((status) => mapPublicationStatus(status, NewsStatus)) : undefined,
+        sort: getBaseContentSortOptions(sortValue, NewsSortBy) as NonNullable<NewsFiltersInput['sort']>
       },
       media: {
         search: normalizedSearch || undefined,
         languages: languageFilters.length ? languageFilters.map(mapPublicationLanguageToApiLanguage) : undefined,
-        statuses: statusFilters.length ? statusFilters.map(mapPublicationStatusToMediaStatus) : undefined,
-        sort: getMediaSortOptions(sortValue)
+        statuses: statusFilters.length ? statusFilters.map((status) => mapPublicationStatus(status, MediaStatus)) : undefined,
+        sort: getBaseContentSortOptions(sortValue, MediaMentionsSortBy) as NonNullable<MediaMentionsFiltersInput['sort']>
       }
     }),
     [languageFilters, normalizedSearch, sortValue, statusFilters]

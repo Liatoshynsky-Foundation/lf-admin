@@ -52,25 +52,22 @@ export const createToEntity = <
   } as TEntity);
 
 export const buildBaseQuery = <TDb>(
-  filters?: FiltersInput & { status?: string; statuses?: string[] }
+  filters?: FiltersInput & { statuses?: string[] }
 ): FilterQuery<TDb> => {
-  const baseQuery: Record<string, unknown> = {};
-  const compoundConditions: FilterQuery<TDb>[] = [];
+  const conditions: FilterQuery<TDb>[] = [];
 
   if (filters?.statuses?.length) {
-    baseQuery.status = { $in: filters.statuses };
-  } else if (filters?.status) {
-    baseQuery.status = filters.status;
+    conditions.push({ status: { $in: filters.statuses } } as FilterQuery<TDb>);
   }
 
   if (filters?.slug) {
-    baseQuery.slug = filters.slug;
+    conditions.push({ slug: filters.slug } as FilterQuery<TDb>);
   }
 
   if (filters?.search?.trim()) {
     const searchRegex = new RegExp(escapeRegex(filters.search.trim()), 'i');
 
-    compoundConditions.push({
+    conditions.push({
       $or: [
         { adminTitle: searchRegex },
         { 'title.uk': searchRegex },
@@ -85,30 +82,19 @@ export const buildBaseQuery = <TDb>(
       .filter((condition): condition is FilterQuery<TDb> => Boolean(condition));
 
     if (languageConditions.length) {
-      compoundConditions.push({ $or: languageConditions } as FilterQuery<TDb>);
+      conditions.push({ $or: languageConditions } as FilterQuery<TDb>);
     }
   }
 
-  const hasBaseQuery = Object.keys(baseQuery).length > 0;
-
-  if (!hasBaseQuery && !compoundConditions.length) {
+  if (!conditions.length) {
     return {} as FilterQuery<TDb>;
   }
 
-  if (!compoundConditions.length) {
-    return baseQuery as FilterQuery<TDb>;
+  if (conditions.length === 1) {
+    return conditions[0];
   }
 
-  if (!hasBaseQuery && compoundConditions.length === 1) {
-    return compoundConditions[0];
-  }
-
-  return {
-    $and: [
-      ...(hasBaseQuery ? [baseQuery as FilterQuery<TDb>] : []),
-      ...compoundConditions
-    ]
-  } as FilterQuery<TDb>;
+  return { $and: conditions } as FilterQuery<TDb>;
 };
 
 export const getBaseSort = (filters?: FiltersInput): Record<string, 1 | -1> => {

@@ -30,6 +30,18 @@ type PaginatedMediaMentions {
   totalPages: Int!
 }
 
+enum MediaMentionsSortBy {
+  createdAt
+  updatedAt
+  publishedAt
+  adminTitle
+}
+
+input MediaMentionsSortOptions {
+  field: MediaMentionsSortBy!
+  order: SortOrder!
+}
+
 input MediaMentionsFiltersInput {
   status: MediaStatus
   statuses: [MediaStatus!]
@@ -38,7 +50,7 @@ input MediaMentionsFiltersInput {
   slug: String
   search: String
   languages: [ContentLanguage!]
-  sort: [SortOptions!]
+  sort: [MediaMentionsSortOptions!]
 }
 
 input CreateMediaMentionInput {

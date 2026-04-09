@@ -39,7 +39,7 @@ describe('NewsQuery Resolvers', () => {
 
       expect(mockRepo.findAll).toHaveBeenCalledWith({
         slug: 'test-slug',
-        status: NewsStatus.Published,
+        statuses: [NewsStatus.Published],
         limit: 10,
         skip: 0,
         sort: undefined
@@ -54,7 +54,7 @@ describe('NewsQuery Resolvers', () => {
       await NewsQuery.publishedNews({}, args, context);
 
       expect(mockRepo.findAll).toHaveBeenCalledWith(expect.objectContaining({
-        status: NewsStatus.Published
+        statuses: [NewsStatus.Published]
       }));
     });
   });
@@ -87,12 +87,12 @@ describe('NewsQuery Resolvers', () => {
   describe('newsCount', () => {
     it('should call count without status if not provided', async () => {
       await NewsQuery.newsCount({}, { status: NewsStatus.Archived }, context);
-      expect(mockRepo.count).toHaveBeenCalledWith({ status: NewsStatus.Archived });
+      expect(mockRepo.count).toHaveBeenCalledWith({ statuses: [NewsStatus.Archived] });
     });
 
     it('should call count with specific status', async () => {
       await NewsQuery.newsCount({}, { status: NewsStatus.Archived }, context);
-      expect(mockRepo.count).toHaveBeenCalledWith({ status: NewsStatus.Archived });
+      expect(mockRepo.count).toHaveBeenCalledWith({ statuses: [NewsStatus.Archived] });
     });
   });
 });
