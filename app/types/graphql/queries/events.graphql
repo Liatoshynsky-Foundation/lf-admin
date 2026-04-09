@@ -34,6 +34,38 @@ query EventBySlug($slug: String!) {
     }
 }
 
+query AllEvents($filters: EventFiltersInput) {
+    allEvents(filters: $filters) {
+        id
+        adminTitle
+        title { uk en }
+        slug
+        status
+        eventLink
+        eventDateTimeStart
+        eventDateTimeEnd
+        publishedAt
+        meta { views }
+    }
+}
+
+query PublishedEvents($filters: EventFiltersInput) {
+    publishedEvents(filters: $filters) {
+        id
+        title { uk en }
+        slug
+        coverImage {
+            src
+            alt { uk en }
+        }
+        eventLink
+        eventDateTimeStart
+        eventDateTimeEnd
+        publishedAt
+        meta { views }
+    }
+}
+
 query PaginatedEvents($page: Int!, $limit: Int!, $filters: EventFiltersInput) {
     paginatedEvents(page: $page, limit: $limit, filters: $filters) {
         items {

@@ -49,6 +49,25 @@ export const newsErrors = {
   FAILED_TO_UPDATE_STATUS: 'Failed to update news status'
 };
 
+export const EventsErrors = {
+  NETWORK_ERROR_CREATE: 'Network error while creating event',
+  FAILED_TO_CREATE: 'Failed to create event',
+  NETWORK_ERROR_UPDATE: 'Network error while updating event',
+  FAILED_TO_UPDATE: 'Failed to update event',
+  NETWORK_ERROR_PUBLISH: 'Network error while publishing event',
+  FAILED_TO_PUBLISH: 'Failed to publish event',
+  NETWORK_ERROR_UNPUBLISH: 'Network error while unpublishing event',
+  FAILED_TO_UNPUBLISH: 'Failed to unpublish event',
+  NETWORK_ERROR_ARCHIVE: 'Network error while archiving event',
+  FAILED_TO_ARCHIVE: 'Failed to archive event',
+  NETWORK_ERROR_HIDE: 'Network error while hiding event',
+  FAILED_TO_HIDE: 'Failed to hide event',
+  NETWORK_ERROR_DELETE: 'Network error while deleting event',
+  FAILED_TO_DELETE: 'Failed to delete event',
+  NETWORK_ERROR_STATUS_UPDATE: 'Network error while updating event status',
+  FAILED_TO_UPDATE_STATUS: 'Failed to update event status'
+};
+
 export const MediaMentionsErrors = {
   NETWORK_ERROR_CREATE: 'Network error while creating media mention',
   FAILED_TO_CREATE: 'Failed to create media mention',
