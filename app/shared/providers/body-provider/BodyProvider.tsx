@@ -1,24 +1,22 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono, Mulish } from 'next/font/google';
+import { Mulish, Oswald } from 'next/font/google';
 
 import { ThemeProvider } from '../../../providers/ThemeProvider';
 import { ApolloClientProvider } from '~/providers/apollo-client-provider/apolloClientProvider';
 import EmotionProvider from '~/providers/EmotionProvider';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin']
-});
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin']
-});
-
 const mulish = Mulish({
   subsets: ['latin', 'cyrillic'],
-  weight: ['400', '700'],
-  variable: '--font-mulish'
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-mulish',
+  display: 'swap'
+});
+
+const oswald = Oswald({
+  subsets: ['latin', 'cyrillic'],
+  weight: ['400', '600', '700'],
+  variable: '--font-oswald',
+  display: 'swap'
 });
 
 export const metadata: Metadata = {
@@ -28,15 +26,8 @@ export const metadata: Metadata = {
 
 export default function BodyProvider({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${mulish.variable}`}
-      suppressHydrationWarning
-    >
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${mulish.variable}`}
-        suppressHydrationWarning
-      >
+    <html lang="en" className={`${mulish.variable} ${oswald.variable}`} suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <EmotionProvider>
           <ThemeProvider>
             <ApolloClientProvider>{children}</ApolloClientProvider>
