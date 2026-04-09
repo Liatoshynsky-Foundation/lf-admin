@@ -20,8 +20,7 @@ jest.mock('~/src/shared/utils/slugGenerator/slugGenerator', () => ({
 
 jest.mock('../helpers', () => ({
   ...jest.requireActual('../helpers'),
-  syncCoverImageCrop: jest.fn(),
-  syncContentImagesCrops: jest.fn(),
+  syncImagesCrops: jest.fn(),
 }));
 
 describe('NewsMutation Resolvers', () => {
@@ -88,7 +87,7 @@ describe('NewsMutation Resolvers', () => {
   });
 
   describe('createNews', () => {
-    it('should successfully create news with generated slug', async () => {
+    it('should successfully create news and call unified syncImagesCrops', async () => {
       mockAction('findBySlug', null);
       mockAction('create', createMockNews({ id: 'new-id', slug: 'slug-новина' }));
 
@@ -96,18 +95,19 @@ describe('NewsMutation Resolvers', () => {
 
       expect(result.id).toBe('new-id');
       expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({ slug: 'slug-новина' }));
-      expect(helpers.syncCoverImageCrop).toHaveBeenCalledWith('new-id', baseInput.coverImage);
-      expect(helpers.syncContentImagesCrops).toHaveBeenCalledWith('new-id', baseInput.content);
+      expect(helpers.syncImagesCrops).toHaveBeenCalledWith('new-id', baseInput.coverImage, { isCoverImage: true });
+      expect(helpers.syncImagesCrops).toHaveBeenCalledWith('new-id', baseInput.content);
     });
   });
 
   describe('updateNews', () => {
     const id = 'news-123';
 
-    it('should update title and re-generate slug', async () => {
+    it('should update title, re-generate slug and sync crops', async () => {
       const updateInput: UpdateNewsGQLInput = {
         title: { uk: 'Оновлено', en: 'Updated' },
-        coverImage: { ...baseInput.coverImage, src: 'new.jpg' }
+        coverImage: { ...baseInput.coverImage, src: 'new.jpg' },
+        content: { uk: { blocks: [{ type: 'image' }] }, en: { blocks: [] } } as News['content']
       };
       mockAction('findById', createMockNews({ id }));
       mockAction('update', createMockNews({ id, slug: 'slug-оновлено' }));
@@ -116,7 +116,8 @@ describe('NewsMutation Resolvers', () => {
 
       expect(mockRepo.update).toHaveBeenCalledWith(id, expect.objectContaining({ slug: 'slug-оновлено' }));
       expect(result.slug).toBe('slug-оновлено');
-      expect(helpers.syncCoverImageCrop).toHaveBeenCalledWith(id, updateInput.coverImage);
+      expect(helpers.syncImagesCrops).toHaveBeenCalledWith(id, updateInput.coverImage, { isCoverImage: true });
+      expect(helpers.syncImagesCrops).toHaveBeenCalledWith(id, updateInput.content);
     });
 
     it('should throw if news not found during slug update', async () => {

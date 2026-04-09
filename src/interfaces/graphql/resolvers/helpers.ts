@@ -1,9 +1,11 @@
 import { GraphQLError } from 'graphql';
 import {Types} from 'mongoose';
 
+import {extractImagesWithMetadata} from '~/application/use-cases/extractImageSrc/extractImageSrc';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
+import { JsonValue } from '~/back-shared/types/pages/types';
 import { graphqlErrors } from '~/constants/errors';
-import {LocalizedContent, LocalizedImage} from '~/domain/entities/BaseContent';
+import { LocalizedImage} from '~/domain/entities/BaseContent';
 import {BaseEntity, FiltersInput} from '~/domain/repositories/baseRepository';
 import {ImageCropModel} from '~/infrastructure/models/imageCrop.model';
 import { RepositoriesModule } from '~/src/container/modules/repositories.module';
@@ -94,69 +96,64 @@ export const processSlugUpdate = async <
   }
 };
 
-export const syncCoverImageCrop = async (
+export const syncImagesCrops = async (
   contentId: string,
-  image: LocalizedImage,
-  locale: 'uk' | 'en' = 'uk'
+  data: unknown,
+  options: {
+    locale?: 'uk' | 'en';
+    cropIdPrefix?: string;
+    isCoverImage?: boolean;
+  } = {}
 ): Promise<void> => {
-  if (image.crop) {
-    await ImageCropModel.findOneAndUpdate(
-      {
-        pageId: contentId,
-        cropId: 'coverImage',
-        locale
-      },
-      {
-        crop: image.crop,
-        imageAssetId: new Types.ObjectId(),
-        pageId: contentId,
-        cropId: 'coverImage',
-        locale
-      },
-      { upsert: true }
-    );
-  }
-};
+  const { locale = 'uk', cropIdPrefix = '', isCoverImage = false } = options;
 
-export const syncContentImagesCrops = async (
-  contentId: string,
-  content: LocalizedContent,
-  blockPrefix: string = 'content'
-): Promise<void> => {
-  const locales: (keyof LocalizedContent)[] = ['uk', 'en'];
+  if (!isCoverImage) {
+    const imagesWithMetadata = extractImagesWithMetadata(data as JsonValue);
 
-  for (const locale of locales) {
-    const data = content[locale];
-    if (!data || typeof data !== 'object') continue;
-
-    const findAndSync = async (obj: Record<string, unknown>, path: string = ''): Promise<void> => {
-      const potentialImage = obj as unknown as LocalizedImage;
-
-      if (potentialImage.src && potentialImage.crop) {
+    for (const item of imagesWithMetadata) {
+      if (item.crop) {
         await ImageCropModel.findOneAndUpdate(
           {
             pageId: contentId,
-            blockId: `${blockPrefix}${path}`,
+            cropId: item.src,
             locale
           },
           {
-            crop: potentialImage.crop,
+            crop: item.crop,
             imageAssetId: new Types.ObjectId(),
             pageId: contentId,
-            blockId: `${blockPrefix}${path}`,
+            cropId: item.src,
             locale
           },
-          { upsert: true }
+          { upsert: true, new: true }
         );
       }
+    }
+    return;
+  }
 
-      for (const [key, value] of Object.entries(obj)) {
-        if (value && typeof value === 'object') {
-          await findAndSync(value as Record<string, unknown>, `${path}.${key}`);
-        }
-      }
-    };
+  if (isCoverImage) {
+    const image = data as LocalizedImage;
+    if (image?.crop) {
+      const locales: Array<'uk' | 'en'> = ['uk', 'en'];
 
-    await findAndSync(data as Record<string, unknown>);
+      await Promise.all(locales.map(l =>
+        ImageCropModel.findOneAndUpdate(
+          {
+            pageId: contentId,
+            cropId: cropIdPrefix || 'coverImage',
+            locale: l
+          },
+          {
+            crop: image.crop,
+            imageAssetId: new Types.ObjectId(),
+            pageId: contentId,
+            cropId: cropIdPrefix || 'coverImage',
+            locale: l
+          },
+          { upsert: true, new: true }
+        )
+      ));
+    }
   }
 };

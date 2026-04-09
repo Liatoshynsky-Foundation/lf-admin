@@ -1,11 +1,12 @@
 import { GraphQLError } from 'graphql';
 
+import * as helpers from '../helpers';
 import { PageMutation } from './PageMutation';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import type { BasePage } from '~/domain/entities/Page';
-import { ImageCropModel } from '~/infrastructure/models/imageCrop.model';
 import type { PageRepository } from '~/src/domain/repositories/pageRepository';
 import { PageStatus } from '~/types/enums/common.enums';
+import {Scalars} from '~/types/graphql/generated/graphql';
 
 jest.mock('mongoose', () => ({
   Types: {
@@ -13,6 +14,11 @@ jest.mock('mongoose', () => ({
       toString: () => 'mocked-object-id'
     }))
   }
+}));
+
+jest.mock('../helpers', () => ({
+  ...jest.requireActual('../helpers'),
+  syncImagesCrops: jest.fn()
 }));
 
 jest.mock('~/infrastructure/models/imageCrop.model', () => ({
@@ -77,29 +83,21 @@ describe('PageMutation', () => {
       expect(mockRepo.createDraft).toHaveBeenCalledWith('s', expect.anything(), mockBasePage);
     });
 
-    it('should sync image crops and copy blobs when crop data is present', async () => {
+    it('should call syncImagesCrops and copy blobs when crop data is present', async () => {
       const crop = { x: 10, y: 10, width: 50, height: 50 };
       const blocks = ({
         FoundationInfo: {
-          ourOrganisation: { uk: {}, en: {} },
-          ourName: { uk: {}, en: {} },
-          ourBelief: { uk: {}, en: {} },
-          ourMission: { uk: {}, en: {} },
           image: { src: 'photo.jpg', isTmp: true, crop }
         }
-      } as unknown) as import('~/types/graphql/generated/graphql').Scalars['JSON']['input'];
+      } as unknown) as Scalars['JSON']['input'];
 
       mockRepo.getDraftBySlug.mockResolvedValue(mockBasePage);
-      mockRepo.applyPatchToDraft.mockResolvedValue({ ...mockBasePage, blocks: (blocks as unknown) as Record<string, import('~/store/types').BlockData> });
+      mockRepo.applyPatchToDraft.mockResolvedValue({ ...mockBasePage, blocks: (blocks as unknown) as Record<string, any> });
 
       await PageMutation.upsertPageDraft({}, { input: { slug: 's', blocks } }, mockContext);
 
       expect(mockCopyBlobs).toHaveBeenCalledWith('tmp', 'photos', ['photo.jpg']);
-      expect(ImageCropModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { cropId: 'photo.jpg', pageId: mockBasePage.id },
-        expect.objectContaining({ crop }),
-        { upsert: true, new: true }
-      );
+      expect(helpers.syncImagesCrops).toHaveBeenCalledWith(mockBasePage.id, blocks);
     });
   });
 
@@ -112,7 +110,7 @@ describe('PageMutation', () => {
           image: { src: 'new.jpg', isTmp: true, crop },
           quote: { text: { uk: '', en: '' }, author: '' }
         }
-      } as unknown) as import('~/types/graphql/generated/graphql').Scalars['JSON']['input'];
+      } as unknown) as Scalars['JSON']['input'];
 
       mockRepo.getPublishedBySlug.mockResolvedValue(mockBasePage);
       mockRepo.getDraftBySlug.mockResolvedValue(mockBasePage);
@@ -121,6 +119,7 @@ describe('PageMutation', () => {
       await PageMutation.publishPage({}, { input: { slug: 'test', blocks } }, mockContext);
 
       expect(mockCopyBlobs).toHaveBeenCalledWith('tmp', 'photos', ['new.jpg']);
+      expect(helpers.syncImagesCrops).toHaveBeenCalledWith(mockBasePage.id, blocks);
     });
 
     it('should use draft blocks if no blocks are provided in the input', async () => {
@@ -138,6 +137,7 @@ describe('PageMutation', () => {
       await PageMutation.publishPage({}, { input: { slug: 'test' } }, mockContext);
 
       expect(mockRepo.applyPatchToPublished).toHaveBeenCalled();
+      expect(helpers.syncImagesCrops).toHaveBeenCalledWith(mockBasePage.id, draftBlocks);
     });
 
     it('should throw an error if no source metadata is found for title or pageType', async () => {

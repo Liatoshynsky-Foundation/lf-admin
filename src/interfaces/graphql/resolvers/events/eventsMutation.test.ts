@@ -17,8 +17,7 @@ jest.mock('~/src/shared/utils/slugGenerator/slugGenerator', () => ({
 
 jest.mock('../helpers', () => ({
   ...jest.requireActual('../helpers'),
-  syncCoverImageCrop: jest.fn(),
-  syncContentImagesCrops: jest.fn(),
+  syncImagesCrops: jest.fn(),
 }));
 
 describe('EventsMutation Resolvers', () => {
@@ -82,7 +81,7 @@ describe('EventsMutation Resolvers', () => {
   });
 
   describe('Business Logic', () => {
-    it('should create event with correct slug and status and call sync helpers', async () => {
+    it('should create event with correct slug and status and call syncImagesCrops', async () => {
       const input = createMockInput();
       (mockRepo.findBySlug as jest.Mock).mockResolvedValue(null);
       (mockRepo.create as jest.Mock).mockResolvedValue(createMockEntity({ id: 'event-1', slug: 'slug-подія' }));
@@ -91,11 +90,11 @@ describe('EventsMutation Resolvers', () => {
 
       expect(result.slug).toBe('slug-подія');
       expect(mockRepo.create).toHaveBeenCalled();
-      expect(helpers.syncCoverImageCrop).toHaveBeenCalledWith('event-1', input.coverImage);
-      expect(helpers.syncContentImagesCrops).toHaveBeenCalledWith('event-1', input.content);
+      expect(helpers.syncImagesCrops).toHaveBeenCalledWith('event-1', input.coverImage, { isCoverImage: true });
+      expect(helpers.syncImagesCrops).toHaveBeenCalledWith('event-1', input.content);
     });
 
-    it('should update event and call sync helpers when image changes', async () => {
+    it('should update event and call syncImagesCrops only for provided fields', async () => {
       const id = '123';
       const updateInput: UpdateEventInput = {
         title: { uk: 'Нова Назва', en: 'New Name' },
@@ -112,7 +111,9 @@ describe('EventsMutation Resolvers', () => {
       const result = await EventsMutation.updateEvent({}, { id, input: updateInput }, adminContext);
 
       expect(result.slug).toBe('slug-нова-назва');
-      expect(helpers.syncCoverImageCrop).toHaveBeenCalledWith(id, updateInput.coverImage);
+      expect(helpers.syncImagesCrops).toHaveBeenCalledWith(id, updateInput.coverImage, { isCoverImage: true });
+      expect(helpers.syncImagesCrops).not.toHaveBeenCalledWith(id, undefined);
+      expect(helpers.syncImagesCrops).toHaveBeenCalledTimes(1);
     });
 
     it('should allow the same slug if it belongs to the event being updated', async () => {

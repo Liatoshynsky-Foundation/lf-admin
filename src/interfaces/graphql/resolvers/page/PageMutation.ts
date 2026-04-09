@@ -1,11 +1,10 @@
 import { GraphQLError } from 'graphql';
-import { Types } from 'mongoose';
 
+import { syncImagesCrops } from '../helpers';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
-import { ImageCropModel } from '~/infrastructure/models/imageCrop.model';
 import { createDotNotationPatch } from '~/src/application/use-cases/dotNotationPatch/dotNotationPatch';
-import { extractImageSrcs,extractImagesWithMetadata } from '~/src/application/use-cases/extractImageSrc/extractImageSrc';
+import { extractImageSrcs } from '~/src/application/use-cases/extractImageSrc/extractImageSrc';
 import { removeTmpFlagsRecursively } from '~/src/application/use-cases/removeTmpFlags/removeTmpFlags';
 import { blobStorageService } from '~/src/application/use-cases/uploadService/upload';
 import { JsonObject } from '~/src/shared/types/pages/types';
@@ -13,27 +12,6 @@ import type { Page, Scalars } from '~/types/graphql/generated/graphql';
 
 type UpsertPageDraftArgs = { input: { slug: string; blocks: Scalars['JSON']['input'] } };
 type PublishPageArgs = { input: { slug: string; blocks?: Scalars['JSON']['input'] } };
-
-async function syncImageCrops(blocks: Scalars['JSON']['input'], pageId: string) {
-  const imagesWithMetadata = extractImagesWithMetadata(blocks);
-
-  for (const item of imagesWithMetadata) {
-    if (item.crop) {
-      await ImageCropModel.findOneAndUpdate(
-        {
-          cropId: item.src,
-          pageId: pageId
-        },
-        {
-          crop: item.crop,
-          imageAssetId: new Types.ObjectId(),
-          locale: 'uk',
-        },
-        { upsert: true, new: true }
-      );
-    }
-  }
-}
 
 export const PageMutation = {
   async upsertPageDraft(
@@ -85,7 +63,7 @@ export const PageMutation = {
       }
     }
 
-    await syncImageCrops(blocks, resultPage.id);
+    await syncImagesCrops(resultPage.id, blocks);
 
     return resultPage;
   },
@@ -138,7 +116,7 @@ export const PageMutation = {
 
     const resultPage = await repo.applyPatchToPublished(slug, changes, title, pageType) as Page;
 
-    await syncImageCrops(blocksToPublish, resultPage.id);
+    await syncImagesCrops(resultPage.id, blocksToPublish);
 
     return resultPage;
   }

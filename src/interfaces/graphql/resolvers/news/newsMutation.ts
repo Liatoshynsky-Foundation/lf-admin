@@ -4,8 +4,7 @@ import {
   endpointRepositoryHandler,
   extractTitleForSlug,
   processSlugUpdate,
-  syncContentImagesCrops,
-  syncCoverImageCrop
+  syncImagesCrops
 } from '../helpers';
 import { processNewsContent } from './processNewsContent/processNewsContent';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
@@ -95,10 +94,10 @@ export const NewsMutation = {
     const res = await repo.create(newsData);
 
     if (input.coverImage?.crop) {
-      await syncCoverImageCrop(res.id, input.coverImage as unknown as LocalizedImage);
+      await syncImagesCrops(res.id, input.coverImage, { isCoverImage: true });
     }
     if (input.content) {
-      await syncContentImagesCrops(res.id, input.content);
+      await syncImagesCrops(res.id, input.content);
     }
 
     return res;
@@ -140,10 +139,10 @@ export const NewsMutation = {
     }
 
     if (input.coverImage?.crop) {
-      await syncCoverImageCrop(res.id, input.coverImage as unknown as LocalizedImage);
+      await syncImagesCrops(res.id, input.coverImage, { isCoverImage: true });
     }
     if (input.content) {
-      await syncContentImagesCrops(res.id, input.content);
+      await syncImagesCrops(res.id, input.content);
     }
 
     return res;

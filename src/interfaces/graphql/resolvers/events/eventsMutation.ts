@@ -2,12 +2,10 @@ import { GraphQLError } from 'graphql';
 
 import {
   endpointRepositoryHandler,
-  syncContentImagesCrops,
-  syncCoverImageCrop
+  syncImagesCrops
 } from '../helpers';
 import { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
-import { LocalizedContent, LocalizedImage } from '~/domain/entities/BaseContent';
 import { EventsEntity } from '~/domain/entities/Events';
 import { CreateEventInput, UpdateEventInput } from '~/domain/repositories/eventsRepository';
 import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerator';
@@ -53,10 +51,10 @@ export const EventsMutation = {
     });
 
     if (input.coverImage?.crop) {
-      await syncCoverImageCrop(res.id, input.coverImage as unknown as LocalizedImage);
+      await syncImagesCrops(res.id, input.coverImage, { isCoverImage: true });
     }
     if (input.content) {
-      await syncContentImagesCrops(res.id, input.content as unknown as LocalizedContent);
+      await syncImagesCrops(res.id, input.content);
     }
 
     return res;
@@ -88,10 +86,10 @@ export const EventsMutation = {
     if (!res) throw new GraphQLError('EVENT_NOT_FOUND', { extensions: { code: 'EVENT_NOT_FOUND' } });
 
     if (input.coverImage?.crop) {
-      await syncCoverImageCrop(res.id, input.coverImage as unknown as LocalizedImage);
+      await syncImagesCrops(res.id, input.coverImage, { isCoverImage: true });
     }
     if (input.content) {
-      await syncContentImagesCrops(res.id, input.content as unknown as LocalizedContent);
+      await syncImagesCrops(res.id, input.content);
     }
 
     return res;

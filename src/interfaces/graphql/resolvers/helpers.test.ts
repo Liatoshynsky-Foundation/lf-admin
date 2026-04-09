@@ -9,11 +9,9 @@ import {
   endpointRepositoryHandler,
   extractTitleForSlug,
   mapFilters,
-  processSlugUpdate,
-  syncContentImagesCrops,
-  syncCoverImageCrop
+  processSlugUpdate, syncImagesCrops,
 } from './helpers';
-import { LocalizedContent, LocalizedImage } from '~/domain/entities/BaseContent';
+import { LocalizedImage } from '~/domain/entities/BaseContent';
 import { ImageCropModel } from '~/infrastructure/models/imageCrop.model';
 import { SortByDate, SortOrder } from '~/types/enums/common.enums';
 
@@ -147,53 +145,94 @@ describe('Synchronization Helpers', () => {
 
   beforeEach(() => jest.clearAllMocks());
 
-  describe('syncCoverImageCrop', () => {
-    it('should call findOneAndUpdate if crop exists', async () => {
+  describe('syncImagesCrops - Cover Image mode', () => {
+    it('should call findOneAndUpdate if crop exists in cover image', async () => {
       const image: LocalizedImage = {
         src: 'test.jpg',
         alt: { uk: 'опис', en: 'alt' },
         crop: { x: 1, y: 2, width: 3, height: 4 }
       };
 
-      await syncCoverImageCrop(contentId, image, 'uk');
+      await syncImagesCrops(contentId, image, { locale: 'uk', isCoverImage: true });
 
       expect(ImageCropModel.findOneAndUpdate).toHaveBeenCalledWith(
         expect.objectContaining({ pageId: contentId, cropId: 'coverImage', locale: 'uk' }),
         expect.objectContaining({ crop: image.crop }),
-        { upsert: true }
+        { upsert: true, new: true }
       );
     });
 
-    it('should not call findOneAndUpdate if crop is missing', async () => {
+    it('should use cropIdPrefix if provided', async () => {
+      const image: LocalizedImage = {
+        src: 'test.jpg',
+        alt: { uk: '', en: '' },
+        crop: { x: 1, y: 1, width: 1, height: 1 }
+      };
+
+      await syncImagesCrops(contentId, image, { isCoverImage: true, cropIdPrefix: 'custom-id' });
+
+      expect(ImageCropModel.findOneAndUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ cropId: 'custom-id' }),
+        expect.anything(),
+        expect.anything()
+      );
+    });
+
+    it('should not call findOneAndUpdate if crop is missing in cover image', async () => {
       const imageWithoutCrop: LocalizedImage = {
         src: '1.jpg',
         alt: { uk: '', en: '' }
       };
 
-      await syncCoverImageCrop(contentId, imageWithoutCrop);
+      await syncImagesCrops(contentId, imageWithoutCrop, { isCoverImage: true });
       expect(ImageCropModel.findOneAndUpdate).not.toHaveBeenCalled();
     });
   });
 
-  describe('syncContentImagesCrops', () => {
-    it('should recursively find and sync images in content', async () => {
-      const content: LocalizedContent = {
-        uk: {
-          block1: {
-            img: { src: '1.jpg', crop: { x: 0, y: 0, width: 1, height: 1 } }
+  describe('syncImagesCrops - Content mode', () => {
+    it('should recursively find and sync multiple images in content object', async () => {
+      const content = {
+        blocks: [
+          {
+            type: 'image',
+            src: 'img1.jpg',
+            crop: { x: 0, y: 0, width: 10, height: 10 }
+          },
+          {
+            type: 'text',
+            value: 'hello'
+          },
+          {
+            type: 'image',
+            src: 'img2.jpg',
+            crop: { x: 1, y: 1, width: 5, height: 5 }
           }
-        },
-        en: {}
+        ]
       };
 
-      await syncContentImagesCrops(contentId, content as unknown as LocalizedContent);
+      await syncImagesCrops(contentId, content, { locale: 'en', isCoverImage: false });
 
-      expect(ImageCropModel.findOneAndUpdate).toHaveBeenCalledTimes(1);
+      expect(ImageCropModel.findOneAndUpdate).toHaveBeenCalledTimes(2);
       expect(ImageCropModel.findOneAndUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({ pageId: contentId, locale: 'uk' }),
-        expect.any(Object),
-        { upsert: true }
+        expect.objectContaining({ pageId: contentId, cropId: 'img1.jpg', locale: 'en' }),
+        expect.objectContaining({ crop: content.blocks[0].crop }),
+        { upsert: true, new: true }
       );
+      expect(ImageCropModel.findOneAndUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ pageId: contentId, cropId: 'img2.jpg', locale: 'en' }),
+        expect.objectContaining({ crop: content.blocks[2].crop }),
+        { upsert: true, new: true }
+      );
+    });
+
+    it('should not call findOneAndUpdate if no images with crop are found', async () => {
+      const contentWithoutCrops = {
+        text: 'just some text',
+        image: { src: 'no-crop.jpg' }
+      };
+
+      await syncImagesCrops(contentId, contentWithoutCrops, { isCoverImage: false });
+      expect(ImageCropModel.findOneAndUpdate).not.toHaveBeenCalled();
     });
   });
 });

@@ -12,7 +12,7 @@ import * as helpers from '../helpers';
 
 jest.mock('../helpers', () => ({
   ...jest.requireActual('../helpers'),
-  syncCoverImageCrop: jest.fn(),
+  syncImagesCrops: jest.fn(),
 }));
 
 jest.mock('~/src/shared/utils/slugGenerator/slugGenerator', () => ({
@@ -70,7 +70,7 @@ describe('media-mentions Mutation', () => {
       status: MediaStatus.Draft
     };
 
-    it('should generate slug and call repo.create and sync crops', async () => {
+    it('should generate slug and call repo.create and sync crops using unified helper', async () => {
       (mockRepo.findBySlug as jest.Mock).mockResolvedValue(null);
       (mockRepo.create as jest.Mock).mockResolvedValue(createMockEntity({ id: 'new-id', slug: 'тестова-стаття' }));
 
@@ -81,7 +81,7 @@ describe('media-mentions Mutation', () => {
         slug: 'тестова-стаття',
         meta: { views: 0 }
       }));
-      expect(helpers.syncCoverImageCrop).toHaveBeenCalledWith('new-id', input.coverImage);
+      expect(helpers.syncImagesCrops).toHaveBeenCalledWith('new-id', input.coverImage, { isCoverImage: true });
     });
 
     it('should throw unauthenticated error if not admin', async () => {
@@ -119,7 +119,7 @@ describe('media-mentions Mutation', () => {
       expect(mockRepo.update).toHaveBeenCalledWith(id, expect.objectContaining({
         slug: 'оновлений-заголовок'
       }));
-      expect(helpers.syncCoverImageCrop).toHaveBeenCalledWith(id, updateInput.coverImage);
+      expect(helpers.syncImagesCrops).toHaveBeenCalledWith(id, updateInput.coverImage, { isCoverImage: true });
     });
 
     it('should throw error if entity not found', async () => {

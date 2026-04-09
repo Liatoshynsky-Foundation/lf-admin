@@ -1,6 +1,11 @@
 import { GraphQLError } from 'graphql';
 
-import {endpointRepositoryHandler, extractTitleForSlug, processSlugUpdate, syncCoverImageCrop} from '../helpers';
+import {
+  endpointRepositoryHandler,
+  extractTitleForSlug,
+  processSlugUpdate,
+  syncImagesCrops
+} from '../helpers';
 import { MediaMentionsServiceErrors } from '~/back-constants/errors';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
@@ -72,7 +77,7 @@ export const MediaMentionsMutation = {
     const res = await repo.create(mediaData);
 
     if (input.coverImage.crop) {
-      await syncCoverImageCrop(res.id, input.coverImage);
+      await syncImagesCrops(res.id, input.coverImage, { isCoverImage: true });
     }
 
     return res;
@@ -102,7 +107,7 @@ export const MediaMentionsMutation = {
     }
 
     if (input.coverImage?.crop) {
-      await syncCoverImageCrop(res.id, input.coverImage);
+      await syncImagesCrops(res.id, input.coverImage, { isCoverImage: true });
     }
 
     return res;
