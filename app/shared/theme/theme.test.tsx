@@ -1,202 +1,146 @@
-import { Typography } from '@mui/material';
+import { Button, Tab, Tabs, Typography, TypographyProps } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
-import { TypographyPropsVariantOverrides } from '@mui/material/Typography';
-import { OverridableStringUnion } from '@mui/types';
 import { render } from '@testing-library/react';
 
+import { buttonColors, tabsColors } from './colors';
 import { adminTheme } from './theme';
 
-type CustomVariant = OverridableStringUnion<keyof TypographyPropsVariantOverrides, unknown>;
+describe('Admin Theme Configuration', () => {
+  describe('Typography System', () => {
+    it('should have all new semantic typography variants defined', () => {
+      expect(adminTheme.typography.displayXl).toBeDefined();
+      expect(adminTheme.typography.displayLg).toBeDefined();
+      expect(adminTheme.typography.displayMd).toBeDefined();
+      expect(adminTheme.typography.bodyLg).toBeDefined();
+      expect(adminTheme.typography.bodyMd).toBeDefined();
+      expect(adminTheme.typography.bodySm).toBeDefined();
+      expect(adminTheme.typography.textMd).toBeDefined();
+      expect(adminTheme.typography.textSm).toBeDefined();
+    });
 
-describe('Custom Typography Variants', () => {
-  const renderWithTheme = (variant: CustomVariant) =>
-    render(
-      <ThemeProvider theme={adminTheme}>
-        <Typography variant={variant}>Test</Typography>
-      </ThemeProvider>
-    );
+    it('should have correct variant mapping for new typography', () => {
+      const variantMapping = adminTheme.components?.MuiTypography?.defaultProps?.variantMapping as
+        | Record<string, string>
+        | undefined;
 
-  it('should render customBold32 variant correctly', () => {
-    const { getByText } = renderWithTheme('customBold32');
-    const element = getByText('Test');
-    expect(element).toHaveStyle({
-      fontWeight: 700,
-      fontSize: '32px',
-      lineHeight: '140%',
-      letterSpacing: '0px'
+      expect(variantMapping?.displayXl).toBe('h2');
+      expect(variantMapping?.bodyLg).toBe('p');
+      expect(variantMapping?.textSm).toBe('p');
+    });
+
+    it('should use unitless line-heights and correct sizes for body variants', () => {
+      expect(adminTheme.typography.bodyLg).toMatchObject({
+        fontSize: '24px',
+        fontWeight: 400,
+        lineHeight: 1.6
+      });
+
+      expect(adminTheme.typography.bodySm).toMatchObject({
+        fontSize: '18px',
+        fontWeight: 400,
+        lineHeight: 1.6
+      });
+    });
+
+    it('should use correct font families for display and body', () => {
+      expect(adminTheme.typography.displayXl?.fontFamily).toContain('var(--font-oswald)');
+      expect(adminTheme.typography.bodyMd?.fontFamily).toContain('var(--font-mulish)');
     });
   });
 
-  it('should render customMedium22Tight variant correctly', () => {
-    const { getByText } = renderWithTheme('customMedium22Tight');
-    const element = getByText('Test');
-    expect(element).toHaveStyle({
-      fontWeight: 500,
-      fontSize: '22px',
-      lineHeight: '135%'
+  describe('Palette & Colors', () => {
+    it('should have custom tertiary color defined in the palette', () => {
+      expect(adminTheme.palette.tertiary).toBeDefined();
+      expect(adminTheme.palette.tertiary.main).toBe(buttonColors.tertiary.enabledBg);
+    });
+
+    it('should have expanded functional color palettes', () => {
+      const palette = adminTheme.palette as unknown as Record<string, unknown>;
+
+      expect(palette['blue']).toBeDefined();
+      expect(palette['yellow']).toBeDefined();
+      expect(palette['adminBlue']).toBeDefined();
     });
   });
 
-  it('should render customRegular20Tight variant correctly', () => {
-    const { getByText } = renderWithTheme('customRegular20Tight');
-    const element = getByText('Test');
-    expect(element).toHaveStyle({
-      fontWeight: 400,
-      fontSize: '20px',
-      lineHeight: '140%'
-    });
-  });
+  describe('Component Style Overrides', () => {
+    it('should have MuiButton overrides and variants applied', () => {
+      const buttonTheme = adminTheme.components?.MuiButton;
 
-  it('should render customMedium18Tight variant correctly', () => {
-    const { getByText } = renderWithTheme('customMedium18Tight');
-    const element = getByText('Test');
-    expect(element).toHaveStyle({
-      fontWeight: 500,
-      fontSize: '18px',
-      lineHeight: '135%'
+      expect(buttonTheme?.styleOverrides?.root).toBeDefined();
+      expect(buttonTheme?.variants?.length).toBeGreaterThan(0);
     });
-  });
 
-  it('should render customMedium18Loose variant correctly', () => {
-    const { getByText } = renderWithTheme('customMedium18Loose');
-    const element = getByText('Test');
-    expect(element).toHaveStyle({
-      fontWeight: 500,
-      fontSize: '18px',
-      lineHeight: '155%'
+    it('should have consistent border radius for core components', () => {
+      const buttonOverrides = adminTheme.components?.MuiButton?.styleOverrides?.root as
+        | Record<string, unknown>
+        | undefined;
+      const outlinedInputOverrides = adminTheme.components?.MuiOutlinedInput?.styleOverrides?.root as
+        | Record<string, unknown>
+        | undefined;
+
+      expect(buttonOverrides?.borderRadius).toBe('28px');
+      expect(outlinedInputOverrides?.borderRadius).toBe('8px');
     });
-  });
 
-  it('should render customSemiBold18 variant correctly', () => {
-    const { getByText } = renderWithTheme('customSemiBold18');
-    const element = getByText('Test');
-    expect(element).toHaveStyle({
-      fontWeight: 600,
-      fontSize: '18px',
-      lineHeight: '155%'
-    });
-  });
+    it('should have MuiTabs and MuiTab overrides applied', () => {
+      const tabsTheme = adminTheme.components?.MuiTabs;
+      const tabTheme = adminTheme.components?.MuiTab;
 
-  it('should render customRegular16 variant correctly', () => {
-    const { getByText } = renderWithTheme('customRegular16');
-    const element = getByText('Test');
-    expect(element).toHaveStyle({
-      fontWeight: 400,
-      fontSize: '16px',
-      lineHeight: '150%'
-    });
-  });
+      const tabsIndicator = tabsTheme?.styleOverrides?.indicator as Record<string, unknown> | undefined;
+      const tabRoot = tabTheme?.styleOverrides?.root as Record<string, unknown> | undefined;
 
-  it('should render customBold16 variant correctly', () => {
-    const { getByText } = renderWithTheme('customBold16');
-    const element = getByText('Test');
-    expect(element).toHaveStyle({
-      fontWeight: 700,
-      fontSize: '16px',
-      lineHeight: '100%'
-    });
-  });
+      expect(tabsIndicator?.backgroundColor).toBe(tabsColors.active);
 
-  it('should render customMedium16 variant correctly', () => {
-    const { getByText } = renderWithTheme('customMedium16');
-    const element = getByText('Test');
-    expect(element).toHaveStyle({
-      fontWeight: 500,
-      fontSize: '16px',
-      lineHeight: '150%'
-    });
-  });
-
-  it('should render customItalic16 variant correctly', () => {
-    const { getByText } = renderWithTheme('customItalic16');
-    const element = getByText('Test');
-    expect(element).toHaveStyle({
-      fontStyle: 'italic',
-      fontSize: '16px',
-      lineHeight: '140%'
-    });
-  });
-
-  it('should render customItalic14 variant correctly', () => {
-    const { getByText } = renderWithTheme('customItalic14');
-    const element = getByText('Test');
-    expect(element).toHaveStyle({
-      fontStyle: 'italic',
-      fontSize: '14px',
-      lineHeight: '140%'
+      expect(tabTheme?.defaultProps?.disableRipple).toBe(true);
+      expect(tabRoot?.textTransform).toBe('none');
     });
   });
 });
 
-describe('Admin Theme Configuration', () => {
-  it('should have all custom typography variants defined', () => {
-    const customVariants = [
-      'customBold32',
-      'customMedium22Tight',
-      'customRegular20Tight',
-      'customMedium18Tight',
-      'customMedium18Loose',
-      'customSemiBold18',
-      'customRegular16',
-      'customBold16',
-      'customMedium16',
-      'customItalic16',
-      'customItalic14'
-    ];
+describe('Theme Provider Rendering', () => {
+  const renderTypography = (variant: TypographyProps['variant']) =>
+    render(
+      <ThemeProvider theme={adminTheme}>
+        <Typography variant={variant} data-testid="typography-test">
+          Text Content
+        </Typography>
+      </ThemeProvider>
+    );
 
-    for (const variant of customVariants) {
-      expect((adminTheme.typography as any)[variant]).toBeDefined();
-    }
+  it('renders new semantic typography variant without throwing errors', () => {
+    const { getByTestId } = renderTypography('displayMd');
+    expect(getByTestId('typography-test')).toBeInTheDocument();
   });
 
-  it('should have correct variant mapping for custom typography', () => {
-    const variantMapping = adminTheme.components?.MuiTypography?.defaultProps?.variantMapping;
-
-    expect(variantMapping?.customBold32).toBe('p');
-    expect(variantMapping?.customMedium22Tight).toBe('p');
-    expect(variantMapping?.customRegular20Tight).toBe('p');
-    expect(variantMapping?.customMedium18Tight).toBe('p');
-    expect(variantMapping?.customMedium18Loose).toBe('p');
-    expect(variantMapping?.customSemiBold18).toBe('p');
-    expect(variantMapping?.customRegular16).toBe('p');
-    expect(variantMapping?.customBold16).toBe('p');
-    expect(variantMapping?.customMedium16).toBe('p');
-    expect(variantMapping?.customItalic16).toBe('p');
-    expect(variantMapping?.customItalic14).toBe('p');
+  it('renders standard typography variant without throwing errors', () => {
+    const { getByTestId } = renderTypography('h2');
+    expect(getByTestId('typography-test')).toBeInTheDocument();
   });
 
-  it('should export AdminTheme type', () => {
-    expect(typeof adminTheme).toBe('object');
-    expect(adminTheme.typography).toBeDefined();
-    expect(adminTheme.components).toBeDefined();
+  it('renders custom Button variant (tertiary) without throwing errors', () => {
+    const { getByRole } = render(
+      <ThemeProvider theme={adminTheme}>
+        <Button variant="contained" color="tertiary">
+          Tertiary Button
+        </Button>
+      </ThemeProvider>
+    );
+
+    expect(getByRole('button')).toBeInTheDocument();
   });
 
-  it('should have correct font families for custom variants', () => {
-    const customBold32 = (adminTheme.typography as any).customBold32;
-    const customItalic16 = (adminTheme.typography as any).customItalic16;
+  it('renders Tabs without throwing errors', () => {
+    const { getByRole, getAllByRole } = render(
+      <ThemeProvider theme={adminTheme}>
+        <Tabs value={0}>
+          <Tab label="Tab 1" />
+          <Tab label="Tab 2" />
+        </Tabs>
+      </ThemeProvider>
+    );
 
-    expect(customBold32.fontFamily).toBeDefined();
-    expect(customItalic16.fontFamily).toBeDefined();
-  });
-
-  it('should have standard MUI typography variants', () => {
-    expect(adminTheme.typography.h1).toBeDefined();
-    expect(adminTheme.typography.h2).toBeDefined();
-    expect(adminTheme.typography.h3).toBeDefined();
-    expect(adminTheme.typography.h4).toBeDefined();
-  });
-
-  it('should have correct properties for standard variants', () => {
-    expect(adminTheme.typography.h1).toMatchObject({
-      fontWeight: 700,
-      fontSize: '116px',
-      lineHeight: '100%'
-    });
-
-    expect(adminTheme.typography.h4).toMatchObject({
-      fontWeight: 700,
-      fontSize: '28px',
-      lineHeight: '160%'
-    });
+    expect(getByRole('tablist')).toBeInTheDocument();
+    expect(getAllByRole('tab')).toHaveLength(2);
   });
 });

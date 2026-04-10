@@ -8,17 +8,6 @@ import type { MediaModalOpenState, MediaModalResult } from '~/shared/components/
 
 /* -------------------- MOCKS -------------------- */
 
-jest.mock('../cropper-modal/CropperModal', () => ({
-  CropperModal: ({ open, handleClose }: any) => {
-    if (!open) return null;
-
-    return (
-      <div data-testid="cropper-modal">
-        <button onClick={handleClose}>close</button>
-      </div>
-    );
-  }
-}));
 
 jest.mock('react-hot-toast', () => {
   const success = jest.fn();
@@ -121,8 +110,6 @@ describe('ImagePreviewBlock', () => {
     render(
       <ImagePreviewBlock
         imageUrl="test.jpg"
-        cropWidth={300}
-        cropHeight={200}
         onChangeImage={onChangeImage}
         {...props}
       />
@@ -134,39 +121,37 @@ describe('ImagePreviewBlock', () => {
     (readFileAsDataURL as jest.Mock).mockResolvedValue('data:image/png;base64,mockImage');
   });
 
-  it('opens cropper modal on "Редагувати" click (legacy)', async () => {
-    const user = userEvent.setup();
+  it('should render correctly with initial image', () => {
+    render(
+      <ImagePreviewBlock
+        imageUrl="https://example.com/test.jpg"
+        onChangeImage={onChangeImage}
+        title="Основне зображення"
+      />
+    );
 
-    renderComponent();
-
-    await user.click(screen.getByRole('button', { name: /редагувати/i }));
-
-    expect(screen.getByTestId('cropper-modal')).toBeInTheDocument();
+    expect(screen.getByText(/Основне зображення/)).toBeInTheDocument();
+    expect(screen.getByAltText('Основне зображення')).toHaveAttribute('src', 'https://example.com/test.jpg');
+    expect(screen.getByText(/Назва файлу test\.jpg/)).toBeInTheDocument();
   });
 
-  it('closes cropper modal', async () => {
+  it('should open MediaModal on "Редагувати" click', async () => {
     const user = userEvent.setup();
 
-    renderComponent();
-
-    await user.click(screen.getByRole('button', { name: /редагувати/i }));
-    await user.click(screen.getByRole('button', { name: /close/i }));
-
-    await waitFor(() => {
-      expect(screen.queryByTestId('cropper-modal')).not.toBeInTheDocument();
-    });
-  });
-
-  it('opens media modal in CROP mode and closes it', async () => {
-    const user = userEvent.setup();
-
-    renderComponent({ editorMode: 'mediaModal' });
+    render(<ImagePreviewBlock imageUrl="https://example.com/test.jpg" onChangeImage={onChangeImage} />);
 
     await user.click(screen.getByRole('button', { name: /редагувати/i }));
 
     expect(screen.getByTestId('media-modal')).toBeInTheDocument();
     expect(screen.getByTestId('initial-step')).toHaveTextContent('CROP');
+  });
 
+  it('opens media modal in CROP mode and closes it', async () => {
+    const user = userEvent.setup();
+
+    renderComponent();
+
+    await user.click(screen.getByRole('button', { name: /редагувати/i }));
     await user.click(screen.getByTestId('close'));
 
     await waitFor(() => {
@@ -174,10 +159,10 @@ describe('ImagePreviewBlock', () => {
     });
   });
 
-  it('opens media modal in UPLOAD mode', async () => {
+  it('opens media modal in UPLOAD mode on "Змінити" click', async () => {
     const user = userEvent.setup();
 
-    renderComponent({ editorMode: 'mediaModal' });
+    render(<ImagePreviewBlock imageUrl="https://example.com/test.jpg" onChangeImage={onChangeImage} />);
 
     await user.click(screen.getByRole('button', { name: /змінити/i }));
 
@@ -187,7 +172,7 @@ describe('ImagePreviewBlock', () => {
   it('applies upload result (updates preview + calls onChangeImage)', async () => {
     const user = userEvent.setup();
 
-    renderComponent({ editorMode: 'mediaModal' });
+    renderComponent();
 
     await user.click(screen.getByRole('button', { name: /змінити/i }));
     await user.click(screen.getByTestId('apply-upload'));
@@ -211,7 +196,7 @@ describe('ImagePreviewBlock', () => {
       } as Response)
     );
 
-    renderComponent({ editorMode: 'mediaModal' });
+    renderComponent();
 
     await user.click(screen.getByRole('button', { name: /змінити/i }));
     await user.click(screen.getByTestId('apply-non-upload'));
@@ -224,7 +209,7 @@ describe('ImagePreviewBlock', () => {
   it('shows success toast on successful apply', async () => {
     const user = userEvent.setup();
 
-    renderComponent({ editorMode: 'mediaModal' });
+    renderComponent();
 
     await user.click(screen.getByRole('button', { name: /змінити/i }));
     await user.click(screen.getByTestId('apply-upload'));
@@ -239,29 +224,13 @@ describe('ImagePreviewBlock', () => {
 
     (readFileAsDataURL as jest.Mock).mockRejectedValueOnce(new Error('fail'));
 
-    renderComponent({ editorMode: 'mediaModal' });
+    renderComponent();
 
     await user.click(screen.getByRole('button', { name: /змінити/i }));
     await user.click(screen.getByTestId('apply-upload'));
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Не вдалося змінити');
-    });
-  });
-
-  it('handles file input change in legacy mode', async () => {
-    const user = userEvent.setup();
-
-    renderComponent({ imageUrl: '' });
-
-    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
-    const file = new File(['img'], 'test.png', { type: 'image/png' });
-
-    await user.upload(input, file);
-
-    await waitFor(() => {
-      expect(readFileAsDataURL).toHaveBeenCalledWith(file);
-      expect(onChangeImage).toHaveBeenCalledWith(file);
     });
   });
 
@@ -278,7 +247,7 @@ describe('ImagePreviewBlock', () => {
 
     expect(screen.getByRole('img')).toHaveAttribute('src', 'old.jpg');
 
-    rerender(<ImagePreviewBlock imageUrl="new.jpg" cropWidth={300} cropHeight={200} onChangeImage={onChangeImage} />);
+    rerender(<ImagePreviewBlock imageUrl="new.jpg" onChangeImage={onChangeImage} />);
 
     await waitFor(() => {
       expect(screen.getByRole('img')).toHaveAttribute('src', 'new.jpg');
