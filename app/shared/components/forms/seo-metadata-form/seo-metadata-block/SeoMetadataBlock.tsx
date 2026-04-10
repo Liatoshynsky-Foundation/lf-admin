@@ -1,15 +1,17 @@
 'use client';
-import { Box } from '@mui/material';
+import { Box, TextField } from '@mui/material';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 
 import type { LocalizedMeta } from '../SeoMetadataForm';
 import SeoMetadataForm from '../SeoMetadataForm';
+import { styles } from '../SeoMetadataForm.styles';
 
 export interface SeoBlockValue {
   meta: { uk: LocalizedMeta; en: LocalizedMeta };
   ogImage: File | string | null;
   allowIndexing: { uk: boolean; en: boolean };
+  ticketUrl?: string;
 }
 
 const defaultValue: SeoBlockValue = {
@@ -18,11 +20,13 @@ const defaultValue: SeoBlockValue = {
     en: { title: '', description: '', keywords: '', canonicalUrl: undefined }
   },
   ogImage: null,
-  allowIndexing: { uk: true, en: true }
+  allowIndexing: { uk: true, en: true },
+  ticketUrl: ''
 };
 
 export interface SeoMetadataBlockProps {
   readonly showAlternativeText?: boolean;
+  readonly showTicketUrl?: boolean;
   readonly value?: SeoBlockValue;
   readonly onChange?: (value: SeoBlockValue) => void;
   readonly extraFields?: (locale: 'uk' | 'en') => ReactNode;
@@ -30,11 +34,26 @@ export interface SeoMetadataBlockProps {
 
 export default function SeoMetadataBlock({
   showAlternativeText = false,
+  showTicketUrl = false,
   value: externalValue,
   onChange: externalOnChange,
   extraFields
 }: SeoMetadataBlockProps) {
   const [internalValue, setInternalValue] = useState<SeoBlockValue>(defaultValue);
+  const [ticketUrlTouched, setTicketUrlTouched] = useState(false);
+  const [ticketUrlError, setTicketUrlError] = useState('');
+
+  const validateTicketUrl = (val: string) => (val.trim() ? '' : 'Обовʼязкове поле');
+
+  const handleTicketUrlChange = (val: string) => {
+    handleChange({ ...value, ticketUrl: val });
+    if (ticketUrlTouched) setTicketUrlError(validateTicketUrl(val));
+  };
+
+  const handleTicketUrlBlur = () => {
+    setTicketUrlTouched(true);
+    setTicketUrlError(validateTicketUrl(value.ticketUrl ?? ''));
+  };
 
   const isControlled = externalValue !== undefined && externalOnChange !== undefined;
   const value = isControlled ? externalValue : internalValue;
@@ -47,8 +66,30 @@ export default function SeoMetadataBlock({
     }
   };
 
+  const buildExtraFields = (locale: 'uk' | 'en') => {
+    const externalExtra = extraFields?.(locale);
+    if (!showTicketUrl) return externalExtra;
+    return (
+      <>
+        <TextField
+          label="Ticket URL"
+          value={value.ticketUrl ?? ''}
+          onChange={(e) => handleTicketUrlChange(e.target.value)}
+          onBlur={handleTicketUrlBlur}
+          error={ticketUrlTouched && Boolean(ticketUrlError)}
+          helperText={ticketUrlTouched && ticketUrlError ? ticketUrlError : ''}
+          fullWidth
+          size="small"
+          sx={styles.textField}
+          required
+        />
+        {externalExtra}
+      </>
+    );
+  };
+
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'row', gap: '4%', width: '100%' }}>
       <SeoMetadataForm
         value={value.meta.uk}
         onChange={(newMeta) => handleChange({ ...value, meta: { ...value.meta, uk: newMeta } })}
@@ -58,7 +99,7 @@ export default function SeoMetadataBlock({
         allowIndexing={value.allowIndexing.uk}
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, uk: val } })}
         showAlternativeText={showAlternativeText}
-        extraFields={extraFields?.('uk')}
+        extraFields={buildExtraFields('uk')}
       />
       <SeoMetadataForm
         value={value.meta.en}
@@ -69,7 +110,7 @@ export default function SeoMetadataBlock({
         allowIndexing={value.allowIndexing.en}
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, en: val } })}
         showAlternativeText={showAlternativeText}
-        extraFields={extraFields?.('en')}
+        extraFields={buildExtraFields('en')}
       />
     </Box>
   );

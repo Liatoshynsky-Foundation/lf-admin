@@ -17,10 +17,9 @@ export const styles = {
     borderRadius: '20px',
     backgroundColor: colors.white,
     border: `1px solid ${colors.blue[300]}`,
-    maxWidth: '560px',
     width: '48%',
+    minWidth: 0,
     minHeight: '794px',
-    mt: 4,
     px: 4,
     py: 3
   },
