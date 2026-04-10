@@ -29,7 +29,7 @@ export interface SeoMetadataBlockProps {
   readonly showTicketUrl?: boolean;
   readonly value?: SeoBlockValue;
   readonly onChange?: (value: SeoBlockValue) => void;
-  readonly extraFields?: (locale: 'uk' | 'en') => ReactNode;
+  readonly extraFields?: (locale: 'uk' | 'en', value: LocalizedMeta, onChange: (val: LocalizedMeta) => void) => ReactNode;
 }
 
 export default function SeoMetadataBlock({
@@ -43,7 +43,15 @@ export default function SeoMetadataBlock({
   const [ticketUrlTouched, setTicketUrlTouched] = useState(false);
   const [ticketUrlError, setTicketUrlError] = useState('');
 
-  const validateTicketUrl = (val: string) => (val.trim() ? '' : 'Обовʼязкове поле');
+  const validateTicketUrl = (val: string) => {
+    if (!val.trim()) return 'Обовʼязкове поле';
+    try {
+      new URL(val);
+      return '';
+    } catch {
+      return 'Некоректний URL';
+    }
+  };
 
   const handleTicketUrlChange = (val: string) => {
     handleChange({ ...value, ticketUrl: val });
@@ -66,8 +74,12 @@ export default function SeoMetadataBlock({
     }
   };
 
-  const buildExtraFields = (locale: 'uk' | 'en') => {
-    const externalExtra = extraFields?.(locale);
+  const buildExtraFields = (
+    locale: 'uk' | 'en',
+    localeMeta: LocalizedMeta,
+    onLocaleMeta: (val: LocalizedMeta) => void
+  ) => {
+    const externalExtra = extraFields?.(locale, localeMeta, onLocaleMeta);
     if (!showTicketUrl) return externalExtra;
     return (
       <>
@@ -99,7 +111,7 @@ export default function SeoMetadataBlock({
         allowIndexing={value.allowIndexing.uk}
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, uk: val } })}
         showAlternativeText={showAlternativeText}
-        extraFields={buildExtraFields('uk')}
+        extraFields={(localeMeta, onLocaleMeta) => buildExtraFields('uk', localeMeta, onLocaleMeta)}
       />
       <SeoMetadataForm
         value={value.meta.en}
@@ -110,7 +122,7 @@ export default function SeoMetadataBlock({
         allowIndexing={value.allowIndexing.en}
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, en: val } })}
         showAlternativeText={showAlternativeText}
-        extraFields={buildExtraFields('en')}
+        extraFields={(localeMeta, onLocaleMeta) => buildExtraFields('en', localeMeta, onLocaleMeta)}
       />
     </Box>
   );

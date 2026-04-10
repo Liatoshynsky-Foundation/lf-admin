@@ -30,7 +30,7 @@ export interface SeoMetadataFormProps {
   readonly allowIndexing: boolean;
   readonly onIndexingChange: (val: boolean) => void;
   readonly showAlternativeText?: boolean;
-  readonly extraFields?: ReactNode;
+  readonly extraFields?: (value: LocalizedMeta, onChange: (val: LocalizedMeta) => void) => ReactNode;
   readonly labels?: {
     readonly metaTitle?: string;
     readonly metaDescription?: string;
@@ -148,7 +148,7 @@ export default function SeoMetadataForm({
           onBlur={handleBlur}
           labels={labels}
         />
-        {extraFields}
+        {extraFields?.(value, onChange)}
       </Stack>
       {renderPhotoBlock()}
       <Divider sx={styles.divider} />

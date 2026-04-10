@@ -6,7 +6,6 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { notFound, useParams } from 'next/navigation';
-import { useState } from 'react';
 
 import { colors } from '~/shared/components/design-system/button/Button.styles';
 import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
@@ -36,10 +35,6 @@ export default function CreatePublicationPage() {
 
   const publicationType = type as PublicationType;
   const pageTitle = PAGE_TITLES[publicationType];
-
-  const [eventStart, setEventStart] = useState<string | undefined>(undefined);
-  const [eventEnd, setEventEnd] = useState<string | undefined>(undefined);
-  const [canonicalUrl, setCanonicalUrl] = useState({ uk: '', en: '' });
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
@@ -149,21 +144,18 @@ export default function CreatePublicationPage() {
           showTicketUrl={publicationType === 'events'}
           extraFields={
             publicationType === 'events'
-              ? () => (
+              ? (_locale, value, onChange) => (
                 <SeoDateTimeFields
-                  startDateTime={eventStart}
-                  endDateTime={eventEnd}
-                  onChange={(start, end) => {
-                    setEventStart(start);
-                    setEventEnd(end);
-                  }}
+                  startDateTime={value.startDateTime}
+                  endDateTime={value.endDateTime}
+                  onChange={(start, end) => onChange({ ...value, startDateTime: start, endDateTime: end })}
                 />
               )
               : publicationType === 'media'
-                ? (locale) => (
+                ? (_locale, value, onChange) => (
                   <SeoCanonicalUrlField
-                    value={canonicalUrl[locale]}
-                    onChange={(val) => setCanonicalUrl((prev) => ({ ...prev, [locale]: val }))}
+                    value={value.canonicalUrl ?? ''}
+                    onChange={(val) => onChange({ ...value, canonicalUrl: val })}
                     onBlur={() => {}}
                   />
                 )
