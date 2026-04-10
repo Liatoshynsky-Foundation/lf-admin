@@ -34,7 +34,6 @@ import { filterSelectStyles } from '~/shared/components/selector/FilterSelect.st
 import { useAllMediaMentions } from '~/shared/hooks/use-media-mentions/useMediaMentions';
 import { useAllNews } from '~/shared/hooks/use-news/useNews';
 import { usePublicationsFiltering } from '~/shared/hooks/use-publications';
-import { normalizeSearch } from '~/shared/utils/normalizeSearch';
 import type { ImageBlock, LocalizedString } from '~/types/common';
 import {
   type AllMediaMentionsQuery,
@@ -42,6 +41,7 @@ import {
   MediaStatus,
   NewsStatus
 } from '~/types/graphql/generated/graphql';
+import { normalizeSearch } from '~/utils/normalizeSearch';
 
 type PublicationsPageContentProps = Readonly<{
   activeTab: PublicationsTabValue;
