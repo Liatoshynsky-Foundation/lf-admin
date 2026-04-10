@@ -1,5 +1,4 @@
 import { GraphQLError } from 'graphql';
-import {Types} from 'mongoose';
 
 import {extractImagesWithMetadata} from '~/application/use-cases/extractImageSrc/extractImageSrc';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
@@ -120,7 +119,6 @@ export const syncImagesCrops = async (
           },
           {
             crop: item.crop,
-            imageAssetId: new Types.ObjectId(),
             pageId: contentId,
             cropId: item.src,
             locale
@@ -146,7 +144,6 @@ export const syncImagesCrops = async (
           },
           {
             crop: image.crop,
-            imageAssetId: new Types.ObjectId(),
             pageId: contentId,
             cropId: cropIdPrefix || 'coverImage',
             locale: l

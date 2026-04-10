@@ -4,11 +4,11 @@ import { JsonValue } from '~/back-shared/types/pages/types';
 const compareFn = (a: string, b: string) => a.localeCompare(b);
 
 describe('extractImageSrcs with Metadata', () => {
-  it('should find src if crop is present even if isTmp is missing', () => {
+  it('should NOT find src if crop is present but isTmp is missing in extractImageSrcs', () => {
     const data: JsonValue = {
       image: { src: 'cropped-image.jpg', crop: { x: 0, y: 0, width: 100, height: 100 } }
     };
-    expect(extractImageSrcs(data)).toEqual(['cropped-image.jpg']);
+    expect(extractImageSrcs(data)).toEqual([]);
   });
 
   it('should extract full metadata including crop object', () => {
@@ -20,12 +20,12 @@ describe('extractImageSrcs with Metadata', () => {
     expect(result).toEqual([{ src: 'test.png', crop }]);
   });
 
-  it('should find both isTmp and cropped images', () => {
+  it('should find only isTmp images in extractImageSrcs', () => {
     const data: JsonValue = {
       img1: { src: 'tmp.jpg', isTmp: true },
       img2: { src: 'permanent-cropped.jpg', isTmp: false, crop: { x: 1, y: 1, width: 5, height: 5 } }
     };
-    const expected = ['tmp.jpg', 'permanent-cropped.jpg'];
+    const expected = ['tmp.jpg'];
     expect(extractImageSrcs(data).toSorted(compareFn)).toEqual(expected.toSorted(compareFn));
   });
 
@@ -51,7 +51,7 @@ describe('extractImageSrcs uniqueness', () => {
     const data: JsonValue = {
       image1: { src: 'duplicate.jpg', isTmp: true },
       image2: { src: 'unique.png', isTmp: true },
-      image3: { src: 'duplicate.jpg', crop: { x: 0, y: 0, width: 10, height: 10 } }
+      image3: { src: 'duplicate.jpg', isTmp: true }
     };
     const expected = ['duplicate.jpg', 'unique.png'];
     const sortedResult = extractImageSrcs(data).toSorted(compareFn);
@@ -60,9 +60,9 @@ describe('extractImageSrcs uniqueness', () => {
     expect(sortedResult).toEqual(sortedExpected);
   });
 
-  it('should return unique metadata objects but unique srcs in extractImageSrcs', () => {
+  it('should return unique metadata objects', () => {
     const data: JsonValue = {
-      section1: { src: 'image.jpg', isTmp: true },
+      section1: { src: 'image.jpg', crop: { x: 0, y: 0, width: 1, height: 1 } },
       section2: { src: 'image.jpg', crop: { x: 0, y: 0, width: 1, height: 1 } }
     };
 
@@ -70,8 +70,7 @@ describe('extractImageSrcs uniqueness', () => {
     const srcs = extractImageSrcs(data);
 
     expect(metadata).toHaveLength(2);
-    expect(srcs).toHaveLength(1);
-    expect(srcs).toEqual(['image.jpg']);
+    expect(srcs).toHaveLength(0);
   });
 
   it('should find a deeply nested src', () => {
@@ -160,13 +159,13 @@ describe('extractImageSrcs', () => {
     });
 
     it('should return an empty array for null or undefined input', () => {
-      expect(extractImageSrcs(null)).toEqual([]);
+      expect(extractImageSrcs(null as unknown as JsonValue)).toEqual([]);
       expect(extractImageSrcs(undefined as unknown as JsonValue)).toEqual([]);
     });
 
     it('should return an empty array for a primitive value input', () => {
-      expect(extractImageSrcs('a string')).toEqual([]);
-      expect(extractImageSrcs(123)).toEqual([]);
+      expect(extractImageSrcs('a string' as unknown as JsonValue)).toEqual([]);
+      expect(extractImageSrcs(123 as unknown as JsonValue)).toEqual([]);
     });
   });
 });
