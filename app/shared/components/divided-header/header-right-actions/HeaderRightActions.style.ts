@@ -47,22 +47,23 @@ export const styles = {
   },
 
   group: {
+    display: 'flex',
     gap: '2px',
-    '& .MuiButtonGroup-grouped,  & .MuiIconButton-root': {
+    textTransform: 'none',
+    fontSize: '16px',
+    fontWeight: 500,
+    lineHeight: '150%',
+    border: 'none',
+    '& .MuiButton-root, & .MuiIconButton-root': {
       bgcolor: COLORS.yellow,
       color: COLORS.textBlack,
-      textTransform: 'none',
-      fontSize: '16px',
-      fontWeight: 500,
-      lineHeight: '150%',
-      border: 'none',
-      '&.Mui-disabled': {
-        border: 'none',
-        bgcolor: COLORS.grayBg,
-        color: COLORS.textGray
-      },
       '&:hover': { bgcolor: COLORS.yellowHover }
-    }
+    },
+    '&.Mui-disabled': {
+      border: 'none',
+      bgcolor: COLORS.grayBg,
+      color: COLORS.textGray
+    },
   } as SxProps<Theme>,
 
   groupLeft: { borderRadius: '28px 0 0 28px', px: 3 } as SxProps<Theme>,
