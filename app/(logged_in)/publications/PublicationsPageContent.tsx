@@ -196,7 +196,7 @@ const getLanguageFromLocalizedValue = (value: NullableLocalizedString): Publicat
 };
 
 const isPublicationCardStatus = (status: string): status is PublicationsStatusValue => {
-  return PUBLICATIONS_STATUSES.some((publicationStatus) => publicationStatus === status);
+  return PUBLICATIONS_STATUSES.includes(status as PublicationsStatusValue);
 };
 
 const mapCardType = (type: PublicationsItemType): ContentType => {
