@@ -24,6 +24,10 @@ const eventSchema = new Schema<EventsEntity>(
     eventDateTimeEnd: {
       type: Date,
       default: null
+    },
+    ticketUrl: {
+      type: String,
+      default: null
     }
   },
   {

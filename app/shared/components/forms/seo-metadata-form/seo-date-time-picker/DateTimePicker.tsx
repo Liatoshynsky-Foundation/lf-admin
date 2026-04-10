@@ -85,7 +85,7 @@ export default function DateTimePicker({ startDateTime, endDateTime, onChange, l
               color: '#190D03'
             },
             '& label': { sx: styles.datetimePickerLabel },
-            width: { sm: '200px', xl: '223px' },
+            width: { sm: '180px', xl: '223px' },
             '& .MuiPickersOutlinedInput-root.Mui-focused:not(.Mui-error) .MuiPickersOutlinedInput-notchedOutline': {
               borderColor: '#190D03',
               borderWidth: '1px'
@@ -100,10 +100,8 @@ export default function DateTimePicker({ startDateTime, endDateTime, onChange, l
   return (
     <Box sx={{ width: '100%' }}>
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="uk">
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Box sx={{ width: '45%' }}>
-            {renderPicker(startDateTime, labels.startDateTime || 'Початок події', handleStartChange)}
-          </Box>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+          <Box>{renderPicker(startDateTime, labels.startDateTime || 'Початок події', handleStartChange)}</Box>
           <Box
             sx={{
               textAlign: 'center',
@@ -115,9 +113,7 @@ export default function DateTimePicker({ startDateTime, endDateTime, onChange, l
           >
             —
           </Box>
-          <Box sx={{ width: '45%' }}>
-            {renderPicker(endDateTime, labels.endDateTime || 'Закінчення події', handleEndChange)}
-          </Box>
+          <Box>{renderPicker(endDateTime, labels.endDateTime || 'Закінчення події', handleEndChange)}</Box>
         </Box>
       </LocalizationProvider>
     </Box>
