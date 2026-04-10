@@ -5,11 +5,23 @@ export interface LocalizedString {
   en: string;
 }
 
+export interface CropRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface CropResult {
+  rect: CropRect;
+}
+
 export interface ImageBlock {
   src: string;
   alt: LocalizedString;
   caption: LocalizedString;
   isTmp?: boolean;
+  crop?: CropResult | null;
 }
 
 export type ImageType = {
@@ -17,6 +29,7 @@ export type ImageType = {
   alt: { uk: string; en: string };
   caption: { uk: string; en: string };
   generatedSrc: string;
+  crop?: CropResult | null;
 };
 
 export interface QuoteBlock {

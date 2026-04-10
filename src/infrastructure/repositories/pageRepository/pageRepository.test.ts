@@ -19,24 +19,30 @@ jest.mock('../../models/page.model', () => ({
   }
 }));
 
-jest.mock('../../models/draftPage.model', () => ({
-  __esModule: true,
-  default: {
-    findOne: jest.fn(),
-    findOneAndUpdate: jest.fn(),
-    save: jest.fn()
-  }
-}));
+jest.mock('../../models/draftPage.model', () => {
+  const mockSave = jest.fn();
+  const MockModel = jest.fn().mockImplementation(() => ({
+    save: mockSave,
+    toObject: jest.fn()
+  }));
+
+  return {
+    __esModule: true,
+    default: Object.assign(MockModel, {
+      findOne: jest.fn(),
+      findOneAndUpdate: jest.fn(),
+      save: mockSave
+    })
+  };
+});
 
 const mockedConnect = dbConnect as unknown as jest.Mock;
 const mockedPageFindOne = (PageModel as unknown as { findOne: jest.Mock }).findOne;
 const mockedPageFindOneAndUpdate = (PageModel as unknown as { findOneAndUpdate: jest.Mock }).findOneAndUpdate;
 
-const draftModelMock = jest.requireMock('../../models/draftPage.model') as {
-  default: { findOne: jest.Mock; findOneAndUpdate: jest.Mock; save: jest.Mock };
-};
-const mockedDraftFindOne = draftModelMock.default.findOne;
-const mockedDraftFindOneAndUpdate = draftModelMock.default.findOneAndUpdate;
+const DraftPageModelMock = jest.requireMock('../../models/draftPage.model').default;
+const mockedDraftFindOne = DraftPageModelMock.findOne;
+const mockedDraftFindOneAndUpdate = DraftPageModelMock.findOneAndUpdate;
 
 type LeanRet<T> = { lean: jest.Mock<Promise<T>, []>; toObject?: jest.Mock<T, []> };
 const leanResolved = <T>(val: T): LeanRet<T> => ({
@@ -44,10 +50,19 @@ const leanResolved = <T>(val: T): LeanRet<T> => ({
   toObject: jest.fn().mockReturnValue(val)
 });
 
+interface MockImageWithCrop {
+  image?: {
+    crop?: { x: number; y: number; width: number; height: number };
+  };
+  bigImage?: {
+    crop?: { x: number; y: number; width: number; height: number };
+  };
+}
+
 describe('PageRepository', () => {
   const repo = PageRepository({
     PageModel: PageModel as unknown as import('mongoose').Model<BasePage>,
-    DraftPageModel: draftModelMock.default as unknown as import('mongoose').Model<BasePage>
+    DraftPageModel: DraftPageModelMock as unknown as import('mongoose').Model<BasePage>
   });
 
   const _id = '507f1f77bcf86cd799439011';
@@ -63,7 +78,7 @@ describe('PageRepository', () => {
     blocks: {
       IntroSection: {
         title: { uk: 'Вступ', en: 'Introduction' },
-        image: { url: 'https://example.com/image.jpg', alt: { uk: 'Зображення', en: 'Image' } },
+        image: { src: 'foundation-first.jpg', alt: { uk: 'Зображення', en: 'Image' } },
         quote: { text: { uk: 'Цитата', en: 'Quote' }, author: 'Author' }
       }
     },
@@ -80,7 +95,7 @@ describe('PageRepository', () => {
     blocks: {
       IntroSection: {
         title: { uk: 'Чернетка Вступ', en: 'Draft Introduction' },
-        image: { url: 'https://example.com/draft-image.jpg', alt: { uk: 'Чернетка Зображення', en: 'Draft Image' } },
+        image: { src: 'draft-image.jpg', alt: { uk: 'Чернетка Зображення', en: 'Draft Image' } },
         quote: { text: { uk: 'Чернетка Цитата', en: 'Draft Quote' }, author: 'Draft Author' }
       }
     },
@@ -264,6 +279,106 @@ describe('PageRepository', () => {
       await expect(repo.applyPatchToPublished('about-us', patch, title, pageType)).rejects.toThrow(
         'Error during publishing the page'
       );
+    });
+  });
+
+  describe('applyPatchToPublished with crop', () => {
+    it('should include crop data in blocks when patched', async () => {
+      const crop = { x: 50, y: 50, width: 200, height: 200 };
+      const patch = {
+        $set: { 'IntroSection.image.crop': crop }
+      };
+
+      const title = { uk: 'Про нас', en: 'About us' };
+      const pageType = 'AboutUsPage';
+
+      const updatedDoc = {
+        ...publishedDoc,
+        blocks: {
+          ...publishedDoc.blocks,
+          IntroSection: {
+            ...publishedDoc.blocks.IntroSection,
+            image: { ...publishedDoc.blocks.IntroSection.image, crop }
+          }
+        }
+      };
+
+      mockedPageFindOneAndUpdate.mockReturnValueOnce(leanResolved(updatedDoc));
+
+      const res = await repo.applyPatchToPublished('about-us', patch, title, pageType);
+
+      const introSection = res.blocks.IntroSection as unknown as MockImageWithCrop;
+      expect(introSection.image?.crop).toEqual(crop);
+
+      expect(mockedPageFindOneAndUpdate).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          $set: expect.objectContaining({
+            'blocks.IntroSection.image.crop': crop
+          })
+        }),
+        expect.anything()
+      );
+    });
+  });
+
+  describe('createDraft with crop', () => {
+    it('should save a new draft with crop data in blocks', async () => {
+      const crop = { x: 10, y: 10, width: 100, height: 100 };
+      const blocks = {
+        IntroSection: {
+          image: { src: 'new-image.jpg', crop }
+        }
+      };
+
+      const newDraftDoc = { ...draftDoc, _id: 'new-draft-id', blocks };
+      const mockSave = jest.fn().mockResolvedValue({
+        toObject: jest.fn().mockReturnValue(newDraftDoc)
+      });
+      DraftPageModelMock.mockImplementationOnce(() => ({ save: mockSave }));
+
+      const res = await repo.createDraft('about-us', blocks, publishedDoc as unknown as BasePage);
+
+      const resBlocks = res.blocks as unknown as Record<string, MockImageWithCrop>;
+      expect(resBlocks.IntroSection.image?.crop).toEqual(crop);
+    });
+  });
+
+  describe('applyPatchToDraft with crop', () => {
+    it('should apply patch containing crop to draft blocks', async () => {
+      const crop = { x: 25, y: 25, width: 50, height: 50 };
+      const patch: Patch = { $set: { 'IntroSection.image.crop': crop } };
+
+      const updatedDraft = {
+        ...draftDoc,
+        blocks: { IntroSection: { image: { src: 'foundation-first.jpg', crop } } }
+      };
+
+      mockedDraftFindOneAndUpdate.mockReturnValueOnce(leanResolved(updatedDraft));
+      const res = await repo.applyPatchToDraft('about-us', patch);
+
+      const resBlocks = res.blocks as unknown as Record<string, MockImageWithCrop>;
+      expect(resBlocks.IntroSection.image?.crop).toEqual(crop);
+    });
+  });
+
+  describe('applyPatchToPublished with complex crop', () => {
+    it('should correctly build dot notation for nested crop updates', async () => {
+      const crop = { x: 0, y: 0, width: 500, height: 500 };
+      const patch: Patch = { $set: { 'OurMission.bigImage.crop': crop } };
+      const title = { uk: 'Місія', en: 'Mission' };
+      const pageType = 'AboutUsPage';
+
+      const updatedDoc = {
+        ...publishedDoc,
+        blocks: { OurMission: { bigImage: { src: 'mission.jpg', crop } } }
+      };
+
+      mockedPageFindOneAndUpdate.mockReturnValueOnce(leanResolved(updatedDoc));
+      const res = await repo.applyPatchToPublished('about-us', patch, title, pageType);
+
+      const resBlocks = res.blocks as unknown as Record<string, MockImageWithCrop>;
+      expect(resBlocks.OurMission.bigImage?.crop).toEqual(crop);
     });
   });
 });

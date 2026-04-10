@@ -1,8 +1,12 @@
 import { GraphQLError } from 'graphql';
 
+import {extractImagesWithMetadata} from '~/application/use-cases/extractImageSrc/extractImageSrc';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
+import { JsonValue } from '~/back-shared/types/pages/types';
 import { graphqlErrors } from '~/constants/errors';
+import { LocalizedImage} from '~/domain/entities/BaseContent';
 import {BaseEntity, FiltersInput} from '~/domain/repositories/baseRepository';
+import {ImageCropModel} from '~/infrastructure/models/imageCrop.model';
 import { RepositoriesModule } from '~/src/container/modules/repositories.module';
 import {generateUniqueSlug} from '~/src/shared/utils';
 import {SortByDate, SortOrder} from '~/types/enums/common.enums';
@@ -98,5 +102,65 @@ export const processSlugUpdate = async <
         return existing !== null && (id ? existing.id !== id : true);
       }
     });
+  }
+};
+
+export const syncImagesCrops = async (
+  contentId: string,
+  data: unknown,
+  options: {
+    locale?: 'uk' | 'en';
+    cropIdPrefix?: string;
+    isCoverImage?: boolean;
+  } = {}
+): Promise<void> => {
+  const { locale = 'uk', cropIdPrefix = '', isCoverImage = false } = options;
+
+  if (!isCoverImage) {
+    const imagesWithMetadata = extractImagesWithMetadata(data as JsonValue);
+
+    for (const item of imagesWithMetadata) {
+      if (item.crop) {
+        await ImageCropModel.findOneAndUpdate(
+          {
+            pageId: contentId,
+            cropId: item.src,
+            locale
+          },
+          {
+            crop: item.crop,
+            pageId: contentId,
+            cropId: item.src,
+            locale
+          },
+          { upsert: true, new: true }
+        );
+      }
+    }
+    return;
+  }
+
+  if (isCoverImage) {
+    const image = data as LocalizedImage;
+    if (image?.crop) {
+      const locales: Array<'uk' | 'en'> = ['uk', 'en'];
+
+      await Promise.all(locales.map(l =>
+        ImageCropModel.findOneAndUpdate(
+          {
+            pageId: contentId,
+            cropId: cropIdPrefix || 'coverImage',
+            locale: l
+          },
+          {
+            crop: image.crop,
+            pageId: contentId,
+            cropId: cropIdPrefix || 'coverImage',
+            locale: l
+          },
+          { upsert: true, new: true }
+        )
+      ));
+    }
   }
 };

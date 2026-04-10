@@ -9,7 +9,7 @@ export interface CropRect {
   height: number;
 }
 
-const cropRectSchema = new Schema<CropRect>(
+export const cropRectSchema = new Schema<CropRect>(
   {
     x: { type: Number, required: true },
     y: { type: Number, required: true },
@@ -21,12 +21,10 @@ const cropRectSchema = new Schema<CropRect>(
 
 const imageCropSchema = new Schema(
   {
-    imageAssetId: { type: Schema.Types.ObjectId, required: true, ref: 'ImageAsset', index: true },
-
-    cropId: { type: String, required: true, trim: true, index: true },
-
     pageId: { type: String, required: false, default: null, index: true },
     blockId: { type: String, required: false, default: null, index: true },
+
+    cropId: { type: String, required: true, trim: true, index: true },
     locale: { type: String, required: true, enum: ['uk', 'en'], index: true },
 
     crop: { type: cropRectSchema, required: true }
@@ -39,33 +37,9 @@ const imageCropSchema = new Schema(
 );
 
 imageCropSchema.index(
-  { imageAssetId: 1, pageId: 1, blockId: 1, locale: 1 },
-  {
-    unique: true,
-    partialFilterExpression: {
-      pageId: { $type: 'string' },
-      blockId: { $type: 'string' }
-    }
-  }
+  { pageId: 1, cropId: 1, locale: 1 },
+  { unique: true }
 );
-
-imageCropSchema.index(
-  { imageAssetId: 1, pageId: 1, locale: 1 },
-  {
-    unique: true,
-    partialFilterExpression: {
-      pageId: { $type: 'string' },
-      blockId: null
-    }
-  }
-);
-
-imageCropSchema.index(
-  { imageAssetId: 1, locale: 1, cropId: 1 },
-  { unique: true, partialFilterExpression: { pageId: null, blockId: null } }
-);
-
-imageCropSchema.index({ imageAssetId: 1, updatedAt: -1 });
 
 export type ImageCropDocument = InferSchemaType<typeof imageCropSchema> & {
   _id: Types.ObjectId;

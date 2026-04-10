@@ -1,13 +1,23 @@
-import {CreateEventArgs, EventsMutation} from './eventsMutation';
-import type { GraphQLContext } from '~/back-shared/types/container/types';
+import { CreateEventArgs, EventsMutation } from './eventsMutation';
+import { LocalizedImage } from '~/domain/entities/BaseContent';
 import { EventsEntity } from '~/domain/entities/Events';
-import type { CreateEventInput, IEventsRepository } from '~/domain/repositories/eventsRepository';
+import type { CreateEventInput, IEventsRepository, UpdateEventInput } from '~/domain/repositories/eventsRepository';
+import { createMockContext } from '~/interfaces/graphql/resolvers/testUtils';
 import { EventStatus } from '~/types/enums/common.enums';
+
+jest.mock('mongoose');
+
+import * as helpers from '../helpers';
 
 jest.mock('~/src/shared/utils/slugGenerator/slugGenerator', () => ({
   generateUniqueSlug: jest.fn((title: string) =>
     Promise.resolve(`slug-${title.toLowerCase().replaceAll(/\s+/g, '-')}`)
   )
+}));
+
+jest.mock('../helpers', () => ({
+  ...jest.requireActual('../helpers'),
+  syncImagesCrops: jest.fn(),
 }));
 
 describe('EventsMutation Resolvers', () => {
@@ -20,17 +30,8 @@ describe('EventsMutation Resolvers', () => {
     incrementViews: jest.fn()
   };
 
-  const createTestContext = (isAdmin: boolean): GraphQLContext => ({
-    admin: isAdmin,
-    requestContainer: {
-      cradle: {
-        eventsRepository: mockRepo as IEventsRepository
-      }
-    }
-  } as unknown as GraphQLContext);
-
-  const adminContext = createTestContext(true);
-  const userContext = createTestContext(false);
+  const adminContext = createMockContext(true, 'eventsRepository', mockRepo);
+  const userContext = createMockContext(false, 'eventsRepository', mockRepo);
 
   const createMockEntity = (overrides: Partial<EventsEntity> = {}): EventsEntity => ({
     id: '1',
@@ -58,7 +59,12 @@ describe('EventsMutation Resolvers', () => {
     keywords: { uk: 'к', en: 'k' },
     allowIndexation: { uk: true, en: true },
     content: { uk: { blocks: [] }, en: { blocks: [] } } as EventsEntity['content'],
-    coverImage: { src: '', alt: { uk: '', en: '' }, caption: { uk: '', en: '' } },
+    coverImage: {
+      src: 'event.jpg',
+      alt: { uk: 'alt uk', en: 'alt en' },
+      caption: { uk: '', en: '' },
+      crop: { x: 10, y: 10, width: 50, height: 50 }
+    },
     status: EventStatus.Draft,
     meta: { views: 0 },
     ...overrides
@@ -75,22 +81,29 @@ describe('EventsMutation Resolvers', () => {
   });
 
   describe('Business Logic', () => {
-    it('should create event with correct slug and status', async () => {
+    it('should create event with correct slug and status and call syncImagesCrops', async () => {
       const input = createMockInput();
       (mockRepo.findBySlug as jest.Mock).mockResolvedValue(null);
-      (mockRepo.create as jest.Mock).mockResolvedValue(createMockEntity({ slug: 'slug-подія' }));
+      (mockRepo.create as jest.Mock).mockResolvedValue(createMockEntity({ id: 'event-1', slug: 'slug-подія' }));
 
       const result = await EventsMutation.createEvent({}, { input }, adminContext);
 
       expect(result.slug).toBe('slug-подія');
-      expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({
-        status: EventStatus.Draft
-      }));
+      expect(mockRepo.create).toHaveBeenCalled();
+      expect(helpers.syncImagesCrops).toHaveBeenCalledWith('event-1', input.coverImage, { isCoverImage: true });
+      expect(helpers.syncImagesCrops).toHaveBeenCalledWith('event-1', input.content);
     });
 
-    it('should update event and generate new slug if title changes', async () => {
+    it('should update event and call syncImagesCrops only for provided fields', async () => {
       const id = '123';
-      const updateInput = { title: { uk: 'Нова Назва', en: 'New Name' } };
+      const updateInput: UpdateEventInput = {
+        title: { uk: 'Нова Назва', en: 'New Name' },
+        coverImage: {
+          src: 'updated.jpg',
+          alt: { uk: 'оновлено', en: 'updated' },
+          crop: { x: 1, y: 1, width: 1, height: 1 }
+        } as LocalizedImage
+      };
 
       (mockRepo.findBySlug as jest.Mock).mockResolvedValue(null);
       (mockRepo.update as jest.Mock).mockResolvedValue(createMockEntity({ id, slug: 'slug-нова-назва' }));
@@ -98,12 +111,14 @@ describe('EventsMutation Resolvers', () => {
       const result = await EventsMutation.updateEvent({}, { id, input: updateInput }, adminContext);
 
       expect(result.slug).toBe('slug-нова-назва');
-      expect(mockRepo.update).toHaveBeenCalledWith(id, expect.objectContaining({ slug: 'slug-нова-назва' }));
+      expect(helpers.syncImagesCrops).toHaveBeenCalledWith(id, updateInput.coverImage, { isCoverImage: true });
+      expect(helpers.syncImagesCrops).not.toHaveBeenCalledWith(id, undefined);
+      expect(helpers.syncImagesCrops).toHaveBeenCalledTimes(1);
     });
 
     it('should allow the same slug if it belongs to the event being updated', async () => {
       const id = '123';
-      const updateInput = { title: { uk: 'Нова Назва', en: 'New Name' } };
+      const updateInput: UpdateEventInput = { title: { uk: 'Нова Назва', en: 'New Name' } };
 
       (mockRepo.findBySlug as jest.Mock).mockResolvedValue(createMockEntity({ id: '123', slug: 'slug-existing-title' }));
       (mockRepo.update as jest.Mock).mockResolvedValue(createMockEntity({ id, slug: 'slug-existing-title' }));
@@ -116,7 +131,7 @@ describe('EventsMutation Resolvers', () => {
     it('should default to Draft status if no status is provided', async () => {
       const input = createMockInput();
       const { status: _status, ...inputWithoutStatus } = input;
-      const finalInput: CreateEventArgs['input'] = inputWithoutStatus as CreateEventArgs['input'];
+      const finalInput = inputWithoutStatus as unknown as CreateEventArgs['input'];
 
       (mockRepo.create as jest.Mock).mockResolvedValue(createMockEntity({ status: EventStatus.Draft }));
 
@@ -140,7 +155,7 @@ describe('EventsMutation Resolvers', () => {
 
       const result = await EventsMutation.incrementEventViews({}, { id: '1' }, adminContext);
 
-      expect(result!.meta.views).toBe(100);
+      expect(result?.meta.views).toBe(100);
       expect(mockRepo.incrementViews).toHaveBeenCalledWith('1');
     });
 

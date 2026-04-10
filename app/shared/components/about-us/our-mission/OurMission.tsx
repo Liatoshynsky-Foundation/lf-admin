@@ -15,6 +15,7 @@ import { proseToText, textToProse } from '~/lib/utils/prose';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 import { ConfigurableListItem } from '~/types/accordionBlocks';
+import { CropResult } from '~/types/common';
 import { useUploadBlobMutation } from '~/types/graphql/generated/graphql';
 import { MissionListItemWithId } from '~/types/store/pages/about-us/blocks/missionBlock';
 import { getImageUrl } from '~/utils/getImageUrl';
@@ -27,16 +28,15 @@ export type MissionImage = {
   generatedSrc: string;
   caption: { uk: string; en: string };
   alt: { uk: string; en: string };
+  crop?: CropResult | null;
 };
 
 type MissionImageBlockProps = {
   image: MissionImage;
   locale: 'uk' | 'en';
   title: string;
-  onChangeCaption: (value: string, file?: File) => void;
-  onChangeImage: (file: File) => void;
-  cropWidth?: number;
-  cropHeight?: number;
+  onChangeCaption: (value: string) => void;
+  onChangeImage: (file: File, crop?: CropResult | null) => void;
 };
 
 const MissionImageBlock = ({
@@ -51,6 +51,7 @@ const MissionImageBlock = ({
       imageUrl={getImageUrl(image)}
       title={title}
       fileName={image.src || ''}
+      initialCrop={image.crop}
       onChangeImage={onChangeImage}
     />
     <CustomTextField
@@ -88,6 +89,7 @@ const OurMission = () => {
     );
     setField(pageId, blockId, 'list', updatedList);
   };
+
   const handleAddMissionPoint = (): MissionPoint => {
     const newItem: MissionListItemWithId = {
       uk: { type: 'doc', content: [] },
@@ -104,17 +106,27 @@ const OurMission = () => {
     setField(pageId, blockId, 'list', newList);
   };
 
-  const handleImageChange = (key: 'smallImage' | 'bigImage', value: string, file?: File) => {
+  const handleCaptionChange = (key: 'smallImage' | 'bigImage', value: string) => {
+    const image = block[key];
+    if (!image) return;
+    setField(pageId, blockId, key, {
+      ...image,
+      caption: { ...image.caption, [currentLocale]: value }
+    });
+  };
+
+  const handleImageChange = async (key: 'smallImage' | 'bigImage', file: File, crop?: CropResult | null) => {
     const image = block[key];
     if (!image) return;
 
-    const updated = {
+    setField(pageId, blockId, key, {
       ...image,
-      caption: { ...image.caption, [currentLocale]: value },
-      ...(file && { src: file.name, generatedSrc: `/api/blob-url?folderName=photos&blobName=${file.name}` })
-    };
+      src: file.name,
+      isTmp: true,
+      crop: crop ?? null
+    } as typeof image);
 
-    setField(pageId, blockId, key, updated);
+    await handleUploadImage(file, pageId, blockId, key, uploadBlob, 'tmp');
   };
 
   return (
@@ -133,7 +145,7 @@ const OurMission = () => {
       {missionPoints.length > 0 && (
         <>
           <Box component="h4" sx={styles.pointHeader}>
-            Текст секції:
+                Текст секції:
           </Box>
           <ConfigurableList<MissionPoint>
             items={missionPoints}
@@ -163,8 +175,8 @@ const OurMission = () => {
           image={block.smallImage}
           locale={currentLocale}
           title="Перше зображення секції"
-          onChangeCaption={(value, file) => handleImageChange('smallImage', value, file)}
-          onChangeImage={(file) => handleUploadImage(file, pageId, blockId, 'smallImage', uploadBlob, 'tmp')}
+          onChangeCaption={(value) => handleCaptionChange('smallImage', value)}
+          onChangeImage={(file, crop) => handleImageChange('smallImage', file, crop)}
         />
       )}
 
@@ -173,8 +185,8 @@ const OurMission = () => {
           image={block.bigImage}
           locale={currentLocale}
           title="Друге зображення секції"
-          onChangeCaption={(value, file) => handleImageChange('bigImage', value, file)}
-          onChangeImage={(file) => handleUploadImage(file, pageId, blockId, 'bigImage', uploadBlob, 'tmp')}
+          onChangeCaption={(value) => handleCaptionChange('bigImage', value)}
+          onChangeImage={(file, crop) => handleImageChange('bigImage', file, crop)}
         />
       )}
     </CollapsibleBlock>

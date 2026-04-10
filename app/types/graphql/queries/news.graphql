@@ -11,8 +11,7 @@ fragment NewsFields on News {
     alt { uk en }
     caption { uk en }
     isTmp
-    width
-    height
+    crop { x y width height }
   }
   status
   allowIndexation { uk en }

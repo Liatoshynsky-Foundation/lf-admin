@@ -1,13 +1,24 @@
 import { GraphQLError } from 'graphql';
 
 import { CreateMediaMentionGQLInput, MediaMentionsMutation, UpdateMediaMentionGQLInput } from './mediaMentionMutation';
-import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { MediaMentionEntity } from '~/domain/entities/MediaMentions';
 import type { IMediaMentionsRepository } from '~/domain/repositories/mediaMentionsRepository';
+import { createMockContext } from '~/interfaces/graphql/resolvers/testUtils';
 import { MediaStatus } from '~/types/enums/common.enums';
 
+jest.mock('mongoose');
+
+import * as helpers from '../helpers';
+
+jest.mock('../helpers', () => ({
+  ...jest.requireActual('../helpers'),
+  syncImagesCrops: jest.fn(),
+}));
+
 jest.mock('~/src/shared/utils/slugGenerator/slugGenerator', () => ({
-  generateUniqueSlug: jest.fn((title: string) => Promise.resolve(title.toLowerCase().replaceAll(/\s+/g, '-')))
+  generateUniqueSlug: jest.fn((title: string) =>
+    Promise.resolve(title.toLowerCase().replaceAll(/\s+/g, '-'))
+  )
 }));
 
 describe('media-mentions Mutation', () => {
@@ -19,12 +30,7 @@ describe('media-mentions Mutation', () => {
     incrementViews: jest.fn(),
   };
 
-  const adminContext = {
-    admin: true,
-    requestContainer: {
-      cradle: { mediaMentionsRepository: mockRepo as IMediaMentionsRepository }
-    }
-  } as unknown as GraphQLContext;
+  const adminContext = createMockContext(true, 'mediaMentionsRepository', mockRepo);
 
   const createMockEntity = (overrides: Partial<MediaMentionEntity> = {}): MediaMentionEntity => ({
     id: 'mock-id',
@@ -55,13 +61,18 @@ describe('media-mentions Mutation', () => {
       description: { uk: 'Опис', en: 'Desc' },
       keywords: { uk: 'ключі', en: 'keys' },
       allowIndexation: { uk: true, en: true },
-      coverImage: { src: 'img.jpg', alt: { uk: '', en: '' }, caption: { uk: '', en: '' } },
+      coverImage: {
+        src: 'img.jpg',
+        alt: { uk: '', en: '' },
+        caption: { uk: '', en: '' },
+        crop: { x: 0, y: 0, width: 100, height: 100 }
+      },
       status: MediaStatus.Draft
     };
 
-    it('should generate slug and call repo.create', async () => {
+    it('should generate slug and call repo.create and sync crops using unified helper', async () => {
       (mockRepo.findBySlug as jest.Mock).mockResolvedValue(null);
-      (mockRepo.create as jest.Mock).mockResolvedValue(createMockEntity({ ...input, id: 'new-id', slug: 'тестова-стаття' }));
+      (mockRepo.create as jest.Mock).mockResolvedValue(createMockEntity({ id: 'new-id', slug: 'тестова-стаття' }));
 
       const result = await MediaMentionsMutation.createMediaMention({}, { input }, adminContext);
 
@@ -70,16 +81,17 @@ describe('media-mentions Mutation', () => {
         slug: 'тестова-стаття',
         meta: { views: 0 }
       }));
+      expect(helpers.syncImagesCrops).toHaveBeenCalledWith('new-id', input.coverImage, { isCoverImage: true });
     });
 
     it('should throw unauthenticated error if not admin', async () => {
-      const context = { admin: false } as unknown as GraphQLContext;
+      const context = createMockContext(false, 'mediaMentionsRepository', mockRepo);
       await expect(MediaMentionsMutation.createMediaMention({}, { input }, context))
         .rejects.toThrow(GraphQLError);
     });
 
     it('should throw error if title.uk is missing for slug generation', async () => {
-      const invalidInput = { ...input, title: { en: 'Only English' } } as CreateMediaMentionGQLInput;
+      const invalidInput = { ...input, title: { en: 'Only English' } } as unknown as CreateMediaMentionGQLInput;
       await expect(MediaMentionsMutation.createMediaMention({}, { input: invalidInput }, adminContext))
         .rejects.toThrow('Title is required for slug generation');
     });
@@ -88,10 +100,16 @@ describe('media-mentions Mutation', () => {
   describe('updateMediaMention', () => {
     const id = 'existing-id';
     const updateInput: UpdateMediaMentionGQLInput = {
-      title: { uk: 'Оновлений заголовок', en: 'Updated Title' }
+      title: { uk: 'Оновлений заголовок', en: 'Updated Title' },
+      coverImage: {
+        src: 'updated.jpg',
+        alt: { uk: '', en: '' },
+        caption: { uk: '', en: '' },
+        crop: { x: 5, y: 5, width: 90, height: 90 }
+      }
     };
 
-    it('should update slug when title changes', async () => {
+    it('should update slug and sync crops when title/image changes', async () => {
       (mockRepo.findBySlug as jest.Mock).mockResolvedValue(null);
       (mockRepo.update as jest.Mock).mockResolvedValue(createMockEntity({ id, slug: 'оновлений-заголовок' }));
 
@@ -101,6 +119,7 @@ describe('media-mentions Mutation', () => {
       expect(mockRepo.update).toHaveBeenCalledWith(id, expect.objectContaining({
         slug: 'оновлений-заголовок'
       }));
+      expect(helpers.syncImagesCrops).toHaveBeenCalledWith(id, updateInput.coverImage, { isCoverImage: true });
     });
 
     it('should throw error if entity not found', async () => {

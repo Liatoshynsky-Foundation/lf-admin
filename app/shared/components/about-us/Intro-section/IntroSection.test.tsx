@@ -12,7 +12,7 @@ jest.mock('~/store', () => ({
 }));
 
 jest.mock('~/utils/uploadToTmpFolder', () => ({
-  handleUploadImage: (...args: any[]) => handleUploadImageMock(...args)
+  handleUploadImage: (...args: unknown[]) => handleUploadImageMock(...args)
 }));
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
