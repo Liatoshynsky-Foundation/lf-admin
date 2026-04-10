@@ -7,6 +7,7 @@ import { ImagePreviewModal } from './image-preview-modal/ImagePreviewModal';
 import { useAutosavedDescription } from './useAutosavedDescription';
 import { formatUsageCount } from '~/lib/utils/formatUsageCount';
 import CloseIcon from '~/public/icons/close.svg';
+import DocIcon from '~/public/icons/doc.svg';
 import DownloadOutlinedIcon from '~/public/icons/download.svg';
 import DeleteOutlineIcon from '~/public/icons/empty-trash.svg';
 import EditOutlinedIcon from '~/public/icons/pen-line.svg';
@@ -14,6 +15,9 @@ import PictureIcon from '~/public/icons/picture.svg';
 import StarBorderIcon from '~/public/icons/small-star.svg';
 import AudioIcon from '~/public/icons/type-audio.svg';
 import PdfIcon from '~/public/icons/type-pdf.svg';
+import VideoFileIcon from '~/public/icons/video-file.svg';
+import XlsIcon from '~/public/icons/xls.svg';
+import ArchiveIcon from '~/public/icons/zip.svg';
 import ZoomIn from '~/public/icons/zoom-in.svg';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 
@@ -25,7 +29,7 @@ export type FileUsageLink = {
 
 export type FileDetailsSidebarFile = {
   id: string;
-  type: 'image' | 'pdf' | 'audio';
+  type: 'image' | 'pdf' | 'audio' | 'document' | 'spreadsheet' | 'video' | 'archive';
   filename: string;
   previewUrl?: string;
 
@@ -61,7 +65,11 @@ const AUTOSAVE_DEBOUNCE_MS = 1800;
 const TYPE_ICON: Record<FileDetailsSidebarFile['type'], React.ComponentType> = {
   image: PictureIcon,
   pdf: PdfIcon,
-  audio: AudioIcon
+  audio: AudioIcon,
+  document: DocIcon,
+  spreadsheet: XlsIcon,
+  video: VideoFileIcon,
+  archive: ArchiveIcon
 };
 
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (

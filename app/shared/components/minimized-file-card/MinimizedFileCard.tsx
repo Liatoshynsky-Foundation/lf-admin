@@ -9,10 +9,14 @@ const ICON_SIZE = 21;
 const FILE_TYPES = {
   img: 'img',
   audio: 'audio',
-  pdf: 'pdf'
+  pdf: 'pdf',
+  doc: 'doc',
+  xls: 'xls',
+  'video-file': 'video-file',
+  archive: 'zip'
 } as const;
 
-type FileType = (typeof FILE_TYPES)[keyof typeof FILE_TYPES];
+type FileType = keyof typeof FILE_TYPES;
 
 interface MinimizedFileCardProps {
   fileType?: FileType;

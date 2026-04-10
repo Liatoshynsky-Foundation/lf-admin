@@ -2,7 +2,7 @@ import { FilterQuery, Model, Types } from 'mongoose';
 
 import { createBaseRepository } from '../baseRepository/baseRepository';
 
-type AssetType = 'image' | 'pdf' | 'audio' | 'document' | 'spreadsheet' | 'video';
+type AssetType = 'image' | 'pdf' | 'audio' | 'document' | 'spreadsheet' | 'video' | 'archive';
 
 type AssetUsageRef = {
   pageId?: string;

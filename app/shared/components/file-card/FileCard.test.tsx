@@ -93,7 +93,7 @@ describe('FileCard', () => {
   });
 
   it('should render correct file type icon for different file types', () => {
-    const fileTypes: FileType[] = ['image', 'audio', 'pdf'];
+    const fileTypes: FileType[] = ['image', 'audio', 'pdf', 'document', 'spreadsheet', 'video', 'archive'];
 
     fileTypes.forEach((type) => {
       const { unmount } = render(<FileCard fileType={type} fileData={defaultFileData} />);

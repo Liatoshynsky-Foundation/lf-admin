@@ -5,6 +5,7 @@ enum AssetType {
   document
   spreadsheet
   video
+  archive
 }
 
 enum AssetSortBy {

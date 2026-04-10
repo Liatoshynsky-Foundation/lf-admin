@@ -13,7 +13,11 @@ const ICON_SIZE_2 = 32;
 const FILE_TYPES = {
   image: 'img',
   audio: 'audio',
-  pdf: 'pdf'
+  pdf: 'pdf',
+  document: 'doc',
+  spreadsheet: 'xls',
+  video: 'video-file',
+  archive: 'zip'
 } as const;
 
 export type FileType = keyof typeof FILE_TYPES;

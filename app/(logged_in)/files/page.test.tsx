@@ -22,7 +22,11 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
   AssetType: {
     Image: 'Image',
     Pdf: 'Pdf',
-    Audio: 'Audio'
+    Audio: 'Audio',
+    Archive: 'Archive',
+    Video: 'Video',
+    Document: 'Document',
+    Spreadsheet: 'Spreadsheet'
   },
   useUploadBlobMutation: () => [mockUploadBlob]
 }));
@@ -83,11 +87,7 @@ jest.mock('~/shared/components/filtering-toolbar', () => ({
   }) => (
     <div data-testid="control-panel">
       {search ? (
-        <input
-          data-testid="search"
-          value={search.search}
-          onChange={(event) => search.setSearch(event.target.value)}
-        />
+        <input data-testid="search" value={search.search} onChange={(event) => search.setSearch(event.target.value)} />
       ) : null}
       {onToggleFilters ? (
         <button type="button" onClick={onToggleFilters}>
@@ -167,7 +167,7 @@ describe('Files page', () => {
       },
       {
         id: 'asset-doc',
-        type: 'Pdf',
+        type: 'Archive',
         filename: 'documents.zip',
         createdAt: '2026-03-18T10:00:00.000Z',
         isStarred: false,

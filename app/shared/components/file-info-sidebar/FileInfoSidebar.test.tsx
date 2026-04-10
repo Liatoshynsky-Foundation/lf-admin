@@ -42,6 +42,14 @@ jest.mock('~/public/icons/type-audio.svg', () => ({
 jest.mock('~/public/icons/type-pdf.svg', () => ({ __esModule: true, default: () => <svg data-testid="PdfIcon" /> }));
 jest.mock('~/public/icons/zoom-in.svg', () => ({ __esModule: true, default: () => <svg data-testid="ZoomInIcon" /> }));
 
+jest.mock('~/public/icons/doc.svg', () => ({ __esModule: true, default: () => <svg data-testid="DocIcon" /> }));
+jest.mock('~/public/icons/xls.svg', () => ({ __esModule: true, default: () => <svg data-testid="XlsIcon" /> }));
+jest.mock('~/public/icons/video-file.svg', () => ({
+  __esModule: true,
+  default: () => <svg data-testid="VideoIcon" />
+}));
+jest.mock('~/public/icons/zip.svg', () => ({ __esModule: true, default: () => <svg data-testid="ArchiveIcon" /> }));
+
 const commitMock = jest.fn();
 const setDraftMock = jest.fn();
 jest.mock('./useAutosavedDescription', () => ({
@@ -103,6 +111,14 @@ describe('FileInfoSidebar', () => {
 
     fireEvent.click(screen.getByLabelText('Close sidebar'));
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('should render ArchiveIcon when file type is archive', () => {
+    const archiveFile: FileDetailsSidebarFile = { ...baseFile, type: 'archive' };
+    render(<FileInfoSidebar file={archiveFile} onClose={jest.fn()} />);
+
+    const archiveIcons = screen.getAllByTestId('ArchiveIcon');
+    expect(archiveIcons.length).toBeGreaterThan(0);
   });
 
   it('should disable actions when file is missing id', () => {
