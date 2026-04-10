@@ -1,6 +1,11 @@
 import { GraphQLError } from 'graphql';
 
-import {endpointRepositoryHandler, extractTitleForSlug, processSlugUpdate} from '../helpers';
+import {
+  endpointRepositoryHandler,
+  extractTitleForSlug,
+  processSlugUpdate,
+  syncImagesCrops
+} from '../helpers';
 import { processNewsContent } from './processNewsContent/processNewsContent';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
@@ -86,7 +91,16 @@ export const NewsMutation = {
       meta: { views: 0 }
     };
 
-    return repo.create(newsData);
+    const res = await repo.create(newsData);
+
+    if (input.coverImage?.crop) {
+      await syncImagesCrops(res.id, input.coverImage, { isCoverImage: true });
+    }
+    if (input.content) {
+      await syncImagesCrops(res.id, input.content);
+    }
+
+    return res;
   },
 
   updateNews: async (_: unknown, { id, input }: UpdateNewsArgs, context: GraphQLContext): Promise<News> => {
@@ -122,6 +136,13 @@ export const NewsMutation = {
       throw new GraphQLError(newsServiceErrors.NEWS_NOT_FOUND(id), {
         extensions: { code: 'NEWS_NOT_FOUND' }
       });
+    }
+
+    if (input.coverImage?.crop) {
+      await syncImagesCrops(res.id, input.coverImage, { isCoverImage: true });
+    }
+    if (input.content) {
+      await syncImagesCrops(res.id, input.content);
     }
 
     return res;

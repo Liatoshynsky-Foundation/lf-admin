@@ -45,6 +45,18 @@ describe('getStatus', () => {
     expect(mockedFormatDate).toHaveBeenCalledWith('2024-01-01');
   });
 
+  it('should return draft label when createdAt is missing', () => {
+    const result = getStatus('draft');
+
+    expect(result).toBe('Чернетка');
+  });
+
+  it('should return editing label for editing status', () => {
+    const result = getStatus('editing', '2024-01-01', '2024-02-01');
+
+    expect(result).toBe('Редагування');
+  });
+
   it('should return empty string for unknown status', () => {
     const result = getStatus('archived', '2024-01-01');
 

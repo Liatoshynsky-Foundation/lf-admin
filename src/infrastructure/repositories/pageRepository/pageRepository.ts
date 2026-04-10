@@ -95,13 +95,17 @@ export const PageRepository = ({ PageModel, DraftPageModel }: PageRepoDeps): Pag
       updateQuery.$set.pageType = pageType;
       updateQuery.$set.status = PageStatus.Published;
 
-      const updated = await PageModel.findOneAndUpdate({ slug }, updateQuery, {
-        new: true,
-        upsert: true,
-        runValidators: true,
-        context: 'query',
-        strict: false
-      }).lean<DbPage>();
+      const updated = await PageModel.findOneAndUpdate(
+        { slug },
+        updateQuery,
+        {
+          new: true,
+          upsert: true,
+          runValidators: true,
+          context: 'query',
+          strict: false
+        }
+      ).lean<DbPage>();
 
       if (!updated) throw new Error('Error during publishing the page');
       return toEntity(updated);

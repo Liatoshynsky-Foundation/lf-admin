@@ -2,6 +2,7 @@
 import { Stack } from '@mui/material';
 import React from 'react';
 
+import {MediaModalResult} from '~/components/media-modal/MediaModal.types';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { ImagePreviewBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
 import { ImageType, LocalizedString } from '~/types/common';
@@ -25,14 +26,16 @@ export const ContributorCard = ({
   onChangeDescription,
   onChangePhoto
 }: ContributorCardProps) => {
-  const handleChangeImage = (file: File) => {
+  const handleChangeImage = (file: File, crop?: MediaModalResult['crop']) => {
     const previewUrl = URL.createObjectURL(file);
 
     const updatedPhoto: ImageType = {
       ...contributor.photo,
 
       generatedSrc: previewUrl,
-      alt: { ...contributor.photo.alt, [currentLocale]: contributor.photo.alt[currentLocale] || file.name }
+      src: file.name,
+      alt: { ...contributor.photo.alt, [currentLocale]: contributor.photo.alt[currentLocale] || file.name },
+      ...(crop && { crop })
     };
 
     onChangePhoto(updatedPhoto);
@@ -43,6 +46,7 @@ export const ContributorCard = ({
       <ImagePreviewBlock
         imageUrl={contributor.photo.generatedSrc || '/images/oval-contributor-card.png'}
         fileName={contributor.photo.alt[currentLocale] || ''}
+        initialCrop={(contributor.photo as unknown as { crop: MediaModalResult['crop'] }).crop}
         onChangeImage={handleChangeImage}
         direction="column"
         buttonSpacing="8px"

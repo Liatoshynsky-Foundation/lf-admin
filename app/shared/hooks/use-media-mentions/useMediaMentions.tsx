@@ -2,7 +2,6 @@ import { FetchResult } from '@apollo/client';
 import { useCallback } from 'react';
 
 import {
-  AllMediaMentionsQueryVariables,
   CreateMediaMentionInput,
   MediaMentionsCountQueryVariables,
   MediaMentionsFiltersInput,
@@ -15,21 +14,28 @@ import {
   useDeleteMediaMentionMutation,
   useMediaMentionsCountQuery,
   usePaginatedMediaMentionsQuery,
+  usePublishedMediaMentionsQuery,
   useUpdateMediaMentionMutation
 } from '~/types/graphql/generated/graphql';
 
+type QueryHookOptions = Readonly<{
+  skip?: boolean;
+}>;
+
 // We should discuss on cache policy
-export const useAllMediaMentions = (status?: MediaStatus) => {
+export const useAllMediaMentions = (filters?: MediaMentionsFiltersInput, options: QueryHookOptions = {}) => {
   return useAllMediaMentionsQuery({
-    variables: { status } as AllMediaMentionsQueryVariables,
-    fetchPolicy: 'network-only'
+    variables: { filters },
+    fetchPolicy: 'network-only',
+    skip: options.skip
   });
 };
 
-export const usePublishedMediaMentions = () => {
-  return useAllMediaMentionsQuery({
-    variables: { status: MediaStatus.Published } as AllMediaMentionsQueryVariables,
-    fetchPolicy: 'cache-first'
+export const usePublishedMediaMentions = (filters?: MediaMentionsFiltersInput, options: QueryHookOptions = {}) => {
+  return usePublishedMediaMentionsQuery({
+    variables: { filters },
+    fetchPolicy: 'cache-first',
+    skip: options.skip
   });
 };
 

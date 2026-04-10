@@ -96,16 +96,10 @@ describe('EventsRepository - Advanced Filtering Logic', () => {
   };
 
   it('should correctly apply combined status and slug filter', async () => {
-    findMock.mockImplementation((conditions: Record<string, unknown>) => {
-      const filtered = mockDbEventsExtended.filter(e =>
-        (!conditions.status || e.status === conditions.status) &&
-          (!conditions.slug || e.slug === conditions.slug)
-      );
-      return setupPaginatedMock(filtered);
-    });
+    setupPaginatedMock(mockDbEventsExtended.filter(e => e.status === EventStatus.Published && e.slug === 'event-c'));
 
     const result = await repository.findAll({
-      status: EventStatus.Published,
+      statuses: [EventStatus.Published],
       slug: 'event-c'
     });
 
@@ -113,19 +107,18 @@ describe('EventsRepository - Advanced Filtering Logic', () => {
     expect(result[0].slug).toBe('event-c');
     expect(result[0].id).toBe('1');
     expect(findMock).toHaveBeenCalledWith({
-      status: EventStatus.Published,
-      slug: 'event-c'
+      $and: [
+        { status: { $in: [EventStatus.Published] } },
+        { slug: 'event-c' }
+      ]
     });
   });
 
   it('should sort filtered events by adminTitle ASC', async () => {
-    findMock.mockImplementation((conditions: Record<string, unknown>) => {
-      const filtered = mockDbEventsExtended.filter(e => e.status === conditions.status);
-      return setupPaginatedMock(filtered);
-    });
+    setupPaginatedMock(mockDbEventsExtended.filter(e => e.status === EventStatus.Published));
 
     const result = await repository.findAll({
-      status: EventStatus.Published,
+      statuses: [EventStatus.Published],
       sort: [{ sortBy: 'adminTitle', sortOrder: SortOrder.Asc }]
     });
 
@@ -137,19 +130,17 @@ describe('EventsRepository - Advanced Filtering Logic', () => {
   it('should handle pagination on filtered and sorted results', async () => {
     countDocumentsMock.mockResolvedValue(2);
 
-    findMock.mockImplementation((conditions: Record<string, unknown>) => {
-      const filtered = mockDbEventsExtended.filter(e => e.status === conditions.status);
-      return setupPaginatedMock(filtered);
-    });
+    setupPaginatedMock(mockDbEventsExtended.filter(e => e.status === EventStatus.Published));
 
     const result = await repository.findPaginated(2, 1, {
-      status: EventStatus.Published,
+      statuses: [EventStatus.Published],
       sort: [{ sortBy: 'adminTitle', sortOrder: SortOrder.Asc }]
     });
 
     expect(result.items).toHaveLength(1);
     expect(result.items[0].id).toBe('1');
     expect(result.total).toBe(2);
+    expect(countDocumentsMock).toHaveBeenCalledWith({ status: { $in: [EventStatus.Published] } });
   });
 });
 

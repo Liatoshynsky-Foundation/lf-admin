@@ -1,16 +1,19 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { ChangeEvent } from 'react';
+import React from 'react';
 
 import { FoundationBlock } from './FoundationBlock';
+import {MediaModalResult} from '~/components/media-modal/MediaModal.types';
 
 jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
-  ImagePreviewBlock: ({ onChangeImage }: { onChangeImage: (file: File) => void }) => (
+  ImagePreviewBlock: ({ onChangeImage }: {
+    onChangeImage: (file: File, crop?: MediaModalResult['crop']) => void
+  }) => (
     <div data-testid="image-preview-block">
       <input
         type="file"
         aria-label="Upload image"
-        onChange={(e: ChangeEvent<HTMLInputElement>) => {
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
           if (e.target.files?.[0]) onChangeImage(e.target.files?.[0]);
         }}
       />

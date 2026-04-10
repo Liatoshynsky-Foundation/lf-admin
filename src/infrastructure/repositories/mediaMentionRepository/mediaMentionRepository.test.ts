@@ -1,9 +1,8 @@
 import { Model } from 'mongoose';
 
 import {DbMediaMention, MediaMentionsRepository} from './mediaMentionRepository';
-import {MediaMentionFilters} from '~/domain/entities/MediaMentions';
 import {
-  CreateMediaMentionInput, IMediaMentionsRepository,
+  CreateMediaMentionInput, IMediaMentionsRepository, MediaMentionFilters
 } from '~/domain/repositories/mediaMentionsRepository';
 import { MediaStatus } from '~/types/enums/common.enums';
 
@@ -123,51 +122,48 @@ describe('MediaMentionsRepository - Advanced Filtering & Sorting Logic', () => {
 
   describe('Complex Filtering Logic', () => {
     it('should filter by status and return only matching entities', async () => {
-      findMock.mockImplementation((conditions: Record<string, unknown>) => {
-        const filtered = mockDbMentions.filter(m => m.status === conditions.status);
-        return setupQueryMock(filtered);
-      });
+      setupQueryMock(mockDbMentions.filter(m => m.status === MediaStatus.Published));
 
-      const result = await repository.findAll({ status: MediaStatus.Published });
+      const result = await repository.findAll({ statuses: [MediaStatus.Published] });
 
       expect(result).toHaveLength(2);
       expect(result.every(m => m.status === MediaStatus.Published)).toBe(true);
       expect(result[0].id).toBe('3');
       expect(result[1].id).toBe('1');
+      expect(findMock).toHaveBeenCalledWith({ status: { $in: [MediaStatus.Published] } });
     });
 
     it('should return empty array when no mentions match multiple filters', async () => {
-      findMock.mockImplementation((conditions: Record<string, unknown>) => {
-        const filtered = mockDbMentions.filter(m =>
-          m.status === conditions.status && m.slug === conditions.slug
-        );
-        return setupQueryMock(filtered);
-      });
+      setupQueryMock([]);
 
       const filters = {
-        status: MediaStatus.Draft,
+        statuses: [MediaStatus.Draft],
         slug: 'slug-1'
       } as MediaMentionFilters;
 
       const result = await repository.findAll(filters);
 
       expect(result).toHaveLength(0);
+      expect(findMock).toHaveBeenCalledWith({
+        $and: [
+          { status: { $in: [MediaStatus.Draft] } },
+          { slug: 'slug-1' }
+        ]
+      });
     });
 
     it('should handle findPaginated with filtering and custom sort simultaneously', async () => {
       const countMock = jest.fn().mockResolvedValue(2);
       (MockModel as unknown as { countDocuments: jest.Mock }).countDocuments = countMock;
 
-      findMock.mockImplementation((conditions: Record<string, unknown>) => {
-        const filtered = mockDbMentions.filter(m => m.status === conditions.status);
-        return setupQueryMock(filtered);
-      });
+      setupQueryMock(mockDbMentions.filter(m => m.status === MediaStatus.Published));
 
-      const result = await repository.findPaginated(1, 10, { status: MediaStatus.Published });
+      const result = await repository.findPaginated(1, 10, { statuses: [MediaStatus.Published] });
 
       expect(result.items).toHaveLength(2);
       expect(result.total).toBe(2);
       expect(result.items[0].id).toBe('3');
+      expect(countMock).toHaveBeenCalledWith({ status: { $in: [MediaStatus.Published] } });
     });
   });
 
@@ -298,15 +294,17 @@ describe('MediaMentionsRepository Comprehensive Tests', () => {
       setupChainMock([]);
 
       const filters = {
-        status: MediaStatus.Published,
+        statuses: [MediaStatus.Published],
         slug: 'test-mention'
       } as MediaMentionFilters;
 
       await repository.findAll(filters);
 
       expect(findMock).toHaveBeenCalledWith({
-        status: MediaStatus.Published,
-        slug: 'test-mention'
+        $and: [
+          { status: { $in: [MediaStatus.Published] } },
+          { slug: 'test-mention' }
+        ]
       });
     });
 
@@ -344,13 +342,13 @@ describe('MediaMentionsRepository Comprehensive Tests', () => {
         lean: jest.fn().mockResolvedValue(items)
       });
 
-      const result = await repository.findPaginated(3, 10, { status: MediaStatus.Published });
+      const result = await repository.findPaginated(3, 10, { statuses: [MediaStatus.Published] });
 
       expect(result.items).toHaveLength(2);
       expect(result.total).toBe(45);
       expect(result.page).toBe(3);
       expect(result.totalPages).toBe(5);
-      expect(countDocumentsMock).toHaveBeenCalledWith({ status: MediaStatus.Published });
+      expect(countDocumentsMock).toHaveBeenCalledWith({ status: { $in: [MediaStatus.Published] } });
     });
   });
 

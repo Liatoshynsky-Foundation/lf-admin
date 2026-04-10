@@ -11,10 +11,9 @@ fragment EventFields on Event {
     content { uk en }
     coverImage {
         src
-        width
-        height
         alt { uk en }
         caption { uk en }
+        crop { x y width height }
     }
     publishedAt
     createdAt

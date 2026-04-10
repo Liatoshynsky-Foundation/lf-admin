@@ -11,8 +11,7 @@ fragment NewsFields on News {
     alt { uk en }
     caption { uk en }
     isTmp
-    width
-    height
+    crop { x y width height }
   }
   status
   allowIndexation { uk en }
@@ -42,8 +41,14 @@ query AllNews($filters: NewsFiltersInput) {
     title { uk en }
     slug
     status
+    createdAt
+    updatedAt
     newsDate
     publishedAt
+    coverImage {
+      src
+      alt { uk en }
+    }
     meta { views }
   }
 }

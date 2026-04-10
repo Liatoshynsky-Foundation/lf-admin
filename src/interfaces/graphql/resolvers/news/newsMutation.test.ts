@@ -1,8 +1,12 @@
 import { CreateNewsGQLInput, NewsMutation, UpdateNewsGQLInput } from './newsMutation';
-import type { GraphQLContext } from '~/back-shared/types/container/types';
 import type { News } from '~/domain/entities/News';
+import { createMockContext } from '~/interfaces/graphql/resolvers/testUtils';
 import { INewsRepository } from '~/src/domain/repositories/newsRepository';
 import { NewsStatus } from '~/types/enums/common.enums';
+
+jest.mock('mongoose');
+
+import * as helpers from '../helpers';
 
 jest.mock('./processNewsContent/processNewsContent', () => ({
   processNewsContent: jest.fn(<T>(input: T): Promise<T> => Promise.resolve(input)),
@@ -12,6 +16,11 @@ jest.mock('~/src/shared/utils/slugGenerator/slugGenerator', () => ({
   generateUniqueSlug: jest.fn((title: string) =>
     Promise.resolve(`slug-${title.toLowerCase()}`)
   ),
+}));
+
+jest.mock('../helpers', () => ({
+  ...jest.requireActual('../helpers'),
+  syncImagesCrops: jest.fn(),
 }));
 
 describe('NewsMutation Resolvers', () => {
@@ -24,12 +33,7 @@ describe('NewsMutation Resolvers', () => {
     incrementViews: jest.fn()
   };
 
-  const createContainer = (admin: boolean) => ({
-    admin,
-    requestContainer: { cradle: { newsRepository: mockRepo as INewsRepository } }
-  } as unknown as GraphQLContext);
-
-  const adminContext = createContainer(true);
+  const adminContext = createMockContext(true, 'newsRepository', mockRepo);
 
   const baseInput: CreateNewsGQLInput = {
     adminTitle: 'Test News',
@@ -39,9 +43,10 @@ describe('NewsMutation Resolvers', () => {
     allowIndexation: { uk: true, en: true },
     content: { uk: { blocks: [] }, en: { blocks: [] } } as News['content'],
     coverImage: {
-      src: '',
+      src: 'test.jpg',
       alt: { uk: '', en: '' },
-      caption: { uk: '', en: '' }
+      caption: { uk: '', en: '' },
+      crop: { x: 0, y: 0, width: 100, height: 100 }
     },
     status: NewsStatus.Draft
   };
@@ -61,6 +66,7 @@ describe('NewsMutation Resolvers', () => {
 
     return { ...base, ...overrides } as News;
   };
+
   const mockAction = <T>(method: keyof typeof mockRepo, value: T) =>
     (mockRepo[method] as jest.Mock).mockResolvedValue(value);
 
@@ -81,7 +87,7 @@ describe('NewsMutation Resolvers', () => {
   });
 
   describe('createNews', () => {
-    it('should successfully create news with generated slug', async () => {
+    it('should successfully create news and call unified syncImagesCrops', async () => {
       mockAction('findBySlug', null);
       mockAction('create', createMockNews({ id: 'new-id', slug: 'slug-новина' }));
 
@@ -89,14 +95,20 @@ describe('NewsMutation Resolvers', () => {
 
       expect(result.id).toBe('new-id');
       expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({ slug: 'slug-новина' }));
+      expect(helpers.syncImagesCrops).toHaveBeenCalledWith('new-id', baseInput.coverImage, { isCoverImage: true });
+      expect(helpers.syncImagesCrops).toHaveBeenCalledWith('new-id', baseInput.content);
     });
   });
 
   describe('updateNews', () => {
     const id = 'news-123';
 
-    it('should update title and re-generate slug', async () => {
-      const updateInput: UpdateNewsGQLInput = { title: { uk: 'Оновлено', en: 'Updated' } };
+    it('should update title, re-generate slug and sync crops', async () => {
+      const updateInput: UpdateNewsGQLInput = {
+        title: { uk: 'Оновлено', en: 'Updated' },
+        coverImage: { ...baseInput.coverImage, src: 'new.jpg' },
+        content: { uk: { blocks: [{ type: 'image' }] }, en: { blocks: [] } } as News['content']
+      };
       mockAction('findById', createMockNews({ id }));
       mockAction('update', createMockNews({ id, slug: 'slug-оновлено' }));
 
@@ -104,6 +116,8 @@ describe('NewsMutation Resolvers', () => {
 
       expect(mockRepo.update).toHaveBeenCalledWith(id, expect.objectContaining({ slug: 'slug-оновлено' }));
       expect(result.slug).toBe('slug-оновлено');
+      expect(helpers.syncImagesCrops).toHaveBeenCalledWith(id, updateInput.coverImage, { isCoverImage: true });
+      expect(helpers.syncImagesCrops).toHaveBeenCalledWith(id, updateInput.content);
     });
 
     it('should throw if news not found during slug update', async () => {
@@ -128,7 +142,6 @@ describe('NewsMutation Resolvers', () => {
 
       expect(mockRepo.findById).toHaveBeenCalledTimes(1);
       expect(mockRepo.findById).toHaveBeenCalledWith(id);
-
       expect(mockRepo.findBySlug).not.toHaveBeenCalled();
       expect(mockRepo.update).toHaveBeenCalled();
     });

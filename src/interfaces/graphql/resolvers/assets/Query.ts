@@ -2,9 +2,9 @@ import { endpointRepositoryHandler } from '../helpers';
 import { SortOrder } from '~/types/enums/common.enums';
 import { AssetType } from '~/types/graphql/generated/graphql';
 
-type AssetSortBy = 'filename' | 'createdAt' | 'updatedAt';
+export type AssetSortBy = 'filename' | 'createdAt' | 'updatedAt';
 
-interface AllAssetsArgs {
+export interface AllAssetsArgs {
   filters: {
     type?: AssetType;
     isStarred?: boolean;

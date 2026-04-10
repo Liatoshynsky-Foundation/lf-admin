@@ -78,7 +78,7 @@ input EventSortOptions {
 input EventFiltersInput {
   limit: Int
   skip: Int
-  status: EventStatus
+  statuses: [EventStatus!]
   slug: String
   eventDateTimeStart: String
   eventDateTimeEnd: String

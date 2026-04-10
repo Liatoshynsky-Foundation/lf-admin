@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Divider, Typography } from '@mui/material';
-import Image from 'next/image';
+import { ChevronDown } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 import DropdownMenu from '~/shared/components/dropdown-menu/DropdownMenu';
@@ -80,13 +80,7 @@ export function SortSelect<FieldValue extends string, SortValue extends string>(
       >
         <Typography sx={filterSelectStyles.label(disabled)}>{triggerLabel}</Typography>
         <Box sx={filterSelectStyles.dropdownIcon(disabled)}>
-          <Image
-            src="/icons/chevron-down-dark.svg"
-            alt="chevron-down"
-            width={12}
-            height={12}
-            style={{ transform: 'translateY(2px)' }}
-          />
+          <ChevronDown size={16} strokeWidth={2.25} aria-hidden="true" />
         </Box>
       </Box>
 
