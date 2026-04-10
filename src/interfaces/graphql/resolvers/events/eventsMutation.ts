@@ -1,6 +1,9 @@
 import { GraphQLError } from 'graphql';
 
-import { endpointRepositoryHandler } from '../helpers';
+import {
+  endpointRepositoryHandler,
+  syncImagesCrops
+} from '../helpers';
 import { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
 import { EventsEntity } from '~/domain/entities/Events';
@@ -9,12 +12,12 @@ import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerat
 import { EventStatus } from '~/types/enums/common.enums';
 
 export interface CreateEventArgs {
-    input: Omit<CreateEventInput, 'slug'>;
+  input: Omit<CreateEventInput, 'slug'>;
 }
 
 interface UpdateEventArgs {
-    id: string;
-    input: UpdateEventInput;
+  id: string;
+  input: UpdateEventInput;
 }
 
 interface IncrementViewsArgs { id: string }
@@ -41,11 +44,20 @@ export const EventsMutation = {
       }
     });
 
-    return repo.create({
+    const res = await repo.create({
       ...input,
       slug,
       status: input.status || EventStatus.Draft
     });
+
+    if (input.coverImage?.crop) {
+      await syncImagesCrops(res.id, input.coverImage, { isCoverImage: true });
+    }
+    if (input.content) {
+      await syncImagesCrops(res.id, input.content);
+    }
+
+    return res;
   },
 
   updateEvent: async (_: unknown, { id, input }: UpdateEventArgs, context: GraphQLContext): Promise<EventsEntity> => {
@@ -72,6 +84,14 @@ export const EventsMutation = {
 
     const res = await repo.update(id, updateData as Parameters<typeof repo.update>[1]);
     if (!res) throw new GraphQLError('EVENT_NOT_FOUND', { extensions: { code: 'EVENT_NOT_FOUND' } });
+
+    if (input.coverImage?.crop) {
+      await syncImagesCrops(res.id, input.coverImage, { isCoverImage: true });
+    }
+    if (input.content) {
+      await syncImagesCrops(res.id, input.content);
+    }
+
     return res;
   },
 

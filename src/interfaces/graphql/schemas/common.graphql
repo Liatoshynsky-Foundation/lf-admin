@@ -22,13 +22,19 @@ type LocalizedBoolean {
     en: Boolean!
 }
 
+type CropRect {
+    x: Float!
+    y: Float!
+    width: Float!
+    height: Float!
+}
+
 type LocalizedImage {
     src: String!
     alt: LocalizedString!
     caption: LocalizedString!
     isTmp: Boolean
-    width: Int
-    height: Int
+    crop: CropRect
 }
 
 type ContentMeta {

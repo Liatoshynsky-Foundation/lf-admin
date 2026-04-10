@@ -61,9 +61,19 @@ export const LiatoshynskyFoundation = () => {
         paragraphs={paragraphs}
         imageUrl={getImageUrl(block.image)}
         fileName={block.image?.caption?.[currentLocale]}
+        initialCrop={block.image?.crop}
         onMainTextChange={handleMainTextChange}
         onParagraphChange={handleParagraphChange}
-        onImageChange={(file) => handleUploadImage(file, pageId, blockId, 'image', uploadBlob, 'tmp')}
+        onImageChange={async (file, crop) => {
+          setField(pageId, blockId, 'image', {
+            ...block.image,
+            src: file.name,
+            isTmp: true,
+            crop: crop ?? null
+          } as typeof block.image);
+
+          await handleUploadImage(file, pageId, blockId, 'image', uploadBlob, 'tmp');
+        }}
       />
     </CollapsibleBlock>
   );

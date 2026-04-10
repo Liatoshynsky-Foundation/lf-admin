@@ -1,7 +1,33 @@
-import { EventsQuery } from './eventsQuery';
-import type { GraphQLContext } from '~/back-shared/types/container/types';
-import type { IEventsRepository } from '~/domain/repositories/eventsRepository';
+import { IEventsRepository } from '~/domain/repositories/eventsRepository';
+import { createMockContext } from '~/interfaces/graphql/resolvers/testUtils';
 import { EventStatus, SortOrder } from '~/types/enums/common.enums';
+
+jest.mock('mongoose', () => {
+  const mockSchema = jest.fn().mockImplementation(() => ({
+    index: jest.fn(),
+  }));
+
+  (mockSchema as unknown as Record<string, unknown>).Types = {
+    ObjectId: String,
+  };
+
+  return {
+    Schema: mockSchema,
+    Types: {
+      ObjectId: jest.fn().mockImplementation(() => 'mocked-id'),
+    },
+    model: jest.fn().mockReturnValue({}),
+    models: {},
+  };
+});
+
+jest.mock('~/infrastructure/models/imageCrop.model', () => ({
+  ImageCropModel: {
+    findOneAndUpdate: jest.fn(),
+  },
+}));
+
+import { EventsQuery } from './eventsQuery';
 
 describe('EventsQuery Resolvers', () => {
   const mockRepo: jest.Mocked<Partial<IEventsRepository>> = {
@@ -12,12 +38,7 @@ describe('EventsQuery Resolvers', () => {
     findBySlug: jest.fn()
   };
 
-  const context = {
-    admin: true,
-    requestContainer: {
-      cradle: { eventsRepository: mockRepo as IEventsRepository }
-    }
-  } as unknown as GraphQLContext;
+  const context = createMockContext(true, 'eventsRepository', mockRepo);
 
   beforeEach(() => jest.clearAllMocks());
 

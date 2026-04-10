@@ -1,11 +1,25 @@
-import { AssetsQuery } from './Query';
+import { createMockContext } from '../testUtils';
+import { AllAssetsArgs, AssetsQuery } from './Query';
 import { SortOrder } from '~/types/enums/common.enums';
 import { AssetType } from '~/types/graphql/generated/graphql';
 
+jest.mock('mongoose');
+jest.mock('~/infrastructure/models/imageCrop.model');
+
 describe('AssetsQuery', () => {
+  const mockRepo = {
+    findAll: jest.fn()
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('should pass filters to assets repository', async () => {
-    const repo = { findAll: jest.fn().mockResolvedValue(['asset']) };
-    const ctx = { admin: true, requestContainer: { cradle: { assetsRepository: repo } } } as never;
+    const expectedAssets = ['asset'];
+    mockRepo.findAll.mockResolvedValue(expectedAssets);
+
+    const ctx = createMockContext(true, 'assetsRepository', mockRepo);
 
     const filters = {
       type: AssetType.Image,
@@ -18,11 +32,18 @@ describe('AssetsQuery', () => {
 
     const res = await AssetsQuery.allAssets({}, { filters }, ctx);
 
-    expect(res).toEqual(['asset']);
-    expect(repo.findAll).toHaveBeenCalledWith(filters);
+    expect(res).toEqual(expectedAssets);
+    expect(mockRepo.findAll).toHaveBeenCalledWith(filters);
   });
 
   it('should throw when admin is missing', async () => {
-    await expect(AssetsQuery.allAssets({}, { filters: {} } as never, { admin: false } as never)).rejects.toThrow();
+    const invalidCtx = createMockContext(false, 'assetsRepository', mockRepo);
+
+    const args = {
+      filters: {}
+    } as unknown as { filters: AllAssetsArgs['filters'] };
+
+    await expect(AssetsQuery.allAssets({}, args as never, invalidCtx))
+      .rejects.toThrow();
   });
 });

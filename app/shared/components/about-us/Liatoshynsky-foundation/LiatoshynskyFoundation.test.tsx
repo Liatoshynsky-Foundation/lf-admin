@@ -18,7 +18,7 @@ jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
 }));
 
 jest.mock('~/utils/uploadToTmpFolder', () => ({
-  handleUploadImage: (...args: any[]) => handleUploadImageMock(...args)
+  handleUploadImage: (...args: unknown[]) => handleUploadImageMock(...args)
 }));
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
