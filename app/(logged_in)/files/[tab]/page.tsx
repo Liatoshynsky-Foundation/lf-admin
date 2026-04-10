@@ -1,3 +1,4 @@
+import { Box } from '@mui/material';
 import { notFound } from 'next/navigation';
 
 import { FilesPageContent } from '../FilesPageContent';
@@ -20,5 +21,9 @@ export default async function FilesTabPage({ params }: FilesTabPageProps) {
     notFound();
   }
 
-  return <FilesPageContent activeTab={tab as FilesTabValue} />;
+  return (
+    <Box sx={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', p: '32px' }}>
+      <FilesPageContent activeTab={tab as FilesTabValue} />
+    </Box>
+  );
 }

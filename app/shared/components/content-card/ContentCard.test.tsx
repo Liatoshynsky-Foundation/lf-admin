@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import type { MouseEventHandler, ReactNode } from 'react';
 
 import ContentCard, { ContentType } from './ContentCard';
 
@@ -8,7 +9,15 @@ jest.mock('~/lib/utils/formatDate', () => ({
 
 jest.mock('../design-system/button/Button', () => ({
   __esModule: true,
-  default: ({ children, onClick }: any) => <button onClick={onClick}>{children}</button>
+  default: ({
+    children,
+    href,
+    onClick
+  }: {
+    children: ReactNode;
+    href?: string;
+    onClick?: MouseEventHandler<HTMLButtonElement>;
+  }) => (href ? <a href={href}>{children}</a> : <button onClick={onClick}>{children}</button>)
 }));
 
 jest.mock('./ContentCardBadge', () => ({
@@ -78,6 +87,15 @@ describe('ContentCard', () => {
     expect(defaultProps.onClick).toHaveBeenCalledTimes(1);
   });
 
+  it('should render edit button as link when href is provided', () => {
+    render(<ContentCard {...defaultProps} editHref="/publications/news/test-slug/edit" />);
+
+    expect(screen.getByRole('link', { name: 'Редагувати' })).toHaveAttribute(
+      'href',
+      '/publications/news/test-slug/edit'
+    );
+  });
+
   it('should call onClickMenu when menu icon is clicked', () => {
     render(<ContentCard {...defaultProps} />);
 
@@ -95,5 +113,26 @@ describe('ContentCard', () => {
 
     expect(img).toHaveAttribute('src', '/image.png');
     expect(img).toHaveAttribute('alt', 'Image UA');
+  });
+
+  it('should fallback to default image when cover image fails to load', () => {
+    render(
+      <ContentCard
+        {...defaultProps}
+        coverImage={{
+          src: '/news-mock-images/image1.jpg',
+          alt: {
+            uk: 'Broken image',
+            en: 'Broken image'
+          }
+        }}
+      />
+    );
+
+    const img = screen.getByAltText('Broken image');
+
+    fireEvent.error(img);
+
+    expect(img).toHaveAttribute('src', '/images/image.png');
   });
 });

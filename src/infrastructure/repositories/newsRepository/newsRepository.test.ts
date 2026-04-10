@@ -72,32 +72,31 @@ describe('NewsRepository - Advanced Filtering Logic', () => {
   };
 
   it('should filter by status and maintain default sorting (createdAt DESC)', async () => {
-    findMock.mockImplementation((conditions: Record<string, unknown>) => {
-      const filtered = mockDbNewsExtended.filter(n => n.status === conditions.status);
-      return setupAdvancedMock(filtered);
-    });
+    setupAdvancedMock(mockDbNewsExtended.filter(n => n.status === NewsStatus.Published));
 
-    const result = await repository.findAll({ status: NewsStatus.Published });
+    const result = await repository.findAll({ statuses: [NewsStatus.Published] });
 
     expect(result).toHaveLength(2);
     expect(result[0].id).toBe('3');
     expect(result[1].id).toBe('1');
+    expect(findMock).toHaveBeenCalledWith({ status: { $in: [NewsStatus.Published] } });
   });
 
   it('should return empty array when slug and status criteria do not match any document', async () => {
-    findMock.mockImplementation((conditions: Record<string, unknown>) => {
-      const filtered = mockDbNewsExtended.filter(n =>
-        n.status === conditions.status && n.slug === conditions.slug
-      );
-      return setupAdvancedMock(filtered);
-    });
+    setupAdvancedMock([]);
 
     const result = await repository.findAll({
-      status: NewsStatus.Published,
+      statuses: [NewsStatus.Published],
       slug: 'news-a'
     });
 
     expect(result).toHaveLength(0);
+    expect(findMock).toHaveBeenCalledWith({
+      $and: [
+        { status: { $in: [NewsStatus.Published] } },
+        { slug: 'news-a' }
+      ]
+    });
   });
 
   it('should handle complex multiple sort fields after filtering', async () => {
@@ -235,13 +234,15 @@ describe('NewsRepository Comprehensive Tests', () => {
       setupChainMock([createMockNewsDoc()]);
 
       await repository.findAll({
-        status: NewsStatus.Published,
+        statuses: [NewsStatus.Published],
         slug: 'test-news'
       });
 
       expect(findMock).toHaveBeenCalledWith({
-        status: NewsStatus.Published,
-        slug: 'test-news'
+        $and: [
+          { status: { $in: [NewsStatus.Published] } },
+          { slug: 'test-news' }
+        ]
       });
     });
 
@@ -293,12 +294,13 @@ describe('NewsRepository Comprehensive Tests', () => {
         lean: jest.fn().mockResolvedValue(items)
       });
 
-      const result = await repository.findPaginated(2, 10, { status: NewsStatus.Published });
+      const result = await repository.findPaginated(2, 10, { statuses: [NewsStatus.Published] });
 
       expect(result.items).toHaveLength(2);
       expect(result.total).toBe(25);
       expect(result.page).toBe(2);
       expect(result.totalPages).toBe(3);
+      expect(countDocumentsMock).toHaveBeenCalledWith({ status: { $in: [NewsStatus.Published] } });
     });
   });
 
@@ -346,9 +348,9 @@ describe('NewsRepository Comprehensive Tests', () => {
 
     it('should return 0 when counting news with no results', async () => {
       countDocumentsMock.mockResolvedValue(0);
-      const count = await repository.count({ status: NewsStatus.Archived });
+      const count = await repository.count({ statuses: [NewsStatus.Archived] });
       expect(count).toBe(0);
-      expect(countDocumentsMock).toHaveBeenCalledWith({ status: NewsStatus.Archived });
+      expect(countDocumentsMock).toHaveBeenCalledWith({ status: { $in: [NewsStatus.Archived] } });
     });
   });
 });

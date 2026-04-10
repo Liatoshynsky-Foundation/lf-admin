@@ -55,15 +55,15 @@ describe('EventsQuery Resolvers', () => {
   });
 
   it('publishedEvents: should force published status', async () => {
-    await EventsQuery.publishedEvents({}, { filters: { status: 'draft' } }, context);
+    await EventsQuery.publishedEvents({}, { filters: { statuses: [EventStatus.Draft] } }, context);
     expect(mockRepo.findAll).toHaveBeenCalledWith(expect.objectContaining({
-      status: EventStatus.Published
+      statuses: [EventStatus.Published]
     }));
   });
 
   it('eventsCount: should handle status filtering', async () => {
     await EventsQuery.eventsCount({}, { status: EventStatus.Archived }, context);
-    expect(mockRepo.count).toHaveBeenCalledWith({ status: EventStatus.Archived });
+    expect(mockRepo.count).toHaveBeenCalledWith({ statuses: [EventStatus.Archived] });
   });
 
   it('paginatedEvents: should pass parameters correctly', async () => {

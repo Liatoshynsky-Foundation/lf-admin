@@ -51,7 +51,7 @@ export const MediaMentionsRepository = ({ MediaMentionsModel }: MediaMentionRepo
   const baseRepo = createBaseRepository<MediaMentionEntity, DbMediaMention, MediaMentionFilters>({
     model: MediaMentionsModel,
     toEntity,
-    buildQuery: buildBaseQuery,
+    buildQuery: (filters) => buildBaseQuery(filters),
     getDefaultSort: getBaseSort
   });
 

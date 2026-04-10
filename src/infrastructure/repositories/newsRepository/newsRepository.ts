@@ -49,7 +49,7 @@ export const NewsRepository = ({ NewsModel }: NewsRepoDeps): INewsRepository => 
   const baseRepo = createBaseRepository<News, DbNews, NewsFilters>({
     model: NewsModel,
     toEntity,
-    buildQuery: buildBaseQuery,
+    buildQuery: (filters) => buildBaseQuery(filters),
     getDefaultSort: getBaseSort
   });
 

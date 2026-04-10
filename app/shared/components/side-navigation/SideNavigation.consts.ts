@@ -10,8 +10,7 @@ export const NAVIGATION_DATA = {
     {
       title: 'Новини та події',
       iconSrc: 'news',
-      href: '',
-      disabled: true
+      href: '/publications',
     },
     {
       element: { title: 'Каталоги', iconSrc: 'book-marked' },

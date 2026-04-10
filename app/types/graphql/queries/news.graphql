@@ -41,8 +41,14 @@ query AllNews($filters: NewsFiltersInput) {
     title { uk en }
     slug
     status
+    createdAt
+    updatedAt
     newsDate
     publishedAt
+    coverImage {
+      src
+      alt { uk en }
+    }
     meta { views }
   }
 }

@@ -2,7 +2,8 @@ const styles = {
   card: {
     display: 'flex',
     flexDirection: 'column',
-    width: '296px',
+    width: '100%',
+    maxWidth: '100%',
     borderRadius: '16px',
     border: '1px solid #D9DCE8'
   },

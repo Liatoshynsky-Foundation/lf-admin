@@ -2,7 +2,7 @@ import { MediaMentionsQuery } from './mediaMentionQuery';
 import type { IMediaMentionsRepository } from '~/domain/repositories/mediaMentionsRepository';
 import { createMockContext } from '~/interfaces/graphql/resolvers/testUtils';
 import { MediaStatus, SortOrder } from '~/types/enums/common.enums';
-import type { MediaMentionsFiltersInput } from '~/types/graphql/generated/graphql';
+import { type MediaMentionsFiltersInput,MediaMentionsSortBy } from '~/types/graphql/generated/graphql';
 
 jest.mock('mongoose');
 jest.mock('~/infrastructure/models/imageCrop.model');
@@ -25,7 +25,7 @@ describe('MediaMentionsQuery Resolvers', () => {
   it('allMediaMentions: should map complex sort array accurately', async () => {
     const args = {
       filters: {
-        sort: [{ field: 'adminTitle', order: SortOrder.Desc }]
+        sort: [{ field: MediaMentionsSortBy.AdminTitle, order: SortOrder.Desc }]
       } as unknown as MediaMentionsFiltersInput
     };
 
@@ -53,18 +53,18 @@ describe('MediaMentionsQuery Resolvers', () => {
 
     await MediaMentionsQuery.mediaMentionsCount({}, args, context);
 
-    expect(mockRepo.count).toHaveBeenCalledWith({ status: MediaStatus.Published });
+    expect(mockRepo.count).toHaveBeenCalledWith({ statuses: [MediaStatus.Published] });
   });
 
   it('publishedMediaMentions: should force published status', async () => {
     const args = {
-      filters: { status: MediaStatus.Draft } as unknown as MediaMentionsFiltersInput
+      filters: { statuses: [MediaStatus.Draft] } as unknown as MediaMentionsFiltersInput
     };
 
     await MediaMentionsQuery.publishedMediaMentions({}, args, context);
 
     expect(mockRepo.findAll).toHaveBeenCalledWith(expect.objectContaining({
-      status: MediaStatus.Published
+      statuses: [MediaStatus.Published]
     }));
   });
 });

@@ -1,7 +1,7 @@
 import { createMockContext } from '~/interfaces/graphql/resolvers/testUtils';
-import { INewsRepository } from '~/src/domain/repositories/newsRepository';
+import type { INewsRepository } from '~/src/domain/repositories/newsRepository';
 import { NewsStatus } from '~/types/enums/common.enums';
-import { NewsFiltersInput } from '~/types/graphql/generated/graphql';
+import type { NewsFiltersInput } from '~/types/graphql/generated/graphql';
 
 jest.mock('mongoose', () => {
   const mockSchema = jest.fn().mockImplementation(() => ({
@@ -49,11 +49,11 @@ describe('NewsQuery Resolvers', () => {
   });
 
   describe('allNews & Complex Filtering', () => {
-    it('should map full filters input including slug and status', async () => {
+    it('should map full filters input including slug and statuses', async () => {
       const args = {
         filters: {
           slug: 'test-slug',
-          status: NewsStatus.Published,
+          statuses: [NewsStatus.Published],
           limit: 10,
           skip: 0
         } as unknown as NewsFiltersInput
@@ -63,7 +63,7 @@ describe('NewsQuery Resolvers', () => {
 
       expect(mockRepo.findAll).toHaveBeenCalledWith({
         slug: 'test-slug',
-        status: NewsStatus.Published,
+        statuses: [NewsStatus.Published],
         limit: 10,
         skip: 0,
         sort: undefined
@@ -74,7 +74,7 @@ describe('NewsQuery Resolvers', () => {
       const args = {
         filters: {
           slug: 'test-slug',
-          status: NewsStatus.Draft
+          statuses: [NewsStatus.Draft]
         } as unknown as NewsFiltersInput
       };
 
@@ -82,7 +82,7 @@ describe('NewsQuery Resolvers', () => {
 
       expect(mockRepo.findAll).toHaveBeenCalledWith(expect.objectContaining({
         slug: 'test-slug',
-        status: NewsStatus.Published
+        statuses: [NewsStatus.Published]
       }));
     });
   });
@@ -109,5 +109,19 @@ describe('NewsQuery Resolvers', () => {
     const invalidContext = createMockContext(false, 'newsRepository', mockRepo);
     await expect(NewsQuery.allNews({}, { filters: {} as NewsFiltersInput }, invalidContext))
       .rejects.toThrow();
+  });
+
+  describe('newsCount', () => {
+    it('should call count without filters when status is not provided', async () => {
+      await NewsQuery.newsCount({}, {}, context);
+
+      expect(mockRepo.count).toHaveBeenCalledWith(undefined);
+    });
+
+    it('should call count with specific status', async () => {
+      await NewsQuery.newsCount({}, { status: NewsStatus.Archived }, context);
+
+      expect(mockRepo.count).toHaveBeenCalledWith({ statuses: [NewsStatus.Archived] });
+    });
   });
 });

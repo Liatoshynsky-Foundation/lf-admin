@@ -62,7 +62,7 @@ describe('mapFilters', () => {
 
   it('should correctly map basic filter fields', () => {
     const input = {
-      status: 'published',
+      statuses: ['published'],
       slug: 'test-slug',
       limit: 10,
       skip: 0
@@ -71,7 +71,7 @@ describe('mapFilters', () => {
     const result = mapFilters(input);
 
     expect(result).toEqual({
-      status: 'published',
+      statuses: ['published'],
       slug: 'test-slug',
       limit: 10,
       skip: 0,

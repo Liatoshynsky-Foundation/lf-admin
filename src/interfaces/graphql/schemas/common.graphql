@@ -60,6 +60,12 @@ enum SortOrder {
     desc
 }
 
+enum ContentLanguage {
+    uk
+    en
+    bilingual
+}
+
 input SortOptions {
     field: String!
     order: SortOrder!
