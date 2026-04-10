@@ -49,11 +49,11 @@ describe('NewsQuery Resolvers', () => {
   });
 
   describe('allNews & Complex Filtering', () => {
-    it('should map full filters input including slug and status', async () => {
+    it('should map full filters input including slug and statuses', async () => {
       const args = {
         filters: {
           slug: 'test-slug',
-          status: NewsStatus.Published,
+          statuses: [NewsStatus.Published],
           limit: 10,
           skip: 0
         } as unknown as NewsFiltersInput
@@ -74,7 +74,7 @@ describe('NewsQuery Resolvers', () => {
       const args = {
         filters: {
           slug: 'test-slug',
-          status: NewsStatus.Draft
+          statuses: [NewsStatus.Draft]
         } as unknown as NewsFiltersInput
       };
 

@@ -58,7 +58,7 @@ describe('MediaMentionsQuery Resolvers', () => {
 
   it('publishedMediaMentions: should force published status', async () => {
     const args = {
-      filters: { status: MediaStatus.Draft } as unknown as MediaMentionsFiltersInput
+      filters: { statuses: [MediaStatus.Draft] } as unknown as MediaMentionsFiltersInput
     };
 
     await MediaMentionsQuery.publishedMediaMentions({}, args, context);

@@ -51,13 +51,10 @@ describe('getStatus', () => {
     expect(result).toBe('Чернетка');
   });
 
-  it('should treat published_with_draft as published content', () => {
-    mockedFormatDate.mockReturnValue('formatted-date');
+  it('should return editing label for editing status', () => {
+    const result = getStatus('editing', '2024-01-01', '2024-02-01');
 
-    const result = getStatus('published_with_draft', '2024-01-01', '2024-02-01');
-
-    expect(result).toBe('Редаговано formatted-date');
-    expect(mockedFormatDate).toHaveBeenCalledWith('2024-02-01');
+    expect(result).toBe('Редагування');
   });
 
   it('should return empty string for unknown status', () => {

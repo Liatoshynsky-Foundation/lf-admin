@@ -13,6 +13,7 @@ import {
   type PublicationsStatusValue
 } from '~/constants/publications';
 import type { FilteringToolbarProps, SortSelectProps } from '~/shared/components/filtering-toolbar';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
 import {
   ContentLanguage,
   type MediaMentionsFiltersInput,
@@ -48,9 +49,9 @@ type PublicationStatusEnum<TStatus extends string> = Readonly<{
 }>;
 
 const PUBLICATION_STATUS_TO_ENUM_KEY = {
-  draft: 'Draft',
-  published: 'Published',
-  published_with_draft: 'Editing'
+  [BaseContentStatuses.Draft]: 'Draft',
+  [BaseContentStatuses.Published]: 'Published',
+  [BaseContentStatuses.Editing]: 'Editing'
 } as const satisfies Record<PublicationsStatusValue, keyof PublicationStatusEnum<string>>;
 
 const mapPublicationStatus = <TStatus extends string>(

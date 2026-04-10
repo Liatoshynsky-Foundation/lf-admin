@@ -19,6 +19,7 @@ import {
   PUBLICATIONS_LOADING_STATE_DESCRIPTION,
   PUBLICATIONS_LOADING_STATE_TITLE,
   PUBLICATIONS_PAGE_TITLE,
+  PUBLICATIONS_STATUSES,
   PUBLICATIONS_TABS,
   type PublicationsItemType,
   type PublicationsLanguageValue,
@@ -37,9 +38,7 @@ import { usePublicationsFiltering } from '~/shared/hooks/use-publications';
 import type { ImageBlock, LocalizedString } from '~/types/common';
 import {
   type AllMediaMentionsQuery,
-  type AllNewsQuery,
-  MediaStatus,
-  NewsStatus
+  type AllNewsQuery
 } from '~/types/graphql/generated/graphql';
 import { normalizeSearch } from '~/utils/normalizeSearch';
 
@@ -196,23 +195,9 @@ const getLanguageFromLocalizedValue = (value: NullableLocalizedString): Publicat
   return 'uk';
 };
 
-const getNormalizedContentStatus = (status: string): PublicationsStatusValue | null => {
-  switch (status.toLowerCase()) {
-  case 'draft':
-    return 'draft';
-  case 'published':
-    return 'published';
-  case 'editing':
-  case 'published_with_draft':
-    return 'published_with_draft';
-  default:
-    return null;
-  }
+const isPublicationCardStatus = (status: string): status is PublicationsStatusValue => {
+  return PUBLICATIONS_STATUSES.some((publicationStatus) => publicationStatus === status);
 };
-
-const getNormalizedNewsStatus = (status: NewsStatus | string): PublicationsStatusValue | null => getNormalizedContentStatus(String(status));
-
-const getNormalizedMediaStatus = (status: MediaStatus | string): PublicationsStatusValue | null => getNormalizedContentStatus(String(status));
 
 const mapCardType = (type: PublicationsItemType): ContentType => {
   if (type === 'events') {
@@ -227,11 +212,11 @@ const getPublicationEditHref = (item: Pick<PublicationCardItem, 'type' | 'slug'>
 };
 
 const mapNewsItem = (item: NewsItem): PublicationCardItem | null => {
-  const normalizedStatus = getNormalizedNewsStatus(item.status);
-
-  if (!normalizedStatus) {
+  if (!isPublicationCardStatus(item.status)) {
     return null;
   }
+
+  const publicationStatus = item.status;
 
   const fallbackTitle = item.adminTitle;
   const title = toLocalizedCardValue(item.title, fallbackTitle);
@@ -253,8 +238,8 @@ const mapNewsItem = (item: NewsItem): PublicationCardItem | null => {
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
     publishedAt: item.publishedAt ?? undefined,
-    status: normalizedStatus,
-    cardStatus: normalizedStatus,
+    status: publicationStatus,
+    cardStatus: publicationStatus,
     language: getLanguageFromLocalizedValue(title),
     coverImage: {
       src: coverImage?.src || DEFAULT_COVER_IMAGE,
@@ -264,11 +249,11 @@ const mapNewsItem = (item: NewsItem): PublicationCardItem | null => {
 };
 
 const mapMediaMentionItem = (item: MediaMentionItem): PublicationCardItem | null => {
-  const normalizedStatus = getNormalizedMediaStatus(item.status);
-
-  if (!normalizedStatus) {
+  if (!isPublicationCardStatus(item.status)) {
     return null;
   }
+
+  const publicationStatus = item.status;
 
   const fallbackTitle = item.adminTitle;
   const titleData = toLocalizedCardValue(item.title, fallbackTitle);
@@ -289,8 +274,8 @@ const mapMediaMentionItem = (item: MediaMentionItem): PublicationCardItem | null
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
     publishedAt: item.publishedAt ?? undefined,
-    status: normalizedStatus,
-    cardStatus: normalizedStatus,
+    status: publicationStatus,
+    cardStatus: publicationStatus,
     language: getLanguageFromLocalizedValue(titleData),
     coverImage: {
       src: item.coverImage?.src || DEFAULT_COVER_IMAGE,

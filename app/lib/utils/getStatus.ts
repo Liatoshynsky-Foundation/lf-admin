@@ -1,7 +1,8 @@
 import { formatDate } from './formatDate';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 export function getStatus(status: string, createdAt?: string, updatedAt?: string, publishedAt?: string): string {
-  if (status === 'published' || status === 'published_with_draft') {
+  if (status === BaseContentStatuses.Published) {
     if (updatedAt) {
       return `Редаговано ${formatDate(updatedAt)}`;
     }
@@ -10,12 +11,16 @@ export function getStatus(status: string, createdAt?: string, updatedAt?: string
     }
     return 'Опубліковано';
   }
-  if (status === 'draft') {
+  if (status === BaseContentStatuses.Draft) {
     if (!createdAt) {
       return 'Чернетка';
     }
 
     return `Створено ${formatDate(createdAt)}`;
+  }
+
+  if (status === BaseContentStatuses.Editing) {
+    return 'Редагування';
   }
 
   return '';

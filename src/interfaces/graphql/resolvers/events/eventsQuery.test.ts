@@ -55,7 +55,7 @@ describe('EventsQuery Resolvers', () => {
   });
 
   it('publishedEvents: should force published status', async () => {
-    await EventsQuery.publishedEvents({}, { filters: { status: 'draft' } }, context);
+    await EventsQuery.publishedEvents({}, { filters: { statuses: [EventStatus.Draft] } }, context);
     expect(mockRepo.findAll).toHaveBeenCalledWith(expect.objectContaining({
       statuses: [EventStatus.Published]
     }));

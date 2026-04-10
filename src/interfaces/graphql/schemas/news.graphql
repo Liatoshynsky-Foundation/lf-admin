@@ -45,7 +45,6 @@ input NewsSortOptions {
 }
 
 input NewsFiltersInput {
-  status: NewsStatus
   statuses: [NewsStatus!]
   limit: Int
   skip: Int

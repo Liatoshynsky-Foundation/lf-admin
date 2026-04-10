@@ -36,7 +36,6 @@ export function endpointRepositoryHandler<RepoKey extends keyof RepositoriesModu
 }
 
 interface GenericFiltersInput {
-  status?: string | null;
   statuses?: Array<string | null> | null;
   slug?: string | null;
   search?: string | null;
@@ -54,10 +53,7 @@ export const mapFilters = <T extends FiltersInput>(
 ): T | undefined => {
   if (!filters) return undefined;
 
-  const statuses = [
-    ...(filters.statuses?.filter((status): status is string => Boolean(status)) ?? []),
-    ...(filters.status ? [filters.status] : [])
-  ];
+  const statuses = filters.statuses?.filter((status): status is string => Boolean(status)) ?? [];
 
   const mapped = {
     statuses: statuses.length ? [...new Set(statuses)] : undefined,

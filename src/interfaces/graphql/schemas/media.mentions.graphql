@@ -43,7 +43,6 @@ input MediaMentionsSortOptions {
 }
 
 input MediaMentionsFiltersInput {
-  status: MediaStatus
   statuses: [MediaStatus!]
   limit: Int
   skip: Int

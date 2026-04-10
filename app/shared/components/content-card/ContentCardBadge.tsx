@@ -4,6 +4,7 @@ import { CircleCheckBig } from 'lucide-react';
 import { ContentType } from './ContentCard';
 import styles from './ContentCardBadge.styles';
 import { getLocalizations } from '~/lib/utils/localizations';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
 interface ContentCardBadgeProps {
   type: ContentType;
   status: string;
@@ -52,7 +53,7 @@ const ContentCardBadge = ({ type, status, localizations }: ContentCardBadgeProps
         <CircleCheckBig size={15} />
         {getLocalizations(localizations) && <Box>{getLocalizations(localizations)}</Box>}
       </Box>
-      {status === 'draft' && <Box sx={styles.draftBadge}>Чернетка {getLocalizations(localizations)}</Box>}
+      {status === BaseContentStatuses.Draft && <Box sx={styles.draftBadge}>Чернетка {getLocalizations(localizations)}</Box>}
     </Box>
   );
 };

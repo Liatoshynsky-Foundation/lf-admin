@@ -17,7 +17,7 @@ describe('usePublicationsFiltering', () => {
 
     act(() => {
       result.current.toolbarProps.search?.setSearch(' фестиваль ');
-      result.current.toolbarProps.filters?.[0]?.onChange(['published_with_draft']);
+      result.current.toolbarProps.filters?.[0]?.onChange(['editing']);
       result.current.toolbarProps.filters?.[1]?.onChange(['bilingual']);
     });
 

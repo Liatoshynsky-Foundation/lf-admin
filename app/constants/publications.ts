@@ -1,8 +1,15 @@
 import type { FilterOption } from '~/shared/components/selector/FilterSelect';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 export type PublicationsTabValue = 'all' | 'events' | 'news' | 'media';
 export type PublicationsItemType = Exclude<PublicationsTabValue, 'all'>;
-export type PublicationsStatusValue = 'draft' | 'published' | 'published_with_draft';
+export const PUBLICATIONS_STATUSES = [
+  BaseContentStatuses.Draft,
+  BaseContentStatuses.Published,
+  BaseContentStatuses.Editing
+] as const;
+
+export type PublicationsStatusValue = (typeof PUBLICATIONS_STATUSES)[number];
 export type PublicationsLanguageValue = 'uk' | 'en' | 'bilingual';
 export type PublicationsFilterId = 'status' | 'language';
 
@@ -91,9 +98,9 @@ export const PUBLICATIONS_CREATE_OPTIONS: ReadonlyArray<PublicationsCreateOption
 );
 
 const PUBLICATIONS_STATUS_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
-  { value: 'draft', label: 'Чернетка' },
-  { value: 'published', label: 'Опублікована' },
-  { value: 'published_with_draft', label: 'Опублікована з чернеткою' }
+  { value: BaseContentStatuses.Draft, label: 'Чернетка' },
+  { value: BaseContentStatuses.Published, label: 'Опублікована' },
+  { value: BaseContentStatuses.Editing, label: 'Опублікована з чернеткою' }
 ];
 
 const PUBLICATIONS_LANGUAGE_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
