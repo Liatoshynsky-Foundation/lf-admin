@@ -22,10 +22,14 @@ type FilesCardsLayoutProps = Readonly<{
   onItemClick?: (item: FilesCardsLayoutItem) => void;
 }>;
 
-const minimizedTypeMap: Record<FileType, 'img' | 'audio' | 'pdf'> = {
+const minimizedTypeMap: Record<FileType, 'img' | 'audio' | 'pdf' | 'doc' | 'xls' | 'video-file' | 'archive'> = {
   image: 'img',
   audio: 'audio',
-  pdf: 'pdf'
+  pdf: 'pdf',
+  document: 'doc',
+  spreadsheet: 'xls',
+  video: 'video-file',
+  archive: 'archive'
 };
 
 export function FilesCardsLayout({ view, items, onItemClick }: FilesCardsLayoutProps) {

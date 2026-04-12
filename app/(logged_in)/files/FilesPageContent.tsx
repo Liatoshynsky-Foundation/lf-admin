@@ -32,10 +32,7 @@ import {
   type FilesCardsLayoutItem,
   type FilesCardsLayoutView
 } from '~/shared/components/files-cards-layout';
-import {
-  FilteringToolbar,
-  SortSelect
-} from '~/shared/components/filtering-toolbar';
+import { FilteringToolbar, SortSelect } from '~/shared/components/filtering-toolbar';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
 import type { MediaModalRenderers } from '~/shared/components/media-modal/MediaModal.renderers';
 import type { MediaModalOpenState, MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
@@ -63,7 +60,11 @@ type FilesPageContentProps = Readonly<{
 const assetCardTypeMap: Record<AssetType, FilesCardsLayoutItem['type']> = {
   [AssetType.Image]: 'image',
   [AssetType.Pdf]: 'pdf',
-  [AssetType.Audio]: 'audio'
+  [AssetType.Audio]: 'audio',
+  [AssetType.Document]: 'document',
+  [AssetType.Spreadsheet]: 'spreadsheet',
+  [AssetType.Video]: 'video',
+  [AssetType.Archive]: 'archive'
 };
 
 const supportedUploadMimeTypes = new Set<string>(FILES_UPLOAD_ALLOWED_MIME_TYPES);
@@ -294,13 +295,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
         {...toolbarProps}
         dataTestId="control-panel"
         rightSlot={<ViewToggle value={view} onChange={setView} />}
-        bottomTrailingContent={
-          <SortSelect
-            {...sortProps}
-            minWidth={208}
-            dataTestId="files-sort-select"
-          />
-        }
+        bottomTrailingContent={<SortSelect {...sortProps} minWidth={208} dataTestId="files-sort-select" />}
       />
 
       <FilesCardsLayout view={view} items={filteredFiles} onItemClick={(item) => setSelectedFileId(item.id)} />
@@ -308,12 +303,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
       {loading && <Typography>{FILES_LOADING_STATE_TEXT}</Typography>}
       {error && <Typography color="error">{FILES_ERROR_STATE_TEXT}</Typography>}
 
-      {sidebarFile && (
-        <FileInfoSidebar
-          file={sidebarFile}
-          onClose={() => setSelectedFileId(null)}
-        />
-      )}
+      {sidebarFile && <FileInfoSidebar file={sidebarFile} onClose={() => setSelectedFileId(null)} />}
 
       <MediaModal
         open={isUploadModalOpen}

@@ -2,6 +2,10 @@ enum AssetType {
   image
   pdf
   audio
+  document
+  spreadsheet
+  video
+  archive
 }
 
 enum AssetSortBy {

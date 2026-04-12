@@ -2,7 +2,7 @@ import { FilterQuery, Model, Types } from 'mongoose';
 
 import { createBaseRepository } from '../baseRepository/baseRepository';
 
-type AssetType = 'image' | 'pdf' | 'audio';
+type AssetType = 'image' | 'pdf' | 'audio' | 'document' | 'spreadsheet' | 'video' | 'archive';
 
 type AssetUsageRef = {
   pageId?: string;
@@ -80,7 +80,9 @@ const toEntity = (doc: DbAsset): AssetEntity => ({
   updatedAt: dateToIso(doc.updatedAt)
 });
 
-const buildAssetQuery = (filters?: Omit<AssetFilters, 'limit' | 'skip' | 'sortBy' | 'sortOrder'>): FilterQuery<DbAsset> => {
+const buildAssetQuery = (
+  filters?: Omit<AssetFilters, 'limit' | 'skip' | 'sortBy' | 'sortOrder'>
+): FilterQuery<DbAsset> => {
   const query: FilterQuery<DbAsset> = {};
 
   if (!filters) {

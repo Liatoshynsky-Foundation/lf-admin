@@ -13,7 +13,9 @@ export const ALL_FORMAT_FILTER_OPTIONS: ReadonlyArray<{ value: string; label: st
   { value: 'mp4', label: 'mp4' },
   { value: 'mpeg', label: 'mpeg' },
   { value: 'wav', label: 'wav' },
-  { value: 'mp3', label: 'mp3' }
+  { value: 'mp3', label: 'mp3' },
+  { value: 'zip', label: 'zip' },
+  { value: 'x-zip-compressed', label: 'zip' }
 ];
 
 export const VISIBLE_FORMAT_FILTER_VALUES = new Set<string>(['jpg', 'png', 'bmp', 'gif', 'webp', 'svg']);

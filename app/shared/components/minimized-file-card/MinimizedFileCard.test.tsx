@@ -29,6 +29,26 @@ describe('MinimizedFileCard', () => {
     expect(screen.getByAltText('pdf file icon')).toBeInTheDocument();
   });
 
+  it('should render document icon when fileType is doc', () => {
+    render(<MinimizedFileCard {...defaultProps} fileType="doc" />);
+    expect(screen.getByAltText('doc file icon')).toBeInTheDocument();
+  });
+
+  it('should render spreadsheet icon when fileType is xls', () => {
+    render(<MinimizedFileCard {...defaultProps} fileType="xls" />);
+    expect(screen.getByAltText('xls file icon')).toBeInTheDocument();
+  });
+
+  it('should render video icon when fileType is video-file', () => {
+    render(<MinimizedFileCard {...defaultProps} fileType="video-file" />);
+    expect(screen.getByAltText('video-file file icon')).toBeInTheDocument();
+  });
+
+  it('should render archive icon when fileType is archive', () => {
+    render(<MinimizedFileCard {...defaultProps} fileType="archive" />);
+    expect(screen.getByAltText('archive file icon')).toBeInTheDocument();
+  });
+
   it('should render star icon when starred prop is true', () => {
     render(<MinimizedFileCard {...defaultProps} starred={true} />);
 

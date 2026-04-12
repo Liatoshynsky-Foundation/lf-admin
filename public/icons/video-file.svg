@@ -1,0 +1,9 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <mask id="mask-vid-icon">
+      <rect width="32" height="32" fill="white" />
+      <path d="M12 10l9 6-9 6V10z" fill="black"/>
+    </mask>
+  </defs>
+  <rect x="6" y="6" width="20" height="20" rx="3" fill="#190D03" mask="url(#mask-vid-icon)"/>
+</svg>
