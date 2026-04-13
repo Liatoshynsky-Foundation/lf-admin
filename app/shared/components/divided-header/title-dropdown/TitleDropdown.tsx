@@ -14,12 +14,12 @@ type BaseTitleDropdownProps = {
 };
 
 type MultilingualProps = BaseTitleDropdownProps & {
-  type?: 'multilingual';
+  type: 'multilingual';
   language?: 'UA' | 'EN';
 };
 
 type SeoProps = BaseTitleDropdownProps & {
-  type?: 'SEO';
+  type: 'SEO';
 };
 
 export type TitleDropdownProps = MultilingualProps | SeoProps;
