@@ -130,6 +130,7 @@ export const ImagePreviewBlock = ({
       return (
         <Box sx={styles.imagePreview}>
           <CloudUpload
+            data-testid="cloud-upload-icon"
             size={76}
             strokeWidth={1.5}
             style={{ opacity: 0.3 }}

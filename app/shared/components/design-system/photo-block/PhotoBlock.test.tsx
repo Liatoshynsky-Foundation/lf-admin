@@ -237,9 +237,11 @@ describe('ImagePreviewBlock', () => {
   it('renders placeholder when no image', () => {
     renderComponent({ imageUrl: '' });
 
-    const img = screen.queryByRole('img');
-    expect(img).toBeInTheDocument();
-    expect(img).toHaveAttribute('src', '/icons/cloud-upload.svg');
+    const icon = screen.getByTestId('cloud-upload-icon');
+
+    expect(icon).toBeInTheDocument();
+    expect(icon).toHaveAttribute('width', '76');
+    expect(icon).toHaveAttribute('height', '76');
   });
 
   it('updates preview when imageUrl changes', async () => {
