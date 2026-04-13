@@ -1,6 +1,7 @@
 'use client';
 
 import { Box, Stack, type StackProps, TextField, Typography } from '@mui/material';
+import { CloudUpload } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -128,11 +129,10 @@ export const ImagePreviewBlock = ({
     if (!previewImage) {
       return (
         <Box sx={styles.imagePreview}>
-          <Box
-            component="img"
-            src="/icons/cloud-upload.svg"
-            alt="cloud upload"
-            sx={{ width: 76, height: 76, opacity: 0.3 }}
+          <CloudUpload
+            size={76}
+            strokeWidth={1.5}
+            style={{ opacity: 0.3 }}
           />
         </Box>
       );
