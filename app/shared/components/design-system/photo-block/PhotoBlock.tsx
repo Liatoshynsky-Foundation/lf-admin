@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Stack, type StackProps, TextField, Typography } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import Button from '../button/Button';
@@ -124,6 +124,44 @@ export const ImagePreviewBlock = ({
     }
   };
 
+  const renderPreviewContent = useMemo(() => {
+    if (!previewImage) {
+      return (
+        <Box sx={styles.imagePreview}>
+          <Box
+            component="img"
+            src="/icons/cloud-upload.svg"
+            alt="cloud upload"
+            sx={{ width: 76, height: 76, opacity: 0.3 }}
+          />
+        </Box>
+      );
+    }
+
+    if (oval) {
+      return (
+        <Box
+          component="img"
+          src={previewImage}
+          alt={title || 'Selected'}
+          sx={styles.imageOvalPreview}
+        />
+      );
+    }
+
+    return (
+      <Box sx={cropStyles.container}>
+        <Box
+          component="img"
+          src={previewImage}
+          alt={title || 'Selected'}
+          onLoad={onImgLoad}
+          sx={cropStyles.image}
+        />
+      </Box>
+    );
+  }, [previewImage, oval, title, cropStyles, onImgLoad]);
+
   return (
     <Box sx={styles.container}>
       {title ? (
@@ -133,35 +171,7 @@ export const ImagePreviewBlock = ({
       ) : null}
 
       <Box sx={styles.imageBlock}>
-        {previewImage ? (
-          oval ? (
-            <Box
-              component="img"
-              src={previewImage}
-              alt={title || 'Selected'}
-              sx={styles.imageOvalPreview}
-            />
-          ) : (
-            <Box sx={cropStyles.container}>
-              <Box
-                component="img"
-                src={previewImage}
-                alt={title || 'Selected'}
-                onLoad={onImgLoad}
-                sx={cropStyles.image}
-              />
-            </Box>
-          )
-        ) : (
-          <Box sx={styles.imagePreview}>
-            <Box
-              component="img"
-              src="/icons/cloud-upload.svg"
-              alt="cloud upload"
-              sx={{ width: 76, height: 76, opacity: 0.3 }}
-            />
-          </Box>
-        )}
+        {renderPreviewContent}
 
         <Stack spacing={stackSpacing} sx={styles.rightBlock}>
           <Stack spacing={typographySpacing}>
