@@ -5,16 +5,22 @@ import { Box, TextField, Typography } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { notFound, useParams } from 'next/navigation';
+import type { Dayjs } from 'dayjs';
+import { notFound, useParams, useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 import { colors } from '~/shared/components/design-system/button/Button.styles';
-import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
 import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
 import ProgressStatus from '~/shared/components/divided-header/progress-status/ProgressStatus';
+import SeoCollapsibleBlock from '~/shared/components/forms/seo-collapsible-block/SeoCollapsibleBlock';
 import { SeoCanonicalUrlField } from '~/shared/components/forms/seo-metadata-form/seo-canonicalurl-field/SeoCanonicalUrlField';
 import { SeoDateTimeFields } from '~/shared/components/forms/seo-metadata-form/seo-datetime-fields/SeoDateTimeFields';
-import SeoMetadataBlock from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
+import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
+import { useCreateEvent } from '~/shared/hooks/use-events/useEvents';
+import { useCreateMediaMention } from '~/shared/hooks/use-media-mentions/useMediaMentions';
+import { useCreateNews } from '~/shared/hooks/use-news/useNews';
+import { EventStatus, MediaStatus, NewsStatus } from '~/types/graphql/generated/graphql';
 
 const VALID_TYPES = ['events', 'news', 'media'] as const;
 type PublicationType = (typeof VALID_TYPES)[number];
@@ -23,6 +29,15 @@ const PAGE_TITLES: Record<PublicationType, string> = {
   events: 'Створення події',
   news: 'Створення новини',
   media: 'Створення ми у ЗМІ'
+};
+
+const initialSeoValue: SeoBlockValue = {
+  meta: {
+    uk: { title: '', description: '', keywords: '' },
+    en: { title: '', description: '', keywords: '' }
+  },
+  ogImage: null,
+  allowIndexing: { uk: true, en: true }
 };
 
 export default function CreatePublicationPage() {
@@ -36,13 +51,91 @@ export default function CreatePublicationPage() {
   const publicationType = type as PublicationType;
   const pageTitle = PAGE_TITLES[publicationType];
 
+  const router = useRouter();
+
+  const [adminTitle, setAdminTitle] = useState('');
+  const [adminTitleError, setAdminTitleError] = useState('');
+  const [publishDate, setPublishDate] = useState<Dayjs | null>(null);
+  const [seoValue, setSeoValue] = useState<SeoBlockValue>(initialSeoValue);
+
+  const [createEvent] = useCreateEvent();
+  const [createNews] = useCreateNews();
+  const [createMediaMention] = useCreateMediaMention();
+
+  const handleSave = async () => {
+    if (!adminTitle.trim()) {
+      setAdminTitleError('Обов\'язкове поле');
+      return;
+    }
+
+    const ukMeta = seoValue.meta.uk;
+    const enMeta = seoValue.meta.en;
+
+    const coverImage = {
+      src: typeof seoValue.ogImage === 'string' ? seoValue.ogImage : adminTitle,
+      alt: {
+        uk: ukMeta.altText?.uk ?? '',
+        en: enMeta.altText?.en ?? ''
+      }
+    };
+
+    const commonInput = {
+      adminTitle,
+      title: { uk: adminTitle, en: adminTitle },
+      description: {
+        uk: adminTitle,
+        en: adminTitle,
+        meta: {
+          metaTitle: { uk: ukMeta.title, en: enMeta.title }
+        }
+      },
+      keywords: { uk: ukMeta.keywords || '', en: enMeta.keywords || '' },
+      allowIndexation: { uk: seoValue.allowIndexing.uk, en: seoValue.allowIndexing.en },
+      coverImage,
+      publishedAt: publishDate?.toISOString() ?? undefined
+    };
+
+    try {
+      if (publicationType === 'events') {
+        const result = await createEvent({
+          ...commonInput,
+          eventLink: adminTitle,
+          content: { uk: {}, en: {} },
+          eventDateTimeStart: ukMeta.startDateTime ?? undefined,
+          eventDateTimeEnd: ukMeta.endDateTime ?? undefined,
+          ticketUrl: seoValue.ticketUrl ?? undefined,
+          status: EventStatus.Draft
+        });
+        const id = result.data?.createEvent.id;
+        if (id) router.push(`/publications/events/${id}/edit`);
+      } else if (publicationType === 'news') {
+        const result = await createNews({
+          ...commonInput,
+          content: { uk: {}, en: {} },
+          newsDate: publishDate?.toISOString() ?? undefined,
+          status: NewsStatus.Draft
+        });
+        const id = result.data?.createNews.id;
+        if (id) router.push(`/publications/news/${id}/edit`);
+      } else if (publicationType === 'media') {
+        const result = await createMediaMention({
+          ...commonInput,
+          url: ukMeta.canonicalUrl || enMeta.canonicalUrl || adminTitle,
+          status: MediaStatus.Draft
+        });
+        const id = result.data?.createMediaMention.id;
+        if (id) router.push(`/publications/media/${id}/edit`);
+      }
+    } catch {
+      // errors are handled by safeMutate
+    }
+  };
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
       <DividedHeader
         originUrl="/publications"
-        rightActionsComponent={
-          <HeaderRightActions mode="create" onEdit={() => undefined} onPreview={() => undefined} />
-        }
+        rightActionsComponent={<HeaderRightActions mode="create" onEdit={handleSave} onPreview={() => undefined} />}
       >
         <Typography variant="customBold20Tight">{pageTitle}</Typography>
         <ProgressStatus isSaved />
@@ -59,7 +152,7 @@ export default function CreatePublicationPage() {
           width: 'calc(100% - 64px)'
         }}
       >
-        <CollapsibleBlock
+        <SeoCollapsibleBlock
           title="Деталі"
           defaultExpanded
           sx={{
@@ -74,9 +167,39 @@ export default function CreatePublicationPage() {
             gap: '24px',
             padding: 0
           }}
+          showAlternativeText
+          showTicketUrl={publicationType === 'events'}
+          value={seoValue}
+          onChange={setSeoValue}
+          extraFields={
+            publicationType === 'events'
+              ? (_locale, value, onChange) => (
+                <SeoDateTimeFields
+                  startDateTime={value.startDateTime}
+                  endDateTime={value.endDateTime}
+                  onChange={(start, end) => onChange({ ...value, startDateTime: start, endDateTime: end })}
+                />
+              )
+              : publicationType === 'media'
+                ? (_locale, value, onChange) => (
+                  <SeoCanonicalUrlField
+                    value={value.canonicalUrl ?? ''}
+                    onChange={(val) => onChange({ ...value, canonicalUrl: val })}
+                    onBlur={() => {}}
+                  />
+                )
+                : undefined
+          }
         >
           <TextField
             label="Назва новини в адмінці"
+            value={adminTitle}
+            onChange={(e) => {
+              setAdminTitle(e.target.value);
+              if (adminTitleError) setAdminTitleError('');
+            }}
+            error={Boolean(adminTitleError)}
+            helperText={adminTitleError}
             sx={{
               '& .MuiOutlinedInput-root': {
                 '& fieldset': {
@@ -114,6 +237,8 @@ export default function CreatePublicationPage() {
           <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="uk">
             <DatePicker
               label="Дата публікації"
+              value={publishDate}
+              onChange={(newVal) => setPublishDate(newVal)}
               slotProps={{
                 textField: {
                   sx: {
@@ -137,31 +262,7 @@ export default function CreatePublicationPage() {
               }}
             />
           </LocalizationProvider>
-        </CollapsibleBlock>
-
-        <SeoMetadataBlock
-          showAlternativeText
-          showTicketUrl={publicationType === 'events'}
-          extraFields={
-            publicationType === 'events'
-              ? (_locale, value, onChange) => (
-                <SeoDateTimeFields
-                  startDateTime={value.startDateTime}
-                  endDateTime={value.endDateTime}
-                  onChange={(start, end) => onChange({ ...value, startDateTime: start, endDateTime: end })}
-                />
-              )
-              : publicationType === 'media'
-                ? (_locale, value, onChange) => (
-                  <SeoCanonicalUrlField
-                    value={value.canonicalUrl ?? ''}
-                    onChange={(val) => onChange({ ...value, canonicalUrl: val })}
-                    onBlur={() => {}}
-                  />
-                )
-                : undefined
-          }
-        />
+        </SeoCollapsibleBlock>
       </Box>
     </Box>
   );
