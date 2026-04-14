@@ -8,7 +8,6 @@ import { MediaModalSwitcher } from '../components/switcher/MediaModalSwitcher';
 import type { MediaModalRenderers } from '../MediaModal.renderers';
 import { styles } from '../MediaModal.styles';
 import type {
-  CropResult,
   MediaModalOpenState,
   MediaModalResult,
   MediaModalTab,
@@ -20,6 +19,7 @@ import { useMediaModalApply } from './useMediaModalApply';
 import ArrowLeftIcon from '~/public/icons/arrowLeft.svg';
 import IterationIcon from '~/public/icons/iteration.svg';
 import Button from '~/shared/components/design-system/button/Button';
+import type { CropResult } from '~/types/common';
 
 export type MediaModalFlowProps = {
   open: boolean;

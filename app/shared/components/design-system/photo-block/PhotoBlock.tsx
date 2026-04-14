@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import Button from '../button/Button';
-import { styles } from './PhotoBlock.styles';
+import {PREVIEW_H, PREVIEW_W, styles} from './PhotoBlock.styles';
 import { useCroppedImage } from '~/hooks/use-cropped-image/use-cropped-image';
 import { readFileAsDataURL } from '~/lib/utils/readFileAsDataURL';
 import ImageIcon from '~/public/icons/image.svg';
@@ -14,9 +14,6 @@ import PencilIcon from '~/public/icons/pencil.svg';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
 import type { MediaModalOpenState, MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import { useImageMetadata } from '~/shared/hooks/use-image-metadata/useImageMetadata';
-
-const PREVIEW_W = 196;
-const PREVIEW_H = 120;
 
 interface ImagePreviewBlockProps extends StackProps {
   imageUrl: string;

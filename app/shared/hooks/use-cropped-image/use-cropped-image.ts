@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import type { CropResult } from '~/shared/components/media-modal/MediaModal.types';
+import type { CropResult } from '~/types/common';
 
 export type CroppedImageStyles = {
   container: React.CSSProperties;
@@ -20,10 +20,15 @@ function buildCroppedStyles(
     overflow: 'hidden',
     position: 'relative',
     flexShrink: 0,
-    border: '1px solid #B2B3BE',
   };
 
-  if (!crop?.rect || natW === 0 || natH === 0) {
+  if (
+    !crop?.rect ||
+      crop.rect.width === 0 ||
+      crop.rect.height === 0 ||
+      natW === 0 ||
+      natH === 0
+  ) {
     return {
       container: containerBase,
       image: {
