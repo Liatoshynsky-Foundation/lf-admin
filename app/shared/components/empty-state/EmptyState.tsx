@@ -3,7 +3,6 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 import { styles } from './EmptyState.styles';
-import { colors } from '~/shared/components/design-system/button/Button.styles';
 
 type EmptyStateAction = {
   label: string;
@@ -16,11 +15,12 @@ type EmptyStateProps = Readonly<{
   description: string;
   icon?: ReactNode;
   action?: EmptyStateAction;
+  dataTestId?: string;
 }>;
 
-export function EmptyState({ title, description, icon, action }: EmptyStateProps) {
+export function EmptyState({ title, description, icon, action, dataTestId }: EmptyStateProps) {
   return (
-    <Box sx={styles.container}>
+    <Box sx={styles.container} data-testid={dataTestId}>
       {icon && <Box sx={styles.icon}>{icon}</Box>}
 
       <Typography variant="h6" sx={styles.title}>
@@ -36,23 +36,7 @@ export function EmptyState({ title, description, icon, action }: EmptyStateProps
           variant="contained"
           {...(action.href ? { component: Link, href: action.href } : {})}
           onClick={action.onClick}
-          sx={{
-            mt: '8px',
-            borderRadius: '20px',
-            px: '24px',
-            py: '8px',
-            minHeight: '40px',
-            textTransform: 'none',
-            color: colors.white,
-            boxShadow: 'none',
-            fontSize: '16px',
-            lineHeight: 1.5,
-            bgcolor: colors.black,
-            '&:hover': {
-              bgcolor: colors.blue[900],
-              boxShadow: 'none'
-            }
-          }}
+          sx={styles.actionButton}
         >
           {action.label}
         </Button>

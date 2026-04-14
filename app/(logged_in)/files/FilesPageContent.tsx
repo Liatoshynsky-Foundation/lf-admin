@@ -331,7 +331,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
         <FilesCardsLayout view={view} items={filteredFiles} onItemClick={(item) => setSelectedFileId(item.id)} />
       )}
 
-      {!loading && !error && hasNoFiles && isFavoritesTab && !hasActiveCriteria && (
+      {hasNoFiles && isFavoritesTab && !hasActiveCriteria && (
         <EmptyState
           title={FILES_FAVORITES_EMPTY_STATE_TITLE}
           description={FILES_FAVORITES_EMPTY_STATE_DESCRIPTION}
@@ -340,14 +340,14 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
         />
       )}
 
-      {!loading && !error && hasNoFiles && hasActiveCriteria && (
+      {hasNoFiles && hasActiveCriteria && (
         <EmptyState
           title={FILES_EMPTY_STATE_NO_RESULTS_TITLE}
           description={FILES_EMPTY_STATE_NO_RESULTS_DESCRIPTION}
         />
       )}
 
-      {!loading && !error && hasNoFiles && !isFavoritesTab && !hasActiveCriteria && (
+      {hasNoFiles && !isFavoritesTab && !hasActiveCriteria && (
         <EmptyState
           title={FILES_EMPTY_STATE_TITLE}
           description={FILES_EMPTY_STATE_DESCRIPTION}
