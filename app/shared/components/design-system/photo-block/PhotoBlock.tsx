@@ -175,15 +175,23 @@ export const ImagePreviewBlock = ({
 
         <Stack spacing={stackSpacing} sx={styles.rightBlock}>
           <Stack spacing={typographySpacing}>
-            <Typography
-              variant="body1"
-              sx={{
-                ...styles.fileNameText,
-                ...styles.trimmedTypography
-              }}
-            >
-              Назва файлу {finalFileName}
-            </Typography>
+            <Box sx={{ display: 'flex', gap: '4px', minWidth: 0 }}>
+              <Typography variant="body1" sx={{ ...styles.fileNameText, flexShrink: 0 }}>
+                Назва файлу
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{
+                  ...styles.fileNameText,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  minWidth: 0
+                }}
+              >
+                {finalFileName}
+              </Typography>
+            </Box>
 
             {dimensions ? (
               <Typography variant="body2" color="text.secondary" sx={styles.imageSizeText}>

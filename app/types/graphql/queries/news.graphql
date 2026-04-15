@@ -59,7 +59,7 @@ query PublishedNews($filters: NewsFiltersInput) {
     title { uk en }
     slug
     coverImage {
-      src
+      src { uk en }
       alt { uk en }
     }
     newsDate

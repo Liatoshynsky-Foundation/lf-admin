@@ -1,6 +1,6 @@
+import { Box, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
 
-import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
 import type { SeoMetadataBlockProps } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import SeoMetadataBlock from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 
@@ -14,7 +14,7 @@ interface SeoCollapsibleBlockProps extends SeoMetadataBlockProps {
 
 export default function SeoCollapsibleBlock({
   title,
-  defaultExpanded,
+  defaultExpanded: _defaultExpanded,
   sx,
   childrenContainerSx,
   children,
@@ -22,15 +22,34 @@ export default function SeoCollapsibleBlock({
 }: SeoCollapsibleBlockProps) {
   return (
     <>
-      <CollapsibleBlock
-        title={title}
-        defaultExpanded={defaultExpanded}
-        sx={sx}
-        childrenContainerSx={childrenContainerSx}
+      <Box
+        sx={{
+          border: '0.5px solid #190D0333',
+          borderRadius: '20px',
+          backgroundColor: 'rgba(25, 13, 3, 0.04)',
+          boxShadow: 'none',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '24px',
+          ...sx
+        }}
       >
-        {children}
-      </CollapsibleBlock>
-      <SeoMetadataBlock {...seoProps} />
+        <Typography
+          sx={{
+            fontFamily: 'Mulish',
+            fontWeight: 700,
+            fontSize: '24px',
+            lineHeight: '120%',
+            letterSpacing: '0px'
+          }}
+        >
+          {title}
+        </Typography>
+        <Box sx={childrenContainerSx}>{children}</Box>
+      </Box>
+      <Box sx={{ padding: '32px 0' }}>
+        <SeoMetadataBlock {...seoProps} />
+      </Box>
     </>
   );
 }

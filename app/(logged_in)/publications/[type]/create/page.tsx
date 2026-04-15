@@ -86,8 +86,8 @@ export default function CreatePublicationPage() {
         en: seoValue.ogImage?.en ?? adminTitle
       },
       alt: {
-        uk: ukMeta.altText?.uk ?? '',
-        en: enMeta.altText?.en ?? ''
+        uk: ukMeta.altText?.uk || adminTitle,
+        en: enMeta.altText?.en || adminTitle
       },
       caption: { uk: adminTitle, en: adminTitle }
     };
@@ -100,7 +100,10 @@ export default function CreatePublicationPage() {
         en: adminTitle,
         meta: {
           metaTitle: { uk: ukMeta.title, en: enMeta.title },
-          description: { uk: ukMeta.description, en: enMeta.description }
+          description: { uk: ukMeta.description, en: enMeta.description },
+          ...(publicationType === 'media' && {
+            canonicalUrl: { uk: ukMeta.canonicalUrl ?? null, en: enMeta.canonicalUrl ?? null }
+          })
         }
       },
       keywords: { uk: ukMeta.keywords || '', en: enMeta.keywords || '' },
