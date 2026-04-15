@@ -36,7 +36,7 @@ const initialSeoValue: SeoBlockValue = {
     uk: { title: '', description: '', keywords: '' },
     en: { title: '', description: '', keywords: '' }
   },
-  ogImage: null,
+  ogImage: { uk: null, en: null },
   allowIndexing: { uk: true, en: true }
 };
 
@@ -74,14 +74,17 @@ export default function CreatePublicationPage() {
       !ukMeta.description.trim() ||
       !enMeta.description.trim() ||
       (publicationType === 'media' && (!ukMeta.canonicalUrl?.trim() || !enMeta.canonicalUrl?.trim())) ||
-      (publicationType === 'events' && !seoValue.ticketUrl?.trim());
+      (publicationType === 'events' && (!seoValue.ticketUrl?.uk?.trim() || !seoValue.ticketUrl?.en?.trim()));
 
     if (isAdminTitleInvalid) setAdminTitleError('Обов\'язкове поле');
     if (isSeoInvalid) setForceShowErrors(true);
     if (isAdminTitleInvalid || isSeoInvalid) return;
 
     const coverImage = {
-      src: seoValue.ogImage ?? adminTitle,
+      src: {
+        uk: seoValue.ogImage?.uk ?? adminTitle,
+        en: seoValue.ogImage?.en ?? adminTitle
+      },
       alt: {
         uk: ukMeta.altText?.uk ?? '',
         en: enMeta.altText?.en ?? ''
@@ -186,11 +189,19 @@ export default function CreatePublicationPage() {
           onChange={setSeoValue}
           extraFields={
             publicationType === 'events'
-              ? (_locale, value, onChange) => (
+              ? (_locale, value) => (
                 <SeoDateTimeFields
                   startDateTime={value.startDateTime}
                   endDateTime={value.endDateTime}
-                  onChange={(start, end) => onChange({ ...value, startDateTime: start, endDateTime: end })}
+                  onChange={(start, end) =>
+                    setSeoValue((prev) => ({
+                      ...prev,
+                      meta: {
+                        uk: { ...prev.meta.uk, startDateTime: start, endDateTime: end },
+                        en: { ...prev.meta.en, startDateTime: start, endDateTime: end }
+                      }
+                    }))
+                  }
                 />
               )
               : publicationType === 'media'

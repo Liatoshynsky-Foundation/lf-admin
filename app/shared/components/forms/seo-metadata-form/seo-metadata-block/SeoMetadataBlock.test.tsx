@@ -49,7 +49,7 @@ describe('SeoMetadataBlock', () => {
       uk: { title: '', description: '', keywords: '' },
       en: { title: '', description: '', keywords: '' }
     },
-    ogImage: null,
+    ogImage: { uk: null, en: null },
     allowIndexing: { uk: true, en: true }
   };
 
@@ -97,7 +97,7 @@ describe('SeoMetadataBlock', () => {
     clickButton('image-en');
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
-        ogImage: expect.any(String)
+        ogImage: expect.objectContaining({ en: 'https://example.com/test.png' })
       })
     );
   });

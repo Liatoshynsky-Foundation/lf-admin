@@ -26,8 +26,8 @@ const eventSchema = new Schema<EventsEntity>(
       default: null
     },
     ticketUrl: {
-      type: String,
-      default: null
+      uk: { type: String, default: null },
+      en: { type: String, default: null }
     }
   },
   {
