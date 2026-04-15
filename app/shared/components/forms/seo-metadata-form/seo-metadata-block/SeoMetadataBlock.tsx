@@ -9,9 +9,9 @@ import { styles } from '../SeoMetadataForm.styles';
 
 export interface SeoBlockValue {
   meta: { uk: LocalizedMeta; en: LocalizedMeta };
-  ogImage: string | null;
+  ogImage: { uk: string | null; en: string | null };
   allowIndexing: { uk: boolean; en: boolean };
-  ticketUrl?: string;
+  ticketUrl?: { uk: string; en: string };
 }
 
 const defaultValue: SeoBlockValue = {
@@ -19,9 +19,9 @@ const defaultValue: SeoBlockValue = {
     uk: { title: '', description: '', keywords: '', canonicalUrl: undefined },
     en: { title: '', description: '', keywords: '', canonicalUrl: undefined }
   },
-  ogImage: null,
+  ogImage: { uk: null, en: null },
   allowIndexing: { uk: true, en: true },
-  ticketUrl: ''
+  ticketUrl: { uk: '', en: '' }
 };
 
 export interface SeoMetadataBlockProps {
@@ -31,7 +31,11 @@ export interface SeoMetadataBlockProps {
   readonly forceShowErrors?: boolean;
   readonly value?: SeoBlockValue;
   readonly onChange?: (value: SeoBlockValue) => void;
-  readonly extraFields?: (locale: 'uk' | 'en', value: LocalizedMeta, onChange: (val: LocalizedMeta) => void) => ReactNode;
+  readonly extraFields?: (
+    locale: 'uk' | 'en',
+    value: LocalizedMeta,
+    onChange: (val: LocalizedMeta) => void
+  ) => ReactNode;
 }
 
 export default function SeoMetadataBlock({
@@ -44,15 +48,18 @@ export default function SeoMetadataBlock({
   extraFields
 }: SeoMetadataBlockProps) {
   const [internalValue, setInternalValue] = useState<SeoBlockValue>(defaultValue);
-  const [ticketUrlTouched, setTicketUrlTouched] = useState(false);
-  const [ticketUrlError, setTicketUrlError] = useState('');
+  const [ticketUrlTouched, setTicketUrlTouched] = useState<{ uk: boolean; en: boolean }>({ uk: false, en: false });
+  const [ticketUrlError, setTicketUrlError] = useState<{ uk: string; en: string }>({ uk: '', en: '' });
 
   useEffect(() => {
     if (forceShowErrors && showTicketUrl) {
-      setTicketUrlTouched(true);
-      setTicketUrlError(validateTicketUrl(value.ticketUrl ?? ''));
+      setTicketUrlTouched({ uk: true, en: true });
+      setTicketUrlError({
+        uk: validateTicketUrl(value.ticketUrl?.uk ?? ''),
+        en: validateTicketUrl(value.ticketUrl?.en ?? '')
+      });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forceShowErrors]);
 
   const validateTicketUrl = (val: string) => {
@@ -65,14 +72,14 @@ export default function SeoMetadataBlock({
     }
   };
 
-  const handleTicketUrlChange = (val: string) => {
-    handleChange({ ...value, ticketUrl: val });
-    if (ticketUrlTouched) setTicketUrlError(validateTicketUrl(val));
+  const handleTicketUrlChange = (locale: 'uk' | 'en', val: string) => {
+    handleChange({ ...value, ticketUrl: { ...(value.ticketUrl ?? { uk: '', en: '' }), [locale]: val } });
+    if (ticketUrlTouched[locale]) setTicketUrlError((prev) => ({ ...prev, [locale]: validateTicketUrl(val) }));
   };
 
-  const handleTicketUrlBlur = () => {
-    setTicketUrlTouched(true);
-    setTicketUrlError(validateTicketUrl(value.ticketUrl ?? ''));
+  const handleTicketUrlBlur = (locale: 'uk' | 'en') => {
+    setTicketUrlTouched((prev) => ({ ...prev, [locale]: true }));
+    setTicketUrlError((prev) => ({ ...prev, [locale]: validateTicketUrl(value.ticketUrl?.[locale] ?? '') }));
   };
 
   const isControlled = externalValue !== undefined && externalOnChange !== undefined;
@@ -97,11 +104,11 @@ export default function SeoMetadataBlock({
       <>
         <TextField
           label="Ticket URL"
-          value={value.ticketUrl ?? ''}
-          onChange={(e) => handleTicketUrlChange(e.target.value)}
-          onBlur={handleTicketUrlBlur}
-          error={ticketUrlTouched && Boolean(ticketUrlError)}
-          helperText={ticketUrlTouched && ticketUrlError ? ticketUrlError : ''}
+          value={value.ticketUrl?.[locale] ?? ''}
+          onChange={(e) => handleTicketUrlChange(locale, e.target.value)}
+          onBlur={() => handleTicketUrlBlur(locale)}
+          error={ticketUrlTouched[locale] && Boolean(ticketUrlError[locale])}
+          helperText={ticketUrlTouched[locale] && ticketUrlError[locale] ? ticketUrlError[locale] : ''}
           fullWidth
           size="small"
           sx={styles.textField}
@@ -118,8 +125,8 @@ export default function SeoMetadataBlock({
         value={value.meta.uk}
         onChange={(newMeta) => handleChange({ ...value, meta: { ...value.meta, uk: newMeta } })}
         locale="uk"
-        ogImage={value.ogImage}
-        onImageChange={(url) => handleChange({ ...value, ogImage: url })}
+        ogImage={value.ogImage.uk}
+        onImageChange={(url) => handleChange({ ...value, ogImage: { ...value.ogImage, uk: url } })}
         allowIndexing={value.allowIndexing.uk}
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, uk: val } })}
         showAlternativeText={showAlternativeText}
@@ -131,8 +138,8 @@ export default function SeoMetadataBlock({
         value={value.meta.en}
         onChange={(newMeta) => handleChange({ ...value, meta: { ...value.meta, en: newMeta } })}
         locale="en"
-        ogImage={value.ogImage}
-        onImageChange={(url) => handleChange({ ...value, ogImage: url })}
+        ogImage={value.ogImage.en}
+        onImageChange={(url) => handleChange({ ...value, ogImage: { ...value.ogImage, en: url } })}
         allowIndexing={value.allowIndexing.en}
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, en: val } })}
         showAlternativeText={showAlternativeText}

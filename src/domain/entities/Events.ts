@@ -8,5 +8,5 @@ export type EventsEntity = BaseContentFields & {
   status: EventStatus;
   eventDateTimeStart?: string | null;
   eventDateTimeEnd?: string | null;
-  ticketUrl?: string | null;
+  ticketUrl?: { uk: string; en: string } | null;
 };

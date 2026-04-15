@@ -41,8 +41,10 @@ export default async function parseMediaMention(
     keywords: toLocalized(''),
     allowIndexation: { uk: true, en: true },
     coverImage: {
-      src: parsed.image.src,
+      src: { uk: parsed.image.src, en: parsed.image.src },
       alt: toLocalized(parsed.image.alt || parsed.title),
+      width: parsed.image.width,
+      height: parsed.image.height
     },
     publishedAt: parsed.published_time
       ? new Date(parsed.published_time).toISOString()

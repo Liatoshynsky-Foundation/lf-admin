@@ -30,7 +30,7 @@ type CropRect {
 }
 
 type LocalizedImage {
-    src: String!
+    src: LocalizedString!
     alt: LocalizedString!
     caption: LocalizedString!
     isTmp: Boolean

@@ -29,7 +29,10 @@ describe('ContentCard', () => {
   const defaultProps = {
     type: 'news' as ContentType,
     coverImage: {
-      src: '/image.png',
+      src: {
+        uk: '/image.png',
+        en: '/image.png'
+      },
       alt: {
         uk: 'Image UA',
         en: 'Image EN'
