@@ -33,12 +33,21 @@ export default function DateTimePicker({ startDateTime, endDateTime, onChange, l
     [onChange, startDateTime]
   );
 
-  const renderPicker = (value?: string, label?: string, onChangeCb?: (val: dayjs.Dayjs | null) => void) => (
+  const endBeforeStart =
+    Boolean(startDateTime) && Boolean(endDateTime) && dayjs(endDateTime).isBefore(dayjs(startDateTime));
+
+  const renderPicker = (
+    value?: string,
+    label?: string,
+    onChangeCb?: (val: dayjs.Dayjs | null) => void,
+    extraProps?: object
+  ) => (
     <DesktopDateTimePicker
       label={label}
       value={value ? dayjs(value) : null}
       onChange={onChangeCb}
       ampm={false}
+      {...extraProps}
       sx={{
         '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
           borderColor: '#ADAEBA',
@@ -113,7 +122,17 @@ export default function DateTimePicker({ startDateTime, endDateTime, onChange, l
           >
             —
           </Box>
-          <Box>{renderPicker(endDateTime, labels.endDateTime || 'Закінчення події', handleEndChange)}</Box>
+          <Box>
+            {renderPicker(endDateTime, labels.endDateTime || 'Закінчення події', handleEndChange, {
+              minDateTime: startDateTime ? dayjs(startDateTime) : undefined,
+              slotProps: {
+                textField: {
+                  error: endBeforeStart,
+                  helperText: endBeforeStart ? 'Дата кінця не може бути раніше дати початку' : undefined
+                }
+              }
+            })}
+          </Box>
         </Box>
       </LocalizationProvider>
     </Box>

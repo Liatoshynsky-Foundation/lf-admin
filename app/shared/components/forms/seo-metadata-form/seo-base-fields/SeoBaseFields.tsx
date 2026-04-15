@@ -9,6 +9,7 @@ interface SeoBaseFieldsProps {
   readonly touched: Partial<Record<keyof LocalizedMeta, boolean>>;
   readonly onFieldChange: (field: keyof LocalizedMeta, val: string) => void;
   readonly onBlur: (field: keyof LocalizedMeta) => void;
+  readonly showKeywords?: boolean;
   readonly labels?: {
     readonly metaTitle?: string;
     readonly metaDescription?: string;
@@ -16,7 +17,7 @@ interface SeoBaseFieldsProps {
   };
 }
 
-export function SeoBaseFields({ value, errors, touched, onFieldChange, onBlur, labels = {} }: SeoBaseFieldsProps) {
+export function SeoBaseFields({ value, errors, touched, onFieldChange, onBlur, showKeywords = true, labels = {} }: SeoBaseFieldsProps) {
   const fields = [
     { key: 'title' as const, label: labels.metaTitle || 'Meta title', required: true },
     {
@@ -26,7 +27,7 @@ export function SeoBaseFields({ value, errors, touched, onFieldChange, onBlur, l
       multiline: true,
       minRows: 2
     },
-    { key: 'keywords' as const, label: labels.metaKeywords || 'Meta keywords' }
+    ...(showKeywords ? [{ key: 'keywords' as const, label: labels.metaKeywords || 'Meta keywords' }] : [])
   ];
 
   return (

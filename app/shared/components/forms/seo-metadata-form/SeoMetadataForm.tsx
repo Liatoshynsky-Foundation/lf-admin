@@ -2,9 +2,9 @@
 
 import 'dayjs/locale/uk';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { Box, Checkbox, Divider, FormControlLabel, Stack, Typography } from '@mui/material';
+import { Box, Checkbox, Divider, FormControlLabel, Stack, TextField, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { SeoBaseFields } from './seo-base-fields/SeoBaseFields';
 import { styles } from './SeoMetadataForm.styles';
@@ -30,6 +30,8 @@ export interface SeoMetadataFormProps {
   readonly allowIndexing: boolean;
   readonly onIndexingChange: (val: boolean) => void;
   readonly showAlternativeText?: boolean;
+  readonly extraFieldsBeforeKeywords?: boolean;
+  readonly forceShowErrors?: boolean;
   readonly extraFields?: (value: LocalizedMeta, onChange: (val: LocalizedMeta) => void) => ReactNode;
   readonly labels?: {
     readonly metaTitle?: string;
@@ -51,12 +53,25 @@ export default function SeoMetadataForm({
   allowIndexing,
   onIndexingChange,
   showAlternativeText = false,
+  extraFieldsBeforeKeywords = false,
+  forceShowErrors = false,
   extraFields,
   labels = {}
 }: SeoMetadataFormProps) {
   const [ogImagePreview, setOgImagePreview] = useState<string | null>(typeof ogImage === 'string' ? ogImage : null);
   const [touched, setTouched] = useState<Partial<Record<keyof LocalizedMeta, boolean>>>({});
   const [errors, setErrors] = useState<Partial<Record<keyof LocalizedMeta, string>>>({});
+
+  useEffect(() => {
+    if (!forceShowErrors) return;
+    setTouched((prev) => ({ ...prev, title: true, description: true }));
+    setErrors((prev) => ({
+      ...prev,
+      title: validateField('title', value.title),
+      description: validateField('description', value.description)
+    }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forceShowErrors]);
 
   const validateField = (field: keyof LocalizedMeta, val: string) => {
     switch (field) {
@@ -146,9 +161,22 @@ export default function SeoMetadataForm({
           touched={touched}
           onFieldChange={handleFieldChange}
           onBlur={handleBlur}
+          showKeywords={!extraFieldsBeforeKeywords}
           labels={labels}
         />
         {extraFields?.(value, onChange)}
+        {extraFieldsBeforeKeywords && (
+          <TextField
+            label={labels.metaKeywords || 'Meta keywords'}
+            value={value.keywords || ''}
+            onChange={(e) => handleFieldChange('keywords', e.target.value)}
+            onBlur={() => handleBlur('keywords')}
+            error={Boolean(errors.keywords && touched.keywords)}
+            helperText={errors.keywords && touched.keywords ? errors.keywords : ''}
+            fullWidth
+            sx={styles.textField}
+          />
+        )}
       </Stack>
       {renderPhotoBlock()}
       <Divider sx={styles.divider} />

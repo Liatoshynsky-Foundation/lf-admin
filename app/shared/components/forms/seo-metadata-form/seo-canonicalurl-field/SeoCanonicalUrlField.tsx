@@ -1,6 +1,6 @@
 'use client';
 import { TextField } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { styles } from '../SeoMetadataForm.styles';
 
@@ -9,6 +9,7 @@ interface SeoCanonicalUrlFieldProps {
   readonly onChange: (val: string) => void;
   readonly onBlur?: () => void;
   readonly label?: string;
+  readonly forceShowErrors?: boolean;
 }
 
 const validateCanonicalUrl = (val: string): string => {
@@ -21,8 +22,12 @@ const validateCanonicalUrl = (val: string): string => {
   }
 };
 
-export function SeoCanonicalUrlField({ value, onChange, onBlur, label }: SeoCanonicalUrlFieldProps) {
+export function SeoCanonicalUrlField({ value, onChange, onBlur, label, forceShowErrors = false }: SeoCanonicalUrlFieldProps) {
   const [touched, setTouched] = useState(false);
+
+  useEffect(() => {
+    if (forceShowErrors) setTouched(true);
+  }, [forceShowErrors]);
 
   const error = touched ? validateCanonicalUrl(value) : '';
 
@@ -45,6 +50,7 @@ export function SeoCanonicalUrlField({ value, onChange, onBlur, label }: SeoCano
       error={Boolean(error)}
       helperText={error}
       fullWidth
+      required
       sx={styles.textField}
     />
   );

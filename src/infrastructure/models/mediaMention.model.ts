@@ -1,8 +1,8 @@
 import mongoose, { Schema } from 'mongoose';
 
 import { MediaMentionEntity } from '~/domain/entities/MediaMentions';
-import {baseContentSchemaFields} from '~/infrastructure/models/commonSchemas';
-import {MediaStatus} from '~/types/enums/common.enums';
+import { baseContentSchemaFields } from '~/infrastructure/models/commonSchemas';
+import { MediaStatus } from '~/types/enums/common.enums';
 
 const mediaMentionSchema = new Schema<MediaMentionEntity>(
   {
@@ -12,7 +12,7 @@ const mediaMentionSchema = new Schema<MediaMentionEntity>(
       type: String,
       required: true,
       enum: Array.from(Object.values(MediaStatus))
-    },
+    }
   },
   {
     timestamps: true,
