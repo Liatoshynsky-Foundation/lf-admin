@@ -20,7 +20,7 @@ import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/
 import { useCreateEvent } from '~/shared/hooks/use-events/useEvents';
 import { useCreateMediaMention } from '~/shared/hooks/use-media-mentions/useMediaMentions';
 import { useCreateNews } from '~/shared/hooks/use-news/useNews';
-import { EventStatus, MediaStatus, NewsStatus, useUploadBlobMutation } from '~/types/graphql/generated/graphql';
+import { EventStatus, MediaStatus, NewsStatus } from '~/types/graphql/generated/graphql';
 
 const VALID_TYPES = ['events', 'news', 'media'] as const;
 type PublicationType = (typeof VALID_TYPES)[number];
@@ -62,7 +62,6 @@ export default function CreatePublicationPage() {
   const [createEvent] = useCreateEvent();
   const [createNews] = useCreateNews();
   const [createMediaMention] = useCreateMediaMention();
-  const [uploadBlob] = useUploadBlobMutation();
 
   const handleSave = async () => {
     const ukMeta = seoValue.meta.uk;
@@ -81,32 +80,13 @@ export default function CreatePublicationPage() {
     if (isSeoInvalid) setForceShowErrors(true);
     if (isAdminTitleInvalid || isSeoInvalid) return;
 
-    let coverImageSrc = typeof seoValue.ogImage === 'string' ? seoValue.ogImage : adminTitle;
-    let isTmp = false;
-
-    try {
-      if (seoValue.ogImage instanceof File) {
-        const file = seoValue.ogImage;
-        const buffer = await file.arrayBuffer();
-        const base64 = Buffer.from(buffer).toString('base64');
-        const res = await uploadBlob({
-          variables: { folderName: 'tmp', blobName: file.name, buffer: base64, contentType: file.type }
-        });
-        coverImageSrc = res.data?.uploadBlob.blobName ?? adminTitle;
-        isTmp = true;
-      }
-    } catch {
-      // photo upload failed, proceed with adminTitle as src fallback
-    }
-
     const coverImage = {
-      src: coverImageSrc,
+      src: seoValue.ogImage ?? adminTitle,
       alt: {
         uk: ukMeta.altText?.uk ?? '',
         en: enMeta.altText?.en ?? ''
       },
-      caption: { uk: adminTitle, en: adminTitle },
-      isTmp
+      caption: { uk: adminTitle, en: adminTitle }
     };
 
     const commonInput = {

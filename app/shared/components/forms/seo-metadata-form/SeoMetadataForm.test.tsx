@@ -100,14 +100,17 @@ describe('SeoMetadataForm', () => {
     expect(defaultProps.onIndexingChange).toHaveBeenCalledWith(true);
   });
 
-  it('calls onImageChange', async () => {
-    globalThis.URL.createObjectURL = jest.fn(() => 'mock-url');
+  it('calls onImageChange with uploaded url', async () => {
+    globalThis.URL.createObjectURL = jest.fn(() => 'blob:mock-url');
+    globalThis.fetch = jest.fn().mockResolvedValue({
+      json: () => Promise.resolve({ success: true, data: { url: 'https://example.com/uploaded.png' } })
+    }) as jest.Mock;
 
     render(<SeoMetadataForm {...defaultProps} />);
 
     await user.click(screen.getByTestId('photo-block'));
 
-    expect(defaultProps.onImageChange).toHaveBeenCalled();
+    expect(defaultProps.onImageChange).toHaveBeenCalledWith('https://example.com/uploaded.png');
   });
 
   it('validates description field (empty and non-empty)', async () => {
@@ -148,7 +151,7 @@ describe('SeoMetadataForm', () => {
           {...defaultProps}
           value={value}
           onChange={setValue}
-          extraFields={
+          extraFields={() => (
             <SeoCanonicalUrlField
               value={canonicalUrl}
               error={canonicalError}
@@ -162,7 +165,7 @@ describe('SeoMetadataForm', () => {
                 setCanonicalError(validateCanonicalUrl(canonicalUrl));
               }}
             />
-          }
+          )}
         />
       );
     };
@@ -214,9 +217,8 @@ describe('SeoMetadataForm', () => {
     expect(screen.getByLabelText(/meta keywords/i)).toBeInTheDocument();
   });
 
-  it('renders ogImage as File and shows fileName', () => {
-    const file = new File(['img'], 'file-image.png');
-    render(<SeoMetadataForm {...defaultProps} ogImage={file} />);
+  it('renders ogImage as url and shows fileName', () => {
+    render(<SeoMetadataForm {...defaultProps} ogImage="https://example.com/file-image.png" />);
     expect(screen.getByTestId('photo-block')).toBeInTheDocument();
   });
 
