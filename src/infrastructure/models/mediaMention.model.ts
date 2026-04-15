@@ -7,7 +7,7 @@ import { MediaStatus } from '~/types/enums/common.enums';
 const mediaMentionSchema = new Schema<MediaMentionEntity>(
   {
     ...baseContentSchemaFields,
-    url: { type: String, required: true, unique: true },
+    url: { type: String, required: true },
     status: {
       type: String,
       required: true,

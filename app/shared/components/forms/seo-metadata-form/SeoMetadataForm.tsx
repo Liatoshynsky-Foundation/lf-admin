@@ -59,7 +59,11 @@ export default function SeoMetadataForm({
   extraFields,
   labels = {}
 }: SeoMetadataFormProps) {
+  const getFileNameFromUrl = (url: string | null) =>
+    url ? url.split('/').pop()?.split('?')[0] : undefined;
+
   const [ogImagePreview, setOgImagePreview] = useState<string | null>(typeof ogImage === 'string' ? ogImage : null);
+  const [displayFileName, setDisplayFileName] = useState<string | undefined>(getFileNameFromUrl(ogImage));
   const [isUploading, setIsUploading] = useState(false);
   const [touched, setTouched] = useState<Partial<Record<keyof LocalizedMeta, boolean>>>({});
   const [errors, setErrors] = useState<Partial<Record<keyof LocalizedMeta, string>>>({});
@@ -72,7 +76,7 @@ export default function SeoMetadataForm({
       title: validateField('title', value.title),
       description: validateField('description', value.description)
     }));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forceShowErrors]);
 
   const validateField = (field: keyof LocalizedMeta, val: string) => {
@@ -111,6 +115,7 @@ export default function SeoMetadataForm({
 
   const handleImageChange = async (file: File) => {
     setIsUploading(true);
+    setDisplayFileName(file.name);
     setOgImagePreview(URL.createObjectURL(file));
     const formData = new FormData();
     formData.append('file', file);
@@ -123,6 +128,7 @@ export default function SeoMetadataForm({
     } else {
       toast.error('Непідтримуваний формат файлу');
       setOgImagePreview(null);
+      setDisplayFileName(undefined);
     }
     setIsUploading(false);
   };
@@ -140,7 +146,7 @@ export default function SeoMetadataForm({
       </Box>
       <PhotoBlock
         imageUrl={ogImagePreview || ''}
-        fileName={ogImage ?? undefined}
+        fileName={displayFileName}
         onChangeImage={handleImageChange}
         disabled={isUploading}
         buttonSpacing="8px"
