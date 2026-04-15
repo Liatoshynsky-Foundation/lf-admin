@@ -5,7 +5,11 @@ export const useImageMetadata = (imageSrc: string, providedFileName?: string) =>
   const [autoFileName, setAutoFileName] = useState<string>('');
 
   useEffect(() => {
-    if (!imageSrc) return;
+    if (!imageSrc) {
+      setDimensions(null);
+      setAutoFileName('');
+      return;
+    }
 
     const img = new Image();
     img.src = imageSrc;

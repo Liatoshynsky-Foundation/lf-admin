@@ -18,10 +18,10 @@ jest.mock('../SeoMetadataForm', () => ({
   }: {
     locale: string;
     value: { title: string; description: string; keywords: string };
-    ogImage: File | string | null;
+    ogImage: string | null;
     allowIndexing: boolean;
     onChange: (meta: object) => void;
-    onImageChange: (file: File) => void;
+    onImageChange: (url: string) => void;
     onIndexingChange: (val: boolean) => void;
     extraFields?: React.ReactNode;
   }) => (
@@ -31,7 +31,7 @@ jest.mock('../SeoMetadataForm', () => ({
       <span data-testid={`og-image-${locale}`}>{ogImage ? 'has-image' : 'no-image'}</span>
       <span data-testid={`indexing-${locale}`}>{String(allowIndexing)}</span>
       <button onClick={() => onChange({ title: 'test', description: 'desc', keywords: 'kw' })}>change-{locale}</button>
-      <button onClick={() => onImageChange(new File(['img'], 'test.png'))}>image-{locale}</button>
+      <button onClick={() => onImageChange('https://example.com/test.png')}>image-{locale}</button>
       <button onClick={() => onIndexingChange(false)}>indexing-{locale}</button>
       {extraFields && <div data-testid={`extra-${locale}`}>{extraFields}</div>}
     </div>
@@ -97,7 +97,7 @@ describe('SeoMetadataBlock', () => {
     clickButton('image-en');
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
-        ogImage: expect.any(File)
+        ogImage: expect.any(String)
       })
     );
   });

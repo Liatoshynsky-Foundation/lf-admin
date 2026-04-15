@@ -9,7 +9,7 @@ import { styles } from '../SeoMetadataForm.styles';
 
 export interface SeoBlockValue {
   meta: { uk: LocalizedMeta; en: LocalizedMeta };
-  ogImage: File | string | null;
+  ogImage: string | null;
   allowIndexing: { uk: boolean; en: boolean };
   ticketUrl?: string;
 }
@@ -119,7 +119,7 @@ export default function SeoMetadataBlock({
         onChange={(newMeta) => handleChange({ ...value, meta: { ...value.meta, uk: newMeta } })}
         locale="uk"
         ogImage={value.ogImage}
-        onImageChange={(file) => handleChange({ ...value, ogImage: file })}
+        onImageChange={(url) => handleChange({ ...value, ogImage: url })}
         allowIndexing={value.allowIndexing.uk}
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, uk: val } })}
         showAlternativeText={showAlternativeText}
@@ -132,7 +132,7 @@ export default function SeoMetadataBlock({
         onChange={(newMeta) => handleChange({ ...value, meta: { ...value.meta, en: newMeta } })}
         locale="en"
         ogImage={value.ogImage}
-        onImageChange={(file) => handleChange({ ...value, ogImage: file })}
+        onImageChange={(url) => handleChange({ ...value, ogImage: url })}
         allowIndexing={value.allowIndexing.en}
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, en: val } })}
         showAlternativeText={showAlternativeText}

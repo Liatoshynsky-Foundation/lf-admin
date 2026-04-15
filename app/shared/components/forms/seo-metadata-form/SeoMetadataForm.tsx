@@ -5,6 +5,7 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { Box, Checkbox, Divider, FormControlLabel, Stack, TextField, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import { SeoBaseFields } from './seo-base-fields/SeoBaseFields';
 import { styles } from './SeoMetadataForm.styles';
@@ -25,8 +26,8 @@ export interface SeoMetadataFormProps {
   readonly value: LocalizedMeta;
   readonly onChange: (value: LocalizedMeta) => void;
   readonly locale: 'uk' | 'en';
-  readonly ogImage: File | string | null;
-  readonly onImageChange: (file: File) => void;
+  readonly ogImage: string | null;
+  readonly onImageChange: (url: string) => void;
   readonly allowIndexing: boolean;
   readonly onIndexingChange: (val: boolean) => void;
   readonly showAlternativeText?: boolean;
@@ -59,6 +60,7 @@ export default function SeoMetadataForm({
   labels = {}
 }: SeoMetadataFormProps) {
   const [ogImagePreview, setOgImagePreview] = useState<string | null>(typeof ogImage === 'string' ? ogImage : null);
+  const [isUploading, setIsUploading] = useState(false);
   const [touched, setTouched] = useState<Partial<Record<keyof LocalizedMeta, boolean>>>({});
   const [errors, setErrors] = useState<Partial<Record<keyof LocalizedMeta, string>>>({});
 
@@ -107,9 +109,22 @@ export default function SeoMetadataForm({
     if (touched[field]) setErrors((prev) => ({ ...prev, [field]: validateField(field, val) }));
   };
 
-  const handleImageChange = (file: File) => {
+  const handleImageChange = async (file: File) => {
+    setIsUploading(true);
     setOgImagePreview(URL.createObjectURL(file));
-    onImageChange(file);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('directory', 'photos');
+    const res = await fetch('/api/uploads/single', { method: 'POST', body: formData });
+    const json = await res.json();
+    if (json.success) {
+      setOgImagePreview(json.data.url);
+      onImageChange(json.data.url);
+    } else {
+      toast.error('Непідтримуваний формат файлу');
+      setOgImagePreview(null);
+    }
+    setIsUploading(false);
   };
 
   const renderPhotoBlock = () => (
@@ -125,8 +140,9 @@ export default function SeoMetadataForm({
       </Box>
       <PhotoBlock
         imageUrl={ogImagePreview || ''}
-        fileName={typeof ogImage === 'string' ? ogImage : ogImage?.name}
+        fileName={ogImage ?? undefined}
         onChangeImage={handleImageChange}
+        disabled={isUploading}
         buttonSpacing="8px"
         stackSpacing="0"
         typographySpacing="4px"

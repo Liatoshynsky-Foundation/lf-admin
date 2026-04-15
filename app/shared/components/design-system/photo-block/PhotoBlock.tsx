@@ -29,6 +29,7 @@ interface ImagePreviewBlockProps extends StackProps {
   stackSpacing?: string;
   typographySpacing?: string;
   showAlternativeText?: boolean;
+  disabled?: boolean;
 }
 
 export const ImagePreviewBlock = ({
@@ -44,7 +45,8 @@ export const ImagePreviewBlock = ({
   typographySpacing = '8px',
   showAlternativeText = false,
   altText,
-  onChangeAltText
+  onChangeAltText,
+  disabled = false
 }: ImagePreviewBlockProps) => {
   const [previewImage, setPreviewImage] = useState<string>(imageUrl);
 
@@ -214,6 +216,7 @@ export const ImagePreviewBlock = ({
               size="small"
               onClick={openEditCrop}
               style={styles.editButton}
+              disabled={disabled}
             >
               Редагувати
             </Button>
@@ -225,6 +228,7 @@ export const ImagePreviewBlock = ({
               size="small"
               onClick={openChangeImage}
               sx={styles.changeButton}
+              disabled={disabled}
             >
               Змінити зображення
             </Button>
