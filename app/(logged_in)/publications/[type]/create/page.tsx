@@ -20,7 +20,7 @@ import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/
 import { useCreateEvent } from '~/shared/hooks/use-events/useEvents';
 import { useCreateMediaMention } from '~/shared/hooks/use-media-mentions/useMediaMentions';
 import { useCreateNews } from '~/shared/hooks/use-news/useNews';
-import { EventStatus, MediaStatus, NewsStatus } from '~/types/graphql/generated/graphql';
+import { EventStatus, MediaStatus, NewsStatus, useUploadBlobMutation } from '~/types/graphql/generated/graphql';
 
 const VALID_TYPES = ['events', 'news', 'media'] as const;
 type PublicationType = (typeof VALID_TYPES)[number];
@@ -57,26 +57,56 @@ export default function CreatePublicationPage() {
   const [adminTitleError, setAdminTitleError] = useState('');
   const [publishDate, setPublishDate] = useState<Dayjs | null>(null);
   const [seoValue, setSeoValue] = useState<SeoBlockValue>(initialSeoValue);
+  const [forceShowErrors, setForceShowErrors] = useState(false);
 
   const [createEvent] = useCreateEvent();
   const [createNews] = useCreateNews();
   const [createMediaMention] = useCreateMediaMention();
+  const [uploadBlob] = useUploadBlobMutation();
 
   const handleSave = async () => {
-    if (!adminTitle.trim()) {
-      setAdminTitleError('Обов\'язкове поле');
-      return;
-    }
-
     const ukMeta = seoValue.meta.uk;
     const enMeta = seoValue.meta.en;
 
+    const isAdminTitleInvalid = !adminTitle.trim();
+    const isSeoInvalid =
+      !ukMeta.title.trim() ||
+      !enMeta.title.trim() ||
+      !ukMeta.description.trim() ||
+      !enMeta.description.trim() ||
+      (publicationType === 'media' && (!ukMeta.canonicalUrl?.trim() || !enMeta.canonicalUrl?.trim())) ||
+      (publicationType === 'events' && !seoValue.ticketUrl?.trim());
+
+    if (isAdminTitleInvalid) setAdminTitleError('Обов\'язкове поле');
+    if (isSeoInvalid) setForceShowErrors(true);
+    if (isAdminTitleInvalid || isSeoInvalid) return;
+
+    let coverImageSrc = typeof seoValue.ogImage === 'string' ? seoValue.ogImage : adminTitle;
+    let isTmp = false;
+
+    try {
+      if (seoValue.ogImage instanceof File) {
+        const file = seoValue.ogImage;
+        const buffer = await file.arrayBuffer();
+        const base64 = Buffer.from(buffer).toString('base64');
+        const res = await uploadBlob({
+          variables: { folderName: 'tmp', blobName: file.name, buffer: base64, contentType: file.type }
+        });
+        coverImageSrc = res.data?.uploadBlob.blobName ?? adminTitle;
+        isTmp = true;
+      }
+    } catch {
+      // photo upload failed, proceed with adminTitle as src fallback
+    }
+
     const coverImage = {
-      src: typeof seoValue.ogImage === 'string' ? seoValue.ogImage : adminTitle,
+      src: coverImageSrc,
       alt: {
         uk: ukMeta.altText?.uk ?? '',
         en: enMeta.altText?.en ?? ''
-      }
+      },
+      caption: { uk: adminTitle, en: adminTitle },
+      isTmp
     };
 
     const commonInput = {
@@ -86,7 +116,8 @@ export default function CreatePublicationPage() {
         uk: adminTitle,
         en: adminTitle,
         meta: {
-          metaTitle: { uk: ukMeta.title, en: enMeta.title }
+          metaTitle: { uk: ukMeta.title, en: enMeta.title },
+          description: { uk: ukMeta.description, en: enMeta.description }
         }
       },
       keywords: { uk: ukMeta.keywords || '', en: enMeta.keywords || '' },
@@ -169,6 +200,8 @@ export default function CreatePublicationPage() {
           }}
           showAlternativeText
           showTicketUrl={publicationType === 'events'}
+          extraFieldsBeforeKeywords={publicationType === 'media'}
+          forceShowErrors={forceShowErrors}
           value={seoValue}
           onChange={setSeoValue}
           extraFields={
@@ -186,6 +219,7 @@ export default function CreatePublicationPage() {
                     value={value.canonicalUrl ?? ''}
                     onChange={(val) => onChange({ ...value, canonicalUrl: val })}
                     onBlur={() => {}}
+                    forceShowErrors={forceShowErrors}
                   />
                 )
                 : undefined

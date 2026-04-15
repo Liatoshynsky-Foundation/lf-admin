@@ -12,14 +12,12 @@ export const styles = {
   container: {
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'space-between',
     gap: '28px',
     borderRadius: '20px',
     backgroundColor: colors.white,
     border: `1px solid ${colors.blue[300]}`,
     width: '48%',
     minWidth: 0,
-    minHeight: '794px',
     px: 4,
     py: 3
   },
@@ -60,8 +58,7 @@ export const styles = {
   formFieldsContainer: {
     flexDirection: 'column',
     gap: '20px',
-    width: '100%',
-    minHeight: '324px'
+    width: '100%'
   },
   sectionTitle: {
     fontFamily: 'Mulish',

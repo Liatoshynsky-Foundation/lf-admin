@@ -1,7 +1,7 @@
 'use client';
 import { Box, TextField } from '@mui/material';
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import type { LocalizedMeta } from '../SeoMetadataForm';
 import SeoMetadataForm from '../SeoMetadataForm';
@@ -27,6 +27,8 @@ const defaultValue: SeoBlockValue = {
 export interface SeoMetadataBlockProps {
   readonly showAlternativeText?: boolean;
   readonly showTicketUrl?: boolean;
+  readonly extraFieldsBeforeKeywords?: boolean;
+  readonly forceShowErrors?: boolean;
   readonly value?: SeoBlockValue;
   readonly onChange?: (value: SeoBlockValue) => void;
   readonly extraFields?: (locale: 'uk' | 'en', value: LocalizedMeta, onChange: (val: LocalizedMeta) => void) => ReactNode;
@@ -35,6 +37,8 @@ export interface SeoMetadataBlockProps {
 export default function SeoMetadataBlock({
   showAlternativeText = false,
   showTicketUrl = false,
+  extraFieldsBeforeKeywords = false,
+  forceShowErrors = false,
   value: externalValue,
   onChange: externalOnChange,
   extraFields
@@ -42,6 +46,14 @@ export default function SeoMetadataBlock({
   const [internalValue, setInternalValue] = useState<SeoBlockValue>(defaultValue);
   const [ticketUrlTouched, setTicketUrlTouched] = useState(false);
   const [ticketUrlError, setTicketUrlError] = useState('');
+
+  useEffect(() => {
+    if (forceShowErrors && showTicketUrl) {
+      setTicketUrlTouched(true);
+      setTicketUrlError(validateTicketUrl(value.ticketUrl ?? ''));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forceShowErrors]);
 
   const validateTicketUrl = (val: string) => {
     if (!val.trim()) return 'Обовʼязкове поле';
@@ -111,6 +123,8 @@ export default function SeoMetadataBlock({
         allowIndexing={value.allowIndexing.uk}
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, uk: val } })}
         showAlternativeText={showAlternativeText}
+        extraFieldsBeforeKeywords={extraFieldsBeforeKeywords}
+        forceShowErrors={forceShowErrors}
         extraFields={(localeMeta, onLocaleMeta) => buildExtraFields('uk', localeMeta, onLocaleMeta)}
       />
       <SeoMetadataForm
@@ -122,6 +136,7 @@ export default function SeoMetadataBlock({
         allowIndexing={value.allowIndexing.en}
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, en: val } })}
         showAlternativeText={showAlternativeText}
+        extraFieldsBeforeKeywords={extraFieldsBeforeKeywords}
         extraFields={(localeMeta, onLocaleMeta) => buildExtraFields('en', localeMeta, onLocaleMeta)}
       />
     </Box>
