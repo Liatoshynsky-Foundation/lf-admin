@@ -256,7 +256,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
         display: 'flex',
         flexDirection: 'column',
         gap: '20px',
-        pr: { xs: 0, md: sidebarFile ? `${SIDEBAR_WIDTH + 12}px` : 0 },
+        pr: { xs: 0, md: sidebarFile ? `${SIDEBAR_WIDTH}px` : 0 },
         transition: 'padding-right 0.2s ease'
       }}
     >
