@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 
-import { EventsErrors } from '~/constants/errors'; 
+import { EventsErrors } from '~/constants/errors';
 import { safeMutate } from '~/lib/utils/safeMutate';
 import {
   type CreateEventInput,
@@ -20,13 +20,18 @@ import {
   useEventsCountQuery,
   usePaginatedEventsQuery,
   usePublishedEventsQuery,
-  useUpdateEventMutation} from '~/types/graphql/generated/graphql';
+  useUpdateEventMutation
+} from '~/types/graphql/generated/graphql';
 
-export const useAllEvents = (filters?: EventFiltersInput) =>
-  useAllEventsQuery({ variables: { filters }, fetchPolicy: 'network-only' });
+type QueryHookOptions = Readonly<{
+  skip?: boolean;
+}>;
 
-export const usePublishedEvents = (filters?: EventFiltersInput) =>
-  usePublishedEventsQuery({ variables: { filters }, fetchPolicy: 'cache-first' });
+export const useAllEvents = (filters?: EventFiltersInput, options: QueryHookOptions = {}) =>
+  useAllEventsQuery({ variables: { filters }, fetchPolicy: 'network-only', skip: options.skip });
+
+export const usePublishedEvents = (filters?: EventFiltersInput, options: QueryHookOptions = {}) =>
+  usePublishedEventsQuery({ variables: { filters }, fetchPolicy: 'cache-first', skip: options.skip });
 
 export const usePaginatedEvents = (page = 1, limit = 10, filters?: EventFiltersInput) =>
   usePaginatedEventsQuery({ variables: { page, limit, filters }, fetchPolicy: 'network-only' });
@@ -35,7 +40,7 @@ export const useEventsCount = (status?: EventStatus) => useEventsCountQuery({ va
 
 export const useCreateEvent = () => {
   const [mutate, meta] = useCreateEventMutation();
-  
+
   const createEvent = useCallback(
     async (event: CreateEventInput) =>
       safeMutate<CreateEventMutation, CreateEventMutationVariables>(
@@ -46,13 +51,13 @@ export const useCreateEvent = () => {
       ),
     [mutate]
   );
-  
+
   return [createEvent, meta] as const;
 };
 
 export const useUpdateEvent = () => {
   const [mutate, meta] = useUpdateEventMutation();
-  
+
   const updateEvent = useCallback(
     async (variables: UpdateEventMutationVariables) =>
       safeMutate<UpdateEventMutation, UpdateEventMutationVariables>(
@@ -63,7 +68,7 @@ export const useUpdateEvent = () => {
       ),
     [mutate]
   );
-  
+
   return [updateEvent, meta] as const;
 };
 
@@ -97,12 +102,12 @@ export const useUpdateEventStatus = () => {
 
 export const useDeleteEvent = () => {
   const [mutate, meta] = useDeleteEventMutation();
-  
+
   const deleteEvent = useCallback(
     async (variables: DeleteEventMutationVariables) =>
       safeMutate(mutate, variables, EventsErrors.NETWORK_ERROR_DELETE, EventsErrors.FAILED_TO_DELETE),
     [mutate]
   );
-  
+
   return [deleteEvent, meta] as const;
 };
