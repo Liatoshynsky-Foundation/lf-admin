@@ -395,7 +395,7 @@ describe('Publications page', () => {
 
     expect(within(firstCard).getByRole('link', { name: 'Редагувати' })).toHaveAttribute(
       'href',
-      '/publications/news/festival-news/edit'
+      '/publications/news/news-1/edit'
     );
   });
 
