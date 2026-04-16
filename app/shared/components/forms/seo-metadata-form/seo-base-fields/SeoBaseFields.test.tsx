@@ -114,13 +114,13 @@ describe('SeoBaseFields', () => {
     expect(screen.queryByTestId(`helper-${label}`)).not.toBeInTheDocument();
   });
 
-  it('marks title and description as required and sets multiline only on description', () => {
+  it('marks title and description as required and sets multiline on description and keywords', () => {
     render(<SeoBaseFields {...baseProps} />);
     expect(screen.getByLabelText('Meta title')).toHaveAttribute('aria-required', 'true');
     expect(screen.getByLabelText('Meta description')).toHaveAttribute('aria-required', 'true');
     expect(screen.getByLabelText('Meta description')).toHaveAttribute('data-multiline', 'true');
     expect(screen.getByLabelText('Meta keywords')).not.toHaveAttribute('aria-required');
-    expect(screen.getByLabelText('Meta keywords')).not.toHaveAttribute('data-multiline');
+    expect(screen.getByLabelText('Meta keywords')).toHaveAttribute('data-multiline', 'true');
     expect(screen.getByLabelText('Meta title')).not.toHaveAttribute('data-multiline');
   });
 });

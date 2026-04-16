@@ -134,17 +134,22 @@ describe('SeoMetadataForm', () => {
       });
       const [canonicalUrl, setCanonicalUrl] = React.useState('');
 
+      const canonicalExtraFields = React.useCallback(
+        () => (
+          <SeoCanonicalUrlField
+            value={canonicalUrl}
+            onChange={(val) => setCanonicalUrl(val)}
+          />
+        ),
+        [canonicalUrl]
+      );
+
       return (
         <SeoMetadataForm
           {...defaultProps}
           value={value}
           onChange={setValue}
-          extraFields={() => (
-            <SeoCanonicalUrlField
-              value={canonicalUrl}
-              onChange={(val) => setCanonicalUrl(val)}
-            />
-          )}
+          extraFields={canonicalExtraFields}
         />
       );
     };

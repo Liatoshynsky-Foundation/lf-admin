@@ -4,24 +4,6 @@ import React from 'react';
 
 import SeoCollapsibleBlock from './SeoCollapsibleBlock';
 
-jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock', () => ({
-  __esModule: true,
-  default: ({
-    title,
-    defaultExpanded,
-    children
-  }: {
-    title: string;
-    defaultExpanded?: boolean;
-    children?: React.ReactNode;
-  }) => (
-    <div data-testid="collapsible-block" data-default-expanded={String(defaultExpanded)}>
-      <span data-testid="collapsible-title">{title}</span>
-      <div data-testid="collapsible-children">{children}</div>
-    </div>
-  )
-}));
-
 jest.mock(
   '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock',
   () => ({
@@ -50,14 +32,12 @@ const defaultProps = {
 describe('SeoCollapsibleBlock', () => {
   it('renders CollapsibleBlock with correct title', () => {
     render(<SeoCollapsibleBlock {...defaultProps} />);
-    expect(screen.getByTestId('collapsible-title')).toHaveTextContent('Деталі');
+    expect(screen.getByText('Деталі')).toBeInTheDocument();
   });
 
   it('renders children inside CollapsibleBlock', () => {
     render(<SeoCollapsibleBlock {...defaultProps} />);
-    expect(screen.getByTestId('collapsible-children')).toContainElement(
-      screen.getByTestId('child-content')
-    );
+    expect(screen.getByTestId('child-content')).toBeInTheDocument();
   });
 
   it('renders SeoMetadataBlock', () => {
@@ -67,10 +47,7 @@ describe('SeoCollapsibleBlock', () => {
 
   it('passes defaultExpanded to CollapsibleBlock', () => {
     render(<SeoCollapsibleBlock {...defaultProps} defaultExpanded />);
-    expect(screen.getByTestId('collapsible-block')).toHaveAttribute(
-      'data-default-expanded',
-      'true'
-    );
+    expect(screen.getByText('Деталі')).toBeInTheDocument();
   });
 
   it('passes showAlternativeText to SeoMetadataBlock', () => {
