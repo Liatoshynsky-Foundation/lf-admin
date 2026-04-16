@@ -314,6 +314,9 @@ export default function CreatePublicationPage() {
                     '& .MuiInputLabel-root.Mui-focused': {
                       color: '#190D03'
                     },
+                    '& .MuiInputLabel-root:not(.MuiInputLabel-shrunk)': {
+                      transform: 'translate(14px, 12px) scale(1)'
+                    },
                     width: '238px',
                     '& .MuiPickersOutlinedInput-root.Mui-focused:not(.Mui-error) .MuiPickersOutlinedInput-notchedOutline':
                       {
