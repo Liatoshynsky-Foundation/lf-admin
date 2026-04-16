@@ -25,14 +25,15 @@ export function SeoBaseFields({ value, errors, touched, onFieldChange, onBlur, s
       label: labels.metaDescription || 'Meta description',
       required: true,
       multiline: true,
-      minRows: 2
+      minRows: 3,
+      maxRows: 3
     },
-    ...(showKeywords ? [{ key: 'keywords' as const, label: labels.metaKeywords || 'Meta keywords' }] : [])
+    ...(showKeywords ? [{ key: 'keywords' as const, label: labels.metaKeywords || 'Meta keywords', multiline: true, minRows: 2, maxRows: 2 }] : [])
   ];
 
   return (
     <Stack sx={styles.formFields}>
-      {fields.map(({ key, label, required, multiline, minRows }) => (
+      {fields.map(({ key, label, required, multiline, minRows, maxRows }) => (
         <TextField
           key={key}
           label={label}
@@ -46,6 +47,7 @@ export function SeoBaseFields({ value, errors, touched, onFieldChange, onBlur, s
           required={required}
           multiline={multiline}
           minRows={minRows}
+          maxRows={maxRows}
         />
       ))}
     </Stack>

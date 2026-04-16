@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 
-import { eventsErrors } from '~/constants/errors';
+import { EventsErrors } from '~/constants/errors';
 import { safeMutate } from '~/lib/utils/safeMutate';
 import {
   type CreateEventInput,
@@ -34,8 +34,8 @@ export const useCreateEvent = () => {
       safeMutate<CreateEventMutation, CreateEventMutationVariables>(
         mutate,
         { input: event },
-        eventsErrors.NETWORK_ERROR_CREATE,
-        eventsErrors.FAILED_TO_CREATE
+        EventsErrors.NETWORK_ERROR_CREATE,
+        EventsErrors.FAILED_TO_CREATE
       ),
     [mutate]
   );
@@ -49,8 +49,8 @@ export const useUpdateEvent = () => {
       safeMutate<UpdateEventMutation, UpdateEventMutationVariables>(
         mutate,
         variables,
-        eventsErrors.NETWORK_ERROR_UPDATE,
-        eventsErrors.FAILED_TO_UPDATE
+        EventsErrors.NETWORK_ERROR_UPDATE,
+        EventsErrors.FAILED_TO_UPDATE
       ),
     [mutate]
   );
@@ -89,7 +89,7 @@ export const useDeleteEvent = () => {
   const [mutate, meta] = useDeleteEventMutation();
   const deleteEvent = useCallback(
     async (variables: DeleteEventMutationVariables) =>
-      safeMutate(mutate, variables, eventsErrors.NETWORK_ERROR_DELETE, eventsErrors.FAILED_TO_DELETE),
+      safeMutate(mutate, variables, EventsErrors.NETWORK_ERROR_DELETE, EventsErrors.FAILED_TO_DELETE),
     [mutate]
   );
   return [deleteEvent, meta] as const;

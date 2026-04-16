@@ -35,6 +35,8 @@ type LocalizedImage {
     caption: LocalizedString!
     isTmp: Boolean
     crop: CropRect
+    width: Float
+    height: Float
 }
 
 type ContentMeta {

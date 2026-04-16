@@ -46,7 +46,7 @@ query AllNews($filters: NewsFiltersInput) {
     newsDate
     publishedAt
     coverImage {
-      src
+      src { uk en }
       alt { uk en }
     }
     meta { views }

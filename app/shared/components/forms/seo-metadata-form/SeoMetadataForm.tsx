@@ -197,6 +197,9 @@ export default function SeoMetadataForm({
             helperText={errors.keywords && touched.keywords ? errors.keywords : ''}
             fullWidth
             sx={styles.textField}
+            multiline
+            minRows={2}
+            maxRows={2}
           />
         )}
       </Stack>

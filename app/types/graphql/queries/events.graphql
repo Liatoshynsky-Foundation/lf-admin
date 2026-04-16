@@ -95,7 +95,10 @@ query PublishedEvents($filters: EventFiltersInput) {
     }
     slug
     coverImage {
-      src
+      src {
+        uk
+        en
+      }
       alt {
         uk
         en

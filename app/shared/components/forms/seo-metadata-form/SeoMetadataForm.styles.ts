@@ -23,6 +23,13 @@ export const styles = {
   },
   textField: {
     '& .MuiOutlinedInput-root': {
+      alignItems: 'center',
+      '&.MuiInputBase-multiline': {
+        alignItems: 'flex-start',
+        height: 'auto',
+        paddingTop: '12px',
+        paddingBottom: '12px'
+      },
       '& fieldset': {
         borderRadius: '8px',
         borderColor: colors.adminBlue[500],
