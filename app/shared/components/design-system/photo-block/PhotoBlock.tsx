@@ -62,6 +62,9 @@ export const ImagePreviewBlock = ({
   }, [initialCrop]);
 
   const { dimensions, fileName: finalFileName } = useImageMetadata(previewImage, fileName);
+  const displayedFileName = finalFileName && finalFileName.length > 15
+    ? `${finalFileName.slice(0, 15)}...`
+    : finalFileName;
 
   const openEditCrop = () => {
     setMediaInitial({
@@ -145,22 +148,13 @@ export const ImagePreviewBlock = ({
         )}
 
         <Stack spacing={stackSpacing} sx={styles.rightBlock}>
-          <Stack spacing={typographySpacing}>
+          <Stack spacing={typographySpacing} sx={{ minWidth: 0 }}>
             <Box sx={{ display: 'flex', gap: '4px', minWidth: 0 }}>
               <Typography variant="body1" sx={{ ...styles.fileNameText, flexShrink: 0 }}>
                 Назва файлу
               </Typography>
-              <Typography
-                variant="body1"
-                sx={{
-                  ...styles.fileNameText,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  minWidth: 0
-                }}
-              >
-                {finalFileName}
+              <Typography variant="body1" sx={styles.fileNameText}>
+                {displayedFileName}
               </Typography>
             </Box>
 
