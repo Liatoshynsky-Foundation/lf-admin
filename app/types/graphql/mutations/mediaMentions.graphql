@@ -26,8 +26,6 @@ mutation CreateMediaMention($input: CreateMediaMentionInput!) {
         uk
         en
       }
-      width
-      height
       alt {
         uk
         en
@@ -80,8 +78,6 @@ mutation UpdateMediaMention($id: ID!, $input: UpdateMediaMentionInput!) {
         uk
         en
       }
-      width
-      height
       alt {
         uk
         en
