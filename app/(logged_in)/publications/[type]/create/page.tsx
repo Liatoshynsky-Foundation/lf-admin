@@ -25,19 +25,35 @@ import { EventStatus, MediaStatus, NewsStatus } from '~/types/graphql/generated/
 const VALID_TYPES = ['events', 'news', 'media'] as const;
 type PublicationType = (typeof VALID_TYPES)[number];
 
+const isValidUrl = (url: string): boolean => {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 const checkIsSeoInvalid = (
   ukMeta: SeoBlockValue['meta']['uk'],
   enMeta: SeoBlockValue['meta']['en'],
   publicationType: PublicationType,
   ticketUrl: SeoBlockValue['ticketUrl']
-): boolean =>
-  !ukMeta.title.trim() ||
-  !enMeta.title.trim() ||
-  !ukMeta.description.trim() ||
-  !enMeta.description.trim() ||
-  (publicationType === 'media' && (!ukMeta.canonicalUrl?.trim() || !enMeta.canonicalUrl?.trim())) ||
-  (publicationType === 'events' && (!ticketUrl?.uk?.trim() || !ticketUrl?.en?.trim()));
-
+): boolean => {
+  if (!ukMeta.title.trim() || !enMeta.title.trim()) return true;
+  if (!ukMeta.description.trim() || !enMeta.description.trim()) return true;
+  if (publicationType === 'media') {
+    const ukUrl = ukMeta.canonicalUrl ?? '';
+    const enUrl = enMeta.canonicalUrl ?? '';
+    return !ukUrl.trim() || !enUrl.trim() || !isValidUrl(ukUrl) || !isValidUrl(enUrl);
+  }
+  if (publicationType === 'events') {
+    const ukUrl = ticketUrl?.uk ?? '';
+    const enUrl = ticketUrl?.en ?? '';
+    return !ukUrl.trim() || !enUrl.trim() || !isValidUrl(ukUrl) || !isValidUrl(enUrl);
+  }
+  return false;
+};
 
 const PAGE_TITLES: Record<PublicationType, string> = {
   events: 'Створення події',
@@ -181,7 +197,11 @@ export default function CreatePublicationPage() {
   );
 
   const mediaExtraFields = useCallback(
-    (_locale: 'uk' | 'en', value: SeoBlockValue['meta']['uk'], onChange: (val: SeoBlockValue['meta']['uk']) => void) => (
+    (
+      _locale: 'uk' | 'en',
+      value: SeoBlockValue['meta']['uk'],
+      onChange: (val: SeoBlockValue['meta']['uk']) => void
+    ) => (
       <SeoCanonicalUrlField
         value={value.canonicalUrl ?? ''}
         onChange={(val) => onChange({ ...value, canonicalUrl: val })}
