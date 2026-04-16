@@ -1,11 +1,11 @@
 import type {
-  CropResult,
   MediaModalOpenState,
   MediaModalStep,
   MediaModalTab,
   SelectedMedia
 } from '../MediaModal.types';
 import { isImageUploadFile } from '../MediaModal.utils';
+import type { CropResult } from '~/types/common';
 
 export type GalleryFilters = {
   search: string;
