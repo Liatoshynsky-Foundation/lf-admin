@@ -17,15 +17,18 @@ import {
   useAllEventsQuery,
   useCreateEventMutation,
   useDeleteEventMutation,
+  useEventByIdQuery,
   useEventsCountQuery,
   usePaginatedEventsQuery,
   usePublishedEventsQuery,
-  useUpdateEventMutation
-} from '~/types/graphql/generated/graphql';
+  useUpdateEventMutation} from '~/types/graphql/generated/graphql';
 
 type QueryHookOptions = Readonly<{
   skip?: boolean;
 }>;
+
+export const useEventById = (id: string, options: QueryHookOptions = {}) =>
+  useEventByIdQuery({ variables: { id }, fetchPolicy: 'network-only', skip: options.skip || !id });
 
 export const useAllEvents = (filters?: EventFiltersInput, options: QueryHookOptions = {}) =>
   useAllEventsQuery({ variables: { filters }, fetchPolicy: 'network-only', skip: options.skip });
