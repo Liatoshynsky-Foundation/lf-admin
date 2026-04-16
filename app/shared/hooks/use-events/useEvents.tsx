@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 
+import { buildStatusUpdater } from '../buildStatusUpdater';
 import { EventsErrors } from '~/constants/errors';
 import { safeMutate } from '~/lib/utils/safeMutate';
 import {
@@ -11,16 +12,23 @@ import {
   type DeleteEventMutationVariables,
   EventFiltersInput,
   EventStatus,
-  type UpdateEventInput,
   type UpdateEventMutation,
   type UpdateEventMutationVariables,
+  useAllEventsQuery,
   useCreateEventMutation,
   useDeleteEventMutation,
   useEventsCountQuery,
   useIncrementEventViewsMutation,
   usePaginatedEventsQuery,
+  usePublishedEventsQuery,
   useUpdateEventMutation
 } from '~/types/graphql/generated/graphql';
+
+export const useAllEvents = (filters?: EventFiltersInput) =>
+  useAllEventsQuery({ variables: { filters }, fetchPolicy: 'network-only' });
+
+export const usePublishedEvents = (filters?: EventFiltersInput) =>
+  usePublishedEventsQuery({ variables: { filters }, fetchPolicy: 'cache-first' });
 
 export const usePaginatedEvents = (page = 1, limit = 10, filters?: EventFiltersInput) =>
   usePaginatedEventsQuery({ variables: { page, limit, filters }, fetchPolicy: 'network-only' });
@@ -62,15 +70,7 @@ export const useUpdateEventStatus = () => {
   const status = data?.updateEvent.status;
 
   const makeStatusUpdater = useCallback(
-    (status: EventStatus) => {
-      return async (id: string, input?: { publishedAt?: string | null }) => {
-        const payload: UpdateEventInput = { status };
-        if (status === EventStatus.Published) {
-          payload.publishedAt = input?.publishedAt ?? new Date().toISOString();
-        }
-        return mutate({ variables: { id, input: payload } });
-      };
-    },
+    buildStatusUpdater(mutate, EventStatus.Published),
     [mutate]
   );
 

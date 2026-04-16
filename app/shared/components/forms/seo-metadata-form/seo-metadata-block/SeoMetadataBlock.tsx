@@ -132,7 +132,7 @@ export default function SeoMetadataBlock({
         showAlternativeText={showAlternativeText}
         extraFieldsBeforeKeywords={extraFieldsBeforeKeywords}
         forceShowErrors={forceShowErrors}
-        extraFields={(localeMeta, onLocaleMeta) => buildExtraFields('uk', localeMeta, onLocaleMeta)}
+        extraFields={showTicketUrl || extraFields ? (localeMeta, onLocaleMeta) => buildExtraFields('uk', localeMeta, onLocaleMeta) : undefined}
       />
       <SeoMetadataForm
         value={value.meta.en}
@@ -144,7 +144,7 @@ export default function SeoMetadataBlock({
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, en: val } })}
         showAlternativeText={showAlternativeText}
         extraFieldsBeforeKeywords={extraFieldsBeforeKeywords}
-        extraFields={(localeMeta, onLocaleMeta) => buildExtraFields('en', localeMeta, onLocaleMeta)}
+        extraFields={showTicketUrl || extraFields ? (localeMeta, onLocaleMeta) => buildExtraFields('en', localeMeta, onLocaleMeta) : undefined}
       />
     </Box>
   );
