@@ -123,7 +123,7 @@ describe('ContentCard', () => {
       <ContentCard
         {...defaultProps}
         coverImage={{
-          src: '/news-mock-images/image1.jpg',
+          src: { uk: '/news-mock-images/image1.jpg', en: '/news-mock-images/image1.jpg' },
           alt: {
             uk: 'Broken image',
             en: 'Broken image'

@@ -5,11 +5,11 @@ import type { SeoMetadataBlockProps } from '~/shared/components/forms/seo-metada
 import SeoMetadataBlock from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 
 interface SeoCollapsibleBlockProps extends SeoMetadataBlockProps {
-  title: string;
-  defaultExpanded?: boolean;
-  sx?: object;
-  childrenContainerSx?: object;
-  children: NonNullable<ReactNode>;
+  readonly title: string;
+  readonly defaultExpanded?: boolean;
+  readonly sx?: object;
+  readonly childrenContainerSx?: object;
+  readonly children: NonNullable<ReactNode>;
 }
 
 export default function SeoCollapsibleBlock({

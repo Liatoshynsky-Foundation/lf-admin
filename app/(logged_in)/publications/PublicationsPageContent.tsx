@@ -35,7 +35,7 @@ import { filterSelectStyles } from '~/shared/components/selector/FilterSelect.st
 import { useAllMediaMentions } from '~/shared/hooks/use-media-mentions/useMediaMentions';
 import { useAllNews } from '~/shared/hooks/use-news/useNews';
 import { usePublicationsFiltering } from '~/shared/hooks/use-publications';
-import type { ImageBlock, LocalizedString } from '~/types/common';
+import type { LocalizedString } from '~/types/common';
 import {
   type AllMediaMentionsQuery,
   type AllNewsQuery
@@ -46,7 +46,10 @@ type PublicationsPageContentProps = Readonly<{
   activeTab: PublicationsTabValue;
 }>;
 
-type PublicationCardImage = Pick<ImageBlock, 'src' | 'alt'>;
+type PublicationCardImage = {
+  src: { uk: string; en: string };
+  alt: { uk: string; en: string };
+};
 
 type PublicationCardItem = {
   id: string;
@@ -242,7 +245,10 @@ const mapNewsItem = (item: NewsItem): PublicationCardItem | null => {
     cardStatus: publicationStatus,
     language: getLanguageFromLocalizedValue(title),
     coverImage: {
-      src: coverImage?.src || DEFAULT_COVER_IMAGE,
+      src: {
+        uk: coverImage?.src?.uk || DEFAULT_COVER_IMAGE,
+        en: coverImage?.src?.en || DEFAULT_COVER_IMAGE
+      },
       alt: toLocalizedString(coverImage?.alt, titleText || DEFAULT_COVER_ALT)
     }
   };
@@ -278,7 +284,10 @@ const mapMediaMentionItem = (item: MediaMentionItem): PublicationCardItem | null
     cardStatus: publicationStatus,
     language: getLanguageFromLocalizedValue(titleData),
     coverImage: {
-      src: item.coverImage?.src || DEFAULT_COVER_IMAGE,
+      src: {
+        uk: item.coverImage?.src?.uk || DEFAULT_COVER_IMAGE,
+        en: item.coverImage?.src?.en || DEFAULT_COVER_IMAGE
+      },
       alt: toLocalizedString(item.coverImage?.alt, titleText || DEFAULT_COVER_ALT)
     }
   };
