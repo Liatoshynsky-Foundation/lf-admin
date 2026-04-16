@@ -72,15 +72,6 @@ const initialSeoValue: SeoBlockValue = {
 
 export default function CreatePublicationPage() {
   const params = useParams();
-  const type = params?.type as string;
-
-  if (!VALID_TYPES.includes(type as PublicationType)) {
-    notFound();
-  }
-
-  const publicationType = type as PublicationType;
-  const pageTitle = PAGE_TITLES[publicationType];
-
   const router = useRouter();
 
   const [adminTitle, setAdminTitle] = useState('');
@@ -92,6 +83,15 @@ export default function CreatePublicationPage() {
   const [createEvent] = useCreateEvent();
   const [createNews] = useCreateNews();
   const [createMediaMention] = useCreateMediaMention();
+
+  const type = params?.type as string;
+
+  if (!VALID_TYPES.includes(type as PublicationType)) {
+    notFound();
+  }
+
+  const publicationType = type as PublicationType;
+  const pageTitle = PAGE_TITLES[publicationType];
 
   const handleSave = async () => {
     const ukMeta = seoValue.meta.uk;
