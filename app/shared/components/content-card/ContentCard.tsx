@@ -24,10 +24,7 @@ interface ContentCardProps {
       en: string;
     };
   };
-  title: {
-    uk: string;
-    en: string;
-  };
+  title: Partial<{ uk: string; en: string }>;
   status: string;
   updatedAt?: string;
   createdAt?: string;

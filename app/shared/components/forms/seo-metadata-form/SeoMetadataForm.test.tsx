@@ -56,7 +56,7 @@ const defaultProps: SeoMetadataFormProps = {
   }
 };
 
-const renderWithState = (extraFields?: React.ReactNode) => {
+const renderWithState = (extraFields?: SeoMetadataFormProps['extraFields']) => {
   const Wrapper = () => {
     const [value, setValue] = React.useState<SeoMetadataFormProps['value']>({
       title: '',
@@ -125,16 +125,6 @@ describe('SeoMetadataForm', () => {
   });
 
   it('validates canonicalUrl: empty, valid, invalid', async () => {
-    const validateCanonicalUrl = (val: string) => {
-      if (!val) return '';
-      try {
-        new URL(val);
-        return '';
-      } catch {
-        return 'Некоректний URL';
-      }
-    };
-
     const CanonicalWrapper = () => {
       const [value, setValue] = React.useState<SeoMetadataFormProps['value']>({
         title: '',
@@ -143,8 +133,6 @@ describe('SeoMetadataForm', () => {
         canonicalUrl: ''
       });
       const [canonicalUrl, setCanonicalUrl] = React.useState('');
-      const [canonicalError, setCanonicalError] = React.useState('');
-      const [canonicalTouched, setCanonicalTouched] = React.useState(false);
 
       return (
         <SeoMetadataForm
@@ -154,16 +142,7 @@ describe('SeoMetadataForm', () => {
           extraFields={() => (
             <SeoCanonicalUrlField
               value={canonicalUrl}
-              error={canonicalError}
-              touched={canonicalTouched}
-              onChange={(val) => {
-                setCanonicalUrl(val);
-                if (canonicalTouched) setCanonicalError(validateCanonicalUrl(val));
-              }}
-              onBlur={() => {
-                setCanonicalTouched(true);
-                setCanonicalError(validateCanonicalUrl(canonicalUrl));
-              }}
+              onChange={(val) => setCanonicalUrl(val)}
             />
           )}
         />

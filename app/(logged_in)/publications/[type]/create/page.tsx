@@ -7,7 +7,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import type { Dayjs } from 'dayjs';
 import { notFound, useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { colors } from '~/shared/components/design-system/button/Button.styles';
 import DividedHeader from '~/shared/components/divided-header/DividedHeader';
@@ -24,6 +24,20 @@ import { EventStatus, MediaStatus, NewsStatus } from '~/types/graphql/generated/
 
 const VALID_TYPES = ['events', 'news', 'media'] as const;
 type PublicationType = (typeof VALID_TYPES)[number];
+
+const checkIsSeoInvalid = (
+  ukMeta: SeoBlockValue['meta']['uk'],
+  enMeta: SeoBlockValue['meta']['en'],
+  publicationType: PublicationType,
+  ticketUrl: SeoBlockValue['ticketUrl']
+): boolean =>
+  !ukMeta.title.trim() ||
+  !enMeta.title.trim() ||
+  !ukMeta.description.trim() ||
+  !enMeta.description.trim() ||
+  (publicationType === 'media' && (!ukMeta.canonicalUrl?.trim() || !enMeta.canonicalUrl?.trim())) ||
+  (publicationType === 'events' && (!ticketUrl?.uk?.trim() || !ticketUrl?.en?.trim()));
+
 
 const PAGE_TITLES: Record<PublicationType, string> = {
   events: 'Створення події',
@@ -68,13 +82,7 @@ export default function CreatePublicationPage() {
     const enMeta = seoValue.meta.en;
 
     const isAdminTitleInvalid = !adminTitle.trim();
-    const isSeoInvalid =
-      !ukMeta.title.trim() ||
-      !enMeta.title.trim() ||
-      !ukMeta.description.trim() ||
-      !enMeta.description.trim() ||
-      (publicationType === 'media' && (!ukMeta.canonicalUrl?.trim() || !enMeta.canonicalUrl?.trim())) ||
-      (publicationType === 'events' && (!seoValue.ticketUrl?.uk?.trim() || !seoValue.ticketUrl?.en?.trim()));
+    const isSeoInvalid = checkIsSeoInvalid(ukMeta, enMeta, publicationType, seoValue.ticketUrl);
 
     if (isAdminTitleInvalid) setAdminTitleError('Обов\'язкове поле');
     if (isSeoInvalid) setForceShowErrors(true);
@@ -148,6 +156,46 @@ export default function CreatePublicationPage() {
     }
   };
 
+  const handleDateTimeChange = useCallback(
+    (start: string | undefined, end: string | undefined) => {
+      setSeoValue((prev) => ({
+        ...prev,
+        meta: {
+          uk: { ...prev.meta.uk, startDateTime: start, endDateTime: end },
+          en: { ...prev.meta.en, startDateTime: start, endDateTime: end }
+        }
+      }));
+    },
+    [setSeoValue]
+  );
+
+  const eventsExtraFields = useCallback(
+    (_locale: 'uk' | 'en', value: SeoBlockValue['meta']['uk']) => (
+      <SeoDateTimeFields
+        startDateTime={value.startDateTime}
+        endDateTime={value.endDateTime}
+        onChange={handleDateTimeChange}
+      />
+    ),
+    [handleDateTimeChange]
+  );
+
+  const mediaExtraFields = useCallback(
+    (_locale: 'uk' | 'en', value: SeoBlockValue['meta']['uk'], onChange: (val: SeoBlockValue['meta']['uk']) => void) => (
+      <SeoCanonicalUrlField
+        value={value.canonicalUrl ?? ''}
+        onChange={(val) => onChange({ ...value, canonicalUrl: val })}
+        onBlur={() => {}}
+        forceShowErrors={forceShowErrors}
+      />
+    ),
+    [forceShowErrors]
+  );
+
+  let seoExtraFields: typeof eventsExtraFields | typeof mediaExtraFields | undefined;
+  if (publicationType === 'events') seoExtraFields = eventsExtraFields;
+  else if (publicationType === 'media') seoExtraFields = mediaExtraFields;
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
       <DividedHeader
@@ -190,34 +238,7 @@ export default function CreatePublicationPage() {
           forceShowErrors={forceShowErrors}
           value={seoValue}
           onChange={setSeoValue}
-          extraFields={
-            publicationType === 'events'
-              ? (_locale, value) => (
-                <SeoDateTimeFields
-                  startDateTime={value.startDateTime}
-                  endDateTime={value.endDateTime}
-                  onChange={(start, end) =>
-                    setSeoValue((prev) => ({
-                      ...prev,
-                      meta: {
-                        uk: { ...prev.meta.uk, startDateTime: start, endDateTime: end },
-                        en: { ...prev.meta.en, startDateTime: start, endDateTime: end }
-                      }
-                    }))
-                  }
-                />
-              )
-              : publicationType === 'media'
-                ? (_locale, value, onChange) => (
-                  <SeoCanonicalUrlField
-                    value={value.canonicalUrl ?? ''}
-                    onChange={(val) => onChange({ ...value, canonicalUrl: val })}
-                    onBlur={() => {}}
-                    forceShowErrors={forceShowErrors}
-                  />
-                )
-                : undefined
-          }
+          extraFields={seoExtraFields}
         >
           <TextField
             label="Назва новини в адмінці"
