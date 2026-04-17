@@ -69,7 +69,7 @@ export const filterSelectStyles = {
     backgroundColor: FilterSelectColors.chipBg,
     height: '28px',
     borderRadius: '20px',
-    marginRight: '8px',
+    marginRight: 'auto',
     maxWidth: '260px',
     py: '8px',
     px: '4px',

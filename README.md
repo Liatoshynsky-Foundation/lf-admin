@@ -21,6 +21,7 @@
   - [Run Locally](#️-run-locally)
   - [Run with Docker](#️-run-with-docker)
 - [Usage](#usage)
+  - [How to run Storybook](#how-to-run-storybook)
   - [How to work with swagger UI](#how-to-work-with-swagger-ui)
   - [How to run tests](#how-to-run-tests)
   - [How to Check Code Style (ESLint)](#️-how-to-check-code-style-eslint)
@@ -127,6 +128,22 @@ npm run dev
 ```
 
 The admin panel will be available at http://localhost:3000 or your configured port
+
+### 📚 Run Storybook
+
+Storybook is available for isolated development of reusable shared UI components and cards.
+
+```shell
+npm run storybook
+```
+
+Storybook will be available at http://localhost:6006
+
+To verify the static production build:
+
+```shell
+npm run build-storybook
+```
 
 ### 🐳 Run with Docker
 
