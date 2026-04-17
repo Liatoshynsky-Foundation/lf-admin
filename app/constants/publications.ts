@@ -1,6 +1,9 @@
 import type { FilterOption } from '~/shared/components/selector/FilterSelect';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
+export const PUBLICATIONS_TYPES = ['event', 'news', 'media'] as const;
+export type PublicationsType = (typeof PUBLICATIONS_TYPES)[number];
+
 export type PublicationsTabValue = 'all' | 'events' | 'news' | 'media';
 export type PublicationsItemType = Exclude<PublicationsTabValue, 'all'>;
 export const PUBLICATIONS_STATUSES = [
@@ -53,7 +56,7 @@ export const PUBLICATIONS_LOADING_STATE_DESCRIPTION = 'Зачекайте, по�
 export const PUBLICATIONS_ERROR_STATE_TITLE = 'Не вдалося завантажити матеріали';
 export const PUBLICATIONS_ERROR_STATE_DESCRIPTION = 'Спробуйте оновити сторінку або повторити пізніше.';
 
-const PUBLICATIONS_BASE_PATH = '/publications';
+export const PUBLICATIONS_BASE_PATH = '/publications';
 
 const PUBLICATIONS_CATEGORIES: ReadonlyArray<PublicationsCategoryConfig> = [
   {
@@ -123,3 +126,34 @@ export const PUBLICATIONS_FILTERS: ReadonlyArray<PublicationsFilterConfig> = [
     menuMinWidth: 205
   }
 ];
+
+export const PublicationsEditorPlaceholder = 'H';
+
+export const PublicationsChipLabels: Record<PublicationsItemType, string> = {
+  news: 'Новина',
+  events: 'Подія',
+  media: 'Ми у ЗМІ'
+} as const;
+
+export enum MenuActionId {
+  PUBLISH = 'PUBLISH',
+  SAVE_DRAFT = 'SAVE_DRAFT',
+  SAVE_AND_EXIT = 'SAVE_AND_EXIT',
+  DELETE_DRAFT = 'DELETE_DRAFT'
+}
+
+export type ACTIONS_TYPE = {
+  id: MenuActionId;
+  label: string;
+};
+
+export type HEADER_MENU_OPTIONS_TYPE = Record<string, ReadonlyArray<ACTIONS_TYPE>>;
+
+export const HEADER_MENU_OPTIONS: HEADER_MENU_OPTIONS_TYPE = {
+  baseActions: [
+    { id: MenuActionId.PUBLISH, label: 'Опублікувати' },
+    { id: MenuActionId.SAVE_DRAFT, label: 'Зберегти зміни' },
+    { id: MenuActionId.SAVE_AND_EXIT, label: 'Зберегти зміни і вийти' },
+    { id: MenuActionId.DELETE_DRAFT, label: 'Видалити чернетку' }
+  ]
+} as const;
