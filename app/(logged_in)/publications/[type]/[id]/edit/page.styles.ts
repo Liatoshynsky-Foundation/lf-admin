@@ -1,20 +1,19 @@
 
-import { publicationsChipsColors } from '~/shared/theme/colors';
 
-type ChipColorType = 'draft' | 'published' | 'news' | 'event' | 'media';
+type ChipColorType = 'draft' | 'published' | 'news' | 'events' | 'media';
 
-const ChipsColorsMap: Record<ChipColorType, string> = {
-  draft: publicationsChipsColors.draftBg,
-  published: publicationsChipsColors.publishedBg,
-  news: publicationsChipsColors.newsBg,
-  event: publicationsChipsColors.eventBg,
-  media: publicationsChipsColors.mediaMentionBg
+const publicationsChipsColors: Record<ChipColorType, string> = {
+  published: '#579A40',
+  draft: 'red.200',
+  news: '#B6D0F7',
+  events: '#F7B6E1',
+  media: '#B6F7CF'
 };
+
 
 export const styles = {
   container: {
     width: '100%',
-    minHeight: '100vh',
     bgcolor: 'adminBlue.50'
   },
   header: {
@@ -32,31 +31,40 @@ export const styles = {
       overflowY: 'auto'
     }
   },
+  menuSubheader: {
+    height: 26,
+    display: 'flex',
+    alignItems: 'center'
+  },
   menuItem: {
     p: '10px 16px',
     borderRadius: '8px',
     height: 44
   },
+  draftCaption: {
+    color: 'red.600',
+  },
   mainContent: {
-    bgcolor: 'adminBlue.50',
+    minHeight: '100vh',
+    bgcolr: 'adminBlue.50',
     p: '16px 32px'
   },
-  collapse: {
-    bgcolor: 'white',
-    border: '1px solid',
-    borderColor: 'blue.200',
-    px: '24px',
-    '& .MuiAccordionSummary-root, & .MuiAccordionDetails-root': {
-      p: '4px 0'
-    },
-    '& .MuiAccordionSummary-content': {}
-  },
+  // collapse: {
+  //   bgcolor: 'white',
+  //   border: '1px solid',
+  //   borderColor: 'blue.200',
+  //   px: '24px',
+  //   '& .MuiAccordionSummary-root, & .MuiAccordionDetails-root': {
+  //     p: '4px 0'
+  //   },
+  // },
   contentEditor: {
-    border: 'none',
-    p: 0,
+    p: '24px',
     bgcolor: 'white',
+    borderRadius: '20px',
+    borderColor: 'blue.200',
     '& .bn-editor': {
-      p: 0,
+      maxWidth: '1136px',
       bgcolor: 'white'
     }
   },
@@ -76,7 +84,7 @@ export const styles = {
       display: 'none'
     },
 
-    bgcolor: ChipsColorsMap[color],
+    bgcolor: publicationsChipsColors[color],
     height: 28,
     '& .MuiChip-root': {
       p: '4px 8px'
