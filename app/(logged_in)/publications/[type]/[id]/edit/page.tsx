@@ -1,9 +1,9 @@
 'use client';
 
 import { Block } from '@blocknote/core';
-import { Box, Chip, Divider, ListSubheader,Menu, MenuItem, Typography } from '@mui/material';
+import { Box, Chip, Divider, ListSubheader, Menu, MenuItem, Typography } from '@mui/material';
 import { useParams, useRouter } from 'next/navigation';
-import { MouseEvent, useEffect, useMemo,useState } from 'react';
+import { MouseEvent, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { styles } from './page.styles';
@@ -34,6 +34,8 @@ type Params = {
   type: PublicationsItemType;
   id: string;
 };
+
+const DEFAULT_EMPTY_DOCUMENT: Block[] = [{ type: 'paragraph', content: [] } as unknown as Block];
 
 export type LocalizedEditorState = {
   en?: {
@@ -87,8 +89,6 @@ export default function EditPublicationsPage() {
   const [currentLanguage, setCurrentLanguage] = useState<EditorLanguage>('UA');
 
   const localeKey = currentLanguage === 'UA' ? 'uk' : 'en';
-
-  const DEFAULT_EMPTY_DOCUMENT: Block[] = [{ type: 'paragraph', content: [] } as unknown as Block];
 
   useEffect(() => {
     const currentResourceData =
@@ -176,6 +176,10 @@ export default function EditPublicationsPage() {
   const baseActions = HEADER_MENU_OPTIONS.baseActions as ACTIONS_TYPE[];
   const publishActions = [...baseActions].filter((action) => action.id !== MenuActionId.PUBLISH);
 
+  const currentBlocks = editedContent?.[localeKey]?.blocks;
+
+  const initialBlocksForEditor = currentBlocks && currentBlocks.length > 0 ? currentBlocks : undefined;
+
   const renderChips = (
     <>
       <Chip sx={styles.chip(type)} label={PublicationsChipLabels[type]} />
@@ -225,9 +229,13 @@ export default function EditPublicationsPage() {
         sx={styles.menuItem}
       >
         <Typography variant="customMedium16">Українська</Typography>
-        <Typography variant="customItalic14" sx={styles.draftCaption}>
-          (чернетка)
-        </Typography>
+        {Array.isArray(editedContent?.uk?.blocks) && editedContent.uk.blocks.length > 1 && (
+          <>
+            <Typography variant="customItalic14" sx={styles.draftCaption}>
+              (чернетка)
+            </Typography>
+          </>
+        )}
       </MenuItem>
 
       <MenuItem
@@ -238,6 +246,14 @@ export default function EditPublicationsPage() {
         sx={styles.menuItem}
       >
         <Typography variant="customMedium16">Англійська</Typography>
+
+        {Array.isArray(editedContent?.en?.blocks) && editedContent.en.blocks.length > 1 && (
+          <>
+            <Typography variant="customItalic14" sx={styles.draftCaption}>
+              (чернетка)
+            </Typography>
+          </>
+        )}
       </MenuItem>
 
       <Divider sx={{ my: '7px' }} />
@@ -265,10 +281,6 @@ export default function EditPublicationsPage() {
       ))}
     </Menu>
   );
-
-  const currentBlocks = editedContent?.[localeKey]?.blocks;
-
-  const initialBlocksForEditor = currentBlocks && currentBlocks.length > 0 ? currentBlocks : undefined;
 
   if (isLoading) return <Box sx={{ p: 4 }}>Завантаження...</Box>;
 
