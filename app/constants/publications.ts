@@ -1,3 +1,4 @@
+import { CONTENT_VERSION, SerializedContent } from '~/shared/components/content-editor/types';
 import type { FilterOption } from '~/shared/components/selector/FilterSelect';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
@@ -56,6 +57,7 @@ export const PUBLICATIONS_LOADING_STATE_TITLE = 'Завантаження мат
 export const PUBLICATIONS_LOADING_STATE_DESCRIPTION = 'Зачекайте, поки завершиться запит.';
 export const PUBLICATIONS_ERROR_STATE_TITLE = 'Не вдалося завантажити матеріали';
 export const PUBLICATIONS_ERROR_STATE_DESCRIPTION = 'Спробуйте оновити сторінку або повторити пізніше.';
+export const PUBLICATION_EDIT_ERROR_STATE = 'Щось пішло не так';
 
 export const PUBLICATIONS_BASE_PATH = '/publications';
 
@@ -158,3 +160,34 @@ export const HEADER_MENU_OPTIONS: HEADER_MENU_OPTIONS_TYPE = {
     { id: MenuActionId.DELETE_DRAFT, label: 'Видалити чернетку' }
   ]
 } as const;
+
+export type MUTATION_RESULT = Record<string, string>;
+
+export const CONTENT_MUTATION_RESULTS: MUTATION_RESULT = {
+  draftPublished: 'Чернетку опубліковано успішно',
+  draftSaved: 'Чернетку збережено успішно',
+  draftDeleted: 'Чернетку видалено успішно'
+};
+
+export const DEFAULT_EMPTY_DOCUMENT: SerializedContent = {
+  blocks: [],
+  version: CONTENT_VERSION,
+  lastModified: new Date().toISOString()
+};
+
+export type LocalizedEditorState = {
+  en?: SerializedContent;
+  uk?: SerializedContent;
+  __typename?: string;
+};
+
+export type EditorLanguage = 'EN' | 'UA';
+
+export type MutationResponse<TData = unknown> = {
+  data?: TData | null;
+};
+
+export type PublicationResource = {
+  update: (status: BaseContentStatuses, extra?: Record<string, unknown>) => Promise<MutationResponse>;
+  remove: () => Promise<MutationResponse>;
+};
