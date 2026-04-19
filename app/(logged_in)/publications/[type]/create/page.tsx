@@ -165,7 +165,7 @@ export default function CreatePublicationPage() {
           status: MediaStatus.Draft
         });
         const id = result.data?.createMediaMention.id;
-        if (id) router.push(`/publications/media/${id}/edit`);
+        if (id) router.push('/publications/');
       }
     } catch {
       // errors are handled by safeMutate
@@ -315,7 +315,7 @@ export default function CreatePublicationPage() {
                       color: '#190D03'
                     },
                     '& .MuiInputLabel-root:not(.MuiInputLabel-shrunk)': {
-                      transform: 'translate(14px, 12px) scale(1)'
+                      top: '-3px'
                     },
                     width: '238px',
                     '& .MuiPickersOutlinedInput-root.Mui-focused:not(.Mui-error) .MuiPickersOutlinedInput-notchedOutline':

@@ -53,6 +53,9 @@ export const styles = {
     '& .MuiInputLabel-root': {
       color: colors.blue[800]
     },
+    '& .MuiInputLabel-root:not(.MuiInputLabel-shrunk)': {
+      top: '-4px'
+    },
     '& .MuiInputLabel-root.Mui-focused': {
       color: colors.blue[800]
     }
