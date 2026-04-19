@@ -7,6 +7,7 @@ import Button from '../design-system/button/Button';
 import styles from './ContentCard.styles';
 import ContentCardBadge from './ContentCardBadge';
 import { getStatus } from '~/lib/utils/getStatus';
+import type { LocalizedString } from '~/types/common';
 
 export type ContentType = 'news' | 'event' | 'media';
 
@@ -24,7 +25,7 @@ interface ContentCardProps {
       en: string;
     };
   };
-  title: Partial<{ uk: string; en: string }>;
+  title: Partial<LocalizedString>;
   status: string;
   updatedAt?: string;
   createdAt?: string;
@@ -46,7 +47,7 @@ const ContentCard = ({
   onClick,
   onClickMenu
 }: ContentCardProps) => {
-  const [imageSrc, setImageSrc] = useState(coverImage.src.uk || FALLBACK_IMAGE_SRC);
+  const [imageSrc, setImageSrc] = useState(coverImage.src.uk || coverImage.src.en || FALLBACK_IMAGE_SRC);
   const localizedKeys = Object.entries(title)
     .filter(([, value]) => Boolean(value?.trim()))
     .map(([key]) => key);
@@ -54,8 +55,8 @@ const ContentCard = ({
   const altText = coverImage.alt.uk || coverImage.alt.en || titleText;
 
   useEffect(() => {
-    setImageSrc(coverImage.src.uk || FALLBACK_IMAGE_SRC);
-  }, [coverImage.src.uk]);
+    setImageSrc(coverImage.src.uk || coverImage.src.en || FALLBACK_IMAGE_SRC);
+  }, [coverImage.src.uk, coverImage.src.en]);
 
   const handleImageError = () => {
     if (imageSrc !== FALLBACK_IMAGE_SRC) {

@@ -70,7 +70,7 @@ export const useUpdateEventStatus = () => {
   const status = data?.updateEvent.status;
 
   const makeStatusUpdater = useCallback(
-    buildStatusUpdater(mutate, EventStatus.Published),
+    (status: EventStatus) => buildStatusUpdater(mutate, EventStatus.Published)(status),
     [mutate]
   );
 

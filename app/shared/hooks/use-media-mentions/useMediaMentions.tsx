@@ -88,7 +88,7 @@ export const useUpdateMediaMentionStatus = (): [
   const status = data?.updateMediaMention.status; // Placeholder for current status
 
   const makeStatusUpdater = useCallback(
-    buildStatusUpdater(mutate, MediaStatus.Published),
+    (status: MediaStatus) => buildStatusUpdater(mutate, MediaStatus.Published)(status),
     [mutate]
   );
 

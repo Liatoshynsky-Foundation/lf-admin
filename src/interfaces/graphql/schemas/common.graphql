@@ -1,74 +1,72 @@
 type Query {
-    _empty: String
-    test: RefreshTokenPayload!
+  _empty: String
+  test: RefreshTokenPayload!
 }
 
 type Mutation {
-    _empty: String
+  _empty: String
 }
 
 type LocalizedJSON {
-    uk: JSON!
-    en: JSON!
+  uk: JSON!
+  en: JSON!
 }
 
 type LocalizedString {
-    uk: String!
-    en: String!
+  uk: String!
+  en: String!
 }
 
 type LocalizedBoolean {
-    uk: Boolean!
-    en: Boolean!
+  uk: Boolean!
+  en: Boolean!
 }
 
 type CropRect {
-    x: Float!
-    y: Float!
-    width: Float!
-    height: Float!
+  x: Float!
+  y: Float!
+  width: Float!
+  height: Float!
 }
 
 type LocalizedImage {
-    src: LocalizedString!
-    alt: LocalizedString!
-    caption: LocalizedString!
-    isTmp: Boolean
-    crop: CropRect
-    width: Float
-    height: Float
+  src: LocalizedString!
+  alt: LocalizedString!
+  caption: LocalizedString!
+  isTmp: Boolean
+  crop: CropRect
 }
 
 type ContentMeta {
-    views: Int!
+  views: Int!
 }
 
 interface BaseContent {
-    adminTitle: String!
-    title: LocalizedString!
-    description: LocalizedString!
-    keywords: LocalizedString!
-    allowIndexation: LocalizedBoolean!
-    slug: String!
-    coverImage: LocalizedImage!
-    meta: ContentMeta!
-    publishedAt: String
-    createdAt: String!
-    updatedAt: String!
+  adminTitle: String!
+  title: LocalizedString!
+  description: LocalizedString!
+  keywords: LocalizedString!
+  allowIndexation: LocalizedBoolean!
+  slug: String!
+  coverImage: LocalizedImage!
+  meta: ContentMeta!
+  publishedAt: String
+  createdAt: String!
+  updatedAt: String!
 }
 
 enum SortOrder {
-    asc
-    desc
+  asc
+  desc
 }
 
 enum ContentLanguage {
-    uk
-    en
-    bilingual
+  uk
+  en
+  bilingual
 }
 
 input SortOptions {
-    field: String!
-    order: SortOrder!
+  field: String!
+  order: SortOrder!
 }

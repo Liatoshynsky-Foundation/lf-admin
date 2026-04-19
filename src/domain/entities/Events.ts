@@ -1,4 +1,4 @@
-import { BaseContentFields, LocalizedContent } from '~/domain/entities/BaseContent';
+import { BaseContentFields, LocalizedContent, LocalizedString } from '~/domain/entities/BaseContent';
 import { EventStatus } from '~/types/enums/common.enums';
 
 export type EventsEntity = BaseContentFields & {
@@ -8,5 +8,5 @@ export type EventsEntity = BaseContentFields & {
   status: EventStatus;
   eventDateTimeStart?: string | null;
   eventDateTimeEnd?: string | null;
-  ticketUrl?: { uk: string; en: string } | null;
+  ticketUrl?: LocalizedString | null;
 };
