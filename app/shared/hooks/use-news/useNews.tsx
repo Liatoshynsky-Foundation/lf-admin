@@ -18,6 +18,7 @@ import {
   useCreateNewsMutation,
   useDeleteNewsMutation,
   useIncrementNewsViewsMutation,
+  useNewsByIdQuery,
   useNewsCountQuery,
   usePaginatedNewsQuery,
   usePublishedNewsQuery,
@@ -27,6 +28,9 @@ import {
 type QueryHookOptions = Readonly<{
   skip?: boolean;
 }>;
+
+export const useNewsById = (id: string, options: QueryHookOptions = {}) =>
+  useNewsByIdQuery({ variables: { id }, fetchPolicy: 'network-only', skip: options.skip || !id });
 
 export const useAllNews = (filters?: NewsFiltersInput, options: QueryHookOptions = {}) =>
   useAllNewsQuery({ variables: { filters }, fetchPolicy: 'network-only', skip: options.skip });

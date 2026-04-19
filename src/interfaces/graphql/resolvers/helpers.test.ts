@@ -9,7 +9,8 @@ import {
   endpointRepositoryHandler,
   extractTitleForSlug,
   mapFilters,
-  processSlugUpdate, syncImagesCrops,
+  processSlugUpdate,
+  syncImagesCrops
 } from './helpers';
 import { LocalizedImage } from '~/domain/entities/BaseContent';
 import { ImageCropModel } from '~/infrastructure/models/imageCrop.model';
@@ -25,11 +26,11 @@ describe('endpointRepositoryHandler', () => {
   });
 
   it('should throw GraphQLError when admin is falsy', async () => {
-    const handler = endpointRepositoryHandler('mediaMentionsRepository')<Record<string, never>, unknown>(
-      async ({ repo }) => {
-        return (repo as unknown as typeof fakeRepo).findById('1');
-      }
-    );
+    const handler = endpointRepositoryHandler('mediaMentionsRepository')<Record<string, never>, unknown>(async ({
+      repo
+    }) => {
+      return (repo as unknown as typeof fakeRepo).findById('1');
+    });
 
     const context = createMockContext(false, 'mediaMentionsRepository', fakeRepo);
 
@@ -37,14 +38,16 @@ describe('endpointRepositoryHandler', () => {
   });
 
   it('should call handler and return value when admin is true', async () => {
-    interface Args { id: string }
-    interface Result { id: string }
+    interface Args {
+      id: string;
+    }
+    interface Result {
+      id: string;
+    }
 
-    const handler = endpointRepositoryHandler('mediaMentionsRepository')<Args, Result>(
-      async ({ args, repo }) => {
-        return (repo as unknown as typeof fakeRepo).findById(args.id);
-      }
-    );
+    const handler = endpointRepositoryHandler('mediaMentionsRepository')<Args, Result>(async ({ args, repo }) => {
+      return (repo as unknown as typeof fakeRepo).findById(args.id);
+    });
 
     const context = createMockContext(true, 'mediaMentionsRepository', fakeRepo);
     const res = await handler({}, { id: '1' }, context);

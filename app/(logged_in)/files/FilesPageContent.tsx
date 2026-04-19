@@ -271,7 +271,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
         display: 'flex',
         flexDirection: 'column',
         gap: '20px',
-        pr: { xs: 0, md: sidebarFile ? `${SIDEBAR_WIDTH}px` : 0 },
+        pr: { xs: 0, md: sidebarFile ? `${SIDEBAR_WIDTH + 12}px` : 0 },
         transition: 'padding-right 0.2s ease'
       }}
     >
@@ -313,19 +313,9 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
         bottomTrailingContent={<SortSelect {...sortProps} minWidth={208} dataTestId="files-sort-select" />}
       />
 
-      {loading && (
-        <EmptyState
-          title={FILES_LOADING_STATE_TITLE}
-          description={FILES_LOADING_STATE_DESCRIPTION}
-        />
-      )}
+      {loading && <EmptyState title={FILES_LOADING_STATE_TITLE} description={FILES_LOADING_STATE_DESCRIPTION} />}
 
-      {!loading && error && (
-        <EmptyState
-          title={FILES_ERROR_STATE_TITLE}
-          description={FILES_ERROR_STATE_DESCRIPTION}
-        />
-      )}
+      {!loading && error && <EmptyState title={FILES_ERROR_STATE_TITLE} description={FILES_ERROR_STATE_DESCRIPTION} />}
 
       {!loading && !error && filteredFiles.length > 0 && (
         <FilesCardsLayout view={view} items={filteredFiles} onItemClick={(item) => setSelectedFileId(item.id)} />
@@ -341,17 +331,11 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
       )}
 
       {hasNoFiles && hasActiveCriteria && (
-        <EmptyState
-          title={FILES_EMPTY_STATE_NO_RESULTS_TITLE}
-          description={FILES_EMPTY_STATE_NO_RESULTS_DESCRIPTION}
-        />
+        <EmptyState title={FILES_EMPTY_STATE_NO_RESULTS_TITLE} description={FILES_EMPTY_STATE_NO_RESULTS_DESCRIPTION} />
       )}
 
       {hasNoFiles && !isFavoritesTab && !hasActiveCriteria && (
-        <EmptyState
-          title={FILES_EMPTY_STATE_TITLE}
-          description={FILES_EMPTY_STATE_DESCRIPTION}
-        />
+        <EmptyState title={FILES_EMPTY_STATE_TITLE} description={FILES_EMPTY_STATE_DESCRIPTION} />
       )}
 
       {sidebarFile && <FileInfoSidebar file={sidebarFile} onClose={() => setSelectedFileId(null)} />}

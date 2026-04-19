@@ -12,13 +12,11 @@ import * as helpers from '../helpers';
 
 jest.mock('../helpers', () => ({
   ...jest.requireActual('../helpers'),
-  syncImagesCrops: jest.fn(),
+  syncImagesCrops: jest.fn()
 }));
 
 jest.mock('~/src/shared/utils/slugGenerator/slugGenerator', () => ({
-  generateUniqueSlug: jest.fn((title: string) =>
-    Promise.resolve(title.toLowerCase().replaceAll(/\s+/g, '-'))
-  )
+  generateUniqueSlug: jest.fn((title: string) => Promise.resolve(title.toLowerCase().replaceAll(/\s+/g, '-')))
 }));
 
 describe('media-mentions Mutation', () => {
@@ -27,7 +25,7 @@ describe('media-mentions Mutation', () => {
     update: jest.fn(),
     findBySlug: jest.fn(),
     delete: jest.fn(),
-    incrementViews: jest.fn(),
+    incrementViews: jest.fn()
   };
 
   const adminContext = createMockContext(true, 'mediaMentionsRepository', mockRepo);
@@ -77,23 +75,25 @@ describe('media-mentions Mutation', () => {
       const result = await MediaMentionsMutation.createMediaMention({}, { input }, adminContext);
 
       expect(result.id).toBe('new-id');
-      expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({
-        slug: 'тестова-стаття',
-        meta: { views: 0 }
-      }));
+      expect(mockRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          slug: 'тестова-стаття',
+          meta: { views: 0 }
+        })
+      );
       expect(helpers.syncImagesCrops).toHaveBeenCalledWith('new-id', input.coverImage, { isCoverImage: true });
     });
 
     it('should throw unauthenticated error if not admin', async () => {
       const context = createMockContext(false, 'mediaMentionsRepository', mockRepo);
-      await expect(MediaMentionsMutation.createMediaMention({}, { input }, context))
-        .rejects.toThrow(GraphQLError);
+      await expect(MediaMentionsMutation.createMediaMention({}, { input }, context)).rejects.toThrow(GraphQLError);
     });
 
     it('should throw error if title.uk is missing for slug generation', async () => {
       const invalidInput = { ...input, title: { en: 'Only English' } } as unknown as CreateMediaMentionGQLInput;
-      await expect(MediaMentionsMutation.createMediaMention({}, { input: invalidInput }, adminContext))
-        .rejects.toThrow('Title is required for slug generation');
+      await expect(MediaMentionsMutation.createMediaMention({}, { input: invalidInput }, adminContext)).rejects.toThrow(
+        'Title is required for slug generation'
+      );
     });
   });
 
@@ -116,17 +116,21 @@ describe('media-mentions Mutation', () => {
       const result = await MediaMentionsMutation.updateMediaMention({}, { id, input: updateInput }, adminContext);
 
       expect(result.slug).toBe('оновлений-заголовок');
-      expect(mockRepo.update).toHaveBeenCalledWith(id, expect.objectContaining({
-        slug: 'оновлений-заголовок'
-      }));
+      expect(mockRepo.update).toHaveBeenCalledWith(
+        id,
+        expect.objectContaining({
+          slug: 'оновлений-заголовок'
+        })
+      );
       expect(helpers.syncImagesCrops).toHaveBeenCalledWith(id, updateInput.coverImage, { isCoverImage: true });
     });
 
     it('should throw error if entity not found', async () => {
       (mockRepo.update as jest.Mock).mockResolvedValue(null);
 
-      await expect(MediaMentionsMutation.updateMediaMention({}, { id, input: updateInput }, adminContext))
-        .rejects.toThrow(GraphQLError);
+      await expect(
+        MediaMentionsMutation.updateMediaMention({}, { id, input: updateInput }, adminContext)
+      ).rejects.toThrow(GraphQLError);
     });
   });
 

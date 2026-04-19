@@ -10,14 +10,12 @@ jest.mock('mongoose');
 import * as helpers from '../helpers';
 
 jest.mock('~/src/shared/utils/slugGenerator/slugGenerator', () => ({
-  generateUniqueSlug: jest.fn((title: string) =>
-    Promise.resolve(`slug-${title.toLowerCase().replaceAll(/\s+/g, '-')}`)
-  )
+  generateUniqueSlug: jest.fn((title: string) => Promise.resolve(`slug-${title.toLowerCase().replaceAll(/\s+/g, '-')}`))
 }));
 
 jest.mock('../helpers', () => ({
   ...jest.requireActual('../helpers'),
-  syncImagesCrops: jest.fn(),
+  syncImagesCrops: jest.fn()
 }));
 
 describe('EventsMutation Resolvers', () => {
@@ -51,32 +49,34 @@ describe('EventsMutation Resolvers', () => {
     ...overrides
   });
 
-  const createMockInput = (overrides: Partial<CreateEventInput> = {}): Omit<CreateEventInput, 'slug'> => ({
-    adminTitle: 'New Event',
-    eventLink: 'https://link.com',
-    title: { uk: 'Подія', en: 'Event' },
-    description: { uk: 'Опис', en: 'Desc' },
-    keywords: { uk: 'к', en: 'k' },
-    allowIndexation: { uk: true, en: true },
-    content: { uk: { blocks: [] }, en: { blocks: [] } } as EventsEntity['content'],
-    coverImage: {
-      src: { uk: 'event.jpg', en: 'event.jpg' },
-      alt: { uk: 'alt uk', en: 'alt en' },
-      caption: { uk: '', en: '' },
-      crop: { x: 10, y: 10, width: 50, height: 50 }
-    },
-    status: EventStatus.Draft,
-    meta: { views: 0 },
-    ...overrides
-  } as Omit<CreateEventInput, 'slug'>);
+  const createMockInput = (overrides: Partial<CreateEventInput> = {}): Omit<CreateEventInput, 'slug'> =>
+    ({
+      adminTitle: 'New Event',
+      eventLink: 'https://link.com',
+      title: { uk: 'Подія', en: 'Event' },
+      description: { uk: 'Опис', en: 'Desc' },
+      keywords: { uk: 'к', en: 'k' },
+      allowIndexation: { uk: true, en: true },
+      content: { uk: { blocks: [] }, en: { blocks: [] } } as EventsEntity['content'],
+      coverImage: {
+        src: { uk: 'event.jpg', en: 'event.jpg' },
+        alt: { uk: 'alt uk', en: 'alt en' },
+        caption: { uk: '', en: '' },
+        crop: { x: 10, y: 10, width: 50, height: 50 }
+      },
+      status: EventStatus.Draft,
+      meta: { views: 0 },
+      ...overrides
+    }) as Omit<CreateEventInput, 'slug'>;
 
   beforeEach(() => jest.clearAllMocks());
 
   describe('Security/Authentication', () => {
     it('should throw UNAUTHENTICATED error message if context.admin is false', async () => {
       const input = createMockInput();
-      await expect(EventsMutation.createEvent({}, { input }, userContext))
-        .rejects.toThrow('You must be logged in to access this resource.');
+      await expect(EventsMutation.createEvent({}, { input }, userContext)).rejects.toThrow(
+        'You must be logged in to access this resource.'
+      );
     });
   });
 
@@ -120,7 +120,9 @@ describe('EventsMutation Resolvers', () => {
       const id = '123';
       const updateInput: UpdateEventInput = { title: { uk: 'Нова Назва', en: 'New Name' } };
 
-      (mockRepo.findBySlug as jest.Mock).mockResolvedValue(createMockEntity({ id: '123', slug: 'slug-existing-title' }));
+      (mockRepo.findBySlug as jest.Mock).mockResolvedValue(
+        createMockEntity({ id: '123', slug: 'slug-existing-title' })
+      );
       (mockRepo.update as jest.Mock).mockResolvedValue(createMockEntity({ id, slug: 'slug-existing-title' }));
 
       await EventsMutation.updateEvent({}, { id, input: updateInput }, adminContext);
@@ -137,16 +139,19 @@ describe('EventsMutation Resolvers', () => {
 
       await EventsMutation.createEvent({}, { input: finalInput }, adminContext);
 
-      expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({
-        status: EventStatus.Draft
-      }));
+      expect(mockRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: EventStatus.Draft
+        })
+      );
     });
   });
 
   describe('Deletion and Metadata', () => {
     it('deleteEvent: should throw error if not admin', async () => {
-      await expect(EventsMutation.deleteEvent({}, { id: '1' }, userContext))
-        .rejects.toThrow('You must be logged in to access this resource.');
+      await expect(EventsMutation.deleteEvent({}, { id: '1' }, userContext)).rejects.toThrow(
+        'You must be logged in to access this resource.'
+      );
     });
 
     it('incrementEventViews: should call incrementViews and return result', async () => {

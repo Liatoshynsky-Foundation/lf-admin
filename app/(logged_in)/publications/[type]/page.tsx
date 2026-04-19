@@ -12,6 +12,18 @@ type PublicationsTypePageProps = Readonly<{
 
 const enabledTabs = new Set(PUBLICATIONS_TABS.filter((tab) => !tab.disabled).map((tab) => tab.value));
 
+
+
+
+
+type PublicationsTypePageProps = Readonly<{
+  params: Promise<{
+    type: string;
+  }>;
+}>;
+
+const enabledTabs = new Set(PUBLICATIONS_TABS.filter((tab) => !tab.disabled).map((tab) => tab.value));
+
 export default async function PublicationsTypePage({ params }: PublicationsTypePageProps) {
   const { type } = await params;
 

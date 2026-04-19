@@ -1,25 +1,56 @@
 fragment NewsFields on News {
   id
   adminTitle
-  title { uk en }
+  title {
+    uk
+    en
+  }
   slug
-  description { uk en }
-  keywords { uk en }
-  content { uk en }
+  description {
+    uk
+    en
+  }
+  keywords {
+    uk
+    en
+  }
+  content {
+    uk
+    en
+  }
   coverImage {
-    src { uk en }
-    alt { uk en }
-    caption { uk en }
+    src {
+      uk
+      en
+    }
+    alt {
+      uk
+      en
+    }
+    caption {
+      uk
+      en
+    }
     isTmp
-    crop { x y width height }
+    crop {
+      x
+      y
+      width
+      height
+    }
   }
   status
-  allowIndexation { uk en }
+  allowIndexation {
+    uk
+    en
+  }
   newsDate
   publishedAt
   createdAt
   updatedAt
-  meta { views }
+  meta {
+    views
+  }
 }
 
 query NewsById($id: ID!) {
@@ -38,7 +69,10 @@ query AllNews($filters: NewsFiltersInput) {
   allNews(filters: $filters) {
     id
     adminTitle
-    title { uk en }
+    title {
+      uk
+      en
+    }
     slug
     status
     createdAt
@@ -46,25 +80,44 @@ query AllNews($filters: NewsFiltersInput) {
     newsDate
     publishedAt
     coverImage {
-      src { uk en }
-      alt { uk en }
+      src {
+        uk
+        en
+      }
+      alt {
+        uk
+        en
+      }
     }
-    meta { views }
+    meta {
+      views
+    }
   }
 }
 
 query PublishedNews($filters: NewsFiltersInput) {
   publishedNews(filters: $filters) {
     id
-    title { uk en }
+    title {
+      uk
+      en
+    }
     slug
     coverImage {
-      src { uk en }
-      alt { uk en }
+      src {
+        uk
+        en
+      }
+      alt {
+        uk
+        en
+      }
     }
     newsDate
     publishedAt
-    meta { views }
+    meta {
+      views
+    }
   }
 }
 
@@ -81,13 +134,19 @@ query PaginatedNews($page: Int!, $limit: Int!, $filters: NewsFiltersInput) {
     items {
       id
       adminTitle
-      title { uk en }
+      title {
+        uk
+        en
+      }
       slug
       status
       newsDate
       publishedAt
       coverImage {
-        src { uk en }
+        src {
+          uk
+          en
+        }
       }
     }
     total

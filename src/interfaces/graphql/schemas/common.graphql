@@ -29,6 +29,13 @@ type CropRect {
   height: Float!
 }
 
+type CropRect {
+  x: Float!
+  y: Float!
+  width: Float!
+  height: Float!
+}
+
 type LocalizedImage {
   src: LocalizedString!
   alt: LocalizedString!
@@ -58,6 +65,12 @@ interface BaseContent {
 enum SortOrder {
   asc
   desc
+}
+
+enum ContentLanguage {
+  uk
+  en
+  bilingual
 }
 
 enum ContentLanguage {

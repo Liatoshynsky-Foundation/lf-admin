@@ -13,6 +13,7 @@ import {
   useAllMediaMentionsQuery,
   useCreateMediaMentionMutation,
   useDeleteMediaMentionMutation,
+  useMediaMentionByIdQuery,
   useMediaMentionsCountQuery,
   usePaginatedMediaMentionsQuery,
   usePublishedMediaMentionsQuery,
@@ -22,6 +23,9 @@ import {
 type QueryHookOptions = Readonly<{
   skip?: boolean;
 }>;
+
+export const useMediaMentionById = (id: string, options: QueryHookOptions = {}) =>
+  useMediaMentionByIdQuery({ variables: { id }, fetchPolicy: 'network-only', skip: options.skip || !id });
 
 // We should discuss on cache policy
 export const useAllMediaMentions = (filters?: MediaMentionsFiltersInput, options: QueryHookOptions = {}) => {

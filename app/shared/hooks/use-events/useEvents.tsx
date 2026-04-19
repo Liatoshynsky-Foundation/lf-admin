@@ -17,6 +17,7 @@ import {
   useAllEventsQuery,
   useCreateEventMutation,
   useDeleteEventMutation,
+  useEventByIdQuery,
   useEventsCountQuery,
   useIncrementEventViewsMutation,
   usePaginatedEventsQuery,
@@ -24,11 +25,18 @@ import {
   useUpdateEventMutation
 } from '~/types/graphql/generated/graphql';
 
-export const useAllEvents = (filters?: EventFiltersInput) =>
-  useAllEventsQuery({ variables: { filters }, fetchPolicy: 'network-only' });
+type QueryHookOptions = Readonly<{
+  skip?: boolean;
+}>;
 
-export const usePublishedEvents = (filters?: EventFiltersInput) =>
-  usePublishedEventsQuery({ variables: { filters }, fetchPolicy: 'cache-first' });
+export const useEventById = (id: string, options: QueryHookOptions = {}) =>
+  useEventByIdQuery({ variables: { id }, fetchPolicy: 'network-only', skip: options.skip || !id });
+
+export const useAllEvents = (filters?: EventFiltersInput, options: QueryHookOptions = {}) =>
+  useAllEventsQuery({ variables: { filters }, fetchPolicy: 'network-only', skip: options.skip });
+
+export const usePublishedEvents = (filters?: EventFiltersInput, options: QueryHookOptions = {}) =>
+  usePublishedEventsQuery({ variables: { filters }, fetchPolicy: 'cache-first', skip: options.skip });
 
 export const usePaginatedEvents = (page = 1, limit = 10, filters?: EventFiltersInput) =>
   usePaginatedEventsQuery({ variables: { page, limit, filters }, fetchPolicy: 'network-only' });

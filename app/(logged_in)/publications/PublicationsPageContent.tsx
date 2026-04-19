@@ -37,10 +37,7 @@ import { useAllMediaMentions } from '~/shared/hooks/use-media-mentions/useMediaM
 import { useAllNews } from '~/shared/hooks/use-news/useNews';
 import { usePublicationsFiltering } from '~/shared/hooks/use-publications';
 import type { LocalizedString } from '~/types/common';
-import {
-  type AllMediaMentionsQuery,
-  type AllNewsQuery
-} from '~/types/graphql/generated/graphql';
+import { type AllMediaMentionsQuery, type AllNewsQuery } from '~/types/graphql/generated/graphql';
 import { normalizeSearch } from '~/utils/normalizeSearch';
 
 type PublicationsPageContentProps = Readonly<{
@@ -85,7 +82,11 @@ const DEFAULT_COVER_IMAGE = '/images/image.png';
 const DEFAULT_COVER_ALT = 'Обкладинка матеріалу';
 const SORT_FALLBACK_DATE = '1970-01-01T00:00:00.000Z';
 
-const comparePublicationItems = (left: PublicationCardItem, right: PublicationCardItem, sortValue: FilesSortValue): number => {
+const comparePublicationItems = (
+  left: PublicationCardItem,
+  right: PublicationCardItem,
+  sortValue: FilesSortValue
+): number => {
   if (sortValue === 'name_asc') {
     return left.sortTitle.localeCompare(right.sortTitle, 'uk');
   }
@@ -406,15 +407,25 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
   const { requestFilters, sortValue, toolbarProps, sortProps } = usePublicationsFiltering();
   const shouldFetchNews = activeTab === 'all' || activeTab === 'news';
   const shouldFetchMedia = activeTab === 'all' || activeTab === 'media';
-  const { data: newsData, loading: isNewsLoading, error: newsError } = useAllNews(requestFilters.news, { skip: !shouldFetchNews });
-  const { data: mediaData, loading: isMediaLoading, error: mediaError } = useAllMediaMentions(requestFilters.media, { skip: !shouldFetchMedia });
+  const {
+    data: newsData,
+    loading: isNewsLoading,
+    error: newsError
+  } = useAllNews(requestFilters.news, { skip: !shouldFetchNews });
+  const {
+    data: mediaData,
+    loading: isMediaLoading,
+    error: mediaError
+  } = useAllMediaMentions(requestFilters.media, { skip: !shouldFetchMedia });
 
   const newsItems = useMemo<PublicationCardItem[]>(() => {
     return (newsData?.allNews ?? []).map(mapNewsItem).filter((item): item is PublicationCardItem => Boolean(item));
   }, [newsData?.allNews]);
 
   const mediaItems = useMemo<PublicationCardItem[]>(() => {
-    return (mediaData?.allMediaMentions ?? []).map(mapMediaMentionItem).filter((item): item is PublicationCardItem => Boolean(item));
+    return (mediaData?.allMediaMentions ?? [])
+      .map(mapMediaMentionItem)
+      .filter((item): item is PublicationCardItem => Boolean(item));
   }, [mediaData?.allMediaMentions]);
 
   const visibleItems = useMemo<PublicationCardItem[]>(() => {
@@ -448,12 +459,18 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
   );
   const hasActiveCriteria = Boolean(toolbarProps.search?.search.trim()) || Boolean(toolbarProps.activeFiltersCount);
   const hasBaseItems = visibleItems.length > 0;
-  const isLoading = getActiveTabState(activeTab, { news: shouldFetchNews ? isNewsLoading : false, media: shouldFetchMedia ? isMediaLoading : false, events: false }, (states) =>
-    states.news || states.media || states.events
+  const isLoading = getActiveTabState(
+    activeTab,
+    { news: shouldFetchNews ? isNewsLoading : false, media: shouldFetchMedia ? isMediaLoading : false, events: false },
+    (states) => states.news || states.media || states.events
   );
   const activeError = getActiveTabState(
     activeTab,
-    { news: shouldFetchNews ? newsError : undefined, media: shouldFetchMedia ? mediaError : undefined, events: undefined },
+    {
+      news: shouldFetchNews ? newsError : undefined,
+      media: shouldFetchMedia ? mediaError : undefined,
+      events: undefined
+    },
     (states) => states.news ?? states.media ?? states.events
   );
   const shouldShowLoadingState = activeTab === 'all' ? !hasBaseItems && isLoading : isLoading;
@@ -472,30 +489,19 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
   const content = (() => {
     if (shouldShowLoadingState) {
       return (
-        <EmptyState
-          title={PUBLICATIONS_LOADING_STATE_TITLE}
-          description={PUBLICATIONS_LOADING_STATE_DESCRIPTION}
-        />
+        <EmptyState title={PUBLICATIONS_LOADING_STATE_TITLE} description={PUBLICATIONS_LOADING_STATE_DESCRIPTION} />
       );
     }
 
     if (shouldShowErrorState) {
-      return (
-        <EmptyState
-          title={PUBLICATIONS_ERROR_STATE_TITLE}
-          description={PUBLICATIONS_ERROR_STATE_DESCRIPTION}
-        />
-      );
+      return <EmptyState title={PUBLICATIONS_ERROR_STATE_TITLE} description={PUBLICATIONS_ERROR_STATE_DESCRIPTION} />;
     }
 
     if (visibleItems.length) {
       return (
         <Box sx={styles.cardGrid}>
           {visibleItems.map((item) => (
-            <Box
-              key={item.id}
-              sx={styles.cardWrapper}
-            >
+            <Box key={item.id} sx={styles.cardWrapper}>
               <ContentCard
                 type={item.cardType}
                 coverImage={item.coverImage}
@@ -513,12 +519,7 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
       );
     }
 
-    return (
-      <EmptyState
-        title={emptyStateTitle}
-        description={emptyStateDescription}
-      />
-    );
+    return <EmptyState title={emptyStateTitle} description={emptyStateDescription} />;
   })();
 
   return (
@@ -542,13 +543,7 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
       <FilteringToolbar
         {...resolvedToolbarProps}
         dataTestId="publications-control-panel"
-        bottomTrailingContent={
-          <SortSelect
-            {...sortProps}
-            minWidth={208}
-            dataTestId="publications-sort-select"
-          />
-        }
+        bottomTrailingContent={<SortSelect {...sortProps} minWidth={208} dataTestId="publications-sort-select" />}
       />
 
       {content}

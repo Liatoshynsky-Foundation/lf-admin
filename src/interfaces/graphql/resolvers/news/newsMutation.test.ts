@@ -9,18 +9,16 @@ jest.mock('mongoose');
 import * as helpers from '../helpers';
 
 jest.mock('./processNewsContent/processNewsContent', () => ({
-  processNewsContent: jest.fn(<T>(input: T): Promise<T> => Promise.resolve(input)),
+  processNewsContent: jest.fn(<T>(input: T): Promise<T> => Promise.resolve(input))
 }));
 
 jest.mock('~/src/shared/utils/slugGenerator/slugGenerator', () => ({
-  generateUniqueSlug: jest.fn((title: string) =>
-    Promise.resolve(`slug-${title.toLowerCase()}`)
-  ),
+  generateUniqueSlug: jest.fn((title: string) => Promise.resolve(`slug-${title.toLowerCase()}`))
 }));
 
 jest.mock('../helpers', () => ({
   ...jest.requireActual('../helpers'),
-  syncImagesCrops: jest.fn(),
+  syncImagesCrops: jest.fn()
 }));
 
 describe('NewsMutation Resolvers', () => {
@@ -75,14 +73,12 @@ describe('NewsMutation Resolvers', () => {
   describe('Security & Validation', () => {
     it('should throw error if title is empty (required for slug)', async () => {
       const invalidInput = { ...baseInput, title: { uk: '', en: '' } };
-      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext))
-        .rejects.toThrow();
+      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toThrow();
     });
 
     it('should throw error if title uk is missing (via partial object)', async () => {
       const invalidInput = { ...baseInput, title: { uk: '' } } as unknown as CreateNewsGQLInput;
-      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext))
-        .rejects.toThrow();
+      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toThrow();
     });
   });
 

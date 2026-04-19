@@ -168,10 +168,18 @@ const compareBySort = (
   return 0;
 };
 
-const applyFilters = <T extends { createdAt: string; adminTitle?: string; title: string | { uk?: string; en?: string }; status: string; language: string }>(
-  items: T[],
-  filters?: PublicationsQueryFilters
-) => {
+const applyFilters = <
+  T extends {
+    createdAt: string;
+    adminTitle?: string;
+    title: string | { uk?: string; en?: string };
+    status: string;
+    language: string;
+  }
+>(
+    items: T[],
+    filters?: PublicationsQueryFilters
+  ) => {
   const normalizedSearch = filters?.search?.trim().toLowerCase();
 
   const filteredItems = items.filter((item) => {
@@ -277,11 +285,7 @@ jest.mock('~/shared/components/filtering-toolbar', () => ({
   }) => (
     <div data-testid={dataTestId ?? 'filtering-toolbar'}>
       {search ? (
-        <input
-          data-testid="search"
-          value={search.search}
-          onChange={(event) => search.setSearch(event.target.value)}
-        />
+        <input data-testid="search" value={search.search} onChange={(event) => search.setSearch(event.target.value)} />
       ) : null}
       {onToggleFilters ? (
         <button type="button" onClick={onToggleFilters}>
@@ -381,7 +385,10 @@ describe('Publications page', () => {
 
     expect(within(dropdownMenu).getByText('Подію').closest('a')).toHaveAttribute('href', '/publications/events/create');
     expect(within(dropdownMenu).getByText('Новину').closest('a')).toHaveAttribute('href', '/publications/news/create');
-    expect(within(dropdownMenu).getByText('Ми у ЗМІ').closest('a')).toHaveAttribute('href', '/publications/media/create');
+    expect(within(dropdownMenu).getByText('Ми у ЗМІ').closest('a')).toHaveAttribute(
+      'href',
+      '/publications/media/create'
+    );
 
     fireEvent.click(within(dropdownMenu).getByText('Подію'));
 
