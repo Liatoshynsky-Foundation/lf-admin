@@ -29,8 +29,6 @@ fragment EventFields on Event {
       uk
       en
     }
-    width
-    height
     alt {
       uk
       en

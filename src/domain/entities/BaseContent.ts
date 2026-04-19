@@ -1,4 +1,4 @@
-import {CropRect} from '~/types/common';
+import { CropRect } from '~/types/common';
 
 export type LocalizedString = {
   uk: string;
@@ -16,7 +16,7 @@ export type LocalizedContent = {
 };
 
 export type LocalizedImage = {
-  src: { uk: string; en: string };
+  src: LocalizedString;
   alt: LocalizedString;
   caption?: LocalizedString;
   isTmp?: boolean;

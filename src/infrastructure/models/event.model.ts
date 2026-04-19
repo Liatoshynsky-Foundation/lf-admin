@@ -9,8 +9,8 @@ const eventSchema = new Schema<EventsEntity>(
     ...baseContentSchemaFields,
     eventLink: { type: String, required: true },
     content: {
-      uk: { type: Object, required: true },
-      en: { type: Object, required: true }
+      uk: { type: Object, required: true, default: {} },
+      en: { type: Object, required: true, default: {} }
     },
     status: {
       type: String,

@@ -74,7 +74,7 @@ export const useUpdateNewsStatus = () => {
   const status = data?.updateNews.status; // Placeholder for current status
 
   const makeStatusUpdater = useCallback(
-    buildStatusUpdater(mutate, NewsStatus.Published),
+    (status: NewsStatus) => buildStatusUpdater(mutate, NewsStatus.Published)(status),
     [mutate]
   );
 
