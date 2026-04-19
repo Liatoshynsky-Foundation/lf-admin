@@ -12,20 +12,24 @@ export const styles = {
   container: {
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'space-between',
     gap: '28px',
     borderRadius: '20px',
     backgroundColor: colors.white,
     border: `1px solid ${colors.blue[300]}`,
-    maxWidth: '560px',
     width: '48%',
-    minHeight: '794px',
-    mt: 4,
+    minWidth: 0,
     px: 4,
     py: 3
   },
   textField: {
     '& .MuiOutlinedInput-root': {
+      alignItems: 'center',
+      '&.MuiInputBase-multiline': {
+        alignItems: 'flex-start',
+        height: 'auto',
+        paddingTop: '12px',
+        paddingBottom: '12px'
+      },
       '& fieldset': {
         borderRadius: '8px',
         borderColor: colors.adminBlue[500],
@@ -49,6 +53,9 @@ export const styles = {
     '& .MuiInputLabel-root': {
       color: colors.blue[800]
     },
+    '& .MuiInputLabel-root:not(.MuiInputLabel-shrunk)': {
+      top: '-4px'
+    },
     '& .MuiInputLabel-root.Mui-focused': {
       color: colors.blue[800]
     }
@@ -61,8 +68,7 @@ export const styles = {
   formFieldsContainer: {
     flexDirection: 'column',
     gap: '20px',
-    width: '100%',
-    minHeight: '324px'
+    width: '100%'
   },
   sectionTitle: {
     fontFamily: 'Mulish',

@@ -9,8 +9,8 @@ const eventSchema = new Schema<EventsEntity>(
     ...baseContentSchemaFields,
     eventLink: { type: String, required: true },
     content: {
-      uk: { type: Object, required: true },
-      en: { type: Object, required: true }
+      uk: { type: Object, required: true, default: {} },
+      en: { type: Object, required: true, default: {} }
     },
     status: {
       type: String,
@@ -24,6 +24,10 @@ const eventSchema = new Schema<EventsEntity>(
     eventDateTimeEnd: {
       type: Date,
       default: null
+    },
+    ticketUrl: {
+      uk: { type: String, default: null },
+      en: { type: String, default: null }
     }
   },
   {

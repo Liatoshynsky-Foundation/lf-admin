@@ -29,6 +29,7 @@ interface ImagePreviewBlockProps extends StackProps {
   stackSpacing?: string;
   typographySpacing?: string;
   showAlternativeText?: boolean;
+  disabled?: boolean;
 }
 
 export const ImagePreviewBlock = ({
@@ -44,7 +45,8 @@ export const ImagePreviewBlock = ({
   typographySpacing = '8px',
   showAlternativeText = false,
   altText,
-  onChangeAltText
+  onChangeAltText,
+  disabled = false
 }: ImagePreviewBlockProps) => {
   const [previewImage, setPreviewImage] = useState<string>(imageUrl);
 
@@ -61,6 +63,9 @@ export const ImagePreviewBlock = ({
   }, [initialCrop]);
 
   const { dimensions, fileName: finalFileName } = useImageMetadata(previewImage, fileName);
+  const displayedFileName = finalFileName && finalFileName.length > 15
+    ? `${finalFileName.slice(0, 15)}...`
+    : finalFileName;
 
   const { styles: cropStyles, onLoad: onImgLoad } = useCroppedImage(
     savedCrop,
@@ -172,16 +177,15 @@ export const ImagePreviewBlock = ({
         {renderPreviewContent}
 
         <Stack spacing={stackSpacing} sx={styles.rightBlock}>
-          <Stack spacing={typographySpacing}>
-            <Typography
-              variant="body1"
-              sx={{
-                ...styles.fileNameText,
-                ...styles.trimmedTypography
-              }}
-            >
-              Назва файлу {finalFileName}
-            </Typography>
+          <Stack spacing={typographySpacing} sx={{ minWidth: 0 }}>
+            <Box sx={{ display: 'flex', gap: '4px', minWidth: 0 }}>
+              <Typography variant="body1" sx={{ ...styles.fileNameText, flexShrink: 0 }}>
+                Назва файлу
+              </Typography>
+              <Typography variant="body1" sx={styles.fileNameText}>
+                {displayedFileName}
+              </Typography>
+            </Box>
 
             {dimensions ? (
               <Typography variant="body2" color="text.secondary" sx={styles.imageSizeText}>
@@ -214,6 +218,7 @@ export const ImagePreviewBlock = ({
               size="small"
               onClick={openEditCrop}
               style={styles.editButton}
+              disabled={disabled}
             >
               Редагувати
             </Button>
@@ -225,6 +230,7 @@ export const ImagePreviewBlock = ({
               size="small"
               onClick={openChangeImage}
               sx={styles.changeButton}
+              disabled={disabled}
             >
               Змінити зображення
             </Button>

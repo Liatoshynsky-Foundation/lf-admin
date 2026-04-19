@@ -7,17 +7,24 @@ import Button from '../design-system/button/Button';
 import styles from './ContentCard.styles';
 import ContentCardBadge from './ContentCardBadge';
 import { getStatus } from '~/lib/utils/getStatus';
-import type { ImageBlock, LocalizedString } from '~/types/common';
+import type { LocalizedString } from '~/types/common';
 
 export type ContentType = 'news' | 'event' | 'media';
 
 const FALLBACK_IMAGE_SRC = '/images/image.png';
 
-type ContentCardImage = Pick<ImageBlock, 'src' | 'alt'>;
-
 interface ContentCardProps {
   type: ContentType;
-  coverImage: ContentCardImage;
+  coverImage: {
+    src: {
+      uk: string;
+      en: string;
+    };
+    alt: {
+      uk: string;
+      en: string;
+    };
+  };
   title: Partial<LocalizedString>;
   status: string;
   updatedAt?: string;
@@ -40,7 +47,7 @@ const ContentCard = ({
   onClick,
   onClickMenu
 }: ContentCardProps) => {
-  const [imageSrc, setImageSrc] = useState(coverImage.src || FALLBACK_IMAGE_SRC);
+  const [imageSrc, setImageSrc] = useState(coverImage.src.uk || coverImage.src.en || FALLBACK_IMAGE_SRC);
   const localizedKeys = Object.entries(title)
     .filter(([, value]) => Boolean(value?.trim()))
     .map(([key]) => key);
@@ -48,8 +55,8 @@ const ContentCard = ({
   const altText = coverImage.alt.uk || coverImage.alt.en || titleText;
 
   useEffect(() => {
-    setImageSrc(coverImage.src || FALLBACK_IMAGE_SRC);
-  }, [coverImage.src]);
+    setImageSrc(coverImage.src.uk || coverImage.src.en || FALLBACK_IMAGE_SRC);
+  }, [coverImage.src.uk, coverImage.src.en]);
 
   const handleImageError = () => {
     if (imageSrc !== FALLBACK_IMAGE_SRC) {

@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import SeoMetadataBlock, { SeoBlockValue } from './SeoMetadataBlock';
@@ -18,12 +19,12 @@ jest.mock('../SeoMetadataForm', () => ({
   }: {
     locale: string;
     value: { title: string; description: string; keywords: string };
-    ogImage: File | string | null;
+    ogImage: string | null;
     allowIndexing: boolean;
     onChange: (meta: object) => void;
-    onImageChange: (file: File) => void;
+    onImageChange: (url: string) => void;
     onIndexingChange: (val: boolean) => void;
-    extraFields?: React.ReactNode;
+    extraFields?: (value: object, onChange: (val: object) => void) => React.ReactNode;
   }) => (
     <div>
       <span data-testid={`locale-${locale}`}>{locale}</span>
@@ -31,9 +32,9 @@ jest.mock('../SeoMetadataForm', () => ({
       <span data-testid={`og-image-${locale}`}>{ogImage ? 'has-image' : 'no-image'}</span>
       <span data-testid={`indexing-${locale}`}>{String(allowIndexing)}</span>
       <button onClick={() => onChange({ title: 'test', description: 'desc', keywords: 'kw' })}>change-{locale}</button>
-      <button onClick={() => onImageChange(new File(['img'], 'test.png'))}>image-{locale}</button>
+      <button onClick={() => onImageChange('https://example.com/test.png')}>image-{locale}</button>
       <button onClick={() => onIndexingChange(false)}>indexing-{locale}</button>
-      {extraFields && <div data-testid={`extra-${locale}`}>{extraFields}</div>}
+      {extraFields && <div data-testid={`extra-${locale}`}>{extraFields(value, onChange)}</div>}
     </div>
   )
 }));
@@ -49,7 +50,7 @@ describe('SeoMetadataBlock', () => {
       uk: { title: '', description: '', keywords: '' },
       en: { title: '', description: '', keywords: '' }
     },
-    ogImage: null,
+    ogImage: { uk: null, en: null },
     allowIndexing: { uk: true, en: true }
   };
 
@@ -97,7 +98,7 @@ describe('SeoMetadataBlock', () => {
     clickButton('image-en');
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
-        ogImage: expect.any(File)
+        ogImage: expect.objectContaining({ en: 'https://example.com/test.png' })
       })
     );
   });
@@ -125,5 +126,33 @@ describe('SeoMetadataBlock', () => {
     locales.forEach((locale) => {
       expect(screen.queryByTestId(`extra-${locale}`)).not.toBeInTheDocument();
     });
+  });
+
+  it('shows required error for empty ticket url on blur', async () => {
+    const user = userEvent.setup();
+    renderBlock({ showTicketUrl: true });
+    const inputs = screen.getAllByLabelText(/ticket url/i);
+    await user.click(inputs[0]);
+    await user.tab();
+    expect(await screen.findByText(/обовʼязкове поле/i)).toBeInTheDocument();
+  });
+
+  it('shows url format error for invalid ticket url', async () => {
+    const user = userEvent.setup();
+    renderBlock({ showTicketUrl: true });
+    const inputs = screen.getAllByLabelText(/ticket url/i);
+    await user.type(inputs[0], 'bad-url');
+    await user.tab();
+    expect(await screen.findByText(/некоректний url/i)).toBeInTheDocument();
+  });
+
+  it('shows no error for valid ticket url', async () => {
+    const user = userEvent.setup();
+    renderBlock({ showTicketUrl: true });
+    const inputs = screen.getAllByLabelText(/ticket url/i);
+    await user.type(inputs[0], 'https://tickets.example.com');
+    await user.tab();
+    expect(screen.queryByText(/некоректний url/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/обовʼязкове поле/i)).not.toBeInTheDocument();
   });
 });
