@@ -17,6 +17,12 @@ export type PublicationsStatusValue = (typeof PUBLICATIONS_STATUSES)[number];
 export type PublicationsLanguageValue = 'uk' | 'en' | 'bilingual';
 export type PublicationsFilterId = 'status' | 'language';
 
+export type PublicationLanguageOption = Readonly<{
+  locale: EditorLanguage;
+  key: 'uk' | 'en';
+  label: 'Українська' | 'Англійська';
+}>;
+
 export type PublicationsTabConfig = Readonly<{
   value: PublicationsTabValue;
   label: string;
@@ -49,9 +55,11 @@ type PublicationsCategoryConfig = Readonly<{
 export const PUBLICATIONS_PAGE_TITLE = 'Новини та події';
 export const PUBLICATIONS_EMPTY_STATE_TITLE = 'Матеріали відсутні';
 export const PUBLICATIONS_EMPTY_STATE_DESCRIPTION = 'Матеріали для цієї вкладки поки відсутні.';
-export const PUBLICATIONS_EVENTS_EMPTY_STATE_DESCRIPTION = 'Матеріали для вкладки "Події" з’являться після підключення джерела даних.';
+export const PUBLICATIONS_EVENTS_EMPTY_STATE_DESCRIPTION =
+  'Матеріали для вкладки "Події" з’являться після підключення джерела даних.';
 export const PUBLICATIONS_EMPTY_STATE_NO_RESULTS_TITLE = 'Результатів немає';
-export const PUBLICATIONS_EMPTY_STATE_NO_RESULTS_DESCRIPTION = 'За цими критеріями нічого не знайдено.\nСпробуйте змінити параметри фільтрів або пошуку.';
+export const PUBLICATIONS_EMPTY_STATE_NO_RESULTS_DESCRIPTION =
+  'За цими критеріями нічого не знайдено.\nСпробуйте змінити параметри фільтрів або пошуку.';
 export const PUBLICATIONS_LOADING_STATE_TITLE = 'Завантаження матеріалів';
 export const PUBLICATIONS_LOADING_STATE_DESCRIPTION = 'Зачекайте, поки завершиться запит.';
 export const PUBLICATIONS_ERROR_STATE_TITLE = 'Не вдалося завантажити матеріали';
@@ -129,7 +137,10 @@ export const PUBLICATIONS_FILTERS: ReadonlyArray<PublicationsFilterConfig> = [
   }
 ];
 
-export const PublicationsEditorPlaceholder = 'H';
+export const LANGUAGE_OPTIONS: ReadonlyArray<PublicationLanguageOption> = [
+  { locale: 'UA', key: 'uk', label: 'Українська' },
+  { locale: 'EN', key: 'en', label: 'Англійська' }
+] as const;
 
 export const PublicationsChipLabels: Record<PublicationsItemType, string> = {
   news: 'Новина',
@@ -175,8 +186,12 @@ export const DEFAULT_EMPTY_DOCUMENT: SerializedContent = {
 };
 
 export type LocalizedEditorState = {
-  en?: SerializedContent;
-  uk?: SerializedContent;
+  en?: {
+    content: SerializedContent;
+  };
+  uk?: {
+    content: SerializedContent;
+  };
   __typename?: string;
 };
 
@@ -188,5 +203,4 @@ export type MutationResponse<TData = unknown> = {
 
 export type PublicationResource = {
   update: (status: BaseContentStatuses, extra?: Record<string, unknown>) => Promise<MutationResponse>;
-  remove: () => Promise<MutationResponse>;
 };

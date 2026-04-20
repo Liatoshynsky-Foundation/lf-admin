@@ -13,6 +13,7 @@ import {
   DEFAULT_EMPTY_DOCUMENT,
   EditorLanguage,
   HEADER_MENU_OPTIONS,
+  LANGUAGE_OPTIONS,
   LocalizedEditorState,
   MenuActionId,
   PUBLICATION_EDIT_ERROR_STATE,
@@ -21,20 +22,15 @@ import {
   PublicationsChipLabels,
   PublicationsItemType
 } from '~/constants/publications';
-import { ContentEditor, SerializedContent } from '~/shared/components/content-editor';
+import { ContentEditor, isContentEmpty, SerializedContent } from '~/shared/components/content-editor';
 import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
-import ProgressStatus from '~/shared/components/divided-header/progress-status/ProgressStatus';
 import { TitleDropdown } from '~/shared/components/divided-header/title-dropdown/TitleDropdown';
-import { useDeleteEvent, useEventById, useUpdateEvent } from '~/shared/hooks/use-events/useEvents';
-import {
-  useDeleteMediaMention,
-  useMediaMentionById,
-  useUpdateMediaMention
-} from '~/shared/hooks/use-media-mentions/useMediaMentions';
-import { useDeleteNews, useNewsById, useUpdateNews } from '~/shared/hooks/use-news/useNews';
+import { useEventById, useUpdateEvent } from '~/shared/hooks/use-events/useEvents';
+import { useMediaMentionById, useUpdateMediaMention } from '~/shared/hooks/use-media-mentions/useMediaMentions';
+import { useNewsById, useUpdateNews } from '~/shared/hooks/use-news/useNews';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
-import { EventStatus, MediaStatus, NewsStatus } from '~/types/graphql/generated/graphql';
+import { type EventStatus, type MediaStatus, type NewsStatus } from '~/types/graphql/generated/graphql';
 
 type Params = {
   type: PublicationsItemType;
@@ -52,26 +48,15 @@ export default function EditPublicationsPage() {
   const event = useEventById(id, { skip: type !== 'events' });
   const media = useMediaMentionById(id, { skip: type !== 'media' });
 
-  const activeQuery = type === 'news' ? news : type === 'events' ? event : media;
+  const queryMap = {
+    news,
+    events: event,
+    media
+  };
+
+  const activeQuery = queryMap[type];
   const isLoading = activeQuery.loading;
   const hasError = activeQuery.error;
-
-  const [updateNews] = useUpdateNews();
-  const [updateEvent] = useUpdateEvent();
-  const [updateMedia] = useUpdateMediaMention();
-
-  const [deleteNews] = useDeleteNews();
-  const [deleteEvent] = useDeleteEvent();
-  const [deleteMedia] = useDeleteMediaMention();
-
-  const [anchors, setAnchors] = useState<MenuAnchor>({});
-  const [currentLanguage, setCurrentLanguage] = useState<EditorLanguage>('UA');
-  const [editedContent, setEditedContent] = useState<LocalizedEditorState | null>(null);
-
-  const latestBlocksRef = useRef<SerializedContent>(null);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const localeKey = currentLanguage === 'UA' ? 'uk' : 'en';
 
   const currentData = useMemo(() => {
     switch (type) {
@@ -84,32 +69,43 @@ export default function EditPublicationsPage() {
     }
   }, [news.data, event.data, media.data]);
 
-  useEffect(() => {
-    const currentResourceData =
-      type === 'news' ? news.data?.newsById : type === 'events' ? event.data?.eventById : null;
+  const [updateNews] = useUpdateNews();
+  const [updateEvent] = useUpdateEvent();
+  const [updateMedia] = useUpdateMediaMention();
 
-    if (isLoading || activeQuery.data === undefined) return;
+  const [anchors, setAnchors] = useState<MenuAnchor>({});
+  const [currentLanguage, setCurrentLanguage] = useState<EditorLanguage>('UA');
+  const [editedContent, setEditedContent] = useState<LocalizedEditorState | null>(null);
+
+  const latestBlocksRef = useRef<SerializedContent>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const localeKey = currentLanguage === 'UA' ? 'uk' : 'en';
+
+  useEffect(() => {
+    if (type === 'media' || isLoading || activeQuery.data === undefined) return;
 
     if (editedContent === null) {
-      const getSafeBlocks = (langData: Record<'blocks', Block[] | undefined>): Block[] => {
-        const arr = langData?.blocks;
-        return Array.isArray(arr) && arr.length > 0 ? arr : DEFAULT_EMPTY_DOCUMENT.blocks;
-      };
+      const resourceData = type === 'news' ? news.data?.newsById?.content : event.data?.eventById?.content;
 
-      setEditedContent({
-        uk: {
-          blocks: getSafeBlocks(currentResourceData?.content?.uk),
-          version: DEFAULT_EMPTY_DOCUMENT.version,
-          lastModified: new Date().toISOString()
-        },
-        en: {
-          blocks: getSafeBlocks(currentResourceData?.content?.en),
-          version: DEFAULT_EMPTY_DOCUMENT.version,
-          lastModified: new Date().toISOString()
+      const hasUk = !isContentEmpty(resourceData?.uk?.content?.blocks);
+      const hasEn = !isContentEmpty(resourceData?.en?.content?.blocks);
+
+      setCurrentLanguage(!hasUk && hasEn ? 'EN' : 'UA');
+
+      const createSafeLangObj = (blocks: Block[] | undefined) => ({
+        content: {
+          ...DEFAULT_EMPTY_DOCUMENT,
+          blocks: !isContentEmpty(blocks) && blocks ? blocks : DEFAULT_EMPTY_DOCUMENT.blocks
         }
       });
+
+      setEditedContent({
+        uk: createSafeLangObj(resourceData?.uk?.content?.blocks),
+        en: createSafeLangObj(resourceData?.en?.content?.blocks)
+      });
     }
-  }, [isLoading, editedContent]);
+  }, [isLoading, editedContent, type, activeQuery.data, news.data, event.data]);
 
   useEffect(() => {
     return () => {
@@ -121,30 +117,16 @@ export default function EditPublicationsPage() {
 
   if (isNotFound) notFound();
 
-  const status = {
-    isReady: !hasError && !isLoading,
-    errorMessage: hasError ? PUBLICATION_EDIT_ERROR_STATE : null
-  };
-
   useEffect(() => {
-    if (status.errorMessage) toast.error(status.errorMessage);
-  }, [status.errorMessage]);
+    if (hasError && !isLoading) toast.error(PUBLICATION_EDIT_ERROR_STATE);
+  }, [hasError, isLoading]);
 
   const handleEditorChange = (content: SerializedContent) => {
     latestBlocksRef.current = content;
-
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
 
     debounceTimerRef.current = setTimeout(() => {
-      if (latestBlocksRef.current?.blocks) {
-        setEditedContent((prev) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            [localeKey]: latestBlocksRef.current
-          };
-        });
-      }
+      setEditedContent((prev) => (prev ? { ...prev, [localeKey]: { content: latestBlocksRef.current } } : prev));
     }, 500);
   };
 
@@ -153,18 +135,14 @@ export default function EditPublicationsPage() {
 
     const resourceMap: Record<string, PublicationResource> = {
       news: {
-        update: (status, extra = {}) =>
-          updateNews({ id, input: { ...extra, status: status as unknown as NewsStatus } }),
-        remove: () => deleteNews({ id })
+        update: (status, extra = {}) => updateNews({ id, input: { ...extra, status: status as unknown as NewsStatus } })
       },
       events: {
         update: (status, extra = {}) =>
-          updateEvent({ id, input: { ...extra, status: status as unknown as EventStatus } }),
-        remove: () => deleteEvent({ id })
+          updateEvent({ id, input: { ...extra, status: status as unknown as EventStatus } })
       },
       media: {
-        update: (status, extra = {}) => updateMedia(id, { ...extra, status: status as unknown as MediaStatus }),
-        remove: () => deleteMedia(id)
+        update: (status, extra = {}) => updateMedia(id, { ...extra, status: status as unknown as MediaStatus })
       }
     };
 
@@ -187,11 +165,19 @@ export default function EditPublicationsPage() {
         }
       },
       [MenuActionId.DELETE_DRAFT]: async () => {
-        const { data } = await currentResource.remove();
-        if (data) {
-          toast.success(CONTENT_MUTATION_RESULTS.draftDeleted);
-          router.push(PUBLICATIONS_BASE_PATH);
-        }
+        const emptyContent = {
+          content: {
+            ...editedContent,
+            [localeKey]: {
+              content: { ...DEFAULT_EMPTY_DOCUMENT }
+            }
+          }
+        };
+        const { data } = await currentResource.update(
+          (currentData?.status as unknown as BaseContentStatuses) ?? BaseContentStatuses.Draft,
+          emptyContent
+        );
+        if (data) toast.success(CONTENT_MUTATION_RESULTS.draftDeleted);
       }
     };
 
@@ -209,10 +195,13 @@ export default function EditPublicationsPage() {
     setAnchors((prev) => ({ ...prev, [id]: event.currentTarget as HTMLButtonElement }));
   const handleClose = (id: AnchorId) => setAnchors((prev) => ({ ...prev, [id]: undefined }));
 
-  const baseActions = HEADER_MENU_OPTIONS.baseActions as ACTIONS_TYPE[];
-  const publishActions = [...baseActions].filter((action) => action.id !== MenuActionId.PUBLISH);
-
   if (isLoading || editedContent === null) return <Box sx={{ p: 4 }}>Завантаження...</Box>;
+
+  const initialBlocks = editedContent[localeKey]?.content?.blocks;
+  const isContentValid = Array.isArray(initialBlocks) && initialBlocks.length;
+  const publishActions = (HEADER_MENU_OPTIONS.baseActions as ACTIONS_TYPE[]).filter(
+    (a) => a.id !== MenuActionId.PUBLISH
+  );
 
   return (
     <Box sx={styles.container}>
@@ -239,13 +228,12 @@ export default function EditPublicationsPage() {
         )}
         <Chip sx={styles.chip(type)} label={PublicationsChipLabels[type]} />
         <Chip sx={styles.chip('draft')} label="Чернетка" />
-        {type !== 'media' && <ProgressStatus isSaved={false} />}
       </DividedHeader>
 
       <Box sx={styles.mainContent}>
         {type !== 'media' && (
           <ContentEditor
-            initialContent={editedContent[localeKey]?.blocks?.length ? editedContent[localeKey].blocks : undefined}
+            initialContent={isContentValid ? initialBlocks : undefined}
             key={currentLanguage}
             persistence={{
               onChange: handleEditorChange
@@ -270,35 +258,28 @@ export default function EditPublicationsPage() {
           <Typography variant="customMedium14Tight">Мовні версії</Typography>
         </ListSubheader>
 
-        <MenuItem
-          onClick={() => {
-            setCurrentLanguage('UA');
-            handleClose('navigation');
-          }}
-          sx={styles.menuItem}
-        >
-          <Typography variant="customMedium16">Українська</Typography>
-          {Array.isArray(editedContent?.uk?.blocks) && editedContent.uk.blocks.length > 1 && (
-            <Typography variant="customItalic14" sx={styles.draftCaption}>
-              (чернетка)
-            </Typography>
-          )}
-        </MenuItem>
+        {LANGUAGE_OPTIONS.map(({ locale, key, label }) => {
+          const blocks = editedContent?.[key]?.content?.blocks;
+          const isDraft = !isContentEmpty(blocks);
 
-        <MenuItem
-          onClick={() => {
-            setCurrentLanguage('EN');
-            handleClose('navigation');
-          }}
-          sx={styles.menuItem}
-        >
-          <Typography variant="customMedium16">Англійська</Typography>
-          {Array.isArray(editedContent?.en?.blocks) && editedContent.en.blocks.length > 1 && (
-            <Typography variant="customItalic14" sx={styles.draftCaption}>
-              (чернетка)
-            </Typography>
-          )}
-        </MenuItem>
+          return (
+            <MenuItem
+              key={key}
+              onClick={() => {
+                setCurrentLanguage(locale);
+                handleClose('navigation');
+              }}
+              sx={styles.menuItem}
+            >
+              <Typography variant="customMedium16">{label}</Typography>
+              {isDraft && (
+                <Typography variant="customItalic14" sx={styles.draftCaption}>
+                  (чернетка)
+                </Typography>
+              )}
+            </MenuItem>
+          );
+        })}
 
         <Divider sx={{ my: '7px' }} />
         <MenuItem onClick={() => handleClose('navigation')} sx={styles.menuItem}>
@@ -317,7 +298,7 @@ export default function EditPublicationsPage() {
         sx={styles.menu}
       >
         {publishActions.map((action) => (
-          <MenuItem sx={styles.menuItem} key={action.id} onClick={() => handleMenuAction(action.id as MenuActionId)}>
+          <MenuItem sx={styles.menuItem} key={action.id} onClick={() => handleMenuAction(action.id)}>
             <Typography variant="customMedium16">{action.label}</Typography>
           </MenuItem>
         ))}
