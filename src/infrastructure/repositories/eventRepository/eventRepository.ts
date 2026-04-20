@@ -4,29 +4,29 @@ import { createBaseRepository } from '../baseRepository/baseRepository';
 import { EventsEntity } from '~/domain/entities/Events';
 import { CreateEventInput, EventFilters, IEventsRepository } from '~/domain/repositories/eventsRepository';
 import dbConnect from '~/infrastructure/db/connect';
-import {buildBaseQuery, createToEntity, getBaseSort} from '~/infrastructure/repositories/helpers';
+import { buildBaseQuery, createToEntity, getBaseSort } from '~/infrastructure/repositories/helpers';
 import { EventStatus } from '~/types/enums/common.enums';
 
 export type DbEvent = {
-    _id: { toString(): string };
-    eventLink: string;
-    publishedAt: string | null;
-    title: EventsEntity['title'];
-    adminTitle: EventsEntity['adminTitle'];
-    description: EventsEntity['description'];
-    keywords: EventsEntity['keywords'];
-    allowIndexation: EventsEntity['allowIndexation'];
-    content: EventsEntity['content'];
-    slug: string;
-    coverImage: EventsEntity['coverImage'];
-    status: EventStatus;
-    meta: EventsEntity['meta'];
-    createdAt: string;
-    updatedAt: string;
+  _id: { toString(): string };
+  eventLink: string;
+  publishedAt: string | null;
+  title: EventsEntity['title'];
+  adminTitle: EventsEntity['adminTitle'];
+  description: EventsEntity['description'];
+  keywords: EventsEntity['keywords'];
+  allowIndexation: EventsEntity['allowIndexation'];
+  content: EventsEntity['content'];
+  slug: string;
+  coverImage: EventsEntity['coverImage'];
+  status: EventStatus;
+  meta: EventsEntity['meta'];
+  createdAt: string;
+  updatedAt: string;
 };
 
 type EventRepoDeps = Readonly<{
-    EventModel: Model<DbEvent>;
+  EventModel: Model<DbEvent>;
 }>;
 
 const toEntity = (doc: DbEvent): EventsEntity =>
@@ -38,11 +38,11 @@ const toEntity = (doc: DbEvent): EventsEntity =>
     keywords: doc.keywords,
     allowIndexation: doc.allowIndexation,
     slug: doc.slug,
-    content: doc.content,
+    content: doc.content ?? { uk: {}, en: {} },
     coverImage: doc.coverImage,
     status: doc.status,
     meta: doc.meta,
-    publishedAt: doc.publishedAt ?? undefined,
+    publishedAt: doc.publishedAt ?? undefined
   });
 
 export const EventsRepository = ({ EventModel }: EventRepoDeps): IEventsRepository => {

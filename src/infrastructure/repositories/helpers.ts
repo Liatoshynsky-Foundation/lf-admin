@@ -38,8 +38,8 @@ export const createToEntity = <
   ): TEntity =>
   ({
     id: doc._id.toString(),
-    createdAt: doc.createdAt,
-    updatedAt: doc.updatedAt,
+    createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : doc.createdAt,
+    updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : doc.updatedAt,
     ...extraFields
   }) as TEntity;
 

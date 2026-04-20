@@ -1,15 +1,10 @@
 import { GraphQLError } from 'graphql';
 
-import {
-  endpointRepositoryHandler,
-  extractTitleForSlug,
-  processSlugUpdate,
-  syncImagesCrops
-} from '../helpers';
+import { endpointRepositoryHandler, extractTitleForSlug, processSlugUpdate, syncImagesCrops } from '../helpers';
 import { processNewsContent } from './processNewsContent/processNewsContent';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
-import {LocalizedBoolean, LocalizedContent, LocalizedImage, LocalizedString} from '~/domain/entities/BaseContent';
+import { LocalizedBoolean, LocalizedContent, LocalizedImage, LocalizedString } from '~/domain/entities/BaseContent';
 import type { News } from '~/domain/entities/News';
 import { newsServiceErrors } from '~/src/constants/errors';
 import { CreateNewsInput, UpdateNewsInput } from '~/src/domain/repositories/newsRepository';
@@ -33,7 +28,9 @@ export type UpdateNewsGQLInput = Partial<CreateNewsGQLInput>;
 
 type CreateNewsArgs = { input: CreateNewsGQLInput };
 type UpdateNewsArgs = { id: string; input: UpdateNewsGQLInput };
-interface IdArgs { id: string }
+interface IdArgs {
+  id: string;
+}
 
 const processContentFields = async (input: UpdateNewsGQLInput, updateData: UpdateNewsInput): Promise<void> => {
   const contentToProcess = {
