@@ -94,7 +94,7 @@ export const BlockNoteEditor = ({
       uploadFile: handleFileUpload,
       initialContent: initialContent || undefined,
       dropCursor: multiColumnDropCursor,
-      placeholderText: placeholder
+      placeholders: { default: placeholder, }
     },
     [isMounted]
   );
@@ -212,11 +212,7 @@ export const BlockNoteEditor = ({
   }
 
   return (
-    <Box sx={[
-      styles.container,
-      ...sxToArray(sx),
-      {minHeight},
-    ]}>
+    <Box sx={[styles.container, ...sxToArray(sx), { minHeight }]}>
       <BlockNoteView
         editor={editor}
         editable={editable}
