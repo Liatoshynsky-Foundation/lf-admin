@@ -2,6 +2,11 @@ import { fireEvent, render, screen } from '@testing-library/react';
 
 import { FilesCardsLayout, type FilesCardsLayoutItem } from './FilesCardsLayout';
 
+jest.mock('~/types/graphql/generated/graphql', () => ({
+  ...jest.requireActual('~/types/graphql/generated/graphql'),
+  useUpdateAssetMutation: () => [jest.fn(), { loading: false }]
+}));
+
 jest.mock('~/shared/components/file-card', () => ({
   __esModule: true,
   default: ({ onClick }: { onClick?: () => void }) => (
