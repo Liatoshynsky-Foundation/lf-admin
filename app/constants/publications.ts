@@ -17,7 +17,6 @@ export type PublicationsStatusValue = (typeof PUBLICATIONS_STATUSES)[number];
 export type PublicationsLanguageValue = 'uk' | 'en' | 'bilingual';
 export type PublicationsFilterId = 'status' | 'language';
 
-
 export type PublicationsTabConfig = Readonly<{
   value: PublicationsTabValue;
   label: string;
@@ -202,8 +201,7 @@ export type MutationResponse<TData = unknown> = {
   data?: TData | null;
 };
 
-export type PublicationResource = {
-  update: (status: BaseContentStatuses, extra?: Record<string, unknown>) => Promise<MutationResponse>;
-};
-
-
+export type PublicationResource = (
+  status: BaseContentStatuses,
+  extra?: Record<string, unknown>
+) => Promise<MutationResponse>;

@@ -49,15 +49,6 @@ export const styles = {
     bgcolr: 'adminBlue.50',
     p: '16px 32px'
   },
-  // collapse: {
-  //   bgcolor: 'white',
-  //   border: '1px solid',
-  //   borderColor: 'blue.200',
-  //   px: '24px',
-  //   '& .MuiAccordionSummary-root, & .MuiAccordionDetails-root': {
-  //     p: '4px 0'
-  //   },
-  // },
   contentEditor: {
     p: '24px',
     bgcolor: 'white',
