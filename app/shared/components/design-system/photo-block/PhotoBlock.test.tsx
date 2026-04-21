@@ -132,7 +132,8 @@ describe('ImagePreviewBlock', () => {
 
     expect(screen.getByText(/Основне зображення/)).toBeInTheDocument();
     expect(screen.getByAltText('Основне зображення')).toHaveAttribute('src', 'https://example.com/test.jpg');
-    expect(screen.getByText(/Назва файлу test\.jpg/)).toBeInTheDocument();
+    expect(screen.getByText(/Назва файлу/)).toBeInTheDocument();
+    expect(screen.getByText(/test\.jpg/)).toBeInTheDocument();
   });
 
   it('should open MediaModal on "Редагувати" click', async () => {

@@ -18,7 +18,7 @@ mutation UpdateEvent($id: ID!, $input: UpdateEventInput!) {
         description { uk en }
         content { uk en }
         coverImage {
-            src
+            src { uk en }
             alt { uk en }
             crop { x y width height }
         }

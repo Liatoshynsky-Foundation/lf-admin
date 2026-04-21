@@ -67,12 +67,16 @@ describe('SeoCanonicalUrlField', () => {
   });
 
   test.each([
-    ['error set, touched — shows error', 'Invalid URL', true, true, 'Invalid URL'],
-    ['error set, not touched — hides error', 'Invalid URL', false, false, null],
-    ['no error, touched — hides error', undefined, true, false, null],
-    ['no error, not touched — hides error', undefined, false, false, null]
-  ] as const)('%s', (_desc, error, touched, expectedInvalid, expectedHelperText) => {
-    render(<SeoCanonicalUrlField {...baseProps} error={error} touched={touched} />);
+    ['порожнє значення після blur — показує помилку обовʼязкового поля', '', true, false, 'Обовʼязкове поле'],
+    ['некоректний URL після blur — показує помилку формату', 'not-a-url', true, false, 'Некоректний URL'],
+    ['валідний URL після blur — помилки немає', 'https://example.com', true, false, null],
+    ['порожнє значення без blur — помилки немає', '', false, false, null]
+  ] as const)('%s', (_desc, value, doBlur, _unused, expectedHelperText) => {
+    render(<SeoCanonicalUrlField {...baseProps} value={value} />);
+    if (doBlur) {
+      fireEvent.blur(screen.getByRole('textbox'));
+    }
+    const expectedInvalid = Boolean(expectedHelperText);
     expect(screen.getByRole('textbox')).toHaveAttribute('aria-invalid', String(expectedInvalid));
     if (expectedHelperText) {
       expect(screen.getByTestId('helper-text')).toHaveTextContent(expectedHelperText);
