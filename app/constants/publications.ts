@@ -17,11 +17,6 @@ export type PublicationsStatusValue = (typeof PUBLICATIONS_STATUSES)[number];
 export type PublicationsLanguageValue = 'uk' | 'en' | 'bilingual';
 export type PublicationsFilterId = 'status' | 'language';
 
-export type PublicationLanguageOption = Readonly<{
-  locale: EditorLanguage;
-  key: 'uk' | 'en';
-  label: 'Українська' | 'Англійська';
-}>;
 
 export type PublicationsTabConfig = Readonly<{
   value: PublicationsTabValue;
@@ -137,6 +132,12 @@ export const PUBLICATIONS_FILTERS: ReadonlyArray<PublicationsFilterConfig> = [
   }
 ];
 
+export type PublicationLanguageOption = Readonly<{
+  locale: EditorLanguage;
+  key: 'uk' | 'en';
+  label: 'Українська' | 'Англійська';
+}>;
+
 export const LANGUAGE_OPTIONS: ReadonlyArray<PublicationLanguageOption> = [
   { locale: 'UA', key: 'uk', label: 'Українська' },
   { locale: 'EN', key: 'en', label: 'Англійська' }
@@ -204,3 +205,5 @@ export type MutationResponse<TData = unknown> = {
 export type PublicationResource = {
   update: (status: BaseContentStatuses, extra?: Record<string, unknown>) => Promise<MutationResponse>;
 };
+
+

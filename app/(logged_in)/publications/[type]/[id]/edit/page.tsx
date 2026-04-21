@@ -76,6 +76,7 @@ export default function EditPublicationsPage() {
   const [anchors, setAnchors] = useState<MenuAnchor>({});
   const [currentLanguage, setCurrentLanguage] = useState<EditorLanguage>('UA');
   const [editedContent, setEditedContent] = useState<LocalizedEditorState | null>(null);
+  const [editorResetKey, setEditorResetKey] = useState<number>(0);
 
   const latestBlocksRef = useRef<SerializedContent>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -177,7 +178,12 @@ export default function EditPublicationsPage() {
           (currentData?.status as unknown as BaseContentStatuses) ?? BaseContentStatuses.Draft,
           emptyContent
         );
-        if (data) toast.success(CONTENT_MUTATION_RESULTS.draftDeleted);
+        if (data) {
+          toast.success(CONTENT_MUTATION_RESULTS.draftDeleted);
+          latestBlocksRef.current = null;
+          setEditedContent(emptyContent.content);
+          setEditorResetKey((prev) => prev + 1);
+        }
       }
     };
 
@@ -195,7 +201,7 @@ export default function EditPublicationsPage() {
     setAnchors((prev) => ({ ...prev, [id]: event.currentTarget as HTMLButtonElement }));
   const handleClose = (id: AnchorId) => setAnchors((prev) => ({ ...prev, [id]: undefined }));
 
-  if (isLoading || editedContent === null) return <Box sx={{ p: 4 }}>Завантаження...</Box>;
+  if (isLoading || editedContent === null) return <Box sx={{ p: 4 }}>{'Завантаження...'}</Box>;
 
   const initialBlocks = editedContent[localeKey]?.content?.blocks;
   const isContentValid = Array.isArray(initialBlocks) && initialBlocks.length;
@@ -210,14 +216,14 @@ export default function EditPublicationsPage() {
         originUrl={PUBLICATIONS_BASE_PATH}
         rightActionsComponent={
           <HeaderRightActions
-            mode={type === 'media' ? 'seo' : 'edit'}
+            mode={'edit'}
             onMenuOpen={(e) => handleOpen(e, 'publish')}
             onPublish={() => handleMenuAction(MenuActionId.PUBLISH)}
           />
         }
       >
         {type === 'media' ? (
-          <Typography variant="customBold20Tight">Редагування Ми у ЗМІ</Typography>
+          <Typography variant="customBold20Tight">{'Редагування Ми у ЗМІ'}</Typography>
         ) : (
           <TitleDropdown
             type="multilingual"
@@ -234,7 +240,7 @@ export default function EditPublicationsPage() {
         {type !== 'media' && (
           <ContentEditor
             initialContent={isContentValid ? initialBlocks : undefined}
-            key={currentLanguage}
+            key={`${currentLanguage}-${editorResetKey}`}
             persistence={{
               onChange: handleEditorChange
             }}
@@ -255,7 +261,7 @@ export default function EditPublicationsPage() {
         sx={styles.menu}
       >
         <ListSubheader sx={styles.menuSubheader}>
-          <Typography variant="customMedium14Tight">Мовні версії</Typography>
+          <Typography variant="customMedium14Tight">{'Мовні версії'}</Typography>
         </ListSubheader>
 
         {LANGUAGE_OPTIONS.map(({ locale, key, label }) => {
@@ -274,7 +280,7 @@ export default function EditPublicationsPage() {
               <Typography variant="customMedium16">{label}</Typography>
               {isDraft && (
                 <Typography variant="customItalic14" sx={styles.draftCaption}>
-                  (чернетка)
+                  {'(чернетка)'}
                 </Typography>
               )}
             </MenuItem>
@@ -282,8 +288,8 @@ export default function EditPublicationsPage() {
         })}
 
         <Divider sx={{ my: '7px' }} />
-        <MenuItem onClick={() => handleClose('navigation')} sx={styles.menuItem}>
-          <Typography variant="customMedium16">SEO налаштування</Typography>
+        <MenuItem onClick={() => router.push(`${PUBLICATIONS_BASE_PATH}/${type}/${id}/seo`)} sx={styles.menuItem}>
+          <Typography variant="customMedium16">{'SEO налаштування'}</Typography>
         </MenuItem>
       </Menu>
 
