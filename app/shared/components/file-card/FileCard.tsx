@@ -6,6 +6,7 @@ import { MouseEvent, useState } from 'react';
 import { styles } from './FileCard.styles';
 import TooltipCustom from '~/ds-components/tooltip/Tooltip';
 import { formatUsageCount } from '~/lib/utils/formatUsageCount';
+import { useUpdateAssetMutation } from '~/types/graphql/generated/graphql';
 
 const ICON_SIZE = 21;
 const ICON_SIZE_2 = 32;
@@ -23,6 +24,7 @@ const FILE_TYPES = {
 export type FileType = keyof typeof FILE_TYPES;
 
 export interface FileCardData {
+  id: string;
   name: string;
   dateAdded: string;
   isStarred?: boolean;
@@ -38,10 +40,24 @@ export interface FileCardProps {
 
 const FileCard = ({ fileType, fileData, onClick }: FileCardProps) => {
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
-  const { name, dateAdded, isStarred = false, usageLinks, imageSrc } = fileData;
+  const { id, name, dateAdded, isStarred = false, usageLinks, imageSrc } = fileData;
+
+  const [updateAsset, { loading: isUpdatingStar }] = useUpdateAssetMutation();
 
   const handleMenuClick = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
+  };
+
+  const handleStarClick = async (e: MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    try {
+      await updateAsset({
+        variables: {
+          id,
+          input: { isStarred: !isStarred }
+        }
+      });
+    } catch {}
   };
 
   const fileTypeIcon = FILE_TYPES[fileType] || FILE_TYPES.image;
@@ -84,7 +100,7 @@ const FileCard = ({ fileType, fileData, onClick }: FileCardProps) => {
 
         <Stack direction="row" gap="8px" alignItems="center">
           {isStarred && (
-            <Box sx={styles.iconWrapper}>
+            <Box sx={{ ...styles.iconWrapper, cursor: isUpdatingStar ? 'wait' : 'pointer' }} onClick={handleStarClick}>
               <Image src="/icons/star-1.svg" width={ICON_SIZE} height={ICON_SIZE} alt="Starred file" />
             </Box>
           )}
