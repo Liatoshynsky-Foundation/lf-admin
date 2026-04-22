@@ -7,7 +7,7 @@ fragment NewsFields on News {
   keywords { uk en }
   content { uk en }
   coverImage {
-    src
+    src { uk en }
     alt { uk en }
     caption { uk en }
     isTmp
@@ -46,7 +46,7 @@ query AllNews($filters: NewsFiltersInput) {
     newsDate
     publishedAt
     coverImage {
-      src
+      src { uk en }
       alt { uk en }
     }
     meta { views }
@@ -59,7 +59,7 @@ query PublishedNews($filters: NewsFiltersInput) {
     title { uk en }
     slug
     coverImage {
-      src
+      src { uk en }
       alt { uk en }
     }
     newsDate
@@ -87,7 +87,7 @@ query PaginatedNews($page: Int!, $limit: Int!, $filters: NewsFiltersInput) {
       newsDate
       publishedAt
       coverImage {
-        src
+        src { uk en }
       }
     }
     total

@@ -1,5 +1,6 @@
-import type { CropResult, MediaModalOpenState, SelectedMedia } from '../MediaModal.types';
+import type { MediaModalOpenState, SelectedMedia } from '../MediaModal.types';
 import { buildInitialState, reducer } from './MediaModalFlowState';
+import type { CropResult } from '~/types/common';
 
 const initialCrop: CropResult = { rect: { x: 0, y: 0, width: 200, height: 200 } };
 const resizedCrop: CropResult = { rect: { x: 10, y: 12, width: 180, height: 160 } };

@@ -10,7 +10,10 @@ mutation CreateNews($input: CreateNewsInput!) {
     status
     newsDate
     coverImage {
-      src
+      src {
+        uk
+        en
+      }
       alt {
         uk
         en
@@ -45,7 +48,10 @@ mutation UpdateNews($id: ID!, $input: UpdateNewsInput!) {
       en
     }
     coverImage {
-      src
+      src {
+        uk
+        en
+      }
       alt {
         uk
         en

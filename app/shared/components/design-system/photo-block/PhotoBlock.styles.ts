@@ -1,3 +1,6 @@
+export const PREVIEW_W = 196;
+export const PREVIEW_H = 120;
+
 export const styles = {
   container: {
     width: '100%',
@@ -19,8 +22,8 @@ export const styles = {
   },
 
   imagePreview: {
-    width: '196px',
-    height: '120px',
+    width: `${PREVIEW_W}px`,
+    height: `${PREVIEW_H}px`,
     objectFit: 'cover',
     flexShrink: 0,
     border: '1px solid #B2B3BE',

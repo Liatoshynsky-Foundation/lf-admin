@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 
 import type { GalleryFilters, UsedFilters } from './flow/MediaModalFlowState';
-import type { CropResult, GalleryMedia, SelectedMedia, UploadMedia, UsedMedia } from './MediaModal.types';
+import type { GalleryMedia, SelectedMedia, UploadMedia, UsedMedia } from './MediaModal.types';
+import type { CropResult } from '~/types/common';
 
 export type GalleryRendererProps = {
   selected: GalleryMedia | null;

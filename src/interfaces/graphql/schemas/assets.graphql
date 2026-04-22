@@ -49,3 +49,13 @@ input AssetsFiltersInput {
 extend type Query {
   allAssets(filters: AssetsFiltersInput): [Asset!]!
 }
+
+input UpdateAssetInput {
+  isStarred: Boolean
+  filename: String
+  description: String
+}
+
+extend type Mutation {
+  updateAsset(id: ID!, input: UpdateAssetInput!): Asset!
+}

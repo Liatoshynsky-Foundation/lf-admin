@@ -33,12 +33,21 @@ export default function DateTimePicker({ startDateTime, endDateTime, onChange, l
     [onChange, startDateTime]
   );
 
-  const renderPicker = (value?: string, label?: string, onChangeCb?: (val: dayjs.Dayjs | null) => void) => (
+  const endBeforeStart =
+    Boolean(startDateTime) && Boolean(endDateTime) && dayjs(endDateTime).isBefore(dayjs(startDateTime));
+
+  const renderPicker = (
+    value?: string,
+    label?: string,
+    onChangeCb?: (val: dayjs.Dayjs | null) => void,
+    extraProps?: object
+  ) => (
     <DesktopDateTimePicker
       label={label}
       value={value ? dayjs(value) : null}
       onChange={onChangeCb}
       ampm={false}
+      {...extraProps}
       sx={{
         '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
           borderColor: '#ADAEBA',
@@ -85,7 +94,7 @@ export default function DateTimePicker({ startDateTime, endDateTime, onChange, l
               color: '#190D03'
             },
             '& label': { sx: styles.datetimePickerLabel },
-            width: { sm: '200px', xl: '223px' },
+            width: { sm: '180px', xl: '223px' },
             '& .MuiPickersOutlinedInput-root.Mui-focused:not(.Mui-error) .MuiPickersOutlinedInput-notchedOutline': {
               borderColor: '#190D03',
               borderWidth: '1px'
@@ -100,10 +109,8 @@ export default function DateTimePicker({ startDateTime, endDateTime, onChange, l
   return (
     <Box sx={{ width: '100%' }}>
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="uk">
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Box sx={{ width: '45%' }}>
-            {renderPicker(startDateTime, labels.startDateTime || 'Початок події', handleStartChange)}
-          </Box>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+          <Box>{renderPicker(startDateTime, labels.startDateTime || 'Початок події', handleStartChange)}</Box>
           <Box
             sx={{
               textAlign: 'center',
@@ -115,8 +122,16 @@ export default function DateTimePicker({ startDateTime, endDateTime, onChange, l
           >
             —
           </Box>
-          <Box sx={{ width: '45%' }}>
-            {renderPicker(endDateTime, labels.endDateTime || 'Закінчення події', handleEndChange)}
+          <Box>
+            {renderPicker(endDateTime, labels.endDateTime || 'Закінчення події', handleEndChange, {
+              minDateTime: startDateTime ? dayjs(startDateTime) : undefined,
+              slotProps: {
+                textField: {
+                  error: endBeforeStart,
+                  helperText: endBeforeStart ? 'Дата кінця не може бути раніше дати початку' : undefined
+                }
+              }
+            })}
           </Box>
         </Box>
       </LocalizationProvider>

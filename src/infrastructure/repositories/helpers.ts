@@ -10,28 +10,19 @@ const escapeRegex = (value: string): string => value.replaceAll(/[.*+?^${}()|[\]
 const getLanguageCondition = <TDb>(language: string): FilterQuery<TDb> | null => {
   if (language === 'uk') {
     return {
-      $and: [
-        { 'title.uk': NON_EMPTY_STRING_QUERY },
-        { 'title.en': EMPTY_STRING_QUERY }
-      ]
+      $and: [{ 'title.uk': NON_EMPTY_STRING_QUERY }, { 'title.en': EMPTY_STRING_QUERY }]
     } as FilterQuery<TDb>;
   }
 
   if (language === 'en') {
     return {
-      $and: [
-        { 'title.en': NON_EMPTY_STRING_QUERY },
-        { 'title.uk': EMPTY_STRING_QUERY }
-      ]
+      $and: [{ 'title.en': NON_EMPTY_STRING_QUERY }, { 'title.uk': EMPTY_STRING_QUERY }]
     } as FilterQuery<TDb>;
   }
 
   if (language === 'bilingual') {
     return {
-      $and: [
-        { 'title.uk': NON_EMPTY_STRING_QUERY },
-        { 'title.en': NON_EMPTY_STRING_QUERY }
-      ]
+      $and: [{ 'title.uk': NON_EMPTY_STRING_QUERY }, { 'title.en': NON_EMPTY_STRING_QUERY }]
     } as FilterQuery<TDb>;
   }
 
@@ -39,21 +30,20 @@ const getLanguageCondition = <TDb>(language: string): FilterQuery<TDb> | null =>
 };
 
 export const createToEntity = <
-    TEntity extends BaseEntity,
-    TDb extends { _id: { toString(): string }; createdAt: string | Date; updatedAt: string | Date }
+  TEntity extends BaseEntity,
+  TDb extends { _id: { toString(): string }; createdAt: string | Date; updatedAt: string | Date }
 >(
     doc: TDb,
     extraFields: Omit<TEntity, keyof BaseEntity>
-  ): TEntity => ({
+  ): TEntity =>
+  ({
     id: doc._id.toString(),
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
     ...extraFields
-  } as TEntity);
+  }) as TEntity;
 
-export const buildBaseQuery = <TDb>(
-  filters?: FiltersInput & { statuses?: string[] }
-): FilterQuery<TDb> => {
+export const buildBaseQuery = <TDb>(filters?: FiltersInput & { statuses?: string[] }): FilterQuery<TDb> => {
   const conditions: FilterQuery<TDb>[] = [];
 
   if (filters?.statuses?.length) {
@@ -68,11 +58,7 @@ export const buildBaseQuery = <TDb>(
     const searchRegex = new RegExp(escapeRegex(filters.search.trim()), 'i');
 
     conditions.push({
-      $or: [
-        { adminTitle: searchRegex },
-        { 'title.uk': searchRegex },
-        { 'title.en': searchRegex }
-      ]
+      $or: [{ adminTitle: searchRegex }, { 'title.uk': searchRegex }, { 'title.en': searchRegex }]
     } as FilterQuery<TDb>);
   }
 
