@@ -1,4 +1,3 @@
- 
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import toast from 'react-hot-toast';
@@ -67,7 +66,13 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
                 fileName: 'new.png',
                 file: new File([''], 'new.png')
               },
-              uploadResult: { url: 'https://cdn.com/uploaded.png' },
+              uploadResult: {
+                url: 'https://cdn.com/uploaded.png',
+                filename: 'new.png',
+                originalName: 'new.png',
+                mimeType: 'image/png',
+                size: 1024
+              },
               crop: { rect: { x: 0, y: 0, width: 100, height: 100 } }
             })
           }

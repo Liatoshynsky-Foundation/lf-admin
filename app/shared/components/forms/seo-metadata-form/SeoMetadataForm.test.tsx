@@ -1,4 +1,4 @@
-import { fireEvent,render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -11,6 +11,11 @@ jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
     showAlternativeText,
     altText,
     onChangeAltText
+  }: {
+    onChangeImage: (url: string) => void;
+    showAlternativeText?: boolean;
+    altText?: string;
+    onChangeAltText?: (value: string) => void;
   }) => (
     <div>
       <button
@@ -114,7 +119,7 @@ describe('SeoMetadataForm', () => {
   it('validates canonicalUrl: empty, valid, invalid', async () => {
     const CanonicalWrapper = () => {
       const [value, setValue] = React.useState(defaultProps.value);
-      const canonicalExtraFields = (val, onChange) => (
+      const canonicalExtraFields: SeoMetadataFormProps['extraFields'] = (val, onChange) => (
         <SeoCanonicalUrlField
           value={val.canonicalUrl || ''}
           onChange={(newVal) => onChange({ ...val, canonicalUrl: newVal })}
