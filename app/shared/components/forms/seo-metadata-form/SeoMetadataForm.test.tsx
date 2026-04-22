@@ -56,7 +56,7 @@ const defaultProps: SeoMetadataFormProps = {
   }
 };
 
-const renderWithState = (extraFields?: React.ReactNode) => {
+const renderWithState = (extraFields?: SeoMetadataFormProps['extraFields']) => {
   const Wrapper = () => {
     const [value, setValue] = React.useState<SeoMetadataFormProps['value']>({
       title: '',
@@ -100,14 +100,17 @@ describe('SeoMetadataForm', () => {
     expect(defaultProps.onIndexingChange).toHaveBeenCalledWith(true);
   });
 
-  it('calls onImageChange', async () => {
-    globalThis.URL.createObjectURL = jest.fn(() => 'mock-url');
+  it('calls onImageChange with uploaded url', async () => {
+    globalThis.URL.createObjectURL = jest.fn(() => 'blob:mock-url');
+    globalThis.fetch = jest.fn().mockResolvedValue({
+      json: () => Promise.resolve({ success: true, data: { url: 'https://example.com/uploaded.png' } })
+    }) as jest.Mock;
 
     render(<SeoMetadataForm {...defaultProps} />);
 
     await user.click(screen.getByTestId('photo-block'));
 
-    expect(defaultProps.onImageChange).toHaveBeenCalled();
+    expect(defaultProps.onImageChange).toHaveBeenCalledWith('https://example.com/uploaded.png');
   });
 
   it('validates description field (empty and non-empty)', async () => {
@@ -122,16 +125,6 @@ describe('SeoMetadataForm', () => {
   });
 
   it('validates canonicalUrl: empty, valid, invalid', async () => {
-    const validateCanonicalUrl = (val: string) => {
-      if (!val) return '';
-      try {
-        new URL(val);
-        return '';
-      } catch {
-        return 'Некоректний URL';
-      }
-    };
-
     const CanonicalWrapper = () => {
       const [value, setValue] = React.useState<SeoMetadataFormProps['value']>({
         title: '',
@@ -140,29 +133,23 @@ describe('SeoMetadataForm', () => {
         canonicalUrl: ''
       });
       const [canonicalUrl, setCanonicalUrl] = React.useState('');
-      const [canonicalError, setCanonicalError] = React.useState('');
-      const [canonicalTouched, setCanonicalTouched] = React.useState(false);
+
+      const canonicalExtraFields = React.useCallback(
+        () => (
+          <SeoCanonicalUrlField
+            value={canonicalUrl}
+            onChange={(val) => setCanonicalUrl(val)}
+          />
+        ),
+        [canonicalUrl]
+      );
 
       return (
         <SeoMetadataForm
           {...defaultProps}
           value={value}
           onChange={setValue}
-          extraFields={
-            <SeoCanonicalUrlField
-              value={canonicalUrl}
-              error={canonicalError}
-              touched={canonicalTouched}
-              onChange={(val) => {
-                setCanonicalUrl(val);
-                if (canonicalTouched) setCanonicalError(validateCanonicalUrl(val));
-              }}
-              onBlur={() => {
-                setCanonicalTouched(true);
-                setCanonicalError(validateCanonicalUrl(canonicalUrl));
-              }}
-            />
-          }
+          extraFields={canonicalExtraFields}
         />
       );
     };
@@ -214,9 +201,8 @@ describe('SeoMetadataForm', () => {
     expect(screen.getByLabelText(/meta keywords/i)).toBeInTheDocument();
   });
 
-  it('renders ogImage as File and shows fileName', () => {
-    const file = new File(['img'], 'file-image.png');
-    render(<SeoMetadataForm {...defaultProps} ogImage={file} />);
+  it('renders ogImage as url and shows fileName', () => {
+    render(<SeoMetadataForm {...defaultProps} ogImage="https://example.com/file-image.png" />);
     expect(screen.getByTestId('photo-block')).toBeInTheDocument();
   });
 

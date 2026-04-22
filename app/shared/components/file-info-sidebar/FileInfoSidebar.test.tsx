@@ -3,6 +3,11 @@ import React from 'react';
 
 import { type FileDetailsSidebarFile, FileInfoSidebar } from './FileInfoSidebar';
 
+jest.mock('~/types/graphql/generated/graphql', () => ({
+  ...jest.requireActual('~/types/graphql/generated/graphql'),
+  useUpdateAssetMutation: () => [jest.fn(), { loading: false }]
+}));
+
 jest.mock('../design-system/tooltip/Tooltip', () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => <>{children}</>
@@ -83,13 +88,7 @@ describe('FileInfoSidebar', () => {
 
   it('should render filename, meta, links, and description field', () => {
     render(
-      <FileInfoSidebar
-        file={baseFile}
-        onClose={jest.fn()}
-        onToggleStar={jest.fn()}
-        onDescriptionSave={jest.fn()}
-        onRequestAction={jest.fn()}
-      />
+      <FileInfoSidebar file={baseFile} onClose={jest.fn()} onDescriptionSave={jest.fn()} onRequestAction={jest.fn()} />
     );
 
     expect(screen.getByText('cat.png')).toBeInTheDocument();
@@ -125,12 +124,7 @@ describe('FileInfoSidebar', () => {
     const fileNoId = { ...baseFile, id: '' };
 
     render(
-      <FileInfoSidebar
-        file={fileNoId as FileDetailsSidebarFile}
-        onClose={jest.fn()}
-        onToggleStar={jest.fn()}
-        onRequestAction={jest.fn()}
-      />
+      <FileInfoSidebar file={fileNoId as FileDetailsSidebarFile} onClose={jest.fn()} onRequestAction={jest.fn()} />
     );
 
     expect(screen.getByLabelText('Додати в обрані')).toBeDisabled();
@@ -154,15 +148,6 @@ describe('FileInfoSidebar', () => {
     expect(onRequestAction).toHaveBeenCalledWith({ type: 'download', fileId: 'f1' });
 
     expect(onRequestAction).toHaveBeenCalledTimes(3);
-  });
-
-  it('should toggle star with correct next state', () => {
-    const onToggleStar = jest.fn();
-
-    render(<FileInfoSidebar file={baseFile} onClose={jest.fn()} onToggleStar={onToggleStar} />);
-
-    fireEvent.click(screen.getByLabelText('Додати в обрані'));
-    expect(onToggleStar).toHaveBeenCalledWith('f1', true);
   });
 
   it('should render preview image when previewUrl exists', () => {

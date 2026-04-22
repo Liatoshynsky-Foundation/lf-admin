@@ -1,6 +1,7 @@
 import { FetchResult } from '@apollo/client';
 import { useCallback } from 'react';
 
+import { buildStatusUpdater } from '../buildStatusUpdater';
 import {
   CreateMediaMentionInput,
   MediaMentionsCountQueryVariables,
@@ -87,15 +88,7 @@ export const useUpdateMediaMentionStatus = (): [
   const status = data?.updateMediaMention.status; // Placeholder for current status
 
   const makeStatusUpdater = useCallback(
-    (status: MediaStatus) => {
-      return async (id: string, input?: { publishedAt?: string | null }) => {
-        const payload: UpdateMediaMentionInput = { status };
-        if (status === MediaStatus.Published) {
-          payload.publishedAt = input?.publishedAt ?? new Date().toISOString();
-        }
-        return mutate({ variables: { id, input: payload } });
-      };
-    },
+    (status: MediaStatus) => buildStatusUpdater(mutate, MediaStatus.Published)(status),
     [mutate]
   );
 

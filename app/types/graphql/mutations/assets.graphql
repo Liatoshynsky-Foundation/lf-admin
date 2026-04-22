@@ -1,0 +1,9 @@
+mutation UpdateAsset($id: ID!, $input: UpdateAssetInput!) {
+  updateAsset(id: $id, input: $input) {
+    id
+    isStarred
+    filename
+    description
+    updatedAt
+  }
+}

@@ -6,6 +6,9 @@ export const styles = {
     boxShadow: 'none',
     '&::before': {
       display: 'none'
+    },
+    '&.Mui-expanded': {
+      margin: 0
     }
   },
   title: {

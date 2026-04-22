@@ -10,7 +10,6 @@ import type {
   UsedRendererProps
 } from '../MediaModal.renderers';
 import type {
-  CropResult,
   MediaModalOpenState,
   MediaModalResult,
   MediaModalTab,
@@ -18,6 +17,7 @@ import type {
 } from '../MediaModal.types';
 import { MockDsButton } from '../test-utils/mockDsButton';
 import { MediaModalFlow } from './MediaModalFlow';
+import type { CropResult } from '~/types/common';
 
 jest.mock('~/public/icons/iteration.svg', () => ({
   __esModule: true,
