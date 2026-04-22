@@ -1,7 +1,7 @@
 import mongoose, { Model, Schema } from 'mongoose';
 
 import { News } from '~/domain/entities/News';
-import {baseContentSchemaFields} from '~/infrastructure/models/commonSchemas';
+import { baseContentSchemaFields } from '~/infrastructure/models/commonSchemas';
 import { NewsStatus } from '~/types/enums/common.enums';
 
 const newsSchema = new Schema<News>(
@@ -9,8 +9,8 @@ const newsSchema = new Schema<News>(
     ...baseContentSchemaFields,
     newsDate: { type: String, default: null },
     content: {
-      uk: { type: Object, required: true },
-      en: { type: Object, required: true }
+      uk: { type: Object, required: true, default: {} },
+      en: { type: Object, required: true, default: {} }
     },
     status: {
       type: String,

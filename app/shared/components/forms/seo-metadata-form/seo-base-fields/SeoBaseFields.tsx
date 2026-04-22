@@ -9,6 +9,7 @@ interface SeoBaseFieldsProps {
   readonly touched: Partial<Record<keyof LocalizedMeta, boolean>>;
   readonly onFieldChange: (field: keyof LocalizedMeta, val: string) => void;
   readonly onBlur: (field: keyof LocalizedMeta) => void;
+  readonly showKeywords?: boolean;
   readonly labels?: {
     readonly metaTitle?: string;
     readonly metaDescription?: string;
@@ -16,7 +17,7 @@ interface SeoBaseFieldsProps {
   };
 }
 
-export function SeoBaseFields({ value, errors, touched, onFieldChange, onBlur, labels = {} }: SeoBaseFieldsProps) {
+export function SeoBaseFields({ value, errors, touched, onFieldChange, onBlur, showKeywords = true, labels = {} }: SeoBaseFieldsProps) {
   const fields = [
     { key: 'title' as const, label: labels.metaTitle || 'Meta title', required: true },
     {
@@ -24,14 +25,15 @@ export function SeoBaseFields({ value, errors, touched, onFieldChange, onBlur, l
       label: labels.metaDescription || 'Meta description',
       required: true,
       multiline: true,
-      minRows: 2
+      minRows: 3,
+      maxRows: 3
     },
-    { key: 'keywords' as const, label: labels.metaKeywords || 'Meta keywords' }
+    ...(showKeywords ? [{ key: 'keywords' as const, label: labels.metaKeywords || 'Meta keywords', multiline: true, minRows: 2, maxRows: 2 }] : [])
   ];
 
   return (
     <Stack sx={styles.formFields}>
-      {fields.map(({ key, label, required, multiline, minRows }) => (
+      {fields.map(({ key, label, required, multiline, minRows, maxRows }) => (
         <TextField
           key={key}
           label={label}
@@ -45,6 +47,7 @@ export function SeoBaseFields({ value, errors, touched, onFieldChange, onBlur, l
           required={required}
           multiline={multiline}
           minRows={minRows}
+          maxRows={maxRows}
         />
       ))}
     </Stack>

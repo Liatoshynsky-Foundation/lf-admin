@@ -14,11 +14,23 @@ export interface AllAssetsArgs {
     skip?: number;
   };
 }
+export interface UpdateAssetArgs {
+  id: string;
+  input: {
+    isStarred?: boolean;
+    filename?: string;
+    description?: string;
+  };
+}
 
 const endpointHandler = endpointRepositoryHandler('assetsRepository');
 
 export const AssetsQuery = {
-  allAssets: endpointHandler<AllAssetsArgs, unknown>(
-    async ({ args: { filters }, repo }) => repo.findAll(filters)
-  )
+  allAssets: endpointHandler<AllAssetsArgs, unknown>(async ({ args: { filters }, repo }) => repo.findAll(filters))
+};
+
+export const AssetsMutation = {
+  updateAsset: endpointHandler<UpdateAssetArgs, unknown>(async ({ args: { id, input }, repo }) => {
+    return repo.updateAsset(id, input);
+  })
 };
