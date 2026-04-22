@@ -62,6 +62,7 @@ export function FilesCardsLayout({ view, items, onItemClick }: FilesCardsLayoutP
             <FileCard
               fileType={item.type}
               fileData={{
+                id: item.id,
                 name: item.name,
                 dateAdded: item.dateAdded,
                 isStarred: item.isStarred,
