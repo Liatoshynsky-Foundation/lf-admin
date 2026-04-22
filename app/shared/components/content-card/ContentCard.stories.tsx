@@ -63,7 +63,7 @@ export const NewsCard: Story = {
   args: {
     type: 'news',
     coverImage: {
-      src: '/images/image.png',
+      src: { uk: '/images/image.png', en: '/images/image.png' },
       alt: { uk: 'Новина', en: 'News' },
     },
     title: { uk: 'Заголовок новини', en: 'News Title' },
@@ -79,7 +79,7 @@ export const EventCard: Story = {
   args: {
     type: 'event',
     coverImage: {
-      src: '/images/image.png',
+      src: { uk: '/images/image.png', en: '/images/image.png' },
       alt: { uk: 'Подія', en: 'Event' },
     },
     title: { uk: 'Концерт до дня народження Лятошинського' },
@@ -95,7 +95,7 @@ export const MediaCard: Story = {
   args: {
     type: 'media',
     coverImage: {
-      src: '/images/image.png',
+      src: { uk: '/images/image.png', en: '/images/image.png' },
       alt: { uk: 'ЗМІ', en: 'Media' },
     },
     title: { uk: 'Публікація у ЗМІ' },
@@ -110,7 +110,7 @@ export const DraftCard: Story = {
   args: {
     type: 'news',
     coverImage: {
-      src: '',
+      src: { uk: '', en: '' },
       alt: { uk: '', en: '' },
     },
     title: { uk: 'Чернетка без зображення' },
@@ -125,7 +125,7 @@ export const WithClickHandler: Story = {
   args: {
     type: 'news',
     coverImage: {
-      src: '/images/image.png',
+      src: { uk: '/images/image.png', en: '/images/image.png' },
       alt: { uk: 'Новина', en: 'News' },
     },
     title: { uk: 'Картка з onClick замість href' },

@@ -42,6 +42,7 @@ export const ImageFile: Story = {
   args: {
     fileType: 'image',
     fileData: {
+      id: 'file-1',
       name: 'concert-photo.jpg',
       dateAdded: '15.01.2025',
       imageSrc: '/images/image.png',
@@ -56,6 +57,7 @@ export const AudioFile: Story = {
   args: {
     fileType: 'audio',
     fileData: {
+      id: 'file-2',
       name: 'symphony-no-3.mp3',
       dateAdded: '20.02.2025',
       isStarred: true,
@@ -69,6 +71,7 @@ export const PdfDocument: Story = {
   args: {
     fileType: 'pdf',
     fileData: {
+      id: 'file-3',
       name: 'program-2025.pdf',
       dateAdded: '10.03.2025',
       isStarred: false,
@@ -82,6 +85,7 @@ export const VideoFile: Story = {
   args: {
     fileType: 'video',
     fileData: {
+      id: 'file-4',
       name: 'interview.mp4',
       dateAdded: '05.04.2025',
       isStarred: true,
@@ -95,6 +99,7 @@ export const StarredImage: Story = {
   args: {
     fileType: 'image',
     fileData: {
+      id: 'file-5',
       name: 'starred-photo.png',
       dateAdded: '01.01.2025',
       imageSrc: '/images/image.png',

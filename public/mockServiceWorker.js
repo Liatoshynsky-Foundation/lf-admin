@@ -1,4 +1,4 @@
-/* eslint-disable */
+/* eslint-disable semi, indent */
 /* tslint:disable */
 
 /**
