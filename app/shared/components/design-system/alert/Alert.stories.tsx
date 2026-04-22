@@ -116,7 +116,7 @@ export const Success: Story = {
   },
 };
 
-export const Error: Story = {
+export const ErrorAlert: Story = {
   args: {
     severity: 'error',
     variant: 'outlined',
