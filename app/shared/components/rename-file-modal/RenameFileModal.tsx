@@ -1,5 +1,5 @@
 import CloseIcon from '@mui/icons-material/Close';
-import { Box, Button, Dialog, IconButton,Typography } from '@mui/material';
+import { Box, Button, Dialog, IconButton, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -50,7 +50,7 @@ export function RenameFileModal({ open, onClose, fileId, currentFilename }: Read
   return (
     <Dialog
       open={open}
-      onClose={!loading ? onClose : undefined}
+      onClose={loading ? undefined : onClose}
       disableScrollLock
       slotProps={{
         paper: {
