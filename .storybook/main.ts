@@ -45,9 +45,9 @@ const config: StorybookConfig = {
       '~/public': path.resolve(__dirname, '../public'),
       '~/lib': path.resolve(__dirname, '../app/lib'),
       '~/shared': path.resolve(__dirname, '../app/shared'),
-      // Mock Next.js modules for Storybook
       'next/image': path.resolve(__dirname, './mocks/next-image.tsx'),
       'next/link': path.resolve(__dirname, './mocks/next-link.tsx'),
+      'next/navigation': path.resolve(__dirname, './mocks/next-navigation.ts'),
       '~': path.resolve(__dirname, '../app'),
     };
 
@@ -85,6 +85,9 @@ const config: StorybookConfig = {
   },
   typescript: {
     reactDocgen: 'react-docgen-typescript',
+  },
+  docs: {
+    autodocs: 'tag',
   },
 };
 

@@ -1,4 +1,4 @@
-import { CookieSerializeOptions } from 'cookie';
+import { SerializeOptions } from 'cookie';
 import { NextRequest } from 'next/server';
 
 import { CookieToAction, GraphQLContext } from '~/back-shared/types/container/types';
@@ -24,10 +24,10 @@ export const createGraphQLContext = async (req: NextRequest): Promise<Omit<Graph
   }
 
   const cookieActions: CookieToAction[] = [];
-  const setCookie = (name: string, value: string, options: CookieSerializeOptions = {}) => {
+  const setCookie = (name: string, value: string, options: SerializeOptions = {}) => {
     cookieActions.push({ action: 'set', name, value, options });
   };
-  const deleteCookie = (name: string, options: CookieSerializeOptions = {}) => {
+  const deleteCookie = (name: string, options: SerializeOptions = {}) => {
     cookieActions.push({ action: 'delete', name, options });
   };
 

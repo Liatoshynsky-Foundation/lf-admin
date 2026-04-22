@@ -19,9 +19,9 @@
   - [(Optional for macOS) Install Tooling via Homebrew](#️-optional-for-macos-install-tooling-via-homebrew)
   - [Install Node Dependencies](#️-install-node-dependencies)
   - [Run Locally](#️-run-locally)
+  - [Run Storybook](#-run-storybook)
   - [Run with Docker](#️-run-with-docker)
 - [Usage](#usage)
-  - [How to run Storybook](#how-to-run-storybook)
   - [How to work with swagger UI](#how-to-work-with-swagger-ui)
   - [How to run tests](#how-to-run-tests)
   - [How to Check Code Style (ESLint)](#️-how-to-check-code-style-eslint)
@@ -131,7 +131,7 @@ The admin panel will be available at http://localhost:3000 or your configured po
 
 ### 📚 Run Storybook
 
-Storybook is available for isolated development of reusable shared UI components and cards.
+Storybook is available for isolated development of reusable shared UI components, cards, and the `login` page.
 
 ```shell
 npm run storybook
@@ -144,6 +144,24 @@ To verify the static production build:
 ```shell
 npm run build-storybook
 ```
+
+The current setup is defined in `.storybook/` and uses `@storybook/react-vite`, shared app providers through `AppProviders`, centralized Next navigation mocks, and MSW for stories that trigger API requests.
+
+Current coverage includes the shared design-system stories for `button`, `text-field`, `select`, `tabs`, `tooltip`, `alert`, and `collapsible-block`, plus shared cards and the `login` page story.
+
+### ✍️ Write Stories
+
+- Create stories next to the component or page as `*.stories.tsx`.
+- Prefer `Meta` and `StoryObj` typing.
+- Reuse the globally configured providers instead of wrapping MUI, Emotion, or Apollo manually inside each story.
+- Use `parameters.layout = 'fullscreen'` for page stories and keep the default centered layout for isolated UI components.
+- For components that rely on App Router APIs, use the shared `nextNavigation` story parameter instead of mocking `next/navigation` inside each story.
+
+### 🧪 Mocking Guidelines
+
+- Use `withMswHandlers(...)` from `.storybook/msw.ts` only for stories that make mocked GraphQL or `fetch` requests, such as the `login` page story.
+- Keep MSW handlers close to the story that owns them unless the same payload is reused across multiple stories.
+- The MSW worker is checked into `public/mockServiceWorker.js`, so browser-based Storybook mocks work without extra setup.
 
 ### 🐳 Run with Docker
 

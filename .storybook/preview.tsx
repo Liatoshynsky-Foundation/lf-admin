@@ -7,24 +7,19 @@ import '@fontsource/oswald/600.css';
 import '@fontsource/oswald/700.css';
 import './fonts.css';
 import '../app/globals.css';
-import CssBaseline from '@mui/material/CssBaseline';
-import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import type { Preview } from '@storybook/react';
-import React from 'react';
+import { initialize, mswLoader } from 'msw-storybook-addon';
 
-import { createAdminTheme } from '../app/shared/theme/theme';
+import { withStorybookProviders } from './StorybookProviders';
+import { withNextNavigation } from './withNextNavigation';
 
-const adminTheme = createAdminTheme();
+initialize({
+  onUnhandledRequest: 'bypass',
+});
 
 const preview: Preview = {
-  decorators: [
-    (Story) => (
-      <MuiThemeProvider theme={adminTheme}>
-        <CssBaseline />
-        <Story />
-      </MuiThemeProvider>
-    ),
-  ],
+  decorators: [withNextNavigation, withStorybookProviders],
+  loaders: [mswLoader],
   parameters: {
     controls: {
       expanded: true,
@@ -34,6 +29,9 @@ const preview: Preview = {
       },
     },
     layout: 'centered',
+    nextNavigation: {
+      pathname: '/',
+    },
   },
 };
 
