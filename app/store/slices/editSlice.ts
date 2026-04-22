@@ -5,6 +5,19 @@ import { BlocksMap } from '~/types/store/pages';
 
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v));
 
+const IMAGE_FIELDS = new Set(['image', 'smallImage', 'bigImage', 'photo']);
+
+const resolveIsTmp = (field: string, value: unknown): boolean | undefined => {
+  if (!IMAGE_FIELDS.has(field)) return undefined;
+  if (!value || typeof value !== 'object') return undefined;
+
+  const img = value as Record<string, unknown>;
+
+  if ('isTmp' in img) return Boolean(img.isTmp);
+
+  return false;
+};
+
 export const createEditSlice: StateCreator<EditState> = (set, get) => ({
   isChanged: false,
   isInitialized: false,
@@ -23,10 +36,13 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
 
     if (prevBlock[field] === value) return;
 
+    const fieldName = field as string;
+    const isTmp = resolveIsTmp(fieldName, value);
+
     const newBlock = {
       ...prevBlock,
       [field]: value,
-      isTmp: field === 'image' && value && typeof value === 'object' && 'src' in value
+      ...(isTmp !== undefined ? { isTmp } : {})
     };
 
     set({
@@ -47,13 +63,19 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
 
     const isDifferent = Object.entries(data).some(([key, val]) => prevBlock[key as keyof typeof data] !== val);
     if (!isDifferent) return;
+
     let newBlock = { ...prevBlock, ...data };
 
-    if ('image' in data) {
-      const img = data.image;
-      if (img && typeof img === 'object' && 'src' in img) {
-        newBlock = { ...newBlock, isTmp: true };
-      }
+    for (const field of IMAGE_FIELDS) {
+      if (!(field in data)) continue;
+      const img = (data as Record<string, unknown>)[field];
+      if (!img || typeof img !== 'object') continue;
+
+      const isTmp = 'isTmp' in (img as object)
+        ? Boolean((img as Record<string, unknown>).isTmp)
+        : false;
+
+      newBlock = { ...newBlock, isTmp };
     }
 
     set({

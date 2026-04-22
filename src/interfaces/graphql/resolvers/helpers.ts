@@ -116,22 +116,26 @@ export const syncImagesCrops = async (
     const imagesWithMetadata = extractImagesWithMetadata(data as JsonValue);
 
     for (const item of imagesWithMetadata) {
-      if (item.crop) {
-        await ImageCropModel.findOneAndUpdate(
-          {
-            pageId: contentId,
-            cropId: item.src,
-            locale
-          },
-          {
+      if (!item.crop) continue;
+      
+      const cropId = normalizeCropId(item.src);
+
+      await ImageCropModel.findOneAndUpdate(
+        {
+          pageId: contentId,
+          cropId,
+          locale
+        },
+        {
+          $set: {
             crop: item.crop,
             pageId: contentId,
-            cropId: item.src,
+            cropId,
             locale
-          },
-          { upsert: true, new: true }
-        );
-      }
+          }
+        },
+        { upsert: true, new: true }
+      );
     }
     return;
   }
@@ -139,24 +143,39 @@ export const syncImagesCrops = async (
   if (isCoverImage) {
     const image = data as LocalizedImage;
     if (image?.crop) {
+      const cropId = normalizeCropId(cropIdPrefix || 'coverImage');
       const locales: Array<'uk' | 'en'> = ['uk', 'en'];
 
-      await Promise.all(locales.map(l =>
-        ImageCropModel.findOneAndUpdate(
-          {
-            pageId: contentId,
-            cropId: cropIdPrefix || 'coverImage',
-            locale: l
-          },
-          {
-            crop: image.crop,
-            pageId: contentId,
-            cropId: cropIdPrefix || 'coverImage',
-            locale: l
-          },
-          { upsert: true, new: true }
+      await Promise.all(
+        locales.map((l) =>
+          ImageCropModel.findOneAndUpdate(
+            {
+              pageId: contentId,
+              cropId,
+              locale: l
+            },
+            {
+              $set: {
+                crop: image.crop,
+                pageId: contentId,
+                cropId,
+                locale: l
+              }
+            },
+            { upsert: true, new: true }
+          )
         )
-      ));
+      );
     }
   }
 };
+
+function normalizeCropId(src: string): string {
+  try {
+    const url = new URL(src);
+    const segments = url.pathname.split('/').filter(Boolean);
+    const filename = segments.at(-1);
+    if (filename) return filename;
+  } catch {}
+  return src;
+}
