@@ -13,11 +13,22 @@ import { getStatus } from '~/lib/utils/getStatus';
 import { useDeleteEvent } from '~/shared/hooks/use-events/useEvents';
 import { useDeleteMediaMention } from '~/shared/hooks/use-media-mentions/useMediaMentions';
 import { useDeleteNews } from '~/shared/hooks/use-news/useNews';
-import type { ImageBlock, LocalizedString } from '~/types/common';
+import type { LocalizedString } from '~/types/common';
 
 export type ContentType = 'news' | 'event' | 'media';
 
 const FALLBACK_IMAGE_SRC = '/images/image.png';
+
+interface ContentCardImage {
+  src: {
+    uk: string;
+    en: string;
+  };
+  alt: {
+    uk: string;
+    en: string;
+  };
+}
 
 interface ContentCardProps {
   id: string;

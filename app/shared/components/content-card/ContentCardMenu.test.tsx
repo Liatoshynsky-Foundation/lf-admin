@@ -1,8 +1,7 @@
-import { fireEvent,render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import ContentCardMenu from './ContentCardMenu';
 
-// 🔧 mock router
 const pushMock = jest.fn();
 
 jest.mock('next/navigation', () => ({

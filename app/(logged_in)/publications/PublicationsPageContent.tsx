@@ -36,7 +36,7 @@ import { filterSelectStyles } from '~/shared/components/selector/FilterSelect.st
 import { useAllMediaMentions } from '~/shared/hooks/use-media-mentions/useMediaMentions';
 import { useAllNews } from '~/shared/hooks/use-news/useNews';
 import { usePublicationsFiltering } from '~/shared/hooks/use-publications';
-import type { ImageBlock, LocalizedString } from '~/types/common';
+import type { LocalizedString } from '~/types/common';
 import { type AllMediaMentionsQuery, type AllNewsQuery } from '~/types/graphql/generated/graphql';
 import { normalizeSearch } from '~/utils/normalizeSearch';
 
@@ -59,6 +59,7 @@ type PublicationCardItem = {
   status: PublicationsStatusValue;
   language: PublicationsLanguageValue;
   cardType: ContentType;
+  slug: string;
   cardStatus: PublicationsStatusValue;
   titleData: Partial<LocalizedString>;
   coverImage: PublicationCardImage;
@@ -235,6 +236,7 @@ const mapNewsItem = (item: NewsItem): PublicationCardItem | null => {
     sortTitle,
     titleData: title,
     type: 'news',
+    slug: item.slug,
     cardType: mapCardType('news'),
     dateAdded: sortableDate,
     createdAtRaw: sortableDate,
@@ -246,8 +248,8 @@ const mapNewsItem = (item: NewsItem): PublicationCardItem | null => {
     language: getLanguageFromLocalizedValue(title),
     coverImage: {
       src: {
-        uk: coverImage?.src?.uk || DEFAULT_COVER_IMAGE,
-        en: coverImage?.src?.en || DEFAULT_COVER_IMAGE
+        uk: coverImage?.src || DEFAULT_COVER_IMAGE,
+        en: coverImage?.src || DEFAULT_COVER_IMAGE
       },
       alt: toLocalizedString(coverImage?.alt, titleText || DEFAULT_COVER_ALT)
     }
@@ -273,6 +275,7 @@ const mapMediaMentionItem = (item: MediaMentionItem): PublicationCardItem | null
     sortTitle,
     titleData,
     type: 'media',
+    slug: item.slug,
     cardType: mapCardType('media'),
     dateAdded: sortableDate,
     createdAtRaw: sortableDate,
@@ -284,8 +287,8 @@ const mapMediaMentionItem = (item: MediaMentionItem): PublicationCardItem | null
     language: getLanguageFromLocalizedValue(titleData),
     coverImage: {
       src: {
-        uk: item.coverImage?.src?.uk || DEFAULT_COVER_IMAGE,
-        en: item.coverImage?.src?.en || DEFAULT_COVER_IMAGE
+        uk: item.coverImage?.src || DEFAULT_COVER_IMAGE,
+        en: item.coverImage?.src || DEFAULT_COVER_IMAGE
       },
       alt: toLocalizedString(item.coverImage?.alt, titleText || DEFAULT_COVER_ALT)
     }
@@ -489,20 +492,12 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
   const content = (() => {
     if (shouldShowLoadingState) {
       return (
-        <EmptyState
-          title={PUBLICATIONS_LOADING_STATE_TITLE}
-          description={PUBLICATIONS_LOADING_STATE_DESCRIPTION}
-        />
+        <EmptyState title={PUBLICATIONS_LOADING_STATE_TITLE} description={PUBLICATIONS_LOADING_STATE_DESCRIPTION} />
       );
     }
 
     if (shouldShowErrorState) {
-      return (
-        <EmptyState
-          title={PUBLICATIONS_ERROR_STATE_TITLE}
-          description={PUBLICATIONS_ERROR_STATE_DESCRIPTION}
-        />
-      );
+      return <EmptyState title={PUBLICATIONS_ERROR_STATE_TITLE} description={PUBLICATIONS_ERROR_STATE_DESCRIPTION} />;
     }
 
     if (visibleItems.length) {
@@ -528,12 +523,7 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
       );
     }
 
-    return (
-      <EmptyState
-        title={emptyStateTitle}
-        description={emptyStateDescription}
-      />
-    );
+    return <EmptyState title={emptyStateTitle} description={emptyStateDescription} />;
   })();
 
   return (

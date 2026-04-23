@@ -1,4 +1,4 @@
-/* eslint-disable semi, indent */
+/* eslint-disable */
 /* tslint:disable */
 
 /**
@@ -13,27 +13,27 @@ const IS_MOCKED_RESPONSE = Symbol('isMockedResponse')
 const activeClientIds = new Set()
 
 addEventListener('install', function () {
-  globalThis.skipWaiting()
+  self.skipWaiting()
 })
 
 addEventListener('activate', function (event) {
-  event.waitUntil(globalThis.clients.claim())
+  event.waitUntil(self.clients.claim())
 })
 
 addEventListener('message', async function (event) {
-  const clientId = event.source?.id
+  const clientId = Reflect.get(event.source || {}, 'id')
 
-  if (!clientId || !globalThis.clients) {
+  if (!clientId || !self.clients) {
     return
   }
 
-  const client = await globalThis.clients.get(clientId)
+  const client = await self.clients.get(clientId)
 
   if (!client) {
     return
   }
 
-  const allClients = await globalThis.clients.matchAll({
+  const allClients = await self.clients.matchAll({
     type: 'window',
   })
 
@@ -80,7 +80,7 @@ addEventListener('message', async function (event) {
 
       // Unregister itself when there are no more clients
       if (remainingClients.length === 0) {
-        globalThis.registration.unregister()
+        self.registration.unregister()
       }
 
       break
@@ -175,7 +175,7 @@ async function handleRequest(event, requestId, requestInterceptedAt) {
  * @returns {Promise<Client | undefined>}
  */
 async function resolveMainClient(event) {
-  const client = await globalThis.clients.get(event.clientId)
+  const client = await self.clients.get(event.clientId)
 
   if (activeClientIds.has(event.clientId)) {
     return client
@@ -185,7 +185,7 @@ async function resolveMainClient(event) {
     return client
   }
 
-  const allClients = await globalThis.clients.matchAll({
+  const allClients = await self.clients.matchAll({
     type: 'window',
   })
 
@@ -290,7 +290,7 @@ function sendToClient(client, message, transferrables = []) {
     const channel = new MessageChannel()
 
     channel.port1.onmessage = (event) => {
-      if (event.data?.error) {
+      if (event.data && event.data.error) {
         return reject(event.data.error)
       }
 

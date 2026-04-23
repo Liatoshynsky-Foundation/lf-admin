@@ -10,40 +10,38 @@ const meta = {
   argTypes: {
     type: {
       control: 'radio',
-      options: ['news', 'event', 'media'],
+      options: ['news', 'event', 'media']
     },
     coverImage: {
-      control: false,
+      control: false
     },
     title: {
-      control: false,
+      control: false
     },
     status: {
-      control: 'text',
+      control: 'text'
     },
     updatedAt: {
-      control: 'text',
+      control: 'text'
     },
     createdAt: {
-      control: 'text',
+      control: 'text'
     },
     publishedAt: {
-      control: 'text',
+      control: 'text'
     },
     editHref: {
-      control: 'text',
+      control: 'text'
     },
     onClick: {
-      control: false,
-    },
-    onClickMenu: {
-      control: false,
-    },
+      control: false
+    }
   },
   parameters: {
     docs: {
       description: {
-        component: 'Reusable content card for admin lists of news, events, and media items with status, dates, and quick actions.'
+        component:
+          'Reusable content card for admin lists of news, events, and media items with status, dates, and quick actions.'
       }
     }
   },
@@ -52,8 +50,8 @@ const meta = {
       <div style={{ width: '320px' }}>
         <Story />
       </div>
-    ),
-  ],
+    )
+  ]
 } satisfies Meta<typeof ContentCard>;
 
 export default meta;
@@ -64,15 +62,14 @@ export const NewsCard: Story = {
     type: 'news',
     coverImage: {
       src: { uk: '/images/image.png', en: '/images/image.png' },
-      alt: { uk: 'Новина', en: 'News' },
+      alt: { uk: 'Новина', en: 'News' }
     },
     title: { uk: 'Заголовок новини', en: 'News Title' },
     status: 'published',
     createdAt: '2025-01-15T12:00:00Z',
     updatedAt: '2025-01-16T12:00:00Z',
-    editHref: '#',
-    onClickMenu: fn(),
-  },
+    editHref: '#'
+  }
 };
 
 export const EventCard: Story = {
@@ -80,15 +77,14 @@ export const EventCard: Story = {
     type: 'event',
     coverImage: {
       src: { uk: '/images/image.png', en: '/images/image.png' },
-      alt: { uk: 'Подія', en: 'Event' },
+      alt: { uk: 'Подія', en: 'Event' }
     },
     title: { uk: 'Концерт до дня народження Лятошинського' },
     status: 'published',
     createdAt: '2025-03-10T12:00:00Z',
     publishedAt: '2025-03-12T12:00:00Z',
-    editHref: '#',
-    onClickMenu: fn(),
-  },
+    editHref: '#'
+  }
 };
 
 export const MediaCard: Story = {
@@ -96,14 +92,13 @@ export const MediaCard: Story = {
     type: 'media',
     coverImage: {
       src: { uk: '/images/image.png', en: '/images/image.png' },
-      alt: { uk: 'ЗМІ', en: 'Media' },
+      alt: { uk: 'ЗМІ', en: 'Media' }
     },
     title: { uk: 'Публікація у ЗМІ' },
     status: 'published',
     updatedAt: '2025-02-20T12:00:00Z',
-    editHref: '#',
-    onClickMenu: fn(),
-  },
+    editHref: '#'
+  }
 };
 
 export const DraftCard: Story = {
@@ -111,14 +106,13 @@ export const DraftCard: Story = {
     type: 'news',
     coverImage: {
       src: { uk: '', en: '' },
-      alt: { uk: '', en: '' },
+      alt: { uk: '', en: '' }
     },
     title: { uk: 'Чернетка без зображення' },
     status: 'draft',
     createdAt: '2025-04-01T12:00:00Z',
-    editHref: '#',
-    onClickMenu: fn(),
-  },
+    editHref: '#'
+  }
 };
 
 export const WithClickHandler: Story = {
@@ -126,12 +120,11 @@ export const WithClickHandler: Story = {
     type: 'news',
     coverImage: {
       src: { uk: '/images/image.png', en: '/images/image.png' },
-      alt: { uk: 'Новина', en: 'News' },
+      alt: { uk: 'Новина', en: 'News' }
     },
     title: { uk: 'Картка з onClick замість href' },
     status: 'published',
     createdAt: '2025-01-15T12:00:00Z',
-    onClick: fn(),
-    onClickMenu: fn(),
-  },
+    onClick: fn()
+  }
 };
