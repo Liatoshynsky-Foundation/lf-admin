@@ -1,7 +1,7 @@
 import { Theme } from '@mui/material';
 import { SystemStyleObject } from '@mui/system';
 
-import { colors } from '~/shared/components/design-system/button/Button.styles';
+import { mainHexPallete as colors } from '~/shared/theme/colors';
 
 type ViewToggleStyles = {
   root: SystemStyleObject<Theme>;
@@ -20,11 +20,11 @@ export const styles: ViewToggleStyles = {
     width: 'fit-content',
     gap: '4px'
   },
-  button: { 
+  button: {
     width: 32,
     height: 32,
     borderRadius: '19px',
-    p: '4px',
+    p: '4px'
   },
   active: {
     bgcolor: colors.black,

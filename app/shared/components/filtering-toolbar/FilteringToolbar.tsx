@@ -1,19 +1,13 @@
 'use client';
 
-import {
-  Badge,
-  Box,
-  Button,
-  IconButton,
-  Tooltip
-} from '@mui/material';
+import { Badge, Box, Button, IconButton, Tooltip } from '@mui/material';
 import { Filter, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { ControlPanel } from '~/shared/components/control-panel';
-import { colors } from '~/shared/components/design-system/button/Button.styles';
 import { Search, type SearchProps } from '~/shared/components/search/Search';
-import { type FilterOption,FilterSelect } from '~/shared/components/selector/FilterSelect';
+import { type FilterOption, FilterSelect } from '~/shared/components/selector/FilterSelect';
+import { mainHexPallete as colors } from '~/shared/theme/colors';
 
 export type FilteringToolbarFilterConfig = Readonly<{
   id: string;

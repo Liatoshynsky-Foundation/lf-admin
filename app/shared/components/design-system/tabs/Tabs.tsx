@@ -38,13 +38,7 @@ export const CustomTabs = ({ tabs, activeTab, onTabChange, className, dataTestId
         sx={styles.root}
       >
         {tabs.map((tab) => (
-          <MuiTab
-            key={tab.id}
-            label={tab.label}
-            value={tab.id}
-            disableRipple
-            data-testid={`${dataTestId}-tab-${tab.id}`}
-          />
+          <MuiTab key={tab.id} label={tab.label} value={tab.id} data-testid={`${dataTestId}-tab-${tab.id}`} />
         ))}
       </MuiTabs>
     </Box>

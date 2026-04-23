@@ -2,7 +2,7 @@ import { Box, Tab, Tabs, Typography } from '@mui/material';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-import { colors } from '~/shared/components/design-system/button/Button.styles';
+import { mainHexPallete as colors } from '~/shared/theme/colors';
 
 export type PageHeaderTab = Readonly<{
   value: string;

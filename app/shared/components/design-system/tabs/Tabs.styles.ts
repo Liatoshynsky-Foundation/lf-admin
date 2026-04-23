@@ -1,8 +1,7 @@
 import type { SxProps, Theme } from '@mui/material';
 
-import { rgbaTabColors } from '~/ds-components/theme/colors';
-
 const gutter = '24px';
+
 export const styles: Record<string, SxProps<Theme>> = {
   container: {
     display: 'block',
@@ -29,24 +28,7 @@ export const styles: Record<string, SxProps<Theme>> = {
       },
 
       whiteSpace: 'nowrap',
-      position: 'relative',
-
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        bottom: 0,
-        width: '100%',
-        height: '2px',
-        backgroundColor: rgbaTabColors.defaultLineColor,
-        zIndex: 1
-      }
-    },
-
-    '& .MuiTabs-indicator': {
-      height: '2px',
-      backgroundColor: rgbaTabColors.activeLineColor,
-      bottom: 0,
-      zIndex: 2
+      position: 'relative'
     },
 
     '& .MuiTab-root': {
@@ -55,35 +37,10 @@ export const styles: Record<string, SxProps<Theme>> = {
         sm: '1 1 0'
       },
 
-      textTransform: 'none',
-      justifyContent: 'center',
       padding: '12px 28px',
 
-      fontFamily: 'Mulish, sans-serif',
       fontSize: { xs: '16px', md: '18px' },
-      fontWeight: 600,
-      lineHeight: '150%',
-      letterSpacing: '0px',
-      whiteSpace: 'nowrap',
-
-      color: rgbaTabColors.defaultTextColor,
-
-      '&:hover': {
-        color: rgbaTabColors.hoveredTextColor
-      },
-      '&:active': {
-        color: rgbaTabColors.pressedTextColor
-      },
-      '&.Mui-selected': {
-        color: rgbaTabColors.activeTextColor
-      }
+      whiteSpace: 'nowrap'
     }
-  },
-
-  indicator: {
-    height: '2px',
-    backgroundColor: rgbaTabColors.activeLineColor,
-    bottom: 0,
-    zIndex: 2
   }
 };

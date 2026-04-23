@@ -1,17 +1,10 @@
 'use client';
 
-import {
-  Autocomplete,
-  Box,
-  InputAdornment,
-  ListItem,
-  OutlinedInput,
-  Typography
-} from '@mui/material';
+import { Autocomplete, Box, InputAdornment, ListItem, OutlinedInput, Typography } from '@mui/material';
 import Image from 'next/image';
 import { useMemo } from 'react';
 
-import { colors } from '~/shared/components/design-system/button/Button.styles';
+import { mainHexPallete as colors } from '~/shared/theme/colors';
 
 export type SearchOption = {
   id: string;
@@ -122,9 +115,10 @@ export function Search({
           placeholder={placeholder}
           fullWidth
           startAdornment={
-            <InputAdornment position="start"
+            <InputAdornment
+              position="start"
               sx={{
-                mr: '2px',
+                mr: '2px'
               }}
             >
               <Image src="/icons/search-dark.svg" alt="search" width={24} height={24} />

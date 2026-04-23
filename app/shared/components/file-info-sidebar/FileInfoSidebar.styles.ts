@@ -1,6 +1,6 @@
 import { alpha } from '@mui/material';
 
-import { colors } from '~/shared/components/design-system/button/Button.styles';
+import { mainHexPallete as colors } from '~/shared/theme/colors';
 
 export const SIDEBAR_WIDTH = 320;
 

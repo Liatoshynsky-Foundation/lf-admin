@@ -1,7 +1,7 @@
 import { styled } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 
-import { colors } from '~/shared/components/design-system/button/Button.styles';
+import { mainHexPallete as colors } from '~/shared/theme/colors';
 
 export const CustomBorderTextField = styled(TextField)({
   '& .MuiOutlinedInput-root': {

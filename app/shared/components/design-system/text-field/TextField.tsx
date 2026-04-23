@@ -1,5 +1,4 @@
-import { Box, TextField, Typography } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { Box, type SxProps, TextField, type Theme, Typography } from '@mui/material';
 import { type TextFieldProps } from '@mui/material/TextField';
 import React from 'react';
 
@@ -7,21 +6,18 @@ import { styles } from './TextField.styles';
 
 interface CustomTextFieldProps extends Omit<TextFieldProps, 'title'> {
   title?: string;
+  titleSx?: SxProps<Theme>;
 }
 
-const StyledTextField = styled(TextField)(() => ({
-  ...styles.customTextFieldStyles
-}));
-
-export const CustomTextField: React.FC<CustomTextFieldProps> = ({ title, ...props }) => {
+export const CustomTextField: React.FC<CustomTextFieldProps> = ({ title, titleSx, sx, ...props }) => {
   return (
     <Box>
       {title && (
-        <Typography variant="subtitle2" sx={styles.titleStyles}>
+        <Typography variant="subtitle2" sx={{ ...styles.titleStyles, ...titleSx }}>
           {title}
         </Typography>
       )}
-      <StyledTextField {...props} />
+      <TextField sx={{ ...styles.textField, ...sx }} {...props} />
     </Box>
   );
 };

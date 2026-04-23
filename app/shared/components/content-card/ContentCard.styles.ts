@@ -5,7 +5,8 @@ const styles = {
     width: '100%',
     maxWidth: '100%',
     borderRadius: '16px',
-    border: '1px solid #D9DCE8'
+    border: '1px solid',
+    borderColor: 'blue.200'
   },
   cardContent: {
     display: 'flex',
@@ -14,13 +15,12 @@ const styles = {
     flexGrow: '1'
   },
   title: {
-    fontSize: '18px',
     fontWeight: 700,
     flex: 1,
-    color: '#190D03'
+    color: 'text.primary'
   },
   date: {
-    color: '#898C95',
+    color: 'blue.600',
     fontStyle: 'italic'
   },
   mainInfo: {

@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import Button from './Button';
-import { colors } from './Button.styles';
+import { mainHexPallete as colors } from '~/shared/theme/colors';
 
 describe('Button Component', () => {
   const startIcon = <span data-testid="start-icon">▲</span>;

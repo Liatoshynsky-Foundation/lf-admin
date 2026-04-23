@@ -147,7 +147,6 @@ export const ImagePreviewBlock = ({
             <Typography
               variant="body1"
               sx={{
-                ...styles.fileNameText,
                 ...styles.trimmedTypography
               }}
             >
@@ -168,7 +167,6 @@ export const ImagePreviewBlock = ({
               onChange={(e) => onChangeAltText?.(e.target.value)}
               fullWidth
               margin="none"
-              sx={styles.altTextField}
               multiline
               maxRows={4}
               disabled={!previewImage}
@@ -184,7 +182,7 @@ export const ImagePreviewBlock = ({
               color="primary"
               size="small"
               onClick={openEditCrop}
-              style={styles.editButton}
+              sx={styles.editButton}
             >
               Редагувати
             </Button>

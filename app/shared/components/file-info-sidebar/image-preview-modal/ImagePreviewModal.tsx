@@ -5,8 +5,8 @@ import React, { useEffect, useRef } from 'react';
 
 import { styles } from './ImagePreviewModal.styles';
 import CloseIcon from '~/public/icons/close.svg';
-import { colors } from '~/shared/components/design-system/button/Button.styles';
 import { useZoomPan } from '~/shared/hooks/use-zoom-pan/useZoomPan';
+import { mainHexPallete as colors } from '~/shared/theme/colors';
 
 type ImagePreviewModalProps = {
   open: boolean;

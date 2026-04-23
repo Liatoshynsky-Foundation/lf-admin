@@ -73,7 +73,9 @@ export const mainHexPallete = {
     900: '#3d0607'
   },
   green: {
-    100: '#E2F2DC'
+    100: '#E2F2DC',
+    600: '#579A40',
+    800: '#2C4D20'
   }
 };
 
@@ -223,7 +225,11 @@ export const chipsColors = {
   outlinePressedBg: 'rgba(25, 13, 3, 0.24)',
   outlineNormalBorder: mainHexPallete.black,
   outlineDisabledBorder: mainHexPallete.blue[700],
-  outlineDisabledText: mainHexPallete.blue[700]
+  outlineDisabledText: mainHexPallete.blue[700],
+
+  newsChipBg: 'rgb(182, 208, 247)',
+  eventChipBg: 'rgb(247, 182, 225)',
+  mediaChipBg: 'rgb(182, 247, 207)'
 };
 
 export const menuItemColors = {
@@ -300,6 +306,8 @@ export const textFieldColors = {
 
 export const tabsColors = {
   active: mainHexPallete.black,
+  hovered: mainHexPallete.adminBlue[600],
+  pressed: mainHexPallete.adminBlue[900],
   unactive: mainHexPallete.adminBlue[800],
   disabled: mainHexPallete.adminBlue[300],
   baseUnderline: mainHexPallete.adminBlue[300]
@@ -311,4 +319,67 @@ export const toolbarColors = {
   hovered: 'rgba(241, 242, 247, 1)',
   focused: 'rgba(25, 13, 3, 0.06)',
   border: mainHexPallete.blue[200]
+};
+
+// нові кольори
+// потрібен рефактор (можлива дуплікація)
+export const alertColors = {
+  cross: 'rgba(86, 86, 86, 1)',
+  shadow: 'rgba(0, 0, 0, 0.08)',
+
+  filled: {
+    label: mainHexPallete.white,
+
+    errorBg: mainHexPallete.red[500],
+    errorText: mainHexPallete.red[50],
+    errorIcon: mainHexPallete.red[700],
+
+    warningBg: mainHexPallete.yellow[500],
+    warningText: mainHexPallete.white,
+    warningIcon: mainHexPallete.white,
+
+    infoBg: 'rgba(51, 161, 216, 1)',
+    infoText: mainHexPallete.white,
+    infoIcon: 'rgba(86, 86, 86, 1)',
+
+    successBg: mainHexPallete.green[600],
+    successText: mainHexPallete.white,
+    successIcon: mainHexPallete.blue[700]
+  },
+
+  outlined: {
+    label: mainHexPallete.black,
+
+    errorBg: mainHexPallete.red[50],
+    errorText: mainHexPallete.red[800],
+    errorIcon: mainHexPallete.blue[700],
+    errorBorder: mainHexPallete.red[500],
+
+    warningBg: mainHexPallete.yellow[100],
+    warningText: mainHexPallete.yellow[800],
+    warningIcon: 'rgba(181, 133, 23, 1)',
+    warningBorder: mainHexPallete.yellow[500],
+
+    infoBg: 'rgba(214, 236, 247, 1)',
+    infoText: 'rgba(20, 64, 86, 1)',
+    infoIcon: 'rgba(86, 86, 86, 1)',
+    infoBorder: 'rgba(51, 161, 216, 1)',
+
+    successBg: mainHexPallete.green[100],
+    successText: mainHexPallete.green[800],
+    successIcon: mainHexPallete.blue[700],
+    successBorder: mainHexPallete.green[600]
+  }
+};
+
+export const accordionColors = {
+  defaultBg: mainHexPallete.white,
+  defaultBorder: mainHexPallete.blue[200],
+  defaultIcon: mainHexPallete.black
+};
+
+export const tooltipColors = {
+  defaultBg: mainHexPallete.blue[900],
+  defaultText: mainHexPallete.white,
+  defaultShadow: 'rgba(0, 0, 0, 0.07)'
 };

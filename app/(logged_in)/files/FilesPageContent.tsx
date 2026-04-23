@@ -20,7 +20,6 @@ import {
   type FilesTabValue
 } from '~/constants/files';
 import { readFileAsDataURL } from '~/lib/utils/readFileAsDataURL';
-import { colors } from '~/shared/components/design-system/button/Button.styles';
 import {
   type FileDetailsSidebarFile,
   FileInfoSidebar,
@@ -32,10 +31,7 @@ import {
   type FilesCardsLayoutItem,
   type FilesCardsLayoutView
 } from '~/shared/components/files-cards-layout';
-import {
-  FilteringToolbar,
-  SortSelect
-} from '~/shared/components/filtering-toolbar';
+import { FilteringToolbar, SortSelect } from '~/shared/components/filtering-toolbar';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
 import type { MediaModalRenderers } from '~/shared/components/media-modal/MediaModal.renderers';
 import type { MediaModalOpenState, MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
@@ -44,6 +40,7 @@ import { PageHeader } from '~/shared/components/page-header/PageHeader';
 import { ViewToggle } from '~/shared/components/view-toggle';
 import { useAllAssets } from '~/shared/hooks/use-assets/useAssets';
 import { useFilesFiltering } from '~/shared/hooks/use-files';
+import { mainHexPallete as colors } from '~/shared/theme/colors';
 import { AssetType, useUploadBlobMutation } from '~/types/graphql/generated/graphql';
 
 type FilesPageFileItem = FilesCardsLayoutItem & {
@@ -294,13 +291,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
         {...toolbarProps}
         dataTestId="control-panel"
         rightSlot={<ViewToggle value={view} onChange={setView} />}
-        bottomTrailingContent={
-          <SortSelect
-            {...sortProps}
-            minWidth={208}
-            dataTestId="files-sort-select"
-          />
-        }
+        bottomTrailingContent={<SortSelect {...sortProps} minWidth={208} dataTestId="files-sort-select" />}
       />
 
       <FilesCardsLayout view={view} items={filteredFiles} onItemClick={(item) => setSelectedFileId(item.id)} />
@@ -308,12 +299,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
       {loading && <Typography>{FILES_LOADING_STATE_TEXT}</Typography>}
       {error && <Typography color="error">{FILES_ERROR_STATE_TEXT}</Typography>}
 
-      {sidebarFile && (
-        <FileInfoSidebar
-          file={sidebarFile}
-          onClose={() => setSelectedFileId(null)}
-        />
-      )}
+      {sidebarFile && <FileInfoSidebar file={sidebarFile} onClose={() => setSelectedFileId(null)} />}
 
       <MediaModal
         open={isUploadModalOpen}

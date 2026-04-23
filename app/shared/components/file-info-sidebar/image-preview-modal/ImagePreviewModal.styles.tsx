@@ -1,6 +1,6 @@
 import type { SxProps, Theme } from '@mui/material/styles';
 
-import { colors } from '../../design-system/button/Button.styles';
+import { mainHexPallete as colors } from '~/shared/theme/colors';
 
 type Params = {
   padding: number;

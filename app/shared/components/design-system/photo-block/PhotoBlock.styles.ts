@@ -1,14 +1,10 @@
 export const styles = {
   container: {
-    width: '100%',
+    width: '100%'
   },
 
   sectionTitle: {
-    fontSize: '18px',
-    fontWeight: 500,
-    color: 'rgba(71, 77, 90, 1)',
-    mb: 1,
-    fontFamily: 'Mulish'
+    mb: 1
   },
 
   imageBlock: {
@@ -23,7 +19,8 @@ export const styles = {
     height: '120px',
     objectFit: 'cover',
     flexShrink: 0,
-    border: '1px solid #B2B3BE',
+    border: '1px solid',
+    borderColor: 'blue.400',
     display: 'grid',
     placeItems: 'center'
   },
@@ -32,8 +29,7 @@ export const styles = {
     flex: '1',
     minWidth: 0,
     display: 'flex',
-    flexDirection: 'column',
-    gap: 2
+    flexDirection: 'column'
   },
 
   imageOvalPreview: {
@@ -42,48 +38,14 @@ export const styles = {
     maxHeight: '136px',
     borderRadius: '60% 40% 60% 40% / 55% 45% 55% 45%'
   },
-  fileNameText: {
-    color: '#190D03',
-    fontFamily: 'Mulish',
-    fontWeight: 500,
-    fontSize: '18px',
-    lineHeight: '150%'
-  },
-
   imageSizeText: {
-    fontFamily: 'Mulish',
-    fontWeight: 500,
-    fontStyle: 'italic',
-    fontSize: '16px',
-    lineHeight: '140%',
-    letterSpacing: '0%',
-    color: '#52545A'
+    fontStyle: 'italic'
   },
   editButton: {
-    width: '127px',
-    height: '32px',
-    padding: '4px 12px',
-    border: '1px solid #190D03',
-    color: '#190D03',
-    fontFamily: 'Mulish',
-    fontWeight: 400,
-    fontStyle: 'Regular',
-    fontSize: '14px',
-    lineHeight: '140%',
-    letterSpacing: '0px'
+    width: '127px'
   },
   changeButton: {
-    width: '190px',
-    height: '32px',
-    padding: '4px 12px',
-    border: '1px solid #190D03',
-    color: '#190D03',
-    fontFamily: 'Mulish',
-    fontWeight: 400,
-    fontStyle: 'Regular',
-    fontSize: '14px',
-    lineHeight: '140%',
-    letterSpacing: '0px'
+    width: '190px'
   },
   trimmedTypography: {
     display: '-webkit-box',
@@ -91,30 +53,5 @@ export const styles = {
     WebkitBoxOrient: 'vertical',
     overflow: 'hidden',
     textOverflow: 'ellipsis'
-  },
-  altTextField: {
-    minHeight: '48px',
-    '& .MuiOutlinedInput-root': {
-      '& fieldset': {
-        borderRadius: '8px',
-        borderColor: '#ADAEBA',
-        borderWidth: '1px',
-        padding: '12px 16px',
-        fontSize: '16px',
-        fontWeight: 500,
-        lineHeight: '150%',
-        fontFamily: 'Mulish'
-      },
-      '&:hover fieldset': {
-        borderColor: 'rgba(25, 13, 3, 0.5)'
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: '#190D03',
-        borderWidth: '1px'
-      }
-    },
-    '& .MuiInputLabel-root.Mui-focused': {
-      color: '#52545A'
-    }
   }
 };

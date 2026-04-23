@@ -1,27 +1,14 @@
 import { Box } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
-export const hexButtonGroupColors = {
-  primary: {
-    selectedButtonColor: '#190d03',
-    selectedButtonTextColor: '#FCFCFC',
-    groupBackgroundColor: '#F9FAFB',
-    buttonTextColor: '#190d03'
-  },
-  secondary: {
-    selectedButtonColor: '#FCFCFC',
-    selectedButtonTextColor: '#190d03',
-    groupBackgroundColor: '#FCBD28',
-    buttonTextColor: '#190d03'
-  }
-};
+import { buttonGroupColors } from '~/shared/theme/colors';
+
+type PaletteType = 'primary' | 'secondary' | 'tertiary';
 
 export const StyledButtonGroup = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'palette'
-})<{
-  palette: 'primary' | 'secondary';
-}>(({ palette }) => {
-  const paletteValues = palette === 'primary' ? hexButtonGroupColors.primary : hexButtonGroupColors.secondary;
+})<{ palette: PaletteType }>(({ palette }) => {
+  const paletteValues = buttonGroupColors[palette];
 
   return {
     display: 'flex',
@@ -36,8 +23,8 @@ export const StyledButtonGroup = styled(Box, {
     width: 'fit-content',
     border: 'none',
     lineHeight: '150%',
-    backgroundColor: paletteValues.groupBackgroundColor,
-    color: paletteValues.buttonTextColor
+    backgroundColor: paletteValues.groupBackground,
+    color: paletteValues.buttonText
   };
 });
 
@@ -46,9 +33,9 @@ export const StyledIndicator = styled(Box, {
 })<{
   left: number;
   width: number;
-  palette: 'primary' | 'secondary';
+  palette: PaletteType;
 }>(({ left, width, palette }) => {
-  const paletteValues = palette === 'primary' ? hexButtonGroupColors.primary : hexButtonGroupColors.secondary;
+  const paletteValues = buttonGroupColors[palette];
 
   return {
     height: 'calc(100% - 4px)',
@@ -57,8 +44,8 @@ export const StyledIndicator = styled(Box, {
     borderRadius: '9999px',
     transition: 'all 0.3s ease',
     zIndex: 0,
-    backgroundColor: paletteValues.selectedButtonColor,
-    color: paletteValues.selectedButtonTextColor,
+    backgroundColor: paletteValues.selectedButton,
+    color: paletteValues.selectedButtonText,
     left,
     width
   };
@@ -68,16 +55,17 @@ export const StyledButtonItem = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'active' && prop !== 'palette' && prop !== 'size'
 })<{
   active: boolean;
-  palette: 'primary' | 'secondary';
+  palette: PaletteType;
   size: 'small' | 'big';
 }>(({ active, palette, size }) => {
-  const paletteValues = palette === 'primary' ? hexButtonGroupColors.primary : hexButtonGroupColors.secondary;
+  const paletteValues = buttonGroupColors[palette];
 
   return {
     display: 'inline-block',
     borderRadius: '9999px',
-    color: active ? paletteValues.selectedButtonTextColor : paletteValues.buttonTextColor,
+    color: active ? paletteValues.selectedButtonText : paletteValues.buttonText,
     fontFamily: 'inherit',
+    fontSize: size === 'big' ? '18px' : '16px',
     cursor: 'pointer',
     position: 'relative',
     zIndex: 1,
