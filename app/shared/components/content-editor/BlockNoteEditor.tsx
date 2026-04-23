@@ -18,6 +18,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { styles } from './BlockNoteEditor.styles';
 import { BlockNoteEditorProps } from './types';
 import { useFilePickerUpload } from './useFilePickerUpload';
+import { sxToArray } from '~/lib/utils/sxToArray';
 
 const defaultFileUploadHandler = async (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -42,9 +43,11 @@ export const BlockNoteEditor = ({
   onChange,
   placeholder = 'Почніть вводити текст або використайте "/" для команд...',
   editable = true,
+  sideMenu = false,
   minHeight = '800px',
   fileUpload,
-  keyboardShortcuts
+  keyboardShortcuts,
+  sx
 }: BlockNoteEditorProps) => {
   const [isMounted, setIsMounted] = useState(false);
 
@@ -91,7 +94,7 @@ export const BlockNoteEditor = ({
       uploadFile: handleFileUpload,
       initialContent: initialContent || undefined,
       dropCursor: multiColumnDropCursor,
-      placeholderText: placeholder
+      placeholders: { default: placeholder, }
     },
     [isMounted]
   );
@@ -209,14 +212,14 @@ export const BlockNoteEditor = ({
   }
 
   return (
-    <Box sx={{ ...styles.container, minHeight }}>
+    <Box sx={[styles.container, ...sxToArray(sx), { minHeight }]}>
       <BlockNoteView
         editor={editor}
         editable={editable}
         onChange={handleEditorChange}
         theme="light"
         data-theming-css-variables-demo
-        sideMenu={true}
+        sideMenu={sideMenu}
       />
 
       {modalProps && fileUpload?.customModal?.(modalProps)}

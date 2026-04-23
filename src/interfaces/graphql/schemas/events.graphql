@@ -24,6 +24,7 @@ type Event implements BaseContent {
   meta: ContentMeta!
   eventDateTimeStart: String
   eventDateTimeEnd: String
+  ticketUrl: JSON
 }
 
 enum EventSortBy {
@@ -53,6 +54,7 @@ input CreateEventInput {
   publishedAt: String
   eventDateTimeStart: String
   eventDateTimeEnd: String
+  ticketUrl: JSON
 }
 
 input UpdateEventInput {
@@ -68,6 +70,7 @@ input UpdateEventInput {
   publishedAt: String
   eventDateTimeStart: String
   eventDateTimeEnd: String
+  ticketUrl: JSON
 }
 
 input EventSortOptions {

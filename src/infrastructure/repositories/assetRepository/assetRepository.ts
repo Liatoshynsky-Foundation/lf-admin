@@ -2,7 +2,7 @@ import { FilterQuery, Model, Types } from 'mongoose';
 
 import { createBaseRepository } from '../baseRepository/baseRepository';
 
-type AssetType = 'image' | 'pdf' | 'audio';
+type AssetType = 'image' | 'pdf' | 'audio' | 'document' | 'spreadsheet' | 'video' | 'archive';
 
 type AssetUsageRef = {
   pageId?: string;
@@ -80,7 +80,9 @@ const toEntity = (doc: DbAsset): AssetEntity => ({
   updatedAt: dateToIso(doc.updatedAt)
 });
 
-const buildAssetQuery = (filters?: Omit<AssetFilters, 'limit' | 'skip' | 'sortBy' | 'sortOrder'>): FilterQuery<DbAsset> => {
+const buildAssetQuery = (
+  filters?: Omit<AssetFilters, 'limit' | 'skip' | 'sortBy' | 'sortOrder'>
+): FilterQuery<DbAsset> => {
   const query: FilterQuery<DbAsset> = {};
 
   if (!filters) {
@@ -115,10 +117,24 @@ const getAssetSort = (filters?: AssetFilters): Record<string, 1 | -1> => {
   };
 };
 
-export const AssetRepository = ({ AssetModel }: AssetRepoDeps) =>
-  createBaseRepository<AssetEntity, DbAsset, AssetFilters>({
+export type UpdateAssetData = Partial<Pick<AssetEntity, 'isStarred' | 'filename' | 'description'>>;
+
+export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
+  const baseRepo = createBaseRepository<AssetEntity, DbAsset, AssetFilters>({
     model: AssetModel,
     toEntity,
     buildQuery: buildAssetQuery,
     getDefaultSort: getAssetSort
   });
+
+  const updateAsset = async (id: string, data: UpdateAssetData): Promise<AssetEntity | null> => {
+    const updatedDoc = await AssetModel.findByIdAndUpdate(id, { $set: data }, { new: true });
+
+    return updatedDoc ? toEntity(updatedDoc) : null;
+  };
+
+  return {
+    ...baseRepo,
+    updateAsset
+  };
+};

@@ -22,10 +22,14 @@ type FilesCardsLayoutProps = Readonly<{
   onItemClick?: (item: FilesCardsLayoutItem) => void;
 }>;
 
-const minimizedTypeMap: Record<FileType, 'img' | 'audio' | 'pdf'> = {
+const minimizedTypeMap: Record<FileType, 'img' | 'audio' | 'pdf' | 'doc' | 'xls' | 'video-file' | 'archive'> = {
   image: 'img',
   audio: 'audio',
-  pdf: 'pdf'
+  pdf: 'pdf',
+  document: 'doc',
+  spreadsheet: 'xls',
+  video: 'video-file',
+  archive: 'archive'
 };
 
 export function FilesCardsLayout({ view, items, onItemClick }: FilesCardsLayoutProps) {
@@ -36,6 +40,7 @@ export function FilesCardsLayout({ view, items, onItemClick }: FilesCardsLayoutP
           {items.map((item) => (
             <Box key={item.id} sx={styles.listItem}>
               <MinimizedFileCard
+                id={item.id}
                 fileType={minimizedTypeMap[item.type]}
                 starred={!!item.isStarred}
                 linked={!!item.usageLinks && item.usageLinks > 0}
@@ -58,6 +63,7 @@ export function FilesCardsLayout({ view, items, onItemClick }: FilesCardsLayoutP
             <FileCard
               fileType={item.type}
               fileData={{
+                id: item.id,
                 name: item.name,
                 dateAdded: item.dateAdded,
                 isStarred: item.isStarred,

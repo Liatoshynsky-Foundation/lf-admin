@@ -35,8 +35,17 @@ export const FILES_UPLOAD_ERROR = 'Підтримуються зображенн
 export const FILES_UPLOAD_READ_ERROR = 'Не вдалося прочитати файл для завантаження.';
 export const FILES_UPLOAD_FAILED_ERROR = 'Не вдалося завантажити файл. Спробуйте ще раз.';
 export const FILES_UNKNOWN_SECTION_LABEL = 'Невідомий розділ';
-export const FILES_LOADING_STATE_TEXT = 'Завантаження файлів…';
-export const FILES_ERROR_STATE_TEXT = 'Не вдалося завантажити файли.';
+export const FILES_LOADING_STATE_TITLE = 'Завантаження файлів';
+export const FILES_LOADING_STATE_DESCRIPTION = 'Зачекайте, поки завершиться запит.';
+export const FILES_ERROR_STATE_TITLE = 'Не вдалося завантажити файли';
+export const FILES_ERROR_STATE_DESCRIPTION = 'Спробуйте оновити сторінку або повторити пізніше.';
+export const FILES_EMPTY_STATE_TITLE = 'Файли відсутні';
+export const FILES_EMPTY_STATE_DESCRIPTION = 'Файли для цієї вкладки поки відсутні.';
+export const FILES_EMPTY_STATE_NO_RESULTS_TITLE = 'Результатів немає';
+export const FILES_EMPTY_STATE_NO_RESULTS_DESCRIPTION = 'За цими критеріями нічого не знайдено.\nСпробуйте змінити параметри фільтрів або пошуку.';
+export const FILES_FAVORITES_EMPTY_STATE_TITLE = 'Немає обраних файлів';
+export const FILES_FAVORITES_EMPTY_STATE_DESCRIPTION = 'Позначайте важливі файли зірочкою, щоб мати до них швидкий доступ тут.';
+export const FILES_FAVORITES_EMPTY_STATE_BUTTON = 'Переглянути всі файли';
 
 export const SORT_OPTIONS: ReadonlyArray<{ value: FilesSortValue; label: string }> = [
   { value: 'date_desc', label: 'Нові спочатку' },

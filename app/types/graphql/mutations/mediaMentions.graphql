@@ -5,20 +5,48 @@ mutation CreateMediaMention($input: CreateMediaMentionInput!) {
     adminTitle
     slug
     status
-    title { uk en }
-    description { uk en }
-    keywords { uk en }
-    allowIndexation { uk en }
+    title {
+      uk
+      en
+    }
+    description {
+      uk
+      en
+    }
+    keywords {
+      uk
+      en
+    }
+    allowIndexation {
+      uk
+      en
+    }
     coverImage {
-      src
-      alt { uk en }
-      caption { uk en }
-      crop { x y width height }
+      src {
+        uk
+        en
+      }
+      alt {
+        uk
+        en
+      }
+      caption {
+        uk
+        en
+      }
+      crop {
+        x
+        y
+        width
+        height
+      }
     }
     publishedAt
     createdAt
     updatedAt
-    meta { views }
+    meta {
+      views
+    }
   }
 }
 
@@ -29,20 +57,48 @@ mutation UpdateMediaMention($id: ID!, $input: UpdateMediaMentionInput!) {
     adminTitle
     slug
     status
-    title { uk en }
-    description { uk en }
-    keywords { uk en }
-    allowIndexation { uk en }
+    title {
+      uk
+      en
+    }
+    description {
+      uk
+      en
+    }
+    keywords {
+      uk
+      en
+    }
+    allowIndexation {
+      uk
+      en
+    }
     coverImage {
-      src
-      alt { uk en }
-      caption { uk en }
-      crop { x y width height }
+      src {
+        uk
+        en
+      }
+      alt {
+        uk
+        en
+      }
+      caption {
+        uk
+        en
+      }
+      crop {
+        x
+        y
+        width
+        height
+      }
     }
     publishedAt
     createdAt
     updatedAt
-    meta { views }
+    meta {
+      views
+    }
   }
 }
 

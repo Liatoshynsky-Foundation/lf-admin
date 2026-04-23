@@ -37,8 +37,8 @@ const imageCropSchema = new Schema(
 );
 
 imageCropSchema.index(
-  { pageId: 1, cropId: 1, locale: 1 },
-  { unique: true }
+  { imageAssetId: 1, pageId: 1, locale: 1 },
+  { unique: true, sparse: true }
 );
 
 export type ImageCropDocument = InferSchemaType<typeof imageCropSchema> & {

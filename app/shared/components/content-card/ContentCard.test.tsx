@@ -29,7 +29,10 @@ describe('ContentCard', () => {
   const defaultProps = {
     type: 'news' as ContentType,
     coverImage: {
-      src: '/image.png',
+      src: {
+        uk: '/image.png',
+        en: '/image.png'
+      },
       alt: {
         uk: 'Image UA',
         en: 'Image EN'
@@ -120,7 +123,7 @@ describe('ContentCard', () => {
       <ContentCard
         {...defaultProps}
         coverImage={{
-          src: '/news-mock-images/image1.jpg',
+          src: { uk: '/news-mock-images/image1.jpg', en: '/news-mock-images/image1.jpg' },
           alt: {
             uk: 'Broken image',
             en: 'Broken image'

@@ -3,42 +3,36 @@ import userEvent from '@testing-library/user-event';
 import toast from 'react-hot-toast';
 
 import { ImagePreviewBlock } from './PhotoBlock';
-import { readFileAsDataURL } from '~/lib/utils/readFileAsDataURL';
 import type { MediaModalOpenState, MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 
 /* -------------------- MOCKS -------------------- */
 
-
-jest.mock('react-hot-toast', () => {
-  const success = jest.fn();
-  const error = jest.fn();
-
-  return {
-    __esModule: true,
-    default: { success, error },
-    success,
-    error
-  };
-});
-
-jest.mock('~/lib/utils/readFileAsDataURL', () => ({
-  readFileAsDataURL: jest.fn()
+jest.mock('react-hot-toast', () => ({
+  success: jest.fn(),
+  error: jest.fn(),
 }));
 
 jest.mock('~/public/icons/image.svg', () => ({
   __esModule: true,
-  default: () => null
+  default: () => <span data-testid="image-icon" />
 }));
 
 jest.mock('~/public/icons/pencil.svg', () => ({
   __esModule: true,
-  default: () => null
+  default: () => <span data-testid="pencil-icon" />
 }));
 
 jest.mock('~/shared/hooks/use-image-metadata/useImageMetadata', () => ({
   useImageMetadata: () => ({
-    dimensions: null,
+    dimensions: { width: 1024, height: 768 },
     fileName: 'test.jpg'
+  })
+}));
+
+jest.mock('~/hooks/use-cropped-image/use-cropped-image', () => ({
+  useCroppedImage: () => ({
+    styles: { container: {}, image: {} },
+    onLoad: jest.fn()
   })
 }));
 
@@ -63,16 +57,23 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
         </button>
 
         <button
-          data-testid="apply-upload"
+          data-testid="apply-upload-success"
           onClick={() =>
             onApply({
               selected: {
                 kind: 'upload',
                 id: 'upload-1',
-                fileName: 'x.png',
-                file: new File(['x'], 'x.png', { type: 'image/png' })
+                fileName: 'new.png',
+                file: new File([''], 'new.png')
               },
-              crop: null
+              uploadResult: {
+                url: 'https://cdn.com/uploaded.png',
+                filename: 'new.png',
+                originalName: 'new.png',
+                mimeType: 'image/png',
+                size: 1024
+              },
+              crop: { rect: { x: 0, y: 0, width: 100, height: 100 } }
             })
           }
         >
@@ -80,16 +81,10 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
         </button>
 
         <button
-          data-testid="apply-non-upload"
+          data-testid="apply-fail"
           onClick={() =>
             onApply({
-              selected: {
-                kind: 'used',
-                id: '1',
-                fileName: 'test.jpg',
-                src: 'url',
-                locale: 'uk'
-              },
+              selected: { kind: 'upload', id: 'fail', fileName: 'f.png', file: new File([''], 'f.png') },
               crop: null
             })
           }
@@ -117,28 +112,21 @@ describe('ImagePreviewBlock', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-
-    (readFileAsDataURL as jest.Mock).mockResolvedValue('data:image/png;base64,mockImage');
   });
 
   it('should render correctly with initial image', () => {
-    render(
-      <ImagePreviewBlock
-        imageUrl="https://example.com/test.jpg"
-        onChangeImage={onChangeImage}
-        title="Основне зображення"
-      />
-    );
+    renderComponent({ title: 'Основне зображення' });
 
     expect(screen.getByText(/Основне зображення/)).toBeInTheDocument();
-    expect(screen.getByAltText('Основне зображення')).toHaveAttribute('src', 'https://example.com/test.jpg');
-    expect(screen.getByText(/Назва файлу test\.jpg/)).toBeInTheDocument();
+    expect(screen.getByAltText('Основне зображення')).toHaveAttribute('src', 'test.jpg');
+    expect(screen.getByText(/Назва файлу/)).toBeInTheDocument();
+    expect(screen.getByText(/test\.jpg/)).toBeInTheDocument();
+    expect(screen.getByText(/1024 × 768/)).toBeInTheDocument();
   });
 
   it('should open MediaModal on "Редагувати" click', async () => {
     const user = userEvent.setup();
-
-    render(<ImagePreviewBlock imageUrl="https://example.com/test.jpg" onChangeImage={onChangeImage} />);
+    renderComponent();
 
     await user.click(screen.getByRole('button', { name: /редагувати/i }));
 
@@ -146,7 +134,18 @@ describe('ImagePreviewBlock', () => {
     expect(screen.getByTestId('initial-step')).toHaveTextContent('CROP');
   });
 
-  it('opens media modal in CROP mode and closes it', async () => {
+  it('should open MediaModal in UPLOAD tab on "Змінити зображення" click', async () => {
+    const user = userEvent.setup();
+
+    renderComponent();
+
+    await user.click(screen.getByRole('button', { name: /змінити зображення/i }));
+
+    expect(screen.getByTestId('media-modal')).toBeInTheDocument();
+    expect(screen.getByTestId('initial-tab')).toHaveTextContent('UPLOAD');
+  });
+
+  it('closes media modal on close click', async () => {
     const user = userEvent.setup();
 
     renderComponent();
@@ -154,104 +153,52 @@ describe('ImagePreviewBlock', () => {
     await user.click(screen.getByRole('button', { name: /редагувати/i }));
     await user.click(screen.getByTestId('close'));
 
-    await waitFor(() => {
-      expect(screen.queryByTestId('media-modal')).not.toBeInTheDocument();
-    });
+    expect(screen.queryByTestId('media-modal')).not.toBeInTheDocument();
   });
 
-  it('opens media modal in UPLOAD mode on "Змінити" click', async () => {
+  it('applies upload result successfully', async () => {
     const user = userEvent.setup();
-
-    render(<ImagePreviewBlock imageUrl="https://example.com/test.jpg" onChangeImage={onChangeImage} />);
-
-    await user.click(screen.getByRole('button', { name: /змінити/i }));
-
-    expect(screen.getByTestId('initial-tab')).toHaveTextContent('UPLOAD');
-  });
-
-  it('applies upload result (updates preview + calls onChangeImage)', async () => {
-    const user = userEvent.setup();
-
     renderComponent();
 
-    await user.click(screen.getByRole('button', { name: /змінити/i }));
-    await user.click(screen.getByTestId('apply-upload'));
+    await user.click(screen.getByRole('button', { name: /змінити зображення/i }));
+    await user.click(screen.getByTestId('apply-upload-success'));
 
     await waitFor(() => {
-      expect(onChangeImage).toHaveBeenCalledTimes(1);
-      expect(readFileAsDataURL).toHaveBeenCalledTimes(1);
-      expect(screen.getByAltText('Selected')).toHaveAttribute(
-        'src',
-        expect.stringContaining('data:image/png;base64,mockImage')
+      expect(onChangeImage).toHaveBeenCalledWith(
+        'https://cdn.com/uploaded.png',
+        { rect: { x: 0, y: 0, width: 100, height: 100 } }
       );
-    });
-  });
-
-  it('applies non-upload result (used/gallery)', async () => {
-    const user = userEvent.setup();
-
-    globalThis.fetch = jest.fn(() =>
-      Promise.resolve({
-        blob: () => Promise.resolve(new Blob(['img'], { type: 'image/jpeg' }))
-      } as Response)
-    );
-
-    renderComponent();
-
-    await user.click(screen.getByRole('button', { name: /змінити/i }));
-    await user.click(screen.getByTestId('apply-non-upload'));
-
-    await waitFor(() => {
-      expect(onChangeImage).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  it('shows success toast on successful apply', async () => {
-    const user = userEvent.setup();
-
-    renderComponent();
-
-    await user.click(screen.getByRole('button', { name: /змінити/i }));
-    await user.click(screen.getByTestId('apply-upload'));
-
-    await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith('Зображення змінено');
+      expect(screen.getByAltText('Selected')).toHaveAttribute('src', 'https://cdn.com/uploaded.png');
     });
   });
 
-  it('shows error toast if apply fails', async () => {
+  it('shows error toast if URL is missing in result', async () => {
     const user = userEvent.setup();
-
-    (readFileAsDataURL as jest.Mock).mockRejectedValueOnce(new Error('fail'));
-
     renderComponent();
 
-    await user.click(screen.getByRole('button', { name: /змінити/i }));
-    await user.click(screen.getByTestId('apply-upload'));
+    await user.click(screen.getByRole('button', { name: /змінити зображення/i }));
+    await user.click(screen.getByTestId('apply-fail'));
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Не вдалося змінити');
+      expect(toast.error).toHaveBeenCalledWith('Не вдалося отримати URL зображення');
+      expect(onChangeImage).not.toHaveBeenCalled();
     });
   });
 
   it('renders placeholder when no image', () => {
     renderComponent({ imageUrl: '' });
 
-    const img = screen.queryByRole('img');
-    expect(img).toBeInTheDocument();
-    expect(img).toHaveAttribute('src', '/icons/cloud-upload.svg');
+    expect(screen.getByTestId('cloud-upload-icon')).toBeInTheDocument();
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
 
-  it('updates preview when imageUrl changes', async () => {
-    const { rerender } = renderComponent({ imageUrl: 'old.jpg' });
+  it('updates preview when imageUrl changes', () => {
+    const { rerender } = renderComponent({ imageUrl: 'first.jpg' });
+    expect(screen.getByAltText('Selected')).toHaveAttribute('src', 'first.jpg');
 
-    expect(screen.getByRole('img')).toHaveAttribute('src', 'old.jpg');
-
-    rerender(<ImagePreviewBlock imageUrl="new.jpg" onChangeImage={onChangeImage} />);
-
-    await waitFor(() => {
-      expect(screen.getByRole('img')).toHaveAttribute('src', 'new.jpg');
-    });
+    rerender(<ImagePreviewBlock imageUrl="second.jpg" onChangeImage={onChangeImage} />);
+    expect(screen.getByAltText('Selected')).toHaveAttribute('src', 'second.jpg');
   });
 
   it('renders and updates alt text', async () => {
@@ -260,15 +207,27 @@ describe('ImagePreviewBlock', () => {
 
     renderComponent({
       showAlternativeText: true,
-      altText: 'old',
+      altText: 'old alt',
       onChangeAltText
     });
 
-    const input = screen.getByLabelText(/alt текст/i);
+    const input = screen.getByLabelText(/alt текст зображення/i);
+    expect(input).toHaveValue('old alt');
 
-    await user.clear(input);
-    await user.type(input, 'new alt');
-
+    await user.type(input, '!');
     expect(onChangeAltText).toHaveBeenCalled();
+  });
+
+  it('disables buttons when disabled prop is true', () => {
+    renderComponent({ disabled: true });
+
+    expect(screen.getByRole('button', { name: /редагувати/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /змінити зображення/i })).toBeDisabled();
+  });
+
+  it('renders oval preview when oval prop is true', () => {
+    renderComponent({ oval: true });
+    const img = screen.getByAltText('Selected');
+    expect(img).toBeInTheDocument();
   });
 });

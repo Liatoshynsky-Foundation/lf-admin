@@ -93,7 +93,7 @@ function renderFilterToggleButton({
       overlap="circular"
       invisible={resolvedActiveFiltersCount === 0}
       sx={{
-        '& .MuiBadge-badge': {
+        '& .MuiBadge-badge:not(.MuiBadge-invisible)': {
           top: '4px',
           fontSize: '14px',
           minWidth: '22px',

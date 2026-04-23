@@ -1,3 +1,5 @@
+import { CropResult } from '~/types/common';
+
 export type MediaModalTab = 'GALLERY' | 'UPLOAD' | 'USED';
 export type MediaModalStep = 'SELECT' | 'CROP';
 
@@ -28,20 +30,18 @@ export type UploadMedia = {
 
 export type SelectedMedia = GalleryMedia | UsedMedia | UploadMedia;
 
-export type CropRect = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
-
-export type CropResult = {
-  rect: CropRect;
+export type UploadResult = {
+  url: string;
+  filename: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
 };
 
 export type MediaModalResult = {
   selected: SelectedMedia;
   crop: CropResult | null;
+  uploadResult?: UploadResult;
 };
 
 export type MediaModalOpenState = {

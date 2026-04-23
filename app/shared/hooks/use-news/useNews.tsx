@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 
+import { buildStatusUpdater } from '../buildStatusUpdater';
 import { newsErrors } from '~/constants/errors';
 import { safeMutate } from '~/lib/utils/safeMutate';
 import {
@@ -11,22 +12,24 @@ import {
   type DeleteNewsMutationVariables,
   NewsFiltersInput,
   NewsStatus,
-  type UpdateNewsInput,
   type UpdateNewsMutation,
   type UpdateNewsMutationVariables,
   useAllNewsQuery,
   useCreateNewsMutation,
   useDeleteNewsMutation,
   useIncrementNewsViewsMutation,
+  useNewsByIdQuery,
   useNewsCountQuery,
   usePaginatedNewsQuery,
   usePublishedNewsQuery,
-  useUpdateNewsMutation
-} from '~/types/graphql/generated/graphql';
+  useUpdateNewsMutation} from '~/types/graphql/generated/graphql';
 
 type QueryHookOptions = Readonly<{
   skip?: boolean;
 }>;
+
+export const useNewsById = (id: string, options: QueryHookOptions = {}) =>
+  useNewsByIdQuery({ variables: { id }, fetchPolicy: 'network-only', skip: options.skip || !id });
 
 export const useAllNews = (filters?: NewsFiltersInput, options: QueryHookOptions = {}) =>
   useAllNewsQuery({ variables: { filters }, fetchPolicy: 'network-only', skip: options.skip });
@@ -74,15 +77,7 @@ export const useUpdateNewsStatus = () => {
   const status = data?.updateNews.status; // Placeholder for current status
 
   const makeStatusUpdater = useCallback(
-    (status: NewsStatus) => {
-      return async (id: string, input?: { publishedAt?: string | null }) => {
-        const payload: UpdateNewsInput = { status };
-        if (status === NewsStatus.Published) {
-          payload.publishedAt = input?.publishedAt ?? new Date().toISOString();
-        }
-        return mutate({ variables: { id, input: payload } });
-      };
-    },
+    (status: NewsStatus) => buildStatusUpdater(mutate, NewsStatus.Published)(status),
     [mutate]
   );
 

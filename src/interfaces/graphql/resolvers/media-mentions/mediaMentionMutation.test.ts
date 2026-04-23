@@ -41,7 +41,7 @@ describe('media-mentions Mutation', () => {
     keywords: { uk: 'к', en: 'k' },
     allowIndexation: { uk: true, en: true },
     slug: 'slug-test',
-    coverImage: { src: '', alt: { uk: '', en: '' }, caption: { uk: '', en: '' } },
+    coverImage: { src: { uk: '', en: '' }, alt: { uk: '', en: '' }, caption: { uk: '', en: '' } },
     status: MediaStatus.Published,
     meta: { views: 0 },
     createdAt: '2024-01-01',
@@ -62,7 +62,7 @@ describe('media-mentions Mutation', () => {
       keywords: { uk: 'ключі', en: 'keys' },
       allowIndexation: { uk: true, en: true },
       coverImage: {
-        src: 'img.jpg',
+        src: { uk: 'img.jpg', en: 'img.jpg' },
         alt: { uk: '', en: '' },
         caption: { uk: '', en: '' },
         crop: { x: 0, y: 0, width: 100, height: 100 }
@@ -102,7 +102,7 @@ describe('media-mentions Mutation', () => {
     const updateInput: UpdateMediaMentionGQLInput = {
       title: { uk: 'Оновлений заголовок', en: 'Updated Title' },
       coverImage: {
-        src: 'updated.jpg',
+        src: { uk: 'updated.jpg', en: 'updated.jpg' },
         alt: { uk: '', en: '' },
         caption: { uk: '', en: '' },
         crop: { x: 5, y: 5, width: 90, height: 90 }

@@ -1,12 +1,13 @@
 'use client';
 
 import { Box, Stack, type StackProps, TextField, Typography } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { CloudUpload } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import Button from '../button/Button';
-import { styles } from './PhotoBlock.styles';
-import { readFileAsDataURL } from '~/lib/utils/readFileAsDataURL';
+import { PREVIEW_H, PREVIEW_W, styles } from './PhotoBlock.styles';
+import { useCroppedImage } from '~/hooks/use-cropped-image/use-cropped-image';
 import ImageIcon from '~/public/icons/image.svg';
 import PencilIcon from '~/public/icons/pencil.svg';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
@@ -20,13 +21,14 @@ interface ImagePreviewBlockProps extends StackProps {
   altText?: string;
   onChangeAltText?: (value: string) => void;
   oval?: boolean;
-  onChangeImage: (file: File, crop?: MediaModalResult['crop']) => void;
+  onChangeImage: (url: string, crop?: MediaModalResult['crop']) => void;
   initialCrop?: MediaModalResult['crop'];
   direction?: 'row' | 'row-reverse' | 'column' | 'column-reverse';
   buttonSpacing?: string;
   stackSpacing?: string;
   typographySpacing?: string;
   showAlternativeText?: boolean;
+  disabled?: boolean;
 }
 
 export const ImagePreviewBlock = ({
@@ -42,24 +44,28 @@ export const ImagePreviewBlock = ({
   typographySpacing = '8px',
   showAlternativeText = false,
   altText,
-  onChangeAltText
+  onChangeAltText,
+  disabled = false
 }: ImagePreviewBlockProps) => {
   const [previewImage, setPreviewImage] = useState<string>(imageUrl);
 
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [mediaInitial, setMediaInitial] = useState<MediaModalOpenState | undefined>(undefined);
-
-  const [savedCrop, setSavedCrop] = useState<MediaModalResult['crop']>(initialCrop || null);
+  const [savedCrop, setSavedCrop] = useState<MediaModalResult['crop']>(initialCrop ?? null);
 
   useEffect(() => {
     setPreviewImage(imageUrl);
   }, [imageUrl]);
 
   useEffect(() => {
-    setSavedCrop(initialCrop || null);
+    setSavedCrop(initialCrop ?? null);
   }, [initialCrop]);
 
   const { dimensions, fileName: finalFileName } = useImageMetadata(previewImage, fileName);
+  const displayedFileName =
+    finalFileName && finalFileName.length > 15 ? `${finalFileName.slice(0, 15)}...` : finalFileName;
+
+  const { styles: cropStyles, onLoad: onImgLoad } = useCroppedImage(savedCrop, PREVIEW_W, PREVIEW_H);
 
   const openEditCrop = () => {
     setMediaInitial({
@@ -87,33 +93,42 @@ export const ImagePreviewBlock = ({
     setMediaInitial(undefined);
   };
 
-  const handleApplyMediaModal = async (result: MediaModalResult) => {
-    const { selected, crop } = result;
+  const handleApplyMediaModal = (result: MediaModalResult) => {
+    const { selected, crop, uploadResult } = result;
 
-    try {
-      let file: File;
+    const url = uploadResult?.url ?? (selected.kind === 'upload' ? null : selected.src);
 
-      if (selected.kind === 'upload') {
-        const dataUrl = await readFileAsDataURL(selected.file);
-        setPreviewImage(dataUrl);
-        file = selected.file;
-      } else {
-        const response = await fetch(selected.src);
-        const blob = await response.blob();
-        file = new File([blob], selected.fileName || 'image.jpg', { type: blob.type });
-        setPreviewImage(selected.src);
-      }
-
-      setSavedCrop(crop);
-      onChangeImage(file, crop);
-
-      toast.success('Зображення змінено');
-    } catch {
-      toast.error('Не вдалося змінити');
-    } finally {
-      closeMediaModal();
+    if (!url) {
+      toast.error('Не вдалося отримати URL зображення');
+      return;
     }
+
+    setPreviewImage(url);
+    setSavedCrop(crop);
+    onChangeImage(url, crop);
+
+    toast.success('Зображення змінено');
   };
+
+  const renderPreviewContent = useMemo(() => {
+    if (!previewImage) {
+      return (
+        <Box sx={styles.imagePreview}>
+          <CloudUpload data-testid="cloud-upload-icon" size={76} strokeWidth={1.5} style={{ opacity: 0.3 }} />
+        </Box>
+      );
+    }
+
+    if (oval) {
+      return <Box component="img" src={previewImage} alt={title || 'Selected'} sx={styles.imageOvalPreview} />;
+    }
+
+    return (
+      <Box sx={cropStyles.container}>
+        <Box component="img" src={previewImage} alt={title || 'Selected'} onLoad={onImgLoad} sx={cropStyles.image} />
+      </Box>
+    );
+  }, [previewImage, oval, title, cropStyles, onImgLoad]);
 
   return (
     <Box sx={styles.container}>
@@ -124,34 +139,18 @@ export const ImagePreviewBlock = ({
       ) : null}
 
       <Box sx={styles.imageBlock}>
-        {previewImage ? (
-          <Box
-            component="img"
-            src={previewImage}
-            alt={title || 'Selected'}
-            sx={oval ? styles.imageOvalPreview : styles.imagePreview}
-          />
-        ) : (
-          <Box sx={styles.imagePreview}>
-            <Box
-              component="img"
-              src="/icons/cloud-upload.svg"
-              alt="cloud upload"
-              sx={{ width: 76, height: 76, opacity: 0.3 }}
-            />
-          </Box>
-        )}
+        {renderPreviewContent}
 
         <Stack spacing={stackSpacing} sx={styles.rightBlock}>
-          <Stack spacing={typographySpacing}>
-            <Typography
-              variant="body1"
-              sx={{
-                ...styles.trimmedTypography
-              }}
-            >
-              Назва файлу {finalFileName}
-            </Typography>
+          <Stack spacing={typographySpacing} sx={{ minWidth: 0 }}>
+            <Box sx={{ display: 'flex', gap: '4px', minWidth: 0 }}>
+              <Typography variant="body1" sx={{ ...styles.fileNameText, flexShrink: 0 }}>
+                Назва файлу
+              </Typography>
+              <Typography variant="body1" sx={styles.fileNameText}>
+                {displayedFileName}
+              </Typography>
+            </Box>
 
             {dimensions ? (
               <Typography variant="body2" color="text.secondary" sx={styles.imageSizeText}>
@@ -182,7 +181,8 @@ export const ImagePreviewBlock = ({
               color="primary"
               size="small"
               onClick={openEditCrop}
-              sx={styles.editButton}
+              style={styles.editButton}
+              disabled={disabled}
             >
               Редагувати
             </Button>
@@ -194,6 +194,7 @@ export const ImagePreviewBlock = ({
               size="small"
               onClick={openChangeImage}
               sx={styles.changeButton}
+              disabled={disabled}
             >
               Змінити зображення
             </Button>
@@ -206,6 +207,7 @@ export const ImagePreviewBlock = ({
         initial={mediaInitial}
         onClose={closeMediaModal}
         onApply={handleApplyMediaModal}
+        directory="images"
       />
     </Box>
   );

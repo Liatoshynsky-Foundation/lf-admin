@@ -1,6 +1,7 @@
 import { FetchResult } from '@apollo/client';
 import { useCallback } from 'react';
 
+import { buildStatusUpdater } from '../buildStatusUpdater';
 import {
   CreateMediaMentionInput,
   MediaMentionsCountQueryVariables,
@@ -12,6 +13,7 @@ import {
   useAllMediaMentionsQuery,
   useCreateMediaMentionMutation,
   useDeleteMediaMentionMutation,
+  useMediaMentionByIdQuery,
   useMediaMentionsCountQuery,
   usePaginatedMediaMentionsQuery,
   usePublishedMediaMentionsQuery,
@@ -21,6 +23,9 @@ import {
 type QueryHookOptions = Readonly<{
   skip?: boolean;
 }>;
+
+export const useMediaMentionById = (id: string, options: QueryHookOptions = {}) =>
+  useMediaMentionByIdQuery({ variables: { id }, fetchPolicy: 'network-only', skip: options.skip || !id });
 
 // We should discuss on cache policy
 export const useAllMediaMentions = (filters?: MediaMentionsFiltersInput, options: QueryHookOptions = {}) => {
@@ -87,15 +92,7 @@ export const useUpdateMediaMentionStatus = (): [
   const status = data?.updateMediaMention.status; // Placeholder for current status
 
   const makeStatusUpdater = useCallback(
-    (status: MediaStatus) => {
-      return async (id: string, input?: { publishedAt?: string | null }) => {
-        const payload: UpdateMediaMentionInput = { status };
-        if (status === MediaStatus.Published) {
-          payload.publishedAt = input?.publishedAt ?? new Date().toISOString();
-        }
-        return mutate({ variables: { id, input: payload } });
-      };
-    },
+    (status: MediaStatus) => buildStatusUpdater(mutate, MediaStatus.Published)(status),
     [mutate]
   );
 

@@ -1,0 +1,10 @@
+:root {
+  --font-mulish: 'Mulish';
+  --font-oswald: 'Oswald';
+}
+
+html,
+body,
+#storybook-root {
+  font-family: var(--font-mulish), Arial, Helvetica, sans-serif;
+}

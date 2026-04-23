@@ -14,12 +14,12 @@ type BaseTitleDropdownProps = {
 };
 
 type MultilingualProps = BaseTitleDropdownProps & {
-  type?: 'multilingual';
+  type: 'multilingual';
   language?: 'UA' | 'EN';
 };
 
 type SeoProps = BaseTitleDropdownProps & {
-  type?: 'SEO';
+  type: 'SEO';
 };
 
 export type TitleDropdownProps = MultilingualProps | SeoProps;
@@ -31,7 +31,7 @@ export const TitleDropdown = (props: TitleDropdownProps) => {
 
   return (
     <Box sx={[styles.container, ...sxToArray(props.sx)]}>
-      <Typography sx={{ width: 320 }} noWrap variant="customBold20Tight" title={title}>
+      <Typography sx={{ maxWidth: 320 }} noWrap variant="customBold20Tight" title={title}>
         {title}
       </Typography>
 

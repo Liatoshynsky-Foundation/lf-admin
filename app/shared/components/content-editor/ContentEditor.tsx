@@ -12,7 +12,8 @@ export const ContentEditor = ({
   persistence,
   editorConfig,
   renderSaveButton,
-  onSaveComplete
+  onSaveComplete,
+  sx
 }: ContentEditorProps) => {
   const [content, setContent] = useState<Block[] | null>(() => deserializeContent(initialContent));
 
@@ -96,11 +97,13 @@ export const ContentEditor = ({
         onChange={handleContentChange}
         placeholder={editorConfig?.placeholder}
         editable={editorConfig?.editable}
+        sideMenu={editorConfig?.sideMenu}
         minHeight={editorConfig?.minHeight}
         fileUpload={editorConfig?.fileUpload}
         keyboardShortcuts={{
           onSave: () => void handleSave()
         }}
+        sx={sx}
       />
 
       {renderSaveButton?.({ onSave: () => void handleSave(), isSaving })}

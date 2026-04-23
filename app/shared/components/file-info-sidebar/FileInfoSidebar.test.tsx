@@ -3,6 +3,11 @@ import React from 'react';
 
 import { type FileDetailsSidebarFile, FileInfoSidebar } from './FileInfoSidebar';
 
+jest.mock('~/types/graphql/generated/graphql', () => ({
+  ...jest.requireActual('~/types/graphql/generated/graphql'),
+  useUpdateAssetMutation: () => [jest.fn(), { loading: false }]
+}));
+
 jest.mock('../design-system/tooltip/Tooltip', () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => <>{children}</>
@@ -42,6 +47,14 @@ jest.mock('~/public/icons/type-audio.svg', () => ({
 jest.mock('~/public/icons/type-pdf.svg', () => ({ __esModule: true, default: () => <svg data-testid="PdfIcon" /> }));
 jest.mock('~/public/icons/zoom-in.svg', () => ({ __esModule: true, default: () => <svg data-testid="ZoomInIcon" /> }));
 
+jest.mock('~/public/icons/doc.svg', () => ({ __esModule: true, default: () => <svg data-testid="DocIcon" /> }));
+jest.mock('~/public/icons/xls.svg', () => ({ __esModule: true, default: () => <svg data-testid="XlsIcon" /> }));
+jest.mock('~/public/icons/video-file.svg', () => ({
+  __esModule: true,
+  default: () => <svg data-testid="VideoIcon" />
+}));
+jest.mock('~/public/icons/zip.svg', () => ({ __esModule: true, default: () => <svg data-testid="ArchiveIcon" /> }));
+
 const commitMock = jest.fn();
 const setDraftMock = jest.fn();
 jest.mock('./useAutosavedDescription', () => ({
@@ -75,13 +88,7 @@ describe('FileInfoSidebar', () => {
 
   it('should render filename, meta, links, and description field', () => {
     render(
-      <FileInfoSidebar
-        file={baseFile}
-        onClose={jest.fn()}
-        onToggleStar={jest.fn()}
-        onDescriptionSave={jest.fn()}
-        onRequestAction={jest.fn()}
-      />
+      <FileInfoSidebar file={baseFile} onClose={jest.fn()} onDescriptionSave={jest.fn()} onRequestAction={jest.fn()} />
     );
 
     expect(screen.getByText('cat.png')).toBeInTheDocument();
@@ -105,16 +112,19 @@ describe('FileInfoSidebar', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it('should render ArchiveIcon when file type is archive', () => {
+    const archiveFile: FileDetailsSidebarFile = { ...baseFile, type: 'archive' };
+    render(<FileInfoSidebar file={archiveFile} onClose={jest.fn()} />);
+
+    const archiveIcons = screen.getAllByTestId('ArchiveIcon');
+    expect(archiveIcons.length).toBeGreaterThan(0);
+  });
+
   it('should disable actions when file is missing id', () => {
     const fileNoId = { ...baseFile, id: '' };
 
     render(
-      <FileInfoSidebar
-        file={fileNoId as FileDetailsSidebarFile}
-        onClose={jest.fn()}
-        onToggleStar={jest.fn()}
-        onRequestAction={jest.fn()}
-      />
+      <FileInfoSidebar file={fileNoId as FileDetailsSidebarFile} onClose={jest.fn()} onRequestAction={jest.fn()} />
     );
 
     expect(screen.getByLabelText('Додати в обрані')).toBeDisabled();
@@ -138,15 +148,6 @@ describe('FileInfoSidebar', () => {
     expect(onRequestAction).toHaveBeenCalledWith({ type: 'download', fileId: 'f1' });
 
     expect(onRequestAction).toHaveBeenCalledTimes(3);
-  });
-
-  it('should toggle star with correct next state', () => {
-    const onToggleStar = jest.fn();
-
-    render(<FileInfoSidebar file={baseFile} onClose={jest.fn()} onToggleStar={onToggleStar} />);
-
-    fireEvent.click(screen.getByLabelText('Додати в обрані'));
-    expect(onToggleStar).toHaveBeenCalledWith('f1', true);
   });
 
   it('should render preview image when previewUrl exists', () => {

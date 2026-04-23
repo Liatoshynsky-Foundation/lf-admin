@@ -19,5 +19,15 @@ export const styles = {
   },
   content: {
     gap: '8px'
+  },
+  iconWrapper: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    transition: 'opacity 0.2s',
+    '&:hover': {
+      opacity: 0.7
+    }
   }
 };

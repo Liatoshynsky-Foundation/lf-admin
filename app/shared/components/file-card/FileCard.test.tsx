@@ -2,10 +2,16 @@ import { fireEvent, render, screen } from '@testing-library/react';
 
 import FileCard, { FileCardData, FileType } from './FileCard';
 
+jest.mock('~/types/graphql/generated/graphql', () => ({
+  ...jest.requireActual('~/types/graphql/generated/graphql'),
+  useUpdateAssetMutation: () => [jest.fn(), { loading: false }]
+}));
+
 describe('FileCard', () => {
   const mockOnClick = jest.fn();
 
   const defaultFileData: FileCardData = {
+    id: 'test-file-123',
     name: 'Test Image.jpg',
     dateAdded: '2026-01-10',
     isStarred: false,
@@ -93,7 +99,7 @@ describe('FileCard', () => {
   });
 
   it('should render correct file type icon for different file types', () => {
-    const fileTypes: FileType[] = ['image', 'audio', 'pdf'];
+    const fileTypes: FileType[] = ['image', 'audio', 'pdf', 'document', 'spreadsheet', 'video', 'archive'];
 
     fileTypes.forEach((type) => {
       const { unmount } = render(<FileCard fileType={type} fileData={defaultFileData} />);

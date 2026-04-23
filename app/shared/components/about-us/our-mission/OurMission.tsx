@@ -16,10 +16,8 @@ import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 import { ConfigurableListItem } from '~/types/accordionBlocks';
 import { CropResult } from '~/types/common';
-import { useUploadBlobMutation } from '~/types/graphql/generated/graphql';
 import { MissionListItemWithId } from '~/types/store/pages/about-us/blocks/missionBlock';
 import { getImageUrl } from '~/utils/getImageUrl';
-import { handleUploadImage } from '~/utils/uploadToTmpFolder';
 
 export type MissionPoint = ConfigurableListItem & { value: string };
 
@@ -36,7 +34,7 @@ type MissionImageBlockProps = {
   locale: 'uk' | 'en';
   title: string;
   onChangeCaption: (value: string) => void;
-  onChangeImage: (file: File, crop?: CropResult | null) => void;
+  onChangeImage: (url: string, crop?: CropResult | null) => void;
 };
 
 const MissionImageBlock = ({ image, locale, title, onChangeCaption, onChangeImage }: MissionImageBlockProps) => (
@@ -63,7 +61,6 @@ const OurMission = () => {
   const pageId = PAGE_IDS.ABOUT_US;
   const blockId = BLOCK_IDS.OUR_MISSION;
   const currentLocale: 'uk' | 'en' = useStore((state) => state.locale);
-  const [uploadBlob] = useUploadBlobMutation();
 
   const { block } = usePageBlock(pageId, blockId);
   const setField = useStore((state) => state.setField);
@@ -109,18 +106,16 @@ const OurMission = () => {
     });
   };
 
-  const handleImageChange = async (key: 'smallImage' | 'bigImage', file: File, crop?: CropResult | null) => {
+  const handleImageChange = (key: 'smallImage' | 'bigImage', url: string, crop?: CropResult | null) => {
     const image = block[key];
     if (!image) return;
 
     setField(pageId, blockId, key, {
       ...image,
-      src: file.name,
-      isTmp: true,
+      src: url,
+      isTmp: false,
       crop: crop ?? null
     } as typeof image);
-
-    await handleUploadImage(file, pageId, blockId, key, uploadBlob, 'tmp');
   };
 
   return (
@@ -170,7 +165,7 @@ const OurMission = () => {
           locale={currentLocale}
           title="Перше зображення секції"
           onChangeCaption={(value) => handleCaptionChange('smallImage', value)}
-          onChangeImage={(file, crop) => handleImageChange('smallImage', file, crop)}
+          onChangeImage={(url, crop) => handleImageChange('smallImage', url, crop)}
         />
       )}
 
@@ -180,7 +175,7 @@ const OurMission = () => {
           locale={currentLocale}
           title="Друге зображення секції"
           onChangeCaption={(value) => handleCaptionChange('bigImage', value)}
-          onChangeImage={(file, crop) => handleImageChange('bigImage', file, crop)}
+          onChangeImage={(url, crop) => handleImageChange('bigImage', url, crop)}
         />
       )}
     </CollapsibleBlock>

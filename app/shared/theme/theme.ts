@@ -801,41 +801,53 @@ export const createAdminTheme = () =>
           {
             props: { color: 'default', variant: 'standard' },
             style: {
-              backgroundColor: 'transparent',
-              color: badgeColors.standardDefaultValue
+              '& .MuiBadge-badge': {
+                backgroundColor: 'transparent',
+                color: badgeColors.standardDefaultValue
+              }
             }
           },
           {
             props: { color: 'primary', variant: 'standard' },
             style: {
-              backgroundColor: badgeColors.standardPrimaryBg,
-              color: badgeColors.standardPrimaryValue
+              '& .MuiBadge-badge': {
+                backgroundColor: badgeColors.standardPrimaryBg,
+                color: badgeColors.standardPrimaryValue
+              }
             }
           },
           {
             props: { color: 'primary', variant: 'dot' },
             style: {
-              backgroundColor: badgeColors.dotPrimaryBg
+              '& .MuiBadge-badge': {
+                backgroundColor: badgeColors.dotPrimaryBg
+              }
             }
           },
           {
             props: { color: 'secondary', variant: 'standard' },
             style: {
-              backgroundColor: 'transparent',
-              color: badgeColors.standardSecondaryValue
+              '& .MuiBadge-badge': {
+                backgroundColor: 'transparent',
+                color: badgeColors.standardSecondaryValue
+              }
             }
           },
           {
             props: { color: 'error', variant: 'standard' },
             style: {
-              backgroundColor: badgeColors.standardErrorBg,
-              color: badgeColors.standardErrorValue
+              '& .MuiBadge-badge': {
+                backgroundColor: badgeColors.standardErrorBg,
+                color: badgeColors.standardErrorValue
+              }
             }
           },
           {
             props: { color: 'error', variant: 'dot' },
             style: {
-              backgroundColor: badgeColors.dotErrorBg
+              '& .MuiBadge-badge': {
+                backgroundColor: badgeColors.dotErrorBg
+              }
             }
           }
         ]

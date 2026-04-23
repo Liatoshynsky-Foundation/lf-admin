@@ -2,7 +2,8 @@
 
 import { useCallback } from 'react';
 
-import { EventsErrors } from '~/constants/errors'; 
+import { buildStatusUpdater } from '../buildStatusUpdater';
+import { EventsErrors } from '~/constants/errors';
 import { safeMutate } from '~/lib/utils/safeMutate';
 import {
   type CreateEventInput,
@@ -11,22 +12,30 @@ import {
   type DeleteEventMutationVariables,
   EventFiltersInput,
   EventStatus,
-  type UpdateEventInput,
   type UpdateEventMutation,
   type UpdateEventMutationVariables,
   useAllEventsQuery,
   useCreateEventMutation,
   useDeleteEventMutation,
+  useEventByIdQuery,
   useEventsCountQuery,
+  useIncrementEventViewsMutation,
   usePaginatedEventsQuery,
   usePublishedEventsQuery,
   useUpdateEventMutation} from '~/types/graphql/generated/graphql';
 
-export const useAllEvents = (filters?: EventFiltersInput) =>
-  useAllEventsQuery({ variables: { filters }, fetchPolicy: 'network-only' });
+type QueryHookOptions = Readonly<{
+  skip?: boolean;
+}>;
 
-export const usePublishedEvents = (filters?: EventFiltersInput) =>
-  usePublishedEventsQuery({ variables: { filters }, fetchPolicy: 'cache-first' });
+export const useEventById = (id: string, options: QueryHookOptions = {}) =>
+  useEventByIdQuery({ variables: { id }, fetchPolicy: 'network-only', skip: options.skip || !id });
+
+export const useAllEvents = (filters?: EventFiltersInput, options: QueryHookOptions = {}) =>
+  useAllEventsQuery({ variables: { filters }, fetchPolicy: 'network-only', skip: options.skip });
+
+export const usePublishedEvents = (filters?: EventFiltersInput, options: QueryHookOptions = {}) =>
+  usePublishedEventsQuery({ variables: { filters }, fetchPolicy: 'cache-first', skip: options.skip });
 
 export const usePaginatedEvents = (page = 1, limit = 10, filters?: EventFiltersInput) =>
   usePaginatedEventsQuery({ variables: { page, limit, filters }, fetchPolicy: 'network-only' });
@@ -35,7 +44,6 @@ export const useEventsCount = (status?: EventStatus) => useEventsCountQuery({ va
 
 export const useCreateEvent = () => {
   const [mutate, meta] = useCreateEventMutation();
-  
   const createEvent = useCallback(
     async (event: CreateEventInput) =>
       safeMutate<CreateEventMutation, CreateEventMutationVariables>(
@@ -46,13 +54,11 @@ export const useCreateEvent = () => {
       ),
     [mutate]
   );
-  
   return [createEvent, meta] as const;
 };
 
 export const useUpdateEvent = () => {
   const [mutate, meta] = useUpdateEventMutation();
-  
   const updateEvent = useCallback(
     async (variables: UpdateEventMutationVariables) =>
       safeMutate<UpdateEventMutation, UpdateEventMutationVariables>(
@@ -63,7 +69,6 @@ export const useUpdateEvent = () => {
       ),
     [mutate]
   );
-  
   return [updateEvent, meta] as const;
 };
 
@@ -72,15 +77,7 @@ export const useUpdateEventStatus = () => {
   const status = data?.updateEvent.status;
 
   const makeStatusUpdater = useCallback(
-    (status: EventStatus) => {
-      return async (id: string, input?: { publishedAt?: string | null }) => {
-        const payload: UpdateEventInput = { status };
-        if (status === EventStatus.Published) {
-          payload.publishedAt = input?.publishedAt ?? new Date().toISOString();
-        }
-        return mutate({ variables: { id, input: payload } });
-      };
-    },
+    (status: EventStatus) => buildStatusUpdater(mutate, EventStatus.Published)(status),
     [mutate]
   );
 
@@ -97,12 +94,16 @@ export const useUpdateEventStatus = () => {
 
 export const useDeleteEvent = () => {
   const [mutate, meta] = useDeleteEventMutation();
-  
   const deleteEvent = useCallback(
     async (variables: DeleteEventMutationVariables) =>
       safeMutate(mutate, variables, EventsErrors.NETWORK_ERROR_DELETE, EventsErrors.FAILED_TO_DELETE),
     [mutate]
   );
-  
   return [deleteEvent, meta] as const;
+};
+
+export const useIncrementEventViews = () => {
+  const [mutate, meta] = useIncrementEventViewsMutation();
+  const incrementViews = useCallback(async (id: string) => mutate({ variables: { id } }), [mutate]);
+  return [incrementViews, meta] as const;
 };

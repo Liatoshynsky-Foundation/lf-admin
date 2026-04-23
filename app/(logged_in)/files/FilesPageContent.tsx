@@ -1,13 +1,22 @@
 'use client';
 
-import { Box, Button, Typography } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import { Upload } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import {
   FILE_TABS,
-  FILES_ERROR_STATE_TEXT,
-  FILES_LOADING_STATE_TEXT,
+  FILES_EMPTY_STATE_DESCRIPTION,
+  FILES_EMPTY_STATE_NO_RESULTS_DESCRIPTION,
+  FILES_EMPTY_STATE_NO_RESULTS_TITLE,
+  FILES_EMPTY_STATE_TITLE,
+  FILES_ERROR_STATE_DESCRIPTION,
+  FILES_ERROR_STATE_TITLE,
+  FILES_FAVORITES_EMPTY_STATE_BUTTON,
+  FILES_FAVORITES_EMPTY_STATE_DESCRIPTION,
+  FILES_FAVORITES_EMPTY_STATE_TITLE,
+  FILES_LOADING_STATE_DESCRIPTION,
+  FILES_LOADING_STATE_TITLE,
   FILES_PAGE_TITLE,
   FILES_UNKNOWN_SECTION_LABEL,
   FILES_UPLOAD_ACCEPT,
@@ -20,6 +29,8 @@ import {
   type FilesTabValue
 } from '~/constants/files';
 import { readFileAsDataURL } from '~/lib/utils/readFileAsDataURL';
+import FavouriteStarIcon from '~/public/icons/favourite-star.svg';
+import { EmptyState } from '~/shared/components/empty-state';
 import {
   type FileDetailsSidebarFile,
   FileInfoSidebar,
@@ -60,7 +71,11 @@ type FilesPageContentProps = Readonly<{
 const assetCardTypeMap: Record<AssetType, FilesCardsLayoutItem['type']> = {
   [AssetType.Image]: 'image',
   [AssetType.Pdf]: 'pdf',
-  [AssetType.Audio]: 'audio'
+  [AssetType.Audio]: 'audio',
+  [AssetType.Document]: 'document',
+  [AssetType.Spreadsheet]: 'spreadsheet',
+  [AssetType.Video]: 'video',
+  [AssetType.Archive]: 'archive'
 };
 
 const supportedUploadMimeTypes = new Set<string>(FILES_UPLOAD_ALLOWED_MIME_TYPES);
@@ -203,6 +218,10 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
 
   const { filteredFiles, toolbarProps, sortProps } = useFilesFiltering(allFiles, activeTab);
 
+  const hasActiveCriteria = Boolean(toolbarProps.search?.search.trim()) || Boolean(toolbarProps.activeFiltersCount);
+  const isFavoritesTab = activeTab === 'favorites';
+  const hasNoFiles = !loading && !error && filteredFiles.length === 0;
+
   useEffect(() => {
     if (!filteredFiles.length) {
       setSelectedFileId(null);
@@ -252,7 +271,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
         display: 'flex',
         flexDirection: 'column',
         gap: '20px',
-        pr: { xs: 0, md: sidebarFile ? `${SIDEBAR_WIDTH + 12}px` : 0 },
+        pr: { xs: 0, md: sidebarFile ? `${SIDEBAR_WIDTH}px` : 0 },
         transition: 'padding-right 0.2s ease'
       }}
     >
@@ -294,10 +313,30 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
         bottomTrailingContent={<SortSelect {...sortProps} minWidth={208} dataTestId="files-sort-select" />}
       />
 
-      <FilesCardsLayout view={view} items={filteredFiles} onItemClick={(item) => setSelectedFileId(item.id)} />
+      {loading && <EmptyState title={FILES_LOADING_STATE_TITLE} description={FILES_LOADING_STATE_DESCRIPTION} />}
 
-      {loading && <Typography>{FILES_LOADING_STATE_TEXT}</Typography>}
-      {error && <Typography color="error">{FILES_ERROR_STATE_TEXT}</Typography>}
+      {!loading && error && <EmptyState title={FILES_ERROR_STATE_TITLE} description={FILES_ERROR_STATE_DESCRIPTION} />}
+
+      {!loading && !error && filteredFiles.length > 0 && (
+        <FilesCardsLayout view={view} items={filteredFiles} onItemClick={(item) => setSelectedFileId(item.id)} />
+      )}
+
+      {hasNoFiles && isFavoritesTab && !hasActiveCriteria && (
+        <EmptyState
+          title={FILES_FAVORITES_EMPTY_STATE_TITLE}
+          description={FILES_FAVORITES_EMPTY_STATE_DESCRIPTION}
+          icon={<FavouriteStarIcon />}
+          action={{ label: FILES_FAVORITES_EMPTY_STATE_BUTTON, href: '/files' }}
+        />
+      )}
+
+      {hasNoFiles && hasActiveCriteria && (
+        <EmptyState title={FILES_EMPTY_STATE_NO_RESULTS_TITLE} description={FILES_EMPTY_STATE_NO_RESULTS_DESCRIPTION} />
+      )}
+
+      {hasNoFiles && !isFavoritesTab && !hasActiveCriteria && (
+        <EmptyState title={FILES_EMPTY_STATE_TITLE} description={FILES_EMPTY_STATE_DESCRIPTION} />
+      )}
 
       {sidebarFile && <FileInfoSidebar file={sidebarFile} onClose={() => setSelectedFileId(null)} />}
 
