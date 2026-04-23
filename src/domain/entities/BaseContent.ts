@@ -16,7 +16,7 @@ export type LocalizedContent = {
 };
 
 export type LocalizedImage = {
-  src: LocalizedString;
+  src: string;
   alt: LocalizedString;
   caption?: LocalizedString;
   isTmp?: boolean;

@@ -16,10 +16,7 @@ const FALLBACK_IMAGE_SRC = '/images/image.png';
 interface ContentCardProps {
   type: ContentType;
   coverImage: {
-    src: {
-      uk: string;
-      en: string;
-    };
+    src: string;
     alt: {
       uk: string;
       en: string;

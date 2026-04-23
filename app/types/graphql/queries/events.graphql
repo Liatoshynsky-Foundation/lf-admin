@@ -25,10 +25,7 @@ fragment EventFields on Event {
     en
   }
   coverImage {
-    src {
-      uk
-      en
-    }
+    src 
     alt {
       uk
       en
@@ -99,10 +96,7 @@ query PublishedEvents($filters: EventFiltersInput) {
     }
     slug
     coverImage {
-      src {
-        uk
-        en
-      }
+      src 
       alt {
         uk
         en
@@ -134,10 +128,7 @@ query PaginatedEvents($page: Int!, $limit: Int!, $filters: EventFiltersInput) {
         en
       }
       coverImage {
-        src {
-          uk
-          en
-        }
+        src 
         alt {
           uk
           en
