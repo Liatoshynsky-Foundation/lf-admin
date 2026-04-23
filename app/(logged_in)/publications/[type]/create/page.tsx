@@ -141,7 +141,7 @@ export default function CreatePublicationPage() {
         const result = await createEvent({
           ...commonInput,
           eventLink: adminTitle,
-          content: { uk: {}, en: {} },
+          content: { uk: { content: { blocks: [] } }, en: { content: { blocks: [] } } },
           eventDateTimeStart: ukMeta.startDateTime ?? undefined,
           eventDateTimeEnd: ukMeta.endDateTime ?? undefined,
           ticketUrl: seoValue.ticketUrl ?? undefined,
@@ -152,7 +152,7 @@ export default function CreatePublicationPage() {
       } else if (publicationType === 'news') {
         const result = await createNews({
           ...commonInput,
-          content: { uk: {}, en: {} },
+          content: { uk: {content: {blocks: []}}, en: {content: {blocks: []}} },
           newsDate: publishDate?.toISOString() ?? undefined,
           status: NewsStatus.Draft
         });

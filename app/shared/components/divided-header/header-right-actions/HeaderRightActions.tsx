@@ -1,4 +1,4 @@
-import { Box, Button, ButtonGroup, IconButton, Stack, SxProps, Theme } from '@mui/material';
+import { Box, Button, IconButton, Stack, SxProps, Theme } from '@mui/material';
 import { ChevronDown, EyeIcon } from 'lucide-react';
 import React, { MouseEvent } from 'react';
 
@@ -61,9 +61,7 @@ export default function HeaderRightActions(props: HeaderRightActionsProps) {
             <EyeIcon size={24} strokeWidth={1.5} />
           </IconButton>
 
-          <ButtonGroup
-            variant="contained"
-            disableElevation
+          <Box
             sx={styles.group}
             role="group"
             aria-label="Дії публікації"
@@ -74,7 +72,7 @@ export default function HeaderRightActions(props: HeaderRightActionsProps) {
             <IconButton aria-label="Відкрити меню параметрів" onClick={props.onMenuOpen} sx={styles.groupRight}>
               <ChevronDown size={20} />
             </IconButton>
-          </ButtonGroup>
+          </Box>
         </>
       );
 

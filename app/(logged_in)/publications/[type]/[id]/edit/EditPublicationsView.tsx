@@ -1,0 +1,182 @@
+import { Box, Chip, Divider, ListSubheader, Menu, MenuItem, Typography } from '@mui/material';
+import { MouseEvent, useState } from 'react';
+
+import { styles } from './EditPublicationsView.styles';
+import {
+  ACTIONS_TYPE,
+  EditorLanguage,
+  HEADER_MENU_OPTIONS,
+  LANGUAGE_OPTIONS,
+  LocalizedEditorState,
+  MenuActionId,
+  PUBLICATIONS_BASE_PATH,
+  PublicationsChipLabels,
+  PublicationsItemType
+} from '~/constants/publications';
+import { ContentEditor, isContentEmpty, SerializedContent } from '~/shared/components/content-editor';
+import DividedHeader from '~/shared/components/divided-header/DividedHeader';
+import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
+import { TitleDropdown } from '~/shared/components/divided-header/title-dropdown/TitleDropdown';
+
+type AnchorId = 'navigation' | 'publish';
+type MenuAnchor = Partial<Record<AnchorId, HTMLButtonElement>>;
+
+export type PublicationViewData = {
+  adminTitle?: string | null;
+};
+
+export type EditPublicationsViewProps = {
+  type: PublicationsItemType;
+  isLoading: boolean;
+  currentData: PublicationViewData | null | undefined;
+  editedContent: LocalizedEditorState | null;
+  editorResetKey: number;
+  currentLanguage: EditorLanguage; 
+  onLanguageChange: (lang: EditorLanguage) => void;
+  onEditorChange: (content: SerializedContent, localeKey: 'uk' | 'en') => void;
+  onAction: (actionId: MenuActionId) => void;
+  onSeoClick: () => void;
+};
+
+export function EditPublicationsView({
+  type,
+  isLoading,
+  currentData,
+  editedContent,
+  editorResetKey,
+  currentLanguage,
+  onLanguageChange,
+  onEditorChange,
+  onAction,
+  onSeoClick
+}: Readonly<EditPublicationsViewProps>) {
+  const [anchors, setAnchors] = useState<MenuAnchor>({});
+
+  const localeKey = currentLanguage === 'UA' ? 'uk' : 'en';
+
+  const handleOpen = (event: MouseEvent<HTMLElement>, id: AnchorId) =>
+    setAnchors((prev) => ({ ...prev, [id]: event.currentTarget as HTMLButtonElement }));
+  const handleClose = (id: AnchorId) => setAnchors((prev) => ({ ...prev, [id]: undefined }));
+
+  const handlePublishActionClick = (actionId: MenuActionId) => {
+    onAction(actionId);
+    handleClose('publish');
+  };
+
+  if (isLoading || editedContent === null) return <Box sx={{ p: 4 }}>{'Завантаження...'}</Box>;
+
+  const initialBlocks = editedContent[localeKey]?.content?.blocks;
+  const isContentValid = Array.isArray(initialBlocks) && initialBlocks.length;
+  const publishActions = (HEADER_MENU_OPTIONS.baseActions as ACTIONS_TYPE[]).filter(
+    (a) => a.id !== MenuActionId.PUBLISH
+  );
+
+  return (
+    <Box sx={styles.container}>
+      <DividedHeader
+        sx={styles.header}
+        originUrl={PUBLICATIONS_BASE_PATH}
+        rightActionsComponent={
+          <HeaderRightActions
+            mode={type === 'media' ? 'seo' : 'edit'}
+            onMenuOpen={(e) => handleOpen(e, 'publish')}
+            onPublish={() => handlePublishActionClick(MenuActionId.PUBLISH)}
+          />
+        }
+      >
+        {type === 'media' ? (
+          <Typography variant="customBold20Tight">{'Редагування Ми у ЗМІ'}</Typography>
+        ) : (
+          <TitleDropdown
+            type="multilingual"
+            language={currentLanguage}
+            title={currentData?.adminTitle ?? ''}
+            onMenuOpen={(e) => handleOpen(e, 'navigation')}
+          />
+        )}
+        <Chip sx={styles.chip(type)} label={PublicationsChipLabels[type]} />
+        <Chip sx={styles.chip('draft')} label="Чернетка" />
+      </DividedHeader>
+
+      <Box sx={styles.mainContent}>
+        {type !== 'media' && (
+          <ContentEditor
+            initialContent={isContentValid ? initialBlocks : undefined}
+            key={`${currentLanguage}-${editorResetKey}`}
+            persistence={{
+              onChange: (content) => onEditorChange(content, localeKey)
+            }}
+            sx={styles.contentEditor}
+            editorConfig={{ sideMenu: true }}
+          />
+        )}
+      </Box>
+
+      <Menu
+        anchorEl={anchors['navigation']}
+        open={Boolean(anchors['navigation'])}
+        onClose={() => handleClose('navigation')}
+        disableScrollLock
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        slotProps={{ paper: { sx: { width: 205 } } }}
+        sx={styles.menu}
+      >
+        <ListSubheader sx={styles.menuSubheader}>
+          <Typography variant="customMedium14Tight">{'Мовні версії'}</Typography>
+        </ListSubheader>
+
+        {LANGUAGE_OPTIONS.map(({ locale, key, label }) => {
+          const blocks = editedContent?.[key]?.content?.blocks;
+          const isDraft = !isContentEmpty(blocks);
+
+          return (
+            <MenuItem
+              key={key}
+              onClick={() => {
+                onLanguageChange(locale);
+                handleClose('navigation');
+              }}
+              sx={styles.menuItem}
+            >
+              <Typography variant="customMedium16">{label}</Typography>
+              {isDraft && (
+                <Typography variant="customItalic14" sx={styles.draftCaption}>
+                  {'(чернетка)'}
+                </Typography>
+              )}
+            </MenuItem>
+          );
+        })}
+
+        <Divider sx={{ my: '7px' }} />
+        <MenuItem
+          onClick={() => {
+            onSeoClick();
+            handleClose('navigation');
+          }}
+          sx={styles.menuItem}
+        >
+          <Typography variant="customMedium16">{'SEO налаштування'}</Typography>
+        </MenuItem>
+      </Menu>
+
+      <Menu
+        anchorEl={anchors['publish']}
+        open={Boolean(anchors['publish'])}
+        onClose={() => handleClose('publish')}
+        disableScrollLock
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        slotProps={{ paper: { sx: { width: 260 } } }}
+        sx={styles.menu}
+      >
+        {publishActions.map((action) => (
+          <MenuItem sx={styles.menuItem} key={action.id} onClick={() => handlePublishActionClick(action.id)}>
+            <Typography variant="customMedium16">{action.label}</Typography>
+          </MenuItem>
+        ))}
+      </Menu>
+    </Box>
+  );
+}
