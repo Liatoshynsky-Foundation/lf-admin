@@ -172,13 +172,13 @@ const toLocalizedString = (value: MaybeLocalizedValue, fallback = ''): Localized
     return {
       uk: localizedValue,
       en: localizedValue
-    };
+    } as const;
   }
 
   const uk = value?.uk?.trim() || value?.en?.trim() || fallback;
   const en = value?.en?.trim() || value?.uk?.trim() || fallback;
 
-  return { uk, en };
+  return { uk, en } as const;
 };
 
 const getSortableDate = (...values: Array<string | null | undefined>): string => {
@@ -248,7 +248,7 @@ const mapNewsItem = (item: NewsItem): PublicationCardItem | null => {
     language: getLanguageFromLocalizedValue(title),
     coverImage: {
       src: coverImage?.src || DEFAULT_COVER_IMAGE,
-      alt: toLocalizedString(coverImage?.alt.en || coverImage?.alt.uk, titleText || DEFAULT_COVER_ALT)
+      alt: toLocalizedString(coverImage?.alt, titleText || DEFAULT_COVER_ALT)
     }
   };
 };
@@ -284,7 +284,7 @@ const mapMediaMentionItem = (item: MediaMentionItem): PublicationCardItem | null
     language: getLanguageFromLocalizedValue(titleData),
     coverImage: {
       src: item.coverImage?.src || DEFAULT_COVER_IMAGE,
-      alt: toLocalizedString(item.coverImage?.alt.en || item.coverImage?.alt.uk, titleText || DEFAULT_COVER_ALT)
+      alt: toLocalizedString(item.coverImage?.alt, titleText || DEFAULT_COVER_ALT)
     }
   };
 };
