@@ -1,8 +1,9 @@
-import { IconButton, Paper, Stack, Typography } from '@mui/material';
+import { Box, IconButton, Paper, Stack, Typography } from '@mui/material';
 import Image from 'next/image';
 import { MouseEvent } from 'react';
 
 import { styles } from '~/components/minimized-file-card/MinimizedFileCard.styles';
+import { useUpdateAssetMutation } from '~/types/graphql/generated/graphql';
 
 const ICON_SIZE = 21;
 
@@ -19,6 +20,7 @@ const FILE_TYPES = {
 type FileType = keyof typeof FILE_TYPES;
 
 interface MinimizedFileCardProps {
+  id: string;
   fileType?: FileType;
   starred?: boolean;
   linked?: boolean;
@@ -29,6 +31,7 @@ interface MinimizedFileCardProps {
 }
 
 const MinimizedFileCard = ({
+  id,
   fileType = FILE_TYPES.img,
   starred = false,
   linked = false,
@@ -37,9 +40,23 @@ const MinimizedFileCard = ({
   onClick,
   onMenuClick
 }: MinimizedFileCardProps) => {
+  const [updateAsset, { loading: isUpdatingStar }] = useUpdateAssetMutation();
+
   const handleMenuClick = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     onMenuClick?.(e);
+  };
+
+  const handleStarClick = async (e: MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    try {
+      await updateAsset({
+        variables: {
+          id,
+          input: { isStarred: !starred }
+        }
+      });
+    } catch {}
   };
 
   return (
@@ -56,8 +73,18 @@ const MinimizedFileCard = ({
           {name}
         </Typography>
 
-        <Stack direction="row" gap={'10px'}>
-          {starred && <Image src="/icons/star.svg" width={ICON_SIZE} height={ICON_SIZE} alt="Starred file" />}
+        <Stack direction="row" gap={'10px'} alignItems="center">
+          {starred && (
+            <Box
+              onClick={handleStarClick}
+              sx={{
+                ...styles.iconWrapper,
+                cursor: isUpdatingStar ? 'wait' : 'pointer'
+              }}
+            >
+              <Image src="/icons/star-1.svg" width={ICON_SIZE} height={ICON_SIZE} alt="Starred file" />
+            </Box>
+          )}
           {linked && <Image src="/icons/link.svg" width={ICON_SIZE} height={ICON_SIZE} alt="Linked file" />}
         </Stack>
       </Stack>
