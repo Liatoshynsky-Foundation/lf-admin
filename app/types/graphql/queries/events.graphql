@@ -50,6 +50,9 @@ fragment EventFields on Event {
   meta {
     views
   }
+  ticketUrl { uk en}
+  eventDateTimeStart
+  eventDateTimeEnd
 }
 
 query EventById($id: ID!) {
@@ -81,6 +84,9 @@ query AllEvents($filters: EventFiltersInput) {
     meta {
       views
     }
+  ticketUrl { uk en}
+    eventDateTimeStart
+    eventDateTimeEnd
   }
 }
 
@@ -109,6 +115,9 @@ query PublishedEvents($filters: EventFiltersInput) {
     meta {
       views
     }
+  ticketUrl { uk en}
+    eventDateTimeStart
+    eventDateTimeEnd
   }
 }
 
