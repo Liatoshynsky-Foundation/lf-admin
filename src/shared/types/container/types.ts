@@ -1,4 +1,4 @@
-import { CookieSerializeOptions } from 'cookie';
+import { SerializeOptions } from 'cookie';
 
 import { AdminTokenPayload } from '~/back-shared/types/tokens/types';
 import { AwilixContainerType } from '~/container/index';
@@ -7,7 +7,7 @@ export interface CookieToAction {
   action: 'set' | 'delete';
   name: string;
   value?: string;
-  options?: CookieSerializeOptions;
+  options?: SerializeOptions;
 }
 
 export interface GraphQLContext {
@@ -15,6 +15,6 @@ export interface GraphQLContext {
   admin: AdminTokenPayload | null;
   refreshTokenFromCookie?: string;
   cookieActions: CookieToAction[];
-  setCookie: (name: string, value: string, options?: CookieSerializeOptions) => void;
-  deleteCookie: (name: string, options?: CookieSerializeOptions) => void;
+  setCookie: (name: string, value: string, options?: SerializeOptions) => void;
+  deleteCookie: (name: string, options?: SerializeOptions) => void;
 }

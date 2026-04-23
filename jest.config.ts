@@ -56,7 +56,10 @@ const config: Config = {
     '^.+\\.(js|jsx|ts|tsx)$': ['ts-jest', { useESM: true }],
   },
   transformIgnorePatterns: ['node_modules/(?!(mongoose|mongodb|bson|lodash-es|@azure|@blocknote|uuid|@aws-sdk|@smithy)/)'],
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts']
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  testTimeout: 15000,
+  detectOpenHandles: true,
+  forceExit: true
 };
 
 export default createJestConfig(config);

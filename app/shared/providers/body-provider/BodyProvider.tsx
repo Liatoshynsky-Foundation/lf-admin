@@ -1,9 +1,7 @@
 import type { Metadata } from 'next';
 import { Mulish, Oswald } from 'next/font/google';
 
-import { ThemeProvider } from '../../../providers/ThemeProvider';
-import { ApolloClientProvider } from '~/providers/apollo-client-provider/apolloClientProvider';
-import EmotionProvider from '~/providers/EmotionProvider';
+import { AppProviders } from '../AppProviders';
 
 const mulish = Mulish({
   subsets: ['latin', 'cyrillic'],
@@ -28,11 +26,7 @@ export default function BodyProvider({ children }: Readonly<{ children: React.Re
   return (
     <html lang="en" className={`${mulish.variable} ${oswald.variable}`} suppressHydrationWarning>
       <body suppressHydrationWarning>
-        <EmotionProvider>
-          <ThemeProvider>
-            <ApolloClientProvider>{children}</ApolloClientProvider>
-          </ThemeProvider>
-        </EmotionProvider>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );
