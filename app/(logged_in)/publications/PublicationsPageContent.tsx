@@ -46,7 +46,7 @@ type PublicationsPageContentProps = Readonly<{
 
 type PublicationCardImage = {
   src: string;
-  alt: LocalizedString;
+  alt: string | LocalizedString;
 };
 
 type PublicationCardItem = {
