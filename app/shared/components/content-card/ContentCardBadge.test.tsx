@@ -11,6 +11,11 @@ jest.mock('./ContentCardBadge', () => ({
 describe('ContentCard Component', () => {
   const mockProps = {
     type: 'news' as const,
+    coverImage: {
+      src: { uk: '/test-cover.jpg', en: '/test-cover.jpg' },
+      alt: { uk: 'Опис фото', en: 'Photo description' }
+    },
+    title: { uk: 'Український заголовок', en: 'English Title' },
     status: 'published',
     localizations: ['en', 'fr']
   };

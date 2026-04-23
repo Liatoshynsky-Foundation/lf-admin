@@ -2,9 +2,9 @@
 
 import 'dayjs/locale/uk';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { Box, Checkbox, Divider, FormControlLabel, Stack, Typography } from '@mui/material';
+import { Box, Checkbox, Divider, FormControlLabel, Stack, TextField, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { SeoBaseFields } from './seo-base-fields/SeoBaseFields';
 import { styles } from './SeoMetadataForm.styles';
@@ -25,12 +25,14 @@ export interface SeoMetadataFormProps {
   readonly value: LocalizedMeta;
   readonly onChange: (value: LocalizedMeta) => void;
   readonly locale: 'uk' | 'en';
-  readonly ogImage: File | string | null;
-  readonly onImageChange: (file: File) => void;
+  readonly ogImage: string | null;
+  readonly onImageChange: (url: string) => void;
   readonly allowIndexing: boolean;
   readonly onIndexingChange: (val: boolean) => void;
   readonly showAlternativeText?: boolean;
-  readonly extraFields?: ReactNode;
+  readonly extraFieldsBeforeKeywords?: boolean;
+  readonly forceShowErrors?: boolean;
+  readonly extraFields?: (value: LocalizedMeta, onChange: (val: LocalizedMeta) => void) => ReactNode;
   readonly labels?: {
     readonly metaTitle?: string;
     readonly metaDescription?: string;
@@ -51,12 +53,30 @@ export default function SeoMetadataForm({
   allowIndexing,
   onIndexingChange,
   showAlternativeText = false,
+  extraFieldsBeforeKeywords = false,
+  forceShowErrors = false,
   extraFields,
   labels = {}
 }: SeoMetadataFormProps) {
+  const getFileNameFromUrl = (url: string | null) =>
+    url ? url.split('/').pop()?.split('?')[0] : undefined;
+
   const [ogImagePreview, setOgImagePreview] = useState<string | null>(typeof ogImage === 'string' ? ogImage : null);
+  const [displayFileName, setDisplayFileName] = useState<string | undefined>(getFileNameFromUrl(ogImage));
+  const [isUploading, setIsUploading] = useState(false);
   const [touched, setTouched] = useState<Partial<Record<keyof LocalizedMeta, boolean>>>({});
   const [errors, setErrors] = useState<Partial<Record<keyof LocalizedMeta, string>>>({});
+
+  useEffect(() => {
+    if (!forceShowErrors) return;
+    setTouched((prev) => ({ ...prev, title: true, description: true }));
+    setErrors((prev) => ({
+      ...prev,
+      title: validateField('title', value.title),
+      description: validateField('description', value.description)
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forceShowErrors]);
 
   const validateField = (field: keyof LocalizedMeta, val: string) => {
     switch (field) {
@@ -92,9 +112,15 @@ export default function SeoMetadataForm({
     if (touched[field]) setErrors((prev) => ({ ...prev, [field]: validateField(field, val) }));
   };
 
-  const handleImageChange = (file: File) => {
-    setOgImagePreview(URL.createObjectURL(file));
-    onImageChange(file);
+  const handleImageChange = async (url: string) => {
+    setIsUploading(true);
+    setOgImagePreview(url);
+    const fileNameFromUrl = url.split('/').pop()?.split('?')[0];
+    setDisplayFileName(fileNameFromUrl || 'image');
+
+    onImageChange(url);
+
+    setIsUploading(false);
   };
 
   const renderPhotoBlock = () => (
@@ -110,8 +136,9 @@ export default function SeoMetadataForm({
       </Box>
       <PhotoBlock
         imageUrl={ogImagePreview || ''}
-        fileName={typeof ogImage === 'string' ? ogImage : ogImage?.name}
+        fileName={displayFileName}
         onChangeImage={handleImageChange}
+        disabled={isUploading}
         buttonSpacing="8px"
         stackSpacing="0"
         typographySpacing="4px"
@@ -146,9 +173,25 @@ export default function SeoMetadataForm({
           touched={touched}
           onFieldChange={handleFieldChange}
           onBlur={handleBlur}
+          showKeywords={!extraFieldsBeforeKeywords}
           labels={labels}
         />
-        {extraFields}
+        {extraFields?.(value, onChange)}
+        {extraFieldsBeforeKeywords && (
+          <TextField
+            label={labels.metaKeywords || 'Meta keywords'}
+            value={value.keywords || ''}
+            onChange={(e) => handleFieldChange('keywords', e.target.value)}
+            onBlur={() => handleBlur('keywords')}
+            error={Boolean(errors.keywords && touched.keywords)}
+            helperText={errors.keywords && touched.keywords ? errors.keywords : ''}
+            fullWidth
+            sx={styles.textField}
+            multiline
+            minRows={2}
+            maxRows={2}
+          />
+        )}
       </Stack>
       {renderPhotoBlock()}
       <Divider sx={styles.divider} />

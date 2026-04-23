@@ -8,7 +8,6 @@ import { MediaModalSwitcher } from '../components/switcher/MediaModalSwitcher';
 import type { MediaModalRenderers } from '../MediaModal.renderers';
 import { styles } from '../MediaModal.styles';
 import type {
-  CropResult,
   MediaModalOpenState,
   MediaModalResult,
   MediaModalTab,
@@ -20,6 +19,7 @@ import { useMediaModalApply } from './useMediaModalApply';
 import ArrowLeftIcon from '~/public/icons/arrowLeft.svg';
 import IterationIcon from '~/public/icons/iteration.svg';
 import Button from '~/shared/components/design-system/button/Button';
+import type { CropResult } from '~/types/common';
 
 export type MediaModalFlowProps = {
   open: boolean;
@@ -27,6 +27,7 @@ export type MediaModalFlowProps = {
   onApply: (result: MediaModalResult) => void | Promise<void>;
   initial?: MediaModalOpenState;
   renderers: MediaModalRenderers;
+  directory?: string;
 };
 
 const isNonImageUploadSelection = (selected: SelectedMedia | null): boolean => {
@@ -37,11 +38,11 @@ const isNonImageUploadSelection = (selected: SelectedMedia | null): boolean => {
   return !isImageUploadFile(selected.file);
 };
 
-export function MediaModalFlow({ open, onClose, onApply, initial, renderers }: Readonly<MediaModalFlowProps>) {
+export function MediaModalFlow({ open, onClose, onApply, initial, renderers, directory }: Readonly<MediaModalFlowProps>) {
   const [state, dispatch] = useReducer(reducer, initial, buildInitialState);
 
   const { isApplying, applyError, clearApplyState, clearApplyError, cancelInFlightApply, handleClose, runApply } =
-    useMediaModalApply({ open, onClose, onApply });
+      useMediaModalApply({ open, onClose, onApply, directory });
 
   const latestInitialRef = useRef<MediaModalOpenState | undefined>(initial);
   useEffect(() => {

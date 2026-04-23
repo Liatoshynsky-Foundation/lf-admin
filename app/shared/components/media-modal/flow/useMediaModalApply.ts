@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { MediaModalResult } from '../MediaModal.types';
+import {useUpload} from '~/hooks/use-upload/useUpload';
 
 type Args = {
   open: boolean;
   onClose: () => void;
   onApply: (result: MediaModalResult) => void | Promise<void>;
+  directory?: string;
 };
 
 type Return = {
@@ -20,9 +22,11 @@ type Return = {
   runApply: (result: MediaModalResult) => Promise<void>;
 };
 
-export function useMediaModalApply({ open, onClose, onApply }: Readonly<Args>): Return {
+export function useMediaModalApply({ open, onClose, onApply, directory }: Readonly<Args>): Return {
   const [isApplying, setIsApplying] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
+
+  const { uploadFile } = useUpload();
 
   const openRef = useRef(open);
   useEffect(() => {
@@ -61,7 +65,17 @@ export function useMediaModalApply({ open, onClose, onApply }: Readonly<Args>): 
       setApplyError(null);
 
       try {
-        await onApply(result);
+        let enrichedResult = result;
+
+        if (result.selected.kind === 'upload') {
+          const uploadResult = await uploadFile(result.selected.file, { directory });
+
+          if (!isCurrent()) return;
+
+          enrichedResult = { ...result, uploadResult };
+        }
+
+        await onApply(enrichedResult);
 
         if (isCurrent()) {
           handleClose();
@@ -76,7 +90,7 @@ export function useMediaModalApply({ open, onClose, onApply }: Readonly<Args>): 
         }
       }
     },
-    [handleClose, isApplying, onApply]
+    [directory, handleClose, isApplying, onApply, uploadFile]
   );
 
   return {

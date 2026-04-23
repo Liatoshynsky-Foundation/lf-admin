@@ -117,10 +117,24 @@ const getAssetSort = (filters?: AssetFilters): Record<string, 1 | -1> => {
   };
 };
 
-export const AssetRepository = ({ AssetModel }: AssetRepoDeps) =>
-  createBaseRepository<AssetEntity, DbAsset, AssetFilters>({
+export type UpdateAssetData = Partial<Pick<AssetEntity, 'isStarred' | 'filename' | 'description'>>;
+
+export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
+  const baseRepo = createBaseRepository<AssetEntity, DbAsset, AssetFilters>({
     model: AssetModel,
     toEntity,
     buildQuery: buildAssetQuery,
     getDefaultSort: getAssetSort
   });
+
+  const updateAsset = async (id: string, data: UpdateAssetData): Promise<AssetEntity | null> => {
+    const updatedDoc = await AssetModel.findByIdAndUpdate(id, { $set: data }, { new: true });
+
+    return updatedDoc ? toEntity(updatedDoc) : null;
+  };
+
+  return {
+    ...baseRepo,
+    updateAsset
+  };
+};

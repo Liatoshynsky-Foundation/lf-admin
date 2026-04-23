@@ -13,7 +13,7 @@ import { LocalizedString } from '~/types/common';
 
 const toLocalized = (value: string): LocalizedString => ({
   uk: value,
-  en: value,
+  en: value
 });
 
 export default async function parseMediaMention(
@@ -41,14 +41,12 @@ export default async function parseMediaMention(
     keywords: toLocalized(''),
     allowIndexation: { uk: true, en: true },
     coverImage: {
-      src: parsed.image.src,
-      alt: toLocalized(parsed.image.alt || parsed.title),
+      src: { uk: parsed.image.src, en: parsed.image.src },
+      alt: toLocalized(parsed.image.alt || parsed.title)
     },
-    publishedAt: parsed.published_time
-      ? new Date(parsed.published_time).toISOString()
-      : now,
+    publishedAt: parsed.published_time ? new Date(parsed.published_time).toISOString() : now,
     createdAt: now,
-    updatedAt: now,
+    updatedAt: now
   };
 }
 

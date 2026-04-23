@@ -1,7 +1,7 @@
 'use client';
 
 import 'react-image-crop/dist/ReactCrop.css';
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import ReactCrop, { PixelCrop } from 'react-image-crop';
 
@@ -22,9 +22,14 @@ const forCropAngle = Math.min(MOCK_SERVER_DATA.width, MOCK_SERVER_DATA.height) *
 export function CropView({ selected, crop: stateCrop, resetSeq, onBaseline, onChange }: Readonly<CropRendererProps>) {
   const uploadFile = selected.kind === 'upload' ? selected.file : null;
   const [uploadObjectUrl, setUploadObjectUrl] = useState('');
+  const [imgError, setImgError] = useState(false);
 
   const [crop, setCrop] = useState<PixelCrop>();
   const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [selected.id]);
 
   useEffect(() => {
     if (!uploadFile) {
@@ -127,6 +132,75 @@ export function CropView({ selected, crop: stateCrop, resetSeq, onBaseline, onCh
     });
   };
 
+  const renderImage = () => {
+    if (!previewSrc) return null;
+
+    if (imgError) {
+      return (
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 1,
+            p: 4,
+            color: 'text.secondary'
+          }}
+        >
+          <Typography variant="body2">
+              Не вдалося завантажити зображення
+          </Typography>
+          <Typography variant="caption" sx={{ wordBreak: 'break-all', opacity: 0.6 }}>
+            {previewSrc}
+          </Typography>
+        </Box>
+      );
+    }
+
+    return (
+      <Box
+        sx={{
+          width: '100%',
+          flex: 1,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}
+      >
+        <ReactCrop
+          crop={crop}
+          onChange={handleCropChange}
+          onComplete={handleComplete}
+          keepSelection
+          ruleOfThirds
+          style={{
+            maxWidth: '100%',
+            display: 'block'
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            ref={imgRef}
+            src={previewSrc}
+            alt=""
+            onLoad={onImageLoad}
+            onError={() => {
+              setImgError(true);
+            }}
+            style={{
+              maxWidth: '100%',
+              height: 'auto',
+              display: 'block'
+            }}
+          />
+        </ReactCrop>
+      </Box>
+    );
+  };
+
   return (
     <Box
       data-testid="CropView"
@@ -180,44 +254,7 @@ export function CropView({ selected, crop: stateCrop, resetSeq, onBaseline, onCh
         }
       }}
     >
-      {previewSrc ? (
-        <Box
-          sx={{
-            width: '100%',
-            flex: 1,
-            overflowY: 'auto',
-            overflowX: 'hidden',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}
-        >
-          <ReactCrop
-            crop={crop}
-            onChange={handleCropChange}
-            onComplete={handleComplete}
-            keepSelection
-            ruleOfThirds
-            style={{
-              maxWidth: '100%',
-              display: 'block'
-            }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              ref={imgRef}
-              src={previewSrc}
-              alt=""
-              onLoad={onImageLoad}
-              style={{
-                maxWidth: '100%',
-                height: 'auto',
-                display: 'block'
-              }}
-            />
-          </ReactCrop>
-        </Box>
-      ) : null}
+      {renderImage()}
     </Box>
   );
 }

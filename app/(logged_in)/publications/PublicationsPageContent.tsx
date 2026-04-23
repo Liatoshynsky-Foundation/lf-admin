@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Button, MenuItem, Typography } from '@mui/material';
+import { Box, Button, MenuItem } from '@mui/material';
 import { ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useRef, useState } from 'react';
@@ -29,6 +29,7 @@ import {
 import ContentCard, { type ContentType } from '~/shared/components/content-card/ContentCard';
 import { colors } from '~/shared/components/design-system/button/Button.styles';
 import DropdownMenu from '~/shared/components/dropdown-menu/DropdownMenu';
+import { EmptyState } from '~/shared/components/empty-state';
 import { FilteringToolbar, SortSelect } from '~/shared/components/filtering-toolbar';
 import { PageHeader } from '~/shared/components/page-header/PageHeader';
 import { filterSelectStyles } from '~/shared/components/selector/FilterSelect.styles';
@@ -43,7 +44,10 @@ type PublicationsPageContentProps = Readonly<{
   activeTab: PublicationsTabValue;
 }>;
 
-type PublicationCardImage = Pick<ImageBlock, 'src' | 'alt'>;
+type PublicationCardImage = {
+  src: { uk: string; en: string };
+  alt: { uk: string; en: string };
+};
 
 type PublicationCardItem = {
   id: string;
@@ -54,7 +58,6 @@ type PublicationCardItem = {
   createdAtRaw: string;
   status: PublicationsStatusValue;
   language: PublicationsLanguageValue;
-  slug: string;
   cardType: ContentType;
   cardStatus: PublicationsStatusValue;
   titleData: Partial<LocalizedString>;
@@ -208,8 +211,8 @@ const mapCardType = (type: PublicationsItemType): ContentType => {
   return type;
 };
 
-const getPublicationEditHref = (item: Pick<PublicationCardItem, 'type' | 'slug'>): string => {
-  return `/publications/${item.type}/${item.slug}/edit`;
+const getPublicationEditHref = (item: Pick<PublicationCardItem, 'type' | 'id'>): string => {
+  return `/publications/${item.type}/${item.id}/edit`;
 };
 
 const mapNewsItem = (item: NewsItem): PublicationCardItem | null => {
@@ -228,7 +231,6 @@ const mapNewsItem = (item: NewsItem): PublicationCardItem | null => {
 
   return {
     id: item.id,
-    slug: item.slug,
     title: titleText,
     sortTitle,
     titleData: title,
@@ -243,7 +245,10 @@ const mapNewsItem = (item: NewsItem): PublicationCardItem | null => {
     cardStatus: publicationStatus,
     language: getLanguageFromLocalizedValue(title),
     coverImage: {
-      src: coverImage?.src || DEFAULT_COVER_IMAGE,
+      src: {
+        uk: coverImage?.src?.uk || DEFAULT_COVER_IMAGE,
+        en: coverImage?.src?.en || DEFAULT_COVER_IMAGE
+      },
       alt: toLocalizedString(coverImage?.alt, titleText || DEFAULT_COVER_ALT)
     }
   };
@@ -264,7 +269,6 @@ const mapMediaMentionItem = (item: MediaMentionItem): PublicationCardItem | null
 
   return {
     id: item.id,
-    slug: item.slug,
     title: titleText,
     sortTitle,
     titleData,
@@ -279,7 +283,10 @@ const mapMediaMentionItem = (item: MediaMentionItem): PublicationCardItem | null
     cardStatus: publicationStatus,
     language: getLanguageFromLocalizedValue(titleData),
     coverImage: {
-      src: item.coverImage?.src || DEFAULT_COVER_IMAGE,
+      src: {
+        uk: item.coverImage?.src?.uk || DEFAULT_COVER_IMAGE,
+        en: item.coverImage?.src?.en || DEFAULT_COVER_IMAGE
+      },
       alt: toLocalizedString(item.coverImage?.alt, titleText || DEFAULT_COVER_ALT)
     }
   };
@@ -482,65 +489,19 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
   const content = (() => {
     if (shouldShowLoadingState) {
       return (
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px',
-            p: '24px',
-            borderRadius: '20px',
-            border: `1px dashed ${colors.blue[300]}`,
-            bgcolor: colors.blue[50]
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{
-              fontSize: '22px',
-              lineHeight: 1.4,
-              fontWeight: 700,
-              color: colors.black
-            }}
-          >
-            {PUBLICATIONS_LOADING_STATE_TITLE}
-          </Typography>
-
-          <Typography sx={{ fontSize: '16px', lineHeight: 1.6, color: colors.blue[800] }}>
-            {PUBLICATIONS_LOADING_STATE_DESCRIPTION}
-          </Typography>
-        </Box>
+        <EmptyState
+          title={PUBLICATIONS_LOADING_STATE_TITLE}
+          description={PUBLICATIONS_LOADING_STATE_DESCRIPTION}
+        />
       );
     }
 
     if (shouldShowErrorState) {
       return (
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px',
-            p: '24px',
-            borderRadius: '20px',
-            border: `1px dashed ${colors.blue[300]}`,
-            bgcolor: colors.blue[50]
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{
-              fontSize: '22px',
-              lineHeight: 1.4,
-              fontWeight: 700,
-              color: colors.black
-            }}
-          >
-            {PUBLICATIONS_ERROR_STATE_TITLE}
-          </Typography>
-
-          <Typography sx={{ fontSize: '16px', lineHeight: 1.6, color: colors.blue[800] }}>
-            {PUBLICATIONS_ERROR_STATE_DESCRIPTION}
-          </Typography>
-        </Box>
+        <EmptyState
+          title={PUBLICATIONS_ERROR_STATE_TITLE}
+          description={PUBLICATIONS_ERROR_STATE_DESCRIPTION}
+        />
       );
     }
 
@@ -568,33 +529,10 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
     }
 
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-          p: '24px',
-          borderRadius: '20px',
-          border: `1px dashed ${colors.blue[300]}`,
-          bgcolor: colors.blue[50]
-        }}
-      >
-        <Typography
-          variant="h6"
-          sx={{
-            fontSize: '22px',
-            lineHeight: 1.4,
-            fontWeight: 700,
-            color: colors.black
-          }}
-        >
-          {emptyStateTitle}
-        </Typography>
-
-        <Typography sx={{ fontSize: '16px', lineHeight: 1.6, color: colors.blue[800] }}>
-          {emptyStateDescription}
-        </Typography>
-      </Box>
+      <EmptyState
+        title={emptyStateTitle}
+        description={emptyStateDescription}
+      />
     );
   })();
 

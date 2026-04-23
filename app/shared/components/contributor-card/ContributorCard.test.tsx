@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { ContributorCard } from './ContributorCard';
-import { ImageType } from '~/types/common';
+import { CropResult,ImageType } from '~/types/common';
 
 jest.mock('~/ds-components/text-field/TextField', () => ({
   CustomTextField: ({
@@ -29,25 +29,34 @@ jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
   }: {
     imageUrl: string;
     fileName: string;
-    onChangeImage: (file: File | undefined) => void;
+    onChangeImage: (url: string, crop?: CropResult | null) => void;
   }) => (
     <div>
       <img src={imageUrl} alt="Preview" data-testid="preview-img" />
       <span data-testid="file-name">{fileName}</span>
-      <input type="file" onChange={(e) => onChangeImage(e.target.files?.[0])} data-testid="image-upload" />
+      <button
+        data-testid="image-upload-trigger"
+        onClick={() =>
+          onChangeImage('new-image-url.png', {
+            rect: {x: 0, y: 0, width: 10, height: 10}
+          })
+        }
+      >
+          Upload
+      </button>
     </div>
   )
 }));
 
-beforeAll(() => {
-  URL.createObjectURL = jest.fn(() => 'mocked-url');
-});
-
 describe('ContributorCard', () => {
   const baseContributor = {
-    name: { uk: 'John Doe', en: '' },
-    description: { uk: 'Team leader', en: '' },
-    photo: { generatedSrc: '', src: '', alt: { uk: '', en: '' } } as ImageType
+    name: {uk: 'John Doe', en: ''},
+    description: {uk: 'Team leader', en: ''},
+    photo: {
+      generatedSrc: '',
+      src: '',
+      alt: {uk: 'Initial Alt', en: ''}
+    } as ImageType
   };
 
   const renderCard = (overrides: Partial<typeof baseContributor> = {}) => {
@@ -76,8 +85,9 @@ describe('ContributorCard', () => {
   });
 
   it('should render image preview with default placeholder image', () => {
-    renderCard();
-
+    renderCard({
+      photo: { generatedSrc: '', src: '', alt: { uk: '', en: '' } } as ImageType
+    });
     const img = screen.getByTestId('preview-img') as HTMLImageElement;
     expect(img.src).toContain('/images/oval-contributor-card.png');
   });
@@ -85,15 +95,32 @@ describe('ContributorCard', () => {
   it('should call onChangePhoto with updated photo when uploading a file', () => {
     const { onChangePhoto } = renderCard();
 
-    const fileInput = screen.getByTestId('image-upload') as HTMLInputElement;
-    const file = new File(['dummy'], 'photo.png', { type: 'image/png' });
-
-    fireEvent.change(fileInput, { target: { files: [file] } });
+    const trigger = screen.getByTestId('image-upload-trigger');
+    fireEvent.click(trigger);
 
     expect(onChangePhoto).toHaveBeenCalledWith(
       expect.objectContaining({
-        generatedSrc: 'mocked-url',
-        alt: expect.objectContaining({ uk: 'photo.png' })
+        src: 'new-image-url.png',
+        generatedSrc: 'new-image-url.png',
+        alt: expect.objectContaining({ uk: 'Initial Alt' }),
+        crop: {
+          rect: { x: 0, y: 0, width: 10, height: 10 }
+        }
+      })
+    );
+  });
+
+  it('should use URL as fallback for alt if current alt is empty', () => {
+    const { onChangePhoto } = renderCard({
+      photo: { generatedSrc: '', src: '', alt: { uk: '', en: '' } } as ImageType
+    });
+
+    const trigger = screen.getByTestId('image-upload-trigger');
+    fireEvent.click(trigger);
+
+    expect(onChangePhoto).toHaveBeenCalledWith(
+      expect.objectContaining({
+        alt: expect.objectContaining({ uk: 'new-image-url.png' })
       })
     );
   });

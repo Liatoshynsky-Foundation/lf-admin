@@ -7,17 +7,15 @@ import { FoundationBlock } from './foundation-block/FoundationBlock';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { proseToText, textToProse } from '~/lib/utils/prose';
+import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 import { ProseDoc } from '~/types/common';
-import { useUploadBlobMutation } from '~/types/graphql/generated/graphql';
 import { getImageUrl } from '~/utils/getImageUrl';
-import { handleUploadImage } from '~/utils/uploadToTmpFolder';
 
 export const LiatoshynskyFoundation = () => {
   const pageId = PAGE_IDS.ABOUT_US;
   const blockId = BLOCK_IDS.LIATOSHYNSKY_FOUNDATION;
-  const [uploadBlob] = useUploadBlobMutation();
 
   const { block } = usePageBlock(pageId, blockId);
 
@@ -64,15 +62,13 @@ export const LiatoshynskyFoundation = () => {
         initialCrop={block.image?.crop}
         onMainTextChange={handleMainTextChange}
         onParagraphChange={handleParagraphChange}
-        onImageChange={async (file, crop) => {
+        onImageChange={(url: string, crop?: MediaModalResult['crop']) => {
           setField(pageId, blockId, 'image', {
             ...block.image,
-            src: file.name,
-            isTmp: true,
+            src: url,
+            isTmp: false,
             crop: crop ?? null
           } as typeof block.image);
-
-          await handleUploadImage(file, pageId, blockId, 'image', uploadBlob, 'tmp');
         }}
       />
     </CollapsibleBlock>

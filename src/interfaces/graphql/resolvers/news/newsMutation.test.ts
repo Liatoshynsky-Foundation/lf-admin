@@ -43,7 +43,7 @@ describe('NewsMutation Resolvers', () => {
     allowIndexation: { uk: true, en: true },
     content: { uk: { blocks: [] }, en: { blocks: [] } } as News['content'],
     coverImage: {
-      src: 'test.jpg',
+      src: { uk: 'test.jpg', en: 'test.jpg' },
       alt: { uk: '', en: '' },
       caption: { uk: '', en: '' },
       crop: { x: 0, y: 0, width: 100, height: 100 }
@@ -106,7 +106,7 @@ describe('NewsMutation Resolvers', () => {
     it('should update title, re-generate slug and sync crops', async () => {
       const updateInput: UpdateNewsGQLInput = {
         title: { uk: 'Оновлено', en: 'Updated' },
-        coverImage: { ...baseInput.coverImage, src: 'new.jpg' },
+        coverImage: { ...baseInput.coverImage, src: { uk: 'new.jpg', en: 'new.jpg' } },
         content: { uk: { blocks: [{ type: 'image' }] }, en: { blocks: [] } } as News['content']
       };
       mockAction('findById', createMockNews({ id }));

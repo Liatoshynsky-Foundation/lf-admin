@@ -1,4 +1,5 @@
 import { Block } from '@blocknote/core';
+import { SxProps, Theme } from '@mui/material';
 import { ReactElement } from 'react';
 
 export interface FilePickerModalProps {
@@ -20,11 +21,13 @@ export interface BlockNoteEditorProps {
   onChange?: (content: Block[]) => void;
   placeholder?: string;
   editable?: boolean;
+  sideMenu?: boolean;
   minHeight?: string;
   fileUpload?: FileUploadConfig;
   keyboardShortcuts?: {
     onSave?: () => void;
   };
+  sx?: SxProps<Theme>
 }
 
 export interface SerializedContent {
@@ -45,6 +48,7 @@ export interface ContentEditorProps {
 
   editorConfig?: {
     placeholder?: string;
+    sideMenu?: boolean;
     editable?: boolean;
     minHeight?: string;
     fileUpload?: FileUploadConfig;
@@ -53,6 +57,7 @@ export interface ContentEditorProps {
   renderSaveButton?: (props: { onSave: () => void; isSaving: boolean }) => ReactElement;
 
   onSaveComplete?: (success: boolean) => void;
+  sx?: SxProps<Theme>
 }
 
 export const CONTENT_VERSION = '1.0.0';

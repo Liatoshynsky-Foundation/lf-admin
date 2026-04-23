@@ -20,6 +20,7 @@ import XlsIcon from '~/public/icons/xls.svg';
 import ArchiveIcon from '~/public/icons/zip.svg';
 import ZoomIn from '~/public/icons/zoom-in.svg';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
+import { useUpdateAssetMutation } from '~/types/graphql/generated/graphql';
 
 export type FileUsageLink = {
   id: string;
@@ -83,13 +84,7 @@ const RowText = ({ children }: { children: React.ReactNode }) => (
   <Typography sx={styles.rowText}>{children}</Typography>
 );
 
-export function FileInfoSidebar({
-  file,
-  onClose,
-  onToggleStar,
-  onDescriptionSave,
-  onRequestAction
-}: Readonly<FileInfoSidebarProps>) {
+export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAction }: Readonly<FileInfoSidebarProps>) {
   const fileId = file?.id;
   const filename = file?.filename ?? '—';
   const usageLinks = file?.usageLinks ?? [];
@@ -126,6 +121,21 @@ export function FileInfoSidebar({
     [fileId, onRequestAction]
   );
 
+  const [updateAsset, { loading: isUpdatingStar }] = useUpdateAssetMutation();
+
+  const handleStarToggle = async () => {
+    if (!file?.id) return;
+
+    try {
+      await updateAsset({
+        variables: {
+          id: file.id,
+          input: { isStarred: !isStarred }
+        }
+      });
+    } catch {}
+  };
+
   return (
     <Box sx={styles.root}>
       <Box sx={styles.header}>
@@ -146,9 +156,9 @@ export function FileInfoSidebar({
         <TooltipCustom title={isStarred ? 'Забрати з обраних' : 'Додати в обрані'} showArrow>
           <IconButton
             sx={{ ...styles.actionBtn, ...(isStarred ? styles.starFilled : {}) }}
-            onClick={() => fileId && onToggleStar?.(fileId, !isStarred)}
+            onClick={handleStarToggle}
             aria-label={isStarred ? 'Забрати з обраних' : 'Додати в обрані'}
-            disabled={!canEdit}
+            disabled={!canEdit || isUpdatingStar}
           >
             <StarBorderIcon />
           </IconButton>
