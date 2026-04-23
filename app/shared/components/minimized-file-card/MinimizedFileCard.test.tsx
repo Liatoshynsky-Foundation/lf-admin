@@ -3,8 +3,14 @@ import userEvent from '@testing-library/user-event';
 
 import MinimizedFileCard from './MinimizedFileCard';
 
+jest.mock('~/types/graphql/generated/graphql', () => ({
+  ...jest.requireActual('~/types/graphql/generated/graphql'),
+  useUpdateAssetMutation: () => [jest.fn(), { loading: false }]
+}));
+
 describe('MinimizedFileCard', () => {
   const defaultProps = {
+    id: 'test-id-123',
     name: 'Test File',
     date: '10.10.2025'
   };
