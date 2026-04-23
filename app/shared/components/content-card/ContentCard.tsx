@@ -20,10 +20,7 @@ export type ContentType = 'news' | 'event' | 'media';
 const FALLBACK_IMAGE_SRC = '/images/image.png';
 
 interface ContentCardImage {
-  src: {
-    uk: string;
-    en: string;
-  };
+  src: string;
   alt: {
     uk: string;
     en: string;
@@ -57,7 +54,7 @@ const ContentCard = ({
   editHref,
   onClick
 }: ContentCardProps) => {
-  const [imageSrc, setImageSrc] = useState(coverImage.src.uk || coverImage.src.en || FALLBACK_IMAGE_SRC);
+  const [imageSrc, setImageSrc] = useState(coverImage.src || FALLBACK_IMAGE_SRC);
   const localizedKeys = Object.entries(title)
     .filter(([, value]) => Boolean(value?.trim()))
     .map(([key]) => key);
@@ -73,8 +70,8 @@ const ContentCard = ({
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   useEffect(() => {
-    setImageSrc(coverImage.src.uk || coverImage.src.en || FALLBACK_IMAGE_SRC);
-  }, [coverImage.src.uk, coverImage.src.en]);
+    setImageSrc(coverImage.src || FALLBACK_IMAGE_SRC);
+  }, [coverImage.src]);
 
   const handleImageError = () => {
     if (imageSrc !== FALLBACK_IMAGE_SRC) {

@@ -60,8 +60,10 @@ type Story = StoryObj<typeof meta>;
 export const NewsCard: Story = {
   args: {
     type: 'news',
+    id: '1',
+    slug: 'news-title',
     coverImage: {
-      src: { uk: '/images/image.png', en: '/images/image.png' },
+      src: '/images/image.png',
       alt: { uk: 'Новина', en: 'News' }
     },
     title: { uk: 'Заголовок новини', en: 'News Title' },
@@ -75,8 +77,10 @@ export const NewsCard: Story = {
 export const EventCard: Story = {
   args: {
     type: 'event',
+    id: '2',
+    slug: 'event-title',
     coverImage: {
-      src: { uk: '/images/image.png', en: '/images/image.png' },
+      src: '/images/image.png',
       alt: { uk: 'Подія', en: 'Event' }
     },
     title: { uk: 'Концерт до дня народження Лятошинського' },
@@ -90,8 +94,10 @@ export const EventCard: Story = {
 export const MediaCard: Story = {
   args: {
     type: 'media',
+    id: '3',
+    slug: 'media-title',
     coverImage: {
-      src: { uk: '/images/image.png', en: '/images/image.png' },
+      src: '/images/image.png',
       alt: { uk: 'ЗМІ', en: 'Media' }
     },
     title: { uk: 'Публікація у ЗМІ' },
@@ -104,8 +110,10 @@ export const MediaCard: Story = {
 export const DraftCard: Story = {
   args: {
     type: 'news',
+    id: '4',
+    slug: 'draft-title',
     coverImage: {
-      src: { uk: '', en: '' },
+      src: '',
       alt: { uk: '', en: '' }
     },
     title: { uk: 'Чернетка без зображення' },
@@ -118,8 +126,10 @@ export const DraftCard: Story = {
 export const WithClickHandler: Story = {
   args: {
     type: 'news',
+    id: '5',
+    slug: 'click-handler-title',
     coverImage: {
-      src: { uk: '/images/image.png', en: '/images/image.png' },
+      src: '/images/image.png',
       alt: { uk: 'Новина', en: 'News' }
     },
     title: { uk: 'Картка з onClick замість href' },
