@@ -8,9 +8,7 @@ describe('useUpload', () => {
   let fetchSpy: jest.SpyInstance;
 
   beforeEach(() => {
-    if (globalThis.fetch === undefined) {
-      globalThis.fetch = jest.fn();
-    }
+    globalThis.fetch ??= jest.fn();
 
     fetchSpy = jest.spyOn(globalThis, 'fetch');
   });
