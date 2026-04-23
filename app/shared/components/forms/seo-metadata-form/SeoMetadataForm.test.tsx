@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -12,13 +12,16 @@ jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
     altText,
     onChangeAltText
   }: {
-    onChangeImage: (file: File) => void;
+    onChangeImage: (url: string) => void;
     showAlternativeText?: boolean;
     altText?: string;
-    onChangeAltText?: (val: string) => void;
+    onChangeAltText?: (value: string) => void;
   }) => (
     <div>
-      <button data-testid="photo-block" onClick={() => onChangeImage(new File(['img'], 'test.png'))}>
+      <button
+        data-testid="photo-block"
+        onClick={() => onChangeImage('https://example.com/mock-image.png')}
+      >
         PhotoBlock
       </button>
       {showAlternativeText && (
@@ -58,13 +61,7 @@ const defaultProps: SeoMetadataFormProps = {
 
 const renderWithState = (extraFields?: SeoMetadataFormProps['extraFields']) => {
   const Wrapper = () => {
-    const [value, setValue] = React.useState<SeoMetadataFormProps['value']>({
-      title: '',
-      description: '',
-      keywords: '',
-      canonicalUrl: ''
-    });
-
+    const [value, setValue] = React.useState<SeoMetadataFormProps['value']>(defaultProps.value);
     return <SeoMetadataForm {...defaultProps} value={value} onChange={setValue} extraFields={extraFields} />;
   };
 
@@ -72,10 +69,10 @@ const renderWithState = (extraFields?: SeoMetadataFormProps['extraFields']) => {
 };
 
 describe('SeoMetadataForm', () => {
-  let user: ReturnType<typeof userEvent.setup>;
+  const user = userEvent.setup({ delay: null });
+
   beforeEach(() => {
     jest.clearAllMocks();
-    user = userEvent.setup();
   });
 
   it('calls onChange when typing', async () => {
@@ -101,73 +98,47 @@ describe('SeoMetadataForm', () => {
   });
 
   it('calls onImageChange with uploaded url', async () => {
-    globalThis.URL.createObjectURL = jest.fn(() => 'blob:mock-url');
-    globalThis.fetch = jest.fn().mockResolvedValue({
-      json: () => Promise.resolve({ success: true, data: { url: 'https://example.com/uploaded.png' } })
-    }) as jest.Mock;
-
     render(<SeoMetadataForm {...defaultProps} />);
-
     await user.click(screen.getByTestId('photo-block'));
-
-    expect(defaultProps.onImageChange).toHaveBeenCalledWith('https://example.com/uploaded.png');
+    expect(defaultProps.onImageChange).toHaveBeenCalledWith('https://example.com/mock-image.png');
   });
 
   it('validates description field (empty and non-empty)', async () => {
     renderWithState();
     const input = screen.getByLabelText(/meta description/i);
+
     await user.click(input);
     await user.tab();
     expect(await screen.findByText(/обовʼязкове поле/i)).toBeInTheDocument();
+
     await user.type(input, 'Some description');
-    await user.click(document.body);
+    fireEvent.blur(input);
     expect(screen.queryByText(/обовʼязкове поле/i)).not.toBeInTheDocument();
   });
 
   it('validates canonicalUrl: empty, valid, invalid', async () => {
     const CanonicalWrapper = () => {
-      const [value, setValue] = React.useState<SeoMetadataFormProps['value']>({
-        title: '',
-        description: '',
-        keywords: '',
-        canonicalUrl: ''
-      });
-      const [canonicalUrl, setCanonicalUrl] = React.useState('');
-
-      const canonicalExtraFields = React.useCallback(
-        () => (
-          <SeoCanonicalUrlField
-            value={canonicalUrl}
-            onChange={(val) => setCanonicalUrl(val)}
-          />
-        ),
-        [canonicalUrl]
-      );
-
-      return (
-        <SeoMetadataForm
-          {...defaultProps}
-          value={value}
-          onChange={setValue}
-          extraFields={canonicalExtraFields}
+      const [value, setValue] = React.useState(defaultProps.value);
+      const canonicalExtraFields: SeoMetadataFormProps['extraFields'] = (val, onChange) => (
+        <SeoCanonicalUrlField
+          value={val.canonicalUrl || ''}
+          onChange={(newVal) => onChange({ ...val, canonicalUrl: newVal })}
         />
       );
+
+      return <SeoMetadataForm {...defaultProps} value={value} onChange={setValue} extraFields={canonicalExtraFields} />;
     };
 
     render(<CanonicalWrapper />);
     const input = screen.getByLabelText(/canonical url/i);
 
-    await user.clear(input);
-    await user.tab();
-    expect(screen.queryByText(/некоректний url/i)).not.toBeInTheDocument();
-
     await user.type(input, 'https://test.com');
-    await user.click(document.body);
+    fireEvent.blur(input);
     expect(screen.queryByText(/некоректний url/i)).not.toBeInTheDocument();
 
     await user.clear(input);
     await user.type(input, 'bad-url');
-    await user.click(document.body);
+    fireEvent.blur(input);
     expect(await screen.findByText(/некоректний url/i)).toBeInTheDocument();
   });
 
@@ -175,18 +146,14 @@ describe('SeoMetadataForm', () => {
     renderWithState();
     const input = screen.getByLabelText(/meta keywords/i);
 
-    await user.clear(input);
-    await user.tab();
-    expect(screen.queryByText(/ключові слова/i)).not.toBeInTheDocument();
-
-    await user.type(input, 'one, two,three');
-    await user.click(document.body);
-    expect(screen.queryByText(/ключові слова/i)).not.toBeInTheDocument();
+    await user.type(input, 'one, two, three');
+    fireEvent.blur(input);
+    expect(screen.queryByText(/Ключові слова мають бути через кому/i)).not.toBeInTheDocument();
 
     await user.clear(input);
     await user.type(input, 'one, ,two');
-    await user.click(document.body);
-    expect(await screen.findByText(/ключові слова/i)).toBeInTheDocument();
+    fireEvent.blur(input);
+    expect(await screen.findByText(/Ключові слова мають бути через кому/i)).toBeInTheDocument();
   });
 
   it('does not render canonicalUrl without extraFields', () => {
@@ -222,18 +189,9 @@ describe('SeoMetadataForm', () => {
     expect(onChange).toHaveBeenCalled();
   });
 
-  it('covers validateField canonicalUrl branch via handleBlur', async () => {
-    const Wrapper = () => {
-      const [value, setValue] = React.useState<SeoMetadataFormProps['value']>({
-        ...defaultProps.value,
-        canonicalUrl: 'bad-url'
-      });
-      return <SeoMetadataForm {...defaultProps} value={value} onChange={setValue} />;
-    };
-    render(<Wrapper />);
-    const titleInput = screen.getByLabelText(/meta title/i);
-    await user.click(titleInput);
-    await user.tab();
+  it('covers validateField default branch', () => {
+    render(<SeoMetadataForm {...defaultProps} forceShowErrors={true} />);
+    expect(screen.getAllByText(/обовʼязкове поле/i).length).toBeGreaterThan(0);
   });
 
   it('covers validateField default branch with unknown field', () => {

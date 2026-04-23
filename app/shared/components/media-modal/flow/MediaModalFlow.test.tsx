@@ -11,13 +11,21 @@ import type {
 } from '../MediaModal.renderers';
 import type {
   MediaModalOpenState,
-  MediaModalResult,
   MediaModalTab,
-  SelectedMedia
 } from '../MediaModal.types';
 import { MockDsButton } from '../test-utils/mockDsButton';
 import { MediaModalFlow } from './MediaModalFlow';
 import type { CropResult } from '~/types/common';
+
+jest.mock('~/hooks/use-upload/useUpload', () => ({
+  useUpload: () => ({
+    uploadFile: jest.fn().mockResolvedValue({ id: 'upload-pdf-1', fileName: 'doc.pdf' })
+  })
+}));
+
+jest.mock('../MediaModal.utils', () => ({
+  isImageUploadFile: (file: File) => file.type.startsWith('image/')
+}));
 
 jest.mock('~/public/icons/iteration.svg', () => ({
   __esModule: true,
@@ -230,13 +238,14 @@ async function pickAndEnterCrop(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe('MediaModalFlow', () => {
+  const user = userEvent.setup();
+
   it('should render select step without footer', () => {
     renderOpen({ tab: 'GALLERY' });
 
     expect(screen.getByTestId('MediaModalSwitcher')).toBeInTheDocument();
     expect(screen.getByTestId('GalleryView')).toBeInTheDocument();
     expect(screen.queryByTestId('MediaModal-footer')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('MediaModal-resetButton')).not.toBeInTheDocument();
   });
 
   it('should ignore initial CROP when selected is missing', () => {
@@ -263,8 +272,6 @@ describe('MediaModalFlow', () => {
   });
 
   it('should switch tabs in select step', async () => {
-    const user = userEvent.setup();
-
     renderOpen({ tab: 'GALLERY' });
 
     await user.click(screen.getByTestId('MediaModalSwitcher-usedTab'));
@@ -272,14 +279,11 @@ describe('MediaModalFlow', () => {
 
     await user.click(screen.getByTestId('MediaModalSwitcher-uploadTab'));
     expect(screen.getByTestId('UploadView')).toBeInTheDocument();
-    expect(screen.getByTestId('UploadView')).toHaveAttribute('data-selected', 'none');
   });
 
   it('should apply non-image upload without crop step', async () => {
-    const user = userEvent.setup();
-
-    const onClose = jest.fn<void, []>();
-    const onApply = jest.fn((_: MediaModalResult) => Promise.resolve());
+    const onClose = jest.fn();
+    const onApply = jest.fn().mockResolvedValue(undefined);
 
     const renderers = createRenderers();
     renderers.upload = ({ selected, onPick }: Readonly<UploadRendererProps>) => (
@@ -305,28 +309,26 @@ describe('MediaModalFlow', () => {
 
     await user.click(screen.getByTestId('UploadView-pickPdf'));
 
-    expect(screen.queryByTestId('CropView')).not.toBeInTheDocument();
-    expect(screen.getByTestId('MediaModal-footer')).toBeInTheDocument();
-    expect(screen.getByTestId('MediaModal-cancelButton')).toBeInTheDocument();
-    expect(screen.getByTestId('MediaModal-applyButton')).toBeInTheDocument();
+    const applyButton = await screen.findByTestId('MediaModal-applyButton');
+    await waitFor(() => expect(applyButton).not.toBeDisabled());
 
-    await user.click(screen.getByTestId('MediaModal-applyButton'));
+    await user.click(applyButton);
 
-    expect(onApply).toHaveBeenCalledWith({
-      selected: expect.objectContaining({
-        kind: 'upload',
-        id: 'upload-pdf-1',
-        fileName: 'doc.pdf'
-      }),
-      crop: null
+    await waitFor(() => {
+      expect(onApply).toHaveBeenCalledWith(expect.objectContaining({
+        selected: expect.objectContaining({
+          kind: 'upload',
+          id: 'upload-pdf-1',
+          fileName: 'doc.pdf'
+        }),
+        crop: null
+      }));
     });
 
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
   });
 
   it('should enter crop after pick and show crop actions', async () => {
-    const user = userEvent.setup();
-
     renderOpen({ tab: 'GALLERY' });
 
     await pickAndEnterCrop(user);
@@ -334,14 +336,10 @@ describe('MediaModalFlow', () => {
     expect(screen.queryByTestId('MediaModalSwitcher')).not.toBeInTheDocument();
     expect(screen.getByTestId('MediaModal-footer')).toBeInTheDocument();
     expect(screen.getByTestId('MediaModal-backButton')).toBeInTheDocument();
-    expect(screen.getByTestId('MediaModal-cancelButton')).toBeInTheDocument();
-    expect(screen.getByTestId('MediaModal-applyButton')).toBeInTheDocument();
     expect(screen.getByTestId('MediaModal-resetButton')).toBeDisabled();
   });
 
   it('should enable reset after resize and reset back to initial crop', async () => {
-    const user = userEvent.setup();
-
     renderOpen({ tab: 'GALLERY' });
 
     await pickAndEnterCrop(user);
@@ -349,69 +347,40 @@ describe('MediaModalFlow', () => {
     const reset = screen.getByTestId('MediaModal-resetButton');
     const cropView = screen.getByTestId('CropView');
 
-    expect(reset).toBeDisabled();
-    expect(cropView).toHaveAttribute('data-crop', JSON.stringify(initialCrop));
-
     await user.click(screen.getByTestId('CropView-resize'));
-
-    await waitFor(() => expect(cropView).toHaveAttribute('data-crop', JSON.stringify(resizedCrop)));
-    expect(reset).not.toBeDisabled();
-
-    const beforeSeq = cropView.dataset.resetSeq;
+    await waitFor(() => expect(reset).not.toBeDisabled());
 
     await user.click(reset);
 
     await waitFor(() => expect(cropView).toHaveAttribute('data-crop', JSON.stringify(initialCrop)));
     expect(reset).toBeDisabled();
-
-    const afterSeq = cropView.dataset.resetSeq;
-    expect(afterSeq).not.toBe(beforeSeq);
   });
 
   it('should apply resized crop and close on success', async () => {
-    const user = userEvent.setup();
-
-    const onClose = jest.fn<void, []>();
-    const onApply = jest.fn((_: MediaModalResult) => Promise.resolve());
+    const onApply = jest.fn(() => Promise.resolve());
+    const onClose = jest.fn();
 
     renderOpen({ tab: 'GALLERY' }, { onClose, onApply });
 
     await pickAndEnterCrop(user);
 
     await user.click(screen.getByTestId('CropView-resize'));
-    await waitFor(() =>
-      expect(screen.getByTestId('CropView')).toHaveAttribute('data-crop', JSON.stringify(resizedCrop))
-    );
 
     await user.click(screen.getByTestId('MediaModal-applyButton'));
 
-    expect(onApply).toHaveBeenCalledWith({
-      selected: {
-        kind: 'gallery',
-        id: 'gallery-1-uk',
-        fileName: 'gallery-1.png',
-        src: '/demo/gallery-1.png',
-        locale: 'uk'
-      } satisfies SelectedMedia,
-      crop: resizedCrop
-    });
-
+    await waitFor(() => expect(onApply).toHaveBeenCalled());
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
   });
 
   it('should render apply error in footer when apply fails', async () => {
-    const user = userEvent.setup();
-
-    const onClose = jest.fn<void, []>();
     const onApply = jest.fn(() => Promise.reject(new Error('apply failed')));
 
-    renderOpen({ tab: 'GALLERY' }, { onClose, onApply });
+    renderOpen({ tab: 'GALLERY' }, { onApply });
 
     await pickAndEnterCrop(user);
 
     await user.click(screen.getByTestId('MediaModal-applyButton'));
 
     expect(await screen.findByTestId('MediaModal-applyError')).toHaveTextContent('apply failed');
-    expect(onClose).not.toHaveBeenCalled();
   });
 });

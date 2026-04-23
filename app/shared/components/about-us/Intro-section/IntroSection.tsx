@@ -6,12 +6,11 @@ import { QuoteBlock } from '../Liatoshynsky-office/quote-block/QuoteBlock';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { ImagePreviewBlock } from '~/ds-components/photo-block/PhotoBlock';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
+import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 import { LocalizedString } from '~/types/common';
-import { useUploadBlobMutation } from '~/types/graphql/generated/graphql';
 import { getImageUrl } from '~/utils/getImageUrl';
-import { handleUploadImage } from '~/utils/uploadToTmpFolder';
 
 export const IntroSection = () => {
   const pageId = PAGE_IDS.ABOUT_US;
@@ -20,8 +19,6 @@ export const IntroSection = () => {
   const { block } = usePageBlock(pageId, blockId);
 
   const currentLocale: keyof LocalizedString = useStore((state) => state.locale);
-  const [uploadBlob] = useUploadBlobMutation();
-
   const setField = useStore((state) => state.setField);
 
   if (!block) return <Skeleton sx={{ height: '60px' }} />;
@@ -46,15 +43,13 @@ export const IntroSection = () => {
           imageUrl={getImageUrl(block.image)}
           fileName={block.image.src || ''}
           initialCrop={block.image.crop}
-          onChangeImage={async (file, crop) => {
+          onChangeImage={(url: string, crop?: MediaModalResult['crop']) => {
             setField(pageId, blockId, 'image', {
               ...block.image,
-              src: file.name,
-              isTmp: true,
+              src: url,
+              isTmp: false,
               crop: crop ?? null
             });
-
-            await handleUploadImage(file, pageId, blockId, 'image', uploadBlob, 'tmp');
           }}
         />
       </Box>

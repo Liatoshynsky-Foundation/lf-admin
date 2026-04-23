@@ -5,7 +5,6 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { Box, Checkbox, Divider, FormControlLabel, Stack, TextField, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
 
 import { SeoBaseFields } from './seo-base-fields/SeoBaseFields';
 import { styles } from './SeoMetadataForm.styles';
@@ -113,23 +112,14 @@ export default function SeoMetadataForm({
     if (touched[field]) setErrors((prev) => ({ ...prev, [field]: validateField(field, val) }));
   };
 
-  const handleImageChange = async (file: File) => {
+  const handleImageChange = async (url: string) => {
     setIsUploading(true);
-    setDisplayFileName(file.name);
-    setOgImagePreview(URL.createObjectURL(file));
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('directory', 'photos');
-    const res = await fetch('/api/uploads/single', { method: 'POST', body: formData });
-    const json = await res.json();
-    if (json.success) {
-      setOgImagePreview(json.data.url);
-      onImageChange(json.data.url);
-    } else {
-      toast.error('Непідтримуваний формат файлу');
-      setOgImagePreview(null);
-      setDisplayFileName(undefined);
-    }
+    setOgImagePreview(url);
+    const fileNameFromUrl = url.split('/').pop()?.split('?')[0];
+    setDisplayFileName(fileNameFromUrl || 'image');
+
+    onImageChange(url);
+
     setIsUploading(false);
   };
 

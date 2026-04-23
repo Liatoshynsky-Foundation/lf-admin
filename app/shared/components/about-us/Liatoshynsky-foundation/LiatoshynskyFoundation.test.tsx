@@ -1,11 +1,10 @@
+/* eslint-disable @next/next/no-img-element */
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { LiatoshynskyFoundation } from './LiatoshynskyFoundation';
 
 const setFieldMock = jest.fn();
-const handleUploadImageMock = jest.fn();
-const useUploadBlobMutationMock = jest.fn();
 
 jest.mock('~/store', () => ({
   useStore: (selector: (state: { locale: 'uk'; setField: typeof setFieldMock }) => void) =>
@@ -15,14 +14,6 @@ jest.mock('~/store', () => ({
 const usePageBlockMock = jest.fn();
 jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: (pageId: string, blockId: string) => usePageBlockMock(pageId, blockId)
-}));
-
-jest.mock('~/utils/uploadToTmpFolder', () => ({
-  handleUploadImage: (...args: unknown[]) => handleUploadImageMock(...args)
-}));
-
-jest.mock('~/types/graphql/generated/graphql', () => ({
-  useUploadBlobMutation: () => [useUploadBlobMutationMock]
 }));
 
 interface Paragraph {
@@ -36,7 +27,7 @@ interface FoundationBlockProps {
   fileName: string;
   onMainTextChange: (value: string) => void;
   onParagraphChange: (idx: number, value: string) => void;
-  onImageChange: (file: File) => void;
+  onImageChange: (url: string, crop?: { x: number; y: number; width: number; height: number }) => void;
 }
 
 jest.mock('./foundation-block/FoundationBlock', () => ({
@@ -51,7 +42,7 @@ jest.mock('./foundation-block/FoundationBlock', () => ({
   }: FoundationBlockProps) => (
     <div>
       <input data-testid="main-text" value={mainText} onChange={(e) => onMainTextChange(e.target.value)} />
-      {paragraphs.map((p: any, idx: number) => (
+      {paragraphs.map((p: Paragraph, idx: number) => (
         <input
           key={`${p.text}-${idx}`}
           data-testid={`paragraph-${idx}`}
@@ -61,11 +52,12 @@ jest.mock('./foundation-block/FoundationBlock', () => ({
       ))}
       <img src={imageUrl} alt="Foundation" data-testid="image" />
       <span data-testid="file-name">{fileName}</span>
-      <input
-        type="file"
-        data-testid="image-input"
-        onChange={(e) => e.target.files && onImageChange(e.target.files[0])}
-      />
+      <button
+        data-testid="trigger-image-change"
+        onClick={() => onImageChange('new-image-url.jpg', { x: 0, y: 0, width: 100, height: 100 })}
+      >
+          Change Image
+      </button>
     </div>
   )
 }));
@@ -99,7 +91,6 @@ describe('LiatoshynskyFoundation', () => {
   let paragraph1Input: HTMLElement;
   let image: HTMLElement;
   let fileNameSpan: HTMLElement;
-  let imageInput: HTMLElement;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -112,7 +103,6 @@ describe('LiatoshynskyFoundation', () => {
     paragraph1Input = screen.getByTestId('paragraph-1');
     image = screen.getByTestId('image');
     fileNameSpan = screen.getByTestId('file-name');
-    imageInput = screen.getByTestId('image-input');
   });
 
   it('should render all fields with initial data from the block', () => {
@@ -160,18 +150,20 @@ describe('LiatoshynskyFoundation', () => {
     });
   });
 
-  it('should call handleUploadImage when a new file is selected', () => {
-    const file = new File(['test'], 'new-image.png', { type: 'image/png' });
+  it('should update store when onImageChange is called', () => {
+    const trigger = screen.getByTestId('trigger-image-change');
 
-    fireEvent.change(imageInput, { target: { files: [file] } });
+    fireEvent.click(trigger);
 
-    expect(handleUploadImageMock).toHaveBeenCalledWith(
-      file,
+    expect(setFieldMock).toHaveBeenCalledWith(
       'about-us',
       'FoundationInfo',
       'image',
-      useUploadBlobMutationMock,
-      'tmp'
+      expect.objectContaining({
+        src: 'new-image-url.jpg',
+        isTmp: false,
+        crop: { x: 0, y: 0, width: 100, height: 100 }
+      })
     );
   });
 });

@@ -8,7 +8,6 @@ import toast from 'react-hot-toast';
 import Button from '../button/Button';
 import { PREVIEW_H, PREVIEW_W, styles } from './PhotoBlock.styles';
 import { useCroppedImage } from '~/hooks/use-cropped-image/use-cropped-image';
-import { readFileAsDataURL } from '~/lib/utils/readFileAsDataURL';
 import ImageIcon from '~/public/icons/image.svg';
 import PencilIcon from '~/public/icons/pencil.svg';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
@@ -22,7 +21,7 @@ interface ImagePreviewBlockProps extends StackProps {
   altText?: string;
   onChangeAltText?: (value: string) => void;
   oval?: boolean;
-  onChangeImage: (file: File, crop?: MediaModalResult['crop']) => void;
+  onChangeImage: (url: string, crop?: MediaModalResult['crop']) => void;
   initialCrop?: MediaModalResult['crop'];
   direction?: 'row' | 'row-reverse' | 'column' | 'column-reverse';
   buttonSpacing?: string;
@@ -94,32 +93,21 @@ export const ImagePreviewBlock = ({
     setMediaInitial(undefined);
   };
 
-  const handleApplyMediaModal = async (result: MediaModalResult) => {
-    const { selected, crop } = result;
+  const handleApplyMediaModal = (result: MediaModalResult) => {
+    const { selected, crop, uploadResult } = result;
 
-    try {
-      let file: File;
+    const url = uploadResult?.url ?? (selected.kind === 'upload' ? null : selected.src);
 
-      if (selected.kind === 'upload') {
-        const dataUrl = await readFileAsDataURL(selected.file);
-        setPreviewImage(dataUrl);
-        file = selected.file;
-      } else {
-        const response = await fetch(selected.src);
-        const blob = await response.blob();
-        file = new File([blob], selected.fileName || 'image.jpg', { type: blob.type });
-        setPreviewImage(selected.src);
-      }
-
-      setSavedCrop(crop);
-      onChangeImage(file, crop);
-
-      toast.success('Зображення змінено');
-    } catch {
-      toast.error('Не вдалося змінити');
-    } finally {
-      closeMediaModal();
+    if (!url) {
+      toast.error('Не вдалося отримати URL зображення');
+      return;
     }
+
+    setPreviewImage(url);
+    setSavedCrop(crop);
+    onChangeImage(url, crop);
+
+    toast.success('Зображення змінено');
   };
 
   const renderPreviewContent = useMemo(() => {
@@ -220,6 +208,7 @@ export const ImagePreviewBlock = ({
         initial={mediaInitial}
         onClose={closeMediaModal}
         onApply={handleApplyMediaModal}
+        directory="images"
       />
     </Box>
   );

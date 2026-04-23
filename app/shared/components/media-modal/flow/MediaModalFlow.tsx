@@ -27,6 +27,7 @@ export type MediaModalFlowProps = {
   onApply: (result: MediaModalResult) => void | Promise<void>;
   initial?: MediaModalOpenState;
   renderers: MediaModalRenderers;
+  directory?: string;
 };
 
 const isNonImageUploadSelection = (selected: SelectedMedia | null): boolean => {
@@ -37,11 +38,11 @@ const isNonImageUploadSelection = (selected: SelectedMedia | null): boolean => {
   return !isImageUploadFile(selected.file);
 };
 
-export function MediaModalFlow({ open, onClose, onApply, initial, renderers }: Readonly<MediaModalFlowProps>) {
+export function MediaModalFlow({ open, onClose, onApply, initial, renderers, directory }: Readonly<MediaModalFlowProps>) {
   const [state, dispatch] = useReducer(reducer, initial, buildInitialState);
 
   const { isApplying, applyError, clearApplyState, clearApplyError, cancelInFlightApply, handleClose, runApply } =
-    useMediaModalApply({ open, onClose, onApply });
+      useMediaModalApply({ open, onClose, onApply, directory });
 
   const latestInitialRef = useRef<MediaModalOpenState | undefined>(initial);
   useEffect(() => {
