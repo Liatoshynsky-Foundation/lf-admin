@@ -8,10 +8,11 @@ describe('useUpload', () => {
   let fetchSpy: jest.SpyInstance;
 
   beforeEach(() => {
-    if (typeof window.fetch === 'undefined') {
-      window.fetch = jest.fn();
+    if (globalThis.fetch === undefined) {
+      globalThis.fetch = jest.fn();
     }
-    fetchSpy = jest.spyOn(window, 'fetch');
+
+    fetchSpy = jest.spyOn(globalThis, 'fetch');
   });
 
   afterEach(() => {

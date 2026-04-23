@@ -96,7 +96,7 @@ export const ImagePreviewBlock = ({
   const handleApplyMediaModal = (result: MediaModalResult) => {
     const { selected, crop, uploadResult } = result;
 
-    const url = uploadResult?.url ?? (selected.kind !== 'upload' ? selected.src : null);
+    const url = uploadResult?.url ?? (selected.kind === 'upload' ? null : selected.src);
 
     if (!url) {
       toast.error('Не вдалося отримати URL зображення');

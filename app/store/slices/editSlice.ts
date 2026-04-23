@@ -42,7 +42,7 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
     const newBlock = {
       ...prevBlock,
       [field]: value,
-      ...(isTmp !== undefined ? { isTmp } : {})
+      ...(isTmp === undefined ? {} : { isTmp })
     };
 
     set({
@@ -71,7 +71,7 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
       const img = (data as Record<string, unknown>)[field];
       if (!img || typeof img !== 'object') continue;
 
-      const isTmp = 'isTmp' in (img as object)
+      const isTmp = 'isTmp' in img
         ? Boolean((img as Record<string, unknown>).isTmp)
         : false;
 

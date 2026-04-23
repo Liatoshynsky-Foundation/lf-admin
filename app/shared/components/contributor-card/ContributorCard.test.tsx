@@ -10,10 +10,10 @@ jest.mock('~/ds-components/text-field/TextField', () => ({
     value,
     onChange
   }: {
-        label: string;
-        value: string;
-        onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    }) => (
+    label: string;
+    value: string;
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  }) => (
     <div>
       <label>{label}</label>
       <input value={value} aria-label={label} onChange={onChange} />
@@ -27,10 +27,10 @@ jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
     fileName,
     onChangeImage
   }: {
-        imageUrl: string;
-        fileName: string;
-        onChangeImage: (url: string, crop?: CropResult | null) => void;
-    }) => (
+    imageUrl: string;
+    fileName: string;
+    onChangeImage: (url: string, crop?: CropResult | null) => void;
+  }) => (
     <div>
       <img src={imageUrl} alt="Preview" data-testid="preview-img" />
       <span data-testid="file-name">{fileName}</span>
