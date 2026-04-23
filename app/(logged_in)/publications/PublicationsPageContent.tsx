@@ -46,7 +46,7 @@ type PublicationsPageContentProps = Readonly<{
 
 type PublicationCardImage = {
   src: string;
-  alt: string | LocalizedString;
+  alt: LocalizedString;
 };
 
 type PublicationCardItem = {
@@ -248,7 +248,7 @@ const mapNewsItem = (item: NewsItem): PublicationCardItem | null => {
     language: getLanguageFromLocalizedValue(title),
     coverImage: {
       src: coverImage?.src || DEFAULT_COVER_IMAGE,
-      alt: toLocalizedString(coverImage?.alt, titleText || DEFAULT_COVER_ALT)
+      alt: toLocalizedString(coverImage?.alt.en || coverImage?.alt.uk, titleText || DEFAULT_COVER_ALT)
     }
   };
 };
@@ -284,7 +284,7 @@ const mapMediaMentionItem = (item: MediaMentionItem): PublicationCardItem | null
     language: getLanguageFromLocalizedValue(titleData),
     coverImage: {
       src: item.coverImage?.src || DEFAULT_COVER_IMAGE,
-      alt: toLocalizedString(item.coverImage?.alt, titleText || DEFAULT_COVER_ALT)
+      alt: toLocalizedString(item.coverImage?.alt.en || item.coverImage?.alt.uk, titleText || DEFAULT_COVER_ALT)
     }
   };
 };

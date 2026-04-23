@@ -21,7 +21,10 @@ const FALLBACK_IMAGE_SRC = '/images/image.png';
 
 interface ContentCardImage {
   src: string;
-  alt: LocalizedString | string;
+  alt: {
+    uk: string;
+    en: string;
+  };
 }
 
 interface ContentCardProps {
@@ -56,8 +59,7 @@ const ContentCard = ({
     .filter(([, value]) => Boolean(value?.trim()))
     .map(([key]) => key);
   const titleText = title.uk || title.en || '';
-  const altText =
-    typeof coverImage.alt === 'string' ? coverImage.alt : coverImage.alt.uk || coverImage.alt.en || titleText;
+  const altText = coverImage.alt.uk || coverImage.alt.en || titleText;
 
   const router = useRouter();
 
