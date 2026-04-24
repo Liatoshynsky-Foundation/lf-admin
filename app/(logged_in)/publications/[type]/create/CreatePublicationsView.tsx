@@ -17,7 +17,7 @@ interface PublicationViewProps{
   data: ReturnType<typeof useUpsertPublication>;
 }
 
-export default function CreatePublicationView({ data }: PublicationViewProps) {
+export default function CreatePublicationsView({ data }: PublicationViewProps) {
   const {
     publicationType,
     adminTitle,

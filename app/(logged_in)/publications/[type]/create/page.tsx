@@ -2,7 +2,7 @@
 import { Box, Typography } from '@mui/material';
 import { notFound, useParams } from 'next/navigation';
 
-import CreatePublicationView from './CreatePublicationView';
+import CreatePublicationsView from './CreatePublicationsView';
 import { styles } from './page.styles';
 import { PAGE_TITLES, PUBLICATIONS_BASE_PATH, PUBLICATIONS_TYPES, PublicationsItemType } from '~/constants/publications';
 import DividedHeader from '~/shared/components/divided-header/DividedHeader';
@@ -28,7 +28,7 @@ export default function CreatePublicationPage() {
         <Typography variant="customBold20Tight">{`Створення ${PAGE_TITLES[type]}`}</Typography>
       </DividedHeader>
 
-      <CreatePublicationView data={publicationData} />
+      <CreatePublicationsView data={publicationData} />
     </Box>
   );
 }
