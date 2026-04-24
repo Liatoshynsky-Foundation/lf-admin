@@ -54,8 +54,8 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
   const router = useRouter();
   const isEditing = Boolean(id);
 
-  const isValidType = PUBLICATIONS_TYPES.includes(type as PublicationsItemType);
-  const publicationType = type as PublicationsItemType;
+  const isValidType = PUBLICATIONS_TYPES.includes(type);
+  const publicationType = type;
   const pageTitle = isValidType ? `${isEditing ? 'Редагування' : 'Створення'} ${PAGE_TITLES[publicationType]}` : '';
 
   const newsQuery = useNewsById(id as string, { skip: type !== 'news' || !isEditing });
@@ -172,100 +172,88 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
   const handleSave = async () => {
     if (!isValidType) return;
 
-    const currentAdminTitle = latestDataRef.current.adminTitle;
-    const currentSeoValue = latestDataRef.current.seoValue;
-    const currentPublishDate = latestDataRef.current.publishDate;
+    const { adminTitle, seoValue, publishDate, crop } = latestDataRef.current;
+    const { uk: ukMeta, en: enMeta } = seoValue.meta;
 
-    const currentCrop = latestDataRef.current.crop;
-
-    const ukMeta = currentSeoValue.meta.uk;
-    const enMeta = currentSeoValue.meta.en;
-
-    const isAdminTitleInvalid = !currentAdminTitle.trim();
-    const isSeoInvalid = checkIsSeoInvalid(ukMeta, enMeta, publicationType, currentSeoValue.ticketUrl);
+    const isAdminTitleInvalid = !adminTitle.trim();
+    const isSeoInvalid = checkIsSeoInvalid(ukMeta, enMeta, publicationType, seoValue.ticketUrl);
 
     if (isAdminTitleInvalid) setAdminTitleError('Обов\'язкове поле');
     if (isSeoInvalid) setForceShowErrors(true);
     if (isAdminTitleInvalid || isSeoInvalid) return;
 
     const coverImage = {
-      src: currentSeoValue.ogImage ?? currentAdminTitle,
-      alt: {
-        uk: ukMeta.altText?.uk || currentAdminTitle,
-        en: enMeta.altText?.en || currentAdminTitle
-      },
-      caption: { uk: currentAdminTitle, en: currentAdminTitle },
-
-      ...(currentCrop ? { crop: currentCrop } : {})
+      src: seoValue.ogImage ?? adminTitle,
+      alt: { uk: ukMeta.altText?.uk || adminTitle, en: enMeta.altText?.en || adminTitle },
+      caption: { uk: adminTitle, en: adminTitle },
+      ...(crop ? { crop } : {})
     };
 
     const commonInput = {
-      adminTitle: currentAdminTitle,
-      title: { uk: ukMeta.title || currentAdminTitle, en: enMeta.title || currentAdminTitle },
+      adminTitle,
+      title: { uk: ukMeta.title || adminTitle, en: enMeta.title || adminTitle },
       description: { uk: ukMeta.description || '', en: enMeta.description || '' },
       keywords: { uk: ukMeta.keywords || '', en: enMeta.keywords || '' },
-      allowIndexation: { uk: currentSeoValue.allowIndexing.uk, en: currentSeoValue.allowIndexing.en },
+      allowIndexation: { uk: seoValue.allowIndexing.uk, en: seoValue.allowIndexing.en },
       coverImage,
-      publishedAt: currentPublishDate?.toISOString() ?? undefined
+      publishedAt: publishDate?.toISOString() ?? undefined
     };
 
+    const emptyContent = { uk: { content: { blocks: [] } }, en: { content: { blocks: [] } } };
+
     try {
-      if (publicationType === 'events') {
+      let newEntityId: string | undefined;
+
+      switch (publicationType) {
+      case 'events': {
         const payload = {
           ...commonInput,
-          eventLink: currentAdminTitle,
+          eventLink: adminTitle,
           eventDateTimeStart: ukMeta.startDateTime ?? undefined,
           eventDateTimeEnd: ukMeta.endDateTime ?? undefined,
-          ticketUrl: currentSeoValue.ticketUrl ?? undefined
+          ticketUrl: seoValue.ticketUrl ?? undefined
         };
 
         if (isEditing && id) {
           await updateEvent({ id, input: payload });
-          router.push(`${PUBLICATIONS_BASE_PATH}/events/${id}/edit`);
         } else {
-          const result = await createEvent({
-            ...payload,
-            content: { uk: { content: { blocks: [] } }, en: { content: { blocks: [] } } },
-            status: EventStatus.Draft
-          });
-          if (result.data?.createEvent.id)
-            router.push(`${PUBLICATIONS_BASE_PATH}/events/${result.data.createEvent.id}/edit`);
+          const res = await createEvent({ ...payload, content: emptyContent, status: EventStatus.Draft });
+          newEntityId = res.data?.createEvent.id;
         }
-      } else if (publicationType === 'news') {
-        const payload = {
-          ...commonInput,
-          newsDate: currentPublishDate?.toISOString() ?? undefined
-        };
+        break;
+      }
+
+      case 'news': {
+        const payload = { ...commonInput, newsDate: publishDate?.toISOString() ?? undefined };
 
         if (isEditing && id) {
           await updateNews({ id, input: payload });
-          router.push(`${PUBLICATIONS_BASE_PATH}/news/${id}/edit`);
         } else {
-          const result = await createNews({
-            ...payload,
-            content: { uk: { content: { blocks: [] } }, en: { content: { blocks: [] } } },
-            status: NewsStatus.Draft
-          });
-          if (result.data?.createNews.id)
-            router.push(`${PUBLICATIONS_BASE_PATH}/news/${result.data.createNews.id}/edit`);
+          const res = await createNews({ ...payload, content: emptyContent, status: NewsStatus.Draft });
+          newEntityId = res.data?.createNews.id;
         }
-      } else if (publicationType === 'media') {
-        const payload = {
-          ...commonInput,
-          url: ukMeta.canonicalUrl || enMeta.canonicalUrl || currentAdminTitle
-        };
+        break;
+      }
+
+      case 'media': {
+        const payload = { ...commonInput, url: ukMeta.canonicalUrl || enMeta.canonicalUrl || adminTitle };
 
         if (isEditing && id) {
           await updateMediaMention(id, payload);
-          router.push(PUBLICATIONS_BASE_PATH);
         } else {
-          const result = await createMediaMention({
-            ...payload,
-            status: MediaStatus.Draft
-          });
-          if (result.data?.createMediaMention.id) router.push(PUBLICATIONS_BASE_PATH);
+          await createMediaMention({ ...payload, status: MediaStatus.Draft });
         }
+        break;
       }
+      }
+
+      if (publicationType === 'media') {
+        router.push(PUBLICATIONS_BASE_PATH);
+      } else {
+        const targetId = isEditing ? id : newEntityId;
+        if (targetId) router.push(`${PUBLICATIONS_BASE_PATH}/${publicationType}/${targetId}/edit`);
+      }
+
     } catch {
       // errors are handled by safeMutate
     }
