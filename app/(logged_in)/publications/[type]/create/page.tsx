@@ -1,29 +1,30 @@
 'use client';
 import { Box, Typography } from '@mui/material';
-import { notFound,useParams } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 
 import CreatePublicationView from './CreatePublicationView';
 import { styles } from './page.styles';
+import { PAGE_TITLES, PUBLICATIONS_BASE_PATH, PUBLICATIONS_TYPES, PublicationsItemType } from '~/constants/publications';
 import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
 import {
-  PAGE_TITLES,
-  PublicationType,
   useUpsertPublication,
-  VALID_TYPES} from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
+} from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
 
 export default function CreatePublicationPage() {
   const params = useParams();
-  const type = params?.type as PublicationType;
+  const type = params?.type as PublicationsItemType;
 
-  if (!VALID_TYPES.includes(type as PublicationType)) notFound();
-  const targetId = '69e90d59b42da040169e7525';
-
-  const publicationData = useUpsertPublication({ type: type as PublicationType, id: targetId as string });
+  if (!PUBLICATIONS_TYPES.includes(type)) notFound();
+  
+  const publicationData = useUpsertPublication({ type });
 
   return (
     <Box sx={styles.container}>
-      <DividedHeader rightActionsComponent={<HeaderRightActions mode="edit" onPublish={publicationData.handleSave} />}>
+      <DividedHeader
+        originUrl={PUBLICATIONS_BASE_PATH}
+        rightActionsComponent={<HeaderRightActions mode="create" onEdit={publicationData.handleSave} />}
+      >
         <Typography variant="customBold20Tight">{`Створення ${PAGE_TITLES[type]}`}</Typography>
       </DividedHeader>
 

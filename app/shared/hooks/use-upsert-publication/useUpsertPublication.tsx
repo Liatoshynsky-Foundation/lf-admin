@@ -2,7 +2,7 @@ import dayjs, { type Dayjs } from 'dayjs';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { PUBLICATIONS_BASE_PATH } from '~/constants/publications';
+import { FetchedPublicationData, ImageCropData, initialSeoValue, PAGE_TITLES, PUBLICATIONS_BASE_PATH, PUBLICATIONS_TYPES, PublicationsItemType } from '~/constants/publications';
 import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import { useCreateEvent, useEventById, useUpdateEvent } from '~/shared/hooks/use-events/useEvents';
 import {
@@ -11,62 +11,8 @@ import {
   useUpdateMediaMention
 } from '~/shared/hooks/use-media-mentions/useMediaMentions';
 import { useCreateNews, useNewsById, useUpdateNews } from '~/shared/hooks/use-news/useNews';
-import { CropRect } from '~/types/common';
 import { EventStatus, MediaStatus, NewsStatus } from '~/types/graphql/generated/graphql';
 
-export type ImageCropData = NonNullable<FetchedPublicationData['coverImage']>['crop'];
-
-export interface FetchedPublicationData {
-  adminTitle?: string | null;
-  newsDate?: string | null;
-  publishedAt?: string | null;
-  ticketUrl?: {
-    uk?: string | null;
-    en?: string | null;
-  };
-  eventDateTimeStart?: string | null;
-  eventDateTimeEnd?: string | null;
-  url?: string | null;
-  title?: {
-    uk?: string | null;
-    en?: string | null;
-  } | null;
-  description?: {
-    uk?: string | null;
-    en?: string | null;
-  } | null;
-  keywords?: {
-    uk?: string | null;
-    en?: string | null;
-  } | null;
-  coverImage?: {
-    src?: string | null;
-    alt?: { uk?: string | null; en?: string | null } | null;
-    crop?: CropRect | null;
-  } | null;
-  allowIndexation?: {
-    uk?: boolean | null;
-    en?: boolean | null;
-  } | null;
-}
-
-export const VALID_TYPES = ['events', 'news', 'media'] as const;
-export type PublicationType = (typeof VALID_TYPES)[number];
-
-export const PAGE_TITLES: Record<PublicationType, string> = {
-  events: 'Події',
-  news: 'Новини',
-  media: 'Ми у ЗМІ'
-};
-
-export const initialSeoValue: SeoBlockValue = {
-  meta: {
-    uk: { title: '', description: '', keywords: '' },
-    en: { title: '', description: '', keywords: '' }
-  },
-  ogImage: null,
-  allowIndexing: { uk: true, en: true }
-};
 
 const isValidUrl = (url: string): boolean => {
   try {
@@ -80,7 +26,7 @@ const isValidUrl = (url: string): boolean => {
 const checkIsSeoInvalid = (
   ukMeta: SeoBlockValue['meta']['uk'],
   enMeta: SeoBlockValue['meta']['en'],
-  publicationType: PublicationType,
+  publicationType: PublicationsItemType,
   ticketUrl: SeoBlockValue['ticketUrl']
 ): boolean => {
   if (!ukMeta.title.trim() || !enMeta.title.trim()) return true;
@@ -100,7 +46,7 @@ const checkIsSeoInvalid = (
 };
 
 interface UseUpsertPublicationProps {
-  type: PublicationType;
+  type: PublicationsItemType;
   id?: string;
 }
 
@@ -108,8 +54,8 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
   const router = useRouter();
   const isEditing = Boolean(id);
 
-  const isValidType = VALID_TYPES.includes(type as PublicationType);
-  const publicationType = type as PublicationType;
+  const isValidType = PUBLICATIONS_TYPES.includes(type as PublicationsItemType);
+  const publicationType = type as PublicationsItemType;
   const pageTitle = isValidType ? `${isEditing ? 'Редагування' : 'Створення'} ${PAGE_TITLES[publicationType]}` : '';
 
   const newsQuery = useNewsById(id as string, { skip: type !== 'news' || !isEditing });

@@ -5,17 +5,13 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { useCallback } from 'react';
 
 import { styles } from './page.styles'; 
+import { ADMIN_TITLE_LABELS } from '~/constants/publications';
 import SeoCollapsibleBlock from '~/shared/components/forms/seo-collapsible-block/SeoCollapsibleBlock';
 import { SeoCanonicalUrlField } from '~/shared/components/forms/seo-metadata-form/seo-canonicalurl-field/SeoCanonicalUrlField';
 import { SeoDateTimeFields } from '~/shared/components/forms/seo-metadata-form/seo-datetime-fields/SeoDateTimeFields';
 import { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
-import { PublicationType,useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
+import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
 
-const ADMIN_TITLE_LABELS: Record<PublicationType, string> = {
-  events: 'Назва події в адмінці',
-  news: 'Назва новини в адмінці',
-  media: 'Назва публікації в адмінці'
-};
 
 interface PublicationViewProps{
   data: ReturnType<typeof useUpsertPublication>;
