@@ -133,7 +133,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       const safeParseDate = (dateVal: Dayjs | string | null | undefined) => {
         if (!dateVal) return null;
         const num = Number(dateVal);
-        return dayjs(!Number.isNaN(num) ? num : dateVal);
+        return dayjs(Number.isNaN(num) ? dateVal : num);
       };
 
       const mainDate = type === 'news' ? fetchedData.newsDate : fetchedData.publishedAt;
