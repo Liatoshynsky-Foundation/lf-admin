@@ -125,7 +125,7 @@ describe('NewsRepository Comprehensive Tests', () => {
     slug: 'test-news',
     content: { uk: { blocks: [] }, en: { blocks: [] } } as News['content'],
     status: NewsStatus.Published,
-    coverImage: { src: { uk: 'img.jpg', en: 'img.jpg' }, alt: { uk: 'а', en: 'a' }, caption: { uk: '', en: '' } },
+    coverImage: { src: 'img.jpg', alt: { uk: 'а', en: 'a' }, caption: { uk: '', en: '' } },
     description: { uk: 'Опис', en: 'Desc' },
     keywords: { uk: 'к', en: 'k' },
     allowIndexation: { uk: true, en: true },
@@ -180,7 +180,7 @@ describe('NewsRepository Comprehensive Tests', () => {
         slug: 'new-news',
         content: { uk: { blocks: [] }, en: { blocks: [] } } as News['content'],
         status: NewsStatus.Draft,
-        coverImage: { src: { uk: 'i.jpg', en: 'i.jpg' }, alt: { uk: 'а', en: 'a' }, caption: { uk: '', en: '' } },
+        coverImage: { src: 'i.jpg', alt: { uk: 'а', en: 'a' }, caption: { uk: '', en: '' } },
         description: { uk: 'Опис', en: 'Desc' },
         keywords: { uk: 'к', en: 'k' },
         allowIndexation: { uk: true, en: true }
