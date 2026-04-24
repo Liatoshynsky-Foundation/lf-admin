@@ -1,6 +1,6 @@
 import dayjs, { type Dayjs } from 'dayjs';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect,useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { PUBLICATIONS_BASE_PATH } from '~/constants/publications';
 import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
@@ -11,16 +11,22 @@ import {
   useUpdateMediaMention
 } from '~/shared/hooks/use-media-mentions/useMediaMentions';
 import { useCreateNews, useNewsById, useUpdateNews } from '~/shared/hooks/use-news/useNews';
+import { CropRect } from '~/types/common';
 import { EventStatus, MediaStatus, NewsStatus } from '~/types/graphql/generated/graphql';
+
+export type ImageCropData = NonNullable<FetchedPublicationData['coverImage']>['crop'];
 
 export interface FetchedPublicationData {
   adminTitle?: string | null;
-  newsDate?: string | null; 
+  newsDate?: string | null;
   publishedAt?: string | null;
-  ticketUrl?: unknown; 
+  ticketUrl?: {
+    uk?: string | null;
+    en?: string | null;
+  };
   eventDateTimeStart?: string | null;
-  eventDateTimeEnd?: string | null; 
-  url?: string | null; 
+  eventDateTimeEnd?: string | null;
+  url?: string | null;
   title?: {
     uk?: string | null;
     en?: string | null;
@@ -34,8 +40,9 @@ export interface FetchedPublicationData {
     en?: string | null;
   } | null;
   coverImage?: {
-    src?: { uk?: string | null; en?: string | null } | null;
+    src?: string | null;
     alt?: { uk?: string | null; en?: string | null } | null;
+    crop?: CropRect | null;
   } | null;
   allowIndexation?: {
     uk?: boolean | null;
@@ -57,7 +64,7 @@ export const initialSeoValue: SeoBlockValue = {
     uk: { title: '', description: '', keywords: '' },
     en: { title: '', description: '', keywords: '' }
   },
-  ogImage: { uk: null, en: null },
+  ogImage: null,
   allowIndexing: { uk: true, en: true }
 };
 
@@ -121,12 +128,15 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
   const [adminTitleError, setAdminTitleError] = useState('');
   const [publishDate, setPublishDateState] = useState<Dayjs | null>(null);
   const [seoValue, setSeoValueState] = useState<SeoBlockValue>(initialSeoValue);
+
+  const [crop, setCropState] = useState<ImageCropData>(null);
   const [forceShowErrors, setForceShowErrors] = useState(false);
 
   const latestDataRef = useRef({
     adminTitle: '',
     publishDate: null as Dayjs | null,
-    seoValue: initialSeoValue
+    seoValue: initialSeoValue,
+    crop: null as ImageCropData | null
   });
 
   const isInitializedRef = useRef(false);
@@ -143,6 +153,11 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     const newValue = typeof val === 'function' ? val(latestDataRef.current.seoValue) : val;
     latestDataRef.current.seoValue = newValue;
     setSeoValueState(newValue);
+  };
+
+  const setCrop = (val: ImageCropData) => {
+    latestDataRef.current.crop = val;
+    setCropState(val);
   };
 
   useEffect(() => {
@@ -170,29 +185,22 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       const mainDate = type === 'news' ? fetchedData.newsDate : fetchedData.publishedAt;
       setPublishDate(safeParseDate(mainDate));
 
-      let parsedTicketUrl = { uk: '', en: '' };
-
-      if (fetchedData.ticketUrl) {
-        try {
-          parsedTicketUrl =
-            typeof fetchedData.ticketUrl === 'string' ? JSON.parse(fetchedData.ticketUrl) : fetchedData.ticketUrl;
-        } catch {
-        }
-      }
+      setCrop(fetchedData.coverImage?.crop ?? null);
 
       const getLangMeta = (lang: 'uk' | 'en') => {
         const start = safeParseDate(fetchedData?.eventDateTimeStart);
         const end = safeParseDate(fetchedData?.eventDateTimeEnd);
 
         return {
-          // Because of our interface, TS now knows exactly what fetchedData.title looks like!
           title: fetchedData?.title?.[lang] || '',
           description: fetchedData?.description?.[lang] || '',
           keywords: fetchedData?.keywords?.[lang] || '',
 
           canonicalUrl: type === 'media' ? fetchedData?.url || '' : '',
-          altText: fetchedData?.coverImage?.alt?.[lang] || '',
-
+          altText: {
+            uk: fetchedData?.coverImage?.alt?.uk || '',
+            en: fetchedData?.coverImage?.alt?.en || ''
+          },
           startDateTime: start ? start.toISOString() : undefined,
           endDateTime: end ? end.toISOString() : undefined
         };
@@ -200,15 +208,15 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
 
       setSeoValue({
         meta: { uk: getLangMeta('uk'), en: getLangMeta('en') },
-        ogImage: {
-          uk: fetchedData.coverImage?.src?.uk || null,
-          en: fetchedData.coverImage?.src?.en || null
-        },
+        ogImage: fetchedData.coverImage?.src || null,
         allowIndexing: {
           uk: fetchedData.allowIndexation?.uk ?? true,
           en: fetchedData.allowIndexation?.en ?? true
         },
-        ticketUrl: parsedTicketUrl
+        ticketUrl: {
+          uk: fetchedData.ticketUrl?.uk || '',
+          en: fetchedData.ticketUrl?.en || ''
+        }
       });
 
       isInitializedRef.current = true;
@@ -222,6 +230,8 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     const currentSeoValue = latestDataRef.current.seoValue;
     const currentPublishDate = latestDataRef.current.publishDate;
 
+    const currentCrop = latestDataRef.current.crop;
+
     const ukMeta = currentSeoValue.meta.uk;
     const enMeta = currentSeoValue.meta.en;
 
@@ -233,39 +243,22 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     if (isAdminTitleInvalid || isSeoInvalid) return;
 
     const coverImage = {
-      src: {
-        uk: currentSeoValue.ogImage?.uk ?? currentAdminTitle,
-        en: currentSeoValue.ogImage?.en ?? currentAdminTitle
-      },
+      src: currentSeoValue.ogImage ?? currentAdminTitle,
       alt: {
         uk: ukMeta.altText?.uk || currentAdminTitle,
         en: enMeta.altText?.en || currentAdminTitle
       },
-      caption: { uk: currentAdminTitle, en: currentAdminTitle }
+      caption: { uk: currentAdminTitle, en: currentAdminTitle },
+
+      ...(currentCrop ? { crop: currentCrop } : {})
     };
 
     const commonInput = {
       adminTitle: currentAdminTitle,
-
-      title: {
-        uk: ukMeta.title || currentAdminTitle,
-        en: enMeta.title || currentAdminTitle
-      },
-
-      description: {
-        uk: ukMeta.description || '',
-        en: enMeta.description || ''
-      },
-
-      keywords: {
-        uk: ukMeta.keywords || '',
-        en: enMeta.keywords || ''
-      },
-
-      allowIndexation: {
-        uk: currentSeoValue.allowIndexing.uk,
-        en: currentSeoValue.allowIndexing.en
-      },
+      title: { uk: ukMeta.title || currentAdminTitle, en: enMeta.title || currentAdminTitle },
+      description: { uk: ukMeta.description || '', en: enMeta.description || '' },
+      keywords: { uk: ukMeta.keywords || '', en: enMeta.keywords || '' },
+      allowIndexation: { uk: currentSeoValue.allowIndexing.uk, en: currentSeoValue.allowIndexing.en },
       coverImage,
       publishedAt: currentPublishDate?.toISOString() ?? undefined
     };
@@ -356,6 +349,10 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     setPublishDate,
     seoValue,
     setSeoValue,
+
+    crop,
+    setCrop,
+
     forceShowErrors,
     handleSave,
     handleDateTimeChange

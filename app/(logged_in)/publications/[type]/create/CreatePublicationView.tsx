@@ -1,4 +1,3 @@
-// PublicationForm.tsx
 import { Box, TextField } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -32,6 +31,8 @@ export default function CreatePublicationView({ data }: PublicationViewProps) {
     setPublishDate,
     seoValue,
     setSeoValue,
+    crop,
+    setCrop,
     forceShowErrors,
     handleDateTimeChange
   } = data;
@@ -78,6 +79,8 @@ export default function CreatePublicationView({ data }: PublicationViewProps) {
         showTicketUrl={publicationType === 'events'}
         extraFieldsBeforeKeywords={publicationType === 'media'}
         forceShowErrors={forceShowErrors}
+        crop={crop}
+        onChangeCrop={setCrop}
         value={seoValue}
         onChange={setSeoValue}
         extraFields={seoExtraFields}
