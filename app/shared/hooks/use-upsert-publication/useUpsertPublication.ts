@@ -2,7 +2,15 @@ import dayjs, { type Dayjs } from 'dayjs';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { FetchedPublicationData, ImageCropData, initialSeoValue, PAGE_TITLES, PUBLICATIONS_BASE_PATH, PUBLICATIONS_TYPES, PublicationsItemType } from '~/constants/publications';
+import {
+  FetchedPublicationData,
+  ImageCropData,
+  initialSeoValue,
+  PAGE_TITLES,
+  PUBLICATIONS_BASE_PATH,
+  PUBLICATIONS_TYPES,
+  PublicationsItemType
+} from '~/constants/publications';
 import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import { useCreateEvent, useEventById, useUpdateEvent } from '~/shared/hooks/use-events/useEvents';
 import {
@@ -12,7 +20,6 @@ import {
 } from '~/shared/hooks/use-media-mentions/useMediaMentions';
 import { useCreateNews, useNewsById, useUpdateNews } from '~/shared/hooks/use-news/useNews';
 import { EventStatus, MediaStatus, NewsStatus } from '~/types/graphql/generated/graphql';
-
 
 const isValidUrl = (url: string): boolean => {
   try {
@@ -56,7 +63,8 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
 
   const isValidType = PUBLICATIONS_TYPES.includes(type);
   const publicationType = type;
-  const pageTitle = isValidType ? `${isEditing ? 'Редагування' : 'Створення'} ${PAGE_TITLES[publicationType]}` : '';
+  const mode = isEditing ? 'Редагування' : 'Створення';
+  const pageTitle = isValidType ? `${mode} ${PAGE_TITLES[publicationType]}` : '';
 
   const newsQuery = useNewsById(id as string, { skip: type !== 'news' || !isEditing });
   const eventQuery = useEventById(id as string, { skip: type !== 'events' || !isEditing });
@@ -70,12 +78,12 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
   const [updateNews] = useUpdateNews();
   const [updateMediaMention] = useUpdateMediaMention();
 
-  const [adminTitle, setAdminTitleState] = useState('');
+  const [adminTitle, setAdminTitle] = useState('');
   const [adminTitleError, setAdminTitleError] = useState('');
-  const [publishDate, setPublishDateState] = useState<Dayjs | null>(null);
-  const [seoValue, setSeoValueState] = useState<SeoBlockValue>(initialSeoValue);
+  const [publishDate, setPublishDate] = useState<Dayjs | null>(null);
+  const [seoValue, setSeoValue] = useState<SeoBlockValue>(initialSeoValue);
 
-  const [crop, setCropState] = useState<ImageCropData>(null);
+  const [crop, setCrop] = useState<ImageCropData>(null);
   const [forceShowErrors, setForceShowErrors] = useState(false);
 
   const latestDataRef = useRef({
@@ -87,23 +95,23 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
 
   const isInitializedRef = useRef(false);
 
-  const setAdminTitle = (val: string) => {
+  const changeAdminTitle = (val: string) => {
     latestDataRef.current.adminTitle = val;
-    setAdminTitleState(val);
+    setAdminTitle(val);
   };
-  const setPublishDate = (val: Dayjs | null) => {
+  const changePublishDate = (val: Dayjs | null) => {
     latestDataRef.current.publishDate = val;
-    setPublishDateState(val);
+    setPublishDate(val);
   };
-  const setSeoValue = (val: SeoBlockValue | ((prev: SeoBlockValue) => SeoBlockValue)) => {
+  const changeSeoValue = (val: SeoBlockValue | ((prev: SeoBlockValue) => SeoBlockValue)) => {
     const newValue = typeof val === 'function' ? val(latestDataRef.current.seoValue) : val;
     latestDataRef.current.seoValue = newValue;
-    setSeoValueState(newValue);
+    setSeoValue(newValue);
   };
 
-  const setCrop = (val: ImageCropData) => {
+  const changeCrop = (val: ImageCropData) => {
     latestDataRef.current.crop = val;
-    setCropState(val);
+    setCrop(val);
   };
 
   useEffect(() => {
@@ -120,18 +128,18 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     }
 
     if (fetchedData) {
-      setAdminTitle(fetchedData.adminTitle || '');
+      changeAdminTitle(fetchedData.adminTitle || '');
 
       const safeParseDate = (dateVal: Dayjs | string | null | undefined) => {
         if (!dateVal) return null;
         const num = Number(dateVal);
-        return dayjs(!isNaN(num) ? num : dateVal);
+        return dayjs(!Number.isNaN(num) ? num : dateVal);
       };
 
       const mainDate = type === 'news' ? fetchedData.newsDate : fetchedData.publishedAt;
-      setPublishDate(safeParseDate(mainDate));
+      changePublishDate(safeParseDate(mainDate));
 
-      setCrop(fetchedData.coverImage?.crop ?? null);
+      changeCrop(fetchedData.coverImage?.crop ?? null);
 
       const getLangMeta = (lang: 'uk' | 'en') => {
         const start = safeParseDate(fetchedData?.eventDateTimeStart);
@@ -152,7 +160,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
         };
       };
 
-      setSeoValue({
+      changeSeoValue({
         meta: { uk: getLangMeta('uk'), en: getLangMeta('en') },
         ogImage: fetchedData.coverImage?.src || null,
         allowIndexing: {
@@ -175,19 +183,14 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     const { adminTitle, seoValue, publishDate, crop } = latestDataRef.current;
     const { uk: ukMeta, en: enMeta } = seoValue.meta;
 
-    const isAdminTitleInvalid = !adminTitle.trim();
+    const isTitleInvalid = !adminTitle.trim();
     const isSeoInvalid = checkIsSeoInvalid(ukMeta, enMeta, publicationType, seoValue.ticketUrl);
 
-    if (isAdminTitleInvalid) setAdminTitleError('Обов\'язкове поле');
-    if (isSeoInvalid) setForceShowErrors(true);
-    if (isAdminTitleInvalid || isSeoInvalid) return;
-
-    const coverImage = {
-      src: seoValue.ogImage ?? adminTitle,
-      alt: { uk: ukMeta.altText?.uk || adminTitle, en: enMeta.altText?.en || adminTitle },
-      caption: { uk: adminTitle, en: adminTitle },
-      ...(crop ? { crop } : {})
-    };
+    if (isTitleInvalid || isSeoInvalid) {
+      if (isTitleInvalid) setAdminTitleError('Обов\'язкове поле');
+      if (isSeoInvalid) setForceShowErrors(true);
+      return;
+    }
 
     const commonInput = {
       adminTitle,
@@ -195,72 +198,61 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       description: { uk: ukMeta.description || '', en: enMeta.description || '' },
       keywords: { uk: ukMeta.keywords || '', en: enMeta.keywords || '' },
       allowIndexation: { uk: seoValue.allowIndexing.uk, en: seoValue.allowIndexing.en },
-      coverImage,
-      publishedAt: publishDate?.toISOString() ?? undefined
+      publishedAt: publishDate?.toISOString(),
+      coverImage: {
+        src: seoValue.ogImage || adminTitle,
+        alt: { uk: ukMeta.altText?.uk || adminTitle, en: enMeta.altText?.en || adminTitle },
+        caption: { uk: adminTitle, en: adminTitle },
+        ...(crop && { crop })
+      }
     };
 
-    const emptyContent = { uk: { content: { blocks: [] } }, en: { content: { blocks: [] } } };
-
     try {
-      let newEntityId: string | undefined;
+      const emptyContent = { uk: { content: { blocks: [] } }, en: { content: { blocks: [] } } };
+      const isUpdate = isEditing && id;
 
-      switch (publicationType) {
-      case 'events': {
-        const payload = {
-          ...commonInput,
-          eventLink: adminTitle,
-          eventDateTimeStart: ukMeta.startDateTime ?? undefined,
-          eventDateTimeEnd: ukMeta.endDateTime ?? undefined,
-          ticketUrl: seoValue.ticketUrl ?? undefined
-        };
-
-        if (isEditing && id) {
-          await updateEvent({ id, input: payload });
-        } else {
-          const res = await createEvent({ ...payload, content: emptyContent, status: EventStatus.Draft });
-          newEntityId = res.data?.createEvent.id;
+      const saveStrategies: Record<string, () => Promise<string | void>> = {
+        events: async () => {
+          const payload = {
+            ...commonInput,
+            eventLink: adminTitle,
+            eventDateTimeStart: ukMeta.startDateTime,
+            eventDateTimeEnd: ukMeta.endDateTime,
+            ticketUrl: seoValue.ticketUrl
+          };
+          if (isUpdate) return updateEvent({ id, input: payload }).then(() => id);
+          return createEvent({ ...payload, content: emptyContent, status: EventStatus.Draft }).then(
+            (r) => r.data?.createEvent?.id
+          );
+        },
+        news: async () => {
+          const payload = { ...commonInput, newsDate: commonInput.publishedAt };
+          if (isUpdate) return updateNews({ id, input: payload }).then(() => id);
+          return createNews({ ...payload, content: emptyContent, status: NewsStatus.Draft }).then(
+            (r) => r.data?.createNews?.id
+          );
+        },
+        media: async () => {
+          const payload = { ...commonInput, url: ukMeta.canonicalUrl || enMeta.canonicalUrl || adminTitle };
+          if (isUpdate) await updateMediaMention(id, payload);
+          else await createMediaMention({ ...payload, status: MediaStatus.Draft });
         }
-        break;
-      }
+      };
 
-      case 'news': {
-        const payload = { ...commonInput, newsDate: publishDate?.toISOString() ?? undefined };
-
-        if (isEditing && id) {
-          await updateNews({ id, input: payload });
-        } else {
-          const res = await createNews({ ...payload, content: emptyContent, status: NewsStatus.Draft });
-          newEntityId = res.data?.createNews.id;
-        }
-        break;
-      }
-
-      case 'media': {
-        const payload = { ...commonInput, url: ukMeta.canonicalUrl || enMeta.canonicalUrl || adminTitle };
-
-        if (isEditing && id) {
-          await updateMediaMention(id, payload);
-        } else {
-          await createMediaMention({ ...payload, status: MediaStatus.Draft });
-        }
-        break;
-      }
-      }
+      const resultId = await saveStrategies[publicationType]?.();
 
       if (publicationType === 'media') {
         router.push(PUBLICATIONS_BASE_PATH);
-      } else {
-        const targetId = isEditing ? id : newEntityId;
-        if (targetId) router.push(`${PUBLICATIONS_BASE_PATH}/${publicationType}/${targetId}/edit`);
+      } else if (resultId) {
+        router.push(`${PUBLICATIONS_BASE_PATH}/${publicationType}/${resultId}/edit`);
       }
-
     } catch {
       // errors are handled by safeMutate
     }
   };
 
   const handleDateTimeChange = useCallback((start: string | undefined, end: string | undefined) => {
-    setSeoValue((prev) => ({
+    changeSeoValue((prev) => ({
       ...prev,
       meta: {
         uk: { ...prev.meta.uk, startDateTime: start, endDateTime: end },
@@ -276,16 +268,16 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     publicationType,
     pageTitle,
     adminTitle,
-    setAdminTitle,
+    setAdminTitle: changeAdminTitle,
     adminTitleError,
     setAdminTitleError,
     publishDate,
-    setPublishDate,
+    setPublishDate: changePublishDate,
     seoValue,
-    setSeoValue,
+    setSeoValue: changeSeoValue,
 
     crop,
-    setCrop,
+    setCrop: changeCrop,
 
     forceShowErrors,
     handleSave,

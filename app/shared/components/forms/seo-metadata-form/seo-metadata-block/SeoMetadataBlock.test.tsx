@@ -67,12 +67,6 @@ describe('SeoMetadataBlock', () => {
     expect(screen.getByTestId(`title-${locale}`)).toHaveTextContent('test');
   });
 
-  // test.each(locales)('updates %s ogImage in uncontrolled mode', (locale) => {
-  //   renderBlock();
-  //   clickButton(`image-${locale}`);
-  //   expect(screen.getByTestId(`og-image-${locale}`)).toHaveTextContent('has-image');
-  // });
-
   test.each(locales)('updates %s allowIndexing in uncontrolled mode', (locale) => {
     renderBlock();
     clickButton(`indexing-${locale}`);
