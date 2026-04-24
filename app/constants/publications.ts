@@ -1,9 +1,10 @@
 import { CONTENT_VERSION, SerializedContent } from '~/shared/components/content-editor/types';
+import { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import type { FilterOption } from '~/shared/components/selector/FilterSelect';
+import { CropRect } from '~/types/common';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
-export const PUBLICATIONS_TYPES = ['event', 'news', 'media'] as const;
-export type PublicationsType = (typeof PUBLICATIONS_TYPES)[number];
+export const PUBLICATIONS_TYPES = ['events', 'news', 'media'] as const;
 
 export type PublicationsTabValue = 'all' | 'events' | 'news' | 'media';
 export type PublicationsItemType = Exclude<PublicationsTabValue, 'all'>;
@@ -205,3 +206,62 @@ export type PublicationResource = (
   status: BaseContentStatuses,
   extra?: Record<string, unknown>
 ) => Promise<MutationResponse>;
+
+
+export interface FetchedPublicationData {
+  adminTitle?: string | null;
+  newsDate?: string | null;
+  publishedAt?: string | null;
+  ticketUrl?: {
+    uk?: string | null;
+    en?: string | null;
+  };
+  eventDateTimeStart?: string | null;
+  eventDateTimeEnd?: string | null;
+  url?: string | null;
+  title?: {
+    uk?: string | null;
+    en?: string | null;
+  } | null;
+  description?: {
+    uk?: string | null;
+    en?: string | null;
+  } | null;
+  keywords?: {
+    uk?: string | null;
+    en?: string | null;
+  } | null;
+  coverImage?: {
+    src?: string | null;
+    alt?: { uk?: string | null; en?: string | null } | null;
+    crop?: CropRect | null;
+  } | null;
+  allowIndexation?: {
+    uk?: boolean | null;
+    en?: boolean | null;
+  } | null;
+}
+
+export type ImageCropData = NonNullable<FetchedPublicationData['coverImage']>['crop'];
+
+export const PAGE_TITLES: Record<PublicationsItemType, string> = {
+  events: 'Події',
+  news: 'Новини',
+  media: 'Ми у ЗМІ'
+};
+
+export const initialSeoValue: SeoBlockValue = {
+  meta: {
+    uk: { title: '', description: '', keywords: '' },
+    en: { title: '', description: '', keywords: '' }
+  },
+  ogImage: null,
+  allowIndexing: { uk: true, en: true }
+};
+
+
+export const ADMIN_TITLE_LABELS: Record<PublicationsItemType, string> = {
+  events: 'Назва події в адмінці',
+  news: 'Назва новини в адмінці',
+  media: 'Назва публікації в адмінці'
+};
