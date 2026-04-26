@@ -10,7 +10,8 @@ import { sxToArray } from '~/lib/utils/sxToArray';
 type BaseTitleDropdownProps = {
   title: string;
   sx?: SxProps<Theme>;
-  onMenuOpen: (event: MouseEvent<HTMLElement>) => void;
+  renderMenuOpen?: boolean;
+  onMenuOpen?: (event: MouseEvent<HTMLElement>) => void;
 };
 
 type MultilingualProps = BaseTitleDropdownProps & {
@@ -25,7 +26,7 @@ type SeoProps = BaseTitleDropdownProps & {
 export type TitleDropdownProps = MultilingualProps | SeoProps;
 
 export const TitleDropdown = (props: TitleDropdownProps) => {
-  const { title, type, onMenuOpen } = props;
+  const { title, type, renderMenuOpen = true, onMenuOpen } = props;
 
   const contextLabel = type === 'multilingual' ? (props.language ?? 'UA') : 'SEO';
 
@@ -40,9 +41,11 @@ export const TitleDropdown = (props: TitleDropdownProps) => {
       </Typography>
 
       <Typography variant="customBold20Tight">{contextLabel}</Typography>
-      <IconButton aria-label="Відкрити меню" sx={{ ml: '-4px' }} onClick={onMenuOpen}>
-        <ChevronDown size="20px" color="#190D03" strokeWidth="1.5px" />
-      </IconButton>
+      {renderMenuOpen && (
+        <IconButton aria-label="Відкрити меню" sx={{ ml: '-4px' }} onClick={onMenuOpen}>
+          <ChevronDown size="20px" color="#190D03" strokeWidth="1.5px" />
+        </IconButton>
+      )}
     </Box>
   );
 };
