@@ -15,9 +15,9 @@ export default function CreatePublicationPage() {
   const params = useParams();
   const type = params?.type as PublicationsItemType;
 
-  if (!PUBLICATIONS_TYPES.includes(type)) notFound();
-  
   const publicationData = useUpsertPublication({ type });
+
+  if (!PUBLICATIONS_TYPES.includes(type)) notFound();
 
   return (
     <Box sx={styles.container}>
