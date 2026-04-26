@@ -22,10 +22,7 @@ mutation CreateMediaMention($input: CreateMediaMentionInput!) {
       en
     }
     coverImage {
-      src {
-        uk
-        en
-      }
+      src 
       alt {
         uk
         en
@@ -74,10 +71,7 @@ mutation UpdateMediaMention($id: ID!, $input: UpdateMediaMentionInput!) {
       en
     }
     coverImage {
-      src {
-        uk
-        en
-      }
+      src 
       alt {
         uk
         en

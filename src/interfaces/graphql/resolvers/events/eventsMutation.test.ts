@@ -43,7 +43,7 @@ describe('EventsMutation Resolvers', () => {
     allowIndexation: { uk: true, en: true },
     slug: 'slug-test',
     content: { uk: { blocks: [] }, en: { blocks: [] } } as EventsEntity['content'],
-    coverImage: { src: { uk: '', en: '' }, alt: { uk: '', en: '' }, caption: { uk: '', en: '' } },
+    coverImage: { src:'', alt: { uk: '', en: '' }, caption: { uk: '', en: '' } },
     status: EventStatus.Draft,
     meta: { views: 0 },
     createdAt: '2024-01-01',
@@ -60,7 +60,7 @@ describe('EventsMutation Resolvers', () => {
     allowIndexation: { uk: true, en: true },
     content: { uk: { blocks: [] }, en: { blocks: [] } } as EventsEntity['content'],
     coverImage: {
-      src: { uk: 'event.jpg', en: 'event.jpg' },
+      src: 'event.jpg',
       alt: { uk: 'alt uk', en: 'alt en' },
       caption: { uk: '', en: '' },
       crop: { x: 10, y: 10, width: 50, height: 50 }
@@ -99,7 +99,7 @@ describe('EventsMutation Resolvers', () => {
       const updateInput: UpdateEventInput = {
         title: { uk: 'Нова Назва', en: 'New Name' },
         coverImage: {
-          src: { uk: 'updated.jpg', en: 'updated.jpg' },
+          src:'updated.jpg',
           alt: { uk: 'оновлено', en: 'updated' },
           crop: { x: 1, y: 1, width: 1, height: 1 }
         } as LocalizedImage

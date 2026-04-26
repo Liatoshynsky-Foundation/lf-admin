@@ -50,7 +50,7 @@ describe('SeoMetadataBlock', () => {
       uk: { title: '', description: '', keywords: '' },
       en: { title: '', description: '', keywords: '' }
     },
-    ogImage: { uk: null, en: null },
+    ogImage: null,
     allowIndexing: { uk: true, en: true }
   };
 
@@ -65,12 +65,6 @@ describe('SeoMetadataBlock', () => {
     renderBlock();
     clickButton(`change-${locale}`);
     expect(screen.getByTestId(`title-${locale}`)).toHaveTextContent('test');
-  });
-
-  test.each(locales)('updates %s ogImage in uncontrolled mode', (locale) => {
-    renderBlock();
-    clickButton(`image-${locale}`);
-    expect(screen.getByTestId(`og-image-${locale}`)).toHaveTextContent('has-image');
   });
 
   test.each(locales)('updates %s allowIndexing in uncontrolled mode', (locale) => {
@@ -98,7 +92,7 @@ describe('SeoMetadataBlock', () => {
     clickButton('image-en');
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
-        ogImage: expect.objectContaining({ en: 'https://example.com/test.png' })
+        ogImage: 'https://example.com/test.png'
       })
     );
   });
