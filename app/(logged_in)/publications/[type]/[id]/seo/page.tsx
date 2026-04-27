@@ -14,6 +14,7 @@ import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
 import { TitleDropdown } from '~/shared/components/divided-header/title-dropdown/TitleDropdown';
 import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 type Params = {
   type: PublicationsItemType;
@@ -30,7 +31,7 @@ export default function PublicatiosSeoPage() {
 
   const handleCancel = () => router.push(PUBLICATIONS_BASE_PATH);
   const handleSave = () => {
-    publicationData?.handleSave();
+    publicationData?.handleSave(BaseContentStatuses.Draft);
     router.push(PUBLICATIONS_BASE_PATH);
   };
 
