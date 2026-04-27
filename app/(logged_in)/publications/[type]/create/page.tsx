@@ -152,7 +152,7 @@ export default function CreatePublicationPage() {
       } else if (publicationType === 'news') {
         const result = await createNews({
           ...commonInput,
-          content: { uk: {content: {blocks: []}}, en: {content: {blocks: []}} },
+          content: { uk: { content: { blocks: [] } }, en: { content: { blocks: [] } } },
           newsDate: publishDate?.toISOString() ?? undefined,
           status: NewsStatus.Draft
         });
