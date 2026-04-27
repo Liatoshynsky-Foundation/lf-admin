@@ -266,7 +266,7 @@ const mapEventItem = (item: EventItem): PublicationCardItem | null => {
   const sortTitle = fallbackTitle || titleText;
   const sortableDate = getSortableDate(item.publishedAt, item.eventDateTimeStart, item.eventDateTimeEnd);
 
-  const coverImage = (item as any).coverImage;
+  const coverImage = item.coverImage;
 
   return {
     id: item.id,
@@ -277,8 +277,8 @@ const mapEventItem = (item: EventItem): PublicationCardItem | null => {
     cardType: mapCardType('events'),
     dateAdded: sortableDate,
     createdAtRaw: sortableDate,
-    createdAt: (item as any).createdAt,
-    updatedAt: (item as any).updatedAt,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
     publishedAt: item.publishedAt ?? undefined,
     status: publicationStatus,
     cardStatus: publicationStatus,
