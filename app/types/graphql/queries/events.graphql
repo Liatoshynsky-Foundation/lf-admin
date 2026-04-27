@@ -74,10 +74,16 @@ query AllEvents($filters: EventFiltersInput) {
     }
     slug
     status
+    createdAt
+    updatedAt
     eventLink
     eventDateTimeStart
     eventDateTimeEnd
     publishedAt
+    coverImage {
+      src 
+      alt { uk en }
+    }
     meta {
       views
     }
