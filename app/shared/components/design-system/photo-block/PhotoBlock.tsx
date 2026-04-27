@@ -208,7 +208,7 @@ export const ImagePreviewBlock = ({
         initial={mediaInitial}
         onClose={closeMediaModal}
         onApply={handleApplyMediaModal}
-        directory="images"
+        directory="photos"
       />
     </Box>
   );

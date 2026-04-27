@@ -19,7 +19,7 @@ export type SeoData = {
     uk: boolean;
     en: boolean;
   };
-  ogImage: { uk: string | null; en: string | null };
+  ogImage: string | null;
 };
 
 export const mapSeoBase = ({ meta, allowIndexing, ogImage }: SeoData) => ({
@@ -44,7 +44,7 @@ export const mapSeoBase = ({ meta, allowIndexing, ogImage }: SeoData) => ({
     en: allowIndexing.en
   },
   coverImage: {
-    src: { uk: ogImage.uk, en: ogImage.en },
+    src: ogImage,
     alt: {
       uk: meta.uk.altText?.uk ?? '',
       en: meta.en.altText?.en ?? ''

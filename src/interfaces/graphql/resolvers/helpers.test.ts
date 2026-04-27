@@ -148,7 +148,7 @@ describe('Synchronization Helpers', () => {
   describe('syncImagesCrops - Cover Image mode', () => {
     it('should call findOneAndUpdate for both locales if crop exists in cover image', async () => {
       const image: LocalizedImage = {
-        src: { uk: 'test.jpg', en: 'test.jpg' },
+        src: 'test.jpg',
         alt: { uk: 'опис', en: 'alt' },
         crop: { x: 1, y: 2, width: 3, height: 4 }
       };
@@ -173,7 +173,7 @@ describe('Synchronization Helpers', () => {
 
     it('should use cropIdPrefix if provided', async () => {
       const image: LocalizedImage = {
-        src: { uk: 'test.jpg', en: 'test.jpg' },
+        src: 'test.jpg',
         alt: { uk: '', en: '' },
         crop: { x: 1, y: 1, width: 1, height: 1 }
       };
@@ -189,7 +189,7 @@ describe('Synchronization Helpers', () => {
 
     it('should not call findOneAndUpdate if crop is missing in cover image', async () => {
       const imageWithoutCrop: LocalizedImage = {
-        src: { uk: '1.jpg', en: '1.jpg' },
+        src: '1.jpg',
         alt: { uk: '', en: '' }
       };
 

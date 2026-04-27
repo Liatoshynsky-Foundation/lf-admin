@@ -10,6 +10,7 @@ import { SeoBaseFields } from './seo-base-fields/SeoBaseFields';
 import { styles } from './SeoMetadataForm.styles';
 import { ImagePreviewBlock as PhotoBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
 import TooltipCustom from '~/shared/components/design-system/tooltip/Tooltip';
+import { CropRect, CropResult } from '~/types/common';
 
 export interface LocalizedMeta {
   title: string;
@@ -33,6 +34,8 @@ export interface SeoMetadataFormProps {
   readonly extraFieldsBeforeKeywords?: boolean;
   readonly forceShowErrors?: boolean;
   readonly extraFields?: (value: LocalizedMeta, onChange: (val: LocalizedMeta) => void) => ReactNode;
+  readonly crop?: CropRect | null;
+  readonly onChangeCrop?: (crop: CropRect | null) => void;
   readonly labels?: {
     readonly metaTitle?: string;
     readonly metaDescription?: string;
@@ -55,17 +58,25 @@ export default function SeoMetadataForm({
   showAlternativeText = false,
   extraFieldsBeforeKeywords = false,
   forceShowErrors = false,
+  crop,
+  onChangeCrop,
   extraFields,
   labels = {}
 }: SeoMetadataFormProps) {
-  const getFileNameFromUrl = (url: string | null) =>
-    url ? url.split('/').pop()?.split('?')[0] : undefined;
+  const getFileNameFromUrl = (url: string | null) => (url ? url.split('/').pop()?.split('?')[0] : undefined);
 
   const [ogImagePreview, setOgImagePreview] = useState<string | null>(typeof ogImage === 'string' ? ogImage : null);
   const [displayFileName, setDisplayFileName] = useState<string | undefined>(getFileNameFromUrl(ogImage));
   const [isUploading, setIsUploading] = useState(false);
   const [touched, setTouched] = useState<Partial<Record<keyof LocalizedMeta, boolean>>>({});
   const [errors, setErrors] = useState<Partial<Record<keyof LocalizedMeta, string>>>({});
+
+  useEffect(() => {
+    if (typeof ogImage === 'string') {
+      setOgImagePreview(ogImage);
+      setDisplayFileName(getFileNameFromUrl(ogImage));
+    }
+  }, [ogImage]);
 
   useEffect(() => {
     if (!forceShowErrors) return;
@@ -112,13 +123,14 @@ export default function SeoMetadataForm({
     if (touched[field]) setErrors((prev) => ({ ...prev, [field]: validateField(field, val) }));
   };
 
-  const handleImageChange = async (url: string) => {
+  const handleImageChange = async (url: string, crop: CropResult | null | undefined) => {
     setIsUploading(true);
     setOgImagePreview(url);
     const fileNameFromUrl = url.split('/').pop()?.split('?')[0];
     setDisplayFileName(fileNameFromUrl || 'image');
 
     onImageChange(url);
+    onChangeCrop?.(crop?.rect ?? null);
 
     setIsUploading(false);
   };
@@ -143,6 +155,7 @@ export default function SeoMetadataForm({
         stackSpacing="0"
         typographySpacing="4px"
         direction="column"
+        initialCrop={crop ? { rect: crop } : null}
         showAlternativeText={showAlternativeText}
         altText={value.altText?.[locale] ?? ''}
         onChangeAltText={(alt) =>

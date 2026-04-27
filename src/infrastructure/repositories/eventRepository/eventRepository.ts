@@ -23,6 +23,10 @@ export type DbEvent = {
     meta: EventsEntity['meta'];
     createdAt: string;
     updatedAt: string;
+    eventDateTimeStart: string;
+    eventDateTimeEnd: string;
+    ticketUrl?: EventsEntity['ticketUrl'];
+
 };
 
 type EventRepoDeps = Readonly<{
@@ -43,6 +47,9 @@ const toEntity = (doc: DbEvent): EventsEntity =>
     status: doc.status,
     meta: doc.meta,
     publishedAt: doc.publishedAt ?? undefined,
+    eventDateTimeStart: doc.eventDateTimeStart ?? undefined,
+    eventDateTimeEnd: doc.eventDateTimeEnd ?? undefined,
+    ticketUrl: doc.ticketUrl ?? null,
   });
 
 export const EventsRepository = ({ EventModel }: EventRepoDeps): IEventsRepository => {

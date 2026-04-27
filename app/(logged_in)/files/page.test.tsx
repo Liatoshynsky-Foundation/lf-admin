@@ -28,7 +28,8 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
     Document: 'Document',
     Spreadsheet: 'Spreadsheet'
   },
-  useUploadBlobMutation: () => [mockUploadBlob]
+  useUploadBlobMutation: () => [mockUploadBlob],
+  useUpdateAssetMutation: () => [jest.fn(), { loading: false }]
 }));
 
 jest.mock('~/shared/components/file-info-sidebar/FileInfoSidebar', () => ({
