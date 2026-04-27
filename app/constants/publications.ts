@@ -231,7 +231,7 @@ export interface FetchedPublicationData {
     en?: string | null;
   } | null;
   coverImage?: {
-    src?: { uk?: string | null; en?: string | null } | null;
+    src?: string | null;
     alt?: { uk?: string | null; en?: string | null } | null;
     crop?: CropRect | null;
   } | null;

@@ -162,7 +162,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
 
       changeSeoValue({
         meta: { uk: getLangMeta('uk'), en: getLangMeta('en') },
-        ogImage: fetchedData.coverImage?.src?.uk || fetchedData.coverImage?.src?.en || null,
+        ogImage: fetchedData.coverImage?.src || null,
         allowIndexing: {
           uk: fetchedData.allowIndexation?.uk ?? true,
           en: fetchedData.allowIndexation?.en ?? true

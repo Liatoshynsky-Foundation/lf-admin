@@ -247,7 +247,7 @@ const mapNewsItem = (item: NewsItem): PublicationCardItem | null => {
     cardStatus: publicationStatus,
     language: getLanguageFromLocalizedValue(title),
     coverImage: {
-      src: coverImage?.src.uk || coverImage?.src.en || DEFAULT_COVER_IMAGE,
+      src: coverImage?.src || DEFAULT_COVER_IMAGE,
       alt: toLocalizedString(coverImage?.alt, titleText || DEFAULT_COVER_ALT)
     }
   };
@@ -283,7 +283,7 @@ const mapMediaMentionItem = (item: MediaMentionItem): PublicationCardItem | null
     cardStatus: publicationStatus,
     language: getLanguageFromLocalizedValue(titleData),
     coverImage: {
-      src: item.coverImage?.src.uk || item.coverImage?.src.en || DEFAULT_COVER_IMAGE,
+      src: item.coverImage?.src || DEFAULT_COVER_IMAGE,
       alt: toLocalizedString(item.coverImage?.alt, titleText || DEFAULT_COVER_ALT)
     }
   };
