@@ -10,11 +10,10 @@ export const styles: Record<string, SxProps<Theme>> = {
       xl: 'repeat(4, minmax(0, 1fr))'
     },
     gap: '16px',
-    width: '100%'
+    width: '100%',
   },
   cardWrapper: {
     minWidth: 0,
     display: 'flex',
-    height: '100%'
   }
 };
