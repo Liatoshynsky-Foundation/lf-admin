@@ -8,7 +8,6 @@ import { EventStatus, MediaStatus, NewsStatus } from '~/types/graphql/generated/
 
 type QueryOptions = { skip?: boolean };
 
-// --- MOCK NEWS HOOKS ---
 const mockCreateNews = jest.fn();
 const mockUpdateNews = jest.fn();
 const mockDeleteNews = jest.fn();
@@ -20,28 +19,22 @@ jest.mock('~/shared/hooks/use-news/useNews', () => ({
   useDeleteNews: () => [mockDeleteNews]
 }));
 
-// --- MOCK EVENTS HOOKS ---
 const mockCreateEvent = jest.fn();
 const mockUpdateEvent = jest.fn();
-const mockDeleteEvent = jest.fn();
 const mockEventQuery = jest.fn();
 jest.mock('~/shared/hooks/use-events/useEvents', () => ({
   useEventById: (id: string, options?: QueryOptions) => mockEventQuery(id, options),
   useCreateEvent: () => [mockCreateEvent],
   useUpdateEvent: () => [mockUpdateEvent],
-  useDeleteEvent: () => [mockDeleteEvent]
 }));
 
-// --- MOCK MEDIA HOOKS ---
 const mockCreateMedia = jest.fn();
 const mockUpdateMedia = jest.fn();
-const mockDeleteMedia = jest.fn();
 const mockMediaQuery = jest.fn();
 jest.mock('~/shared/hooks/use-media-mentions/useMediaMentions', () => ({
   useMediaMentionById: (id: string, options?: QueryOptions) => mockMediaQuery(id, options),
   useCreateMediaMention: () => [mockCreateMedia],
   useUpdateMediaMention: () => [mockUpdateMedia],
-  useDeleteMediaMention: () => [mockDeleteMedia]
 }));
 
 const createValidSeoState = (type: PublicationsItemType): SeoBlockValue => ({
@@ -174,7 +167,7 @@ describe('useUpsertPublication Hook', () => {
       expect(mockCreateNews).toHaveBeenCalledWith(
         expect.objectContaining({
           adminTitle: 'Valid News Title',
-          status: NewsStatus.Draft, // Status passed through args
+          status: NewsStatus.Draft,
           content: { uk: { content: { blocks: [] } }, en: { content: { blocks: [] } } }
         })
       );
@@ -199,7 +192,7 @@ describe('useUpsertPublication Hook', () => {
       expect(mockCreateEvent).toHaveBeenCalledWith(
         expect.objectContaining({
           adminTitle: 'Valid Event Title',
-          status: EventStatus.Published, // Status passed through args
+          status: EventStatus.Published, 
           ticketUrl: { uk: 'https://tickets.com/uk', en: 'https://tickets.com/en' }
         })
       );
@@ -225,7 +218,7 @@ describe('useUpsertPublication Hook', () => {
 
       expect(mockUpdateMedia).toHaveBeenCalledWith('media-55', expect.objectContaining({
         adminTitle: 'Updated Media Title',
-        status: MediaStatus.Editing, // Status passed through args
+        status: MediaStatus.Editing, 
         url: 'https://example.com' 
       }));
       
@@ -233,43 +226,6 @@ describe('useUpsertPublication Hook', () => {
     });
   });
 
-  describe('Deletion Flows (Delete)', () => {
-    it('should correctly trigger deleteNews mutation', async () => {
-      mockDeleteNews.mockResolvedValue({ data: { deleteNews: { success: true } } });
-      const { result } = renderHook(() => useUpsertPublication({ type: 'news', id: 'news-123' }));
-
-      await act(async () => {
-        await result.current.handleDelete();
-      });
-
-      expect(mockDeleteNews).toHaveBeenCalledTimes(1);
-      expect(mockDeleteNews).toHaveBeenCalledWith({ id: 'news-123' });
-    });
-
-    it('should correctly trigger deleteEvent mutation', async () => {
-      mockDeleteEvent.mockResolvedValue({ data: { deleteEvent: { success: true } } });
-      const { result } = renderHook(() => useUpsertPublication({ type: 'events', id: 'event-456' }));
-
-      await act(async () => {
-        await result.current.handleDelete();
-      });
-
-      expect(mockDeleteEvent).toHaveBeenCalledTimes(1);
-      expect(mockDeleteEvent).toHaveBeenCalledWith({ id: 'event-456' });
-    });
-
-    it('should correctly trigger deleteMediaMention mutation', async () => {
-      mockDeleteMedia.mockResolvedValue({ data: { deleteMediaMention: { success: true } } });
-      const { result } = renderHook(() => useUpsertPublication({ type: 'media', id: 'media-789' }));
-
-      await act(async () => {
-        await result.current.handleDelete();
-      });
-
-      expect(mockDeleteMedia).toHaveBeenCalledTimes(1);
-      expect(mockDeleteMedia).toHaveBeenCalledWith('media-789'); // Media specifically takes string, not an object
-    });
-  });
 
   describe('Helper Functions', () => {
     it('should correctly update start and end DateTimes via handleDateTimeChange', () => {

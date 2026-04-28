@@ -77,7 +77,6 @@ const createMockData = (
   setCrop: jest.fn(),
   forceShowErrors: false,
   handleSave: jest.fn(),
-  handleDelete: jest.fn(),
   handleDateTimeChange: jest.fn(),
   ...overrides
 });

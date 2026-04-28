@@ -10,14 +10,13 @@ import {
   PublicationsItemType
 } from '~/constants/publications';
 import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
-import { useCreateEvent, useDeleteEvent, useEventById, useUpdateEvent } from '~/shared/hooks/use-events/useEvents';
+import { useCreateEvent, useEventById, useUpdateEvent } from '~/shared/hooks/use-events/useEvents';
 import {
   useCreateMediaMention,
-  useDeleteMediaMention,
   useMediaMentionById,
   useUpdateMediaMention
 } from '~/shared/hooks/use-media-mentions/useMediaMentions';
-import { useCreateNews, useDeleteNews, useNewsById, useUpdateNews } from '~/shared/hooks/use-news/useNews';
+import { useCreateNews, useNewsById, useUpdateNews } from '~/shared/hooks/use-news/useNews';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { EventStatus, MediaStatus, NewsStatus } from '~/types/graphql/generated/graphql';
 
@@ -76,10 +75,6 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
   const [updateEvent] = useUpdateEvent();
   const [updateNews] = useUpdateNews();
   const [updateMediaMention] = useUpdateMediaMention();
-
-  const [deleteEvent] = useDeleteEvent();
-  const [deleteNews] = useDeleteNews();
-  const [deleteMediaMention] = useDeleteMediaMention();
 
   const [adminTitle, setAdminTitle] = useState('');
   const [adminTitleError, setAdminTitleError] = useState('');
@@ -276,19 +271,6 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     }));
   }, []);
 
-  const handleDelete = async () => {
-    switch (type) {
-    case 'news':
-      return deleteNews({ id } as { id: string });
-    case 'events':
-      return deleteEvent({ id } as { id: string });
-    case 'media':
-      return deleteMediaMention(id as string);
-    default:
-      throw new Error(`Unsupported publication type for mutation: ${type}`);
-    }
-  };
-
   return {
     isEditing,
     isLoading: isEditing && (newsQuery.loading || eventQuery.loading || mediaQuery.loading),
@@ -310,6 +292,5 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     forceShowErrors,
     handleSave,
     handleDateTimeChange,
-    handleDelete
   };
 };
