@@ -33,14 +33,12 @@ import { EmptyState } from '~/shared/components/empty-state';
 import { FilteringToolbar, SortSelect } from '~/shared/components/filtering-toolbar';
 import { PageHeader } from '~/shared/components/page-header/PageHeader';
 import { filterSelectStyles } from '~/shared/components/selector/FilterSelect.styles';
+import { useAllEvents } from '~/shared/hooks/use-events/useEvents';
 import { useAllMediaMentions } from '~/shared/hooks/use-media-mentions/useMediaMentions';
 import { useAllNews } from '~/shared/hooks/use-news/useNews';
 import { usePublicationsFiltering } from '~/shared/hooks/use-publications';
 import type { LocalizedString } from '~/types/common';
-import {
-  type AllMediaMentionsQuery,
-  type AllNewsQuery
-} from '~/types/graphql/generated/graphql';
+import { type AllEventsQuery, type AllMediaMentionsQuery, type AllNewsQuery } from '~/types/graphql/generated/graphql';
 import { normalizeSearch } from '~/utils/normalizeSearch';
 
 type PublicationsPageContentProps = Readonly<{
@@ -71,6 +69,7 @@ type PublicationCardItem = {
 };
 
 type NewsItem = AllNewsQuery['allNews'][number];
+type EventItem = AllEventsQuery['allEvents'][number];
 type MediaMentionItem = AllMediaMentionsQuery['allMediaMentions'][number];
 type PublicationsTabStateMap<T> = {
   news: T;
@@ -85,7 +84,11 @@ const DEFAULT_COVER_IMAGE = '/images/image.png';
 const DEFAULT_COVER_ALT = 'Обкладинка матеріалу';
 const SORT_FALLBACK_DATE = '1970-01-01T00:00:00.000Z';
 
-const comparePublicationItems = (left: PublicationCardItem, right: PublicationCardItem, sortValue: FilesSortValue): number => {
+const comparePublicationItems = (
+  left: PublicationCardItem,
+  right: PublicationCardItem,
+  sortValue: FilesSortValue
+): number => {
   if (sortValue === 'name_asc') {
     return left.sortTitle.localeCompare(right.sortTitle, 'uk');
   }
@@ -250,6 +253,43 @@ const mapNewsItem = (item: NewsItem): PublicationCardItem | null => {
   };
 };
 
+const mapEventItem = (item: EventItem): PublicationCardItem | null => {
+  if (!isPublicationCardStatus(item.status)) {
+    return null;
+  }
+
+  const publicationStatus = item.status;
+
+  const fallbackTitle = item.adminTitle;
+  const title = toLocalizedCardValue(item.title, fallbackTitle);
+  const titleText = getPrimaryText(item.title, fallbackTitle);
+  const sortTitle = fallbackTitle || titleText;
+  const sortableDate = getSortableDate(item.publishedAt, item.eventDateTimeStart, item.eventDateTimeEnd);
+
+  const coverImage = item.coverImage;
+
+  return {
+    id: item.id,
+    title: titleText,
+    sortTitle,
+    titleData: title,
+    type: 'events',
+    cardType: mapCardType('events'),
+    dateAdded: sortableDate,
+    createdAtRaw: sortableDate,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+    publishedAt: item.publishedAt ?? undefined,
+    status: publicationStatus,
+    cardStatus: publicationStatus,
+    language: getLanguageFromLocalizedValue(title),
+    coverImage: {
+      src: coverImage?.src || DEFAULT_COVER_IMAGE,
+      alt: toLocalizedString(coverImage?.alt, titleText || DEFAULT_COVER_ALT)
+    }
+  };
+};
+
 const mapMediaMentionItem = (item: MediaMentionItem): PublicationCardItem | null => {
   if (!isPublicationCardStatus(item.status)) {
     return null;
@@ -399,16 +439,36 @@ function PublicationsCreateAction() {
 export function PublicationsPageContent({ activeTab }: PublicationsPageContentProps) {
   const { requestFilters, sortValue, toolbarProps, sortProps } = usePublicationsFiltering();
   const shouldFetchNews = activeTab === 'all' || activeTab === 'news';
+  const shouldFetchEvents = activeTab === 'all' || activeTab === 'events';
   const shouldFetchMedia = activeTab === 'all' || activeTab === 'media';
-  const { data: newsData, loading: isNewsLoading, error: newsError } = useAllNews(requestFilters.news, { skip: !shouldFetchNews });
-  const { data: mediaData, loading: isMediaLoading, error: mediaError } = useAllMediaMentions(requestFilters.media, { skip: !shouldFetchMedia });
+  const {
+    data: newsData,
+    loading: isNewsLoading,
+    error: newsError
+  } = useAllNews(requestFilters.news, { skip: !shouldFetchNews });
+  const {
+    data: eventsData,
+    loading: isEventsLoading,
+    error: eventsError
+  } = useAllEvents(requestFilters.events, { skip: !shouldFetchEvents });
+  const {
+    data: mediaData,
+    loading: isMediaLoading,
+    error: mediaError
+  } = useAllMediaMentions(requestFilters.media, { skip: !shouldFetchMedia });
 
   const newsItems = useMemo<PublicationCardItem[]>(() => {
     return (newsData?.allNews ?? []).map(mapNewsItem).filter((item): item is PublicationCardItem => Boolean(item));
   }, [newsData?.allNews]);
 
+  const eventItems = useMemo<PublicationCardItem[]>(() => {
+    return (eventsData?.allEvents ?? []).map(mapEventItem).filter((item): item is PublicationCardItem => Boolean(item));
+  }, [eventsData?.allEvents]);
+
   const mediaItems = useMemo<PublicationCardItem[]>(() => {
-    return (mediaData?.allMediaMentions ?? []).map(mapMediaMentionItem).filter((item): item is PublicationCardItem => Boolean(item));
+    return (mediaData?.allMediaMentions ?? [])
+      .map(mapMediaMentionItem)
+      .filter((item): item is PublicationCardItem => Boolean(item));
   }, [mediaData?.allMediaMentions]);
 
   const visibleItems = useMemo<PublicationCardItem[]>(() => {
@@ -416,16 +476,17 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
       return newsItems;
     }
 
+    if (activeTab === 'events') {
+      return eventItems;
+    }
+
     if (activeTab === 'media') {
       return mediaItems;
     }
 
-    if (activeTab === 'events') {
-      return [];
-    }
-
-    return mergeSortedPublicationItems(newsItems, mediaItems, sortValue);
-  }, [activeTab, mediaItems, newsItems, sortValue]);
+    const mergedNewsMedia = mergeSortedPublicationItems(newsItems, mediaItems, sortValue);
+    return mergeSortedPublicationItems(mergedNewsMedia, eventItems, sortValue);
+  }, [activeTab, mediaItems, eventItems, newsItems, sortValue]);
 
   const titleOptions = useMemo(() => getPublicationSearchOptions(visibleItems), [visibleItems]);
   const resolvedToolbarProps = useMemo(
@@ -442,13 +503,23 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
   );
   const hasActiveCriteria = Boolean(toolbarProps.search?.search.trim()) || Boolean(toolbarProps.activeFiltersCount);
   const hasBaseItems = visibleItems.length > 0;
-  const isLoading = getActiveTabState(activeTab, { news: shouldFetchNews ? isNewsLoading : false, media: shouldFetchMedia ? isMediaLoading : false, events: false }, (states) =>
-    states.news || states.media || states.events
+  const isLoading = getActiveTabState(
+    activeTab,
+    {
+      news: shouldFetchNews ? isNewsLoading : false,
+      events: shouldFetchEvents ? isEventsLoading : false,
+      media: shouldFetchMedia ? isMediaLoading : false
+    },
+    (states) => states.news || states.media || states.events
   );
   const activeError = getActiveTabState(
     activeTab,
-    { news: shouldFetchNews ? newsError : undefined, media: shouldFetchMedia ? mediaError : undefined, events: undefined },
-    (states) => states.news ?? states.media ?? states.events
+    {
+      news: shouldFetchNews ? newsError : undefined,
+      events: shouldFetchEvents ? eventsError : undefined,
+      media: shouldFetchMedia ? mediaError : undefined
+    },
+    (states) => states.news ?? states.events ?? states.media
   );
   const shouldShowLoadingState = activeTab === 'all' ? !hasBaseItems && isLoading : isLoading;
   const shouldShowErrorState = activeTab === 'all' ? !hasBaseItems && Boolean(activeError) : Boolean(activeError);
@@ -466,30 +537,19 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
   const content = (() => {
     if (shouldShowLoadingState) {
       return (
-        <EmptyState
-          title={PUBLICATIONS_LOADING_STATE_TITLE}
-          description={PUBLICATIONS_LOADING_STATE_DESCRIPTION}
-        />
+        <EmptyState title={PUBLICATIONS_LOADING_STATE_TITLE} description={PUBLICATIONS_LOADING_STATE_DESCRIPTION} />
       );
     }
 
     if (shouldShowErrorState) {
-      return (
-        <EmptyState
-          title={PUBLICATIONS_ERROR_STATE_TITLE}
-          description={PUBLICATIONS_ERROR_STATE_DESCRIPTION}
-        />
-      );
+      return <EmptyState title={PUBLICATIONS_ERROR_STATE_TITLE} description={PUBLICATIONS_ERROR_STATE_DESCRIPTION} />;
     }
 
     if (visibleItems.length) {
       return (
         <Box sx={styles.cardGrid}>
           {visibleItems.map((item) => (
-            <Box
-              key={item.id}
-              sx={styles.cardWrapper}
-            >
+            <Box key={item.id} sx={styles.cardWrapper}>
               <ContentCard
                 type={item.cardType}
                 coverImage={item.coverImage}
@@ -507,12 +567,7 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
       );
     }
 
-    return (
-      <EmptyState
-        title={emptyStateTitle}
-        description={emptyStateDescription}
-      />
-    );
+    return <EmptyState title={emptyStateTitle} description={emptyStateDescription} />;
   })();
 
   return (
@@ -536,13 +591,7 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
       <FilteringToolbar
         {...resolvedToolbarProps}
         dataTestId="publications-control-panel"
-        bottomTrailingContent={
-          <SortSelect
-            {...sortProps}
-            minWidth={208}
-            dataTestId="publications-sort-select"
-          />
-        }
+        bottomTrailingContent={<SortSelect {...sortProps} minWidth={208} dataTestId="publications-sort-select" />}
       />
 
       {content}
