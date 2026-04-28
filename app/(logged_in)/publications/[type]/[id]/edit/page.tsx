@@ -4,6 +4,7 @@ import { notFound, useParams, useRouter } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 
+import CreatePublicationsView from '../../create/CreatePublicationsView';
 import { EditPublicationsView } from './EditPublicationsView';
 import {
   CONTENT_MUTATION_RESULTS,
@@ -14,6 +15,7 @@ import {
 } from '~/constants/publications';
 import { SerializedContent } from '~/shared/components/content-editor';
 import { usePublicationManager } from '~/shared/hooks/use-publications-manager/usePublicationsManager';
+import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 type Params = {
@@ -26,6 +28,7 @@ export default function EditPublicationsPage() {
   const router = useRouter();
 
   const manager = usePublicationManager(type, id);
+  const publicationData = useUpsertPublication({ type, id });
 
   const latestBlocksRef = useRef<SerializedContent | null>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -109,7 +112,9 @@ export default function EditPublicationsPage() {
     }
   };
 
-  return (
+  return type === 'media' ? (
+    <CreatePublicationsView data={publicationData} />
+  ) : (
     <EditPublicationsView
       type={type}
       isLoading={manager.isLoading}
