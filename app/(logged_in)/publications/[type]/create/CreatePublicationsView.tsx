@@ -3,7 +3,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { useRouter } from 'next/navigation';
-import { MouseEvent,useCallback, useState } from 'react';
+import { MouseEvent, useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { styles as editStyles } from '../[id]/edit/EditPublicationsView.styles';
@@ -90,6 +90,7 @@ export default function CreatePublicationsView({ data }: Readonly<PublicationVie
   );
 
   const handleMenuAction = async (actionId: MenuActionId) => {
+    handleClose();
     try {
       switch (actionId) {
       case MenuActionId.PUBLISH: {
@@ -123,7 +124,7 @@ export default function CreatePublicationsView({ data }: Readonly<PublicationVie
     }
   };
   const onEdit = async () => {
-    const id = await handleSave(BaseContentStatuses.Draft); 
+    const id = await handleSave(BaseContentStatuses.Draft);
     router.push(`${PUBLICATIONS_BASE_PATH}/${publicationType}/${id}/edit`);
   };
 
