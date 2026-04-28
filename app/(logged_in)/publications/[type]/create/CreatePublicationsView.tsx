@@ -110,7 +110,6 @@ export default function CreatePublicationsView({ data }: Readonly<PublicationVie
 
       case MenuActionId.SAVE_AND_EXIT: {
         const id = await handleSave(BaseContentStatuses.Draft);
-        console.log(id);
         if (id) {
           toast.success(CONTENT_MUTATION_RESULTS.draftSaved);
           router.push(PUBLICATIONS_BASE_PATH);
