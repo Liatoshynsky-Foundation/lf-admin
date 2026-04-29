@@ -1,26 +1,22 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 
 import { useUpsertPublication } from './useUpsertPublication';
-import { FetchedPublicationData,initialSeoValue, PublicationsItemType } from '~/constants/publications';
+import { FetchedPublicationData, initialSeoValue, PublicationsItemType } from '~/constants/publications';
 import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
-import { EventStatus, NewsStatus } from '~/types/graphql/generated/graphql';
-
-const mockPush = jest.fn();
-jest.mock('next/navigation', () => ({
-  useRouter: jest.fn(() => ({ push: mockPush }))
-}));
-
+import { BaseContentStatuses } from '~/types/enums/common.enums';
+import { EventStatus, MediaStatus, NewsStatus } from '~/types/graphql/generated/graphql';
 
 type QueryOptions = { skip?: boolean };
 
-
 const mockCreateNews = jest.fn();
 const mockUpdateNews = jest.fn();
+const mockDeleteNews = jest.fn();
 const mockNewsQuery = jest.fn();
 jest.mock('~/shared/hooks/use-news/useNews', () => ({
   useNewsById: (id: string, options?: QueryOptions) => mockNewsQuery(id, options),
   useCreateNews: () => [mockCreateNews],
-  useUpdateNews: () => [mockUpdateNews]
+  useUpdateNews: () => [mockUpdateNews],
+  useDeleteNews: () => [mockDeleteNews]
 }));
 
 const mockCreateEvent = jest.fn();
@@ -29,7 +25,7 @@ const mockEventQuery = jest.fn();
 jest.mock('~/shared/hooks/use-events/useEvents', () => ({
   useEventById: (id: string, options?: QueryOptions) => mockEventQuery(id, options),
   useCreateEvent: () => [mockCreateEvent],
-  useUpdateEvent: () => [mockUpdateEvent]
+  useUpdateEvent: () => [mockUpdateEvent],
 }));
 
 const mockCreateMedia = jest.fn();
@@ -38,9 +34,8 @@ const mockMediaQuery = jest.fn();
 jest.mock('~/shared/hooks/use-media-mentions/useMediaMentions', () => ({
   useMediaMentionById: (id: string, options?: QueryOptions) => mockMediaQuery(id, options),
   useCreateMediaMention: () => [mockCreateMedia],
-  useUpdateMediaMention: () => [mockUpdateMedia]
+  useUpdateMediaMention: () => [mockUpdateMedia],
 }));
-
 
 const createValidSeoState = (type: PublicationsItemType): SeoBlockValue => ({
   ...initialSeoValue,
@@ -77,7 +72,6 @@ describe('useUpsertPublication Hook', () => {
     mockMediaQuery.mockReturnValue({ data: undefined, loading: false });
   });
 
-  
   describe('Initialization', () => {
     it('should initialize in Create mode with empty defaults', () => {
       const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
@@ -89,7 +83,6 @@ describe('useUpsertPublication Hook', () => {
     });
 
     it('should initialize in Edit mode and populate state from fetched data', async () => {
-      
       const fetchedNewsData: FetchedPublicationData = {
         adminTitle: 'Fetched Title',
         newsDate: '2024-01-01T12:00:00Z',
@@ -105,7 +98,6 @@ describe('useUpsertPublication Hook', () => {
 
       expect(result.current.isEditing).toBe(true);
 
-      
       await waitFor(() => {
         expect(result.current.adminTitle).toBe('Fetched Title');
         expect(result.current.seoValue.meta.uk.title).toBe('UK T');
@@ -114,13 +106,12 @@ describe('useUpsertPublication Hook', () => {
     });
   });
 
-  
   describe('Validation Logic', () => {
     it('should block save and show errors if adminTitle is empty', async () => {
       const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
 
       act(() => {
-        result.current.handleSave();
+        result.current.handleSave(BaseContentStatuses.Draft);
       });
 
       expect(result.current.adminTitleError).toBe('Обов\'язкове поле');
@@ -132,8 +123,7 @@ describe('useUpsertPublication Hook', () => {
 
       act(() => {
         result.current.setAdminTitle('Valid Title');
-        
-        result.current.handleSave();
+        result.current.handleSave(BaseContentStatuses.Draft);
       });
 
       expect(result.current.forceShowErrors).toBe(true);
@@ -151,7 +141,7 @@ describe('useUpsertPublication Hook', () => {
       });
 
       act(() => {
-        result.current.handleSave();
+        result.current.handleSave(BaseContentStatuses.Draft);
       });
 
       expect(result.current.forceShowErrors).toBe(true);
@@ -159,9 +149,8 @@ describe('useUpsertPublication Hook', () => {
     });
   });
 
-  
   describe('Creation Flows (Save)', () => {
-    it('should successfully create a News publication and redirect', async () => {
+    it('should successfully create a News publication and return ID', async () => {
       mockCreateNews.mockResolvedValue({ data: { createNews: { id: 'new-news-99' } } });
       const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
 
@@ -170,8 +159,9 @@ describe('useUpsertPublication Hook', () => {
         result.current.setSeoValue(createValidSeoState('news'));
       });
 
+      let returnedId;
       await act(async () => {
-        await result.current.handleSave();
+        returnedId = await result.current.handleSave(BaseContentStatuses.Draft);
       });
 
       expect(mockCreateNews).toHaveBeenCalledWith(
@@ -182,10 +172,10 @@ describe('useUpsertPublication Hook', () => {
         })
       );
       
-      expect(mockPush).toHaveBeenCalledWith('/publications/news/new-news-99/edit');
+      expect(returnedId).toBe('new-news-99');
     });
 
-    it('should successfully create an Event and redirect', async () => {
+    it('should successfully create an Event and return ID', async () => {
       mockCreateEvent.mockResolvedValue({ data: { createEvent: { id: 'new-event-77' } } });
       const { result } = renderHook(() => useUpsertPublication({ type: 'events' }));
 
@@ -194,24 +184,25 @@ describe('useUpsertPublication Hook', () => {
         result.current.setSeoValue(createValidSeoState('events'));
       });
 
+      let returnedId;
       await act(async () => {
-        await result.current.handleSave();
+        returnedId = await result.current.handleSave(BaseContentStatuses.Published);
       });
 
       expect(mockCreateEvent).toHaveBeenCalledWith(
         expect.objectContaining({
           adminTitle: 'Valid Event Title',
-          status: EventStatus.Draft,
+          status: EventStatus.Published, 
           ticketUrl: { uk: 'https://tickets.com/uk', en: 'https://tickets.com/en' }
         })
       );
       
-      expect(mockPush).toHaveBeenCalledWith('/publications/events/new-event-77/edit');
+      expect(returnedId).toBe('new-event-77');
     });
   });
 
   describe('Update Flows (Edit)', () => {
-    it('should successfully update Media and redirect to base path', async () => {
+    it('should successfully update Media and return its ID', async () => {
       mockUpdateMedia.mockResolvedValue({ data: { updateMediaMention: { id: 'media-55' } } });
       const { result } = renderHook(() => useUpsertPublication({ type: 'media', id: 'media-55' }));
 
@@ -220,20 +211,22 @@ describe('useUpsertPublication Hook', () => {
         result.current.setSeoValue(createValidSeoState('media'));
       });
 
+      let returnedId;
       await act(async () => {
-        await result.current.handleSave();
+        returnedId = await result.current.handleSave(BaseContentStatuses.Editing);
       });
 
       expect(mockUpdateMedia).toHaveBeenCalledWith('media-55', expect.objectContaining({
         adminTitle: 'Updated Media Title',
+        status: MediaStatus.Editing, 
         url: 'https://example.com' 
       }));
       
-      expect(mockPush).toHaveBeenCalledWith('/publications');
+      expect(returnedId).toBe('media-55');
     });
   });
 
-  
+
   describe('Helper Functions', () => {
     it('should correctly update start and end DateTimes via handleDateTimeChange', () => {
       const { result } = renderHook(() => useUpsertPublication({ type: 'events' }));
