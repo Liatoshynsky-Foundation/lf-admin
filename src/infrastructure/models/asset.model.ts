@@ -10,10 +10,15 @@ const usageRefSchema = new Schema(
 
 const assetSchema = new Schema(
   {
-    type: { type: String, required: true, enum: ['image', 'pdf', 'audio'], index: true },
+    type: {
+      type: String,
+      required: true,
+      enum: ['image', 'pdf', 'audio', 'document', 'docx', 'xlsx', 'video', 'archive', 'generic', 'rar'],
+      index: true
+    },
     tags: {
       type: [String],
-      enum: ['page', 'news', 'events', 'opus', 'artistry', 'archive', 'works'],
+      enum: ['page', 'news', 'events', 'opus', 'artistry', 'archive', 'works', 'docs'],
       default: []
     },
 

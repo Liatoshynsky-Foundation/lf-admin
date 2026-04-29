@@ -1,41 +1,63 @@
-import { UPLOAD_ERRORS } from '../errors';
-import { FileValidationRules, FileValidator } from './common';
+import {
+  combineValidationResults,
+  FileValidationRules,
+  FileValidator,
+  validateExtension,
+  validateFileSize,
+  validateMimeType
+} from './common';
 import { createImageValidator, ImageValidationRules } from './imageValidator';
 
-export type FileType = 'image' | 'document' | 'video' | 'audio' | 'generic';
+export type FileType =
+  | 'image'
+  | 'document'
+  | 'video'
+  | 'audio'
+  | 'generic'
+  | 'pdf'
+  | 'archive'
+  | 'docx'
+  | 'zip'
+  | 'xlsx'
+  | 'rar';
 
 export interface ValidatorConfig {
   fileType: FileType;
   rules?: FileValidationRules;
 }
 
-/* prettier-ignore */
+const createGenericValidator = (rules?: FileValidationRules): FileValidator => {
+  return {
+    validate: async (buffer: Buffer, filename: string, mimeType: string) => {
+      if (!rules) return { valid: true, errors: [] };
+
+      const sizeValid = validateFileSize(buffer, rules.maxSize);
+      const mimeValid = validateMimeType(mimeType, rules.allowedMimeTypes);
+      const extValid = validateExtension(filename, rules.allowedExtensions);
+
+      return combineValidationResults(sizeValid, mimeValid, extValid);
+    }
+  };
+};
+
 export const createValidator = (config: ValidatorConfig): FileValidator => {
   switch (config.fileType) {
   case 'image':
     return createImageValidator(config.rules as ImageValidationRules);
 
   case 'document':
-    // OPTIONAL: Implement document validator
-    // return createDocumentValidator(config.rules);
-    throw new Error(UPLOAD_ERRORS.DOCUMENT_VALIDATOR_NOT_IMPLEMENTED);
-
-  case 'video':
-    // OPTIONAL: Implement video validator
-    // return createVideoValidator(config.rules);
-    throw new Error(UPLOAD_ERRORS.VIDEO_VALIDATOR_NOT_IMPLEMENTED);
-
+  case 'pdf':
+  case 'docx':
+  case 'xlsx':
   case 'audio':
-    // OPTIONAL: Implement audio validator
-    // return createAudioValidator(config.rules);
-    throw new Error(UPLOAD_ERRORS.AUDIO_VALIDATOR_NOT_IMPLEMENTED);
-
+  case 'video':
+  case 'zip':
+  case 'rar':
+  case 'archive':
   case 'generic':
-    // OPTIONAL: Implement generic file validator
-    // return createGenericValidator(config.rules);
-    throw new Error(UPLOAD_ERRORS.GENERIC_VALIDATOR_NOT_IMPLEMENTED);
+    return createGenericValidator(config.rules);
 
   default:
-    throw new Error(`${UPLOAD_ERRORS.UNKNOWN_FILE_TYPE}: ${config.fileType}`);
+    return createGenericValidator(config.rules);
   }
 };
