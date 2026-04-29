@@ -4,8 +4,9 @@ const styles: Record<string, SxProps<Theme>> = {
   card: {
     display: 'flex',
     flexDirection: 'column',
-    width: '366px',
-    height: '344px',          
+    minHeight: '266px',
+    width: '100%',
+    height: '100%',          
     borderRadius: '12px',
     boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.08)',
     overflow: 'hidden',
@@ -34,7 +35,7 @@ const styles: Record<string, SxProps<Theme>> = {
     fontWeight: 700,
     fontFamily: 'Mulish, sans-serif',
     fontStyle: 'normal',
-    lineHeight: 1.5,            // 150%
+    lineHeight: 1.5,           
     letterSpacing: '0px',
     display: '-webkit-box',
     WebkitLineClamp: 2,
