@@ -89,14 +89,6 @@ describe('createValidator', () => {
 
       expect(() => createValidator(config)).not.toThrow();
     });
-
-    it('should create validator for generic', () => {
-      const config: ValidatorConfig = {
-        fileType: 'generic'
-      };
-
-      expect(() => createValidator(config)).not.toThrow();
-    });
   });
 
   describe('invalid file types', () => {
@@ -105,7 +97,7 @@ describe('createValidator', () => {
         fileType: 'unknown-type' as FileType
       };
 
-      expect(() => createValidator(config)).not.toThrow('Unknown file type: unknown-type');
+      expect(() => createValidator(config)).toThrow('Unknown file type: unknown-type');
     });
 
     it('should throw error for null file type', () => {
@@ -113,7 +105,7 @@ describe('createValidator', () => {
         fileType: null
       } as unknown as ValidatorConfig;
 
-      expect(() => createValidator(config)).not.toThrow();
+      expect(() => createValidator(config)).toThrow();
     });
 
     it('should throw error for undefined file type', () => {
@@ -121,7 +113,7 @@ describe('createValidator', () => {
         fileType: undefined
       } as unknown as ValidatorConfig;
 
-      expect(() => createValidator(config)).not.toThrow();
+      expect(() => createValidator(config)).toThrow();
     });
   });
 
@@ -163,13 +155,12 @@ describe('createValidator', () => {
 
   describe('type checking', () => {
     it('should accept valid FileType values', () => {
-      const fileTypes: FileType[] = ['image', 'document', 'video', 'audio', 'generic'];
+      const fileTypes: FileType[] = ['image', 'document', 'video', 'audio'];
 
       expect(() => createValidator({ fileType: fileTypes[0] })).not.toThrow();
       expect(() => createValidator({ fileType: fileTypes[1] })).not.toThrow();
       expect(() => createValidator({ fileType: fileTypes[2] })).not.toThrow();
       expect(() => createValidator({ fileType: fileTypes[3] })).not.toThrow();
-      expect(() => createValidator({ fileType: fileTypes[4] })).not.toThrow();
     });
   });
 });
