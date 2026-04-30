@@ -8,15 +8,24 @@ type SlashMenuItem = {
   onItemClick?: () => Promise<void>;
 };
 
+type ToolbarItem = {
+  key: string;
+  type?: string;
+};
+
 const mockInsertBlocks = jest.fn();
+const mockUpdateBlock = jest.fn();
 const mockGetTextCursorPosition = jest.fn(() => ({ block: { id: 'mock-block-id' } }));
+
 const mockEditor = {
   document: [],
   getTextCursorPosition: mockGetTextCursorPosition,
-  insertBlocks: mockInsertBlocks
+  insertBlocks: mockInsertBlocks,
+  updateBlock: mockUpdateBlock
 };
 
 let capturedCreateOptions: { uploadFile: (file: File) => Promise<string> } | null = null;
+let capturedSelectedBlocks: { id: string; type: string }[] = [];
 
 jest.mock('@blocknote/core', () => ({
   BlockNoteSchema: {
@@ -54,7 +63,34 @@ jest.mock('@blocknote/react', () => ({
         </button>
       </div>
     );
-  }
+  },
+  useSelectedBlocks: () => capturedSelectedBlocks,
+  useComponentsContext: () => ({
+    FormattingToolbar: {
+      Button: ({ label, onClick }: { label: string; onClick: () => void }) => (
+        <button data-testid="custom-replace-button" onClick={onClick}>
+          {label}
+        </button>
+      )
+    }
+  }),
+  getFormattingToolbarItems: (): ToolbarItem[] => [{ key: 'boldButton' }, { key: 'replaceFileButton' }],
+  FormattingToolbar: ({ children }: { children: any[] }) => (
+    <div data-testid="formatting-toolbar">
+      {Array.isArray(children)
+        ? children.map((child, idx) =>
+          React.isValidElement(child) ? (
+            React.cloneElement(child, { key: child.key || idx } as any)
+          ) : (
+            <span key={child.key || idx}>{child.key}</span>
+          )
+        )
+        : children}
+    </div>
+  ),
+  FormattingToolbarController: ({ formattingToolbar }: { formattingToolbar: () => React.ReactNode }) => (
+    <div data-testid="formatting-toolbar-controller">{formattingToolbar()}</div>
+  )
 }));
 
 jest.mock('@blocknote/mantine', () => ({
@@ -106,6 +142,7 @@ describe('BlockNoteEditor', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     capturedCreateOptions = null;
+    capturedSelectedBlocks = [];
   });
 
   describe('1. Mounting', () => {
@@ -116,6 +153,7 @@ describe('BlockNoteEditor', () => {
       expect(editor).toBeInTheDocument();
       expect(editor).toHaveAttribute('data-editable', 'true');
       expect(screen.getByTestId('suggestion-menu-controller')).toBeInTheDocument();
+      expect(screen.getByTestId('formatting-toolbar-controller')).toBeInTheDocument();
     });
   });
 
@@ -123,11 +161,7 @@ describe('BlockNoteEditor', () => {
     it('should successfully trigger the fileUpload.handler and return the URL', async () => {
       const mockHandler = jest.fn().mockResolvedValue('https://example.com/silent-upload.png');
 
-      render(
-        <BlockNoteEditor
-          fileUpload={{ handler: mockHandler, maxFileSize: 50000 }}
-        />
-      );
+      render(<BlockNoteEditor fileUpload={{ handler: mockHandler, maxFileSize: 50000 }} />);
 
       await waitFor(() => expect(capturedCreateOptions).not.toBeNull());
 
@@ -143,18 +177,16 @@ describe('BlockNoteEditor', () => {
     it('should enforce the maxFileSize error logic', async () => {
       const mockHandler = jest.fn();
 
-      render(
-        <BlockNoteEditor
-          fileUpload={{ handler: mockHandler, maxFileSize: 100 }}
-        />
-      );
+      render(<BlockNoteEditor fileUpload={{ handler: mockHandler, maxFileSize: 100 }} />);
 
       await waitFor(() => expect(capturedCreateOptions).not.toBeNull());
 
       const fakeFile = new File(['dummy content'], 'test.png', { type: 'image/png' });
       Object.defineProperty(fakeFile, 'size', { value: 5000 });
 
-      await expect(capturedCreateOptions!.uploadFile(fakeFile)).rejects.toThrow('File size exceeds maximum allowed size');
+      await expect(capturedCreateOptions!.uploadFile(fakeFile)).rejects.toThrow(
+        'File size exceeds maximum allowed size'
+      );
       expect(mockHandler).not.toHaveBeenCalled();
     });
   });
@@ -200,8 +232,55 @@ describe('BlockNoteEditor', () => {
       await act(async () => {
         fireEvent.click(screen.getByTestId('modal-close'));
       });
+
       expect(screen.queryByTestId('media-modal')).not.toBeInTheDocument();
+
       expect(mockInsertBlocks).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('5. Formatting Toolbar Replace Flow', () => {
+    it('should not render the CustomReplaceButton if no blocks are selected', () => {
+      capturedSelectedBlocks = [];
+      render(<BlockNoteEditor />);
+
+      expect(screen.queryByTestId('custom-replace-button')).not.toBeInTheDocument();
+    });
+
+    it('should not render the CustomReplaceButton if the selected block is not an image', () => {
+      capturedSelectedBlocks = [{ id: 'text-1', type: 'paragraph' }];
+      render(<BlockNoteEditor />);
+
+      expect(screen.queryByTestId('custom-replace-button')).not.toBeInTheDocument();
+    });
+
+    it('should render the CustomReplaceButton when exactly one image block is selected', () => {
+      capturedSelectedBlocks = [{ id: 'img-1', type: 'image' }];
+      render(<BlockNoteEditor />);
+
+      expect(screen.getByTestId('custom-replace-button')).toBeInTheDocument();
+    });
+
+    it('should open the modal and update the block when the CustomReplaceButton is clicked and applied', async () => {
+      capturedSelectedBlocks = [{ id: 'img-1', type: 'image' }];
+      render(<BlockNoteEditor />);
+
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('custom-replace-button'));
+      });
+
+      const modal = await screen.findByTestId('media-modal');
+      expect(modal).toBeInTheDocument();
+
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('modal-apply-success'));
+      });
+
+      expect(mockUpdateBlock).toHaveBeenCalledTimes(1);
+      expect(mockUpdateBlock).toHaveBeenCalledWith('img-1', {
+        type: 'image',
+        props: { url: 'https://example.com/mock-image.png' }
+      });
     });
   });
 });

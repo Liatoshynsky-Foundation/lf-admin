@@ -10,10 +10,19 @@ import {
   defaultStyleSpecs
 } from '@blocknote/core';
 import { BlockNoteView } from '@blocknote/mantine';
-import { getDefaultReactSlashMenuItems, SuggestionMenuController, useCreateBlockNote } from '@blocknote/react';
+import {
+  FormattingToolbar,
+  FormattingToolbarController,
+  getDefaultReactSlashMenuItems,
+  getFormattingToolbarItems,
+  SuggestionMenuController,
+  useComponentsContext,
+  useCreateBlockNote,
+  useSelectedBlocks
+} from '@blocknote/react';
 import { multiColumnDropCursor, withMultiColumn } from '@blocknote/xl-multi-column';
 import { Box } from '@mui/material';
-import { Image as ImageIcon } from 'lucide-react';
+import { Image as ImageIcon, Replace } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { styles } from './BlockNoteEditor.styles';
@@ -43,13 +52,11 @@ export const BlockNoteEditor = ({
 }: BlockNoteEditorProps) => {
   const [isMounted, setIsMounted] = useState(false);
 
-  
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const pendingInsertRef = useRef<{ resolve: (url: string | null) => void } | null>(null);
 
   const uploadHandler = useMemo(() => fileUpload?.handler || defaultFileUploadHandler, [fileUpload?.handler]);
 
-  
   const handleSilentFileUpload = useCallback(
     async (file: File): Promise<string> => {
       if (fileUpload?.maxFileSize && file.size > fileUpload.maxFileSize) {
@@ -73,7 +80,7 @@ export const BlockNoteEditor = ({
   const editor = useCreateBlockNote(
     {
       schema,
-      uploadFile: handleSilentFileUpload, 
+      uploadFile: handleSilentFileUpload,
       initialContent: initialContent || undefined,
       dropCursor: multiColumnDropCursor,
       placeholders: { default: placeholder }
@@ -125,6 +132,37 @@ export const BlockNoteEditor = ({
     );
   }
 
+  // 📍 Put this right above your return statement
+  const CustomReplaceButton = () => {
+    // This hook gives us access to BlockNote's native, themed UI components
+    const Components = useComponentsContext()!;
+    const selectedBlocks = useSelectedBlocks(editor);
+
+    // Check if exactly one block is selected, and verify it is an image
+    const block = selectedBlocks.length === 1 ? selectedBlocks[0] : undefined;
+    if (block === undefined || block.type !== 'image') {
+      return null;
+    }
+
+    return (
+      <Components.FormattingToolbar.Button
+        label="Replace image"
+        mainTooltip="Замінити зображення"
+        icon={<Replace size={18} />}
+        onClick={async () => {
+          const finalUrl = await openMediaModal();
+
+          if (finalUrl) {
+            editor.updateBlock(block.id, {
+              type: 'image',
+              props: { url: finalUrl }
+            });
+          }
+        }}
+      />
+    );
+  };
+
   return (
     <Box sx={[styles.container, ...sxToArray(sx), { minHeight }]}>
       <BlockNoteView
@@ -133,7 +171,8 @@ export const BlockNoteEditor = ({
         onChange={handleEditorChange}
         theme="light"
         sideMenu={sideMenu}
-        slashMenu={false} 
+        slashMenu={false}
+        formattingToolbar={false}
       >
         <SuggestionMenuController
           triggerCharacter="/"
@@ -177,13 +216,25 @@ export const BlockNoteEditor = ({
             });
           }}
         />
+        <FormattingToolbarController
+          formattingToolbar={() => {
+            const items = getFormattingToolbarItems();
+            const replaceIndex = items.findIndex((item) => item.key === 'replaceFileButton');
+
+            if (replaceIndex !== -1) {
+              items.splice(replaceIndex, 1, <CustomReplaceButton key="customReplaceButton" />);
+            }
+
+            return <FormattingToolbar>{items}</FormattingToolbar>;
+          }}
+        />
       </BlockNoteView>
 
       <MediaModal
         open={isMediaModalOpen}
         onClose={handleCloseMediaModal}
         onApply={handleApplyMediaModal}
-        directory="photos" 
+        directory="photos"
       />
     </Box>
   );
