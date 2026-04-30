@@ -27,7 +27,7 @@ export interface ValidatorConfig {
   rules?: FileValidationRules;
 }
 
-const createDocumentValidator = (rules?: FileValidationRules): FileValidator => {
+const createBaseValidator = (rules?: FileValidationRules): FileValidator => {
   return {
     validate: async (buffer: Buffer, filename: string, mimeType: string) => {
       if (!rules) return { valid: true, errors: [] };
@@ -39,41 +39,10 @@ const createDocumentValidator = (rules?: FileValidationRules): FileValidator => 
   };
 };
 
-const createArchiveValidator = (rules?: FileValidationRules): FileValidator => {
-  return {
-    validate: async (buffer: Buffer, filename: string, mimeType: string) => {
-      if (!rules) return { valid: true, errors: [] };
-      const sizeValid = validateFileSize(buffer, rules.maxSize);
-      const mimeValid = validateMimeType(mimeType, rules.allowedMimeTypes);
-      const extValid = validateExtension(filename, rules.allowedExtensions);
-      return combineValidationResults(sizeValid, mimeValid, extValid);
-    }
-  };
-};
-
-const createAudioValidator = (rules?: FileValidationRules): FileValidator => {
-  return {
-    validate: async (buffer: Buffer, filename: string, mimeType: string) => {
-      if (!rules) return { valid: true, errors: [] };
-      const sizeValid = validateFileSize(buffer, rules.maxSize);
-      const mimeValid = validateMimeType(mimeType, rules.allowedMimeTypes);
-      const extValid = validateExtension(filename, rules.allowedExtensions);
-      return combineValidationResults(sizeValid, mimeValid, extValid);
-    }
-  };
-};
-
-const createVideoValidator = (rules?: FileValidationRules): FileValidator => {
-  return {
-    validate: async (buffer: Buffer, filename: string, mimeType: string) => {
-      if (!rules) return { valid: true, errors: [] };
-      const sizeValid = validateFileSize(buffer, rules.maxSize);
-      const mimeValid = validateMimeType(mimeType, rules.allowedMimeTypes);
-      const extValid = validateExtension(filename, rules.allowedExtensions);
-      return combineValidationResults(sizeValid, mimeValid, extValid);
-    }
-  };
-};
+const createDocumentValidator = createBaseValidator;
+const createArchiveValidator = createBaseValidator;
+const createAudioValidator = createBaseValidator;
+const createVideoValidator = createBaseValidator;
 
 export const createValidator = (config: ValidatorConfig): FileValidator => {
   switch (config.fileType) {
