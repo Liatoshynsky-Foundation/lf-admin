@@ -113,7 +113,7 @@ export default function EditPublicationsPage() {
   };
 
   return type === 'media' ? (
-    <CreatePublicationsView data={publicationData} />
+    <CreatePublicationsView data={publicationData}  mode='edit'/>
   ) : (
     <EditPublicationsView
       type={type}
