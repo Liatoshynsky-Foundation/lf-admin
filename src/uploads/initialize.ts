@@ -3,6 +3,7 @@ import logger from '../middleware/logger/logger';
 import { createStorageAdapter } from '../uploads/storage';
 import { createUploadController } from '../uploads/uploadController';
 import { createUploadService } from '../uploads/uploadService';
+import { DEFAULT_IMAGE_RULES } from './validators';
 
 export const initializeUploadModule = (config: Config) => {
   const storageConfig = config.uploads.storage;
@@ -13,8 +14,8 @@ export const initializeUploadModule = (config: Config) => {
 
   const uploadService = createUploadService({
     storage,
-    defaultFileType: 'generic',
-    defaultValidationRules: {}
+    defaultFileType: 'image',
+    defaultValidationRules: DEFAULT_IMAGE_RULES as Record<string, unknown>
   });
 
   const controller = createUploadController({

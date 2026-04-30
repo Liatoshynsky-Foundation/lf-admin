@@ -1,3 +1,4 @@
+import { UPLOAD_ERRORS } from '../errors';
 import {
   combineValidationResults,
   FileValidationRules,
@@ -26,15 +27,49 @@ export interface ValidatorConfig {
   rules?: FileValidationRules;
 }
 
-const createGenericValidator = (rules?: FileValidationRules): FileValidator => {
+const createDocumentValidator = (rules?: FileValidationRules): FileValidator => {
   return {
     validate: async (buffer: Buffer, filename: string, mimeType: string) => {
       if (!rules) return { valid: true, errors: [] };
-
       const sizeValid = validateFileSize(buffer, rules.maxSize);
       const mimeValid = validateMimeType(mimeType, rules.allowedMimeTypes);
       const extValid = validateExtension(filename, rules.allowedExtensions);
+      return combineValidationResults(sizeValid, mimeValid, extValid);
+    }
+  };
+};
 
+const createArchiveValidator = (rules?: FileValidationRules): FileValidator => {
+  return {
+    validate: async (buffer: Buffer, filename: string, mimeType: string) => {
+      if (!rules) return { valid: true, errors: [] };
+      const sizeValid = validateFileSize(buffer, rules.maxSize);
+      const mimeValid = validateMimeType(mimeType, rules.allowedMimeTypes);
+      const extValid = validateExtension(filename, rules.allowedExtensions);
+      return combineValidationResults(sizeValid, mimeValid, extValid);
+    }
+  };
+};
+
+const createAudioValidator = (rules?: FileValidationRules): FileValidator => {
+  return {
+    validate: async (buffer: Buffer, filename: string, mimeType: string) => {
+      if (!rules) return { valid: true, errors: [] };
+      const sizeValid = validateFileSize(buffer, rules.maxSize);
+      const mimeValid = validateMimeType(mimeType, rules.allowedMimeTypes);
+      const extValid = validateExtension(filename, rules.allowedExtensions);
+      return combineValidationResults(sizeValid, mimeValid, extValid);
+    }
+  };
+};
+
+const createVideoValidator = (rules?: FileValidationRules): FileValidator => {
+  return {
+    validate: async (buffer: Buffer, filename: string, mimeType: string) => {
+      if (!rules) return { valid: true, errors: [] };
+      const sizeValid = validateFileSize(buffer, rules.maxSize);
+      const mimeValid = validateMimeType(mimeType, rules.allowedMimeTypes);
+      const extValid = validateExtension(filename, rules.allowedExtensions);
       return combineValidationResults(sizeValid, mimeValid, extValid);
     }
   };
@@ -49,15 +84,20 @@ export const createValidator = (config: ValidatorConfig): FileValidator => {
   case 'pdf':
   case 'docx':
   case 'xlsx':
-  case 'audio':
-  case 'video':
+    return createDocumentValidator(config.rules);
+
+  case 'archive':
   case 'zip':
   case 'rar':
-  case 'archive':
-  case 'generic':
-    return createGenericValidator(config.rules);
+    return createArchiveValidator(config.rules);
+
+  case 'audio':
+    return createAudioValidator(config.rules);
+
+  case 'video':
+    return createVideoValidator(config.rules);
 
   default:
-    return createGenericValidator(config.rules);
+    throw new Error(`${UPLOAD_ERRORS.UNKNOWN_FILE_TYPE}: ${config.fileType}`);
   }
 };

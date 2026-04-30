@@ -3,7 +3,6 @@
 import { Box, Button } from '@mui/material';
 import { Upload } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import toast from 'react-hot-toast';
 
 import {
   FILE_TABS,
@@ -26,8 +25,10 @@ import {
   FILES_UPLOAD_BUTTON_LABEL,
   FILES_UPLOAD_ERROR,
   FILES_UPLOAD_FAILED_ERROR,
+  FILES_UPLOAD_READ_ERROR,
   type FilesTabValue
 } from '~/constants/files';
+import { readFileAsDataURL } from '~/lib/utils/readFileAsDataURL';
 import FavouriteStarIcon from '~/public/icons/favourite-star.svg';
 import { colors } from '~/shared/components/design-system/button/Button.styles';
 import { EmptyState } from '~/shared/components/empty-state';
@@ -43,15 +44,16 @@ import {
   type FilesCardsLayoutView
 } from '~/shared/components/files-cards-layout';
 import { FilteringToolbar, SortSelect } from '~/shared/components/filtering-toolbar';
-import { FileUploadModal } from '~/shared/components/media-modal/FileUploadModal';
-import { isAnyAllowedFile } from '~/shared/components/media-modal/MediaModal.utils';
+import { MediaModal } from '~/shared/components/media-modal/MediaModal';
+import type { MediaModalRenderers } from '~/shared/components/media-modal/MediaModal.renderers';
+import type { MediaModalOpenState, MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
+import { UploadView } from '~/shared/components/media-modal/views/upload-view/UploadView';
 import { PageHeader } from '~/shared/components/page-header/PageHeader';
 import { RenameFileModal } from '~/shared/components/rename-file-modal/RenameFileModal';
 import { ViewToggle } from '~/shared/components/view-toggle';
 import { useAllAssets } from '~/shared/hooks/use-assets/useAssets';
 import { useFilesFiltering } from '~/shared/hooks/use-files';
-import { useUpload } from '~/shared/hooks/use-upload/useUpload';
-import { AssetType, useCreateAssetMutation } from '~/types/graphql/generated/graphql';
+import { AssetType, useUploadBlobMutation } from '~/types/graphql/generated/graphql';
 
 type FilesPageFileItem = FilesCardsLayoutItem & {
   description?: string;
@@ -59,7 +61,6 @@ type FilesPageFileItem = FilesCardsLayoutItem & {
   createdAtRaw?: string;
   size?: string;
   previewUrl?: string;
-  downloadUrl?: string;
   addedBy?: { name: string; avatarUrl?: string };
   usage: FileUsageLink[];
 };
@@ -77,6 +78,31 @@ const assetCardTypeMap: Record<AssetType, FilesCardsLayoutItem['type']> = {
   [AssetType.Video]: 'video',
   [AssetType.Archive]: 'archive'
 };
+
+const supportedUploadMimeTypes = new Set<string>(FILES_UPLOAD_ALLOWED_MIME_TYPES);
+const supportedUploadExtensions = new Set<string>(FILES_UPLOAD_ALLOWED_EXTENSIONS);
+
+const isFilesSupportedFile = (file: File): boolean => {
+  const mimeType = file.type.toLowerCase();
+
+  if (mimeType) {
+    return supportedUploadMimeTypes.has(mimeType);
+  }
+
+  const extension = file.name.split('.').pop()?.toLowerCase();
+
+  return Boolean(extension && supportedUploadExtensions.has(extension));
+};
+
+const renderFilesUpload: MediaModalRenderers['upload'] = (props) => (
+  <UploadView
+    {...props}
+    accept={FILES_UPLOAD_ACCEPT}
+    invalidFileError={FILES_UPLOAD_ERROR}
+    isAllowedFile={isFilesSupportedFile}
+    ariaLabel="Upload file"
+  />
+);
 
 const formatDateAdded = (value: string) => {
   const date = new Date(value);
@@ -125,73 +151,52 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [hasInitializedSelection, setHasInitializedSelection] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [uploadModalInitial, setUploadModalInitial] = useState<MediaModalOpenState | undefined>(undefined);
   const [renameModalState, setRenameModalState] = useState<{ open: boolean; fileId: string; currentFilename: string }>({
     open: false,
     fileId: '',
     currentFilename: ''
   });
   const { data, loading, error, refetch } = useAllAssets();
-  const { uploadFile } = useUpload();
-  const [createAsset] = useCreateAssetMutation();
+  const [uploadBlob] = useUploadBlobMutation();
+
   const handleOpenUploadFlow = () => {
+    setUploadModalInitial({ tab: 'UPLOAD' });
     setIsUploadModalOpen(true);
   };
 
   const handleCloseUploadFlow = () => {
     setIsUploadModalOpen(false);
+    setUploadModalInitial(undefined);
   };
 
-  const handleUploadApply = async (file: File) => {
-    let folderName = 'works';
-    let assetType = 'document';
-
-    if (file.type.startsWith('image/')) {
-      folderName = 'photos';
-      assetType = 'image';
-    } else if (file.type.startsWith('audio/')) {
-      folderName = 'compositions';
-      assetType = 'audio';
-    } else if (file.type.includes('pdf')) {
-      assetType = 'pdf';
-    } else if (
-      file.type.includes('zip') ||
-      file.type.includes('rar') ||
-      file.type.includes('compressed') ||
-      file.name.toLowerCase().endsWith('.rar')
-    ) {
-      assetType = 'archive';
-    } else if (file.type.includes('spreadsheet') || file.type.includes('excel')) {
-      assetType = 'spreadsheet';
+  const handleUploadApply = async (result: MediaModalResult) => {
+    if (result.selected.kind !== 'upload') {
+      return;
     }
 
-    try {
-      const uploadResult = await uploadFile(file, {
-        directory: folderName,
-        fileType: assetType,
-        validationRules: JSON.stringify({
-          allowedMimeTypes: Array.from(FILES_UPLOAD_ALLOWED_MIME_TYPES),
-          allowedExtensions: Array.from(FILES_UPLOAD_ALLOWED_EXTENSIONS)
-        })
-      });
+    const file = result.selected.file;
+    const dataUrl = await readFileAsDataURL(file);
+    const base64 = dataUrl.split(',')[1];
 
-      await createAsset({
-        variables: {
-          input: {
-            filename: uploadResult.originalName || file.name,
-            mimeType: uploadResult.mimeType || file.type,
-            sizeBytes: uploadResult.size || file.size,
-            url: uploadResult.url,
-            type: assetType
-          }
-        }
-      });
+    if (!base64) {
+      throw new Error(FILES_UPLOAD_READ_ERROR);
+    }
 
-      await refetch();
-      toast.success('Файл успішно завантажено!');
-    } catch {
-      toast.error('Помилка завантаження файлу');
+    const uploadResult = await uploadBlob({
+      variables: {
+        folderName: 'tmp',
+        blobName: file.name,
+        buffer: base64,
+        contentType: file.type || 'application/octet-stream'
+      }
+    });
+
+    if (!uploadResult.data?.uploadBlob.success) {
       throw new Error(FILES_UPLOAD_FAILED_ERROR);
     }
+
+    await refetch();
   };
 
   const allFiles = useMemo<FilesPageFileItem[]>(() => {
@@ -314,9 +319,19 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
         bottomTrailingContent={<SortSelect {...sortProps} minWidth={208} dataTestId="files-sort-select" />}
       />
 
-      {loading && <EmptyState title={FILES_LOADING_STATE_TITLE} description={FILES_LOADING_STATE_DESCRIPTION} />}
+      {loading && (
+        <EmptyState
+          title={FILES_LOADING_STATE_TITLE}
+          description={FILES_LOADING_STATE_DESCRIPTION}
+        />
+      )}
 
-      {!loading && error && <EmptyState title={FILES_ERROR_STATE_TITLE} description={FILES_ERROR_STATE_DESCRIPTION} />}
+      {!loading && error && (
+        <EmptyState
+          title={FILES_ERROR_STATE_TITLE}
+          description={FILES_ERROR_STATE_DESCRIPTION}
+        />
+      )}
 
       {!loading && !error && filteredFiles.length > 0 && (
         <FilesCardsLayout view={view} items={filteredFiles} onItemClick={(item) => setSelectedFileId(item.id)} />
@@ -332,11 +347,17 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
       )}
 
       {hasNoFiles && hasActiveCriteria && (
-        <EmptyState title={FILES_EMPTY_STATE_NO_RESULTS_TITLE} description={FILES_EMPTY_STATE_NO_RESULTS_DESCRIPTION} />
+        <EmptyState
+          title={FILES_EMPTY_STATE_NO_RESULTS_TITLE}
+          description={FILES_EMPTY_STATE_NO_RESULTS_DESCRIPTION}
+        />
       )}
 
       {hasNoFiles && !isFavoritesTab && !hasActiveCriteria && (
-        <EmptyState title={FILES_EMPTY_STATE_TITLE} description={FILES_EMPTY_STATE_DESCRIPTION} />
+        <EmptyState
+          title={FILES_EMPTY_STATE_TITLE}
+          description={FILES_EMPTY_STATE_DESCRIPTION}
+        />
       )}
 
       {sidebarFile && (
@@ -354,13 +375,12 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
           }}
         />
       )}
-      <FileUploadModal
+      <MediaModal
         open={isUploadModalOpen}
+        initial={uploadModalInitial}
         onClose={handleCloseUploadFlow}
         onApply={handleUploadApply}
-        accept={FILES_UPLOAD_ACCEPT}
-        invalidFileError={FILES_UPLOAD_ERROR}
-        isAllowedFile={isAnyAllowedFile}
+        renderers={{ upload: renderFilesUpload }}
       />
       <RenameFileModal
         open={renameModalState.open}
