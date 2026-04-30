@@ -11,6 +11,7 @@ let mockAllAssets: Array<Record<string, unknown>> = [];
 
 jest.mock('next/image', () => ({
   __esModule: true,
+  // eslint-disable-next-line @next/next/no-img-element
   default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => <img {...props} alt={props.alt ?? ''} />
 }));
 
@@ -29,7 +30,8 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
     Spreadsheet: 'Spreadsheet'
   },
   useUploadBlobMutation: () => [mockUploadBlob],
-  useUpdateAssetMutation: () => [jest.fn(), { loading: false }]
+  useUpdateAssetMutation: () => [jest.fn(), { loading: false }],
+  useCreateAssetMutation: () => [jest.fn(), { loading: false }]
 }));
 
 jest.mock('~/shared/components/file-info-sidebar/FileInfoSidebar', () => ({
@@ -57,8 +59,8 @@ jest.mock('~/shared/components/files-cards-layout', () => ({
   )
 }));
 
-jest.mock('~/shared/components/media-modal/MediaModal', () => ({
-  MediaModal: ({ open }: { open: boolean }) => (open ? <div data-testid="media-modal">open</div> : null)
+jest.mock('~/shared/components/media-modal/FileUploadModal', () => ({
+  FileUploadModal: ({ open }: { open: boolean }) => (open ? <div data-testid="FileUploadModal">open</div> : null)
 }));
 
 jest.mock('~/shared/components/media-modal/views/upload-view/UploadView', () => ({
@@ -249,6 +251,6 @@ describe('Files page', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Завантажити файл/i }));
 
-    expect(screen.getByTestId('media-modal')).toBeInTheDocument();
+    expect(screen.getByTestId('FileUploadModal')).toBeInTheDocument();
   });
 });

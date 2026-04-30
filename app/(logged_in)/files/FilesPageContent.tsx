@@ -3,6 +3,7 @@
 import { Box, Button } from '@mui/material';
 import { Upload } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import {
   FILE_TABS,
@@ -42,11 +43,8 @@ import {
   type FilesCardsLayoutView
 } from '~/shared/components/files-cards-layout';
 import { FilteringToolbar, SortSelect } from '~/shared/components/filtering-toolbar';
-import { MediaModal } from '~/shared/components/media-modal/MediaModal';
-import type { MediaModalRenderers } from '~/shared/components/media-modal/MediaModal.renderers';
-import type { MediaModalOpenState, MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
+import { FileUploadModal } from '~/shared/components/media-modal/FileUploadModal';
 import { isAnyAllowedFile } from '~/shared/components/media-modal/MediaModal.utils';
-import { UploadView } from '~/shared/components/media-modal/views/upload-view/UploadView';
 import { PageHeader } from '~/shared/components/page-header/PageHeader';
 import { RenameFileModal } from '~/shared/components/rename-file-modal/RenameFileModal';
 import { ViewToggle } from '~/shared/components/view-toggle';
@@ -79,16 +77,6 @@ const assetCardTypeMap: Record<AssetType, FilesCardsLayoutItem['type']> = {
   [AssetType.Video]: 'video',
   [AssetType.Archive]: 'archive'
 };
-
-const renderFilesUpload: MediaModalRenderers['upload'] = (props) => (
-  <UploadView
-    {...props}
-    accept={FILES_UPLOAD_ACCEPT}
-    invalidFileError={FILES_UPLOAD_ERROR}
-    isAllowedFile={isAnyAllowedFile}
-    ariaLabel="Upload file"
-  />
-);
 
 const formatDateAdded = (value: string) => {
   const date = new Date(value);
@@ -137,7 +125,6 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [hasInitializedSelection, setHasInitializedSelection] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [uploadModalInitial, setUploadModalInitial] = useState<MediaModalOpenState | undefined>(undefined);
   const [renameModalState, setRenameModalState] = useState<{ open: boolean; fileId: string; currentFilename: string }>({
     open: false,
     fileId: '',
@@ -147,22 +134,14 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
   const { uploadFile } = useUpload();
   const [createAsset] = useCreateAssetMutation();
   const handleOpenUploadFlow = () => {
-    setUploadModalInitial({ tab: 'UPLOAD' });
     setIsUploadModalOpen(true);
   };
 
   const handleCloseUploadFlow = () => {
     setIsUploadModalOpen(false);
-    setUploadModalInitial(undefined);
   };
 
-  const handleUploadApply = async (result: MediaModalResult) => {
-    if (result.selected.kind !== 'upload') {
-      return;
-    }
-
-    const file = result.selected.file;
-
+  const handleUploadApply = async (file: File) => {
     let folderName = 'works';
     let assetType = 'document';
 
@@ -208,8 +187,9 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
       });
 
       await refetch();
-    } catch (error) {
-      console.error('Upload error:', error);
+      toast.success('Файл успішно завантажено!');
+    } catch {
+      toast.error('Помилка завантаження файлу');
       throw new Error(FILES_UPLOAD_FAILED_ERROR);
     }
   };
@@ -374,12 +354,13 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
           }}
         />
       )}
-      <MediaModal
+      <FileUploadModal
         open={isUploadModalOpen}
-        initial={uploadModalInitial}
         onClose={handleCloseUploadFlow}
         onApply={handleUploadApply}
-        renderers={{ upload: renderFilesUpload }}
+        accept={FILES_UPLOAD_ACCEPT}
+        invalidFileError={FILES_UPLOAD_ERROR}
+        isAllowedFile={isAnyAllowedFile}
       />
       <RenameFileModal
         open={renameModalState.open}

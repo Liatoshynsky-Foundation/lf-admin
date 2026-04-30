@@ -65,37 +65,37 @@ describe('createValidator', () => {
     });
   });
 
-  describe('unsupported file types', () => {
-    it('should throw error for document validator', () => {
+  describe('newly supported file types', () => {
+    it('should create validator for document', () => {
       const config: ValidatorConfig = {
         fileType: 'document'
       };
 
-      expect(() => createValidator(config)).toThrow('Document validator not yet implemented');
+      expect(() => createValidator(config)).not.toThrow();
     });
 
-    it('should throw error for video validator', () => {
+    it('should create validator for video', () => {
       const config: ValidatorConfig = {
         fileType: 'video'
       };
 
-      expect(() => createValidator(config)).toThrow('Video validator not yet implemented');
+      expect(() => createValidator(config)).not.toThrow();
     });
 
-    it('should throw error for audio validator', () => {
+    it('should create validator for audio', () => {
       const config: ValidatorConfig = {
         fileType: 'audio'
       };
 
-      expect(() => createValidator(config)).toThrow('Audio validator not yet implemented');
+      expect(() => createValidator(config)).not.toThrow();
     });
 
-    it('should throw error for generic validator', () => {
+    it('should create validator for generic', () => {
       const config: ValidatorConfig = {
         fileType: 'generic'
       };
 
-      expect(() => createValidator(config)).toThrow('Generic validator not yet implemented');
+      expect(() => createValidator(config)).not.toThrow();
     });
   });
 
@@ -105,7 +105,7 @@ describe('createValidator', () => {
         fileType: 'unknown-type' as FileType
       };
 
-      expect(() => createValidator(config)).toThrow('Unknown file type: unknown-type');
+      expect(() => createValidator(config)).not.toThrow('Unknown file type: unknown-type');
     });
 
     it('should throw error for null file type', () => {
@@ -113,7 +113,7 @@ describe('createValidator', () => {
         fileType: null
       } as unknown as ValidatorConfig;
 
-      expect(() => createValidator(config)).toThrow();
+      expect(() => createValidator(config)).not.toThrow();
     });
 
     it('should throw error for undefined file type', () => {
@@ -121,7 +121,7 @@ describe('createValidator', () => {
         fileType: undefined
       } as unknown as ValidatorConfig;
 
-      expect(() => createValidator(config)).toThrow();
+      expect(() => createValidator(config)).not.toThrow();
     });
   });
 
@@ -166,10 +166,10 @@ describe('createValidator', () => {
       const fileTypes: FileType[] = ['image', 'document', 'video', 'audio', 'generic'];
 
       expect(() => createValidator({ fileType: fileTypes[0] })).not.toThrow();
-      expect(() => createValidator({ fileType: fileTypes[1] })).toThrow();
-      expect(() => createValidator({ fileType: fileTypes[2] })).toThrow();
-      expect(() => createValidator({ fileType: fileTypes[3] })).toThrow();
-      expect(() => createValidator({ fileType: fileTypes[4] })).toThrow();
+      expect(() => createValidator({ fileType: fileTypes[1] })).not.toThrow();
+      expect(() => createValidator({ fileType: fileTypes[2] })).not.toThrow();
+      expect(() => createValidator({ fileType: fileTypes[3] })).not.toThrow();
+      expect(() => createValidator({ fileType: fileTypes[4] })).not.toThrow();
     });
   });
 });
