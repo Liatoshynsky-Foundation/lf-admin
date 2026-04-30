@@ -1,12 +1,14 @@
-import { act,fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { notFound,useParams, useRouter } from 'next/navigation';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { notFound, useParams, useRouter } from 'next/navigation';
+import React from 'react';
 import toast from 'react-hot-toast';
 
 import { EditPublicationsViewProps } from './EditPublicationsView';
 import EditPublicationsPage from './page';
-import { CONTENT_MUTATION_RESULTS, LocalizedEditorState,MenuActionId } from '~/constants/publications';
+import { CONTENT_MUTATION_RESULTS, LocalizedEditorState, MenuActionId } from '~/constants/publications';
 import { SerializedContent } from '~/shared/components/content-editor';
 import { usePublicationManager } from '~/shared/hooks/use-publications-manager/usePublicationsManager';
+import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 jest.mock('next/navigation', () => ({
@@ -22,6 +24,10 @@ jest.mock('react-hot-toast', () => ({
 
 jest.mock('~/shared/hooks/use-publications-manager/usePublicationsManager', () => ({
   usePublicationManager: jest.fn()
+}));
+
+jest.mock('~/shared/hooks/use-upsert-publication/useUpsertPublication', () => ({
+  useUpsertPublication: jest.fn()
 }));
 
 const baseMockManager = {
@@ -42,7 +48,7 @@ const baseMockManager = {
 
 jest.mock('./EditPublicationsView', () => ({
   EditPublicationsView: (props: EditPublicationsViewProps) => (
-    <div data-testid="mock-view">
+    <div data-testid="mock-edit-view">
       <button
         data-testid="trigger-editor-change"
         onClick={() =>
@@ -60,14 +66,33 @@ jest.mock('./EditPublicationsView', () => ({
   )
 }));
 
+jest.mock('../../create/CreatePublicationsView', () => ({
+  __esModule: true,
+  default: () => <div data-testid="mock-create-view" />
+}));
+
 describe('EditPublicationsPage Container', () => {
   const mockPush = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
+    
     (useParams as jest.Mock).mockReturnValue({ type: 'news', id: '123' });
     (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
     (usePublicationManager as jest.Mock).mockReturnValue(baseMockManager);
+    (useUpsertPublication as jest.Mock).mockReturnValue({ mockUpsertData: true });
+  });
+
+  it('should render CreatePublicationsView if type is media', () => {
+    (useParams as jest.Mock).mockReturnValue({ type: 'media', id: '456' });
+
+    render(<EditPublicationsPage />);
+
+    expect(useUpsertPublication).toHaveBeenCalledWith({ type: 'media', id: '456' });
+    
+    expect(screen.getByTestId('mock-create-view')).toBeInTheDocument();
+    
+    expect(screen.queryByTestId('mock-edit-view')).not.toBeInTheDocument();
   });
 
   it('should call notFound if loading is finished but data is null', () => {
