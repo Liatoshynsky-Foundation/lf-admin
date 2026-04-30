@@ -10,30 +10,23 @@ import {
   defaultStyleSpecs
 } from '@blocknote/core';
 import { BlockNoteView } from '@blocknote/mantine';
-import { useCreateBlockNote } from '@blocknote/react';
+import { getDefaultReactSlashMenuItems, SuggestionMenuController, useCreateBlockNote } from '@blocknote/react';
 import { multiColumnDropCursor, withMultiColumn } from '@blocknote/xl-multi-column';
 import { Box } from '@mui/material';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Image as ImageIcon } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { styles } from './BlockNoteEditor.styles';
 import { BlockNoteEditorProps } from './types';
-import { useFilePickerUpload } from './useFilePickerUpload';
 import { sxToArray } from '~/lib/utils/sxToArray';
+import { MediaModal } from '~/shared/components/media-modal/MediaModal';
+import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 
 const defaultFileUploadHandler = async (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result;
-      if (result) {
-        resolve(result as string);
-      } else {
-        reject(new Error('Failed to read file'));
-      }
-    };
-    reader.onerror = () => {
-      reject(new Error('Failed to read file'));
-    };
+    reader.onload = (e) => resolve(e.target?.result as string);
+    reader.onerror = () => reject(new Error('Failed to read file'));
     reader.readAsDataURL(file);
   });
 };
@@ -46,162 +39,83 @@ export const BlockNoteEditor = ({
   sideMenu = false,
   minHeight = '800px',
   fileUpload,
-  keyboardShortcuts,
   sx
 }: BlockNoteEditorProps) => {
   const [isMounted, setIsMounted] = useState(false);
 
+  
+  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
+  const pendingInsertRef = useRef<{ resolve: (url: string | null) => void } | null>(null);
+
   const uploadHandler = useMemo(() => fileUpload?.handler || defaultFileUploadHandler, [fileUpload?.handler]);
 
-  const { openCustomPicker, modalProps } = useFilePickerUpload({
-    customFilePickerModal: fileUpload?.customModal
-  });
-
-  const handleFileUpload = useCallback(
+  
+  const handleSilentFileUpload = useCallback(
     async (file: File): Promise<string> => {
       if (fileUpload?.maxFileSize && file.size > fileUpload.maxFileSize) {
-        throw new Error(`File size exceeds maximum allowed size of ${fileUpload.maxFileSize} bytes`);
+        throw new Error('File size exceeds maximum allowed size');
       }
-
-      if (fileUpload?.allowedMimeTypes && !fileUpload.allowedMimeTypes.includes(file.type)) {
-        throw new Error(`File type ${file.type} is not allowed`);
-      }
-
       return uploadHandler(file);
     },
-    [uploadHandler, fileUpload?.maxFileSize, fileUpload?.allowedMimeTypes]
+    [uploadHandler, fileUpload?.maxFileSize]
   );
 
   const schema = useMemo(() => {
-    const baseSchema = BlockNoteSchema.create({
-      blockSpecs: {
-        ...defaultBlockSpecs
-      },
-      inlineContentSpecs: {
-        ...defaultInlineContentSpecs
-      },
-      styleSpecs: {
-        ...defaultStyleSpecs
-      }
-    });
-
-    return withMultiColumn(baseSchema);
+    return withMultiColumn(
+      BlockNoteSchema.create({
+        blockSpecs: defaultBlockSpecs,
+        inlineContentSpecs: defaultInlineContentSpecs,
+        styleSpecs: defaultStyleSpecs
+      })
+    );
   }, []);
 
   const editor = useCreateBlockNote(
     {
       schema,
-      uploadFile: handleFileUpload,
+      uploadFile: handleSilentFileUpload, 
       initialContent: initialContent || undefined,
       dropCursor: multiColumnDropCursor,
-      placeholders: { default: placeholder, }
+      placeholders: { default: placeholder }
     },
     [isMounted]
   );
 
-  useEffect(() => {
-    setIsMounted(true);
+  const openMediaModal = useCallback((): Promise<string | null> => {
+    return new Promise((resolve) => {
+      pendingInsertRef.current = { resolve };
+      setIsMediaModalOpen(true);
+    });
   }, []);
 
-  useEffect(() => {
-    if (!openCustomPicker || !editor) {
-      return;
+  const handleApplyMediaModal = useCallback((result: MediaModalResult) => {
+    const { selected, uploadResult } = result;
+    const url = uploadResult?.url ?? (selected.kind === 'upload' ? null : selected.src);
+
+    if (pendingInsertRef.current) {
+      pendingInsertRef.current.resolve(url || null);
+      pendingInsertRef.current = null;
     }
+    setIsMediaModalOpen(false);
+  }, []);
 
-    const handleClick = async (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-
-      if (target instanceof HTMLInputElement && target.type === 'file') {
-        if (target.dataset.customFilePicker === 'true') {
-          return;
-        }
-
-        const isBlockNoteFileInput =
-          target.accept?.includes('image') ||
-          target.closest('[data-node-type]') ||
-          target.id?.includes('blocknote') ||
-          target.closest('.bn-');
-
-        if (isBlockNoteFileInput) {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-
-          try {
-            const selectedFile = await openCustomPicker();
-            if (selectedFile) {
-              const fileUrl = await handleFileUpload(selectedFile);
-
-              const currentBlock = editor.getTextCursorPosition().block;
-              editor.insertBlocks(
-                [
-                  {
-                    type: 'image',
-                    props: {
-                      url: fileUrl,
-                      name: selectedFile.name
-                    }
-                  }
-                ],
-                currentBlock,
-                'after'
-              );
-            }
-          } catch (error) {
-            console.error('Error handling file selection:', error);
-          }
-        }
-      }
-    };
-
-    const handleFocus = (event: FocusEvent) => {
-      const target = event.target as HTMLElement;
-
-      if (target instanceof HTMLInputElement && target.type === 'file' && target.dataset.customFilePicker === 'true') {
-        return;
-      }
-
-      if (
-        target instanceof HTMLInputElement &&
-        target.type === 'file' &&
-        (target.accept?.includes('image') || target.closest('[data-node-type]'))
-      ) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-      }
-    };
-
-    document.addEventListener('click', handleClick, true);
-    document.addEventListener('focus', handleFocus, true);
-
-    return () => {
-      document.removeEventListener('click', handleClick, true);
-      document.removeEventListener('focus', handleFocus, true);
-    };
-  }, [openCustomPicker, handleFileUpload, editor]);
+  const handleCloseMediaModal = useCallback(() => {
+    if (pendingInsertRef.current) {
+      pendingInsertRef.current.resolve(null);
+      pendingInsertRef.current = null;
+    }
+    setIsMediaModalOpen(false);
+  }, []);
 
   const handleEditorChange = useCallback(() => {
-    if (onChange) {
-      const content = editor.document;
-      onChange(content as Block[]);
+    if (onChange && editor) {
+      onChange(editor.document as Block[]);
     }
   }, [editor, onChange]);
 
   useEffect(() => {
-    if (!keyboardShortcuts?.onSave) {
-      return;
-    }
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Cmd/Ctrl + S to save
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-        e.preventDefault();
-        keyboardShortcuts.onSave?.();
-      }
-    };
-
-    globalThis.addEventListener('keydown', handleKeyDown);
-    return () => globalThis.removeEventListener('keydown', handleKeyDown);
-  }, [keyboardShortcuts]);
+    setIsMounted(true);
+  }, []);
 
   if (!isMounted) {
     return (
@@ -218,11 +132,59 @@ export const BlockNoteEditor = ({
         editable={editable}
         onChange={handleEditorChange}
         theme="light"
-        data-theming-css-variables-demo
         sideMenu={sideMenu}
-      />
+        slashMenu={false} 
+      >
+        <SuggestionMenuController
+          triggerCharacter="/"
+          getItems={async (query) => {
+            const defaultItems = getDefaultReactSlashMenuItems(editor);
 
-      {modalProps && fileUpload?.customModal?.(modalProps)}
+            const customImageItem = {
+              title: 'Picture',
+              aliases: ['image', 'img', 'picture', 'photo', 'фото', 'зображення'],
+              group: 'Media',
+              icon: <ImageIcon size={18} />,
+              subtext: 'Pick photo',
+              onItemClick: async () => {
+                const finalUrl = await openMediaModal();
+
+                if (finalUrl) {
+                  const currentBlock = editor.getTextCursorPosition().block;
+                  editor.insertBlocks([{ type: 'image', props: { url: finalUrl } }], currentBlock, 'after');
+                }
+              }
+            };
+
+            const filteredItems = defaultItems.filter(
+              (item) => item.title !== 'Image' && item.title !== 'Image (Upload)'
+            );
+
+            const mediaGroupIndex = filteredItems.findIndex((item) => item.group === 'Media');
+
+            if (mediaGroupIndex !== -1) {
+              filteredItems.splice(mediaGroupIndex, 0, customImageItem);
+            } else {
+              filteredItems.push(customImageItem);
+            }
+
+            return filteredItems.filter((item) => {
+              const queryLower = query.toLowerCase();
+              const matchesTitle = item.title.toLowerCase().includes(queryLower);
+              const matchesAlias = item.aliases?.some((alias: string) => alias.toLowerCase().includes(queryLower));
+
+              return matchesTitle || matchesAlias;
+            });
+          }}
+        />
+      </BlockNoteView>
+
+      <MediaModal
+        open={isMediaModalOpen}
+        onClose={handleCloseMediaModal}
+        onApply={handleApplyMediaModal}
+        directory="photos" 
+      />
     </Box>
   );
 };
