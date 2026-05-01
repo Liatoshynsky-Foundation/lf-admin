@@ -1,6 +1,6 @@
 import type { SxProps, Theme } from '@mui/material';
 
-import { colors } from '~/shared/components/design-system/button/Button.styles';
+import { mainHexPallete as colors } from '~/shared/theme/colors';
 
 export const styles = {
   container: {

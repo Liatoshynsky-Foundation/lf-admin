@@ -16,6 +16,7 @@ import { ImagePreviewBlock } from '~/shared/components/design-system/photo-block
 import { CustomTabs } from '~/shared/components/design-system/tabs/Tabs';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 import TooltipCustom from '~/shared/components/design-system/tooltip/Tooltip';
+import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
 
 export default function StyleGuide() {
   const tabs = [
@@ -283,12 +284,21 @@ export default function StyleGuide() {
       </Typography>
 
       <ContentCard
-        type="event"
-        coverImage={{ src: 'https://shorturl.at/xkStA', alt: { en: 'event', uk: 'подія' } }}
+        type="news"
+        coverImage={{
+          src: { en: 'https://shorturl.at/xkStA', uk: 'https://shorturl.at/xkStA' },
+          alt: { en: 'event', uk: 'подія' }
+        }}
         title={{ en: 'Event' }}
         status="draft"
         onClickMenu={() => {}}
       ></ContentCard>
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування HeaderRightActions
+      </Typography>
+
+      <HeaderRightActions mode="seo"></HeaderRightActions>
     </Box>
   );
 }

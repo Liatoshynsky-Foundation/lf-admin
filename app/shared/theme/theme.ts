@@ -123,7 +123,7 @@ export const buttonSizeStyles = {
   }
 };
 
-const baseTextStyles = {
+export const baseTextStyles = {
   fontFamily: fontFamilies.body,
   fontSize: '16px',
   fontWeight: 500,
@@ -864,6 +864,20 @@ export const createAdminTheme = () =>
             borderRadius: '20px'
           },
 
+          sizeSmall: {
+            height: 'auto',
+            padding: '6px 8px',
+
+            '& .MuiChip-label': {
+              padding: 0
+            },
+
+            '& .MuiChip-icon': {
+              margin: 0,
+              marginRight: '4px'
+            }
+          },
+
           deleteIcon: {
             color: 'inherit',
             '&:hover': {
@@ -880,7 +894,8 @@ export const createAdminTheme = () =>
               border: 'none',
 
               '&:hover': {
-                backgroundColor: chipsColors.filledHoveredBg
+                backgroundColor: chipsColors.filledHoveredBg,
+                color: chipsColors.normalText
               },
               '&:active': {
                 backgroundColor: chipsColors.filledPressedBg

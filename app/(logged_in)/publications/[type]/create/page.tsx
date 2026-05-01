@@ -9,7 +9,6 @@ import type { Dayjs } from 'dayjs';
 import { notFound, useParams, useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 
-import { colors } from '~/shared/components/design-system/button/Button.styles';
 import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
 import ProgressStatus from '~/shared/components/divided-header/progress-status/ProgressStatus';
@@ -20,6 +19,7 @@ import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/
 import { useCreateEvent } from '~/shared/hooks/use-events/useEvents';
 import { useCreateMediaMention } from '~/shared/hooks/use-media-mentions/useMediaMentions';
 import { useCreateNews } from '~/shared/hooks/use-news/useNews';
+import { mainHexPallete as colors } from '~/shared/theme/colors';
 import { EventStatus, MediaStatus, NewsStatus } from '~/types/graphql/generated/graphql';
 
 const VALID_TYPES = ['events', 'news', 'media'] as const;
@@ -152,7 +152,7 @@ export default function CreatePublicationPage() {
       } else if (publicationType === 'news') {
         const result = await createNews({
           ...commonInput,
-          content: { uk: {content: {blocks: []}}, en: {content: {blocks: []}} },
+          content: { uk: { content: { blocks: [] } }, en: { content: { blocks: [] } } },
           newsDate: publishDate?.toISOString() ?? undefined,
           status: NewsStatus.Draft
         });

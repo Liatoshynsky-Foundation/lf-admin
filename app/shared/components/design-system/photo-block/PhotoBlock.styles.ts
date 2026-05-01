@@ -32,7 +32,8 @@ export const styles = {
     flex: '1',
     minWidth: 0,
     display: 'flex',
-    flexDirection: 'column'
+    flexDirection: 'column',
+    gap: 2
   },
 
   imageOvalPreview: {

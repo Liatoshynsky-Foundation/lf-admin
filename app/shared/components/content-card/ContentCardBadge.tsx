@@ -1,8 +1,9 @@
+/* eslint-disable indent */
 import { Box, Chip } from '@mui/material';
 import { CircleCheckBig } from 'lucide-react';
 
 import { ContentType } from './ContentCard';
-import styles from './ContentCardBadge.styles';
+import { badgeColors, styles } from './ContentCardBadge.styles';
 import { getLocalizations } from '~/lib/utils/localizations';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 interface ContentCardBadgeProps {
@@ -14,23 +15,12 @@ interface ContentCardBadgeProps {
 const ContentCardBadge = ({ type, status, localizations }: ContentCardBadgeProps) => {
   const getContentTypeLabel = (contentType: 'news' | 'event' | 'media'): string => {
     switch (contentType) {
-    case 'news':
-      return 'Новина';
-    case 'event':
-      return 'Подія';
-    case 'media':
-      return 'Ми у ЗМІ';
-    }
-  };
-
-  const getContentTypeColor = (contentType: 'news' | 'event' | 'media'): string => {
-    switch (contentType) {
-    case 'news':
-      return '#93CCF4';
-    case 'event':
-      return '#EC93F4';
-    case 'media':
-      return '#B6F7CF';
+      case 'news':
+        return 'Новина';
+      case 'event':
+        return 'Подія';
+      case 'media':
+        return 'Ми у ЗМІ';
     }
   };
 
@@ -42,18 +32,37 @@ const ContentCardBadge = ({ type, status, localizations }: ContentCardBadgeProps
         label={getContentTypeLabel(type)}
         size="small"
         variant="filled"
-        sx={{ backgroundColor: getContentTypeColor(type) }}
+        sx={{ backgroundColor: badgeColors[type] }}
       ></Chip>
-      <Box
+
+      <Chip
+        icon={<CircleCheckBig size={15} />}
+        label={localizationLabel || ''}
+        size="small"
+        variant="filled"
         sx={{
           ...styles.localizationsBadge,
-          padding: localizationLabel ? '4px 8px' : '4px 6px'
+          ...(!localizationLabel && {
+            '& .MuiChip-label': {
+              display: 'none'
+            },
+            '& .MuiChip-icon, & svg': {
+              margin: 0,
+              color: 'inherit'
+            },
+            padding: '6px'
+          })
         }}
-      >
-        <CircleCheckBig size={15} />
-        {getLocalizations(localizations) && <Box>{getLocalizations(localizations)}</Box>}
-      </Box>
-      {status === BaseContentStatuses.Draft && <Box sx={styles.draftBadge}>Чернетка {getLocalizations(localizations)}</Box>}
+      ></Chip>
+
+      {status === BaseContentStatuses.Draft && (
+        <Chip
+          label={`Чернетка ${localizationLabel ? localizationLabel : ''}`.trim()}
+          size="small"
+          variant="filled"
+          sx={styles.draftBadge}
+        />
+      )}
     </Box>
   );
 };
