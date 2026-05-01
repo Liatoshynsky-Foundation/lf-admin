@@ -129,13 +129,25 @@ const formatFileSize = (sizeBytes: number) => {
 };
 
 const formatFromMimeType = (mimeType: string, filename: string) => {
-  const byMime = mimeType.split('/')[1]?.toLowerCase();
-  if (byMime === 'jpeg') return 'jpg';
-  if (byMime === 'mpeg' && filename.toLowerCase().endsWith('.mp3')) return 'mp3';
-  if (byMime) return byMime;
-
   const ext = filename.split('.').pop()?.toLowerCase();
-  return ext || undefined;
+
+  if (ext) {
+    if (ext === 'jpeg') return 'jpg';
+    return ext;
+  }
+
+  const byMime = mimeType.split('/')[1]?.toLowerCase();
+  if (!byMime) return undefined;
+
+  if (byMime.includes('spreadsheetml')) return 'xlsx';
+  if (byMime.includes('wordprocessingml')) return 'docx';
+  if (byMime.includes('zip')) return 'zip';
+  if (byMime.includes('rar')) return 'rar';
+  if (byMime.includes('svg')) return 'svg';
+  if (byMime === 'jpeg') return 'jpg';
+  if (byMime === 'wave' || byMime === 'x-wav') return 'wav';
+
+  return byMime;
 };
 
 const usageToLink = (pageId?: string | null) => {
@@ -319,19 +331,9 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
         bottomTrailingContent={<SortSelect {...sortProps} minWidth={208} dataTestId="files-sort-select" />}
       />
 
-      {loading && (
-        <EmptyState
-          title={FILES_LOADING_STATE_TITLE}
-          description={FILES_LOADING_STATE_DESCRIPTION}
-        />
-      )}
+      {loading && <EmptyState title={FILES_LOADING_STATE_TITLE} description={FILES_LOADING_STATE_DESCRIPTION} />}
 
-      {!loading && error && (
-        <EmptyState
-          title={FILES_ERROR_STATE_TITLE}
-          description={FILES_ERROR_STATE_DESCRIPTION}
-        />
-      )}
+      {!loading && error && <EmptyState title={FILES_ERROR_STATE_TITLE} description={FILES_ERROR_STATE_DESCRIPTION} />}
 
       {!loading && !error && filteredFiles.length > 0 && (
         <FilesCardsLayout view={view} items={filteredFiles} onItemClick={(item) => setSelectedFileId(item.id)} />
@@ -347,17 +349,11 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
       )}
 
       {hasNoFiles && hasActiveCriteria && (
-        <EmptyState
-          title={FILES_EMPTY_STATE_NO_RESULTS_TITLE}
-          description={FILES_EMPTY_STATE_NO_RESULTS_DESCRIPTION}
-        />
+        <EmptyState title={FILES_EMPTY_STATE_NO_RESULTS_TITLE} description={FILES_EMPTY_STATE_NO_RESULTS_DESCRIPTION} />
       )}
 
       {hasNoFiles && !isFavoritesTab && !hasActiveCriteria && (
-        <EmptyState
-          title={FILES_EMPTY_STATE_TITLE}
-          description={FILES_EMPTY_STATE_DESCRIPTION}
-        />
+        <EmptyState title={FILES_EMPTY_STATE_TITLE} description={FILES_EMPTY_STATE_DESCRIPTION} />
       )}
 
       {sidebarFile && (
@@ -381,6 +377,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
         onClose={handleCloseUploadFlow}
         onApply={handleUploadApply}
         renderers={{ upload: renderFilesUpload }}
+        hideTabs={true}
       />
       <RenameFileModal
         open={renameModalState.open}

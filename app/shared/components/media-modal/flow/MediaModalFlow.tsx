@@ -7,13 +7,9 @@ import { MediaModalContainer } from '../components/container/MediaModalContainer
 import { MediaModalSwitcher } from '../components/switcher/MediaModalSwitcher';
 import type { MediaModalRenderers } from '../MediaModal.renderers';
 import { styles } from '../MediaModal.styles';
-import type {
-  MediaModalOpenState,
-  MediaModalResult,
-  MediaModalTab,
-  SelectedMedia
-} from '../MediaModal.types';
+import type { MediaModalOpenState, MediaModalResult, MediaModalTab, SelectedMedia } from '../MediaModal.types';
 import { isImageUploadFile } from '../MediaModal.utils';
+import { FileView } from '../views/file-view/FileView';
 import { buildInitialState, GalleryFilters, isSameCrop, reducer, UsedFilters } from './MediaModalFlowState';
 import { useMediaModalApply } from './useMediaModalApply';
 import ArrowLeftIcon from '~/public/icons/arrowLeft.svg';
@@ -28,6 +24,7 @@ export type MediaModalFlowProps = {
   initial?: MediaModalOpenState;
   renderers: MediaModalRenderers;
   directory?: string;
+  hideTabs?: boolean;
 };
 
 const isNonImageUploadSelection = (selected: SelectedMedia | null): boolean => {
@@ -38,11 +35,19 @@ const isNonImageUploadSelection = (selected: SelectedMedia | null): boolean => {
   return !isImageUploadFile(selected.file);
 };
 
-export function MediaModalFlow({ open, onClose, onApply, initial, renderers, directory }: Readonly<MediaModalFlowProps>) {
+export function MediaModalFlow({
+  open,
+  onClose,
+  onApply,
+  initial,
+  renderers,
+  directory,
+  hideTabs
+}: Readonly<MediaModalFlowProps>) {
   const [state, dispatch] = useReducer(reducer, initial, buildInitialState);
 
   const { isApplying, applyError, clearApplyState, clearApplyError, cancelInFlightApply, handleClose, runApply } =
-      useMediaModalApply({ open, onClose, onApply, directory });
+    useMediaModalApply({ open, onClose, onApply, directory });
 
   const latestInitialRef = useRef<MediaModalOpenState | undefined>(initial);
   useEffect(() => {
@@ -92,6 +97,12 @@ export function MediaModalFlow({ open, onClose, onApply, initial, renderers, dir
     },
     [clearApplyError, isApplying]
   );
+
+  const handleClearFile = useCallback(() => {
+    if (isApplying) return;
+    clearApplyError();
+    dispatch({ type: 'OPEN', initial: latestInitialRef.current });
+  }, [clearApplyError, isApplying]);
 
   const handleBack = useCallback(() => {
     if (isApplying) return;
@@ -148,9 +159,11 @@ export function MediaModalFlow({ open, onClose, onApply, initial, renderers, dir
         {selectedFileName}
       </Box>
     </Box>
+  ) : hideTabs ? (
+    <Box sx={styles.cropHeaderTitle}>Завантажити файл</Box>
   ) : null;
 
-  const headerCenter = isCrop ? null : <MediaModalSwitcher value={state.tab} onChange={handleTabChange} />;
+  const headerCenter = isCrop || hideTabs ? null : <MediaModalSwitcher value={state.tab} onChange={handleTabChange} />;
 
   const headerRight = isCrop ? (
     <IconButton
@@ -164,38 +177,40 @@ export function MediaModalFlow({ open, onClose, onApply, initial, renderers, dir
     </IconButton>
   ) : null;
 
-  const footerLeft = isCrop ? (
-    <Button
-      color="secondary"
-      variant="outlined"
-      label="Повернутись назад"
-      data-testid="MediaModal-backButton"
-      sx={styles.footerBackButton}
-      startIcon={<ArrowLeftIcon width={12} height={12} aria-hidden focusable={false} />}
-      onClick={handleBack}
-    />
-  ) : null;
-
-  const footerRight = isCrop || canApplySelectedUpload ? (
-    <>
+  const footerLeft =
+    isCrop || canApplySelectedUpload ? (
       <Button
         color="secondary"
         variant="outlined"
-        label="Скасувати"
-        data-testid="MediaModal-cancelButton"
-        onClick={handleClose}
+        label="Повернутись назад"
+        data-testid="MediaModal-backButton"
+        sx={styles.footerBackButton}
+        startIcon={<ArrowLeftIcon width={12} height={12} aria-hidden focusable={false} />}
+        onClick={isCrop ? handleBack : handleClearFile}
       />
-      <Button
-        color="tertiary"
-        variant="filled"
-        label="Застосувати"
-        data-testid="MediaModal-applyButton"
-        loading={isApplying}
-        disabled={!state.selected || isApplying}
-        onClick={handleApply}
-      />
-    </>
-  ) : null;
+    ) : null;
+
+  const footerRight =
+    isCrop || canApplySelectedUpload ? (
+      <>
+        <Button
+          color="secondary"
+          variant="outlined"
+          label="Скасувати"
+          data-testid="MediaModal-cancelButton"
+          onClick={onClose}
+        />
+        <Button
+          color="tertiary"
+          variant="filled"
+          label="Застосувати"
+          data-testid="MediaModal-applyButton"
+          loading={isApplying}
+          disabled={!state.selected || isApplying}
+          onClick={handleApply}
+        />
+      </>
+    ) : null;
 
   const renderBody = () => {
     if (isCrop) {
@@ -220,6 +235,10 @@ export function MediaModalFlow({ open, onClose, onApply, initial, renderers, dir
     }
 
     if (state.tab === 'UPLOAD') {
+      if (state.selected?.kind === 'upload' && isNonImageUploadSelection(state.selected)) {
+        return <FileView file={state.selected.file} />;
+      }
+
       return renderers.upload({
         selected: state.selected?.kind === 'upload' ? state.selected : null,
         onPick: pickAndCrop
