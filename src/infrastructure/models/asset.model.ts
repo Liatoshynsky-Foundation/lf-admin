@@ -13,7 +13,7 @@ const assetSchema = new Schema(
     type: {
       type: String,
       required: true,
-      enum: ['image', 'pdf', 'audio', 'document', 'docx', 'xlsx', 'video', 'archive', 'generic', 'rar'],
+      enum: ['image', 'pdf', 'audio', 'document', 'spreadsheet', 'video', 'archive'],
       index: true
     },
     tags: {

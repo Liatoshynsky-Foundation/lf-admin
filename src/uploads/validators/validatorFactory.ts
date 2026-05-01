@@ -9,18 +9,7 @@ import {
 } from './common';
 import { createImageValidator, ImageValidationRules } from './imageValidator';
 
-export type FileType =
-  | 'image'
-  | 'document'
-  | 'video'
-  | 'audio'
-  | 'generic'
-  | 'pdf'
-  | 'archive'
-  | 'docx'
-  | 'zip'
-  | 'xlsx'
-  | 'rar';
+export type FileType = 'image' | 'document' | 'video' | 'audio' | 'generic' | 'pdf' | 'archive' | 'spreadsheet';
 
 export interface ValidatorConfig {
   fileType: FileType;
@@ -45,19 +34,17 @@ const createAudioValidator = createBaseValidator;
 const createVideoValidator = createBaseValidator;
 
 export const createValidator = (config: ValidatorConfig): FileValidator => {
-  switch (config.fileType) {
+  const cleanType = config.fileType.trim().toLowerCase();
+  switch (cleanType) {
   case 'image':
     return createImageValidator(config.rules as ImageValidationRules);
 
   case 'document':
   case 'pdf':
-  case 'docx':
-  case 'xlsx':
+  case 'spreadsheet':
     return createDocumentValidator(config.rules);
 
   case 'archive':
-  case 'zip':
-  case 'rar':
     return createArchiveValidator(config.rules);
 
   case 'audio':
