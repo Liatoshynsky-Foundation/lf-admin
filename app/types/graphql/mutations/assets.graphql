@@ -7,13 +7,3 @@ mutation UpdateAsset($id: ID!, $input: UpdateAssetInput!) {
     updatedAt
   }
 }
-
-mutation CreateAsset($input: CreateAssetInput!) {
-  createAsset(input: $input) {
-    id
-    filename
-    url
-    mimeType
-    type
-  }
-}
