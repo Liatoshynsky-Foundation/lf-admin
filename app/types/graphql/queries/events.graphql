@@ -25,10 +25,7 @@ fragment EventFields on Event {
     en
   }
   coverImage {
-    src {
-      uk
-      en
-    }
+    src 
     alt {
       uk
       en
@@ -50,6 +47,9 @@ fragment EventFields on Event {
   meta {
     views
   }
+  ticketUrl
+  eventDateTimeStart
+  eventDateTimeEnd
 }
 
 query EventById($id: ID!) {
@@ -74,13 +74,22 @@ query AllEvents($filters: EventFiltersInput) {
     }
     slug
     status
+    createdAt
+    updatedAt
     eventLink
     eventDateTimeStart
     eventDateTimeEnd
     publishedAt
+    coverImage {
+      src 
+      alt { uk en }
+    }
     meta {
       views
     }
+    ticketUrl
+    eventDateTimeStart
+    eventDateTimeEnd
   }
 }
 
@@ -93,10 +102,7 @@ query PublishedEvents($filters: EventFiltersInput) {
     }
     slug
     coverImage {
-      src {
-        uk
-        en
-      }
+      src 
       alt {
         uk
         en
@@ -109,6 +115,9 @@ query PublishedEvents($filters: EventFiltersInput) {
     meta {
       views
     }
+    ticketUrl
+    eventDateTimeStart
+    eventDateTimeEnd
   }
 }
 
@@ -125,10 +134,7 @@ query PaginatedEvents($page: Int!, $limit: Int!, $filters: EventFiltersInput) {
         en
       }
       coverImage {
-        src {
-          uk
-          en
-        }
+        src 
         alt {
           uk
           en

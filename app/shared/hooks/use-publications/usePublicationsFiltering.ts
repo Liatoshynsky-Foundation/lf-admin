@@ -16,14 +16,16 @@ import type { FilteringToolbarProps, SortSelectProps } from '~/shared/components
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import {
   ContentLanguage,
+  EventFiltersInput,
+  EventSortBy,
+  EventStatus,
   type MediaMentionsFiltersInput,
   MediaMentionsSortBy,
   MediaStatus,
   type NewsFiltersInput,
   NewsSortBy,
   NewsStatus,
-  SortOrder
-} from '~/types/graphql/generated/graphql';
+  SortOrder} from '~/types/graphql/generated/graphql';
 
 const SORT_STORAGE_KEY = 'publications_sort';
 
@@ -39,6 +41,7 @@ export type PublicationsFilteringSortProps = Omit<
 
 export type PublicationsRequestFilters = Readonly<{
   news: NewsFiltersInput;
+  events: EventFiltersInput;
   media: MediaMentionsFiltersInput;
 }>;
 
@@ -141,6 +144,12 @@ export function usePublicationsFiltering(): Readonly<{
         languages: languageFilters.length ? languageFilters.map(mapPublicationLanguageToApiLanguage) : undefined,
         statuses: statusFilters.length ? statusFilters.map((status) => mapPublicationStatus(status, NewsStatus)) : undefined,
         sort: getBaseContentSortOptions(sortValue, NewsSortBy) as NonNullable<NewsFiltersInput['sort']>
+      },
+      events: {
+        search: normalizedSearch || undefined,
+        languages: languageFilters.length ? languageFilters.map(mapPublicationLanguageToApiLanguage) : undefined,
+        statuses: statusFilters.length ? statusFilters.map((status) => mapPublicationStatus(status, EventStatus)) : undefined,
+        sort: getBaseContentSortOptions(sortValue, EventSortBy) as NonNullable<EventFiltersInput['sort']>
       },
       media: {
         search: normalizedSearch || undefined,

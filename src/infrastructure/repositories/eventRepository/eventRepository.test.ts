@@ -155,7 +155,7 @@ describe('EventsRepository Comprehensive Tests', () => {
     slug: 'test-event',
     content: { uk: { blocks: [] }, en: { blocks: [] } } as EventsEntity['content'],
     status: EventStatus.Published,
-    coverImage: { src: { uk: 'img.jpg', en: 'img.jpg' }, alt: { uk: 'а', en: 'a' }, caption: { uk: '', en: '' } },
+    coverImage: { src: 'img.jpg', alt: { uk: 'а', en: 'a' }, caption: { uk: '', en: '' } },
     description: { uk: 'Опис', en: 'Desc' },
     keywords: { uk: 'к', en: 'k' },
     allowIndexation: { uk: true, en: true },
@@ -243,7 +243,7 @@ describe('EventsRepository Comprehensive Tests', () => {
           slug: 'created',
           content: { uk: { blocks: [] }, en: { blocks: [] } } as EventsEntity['content'],
           status: EventStatus.Draft,
-          coverImage: { src: { uk: 'img.jpg', en: 'img.jpg' }, alt: { uk: 'а', en: 'a' }, caption: { uk: '', en: '' } },
+          coverImage: { src: 'img.jpg', alt: { uk: 'а', en: 'a' }, caption: { uk: '', en: '' } },
           description: { uk: 'Опис', en: 'Desc' },
           keywords: { uk: 'к', en: 'k' },
           allowIndexation: { uk: true, en: true }

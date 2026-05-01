@@ -32,12 +32,13 @@ import { EmptyState } from '~/shared/components/empty-state';
 import { FilteringToolbar, SortSelect } from '~/shared/components/filtering-toolbar';
 import { PageHeader } from '~/shared/components/page-header/PageHeader';
 import { filterSelectStyles } from '~/shared/components/selector/FilterSelect.styles';
+import { useAllEvents } from '~/shared/hooks/use-events/useEvents';
 import { useAllMediaMentions } from '~/shared/hooks/use-media-mentions/useMediaMentions';
 import { useAllNews } from '~/shared/hooks/use-news/useNews';
 import { usePublicationsFiltering } from '~/shared/hooks/use-publications';
 import { mainHexPallete as colors } from '~/shared/theme/colors';
 import type { LocalizedString } from '~/types/common';
-import { type AllMediaMentionsQuery, type AllNewsQuery } from '~/types/graphql/generated/graphql';
+import { type AllEventsQuery, type AllMediaMentionsQuery, type AllNewsQuery } from '~/types/graphql/generated/graphql';
 import { normalizeSearch } from '~/utils/normalizeSearch';
 
 type PublicationsPageContentProps = Readonly<{
@@ -45,7 +46,7 @@ type PublicationsPageContentProps = Readonly<{
 }>;
 
 type PublicationCardImage = {
-  src: { uk: string; en: string };
+  src: string;
   alt: { uk: string; en: string };
 };
 
@@ -68,6 +69,7 @@ type PublicationCardItem = {
 };
 
 type NewsItem = AllNewsQuery['allNews'][number];
+type EventItem = AllEventsQuery['allEvents'][number];
 type MediaMentionItem = AllMediaMentionsQuery['allMediaMentions'][number];
 type PublicationsTabStateMap<T> = {
   news: T;
@@ -245,10 +247,44 @@ const mapNewsItem = (item: NewsItem): PublicationCardItem | null => {
     cardStatus: publicationStatus,
     language: getLanguageFromLocalizedValue(title),
     coverImage: {
-      src: {
-        uk: coverImage?.src?.uk || DEFAULT_COVER_IMAGE,
-        en: coverImage?.src?.en || DEFAULT_COVER_IMAGE
-      },
+      src: coverImage?.src || DEFAULT_COVER_IMAGE,
+      alt: toLocalizedString(coverImage?.alt, titleText || DEFAULT_COVER_ALT)
+    }
+  };
+};
+
+const mapEventItem = (item: EventItem): PublicationCardItem | null => {
+  if (!isPublicationCardStatus(item.status)) {
+    return null;
+  }
+
+  const publicationStatus = item.status;
+
+  const fallbackTitle = item.adminTitle;
+  const title = toLocalizedCardValue(item.title, fallbackTitle);
+  const titleText = getPrimaryText(item.title, fallbackTitle);
+  const sortTitle = fallbackTitle || titleText;
+  const sortableDate = getSortableDate(item.publishedAt, item.eventDateTimeStart, item.eventDateTimeEnd);
+
+  const coverImage = item.coverImage;
+
+  return {
+    id: item.id,
+    title: titleText,
+    sortTitle,
+    titleData: title,
+    type: 'events',
+    cardType: mapCardType('events'),
+    dateAdded: sortableDate,
+    createdAtRaw: sortableDate,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+    publishedAt: item.publishedAt ?? undefined,
+    status: publicationStatus,
+    cardStatus: publicationStatus,
+    language: getLanguageFromLocalizedValue(title),
+    coverImage: {
+      src: coverImage?.src || DEFAULT_COVER_IMAGE,
       alt: toLocalizedString(coverImage?.alt, titleText || DEFAULT_COVER_ALT)
     }
   };
@@ -283,10 +319,7 @@ const mapMediaMentionItem = (item: MediaMentionItem): PublicationCardItem | null
     cardStatus: publicationStatus,
     language: getLanguageFromLocalizedValue(titleData),
     coverImage: {
-      src: {
-        uk: item.coverImage?.src?.uk || DEFAULT_COVER_IMAGE,
-        en: item.coverImage?.src?.en || DEFAULT_COVER_IMAGE
-      },
+      src: item.coverImage?.src || DEFAULT_COVER_IMAGE,
       alt: toLocalizedString(item.coverImage?.alt, titleText || DEFAULT_COVER_ALT)
     }
   };
@@ -406,12 +439,18 @@ function PublicationsCreateAction() {
 export function PublicationsPageContent({ activeTab }: PublicationsPageContentProps) {
   const { requestFilters, sortValue, toolbarProps, sortProps } = usePublicationsFiltering();
   const shouldFetchNews = activeTab === 'all' || activeTab === 'news';
+  const shouldFetchEvents = activeTab === 'all' || activeTab === 'events';
   const shouldFetchMedia = activeTab === 'all' || activeTab === 'media';
   const {
     data: newsData,
     loading: isNewsLoading,
     error: newsError
   } = useAllNews(requestFilters.news, { skip: !shouldFetchNews });
+  const {
+    data: eventsData,
+    loading: isEventsLoading,
+    error: eventsError
+  } = useAllEvents(requestFilters.events, { skip: !shouldFetchEvents });
   const {
     data: mediaData,
     loading: isMediaLoading,
@@ -421,6 +460,10 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
   const newsItems = useMemo<PublicationCardItem[]>(() => {
     return (newsData?.allNews ?? []).map(mapNewsItem).filter((item): item is PublicationCardItem => Boolean(item));
   }, [newsData?.allNews]);
+
+  const eventItems = useMemo<PublicationCardItem[]>(() => {
+    return (eventsData?.allEvents ?? []).map(mapEventItem).filter((item): item is PublicationCardItem => Boolean(item));
+  }, [eventsData?.allEvents]);
 
   const mediaItems = useMemo<PublicationCardItem[]>(() => {
     return (mediaData?.allMediaMentions ?? [])
@@ -433,16 +476,17 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
       return newsItems;
     }
 
+    if (activeTab === 'events') {
+      return eventItems;
+    }
+
     if (activeTab === 'media') {
       return mediaItems;
     }
 
-    if (activeTab === 'events') {
-      return [];
-    }
-
-    return mergeSortedPublicationItems(newsItems, mediaItems, sortValue);
-  }, [activeTab, mediaItems, newsItems, sortValue]);
+    const mergedNewsMedia = mergeSortedPublicationItems(newsItems, mediaItems, sortValue);
+    return mergeSortedPublicationItems(mergedNewsMedia, eventItems, sortValue);
+  }, [activeTab, mediaItems, eventItems, newsItems, sortValue]);
 
   const titleOptions = useMemo(() => getPublicationSearchOptions(visibleItems), [visibleItems]);
   const resolvedToolbarProps = useMemo(
@@ -461,17 +505,21 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
   const hasBaseItems = visibleItems.length > 0;
   const isLoading = getActiveTabState(
     activeTab,
-    { news: shouldFetchNews ? isNewsLoading : false, media: shouldFetchMedia ? isMediaLoading : false, events: false },
+    {
+      news: shouldFetchNews ? isNewsLoading : false,
+      events: shouldFetchEvents ? isEventsLoading : false,
+      media: shouldFetchMedia ? isMediaLoading : false
+    },
     (states) => states.news || states.media || states.events
   );
   const activeError = getActiveTabState(
     activeTab,
     {
       news: shouldFetchNews ? newsError : undefined,
-      media: shouldFetchMedia ? mediaError : undefined,
-      events: undefined
+      events: shouldFetchEvents ? eventsError : undefined,
+      media: shouldFetchMedia ? mediaError : undefined
     },
-    (states) => states.news ?? states.media ?? states.events
+    (states) => states.news ?? states.events ?? states.media
   );
   const shouldShowLoadingState = activeTab === 'all' ? !hasBaseItems && isLoading : isLoading;
   const shouldShowErrorState = activeTab === 'all' ? !hasBaseItems && Boolean(activeError) : Boolean(activeError);

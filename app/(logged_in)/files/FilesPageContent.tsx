@@ -48,6 +48,7 @@ import type { MediaModalRenderers } from '~/shared/components/media-modal/MediaM
 import type { MediaModalOpenState, MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import { UploadView } from '~/shared/components/media-modal/views/upload-view/UploadView';
 import { PageHeader } from '~/shared/components/page-header/PageHeader';
+import { RenameFileModal } from '~/shared/components/rename-file-modal/RenameFileModal';
 import { ViewToggle } from '~/shared/components/view-toggle';
 import { useAllAssets } from '~/shared/hooks/use-assets/useAssets';
 import { useFilesFiltering } from '~/shared/hooks/use-files';
@@ -151,6 +152,11 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
   const [hasInitializedSelection, setHasInitializedSelection] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadModalInitial, setUploadModalInitial] = useState<MediaModalOpenState | undefined>(undefined);
+  const [renameModalState, setRenameModalState] = useState<{ open: boolean; fileId: string; currentFilename: string }>({
+    open: false,
+    fileId: '',
+    currentFilename: ''
+  });
   const { data, loading, error, refetch } = useAllAssets();
   const [uploadBlob] = useUploadBlobMutation();
 
@@ -338,14 +344,33 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
         <EmptyState title={FILES_EMPTY_STATE_TITLE} description={FILES_EMPTY_STATE_DESCRIPTION} />
       )}
 
-      {sidebarFile && <FileInfoSidebar file={sidebarFile} onClose={() => setSelectedFileId(null)} />}
-
+      {sidebarFile && (
+        <FileInfoSidebar
+          file={sidebarFile}
+          onClose={() => setSelectedFileId(null)}
+          onRequestAction={(action) => {
+            if (action.type === 'rename') {
+              setRenameModalState({
+                open: true,
+                fileId: action.fileId,
+                currentFilename: sidebarFile.filename
+              });
+            }
+          }}
+        />
+      )}
       <MediaModal
         open={isUploadModalOpen}
         initial={uploadModalInitial}
         onClose={handleCloseUploadFlow}
         onApply={handleUploadApply}
         renderers={{ upload: renderFilesUpload }}
+      />
+      <RenameFileModal
+        open={renameModalState.open}
+        fileId={renameModalState.fileId}
+        currentFilename={renameModalState.currentFilename}
+        onClose={() => setRenameModalState((prev) => ({ ...prev, open: false }))}
       />
     </Box>
   );

@@ -2,10 +2,11 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
 
 import Page from './page';
-import { MediaStatus, NewsStatus } from '~/types/graphql/generated/graphql';
+import { EventStatus, MediaStatus, NewsStatus } from '~/types/graphql/generated/graphql';
 
 const mockUseAllNews = jest.fn();
 const mockUseAllMediaMentions = jest.fn();
+const mockUseAllEvents = jest.fn();
 
 type QuerySortOption = {
   field: 'adminTitle' | 'createdAt';
@@ -68,6 +69,29 @@ const NEWS_ITEMS = [
   }
 ];
 
+const EVENT_ITEMS = [
+  {
+    id: 'event-1',
+    slug: 'main-event',
+    adminTitle: 'Головна подія сезону',
+    language: 'uk',
+    title: { uk: 'Головна подія сезону', en: '' },
+    status: EventStatus.Published,
+    createdAt: '2026-03-17T10:00:00.000Z', 
+    updatedAt: '2026-03-17T10:00:00.000Z',
+    publishedAt: '2026-03-18T10:00:00.000Z',
+    eventDateTimeStart: '2026-04-01T10:00:00.000Z',
+    eventDateTimeEnd: '2026-04-01T12:00:00.000Z',
+    description: null,
+    coverImage: {
+      src: '/event-1.png',
+      alt: { uk: 'Подія', en: '' }
+    },
+    meta: { views: 20 },
+    __typename: 'Event'
+  }
+];
+
 const MEDIA_ITEMS = [
   {
     id: 'media-1',
@@ -106,19 +130,16 @@ const MEDIA_ITEMS = [
   }
 ];
 
+
 const getSearchText = (title: string | { uk?: string; en?: string }, adminTitle?: string) => {
   if (typeof title === 'string') {
     return `${title} ${adminTitle ?? ''}`.trim().toLowerCase();
   }
-
   return [title.uk, title.en, adminTitle].filter(Boolean).join(' ').toLowerCase();
 };
 
 const getSortTitle = (item: { adminTitle?: string; title: string | { uk?: string; en?: string } }) => {
-  if (item.adminTitle) {
-    return item.adminTitle;
-  }
-
+  if (item.adminTitle) return item.adminTitle;
   return typeof item.title === 'string' ? item.title : item.title.uk || item.title.en || '';
 };
 
@@ -141,10 +162,7 @@ const getFieldComparison = (
   right: SortablePublicationItem,
   field: QuerySortOption['field']
 ): number => {
-  if (field === 'adminTitle') {
-    return compareByAdminTitle(left, right);
-  }
-
+  if (field === 'adminTitle') return compareByAdminTitle(left, right);
   return compareByCreatedAt(left, right);
 };
 
@@ -159,12 +177,10 @@ const compareBySort = (
 ) => {
   for (const criterion of sort) {
     const comparison = getFieldComparison(left, right, criterion.field);
-
     if (comparison !== 0) {
       return applySortOrder(comparison, criterion.order);
     }
   }
-
   return 0;
 };
 
@@ -190,28 +206,27 @@ const applyFilters = <T extends { createdAt: string; adminTitle?: string; title:
 };
 
 const buildNewsResponse = (filters?: PublicationsQueryFilters, options?: QueryHookOptions) => {
-  if (options?.skip) {
-    return { data: undefined, loading: false, error: undefined };
-  }
-
+  if (options?.skip) return { data: undefined, loading: false, error: undefined };
   return {
-    data: {
-      allNews: applyFilters(NEWS_ITEMS, filters)
-    },
+    data: { allNews: applyFilters(NEWS_ITEMS, filters) },
     loading: false,
     error: undefined
   };
 };
 
 const buildMediaResponse = (filters?: PublicationsQueryFilters, options?: QueryHookOptions) => {
-  if (options?.skip) {
-    return { data: undefined, loading: false, error: undefined };
-  }
-
+  if (options?.skip) return { data: undefined, loading: false, error: undefined };
   return {
-    data: {
-      allMediaMentions: applyFilters(MEDIA_ITEMS, filters)
-    },
+    data: { allMediaMentions: applyFilters(MEDIA_ITEMS, filters) },
+    loading: false,
+    error: undefined
+  };
+};
+
+const buildEventsResponse = (filters?: PublicationsQueryFilters, options?: QueryHookOptions) => {
+  if (options?.skip) return { data: undefined, loading: false, error: undefined };
+  return {
+    data: { allEvents: applyFilters(EVENT_ITEMS, filters) },
     loading: false,
     error: undefined
   };
@@ -224,6 +239,11 @@ jest.mock('~/shared/hooks/use-news/useNews', () => ({
 jest.mock('~/shared/hooks/use-media-mentions/useMediaMentions', () => ({
   useAllMediaMentions: (filters?: PublicationsQueryFilters, options?: QueryHookOptions) =>
     mockUseAllMediaMentions(filters, options)
+}));
+
+jest.mock('~/shared/hooks/use-events/useEvents', () => ({
+  useAllEvents: (filters?: PublicationsQueryFilters, options?: QueryHookOptions) =>
+    mockUseAllEvents(filters, options)
 }));
 
 jest.mock('~/shared/components/content-card/ContentCard', () => ({
@@ -242,7 +262,7 @@ jest.mock('~/shared/components/content-card/ContentCard', () => ({
     <div data-testid="publication-card">
       <span data-testid="publication-card-title">{title.uk || title.en}</span>
       <span>{status}</span>
-      <span>{type}</span>
+      <span data-testid="publication-card-type">{type}</span>
       {editHref ? <a href={editHref}>Редагувати</a> : null}
     </div>
   )
@@ -346,6 +366,10 @@ describe('Publications page', () => {
     mockUseAllMediaMentions.mockImplementation((filters?: PublicationsQueryFilters, options?: QueryHookOptions) =>
       buildMediaResponse(filters, options)
     );
+
+    mockUseAllEvents.mockImplementation((filters?: PublicationsQueryFilters, options?: QueryHookOptions) =>
+      buildEventsResponse(filters, options)
+    );
   });
 
   it('renders the configured page header and filtering controls', () => {
@@ -358,7 +382,9 @@ describe('Publications page', () => {
     expect(screen.getByRole('tab', { name: 'Ми у ЗМІ' })).toHaveAttribute('href', '/publications/media');
     expect(screen.getByRole('button', { name: 'Створити' })).toBeInTheDocument();
     expect(screen.getByTestId('publications-control-panel')).toBeInTheDocument();
-    expect(screen.getAllByTestId('publication-card')).toHaveLength(4);
+    
+    expect(screen.getAllByTestId('publication-card')).toHaveLength(5);
+    expect(screen.getByText('Головна подія сезону')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Фільтри' }));
 
@@ -399,15 +425,16 @@ describe('Publications page', () => {
     );
   });
 
-  it('filters cards by search value', () => {
+  it('filters cards by search value (across all types)', () => {
     render(<Page />);
 
-    fireEvent.change(screen.getByTestId('search'), { target: { value: 'фестиваль' } });
+    fireEvent.change(screen.getByTestId('search'), { target: { value: 'головна' } });
 
     expect(screen.getAllByTestId('publication-card')).toHaveLength(1);
-    expect(screen.getByText('Новина про фестиваль')).toBeInTheDocument();
-    expect(mockUseAllNews).toHaveBeenLastCalledWith(
-      expect.objectContaining({ search: 'фестиваль' }),
+    expect(screen.getByText('Головна подія сезону')).toBeInTheDocument();
+    
+    expect(mockUseAllEvents).toHaveBeenLastCalledWith(
+      expect.objectContaining({ search: 'головна' }),
       expect.objectContaining({ skip: false })
     );
   });
@@ -427,7 +454,7 @@ describe('Publications page', () => {
     render(<Page />);
 
     const beforeSort = screen.getAllByTestId('publication-card-title').map((element) => element.textContent);
-
+    
     expect(beforeSort[0]).toBe('Новина про фестиваль');
 
     fireEvent.click(screen.getByRole('button', { name: 'Фільтри' }));
@@ -436,7 +463,8 @@ describe('Publications page', () => {
     const afterSort = screen.getAllByTestId('publication-card-title').map((element) => element.textContent);
 
     expect(afterSort[0]).toBe('Вечір камерної музики');
-    expect(mockUseAllNews).toHaveBeenLastCalledWith(
+    
+    expect(mockUseAllEvents).toHaveBeenLastCalledWith(
       expect.objectContaining({
         sort: [
           { field: 'adminTitle', order: 'asc' },
@@ -447,7 +475,7 @@ describe('Publications page', () => {
     );
   });
 
-  it('keeps rendering news on the all tab when media request fails', () => {
+  it('keeps rendering remaining data on the all tab when one request fails', () => {
     mockUseAllMediaMentions.mockReturnValue({
       data: undefined,
       loading: false,
@@ -457,7 +485,10 @@ describe('Publications page', () => {
     render(<Page />);
 
     expect(screen.queryByText('Не вдалося завантажити матеріали')).not.toBeInTheDocument();
+    
     expect(screen.getByText('Новина про фестиваль')).toBeInTheDocument();
-    expect(screen.getByText('Вечір камерної музики')).toBeInTheDocument();
+    expect(screen.getByText('Головна подія сезону')).toBeInTheDocument();
+    
+    expect(screen.queryByText('Інтерв’ю про нову постановку')).not.toBeInTheDocument();
   });
 });

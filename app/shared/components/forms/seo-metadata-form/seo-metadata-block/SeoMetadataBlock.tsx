@@ -6,10 +6,11 @@ import { useEffect, useState } from 'react';
 import type { LocalizedMeta } from '../SeoMetadataForm';
 import SeoMetadataForm from '../SeoMetadataForm';
 import { styles } from '../SeoMetadataForm.styles';
+import { CropRect } from '~/types/common';
 
 export interface SeoBlockValue {
   meta: { uk: LocalizedMeta; en: LocalizedMeta };
-  ogImage: { uk: string | null; en: string | null };
+  ogImage: string | null;
   allowIndexing: { uk: boolean; en: boolean };
   ticketUrl?: { uk: string; en: string };
 }
@@ -19,7 +20,7 @@ const defaultValue: SeoBlockValue = {
     uk: { title: '', description: '', keywords: '', canonicalUrl: undefined },
     en: { title: '', description: '', keywords: '', canonicalUrl: undefined }
   },
-  ogImage: { uk: null, en: null },
+  ogImage: null,
   allowIndexing: { uk: true, en: true },
   ticketUrl: { uk: '', en: '' }
 };
@@ -30,6 +31,8 @@ export interface SeoMetadataBlockProps {
   readonly extraFieldsBeforeKeywords?: boolean;
   readonly forceShowErrors?: boolean;
   readonly value?: SeoBlockValue;
+  readonly crop?: CropRect | null;
+  readonly onChangeCrop?: (newCrop: CropRect | null) => void;
   readonly onChange?: (value: SeoBlockValue) => void;
   readonly extraFields?: (
     locale: 'uk' | 'en',
@@ -44,6 +47,8 @@ export default function SeoMetadataBlock({
   extraFieldsBeforeKeywords = false,
   forceShowErrors = false,
   value: externalValue,
+  crop,
+  onChangeCrop,
   onChange: externalOnChange,
   extraFields
 }: SeoMetadataBlockProps) {
@@ -55,8 +60,8 @@ export default function SeoMetadataBlock({
     if (forceShowErrors && showTicketUrl) {
       setTicketUrlTouched({ uk: true, en: true });
       setTicketUrlError({
-        uk: validateTicketUrl(value.ticketUrl?.uk ?? ''),
-        en: validateTicketUrl(value.ticketUrl?.en ?? '')
+        uk: validateTicketUrl(value?.ticketUrl?.uk ?? ''),
+        en: validateTicketUrl(value?.ticketUrl?.en ?? '')
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -125,26 +130,38 @@ export default function SeoMetadataBlock({
         value={value.meta.uk}
         onChange={(newMeta) => handleChange({ ...value, meta: { ...value.meta, uk: newMeta } })}
         locale="uk"
-        ogImage={value.ogImage.uk}
-        onImageChange={(url) => handleChange({ ...value, ogImage: { ...value.ogImage, uk: url } })}
+        ogImage={value.ogImage}
+        onImageChange={(url) => handleChange({ ...value, ogImage: url })}
         allowIndexing={value.allowIndexing.uk}
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, uk: val } })}
         showAlternativeText={showAlternativeText}
         extraFieldsBeforeKeywords={extraFieldsBeforeKeywords}
         forceShowErrors={forceShowErrors}
-        extraFields={showTicketUrl || extraFields ? (localeMeta, onLocaleMeta) => buildExtraFields('uk', localeMeta, onLocaleMeta) : undefined}
+        crop={crop}
+        onChangeCrop={onChangeCrop}
+        extraFields={
+          showTicketUrl || extraFields
+            ? (localeMeta, onLocaleMeta) => buildExtraFields('uk', localeMeta, onLocaleMeta)
+            : undefined
+        }
       />
       <SeoMetadataForm
         value={value.meta.en}
         onChange={(newMeta) => handleChange({ ...value, meta: { ...value.meta, en: newMeta } })}
         locale="en"
-        ogImage={value.ogImage.en}
-        onImageChange={(url) => handleChange({ ...value, ogImage: { ...value.ogImage, en: url } })}
+        ogImage={value.ogImage}
+        onImageChange={(url) => handleChange({ ...value, ogImage: url })}
         allowIndexing={value.allowIndexing.en}
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, en: val } })}
         showAlternativeText={showAlternativeText}
         extraFieldsBeforeKeywords={extraFieldsBeforeKeywords}
-        extraFields={showTicketUrl || extraFields ? (localeMeta, onLocaleMeta) => buildExtraFields('en', localeMeta, onLocaleMeta) : undefined}
+        crop={crop}
+        onChangeCrop={onChangeCrop}
+        extraFields={
+          showTicketUrl || extraFields
+            ? (localeMeta, onLocaleMeta) => buildExtraFields('en', localeMeta, onLocaleMeta)
+            : undefined
+        }
       />
     </Box>
   );
