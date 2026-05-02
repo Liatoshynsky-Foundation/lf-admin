@@ -152,16 +152,26 @@ export function MediaModalFlow({
 
   const canApplySelectedUpload = state.step === 'SELECT' && isNonImageUploadSelection(state.selected);
 
-  const headerLeft = isCrop ? (
-    <Box sx={styles.cropHeader} data-testid="MediaModal-cropHeader">
-      <Box sx={styles.cropHeaderTitle}>Редагування зображення</Box>
-      <Box sx={styles.cropHeaderSubtitle} data-testid="MediaModal-cropHeaderFileName">
-        {selectedFileName}
-      </Box>
-    </Box>
-  ) : hideTabs ? (
-    <Box sx={styles.cropHeaderTitle}>Завантажити файл</Box>
-  ) : null;
+  const getHeaderLeftContent = () => {
+    if (isCrop) {
+      return (
+        <Box sx={styles.cropHeader} data-testid="MediaModal-cropHeader">
+          <Box sx={styles.cropHeaderTitle}>Редагування зображення</Box>
+          <Box sx={styles.cropHeaderSubtitle} data-testid="MediaModal-cropHeaderFileName">
+            {selectedFileName}
+          </Box>
+        </Box>
+      );
+    }
+
+    if (hideTabs) {
+      return <Box sx={styles.cropHeaderTitle}>Завантажити файл</Box>;
+    }
+
+    return null;
+  };
+
+  const headerLeft = getHeaderLeftContent();
 
   const headerCenter = isCrop || hideTabs ? null : <MediaModalSwitcher value={state.tab} onChange={handleTabChange} />;
 
