@@ -1,4 +1,4 @@
-import { defaultProps } from '@blocknote/core';
+import { BlockNoteEditor, BlockSchema, defaultProps, InlineContentSchema, StyleSchema } from '@blocknote/core';
 import { createReactBlockSpec } from '@blocknote/react';
 import { Box, InputBase, Paper, Typography } from '@mui/material';
 import { FileImage, GripHorizontal } from 'lucide-react';
@@ -7,11 +7,37 @@ import { useState } from 'react';
 
 import { styles } from './CroppedImageBlock.styles';
 import { useCroppedImage } from '~/hooks/use-cropped-image/use-cropped-image';
+type CroppedImageProps = {
+  textAlignment: 'left' | 'center' | 'right'
+  textColor: string;
+  url: string;
+  cropData: string;
+  fileName: string;
+  caption: string;
+  width: number;
+  showPreview: boolean;
+};
+
+type StrictEditor = Omit<BlockNoteEditor<BlockSchema, InlineContentSchema, StyleSchema>, 'updateBlock'> & {
+  updateBlock: (
+    id: string,
+    blockUpdate: { type: 'cropped-image'; props: Partial<CroppedImageProps> } 
+  ) => void;
+};
+
+interface CroppedImageRendererProps {
+  block: {
+    id: string;
+    type: 'cropped-image';
+    props: CroppedImageProps;
+  };
+  editor: StrictEditor; 
+}
 
 const EDITOR_PREVIEW_W = 600;
 const EDITOR_PREVIEW_H = 400;
 
-const CroppedImageRenderer = ({ props }: { props: any }) => {
+const CroppedImageRenderer = ({ props }: { props: CroppedImageRendererProps }) => {
   const [tempWidth, setTempWidth] = useState<number | null>(null);
 
   const savedCrop = JSON.parse(props.block.props.cropData);
@@ -22,10 +48,13 @@ const CroppedImageRenderer = ({ props }: { props: any }) => {
 
   if (!props.block.props.url) return null;
 
-  const handleUpdateProp = <K extends keyof typeof props.block.props>(key: K, value: (typeof props.block.props)[K]) => {
+  const handleUpdateProp = <K extends keyof CroppedImageRendererProps['block']['props']>(
+    key: K,
+    value: CroppedImageRendererProps['block']['props'][K]
+  ) => {
     props.editor.updateBlock(props.block.id, {
       type: 'cropped-image',
-      props: { ...props.block.props, [key]: value }
+      props: { [key]: value } 
     });
   };
 
@@ -112,24 +141,23 @@ const CroppedImageRenderer = ({ props }: { props: any }) => {
 
 export const CroppedImageBlock = createReactBlockSpec(
   {
-    type: 'cropped-image',
+    type: 'cropped-image', 
     propSchema: {
       textAlignment: defaultProps.textAlignment,
       textColor: defaultProps.textColor,
-      url: { default: '', type: 'string' },
-      cropData: { default: '{}', type: 'string' },
-      fileName: { default: 'image', type: 'string' },
-      caption: { default: '', type: 'string' },
-      width: { default: 512, type: 'number' },
-      showPreview: { default: true, type: 'boolean' }
+      url: { default: '' },
+      cropData: { default: '{}' },
+      fileName: { default: 'image' },
+      caption: { default: '' },
+      width: { default: 512 },
+      showPreview: { default: true }
     },
     content: 'none'
   },
   {
-    render: (props) => <CroppedImageRenderer props={props} />,
+    render: (props) => <CroppedImageRenderer props={props as unknown as CroppedImageRendererProps} />,
 
     toExternalHTML: (props) => {
-      // Again, crutch is settled because toExternalHTML renders to clipboard and not to the screen
        
       return (
         <img
@@ -146,7 +174,7 @@ export const CroppedImageBlock = createReactBlockSpec(
 
     parse: (el) => {
       const img = el.tagName.toLowerCase() === 'img' ? el : el.querySelector('img');
-
+      
       if (img && img.hasAttribute('data-custom-cropped')) {
         return {
           url: img.getAttribute('src') || '',
@@ -157,8 +185,8 @@ export const CroppedImageBlock = createReactBlockSpec(
           caption: img.getAttribute('data-caption') || ''
         };
       }
-
-      return undefined;
+      
+      return undefined; 
     }
   }
 );
