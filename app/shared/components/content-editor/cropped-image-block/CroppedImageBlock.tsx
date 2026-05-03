@@ -1,38 +1,13 @@
-import { BlockNoteEditor, BlockSchema, defaultProps, InlineContentSchema, StyleSchema } from '@blocknote/core';
+import { defaultProps } from '@blocknote/core';
 import { createReactBlockSpec } from '@blocknote/react';
 import { Box, InputBase, Paper, Typography } from '@mui/material';
 import { FileImage, GripHorizontal } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 
+import { CroppedImageRendererProps } from '../types';
 import { styles } from './CroppedImageBlock.styles';
 import { useCroppedImage } from '~/hooks/use-cropped-image/use-cropped-image';
-type CroppedImageProps = {
-  textAlignment: 'left' | 'center' | 'right'
-  textColor: string;
-  url: string;
-  cropData: string;
-  fileName: string;
-  caption: string;
-  width: number;
-  showPreview: boolean;
-};
-
-type StrictEditor = Omit<BlockNoteEditor<BlockSchema, InlineContentSchema, StyleSchema>, 'updateBlock'> & {
-  updateBlock: (
-    id: string,
-    blockUpdate: { type: 'cropped-image'; props: Partial<CroppedImageProps> } 
-  ) => void;
-};
-
-interface CroppedImageRendererProps {
-  block: {
-    id: string;
-    type: 'cropped-image';
-    props: CroppedImageProps;
-  };
-  editor: StrictEditor; 
-}
 
 const EDITOR_PREVIEW_W = 600;
 const EDITOR_PREVIEW_H = 400;
