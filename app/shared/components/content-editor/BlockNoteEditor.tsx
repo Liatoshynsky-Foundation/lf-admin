@@ -13,23 +13,28 @@ import { BlockNoteView } from '@blocknote/mantine';
 import {
   FormattingToolbar,
   FormattingToolbarController,
-  getDefaultReactSlashMenuItems,
   getFormattingToolbarItems,
   SuggestionMenuController,
-  useComponentsContext,
-  useCreateBlockNote,
-  useSelectedBlocks
+  useCreateBlockNote
 } from '@blocknote/react';
-import { multiColumnDropCursor, withMultiColumn } from '@blocknote/xl-multi-column';
 import { Box } from '@mui/material';
-import { Image as ImageIcon, Replace } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { styles } from './BlockNoteEditor.styles';
+import { CroppedImageBlock } from './cropped-image-block/CroppedImageBlock';
+import { CustomReplaceButton } from './custom-replace-button/CustomReplaceButton';
 import { BlockNoteEditorProps } from './types';
+import { getCustomSlashMenuItems } from '~/lib/utils/getCustomSlashMenuItems';
 import { sxToArray } from '~/lib/utils/sxToArray';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
+
+const DEFAULT_EDITOR_SETTINGS = {
+  placeholder: 'Почніть вводити текст або використайте "/" для команд...',
+  editable: true,
+  sideMenu: false,
+  minHeight: '800px'
+} as const;
 
 const defaultFileUploadHandler = async (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -40,20 +45,32 @@ const defaultFileUploadHandler = async (file: File): Promise<string> => {
   });
 };
 
-export const BlockNoteEditor = ({
-  initialContent,
-  onChange,
-  placeholder = 'Почніть вводити текст або використайте "/" для команд...',
-  editable = true,
-  sideMenu = false,
-  minHeight = '800px',
-  fileUpload,
-  sx
-}: BlockNoteEditorProps) => {
-  const [isMounted, setIsMounted] = useState(false);
+export const customSchema = BlockNoteSchema.create(
+  BlockNoteSchema.create({
+    blockSpecs: {
+      ...defaultBlockSpecs,
+      'cropped-image': CroppedImageBlock()
+    },
+    inlineContentSpecs: defaultInlineContentSpecs,
+    styleSpecs: defaultStyleSpecs
+  })
+);
 
+export const BlockNoteEditor = (props: BlockNoteEditorProps) => {
+  const {
+    initialContent,
+    onChange,
+    fileUpload,
+    sx,
+    placeholder = DEFAULT_EDITOR_SETTINGS.placeholder,
+    editable = DEFAULT_EDITOR_SETTINGS.editable,
+    sideMenu = DEFAULT_EDITOR_SETTINGS.sideMenu,
+    minHeight = DEFAULT_EDITOR_SETTINGS.minHeight
+  } = props;
+
+  const [isMounted, setIsMounted] = useState(false);
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
-  const pendingInsertRef = useRef<{ resolve: (url: string | null) => void } | null>(null);
+  const pendingInsertRef = useRef<{ resolve: (url: MediaModalResult | null) => void } | null>(null);
 
   const uploadHandler = useMemo(() => fileUpload?.handler || defaultFileUploadHandler, [fileUpload?.handler]);
 
@@ -67,28 +84,17 @@ export const BlockNoteEditor = ({
     [uploadHandler, fileUpload?.maxFileSize]
   );
 
-  const schema = useMemo(() => {
-    return withMultiColumn(
-      BlockNoteSchema.create({
-        blockSpecs: defaultBlockSpecs,
-        inlineContentSpecs: defaultInlineContentSpecs,
-        styleSpecs: defaultStyleSpecs
-      })
-    );
-  }, []);
-
   const editor = useCreateBlockNote(
     {
-      schema,
+      schema: customSchema,
       uploadFile: handleSilentFileUpload,
       initialContent: initialContent || undefined,
-      dropCursor: multiColumnDropCursor,
       placeholders: { default: placeholder }
     },
     [isMounted]
   );
 
-  const openMediaModal = useCallback((): Promise<string | null> => {
+  const openMediaModal = useCallback((): Promise<MediaModalResult | null> => {
     return new Promise((resolve) => {
       pendingInsertRef.current = { resolve };
       setIsMediaModalOpen(true);
@@ -96,11 +102,8 @@ export const BlockNoteEditor = ({
   }, []);
 
   const handleApplyMediaModal = useCallback((result: MediaModalResult) => {
-    const { selected, uploadResult } = result;
-    const url = uploadResult?.url ?? (selected.kind === 'upload' ? null : selected.src);
-
     if (pendingInsertRef.current) {
-      pendingInsertRef.current.resolve(url || null);
+      pendingInsertRef.current.resolve(result);
       pendingInsertRef.current = null;
     }
     setIsMediaModalOpen(false);
@@ -118,10 +121,27 @@ export const BlockNoteEditor = ({
     if (onChange && editor) {
       onChange(editor.document as Block[]);
     }
+    editor.forEachBlock((block) => {
+      if (block.type === 'image') {
+        editor.updateBlock(block.id, {
+          type: 'cropped-image',
+          props: {
+            url: block.props.url,
+            fileName: block.props.name || 'Завантажене зображення',
+            cropData: '{}',
+            width: 512,
+            showPreview: true,
+            caption: block.props.caption || ''
+          }
+        });
+      }
+      return true;
+    });
   }, [editor, onChange]);
 
   useEffect(() => {
     setIsMounted(true);
+
   }, []);
 
   if (!isMounted) {
@@ -131,37 +151,6 @@ export const BlockNoteEditor = ({
       </Box>
     );
   }
-
-  // 📍 Put this right above your return statement
-  const CustomReplaceButton = () => {
-    // This hook gives us access to BlockNote's native, themed UI components
-    const Components = useComponentsContext()!;
-    const selectedBlocks = useSelectedBlocks(editor);
-
-    // Check if exactly one block is selected, and verify it is an image
-    const block = selectedBlocks.length === 1 ? selectedBlocks[0] : undefined;
-    if (block === undefined || block.type !== 'image') {
-      return null;
-    }
-
-    return (
-      <Components.FormattingToolbar.Button
-        label="Replace image"
-        mainTooltip="Замінити зображення"
-        icon={<Replace size={18} />}
-        onClick={async () => {
-          const finalUrl = await openMediaModal();
-
-          if (finalUrl) {
-            editor.updateBlock(block.id, {
-              type: 'image',
-              props: { url: finalUrl }
-            });
-          }
-        }}
-      />
-    );
-  };
 
   return (
     <Box sx={[styles.container, ...sxToArray(sx), { minHeight }]}>
@@ -176,55 +165,21 @@ export const BlockNoteEditor = ({
       >
         <SuggestionMenuController
           triggerCharacter="/"
-          getItems={async (query) => {
-            const defaultItems = getDefaultReactSlashMenuItems(editor);
-
-            const customImageItem = {
-              title: 'Picture',
-              aliases: ['image', 'img', 'picture', 'photo', 'фото', 'зображення'],
-              group: 'Media',
-              icon: <ImageIcon size={18} />,
-              subtext: 'Pick photo',
-              onItemClick: async () => {
-                const finalUrl = await openMediaModal();
-
-                if (finalUrl) {
-                  const currentBlock = editor.getTextCursorPosition().block;
-                  editor.insertBlocks([{ type: 'image', props: { url: finalUrl } }], currentBlock, 'after');
-                }
-              }
-            };
-
-            const filteredItems = defaultItems.filter(
-              (item) => item.title !== 'Image' && item.title !== 'Image (Upload)'
-            );
-
-            const mediaGroupIndex = filteredItems.findIndex((item) => item.group === 'Media');
-
-            if (mediaGroupIndex !== -1) {
-              filteredItems.splice(mediaGroupIndex, 0, customImageItem);
-            } else {
-              filteredItems.push(customImageItem);
-            }
-
-            return filteredItems.filter((item) => {
-              const queryLower = query.toLowerCase();
-              const matchesTitle = item.title.toLowerCase().includes(queryLower);
-              const matchesAlias = item.aliases?.some((alias: string) => alias.toLowerCase().includes(queryLower));
-
-              return matchesTitle || matchesAlias;
-            });
-          }}
+          getItems={async (query) => getCustomSlashMenuItems(editor, query, openMediaModal)}
         />
+
         <FormattingToolbarController
           formattingToolbar={() => {
             const items = getFormattingToolbarItems();
             const replaceIndex = items.findIndex((item) => item.key === 'replaceFileButton');
 
             if (replaceIndex !== -1) {
-              items.splice(replaceIndex, 1, <CustomReplaceButton key="customReplaceButton" />);
+              items.splice(
+                replaceIndex,
+                1,
+                <CustomReplaceButton key="customReplaceButton" openMediaModal={openMediaModal} />
+              );
             }
-
             return <FormattingToolbar>{items}</FormattingToolbar>;
           }}
         />
