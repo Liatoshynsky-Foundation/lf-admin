@@ -155,7 +155,7 @@ describe('CroppedImageBlock', () => {
       fireEvent.click(fileCard);
 
       expect(mockEditor.updateBlock).toHaveBeenCalledWith('test-block', {
-        type: 'cropped-image',
+        type: 'image',
         props: { showPreview: true } 
       });
     });
@@ -167,7 +167,7 @@ describe('CroppedImageBlock', () => {
       fireEvent.change(captionInput, { target: { value: 'New Caption' } });
 
       expect(mockEditor.updateBlock).toHaveBeenCalledWith('test-block', {
-        type: 'cropped-image',
+        type: 'image',
         props: { caption: 'New Caption' }
       });
     });
@@ -198,7 +198,7 @@ describe('CroppedImageBlock', () => {
       fireEvent.mouseUp(document, { clientX: 150 });
 
       expect(mockEditor.updateBlock).toHaveBeenCalledWith('test-block', {
-        type: 'cropped-image',
+        type: 'image',
         props: { width: 550 }
       });
     });
@@ -213,7 +213,7 @@ describe('CroppedImageBlock', () => {
       fireEvent.mouseUp(document, { clientX: 100 });
 
       expect(mockEditor.updateBlock).toHaveBeenCalledWith('test-block', {
-        type: 'cropped-image',
+        type: 'image',
         props: { width: 150 }
       });
     });

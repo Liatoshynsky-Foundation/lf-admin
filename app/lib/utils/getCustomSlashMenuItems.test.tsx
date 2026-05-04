@@ -135,7 +135,7 @@ describe('getCustomSlashMenuItems', () => {
       expect(mockInsertBlocks).not.toHaveBeenCalled();
     });
 
-    it('should insert a cropped-image block when an uploaded image is successfully returned', async () => {
+    it('should insert a image block when an uploaded image is successfully returned', async () => {
       const mockResult: MediaModalResult = {
         selected: { 
           kind: 'upload', 
@@ -161,7 +161,7 @@ describe('getCustomSlashMenuItems', () => {
       expect(mockInsertBlocks).toHaveBeenCalledWith(
         [
           {
-            type: 'cropped-image',
+            type: 'image',
             props: {
               url: 'https://example.com/uploaded.jpg',
               cropData: JSON.stringify({ width: 500, height: 500, x: 10, y: 10 }),
@@ -174,7 +174,7 @@ describe('getCustomSlashMenuItems', () => {
       );
     });
 
-    it('should insert a cropped-image block when a gallery/library image is selected', async () => {
+    it('should insert a image block when a gallery/library image is selected', async () => {
       const mockResult: MediaModalResult = {
         selected: { 
           kind: 'gallery', 
@@ -194,7 +194,7 @@ describe('getCustomSlashMenuItems', () => {
       expect(mockInsertBlocks).toHaveBeenCalledWith(
         [
           {
-            type: 'cropped-image',
+            type: 'image',
             props: {
               url: 'https://example.com/gallery-img.png',
               cropData: '{}', 

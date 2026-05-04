@@ -26,7 +26,6 @@ type CreateOptions = {
 };
 
 const mockUpdateBlock = jest.fn();
-const mockForEachBlock = jest.fn();
 
 let mockDocumentState: MockBlock[] = [];
 let capturedCreateOptions: CreateOptions | null = null;
@@ -34,8 +33,7 @@ let captureSlashMenuOpenMediaModal: (() => Promise<MediaModalResult | null>) | n
 
 const mockEditor = {
   document: mockDocumentState,
-  updateBlock: mockUpdateBlock,
-  forEachBlock: mockForEachBlock
+  updateBlock: mockUpdateBlock
 };
 
 jest.mock('@blocknote/core', () => ({
@@ -49,11 +47,7 @@ jest.mock('@blocknote/core', () => ({
 
 jest.mock('~/lib/utils/getCustomSlashMenuItems', () => ({
   getCustomSlashMenuItems: jest.fn(
-    (
-      _editor: unknown,
-      _query: string,
-      openModal: () => Promise<MediaModalResult | null>
-    ) => {
+    (_editor: unknown, _query: string, openModal: () => Promise<MediaModalResult | null>) => {
       captureSlashMenuOpenMediaModal = openModal;
       return [
         {
@@ -86,14 +80,18 @@ jest.mock('@blocknote/react', () => ({
     </div>
   ),
   getFormattingToolbarItems: (): ToolbarItem[] => [{ key: 'boldButton' }, { key: 'replaceFileButton' }],
-  FormattingToolbar: ({ children }: { children: React.ReactNode }) => (
+  FormattingToolbar: ({ children }: { children: (React.ReactElement | ToolbarItem)[] }) => (
     <div data-testid="formatting-toolbar">
-      {React.Children.map(children, (child, idx) => {
-        if (React.isValidElement(child)) {
-          return React.cloneElement(child, { key: child.key || String(idx) } as React.Attributes);
-        }
-        return <span key={idx}>{child as React.ReactNode}</span>;
-      })}
+      {Array.isArray(children)
+        ? children.map((child, idx) => {
+          // If it's our CustomReplaceButton React element
+          if (React.isValidElement(child)) {
+            return React.cloneElement(child, { key: child.key || String(idx) } as React.Attributes);
+          }
+          const item = child as ToolbarItem;
+          return <span key={item.key || String(idx)}>{item.key}</span>;
+        })
+        : null}
     </div>
   ),
   FormattingToolbarController: ({ formattingToolbar }: { formattingToolbar: () => React.ReactNode }) => (
@@ -232,61 +230,20 @@ describe('BlockNoteEditor', () => {
     });
   });
 
-  describe('3. Editor Change & Native Block Interception', () => {
-    it('should call onChange prop and convert native "image" blocks to "cropped-image"', async () => {
+  describe('3. Editor Change', () => {
+    it('should call onChange prop with the current document state', async () => {
       const onChangeMock = jest.fn();
       mockDocumentState = [{ type: 'paragraph' }];
       mockEditor.document = mockDocumentState;
 
-      mockForEachBlock.mockImplementation((callback: (block: MockBlock) => boolean) => {
-        callback({
-          id: 'native-img-block',
-          type: 'image',
-          props: { url: 'http://test.com/img.png', name: 'test.png', caption: 'Test' }
-        });
-      });
-
       render(<BlockNoteEditor onChange={onChangeMock} />);
       await screen.findByTestId('blocknote-editor');
-
       fireEvent.click(screen.getByTestId('trigger-editor-change'));
 
+      expect(onChangeMock).toHaveBeenCalledTimes(1);
       expect(onChangeMock).toHaveBeenCalledWith(mockDocumentState);
 
-      expect(mockUpdateBlock).toHaveBeenCalledWith('native-img-block', {
-        type: 'cropped-image',
-        props: {
-          url: 'http://test.com/img.png',
-          fileName: 'test.png',
-          cropData: '{}',
-          width: 512,
-          showPreview: true,
-          caption: 'Test'
-        }
-      });
-    });
-
-    it('should provide default filename and caption when intercepting native image if missing', async () => {
-      mockForEachBlock.mockImplementation((callback: (block: MockBlock) => boolean) => {
-        callback({
-          id: 'native-img-block',
-          type: 'image',
-          props: { url: 'http://test.com/img.png' } 
-        });
-      });
-
-      render(<BlockNoteEditor />);
-      await screen.findByTestId('blocknote-editor');
-
-      fireEvent.click(screen.getByTestId('trigger-editor-change'));
-
-      expect(mockUpdateBlock).toHaveBeenCalledWith('native-img-block', {
-        type: 'cropped-image',
-        props: expect.objectContaining({
-          fileName: 'Завантажене зображення',
-          caption: ''
-        })
-      });
+      expect(mockUpdateBlock).not.toHaveBeenCalled();
     });
   });
 
@@ -313,12 +270,12 @@ describe('BlockNoteEditor', () => {
 
       expect(screen.queryByTestId('media-modal')).not.toBeInTheDocument();
       expect(promiseResult).toEqual({
-        selected: { 
-          kind: 'gallery', 
-          src: 'https://example.com/mock-image.png', 
-          id: '1', 
-          fileName: 'mock', 
-          locale: 'en' 
+        selected: {
+          kind: 'gallery',
+          src: 'https://example.com/mock-image.png',
+          id: '1',
+          fileName: 'mock',
+          locale: 'en'
         },
         crop: null,
         uploadResult: undefined

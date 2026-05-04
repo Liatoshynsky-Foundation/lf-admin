@@ -66,7 +66,7 @@ describe('CustomReplaceButton', () => {
       expect(container).toBeEmptyDOMElement();
     });
 
-    it('should return null and not render if the selected block is not an image or cropped-image', () => {
+    it('should return null and not render if the selected block is not an image', () => {
       const selectedBlocks: MockBlock[] = [{ id: '1', type: 'paragraph' }];
       (useSelectedBlocks as jest.Mock).mockReturnValue(selectedBlocks);
 
@@ -85,8 +85,8 @@ describe('CustomReplaceButton', () => {
       expect(screen.getByText('Replace image')).toBeInTheDocument();
     });
 
-    it('should render the button if exactly one "cropped-image" block is selected', () => {
-      const selectedBlocks: MockBlock[] = [{ id: 'img-1', type: 'cropped-image' }];
+    it('should render the button if exactly one "image" block is selected', () => {
+      const selectedBlocks: MockBlock[] = [{ id: 'img-1', type: 'image' }];
       (useSelectedBlocks as jest.Mock).mockReturnValue(selectedBlocks);
 
       render(<CustomReplaceButton openMediaModal={mockOpenMediaModal} />);
@@ -173,7 +173,7 @@ describe('CustomReplaceButton', () => {
       await waitFor(() => {
         expect(mockUpdateBlock).toHaveBeenCalledTimes(1);
         expect(mockUpdateBlock).toHaveBeenCalledWith('target-block-id', {
-          type: 'cropped-image',
+          type: 'image',
           props: {
             url: 'https://example.com/uploaded.jpg',
             cropData: JSON.stringify({ width: 500, height: 500, x: 10, y: 10 }),
@@ -205,7 +205,7 @@ describe('CustomReplaceButton', () => {
       await waitFor(() => {
         expect(mockUpdateBlock).toHaveBeenCalledTimes(1);
         expect(mockUpdateBlock).toHaveBeenCalledWith('target-block-id', {
-          type: 'cropped-image',
+          type: 'image',
           props: {
             url: 'https://example.com/gallery-img.png',
             cropData: '{}', 
@@ -236,7 +236,7 @@ describe('CustomReplaceButton', () => {
 
       await waitFor(() => {
         expect(mockUpdateBlock).toHaveBeenCalledWith('target-block-id', {
-          type: 'cropped-image',
+          type: 'image',
           props: {
             url: 'https://example.com/no-name.png',
             cropData: '{}',
