@@ -43,6 +43,13 @@ const getFileTypeForBackend = (file: File): string => {
   return 'document';
 };
 
+const resolveUploadDirectory = (explicitDirectory: string | undefined, backendFileType: string): string => {
+  if (explicitDirectory) return explicitDirectory;
+  if (backendFileType === 'image') return 'photos';
+  if (backendFileType === 'audio') return 'compositions';
+  return 'uploads';
+};
+
 export function useMediaModalApply({ open, onClose, onApply, directory }: Readonly<Args>): Return {
   const [isApplying, setIsApplying] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
@@ -99,17 +106,7 @@ export function useMediaModalApply({ open, onClose, onApply, directory }: Readon
             allowedExtensions: [fileExt]
           });
 
-          let finalDirectory = directory;
-
-          if (!finalDirectory) {
-            if (backendFileType === 'image') {
-              finalDirectory = 'photos';
-            } else if (backendFileType === 'audio') {
-              finalDirectory = 'compositions';
-            } else {
-              finalDirectory = 'uploads';
-            }
-          }
+          const finalDirectory = resolveUploadDirectory(directory, backendFileType);
 
           const uploadResult = await uploadFile(result.selected.file, {
             directory: finalDirectory,
