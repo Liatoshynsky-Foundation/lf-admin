@@ -13,7 +13,7 @@ type MockBlockProps = {
   fileName: string;
   cropData: string;
   width: number;
-  textAlignment: 'left' | 'center' | 'right' | 'justify';
+  textAlignment: 'left' | 'center' | 'right';
   textColor: string;
 };
 
@@ -58,7 +58,7 @@ jest.mock('@blocknote/react', () => ({
 
 jest.mock('@blocknote/core', () => ({
   defaultProps: {
-    textAlignment: { default: 'left', values: ['left', 'center', 'right', 'justify'] },
+    textAlignment: { default: 'left', values: ['left', 'center', 'right'] },
     textColor: { default: 'default' }
   }
 }));
