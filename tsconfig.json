@@ -18,7 +18,7 @@
         "name": "next"
       }
     ],
-    "baseUrl": ".", // Base URL for module resolution
+    "baseUrl": ".",
     "paths": {
       "~/*": ["./app/*"],
       "~/src/*": ["./src/*"],

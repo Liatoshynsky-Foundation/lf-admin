@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 
 import { usePublicationsFiltering } from './usePublicationsFiltering';
-import { MediaMentionsSortBy, NewsSortBy } from '~/types/graphql/generated/graphql';
+import { EventSortBy, MediaMentionsSortBy, NewsSortBy } from '~/types/graphql/generated/graphql';
 
 describe('usePublicationsFiltering', () => {
   beforeEach(() => {
@@ -14,6 +14,7 @@ describe('usePublicationsFiltering', () => {
 
     expect(result.current.requestFilters.news.sort).toEqual([{ field: NewsSortBy.CreatedAt, order: 'desc' }]);
     expect(result.current.requestFilters.media.sort).toEqual([{ field: MediaMentionsSortBy.CreatedAt, order: 'desc' }]);
+    expect(result.current.requestFilters.events.sort).toEqual([{ field: EventSortBy.CreatedAt, order: 'desc' }]);
 
     act(() => {
       result.current.toolbarProps.search?.setSearch(' фестиваль ');
@@ -32,6 +33,12 @@ describe('usePublicationsFiltering', () => {
       languages: ['bilingual'],
       statuses: ['editing'],
       sort: [{ field: MediaMentionsSortBy.CreatedAt, order: 'desc' }]
+    });
+    expect(result.current.requestFilters.events).toEqual({
+      search: 'фестиваль',
+      languages: ['bilingual'],
+      statuses: ['editing'],
+      sort: [{ field: EventSortBy.CreatedAt, order: 'desc' }]
     });
   });
 
@@ -52,6 +59,10 @@ describe('usePublicationsFiltering', () => {
     expect(result.current.requestFilters.media.sort).toEqual([
       { field: MediaMentionsSortBy.AdminTitle, order: 'asc' },
       { field: MediaMentionsSortBy.CreatedAt, order: 'desc' }
+    ]);
+    expect(result.current.requestFilters.events.sort).toEqual([
+      { field: EventSortBy.AdminTitle, order: 'asc' },
+      { field: EventSortBy.CreatedAt, order: 'desc' }
     ]);
     expect(result.current.toolbarProps.search?.options).toEqual([]);
   });

@@ -1,5 +1,4 @@
 import dayjs, { type Dayjs } from 'dayjs';
-import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
@@ -7,7 +6,6 @@ import {
   ImageCropData,
   initialSeoValue,
   PAGE_TITLES,
-  PUBLICATIONS_BASE_PATH,
   PUBLICATIONS_TYPES,
   PublicationsItemType
 } from '~/constants/publications';
@@ -19,6 +17,7 @@ import {
   useUpdateMediaMention
 } from '~/shared/hooks/use-media-mentions/useMediaMentions';
 import { useCreateNews, useNewsById, useUpdateNews } from '~/shared/hooks/use-news/useNews';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { EventStatus, MediaStatus, NewsStatus } from '~/types/graphql/generated/graphql';
 
 const isValidUrl = (url: string): boolean => {
@@ -58,7 +57,6 @@ interface UseUpsertPublicationProps {
 }
 
 export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) => {
-  const router = useRouter();
   const isEditing = Boolean(id);
 
   const isValidType = PUBLICATIONS_TYPES.includes(type);
@@ -177,7 +175,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     }
   }, [isEditing, type, newsQuery.data, eventQuery.data, mediaQuery.data]);
 
-  const handleSave = async () => {
+  const handleSave = async (status: BaseContentStatuses) => {
     if (!isValidType) return;
 
     const { adminTitle, seoValue, publishDate, crop } = latestDataRef.current;
@@ -218,34 +216,46 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
             eventLink: adminTitle,
             eventDateTimeStart: ukMeta.startDateTime,
             eventDateTimeEnd: ukMeta.endDateTime,
-            ticketUrl: seoValue.ticketUrl
+            ticketUrl: seoValue.ticketUrl,
+            status: status as unknown as EventStatus
           };
           if (isUpdate) return updateEvent({ id, input: payload }).then(() => id);
-          return createEvent({ ...payload, content: emptyContent, status: EventStatus.Draft }).then(
-            (r) => r.data?.createEvent?.id
-          );
+          return createEvent({
+            ...payload,
+            content: emptyContent
+          }).then((r) => r.data?.createEvent?.id);
         },
         news: async () => {
-          const payload = { ...commonInput, newsDate: commonInput.publishedAt };
+          const payload = {
+            ...commonInput,
+            newsDate: commonInput.publishedAt,
+            status: status as unknown as NewsStatus
+          };
           if (isUpdate) return updateNews({ id, input: payload }).then(() => id);
-          return createNews({ ...payload, content: emptyContent, status: NewsStatus.Draft }).then(
-            (r) => r.data?.createNews?.id
-          );
+          return createNews({
+            ...payload,
+            content: emptyContent
+          }).then((r) => r.data?.createNews?.id);
         },
         media: async () => {
-          const payload = { ...commonInput, url: ukMeta.canonicalUrl || enMeta.canonicalUrl || adminTitle };
-          if (isUpdate) await updateMediaMention(id, payload);
-          else await createMediaMention({ ...payload, status: MediaStatus.Draft });
+          const payload = {
+            ...commonInput,
+            url: ukMeta.canonicalUrl || enMeta.canonicalUrl || adminTitle,
+            status: status as unknown as MediaStatus
+          };
+          if (isUpdate) {
+            const response = await updateMediaMention(id, payload);
+            return response.data?.updateMediaMention.id;
+          } else {
+            const response = await createMediaMention(payload);
+            return response.data?.createMediaMention.id;
+          }
         }
       };
 
       const resultId = await saveStrategies[publicationType]?.();
 
-      if (publicationType === 'media') {
-        router.push(PUBLICATIONS_BASE_PATH);
-      } else if (resultId) {
-        router.push(`${PUBLICATIONS_BASE_PATH}/${publicationType}/${resultId}/edit`);
-      }
+      return resultId;
     } catch {
       // errors are handled by safeMutate
     }
@@ -281,6 +291,6 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
 
     forceShowErrors,
     handleSave,
-    handleDateTimeChange
+    handleDateTimeChange,
   };
 };

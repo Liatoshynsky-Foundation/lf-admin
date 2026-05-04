@@ -65,37 +65,29 @@ describe('createValidator', () => {
     });
   });
 
-  describe('unsupported file types', () => {
-    it('should throw error for document validator', () => {
+  describe('newly supported file types', () => {
+    it('should create validator for document', () => {
       const config: ValidatorConfig = {
         fileType: 'document'
       };
 
-      expect(() => createValidator(config)).toThrow('Document validator not yet implemented');
+      expect(() => createValidator(config)).not.toThrow();
     });
 
-    it('should throw error for video validator', () => {
+    it('should create validator for video', () => {
       const config: ValidatorConfig = {
         fileType: 'video'
       };
 
-      expect(() => createValidator(config)).toThrow('Video validator not yet implemented');
+      expect(() => createValidator(config)).not.toThrow();
     });
 
-    it('should throw error for audio validator', () => {
+    it('should create validator for audio', () => {
       const config: ValidatorConfig = {
         fileType: 'audio'
       };
 
-      expect(() => createValidator(config)).toThrow('Audio validator not yet implemented');
-    });
-
-    it('should throw error for generic validator', () => {
-      const config: ValidatorConfig = {
-        fileType: 'generic'
-      };
-
-      expect(() => createValidator(config)).toThrow('Generic validator not yet implemented');
+      expect(() => createValidator(config)).not.toThrow();
     });
   });
 
@@ -163,13 +155,12 @@ describe('createValidator', () => {
 
   describe('type checking', () => {
     it('should accept valid FileType values', () => {
-      const fileTypes: FileType[] = ['image', 'document', 'video', 'audio', 'generic'];
+      const fileTypes: FileType[] = ['image', 'document', 'video', 'audio'];
 
       expect(() => createValidator({ fileType: fileTypes[0] })).not.toThrow();
-      expect(() => createValidator({ fileType: fileTypes[1] })).toThrow();
-      expect(() => createValidator({ fileType: fileTypes[2] })).toThrow();
-      expect(() => createValidator({ fileType: fileTypes[3] })).toThrow();
-      expect(() => createValidator({ fileType: fileTypes[4] })).toThrow();
+      expect(() => createValidator({ fileType: fileTypes[1] })).not.toThrow();
+      expect(() => createValidator({ fileType: fileTypes[2] })).not.toThrow();
+      expect(() => createValidator({ fileType: fileTypes[3] })).not.toThrow();
     });
   });
 });
