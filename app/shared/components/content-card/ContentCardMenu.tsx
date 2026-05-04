@@ -39,23 +39,21 @@ const ContentCardMenu = ({
   };
 
   return (
-    <>
-      <Menu anchorEl={anchorEl} open={open} onClose={onClose} sx={styles.menu}>
-        <Typography sx={styles.menuText}>Мовні версії</Typography>
-        <MenuItem onClick={() => handleClick('en')} sx={styles.menuItem}>
-          Англійська
-        </MenuItem>
-        <MenuItem onClick={() => handleClick('ua')} sx={styles.menuItem}>
-          Українська
-        </MenuItem>
-        <MenuItem onClick={() => router.push(href)} sx={styles.menuItem}>
-          SEO налаштування
-        </MenuItem>
-        <MenuItem onClick={handleDeleteClick} sx={styles.menuItem}>
-          Видалити
-        </MenuItem>
-      </Menu>
-    </>
+    <Menu anchorEl={anchorEl} open={open} onClose={onClose} sx={styles.menu}>
+      <Typography sx={styles.menuText}>Мовні версії</Typography>
+      <MenuItem onClick={() => handleClick('en')} sx={styles.menuItem}>
+        Англійська
+      </MenuItem>
+      <MenuItem onClick={() => handleClick('ua')} sx={styles.menuItem}>
+        Українська
+      </MenuItem>
+      <MenuItem onClick={() => router.push(href)} sx={styles.menuItem}>
+        SEO налаштування
+      </MenuItem>
+      <MenuItem onClick={handleDeleteClick} sx={styles.menuItem}>
+        Видалити
+      </MenuItem>
+    </Menu>
   );
 };
 
