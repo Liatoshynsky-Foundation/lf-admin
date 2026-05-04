@@ -28,7 +28,7 @@ export const getCustomSlashMenuItems = (
           editor.insertBlocks(
             [
               {
-                type: 'cropped-image',
+                type: 'image',
                 props: {
                   url: actualUrlString,
                   cropData: JSON.stringify(crop || {}),

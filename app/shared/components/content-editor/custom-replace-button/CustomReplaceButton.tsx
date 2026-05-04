@@ -15,7 +15,7 @@ export const CustomReplaceButton = ({
 
   const block = selectedBlocks.length === 1 ? selectedBlocks[0] : undefined;
 
-  if (block === undefined || (block.type !== 'image' && block.type !== 'cropped-image')) {
+  if (block === undefined || (block.type !== 'image')) {
     return null;
   }
 
@@ -34,7 +34,7 @@ export const CustomReplaceButton = ({
 
           if (actualUrlString) {
             editor.updateBlock(block.id, {
-              type: 'cropped-image',
+              type: 'image',
               props: {
                 url: actualUrlString,
                 cropData: JSON.stringify(crop || {}),

@@ -28,7 +28,7 @@ const CroppedImageRenderer = ({ props }: { props: CroppedImageRendererProps }) =
     value: CroppedImageRendererProps['block']['props'][K]
   ) => {
     props.editor.updateBlock(props.block.id, {
-      type: 'cropped-image',
+      type: 'image',
       props: { [key]: value } 
     });
   };
@@ -116,7 +116,7 @@ const CroppedImageRenderer = ({ props }: { props: CroppedImageRendererProps }) =
 
 export const CroppedImageBlock = createReactBlockSpec(
   {
-    type: 'cropped-image', 
+    type: 'image', 
     propSchema: {
       textAlignment: defaultProps.textAlignment,
       textColor: defaultProps.textColor,
@@ -150,7 +150,7 @@ export const CroppedImageBlock = createReactBlockSpec(
     parse: (el) => {
       const img = el.tagName.toLowerCase() === 'img' ? el : el.querySelector('img');
       
-      if (img && img.hasAttribute('data-custom-cropped')) {
+      if (img) {
         return {
           url: img.getAttribute('src') || '',
           fileName: img.getAttribute('alt') || 'image',

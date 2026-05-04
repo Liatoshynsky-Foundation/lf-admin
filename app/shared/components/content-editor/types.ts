@@ -66,14 +66,14 @@ export type StrictEditor = Omit<BlockNoteEditor<BlockSchema, InlineContentSchema
 
   updateBlock: (
     id: string,
-    blockUpdate: { type: 'cropped-image'; props: Partial<CroppedImageProps> } 
+    blockUpdate: { type: 'image'; props: Partial<CroppedImageProps> } 
   ) => void;
 };
 
 export interface CroppedImageRendererProps {
   block: {
     id: string;
-    type: 'cropped-image';
+    type: 'image';
     props: CroppedImageProps;
   };
   editor: StrictEditor; 

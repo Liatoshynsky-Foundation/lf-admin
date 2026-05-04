@@ -49,7 +49,7 @@ export const customSchema = BlockNoteSchema.create(
   BlockNoteSchema.create({
     blockSpecs: {
       ...defaultBlockSpecs,
-      'cropped-image': CroppedImageBlock()
+      image: CroppedImageBlock()
     },
     inlineContentSpecs: defaultInlineContentSpecs,
     styleSpecs: defaultStyleSpecs
@@ -121,22 +121,6 @@ export const BlockNoteEditor = (props: BlockNoteEditorProps) => {
     if (onChange && editor) {
       onChange(editor.document as Block[]);
     }
-    editor.forEachBlock((block) => {
-      if (block.type === 'image') {
-        editor.updateBlock(block.id, {
-          type: 'cropped-image',
-          props: {
-            url: block.props.url,
-            fileName: block.props.name || 'Завантажене зображення',
-            cropData: '{}',
-            width: 512,
-            showPreview: true,
-            caption: block.props.caption || ''
-          }
-        });
-      }
-      return true;
-    });
   }, [editor, onChange]);
 
   useEffect(() => {
