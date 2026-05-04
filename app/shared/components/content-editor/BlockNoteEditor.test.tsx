@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import React from 'react';
 
 import { BlockNoteEditor } from './BlockNoteEditor';
+import { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 
 type SlashMenuItem = {
   title: string;
@@ -13,19 +14,29 @@ type ToolbarItem = {
   type?: string;
 };
 
-const mockInsertBlocks = jest.fn();
-const mockUpdateBlock = jest.fn();
-const mockGetTextCursorPosition = jest.fn(() => ({ block: { id: 'mock-block-id' } }));
-
-const mockEditor = {
-  document: [],
-  getTextCursorPosition: mockGetTextCursorPosition,
-  insertBlocks: mockInsertBlocks,
-  updateBlock: mockUpdateBlock
+type MockBlock = {
+  id?: string;
+  type: string;
+  props?: Record<string, unknown>;
 };
 
-let capturedCreateOptions: { uploadFile: (file: File) => Promise<string> } | null = null;
-let capturedSelectedBlocks: { id: string; type: string }[] = [];
+type CreateOptions = {
+  uploadFile: (file: File) => Promise<string>;
+  onChange?: () => void;
+};
+
+const mockUpdateBlock = jest.fn();
+const mockForEachBlock = jest.fn();
+
+let mockDocumentState: MockBlock[] = [];
+let capturedCreateOptions: CreateOptions | null = null;
+let captureSlashMenuOpenMediaModal: (() => Promise<MediaModalResult | null>) | null = null;
+
+const mockEditor = {
+  document: mockDocumentState,
+  updateBlock: mockUpdateBlock,
+  forEachBlock: mockForEachBlock
+};
 
 jest.mock('@blocknote/core', () => ({
   BlockNoteSchema: {
@@ -36,56 +47,53 @@ jest.mock('@blocknote/core', () => ({
   defaultStyleSpecs: {}
 }));
 
+jest.mock('~/lib/utils/getCustomSlashMenuItems', () => ({
+  getCustomSlashMenuItems: jest.fn(
+    (
+      _editor: unknown,
+      _query: string,
+      openModal: () => Promise<MediaModalResult | null>
+    ) => {
+      captureSlashMenuOpenMediaModal = openModal;
+      return [
+        {
+          title: 'Picture',
+          onItemClick: async () => {
+            await openModal();
+          }
+        }
+      ];
+    }
+  )
+}));
+
 jest.mock('@blocknote/react', () => ({
-  useCreateBlockNote: jest.fn((options: { uploadFile: (file: File) => Promise<string> }) => {
+  useCreateBlockNote: jest.fn((options: CreateOptions) => {
     capturedCreateOptions = options;
     return mockEditor;
   }),
-  getDefaultReactSlashMenuItems: jest.fn(() => [
-    { title: 'Heading', group: 'Text' },
-    { title: 'Image', group: 'Media' },
-    { title: 'Image (Upload)', group: 'Media' }
-  ]),
-  SuggestionMenuController: ({ getItems }: { getItems: (query: string) => Promise<SlashMenuItem[]> }) => {
-    return (
-      <div data-testid="suggestion-menu-controller">
-        <button
-          data-testid="trigger-custom-slash-item"
-          onClick={async () => {
-            const items = await getItems('pic');
-            const pictureItem = items.find((i: SlashMenuItem) => i.title === 'Picture');
-            if (pictureItem && pictureItem.onItemClick) {
-              await pictureItem.onItemClick();
-            }
-          }}
-        >
-          Trigger Slash Menu
-        </button>
-      </div>
-    );
-  },
-  useSelectedBlocks: () => capturedSelectedBlocks,
-  useComponentsContext: () => ({
-    FormattingToolbar: {
-      Button: ({ label, onClick }: { label: string; onClick: () => void }) => (
-        <button data-testid="custom-replace-button" onClick={onClick}>
-          {label}
-        </button>
-      )
-    }
-  }),
+  SuggestionMenuController: ({ getItems }: { getItems: (query: string) => Promise<SlashMenuItem[]> }) => (
+    <div data-testid="suggestion-menu-controller">
+      <button
+        data-testid="trigger-slash-menu"
+        onClick={async () => {
+          const items = await getItems('');
+          if (items[0]?.onItemClick) await items[0].onItemClick();
+        }}
+      >
+        Open Slash Menu
+      </button>
+    </div>
+  ),
   getFormattingToolbarItems: (): ToolbarItem[] => [{ key: 'boldButton' }, { key: 'replaceFileButton' }],
-  FormattingToolbar: ({ children }: { children: any[] }) => (
+  FormattingToolbar: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="formatting-toolbar">
-      {Array.isArray(children)
-        ? children.map((child, idx) =>
-          React.isValidElement(child) ? (
-            React.cloneElement(child, { key: child.key || idx } as any)
-          ) : (
-            <span key={child.key || idx}>{child.key}</span>
-          )
-        )
-        : children}
+      {React.Children.map(children, (child, idx) => {
+        if (React.isValidElement(child)) {
+          return React.cloneElement(child, { key: child.key || String(idx) } as React.Attributes);
+        }
+        return <span key={idx}>{child as React.ReactNode}</span>;
+      })}
     </div>
   ),
   FormattingToolbarController: ({ formattingToolbar }: { formattingToolbar: () => React.ReactNode }) => (
@@ -94,16 +102,32 @@ jest.mock('@blocknote/react', () => ({
 }));
 
 jest.mock('@blocknote/mantine', () => ({
-  BlockNoteView: ({ children, editable }: { children: React.ReactNode; editable: boolean }) => (
+  BlockNoteView: ({
+    children,
+    editable,
+    onChange
+  }: {
+    children: React.ReactNode;
+    editable?: boolean;
+    onChange?: () => void;
+  }) => (
     <div data-testid="blocknote-editor" data-editable={editable}>
+      <button data-testid="trigger-editor-change" onClick={onChange} />
       {children}
     </div>
   )
 }));
 
-jest.mock('@blocknote/xl-multi-column', () => ({
-  multiColumnDropCursor: {},
-  withMultiColumn: jest.fn((schema: unknown) => schema)
+jest.mock('./cropped-image-block/CroppedImageBlock', () => ({
+  CroppedImageBlock: jest.fn(() => ({}))
+}));
+
+jest.mock('./custom-replace-button/CustomReplaceButton', () => ({
+  CustomReplaceButton: ({ openMediaModal }: { openMediaModal: () => Promise<MediaModalResult | null> }) => (
+    <button data-testid="custom-replace-button" onClick={openMediaModal}>
+      Replace
+    </button>
+  )
 }));
 
 jest.mock('~/shared/components/media-modal/MediaModal', () => ({
@@ -114,7 +138,7 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
   }: {
     open: boolean;
     onClose: () => void;
-    onApply: (result: { selected: { kind: string; src?: string }; uploadResult: null }) => void;
+    onApply: (result: MediaModalResult) => void;
   }) => {
     if (!open) return null;
     return (
@@ -123,8 +147,15 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
           data-testid="modal-apply-success"
           onClick={() =>
             onApply({
-              selected: { kind: 'library', src: 'https://example.com/mock-image.png' },
-              uploadResult: null
+              selected: {
+                kind: 'gallery',
+                src: 'https://example.com/mock-image.png',
+                id: '1',
+                fileName: 'mock',
+                locale: 'en'
+              },
+              crop: null,
+              uploadResult: undefined
             })
           }
         >
@@ -142,12 +173,14 @@ describe('BlockNoteEditor', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     capturedCreateOptions = null;
-    capturedSelectedBlocks = [];
+    captureSlashMenuOpenMediaModal = null;
+    mockDocumentState = [];
+    mockEditor.document = mockDocumentState;
   });
 
-  describe('1. Mounting', () => {
+  describe('1. Mounting & Rendering', () => {
     it('should render the loading state initially, then render the BlockNoteView', async () => {
-      render(<BlockNoteEditor editable={true} />);
+      render(<BlockNoteEditor />);
 
       const editor = await screen.findByTestId('blocknote-editor');
       expect(editor).toBeInTheDocument();
@@ -155,9 +188,17 @@ describe('BlockNoteEditor', () => {
       expect(screen.getByTestId('suggestion-menu-controller')).toBeInTheDocument();
       expect(screen.getByTestId('formatting-toolbar-controller')).toBeInTheDocument();
     });
+
+    it('should inject the CustomReplaceButton into the formatting toolbar', async () => {
+      render(<BlockNoteEditor />);
+      await screen.findByTestId('blocknote-editor');
+
+      expect(screen.getByTestId('custom-replace-button')).toBeInTheDocument();
+      expect(screen.queryByText('replaceFileButton')).not.toBeInTheDocument();
+    });
   });
 
-  describe('2. Silent Upload (Drag & Drop)', () => {
+  describe('2. Silent File Uploads', () => {
     it('should successfully trigger the fileUpload.handler and return the URL', async () => {
       const mockHandler = jest.fn().mockResolvedValue('https://example.com/silent-upload.png');
 
@@ -191,40 +232,110 @@ describe('BlockNoteEditor', () => {
     });
   });
 
-  describe('3. The Promise Flow (Success)', () => {
-    it('should open the modal, wait for application, and insert the block with exact URL', async () => {
-      render(<BlockNoteEditor />);
+  describe('3. Editor Change & Native Block Interception', () => {
+    it('should call onChange prop and convert native "image" blocks to "cropped-image"', async () => {
+      const onChangeMock = jest.fn();
+      mockDocumentState = [{ type: 'paragraph' }];
+      mockEditor.document = mockDocumentState;
 
+      mockForEachBlock.mockImplementation((callback: (block: MockBlock) => boolean) => {
+        callback({
+          id: 'native-img-block',
+          type: 'image',
+          props: { url: 'http://test.com/img.png', name: 'test.png', caption: 'Test' }
+        });
+      });
+
+      render(<BlockNoteEditor onChange={onChangeMock} />);
+      await screen.findByTestId('blocknote-editor');
+
+      fireEvent.click(screen.getByTestId('trigger-editor-change'));
+
+      expect(onChangeMock).toHaveBeenCalledWith(mockDocumentState);
+
+      expect(mockUpdateBlock).toHaveBeenCalledWith('native-img-block', {
+        type: 'cropped-image',
+        props: {
+          url: 'http://test.com/img.png',
+          fileName: 'test.png',
+          cropData: '{}',
+          width: 512,
+          showPreview: true,
+          caption: 'Test'
+        }
+      });
+    });
+
+    it('should provide default filename and caption when intercepting native image if missing', async () => {
+      mockForEachBlock.mockImplementation((callback: (block: MockBlock) => boolean) => {
+        callback({
+          id: 'native-img-block',
+          type: 'image',
+          props: { url: 'http://test.com/img.png' } 
+        });
+      });
+
+      render(<BlockNoteEditor />);
+      await screen.findByTestId('blocknote-editor');
+
+      fireEvent.click(screen.getByTestId('trigger-editor-change'));
+
+      expect(mockUpdateBlock).toHaveBeenCalledWith('native-img-block', {
+        type: 'cropped-image',
+        props: expect.objectContaining({
+          fileName: 'Завантажене зображення',
+          caption: ''
+        })
+      });
+    });
+  });
+
+  describe('4. The Media Modal Promise Flow', () => {
+    it('should resolve the promise and close the modal when Apply is clicked', async () => {
+      render(<BlockNoteEditor />);
+      await screen.findByTestId('blocknote-editor');
+
+      let promiseResult: MediaModalResult | null | undefined;
       await act(async () => {
-        fireEvent.click(screen.getByTestId('trigger-custom-slash-item'));
+        fireEvent.click(screen.getByTestId('trigger-slash-menu'));
+      });
+
+      captureSlashMenuOpenMediaModal!().then((res) => {
+        promiseResult = res;
       });
 
       const modal = await screen.findByTestId('media-modal');
       expect(modal).toBeInTheDocument();
-      expect(mockInsertBlocks).not.toHaveBeenCalled();
 
       await act(async () => {
         fireEvent.click(screen.getByTestId('modal-apply-success'));
       });
 
       expect(screen.queryByTestId('media-modal')).not.toBeInTheDocument();
-
-      expect(mockGetTextCursorPosition).toHaveBeenCalled();
-      expect(mockInsertBlocks).toHaveBeenCalledTimes(1);
-      expect(mockInsertBlocks).toHaveBeenCalledWith(
-        [{ type: 'image', props: { url: 'https://example.com/mock-image.png' } }],
-        { id: 'mock-block-id' },
-        'after'
-      );
+      expect(promiseResult).toEqual({
+        selected: { 
+          kind: 'gallery', 
+          src: 'https://example.com/mock-image.png', 
+          id: '1', 
+          fileName: 'mock', 
+          locale: 'en' 
+        },
+        crop: null,
+        uploadResult: undefined
+      });
     });
-  });
 
-  describe('4. The Promise Flow (Cancellation)', () => {
-    it('should open the modal, fire onClose, and NEVER call editor.insertBlocks', async () => {
+    it('should resolve the promise with null and close the modal when Cancel is clicked', async () => {
       render(<BlockNoteEditor />);
+      await screen.findByTestId('blocknote-editor');
 
+      let promiseResult: MediaModalResult | null | undefined = undefined;
       await act(async () => {
-        fireEvent.click(screen.getByTestId('trigger-custom-slash-item'));
+        fireEvent.click(screen.getByTestId('trigger-slash-menu'));
+      });
+
+      captureSlashMenuOpenMediaModal!().then((res) => {
+        promiseResult = res;
       });
 
       expect(await screen.findByTestId('media-modal')).toBeInTheDocument();
@@ -234,53 +345,7 @@ describe('BlockNoteEditor', () => {
       });
 
       expect(screen.queryByTestId('media-modal')).not.toBeInTheDocument();
-
-      expect(mockInsertBlocks).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('5. Formatting Toolbar Replace Flow', () => {
-    it('should not render the CustomReplaceButton if no blocks are selected', () => {
-      capturedSelectedBlocks = [];
-      render(<BlockNoteEditor />);
-
-      expect(screen.queryByTestId('custom-replace-button')).not.toBeInTheDocument();
-    });
-
-    it('should not render the CustomReplaceButton if the selected block is not an image', () => {
-      capturedSelectedBlocks = [{ id: 'text-1', type: 'paragraph' }];
-      render(<BlockNoteEditor />);
-
-      expect(screen.queryByTestId('custom-replace-button')).not.toBeInTheDocument();
-    });
-
-    it('should render the CustomReplaceButton when exactly one image block is selected', () => {
-      capturedSelectedBlocks = [{ id: 'img-1', type: 'image' }];
-      render(<BlockNoteEditor />);
-
-      expect(screen.getByTestId('custom-replace-button')).toBeInTheDocument();
-    });
-
-    it('should open the modal and update the block when the CustomReplaceButton is clicked and applied', async () => {
-      capturedSelectedBlocks = [{ id: 'img-1', type: 'image' }];
-      render(<BlockNoteEditor />);
-
-      await act(async () => {
-        fireEvent.click(screen.getByTestId('custom-replace-button'));
-      });
-
-      const modal = await screen.findByTestId('media-modal');
-      expect(modal).toBeInTheDocument();
-
-      await act(async () => {
-        fireEvent.click(screen.getByTestId('modal-apply-success'));
-      });
-
-      expect(mockUpdateBlock).toHaveBeenCalledTimes(1);
-      expect(mockUpdateBlock).toHaveBeenCalledWith('img-1', {
-        type: 'image',
-        props: { url: 'https://example.com/mock-image.png' }
-      });
+      expect(promiseResult).toBeNull();
     });
   });
 });
