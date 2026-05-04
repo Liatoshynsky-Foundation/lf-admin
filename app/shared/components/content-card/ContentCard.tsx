@@ -121,7 +121,6 @@ const ContentCard = ({
             <EllipsisVertical size={20} />
             {anchorEl && (
               <ContentCardMenu
-                id={id}
                 type={type}
                 anchorEl={anchorEl}
                 onClose={handleMenuClose}

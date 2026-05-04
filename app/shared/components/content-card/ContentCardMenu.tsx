@@ -5,7 +5,6 @@ import { ContentType } from './ContentCard';
 import styles from './ContentCardMenu.styles';
 
 interface ContentCardMenuProps {
-  id: string;
   type: ContentType;
   anchorEl: HTMLElement | null;
   onClose: () => void;
