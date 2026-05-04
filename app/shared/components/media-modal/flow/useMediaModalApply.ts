@@ -99,8 +99,20 @@ export function useMediaModalApply({ open, onClose, onApply, directory }: Readon
             allowedExtensions: [fileExt]
           });
 
+          let finalDirectory = directory;
+
+          if (!finalDirectory) {
+            if (backendFileType === 'image') {
+              finalDirectory = 'photos';
+            } else if (backendFileType === 'audio') {
+              finalDirectory = 'compositions';
+            } else {
+              finalDirectory = 'uploads';
+            }
+          }
+
           const uploadResult = await uploadFile(result.selected.file, {
-            directory,
+            directory: finalDirectory,
             fileType: backendFileType,
             validationRules: validationRules
           });
