@@ -29,7 +29,7 @@ const CroppedImageRenderer = ({ props }: { props: CroppedImageRendererProps }) =
   ) => {
     props.editor.updateBlock(props.block.id, {
       type: 'image',
-      props: { [key]: value } 
+      props: { [key]: value }
     });
   };
 
@@ -116,7 +116,7 @@ const CroppedImageRenderer = ({ props }: { props: CroppedImageRendererProps }) =
 
 export const CroppedImageBlock = createReactBlockSpec(
   {
-    type: 'image', 
+    type: 'image',
     propSchema: {
       textAlignment: defaultProps.textAlignment,
       textColor: defaultProps.textColor,
@@ -133,7 +133,6 @@ export const CroppedImageBlock = createReactBlockSpec(
     render: (props) => <CroppedImageRenderer props={props as unknown as CroppedImageRendererProps} />,
 
     toExternalHTML: (props) => {
-       
       return (
         <img
           src={props.block.props.url}
@@ -149,19 +148,20 @@ export const CroppedImageBlock = createReactBlockSpec(
 
     parse: (el) => {
       const img = el.tagName.toLowerCase() === 'img' ? el : el.querySelector('img');
-      
+
       if (img) {
+        const { src, alt, cropData, width, preview, caption } = img.dataset;
         return {
-          url: img.getAttribute('src') || '',
-          fileName: img.getAttribute('alt') || 'image',
-          cropData: img.getAttribute('data-crop-data') || '{}',
-          width: parseInt(img.getAttribute('data-width') || '512', 10),
-          showPreview: img.getAttribute('data-preview') === 'true',
-          caption: img.getAttribute('data-caption') || ''
+          url: src || '',
+          fileName: alt || 'image',
+          cropData: cropData || '{}',
+          width: Number.parseInt(width || '512', 10),
+          showPreview: preview === 'true',
+          caption: caption || ''
         };
       }
-      
-      return undefined; 
+
+      return undefined;
     }
   }
 );

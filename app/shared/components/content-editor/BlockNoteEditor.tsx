@@ -11,9 +11,7 @@ import {
 } from '@blocknote/core';
 import { BlockNoteView } from '@blocknote/mantine';
 import {
-  FormattingToolbar,
   FormattingToolbarController,
-  getFormattingToolbarItems,
   SuggestionMenuController,
   useCreateBlockNote
 } from '@blocknote/react';
@@ -22,7 +20,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { styles } from './BlockNoteEditor.styles';
 import { CroppedImageBlock } from './cropped-image-block/CroppedImageBlock';
-import { CustomReplaceButton } from './custom-replace-button/CustomReplaceButton';
+import { CustomFormattingToolbar } from './custom-formatting-toolbar/CustomFormattingToolbar';
 import { BlockNoteEditorProps } from './types';
 import { getCustomSlashMenuItems } from '~/lib/utils/getCustomSlashMenuItems';
 import { sxToArray } from '~/lib/utils/sxToArray';
@@ -125,7 +123,6 @@ export const BlockNoteEditor = (props: BlockNoteEditorProps) => {
 
   useEffect(() => {
     setIsMounted(true);
-
   }, []);
 
   if (!isMounted) {
@@ -151,21 +148,12 @@ export const BlockNoteEditor = (props: BlockNoteEditorProps) => {
           triggerCharacter="/"
           getItems={async (query) => getCustomSlashMenuItems(editor, query, openMediaModal)}
         />
-
         <FormattingToolbarController
-          formattingToolbar={() => {
-            const items = getFormattingToolbarItems();
-            const replaceIndex = items.findIndex((item) => item.key === 'replaceFileButton');
-
-            if (replaceIndex !== -1) {
-              items.splice(
-                replaceIndex,
-                1,
-                <CustomReplaceButton key="customReplaceButton" openMediaModal={openMediaModal} />
-              );
-            }
-            return <FormattingToolbar>{items}</FormattingToolbar>;
-          }}
+          formattingToolbar={() => (
+            <CustomFormattingToolbar
+              openMediaModal={openMediaModal}
+            />
+          )}
         />
       </BlockNoteView>
 

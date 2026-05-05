@@ -135,11 +135,11 @@ describe('CroppedImageBlock', () => {
       renderBlock(defaultProps);
 
       expect(screen.queryByTestId('file-image-icon')).not.toBeInTheDocument();
-      
+
       const image = screen.getByAltText('image.png');
       expect(image).toBeInTheDocument();
       expect(image).toHaveAttribute('src', 'http://example.com/image.png');
-      
+
       const captionInput = screen.getByPlaceholderText('Додати підпис...');
       expect(captionInput).toBeInTheDocument();
       expect(captionInput).toHaveValue('Initial Caption');
@@ -156,7 +156,7 @@ describe('CroppedImageBlock', () => {
 
       expect(mockEditor.updateBlock).toHaveBeenCalledWith('test-block', {
         type: 'image',
-        props: { showPreview: true } 
+        props: { showPreview: true }
       });
     });
 
@@ -174,12 +174,12 @@ describe('CroppedImageBlock', () => {
 
     it('should trigger e.stopPropagation() when pressing a key inside the caption input', () => {
       renderBlock(defaultProps);
-      
+
       const captionInput = screen.getByPlaceholderText('Додати підпис...') as HTMLElement;
-      
+
       const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
       const stopPropagationSpy = jest.spyOn(event, 'stopPropagation');
-      
+
       fireEvent(captionInput, event);
 
       expect(stopPropagationSpy).toHaveBeenCalledTimes(1);
@@ -207,9 +207,9 @@ describe('CroppedImageBlock', () => {
       renderBlock(defaultProps);
 
       const dragHandle = screen.getByTestId('grip-horizontal-icon').parentElement as HTMLElement;
-      
+
       fireEvent.mouseDown(dragHandle, { clientX: 500 });
-      fireEvent.mouseMove(document, { clientX: 100 }); 
+      fireEvent.mouseMove(document, { clientX: 100 });
       fireEvent.mouseUp(document, { clientX: 100 });
 
       expect(mockEditor.updateBlock).toHaveBeenCalledWith('test-block', {
@@ -246,13 +246,13 @@ describe('CroppedImageBlock', () => {
 
     it('should correctly reconstruct props from an img element in parse', () => {
       const element = document.createElement('img');
-      element.setAttribute('src', 'http://test.com/parsed.jpg');
-      element.setAttribute('data-custom-cropped', 'true');
-      element.setAttribute('data-width', '400');
-      element.setAttribute('alt', 'parsed.jpg');
-      element.setAttribute('data-crop-data', '{"x":50}');
-      element.setAttribute('data-preview', 'true');
-      element.setAttribute('data-caption', 'Parsed Caption');
+      element.dataset.src = 'http://test.com/parsed.jpg';
+      element.dataset.customCropped = 'true';
+      element.dataset.width = '400';
+      element.dataset.alt = 'parsed.jpg';
+      element.dataset.cropData = '{"x":50}';
+      element.dataset.preview = 'true';
+      element.dataset.caption = 'Parsed Caption';
 
       const parsedProps = blockImplementation.parse(element);
 
@@ -265,11 +265,11 @@ describe('CroppedImageBlock', () => {
         caption: 'Parsed Caption'
       });
     });
-      
+
     it('should return undefined in parse if element does not have data-custom-cropped', () => {
       const element = document.createElement('div');
       const parsedProps = blockImplementation.parse(element);
-      
+
       expect(parsedProps).toBeUndefined();
     });
   });

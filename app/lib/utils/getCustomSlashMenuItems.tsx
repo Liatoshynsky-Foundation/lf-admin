@@ -5,7 +5,7 @@ import { StrictBlockNoteEditor } from '~/shared/components/content-editor/types'
 import { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 
 export const getCustomSlashMenuItems = (
-  editor: StrictBlockNoteEditor, 
+  editor: StrictBlockNoteEditor,
   query: string,
   openMediaModal: () => Promise<MediaModalResult | null>
 ) => {
@@ -44,15 +44,9 @@ export const getCustomSlashMenuItems = (
     }
   };
 
-  const EXCLUDED_TITLES = ['Image', 'Image (Upload)', 'Video', 'File', 'Audio'];
-  const filteredItems = defaultItems.filter((item) => !EXCLUDED_TITLES.includes(item.title));
+  const filteredItems = defaultItems.filter((item) => item.group !== 'Media');
 
-  const mediaGroupIndex = filteredItems.findIndex((item) => item.group === 'Media');
-  if (mediaGroupIndex !== -1) {
-    filteredItems.splice(mediaGroupIndex, 0, customImageItem);
-  } else {
-    filteredItems.push(customImageItem);
-  }
+  filteredItems.push(customImageItem);
 
   const queryLower = query.toLowerCase();
   return filteredItems.filter(
