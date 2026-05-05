@@ -4,7 +4,7 @@ import { createBaseRepository } from '../baseRepository/baseRepository';
 import { EventsEntity } from '~/domain/entities/Events';
 import { CreateEventInput, EventFilters, IEventsRepository } from '~/domain/repositories/eventsRepository';
 import dbConnect from '~/infrastructure/db/connect';
-import {buildBaseQuery, createToEntity, getBaseSort} from '~/infrastructure/repositories/helpers';
+import { buildBaseQuery, createToEntity, getBaseSort } from '~/infrastructure/repositories/helpers';
 import { EventStatus } from '~/types/enums/common.enums';
 
 export type DbEvent = {
@@ -23,15 +23,20 @@ export type DbEvent = {
     meta: EventsEntity['meta'];
     createdAt: string;
     updatedAt: string;
-    eventDateTimeStart: string;
-    eventDateTimeEnd: string;
+    eventDateTimeStart: Date | null;
+    eventDateTimeEnd: Date | null;
     ticketUrl?: EventsEntity['ticketUrl'];
-
 };
 
 type EventRepoDeps = Readonly<{
     EventModel: Model<DbEvent>;
 }>;
+
+const formatEventDate = (date: Date | string | null | undefined): string | undefined => {
+  if (!date) return undefined;
+  const d = date instanceof Date ? date : new Date(date);
+  return d.toISOString();
+};
 
 const toEntity = (doc: DbEvent): EventsEntity =>
   createToEntity<EventsEntity, DbEvent>(doc, {
@@ -47,10 +52,10 @@ const toEntity = (doc: DbEvent): EventsEntity =>
     status: doc.status,
     meta: doc.meta,
     publishedAt: doc.publishedAt ?? undefined,
-    eventDateTimeStart: doc.eventDateTimeStart ?? undefined,
-    eventDateTimeEnd: doc.eventDateTimeEnd ?? undefined,
+    eventDateTimeStart: formatEventDate(doc.eventDateTimeStart),
+    eventDateTimeEnd: formatEventDate(doc.eventDateTimeEnd),
     ticketUrl: doc.ticketUrl ?? null,
-  });
+  }, { isEvent: true });
 
 export const EventsRepository = ({ EventModel }: EventRepoDeps): IEventsRepository => {
   const baseRepo = createBaseRepository<EventsEntity, DbEvent, EventFilters>({

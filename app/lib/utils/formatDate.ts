@@ -1,3 +1,7 @@
 export function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('uk-UA');
+  const value = Number(dateString);
+  const d = !isNaN(value) && String(value) === dateString
+    ? new Date(value)
+    : new Date(dateString);
+  return d.toLocaleDateString('uk-UA');
 }

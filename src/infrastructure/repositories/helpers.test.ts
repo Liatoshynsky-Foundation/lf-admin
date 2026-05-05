@@ -1,100 +1,105 @@
 import { buildBaseQuery, createToEntity, getBaseSort } from './helpers';
-import { BaseEntity } from '~/domain/repositories/baseRepository';
 import { SortByDate, SortOrder } from '~/types/enums/common.enums';
 
 describe('Repository Helpers', () => {
-
   describe('createToEntity', () => {
-        interface TestEntity extends BaseEntity {
-            title: string;
-            isActive: boolean;
-        }
+    interface TestEntity {
+      id: string;
+      title: string;
+      isActive: boolean;
+      createdAt: string;
+      updatedAt: string;
+    }
 
-        interface TestDbDoc {
-            _id: { toString(): string };
-            createdAt: string;
-            updatedAt: string;
-            title: string;
-            isActive: boolean;
-        }
+    interface TestDbDoc {
+      _id: { toString(): string };
+      createdAt: Date;
+      updatedAt: Date;
+      title: string;
+      isActive: boolean;
+    }
 
-        it('should correctly map DB document to Entity', () => {
-          const mockDbDoc: TestDbDoc = {
-            _id: { toString: () => '507f1f77bcf86cd799439011' },
-            createdAt: '2026-03-12T10:00:00Z',
-            updatedAt: '2026-03-12T11:00:00Z',
-            title: 'Test Title',
-            isActive: true
-          };
+    it('should correctly map DB document to Entity', () => {
+      const mockDbDoc: TestDbDoc = {
+        _id: { toString: () => '507f1f77bcf86cd799439011' },
+        createdAt: new Date('2026-03-12T10:00:00Z'),
+        updatedAt: new Date('2026-03-12T11:00:00Z'),
+        title: 'Test Title',
+        isActive: true
+      };
 
-          const extraFields = {
-            title: mockDbDoc.title,
-            isActive: mockDbDoc.isActive
-          };
+      const result = createToEntity<TestEntity, TestDbDoc>(mockDbDoc, {
+        title: mockDbDoc.title,
+        isActive: mockDbDoc.isActive
+      });
 
-          const result = createToEntity<TestEntity, TestDbDoc>(mockDbDoc, extraFields);
-
-          expect(result).toEqual({
-            id: '507f1f77bcf86cd799439011',
-            createdAt: '2026-03-12T10:00:00Z',
-            updatedAt: '2026-03-12T11:00:00Z',
-            title: 'Test Title',
-            isActive: true
-          });
-        });
+      expect(result).toEqual({
+        id: '507f1f77bcf86cd799439011',
+        createdAt: '2026-03-12T10:00:00.000Z',
+        updatedAt: '2026-03-12T11:00:00.000Z',
+        title: 'Test Title',
+        isActive: true
+      });
+    });
   });
 
   describe('buildBaseQuery', () => {
-        interface MockDbModel {
-            status: string;
-            slug: string;
-        }
+    interface MockDbModel {
+      status: string;
+      slug: string;
+    }
 
-        it('should return empty object when no filters provided', () => {
-          expect(buildBaseQuery<MockDbModel>()).toEqual({});
-        });
+    it('should return empty object when no filters provided', () => {
+      expect(buildBaseQuery<MockDbModel>()).toEqual({});
+    });
 
-        it('should include status in query if provided', () => {
-          const filters = { statuses: ['published'] };
-          const result = buildBaseQuery<MockDbModel>(filters);
-          expect(result).toEqual({ status: { $in: ['published'] } });
-        });
+    it('should include status in query if provided', () => {
+      const filters = { statuses: ['published'] };
+      const result = buildBaseQuery<MockDbModel>(filters);
+      expect(result).toEqual({ status: { $in: ['published'] } });
+    });
 
-        it('should include slug in query if provided', () => {
-          const filters = { slug: 'some-slug' };
-          const result = buildBaseQuery<MockDbModel>(filters);
-          expect(result).toEqual({ slug: 'some-slug' });
-        });
+    it('should include slug in query if provided', () => {
+      const filters = { slug: 'some-slug' };
+      const result = buildBaseQuery<MockDbModel>(filters);
+      expect(result).toEqual({ slug: 'some-slug' });
+    });
 
-        it('should include both status and slug', () => {
-          const filters = { statuses: ['draft'], slug: 'my-post' };
-          const result = buildBaseQuery<MockDbModel>(filters);
-          expect(result).toEqual({
-            $and: [
-              { status: { $in: ['draft'] } },
-              { slug: 'my-post' }
+    it('should include both status and slug', () => {
+      const filters = { statuses: ['draft'], slug: 'my-post' };
+      const result = buildBaseQuery<MockDbModel>(filters);
+
+      expect(result).toEqual({
+        $and: [
+          { status: { $in: ['draft'] } },
+          { slug: 'my-post' }
+        ]
+      });
+    });
+
+    it('should combine base filters with search conditions using $and', () => {
+      const filters = {
+        statuses: ['draft'],
+        slug: 'my-post',
+        search: 'festival'
+      };
+
+      const result = buildBaseQuery<MockDbModel>(filters);
+
+      expect(result).toEqual({
+        $and: [
+          { status: { $in: ['draft'] } },
+          { slug: 'my-post' },
+          {
+            $or: [
+              { adminTitle: /festival/i },
+              { 'title.uk': /festival/i },
+              { 'title.en': /festival/i }
             ]
-          });
-        });
-
-        it('should combine base filters with search conditions using $and', () => {
-          const filters = { statuses: ['draft'], slug: 'my-post', search: 'festival' };
-          const result = buildBaseQuery<MockDbModel>(filters);
-
-          expect(result).toEqual({
-            $and: [
-              { status: { $in: ['draft'] } },
-              { slug: 'my-post' },
-              {
-                $or: [
-                  { adminTitle: /festival/i },
-                  { 'title.uk': /festival/i },
-                  { 'title.en': /festival/i }
-                ]
-              }
-            ]
-          });
-        });
+          }
+        ]
+      });
+    });
   });
 
   describe('getBaseSort', () => {
@@ -108,16 +113,16 @@ describe('Repository Helpers', () => {
       const filters = {
         sort: [{ sortBy: SortByDate.PublishedAt, sortOrder: SortOrder.Asc }]
       };
-      const result = getBaseSort(filters);
-      expect(result).toEqual({ publishedAt: 1 });
+
+      expect(getBaseSort(filters)).toEqual({ publishedAt: 1 });
     });
 
     it('should map SortOrder.Desc to -1', () => {
       const filters = {
         sort: [{ sortBy: SortByDate.AdminTitle, sortOrder: SortOrder.Desc }]
       };
-      const result = getBaseSort(filters);
-      expect(result).toEqual({ adminTitle: -1 });
+
+      expect(getBaseSort(filters)).toEqual({ adminTitle: -1 });
     });
 
     it('should only use the first sort criteria if multiple are provided', () => {
@@ -127,8 +132,8 @@ describe('Repository Helpers', () => {
           { sortBy: SortByDate.UpdatedAt, sortOrder: SortOrder.Asc }
         ]
       };
-      const result = getBaseSort(filters);
-      expect(result).toEqual({ createdAt: -1 });
+
+      expect(getBaseSort(filters)).toEqual({ createdAt: -1 });
     });
   });
 });

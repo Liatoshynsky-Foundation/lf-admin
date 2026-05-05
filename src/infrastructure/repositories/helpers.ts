@@ -5,7 +5,8 @@ import { BaseEntity, FiltersInput } from '~/domain/repositories/baseRepository';
 const NON_EMPTY_STRING_QUERY = { $nin: ['', null] } as const;
 const EMPTY_STRING_QUERY = { $in: ['', null] } as const;
 
-const escapeRegex = (value: string): string => value.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+const escapeRegex = (value: string): string =>
+  value.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 
 const getLanguageCondition = <TDb>(language: string): FilterQuery<TDb> | null => {
   if (language === 'uk') {
@@ -29,21 +30,39 @@ const getLanguageCondition = <TDb>(language: string): FilterQuery<TDb> | null =>
   return null;
 };
 
+type BaseMappedEntity = BaseEntity & {
+  createdAt: string;
+  updatedAt: string;
+};
+
+const formatDate = (date: string | Date): string => {
+  const d = date instanceof Date ? date : new Date(date);
+  return d.toISOString();
+};
+
 export const createToEntity = <
-  TEntity extends BaseEntity,
-  TDb extends { _id: { toString(): string }; createdAt: string | Date; updatedAt: string | Date }
+  TEntity extends BaseMappedEntity,
+  TDb extends {
+    _id: { toString(): string };
+    createdAt: string | Date;
+    updatedAt: string | Date;
+  }
 >(
     doc: TDb,
-    extraFields: Omit<TEntity, keyof BaseEntity>
-  ): TEntity =>
-  ({
+    extraFields: Omit<TEntity, keyof BaseMappedEntity>,
+    _options?: { isEvent?: boolean }
+  ): TEntity => {
+  return {
     id: doc._id.toString(),
-    createdAt: doc.createdAt,
-    updatedAt: doc.updatedAt,
+    createdAt: formatDate(doc.createdAt),
+    updatedAt: formatDate(doc.updatedAt),
     ...extraFields
-  }) as TEntity;
+  } as TEntity;
+};
 
-export const buildBaseQuery = <TDb>(filters?: FiltersInput & { statuses?: string[] }): FilterQuery<TDb> => {
+export const buildBaseQuery = <TDb>(
+  filters?: FiltersInput & { statuses?: string[] }
+): FilterQuery<TDb> => {
   const conditions: FilterQuery<TDb>[] = [];
 
   if (filters?.statuses?.length) {
@@ -58,7 +77,11 @@ export const buildBaseQuery = <TDb>(filters?: FiltersInput & { statuses?: string
     const searchRegex = new RegExp(escapeRegex(filters.search.trim()), 'i');
 
     conditions.push({
-      $or: [{ adminTitle: searchRegex }, { 'title.uk': searchRegex }, { 'title.en': searchRegex }]
+      $or: [
+        { adminTitle: searchRegex },
+        { 'title.uk': searchRegex },
+        { 'title.en': searchRegex }
+      ]
     } as FilterQuery<TDb>);
   }
 
@@ -83,9 +106,12 @@ export const buildBaseQuery = <TDb>(filters?: FiltersInput & { statuses?: string
   return { $and: conditions } as FilterQuery<TDb>;
 };
 
-export const getBaseSort = (filters?: FiltersInput): Record<string, 1 | -1> => {
+export const getBaseSort = (
+  filters?: FiltersInput
+): Record<string, 1 | -1> => {
   if (filters?.sort?.length) {
     const { sortBy, sortOrder } = filters.sort[0];
+
     return {
       [sortBy]: sortOrder === 'asc' ? 1 : -1
     };
