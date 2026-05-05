@@ -28,9 +28,12 @@ import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 interface PublicationViewProps {
   data: ReturnType<typeof useUpsertPublication>;
+  mode?: 'edit' | 'create';
 }
 
-export default function CreatePublicationsView({ data }: Readonly<PublicationViewProps>) {
+
+
+export default function CreatePublicationsView({ data, mode = 'create' }: Readonly<PublicationViewProps>) {
   const {
     publicationType,
     adminTitle,
@@ -144,7 +147,7 @@ export default function CreatePublicationsView({ data }: Readonly<PublicationVie
           )
         }
       >
-        <Typography variant="customBold20Tight">{`Створення ${PAGE_TITLES[publicationType]}`}</Typography>
+        <Typography variant="customBold20Tight">{`${mode === 'edit' ? 'Редагування' : 'Створення'} ${PAGE_TITLES[publicationType]}`}</Typography>
       </DividedHeader>
       <Box sx={styles.contentWrapper}>
         <SeoCollapsibleBlock

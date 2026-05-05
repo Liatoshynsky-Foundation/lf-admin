@@ -87,7 +87,7 @@ describe('CreatePublicationsView Component', () => {
   });
 
   describe('Rendering by Publication Type', () => {
-    it('renders correctly for News (no extra SEO fields)', () => {
+    it('should render correctly for News (no extra SEO fields)', () => {
       const mockData = createMockData({ publicationType: 'news' });
       render(<CreatePublicationsView data={mockData} />);
 
@@ -99,7 +99,7 @@ describe('CreatePublicationsView Component', () => {
       expect(screen.queryByTestId('mock-seo-canonical-url-field')).not.toBeInTheDocument();
     });
 
-    it('renders correctly for Events (includes DateTime fields)', () => {
+    it('should render correctly for Events (includes DateTime fields)', () => {
       const mockData = createMockData({ publicationType: 'events' });
       render(<CreatePublicationsView data={mockData} />);
 
@@ -107,7 +107,7 @@ describe('CreatePublicationsView Component', () => {
       expect(screen.getByTestId('mock-seo-datetime-fields')).toBeInTheDocument();
     });
 
-    it('renders correctly for Media (includes Canonical URL field)', () => {
+    it('should render correctly for Media (includes Canonical URL field)', () => {
       const mockData = createMockData({ publicationType: 'media' });
       render(<CreatePublicationsView data={mockData} />);
 
@@ -117,7 +117,7 @@ describe('CreatePublicationsView Component', () => {
   });
 
   describe('User Interactions', () => {
-    it('calls setAdminTitle when the admin title input changes', () => {
+    it('should call setAdminTitle when the admin title input changes', () => {
       const mockSetAdminTitle = jest.fn();
       const mockData = createMockData({
         publicationType: 'news',
@@ -133,7 +133,7 @@ describe('CreatePublicationsView Component', () => {
       expect(mockSetAdminTitle).toHaveBeenCalledWith('New Test Title');
     });
 
-    it('displays an error message on the admin title field if adminTitleError is present', () => {
+    it('should display an error message on the admin title field if adminTitleError is present', () => {
       const mockData = createMockData({
         publicationType: 'news',
         adminTitleError: 'Обов\'язкове поле'
@@ -143,7 +143,7 @@ describe('CreatePublicationsView Component', () => {
       expect(screen.getByText('Обов\'язкове поле')).toBeInTheDocument();
     });
 
-    it('calls setPublishDate when the date picker value changes', () => {
+    it('should call setPublishDate when the date picker value changes', () => {
       const mockSetPublishDate = jest.fn();
       const mockData = createMockData({
         publicationType: 'news',
