@@ -35,8 +35,10 @@ type BaseMappedEntity = BaseEntity & {
   updatedAt: string;
 };
 
-const formatDate = (date: string | Date): string => {
+const formatDate = (date: string | Date | undefined | null): string => {
+  if (!date) return new Date(0).toISOString();
   const d = date instanceof Date ? date : new Date(date);
+  if (isNaN(d.getTime())) return new Date(0).toISOString();
   return d.toISOString();
 };
 
