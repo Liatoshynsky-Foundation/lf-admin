@@ -7,18 +7,23 @@
     "strict": true, // Enable strict type-checking options
     "noEmit": true, // Do not emit output files (used for type-checking only)
     "esModuleInterop": true, // Enables compatibility between CommonJS and ES Modules
-    "module": "esnext", // Use ESNext module resolution
-    "moduleResolution": "node", // Use Node module resolution strategy
+
+    "module": "esnext", // Use ESNext modules
+    "moduleResolution": "bundler", // Modern resolution for Next.js + Turbopack (replaces deprecated node)
+
     "resolveJsonModule": true, // Allow importing JSON modules
     "isolatedModules": true, // Ensure each file is treated as an isolated module
-    "incremental": true, // Enable incremental compilation for faster builds
-    "jsx": "preserve",
+    "incremental": true, // Enable incremental compilation (optional for Next.js)
+
+    "jsx": "preserve", // Let Next.js handle JSX transformation
+
     "plugins": [
       {
         "name": "next"
       }
     ],
-    "baseUrl": "./", // Base URL for module resolution
+
+    "baseUrl": ".", // Base URL for module resolution
     "paths": {
       "~/*": ["./app/*"],
       "~/src/*": ["./src/*"],
@@ -44,8 +49,11 @@
       "~/uploads": ["./src/uploads"],
       "~/uploads/*": ["./src/uploads/*"],
       "~/public/*": ["./public/*"] // Path alias for easier imports
-    }
+    },
+
+    "ignoreDeprecations": "6.0" // Suppress TS6 deprecation warnings (baseUrl, etc.)
   },
+
   "include": [
     "next-env.d.ts",
     "**/*.ts",
@@ -53,5 +61,6 @@
     ".next/types/**/*.ts",
     "jest.config.ts" // Include Jest config file for TypeScript support
   ],
+
   "exclude": ["node_modules"] // Exclude node_modules from compilation
 }

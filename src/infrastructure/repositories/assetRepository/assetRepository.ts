@@ -119,6 +119,15 @@ const getAssetSort = (filters?: AssetFilters): Record<string, 1 | -1> => {
 
 export type UpdateAssetData = Partial<Pick<AssetEntity, 'isStarred' | 'filename' | 'description'>>;
 
+export type CreateAssetData = {
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  url: string;
+  type: AssetType;
+  description?: string;
+};
+
 export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
   const baseRepo = createBaseRepository<AssetEntity, DbAsset, AssetFilters>({
     model: AssetModel,
@@ -133,8 +142,22 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
     return updatedDoc ? toEntity(updatedDoc) : null;
   };
 
+  const createAsset = async (data: CreateAssetData): Promise<AssetEntity> => {
+    const newDoc = await AssetModel.create({
+      ...data,
+      isStarred: false,
+      tags: [],
+      usageRefs: [],
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    return toEntity(newDoc);
+  };
+
   return {
     ...baseRepo,
-    updateAsset
+    updateAsset,
+    createAsset
   };
 };
