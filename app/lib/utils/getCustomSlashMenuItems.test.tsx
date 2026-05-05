@@ -48,14 +48,14 @@ describe('getCustomSlashMenuItems', () => {
   });
 
   describe('Menu Composition and Filtering', () => {
-    it('should exclude forbidden titles and inject the custom "Picture" item', () => {
+    it('should exclude the entire original "Media" group and inject the custom "Picture" item', () => {
       const items = getCustomSlashMenuItems(mockEditor, '', mockOpenMediaModal);
-
       const titles = items.map((item) => item.title);
 
       expect(titles).not.toContain('Image');
       expect(titles).not.toContain('Video');
       expect(titles).not.toContain('File');
+      expect(titles).not.toContain('Divider');
       
       expect(titles).toContain('Picture');
       expect(titles).toContain('Heading 1');
@@ -73,28 +73,24 @@ describe('getCustomSlashMenuItems', () => {
 
     it('should filter items based on the query matching the title', () => {
       const items = getCustomSlashMenuItems(mockEditor, 'head', mockOpenMediaModal);
-      
       expect(items).toHaveLength(1);
       expect(items[0].title).toBe('Heading 1');
     });
 
     it('should filter items based on the query matching an alias', () => {
       const items = getCustomSlashMenuItems(mockEditor, 'ul', mockOpenMediaModal);
-      
       expect(items).toHaveLength(1);
       expect(items[0].title).toBe('List');
     });
 
     it('should return the custom Picture item if queried by its aliases', () => {
       const items = getCustomSlashMenuItems(mockEditor, 'зображення', mockOpenMediaModal);
-      
       expect(items).toHaveLength(1);
       expect(items[0].title).toBe('Picture');
     });
 
     it('should return an empty array if query matches nothing', () => {
       const items = getCustomSlashMenuItems(mockEditor, 'nonexistentquery', mockOpenMediaModal);
-      
       expect(items).toHaveLength(0);
     });
   });
@@ -107,131 +103,73 @@ describe('getCustomSlashMenuItems', () => {
       pictureItemOnClick = items[0].onItemClick!;
     });
 
-    it('should not insert blocks if the modal is cancelled (returns null)', async () => {
-      mockOpenMediaModal.mockResolvedValue(null);
-
+    const triggerClick = async (result: MediaModalResult | null) => {
+      mockOpenMediaModal.mockResolvedValue(result);
       await pictureItemOnClick();
+    };
 
-      expect(mockOpenMediaModal).toHaveBeenCalledTimes(1);
+    const expectNoInsert = async (result: MediaModalResult | null) => {
+      await triggerClick(result);
       expect(mockInsertBlocks).not.toHaveBeenCalled();
-    });
+    };
 
-    it('should not insert blocks if the modal returns an upload without a valid URL', async () => {
-      const mockResult: MediaModalResult = {
-        selected: { 
-          kind: 'upload', 
-          id: 'up-1', 
-          fileName: 'err.jpg', 
-          file: new File([], 'err.jpg') 
-        },
-        crop: null,
-        uploadResult: undefined 
-      };
-      
-      mockOpenMediaModal.mockResolvedValue(mockResult);
-
-      await pictureItemOnClick();
-
-      expect(mockInsertBlocks).not.toHaveBeenCalled();
-    });
-
-    it('should insert a image block when an uploaded image is successfully returned', async () => {
-      const mockResult: MediaModalResult = {
-        selected: { 
-          kind: 'upload', 
-          id: 'up-2', 
-          fileName: 'my-uploaded-file.jpg', 
-          file: new File([], 'my-uploaded-file.jpg') 
-        },
-        crop: { width: 500, height: 500, x: 10, y: 10 } as unknown as  CropResult,
-        uploadResult: { 
-          url: 'https://example.com/uploaded.jpg',
-          filename: 'hash-name.jpg',
-          originalName: 'my-uploaded-file.jpg',
-          mimeType: 'image/jpeg',
-          size: 1024
-        }
-      };
-      
-      mockOpenMediaModal.mockResolvedValue(mockResult);
-
-      await pictureItemOnClick();
-
+    const expectInsert = async (result: MediaModalResult, expectedProps: Record<string, unknown>) => {
+      await triggerClick(result);
       expect(mockGetTextCursorPosition).toHaveBeenCalled();
       expect(mockInsertBlocks).toHaveBeenCalledWith(
-        [
-          {
-            type: 'image',
-            props: {
-              url: 'https://example.com/uploaded.jpg',
-              cropData: JSON.stringify({ width: 500, height: 500, x: 10, y: 10 }),
-              fileName: 'my-uploaded-file.jpg'
-            }
-          }
-        ],
+        [{ type: 'image', props: expectedProps }],
         { id: 'mock-block-id' },
         'after'
       );
+    };
+
+    it('should not insert blocks if the modal is cancelled (returns null)', async () => {
+      await expectNoInsert(null);
+      expect(mockOpenMediaModal).toHaveBeenCalledTimes(1);
     });
 
-    it('should insert a image block when a gallery/library image is selected', async () => {
-      const mockResult: MediaModalResult = {
-        selected: { 
-          kind: 'gallery', 
-          id: 'gal-1', 
-          src: 'https://example.com/gallery-img.png', 
-          fileName: 'gallery-pic.png',
-          locale: 'en'
-        },
+    it('should not insert blocks if the modal returns an upload without a valid uploadResult', async () => {
+      await expectNoInsert({
+        selected: { kind: 'upload', id: 'up-1', fileName: 'err.jpg', file: new File([], 'err.jpg') },
+        crop: null,
+        uploadResult: undefined 
+      });
+    });
+
+    it('should insert an image block when an uploaded image is successfully returned', async () => {
+      await expectInsert({
+        selected: { kind: 'upload', id: 'up-2', fileName: 'my-uploaded-file.jpg', file: new File([], 'my-uploaded-file.jpg') },
+        crop: { width: 500, height: 500, x: 10, y: 10 } as unknown as CropResult,
+        uploadResult: { url: 'https://example.com/uploaded.jpg', filename: 'hash-name.jpg', originalName: 'my-uploaded-file.jpg', mimeType: 'image/jpeg', size: 1024 }
+      }, {
+        url: 'https://example.com/uploaded.jpg',
+        cropData: JSON.stringify({ width: 500, height: 500, x: 10, y: 10 }),
+        fileName: 'my-uploaded-file.jpg'
+      });
+    });
+
+    it('should insert an image block when a gallery/library image is selected', async () => {
+      await expectInsert({
+        selected: { kind: 'gallery', id: 'gal-1', src: 'https://example.com/gallery-img.png', fileName: 'gallery-pic.png', locale: 'en' },
         crop: null, 
         uploadResult: undefined
-      };
-      
-      mockOpenMediaModal.mockResolvedValue(mockResult);
-
-      await pictureItemOnClick();
-
-      expect(mockInsertBlocks).toHaveBeenCalledWith(
-        [
-          {
-            type: 'image',
-            props: {
-              url: 'https://example.com/gallery-img.png',
-              cropData: '{}', 
-              fileName: 'gallery-pic.png'
-            }
-          }
-        ],
-        { id: 'mock-block-id' },
-        'after'
-      );
+      }, {
+        url: 'https://example.com/gallery-img.png',
+        cropData: '{}', 
+        fileName: 'gallery-pic.png'
+      });
     });
 
     it('should fallback to "image" if fileName is falsy', async () => {
-      const mockResult: MediaModalResult = {
-        selected: { 
-          kind: 'used', 
-          id: 'usd-1', 
-          src: 'https://example.com/no-name.png', 
-          fileName: '', 
-          locale: 'uk'
-        },
+      await expectInsert({
+        selected: { kind: 'used', id: 'usd-1', src: 'https://example.com/no-name.png', fileName: '', locale: 'uk' },
         crop: null,
         uploadResult: undefined
-      };
-      
-      mockOpenMediaModal.mockResolvedValue(mockResult);
-
-      await pictureItemOnClick();
-
-      expect(mockInsertBlocks).toHaveBeenCalledWith(
-        expect.any(Array),
-        { id: 'mock-block-id' },
-        'after'
-      );
-
-      const insertedProps = mockInsertBlocks.mock.calls[0][0][0].props;
-      expect(insertedProps.fileName).toBe('image');
+      }, {
+        url: 'https://example.com/no-name.png',
+        cropData: '{}',
+        fileName: 'image'
+      });
     });
   });
 });
