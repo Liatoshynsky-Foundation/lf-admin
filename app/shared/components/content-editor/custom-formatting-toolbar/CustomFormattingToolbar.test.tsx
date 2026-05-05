@@ -12,16 +12,18 @@ type ToolbarItem = {
 
 jest.mock('@blocknote/react', () => ({
   getFormattingToolbarItems: jest.fn(),
-  FormattingToolbar: ({ children }: { children: React.ReactNode }) => (
+  FormattingToolbar: ({ children }: { children: (React.ReactElement | ToolbarItem)[] }) => (
     <div data-testid="formatting-toolbar">
-      {React.Children.map(children, (child, idx) => {
-        if (React.isValidElement(child)) {
-          return React.cloneElement(child, { key: child.key || String(idx) } as React.Attributes);
-        }
-        
-        const item = child as unknown as ToolbarItem;
-        return <span key={item.key || String(idx)} data-testid={`default-item-${item.key}`}>{item.key}</span>;
-      })}
+      {Array.isArray(children)
+        ? children.map((child, idx) => {
+          if (React.isValidElement(child)) {
+            return React.cloneElement(child, { key: child.key || String(idx) } as React.Attributes);
+          }
+            
+          const item = child as ToolbarItem;
+          return <span key={item.key || String(idx)} data-testid={`default-item-${item.key}`}>{item.key}</span>;
+        })
+        : null}
     </div>
   )
 }));
