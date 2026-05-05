@@ -56,21 +56,7 @@ const CroppedImageRenderer = ({ props }: { props: CroppedImageRendererProps }) =
 
   return (
     <Box sx={[styles.mainContainer, { alignItems: props.block.props.textAlignment }]}>
-      {!props.block.props.showPreview ? (
-        <Paper
-          variant="outlined"
-          sx={styles.fileCard}
-          contentEditable={false}
-          onClick={() => handleUpdateProp('showPreview', true)}
-        >
-          <Box sx={styles.fileIconBox}>
-            <FileImage size={24} />
-          </Box>
-          <Typography variant="body2" sx={styles.fileName}>
-            {props.block.props.fileName}
-          </Typography>
-        </Paper>
-      ) : (
+      {props.block.props.showPreview ? (
         <Box sx={[styles.imageStateContainer, { width: currentWidth }]} contentEditable={false}>
           <Box sx={{ ...cropStyles.container, width: currentWidth, height: currentHeight }}>
             <Image
@@ -94,6 +80,20 @@ const CroppedImageRenderer = ({ props }: { props: CroppedImageRendererProps }) =
             <GripHorizontal size={16} style={{ transform: 'rotate(90deg)' }} />
           </Box>
         </Box>
+      ) : (
+        <Paper
+          variant="outlined"
+          sx={styles.fileCard}
+          contentEditable={false}
+          onClick={() => handleUpdateProp('showPreview', true)}
+        >
+          <Box sx={styles.fileIconBox}>
+            <FileImage size={24} />
+          </Box>
+          <Typography variant="body2" sx={styles.fileName}>
+            {props.block.props.fileName}
+          </Typography>
+        </Paper>
       )}
       {props.block.props.showPreview && (
         <InputBase

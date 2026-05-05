@@ -10,11 +10,7 @@ import {
   defaultStyleSpecs
 } from '@blocknote/core';
 import { BlockNoteView } from '@blocknote/mantine';
-import {
-  FormattingToolbarController,
-  SuggestionMenuController,
-  useCreateBlockNote
-} from '@blocknote/react';
+import { FormattingToolbarController, SuggestionMenuController, useCreateBlockNote } from '@blocknote/react';
 import { Box } from '@mui/material';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -125,6 +121,13 @@ export const BlockNoteEditor = (props: BlockNoteEditorProps) => {
     setIsMounted(true);
   }, []);
 
+  const renderFormattingToolbar = useCallback(
+    () => (
+      <CustomFormattingToolbar  openMediaModal={openMediaModal} />
+    ),
+    [openMediaModal]
+  );
+
   if (!isMounted) {
     return (
       <Box sx={{ ...styles.container, minHeight }}>
@@ -149,11 +152,7 @@ export const BlockNoteEditor = (props: BlockNoteEditorProps) => {
           getItems={async (query) => getCustomSlashMenuItems(editor, query, openMediaModal)}
         />
         <FormattingToolbarController
-          formattingToolbar={() => (
-            <CustomFormattingToolbar
-              openMediaModal={openMediaModal}
-            />
-          )}
+          formattingToolbar={renderFormattingToolbar}
         />
       </BlockNoteView>
 
