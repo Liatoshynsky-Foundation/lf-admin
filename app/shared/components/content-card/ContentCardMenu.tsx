@@ -21,7 +21,7 @@ const ContentCardMenu = ({
   onClose,
   editHref,
   setDeleteModalOpen
-}: ContentCardMenuProps & { editHref?: string; slug: string }) => {
+}: ContentCardMenuProps & { editHref?: string }) => {
   const router = useRouter();
   const open = Boolean(anchorEl);
 

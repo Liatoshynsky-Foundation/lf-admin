@@ -30,7 +30,6 @@ interface ContentCardImage {
 interface ContentCardProps {
   id: string;
   type: ContentType;
-  slug: string;
   coverImage: ContentCardImage;
   title: Partial<LocalizedString>;
   status: string;
@@ -44,7 +43,6 @@ interface ContentCardProps {
 const ContentCard = ({
   id,
   type,
-  slug,
   coverImage,
   title,
   status,
@@ -126,7 +124,6 @@ const ContentCard = ({
                 anchorEl={anchorEl}
                 onClose={handleMenuClose}
                 editHref={editHref}
-                slug={slug}
                 setDeleteModalOpen={setDeleteModalOpen}
               />
             )}
