@@ -99,7 +99,7 @@ export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAct
   const [isDownloading, setIsDownloading] = useState(false);
   const handleDownload = useCallback(async () => {
     if (!file?.downloadUrl || !filename) return;
-
+    requestAction('download');
     try {
       setIsDownloading(true);
 
