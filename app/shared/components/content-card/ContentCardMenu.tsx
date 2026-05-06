@@ -1,38 +1,40 @@
-import { Menu, MenuItem, Typography } from '@mui/material';
+import { Menu, MenuItem } from '@mui/material';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 
 import { ContentType } from './ContentCard';
 import styles from './ContentCardMenu.styles';
 
 interface ContentCardMenuProps {
+  id: string;
   type: ContentType;
   anchorEl: HTMLElement | null;
   onClose: () => void;
   editHref?: string;
-  slug: string;
   setDeleteModalOpen: (open: boolean) => void;
 }
 
 const ContentCardMenu = ({
+  id,
   type,
   anchorEl,
   onClose,
   editHref,
-  slug,
   setDeleteModalOpen
 }: ContentCardMenuProps & { editHref?: string; slug: string }) => {
   const router = useRouter();
   const open = Boolean(anchorEl);
 
-  function handleClick(locale: string) {
+  function handleClick() {
     if (editHref) {
-      router.push(`${editHref}/${locale}`);
+      router.push(editHref);
     } else {
       onClose();
+      toast.error('Invalid url');
     }
   }
 
-  const href = `/publications/${type}/${slug}/seo`;
+  const href = `/publications/${type}/${id}/seo`;
 
   const handleDeleteClick = () => {
     setDeleteModalOpen(true);
@@ -40,12 +42,8 @@ const ContentCardMenu = ({
 
   return (
     <Menu anchorEl={anchorEl} open={open} onClose={onClose} sx={styles.menu}>
-      <Typography sx={styles.menuText}>Мовні версії</Typography>
-      <MenuItem onClick={() => handleClick('en')} sx={styles.menuItem}>
-        Англійська
-      </MenuItem>
-      <MenuItem onClick={() => handleClick('ua')} sx={styles.menuItem}>
-        Українська
+      <MenuItem onClick={() => handleClick()} sx={styles.menuItem}>
+        Чернетка
       </MenuItem>
       <MenuItem onClick={() => router.push(href)} sx={styles.menuItem}>
         SEO налаштування

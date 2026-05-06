@@ -1,7 +1,7 @@
 const styles = {
   menu: {
     '& .MuiPaper-root': {
-      padding: '8px 16px'
+      padding: '8px 0px'
     }
   },
   menuText: {
@@ -12,11 +12,14 @@ const styles = {
     fontFamily: 'Mulish, sans-serif'
   },
   menuItem: {
-    padding: '8px 0',
     fontSize: '16px',
     fontWeight: 500,
     color: '#190D03',
-    fontFamily: 'Mulish, sans-serif'
+    fontFamily: 'Mulish, sans-serif',
+    padding: '8px 16px',
+    '&:hover': {
+      backgroundColor: '#F1F2F7'
+    }
   }
 };
 

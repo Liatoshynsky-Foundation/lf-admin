@@ -26,10 +26,7 @@ describe('ContentCardMenu', () => {
 
   it('should render menu items', () => {
     render(<ContentCardMenu {...defaultProps} />);
-
-    expect(screen.getByText('Мовні версії')).toBeInTheDocument();
-    expect(screen.getByText('Англійська')).toBeInTheDocument();
-    expect(screen.getByText('Українська')).toBeInTheDocument();
+    expect(screen.getByText('Чернетка')).toBeInTheDocument();
     expect(screen.getByText('SEO налаштування')).toBeInTheDocument();
     expect(screen.getByText('Видалити')).toBeInTheDocument();
   });
@@ -37,23 +34,15 @@ describe('ContentCardMenu', () => {
   it('should navigate to english version', () => {
     render(<ContentCardMenu {...defaultProps} editHref="/edit" />);
 
-    fireEvent.click(screen.getByText('Англійська'));
+    fireEvent.click(screen.getByText('Чернетка'));
 
-    expect(pushMock).toHaveBeenCalledWith('/edit/en');
-  });
-
-  it('should navigate to ukrainian version', () => {
-    render(<ContentCardMenu {...defaultProps} editHref="/edit" />);
-
-    fireEvent.click(screen.getByText('Українська'));
-
-    expect(pushMock).toHaveBeenCalledWith('/edit/ua');
+    expect(pushMock).toHaveBeenCalledWith('/edit');
   });
 
   it('should call onClose if editHref is not provided', () => {
     render(<ContentCardMenu {...defaultProps} />);
 
-    fireEvent.click(screen.getByText('Англійська'));
+    fireEvent.click(screen.getByText('Чернетка'));
 
     expect(defaultProps.onClose).toHaveBeenCalled();
   });
@@ -63,7 +52,7 @@ describe('ContentCardMenu', () => {
 
     fireEvent.click(screen.getByText('SEO налаштування'));
 
-    expect(pushMock).toHaveBeenCalledWith('/publications/news/test-slug/seo');
+    expect(pushMock).toHaveBeenCalledWith('/publications/news/1/seo');
   });
 
   it('should open delete modal', () => {

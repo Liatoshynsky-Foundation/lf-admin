@@ -15,7 +15,7 @@ import { useDeleteMediaMention } from '~/shared/hooks/use-media-mentions/useMedi
 import { useDeleteNews } from '~/shared/hooks/use-news/useNews';
 import type { LocalizedString } from '~/types/common';
 
-export type ContentType = 'news' | 'event' | 'media';
+export type ContentType = 'news' | 'events' | 'media';
 
 const FALLBACK_IMAGE_SRC = '/images/image.png';
 
@@ -93,7 +93,7 @@ const ContentCard = ({
 
       if (type === 'news') {
         result = await deleteNews({ id });
-      } else if (type === 'event') {
+      } else if (type === 'events') {
         result = await deleteEvent({ id });
       } else if (type === 'media') {
         result = await deleteMediaMention(id);
@@ -121,6 +121,7 @@ const ContentCard = ({
             <EllipsisVertical size={20} />
             {anchorEl && (
               <ContentCardMenu
+                id={id}
                 type={type}
                 anchorEl={anchorEl}
                 onClose={handleMenuClose}
