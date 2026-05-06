@@ -12,7 +12,7 @@ export type FilesTabConfig = Readonly<{
 export const FILE_TABS: ReadonlyArray<FilesTabConfig> = [
   { value: 'all', label: 'Всі', href: '/files' },
   { value: 'image', label: 'Зображення', href: '/files/image' },
-  { value: 'docs', label: 'DOCS', href: '/files/docs', disabled: true },
+  { value: 'docs', label: 'DOCS', href: '/files/docs' },
   { value: 'audio', label: 'Аудіо', href: '/files/audio' },
   { value: 'favorites', label: 'Обрані', href: '/files/favorites' }
 ];
@@ -21,17 +21,48 @@ export const FILES_UPLOAD_ALLOWED_MIME_TYPES = [
   'image/jpeg',
   'image/jpg',
   'image/png',
+  'image/gif',
+  'image/webp',
+  'image/svg+xml',
+  'image/bmp',
   'application/pdf',
   'audio/mpeg',
-  'audio/wav'
+  'audio/wav',
+  'application/zip',
+  'application/x-zip-compressed',
+  'application/vnd.rar',
+  'application/x-rar-compressed',
+  'application/x-rar',
+  'application/octet-stream',
+  'application/x-compressed',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 ] as const;
 
-export const FILES_UPLOAD_ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'pdf', 'mp3', 'wav'] as const;
+export const FILES_UPLOAD_ALLOWED_EXTENSIONS = [
+  'jpg',
+  'jpeg',
+  'png',
+  'gif',
+  'webp',
+  'svg',
+  'bmp',
+  'pdf',
+  'mp3',
+  'wav',
+  'zip',
+  'rar',
+  'docx',
+  'xlsx'
+] as const;
 
-export const FILES_UPLOAD_ACCEPT = FILES_UPLOAD_ALLOWED_MIME_TYPES.join(',');
+export const FILES_UPLOAD_ACCEPT = [
+  ...FILES_UPLOAD_ALLOWED_MIME_TYPES,
+  ...FILES_UPLOAD_ALLOWED_EXTENSIONS.map((ext) => `.${ext}`)
+].join(',');
 export const FILES_PAGE_TITLE = 'Файли';
 export const FILES_UPLOAD_BUTTON_LABEL = 'Завантажити файл';
-export const FILES_UPLOAD_ERROR = 'Підтримуються зображення, PDF та аудіо';
+export const FILES_UPLOAD_ERROR = 'Підтримуються зображення, PDF, аудіо, документи (Docx, Xlsx) та архіви (Zip, Rar)';
 export const FILES_UPLOAD_READ_ERROR = 'Не вдалося прочитати файл для завантаження.';
 export const FILES_UPLOAD_FAILED_ERROR = 'Не вдалося завантажити файл. Спробуйте ще раз.';
 export const FILES_UNKNOWN_SECTION_LABEL = 'Невідомий розділ';
@@ -42,9 +73,11 @@ export const FILES_ERROR_STATE_DESCRIPTION = 'Спробуйте оновити 
 export const FILES_EMPTY_STATE_TITLE = 'Файли відсутні';
 export const FILES_EMPTY_STATE_DESCRIPTION = 'Файли для цієї вкладки поки відсутні.';
 export const FILES_EMPTY_STATE_NO_RESULTS_TITLE = 'Результатів немає';
-export const FILES_EMPTY_STATE_NO_RESULTS_DESCRIPTION = 'За цими критеріями нічого не знайдено.\nСпробуйте змінити параметри фільтрів або пошуку.';
+export const FILES_EMPTY_STATE_NO_RESULTS_DESCRIPTION =
+  'За цими критеріями нічого не знайдено.\nСпробуйте змінити параметри фільтрів або пошуку.';
 export const FILES_FAVORITES_EMPTY_STATE_TITLE = 'Немає обраних файлів';
-export const FILES_FAVORITES_EMPTY_STATE_DESCRIPTION = 'Позначайте важливі файли зірочкою, щоб мати до них швидкий доступ тут.';
+export const FILES_FAVORITES_EMPTY_STATE_DESCRIPTION =
+  'Позначайте важливі файли зірочкою, щоб мати до них швидкий доступ тут.';
 export const FILES_FAVORITES_EMPTY_STATE_BUTTON = 'Переглянути всі файли';
 
 export const SORT_OPTIONS: ReadonlyArray<{ value: FilesSortValue; label: string }> = [
@@ -82,4 +115,3 @@ export const SORT_ORDER_OPTIONS: Readonly<
     { value: 'name_desc', label: 'Я-А' }
   ]
 };
-
