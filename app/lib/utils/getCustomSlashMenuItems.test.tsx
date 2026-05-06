@@ -71,22 +71,43 @@ describe('getCustomSlashMenuItems', () => {
       expect(pictureItem?.aliases).toContain('photo');
     });
 
-    it('should filter items based on the query matching the title', () => {
-      const items = getCustomSlashMenuItems(mockEditor, 'head', mockOpenMediaModal);
-      expect(items).toHaveLength(1);
-      expect(items[0].title).toBe('Heading 1');
-    });
+    describe('Query Filtering', () => {
+      const testCases = [
+        {
+          scenario: 'filter items based on the query matching the title',
+          query: 'head',
+          expectedLength: 1,
+          expectedTitle: 'Heading 1'
+        },
+        {
+          scenario: 'filter items based on the query matching an alias',
+          query: 'ul',
+          expectedLength: 1,
+          expectedTitle: 'List'
+        },
+        {
+          scenario: 'return the custom Picture item if queried by its aliases',
+          query: 'зображення',
+          expectedLength: 1,
+          expectedTitle: 'Picture'
+        },
+        {
+          scenario: 'return an empty array if query matches nothing',
+          query: 'nonexistentquery',
+          expectedLength: 0,
+          expectedTitle: undefined
+        }
+      ];
 
-    it('should filter items based on the query matching an alias', () => {
-      const items = getCustomSlashMenuItems(mockEditor, 'ul', mockOpenMediaModal);
-      expect(items).toHaveLength(1);
-      expect(items[0].title).toBe('List');
-    });
-
-    it('should return the custom Picture item if queried by its aliases', () => {
-      const items = getCustomSlashMenuItems(mockEditor, 'зображення', mockOpenMediaModal);
-      expect(items).toHaveLength(1);
-      expect(items[0].title).toBe('Picture');
+      it.each(testCases)('should $scenario', ({ query, expectedLength, expectedTitle }) => {
+        const items = getCustomSlashMenuItems(mockEditor, query, mockOpenMediaModal);
+        
+        expect(items).toHaveLength(expectedLength);
+        
+        if (expectedLength > 0) {
+          expect(items[0].title).toBe(expectedTitle);
+        }
+      });
     });
 
     it('should return an empty array if query matches nothing', () => {

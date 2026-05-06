@@ -102,47 +102,64 @@ describe('CustomReplaceButton', () => {
       await expectNoUpdate(null);
     });
 
-    it('should not update the block if the modal returns an upload without a valid uploadResult', async () => {
-      await expectNoUpdate({
-        selected: { kind: 'upload', id: 'up-1', fileName: 'err.jpg', file: new File([], 'err.jpg') },
-        crop: null,
-        uploadResult: undefined
-      });
-    });
+    describe('Modal Return Scenarios', () => {
+      const testCases = [
+        {
+          scenario: 'not update the block if the modal returns an upload without a valid uploadResult',
+          modalResult: {
+            selected: { kind: 'upload', id: 'up-1', fileName: 'err.jpg', file: new File([], 'err.jpg') },
+            crop: null,
+            uploadResult: undefined
+          },
+          expectedProps: null 
+        },
+        {
+          scenario: 'update the block correctly when an uploaded image is successfully returned',
+          modalResult: {
+            selected: { kind: 'upload', id: 'up-2', fileName: 'my-uploaded-file.jpg', file: new File([], 'my-uploaded-file.jpg') },
+            crop: { width: 500, height: 500, x: 10, y: 10 } as unknown as CropResult,
+            uploadResult: { url: 'https://example.com/uploaded.jpg', filename: 'hash.jpg', originalName: 'file.jpg', mimeType: 'image/jpeg', size: 1024 }
+          },
+          expectedProps: {
+            url: 'https://example.com/uploaded.jpg',
+            cropData: JSON.stringify({ width: 500, height: 500, x: 10, y: 10 }),
+            fileName: 'my-uploaded-file.jpg'
+          }
+        },
+        {
+          scenario: 'update the block correctly when a gallery image is selected',
+          modalResult: {
+            selected: { kind: 'gallery', id: 'gal-1', src: 'https://example.com/gallery-img.png', fileName: 'gallery-pic.png', locale: 'en' },
+            crop: null,
+            uploadResult: undefined
+          },
+          expectedProps: {
+            url: 'https://example.com/gallery-img.png',
+            cropData: '{}',
+            fileName: 'gallery-pic.png'
+          }
+        },
+        {
+          scenario: 'fallback to "image" if fileName is falsy',
+          modalResult: {
+            selected: { kind: 'used', id: 'usd-1', src: 'https://example.com/no-name.png', fileName: '', locale: 'uk' },
+            crop: null,
+            uploadResult: undefined
+          },
+          expectedProps: {
+            url: 'https://example.com/no-name.png',
+            cropData: '{}',
+            fileName: 'image'
+          }
+        }
+      ];
 
-    it('should update the block correctly when an uploaded image is successfully returned', async () => {
-      await expectUpdate({
-        selected: { kind: 'upload', id: 'up-2', fileName: 'my-uploaded-file.jpg', file: new File([], 'my-uploaded-file.jpg') },
-        crop: { width: 500, height: 500, x: 10, y: 10 } as unknown as CropResult,
-        uploadResult: { url: 'https://example.com/uploaded.jpg', filename: 'hash.jpg', originalName: 'file.jpg', mimeType: 'image/jpeg', size: 1024 }
-      }, {
-        url: 'https://example.com/uploaded.jpg',
-        cropData: JSON.stringify({ width: 500, height: 500, x: 10, y: 10 }),
-        fileName: 'my-uploaded-file.jpg'
-      });
-    });
-
-    it('should update the block correctly when a gallery image is selected', async () => {
-      await expectUpdate({
-        selected: { kind: 'gallery', id: 'gal-1', src: 'https://example.com/gallery-img.png', fileName: 'gallery-pic.png', locale: 'en' },
-        crop: null,
-        uploadResult: undefined
-      }, {
-        url: 'https://example.com/gallery-img.png',
-        cropData: '{}',
-        fileName: 'gallery-pic.png'
-      });
-    });
-
-    it('should fallback to "image" if fileName is falsy', async () => {
-      await expectUpdate({
-        selected: { kind: 'used', id: 'usd-1', src: 'https://example.com/no-name.png', fileName: '', locale: 'uk' },
-        crop: null,
-        uploadResult: undefined
-      }, {
-        url: 'https://example.com/no-name.png',
-        cropData: '{}',
-        fileName: 'image'
+      it.each(testCases)('should $scenario', async ({ modalResult, expectedProps }) => {
+        if (expectedProps === null) {
+          await expectNoUpdate(modalResult as MediaModalResult);
+        } else {
+          await expectUpdate(modalResult as MediaModalResult, expectedProps);
+        }
       });
     });
   });
