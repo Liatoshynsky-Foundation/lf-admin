@@ -12,7 +12,7 @@ export type FilesTabConfig = Readonly<{
 export const FILE_TABS: ReadonlyArray<FilesTabConfig> = [
   { value: 'all', label: 'Всі', href: '/files' },
   { value: 'image', label: 'Зображення', href: '/files/image' },
-  { value: 'docs', label: 'DOCS', href: '/files/docs', disabled: true },
+  { value: 'docs', label: 'DOCS', href: '/files/docs' },
   { value: 'audio', label: 'Аудіо', href: '/files/audio' },
   { value: 'favorites', label: 'Обрані', href: '/files/favorites' }
 ];
