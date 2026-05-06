@@ -18,10 +18,13 @@ jest.mock('~/shared/components/design-system/text-field/TextField', () => ({
   CustomTextField: ({
     fullWidth: _f,
     minRows: _m,
+    multiline: _ml,
     ...props
-  }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & { fullWidth?: boolean; minRows?: number }) => (
-    <textarea data-testid="desc" {...props} />
-  )
+  }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
+    fullWidth?: boolean;
+    minRows?: number;
+    multiline?: boolean;
+  }) => <textarea data-testid="desc" {...props} />
 }));
 
 jest.mock('~/lib/utils/formatUsageCount', () => ({
