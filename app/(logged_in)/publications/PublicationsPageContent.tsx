@@ -208,7 +208,7 @@ const isPublicationCardStatus = (status: string): status is PublicationsStatusVa
 
 const mapCardType = (type: PublicationsItemType): ContentType => {
   if (type === 'events') {
-    return 'event';
+    return 'events';
   }
 
   return type;
@@ -557,7 +557,6 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
               <ContentCard
                 id={item.id}
                 type={item.cardType}
-                slug={item.slug}
                 coverImage={item.coverImage}
                 title={item.titleData}
                 status={item.cardStatus}
