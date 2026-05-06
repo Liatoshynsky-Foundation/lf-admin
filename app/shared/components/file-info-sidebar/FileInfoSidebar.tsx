@@ -1,5 +1,6 @@
-import { Avatar, Box, IconButton, Link, Typography } from '@mui/material';
+import { Avatar, Box, CircularProgress, IconButton, Link, Typography } from '@mui/material';
 import React, { useCallback, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import TooltipCustom from '../design-system/tooltip/Tooltip';
 import { styles } from './FileInfoSidebar.styles';
@@ -33,7 +34,7 @@ export type FileDetailsSidebarFile = {
   type: 'image' | 'pdf' | 'audio' | 'document' | 'spreadsheet' | 'video' | 'archive';
   filename: string;
   previewUrl?: string;
-
+  downloadUrl?: string;
   addedBy?: { name: string; avatarUrl?: string };
   addedAt?: string;
 
@@ -95,6 +96,34 @@ export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAct
   const TypeIcon = file?.type ? TYPE_ICON[file.type] : PictureIcon;
 
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const handleDownload = useCallback(async () => {
+    if (!file?.downloadUrl || !filename) return;
+
+    try {
+      setIsDownloading(true);
+
+      const response = await fetch(file.downloadUrl, { cache: 'no-store' });
+      if (!response.ok) throw new Error('Помилка завантаження');
+
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+      toast.success('Файл завантажено');
+    } catch {
+      toast.error('Не вдалося завантажити файл');
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [file?.downloadUrl, filename]);
 
   const openPreview = useCallback(() => {
     if (isImagePreview) setIsPreviewOpen(true);
@@ -186,15 +215,32 @@ export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAct
           </IconButton>
         </TooltipCustom>
 
-        <TooltipCustom title="Завантажити" showArrow>
-          <IconButton
-            sx={styles.actionBtn}
-            onClick={() => requestAction('download')}
-            aria-label="Завантажити"
-            disabled={!canEdit}
-          >
-            <DownloadOutlinedIcon fontSize="small" />
-          </IconButton>
+        <TooltipCustom title={isDownloading ? 'Завантаження...' : 'Завантажити'} showArrow>
+          <span>
+            <IconButton
+              onClick={handleDownload}
+              sx={styles.actionBtn}
+              aria-label="Завантажити"
+              disabled={!canEdit || !file?.downloadUrl || isDownloading}
+            >
+              {isDownloading ? (
+                <Box
+                  component="span"
+                  sx={{
+                    display: 'flex',
+                    width: '20px',
+                    height: '20px',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <CircularProgress size={16} color="inherit" />
+                </Box>
+              ) : (
+                <DownloadOutlinedIcon fontSize="small" />
+              )}
+            </IconButton>
+          </span>
         </TooltipCustom>
       </Box>
 
