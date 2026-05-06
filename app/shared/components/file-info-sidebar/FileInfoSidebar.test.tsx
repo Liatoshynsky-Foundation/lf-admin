@@ -15,7 +15,11 @@ jest.mock('../design-system/tooltip/Tooltip', () => ({
 
 jest.mock('~/shared/components/design-system/text-field/TextField', () => ({
   __esModule: true,
-  CustomTextField: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
+  CustomTextField: ({
+    fullWidth: _f,
+    minRows: _m,
+    ...props
+  }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & { fullWidth?: boolean; minRows?: number }) => (
     <textarea data-testid="desc" {...props} />
   )
 }));

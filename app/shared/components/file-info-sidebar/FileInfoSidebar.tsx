@@ -97,6 +97,15 @@ export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAct
 
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+
+  const requestAction = useCallback(
+    (type: FileSidebarAction['type']) => {
+      if (!fileId) return;
+      onRequestAction?.({ type, fileId });
+    },
+    [fileId, onRequestAction]
+  );
+
   const handleDownload = useCallback(async () => {
     if (!file?.downloadUrl || !filename) return;
     requestAction('download');
@@ -123,7 +132,7 @@ export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAct
     } finally {
       setIsDownloading(false);
     }
-  }, [file?.downloadUrl, filename]);
+  }, [file?.downloadUrl, filename, requestAction]);
 
   const openPreview = useCallback(() => {
     if (isImagePreview) setIsPreviewOpen(true);
@@ -141,14 +150,6 @@ export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAct
     debounceMs: AUTOSAVE_DEBOUNCE_MS,
     onSave: onDescriptionSave
   });
-
-  const requestAction = useCallback(
-    (type: FileSidebarAction['type']) => {
-      if (!fileId) return;
-      onRequestAction?.({ type, fileId });
-    },
-    [fileId, onRequestAction]
-  );
 
   const [updateAsset, { loading: isUpdatingStar }] = useUpdateAssetMutation();
 
