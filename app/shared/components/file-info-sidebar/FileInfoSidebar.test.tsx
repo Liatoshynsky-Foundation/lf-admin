@@ -81,6 +81,7 @@ describe('FileInfoSidebar', () => {
     type: 'image',
     filename: 'cat.png',
     previewUrl: '/cat.png',
+    downloadUrl: 'https://example.com/cat.png',
     addedBy: { name: 'Alice', avatarUrl: '/a.png' },
     addedAt: '2025-01-01',
     format: 'png',
