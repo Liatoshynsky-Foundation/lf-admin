@@ -61,7 +61,6 @@ export const NewsCard: Story = {
   args: {
     type: 'news',
     id: '1',
-    slug: 'news-title',
     coverImage: {
       src: '/images/image.png',
       alt: { uk: 'Новина', en: 'News' }
@@ -76,9 +75,8 @@ export const NewsCard: Story = {
 
 export const EventCard: Story = {
   args: {
-    type: 'event',
+    type: 'events',
     id: '2',
-    slug: 'event-title',
     coverImage: {
       src: '/images/image.png',
       alt: { uk: 'Подія', en: 'Event' }
@@ -95,7 +93,6 @@ export const MediaCard: Story = {
   args: {
     type: 'media',
     id: '3',
-    slug: 'media-title',
     coverImage: {
       src: '/images/image.png',
       alt: { uk: 'ЗМІ', en: 'Media' }
@@ -111,7 +108,6 @@ export const DraftCard: Story = {
   args: {
     type: 'news',
     id: '4',
-    slug: 'draft-title',
     coverImage: {
       src: '',
       alt: { uk: '', en: '' }
@@ -127,7 +123,6 @@ export const WithClickHandler: Story = {
   args: {
     type: 'news',
     id: '5',
-    slug: 'click-handler-title',
     coverImage: {
       src: '/images/image.png',
       alt: { uk: 'Новина', en: 'News' }
