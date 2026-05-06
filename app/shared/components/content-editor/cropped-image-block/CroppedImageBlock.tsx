@@ -2,7 +2,6 @@ import { defaultProps } from '@blocknote/core';
 import { createReactBlockSpec } from '@blocknote/react';
 import { Box, InputBase, Paper, Typography } from '@mui/material';
 import { FileImage, GripHorizontal } from 'lucide-react';
-import Image from 'next/image';
 import { useState } from 'react';
 
 import { CroppedImageRendererProps } from '../types';
@@ -59,15 +58,14 @@ const CroppedImageRenderer = ({ props }: { props: CroppedImageRendererProps }) =
       {props.block.props.showPreview ? (
         <Box sx={[styles.imageStateContainer, { width: currentWidth }]} contentEditable={false}>
           <Box sx={{ ...cropStyles.container, width: currentWidth, height: currentHeight }}>
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               draggable={false}
               src={props.block.props.url}
               alt={props.block.props.fileName}
               onLoad={onImgLoad}
               width={currentWidth}
               height={currentHeight}
-              // Crutch(unoptimized={true}) settled to achieve correct crop within it's boundaries
-              unoptimized={true}
               style={{
                 ...cropStyles.image,
                 maxWidth: 'none',

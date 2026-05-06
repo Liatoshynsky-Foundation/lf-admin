@@ -44,13 +44,6 @@ type BlockImplementation = {
   parse: (el: HTMLElement) => Partial<MockBlockProps> | undefined;
 };
 
-jest.mock('next/image', () => ({
-  __esModule: true,
-  default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => {
-    // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
-    return <img {...props} />;
-  }
-}));
 
 jest.mock('@blocknote/react', () => ({
   createReactBlockSpec: jest.fn(() => jest.fn())
