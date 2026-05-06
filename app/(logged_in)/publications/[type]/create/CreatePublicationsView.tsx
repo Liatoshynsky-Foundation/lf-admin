@@ -29,11 +29,12 @@ import { BaseContentStatuses } from '~/types/enums/common.enums';
 interface PublicationViewProps {
   data: ReturnType<typeof useUpsertPublication>;
   mode?: 'edit' | 'create';
+  showHeader?: boolean;
 }
 
 
 
-export default function CreatePublicationsView({ data, mode = 'create' }: Readonly<PublicationViewProps>) {
+export default function CreatePublicationsView({ data, mode = 'create', showHeader = true }: Readonly<PublicationViewProps>) {
   const {
     publicationType,
     adminTitle,
@@ -133,22 +134,24 @@ export default function CreatePublicationsView({ data, mode = 'create' }: Readon
 
   return (
     <>
-      <DividedHeader
-        originUrl={PUBLICATIONS_BASE_PATH}
-        rightActionsComponent={
-          publicationType === 'media' ? (
-            <HeaderRightActions
-              mode="edit"
-              onPublish={() => handleMenuAction(MenuActionId.PUBLISH)}
-              onMenuOpen={handleOpen}
-            />
-          ) : (
-            <HeaderRightActions mode="create" onEdit={onEdit} />
-          )
-        }
-      >
-        <Typography variant="customBold20Tight">{`${mode === 'edit' ? 'Редагування' : 'Створення'} ${PAGE_TITLES[publicationType]}`}</Typography>
-      </DividedHeader>
+      {showHeader && (
+        <DividedHeader
+          originUrl={PUBLICATIONS_BASE_PATH}
+          rightActionsComponent={
+            publicationType === 'media' ? (
+              <HeaderRightActions
+                mode="edit"
+                onPublish={() => handleMenuAction(MenuActionId.PUBLISH)}
+                onMenuOpen={handleOpen}
+              />
+            ) : (
+              <HeaderRightActions mode="create" onEdit={onEdit} />
+            )
+          }
+        >
+          <Typography variant="customBold20Tight">{`${mode === 'edit' ? 'Редагування' : 'Створення'} ${PAGE_TITLES[publicationType]}`}</Typography>
+        </DividedHeader>
+      )}
       <Box sx={styles.contentWrapper}>
         <SeoCollapsibleBlock
           title="Деталі"
