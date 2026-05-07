@@ -38,8 +38,10 @@ export type WorksMockData = {
 };
 
 type WorkSeed = Readonly<[id: string, title: string, year: string]>;
+type GroupKind = 'opus' | 'ungrouped';
 
 type GroupSeed = Readonly<[
+  kind: GroupKind,
   id: string,
   number: string,
   title: string,
@@ -56,7 +58,7 @@ const buildWorks = (works: ReadonlyArray<WorkSeed>): WorkItem[] =>
 
 const buildGroup = <TNumberKey extends 'opusNumber' | 'boNumber'>(
   numberKey: TNumberKey,
-  [id, number, title, genre, language, yearRange, status, updatedAt, works]: GroupSeed
+  [, id, number, title, genre, language, yearRange, status, updatedAt, works]: GroupSeed
 ): WorkGroupBase & Record<TNumberKey, string> => ({
   id,
   [numberKey]: number,
@@ -69,8 +71,9 @@ const buildGroup = <TNumberKey extends 'opusNumber' | 'boNumber'>(
   works: buildWorks(works)
 }) as WorkGroupBase & Record<TNumberKey, string>;
 
-const OPUS_GROUP_SEEDS: ReadonlyArray<GroupSeed> = [
+const GROUP_SEEDS: ReadonlyArray<GroupSeed> = [
   [
+    'opus',
     'opus-1',
     'op. 1',
     'Перший струнний квартет (d moll)',
@@ -86,6 +89,7 @@ const OPUS_GROUP_SEEDS: ReadonlyArray<GroupSeed> = [
     ]
   ],
   [
+    'opus',
     'opus-2',
     'op. 2',
     'Опус 2',
@@ -100,6 +104,7 @@ const OPUS_GROUP_SEEDS: ReadonlyArray<GroupSeed> = [
     ]
   ],
   [
+    'opus',
     'opus-3',
     'op. 3',
     'Опус 3',
@@ -111,6 +116,7 @@ const OPUS_GROUP_SEEDS: ReadonlyArray<GroupSeed> = [
     [['work-3-1', '№1 «Ноктюрн»', '1922']]
   ],
   [
+    'opus',
     'opus-4',
     'op. 4',
     'Три романси на вірші Т. Шевченка',
@@ -125,6 +131,7 @@ const OPUS_GROUP_SEEDS: ReadonlyArray<GroupSeed> = [
     ]
   ],
   [
+    'opus',
     'opus-5',
     'op. 5',
     'Соната для фортепіано №1',
@@ -140,6 +147,7 @@ const OPUS_GROUP_SEEDS: ReadonlyArray<GroupSeed> = [
     ]
   ],
   [
+    'opus',
     'opus-6',
     'op. 6',
     'Симфонічна сюїта',
@@ -152,11 +160,9 @@ const OPUS_GROUP_SEEDS: ReadonlyArray<GroupSeed> = [
       ['work-6-1', 'I. Прелюдія', '1926'],
       ['work-6-2', 'II. Intermezzo', '1927']
     ]
-  ]
-];
-
-const UNGROUPED_GROUP_SEEDS: ReadonlyArray<GroupSeed> = [
+  ],
   [
+    'ungrouped',
     'bo-1',
     'bo. 1',
     'Перший струнний квартет (d moll)',
@@ -172,6 +178,7 @@ const UNGROUPED_GROUP_SEEDS: ReadonlyArray<GroupSeed> = [
     ]
   ],
   [
+    'ungrouped',
     'bo-2',
     'bo. 2',
     'Опус 2',
@@ -186,6 +193,7 @@ const UNGROUPED_GROUP_SEEDS: ReadonlyArray<GroupSeed> = [
     ]
   ],
   [
+    'ungrouped',
     'bo-3',
     'bo. 3',
     'Опус 3',
@@ -200,6 +208,7 @@ const UNGROUPED_GROUP_SEEDS: ReadonlyArray<GroupSeed> = [
     ]
   ],
   [
+    'ungrouped',
     'bo-4',
     'bo. 4',
     'Без опусні 1',
@@ -215,6 +224,7 @@ const UNGROUPED_GROUP_SEEDS: ReadonlyArray<GroupSeed> = [
     ]
   ],
   [
+    'ungrouped',
     'bo-5',
     'bo. 5',
     'Без опусні 2',
@@ -229,6 +239,7 @@ const UNGROUPED_GROUP_SEEDS: ReadonlyArray<GroupSeed> = [
     ]
   ],
   [
+    'ungrouped',
     'bo-6',
     'bo. 6',
     'Хорові мініатюри',
@@ -245,6 +256,10 @@ const UNGROUPED_GROUP_SEEDS: ReadonlyArray<GroupSeed> = [
 ];
 
 export const WORKS_MOCK_DATA: WorksMockData = {
-  opusGroups: OPUS_GROUP_SEEDS.map((seed) => buildGroup('opusNumber', seed) as OpusGroup),
-  ungroupedGroups: UNGROUPED_GROUP_SEEDS.map((seed) => buildGroup('boNumber', seed) as UngroupedGroup)
+  opusGroups: GROUP_SEEDS.filter(([kind]) => kind === 'opus').map(
+    (seed) => buildGroup('opusNumber', seed) as OpusGroup
+  ),
+  ungroupedGroups: GROUP_SEEDS.filter(([kind]) => kind === 'ungrouped').map(
+    (seed) => buildGroup('boNumber', seed) as UngroupedGroup
+  )
 };

@@ -118,7 +118,7 @@ export function useWorksFiltering(): Readonly<{
     () => ({
       search: {
         search,
-        onSearch: setSearch,
+        setSearch,
         options: [],
         placeholder: 'Пошук'
       },

@@ -16,7 +16,7 @@ import Link from 'next/link';
 import { useRef, useState } from 'react';
 
 import { useWorksFiltering } from './useWorksFiltering';
-import { type OpusGroup, type UngroupedGroup, WORKS_MOCK_DATA } from './works.mock';
+import { type OpusGroup, type UngroupedGroup, WORKS_MOCK_DATA,type WorkStatus } from './works.mock';
 import {
   WORKS_CREATE_OPTIONS,
   WORKS_EMPTY_STATE_DESCRIPTION,
@@ -24,7 +24,9 @@ import {
   WORKS_EMPTY_STATE_NO_RESULTS_TITLE,
   WORKS_EMPTY_STATE_TITLE,
   WORKS_PAGE_TITLE,
+  WORKS_STATUSES,
   WORKS_TABS,
+  type WorksStatusValue,
   type WorksTabValue
 } from '~/constants/creativity';
 import type { FilesSortValue } from '~/constants/sort';
@@ -64,6 +66,9 @@ const META_TEXT_SX = {
   minWidth: 0,
   ...SINGLE_LINE_ELLIPSIS
 } as const;
+const TITLE_TEXT_SX = { fontSize: '15px', minWidth: 0, ...SINGLE_LINE_ELLIPSIS } as const;
+const WORK_ROW_TITLE_SX = { fontSize: '14px', minWidth: 0, flex: 1, ...SINGLE_LINE_ELLIPSIS } as const;
+const YEAR_TEXT_SX = { ...META_TEXT_SX, width: YEAR_COLUMN_WIDTH, textAlign: 'right' } as const;
 
 type GroupRowData = Readonly<{
   id: string;
@@ -71,7 +76,7 @@ type GroupRowData = Readonly<{
   title: string;
   genre: string;
   yearRange: string;
-  status: string;
+  status: WorkStatus;
   updatedAt: string;
   works: ReadonlyArray<{ id: string; title: string; year: string }>;
 }>;
@@ -80,17 +85,29 @@ type GroupFilterData = Readonly<{
   title: string;
   genre: string;
   language: 'uk' | 'en' | 'bilingual';
-  status: string;
+  status: WorkStatus;
   updatedAt: string;
   works: ReadonlyArray<{ title: string }>;
 }>;
+
+type FilterableItemData = Readonly<{
+  title: string;
+  genre: string;
+  language: 'uk' | 'en' | 'bilingual';
+  status: WorkStatus;
+  updatedAt: string;
+}>;
+
+function isWorksStatusValue(status: WorkStatus): status is WorksStatusValue {
+  return WORKS_STATUSES.includes(status as WorksStatusValue);
+}
 
 type IndividualWorkData = Readonly<{
   id: string;
   title: string;
   year: string;
   genre: string;
-  status: string;
+  status: WorkStatus;
   updatedAt: string;
   language: 'uk' | 'en' | 'bilingual';
 }>;
@@ -309,6 +326,24 @@ function ContextMenu({
   );
 }
 
+function WorkRowCells({
+  title,
+  year,
+  menuItems
+}: {
+  title: string;
+  year: string;
+  menuItems: readonly ContextMenuItem[];
+}) {
+  return (
+    <>
+      <Typography sx={WORK_ROW_TITLE_SX}>{title}</Typography>
+      <Typography sx={YEAR_TEXT_SX}>{year}</Typography>
+      <ContextMenu items={menuItems} triggerLabel={`Дії твору ${title}`} />
+    </>
+  );
+}
+
 // ── Opus accordion row ────────────────────────────────────────────────────────
 function GroupedRow({
   group,
@@ -386,9 +421,7 @@ function GroupedRow({
             {group.numberLabel}
           </Typography>
 
-          <Typography sx={{ fontWeight: 600, fontSize: '15px', minWidth: 0, ...SINGLE_LINE_ELLIPSIS }}>
-            {group.title}
-          </Typography>
+          <Typography sx={{ ...TITLE_TEXT_SX, fontWeight: 600 }}>{group.title}</Typography>
 
           <Box
             sx={{
@@ -428,50 +461,12 @@ function GroupedRow({
                 minWidth: 0
               }}
             >
-              <Typography sx={{ fontSize: '14px', minWidth: 0, flex: 1, ...SINGLE_LINE_ELLIPSIS }}>
-                {work.title}
-              </Typography>
-              <Typography
-                sx={{
-                  color: 'text.secondary',
-                  fontSize: '14px',
-                  width: YEAR_COLUMN_WIDTH,
-                  textAlign: 'right',
-                  ...SINGLE_LINE_ELLIPSIS
-                }}
-              >
-                {work.year}
-              </Typography>
-              <ContextMenu items={workMenuItems} triggerLabel={`Дії твору ${work.title}`} />
+              <WorkRowCells title={work.title} year={work.year} menuItems={workMenuItems} />
             </Box>
           ))}
         </AccordionDetails>
       )}
     </Accordion>
-  );
-}
-
-// ── Ungrouped work row ────────────────────────────────────────────────────────
-function OpusRow({ group, defaultExpanded }: { group: OpusGroup; defaultExpanded?: boolean }) {
-  return (
-    <GroupedRow
-      group={toGroupRowData(group)}
-      defaultExpanded={defaultExpanded}
-      groupMenuItems={GROUP_MENU_ITEMS}
-      workMenuItems={WORK_MENU_ITEMS}
-      withLeftMarker={OPUS_HIGHLIGHT_NUMBERS.has(group.opusNumber.toLowerCase())}
-    />
-  );
-}
-
-function UngroupedRow({ group, defaultExpanded }: { group: UngroupedGroup; defaultExpanded?: boolean }) {
-  return (
-    <GroupedRow
-      group={toGroupRowData(group)}
-      defaultExpanded={defaultExpanded}
-      groupMenuItems={GROUP_MENU_ITEMS}
-      workMenuItems={WORK_MENU_ITEMS}
-    />
   );
 }
 
@@ -493,16 +488,7 @@ function IndividualWorkRow({ work }: { work: IndividualWorkData }) {
       {/* Left marker column (empty for individual works) */}
       <Box sx={{ width: '1px' }} />
 
-      {/* Title column */}
-      <Typography sx={{ fontSize: '15px', minWidth: 0, ...SINGLE_LINE_ELLIPSIS }}>
-        {work.title}
-      </Typography>
-
-      {/* Year column */}
-      <Typography sx={{ ...META_TEXT_SX, width: YEAR_COLUMN_WIDTH, textAlign: 'right' }}>{work.year}</Typography>
-
-      {/* Context menu */}
-      <ContextMenu items={WORK_MENU_ITEMS} triggerLabel={`Дії твору ${work.title}`} />
+      <WorkRowCells title={work.title} year={work.year} menuItems={WORK_MENU_ITEMS} />
     </Box>
   );
 }
@@ -597,12 +583,13 @@ export function WorksPageContent({ activeTab }: WorksPageContentProps) {
   const matchesSearch = (text: string) =>
     !normalizedSearch || normalizeSearch(text.toLowerCase()).includes(normalizedSearch);
 
-  const matchesSelectedFilters = (group: GroupFilterData) => {
+  const matchesSelectedFilters = (item: FilterableItemData) => {
     const statusMatches =
-      selectedFilters.status.length === 0 || selectedFilters.status.includes(group.status);
+      isWorksStatusValue(item.status) &&
+      (selectedFilters.status.length === 0 || selectedFilters.status.includes(item.status));
     const languageMatches =
-      selectedFilters.language.length === 0 || selectedFilters.language.includes(group.language);
-    const genreMatches = selectedFilters.genre.length === 0 || selectedFilters.genre.includes(group.genre);
+      selectedFilters.language.length === 0 || selectedFilters.language.includes(item.language);
+    const genreMatches = selectedFilters.genre.length === 0 || selectedFilters.genre.includes(item.genre);
 
     return statusMatches && languageMatches && genreMatches;
   };
@@ -674,11 +661,24 @@ export function WorksPageContent({ activeTab }: WorksPageContentProps) {
     return (
       <Box>
         {showOpus && visibleOpusGroups.map((group) => (
-          <OpusRow key={group.id} group={group} defaultExpanded />
+          <GroupedRow
+            key={group.id}
+            group={toGroupRowData(group)}
+            defaultExpanded
+            groupMenuItems={GROUP_MENU_ITEMS}
+            workMenuItems={WORK_MENU_ITEMS}
+            withLeftMarker={OPUS_HIGHLIGHT_NUMBERS.has(group.opusNumber.toLowerCase())}
+          />
         ))}
 
         {showUngrouped && visibleUngroupedGroups.map((group) => (
-          <UngroupedRow key={group.id} group={group} defaultExpanded />
+          <GroupedRow
+            key={group.id}
+            group={toGroupRowData(group)}
+            defaultExpanded
+            groupMenuItems={GROUP_MENU_ITEMS}
+            workMenuItems={WORK_MENU_ITEMS}
+          />
         ))}
 
         {showIndividualWorks && visibleUngroupedWorks.map((work) => (
