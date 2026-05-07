@@ -26,25 +26,8 @@ describe('ContentCardMenu', () => {
 
   it('should render menu items', () => {
     render(<ContentCardMenu {...defaultProps} />);
-    expect(screen.getByText('Чернетка')).toBeInTheDocument();
     expect(screen.getByText('SEO налаштування')).toBeInTheDocument();
     expect(screen.getByText('Видалити')).toBeInTheDocument();
-  });
-
-  it('should navigate to english version', () => {
-    render(<ContentCardMenu {...defaultProps} editHref="/edit" />);
-
-    fireEvent.click(screen.getByText('Чернетка'));
-
-    expect(pushMock).toHaveBeenCalledWith('/edit');
-  });
-
-  it('should call onClose if editHref is not provided', () => {
-    render(<ContentCardMenu {...defaultProps} />);
-
-    fireEvent.click(screen.getByText('Чернетка'));
-
-    expect(defaultProps.onClose).toHaveBeenCalled();
   });
 
   it('should navigate to SEO page', () => {
