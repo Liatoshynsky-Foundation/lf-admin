@@ -116,7 +116,7 @@ export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAct
       if (!response.ok) throw new Error('Помилка завантаження');
 
       const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
+      const blobUrl = globalThis.URL.createObjectURL(blob);
 
       const link = document.createElement('a');
       link.href = blobUrl;
@@ -124,8 +124,8 @@ export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAct
       document.body.appendChild(link);
       link.click();
 
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
+      link.remove();
+      globalThis.URL.revokeObjectURL(blobUrl);
       toast.success('Файл завантажено');
     } catch {
       toast.error('Не вдалося завантажити файл');
