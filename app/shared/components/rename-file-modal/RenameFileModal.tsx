@@ -1,6 +1,6 @@
 import CloseIcon from '@mui/icons-material/Close';
 import { Box, Button, Dialog, IconButton, Typography } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { renameFileModalStyles as styles } from './RenameFileModalStyles';
@@ -15,19 +15,36 @@ export type RenameFileModalProps = {
 };
 
 export function RenameFileModal({ open, onClose, fileId, currentFilename }: Readonly<RenameFileModalProps>) {
-  const [filename, setFilename] = useState(currentFilename);
+  const { initialBaseName, extension } = useMemo(() => {
+    const lastDotIndex = currentFilename.lastIndexOf('.');
+    const hasExtension = lastDotIndex > 0;
+
+    return {
+      initialBaseName: hasExtension ? currentFilename.substring(0, lastDotIndex) : currentFilename,
+      extension: hasExtension ? currentFilename.substring(lastDotIndex) : ''
+    };
+  }, [currentFilename]);
+
+  const [baseName, setBaseName] = useState(initialBaseName);
   const [updateAsset, { loading }] = useUpdateAssetMutation();
+  const hasInvalidChars = /[\\/:*?"<>|]/.test(baseName);
 
   useEffect(() => {
     if (open) {
-      setFilename(currentFilename);
+      setBaseName(initialBaseName);
     }
-  }, [open, currentFilename]);
+  }, [open, initialBaseName]);
 
   const handleSave = async () => {
-    const trimmedName = filename.trim();
+    const trimmedBaseName = baseName.trim();
+    const newFilename = trimmedBaseName + extension;
 
-    if (!trimmedName || trimmedName === currentFilename) {
+    if (!trimmedBaseName || newFilename === currentFilename || hasInvalidChars) {
+      onClose();
+      return;
+    }
+
+    if (!trimmedBaseName || newFilename === currentFilename) {
       onClose();
       return;
     }
@@ -36,10 +53,9 @@ export function RenameFileModal({ open, onClose, fileId, currentFilename }: Read
       await updateAsset({
         variables: {
           id: fileId,
-          input: { filename: trimmedName }
+          input: { filename: newFilename }
         }
       });
-
       onClose();
       toast.success('Файл успішно перейменовано');
     } catch {
@@ -69,9 +85,11 @@ export function RenameFileModal({ open, onClose, fileId, currentFilename }: Read
         <CustomTextField
           fullWidth
           autoFocus
-          value={filename}
-          onChange={(e) => setFilename(e.target.value)}
+          value={baseName}
+          onChange={(e) => setBaseName(e.target.value)}
           disabled={loading}
+          error={hasInvalidChars}
+          helperText={hasInvalidChars ? 'Ім\'я файлу містить заборонені символи: \\ / : * ? " < > |' : ''}
         />
       </Box>
 
@@ -88,7 +106,7 @@ export function RenameFileModal({ open, onClose, fileId, currentFilename }: Read
         </Button>
         <Button
           onClick={onClose}
-          disabled={loading}
+          disabled={loading || hasInvalidChars || !baseName.trim()}
           variant="outlined"
           color="primary"
           size="medium"

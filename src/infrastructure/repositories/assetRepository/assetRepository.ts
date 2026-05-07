@@ -1,4 +1,5 @@
 import { FilterQuery, Model, Types } from 'mongoose';
+import * as path from 'path';
 
 import { createBaseRepository } from '../baseRepository/baseRepository';
 
@@ -137,11 +138,22 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
   });
 
   const updateAsset = async (id: string, data: UpdateAssetData): Promise<AssetEntity | null> => {
+    if (data.filename) {
+      const existingDoc = await AssetModel.findById(id);
+
+      if (existingDoc) {
+        const originalExt = path.extname(existingDoc.filename);
+
+        const safeBaseName = path.parse(data.filename).name;
+
+        data.filename = `${safeBaseName}${originalExt}`;
+      }
+    }
+
     const updatedDoc = await AssetModel.findByIdAndUpdate(id, { $set: data }, { new: true });
 
     return updatedDoc ? toEntity(updatedDoc) : null;
   };
-
   const createAsset = async (data: CreateAssetData): Promise<AssetEntity> => {
     const newDoc = await AssetModel.create({
       ...data,
