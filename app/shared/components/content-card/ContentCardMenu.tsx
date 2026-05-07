@@ -12,7 +12,7 @@ interface ContentCardMenuProps {
   setDeleteModalOpen: (open: boolean) => void;
 }
 
-const ContentCardMenu = ({ id, type, anchorEl, onClose, setDeleteModalOpen }: ContentCardMenuProps & {}) => {
+const ContentCardMenu = ({ id, type, anchorEl, onClose, setDeleteModalOpen }: ContentCardMenuProps) => {
   const router = useRouter();
   const open = Boolean(anchorEl);
 

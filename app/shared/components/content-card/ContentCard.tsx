@@ -123,7 +123,6 @@ const ContentCard = ({
                 type={type}
                 anchorEl={anchorEl}
                 onClose={handleMenuClose}
-                editHref={editHref}
                 setDeleteModalOpen={setDeleteModalOpen}
               />
             )}
