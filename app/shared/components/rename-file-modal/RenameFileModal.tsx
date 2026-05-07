@@ -36,13 +36,13 @@ export function RenameFileModal({ open, onClose, fileId, currentFilename }: Read
   }, [open, initialBaseName]);
 
   const handleSave = async () => {
-    const trimmedBaseName = baseName.trim();
-    const newFilename = trimmedBaseName + extension;
-
-    if (!trimmedBaseName || newFilename === currentFilename || hasInvalidChars) {
-      onClose();
+    if (hasInvalidChars) {
+      toast.error('Ім\'я файлу містить заборонені символи');
       return;
     }
+
+    const trimmedBaseName = baseName.trim();
+    const newFilename = trimmedBaseName + extension;
 
     if (!trimmedBaseName || newFilename === currentFilename) {
       onClose();
@@ -62,6 +62,8 @@ export function RenameFileModal({ open, onClose, fileId, currentFilename }: Read
       toast.error('Помилка при перейменуванні файлу');
     }
   };
+
+  const isUnchanged = baseName.trim() === initialBaseName;
 
   return (
     <Dialog
@@ -89,14 +91,14 @@ export function RenameFileModal({ open, onClose, fileId, currentFilename }: Read
           onChange={(e) => setBaseName(e.target.value)}
           disabled={loading}
           error={hasInvalidChars}
-          helperText={hasInvalidChars ? 'Ім\'я файлу містить заборонені символи: \\ / : * ? " < > |' : ''}
+          helperText={hasInvalidChars ? String.raw`Ім'я файлу містить заборонені символи: \ / : * ? " < > |` : ''}
         />
       </Box>
 
       <Box sx={styles.actions}>
         <Button
           onClick={handleSave}
-          disabled={loading}
+          disabled={loading || hasInvalidChars || !baseName.trim() || isUnchanged}
           variant="contained"
           color="tertiary"
           size="medium"
@@ -106,7 +108,7 @@ export function RenameFileModal({ open, onClose, fileId, currentFilename }: Read
         </Button>
         <Button
           onClick={onClose}
-          disabled={loading || hasInvalidChars || !baseName.trim()}
+          disabled={loading}
           variant="outlined"
           color="primary"
           size="medium"

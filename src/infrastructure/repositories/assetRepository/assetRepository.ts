@@ -1,5 +1,5 @@
 import { FilterQuery, Model, Types } from 'mongoose';
-import * as path from 'path';
+import * as path from 'node:path';
 
 import { createBaseRepository } from '../baseRepository/baseRepository';
 
