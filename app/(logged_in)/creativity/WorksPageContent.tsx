@@ -16,7 +16,7 @@ import Link from 'next/link';
 import { useRef, useState } from 'react';
 
 import { useWorksFiltering } from './useWorksFiltering';
-import { type OpusGroup, type UngroupedGroup,WORKS_MOCK_DATA } from './works.mock';
+import { type OpusGroup, type UngroupedGroup, WORKS_MOCK_DATA } from './works.mock';
 import {
   WORKS_CREATE_OPTIONS,
   WORKS_EMPTY_STATE_DESCRIPTION,
@@ -52,10 +52,17 @@ const GROUP_META_COLUMN_WIDTH = '320px';
 const YEAR_COLUMN_WIDTH = '96px';
 const STATUS_COLUMN_WIDTH = '280px';
 const GROUP_ROW_COLUMNS = `1px ${NUMBER_COLUMN_WIDTH} minmax(260px, 1fr) ${GROUP_META_COLUMN_WIDTH} ${STATUS_COLUMN_WIDTH} 40px`;
+const INDIVIDUAL_WORK_ROW_COLUMNS = `1px 1fr ${YEAR_COLUMN_WIDTH} 40px`;
 const SINGLE_LINE_ELLIPSIS = {
   whiteSpace: 'nowrap',
   overflow: 'hidden',
   textOverflow: 'ellipsis'
+} as const;
+const META_TEXT_SX = {
+  color: 'text.secondary',
+  fontSize: '14px',
+  minWidth: 0,
+  ...SINGLE_LINE_ELLIPSIS
 } as const;
 
 type GroupRowData = Readonly<{
@@ -77,6 +84,29 @@ type GroupFilterData = Readonly<{
   updatedAt: string;
   works: ReadonlyArray<{ title: string }>;
 }>;
+
+type IndividualWorkData = Readonly<{
+  id: string;
+  title: string;
+  year: string;
+  genre: string;
+  status: string;
+  updatedAt: string;
+  language: 'uk' | 'en' | 'bilingual';
+}>;
+
+function toGroupRowData(group: OpusGroup | UngroupedGroup): GroupRowData {
+  return {
+    id: group.id,
+    numberLabel: 'opusNumber' in group ? group.opusNumber : group.boNumber,
+    title: group.title,
+    genre: group.genre,
+    yearRange: group.yearRange,
+    status: group.status,
+    updatedAt: group.updatedAt,
+    works: group.works
+  };
+}
 
 function sortGroups<T extends { title: string; updatedAt: string }>(
   groups: readonly T[],
@@ -370,12 +400,8 @@ function GroupedRow({
               minWidth: 0
             }}
           >
-            <Typography sx={{ color: 'text.secondary', fontSize: '14px', minWidth: 0, ...SINGLE_LINE_ELLIPSIS }}>
-              {group.genre}
-            </Typography>
-            <Typography sx={{ color: 'text.secondary', fontSize: '14px', minWidth: 0, ...SINGLE_LINE_ELLIPSIS }}>
-              {group.yearRange}
-            </Typography>
+            <Typography sx={META_TEXT_SX}>{group.genre}</Typography>
+            <Typography sx={META_TEXT_SX}>{group.yearRange}</Typography>
           </Box>
 
           <Box sx={{ width: STATUS_COLUMN_WIDTH, minWidth: 0 }}>
@@ -429,16 +455,7 @@ function GroupedRow({
 function OpusRow({ group, defaultExpanded }: { group: OpusGroup; defaultExpanded?: boolean }) {
   return (
     <GroupedRow
-      group={{
-        id: group.id,
-        numberLabel: group.opusNumber,
-        title: group.title,
-        genre: group.genre,
-        yearRange: group.yearRange,
-        status: group.status,
-        updatedAt: group.updatedAt,
-        works: group.works
-      }}
+      group={toGroupRowData(group)}
       defaultExpanded={defaultExpanded}
       groupMenuItems={GROUP_MENU_ITEMS}
       workMenuItems={WORK_MENU_ITEMS}
@@ -450,16 +467,7 @@ function OpusRow({ group, defaultExpanded }: { group: OpusGroup; defaultExpanded
 function UngroupedRow({ group, defaultExpanded }: { group: UngroupedGroup; defaultExpanded?: boolean }) {
   return (
     <GroupedRow
-      group={{
-        id: group.id,
-        numberLabel: group.boNumber,
-        title: group.title,
-        genre: group.genre,
-        yearRange: group.yearRange,
-        status: group.status,
-        updatedAt: group.updatedAt,
-        works: group.works
-      }}
+      group={toGroupRowData(group)}
       defaultExpanded={defaultExpanded}
       groupMenuItems={GROUP_MENU_ITEMS}
       workMenuItems={WORK_MENU_ITEMS}
@@ -468,21 +476,7 @@ function UngroupedRow({ group, defaultExpanded }: { group: UngroupedGroup; defau
 }
 
 // ── Individual work (ungrouped work without container) ──────────────────────
-const INDIVIDUAL_WORK_ROW_COLUMNS = `1px 1fr ${YEAR_COLUMN_WIDTH} 40px`;
-
-function IndividualWorkRow({
-  work
-}: {
-  work: {
-    id: string;
-    title: string;
-    year: string;
-    genre: string;
-    yearRange: string;
-    status: string;
-    updatedAt: string;
-  };
-}) {
+function IndividualWorkRow({ work }: { work: IndividualWorkData }) {
   return (
     <Box
       sx={{
@@ -505,17 +499,7 @@ function IndividualWorkRow({
       </Typography>
 
       {/* Year column */}
-      <Typography
-        sx={{
-          color: 'text.secondary',
-          fontSize: '14px',
-          width: YEAR_COLUMN_WIDTH,
-          textAlign: 'right',
-          ...SINGLE_LINE_ELLIPSIS
-        }}
-      >
-        {work.year}
-      </Typography>
+      <Typography sx={{ ...META_TEXT_SX, width: YEAR_COLUMN_WIDTH, textAlign: 'right' }}>{work.year}</Typography>
 
       {/* Context menu */}
       <ContextMenu items={WORK_MENU_ITEMS} triggerLabel={`Дії твору ${work.title}`} />
@@ -623,28 +607,27 @@ export function WorksPageContent({ activeTab }: WorksPageContentProps) {
     return statusMatches && languageMatches && genreMatches;
   };
 
-  const visibleOpusGroups = sortGroups(
-    WORKS_MOCK_DATA.opusGroups.filter(
-      (group) =>
-        matchesSelectedFilters(group) &&
-        (matchesSearch(group.title) ||
-          matchesSearch(group.opusNumber) ||
-          matchesSearch(group.genre) ||
-          group.works.some((w) => matchesSearch(w.title)))
-    ),
-    sortValue
-  );
+  const getVisibleGroups = <T extends GroupFilterData>(
+    groups: readonly T[],
+    numberSelector: (group: T) => string
+  ) =>
+      sortGroups(
+        groups.filter(
+          (group) =>
+            matchesSelectedFilters(group) &&
+          (matchesSearch(group.title) ||
+            matchesSearch(numberSelector(group)) ||
+            matchesSearch(group.genre) ||
+            group.works.some((work) => matchesSearch(work.title)))
+        ),
+        sortValue
+      );
 
-  const visibleUngroupedGroups = sortGroups(
-    WORKS_MOCK_DATA.ungroupedGroups.filter(
-      (group) =>
-        matchesSelectedFilters(group) &&
-        (matchesSearch(group.title) ||
-          matchesSearch(group.boNumber) ||
-          matchesSearch(group.genre) ||
-          group.works.some((w) => matchesSearch(w.title)))
-    ),
-    sortValue
+  const visibleOpusGroups = getVisibleGroups(WORKS_MOCK_DATA.opusGroups, (group) => group.opusNumber);
+
+  const visibleUngroupedGroups = getVisibleGroups(
+    WORKS_MOCK_DATA.ungroupedGroups,
+    (group) => group.boNumber
   );
 
   // Extract all individual ungrouped works (when 'works' tab is active)
@@ -654,7 +637,6 @@ export function WorksPageContent({ activeTab }: WorksPageContentProps) {
       title: work.title,
       year: work.year,
       genre: group.genre,
-      yearRange: group.yearRange,
       status: group.status,
       updatedAt: group.updatedAt,
       language: group.language as 'uk' | 'en' | 'bilingual'
