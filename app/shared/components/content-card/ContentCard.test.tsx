@@ -7,6 +7,29 @@ jest.mock('~/lib/utils/formatDate', () => ({
   formatDate: (date: string) => `formatted-${date}`
 }));
 
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    refresh: jest.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+    prefetch: jest.fn()
+  })
+}));
+
+jest.mock('~/shared/hooks/use-news/useNews', () => ({
+  useDeleteNews: () => [jest.fn()]
+}));
+
+jest.mock('~/shared/hooks/use-events/useEvents', () => ({
+  useDeleteEvent: () => [jest.fn()]
+}));
+
+jest.mock('~/shared/hooks/use-media-mentions/useMediaMentions', () => ({
+  useDeleteMediaMention: () => [jest.fn()]
+}));
+
 jest.mock('../design-system/button/Button', () => ({
   __esModule: true,
   default: ({
@@ -27,12 +50,11 @@ jest.mock('./ContentCardBadge', () => ({
 
 describe('ContentCard', () => {
   const defaultProps = {
+    id: '1',
+    slug: 'test-slug',
     type: 'news' as ContentType,
     coverImage: {
-      src: {
-        uk: '/image.png',
-        en: '/image.png'
-      },
+      src: '/image.png',
       alt: {
         uk: 'Image UA',
         en: 'Image EN'
@@ -99,16 +121,6 @@ describe('ContentCard', () => {
     );
   });
 
-  it('should call onClickMenu when menu icon is clicked', () => {
-    render(<ContentCard {...defaultProps} />);
-
-    const menuButton = screen.getByTestId('menu-button');
-
-    fireEvent.click(menuButton);
-
-    expect(defaultProps.onClickMenu).toHaveBeenCalledTimes(1);
-  });
-
   it('should render image with correct src and alt', () => {
     render(<ContentCard {...defaultProps} />);
 
@@ -123,7 +135,7 @@ describe('ContentCard', () => {
       <ContentCard
         {...defaultProps}
         coverImage={{
-          src: { uk: '/news-mock-images/image1.jpg', en: '/news-mock-images/image1.jpg' },
+          src: '/news-mock-images/image1.jpg',
           alt: {
             uk: 'Broken image',
             en: 'Broken image'

@@ -83,6 +83,7 @@ input EventFiltersInput {
   skip: Int
   statuses: [EventStatus!]
   slug: String
+  search: String
   eventDateTimeStart: String
   eventDateTimeEnd: String
   sort: [EventSortOptions!]

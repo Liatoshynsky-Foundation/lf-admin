@@ -55,7 +55,7 @@ export type NewsContentInput = {
   content: LocalizedContent;
   description?: LocalizedContent;
   coverImage?: {
-    src: { uk: string; en: string };
+    src: string;
     alt?: LocalizedContent;
     caption?: LocalizedContent;
     isTmp?: boolean;
@@ -82,10 +82,7 @@ const extractAllImageSources = (input: NewsContentInput): string[] => {
   }
 
   if (input.coverImage?.isTmp === true) {
-    if (input.coverImage.src.uk) allImages.add(input.coverImage.src.uk);
-    if (input.coverImage.src.en && input.coverImage.src.en !== input.coverImage.src.uk) {
-      allImages.add(input.coverImage.src.en);
-    }
+    allImages.add(input.coverImage.src);
   }
 
   return Array.from(allImages);
@@ -135,13 +132,12 @@ const applyImageReplacements = <T extends NewsContentInput>(input: T, replacemen
     updatedInput.description.en = replaceImageSources(updatedInput.description.en as JsonValue, replacementMap);
   }
 
-  if (updatedInput.coverImage?.src) {
-    const newUk = replacementMap.get(updatedInput.coverImage.src.uk);
-    if (newUk) updatedInput.coverImage.src.uk = newUk;
-    const newEn = replacementMap.get(updatedInput.coverImage.src.en);
-    if (newEn) updatedInput.coverImage.src.en = newEn;
+  if (updatedInput.coverImage?.src && replacementMap.has(updatedInput.coverImage.src)) {
+    const newSrc = replacementMap.get(updatedInput.coverImage.src);
+    if (newSrc) {
+      updatedInput.coverImage.src = newSrc;
+    }
   }
-
   return updatedInput;
 };
 

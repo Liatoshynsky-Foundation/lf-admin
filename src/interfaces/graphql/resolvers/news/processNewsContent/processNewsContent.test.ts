@@ -237,7 +237,7 @@ describe('processNewsContent', () => {
           en: { type: 'doc', content: [] }
         },
         coverImage: {
-          src: { uk: localSrc, en: localSrc },
+          src: localSrc,
           alt: { uk: 'Cover Alt UK', en: 'Cover Alt EN' },
           isTmp: true
         }
@@ -257,8 +257,7 @@ describe('processNewsContent', () => {
 
       const result = await processNewsContent(input);
 
-      expect(result.coverImage?.src.uk).toBe(newUrl);
-      expect(result.coverImage?.src.en).toBe(newUrl);
+      expect(result.coverImage?.src).toBe(newUrl);
       expect(mockRemoveTmpFlagsRecursively).toHaveBeenCalled();
     });
 
@@ -271,7 +270,7 @@ describe('processNewsContent', () => {
           en: { type: 'doc', content: [] }
         },
         coverImage: {
-          src: { uk: existingSrc, en: existingSrc },
+          src: existingSrc,
           alt: { uk: 'Cover Alt UK', en: 'Cover Alt EN' },
           isTmp: false
         }
@@ -281,7 +280,7 @@ describe('processNewsContent', () => {
 
       const result = await processNewsContent(input);
 
-      expect(result.coverImage?.src.uk).toBe(existingSrc);
+      expect(result.coverImage?.src).toBe(existingSrc);
       expect(mockUploadService.copyBlobsToNewFolder).not.toHaveBeenCalled();
     });
 
@@ -294,7 +293,7 @@ describe('processNewsContent', () => {
           en: { type: 'doc', content: [] }
         },
         coverImage: {
-          src: { uk: existingSrc, en: existingSrc },
+          src: existingSrc,
           alt: { uk: 'Cover Alt UK', en: 'Cover Alt EN' }
         }
       };
@@ -303,7 +302,7 @@ describe('processNewsContent', () => {
 
       const result = await processNewsContent(input);
 
-      expect(result.coverImage?.src.uk).toBe(existingSrc);
+      expect(result.coverImage?.src).toBe(existingSrc);
       expect(mockUploadService.copyBlobsToNewFolder).not.toHaveBeenCalled();
     });
   });
@@ -506,7 +505,7 @@ describe('processNewsContent', () => {
           en: null
         },
         coverImage: {
-          src: { uk: localSrc, en: localSrc },
+          src: localSrc,
           isTmp: true
         }
       };
@@ -518,8 +517,7 @@ describe('processNewsContent', () => {
 
       const result = await processNewsContent(input);
 
-      expect(result.coverImage?.src.uk).toBe(newUrl);
-      expect(result.coverImage?.src.en).toBe(newUrl);
+      expect(result.coverImage?.src).toBe(newUrl);
     });
 
     it('should handle duplicate image sources', async () => {

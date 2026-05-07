@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { MediaModalResult } from '../MediaModal.types';
+import { useUpload } from '~/hooks/use-upload/useUpload';
 
 type Args = {
   open: boolean;
   onClose: () => void;
   onApply: (result: MediaModalResult) => void | Promise<void>;
+  directory?: string;
 };
 
 type Return = {
@@ -20,9 +22,39 @@ type Return = {
   runApply: (result: MediaModalResult) => Promise<void>;
 };
 
-export function useMediaModalApply({ open, onClose, onApply }: Readonly<Args>): Return {
+const getFileTypeForBackend = (file: File): string => {
+  const type = file.type.toLowerCase();
+  const name = file.name.toLowerCase();
+
+  if (type.startsWith('image/')) return 'image';
+  if (type.startsWith('audio/') || name.endsWith('.mp3') || name.endsWith('.wav')) return 'audio';
+  if (type.includes('spreadsheet') || type.includes('excel') || name.endsWith('.xlsx') || name.endsWith('.xls'))
+    return 'spreadsheet';
+  if (type.includes('pdf') || name.endsWith('.pdf')) return 'pdf';
+  if (
+    type.includes('zip') ||
+    type.includes('rar') ||
+    type.includes('compressed') ||
+    name.endsWith('.zip') ||
+    name.endsWith('.rar')
+  )
+    return 'archive';
+
+  return 'document';
+};
+
+const resolveUploadDirectory = (explicitDirectory: string | undefined, backendFileType: string): string => {
+  if (explicitDirectory) return explicitDirectory;
+  if (backendFileType === 'image') return 'photos';
+  if (backendFileType === 'audio') return 'compositions';
+  return 'uploads';
+};
+
+export function useMediaModalApply({ open, onClose, onApply, directory }: Readonly<Args>): Return {
   const [isApplying, setIsApplying] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
+
+  const { uploadFile } = useUpload();
 
   const openRef = useRef(open);
   useEffect(() => {
@@ -61,7 +93,33 @@ export function useMediaModalApply({ open, onClose, onApply }: Readonly<Args>): 
       setApplyError(null);
 
       try {
-        await onApply(result);
+        let enrichedResult = result;
+
+        if (result.selected.kind === 'upload') {
+          const backendFileType = getFileTypeForBackend(result.selected.file);
+
+          const fileExt = result.selected.file.name.split('.').pop()?.toLowerCase() || '';
+          const fileMime = result.selected.file.type || 'application/octet-stream';
+
+          const validationRules = JSON.stringify({
+            allowedMimeTypes: [fileMime],
+            allowedExtensions: [fileExt]
+          });
+
+          const finalDirectory = resolveUploadDirectory(directory, backendFileType);
+
+          const uploadResult = await uploadFile(result.selected.file, {
+            directory: finalDirectory,
+            fileType: backendFileType,
+            validationRules: validationRules
+          });
+
+          if (!isCurrent()) return;
+
+          enrichedResult = { ...result, uploadResult };
+        }
+
+        await onApply(enrichedResult);
 
         if (isCurrent()) {
           handleClose();
@@ -76,7 +134,7 @@ export function useMediaModalApply({ open, onClose, onApply }: Readonly<Args>): 
         }
       }
     },
-    [handleClose, isApplying, onApply]
+    [directory, handleClose, isApplying, onApply, uploadFile]
   );
 
   return {

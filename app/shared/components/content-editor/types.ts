@@ -1,6 +1,8 @@
-import { Block } from '@blocknote/core';
+import { Block, BlockNoteEditor, BlockSchema, InlineContentSchema, StyleSchema } from '@blocknote/core';
 import { SxProps, Theme } from '@mui/material';
 import { ReactElement } from 'react';
+
+import { customSchema } from './BlockNoteEditor';
 
 export interface FilePickerModalProps {
   isOpen: boolean;
@@ -27,7 +29,7 @@ export interface BlockNoteEditorProps {
   keyboardShortcuts?: {
     onSave?: () => void;
   };
-  sx?: SxProps<Theme>
+  sx?: SxProps<Theme>;
 }
 
 export interface SerializedContent {
@@ -40,6 +42,41 @@ export interface ContentPersistence {
   onSave?: (content: SerializedContent) => Promise<boolean>;
   onChange?: (content: SerializedContent) => void;
   autoSaveInterval?: number;
+}
+
+export type StrictBlockNoteEditor = BlockNoteEditor<
+  typeof customSchema.blockSchema,
+  typeof customSchema.inlineContentSchema,
+  typeof customSchema.styleSchema
+>;
+
+export type CroppedImageProps = {
+  textAlignment: 'left' | 'center' | 'right'
+  textColor: string;
+  url: string;
+  cropData: string;
+  fileName: string;
+  caption: string;
+  width: number;
+  showPreview: boolean;
+};
+
+
+export type StrictEditor = Omit<BlockNoteEditor<BlockSchema, InlineContentSchema, StyleSchema>, 'updateBlock'> & {
+
+  updateBlock: (
+    id: string,
+    blockUpdate: { type: 'image'; props: Partial<CroppedImageProps> } 
+  ) => void;
+};
+
+export interface CroppedImageRendererProps {
+  block: {
+    id: string;
+    type: 'image';
+    props: CroppedImageProps;
+  };
+  editor: StrictEditor; 
 }
 
 export interface ContentEditorProps {
@@ -57,7 +94,7 @@ export interface ContentEditorProps {
   renderSaveButton?: (props: { onSave: () => void; isSaving: boolean }) => ReactElement;
 
   onSaveComplete?: (success: boolean) => void;
-  sx?: SxProps<Theme>
+  sx?: SxProps<Theme>;
 }
 
 export const CONTENT_VERSION = '1.0.0';

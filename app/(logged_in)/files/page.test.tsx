@@ -5,7 +5,6 @@ import Page from './page';
 
 const mockRefetch = jest.fn();
 const mockUseAllAssets = jest.fn();
-const mockUploadBlob = jest.fn();
 
 let mockAllAssets: Array<Record<string, unknown>> = [];
 
@@ -28,7 +27,8 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
     Document: 'Document',
     Spreadsheet: 'Spreadsheet'
   },
-  useUploadBlobMutation: () => [mockUploadBlob]
+  useUpdateAssetMutation: () => [jest.fn(), { loading: false }],
+  useCreateAssetMutation: () => [jest.fn(), { loading: false }]
 }));
 
 jest.mock('~/shared/components/file-info-sidebar/FileInfoSidebar', () => ({

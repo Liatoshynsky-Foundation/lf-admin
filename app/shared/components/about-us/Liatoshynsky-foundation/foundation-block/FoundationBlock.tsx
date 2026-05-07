@@ -15,7 +15,7 @@ interface FoundationBlockProps {
   initialCrop?: MediaModalResult['crop'];
   onMainTextChange: (val: string) => void;
   onParagraphChange: (index: number, val: string) => void;
-  onImageChange: (file: File, crop?: MediaModalResult['crop']) => void;
+  onImageChange: (url: string, crop?: MediaModalResult['crop']) => void;
 }
 
 export const FoundationBlock = ({
