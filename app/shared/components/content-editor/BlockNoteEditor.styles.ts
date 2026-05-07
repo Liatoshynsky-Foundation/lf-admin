@@ -2,6 +2,7 @@ import { SxProps, Theme } from '@mui/material';
 
 export const styles: Record<string, SxProps<Theme>> = {
   container: {
+    overflow: 'hidden',
     width: '100%',
     backgroundColor: '#fff',
     borderRadius: '8px',
@@ -9,10 +10,10 @@ export const styles: Record<string, SxProps<Theme>> = {
     padding: '24px',
     fontFamily: 'Mulish, sans-serif',
     '& .bn-container': {
-      width: '100%',
+      width: '100%'
     },
     '& .bn-editor': {
-      minHeight: '400px',
+      minHeight: '400px'
     },
     // Hide native file input when using custom file picker
     '&.custom-file-picker-enabled': {
