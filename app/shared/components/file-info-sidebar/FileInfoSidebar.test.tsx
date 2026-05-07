@@ -15,9 +15,16 @@ jest.mock('../design-system/tooltip/Tooltip', () => ({
 
 jest.mock('~/shared/components/design-system/text-field/TextField', () => ({
   __esModule: true,
-  CustomTextField: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
-    <textarea data-testid="desc" {...props} />
-  )
+  CustomTextField: ({
+    fullWidth: _f,
+    minRows: _m,
+    multiline: _ml,
+    ...props
+  }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
+    fullWidth?: boolean;
+    minRows?: number;
+    multiline?: boolean;
+  }) => <textarea data-testid="desc" {...props} />
 }));
 
 jest.mock('~/lib/utils/formatUsageCount', () => ({
@@ -77,6 +84,7 @@ describe('FileInfoSidebar', () => {
     type: 'image',
     filename: 'cat.png',
     previewUrl: '/cat.png',
+    downloadUrl: 'https://example.com/cat.png',
     addedBy: { name: 'Alice', avatarUrl: '/a.png' },
     addedAt: '2025-01-01',
     format: 'png',

@@ -63,6 +63,7 @@ type FilesPageFileItem = FilesCardsLayoutItem & {
   createdAtRaw?: string;
   size?: string;
   previewUrl?: string;
+  downloadUrl?: string;
   addedBy?: { name: string; avatarUrl?: string };
   usage: FileUsageLink[];
 };
@@ -230,6 +231,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
       createdAtRaw: asset.createdAt,
       isStarred: asset.isStarred,
       usageLinks: asset.usageRefs.length,
+      downloadUrl: asset.url,
       imageSrc: asset.type === AssetType.Image ? asset.url : undefined,
       previewUrl: asset.type === AssetType.Image ? asset.url : undefined,
       format: formatFromMimeType(asset.mimeType, asset.filename),
@@ -285,7 +287,8 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
       size: selectedFile.size,
       usageLinks: selectedFile.usage,
       description: selectedFile.description,
-      isStarred: selectedFile.isStarred
+      isStarred: selectedFile.isStarred,
+      downloadUrl: selectedFile.downloadUrl
     }
     : null;
 
