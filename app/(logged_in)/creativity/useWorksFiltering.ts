@@ -73,9 +73,9 @@ export function useWorksFiltering(): Readonly<{
   const handleSortFieldChange = useCallback((field: SortFieldValue) => {
     setSortValue((previous) => {
       const isDate = field === 'date';
-      const nextValue: FilesSortValue = isDate
-        ? (previous.startsWith('date') ? previous : 'date_desc')
-        : (previous.startsWith('name') ? previous : 'name_asc');
+      const prefix = isDate ? 'date' : 'name';
+      const defaultSort: FilesSortValue = isDate ? 'date_desc' : 'name_asc';
+      const nextValue: FilesSortValue = previous.startsWith(prefix) ? (previous as FilesSortValue) : defaultSort;
       localStorage.setItem(SORT_STORAGE_KEY, nextValue);
       return nextValue;
     });
