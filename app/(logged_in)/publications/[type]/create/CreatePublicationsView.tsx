@@ -28,13 +28,10 @@ import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 interface PublicationViewProps {
   data: ReturnType<typeof useUpsertPublication>;
-  mode?: 'edit' | 'create';
-  showHeader?: boolean;
+  mode?: 'edit' | 'create' | 'seo';
 }
 
-
-
-export default function CreatePublicationsView({ data, mode = 'create', showHeader = true }: Readonly<PublicationViewProps>) {
+export default function CreatePublicationsView({ data, mode = 'create' }: Readonly<PublicationViewProps>) {
   const {
     publicationType,
     adminTitle,
@@ -127,6 +124,7 @@ export default function CreatePublicationsView({ data, mode = 'create', showHead
       console.error(`Action ${actionId} failed`, err);
     }
   };
+
   const onEdit = async () => {
     const id = await handleSave(BaseContentStatuses.Draft);
     router.push(`${PUBLICATIONS_BASE_PATH}/${publicationType}/${id}/edit`);
@@ -134,7 +132,7 @@ export default function CreatePublicationsView({ data, mode = 'create', showHead
 
   return (
     <>
-      {showHeader && (
+      {mode !== 'seo' && (
         <DividedHeader
           originUrl={PUBLICATIONS_BASE_PATH}
           rightActionsComponent={

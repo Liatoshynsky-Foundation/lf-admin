@@ -44,7 +44,7 @@ export default function PublicatiosSeoPage() {
         <TitleDropdown type="SEO" title={`Редагування ${PAGE_TITLES[type]}`} renderMenuOpen={false} />
       </DividedHeader>
 
-      <CreatePublicationView data={publicationData}  showHeader={false} />
+      <CreatePublicationView data={publicationData} mode="seo" />
     </Box>
   );
 }
