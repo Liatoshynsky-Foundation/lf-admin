@@ -244,23 +244,7 @@ const WORK_MENU_ITEMS = [
 
 type ContextMenuItem = { id: string; label: string; danger?: boolean };
 
-function DropdownItemsList({
-  items,
-  renderItem
-}: {
-  items: readonly ContextMenuItem[];
-  renderItem: (item: ContextMenuItem) => React.ReactNode;
-}) {
-  return <Box sx={MENU_LIST_SX}>{items.map((item) => renderItem(item))}</Box>;
-}
-
-function ContextMenu({
-  items,
-  triggerLabel
-}: {
-  items: readonly ContextMenuItem[];
-  triggerLabel: string;
-}) {
+function useDropdownState() {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
 
@@ -273,6 +257,32 @@ function ContextMenu({
     setAnchorEl(null);
     requestAnimationFrame(() => triggerRef.current?.focus());
   };
+
+  const handleToggle = () => {
+    setAnchorEl((previous) => (previous ? null : triggerRef.current));
+  };
+
+  return { anchorEl, triggerRef, handleOpen, handleClose, handleToggle };
+}
+
+function DropdownItemsList<T extends { id: string }>({
+  items,
+  renderItem
+}: {
+  items: readonly T[];
+  renderItem: (item: T) => React.ReactNode;
+}) {
+  return <Box sx={MENU_LIST_SX}>{items.map((item) => renderItem(item))}</Box>;
+}
+
+function ContextMenu({
+  items,
+  triggerLabel
+}: {
+  items: readonly ContextMenuItem[];
+  triggerLabel: string;
+}) {
+  const { anchorEl, triggerRef, handleOpen, handleClose } = useDropdownState();
 
   return (
     <>
@@ -341,20 +351,12 @@ function ContextMenu({
   );
 }
 
-function WorkRowCells({
-  title,
-  year,
-  menuItems
-}: {
-  title: string;
-  year: string;
-  menuItems: readonly ContextMenuItem[];
-}) {
+function WorkRowCells({ title, year }: { title: string; year: string }) {
   return (
     <>
       <Typography sx={WORK_ROW_TITLE_SX}>{title}</Typography>
       <Typography sx={YEAR_TEXT_SX}>{year}</Typography>
-      <ContextMenu items={menuItems} triggerLabel={`Дії твору ${title}`} />
+      <ContextMenu items={WORK_MENU_ITEMS} triggerLabel={`Дії твору ${title}`} />
     </>
   );
 }
@@ -363,14 +365,10 @@ function WorkRowCells({
 function GroupedRow({
   group,
   defaultExpanded,
-  groupMenuItems,
-  workMenuItems,
   withLeftMarker
 }: {
   group: GroupRowData;
   defaultExpanded?: boolean;
-  groupMenuItems: readonly ContextMenuItem[];
-  workMenuItems: readonly ContextMenuItem[];
   withLeftMarker?: boolean;
 }) {
   const shouldShowOpusMarker = Boolean(withLeftMarker);
@@ -456,7 +454,7 @@ function GroupedRow({
             <StatusWithDate status={group.status} date={group.updatedAt} />
           </Box>
 
-          <ContextMenu items={groupMenuItems} triggerLabel={`Дії групи ${group.title}`} />
+          <ContextMenu items={GROUP_MENU_ITEMS} triggerLabel={`Дії групи ${group.title}`} />
         </Box>
       </AccordionSummary>
 
@@ -476,7 +474,7 @@ function GroupedRow({
                 minWidth: 0
               }}
             >
-              <WorkRowCells title={work.title} year={work.year} menuItems={workMenuItems} />
+              <WorkRowCells title={work.title} year={work.year} />
             </Box>
           ))}
         </AccordionDetails>
@@ -503,7 +501,7 @@ function IndividualWorkRow({ work }: { work: IndividualWorkData }) {
       {/* Left marker column (empty for individual works) */}
       <Box sx={{ width: '1px' }} />
 
-      <WorkRowCells title={work.title} year={work.year} menuItems={WORK_MENU_ITEMS} />
+      <WorkRowCells title={work.title} year={work.year} />
     </Box>
   );
 }
@@ -516,8 +514,6 @@ function GroupRowsList({ groups, withLeftMarker }: { groups: readonly (OpusGroup
           key={group.id}
           group={toGroupRowData(group)}
           defaultExpanded
-          groupMenuItems={GROUP_MENU_ITEMS}
-          workMenuItems={WORK_MENU_ITEMS}
           withLeftMarker={
             withLeftMarker && 'opusNumber' in group
               ? OPUS_HIGHLIGHT_NUMBERS.has(group.opusNumber.toLowerCase())
@@ -531,17 +527,10 @@ function GroupRowsList({ groups, withLeftMarker }: { groups: readonly (OpusGroup
 
 // ── Create button (same pattern as PublicationsCreateAction) ──────────────────
 function WorksCreateAction() {
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const { anchorEl, triggerRef, handleClose, handleToggle } = useDropdownState();
 
-  const handleToggleMenu = () => {
-    setAnchorEl((previous) => (previous ? null : triggerRef.current));
-  };
-
-  const handleCloseMenu = () => {
-    setAnchorEl(null);
-    requestAnimationFrame(() => triggerRef.current?.focus());
-  };
+  const handleToggleMenu = handleToggle;
+  const handleCloseMenu = handleClose;
 
   return (
     <>
