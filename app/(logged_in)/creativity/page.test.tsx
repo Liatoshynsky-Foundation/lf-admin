@@ -81,7 +81,7 @@ jest.mock('./useWorksFiltering', () => ({
     toolbarProps: {
       search: {
         search: '',
-        onSearch: jest.fn(),
+        setSearch: jest.fn(),
         options: [],
         placeholder: 'Пошук'
       },
@@ -126,13 +126,13 @@ describe('Creativity page', () => {
       '/creativity/group/create'
     );
 
-    expect(screen.getByText('№1«Після бою», сл. І. Буніна, укр.пер. М. Стріхи')).toBeInTheDocument();
+    expect(screen.getAllByText('№1«Після бою», сл. І. Буніна, укр.пер. М. Стріхи').length).toBeGreaterThan(0);
   });
 
   it('shows different context actions for a group and a work', () => {
     render(<CreativityPage />);
 
-    fireEvent.click(screen.getByRole('button', { name: /дії групи перший струнний квартет/i }));
+    fireEvent.click(screen.getAllByRole('button', { name: /дії групи перший струнний квартет/i })[0]);
 
     let dropdownMenu = screen.getByTestId('dropdown-menu');
 
@@ -148,7 +148,7 @@ describe('Creativity page', () => {
 
     fireEvent.click(within(dropdownMenu).getByText('Редагувати'));
 
-    fireEvent.click(screen.getByRole('button', { name: /дії твору №1«після бою»/i }));
+    fireEvent.click(screen.getAllByRole('button', { name: /дії твору №1«після бою»/i })[0]);
 
     dropdownMenu = screen.getByTestId('dropdown-menu');
 

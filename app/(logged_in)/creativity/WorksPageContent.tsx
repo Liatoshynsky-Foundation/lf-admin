@@ -16,7 +16,7 @@ import Link from 'next/link';
 import { useRef, useState } from 'react';
 
 import { useWorksFiltering } from './useWorksFiltering';
-import { type OpusGroup, type UngroupedGroup, WORKS_MOCK_DATA,type WorkStatus } from './works.mock';
+import { type OpusGroup, type UngroupedGroup, WORKS_MOCK_DATA, type WorkStatus } from './works.mock';
 import {
   WORKS_CREATE_OPTIONS,
   WORKS_EMPTY_STATE_DESCRIPTION,
@@ -69,6 +69,14 @@ const META_TEXT_SX = {
 const TITLE_TEXT_SX = { fontSize: '15px', minWidth: 0, ...SINGLE_LINE_ELLIPSIS } as const;
 const WORK_ROW_TITLE_SX = { fontSize: '14px', minWidth: 0, flex: 1, ...SINGLE_LINE_ELLIPSIS } as const;
 const YEAR_TEXT_SX = { ...META_TEXT_SX, width: YEAR_COLUMN_WIDTH, textAlign: 'right' } as const;
+const MENU_LIST_SX = { px: '8px', py: '4px' } as const;
+const MENU_ITEM_BASE_SX = {
+  ...filterSelectStyles.menuItem,
+  minHeight: 'auto',
+  px: '12px',
+  py: '8px',
+  borderRadius: '8px'
+} as const;
 
 type GroupRowData = Readonly<{
   id: string;
@@ -236,6 +244,16 @@ const WORK_MENU_ITEMS = [
 
 type ContextMenuItem = { id: string; label: string; danger?: boolean };
 
+function DropdownItemsList({
+  items,
+  renderItem
+}: {
+  items: readonly ContextMenuItem[];
+  renderItem: (item: ContextMenuItem) => React.ReactNode;
+}) {
+  return <Box sx={MENU_LIST_SX}>{items.map((item) => renderItem(item))}</Box>;
+}
+
 function ContextMenu({
   items,
   triggerLabel
@@ -299,17 +317,14 @@ function ContextMenu({
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         menuList={
-          <Box sx={{ px: '8px', py: '4px' }}>
-            {items.map((item) => (
+          <DropdownItemsList
+            items={items}
+            renderItem={(item) => (
               <MenuItem
                 key={item.id}
                 onClick={handleClose}
                 sx={{
-                  ...filterSelectStyles.menuItem,
-                  minHeight: 'auto',
-                  px: '12px',
-                  py: '8px',
-                  borderRadius: '8px',
+                  ...MENU_ITEM_BASE_SX,
                   color: item.danger ? 'error.main' : colors.black,
                   '&:hover': {
                     bgcolor: item.danger ? 'rgba(211,47,47,0.04)' : 'rgba(0, 0, 0, 0.04)'
@@ -318,8 +333,8 @@ function ContextMenu({
               >
                 {item.label}
               </MenuItem>
-            ))}
-          </Box>
+            )}
+          />
         }
       />
     </>
@@ -493,6 +508,27 @@ function IndividualWorkRow({ work }: { work: IndividualWorkData }) {
   );
 }
 
+function GroupRowsList({ groups, withLeftMarker }: { groups: readonly (OpusGroup | UngroupedGroup)[]; withLeftMarker?: boolean }) {
+  return (
+    <>
+      {groups.map((group) => (
+        <GroupedRow
+          key={group.id}
+          group={toGroupRowData(group)}
+          defaultExpanded
+          groupMenuItems={GROUP_MENU_ITEMS}
+          workMenuItems={WORK_MENU_ITEMS}
+          withLeftMarker={
+            withLeftMarker && 'opusNumber' in group
+              ? OPUS_HIGHLIGHT_NUMBERS.has(group.opusNumber.toLowerCase())
+              : undefined
+          }
+        />
+      ))}
+    </>
+  );
+}
+
 // ── Create button (same pattern as PublicationsCreateAction) ──────────────────
 function WorksCreateAction() {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
@@ -545,19 +581,16 @@ function WorksCreateAction() {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
         menuList={
-          <Box sx={{ px: '8px', py: '4px' }}>
-            {WORKS_CREATE_OPTIONS.map((option) => (
+          <DropdownItemsList
+            items={WORKS_CREATE_OPTIONS}
+            renderItem={(option) => (
               <MenuItem
                 key={option.id}
                 component={Link}
                 href={option.href}
                 onClick={handleCloseMenu}
                 sx={{
-                  ...filterSelectStyles.menuItem,
-                  minHeight: 'auto',
-                  px: '12px',
-                  py: '8px',
-                  borderRadius: '8px',
+                  ...MENU_ITEM_BASE_SX,
                   color: colors.black,
                   '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' },
                   '&.Mui-focusVisible': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
@@ -565,8 +598,8 @@ function WorksCreateAction() {
               >
                 {option.label}
               </MenuItem>
-            ))}
-          </Box>
+            )}
+          />
         }
       />
     </>
@@ -660,26 +693,9 @@ export function WorksPageContent({ activeTab }: WorksPageContentProps) {
 
     return (
       <Box>
-        {showOpus && visibleOpusGroups.map((group) => (
-          <GroupedRow
-            key={group.id}
-            group={toGroupRowData(group)}
-            defaultExpanded
-            groupMenuItems={GROUP_MENU_ITEMS}
-            workMenuItems={WORK_MENU_ITEMS}
-            withLeftMarker={OPUS_HIGHLIGHT_NUMBERS.has(group.opusNumber.toLowerCase())}
-          />
-        ))}
+        {showOpus && <GroupRowsList groups={visibleOpusGroups} withLeftMarker />}
 
-        {showUngrouped && visibleUngroupedGroups.map((group) => (
-          <GroupedRow
-            key={group.id}
-            group={toGroupRowData(group)}
-            defaultExpanded
-            groupMenuItems={GROUP_MENU_ITEMS}
-            workMenuItems={WORK_MENU_ITEMS}
-          />
-        ))}
+        {showUngrouped && <GroupRowsList groups={visibleUngroupedGroups} />}
 
         {showIndividualWorks && visibleUngroupedWorks.map((work) => (
           <IndividualWorkRow key={work.id} work={work} />

@@ -1,0 +1,183 @@
+[
+  {
+    "kind": "opus",
+    "id": "opus-1",
+    "number": "op. 1",
+    "title": "Перший струнний квартет (d moll)",
+    "genre": "Струнний квартет",
+    "language": "uk",
+    "yearRange": "1920-1930",
+    "status": "published",
+    "updatedAt": "2025-09-11T00:00:00.000Z",
+    "works": [
+      { "id": "work-1-1", "title": "№1«Після бою», сл. І. Буніна, укр.пер. М. Стріхи", "year": "1922" },
+      { "id": "work-1-2", "title": "№3«Був цар», сл. Г. Гейне, укр. пер. М. Стріхи", "year": "1922" },
+      { "id": "work-1-3", "title": "№3«Був цар», сл. Г. Гейне, укр. пер. М. Стріхи", "year": "1922" }
+    ]
+  },
+  {
+    "kind": "opus",
+    "id": "opus-2",
+    "number": "op. 2",
+    "title": "Опус 2",
+    "genre": "Романс, мистецька пісня",
+    "language": "uk",
+    "yearRange": "1930-1940",
+    "status": "draft",
+    "updatedAt": "2025-09-11T00:00:00.000Z",
+    "works": [
+      { "id": "work-2-1", "title": "№1 «Туман над полем»", "year": "1931" },
+      { "id": "work-2-2", "title": "№2 «Весняний мотив»", "year": "1934" }
+    ]
+  },
+  {
+    "kind": "opus",
+    "id": "opus-3",
+    "number": "op. 3",
+    "title": "Опус 3",
+    "genre": "Романс, мистецька пісня",
+    "language": "bilingual",
+    "yearRange": "1922",
+    "status": "draft",
+    "updatedAt": "2025-09-11T00:00:00.000Z",
+    "works": [{ "id": "work-3-1", "title": "№1 «Ноктюрн»", "year": "1922" }]
+  },
+  {
+    "kind": "opus",
+    "id": "opus-4",
+    "number": "op. 4",
+    "title": "Три романси на вірші Т. Шевченка",
+    "genre": "Романс, мистецька пісня",
+    "language": "uk",
+    "yearRange": "1923-1924",
+    "status": "editing",
+    "updatedAt": "2025-09-13T00:00:00.000Z",
+    "works": [
+      { "id": "work-4-1", "title": "№1 «Думи мої»", "year": "1923" },
+      { "id": "work-4-2", "title": "№2 «Минають дні»", "year": "1924" }
+    ]
+  },
+  {
+    "kind": "opus",
+    "id": "opus-5",
+    "number": "op. 5",
+    "title": "Соната для фортепіано №1",
+    "genre": "Соната",
+    "language": "en",
+    "yearRange": "1925",
+    "status": "published",
+    "updatedAt": "2025-09-10T00:00:00.000Z",
+    "works": [
+      { "id": "work-5-1", "title": "I. Allegro moderato", "year": "1925" },
+      { "id": "work-5-2", "title": "II. Largo", "year": "1925" },
+      { "id": "work-5-3", "title": "III. Finale", "year": "1925" }
+    ]
+  },
+  {
+    "kind": "opus",
+    "id": "opus-6",
+    "number": "op. 6",
+    "title": "Симфонічна сюїта",
+    "genre": "Симфонія",
+    "language": "uk",
+    "yearRange": "1926-1927",
+    "status": "draft",
+    "updatedAt": "2025-09-09T00:00:00.000Z",
+    "works": [
+      { "id": "work-6-1", "title": "I. Прелюдія", "year": "1926" },
+      { "id": "work-6-2", "title": "II. Intermezzo", "year": "1927" }
+    ]
+  },
+  {
+    "kind": "ungrouped",
+    "id": "bo-1",
+    "number": "bo. 1",
+    "title": "Перший струнний квартет (d moll)",
+    "genre": "Струнний квартет",
+    "language": "uk",
+    "yearRange": "1922",
+    "status": "published",
+    "updatedAt": "2025-09-11T00:00:00.000Z",
+    "works": [
+      { "id": "bo-work-1-1", "title": "№1«Після бою», сл. І. Буніна, укр.пер. М. Стріхи", "year": "1922" },
+      { "id": "bo-work-1-2", "title": "№2«Смерть», сл. І. Буніна, укр.пер. М. Стріхи", "year": "1922" },
+      { "id": "bo-work-1-3", "title": "№3«Був цар», сл. Г. Гейне, укр. пер. М. Стріхи", "year": "1922" }
+    ]
+  },
+  {
+    "kind": "ungrouped",
+    "id": "bo-2",
+    "number": "bo. 2",
+    "title": "Опус 2",
+    "genre": "Романс, мистецька пісня",
+    "language": "uk",
+    "yearRange": "1922",
+    "status": "draft",
+    "updatedAt": "2025-09-11T00:00:00.000Z",
+    "works": [
+      { "id": "bo-work-2-1", "title": "Пісня №1", "year": "1922" },
+      { "id": "bo-work-2-2", "title": "Пісня №3 «Дорога додому»", "year": "1932" }
+    ]
+  },
+  {
+    "kind": "ungrouped",
+    "id": "bo-3",
+    "number": "bo. 3",
+    "title": "Опус 3",
+    "genre": "Романс, мистецька пісня",
+    "language": "bilingual",
+    "yearRange": "1922",
+    "status": "draft",
+    "updatedAt": "2025-09-11T00:00:00.000Z",
+    "works": [
+      { "id": "bo-work-3-1", "title": "Пісня №2", "year": "1922" },
+      { "id": "bo-work-3-2", "title": "Пісня №4 «Нічний вітер»", "year": "1931" }
+    ]
+  },
+  {
+    "kind": "ungrouped",
+    "id": "bo-4",
+    "number": "bo. 4",
+    "title": "Без опусні 1",
+    "genre": "Романс, мистецька пісня",
+    "language": "en",
+    "yearRange": "1922",
+    "status": "draft",
+    "updatedAt": "2025-09-11T00:00:00.000Z",
+    "works": [
+      { "id": "bo-work-4-1", "title": "Пісня без опусу", "year": "1922" },
+      { "id": "bo-work-4-2", "title": "№1«Після бою», сл. І. Буніна, укр.пер. М. Стріхи", "year": "1932" },
+      { "id": "bo-work-4-3", "title": "Прелюдія без опусу", "year": "1935" }
+    ]
+  },
+  {
+    "kind": "ungrouped",
+    "id": "bo-5",
+    "number": "bo. 5",
+    "title": "Без опусні 2",
+    "genre": "Соната",
+    "language": "uk",
+    "yearRange": "1930-1936",
+    "status": "published",
+    "updatedAt": "2025-09-12T00:00:00.000Z",
+    "works": [
+      { "id": "bo-work-5-1", "title": "Скерцо без опусу", "year": "1930" },
+      { "id": "bo-work-5-2", "title": "Рондо без опусу", "year": "1936" }
+    ]
+  },
+  {
+    "kind": "ungrouped",
+    "id": "bo-6",
+    "number": "bo. 6",
+    "title": "Хорові мініатюри",
+    "genre": "Хор",
+    "language": "uk",
+    "yearRange": "1934-1938",
+    "status": "draft",
+    "updatedAt": "2025-09-14T00:00:00.000Z",
+    "works": [
+      { "id": "bo-work-6-1", "title": "Ave Maria (без опусу)", "year": "1934" },
+      { "id": "bo-work-6-2", "title": "Kyrie (без опусу)", "year": "1938" }
+    ]
+  }
+]
