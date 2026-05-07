@@ -47,7 +47,7 @@ type PublicationsPageContentProps = Readonly<{
 
 type PublicationCardImage = {
   src: string;
-  alt: { uk: string; en: string };
+  alt: LocalizedString;
 };
 
 type PublicationCardItem = {
@@ -60,6 +60,7 @@ type PublicationCardItem = {
   status: PublicationsStatusValue;
   language: PublicationsLanguageValue;
   cardType: ContentType;
+  slug: string;
   cardStatus: PublicationsStatusValue;
   titleData: Partial<LocalizedString>;
   coverImage: PublicationCardImage;
@@ -173,13 +174,13 @@ const toLocalizedString = (value: MaybeLocalizedValue, fallback = ''): Localized
     return {
       uk: localizedValue,
       en: localizedValue
-    };
+    } as const;
   }
 
   const uk = value?.uk?.trim() || value?.en?.trim() || fallback;
   const en = value?.en?.trim() || value?.uk?.trim() || fallback;
 
-  return { uk, en };
+  return { uk, en } as const;
 };
 
 const getSortableDate = (...values: Array<string | null | undefined>): string => {
@@ -207,7 +208,7 @@ const isPublicationCardStatus = (status: string): status is PublicationsStatusVa
 
 const mapCardType = (type: PublicationsItemType): ContentType => {
   if (type === 'events') {
-    return 'event';
+    return 'events';
   }
 
   return type;
@@ -237,6 +238,7 @@ const mapNewsItem = (item: NewsItem): PublicationCardItem | null => {
     sortTitle,
     titleData: title,
     type: 'news',
+    slug: item.slug,
     cardType: mapCardType('news'),
     dateAdded: sortableDate,
     createdAtRaw: sortableDate,
@@ -272,6 +274,7 @@ const mapEventItem = (item: EventItem): PublicationCardItem | null => {
     id: item.id,
     title: titleText,
     sortTitle,
+    slug: item.slug,
     titleData: title,
     type: 'events',
     cardType: mapCardType('events'),
@@ -309,6 +312,7 @@ const mapMediaMentionItem = (item: MediaMentionItem): PublicationCardItem | null
     sortTitle,
     titleData,
     type: 'media',
+    slug: item.slug,
     cardType: mapCardType('media'),
     dateAdded: sortableDate,
     createdAtRaw: sortableDate,
@@ -551,6 +555,7 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
           {visibleItems.map((item) => (
             <Box key={item.id} sx={styles.cardWrapper}>
               <ContentCard
+                id={item.id}
                 type={item.cardType}
                 coverImage={item.coverImage}
                 title={item.titleData}
@@ -559,7 +564,6 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
                 createdAt={item.createdAt}
                 publishedAt={item.publishedAt}
                 editHref={getPublicationEditHref(item)}
-                onClickMenu={() => undefined}
               />
             </Box>
           ))}

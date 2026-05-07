@@ -12,22 +12,22 @@ interface ContentCardBadgeProps {
 }
 
 const ContentCardBadge = ({ type, status, localizations }: ContentCardBadgeProps) => {
-  const getContentTypeLabel = (contentType: 'news' | 'event' | 'media'): string => {
+  const getContentTypeLabel = (contentType: ContentType): string => {
     switch (contentType) {
     case 'news':
       return 'Новина';
-    case 'event':
+    case 'events':
       return 'Подія';
     case 'media':
       return 'Ми у ЗМІ';
     }
   };
 
-  const getContentTypeColor = (contentType: 'news' | 'event' | 'media'): string => {
+  const getContentTypeColor = (contentType: ContentType): string => {
     switch (contentType) {
     case 'news':
       return '#93CCF4';
-    case 'event':
+    case 'events':
       return '#EC93F4';
     case 'media':
       return '#B6F7CF';
@@ -53,7 +53,9 @@ const ContentCardBadge = ({ type, status, localizations }: ContentCardBadgeProps
         <CircleCheckBig size={15} />
         {getLocalizations(localizations) && <Box>{getLocalizations(localizations)}</Box>}
       </Box>
-      {status === BaseContentStatuses.Draft && <Box sx={styles.draftBadge}>Чернетка {getLocalizations(localizations)}</Box>}
+      {status === BaseContentStatuses.Draft && (
+        <Box sx={styles.draftBadge}>Чернетка {getLocalizations(localizations)}</Box>
+      )}
     </Box>
   );
 };

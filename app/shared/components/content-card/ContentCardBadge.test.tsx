@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 
-import ContentCard from './ContentCard';
+import ContentCardBadge from './ContentCardBadge';
 
 jest.mock('./ContentCardBadge', () => ({
   __esModule: true,
@@ -17,11 +17,7 @@ describe('ContentCard Component', () => {
     },
     title: { uk: 'Український заголовок', en: 'English Title' },
     status: 'published',
-    createdAt: '2024-01-01T10:00:00Z',
-    publishedAt: '2024-01-02T10:00:00Z',
-    updatedAt: '2024-01-03T10:00:00Z',
-    onClick: jest.fn(),
-    onClickMenu: jest.fn()
+    localizations: ['en', 'fr']
   };
 
   beforeEach(() => {
@@ -29,7 +25,7 @@ describe('ContentCard Component', () => {
   });
 
   it('should render the ContentCardBadge with provided props', () => {
-    render(<ContentCard {...mockProps} />);
+    render(<ContentCardBadge {...mockProps} />);
     expect(screen.getByTestId('badge-mock')).toBeInTheDocument();
   });
 });
