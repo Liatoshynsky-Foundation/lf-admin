@@ -6,7 +6,7 @@ import CreativityPage from './page';
 
 jest.mock('next/link', () => {
   const MockLink = ({ children, href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
-    <a href={typeof href === 'string' ? href : ''} {...props}>
+    <a href={typeof href === 'string' && href ? href : '#'} {...props}>
       {children}
     </a>
   );

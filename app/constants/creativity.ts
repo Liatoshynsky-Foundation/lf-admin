@@ -4,7 +4,6 @@ import { BaseContentStatuses } from '~/types/enums/common.enums';
 export type WorksTabValue = 'all' | 'opus' | 'ungrouped' | 'works';
 
 export type WorksStatusValue = (typeof WORKS_STATUSES)[number];
-export type WorksGenreValue = string;
 export type WorksLanguageValue = 'uk' | 'en' | 'bilingual';
 export type WorksFilterId = 'status' | 'language' | 'genre';
 

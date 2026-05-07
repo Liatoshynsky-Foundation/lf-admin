@@ -155,7 +155,7 @@ function sortGroups<T extends { title: string; updatedAt: string }>(
 }
 
 // ── Status chip ───────────────────────────────────────────────────────────────
-function StatusChip({ status }: { status: string }) {
+function StatusChip({ status }: Readonly<{ status: string }>) {
   if (status === BaseContentStatuses.Published) {
     return (
       <Box
@@ -193,7 +193,7 @@ function StatusChip({ status }: { status: string }) {
 }
 
 // ── Status label (for opus row, shows date aside status badge) ────────────────
-function StatusWithDate({ status, date }: { status: string; date: string }) {
+function StatusWithDate({ status, date }: Readonly<{ status: string; date: string }>) {
   const normalizedStatus =
     status === BaseContentStatuses.Editing ? BaseContentStatuses.Published : status;
   const statusText =
@@ -268,20 +268,20 @@ function useDropdownState() {
 function DropdownItemsList<T extends { id: string }>({
   items,
   renderItem
-}: {
+}: Readonly<{
   items: readonly T[];
   renderItem: (item: T) => React.ReactNode;
-}) {
+}>) {
   return <Box sx={MENU_LIST_SX}>{items.map((item) => renderItem(item))}</Box>;
 }
 
 function ContextMenu({
   items,
   triggerLabel
-}: {
+}: Readonly<{
   items: readonly ContextMenuItem[];
   triggerLabel: string;
-}) {
+}>) {
   const { anchorEl, triggerRef, handleOpen, handleClose } = useDropdownState();
 
   return (
@@ -351,7 +351,7 @@ function ContextMenu({
   );
 }
 
-function WorkRowCells({ title, year }: { title: string; year: string }) {
+function WorkRowCells({ title, year }: Readonly<{ title: string; year: string }>) {
   return (
     <>
       <Typography sx={WORK_ROW_TITLE_SX}>{title}</Typography>
@@ -366,11 +366,11 @@ function GroupedRow({
   group,
   defaultExpanded,
   withLeftMarker
-}: {
+}: Readonly<{
   group: GroupRowData;
   defaultExpanded?: boolean;
   withLeftMarker?: boolean;
-}) {
+}>) {
   const shouldShowOpusMarker = Boolean(withLeftMarker);
 
   return (
@@ -484,7 +484,7 @@ function GroupedRow({
 }
 
 // ── Individual work (ungrouped work without container) ──────────────────────
-function IndividualWorkRow({ work }: { work: IndividualWorkData }) {
+function IndividualWorkRow({ work }: Readonly<{ work: IndividualWorkData }>) {
   return (
     <Box
       sx={{
@@ -506,7 +506,7 @@ function IndividualWorkRow({ work }: { work: IndividualWorkData }) {
   );
 }
 
-function GroupRowsList({ groups, withLeftMarker }: { groups: readonly (OpusGroup | UngroupedGroup)[]; withLeftMarker?: boolean }) {
+function GroupRowsList({ groups, withLeftMarker }: Readonly<{ groups: readonly (OpusGroup | UngroupedGroup)[]; withLeftMarker?: boolean }>) {
   return (
     <>
       {groups.map((group) => (

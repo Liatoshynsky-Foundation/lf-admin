@@ -5,7 +5,6 @@ import { useCallback, useMemo, useState } from 'react';
 import {
   WORKS_FILTERS,
   type WorksFilterId,
-  type WorksGenreValue,
   type WorksLanguageValue,
   type WorksStatusValue
 } from '~/constants/creativity';
@@ -45,7 +44,7 @@ export function useWorksFiltering(): Readonly<{
   selectedFilters: Readonly<{
     status: readonly WorksStatusValue[];
     language: readonly WorksLanguageValue[];
-    genre: readonly WorksGenreValue[];
+    genre: readonly string[];
   }>;
   toolbarProps: WorksFilteringToolbarProps;
   sortProps: WorksFilteringSortProps;
@@ -54,7 +53,7 @@ export function useWorksFiltering(): Readonly<{
   const [search, setSearch] = useState('');
   const [statusFilters, setStatusFilters] = useState<WorksStatusValue[]>([]);
   const [languageFilters, setLanguageFilters] = useState<WorksLanguageValue[]>([]);
-  const [genreFilters, setGenreFilters] = useState<WorksGenreValue[]>([]);
+  const [genreFilters, setGenreFilters] = useState<string[]>([]);
   const [sortValue, setSortValue] = useState<FilesSortValue>(getInitialSortValue);
 
   const activeFiltersCount = statusFilters.length + languageFilters.length + genreFilters.length;
@@ -73,7 +72,8 @@ export function useWorksFiltering(): Readonly<{
 
   const handleSortFieldChange = useCallback((field: SortFieldValue) => {
     setSortValue((previous) => {
-      const nextValue = field === 'date'
+      const isDate = field === 'date';
+      const nextValue: FilesSortValue = isDate
         ? (previous.startsWith('date') ? previous : 'date_desc')
         : (previous.startsWith('name') ? previous : 'name_asc');
       localStorage.setItem(SORT_STORAGE_KEY, nextValue);
@@ -87,30 +87,29 @@ export function useWorksFiltering(): Readonly<{
   }, []);
 
   const filterConfigs = useMemo(
-    () =>
-      WORKS_FILTERS.map((filter) => {
-        const getFilterValue = (): string[] => {
-          if (filter.id === 'status') return statusFilters;
-          if (filter.id === 'language') return languageFilters;
-          return genreFilters;
-        };
+    () => {
+      const filterValues: Record<WorksFilterId, string[]> = {
+        status: statusFilters,
+        language: languageFilters,
+        genre: genreFilters
+      };
 
-        const getOnChange = (id: WorksFilterId) => {
-          if (id === 'status') return (value: string[]) => setStatusFilters(value as WorksStatusValue[]);
-          if (id === 'language') return (value: string[]) => setLanguageFilters(value as WorksLanguageValue[]);
-          return (value: string[]) => setGenreFilters(value);
-        };
+      const filterOnChange: Record<WorksFilterId, (value: string[]) => void> = {
+        status: (value) => setStatusFilters(value as WorksStatusValue[]),
+        language: (value) => setLanguageFilters(value as WorksLanguageValue[]),
+        genre: (value) => setGenreFilters(value)
+      };
 
-        return {
-          id: filter.id,
-          label: filter.label,
-          options: filter.options,
-          value: getFilterValue(),
-          hideClearAction: true,
-          menuMinWidth: filter.menuMinWidth,
-          onChange: getOnChange(filter.id)
-        };
-      }),
+      return WORKS_FILTERS.map((filter) => ({
+        id: filter.id,
+        label: filter.label,
+        options: filter.options,
+        value: filterValues[filter.id],
+        hideClearAction: true,
+        menuMinWidth: filter.menuMinWidth,
+        onChange: filterOnChange[filter.id]
+      }));
+    },
     [statusFilters, languageFilters, genreFilters]
   );
 
