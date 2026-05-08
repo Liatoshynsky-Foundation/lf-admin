@@ -3,7 +3,7 @@ import { Box, Button, Dialog, IconButton, Typography } from '@mui/material';
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
-import { renameFileModalStyles as styles } from './RenameFileModalStyles';
+import { renameFileModalStyles as styles } from './RenameFileModal.styles';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 import { useUpdateAssetMutation } from '~/types/graphql/generated/graphql';
 
