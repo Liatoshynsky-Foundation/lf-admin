@@ -1,4 +1,3 @@
-/* eslint-disable indent */
 import { Box, Chip } from '@mui/material';
 import { CircleCheckBig } from 'lucide-react';
 
@@ -13,14 +12,14 @@ interface ContentCardBadgeProps {
 }
 
 const ContentCardBadge = ({ type, status, localizations }: ContentCardBadgeProps) => {
-  const getContentTypeLabel = (contentType: 'news' | 'event' | 'media'): string => {
+  const getContentTypeLabel = (contentType: ContentType): string => {
     switch (contentType) {
-      case 'news':
-        return 'Новина';
-      case 'event':
-        return 'Подія';
-      case 'media':
-        return 'Ми у ЗМІ';
+    case 'news':
+      return 'Новина';
+    case 'events':
+      return 'Подія';
+    case 'media':
+      return 'Ми у ЗМІ';
     }
   };
 
@@ -32,36 +31,23 @@ const ContentCardBadge = ({ type, status, localizations }: ContentCardBadgeProps
         label={getContentTypeLabel(type)}
         size="small"
         variant="filled"
-        sx={{ backgroundColor: badgeColors[type] }}
+        sx={{ backgroundColor: badgeColors[type], padding: '5.5px 8px' }}
       ></Chip>
 
-      <Chip
-        icon={<CircleCheckBig size={15} />}
-        label={localizationLabel || ''}
-        size="small"
-        variant="filled"
+      <Box
         sx={{
           ...styles.localizationsBadge,
-          ...(!localizationLabel && {
-            '& .MuiChip-label': {
-              display: 'none'
-            },
-            '& .MuiChip-icon, & svg': {
-              margin: 0,
-              color: 'inherit'
-            },
-            padding: '6px'
-          })
+          padding: localizationLabel ? '4px 8px' : '7px'
         }}
-      ></Chip>
+      >
+        <CircleCheckBig size={15} />
+        {localizationLabel && <Box>{localizationLabel}</Box>}
+      </Box>
 
       {status === BaseContentStatuses.Draft && (
-        <Chip
-          label={`Чернетка ${localizationLabel ? localizationLabel : ''}`.trim()}
-          size="small"
-          variant="filled"
-          sx={styles.draftBadge}
-        />
+        <Box sx={styles.draftBadge}>
+          {`Чернетка ${localizationLabel ? localizationLabel : ''}`.trim()}
+        </Box>
       )}
     </Box>
   );

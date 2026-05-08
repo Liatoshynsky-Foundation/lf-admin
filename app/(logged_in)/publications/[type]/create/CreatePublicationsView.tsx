@@ -28,10 +28,8 @@ import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 interface PublicationViewProps {
   data: ReturnType<typeof useUpsertPublication>;
-  mode?: 'edit' | 'create';
+  mode?: 'edit' | 'create' | 'seo';
 }
-
-
 
 export default function CreatePublicationsView({ data, mode = 'create' }: Readonly<PublicationViewProps>) {
   const {
@@ -126,6 +124,7 @@ export default function CreatePublicationsView({ data, mode = 'create' }: Readon
       console.error(`Action ${actionId} failed`, err);
     }
   };
+
   const onEdit = async () => {
     const id = await handleSave(BaseContentStatuses.Draft);
     router.push(`${PUBLICATIONS_BASE_PATH}/${publicationType}/${id}/edit`);
@@ -133,22 +132,24 @@ export default function CreatePublicationsView({ data, mode = 'create' }: Readon
 
   return (
     <>
-      <DividedHeader
-        originUrl={PUBLICATIONS_BASE_PATH}
-        rightActionsComponent={
-          publicationType === 'media' ? (
-            <HeaderRightActions
-              mode="edit"
-              onPublish={() => handleMenuAction(MenuActionId.PUBLISH)}
-              onMenuOpen={handleOpen}
-            />
-          ) : (
-            <HeaderRightActions mode="create" onEdit={onEdit} />
-          )
-        }
-      >
-        <Typography variant="customBold20Tight">{`${mode === 'edit' ? 'Редагування' : 'Створення'} ${PAGE_TITLES[publicationType]}`}</Typography>
-      </DividedHeader>
+      {mode !== 'seo' && (
+        <DividedHeader
+          originUrl={PUBLICATIONS_BASE_PATH}
+          rightActionsComponent={
+            publicationType === 'media' ? (
+              <HeaderRightActions
+                mode="edit"
+                onPublish={() => handleMenuAction(MenuActionId.PUBLISH)}
+                onMenuOpen={handleOpen}
+              />
+            ) : (
+              <HeaderRightActions mode="create" onEdit={onEdit} />
+            )
+          }
+        >
+          <Typography variant="customBold20Tight">{`${mode === 'edit' ? 'Редагування' : 'Створення'} ${PAGE_TITLES[publicationType]}`}</Typography>
+        </DividedHeader>
+      )}
       <Box sx={styles.contentWrapper}>
         <SeoCollapsibleBlock
           title="Деталі"

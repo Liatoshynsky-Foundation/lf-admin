@@ -7,7 +7,7 @@ import { createValidator, FileValidator } from './validators';
 export interface UploadServiceConfig {
   storage: StorageAdapter;
   defaultFileType?: 'image' | 'document' | 'video' | 'audio' | 'generic';
-  defaultValidationRules?: Record<string, unknown>| object;
+  defaultValidationRules?: Record<string, unknown> | object;
 }
 
 export const createUploadService = (config: UploadServiceConfig) => {

@@ -19,7 +19,7 @@ export const createGraphQLContext = async (req: NextRequest): Promise<Omit<Graph
     try {
       admin = tokenService.verifyAccessToken(accessToken);
     } catch {
-      logger.warning('Access token not verified. Need to refresh it');
+      logger.warn('Access token not verified. Need to refresh it');
     }
   }
 

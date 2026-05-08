@@ -207,7 +207,6 @@ export type PublicationResource = (
   extra?: Record<string, unknown>
 ) => Promise<MutationResponse>;
 
-
 export interface FetchedPublicationData {
   adminTitle?: string | null;
   newsDate?: string | null;
@@ -258,7 +257,6 @@ export const initialSeoValue: SeoBlockValue = {
   ogImage: null,
   allowIndexing: { uk: true, en: true }
 };
-
 
 export const ADMIN_TITLE_LABELS: Record<PublicationsItemType, string> = {
   events: 'Назва події в адмінці',

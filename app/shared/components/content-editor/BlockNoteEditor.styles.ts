@@ -4,6 +4,7 @@ import { baseTextStyles } from '~/shared/theme/theme';
 
 export const styles: Record<string, SxProps<Theme>> = {
   container: {
+    overflow: 'hidden',
     width: '100%',
     backgroundColor: 'white',
     borderRadius: '8px',

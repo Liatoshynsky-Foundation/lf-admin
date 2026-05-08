@@ -25,10 +25,8 @@ import {
   FILES_UPLOAD_BUTTON_LABEL,
   FILES_UPLOAD_ERROR,
   FILES_UPLOAD_FAILED_ERROR,
-  FILES_UPLOAD_READ_ERROR,
   type FilesTabValue
 } from '~/constants/files';
-import { readFileAsDataURL } from '~/lib/utils/readFileAsDataURL';
 import FavouriteStarIcon from '~/public/icons/favourite-star.svg';
 import { EmptyState } from '~/shared/components/empty-state';
 import {
@@ -45,7 +43,11 @@ import {
 import { FilteringToolbar, SortSelect } from '~/shared/components/filtering-toolbar';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
 import type { MediaModalRenderers } from '~/shared/components/media-modal/MediaModal.renderers';
-import type { MediaModalOpenState, MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
+import type {
+  MediaModalOpenState,
+  MediaModalResult,
+  UploadResult
+} from '~/shared/components/media-modal/MediaModal.types';
 import { UploadView } from '~/shared/components/media-modal/views/upload-view/UploadView';
 import { PageHeader } from '~/shared/components/page-header/PageHeader';
 import { RenameFileModal } from '~/shared/components/rename-file-modal/RenameFileModal';
@@ -53,7 +55,7 @@ import { ViewToggle } from '~/shared/components/view-toggle';
 import { useAllAssets } from '~/shared/hooks/use-assets/useAssets';
 import { useFilesFiltering } from '~/shared/hooks/use-files';
 import { mainHexPallete as colors } from '~/shared/theme/colors';
-import { AssetType, useUploadBlobMutation } from '~/types/graphql/generated/graphql';
+import { AssetType, useCreateAssetMutation } from '~/types/graphql/generated/graphql';
 
 type FilesPageFileItem = FilesCardsLayoutItem & {
   description?: string;
@@ -61,6 +63,7 @@ type FilesPageFileItem = FilesCardsLayoutItem & {
   createdAtRaw?: string;
   size?: string;
   previewUrl?: string;
+  downloadUrl?: string;
   addedBy?: { name: string; avatarUrl?: string };
   usage: FileUsageLink[];
 };
@@ -129,13 +132,25 @@ const formatFileSize = (sizeBytes: number) => {
 };
 
 const formatFromMimeType = (mimeType: string, filename: string) => {
-  const byMime = mimeType.split('/')[1]?.toLowerCase();
-  if (byMime === 'jpeg') return 'jpg';
-  if (byMime === 'mpeg' && filename.toLowerCase().endsWith('.mp3')) return 'mp3';
-  if (byMime) return byMime;
-
   const ext = filename.split('.').pop()?.toLowerCase();
-  return ext || undefined;
+
+  if (ext) {
+    if (ext === 'jpeg') return 'jpg';
+    return ext;
+  }
+
+  const byMime = mimeType.split('/')[1]?.toLowerCase();
+  if (!byMime) return undefined;
+
+  if (byMime.includes('spreadsheetml')) return 'xlsx';
+  if (byMime.includes('wordprocessingml')) return 'docx';
+  if (byMime.includes('zip')) return 'zip';
+  if (byMime.includes('rar')) return 'rar';
+  if (byMime.includes('svg')) return 'svg';
+  if (byMime === 'jpeg') return 'jpg';
+  if (byMime === 'wave' || byMime === 'x-wav') return 'wav';
+
+  return byMime;
 };
 
 const usageToLink = (pageId?: string | null) => {
@@ -158,7 +173,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
     currentFilename: ''
   });
   const { data, loading, error, refetch } = useAllAssets();
-  const [uploadBlob] = useUploadBlobMutation();
+  const [createAsset] = useCreateAssetMutation();
 
   const handleOpenUploadFlow = () => {
     setUploadModalInitial({ tab: 'UPLOAD' });
@@ -170,29 +185,37 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
     setUploadModalInitial(undefined);
   };
 
-  const handleUploadApply = async (result: MediaModalResult) => {
-    if (result.selected.kind !== 'upload') {
+  const handleUploadApply = async (result: MediaModalResult & { uploadResult?: UploadResult }) => {
+    if (result.selected.kind !== 'upload' || !result.uploadResult) {
       return;
     }
 
     const file = result.selected.file;
-    const dataUrl = await readFileAsDataURL(file);
-    const base64 = dataUrl.split(',')[1];
+    const { url, filename, originalName, mimeType, size } = result.uploadResult;
 
-    if (!base64) {
-      throw new Error(FILES_UPLOAD_READ_ERROR);
-    }
+    let assetType = 'document';
+    const type = file.type.toLowerCase();
+    const name = file.name.toLowerCase();
 
-    const uploadResult = await uploadBlob({
+    if (type.includes('spreadsheet') || name.endsWith('.xlsx') || name.endsWith('.xls')) assetType = 'spreadsheet';
+    else if (type.includes('pdf') || name.endsWith('.pdf')) assetType = 'pdf';
+    else if (type.includes('zip') || type.includes('rar') || name.endsWith('.rar')) assetType = 'archive';
+    else if (type.startsWith('audio/')) assetType = 'audio';
+    else if (type.startsWith('image/')) assetType = 'image';
+
+    const createResult = await createAsset({
       variables: {
-        folderName: 'tmp',
-        blobName: file.name,
-        buffer: base64,
-        contentType: file.type || 'application/octet-stream'
+        input: {
+          filename: originalName || filename,
+          url: url,
+          mimeType: mimeType,
+          sizeBytes: size,
+          type: assetType
+        }
       }
     });
 
-    if (!uploadResult.data?.uploadBlob.success) {
+    if (!createResult.data?.createAsset) {
       throw new Error(FILES_UPLOAD_FAILED_ERROR);
     }
 
@@ -208,6 +231,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
       createdAtRaw: asset.createdAt,
       isStarred: asset.isStarred,
       usageLinks: asset.usageRefs.length,
+      downloadUrl: asset.url,
       imageSrc: asset.type === AssetType.Image ? asset.url : undefined,
       previewUrl: asset.type === AssetType.Image ? asset.url : undefined,
       format: formatFromMimeType(asset.mimeType, asset.filename),
@@ -263,7 +287,8 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
       size: selectedFile.size,
       usageLinks: selectedFile.usage,
       description: selectedFile.description,
-      isStarred: selectedFile.isStarred
+      isStarred: selectedFile.isStarred,
+      downloadUrl: selectedFile.downloadUrl
     }
     : null;
 
@@ -365,6 +390,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
         onClose={handleCloseUploadFlow}
         onApply={handleUploadApply}
         renderers={{ upload: renderFilesUpload }}
+        hideTabs={true}
       />
       <RenameFileModal
         open={renameModalState.open}
