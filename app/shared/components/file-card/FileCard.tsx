@@ -83,7 +83,7 @@ const FileCard = ({ fileType, fileData, onClick }: FileCardProps) => {
             alt={`${fileType} icon`}
             style={{ width: ICON_SIZE, height: ICON_SIZE }}
           />
-          <Typography variant="customMedium16" noWrap>
+          <Typography variant="subtitle1" sx={styles.fileTitle} noWrap>
             {name}
           </Typography>
         </Stack>
@@ -94,7 +94,7 @@ const FileCard = ({ fileType, fileData, onClick }: FileCardProps) => {
       </Stack>
 
       <Stack sx={styles.metadataSection}>
-        <Typography variant="customItalic14" color="text.secondary">
+        <Typography variant="caption" sx={styles.fileDate}>
           {dateAdded}
         </Typography>
 

@@ -21,7 +21,7 @@ const ProgressStatus = ({ isSaved = true, sx }: ProgressStatusProps) => {
           animation: isSaved ? `${styles.blinkThenFade} 4s ease forwards` : `${styles.blinkStay} 0.4s ease`,
           opacity: isSaved ? 0 : 1
         }}
-        variant="customMedium14Tight"
+        variant="subtitle2"
       >
         {displayText}
       </Typography>

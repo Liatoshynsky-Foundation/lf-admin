@@ -6,8 +6,8 @@ export const styles: Record<string, SxProps<Theme>> = {
     maxWidth: '100%',
     height: '325px',
     borderRadius: '16px',
-    borderColor: '#C6C8D3',
-    backgroundColor: '#FCFCFC',
+    borderColor: 'blue.300',
+    backgroundColor: 'white',
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
@@ -24,11 +24,18 @@ export const styles: Record<string, SxProps<Theme>> = {
     width: '100%',
     height: '225px',
     overflow: 'hidden',
-    backgroundColor: '#F1F2F7'
+    backgroundColor: 'adminBlue.100'
   },
 
   fileTitle: {
-    fontSize: '18px'
+    lineHeight: '1.5'
+  },
+
+  fileDate: {
+    fontSize: '16px',
+    fontStyle: 'italic',
+    color: 'text.secondary',
+    lineHeight: '1'
   },
 
   imagePlaceholder: {
@@ -37,7 +44,7 @@ export const styles: Record<string, SxProps<Theme>> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1F2F7'
+    backgroundColor: 'adminBlue.100'
   },
 
   fileInfoSection: {

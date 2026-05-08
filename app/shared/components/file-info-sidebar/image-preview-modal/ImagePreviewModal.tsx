@@ -1,12 +1,12 @@
 'use client';
 
-import { alpha, Box, Fade, IconButton, Modal } from '@mui/material';
+import { Box, Fade, IconButton, Modal } from '@mui/material';
 import React, { useEffect, useRef } from 'react';
 
 import { styles } from './ImagePreviewModal.styles';
+import { sxToArray } from '~/lib/utils/sxToArray';
 import CloseIcon from '~/public/icons/close.svg';
 import { useZoomPan } from '~/shared/hooks/use-zoom-pan/useZoomPan';
-import { mainHexPallete as colors } from '~/shared/theme/colors';
 
 type ImagePreviewModalProps = {
   open: boolean;
@@ -50,7 +50,7 @@ export function ImagePreviewModal({ open, src, alt, onClose, padding = 40 }: Rea
       disableScrollLock
       closeAfterTransition
       slotProps={{
-        backdrop: { sx: { bgcolor: alpha(colors.blue[900], 0.4) } }
+        backdrop: { sx: styles.backdrop }
       }}
     >
       <Fade in={open} timeout={{ enter: 500, exit: 300 }}>
@@ -65,14 +65,7 @@ export function ImagePreviewModal({ open, src, alt, onClose, padding = 40 }: Rea
             onMouseLeave={endPan}
             sx={styles.viewer({ padding, containerCursor })}
           >
-            <Box
-              ref={imageWrapRef}
-              sx={{
-                position: 'relative',
-                display: 'inline-block',
-                ...getImageSx()
-              }}
-            >
+            <Box ref={imageWrapRef} sx={[...sxToArray(styles.imageWrap), ...sxToArray(getImageSx())]}>
               <IconButton
                 size="small"
                 aria-label="Close preview"
@@ -80,7 +73,7 @@ export function ImagePreviewModal({ open, src, alt, onClose, padding = 40 }: Rea
                   e.stopPropagation();
                   onClose();
                 }}
-                sx={styles.closeButton()}
+                sx={styles.closeButton}
               >
                 <CloseIcon />
               </IconButton>

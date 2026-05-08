@@ -1,6 +1,7 @@
+import { alpha } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
 
-import { mainHexPallete as colors } from '~/shared/theme/colors';
+import { buttonColors } from '~/shared/theme/colors';
 
 type Params = {
   padding: number;
@@ -8,6 +9,10 @@ type Params = {
 };
 
 export const styles = {
+  backdrop: {
+    bgcolor: (theme) => alpha(theme.palette.primary.dark, 0.4) 
+  } as SxProps<Theme>,
+
   root: ({ padding }: Pick<Params, 'padding'>): SxProps<Theme> => ({
     position: 'fixed',
     inset: 0,
@@ -31,7 +36,12 @@ export const styles = {
     userSelect: 'none'
   }),
 
-  closeButton: (): SxProps<Theme> => ({
+  imageWrap: {
+    position: 'relative',
+    display: 'inline-block'
+  } as SxProps<Theme>,
+
+  closeButton: {
     position: 'absolute',
     top: -32,
     right: -32,
@@ -39,10 +49,10 @@ export const styles = {
     width: 32,
     height: 32,
     borderRadius: '16px',
-    bgcolor: colors.yellow[500],
+    bgcolor: buttonColors.tertiary.enabledBg,
     boxShadow: '0 2px 10px rgba(0,0,0,0.12)',
-    '&:hover': { bgcolor: '#d1a94cff' }
-  }),
+    '&:hover': { bgcolor: buttonColors.tertiary.hoveredBg }
+  } as SxProps<Theme>,
 
   img: ({ padding }: Pick<Params, 'padding'>): SxProps<Theme> => ({
     display: 'block',

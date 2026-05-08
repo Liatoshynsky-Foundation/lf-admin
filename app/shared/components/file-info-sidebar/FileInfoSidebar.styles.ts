@@ -1,4 +1,5 @@
 import { alpha } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 
 import { mainHexPallete as colors } from '~/shared/theme/colors';
 
@@ -53,10 +54,8 @@ export const styles = {
 
   headerTitle: {
     minWidth: 0,
-    fontFamily: 'Mulish, sans-serif',
     fontWeight: 700,
-    fontSize: 20,
-    lineHeight: '140%',
+    lineHeight: '1.4',
     letterSpacing: 0,
 
     display: '-webkit-box',
@@ -130,11 +129,7 @@ export const styles = {
     gap: 1
   },
   sectionTitle: {
-    fontFamily: 'Mulish, sans-serif',
-    fontWeight: 700,
-    fontSize: 14,
-    lineHeight: '130%',
-    letterSpacing: '0.17px'
+    fontWeight: 700
   },
   userRow: {
     display: 'flex',
@@ -146,11 +141,7 @@ export const styles = {
     width: '34px'
   },
   rowText: {
-    fontFamily: 'Mulish, sans-serif',
     fontWeight: 600,
-    fontSize: 16,
-    lineHeight: '150%',
-    letterSpacing: 0,
     color: colors.blue[800]
   },
   columnText: {
@@ -168,47 +159,45 @@ export const styles = {
   },
 
   usageLink: {
-    fontFamily: 'Mulish, sans-serif',
     fontWeight: 600,
-    fontSize: 16,
-    lineHeight: '150%',
     textDecoration: 'underline',
     overflowWrap: 'anywhere',
     color: colors.blue[800]
   },
 
-  descriptionField: {
+  descriptionField: (theme: Theme): SxProps<Theme> => ({
     '& .MuiOutlinedInput-root': {
       borderRadius: '12px',
       backgroundColor: 'transparent'
     },
 
     '& .MuiOutlinedInput-notchedOutline': {
-      borderColor: '#A7A8B4'
-    },
-    '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
-      borderColor: '#A7A8B4',
-      borderWidth: '1px'
+      borderColor: colors.blue[500]
     },
 
+    '& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline': {
+      borderColor: colors.blue[600]
+    },
+    
+    '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+      borderColor: colors.blue[800]
+    },
+    
     '& .MuiInputBase-inputMultiline': {
-      fontFamily: 'Mulish, sans-serif',
-      fontWeight: 600,
-      fontSize: '16px',
-      lineHeight: '150%'
+      ...theme.typography.textMd
     },
 
     '& .MuiInputBase-inputMultiline::placeholder': {
-      fontFamily: 'Mulish, sans-serif',
-      fontWeight: 400,
-      color: '#00000061',
+      ...theme.typography.textMd,
+      color: colors.blue[800],
       opacity: 1
     }
-  },
+  }),
+
   starFilled: {
     '& svg': { display: 'block' },
-    '& svg path': { fill: '#000' },
-    '& svg *': { stroke: '#000' }
+    '& svg path': { fill: 'black' },
+    '& svg *': { stroke: 'black' }
   },
   previewOverlay: {
     position: 'absolute',

@@ -42,13 +42,7 @@ export default function HeaderRightActions(props: HeaderRightActionsProps) {
           <IconButton onClick={props.onPreview} sx={{ color: 'text.primary' }} aria-label="Передогляд">
             <EyeIcon size={24} strokeWidth={1.5} />
           </IconButton>
-          <Button
-            disabled={disabled}
-            onClick={props.onEdit}
-            variant="contained"
-            disableElevation
-            sx={styles.pill('yellow')}
-          >
+          <Button disabled={disabled} onClick={props.onEdit} variant="contained" color="tertiary" disableElevation>
               Редагувати
           </Button>
         </>
@@ -57,21 +51,32 @@ export default function HeaderRightActions(props: HeaderRightActionsProps) {
     case 'edit':
       return (
         <>
-          <IconButton onClick={props.onPreview} sx={{ color: 'text.primary' }} aria-label="Передогляд">
+          <IconButton onClick={props.onPreview} sx={styles.icon} aria-label="Передогляд">
             <EyeIcon size={24} strokeWidth={1.5} />
           </IconButton>
 
-          <Box
-            sx={styles.group}
-            role="group"
-            aria-label="Дії публікації"
-          >
-            <Button disabled={disabled} onClick={props.onPublish} sx={styles.groupLeft}>
+          <Box sx={styles.group} role="group" aria-label="Дії публікації">
+            <Button
+              disabled={disabled}
+              onClick={props.onPublish}
+              variant="contained"
+              color="tertiary"
+              disableElevation
+              sx={styles.groupLeft}
+            >
                 Опублікувати
             </Button>
-            <IconButton aria-label="Відкрити меню параметрів" onClick={props.onMenuOpen} sx={styles.groupRight}>
+            <Button
+              disabled={disabled}
+              aria-label="Відкрити меню параметрів"
+              onClick={props.onMenuOpen}
+              variant="contained"
+              color="tertiary"
+              disableElevation
+              sx={styles.groupRight}
+            >
               <ChevronDown size={20} />
-            </IconButton>
+            </Button>
           </Box>
         </>
       );
@@ -79,16 +84,10 @@ export default function HeaderRightActions(props: HeaderRightActionsProps) {
     case 'seo':
       return (
         <Stack spacing="12px" marginLeft="8px" direction="row" role="group" aria-label="Дії збереження">
-          <Button onClick={props.onCancel} variant="outlined" sx={styles.pill('outline')}>
+          <Button onClick={props.onCancel} variant="outlined" color="primary">
               Скасувати
           </Button>
-          <Button
-            disabled={disabled}
-            onClick={props.onSave}
-            variant="contained"
-            disableElevation
-            sx={styles.pill('yellow')}
-          >
+          <Button disabled={disabled} onClick={props.onSave} variant="contained" color="tertiary" disableElevation>
               Зберегти
           </Button>
         </Stack>

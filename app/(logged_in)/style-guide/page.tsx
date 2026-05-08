@@ -8,6 +8,7 @@ import Alert from '~/ds-components/alert/Alert';
 import Button from '~/ds-components/button/Button';
 import ButtonGroup from '~/ds-components/button-group/ButtonGroup';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
+import FavouriteStarIcon from '~/public/icons/favourite-star.svg';
 import ContentCard from '~/shared/components/content-card/ContentCard';
 import DiscardChangesModal from '~/shared/components/design-system/discard-changes-modal/DiscardChangesModal';
 import CustomLink from '~/shared/components/design-system/link/CustomLink';
@@ -16,7 +17,17 @@ import { ImagePreviewBlock } from '~/shared/components/design-system/photo-block
 import { CustomTabs } from '~/shared/components/design-system/tabs/Tabs';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 import TooltipCustom from '~/shared/components/design-system/tooltip/Tooltip';
+import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
+import ProgressStatus from '~/shared/components/divided-header/progress-status/ProgressStatus';
+import { TitleDropdown } from '~/shared/components/divided-header/title-dropdown/TitleDropdown';
+import { EmptyState } from '~/shared/components/empty-state';
+import FileCard from '~/shared/components/file-card';
+import { FileInfoSidebar } from '~/shared/components/file-info-sidebar/FileInfoSidebar';
+import { ImagePreviewModal } from '~/shared/components/file-info-sidebar/image-preview-modal/ImagePreviewModal';
+import { FilteringToolbar, type FilteringToolbarFilterConfig } from '~/shared/components/filtering-toolbar';
+import { Search, type SearchOption } from '~/shared/components/search/Search';
+import type { FilterOption } from '~/shared/components/selector/FilterSelect';
 
 export default function StyleGuide() {
   const tabs = [
@@ -24,20 +35,72 @@ export default function StyleGuide() {
     { id: '2', label: 'Tab2' },
     { id: '3', label: 'Tab3' }
   ];
-  const [isOpen, setIsOpen] = useState(false);
+
+  const searchMock: SearchOption[] = [
+    { id: '1', title: 'Option1' },
+    { id: '2', title: 'Option2' },
+    { id: '3', title: 'Option3' },
+    { id: '4', title: 'Option4' },
+    { id: '5', title: 'Option5' }
+  ];
+
+  const categoryOptions: FilterOption[] = [
+    { value: 'frontend', label: 'Фронтенд' },
+    { value: 'backend', label: 'Бекенд' },
+    { value: 'design', label: 'Дизайн' }
+  ];
+
+  const statusOptions: FilterOption[] = [
+    { value: 'active', label: 'Активно' },
+    { value: 'archived', label: 'В архіві' }
+  ];
+
+  const [isDiscardChangesModalOpen, setIsDiscardChangesModalOpen] = useState(false);
   const [activeTabId, setActiveTabId] = useState('1');
   const [isControlledOpen, setIsControlledOpen] = useState(false);
+  const [isImagePreviewModalOpen, setIsImagePreviewModalOpen] = useState(false);
+  const [isFileInfoSidebarOpen, setIsFileInfoSidebarOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState<string>('');
+  const [isFiltersOpen, setIsFiltersOpen] = useState<boolean>(false);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
 
-  const handleOpen = () => setIsOpen(true);
-  const handleClose = () => setIsOpen(false);
+  const handleOpenDiscardChangesModal = () => setIsDiscardChangesModalOpen(true);
+  const handleCloseDiscardChangesModal = () => setIsDiscardChangesModalOpen(false);
+  const handleOpenImagePreviewModal = () => setIsImagePreviewModalOpen(true);
+  const handleCloseImagePreviewModal = () => setIsImagePreviewModalOpen(false);
+  const handleOpenFileInfoSidebar = () => setIsFileInfoSidebarOpen(true);
+  const handleCloseFileInfoSidebar = () => setIsFileInfoSidebarOpen(false);
 
-  const handleSubmit = () => {
-    setIsOpen(false);
+  const handleSubmitChanges = () => {
+    setIsDiscardChangesModalOpen(false);
   };
 
   const handleTabChange = (id: string) => {
     setActiveTabId(id);
   };
+
+  const handleClearAllFilters = () => {
+    setSelectedCategories([]);
+    setSelectedStatuses([]);
+  };
+
+  const filtersConfig: FilteringToolbarFilterConfig[] = [
+    {
+      id: 'category-filter',
+      label: 'Категорія',
+      options: categoryOptions,
+      value: selectedCategories,
+      onChange: setSelectedCategories
+    },
+    {
+      id: 'status-filter',
+      label: 'Статус',
+      options: statusOptions,
+      value: selectedStatuses,
+      onChange: setSelectedStatuses
+    }
+  ];
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: '24px', padding: '40px', maxWidth: '800px' }}>
@@ -177,11 +240,15 @@ export default function StyleGuide() {
         Тестування DiscardChangesModal
       </Typography>
 
-      <Button size="small" variant="filled" color="tertiary" onClick={handleOpen}>
+      <Button size="small" variant="filled" color="tertiary" onClick={handleOpenDiscardChangesModal}>
         Open modal
       </Button>
 
-      <DiscardChangesModal open={isOpen} handleClose={handleClose} handleSubmit={handleSubmit} />
+      <DiscardChangesModal
+        open={isDiscardChangesModalOpen}
+        handleClose={handleCloseDiscardChangesModal}
+        handleSubmit={handleSubmitChanges}
+      />
 
       <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
         Тестування CustomLink
@@ -286,7 +353,7 @@ export default function StyleGuide() {
       <ContentCard
         type="news"
         coverImage={{
-          src: { en: 'https://shorturl.at/xkStA', uk: 'https://shorturl.at/xkStA' },
+          src: 'https://shorturl.at/xkStA',
           alt: { en: 'event', uk: 'подія' }
         }}
         title={{ en: 'Event' }}
@@ -298,7 +365,146 @@ export default function StyleGuide() {
         Тестування HeaderRightActions
       </Typography>
 
+      <Typography variant="h6" sx={{ mt: 2 }}>
+        1. Mode: create
+      </Typography>
+
+      <HeaderRightActions mode="create"></HeaderRightActions>
+
+      <Typography variant="h6" sx={{ mt: 2 }}>
+        2. Mode: seo
+      </Typography>
+
       <HeaderRightActions mode="seo"></HeaderRightActions>
+
+      <Typography variant="h6" sx={{ mt: 2 }}>
+        3. Mode: edit
+      </Typography>
+
+      <HeaderRightActions mode="edit"></HeaderRightActions>
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування ProgressStatus
+      </Typography>
+
+      <ProgressStatus></ProgressStatus>
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування TitleDropdown
+      </Typography>
+
+      <TitleDropdown title="Золотий обруч" type="SEO" onMenuOpen={() => {}} />
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування DividedHeader
+      </Typography>
+
+      <DividedHeader />
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування EmptyState
+      </Typography>
+
+      <EmptyState
+        title="title"
+        description="description"
+        icon={<FavouriteStarIcon />}
+        action={{ label: 'Click me', href: '#', onClick: () => {} }}
+      />
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування FileCard
+      </Typography>
+
+      <FileCard
+        fileType="image"
+        fileData={{
+          id: 'a1',
+          name: 'file',
+          dateAdded: '01.01.2001',
+          isStarred: true,
+          usageLinks: 2,
+          imageSrc: '/images/image.png'
+        }}
+      />
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування ImagePreviewModal
+      </Typography>
+
+      <Button size="small" variant="filled" color="tertiary" onClick={handleOpenImagePreviewModal}>
+        Open modal
+      </Button>
+
+      <ImagePreviewModal
+        open={isImagePreviewModalOpen}
+        src="https://shorturl.at/xkStA"
+        alt="kitten"
+        onClose={handleCloseImagePreviewModal}
+      />
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування FileInfoSidebar
+      </Typography>
+
+      <Button size="small" variant="filled" color="tertiary" onClick={handleOpenFileInfoSidebar}>
+        Open sidebar
+      </Button>
+
+      {isFileInfoSidebarOpen && (
+        <FileInfoSidebar
+          file={{
+            id: 'a1',
+            type: 'image',
+            filename: 'File #1',
+            previewUrl: 'google.com',
+            addedBy: { name: 'Admin' },
+            addedAt: '01.01.2001',
+            format: 'png',
+            size: '1.55 Mb',
+            usageLinks: [{ id: '01', label: 'label', href: 'google.com' }],
+            isStarred: true
+          }}
+          onClose={handleCloseFileInfoSidebar}
+        ></FileInfoSidebar>
+      )}
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування Search
+      </Typography>
+
+      <Search
+        search={searchValue}
+        setSearch={setSearchValue}
+        options={searchMock}
+        placeholder="Пошук..."
+        maxWidth="400px"
+      />
+
+      <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: '8px', maxWidth: '400px' }}>
+        <Typography variant="body1">
+          <strong>Значення state:</strong> {searchValue || 'немає'}
+        </Typography>
+      </Box>
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування FilteringToolbar
+      </Typography>
+
+      <FilteringToolbar
+        search={{ search: searchValue, setSearch: setSearchValue, options: searchMock, placeholder: 'Пошук...' }}
+        filters={filtersConfig}
+        isFiltersOpen={isFiltersOpen}
+        onToggleFilters={() => setIsFiltersOpen((prev) => !prev)}
+        onClearFilters={handleClearAllFilters}
+        filtersButtonLabel="Фільтри"
+        clearFiltersTooltip="Скинути всі налаштування"
+        rightSlot={
+          <Button variant="filled" color="tertiary">
+            Кнопка
+          </Button>
+        }
+      />
     </Box>
   );
 }

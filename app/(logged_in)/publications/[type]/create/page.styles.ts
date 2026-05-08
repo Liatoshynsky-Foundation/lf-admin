@@ -1,7 +1,7 @@
 import { Theme } from '@mui/material/styles';
 import { SxProps } from '@mui/system';
 
-import { colors } from '~/shared/components/design-system/button/Button.styles';
+import { mainHexPallete as colors } from '~/shared/theme/colors';
 
 export const styles: Record<string, SxProps<Theme>> = {
   container: {
