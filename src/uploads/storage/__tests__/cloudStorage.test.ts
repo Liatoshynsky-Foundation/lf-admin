@@ -102,27 +102,34 @@ describe('createCloudStorage', () => {
       );
     });
 
-    it('should throw error if AWS credentials are missing', async () => {
+    it('should return error if AWS credentials are missing', async () => {
       const options = createAwsOptions({ credentials: {} });
       const storage = createCloudStorage(options);
 
-      await expect(storage.exists('test.txt')).rejects.toThrow('aws storage requires accessKeyId and secretAccessKey');
+      const result = await storage.delete('test.txt');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('aws storage requires accessKeyId and secretAccessKey');
     });
 
-    it('should throw error if Cloudflare credentials are missing', async () => {
+    it('should return error if Cloudflare credentials are missing', async () => {
       const options = createCloudflareOptions({ credentials: {} });
       const storage = createCloudStorage(options);
 
-      await expect(storage.exists('test.txt')).rejects.toThrow(
-        'cloudflare storage requires accessKeyId and secretAccessKey'
-      );
+      const result = await storage.delete('test.txt');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('cloudflare storage requires accessKeyId and secretAccessKey');
     });
 
-    it('should throw error if Cloudflare endpoint is missing', async () => {
+    it('should return error if Cloudflare endpoint is missing', async () => {
       const options = createCloudflareOptions({ endpoint: undefined });
       const storage = createCloudStorage(options);
 
-      await expect(storage.exists('test.txt')).rejects.toThrow('Cloudflare R2 storage requires endpoint configuration');
+      const result = await storage.delete('test.txt');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Cloudflare R2 storage requires endpoint configuration');
     });
   });
 
