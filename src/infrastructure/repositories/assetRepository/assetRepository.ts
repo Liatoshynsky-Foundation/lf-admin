@@ -173,6 +173,28 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
     return toEntity(newDoc);
   };
 
+  const getCloudStoragePath = (asset: DbAsset) => {
+    let folder = 'uploads';
+    let filename = asset.filename;
+
+    try {
+      if (asset.url) {
+        const urlObj = new URL(asset.url);
+        const pathParts = urlObj.pathname.split('/').filter(Boolean);
+
+        if (pathParts.length > 0) {
+          filename = pathParts.pop() || asset.filename;
+          folder = pathParts.length > 0 ? pathParts.join('/') : '';
+        }
+      }
+    } catch {
+      if (asset.type === 'image') folder = 'photos';
+      if (asset.type === 'audio') folder = 'compositions';
+    }
+
+    return { filename, folder };
+  };
+
   const deleteAsset = async (id: string): Promise<boolean> => {
     const asset = await AssetModel.findById(id);
 
@@ -184,34 +206,14 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
       throw new Error('Cannot delete: file is in use on the site.');
     }
 
-    let targetFolder = 'uploads';
-    let cloudFilename = asset.filename;
+    const { filename, folder } = getCloudStoragePath(asset);
 
-    try {
-      if (asset.url) {
-        const urlObj = new URL(asset.url);
-        const pathParts = urlObj.pathname.split('/').filter(Boolean);
-
-        if (pathParts.length > 0) {
-          cloudFilename = pathParts.pop() || asset.filename;
-
-          if (pathParts.length > 0) {
-            targetFolder = pathParts.join('/');
-          } else {
-            targetFolder = '';
-          }
-        }
-      }
-    } catch {
-      if (asset.type === 'image') targetFolder = 'photos';
-      if (asset.type === 'audio') targetFolder = 'compositions';
-    }
-
-    const storageResult = await storage.delete(cloudFilename, targetFolder);
+    const storageResult = await storage.delete(filename, folder);
 
     if (!storageResult.success) {
       logger.warn(`Failed to delete file from Cloudflare: ${storageResult.error}`);
     }
+
     await AssetModel.findByIdAndDelete(id);
 
     return true;
