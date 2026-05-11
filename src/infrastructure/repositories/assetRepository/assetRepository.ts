@@ -1,7 +1,10 @@
 import { FilterQuery, Model, Types } from 'mongoose';
 import * as path from 'node:path';
 
+import { config } from '../../../config';
+import { createStorageAdapter } from '../../../uploads/storage';
 import { createBaseRepository } from '../baseRepository/baseRepository';
+import logger from '~/src/middleware/logger/logger';
 
 type AssetType = 'image' | 'pdf' | 'audio' | 'document' | 'spreadsheet' | 'video' | 'archive';
 
@@ -56,6 +59,8 @@ type DbAsset = {
 type AssetRepoDeps = Readonly<{
   AssetModel: Model<DbAsset>;
 }>;
+
+const storage = createStorageAdapter(config.uploads.storage);
 
 const dateToIso = (date?: Date | string | null): string => {
   if (!date) {
@@ -154,6 +159,7 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
 
     return updatedDoc ? toEntity(updatedDoc) : null;
   };
+
   const createAsset = async (data: CreateAssetData): Promise<AssetEntity> => {
     const newDoc = await AssetModel.create({
       ...data,
@@ -167,9 +173,54 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
     return toEntity(newDoc);
   };
 
+  const deleteAsset = async (id: string): Promise<boolean> => {
+    const asset = await AssetModel.findById(id);
+
+    if (!asset) {
+      throw new Error('Файл не знайдено');
+    }
+
+    if (asset.usageRefs && asset.usageRefs.length > 0) {
+      throw new Error('Cannot delete: file is in use on the site.');
+    }
+
+    let targetFolder = 'uploads';
+    let cloudFilename = asset.filename;
+
+    try {
+      if (asset.url) {
+        const urlObj = new URL(asset.url);
+        const pathParts = urlObj.pathname.split('/').filter(Boolean);
+
+        if (pathParts.length > 0) {
+          cloudFilename = pathParts.pop() || asset.filename;
+
+          if (pathParts.length > 0) {
+            targetFolder = pathParts.join('/');
+          } else {
+            targetFolder = '';
+          }
+        }
+      }
+    } catch {
+      if (asset.type === 'image') targetFolder = 'photos';
+      if (asset.type === 'audio') targetFolder = 'compositions';
+    }
+
+    const storageResult = await storage.delete(cloudFilename, targetFolder);
+
+    if (!storageResult.success) {
+      logger.warn(`Failed to delete file from Cloudflare: ${storageResult.error}`);
+    }
+    await AssetModel.findByIdAndDelete(id);
+
+    return true;
+  };
+
   return {
     ...baseRepo,
     updateAsset,
-    createAsset
+    createAsset,
+    deleteAsset
   };
 };
