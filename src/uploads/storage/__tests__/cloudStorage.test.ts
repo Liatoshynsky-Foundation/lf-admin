@@ -63,53 +63,66 @@ describe('createCloudStorage', () => {
   });
 
   describe('initialization', () => {
-    it('should create AWS storage successfully', () => {
+    it('should create AWS storage successfully', async () => {
       const options = createAwsOptions({ region: 'us-east-1' });
-
       const storage = createCloudStorage(options);
 
+      mockSend.mockResolvedValueOnce({});
+      await storage.exists('test.txt');
+
       expect(storage).toBeDefined();
-      expect(MockS3Client).toHaveBeenCalledWith({
-        region: 'us-east-1',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        }
-      });
+      expect(MockS3Client).toHaveBeenCalledWith(
+        expect.objectContaining({
+          region: 'us-east-1',
+          credentials: {
+            accessKeyId: 'test-key',
+            secretAccessKey: 'test-secret'
+          }
+        })
+      );
     });
 
-    it('should create Cloudflare R2 storage successfully', () => {
+    it('should create Cloudflare R2 storage successfully', async () => {
       const options = createCloudflareOptions();
-
       const storage = createCloudStorage(options);
 
+      mockSend.mockResolvedValueOnce({});
+      await storage.exists('test.txt');
+
       expect(storage).toBeDefined();
-      expect(MockS3Client).toHaveBeenCalledWith({
-        region: 'auto',
-        credentials: {
-          accessKeyId: 'test-key',
-          secretAccessKey: 'test-secret'
-        },
-        endpoint: 'https://abc123.r2.cloudflarestorage.com'
-      });
+      expect(MockS3Client).toHaveBeenCalledWith(
+        expect.objectContaining({
+          region: 'auto',
+          credentials: {
+            accessKeyId: 'test-key',
+            secretAccessKey: 'test-secret'
+          },
+          endpoint: 'https://abc123.r2.cloudflarestorage.com'
+        })
+      );
     });
 
-    it('should throw error if AWS credentials are missing', () => {
+    it('should throw error if AWS credentials are missing', async () => {
       const options = createAwsOptions({ credentials: {} });
+      const storage = createCloudStorage(options);
 
-      expect(() => createCloudStorage(options)).toThrow('aws storage requires accessKeyId and secretAccessKey');
+      await expect(storage.exists('test.txt')).rejects.toThrow('aws storage requires accessKeyId and secretAccessKey');
     });
 
-    it('should throw error if Cloudflare credentials are missing', () => {
+    it('should throw error if Cloudflare credentials are missing', async () => {
       const options = createCloudflareOptions({ credentials: {} });
+      const storage = createCloudStorage(options);
 
-      expect(() => createCloudStorage(options)).toThrow('cloudflare storage requires accessKeyId and secretAccessKey');
+      await expect(storage.exists('test.txt')).rejects.toThrow(
+        'cloudflare storage requires accessKeyId and secretAccessKey'
+      );
     });
 
-    it('should throw error if Cloudflare endpoint is missing', () => {
+    it('should throw error if Cloudflare endpoint is missing', async () => {
       const options = createCloudflareOptions({ endpoint: undefined });
+      const storage = createCloudStorage(options);
 
-      expect(() => createCloudStorage(options)).toThrow('Cloudflare R2 storage requires endpoint configuration');
+      await expect(storage.exists('test.txt')).rejects.toThrow('Cloudflare R2 storage requires endpoint configuration');
     });
   });
 
