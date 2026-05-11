@@ -5,6 +5,8 @@ import { errorResponse } from '~/utils/apiResponse';
 import { validateWithZod } from '~/utils/validateRequestData';
 import { zBlobQuerySchema } from '~/validators/queryParams.schema';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const validationResult = validateWithZod(
