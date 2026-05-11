@@ -1,6 +1,15 @@
 import { createBaseRepository } from '../baseRepository/baseRepository';
 import { AssetRepository } from './assetRepository';
 
+jest.mock('~/src/middleware/logger/logger', () => ({
+  __esModule: true,
+  default: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn()
+  }
+}));
+
 jest.mock('../baseRepository/baseRepository', () => ({
   createBaseRepository: jest.fn((config) => config)
 }));
