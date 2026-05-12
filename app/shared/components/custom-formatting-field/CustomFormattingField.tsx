@@ -5,7 +5,7 @@ import Italic from '@tiptap/extension-italic';
 import Link from '@tiptap/extension-link';
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
-import { EditorContent,useEditor } from '@tiptap/react';
+import { EditorContent,JSONContent,useEditor } from '@tiptap/react';
 import { BubbleMenu } from '@tiptap/react/menus';
 import React, { useEffect, useState } from 'react';
 
@@ -13,9 +13,9 @@ import { styles } from './CustomFormattingField.style';
 import { FormattingToolbar } from './formatting-toolbar/FormattingToolbar';
 import { sxToArray } from '~/lib/utils/sxToArray';
 
-interface Props {
-  value: string;
-  onChange: (value: string) => void;
+export interface Props {
+  value: JSONContent;
+  onChange: (value: JSONContent ) => void;
   label?: string;
   sx?: SxProps<Theme>
 }
@@ -45,14 +45,14 @@ export const CustomFormattingField = ({ value, onChange, label = 'Текст', s
     content: value,
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      onChange(editor.getJSON());
     },
     onFocus: () => setIsFocused(true),
     onBlur: () => setIsFocused(false)
   });
 
   useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
+    if (editor && value) {
       editor.commands.setContent(value, { emitUpdate: false });
     }
   }, [value, editor]);
