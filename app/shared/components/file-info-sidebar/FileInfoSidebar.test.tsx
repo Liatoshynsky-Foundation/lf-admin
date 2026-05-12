@@ -5,7 +5,8 @@ import { type FileDetailsSidebarFile, FileInfoSidebar } from './FileInfoSidebar'
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
   ...jest.requireActual('~/types/graphql/generated/graphql'),
-  useUpdateAssetMutation: () => [jest.fn(), { loading: false }]
+  useUpdateAssetMutation: () => [jest.fn(), { loading: false }],
+  useDeleteAssetMutation: () => [jest.fn(), { loading: false }]
 }));
 
 jest.mock('../design-system/tooltip/Tooltip', () => ({
@@ -141,7 +142,7 @@ describe('FileInfoSidebar', () => {
     expect(screen.getByLabelText('Завантажити')).toBeDisabled();
   });
 
-  it('should request rename/delete/download with correct payload', () => {
+  it('should request rename and download, and open delete modal', () => {
     const onRequestAction = jest.fn();
 
     render(<FileInfoSidebar file={baseFile} onClose={jest.fn()} onRequestAction={onRequestAction} />);
@@ -149,13 +150,13 @@ describe('FileInfoSidebar', () => {
     fireEvent.click(screen.getByLabelText('Перейменувати'));
     expect(onRequestAction).toHaveBeenCalledWith({ type: 'rename', fileId: 'f1' });
 
-    fireEvent.click(screen.getByLabelText('Видалити'));
-    expect(onRequestAction).toHaveBeenCalledWith({ type: 'delete', fileId: 'f1' });
-
     fireEvent.click(screen.getByLabelText('Завантажити'));
     expect(onRequestAction).toHaveBeenCalledWith({ type: 'download', fileId: 'f1' });
 
-    expect(onRequestAction).toHaveBeenCalledTimes(3);
+    fireEvent.click(screen.getByLabelText('Видалити'));
+    expect(screen.getByText('Видалення неможливе')).toBeInTheDocument();
+
+    expect(onRequestAction).toHaveBeenCalledTimes(2);
   });
 
   it('should render preview image when previewUrl exists', () => {
