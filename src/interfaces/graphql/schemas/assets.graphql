@@ -17,6 +17,7 @@ enum AssetSortBy {
 type AssetUsageRef {
   pageId: String
   blockId: String
+  locale: String
 }
 
 type Asset {
@@ -38,6 +39,7 @@ type Asset {
 input AssetsFiltersInput {
   type: AssetType
   isStarred: Boolean
+  isUsed: Boolean
   tag: String
   search: String
   sortBy: AssetSortBy

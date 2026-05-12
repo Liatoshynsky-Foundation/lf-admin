@@ -6,6 +6,42 @@ import {
 } from '../helpers';
 import { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
+
+type UsageRepo = { addUsageRef: (url: string, ref: { pageId?: string; blockId?: string; locale?: string }) => Promise<void> };
+
+const extractHttpSrcs = (value: unknown, srcs: Set<string>): void => {
+  if (!value || typeof value !== 'object') return;
+  if (Array.isArray(value)) { value.forEach((v) => extractHttpSrcs(v, srcs)); return; }
+  const obj = value as Record<string, unknown>;
+  if (typeof obj.src === 'string' && obj.src.startsWith('http')) srcs.add(obj.src);
+  Object.values(obj).forEach((v) => extractHttpSrcs(v, srcs));
+};
+
+const markImagesAsUsed = async (
+  repo: UsageRepo,
+  content: { uk?: unknown; en?: unknown } | null | undefined,
+  coverImage: { src?: string } | null | undefined,
+  pageId: string,
+  blockId: string
+): Promise<void> => {
+  const ukSrcs = new Set<string>();
+  const enSrcs = new Set<string>();
+
+  if (content?.uk) extractHttpSrcs(content.uk, ukSrcs);
+  if (content?.en) extractHttpSrcs(content.en, enSrcs);
+
+  const promises: Promise<void>[] = [
+    ...Array.from(ukSrcs).map((url) => repo.addUsageRef(url, { pageId, blockId, locale: 'uk' })),
+    ...Array.from(enSrcs).map((url) => repo.addUsageRef(url, { pageId, blockId, locale: 'en' }))
+  ];
+
+  if (coverImage?.src?.startsWith('http')) {
+    promises.push(repo.addUsageRef(coverImage.src, { pageId, blockId, locale: 'uk' }));
+    promises.push(repo.addUsageRef(coverImage.src, { pageId, blockId, locale: 'en' }));
+  }
+
+  await Promise.all(promises);
+};
 import { EventsEntity } from '~/domain/entities/Events';
 import { CreateEventInput, UpdateEventInput } from '~/domain/repositories/eventsRepository';
 import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerator';
@@ -57,6 +93,9 @@ export const EventsMutation = {
       await syncImagesCrops(res.id, input.content);
     }
 
+    const assetsRepo = context.requestContainer.cradle.assetsRepository;
+    await markImagesAsUsed(assetsRepo, input.content, input.coverImage, 'events', res.id);
+
     return res;
   },
 
@@ -91,6 +130,9 @@ export const EventsMutation = {
     if (input.content) {
       await syncImagesCrops(res.id, input.content);
     }
+
+    const assetsRepo = context.requestContainer.cradle.assetsRepository;
+    await markImagesAsUsed(assetsRepo, input.content, input.coverImage, 'events', res.id);
 
     return res;
   },

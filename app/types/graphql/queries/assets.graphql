@@ -6,6 +6,7 @@ query AllAssets($filters: AssetsFiltersInput) {
     usageRefs {
       pageId
       blockId
+      locale
     }
     filename
     mimeType

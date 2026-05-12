@@ -8,6 +8,7 @@ export interface AllAssetsArgs {
   filters: {
     type?: AssetType;
     isStarred?: boolean;
+    isUsed?: boolean;
     sortBy?: AssetSortBy;
     sortOrder?: SortOrder;
     limit?: number;
