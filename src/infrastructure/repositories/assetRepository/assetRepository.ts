@@ -212,6 +212,7 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
 
     if (!storageResult.success) {
       logger.warn(`Failed to delete file from Cloudflare: ${storageResult.error}`);
+      throw new Error('The file was not deleted from cloud storage. Please try again later.');
     }
 
     await AssetModel.findByIdAndDelete(id);
