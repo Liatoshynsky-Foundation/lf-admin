@@ -56,10 +56,6 @@ input UpdateAssetInput {
   description: String
 }
 
-extend type Mutation {
-  updateAsset(id: ID!, input: UpdateAssetInput!): Asset!
-}
-
 input CreateAssetInput {
   filename: String!
   mimeType: String!
@@ -70,5 +66,7 @@ input CreateAssetInput {
 }
 
 extend type Mutation {
+  updateAsset(id: ID!, input: UpdateAssetInput!): Asset!
   createAsset(input: CreateAssetInput!): Asset!
+  deleteAsset(id: ID!): Boolean!
 }

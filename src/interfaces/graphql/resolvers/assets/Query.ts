@@ -32,6 +32,9 @@ export interface CreateAssetArgs {
     description?: string;
   };
 }
+export interface DeleteAssetArgs {
+  id: string;
+}
 
 const endpointHandler = endpointRepositoryHandler('assetsRepository');
 
@@ -45,5 +48,8 @@ export const AssetsMutation = {
   }),
   createAsset: endpointHandler<CreateAssetArgs, unknown>(async ({ args: { input }, repo }) => {
     return repo.createAsset(input);
+  }),
+  deleteAsset: endpointHandler<DeleteAssetArgs, unknown>(async ({ args: { id }, repo }) => {
+    return repo.deleteAsset(id);
   })
 };

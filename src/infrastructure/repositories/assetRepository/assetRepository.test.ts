@@ -1,8 +1,26 @@
 import { createBaseRepository } from '../baseRepository/baseRepository';
 import { AssetRepository } from './assetRepository';
 
+jest.mock('~/src/middleware/logger/logger', () => ({
+  __esModule: true,
+  default: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn()
+  }
+}));
+
 jest.mock('../baseRepository/baseRepository', () => ({
   createBaseRepository: jest.fn((config) => config)
+}));
+
+jest.mock('../../../config', () => ({
+  config: { uploads: { storage: { type: 'local' } } }
+}));
+jest.mock('../../../uploads/storage', () => ({
+  createStorageAdapter: jest.fn(() => ({
+    delete: jest.fn().mockResolvedValue({ success: true })
+  }))
 }));
 
 describe('AssetRepository', () => {
@@ -82,5 +100,45 @@ describe('AssetRepository', () => {
 
     expect(config.getDefaultSort()).toEqual({ createdAt: -1 });
     expect(config.getDefaultSort({ sortBy: 'filename', sortOrder: 'asc' })).toEqual({ filename: 1 });
+  });
+});
+
+describe('deleteAsset', () => {
+  const mockAssetModel = {
+    findById: jest.fn(),
+    findByIdAndDelete: jest.fn()
+  };
+
+  const repository = AssetRepository({ AssetModel: mockAssetModel as never });
+
+  it('should throw an error if the asset is not found', async () => {
+    mockAssetModel.findById.mockResolvedValueOnce(null);
+
+    await expect(repository.deleteAsset('fake-id')).rejects.toThrow('Файл не знайдено');
+  });
+
+  it('should throw an error if the asset is used on the site', async () => {
+    mockAssetModel.findById.mockResolvedValueOnce({
+      _id: 'fake-id',
+      usageRefs: [{ pageId: 'some-page-id' }]
+    });
+
+    await expect(repository.deleteAsset('fake-id')).rejects.toThrow('Cannot delete: file is in use on the site.');
+    expect(mockAssetModel.findByIdAndDelete).not.toHaveBeenCalled();
+  });
+
+  it('should successfully delete asset from storage and DB if not in use', async () => {
+    mockAssetModel.findById.mockResolvedValueOnce({
+      _id: 'fake-id',
+      filename: 'test-image.png',
+      type: 'image',
+      usageRefs: []
+    });
+    mockAssetModel.findByIdAndDelete.mockResolvedValueOnce({});
+
+    const result = await repository.deleteAsset('fake-id');
+
+    expect(result).toBe(true);
+    expect(mockAssetModel.findByIdAndDelete).toHaveBeenCalledWith('fake-id');
   });
 });
