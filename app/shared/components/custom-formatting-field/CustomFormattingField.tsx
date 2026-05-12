@@ -14,7 +14,7 @@ import { FormattingToolbar } from './formatting-toolbar/FormattingToolbar';
 import { sxToArray } from '~/lib/utils/sxToArray';
 
 export interface Props {
-  value: JSONContent;
+  value?: JSONContent;
   onChange: (value: JSONContent ) => void;
   label?: string;
   sx?: SxProps<Theme>
