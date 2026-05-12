@@ -31,5 +31,7 @@ export const styles: Record<string, SxProps<Theme>> = {
       }
     },
 
-  }
+  },
+  linkEditInputContainer: { display: 'flex', width: '100%', alignItems: 'center', px: 1 }
+
 };
