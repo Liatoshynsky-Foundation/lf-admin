@@ -60,13 +60,16 @@ const DeleteFileModal = ({ open, onClose, onConfirm, file, isDeleting, disableSc
             </Typography>
 
             <Box component="ul" sx={styles.usageList}>
-              {blockedRefs.map((ref, index) => (
-                <li key={index}>
-                  <Typography component="span" sx={styles.usageItem}>
-                    {formatUsageRef(ref)}
-                  </Typography>
-                </li>
-              ))}
+              {blockedRefs.map((ref, index) => {
+                const uniqueKey = `${ref.pageId || 'no-page'}-${ref.blockId || 'no-block'}-${index}`;
+                return (
+                  <li key={uniqueKey}>
+                    <Typography component="span" sx={styles.usageItem}>
+                      {formatUsageRef(ref)}
+                    </Typography>
+                  </li>
+                );
+              })}
             </Box>
           </Box>
         ) : (
