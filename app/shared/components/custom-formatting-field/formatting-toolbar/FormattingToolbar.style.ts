@@ -2,6 +2,8 @@ import { SxProps, Theme } from '@mui/material';
 
 export const styles: Record<string, SxProps<Theme>> = {
   container: {
+    position: 'relative',
+    zIndex: 100,
     display: 'flex',
     gap: 0.5,
     p: '2px',
@@ -27,11 +29,9 @@ export const styles: Record<string, SxProps<Theme>> = {
       color: 'white',
       border: 'none',
       '&:hover': {
-        backgroundColor: '#3f3f3f',
+        backgroundColor: '#3f3f3f'
       }
-    },
-
+    }
   },
   linkEditInputContainer: { display: 'flex', width: '100%', alignItems: 'center', px: 1 }
-
 };
