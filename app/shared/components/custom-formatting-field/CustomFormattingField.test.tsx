@@ -32,11 +32,12 @@ jest.mock('@tiptap/react', () => ({
     return mockEditor;
   }),
   EditorContent: () => (
-    <div
+    <textarea
       data-testid="editor-content"
       onFocus={() => mockEditorConfig.onFocus()}
       onBlur={() => mockEditorConfig.onBlur()}
       onInput={() => mockEditorConfig.onUpdate({ editor: mockEditor })}
+      style={{ display: 'none' }} 
     />
   ),
   useCurrentEditor: jest.fn(() => ({ editor: mockEditor }))

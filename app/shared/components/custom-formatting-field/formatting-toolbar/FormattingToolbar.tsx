@@ -4,21 +4,21 @@ import '@tiptap/extension-link';
 import { Box, InputBase, Paper, SxProps, Theme, ToggleButton } from '@mui/material';
 import { Editor } from '@tiptap/react';
 import { Bold, Italic, Link } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useReducer, useState } from 'react';
 
 import { styles } from './FormattingToolbar.style';
 import { sxToArray } from '~/lib/utils/sxToArray';
 
 interface FormattingToolbarProps {
   editor: Editor | null;
-  sx?: SxProps<Theme>
+  sx?: SxProps<Theme>;
 }
 
 export const FormattingToolbar = ({ editor, sx }: FormattingToolbarProps) => {
   const [isLinkEditing, setIsLinkEditing] = useState(false);
   const [url, setUrl] = useState('');
   // Workaround to prevent formatting toolbar options toggle population across editor
-  const [, forceUpdate] = useState(0);
+  const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
   useEffect(() => {
     const handleSelectionChange = () => setIsLinkEditing(false);
@@ -32,7 +32,7 @@ export const FormattingToolbar = ({ editor, sx }: FormattingToolbarProps) => {
     function preventFormattingPopulation() {
       if (!editor) return;
 
-      const handleUpdate = () => forceUpdate((prev) => prev + 1);
+      const handleUpdate = () => forceUpdate();
 
       editor.on('transaction', handleUpdate);
 
