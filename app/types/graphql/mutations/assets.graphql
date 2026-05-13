@@ -17,3 +17,7 @@ mutation CreateAsset($input: CreateAssetInput!) {
     type
   }
 }
+
+mutation DeleteAsset($id: ID!) {
+  deleteAsset(id: $id)
+}
