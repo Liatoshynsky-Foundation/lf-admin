@@ -5,7 +5,8 @@ import Italic from '@tiptap/extension-italic';
 import Link from '@tiptap/extension-link';
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
-import { EditorContent,JSONContent,useEditor } from '@tiptap/react';
+import { EditorContent, JSONContent, useEditor } from '@tiptap/react';
+// @ts-expect-error - Skip legacy node10 resolution checks for this specific modern subpath
 import { BubbleMenu } from '@tiptap/react/menus';
 import React, { useEffect, useState } from 'react';
 
@@ -15,12 +16,12 @@ import { sxToArray } from '~/lib/utils/sxToArray';
 
 export interface Props {
   value?: JSONContent;
-  onChange: (value: JSONContent ) => void;
+  onChange: (value: JSONContent) => void;
   label?: string;
-  sx?: SxProps<Theme>
+  sx?: SxProps<Theme>;
 }
 const OneLineDoc = Document.extend({
-  content: 'paragraph', 
+  content: 'paragraph'
 });
 
 export const CustomFormattingField = ({ value, onChange, label = 'Текст', sx }: Props) => {
