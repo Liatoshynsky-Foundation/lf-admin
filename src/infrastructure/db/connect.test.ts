@@ -5,6 +5,15 @@ import { errors } from '~/constants/errors';
 type MongooseGlobalCache = {
   conn: Mongoose | null;
   promise: Promise<Mongoose> | null;
+  listenersAttached: boolean;
+};
+
+const expectedMongoConnectOptions = {
+  bufferCommands: false,
+  connectTimeoutMS: 60000,
+  serverSelectionTimeoutMS: 60000,
+  socketTimeoutMS: 60000,
+  family: 4
 };
 
 const mockConnection = { connection: { readyState: 1 } };
@@ -51,7 +60,7 @@ describe('dbConnect', () => {
 
     const conn = await dbConnect();
 
-    expect(connect).toHaveBeenCalledWith(mongoUrl, { bufferCommands: false });
+    expect(connect).toHaveBeenCalledWith(mongoUrl, expectedMongoConnectOptions);
     expect(loggerMock.info).toHaveBeenCalledWith('✅ Connected to db');
     expect(conn).toStrictEqual(mockConnection);
 
@@ -59,6 +68,22 @@ describe('dbConnect', () => {
     expect(cached).toBeDefined();
     expect(cached?.conn).toStrictEqual(mockConnection);
     expect(cached?.promise).toBeInstanceOf(Promise);
+  });
+
+  it('should reuse cached connection without reconnecting', async () => {
+    const connectMock = jest.fn().mockResolvedValue(mockConnection);
+    const loggerMock = createLoggerMock();
+
+    mockMongoose(connectMock);
+    mockConfig('mongodb://localhost:27017/test-db');
+    mockLoggerModule(loggerMock);
+
+    const { default: dbConnect } = await import('./connect');
+
+    await dbConnect();
+    await dbConnect();
+
+    expect(connectMock).toHaveBeenCalledTimes(1);
   });
 
   it('should log error if connection fails', async () => {
@@ -98,7 +123,7 @@ describe('dbConnect', () => {
 
     const conn = await dbConnect();
 
-    expect(connect).toHaveBeenCalledWith(mongoUrl, { bufferCommands: false });
+    expect(connect).toHaveBeenCalledWith(mongoUrl, expectedMongoConnectOptions);
     expect(loggerMock.info).toHaveBeenCalledWith('✅ Connected to db');
     expect(conn).toStrictEqual(fakeMongoose);
 

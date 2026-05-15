@@ -218,6 +218,12 @@ formData.append('fileType', 'image'); // Optional: image, document, video, audio
 formData.append('validationRules', JSON.stringify({ maxSize: 5242880 })); // Optional
 formData.append('metadata', JSON.stringify({ author: 'Admin' })); // Optional
 
+### Logs History
+
+- Application logs are written by Winston to MongoDB when `MONGO_URL` is configured.
+- Logs are stored in the same MongoDB database as the application, in the `logger` collection.
+- The logs page reads data through `GET /api/logs`, which fetches documents directly from the `logger` collection.
+
 const response = await fetch('/api/uploads/single', {
   method: 'POST',
   body: formData

@@ -36,6 +36,8 @@ jest.mock('winston-mongodb', () => ({
   MongoDB: jest.fn()
 }));
 
+const MongoDBMock = jest.requireMock('winston-mongodb').MongoDB as jest.Mock;
+
 describe('Logger', () => {
   let logger: Logger;
 
@@ -61,6 +63,15 @@ describe('Logger', () => {
   it('includes MongoDB transport', () => {
     const hasMongoDB = logger.transports.some((t) => t.constructor?.name === 'MongoDB');
     expect(hasMongoDB).toBe(true);
+  });
+
+  it('stores all log levels in MongoDB transport', () => {
+    expect(MongoDBMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'debug',
+        collection: 'logger'
+      })
+    );
   });
 
   it('formats message with stack and metadata', () => {

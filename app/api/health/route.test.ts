@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 
 import { GET } from './route';
 import { errors } from '~/constants/errors';
-import dbConnect from '~/infrastructure/db/connect';
+import dbConnect, { getLastMongoConnectionErrorMessage } from '~/infrastructure/db/connect';
 
 jest.mock('mongoose', () => {
   const mockDbCommand = jest.fn();
@@ -40,16 +40,19 @@ jest.mock('~/utils/apiResponse', () => ({
 }));
 jest.mock('~/src/infrastructure/db/connect', () => ({
   __esModule: true,
-  default: jest.fn()
+  default: jest.fn(),
+  getLastMongoConnectionErrorMessage: jest.fn()
 }));
 
 const mockDbCommand = mongoose.connection.db!.command as jest.Mock;
 const mockServerStatus = mongoose.connection.db!.admin().serverStatus as jest.Mock;
+const mockGetLastMongoConnectionErrorMessage = getLastMongoConnectionErrorMessage as jest.Mock;
 
 describe('GET /api/health', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (mongoose.connection as any).readyState = 0;
+    mockGetLastMongoConnectionErrorMessage.mockReturnValue(null);
   });
 
   it('should return status UP when database connection is successful', async () => {
@@ -66,7 +69,13 @@ describe('GET /api/health', () => {
     expect(responseJson.status).toBe('UP');
     expect(responseJson.dependencies.database.status).toBe('UP');
     expect(responseJson.dependencies.database.details).toEqual(
-      expect.objectContaining({ connectionStatus: 'CONNECTED' })
+      expect.objectContaining({
+        connectionStatus: 'CONNECTED',
+        readyState: 1,
+        host: 'mock-host',
+        databaseName: 'mock-db-name',
+        lastErrorMessage: null
+      })
     );
   });
 
@@ -80,6 +89,15 @@ describe('GET /api/health', () => {
     const responseJson = await response.json();
     expect(responseJson.status).toBe('DOWN');
     expect(responseJson.dependencies.database.message).toBe('Database connection state is: CONNECTING');
+    expect(responseJson.dependencies.database.details).toEqual(
+      expect.objectContaining({
+        connectionStatus: 'CONNECTING',
+        readyState: 2,
+        host: 'mock-host',
+        databaseName: 'mock-db-name',
+        lastErrorMessage: null
+      })
+    );
     expect(mockDbCommand).not.toHaveBeenCalled();
   });
 
@@ -92,6 +110,15 @@ describe('GET /api/health', () => {
     expect(response.status).toBe(503);
     const responseJson = await response.json();
     expect(responseJson.dependencies.database.message).toBe(errors.FAILED_TO_CONNECT_DB);
+    expect(responseJson.dependencies.database.details).toEqual(
+      expect.objectContaining({
+        connectionStatus: 'DISCONNECTED',
+        readyState: 0,
+        host: 'mock-host',
+        databaseName: 'mock-db-name',
+        lastErrorMessage: 'Connection failed'
+      })
+    );
   });
 
   it('should return status DOWN with 503 if db.command throws an error', async () => {
@@ -105,5 +132,14 @@ describe('GET /api/health', () => {
     expect(response.status).toBe(503);
     const responseJson = await response.json();
     expect(responseJson.dependencies.database.message).toBe(errors.FAILED_TO_CONNECT_DB);
+    expect(responseJson.dependencies.database.details).toEqual(
+      expect.objectContaining({
+        connectionStatus: 'CONNECTED',
+        readyState: 1,
+        host: 'mock-host',
+        databaseName: 'mock-db-name',
+        lastErrorMessage: 'Command failed'
+      })
+    );
   });
 });
