@@ -36,6 +36,10 @@ jest.mock('winston-mongodb', () => ({
   MongoDB: jest.fn()
 }));
 
+jest.mock('../../config', () => ({
+  mongoUrl: 'mongodb://localhost:27017/test-logs'
+}));
+
 const MongoDBMock = jest.requireMock('winston-mongodb').MongoDB as jest.Mock;
 
 describe('Logger', () => {

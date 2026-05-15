@@ -1,5 +1,3 @@
-import { ObjectId } from 'mongodb';
-
 const mockDbConnect = jest.fn();
 const toArrayMock = jest.fn();
 const limitMock = jest.fn(() => ({ toArray: toArrayMock }));
@@ -34,7 +32,7 @@ describe('logRepository', () => {
 
   it('returns paginated logs ordered by newest first with normalized metadata', async () => {
     const { getLogs } = await import('./logRepository');
-    const id = new ObjectId();
+    const id = '507f1f77bcf86cd799439011';
 
     countDocumentsMock.mockResolvedValue(1);
     toArrayMock.mockResolvedValue([
@@ -92,7 +90,7 @@ describe('logRepository', () => {
 
   it('returns warn logs when warn filter is requested', async () => {
     const { getLogs } = await import('./logRepository');
-    const id = new ObjectId();
+    const id = '507f191e810c19729de860ea';
 
     countDocumentsMock.mockResolvedValue(1);
     toArrayMock.mockResolvedValue([
