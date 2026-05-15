@@ -37,6 +37,7 @@ jest.mock('winston-mongodb', () => ({
 }));
 
 jest.mock('../../config', () => ({
+  __esModule: true,
   mongoUrl: 'mongodb://localhost:27017/test-logs'
 }));
 
@@ -69,7 +70,12 @@ describe('Logger', () => {
     expect(hasMongoDB).toBe(true);
   });
 
-  it('stores all log levels in MongoDB transport', () => {
+  it('stores all log levels in MongoDB transport', async () => {
+    jest.resetModules();
+    MongoDBMock.mockClear();
+
+    await import('./logger');
+
     expect(MongoDBMock).toHaveBeenCalledWith(
       expect.objectContaining({
         level: 'debug',
