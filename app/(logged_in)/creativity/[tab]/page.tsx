@@ -20,7 +20,15 @@ export default async function WorksTabPage({ params }: WorksTabPageProps) {
   }
 
   return (
-    <Box sx={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', p: '32px' }}>
+    <Box
+      sx={{
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box',
+        px: { xs: '16px', lg: '24px', xl: '32px' },
+        py: '32px'
+      }}
+    >
       <WorksPageContent activeTab={tab as WorksTabValue} />
     </Box>
   );

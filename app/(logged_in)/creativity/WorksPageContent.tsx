@@ -6,15 +6,15 @@ import {
   AccordionSummary,
   Box,
   Button,
-  Chip,
   IconButton,
   MenuItem,
   Typography
 } from '@mui/material';
-import { ChevronDown, CircleCheckBig, MoreVertical } from 'lucide-react';
+import { ChevronDown, MoreVertical } from 'lucide-react';
 import Link from 'next/link';
 import { useRef, useState } from 'react';
 
+import { StatusWithDate } from './components/StatusWithDate';
 import { useWorksFiltering } from './useWorksFiltering';
 import { type OpusGroup, type UngroupedGroup, WORKS_MOCK_DATA, type WorkStatus } from './works.mock';
 import {
@@ -30,17 +30,12 @@ import {
   type WorksTabValue
 } from '~/constants/creativity';
 import type { FilesSortValue } from '~/constants/sort';
-import { formatDate } from '~/lib/utils/formatDate';
-import { getStatus } from '~/lib/utils/getStatus';
-import contentCardStyles from '~/shared/components/content-card/ContentCard.styles';
-import contentCardBadgeStyles from '~/shared/components/content-card/ContentCardBadge.styles';
 import { colors } from '~/shared/components/design-system/button/Button.styles';
 import DropdownMenu from '~/shared/components/dropdown-menu/DropdownMenu';
 import { EmptyState } from '~/shared/components/empty-state';
 import { FilteringToolbar, SortSelect } from '~/shared/components/filtering-toolbar';
 import { PageHeader } from '~/shared/components/page-header/PageHeader';
 import { filterSelectStyles } from '~/shared/components/selector/FilterSelect.styles';
-import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { normalizeSearch } from '~/utils/normalizeSearch';
 
 type WorksPageContentProps = Readonly<{
@@ -48,13 +43,12 @@ type WorksPageContentProps = Readonly<{
 }>;
 
 const OPUS_HIGHLIGHT_NUMBERS = new Set(['op. 1', 'op. 2', 'op. 3']);
-const TABLE_DIVIDER_COLOR = '#D9DCE866';
-const NUMBER_COLUMN_WIDTH = '56px';
-const GROUP_META_COLUMN_WIDTH = '320px';
-const YEAR_COLUMN_WIDTH = '96px';
-const STATUS_COLUMN_WIDTH = '280px';
+const TABLE_DIVIDER_COLOR = '#CDD4DE';
+const NUMBER_COLUMN_WIDTH = '48px';
+const GROUP_META_COLUMN_WIDTH = '260px';
+const STATUS_COLUMN_WIDTH = '220px';
 const GROUP_ROW_COLUMNS = `1px ${NUMBER_COLUMN_WIDTH} minmax(260px, 1fr) ${GROUP_META_COLUMN_WIDTH} ${STATUS_COLUMN_WIDTH} 40px`;
-const INDIVIDUAL_WORK_ROW_COLUMNS = `1px 1fr ${YEAR_COLUMN_WIDTH} 40px`;
+const INDIVIDUAL_WORK_ROW_COLUMNS = `1px minmax(260px, 1fr) ${GROUP_META_COLUMN_WIDTH} ${STATUS_COLUMN_WIDTH} 40px`;
 const SINGLE_LINE_ELLIPSIS = {
   whiteSpace: 'nowrap',
   overflow: 'hidden',
@@ -68,7 +62,7 @@ const META_TEXT_SX = {
 } as const;
 const TITLE_TEXT_SX = { fontSize: '15px', minWidth: 0, ...SINGLE_LINE_ELLIPSIS } as const;
 const WORK_ROW_TITLE_SX = { fontSize: '14px', minWidth: 0, flex: 1, ...SINGLE_LINE_ELLIPSIS } as const;
-const YEAR_TEXT_SX = { ...META_TEXT_SX, width: YEAR_COLUMN_WIDTH, textAlign: 'right' } as const;
+const YEAR_TEXT_SX = { ...META_TEXT_SX, width: STATUS_COLUMN_WIDTH, textAlign: 'right' } as const;
 const MENU_LIST_SX = { px: '8px', py: '4px' } as const;
 const MENU_ITEM_BASE_SX = {
   ...filterSelectStyles.menuItem,
@@ -85,7 +79,9 @@ type GroupRowData = Readonly<{
   genre: string;
   yearRange: string;
   status: WorkStatus;
+  createdAt?: string;
   updatedAt: string;
+  publishedAt?: string;
   works: ReadonlyArray<{ id: string; title: string; year: string }>;
 }>;
 
@@ -128,7 +124,9 @@ function toGroupRowData(group: OpusGroup | UngroupedGroup): GroupRowData {
     genre: group.genre,
     yearRange: group.yearRange,
     status: group.status,
+    createdAt: group.createdAt,
     updatedAt: group.updatedAt,
+    publishedAt: group.publishedAt,
     works: group.works
   };
 }
@@ -152,74 +150,6 @@ function sortGroups<T extends { title: string; updatedAt: string }>(
 
     return right.title.localeCompare(left.title, 'uk', { sensitivity: 'base' });
   });
-}
-
-// ── Status chip ───────────────────────────────────────────────────────────────
-function StatusChip({ status }: Readonly<{ status: string }>) {
-  if (status === BaseContentStatuses.Published) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '4px',
-          color: '#2E7D32',
-          fontSize: '14px',
-          whiteSpace: 'nowrap'
-        }}
-      >
-        <CircleCheckBig size={16} />
-      </Box>
-    );
-  }
-
-  const isDraft = status === BaseContentStatuses.Draft;
-  return (
-    <Chip
-      label={isDraft ? 'Чернетка' : 'Редагується'}
-      size="small"
-      sx={{
-        backgroundColor: contentCardBadgeStyles.draftBadge.backgroundColor,
-        color: '#190D03',
-        fontWeight: contentCardBadgeStyles.draftBadge.fontWeight,
-        fontSize: contentCardBadgeStyles.draftBadge.fontSize,
-        height: '24px',
-        '& .MuiChip-label': {
-          color: '#190D03'
-        }
-      }}
-    />
-  );
-}
-
-// ── Status label (for opus row, shows date aside status badge) ────────────────
-function StatusWithDate({ status, date }: Readonly<{ status: string; date: string }>) {
-  const normalizedStatus =
-    status === BaseContentStatuses.Editing ? BaseContentStatuses.Published : status;
-  const statusText =
-    getStatus(normalizedStatus, date, date, date) || `Редаговано ${formatDate(date)}`;
-
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        ...SINGLE_LINE_ELLIPSIS,
-        pl: '10px',
-        borderLeft: `1px solid ${TABLE_DIVIDER_COLOR}`,
-        minWidth: 0
-      }}
-    >
-      <StatusChip status={status} />
-      <Typography
-        variant="body2"
-        sx={{ ...contentCardStyles.date, fontSize: '14px', minWidth: 0, ...SINGLE_LINE_ELLIPSIS }}
-      >
-        {statusText}
-      </Typography>
-    </Box>
-  );
 }
 
 // ── Opus context menu ─────────────────────────────────────────────────────────
@@ -355,6 +285,7 @@ function WorkRowCells({ title, year }: Readonly<{ title: string; year: string }>
   return (
     <>
       <Typography sx={WORK_ROW_TITLE_SX}>{title}</Typography>
+      <Box sx={{ width: GROUP_META_COLUMN_WIDTH }} />
       <Typography sx={YEAR_TEXT_SX}>{year}</Typography>
       <ContextMenu items={WORK_MENU_ITEMS} triggerLabel={`Дії твору ${title}`} />
     </>
@@ -451,7 +382,13 @@ function GroupedRow({
           </Box>
 
           <Box sx={{ width: STATUS_COLUMN_WIDTH, minWidth: 0 }}>
-            <StatusWithDate status={group.status} date={group.updatedAt} />
+            <StatusWithDate
+              status={group.status}
+              createdAt={group.createdAt}
+              updatedAt={group.updatedAt}
+              publishedAt={group.publishedAt}
+              dividerColor={TABLE_DIVIDER_COLOR}
+            />
           </Box>
 
           <ContextMenu items={GROUP_MENU_ITEMS} triggerLabel={`Дії групи ${group.title}`} />
@@ -464,16 +401,18 @@ function GroupedRow({
             <Box
               key={work.id}
               sx={{
-                display: 'flex',
+                display: 'grid',
+                gridTemplateColumns: INDIVIDUAL_WORK_ROW_COLUMNS,
+                columnGap: '12px',
                 alignItems: 'center',
-                gap: '12px',
                 py: '8px',
-                pl: '81px',
+                px: 0,
                 borderBottom:
-                  index === group.works.length - 1 ? 'none' : `1px solid ${TABLE_DIVIDER_COLOR}`,
+                    index === group.works.length - 1 ? 'none' : `1px solid ${TABLE_DIVIDER_COLOR}`,
                 minWidth: 0
               }}
             >
+              <Box sx={{ width: '1px' }} />
               <WorkRowCells title={work.title} year={work.year} />
             </Box>
           ))}
@@ -490,7 +429,7 @@ function IndividualWorkRow({ work }: Readonly<{ work: IndividualWorkData }>) {
       sx={{
         display: 'grid',
         gridTemplateColumns: INDIVIDUAL_WORK_ROW_COLUMNS,
-        columnGap: '12px',
+        columnGap: '8px',
         alignItems: 'center',
         px: '16px',
         py: '12px',
@@ -501,7 +440,21 @@ function IndividualWorkRow({ work }: Readonly<{ work: IndividualWorkData }>) {
       {/* Left marker column (empty for individual works) */}
       <Box sx={{ width: '1px' }} />
 
-      <WorkRowCells title={work.title} year={work.year} />
+      <Typography sx={WORK_ROW_TITLE_SX}>{work.title}</Typography>
+
+      <Box sx={{ width: GROUP_META_COLUMN_WIDTH }} />
+
+      <Typography
+        sx={{
+          ...META_TEXT_SX,
+          width: STATUS_COLUMN_WIDTH,
+          textAlign: 'right'
+        }}
+      >
+        {work.year}
+      </Typography>
+
+      <ContextMenu items={WORK_MENU_ITEMS} triggerLabel={`Дії твору ${work.title}`} />
     </Box>
   );
 }
@@ -652,10 +605,13 @@ export function WorksPageContent({ activeTab }: WorksPageContentProps) {
     }))
   );
 
-  const visibleUngroupedWorks = allUngroupedWorks.filter(
-    (work) =>
-      matchesSelectedFilters(work) &&
-      (matchesSearch(work.title) || matchesSearch(work.genre))
+  const visibleUngroupedWorks = sortGroups(
+    allUngroupedWorks.filter(
+      (work) =>
+        matchesSelectedFilters(work) &&
+        (matchesSearch(work.title) || matchesSearch(work.genre))
+    ),
+    sortValue
   );
 
   const hasActiveCriteria = Boolean(searchValue) || Boolean(toolbarProps.activeFiltersCount);

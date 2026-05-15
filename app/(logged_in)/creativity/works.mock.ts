@@ -21,7 +21,9 @@ type WorkGroupBase = {
   language: WorkLanguage;
   yearRange: string;
   status: WorkStatus;
+  createdAt?: string;
   updatedAt: string;
+  publishedAt?: string;
   works: WorkItem[];
 };
 
@@ -49,7 +51,9 @@ type GroupSeed = Readonly<{
   language: WorkLanguage;
   yearRange: string;
   status: WorkStatus;
+  createdAt?: string;
   updatedAt: string;
+  publishedAt?: string;
   works: ReadonlyArray<Pick<WorkItem, 'id' | 'title' | 'year'>>;
 }>;
 
@@ -72,7 +76,9 @@ const buildGroup = <TNumberKey extends 'opusNumber' | 'boNumber'>(
   language: seed.language,
   yearRange: seed.yearRange,
   status: normalizeStatus(seed.status),
+  createdAt: seed.createdAt,
   updatedAt: seed.updatedAt,
+  publishedAt: seed.publishedAt,
   works: seed.works.map((work) => ({ id: work.id, title: work.title, year: work.year }))
 }) as WorkGroupBase & Record<TNumberKey, string>;
 
