@@ -28,6 +28,7 @@ import {
   FILES_UPLOAD_FAILED_ERROR,
   type FilesTabValue
 } from '~/constants/files';
+import { downloadFile } from '~/lib/utils/downloadFile';
 import FavouriteStarIcon from '~/public/icons/favourite-star.svg';
 import DeleteFileModal from '~/shared/components/delete-file-modal/DeleteFileModal';
 import { colors } from '~/shared/components/design-system/button/Button.styles';
@@ -57,8 +58,7 @@ import { RenameFileModal } from '~/shared/components/rename-file-modal/RenameFil
 import { ViewToggle } from '~/shared/components/view-toggle';
 import { useAllAssets } from '~/shared/hooks/use-assets/useAssets';
 import { useFilesFiltering } from '~/shared/hooks/use-files';
-import { AssetType, useCreateAssetMutation , useDeleteAssetMutation } from '~/types/graphql/generated/graphql';
-
+import { AssetType, useCreateAssetMutation, useDeleteAssetMutation } from '~/types/graphql/generated/graphql';
 
 type FilesPageFileItem = FilesCardsLayoutItem & {
   description?: string;
@@ -255,25 +255,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
   }, [data?.allAssets]);
 
   const handleDownload = async (fileUrl: string, filename: string) => {
-    try {
-      const response = await fetch(fileUrl, { cache: 'no-store' });
-      if (!response.ok) throw new Error('Помилка завантаження');
-
-      const blob = await response.blob();
-      const blobUrl = globalThis.URL.createObjectURL(blob);
-
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-
-      link.remove();
-      globalThis.URL.revokeObjectURL(blobUrl);
-      toast.success('Файл завантажено');
-    } catch {
-      toast.error('Не вдалося завантажити файл');
-    }
+    await downloadFile(fileUrl, filename);
   };
 
   const handleItemAction = (action: 'rename' | 'delete' | 'download', item: FilesCardsLayoutItem) => {

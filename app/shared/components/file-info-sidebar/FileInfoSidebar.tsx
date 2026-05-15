@@ -8,6 +8,7 @@ import TooltipCustom from '../design-system/tooltip/Tooltip';
 import { styles } from './FileInfoSidebar.styles';
 import { ImagePreviewModal } from './image-preview-modal/ImagePreviewModal';
 import { useAutosavedDescription } from './useAutosavedDescription';
+import { downloadFile } from '~/lib/utils/downloadFile';
 import { formatUsageCount } from '~/lib/utils/formatUsageCount';
 import CloseIcon from '~/public/icons/close.svg';
 import DocIcon from '~/public/icons/doc.svg';
@@ -23,7 +24,7 @@ import XlsIcon from '~/public/icons/xls.svg';
 import ArchiveIcon from '~/public/icons/zip.svg';
 import ZoomIn from '~/public/icons/zoom-in.svg';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
-import { useDeleteAssetMutation,useUpdateAssetMutation } from '~/types/graphql/generated/graphql';
+import { useDeleteAssetMutation, useUpdateAssetMutation } from '~/types/graphql/generated/graphql';
 
 export type FileUsageLink = {
   id: string;
@@ -113,29 +114,10 @@ export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAct
   const handleDownload = useCallback(async () => {
     if (!file?.downloadUrl || !filename) return;
     requestAction('download');
-    try {
-      setIsDownloading(true);
 
-      const response = await fetch(file.downloadUrl, { cache: 'no-store' });
-      if (!response.ok) throw new Error('Помилка завантаження');
-
-      const blob = await response.blob();
-      const blobUrl = globalThis.URL.createObjectURL(blob);
-
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-
-      link.remove();
-      globalThis.URL.revokeObjectURL(blobUrl);
-      toast.success('Файл завантажено');
-    } catch {
-      toast.error('Не вдалося завантажити файл');
-    } finally {
-      setIsDownloading(false);
-    }
+    setIsDownloading(true);
+    await downloadFile(file.downloadUrl, filename);
+    setIsDownloading(false);
   }, [file?.downloadUrl, filename, requestAction]);
 
   const openPreview = useCallback(() => {
