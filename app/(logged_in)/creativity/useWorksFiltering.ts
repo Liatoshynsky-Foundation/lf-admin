@@ -21,7 +21,7 @@ import type { FilteringToolbarProps, SortSelectProps } from '~/shared/components
 const SORT_STORAGE_KEY = 'works_sort';
 
 const isWorksStatusValue = (value: string): value is WorksStatusValue =>
-  WORKS_STATUSES.some((status) => status === value);
+  WORKS_STATUSES.includes(value as WorksStatusValue);
 
 const isWorksLanguageValue = (value: string): value is WorksLanguageValue =>
   value === 'uk' || value === 'en' || value === 'bilingual';
