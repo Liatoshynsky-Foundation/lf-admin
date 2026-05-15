@@ -95,8 +95,8 @@ export function useWorksFiltering(): Readonly<{
       };
 
       const filterOnChange: Record<WorksFilterId, (value: string[]) => void> = {
-        status: (value) => setStatusFilters(value as WorksStatusValue[]),
-        language: (value) => setLanguageFilters(value as WorksLanguageValue[]),
+        status: (value) => setStatusFilters(value),
+        language: (value) => setLanguageFilters(value),
         genre: (value) => setGenreFilters(value)
       };
 

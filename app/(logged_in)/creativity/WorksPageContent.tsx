@@ -49,6 +49,27 @@ const GROUP_META_COLUMN_WIDTH = '260px';
 const STATUS_COLUMN_WIDTH = '220px';
 const GROUP_ROW_COLUMNS = `1px ${NUMBER_COLUMN_WIDTH} minmax(260px, 1fr) ${GROUP_META_COLUMN_WIDTH} ${STATUS_COLUMN_WIDTH} 40px`;
 const INDIVIDUAL_WORK_ROW_COLUMNS = `1px minmax(260px, 1fr) ${GROUP_META_COLUMN_WIDTH} ${STATUS_COLUMN_WIDTH} 40px`;
+const WORK_ROW_GRID_SX = {
+  display: 'grid',
+  gridTemplateColumns: INDIVIDUAL_WORK_ROW_COLUMNS,
+  alignItems: 'center',
+  borderBottom: `1px solid ${TABLE_DIVIDER_COLOR}`,
+  minWidth: 0
+} as const;
+const GROUPED_WORK_ROW_SX = {
+  ...WORK_ROW_GRID_SX,
+  columnGap: '12px',
+  py: '8px',
+  px: 0
+} as const;
+const INDIVIDUAL_WORK_ROW_SX = {
+  ...WORK_ROW_GRID_SX,
+  columnGap: '8px',
+  px: '16px',
+  py: '12px'
+} as const;
+const MARKER_COLUMN_SX = { width: '1px' } as const;
+const META_SPACER_SX = { width: GROUP_META_COLUMN_WIDTH } as const;
 const SINGLE_LINE_ELLIPSIS = {
   whiteSpace: 'nowrap',
   overflow: 'hidden',
@@ -401,18 +422,11 @@ function GroupedRow({
             <Box
               key={work.id}
               sx={{
-                display: 'grid',
-                gridTemplateColumns: INDIVIDUAL_WORK_ROW_COLUMNS,
-                columnGap: '12px',
-                alignItems: 'center',
-                py: '8px',
-                px: 0,
-                borderBottom:
-                    index === group.works.length - 1 ? 'none' : `1px solid ${TABLE_DIVIDER_COLOR}`,
-                minWidth: 0
+                ...GROUPED_WORK_ROW_SX,
+                borderBottom: index === group.works.length - 1 ? 'none' : GROUPED_WORK_ROW_SX.borderBottom
               }}
             >
-              <Box sx={{ width: '1px' }} />
+              <Box sx={MARKER_COLUMN_SX} />
               <WorkRowCells title={work.title} year={work.year} />
             </Box>
           ))}
@@ -425,24 +439,13 @@ function GroupedRow({
 // ── Individual work (ungrouped work without container) ──────────────────────
 function IndividualWorkRow({ work }: Readonly<{ work: IndividualWorkData }>) {
   return (
-    <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: INDIVIDUAL_WORK_ROW_COLUMNS,
-        columnGap: '8px',
-        alignItems: 'center',
-        px: '16px',
-        py: '12px',
-        borderBottom: `1px solid ${TABLE_DIVIDER_COLOR}`,
-        minWidth: 0
-      }}
-    >
+    <Box sx={INDIVIDUAL_WORK_ROW_SX}>
       {/* Left marker column (empty for individual works) */}
-      <Box sx={{ width: '1px' }} />
+      <Box sx={MARKER_COLUMN_SX} />
 
       <Typography sx={WORK_ROW_TITLE_SX}>{work.title}</Typography>
 
-      <Box sx={{ width: GROUP_META_COLUMN_WIDTH }} />
+      <Box sx={META_SPACER_SX} />
 
       <Typography
         sx={{
@@ -601,7 +604,7 @@ export function WorksPageContent({ activeTab }: WorksPageContentProps) {
       genre: group.genre,
       status: group.status,
       updatedAt: group.updatedAt,
-      language: group.language as 'uk' | 'en' | 'bilingual'
+      language: group.language
     }))
   );
 
