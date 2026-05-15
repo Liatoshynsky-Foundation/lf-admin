@@ -1,5 +1,14 @@
+import 'whatwg-fetch';
+
 import { GET } from './route';
 import { getLogs } from '~/infrastructure/repositories/logRepository/logRepository';
+
+jest.mock('next/server', () => ({
+  __esModule: true,
+  NextResponse: {
+    json: (body: any, init?: ResponseInit) => new Response(JSON.stringify(body), init)
+  }
+}));
 
 jest.mock('~/infrastructure/repositories/logRepository/logRepository', () => ({
   __esModule: true,
