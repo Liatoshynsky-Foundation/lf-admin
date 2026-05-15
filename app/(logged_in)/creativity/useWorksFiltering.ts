@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import {
   WORKS_FILTERS,
+  WORKS_STATUSES,
   type WorksFilterId,
   type WorksLanguageValue,
   type WorksStatusValue
@@ -18,6 +19,12 @@ import {
 import type { FilteringToolbarProps, SortSelectProps } from '~/shared/components/filtering-toolbar';
 
 const SORT_STORAGE_KEY = 'works_sort';
+
+const isWorksStatusValue = (value: string): value is WorksStatusValue =>
+  WORKS_STATUSES.some((status) => status === value);
+
+const isWorksLanguageValue = (value: string): value is WorksLanguageValue =>
+  value === 'uk' || value === 'en' || value === 'bilingual';
 
 export type WorksFilteringToolbarProps = Pick<
   FilteringToolbarProps,
@@ -95,8 +102,8 @@ export function useWorksFiltering(): Readonly<{
       };
 
       const filterOnChange: Record<WorksFilterId, (value: string[]) => void> = {
-        status: (value) => setStatusFilters(value),
-        language: (value) => setLanguageFilters(value),
+        status: (value) => setStatusFilters(value.filter(isWorksStatusValue)),
+        language: (value) => setLanguageFilters(value.filter(isWorksLanguageValue)),
         genre: (value) => setGenreFilters(value)
       };
 
