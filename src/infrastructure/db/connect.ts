@@ -77,12 +77,10 @@ async function dbConnect() {
   if (cached.conn) {
     return cached.conn;
   }
-  if (!cached.promise) {
-    cached.promise = mongoose.connect(mongoUrl, mongoConnectOptions).then((mongoose) => {
-      logger.info('✅ Connected to db');
-      return mongoose;
-    });
-  }
+  cached.promise ??= mongoose.connect(mongoUrl, mongoConnectOptions).then((mongoose) => {
+    logger.info('✅ Connected to db');
+    return mongoose;
+  });
   try {
     cached.conn = await cached.promise;
     cached.lastErrorMessage = null;

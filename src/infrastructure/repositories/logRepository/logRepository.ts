@@ -19,7 +19,7 @@ type RawLogDocument = {
   [key: string]: unknown;
 };
 
-const ALLOWED_LEVELS: LogLevel[] = ['error', 'warn', 'info', 'debug'];
+const ALLOWED_LEVELS = new Set<LogLevel>(['error', 'warn', 'info', 'debug']);
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
@@ -29,7 +29,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> => {
 };
 
 const isAllowedLevel = (level: unknown): level is LogLevel => {
-  return typeof level === 'string' && ALLOWED_LEVELS.includes(level as LogLevel);
+  return typeof level === 'string' && ALLOWED_LEVELS.has(level as LogLevel);
 };
 
 const toDateString = (value: unknown): string => {

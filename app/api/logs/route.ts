@@ -8,10 +8,15 @@ const parsePositiveInteger = (value: string | null, fallback: number): number =>
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 };
 
+const LOG_LEVELS = new Set<LogLevel>(['error', 'warn', 'info', 'debug']);
+
+const isLogLevel = (value: string): value is LogLevel => LOG_LEVELS.has(value as LogLevel);
+
 const parseLevel = (value: string | null): LogLevel | 'all' | undefined => {
-  if (!value || value === 'all') return value ?? undefined;
-  if (['error', 'warn', 'info', 'debug'].includes(value)) {
-    return value as LogLevel;
+  if (!value) return undefined;
+  if (value === 'all') return 'all';
+  if (isLogLevel(value)) {
+    return value;
   }
   return undefined;
 };

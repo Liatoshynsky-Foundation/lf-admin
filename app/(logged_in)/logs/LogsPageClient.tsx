@@ -13,7 +13,7 @@ import {
   Tabs,
   Typography
 } from '@mui/material';
-import { type SyntheticEvent,useEffect, useMemo, useState } from 'react';
+import { type SyntheticEvent, useEffect, useMemo, useState } from 'react';
 
 import type { LogEntry, LogLevel, LogsResponse } from '~/back-shared/types/logs';
 
@@ -67,7 +67,9 @@ const JsonBlock = ({ value }: { value?: Record<string, unknown> }) => {
 };
 
 const LogItem = ({ item }: { item: LogEntry }) => {
-  const hasDetails = Boolean(item.meta.method || item.meta.url || item.meta.statusCode || item.meta.stack || item.meta.metadata || item.meta.raw);
+  const hasStatusCode = typeof item.meta.statusCode === 'number';
+  const hasDetails = Boolean(item.meta.method || item.meta.url || hasStatusCode || item.meta.stack || item.meta.metadata || item.meta.raw);
+  const noDetails = !hasDetails;
   const accent = LEVEL_ACCENTS[item.level];
 
   return (
@@ -102,7 +104,7 @@ const LogItem = ({ item }: { item: LogEntry }) => {
               <strong>URL:</strong> {item.meta.url}
             </Typography>
           ) : null}
-          {item.meta.statusCode !== undefined ? (
+          {hasStatusCode ? (
             <Typography variant="body2">
               <strong>Status:</strong> {item.meta.statusCode}
             </Typography>
@@ -114,7 +116,7 @@ const LogItem = ({ item }: { item: LogEntry }) => {
           ) : null}
           <JsonBlock value={item.meta.metadata} />
           <JsonBlock value={item.meta.raw} />
-          {!hasDetails ? (
+          {noDetails ? (
             <Typography variant="body2" color="text.secondary">
               Немає додаткових деталей.
             </Typography>
@@ -165,11 +167,36 @@ const LogsPageClient = () => {
   }, [level, page]);
 
   const totalPages = Math.max(1, Math.ceil(total / 20));
+  const hasItems = items.length > 0;
+  const noItems = items.length === 0;
 
-  const onLevelChange = (_event: SyntheticEvent, value: string) => {
-    setLevel(value as LogLevel | 'all');
+  const onLevelChange = (_event: SyntheticEvent, value: LogLevel | 'all') => {
+    setLevel(value);
     setPage(1);
   };
+
+  let content: React.ReactNode;
+  if (loading) {
+    content = (
+      <Typography variant="body2" color="text.secondary">
+        Завантаження...
+      </Typography>
+    );
+  } else if (noItems) {
+    content = (
+      <Typography variant="body2" color="text.secondary">
+        Логи не знайдено.
+      </Typography>
+    );
+  } else {
+    content = (
+      <Stack spacing={1.5}>
+        {items.map((item) => (
+          <LogItem key={item.id} item={item} />
+        ))}
+      </Stack>
+    );
+  }
 
   return (
     <Stack spacing={2.5}>
@@ -194,23 +221,9 @@ const LogsPageClient = () => {
         {total} записів
       </Typography>
 
-      {loading ? (
-        <Typography variant="body2" color="text.secondary">
-          Завантаження...
-        </Typography>
-      ) : items.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
-          Логи не знайдено.
-        </Typography>
-      ) : (
-        <Stack spacing={1.5}>
-          {items.map((item) => (
-            <LogItem key={item.id} item={item} />
-          ))}
-        </Stack>
-      )}
+      {content}
 
-      {totalPages > 1 ? <Pagination count={totalPages} page={page} onChange={(_, value) => setPage(value)} /> : null}
+      {hasItems && totalPages > 1 ? <Pagination count={totalPages} page={page} onChange={(_, value) => setPage(value)} /> : null}
     </Stack>
   );
 };
