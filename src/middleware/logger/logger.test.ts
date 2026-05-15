@@ -41,7 +41,7 @@ jest.mock('../../config', () => ({
   mongoUrl: 'mongodb://localhost:27017/test-logs'
 }));
 
-const MongoDBMock = jest.requireMock('winston-mongodb').MongoDB as jest.Mock;
+const getMongoDBMock = (): jest.Mock => jest.requireMock('winston-mongodb').MongoDB as jest.Mock;
 
 describe('Logger', () => {
   let logger: Logger;
@@ -72,6 +72,7 @@ describe('Logger', () => {
 
   it('stores all log levels in MongoDB transport', async () => {
     jest.resetModules();
+    const MongoDBMock = getMongoDBMock();
     MongoDBMock.mockClear();
 
     await import('./logger');
