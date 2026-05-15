@@ -20,6 +20,7 @@ type FilesCardsLayoutProps = Readonly<{
   view: FilesCardsLayoutView;
   items: FilesCardsLayoutItem[];
   onItemClick?: (item: FilesCardsLayoutItem) => void;
+  onItemAction?: (action: 'rename' | 'delete' | 'download', item: FilesCardsLayoutItem) => void;
 }>;
 
 const minimizedTypeMap: Record<FileType, 'img' | 'audio' | 'pdf' | 'doc' | 'xls' | 'video-file' | 'archive'> = {
@@ -32,7 +33,7 @@ const minimizedTypeMap: Record<FileType, 'img' | 'audio' | 'pdf' | 'doc' | 'xls'
   archive: 'archive'
 };
 
-export function FilesCardsLayout({ view, items, onItemClick }: FilesCardsLayoutProps) {
+export function FilesCardsLayout({ view, items, onItemClick, onItemAction }: FilesCardsLayoutProps) {
   if (view === 'list') {
     return (
       <Box sx={styles.root} data-testid="FilesCardsLayout-list">
@@ -47,6 +48,7 @@ export function FilesCardsLayout({ view, items, onItemClick }: FilesCardsLayoutP
                 name={item.name}
                 date={item.dateAdded}
                 onClick={() => onItemClick?.(item)}
+                onAction={(action) => onItemAction?.(action, item)}
               />
             </Box>
           ))}
@@ -71,6 +73,7 @@ export function FilesCardsLayout({ view, items, onItemClick }: FilesCardsLayoutP
                 imageSrc: item.imageSrc
               }}
               onClick={() => onItemClick?.(item)}
+              onAction={(action) => onItemAction?.(action, item)}
             />
           </Box>
         ))}
