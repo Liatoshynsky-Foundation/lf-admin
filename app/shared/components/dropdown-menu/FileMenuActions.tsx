@@ -40,6 +40,16 @@ export const FileMenuActions: React.FC<FileMenuActionsProps> = ({
     onToggleStar();
   };
 
+  const renderStarIcon = () => {
+    if (isStarLoading) {
+      return <CircularProgress size={20} color="inherit" />;
+    }
+    if (isStarred) {
+      return <Image src="/icons/star-slash.svg" width={20} height={20} alt="Unstar" />;
+    }
+    return <Image src="/icons/small-star.svg" width={20} height={20} alt="Star" />;
+  };
+
   return (
     <>
       <MenuItem onClick={(e) => handleAction(onOpenDetails, e)} sx={styles.menuItem}>
@@ -64,15 +74,7 @@ export const FileMenuActions: React.FC<FileMenuActionsProps> = ({
           cursor: isStarLoading ? 'wait' : 'pointer'
         }}
       >
-        <Box sx={styles.icon}>
-          {isStarLoading ? (
-            <CircularProgress size={20} color="inherit" />
-          ) : isStarred ? (
-            <Image src="/icons/star-slash.svg" width={20} height={20} alt="Unstar" />
-          ) : (
-            <Image src="/icons/small-star.svg" width={20} height={20} alt="Star" />
-          )}
-        </Box>
+        <Box sx={styles.icon}>{renderStarIcon()}</Box>
         <Typography sx={styles.menuText}>{isStarred ? 'Забрати з обраних' : 'Додати в обрані'}</Typography>
       </MenuItem>
 
