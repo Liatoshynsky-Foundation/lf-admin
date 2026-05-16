@@ -32,7 +32,7 @@ export function SeoBaseFields({ value, errors, touched, onFieldChange, onBlur, s
   ];
 
   return (
-    <Stack sx={styles.formFields}>
+    <Stack direction="column" spacing={2.5} sx={styles.formFieldsContainer}>
       {fields.map(({ key, label, required, multiline, minRows, maxRows }) => (
         <TextField
           key={key}

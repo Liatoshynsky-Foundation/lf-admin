@@ -142,7 +142,7 @@ export default function SeoMetadataForm({
           {'Зображення для соцмереж'}
         </Typography>
         <TooltipCustom title={'Зображення для соцмереж'}>
-          <InfoOutlinedIcon sx={{ borderWidth: '1px', width: '16px', height: '16px' }} />
+          <InfoOutlinedIcon sx={styles.infoIcon} />
         </TooltipCustom>
         <Divider sx={styles.photoBlockHeaderDivider} />
       </Box>
@@ -168,7 +168,7 @@ export default function SeoMetadataForm({
           })
         }
       />
-      <Typography variant="body2" sx={styles.ogImageHint}>
+      <Typography variant="textMd" sx={styles.ogImageHint}>
         {'Оптимальний розмір: 1200×630 px.'}
       </Typography>
     </Stack>
@@ -215,19 +215,9 @@ export default function SeoMetadataForm({
             <Checkbox
               checked={allowIndexing}
               onChange={(e) => onIndexingChange(e.target.checked)}
-              sx={styles.indexingCheckbox}
             />
           }
-          sx={{
-            '& .MuiFormControlLabel-label': {
-              color: '#52545A',
-              fontSize: '18px',
-              fontWeight: 500,
-              fontFamily: 'Mulish',
-              lineHeight: '150%',
-              letterSpacing: 0
-            }
-          }}
+          sx={styles.indexingCheckbox}
         />
         <TooltipCustom title={'Дозволити індексацію сторінки пошуковими системами'}>
           <InfoOutlinedIcon sx={{ borderWidth: '1px', width: '16px', height: '16px' }} />

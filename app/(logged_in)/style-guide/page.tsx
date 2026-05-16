@@ -26,6 +26,18 @@ import FileCard from '~/shared/components/file-card';
 import { FileInfoSidebar } from '~/shared/components/file-info-sidebar/FileInfoSidebar';
 import { ImagePreviewModal } from '~/shared/components/file-info-sidebar/image-preview-modal/ImagePreviewModal';
 import { FilteringToolbar, type FilteringToolbarFilterConfig } from '~/shared/components/filtering-toolbar';
+import SeoCollapsibleBlock from '~/shared/components/forms/seo-collapsible-block/SeoCollapsibleBlock';
+import { SeoBaseFields } from '~/shared/components/forms/seo-metadata-form/seo-base-fields/SeoBaseFields';
+import DateTimePicker from '~/shared/components/forms/seo-metadata-form/seo-date-time-picker/DateTimePicker';
+import SeoMetadataBlock from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
+import SeoMetadataForm from '~/shared/components/forms/seo-metadata-form/SeoMetadataForm';
+import { Header } from '~/shared/components/header/Header';
+import LoginModal from '~/shared/components/login-modal/LoginModal';
+import { MediaModalContainer } from '~/shared/components/media-modal/components/container/MediaModalContainer';
+import { FilterDropdown } from '~/shared/components/media-modal/components/filter-dropdown/FilterDropdown';
+import { GalleryCard } from '~/shared/components/media-modal/components/gallery-card/GalleryCard';
+import { SearchButton } from '~/shared/components/media-modal/components/search-button/SearchButton';
+import { MediaModalSwitcher } from '~/shared/components/media-modal/components/switcher/MediaModalSwitcher';
 import { Search, type SearchOption } from '~/shared/components/search/Search';
 import type { FilterOption } from '~/shared/components/selector/FilterSelect';
 
@@ -64,6 +76,7 @@ export default function StyleGuide() {
   const [isFiltersOpen, setIsFiltersOpen] = useState<boolean>(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [isMediaModalContainerOpen, setIsMediaModalContainerOpen] = useState(false);
 
   const handleOpenDiscardChangesModal = () => setIsDiscardChangesModalOpen(true);
   const handleCloseDiscardChangesModal = () => setIsDiscardChangesModalOpen(false);
@@ -71,6 +84,8 @@ export default function StyleGuide() {
   const handleCloseImagePreviewModal = () => setIsImagePreviewModalOpen(false);
   const handleOpenFileInfoSidebar = () => setIsFileInfoSidebarOpen(true);
   const handleCloseFileInfoSidebar = () => setIsFileInfoSidebarOpen(false);
+  const handleOpenMediaModalContainer = () => setIsMediaModalContainerOpen(true);
+  const handleCloseMediaModalContainer = () => setIsMediaModalContainerOpen(false);
 
   const handleSubmitChanges = () => {
     setIsDiscardChangesModalOpen(false);
@@ -103,7 +118,7 @@ export default function StyleGuide() {
   ];
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '24px', padding: '40px', maxWidth: '800px' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '24px', padding: '40px' }}>
       <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
         Тестування Alert
       </Typography>
@@ -351,6 +366,7 @@ export default function StyleGuide() {
       </Typography>
 
       <ContentCard
+        id="content-card1"
         type="news"
         coverImage={{
           src: 'https://shorturl.at/xkStA',
@@ -358,7 +374,7 @@ export default function StyleGuide() {
         }}
         title={{ en: 'Event' }}
         status="draft"
-        onClickMenu={() => {}}
+        onClick={() => {}}
       ></ContentCard>
 
       <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
@@ -505,6 +521,150 @@ export default function StyleGuide() {
           </Button>
         }
       />
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування SeoCollapsibleBlock
+      </Typography>
+
+      <SeoCollapsibleBlock title="title" defaultExpanded>
+        <Typography variant="bodySm">Child</Typography>
+        <Typography variant="bodySm">Child</Typography>
+        <Typography variant="bodySm">Child</Typography>
+      </SeoCollapsibleBlock>
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування SeoBaseFields
+      </Typography>
+
+      <SeoBaseFields
+        value={{ title: 'Title', description: 'Description', keywords: 'keyword1, keyword2' }}
+        errors={{
+          description: 'Description is too short'
+        }}
+        touched={{ description: true }}
+        onFieldChange={() => {}}
+        onBlur={() => {}}
+        showKeywords={true}
+        labels={{
+          metaTitle: 'Header',
+          metaDescription: 'Description'
+        }}
+      />
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування DateTimePicker
+      </Typography>
+
+      <DateTimePicker
+        onChange={() => {}}
+        labels={{ startDateTime: 'Дата початку події', endDateTime: 'Дата кінця події' }}
+      />
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування DateTimeFields
+      </Typography>
+
+      <DateTimePicker
+        onChange={() => {}}
+        labels={{ startDateTime: 'Дата початку події', endDateTime: 'Дата кінця події' }}
+      />
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування SeoMetadataBlock
+      </Typography>
+
+      <SeoMetadataBlock />
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування SeoMetadataForm
+      </Typography>
+
+      <SeoMetadataForm
+        value={{ title: 'Title', description: 'Description', keywords: 'keyword1, keyword2' }}
+        onChange={() => {}}
+        locale="uk"
+        ogImage="https://shorturl.at/xkStA"
+        onImageChange={() => {}}
+        allowIndexing={false}
+        onIndexingChange={() => {}}
+      ></SeoMetadataForm>
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування Header
+      </Typography>
+
+      <Header
+        title="Title"
+        onPreview={() => {}}
+        onSave={() => {}}
+        onCancel={() => {}}
+        isSaving
+        onLanguageChange={() => {}}
+      />
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування LoginModal
+      </Typography>
+
+      <LoginModal onSubmit={() => {}} />
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування MediaModalContainer
+      </Typography>
+
+      <Button size="small" variant="filled" color="tertiary" onClick={handleOpenMediaModalContainer}>
+        Open modal
+      </Button>
+
+      <MediaModalContainer open={isMediaModalContainerOpen} onClose={handleCloseMediaModalContainer}>
+        <Typography variant="bodySm">Child</Typography>
+        <Typography variant="bodySm">Child</Typography>
+        <Typography variant="bodySm">Child</Typography>
+      </MediaModalContainer>
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування FilterDropdown
+      </Typography>
+
+      <FilterDropdown
+        label="Label1"
+        value="Value1"
+        options={[
+          { value: 'Value1', label: 'Label1' },
+          { value: 'Value2', label: 'Label2' },
+          { value: 'Value3', label: 'Label3' }
+        ]}
+        onChange={() => {}}
+      />
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування GalleryCard
+      </Typography>
+
+      <Box sx={{ maxWidth: '400px', padding: '10px', backgroundColor: '#232529' }}>
+        <GalleryCard
+          src="https://shorturl.at/xkStA"
+          fileName="File"
+          isStarred
+          usageLocations={['Main page', 'Files page']}
+          onClick={() => {}}
+          testId="file1"
+        />
+      </Box>
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування SearchButton
+      </Typography>
+
+      <Box sx={{ maxWidth: '400px', padding: '10px', backgroundColor: 'grey' }}>
+        <SearchButton value="Search" onSearch={() => {}} placeholder="Search..." testId="Search" />
+      </Box>
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування MediaModalSwitcher
+      </Typography>
+
+      <MediaModalSwitcher value='GALLERY' onChange={()=>{}}/>
     </Box>
   );
 }

@@ -1,11 +1,14 @@
-import { SxProps, Theme } from '@mui/material';
+import { alpha,SxProps, Theme  } from '@mui/material';
+
+import { mainHexPallete as colors } from '~/shared/theme/colors';
 
 export const mediaCardStyles = {
   wrapper: {
     display: 'flex',
     flexDirection: 'column',
     width: '100%',
-    border: '1px solid #424242',
+    border: '1px solid',
+    borderColor: 'blue.900',
     borderRadius: '6px',
     overflow: 'hidden'
   } as SxProps<Theme>,
@@ -15,7 +18,7 @@ export const mediaCardStyles = {
     width: '100%',
     height: '160px',
     cursor: 'pointer',
-    backgroundColor: '#3F444A',
+    backgroundColor: 'blue.900',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -47,8 +50,8 @@ export const mediaCardStyles = {
 
   bottom: {
     padding: '8px 8px',
-    backgroundColor: 'rgba(36, 36, 36, 0.3)',
-    color: '#FCFCFC',
+    backgroundColor: alpha(colors.charcoalGray, 0.3),
+    color: 'white',
     fontSize: '14px',
     fontWeight: 400,
     whiteSpace: 'nowrap',

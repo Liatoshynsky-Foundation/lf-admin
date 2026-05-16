@@ -1,6 +1,7 @@
 import { Box, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
 
+import { styles } from './SeoCollapsibleBlock.styles';
 import type { SeoMetadataBlockProps } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import SeoMetadataBlock from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 
@@ -24,25 +25,11 @@ export default function SeoCollapsibleBlock({
     <>
       <Box
         sx={{
-          border: '0.5px solid #190D0333',
-          borderRadius: '20px',
-          backgroundColor: 'rgba(25, 13, 3, 0.04)',
-          boxShadow: 'none',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '24px',
+          ...styles.upperContentBlock,
           ...sx
         }}
       >
-        <Typography
-          sx={{
-            fontFamily: 'Mulish',
-            fontWeight: 700,
-            fontSize: '24px',
-            lineHeight: '120%',
-            letterSpacing: '0px'
-          }}
-        >
+        <Typography variant="h6" sx={{ lineHeight: '1.2' }}>
           {title}
         </Typography>
         <Box sx={childrenContainerSx}>{children}</Box>

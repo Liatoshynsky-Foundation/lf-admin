@@ -76,7 +76,8 @@ export const mainHexPallete = {
     100: '#E2F2DC',
     600: '#579A40',
     800: '#2C4D20'
-  }
+  },
+  charcoalGray: '#232529'
 };
 
 const sharedTokens = {

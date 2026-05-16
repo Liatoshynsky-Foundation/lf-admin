@@ -25,22 +25,20 @@ export const inputAdornmentStyles = {
 export const textFieldStyles = {
   '& .MuiOutlinedInput-root': {
     '& fieldset': {
-      borderColor: '#FCFCFC'
+      borderColor: 'white'
     },
     '&:hover fieldset': {
-      borderColor: '#FCFCFC'
+      borderColor: 'white'
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#FCFCFC'
+      borderColor: 'white'
     }
   },
   '& .MuiOutlinedInput-input': {
-    color: '#FCFCFC',
-    fontSize: '16px',
-    fontFamily: 'Mulish',
+    color: 'white',
     padding: 0,
     '&::placeholder': {
-      color: '#999',
+      color: 'blue[500]',
       opacity: 1
     }
   }

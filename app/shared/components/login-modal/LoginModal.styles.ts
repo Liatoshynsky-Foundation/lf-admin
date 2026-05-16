@@ -1,9 +1,12 @@
+import { alpha } from '@mui/material';
+
 import { mainHexPallete as colors } from '~/shared/theme/colors';
 
 export const styles = {
   container: {
-    border: '0.5px solid rgba(25, 13, 3, 0.2)',
-    background: colors.blue[100],
+    border: '0.5px solid',
+    borderColor: alpha(colors.black, 0.2),
+    background: 'blue.100',
     borderRadius: '16px',
     padding: '20px 24px',
     maxWidth: '400px',
@@ -12,43 +15,17 @@ export const styles = {
     }
   },
   title: {
-    fontSize: '24px',
-    fontWeight: 700,
-    lineHeight: '140%',
-    letterSpacing: '0px',
-    fontFamily: 'Mulish',
     textAlign: 'center',
-    color: '#190D03',
     marginBottom: '11px'
   },
   subtitle: {
-    fontSize: '18px',
     fontWeight: 400,
-    lineHeight: '160%',
-    letterSpacing: '0px',
-    fontFamily: 'Mulish',
     marginTop: '0px',
     textAlign: 'center',
-    color: '#474D5A'
-  },
-  textField: {
-    backgroundColor: 'transparent',
-    width: '100%'
-  },
-  passwordField: {
-    borderRadius: '8px'
+    color: 'adminBlue.800'
   },
   button: {
-    width: '100%',
-    borderRadius: '28px',
-    backgroundColor: '#190D03',
-    padding: '14px 32px',
-    fontFamily: 'Mulish',
     fontWeight: 600,
-    fontStyle: 'normal',
-    fontSize: '18px',
-    lineHeight: '155%',
-    letterSpacing: '0px',
     textTransform: 'none'
   },
   outerContainer: {
@@ -60,9 +37,8 @@ export const styles = {
     width: '100%'
   },
   errorText: {
-    color: '#E53D11',
+    color: 'error.main',
     textAlign: 'center',
-    marginTop: '0px',
-    fontSize: '1rem'
+    marginTop: '0px'
   }
 };
