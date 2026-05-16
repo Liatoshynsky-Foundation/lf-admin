@@ -1,7 +1,9 @@
+import { ApolloCache } from '@apollo/client';
 import { Avatar, Box, CircularProgress, IconButton, Link, Typography, useTheme } from '@mui/material';
 import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import DeleteFileModal from '../delete-file-modal/DeleteFileModal';
 import TooltipCustom from '../design-system/tooltip/Tooltip';
 import { styles } from './FileInfoSidebar.styles';
 import { ImagePreviewModal } from './image-preview-modal/ImagePreviewModal';
@@ -21,7 +23,7 @@ import XlsIcon from '~/public/icons/xls.svg';
 import ArchiveIcon from '~/public/icons/zip.svg';
 import ZoomIn from '~/public/icons/zoom-in.svg';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
-import { useUpdateAssetMutation } from '~/types/graphql/generated/graphql';
+import { useDeleteAssetMutation, useUpdateAssetMutation } from '~/types/graphql/generated/graphql';
 
 export type FileUsageLink = {
   id: string;
@@ -99,6 +101,8 @@ export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAct
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
   const requestAction = useCallback(
     (type: FileSidebarAction['type']) => {
       if (!fileId) return;
@@ -153,6 +157,7 @@ export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAct
   });
 
   const [updateAsset, { loading: isUpdatingStar }] = useUpdateAssetMutation();
+  const [deleteAsset, { loading: isDeleting }] = useDeleteAssetMutation();
 
   const handleStarToggle = async () => {
     if (!file?.id) return;
@@ -166,6 +171,34 @@ export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAct
       });
     } catch {}
   };
+
+  const handleDeleteConfirm = async (id: string) => {
+    try {
+      await deleteAsset({
+        variables: { id },
+        update: (cache: ApolloCache<any>) => {
+          cache.evict({ id: cache.identify({ __typename: 'Asset', id }) });
+          cache.gc();
+        }
+      });
+
+      toast.success('Файл успішно видалено');
+      setIsDeleteModalOpen(false);
+      onClose();
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Не вдалося видалити файл. Спробуйте пізніше.';
+
+      toast.error(errorMessage);
+    }
+  };
+
+  const fileForDeleteModal = file
+    ? {
+      id: file.id,
+      filename: file.filename,
+      usageRefs: file.usageLinks?.map((link) => ({ pageId: link.label, blockId: '' })) || []
+    }
+    : null;
 
   return (
     <Box sx={styles.root}>
@@ -209,7 +242,7 @@ export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAct
         <TooltipCustom title="Видалити" showArrow>
           <IconButton
             sx={styles.actionBtn}
-            onClick={() => requestAction('delete')}
+            onClick={() => setIsDeleteModalOpen(true)}
             aria-label="Видалити"
             disabled={!canEdit}
           >
@@ -245,6 +278,15 @@ export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAct
           </span>
         </TooltipCustom>
       </Box>
+
+      <DeleteFileModal
+        disableScrollLock
+        open={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        file={fileForDeleteModal}
+        isDeleting={isDeleting}
+      />
 
       <Box
         sx={{

@@ -31,11 +31,11 @@ describe('RenameFileModal', () => {
     (useUpdateAssetMutation as jest.Mock).mockReturnValue([mockUpdateAsset, { loading: false }]);
   });
 
-  it('renders modal with correct initial values', () => {
+  it('renders modal with correct initial values separated', () => {
     render(<RenameFileModal {...defaultProps} />);
 
     expect(screen.getByText('Перейменувати файл')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('old_name.jpg')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('old_name')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /зберегти/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /скасувати/i })).toBeInTheDocument();
   });
@@ -51,41 +51,34 @@ describe('RenameFileModal', () => {
     expect(mockUpdateAsset).not.toHaveBeenCalled();
   });
 
-  it('closes modal without calling API if filename is unchanged', async () => {
-    const user = userEvent.setup();
+  it('disables save button if filename is unchanged', () => {
     render(<RenameFileModal {...defaultProps} />);
 
     const saveButton = screen.getByRole('button', { name: /зберегти/i });
-    await user.click(saveButton);
-
-    expect(mockUpdateAsset).not.toHaveBeenCalled();
-    expect(mockOnClose).toHaveBeenCalledTimes(1);
+    expect(saveButton).toBeDisabled();
   });
 
-  it('closes modal without calling API if filename is empty (only spaces)', async () => {
+  it('disables save button if filename is empty (only spaces)', async () => {
     const user = userEvent.setup();
     render(<RenameFileModal {...defaultProps} />);
 
-    const input = screen.getByDisplayValue('old_name.jpg');
+    const input = screen.getByDisplayValue('old_name');
     await user.clear(input);
     await user.type(input, '   ');
 
     const saveButton = screen.getByRole('button', { name: /зберегти/i });
-    await user.click(saveButton);
-
-    expect(mockUpdateAsset).not.toHaveBeenCalled();
-    expect(mockOnClose).toHaveBeenCalledTimes(1);
+    expect(saveButton).toBeDisabled();
   });
 
-  it('calls API and shows success toast on valid submit', async () => {
+  it('calls API and shows success toast on valid submit (appends extension automatically)', async () => {
     const user = userEvent.setup();
     mockUpdateAsset.mockResolvedValueOnce({ data: {} });
 
     render(<RenameFileModal {...defaultProps} />);
 
-    const input = screen.getByDisplayValue('old_name.jpg');
+    const input = screen.getByDisplayValue('old_name');
     await user.clear(input);
-    await user.type(input, 'new_name.jpg');
+    await user.type(input, 'new_name');
 
     const saveButton = screen.getByRole('button', { name: /зберегти/i });
     await user.click(saveButton);
@@ -109,9 +102,9 @@ describe('RenameFileModal', () => {
 
     render(<RenameFileModal {...defaultProps} />);
 
-    const input = screen.getByDisplayValue('old_name.jpg');
+    const input = screen.getByDisplayValue('old_name');
     await user.clear(input);
-    await user.type(input, 'new_name.jpg');
+    await user.type(input, 'new_name');
 
     const saveButton = screen.getByRole('button', { name: /зберегти/i });
     await user.click(saveButton);
@@ -126,7 +119,7 @@ describe('RenameFileModal', () => {
     (useUpdateAssetMutation as jest.Mock).mockReturnValue([mockUpdateAsset, { loading: true }]);
     render(<RenameFileModal {...defaultProps} />);
 
-    const input = screen.getByDisplayValue('old_name.jpg');
+    const input = screen.getByDisplayValue('old_name');
     const saveButton = screen.getByRole('button', { name: /зберегти/i });
     const cancelButton = screen.getByRole('button', { name: /скасувати/i });
 

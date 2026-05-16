@@ -1,4 +1,4 @@
-import { type InferSchemaType, type Model, model, Schema, Types } from 'mongoose';
+import { type InferSchemaType, type Model, model, models, Schema, Types } from 'mongoose';
 
 export type Locale = 'uk' | 'en';
 
@@ -36,16 +36,12 @@ const imageCropSchema = new Schema(
   }
 );
 
-imageCropSchema.index(
-  { imageAssetId: 1, pageId: 1, locale: 1 },
-  { unique: true, sparse: true }
-);
+imageCropSchema.index({ imageAssetId: 1, pageId: 1, locale: 1 }, { unique: true, sparse: true });
 
 export type ImageCropDocument = InferSchemaType<typeof imageCropSchema> & {
   _id: Types.ObjectId;
 };
 
-export const ImageCropModel: Model<ImageCropDocument> = model<ImageCropDocument>(
-  'ImageCrop',
-  imageCropSchema
-) as unknown as Model<ImageCropDocument>;
+export const ImageCropModel: Model<ImageCropDocument> =
+  (models.ImageCrop as unknown as Model<ImageCropDocument>) ||
+  (model<ImageCropDocument>('ImageCrop', imageCropSchema) as unknown as Model<ImageCropDocument>);

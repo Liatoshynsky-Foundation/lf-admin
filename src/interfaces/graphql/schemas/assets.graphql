@@ -56,8 +56,19 @@ input UpdateAssetInput {
   description: String
 }
 
+input CreateAssetInput {
+  filename: String!
+  mimeType: String!
+  sizeBytes: Int!
+  url: String!
+  type: String! # 'image', 'audio', 'document', 'archive', etc.
+  description: String
+}
+
 extend type Mutation {
   updateAsset(id: ID!, input: UpdateAssetInput!): Asset!
+  createAsset(input: CreateAssetInput!): Asset!
+  deleteAsset(id: ID!): Boolean!
 }
 
 input CreateAssetInput {
