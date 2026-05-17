@@ -3,6 +3,7 @@
 import { Box, Button } from '@mui/material';
 import { Upload } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import {
   FILE_TABS,
@@ -27,7 +28,9 @@ import {
   FILES_UPLOAD_FAILED_ERROR,
   type FilesTabValue
 } from '~/constants/files';
+import { downloadFile } from '~/lib/utils/downloadFile';
 import FavouriteStarIcon from '~/public/icons/favourite-star.svg';
+import DeleteFileModal from '~/shared/components/delete-file-modal/DeleteFileModal';
 import { colors } from '~/shared/components/design-system/button/Button.styles';
 import { EmptyState } from '~/shared/components/empty-state';
 import {
@@ -55,7 +58,7 @@ import { RenameFileModal } from '~/shared/components/rename-file-modal/RenameFil
 import { ViewToggle } from '~/shared/components/view-toggle';
 import { useAllAssets } from '~/shared/hooks/use-assets/useAssets';
 import { useFilesFiltering } from '~/shared/hooks/use-files';
-import { AssetType, useCreateAssetMutation } from '~/types/graphql/generated/graphql';
+import { AssetType, useCreateAssetMutation, useDeleteAssetMutation } from '~/types/graphql/generated/graphql';
 
 type FilesPageFileItem = FilesCardsLayoutItem & {
   description?: string;
@@ -166,6 +169,10 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [hasInitializedSelection, setHasInitializedSelection] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [deleteModalState, setDeleteModalState] = useState<{ open: boolean; fileId: string | null }>({
+    open: false,
+    fileId: null
+  });
   const [uploadModalInitial, setUploadModalInitial] = useState<MediaModalOpenState | undefined>(undefined);
   const [renameModalState, setRenameModalState] = useState<{ open: boolean; fileId: string; currentFilename: string }>({
     open: false,
@@ -174,6 +181,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
   });
   const { data, loading, error, refetch } = useAllAssets();
   const [createAsset] = useCreateAssetMutation();
+  const [deleteAsset, { loading: isDeleting }] = useDeleteAssetMutation();
 
   const handleOpenUploadFlow = () => {
     setUploadModalInitial({ tab: 'UPLOAD' });
@@ -245,6 +253,53 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
       description: asset.description ?? undefined
     }));
   }, [data?.allAssets]);
+
+  const handleDownload = async (fileUrl: string, filename: string) => {
+    await downloadFile(fileUrl, filename);
+  };
+
+  const handleItemAction = (action: 'rename' | 'delete' | 'download', item: FilesCardsLayoutItem) => {
+    if (action === 'rename') {
+      setRenameModalState({ open: true, fileId: item.id, currentFilename: item.name });
+    } else if (action === 'delete') {
+      setDeleteModalState({ open: true, fileId: item.id });
+    } else if (action === 'download') {
+      const file = allFiles.find((f) => f.id === item.id);
+      if (file?.downloadUrl) {
+        handleDownload(file.downloadUrl, file.name);
+      } else {
+        toast.error('Посилання на завантаження відсутнє');
+      }
+    }
+  };
+
+  const handleDeleteConfirm = async (id: string) => {
+    try {
+      await deleteAsset({
+        variables: { id },
+        update: (cache) => {
+          cache.evict({ id: cache.identify({ __typename: 'Asset', id }) });
+          cache.gc();
+        }
+      });
+      toast.success('Файл успішно видалено');
+      setDeleteModalState({ open: false, fileId: null });
+      if (selectedFileId === id) setSelectedFileId(null);
+    } catch (error: any) {
+      toast.error(error.message || 'Не вдалося видалити файл. Спробуйте пізніше.');
+    }
+  };
+
+  const fileForDeleteModal = useMemo(() => {
+    if (!deleteModalState.fileId) return null;
+    const file = allFiles.find((f) => f.id === deleteModalState.fileId);
+    if (!file) return null;
+    return {
+      id: file.id,
+      filename: file.name,
+      usageRefs: file.usage.map((u) => ({ pageId: u.label, blockId: '' }))
+    };
+  }, [deleteModalState.fileId, allFiles]);
 
   const { filteredFiles, toolbarProps, sortProps } = useFilesFiltering(allFiles, activeTab);
 
@@ -349,7 +404,12 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
       {!loading && error && <EmptyState title={FILES_ERROR_STATE_TITLE} description={FILES_ERROR_STATE_DESCRIPTION} />}
 
       {!loading && !error && filteredFiles.length > 0 && (
-        <FilesCardsLayout view={view} items={filteredFiles} onItemClick={(item) => setSelectedFileId(item.id)} />
+        <FilesCardsLayout
+          view={view}
+          items={filteredFiles}
+          onItemClick={(item) => setSelectedFileId(item.id)}
+          onItemAction={handleItemAction}
+        />
       )}
 
       {hasNoFiles && isFavoritesTab && !hasActiveCriteria && (
@@ -397,6 +457,14 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
         fileId={renameModalState.fileId}
         currentFilename={renameModalState.currentFilename}
         onClose={() => setRenameModalState((prev) => ({ ...prev, open: false }))}
+      />
+      <DeleteFileModal
+        disableScrollLock
+        open={deleteModalState.open}
+        onClose={() => setDeleteModalState({ open: false, fileId: null })}
+        onConfirm={handleDeleteConfirm}
+        file={fileForDeleteModal}
+        isDeleting={isDeleting}
       />
     </Box>
   );
