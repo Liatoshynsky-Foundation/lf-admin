@@ -36,6 +36,13 @@ jest.mock('winston-mongodb', () => ({
   MongoDB: jest.fn()
 }));
 
+jest.mock('../../config', () => ({
+  __esModule: true,
+  mongoUrl: 'mongodb://localhost:27017/test-logs'
+}));
+
+const getMongoDBMock = (): jest.Mock => jest.requireMock('winston-mongodb').MongoDB as jest.Mock;
+
 describe('Logger', () => {
   let logger: Logger;
 
@@ -61,6 +68,21 @@ describe('Logger', () => {
   it('includes MongoDB transport', () => {
     const hasMongoDB = logger.transports.some((t) => t.constructor?.name === 'MongoDB');
     expect(hasMongoDB).toBe(true);
+  });
+
+  it('stores all log levels in MongoDB transport', async () => {
+    jest.resetModules();
+    const MongoDBMock = getMongoDBMock();
+    MongoDBMock.mockClear();
+
+    await import('./logger');
+
+    expect(MongoDBMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'debug',
+        collection: 'logger'
+      })
+    );
   });
 
   it('formats message with stack and metadata', () => {
