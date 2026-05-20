@@ -32,6 +32,10 @@ export const textFieldStyles = {
     },
     '&.Mui-focused fieldset': {
       borderColor: 'white'
+    },
+    '&.Mui-focused .MuiOutlinedInput-input': {
+      color: 'white',
+      WebkitTextFillColor: 'white' 
     }
   },
   '& .MuiOutlinedInput-input': {

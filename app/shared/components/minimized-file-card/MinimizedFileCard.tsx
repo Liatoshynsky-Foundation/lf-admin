@@ -3,6 +3,9 @@ import Image from 'next/image';
 import { MouseEvent } from 'react';
 
 import { styles } from '~/components/minimized-file-card/MinimizedFileCard.styles';
+import LinkIcon from '~/public/icons/link.svg';
+import MenuIcon from '~/public/icons/menu.svg';
+import StarIcon from '~/public/icons/star-1.svg';
 import { useUpdateAssetMutation } from '~/types/graphql/generated/graphql';
 
 const ICON_SIZE = 21;
@@ -69,7 +72,7 @@ const MinimizedFileCard = ({
           alt={`${fileType} file icon`}
         />
 
-        <Typography variant="customMedium18Loose" noWrap>
+        <Typography variant="subtitle1" sx={styles.fileName} noWrap>
           {name}
         </Typography>
 
@@ -82,18 +85,24 @@ const MinimizedFileCard = ({
                 cursor: isUpdatingStar ? 'wait' : 'pointer'
               }}
             >
-              <Image src="/icons/star-1.svg" width={ICON_SIZE} height={ICON_SIZE} alt="Starred file" />
+              <StarIcon width={ICON_SIZE} height={ICON_SIZE} alt="Starred file" />
             </Box>
           )}
-          {linked && <Image src="/icons/link.svg" width={ICON_SIZE} height={ICON_SIZE} alt="Linked file" />}
+          {linked && (
+            <Box sx={{ color: 'blue.700', display: 'flex' }}>
+              <LinkIcon width={ICON_SIZE} height={ICON_SIZE} alt="Linked file" />
+            </Box>
+          )}
         </Stack>
       </Stack>
 
       <Stack direction="row" sx={styles.content} alignItems="center">
-        <Typography variant="customItalic16">{date}</Typography>
+        <Typography variant="textMd" sx={styles.date}>
+          {date}
+        </Typography>
 
         <IconButton size="small" aria-label="Open file menu" onClick={handleMenuClick}>
-          <Image src="/icons/menu.svg" width={ICON_SIZE} height={ICON_SIZE} alt="Menu icon" aria-hidden />
+          <MenuIcon width={ICON_SIZE} height={ICON_SIZE} alt="Menu icon" aria-hidden />
         </IconButton>
       </Stack>
     </Paper>

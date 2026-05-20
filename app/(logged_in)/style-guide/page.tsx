@@ -38,8 +38,16 @@ import { FilterDropdown } from '~/shared/components/media-modal/components/filte
 import { GalleryCard } from '~/shared/components/media-modal/components/gallery-card/GalleryCard';
 import { SearchButton } from '~/shared/components/media-modal/components/search-button/SearchButton';
 import { MediaModalSwitcher } from '~/shared/components/media-modal/components/switcher/MediaModalSwitcher';
+import { UsedCard } from '~/shared/components/media-modal/components/used-card/UsedCard';
+import { MediaModal } from '~/shared/components/media-modal/MediaModal';
+import { FileView } from '~/shared/components/media-modal/views/file-view/FileView';
+import UploadView from '~/shared/components/media-modal/views/upload-view/UploadView';
+import MinimizedFileCard from '~/shared/components/minimized-file-card/MinimizedFileCard';
+import { PageHeader } from '~/shared/components/page-header/PageHeader';
+import { RenameFileModal } from '~/shared/components/rename-file-modal/RenameFileModal';
 import { Search, type SearchOption } from '~/shared/components/search/Search';
 import type { FilterOption } from '~/shared/components/selector/FilterSelect';
+import FilterSelectItem from '~/shared/components/selector/FilterSelectItem/FilterSelectItem';
 
 export default function StyleGuide() {
   const tabs = [
@@ -67,6 +75,17 @@ export default function StyleGuide() {
     { value: 'archived', label: 'В архіві' }
   ];
 
+  const mockPdfFile = new File([''], 'my-document.pdf', {
+    type: 'application/pdf',
+    lastModified: Date.now()
+  });
+
+  const pageHeaderTabs = [
+    { value: 'Tab1', label: 'tab1', href: '/style-guide' },
+    { value: 'Tab2', label: 'tab2', href: '/style-guide', disabled: true },
+    { value: 'Tab3', label: 'tab3', href: '/style-guide' }
+  ];
+
   const [isDiscardChangesModalOpen, setIsDiscardChangesModalOpen] = useState(false);
   const [activeTabId, setActiveTabId] = useState('1');
   const [isControlledOpen, setIsControlledOpen] = useState(false);
@@ -77,6 +96,8 @@ export default function StyleGuide() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [isMediaModalContainerOpen, setIsMediaModalContainerOpen] = useState(false);
+  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
+  const [isRenameFileModalOpen, setIsRenameFileModalOpen] = useState(false);
 
   const handleOpenDiscardChangesModal = () => setIsDiscardChangesModalOpen(true);
   const handleCloseDiscardChangesModal = () => setIsDiscardChangesModalOpen(false);
@@ -86,6 +107,10 @@ export default function StyleGuide() {
   const handleCloseFileInfoSidebar = () => setIsFileInfoSidebarOpen(false);
   const handleOpenMediaModalContainer = () => setIsMediaModalContainerOpen(true);
   const handleCloseMediaModalContainer = () => setIsMediaModalContainerOpen(false);
+  const handleOpenMediaModal = () => setIsMediaModalOpen(true);
+  const handleCloseMediaModal = () => setIsMediaModalOpen(false);
+  const handleOpenRenameFileModal = () => setIsRenameFileModalOpen(true);
+  const handleCloseRenameFileModal = () => setIsRenameFileModalOpen(false);
 
   const handleSubmitChanges = () => {
     setIsDiscardChangesModalOpen(false);
@@ -473,12 +498,12 @@ export default function StyleGuide() {
             id: 'a1',
             type: 'image',
             filename: 'File #1',
-            previewUrl: 'google.com',
+            previewUrl: '/style-guide',
             addedBy: { name: 'Admin' },
             addedAt: '01.01.2001',
             format: 'png',
             size: '1.55 Mb',
-            usageLinks: [{ id: '01', label: 'label', href: 'google.com' }],
+            usageLinks: [{ id: '01', label: 'label', href: '/style-guide' }],
             isStarred: true
           }}
           onClose={handleCloseFileInfoSidebar}
@@ -648,7 +673,6 @@ export default function StyleGuide() {
           isStarred
           usageLocations={['Main page', 'Files page']}
           onClick={() => {}}
-          testId="file1"
         />
       </Box>
 
@@ -657,14 +681,81 @@ export default function StyleGuide() {
       </Typography>
 
       <Box sx={{ maxWidth: '400px', padding: '10px', backgroundColor: 'grey' }}>
-        <SearchButton value="Search" onSearch={() => {}} placeholder="Search..." testId="Search" />
+        <SearchButton value="Search" onSearch={() => {}} placeholder="Search..." />
       </Box>
 
       <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
         Тестування MediaModalSwitcher
       </Typography>
 
-      <MediaModalSwitcher value='GALLERY' onChange={()=>{}}/>
+      <MediaModalSwitcher value="GALLERY" onChange={() => {}} />
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування UsedCard
+      </Typography>
+
+      <Box sx={{ maxWidth: '400px', padding: '10px', backgroundColor: '#232529' }}>
+        <UsedCard src="https://shorturl.at/xkStA" fileName="File 1" locale="uk" onClick={() => {}} />
+      </Box>
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування MediaModal
+      </Typography>
+
+      <Button size="small" variant="filled" color="tertiary" onClick={handleOpenMediaModal}>
+        Open modal
+      </Button>
+
+      <MediaModal open={isMediaModalOpen} onClose={handleCloseMediaModal} onApply={() => {}} />
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування FileView
+      </Typography>
+
+      <Box sx={{ maxWidth: '400px', padding: '10px', backgroundColor: '#232529' }}>
+        <FileView file={mockPdfFile} />
+      </Box>
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування UploadView
+      </Typography>
+
+      <Box sx={{ maxWidth: '400px', padding: '10px', backgroundColor: '#232529' }}>
+        <UploadView selected={null} onPick={() => {}} />
+      </Box>
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування MinimizedFileCard
+      </Typography>
+
+      <MinimizedFileCard id="fileCard" fileType="img" starred linked name="File card 1" date="11.11.2011" />
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування PageHeader
+      </Typography>
+
+      <PageHeader title="Title" tabs={pageHeaderTabs} activeTab="Tab1" />
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування RenameFileModal
+      </Typography>
+
+      <Button size="small" variant="filled" color="tertiary" onClick={handleOpenRenameFileModal}>
+        Open modal
+      </Button>
+
+      <RenameFileModal
+        open={isRenameFileModalOpen}
+        onClose={handleCloseRenameFileModal}
+        fileId="fileId"
+        currentFilename="File1"
+      />
+
+      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
+        Тестування FilterSelectItem
+      </Typography>
+
+      <FilterSelectItem label="item1" selected />
     </Box>
   );
 }

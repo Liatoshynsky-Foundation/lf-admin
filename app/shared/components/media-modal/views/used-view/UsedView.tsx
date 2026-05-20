@@ -1,6 +1,6 @@
 'use client';
 
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { useMemo } from 'react';
 
 import { FilterDropdown } from '../../components/filter-dropdown/FilterDropdown';
@@ -100,7 +100,9 @@ export function UsedView({ onPick, filters, onFiltersChange }: Props) {
   return (
     <Box data-testid="UsedView" sx={sharedViewStyles.container}>
       <Box sx={sharedViewStyles.header}>
-        <Box sx={sharedViewStyles.title}>Зображення на сторінці</Box>
+        <Typography variant="h6" sx={sharedViewStyles.title}>
+          Зображення на сторінці
+        </Typography>
 
         <Box sx={sharedViewStyles.controlsGroup}>
           <SearchButton

@@ -155,6 +155,7 @@ export function UploadView({
           </Box>
 
           <Typography
+            variant='bodyMd'
             id={messageId}
             role={hasError ? 'alert' : undefined}
             sx={[styles.text, hasError && styles.textError]}

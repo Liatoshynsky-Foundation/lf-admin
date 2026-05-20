@@ -8,17 +8,17 @@ export const usedCardStyles = {
     padding: '2px 6px',
     height: '20px',
     borderRadius: '15px',
-    border: '1px solid #9D9FA9',
-    backgroundColor: '#3F444A'
+    border: '1px solid',
+    borderColor: 'blue.500',
+    backgroundColor: 'blue.900'
   } as SxProps<Theme>,
 
   badgeText: {
-    fontFamily: 'Mulish',
     fontWeight: 500,
     fontSize: '14px',
-    lineHeight: '130%',
+    lineHeight: '1.3',
     letterSpacing: '0.17px',
     textAlign: 'center',
-    color: '#C6C8D3'
+    color: 'blue.300'
   } as SxProps<Theme>
 } as const;

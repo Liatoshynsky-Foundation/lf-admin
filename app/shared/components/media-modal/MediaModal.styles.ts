@@ -1,3 +1,7 @@
+import { alpha } from '@mui/material';
+
+import { mainHexPallete as colors } from '~/shared/theme/colors';
+
 export const styles = {
   cropHeader: {
     display: 'grid',
@@ -9,23 +13,23 @@ export const styles = {
     fontWeight: 700,
     fontSize: '24px',
     lineHeight: '140%',
-    color: '#FCFCFC'
+    color: 'white'
   },
 
   cropHeaderSubtitle: {
     fontWeight: 500,
     fontSize: '18px',
-    lineHeight: '150%',
-    color: '#C1C9D6'
+    lineHeight: '1.5',
+    color: 'blue.300'
   },
 
   headerIconButton: {
-    color: '#FCFCFC',
+    color: 'white',
     '&:hover': {
-      backgroundColor: 'rgba(255,255,255,0.08)'
+      backgroundColor: alpha(colors.white, 0.08)
     },
     '&.Mui-disabled': {
-      color: 'rgba(193, 201, 214, 0.6)'
+      color: alpha(colors.blue[300], 0.6)
     }
   },
 
@@ -33,3 +37,5 @@ export const styles = {
     padding: '8px 24px'
   }
 };
+
+

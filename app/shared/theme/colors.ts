@@ -81,7 +81,7 @@ export const mainHexPallete = {
 };
 
 const sharedTokens = {
-  error: 'rgba(230, 60, 20, 1)',
+  error: 'rgb(230, 60, 20)',
   ripple: 'rgba(239, 233, 224, 0.4)',
   primaryBadge: 'rgba(95, 14, 15, 1)'
 };
