@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   WORKS_FILTERS,
@@ -36,15 +36,7 @@ export type WorksFilteringSortProps = Omit<
   'minWidth' | 'dataTestId'
 >;
 
-const getInitialSortValue = (): FilesSortValue => {
-  if (globalThis.window === undefined) {
-    return 'date_desc';
-  }
-
-  const saved = localStorage.getItem(SORT_STORAGE_KEY);
-  const validValues: FilesSortValue[] = ['date_desc', 'date_asc', 'name_asc', 'name_desc'];
-  return (validValues.includes(saved as FilesSortValue) ? saved : 'date_desc') as FilesSortValue;
-};
+const VALID_SORT_VALUES: FilesSortValue[] = ['date_desc', 'date_asc', 'name_asc', 'name_desc'];
 
 export function useWorksFiltering(): Readonly<{
   sortValue: FilesSortValue;
@@ -61,7 +53,14 @@ export function useWorksFiltering(): Readonly<{
   const [statusFilters, setStatusFilters] = useState<WorksStatusValue[]>([]);
   const [languageFilters, setLanguageFilters] = useState<WorksLanguageValue[]>([]);
   const [genreFilters, setGenreFilters] = useState<string[]>([]);
-  const [sortValue, setSortValue] = useState<FilesSortValue>(getInitialSortValue);
+  const [sortValue, setSortValue] = useState<FilesSortValue>('date_desc');
+
+  useEffect(() => {
+    const saved = localStorage.getItem(SORT_STORAGE_KEY);
+    if (saved && VALID_SORT_VALUES.includes(saved as FilesSortValue)) {
+      setSortValue(saved as FilesSortValue);
+    }
+  }, []);
 
   const activeFiltersCount = statusFilters.length + languageFilters.length + genreFilters.length;
   const currentSortField: SortFieldValue = sortValue.startsWith('date') ? 'date' : 'name';

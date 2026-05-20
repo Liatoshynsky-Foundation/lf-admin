@@ -42,34 +42,36 @@ type WorksPageContentProps = Readonly<{
   activeTab: WorksTabValue;
 }>;
 
-const OPUS_HIGHLIGHT_NUMBERS = new Set(['op. 1', 'op. 2', 'op. 3']);
 const TABLE_DIVIDER_COLOR = '#CDD4DE';
+const HORIZONTAL_ROW_DIVIDER_COLOR = '#D9DCE866';
 const NUMBER_COLUMN_WIDTH = '48px';
-const GROUP_META_COLUMN_WIDTH = '260px';
-const STATUS_COLUMN_WIDTH = '220px';
-const GROUP_ROW_COLUMNS = `1px ${NUMBER_COLUMN_WIDTH} minmax(260px, 1fr) ${GROUP_META_COLUMN_WIDTH} ${STATUS_COLUMN_WIDTH} 40px`;
-const INDIVIDUAL_WORK_ROW_COLUMNS = `1px minmax(260px, 1fr) ${GROUP_META_COLUMN_WIDTH} ${STATUS_COLUMN_WIDTH} 40px`;
+const GROUP_GENRE_COLUMN_WIDTH = '220px';
+const GROUP_YEARS_COLUMN_WIDTH = '96px';
+const STATUS_COLUMN_WIDTH = '310px';
+const ACCORDION_ICON_OFFSET = '26px';
+const GROUP_ROW_COLUMNS = `1px ${NUMBER_COLUMN_WIDTH} minmax(220px, 1fr) ${GROUP_GENRE_COLUMN_WIDTH} ${GROUP_YEARS_COLUMN_WIDTH} ${STATUS_COLUMN_WIDTH} 40px`;
+const TABLE_HEADER_COLUMNS = `1px calc(${NUMBER_COLUMN_WIDTH} + ${ACCORDION_ICON_OFFSET}) minmax(220px, 1fr) ${GROUP_GENRE_COLUMN_WIDTH} ${GROUP_YEARS_COLUMN_WIDTH} ${STATUS_COLUMN_WIDTH} 40px`;
+const INDIVIDUAL_WORK_ROW_COLUMNS = `1px minmax(220px, 1fr) ${GROUP_GENRE_COLUMN_WIDTH} ${GROUP_YEARS_COLUMN_WIDTH} ${STATUS_COLUMN_WIDTH} 40px`;
 const WORK_ROW_GRID_SX = {
   display: 'grid',
   gridTemplateColumns: INDIVIDUAL_WORK_ROW_COLUMNS,
   alignItems: 'center',
-  borderBottom: `1px solid ${TABLE_DIVIDER_COLOR}`,
+  borderBottom: `1px solid ${HORIZONTAL_ROW_DIVIDER_COLOR}`,
   minWidth: 0
 } as const;
 const GROUPED_WORK_ROW_SX = {
   ...WORK_ROW_GRID_SX,
-  columnGap: '12px',
+  columnGap: '8px',
   py: '8px',
   px: 0
 } as const;
 const INDIVIDUAL_WORK_ROW_SX = {
   ...WORK_ROW_GRID_SX,
   columnGap: '8px',
-  px: '16px',
   py: '12px'
 } as const;
 const MARKER_COLUMN_SX = { width: '1px' } as const;
-const META_SPACER_SX = { width: GROUP_META_COLUMN_WIDTH } as const;
+const GENRE_SPACER_SX = { width: GROUP_GENRE_COLUMN_WIDTH } as const;
 const SINGLE_LINE_ELLIPSIS = {
   whiteSpace: 'nowrap',
   overflow: 'hidden',
@@ -82,8 +84,31 @@ const META_TEXT_SX = {
   ...SINGLE_LINE_ELLIPSIS
 } as const;
 const TITLE_TEXT_SX = { fontSize: '15px', minWidth: 0, ...SINGLE_LINE_ELLIPSIS } as const;
-const WORK_ROW_TITLE_SX = { fontSize: '14px', minWidth: 0, flex: 1, ...SINGLE_LINE_ELLIPSIS } as const;
-const YEAR_TEXT_SX = { ...META_TEXT_SX, width: STATUS_COLUMN_WIDTH, textAlign: 'right' } as const;
+const WORK_ROW_TITLE_SX = {
+  fontSize: '14px',
+  fontWeight: 500,
+  minWidth: 0,
+  flex: 1,
+  ...SINGLE_LINE_ELLIPSIS
+} as const;
+const YEAR_TEXT_SX = {
+  ...META_TEXT_SX,
+  fontWeight: 500,
+  width: GROUP_YEARS_COLUMN_WIDTH,
+  textAlign: 'left'
+} as const;
+const OPUS_COLUMN_DIVIDER_SX = {
+  borderRight: `1px solid ${TABLE_DIVIDER_COLOR}`,
+  pr: '10px'
+} as const;
+const TABLE_HEADER_TEXT_SX = {
+  fontSize: '16px',
+  lineHeight: '22px',
+  fontWeight: 700,
+  color: '#63666E',
+  fontStyle: 'normal',
+  ...SINGLE_LINE_ELLIPSIS
+} as const;
 const MENU_LIST_SX = { px: '8px', py: '4px' } as const;
 const MENU_ITEM_BASE_SX = {
   ...filterSelectStyles.menuItem,
@@ -98,9 +123,10 @@ type GroupRowData = Readonly<{
   numberLabel: string;
   title: string;
   genre: string;
-  yearRange: string;
+  startDate: string;
+  endDate?: string;
   status: WorkStatus;
-  createdAt?: string;
+  createdAt: string;
   updatedAt: string;
   publishedAt?: string;
   works: ReadonlyArray<{ id: string; title: string; year: string }>;
@@ -138,18 +164,31 @@ type IndividualWorkData = Readonly<{
 }>;
 
 function toGroupRowData(group: OpusGroup | UngroupedGroup): GroupRowData {
+  const [rawStartDate, rawEndDate] = group.yearRange.split('-').map((part) => part.trim());
+  const startDate = rawStartDate || group.updatedAt.slice(0, 4);
+  const endDate = rawEndDate || undefined;
+
   return {
     id: group.id,
     numberLabel: 'opusNumber' in group ? group.opusNumber : group.boNumber,
     title: group.title,
     genre: group.genre,
-    yearRange: group.yearRange,
+    startDate,
+    endDate,
     status: group.status,
-    createdAt: group.createdAt,
+    createdAt: group.createdAt ?? group.updatedAt,
     updatedAt: group.updatedAt,
     publishedAt: group.publishedAt,
     works: group.works
   };
+}
+
+function formatGroupYears(startDate: string, endDate?: string): string {
+  if (!endDate || endDate === startDate) {
+    return startDate;
+  }
+
+  return `${startDate} - ${endDate}`;
 }
 
 function sortGroups<T extends { title: string; updatedAt: string }>(
@@ -306,32 +345,56 @@ function WorkRowCells({ title, year }: Readonly<{ title: string; year: string }>
   return (
     <>
       <Typography sx={WORK_ROW_TITLE_SX}>{title}</Typography>
-      <Box sx={{ width: GROUP_META_COLUMN_WIDTH }} />
+      <Box sx={GENRE_SPACER_SX} />
       <Typography sx={YEAR_TEXT_SX}>{year}</Typography>
+      <Box sx={{ width: STATUS_COLUMN_WIDTH }} />
       <ContextMenu items={WORK_MENU_ITEMS} triggerLabel={`Дії твору ${title}`} />
     </>
+  );
+}
+
+function WorksTableHeader() {
+  return (
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: TABLE_HEADER_COLUMNS,
+        columnGap: '8px',
+        alignItems: 'center',
+        px: 0,
+        py: '8px',
+        borderBottom: `1px solid ${HORIZONTAL_ROW_DIVIDER_COLOR}`,
+        minWidth: 0
+      }}
+    >
+      <Box sx={MARKER_COLUMN_SX} />
+      <Typography sx={{ ...TABLE_HEADER_TEXT_SX, textAlign: 'left', justifySelf: 'start', width: '100%', pl: 0 }}>
+        Опуси
+      </Typography>
+      <Typography sx={TABLE_HEADER_TEXT_SX}>Назва</Typography>
+      <Typography sx={TABLE_HEADER_TEXT_SX}>Жанр</Typography>
+      <Typography sx={TABLE_HEADER_TEXT_SX}>Роки</Typography>
+      <Typography sx={TABLE_HEADER_TEXT_SX}>Статус</Typography>
+      <Box sx={{ width: '40px' }} />
+    </Box>
   );
 }
 
 // ── Opus accordion row ────────────────────────────────────────────────────────
 function GroupedRow({
   group,
-  defaultExpanded,
-  withLeftMarker
+  defaultExpanded
 }: Readonly<{
   group: GroupRowData;
   defaultExpanded?: boolean;
-  withLeftMarker?: boolean;
 }>) {
-  const shouldShowOpusMarker = Boolean(withLeftMarker);
-
   return (
     <Accordion
       defaultExpanded={defaultExpanded}
       disableGutters
       elevation={0}
       sx={{
-        borderBottom: `1px solid ${TABLE_DIVIDER_COLOR}`,
+        borderBottom: `1px solid ${HORIZONTAL_ROW_DIVIDER_COLOR}`,
         borderRadius: 0,
         mb: '4px',
         overflow: 'hidden',
@@ -342,12 +405,18 @@ function GroupedRow({
       <AccordionSummary
         expandIcon={<ChevronDown size={18} />}
         sx={{
-          px: '16px',
+          px: 0,
           minHeight: '56px',
           flexDirection: 'row-reverse',
           '& .MuiAccordionSummary-expandIconWrapper': {
-            mr: '12px',
-            ml: 0
+            width: '26px',
+            height: '26px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            ml: '6px',
+            mr: 0,
+            flexShrink: 0
           },
           '& .MuiAccordionSummary-content': {
             display: 'block',
@@ -361,7 +430,7 @@ function GroupedRow({
           sx={{
             display: 'grid',
             gridTemplateColumns: GROUP_ROW_COLUMNS,
-            columnGap: '12px',
+            columnGap: '8px',
             alignItems: 'center',
             minWidth: 0
           }}
@@ -370,37 +439,35 @@ function GroupedRow({
             sx={{
               width: '1px',
               alignSelf: 'stretch',
-              backgroundColor: shouldShowOpusMarker ? TABLE_DIVIDER_COLOR : 'transparent'
+              backgroundColor: 'transparent'
             }}
           />
 
           <Typography
             sx={{
               fontWeight: 600,
+              fontStyle: 'italic',
               fontSize: '14px',
               color: 'text.secondary',
               width: NUMBER_COLUMN_WIDTH,
+              ...OPUS_COLUMN_DIVIDER_SX,
               ...SINGLE_LINE_ELLIPSIS
             }}
           >
             {group.numberLabel}
           </Typography>
 
-          <Typography sx={{ ...TITLE_TEXT_SX, fontWeight: 600 }}>{group.title}</Typography>
+          <Typography sx={{ ...TITLE_TEXT_SX, fontWeight: 600 }}>
+            {group.title}
+          </Typography>
 
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              alignItems: 'center',
-              gap: '8px',
-              width: GROUP_META_COLUMN_WIDTH,
-              minWidth: 0
-            }}
-          >
-            <Typography sx={META_TEXT_SX}>{group.genre}</Typography>
-            <Typography sx={META_TEXT_SX}>{group.yearRange}</Typography>
-          </Box>
+          <Typography sx={{ ...META_TEXT_SX, fontWeight: 600, width: GROUP_GENRE_COLUMN_WIDTH }}>
+            {group.genre}
+          </Typography>
+
+          <Typography sx={{ ...META_TEXT_SX, fontWeight: 600, width: GROUP_YEARS_COLUMN_WIDTH, textAlign: 'left' }}>
+            {formatGroupYears(group.startDate, group.endDate)}
+          </Typography>
 
           <Box sx={{ width: STATUS_COLUMN_WIDTH, minWidth: 0 }}>
             <StatusWithDate
@@ -417,7 +484,7 @@ function GroupedRow({
       </AccordionSummary>
 
       {group.works.length > 0 && (
-        <AccordionDetails sx={{ px: '16px', pt: 0, pb: 0 }}>
+        <AccordionDetails sx={{ pl: 0, pr: 0, pt: 0, pb: 0 }}>
           {group.works.map((work, index) => (
             <Box
               key={work.id}
@@ -445,24 +512,26 @@ function IndividualWorkRow({ work }: Readonly<{ work: IndividualWorkData }>) {
 
       <Typography sx={WORK_ROW_TITLE_SX}>{work.title}</Typography>
 
-      <Box sx={META_SPACER_SX} />
+      <Box sx={GENRE_SPACER_SX} />
 
       <Typography
         sx={{
           ...META_TEXT_SX,
-          width: STATUS_COLUMN_WIDTH,
-          textAlign: 'right'
+          width: GROUP_YEARS_COLUMN_WIDTH,
+          textAlign: 'left'
         }}
       >
         {work.year}
       </Typography>
+
+      <Box sx={{ width: STATUS_COLUMN_WIDTH }} />
 
       <ContextMenu items={WORK_MENU_ITEMS} triggerLabel={`Дії твору ${work.title}`} />
     </Box>
   );
 }
 
-function GroupRowsList({ groups, withLeftMarker }: Readonly<{ groups: readonly (OpusGroup | UngroupedGroup)[]; withLeftMarker?: boolean }>) {
+function GroupRowsList({ groups }: Readonly<{ groups: readonly (OpusGroup | UngroupedGroup)[] }>) {
   return (
     <>
       {groups.map((group) => (
@@ -470,11 +539,6 @@ function GroupRowsList({ groups, withLeftMarker }: Readonly<{ groups: readonly (
           key={group.id}
           group={toGroupRowData(group)}
           defaultExpanded
-          withLeftMarker={
-            withLeftMarker && 'opusNumber' in group
-              ? OPUS_HIGHLIGHT_NUMBERS.has(group.opusNumber.toLowerCase())
-              : undefined
-          }
         />
       ))}
     </>
@@ -640,8 +704,10 @@ export function WorksPageContent({ activeTab }: WorksPageContentProps) {
     }
 
     return (
-      <Box>
-        {showOpus && <GroupRowsList groups={visibleOpusGroups} withLeftMarker />}
+      <Box sx={{ pt: '12px' }}>
+        <WorksTableHeader />
+
+        {showOpus && <GroupRowsList groups={visibleOpusGroups} />}
 
         {showUngrouped && <GroupRowsList groups={visibleUngroupedGroups} />}
 

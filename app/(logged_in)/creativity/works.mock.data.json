@@ -24,6 +24,7 @@
     "language": "uk",
     "yearRange": "1930-1940",
     "status": "draft",
+    "createdAt": "2025-09-09T00:00:00.000Z",
     "updatedAt": "2025-09-11T00:00:00.000Z",
     "works": [
       { "id": "work-2-1", "title": "№1 «Туман над полем»", "year": "1931" },
@@ -113,6 +114,7 @@
     "language": "uk",
     "yearRange": "1922",
     "status": "draft",
+    "createdAt": "2025-09-10T00:00:00.000Z",
     "updatedAt": "2025-09-11T00:00:00.000Z",
     "works": [
       { "id": "bo-work-2-1", "title": "Пісня №1", "year": "1922" },

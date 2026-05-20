@@ -21,7 +21,7 @@ type WorkGroupBase = {
   language: WorkLanguage;
   yearRange: string;
   status: WorkStatus;
-  createdAt?: string;
+  createdAt: string;
   updatedAt: string;
   publishedAt?: string;
   works: WorkItem[];
@@ -76,7 +76,7 @@ const buildGroup = <TNumberKey extends 'opusNumber' | 'boNumber'>(
   language: seed.language,
   yearRange: seed.yearRange,
   status: normalizeStatus(seed.status),
-  createdAt: seed.createdAt,
+  createdAt: seed.createdAt ?? seed.updatedAt,
   updatedAt: seed.updatedAt,
   publishedAt: seed.publishedAt,
   works: seed.works.map((work) => ({ id: work.id, title: work.title, year: work.year }))

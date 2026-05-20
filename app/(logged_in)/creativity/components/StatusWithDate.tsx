@@ -2,15 +2,17 @@ import { Box, Chip, Typography } from '@mui/material';
 import { CircleCheckBig } from 'lucide-react';
 
 import { formatDate } from '~/lib/utils/formatDate';
-import { getStatus } from '~/lib/utils/getStatus';
 import contentCardStyles from '~/shared/components/content-card/ContentCard.styles';
 import contentCardBadgeStyles from '~/shared/components/content-card/ContentCardBadge.styles';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
-type StatusChipProps = Readonly<{ status: string }>;
+type StatusChipStatus = typeof BaseContentStatuses.Draft | typeof BaseContentStatuses.Published;
+type StatusWithDateStatus = typeof BaseContentStatuses[keyof typeof BaseContentStatuses];
+
+type StatusChipProps = Readonly<{ status: StatusChipStatus }>;
 
 type StatusWithDateProps = Readonly<{
-  status: string;
+  status: StatusWithDateStatus;
   createdAt?: string;
   updatedAt?: string;
   publishedAt?: string;
@@ -22,23 +24,25 @@ function StatusChip({ status }: StatusChipProps) {
     return (
       <Box
         sx={{
-          display: 'flex',
+          width: '24px',
+          height: '24px',
+          borderRadius: '12px',
+          display: 'inline-flex',
           alignItems: 'center',
-          gap: '4px',
-          color: '#2E7D32',
-          fontSize: '14px',
-          whiteSpace: 'nowrap'
+          justifyContent: 'center',
+          backgroundColor: '#2E7D32',
+          color: '#FFFFFF',
+          flexShrink: 0
         }}
       >
-        <CircleCheckBig size={16} />
+        <CircleCheckBig size={14} />
       </Box>
     );
   }
 
-  const isDraft = status === BaseContentStatuses.Draft;
   return (
     <Chip
-      label={isDraft ? 'Чернетка' : 'Редагується'}
+      label="Чернетка"
       size="small"
       sx={{
         backgroundColor: contentCardBadgeStyles.draftBadge.backgroundColor,
@@ -61,12 +65,21 @@ export function StatusWithDate({
   publishedAt,
   dividerColor
 }: StatusWithDateProps) {
-  const normalizedStatus =
-    status === BaseContentStatuses.Editing ? BaseContentStatuses.Published : status;
-  const fallbackDate = updatedAt ?? publishedAt ?? createdAt;
-  const statusText =
-    getStatus(normalizedStatus, createdAt, updatedAt, publishedAt) ||
-    (fallbackDate ? `Редаговано ${formatDate(fallbackDate)}` : '');
+  const normalizedStatus: StatusChipStatus =
+    status === BaseContentStatuses.Draft ? BaseContentStatuses.Draft : BaseContentStatuses.Published;
+
+  const statusText = (() => {
+    if (normalizedStatus === BaseContentStatuses.Published) {
+      const publishedDate = publishedAt ?? updatedAt ?? createdAt;
+      return publishedDate ? `Опубліковано ${formatDate(publishedDate)}` : 'Опубліковано';
+    }
+
+    if (updatedAt && (!createdAt || updatedAt !== createdAt)) {
+      return `Редаговано ${formatDate(updatedAt)}`;
+    }
+
+    return createdAt ? `Створено ${formatDate(createdAt)}` : '';
+  })();
 
   return (
     <Box
@@ -82,20 +95,24 @@ export function StatusWithDate({
         minWidth: 0
       }}
     >
-      <StatusChip status={status} />
-      <Typography
-        variant="body2"
-        sx={{
-          ...contentCardStyles.date,
-          fontSize: '14px',
-          minWidth: 0,
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis'
-        }}
-      >
-        {statusText}
-      </Typography>
+      <StatusChip status={normalizedStatus} />
+      {statusText && (
+        <Typography
+          variant="body2"
+          sx={{
+            ...contentCardStyles.date,
+            fontSize: '14px',
+            fontStyle: 'italic',
+            mt: 0,
+            minWidth: 0,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}
+        >
+          {statusText}
+        </Typography>
+      )}
     </Box>
   );
 }
