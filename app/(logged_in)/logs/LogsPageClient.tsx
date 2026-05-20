@@ -13,7 +13,7 @@ import {
   Tabs,
   Typography
 } from '@mui/material';
-import { type SyntheticEvent, useEffect, useMemo, useState } from 'react';
+import { type SyntheticEvent, useEffect, useState } from 'react';
 
 import type { LogEntry, LogLevel, LogsResponse } from '~/back-shared/types/logs';
 
@@ -134,8 +134,6 @@ const LogsPageClient = () => {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const currentTab = useMemo(() => level, [level]);
-
   useEffect(() => {
     const controller = new AbortController();
 
@@ -210,7 +208,7 @@ const LogsPageClient = () => {
       </Stack>
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={currentTab} onChange={onLevelChange} variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile>
+        <Tabs value={level} onChange={onLevelChange} variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile>
           {LEVEL_OPTIONS.map((option) => (
             <Tab key={option.value} value={option.value} label={option.label} />
           ))}
