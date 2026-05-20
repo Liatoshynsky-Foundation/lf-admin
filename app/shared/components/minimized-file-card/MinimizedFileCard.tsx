@@ -1,11 +1,14 @@
+'use client';
 import { Box, IconButton, Paper, Stack, Typography } from '@mui/material';
 import Image from 'next/image';
-import { MouseEvent } from 'react';
+import { MouseEvent, useEffect,useState } from 'react';
 
-import { styles } from '~/components/minimized-file-card/MinimizedFileCard.styles';
+import DropdownMenu from '../dropdown-menu/DropdownMenu';
+import { FileMenuActions } from '../dropdown-menu/FileMenuActions';
 import LinkIcon from '~/public/icons/link.svg';
 import MenuIcon from '~/public/icons/menu.svg';
 import StarIcon from '~/public/icons/star-1.svg';
+import { styles } from '~/shared/components/minimized-file-card/MinimizedFileCard.styles';
 import { useUpdateAssetMutation } from '~/types/graphql/generated/graphql';
 
 const ICON_SIZE = 21;
@@ -30,6 +33,7 @@ interface MinimizedFileCardProps {
   name: string;
   date: string;
   onClick?: () => void;
+  onAction?: (action: 'rename' | 'delete' | 'download', fileId: string) => void;
   onMenuClick?: (e: MouseEvent<HTMLButtonElement>) => void;
 }
 
@@ -41,17 +45,39 @@ const MinimizedFileCard = ({
   name,
   date,
   onClick,
+  onAction,
   onMenuClick
 }: MinimizedFileCardProps) => {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [updateAsset, { loading: isUpdatingStar }] = useUpdateAssetMutation();
+
+  useEffect(() => {
+    const handleResizeOrScroll = () => {
+      if (anchorEl) {
+        setAnchorEl(null);
+      }
+    };
+
+    window.addEventListener('resize', handleResizeOrScroll);
+    window.addEventListener('scroll', handleResizeOrScroll, true);
+
+    return () => {
+      window.removeEventListener('resize', handleResizeOrScroll);
+      window.removeEventListener('scroll', handleResizeOrScroll, true);
+    };
+  }, [anchorEl]);
 
   const handleMenuClick = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
+    setAnchorEl(e.currentTarget);
     onMenuClick?.(e);
   };
 
-  const handleStarClick = async (e: MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+  };
+
+  const handleToggleStar = async () => {
     try {
       await updateAsset({
         variables: {
@@ -61,6 +87,13 @@ const MinimizedFileCard = ({
       });
     } catch {}
   };
+
+  const handleStarClick = (e: MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    handleToggleStar();
+  };
+
+  const isMenuOpen = Boolean(anchorEl);
 
   return (
     <Paper variant="outlined" sx={styles.container} onClick={onClick}>
@@ -79,18 +112,19 @@ const MinimizedFileCard = ({
         <Stack direction="row" gap={'10px'} alignItems="center">
           {starred && (
             <Box
+              aria-label="Starred file"
               onClick={handleStarClick}
               sx={{
                 ...styles.iconWrapper,
                 cursor: isUpdatingStar ? 'wait' : 'pointer'
               }}
             >
-              <StarIcon width={ICON_SIZE} height={ICON_SIZE} alt="Starred file" />
+              <StarIcon width={ICON_SIZE} height={ICON_SIZE} />
             </Box>
           )}
           {linked && (
-            <Box sx={{ color: 'blue.700', display: 'flex' }}>
-              <LinkIcon width={ICON_SIZE} height={ICON_SIZE} alt="Linked file" />
+            <Box aria-label="File is linked to other pages" sx={{ color: 'blue.700', display: 'flex' }}>
+              <LinkIcon width={ICON_SIZE} height={ICON_SIZE} aria-hidden/>
             </Box>
           )}
         </Stack>
@@ -101,12 +135,52 @@ const MinimizedFileCard = ({
           {date}
         </Typography>
 
-        <IconButton size="small" aria-label="Open file menu" onClick={handleMenuClick}>
-          <MenuIcon width={ICON_SIZE} height={ICON_SIZE} alt="Menu icon" aria-hidden />
+        <IconButton
+          sx={[
+            styles.menuButton, 
+            isMenuOpen && styles.menuButtonActive
+          ]}
+          size="small"
+          aria-label="Open file menu"
+          onClick={handleMenuClick}
+        >
+          <MenuIcon width={ICON_SIZE} height={ICON_SIZE} aria-hidden />
         </IconButton>
       </Stack>
+
+      <DropdownMenu
+        disableScrollLock
+        transitionDuration={0}
+        disableAutoFocus
+        disableEnforceFocus
+        disableRestoreFocus
+        anchorEl={anchorEl}
+        open={isMenuOpen}
+        onClose={handleCloseMenu}
+        onClick={(e) => e.stopPropagation()}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        slotProps={{
+          paper: {
+            sx: {
+              mt: '-1px'
+            }
+          }
+        }}
+        menuList={
+          <FileMenuActions
+            isStarred={starred}
+            isStarLoading={isUpdatingStar}
+            onCloseMenu={handleCloseMenu}
+            onOpenDetails={() => onClick?.()}
+            onRename={() => onAction?.('rename', id)}
+            onDelete={() => onAction?.('delete', id)}
+            onDownload={() => onAction?.('download', id)}
+            onToggleStar={handleToggleStar}
+          />
+        }
+      />
     </Paper>
   );
 };
-
 export default MinimizedFileCard;

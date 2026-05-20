@@ -35,7 +35,7 @@ const transportsList: Transport[] = [
 if (mongoUrl) {
   transportsList.push(
     new MongoDB({
-      level: 'error',
+      level: 'debug',
       db: mongoUrl,
       collection: 'logger',
       expireAfterSeconds: SEVEN_DAYS_IN_SECONDS,

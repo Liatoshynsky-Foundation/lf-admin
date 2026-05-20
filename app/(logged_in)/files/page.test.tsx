@@ -28,7 +28,8 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
     Spreadsheet: 'Spreadsheet'
   },
   useUpdateAssetMutation: () => [jest.fn(), { loading: false }],
-  useCreateAssetMutation: () => [jest.fn(), { loading: false }]
+  useCreateAssetMutation: () => [jest.fn(), { loading: false }],
+  useDeleteAssetMutation: jest.fn().mockReturnValue([jest.fn(), { loading: false }])
 }));
 
 jest.mock('~/shared/components/file-info-sidebar/FileInfoSidebar', () => ({

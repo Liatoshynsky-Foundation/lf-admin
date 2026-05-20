@@ -1,3 +1,6 @@
+import { alpha } from '@mui/material';
+
+import { mainHexPallete as colors } from '~/shared/theme/colors';
 
 export const styles = {
   container: {
@@ -39,5 +42,16 @@ export const styles = {
     fontStyle: 'italic',
     fontWeight: 400,
     lineHeight: '1'
+  },
+
+  menuButton: {
+    backgroundColor: 'transparent',
+    '&:hover': { 
+      backgroundColor: alpha(colors.black, 0.08)
+    }
+  },
+  
+  menuButtonActive: {
+    backgroundColor: alpha(colors.black, 0.08)
   }
 };

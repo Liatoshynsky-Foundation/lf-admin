@@ -3,11 +3,24 @@ import { NextResponse } from 'next/server';
 
 import { stateNames } from '~/constants';
 import { errors } from '~/constants/errors';
-import dbConnect from '~/infrastructure/db/connect';
+import dbConnect, { getLastMongoConnectionErrorMessage } from '~/infrastructure/db/connect';
 import { successResponse } from '~/utils/apiResponse';
 
 const getMongooseConnectionState = (state: number): string => {
   return stateNames[state] || 'UNKNOWN';
+};
+
+const getDatabaseDetails = (lastErrorMessage: string | null) => {
+  const connection = mongoose.connection;
+  const readyState = connection.readyState;
+
+  return {
+    readyState,
+    connectionStatus: getMongooseConnectionState(readyState),
+    host: connection.host,
+    databaseName: connection.name,
+    lastErrorMessage
+  };
 };
 
 export async function GET() {
@@ -32,12 +45,7 @@ export async function GET() {
     const connectionStatus = getMongooseConnectionState(readyState);
     const isConnected = readyState === 1;
 
-    healthDetails.dependencies.database.details = {
-      connectionStatus: connectionStatus,
-      host: connection.host,
-      port: connection.port,
-      databaseName: connection.name
-    };
+    healthDetails.dependencies.database.details = getDatabaseDetails(getLastMongoConnectionErrorMessage());
 
     if (isConnected) {
       if (!db) throw new Error(errors.FAILED_TO_CONNECT_DB);
@@ -46,6 +54,7 @@ export async function GET() {
 
       healthDetails.dependencies.database.details = {
         ...healthDetails.dependencies.database.details,
+        port: connection.port,
         serverVersion: serverInfo.version,
         collections: stats.collections,
         objects: stats.objects,
@@ -64,8 +73,13 @@ export async function GET() {
       return NextResponse.json(healthDetails, { status: 503 });
     }
   } catch (e) {
+    const caughtErrorMessage = e instanceof Error && e.message ? e.message : null;
+
     healthDetails.dependencies.database.message = errors.FAILED_TO_CONNECT_DB;
-    healthDetails.dependencies.database.details = { e };
+    healthDetails.dependencies.database.details = getDatabaseDetails(
+      caughtErrorMessage ?? getLastMongoConnectionErrorMessage()
+    );
+
     return NextResponse.json(healthDetails, { status: 503 });
   }
 }

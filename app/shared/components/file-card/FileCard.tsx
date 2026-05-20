@@ -1,8 +1,11 @@
 'use client';
 import { Box, IconButton, Paper, Stack, Typography } from '@mui/material';
 import Image from 'next/image';
-import { MouseEvent, useState } from 'react';
+import { MouseEvent,useState } from 'react';
+import toast from 'react-hot-toast';
 
+import DropdownMenu from '../dropdown-menu/DropdownMenu';
+import { FileMenuActions } from '../dropdown-menu/FileMenuActions';
 import { styles } from './FileCard.styles';
 import TooltipCustom from '~/ds-components/tooltip/Tooltip';
 import { formatUsageCount } from '~/lib/utils/formatUsageCount';
@@ -36,20 +39,37 @@ export interface FileCardProps {
   fileType: FileType;
   fileData: FileCardData;
   onClick?: () => void;
+  onAction?: (action: 'rename' | 'delete' | 'download', fileId: string) => void;
 }
 
-const FileCard = ({ fileType, fileData, onClick }: FileCardProps) => {
+const FileCard = ({ fileType, fileData, onClick, onAction }: FileCardProps) => {
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
-  const { id, name, dateAdded, isStarred = false, usageLinks, imageSrc } = fileData;
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
+  const [menuDirection, setMenuDirection] = useState<'left' | 'right'>('right');
+
+  const { id, name, dateAdded, isStarred = false, usageLinks, imageSrc } = fileData;
   const [updateAsset, { loading: isUpdatingStar }] = useUpdateAssetMutation();
 
   const handleMenuClick = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
+    setAnchorEl(e.currentTarget);
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const spaceOnRight = window.innerWidth - rect.right;
+
+    if (spaceOnRight < 400) {
+      setMenuDirection('left');
+    } else {
+      setMenuDirection('right');
+    }
   };
 
-  const handleStarClick = async (e: MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+  };
+
+  const handleToggleStar = async () => {
     try {
       await updateAsset({
         variables: {
@@ -57,10 +77,18 @@ const FileCard = ({ fileType, fileData, onClick }: FileCardProps) => {
           input: { isStarred: !isStarred }
         }
       });
-    } catch {}
+    } catch {
+      toast.error('');
+    }
+  };
+
+  const handleStarClick = (e: MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    handleToggleStar();
   };
 
   const fileTypeIcon = FILE_TYPES[fileType] || FILE_TYPES.image;
+  const isMenuOpen = Boolean(anchorEl);
 
   return (
     <Paper variant="outlined" sx={styles.container} onClick={onClick}>
@@ -88,10 +116,50 @@ const FileCard = ({ fileType, fileData, onClick }: FileCardProps) => {
           </Typography>
         </Stack>
 
-        <IconButton size="small" aria-label="Open file menu" onClick={handleMenuClick}>
+        <IconButton
+          sx={{
+            backgroundColor: isMenuOpen ? 'rgba(0, 0, 0, 0.08)' : 'transparent',
+            '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.08)' }
+          }}
+          size="small"
+          aria-label="Open file menu"
+          onClick={handleMenuClick}
+        >
           <Image src="/icons/menu.svg" width={ICON_SIZE_2} height={32} alt="Menu icon" aria-hidden />
         </IconButton>
       </Stack>
+
+      <DropdownMenu
+        disableScrollLock
+        transitionDuration={0}
+        disableAutoFocus
+        disableEnforceFocus
+        disableRestoreFocus
+        anchorEl={anchorEl}
+        open={isMenuOpen}
+        onClose={handleCloseMenu}
+        onClick={(e) => e.stopPropagation()}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: menuDirection === 'left' ? 'left' : 'right'
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: menuDirection === 'left' ? 'right' : 'left'
+        }}
+        menuList={
+          <FileMenuActions
+            isStarred={isStarred}
+            onCloseMenu={handleCloseMenu}
+            isStarLoading={isUpdatingStar}
+            onOpenDetails={() => onClick?.()}
+            onRename={() => onAction?.('rename', id)}
+            onDelete={() => onAction?.('delete', id)}
+            onDownload={() => onAction?.('download', id)}
+            onToggleStar={handleToggleStar}
+          />
+        }
+      />
 
       <Stack sx={styles.metadataSection}>
         <Typography variant="caption" sx={styles.fileDate}>

@@ -3,7 +3,6 @@ export const NAVIGATION_DATA = {
   content: [
     {
       title: 'Основні сторінки',
-      iconSrc: 'file-text',
       href: '',
       disabled: true
     },
