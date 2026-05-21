@@ -3,6 +3,7 @@ import { GraphQLError } from 'graphql';
 import {
   endpointRepositoryHandler,
   extractTitleForSlug,
+  markImagesAsUsed,
   processSlugUpdate,
   syncImagesCrops
 } from '../helpers';
@@ -100,6 +101,9 @@ export const NewsMutation = {
       await syncImagesCrops(res.id, input.content);
     }
 
+    const assetsRepo = context.requestContainer.cradle.assetsRepository;
+    await markImagesAsUsed(assetsRepo, processedInput.content, processedInput.coverImage, 'news', res.id);
+
     return res;
   },
 
@@ -144,6 +148,9 @@ export const NewsMutation = {
     if (input.content) {
       await syncImagesCrops(res.id, input.content);
     }
+
+    const assetsRepo = context.requestContainer.cradle.assetsRepository;
+    await markImagesAsUsed(assetsRepo, updateData.content, updateData.coverImage, 'news', res.id);
 
     return res;
   },

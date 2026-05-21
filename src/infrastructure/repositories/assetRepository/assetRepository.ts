@@ -11,6 +11,7 @@ type AssetType = 'image' | 'pdf' | 'audio' | 'document' | 'spreadsheet' | 'video
 type AssetUsageRef = {
   pageId?: string;
   blockId?: string;
+  locale?: string;
 };
 
 export type AssetEntity = {
@@ -32,6 +33,7 @@ export type AssetEntity = {
 export type AssetFilters = {
   type?: AssetType;
   isStarred?: boolean;
+  isUsed?: boolean;
   tag?: string;
   search?: string;
   sortBy?: 'createdAt' | 'updatedAt' | 'filename';
@@ -101,6 +103,10 @@ const buildAssetQuery = (
 
   if (typeof filters.isStarred === 'boolean') {
     query.isStarred = filters.isStarred;
+  }
+
+  if (typeof filters.isUsed === 'boolean') {
+    (query as Record<string, unknown>)['usageRefs.0'] = { $exists: filters.isUsed };
   }
 
   if (filters.tag) {
@@ -220,10 +226,15 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
     return true;
   };
 
+  const addUsageRef = async (url: string, ref: AssetUsageRef): Promise<void> => {
+    await AssetModel.findOneAndUpdate({ url }, { $addToSet: { usageRefs: ref } });
+  };
+
   return {
     ...baseRepo,
     updateAsset,
     createAsset,
-    deleteAsset
+    deleteAsset,
+    addUsageRef
   };
 };
