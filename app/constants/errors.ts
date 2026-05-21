@@ -68,6 +68,10 @@ export const EventsErrors = {
   FAILED_TO_UPDATE_STATUS: 'Failed to update event status'
 };
 
+export const galleryErrors = {
+  FAILED_TO_FETCH: 'Upload files failed'
+};
+
 export const MediaMentionsErrors = {
   NETWORK_ERROR_CREATE: 'Network error while creating media mention',
   FAILED_TO_CREATE: 'Failed to create media mention',

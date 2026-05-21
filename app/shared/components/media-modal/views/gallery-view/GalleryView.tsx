@@ -87,9 +87,9 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
   };
 
   const assetByUrl = useMemo(() => {
-    const map = new Map<string, AssetMeta>();
+    const map: Record<string, AssetMeta> = {};
     (assetsData?.allAssets ?? []).forEach((asset) => {
-      if (asset.url) map.set(asset.url, asset as AssetMeta);
+      if (asset.url) map[asset.url] = asset as AssetMeta;
     });
     return map;
   }, [assetsData]);
@@ -98,7 +98,7 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
     return r2Files
       .filter((file): file is GalleryFile & { url: string } => Boolean(file.url))
       .map((file) => {
-        const asset = assetByUrl.get(file.url);
+        const asset = assetByUrl[file.url];
         return {
           id: asset?.id ?? file.path ?? file.filename,
           filename: asset?.filename ?? file.filename,

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 
+import { galleryErrors } from '~/constants/errors';
+
 export type GalleryFile = {
   filename: string;
   originalName: string;
@@ -29,10 +31,10 @@ export function useGalleryFiles() {
           );
           setFiles(mapped);
         } else {
-          setError('Upload files failed');
+          setError(galleryErrors.FAILED_TO_FETCH);
         }
       })
-      .catch(() => setError('Upload files failed'))
+      .catch(() => setError(galleryErrors.FAILED_TO_FETCH))
       .finally(() => setIsLoading(false));
   }, []);
   return { files, isLoading, error };
