@@ -2,14 +2,16 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { FORMAT_FILTER_OPTIONS } from '~/constants/file-formats';
 import {
-  type FilesSortValue,
   type FilesTabValue,
+  USAGE_FILTER_OPTIONS
+} from '~/constants/files';
+import {
+  type FilesSortValue,
   SORT_FIELD_OPTIONS,
   SORT_OPTIONS,
   SORT_ORDER_OPTIONS,
-  type SortFieldValue,
-  USAGE_FILTER_OPTIONS
-} from '~/constants/files';
+  type SortFieldValue
+} from '~/constants/sort';
 import type { FilesCardsLayoutItem } from '~/shared/components/files-cards-layout';
 import type { FilteringToolbarFilterConfig, FilteringToolbarProps , SortSelectProps } from '~/shared/components/filtering-toolbar';
 import { normalizeSearch } from '~/utils/normalizeSearch';

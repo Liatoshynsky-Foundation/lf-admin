@@ -1,0 +1,164 @@
+'use client';
+
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
+import {
+  WORKS_FILTERS,
+  WORKS_STATUSES,
+  type WorksFilterId,
+  type WorksLanguageValue,
+  type WorksStatusValue
+} from '~/constants/creativity';
+import {
+  type FilesSortValue,
+  SORT_FIELD_OPTIONS,
+  SORT_OPTIONS,
+  SORT_ORDER_OPTIONS,
+  type SortFieldValue
+} from '~/constants/sort';
+import type { FilteringToolbarProps, SortSelectProps } from '~/shared/components/filtering-toolbar';
+
+const SORT_STORAGE_KEY = 'works_sort';
+
+const isWorksStatusValue = (value: string): value is WorksStatusValue =>
+  WORKS_STATUSES.includes(value as WorksStatusValue);
+
+const isWorksLanguageValue = (value: string): value is WorksLanguageValue =>
+  value === 'uk' || value === 'en' || value === 'bilingual';
+
+export type WorksFilteringToolbarProps = Pick<
+  FilteringToolbarProps,
+  'search' | 'filters' | 'isFiltersOpen' | 'onToggleFilters' | 'activeFiltersCount' | 'onClearFilters'
+>;
+
+export type WorksFilteringSortProps = Omit<
+  SortSelectProps<SortFieldValue, FilesSortValue>,
+  'minWidth' | 'dataTestId'
+>;
+
+const VALID_SORT_VALUES: ReadonlySet<string> = new Set(['date_desc', 'date_asc', 'name_asc', 'name_desc']);
+
+const isFilesSortValue = (value: string): value is FilesSortValue => VALID_SORT_VALUES.has(value);
+
+export function useWorksFiltering(): Readonly<{
+  sortValue: FilesSortValue;
+  selectedFilters: Readonly<{
+    status: readonly WorksStatusValue[];
+    language: readonly WorksLanguageValue[];
+    genre: readonly string[];
+  }>;
+  toolbarProps: WorksFilteringToolbarProps;
+  sortProps: WorksFilteringSortProps;
+}> {
+  const [isFiltersOpen, setIsFiltersOpen] = useState(true);
+  const [search, setSearch] = useState('');
+  const [statusFilters, setStatusFilters] = useState<WorksStatusValue[]>([]);
+  const [languageFilters, setLanguageFilters] = useState<WorksLanguageValue[]>([]);
+  const [genreFilters, setGenreFilters] = useState<string[]>([]);
+  const [sortValue, setSortValue] = useState<FilesSortValue>('date_desc');
+
+  useEffect(() => {
+    const saved = localStorage.getItem(SORT_STORAGE_KEY);
+    if (saved && isFilesSortValue(saved)) {
+      setSortValue(saved);
+    }
+  }, []);
+
+  const activeFiltersCount = statusFilters.length + languageFilters.length + genreFilters.length;
+  const currentSortField: SortFieldValue = sortValue.startsWith('date') ? 'date' : 'name';
+  const currentSortOption = SORT_OPTIONS.find((option) => option.value === sortValue) ?? SORT_OPTIONS[0];
+
+  const toggleFilters = useCallback(() => {
+    setIsFiltersOpen((previous) => !previous);
+  }, []);
+
+  const clearFilters = useCallback(() => {
+    setStatusFilters([]);
+    setLanguageFilters([]);
+    setGenreFilters([]);
+  }, []);
+
+  const handleSortFieldChange = useCallback((field: SortFieldValue) => {
+    setSortValue((previous) => {
+      const isDate = field === 'date';
+      const prefix = isDate ? 'date' : 'name';
+      const defaultSort: FilesSortValue = isDate ? 'date_desc' : 'name_asc';
+      const nextValue: FilesSortValue = previous.startsWith(prefix) ? (previous as FilesSortValue) : defaultSort;
+      localStorage.setItem(SORT_STORAGE_KEY, nextValue);
+      return nextValue;
+    });
+  }, []);
+
+  const handleSortValueChange = useCallback((nextValue: FilesSortValue) => {
+    setSortValue(nextValue);
+    localStorage.setItem(SORT_STORAGE_KEY, nextValue);
+  }, []);
+
+  const filterConfigs = useMemo(
+    () => {
+      const filterValues: Record<WorksFilterId, string[]> = {
+        status: statusFilters,
+        language: languageFilters,
+        genre: genreFilters
+      };
+
+      const filterOnChange: Record<WorksFilterId, (value: string[]) => void> = {
+        status: (value) => setStatusFilters(value.filter(isWorksStatusValue)),
+        language: (value) => setLanguageFilters(value.filter(isWorksLanguageValue)),
+        genre: (value) => setGenreFilters(value)
+      };
+
+      return WORKS_FILTERS.map((filter) => ({
+        id: filter.id,
+        label: filter.label,
+        options: filter.options,
+        value: filterValues[filter.id],
+        hideClearAction: true,
+        menuMinWidth: filter.menuMinWidth,
+        onChange: filterOnChange[filter.id]
+      }));
+    },
+    [statusFilters, languageFilters, genreFilters]
+  );
+
+  const toolbarProps: WorksFilteringToolbarProps = useMemo(
+    () => ({
+      search: {
+        search,
+        setSearch,
+        options: [],
+        placeholder: 'Пошук'
+      },
+      filters: filterConfigs,
+      isFiltersOpen,
+      onToggleFilters: toggleFilters,
+      activeFiltersCount,
+      onClearFilters: clearFilters
+    }),
+    [search, filterConfigs, isFiltersOpen, toggleFilters, activeFiltersCount, clearFilters]
+  );
+
+  const sortProps: WorksFilteringSortProps = useMemo(
+    () => ({
+      fieldOptions: SORT_FIELD_OPTIONS,
+      orderOptions: SORT_ORDER_OPTIONS,
+      fieldValue: currentSortField,
+      value: sortValue,
+      triggerLabel: currentSortOption.label,
+      onFieldChange: handleSortFieldChange,
+      onValueChange: handleSortValueChange
+    }),
+    [currentSortField, currentSortOption.label, handleSortFieldChange, handleSortValueChange, sortValue]
+  );
+
+  return {
+    sortValue,
+    selectedFilters: {
+      status: statusFilters,
+      language: languageFilters,
+      genre: genreFilters
+    },
+    toolbarProps,
+    sortProps
+  };
+}
