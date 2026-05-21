@@ -39,7 +39,7 @@ export const WORKS_STATUSES = [
 export const WORKS_TABS: ReadonlyArray<WorksTabConfig> = [
   { value: 'all', label: 'Всі', href: WORKS_BASE_PATH },
   { value: 'opus', label: 'Опуси', href: `${WORKS_BASE_PATH}/opus` },
-  { value: 'ungrouped', label: 'Без опусні', href: `${WORKS_BASE_PATH}/ungrouped` },
+  { value: 'ungrouped', label: 'Безопусні', href: `${WORKS_BASE_PATH}/ungrouped` },
   { value: 'works', label: 'Твори', href: `${WORKS_BASE_PATH}/works` }
 ];
 

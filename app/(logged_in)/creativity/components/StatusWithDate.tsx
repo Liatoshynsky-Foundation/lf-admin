@@ -91,6 +91,7 @@ export function StatusWithDate({
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         pl: '10px',
+        pr: '4px',
         borderLeft: `1px solid ${dividerColor}`,
         minWidth: 0
       }}

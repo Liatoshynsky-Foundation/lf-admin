@@ -36,7 +36,9 @@ export type WorksFilteringSortProps = Omit<
   'minWidth' | 'dataTestId'
 >;
 
-const VALID_SORT_VALUES: FilesSortValue[] = ['date_desc', 'date_asc', 'name_asc', 'name_desc'];
+const VALID_SORT_VALUES: ReadonlySet<string> = new Set(['date_desc', 'date_asc', 'name_asc', 'name_desc']);
+
+const isFilesSortValue = (value: string): value is FilesSortValue => VALID_SORT_VALUES.has(value);
 
 export function useWorksFiltering(): Readonly<{
   sortValue: FilesSortValue;
@@ -57,8 +59,8 @@ export function useWorksFiltering(): Readonly<{
 
   useEffect(() => {
     const saved = localStorage.getItem(SORT_STORAGE_KEY);
-    if (saved && VALID_SORT_VALUES.includes(saved as FilesSortValue)) {
-      setSortValue(saved as FilesSortValue);
+    if (saved && isFilesSortValue(saved)) {
+      setSortValue(saved);
     }
   }, []);
 
