@@ -141,7 +141,7 @@ describe('EventsMutation Resolvers', () => {
         content: {
           uk: { blocks: [{ src: 'https://cdn.example.com/uk-img.jpg', type: 'image' }] },
           en: { blocks: [] }
-        } as never
+        }
       });
       (mockRepo.create as jest.Mock).mockResolvedValue(createMockEntity({ id: 'evt-http' }));
 
@@ -231,7 +231,7 @@ describe('EventsMutation Resolvers', () => {
     it('should call syncImagesCrops for content when updating event', async () => {
       const id = '456';
       const updateInput: UpdateEventInput = {
-        content: { uk: { blocks: [] }, en: { blocks: [] } } as EventsEntity['content']
+        content: { uk: { blocks: [] }, en: { blocks: [] } }
       };
       (mockRepo.update as jest.Mock).mockResolvedValue(createMockEntity({ id }));
 

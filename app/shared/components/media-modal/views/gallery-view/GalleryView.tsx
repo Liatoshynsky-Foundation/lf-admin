@@ -12,7 +12,7 @@ import type { GalleryMedia } from '../../MediaModal.types';
 import { sharedViewStyles } from '../shared-view.styles';
 import { useDebounce } from '~/hooks/use-debounce/useDebounce';
 import { matchesSearch, sortByDateAndName } from '~/lib/utils/filterHelpers';
-import { useGalleryFiles } from '~/shared/hooks/use-galllery-photo/useGallery';
+import { type GalleryFile, useGalleryFiles } from '~/shared/hooks/use-galllery-photo/useGallery';
 import { AssetType, useAllAssetsQuery } from '~/types/graphql/generated/graphql';
 
 type Props = Readonly<{
@@ -96,13 +96,13 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
 
   const galleryItems = useMemo((): GalleryItem[] => {
     return r2Files
-      .filter((file) => !!file.url)
+      .filter((file): file is GalleryFile & { url: string } => Boolean(file.url))
       .map((file) => {
-        const asset = assetByUrl.get(file.url!);
+        const asset = assetByUrl.get(file.url);
         return {
           id: asset?.id ?? file.path ?? file.filename,
           filename: asset?.filename ?? file.filename,
-          url: file.url!,
+          url: file.url,
           isStarred: asset?.isStarred ?? false,
           tags: asset?.tags ?? [],
           usageRefs: asset?.usageRefs ?? [],

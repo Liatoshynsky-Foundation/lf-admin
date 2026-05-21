@@ -6,7 +6,7 @@ import type { UsedRendererProps } from '../../MediaModal.renderers';
 import { sharedViewStyles } from '../shared-view.styles';
 import Alert from '~/shared/components/design-system/alert/Alert';
 
-export function UsedView(_props: UsedRendererProps) {
+export function UsedView(_props: Readonly<UsedRendererProps>) {
   return (
     <Box data-testid="UsedView" sx={sharedViewStyles.container}>
       <Box sx={sharedViewStyles.header}>

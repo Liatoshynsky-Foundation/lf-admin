@@ -3,10 +3,9 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { useGalleryFiles } from './useGallery';
 
 const mockFetch = jest.fn();
-global.fetch = mockFetch;
+globalThis.fetch = mockFetch;
 
-const makeResponse = (body: unknown) =>
-  Promise.resolve({ json: () => Promise.resolve(body) } as Response);
+const makeResponse = (body: unknown) => Promise.resolve({ json: () => Promise.resolve(body) } as Response);
 
 describe('useGalleryFiles', () => {
   beforeEach(() => {

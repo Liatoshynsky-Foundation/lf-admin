@@ -128,10 +128,10 @@ describe('AssetRepository', () => {
     it('should build isUsed filter using $exists operator', () => {
       const { buildQuery } = getRepoConfig();
 
-      const usedQuery = buildQuery({ isUsed: true }) as Record<string, unknown>;
+      const usedQuery = buildQuery({ isUsed: true });
       expect(usedQuery['usageRefs.0']).toEqual({ $exists: true });
 
-      const unusedQuery = buildQuery({ isUsed: false }) as Record<string, unknown>;
+      const unusedQuery = buildQuery({ isUsed: false });
       expect(unusedQuery['usageRefs.0']).toEqual({ $exists: false });
     });
   });

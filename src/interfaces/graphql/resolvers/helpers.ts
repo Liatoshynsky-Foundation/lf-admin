@@ -209,8 +209,10 @@ export const markImagesAsUsed = async (
   ];
 
   if (coverImage?.src?.startsWith('http')) {
-    promises.push(repo.addUsageRef(coverImage.src, { pageId, blockId, locale: 'uk' }));
-    promises.push(repo.addUsageRef(coverImage.src, { pageId, blockId, locale: 'en' }));
+    promises.push(
+      repo.addUsageRef(coverImage.src, { pageId, blockId, locale: 'uk' }),
+      repo.addUsageRef(coverImage.src, { pageId, blockId, locale: 'en' })
+    );
   }
 
   await Promise.all(promises);
