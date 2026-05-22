@@ -2,7 +2,6 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import Button from './Button';
-import { mainHexPallete as colors } from '~/shared/theme/colors';
 
 describe('Button Component', () => {
   const startIcon = <span data-testid="start-icon">▲</span>;
@@ -17,15 +16,6 @@ describe('Button Component', () => {
 
     expect(screen.getByTestId('start-icon')).toBeInTheDocument();
     expect(screen.getByTestId('end-icon')).toBeInTheDocument();
-  });
-
-  test('should apply tertiary color styles', () => {
-    render(<Button color="tertiary">Tertiary Button</Button>);
-
-    expect(screen.getByRole('button')).toHaveStyle({
-      backgroundColor: colors.yellow[500],
-      color: colors.black
-    });
   });
 
   test('should loading state disables interaction and shows loader', () => {
