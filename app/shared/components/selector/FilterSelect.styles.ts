@@ -3,6 +3,15 @@ import { SxProps } from '@mui/material';
 
 export const filterSelectStyles = {
   root: (variant: 'filled' | 'outlined', disabled: boolean): SxProps => {
+
+    let bgColor = 'blue.200';
+    
+    if (disabled) {
+      bgColor = 'adminBlue.50';
+    } else if (variant === 'outlined') {
+      bgColor = 'transparent';
+    }
+
     return {
       display: 'flex',
       alignItems: 'center',
@@ -12,7 +21,7 @@ export const filterSelectStyles = {
       borderRadius: '8px',
       padding: '6px 12px 6px 16px',
 
-      backgroundColor: disabled ? 'adminBlue.50' : variant === 'outlined' ? 'transparent' : 'blue.200',
+      backgroundColor: bgColor,
       border: variant === 'outlined' ? 1 : 0,
       borderStyle: 'solid',
       borderColor: disabled ? 'blue.200' : 'black',

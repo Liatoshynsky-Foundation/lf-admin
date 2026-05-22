@@ -44,7 +44,7 @@ const ContentCardBadge = ({ type, status, localizations }: ContentCardBadgeProps
 
       {status === BaseContentStatuses.Draft && (
         <Box sx={styles.draftBadge}>
-          {`Чернетка ${localizationLabel ? localizationLabel : ''}`.trim()}
+          {`Чернетка ${localizationLabel || ''}`.trim()}
         </Box>
       )}
     </Box>
