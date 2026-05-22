@@ -1,4 +1,6 @@
-import { SxProps, Theme } from '@mui/material';
+import { alpha, SxProps, Theme } from '@mui/material';
+
+import { mainHexPallete as colors } from '~/shared/theme/colors';
 
 const styles: Record<string, SxProps<Theme>> = {
   card: {
@@ -11,8 +13,9 @@ const styles: Record<string, SxProps<Theme>> = {
     overflow: 'hidden',
     border: '1px solid',
     borderColor: 'blue.200',
-    boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.08)'
+    boxShadow: `0px 1px 4px ${alpha(colors.black, 0.08)}`
   },
+
   cardContent: {
     display: 'flex',
     flexDirection: 'column',
@@ -24,6 +27,7 @@ const styles: Record<string, SxProps<Theme>> = {
       pb: '12px'
     }
   },
+
   mainInfo: {
     display: 'flex',
     alignItems: 'flex-start',
@@ -31,6 +35,7 @@ const styles: Record<string, SxProps<Theme>> = {
     gap: '4px',
     overflow: 'hidden'
   },
+
   title: {
     fontWeight: 700,
     color: 'text.primary',
@@ -41,6 +46,7 @@ const styles: Record<string, SxProps<Theme>> = {
     WebkitBoxOrient: 'vertical',
     overflow: 'hidden'
   },
+  
   date: {
     color: 'blue.600',
     fontStyle: 'italic',

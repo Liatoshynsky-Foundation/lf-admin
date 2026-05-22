@@ -1,22 +1,10 @@
-import { Theme } from '@mui/material';
-import { SystemStyleObject } from '@mui/system';
-
-import { mainHexPallete as colors } from '~/shared/theme/colors';
-
-type ViewToggleStyles = {
-  root: SystemStyleObject<Theme>;
-  button: SystemStyleObject<Theme>;
-  active: SystemStyleObject<Theme>;
-  inactive: SystemStyleObject<Theme>;
-};
-
-export const styles: ViewToggleStyles = {
+export const styles = {
   root: {
     display: 'flex',
     alignItems: 'center',
     p: '4px',
     borderRadius: '23px',
-    bgcolor: colors.blue[100],
+    bgcolor: 'blue.100',
     width: 'fit-content',
     gap: '4px'
   },
@@ -27,17 +15,26 @@ export const styles: ViewToggleStyles = {
     p: '4px'
   },
   active: {
-    bgcolor: colors.black,
-    color: colors.white,
+    bgcolor: 'black',
+    color: 'white',
     '&:hover': {
-      bgcolor: colors.black
+      bgcolor: 'black'
     }
   },
   inactive: {
     bgcolor: 'transparent',
-    color: colors.black,
+    color: 'black',
     '&:hover': {
-      bgcolor: colors.blue[200]
+      bgcolor: 'blue.200'
     }
+  },
+
+  gridIcon: {
+    fontSize: 24,
+    transform: 'scale(0.94)'
+  },
+
+  listIcon: {
+    fontSize: 24
   }
 };

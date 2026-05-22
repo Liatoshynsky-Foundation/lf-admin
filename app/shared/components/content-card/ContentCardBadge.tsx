@@ -2,7 +2,7 @@ import { Box, Chip } from '@mui/material';
 import { CircleCheckBig } from 'lucide-react';
 
 import { ContentType } from './ContentCard';
-import { badgeColors, styles } from './ContentCardBadge.styles';
+import { styles } from './ContentCardBadge.styles';
 import { getLocalizations } from '~/lib/utils/localizations';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 interface ContentCardBadgeProps {
@@ -24,6 +24,7 @@ const ContentCardBadge = ({ type, status, localizations }: ContentCardBadgeProps
   };
 
   const localizationLabel = getLocalizations(localizations);
+  const hasLocalizationLabel = Boolean(localizationLabel);
 
   return (
     <Box sx={styles.badgeContainer}>
@@ -31,14 +32,11 @@ const ContentCardBadge = ({ type, status, localizations }: ContentCardBadgeProps
         label={getContentTypeLabel(type)}
         size="small"
         variant="filled"
-        sx={{ backgroundColor: badgeColors[type], padding: '5.5px 8px' }}
+        sx={styles.typeBadge(type)}
       ></Chip>
 
       <Box
-        sx={{
-          ...styles.localizationsBadge,
-          padding: localizationLabel ? '4px 8px' : '7px'
-        }}
+        sx={styles.localizationsBadge(hasLocalizationLabel)}
       >
         <CircleCheckBig size={15} />
         {localizationLabel && <Box>{localizationLabel}</Box>}

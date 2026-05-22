@@ -14,9 +14,7 @@ export const usedCardStyles = {
   } as SxProps<Theme>,
 
   badgeText: {
-    fontWeight: 500,
-    fontSize: '14px',
-    lineHeight: '1.3',
+    typography: 'subtitle2',
     letterSpacing: '0.17px',
     textAlign: 'center',
     color: 'blue.300'

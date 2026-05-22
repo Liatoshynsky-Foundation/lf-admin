@@ -8,5 +8,13 @@ export const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '24px'
+  },
+
+  title: {
+    lineHeight: '1.2'
+  },
+
+  metadataWrapper: {
+    padding: '32px 0'
   }
 };

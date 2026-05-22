@@ -12,6 +12,7 @@ export const styles = {
     px: 4,
     py: 3
   },
+
   textField: {
     '& .MuiOutlinedInput-root': {
       alignItems: 'center',
@@ -23,23 +24,32 @@ export const styles = {
       }
     }
   },
+
   formFieldsContainer: {
     flexDirection: 'column',
     gap: '20px',
-    width: '100%'
+    width: '100%',
+
+    '& .MuiFormControl-root, & .MuiTextField-root': {
+      marginTop: 0,
+      marginBottom: 0
+    }
   },
+
   sectionTitle: {
     lineHeight: '1.2',
     color: 'black',
     verticalAlignment: 'middle',
     height: '17px'
   },
+
   photoBlock: {
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
     gap: '16px'
   },
+
   photoBlockHeader: {
     display: 'flex',
     flexDirection: 'row',
@@ -47,32 +57,42 @@ export const styles = {
     gap: '8px',
     height: '20px'
   },
+
   photoBlockTitle: {
     color: 'blue.800',
     letterSpacing: '0.17px'
   },
+
   photoBlockHeaderDivider: {
     flexGrow: 1
   },
+
   ogImageHint: {
     lineHeight: '1.4',
     fontStyle: 'italic',
     color: 'blue.800'
   },
+
   divider: {
     borderColor: 'blue.200'
   },
+
   indexingCheckboxContainer: {
     display: 'flex',
     alignItems: 'center'
   },
+
   indexingCheckbox: {
     '& .MuiFormControlLabel-label': {
       color: 'blue.800',
-      fontSize: '18px',
-      fontWeight: 500,
+      typography: 'subtitle1',
       lineHeight: '1.5'
     }
   },
-  infoIcon: { borderWidth: '1px', width: '16px', height: '16px' }
+  
+  infoIcon: { 
+    borderWidth: '1px', 
+    width: '16px', 
+    height: '16px' 
+  }
 };

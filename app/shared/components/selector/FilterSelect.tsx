@@ -141,7 +141,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
         aria-label={triggerAriaLabel}
       >
         {(selectedOptionsCount === 0 || hideCounterChip) && (
-          <Typography sx={filterSelectStyles.label(disabled)}>{label}</Typography>
+          <Typography variant='textMd' sx={filterSelectStyles.label(disabled)}>{label}</Typography>
         )}
         <Box sx={filterSelectStyles.chipContainer}>
           {selectedOptionsCount > 0 && !hideCounterChip && (
@@ -150,7 +150,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
               variant={variant}
               disabled={disabled}
               onDelete={clearAll}
-              deleteIcon={<CloseIcon width={12} height={12} data-testid="clear-all-icon" />}
+              deleteIcon={<CloseIcon width={12} height={12} data-testid="clear-all-icon" aria-hidden />}
               size="small"
               sx={filterSelectStyles.selectedOptionsChip(disabled)}
             />
@@ -166,17 +166,13 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleCloseMenu}
-        sx={{
-          '& .MuiPaper-root': {
-            minWidth: menuMinWidth ? `${menuMinWidth}px` : undefined
-          }
-        }}
+        sx={filterSelectStyles.dropdownMenu(menuMinWidth)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
         maxHeight={300}
         menuList={
-          <Box sx={{ padding: '0 8px' }}>
-            <Box sx={{ maxHeight: 220, overflowY: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
+          <Box sx={filterSelectStyles.menuListWrapper}>
+            <Box sx={filterSelectStyles.menuItemsContainer}>
               {options.map((option) => {
                 const isSelected = selectedValues.includes(option.value);
                 const optionDisabled = !isSelected && isMaxReached;
@@ -195,8 +191,8 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
             </Box>
             {!hideClearAction && (
               <>
-                <Divider sx={{ my: 1 }} />
-                <Button variant="text" onClick={clearAll} sx={{ textTransform: 'none' }}>
+                <Divider sx={filterSelectStyles.divider} />
+                <Button variant="text" onClick={clearAll} sx={filterSelectStyles.clearButton}>
                   {clearLabel}
                 </Button>
               </>

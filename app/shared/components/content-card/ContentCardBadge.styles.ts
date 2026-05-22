@@ -1,3 +1,5 @@
+import { SxProps } from '@mui/material';
+
 import { ContentType } from './ContentCard';
 import { chipsColors } from '~/shared/theme/colors';
 
@@ -14,7 +16,12 @@ export const styles = {
     gap: '2px'
   },
 
-  localizationsBadge: {
+  typeBadge: (type: ContentType): SxProps => ({
+    backgroundColor: badgeColors[type],
+    padding: '5.5px 8px'
+  }),
+
+  localizationsBadge: (hasLabel: boolean): SxProps => ({
     backgroundColor: 'green.600',
     color: 'adminBlue.50',
 
@@ -22,13 +29,14 @@ export const styles = {
     alignItems: 'center',
     borderRadius: '15px',
     gap: '4px',
-    fontWeight: 500,
-    fontSize: '14px',
+    typography: 'subtitle2',
+
+    padding: hasLabel ? '4px 8px' : '7px',
 
     '& svg': {
       color: 'inherit'
     }
-  },
+  }),
 
   draftBadge: {
     backgroundColor: 'red.200',
@@ -37,8 +45,7 @@ export const styles = {
     padding: '4px 8px',
     borderRadius: '15px',
     gap: '4px',
-    fontSize: '14px',
-    fontWeight: 500
+    typography: 'subtitle2'
   }
 };
 

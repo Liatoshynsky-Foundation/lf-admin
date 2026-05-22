@@ -1,7 +1,7 @@
 import { alpha } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
 
-import { buttonColors } from '~/shared/theme/colors';
+import { buttonColors, mainHexPallete as colors } from '~/shared/theme/colors';
 
 type Params = {
   padding: number;
@@ -50,7 +50,7 @@ export const styles = {
     height: 32,
     borderRadius: '16px',
     bgcolor: buttonColors.tertiary.enabledBg,
-    boxShadow: '0 2px 10px rgba(0,0,0,0.12)',
+    boxShadow: `0 2px 10px ${alpha(colors.black, 0.12)}`,
     '&:hover': { bgcolor: buttonColors.tertiary.hoveredBg }
   } as SxProps<Theme>,
 

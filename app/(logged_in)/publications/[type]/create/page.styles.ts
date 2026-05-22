@@ -1,5 +1,5 @@
 import { Theme } from '@mui/material/styles';
-import { SxProps } from '@mui/system';
+import { alpha, SxProps } from '@mui/system';
 
 import { mainHexPallete as colors } from '~/shared/theme/colors';
 
@@ -21,7 +21,7 @@ export const styles: Record<string, SxProps<Theme>> = {
   },
 
   seoBlock: {
-    backgroundColor: colors.white,
+    backgroundColor: 'white',
     padding: '24px',
     '& .MuiAccordionSummary-content': { margin: '0 0 24px' },
     '& .MuiAccordion-heading': { '& .MuiButtonBase-root': { padding: 0 } }
@@ -38,29 +38,29 @@ export const styles: Record<string, SxProps<Theme>> = {
     '& .MuiOutlinedInput-root': {
       '& fieldset': {
         borderRadius: '8px',
-        borderColor: colors.blue[500],
+        borderColor: 'blue.500',
         borderWidth: '1px',
         borderStyle: 'solid'
       },
       '&:hover fieldset': {
-        borderColor: 'rgba(25, 13, 3, 0.5)'
+        borderColor: alpha(colors.black, 0.5)
       },
       '&.Mui-focused fieldset': {
-        borderColor: colors.black,
+        borderColor: 'black',
         borderWidth: '1px'
       },
       '&.Mui-disabled fieldset': {
-        borderColor: 'rgba(25, 13, 3, 0.25)'
+        borderColor: alpha(colors.black, 0.25)
       },
       '&.Mui-error fieldset': {
-        borderColor: '#E63C14'
+        borderColor: 'error.main'
       }
     },
     '& .MuiInputLabel-root': {
-      color: colors.blue[800]
+      color: 'blue.800'
     },
     '& .MuiInputLabel-root.Mui-focused': {
-      color: colors.blue[800]
+      color: 'blue.800'
     },
     '& .MuiInputBase-root': {
       height: '48px'
@@ -73,14 +73,14 @@ export const styles: Record<string, SxProps<Theme>> = {
 
   datePickerTextField: {
     '& .MuiInputLabel-root.Mui-focused': {
-      color: '#190D03'
+      color: 'black'
     },
     '& .MuiInputLabel-root:not(.MuiInputLabel-shrunk)': {
       top: '-3px'
     },
     width: '238px',
     '& .MuiPickersOutlinedInput-root.Mui-focused:not(.Mui-error) .MuiPickersOutlinedInput-notchedOutline': {
-      borderColor: '#190D03',
+      borderColor: 'black',
       borderWidth: '1px'
     }
   },

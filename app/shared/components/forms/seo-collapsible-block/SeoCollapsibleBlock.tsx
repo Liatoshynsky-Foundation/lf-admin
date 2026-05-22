@@ -29,12 +29,12 @@ export default function SeoCollapsibleBlock({
           ...sx
         }}
       >
-        <Typography variant="h6" sx={{ lineHeight: '1.2' }}>
+        <Typography variant="h6" sx={styles.title}>
           {title}
         </Typography>
         <Box sx={childrenContainerSx}>{children}</Box>
       </Box>
-      <Box sx={{ padding: '32px 0' }}>
+      <Box sx={styles.metadataWrapper}>
         <SeoMetadataBlock {...seoProps} />
       </Box>
     </>

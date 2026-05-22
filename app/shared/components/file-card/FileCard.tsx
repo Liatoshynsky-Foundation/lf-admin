@@ -1,7 +1,7 @@
 'use client';
 import { Box, IconButton, Paper, Stack, Typography } from '@mui/material';
 import Image from 'next/image';
-import { MouseEvent,useState } from 'react';
+import { MouseEvent, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import DropdownMenu from '../dropdown-menu/DropdownMenu';
@@ -12,7 +12,6 @@ import { formatUsageCount } from '~/lib/utils/formatUsageCount';
 import { useUpdateAssetMutation } from '~/types/graphql/generated/graphql';
 
 const ICON_SIZE = 21;
-const ICON_SIZE_2 = 32;
 
 const FILE_TYPES = {
   image: 'img',
@@ -117,15 +116,12 @@ const FileCard = ({ fileType, fileData, onClick, onAction }: FileCardProps) => {
         </Stack>
 
         <IconButton
-          sx={{
-            backgroundColor: isMenuOpen ? 'rgba(0, 0, 0, 0.08)' : 'transparent',
-            '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.08)' }
-          }}
+          sx={styles.menuButton(isMenuOpen)}
           size="small"
           aria-label="Open file menu"
           onClick={handleMenuClick}
         >
-          <Image src="/icons/menu.svg" width={ICON_SIZE_2} height={32} alt="Menu icon" aria-hidden />
+          <Image src="/icons/menu.svg" width={ICON_SIZE} height={ICON_SIZE} alt="Menu icon" aria-hidden />
         </IconButton>
       </Stack>
 

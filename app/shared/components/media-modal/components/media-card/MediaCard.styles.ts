@@ -52,7 +52,7 @@ export const mediaCardStyles = {
     padding: '8px 8px',
     backgroundColor: alpha(colors.charcoalGray, 0.3),
     color: 'white',
-    fontSize: '14px',
+    typography: 'subtitle2',
     fontWeight: 400,
     whiteSpace: 'nowrap',
     overflow: 'hidden',

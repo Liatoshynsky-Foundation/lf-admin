@@ -21,9 +21,11 @@ export const styles = {
       borderColor: 'blue.700'
     }
   },
+
   content: {
     gap: '8px'
   },
+
   iconWrapper: {
     display: 'flex',
     alignItems: 'center',
@@ -34,9 +36,16 @@ export const styles = {
       opacity: 0.7
     }
   },
+
+  linkIconWrapper: {
+    color: 'blue.700',
+    display: 'flex'
+  },
+
   fileName: {
     lineHeight: '1.5'
   },
+
   date: {
     color: 'blue.700',
     fontStyle: 'italic',
@@ -45,6 +54,7 @@ export const styles = {
   },
 
   menuButton: {
+    color: 'black',
     backgroundColor: 'transparent',
     '&:hover': { 
       backgroundColor: alpha(colors.black, 0.08)
@@ -53,5 +63,9 @@ export const styles = {
   
   menuButtonActive: {
     backgroundColor: alpha(colors.black, 0.08)
+  },
+
+  dropdownPaper: {
+    mt: '-1px'
   }
 };

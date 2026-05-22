@@ -27,15 +27,15 @@ export const Toaster = () => {
           <Box sx={styles.contentWrapper}>
             {t.type === 'success' ? (
               <Box sx={styles.icon} data-testid="success-icon">
-                <CheckCircle2 size={32} color="#696C7D" />
+                <CheckCircle2 size={32} />
               </Box>
             ) : (
               <Box sx={styles.icon} data-testid="error-icon">
-                <CircleAlert size={32} color="#696C7D" />
+                <CircleAlert size={32} />
               </Box>
             )}
 
-            <Typography sx={styles.message}>{resolveValue(t.message, t)}</Typography>
+            <Typography variant='subtitle1' sx={styles.message}>{resolveValue(t.message, t)}</Typography>
           </Box>
 
           <IconButton

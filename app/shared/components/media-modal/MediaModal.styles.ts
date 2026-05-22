@@ -10,15 +10,13 @@ export const styles = {
   },
 
   cropHeaderTitle: {
+    typography: 'h6',
     fontWeight: 700,
-    fontSize: '24px',
-    lineHeight: '140%',
     color: 'white'
   },
 
   cropHeaderSubtitle: {
-    fontWeight: 500,
-    fontSize: '18px',
+    typography: 'subtitle1',
     lineHeight: '1.5',
     color: 'blue.300'
   },

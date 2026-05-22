@@ -85,7 +85,7 @@ export function EditPublicationsView({
         }
       >
         {type === 'media' ? (
-          <Typography variant="customBold20Tight">{'Редагування Ми у ЗМІ'}</Typography>
+          <Typography variant="h7">{'Редагування Ми у ЗМІ'}</Typography>
         ) : (
           <TitleDropdown
             type="multilingual"
@@ -123,7 +123,7 @@ export function EditPublicationsView({
         sx={styles.menu}
       >
         <ListSubheader sx={styles.menuSubheader}>
-          <Typography variant="customMedium14Tight">{'Мовні версії'}</Typography>
+          <Typography variant="subtitle2">{'Мовні версії'}</Typography>
         </ListSubheader>
 
         {LANGUAGE_OPTIONS.map(({ locale, key, label }) => {
@@ -139,9 +139,9 @@ export function EditPublicationsView({
               }}
               sx={styles.menuItem}
             >
-              <Typography variant="customMedium16">{label}</Typography>
+              <Typography variant="textMd">{label}</Typography>
               {isDraft && (
-                <Typography variant="customItalic14" sx={styles.draftCaption}>
+                <Typography variant="subtitle2" sx={styles.draftCaption}>
                   {'(чернетка)'}
                 </Typography>
               )}
@@ -157,7 +157,7 @@ export function EditPublicationsView({
           }}
           sx={styles.menuItem}
         >
-          <Typography variant="customMedium16">{'SEO налаштування'}</Typography>
+          <Typography variant="textMd">{'SEO налаштування'}</Typography>
         </MenuItem>
       </Menu>
 
@@ -173,7 +173,7 @@ export function EditPublicationsView({
       >
         {publishActions.map((action) => (
           <MenuItem sx={styles.menuItem} key={action.id} onClick={() => handlePublishActionClick(action.id)}>
-            <Typography variant="customMedium16">{action.label}</Typography>
+            <Typography variant="textMd">{action.label}</Typography>
           </MenuItem>
         ))}
       </Menu>

@@ -1,4 +1,6 @@
-import { SxProps, Theme } from '@mui/material';
+import { alpha, SxProps, Theme } from '@mui/material';
+
+import { mainHexPallete as colors } from '~/shared/theme/colors';
 
 export const styles = {
   mainContainer: {
@@ -38,7 +40,7 @@ export const styles = {
     transform: 'translateY(-50%)',
     width: 24,
     height: 48,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: alpha(colors.black, 0.5),
     color: 'white',
     borderRadius: 1,
     display: 'flex',

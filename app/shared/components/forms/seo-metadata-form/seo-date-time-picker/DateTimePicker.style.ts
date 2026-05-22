@@ -41,9 +41,7 @@ export const styles = {
     color: 'adminBlue.800',
   },
   datetimePickerLabel: {
-    fontSize: '14px',
-    fontWeight: 500,
+    typography: 'subtitle2',
     color: 'adminBlue.800',
-    lineHeight: '12px'
   }
 };

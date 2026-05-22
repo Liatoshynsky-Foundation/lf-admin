@@ -1,4 +1,6 @@
-import { SxProps, Theme } from '@mui/material';
+import { alpha, SxProps, Theme } from '@mui/material';
+
+import { mainHexPallete as colors } from '~/shared/theme/colors';
 
 export const styles: Record<string, SxProps<Theme>> = {
   container: {
@@ -10,6 +12,12 @@ export const styles: Record<string, SxProps<Theme>> = {
     height: '34px',
     backgroundColor: 'background.paper'
   },
+
+  toolbarGroup: {
+    display: 'flex',
+    gap: 0.5
+  },
+
   toggleButton: {
     border: 'none',
     width: 30,
@@ -20,18 +28,28 @@ export const styles: Record<string, SxProps<Theme>> = {
     },
 
     '&:hover': {
-      backgroundColor: 'rgba(0, 0, 0, 0.08)',
+      backgroundColor: alpha(colors.black, 0.08),
       color: 'primary.main'
     },
 
     '&.Mui-selected': {
-      backgroundColor: '#3f3f3f',
+      backgroundColor: 'blue.900',
       color: 'white',
       border: 'none',
       '&:hover': {
-        backgroundColor: '#3f3f3f'
+        backgroundColor: 'blue.900'
       }
     }
   },
-  linkEditInputContainer: { display: 'flex', width: '100%', alignItems: 'center', px: 1 }
+  linkEditInputContainer: { 
+    display: 'flex', 
+    width: '100%', 
+    alignItems: 'center', 
+    px: 1 
+  },
+
+  linkEditInput: {
+    flex: 1,
+    typography: 'subtitle2'
+  }
 };

@@ -1,26 +1,5 @@
 import { SxProps } from '@mui/material';
 
-export const FilterSelectColors = {
-  text: '#190D03',
-  bgFilledDefault: '#D9DCE8',
-  bgFilledDisabled: '#F7F8FC',
-  chipBg: '#fff',
-  textDisabled: '#63666E',
-  borderOutlined: '#190D03',
-  borderDisabled: '#D9D9D9'
-};
-
-function getBackgroundColor(variant: 'filled' | 'outlined', disabled: boolean): string {
-  if (disabled) return FilterSelectColors.bgFilledDisabled;
-  if (variant === 'outlined') return 'transparent';
-  return FilterSelectColors.bgFilledDefault;
-}
-
-function getBorder(variant: 'filled' | 'outlined', disabled: boolean): string {
-  if (variant !== 'outlined') return 'none';
-  const borderColor = disabled ? FilterSelectColors.borderDisabled : FilterSelectColors.borderOutlined;
-  return `1px solid ${borderColor}`;
-}
 
 export const filterSelectStyles = {
   root: (variant: 'filled' | 'outlined', disabled: boolean): SxProps => {
@@ -32,27 +11,22 @@ export const filterSelectStyles = {
       gap: '12px',
       borderRadius: '8px',
       padding: '6px 12px 6px 16px',
-      backgroundColor: getBackgroundColor(variant, disabled),
-      border: getBorder(variant, disabled),
+
+      backgroundColor: disabled ? 'adminBlue.50' : variant === 'outlined' ? 'transparent' : 'blue.200',
+      border: variant === 'outlined' ? 1 : 0,
+      borderStyle: 'solid',
+      borderColor: disabled ? 'blue.200' : 'black',
       cursor: disabled ? 'not-allowed' : 'pointer',
       transition: 'background-color 0.2s',
 
-      fontFamily: 'Mulish',
       fontWeight: 600,
-      fontSize: '16px',
-      lineHeight: '150%',
-      letterSpacing: '0%',
-      minWidth: '136px',
+      minWidth: '136px'
     };
   },
 
   label: (disabled: boolean): SxProps => ({
-    fontFamily: 'Mulish',
     fontWeight: 600,
-    fontSize: '16px',
-    lineHeight: '150%',
-    letterSpacing: '0%',
-    color: disabled ? FilterSelectColors.textDisabled : FilterSelectColors.text
+    color: disabled ? 'blue.700' : 'black'
   }),
 
   chipContainer: {
@@ -66,7 +40,7 @@ export const filterSelectStyles = {
   },
 
   selectedOptionsChip: (disabled: boolean): SxProps => ({
-    backgroundColor: FilterSelectColors.chipBg,
+    backgroundColor: 'white',
     height: '28px',
     borderRadius: '20px',
     marginRight: 'auto',
@@ -74,42 +48,26 @@ export const filterSelectStyles = {
     py: '8px',
     px: '4px',
     '& .MuiChip-label': {
-      color: disabled ? FilterSelectColors.textDisabled : FilterSelectColors.text,
-      fontFamily: 'Mulish',
+      color: disabled ? 'blue.700' : 'black',
+      typography: 'textMd',
       fontWeight: 600,
-      fontSize: '16px',
       fontStyle: 'italic',
-      lineHeight: '150%',
-      letterSpacing: '0%',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
       padding: '0 8px'
     },
     '& .MuiChip-deleteIcon': {
-      color: disabled ? FilterSelectColors.textDisabled : FilterSelectColors.text,
+      color: disabled ? 'blue.700' : 'black',
       width: '16px',
       height: '16px',
       margin: '2px 9px 0 -2px',
       flexShrink: 0
     },
     '& .MuiChip-deleteIcon:hover': {
-      color: disabled ? FilterSelectColors.textDisabled : FilterSelectColors.text
+      color: disabled ? 'blue.700' : 'black'
     }
   }),
-
-  chipList: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '8px',
-    flex: 1
-  },
-
-  placeholderChip: {
-    pointerEvents: 'none',
-    opacity: 0.7,
-    flex: 1
-  },
 
   dropdownIcon: (disabled: boolean): SxProps => ({
     cursor: disabled ? 'default' : 'pointer',
@@ -118,29 +76,39 @@ export const filterSelectStyles = {
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
-    color: disabled ? FilterSelectColors.textDisabled : FilterSelectColors.text
+    color: disabled ? 'blue.700' : 'black'
   }),
 
-  menuItem: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  dropdownMenu: (menuMinWidth?: number): SxProps => ({
+    '& .MuiPaper-root': {
+      minWidth: menuMinWidth ? `${menuMinWidth}px` : undefined
+    }
+  }),
 
-    fontFamily: 'Mulish',
-    fontWeight: 600,
-    fontSize: '16px',
-    lineHeight: '150%',
-    letterSpacing: '0%'
+  menuListWrapper: {
+    padding: '0 8px'
   },
 
-  clearAllContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '8px 16px',
-    cursor: 'pointer',
-    '&:hover': {
-      backgroundColor: 'rgba(0, 0, 0, 0.04)'
+  menuItemsContainer: {
+    maxHeight: '220px',
+    overflowY: 'auto',
+
+    scrollbarWidth: 'none',
+
+    '&::-webkit-scrollbar': {
+      display: 'none'
     }
+  },
+
+  menuItem: {
+    fontWeight: 600
+  },
+
+  divider: {
+    my: 1
+  },
+
+  clearButton: {
+    textTransform: 'none'
   }
 };

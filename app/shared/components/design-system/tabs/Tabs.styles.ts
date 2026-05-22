@@ -38,8 +38,7 @@ export const styles: Record<string, SxProps<Theme>> = {
       },
 
       padding: '12px 28px',
-
-      fontSize: { xs: '16px', md: '18px' },
+      typography: { xs: 'textMd', md: 'subtitle1'},
       whiteSpace: 'nowrap'
     }
   }

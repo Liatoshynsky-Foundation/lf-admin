@@ -22,7 +22,7 @@ export const StyledButtonGroup = styled(Box, {
     overflow: 'hidden',
     width: 'fit-content',
     border: 'none',
-    lineHeight: '150%',
+    lineHeight: '1.5',
     backgroundColor: paletteValues.groupBackground,
     color: paletteValues.buttonText
   };
@@ -72,7 +72,7 @@ export const StyledButtonItem = styled(Box, {
     marginRight: '4px',
     padding: size === 'big' ? '8px 22px' : '2px 16px',
     textTransform: 'none',
-    lineHeight: '150%',
+    lineHeight: '1.5',
     border: 'none',
     backgroundColor: 'transparent',
     '&:last-child': {

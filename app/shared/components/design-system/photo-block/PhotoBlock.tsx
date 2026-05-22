@@ -114,7 +114,7 @@ export const ImagePreviewBlock = ({
     if (!previewImage) {
       return (
         <Box sx={styles.imagePreview}>
-          <CloudUpload data-testid="cloud-upload-icon" size={76} strokeWidth={1.5} style={{ opacity: 0.3 }} />
+          <CloudUpload data-testid="cloud-upload-icon" size={76} strokeWidth={1.5} />
         </Box>
       );
     }
@@ -142,8 +142,8 @@ export const ImagePreviewBlock = ({
         {renderPreviewContent}
 
         <Stack spacing={stackSpacing} sx={styles.rightBlock}>
-          <Stack spacing={typographySpacing} sx={{ minWidth: 0 }}>
-            <Box sx={{ display: 'flex', gap: '4px', minWidth: 0 }}>
+          <Stack spacing={typographySpacing} sx={styles.textStack}>
+            <Box sx={styles.fileNameContainer}>
               <Typography variant="body1" sx={{ ...styles.fileNameText, flexShrink: 0 }}>
                 Назва файлу
               </Typography>
@@ -175,20 +175,20 @@ export const ImagePreviewBlock = ({
           <Stack direction={direction} spacing={buttonSpacing}>
             <Button
               startIcon={
-                <PencilIcon style={{ marginRight: '-8px', width: '16px', height: '24px', marginTop: '6px' }} />
+                <PencilIcon />
               }
               variant="outlined"
               color="primary"
               size="small"
               onClick={openEditCrop}
-              style={styles.editButton}
+              sx={styles.editButton}
               disabled={disabled}
             >
               Редагувати
             </Button>
 
             <Button
-              startIcon={<ImageIcon style={{ marginRight: '-8px', width: '16px', height: '24px', marginTop: '6px' }} />}
+              startIcon={<ImageIcon />}
               variant="outlined"
               color="primary"
               size="small"

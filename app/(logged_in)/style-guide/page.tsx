@@ -3,6 +3,7 @@
 import { Box, Typography } from '@mui/material';
 import { Upload } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'react-hot-toast';
 
 import Alert from '~/ds-components/alert/Alert';
 import Button from '~/ds-components/button/Button';
@@ -10,6 +11,8 @@ import ButtonGroup from '~/ds-components/button-group/ButtonGroup';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import FavouriteStarIcon from '~/public/icons/favourite-star.svg';
 import ContentCard from '~/shared/components/content-card/ContentCard';
+import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
+import DeleteFileModal from '~/shared/components/delete-file-modal/DeleteFileModal';
 import DiscardChangesModal from '~/shared/components/design-system/discard-changes-modal/DiscardChangesModal';
 import CustomLink from '~/shared/components/design-system/link/CustomLink';
 import PasswordField from '~/shared/components/design-system/password-field/PasswordField';
@@ -21,11 +24,14 @@ import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
 import ProgressStatus from '~/shared/components/divided-header/progress-status/ProgressStatus';
 import { TitleDropdown } from '~/shared/components/divided-header/title-dropdown/TitleDropdown';
+import { FileMenuActions } from '~/shared/components/dropdown-menu/FileMenuActions';
 import { EmptyState } from '~/shared/components/empty-state';
 import FileCard from '~/shared/components/file-card';
 import { FileInfoSidebar } from '~/shared/components/file-info-sidebar/FileInfoSidebar';
 import { ImagePreviewModal } from '~/shared/components/file-info-sidebar/image-preview-modal/ImagePreviewModal';
+import { FilesCardsLayoutView } from '~/shared/components/files-cards-layout';
 import { FilteringToolbar, type FilteringToolbarFilterConfig } from '~/shared/components/filtering-toolbar';
+import { SortSelect } from '~/shared/components/filtering-toolbar';
 import SeoCollapsibleBlock from '~/shared/components/forms/seo-collapsible-block/SeoCollapsibleBlock';
 import { SeoBaseFields } from '~/shared/components/forms/seo-metadata-form/seo-base-fields/SeoBaseFields';
 import DateTimePicker from '~/shared/components/forms/seo-metadata-form/seo-date-time-picker/DateTimePicker';
@@ -47,44 +53,78 @@ import { PageHeader } from '~/shared/components/page-header/PageHeader';
 import { RenameFileModal } from '~/shared/components/rename-file-modal/RenameFileModal';
 import { Search, type SearchOption } from '~/shared/components/search/Search';
 import type { FilterOption } from '~/shared/components/selector/FilterSelect';
+import { FilterSelect } from '~/shared/components/selector/FilterSelect';
 import FilterSelectItem from '~/shared/components/selector/FilterSelectItem/FilterSelectItem';
+import { CollapseListNavigation } from '~/shared/components/side-navigation/collapse-list-navigation/CollapseListNavigation';
+import { LinkElement } from '~/shared/components/side-navigation/link-element/LinkElement';
+import { ListElement } from '~/shared/components/side-navigation/list-element/ListElement';
+import { Toaster } from '~/shared/components/toaster/Toaster';
+import { ViewToggle } from '~/shared/components/view-toggle';
+
+const tabs = [
+  { id: '1', label: 'Tab1' },
+  { id: '2', label: 'Tab2' },
+  { id: '3', label: 'Tab3' }
+];
+
+const searchMock: SearchOption[] = [
+  { id: '1', title: 'Option1' },
+  { id: '2', title: 'Option2' },
+  { id: '3', title: 'Option3' },
+  { id: '4', title: 'Option4' },
+  { id: '5', title: 'Option5' }
+];
+
+const categoryOptions: FilterOption[] = [
+  { value: 'frontend', label: 'Фронтенд' },
+  { value: 'backend', label: 'Бекенд' },
+  { value: 'design', label: 'Дизайн' }
+];
+
+const statusOptions: FilterOption[] = [
+  { value: 'active', label: 'Активно' },
+  { value: 'archived', label: 'В архіві' }
+];
+
+const pageHeaderTabs = [
+  { value: 'Tab1', label: 'tab1', href: '/style-guide' },
+  { value: 'Tab2', label: 'tab2', href: '/style-guide', disabled: true },
+  { value: 'Tab3', label: 'tab3', href: '/style-guide' }
+];
+
+type SortField = 'date' | 'name';
+type SortOrder = 'newest' | 'oldest' | 'asc' | 'desc';
+
+const sortSelectFields: { value: SortField; label: string }[] = [
+  { value: 'date', label: 'Нові спочатку' },
+  { value: 'name', label: 'Назва файлу' }
+];
+
+const sortSelectOrders: Record<SortField, { value: SortOrder; label: string }[]> = {
+  date: [
+    { value: 'newest', label: 'Новіші-старіші' },
+    { value: 'oldest', label: 'Старіші-новіші' }
+  ],
+  name: [
+    { value: 'asc', label: 'А-Я' },
+    { value: 'desc', label: 'Я-А' }
+  ]
+};
+
+const SandboxSection = ({ title, children }: { title: string; children: React.ReactNode }) => (
+  <Box sx={{ display: 'flex', flexDirection: 'column', gap: '16px', pb: 2 }}>
+    <Typography variant="h4" sx={{ backgroundColor: 'peachpuff', padding: '8px 16px', borderRadius: '8px' }}>
+      Тестування {title}
+    </Typography>
+    {children}
+  </Box>
+);
 
 export default function StyleGuide() {
-  const tabs = [
-    { id: '1', label: 'Tab1' },
-    { id: '2', label: 'Tab2' },
-    { id: '3', label: 'Tab3' }
-  ];
-
-  const searchMock: SearchOption[] = [
-    { id: '1', title: 'Option1' },
-    { id: '2', title: 'Option2' },
-    { id: '3', title: 'Option3' },
-    { id: '4', title: 'Option4' },
-    { id: '5', title: 'Option5' }
-  ];
-
-  const categoryOptions: FilterOption[] = [
-    { value: 'frontend', label: 'Фронтенд' },
-    { value: 'backend', label: 'Бекенд' },
-    { value: 'design', label: 'Дизайн' }
-  ];
-
-  const statusOptions: FilterOption[] = [
-    { value: 'active', label: 'Активно' },
-    { value: 'archived', label: 'В архіві' }
-  ];
-
   const mockPdfFile = new File([''], 'my-document.pdf', {
     type: 'application/pdf',
     lastModified: Date.now()
   });
-
-  const pageHeaderTabs = [
-    { value: 'Tab1', label: 'tab1', href: '/style-guide' },
-    { value: 'Tab2', label: 'tab2', href: '/style-guide', disabled: true },
-    { value: 'Tab3', label: 'tab3', href: '/style-guide' }
-  ];
 
   const [isDiscardChangesModalOpen, setIsDiscardChangesModalOpen] = useState(false);
   const [activeTabId, setActiveTabId] = useState('1');
@@ -98,23 +138,20 @@ export default function StyleGuide() {
   const [isMediaModalContainerOpen, setIsMediaModalContainerOpen] = useState(false);
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [isRenameFileModalOpen, setIsRenameFileModalOpen] = useState(false);
+  const [currentField, setCurrentField] = useState<SortField>('date');
+  const [currentOrder, setCurrentOrder] = useState<SortOrder>('newest');
+  const [currentView, setCurrentView] = useState<FilesCardsLayoutView>('grid');
+  const [isDeleteCardModalOpen, setIsDeleteCardModalOpen] = useState(false);
+  const [isDeleteFileModalOpen, setIsDeleteFileModalOpen] = useState(false);
+  const [isDeletingToggled, setIsDeletingToggled] = useState(false);
+  const [isRefsIncluded, setIsRefsIncluded] = useState(false);
 
-  const handleOpenDiscardChangesModal = () => setIsDiscardChangesModalOpen(true);
-  const handleCloseDiscardChangesModal = () => setIsDiscardChangesModalOpen(false);
-  const handleOpenImagePreviewModal = () => setIsImagePreviewModalOpen(true);
-  const handleCloseImagePreviewModal = () => setIsImagePreviewModalOpen(false);
-  const handleOpenFileInfoSidebar = () => setIsFileInfoSidebarOpen(true);
-  const handleCloseFileInfoSidebar = () => setIsFileInfoSidebarOpen(false);
-  const handleOpenMediaModalContainer = () => setIsMediaModalContainerOpen(true);
-  const handleCloseMediaModalContainer = () => setIsMediaModalContainerOpen(false);
-  const handleOpenMediaModal = () => setIsMediaModalOpen(true);
-  const handleCloseMediaModal = () => setIsMediaModalOpen(false);
-  const handleOpenRenameFileModal = () => setIsRenameFileModalOpen(true);
-  const handleCloseRenameFileModal = () => setIsRenameFileModalOpen(false);
+  const handleToggleDeletingMode = () => setIsDeletingToggled((prev) => !prev);
+  const handleToggleRefsIncluded = () => setIsRefsIncluded((prev) => !prev);
 
-  const handleSubmitChanges = () => {
-    setIsDiscardChangesModalOpen(false);
-  };
+  const activeFieldLabel = sortSelectFields.find((f) => f.value === currentField)?.label ?? '';
+
+  const handleSubmitChanges = () => setIsDiscardChangesModalOpen(false);
 
   const handleTabChange = (id: string) => {
     setActiveTabId(id);
@@ -123,6 +160,14 @@ export default function StyleGuide() {
   const handleClearAllFilters = () => {
     setSelectedCategories([]);
     setSelectedStatuses([]);
+  };
+
+  const showSuccess = () => {
+    toast.success('Успішний тост');
+  };
+
+  const showError = () => {
+    toast.error('Тост-помилка');
   };
 
   const filtersConfig: FilteringToolbarFilterConfig[] = [
@@ -144,618 +189,640 @@ export default function StyleGuide() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: '24px', padding: '40px' }}>
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування Alert
-      </Typography>
-
-      <Typography variant="h6">1. Variant: Filled</Typography>
-      <Alert severity="error" variant="filled" title="Title" description="Description" label="Label" />
-      <Alert severity="warning" variant="filled" title="Title" description="Description" label="Label" />
-      <Alert severity="info" variant="filled" title="Title" description="Description" label="Label" />
-      <Alert severity="success" variant="filled" title="Title" description="Description" label="Label" />
-
-      <Typography variant="h6" sx={{ mt: 4 }}>
-        2. Variant: Outlined
-      </Typography>
-      <Alert severity="error" variant="outlined" title="Title" description="Description" label="Label" />
-      <Alert severity="warning" variant="outlined" title="Title" description="Description" label="Label" />
-      <Alert severity="info" variant="outlined" title="Title" description="Description" label="Label" />
-      <Alert severity="success" variant="outlined" title="Title" description="Description" label="Label" />
-
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування Button
-      </Typography>
-
-      <Typography variant="h6">1. Variant: Filled, Palette: Primary, Size: Small</Typography>
-      <Button size="small" variant="filled" color="primary" endIcon={<Upload size={20} aria-hidden="true" />}>
-        Завантажити файл
-      </Button>
-
-      <Typography variant="h6">2. Variant: Outlined, Palette: Primary, Size: Medium</Typography>
-      <Button size="medium" variant="outlined" color="primary" endIcon={<Upload size={20} aria-hidden="true" />}>
-        Завантажити файл
-      </Button>
-
-      <Typography variant="h6">3. Variant: Filled, Palette: Secondary, Size: Large</Typography>
-      <Box
-        sx={{
-          backgroundColor: 'black',
-          padding: '16px',
-          borderRadius: '8px'
-        }}
-      >
-        <Button
-          fullWidth
-          size="large"
-          variant="filled"
-          color="secondary"
-          endIcon={<Upload size={20} aria-hidden="true" />}
-        >
-          Завантажити файл
-        </Button>
-      </Box>
-
-      <Typography variant="h6">4. Variant: Outlined, Palette: Secondary, Size: Small</Typography>
-      <Box
-        sx={{
-          backgroundColor: 'black',
-          padding: '16px',
-          borderRadius: '8px'
-        }}
-      >
-        <Button
-          fullWidth
-          size="small"
-          variant="outlined"
-          color="secondary"
-          endIcon={<Upload size={20} aria-hidden="true" />}
-        >
-          Завантажити файл
-        </Button>
-      </Box>
-
-      <Typography variant="h6">5. Variant: Filled, Palette: Tertiary, Size: Small</Typography>
-      <Button size="small" variant="filled" color="tertiary" endIcon={<Upload size={20} aria-hidden="true" />}>
-        Завантажити файл
-      </Button>
-
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування ButtonGroup
-      </Typography>
-
-      <Typography variant="h6">1. Palette: Primary, Size: Small (Default)</Typography>
-      <ButtonGroup buttons={['Опція 1', 'Опція 2', 'Опція 3']} defaultActiveButton={0} />
-
-      <Typography variant="h6" sx={{ mt: 2 }}>
-        2. Palette: Primary, Size: Big
-      </Typography>
-      <ButtonGroup
-        buttons={['Опція 1', 'Опція 2', 'Опція 3', 'Опція 4']}
-        defaultActiveButton={1}
-        size="big"
-        palette="primary"
-      />
-
-      <Typography variant="h6" sx={{ mt: 2 }}>
-        3. Palette: Secondary, Size: Small
-      </Typography>
-      <ButtonGroup buttons={['Опція 1', 'Опція 2', 'Опція 3']} defaultActiveButton={0} palette="secondary" />
-
-      <Typography variant="h6" sx={{ mt: 2 }}>
-        4. Palette: Secondary, Size: Big
-      </Typography>
-      <ButtonGroup
-        buttons={['Опція 1', 'Опція 2', 'Опція 3', 'Опція 4']}
-        defaultActiveButton={2}
-        size="big"
-        palette="secondary"
-      />
-
-      <Typography variant="h6" sx={{ mt: 2 }}>
-        5. Palette: Tertiary, Size: Small
-      </Typography>
-      <ButtonGroup buttons={['Опція 1', 'Опція 2', 'Опція 3']} defaultActiveButton={0} palette="tertiary" />
-
-      <Typography variant="h6" sx={{ mt: 2 }}>
-        6. Palette: Tertiary, Size: Big
-      </Typography>
-      <ButtonGroup
-        buttons={['Опція 1', 'Опція 2', 'Опція 3', 'Опція 4']}
-        defaultActiveButton={2}
-        size="big"
-        palette="tertiary"
-      />
-
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування CollapsibleBlock
-      </Typography>
-
-      <CollapsibleBlock title="Collapse">
-        Lorem ipsum, dolor sit amet consectetur adipisicing elit. Eius distinctio ex nisi, voluptatum eligendi sed rerum
-        facere perferendis ab natus assumenda molestias? Amet magni repudiandae doloremque voluptas, numquam
-        reprehenderit animi.
-      </CollapsibleBlock>
-
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування DiscardChangesModal
-      </Typography>
-
-      <Button size="small" variant="filled" color="tertiary" onClick={handleOpenDiscardChangesModal}>
-        Open modal
-      </Button>
-
-      <DiscardChangesModal
-        open={isDiscardChangesModalOpen}
-        handleClose={handleCloseDiscardChangesModal}
-        handleSubmit={handleSubmitChanges}
-      />
-
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування CustomLink
-      </Typography>
-
-      <CustomLink path="#">Link</CustomLink>
-
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування PasswordField
-      </Typography>
-
-      <PasswordField helperText={'Enter the password'}></PasswordField>
-
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування PhotoBlock
-      </Typography>
-
-      <ImagePreviewBlock imageUrl="https://shorturl.at/xkStA" onChangeImage={() => {}}></ImagePreviewBlock>
-
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування CustomTabs
-      </Typography>
-
-      <CustomTabs tabs={tabs} activeTab={activeTabId} onTabChange={handleTabChange}></CustomTabs>
-
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування CustomTextField
-      </Typography>
-
-      <CustomTextField
-        title="Заголовок сторінки"
-        titleSx={{ fontSize: 18, fontWeight: 700 }}
-        label="Заголовок сторінки"
-      ></CustomTextField>
-
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування TooltipCustom
-      </Typography>
-
-      <Typography variant="h6" sx={{ mt: 2 }}>
-        1. Default
-      </Typography>
-
-      <TooltipCustom text="Some text">
-        <Button fullWidth size="large" variant="filled" color="primary">
-          Hover me
-        </Button>
-      </TooltipCustom>
-
-      <Typography variant="h6" sx={{ mt: 2 }}>
-        2. With an arrow
-      </Typography>
-
-      <TooltipCustom text="Some text" showArrow placement="bottom">
-        <Button fullWidth size="large" variant="filled" color="primary">
-          Hover me
-        </Button>
-      </TooltipCustom>
-
-      <Typography variant="h6" sx={{ mt: 2 }}>
-        3. Without children as default Typography
-      </Typography>
-
-      <Box textAlign="center">
-        <TooltipCustom
-          text="Hover text"
-          wrapperProps={{
-            sx: {
-              width: '100%',
-              border: '1px dashed grey',
-              p: 1,
-              display: 'inline-block',
-              cursor: 'help'
-            }
-          }}
-          textProps={{
-            sx: { fontWeight: 'bold' }
-          }}
-        />
-      </Box>
-
-      <Typography variant="h6" sx={{ mt: 2 }}>
-        4. Controllable
-      </Typography>
-
-      <TooltipCustom title={<b>I am opened with the state</b>} showArrow placement="right" isOpen={isControlledOpen}>
-        <Button
-          fullWidth
-          size="large"
-          variant="filled"
-          color="primary"
-          onClick={() => setIsControlledOpen(!isControlledOpen)}
-        >
-          Click me
-        </Button>
-      </TooltipCustom>
-
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування ContentCard
-      </Typography>
-
-      <ContentCard
-        id="content-card1"
-        type="news"
-        coverImage={{
-          src: 'https://shorturl.at/xkStA',
-          alt: { en: 'event', uk: 'подія' }
-        }}
-        title={{ en: 'Event' }}
-        status="draft"
-        onClick={() => {}}
-      ></ContentCard>
-
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування HeaderRightActions
-      </Typography>
-
-      <Typography variant="h6" sx={{ mt: 2 }}>
-        1. Mode: create
-      </Typography>
-
-      <HeaderRightActions mode="create"></HeaderRightActions>
-
-      <Typography variant="h6" sx={{ mt: 2 }}>
-        2. Mode: seo
-      </Typography>
-
-      <HeaderRightActions mode="seo"></HeaderRightActions>
-
-      <Typography variant="h6" sx={{ mt: 2 }}>
-        3. Mode: edit
-      </Typography>
-
-      <HeaderRightActions mode="edit"></HeaderRightActions>
-
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування ProgressStatus
-      </Typography>
-
-      <ProgressStatus></ProgressStatus>
-
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування TitleDropdown
-      </Typography>
-
-      <TitleDropdown title="Золотий обруч" type="SEO" onMenuOpen={() => {}} />
-
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування DividedHeader
-      </Typography>
-
-      <DividedHeader />
-
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування EmptyState
-      </Typography>
-
-      <EmptyState
-        title="title"
-        description="description"
-        icon={<FavouriteStarIcon />}
-        action={{ label: 'Click me', href: '#', onClick: () => {} }}
-      />
-
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування FileCard
-      </Typography>
-
-      <FileCard
-        fileType="image"
-        fileData={{
-          id: 'a1',
-          name: 'file',
-          dateAdded: '01.01.2001',
-          isStarred: true,
-          usageLinks: 2,
-          imageSrc: '/images/image.png'
-        }}
-      />
-
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування ImagePreviewModal
-      </Typography>
-
-      <Button size="small" variant="filled" color="tertiary" onClick={handleOpenImagePreviewModal}>
-        Open modal
-      </Button>
-
-      <ImagePreviewModal
-        open={isImagePreviewModalOpen}
-        src="https://shorturl.at/xkStA"
-        alt="kitten"
-        onClose={handleCloseImagePreviewModal}
-      />
-
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування FileInfoSidebar
-      </Typography>
-
-      <Button size="small" variant="filled" color="tertiary" onClick={handleOpenFileInfoSidebar}>
-        Open sidebar
-      </Button>
-
-      {isFileInfoSidebarOpen && (
-        <FileInfoSidebar
-          file={{
-            id: 'a1',
-            type: 'image',
-            filename: 'File #1',
-            previewUrl: '/style-guide',
-            addedBy: { name: 'Admin' },
-            addedAt: '01.01.2001',
-            format: 'png',
-            size: '1.55 Mb',
-            usageLinks: [{ id: '01', label: 'label', href: '/style-guide' }],
-            isStarred: true
-          }}
-          onClose={handleCloseFileInfoSidebar}
-        ></FileInfoSidebar>
-      )}
-
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування Search
-      </Typography>
-
-      <Search
-        search={searchValue}
-        setSearch={setSearchValue}
-        options={searchMock}
-        placeholder="Пошук..."
-        maxWidth="400px"
-      />
-
-      <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: '8px', maxWidth: '400px' }}>
-        <Typography variant="body1">
-          <strong>Значення state:</strong> {searchValue || 'немає'}
+      <SandboxSection title="Alert">
+        <Typography variant="h6">1. Variant: Filled</Typography>
+        <Alert severity="error" variant="filled" title="Title" description="Description" label="Label" />
+        <Alert severity="warning" variant="filled" title="Title" description="Description" label="Label" />
+        <Alert severity="info" variant="filled" title="Title" description="Description" label="Label" />
+        <Alert severity="success" variant="filled" title="Title" description="Description" label="Label" />
+
+        <Typography variant="h6" sx={{ mt: 4 }}>
+          2. Variant: Outlined
         </Typography>
-      </Box>
+        <Alert severity="error" variant="outlined" title="Title" description="Description" label="Label" />
+        <Alert severity="warning" variant="outlined" title="Title" description="Description" label="Label" />
+        <Alert severity="info" variant="outlined" title="Title" description="Description" label="Label" />
+        <Alert severity="success" variant="outlined" title="Title" description="Description" label="Label" />
+      </SandboxSection>
 
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування FilteringToolbar
-      </Typography>
+      <SandboxSection title="Button">
+        <Typography variant="h6">1. Variant: Filled, Palette: Primary, Size: Small</Typography>
+        <Button size="small" variant="filled" color="primary" endIcon={<Upload size={20} aria-hidden="true" />}>
+          Завантажити файл
+        </Button>
 
-      <FilteringToolbar
-        search={{ search: searchValue, setSearch: setSearchValue, options: searchMock, placeholder: 'Пошук...' }}
-        filters={filtersConfig}
-        isFiltersOpen={isFiltersOpen}
-        onToggleFilters={() => setIsFiltersOpen((prev) => !prev)}
-        onClearFilters={handleClearAllFilters}
-        filtersButtonLabel="Фільтри"
-        clearFiltersTooltip="Скинути всі налаштування"
-        rightSlot={
-          <Button variant="filled" color="tertiary">
-            Кнопка
+        <Typography variant="h6">2. Variant: Outlined, Palette: Primary, Size: Medium</Typography>
+        <Button size="medium" variant="outlined" color="primary" endIcon={<Upload size={20} aria-hidden="true" />}>
+          Завантажити файл
+        </Button>
+
+        <Typography variant="h6">3. Variant: Filled, Palette: Secondary, Size: Large</Typography>
+        <Box
+          sx={{
+            backgroundColor: 'black',
+            padding: '16px',
+            borderRadius: '8px'
+          }}
+        >
+          <Button
+            fullWidth
+            size="large"
+            variant="filled"
+            color="secondary"
+            endIcon={<Upload size={20} aria-hidden="true" />}
+          >
+            Завантажити файл
           </Button>
-        }
-      />
+        </Box>
 
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування SeoCollapsibleBlock
-      </Typography>
+        <Typography variant="h6">4. Variant: Outlined, Palette: Secondary, Size: Small</Typography>
+        <Box
+          sx={{
+            backgroundColor: 'black',
+            padding: '16px',
+            borderRadius: '8px'
+          }}
+        >
+          <Button
+            fullWidth
+            size="small"
+            variant="outlined"
+            color="secondary"
+            endIcon={<Upload size={20} aria-hidden="true" />}
+          >
+            Завантажити файл
+          </Button>
+        </Box>
 
-      <SeoCollapsibleBlock title="title" defaultExpanded>
-        <Typography variant="bodySm">Child</Typography>
-        <Typography variant="bodySm">Child</Typography>
-        <Typography variant="bodySm">Child</Typography>
-      </SeoCollapsibleBlock>
+        <Typography variant="h6">5. Variant: Filled, Palette: Tertiary, Size: Small</Typography>
+        <Button size="small" variant="filled" color="tertiary" endIcon={<Upload size={20} aria-hidden="true" />}>
+          Завантажити файл
+        </Button>
+      </SandboxSection>
 
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування SeoBaseFields
-      </Typography>
+      <SandboxSection title="ButtonGroup">
+        <Typography variant="h6">1. Palette: Primary, Size: Small (Default)</Typography>
+        <ButtonGroup buttons={['Опція 1', 'Опція 2', 'Опція 3']} defaultActiveButton={0} />
 
-      <SeoBaseFields
-        value={{ title: 'Title', description: 'Description', keywords: 'keyword1, keyword2' }}
-        errors={{
-          description: 'Description is too short'
-        }}
-        touched={{ description: true }}
-        onFieldChange={() => {}}
-        onBlur={() => {}}
-        showKeywords={true}
-        labels={{
-          metaTitle: 'Header',
-          metaDescription: 'Description'
-        }}
-      />
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          2. Palette: Primary, Size: Big
+        </Typography>
+        <ButtonGroup
+          buttons={['Опція 1', 'Опція 2', 'Опція 3', 'Опція 4']}
+          defaultActiveButton={1}
+          size="big"
+          palette="primary"
+        />
 
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування DateTimePicker
-      </Typography>
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          3. Palette: Secondary, Size: Small
+        </Typography>
+        <ButtonGroup buttons={['Опція 1', 'Опція 2', 'Опція 3']} defaultActiveButton={0} palette="secondary" />
 
-      <DateTimePicker
-        onChange={() => {}}
-        labels={{ startDateTime: 'Дата початку події', endDateTime: 'Дата кінця події' }}
-      />
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          4. Palette: Secondary, Size: Big
+        </Typography>
+        <ButtonGroup
+          buttons={['Опція 1', 'Опція 2', 'Опція 3', 'Опція 4']}
+          defaultActiveButton={2}
+          size="big"
+          palette="secondary"
+        />
 
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування DateTimeFields
-      </Typography>
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          5. Palette: Tertiary, Size: Small
+        </Typography>
+        <ButtonGroup buttons={['Опція 1', 'Опція 2', 'Опція 3']} defaultActiveButton={0} palette="tertiary" />
 
-      <DateTimePicker
-        onChange={() => {}}
-        labels={{ startDateTime: 'Дата початку події', endDateTime: 'Дата кінця події' }}
-      />
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          6. Palette: Tertiary, Size: Big
+        </Typography>
+        <ButtonGroup
+          buttons={['Опція 1', 'Опція 2', 'Опція 3', 'Опція 4']}
+          defaultActiveButton={2}
+          size="big"
+          palette="tertiary"
+        />
+      </SandboxSection>
 
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування SeoMetadataBlock
-      </Typography>
+      <SandboxSection title="CollapsibleBlock">
+        <CollapsibleBlock title="Collapse">
+          Lorem ipsum, dolor sit amet consectetur adipisicing elit. Eius distinctio ex nisi, voluptatum eligendi sed
+          rerum facere perferendis ab natus assumenda molestias? Amet magni repudiandae doloremque voluptas, numquam
+          reprehenderit animi.
+        </CollapsibleBlock>
+      </SandboxSection>
 
-      <SeoMetadataBlock />
+      <SandboxSection title="DiscardChangesModal">
+        <Button size="small" variant="filled" color="tertiary" onClick={() => setIsDiscardChangesModalOpen(true)}>
+          Open modal
+        </Button>
 
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування SeoMetadataForm
-      </Typography>
+        <DiscardChangesModal
+          open={isDiscardChangesModalOpen}
+          handleClose={() => setIsDiscardChangesModalOpen(false)}
+          handleSubmit={handleSubmitChanges}
+        />
+      </SandboxSection>
 
-      <SeoMetadataForm
-        value={{ title: 'Title', description: 'Description', keywords: 'keyword1, keyword2' }}
-        onChange={() => {}}
-        locale="uk"
-        ogImage="https://shorturl.at/xkStA"
-        onImageChange={() => {}}
-        allowIndexing={false}
-        onIndexingChange={() => {}}
-      ></SeoMetadataForm>
+      <SandboxSection title="CustomLink">
+        <CustomLink path="/style-guide">Link</CustomLink>
+      </SandboxSection>
 
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування Header
-      </Typography>
+      <SandboxSection title="PasswordField">
+        <PasswordField helperText={'Enter the password'}></PasswordField>
+      </SandboxSection>
 
-      <Header
-        title="Title"
-        onPreview={() => {}}
-        onSave={() => {}}
-        onCancel={() => {}}
-        isSaving
-        onLanguageChange={() => {}}
-      />
+      <SandboxSection title="PhotoBlock">
+        <ImagePreviewBlock imageUrl="https://shorturl.at/xkStA" onChangeImage={() => {}}></ImagePreviewBlock>
+      </SandboxSection>
 
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування LoginModal
-      </Typography>
+      <SandboxSection title="CustomTabs">
+        <CustomTabs tabs={tabs} activeTab={activeTabId} onTabChange={handleTabChange}></CustomTabs>
+      </SandboxSection>
 
-      <LoginModal onSubmit={() => {}} />
+      <SandboxSection title="CustomTextField">
+        <CustomTextField
+          title="Заголовок сторінки"
+          titleSx={{ fontSize: 18, fontWeight: 700 }}
+          label="Заголовок сторінки"
+        ></CustomTextField>
+      </SandboxSection>
 
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування MediaModalContainer
-      </Typography>
+      <SandboxSection title="TooltipCustom">
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          1. Default
+        </Typography>
 
-      <Button size="small" variant="filled" color="tertiary" onClick={handleOpenMediaModalContainer}>
-        Open modal
-      </Button>
+        <TooltipCustom text="Some text">
+          <Button fullWidth size="large" variant="filled" color="primary">
+            Hover me
+          </Button>
+        </TooltipCustom>
 
-      <MediaModalContainer open={isMediaModalContainerOpen} onClose={handleCloseMediaModalContainer}>
-        <Typography variant="bodySm">Child</Typography>
-        <Typography variant="bodySm">Child</Typography>
-        <Typography variant="bodySm">Child</Typography>
-      </MediaModalContainer>
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          2. With an arrow
+        </Typography>
 
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування FilterDropdown
-      </Typography>
+        <TooltipCustom text="Some text" showArrow placement="bottom">
+          <Button fullWidth size="large" variant="filled" color="primary">
+            Hover me
+          </Button>
+        </TooltipCustom>
 
-      <FilterDropdown
-        label="Label1"
-        value="Value1"
-        options={[
-          { value: 'Value1', label: 'Label1' },
-          { value: 'Value2', label: 'Label2' },
-          { value: 'Value3', label: 'Label3' }
-        ]}
-        onChange={() => {}}
-      />
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          3. Without children as default Typography
+        </Typography>
 
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування GalleryCard
-      </Typography>
+        <Box textAlign="center">
+          <TooltipCustom
+            text="Hover text"
+            wrapperProps={{
+              sx: {
+                width: '100%',
+                border: '1px dashed grey',
+                p: 1,
+                display: 'inline-block',
+                cursor: 'help'
+              }
+            }}
+            textProps={{
+              sx: { fontWeight: 'bold' }
+            }}
+          />
+        </Box>
 
-      <Box sx={{ maxWidth: '400px', padding: '10px', backgroundColor: '#232529' }}>
-        <GalleryCard
-          src="https://shorturl.at/xkStA"
-          fileName="File"
-          isStarred
-          usageLocations={['Main page', 'Files page']}
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          4. Controllable
+        </Typography>
+
+        <TooltipCustom title={<b>I am opened with the state</b>} showArrow placement="right" isOpen={isControlledOpen}>
+          <Button
+            fullWidth
+            size="large"
+            variant="filled"
+            color="primary"
+            onClick={() => setIsControlledOpen(!isControlledOpen)}
+          >
+            Click me
+          </Button>
+        </TooltipCustom>
+      </SandboxSection>
+
+      <SandboxSection title="ContentCard">
+        <ContentCard
+          id="content-card1"
+          type="news"
+          coverImage={{
+            src: 'https://shorturl.at/xkStA',
+            alt: { en: 'event', uk: 'подія' }
+          }}
+          title={{ en: 'Event' }}
+          status="draft"
           onClick={() => {}}
         />
-      </Box>
+      </SandboxSection>
 
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування SearchButton
-      </Typography>
+      <SandboxSection title="HeaderRightActions">
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          1. Mode: create
+        </Typography>
 
-      <Box sx={{ maxWidth: '400px', padding: '10px', backgroundColor: 'grey' }}>
-        <SearchButton value="Search" onSearch={() => {}} placeholder="Search..." />
-      </Box>
+        <HeaderRightActions mode="create"></HeaderRightActions>
 
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування MediaModalSwitcher
-      </Typography>
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          2. Mode: seo
+        </Typography>
 
-      <MediaModalSwitcher value="GALLERY" onChange={() => {}} />
+        <HeaderRightActions mode="seo"></HeaderRightActions>
 
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування UsedCard
-      </Typography>
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          3. Mode: edit
+        </Typography>
 
-      <Box sx={{ maxWidth: '400px', padding: '10px', backgroundColor: '#232529' }}>
-        <UsedCard src="https://shorturl.at/xkStA" fileName="File 1" locale="uk" onClick={() => {}} />
-      </Box>
+        <HeaderRightActions mode="edit"></HeaderRightActions>
+      </SandboxSection>
 
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування MediaModal
-      </Typography>
+      <SandboxSection title="ProgressStatus">
+        <ProgressStatus />
+      </SandboxSection>
 
-      <Button size="small" variant="filled" color="tertiary" onClick={handleOpenMediaModal}>
-        Open modal
-      </Button>
+      <SandboxSection title="TitleDropdown">
+        <TitleDropdown title="Золотий обруч" type="SEO" onMenuOpen={() => {}} />
+      </SandboxSection>
 
-      <MediaModal open={isMediaModalOpen} onClose={handleCloseMediaModal} onApply={() => {}} />
+      <SandboxSection title="DividedHeader">
+        <DividedHeader>
+          <Typography variant="h7">{'Редагування Ми у ЗМІ'}</Typography>
+        </DividedHeader>
+      </SandboxSection>
 
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування FileView
-      </Typography>
+      <SandboxSection title="EmptyState">
+        <EmptyState
+          title="title"
+          description="description"
+          icon={<FavouriteStarIcon />}
+          action={{ label: 'Click me', href: '#', onClick: () => {} }}
+        />
+      </SandboxSection>
 
-      <Box sx={{ maxWidth: '400px', padding: '10px', backgroundColor: '#232529' }}>
-        <FileView file={mockPdfFile} />
-      </Box>
+      <SandboxSection title="FileCard">
+        <FileCard
+          fileType="image"
+          fileData={{
+            id: 'a1',
+            name: 'file',
+            dateAdded: '01.01.2001',
+            isStarred: true,
+            usageLinks: 2,
+            imageSrc: '/images/image.png'
+          }}
+        />
+      </SandboxSection>
 
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування UploadView
-      </Typography>
+      <SandboxSection title="ImagePreviewModal">
+        <Button size="small" variant="filled" color="tertiary" onClick={() => setIsImagePreviewModalOpen(true)}>
+          Open modal
+        </Button>
 
-      <Box sx={{ maxWidth: '400px', padding: '10px', backgroundColor: '#232529' }}>
-        <UploadView selected={null} onPick={() => {}} />
-      </Box>
+        <ImagePreviewModal
+          open={isImagePreviewModalOpen}
+          src="https://shorturl.at/xkStA"
+          alt="kitten"
+          onClose={() => setIsImagePreviewModalOpen(false)}
+        />
+      </SandboxSection>
 
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування MinimizedFileCard
-      </Typography>
+      <SandboxSection title="FileInfoSidebar">
+        <Button size="small" variant="filled" color="tertiary" onClick={() => setIsFileInfoSidebarOpen(true)}>
+          Open sidebar
+        </Button>
 
-      <MinimizedFileCard id="fileCard" fileType="img" starred linked name="File card 1" date="11.11.2011" />
+        {isFileInfoSidebarOpen && (
+          <FileInfoSidebar
+            file={{
+              id: 'a1',
+              type: 'image',
+              filename: 'File #1',
+              previewUrl: '/style-guide',
+              addedBy: { name: 'Admin' },
+              addedAt: '01.01.2001',
+              format: 'png',
+              size: '1.55 Mb',
+              usageLinks: [{ id: '01', label: 'label', href: '/style-guide' }],
+              isStarred: true
+            }}
+            onClose={() => setIsFileInfoSidebarOpen(false)}
+          ></FileInfoSidebar>
+        )}
+      </SandboxSection>
 
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування PageHeader
-      </Typography>
+      <SandboxSection title="Search">
+        <Search
+          search={searchValue}
+          setSearch={setSearchValue}
+          options={searchMock}
+          placeholder="Пошук..."
+          maxWidth="400px"
+        />
 
-      <PageHeader title="Title" tabs={pageHeaderTabs} activeTab="Tab1" />
+        <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: '8px', maxWidth: '400px' }}>
+          <Typography variant="body1">
+            <strong>Значення state:</strong> {searchValue || 'немає'}
+          </Typography>
+        </Box>
+      </SandboxSection>
 
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування RenameFileModal
-      </Typography>
+      <SandboxSection title="FilteringToolbar">
+        <FilteringToolbar
+          search={{ search: searchValue, setSearch: setSearchValue, options: searchMock, placeholder: 'Пошук...' }}
+          filters={filtersConfig}
+          isFiltersOpen={isFiltersOpen}
+          onToggleFilters={() => setIsFiltersOpen((prev) => !prev)}
+          onClearFilters={handleClearAllFilters}
+          filtersButtonLabel="Фільтри"
+          clearFiltersTooltip="Скинути всі налаштування"
+          rightSlot={
+            <Button variant="filled" color="tertiary">
+              Кнопка
+            </Button>
+          }
+          bottomTrailingContent={
+            <SortSelect
+              triggerLabel={`${activeFieldLabel}`}
+              fieldOptions={sortSelectFields}
+              orderOptions={sortSelectOrders}
+              fieldValue={currentField}
+              value={currentOrder}
+              onFieldChange={(field) => {
+                setCurrentField(field);
+                setCurrentOrder(sortSelectOrders[field][0].value);
+              }}
+              onValueChange={(value) => {
+                setCurrentOrder(value);
+              }}
+            />
+          }
+        />
+      </SandboxSection>
 
-      <Button size="small" variant="filled" color="tertiary" onClick={handleOpenRenameFileModal}>
-        Open modal
-      </Button>
+      <SandboxSection title="SeoCollapsibleBlock">
+        <SeoCollapsibleBlock title="title" defaultExpanded>
+          <Typography variant="bodySm">Child</Typography>
+          <Typography variant="bodySm">Child</Typography>
+          <Typography variant="bodySm">Child</Typography>
+        </SeoCollapsibleBlock>
+      </SandboxSection>
 
-      <RenameFileModal
-        open={isRenameFileModalOpen}
-        onClose={handleCloseRenameFileModal}
-        fileId="fileId"
-        currentFilename="File1"
-      />
+      <SandboxSection title="SeoBaseFields">
+        <SeoBaseFields
+          value={{ title: 'Title', description: 'Description', keywords: 'keyword1, keyword2' }}
+          errors={{
+            description: 'Description is too short'
+          }}
+          touched={{ description: true }}
+          onFieldChange={() => {}}
+          onBlur={() => {}}
+          showKeywords={true}
+          labels={{
+            metaTitle: 'Header',
+            metaDescription: 'Description'
+          }}
+        />
+      </SandboxSection>
 
-      <Typography variant="h4" sx={{ backgroundColor: 'peachpuff' }}>
-        Тестування FilterSelectItem
-      </Typography>
+      <SandboxSection title="DateTimePicker">
+        <DateTimePicker
+          onChange={() => {}}
+          labels={{ startDateTime: 'Дата початку події', endDateTime: 'Дата кінця події' }}
+        />
+      </SandboxSection>
 
-      <FilterSelectItem label="item1" selected />
+      <SandboxSection title="SeoMetadataBlock">
+        <SeoMetadataBlock />
+      </SandboxSection>
+
+      <SandboxSection title="SeoMetadataForm">
+        <SeoMetadataForm
+          value={{ title: 'Title', description: 'Description', keywords: 'keyword1, keyword2' }}
+          onChange={() => {}}
+          locale="uk"
+          ogImage="https://shorturl.at/xkStA"
+          onImageChange={() => {}}
+          allowIndexing={false}
+          onIndexingChange={() => {}}
+        ></SeoMetadataForm>
+      </SandboxSection>
+
+      <SandboxSection title="Header">
+        <Header
+          title="Title"
+          onPreview={() => {}}
+          onSave={() => {}}
+          onCancel={() => {}}
+          isSaving
+          onLanguageChange={() => {}}
+        />
+      </SandboxSection>
+
+      <SandboxSection title="LoginModal">
+        <LoginModal onSubmit={() => {}} />
+      </SandboxSection>
+
+      <SandboxSection title="MediaModalContainer">
+        <Button size="small" variant="filled" color="tertiary" onClick={() => setIsMediaModalContainerOpen(true)}>
+          Open modal
+        </Button>
+
+        <MediaModalContainer open={isMediaModalContainerOpen} onClose={() => setIsMediaModalContainerOpen(false)}>
+          <Typography variant="bodySm">Child</Typography>
+          <Typography variant="bodySm">Child</Typography>
+          <Typography variant="bodySm">Child</Typography>
+        </MediaModalContainer>
+      </SandboxSection>
+
+      <SandboxSection title="FilterDropdown">
+        <FilterDropdown
+          label="Label1"
+          value="Value1"
+          options={[
+            { value: 'Value1', label: 'Label1' },
+            { value: 'Value2', label: 'Label2' },
+            { value: 'Value3', label: 'Label3' }
+          ]}
+          onChange={() => {}}
+        />
+      </SandboxSection>
+
+      <SandboxSection title="GalleryCard">
+        <Box sx={{ maxWidth: '400px', padding: '10px', backgroundColor: '#232529' }}>
+          <GalleryCard
+            src="https://shorturl.at/xkStA"
+            fileName="File"
+            isStarred
+            usageLocations={['Main page', 'Files page']}
+            onClick={() => {}}
+          />
+        </Box>
+      </SandboxSection>
+
+      <SandboxSection title="SearchButton">
+        {' '}
+        <Box sx={{ maxWidth: '400px', padding: '10px', backgroundColor: 'grey' }}>
+          <SearchButton value="Search" onSearch={() => {}} placeholder="Search..." />
+        </Box>
+      </SandboxSection>
+
+      <SandboxSection title="MediaModalSwitcher">
+        <MediaModalSwitcher value="GALLERY" onChange={() => {}} />
+      </SandboxSection>
+
+      <SandboxSection title="UsedCard">
+        <Box sx={{ maxWidth: '400px', padding: '10px', backgroundColor: '#232529' }}>
+          <UsedCard src="https://shorturl.at/xkStA" fileName="File 1" locale="uk" onClick={() => {}} />
+        </Box>
+      </SandboxSection>
+
+      <SandboxSection title="MediaModal">
+        <Button size="small" variant="filled" color="tertiary" onClick={() => setIsMediaModalOpen(true)}>
+          Open modal
+        </Button>
+
+        <MediaModal open={isMediaModalOpen} onClose={() => setIsMediaModalOpen(false)} onApply={() => {}} />
+      </SandboxSection>
+
+      <SandboxSection title="FileView">
+        <Box sx={{ maxWidth: '400px', padding: '10px', backgroundColor: '#232529' }}>
+          <FileView file={mockPdfFile} />
+        </Box>
+      </SandboxSection>
+
+      <SandboxSection title="UploadView">
+        <Box sx={{ maxWidth: '400px', padding: '10px', backgroundColor: '#232529' }}>
+          <UploadView selected={null} onPick={() => {}} />
+        </Box>
+      </SandboxSection>
+
+      <SandboxSection title="MinimizedFileCard">
+        <MinimizedFileCard id="fileCard" fileType="img" starred linked name="File card 1" date="11.11.2011" />
+      </SandboxSection>
+
+      <SandboxSection title="PageHeader">
+        <PageHeader title="Title" tabs={pageHeaderTabs} activeTab="Tab1" />
+      </SandboxSection>
+
+      <SandboxSection title="RenameFileModal">
+        <Button size="small" variant="filled" color="tertiary" onClick={() => setIsRenameFileModalOpen(true)}>
+          Open modal
+        </Button>
+
+        <RenameFileModal
+          open={isRenameFileModalOpen}
+          onClose={() => setIsRenameFileModalOpen(false)}
+          fileId="fileId"
+          currentFilename="File1"
+        />
+      </SandboxSection>
+
+      <SandboxSection title="FilterSelectItem">
+        <FilterSelectItem label="item1" selected />
+      </SandboxSection>
+
+      <SandboxSection title="FilterSelect">
+        <FilterSelect label="label" options={categoryOptions} menuMinWidth={200} />
+      </SandboxSection>
+
+      <SandboxSection title="Toaster">
+        <Button variant="filled" color="primary" onClick={showSuccess}>
+          Показати Success-сповіщення
+        </Button>
+
+        <Button variant="filled" color="primary" onClick={showError}>
+          Показати Error-сповіщення
+        </Button>
+
+        <Toaster />
+      </SandboxSection>
+
+      <SandboxSection title="ViewToggle">
+        <ViewToggle
+          value={currentView}
+          onChange={(newValue) => {
+            setCurrentView(newValue);
+          }}
+        />
+      </SandboxSection>
+
+      <SandboxSection title="LinkElement (closed)">
+        <LinkElement element={{ title: 'Title', iconSrc: 'doc', href: '/style-guide' }} open={false} />
+      </SandboxSection>
+
+      <SandboxSection title="LinkElement (open)">
+        <ListElement element={{ title: 'Title', iconSrc: 'doc', href: '/style-guide' }} open />
+      </SandboxSection>
+
+      <SandboxSection title="CollapseListNavigation">
+        <CollapseListNavigation
+          openNavbar={true}
+          elementProps={{
+            element: { title: 'Title1', iconSrc: 'doc', href: '/style-guide' },
+            collapseElements: [
+              { title: 'Title2', iconSrc: 'doc', href: '/style-guide' },
+              { title: 'Title3', iconSrc: 'doc', href: '/style-guide' }
+            ]
+          }}
+        />
+      </SandboxSection>
+
+      <SandboxSection title="DeleteCardModal">
+        <Button size="small" variant="filled" color="tertiary" onClick={() => setIsDeleteCardModalOpen(true)}>
+          Open modal
+        </Button>
+
+        <DeleteCardModal
+          open={isDeleteCardModalOpen}
+          onClose={() => setIsDeleteCardModalOpen(false)}
+          onDelete={() => {}}
+        />
+      </SandboxSection>
+
+      <SandboxSection title="DeleteFileModal">
+        <Button size="small" variant="filled" color="tertiary" onClick={handleToggleDeletingMode}>
+          Toggle isDeleting <p>(now {isDeletingToggled ? <b>on</b> : <b>off</b>})</p>
+        </Button>
+
+        <Button size="small" variant="filled" color="tertiary" onClick={handleToggleRefsIncluded}>
+          Unclude usage refs: <p>{isRefsIncluded ? <b>yes</b> : <b>no</b>}</p>
+        </Button>
+
+        <Button size="small" variant="filled" color="tertiary" onClick={() => setIsDeleteFileModalOpen(true)}>
+          Open modal
+        </Button>
+
+        <DeleteFileModal
+          open={isDeleteFileModalOpen}
+          onClose={() => setIsDeleteFileModalOpen(false)}
+          onConfirm={() => {}}
+          file={{
+            id: 'id1',
+            filename: 'File1',
+            ...(isRefsIncluded && { usageRefs: [{ pageId: 'id1', blockId: 'block1' }] })
+          }}
+          isDeleting={isDeletingToggled}
+        />
+      </SandboxSection>
+
+      <SandboxSection title="FileMenuActions">
+        <FileMenuActions
+          isStarred
+          onCloseMenu={() => {}}
+          onOpenDetails={() => {}}
+          onRename={() => {}}
+          onToggleStar={() => {}}
+          onDownload={() => {}}
+          onDelete={() => {}}
+        />
+      </SandboxSection>
     </Box>
   );
 }

@@ -297,7 +297,7 @@ export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAct
                     e.stopPropagation();
                     openPreview();
                   }}
-                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  sx={styles.zoomIconWrapper}
                   aria-label="Open image preview"
                   role="button"
                   tabIndex={-1}

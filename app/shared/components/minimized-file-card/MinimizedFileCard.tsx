@@ -11,7 +11,7 @@ import StarIcon from '~/public/icons/star-1.svg';
 import { styles } from '~/shared/components/minimized-file-card/MinimizedFileCard.styles';
 import { useUpdateAssetMutation } from '~/types/graphql/generated/graphql';
 
-const ICON_SIZE = 21;
+const ICON_SIZE = 20;
 
 const FILE_TYPES = {
   img: 'img',
@@ -123,7 +123,7 @@ const MinimizedFileCard = ({
             </Box>
           )}
           {linked && (
-            <Box aria-label="File is linked to other pages" sx={{ color: 'blue.700', display: 'flex' }}>
+            <Box aria-label="File is linked to other pages" sx={styles.linkIconWrapper}>
               <LinkIcon width={ICON_SIZE} height={ICON_SIZE} aria-hidden/>
             </Box>
           )}
@@ -162,9 +162,7 @@ const MinimizedFileCard = ({
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         slotProps={{
           paper: {
-            sx: {
-              mt: '-1px'
-            }
+            sx: styles.dropdownPaper
           }
         }}
         menuList={

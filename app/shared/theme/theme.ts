@@ -50,6 +50,7 @@ declare module '@mui/material/styles' {
     bodySm: React.CSSProperties;
     textMd: React.CSSProperties;
     textSm: React.CSSProperties;
+    h7: React.CSSProperties;
   }
 
   interface TypographyVariantsOptions {
@@ -61,6 +62,7 @@ declare module '@mui/material/styles' {
     bodySm?: React.CSSProperties;
     textMd?: React.CSSProperties;
     textSm?: React.CSSProperties;
+    h7?: React.CSSProperties;
   }
 }
 
@@ -74,6 +76,7 @@ declare module '@mui/material/Typography' {
     bodySm: true;
     textMd: true;
     textSm: true;
+    h7: true;
   }
 }
 
@@ -240,6 +243,13 @@ export const createAdminTheme = () =>
         fontWeight: 700,
         lineHeight: 1.4
       },
+      h7: {
+        fontFamily: fontFamilies.body,
+        fontSize: '20px',
+        fontStyle: 'bold',
+        fontWeight: 700,
+        lineHeight: 1.4
+      },
 
       subtitle1: {
         fontFamily: fontFamilies.body,
@@ -316,6 +326,12 @@ export const createAdminTheme = () =>
             whiteSpace: 'nowrap',
             fontFamily: fontFamilies.body,
             gap: '8px'
+          },
+          startIcon: {
+            margin: 0
+          },
+          endIcon: {
+            margin: 0
           }
         },
         variants: [

@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import { ButtonHTMLAttributes, forwardRef, SyntheticEvent, useCallback } from 'react';
 
-import { alertColors } from '~/shared/theme/colors';
+import { styles } from './Alert.styles';
 
 export type AlertColor = 'success' | 'info' | 'warning' | 'error';
 
@@ -31,27 +31,7 @@ const CloseButton = ({ label, onClick, variant = 'filled' }: CloseButtonProps) =
       component="button"
       aria-label="Close alert"
       onClick={onClick}
-      sx={{
-        typography: 'caption',
-        background: 'transparent',
-        border: 'none',
-        borderRadius: '8px',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        alignSelf: 'flex-start',
-        color: variant === 'outlined' ? alertColors.outlined.label : alertColors.filled.label,
-
-        '& span': {
-          margin: '0 12px 0 0'
-        },
-
-        '& svg': {
-          width: '20px',
-          height: '20px',
-          color: alertColors.cross
-        }
-      }}
+      sx={styles.closeButton(variant)}
     >
       {label && <Box component="span">{label}</Box>}
       <CloseRounded />
@@ -105,7 +85,7 @@ const Alert = forwardRef<HTMLDivElement, AlertProps>(
       >
         {title && <AlertTitle>{title}</AlertTitle>}
         {description && (
-          <Box component="p" sx={{ margin: 0 }}>
+          <Box component="p" sx={styles.description}>
             {description}
           </Box>
         )}

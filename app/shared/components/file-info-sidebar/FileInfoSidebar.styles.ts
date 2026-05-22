@@ -178,11 +178,11 @@ export const styles = {
     '& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline': {
       borderColor: colors.blue[600]
     },
-    
+
     '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
       borderColor: colors.blue[800]
     },
-    
+
     '& .MuiInputBase-inputMultiline': {
       ...theme.typography.textMd
     },
@@ -210,5 +210,11 @@ export const styles = {
     transition: 'opacity 300ms ease-out',
     pointerEvents: 'none',
     borderRadius: 'inherit'
+  },
+
+  zoomIconWrapper: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
   }
 };

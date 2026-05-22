@@ -228,6 +228,8 @@ export const chipsColors = {
   outlineDisabledBorder: mainHexPallete.blue[700],
   outlineDisabledText: mainHexPallete.blue[700],
 
+  published: mainHexPallete.green[600],
+  draft: mainHexPallete.red[100],
   newsChipBg: 'rgb(182, 208, 247)',
   eventChipBg: 'rgb(247, 182, 225)',
   mediaChipBg: 'rgb(182, 247, 207)'
@@ -322,8 +324,6 @@ export const toolbarColors = {
   border: mainHexPallete.blue[200]
 };
 
-// нові кольори
-// потрібен рефактор (можлива дуплікація)
 export const alertColors = {
   cross: 'rgba(86, 86, 86, 1)',
   shadow: 'rgba(0, 0, 0, 0.08)',

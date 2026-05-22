@@ -25,7 +25,11 @@ export const styles = {
     border: '1px solid',
     borderColor: 'blue.400',
     display: 'grid',
-    placeItems: 'center'
+    placeItems: 'center',
+
+    '& svg': {
+      opacity: 0.3
+    }
   },
 
   rightBlock: {
@@ -36,21 +40,49 @@ export const styles = {
     gap: 2
   },
 
+  textStack: {
+    minWidth: 0
+  },
+
+  fileNameContainer: {
+    display: 'flex',
+    gap: '4px',
+    minWidth: 0
+  },
+
   imageOvalPreview: {
     objectFit: 'cover',
     maxWidth: '150px',
     maxHeight: '136px',
     borderRadius: '60% 40% 60% 40% / 55% 45% 55% 45%'
   },
+
   imageSizeText: {
     fontStyle: 'italic'
   },
+
   editButton: {
-    width: '127px'
+    width: '127px',
+
+    '& .MuiButton-startIcon svg': {
+      marginRight: '-8px',
+      width: '16px',
+      height: '24px',
+      marginTop: '6px'
+    }
   },
+
   changeButton: {
-    width: '190px'
+    width: '190px',
+
+    '& .MuiButton-startIcon svg': {
+      marginRight: '-8px',
+      width: '16px',
+      height: '24px',
+      marginTop: '6px'
+    }
   },
+
   fileNameText: {
     display: '-webkit-box',
     WebkitLineClamp: 1,

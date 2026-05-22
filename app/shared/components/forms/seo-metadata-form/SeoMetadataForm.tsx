@@ -220,7 +220,7 @@ export default function SeoMetadataForm({
           sx={styles.indexingCheckbox}
         />
         <TooltipCustom title={'Дозволити індексацію сторінки пошуковими системами'}>
-          <InfoOutlinedIcon sx={{ borderWidth: '1px', width: '16px', height: '16px' }} />
+          <InfoOutlinedIcon sx={styles.infoIcon} />
         </TooltipCustom>
       </Box>
     </Box>
