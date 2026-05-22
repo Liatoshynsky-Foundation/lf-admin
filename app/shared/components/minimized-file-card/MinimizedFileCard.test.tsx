@@ -3,6 +3,21 @@ import userEvent from '@testing-library/user-event';
 
 import MinimizedFileCard from './MinimizedFileCard';
 
+jest.mock('~/public/icons/link.svg', () => ({
+  __esModule: true,
+  default: () => <svg data-testid="link-icon" />
+}));
+
+jest.mock('~/public/icons/menu.svg', () => ({
+  __esModule: true,
+  default: () => <svg data-testid="menu-icon" />
+}));
+
+jest.mock('~/public/icons/star-1.svg', () => ({
+  __esModule: true,
+  default: () => <svg data-testid="star-icon" />
+}));
+
 jest.mock('~/types/graphql/generated/graphql', () => ({
   ...jest.requireActual('~/types/graphql/generated/graphql'),
   useUpdateAssetMutation: () => [jest.fn(), { loading: false }]
