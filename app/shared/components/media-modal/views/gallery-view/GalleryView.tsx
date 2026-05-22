@@ -12,6 +12,8 @@ import type { GalleryMedia } from '../../MediaModal.types';
 import { sharedViewStyles } from '../shared-view.styles';
 import { useDebounce } from '~/hooks/use-debounce/useDebounce';
 import { matchesSearch, sortByDateAndName } from '~/lib/utils/filterHelpers';
+import { type GalleryFile, useGalleryFiles } from '~/shared/hooks/use-galllery-photo/useGallery';
+import { AssetType, useAllAssetsQuery } from '~/types/graphql/generated/graphql';
 
 type Props = Readonly<{
   selected: GalleryMedia | null;
@@ -20,57 +22,15 @@ type Props = Readonly<{
   onFiltersChange: (filters: Partial<GalleryFilters>) => void;
 }>;
 
-type MockAsset = {
-  _id: string;
+type GalleryItem = {
+  id: string;
   filename: string;
   url: string;
   isStarred: boolean;
-  tags: ('page' | 'news' | 'events' | 'opus')[];
-  usageRefs: { pageId: string; blockId?: string }[];
+  tags: string[];
+  usageRefs: { pageId?: string | null; blockId?: string | null }[];
   createdAt: string;
 };
-
-const mockAssets: MockAsset[] = [
-  {
-    _id: '1',
-    filename: 'piano-studio.jpg',
-    url: '/images/foundation-second.png',
-    isStarred: true,
-    tags: ['page', 'opus'],
-    usageRefs: [
-      { pageId: 'about', blockId: 'hero' },
-      { pageId: 'collaboration', blockId: 'partners' }
-    ],
-    createdAt: '2025-01-08T10:30:00Z'
-  },
-  {
-    _id: '2',
-    filename: 'composer-portrait.jpg',
-    url: '/images/foundation-first.png',
-    isStarred: false,
-    tags: ['opus'],
-    usageRefs: [],
-    createdAt: '2025-01-09T14:20:00Z'
-  },
-  {
-    _id: '3',
-    filename: 'archive-documents.jpg',
-    url: '/images/mission-1.png',
-    isStarred: true,
-    tags: ['news', 'events'],
-    usageRefs: [],
-    createdAt: '2025-01-10T09:15:00Z'
-  },
-  {
-    _id: '4',
-    filename: 'concert-hall.jpg',
-    url: '/images/foundation-first.png',
-    isStarred: false,
-    tags: ['events'],
-    usageRefs: [],
-    createdAt: '2025-01-07T16:45:00Z'
-  }
-];
 
 const favoritesFilterOptions = [
   { value: 'starred', label: 'Із зірочкою' },
@@ -86,58 +46,95 @@ const usageFilterOptions = [
   { value: 'unused', label: 'Не використані' }
 ];
 
-const getPageNames = (usageRefs: MockAsset['usageRefs']): string[] => {
+const getPageNames = (usageRefs: GalleryItem['usageRefs']): string[] => {
   const pageNameMap: Record<string, string> = {
     about: 'Про Фундацію',
     collaboration: 'Співпраця',
     news: 'Новини',
     events: 'Події'
   };
-
-  return usageRefs.map((ref) => pageNameMap[ref.pageId] || ref.pageId);
+  return usageRefs.map((ref) => pageNameMap[ref.pageId ?? ''] ?? ref.pageId ?? '');
 };
 
-const matchesFavoritesFilter = (asset: MockAsset, filter: string): boolean => {
+const matchesFavoritesFilter = (item: GalleryItem, filter: string): boolean => {
   if (!filter) return true;
-  if (filter === 'starred') return asset.isStarred;
-  if (filter === 'not-starred') return !asset.isStarred;
+  if (filter === 'starred') return item.isStarred;
+  if (filter === 'not-starred') return !item.isStarred;
   return true;
 };
 
-const matchesUsageFilter = (asset: MockAsset, filter: string): boolean => {
+const matchesUsageFilter = (item: GalleryItem, filter: string): boolean => {
   if (!filter) return true;
-  if (filter === 'unused') return asset.usageRefs.length === 0;
-  return asset.tags.includes(filter as MockAsset['tags'][number]);
+  if (filter === 'unused') return item.usageRefs.length === 0;
+  return item.usageRefs.some((ref) => ref.pageId === filter);
 };
 
 export function GalleryView({ selected: _selected, onPick, filters, onFiltersChange }: Props) {
-  const handleCardClick = (asset: MockAsset) => {
-    const galleryMedia: GalleryMedia = {
-      kind: 'gallery',
-      id: asset._id,
-      fileName: asset.filename,
-      src: asset.url,
-      locale: 'uk'
-    };
+  const { files: r2Files, isLoading: r2Loading } = useGalleryFiles();
 
-    onPick(galleryMedia);
-  };
+  const { data: assetsData, loading: assetsLoading } = useAllAssetsQuery({
+    variables: { filters: { type: AssetType.Image } }
+  });
 
   const debouncedSearchValue = useDebounce(filters.search, 200);
 
-  const filteredAndSortedAssets = useMemo(
+  type AssetMeta = {
+    id: string;
+    filename: string;
+    isStarred: boolean;
+    tags: string[];
+    usageRefs: { pageId?: string | null; blockId?: string | null }[];
+  };
+
+  const assetByUrl = useMemo(() => {
+    const map: Record<string, AssetMeta> = {};
+    (assetsData?.allAssets ?? []).forEach((asset) => {
+      if (asset.url) map[asset.url] = asset as AssetMeta;
+    });
+    return map;
+  }, [assetsData]);
+
+  const galleryItems = useMemo((): GalleryItem[] => {
+    return r2Files
+      .filter((file): file is GalleryFile & { url: string } => Boolean(file.url))
+      .map((file) => {
+        const asset = assetByUrl[file.url];
+        return {
+          id: asset?.id ?? file.path ?? file.filename,
+          filename: asset?.filename ?? file.filename,
+          url: file.url,
+          isStarred: asset?.isStarred ?? false,
+          tags: asset?.tags ?? [],
+          usageRefs: asset?.usageRefs ?? [],
+          createdAt: file.createdAt
+        };
+      });
+  }, [r2Files, assetByUrl]);
+
+  const filteredAndSortedItems = useMemo(
     () =>
       sortByDateAndName(
-        mockAssets.filter((asset) => {
-          return (
-            matchesSearch(asset, debouncedSearchValue, ['filename']) &&
-            matchesFavoritesFilter(asset, filters.favorites) &&
-            matchesUsageFilter(asset, filters.usage)
-          );
-        })
+        galleryItems.filter(
+          (item) =>
+            matchesSearch(item, debouncedSearchValue, ['filename']) &&
+            matchesFavoritesFilter(item, filters.favorites) &&
+            matchesUsageFilter(item, filters.usage)
+        )
       ),
-    [debouncedSearchValue, filters.favorites, filters.usage]
+    [galleryItems, debouncedSearchValue, filters.favorites, filters.usage]
   );
+
+  const handleCardClick = (item: GalleryItem) => {
+    onPick({
+      kind: 'gallery',
+      id: item.id,
+      fileName: item.filename,
+      src: item.url,
+      locale: 'uk'
+    });
+  };
+
+  const loading = r2Loading || assetsLoading;
 
   return (
     <Box data-testid="GalleryView" sx={sharedViewStyles.container}>
@@ -153,7 +150,6 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
             placeholder="Пошук..."
             testId="GalleryView-search"
           />
-
           <FilterDropdown
             label="Позначення"
             value={filters.favorites}
@@ -161,7 +157,6 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
             onChange={(favorites) => onFiltersChange({ favorites })}
             testId="GalleryView-favoritesFilter"
           />
-
           <FilterDropdown
             label="Використання"
             value={filters.usage}
@@ -172,21 +167,25 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
         </Box>
       </Box>
 
-      <MediaGrid
-        items={filteredAndSortedAssets}
-        sx={sharedViewStyles.gridContainer}
-        renderCard={(asset: MockAsset) => (
-          <GalleryCard
-            src={asset.url}
-            fileName={asset.filename}
-            isStarred={asset.isStarred}
-            usageLocations={getPageNames(asset.usageRefs)}
-            onClick={() => handleCardClick(asset)}
-            testId={`GalleryCard-${asset._id}`}
-          />
-        )}
-        testIdPrefix="GalleryView"
-      />
+      {loading ? (
+        <Box sx={sharedViewStyles.gridContainer}>Завантаження...</Box>
+      ) : (
+        <MediaGrid
+          items={filteredAndSortedItems}
+          sx={sharedViewStyles.gridContainer}
+          renderCard={(item) => (
+            <GalleryCard
+              src={item.url}
+              fileName={item.filename}
+              isStarred={item.isStarred}
+              usageLocations={getPageNames(item.usageRefs)}
+              onClick={() => handleCardClick(item)}
+              testId={`GalleryCard-${item.id}`}
+            />
+          )}
+          testIdPrefix="GalleryView"
+        />
+      )}
     </Box>
   );
 }

@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { useMemo, useRef, useState } from 'react';
 
 import { styles } from './PublicationsPageContent.styles';
-import type { FilesSortValue } from '~/constants/files';
 import {
   PUBLICATIONS_CREATE_OPTIONS,
   PUBLICATIONS_EMPTY_STATE_DESCRIPTION,
@@ -26,6 +25,7 @@ import {
   type PublicationsStatusValue,
   type PublicationsTabValue
 } from '~/constants/publications';
+import type { FilesSortValue } from '~/constants/sort';
 import ContentCard, { type ContentType } from '~/shared/components/content-card/ContentCard';
 import DropdownMenu from '~/shared/components/dropdown-menu/DropdownMenu';
 import { EmptyState } from '~/shared/components/empty-state';

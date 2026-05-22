@@ -14,7 +14,7 @@ export const NAVIGATION_DATA = {
     {
       element: { title: 'Каталоги', iconSrc: 'book-marked' },
       collapseElements: [
-        { title: 'Твори', href: '', disabled: true },
+        { title: 'Твори', href: '/creativity' },
         { title: 'Дослідження та наукові праці', href: '', disabled: true },
         { title: 'Архів кабінету-музею', href: '', disabled: true }
       ]
