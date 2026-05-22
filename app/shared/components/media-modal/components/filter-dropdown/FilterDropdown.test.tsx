@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { FilterDropdown } from './FilterDropdown';
+import { mainHexPallete as colors} from '~/shared/theme/colors';
 
 jest.mock('~/public/icons/chevronDown.svg', () => ({
   __esModule: true,
@@ -81,7 +82,7 @@ describe('FilterDropdown', () => {
     expect(screen.getByText('Option 2')).toBeInTheDocument();
 
     const chip = screen.getByText('Option 2').closest('div');
-    expect(chip).toHaveStyle({ backgroundColor: '#FCFCFC' });
+    expect(chip).toHaveStyle({ backgroundColor: colors.white });
   });
 
   it('should clear selection when chip is clicked', async () => {
