@@ -30,12 +30,12 @@ import {
   type WorksTabValue
 } from '~/constants/creativity';
 import type { FilesSortValue } from '~/constants/sort';
-import { colors } from '~/shared/components/design-system/button/Button.styles';
 import DropdownMenu from '~/shared/components/dropdown-menu/DropdownMenu';
 import { EmptyState } from '~/shared/components/empty-state';
 import { FilteringToolbar, SortSelect } from '~/shared/components/filtering-toolbar';
 import { PageHeader } from '~/shared/components/page-header/PageHeader';
 import { filterSelectStyles } from '~/shared/components/selector/FilterSelect.styles';
+import { mainHexPallete as colors } from '~/shared/theme/colors';
 import { normalizeSearch } from '~/utils/normalizeSearch';
 
 type WorksPageContentProps = Readonly<{
