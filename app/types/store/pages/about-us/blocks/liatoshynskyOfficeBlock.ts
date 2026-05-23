@@ -1,5 +1,5 @@
-import { QuoteBlock } from '~/types/common';
+import { TipTapQuoteBlock } from '~/types/common';
 
 export interface LiatoshynskyOfficeBlock {
-  quote: QuoteBlock;
+  quote: TipTapQuoteBlock;
 }

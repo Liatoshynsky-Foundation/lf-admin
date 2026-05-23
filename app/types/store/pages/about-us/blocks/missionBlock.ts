@@ -10,7 +10,7 @@ export type MissionListItemWithId = {
 } & MissionListItem;
 
 export type OurMissionBlock = {
-  title: { uk: string; en: string };
+  title: MissionListItem;
   smallImage: ImageType;
   bigImage: ImageType;
   list: MissionListItem[];

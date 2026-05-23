@@ -1,8 +1,8 @@
-import type { LocalizedProse, LocalizedString } from '~/types/common';
+import type { LocalizedJSON } from '~/types/common';
 
 export type GoalItem = {
-  title: LocalizedString;
-  description: LocalizedProse;
+  title: LocalizedJSON;
+  description: LocalizedJSON;
 };
 
 export type GoalItemWithId = {
@@ -10,6 +10,6 @@ export type GoalItemWithId = {
 } & GoalItem;
 
 export type OurGoalsBlock = {
-  title: LocalizedString;
+  title: LocalizedJSON;
   goals: GoalItemWithId[];
 };

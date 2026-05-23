@@ -1,9 +1,10 @@
-import { ImageType, LocalizedProse, LocalizedString } from '~/types/common';
+import { ImageType, LocalizedJSON } from '~/types/common';
+// import { JSONContent } from '@tiptap/react';
 
 export type TeamMember = {
   photo: ImageType;
-  name: LocalizedString;
-  description: LocalizedString;
+  name: LocalizedJSON;
+  description: LocalizedJSON;
 };
 
 export type TeamMemberWithId = {
@@ -11,7 +12,7 @@ export type TeamMemberWithId = {
 } & TeamMember;
 
 export type FoundationFoundersBlock = {
-  titleText: LocalizedProse;
-  listTitle: LocalizedString;
+  titleText: LocalizedJSON;
+  listTitle: LocalizedJSON;
   members: TeamMember[];
 };

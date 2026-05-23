@@ -1,7 +1,9 @@
-import { ImageBlock, LocalizedString, QuoteBlock } from '~/types/common';
+import { JSONContent } from '@tiptap/react';
+
+import { ImageBlock, TipTapQuoteBlock } from '~/types/common';
 
 export interface IntroSectionBlock {
-  title: LocalizedString;
+  title: JSONContent;
   image: ImageBlock;
-  quote: QuoteBlock;
+  quote: TipTapQuoteBlock;
 }

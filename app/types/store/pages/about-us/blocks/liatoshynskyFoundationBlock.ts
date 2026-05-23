@@ -1,14 +1,17 @@
-import { ImageType, ProseDoc } from '~/types/common';
+import { JSONContent } from '@tiptap/react';
+
+import { ImageType } from '~/types/common';
 
 export type FoundationInfo = {
-  ourOrganisation: Record<'uk' | 'en', ProseDoc>;
-  ourName: Record<'uk' | 'en', ProseDoc>;
-  ourBelief: Record<'uk' | 'en', ProseDoc>;
+  ourOrganisation: Record<'uk' | 'en', JSONContent>;
+  ourName: Record<'uk' | 'en', JSONContent
+  >;
+  ourBelief: Record<'uk' | 'en', JSONContent>;
   image: ImageType;
   ourMission: {
-    title: Record<'uk' | 'en', string>;
+    title: Record<'uk' | 'en', JSONContent>;
     smallImage: ImageType;
     bigImage: ImageType;
-    list: Record<'uk' | 'en', ProseDoc>[];
+    list: Record<'uk' | 'en', JSONContent>[];
   };
 };
