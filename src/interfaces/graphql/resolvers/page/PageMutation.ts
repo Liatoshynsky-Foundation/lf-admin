@@ -52,7 +52,7 @@ export const PageMutation = {
       resultPage = await repo.createDraft(slug, cleanedBlocks, published) as Page;
     } else {
       const changes = createDotNotationPatch(
-        (existingDraft.blocks as JsonObject) || {},
+        (existingDraft.blocks as unknown as JsonObject) || {},
         (cleanedBlocks as JsonObject) || {}
       );
 
@@ -110,7 +110,7 @@ export const PageMutation = {
     }
 
     const changes = createDotNotationPatch(
-      (publishedPage?.blocks as JsonObject) || {},
+      (publishedPage?.blocks as unknown as JsonObject) || {},
       (cleanedBlocks as JsonObject) || {}
     );
 
