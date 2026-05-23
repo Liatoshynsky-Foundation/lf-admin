@@ -1,8 +1,15 @@
+import { JSONContent } from '@tiptap/react';
+
 import { ErrorMessage } from '~/interfaces/error';
 
 export interface LocalizedString {
   uk: string;
   en: string;
+}
+
+export interface LocalizedJSON {
+  uk: JSONContent;
+  en: JSONContent;
 }
 
 export interface CropRect {
@@ -18,16 +25,16 @@ export interface CropResult {
 
 export interface ImageBlock {
   src: string;
-  alt: LocalizedString;
-  caption: LocalizedString;
+  alt: LocalizedJSON;
+  caption: LocalizedJSON;
   isTmp?: boolean;
   crop?: CropResult | null;
 }
 
 export type ImageType = {
   src: string;
-  alt: { uk: string; en: string };
-  caption: { uk: string; en: string };
+  alt: LocalizedJSON;
+  caption: LocalizedJSON;
   generatedSrc: string;
   crop?: CropResult | null;
 };
@@ -35,6 +42,11 @@ export type ImageType = {
 export interface QuoteBlock {
   text: LocalizedString;
   source: LocalizedString;
+}
+
+export interface TipTapQuoteBlock {
+  text: LocalizedJSON;
+  source: LocalizedJSON;
 }
 
 export type ProseTextNode = {

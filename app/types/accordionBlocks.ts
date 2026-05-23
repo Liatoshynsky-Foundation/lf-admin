@@ -1,13 +1,15 @@
+import { JSONContent } from '@tiptap/react';
+
 interface ChangeHandlers {
-  onTitleChange?: (newValue: string) => void;
-  onDescriptionChange?: (newValue: string) => void;
-  onMainTextChange?: (newValue: string) => void;
-  onParagraphsChange?: (index: number, newValue: string) => void;
+  onTitleChange?: (newValue: JSONContent) => void;
+  onDescriptionChange?: (newValue: JSONContent) => void;
+  onMainTextChange?: (newValue: JSONContent) => void;
+  onParagraphsChange?: (index: number, newValue: JSONContent) => void;
 }
 
 export interface DescriptiveTextBlock extends ChangeHandlers {
-  title: string;
-  description: string;
+  title: JSONContent;
+  description: JSONContent;
 }
 
 export interface TextBlock extends ChangeHandlers {
