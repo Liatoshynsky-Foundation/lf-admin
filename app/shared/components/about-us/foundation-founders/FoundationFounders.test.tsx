@@ -1,22 +1,46 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { JSONContent } from '@tiptap/react';
+import React from 'react';
 
 import { FoundationFounders } from './FoundationFounders';
+import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
+import { TeamMemberWithId } from '~/types/store/pages/about-us/blocks/foundationFounderBlock';
+
+interface MockCustomTextFieldProps {
+  readonly title: string;
+  readonly value: JSONContent;
+  readonly onChange: (value: JSONContent) => void;
+}
+
+interface MockConfigurableListProps<T> {
+  readonly items: readonly T[];
+  readonly addBtnLabel: string;
+  readonly onCreate: () => void;
+  readonly renderItem: (props: { readonly item: T }) => React.ReactNode;
+  readonly editable: boolean;
+  readonly onDelete: (id: string) => void;
+}
+
+interface MockContributorCardProps {
+  readonly contributor: TeamMemberWithId;
+  readonly currentLocale: 'uk' | 'en';
+}
 
 const setFieldMock = jest.fn();
 const usePageBlockMock = jest.fn();
 
 jest.mock('~/store', () => ({
-  useStore: (selector: (state: { locale: string; setField: typeof setFieldMock }) => void) =>
+  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock }) => unknown) =>
     selector({ locale: 'uk', setField: setFieldMock })
 }));
 
 jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
-  usePageBlock: (...args: [string, string]) => usePageBlockMock(...args)
+  usePageBlock: () => usePageBlockMock()
 }));
 
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
-  default: ({ children, title }: { children: React.ReactNode; title: string }) => (
+  default: ({ children, title }: { readonly children: React.ReactNode; readonly title: string }) => (
     <section data-testid="collapsible">
       <h2>{title}</h2>
       {children}
@@ -25,148 +49,199 @@ jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
 }));
 
 jest.mock('~/ds-components/text-field/TextField', () => ({
-  CustomTextField: ({
-    title,
-    value,
-    onChange
-  }: {
-    title: string;
-    value: string;
-    onChange: (e: { target: { value: string } }) => void;
-  }) => (
-    <label>
-      {title}
-      <input data-testid={`textfield-${title}`} value={value} onChange={onChange} />
-    </label>
+  __esModule: true,
+  CustomTextField: ({ title, value, onChange }: MockCustomTextFieldProps) => (
+    <div data-testid={`textfield-wrapper-${title}`}>
+      <span data-testid={`textfield-json-${title}`}>{JSON.stringify(value)}</span>
+      <button
+        data-testid={`trigger-change-${title}`}
+        onClick={() => {
+          const updatedJson: JSONContent = {
+            type: 'doc',
+            content: [{ type: 'paragraph', content: [{ type: 'text', text: `Updated ${title}` }] }]
+          };
+          onChange(updatedJson);
+        }}
+      >
+        Change {title}
+      </button>
+    </div>
   )
 }));
 
 jest.mock('~/components/configurable-list/ConfigurableList', () => ({
   __esModule: true,
-  default: ({
+  default: <T extends { readonly id: string }>({
     items,
     addBtnLabel,
     onCreate,
     renderItem,
     editable,
     onDelete
-  }: {
-    items: { id: string }[];
-    addBtnLabel: string;
-    onCreate: () => void;
-    renderItem: ({ item }: { item: { id: string } }) => React.ReactNode;
-    editable: boolean;
-    onDelete: (id: string) => void;
-  }) => (
+  }: MockConfigurableListProps<T>) => (
     <div data-testid="configurable-list">
-      {items.map((item: { id: string }) => (
-        <div key={item.id} data-testid="configurable-item">
+      {items.map((item) => (
+        <div key={item.id} data-testid={`list-item-${item.id}`}>
           {renderItem({ item })}
-          {editable && <button onClick={() => onDelete(item.id)}>Delete</button>}
+          {editable && (
+            <button data-testid={`delete-${item.id}`} onClick={() => onDelete(item.id)}>
+              Delete
+            </button>
+          )}
         </div>
       ))}
-      {editable && <button onClick={onCreate}>{addBtnLabel}</button>}
+      {editable && (
+        <button data-testid="add-btn" onClick={onCreate}>
+          {addBtnLabel}
+        </button>
+      )}
     </div>
   )
 }));
 
 jest.mock('~/components/contributor-card/ContributorCard', () => ({
-  ContributorCard: ({
-    contributor
-  }: {
-    contributor: {
-      name: { uk: string; en: string };
-      description: { uk: string; en: string };
-      photo: {
-        src: string;
-        alt: { uk: string; en: string };
-        caption: { uk: string; en: string };
-        generatedSrc: string;
-      };
-    };
-  }) => <div data-testid="contributor-card">{contributor.name.uk || 'Placeholder Name'}</div>
+  __esModule: true,
+  ContributorCard: ({ contributor, currentLocale }: MockContributorCardProps) => (
+    <div data-testid={`contributor-card-${contributor.id}`}>
+      <span data-testid={`contributor-name-json-${contributor.id}`}>
+        {JSON.stringify(contributor.name[currentLocale])}
+      </span>
+    </div>
+  )
 }));
-
-const expectSetField = (field: string, value: unknown) =>
-  expect(setFieldMock).toHaveBeenCalledWith('about-us', 'FoundationFounders', field, expect.objectContaining(value));
-
-const updateField = (testId: string, value: string) =>
-  fireEvent.change(screen.getByTestId(testId), { target: { value } });
 
 beforeAll(() => {
   globalThis.crypto.randomUUID = jest.fn(() => 'test-id') as unknown as typeof crypto.randomUUID;
 });
 
+const mockIntroJson: JSONContent = {
+  type: 'doc',
+  content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Вступ' }] }]
+};
+
+const mockListTitleJson: JSONContent = {
+  type: 'doc',
+  content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Список' }] }]
+};
+
+const mockMemberNameJson: JSONContent = {
+  type: 'doc',
+  content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Тест' }] }]
+};
+
+const defaultMockBlock = {
+  titleText: { uk: mockIntroJson, en: { type: 'doc', content: [] } },
+  listTitle: { uk: mockListTitleJson, en: { type: 'doc', content: [] } },
+  members: [] as TeamMemberWithId[]
+};
+
 describe('FoundationFounders', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    usePageBlockMock.mockReturnValue({
-      block: {
-        titleText: {
-          uk: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Вступ' }] }] },
-          en: { type: 'doc', content: [] }
-        },
-        listTitle: {
-          uk: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Список' }] }] },
-          en: { type: 'doc', content: [] }
-        },
-        members: []
-      }
-    });
   });
 
-  it('should render skeleton when no block', () => {
-    usePageBlockMock.mockReturnValueOnce({ block: null });
+  it('should render skeleton when no block exists', () => {
+    usePageBlockMock.mockReturnValue({ block: null });
+    
     const { container } = render(<FoundationFounders />);
     expect(container.querySelector('.MuiSkeleton-root')).toBeInTheDocument();
   });
 
-  it('should update title text', () => {
+  it('should verify initial layout textfield rich text payloads match serialization expectations', () => {
+    usePageBlockMock.mockReturnValue({ block: defaultMockBlock });
     render(<FoundationFounders />);
-    updateField('textfield-Вступний текст секції', 'Новий заголовок');
-    expectSetField('titleText', { uk: expect.objectContaining({ type: 'doc' }) });
+
+    expect(screen.getByTestId('textfield-json-Вступний текст секції')).toHaveTextContent(JSON.stringify(mockIntroJson));
+    expect(screen.getByTestId('textfield-json-Заголовок секції')).toHaveTextContent(JSON.stringify(mockListTitleJson));
   });
 
-  it('should update list title', () => {
+  it('should update intro section title text values with structured rich text schemas when modified', () => {
+    usePageBlockMock.mockReturnValue({ block: defaultMockBlock });
     render(<FoundationFounders />);
-    updateField('textfield-Заголовок секції', 'Новий список');
-    expectSetField('listTitle', { uk: expect.objectContaining({ type: 'doc' }) });
-  });
 
-  it('should add a new member', () => {
-    render(<FoundationFounders />);
-    fireEvent.click(screen.getByText(/Додати учасника/));
+    fireEvent.click(screen.getByTestId('trigger-change-Вступний текст секції'));
 
     expect(setFieldMock).toHaveBeenCalledWith(
-      'about-us',
-      'FoundationFounders',
+      PAGE_IDS.ABOUT_US,
+      BLOCK_IDS.FOUNDATION_FOUNDERS,
+      'titleText',
+      expect.objectContaining({
+        uk: {
+          type: 'doc',
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Вступний текст секції' }] }]
+        }
+      })
+    );
+  });
+
+  it('should update list structural headers with structured rich text schemas when modified', () => {
+    usePageBlockMock.mockReturnValue({ block: defaultMockBlock });
+    render(<FoundationFounders />);
+
+    fireEvent.click(screen.getByTestId('trigger-change-Заголовок секції'));
+
+    expect(setFieldMock).toHaveBeenCalledWith(
+      PAGE_IDS.ABOUT_US,
+      BLOCK_IDS.FOUNDATION_FOUNDERS,
+      'listTitle',
+      expect.objectContaining({
+        uk: {
+          type: 'doc',
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Заголовок секції' }] }]
+        }
+      })
+    );
+  });
+
+  it('should append a clean, empty localized item layout to members arrays upon add click interactions', () => {
+    usePageBlockMock.mockReturnValue({ block: defaultMockBlock });
+    render(<FoundationFounders />);
+
+    fireEvent.click(screen.getByTestId('add-btn'));
+
+    expect(setFieldMock).toHaveBeenCalledWith(
+      PAGE_IDS.ABOUT_US,
+      BLOCK_IDS.FOUNDATION_FOUNDERS,
       'members',
       expect.arrayContaining([
         expect.objectContaining({
           id: 'test-id',
-          name: { uk: 'Placeholder Name', en: 'Placeholder Name' }
+          name: { uk: {}, en: {} },
+          description: { uk: {}, en: {} },
+          photo: expect.objectContaining({ src: '' })
         })
       ])
     );
   });
 
-  it('should remove a member', () => {
-    usePageBlockMock.mockReturnValueOnce({
+  it('should cleanly remove targeted items out of the list matrix when delete buttons are pushed', () => {
+    usePageBlockMock.mockReturnValue({
       block: {
-        titleText: {
-          uk: { type: 'doc', content: [] },
-          en: { type: 'doc', content: [] }
-        },
-        listTitle: {
-          uk: { type: 'doc', content: [] },
-          en: { type: 'doc', content: [] }
-        },
-        members: [{ id: '1', name: { uk: 'Тест', en: 'Test' }, description: { uk: '', en: '' }, photo: {} }]
+        ...defaultMockBlock,
+        members: [
+          {
+            id: 'target-member-1',
+            name: { uk: mockMemberNameJson, en: {} },
+            description: { uk: {}, en: {} },
+            photo: { src: '', alt: {}, caption: {}, generatedSrc: '' }
+          }
+        ] as TeamMemberWithId[]
       }
     });
+
     render(<FoundationFounders />);
-    expect(screen.getByText('Тест')).toBeInTheDocument();
-    fireEvent.click(screen.getByText('Delete'));
-    expectSetField('members', []);
+    
+    expect(screen.getByTestId('contributor-name-json-target-member-1')).toHaveTextContent(
+      JSON.stringify(mockMemberNameJson)
+    );
+
+    fireEvent.click(screen.getByTestId('delete-target-member-1'));
+
+    expect(setFieldMock).toHaveBeenCalledWith(
+      PAGE_IDS.ABOUT_US,
+      BLOCK_IDS.FOUNDATION_FOUNDERS,
+      'members',
+      []
+    );
   });
 });

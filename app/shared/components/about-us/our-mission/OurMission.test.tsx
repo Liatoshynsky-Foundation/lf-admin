@@ -1,7 +1,35 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { JSONContent } from '@tiptap/react';
+import React from 'react';
 
 import OurMission from './OurMission';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
+import { MissionListItemWithId } from '~/types/store/pages/about-us/blocks/missionBlock';
+
+interface MockCustomTextFieldProps {
+  readonly title?: string;
+  readonly label?: string;
+  readonly value: JSONContent;
+  readonly onChange: (value: JSONContent) => void;
+}
+
+interface MockImagePreviewBlockProps {
+  readonly title: string;
+  readonly imageUrl: string;
+  readonly onChangeImage: (url: string) => void;
+}
+
+interface MockConfigurableListProps<T> {
+  readonly items: readonly T[];
+  readonly onCreate: () => { readonly id: string | number };
+  readonly onDelete: (id: string | number) => void;
+  readonly onChange: (item: T) => void;
+  readonly renderItem: (props: {
+    readonly item: T;
+    readonly onChange: (item: T) => void;
+  }) => React.ReactNode;
+  readonly addBtnLabel: string;
+}
 
 const handleUploadImageMock = jest.fn();
 const useUploadBlobMutationMock = jest.fn();
@@ -16,19 +44,19 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
 
 const setFieldMock = jest.fn();
 
-type StoreState = { locale: 'uk'; setField: typeof setFieldMock };
 jest.mock('~/store', () => ({
-  useStore: (selector: (state: StoreState) => unknown) => selector({ locale: 'uk', setField: setFieldMock })
+  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock }) => unknown) =>
+    selector({ locale: 'uk', setField: setFieldMock })
 }));
 
 const usePageBlockMock = jest.fn();
 jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
-  usePageBlock: (...args: unknown[]) => usePageBlockMock(...args)
+  usePageBlock: () => usePageBlockMock()
 }));
 
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
-  default: ({ children, title }: { children: React.ReactNode; title: string }) => (
+  default: ({ children, title }: { readonly children: React.ReactNode; readonly title: string }) => (
     <section data-testid="collapsible-block">
       <h2>{title}</h2>
       {children}
@@ -38,25 +66,21 @@ jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
 
 jest.mock('~/components/configurable-list/ConfigurableList', () => ({
   __esModule: true,
-  default: ({
+  default: <T extends { readonly id: string | number; readonly value: JSONContent }>({
     items,
     onCreate,
     onDelete,
     onChange,
     renderItem,
     addBtnLabel
-  }: {
-    items: { id: string }[];
-    onCreate: () => void;
-    onDelete: (id: string) => void;
-    onChange: (id: string, value: unknown) => void;
-    renderItem: (props: { item: { id: string }; onChange: (id: string, value: unknown) => void }) => React.ReactNode;
-    addBtnLabel: string;
-  }) => (
+  }: MockConfigurableListProps<T>) => (
     <div data-testid="configurable-list">
-      {items.map((item: { id: string }) => (
-        <div key={item.id} data-testid="list-item">
-          {renderItem({ item, onChange })}
+      {items.map((item) => (
+        <div key={item.id} data-testid={`list-item-${item.id}`}>
+          {renderItem({
+            item,
+            onChange: (updatedItem) => onChange(updatedItem)
+          })}
           <button data-testid={`delete-${item.id}`} onClick={() => onDelete(item.id)}>
             Delete
           </button>
@@ -70,36 +94,35 @@ jest.mock('~/components/configurable-list/ConfigurableList', () => ({
 }));
 
 jest.mock('~/ds-components/text-field/TextField', () => ({
-  CustomTextField: ({
-    title,
-    label,
-    value,
-    onChange
-  }: {
-    title?: string;
-    label?: string;
-    value: string;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  }) => (
-    <div data-testid={`textfield-${title || label}`}>
-      <input data-testid={`input-${title || label}`} value={value} onChange={onChange} />
-    </div>
-  )
+  __esModule: true,
+  CustomTextField: ({ title, label, value, onChange }: MockCustomTextFieldProps) => {
+    const selectorKey = title || label || 'default';
+    return (
+      <div data-testid={`textfield-wrapper-${selectorKey}`}>
+        <span data-testid={`textfield-json-${selectorKey}`}>{JSON.stringify(value)}</span>
+        <button
+          data-testid={`trigger-change-${selectorKey}`}
+          onClick={() => {
+            const updatedJson: JSONContent = {
+              type: 'doc',
+              content: [{ type: 'paragraph', content: [{ type: 'text', text: `Updated ${selectorKey}` }] }]
+            };
+            onChange(updatedJson);
+          }}
+        >
+          Change {selectorKey}
+        </button>
+      </div>
+    );
+  }
 }));
 
 jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
-  ImagePreviewBlock: ({
-    title,
-    imageUrl,
-    onChangeImage
-  }: {
-    title: string;
-    imageUrl: string;
-    onChangeImage: (file: File) => void;
-  }) => (
+  __esModule: true,
+  ImagePreviewBlock: ({ title, imageUrl, onChangeImage }: MockImagePreviewBlockProps) => (
     <div data-testid={`image-block-${title}`}>
-      <span>{imageUrl}</span>
-      <button data-testid={`upload-${title}`} onClick={() => onChangeImage(new File([''], 'test.png'))}>
+      <span data-testid={`image-url-${title}`}>{imageUrl}</span>
+      <button data-testid={`upload-${title}`} onClick={() => onChangeImage('new-image-path.jpg')}>
         Upload
       </button>
     </div>
@@ -111,60 +134,153 @@ beforeAll(() => {
   URL.createObjectURL = jest.fn(() => 'mocked-url');
 });
 
+const mockTitleJson: JSONContent = {
+  type: 'doc',
+  content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Initial title' }] }]
+};
+
+const mockItemJson: JSONContent = {
+  type: 'doc',
+  content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Initial point' }] }]
+};
+
+const mockCaptionJson: JSONContent = {
+  type: 'doc',
+  content: [{ type: 'paragraph', content: [{ type: 'text', text: 'caption' }] }]
+};
+
 const mockBlock = {
-  title: { uk: 'Initial title' },
-  list: [{ id: '1', uk: { type: 'doc', content: [] }, en: { type: 'doc', content: [] } }],
+  title: { uk: mockTitleJson },
+  list: [{ id: '1', uk: mockItemJson, en: { type: 'doc', content: [] } }] as MissionListItemWithId[],
   smallImage: {
-    src: 'small',
+    src: 'small.jpg',
     generatedSrc: '',
-    caption: { uk: 'caption', en: '' },
-    alt: { uk: '', en: '' }
+    caption: { uk: mockCaptionJson, en: {} },
+    alt: { uk: {}, en: {} }
   },
   bigImage: {
-    src: 'big',
+    src: 'big.jpg',
     generatedSrc: '',
-    caption: { uk: 'caption', en: '' },
-    alt: { uk: '', en: '' }
+    caption: { uk: mockCaptionJson, en: {} },
+    alt: { uk: {}, en: {} }
   }
 };
 
 describe('OurMission', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    usePageBlockMock.mockReturnValue({ block: mockBlock });
   });
 
-  it('should render title and collapsible block', () => {
-    usePageBlockMock.mockReturnValue({ block: mockBlock });
+  it('should render headers and verify deep initial JSON content payloads inside the DOM', () => {
     render(<OurMission />);
+
     expect(screen.getByTestId('collapsible-block')).toBeInTheDocument();
-    expect(screen.getByTestId('input-Заголовок секції')).toHaveValue('Initial title');
+    expect(screen.getByTestId('textfield-json-Заголовок секції')).toHaveTextContent(JSON.stringify(mockTitleJson));
+    expect(screen.getByTestId('textfield-json-Пункт місії')).toHaveTextContent(JSON.stringify(mockItemJson));
   });
 
-  it('should change section title', () => {
-    usePageBlockMock.mockReturnValue({ block: mockBlock });
+  it('should dispatch structural rich text updates to the store when the section title changes', () => {
     render(<OurMission />);
-    fireEvent.change(screen.getByTestId('input-Заголовок секції'), {
-      target: { value: 'New title' }
-    });
-    expect(setFieldMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_MISSION, 'title', { uk: 'New title' });
+
+    fireEvent.click(screen.getByTestId('trigger-change-Заголовок секції'));
+
+    expect(setFieldMock).toHaveBeenCalledWith(
+      PAGE_IDS.ABOUT_US,
+      BLOCK_IDS.OUR_MISSION,
+      'title',
+      expect.objectContaining({
+        uk: {
+          type: 'doc',
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Заголовок секції' }] }]
+        }
+      })
+    );
   });
 
-  it('should add and deletes mission points', () => {
-    usePageBlockMock.mockReturnValue({ block: mockBlock });
+  it('should push a clean, empty structured array item to the schema list when clicking the add action', () => {
     render(<OurMission />);
+
     fireEvent.click(screen.getByTestId('add-btn'));
-    expect(setFieldMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_MISSION, 'list', expect.any(Array));
+
+    expect(setFieldMock).toHaveBeenCalledWith(
+      PAGE_IDS.ABOUT_US,
+      BLOCK_IDS.OUR_MISSION,
+      'list',
+      expect.arrayContaining([
+        expect.objectContaining({ id: '1' }),
+        expect.objectContaining({
+          id: 'uuid-1',
+          uk: { type: 'doc', content: [] },
+          en: { type: 'doc', content: [] }
+        })
+      ])
+    );
+  });
+
+  it('should isolate identifiers and drop correct nodes when trigger actions occur', () => {
+    render(<OurMission />);
 
     fireEvent.click(screen.getByTestId('delete-1'));
-    expect(setFieldMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_MISSION, 'list', expect.any(Array));
+
+    expect(setFieldMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_MISSION, 'list', []);
   });
 
-  it('should update mission point value', () => {
-    usePageBlockMock.mockReturnValue({ block: mockBlock });
+  it('should update mission points with fully formed JSONContent trees', () => {
     render(<OurMission />);
-    fireEvent.change(screen.getByTestId('input-Пункт місії'), {
-      target: { value: 'Updated mission' }
-    });
-    expect(setFieldMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_MISSION, 'list', expect.any(Array));
+
+    fireEvent.click(screen.getByTestId('trigger-change-Пункт місії'));
+
+    expect(setFieldMock).toHaveBeenCalledWith(
+      PAGE_IDS.ABOUT_US,
+      BLOCK_IDS.OUR_MISSION,
+      'list',
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: '1',
+          uk: {
+            type: 'doc',
+            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Пункт місії' }] }]
+          }
+        })
+      ])
+    );
+  });
+
+  it('should pass structural object values down when editing small image configurations', () => {
+    render(<OurMission />);
+
+    fireEvent.click(screen.getByTestId('trigger-change-Підпис до зображення (Перше зображення секції)'));
+
+    expect(setFieldMock).toHaveBeenCalledWith(
+      PAGE_IDS.ABOUT_US,
+      BLOCK_IDS.OUR_MISSION,
+      'smallImage',
+      expect.objectContaining({
+        caption: expect.objectContaining({
+          uk: {
+            type: 'doc',
+            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Підпис до зображення (Перше зображення секції)' }] }]
+          }
+        })
+      })
+    );
+  });
+
+  it('should propagate new asset source paths cleanly through image modification channels', () => {
+    render(<OurMission />);
+
+    fireEvent.click(screen.getByTestId('upload-Перше зображення секції'));
+
+    expect(setFieldMock).toHaveBeenCalledWith(
+      PAGE_IDS.ABOUT_US,
+      BLOCK_IDS.OUR_MISSION,
+      'smallImage',
+      expect.objectContaining({
+        src: 'new-image-path.jpg',
+        isTmp: false,
+        crop: null
+      })
+    );
   });
 });

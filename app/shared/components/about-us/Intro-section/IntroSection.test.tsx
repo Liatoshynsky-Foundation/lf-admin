@@ -1,13 +1,28 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import type { JSONContent } from '@tiptap/react';
+import React from 'react';
 
 import { IntroSection } from './IntroSection';
+
+interface MockCustomTextFieldProps {
+  readonly title: string;
+  readonly value: JSONContent;
+  readonly onChange: (value: JSONContent) => void;
+}
+
+interface MockQuoteBlockProps {
+  readonly title: JSONContent;
+  readonly description: JSONContent;
+  readonly onTitleChange: (value: JSONContent) => void;
+  readonly onDescriptionChange: (value: JSONContent) => void;
+}
 
 const setFieldMock = jest.fn();
 const handleUploadImageMock = jest.fn();
 const useUploadBlobMutationMock = jest.fn();
 
 jest.mock('~/store', () => ({
-  useStore: (selector: (state: { locale: string; setField: typeof setFieldMock }) => void) =>
+  useStore: (selector: (state: { readonly locale: string; readonly setField: typeof setFieldMock }) => unknown) =>
     selector({ locale: 'uk', setField: setFieldMock })
 }));
 
@@ -26,7 +41,7 @@ jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
 
 jest.mock('../../design-system/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
-  default: ({ children, title }: { children: React.ReactNode; title: string }) => (
+  default: ({ children, title }: { readonly children: React.ReactNode; readonly title: string }) => (
     <section data-testid="collapsible">
       <h2>{title}</h2>
       {children}
@@ -40,89 +55,119 @@ jest.mock('../../design-system/photo-block/PhotoBlock', () => ({
     fileName,
     onChangeImage
   }: {
-    imageUrl: string;
-    fileName: string;
-    onChangeImage: (file: { name: string }) => void;
+    readonly imageUrl: string;
+    readonly fileName: string;
+    readonly onChangeImage: (url: string, crop: null) => void;
   }) => (
     <div data-testid="image-preview">
       <span data-testid="image-url">{imageUrl}</span>
       <span data-testid="file-name">{fileName}</span>
-      <button onClick={() => onChangeImage({ name: 'new.png' })}>Upload Image</button>
+      <button onClick={() => onChangeImage('new-image.png', null)}>Upload Image</button>
     </div>
   )
 }));
 
-jest.mock('../../design-system/text-field/TextField', () => ({
-  CustomTextField: ({
-    title,
-    value,
-    onChange
-  }: {
-    title: string;
-    value: string;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  }) => (
-    <label>
-      {title}
-      <input data-testid={`textfield-${title}`} value={value} onChange={onChange} />
-    </label>
+jest.mock('~/ds-components/text-field/TextField', () => ({
+  CustomTextField: ({ title, value, onChange }: MockCustomTextFieldProps) => (
+    <div data-testid={`textfield-wrapper-${title}`}>
+      <span data-testid={`textfield-json-${title}`}>{JSON.stringify(value)}</span>
+      <button
+        data-testid={`trigger-textfield-change-${title}`}
+        onClick={() => {
+          const mockUpdatedJson: JSONContent = {
+            type: 'doc',
+            content: [{ type: 'paragraph', content: [{ type: 'text', text: `Updated ${title}` }] }]
+          };
+          onChange(mockUpdatedJson);
+        }}
+      >
+        Change {title}
+      </button>
+    </div>
   )
 }));
 
 jest.mock('../Liatoshynsky-office/quote-block/QuoteBlock', () => ({
-  QuoteBlock: ({
-    title,
-    description,
-    onTitleChange,
-    onDescriptionChange
-  }: {
-    title: string;
-    description: string;
-    onTitleChange: (val: string) => void;
-    onDescriptionChange: (val: string) => void;
-  }) => (
+  QuoteBlock: ({ title, description, onTitleChange, onDescriptionChange }: MockQuoteBlockProps) => (
     <div data-testid="quote-block">
-      <span data-testid="quote-title-prop">{title}</span>
-      <span data-testid="quote-description-prop">{description}</span>
-      <input data-testid="quote-title" value={title} onChange={(e) => onTitleChange(e.target.value)} />
-      <input
-        data-testid="quote-description"
-        value={description}
-        onChange={(e) => onDescriptionChange(e.target.value)}
-      />
+      <span data-testid="quote-title-json">{JSON.stringify(title)}</span>
+      <span data-testid="quote-description-json">{JSON.stringify(description)}</span>
+      
+      <button
+        data-testid="trigger-quote-title-change"
+        onClick={() => {
+          const mockUpdatedTitleJson: JSONContent = {
+            type: 'doc',
+            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Author Text' }] }]
+          };
+          onTitleChange(mockUpdatedTitleJson);
+        }}
+      >
+        Change Quote Title
+      </button>
+
+      <button
+        data-testid="trigger-quote-description-change"
+        onClick={() => {
+          const mockUpdatedDescJson: JSONContent = {
+            type: 'doc',
+            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Quote Text' }] }]
+          };
+          onDescriptionChange(mockUpdatedDescJson);
+        }}
+      >
+        Change Quote Description
+      </button>
     </div>
   )
 }));
 
-const expectSetField = (field: string, value: unknown) =>
-  expect(setFieldMock).toHaveBeenCalledWith('about-us', 'IntroSection', field, expect.objectContaining(value));
-
-const updateField = (testId: string, value: string) =>
-  fireEvent.change(screen.getByTestId(testId), { target: { value } });
-
-const updateMultipleFields = (updates: { testId: string; value: string; field: string; prop?: string }[]) => {
-  updates.forEach(({ testId, value, field, prop }) => {
-    updateField(testId, value);
-    expectSetField(field, prop ? { [prop]: { uk: value } } : { uk: value });
-  });
+const mockTitleJson: JSONContent = {
+  type: 'doc',
+  content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Initial Title' }] }]
 };
 
-describe('EntrySection', () => {
+const mockCaptionJson: JSONContent = {
+  type: 'doc',
+  content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Initial Caption' }] }]
+};
+
+const mockAuthorJson: JSONContent = {
+  type: 'doc',
+  content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Initial Author' }] }]
+};
+
+const mockQuoteJson: JSONContent = {
+  type: 'doc',
+  content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Initial Quote' }] }]
+};
+
+
+const expectSetField = (field: string, value: unknown) => {
+  expect(setFieldMock).toHaveBeenCalledWith('about-us', 'IntroSection', field, expect.objectContaining(value));
+};
+
+
+describe('IntroSection', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     usePageBlockMock.mockReturnValue({
       block: {
-        title: { uk: 'Title' },
-        image: { src: 'test-image', caption: { uk: 'Caption' } },
-        quote: { source: { uk: 'Author' }, text: { uk: 'Quote' } }
+        title: { uk: mockTitleJson },
+        image: { src: 'test-image', caption: { uk: mockCaptionJson }, alt: { uk: mockCaptionJson } },
+        quote: { source: { uk: mockAuthorJson }, text: { uk: mockQuoteJson } }
       }
     });
     render(<IntroSection />);
   });
 
-  it('should render all fields when block exists', () => {
+  it('should render all fields with type-safe structural JSON states', () => {
     expect(screen.getByText('Вступна секція')).toBeInTheDocument();
-    ['Title', 'Caption', 'Author', 'Quote'].forEach((val) => expect(screen.getByDisplayValue(val)).toBeInTheDocument());
+    
+    expect(screen.getByTestId('textfield-json-Заголовок сторінки')).toHaveTextContent(JSON.stringify(mockTitleJson));
+    expect(screen.getByTestId('textfield-json-Підпис до зображення')).toHaveTextContent(JSON.stringify(mockCaptionJson));
+    expect(screen.getByTestId('quote-title-json')).toHaveTextContent(JSON.stringify(mockAuthorJson));
+    expect(screen.getByTestId('quote-description-json')).toHaveTextContent(JSON.stringify(mockQuoteJson));
   });
 
   it('should pass correct props to ImagePreviewBlock', () => {
@@ -133,25 +178,54 @@ describe('EntrySection', () => {
     expect(within(preview).getByTestId('file-name')).toHaveTextContent('test-image');
   });
 
-  it('should pass correct props to QuoteBlock', () => {
-    expect(screen.getByTestId('quote-title-prop')).toHaveTextContent('Author');
-    expect(screen.getByTestId('quote-description-prop')).toHaveTextContent('Quote');
+  it('should call setField with a structured JSONContent tree when updating title textfield', () => {
+    fireEvent.click(screen.getByTestId('trigger-textfield-change-Заголовок сторінки'));
+    
+    expectSetField('title', {
+      uk: {
+        type: 'doc',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Заголовок сторінки' }] }]
+      }
+    });
   });
 
-  it('should call setField when updating title', () => {
-    updateField('textfield-Заголовок сторінки', 'New Title');
-    expectSetField('title', { uk: 'New Title' });
+  it('should call setField with synchronized captions and alternative texts when modifying layout images', () => {
+    fireEvent.click(screen.getByTestId('trigger-textfield-change-Підпис до зображення'));
+    
+    const expectedPayload = {
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Підпис до зображення' }] }]
+    };
+
+    expectSetField('image', {
+      caption: expect.objectContaining({ uk: expectedPayload }),
+      alt: expect.objectContaining({ uk: expectedPayload })
+    });
   });
 
-  it('should call setField when updating image caption', () => {
-    updateField('textfield-Підпис до зображення', 'New Caption');
-    expectSetField('image', { caption: { uk: 'New Caption' } });
+  it('should call setField when modifying the quote blocks author target payload', () => {
+    fireEvent.click(screen.getByTestId('trigger-quote-title-change'));
+    
+    expectSetField('quote', {
+      source: expect.objectContaining({
+        uk: {
+          type: 'doc',
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Author Text' }] }]
+        }
+      })
+    });
   });
 
-  it('should call setField when updating quote fields', () => {
-    updateMultipleFields([
-      { testId: 'quote-title', value: 'New Author', field: 'quote', prop: 'source' },
-      { testId: 'quote-description', value: 'New Quote', field: 'quote', prop: 'text' }
-    ]);
+  it('should call setField when modifying the quote blocks main descriptive body payload', () => {
+    fireEvent.click(screen.getByTestId('trigger-quote-description-change'));
+    
+    expectSetField('quote', {
+      text: expect.objectContaining({
+        uk: {
+          type: 'doc',
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Quote Text' }] }]
+        }
+      })
+    });
   });
 });
