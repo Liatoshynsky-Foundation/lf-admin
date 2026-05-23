@@ -1,6 +1,7 @@
 'use client';
 
 import { Skeleton } from '@mui/material';
+import { JSONContent } from '@tiptap/react';
 
 import { QuoteBlock } from './quote-block/QuoteBlock';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
@@ -20,7 +21,7 @@ export const LiatoshynskyOffice = () => {
 
   if (!block) return <Skeleton sx={{ height: '60px' }} />;
 
-  const handleTitleChange = (val: string) => {
+  const handleTitleChange = (val: JSONContent) => {
     setField(pageId, blockId, 'quote', {
       source: {
         ...block.quote.source,
@@ -30,7 +31,7 @@ export const LiatoshynskyOffice = () => {
     });
   };
 
-  const handleDescriptionChange = (val: string) => {
+  const handleDescriptionChange = (val: JSONContent) => {
     setField(pageId, blockId, 'quote', {
       source: block.quote.source,
       text: {
@@ -43,8 +44,8 @@ export const LiatoshynskyOffice = () => {
   return (
     <CollapsibleBlock title="Кабінет Лятошинського">
       <QuoteBlock
-        title={block.quote.source[currentLocale] || ''}
-        description={block.quote.text[currentLocale] || ''}
+        title={block.quote.source[currentLocale]}
+        description={block.quote.text[currentLocale]}
         onTitleChange={handleTitleChange}
         onDescriptionChange={handleDescriptionChange}
       />
