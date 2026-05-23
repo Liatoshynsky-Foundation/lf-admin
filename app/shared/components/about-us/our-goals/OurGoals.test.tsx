@@ -23,13 +23,13 @@ interface MockEditableSectionListProps {
 }
 
 const setFieldMock = jest.fn();
+const usePageBlockMock = jest.fn();
 
 jest.mock('~/store', () => ({
   useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock }) => unknown) =>
     selector({ locale: 'uk', setField: setFieldMock })
 }));
 
-const usePageBlockMock = jest.fn();
 jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: () => usePageBlockMock()
 }));
@@ -44,6 +44,11 @@ jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
   )
 }));
 
+const createDocNode = (text: string): JSONContent => ({
+  type: 'doc',
+  content: [{ type: 'paragraph', content: [{ type: 'text', text }] }]
+});
+
 jest.mock('../../accordion-blocks/editable-section-list/EditableSectionList', () => ({
   __esModule: true,
   EditableSectionList: ({
@@ -57,16 +62,7 @@ jest.mock('../../accordion-blocks/editable-section-list/EditableSectionList', ()
   }: MockEditableSectionListProps) => (
     <div data-testid="editable-section-list" data-label={sectionLabel}>
       <div data-testid="main-title-json">{JSON.stringify(title)}</div>
-      <button
-        data-testid="trigger-main-title-change"
-        onClick={() => {
-          const updatedJson: JSONContent = {
-            type: 'doc',
-            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Section Title' }] }]
-          };
-          onTitleChange(updatedJson);
-        }}
-      >
+      <button data-testid="trigger-main-title-change" onClick={() => onTitleChange(createDocNode('Updated Section Title'))}>
         Change Main Title
       </button>
 
@@ -75,32 +71,12 @@ jest.mock('../../accordion-blocks/editable-section-list/EditableSectionList', ()
           <span data-testid={`item-title-${item.id}`}>{JSON.stringify(item.title)}</span>
           <span data-testid={`item-desc-${item.id}`}>{JSON.stringify(item.description)}</span>
 
-          <button
-            data-testid={`trigger-item-title-change-${item.id}`}
-            onClick={() => {
-              const updatedTitleJson: JSONContent = {
-                type: 'doc',
-                content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Item Title' }] }]
-              };
-              onChangeItem(item.id, 'title', updatedTitleJson);
-            }}
-          >
+          <button data-testid={`trigger-item-title-change-${item.id}`} onClick={() => onChangeItem(item.id, 'title', createDocNode('Updated Item Title'))}>
             Change Item Title
           </button>
-
-          <button
-            data-testid={`trigger-item-desc-change-${item.id}`}
-            onClick={() => {
-              const updatedDescJson: JSONContent = {
-                type: 'doc',
-                content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Item Description' }] }]
-              };
-              onChangeItem(item.id, 'description', updatedDescJson);
-            }}
-          >
+          <button data-testid={`trigger-item-desc-change-${item.id}`} onClick={() => onChangeItem(item.id, 'description', createDocNode('Updated Item Description'))}>
             Change Item Description
           </button>
-
           <button data-testid={`trigger-item-delete-${item.id}`} onClick={() => onDeleteItem(item.id)}>
             Delete Item
           </button>
@@ -114,34 +90,33 @@ jest.mock('../../accordion-blocks/editable-section-list/EditableSectionList', ()
   )
 }));
 
+const TARGET_ID = 'target-id-1';
+const emptyDoc = { uk: { type: 'doc', content: [] }, en: { type: 'doc', content: [] } };
+
 beforeAll(() => {
   crypto.randomUUID = jest.fn(() => 'uuid-generated-1') as typeof crypto.randomUUID;
 });
 
-const mockBlockTitleJson: JSONContent = {
-  type: 'doc',
-  content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Our Goals Main Title' }] }]
-};
-
-const mockGoalTitleJson: JSONContent = {
-  type: 'doc',
-  content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Goal Item Title Stub' }] }]
-};
-
-const mockGoalDescJson: JSONContent = {
-  type: 'doc',
-  content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Goal Item Description Stub' }] }]
-};
+const mockBlockTitleJson = createDocNode('Our Goals Main Title');
+const mockGoalTitleJson = createDocNode('Goal Item Title Stub');
+const mockGoalDescJson = createDocNode('Goal Item Description Stub');
 
 const mockBlock = {
   title: { uk: mockBlockTitleJson },
   goals: [
     {
-      id: 'target-id-1',
+      id: TARGET_ID,
       title: { uk: mockGoalTitleJson, en: { type: 'doc', content: [] } },
       description: { uk: mockGoalDescJson, en: { type: 'doc', content: [] } }
     }
   ] as GoalItemWithId[]
+};
+
+const setupTest = (testidToClick?: string) => {
+  render(<OurGoals />);
+  if (testidToClick) {
+    fireEvent.click(screen.getByTestId(testidToClick));
+  }
 };
 
 describe('OurGoals', () => {
@@ -151,107 +126,65 @@ describe('OurGoals', () => {
   });
 
   it('should render structural layout boundaries and confirm deep initial JSON content payloads inside the DOM', () => {
-    render(<OurGoals />);
+    setupTest();
 
     expect(screen.getByTestId('collapsible-block')).toBeInTheDocument();
     expect(screen.getByTestId('editable-section-list')).toHaveAttribute('data-label', 'Пункти секції:');
     
     expect(screen.getByTestId('main-title-json')).toHaveTextContent(JSON.stringify(mockBlockTitleJson));
-    expect(screen.getByTestId('item-title-target-id-1')).toHaveTextContent(JSON.stringify(mockGoalTitleJson));
-    expect(screen.getByTestId('item-desc-target-id-1')).toHaveTextContent(JSON.stringify(mockGoalDescJson));
+    expect(screen.getByTestId(`item-title-${TARGET_ID}`)).toHaveTextContent(JSON.stringify(mockGoalTitleJson));
+    expect(screen.getByTestId(`item-desc-${TARGET_ID}`)).toHaveTextContent(JSON.stringify(mockGoalDescJson));
   });
 
-  it('should update the parent section title using structural rich text trees when triggered', () => {
-    render(<OurGoals />);
-
-    fireEvent.click(screen.getByTestId('trigger-main-title-change'));
-
-    expect(setFieldMock).toHaveBeenCalledWith(
-      PAGE_IDS.ABOUT_US,
-      BLOCK_IDS.OUR_GOALS,
+  it.each([
+    [
+      'main parent section title using structural rich text trees',
+      'trigger-main-title-change',
       'title',
-      expect.objectContaining({
-        uk: {
-          type: 'doc',
-          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Section Title' }] }]
-        }
-      })
-    );
-  });
-
-  it('should mutate target item titles cleanly inside the goal list structure array matrix', () => {
-    render(<OurGoals />);
-
-    fireEvent.click(screen.getByTestId('trigger-item-title-change-target-id-1'));
-
-    expect(setFieldMock).toHaveBeenCalledWith(
-      PAGE_IDS.ABOUT_US,
-      BLOCK_IDS.OUR_GOALS,
+      expect.objectContaining({ uk: createDocNode('Updated Section Title') })
+    ],
+    [
+      'target item titles inside the goals list structure',
+      `trigger-item-title-change-${TARGET_ID}`,
       'goals',
       expect.arrayContaining([
-        expect.objectContaining({
-          id: 'target-id-1',
-          title: expect.objectContaining({
-            uk: {
-              type: 'doc',
-              content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Item Title' }] }]
-            }
-          })
-        })
+        expect.objectContaining({ id: TARGET_ID, title: expect.objectContaining({ uk: createDocNode('Updated Item Title') }) })
       ])
-    );
-  });
-
-  it('should mutate target item descriptions cleanly inside the goal list structure array matrix', () => {
-    render(<OurGoals />);
-
-    fireEvent.click(screen.getByTestId('trigger-item-desc-change-target-id-1'));
-
-    expect(setFieldMock).toHaveBeenCalledWith(
-      PAGE_IDS.ABOUT_US,
-      BLOCK_IDS.OUR_GOALS,
+    ],
+    [
+      'target item descriptions inside the goals list structure',
+      `trigger-item-desc-change-${TARGET_ID}`,
       'goals',
       expect.arrayContaining([
-        expect.objectContaining({
-          id: 'target-id-1',
-          description: expect.objectContaining({
-            uk: {
-              type: 'doc',
-              content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Item Description' }] }]
-            }
-          })
-        })
+        expect.objectContaining({ id: TARGET_ID, description: expect.objectContaining({ uk: createDocNode('Updated Item Description') }) })
       ])
-    );
-  });
-
-  it('should generate a type-safe empty double-localized item node block and push it to the list map upon creation triggers', () => {
-    render(<OurGoals />);
-
-    fireEvent.click(screen.getByTestId('trigger-item-create'));
-
-    const emptyDoc = { uk: { type: 'doc', content: [] }, en: { type: 'doc', content: [] } };
-
-    expect(setFieldMock).toHaveBeenCalledWith(
-      PAGE_IDS.ABOUT_US,
-      BLOCK_IDS.OUR_GOALS,
+    ],
+    [
+      'new localized item node block layout when triggered by creation engines',
+      'trigger-item-create',
       'goals',
       expect.arrayContaining([
-        expect.objectContaining({ id: 'target-id-1' }),
-        expect.objectContaining({
-          id: 'uuid-generated-1',
-          title: emptyDoc,
-          description: emptyDoc
-        })
+        expect.objectContaining({ id: TARGET_ID }),
+        expect.objectContaining({ id: 'uuid-generated-1', title: emptyDoc, description: emptyDoc })
       ])
-    );
-  });
+    ],
+    [
+      'empty list array when target identifiers are completely deleted',
+      `trigger-item-delete-${TARGET_ID}`,
+      'goals',
+      []
+    ]
+  ])(
+    'should dynamically update %s',
+    (_scenario, triggerId, storeKey, expectedPayload) => {
+      setupTest(triggerId);
 
-  it('should filter targeted identifier arrays out completely when deleting structural blocks', () => {
-    render(<OurGoals />);
-
-    fireEvent.click(screen.getByTestId('trigger-item-delete-target-id-1'));
-
-    expect(setFieldMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_GOALS, 'goals', []);
-  });
+      expect(setFieldMock).toHaveBeenCalledWith(
+        PAGE_IDS.ABOUT_US, 
+        BLOCK_IDS.OUR_GOALS, 
+        storeKey, 
+        expectedPayload
+      );
+    }
+  );
 });

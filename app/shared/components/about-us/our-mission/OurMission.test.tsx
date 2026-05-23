@@ -31,25 +31,17 @@ interface MockConfigurableListProps<T> {
   readonly addBtnLabel: string;
 }
 
-const handleUploadImageMock = jest.fn();
-const useUploadBlobMutationMock = jest.fn();
-
-jest.mock('~/utils/uploadToTmpFolder', () => ({
-  handleUploadImage: (...args: unknown[]) => handleUploadImageMock(...args)
-}));
-
-jest.mock('~/types/graphql/generated/graphql', () => ({
-  useUploadBlobMutation: () => [useUploadBlobMutationMock]
-}));
-
 const setFieldMock = jest.fn();
+const usePageBlockMock = jest.fn();
+
+jest.mock('~/utils/uploadToTmpFolder', () => ({ handleUploadImage: jest.fn() }));
+jest.mock('~/types/graphql/generated/graphql', () => ({ useUploadBlobMutation: () => [jest.fn()] }));
 
 jest.mock('~/store', () => ({
   useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock }) => unknown) =>
     selector({ locale: 'uk', setField: setFieldMock })
 }));
 
-const usePageBlockMock = jest.fn();
 jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: () => usePageBlockMock()
 }));
@@ -63,6 +55,11 @@ jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
     </section>
   )
 }));
+
+const createDocNode = (text: string): JSONContent => ({
+  type: 'doc',
+  content: [{ type: 'paragraph', content: [{ type: 'text', text }] }]
+});
 
 jest.mock('~/components/configurable-list/ConfigurableList', () => ({
   __esModule: true,
@@ -100,16 +97,7 @@ jest.mock('~/ds-components/text-field/TextField', () => ({
     return (
       <div data-testid={`textfield-wrapper-${selectorKey}`}>
         <span data-testid={`textfield-json-${selectorKey}`}>{JSON.stringify(value)}</span>
-        <button
-          data-testid={`trigger-change-${selectorKey}`}
-          onClick={() => {
-            const updatedJson: JSONContent = {
-              type: 'doc',
-              content: [{ type: 'paragraph', content: [{ type: 'text', text: `Updated ${selectorKey}` }] }]
-            };
-            onChange(updatedJson);
-          }}
-        >
+        <button data-testid={`trigger-change-${selectorKey}`} onClick={() => onChange(createDocNode(`Updated ${selectorKey}`))}>
           Change {selectorKey}
         </button>
       </div>
@@ -129,29 +117,26 @@ jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
   )
 }));
 
+const TARGET_ID = '1';
+const keys = {
+  title: 'Заголовок секції',
+  item: 'Пункт місії',
+  caption: 'Підпис до зображення (Перше зображення секції)',
+  upload: 'Перше зображення секції'
+};
+
 beforeAll(() => {
   crypto.randomUUID = jest.fn(() => 'uuid-1') as typeof crypto.randomUUID;
   URL.createObjectURL = jest.fn(() => 'mocked-url');
 });
 
-const mockTitleJson: JSONContent = {
-  type: 'doc',
-  content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Initial title' }] }]
-};
-
-const mockItemJson: JSONContent = {
-  type: 'doc',
-  content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Initial point' }] }]
-};
-
-const mockCaptionJson: JSONContent = {
-  type: 'doc',
-  content: [{ type: 'paragraph', content: [{ type: 'text', text: 'caption' }] }]
-};
+const mockTitleJson = createDocNode('Initial title');
+const mockItemJson = createDocNode('Initial point');
+const mockCaptionJson = createDocNode('caption');
 
 const mockBlock = {
   title: { uk: mockTitleJson },
-  list: [{ id: '1', uk: mockItemJson, en: { type: 'doc', content: [] } }] as MissionListItemWithId[],
+  list: [{ id: TARGET_ID, uk: mockItemJson, en: { type: 'doc', content: [] } }] as MissionListItemWithId[],
   smallImage: {
     src: 'small.jpg',
     generatedSrc: '',
@@ -166,6 +151,13 @@ const mockBlock = {
   }
 };
 
+const runSimulation = (testidToClick?: string) => {
+  render(<OurMission />);
+  if (testidToClick) {
+    fireEvent.click(screen.getByTestId(testidToClick));
+  }
+};
+
 describe('OurMission', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -173,114 +165,68 @@ describe('OurMission', () => {
   });
 
   it('should render headers and verify deep initial JSON content payloads inside the DOM', () => {
-    render(<OurMission />);
+    runSimulation();
 
     expect(screen.getByTestId('collapsible-block')).toBeInTheDocument();
-    expect(screen.getByTestId('textfield-json-Заголовок секції')).toHaveTextContent(JSON.stringify(mockTitleJson));
-    expect(screen.getByTestId('textfield-json-Пункт місії')).toHaveTextContent(JSON.stringify(mockItemJson));
+    expect(screen.getByTestId(`textfield-json-${keys.title}`)).toHaveTextContent(JSON.stringify(mockTitleJson));
+    expect(screen.getByTestId(`textfield-json-${keys.item}`)).toHaveTextContent(JSON.stringify(mockItemJson));
   });
 
-  it('should dispatch structural rich text updates to the store when the section title changes', () => {
-    render(<OurMission />);
-
-    fireEvent.click(screen.getByTestId('trigger-change-Заголовок секції'));
-
-    expect(setFieldMock).toHaveBeenCalledWith(
-      PAGE_IDS.ABOUT_US,
-      BLOCK_IDS.OUR_MISSION,
+  it.each([
+    [
+      'section title changes',
+      `trigger-change-${keys.title}`,
       'title',
-      expect.objectContaining({
-        uk: {
-          type: 'doc',
-          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Заголовок секції' }] }]
-        }
-      })
-    );
-  });
-
-  it('should push a clean, empty structured array item to the schema list when clicking the add action', () => {
-    render(<OurMission />);
-
-    fireEvent.click(screen.getByTestId('add-btn'));
-
-    expect(setFieldMock).toHaveBeenCalledWith(
-      PAGE_IDS.ABOUT_US,
-      BLOCK_IDS.OUR_MISSION,
+      expect.objectContaining({ uk: createDocNode(`Updated ${keys.title}`) })
+    ],
+    [
+      'clicking the add action on lists',
+      'add-btn',
       'list',
       expect.arrayContaining([
-        expect.objectContaining({ id: '1' }),
-        expect.objectContaining({
-          id: 'uuid-1',
-          uk: { type: 'doc', content: [] },
-          en: { type: 'doc', content: [] }
-        })
+        expect.objectContaining({ id: TARGET_ID }),
+        expect.objectContaining({ id: 'uuid-1', uk: { type: 'doc', content: [] }, en: { type: 'doc', content: [] } })
       ])
-    );
-  });
-
-  it('should isolate identifiers and drop correct nodes when trigger actions occur', () => {
-    render(<OurMission />);
-
-    fireEvent.click(screen.getByTestId('delete-1'));
-
-    expect(setFieldMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_MISSION, 'list', []);
-  });
-
-  it('should update mission points with fully formed JSONContent trees', () => {
-    render(<OurMission />);
-
-    fireEvent.click(screen.getByTestId('trigger-change-Пункт місії'));
-
-    expect(setFieldMock).toHaveBeenCalledWith(
-      PAGE_IDS.ABOUT_US,
-      BLOCK_IDS.OUR_MISSION,
+    ],
+    [
+      'triggering item drop action rows',
+      `delete-${TARGET_ID}`,
+      'list',
+      []
+    ],
+    [
+      'updating standard list point rich-text trees',
+      `trigger-change-${keys.item}`,
       'list',
       expect.arrayContaining([
-        expect.objectContaining({
-          id: '1',
-          uk: {
-            type: 'doc',
-            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Пункт місії' }] }]
-          }
-        })
+        expect.objectContaining({ id: TARGET_ID, uk: createDocNode(`Updated ${keys.item}`) })
       ])
-    );
-  });
-
-  it('should pass structural object values down when editing small image configurations', () => {
-    render(<OurMission />);
-
-    fireEvent.click(screen.getByTestId('trigger-change-Підпис до зображення (Перше зображення секції)'));
-
-    expect(setFieldMock).toHaveBeenCalledWith(
-      PAGE_IDS.ABOUT_US,
-      BLOCK_IDS.OUR_MISSION,
+    ],
+    [
+      'editing layout image configuration captions',
+      `trigger-change-${keys.caption}`,
       'smallImage',
       expect.objectContaining({
-        caption: expect.objectContaining({
-          uk: {
-            type: 'doc',
-            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Підпис до зображення (Перше зображення секції)' }] }]
-          }
-        })
+        caption: expect.objectContaining({ uk: createDocNode(`Updated ${keys.caption}`) })
       })
-    );
-  });
-
-  it('should propagate new asset source paths cleanly through image modification channels', () => {
-    render(<OurMission />);
-
-    fireEvent.click(screen.getByTestId('upload-Перше зображення секції'));
-
-    expect(setFieldMock).toHaveBeenCalledWith(
-      PAGE_IDS.ABOUT_US,
-      BLOCK_IDS.OUR_MISSION,
+    ],
+    [
+      'propagating new asset paths through upload channels',
+      `upload-${keys.upload}`,
       'smallImage',
-      expect.objectContaining({
-        src: 'new-image-path.jpg',
-        isTmp: false,
-        crop: null
-      })
-    );
-  });
+      expect.objectContaining({ src: 'new-image-path.jpg', isTmp: false, crop: null })
+    ]
+  ])(
+    'should correctly invoke setField upon %s',
+    (_scenario, triggerId, storeKey, expectedPayload) => {
+      runSimulation(triggerId);
+
+      expect(setFieldMock).toHaveBeenCalledWith(
+        PAGE_IDS.ABOUT_US,
+        BLOCK_IDS.OUR_MISSION,
+        storeKey,
+        expectedPayload
+      );
+    }
+  );
 });

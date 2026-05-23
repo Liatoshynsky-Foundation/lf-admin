@@ -42,6 +42,11 @@ jest.mock('~/components/configurable-list/ConfigurableList', () => ({
   )
 }));
 
+const createDocNode = (text: string): JSONContent => ({
+  type: 'doc',
+  content: [{ type: 'paragraph', content: [{ type: 'text', text }] }]
+});
+
 jest.mock('~/components/design-system/text-field/TextField', () => ({
   __esModule: true,
   CustomTextField: ({ title, label, value, onChange }: MockCustomTextFieldProps) => {
@@ -49,16 +54,7 @@ jest.mock('~/components/design-system/text-field/TextField', () => ({
     return (
       <div data-testid={`textfield-wrapper-${selectorKey}`}>
         <span data-testid={`textfield-json-${selectorKey}`}>{JSON.stringify(value)}</span>
-        <button
-          data-testid={`trigger-change-${selectorKey}`}
-          onClick={() => {
-            const updatedJson: JSONContent = {
-              type: 'doc',
-              content: [{ type: 'paragraph', content: [{ type: 'text', text: `Updated ${selectorKey}` }] }]
-            };
-            onChange(updatedJson);
-          }}
-        >
+        <button data-testid={`trigger-change-${selectorKey}`} onClick={() => onChange(createDocNode(`Updated ${selectorKey}`))}>
           Change {selectorKey}
         </button>
       </div>
@@ -66,22 +62,11 @@ jest.mock('~/components/design-system/text-field/TextField', () => ({
   }
 }));
 
-const mockTitleJson: JSONContent = {
-  type: 'doc',
-  content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Test Section Title' }] }]
-};
+const mockTitleJson = createDocNode('Test Section Title');
 
 const mockItems: SectionListItem[] = [
-  {
-    id: '1',
-    title: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Item 1 Title' }] }] },
-    description: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Desc 1' }] }] }
-  },
-  {
-    id: '2',
-    title: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Item 2 Title' }] }] },
-    description: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Desc 2' }] }] }
-  }
+  { id: '1', title: createDocNode('Item 1 Title'), description: createDocNode('Desc 1') },
+  { id: '2', title: createDocNode('Item 2 Title'), description: createDocNode('Desc 2') }
 ];
 
 describe('EditableSectionList', () => {
@@ -93,7 +78,7 @@ describe('EditableSectionList', () => {
   beforeEach(() => {
     onTitleChange = jest.fn();
     onChangeItem = jest.fn();
-    onCreateItem = jest.fn(() => ({ id: '3', title: {}, description: {} }) as SectionListItem);
+    onCreateItem = jest.fn(() => ({ id: '3', title: {}, description: {} } as SectionListItem));
     onDeleteItem = jest.fn();
 
     render(
@@ -112,61 +97,50 @@ describe('EditableSectionList', () => {
   it('should render the layout structures, section headers, and inner serialization text targets', () => {
     expect(screen.getByTestId('textfield-json-Заголовок секції')).toHaveTextContent(JSON.stringify(mockTitleJson));
     expect(screen.getByText('Test Label')).toBeInTheDocument();
-
-    const items = screen.getAllByTestId('item');
-    expect(items).toHaveLength(2);
+    expect(screen.getAllByTestId('item')).toHaveLength(2);
   });
 
-  it('should call onTitleChange with rich text schemas when modifying the section wrapper title', () => {
-    fireEvent.click(screen.getByTestId('trigger-change-Заголовок секції'));
-
-    const expectedTitlePayload: JSONContent = {
-      type: 'doc',
-      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Заголовок секції' }] }]
-    };
-
-    expect(onTitleChange).toHaveBeenCalledWith(expectedTitlePayload);
-  });
-
-  it('should call onChangeItem with key target indicators and structural text payloads when a list item title changes', () => {
-    screen.getAllByTestId('item');
-    fireEvent.click(screen.getAllByTestId('trigger-change-Заголовок пункту')[0]);
-
-    const expectedItemTitlePayload: JSONContent = {
-      type: 'doc',
-      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Заголовок пункту' }] }]
-    };
-
-    expect(onChangeItem).toHaveBeenCalledWith('1', 'title', expectedItemTitlePayload);
-  });
-
-  it('should call onChangeItem with key target indicators and structural text payloads when a list item description changes', () => {
-    screen.getAllByTestId('item');
-    fireEvent.click(screen.getAllByTestId('trigger-change-Текст пункту')[1]);
-
-    const expectedItemDescPayload: JSONContent = {
-      type: 'doc',
-      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Текст пункту' }] }]
-    };
-
-    expect(onChangeItem).toHaveBeenCalledWith('2', 'description', expectedItemDescPayload);
-  });
-
-  it('should call onCreateItem and expect an empty double localized object layout item tree structure upon button clicks', () => {
-    fireEvent.click(screen.getByTestId('add-btn'));
-
-    expect(onCreateItem).toHaveBeenCalled();
-    const newItem = onCreateItem.mock.results[0].value;
-    expect(newItem).toEqual({ id: '3', title: {}, description: {} });
-  });
-
-  it('should execute onDeleteItem extraction paths back cleanly with targeted individual identifiers', () => {
-    fireEvent.click(screen.getByTestId('delete-1'));
-    expect(onDeleteItem).toHaveBeenCalledWith('1');
-
-    fireEvent.click(screen.getByTestId('delete-2'));
-    expect(onDeleteItem).toHaveBeenCalledWith('2');
-
-    expect(onDeleteItem).toHaveBeenCalledTimes(2);
-  });
+  it.each([
+    [
+      'the section wrapper title',
+      () => fireEvent.click(screen.getByTestId('trigger-change-Заголовок секції')),
+      () => expect(onTitleChange).toHaveBeenCalledWith(createDocNode('Updated Заголовок секції'))
+    ],
+    [
+      'a specific list item title',
+      () => fireEvent.click(screen.getAllByTestId('trigger-change-Заголовок пункту')[0]),
+      () => expect(onChangeItem).toHaveBeenCalledWith('1', 'title', createDocNode('Updated Заголовок пункту'))
+    ],
+    [
+      'a specific list item description',
+      () => fireEvent.click(screen.getAllByTestId('trigger-change-Текст пункту')[1]),
+      () => expect(onChangeItem).toHaveBeenCalledWith('2', 'description', createDocNode('Updated Текст пункту'))
+    ],
+    [
+      'the creation of a new item',
+      () => fireEvent.click(screen.getByTestId('add-btn')),
+      () => {
+        expect(onCreateItem).toHaveBeenCalled();
+        expect(onCreateItem.mock.results[0].value).toEqual({ id: '3', title: {}, description: {} });
+      }
+    ],
+    [
+      'the deletion extraction paths with targeted identifiers',
+      () => {
+        fireEvent.click(screen.getByTestId('delete-1'));
+        fireEvent.click(screen.getByTestId('delete-2'));
+      },
+      () => {
+        expect(onDeleteItem).toHaveBeenCalledWith('1');
+        expect(onDeleteItem).toHaveBeenCalledWith('2');
+        expect(onDeleteItem).toHaveBeenCalledTimes(2);
+      }
+    ]
+  ])(
+    'should correctly dispatch callbacks when modifying %s',
+    (_scenario, executeTrigger, assertOutcome) => {
+      executeTrigger();
+      assertOutcome();
+    }
+  );
 });

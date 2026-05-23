@@ -17,21 +17,17 @@ interface MockImagePreviewBlockProps {
   readonly title?: string;
 }
 
+const createDocNode = (text: string): JSONContent => ({
+  type: 'doc',
+  content: [{ type: 'paragraph', content: [{ type: 'text', text }] }]
+});
+
 jest.mock('~/shared/components/design-system/text-field/TextField', () => ({
   __esModule: true,
   CustomTextField: ({ title, value, onChange }: MockCustomTextFieldProps) => (
     <div data-testid={`textfield-wrapper-${title}`}>
       <span data-testid={`textfield-json-${title}`}>{JSON.stringify(value)}</span>
-      <button
-        data-testid={`trigger-textfield-change-${title}`}
-        onClick={() => {
-          const mockUpdatedJson: JSONContent = {
-            type: 'doc',
-            content: [{ type: 'paragraph', content: [{ type: 'text', text: `Updated ${title}` }] }]
-          };
-          onChange(mockUpdatedJson);
-        }}
-      >
+      <button data-testid={`trigger-change-${title}`} onClick={() => onChange(createDocNode(`Updated ${title}`))}>
         Change {title}
       </button>
     </div>
@@ -44,47 +40,31 @@ jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
     <div data-testid="image-preview-block" data-title={title}>
       <span data-testid="preview-url">{imageUrl}</span>
       <span data-testid="preview-filename">{fileName}</span>
-      <button 
-        data-testid="trigger-image-upload" 
-        onClick={() => onChangeImage('uploaded-image-path.png')}
-      >
+      <button data-testid="trigger-image-upload" onClick={() => onChangeImage('uploaded-image-path.png')}>
         Upload Image
       </button>
     </div>
   )
 }));
 
-const mockMainTextJson: JSONContent = {
-  type: 'doc',
-  content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Основний текст секції' }] }]
+const MAIN_TEXT_KEY = 'Основний текст секції';
+const mockMainTextJson = createDocNode(MAIN_TEXT_KEY);
+
+const mockParagraphsJson = [{ text: createDocNode('Перший абзац') }, { text: createDocNode('Другий абзац') }];
+
+const mockProps = {
+  mainText: mockMainTextJson,
+  paragraphs: mockParagraphsJson,
+  imageUrl: '/images/test.png',
+  fileName: 'test.png',
+  onMainTextChange: jest.fn(),
+  onParagraphChange: jest.fn(),
+  onImageChange: jest.fn()
 };
 
-const mockParagraphsJson: { text: JSONContent }[] = [
-  {
-    text: {
-      type: 'doc',
-      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Перший абзац' }] }]
-    }
-  },
-  {
-    text: {
-      type: 'doc',
-      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Другий абзац' }] }]
-    }
-  }
-];
+const getParagraphLabel = (index: number) => `Текст ${index + 1} абзацу`;
 
 describe('FoundationBlock', () => {
-  const mockProps = {
-    mainText: mockMainTextJson,
-    paragraphs: mockParagraphsJson,
-    imageUrl: '/images/test.png',
-    fileName: 'test.png',
-    onMainTextChange: jest.fn(),
-    onParagraphChange: jest.fn(),
-    onImageChange: jest.fn()
-  };
-
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -92,58 +72,53 @@ describe('FoundationBlock', () => {
   it('should render main text, paragraph lists, and image layouts with correct structural values', () => {
     render(<FoundationBlock {...mockProps} />);
 
-    expect(screen.getByTestId('textfield-json-Основний текст секції')).toHaveTextContent(
-      JSON.stringify(mockMainTextJson)
-    );
+    expect(screen.getByTestId(`textfield-json-${MAIN_TEXT_KEY}`)).toHaveTextContent(JSON.stringify(mockMainTextJson));
 
     mockProps.paragraphs.forEach((p, index) => {
-      const containerLabel = `Текст ${index + 1} абзацу`;
-      expect(screen.getByTestId(`textfield-json-${containerLabel}`)).toHaveTextContent(
+      expect(screen.getByTestId(`textfield-json-${getParagraphLabel(index)}`)).toHaveTextContent(
         JSON.stringify(p.text)
       );
     });
 
-    const imageBlock = screen.getByTestId('image-preview-block');
-    expect(imageBlock).toBeInTheDocument();
-    expect(screen.getByTestId('preview-url')).toHaveTextContent('/images/test.png');
-    expect(screen.getByTestId('preview-filename')).toHaveTextContent('test.png');
+    expect(screen.getByTestId('image-preview-block')).toBeInTheDocument();
+    expect(screen.getByTestId('preview-url')).toHaveTextContent(mockProps.imageUrl);
+    expect(screen.getByTestId('preview-filename')).toHaveTextContent(mockProps.fileName);
   });
 
-  it('should dispatch corresponding parent callbacks when the main formatting section text field mutates', () => {
+  it.each([
+    [
+      'main section text field changes',
+      `trigger-change-${MAIN_TEXT_KEY}`,
+      () => {
+        expect(mockProps.onMainTextChange).toHaveBeenCalledWith(createDocNode(`Updated ${MAIN_TEXT_KEY}`));
+      }
+    ],
+    [
+      'first dynamic paragraph array alterations',
+      `trigger-change-${getParagraphLabel(0)}`,
+      () => {
+        expect(mockProps.onParagraphChange).toHaveBeenCalledWith(0, createDocNode(`Updated ${getParagraphLabel(0)}`));
+      }
+    ],
+    [
+      'second dynamic paragraph array alterations',
+      `trigger-change-${getParagraphLabel(1)}`,
+      () => {
+        expect(mockProps.onParagraphChange).toHaveBeenCalledWith(1, createDocNode(`Updated ${getParagraphLabel(1)}`));
+      }
+    ],
+    [
+      'image asset upload handler interactions',
+      'trigger-image-upload',
+      () => {
+        expect(mockProps.onImageChange).toHaveBeenCalledTimes(1);
+        expect(mockProps.onImageChange).toHaveBeenCalledWith('uploaded-image-path.png');
+      }
+    ]
+  ])('should dispatch matching callbacks upon executing %s', (_scenario, triggerId, assertionCallback) => {
     render(<FoundationBlock {...mockProps} />);
 
-    fireEvent.click(screen.getByTestId('trigger-textfield-change-Основний текст секції'));
-
-    const expectedMainPayload: JSONContent = {
-      type: 'doc',
-      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Основний текст секції' }] }]
-    };
-
-    expect(mockProps.onMainTextChange).toHaveBeenCalledWith(expectedMainPayload);
-  });
-
-  it('should pass index identities along with rich text payloads when executing parameter modifications on dynamic paragraphs', () => {
-    render(<FoundationBlock {...mockProps} />);
-
-    mockProps.paragraphs.forEach((_, index) => {
-      const containerLabel = `Текст ${index + 1} абзацу`;
-      fireEvent.click(screen.getByTestId(`trigger-textfield-change-${containerLabel}`));
-
-      const expectedParagraphPayload: JSONContent = {
-        type: 'doc',
-        content: [{ type: 'paragraph', content: [{ type: 'text', text: `Updated ${containerLabel}` }] }]
-      };
-
-      expect(mockProps.onParagraphChange).toHaveBeenCalledWith(index, expectedParagraphPayload);
-    });
-  });
-
-  it('should call onImageChange when an asset upload handler interaction executes', () => {
-    render(<FoundationBlock {...mockProps} />);
-
-    fireEvent.click(screen.getByTestId('trigger-image-upload'));
-
-    expect(mockProps.onImageChange).toHaveBeenCalledTimes(1);
-    expect(mockProps.onImageChange).toHaveBeenCalledWith('uploaded-image-path.png');
+    fireEvent.click(screen.getByTestId(triggerId));
+    assertionCallback();
   });
 });
