@@ -1,8 +1,8 @@
-/* eslint-disable @next/next/no-img-element */
 import { fireEvent, render, screen } from '@testing-library/react';
 import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
+import { createDocNode } from '../__mocks__/utils';
 import { LiatoshynskyFoundation } from './LiatoshynskyFoundation';
 import { CropRect } from '~/types/graphql/generated/graphql';
 
@@ -33,10 +33,6 @@ jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: (pageId: string, blockId: string) => usePageBlockMock(pageId, blockId)
 }));
 
-const createDocNode = (text: string): JSONContent => ({
-  type: 'doc',
-  content: [{ type: 'paragraph', content: [{ type: 'text', text }] }]
-});
 
 jest.mock('./foundation-block/FoundationBlock', () => ({
   FoundationBlock: ({
@@ -85,7 +81,7 @@ jest.mock('./foundation-block/FoundationBlock', () => ({
   )
 }));
 
-jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', CollapsibleBlock);
+jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
 
 jest.mock('~/lib/utils/prose', () => ({
   proseToText: (input: unknown) => String(input)
