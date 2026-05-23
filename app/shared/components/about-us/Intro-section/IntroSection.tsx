@@ -26,14 +26,14 @@ export const IntroSection = () => {
   return (
     <CollapsibleBlock title="Вступна секція">
       <CustomTextField
+        fieldType="formatting"
         title="Заголовок сторінки"
         label="Текст заголовку"
-        fullWidth
-        value={block.title[currentLocale] || ''}
-        onChange={(e) =>
+        value={block.title[currentLocale]}
+        onChange={(value) =>
           setField(pageId, blockId, 'title', {
             ...block.title,
-            [currentLocale]: e.target.value
+            [currentLocale]: value
           })
         }
       />
@@ -55,23 +55,23 @@ export const IntroSection = () => {
       </Box>
 
       <CustomTextField
+        fieldType='formatting'
         title="Підпис до зображення"
         label="Текст підпису"
-        fullWidth
-        value={block.image.caption[currentLocale] || ''}
-        onChange={(e) =>
+        value={block.image.caption[currentLocale]}
+        onChange={(value) =>
           setField(pageId, blockId, 'image', {
             ...block.image,
-            caption: { ...block.image.caption, [currentLocale]: e.target.value },
-            alt: { ...block.image.alt, [currentLocale]: e.target.value }
+            caption: { ...block.image.caption, [currentLocale]: value },
+            alt: { ...block.image.alt, [currentLocale]: value }
           })
         }
       />
 
       <Box sx={{ marginTop: '15px' }}>
         <QuoteBlock
-          title={block.quote.source[currentLocale] || ''}
-          description={block.quote.text[currentLocale] || ''}
+          title={block.quote.source[currentLocale]}
+          description={block.quote.text[currentLocale]}
           onTitleChange={(val) =>
             setField(pageId, blockId, 'quote', {
               source: { ...block?.quote?.source, [currentLocale]: val },
