@@ -85,15 +85,7 @@ jest.mock('./foundation-block/FoundationBlock', () => ({
   )
 }));
 
-jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
-  __esModule: true,
-  default: ({ children, title }: { readonly children: React.ReactNode; readonly title: string }) => (
-    <div data-testid="collapsible-block">
-      <h2>{title}</h2>
-      {children}
-    </div>
-  )
-}));
+jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', CollapsibleBlock);
 
 jest.mock('~/lib/utils/prose', () => ({
   proseToText: (input: unknown) => String(input)

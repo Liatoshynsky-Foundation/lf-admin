@@ -1,15 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
+import { createDocNode } from '../../about-us/__mocks__/utils';
 import { EditableSectionList, SectionListItem } from './EditableSectionList';
-
-interface MockCustomTextFieldProps {
-  readonly title?: string;
-  readonly label?: string;
-  readonly value: JSONContent;
-  readonly onChange: (value: JSONContent) => void;
-}
 
 interface MockConfigurableListProps<T> {
   readonly items: readonly T[];
@@ -42,25 +35,8 @@ jest.mock('~/components/configurable-list/ConfigurableList', () => ({
   )
 }));
 
-const createDocNode = (text: string): JSONContent => ({
-  type: 'doc',
-  content: [{ type: 'paragraph', content: [{ type: 'text', text }] }]
-});
 
-jest.mock('~/components/design-system/text-field/TextField', () => ({
-  __esModule: true,
-  CustomTextField: ({ title, label, value, onChange }: MockCustomTextFieldProps) => {
-    const selectorKey = title || label || 'default';
-    return (
-      <div data-testid={`textfield-wrapper-${selectorKey}`}>
-        <span data-testid={`textfield-json-${selectorKey}`}>{JSON.stringify(value)}</span>
-        <button data-testid={`trigger-change-${selectorKey}`} onClick={() => onChange(createDocNode(`Updated ${selectorKey}`))}>
-          Change {selectorKey}
-        </button>
-      </div>
-    );
-  }
-}));
+jest.mock('~/shared/components/design-system/text-field/TextField');
 
 const mockTitleJson = createDocNode('Test Section Title');
 

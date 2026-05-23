@@ -2,16 +2,11 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
+import { createDocNode } from '../__mocks__/utils';
 import OurMission from './OurMission';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { MissionListItemWithId } from '~/types/store/pages/about-us/blocks/missionBlock';
 
-interface MockCustomTextFieldProps {
-  readonly title?: string;
-  readonly label?: string;
-  readonly value: JSONContent;
-  readonly onChange: (value: JSONContent) => void;
-}
 
 interface MockImagePreviewBlockProps {
   readonly title: string;
@@ -46,20 +41,10 @@ jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: () => usePageBlockMock()
 }));
 
-jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
-  __esModule: true,
-  default: ({ children, title }: { readonly children: React.ReactNode; readonly title: string }) => (
-    <section data-testid="collapsible-block">
-      <h2>{title}</h2>
-      {children}
-    </section>
-  )
-}));
+jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
 
-const createDocNode = (text: string): JSONContent => ({
-  type: 'doc',
-  content: [{ type: 'paragraph', content: [{ type: 'text', text }] }]
-});
+jest.mock('~/ds-components/text-field/TextField');
+
 
 jest.mock('~/components/configurable-list/ConfigurableList', () => ({
   __esModule: true,
@@ -90,20 +75,6 @@ jest.mock('~/components/configurable-list/ConfigurableList', () => ({
   )
 }));
 
-jest.mock('~/ds-components/text-field/TextField', () => ({
-  __esModule: true,
-  CustomTextField: ({ title, label, value, onChange }: MockCustomTextFieldProps) => {
-    const selectorKey = title || label || 'default';
-    return (
-      <div data-testid={`textfield-wrapper-${selectorKey}`}>
-        <span data-testid={`textfield-json-${selectorKey}`}>{JSON.stringify(value)}</span>
-        <button data-testid={`trigger-change-${selectorKey}`} onClick={() => onChange(createDocNode(`Updated ${selectorKey}`))}>
-          Change {selectorKey}
-        </button>
-      </div>
-    );
-  }
-}));
 
 jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
   __esModule: true,

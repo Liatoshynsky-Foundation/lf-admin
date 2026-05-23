@@ -1,16 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
+import { createDocNode } from '../__mocks__/utils';
 import { FoundationFounders } from './FoundationFounders';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { TeamMemberWithId } from '~/types/store/pages/about-us/blocks/foundationFounderBlock';
-
-interface MockCustomTextFieldProps {
-  readonly title: string;
-  readonly value: JSONContent;
-  readonly onChange: (value: JSONContent) => void;
-}
 
 interface MockConfigurableListProps<T> {
   readonly items: readonly T[];
@@ -38,32 +32,9 @@ jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: () => usePageBlockMock()
 }));
 
-jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
-  __esModule: true,
-  default: ({ children, title }: { readonly children: React.ReactNode; readonly title: string }) => (
-    <section data-testid="collapsible">
-      <h2>{title}</h2>
-      {children}
-    </section>
-  )
-}));
+jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
 
-const createDocNode = (text: string): JSONContent => ({
-  type: 'doc',
-  content: [{ type: 'paragraph', content: [{ type: 'text', text }] }]
-});
-
-jest.mock('~/ds-components/text-field/TextField', () => ({
-  __esModule: true,
-  CustomTextField: ({ title, value, onChange }: MockCustomTextFieldProps) => (
-    <div data-testid={`textfield-wrapper-${title}`}>
-      <span data-testid={`textfield-json-${title}`}>{JSON.stringify(value)}</span>
-      <button data-testid={`trigger-change-${title}`} onClick={() => onChange(createDocNode(`Updated ${title}`))}>
-        Change {title}
-      </button>
-    </div>
-  )
-}));
+jest.mock('~/ds-components/text-field/TextField');
 
 jest.mock('~/components/configurable-list/ConfigurableList', () => ({
   __esModule: true,

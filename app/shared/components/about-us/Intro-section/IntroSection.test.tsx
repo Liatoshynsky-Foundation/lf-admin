@@ -2,13 +2,8 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import type { JSONContent } from '@tiptap/react';
 import React from 'react';
 
+import { createDocNode } from '../__mocks__/utils';
 import { IntroSection } from './IntroSection';
-
-interface MockCustomTextFieldProps {
-  readonly title: string;
-  readonly value: JSONContent;
-  readonly onChange: (value: JSONContent) => void;
-}
 
 interface MockQuoteBlockProps {
   readonly title: JSONContent;
@@ -32,38 +27,15 @@ jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: (pageId: string, blockId: string) => usePageBlockMock(pageId, blockId)
 }));
 
-jest.mock('../../design-system/collapsible-block/CollapsibleBlock', () => ({
-  __esModule: true,
-  default: ({ children, title }: { readonly children: React.ReactNode; readonly title: string }) => (
-    <section data-testid="collapsible">
-      <h2>{title}</h2>
-      {children}
-    </section>
-  )
-}));
+jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
 
-jest.mock('../../design-system/photo-block/PhotoBlock', () => ({
+jest.mock('~/ds-components/text-field/TextField');
+
+jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
   ImagePreviewBlock: ({ imageUrl, fileName }: { readonly imageUrl: string; readonly fileName: string }) => (
     <div data-testid="image-preview">
       <span data-testid="image-url">{imageUrl}</span>
       <span data-testid="file-name">{fileName}</span>
-    </div>
-  )
-}));
-
-const createDocNode = (text: string): JSONContent => ({
-  type: 'doc',
-  content: [{ type: 'paragraph', content: [{ type: 'text', text }] }]
-});
-
-jest.mock('~/ds-components/text-field/TextField', () => ({
-  __esModule: true,
-  CustomTextField: ({ title, value, onChange }: MockCustomTextFieldProps) => (
-    <div data-testid={`textfield-wrapper-${title}`}>
-      <span data-testid={`textfield-json-${title}`}>{JSON.stringify(value)}</span>
-      <button data-testid={`trigger-change-${title}`} onClick={() => onChange(createDocNode(`Updated ${title}`))}>
-        Change {title}
-      </button>
     </div>
   )
 }));
@@ -74,10 +46,16 @@ jest.mock('../Liatoshynsky-office/quote-block/QuoteBlock', () => ({
     <div data-testid="quote-block">
       <span data-testid="quote-title-json">{JSON.stringify(title)}</span>
       <span data-testid="quote-description-json">{JSON.stringify(description)}</span>
-      <button data-testid="trigger-quote-title-change" onClick={() => onTitleChange(createDocNode('Updated Author Text'))}>
+      <button
+        data-testid="trigger-quote-title-change"
+        onClick={() => onTitleChange(createDocNode('Updated Author Text'))}
+      >
         Change Quote Title
       </button>
-      <button data-testid="trigger-quote-description-change" onClick={() => onDescriptionChange(createDocNode('Updated Quote Text'))}>
+      <button
+        data-testid="trigger-quote-description-change"
+        onClick={() => onDescriptionChange(createDocNode('Updated Quote Text'))}
+      >
         Change Quote Description
       </button>
     </div>
@@ -129,7 +107,9 @@ describe('IntroSection', () => {
     runSimulation();
 
     const preview = screen.getByTestId('image-preview');
-    expect(within(preview).getByTestId('image-url')).toHaveTextContent('/api/blob-url?folderName=photos&blobName=test-image');
+    expect(within(preview).getByTestId('image-url')).toHaveTextContent(
+      '/api/blob-url?folderName=photos&blobName=test-image'
+    );
     expect(within(preview).getByTestId('file-name')).toHaveTextContent('test-image');
   });
 
@@ -161,17 +141,14 @@ describe('IntroSection', () => {
       'quote',
       { text: expect.objectContaining({ uk: createDocNode('Updated Quote Text') }) }
     ]
-  ])(
-    'should correctly invoke setField on %s',
-    (_scenario, triggerId, storeKey, expectedPayload) => {
-      runSimulation(triggerId);
+  ])('should correctly invoke setField on %s', (_scenario, triggerId, storeKey, expectedPayload) => {
+    runSimulation(triggerId);
 
-      expect(setFieldMock).toHaveBeenCalledWith(
-        'about-us',
-        'IntroSection',
-        storeKey,
-        expect.objectContaining(expectedPayload)
-      );
-    }
-  );
+    expect(setFieldMock).toHaveBeenCalledWith(
+      'about-us',
+      'IntroSection',
+      storeKey,
+      expect.objectContaining(expectedPayload)
+    );
+  });
 });

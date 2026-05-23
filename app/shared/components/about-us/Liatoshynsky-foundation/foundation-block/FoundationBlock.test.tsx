@@ -1,14 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
+import { createDocNode } from '../../__mocks__/utils';
 import { FoundationBlock } from './FoundationBlock';
 
-interface MockCustomTextFieldProps {
-  readonly title: string;
-  readonly value: JSONContent;
-  readonly onChange: (value: JSONContent) => void;
-}
 
 interface MockImagePreviewBlockProps {
   readonly imageUrl: string;
@@ -17,24 +12,9 @@ interface MockImagePreviewBlockProps {
   readonly title?: string;
 }
 
-const createDocNode = (text: string): JSONContent => ({
-  type: 'doc',
-  content: [{ type: 'paragraph', content: [{ type: 'text', text }] }]
-});
+jest.mock('~/ds-components/text-field/TextField');
 
-jest.mock('~/shared/components/design-system/text-field/TextField', () => ({
-  __esModule: true,
-  CustomTextField: ({ title, value, onChange }: MockCustomTextFieldProps) => (
-    <div data-testid={`textfield-wrapper-${title}`}>
-      <span data-testid={`textfield-json-${title}`}>{JSON.stringify(value)}</span>
-      <button data-testid={`trigger-change-${title}`} onClick={() => onChange(createDocNode(`Updated ${title}`))}>
-        Change {title}
-      </button>
-    </div>
-  )
-}));
-
-jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
+jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
   __esModule: true,
   ImagePreviewBlock: ({ imageUrl, fileName, onChangeImage, title }: MockImagePreviewBlockProps) => (
     <div data-testid="image-preview-block" data-title={title}>

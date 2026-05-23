@@ -1,26 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
+import { createDocNode } from '../__mocks__/utils';
 import OurGoals from './OurGoals';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { GoalItemWithId } from '~/types/store/pages/about-us/blocks/ourGoalsBlock';
-
-interface MockSectionListItem {
-  readonly id: string;
-  readonly title: JSONContent;
-  readonly description: JSONContent;
-}
-
-interface MockEditableSectionListProps {
-  readonly title: JSONContent;
-  readonly onTitleChange: (value: JSONContent) => void;
-  readonly items: readonly MockSectionListItem[];
-  readonly onChangeItem: (id: string, field: 'title' | 'description', value: JSONContent) => void;
-  readonly onCreateItem: () => { readonly id: string };
-  readonly onDeleteItem: (id: string) => void;
-  readonly sectionLabel: string;
-}
 
 const setFieldMock = jest.fn();
 const usePageBlockMock = jest.fn();
@@ -34,61 +18,9 @@ jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: () => usePageBlockMock()
 }));
 
-jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
-  __esModule: true,
-  default: ({ children, title }: { readonly children: React.ReactNode; readonly title: string }) => (
-    <section data-testid="collapsible-block">
-      <h2>{title}</h2>
-      {children}
-    </section>
-  )
-}));
+jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
 
-const createDocNode = (text: string): JSONContent => ({
-  type: 'doc',
-  content: [{ type: 'paragraph', content: [{ type: 'text', text }] }]
-});
-
-jest.mock('../../accordion-blocks/editable-section-list/EditableSectionList', () => ({
-  __esModule: true,
-  EditableSectionList: ({
-    title,
-    onTitleChange,
-    items,
-    onChangeItem,
-    onCreateItem,
-    onDeleteItem,
-    sectionLabel
-  }: MockEditableSectionListProps) => (
-    <div data-testid="editable-section-list" data-label={sectionLabel}>
-      <div data-testid="main-title-json">{JSON.stringify(title)}</div>
-      <button data-testid="trigger-main-title-change" onClick={() => onTitleChange(createDocNode('Updated Section Title'))}>
-        Change Main Title
-      </button>
-
-      {items.map((item) => (
-        <div key={item.id} data-testid={`goal-item-${item.id}`}>
-          <span data-testid={`item-title-${item.id}`}>{JSON.stringify(item.title)}</span>
-          <span data-testid={`item-desc-${item.id}`}>{JSON.stringify(item.description)}</span>
-
-          <button data-testid={`trigger-item-title-change-${item.id}`} onClick={() => onChangeItem(item.id, 'title', createDocNode('Updated Item Title'))}>
-            Change Item Title
-          </button>
-          <button data-testid={`trigger-item-desc-change-${item.id}`} onClick={() => onChangeItem(item.id, 'description', createDocNode('Updated Item Description'))}>
-            Change Item Description
-          </button>
-          <button data-testid={`trigger-item-delete-${item.id}`} onClick={() => onDeleteItem(item.id)}>
-            Delete Item
-          </button>
-        </div>
-      ))}
-
-      <button data-testid="trigger-item-create" onClick={onCreateItem}>
-        Create Item
-      </button>
-    </div>
-  )
-}));
+jest.mock('~/components/accordion-blocks/editable-section-list/EditableSectionList');
 
 const TARGET_ID = 'target-id-1';
 const emptyDoc = { uk: { type: 'doc', content: [] }, en: { type: 'doc', content: [] } };
