@@ -20,7 +20,7 @@ export const QuoteBlock = ({ title, description, onTitleChange, onDescriptionCha
         title="Підпис до цитати"
         label="Текст підпису"
         value={description}
-        onChange={(value) => onDescriptionChange && onDescriptionChange(value)}
+        onChange={(value) => onDescriptionChange?.(value)}
       />
 
     </Box>

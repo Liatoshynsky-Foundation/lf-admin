@@ -28,23 +28,29 @@ interface MockConfigurableListProps<T> {
 
 const setFieldMock = jest.fn();
 const usePageBlockMock = jest.fn();
-
 jest.mock('~/utils/uploadToTmpFolder', () => ({ handleUploadImage: jest.fn() }));
 jest.mock('~/types/graphql/generated/graphql', () => ({ useUploadBlobMutation: () => [jest.fn()] }));
-
 jest.mock('~/store', () => ({
   useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock }) => unknown) =>
     selector({ locale: 'uk', setField: setFieldMock })
 }));
-
 jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: () => usePageBlockMock()
 }));
-
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
-
 jest.mock('~/ds-components/text-field/TextField');
 
+jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
+  __esModule: true,
+  ImagePreviewBlock: ({ title, imageUrl, onChangeImage }: MockImagePreviewBlockProps) => (
+    <div data-testid={`image-block-${title}`}>
+      <span data-testid={`image-url-${title}`}>{imageUrl}</span>
+      <button data-testid={`upload-${title}`} onClick={() => onChangeImage('new-image-path.jpg')}>
+        Upload
+      </button>
+    </div>
+  )
+}));
 
 jest.mock('~/components/configurable-list/ConfigurableList', () => ({
   __esModule: true,
@@ -70,19 +76,6 @@ jest.mock('~/components/configurable-list/ConfigurableList', () => ({
       ))}
       <button data-testid="add-btn" onClick={onCreate}>
         {addBtnLabel}
-      </button>
-    </div>
-  )
-}));
-
-
-jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
-  __esModule: true,
-  ImagePreviewBlock: ({ title, imageUrl, onChangeImage }: MockImagePreviewBlockProps) => (
-    <div data-testid={`image-block-${title}`}>
-      <span data-testid={`image-url-${title}`}>{imageUrl}</span>
-      <button data-testid={`upload-${title}`} onClick={() => onChangeImage('new-image-path.jpg')}>
-        Upload
       </button>
     </div>
   )

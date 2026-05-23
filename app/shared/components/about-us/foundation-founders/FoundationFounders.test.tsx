@@ -22,18 +22,14 @@ interface MockContributorCardProps {
 
 const setFieldMock = jest.fn();
 const usePageBlockMock = jest.fn();
-
 jest.mock('~/store', () => ({
   useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock }) => unknown) =>
     selector({ locale: 'uk', setField: setFieldMock })
 }));
-
 jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: () => usePageBlockMock()
 }));
-
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
-
 jest.mock('~/ds-components/text-field/TextField');
 
 jest.mock('~/components/configurable-list/ConfigurableList', () => ({

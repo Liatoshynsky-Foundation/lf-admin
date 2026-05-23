@@ -83,9 +83,7 @@ jest.mock('./foundation-block/FoundationBlock', () => ({
 
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
 
-jest.mock('~/lib/utils/prose', () => ({
-  proseToText: (input: unknown) => String(input)
-}));
+jest.mock('~/lib/utils/prose', () => ({ proseToText: String }));
 
 const mockNodes = {
   org: createDocNode('Organisation Text'),

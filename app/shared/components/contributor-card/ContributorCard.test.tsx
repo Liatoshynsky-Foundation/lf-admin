@@ -3,7 +3,7 @@ import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
 import { ContributorCard } from './ContributorCard';
-import { CropResult, ImageType } from '~/types/common';
+import { CropResult } from '~/types/common';
 
 interface MockCustomTextFieldProps {
   readonly label: string;
@@ -143,7 +143,7 @@ describe('ContributorCard', () => {
 
   it('should render image preview with default placeholder image path when inputs are blank', () => {
     renderCard({
-      photo: { generatedSrc: '', src: '', alt: { uk: {}, en: {} }, caption: { uk: {}, en: {} } } as ImageType
+      photo: { generatedSrc: '', src: '', alt: { uk: {}, en: {} }, caption: { uk: {}, en: {} } } 
     });
 
     const img = screen.getByTestId('preview-img') as HTMLImageElement;
@@ -169,7 +169,7 @@ describe('ContributorCard', () => {
 
   it('should pass the raw target image URL path back as a localized value fallback string if the original alt object property field is empty', () => {
     const { onChangePhoto } = renderCard({
-      photo: { generatedSrc: '', src: '', alt: { uk: {}, en: {} }, caption: { uk: {}, en: {} } } as ImageType
+      photo: { generatedSrc: '', src: '', alt: { uk: {}, en: {} }, caption: { uk: {}, en: {} } } 
     });
 
     fireEvent.click(screen.getByTestId('image-upload-trigger'));

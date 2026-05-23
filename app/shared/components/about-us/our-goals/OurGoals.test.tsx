@@ -8,18 +8,14 @@ import { GoalItemWithId } from '~/types/store/pages/about-us/blocks/ourGoalsBloc
 
 const setFieldMock = jest.fn();
 const usePageBlockMock = jest.fn();
-
 jest.mock('~/store', () => ({
   useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock }) => unknown) =>
     selector({ locale: 'uk', setField: setFieldMock })
 }));
-
 jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: () => usePageBlockMock()
 }));
-
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
-
 jest.mock('~/components/accordion-blocks/editable-section-list/EditableSectionList');
 
 const TARGET_ID = 'target-id-1';

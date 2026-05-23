@@ -8,19 +8,15 @@ import { WhatWeDolItemWithId } from '~/types/store/pages/about-us/blocks/whatWeD
 
 const setFieldMock = jest.fn();
 const usePageBlockMock = jest.fn();
-
 jest.mock('~/store', () => ({
   useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock }) => unknown) =>
     selector({ locale: 'uk', setField: setFieldMock })
 }));
-
+jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
+jest.mock('~/components/accordion-blocks/editable-section-list/EditableSectionList');
 jest.mock('~/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: () => usePageBlockMock()
 }));
-
-jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
-
-jest.mock('~/components/accordion-blocks/editable-section-list/EditableSectionList');
 
 const ITEM_ID = 'mock-item-id-1';
 
