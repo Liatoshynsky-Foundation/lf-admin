@@ -108,7 +108,7 @@ const baseContributor = {
     src: '',
     alt: { uk: mockAltJson, en: {} },
     caption: { uk: mockCaptionJson, en: {} }
-  } as ImageType
+  }
 };
 
 const renderCard = (overrides: Partial<typeof baseContributor> = {}) => {

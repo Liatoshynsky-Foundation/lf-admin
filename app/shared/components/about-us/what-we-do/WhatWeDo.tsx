@@ -36,8 +36,7 @@ const WhatWeDo = () => {
     const updatedList = itemList.map((item) => {
       if (item.id !== id) return item;
 
-      const updatedFieldValue = field === 'description' ? value : value;
-      return { ...item, [field]: { ...item[field], [currentLocale]: updatedFieldValue } };
+      return { ...item, [field]: { ...item[field], [currentLocale]: value } };
     });
     setField(pageId, blockId, 'items', updatedList);
   };

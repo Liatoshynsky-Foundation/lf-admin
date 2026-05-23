@@ -12,7 +12,7 @@ export const QuoteBlock = ({ title, description, onTitleChange, onDescriptionCha
         title="Головна цитата"
         label="Текст підпису"
         value={title}
-        onChange={(value) => onTitleChange && onTitleChange(value)}
+        onChange={(value) => onTitleChange?.(value)}
       />
 
       <CustomTextField

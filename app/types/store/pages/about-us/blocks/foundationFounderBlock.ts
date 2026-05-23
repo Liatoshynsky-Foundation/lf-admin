@@ -1,5 +1,4 @@
 import { ImageType, LocalizedJSON } from '~/types/common';
-// import { JSONContent } from '@tiptap/react';
 
 export type TeamMember = {
   photo: ImageType;
