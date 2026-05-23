@@ -1,12 +1,13 @@
 'use client';
 
 import { Skeleton } from '@mui/material';
+import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
 import { FoundationBlock } from './foundation-block/FoundationBlock';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
-import { proseToText, textToProse } from '~/lib/utils/prose';
+import { proseToText } from '~/lib/utils/prose';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
@@ -25,30 +26,30 @@ export const LiatoshynskyFoundation = () => {
 
   if (!block) return <Skeleton sx={{ height: '60px' }} />;
 
-  const mainText = proseToText(block.ourOrganisation?.[currentLocale]);
-  const handleMainTextChange = (val: string) => {
+  const mainText = block.ourOrganisation?.[currentLocale];
+  const handleMainTextChange = (val: JSONContent) => {
     setField(pageId, blockId, 'ourOrganisation', {
       ...block.ourOrganisation,
-      [currentLocale]: textToProse(val)
+      [currentLocale]: val
     });
   };
 
-  type LocalizedProse = Record<'uk' | 'en', ProseDoc | undefined>;
+  type LocalizedProse = Record<'uk' | 'en', JSONContent>;
 
   const paragraphKeys: (keyof typeof block)[] = ['ourName', 'ourBelief'];
 
   const paragraphs = paragraphKeys.map((key) => {
-    const localized = block[key] as LocalizedProse | undefined;
+    const localized = block[key] as LocalizedProse;
     return {
-      text: proseToText(localized?.[currentLocale])
+      text: localized?.[currentLocale]
     };
   });
 
-  const handleParagraphChange = (index: number, val: string) => {
+  const handleParagraphChange = (index: number, val: JSONContent) => {
     const key = paragraphKeys[index];
     setField(pageId, blockId, key, {
       ...block[key],
-      [currentLocale]: textToProse(val)
+      [currentLocale]: val
     });
   };
 
@@ -58,7 +59,7 @@ export const LiatoshynskyFoundation = () => {
         mainText={mainText}
         paragraphs={paragraphs}
         imageUrl={getImageUrl(block.image)}
-        fileName={block.image?.caption?.[currentLocale]}
+        fileName={proseToText(block.image?.caption?.[currentLocale] as ProseDoc)}
         initialCrop={block.image?.crop}
         onMainTextChange={handleMainTextChange}
         onParagraphChange={handleParagraphChange}
