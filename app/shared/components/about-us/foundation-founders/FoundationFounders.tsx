@@ -1,5 +1,6 @@
 'use client';
 import { Skeleton, Typography } from '@mui/material';
+import { JSONContent } from '@tiptap/react';
 
 import { styles } from './FoundationFounders.style';
 import ConfigurableList from '~/components/configurable-list/ConfigurableList';
@@ -8,7 +9,6 @@ import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { ensureIds } from '~/lib/utils/ensureIds';
-import { proseToText, textToProse } from '~/lib/utils/prose';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 import { ImageType, LocalizedString } from '~/types/common';
@@ -31,14 +31,15 @@ export const FoundationFounders = () => {
   };
 
   const addMember = (): TeamMemberWithId => {
+    const emptyDoc = { uk: {}, en: {} };
     const newMember: TeamMemberWithId = {
       id: crypto.randomUUID(),
-      name: { uk: 'Placeholder Name', en: 'Placeholder Name' },
-      description: { uk: 'Placeholder Description', en: 'Placeholder Description' },
+      name: emptyDoc,
+      description: emptyDoc,
       photo: {
         src: '',
-        alt: { uk: '', en: '' },
-        caption: { uk: '', en: '' },
+        alt: { uk: {}, en: {} },
+        caption: { uk: {}, en: {} },
         generatedSrc: ''
       }
     };
@@ -54,36 +55,36 @@ export const FoundationFounders = () => {
     updateMembers(memberList.map((member) => (member.id === updated.id ? updated : member)));
   };
 
-  const handleChangeTitleText = (value: string) => {
+  const handleChangeTitleText = (value: JSONContent) => {
     setField(pageId, blockId, 'titleText', {
       ...block.titleText,
-      [currentLocale]: textToProse(value)
+      [currentLocale]: value
     });
   };
 
-  const handleChangeListTitle = (value: string) => {
+  const handleChangeListTitle = (value: JSONContent) => {
     setField(pageId, blockId, 'listTitle', {
       ...block.listTitle,
-      [currentLocale]: textToProse(value)
+      [currentLocale]: value
     });
   };
 
   return (
     <CollapsibleBlock title="Команда Фундації">
       <CustomTextField
+        fieldType="formatting"
         title="Вступний текст секції"
         label="Текст заголовку"
-        fullWidth
-        value={proseToText(block.titleText[currentLocale])}
-        onChange={(e) => handleChangeTitleText(e.target.value)}
+        value={block.titleText[currentLocale]}
+        onChange={(value) => handleChangeTitleText(value)}
       />
 
       <CustomTextField
+        fieldType="formatting"
         title="Заголовок секції"
         label="Текст заголовку"
-        fullWidth
         value={block.listTitle[currentLocale]}
-        onChange={(e) => handleChangeListTitle(e.target.value)}
+        onChange={(value) => handleChangeListTitle(value)}
       />
 
       <Typography sx={styles.contributorsTitle} variant="subtitle1">
