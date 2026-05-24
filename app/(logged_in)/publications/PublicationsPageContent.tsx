@@ -27,7 +27,6 @@ import {
 } from '~/constants/publications';
 import type { FilesSortValue } from '~/constants/sort';
 import ContentCard, { type ContentType } from '~/shared/components/content-card/ContentCard';
-import { colors } from '~/shared/components/design-system/button/Button.styles';
 import DropdownMenu from '~/shared/components/dropdown-menu/DropdownMenu';
 import { EmptyState } from '~/shared/components/empty-state';
 import { FilteringToolbar, SortSelect } from '~/shared/components/filtering-toolbar';
@@ -37,6 +36,7 @@ import { useAllEvents } from '~/shared/hooks/use-events/useEvents';
 import { useAllMediaMentions } from '~/shared/hooks/use-media-mentions/useMediaMentions';
 import { useAllNews } from '~/shared/hooks/use-news/useNews';
 import { usePublicationsFiltering } from '~/shared/hooks/use-publications';
+import { mainHexPallete as colors } from '~/shared/theme/colors';
 import type { LocalizedString } from '~/types/common';
 import { type AllEventsQuery, type AllMediaMentionsQuery, type AllNewsQuery } from '~/types/graphql/generated/graphql';
 import { normalizeSearch } from '~/utils/normalizeSearch';

@@ -1,6 +1,6 @@
 'use client';
 
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 
 import type { UsedRendererProps } from '../../MediaModal.renderers';
 import { sharedViewStyles } from '../shared-view.styles';
@@ -10,7 +10,9 @@ export function UsedView(_props: Readonly<UsedRendererProps>) {
   return (
     <Box data-testid="UsedView" sx={sharedViewStyles.container}>
       <Box sx={sharedViewStyles.header}>
-        <Box sx={sharedViewStyles.title}>Зображення на сторінці</Box>
+        <Typography variant="h6" sx={sharedViewStyles.title}>
+          Зображення на сторінці
+        </Typography>
       </Box>
 
       <Box sx={sharedViewStyles.gridContainer}>

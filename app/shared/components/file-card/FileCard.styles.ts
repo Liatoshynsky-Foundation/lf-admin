@@ -1,13 +1,15 @@
-import { SxProps, Theme } from '@mui/material';
+import { alpha, SxProps } from '@mui/material';
 
-export const styles: Record<string, SxProps<Theme>> = {
+import { mainHexPallete as colors } from '~/shared/theme/colors';
+
+export const styles = {
   container: {
     width: '100%',
     maxWidth: '100%',
     height: '325px',
     borderRadius: '16px',
-    borderColor: '#C6C8D3',
-    backgroundColor: '#FCFCFC',
+    borderColor: 'blue.300',
+    backgroundColor: 'white',
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
@@ -15,7 +17,7 @@ export const styles: Record<string, SxProps<Theme>> = {
     transition: 'opacity 0.2s, box-shadow 0.2s',
     '&:hover': {
       opacity: 0.95,
-      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+      boxShadow: `0 2px 8px ${alpha(colors.black, 0.1)}`
     }
   },
 
@@ -24,11 +26,18 @@ export const styles: Record<string, SxProps<Theme>> = {
     width: '100%',
     height: '225px',
     overflow: 'hidden',
-    backgroundColor: '#F1F2F7'
+    backgroundColor: 'adminBlue.100'
   },
 
   fileTitle: {
-    fontSize: '18px'
+    lineHeight: '1.5'
+  },
+
+  fileDate: {
+    fontSize: '16px',
+    fontStyle: 'italic',
+    color: 'text.secondary',
+    lineHeight: '1'
   },
 
   imagePlaceholder: {
@@ -37,7 +46,7 @@ export const styles: Record<string, SxProps<Theme>> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1F2F7'
+    backgroundColor: 'adminBlue.100'
   },
 
   fileInfoSection: {
@@ -48,6 +57,11 @@ export const styles: Record<string, SxProps<Theme>> = {
     padding: '0 16px',
     gap: '8px'
   },
+
+  menuButton: (isMenuOpen: boolean): SxProps => ({
+    backgroundColor: isMenuOpen ? alpha(colors.black, 0.08) : 'transparent',
+    '&:hover': { backgroundColor: alpha(colors.black, 0.08) }
+  }),
 
   metadataSection: {
     display: 'flex',

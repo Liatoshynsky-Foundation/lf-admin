@@ -148,7 +148,7 @@ export function CropView({ selected, crop: stateCrop, resetSeq, onBaseline, onCh
             color: 'text.secondary'
           }}
         >
-          <Typography variant="body2">
+          <Typography variant="textMd">
               Не вдалося завантажити зображення
           </Typography>
           <Typography variant="caption" sx={{ wordBreak: 'break-all', opacity: 0.6 }}>

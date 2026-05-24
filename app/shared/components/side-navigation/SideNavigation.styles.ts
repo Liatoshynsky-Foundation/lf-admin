@@ -1,19 +1,32 @@
+import { SxProps } from '@mui/material';
+
 export const styles = {
-  drawerPaper: {
-    backgroundColor: '#F1F2F7',
-    borderRight: '1px solid #DCDDE5',
+  wrapper: (width: number): SxProps => ({
+    height: '100vh',
+    width: width,
+    flexShrink: 0
+  }),
+
+  drawerPaper: (width: number, open: boolean): SxProps => ({
+    backgroundColor: 'adminBlue.100',
+    borderRight: '1px solid',
+    borderColor: 'adminBlue.300',
     position: 'fixed',
     display: 'flex',
     flexDirection: 'column',
+    width: width,
     maxWidth: '280px',
-    padding: '32px 0',
+    padding: '0',
+    pt: open ? '32px' : '40px',
+    pb: '32px',
     height: '100vh',
     overflow: 'visible',
     boxSizing: 'border-box',
     '&::-webkit-scrollbar': {
       display: 'none'
     }
-  },
+  }),
+
   navigationContent: {
     flex: 1,
     minHeight: 0,
@@ -24,38 +37,46 @@ export const styles = {
       display: 'none'
     }
   },
+
   topSection: {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center'
   },
-  hideBtn: {
+
+  hideBtn: (left: number): SxProps => ({
     borderRadius: '50%',
     width: 32,
     height: 32,
-    backgroundColor: '#F1F2F7',
+    backgroundColor: 'adminBlue.100',
     position: 'absolute',
     top: '90px',
-    border: '1px solid #DCDDE5',
+    left: left,
+    border: '1px solid',
+    borderColor: 'adminBlue.300',
     transform: 'translateY(-50%)',
     zIndex: 1,
     '&:hover': {
-      backgroundColor: '#E0E0E0'
+      backgroundColor: 'adminBlue.200'
     }
-  },
+  }),
+
   hideInClosed: (open: boolean) => ({
     display: open ? 'block' : 'none'
   }),
+
   subheader: {
     background: 'transparent',
     pl: '24px',
-    lineHeight: '140%',
-    fontFamily: 'Mulish',
+    my: '16px',
+    lineHeight: '1.4',
     position: 'relative'
   },
+
   divider: {
     my: '16px'
   },
+
   logoBlock: {
     display: 'flex',
     alignItems: 'center',
@@ -64,5 +85,19 @@ export const styles = {
     borderRadius: '8px',
     padding: 0,
     cursor: 'pointer'
+  },
+
+  logoTextContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center'
+  },
+
+  spacer: (open: boolean): SxProps => ({
+    height: open ? 40 : 64
+  }),
+
+  list: {
+    p: 0
   }
 };

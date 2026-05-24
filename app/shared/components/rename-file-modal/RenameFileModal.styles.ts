@@ -6,7 +6,7 @@ export const renameFileModalStyles: Record<string, SxProps<Theme>> = {
     maxWidth: '100%',
     borderRadius: '24px',
     padding: '28px 24px 28px 32px',
-    backgroundColor: 'background.default',
+    backgroundColor: 'white',
     display: 'flex',
     flexDirection: 'column',
     gap: '40px',
@@ -18,14 +18,6 @@ export const renameFileModalStyles: Record<string, SxProps<Theme>> = {
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%'
-  },
-
-  title: {
-    fontSize: '28px',
-    fontWeight: 700,
-    lineHeight: 1.4,
-    color: 'text.primary',
-    margin: 0
   },
 
   inputContainer: {

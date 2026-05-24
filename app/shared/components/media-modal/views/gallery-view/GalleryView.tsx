@@ -1,6 +1,6 @@
 'use client';
 
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { useMemo } from 'react';
 
 import { FilterDropdown } from '../../components/filter-dropdown/FilterDropdown';
@@ -139,7 +139,9 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
   return (
     <Box data-testid="GalleryView" sx={sharedViewStyles.container}>
       <Box sx={sharedViewStyles.header}>
-        <Box sx={sharedViewStyles.title}>Усі зображення</Box>
+        <Typography variant="h6" sx={sharedViewStyles.title}>
+          Усі зображення
+        </Typography>
 
         <Box sx={sharedViewStyles.controlsGroup}>
           <SearchButton

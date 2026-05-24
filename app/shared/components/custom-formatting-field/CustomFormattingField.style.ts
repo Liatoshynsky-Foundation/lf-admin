@@ -51,5 +51,21 @@ export const styles = {
     borderWidth: '1px',
     pl: '12px',
     borderColor: isFocused ? 'blue.500' : 'gray',
-  })
+  }),
+
+  legend: (isActive: boolean) => ({
+    display: 'block',
+    fontSize: '12px',
+    maxWidth: isActive ? '100%' : '0',
+    transition: 'max-width 0.2s',
+    visibility: 'hidden'
+  }),
+
+  contentWrapper: {
+    position: 'relative',
+    padding: '0 16px',
+    minHeight: '48px',
+    display: 'flex',
+    alignItems: 'center'
+  }
 };

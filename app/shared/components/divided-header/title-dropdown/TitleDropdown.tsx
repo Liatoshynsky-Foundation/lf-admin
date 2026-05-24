@@ -32,18 +32,18 @@ export const TitleDropdown = (props: TitleDropdownProps) => {
 
   return (
     <Box sx={[styles.container, ...sxToArray(props.sx)]}>
-      <Typography sx={{ maxWidth: 320 }} noWrap variant="customBold20Tight" title={title}>
+      <Typography sx={[{ maxWidth: 320 }, ...sxToArray(styles.typography)]} noWrap variant="bodyMd" title={title}>
         {title}
       </Typography>
 
-      <Typography variant="customBold20Tight" sx={{ color: '#9D9FA9' }}>
+      <Typography variant="bodyMd" sx={styles.separator}>
         /
       </Typography>
 
-      <Typography variant="customBold20Tight">{contextLabel}</Typography>
+      <Typography sx={styles.typography} variant="bodyMd">{contextLabel}</Typography>
       {renderMenuOpen && (
-        <IconButton aria-label="Відкрити меню" sx={{ ml: '-4px' }} onClick={onMenuOpen}>
-          <ChevronDown size="20px" color="#190D03" strokeWidth="1.5px" />
+        <IconButton aria-label="Відкрити меню" sx={styles.iconButton} onClick={onMenuOpen}>
+          <ChevronDown size="20px" />
         </IconButton>
       )}
     </Box>

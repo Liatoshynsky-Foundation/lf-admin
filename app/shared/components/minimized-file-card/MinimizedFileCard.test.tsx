@@ -3,6 +3,21 @@ import userEvent from '@testing-library/user-event';
 
 import MinimizedFileCard from './MinimizedFileCard';
 
+jest.mock('~/public/icons/link.svg', () => ({
+  __esModule: true,
+  default: () => <svg data-testid="link-icon" />
+}));
+
+jest.mock('~/public/icons/menu.svg', () => ({
+  __esModule: true,
+  default: () => <svg data-testid="menu-icon" />
+}));
+
+jest.mock('~/public/icons/star-1.svg', () => ({
+  __esModule: true,
+  default: () => <svg data-testid="star-icon" />
+}));
+
 jest.mock('~/types/graphql/generated/graphql', () => ({
   ...jest.requireActual('~/types/graphql/generated/graphql'),
   useUpdateAssetMutation: () => [jest.fn(), { loading: false }]
@@ -58,25 +73,25 @@ describe('MinimizedFileCard', () => {
   it('should render star icon when starred prop is true', () => {
     render(<MinimizedFileCard {...defaultProps} starred={true} />);
 
-    expect(screen.getByAltText('Starred file')).toBeInTheDocument();
+    expect(screen.getByLabelText('Starred file')).toBeInTheDocument();
   });
 
   it('should not render star icon when starred prop is false', () => {
     render(<MinimizedFileCard {...defaultProps} starred={false} />);
 
-    expect(screen.queryByAltText('Starred file')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Starred file')).not.toBeInTheDocument();
   });
 
   it('should render link icon when linked prop is true', () => {
     render(<MinimizedFileCard {...defaultProps} linked={true} />);
 
-    expect(screen.getByAltText('Linked file')).toBeInTheDocument();
+    expect(screen.getByLabelText('File is linked to other pages')).toBeInTheDocument();
   });
 
   it('should not render link icon when linked prop is false', () => {
     render(<MinimizedFileCard {...defaultProps} linked={false} />);
 
-    expect(screen.queryByAltText('Linked file')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('File is linked to other pages')).not.toBeInTheDocument();
   });
 
   it('should call onClick handler when the card is clicked', async () => {

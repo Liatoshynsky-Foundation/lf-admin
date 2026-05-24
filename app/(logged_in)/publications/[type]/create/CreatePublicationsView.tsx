@@ -147,7 +147,7 @@ export default function CreatePublicationsView({ data, mode = 'create' }: Readon
             )
           }
         >
-          <Typography variant="customBold20Tight">{`${mode === 'edit' ? 'Редагування' : 'Створення'} ${PAGE_TITLES[publicationType]}`}</Typography>
+          <Typography variant="h7">{`${mode === 'edit' ? 'Редагування' : 'Створення'} ${PAGE_TITLES[publicationType]}`}</Typography>
         </DividedHeader>
       )}
       <Box sx={styles.contentWrapper}>
@@ -199,7 +199,7 @@ export default function CreatePublicationsView({ data, mode = 'create' }: Readon
         >
           {actions.map((action) => (
             <MenuItem sx={editStyles.menuItem} key={action.id} onClick={() => handleMenuAction(action.id)}>
-              <Typography variant="customMedium16">{action.label}</Typography>
+              <Typography variant="textMd">{action.label}</Typography>
             </MenuItem>
           ))}
         </Menu>

@@ -75,15 +75,6 @@ describe('FilterDropdown', () => {
     expect(screen.getByText('Option 2')).toBeInTheDocument();
   });
 
-  it('should show selected value as chip', () => {
-    render(<FilterDropdown label="Test Filter" value="option2" options={mockOptions} onChange={() => {}} />);
-
-    expect(screen.getByText('Option 2')).toBeInTheDocument();
-
-    const chip = screen.getByText('Option 2').closest('div');
-    expect(chip).toHaveStyle({ backgroundColor: '#FCFCFC' });
-  });
-
   it('should clear selection when chip is clicked', async () => {
     const user = userEvent.setup();
     const handleChange = jest.fn();

@@ -20,10 +20,10 @@ export const Header = ({ title, onPreview, onSave, onCancel, isSaving, onLanguag
   return (
     <Box sx={styles.container}>
       <Box>
-        <Typography variant="h5" fontWeight="bold" mb={0.5}>
+        <Typography variant="h4" mb={0.5}>
           {title}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="textMd" color="text.secondary">
           Редагуйте та змінюйте вміст сторінки “{title}”.
         </Typography>
       </Box>

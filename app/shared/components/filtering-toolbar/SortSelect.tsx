@@ -4,8 +4,8 @@ import { Box, Divider, Typography } from '@mui/material';
 import { ChevronDown } from 'lucide-react';
 import { useRef, useState } from 'react';
 
+import { styles } from './SortSelect.styles';
 import DropdownMenu from '~/shared/components/dropdown-menu/DropdownMenu';
-import { filterSelectStyles } from '~/shared/components/selector/FilterSelect.styles';
 import FilterSelectItem from '~/shared/components/selector/FilterSelectItem/FilterSelectItem';
 
 export type SortFieldOption<FieldValue extends string> = {
@@ -74,12 +74,12 @@ export function SortSelect<FieldValue extends string, SortValue extends string>(
         aria-expanded={Boolean(anchorEl)}
         data-testid={dataTestId}
         sx={{
-          ...filterSelectStyles.root('filled', disabled),
+          ...styles.root('filled', disabled),
           minWidth: `${minWidth}px`
         }}
       >
-        <Typography sx={filterSelectStyles.label(disabled)}>{triggerLabel}</Typography>
-        <Box sx={filterSelectStyles.dropdownIcon(disabled)}>
+        <Typography variant='textMd' sx={styles.label(disabled)}>{triggerLabel}</Typography>
+        <Box sx={styles.dropdownIcon(disabled)}>
           <ChevronDown size={16} strokeWidth={2.25} aria-hidden="true" />
         </Box>
       </Box>
@@ -89,23 +89,13 @@ export function SortSelect<FieldValue extends string, SortValue extends string>(
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleCloseMenu}
-        sx={{
-          '& .MuiPaper-root': {
-            minWidth: `${minWidth}px`
-          }
-        }}
+        sx={styles.dropdownMenu(minWidth)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
         menuList={
-          <Box sx={{ padding: '8px' }}>
+          <Box sx={styles.menuList}>
             <Typography
-              sx={{
-                color: '#4E5061',
-                fontSize: '12px',
-                textTransform: 'uppercase',
-                px: '12px',
-                py: '4px'
-              }}
+              sx={styles.sortMethodHeading}
             >
               {fieldSectionLabel}
             </Typography>
@@ -116,20 +106,14 @@ export function SortSelect<FieldValue extends string, SortValue extends string>(
                 label={option.label}
                 selected={fieldValue === option.value}
                 onClick={() => onFieldChange(option.value)}
-                sx={filterSelectStyles.menuItem}
+                sx={styles.menuItem}
               />
             ))}
 
-            <Divider sx={{ my: 1 }} />
+            <Divider sx={styles.divider} />
 
             <Typography
-              sx={{
-                color: '#4E5061',
-                fontSize: '12px',
-                textTransform: 'uppercase',
-                px: '12px',
-                py: '4px'
-              }}
+              sx={styles.sortMethodHeading}
             >
               {orderSectionLabel}
             </Typography>
@@ -143,7 +127,7 @@ export function SortSelect<FieldValue extends string, SortValue extends string>(
                   onValueChange(option.value);
                   handleCloseMenu();
                 }}
-                sx={filterSelectStyles.menuItem}
+                sx={styles.menuItem}
               />
             ))}
           </Box>

@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, IconButton, Stack, SxProps, Theme } from '@mui/material';
+import { Box, IconButton, SxProps, Theme } from '@mui/material';
 import { ChevronLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ReactNode } from 'react';
@@ -22,16 +22,16 @@ export default function DividedHeader({ originUrl = '/', rightActionsComponent, 
 
   return (
     <Box sx={[styles.container, ...sxToArray(sx)]}>
-      <Stack alignItems="center" justifyContent="space-between" direction={'row'} sx={styles.contentStack}>
+      <Box sx={styles.contentStack}>
         <IconButton onClick={handleReturn} sx={styles.returnButton} aria-label={`Повернутись на сторінку ${originUrl}`}>
-          <ChevronLeft color="black" strokeWidth="1.5px" size={24} />
+          <ChevronLeft strokeWidth="1.5px" size={24} />
         </IconButton>
 
-        <Stack alignItems="center" justifyContent="flex-start" direction={'row'} sx={styles.children}>
+        <Box sx={styles.children}>
           {children}
-        </Stack>
-      </Stack>
-      <Stack>{rightActionsComponent}</Stack>
+        </Box>
+      </Box>
+      <Box>{rightActionsComponent}</Box>
     </Box>
   );
 }

@@ -19,10 +19,6 @@ jest.mock('~/public/icons/close.svg', () => {
   };
 });
 
-jest.mock('~/shared/components/design-system/button/Button.styles', () => ({
-  colors: { blue: { 900: '#000000' } }
-}));
-
 type ZoomPanReturn = {
   reset: jest.Mock;
   zoomIn: jest.Mock;

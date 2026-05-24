@@ -57,7 +57,7 @@ export const EditableSectionList = <ItemType extends SectionListItem>({
         multiline
       />
       <Box>
-        <Typography variant="subtitle2" sx={styles.title}>
+        <Typography variant="subtitle1" sx={styles.title}>
           {sectionLabel}
         </Typography>
         <ConfigurableList

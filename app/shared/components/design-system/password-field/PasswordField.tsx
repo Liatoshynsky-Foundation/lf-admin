@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import React from 'react';
 
-import { autofillFix, overwrites } from './PasswordField.styles';
+import { styles } from './PasswordField.styles';
 import VisibilityOn from '~/public/icons/eye.svg';
 import VisibilityOff from '~/public/icons/eye-closed.svg';
 
@@ -34,11 +34,9 @@ const PasswordField = ({ helperText, sx, ...props }: PasswordFieldProps) => {
   };
 
   return (
-    <Box sx={autofillFix}>
+    <Box sx={styles}>
       <FormControl variant="outlined" fullWidth>
-        <InputLabel htmlFor="outlined-adornment-password" sx={overwrites.label}>
-          Пароль
-        </InputLabel>
+        <InputLabel htmlFor="outlined-adornment-password">Пароль</InputLabel>
         <OutlinedInput
           id="outlined-adornment-password"
           label="Пароль"
@@ -56,10 +54,10 @@ const PasswordField = ({ helperText, sx, ...props }: PasswordFieldProps) => {
               </IconButton>
             </InputAdornment>
           }
-          sx={{ ...sx, ...overwrites.input }}
+          sx={sx}
           {...props}
         />
-        {helperText && <FormHelperText sx={overwrites.helperText}>{helperText}</FormHelperText>}
+        {helperText && <FormHelperText error>{helperText}</FormHelperText>}
       </FormControl>
     </Box>
   );

@@ -1,6 +1,6 @@
 import { SxProps, Theme } from '@mui/material';
 
-export const galleryCardStyles = {
+export const styles = {
   iconsWrapper: {
     display: 'flex',
     alignItems: 'center',
@@ -9,32 +9,24 @@ export const galleryCardStyles = {
     padding: '2px 8px',
     height: '20px',
     borderRadius: '15px',
-    border: '1px solid #9D9FA9',
-    backgroundColor: '#3F444A',
-    color: '#C6C8D3',
+    border: '1px solid',
+    borderColor: 'blue.500',
+    backgroundColor: 'blue.900',
+    color: 'blue.300',
     cursor: 'help',
     '&:hover': {
-      backgroundColor: '#4A5056'
+      backgroundColor: 'blue.800'
     }
   } as SxProps<Theme>,
 
-  tooltip: {
-    sx: {
-      backgroundColor: '#3F444A',
-      fontFamily: 'Mulish',
-      fontWeight: 400,
-      fontStyle: 'italic',
-      fontSize: '14px',
-      lineHeight: '140%',
-      letterSpacing: 0,
-      textAlign: 'center',
-      color: '#FCFCFC',
-      padding: '4px 16px',
-      borderRadius: '20px',
-      boxShadow: '0px 4px 4px 0px rgba(0, 0, 0, 0.07)',
-      '& .MuiTooltip-arrow': {
-        color: '#3F444A'
-      }
-    }
-  } as const
+  tooltipTitle: {
+    fontWeight: 600,
+    marginBottom: '4px'
+  } as SxProps<Theme>,
+
+  iconContainer: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  } as SxProps<Theme>
 };

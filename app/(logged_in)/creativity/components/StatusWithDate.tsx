@@ -30,8 +30,8 @@ function StatusChip({ status }: StatusChipProps) {
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#2E7D32',
-          color: '#FFFFFF',
+          backgroundColor: 'green.600',
+          color: 'white',
           flexShrink: 0
         }}
       >
@@ -46,12 +46,11 @@ function StatusChip({ status }: StatusChipProps) {
       size="small"
       sx={{
         backgroundColor: contentCardBadgeStyles.draftBadge.backgroundColor,
-        color: '#190D03',
-        fontWeight: contentCardBadgeStyles.draftBadge.fontWeight,
-        fontSize: contentCardBadgeStyles.draftBadge.fontSize,
+        color: 'black',
+        typography: contentCardBadgeStyles.draftBadge.typography,
         height: '24px',
         '& .MuiChip-label': {
-          color: '#190D03'
+          color: 'black'
         }
       }}
     />

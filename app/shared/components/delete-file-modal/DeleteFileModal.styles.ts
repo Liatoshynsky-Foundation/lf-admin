@@ -1,5 +1,3 @@
-import { mainHexPallete } from '~/shared/theme/colors';
-
 export const styles = {
   dialogPaper: {
     width: '572px',
@@ -12,36 +10,31 @@ export const styles = {
     top: 24,
     right: 24,
     cursor: 'pointer',
-    color: mainHexPallete.black
+    color: 'black'
   },
   title: {
     padding: 0,
     paddingBottom: '16px',
-    fontSize: '24px',
-    fontWeight: 700,
-    color: mainHexPallete.black
+    typography: 'h6',
+    color: 'black'
   },
   content: {
     padding: 0
   },
   description: {
-    color: mainHexPallete.blue[800],
-    fontSize: '16px',
-    lineHeight: '150%'
+    color: 'blue.800'
   },
   filename: {
     fontWeight: 700,
-    color: mainHexPallete.blue[800]
+    color: 'blue.800'
   },
   usageList: {
     marginTop: '12px',
     marginBottom: 0,
     paddingLeft: '24px',
-    color: mainHexPallete.blue[800]
+    color: 'blue.800'
   },
   usageItem: {
-    fontSize: '16px',
-    lineHeight: '150%',
     textDecoration: 'underline',
     textUnderlineOffset: '2px'
   },
@@ -53,17 +46,17 @@ export const styles = {
     gap: '16px'
   },
   deleteBtn: {
-    backgroundColor: mainHexPallete.red[600],
-    color: mainHexPallete.white,
+    backgroundColor: 'red.600',
+    color: 'white',
     '&:hover': {
-      backgroundColor: mainHexPallete.red[700]
+      backgroundColor: 'red.700'
     }
   },
   okBtn: {
-    backgroundColor: mainHexPallete.yellow[500],
-    color: mainHexPallete.black,
+    backgroundColor: 'yellow.500',
+    color: 'black',
     '&:hover': {
-      backgroundColor: mainHexPallete.yellow[600]
+      backgroundColor: 'yellow.600'
     }
   }
 };

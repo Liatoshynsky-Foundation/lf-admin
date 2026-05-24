@@ -15,6 +15,16 @@ describe('CustomTextField', () => {
     expect(screen.queryByText('Текст заголовку')).not.toBeInTheDocument();
   });
 
+  it('should apply custom styles to title via titleSx', () => {
+    render(<CustomTextField title="Styled Title" titleSx={{ color: 'red', fontSize: '20px' }} />);
+
+    const titleElement = screen.getByText('Styled Title');
+    expect(titleElement).toBeInTheDocument();
+
+    expect(titleElement).toHaveStyle('color: red');
+    expect(titleElement).toHaveStyle('font-size: 20px');
+  });
+
   it('should render with placeholder and passes props to TextField', () => {
     render(<CustomTextField placeholder="Enter your name" />);
 

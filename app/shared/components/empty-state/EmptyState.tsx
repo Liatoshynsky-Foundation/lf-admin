@@ -27,13 +27,15 @@ export function EmptyState({ title, description, icon, action, dataTestId }: Emp
         {title}
       </Typography>
 
-      <Typography variant="customMedium16" sx={styles.description}>
+      <Typography variant="textMd" sx={styles.description}>
         {description}
       </Typography>
 
       {action && (
         <Button
           variant="contained"
+          color='primary'
+          size='medium'
           {...(action.href ? { component: Link, href: action.href } : {})}
           onClick={action.onClick}
           sx={styles.actionButton}

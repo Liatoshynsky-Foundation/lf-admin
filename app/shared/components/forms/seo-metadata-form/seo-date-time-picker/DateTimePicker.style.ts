@@ -1,30 +1,47 @@
-const colors = {
-  blue: { 300: '#C6C8D3', 200: '#D9DCE8', 800: '#52545A' },
-  adminBlue: { 500: '#ADAEBA' },
-  black: '#190D03',
-  slateGray: '#5E6A79',
-  darkGrafite: '#474D5A',
-  yellow: { 500: '#FCBD28' },
-  white: '#FCFCFC'
-};
+
 
 export const styles = {
-  dateTimePicker: {
-    borderRadius: '8px',
-    fontSize: '16px',
-    fontFamily: 'Mulish',
-    lineHeight: '150%',
-    color: '#696C7D',
-    borderColor: colors.black,
-    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-      borderColor: colors.black
+  wrapper: { width: '100%' },
+  container: { 
+    display: 'flex', 
+    justifyContent: 'space-between', 
+    width: '100%' 
+  },
+  separator: {
+    textAlign: 'center',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '10%',
+    color: 'blue.500'
+  },
+  popper: {
+    '& .MuiMultiSectionDigitalClockSection-item.Mui-selected': {
+      backgroundColor: 'yellow.500',
+      color: 'black'
+    },
+    '& .MuiMultiSectionDigitalClockSection-item.Mui-selected:hover': {
+      backgroundColor: 'yellow.500'
     }
   },
+  day: {
+    '&.MuiPickersDay-root.Mui-selected': {
+      backgroundColor: 'yellow.500',
+      color: 'black'
+    }
+  },
+  textField: {
+    width: { sm: '180px', xl: '223px' },
+    '& .MuiPickersOutlinedInput-root.Mui-focused:not(.Mui-error) .MuiPickersOutlinedInput-notchedOutline': {
+      borderWidth: '1px'
+    }
+  },
+  dateTimePickerInput: {
+    borderRadius: '8px',
+    color: 'adminBlue.800',
+  },
   datetimePickerLabel: {
-    fontSize: '14px',
-    color: colors.yellow[500],
-    lineHeight: '12px',
-    fontFamily: 'Mulish',
-    fontWeight: 500
+    typography: 'subtitle2',
+    color: 'adminBlue.800',
   }
 };

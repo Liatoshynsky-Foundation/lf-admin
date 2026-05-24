@@ -1,4 +1,6 @@
-import { keyframes } from '@mui/material';
+import { alpha, keyframes } from '@mui/material';
+
+import { mainHexPallete as colors } from '~/shared/theme/colors';
 
 export const slideIn = keyframes`
   from { opacity: 0; transform: translateY(30px); }
@@ -17,21 +19,20 @@ export const styles = {
     padding: '12px 16px',
     borderRadius: '12px',
     border: '1px solid',
-    fontSize: '18px',
-    fontWeight: 500,
-    fontFamily: 'Mulish',
-    lineHeight: '1.5',
+    typography: 'subtitle1',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: '8px',
-    boxShadow: '0px 0px 2px 0px rgba(0, 0, 0, 0.08), 0px 2px 4px 0px rgba(0, 0, 0, 0.08)'
+    boxShadow: `0px 0px 2px 0px ${alpha(colors.black, 0.08)}, 0px 2px 4px 0px ${alpha(colors.black, 0.08)}`
   },
+
   contentWrapper: {
     display: 'flex',
     alignItems: 'center',
     gap: '8px'
   },
+
   icon: {
     width: '19.71px',
     height: '19.71px',
@@ -39,31 +40,33 @@ export const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    color: 'adminBlue.800',
     '& svg': {
       width: '100%',
       height: '100%',
       overflow: 'visible'
     }
   },
+
   message: {
-    fontSize: '18px',
-    fontWeight: 500,
-    fontFamily: 'Mulish',
     lineHeight: '1.5',
     wordBreak: 'break-word'
   },
+
   closeButton: {
     padding: '4px',
     color: 'inherit'
   },
+
   success: {
-    backgroundColor: '#E2F2DC',
-    borderColor: '#E2F2DC',
-    color: '#2C4D20'
+    backgroundColor: 'green.100',
+    borderColor: 'green.100',
+    color: 'green.800'
   },
+
   error: {
-    backgroundColor: '#FAE2DC',
-    borderColor: '#FAE2DC',
-    color: '#981b1b'
+    backgroundColor: 'red.100',
+    borderColor: 'red.100',
+    color: 'burgundy.600'
   }
 };

@@ -1,3 +1,7 @@
+import { alpha } from '@mui/material';
+
+import { mainHexPallete as colors } from '~/shared/theme/colors';
+
 export const styles = {
   container: {
     display: 'flex',
@@ -5,21 +9,23 @@ export const styles = {
     justifyContent: 'space-between',
     p: '11px 16px',
     borderRadius: '16px',
-    borderColor: '#C6C8D3',
-    backgroundColor: '#FCFCFC',
+    borderColor: 'blue.300',
+    backgroundColor: 'white',
     cursor: 'pointer',
     transition: 'background-color 0.2s, border-color 0.2s',
     '&:hover': {
-      backgroundColor: '#F1F2F7'
+      backgroundColor: 'adminBlue.100'
     },
     '&:active': {
-      backgroundColor: '#F1F2F7',
-      borderColor: '#63666E'
+      backgroundColor: 'adminBlue.100',
+      borderColor: 'blue.700'
     }
   },
+
   content: {
     gap: '8px'
   },
+
   iconWrapper: {
     display: 'flex',
     alignItems: 'center',
@@ -29,5 +35,37 @@ export const styles = {
     '&:hover': {
       opacity: 0.7
     }
+  },
+
+  linkIconWrapper: {
+    color: 'blue.700',
+    display: 'flex'
+  },
+
+  fileName: {
+    lineHeight: '1.5'
+  },
+
+  date: {
+    color: 'blue.700',
+    fontStyle: 'italic',
+    fontWeight: 400,
+    lineHeight: '1'
+  },
+
+  menuButton: {
+    color: 'black',
+    backgroundColor: 'transparent',
+    '&:hover': { 
+      backgroundColor: alpha(colors.black, 0.08)
+    }
+  },
+  
+  menuButtonActive: {
+    backgroundColor: alpha(colors.black, 0.08)
+  },
+
+  dropdownPaper: {
+    mt: '-1px'
   }
 };

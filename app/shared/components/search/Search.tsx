@@ -1,17 +1,10 @@
 'use client';
 
-import {
-  Autocomplete,
-  Box,
-  InputAdornment,
-  ListItem,
-  OutlinedInput,
-  Typography
-} from '@mui/material';
+import { Autocomplete, Box, InputAdornment, ListItem, OutlinedInput, Typography } from '@mui/material';
 import Image from 'next/image';
 import { useMemo } from 'react';
 
-import { colors } from '~/shared/components/design-system/button/Button.styles';
+import { styles } from './Search.styles';
 
 export type SearchOption = {
   id: string;
@@ -102,19 +95,12 @@ export function Search({
         const { key: _key, ...rest } = props;
 
         return (
-          <ListItem key={option.id} {...rest} sx={{ py: '8px' }}>
-            <Typography variant="customMedium16">{option.title}</Typography>
+          <ListItem key={option.id} {...rest} sx={styles.listItem}>
+            <Typography variant="textMd">{option.title}</Typography>
           </ListItem>
         );
       }}
-      sx={{
-        width: '100%',
-        maxWidth,
-        '& .MuiAutocomplete-inputRoot[class*="MuiOutlinedInput-root"]': {
-          paddingRight: '12px !important',
-          paddingLeft: '16px !important'
-        }
-      }}
+      sx={styles.autocomplete(maxWidth)}
       renderInput={(params) => (
         <OutlinedInput
           {...params.InputProps}
@@ -122,10 +108,9 @@ export function Search({
           placeholder={placeholder}
           fullWidth
           startAdornment={
-            <InputAdornment position="start"
-              sx={{
-                mr: '2px',
-              }}
+            <InputAdornment
+              position="start"
+              sx={styles.startAdornment}
             >
               <Image src="/icons/search-dark.svg" alt="search" width={24} height={24} />
             </InputAdornment>
@@ -137,37 +122,13 @@ export function Search({
                 type="button"
                 aria-label={clearButtonAriaLabel}
                 onClick={() => setSearch('')}
-                sx={{
-                  border: 'none',
-                  background: 'transparent',
-                  color: colors.blue[700],
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  px: '4px'
-                }}
+                sx={styles.clearButton}
               >
                 ✕
               </Box>
             ) : null
           }
-          sx={{
-            borderRadius: '8px',
-            height: '40px',
-            bgcolor: colors.white,
-            '& .MuiOutlinedInput-input::placeholder': {
-              color: '#190D03',
-              opacity: 1
-            },
-            '& .MuiOutlinedInput-notchedOutline': {
-              borderColor: '#ADAEBA'
-            },
-            '&:hover .MuiOutlinedInput-notchedOutline': {
-              borderColor: '#8D8E99'
-            },
-            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-              borderColor: '#565656'
-            }
-          }}
+          sx={styles.input}
         />
       )}
     />

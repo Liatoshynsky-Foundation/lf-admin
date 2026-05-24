@@ -1,26 +1,18 @@
-const colors = {
-  blue: { 300: '#C6C8D3', 200: '#D9DCE8', 800: '#52545A' },
-  adminBlue: { 500: '#ADAEBA' },
-  black: '#190D03',
-  slateGray: '#5E6A79',
-  darkGrafite: '#474D5A',
-  yellow: { 500: '#FCBD28' },
-  white: '#FCFCFC'
-};
-
 export const styles = {
   container: {
     display: 'flex',
     flexDirection: 'column',
     gap: '28px',
     borderRadius: '20px',
-    backgroundColor: colors.white,
-    border: `1px solid ${colors.blue[300]}`,
+    backgroundColor: 'white',
+    border: '1px solid',
+    borderColor: 'blue.300',
     width: '48%',
     minWidth: 0,
     px: 4,
     py: 3
   },
+
   textField: {
     '& .MuiOutlinedInput-root': {
       alignItems: 'center',
@@ -29,64 +21,35 @@ export const styles = {
         height: 'auto',
         paddingTop: '12px',
         paddingBottom: '12px'
-      },
-      '& fieldset': {
-        borderRadius: '8px',
-        borderColor: colors.adminBlue[500],
-        borderWidth: '1px',
-        borderStyle: 'solid'
-      },
-      '&:hover fieldset': {
-        borderColor: 'rgba(25, 13, 3, 0.5)'
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: colors.black,
-        borderWidth: '1px'
-      },
-      '&.Mui-disabled fieldset': {
-        borderColor: 'rgba(25, 13, 3, 0.25)'
-      },
-      '&.Mui-error fieldset': {
-        borderColor: '#E63C14'
       }
-    },
-    '& .MuiInputLabel-root': {
-      color: colors.blue[800]
-    },
-    '& .MuiInputLabel-root:not(.MuiInputLabel-shrunk)': {
-      top: '-4px'
-    },
-    '& .MuiInputLabel-root.Mui-focused': {
-      color: colors.blue[800]
     }
   },
-  formFields: {
-    flexDirection: 'column',
-    gap: '20px',
-    width: '100%'
-  },
+
   formFieldsContainer: {
     flexDirection: 'column',
     gap: '20px',
-    width: '100%'
+    width: '100%',
+
+    '& .MuiFormControl-root, & .MuiTextField-root': {
+      marginTop: 0,
+      marginBottom: 0
+    }
   },
+
   sectionTitle: {
-    fontFamily: 'Mulish',
-    fontSize: '24px',
-    fontWeight: 700,
-    fontStyle: 'bold',
-    lineHeight: '120%',
-    color: colors.black,
-    verticalAlignment: 'center',
-    letterSpacing: 0,
+    lineHeight: '1.2',
+    color: 'black',
+    verticalAlignment: 'middle',
     height: '17px'
   },
+
   photoBlock: {
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
     gap: '16px'
   },
+
   photoBlockHeader: {
     display: 'flex',
     flexDirection: 'row',
@@ -94,49 +57,42 @@ export const styles = {
     gap: '8px',
     height: '20px'
   },
+
   photoBlockTitle: {
-    fontFamily: 'Mulish',
-    fontSize: '14px',
-    fontWeight: 500,
-    lineHeight: '130%',
-    color: colors.blue[800],
+    color: 'blue.800',
     letterSpacing: '0.17px'
   },
+
   photoBlockHeaderDivider: {
     flexGrow: 1
   },
+
   ogImageHint: {
-    fontFamily: 'Mulish',
-    fontSize: '16px',
-    fontWeight: 500,
-    lineHeight: '140%',
+    lineHeight: '1.4',
     fontStyle: 'italic',
-    color: colors.blue[800]
+    color: 'blue.800'
   },
+
   divider: {
-    colors: colors.blue[200]
+    borderColor: 'blue.200'
   },
+
   indexingCheckboxContainer: {
     display: 'flex',
     alignItems: 'center'
   },
+
   indexingCheckbox: {
-    '&.Mui-checked': {
-      color: colors.yellow[500]
+    '& .MuiFormControlLabel-label': {
+      color: 'blue.800',
+      typography: 'subtitle1',
+      lineHeight: '1.5'
     }
   },
-  dateTimePicker: {
-    borderRadius: '8px',
-    fontSize: '16px',
-    fontFamily: 'Mulish',
-    lineHeight: '150%',
-    color: '#696C7D'
-  },
-  datetimePickerLabel: {
-    fontSize: '14px',
-    color: colors.blue[800],
-    lineHeight: '12px',
-    fontFamily: 'Mulish',
-    fontWeight: 500
+  
+  infoIcon: { 
+    borderWidth: '1px', 
+    width: '16px', 
+    height: '16px' 
   }
 };
