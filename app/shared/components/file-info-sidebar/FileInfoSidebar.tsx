@@ -1,5 +1,5 @@
 import { ApolloCache } from '@apollo/client';
-import { Avatar, Box, CircularProgress, IconButton, Link, Typography } from '@mui/material';
+import { Avatar, Box, CircularProgress, IconButton, Link, Typography, useTheme } from '@mui/material';
 import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -79,16 +79,17 @@ const TYPE_ICON: Record<FileDetailsSidebarFile['type'], React.ComponentType> = {
 
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <Box sx={styles.section}>
-    <Typography sx={styles.sectionTitle}>{title}</Typography>
+    <Typography variant='textSm' sx={styles.sectionTitle}>{title}</Typography>
     {children}
   </Box>
 );
 
 const RowText = ({ children }: { children: React.ReactNode }) => (
-  <Typography sx={styles.rowText}>{children}</Typography>
+  <Typography variant='textMd' sx={styles.rowText}>{children}</Typography>
 );
 
 export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAction }: Readonly<FileInfoSidebarProps>) {
+  const theme = useTheme();
   const fileId = file?.id;
   const filename = file?.filename ?? '—';
   const usageLinks = file?.usageLinks ?? [];
@@ -188,7 +189,7 @@ export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAct
           <TypeIcon />
         </Box>
 
-        <Typography sx={styles.headerTitle} title={filename}>
+        <Typography variant='bodyMd' sx={styles.headerTitle} title={filename}>
           {filename}
         </Typography>
 
@@ -296,7 +297,7 @@ export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAct
                     e.stopPropagation();
                     openPreview();
                   }}
-                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  sx={styles.zoomIconWrapper}
                   aria-label="Open image preview"
                   role="button"
                   tabIndex={-1}
@@ -350,7 +351,7 @@ export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAct
                       {u.label}
                     </Link>
                   ) : (
-                    <Typography sx={styles.usageLink}>{u.label}</Typography>
+                    <Typography variant='bodyMd' sx={styles.usageLink}>{u.label}</Typography>
                   )}
                 </li>
               ))}
@@ -370,6 +371,7 @@ export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAct
             onBlur={() => {
               commitDescription(descDraft);
             }}
+            sx={styles.descriptionField(theme)}
           />
         </Section>
       </Box>

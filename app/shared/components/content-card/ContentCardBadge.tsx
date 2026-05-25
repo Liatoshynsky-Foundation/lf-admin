@@ -2,7 +2,7 @@ import { Box, Chip } from '@mui/material';
 import { CircleCheckBig } from 'lucide-react';
 
 import { ContentType } from './ContentCard';
-import styles from './ContentCardBadge.styles';
+import { styles } from './ContentCardBadge.styles';
 import { getLocalizations } from '~/lib/utils/localizations';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 interface ContentCardBadgeProps {
@@ -23,18 +23,8 @@ const ContentCardBadge = ({ type, status, localizations }: ContentCardBadgeProps
     }
   };
 
-  const getContentTypeColor = (contentType: ContentType): string => {
-    switch (contentType) {
-    case 'news':
-      return '#93CCF4';
-    case 'events':
-      return '#EC93F4';
-    case 'media':
-      return '#B6F7CF';
-    }
-  };
-
   const localizationLabel = getLocalizations(localizations);
+  const hasLocalizationLabel = Boolean(localizationLabel);
 
   return (
     <Box sx={styles.badgeContainer}>
@@ -42,19 +32,20 @@ const ContentCardBadge = ({ type, status, localizations }: ContentCardBadgeProps
         label={getContentTypeLabel(type)}
         size="small"
         variant="filled"
-        sx={{ backgroundColor: getContentTypeColor(type) }}
+        sx={styles.typeBadge(type)}
       ></Chip>
+
       <Box
-        sx={{
-          ...styles.localizationsBadge,
-          padding: localizationLabel ? '4px 8px' : '4px 6px'
-        }}
+        sx={styles.localizationsBadge(hasLocalizationLabel)}
       >
         <CircleCheckBig size={15} />
-        {getLocalizations(localizations) && <Box>{getLocalizations(localizations)}</Box>}
+        {localizationLabel && <Box>{localizationLabel}</Box>}
       </Box>
+
       {status === BaseContentStatuses.Draft && (
-        <Box sx={styles.draftBadge}>Чернетка {getLocalizations(localizations)}</Box>
+        <Box sx={styles.draftBadge}>
+          {`Чернетка ${localizationLabel || ''}`.trim()}
+        </Box>
       )}
     </Box>
   );

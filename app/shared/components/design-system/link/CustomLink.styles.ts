@@ -1,13 +1,10 @@
 export const linkStyles = {
   button: {
     cursor: 'pointer',
-    color: '#52545A',
+    color: 'text.secondary',
     display: 'flex',
     borderRadius: 0,
-    '&:hover': {
-      backgroundColor: 'transparent'
-    },
-    '&:active': {
+    '&:hover, &:active': {
       backgroundColor: 'transparent'
     }
   },

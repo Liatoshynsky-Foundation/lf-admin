@@ -23,12 +23,7 @@ export const sharedViewStyles = {
   } as SxProps<Theme>,
 
   title: {
-    fontFamily: 'Mulish',
-    fontWeight: 700,
-    fontSize: '24px',
-    lineHeight: '140%',
-    letterSpacing: 0,
-    color: '#FCFCFC',
+    color: 'white',
     flexShrink: 0,
     whiteSpace: 'nowrap',
     '@media (max-width: 1023px)': {

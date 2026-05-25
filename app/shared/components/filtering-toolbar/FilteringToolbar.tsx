@@ -1,19 +1,13 @@
 'use client';
 
-import {
-  Badge,
-  Box,
-  Button,
-  IconButton,
-  Tooltip
-} from '@mui/material';
+import { Badge, Box, Button, IconButton, Tooltip } from '@mui/material';
 import { Filter, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import { styles } from './FilteringToolbar.styles';
 import { ControlPanel } from '~/shared/components/control-panel';
-import { colors } from '~/shared/components/design-system/button/Button.styles';
 import { Search, type SearchProps } from '~/shared/components/search/Search';
-import { type FilterOption,FilterSelect } from '~/shared/components/selector/FilterSelect';
+import { type FilterOption, FilterSelect } from '~/shared/components/selector/FilterSelect';
 
 export type FilteringToolbarFilterConfig = Readonly<{
   id: string;
@@ -80,7 +74,7 @@ function renderSearchContent(search?: SearchProps): ReactNode | undefined {
   }
 
   return (
-    <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start' }}>
+    <Box sx={styles.searchContainer}>
       <Search {...search} />
     </Box>
   );
@@ -98,37 +92,13 @@ function renderFilterToggleButton({
       color="error"
       overlap="circular"
       invisible={resolvedActiveFiltersCount === 0}
-      sx={{
-        '& .MuiBadge-badge:not(.MuiBadge-invisible)': {
-          top: '4px',
-          fontSize: '14px',
-          minWidth: '22px',
-          height: '22px',
-          borderRadius: '50%',
-          backgroundColor: '#A32B0E',
-          transform: 'translate(18px, -50%)'
-        }
-      }}
+      sx={styles.badge}
     >
       <Button
         variant="outlined"
         startIcon={<Filter size={18} strokeWidth={1.75} />}
         onClick={onToggleFilters}
-        sx={{
-          borderRadius: '28px',
-          px: '24px',
-          py: '6px',
-          minHeight: '40px',
-          textTransform: 'none',
-          borderColor: colors.black,
-          color: colors.black,
-          bgcolor: isFiltersOpen ? '#190D031A' : colors.white,
-          fontSize: '16px',
-          '&:hover': {
-            borderColor: colors.black,
-            bgcolor: isFiltersOpen ? '#190D031A' : colors.blue[50]
-          }
-        }}
+        sx={styles.filterButton(isFiltersOpen)}
       >
         {filtersButtonLabel}
       </Button>
@@ -185,26 +155,8 @@ function renderClearFiltersButton({
         transition: {
           timeout: 0
         },
-        tooltip: {
-          sx: {
-            minWidth: '153px',
-            height: '28px',
-            px: '16px',
-            py: '4px',
-            borderRadius: '20px',
-            bgcolor: '#3F444A',
-            fontStyle: 'italic',
-            fontSize: '14px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }
-        },
-        arrow: {
-          sx: {
-            color: '#3F444A'
-          }
-        }
+        tooltip: { sx: styles.tooltip },
+        arrow: { sx: styles.tooltipArrow }
       }}
     >
       <span>
@@ -212,20 +164,7 @@ function renderClearFiltersButton({
           <IconButton
             aria-label="clear-filters"
             onClick={onClearFilters}
-            sx={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '8px',
-              bgcolor: '#fff',
-              color: '#190D03',
-              '&:hover': {
-                bgcolor: '#fff'
-              },
-              '&.Mui-disabled': {
-                opacity: 0.5,
-                color: '#190D03'
-              }
-            }}
+            sx={styles.clearButton}
           >
             <X size={22} strokeWidth={1.75} />
           </IconButton>
@@ -249,17 +188,11 @@ function renderBottomContent({
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+    <Box sx={styles.bottomContentWrapper}>
       <Box
-        sx={{
-          display: 'flex',
-          gap: '12px',
-          flexWrap: 'wrap',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}
+        sx={styles.bottomContentRow}
       >
-        <Box sx={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        <Box sx={styles.filtersList}>
           {filters.map((filter) => (
             <FilterSelect
               key={filter.id}

@@ -42,7 +42,7 @@ export function FileView({ file }: FileViewProps) {
         style={{ objectFit: 'contain' }}
       />
 
-      <Typography sx={styles.fileName}>{file.name}</Typography>
+      <Typography variant='subtitle2' sx={styles.fileName}>{file.name}</Typography>
     </Box>
   );
 }

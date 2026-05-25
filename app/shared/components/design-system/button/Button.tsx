@@ -3,9 +3,6 @@
 import { Button as MuiButton, ButtonProps as MuiButtonProps, CircularProgress } from '@mui/material';
 import { forwardRef, type ReactNode } from 'react';
 
-import { buttonBaseStyles, sizeStyles, typographyStyles, variantStyles } from './Button.styles';
-import { sxToArray } from '~/lib/utils/sxToArray';
-
 type Size = 'large' | 'medium' | 'small';
 type Variant = 'filled' | 'outlined' | 'text';
 
@@ -53,25 +50,16 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       { filled: 'contained', outlined: 'outlined', text: 'text' } as const
     )[variant];
 
-    const visualSx = color === 'tertiary' ? variantStyles.tertiary.filled : variantStyles[color][variant];
-
-    const mergedSx: MuiButtonProps['sx'] = [
-      buttonBaseStyles,
-      sizeStyles[size],
-      typographyStyles[color][size],
-      visualSx,
-      ...sxToArray(sx)
-    ];
-
     return (
       <MuiButton
         ref={ref}
         size={size}
+        color={color}
         variant={muiVariant}
         disabled={isDisabled}
         startIcon={!loading ? startIcon : undefined}
         endIcon={!loading ? endIcon : undefined}
-        sx={mergedSx}
+        sx={sx}
         {...props}
       >
         {loading ? <CircularProgress size={25} color="inherit" data-testid="loader" /> : content}

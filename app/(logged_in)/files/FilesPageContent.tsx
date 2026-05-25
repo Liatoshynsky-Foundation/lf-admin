@@ -31,7 +31,6 @@ import {
 import { downloadFile } from '~/lib/utils/downloadFile';
 import FavouriteStarIcon from '~/public/icons/favourite-star.svg';
 import DeleteFileModal from '~/shared/components/delete-file-modal/DeleteFileModal';
-import { colors } from '~/shared/components/design-system/button/Button.styles';
 import { EmptyState } from '~/shared/components/empty-state';
 import {
   type FileDetailsSidebarFile,
@@ -58,6 +57,7 @@ import { RenameFileModal } from '~/shared/components/rename-file-modal/RenameFil
 import { ViewToggle } from '~/shared/components/view-toggle';
 import { useAllAssets } from '~/shared/hooks/use-assets/useAssets';
 import { useFilesFiltering } from '~/shared/hooks/use-files';
+import { mainHexPallete as colors } from '~/shared/theme/colors';
 import { AssetType, useCreateAssetMutation, useDeleteAssetMutation } from '~/types/graphql/generated/graphql';
 
 type FilesPageFileItem = FilesCardsLayoutItem & {

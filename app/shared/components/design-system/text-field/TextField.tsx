@@ -1,5 +1,4 @@
-import { Box, TextField, Typography } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { Box, type SxProps, TextField, type Theme, Typography } from '@mui/material';
 import { type TextFieldProps } from '@mui/material/TextField';
 import React from 'react';
 
@@ -10,11 +9,13 @@ import { styles } from './TextField.styles';
 interface StyledInput extends Omit<TextFieldProps, 'title'> {
   title?: string;
   fieldType?: 'styled';
+  titleSx?: SxProps<Theme>;
 }
 
 interface FormattingInput extends CustomFormattingFieldProps {
   title?: string;
   fieldType: 'formatting';
+  titleSx?: SxProps<Theme>;
 }
 
 export type Props = StyledInput | FormattingInput;
@@ -24,12 +25,12 @@ const StyledTextField = styled(TextField)(() => ({
 }));
 
 export const CustomTextField: React.FC<Props> = (allProps) => {
-  const { title, ...props } = allProps;
+  const { title, titleSx, ...props } = allProps;
 
   return (
     <Box>
       {title && (
-        <Typography variant="subtitle2" sx={styles.titleStyles}>
+        <Typography variant="subtitle2" sx={{ ...styles.titleStyles, ...titleSx }}>
           {title}
         </Typography>
       )}

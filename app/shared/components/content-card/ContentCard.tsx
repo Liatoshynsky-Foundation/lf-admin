@@ -112,7 +112,7 @@ const ContentCard = ({
       <CardContent sx={styles.cardContent}>
         <ContentCardBadge type={type} status={status} localizations={localizedKeys}></ContentCardBadge>
         <Box sx={styles.mainInfo}>
-          <Typography component="h3" sx={styles.title}>
+          <Typography variant="subtitle1" component="h3" sx={styles.title}>
             {titleText}
           </Typography>
           <Box data-testid="menu-button" sx={{ cursor: 'pointer' }} onClick={handleMenuClick}>
@@ -128,7 +128,7 @@ const ContentCard = ({
             )}
           </Box>
         </Box>
-        <Typography variant="body2" sx={styles.date}>
+        <Typography variant="caption" sx={styles.date}>
           {getStatus(status, createdAt, updatedAt, publishedAt)}
         </Typography>
         <Button

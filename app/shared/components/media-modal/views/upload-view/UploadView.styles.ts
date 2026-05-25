@@ -1,3 +1,7 @@
+import { alpha } from '@mui/material';
+
+import { mainHexPallete as colors } from '~/shared/theme/colors';
+
 export const styles = {
   root: {
     boxSizing: 'border-box',
@@ -15,7 +19,8 @@ export const styles = {
     minHeight: 0,
 
     borderRadius: '32px',
-    border: '2px dashed rgba(193, 201, 214, 0.7)',
+    border: '2px dashed',
+    borderColor: alpha(colors.blue[300], 0.7),
     display: 'grid',
     placeItems: 'center',
     padding: {
@@ -26,16 +31,16 @@ export const styles = {
     outline: 'none',
 
     ...(isDragging && {
-      borderColor: 'rgba(252, 252, 252, 0.85)',
-      backgroundColor: 'rgba(255, 255, 255, 0.04)'
+      borderColor: alpha(colors.white, 0.85),
+      backgroundColor: alpha(colors.white, 0.04)
     }),
 
     ...(hasError && {
-      borderColor: 'rgba(244, 67, 54, 0.7)'
+      borderColor: alpha(colors.red[500], 0.7)
     }),
 
     '&:focus-visible': {
-      boxShadow: '0 0 0 3px rgba(252, 252, 252, 0.16)'
+      boxShadow: `0 0 0 3px ${alpha(colors.white, 0.16)}`
     }
   }),
 
@@ -47,7 +52,7 @@ export const styles = {
   },
 
   iconWrap: (hasError: boolean) => ({
-    color: hasError ? 'error.main' : '#C1C9D6',
+    color: hasError ? 'error.main' : 'blue.300',
     '& svg': {
       width: '164px',
       height: 'auto',
@@ -57,9 +62,8 @@ export const styles = {
 
   text: {
     fontWeight: 600,
-    fontSize: '20px',
-    lineHeight: '150%',
-    color: '#FCFCFC'
+    lineHeight: '1.5',
+    color: 'white'
   },
 
   textError: {

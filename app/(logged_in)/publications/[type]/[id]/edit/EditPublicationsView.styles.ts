@@ -1,13 +1,13 @@
-
+import { chipsColors } from '~/shared/theme/colors';
 
 type ChipColorType = 'draft' | 'published' | 'news' | 'events' | 'media';
 
 const publicationsChipsColors: Record<ChipColorType, string> = {
-  published: '#579A40',
-  draft: 'red.200',
-  news: '#B6D0F7',
-  events: '#F7B6E1',
-  media: '#B6F7CF'
+  published: chipsColors.published,
+  draft: chipsColors.draft,
+  news: chipsColors.newsChipBg,
+  events: chipsColors.eventChipBg,
+  media: chipsColors.mediaChipBg
 };
 
 
@@ -46,7 +46,7 @@ export const styles = {
   },
   mainContent: {
     minHeight: '100vh',
-    bgcolr: 'adminBlue.50',
+    bgcolor: 'adminBlue.50',
     p: '16px 32px'
   },
   contentEditor: {

@@ -77,8 +77,8 @@ export function RenameFileModal({ open, onClose, fileId, currentFilename }: Read
       }}
     >
       <Box sx={styles.header}>
-        <Typography sx={styles.title}>Перейменувати файл</Typography>
-        <IconButton onClick={onClose} disabled={loading} sx={{ color: 'text.primary', p: 0 }}>
+        <Typography variant='h6' sx={{ lineHeight: '1.4'}}>Перейменувати файл</Typography>
+        <IconButton onClick={onClose} disabled={loading} sx={{ color: 'black', p: 0 }}>
           <CloseIcon />
         </IconButton>
       </Box>

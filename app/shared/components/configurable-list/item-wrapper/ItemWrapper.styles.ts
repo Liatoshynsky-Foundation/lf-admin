@@ -2,7 +2,7 @@ export const styles = {
   separator: {
     height: '1px',
     width: '100%',
-    backgroundColor: '#CDD4DE',
+    backgroundColor: 'divider',
     my: 1
   },
   itemWrapper: {
@@ -17,6 +17,6 @@ export const styles = {
     display: editable ? 'block' : 'none',
     width: 40,
     height: 40,
-    color: '#ff0000'
+    color: 'error.main'
   })
 };

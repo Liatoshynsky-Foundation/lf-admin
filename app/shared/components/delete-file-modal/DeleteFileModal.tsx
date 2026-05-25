@@ -50,7 +50,7 @@ const DeleteFileModal = ({ open, onClose, onConfirm, file, isDeleting, disableSc
       <DialogContent sx={styles.content}>
         {isBlocked ? (
           <Box>
-            <Typography sx={styles.description}>
+            <Typography variant='textMd' sx={styles.description}>
               Файл{' '}
               <Box component="span" sx={styles.filename}>
                 {file.filename}
@@ -64,7 +64,7 @@ const DeleteFileModal = ({ open, onClose, onConfirm, file, isDeleting, disableSc
                 const uniqueKey = `${ref.pageId || 'no-page'}-${ref.blockId || 'no-block'}-${index}`;
                 return (
                   <li key={uniqueKey}>
-                    <Typography component="span" sx={styles.usageItem}>
+                    <Typography variant='textMd' component="span" sx={styles.usageItem}>
                       {formatUsageRef(ref)}
                     </Typography>
                   </li>
@@ -73,7 +73,7 @@ const DeleteFileModal = ({ open, onClose, onConfirm, file, isDeleting, disableSc
             </Box>
           </Box>
         ) : (
-          <Typography sx={styles.description}>
+          <Typography variant='textMd' sx={styles.description}>
             Ви збираєтесь видалити файл{' '}
             <Box component="span" sx={styles.filename}>
               {file.filename}

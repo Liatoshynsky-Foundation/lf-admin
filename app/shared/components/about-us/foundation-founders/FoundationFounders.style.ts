@@ -9,10 +9,7 @@ export const styles = {
     height: '40px'
   },
   contributorsTitle: {
-    color: '#4a4a4a',
-    fontFamily: 'Mulish, sans-serif',
-    fontSize: 18,
-    fontWeight: 500
+    color: 'blue.800'
   },
   teamBlock: {
     mt: '16px',

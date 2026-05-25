@@ -1,4 +1,6 @@
-import { mainHexPallete } from '~/shared/theme/colors';
+import { alpha } from '@mui/material';
+
+import { mainHexPallete as colors} from '~/shared/theme/colors';
 
 export const styles = {
   menuItem: {
@@ -10,21 +12,20 @@ export const styles = {
     width: '242px',
     boxSizing: 'border-box',
     '&:hover': {
-      backgroundColor: 'rgba(25, 13, 3, 0.06)'
+      backgroundColor: alpha(colors.black, 0.06)
     }
   },
+  
   menuText: {
-    fontSize: '16px',
-    fontWeight: 500,
-    lineHeight: '150%',
-    color: mainHexPallete.black
+    color: 'black'
   },
+
   icon: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     width: '24px',
     height: '24px',
-    color: mainHexPallete.black
+    color: 'black'
   }
 };

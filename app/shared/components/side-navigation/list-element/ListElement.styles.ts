@@ -1,3 +1,7 @@
+import { alpha } from '@mui/material';
+
+import { mainHexPallete as colors } from '~/shared/theme/colors';
+
 export const styles = {
   listItem: {
     px: 0,
@@ -12,14 +16,13 @@ export const styles = {
     flexDirection: 'row',
     gap: '8px',
     '&.Mui-selected': {
-      backgroundColor: '#190D031F'
+      backgroundColor: alpha(colors.black, 0.12)
     }
   },
   listItemIcon: {
     minWidth: '24px'
   },
   listItemText: {
-    fontFamily: 'Mulish',
-    fontSize: '16px'
+    typography: 'textMd'
   }
 };

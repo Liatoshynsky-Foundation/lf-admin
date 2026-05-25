@@ -1,22 +1,19 @@
-import { Box, MenuItemProps, Typography } from '@mui/material';
-import Image from 'next/image';
+import { MenuItem, MenuItemProps, Typography } from '@mui/material';
 import React from 'react';
 
 import { styles } from './FilterSelectItem.styles';
+import CheckmarkIcon from '~/public/icons/checkmark.svg';
 
 export interface FilterSelectItemProps extends MenuItemProps {
   label: string;
-  onClick?: () => void;
 }
 
-const FilterSelectItem = ({ label, onClick, sx, selected }: FilterSelectItemProps) => {
+const FilterSelectItem = ({ label, sx, selected, ...props }: FilterSelectItemProps) => {
   return (
-    <Box onClick={onClick} sx={{ ...sx, ...styles.container }}>
-      <Typography variant="customMedium16">{label}</Typography>
-      <Box sx={{ width: '24px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        {selected ? <Image src="/icons/checkmark.svg" alt="selected" width={16} height={16} /> : null}
-      </Box>
-    </Box>
+    <MenuItem selected={selected} sx={[styles.menuItem, ...(Array.isArray(sx) ? sx : [sx])]} {...props}>
+      <Typography variant="textMd">{label}</Typography>
+      {selected && <CheckmarkIcon width={15} height={11} aria-hidden />}
+    </MenuItem>
   );
 };
 

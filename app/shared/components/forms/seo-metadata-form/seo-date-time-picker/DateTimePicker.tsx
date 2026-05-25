@@ -48,77 +48,27 @@ export default function DateTimePicker({ startDateTime, endDateTime, onChange, l
       onChange={onChangeCb}
       ampm={false}
       {...extraProps}
-      sx={{
-        '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
-          borderColor: '#ADAEBA',
-          borderWidth: '1px',
-          borderStyle: 'solid'
-        },
-        '& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline': {
-          borderColor: 'rgba(25, 13, 3, 0.5)'
-        },
-        '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
-          borderColor: '#190D03',
-          borderWidth: '1px'
-        },
-        '& .MuiOutlinedInput-root.Mui-disabled .MuiOutlinedInput-notchedOutline': {
-          borderColor: 'rgba(25, 13, 3, 0.25)'
-        },
-        '& .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline': {
-          borderColor: '#E63C14'
-        }
-      }}
       slotProps={{
-        popper: {
-          sx: {
-            '& .MuiMultiSectionDigitalClockSection-item.Mui-selected': {
-              backgroundColor: '#FCBD28',
-              color: '#190D03'
-            },
-            '& .MuiMultiSectionDigitalClockSection-item.Mui-selected:hover': {
-              backgroundColor: '#FCBD28'
-            }
-          }
-        },
-        day: {
-          sx: {
-            '&.MuiPickersDay-root.Mui-selected': {
-              backgroundColor: '#FCBD28',
-              color: '#190D03'
-            }
-          }
-        },
+        popper: { sx: styles.popper },
+        day: { sx: styles.day },
         textField: {
           sx: {
-            '& .MuiInputLabel-root.Mui-focused': {
-              color: '#190D03'
-            },
-            '& label': { sx: styles.datetimePickerLabel },
-            width: { sm: '180px', xl: '223px' },
-            '& .MuiPickersOutlinedInput-root.Mui-focused:not(.Mui-error) .MuiPickersOutlinedInput-notchedOutline': {
-              borderColor: '#190D03',
-              borderWidth: '1px'
-            }
+            ...styles.textField,
+            '& label': styles.datetimePickerLabel
           },
-          InputProps: { sx: styles.dateTimePicker }
+          InputProps: { sx: styles.dateTimePickerInput }
         }
       }}
     />
   );
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box sx={styles.wrapper}>
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="uk">
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+        <Box sx={styles.container}>
           <Box>{renderPicker(startDateTime, labels.startDateTime || 'Початок події', handleStartChange)}</Box>
           <Box
-            sx={{
-              textAlign: 'center',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '10%'
-            }}
+            sx={styles.separator}
           >
             —
           </Box>

@@ -2,6 +2,11 @@ import { fireEvent, render, screen } from '@testing-library/react';
 
 import FilterSelectItem from './FilterSelectItem';
 
+jest.mock('~/public/icons/checkmark.svg', () => ({
+  __esModule: true,
+  default: () => <svg data-testid="checkmark-icon" />
+}));
+
 const label = 'Test Label';
 const handleClick = jest.fn();
 
@@ -13,7 +18,7 @@ describe('FilterSelectItem', () => {
 
   it('should not render selected icon when item is not selected', () => {
     render(<FilterSelectItem label={label} />);
-    expect(screen.queryByAltText('selected')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('checkmark-icon')).not.toBeInTheDocument();
   });
 
   it('should call onClick when the Box is clicked', () => {
@@ -24,7 +29,7 @@ describe('FilterSelectItem', () => {
 
   it('should render selected icon when selected is true', () => {
     render(<FilterSelectItem label={label} selected />);
-    expect(screen.getByAltText('selected')).toBeInTheDocument();
+    expect(screen.getByTestId('checkmark-icon')).toBeInTheDocument();
   });
 
   it('should render when disabled is true', () => {

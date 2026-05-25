@@ -59,33 +59,33 @@ const LoginModal = ({ onSubmit, submitError }: LoginModalProps) => {
     <Box sx={styles.outerContainer}>
       <Image src="./icons/logo.svg" alt="logo" width={96} height={80} />
       <Box component="form" onSubmit={handleSubmit} sx={styles.container}>
-        <Typography sx={styles.title} variant="h5">
+        <Typography sx={styles.title} variant="h6">
           Вхід до адмін-панелі
         </Typography>
-        <Typography sx={styles.subtitle} variant="subtitle1">
+        <Typography sx={styles.subtitle} variant="textMd">
           Для редагування сайту увійдіть у свій обліковий запис.
         </Typography>
         <CustomTextField
-          sx={styles.textField}
           label="Логін"
           value={username}
           onChange={handleUsernameChange}
           error={!!usernameError}
           helperText={usernameError}
+          fullWidth
         />
         <PasswordField
-          sx={styles.passwordField}
           value={password}
           onChange={handlePasswordChange}
           error={!!passwordError}
           helperText={passwordError}
+          fullWidth
         />
         {submitError && (
           <Typography sx={styles.errorText} variant="body2">
             {submitError}
           </Typography>
         )}
-        <Button variant="contained" sx={styles.button} type="submit" disabled={!username || !password}>
+        <Button variant="contained" size='large' sx={styles.button} type="submit" disabled={!username || !password} fullWidth>
           Увійти
         </Button>
       </Box>

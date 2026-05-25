@@ -1,6 +1,8 @@
 import { createTheme } from '@mui/material/styles';
 
 import {
+  accordionColors,
+  alertColors,
   badgeColors,
   buttonColors,
   buttonGroupColors,
@@ -11,13 +13,20 @@ import {
   selectorColors,
   tabsColors,
   textFieldColors,
-  toolbarColors
+  toolbarColors,
+  tooltipColors
 } from './colors';
 
-const fontFamilies = {
+export const fontFamilies = {
   body: 'var(--font-mulish), Arial, sans-serif',
   display: 'var(--font-oswald), Arial, sans-serif'
 };
+
+declare module '@mui/material/Paper' {
+  interface PaperPropsVariantOverrides {
+    discardChangesModal: true;
+  }
+}
 
 declare module '@mui/material/styles' {
   interface BreakpointOverrides {
@@ -41,34 +50,7 @@ declare module '@mui/material/styles' {
     bodySm: React.CSSProperties;
     textMd: React.CSSProperties;
     textSm: React.CSSProperties;
-
-    // Legacy Variants (Backward Compatibility)
-    /** @deprecated Use one of the semantic variants instead */
-    customBold32: React.CSSProperties;
-    /** @deprecated Use one of the semantic variants instead */
-    customMedium22Tight: React.CSSProperties;
-    /** @deprecated Use one of the semantic variants instead */
-    customRegular20Tight: React.CSSProperties;
-    /** @deprecated Use one of the semantic variants instead */
-    customBold20Tight: React.CSSProperties;
-    /** @deprecated Use one of the semantic variants instead */
-    customMedium18Tight: React.CSSProperties;
-    /** @deprecated Use one of the semantic variants instead */
-    customMedium18Loose: React.CSSProperties;
-    /** @deprecated Use one of the semantic variants instead */
-    customSemiBold18: React.CSSProperties;
-    /** @deprecated Use one of the semantic variants instead */
-    customRegular16: React.CSSProperties;
-    /** @deprecated Use one of the semantic variants instead */
-    customBold16: React.CSSProperties;
-    /** @deprecated Use one of the semantic variants instead */
-    customMedium16: React.CSSProperties;
-    /** @deprecated Use one of the semantic variants instead */
-    customItalic16: React.CSSProperties;
-    /** @deprecated Use one of the semantic variants instead */
-    customItalic14: React.CSSProperties;
-    /** @deprecated Use one of the semantic variants instead */
-    customMedium14Tight: React.CSSProperties;
+    h7: React.CSSProperties;
   }
 
   interface TypographyVariantsOptions {
@@ -80,21 +62,7 @@ declare module '@mui/material/styles' {
     bodySm?: React.CSSProperties;
     textMd?: React.CSSProperties;
     textSm?: React.CSSProperties;
-
-    // Legacy options
-    customBold32?: React.CSSProperties;
-    customMedium22Tight?: React.CSSProperties;
-    customRegular20Tight?: React.CSSProperties;
-    customBold20Tight?: React.CSSProperties;
-    customMedium18Tight?: React.CSSProperties;
-    customMedium18Loose?: React.CSSProperties;
-    customSemiBold18?: React.CSSProperties;
-    customRegular16?: React.CSSProperties;
-    customBold16?: React.CSSProperties;
-    customMedium16?: React.CSSProperties;
-    customItalic16?: React.CSSProperties;
-    customItalic14?: React.CSSProperties;
-    customMedium14Tight?: React.CSSProperties;
+    h7?: React.CSSProperties;
   }
 }
 
@@ -108,21 +76,7 @@ declare module '@mui/material/Typography' {
     bodySm: true;
     textMd: true;
     textSm: true;
-
-    // Legacy overrides for <Typography variant="..." /> component
-    customBold32: true;
-    customMedium22Tight: true;
-    customRegular20Tight: true;
-    customBold20Tight: true;
-    customMedium18Tight: true;
-    customMedium18Loose: true;
-    customSemiBold18: true;
-    customRegular16: true;
-    customBold16: true;
-    customMedium16: true;
-    customItalic16: true;
-    customItalic14: true;
-    customMedium14Tight: true;
+    h7: true;
   }
 }
 
@@ -154,29 +108,29 @@ export const buttonSizeStyles = {
     padding: '4px 12px',
     fontSize: '14px',
     fontWeight: 400,
-    lineHeight: '1.4'
+    lineHeight: 1.4
   },
   medium: {
     height: '40px',
     padding: '8px 24px',
     fontSize: '16px',
     fontWeight: 500,
-    lineHeight: '1.5'
+    lineHeight: 1.5
   },
   large: {
     height: '56px',
     padding: '14px 32px',
     fontSize: '18px',
     fontWeight: 500,
-    lineHeight: '1.55'
+    lineHeight: 1.55
   }
 };
 
-const baseTextStyles = {
+export const baseTextStyles = {
   fontFamily: fontFamilies.body,
   fontSize: '16px',
   fontWeight: 500,
-  lineHeight: '1.5'
+  lineHeight: 1.5
 };
 
 export const createAdminTheme = () =>
@@ -289,6 +243,27 @@ export const createAdminTheme = () =>
         fontWeight: 700,
         lineHeight: 1.4
       },
+      h7: {
+        fontFamily: fontFamilies.body,
+        fontSize: '20px',
+        fontStyle: 'bold',
+        fontWeight: 700,
+        lineHeight: 1.4
+      },
+
+      subtitle1: {
+        fontFamily: fontFamilies.body,
+        fontSize: '18px',
+        fontWeight: 500,
+        lineHeight: 1.75
+      },
+
+      subtitle2: {
+        fontFamily: fontFamilies.body,
+        fontSize: '14px',
+        fontWeight: 500,
+        lineHeight: 1.3
+      },
 
       bodyLg: {
         fontFamily: fontFamilies.body,
@@ -321,87 +296,6 @@ export const createAdminTheme = () =>
         fontSize: '14px',
         fontWeight: 400,
         lineHeight: 1.4
-      },
-
-      // Legacy Variants
-      customBold32: {
-        fontFamily: fontFamilies.body,
-        fontWeight: 700,
-        fontSize: '32px',
-        lineHeight: '140%',
-        letterSpacing: '0px'
-      },
-      customMedium22Tight: {
-        fontFamily: fontFamilies.body,
-        fontWeight: 500,
-        fontSize: '22px',
-        lineHeight: '135%'
-      },
-      customRegular20Tight: {
-        fontFamily: fontFamilies.body,
-        fontWeight: 400,
-        fontSize: '20px',
-        lineHeight: '140%'
-      },
-      customBold20Tight: {
-        fontFamily: fontFamilies.body,
-        fontWeight: 700,
-        fontSize: '20px',
-        lineHeight: '140%'
-      },
-      customMedium18Tight: {
-        fontFamily: fontFamilies.body,
-        fontWeight: 500,
-        fontSize: '18px',
-        lineHeight: '135%'
-      },
-      customMedium18Loose: {
-        fontFamily: fontFamilies.body,
-        fontWeight: 500,
-        fontSize: '18px',
-        lineHeight: '155%'
-      },
-      customSemiBold18: {
-        fontFamily: fontFamilies.body,
-        fontWeight: 600,
-        fontSize: '18px',
-        lineHeight: '155%'
-      },
-      customBold16: {
-        fontFamily: fontFamilies.body,
-        fontWeight: 700,
-        fontSize: '16px',
-        lineHeight: '100%'
-      },
-      customRegular16: {
-        fontFamily: fontFamilies.body,
-        fontWeight: 400,
-        fontSize: '16px',
-        lineHeight: '150%'
-      },
-      customMedium16: {
-        fontFamily: fontFamilies.body,
-        fontWeight: 500,
-        fontSize: '16px',
-        lineHeight: '150%'
-      },
-      customItalic16: {
-        fontFamily: fontFamilies.body,
-        fontStyle: 'italic',
-        fontSize: '16px',
-        lineHeight: '140%'
-      },
-      customItalic14: {
-        fontFamily: fontFamilies.body,
-        fontStyle: 'italic',
-        fontSize: '14px',
-        lineHeight: '140%'
-      },
-      customMedium14Tight: {
-        fontFamily: fontFamilies.body,
-        fontWeight: '500',
-        fontSize: '14px',
-        lineHeight: '130%'
       }
     },
 
@@ -416,21 +310,7 @@ export const createAdminTheme = () =>
             bodyMd: 'p',
             bodySm: 'p',
             textMd: 'p',
-            textSm: 'p',
-
-            //Legacy variants
-            customBold32: 'p',
-            customMedium22Tight: 'p',
-            customRegular20Tight: 'p',
-            customBold20Tight: 'p',
-            customMedium18Tight: 'p',
-            customMedium18Loose: 'p',
-            customSemiBold18: 'p',
-            customRegular16: 'p',
-            customBold16: 'p',
-            customMedium16: 'p',
-            customItalic16: 'p',
-            customItalic14: 'p'
+            textSm: 'p'
           }
         }
       },
@@ -444,7 +324,14 @@ export const createAdminTheme = () =>
               boxShadow: 'none'
             },
             whiteSpace: 'nowrap',
-            fontFamily: fontFamilies.body
+            fontFamily: fontFamilies.body,
+            gap: '8px'
+          },
+          startIcon: {
+            margin: 0
+          },
+          endIcon: {
+            margin: 0
           }
         },
         variants: [
@@ -764,7 +651,7 @@ export const createAdminTheme = () =>
             overflow: 'hidden',
             width: 'fit-content',
             border: 'none',
-            lineHeight: '1.5',
+            lineHeight: 1.5,
 
             '& .MuiButtonGroup-grouped': {
               border: 'none',
@@ -984,9 +871,27 @@ export const createAdminTheme = () =>
       MuiChip: {
         styleOverrides: {
           root: {
-            ...baseTextStyles,
+            fontFamily: fontFamilies.body,
+            fontSize: '14px',
+            fontWeight: 500,
+            lineHeight: 1.3,
+            letterSpacing: 0.17,
             color: chipsColors.normalText,
             borderRadius: '20px'
+          },
+
+          sizeSmall: {
+            height: 'auto',
+            padding: '6px 8px',
+
+            '& .MuiChip-label': {
+              padding: 0
+            },
+
+            '& .MuiChip-icon': {
+              margin: 0,
+              marginRight: '4px'
+            }
           },
 
           deleteIcon: {
@@ -1005,7 +910,8 @@ export const createAdminTheme = () =>
               border: 'none',
 
               '&:hover': {
-                backgroundColor: chipsColors.filledHoveredBg
+                backgroundColor: chipsColors.filledHoveredBg,
+                color: chipsColors.normalText
               },
               '&:active': {
                 backgroundColor: chipsColors.filledPressedBg
@@ -1143,6 +1049,12 @@ export const createAdminTheme = () =>
             fontWeight: 600,
             minWidth: '80px',
             color: tabsColors.unactive,
+            '&:hover': {
+              color: tabsColors.hovered
+            },
+            '&:active': {
+              color: tabsColors.pressed
+            },
 
             '&.Mui-selected': {
               color: tabsColors.active,
@@ -1151,6 +1063,238 @@ export const createAdminTheme = () =>
             '&.Mui-disabled': {
               color: tabsColors.disabled
             }
+          }
+        }
+      },
+      MuiAlert: {
+        styleOverrides: {
+          root: {
+            position: 'relative',
+            fontSize: '18px',
+            fontFamily: fontFamilies.body,
+            lineHeight: 1.5,
+            borderWidth: 1,
+            borderStyle: 'solid',
+            borderColor: 'transparent',
+            borderRadius: '12px',
+            boxShadow: `0 1px 3px ${alertColors.shadow}`,
+            minWidth: '320px'
+          },
+          message: {
+            padding: 0,
+            margin: 0,
+            ...baseTextStyles,
+            fontWeight: 400
+          },
+          icon: {
+            margin: '2px 8px 0 0',
+            display: 'flex',
+            alignItems: 'center',
+            alignSelf: 'flex-start',
+            '& svg': {
+              width: '26px',
+              height: '26px'
+            }
+          },
+          action: {
+            padding: 0,
+            marginTop: '6px',
+            alignItems: 'flex-start',
+            alignSelf: 'flex-start',
+            flexShrink: 0
+          }
+        },
+        variants: [
+          {
+            props: { severity: 'error', variant: 'filled' },
+            style: {
+              backgroundColor: alertColors.filled.errorBg,
+              color: alertColors.filled.errorText,
+              '& .MuiAlert-icon': {
+                color: alertColors.filled.errorIcon
+              }
+            }
+          },
+          {
+            props: { severity: 'warning', variant: 'filled' },
+            style: {
+              backgroundColor: alertColors.filled.warningBg,
+              color: alertColors.filled.warningText,
+              '& .MuiAlert-icon': {
+                color: alertColors.filled.warningIcon
+              }
+            }
+          },
+          {
+            props: { severity: 'info', variant: 'filled' },
+            style: {
+              backgroundColor: alertColors.filled.infoBg,
+              color: alertColors.filled.infoText,
+              '& .MuiAlert-icon': {
+                color: alertColors.filled.infoIcon
+              }
+            }
+          },
+          {
+            props: { severity: 'success', variant: 'filled' },
+            style: {
+              backgroundColor: alertColors.filled.successBg,
+              color: alertColors.filled.successText,
+              '& .MuiAlert-icon': {
+                color: alertColors.filled.successIcon
+              }
+            }
+          },
+          {
+            props: { severity: 'error', variant: 'outlined' },
+            style: {
+              backgroundColor: alertColors.outlined.errorBg,
+              color: alertColors.outlined.errorText,
+              borderColor: alertColors.outlined.errorBorder,
+              '& .MuiAlert-icon': {
+                color: alertColors.outlined.errorIcon
+              }
+            }
+          },
+          {
+            props: { severity: 'warning', variant: 'outlined' },
+            style: {
+              backgroundColor: alertColors.outlined.warningBg,
+              color: alertColors.outlined.warningText,
+              borderColor: alertColors.outlined.warningBorder,
+              '& .MuiAlert-icon': {
+                color: alertColors.outlined.warningIcon
+              }
+            }
+          },
+          {
+            props: { severity: 'info', variant: 'outlined' },
+            style: {
+              backgroundColor: alertColors.outlined.infoBg,
+              color: alertColors.outlined.infoText,
+              borderColor: alertColors.outlined.infoBorder,
+              '& .MuiAlert-icon': {
+                color: alertColors.outlined.infoIcon
+              }
+            }
+          },
+          {
+            props: { severity: 'success', variant: 'outlined' },
+            style: {
+              backgroundColor: alertColors.outlined.successBg,
+              color: alertColors.outlined.successText,
+              borderColor: alertColors.outlined.successBorder,
+              '& .MuiAlert-icon': {
+                color: alertColors.outlined.successIcon
+              }
+            }
+          }
+        ]
+      },
+      MuiAlertTitle: {
+        styleOverrides: {
+          root: {
+            ...baseTextStyles,
+            fontSize: '18px',
+            margin: 0,
+            marginBottom: '4px'
+          }
+        }
+      },
+      MuiAccordion: {
+        styleOverrides: {
+          root: {
+            backgroundColor: accordionColors.defaultBg,
+            border: `1px solid ${accordionColors.defaultBorder}`,
+            boxShadow: 'none',
+            borderRadius: '20px',
+
+            '&::before': {
+              display: 'none'
+            },
+
+            '&.Mui-expanded': {
+              margin: 0
+            },
+
+            '&:first-of-type': {
+              borderTopLeftRadius: '20px',
+              borderTopRightRadius: '20px'
+            },
+            '&:last-of-type': {
+              borderBottomLeftRadius: '20px',
+              borderBottomRightRadius: '20px'
+            }
+          }
+        }
+      },
+      MuiAccordionSummary: {
+        styleOverrides: {
+          root: {
+            padding: '0 24px',
+            minHeight: '64px',
+
+            '& .MuiAccordionSummary-content': {
+              fontFamily: fontFamilies.body,
+              fontWeight: 700,
+              fontSize: '24px',
+              lineHeight: 1.2,
+              verticalAlign: 'middle'
+            }
+          },
+          expandIconWrapper: {
+            color: accordionColors.defaultIcon
+          }
+        }
+      },
+      MuiAccordionDetails: {
+        styleOverrides: {
+          root: {
+            padding: '0 24px 24px'
+          }
+        }
+      },
+      MuiModal: {
+        styleOverrides: {
+          root: {
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }
+        }
+      },
+      MuiPaper: {
+        variants: [
+          {
+            props: { variant: 'discardChangesModal' },
+            style: {
+              maxWidth: '630px',
+              maxHeight: '280px',
+              padding: '40px 64px',
+              borderRadius: '32px',
+              backgroundColor: mainHexPallete.white,
+              overflowY: 'auto',
+              outline: 'none'
+            }
+          }
+        ]
+      },
+      MuiTooltip: {
+        styleOverrides: {
+          tooltip: ({ theme }) => ({
+            ...theme.typography.caption,
+
+            backgroundColor: tooltipColors.defaultBg,
+            color: tooltipColors.defaultText,
+            fontStyle: 'italic',
+            textAlign: 'center',
+            borderRadius: '20px',
+            padding: '4px 16px',
+            boxShadow: `0px 4px 4px 0px ${tooltipColors.defaultShadow}`
+          }),
+
+          arrow: {
+            color: tooltipColors.defaultBg
           }
         }
       }

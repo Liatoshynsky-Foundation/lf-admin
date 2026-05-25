@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import ButtonGroup from './ButtonGroup';
-import { hexButtonGroupColors } from './ButtonGroup.styles';
+import { buttonGroupColors } from '~/shared/theme/colors';
 
 class MockResizeObserver {
   observe() {
@@ -97,7 +97,7 @@ describe('Button Group', () => {
 
     it('should have default color styles applied', () => {
       const button1 = screen.getByText('Button 1').parentElement as HTMLElement;
-      expect(button1).toHaveStyle(`color: ${hexButtonGroupColors.primary.buttonTextColor}`);
+      expect(button1).toHaveStyle(`color: ${buttonGroupColors.primary.buttonText}`);
     });
 
     it('should change active button style on click', async () => {
@@ -106,12 +106,12 @@ describe('Button Group', () => {
       const button2 = screen.getByText('Button 2').parentElement as HTMLElement;
 
       await user.click(button1);
-      expect(button1).toHaveStyle(`color: ${hexButtonGroupColors.primary.selectedButtonTextColor}`);
-      expect(button2).toHaveStyle(`color: ${hexButtonGroupColors.primary.buttonTextColor}`);
+      expect(button1).toHaveStyle(`color: ${buttonGroupColors.primary.selectedButtonText}`);
+      expect(button2).toHaveStyle(`color: ${buttonGroupColors.primary.buttonText}`);
 
       await user.click(button2);
-      expect(button2).toHaveStyle(`color: ${hexButtonGroupColors.primary.selectedButtonTextColor}`);
-      expect(button1).toHaveStyle(`color: ${hexButtonGroupColors.primary.buttonTextColor}`);
+      expect(button2).toHaveStyle(`color: ${buttonGroupColors.primary.selectedButtonText}`);
+      expect(button1).toHaveStyle(`color: ${buttonGroupColors.primary.buttonText}`);
     });
 
     it('should call the corresponding onClick handler when a button is clicked', async () => {
@@ -141,7 +141,7 @@ describe('Button Group', () => {
 
       expect(computedIndicatorStyle.left).toBe(button2.dataset.offsetLeft + 'px');
       expect(computedIndicatorStyle.width).toBe(button2.dataset.offsetWidth + 'px');
-      expect(button2.parentElement).toHaveStyle(`color: ${hexButtonGroupColors.primary.selectedButtonTextColor}`);
+      expect(button2.parentElement).toHaveStyle(`color: ${buttonGroupColors.primary.selectedButtonText}`);
     });
 
     it('should set indicator style to zero when activeButton is out of range', () => {

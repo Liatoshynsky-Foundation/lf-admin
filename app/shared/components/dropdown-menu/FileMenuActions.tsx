@@ -82,7 +82,7 @@ export const FileMenuActions: React.FC<FileMenuActionsProps> = ({
         <Box sx={styles.icon}>
           <Image src="/icons/download.svg" width={18} height={18} alt="Download" />{' '}
         </Box>
-        <Typography sx={styles.menuText}>Завантажити</Typography>
+        <Typography variant='textMd' sx={styles.menuText}>Завантажити</Typography>
       </MenuItem>
 
       <MenuItem onClick={(e) => handleAction(onDelete, e)} sx={styles.menuItem}>

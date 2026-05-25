@@ -1,4 +1,6 @@
-import { SxProps, Theme } from '@mui/material';
+import { alpha, SxProps, Theme } from '@mui/material';
+
+import { mainHexPallete as colors } from '~/shared/theme/colors';
 
 const styles: Record<string, SxProps<Theme>> = {
   card: {
@@ -6,12 +8,14 @@ const styles: Record<string, SxProps<Theme>> = {
     flexDirection: 'column',
     minHeight: '266px',
     width: '100%',
-    height: '100%',          
-    borderRadius: '12px',
-    boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.08)',
+    maxWidth: '100%',
+    borderRadius: '16px',
     overflow: 'hidden',
-    border: '1px solid rgba(0, 0, 0, 0.08)',
+    border: '1px solid',
+    borderColor: 'blue.200',
+    boxShadow: `0px 1px 4px ${alpha(colors.black, 0.08)}`
   },
+
   cardContent: {
     display: 'flex',
     flexDirection: 'column',
@@ -20,38 +24,37 @@ const styles: Record<string, SxProps<Theme>> = {
     p: '12px',
     overflow: 'hidden',
     '&:last-child': {
-      pb: '12px',
-    },
+      pb: '12px'
+    }
   },
+
   mainInfo: {
     display: 'flex',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: '4px',
-    overflow: 'hidden',
+    overflow: 'hidden'
   },
+
   title: {
-    fontSize: '18px',
     fontWeight: 700,
-    fontFamily: 'Mulish, sans-serif',
-    fontStyle: 'normal',
-    lineHeight: 1.5,           
-    letterSpacing: '0px',
+    color: 'text.primary',
+    flex: 1,
+    minWidth: 0,
     display: '-webkit-box',
     WebkitLineClamp: 2,
     WebkitBoxOrient: 'vertical',
-    overflow: 'hidden',
-    flex: 1,
-    minWidth: 0,
+    overflow: 'hidden'
   },
+  
   date: {
-    fontSize: '12px',
-    color: 'rgba(0, 0, 0, 0.45)',
+    color: 'blue.600',
+    fontStyle: 'italic',
+    mt: 'auto',
     whiteSpace: 'nowrap',
     overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    mt: 'auto',
-  },
+    textOverflow: 'ellipsis'
+  }
 };
 
 export default styles;

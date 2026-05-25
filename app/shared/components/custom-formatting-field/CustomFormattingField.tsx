@@ -58,7 +58,7 @@ export const CustomFormattingField = ({ value, onChange, label = 'Текст', s
     }
   }, [value, editor]);
 
-  const isActive = isFocused || (editor && !editor.isEmpty);
+  const isActive = Boolean(isFocused || (editor && !editor.isEmpty));
 
   return (
     <Box sx={[styles.container, ...sxToArray(sx)]}>
@@ -69,26 +69,14 @@ export const CustomFormattingField = ({ value, onChange, label = 'Текст', s
       <Box component="fieldset" sx={styles.fieldset(isFocused)}>
         <Box
           component="legend"
-          sx={{
-            display: 'block',
-            fontSize: '12px',
-            maxWidth: isActive ? '100%' : '0',
-            transition: 'max-width 0.2s',
-            visibility: 'hidden'
-          }}
+          sx={styles.legend(isActive)}
         >
           <span>{label}</span>
         </Box>
       </Box>
 
       <Box
-        sx={{
-          position: 'relative',
-          padding: '0 16px',
-          minHeight: '48px',
-          display: 'flex',
-          alignItems: 'center'
-        }}
+        sx={styles.contentWrapper}
       >
         {editor && (
           <BubbleMenu editor={editor}>

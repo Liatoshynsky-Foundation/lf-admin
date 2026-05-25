@@ -79,11 +79,11 @@ export const FormattingToolbar = ({ editor, sx }: FormattingToolbarProps) => {
             onBlur={handleLinkSubmit}
             placeholder="Вставте гіперпосилання..."
             autoFocus
-            sx={{ flex: 1, fontSize: '14px' }}
+            sx={styles.linkEditInput}
           />
         </Box>
       ) : (
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
+        <Box sx={styles.toolbarGroup}>
           <ToggleButton
             sx={styles.toggleButton}
             value="bold"

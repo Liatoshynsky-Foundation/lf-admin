@@ -1,7 +1,11 @@
+import { alpha } from '@mui/material';
+
+import { mainHexPallete as colors } from '~/shared/theme/colors';
+
 export const styles = {
   dialog: {
     '& .MuiBackdrop-root': {
-      backgroundColor: 'rgba(0,0,0,0.6)'
+      backgroundColor: alpha(colors.black, 0.6)
     }
   },
 
@@ -25,8 +29,8 @@ export const styles = {
     gap: '24px',
     overflow: 'hidden',
 
-    backgroundColor: '#232529',
-    color: '#FCFCFC'
+    backgroundColor: 'charcoalGray',
+    color: 'white'
   },
 
   header: {
@@ -53,9 +57,9 @@ export const styles = {
   },
 
   closeIcon: {
-    color: '#FCFCFC',
+    color: 'white',
     '&:hover': {
-      backgroundColor: 'rgba(255,255,255,0.08)'
+      backgroundColor: alpha(colors.white, 0.08)
     }
   },
 

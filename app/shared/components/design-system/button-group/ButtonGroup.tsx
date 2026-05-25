@@ -8,7 +8,7 @@ interface ButtonGroupProps extends Omit<BoxProps, 'color' | 'size'> {
   buttons: React.ReactNode[];
   defaultActiveButton?: number;
   size?: 'small' | 'big';
-  palette?: 'primary' | 'secondary';
+  palette?: 'primary' | 'secondary' | 'tertiary';
 }
 
 const ButtonGroup = ({

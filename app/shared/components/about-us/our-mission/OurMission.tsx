@@ -1,6 +1,6 @@
 'use client';
 
-import { Skeleton } from '@mui/material';
+import { Skeleton, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import { JSONContent } from '@tiptap/react';
@@ -131,9 +131,9 @@ const OurMission = () => {
 
       {missionPoints.length > 0 && (
         <>
-          <Box component="h4" sx={styles.pointHeader}>
+          <Typography variant="subtitle1" component="h4" sx={styles.pointHeader}>
             Текст секції:
-          </Box>
+          </Typography>
           <ConfigurableList<MissionPoint>
             items={missionPoints}
             addBtnLabel="Додати пункт"

@@ -1,7 +1,7 @@
 
 export const styles = {
   deleteBtn: {
-    backgroundColor: '#D13712',
+    backgroundColor: 'error.main',
     color: 'error.contrastText',
     '&:hover': {
       backgroundColor: 'error.dark'

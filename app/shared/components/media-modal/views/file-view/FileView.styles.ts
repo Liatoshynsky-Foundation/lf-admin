@@ -13,9 +13,7 @@ export const styles = {
   } as SxProps<Theme>,
 
   fileName: {
-    fontSize: '14px',
-    fontWeight: 500,
-    color: '#E5E7EB',
+    color: 'adminBlue.200',
     textAlign: 'center',
     wordBreak: 'break-word',
     maxWidth: '80%',

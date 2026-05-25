@@ -2,8 +2,6 @@ import { Box, type BoxProps, type TooltipProps, Typography, type TypographyProps
 import Tooltip from '@mui/material/Tooltip';
 import React from 'react';
 
-import { arrowStyles, tooltipStyles } from './Tooltip.styles';
-
 interface TooltipCustomProps extends Omit<TooltipProps, 'children' | 'title'> {
   title?: React.ReactNode;
   showArrow?: boolean;
@@ -32,17 +30,7 @@ const TooltipCustom: React.FC<TooltipCustomProps> = ({
 
   return (
     <Box {...wrapperProps}>
-      <Tooltip
-        title={finalTitle}
-        arrow={finalArrow}
-        placement={placement}
-        componentsProps={{
-          tooltip: { sx: tooltipStyles },
-          arrow: { sx: arrowStyles }
-        }}
-        {...controlledProps}
-        {...tooltipProps}
-      >
+      <Tooltip title={finalTitle} arrow={finalArrow} placement={placement} {...controlledProps} {...tooltipProps}>
         {children ?? <Typography {...textProps}>{finalTitle}</Typography>}
       </Tooltip>
     </Box>
