@@ -10,6 +10,7 @@ interface StyledInput extends Omit<TextFieldProps, 'title'> {
   title?: string;
   fieldType?: 'styled';
   titleSx?: SxProps<Theme>;
+  sx?: SxProps<Theme>;
 }
 
 interface FormattingInput extends CustomFormattingFieldProps {
@@ -19,10 +20,6 @@ interface FormattingInput extends CustomFormattingFieldProps {
 }
 
 export type Props = StyledInput | FormattingInput;
-
-const StyledTextField = styled(TextField)(() => ({
-  ...styles.customTextFieldStyles
-}));
 
 export const CustomTextField: React.FC<Props> = (allProps) => {
   const { title, titleSx, ...props } = allProps;
@@ -35,7 +32,11 @@ export const CustomTextField: React.FC<Props> = (allProps) => {
         </Typography>
       )}
 
-      {props.fieldType === 'formatting' ? <CustomFormattingField {...props} />:  <StyledTextField {...props} /> }
+      {props.fieldType === 'formatting' ? (
+        <CustomFormattingField {...props} />
+      ) : (
+        <TextField sx={{ ...styles.textField, ...props.sx }} {...props} />
+      )}
     </Box>
   );
 };
