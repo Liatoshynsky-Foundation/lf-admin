@@ -50,9 +50,9 @@ export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({
           }}
         >
           {isSubmenuOpen ? (
-            <Image src="/icons/chevronDown.svg" alt="open list" width={24} height={24} />
+            <Image src="/icons/chevronDown.svg" alt="open list" width={20} height={20} />
           ) : (
-            <Image src="/icons/chevronRight.svg" alt="close list" width={24} height={24} />
+            <Image src="/icons/chevronRight.svg" alt="close list" width={20} height={20} />
           )}
         </Box>
       </ListElement>
