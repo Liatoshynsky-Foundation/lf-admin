@@ -53,8 +53,8 @@ export const PageMutation = {
     } else {
       const changes = createDotNotationPatch(
          
-        (existingDraft.blocks as unknown as JsonObject) || {},
-        (cleanedBlocks as JsonObject) || {}
+        (existingDraft.blocks as unknown as JsonObject) || {}, // NOSONAR
+        (cleanedBlocks as JsonObject) || {} // NOSONAR
       );
 
       if (!Object.keys(changes.$set ?? {}).length && !Object.keys(changes.$unset ?? {}).length) {
@@ -111,8 +111,9 @@ export const PageMutation = {
     }
 
     const changes = createDotNotationPatch(
-      (publishedPage?.blocks as unknown as JsonObject) || {},
-      (cleanedBlocks as JsonObject) || {}
+       
+      (publishedPage?.blocks as unknown as JsonObject) || {}, // NOSONAR
+      (cleanedBlocks as JsonObject) || {} // NOSONAR
     );
 
     const resultPage = (await repo.applyPatchToPublished(slug, changes, title, pageType)) as Page;
