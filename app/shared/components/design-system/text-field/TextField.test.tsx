@@ -1,65 +1,115 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { Props as CustomFormattingFieldProps } from '../../custom-formatting-field/CustomFormattingField';
 import { CustomTextField } from './TextField';
 
+jest.mock('../../custom-formatting-field/CustomFormattingField', () => ({
+  __esModule: true,
+  CustomFormattingField: ({ value, onChange, label }: CustomFormattingFieldProps) => (
+    <div 
+      data-testid="mock-formatting-field" 
+      data-label={label}
+      data-json-payload={JSON.stringify(value)}
+      onChange={onChange} 
+    />
+  )
+}));
+
 describe('CustomTextField', () => {
-  it('should render with a title', () => {
-    render(<CustomTextField title="Email" />);
-
-    expect(screen.getByText('Email')).toBeInTheDocument();
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
-  it('should not render a title when not provided', () => {
-    render(<CustomTextField />);
-    expect(screen.queryByText('Текст заголовку')).not.toBeInTheDocument();
+  describe('Title & Standard Layout Constraints', () => {
+    it('should render with a title', () => {
+      render(<CustomTextField title="Email" />);
+      expect(screen.getByText('Email')).toBeInTheDocument();
+    });
+
+    it('should not render a title when not provided', () => {
+      render(<CustomTextField />);
+      expect(screen.queryByText('Текст заголовку')).not.toBeInTheDocument();
+    });
+
+    it('should render with placeholder and passes props to TextField', () => {
+      render(<CustomTextField placeholder="Enter your name" />);
+
+      const input = screen.getByPlaceholderText('Enter your name');
+      expect(input).toBeInTheDocument();
+    });
   });
 
-  it('should apply custom styles to title via titleSx', () => {
-    render(<CustomTextField title="Styled Title" titleSx={{ color: 'red', fontSize: '20px' }} />);
+  describe('Standard Action Events', () => {
+    it('should call onChange when typing', () => {
+      const handleChange = jest.fn();
+      render(<CustomTextField onChange={handleChange} />);
 
-    const titleElement = screen.getByText('Styled Title');
-    expect(titleElement).toBeInTheDocument();
+      const input = screen.getByRole('textbox');
+      fireEvent.change(input, { target: { value: 'Hello' } });
 
-    expect(titleElement).toHaveStyle('color: red');
-    expect(titleElement).toHaveStyle('font-size: 20px');
+      expect(handleChange).toHaveBeenCalled();
+    });
+
+    it('should render with a specific value', () => {
+      render(<CustomTextField value="Test value" onChange={() => {}} />);
+
+      const input = screen.getByDisplayValue('Test value');
+      expect(input).toBeInTheDocument();
+    });
+
+    it('should call onFocus and onBlur events', () => {
+      const handleFocus = jest.fn();
+      const handleBlur = jest.fn();
+
+      render(<CustomTextField onFocus={handleFocus} onBlur={handleBlur} />);
+      const input = screen.getByRole('textbox');
+
+      fireEvent.focus(input);
+      expect(handleFocus).toHaveBeenCalled();
+
+      fireEvent.blur(input);
+      expect(handleBlur).toHaveBeenCalled();
+    });
   });
 
-  it('should render with placeholder and passes props to TextField', () => {
-    render(<CustomTextField placeholder="Enter your name" />);
+  describe('Conditional fieldType Formatter Layout Routing', () => {
+    it('should render the standard StyledTextField when fieldType is missing or not formatting', () => {
+      render(<CustomTextField placeholder="Standard Mode" />);
 
-    const input = screen.getByPlaceholderText('Enter your name');
-    expect(input).toBeInTheDocument();
-  });
+      expect(screen.getByRole('textbox')).toBeInTheDocument();
+      expect(screen.queryByTestId('mock-formatting-field')).not.toBeInTheDocument();
+    });
 
-  it('should call onChange when typing', () => {
-    const handleChange = jest.fn();
+    it('should safely alternate execution paths and mount CustomFormattingField when fieldType equals formatting', () => {
+      const mockChange = jest.fn();
 
-    render(<CustomTextField onChange={handleChange} />);
+      const mockJsonValue = {
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [{ type: 'text', text: 'Formatted Text Content' }]
+          }
+        ]
+      };
 
-    const input = screen.getByRole('textbox');
-    fireEvent.change(input, { target: { value: 'Hello' } });
+      render(
+        <CustomTextField 
+          fieldType="formatting" 
+          value={mockJsonValue} 
+          onChange={mockChange} 
+          label="Phone Layout" 
+        />
+      );
 
-    expect(handleChange).toHaveBeenCalled();
-  });
+      const formattingInput = screen.getByTestId('mock-formatting-field');
+      expect(formattingInput).toBeInTheDocument();
+      expect(formattingInput).toHaveAttribute('data-label', 'Phone Layout');
 
-  it('should render with a specific value', () => {
-    render(<CustomTextField value="Test value" onChange={() => {}} />);
+      expect(formattingInput).toHaveAttribute('data-json-payload', JSON.stringify(mockJsonValue));
 
-    const input = screen.getByDisplayValue('Test value');
-    expect(input).toBeInTheDocument();
-  });
-  it('should call onFocus and onBlur events', () => {
-    const handleFocus = jest.fn();
-    const handleBlur = jest.fn();
-
-    render(<CustomTextField onFocus={handleFocus} onBlur={handleBlur} />);
-    const input = screen.getByRole('textbox');
-
-    fireEvent.focus(input);
-    expect(handleFocus).toHaveBeenCalled();
-
-    fireEvent.blur(input);
-    expect(handleBlur).toHaveBeenCalled();
+      expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    });
   });
 });

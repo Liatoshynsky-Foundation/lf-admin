@@ -3,6 +3,7 @@
 import { Skeleton, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
+import { JSONContent } from '@tiptap/react';
 
 import { styles } from './OurMission.styles';
 import ConfigurableList from '~/components/configurable-list/ConfigurableList';
@@ -11,21 +12,20 @@ import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock
 import { ImagePreviewBlock } from '~/ds-components/photo-block/PhotoBlock';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { ensureIds } from '~/lib/utils/ensureIds';
-import { proseToText, textToProse } from '~/lib/utils/prose';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 import { ConfigurableListItem } from '~/types/accordionBlocks';
-import { CropResult } from '~/types/common';
+import { CropResult, LocalizedJSON } from '~/types/common';
 import { MissionListItemWithId } from '~/types/store/pages/about-us/blocks/missionBlock';
 import { getImageUrl } from '~/utils/getImageUrl';
 
-export type MissionPoint = ConfigurableListItem & { value: string };
+export type MissionPoint = ConfigurableListItem & { value: JSONContent };
 
 export type MissionImage = {
   src: string;
   generatedSrc: string;
-  caption: { uk: string; en: string };
-  alt: { uk: string; en: string };
+  caption: LocalizedJSON;
+  alt: LocalizedJSON;
   crop?: CropResult | null;
 };
 
@@ -33,7 +33,7 @@ type MissionImageBlockProps = {
   image: MissionImage;
   locale: 'uk' | 'en';
   title: string;
-  onChangeCaption: (value: string) => void;
+  onChangeCaption: (value: JSONContent) => void;
   onChangeImage: (url: string, crop?: CropResult | null) => void;
 };
 
@@ -47,12 +47,11 @@ const MissionImageBlock = ({ image, locale, title, onChangeCaption, onChangeImag
       onChangeImage={onChangeImage}
     />
     <CustomTextField
-      title="Підпис до зображення"
+      fieldType="formatting"
+      title={`Підпис до зображення (${title})`}
       label="Підпис"
       value={image.caption[locale]}
-      fullWidth
-      multiline
-      onChange={(e) => onChangeCaption(e.target.value)}
+      onChange={(value) => onChangeCaption(value)}
     />
   </Box>
 );
@@ -71,12 +70,12 @@ const OurMission = () => {
 
   const missionPoints: MissionPoint[] = missionList.map((item) => ({
     id: item.id,
-    value: proseToText(item[currentLocale])
+    value: item[currentLocale]
   }));
 
-  const handleChangeMissionPoint = (id: string | number, value: string) => {
+  const handleChangeMissionPoint = (id: string | number, value: JSONContent) => {
     const updatedList: MissionListItemWithId[] = missionList.map((item) =>
-      item.id === id ? { ...item, [currentLocale]: textToProse(value) } : item
+      item.id === id ? { ...item, [currentLocale]: value } : item
     );
     setField(pageId, blockId, 'list', updatedList);
   };
@@ -89,7 +88,7 @@ const OurMission = () => {
     };
     const newList = [...missionList, newItem];
     setField(pageId, blockId, 'list', newList);
-    return { id: newItem.id, value: '' };
+    return { id: newItem.id, value: {} };
   };
 
   const handleDeleteMissionPoint = (id: string | number) => {
@@ -97,7 +96,7 @@ const OurMission = () => {
     setField(pageId, blockId, 'list', newList);
   };
 
-  const handleCaptionChange = (key: 'smallImage' | 'bigImage', value: string) => {
+  const handleCaptionChange = (key: 'smallImage' | 'bigImage', value: JSONContent) => {
     const image = block[key];
     if (!image) return;
     setField(pageId, blockId, key, {
@@ -122,12 +121,11 @@ const OurMission = () => {
     <CollapsibleBlock title="Наша місія">
       <Box sx={styles.wrapper}>
         <CustomTextField
+          fieldType="formatting"
           title="Заголовок секції"
           label="Текст заголовка"
-          value={block.title?.[currentLocale] || ''}
-          fullWidth
-          multiline
-          onChange={(e) => setField(pageId, blockId, 'title', { ...block.title, [currentLocale]: e.target.value })}
+          value={block.title?.[currentLocale]}
+          onChange={(value) => setField(pageId, blockId, 'title', { ...block.title, [currentLocale]: value })}
         />
       </Box>
 
@@ -145,11 +143,10 @@ const OurMission = () => {
             onCreate={handleAddMissionPoint}
             renderItem={({ item, onChange }) => (
               <CustomTextField
+                fieldType="formatting"
                 label="Пункт місії"
                 value={item.value}
-                fullWidth
-                multiline
-                onChange={(e) => onChange({ ...item, value: e.target.value })}
+                onChange={(value) => onChange({ ...item, value })}
               />
             )}
             separator={false}

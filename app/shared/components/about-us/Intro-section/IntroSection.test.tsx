@@ -1,131 +1,111 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import type { JSONContent } from '@tiptap/react';
+import React from 'react';
 
+import { createDocNode } from '../__mocks__/utils';
 import { IntroSection } from './IntroSection';
 
+interface MockQuoteBlockProps {
+  readonly title: JSONContent;
+  readonly description: JSONContent;
+  readonly onTitleChange: (value: JSONContent) => void;
+  readonly onDescriptionChange: (value: JSONContent) => void;
+}
+
 const setFieldMock = jest.fn();
-const handleUploadImageMock = jest.fn();
-const useUploadBlobMutationMock = jest.fn();
+const usePageBlockMock = jest.fn();
 
 jest.mock('~/store', () => ({
-  useStore: (selector: (state: { locale: string; setField: typeof setFieldMock }) => void) =>
+  useStore: (selector: (state: { readonly locale: string; readonly setField: typeof setFieldMock }) => unknown) =>
     selector({ locale: 'uk', setField: setFieldMock })
 }));
 
-jest.mock('~/utils/uploadToTmpFolder', () => ({
-  handleUploadImage: (...args: unknown[]) => handleUploadImageMock(...args)
-}));
+jest.mock('~/utils/uploadToTmpFolder', () => ({ handleUploadImage: jest.fn() }));
+jest.mock('~/types/graphql/generated/graphql', () => ({ useUploadBlobMutation: () => [jest.fn()] }));
 
-jest.mock('~/types/graphql/generated/graphql', () => ({
-  useUploadBlobMutation: () => [useUploadBlobMutationMock]
-}));
-
-const usePageBlockMock = jest.fn();
 jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: (pageId: string, blockId: string) => usePageBlockMock(pageId, blockId)
 }));
 
-jest.mock('../../design-system/collapsible-block/CollapsibleBlock', () => ({
-  __esModule: true,
-  default: ({ children, title }: { children: React.ReactNode; title: string }) => (
-    <section data-testid="collapsible">
-      <h2>{title}</h2>
-      {children}
-    </section>
-  )
-}));
+jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
 
-jest.mock('../../design-system/photo-block/PhotoBlock', () => ({
-  ImagePreviewBlock: ({
-    imageUrl,
-    fileName,
-    onChangeImage
-  }: {
-    imageUrl: string;
-    fileName: string;
-    onChangeImage: (file: { name: string }) => void;
-  }) => (
+jest.mock('~/ds-components/text-field/TextField');
+
+jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
+  ImagePreviewBlock: ({ imageUrl, fileName }: { readonly imageUrl: string; readonly fileName: string }) => (
     <div data-testid="image-preview">
       <span data-testid="image-url">{imageUrl}</span>
       <span data-testid="file-name">{fileName}</span>
-      <button onClick={() => onChangeImage({ name: 'new.png' })}>Upload Image</button>
     </div>
-  )
-}));
-
-jest.mock('../../design-system/text-field/TextField', () => ({
-  CustomTextField: ({
-    title,
-    value,
-    onChange
-  }: {
-    title: string;
-    value: string;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  }) => (
-    <label>
-      {title}
-      <input data-testid={`textfield-${title}`} value={value} onChange={onChange} />
-    </label>
   )
 }));
 
 jest.mock('../Liatoshynsky-office/quote-block/QuoteBlock', () => ({
-  QuoteBlock: ({
-    title,
-    description,
-    onTitleChange,
-    onDescriptionChange
-  }: {
-    title: string;
-    description: string;
-    onTitleChange: (val: string) => void;
-    onDescriptionChange: (val: string) => void;
-  }) => (
+  __esModule: true,
+  QuoteBlock: ({ title, description, onTitleChange, onDescriptionChange }: MockQuoteBlockProps) => (
     <div data-testid="quote-block">
-      <span data-testid="quote-title-prop">{title}</span>
-      <span data-testid="quote-description-prop">{description}</span>
-      <input data-testid="quote-title" value={title} onChange={(e) => onTitleChange(e.target.value)} />
-      <input
-        data-testid="quote-description"
-        value={description}
-        onChange={(e) => onDescriptionChange(e.target.value)}
-      />
+      <span data-testid="quote-title-json">{JSON.stringify(title)}</span>
+      <span data-testid="quote-description-json">{JSON.stringify(description)}</span>
+      <button
+        data-testid="trigger-quote-title-change"
+        onClick={() => onTitleChange(createDocNode('Updated Author Text'))}
+      >
+        Change Quote Title
+      </button>
+      <button
+        data-testid="trigger-quote-description-change"
+        onClick={() => onDescriptionChange(createDocNode('Updated Quote Text'))}
+      >
+        Change Quote Description
+      </button>
     </div>
   )
 }));
 
-const expectSetField = (field: string, value: unknown) =>
-  expect(setFieldMock).toHaveBeenCalledWith('about-us', 'IntroSection', field, expect.objectContaining(value));
-
-const updateField = (testId: string, value: string) =>
-  fireEvent.change(screen.getByTestId(testId), { target: { value } });
-
-const updateMultipleFields = (updates: { testId: string; value: string; field: string; prop?: string }[]) => {
-  updates.forEach(({ testId, value, field, prop }) => {
-    updateField(testId, value);
-    expectSetField(field, prop ? { [prop]: { uk: value } } : { uk: value });
-  });
+const titles = {
+  page: 'Заголовок сторінки',
+  caption: 'Підпис до зображення'
 };
 
-describe('EntrySection', () => {
+const mockNodes = {
+  title: createDocNode('Initial Title'),
+  caption: createDocNode('Initial Caption'),
+  author: createDocNode('Initial Author'),
+  quote: createDocNode('Initial Quote')
+};
+
+const mockBlockData = {
+  title: { uk: mockNodes.title },
+  image: { src: 'test-image', caption: { uk: mockNodes.caption }, alt: { uk: mockNodes.caption } },
+  quote: { source: { uk: mockNodes.author }, text: { uk: mockNodes.quote } }
+};
+
+const runSimulation = (testidToClick?: string) => {
+  render(<IntroSection />);
+  if (testidToClick) {
+    fireEvent.click(screen.getByTestId(testidToClick));
+  }
+};
+
+describe('IntroSection', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    usePageBlockMock.mockReturnValue({
-      block: {
-        title: { uk: 'Title' },
-        image: { src: 'test-image', caption: { uk: 'Caption' } },
-        quote: { source: { uk: 'Author' }, text: { uk: 'Quote' } }
-      }
-    });
-    render(<IntroSection />);
+    usePageBlockMock.mockReturnValue({ block: mockBlockData });
   });
 
-  it('should render all fields when block exists', () => {
+  it('should render all fields with type-safe structural JSON states', () => {
+    runSimulation();
+
     expect(screen.getByText('Вступна секція')).toBeInTheDocument();
-    ['Title', 'Caption', 'Author', 'Quote'].forEach((val) => expect(screen.getByDisplayValue(val)).toBeInTheDocument());
+    expect(screen.getByTestId(`textfield-json-${titles.page}`)).toHaveTextContent(JSON.stringify(mockNodes.title));
+    expect(screen.getByTestId(`textfield-json-${titles.caption}`)).toHaveTextContent(JSON.stringify(mockNodes.caption));
+    expect(screen.getByTestId('quote-title-json')).toHaveTextContent(JSON.stringify(mockNodes.author));
+    expect(screen.getByTestId('quote-description-json')).toHaveTextContent(JSON.stringify(mockNodes.quote));
   });
 
   it('should pass correct props to ImagePreviewBlock', () => {
+    runSimulation();
+
     const preview = screen.getByTestId('image-preview');
     expect(within(preview).getByTestId('image-url')).toHaveTextContent(
       '/api/blob-url?folderName=photos&blobName=test-image'
@@ -133,25 +113,42 @@ describe('EntrySection', () => {
     expect(within(preview).getByTestId('file-name')).toHaveTextContent('test-image');
   });
 
-  it('should pass correct props to QuoteBlock', () => {
-    expect(screen.getByTestId('quote-title-prop')).toHaveTextContent('Author');
-    expect(screen.getByTestId('quote-description-prop')).toHaveTextContent('Quote');
-  });
+  it.each([
+    [
+      'title textfield modifications',
+      `trigger-change-${titles.page}`,
+      'title',
+      { uk: createDocNode(`Updated ${titles.page}`) }
+    ],
+    [
+      'synchronized captions and alternative text rules',
+      `trigger-change-${titles.caption}`,
+      'image',
+      {
+        caption: expect.objectContaining({ uk: createDocNode(`Updated ${titles.caption}`) }),
+        alt: expect.objectContaining({ uk: createDocNode(`Updated ${titles.caption}`) })
+      }
+    ],
+    [
+      'quote block author payload modifications',
+      'trigger-quote-title-change',
+      'quote',
+      { source: expect.objectContaining({ uk: createDocNode('Updated Author Text') }) }
+    ],
+    [
+      'quote block descriptive body alterations',
+      'trigger-quote-description-change',
+      'quote',
+      { text: expect.objectContaining({ uk: createDocNode('Updated Quote Text') }) }
+    ]
+  ])('should correctly invoke setField on %s', (_scenario, triggerId, storeKey, expectedPayload) => {
+    runSimulation(triggerId);
 
-  it('should call setField when updating title', () => {
-    updateField('textfield-Заголовок сторінки', 'New Title');
-    expectSetField('title', { uk: 'New Title' });
-  });
-
-  it('should call setField when updating image caption', () => {
-    updateField('textfield-Підпис до зображення', 'New Caption');
-    expectSetField('image', { caption: { uk: 'New Caption' } });
-  });
-
-  it('should call setField when updating quote fields', () => {
-    updateMultipleFields([
-      { testId: 'quote-title', value: 'New Author', field: 'quote', prop: 'source' },
-      { testId: 'quote-description', value: 'New Quote', field: 'quote', prop: 'text' }
-    ]);
+    expect(setFieldMock).toHaveBeenCalledWith(
+      'about-us',
+      'IntroSection',
+      storeKey,
+      expect.objectContaining(expectedPayload)
+    );
   });
 });

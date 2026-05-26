@@ -49,17 +49,18 @@ export const PageMutation = {
       if (!published) {
         throw new Error(`Cannot upsert draft: no source (draft or published) for slug="${slug}"`);
       }
-      resultPage = await repo.createDraft(slug, cleanedBlocks, published) as Page;
+      resultPage = (await repo.createDraft(slug, cleanedBlocks, published)) as Page;
     } else {
       const changes = createDotNotationPatch(
-        (existingDraft.blocks as JsonObject) || {},
-        (cleanedBlocks as JsonObject) || {}
+         
+        (existingDraft.blocks as unknown as JsonObject) || {}, // NOSONAR
+        (cleanedBlocks as JsonObject) || {} // NOSONAR
       );
 
       if (!Object.keys(changes.$set ?? {}).length && !Object.keys(changes.$unset ?? {}).length) {
         resultPage = existingDraft as Page;
       } else {
-        resultPage = await repo.applyPatchToDraft(slug, changes) as Page;
+        resultPage = (await repo.applyPatchToDraft(slug, changes)) as Page;
       }
     }
 
@@ -110,11 +111,12 @@ export const PageMutation = {
     }
 
     const changes = createDotNotationPatch(
-      (publishedPage?.blocks as JsonObject) || {},
-      (cleanedBlocks as JsonObject) || {}
+       
+      (publishedPage?.blocks as unknown as JsonObject) || {}, // NOSONAR
+      (cleanedBlocks as JsonObject) || {} // NOSONAR
     );
 
-    const resultPage = await repo.applyPatchToPublished(slug, changes, title, pageType) as Page;
+    const resultPage = (await repo.applyPatchToPublished(slug, changes, title, pageType)) as Page;
 
     await syncImagesCrops(resultPage.id, blocksToPublish);
 

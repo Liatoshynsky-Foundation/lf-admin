@@ -1,81 +1,104 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { createDocNode } from '../../__mocks__/utils';
 import { FoundationBlock } from './FoundationBlock';
-import {MediaModalResult} from '~/components/media-modal/MediaModal.types';
 
-jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
-  ImagePreviewBlock: ({ onChangeImage }: {
-    onChangeImage: (file: File, crop?: MediaModalResult['crop']) => void
-  }) => (
-    <div data-testid="image-preview-block">
-      <input
-        type="file"
-        aria-label="Upload image"
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-          if (e.target.files?.[0]) onChangeImage(e.target.files?.[0]);
-        }}
-      />
+
+interface MockImagePreviewBlockProps {
+  readonly imageUrl: string;
+  readonly fileName?: string;
+  readonly onChangeImage: (url: string) => void;
+  readonly title?: string;
+}
+
+jest.mock('~/ds-components/text-field/TextField');
+
+jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
+  __esModule: true,
+  ImagePreviewBlock: ({ imageUrl, fileName, onChangeImage, title }: MockImagePreviewBlockProps) => (
+    <div data-testid="image-preview-block" data-title={title}>
+      <span data-testid="preview-url">{imageUrl}</span>
+      <span data-testid="preview-filename">{fileName}</span>
+      <button data-testid="trigger-image-upload" onClick={() => onChangeImage('uploaded-image-path.png')}>
+        Upload Image
+      </button>
     </div>
   )
 }));
 
-describe('FoundationBlock', () => {
-  const mockProps = {
-    mainText: 'Основний текст секції',
-    paragraphs: [{ text: 'Перший абзац' }, { text: 'Другий абзац' }],
-    imageUrl: '/images/test.png',
-    fileName: 'test.png',
-    onMainTextChange: jest.fn(),
-    onParagraphChange: jest.fn(),
-    onImageChange: jest.fn()
-  };
+const MAIN_TEXT_KEY = 'Основний текст секції';
+const mockMainTextJson = createDocNode(MAIN_TEXT_KEY);
 
+const mockParagraphsJson = [{ text: createDocNode('Перший абзац') }, { text: createDocNode('Другий абзац') }];
+
+const mockProps = {
+  mainText: mockMainTextJson,
+  paragraphs: mockParagraphsJson,
+  imageUrl: '/images/test.png',
+  fileName: 'test.png',
+  onMainTextChange: jest.fn(),
+  onParagraphChange: jest.fn(),
+  onImageChange: jest.fn()
+};
+
+const getParagraphLabel = (index: number) => `Текст ${index + 1} абзацу`;
+
+describe('FoundationBlock', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('should render main text, paragraphs and image block', () => {
+  it('should render main text, paragraph lists, and image layouts with correct structural values', () => {
     render(<FoundationBlock {...mockProps} />);
 
-    expect(screen.getByDisplayValue(mockProps.mainText)).toBeInTheDocument();
-    mockProps.paragraphs.forEach((p) => {
-      expect(screen.getByDisplayValue(p.text)).toBeInTheDocument();
+    expect(screen.getByTestId(`textfield-json-${MAIN_TEXT_KEY}`)).toHaveTextContent(JSON.stringify(mockMainTextJson));
+
+    mockProps.paragraphs.forEach((p, index) => {
+      expect(screen.getByTestId(`textfield-json-${getParagraphLabel(index)}`)).toHaveTextContent(
+        JSON.stringify(p.text)
+      );
     });
 
     expect(screen.getByTestId('image-preview-block')).toBeInTheDocument();
+    expect(screen.getByTestId('preview-url')).toHaveTextContent(mockProps.imageUrl);
+    expect(screen.getByTestId('preview-filename')).toHaveTextContent(mockProps.fileName);
   });
 
-  it('should call onParagraphChange when paragraph inputs change', async () => {
+  it.each([
+    [
+      'main section text field changes',
+      `trigger-change-${MAIN_TEXT_KEY}`,
+      () => {
+        expect(mockProps.onMainTextChange).toHaveBeenCalledWith(createDocNode(`Updated ${MAIN_TEXT_KEY}`));
+      }
+    ],
+    [
+      'first dynamic paragraph array alterations',
+      `trigger-change-${getParagraphLabel(0)}`,
+      () => {
+        expect(mockProps.onParagraphChange).toHaveBeenCalledWith(0, createDocNode(`Updated ${getParagraphLabel(0)}`));
+      }
+    ],
+    [
+      'second dynamic paragraph array alterations',
+      `trigger-change-${getParagraphLabel(1)}`,
+      () => {
+        expect(mockProps.onParagraphChange).toHaveBeenCalledWith(1, createDocNode(`Updated ${getParagraphLabel(1)}`));
+      }
+    ],
+    [
+      'image asset upload handler interactions',
+      'trigger-image-upload',
+      () => {
+        expect(mockProps.onImageChange).toHaveBeenCalledTimes(1);
+        expect(mockProps.onImageChange).toHaveBeenCalledWith('uploaded-image-path.png');
+      }
+    ]
+  ])('should dispatch matching callbacks upon executing %s', (_scenario, triggerId, assertionCallback) => {
     render(<FoundationBlock {...mockProps} />);
-    const user = userEvent.setup();
 
-    mockProps.paragraphs.forEach(async (p, index) => {
-      const input = screen.getByDisplayValue(p.text) as HTMLInputElement;
-      await user.clear(input);
-      await user.type(input, `Новий текст ${index + 1}`);
-      expect(mockProps.onParagraphChange).toHaveBeenCalledWith(index, expect.any(String));
-    });
-  });
-
-  it('should call onImageChange when a file is uploaded', async () => {
-    render(<FoundationBlock {...mockProps} />);
-    const user = userEvent.setup();
-
-    const fileInput = screen.getByLabelText('Upload image') as HTMLInputElement;
-    const file = new File(['dummy'], 'photo.png', { type: 'image/png' });
-
-    await user.upload(fileInput, file);
-
-    expect(mockProps.onImageChange).toHaveBeenCalledTimes(1);
-    const uploadedFile = mockProps.onImageChange.mock.calls[0][0];
-    expect(uploadedFile.name).toBe('photo.png');
-  });
-
-  it('should render correct number of paragraph inputs', () => {
-    render(<FoundationBlock {...mockProps} />);
-    const paragraphInputs = mockProps.paragraphs.map((p) => screen.getByDisplayValue(p.text));
-    expect(paragraphInputs.length).toBe(mockProps.paragraphs.length);
+    fireEvent.click(screen.getByTestId(triggerId));
+    assertionCallback();
   });
 });

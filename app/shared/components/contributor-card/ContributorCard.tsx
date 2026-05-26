@@ -1,20 +1,22 @@
 'use client';
 import { Stack } from '@mui/material';
+import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
 import { CustomTextField } from '~/ds-components/text-field/TextField';
+import { proseToText } from '~/lib/utils/prose';
 import { ImagePreviewBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
-import { CropResult, ImageType, LocalizedString } from '~/types/common';
+import { CropResult, ImageType, LocalizedJSON, LocalizedString, ProseDoc } from '~/types/common';
 
 type ContributorCardProps = {
   contributor: {
-    name: LocalizedString;
-    description: LocalizedString;
+    name: LocalizedJSON;
+    description: LocalizedJSON;
     photo: ImageType;
   };
   currentLocale: keyof LocalizedString;
-  onChangeName: (name: string) => void;
-  onChangeDescription: (description: string) => void;
+  onChangeName: (name: JSONContent) => void;
+  onChangeDescription: (description: JSONContent) => void;
   onChangePhoto: (photo: ImageType) => void;
 };
 
@@ -44,7 +46,7 @@ export const ContributorCard = ({
     <Stack display="flex" flexDirection="row" gap="16px" width="100%">
       <ImagePreviewBlock
         imageUrl={contributor.photo.generatedSrc || contributor.photo.src || '/images/oval-contributor-card.png'}
-        fileName={contributor.photo.alt[currentLocale] || ''}
+        fileName={proseToText(contributor.photo.alt[currentLocale] as ProseDoc)}
         initialCrop={(contributor.photo as unknown as { crop: CropResult }).crop}
         onChangeImage={handleChangeImage}
         direction="column"
@@ -54,18 +56,16 @@ export const ContributorCard = ({
       />
       <Stack direction="column" gap={2} width="100%" mt={2}>
         <CustomTextField
+          fieldType="formatting"
           label="Ім`я"
-          value={contributor.name[currentLocale] || ''}
-          fullWidth
-          onChange={(e) => onChangeName(e.target.value)}
+          value={contributor.name[currentLocale]}
+          onChange={(value) => onChangeName(value)}
         />
         <CustomTextField
+          fieldType="formatting"
           label="Опис учасника"
-          value={contributor.description[currentLocale] || ''}
-          fullWidth
-          multiline
-          margin="none"
-          onChange={(e) => onChangeDescription(e.target.value)}
+          value={contributor.description[currentLocale]}
+          onChange={(value) => onChangeDescription(value)}
         />
       </Stack>
     </Stack>

@@ -1,10 +1,10 @@
 import { Skeleton } from '@mui/material';
+import {JSONContent}from '@tiptap/react';
 
 import { EditableSectionList, SectionListItem } from '../../accordion-blocks/editable-section-list/EditableSectionList';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { ensureIds } from '~/lib/utils/ensureIds';
-import { proseToText, textToProse } from '~/lib/utils/prose';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 import { LocalizedString } from '~/types/common';
@@ -26,17 +26,17 @@ const OurGoals = () => {
   const goalPoints: SectionListItem[] = goalList.map((item) => ({
     id: item.id,
     title: item.title[currentLocale],
-    description: proseToText(item.description[currentLocale])
+    description: item.description[currentLocale]
   }));
 
-  const handleTitleChange = (value: string) =>
+  const handleTitleChange = (value: JSONContent) =>
     setField(pageId, blockId, 'title', { ...block.title, [currentLocale]: value });
 
-  const handleChangeItem = (id: string, field: 'title' | 'description', value: string) => {
+  const handleChangeItem = (id: string, field: 'title' | 'description', value: JSONContent) => {
     const updatedList = goalList.map((item) => {
       if (item.id !== id) return item;
 
-      const updatedFieldValue = field === 'description' ? textToProse(value) : value;
+      const updatedFieldValue = value;
 
       return {
         ...item,
@@ -51,13 +51,14 @@ const OurGoals = () => {
   };
 
   const handleCreateItem = (): SectionListItem => {
+    const emptyDoc = { uk: { type: 'doc', content: [] }, en: { type: 'doc', content: [] } };
     const newItem: GoalItemWithId = {
       id: crypto.randomUUID(),
-      title: { uk: '', en: '' },
-      description: { uk: { type: 'doc', content: [] }, en: { type: 'doc', content: [] } }
+      title: emptyDoc,
+      description: emptyDoc
     };
     setField(pageId, blockId, 'goals', [...goalList, newItem]);
-    return { id: newItem.id, title: '', description: '' };
+    return { id: newItem.id, title: {}, description: {} };
   };
 
   const handleDeleteItem = (id: string) =>

@@ -1,8 +1,8 @@
-import type { LocalizedProse, LocalizedString } from '~/types/common';
+import type { LocalizedJSON } from '~/types/common';
 
 export type WhatWeDoItem = {
-  title: LocalizedString;
-  description: LocalizedProse;
+  title: LocalizedJSON;
+  description: LocalizedJSON;
 };
 
 export type WhatWeDolItemWithId = {
@@ -10,6 +10,6 @@ export type WhatWeDolItemWithId = {
 } & WhatWeDoItem;
 
 export type WhatWeDoBlock = {
-  title: LocalizedString;
+  title: LocalizedJSON;
   items: WhatWeDolItemWithId[];
 };
