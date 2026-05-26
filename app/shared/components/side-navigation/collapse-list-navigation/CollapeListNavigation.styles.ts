@@ -16,7 +16,7 @@ export const styles = {
   },
   collapse: {
     transition: 'ease-in 0.3s',
-    '& ul>div>div': {
+    '& .MuiListItemText-root': {
       pl: '32px'
     }
   }
