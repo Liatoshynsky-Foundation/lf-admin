@@ -12,7 +12,7 @@ export const linkStyles = {
 
 export const styles = {
   listBox: {
-    alignSelf: 'center'
+    display: 'flex'
   },
   collapse: {
     transition: 'ease-in 0.3s',
