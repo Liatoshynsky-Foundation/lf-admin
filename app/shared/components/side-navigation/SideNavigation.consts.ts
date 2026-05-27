@@ -3,8 +3,9 @@ export const NAVIGATION_DATA = {
   content: [
     {
       element: { title: 'Основні сторінки', iconSrc: 'file-text' },
+      // TEMPORARY
       collapseElements: [
-        { title: 'Про нас', href: '/about-us' }
+        { title: 'Про Фундацію', href: '/about-us' }
       ]
     },
     {
