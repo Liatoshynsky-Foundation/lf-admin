@@ -394,8 +394,8 @@ function GroupedRow({
       disableGutters
       elevation={0}
       sx={{
+        border: 'none',
         borderBottom: `1px solid ${HORIZONTAL_ROW_DIVIDER_COLOR}`,
-        borderRadius: 0,
         mb: '4px',
         overflow: 'hidden',
         '&:before': { display: 'none' },
@@ -408,6 +408,7 @@ function GroupedRow({
           px: 0,
           minHeight: '56px',
           flexDirection: 'row-reverse',
+          borderBottom: `1px solid ${HORIZONTAL_ROW_DIVIDER_COLOR}`,
           '& .MuiAccordionSummary-expandIconWrapper': {
             width: '26px',
             height: '26px',
