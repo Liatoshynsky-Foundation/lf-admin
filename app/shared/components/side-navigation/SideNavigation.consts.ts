@@ -2,7 +2,7 @@ export const NAVIGATION_DATA = {
   main: [{ title: 'Головна', iconSrc: 'house', href: '/' }],
   content: [
     {
-      element: { title: 'Основні сторінки', href: '/about-us', iconSrc: 'file-text' },
+      element: { title: 'Основні сторінки', iconSrc: 'file-text' },
       collapseElements: [
         { title: 'Про нас', href: '/about-us' }
       ]
