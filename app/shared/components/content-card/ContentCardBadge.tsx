@@ -23,6 +23,9 @@ const ContentCardBadge = ({ type, status, localizations }: ContentCardBadgeProps
     }
   };
 
+
+  console.log(status);
+
   const localizationLabel = getLocalizations(localizations);
   const hasLocalizationLabel = Boolean(localizationLabel);
 
@@ -35,12 +38,13 @@ const ContentCardBadge = ({ type, status, localizations }: ContentCardBadgeProps
         sx={styles.typeBadge(type)}
       ></Chip>
 
+      {status === BaseContentStatuses.Published && 
       <Box
         sx={styles.localizationsBadge(hasLocalizationLabel)}
       >
         <CircleCheckBig size={15} />
         {localizationLabel && <Box>{localizationLabel}</Box>}
-      </Box>
+      </Box>}
 
       {status === BaseContentStatuses.Draft && (
         <Box sx={styles.draftBadge}>
