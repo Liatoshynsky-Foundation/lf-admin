@@ -155,7 +155,7 @@ describe('EditPublicationsView Component', () => {
     fireEvent.click(screen.getByText('Опублікувати і вийти'));
 
     expect(mockOnAction).toHaveBeenCalledTimes(1);
-    expect(mockOnAction).toHaveBeenCalledWith(MenuActionId.UPDATE_AND_EXIT);
+    expect(mockOnAction).toHaveBeenCalledWith(MenuActionId.PUBLICATE_AND_EXIT);
   });
 
   it('should handle the quick publish button from HeaderRightActions directly', () => {
