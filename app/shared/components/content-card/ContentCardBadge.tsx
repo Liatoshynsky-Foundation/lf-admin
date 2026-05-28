@@ -23,9 +23,6 @@ const ContentCardBadge = ({ type, status, localizations }: ContentCardBadgeProps
     }
   };
 
-
-  console.log(status);
-
   const localizationLabel = getLocalizations(localizations);
   const hasLocalizationLabel = Boolean(localizationLabel);
 
