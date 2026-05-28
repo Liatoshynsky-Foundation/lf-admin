@@ -68,12 +68,6 @@ export default function EditPublicationsPage() {
         break;
       }
 
-      case MenuActionId.SAVE_DRAFT: {
-        const { data } = await manager.updateResource(BaseContentStatuses.Draft, contentPayload);
-        if (data) toast.success(CONTENT_MUTATION_RESULTS.draftSaved);
-        break;
-      }
-
       case MenuActionId.SAVE_AND_EXIT: {
         const { data } = await manager.updateResource(BaseContentStatuses.Draft, contentPayload);
         if (data) {

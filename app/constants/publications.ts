@@ -166,8 +166,7 @@ export type HEADER_MENU_OPTIONS_TYPE = Record<string, ReadonlyArray<ACTIONS_TYPE
 export const HEADER_MENU_OPTIONS: HEADER_MENU_OPTIONS_TYPE = {
   baseActions: [
     { id: MenuActionId.PUBLISH, label: 'Опублікувати' },
-    { id: MenuActionId.SAVE_DRAFT, label: 'Зберегти зміни' },
-    { id: MenuActionId.SAVE_AND_EXIT, label: 'Зберегти зміни і вийти' },
+    { id: MenuActionId.SAVE_AND_EXIT, label: 'Опублікувати і вийти' },
     { id: MenuActionId.DELETE_DRAFT, label: 'Видалити чернетку' }
   ]
 } as const;
