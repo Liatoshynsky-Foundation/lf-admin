@@ -42,7 +42,8 @@ export const NAVIGATION_DATA = {
         { title: 'Основні', href: '', disabled: true },
         { title: 'SEO Налаштування', href: '', disabled: true },
         { title: 'Користувачі та ролі', href: '', disabled: true },
-        { title: 'Історія змін', href: '', disabled: true }
+        { title: 'Історія змін', href: '', disabled: true },
+        { title: 'Системні логи', href: '/logs' }
       ]
     }
   ]
