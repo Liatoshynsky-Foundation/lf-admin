@@ -16,6 +16,11 @@ jest.mock('next/link', () => {
   return MockLink;
 });
 
+jest.mock('~/public/icons/pencil.svg', () => ({
+  __esModule: true,
+  default: () => <svg data-testid="edit-icon" />
+}));
+
 jest.mock('~/shared/components/dropdown-menu/DropdownMenu', () => ({
   __esModule: true,
   default: ({ open, menuList }: { open: boolean; menuList: React.ReactNode }) =>
@@ -160,5 +165,15 @@ describe('Creativity page', () => {
     expect(within(dropdownMenu).queryByText('Редагувати')).not.toBeInTheDocument();
     expect(within(dropdownMenu).queryByText('Опублікувати')).not.toBeInTheDocument();
     expect(within(dropdownMenu).queryByText('Розгрупувати')).not.toBeInTheDocument();
+  });
+
+  it('renders an edit link for each opus and non-opus group', () => {
+    render(<CreativityPage />);
+
+    const editLinks = screen.getAllByRole('link', { name: /редагувати групу/i });
+    const editHrefs = editLinks.map((link) => link.getAttribute('href'));
+
+    expect(editHrefs).toContain('/creativity/group/opus-1/edit');
+    expect(editHrefs).toContain('/creativity/group/bo-1/edit');
   });
 });
