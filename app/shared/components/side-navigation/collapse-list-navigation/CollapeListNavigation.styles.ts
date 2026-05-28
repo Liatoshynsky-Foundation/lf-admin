@@ -19,5 +19,11 @@ export const styles = {
     '& .MuiListItemText-root': {
       pl: '32px'
     }
+  },
+  floatingSubmenu: {
+    position: 'fixed',
+    top: 0,
+    left: 264,
+    zIndex: 2000
   }
 };

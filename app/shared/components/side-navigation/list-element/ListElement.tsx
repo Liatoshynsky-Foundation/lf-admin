@@ -30,11 +30,7 @@ export const ListElement: React.FC<LinkElementProps> = ({
   const listItemSx: SxProps<Theme> = Array.isArray(sxItem) ? [styles.listItem, ...sxItem] : [styles.listItem, sxItem];
 
   return (
-    <ListItemButton
-      sx={listItemSx}
-      selected={isActivePath(href, pathName)}
-      onClick={handleClick ?? (() => {})}
-    >
+    <ListItemButton sx={listItemSx} selected={isActivePath(href, pathName)} onClick={handleClick}>
       {iconSrc && (
         <ListItemIcon sx={styles.listItemIcon}>
           <Image src={`/icons/${iconSrc}.svg`} alt={title} width={24} height={24} />
