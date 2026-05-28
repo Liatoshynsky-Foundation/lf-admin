@@ -10,7 +10,7 @@ import {
   MenuItem,
   Typography
 } from '@mui/material';
-import { ChevronDown, MoreVertical } from 'lucide-react';
+import { ChevronDown, ChevronRight, MoreVertical } from 'lucide-react';
 import Link from 'next/link';
 import { useRef, useState } from 'react';
 
@@ -403,7 +403,7 @@ function GroupedRow({
       }}
     >
       <AccordionSummary
-        expandIcon={<ChevronDown size={18} />}
+        expandIcon={<ChevronRight size={18} />}
         sx={{
           px: 0,
           minHeight: '56px',
@@ -424,6 +424,9 @@ function GroupedRow({
             my: '12px',
             minWidth: 0,
             width: '100%'
+          },
+          '&.Mui-expanded .MuiAccordionSummary-expandIconWrapper': {
+            transform: 'rotate(90deg)', 
           }
         }}
       >
