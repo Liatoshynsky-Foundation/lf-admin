@@ -1,4 +1,4 @@
-export const mainHexPallete = {
+export const mainHexPalette = {
   white: '#FCFCFC',
   black: '#190d03',
   blue: {
@@ -87,14 +87,14 @@ const sharedTokens = {
 };
 
 const sharedButtonDisabled = {
-  filledDisabledBg: mainHexPallete.blue[200],
+  filledDisabledBg: mainHexPalette.blue[200],
   outlinedDisabledBg: 'transparent',
-  outlinedDisabledBorder: mainHexPallete.blue[700],
-  disabledText: mainHexPallete.blue[700]
+  outlinedDisabledBorder: mainHexPalette.blue[700],
+  disabledText: mainHexPalette.blue[700]
 };
 
 const sharedInputErrorBase = {
-  errorValue: mainHexPallete.black
+  errorValue: mainHexPalette.black
 };
 
 const standardInputError = {
@@ -115,11 +115,11 @@ const outlineInputError = {
 
 export const badgeColors = {
   standardDefaultValue: 'rgba(0, 0, 0, 0.56)',
-  standardPrimaryValue: mainHexPallete.white,
+  standardPrimaryValue: mainHexPalette.white,
   standardPrimaryBg: sharedTokens.primaryBadge,
-  standardSecondaryValue: mainHexPallete.black,
+  standardSecondaryValue: mainHexPalette.black,
   standardErrorBg: 'rgba(230, 60, 20, 1)',
-  standardErrorValue: mainHexPallete.white,
+  standardErrorValue: mainHexPalette.white,
 
   dotPrimaryBg: sharedTokens.primaryBadge,
   dotErrorBg: 'rgba(230, 60, 20, 1)'
@@ -128,15 +128,15 @@ export const badgeColors = {
 export const buttonColors = {
   primary: {
     ...sharedButtonDisabled,
-    filledEnabledBg: mainHexPallete.black,
-    filledNormalText: mainHexPallete.white,
+    filledEnabledBg: mainHexPalette.black,
+    filledNormalText: mainHexPalette.white,
     filledHoveredBg: 'rgb(52, 42, 33)',
     filledFocusedBg: 'rgb(93, 85, 78)',
     filledPressedBg: 'rgb(93, 85, 78)',
 
     outlinedEnabledBg: 'transparent',
-    outlinedNormalText: mainHexPallete.black,
-    outlinedNormalBorder: mainHexPallete.black,
+    outlinedNormalText: mainHexPalette.black,
+    outlinedNormalBorder: mainHexPalette.black,
     outlinedHoveredBg: 'rgba(25, 13, 3, 0.04)',
     outlinedFocusedBg: 'rgba(25, 13, 3, 0.1)',
     outlinedPressedBg: 'rgba(25, 13, 3, 0.1)'
@@ -144,92 +144,92 @@ export const buttonColors = {
 
   secondary: {
     ...sharedButtonDisabled,
-    filledEnabledBg: mainHexPallete.white,
-    filledNormalText: mainHexPallete.black,
+    filledEnabledBg: mainHexPalette.white,
+    filledNormalText: mainHexPalette.black,
     filledHoveredBg: 'rgb(238, 236, 234)',
     filledFocusedBg: 'rgb(211, 205, 198)',
     filledPressedBg: 'rgb(218, 213, 207)',
 
     outlinedEnabledBg: 'transparent',
-    outlinedNormalText: mainHexPallete.white,
-    outlinedNormalBorder: mainHexPallete.white,
+    outlinedNormalText: mainHexPalette.white,
+    outlinedNormalBorder: mainHexPalette.white,
     outlinedHoveredBg: 'rgba(252, 252, 252, 0.08)',
     outlinedFocusedBg: 'rgba(252, 252, 252, 0.16)',
     outlinedPressedBg: 'rgba(252, 252, 252, 0.16)'
   },
 
   tertiary: {
-    enabledBg: mainHexPallete.yellow[500],
-    normalText: mainHexPallete.black,
+    enabledBg: mainHexPalette.yellow[500],
+    normalText: mainHexPalette.black,
     hoveredBg: 'rgb(238, 175, 35)',
     focusedBg: 'rgb(229, 169, 34)',
-    pressedBg: mainHexPallete.yellow[800],
-    disabledBg: mainHexPallete.blue[200],
-    disabledText: mainHexPallete.blue[700]
+    pressedBg: mainHexPalette.yellow[800],
+    disabledBg: mainHexPalette.blue[200],
+    disabledText: mainHexPalette.blue[700]
   },
 
   error: {
-    enabledBg: mainHexPallete.red[600],
-    normalText: mainHexPallete.white,
+    enabledBg: mainHexPalette.red[600],
+    normalText: mainHexPalette.white,
     hoveredBg: 'rgb(172, 47, 15)',
     focusedBg: 'rgb(154, 42, 14)',
     pressedBg: 'rgb(154, 42, 13)',
-    disabledBg: mainHexPallete.blue[200],
-    disabledText: mainHexPallete.blue[700]
+    disabledBg: mainHexPalette.blue[200],
+    disabledText: mainHexPalette.blue[700]
   }
 };
 
 export const buttonGroupColors = {
   primary: {
-    selectedButton: mainHexPallete.black,
-    selectedButtonText: mainHexPallete.white,
+    selectedButton: mainHexPalette.black,
+    selectedButtonText: mainHexPalette.white,
     groupBackground: 'rgba(25, 13, 3, 0.08)',
-    buttonText: mainHexPallete.black
+    buttonText: mainHexPalette.black
   },
   secondary: {
-    selectedButton: mainHexPallete.white,
-    selectedButtonText: mainHexPallete.black,
-    groupBackground: mainHexPallete.black,
-    buttonText: mainHexPallete.white
+    selectedButton: mainHexPalette.white,
+    selectedButtonText: mainHexPalette.black,
+    groupBackground: mainHexPalette.black,
+    buttonText: mainHexPalette.white
   },
   tertiary: {
-    selectedButton: mainHexPallete.white,
-    selectedButtonText: mainHexPallete.black,
-    groupBackground: mainHexPallete.yellow[500],
-    buttonText: mainHexPallete.black
+    selectedButton: mainHexPalette.white,
+    selectedButtonText: mainHexPalette.black,
+    groupBackground: mainHexPalette.yellow[500],
+    buttonText: mainHexPalette.black
   }
 };
 
 export const checkboxColors = {
-  defaultIcon: mainHexPallete.blue[500],
+  defaultIcon: mainHexPalette.blue[500],
 
-  hoveredIcon: mainHexPallete.blue[500],
+  hoveredIcon: mainHexPalette.blue[500],
   hoveredRipple: sharedTokens.ripple,
 
-  focusedIcon: mainHexPallete.brown[300],
+  focusedIcon: mainHexPalette.brown[300],
   focusedRipple: sharedTokens.ripple,
 
-  disabledIcon: mainHexPallete.blue[200],
+  disabledIcon: mainHexPalette.blue[200],
 
   selectedIcon: 'rgba(255, 188, 33, 1)'
 };
 
 export const chipsColors = {
-  normalText: mainHexPallete.black,
+  normalText: mainHexPalette.black,
 
-  filledDefaultBg: mainHexPallete.white,
-  filledHoveredBg: mainHexPallete.brown[100],
-  filledPressedBg: mainHexPallete.brown[200],
-  filledDisabledBg: mainHexPallete.blue[50],
+  filledDefaultBg: mainHexPalette.white,
+  filledHoveredBg: mainHexPalette.brown[100],
+  filledPressedBg: mainHexPalette.brown[200],
+  filledDisabledBg: mainHexPalette.blue[50],
 
   outlineHoveredBg: 'rgba(25, 13, 3, 0.08)',
   outlinePressedBg: 'rgba(25, 13, 3, 0.24)',
-  outlineNormalBorder: mainHexPallete.black,
-  outlineDisabledBorder: mainHexPallete.blue[700],
-  outlineDisabledText: mainHexPallete.blue[700],
+  outlineNormalBorder: mainHexPalette.black,
+  outlineDisabledBorder: mainHexPalette.blue[700],
+  outlineDisabledText: mainHexPalette.blue[700],
 
-  published: mainHexPallete.green[600],
-  draft: mainHexPallete.red[100],
+  published: mainHexPalette.green[600],
+  draft: mainHexPalette.red[100],
   newsChipBg: 'rgb(182, 208, 247)',
   eventChipBg: 'rgb(247, 182, 225)',
   mediaChipBg: 'rgb(182, 247, 207)'
@@ -239,89 +239,89 @@ export const menuItemColors = {
   hoveredBg: 'rgba(25, 13, 3, 0.06)',
   activeBg: 'rgba(25, 13, 3, 0.12)',
 
-  defaultText: mainHexPallete.black,
-  disabledText: mainHexPallete.blue[700]
+  defaultText: mainHexPalette.black,
+  disabledText: mainHexPalette.blue[700]
 };
 
 export const selectorColors = {
-  standardTextColor: mainHexPallete.black,
+  standardTextColor: mainHexPalette.black,
 
-  filledBg: mainHexPallete.blue[200],
-  filledChipsBg: mainHexPallete.white,
-  filledChipsContent: mainHexPallete.black,
+  filledBg: mainHexPalette.blue[200],
+  filledChipsBg: mainHexPalette.white,
+  filledChipsContent: mainHexPalette.black,
 
-  outlineBorder: mainHexPallete.black,
-  outlineDefaultChipsBg: mainHexPallete.black,
-  outlineDefaultTextColor: mainHexPallete.white
+  outlineBorder: mainHexPalette.black,
+  outlineDefaultChipsBg: mainHexPalette.black,
+  outlineDefaultTextColor: mainHexPalette.white
 };
 
 export const textFieldColors = {
   standard: {
     ...standardInputError,
-    defaultFirstIcon: mainHexPallete.blue[800],
-    defaultValue: mainHexPallete.blue[800],
-    defaultSecondIcon: mainHexPallete.blue[700],
+    defaultFirstIcon: mainHexPalette.blue[800],
+    defaultValue: mainHexPalette.blue[800],
+    defaultSecondIcon: mainHexPalette.blue[700],
     defaultUnderline: 'rgba(25, 13, 3, 0.25)',
 
-    hoveredFirstIcon: mainHexPallete.blue[800],
-    hoveredValue: mainHexPallete.blue[800],
-    hoveredSecondIcon: mainHexPallete.black,
+    hoveredFirstIcon: mainHexPalette.blue[800],
+    hoveredValue: mainHexPalette.blue[800],
+    hoveredSecondIcon: mainHexPalette.black,
     hoveredUnderline: 'rgba(25, 13, 3, 0.5)',
 
-    focusedFirstIcon: mainHexPallete.black,
-    focusedValue: mainHexPallete.black,
-    focusedSecondIcon: mainHexPallete.black,
-    focusedUnderline: mainHexPallete.black,
+    focusedFirstIcon: mainHexPalette.black,
+    focusedValue: mainHexPalette.black,
+    focusedSecondIcon: mainHexPalette.black,
+    focusedUnderline: mainHexPalette.black,
 
-    disabledFirstIcon: mainHexPallete.blue[700],
-    disabledValue: mainHexPallete.blue[700],
-    disabledSecondIcon: mainHexPallete.blue[700],
-    disabledUnderline: mainHexPallete.blue[700]
+    disabledFirstIcon: mainHexPalette.blue[700],
+    disabledValue: mainHexPalette.blue[700],
+    disabledSecondIcon: mainHexPalette.blue[700],
+    disabledUnderline: mainHexPalette.blue[700]
   },
 
   outline: {
     ...outlineInputError,
-    defaultLabel: mainHexPallete.blue[800],
-    defaultIcon: mainHexPallete.blue[700],
-    defaultValue: mainHexPallete.black,
-    defaultOutline: mainHexPallete.adminBlue[500],
-    defaultTextInfo: mainHexPallete.blue[800],
+    defaultLabel: mainHexPalette.blue[800],
+    defaultIcon: mainHexPalette.blue[700],
+    defaultValue: mainHexPalette.black,
+    defaultOutline: mainHexPalette.adminBlue[500],
+    defaultTextInfo: mainHexPalette.blue[800],
 
-    hoveredLabel: mainHexPallete.blue[800],
-    hoveredIcon: mainHexPallete.black,
-    hoveredValue: mainHexPallete.black,
+    hoveredLabel: mainHexPalette.blue[800],
+    hoveredIcon: mainHexPalette.black,
+    hoveredValue: mainHexPalette.black,
     hoveredOutline: 'rgba(25, 13, 3, 0.5)',
-    hoveredTextInfo: mainHexPallete.blue[800],
+    hoveredTextInfo: mainHexPalette.blue[800],
 
-    focusedLabel: mainHexPallete.black,
-    focusedIcon: mainHexPallete.black,
-    focusedValue: mainHexPallete.black,
-    focusedOutline: mainHexPallete.black,
-    focusedTextInfo: mainHexPallete.black,
+    focusedLabel: mainHexPalette.black,
+    focusedIcon: mainHexPalette.black,
+    focusedValue: mainHexPalette.black,
+    focusedOutline: mainHexPalette.black,
+    focusedTextInfo: mainHexPalette.black,
 
-    disabledLabel: mainHexPallete.blue[600],
-    disabledIcon: mainHexPallete.blue[600],
-    disabledValue: mainHexPallete.blue[600],
-    disabledOutline: mainHexPallete.blue[600],
-    disabledTextInfo: mainHexPallete.blue[600]
+    disabledLabel: mainHexPalette.blue[600],
+    disabledIcon: mainHexPalette.blue[600],
+    disabledValue: mainHexPalette.blue[600],
+    disabledOutline: mainHexPalette.blue[600],
+    disabledTextInfo: mainHexPalette.blue[600]
   }
 };
 
 export const tabsColors = {
-  active: mainHexPallete.black,
-  hovered: mainHexPallete.adminBlue[600],
-  pressed: mainHexPallete.adminBlue[900],
-  unactive: mainHexPallete.adminBlue[800],
-  disabled: mainHexPallete.adminBlue[300],
-  baseUnderline: mainHexPallete.adminBlue[300]
+  active: mainHexPalette.black,
+  hovered: mainHexPalette.adminBlue[600],
+  pressed: mainHexPalette.adminBlue[900],
+  unactive: mainHexPalette.adminBlue[800],
+  disabled: mainHexPalette.adminBlue[300],
+  baseUnderline: mainHexPalette.adminBlue[300]
 };
 
 export const toolbarColors = {
-  textColor: mainHexPallete.black,
-  default: mainHexPallete.white,
+  textColor: mainHexPalette.black,
+  default: mainHexPalette.white,
   hovered: 'rgba(241, 242, 247, 1)',
   focused: 'rgba(25, 13, 3, 0.06)',
-  border: mainHexPallete.blue[200]
+  border: mainHexPalette.blue[200]
 };
 
 export const alertColors = {
@@ -329,58 +329,58 @@ export const alertColors = {
   shadow: 'rgba(0, 0, 0, 0.08)',
 
   filled: {
-    label: mainHexPallete.white,
+    label: mainHexPalette.white,
 
-    errorBg: mainHexPallete.red[500],
-    errorText: mainHexPallete.red[50],
-    errorIcon: mainHexPallete.red[700],
+    errorBg: mainHexPalette.red[500],
+    errorText: mainHexPalette.red[50],
+    errorIcon: mainHexPalette.red[700],
 
-    warningBg: mainHexPallete.yellow[500],
-    warningText: mainHexPallete.white,
-    warningIcon: mainHexPallete.white,
+    warningBg: mainHexPalette.yellow[500],
+    warningText: mainHexPalette.white,
+    warningIcon: mainHexPalette.white,
 
     infoBg: 'rgba(51, 161, 216, 1)',
-    infoText: mainHexPallete.white,
+    infoText: mainHexPalette.white,
     infoIcon: 'rgba(86, 86, 86, 1)',
 
-    successBg: mainHexPallete.green[600],
-    successText: mainHexPallete.white,
-    successIcon: mainHexPallete.blue[700]
+    successBg: mainHexPalette.green[600],
+    successText: mainHexPalette.white,
+    successIcon: mainHexPalette.blue[700]
   },
 
   outlined: {
-    label: mainHexPallete.black,
+    label: mainHexPalette.black,
 
-    errorBg: mainHexPallete.red[50],
-    errorText: mainHexPallete.red[800],
-    errorIcon: mainHexPallete.blue[700],
-    errorBorder: mainHexPallete.red[500],
+    errorBg: mainHexPalette.red[50],
+    errorText: mainHexPalette.red[800],
+    errorIcon: mainHexPalette.blue[700],
+    errorBorder: mainHexPalette.red[500],
 
-    warningBg: mainHexPallete.yellow[100],
-    warningText: mainHexPallete.yellow[800],
+    warningBg: mainHexPalette.yellow[100],
+    warningText: mainHexPalette.yellow[800],
     warningIcon: 'rgba(181, 133, 23, 1)',
-    warningBorder: mainHexPallete.yellow[500],
+    warningBorder: mainHexPalette.yellow[500],
 
     infoBg: 'rgba(214, 236, 247, 1)',
     infoText: 'rgba(20, 64, 86, 1)',
     infoIcon: 'rgba(86, 86, 86, 1)',
     infoBorder: 'rgba(51, 161, 216, 1)',
 
-    successBg: mainHexPallete.green[100],
-    successText: mainHexPallete.green[800],
-    successIcon: mainHexPallete.blue[700],
-    successBorder: mainHexPallete.green[600]
+    successBg: mainHexPalette.green[100],
+    successText: mainHexPalette.green[800],
+    successIcon: mainHexPalette.blue[700],
+    successBorder: mainHexPalette.green[600]
   }
 };
 
 export const accordionColors = {
-  defaultBg: mainHexPallete.white,
-  defaultBorder: mainHexPallete.blue[200],
-  defaultIcon: mainHexPallete.black
+  defaultBg: mainHexPalette.white,
+  defaultBorder: mainHexPalette.blue[200],
+  defaultIcon: mainHexPalette.black
 };
 
 export const tooltipColors = {
-  defaultBg: mainHexPallete.blue[900],
-  defaultText: mainHexPallete.white,
+  defaultBg: mainHexPalette.blue[900],
+  defaultText: mainHexPalette.white,
   defaultShadow: 'rgba(0, 0, 0, 0.07)'
 };

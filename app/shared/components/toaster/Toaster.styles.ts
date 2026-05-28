@@ -1,6 +1,6 @@
 import { alpha, keyframes } from '@mui/material';
 
-import { mainHexPallete as colors } from '~/shared/theme/colors';
+import { mainHexPalette as colors } from '~/shared/theme/colors';
 
 export const slideIn = keyframes`
   from { opacity: 0; transform: translateY(30px); }

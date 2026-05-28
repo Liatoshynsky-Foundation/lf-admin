@@ -1,6 +1,6 @@
 import { alpha, SxProps, Theme } from '@mui/material';
 
-import { mainHexPallete as colors } from '~/shared/theme/colors';
+import { mainHexPalette as colors } from '~/shared/theme/colors';
 
 const styles: Record<string, SxProps<Theme>> = {
   card: {

@@ -1,7 +1,7 @@
 import { alpha } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
 
-import { mainHexPallete as colors } from '~/shared/theme/colors';
+import { mainHexPalette as colors } from '~/shared/theme/colors';
 
 export const SIDEBAR_WIDTH = 320;
 

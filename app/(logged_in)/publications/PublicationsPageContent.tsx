@@ -36,7 +36,7 @@ import { useAllEvents } from '~/shared/hooks/use-events/useEvents';
 import { useAllMediaMentions } from '~/shared/hooks/use-media-mentions/useMediaMentions';
 import { useAllNews } from '~/shared/hooks/use-news/useNews';
 import { usePublicationsFiltering } from '~/shared/hooks/use-publications';
-import { mainHexPallete as colors } from '~/shared/theme/colors';
+import { mainHexPalette as colors } from '~/shared/theme/colors';
 import type { LocalizedString } from '~/types/common';
 import { type AllEventsQuery, type AllMediaMentionsQuery, type AllNewsQuery } from '~/types/graphql/generated/graphql';
 import { normalizeSearch } from '~/utils/normalizeSearch';
