@@ -10,6 +10,7 @@ import {
   MenuItem,
   Typography
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { ChevronDown, ChevronRight, MoreVertical } from 'lucide-react';
 import Link from 'next/link';
 import { useRef, useState } from 'react';
@@ -18,6 +19,7 @@ import { StatusWithDate } from './components/StatusWithDate';
 import { useWorksFiltering } from './useWorksFiltering';
 import { type OpusGroup, type UngroupedGroup, WORKS_MOCK_DATA, type WorkStatus } from './works.mock';
 import {
+  WORKS_BASE_PATH,
   WORKS_CREATE_OPTIONS,
   WORKS_EMPTY_STATE_DESCRIPTION,
   WORKS_EMPTY_STATE_NO_RESULTS_DESCRIPTION,
@@ -30,6 +32,7 @@ import {
   type WorksTabValue
 } from '~/constants/creativity';
 import type { FilesSortValue } from '~/constants/sort';
+import PencilIcon from '~/public/icons/pencil.svg';
 import DropdownMenu from '~/shared/components/dropdown-menu/DropdownMenu';
 import { EmptyState } from '~/shared/components/empty-state';
 import { FilteringToolbar, SortSelect } from '~/shared/components/filtering-toolbar';
@@ -49,9 +52,15 @@ const GROUP_GENRE_COLUMN_WIDTH = '220px';
 const GROUP_YEARS_COLUMN_WIDTH = '96px';
 const STATUS_COLUMN_WIDTH = '310px';
 const ACCORDION_ICON_OFFSET = '26px';
-const GROUP_ROW_COLUMNS = `1px ${NUMBER_COLUMN_WIDTH} minmax(220px, 1fr) ${GROUP_GENRE_COLUMN_WIDTH} ${GROUP_YEARS_COLUMN_WIDTH} ${STATUS_COLUMN_WIDTH} 40px`;
-const TABLE_HEADER_COLUMNS = `1px calc(${NUMBER_COLUMN_WIDTH} + ${ACCORDION_ICON_OFFSET}) minmax(220px, 1fr) ${GROUP_GENRE_COLUMN_WIDTH} ${GROUP_YEARS_COLUMN_WIDTH} ${STATUS_COLUMN_WIDTH} 40px`;
-const INDIVIDUAL_WORK_ROW_COLUMNS = `1px minmax(220px, 1fr) ${GROUP_GENRE_COLUMN_WIDTH} ${GROUP_YEARS_COLUMN_WIDTH} ${STATUS_COLUMN_WIDTH} 40px`;
+const ACTIONS_COLUMN_WIDTH = '88px';
+const GROUP_ROW_COLUMNS = `1px ${NUMBER_COLUMN_WIDTH} minmax(220px, 1fr) ${GROUP_GENRE_COLUMN_WIDTH} ${GROUP_YEARS_COLUMN_WIDTH} ${STATUS_COLUMN_WIDTH} ${ACTIONS_COLUMN_WIDTH}`;
+const TABLE_HEADER_COLUMNS = `1px calc(${NUMBER_COLUMN_WIDTH} + ${ACCORDION_ICON_OFFSET}) minmax(220px, 1fr) ${GROUP_GENRE_COLUMN_WIDTH} ${GROUP_YEARS_COLUMN_WIDTH} ${STATUS_COLUMN_WIDTH} ${ACTIONS_COLUMN_WIDTH}`;
+const INDIVIDUAL_WORK_ROW_COLUMNS = `1px minmax(220px, 1fr) ${GROUP_GENRE_COLUMN_WIDTH} ${GROUP_YEARS_COLUMN_WIDTH} ${STATUS_COLUMN_WIDTH} ${ACTIONS_COLUMN_WIDTH}`;
+const ROW_ACTIONS_CELL_SX = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'flex-end'
+} as const;
 const WORK_ROW_GRID_SX = {
   display: 'grid',
   gridTemplateColumns: INDIVIDUAL_WORK_ROW_COLUMNS,
@@ -189,6 +198,10 @@ function formatGroupYears(startDate: string, endDate?: string): string {
   }
 
   return `${startDate} - ${endDate}`;
+}
+
+function getGroupEditHref(groupId: string): string {
+  return `${WORKS_BASE_PATH}/group/${groupId}/edit`;
 }
 
 function sortGroups<T extends { title: string; updatedAt: string }>(
@@ -341,6 +354,46 @@ function ContextMenu({
   );
 }
 
+function EditAction({ href, label }: Readonly<{ href: string; label: string }>) {
+  const handleClick = (event: React.MouseEvent<HTMLAnchorElement>): void => {
+    event.stopPropagation();
+  };
+
+  return (
+    <Box
+      sx={(theme) => ({
+        width: '40px',
+        height: '40px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        mr: theme.spacing(-1.5),
+        flexShrink: 0
+      })}
+    >
+      <IconButton
+        component={Link}
+        href={href}
+        onClick={handleClick}
+        aria-label={label}
+        sx={{
+          color: colors.black,
+          width: '32px',
+          height: '32px',
+          p: 0,
+          borderRadius: '50%',
+          '& svg': { width: '18px', height: '18px' },
+          '&:hover': {
+            bgcolor: alpha(colors.black, 0.08)
+          }
+        }}
+      >
+        <PencilIcon />
+      </IconButton>
+    </Box>
+  );
+}
+
 function WorkRowCells({ title, year }: Readonly<{ title: string; year: string }>) {
   return (
     <>
@@ -348,7 +401,9 @@ function WorkRowCells({ title, year }: Readonly<{ title: string; year: string }>
       <Box sx={GENRE_SPACER_SX} />
       <Typography sx={YEAR_TEXT_SX}>{year}</Typography>
       <Box sx={{ width: STATUS_COLUMN_WIDTH }} />
-      <ContextMenu items={WORK_MENU_ITEMS} triggerLabel={`Дії твору ${title}`} />
+      <Box sx={ROW_ACTIONS_CELL_SX}>
+        <ContextMenu items={WORK_MENU_ITEMS} triggerLabel={`Дії твору ${title}`} />
+      </Box>
     </>
   );
 }
@@ -375,7 +430,7 @@ function WorksTableHeader() {
       <Typography sx={TABLE_HEADER_TEXT_SX}>Жанр</Typography>
       <Typography sx={TABLE_HEADER_TEXT_SX}>Роки</Typography>
       <Typography sx={TABLE_HEADER_TEXT_SX}>Статус</Typography>
-      <Box sx={{ width: '40px' }} />
+      <Box sx={{ width: ACTIONS_COLUMN_WIDTH }} />
     </Box>
   );
 }
@@ -483,7 +538,14 @@ function GroupedRow({
             />
           </Box>
 
-          <ContextMenu items={GROUP_MENU_ITEMS} triggerLabel={`Дії групи ${group.title}`} />
+          <Box sx={ROW_ACTIONS_CELL_SX}>
+            <EditAction
+              href={getGroupEditHref(group.id)}
+              label={`Редагувати групу ${group.title}`}
+            />
+
+            <ContextMenu items={GROUP_MENU_ITEMS} triggerLabel={`Дії групи ${group.title}`} />
+          </Box>
         </Box>
       </AccordionSummary>
 
@@ -530,7 +592,9 @@ function IndividualWorkRow({ work }: Readonly<{ work: IndividualWorkData }>) {
 
       <Box sx={{ width: STATUS_COLUMN_WIDTH }} />
 
-      <ContextMenu items={WORK_MENU_ITEMS} triggerLabel={`Дії твору ${work.title}`} />
+      <Box sx={ROW_ACTIONS_CELL_SX}>
+        <ContextMenu items={WORK_MENU_ITEMS} triggerLabel={`Дії твору ${work.title}`} />
+      </Box>
     </Box>
   );
 }
