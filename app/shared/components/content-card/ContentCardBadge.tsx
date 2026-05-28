@@ -35,12 +35,13 @@ const ContentCardBadge = ({ type, status, localizations }: ContentCardBadgeProps
         sx={styles.typeBadge(type)}
       ></Chip>
 
+      {status === BaseContentStatuses.Published && 
       <Box
         sx={styles.localizationsBadge(hasLocalizationLabel)}
       >
         <CircleCheckBig size={15} />
         {localizationLabel && <Box>{localizationLabel}</Box>}
-      </Box>
+      </Box>}
 
       {status === BaseContentStatuses.Draft && (
         <Box sx={styles.draftBadge}>
