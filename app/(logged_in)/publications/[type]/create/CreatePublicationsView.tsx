@@ -110,7 +110,7 @@ export default function CreatePublicationsView({ data, mode = 'create' }: Readon
         break;
       }
 
-      case MenuActionId.SAVE_AND_EXIT: {
+      case MenuActionId.UPDATE_AND_EXIT: {
         const id = await handleSave(BaseContentStatuses.Draft);
         if (id) {
           toast.success(CONTENT_MUTATION_RESULTS.draftSaved);

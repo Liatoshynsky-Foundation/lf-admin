@@ -59,7 +59,7 @@ jest.mock('./EditPublicationsView', () => ({
         }
       />
       <button data-testid="trigger-publish" onClick={() => props.onAction(MenuActionId.PUBLISH)} />
-      <button data-testid="trigger-save-exit" onClick={() => props.onAction(MenuActionId.SAVE_AND_EXIT)} />
+      <button data-testid="trigger-save-exit" onClick={() => props.onAction(MenuActionId.UPDATE_AND_EXIT)} />
       <button data-testid="trigger-delete" onClick={() => props.onAction(MenuActionId.DELETE_DRAFT)} />
       <button data-testid="trigger-seo" onClick={props.onSeoClick} />
     </div>
@@ -153,7 +153,7 @@ describe('EditPublicationsPage Container', () => {
     });
   });
 
-  it('should handle SAVE_AND_EXIT action and redirect router', async () => {
+  it('should handle UPDATE_AND_EXIT action and redirect router', async () => {
     render(<EditPublicationsPage />);
 
     fireEvent.click(screen.getByTestId('trigger-save-exit'));
