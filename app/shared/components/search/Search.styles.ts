@@ -1,6 +1,6 @@
 import { SxProps, Theme } from '@mui/material/styles';
 
-import { mainHexPallete as colors } from '~/shared/theme/colors';
+import { mainHexPalette as colors } from '~/shared/theme/colors';
 
 export const styles = {
   autocomplete: (maxWidth: number | string): SxProps<Theme> => ({

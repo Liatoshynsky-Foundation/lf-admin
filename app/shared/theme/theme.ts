@@ -8,7 +8,7 @@ import {
   buttonGroupColors,
   checkboxColors,
   chipsColors,
-  mainHexPallete,
+  mainHexPalette,
   menuItemColors,
   selectorColors,
   tabsColors,
@@ -161,22 +161,22 @@ export const createAdminTheme = () =>
         contrastText: buttonColors.tertiary.normalText
       },
       warning: {
-        main: mainHexPallete.yellow[500],
-        dark: mainHexPallete.burgundy[700]
+        main: mainHexPalette.yellow[500],
+        dark: mainHexPalette.burgundy[700]
       },
       error: {
         main: buttonColors.error.enabledBg,
         contrastText: buttonColors.error.normalText
       },
       text: {
-        primary: mainHexPallete.black,
-        secondary: mainHexPallete.blue[800],
-        disabled: mainHexPallete.blue[200]
+        primary: mainHexPalette.black,
+        secondary: mainHexPalette.blue[800],
+        disabled: mainHexPalette.blue[200]
       },
       background: {
-        default: mainHexPallete.white
+        default: mainHexPalette.white
       },
-      ...mainHexPallete
+      ...mainHexPalette
     },
 
     typography: {
@@ -380,7 +380,7 @@ export const createAdminTheme = () =>
             props: { variant: 'text', color: 'primary' },
             style: {
               backgroundColor: 'transparent',
-              color: mainHexPallete.black,
+              color: mainHexPalette.black,
               '&:hover': {
                 backgroundColor: buttonColors.primary.outlinedHoveredBg
               },
@@ -442,7 +442,7 @@ export const createAdminTheme = () =>
             props: { variant: 'text', color: 'secondary' },
             style: {
               backgroundColor: 'transparent',
-              color: mainHexPallete.white,
+              color: mainHexPalette.white,
               '&:hover': {
                 backgroundColor: buttonColors.secondary.outlinedHoveredBg
               },
@@ -1272,7 +1272,7 @@ export const createAdminTheme = () =>
               maxHeight: '280px',
               padding: '40px 64px',
               borderRadius: '32px',
-              backgroundColor: mainHexPallete.white,
+              backgroundColor: mainHexPalette.white,
               overflowY: 'auto',
               outline: 'none'
             }
