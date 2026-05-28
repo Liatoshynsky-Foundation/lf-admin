@@ -10,6 +10,7 @@ import {
   MenuItem,
   Typography
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { ChevronDown, MoreVertical } from 'lucide-react';
 import Link from 'next/link';
 import { useRef, useState } from 'react';
@@ -360,15 +361,15 @@ function EditAction({ href, label }: Readonly<{ href: string; label: string }>) 
 
   return (
     <Box
-      sx={{
+      sx={(theme) => ({
         width: '40px',
         height: '40px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        mr: '-12px',
+        mr: theme.spacing(-1.5),
         flexShrink: 0
-      }}
+      })}
     >
       <IconButton
         component={Link}
@@ -376,14 +377,14 @@ function EditAction({ href, label }: Readonly<{ href: string; label: string }>) 
         onClick={handleClick}
         aria-label={label}
         sx={{
-          color: '#190D03',
+          color: colors.black,
           width: '32px',
           height: '32px',
           p: 0,
           borderRadius: '50%',
           '& svg': { width: '18px', height: '18px' },
           '&:hover': {
-            bgcolor: 'rgba(25,13,3,0.08)'
+            bgcolor: alpha(colors.black, 0.08)
           }
         }}
       >
