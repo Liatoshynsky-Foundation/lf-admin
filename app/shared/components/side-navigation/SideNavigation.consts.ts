@@ -2,9 +2,11 @@ export const NAVIGATION_DATA = {
   main: [{ title: 'Головна', iconSrc: 'house', href: '/' }],
   content: [
     {
-      title: 'Основні сторінки',
-      href: '',
-      disabled: true
+      element: { title: 'Основні сторінки', iconSrc: 'file-text' },
+      // TEMPORARY
+      collapseElements: [
+        { title: 'Про Фундацію', href: '/about-us' }
+      ]
     },
     {
       title: 'Новини та події',
