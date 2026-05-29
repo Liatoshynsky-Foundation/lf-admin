@@ -152,10 +152,10 @@ describe('EditPublicationsView Component', () => {
     render(<EditPublicationsView {...defaultProps} />);
     
     fireEvent.click(screen.getByTestId('mock-publish-menu-btn'));
-    fireEvent.click(screen.getByText('Зберегти зміни'));
+    fireEvent.click(screen.getByText('Опублікувати і вийти'));
 
     expect(mockOnAction).toHaveBeenCalledTimes(1);
-    expect(mockOnAction).toHaveBeenCalledWith(MenuActionId.SAVE_DRAFT);
+    expect(mockOnAction).toHaveBeenCalledWith(MenuActionId.PUBLICATE_AND_EXIT);
   });
 
   it('should handle the quick publish button from HeaderRightActions directly', () => {
