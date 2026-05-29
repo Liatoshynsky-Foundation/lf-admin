@@ -11,7 +11,7 @@ type BadgeProps = {
   variant: BadgeVariant;
   label?: string;
   sx?: object;
-  localizations: Array<string>
+  localizations?: Array<string>
 }
 
 const iconMapping: Record<BadgeVariant, ReactElement<SVGSVGElement> | null> = {
@@ -30,20 +30,20 @@ const labelMapping: Record<BadgeVariant, string | null> = {
   media: 'Ми у ЗМІ',
 };
 
-const Badge = ({ variant, label, sx, localizations }: BadgeProps) => {
+const Badge = ({ variant, label, sx, localizations=['uk', 'en'] }: BadgeProps) => {
   const localizationLabel = getLocalizations(localizations);
   const hasLocalizationLabel = Boolean(localizationLabel);
   const hasLabel = hasLocalizationLabel || Boolean(label);
-
+  
   return (
     <Box
       data-testid="badge"
       sx={{ ...styles.typeBadge(variant, hasLabel), ...styles[variant], ...sx }}
     >
-      {iconMapping[variant] ? iconMapping[variant] : undefined}
+      {iconMapping[variant] ?? iconMapping[variant]}
       {
         (label || labelMapping[variant]) && (
-          <Box>{label ? label : labelMapping[variant]}</Box>
+          <Box>{label ?? labelMapping[variant]}</Box>
         )
       }
       {localizationLabel && <Box>{localizationLabel}</Box>}</Box>

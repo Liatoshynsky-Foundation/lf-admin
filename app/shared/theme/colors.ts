@@ -229,7 +229,7 @@ export const chipsColors = {
   outlineDisabledText: mainHexPalette.blue[700],
 
   published: mainHexPalette.green[600],
-  draft: mainHexPalette.red[100],
+  draft: mainHexPalette.red[200],
   newsChipBg: 'rgb(182, 208, 247)',
   eventChipBg: 'rgb(247, 182, 225)',
   mediaChipBg: 'rgb(182, 247, 207)'
