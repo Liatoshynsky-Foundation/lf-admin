@@ -2,13 +2,14 @@ import { Box, Card, CardContent, CardMedia, Typography } from '@mui/material';
 import { EllipsisVertical } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef,useState } from 'react';
 
 import DeleteCardModal from '../delete-card-modal/DeleteCardModal';
 import Button from '../design-system/button/Button';
 import styles from './ContentCard.styles';
 import ContentCardBadge from './ContentCardBadge';
 import ContentCardMenu from './ContentCardMenu';
+import TooltipCustom from '~/ds-components/tooltip/Tooltip';
 import { getStatus } from '~/lib/utils/getStatus';
 import { useDeleteEvent } from '~/shared/hooks/use-events/useEvents';
 import { useDeleteMediaMention } from '~/shared/hooks/use-media-mentions/useMediaMentions';
@@ -67,6 +68,18 @@ const ContentCard = ({
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+
+  const titleRef = useRef<HTMLHeadingElement | null>(null);
+  const [isTitleTruncated, setIsTitleTruncated] = useState(false);
+
+  useEffect(() => {
+    const element = titleRef.current;
+
+    if (!element) return;
+
+    setIsTitleTruncated(element.scrollHeight > element.clientHeight);
+  }, [titleText]);
+
   useEffect(() => {
     setImageSrc(coverImage.src || FALLBACK_IMAGE_SRC);
   }, [coverImage.src]);
@@ -112,9 +125,16 @@ const ContentCard = ({
       <CardContent sx={styles.cardContent}>
         <ContentCardBadge type={type} status={status} localizations={localizedKeys}></ContentCardBadge>
         <Box sx={styles.mainInfo}>
-          <Typography variant="subtitle1" component="h3" sx={styles.title}>
-            {titleText}
-          </Typography>
+          <TooltipCustom title={isTitleTruncated ? titleText : ''}>
+            <Typography
+              ref={titleRef}
+              variant="subtitle1"
+              component="h3"
+              sx={styles.title}
+            >
+              {titleText}
+            </Typography>
+          </TooltipCustom>
           <Box data-testid="menu-button" sx={{ cursor: 'pointer' }} onClick={handleMenuClick}>
             <EllipsisVertical size={20} />
             {anchorEl && (
