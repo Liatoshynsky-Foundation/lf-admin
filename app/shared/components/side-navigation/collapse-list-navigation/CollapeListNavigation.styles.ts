@@ -1,3 +1,5 @@
+import { mainHexPalette } from '~/shared/theme/colors';
+
 export const linkStyles = {
   mb: '0',
   justifyContent: 'center',
@@ -21,8 +23,12 @@ export const styles = {
     }
   },
   floatingSubmenu: {
-    zIndex: 1000,
     maxHeight: 'calc(100vh - 16px)',
-    overflowY: 'auto'
+    maxWidth: '223px',
+    padding: '8px',
+    overflowY: 'auto',
+    backgroundColor: mainHexPalette.white,
+    borderRadius: '8px',
+    boxShadow: '0 4px 8px 0 rgba(78, 80, 97, 0.06), 0 0 4px 0 rgba(78, 80, 97, 0.04)'
   }
 };

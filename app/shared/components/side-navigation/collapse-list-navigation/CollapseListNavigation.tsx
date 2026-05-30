@@ -89,13 +89,22 @@ export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({
         anchorEl={anchorEl}
         placement="right-start"
         modifiers={[
+          {
+            name: 'offset',
+            options: {
+              offset: [0, -20]
+            }
+          },
           { name: 'preventOverflow', options: { boundary: 'viewport', padding: 8 } },
-          { name: 'flip', options: { fallbackPlacements: ['right-end', 'left-start'] } }
+          {
+            name: 'flip',
+            enabled: false
+          }
         ]}
         sx={{ zIndex: 1000 }}
       >
         <Paper sx={styles.floatingSubmenu}>
-          <List disablePadding>{collapseContent}</List>{' '}
+          <List disablePadding>{collapseContent}</List>
         </Paper>
       </Popper>
     </Box>
