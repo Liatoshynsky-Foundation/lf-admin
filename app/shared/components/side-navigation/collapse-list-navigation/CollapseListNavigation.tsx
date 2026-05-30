@@ -1,4 +1,4 @@
-import { Box, Collapse, List } from '@mui/material';
+import { Box, Collapse, List, Paper, Popper } from '@mui/material';
 import { CollapseListNavigationProps } from 'app/types/sideNavigation';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
@@ -15,6 +15,7 @@ export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({
 }) => {
   const { element, collapseElements } = elementProps;
   const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const prevOpenNavbarRef = useRef(openNavbar);
 
   const handleClick = () => {
@@ -25,14 +26,16 @@ export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({
     }
   };
 
-  const handleMouseEnter = () => {
+  const handleMouseEnter = (event: React.MouseEvent<HTMLElement>) => {
     if (!openNavbar) {
+      setAnchorEl(event.currentTarget);
       setIsSubmenuOpen(true);
     }
   };
 
   const handleMouseLeave = () => {
     if (!openNavbar) {
+      setAnchorEl(null);
       setIsSubmenuOpen(false);
     }
   };
@@ -56,7 +59,7 @@ export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({
     <Box sx={{ position: 'relative' }} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
       <ListElement
         element={element}
-        open={shouldShowContent}
+        open={openNavbar}
         handleClick={openNavbar ? handleClick : undefined}
         sxItem={{ mb: '0' }}
       >
@@ -81,11 +84,20 @@ export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({
           <List disablePadding>{collapseContent}</List>
         </Collapse>
       ) : null}
-      {!openNavbar && isSubmenuOpen && (
-        <Box sx={styles.floatingSubmenu}>
-          <List disablePadding>{collapseContent}</List>
-        </Box>
-      )}
+      <Popper
+        open={!openNavbar && isSubmenuOpen}
+        anchorEl={anchorEl}
+        placement="right-start"
+        modifiers={[
+          { name: 'preventOverflow', options: { boundary: 'viewport', padding: 8 } },
+          { name: 'flip', options: { fallbackPlacements: ['right-end', 'left-start'] } }
+        ]}
+        sx={{ zIndex: 1000 }}
+      >
+        <Paper sx={styles.floatingSubmenu}>
+          <List disablePadding>{collapseContent}</List>{' '}
+        </Paper>
+      </Popper>
     </Box>
   );
 };

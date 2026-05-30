@@ -21,9 +21,8 @@ export const styles = {
     }
   },
   floatingSubmenu: {
-    position: 'fixed',
-    top: 0,
-    left: 264,
-    zIndex: 2000
+    zIndex: 1000,
+    maxHeight: 'calc(100vh - 16px)',
+    overflowY: 'auto'
   }
 };

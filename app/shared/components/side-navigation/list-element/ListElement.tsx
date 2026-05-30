@@ -3,7 +3,6 @@ import { LinkElementProps } from 'app/types/sideNavigation';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
-import { styles as SideNavigationStyles } from '../SideNavigation.styles';
 import { styles } from './ListElement.styles';
 
 const isActivePath = (href: string | undefined, pathName: string | null) => {
@@ -36,14 +35,15 @@ export const ListElement: React.FC<LinkElementProps> = ({
           <Image src={`/icons/${iconSrc}.svg`} alt={title} width={24} height={24} />
         </ListItemIcon>
       )}
-      <ListItemText
-        sx={SideNavigationStyles.hideInClosed(open)}
-        slotProps={{
-          primary: styles.listItemText
-        }}
-        primary={title}
-        inset={!iconSrc}
-      />
+      {open && (
+        <ListItemText
+          slotProps={{
+            primary: styles.listItemText
+          }}
+          primary={title}
+          inset={!iconSrc}
+        />
+      )}
       {children}
     </ListItemButton>
   );
