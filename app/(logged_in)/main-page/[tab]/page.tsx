@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 
 import { MainPagesContent } from '../MainPageContent';
 
-const validTabs = ['all', 'foundation'];
+const validTabs = new Set(['all', 'foundation']);
 
 type MainPagesTabProps = Readonly<{
   params: Promise<{
@@ -14,7 +14,7 @@ type MainPagesTabProps = Readonly<{
 export default async function MainPagesTabPage({ params }: MainPagesTabProps) {
   const { tab } = await params;
 
-  if (!validTabs.includes(tab)) {
+  if (!validTabs.has(tab)) {
     notFound();
   }
 
