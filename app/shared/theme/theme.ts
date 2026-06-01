@@ -1302,6 +1302,7 @@ export const createAdminTheme = () =>
         styleOverrides: {
           root: {
             'html:has(&)': {
+              scrollbarGutter: 'stable',
               overflow: 'hidden'
             }
           }
