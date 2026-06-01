@@ -1,4 +1,6 @@
-import { mainHexPalette } from '~/shared/theme/colors';
+import { alpha } from '@mui/material';
+
+import { mainHexPalette, shadowColors } from '~/shared/theme/colors';
 
 export const linkStyles = {
   mb: '0',
@@ -29,7 +31,7 @@ export const styles = {
     overflowY: 'auto',
     backgroundColor: mainHexPalette.white,
     borderRadius: '8px',
-    boxShadow: '0 4px 8px 0 rgba(78, 80, 97, 0.06), 0 0 4px 0 rgba(78, 80, 97, 0.04)'
+    boxShadow: `0 4px 8px 0 ${alpha(shadowColors.popup, 0.06)}, 0 0 4px 0 ${alpha(shadowColors.popup, 0.04)}`
   },
   subItem: {
     margin: 0,

@@ -26,10 +26,19 @@ export const ListElement: React.FC<LinkElementProps> = ({
 }) => {
   const { title, href, iconSrc } = element;
   const pathName = usePathname();
-  const listItemSx: SxProps<Theme> = Array.isArray(sxItem) ? [styles.listItem, ...sxItem] : [styles.listItem, sxItem];
+  const disabled = element.disabled;
+  const listItemSx: SxProps<Theme> = [
+    styles.listItem,
+    ...(Array.isArray(sxItem) ? sxItem : [sxItem]),
+    disabled && {
+      color: 'grey.500',
+      cursor: 'not-allowed',
+      opacity: 0.6
+    }
+  ];
 
   return (
-    <ListItemButton sx={listItemSx} selected={isActivePath(href, pathName)} onClick={handleClick}>
+    <ListItemButton sx={listItemSx} selected={isActivePath(href, pathName)} onClick={handleClick} disabled={disabled}>
       {iconSrc && (
         <ListItemIcon sx={styles.listItemIcon}>
           <Image src={`/icons/${iconSrc}.svg`} alt={title} width={24} height={24} />
