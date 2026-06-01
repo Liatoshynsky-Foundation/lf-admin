@@ -33,8 +33,8 @@ const labelMapping: Record<BadgeVariant, string | null> = {
 const Badge = ({ variant, label, sx, localizations=['uk', 'en'] }: BadgeProps) => {
   const localizationLabel = getLocalizations(localizations);
   const hasLocalizationLabel = Boolean(localizationLabel);
-  const hasLabel = hasLocalizationLabel || Boolean(label);
-  
+  const hasLabel = hasLocalizationLabel || Boolean(label) || Boolean(labelMapping[variant]);
+
   return (
     <Box
       data-testid="badge"

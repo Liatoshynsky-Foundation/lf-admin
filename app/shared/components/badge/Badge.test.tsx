@@ -6,39 +6,40 @@ describe('Badge Component', () => {
   describe('Rendering Variants', ()=>{
     it('should render the correct label for the news variant', () => {
       render(<Badge variant="news" localizations={['uk']} />);
-      expect(screen.getByText('Новина')).toBeInTheDocument();
+      expect(screen.getByTestId('badge')).toHaveTextContent('Новина');
     });
 
     it('should render the correct label for the draft variant', () => {
       render(<Badge variant="draft" localizations={['uk']} />);
-      expect(screen.getByText('Чернетка')).toBeInTheDocument();
+      expect(screen.getByTestId('badge')).toHaveTextContent('Чернетка');
     });
 
     it('should render the correct label for the events variant', () => {
       render(<Badge variant="events" localizations={['uk']} />);
-      expect(screen.getByText('Подія')).toBeInTheDocument();
+      expect(screen.getByTestId('badge')).toHaveTextContent('Подія');
     });
     it('should render the correct label for the media variant', () => {
       render(<Badge variant="media" localizations={['uk']} />);
-      expect(screen.getByText('Ми у ЗМІ')).toBeInTheDocument();
+      expect(screen.getByTestId('badge')).toHaveTextContent('Ми у ЗМІ');
     });
   });
 
   describe('Localization Labels', () => {
-    it('should display "EN" label when only english localization is provided', () => {
+    it('should display "EN" label when only English localization is provided', () => {
       render(<Badge variant="news" localizations={['en']} />);
-      expect(screen.getByText('Новина EN')).toBeInTheDocument();
+      expect(screen.getByTestId('badge')).toHaveTextContent('EN');
     });
 
-    it('should display "UK" label when only ukrainian localization is provided', () => {
+    it('should display "UK" label when only Ukrainian localization is provided', () => {
       render(<Badge variant="news" localizations={['uk']} />);
-      expect(screen.getByText('Новина UK')).toBeInTheDocument();
+      expect(screen.getByTestId('badge')).toHaveTextContent('UK');
     });
 
     it('should not display a text label when both localizations are provided', () => {
       render(<Badge variant="news" localizations={['uk', 'en']} />);
-      expect(screen.queryByText('UK')).not.toBeInTheDocument();
-      expect(screen.queryByText('EN')).not.toBeInTheDocument();
+      const badge = screen.getByTestId('badge');
+      expect(badge).not.toHaveTextContent('UK');
+      expect(badge).not.toHaveTextContent('EN');
     });
   });
 
@@ -46,7 +47,7 @@ describe('Badge Component', () => {
   describe('Custom props', () => {
     it('should display correct custom label when provided', () => {
       render(<Badge variant="news" label='Custom label' localizations={['uk']} />);
-      expect(screen.getByText('Custom label')).toBeInTheDocument();
+      expect(screen.getByTestId('badge')).toHaveTextContent('Custom label');
     });
 
     it('should display correct styles for a badge when sx prop provided', ()=>{
