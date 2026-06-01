@@ -41,7 +41,6 @@ export const ListElement: React.FC<LinkElementProps> = ({
             primary: styles.listItemText
           }}
           primary={title}
-          inset={!iconSrc}
         />
       )}
       {children}

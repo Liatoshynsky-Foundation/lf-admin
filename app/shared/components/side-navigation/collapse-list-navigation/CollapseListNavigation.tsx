@@ -52,7 +52,12 @@ export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({
   const shouldShowContent = openNavbar || isSubmenuOpen;
 
   const collapseContent = collapseElements?.map((item) => (
-    <LinkElement element={item} open={shouldShowContent} key={item.title} sxItem={{ mb: '0' }} />
+    <LinkElement
+      element={item}
+      open={shouldShowContent}
+      key={item.title}
+      sxItem={[{ mb: '0' }, !openNavbar && styles.subItem]}
+    />
   ));
 
   return (

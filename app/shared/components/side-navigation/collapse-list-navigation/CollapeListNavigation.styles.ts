@@ -24,11 +24,19 @@ export const styles = {
   },
   floatingSubmenu: {
     maxHeight: 'calc(100vh - 16px)',
-    maxWidth: '223px',
+    width: '223px',
     padding: '8px',
     overflowY: 'auto',
     backgroundColor: mainHexPalette.white,
     borderRadius: '8px',
     boxShadow: '0 4px 8px 0 rgba(78, 80, 97, 0.06), 0 0 4px 0 rgba(78, 80, 97, 0.04)'
+  },
+  subItem: {
+    margin: 0,
+    padding: '10px 16px',
+    alignItems: 'flex-start',
+    '& .MuiListItemText-root': {
+      margin: 0
+    }
   }
 };
