@@ -32,8 +32,11 @@ export const ListElement: React.FC<LinkElementProps> = ({
     ...(Array.isArray(sxItem) ? sxItem : [sxItem]),
     disabled && {
       color: 'grey.500',
-      cursor: 'not-allowed',
-      opacity: 0.6
+      opacity: 0.6,
+      '&.Mui-disabled': {
+        cursor: 'not-allowed',
+        pointerEvents: 'auto'
+      }
     }
   ];
 
