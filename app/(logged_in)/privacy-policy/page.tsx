@@ -7,6 +7,7 @@ import { Cookies } from '~/shared/components/privacy-policy/Cookies/Cookies';
 import { DataUsage } from '~/shared/components/privacy-policy/DataUsage/DataUsage';
 import { DataWeCollect } from '~/shared/components/privacy-policy/DataWeCollect/DataWeCollect';
 import { GoogleAuth } from '~/shared/components/privacy-policy/GoogleAuth/GoogleAuth';
+import { SocialNetworks } from '~/shared/components/privacy-policy/SocialNetworks/SocialNetworks';
 import { usePageEditor } from '~/shared/hooks/use-page-editor/usePageEditor';
 import { useSavePageBlocks } from '~/shared/hooks/use-save-page/UseSavePage';
 import { useStore } from '~/store';
@@ -35,6 +36,7 @@ export default function Page() {
       <DataUsage />
       <Cookies />
       <GoogleAuth />
+      <SocialNetworks />
     </Box>
   );
 }

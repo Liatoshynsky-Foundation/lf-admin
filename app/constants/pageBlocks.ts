@@ -14,5 +14,6 @@ export const BLOCK_IDS = {
   DATA_WE_COLLECT: 'DataWeCollect',
   DATA_USAGE: 'DataUsage',
   COOKIES: 'Cookies',
-  GOOGLE_AUTH: 'GoogleAuth'
+  GOOGLE_AUTH: 'GoogleAuth',
+  SOCIAL_NETWORKS: 'SocialNetworks'
 } as const;
