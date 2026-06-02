@@ -4,6 +4,7 @@ import { Box } from '@mui/material';
 import { PAGE_IDS } from '~/constants/pageBlocks';
 import { Header } from '~/shared/components/header/Header';
 import { Cookies } from '~/shared/components/privacy-policy/Cookies/Cookies';
+import { DataRetention } from '~/shared/components/privacy-policy/data-retention/DataRetention';
 import { DataUsage } from '~/shared/components/privacy-policy/DataUsage/DataUsage';
 import { DataWeCollect } from '~/shared/components/privacy-policy/DataWeCollect/DataWeCollect';
 import { GoogleAuth } from '~/shared/components/privacy-policy/GoogleAuth/GoogleAuth';
@@ -41,6 +42,7 @@ export default function Page() {
       <SocialNetworks />
       <TargetedAds />
       <NewsletterSubscription />
+      <DataRetention />
     </Box>
   );
 }

@@ -1,4 +1,5 @@
 import type { CookiesBlock } from './blocks/cookiesBlock';
+import { DataRetentionBlock } from './blocks/dataRetention';
 import type { DataUsageBlock } from './blocks/dataUsageBlock';
 import type { DataWeCollectBlock } from './blocks/dataWeCollectBlock';
 import { GoogleAuthBlock } from './blocks/googleAuthBlock';
@@ -14,4 +15,5 @@ export interface BlocksMap {
     SocialNetworks: SocialNetworksBlock;
     TargetedAds: TargetedAdsBlock;
     NewsletterSubscription: NewsletterSubscriptionBlock;
+    DataRetention: DataRetentionBlock;
 }
