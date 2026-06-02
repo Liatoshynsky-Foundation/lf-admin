@@ -7,6 +7,7 @@ import { Cookies } from '~/shared/components/privacy-policy/Cookies/Cookies';
 import { DataUsage } from '~/shared/components/privacy-policy/DataUsage/DataUsage';
 import { DataWeCollect } from '~/shared/components/privacy-policy/DataWeCollect/DataWeCollect';
 import { GoogleAuth } from '~/shared/components/privacy-policy/GoogleAuth/GoogleAuth';
+import { NewsletterSubscription } from '~/shared/components/privacy-policy/NewsletterSubscription/NewsletterSubscription';
 import { SocialNetworks } from '~/shared/components/privacy-policy/SocialNetworks/SocialNetworks';
 import { TargetedAds } from '~/shared/components/privacy-policy/TargetedAds/TargetedAds';
 import { usePageEditor } from '~/shared/hooks/use-page-editor/usePageEditor';
@@ -39,6 +40,7 @@ export default function Page() {
       <GoogleAuth />
       <SocialNetworks />
       <TargetedAds />
+      <NewsletterSubscription />
     </Box>
   );
 }
