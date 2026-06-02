@@ -10,8 +10,8 @@ type MainPagesContentProps = Readonly<{
 }>;
 
 const MAIN_PAGE_TABS: readonly PageHeaderTab[] = [
-  { value: 'all', label: 'Всі', href: '/main-pages/all' },
-  { value: 'foundation', label: 'Фундація', href: '/main-pages/foundation' }
+  { value: 'all', label: 'Всі', href: '/main-page/all' },
+  { value: 'foundation', label: 'Фундація', href: '/main-page' }
 ];
 
 export function MainPagesContent({ activeTab }: MainPagesContentProps) {

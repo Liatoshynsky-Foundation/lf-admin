@@ -2,17 +2,10 @@ import { Box } from '@mui/material';
 
 import { MainPagesContent } from './MainPageContent';
 
-type MainPagesPageProps = Readonly<{
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}>;
-
-export default async function MainPagesPage({ searchParams }: MainPagesPageProps) {
-  const resolvedParams = await searchParams;
-  const activeTab = typeof resolvedParams.tab === 'string' ? resolvedParams.tab : 'foundation';
-
+export default async function MainPagesPage() {
   return (
     <Box sx={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', p: '32px' }}>
-      <MainPagesContent activeTab={activeTab} />
+      <MainPagesContent activeTab="foundation" />
     </Box>
   );
 }

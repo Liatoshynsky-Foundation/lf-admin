@@ -1,7 +1,13 @@
 import { render, screen } from '@testing-library/react';
+import { notFound } from 'next/navigation';
 import React from 'react';
 
+import MainPagesTabPage from './[tab]/page';
 import MainPagesPage from './page';
+
+jest.mock('next/navigation', () => ({
+  notFound: jest.fn()
+}));
 
 jest.mock('./MainPageContent', () => ({
   MainPagesContent: ({ activeTab }: { activeTab: string }) => (
@@ -9,27 +15,28 @@ jest.mock('./MainPageContent', () => ({
   )
 }));
 
-describe('MainPagesPage', () => {
-  it('renders foundation tab by default when searchParams is empty', async () => {
-    const ui = await MainPagesPage({ searchParams: Promise.resolve({}) });
+describe('MainPage Routing & Pages', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('root page renders "foundation" tab by default', async () => {
+    const ui = await MainPagesPage();
     render(ui);
 
     expect(screen.getByTestId('mock-content')).toHaveTextContent('Passed tab: foundation');
   });
 
-  it('passes the correct tab from searchParams when provided as a string', async () => {
-    const ui = await MainPagesPage({ searchParams: Promise.resolve({ tab: 'all' }) });
+  it('dynamic page renders the correct tab from params', async () => {
+    const ui = await MainPagesTabPage({ params: Promise.resolve({ tab: 'all' }) });
     render(ui);
 
     expect(screen.getByTestId('mock-content')).toHaveTextContent('Passed tab: all');
   });
 
-  it('falls back to foundation tab if searchParams.tab is an array', async () => {
-    const ui = await MainPagesPage({
-      searchParams: Promise.resolve({ tab: ['all', 'foundation'] })
-    });
-    render(ui);
+  it('dynamic page triggers notFound for invalid tab parameters', async () => {
+    await MainPagesTabPage({ params: Promise.resolve({ tab: 'some-garbage-route' }) });
 
-    expect(screen.getByTestId('mock-content')).toHaveTextContent('Passed tab: foundation');
+    expect(notFound).toHaveBeenCalledTimes(1);
   });
 });
