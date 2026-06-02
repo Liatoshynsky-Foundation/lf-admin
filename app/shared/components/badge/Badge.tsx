@@ -2,7 +2,7 @@ import { Box } from '@mui/material';
 import { CircleCheckBig } from 'lucide-react';
 import { ReactElement } from 'react';
 
-import styles from './Badge.styles';
+import getBadgeStyles from './Badge.styles';
 import { getLocalizations } from '~/lib/utils/localizations';
 
 export type BadgeVariant = 'published' | 'draft' | 'news' | 'events' | 'media'
@@ -38,9 +38,9 @@ const Badge = ({ variant, label, sx, localizations=['uk', 'en'] }: BadgeProps) =
   return (
     <Box
       data-testid="badge"
-      sx={{ ...styles.typeBadge(variant, hasLabel), ...styles[variant], ...sx }}
+      sx={{ ...getBadgeStyles(variant, hasLabel), ...sx }}
     >
-      {iconMapping[variant] ?? iconMapping[variant]}
+      {iconMapping[variant]}
       {
         (label || labelMapping[variant]) && (
           <Box>{label ?? labelMapping[variant]}</Box>

@@ -1,26 +1,17 @@
 import { render, screen } from '@testing-library/react';
 
-import Badge from './Badge';
+import Badge, { BadgeVariant } from './Badge';
 
 describe('Badge Component', () => {
   describe('Rendering Variants', ()=>{
-    it('should render the correct label for the news variant', () => {
-      render(<Badge variant="news" localizations={['uk']} />);
-      expect(screen.getByTestId('badge')).toHaveTextContent('Новина');
-    });
-
-    it('should render the correct label for the draft variant', () => {
-      render(<Badge variant="draft" localizations={['uk']} />);
-      expect(screen.getByTestId('badge')).toHaveTextContent('Чернетка');
-    });
-
-    it('should render the correct label for the events variant', () => {
-      render(<Badge variant="events" localizations={['uk']} />);
-      expect(screen.getByTestId('badge')).toHaveTextContent('Подія');
-    });
-    it('should render the correct label for the media variant', () => {
-      render(<Badge variant="media" localizations={['uk']} />);
-      expect(screen.getByTestId('badge')).toHaveTextContent('Ми у ЗМІ');
+    it.each([
+      { variant: 'news', expected: 'Новина' },
+      { variant: 'draft', expected: 'Чернетка' },
+      { variant: 'events', expected: 'Подія' },
+      { variant: 'media', expected: 'Ми у ЗМІ' },
+    ])('should render $expected for $variant variant', ({ variant, expected }) => {
+      render(<Badge variant={variant as BadgeVariant} localizations={['uk']} />);
+      expect(screen.getByTestId('badge')).toHaveTextContent(expected);
     });
   });
 

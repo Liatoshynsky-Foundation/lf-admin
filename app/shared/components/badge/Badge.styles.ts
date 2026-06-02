@@ -11,31 +11,32 @@ export const badgeColors = {
   published: chipsColors.published
 };
 
-const styles = {
-  typeBadge: (type: BadgeVariant, hasLabel: boolean): SxProps => ({
-    display:'inline-flex',
-    justifyContent: 'center',
-    alignItems:'center',
-    gap: '4px',
-    height: '28px',
-    flexShrink: 0,
-    padding: hasLabel  ? '5px 8px' : '6px', 
-    
-    typography: 'subtitle2',
-    color: type === 'published' ? 'adminBlue.50' : 'black',
-    borderRadius: type === 'published' ? '15px' : '20px',
-    backgroundColor: badgeColors[type],
-    
-    '& svg': {
-      color: 'inherit'
-    }
-  }),
-
-  news:{},
-  events: {},
-  media: {}, 
-  draft: {}, 
-  published: {}
+const badgeConfigs: Partial<Record<BadgeVariant, SxProps>> = {
+  published: { color: 'adminBlue.50', borderRadius: '15px' },
 };
 
-export default styles;
+const baseBadgeStyles = {
+  display:'inline-flex',
+  justifyContent: 'center',
+  alignItems:'center',
+  gap: '4px',
+  height: '28px',
+  flexShrink: 0,
+  typography: 'subtitle2',
+  '& svg': {
+    color: 'inherit'
+  },
+  color: 'black', 
+  borderRadius: '20px'
+};
+
+const getBadgeStyles = (type: BadgeVariant, hasLabel: boolean): SxProps => 
+  ({
+    ...baseBadgeStyles,
+    padding: hasLabel ? '5px 8px' : '6px', 
+    backgroundColor: badgeColors[type],
+    ...badgeConfigs[type],
+  });
+
+
+export default getBadgeStyles;
