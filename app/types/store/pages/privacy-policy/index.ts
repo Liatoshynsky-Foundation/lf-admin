@@ -1,3 +1,4 @@
+import { ContactUsBlock } from './blocks/contactUs';
 import type { CookiesBlock } from './blocks/cookiesBlock';
 import { DataRetentionBlock } from './blocks/dataRetention';
 import type { DataUsageBlock } from './blocks/dataUsageBlock';
@@ -16,4 +17,6 @@ export interface BlocksMap {
     TargetedAds: TargetedAdsBlock;
     NewsletterSubscription: NewsletterSubscriptionBlock;
     DataRetention: DataRetentionBlock;
+
+    ContactUs: ContactUsBlock; 
 }

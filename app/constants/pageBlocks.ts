@@ -18,5 +18,7 @@ export const BLOCK_IDS = {
   SOCIAL_NETWORKS: 'SocialNetworks',
   TARGETED_ADS: 'TargetedAds',
   NEWSLETTER_SUBSCRIPTION: 'NewsletterSubscription',
-  DATA_RETENTION: 'DataRetention'
+  DATA_RETENTION: 'DataRetention',
+  
+  CONTACT_US: 'ContactUs'
 } as const;

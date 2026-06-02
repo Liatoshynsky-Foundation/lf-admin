@@ -8,9 +8,9 @@ import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 
-export const NewsletterSubscription = () => {
+export const ContactUs = () => {
   const pageId = PAGE_IDS.PRIVACY_POLICY;
-  const blockId = BLOCK_IDS.NEWSLETTER_SUBSCRIPTION;
+  const blockId = BLOCK_IDS.CONTACT_US;
 
   const setField = useStore((value)=> value.setField);
   const currentLocale = useStore((value)=> value.locale);
@@ -22,7 +22,7 @@ export const NewsletterSubscription = () => {
   const onParagraphChange = (index:number, val: JSONContent)=>{
     const currentContentArray = [...block.description[currentLocale].content || []];
     currentContentArray[index] = val;
-    
+   
     setField(pageId, blockId, 'description', {
       ...block.description,
       [currentLocale]: currentContentArray
@@ -33,7 +33,7 @@ export const NewsletterSubscription = () => {
   if(!paragraphs || paragraphs.length === 0 ) return null; 
   
   return (
-    <CollapsibleBlock title="Підписка на новини та відмова від розсилки">
+    <CollapsibleBlock title="Як зв’язатися з нами">
       {paragraphs.map((paragraphNode, i) => 
         (
           <CustomTextField

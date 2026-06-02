@@ -3,6 +3,7 @@ import { Box } from '@mui/material';
 
 import { PAGE_IDS } from '~/constants/pageBlocks';
 import { Header } from '~/shared/components/header/Header';
+import { ContactUs } from '~/shared/components/privacy-policy/contact-us/ContactUs';
 import { Cookies } from '~/shared/components/privacy-policy/Cookies/Cookies';
 import { DataRetention } from '~/shared/components/privacy-policy/data-retention/DataRetention';
 import { DataUsage } from '~/shared/components/privacy-policy/DataUsage/DataUsage';
@@ -43,6 +44,8 @@ export default function Page() {
       <TargetedAds />
       <NewsletterSubscription />
       <DataRetention />
+
+      <ContactUs />
     </Box>
   );
 }
