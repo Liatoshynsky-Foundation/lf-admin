@@ -8,6 +8,7 @@ import { DataUsage } from '~/shared/components/privacy-policy/DataUsage/DataUsag
 import { DataWeCollect } from '~/shared/components/privacy-policy/DataWeCollect/DataWeCollect';
 import { GoogleAuth } from '~/shared/components/privacy-policy/GoogleAuth/GoogleAuth';
 import { SocialNetworks } from '~/shared/components/privacy-policy/SocialNetworks/SocialNetworks';
+import { TargetedAds } from '~/shared/components/privacy-policy/TargetedAds/TargetedAds';
 import { usePageEditor } from '~/shared/hooks/use-page-editor/usePageEditor';
 import { useSavePageBlocks } from '~/shared/hooks/use-save-page/UseSavePage';
 import { useStore } from '~/store';
@@ -37,6 +38,7 @@ export default function Page() {
       <Cookies />
       <GoogleAuth />
       <SocialNetworks />
+      <TargetedAds />
     </Box>
   );
 }
