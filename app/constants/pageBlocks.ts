@@ -13,5 +13,6 @@ export const BLOCK_IDS = {
   FOUNDATION_FOUNDERS: 'FoundationFounders',
   DATA_WE_COLLECT: 'DataWeCollect',
   DATA_USAGE: 'DataUsage',
-  COOKIES: 'Cookies'
+  COOKIES: 'Cookies',
+  GOOGLE_AUTH: 'GoogleAuth'
 } as const;
