@@ -12,5 +12,6 @@ export const BLOCK_IDS = {
   WHAT_WE_DO: 'WhatWeDo',
   FOUNDATION_FOUNDERS: 'FoundationFounders',
   DATA_WE_COLLECT: 'DataWeCollect',
-  DATA_USAGE: 'DataUsage'
+  DATA_USAGE: 'DataUsage',
+  COOKIES: 'Cookies'
 } as const;

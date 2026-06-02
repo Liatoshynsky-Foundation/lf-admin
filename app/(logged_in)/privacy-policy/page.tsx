@@ -3,6 +3,7 @@ import { Box } from '@mui/material';
 
 import { PAGE_IDS } from '~/constants/pageBlocks';
 import { Header } from '~/shared/components/header/Header';
+import { Cookies } from '~/shared/components/privacy-policy/Cookies/Cookies';
 import { DataUsage } from '~/shared/components/privacy-policy/DataUsage/DataUsage';
 import { DataWeCollect } from '~/shared/components/privacy-policy/DataWeCollect/DataWeCollect';
 import { usePageEditor } from '~/shared/hooks/use-page-editor/usePageEditor';
@@ -30,7 +31,8 @@ export default function Page() {
         onLanguageChange={(lang: 'uk' | 'en') => setLocale(lang)}
       />
       <DataWeCollect />
-      <DataUsage/>
+      <DataUsage />
+      <Cookies />
     </Box>
   );
 }
