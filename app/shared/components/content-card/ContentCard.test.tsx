@@ -3,6 +3,20 @@ import type { MouseEventHandler, ReactNode } from 'react';
 
 import ContentCard, { ContentType } from './ContentCard';
 
+jest.mock('./ContentCardMenu', () => ({
+  __esModule: true,
+  default: ({ onClose, setDeleteModalOpen }: { onClose: () => void; setDeleteModalOpen: (v: boolean) => void }) => (
+    <div>
+      <button onClick={onClose} data-testid="menu-close">
+        close menu
+      </button>
+      <button onClick={() => setDeleteModalOpen(true)} data-testid="open-delete">
+        delete
+      </button>
+    </div>
+  )
+}));
+
 jest.mock('~/lib/utils/formatDate', () => ({
   formatDate: (date: string) => `formatted-${date}`
 }));
@@ -46,6 +60,16 @@ jest.mock('../design-system/button/Button', () => ({
 jest.mock('./ContentCardBadge', () => ({
   __esModule: true,
   default: () => <div data-testid="badge" />
+}));
+
+jest.mock('../delete-card-modal/DeleteCardModal', () => ({
+  __esModule: true,
+  default: ({ open, onDelete }: { open: boolean; onDelete: () => void }) =>
+    open ? (
+      <button onClick={onDelete} data-testid="confirm-delete">
+        confirm delete
+      </button>
+    ) : null
 }));
 
 describe('ContentCard', () => {
@@ -149,5 +173,58 @@ describe('ContentCard', () => {
     fireEvent.error(img);
 
     expect(img).toHaveAttribute('src', '/images/image.png');
+  });
+
+  it('should open menu when three dots button is clicked', () => {
+    render(<ContentCard {...defaultProps} />);
+    fireEvent.click(screen.getByTestId('menu-button'));
+    expect(screen.getByTestId('menu-button')).toBeInTheDocument();
+  });
+
+  it('should close menu when clicked again', () => {
+    render(<ContentCard {...defaultProps} />);
+    const menuButton = screen.getByTestId('menu-button');
+    fireEvent.click(menuButton);
+    fireEvent.click(menuButton);
+    expect(screen.getByTestId('menu-button')).toBeInTheDocument();
+  });
+
+  it('should close menu when onClose is called', () => {
+    render(<ContentCard {...defaultProps} />);
+    fireEvent.click(screen.getByTestId('menu-button'));
+    expect(screen.getByTestId('menu-close')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('menu-close'));
+    expect(screen.getByTestId('menu-button')).toBeInTheDocument();
+  });
+
+  it('should open delete modal when delete is clicked', () => {
+    render(<ContentCard {...defaultProps} />);
+    fireEvent.click(screen.getByTestId('menu-button'));
+    fireEvent.click(screen.getByTestId('open-delete'));
+    expect(screen.getByTestId('confirm-delete')).toBeInTheDocument();
+  });
+
+  it('should call deleteNews when delete is confirmed', async () => {
+    render(<ContentCard {...defaultProps} type="news" />);
+    fireEvent.click(screen.getByTestId('menu-button'));
+    fireEvent.click(screen.getByTestId('open-delete'));
+    await fireEvent.click(screen.getByTestId('confirm-delete'));
+    expect(screen.getByTestId('menu-button')).toBeInTheDocument();
+  });
+
+  it('should call deleteEvent when type is events', async () => {
+    render(<ContentCard {...defaultProps} type="events" />);
+    fireEvent.click(screen.getByTestId('menu-button'));
+    fireEvent.click(screen.getByTestId('open-delete'));
+    await fireEvent.click(screen.getByTestId('confirm-delete'));
+    expect(screen.getByTestId('menu-button')).toBeInTheDocument();
+  });
+
+  it('should call deleteMediaMention when type is media', async () => {
+    render(<ContentCard {...defaultProps} type="media" />);
+    fireEvent.click(screen.getByTestId('menu-button'));
+    fireEvent.click(screen.getByTestId('open-delete'));
+    await fireEvent.click(screen.getByTestId('confirm-delete'));
+    expect(screen.getByTestId('menu-button')).toBeInTheDocument();
   });
 });

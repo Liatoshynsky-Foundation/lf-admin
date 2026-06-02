@@ -23,7 +23,7 @@ const ContentCardMenu = ({ id, type, anchorEl, onClose, setDeleteModalOpen }: Co
   };
 
   return (
-    <Menu anchorEl={anchorEl} open={open} onClose={onClose} sx={styles.menu} disableAutoFocusItem>
+    <Menu anchorEl={anchorEl} open={open} onClose={onClose} sx={styles.menu} disableAutoFocusItem disableScrollLock>
       <MenuItem onClick={() => router.push(href)} sx={styles.menuItem}>
         SEO налаштування
       </MenuItem>
