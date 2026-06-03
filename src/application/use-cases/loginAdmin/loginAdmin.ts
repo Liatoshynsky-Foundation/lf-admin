@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 
 import { LoginError } from '~/back-constants/apolloCustomErrors/adminErrors';
+import { errors } from '~/back-constants/errors';
 import { adminTypes } from '~/back-constants/index';
 import { AdminRepository } from '~/domain/repositories/adminRepository';
 import { zEmailSchema } from '~/validators/auth.schema';
@@ -11,10 +12,10 @@ export const loginAdmin = ({ adminRepository }: { adminRepository: AdminReposito
       const validatedEmail = zEmailSchema.parse(email);
 
       const admin = await adminRepository.findByEmail(validatedEmail);
-      if (!admin) throw new LoginError();
+      if (!admin) throw new LoginError(errors.WRONG_EMAIL);
 
       const valid = await bcrypt.compare(password, admin.password);
-      if (!valid) throw new LoginError();
+      if (!valid) throw new LoginError(errors.WRONG_PASSWORD);
 
       return {
         id: admin.id,

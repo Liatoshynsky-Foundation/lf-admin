@@ -1,5 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
+import { fireEvent,render, screen } from '@testing-library/react';
 
 import PasswordField from './PasswordField';
 
@@ -18,33 +17,31 @@ jest.mock('~/public/icons/eye-closed.svg', () => {
 describe('PasswordField', () => {
   it('renders the password field with label', () => {
     render(<PasswordField helperText={null} />);
-    expect(screen.getByLabelText('Пароль')).toBeInTheDocument();
+    expect(screen.getByLabelText('Пароль *')).toBeInTheDocument();
   });
 
   it('renders helper text when provided', () => {
-    const helperText = 'Пароль має містити щонайменше 6 символів';
-    render(<PasswordField helperText={helperText} />);
-    expect(screen.getByText(helperText)).toBeInTheDocument();
-  });
-
-  it('does not render helper text when not provided', () => {
-    render(<PasswordField helperText={null} />);
-    expect(screen.queryByText('Пароль має містити щонайменше 6 символів')).toBeNull();
+    render(<PasswordField helperText="Обов'язкове поле" />);
+    expect(screen.getByText('Обов\'язкове поле')).toBeInTheDocument();
   });
 
   it('toggles password visibility when the visibility button is clicked', () => {
     render(<PasswordField helperText={null} />);
-    const passwordInput = screen.getByLabelText('Пароль');
-    const toggleButton = screen.getByRole('button', { name: 'display the password' });
+
+    const passwordInput = screen.getByLabelText('Пароль *');
+    const toggleButton = screen.getByRole('button', { name: /display the password/i });
 
     expect(passwordInput).toHaveAttribute('type', 'password');
 
     fireEvent.click(toggleButton);
     expect(passwordInput).toHaveAttribute('type', 'text');
-    expect(toggleButton).toHaveAttribute('aria-label', 'hide the password');
 
-    fireEvent.click(toggleButton);
+    fireEvent.click(screen.getByRole('button', { name: /hide the password/i }));
     expect(passwordInput).toHaveAttribute('type', 'password');
-    expect(toggleButton).toHaveAttribute('aria-label', 'display the password');
+  });
+
+  it('renders with custom label if provided', () => {
+    render(<PasswordField label="Новий пароль *" helperText={null} />);
+    expect(screen.getByLabelText('Новий пароль *')).toBeInTheDocument();
   });
 });

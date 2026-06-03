@@ -72,7 +72,7 @@ const mockLoginWithNetworkError = (onError: (err: Error) => void) => {
 const submitFormHelper = (password: string) => {
   render(<LoginPage />);
 
-  const emailInput = screen.getByLabelText(/Логін/i);
+  const emailInput = screen.getByLabelText(/Електронна пошта/i);
   const passwordInput = screen.getByLabelText(/Пароль/i);
   const submitButton = screen.getByRole('button', { name: 'Увійти' });
 
@@ -89,7 +89,7 @@ describe('LoginPage', () => {
 
   it('should render the login modal with all fields and button', () => {
     render(<LoginPage />);
-    expect(screen.getByLabelText(/Логін/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Електронна пошта/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Пароль/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Увійти' })).toBeInTheDocument();
   });

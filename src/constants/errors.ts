@@ -12,7 +12,9 @@ export const errors = {
   // Validation errors
   EMAIL_REQUIRED: 'Email is required',
   INVALID_EMAIL_FORMAT: 'Invalid email format',
-  EMAIL_TOO_LONG: 'Email must not exceed 254 characters'
+  EMAIL_TOO_LONG: 'Email must not exceed 254 characters',
+  WRONG_EMAIL: 'WRONG_EMAIL',
+  WRONG_PASSWORD: 'WRONG_PASSWORD'
 };
 
 export const utilsErrors = {

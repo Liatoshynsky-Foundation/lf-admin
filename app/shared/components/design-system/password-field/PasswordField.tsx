@@ -17,10 +17,10 @@ import VisibilityOn from '~/public/icons/eye.svg';
 import VisibilityOff from '~/public/icons/eye-closed.svg';
 
 interface PasswordFieldProps extends OutlinedInputProps {
-  helperText: string | null;
+  helperText: React.ReactNode;
 }
 
-const PasswordField = ({ helperText, sx, ...props }: PasswordFieldProps) => {
+const PasswordField = ({ helperText, sx, label = 'Пароль *', ...props }: PasswordFieldProps) => {
   const [showPassword, setShowPassword] = React.useState(false);
 
   const handleClickShowPassword = () => setShowPassword((show) => !show);
@@ -35,11 +35,11 @@ const PasswordField = ({ helperText, sx, ...props }: PasswordFieldProps) => {
 
   return (
     <Box sx={styles}>
-      <FormControl variant="outlined" fullWidth>
-        <InputLabel htmlFor="outlined-adornment-password">Пароль</InputLabel>
+      <FormControl variant="outlined" fullWidth error={props.error}>
+        <InputLabel htmlFor="outlined-adornment-password">{label}</InputLabel>
         <OutlinedInput
           id="outlined-adornment-password"
-          label="Пароль"
+          label={label}
           type={showPassword ? 'text' : 'password'}
           endAdornment={
             <InputAdornment position="end">
@@ -57,7 +57,7 @@ const PasswordField = ({ helperText, sx, ...props }: PasswordFieldProps) => {
           sx={sx}
           {...props}
         />
-        {helperText && <FormHelperText error>{helperText}</FormHelperText>}
+        {helperText && <FormHelperText error={!!props.error}>{helperText}</FormHelperText>}{' '}
       </FormControl>
     </Box>
   );

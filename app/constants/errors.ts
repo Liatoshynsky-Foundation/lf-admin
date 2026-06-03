@@ -12,9 +12,25 @@ export const loginErrors = {
   INVALID_CREDENTIALS: 'Неправильний логін або пароль',
   EMPTY_USERNAME: 'Логін не може бути порожнім',
   EMPTY_PASSWORD: 'Пароль не може бути порожнім', //NOSONAR
-  UNEXPECTED_ERROR: 'Непередбачена помилка. Спробуйте ще раз.'
+  UNEXPECTED_ERROR: 'Непередбачена помилка. Спробуйте ще раз.',
+  INVALID_PASSWORD: 'Неправильний пароль',
+  EMPTY_EMAIL: 'Будь ласка, вкажіть вашу електронну адресу',
+  INVALID_EMAIL: 'Введіть коректну електронну пошту'
 };
 
+export const forgotPasswordErrors = {
+  SUCCESS_MESSAGE:
+    'Якщо обліковий запис із цією електронною адресою існує, ми надіслали інструкції для відновлення пароля.',
+  RATE_LIMIT: 'Ви перевищили кількість спроб. Спробуйте через 15 хвилин.'
+};
+
+export const resetPasswordErrors = {
+  TOKEN_EXPIRED:
+    'Посилання для відновлення пароля вже було використано або втратило чинність. Будь ласка, створіть новий запит на відновлення пароля.',
+  REQUIREMENTS_NOT_MET: 'Пароль не відповідає вимогам безпеки.',
+  PASSWORDS_MISMATCH: 'Паролі не збігаються.',
+  EMPTY_PASSWORD: 'Введіть новий пароль'
+};
 export const cropperErrors = {
   NO_FRAME: 'Оберіть необхідну зону'
 };

@@ -5,7 +5,7 @@ import { Toaster } from '~/shared/components/toaster/Toaster';
 
 export const metadata = LayoutMetadata;
 
-export default async function LoginLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function ResetPasswordLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <BodyProvider>
       {children}
