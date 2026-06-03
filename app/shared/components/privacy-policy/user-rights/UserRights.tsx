@@ -1,12 +1,13 @@
-import { Skeleton, Typography } from '@mui/material';
+import { Skeleton } from '@mui/material';
 import { JSONContent } from '@tiptap/react';
 
-import ConfigurableList from '../../configurable-list/ConfigurableList';
 import CollapsibleBlock from '../../design-system/collapsible-block/CollapsibleBlock';
 import { CustomTextField } from '../../design-system/text-field/TextField';
+import { PointsList } from '../components/points-list/PointsList';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { ensureIds } from '~/lib/utils/ensureIds';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
+import { usePointsList } from '~/shared/hooks/use-points-list/usePointsList';
 import { useStore } from '~/store';
 
 export const UserRights = () => {
@@ -16,15 +17,18 @@ export const UserRights = () => {
   const currentLocale = useStore((value)=>value.locale);
   const setField = useStore((value)=>value.setField);
 
+  const rawList = block?.list || [];
+  const list = ensureIds(rawList);
+  
+  const { addPoint, removePoint, updatePoint, points } = usePointsList({ 
+    list, 
+    setField, 
+    currentLocale, 
+    pageId, 
+    blockId 
+  });
 
   if(!block) return <Skeleton sx={{height: '60px'}} />;
-  const list = ensureIds(block.list);
-
-  const points = list.map((item) => ({
-    id: item.id,
-    title: item[currentLocale],
-    description: item[currentLocale]
-  }));
 
   const handleChangeTitleText = (value: JSONContent) => {
     setField(pageId, blockId, 'title', {
@@ -43,28 +47,7 @@ export const UserRights = () => {
         onChange={(value) => handleChangeTitleText(value)}
       />
       {points.length > 0 && (
-        <>
-          <Typography variant="subtitle1" component="h4">
-            Пункти:
-          </Typography>
-          <ConfigurableList
-            items={points}
-            addBtnLabel="Додати пункт"
-            editable
-            onChange={() => { }}
-            onDelete={() => { }}
-            onCreate={() => { }}
-            renderItem={({ item, onChange }) => (
-              <CustomTextField
-                fieldType="formatting"
-                label="Текст пункту"
-                value={item.value}
-                onChange={(value) => onChange({ ...item, value })}
-              />
-            )}
-            separator={false}
-          />
-        </>
+        <PointsList points={points} addPoint={addPoint} removePoint={removePoint} updatePoint={updatePoint} />
       )}
       <CustomTextField
         fieldType="formatting"
