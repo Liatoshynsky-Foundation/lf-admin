@@ -20,5 +20,6 @@ export const BLOCK_IDS = {
   NEWSLETTER_SUBSCRIPTION: 'NewsletterSubscription',
   DATA_RETENTION: 'DataRetention',
   USER_RIGHTS: 'UserRights',
-  CONTACT_US: 'ContactUs'
+  CONTACT_US: 'ContactUs',
+  PRIVACY_INTRO_SECTION: 'IntroSection'
 } as const;

@@ -9,6 +9,7 @@ import { DataRetention } from '~/shared/components/privacy-policy/data-retention
 import { DataUsage } from '~/shared/components/privacy-policy/DataUsage/DataUsage';
 import { DataWeCollect } from '~/shared/components/privacy-policy/DataWeCollect/DataWeCollect';
 import { GoogleAuth } from '~/shared/components/privacy-policy/GoogleAuth/GoogleAuth';
+import { IntroSection } from '~/shared/components/privacy-policy/intro-section/IntroSection';
 import { NewsletterSubscription } from '~/shared/components/privacy-policy/NewsletterSubscription/NewsletterSubscription';
 import { SocialNetworks } from '~/shared/components/privacy-policy/SocialNetworks/SocialNetworks';
 import { TargetedAds } from '~/shared/components/privacy-policy/TargetedAds/TargetedAds';
@@ -37,6 +38,7 @@ export default function Page() {
         isSaving={editorLoading || saveLoading}
         onLanguageChange={(lang: 'uk' | 'en') => setLocale(lang)}
       />
+      <IntroSection />
       <DataWeCollect />
       <DataUsage />
       <Cookies />
