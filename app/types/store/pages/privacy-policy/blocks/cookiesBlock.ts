@@ -1,13 +1,13 @@
 import type { LocalizedJSON, ProseDoc } from '~/types/common';
 
-export type Item = {
+export type CookiesItem = {
   uk: ProseDoc;
   en: ProseDoc;
 };
 
-export type ItemWithId = {
+export type CookiesItemWithId = {
   id: string;
-} & Item;
+} & CookiesItem;
 
 export type CookiesBlock = {
   title: LocalizedJSON;

@@ -1,17 +1,17 @@
 import type { LocalizedJSON } from '~/types/common';
 
-export type Item = {
+export type DataWeCollectItem = {
   subtitle: LocalizedJSON;
   list: LocalizedJSON[];
 };
 
-export type ItemWithId = {
+export type DataWeCollectItemWithId = {
   id: string;
-} & Item;
+} & DataWeCollectItem;
 
 export type DataWeCollectBlock = {
   title: LocalizedJSON;
-  sections: ItemWithId[];
+  sections: DataWeCollectItemWithId[];
   description: LocalizedJSON;
   note: LocalizedJSON;
 };
