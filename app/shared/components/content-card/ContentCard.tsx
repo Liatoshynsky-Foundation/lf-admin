@@ -1,4 +1,4 @@
-import { Box, Card, CardContent, CardMedia, IconButton,Typography } from '@mui/material';
+import { Box, Card, CardContent, CardMedia, IconButton, Typography } from '@mui/material';
 import { EllipsisVertical } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -134,7 +134,7 @@ const ContentCard = ({
             data-testid="menu-button"
             onClick={handleMenuClick}
             sx={styles.menuButton}
-            className={Boolean(anchorEl) ? 'active' : ''}
+            className={anchorEl ? 'active' : ''}
           >
             <EllipsisVertical size={20} />
           </IconButton>
