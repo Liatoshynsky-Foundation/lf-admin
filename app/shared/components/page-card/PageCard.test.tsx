@@ -1,5 +1,4 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import type { MouseEventHandler, ReactNode } from 'react';
 
 import PageCard from './PageCard';
 
@@ -7,107 +6,77 @@ jest.mock('~/lib/utils/formatDate', () => ({
   formatDate: (date: string) => `formatted-${date}`
 }));
 
-jest.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: jest.fn(),
-    replace: jest.fn(),
-    refresh: jest.fn(),
-    back: jest.fn(),
-    forward: jest.fn(),
-    prefetch: jest.fn()
-  })
-}));
-
-jest.mock('../design-system/button/Button', () => ({
+jest.mock('./PageCardMenu', () => ({
   __esModule: true,
-  default: ({
-    children,
-    href,
-    onClick
-  }: {
-    children: ReactNode;
-    href?: string;
-    onClick?: MouseEventHandler<HTMLButtonElement>;
-  }) => (href ? <a href={href}>{children}</a> : <button onClick={onClick}>{children}</button>)
+  default: () => <div data-testid="page-card-menu" />
 }));
 
-describe('PageCard', () => {
-  const defaultProps = {
+describe('PageCard Component', () => {
+  const mockProps = {
     id: '1',
     slug: 'test-slug',
     coverImage: {
       src: '/image.png',
       alt: {
-        uk: 'Image UA',
-        en: 'Image EN'
+        uk: 'Image page',
+        en: 'Image page EN'
       }
     },
     title: {
-      uk: 'Test title',
-      en: 'Test title EN'
+      uk: 'Test page title',
+      en: 'Test page title EN'
     },
     status: 'draft',
-    updatedAt: '2024-02-01',
+    updatedAt: '2025-02-01',
     onClick: jest.fn()
   };
 
-  afterEach(() => {
-    jest.clearAllMocks();
+  const editHref = '/mock-url';
+
+  it('renders localized title and updated date correctly', () => {
+    render(<PageCard {...mockProps} />);
+
+    expect(screen.getByText('Test page title')).toBeInTheDocument();
+    expect(screen.getByText('Змінено formatted-2025-02-01')).toBeInTheDocument();
   });
 
-  it('should render title', () => {
-    render(<PageCard {...defaultProps} />);
+  it('triggers menu interaction when action dropdown is clicked', () => {
+    render(<PageCard {...mockProps} />);
 
-    expect(screen.getByText('Test title')).toBeInTheDocument();
-  });
+    const menuButton = screen.getByTestId('menu-button');
+    expect(screen.queryByTestId('page-card-menu')).not.toBeInTheDocument();
 
-  it('should display draft status', () => {
-    render(<PageCard {...defaultProps} />);
-
-    expect(screen.getByText('Змінено formatted-2024-02-01')).toBeInTheDocument();
-  });
-
-  it('should call onClick when edit button is clicked', () => {
-    render(<PageCard {...defaultProps} />);
-
-    fireEvent.click(screen.getByText('Редагувати'));
-
-    expect(defaultProps.onClick).toHaveBeenCalledTimes(1);
+    fireEvent.click(menuButton);
+    expect(screen.getByTestId('page-card-menu')).toBeInTheDocument();
   });
 
   it('should render edit button as link when href is provided', () => {
-    render(<PageCard {...defaultProps} editHref="/about-us" />);
+    render(<PageCard {...mockProps} editHref={editHref} />);
 
-    expect(screen.getByRole('link', { name: 'Редагувати' })).toHaveAttribute('href', '/about-us');
+    expect(screen.getByRole('link', { name: 'Редагувати' })).toHaveAttribute('href', editHref);
   });
 
-  it('should render image with correct src and alt', () => {
-    render(<PageCard {...defaultProps} />);
+  it('displays image preview with proper accessible text', () => {
+    render(<PageCard {...mockProps} />);
 
-    const img = screen.getByAltText('Image UA');
-
-    expect(img).toHaveAttribute('src', '/image.png');
-    expect(img).toHaveAttribute('alt', 'Image UA');
+    const renderedImg = screen.getByAltText('Image page');
+    expect(renderedImg).toHaveAttribute('src', '/image.png');
   });
 
-  it('should fallback to default image when cover image fails to load', () => {
+  it('reverts image source to secure fallback layout on loading issue', () => {
     render(
       <PageCard
-        {...defaultProps}
+        title={{ uk: 'Тест' }}
         coverImage={{
-          src: '/news-mock-images/image1.jpg',
-          alt: {
-            uk: 'Broken image',
-            en: 'Broken image'
-          }
+          src: '/broken-link.jpg',
+          alt: { uk: 'Broken blueprint', en: 'Broken blueprint ENG' }
         }}
       />
     );
 
-    const img = screen.getByAltText('Broken image');
+    const imageElement = screen.getByAltText('Broken blueprint');
+    fireEvent.error(imageElement);
 
-    fireEvent.error(img);
-
-    expect(img).toHaveAttribute('src', '/images/image.png');
+    expect(imageElement).toHaveAttribute('src', '/images/image.png');
   });
 });
