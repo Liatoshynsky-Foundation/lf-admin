@@ -72,6 +72,14 @@ jest.mock('../delete-card-modal/DeleteCardModal', () => ({
     ) : null
 }));
 
+const TEST_IDS = {
+  menuButton: 'menu-button',
+  menuClose: 'menu-close',
+  openDelete: 'open-delete',
+  confirmDelete: 'confirm-delete',
+  badge: 'badge'
+} as const;
+
 describe('ContentCard', () => {
   const defaultProps = {
     id: '1',
@@ -177,54 +185,44 @@ describe('ContentCard', () => {
 
   it('should open menu when three dots button is clicked', () => {
     render(<ContentCard {...defaultProps} />);
-    fireEvent.click(screen.getByTestId('menu-button'));
-    expect(screen.getByTestId('menu-button')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId(TEST_IDS.menuButton));
+    expect(screen.getByTestId(TEST_IDS.menuButton)).toBeInTheDocument();
   });
 
   it('should close menu when clicked again', () => {
     render(<ContentCard {...defaultProps} />);
-    const menuButton = screen.getByTestId('menu-button');
+    const menuButton = screen.getByTestId(TEST_IDS.menuButton);
     fireEvent.click(menuButton);
     fireEvent.click(menuButton);
-    expect(screen.getByTestId('menu-button')).toBeInTheDocument();
+    expect(screen.getByTestId(TEST_IDS.menuButton)).toBeInTheDocument();
   });
 
   it('should close menu when onClose is called', () => {
     render(<ContentCard {...defaultProps} />);
-    fireEvent.click(screen.getByTestId('menu-button'));
+    fireEvent.click(screen.getByTestId(TEST_IDS.menuButton));
     expect(screen.getByTestId('menu-close')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('menu-close'));
-    expect(screen.getByTestId('menu-button')).toBeInTheDocument();
+    expect(screen.getByTestId(TEST_IDS.menuButton)).toBeInTheDocument();
   });
 
   it('should open delete modal when delete is clicked', () => {
     render(<ContentCard {...defaultProps} />);
-    fireEvent.click(screen.getByTestId('menu-button'));
+    fireEvent.click(screen.getByTestId(TEST_IDS.menuButton));
     fireEvent.click(screen.getByTestId('open-delete'));
     expect(screen.getByTestId('confirm-delete')).toBeInTheDocument();
   });
 
-  it('should call deleteNews when delete is confirmed', async () => {
-    render(<ContentCard {...defaultProps} type="news" />);
-    fireEvent.click(screen.getByTestId('menu-button'));
-    fireEvent.click(screen.getByTestId('open-delete'));
-    await fireEvent.click(screen.getByTestId('confirm-delete'));
-    expect(screen.getByTestId('menu-button')).toBeInTheDocument();
-  });
-
-  it('should call deleteEvent when type is events', async () => {
-    render(<ContentCard {...defaultProps} type="events" />);
-    fireEvent.click(screen.getByTestId('menu-button'));
-    fireEvent.click(screen.getByTestId('open-delete'));
-    await fireEvent.click(screen.getByTestId('confirm-delete'));
-    expect(screen.getByTestId('menu-button')).toBeInTheDocument();
-  });
-
-  it('should call deleteMediaMention when type is media', async () => {
-    render(<ContentCard {...defaultProps} type="media" />);
-    fireEvent.click(screen.getByTestId('menu-button'));
-    fireEvent.click(screen.getByTestId('open-delete'));
-    await fireEvent.click(screen.getByTestId('confirm-delete'));
-    expect(screen.getByTestId('menu-button')).toBeInTheDocument();
+  describe('Deletion flow', () => {
+    it.each([
+      { type: 'news', label: 'deleteNews' },
+      { type: 'events', label: 'deleteEvent' },
+      { type: 'media', label: 'deleteMediaMention' }
+    ])('should handle deletion for $type', async ({ type }) => {
+      render(<ContentCard {...defaultProps} type={type as ContentType} />);
+      fireEvent.click(screen.getByTestId(TEST_IDS.menuButton));
+      fireEvent.click(screen.getByTestId(TEST_IDS.openDelete));
+      await fireEvent.click(screen.getByTestId(TEST_IDS.confirmDelete));
+      expect(screen.getByTestId(TEST_IDS.menuButton)).toBeInTheDocument();
+    });
   });
 });
