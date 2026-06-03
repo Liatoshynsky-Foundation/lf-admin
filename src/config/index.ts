@@ -2,6 +2,7 @@ import {
   StorageConfig,
   StorageType
 } from '../uploads/storage/types';
+import { SEVEN_DAYS_IN_SECONDS } from '~/constants/index';
 
 export const mongoUrl = process.env.MONGO_URL ?? '';
 
@@ -9,6 +10,8 @@ export const getJWT = {
   JWT_ACCESS_TOKEN_SECRET: process.env.JWT_ACCESS_TOKEN_SECRET ?? 'your-access-secret',
   JWT_REFRESH_TOKEN_SECRET: process.env.JWT_REFRESH_TOKEN_SECRET ?? 'your-refresh-secret'
 };
+
+export const logRetentionSeconds = Number.parseInt(process.env.LOG_RETENTION_SECONDS ?? String(SEVEN_DAYS_IN_SECONDS), 10);
 
 export type CloudProvider = 'aws' | 'gcp' | 'azure' | 'cloudflare';
 

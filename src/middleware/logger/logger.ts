@@ -3,8 +3,7 @@ import { createLogger, format, transports } from 'winston';
 import { MongoDB } from 'winston-mongodb';
 import type Transport from 'winston-transport';
 
-import { mongoUrl } from '../../config';
-import { SEVEN_DAYS_IN_SECONDS } from '~/constants';
+import { logRetentionSeconds, mongoUrl } from '../../config';
 
 const { combine, timestamp, printf, errors, json } = format;
 
@@ -38,7 +37,7 @@ if (mongoUrl) {
       level: 'debug',
       db: mongoUrl,
       collection: 'logger',
-      expireAfterSeconds: SEVEN_DAYS_IN_SECONDS,
+      expireAfterSeconds: logRetentionSeconds,
       format: combine(errors({ stack: true }), timestamp(), json())
     })
   );
