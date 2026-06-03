@@ -1,4 +1,4 @@
-import { Box, Collapse, List } from '@mui/material';
+import { Box, Collapse, List, Paper, Popper } from '@mui/material';
 import { CollapseListNavigationProps } from 'app/types/sideNavigation';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
@@ -15,6 +15,7 @@ export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({
 }) => {
   const { element, collapseElements } = elementProps;
   const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const prevOpenNavbarRef = useRef(openNavbar);
 
   const handleClick = () => {
@@ -22,6 +23,20 @@ export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({
     setIsSubmenuOpen(newState);
     if (!openNavbar) {
       onExpansionChange?.(newState);
+    }
+  };
+
+  const handleMouseEnter = (event: React.MouseEvent<HTMLElement>) => {
+    if (!openNavbar) {
+      setAnchorEl(event.currentTarget);
+      setIsSubmenuOpen(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (!openNavbar) {
+      setAnchorEl(null);
+      setIsSubmenuOpen(false);
     }
   };
 
@@ -37,28 +52,66 @@ export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({
   const shouldShowContent = openNavbar || isSubmenuOpen;
 
   const collapseContent = collapseElements?.map((item) => (
-    <LinkElement element={item} open={shouldShowContent} key={item.title} sxItem={{ mb: '0' }} />
+    <LinkElement
+      element={item}
+      open={shouldShowContent}
+      key={item.title}
+      sxItem={[{ mb: '0' }, !openNavbar && styles.subItem]}
+    />
   ));
 
   return (
-    <>
-      <ListElement element={element} open={shouldShowContent} handleClick={handleClick} sxItem={{ mb: '0' }}>
-        <Box
-          sx={{
-            ...SideNavigationStyles.hideInClosed(shouldShowContent),
-            ...styles.listBox
-          }}
-        >
-          {isSubmenuOpen ? (
-            <Image src="/icons/chevronDown.svg" alt="open list" width={20} height={20} />
-          ) : (
-            <Image src="/icons/chevronRight.svg" alt="close list" width={20} height={20} />
-          )}
-        </Box>
+    <Box sx={{ position: 'relative' }} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      <ListElement
+        element={element}
+        open={openNavbar}
+        handleClick={openNavbar ? handleClick : undefined}
+        sxItem={{ mb: '0' }}
+      >
+        {openNavbar && (
+          <Box
+            sx={{
+              ...SideNavigationStyles.hideInClosed(shouldShowContent),
+              ...styles.listBox
+            }}
+          >
+            {isSubmenuOpen ? (
+              <Image src="/icons/chevronDown.svg" alt="open list" width={20} height={20} />
+            ) : (
+              <Image src="/icons/chevronRight.svg" alt="close list" width={20} height={20} />
+            )}
+          </Box>
+        )}
       </ListElement>
-      <Collapse in={isSubmenuOpen} timeout="auto" unmountOnExit sx={styles.collapse}>
-        <List disablePadding>{collapseContent}</List>
-      </Collapse>
-    </>
+
+      {openNavbar ? (
+        <Collapse in={isSubmenuOpen} timeout="auto" unmountOnExit sx={styles.collapse}>
+          <List disablePadding>{collapseContent}</List>
+        </Collapse>
+      ) : null}
+      <Popper
+        open={!openNavbar && isSubmenuOpen}
+        anchorEl={anchorEl}
+        placement="right-start"
+        modifiers={[
+          {
+            name: 'offset',
+            options: {
+              offset: [0, -20]
+            }
+          },
+          { name: 'preventOverflow', options: { boundary: 'viewport', padding: 8 } },
+          {
+            name: 'flip',
+            enabled: false
+          }
+        ]}
+        sx={{ zIndex: 1000 }}
+      >
+        <Paper sx={styles.floatingSubmenu}>
+          <List disablePadding>{collapseContent}</List>
+        </Paper>
+      </Popper>
+    </Box>
   );
 };

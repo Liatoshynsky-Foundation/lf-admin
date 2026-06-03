@@ -1,15 +1,12 @@
-import { Box, Chip, Typography } from '@mui/material';
-import { CircleCheckBig } from 'lucide-react';
+import { Box, Typography } from '@mui/material';
 
 import { formatDate } from '~/lib/utils/formatDate';
+import Badge from '~/shared/components/badge/Badge';
 import contentCardStyles from '~/shared/components/content-card/ContentCard.styles';
-import contentCardBadgeStyles from '~/shared/components/content-card/ContentCardBadge.styles';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 type StatusChipStatus = typeof BaseContentStatuses.Draft | typeof BaseContentStatuses.Published;
 type StatusWithDateStatus = typeof BaseContentStatuses[keyof typeof BaseContentStatuses];
-
-type StatusChipProps = Readonly<{ status: StatusChipStatus }>;
 
 type StatusWithDateProps = Readonly<{
   status: StatusWithDateStatus;
@@ -19,43 +16,6 @@ type StatusWithDateProps = Readonly<{
   dividerColor: string;
 }>;
 
-function StatusChip({ status }: StatusChipProps) {
-  if (status === BaseContentStatuses.Published) {
-    return (
-      <Box
-        sx={{
-          width: '24px',
-          height: '24px',
-          borderRadius: '12px',
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: 'green.600',
-          color: 'white',
-          flexShrink: 0
-        }}
-      >
-        <CircleCheckBig size={14} />
-      </Box>
-    );
-  }
-
-  return (
-    <Chip
-      label="Чернетка"
-      size="small"
-      sx={{
-        backgroundColor: contentCardBadgeStyles.draftBadge.backgroundColor,
-        color: 'black',
-        typography: contentCardBadgeStyles.draftBadge.typography,
-        height: '24px',
-        '& .MuiChip-label': {
-          color: 'black'
-        }
-      }}
-    />
-  );
-}
 
 export function StatusWithDate({
   status,
@@ -95,7 +55,7 @@ export function StatusWithDate({
         minWidth: 0
       }}
     >
-      <StatusChip status={normalizedStatus} />
+      <Badge variant={normalizedStatus}/>
       {statusText && (
         <Typography
           variant="body2"
