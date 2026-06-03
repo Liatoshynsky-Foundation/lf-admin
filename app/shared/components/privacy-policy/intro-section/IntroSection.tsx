@@ -5,6 +5,7 @@ import React from 'react';
 import CollapsibleBlock from '../../design-system/collapsible-block/CollapsibleBlock';
 import { CustomTextField } from '../../design-system/text-field/TextField';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
+import { ensureIds } from '~/lib/utils/ensureIds';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 
@@ -18,22 +19,22 @@ export const IntroSection = () => {
   const { block } = usePageBlock(pageId, blockId);
 
   if (!block) return <Skeleton sx={{ height: '60px' }} />;
-  
+
   const paragraphsKeys = ['trustAndSecurity', 'agreement'] as const;
 
   const onParagraphChange = (val: JSONContent, fieldKey: 'trustAndSecurity' | 'agreement') => {
     setField(pageId, blockId, fieldKey, {
       ...block[fieldKey],
-      [currentLocale]:val
+      [currentLocale]: val
     });
   };
 
-  const paragraphs = paragraphsKeys.map((key) =>
+  const paragraphs = ensureIds(paragraphsKeys.map((key) =>
     ({
       key,
       value: block[key][currentLocale]
     })
-  );
+  ));
 
   if (!paragraphs || paragraphs.length === 0) return null;
 
@@ -43,7 +44,7 @@ export const IntroSection = () => {
         (
           <CustomTextField
             fieldType="formatting"
-            key={i}
+            key={paragraphNode.id}
             title={`Текст ${i + 1} абзацу`}
             label="Текст"
             value={paragraphNode.value}

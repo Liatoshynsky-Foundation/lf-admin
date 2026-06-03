@@ -37,7 +37,6 @@ export const UserRights = () => {
     });
   };
 
-
   return (
     <CollapsibleBlock title="Ваші права">
       <CustomTextField

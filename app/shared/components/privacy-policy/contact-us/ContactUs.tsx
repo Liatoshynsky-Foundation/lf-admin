@@ -5,6 +5,7 @@ import React from 'react';
 import CollapsibleBlock from '../../design-system/collapsible-block/CollapsibleBlock';
 import { CustomTextField } from '../../design-system/text-field/TextField';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
+import { ensureIds } from '~/lib/utils/ensureIds';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 
@@ -29,7 +30,7 @@ export const ContactUs = () => {
     });
   };
 
-  const paragraphs = block.description[currentLocale].content;
+  const paragraphs = ensureIds(block.description[currentLocale].content || []);
   if(!paragraphs || paragraphs.length === 0 ) return null; 
   
   return (
@@ -38,7 +39,7 @@ export const ContactUs = () => {
         (
           <CustomTextField
             fieldType="formatting"
-            key={i}
+            key={paragraphNode.id}
             title={`Текст ${i + 1} абзацу`}
             label="Текст"
             value={paragraphNode}

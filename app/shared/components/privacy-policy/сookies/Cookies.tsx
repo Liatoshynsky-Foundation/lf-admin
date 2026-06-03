@@ -43,7 +43,6 @@ export const Cookies = () => {
     });
   };
 
-
   return (
     <CollapsibleBlock title="Які cookie ми використовуємо">
       <CustomTextField
