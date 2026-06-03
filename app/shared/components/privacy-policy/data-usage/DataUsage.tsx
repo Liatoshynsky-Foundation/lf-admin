@@ -1,9 +1,9 @@
 'use client';
 
-import { Skeleton } from '@mui/material';
+import { Skeleton, Typography } from '@mui/material';
 import { JSONContent } from '@tiptap/react';
 
-import { EditableSectionList } from '../../accordion-blocks/editable-section-list/EditableSectionList';
+import ConfigurableList from '../../configurable-list/ConfigurableList';
 import CollapsibleBlock from '../../design-system/collapsible-block/CollapsibleBlock';
 import { CustomTextField } from '../../design-system/text-field/TextField';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
@@ -25,10 +25,9 @@ export const DataUsage = () => {
 
   const list = ensureIds(block.list);
 
-  const sections = list.map((item) => ({
+  const points = list.map((item) => ({
     id: item.id,
-    title: item[currentLocale],
-    description: item[currentLocale]
+    value: item[currentLocale]
   }));
 
   const handleChangeTitleText = (value: JSONContent) => {
@@ -47,15 +46,30 @@ export const DataUsage = () => {
         onChange={(value) => handleChangeTitleText(value)}
       />
 
-      <EditableSectionList
-        title={block.title[currentLocale]}
-        onTitleChange={() => { }}
-        items={sections}
-        onChangeItem={() => { }}
-        onCreateItem={() => { }}
-        onDeleteItem={() => { }}
-        sectionLabel="Пункти секції:"
-      />
+      {points.length > 0 && (
+        <>
+          <Typography variant="subtitle1" component="h4">
+            Пункти:
+          </Typography>
+          <ConfigurableList
+            items={points}
+            addBtnLabel="Додати пункт"
+            editable
+            onChange={()=>{}}
+            onDelete={()=>{}}
+            onCreate={()=>{}}
+            renderItem={({ item, onChange }) => (
+              <CustomTextField
+                fieldType="formatting"
+                label="Текст пункту"
+                value={item.value}
+                onChange={(value) => onChange({ ...item, value })}
+              />
+            )}
+            separator={false}
+          />
+        </>
+      )}
 
     </CollapsibleBlock>
   );

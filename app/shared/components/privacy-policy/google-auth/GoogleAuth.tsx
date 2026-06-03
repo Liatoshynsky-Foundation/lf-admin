@@ -1,5 +1,3 @@
-'use client';
-
 import { Skeleton, Typography } from '@mui/material';
 import { JSONContent } from '@tiptap/react';
 
@@ -12,12 +10,11 @@ import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 import { ConfigurableListItem } from '~/types/accordionBlocks';
 
-export type CookiesPoint = ConfigurableListItem & { value: JSONContent };
+export type GoogleAuthPoint = ConfigurableListItem & { value: JSONContent };
 
-export const Cookies = () => {
+export const GoogleAuth = () => {
   const pageId = PAGE_IDS.PRIVACY_POLICY;
-  const blockId = BLOCK_IDS.COOKIES;
-
+  const blockId = BLOCK_IDS.GOOGLE_AUTH;
   const { block } = usePageBlock(pageId, blockId);
   const currentLocale = useStore((state) => state.locale);
   const setField = useStore((state) => state.setField);
@@ -25,11 +22,12 @@ export const Cookies = () => {
   if (!block) return <Skeleton sx={{ height: '60px' }} />;
 
   const list = ensureIds(block.list);
-
-  const cookiesPoints = list.map((item) => ({
-    id: item.id,
-    value: item[currentLocale]
-  }));
+  const googleAuthPoints = list.map((item) => (
+    {
+      id: item.id,
+      value: item[currentLocale]
+    }
+  ));
 
   const handleChangeTitleText = (value: JSONContent) => {
     setField(pageId, blockId, 'title', {
@@ -38,8 +36,9 @@ export const Cookies = () => {
     });
   };
 
+
   return (
-    <CollapsibleBlock title="Які cookie ми використовуємо">
+    <CollapsibleBlock title="Авторизація через Google-акаунт">
       <CustomTextField
         fieldType="formatting"
         title="Вступний текст секції"
@@ -47,22 +46,22 @@ export const Cookies = () => {
         onChange={(value) => handleChangeTitleText(value)}
       />
 
-      {cookiesPoints.length > 0 && (
+      {googleAuthPoints.length > 0 && (
         <>
           <Typography variant="subtitle1" component="h4">
-            Текст секції:
+            Пункти:
           </Typography>
-          <ConfigurableList<CookiesPoint>
-            items={cookiesPoints}
+          <ConfigurableList<GoogleAuthPoint>
+            items={googleAuthPoints}
             addBtnLabel="Додати пункт"
             editable
-            onChange={()=>{}}
-            onDelete={()=>{}}
-            onCreate={()=>{}}
+            onChange={() => { }}
+            onDelete={() => { }}
+            onCreate={() => { }}
             renderItem={({ item, onChange }) => (
               <CustomTextField
                 fieldType="formatting"
-                label="Пункт cookies"
+                label="Текст пункту"
                 value={item.value}
                 onChange={(value) => onChange({ ...item, value })}
               />
@@ -71,7 +70,7 @@ export const Cookies = () => {
           />
         </>
       )}
- 
+
       <CustomTextField
         fieldType="formatting"
         title="Додаткова інформація"
