@@ -1,7 +1,8 @@
 'use client';
-import { Box, Skeleton } from '@mui/material';
+import { Box } from '@mui/material';
 
 import CollapsibleBlock from '../../design-system/collapsible-block/CollapsibleBlock';
+import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
 import { QuoteBlock } from '../Liatoshynsky-office/quote-block/QuoteBlock';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { ImagePreviewBlock } from '~/ds-components/photo-block/PhotoBlock';
@@ -21,7 +22,7 @@ export const IntroSection = () => {
   const currentLocale: keyof LocalizedString = useStore((state) => state.locale);
   const setField = useStore((state) => state.setField);
 
-  if (!block) return <Skeleton sx={{ height: '60px' }} />;
+  if (!block) return <EditBlockSkeleton />;
 
   return (
     <CollapsibleBlock title="Вступна секція">

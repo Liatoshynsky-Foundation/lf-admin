@@ -1,9 +1,9 @@
-import { Skeleton } from '@mui/material';
 import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
 import CollapsibleBlock from '../../design-system/collapsible-block/CollapsibleBlock';
 import { CustomTextField } from '../../design-system/text-field/TextField';
+import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { ensureIds } from '~/lib/utils/ensureIds';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
@@ -18,7 +18,7 @@ export const SocialNetworks = () => {
 
   const { block } = usePageBlock(pageId, blockId);
 
-  if( !block ) return <Skeleton sx={{ height: '60px' }} />;
+  if (!block) return <EditBlockSkeleton />;
 
   const onParagraphChange = (index:number, val: JSONContent)=>{
     const currentContentArray = [...block.description[currentLocale].content || []];

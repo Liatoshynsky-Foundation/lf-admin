@@ -1,10 +1,10 @@
 'use client';
 
-import { Skeleton } from '@mui/material';
 import { JSONContent } from '@tiptap/react';
 
 import CollapsibleBlock from '../../design-system/collapsible-block/CollapsibleBlock';
 import { CustomTextField } from '../../design-system/text-field/TextField';
+import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
 import { PointsList } from '../components/points-list/PointsList';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { ensureIds } from '~/lib/utils/ensureIds';
@@ -32,7 +32,7 @@ export const DataUsage = () => {
     blockId 
   });
   
-  if (!block) return <Skeleton sx={{ height: '60px' }} />;
+  if (!block) return <EditBlockSkeleton />;
 
   const handleChangeTitleText = (value: JSONContent) => {
     setField(pageId, blockId, 'title', {
