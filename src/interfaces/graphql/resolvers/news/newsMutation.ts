@@ -21,7 +21,7 @@ export type CreateNewsGQLInput = {
   adminTitle: string;
   title: LocalizedString;
   description: LocalizedString;
-  keywords: LocalizedString;
+  keywords?: LocalizedString;
   allowIndexation: LocalizedBoolean;
   content: LocalizedContent;
   coverImage: LocalizedImage;

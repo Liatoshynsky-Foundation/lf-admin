@@ -57,6 +57,14 @@ export const localizedImageSchema = new mongoose.Schema(
   { _id: false }
 );
 
+export const optionalTranslatedFieldSchema = new mongoose.Schema(
+  {
+    uk: { type: String, required: false, default: '' },
+    en: { type: String, required: false, default: '' }
+  },
+  { _id: false }
+);
+
 export const baseContentSchemaFields = {
   adminTitle: {
     type: String,
@@ -71,8 +79,8 @@ export const baseContentSchemaFields = {
     required: true
   },
   keywords: {
-    type: translatedFieldSchema,
-    required: true
+    type: optionalTranslatedFieldSchema,
+    required: false
   },
   allowIndexation: {
     type: translatedBooleanSchema,
