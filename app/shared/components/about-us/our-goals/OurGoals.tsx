@@ -28,7 +28,6 @@ const OurGoals = () => {
     title: item.title[currentLocale],
     description: item.description[currentLocale]
   }));
-  console.log(goalList);
 
   const handleTitleChange = (value: JSONContent) =>
     setField(pageId, blockId, 'title', { ...block.title, [currentLocale]: value });

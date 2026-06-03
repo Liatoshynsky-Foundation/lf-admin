@@ -7,6 +7,7 @@ import { GoogleAuthBlock } from './blocks/googleAuthBlock';
 import { NewsletterSubscriptionBlock } from './blocks/newsletterSubscription';
 import { SocialNetworksBlock } from './blocks/socialNetworksBlock';
 import { TargetedAdsBlock } from './blocks/targetedAds';
+import { UserRightsBlock } from './blocks/userRights';
 
 export interface BlocksMap {
     DataWeCollect: DataWeCollectBlock;
@@ -17,6 +18,6 @@ export interface BlocksMap {
     TargetedAds: TargetedAdsBlock;
     NewsletterSubscription: NewsletterSubscriptionBlock;
     DataRetention: DataRetentionBlock;
-
+    UserRights: UserRightsBlock;
     ContactUs: ContactUsBlock; 
 }

@@ -12,6 +12,7 @@ import { GoogleAuth } from '~/shared/components/privacy-policy/GoogleAuth/Google
 import { NewsletterSubscription } from '~/shared/components/privacy-policy/NewsletterSubscription/NewsletterSubscription';
 import { SocialNetworks } from '~/shared/components/privacy-policy/SocialNetworks/SocialNetworks';
 import { TargetedAds } from '~/shared/components/privacy-policy/TargetedAds/TargetedAds';
+import { UserRights } from '~/shared/components/privacy-policy/user-rights/UserRights';
 import { usePageEditor } from '~/shared/hooks/use-page-editor/usePageEditor';
 import { useSavePageBlocks } from '~/shared/hooks/use-save-page/UseSavePage';
 import { useStore } from '~/store';
@@ -44,7 +45,7 @@ export default function Page() {
       <TargetedAds />
       <NewsletterSubscription />
       <DataRetention />
-
+      <UserRights />
       <ContactUs />
     </Box>
   );
