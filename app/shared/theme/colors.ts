@@ -384,3 +384,7 @@ export const tooltipColors = {
   defaultText: mainHexPalette.white,
   defaultShadow: 'rgba(0, 0, 0, 0.07)'
 };
+
+export const shadowColors = {
+  popup: 'rgb(78, 80, 97)'
+};

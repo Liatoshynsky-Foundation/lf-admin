@@ -3,7 +3,6 @@ import { LinkElementProps } from 'app/types/sideNavigation';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
-import { styles as SideNavigationStyles } from '../SideNavigation.styles';
 import { styles } from './ListElement.styles';
 
 const isActivePath = (href: string | undefined, pathName: string | null) => {
@@ -27,27 +26,35 @@ export const ListElement: React.FC<LinkElementProps> = ({
 }) => {
   const { title, href, iconSrc } = element;
   const pathName = usePathname();
-  const listItemSx: SxProps<Theme> = Array.isArray(sxItem) ? [styles.listItem, ...sxItem] : [styles.listItem, sxItem];
+  const disabled = element.disabled;
+  const listItemSx: SxProps<Theme> = [
+    styles.listItem,
+    ...(Array.isArray(sxItem) ? sxItem : [sxItem]),
+    disabled && {
+      color: 'grey.500',
+      opacity: 0.6,
+      '&.Mui-disabled': {
+        cursor: 'not-allowed',
+        pointerEvents: 'auto'
+      }
+    }
+  ];
 
   return (
-    <ListItemButton
-      sx={listItemSx}
-      selected={isActivePath(href, pathName)}
-      onClick={handleClick ?? (() => {})}
-    >
+    <ListItemButton sx={listItemSx} selected={isActivePath(href, pathName)} onClick={handleClick} disabled={disabled}>
       {iconSrc && (
         <ListItemIcon sx={styles.listItemIcon}>
           <Image src={`/icons/${iconSrc}.svg`} alt={title} width={24} height={24} />
         </ListItemIcon>
       )}
-      <ListItemText
-        sx={SideNavigationStyles.hideInClosed(open)}
-        slotProps={{
-          primary: styles.listItemText
-        }}
-        primary={title}
-        inset={!iconSrc}
-      />
+      {open && (
+        <ListItemText
+          slotProps={{
+            primary: styles.listItemText
+          }}
+          primary={title}
+        />
+      )}
       {children}
     </ListItemButton>
   );
