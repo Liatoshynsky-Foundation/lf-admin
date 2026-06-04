@@ -32,12 +32,20 @@ export const GoogleAuth = () => {
 
   if (!block) return <EditBlockSkeleton />;
 
-  const handleChangeTitleText = (value: JSONContent) => {
-    setField(pageId, blockId, 'title', {
-      ...block.title,
+  const handleChangeDescriptionText = (value: JSONContent) => {
+    setField(pageId, blockId, 'description', {
+      ...block.description,
       [currentLocale]: value
     });
   };
+
+  const handleChangeNote = (value: JSONContent) => {
+    setField(pageId, blockId, 'note', {
+      ...block.note,
+      [currentLocale]: value
+    });
+  };
+
 
   return (
     <CollapsibleBlock title="Авторизація через Google-акаунт">
@@ -45,7 +53,7 @@ export const GoogleAuth = () => {
         fieldType="formatting"
         title="Вступний текст секції"
         value={block.description[currentLocale]}
-        onChange={(value) => handleChangeTitleText(value)}
+        onChange={handleChangeDescriptionText}
       />
 
       {googleAuthPoints.length > 0 && (
@@ -56,7 +64,7 @@ export const GoogleAuth = () => {
         fieldType="formatting"
         title="Додаткова інформація"
         value={block.note[currentLocale]}
-        onChange={(value) => handleChangeTitleText(value)}
+        onChange={handleChangeNote}
       />
 
     </CollapsibleBlock>

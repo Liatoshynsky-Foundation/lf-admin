@@ -36,12 +36,20 @@ export const Cookies = () => {
 
   if (!block) return <EditBlockSkeleton />;
 
-  const handleChangeTitleText = (value: JSONContent) => {
-    setField(pageId, blockId, 'title', {
-      ...block.title,
+  const handleChangeDescriptionText = (value: JSONContent) => {
+    setField(pageId, blockId, 'description', {
+      ...block.description,
       [currentLocale]: value
     });
   };
+
+  const handleChangeNote = (value: JSONContent) => {
+    setField(pageId, blockId, 'note', {
+      ...block.note,
+      [currentLocale]: value
+    });
+  };
+
 
   return (
     <CollapsibleBlock title="Які cookie ми використовуємо">
@@ -49,7 +57,7 @@ export const Cookies = () => {
         fieldType="formatting"
         title="Вступний текст секції"
         value={block.description[currentLocale]}
-        onChange={(value) => handleChangeTitleText(value)}
+        onChange={handleChangeDescriptionText}
       />
 
       {cookiesPoints.length > 0 && (
@@ -60,7 +68,7 @@ export const Cookies = () => {
         fieldType="formatting"
         title="Додаткова інформація"
         value={block.note[currentLocale]}
-        onChange={(value) => handleChangeTitleText(value)}
+        onChange={handleChangeNote}
       />
 
     </CollapsibleBlock>
