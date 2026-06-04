@@ -37,7 +37,7 @@ export type BaseContentFields = {
       metaTitle?: { uk: string; en: string };
     };
   };
-  keywords: LocalizedString;
+  keywords?: LocalizedString;
   allowIndexation: LocalizedBoolean;
   slug: string;
   coverImage: LocalizedImage;

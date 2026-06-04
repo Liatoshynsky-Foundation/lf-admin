@@ -45,7 +45,7 @@ interface BaseContent {
   adminTitle: String!
   title: LocalizedString!
   description: LocalizedString!
-  keywords: LocalizedString!
+  keywords: LocalizedString
   allowIndexation: LocalizedBoolean!
   slug: String!
   coverImage: LocalizedImage!
