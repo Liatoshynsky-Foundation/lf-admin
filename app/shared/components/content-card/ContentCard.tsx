@@ -1,4 +1,4 @@
-import { Box, Card, CardContent, CardMedia, Typography } from '@mui/material';
+import { Box, Card, CardContent, CardMedia, IconButton, Typography } from '@mui/material';
 import { EllipsisVertical } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -140,27 +140,26 @@ const ContentCard = ({
         <ContentCardBadge type={type} status={status} localizations={localizedKeys}></ContentCardBadge>
         <Box sx={styles.mainInfo}>
           <TooltipCustom title={isTitleTruncated ? titleText : ''}>
-            <Typography
-              ref={titleRef}
-              variant="subtitle1"
-              component="h3"
-              sx={styles.title}
-            >
+            <Typography ref={titleRef} variant="subtitle1" component="h3" sx={styles.title}>
               {titleText}
             </Typography>
           </TooltipCustom>
-          <Box data-testid="menu-button" sx={{ cursor: 'pointer' }} onClick={handleMenuClick}>
+          <IconButton
+            data-testid="menu-button"
+            onClick={handleMenuClick}
+            sx={styles.menuButton}
+            className={anchorEl ? 'active' : ''}
+          >
             <EllipsisVertical size={20} />
-            {anchorEl && (
-              <ContentCardMenu
-                id={id}
-                type={type}
-                anchorEl={anchorEl}
-                onClose={handleMenuClose}
-                setDeleteModalOpen={setDeleteModalOpen}
-              />
-            )}
-          </Box>
+          </IconButton>
+
+          <ContentCardMenu
+            id={id}
+            type={type}
+            anchorEl={anchorEl}
+            onClose={handleMenuClose}
+            setDeleteModalOpen={setDeleteModalOpen}
+          />
         </Box>
         <Typography variant="caption" sx={styles.date}>
           {getStatus(status, createdAt, updatedAt, publishedAt)}
