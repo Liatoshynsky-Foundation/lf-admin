@@ -15,7 +15,7 @@ export const loginAdmin = ({ adminRepository }: { adminRepository: AdminReposito
       if (!admin) throw new LoginError(errors.WRONG_EMAIL);
 
       const valid = await bcrypt.compare(password, admin.password);
-      if (!valid) throw new LoginError(errors.WRONG_PASSWORD);
+      if (!valid) throw new LoginError(errors.WRONG_PASS);
 
       return {
         id: admin.id,

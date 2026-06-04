@@ -3,13 +3,13 @@ import { NextResponse } from 'next/server';
 
 import { REFRESH_TOKEN_COOKIE_NAME } from './src/constants';
 
-const publicRoutes = ['/login', '/forgot-password', '/reset-password'];
+const publicRoutes = new Set(['/login', '/forgot-password', '/reset-password']);
 
 export function middleware(request: NextRequest) {
   const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE_NAME);
   const { pathname } = request.nextUrl;
 
-  if (!refreshToken && !publicRoutes.includes(pathname)) {
+  if (!refreshToken && !publicRoutes.has(pathname)) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 

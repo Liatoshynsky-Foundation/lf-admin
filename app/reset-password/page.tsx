@@ -13,7 +13,7 @@ async function verifyToken(token: string): Promise<boolean> {
   return token === 'valid-token-123';
 }
 
-export default async function ResetPasswordPage({ searchParams }: ResetPasswordPageProps) {
+export default async function ResetPasswordPage({ searchParams }: Readonly<ResetPasswordPageProps>) {
   const params = await searchParams;
   const token = typeof params.token === 'string' ? params.token : '';
   if (!token) {

@@ -14,7 +14,7 @@ export const errors = {
   INVALID_EMAIL_FORMAT: 'Invalid email format',
   EMAIL_TOO_LONG: 'Email must not exceed 254 characters',
   WRONG_EMAIL: 'WRONG_EMAIL',
-  WRONG_PASSWORD: 'WRONG_PASSWORD'
+  WRONG_PASS: 'WRONG_PASSWORD'
 };
 
 export const utilsErrors = {

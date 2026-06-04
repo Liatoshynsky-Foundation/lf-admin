@@ -1,10 +1,14 @@
-import { fireEvent,render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import LoginModal from './LoginModal';
 import { loginErrors } from '~/constants/errors';
 
 jest.mock('next/link', () => {
-  const MockedLink = ({ children }: { children: React.ReactNode }) => <a>{children}</a>;
+  const MockedLink = ({ children, ...props }: { children: React.ReactNode; [key: string]: any }) => (
+    <a href="#" {...props}>
+      {children}
+    </a>
+  );
   MockedLink.displayName = 'MockedLink';
   return MockedLink;
 });

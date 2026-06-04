@@ -29,7 +29,7 @@ const validatePassword = (password: string): string | null => {
 const PASSWORD_HINT =
   'Пароль має містити щонайменше 10 символів, включаючи велику літеру, цифру та спеціальний символ (наприклад, !@#$%). Максимальна довжина — 72 символи.';
 
-export default function ResetPasswordForm({ token: _token }: ResetPasswordFormProps) {
+export default function ResetPasswordForm({ token: _token }: Readonly<ResetPasswordFormProps>) {
   const router = useRouter();
 
   const [password, setPassword] = useState('');

@@ -1,9 +1,8 @@
 import '../globals.css';
 
-import BodyProvider, { metadata as LayoutMetadata } from '~/providers/body-provider/BodyProvider';
+import BodyProvider from '~/providers/body-provider/BodyProvider';
+export { metadata } from '~/providers/body-provider/BodyProvider';
 import { Toaster } from '~/shared/components/toaster/Toaster';
-
-export const metadata = LayoutMetadata;
 
 export default async function ForgotPasswordLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
