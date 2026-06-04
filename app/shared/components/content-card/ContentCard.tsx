@@ -2,7 +2,7 @@ import { Box, Card, CardContent, CardMedia, Typography } from '@mui/material';
 import { EllipsisVertical } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef,useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import DeleteCardModal from '../delete-card-modal/DeleteCardModal';
 import Button from '../design-system/button/Button';
@@ -97,6 +97,20 @@ const ContentCard = ({
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
+
+  useEffect(() => {
+    if (!anchorEl) return;
+
+    const handleScroll = () => {
+      setAnchorEl(null);
+    };
+
+    window.addEventListener('scroll', handleScroll, true);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [anchorEl]);
 
   async function handleDelete() {
     try {
