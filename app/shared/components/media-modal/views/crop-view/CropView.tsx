@@ -2,7 +2,7 @@
 
 import 'react-image-crop/dist/ReactCrop.css';
 import { Box, Typography } from '@mui/material';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactCrop, { PixelCrop } from 'react-image-crop';
 
 import type { CropRendererProps } from '../../MediaModal.renderers';
@@ -10,14 +10,10 @@ import type { CropRendererProps } from '../../MediaModal.renderers';
 const canCreateObjectUrl = () => typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function';
 const canRevokeObjectUrl = () => typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function';
 
-const MOCK_SERVER_DATA = {
-  width: 200,
-  height: 250,
-  x: 50,
-  y: 50
+const INITIAL_CROP_COORDINATES = {
+  x: 0,
+  y: 0
 };
-
-const forCropAngle = Math.min(MOCK_SERVER_DATA.width, MOCK_SERVER_DATA.height) * 0.2;
 
 export function CropView({ selected, crop: stateCrop, resetSeq, onBaseline, onChange }: Readonly<CropRendererProps>) {
   const uploadFile = selected.kind === 'upload' ? selected.file : null;
@@ -25,10 +21,15 @@ export function CropView({ selected, crop: stateCrop, resetSeq, onBaseline, onCh
   const [imgError, setImgError] = useState(false);
 
   const [crop, setCrop] = useState<PixelCrop>();
+  const [imgDimensions, setImgDimensions] = useState<{ width: number; height: number } | null>(null);
+
   const imgRef = useRef<HTMLImageElement>(null);
+
+  const forCropAngle = imgDimensions ? Math.min(imgDimensions.width, imgDimensions.height) * 0.1 : 40;
 
   useEffect(() => {
     setImgError(false);
+    setImgDimensions(null);
   }, [selected.id]);
 
   useEffect(() => {
@@ -64,53 +65,42 @@ export function CropView({ selected, crop: stateCrop, resetSeq, onBaseline, onCh
     }
   }, [selected.id]);
 
+  const applyCrop = useCallback(
+    (rect: { x: number; y: number; width: number; height: number }, img: HTMLImageElement) => {
+      const scaleX = img.width / img.naturalWidth;
+      const scaleY = img.height / img.naturalHeight;
+
+      setCrop({
+        unit: 'px',
+        x: rect.x * scaleX,
+        y: rect.y * scaleY,
+        width: rect.width * scaleX,
+        height: rect.height * scaleY
+      });
+
+      onBaseline({ rect });
+    },
+    [onBaseline]
+  );
+
   useEffect(() => {
     if (resetSeq > 0 && imgRef.current) {
-      const { width, height, naturalWidth, naturalHeight } = imgRef.current;
-      const scaleX = width / naturalWidth;
-      const scaleY = height / naturalHeight;
-
-      const resetPixelCrop: PixelCrop = {
-        unit: 'px',
-        x: MOCK_SERVER_DATA.x * scaleX,
-        y: MOCK_SERVER_DATA.y * scaleY,
-        width: MOCK_SERVER_DATA.width * scaleX,
-        height: MOCK_SERVER_DATA.height * scaleY
-      };
-
-      setCrop(resetPixelCrop);
-
-      onBaseline({
-        rect: {
-          x: MOCK_SERVER_DATA.x,
-          y: MOCK_SERVER_DATA.y,
-          width: MOCK_SERVER_DATA.width,
-          height: MOCK_SERVER_DATA.height
-        }
-      });
+      const img = imgRef.current;
+      applyCrop({ ...INITIAL_CROP_COORDINATES, width: img.naturalWidth, height: img.naturalHeight }, img);
     }
-  }, [resetSeq, onBaseline]);
+  }, [resetSeq, applyCrop]);
 
   const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const { width, height, naturalWidth, naturalHeight } = e.currentTarget;
-    const scaleX = width / naturalWidth;
-    const scaleY = height / naturalHeight;
+    const img = e.currentTarget;
+    setImgDimensions({ width: img.width, height: img.height });
 
-    const sourceRect = stateCrop?.rect ?? MOCK_SERVER_DATA;
-
-    const initialPixelCrop: PixelCrop = {
-      unit: 'px',
-      x: sourceRect.x * scaleX,
-      y: sourceRect.y * scaleY,
-      width: sourceRect.width * scaleX,
-      height: sourceRect.height * scaleY
+    const activeRect = stateCrop?.rect ?? {
+      ...INITIAL_CROP_COORDINATES,
+      width: img.naturalWidth,
+      height: img.naturalHeight
     };
 
-    setCrop(initialPixelCrop);
-
-    onBaseline({
-      rect: sourceRect
-    });
+    applyCrop(activeRect, e.currentTarget);
   };
 
   const handleCropChange = (pixelCrop: PixelCrop) => {
@@ -148,9 +138,7 @@ export function CropView({ selected, crop: stateCrop, resetSeq, onBaseline, onCh
             color: 'text.secondary'
           }}
         >
-          <Typography variant="textMd">
-              Не вдалося завантажити зображення
-          </Typography>
+          <Typography variant="textMd">Не вдалося завантажити зображення</Typography>
           <Typography variant="caption" sx={{ wordBreak: 'break-all', opacity: 0.6 }}>
             {previewSrc}
           </Typography>
@@ -161,11 +149,9 @@ export function CropView({ selected, crop: stateCrop, resetSeq, onBaseline, onCh
     return (
       <Box
         sx={{
-          width: '100%',
           flex: 1,
-          overflowY: 'auto',
-          overflowX: 'hidden',
           display: 'flex',
+          overflow: 'hidden',
           justifyContent: 'center',
           alignItems: 'center'
         }}
@@ -177,8 +163,9 @@ export function CropView({ selected, crop: stateCrop, resetSeq, onBaseline, onCh
           keepSelection
           ruleOfThirds
           style={{
+            display: 'flex',
             maxWidth: '100%',
-            display: 'block'
+            maxHeight: '100%'
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -211,6 +198,11 @@ export function CropView({ selected, crop: stateCrop, resetSeq, onBaseline, onCh
         flexDirection: 'column',
         gap: 2,
         overflow: 'hidden',
+
+        '& .ReactCrop__child-wrapper': {
+          width: imgDimensions ? `${imgDimensions.width}px !important` : 'auto',
+          height: imgDimensions ? `${imgDimensions.height}px !important` : 'auto'
+        },
 
         '& .ReactCrop__crop-selection': {
           animation: 'none !important',
