@@ -41,7 +41,6 @@ export function MediaModalContainer({
         if (reason === 'backdropClick') return;
         onClose();
       }}
-      disableScrollLock
       sx={styles.dialog}
       maxWidth={false}
       data-testid={baseTestId}
