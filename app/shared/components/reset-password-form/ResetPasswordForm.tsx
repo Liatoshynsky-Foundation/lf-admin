@@ -70,7 +70,6 @@ export default function ResetPasswordForm({ token: _token }: Readonly<ResetPassw
     e.preventDefault();
     if (validate()) {
       try {
-        // todo backend
         const responseDataSuccess = true;
 
         if (responseDataSuccess) {

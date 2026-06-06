@@ -4,8 +4,8 @@ import LoginModal from './LoginModal';
 import { loginErrors } from '~/constants/errors';
 
 jest.mock('next/link', () => {
-  const MockedLink = ({ children, ...props }: { children: React.ReactNode; [key: string]: any }) => (
-    <a href="#" {...props}>
+  const MockedLink = ({ children, href, ...props }: { children: React.ReactNode; [key: string]: any }) => (
+    <a href={href || '/'} {...props}>
       {children}
     </a>
   );
