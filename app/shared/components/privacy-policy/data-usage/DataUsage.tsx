@@ -46,7 +46,7 @@ export const DataUsage = () => {
       <CustomTextField
         fieldType="formatting"
         title="Вступний текст секції"
-        value={block.description[currentLocale]}
+        value={block.title[currentLocale]}
         onChange={(value) => handleChangeTitleText(value)}
       />
 

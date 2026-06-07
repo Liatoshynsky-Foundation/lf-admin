@@ -4,13 +4,14 @@ import ConfigurableList from '~/shared/components/configurable-list/Configurable
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 import { ListPoint } from '~/shared/hooks/use-points-list/usePointsList';
 
-
-export const PointsList = ({ points, addPoint, updatePoint, removePoint }: {
+interface PointsListProps {
     points: ListPoint[],
     addPoint: () => ListPoint;
     updatePoint: (newValue: ListPoint) => void;
     removePoint: (id: string) => void;
-}) => {
+}
+
+export const PointsList = ({ points, addPoint, updatePoint, removePoint }: PointsListProps) => {
   return (
     <>
       <Typography variant="subtitle1" component="h4">
