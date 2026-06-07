@@ -1,10 +1,9 @@
 import { Typography } from '@mui/material';
-import { JSONContent } from '@tiptap/react';
 
 import ConfigurableList from '~/shared/components/configurable-list/ConfigurableList';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
+import { ListPoint } from '~/shared/hooks/use-points-list/usePointsList';
 
-type ListPoint = { id: string; value: JSONContent }
 
 export const PointsList = ({ points, addPoint, updatePoint, removePoint }: {
     points: ListPoint[],

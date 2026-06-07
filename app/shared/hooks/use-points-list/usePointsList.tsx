@@ -1,19 +1,25 @@
 import { JSONContent } from '@tiptap/react';
 
 import { LocalizedJSON } from '~/types/common';
+import { BlocksMap } from '~/types/store/pages';
 
-export const usePointsList = ({ list, setField, currentLocale, pageId, blockId }: {
-    list: (LocalizedJSON & {
-        id: string;
-    })[], 
-    setField, 
-    currentLocale: 'uk' | 'en', 
-    pageId: string, 
-    blockId: string
-}) => {
-  const emptyDoc: JSONContent = { type: 'doc', content: [] };
-  
-  const points = list.map((item) => ({
+export type ListPoint = { id: string; value: JSONContent };
+
+type UsePointsListProps<K extends keyof BlocksMap> = {
+  blockId: K,
+  setField: <F extends keyof BlocksMap[K]>(pageId: string, blockId: K, field: F, value: BlocksMap[K][F]) => void,
+  list: (LocalizedJSON & {
+    id: string;
+  })[],
+  currentLocale: 'uk' | 'en',
+  pageId: string,
+}
+
+const emptyDoc: JSONContent = { type: 'doc', content: [] };
+
+export const usePointsList = <K extends keyof BlocksMap>({ list, setField, currentLocale, pageId, blockId }: UsePointsListProps<K>) => {
+
+  const points: ListPoint[] = list.map((item) => ({
     id: item.id,
     value: item[currentLocale]
   }));
@@ -29,10 +35,10 @@ export const usePointsList = ({ list, setField, currentLocale, pageId, blockId }
         [currentLocale]: newP.value
       };
     });
-    setField(pageId, blockId, 'list', updatedFullList);
+    setField(pageId, blockId, 'list' as keyof BlocksMap[K], updatedFullList as BlocksMap[K][keyof BlocksMap[K]]);
   };
 
-  const addPoint = () => {
+  const addPoint = (): ListPoint => {
     const newPoint = {
       id: crypto.randomUUID(),
       value: emptyDoc
@@ -46,9 +52,9 @@ export const usePointsList = ({ list, setField, currentLocale, pageId, blockId }
   };
 
   const updatePoint = (updated: {
-        id: string;
-        value: JSONContent;
-    }) => {
+    id: string;
+    value: JSONContent;
+  }) => {
     updatePoints(points.map((point) => (point.id === updated.id ? updated : point)));
   };
 
