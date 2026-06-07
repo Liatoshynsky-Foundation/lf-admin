@@ -167,6 +167,7 @@ export default function SeoMetadataForm({
             }
           })
         }
+        locale={locale}
       />
       <Typography variant="textMd" sx={styles.ogImageHint}>
         {'Оптимальний розмір: 1200×630 px.'}

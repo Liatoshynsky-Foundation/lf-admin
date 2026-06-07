@@ -147,8 +147,11 @@ export const syncImagesCrops = async (
       const locales: Array<'uk' | 'en'> = ['uk', 'en'];
 
       await Promise.all(
-        locales.map((l) =>
-          ImageCropModel.findOneAndUpdate(
+        locales.map(async (l) => {
+          const localeCrop = getCoverImageCropForLocale(image as unknown as Record<string, unknown>, l);
+          if (!localeCrop) return;
+  
+          await ImageCropModel.findOneAndUpdate(
             {
               pageId: contentId,
               cropId,
@@ -156,18 +159,49 @@ export const syncImagesCrops = async (
             },
             {
               $set: {
-                crop: image.crop,
+                crop: localeCrop,
                 pageId: contentId,
                 cropId,
                 locale: l
               }
             },
             { upsert: true, new: true }
-          )
-        )
+          );
+        })
       );
     }
   }
+
+};
+
+function isCropRect(value: unknown): value is NonNullable<LocalizedImage['crop']> {
+  if (!value || typeof value !== 'object') return false;
+
+  const candidate = value as Record<string, unknown>;
+  return (
+    typeof candidate.x === 'number' &&
+    typeof candidate.y === 'number' &&
+    typeof candidate.width === 'number' &&
+    typeof candidate.height === 'number'
+  );
+}
+
+function getCoverImageCropForLocale(
+  image: Record<string, unknown>,
+  locale: 'uk' | 'en'
+): NonNullable<LocalizedImage['crop']> | null {
+  const localizedCrop = image.localizedCrop;
+  if (localizedCrop && typeof localizedCrop === 'object') {
+    const localized = localizedCrop as Partial<Record<'uk' | 'en', unknown>>;
+    if (isCropRect(localized[locale])) return localized[locale];
+  }
+
+  const crop = image.crop;
+  if (isCropRect(crop)) return crop;
+  if (!crop || typeof crop !== 'object') return null;
+
+  const localizedCropFromField = crop as Partial<Record<'uk' | 'en', unknown>>;
+  return isCropRect(localizedCropFromField[locale]) ? localizedCropFromField[locale] : null;
 };
 
 function normalizeCropId(src: string): string {

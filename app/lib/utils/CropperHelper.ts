@@ -1,6 +1,7 @@
 import { PixelCrop } from 'react-image-crop';
 
 import { cropperErrors } from '~/constants/errors';
+import { CropRect, LocalizedCropRect } from '~/types/common';
 import { Size } from '~/types/cropper';
 
 export default async function getCroppedImg(
@@ -67,3 +68,59 @@ function createImage(url: string): Promise<HTMLImageElement> {
     image.src = url;
   });
 }
+
+export const isCropRect = (crop: unknown): crop is CropRect => {
+  if (!crop || typeof crop !== 'object') return false;
+  const candidate = crop as Record<string, unknown>;
+  return (
+    typeof candidate.x === 'number' &&
+    typeof candidate.y === 'number' &&
+    typeof candidate.width === 'number' &&
+    typeof candidate.height === 'number'
+  );
+};
+
+export const isLocalizedCropRect = (crop: unknown): crop is LocalizedCropRect => {
+  if (!crop || typeof crop !== 'object') return false;
+  const value = crop as Record<string, unknown>;
+  return 'uk' in value || 'en' in value;
+};
+
+export const buildCoverImageCropPayload = (crop: unknown) => {
+  if (!crop) return {};
+
+  if (isLocalizedCropRect(crop)) {
+    const fallbackCrop = (crop as LocalizedCropRect).uk ?? (crop as LocalizedCropRect).en ?? null;
+    if (!fallbackCrop) return {};
+
+    return {
+      crop: fallbackCrop,
+      localizedCrop: crop
+    };
+  }
+
+  if (isCropRect(crop)) {
+    return { crop };
+  }
+
+  return {};
+};
+
+export const normalizeFetchedCrop = (crop: unknown): LocalizedCropRect | null => {
+  if (!crop) return null;
+
+  if (isLocalizedCropRect(crop)) {
+    const localized = crop as LocalizedCropRect;
+    return {
+      uk: localized.uk ?? null,
+      en: localized.en ?? null
+    };
+  }
+
+  if (isCropRect(crop)) {
+    const rect = crop as CropRect;
+    return { uk: rect, en: rect };
+  }
+
+  return null;
+};

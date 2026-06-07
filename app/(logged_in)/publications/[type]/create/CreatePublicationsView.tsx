@@ -17,6 +17,7 @@ import {
   PAGE_TITLES,
   PUBLICATIONS_BASE_PATH
 } from '~/constants/publications';
+import { normalizeFetchedCrop } from '~/lib/utils/CropperHelper';
 import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
 import SeoCollapsibleBlock from '~/shared/components/forms/seo-collapsible-block/SeoCollapsibleBlock';
@@ -160,7 +161,7 @@ export default function CreatePublicationsView({ data, mode = 'create' }: Readon
           showTicketUrl={publicationType === 'events'}
           extraFieldsBeforeKeywords={publicationType === 'media'}
           forceShowErrors={forceShowErrors}
-          crop={crop}
+          crop={normalizeFetchedCrop(crop) ?? undefined}
           onChangeCrop={setCrop}
           value={seoValue}
           onChange={setSeoValue}
