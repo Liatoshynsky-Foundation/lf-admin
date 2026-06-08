@@ -4,18 +4,18 @@ import { LocalizedJSON } from '~/types/common';
 import { BlocksMap } from '~/types/store/pages';
 
 export type ListPoint = { id: string; value: JSONContent };
-
-type UsePointsListProps<K extends keyof BlocksMap> = {
+export type List = (LocalizedJSON & {
+  id: string;
+})[]
+export interface UsePointsListProps<K extends keyof BlocksMap> {
   blockId: K,
   setField: <F extends keyof BlocksMap[K]>(pageId: string, blockId: K, field: F, value: BlocksMap[K][F]) => void,
-  list: (LocalizedJSON & {
-    id: string;
-  })[],
+  list: List,
   currentLocale: 'uk' | 'en',
   pageId: string,
 }
 
-const emptyDoc: JSONContent = { type: 'doc', content: [] };
+export const emptyDoc: JSONContent = { type: 'doc', content: [] };
 
 export const usePointsList = <K extends keyof BlocksMap>({ list, setField, currentLocale, pageId, blockId }: UsePointsListProps<K>) => {
 
