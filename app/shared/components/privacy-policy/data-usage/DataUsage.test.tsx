@@ -49,8 +49,8 @@ jest.mock('../components/points-list/PointsList', () => ({
 
 
 const mockTitleJson = createDocNode('Initial title');
-const mockDescriptionJson = createDocNode('Initital description');
-const mockListPointJson = createDocNode('Initital the first list item');
+const mockDescriptionJson = createDocNode('Initial description');
+const mockListPointJson = createDocNode('Initial the first list item');
 
 const mockBlock: DataUsageBlock = {
   title: { uk: mockTitleJson, en: mockTitleJson },
@@ -96,7 +96,7 @@ describe('DataUsage', () => {
       points: [{ id: '1', text: 'Текст пункту' }]
     });
     runSimulation();
-    screen.debug();
+
     expect(screen.getByTestId('collapsible-block')).toBeInTheDocument();
     expect(screen.getByTestId(`textfield-json-${keys.title}`)).toHaveTextContent(JSON.stringify(mockTitleJson));
     expect(screen.getByTestId('points-count')).toHaveTextContent('1');

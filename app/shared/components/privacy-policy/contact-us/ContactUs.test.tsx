@@ -49,7 +49,6 @@ describe('ContactUs', () => {
 
   it('should render structural layout boundaries and confirm deep initial JSON content payloads inside the DOM', () => {
     runSimulation();
-    screen.debug();
     expect(screen.getByTestId('collapsible-block')).toBeInTheDocument();
     expect(screen.getByTestId(`textfield-json-${keys.descriptionParagraph}`)).toHaveTextContent(JSON.stringify(createParagraphNode('Initial description', 'uuid-1')));
   });
