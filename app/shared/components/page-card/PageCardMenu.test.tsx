@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
 import PageCardMenu from './PageCardMenu';
 
@@ -15,10 +15,9 @@ describe('PageCardMenu', () => {
     id: '1',
     anchorEl: document.createElement('div'),
     onClose: jest.fn(),
-    slug: 'test-slug'
+    slug: 'test-slug',
+    editSeoHref: '/main-page'
   };
-
-  const testUrl = '/main-page';
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -31,9 +30,7 @@ describe('PageCardMenu', () => {
 
   it('should navigate to SEO page', () => {
     render(<PageCardMenu {...defaultProps} />);
-
-    fireEvent.click(screen.getByText('Редагувати SEO'));
-
-    expect(pushMock).toHaveBeenCalledWith(testUrl);
+    const menuItem = screen.getByText('Редагувати SEO');
+    expect(menuItem.closest('a')).toHaveAttribute('href', defaultProps.editSeoHref);
   });
 });

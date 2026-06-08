@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
 
 import PageCard from './PageCard';
 
@@ -6,10 +7,14 @@ jest.mock('~/lib/utils/formatDate', () => ({
   formatDate: (date: string) => `formatted-${date}`
 }));
 
-jest.mock('./PageCardMenu', () => ({
-  __esModule: true,
-  default: () => <div data-testid="page-card-menu" />
-}));
+jest.mock('./PageCardMenu', () => {
+  return {
+    __esModule: true,
+    default: React.forwardRef<HTMLDivElement, any>(function PageCardMenuMock(_props, ref) {
+      return <div ref={ref} data-testid="page-card-menu" />;
+    })
+  };
+});
 
 describe('PageCard Component', () => {
   const mockProps = {
@@ -28,6 +33,8 @@ describe('PageCard Component', () => {
     },
     status: 'draft',
     updatedAt: '2025-02-01',
+    editHref: '/edit-page',
+    editSeoHref: '/edit-page-seo',
     onClick: jest.fn()
   };
 
@@ -66,7 +73,7 @@ describe('PageCard Component', () => {
   it('reverts image source to secure fallback layout on loading issue', () => {
     render(
       <PageCard
-        title={{ uk: 'Тест' }}
+        {...mockProps}
         coverImage={{
           src: '/broken-link.jpg',
           alt: { uk: 'Broken blueprint', en: 'Broken blueprint ENG' }

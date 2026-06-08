@@ -1,6 +1,5 @@
-import { alpha, SxProps, Theme } from '@mui/material';
+import { SxProps, Theme } from '@mui/material';
 
-import { mainHexPalette as colors } from '~/shared/theme/colors';
 
 const styles: Record<string, SxProps<Theme>> = {
   card: {
@@ -13,11 +12,13 @@ const styles: Record<string, SxProps<Theme>> = {
     overflow: 'hidden',
     border: '1px solid',
     borderColor: 'blue.200',
-    boxShadow: `0px 1px 4px ${alpha(colors.black, 0.08)}`
+    boxShadow: 0
   },
 
   imageContainer: {
-    position: 'relative'
+    width: '100%',
+    height: '148px',
+    overflow: 'hidden',
   },
 
   cardContent: {

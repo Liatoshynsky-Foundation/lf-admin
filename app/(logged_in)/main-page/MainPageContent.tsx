@@ -29,7 +29,8 @@ const items = [
       en: 'About us'
     },
     updatedAt: '2025-09-11',
-    editHref: '/about-us'
+    editHref: '/about-us',
+    editSeoHref: '/about-us'
   }
 ];
 
@@ -47,6 +48,7 @@ export function MainPagesContent({ activeTab }: MainPagesContentProps) {
                 title={item.titleData}
                 updatedAt={item.updatedAt}
                 editHref={item.editHref}
+                editSeoHref={item.editSeoHref}
               />
             </Box>
           ))}

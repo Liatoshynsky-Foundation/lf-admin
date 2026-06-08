@@ -1,9 +1,10 @@
-import { Box, Card, CardContent, CardMedia, Typography } from '@mui/material';
+import { Box, Card, CardContent, IconButton, Typography } from '@mui/material';
 import { EllipsisVertical } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import Button from '../design-system/button/Button';
+import ImageWithFallback from './ImageWithFallback';
 import styles from './PageCard.styles';
 import PageCardMenu from './PageCardMenu';
 import { formatDate } from '~/lib/utils/formatDate';
@@ -23,26 +24,16 @@ interface PageCardProps {
   coverImage: PageCardImage;
   title: Partial<LocalizedString>;
   updatedAt?: string;
-  editHref?: string;
+  editHref: string;
+  editSeoHref: string;
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
-const PageCard = ({ coverImage, title, updatedAt, editHref, onClick }: PageCardProps) => {
-  const [imageSrc, setImageSrc] = useState(coverImage.src || FALLBACK_IMAGE_SRC);
-
+const PageCard = ({ coverImage, title, updatedAt, editHref, editSeoHref, onClick }: PageCardProps) => {
   const titleText = title.uk || title.en || '';
   const altText = coverImage.alt.uk || coverImage.alt.en || titleText;
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  useEffect(() => {
-    setImageSrc(coverImage.src || FALLBACK_IMAGE_SRC);
-  }, [coverImage.src]);
-
-  const handleImageError = () => {
-    if (imageSrc !== FALLBACK_IMAGE_SRC) {
-      setImageSrc(FALLBACK_IMAGE_SRC);
-    }
-  };
 
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(anchorEl ? null : event.currentTarget);
@@ -55,7 +46,7 @@ const PageCard = ({ coverImage, title, updatedAt, editHref, onClick }: PageCardP
   return (
     <Card sx={styles.card}>
       <Box sx={styles.imageContainer}>
-        <CardMedia component="img" height="180" image={imageSrc} alt={altText} onError={handleImageError} />
+        <ImageWithFallback key={coverImage.src} src={coverImage.src} fallbackSrc={FALLBACK_IMAGE_SRC} alt={altText} />
       </Box>
 
       <CardContent sx={styles.cardContent}>
@@ -68,10 +59,11 @@ const PageCard = ({ coverImage, title, updatedAt, editHref, onClick }: PageCardP
               Змінено {updatedAt ? formatDate(updatedAt) : ''}
             </Typography>
           </Box>
-          <Box data-testid="menu-button" sx={{ cursor: 'pointer' }} onClick={handleMenuClick}>
+
+          <IconButton data-testid="menu-button" onClick={handleMenuClick}>
             <EllipsisVertical size={20} />
-            {anchorEl && <PageCardMenu anchorEl={anchorEl} onClose={handleMenuClose} />}
-          </Box>
+            {anchorEl && <PageCardMenu anchorEl={anchorEl} onClose={handleMenuClose} editSeoHref={editSeoHref} />}
+          </IconButton>
         </Box>
 
         <Button
