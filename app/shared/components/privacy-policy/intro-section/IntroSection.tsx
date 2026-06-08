@@ -8,6 +8,7 @@ import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { ensureIds } from '~/lib/utils/ensureIds';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
+import { IntroSectionBlock } from '~/types/store/pages/privacy-policy';
 
 export const IntroSection = () => {
   const pageId = PAGE_IDS.PRIVACY_POLICY;
@@ -23,10 +24,13 @@ export const IntroSection = () => {
   const paragraphsKeys = ['trustAndSecurity', 'agreement'] as const;
 
   const onParagraphChange = (val: JSONContent, fieldKey: 'trustAndSecurity' | 'agreement') => {
-    setField(pageId, blockId, fieldKey, {
+
+    const newDescription: IntroSectionBlock[typeof fieldKey] = {
       ...block[fieldKey],
       [currentLocale]: val
-    });
+    };
+
+    setField(pageId, blockId, fieldKey, newDescription);
   };
 
   const paragraphs = ensureIds(paragraphsKeys.map((key) =>

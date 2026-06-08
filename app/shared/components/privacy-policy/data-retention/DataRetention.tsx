@@ -8,34 +8,37 @@ import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { ensureIds } from '~/lib/utils/ensureIds';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
+import { DataRetentionBlock } from '~/types/store/pages/privacy-policy';
 
 export const DataRetention = () => {
   const pageId = PAGE_IDS.PRIVACY_POLICY;
   const blockId = BLOCK_IDS.DATA_RETENTION;
 
-  const setField = useStore((value)=> value.setField);
-  const currentLocale = useStore((value)=> value.locale);
+  const setField = useStore((value) => value.setField);
+  const currentLocale = useStore((value) => value.locale);
 
   const { block } = usePageBlock(pageId, blockId);
 
   if (!block) return <EditBlockSkeleton />;
 
-  const onParagraphChange = (index:number, val: JSONContent)=>{
+  const onParagraphChange = (index: number, val: JSONContent) => {
     const currentContentArray = [...block.description[currentLocale].content || []];
     currentContentArray[index] = val;
-   
-    setField(pageId, blockId, 'description', {
+
+    const newDescription: DataRetentionBlock['description'] = {
       ...block.description,
       [currentLocale]: currentContentArray
-    });
+    };
+    
+    setField(pageId, blockId, 'description', newDescription);
   };
 
   const paragraphs = ensureIds(block.description[currentLocale].content || []);
-  if(!paragraphs || paragraphs.length === 0 ) return null; 
-  
+  if (!paragraphs || paragraphs.length === 0) return null;
+
   return (
     <CollapsibleBlock title="Як ми зберігаємо ваші дані">
-      {paragraphs.map((paragraphNode, i) => 
+      {paragraphs.map((paragraphNode, i) =>
         (
           <CustomTextField
             fieldType="formatting"

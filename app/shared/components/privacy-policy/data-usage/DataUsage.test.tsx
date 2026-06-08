@@ -35,11 +35,11 @@ jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
 jest.mock('~/ds-components/text-field/TextField');
 
 interface MockPoinstsListProps<T> {
-    points: T[],
-    addPoint: () => T;
+  points: T[],
+  addPoint: () => T;
 }
 jest.mock('../components/points-list/PointsList', () => ({
-  PointsList: <T extends { readonly id: string; readonly value: JSONContent }>({ addPoint, points}: MockPoinstsListProps<T>) => (
+  PointsList: <T extends { readonly id: string; readonly value: JSONContent }>({ addPoint, points }: MockPoinstsListProps<T>) => (
     <div data-testid="points-list">
       <button data-testid="trigger-add-point" onClick={addPoint}>Add</button>
       <span data-testid="points-count">{points.length}</span>
@@ -55,7 +55,7 @@ const mockListPointJson = createDocNode('Initial the first list item');
 const mockBlock: DataUsageBlock = {
   title: { uk: mockTitleJson, en: mockTitleJson },
   description: { uk: mockDescriptionJson, en: mockDescriptionJson },
-  list: [{ uk: mockListPointJson, en: mockListPointJson }],
+  list: [{ id: '1', uk: mockListPointJson, en: mockListPointJson }],
 };
 
 const keys = {

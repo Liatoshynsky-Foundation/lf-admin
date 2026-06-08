@@ -8,6 +8,7 @@ import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { ensureIds } from '~/lib/utils/ensureIds';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
+import { TargetedAdsBlock } from '~/types/store/pages/privacy-policy';
 
 export const TargetedAds = () => {
   const pageId = PAGE_IDS.PRIVACY_POLICY;
@@ -24,10 +25,12 @@ export const TargetedAds = () => {
     const currentContentArray = [...block.description[currentLocale].content || []];
     currentContentArray[index] = val;
 
-    setField(pageId, blockId, 'description', {
+    const newParagraph: TargetedAdsBlock['description'] = {
       ...block.description,
       [currentLocale]: currentContentArray
-    });
+    };
+    
+    setField(pageId, blockId, 'description', newParagraph);
   };
 
   const paragraphs = ensureIds(block.description[currentLocale].content || []);

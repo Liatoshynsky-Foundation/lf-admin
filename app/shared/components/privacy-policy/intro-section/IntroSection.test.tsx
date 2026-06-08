@@ -12,9 +12,12 @@ jest.mock('~/store', () => ({
   useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock }) => unknown) =>
     selector({ locale: 'uk', setField: setFieldMock })
 }));
+
 beforeAll(() => {
-  crypto.randomUUID = jest.fn(() => 'uuid-1') as typeof crypto.randomUUID;
+  let counter = 0;
+  crypto.randomUUID = jest.fn(() => `uuid-${++counter}`) as typeof crypto.randomUUID;
 });
+
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
 jest.mock('~/ds-components/text-field/TextField');
 
