@@ -90,7 +90,7 @@ export const buildCoverImageCropPayload = (crop: unknown) => {
   if (!crop) return {};
 
   if (isLocalizedCropRect(crop)) {
-    const fallbackCrop = (crop as LocalizedCropRect).uk ?? (crop as LocalizedCropRect).en ?? null;
+    const fallbackCrop = crop.uk ?? crop.en ?? null;
     if (!fallbackCrop) return {};
 
     return {
@@ -110,7 +110,7 @@ export const normalizeFetchedCrop = (crop: unknown): LocalizedCropRect | null =>
   if (!crop) return null;
 
   if (isLocalizedCropRect(crop)) {
-    const localized = crop as LocalizedCropRect;
+    const localized = crop;
     return {
       uk: localized.uk ?? null,
       en: localized.en ?? null
@@ -118,7 +118,7 @@ export const normalizeFetchedCrop = (crop: unknown): LocalizedCropRect | null =>
   }
 
   if (isCropRect(crop)) {
-    const rect = crop as CropRect;
+    const rect = crop;
     return { uk: rect, en: rect };
   }
 

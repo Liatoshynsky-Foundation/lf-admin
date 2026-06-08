@@ -148,7 +148,7 @@ export const syncImagesCrops = async (
 
       await Promise.all(
         locales.map(async (l) => {
-          const localeCrop = getCoverImageCropForLocale(image as unknown as Record<string, unknown>, l);
+          const localeCrop = getCoverImageCropForLocale(image, l);
           if (!localeCrop) return;
   
           await ImageCropModel.findOneAndUpdate(
