@@ -13,17 +13,17 @@ export const NewsletterSubscription = () => {
   const pageId = PAGE_IDS.PRIVACY_POLICY;
   const blockId = BLOCK_IDS.NEWSLETTER_SUBSCRIPTION;
 
-  const setField = useStore((value)=> value.setField);
-  const currentLocale = useStore((value)=> value.locale);
+  const setField = useStore((value) => value.setField);
+  const currentLocale = useStore((value) => value.locale);
 
   const { block } = usePageBlock(pageId, blockId);
 
   if (!block) return <EditBlockSkeleton />;
 
-  const onParagraphChange = (index:number, val: JSONContent)=>{
+  const onParagraphChange = (index: number, val: JSONContent) => {
     const currentContentArray = [...block.description[currentLocale].content || []];
     currentContentArray[index] = val;
-    
+
     setField(pageId, blockId, 'description', {
       ...block.description,
       [currentLocale]: currentContentArray
@@ -31,11 +31,11 @@ export const NewsletterSubscription = () => {
   };
 
   const paragraphs = ensureIds(block.description[currentLocale].content || []);
-  if(!paragraphs || paragraphs.length === 0 ) return null; 
-  
+  if (!paragraphs || paragraphs.length === 0) return null;
+
   return (
     <CollapsibleBlock title="Підписка на новини та відмова від розсилки">
-      {paragraphs.map((paragraphNode, i) => 
+      {paragraphs.map((paragraphNode, i) =>
         (
           <CustomTextField
             fieldType="formatting"

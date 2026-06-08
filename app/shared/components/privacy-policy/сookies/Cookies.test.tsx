@@ -56,7 +56,7 @@ const mockNoteJson = createDocNode('Initial note');
 const mockBlock: CookiesBlock = {
   title: { uk: mockTitleJson, en: mockTitleJson },
   description: { uk: mockDescriptionJson, en: mockDescriptionJson },
-  list: [{ uk: mockListPointJson, en: mockListPointJson }],
+  list: [{ id: '1', uk: mockListPointJson, en: mockListPointJson }],
   note: { uk: mockNoteJson, en: mockNoteJson },
 };
 

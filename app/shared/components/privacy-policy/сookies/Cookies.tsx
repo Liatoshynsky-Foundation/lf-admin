@@ -11,9 +11,8 @@ import { ensureIds } from '~/lib/utils/ensureIds';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { usePointsList } from '~/shared/hooks/use-points-list/usePointsList';
 import { useStore } from '~/store';
-import { ConfigurableListItem } from '~/types/accordionBlocks';
+import { CookiesItemWithId } from '~/types/store/pages/privacy-policy';
 
-export type CookiesPoint = ConfigurableListItem & { value: JSONContent };
 
 export const Cookies = () => {
   const pageId = PAGE_IDS.PRIVACY_POLICY;
@@ -24,9 +23,9 @@ export const Cookies = () => {
   const setField = useStore((state) => state.setField);
 
   const rawList = block?.list || [];
-  const list = ensureIds(rawList);
+  const list: CookiesItemWithId[] = ensureIds(rawList);
   
-  const { addPoint, removePoint, updatePoint, points:cookiesPoints } = usePointsList({ 
+  const { addPoint, removePoint, updatePoint, points } = usePointsList({ 
     list, 
     setField, 
     currentLocale, 
@@ -60,8 +59,8 @@ export const Cookies = () => {
         onChange={handleChangeDescriptionText}
       />
 
-      {cookiesPoints.length > 0 && (
-        <PointsList points={cookiesPoints} addPoint={addPoint} removePoint={removePoint} updatePoint={updatePoint} />
+      {points.length > 0 && (
+        <PointsList points={points} addPoint={addPoint} removePoint={removePoint} updatePoint={updatePoint} />
       )}
 
       <CustomTextField

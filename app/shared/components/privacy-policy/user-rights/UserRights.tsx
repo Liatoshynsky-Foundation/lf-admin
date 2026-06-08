@@ -9,6 +9,7 @@ import { ensureIds } from '~/lib/utils/ensureIds';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { usePointsList } from '~/shared/hooks/use-points-list/usePointsList';
 import { useStore } from '~/store';
+import { UserRightsItemWithId } from '~/types/store/pages/privacy-policy';
 
 export const UserRights = () => {
   const pageId = PAGE_IDS.PRIVACY_POLICY;
@@ -18,7 +19,7 @@ export const UserRights = () => {
   const setField = useStore((value)=>value.setField);
 
   const rawList = block?.list || [];
-  const list = ensureIds(rawList);
+  const list: UserRightsItemWithId[] = ensureIds(rawList);
   
   const { addPoint, removePoint, updatePoint, points } = usePointsList({ 
     list, 

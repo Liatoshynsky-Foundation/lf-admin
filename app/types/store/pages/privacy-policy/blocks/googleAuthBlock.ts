@@ -1,17 +1,12 @@
-import { LocalizedJSON, ProseDoc } from '~/types/common';
-
-export type GoogleAuthItem = {
-    uk: ProseDoc; 
-    en: ProseDoc;
-}
+import { LocalizedJSON } from '~/types/common';
 
 export type GoogleAuthItemWithId = {
     id: string; 
-} & GoogleAuthItem
+} & LocalizedJSON;
 
 export type GoogleAuthBlock = {
     title: LocalizedJSON; 
     description: LocalizedJSON; 
-    list: LocalizedJSON[];
+    list: GoogleAuthItemWithId[];
     note: LocalizedJSON;
 }

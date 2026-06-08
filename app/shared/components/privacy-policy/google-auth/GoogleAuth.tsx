@@ -10,6 +10,7 @@ import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { usePointsList } from '~/shared/hooks/use-points-list/usePointsList';
 import { useStore } from '~/store';
 import { ConfigurableListItem } from '~/types/accordionBlocks';
+import { GoogleAuthItemWithId } from '~/types/store/pages/privacy-policy';
 
 export type GoogleAuthPoint = ConfigurableListItem & { value: JSONContent };
 
@@ -19,8 +20,9 @@ export const GoogleAuth = () => {
   const { block } = usePageBlock(pageId, blockId);
   const currentLocale = useStore((state) => state.locale);
   const setField = useStore((state) => state.setField);
+
   const rawList = block?.list || [];
-  const list = ensureIds(rawList);
+  const list: GoogleAuthItemWithId[] = ensureIds(rawList);
   
   const { addPoint, removePoint, updatePoint, points: googleAuthPoints } = usePointsList({ 
     list, 

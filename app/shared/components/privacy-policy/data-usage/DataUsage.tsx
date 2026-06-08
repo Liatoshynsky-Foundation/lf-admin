@@ -11,6 +11,7 @@ import { ensureIds } from '~/lib/utils/ensureIds';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { usePointsList } from '~/shared/hooks/use-points-list/usePointsList';
 import { useStore } from '~/store';
+import { DataUsageItemWithId } from '~/types/store/pages/privacy-policy';
 
 
 export const DataUsage = () => {
@@ -22,7 +23,7 @@ export const DataUsage = () => {
   const setField = useStore((state) => state.setField);
 
   const rawList = block?.list || [];
-  const list = ensureIds(rawList);
+  const list: DataUsageItemWithId[] = ensureIds(rawList);
 
   const { addPoint, removePoint, updatePoint, points } = usePointsList({ 
     list, 
