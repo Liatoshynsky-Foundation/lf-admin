@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import { createDocNode } from '../../about-us/__mocks__/utils';
 import { IntroSection } from './IntroSection';
+import { createDocNode } from '~/__mocks__/utils';
 
 const usePageBlockMock = jest.fn();
 const setFieldMock = jest.fn();

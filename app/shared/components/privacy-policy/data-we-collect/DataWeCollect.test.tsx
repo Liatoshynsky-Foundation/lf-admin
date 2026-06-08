@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { createDocNode } from '../../about-us/__mocks__/utils';
 import { DataWeCollect } from './DataWeCollect';
+import { createDocNode } from '~/__mocks__/utils';
 import { DataWeCollectBlock } from '~/types/store/pages/privacy-policy';
 
 const usePageBlockMock = jest.fn();

@@ -2,8 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
-import { createDocNode } from '../__mocks__/utils';
 import OurMission from './OurMission';
+import { createDocNode } from '~/__mocks__/utils';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { MissionListItemWithId } from '~/types/store/pages/about-us/blocks/missionBlock';
 

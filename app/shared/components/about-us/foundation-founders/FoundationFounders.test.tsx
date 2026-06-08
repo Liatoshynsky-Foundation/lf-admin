@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { createDocNode } from '../__mocks__/utils';
 import { FoundationFounders } from './FoundationFounders';
+import { createDocNode } from '~/__mocks__/utils';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { TeamMemberWithId } from '~/types/store/pages/about-us/blocks/foundationFounderBlock';
 

@@ -1,8 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import { createDocNode } from '../../about-us/__mocks__/utils';
-import { createParagraphNode } from '../__mocks__/utils';
 import { TargetedAds } from './TargetedAds';
+import { createDocNode,createParagraphNode } from '~/__mocks__/utils';
 
 const usePageBlockMock = jest.fn();
 const setFieldMock = jest.fn();

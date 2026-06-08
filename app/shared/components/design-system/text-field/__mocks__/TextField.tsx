@@ -1,7 +1,7 @@
 import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
-import { createDocNode } from '~/shared/components/about-us/__mocks__/utils';
+import { createDocNode } from '~/__mocks__/utils';
 
 export interface MockTextFieldProps {
   readonly title?: string;

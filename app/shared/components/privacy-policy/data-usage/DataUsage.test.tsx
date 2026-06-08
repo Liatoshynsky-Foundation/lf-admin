@@ -2,8 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
-import { createDocNode } from '../../about-us/__mocks__/utils';
 import { DataUsage } from './DataUsage';
+import { createDocNode } from '~/__mocks__/utils';
 import { usePointsList } from '~/shared/hooks/use-points-list/usePointsList';
 import { DataUsageBlock } from '~/types/store/pages/privacy-policy';
 

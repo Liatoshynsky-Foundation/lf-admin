@@ -2,8 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
-import { createDocNode } from '../../about-us/__mocks__/utils';
 import { GoogleAuth } from './GoogleAuth';
+import { createDocNode } from '~/__mocks__/utils';
 import { usePointsList } from '~/shared/hooks/use-points-list/usePointsList';
 import { GoogleAuthBlock } from '~/types/store/pages/privacy-policy';
 
@@ -62,7 +62,7 @@ const mockBlock: GoogleAuthBlock = {
 
 const keys = {
   listItem: 'Текст пункту',
-  desription: 'Вступний текст секції',
+  description: 'Вступний текст секції',
   note: 'Додаткова інформація'
 };
 
@@ -101,7 +101,7 @@ describe('GoogleAuth', () => {
     runSimulation();
 
     expect(screen.getByTestId('collapsible-block')).toBeInTheDocument();
-    expect(screen.getByTestId(`textfield-json-${keys.desription}`)).toHaveTextContent(JSON.stringify(mockDescriptionJson));
+    expect(screen.getByTestId(`textfield-json-${keys.description}`)).toHaveTextContent(JSON.stringify(mockDescriptionJson));
     expect(screen.getByTestId('points-count')).toHaveTextContent('1');
     expect(screen.getByTestId(`textfield-json-${keys.note}`)).toHaveTextContent(JSON.stringify(mockNoteJson));
   });
