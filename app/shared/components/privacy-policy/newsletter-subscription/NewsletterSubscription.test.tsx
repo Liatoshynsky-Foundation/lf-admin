@@ -32,7 +32,8 @@ const keys = {
   descriptionParagraph: 'Текст 1 абзацу',
 };
 
-const runSimulation = (testidToClick?: string) => {
+const runSimulation = (blockData: unknown = mockBlock, testidToClick?: string) => {
+  usePageBlockMock.mockReturnValue({ block: blockData });
   render(<NewsletterSubscription />);
 
   if (testidToClick) {
@@ -52,6 +53,11 @@ describe('NewsletterSubscription', () => {
 
     expect(screen.getByTestId('collapsible-block')).toBeInTheDocument();
     expect(screen.getByTestId(`textfield-json-${keys.descriptionParagraph}`)).toHaveTextContent(JSON.stringify(createParagraphNode('Initial description', 'uuid-1')));
+  });
+  it('should render skeleton when no block exists', () => {
+    runSimulation(null);
+    expect(screen.queryByTestId('collapsible')).not.toBeInTheDocument();
+    expect(document.querySelector('.MuiSkeleton-root')).toBeInTheDocument();
   });
 });
 

@@ -17,9 +17,6 @@ jest.mock('~/store', () => ({
     selector({ locale: 'uk', setField: setFieldMock })
 }));
 
-jest.mock('../../edit-block-skeleton/EditBlockSkeleton', () => ({
-  EditBlockSkeleton: () => <div data-testid="skeleton">Loading...</div>
-}));
 
 interface MockConfigurableListProps<T> {
     readonly items: readonly T[];
@@ -85,7 +82,8 @@ const keys = {
   note: 'Додаткова інформація',
 };
 
-const runSimulation = (testidToClick?: string) => {
+const runSimulation = (blockData: unknown = mockBlock, testidToClick?: string) => {
+  usePageBlockMock.mockReturnValue({ block: blockData });
   render(<DataWeCollect />);
 
   if (testidToClick) {
@@ -113,6 +111,12 @@ describe('DataWeCollect', () => {
     expect(screen.getByTestId(`textfield-json-${keys.listItem}`)).toHaveTextContent(JSON.stringify(mockListItem1));
     
     expect(screen.getByTestId(`textfield-json-${keys.note}`)).toHaveTextContent(JSON.stringify(mockNoteJson));
+  });
+
+  it('should render skeleton when no block exists', () => {
+    runSimulation(null);
+    expect(screen.queryByTestId('collapsible')).not.toBeInTheDocument();
+    expect(document.querySelector('.MuiSkeleton-root')).toBeInTheDocument();
   });
 });
 

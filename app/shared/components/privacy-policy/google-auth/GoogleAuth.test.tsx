@@ -26,9 +26,6 @@ jest.mock('~/shared/hooks/use-points-list/usePointsList', () => ({
   usePointsList: jest.fn()
 }));
 
-jest.mock('../../edit-block-skeleton/EditBlockSkeleton', () => ({
-  EditBlockSkeleton: () => <div data-testid="skeleton">Loading...</div>
-}));
 
 
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
@@ -66,7 +63,8 @@ const keys = {
   note: 'Додаткова інформація'
 };
 
-const runSimulation = (testidToClick?: string) => {
+const runSimulation = (blockData: unknown = mockBlock, testidToClick?: string) => {
+  usePageBlockMock.mockReturnValue({ block: blockData });
   render(<GoogleAuth />);
 
   if (testidToClick) {
@@ -104,6 +102,12 @@ describe('GoogleAuth', () => {
     expect(screen.getByTestId(`textfield-json-${keys.description}`)).toHaveTextContent(JSON.stringify(mockDescriptionJson));
     expect(screen.getByTestId('points-count')).toHaveTextContent('1');
     expect(screen.getByTestId(`textfield-json-${keys.note}`)).toHaveTextContent(JSON.stringify(mockNoteJson));
+  });
+
+  it('should render skeleton when no block exists', () => {
+    runSimulation(null);
+    expect(screen.queryByTestId('collapsible')).not.toBeInTheDocument();
+    expect(document.querySelector('.MuiSkeleton-root')).toBeInTheDocument();
   });
 });
 

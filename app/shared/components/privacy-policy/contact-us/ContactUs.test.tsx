@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { ContactUs } from './ContactUs';
 import { createDocNode, createParagraphNode } from '~/__mocks__/utils';
 
-const usePageBlockMock = jest.fn();
+export const usePageBlockMock = jest.fn();
 const setFieldMock = jest.fn();
 jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: () => usePageBlockMock()
@@ -22,7 +22,7 @@ const mockTitleJson = createDocNode('Initial title');
 const mockDescriptionJson = createDocNode('Initial description');
 
 
-const mockBlock = {
+export const mockBlock = {
   title: { uk: mockTitleJson, en: mockTitleJson },
   description: { uk: mockDescriptionJson, en: mockDescriptionJson },
 };
@@ -31,7 +31,8 @@ const keys = {
   descriptionParagraph: 'Текст 1 абзацу',
 };
 
-const runSimulation = (testidToClick?: string) => {
+export const runSimulation = (blockData: unknown = mockBlock, testidToClick?: string) => {
+  usePageBlockMock.mockReturnValue({ block: blockData });
   render(<ContactUs />);
 
   if (testidToClick) {
@@ -42,14 +43,18 @@ const runSimulation = (testidToClick?: string) => {
 describe('ContactUs', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-
-    usePageBlockMock.mockReturnValue({ block: mockBlock });
   });
 
   it('should render structural layout boundaries and confirm deep initial JSON content payloads inside the DOM', () => {
     runSimulation();
     expect(screen.getByTestId('collapsible-block')).toBeInTheDocument();
     expect(screen.getByTestId(`textfield-json-${keys.descriptionParagraph}`)).toHaveTextContent(JSON.stringify(createParagraphNode('Initial description', 'uuid-1')));
+  });
+
+  it('should render skeleton when no block exists', () => {
+    runSimulation(null);
+    expect(screen.queryByTestId('collapsible')).not.toBeInTheDocument();
+    expect(document.querySelector('.MuiSkeleton-root')).toBeInTheDocument();
   });
 });
 

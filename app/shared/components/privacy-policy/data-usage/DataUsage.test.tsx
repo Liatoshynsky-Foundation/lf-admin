@@ -26,9 +26,6 @@ jest.mock('~/shared/hooks/use-points-list/usePointsList', () => ({
   usePointsList: jest.fn()
 }));
 
-jest.mock('../../edit-block-skeleton/EditBlockSkeleton', () => ({
-  EditBlockSkeleton: () => <div data-testid="skeleton">Loading...</div>
-}));
 
 
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
@@ -63,7 +60,8 @@ const keys = {
   listItem: 'Текст пункту',
 };
 
-const runSimulation = (testidToClick?: string) => {
+const runSimulation = (blockData: unknown = mockBlock, testidToClick?: string) => {
+  usePageBlockMock.mockReturnValue({ block: blockData });
   render(<DataUsage />);
 
   if (testidToClick) {
@@ -100,6 +98,11 @@ describe('DataUsage', () => {
     expect(screen.getByTestId('collapsible-block')).toBeInTheDocument();
     expect(screen.getByTestId(`textfield-json-${keys.title}`)).toHaveTextContent(JSON.stringify(mockTitleJson));
     expect(screen.getByTestId('points-count')).toHaveTextContent('1');
+  });
+  it('should render skeleton when no block exists', () => {
+    runSimulation(null);
+    expect(screen.queryByTestId('collapsible')).not.toBeInTheDocument();
+    expect(document.querySelector('.MuiSkeleton-root')).toBeInTheDocument();
   });
 });
 
