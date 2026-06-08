@@ -1,16 +1,3 @@
-import { chipsColors } from '~/shared/theme/colors';
-
-type ChipColorType = 'draft' | 'published' | 'news' | 'events' | 'media';
-
-const publicationsChipsColors: Record<ChipColorType, string> = {
-  published: chipsColors.published,
-  draft: chipsColors.draft,
-  news: chipsColors.newsChipBg,
-  events: chipsColors.eventChipBg,
-  media: chipsColors.mediaChipBg
-};
-
-
 export const styles = {
   container: {
     width: '100%',
@@ -58,27 +45,5 @@ export const styles = {
       maxWidth: '1136px',
       bgcolor: 'white'
     }
-  },
-  chip: (color: ChipColorType) => ({
-    pointerEvents: 'none',
-    cursor: 'default',
-    userSelect: 'none',
-
-    '&:hover': {
-      bgcolor: 'inherit'
-    },
-    '&:active': {
-      boxShadow: 'none'
-    },
-
-    '& .MuiTouchRipple-root': {
-      display: 'none'
-    },
-
-    bgcolor: publicationsChipsColors[color],
-    height: 28,
-    '& .MuiChip-root': {
-      p: '4px 8px'
-    }
-  })
+  }
 };

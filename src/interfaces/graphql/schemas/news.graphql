@@ -12,7 +12,7 @@ type News implements BaseContent {
   title: LocalizedString!
   slug: String!
   description: LocalizedString!
-  keywords: LocalizedString!
+  keywords: LocalizedString
   content: LocalizedJSON!
   coverImage: LocalizedImage!
   status: NewsStatus!
@@ -58,7 +58,7 @@ input CreateNewsInput {
   adminTitle: String!
   title: JSON!
   description: JSON!
-  keywords: JSON!
+  keywords: JSON
   allowIndexation: JSON!
   content: JSON!
   coverImage: JSON!

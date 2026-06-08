@@ -229,7 +229,7 @@ export const chipsColors = {
   outlineDisabledText: mainHexPalette.blue[700],
 
   published: mainHexPalette.green[600],
-  draft: mainHexPalette.red[100],
+  draft: mainHexPalette.red[200],
   newsChipBg: 'rgb(182, 208, 247)',
   eventChipBg: 'rgb(247, 182, 225)',
   mediaChipBg: 'rgb(182, 247, 207)'
@@ -383,4 +383,8 @@ export const tooltipColors = {
   defaultBg: mainHexPalette.blue[900],
   defaultText: mainHexPalette.white,
   defaultShadow: 'rgba(0, 0, 0, 0.07)'
+};
+
+export const shadowColors = {
+  popup: 'rgb(78, 80, 97)'
 };

@@ -1297,7 +1297,17 @@ export const createAdminTheme = () =>
             color: tooltipColors.defaultBg
           }
         }
-      }
+      },
+      MuiDialog: {
+        styleOverrides: {
+          root: {
+            'html:has(&)': {
+              scrollbarGutter: 'stable',
+              overflow: 'hidden'
+            }
+          }
+        }
+      },
     }
   });
 

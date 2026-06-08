@@ -32,8 +32,7 @@ const styles: Record<string, SxProps<Theme>> = {
     display: 'flex',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: '4px',
-    overflow: 'hidden'
+    gap: '4px'
   },
 
   title: {
@@ -45,6 +44,22 @@ const styles: Record<string, SxProps<Theme>> = {
     WebkitLineClamp: 2,
     WebkitBoxOrient: 'vertical',
     overflow: 'hidden'
+  },
+
+  menuButton: {
+    borderRadius: '50%',
+    color: 'text.secondary',
+    mr: '4px',
+    mt: '2px',
+    transition: 'box-shadow 0.2s ease-in-out, background-color 0.2s ease-in-out',
+    '&:hover': {
+      backgroundColor: 'rgba(0, 0, 0, 0.04)',
+      boxShadow: '0px 0px 8px rgba(0, 0, 0, 0.15)'
+    },
+    '&.active': {
+      backgroundColor: 'rgba(0, 0, 0, 0.04)',
+      boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.15)'
+    }
   },
   
   date: {

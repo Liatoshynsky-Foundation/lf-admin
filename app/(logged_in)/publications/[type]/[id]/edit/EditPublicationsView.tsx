@@ -1,4 +1,4 @@
-import { Box, Chip, Divider, ListSubheader, Menu, MenuItem, Typography } from '@mui/material';
+import { Box, Divider, ListSubheader, Menu, MenuItem, Typography } from '@mui/material';
 import { MouseEvent, useState } from 'react';
 
 import { styles } from './EditPublicationsView.styles';
@@ -13,6 +13,7 @@ import {
   PublicationsChipLabels,
   PublicationsItemType
 } from '~/constants/publications';
+import Badge from '~/shared/components/badge/Badge';
 import { ContentEditor, isContentEmpty, SerializedContent } from '~/shared/components/content-editor';
 import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
@@ -94,8 +95,8 @@ export function EditPublicationsView({
             onMenuOpen={(e) => handleOpen(e, 'navigation')}
           />
         )}
-        <Chip sx={styles.chip(type)} label={PublicationsChipLabels[type]} />
-        <Chip sx={styles.chip('draft')} label="Чернетка" />
+        <Badge variant={type} label={PublicationsChipLabels[type]} />
+        <Badge variant='draft' />
       </DividedHeader>
 
       <Box sx={styles.mainContent}>

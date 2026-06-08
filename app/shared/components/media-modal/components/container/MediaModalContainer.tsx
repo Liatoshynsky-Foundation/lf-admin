@@ -37,8 +37,10 @@ export function MediaModalContainer({
   return (
     <Dialog
       open={open}
-      onClose={onClose}
-      disableScrollLock
+      onClose={(_, reason: 'backdropClick' | 'escapeKeyDown') => {
+        if (reason === 'backdropClick') return;
+        onClose();
+      }}
       sx={styles.dialog}
       maxWidth={false}
       data-testid={baseTestId}

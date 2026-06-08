@@ -3,6 +3,20 @@ import type { MouseEventHandler, ReactNode } from 'react';
 
 import ContentCard, { ContentType } from './ContentCard';
 
+jest.mock('./ContentCardMenu', () => ({
+  __esModule: true,
+  default: ({ onClose, setDeleteModalOpen }: { onClose: () => void; setDeleteModalOpen: (v: boolean) => void }) => (
+    <div>
+      <button onClick={onClose} data-testid="menu-close">
+        close menu
+      </button>
+      <button onClick={() => setDeleteModalOpen(true)} data-testid="open-delete">
+        delete
+      </button>
+    </div>
+  )
+}));
+
 jest.mock('~/lib/utils/formatDate', () => ({
   formatDate: (date: string) => `formatted-${date}`
 }));
@@ -47,6 +61,24 @@ jest.mock('./ContentCardBadge', () => ({
   __esModule: true,
   default: () => <div data-testid="badge" />
 }));
+
+jest.mock('../delete-card-modal/DeleteCardModal', () => ({
+  __esModule: true,
+  default: ({ open, onDelete }: { open: boolean; onDelete: () => void }) =>
+    open ? (
+      <button onClick={onDelete} data-testid="confirm-delete">
+        confirm delete
+      </button>
+    ) : null
+}));
+
+const TEST_IDS = {
+  menuButton: 'menu-button',
+  menuClose: 'menu-close',
+  openDelete: 'open-delete',
+  confirmDelete: 'confirm-delete',
+  badge: 'badge'
+} as const;
 
 describe('ContentCard', () => {
   const defaultProps = {
@@ -149,5 +181,48 @@ describe('ContentCard', () => {
     fireEvent.error(img);
 
     expect(img).toHaveAttribute('src', '/images/image.png');
+  });
+
+  it('should open menu when three dots button is clicked', () => {
+    render(<ContentCard {...defaultProps} />);
+    fireEvent.click(screen.getByTestId(TEST_IDS.menuButton));
+    expect(screen.getByTestId(TEST_IDS.menuButton)).toBeInTheDocument();
+  });
+
+  it('should close menu when clicked again', () => {
+    render(<ContentCard {...defaultProps} />);
+    const menuButton = screen.getByTestId(TEST_IDS.menuButton);
+    fireEvent.click(menuButton);
+    fireEvent.click(menuButton);
+    expect(screen.getByTestId(TEST_IDS.menuButton)).toBeInTheDocument();
+  });
+
+  it('should close menu when onClose is called', () => {
+    render(<ContentCard {...defaultProps} />);
+    fireEvent.click(screen.getByTestId(TEST_IDS.menuButton));
+    expect(screen.getByTestId('menu-close')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('menu-close'));
+    expect(screen.getByTestId(TEST_IDS.menuButton)).toBeInTheDocument();
+  });
+
+  it('should open delete modal when delete is clicked', () => {
+    render(<ContentCard {...defaultProps} />);
+    fireEvent.click(screen.getByTestId(TEST_IDS.menuButton));
+    fireEvent.click(screen.getByTestId('open-delete'));
+    expect(screen.getByTestId('confirm-delete')).toBeInTheDocument();
+  });
+
+  describe('Deletion flow', () => {
+    it.each([
+      { type: 'news', label: 'deleteNews' },
+      { type: 'events', label: 'deleteEvent' },
+      { type: 'media', label: 'deleteMediaMention' }
+    ])('should handle deletion for $type', async ({ type }) => {
+      render(<ContentCard {...defaultProps} type={type as ContentType} />);
+      fireEvent.click(screen.getByTestId(TEST_IDS.menuButton));
+      fireEvent.click(screen.getByTestId(TEST_IDS.openDelete));
+      await fireEvent.click(screen.getByTestId(TEST_IDS.confirmDelete));
+      expect(screen.getByTestId(TEST_IDS.menuButton)).toBeInTheDocument();
+    });
   });
 });

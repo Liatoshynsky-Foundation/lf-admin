@@ -127,7 +127,9 @@ export default function CreatePublicationsView({ data, mode = 'create' }: Readon
 
   const onEdit = async () => {
     const id = await handleSave(BaseContentStatuses.Draft);
-    router.push(`${PUBLICATIONS_BASE_PATH}/${publicationType}/${id}/edit`);
+    if (id) {
+      router.push(`${PUBLICATIONS_BASE_PATH}/${publicationType}/${id}/edit`);
+    }
   };
 
   return (

@@ -14,7 +14,7 @@ export type DbNews = {
   title: News['title'];
   adminTitle: News['adminTitle'];
   description: News['description'];
-  keywords: News['keywords'];
+  keywords?: News['keywords'];
   allowIndexation: News['allowIndexation'];
   content: News['content'];
   slug: string;

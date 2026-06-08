@@ -57,25 +57,24 @@ describe('CropView', () => {
     expect(img).toHaveAttribute('src', '/test.jpg');
   });
 
-  it('should call onBaseline on image load', () => {
+  it('should call onBaseline with image natural dimensions on image load', () => {
     const onBaseline = jest.fn();
+
     render(
       <CropView selected={defaultSelected} crop={null} resetSeq={0} onBaseline={onBaseline} onChange={jest.fn()} />
     );
 
     const img = screen.getByAltText('');
 
-    fireEvent.load(img, {
-      currentTarget: {
-        width: 500,
-        height: 500,
-        naturalWidth: 1000,
-        naturalHeight: 1000
-      }
-    });
+    Object.defineProperty(img, 'width', { value: 500, configurable: true });
+    Object.defineProperty(img, 'height', { value: 500, configurable: true });
+    Object.defineProperty(img, 'naturalWidth', { value: 1000, configurable: true });
+    Object.defineProperty(img, 'naturalHeight', { value: 1000, configurable: true });
+
+    fireEvent.load(img);
 
     expect(onBaseline).toHaveBeenCalledWith({
-      rect: { x: 50, y: 50, width: 200, height: 250 }
+      rect: { x: 0, y: 0, width: 1000, height: 1000 }
     });
   });
 
