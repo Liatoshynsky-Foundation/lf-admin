@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
+import { createStandardMockBlock } from '../test-utils/block-test-factory';
 import { GoogleAuth } from './GoogleAuth';
 import { createDocNode } from '~/__mocks__/utils';
 import { usePointsList } from '~/shared/hooks/use-points-list/usePointsList';
@@ -31,28 +31,16 @@ jest.mock('~/shared/hooks/use-points-list/usePointsList', () => ({
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
 jest.mock('~/ds-components/text-field/TextField');
 
-interface MockPoinstsListProps<T> {
-  points: T[],
-  addPoint: () => T;
-}
-jest.mock('../components/points-list/PointsList', () => ({
-  PointsList: <T extends { readonly id: string; readonly value: JSONContent }>({ addPoint, points }: MockPoinstsListProps<T>) => (
-    <div data-testid="points-list">
-      <button data-testid="trigger-add-point" onClick={addPoint}>Add</button>
-      <span data-testid="points-count">{points.length}</span>
-    </div>
-  )
-}));
+jest.mock('../components/points-list/PointsList');
 
 
-const mockTitleJson = createDocNode('Initial title');
-const mockDescriptionJson = createDocNode('Initial description');
+const { block: standardMockBlock, expectedValues } = createStandardMockBlock();
+
 const mockListPointJson = createDocNode('Initial the first list item');
 const mockNoteJson = createDocNode('Initial note');
 
 const mockBlock: GoogleAuthBlock = {
-  title: { uk: mockTitleJson, en: mockTitleJson },
-  description: { uk: mockDescriptionJson, en: mockDescriptionJson },
+  ...standardMockBlock,
   list: [{ id: '1', uk: mockListPointJson, en: mockListPointJson }],
   note: { uk: mockNoteJson, en: mockNoteJson },
 };
@@ -99,7 +87,7 @@ describe('GoogleAuth', () => {
     runSimulation();
 
     expect(screen.getByTestId('collapsible-block')).toBeInTheDocument();
-    expect(screen.getByTestId(`textfield-json-${keys.description}`)).toHaveTextContent(JSON.stringify(mockDescriptionJson));
+    expect(screen.getByTestId(`textfield-json-${keys.description}`)).toHaveTextContent(JSON.stringify(expectedValues.description));
     expect(screen.getByTestId('points-count')).toHaveTextContent('1');
     expect(screen.getByTestId(`textfield-json-${keys.note}`)).toHaveTextContent(JSON.stringify(mockNoteJson));
   });
