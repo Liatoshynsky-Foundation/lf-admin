@@ -5,10 +5,12 @@ import { useStore } from '~/store';
 import { LocalizedJSON } from '~/types/common';
 import { BlocksMap } from '~/types/store/pages';
 
+type BlockIdsWithSections = {
+  [K in keyof BlocksMap]: 'sections' extends keyof BlocksMap[K] ? K : never;
+}[keyof BlocksMap]
 
-interface UseSectionListProps<K extends keyof BlocksMap> {
+interface UseSectionListProps<K extends BlockIdsWithSections> {
   blockId: K,
-  setField: <F extends keyof BlocksMap[K]>(pageId: string, blockId: K, field: F, value: BlocksMap[K][F]) => void,
   sectionsList: {
     id: string;
     subtitle: LocalizedJSON;
@@ -19,14 +21,16 @@ interface UseSectionListProps<K extends keyof BlocksMap> {
 }
 
 
-export const useSectionList = <K extends keyof BlocksMap>({ pageId, blockId, sectionsList, currentLocale }: UseSectionListProps<K>) => {
+export const useSectionList = <K extends BlockIdsWithSections>({ pageId, blockId, sectionsList, currentLocale }: UseSectionListProps<K>) => {
   const emptyDoc: JSONContent = { type: 'doc', content: [] };
   const setField = useStore((state) => state.setField);
+
   const sections = sectionsList.map((item) => ({
     id: item.id,
     title: item.subtitle[currentLocale],
     points: ensureIds(item.list)
   }));
+
   const handleUpdateSectionList = (sectionId: string, newPoints: {
     id: string;
     uk: JSONContent;
@@ -39,7 +43,7 @@ export const useSectionList = <K extends keyof BlocksMap>({ pageId, blockId, sec
     const newSections = sectionsList.map((section) =>
       section.id === sectionId ? { ...section, list: newPoints } : section);
 
-    setField(pageId, blockId, 'sections', newSections as BlocksMap[K][keyof BlocksMap[K]]);
+    setField(pageId, blockId, 'sections', newSections);
   };
 
   const handleChangeSectionListPoint = (sectionId: string, updatedPoint: {

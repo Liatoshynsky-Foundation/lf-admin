@@ -27,7 +27,7 @@ export const DataWeCollect = () => {
   const rawSections = block?.sections || [];
   const sectionsList: DataWeCollectItemWithId[] = ensureIds(rawSections);
 
-  const { sections, addListPoint, removeListPoint, updateListPoint } = useSectionList({ blockId, pageId, sectionsList, setField, currentLocale });
+  const { sections, addListPoint, removeListPoint, updateListPoint } = useSectionList({ blockId, pageId, sectionsList, currentLocale });
 
   if (!block) return <EditBlockSkeleton />;
 
