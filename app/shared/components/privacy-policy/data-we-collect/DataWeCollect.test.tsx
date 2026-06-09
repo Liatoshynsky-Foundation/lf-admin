@@ -8,45 +8,7 @@ import { createDocNode } from '~/__mocks__/utils';
 import { DataWeCollectBlock } from '~/types/store/pages/privacy-policy';
 
 
-interface MockConfigurableListProps<T> {
-  readonly items: readonly T[];
-  readonly addBtnLabel: string;
-  readonly onCreate: () => void;
-  readonly renderItem: (props: { readonly item: T }) => React.ReactNode;
-  readonly editable: boolean;
-  readonly onDelete: (id: string) => void;
-}
-
-jest.mock('~/components/configurable-list/ConfigurableList', () => ({
-  __esModule: true,
-  default: <T extends { readonly id: string }>({
-    items,
-    addBtnLabel,
-    onCreate,
-    renderItem,
-    editable,
-    onDelete
-  }: MockConfigurableListProps<T>) => (
-    <div data-testid="configurable-list">
-      {items.map((item) => (
-        <div key={item.id} data-testid={`list-item-${item.id}`}>
-          {renderItem({ item })}
-          {editable && (
-            <button data-testid={`delete-${item.id}`} onClick={() => onDelete(item.id)}>
-              Delete
-            </button>
-          )}
-        </div>
-      ))}
-      {editable && (
-        <button data-testid="add-btn" onClick={onCreate}>
-          {addBtnLabel}
-        </button>
-      )}
-    </div>
-  )
-}));
-
+jest.mock('~/components/configurable-list/ConfigurableList');
 
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
 jest.mock('~/ds-components/text-field/TextField');

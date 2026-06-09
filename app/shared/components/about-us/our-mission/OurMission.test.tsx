@@ -1,5 +1,4 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
 import OurMission from './OurMission';
@@ -12,18 +11,6 @@ interface MockImagePreviewBlockProps {
   readonly title: string;
   readonly imageUrl: string;
   readonly onChangeImage: (url: string) => void;
-}
-
-interface MockConfigurableListProps<T> {
-  readonly items: readonly T[];
-  readonly onCreate: () => { readonly id: string | number };
-  readonly onDelete: (id: string | number) => void;
-  readonly onChange: (item: T) => void;
-  readonly renderItem: (props: {
-    readonly item: T;
-    readonly onChange: (item: T) => void;
-  }) => React.ReactNode;
-  readonly addBtnLabel: string;
 }
 
 const setFieldMock = jest.fn();
@@ -52,34 +39,7 @@ jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
   )
 }));
 
-jest.mock('~/components/configurable-list/ConfigurableList', () => ({
-  __esModule: true,
-  default: <T extends { readonly id: string | number; readonly value: JSONContent }>({
-    items,
-    onCreate,
-    onDelete,
-    onChange,
-    renderItem,
-    addBtnLabel
-  }: MockConfigurableListProps<T>) => (
-    <div data-testid="configurable-list">
-      {items.map((item) => (
-        <div key={item.id} data-testid={`list-item-${item.id}`}>
-          {renderItem({
-            item,
-            onChange: (updatedItem) => onChange(updatedItem)
-          })}
-          <button data-testid={`delete-${item.id}`} onClick={() => onDelete(item.id)}>
-            Delete
-          </button>
-        </div>
-      ))}
-      <button data-testid="add-btn" onClick={onCreate}>
-        {addBtnLabel}
-      </button>
-    </div>
-  )
-}));
+jest.mock('~/components/configurable-list/ConfigurableList');
 
 const TARGET_ID = '1';
 const keys = {
