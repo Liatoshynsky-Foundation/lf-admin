@@ -1,68 +1,25 @@
-import { JSONContent } from '@tiptap/react';
+'use client';
 
-import CollapsibleBlock from '../../design-system/collapsible-block/CollapsibleBlock';
-import { CustomTextField } from '../../design-system/text-field/TextField';
+import React from 'react';
+
 import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
-import { PointsList } from '../components/points-list/PointsList';
+import { EditDescriptionListNoteBlock } from '../components/edit-description-list-note-block/EditDescriptionListNoteBlock';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
-import { ensureIds } from '~/lib/utils/ensureIds';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
-import { usePointsList } from '~/shared/hooks/use-points-list/usePointsList';
-import { useStore } from '~/store';
-import { UserRightsItemWithId } from '~/types/store/pages/privacy-policy';
 
 export const UserRights = () => {
-  const pageId = PAGE_IDS.PRIVACY_POLICY;
   const blockId = BLOCK_IDS.USER_RIGHTS;
-  const { block } = usePageBlock(pageId, blockId);
-  const currentLocale = useStore((value)=>value.locale);
-  const setField = useStore((value)=>value.setField);
-
-  const rawList = block?.list || [];
-  const list: UserRightsItemWithId[] = ensureIds(rawList);
+  const title = 'Ваші права';
   
-  const { addPoint, removePoint, updatePoint, points } = usePointsList({ 
-    list, 
-    setField, 
-    currentLocale, 
-    pageId, 
-    blockId 
-  });
-
+  const { block } = usePageBlock(PAGE_IDS.PRIVACY_POLICY, blockId);
   if (!block) return <EditBlockSkeleton />;
 
-  const handleChangeDescriptionText = (value: JSONContent) => {
-    setField(pageId, blockId, 'description', {
-      ...block.description,
-      [currentLocale]: value
-    });
-  };
-
-  const handleChangeNote = (value: JSONContent) => {
-    setField(pageId, blockId, 'note', {
-      ...block.note,
-      [currentLocale]: value
-    });
-  };
-
-
   return (
-    <CollapsibleBlock title="Ваші права">
-      <CustomTextField
-        fieldType="formatting"
-        title="Вступний текст секції"
-        value={block.description[currentLocale]}
-        onChange={handleChangeDescriptionText}
-      />
-      {points.length > 0 && (
-        <PointsList points={points} addPoint={addPoint} removePoint={removePoint} updatePoint={updatePoint} />
-      )}
-      <CustomTextField
-        fieldType="formatting"
-        title="Додаткова інформація"
-        value={block.note[currentLocale]}
-        onChange={handleChangeNote}
-      />
-    </CollapsibleBlock>
+    <EditDescriptionListNoteBlock
+      blockId={BLOCK_IDS.USER_RIGHTS}
+      title={title}
+      listFieldName="list"
+      block={block}
+    />
   );
 };
