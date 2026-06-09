@@ -1,8 +1,10 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { act } from 'react';
+import toast from 'react-hot-toast';
 import { v4 as uuidv4 } from 'uuid';
 
 import LoginPage from './page';
+import { loginErrors } from '~/constants/errors';
 import { type LoginMutation, useLoginMutation } from '~/types/graphql/generated/graphql';
 
 const mockSuccessMutationResponse: LoginMutation = {
@@ -34,6 +36,11 @@ jest.mock('next/navigation', () => ({
   useRouter: () => ({
     push: routerMockPush
   })
+}));
+
+jest.mock('react-hot-toast', () => ({
+  success: jest.fn(),
+  error: jest.fn()
 }));
 
 jest.mock('~/public/icons/eye.svg', () => {
@@ -109,30 +116,37 @@ describe('LoginPage', () => {
     });
   });
 
-  it('should handle successful login and redirect', () => {
+  it('should handle successful login and redirect', async () => {
     mockedUseLoginMutation.mockImplementation(({ onCompleted }) => mockLoginWithSuccess(onCompleted));
     const test = uuidv4();
 
     submitFormHelper(test);
 
-    expect(routerMockPush).toHaveBeenCalledWith('/');
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith('Ви успішно увійшли до адмін панелі!');
+      expect(routerMockPush).toHaveBeenCalledWith('/');
+    });
   });
 
-  it('should handle login failure and display error message', () => {
+  it('should handle login failure and display error message', async () => {
     mockedUseLoginMutation.mockImplementation(({ onCompleted }) => mockLoginWithError(onCompleted));
     const test = uuidv4();
 
     submitFormHelper(test);
 
-    expect(screen.getByText('Invalid credentials')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(loginErrors.INVALID_CREDENTIALS || 'Invalid credentials');
+    });
   });
 
-  it('should handle unexpected errors gracefully', () => {
+  it('should handle unexpected errors gracefully', async () => {
     mockedUseLoginMutation.mockImplementation(({ onError }) => mockLoginWithNetworkError(onError));
     const test = uuidv4();
 
     submitFormHelper(test);
 
-    expect(screen.getByText('Непередбачена помилка. Спробуйте ще раз.')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(loginErrors.UNEXPECTED_ERROR);
+    });
   });
 });

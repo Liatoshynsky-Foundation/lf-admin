@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Button, InputAdornment, Typography } from '@mui/material';
+import { Box, Button, InputAdornment } from '@mui/material';
 import { Lock, Mail } from 'lucide-react';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
@@ -20,23 +20,10 @@ const LoginModal = ({ onSubmit, submitError }: LoginModalProps) => {
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [serverError, setServerError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (submitError) {
-      const errorText = submitError.toLowerCase();
-
-      if (errorText.includes('email')) {
-        setUsernameError(loginErrors.INVALID_EMAIL || 'Введіть коректну електронну пошту');
-        setServerError(null);
-      } else if (errorText.includes('password')) {
-        setPasswordError(loginErrors.INVALID_PASSWORD || 'Неправильний пароль');
-        setPassword('');
-        setServerError(null);
-      } else {
-        setServerError(submitError);
-        setPassword('');
-      }
+    if (submitError && submitError !== '0') {
+      setPassword('');
     }
   }, [submitError]);
 
@@ -57,7 +44,6 @@ const LoginModal = ({ onSubmit, submitError }: LoginModalProps) => {
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUsername(e.target.value);
     setUsernameError(null);
-    setServerError(null);
   };
 
   const validatePassword = () => {
@@ -72,7 +58,6 @@ const LoginModal = ({ onSubmit, submitError }: LoginModalProps) => {
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
     setPasswordError(null);
-    setServerError(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -126,13 +111,6 @@ const LoginModal = ({ onSubmit, submitError }: LoginModalProps) => {
           />
         </Box>
         <Box sx={styles.buttonsContainer}>
-          {serverError && (
-            <Box sx={{ mt: 1, mb: 2, mx: 'auto' }}>
-              <Typography variant="body2" sx={{ color: '#d32f2f' }}>
-                {renderHelperText(serverError)}
-              </Typography>
-            </Box>
-          )}
           <Button variant="contained" sx={styles.buttonLogin} type="submit" fullWidth>
             Увійти
           </Button>

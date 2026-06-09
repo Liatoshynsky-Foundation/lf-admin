@@ -11,7 +11,7 @@ import { useLoginMutation } from '~/types/graphql/generated/graphql';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [loginError, setLoginError] = useState<string | null>(null);
+  const [triggerErrorClear, setTriggerErrorClear] = useState<number>(0);
 
   const [loginMutation] = useLoginMutation({
     onCompleted: (data) => {
@@ -23,18 +23,20 @@ export default function LoginPage() {
         return;
       }
       if (result.__typename === 'ErrorPayload') {
-        setLoginError(result.message);
+        setTriggerErrorClear(Date.now());
+        toast.error(loginErrors.INVALID_CREDENTIALS || result.message);
         return;
       }
-      setLoginError(loginErrors.UNEXPECTED_ERROR);
+      toast.error(loginErrors.UNEXPECTED_ERROR);
+      setTriggerErrorClear(Date.now());
     },
     onError: () => {
-      setLoginError(loginErrors.UNEXPECTED_ERROR);
+      toast.error(loginErrors.UNEXPECTED_ERROR);
+      setTriggerErrorClear(Date.now());
     }
   });
 
   const handleLoginSubmit = (data: LoginSubmitData) => {
-    setLoginError(null);
     loginMutation({
       variables: {
         email: data.login,
@@ -43,5 +45,5 @@ export default function LoginPage() {
     });
   };
 
-  return <LoginModal onSubmit={handleLoginSubmit} submitError={loginError} />;
+  return <LoginModal onSubmit={handleLoginSubmit} submitError={triggerErrorClear.toString()} />;
 }

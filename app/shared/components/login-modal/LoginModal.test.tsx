@@ -67,8 +67,16 @@ describe('LoginModal', () => {
     });
   });
 
-  it('displays server submitError if provided', () => {
-    render(<LoginModal onSubmit={mockOnSubmit} submitError="Непередбачена помилка сервера" />);
-    expect(screen.getByText('Непередбачена помилка сервера')).toBeInTheDocument();
+  it('clears password field when submitError changes', () => {
+    const { rerender } = render(<LoginModal onSubmit={mockOnSubmit} submitError={null} />);
+
+    const passwordInput = screen.getByPlaceholderText('Введіть пароль');
+    fireEvent.change(passwordInput, { target: { value: 'password123' } });
+
+    expect(passwordInput).toHaveValue('password123');
+
+    rerender(<LoginModal onSubmit={mockOnSubmit} submitError={Date.now().toString()} />);
+
+    expect(passwordInput).toHaveValue('');
   });
 });
