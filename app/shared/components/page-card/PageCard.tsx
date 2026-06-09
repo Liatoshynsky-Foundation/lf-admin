@@ -62,7 +62,7 @@ const PageCard = ({ coverImage, title, updatedAt, editHref, editSeoHref, onClick
 
           <IconButton data-testid="menu-button" onClick={handleMenuClick}>
             <EllipsisVertical size={20} />
-            {anchorEl && <PageCardMenu anchorEl={anchorEl} onClose={handleMenuClose} editSeoHref={editSeoHref} />}
+            <PageCardMenu anchorEl={anchorEl} onClose={handleMenuClose} editSeoHref={editSeoHref} />
           </IconButton>
         </Box>
 

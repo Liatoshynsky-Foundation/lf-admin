@@ -10,8 +10,8 @@ jest.mock('~/lib/utils/formatDate', () => ({
 jest.mock('./PageCardMenu', () => {
   return {
     __esModule: true,
-    default: React.forwardRef<HTMLDivElement, any>(function PageCardMenuMock(_props, ref) {
-      return <div ref={ref} data-testid="page-card-menu" />;
+    default: React.forwardRef<HTMLDivElement, any>(function PageCardMenuMock(props, ref) {
+      return <div ref={ref} data-testid="page-card-menu" data-open={Boolean(props.anchorEl)} />;
     })
   };
 });
@@ -51,10 +51,15 @@ describe('PageCard Component', () => {
     render(<PageCard {...mockProps} />);
 
     const menuButton = screen.getByTestId('menu-button');
-    expect(screen.queryByTestId('page-card-menu')).not.toBeInTheDocument();
+    const menuElement = screen.getByTestId('page-card-menu');
+
+    expect(menuButton).toBeInTheDocument();
+    expect(menuElement).toBeInTheDocument();
+    expect(menuElement).toHaveAttribute('data-open', 'false');
 
     fireEvent.click(menuButton);
-    expect(screen.getByTestId('page-card-menu')).toBeInTheDocument();
+
+    expect(menuElement).toHaveAttribute('data-open', 'true');
   });
 
   it('should render edit button as link when href is provided', () => {
