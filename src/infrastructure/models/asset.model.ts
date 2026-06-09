@@ -25,6 +25,7 @@ const assetSchema = new Schema(
     usageRefs: { type: [usageRefSchema], default: [] },
 
     filename: { type: String, required: true, trim: true },
+    originalname: { type: String, required: false, trim: true },
 
     mimeType: { type: String, required: true, trim: true },
     sizeBytes: { type: Number, required: true, min: 0 },

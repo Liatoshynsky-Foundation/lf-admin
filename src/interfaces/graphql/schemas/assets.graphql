@@ -26,6 +26,7 @@ type Asset {
   tags: [String!]!
   usageRefs: [AssetUsageRef!]!
   filename: String!
+  originalname: String
   mimeType: String!
   sizeBytes: Int!
   url: String!
@@ -60,6 +61,7 @@ input UpdateAssetInput {
 
 input CreateAssetInput {
   filename: String!
+  originalname: String
   mimeType: String!
   sizeBytes: Int!
   url: String!
