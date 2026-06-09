@@ -15,7 +15,7 @@ export interface DescriptionListNoteStructure {
   note: LocalizedJSON;
 }
 
-type BlockWithDescriptionListNote = {
+export type BlockWithDescriptionListNote = {
   [K in keyof BlocksMap]: BlocksMap[K] extends DescriptionListNoteStructure ? K : never;
 }[keyof BlocksMap]
 

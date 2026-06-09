@@ -1,5 +1,6 @@
 
 export const usePageBlockMock = jest.fn();
+export const usePointsListMock = jest.fn();
 export const setFieldMock = jest.fn();
 
 export const mockAddPoint = jest.fn();
@@ -17,6 +18,7 @@ jest.mock('~/store', () => ({
 
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
 jest.mock('~/ds-components/text-field/TextField');
+jest.mock('~/shared/components/privacy-policy/components/points-list/PointsList');
 
 beforeAll(() => {
   crypto.randomUUID = jest.fn(() => 'uuid-1') as typeof crypto.randomUUID;
