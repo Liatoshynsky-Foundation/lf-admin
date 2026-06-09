@@ -1,22 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { usePageBlockMock } from '../__mocks__/setup-mocks';
 import { createStandardMockBlock } from '../test-utils/block-test-factory';
 import { DataWeCollect } from './DataWeCollect';
 import { createDocNode } from '~/__mocks__/utils';
 import { DataWeCollectBlock } from '~/types/store/pages/privacy-policy';
-
-const usePageBlockMock = jest.fn();
-const setFieldMock = jest.fn();
-
-
-jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
-  usePageBlock: () => usePageBlockMock()
-}));
-jest.mock('~/store', () => ({
-  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock }) => unknown) =>
-    selector({ locale: 'uk', setField: setFieldMock })
-}));
 
 
 interface MockConfigurableListProps<T> {
@@ -90,9 +79,6 @@ const runSimulation = (blockData: unknown = mockBlock, testidToClick?: string) =
   }
 };
 
-beforeAll(() => {
-  crypto.randomUUID = jest.fn(() => 'uuid-1') as typeof crypto.randomUUID;
-});
 
 describe('DataWeCollect', () => {
   beforeEach(() => {

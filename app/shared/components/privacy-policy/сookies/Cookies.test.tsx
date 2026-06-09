@@ -59,9 +59,6 @@ const runSimulation = (blockData: unknown = mockBlock, testidToClick?: string) =
   }
 };
 
-beforeAll(() => {
-  crypto.randomUUID = jest.fn(() => 'uuid-1') as typeof crypto.randomUUID;
-});
 
 describe('Cookies', () => {
   beforeEach(() => {

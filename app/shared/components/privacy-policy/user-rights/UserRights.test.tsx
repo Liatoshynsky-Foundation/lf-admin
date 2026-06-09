@@ -1,35 +1,18 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { mockAddPoint, mockRemovePoint, mockUpdatePoint, usePageBlockMock } from '../__mocks__/setup-mocks';
 import { createStandardMockBlock } from '../test-utils/block-test-factory';
 import { UserRights } from './UserRights';
 import { createDocNode } from '~/__mocks__/utils';
 import { usePointsList } from '~/shared/hooks/use-points-list/usePointsList';
 import { UserRightsBlock } from '~/types/store/pages/privacy-policy';
 
-const usePageBlockMock = jest.fn();
-const setFieldMock = jest.fn();
 
-const mockAddPoint = jest.fn();
-const mockRemovePoint = jest.fn();
-const mockUpdatePoint = jest.fn();
-
-
-jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
-  usePageBlock: () => usePageBlockMock()
-}));
-jest.mock('~/store', () => ({
-  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock }) => unknown) =>
-    selector({ locale: 'uk', setField: setFieldMock })
-}));
 jest.mock('~/shared/hooks/use-points-list/usePointsList', () => ({
   usePointsList: jest.fn()
 }));
 
-
-
-jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
-jest.mock('~/ds-components/text-field/TextField');
 
 jest.mock('../components/points-list/PointsList');
 
@@ -59,9 +42,6 @@ const runSimulation = (blockData: unknown = mockBlock, testidToClick?: string) =
   }
 };
 
-beforeAll(() => {
-  crypto.randomUUID = jest.fn(() => 'uuid-1') as typeof crypto.randomUUID;
-});
 
 describe('UserRights', () => {
   beforeEach(() => {

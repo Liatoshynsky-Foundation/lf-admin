@@ -1,25 +1,13 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
+import { usePageBlockMock } from '../__mocks__/setup-mocks';
 import { IntroSection } from './IntroSection';
 import { createDocNode } from '~/__mocks__/utils';
-
-const usePageBlockMock = jest.fn();
-const setFieldMock = jest.fn();
-jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
-  usePageBlock: () => usePageBlockMock()
-}));
-jest.mock('~/store', () => ({
-  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock }) => unknown) =>
-    selector({ locale: 'uk', setField: setFieldMock })
-}));
 
 beforeAll(() => {
   let counter = 0;
   crypto.randomUUID = jest.fn(() => `uuid-${++counter}`) as typeof crypto.randomUUID;
 });
-
-jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
-jest.mock('~/ds-components/text-field/TextField');
 
 const mockTrustAndSecurityJson = createDocNode('Initial trust and security');
 const mockAgreementJson = createDocNode('Initial agreement');
