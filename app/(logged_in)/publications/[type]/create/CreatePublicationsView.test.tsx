@@ -78,6 +78,7 @@ const createMockData = (
   forceShowErrors: false,
   handleSave: jest.fn(),
   handleDateTimeChange: jest.fn(),
+  hasUnsavedChanges: false,
   ...overrides
 });
 

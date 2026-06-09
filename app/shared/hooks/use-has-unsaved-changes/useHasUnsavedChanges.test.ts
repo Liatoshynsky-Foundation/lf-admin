@@ -6,35 +6,57 @@ import { useStore } from '~/store';
 jest.mock('~/store');
 const mockedUseStore = jest.mocked(useStore);
 describe('useHasUnsavedChanges', () => {
-  it('should return false when isChanged = false', () => {
-    mockedUseStore.mockImplementation((selector) => selector({ isChanged: false, blocks: {} } as any));
-
-    const { result } = renderHook(() => useHasUnsavedChanges('/page1'));
-    expect(result.current).toBe(false);
-  });
-
-  it('should return false when isChanged = true but no blocks', () => {
-    mockedUseStore.mockImplementation((selector) => selector({ isChanged: true, blocks: {} } as any));
-
-    const { result } = renderHook(() => useHasUnsavedChanges('/page1'));
-    expect(result.current).toBe(false);
-  });
-
-  it('should return true when isChanged = true and block exists for route', () => {
+  it('should return false when route is not dirty', () => {
     mockedUseStore.mockImplementation((selector) =>
-      selector({ isChanged: true, blocks: { page1: { some: 'data' } } } as any)
+      selector({
+        dirtyPaths: {}
+      } as any)
     );
 
     const { result } = renderHook(() => useHasUnsavedChanges('/page1'));
+
+    expect(result.current).toBe(false);
+  });
+
+  it('should return true when route is dirty', () => {
+    mockedUseStore.mockImplementation((selector) =>
+      selector({
+        dirtyPaths: {
+          '/page1': true
+        }
+      } as any)
+    );
+
+    const { result } = renderHook(() => useHasUnsavedChanges('/page1'));
+
     expect(result.current).toBe(true);
   });
 
-  it('should return false when block exists but isChanged = false', () => {
+  it('should return false when another route is dirty', () => {
     mockedUseStore.mockImplementation((selector) =>
-      selector({ isChanged: false, blocks: { page1: { some: 'data' } } } as any)
+      selector({
+        dirtyPaths: {
+          '/page2': true
+        }
+      } as any)
     );
 
     const { result } = renderHook(() => useHasUnsavedChanges('/page1'));
+
+    expect(result.current).toBe(false);
+  });
+
+  it('should return false when route is not present in dirtyPaths', () => {
+    mockedUseStore.mockImplementation((selector) =>
+      selector({
+        dirtyPaths: {
+          '/page2': false
+        }
+      } as any)
+    );
+
+    const { result } = renderHook(() => useHasUnsavedChanges('/page1'));
+
     expect(result.current).toBe(false);
   });
 });

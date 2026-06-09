@@ -1,6 +1,6 @@
 'use client';
 
-import { notFound, useParams, useRouter } from 'next/navigation';
+import { notFound, useParams, usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -16,6 +16,7 @@ import { SerializedContent } from '~/shared/components/content-editor';
 import DiscardChangesModal from '~/shared/components/design-system/discard-changes-modal/DiscardChangesModal';
 import { usePublicationManager } from '~/shared/hooks/use-publications-manager/usePublicationsManager';
 import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
+import { useStore } from '~/store';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 type Params = {
@@ -29,8 +30,16 @@ export default function EditPublicationsPage() {
 
   const manager = usePublicationManager(type, id);
 
+  const pathname = usePathname();
+  const setDirtyPath = useStore((state) => state.setDirtyPath);
+
   const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
   const [pendingRoute, setPendingRoute] = useState<string | null>(null);
+
+  const publicationData = useUpsertPublication({ type, id });
+
+  const latestBlocksRef = useRef<SerializedContent | null>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const navigateWithGuard = (href: string) => {
     if (!manager.hasUnsavedChanges) {
@@ -56,10 +65,9 @@ export default function EditPublicationsPage() {
     setPendingRoute(null);
   };
 
-  const publicationData = useUpsertPublication({ type, id });
-
-  const latestBlocksRef = useRef<SerializedContent | null>(null);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  useEffect(() => {
+    setDirtyPath(pathname, manager.hasUnsavedChanges);
+  }, [pathname, manager.hasUnsavedChanges, setDirtyPath]);
 
   useEffect(() => {
     return () => {
