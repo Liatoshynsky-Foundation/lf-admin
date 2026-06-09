@@ -20,7 +20,7 @@ interface EditParagraphsBlockProps<T extends BlockIdsWithDescription> {
 }
 
 
-export const EditParagraphsBlock = <T extends BlockIdsWithDescription>({ blockId, title }: EditParagraphsBlockProps<T> ) => {
+export const EditParagraphsBlock = <T extends BlockIdsWithDescription>({ blockId, title }: EditParagraphsBlockProps<T>) => {
   const pageId = PAGE_IDS.PRIVACY_POLICY;
 
   const { block } = usePageBlock(pageId, blockId);
@@ -31,19 +31,22 @@ export const EditParagraphsBlock = <T extends BlockIdsWithDescription>({ blockId
   if (!('description' in block)) return null;
 
   const onParagraphChange = (index: number, val: JSONContent) => {
-    const currentContentArray = [...block.description[currentLocale].content || []];
+    const oldBlockDescription = block.description;
+    const currentContentArray = [...oldBlockDescription[currentLocale].content || []];
     currentContentArray[index] = val;
 
     const newDescription = {
-      ...block.description,
-      [currentLocale]: currentContentArray
+      ...oldBlockDescription,
+      [currentLocale]: {
+        ...oldBlockDescription[currentLocale],
+        content: currentContentArray
+      }
     };
 
     setField(pageId, blockId, 'description', newDescription);
   };
 
   const paragraphs = ensureIds(block.description[currentLocale].content || []);
-
   if (!paragraphs || paragraphs.length === 0) return null;
 
   return (
