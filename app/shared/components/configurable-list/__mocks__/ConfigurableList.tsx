@@ -1,16 +1,16 @@
 import { JSONContent } from '@tiptap/react';
 import React from 'react';
 interface MockConfigurableListProps<T> {
-    readonly items: readonly T[];
-    readonly addBtnLabel: string;
-    readonly onCreate: () => void;
-    readonly renderItem: (props: {
-        readonly item: T;
-        readonly onChange: (item: T) => void;
-    }) => React.ReactNode;
-    readonly editable: boolean;
+  readonly items: readonly T[];
+  readonly addBtnLabel: string;
+  readonly onCreate: () => void;
+  readonly renderItem: (props: {
+    readonly item: T;
     readonly onChange: (item: T) => void;
-    readonly onDelete: (id: string) => void;
+  }) => React.ReactNode;
+  readonly editable: boolean;
+  readonly onChange: (item: T) => void;
+  readonly onDelete: (id: string) => void;
 }
 
 const ConfigurableList = <T extends { readonly id: string; readonly value: JSONContent }>({
@@ -24,7 +24,7 @@ const ConfigurableList = <T extends { readonly id: string; readonly value: JSONC
 }: MockConfigurableListProps<T>) => (
     <div data-testid="configurable-list">
       {items.map((item) => (
-        <div key={item.id} data-testid={`list-item-${item.id}`}>
+        <div key={item.id} data-testid="item">
           {renderItem({
             item,
             onChange: (updatedItem) => onChange(updatedItem)
