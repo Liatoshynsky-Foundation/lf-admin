@@ -6,7 +6,7 @@ import { useSectionList } from './useSectionList';
 import { ensureIds } from '~/lib/utils/ensureIds';
 import { setFieldMock } from '~/shared/components/privacy-policy/__mocks__/setup-mocks';
 
-Object.defineProperty(global, 'crypto', {
+Object.defineProperty(globalThis, 'crypto', {
   value: {
     randomUUID: jest.fn(() => 'uuid-1'),
   },
