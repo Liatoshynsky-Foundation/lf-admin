@@ -2,6 +2,7 @@
 
 import { Box, Typography } from '@mui/material';
 
+import CardsGrid from '~/shared/components/cards-grid/CardsGrid';
 import PageCard from '~/shared/components/page-card/PageCard';
 import { PageHeader, PageHeaderTab } from '~/shared/components/page-header/PageHeader';
 
@@ -40,19 +41,18 @@ export function MainPagesContent({ activeTab }: MainPagesContentProps) {
       <PageHeader title="Основні сторінки" activeTab={activeTab} tabs={MAIN_PAGE_TABS} />
 
       {activeTab === 'foundation' && (
-        <Box sx={{ width: '400px' }}>
+        <CardsGrid columns={{ smCols: 1, mdCols: 2, xlCols: 3 }}>
           {items.map((item) => (
-            <Box key={item.id}>
-              <PageCard
-                coverImage={item.coverImage}
-                title={item.titleData}
-                updatedAt={item.updatedAt}
-                editHref={item.editHref}
-                editSeoHref={item.editSeoHref}
-              />
-            </Box>
+            <PageCard
+              key={item.id}
+              coverImage={item.coverImage}
+              title={item.titleData}
+              updatedAt={item.updatedAt}
+              editHref={item.editHref}
+              editSeoHref={item.editSeoHref}
+            />
           ))}
-        </Box>
+        </CardsGrid>
       )}
 
       {activeTab === 'all' && (
