@@ -29,6 +29,7 @@ interface ImagePreviewBlockProps extends StackProps {
   typographySpacing?: string;
   showAlternativeText?: boolean;
   disabled?: boolean;
+  locale?: 'uk' | 'en';
 }
 
 export const ImagePreviewBlock = ({
@@ -45,7 +46,8 @@ export const ImagePreviewBlock = ({
   showAlternativeText = false,
   altText,
   onChangeAltText,
-  disabled = false
+  disabled = false,
+  locale = 'uk'
 }: ImagePreviewBlockProps) => {
   const [previewImage, setPreviewImage] = useState<string>(imageUrl);
 
@@ -75,7 +77,7 @@ export const ImagePreviewBlock = ({
         id: 'current-image',
         fileName: finalFileName ?? fileName ?? 'image',
         src: previewImage,
-        locale: 'uk'
+        locale: locale
       },
       crop: savedCrop
     });
