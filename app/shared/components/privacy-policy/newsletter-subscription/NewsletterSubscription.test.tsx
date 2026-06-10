@@ -6,6 +6,6 @@ describe('NewsletterSubscription', () => {
   runCommonBlockTests({
     Component: NewsletterSubscription,
     mockBlock: createStandardMockBlock().block,
-    paragraphKey: 'Текст 1 абзацу',
+    checkParagraph: true,
   });
 });

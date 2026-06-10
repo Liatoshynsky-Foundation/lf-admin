@@ -11,6 +11,13 @@ const mockParagraphJson = createParagraphNode(commonText, 'uuid-1');
 const mockListPointJson = createDocNode('Initial the first list item');
 const mockNoteJson = createDocNode('Initial note');
 
+const LABELS = {
+  description: 'Вступний текст секції',
+  note: 'Додаткова інформація',
+  list: 'Текст пункту',
+  title: 'Вступний текст секції',
+  paragraph: 'Текст 1 абзацу',
+};
 
 export const createStandardMockBlock = () => ({
   block: {
@@ -31,14 +38,24 @@ interface CommonTestProps {
   Component: React.ElementType;
   mockBlock: unknown;
 
-  descriptionKey?: string;
-  paragraphKey?: string;
-  noteKey?: string;
-  titleKey?: string;
+  checkDescription?: boolean;
+  checkNote?: boolean;
+  checkTitle?: boolean;
+  checkList?: boolean;
+  checkParagraph?: boolean;
   usePointsListMock?: jest.Mock;
 }
 
-export const runCommonBlockTests = ({ Component, mockBlock, descriptionKey, paragraphKey, noteKey, titleKey, usePointsListMock }: CommonTestProps) => {
+export const runCommonBlockTests = ({
+  Component,
+  mockBlock,
+  checkDescription,
+  checkNote,
+  checkTitle,
+  checkList,
+  checkParagraph,
+  usePointsListMock
+}: CommonTestProps) => {
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -62,7 +79,7 @@ export const runCommonBlockTests = ({ Component, mockBlock, descriptionKey, para
     }
   };
 
-  it('should render structural layout boundaries and confirm deep initial JSON content payloads inside the DOM', () => {
+  it('should render collapsible block', () => {
     runSimulation();
 
     expect(screen.getByTestId('collapsible-block')).toBeInTheDocument();
@@ -75,37 +92,40 @@ export const runCommonBlockTests = ({ Component, mockBlock, descriptionKey, para
     expect(document.querySelector('.MuiSkeleton-root')).toBeInTheDocument();
   });
 
-  if (titleKey) {
+  if (checkTitle) {
     it('should render title with deep initial JSON content', () => {
       runSimulation();
-      expect(screen.getByTestId(`textfield-json-${titleKey}`)).toHaveTextContent(JSON.stringify(mockTitleJson));
+      expect(screen.getByTestId(`textfield-json-${LABELS.title}`)).toHaveTextContent(JSON.stringify(mockTitleJson));
     });
   }
 
-  if (descriptionKey) {
+  if (checkDescription) {
     it('should render description with deep initial JSON content', () => {
       runSimulation();
-      expect(screen.getByTestId(`textfield-json-${descriptionKey}`)).toHaveTextContent(JSON.stringify(mockDescriptionJson));
+      expect(screen.getByTestId(`textfield-json-${LABELS.description}`)).toHaveTextContent(JSON.stringify(mockDescriptionJson));
     });
   }
 
-  if (paragraphKey) {
+  if (checkParagraph) {
     it('should render paragraph with deep initial JSON content', () => {
       runSimulation();
-      expect(screen.getByTestId(`textfield-json-${paragraphKey}`)).toHaveTextContent(JSON.stringify(mockParagraphJson));
+      expect(screen.getByTestId(`textfield-json-${LABELS.paragraph}`)).toHaveTextContent(JSON.stringify(mockParagraphJson));
     });
   }
 
-  if (noteKey) {
+  if (checkNote) {
     it('should render note text field with deep initial JSON content', () => {
       runSimulation();
-      expect(screen.getByTestId(`textfield-json-${noteKey}`)).toHaveTextContent(JSON.stringify(mockNoteJson));
+      expect(screen.getByTestId(`textfield-json-${LABELS.note}`)).toHaveTextContent(JSON.stringify(mockNoteJson));
     });
   }
 
-  if (usePointsListMock) {
-    it('should render list of points with deep inital JSON content', () => {
+  if (checkList && usePointsListMock) {
+    it('should render list of points with deep initial JSON content', () => {
       runSimulation();
+
+      const elements = screen.getAllByTestId(`textfield-json-${LABELS.list}`);
+      expect(elements.length).toBeGreaterThan(0);
     });
   }
 };

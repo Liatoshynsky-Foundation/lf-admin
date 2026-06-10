@@ -6,7 +6,7 @@ describe('SocialNetworks', () => {
   runCommonBlockTests({
     Component: SocialNetworks,
     mockBlock: createStandardMockBlock().block,
-    paragraphKey: 'Текст 1 абзацу',
+    checkParagraph: true,
   });
 });
 

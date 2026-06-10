@@ -7,7 +7,7 @@ describe('DataRetention', () => {
   runCommonBlockTests({
     Component: DataRetention,
     mockBlock: createStandardMockBlock().block,
-    paragraphKey: 'Текст 1 абзацу',
+    checkParagraph: true,
   });
 });
 

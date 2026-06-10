@@ -17,7 +17,6 @@ jest.mock('~/store', () => ({
     selector({ locale: 'uk', setField: setFieldMock })
 }));
 
-const mockSetField = jest.fn();
 const inputSectionsList = [
   { id: '1', subtitle: { uk: emptyDoc, en: emptyDoc }, list: [{ id: 'point-1', uk: emptyDoc, en: emptyDoc }] }, 
   { id: '2', subtitle: { uk: emptyDoc, en: emptyDoc }, list: [{ id: 'point-2', uk: emptyDoc, en: emptyDoc }] }
@@ -32,7 +31,7 @@ const sectionIdMocked = '1';
 const defaultMockedProps = {
   blockId,
   sectionsList:inputSectionsList,
-  setField: mockSetField,
+  setField: setFieldMock,
   currentLocale,
   pageId
 };

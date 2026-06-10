@@ -20,18 +20,13 @@ const mockBlock: DataWeCollectBlock = {
   note: { uk: mockNoteJson, en: mockNoteJson },
 };
 
-const keys = {
-  description: 'Вступний текст секції',
-  list: 'Список 1',
-  listItem: 'Текст пункту',
-  note: 'Додаткова інформація',
-};
 describe('DataWeCollect', () => {
   runCommonBlockTests({
     Component: DataWeCollect,
     mockBlock,
-    descriptionKey: keys.description,
-    noteKey: keys.note,
+    checkDescription: true,
+    checkNote: true,
+    checkList: true,
     usePointsListMock: usePointsListMock
   });
 });
