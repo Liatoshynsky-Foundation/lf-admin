@@ -16,6 +16,10 @@ const defaultMockedProps = {
   pageId
 };
 
+beforeAll(() => {
+  crypto.randomUUID = jest.fn(() => 'uuid-1') as typeof crypto.randomUUID;
+});
+
 
 describe('usePointsList', () => {
   it('should initialize points array with id and currentLocale value', () => {
