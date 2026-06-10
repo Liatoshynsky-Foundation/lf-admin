@@ -20,6 +20,7 @@ export type AssetEntity = {
   tags: string[];
   usageRefs: AssetUsageRef[];
   filename: string;
+  originalname?: string;
   mimeType: string;
   sizeBytes: number;
   url: string;
@@ -48,6 +49,7 @@ type DbAsset = {
   tags: string[];
   usageRefs: AssetUsageRef[];
   filename: string;
+  originalname?: string;
   mimeType: string;
   sizeBytes: number;
   url: string;
@@ -78,6 +80,7 @@ const toEntity = (doc: DbAsset): AssetEntity => ({
   tags: doc.tags,
   usageRefs: doc.usageRefs,
   filename: doc.filename,
+  originalname: doc.originalname,
   mimeType: doc.mimeType,
   sizeBytes: doc.sizeBytes,
   url: doc.url,
@@ -133,6 +136,7 @@ export type UpdateAssetData = Partial<Pick<AssetEntity, 'isStarred' | 'filename'
 
 export type CreateAssetData = {
   filename: string;
+  originalname?: string;
   mimeType: string;
   sizeBytes: number;
   url: string;

@@ -82,6 +82,7 @@ export const SideBarNavigation = () => {
           <Box sx={styles.spacer(open)} />
           <List sx={styles.list}>
             {renderItems(NAVIGATION_DATA.main)}
+            <Divider sx={styles.divider} />
             {open && <ListSubheader sx={styles.subheader}>Контент</ListSubheader>}
             {renderItems(NAVIGATION_DATA.content)}
             <Divider sx={styles.divider} />

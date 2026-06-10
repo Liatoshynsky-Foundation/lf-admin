@@ -1,13 +1,16 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import LoginModal from './LoginModal';
+import { loginErrors } from '~/constants/errors';
 
-jest.mock('~/public/icons/logo.svg', () => {
-  const Logo = () => <img alt="logo" />;
-  Logo.displayName = 'Logo';
-  return Logo;
+jest.mock('next/link', () => {
+  const MockedLink = ({ children, href, ...props }: { children: React.ReactNode; [key: string]: any }) => (
+    <a href={href || '/'} {...props}>
+      {children}
+    </a>
+  );
+  MockedLink.displayName = 'MockedLink';
+  return MockedLink;
 });
 
 jest.mock('~/public/icons/eye.svg', () => {
@@ -26,100 +29,54 @@ describe('LoginModal', () => {
   const mockOnSubmit = jest.fn();
 
   beforeEach(() => {
-    mockOnSubmit.mockClear();
-
-    render(<LoginModal onSubmit={mockOnSubmit} />);
-
-    const usernameInput = screen.getByLabelText('Логін');
-    fireEvent.change(usernameInput, { target: { value: '  ' } });
-
-    const passwordInput = screen.getByLabelText('Пароль');
-    fireEvent.change(passwordInput, { target: { value: '  ' } });
+    jest.clearAllMocks();
   });
 
-  it('should render all elements correctly', () => {
-    expect(screen.getByAltText('logo')).toBeInTheDocument();
-    expect(screen.getByText('Вхід до адмін-панелі')).toBeInTheDocument();
-    expect(screen.getByText('Для редагування сайту увійдіть у свій обліковий запис.')).toBeInTheDocument();
-    expect(screen.getByLabelText('Логін')).toBeInTheDocument();
-    expect(screen.getByLabelText('Пароль')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Увійти' })).toBeInTheDocument();
+  it('renders all inputs and buttons', () => {
+    render(<LoginModal onSubmit={mockOnSubmit} submitError={null} />);
+    expect(screen.getByPlaceholderText('Введіть електронну пошту')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Введіть пароль')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /увійти/i })).toBeInTheDocument();
   });
 
-  it('should disable the submit button when either is empty', () => {
-    const usernameInput = screen.getByLabelText('Логін');
-    const passwordInput = screen.getByLabelText('Пароль');
+  it('shows validation errors when submitting empty fields', () => {
+    render(<LoginModal onSubmit={mockOnSubmit} submitError={null} />);
 
-    fireEvent.change(usernameInput, { target: { value: '' } });
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-
-    const submitButton = screen.getByRole('button', { name: 'Увійти' });
-    expect(submitButton).toBeDisabled();
-
-    fireEvent.change(usernameInput, { target: { value: 'username' } });
-    fireEvent.change(passwordInput, { target: { value: '' } });
-
-    expect(submitButton).toBeDisabled();
-
-    fireEvent.change(usernameInput, { target: { value: 'username' } });
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-
-    expect(submitButton).toBeEnabled();
-  });
-
-  it('should show an error when the username is spaces', () => {
-    const submitButton = screen.getByRole('button', { name: 'Увійти' });
+    const submitButton = screen.getByRole('button', { name: /увійти/i });
     fireEvent.click(submitButton);
 
-    expect(screen.getByText('Логін не може бути порожнім')).toBeInTheDocument();
+    expect(screen.getByText(loginErrors.EMPTY_EMAIL)).toBeInTheDocument();
+    expect(screen.getByText(loginErrors.EMPTY_PASSWORD)).toBeInTheDocument();
     expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 
-  it('should show an error when the password is spaces', () => {
-    const usernameInput = screen.getByLabelText('Логін');
-    fireEvent.change(usernameInput, { target: { value: 'testuser' } });
+  it('calls onSubmit with correct data when form is valid', () => {
+    render(<LoginModal onSubmit={mockOnSubmit} submitError={null} />);
 
-    const submitButton = screen.getByRole('button', { name: 'Увійти' });
-    fireEvent.click(submitButton);
+    const emailInput = screen.getByPlaceholderText('Введіть електронну пошту');
+    const passwordInput = screen.getByPlaceholderText('Введіть пароль');
+    const submitButton = screen.getByRole('button', { name: /увійти/i });
 
-    expect(screen.getByText('Пароль не може бути порожнім')).toBeInTheDocument();
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('should call onSubmit with correct data when inputs are valid', () => {
-    const usernameInput = screen.getByLabelText('Логін');
-    const passwordInput = screen.getByLabelText('Пароль');
-    const submitButton = screen.getByRole('button', { name: 'Увійти' });
-    const test = uuidv4();
-
-    fireEvent.change(usernameInput, { target: { value: 'testuser' } });
-    fireEvent.change(passwordInput, { target: { value: test } });
+    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'password123' } });
     fireEvent.click(submitButton);
 
     expect(mockOnSubmit).toHaveBeenCalledWith({
-      login: 'testuser',
-      password: test
+      login: 'test@example.com',
+      password: 'password123'
     });
   });
 
-  it('should login user by pressing Enter', () => {
-    const usernameInput = screen.getByLabelText('Логін');
-    const passwordInput = screen.getByLabelText('Пароль');
-    const test = uuidv4();
+  it('clears password field when submitError changes', () => {
+    const { rerender } = render(<LoginModal onSubmit={mockOnSubmit} submitError={null} />);
 
-    fireEvent.change(usernameInput, { target: { value: 'testuser' } });
-    fireEvent.change(passwordInput, { target: { value: test } });
+    const passwordInput = screen.getByPlaceholderText('Введіть пароль');
+    fireEvent.change(passwordInput, { target: { value: 'password123' } });
 
-    const form = passwordInput.closest('form');
-    if (!form) {
-      throw new Error('Form element not found');
-    }
+    expect(passwordInput).toHaveValue('password123');
 
-    fireEvent.submit(form);
+    rerender(<LoginModal onSubmit={mockOnSubmit} submitError={Date.now().toString()} />);
 
-    expect(mockOnSubmit).toHaveBeenCalledWith({
-      login: 'testuser',
-      password: test
-    });
+    expect(passwordInput).toHaveValue('');
   });
 });

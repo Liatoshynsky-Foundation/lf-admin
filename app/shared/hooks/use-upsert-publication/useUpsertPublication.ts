@@ -9,6 +9,7 @@ import {
   PUBLICATIONS_TYPES,
   PublicationsItemType
 } from '~/constants/publications';
+import { buildCoverImageCropPayload } from '~/lib/utils/CropperHelper';
 import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import { useCreateEvent, useEventById, useUpdateEvent } from '~/shared/hooks/use-events/useEvents';
 import {
@@ -201,7 +202,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
         src: seoValue.ogImage || adminTitle,
         alt: { uk: ukMeta.altText?.uk || adminTitle, en: enMeta.altText?.en || adminTitle },
         caption: { uk: adminTitle, en: adminTitle },
-        ...(crop && { crop })
+        ...buildCoverImageCropPayload(crop)
       }
     };
 
