@@ -8,9 +8,9 @@ jest.mock('~/public/icons/link.svg', () => ({
   default: () => <svg data-testid="link-icon" />
 }));
 
-jest.mock('~/public/icons/menu.svg', () => ({
-  __esModule: true,
-  default: () => <svg data-testid="menu-icon" />
+jest.mock('lucide-react', () => ({
+  ...jest.requireActual('lucide-react'),
+  EllipsisVertical: () => <svg data-testid="menu-icon" />
 }));
 
 jest.mock('~/public/icons/star-1.svg', () => ({

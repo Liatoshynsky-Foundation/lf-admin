@@ -1,7 +1,0 @@
-<svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <g transform="translate(8.66667, 2.83333)">
-    <path d="M1.33333 8C1.79357 8 2.16667 7.6269 2.16667 7.16667C2.16667 6.70643 1.79357 6.33333 1.33333 6.33333C0.873096 6.33333 0.5 6.70643 0.5 7.16667C0.5 7.6269 0.873096 8 1.33333 8Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M1.33333 2.16667C1.79357 2.16667 2.16667 1.79357 2.16667 1.33333C2.16667 0.873096 1.79357 0.5 1.33333 0.5C0.873096 0.5 0.5 0.873096 0.5 1.33333C0.5 1.79357 0.873096 2.16667 1.33333 2.16667Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M1.33333 13.8333C1.79357 13.8333 2.16667 13.4602 2.16667 13C2.16667 12.5398 1.79357 12.1667 1.33333 12.1667C0.873096 12.1667 0.5 12.5398 0.5 13C0.5 13.4602 0.873096 13.8333 1.33333 13.8333Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-  </g>
-</svg>
