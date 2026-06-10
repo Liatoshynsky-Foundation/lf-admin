@@ -26,6 +26,7 @@ export interface UpdateAssetArgs {
 export interface CreateAssetArgs {
   input: {
     filename: string;
+    originalname?: string;
     mimeType: string;
     sizeBytes: number;
     url: string;

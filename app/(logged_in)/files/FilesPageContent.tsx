@@ -214,7 +214,8 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
     const createResult = await createAsset({
       variables: {
         input: {
-          filename: originalName || filename,
+          filename: filename,
+          originalname: originalName,
           url: url,
           mimeType: mimeType,
           sizeBytes: size,
@@ -234,7 +235,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
     return (data?.allAssets ?? []).map((asset) => ({
       id: asset.id,
       type: assetCardTypeMap[asset.type],
-      name: asset.filename,
+      name: asset.originalname || asset.filename,
       dateAdded: formatDateAdded(asset.createdAt),
       createdAtRaw: asset.createdAt,
       isStarred: asset.isStarred,

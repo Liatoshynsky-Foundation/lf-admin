@@ -9,6 +9,7 @@ query AllAssets($filters: AssetsFiltersInput) {
       locale
     }
     filename
+    originalname
     mimeType
     sizeBytes
     url

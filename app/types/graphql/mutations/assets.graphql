@@ -12,6 +12,7 @@ mutation CreateAsset($input: CreateAssetInput!) {
   createAsset(input: $input) {
     id
     filename
+    originalname
     url
     mimeType
     type
