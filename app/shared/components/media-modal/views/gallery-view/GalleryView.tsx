@@ -25,6 +25,7 @@ type Props = Readonly<{
 type GalleryItem = {
   id: string;
   filename: string;
+  originalname?: string;
   url: string;
   isStarred: boolean;
   tags: string[];
@@ -81,6 +82,7 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
   type AssetMeta = {
     id: string;
     filename: string;
+    originalname?: string;
     isStarred: boolean;
     tags: string[];
     usageRefs: { pageId?: string | null; blockId?: string | null }[];
@@ -102,6 +104,7 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
         return {
           id: asset?.id ?? file.path ?? file.filename,
           filename: asset?.filename ?? file.filename,
+          originalname: asset?.originalname ?? undefined,
           url: file.url,
           isStarred: asset?.isStarred ?? false,
           tags: asset?.tags ?? [],
@@ -176,7 +179,7 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
           renderCard={(item) => (
             <GalleryCard
               src={item.url}
-              fileName={item.filename}
+              fileName={item.originalname || item.filename}
               isStarred={item.isStarred}
               usageLocations={getPageNames(item.usageRefs)}
               onClick={() => handleCardClick(item)}

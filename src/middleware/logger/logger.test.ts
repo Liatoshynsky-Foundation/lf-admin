@@ -38,7 +38,8 @@ jest.mock('winston-mongodb', () => ({
 
 jest.mock('../../config', () => ({
   __esModule: true,
-  mongoUrl: 'mongodb://localhost:27017/test-logs'
+  mongoUrl: 'mongodb://localhost:27017/test-logs',
+  logRetentionSeconds: 60 * 60 * 24 * 3
 }));
 
 const getMongoDBMock = (): jest.Mock => jest.requireMock('winston-mongodb').MongoDB as jest.Mock;
@@ -81,6 +82,20 @@ describe('Logger', () => {
       expect.objectContaining({
         level: 'debug',
         collection: 'logger'
+      })
+    );
+  });
+
+  it('passes configurable retention to MongoDB transport', async () => {
+    jest.resetModules();
+    const MongoDBMock = getMongoDBMock();
+    MongoDBMock.mockClear();
+
+    await import('./logger');
+
+    expect(MongoDBMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        expireAfterSeconds: 60 * 60 * 24 * 3
       })
     );
   });

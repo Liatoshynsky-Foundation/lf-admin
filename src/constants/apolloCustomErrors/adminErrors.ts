@@ -1,7 +1,7 @@
 import { AuthenticationError } from 'apollo-server-errors';
 
 export class LoginError extends AuthenticationError {
-  constructor() {
-    super('Неправильний логін або пароль');
+  constructor(message: string = 'Неправильний логін або пароль') {
+    super(message);
   }
 }

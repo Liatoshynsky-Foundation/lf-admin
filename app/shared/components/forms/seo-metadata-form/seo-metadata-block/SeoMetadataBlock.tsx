@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import type { LocalizedMeta } from '../SeoMetadataForm';
 import SeoMetadataForm from '../SeoMetadataForm';
 import { styles } from '../SeoMetadataForm.styles';
-import { CropRect } from '~/types/common';
+import {LocalizedCropRect } from '~/types/common';
 
 export interface SeoBlockValue {
   meta: { uk: LocalizedMeta; en: LocalizedMeta };
@@ -31,8 +31,8 @@ export interface SeoMetadataBlockProps {
   readonly extraFieldsBeforeKeywords?: boolean;
   readonly forceShowErrors?: boolean;
   readonly value?: SeoBlockValue;
-  readonly crop?: CropRect | null;
-  readonly onChangeCrop?: (newCrop: CropRect | null) => void;
+  readonly crop?: LocalizedCropRect | null;
+  readonly onChangeCrop?: (newCrop: LocalizedCropRect | null) => void;
   readonly onChange?: (value: SeoBlockValue) => void;
   readonly extraFields?: (
     locale: 'uk' | 'en',
@@ -137,8 +137,10 @@ export default function SeoMetadataBlock({
         showAlternativeText={showAlternativeText}
         extraFieldsBeforeKeywords={extraFieldsBeforeKeywords}
         forceShowErrors={forceShowErrors}
-        crop={crop}
-        onChangeCrop={onChangeCrop}
+        crop={crop?.uk ?? null}
+        onChangeCrop={(newUkCrop) => 
+          onChangeCrop?.({ uk: newUkCrop, en: crop?.en ?? null })
+        }
         extraFields={
           showTicketUrl || extraFields
             ? (localeMeta, onLocaleMeta) => buildExtraFields('uk', localeMeta, onLocaleMeta)
@@ -155,8 +157,10 @@ export default function SeoMetadataBlock({
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, en: val } })}
         showAlternativeText={showAlternativeText}
         extraFieldsBeforeKeywords={extraFieldsBeforeKeywords}
-        crop={crop}
-        onChangeCrop={onChangeCrop}
+        crop={crop?.en ?? null}
+        onChangeCrop={(newEnCrop) => 
+          onChangeCrop?.({ uk: crop?.uk ?? null, en: newEnCrop })
+        }
         extraFields={
           showTicketUrl || extraFields
             ? (localeMeta, onLocaleMeta) => buildExtraFields('en', localeMeta, onLocaleMeta)

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactCrop, { PixelCrop } from 'react-image-crop';
 
 import type { CropRendererProps } from '../../MediaModal.renderers';
+import { cropViewContainer, styles } from './CropView.styles';
 
 const canCreateObjectUrl = () => typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function';
 const canRevokeObjectUrl = () => typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function';
@@ -127,17 +128,7 @@ export function CropView({ selected, crop: stateCrop, resetSeq, onBaseline, onCh
 
     if (imgError) {
       return (
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 1,
-            p: 4,
-            color: 'text.secondary'
-          }}
-        >
+        <Box sx={styles.errorImgContainer}>
           <Typography variant="textMd">Не вдалося завантажити зображення</Typography>
           <Typography variant="caption" sx={{ wordBreak: 'break-all', opacity: 0.6 }}>
             {previewSrc}
@@ -147,26 +138,14 @@ export function CropView({ selected, crop: stateCrop, resetSeq, onBaseline, onCh
     }
 
     return (
-      <Box
-        sx={{
-          flex: 1,
-          display: 'flex',
-          overflow: 'hidden',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}
-      >
+      <Box sx={styles.imageContainer}>
         <ReactCrop
           crop={crop}
           onChange={handleCropChange}
           onComplete={handleComplete}
           keepSelection
           ruleOfThirds
-          style={{
-            display: 'flex',
-            maxWidth: '100%',
-            maxHeight: '100%'
-          }}
+          style={styles.cropComponent}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -177,11 +156,7 @@ export function CropView({ selected, crop: stateCrop, resetSeq, onBaseline, onCh
             onError={() => {
               setImgError(true);
             }}
-            style={{
-              maxWidth: '100%',
-              height: 'auto',
-              display: 'block'
-            }}
+            style={styles.cropComponentImage}
           />
         </ReactCrop>
       </Box>
@@ -189,63 +164,7 @@ export function CropView({ selected, crop: stateCrop, resetSeq, onBaseline, onCh
   };
 
   return (
-    <Box
-      data-testid="CropView"
-      data-reset-seq={resetSeq}
-      sx={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 2,
-        overflow: 'hidden',
-
-        '& .ReactCrop__child-wrapper': {
-          width: imgDimensions ? `${imgDimensions.width}px !important` : 'auto',
-          height: imgDimensions ? `${imgDimensions.height}px !important` : 'auto'
-        },
-
-        '& .ReactCrop__crop-selection': {
-          animation: 'none !important',
-          backgroundImage: 'none !important',
-
-          border: '1px solid #fff',
-
-          background: `
-            linear-gradient(#fff, #fff), linear-gradient(#fff, #fff),
-            linear-gradient(#fff, #fff), linear-gradient(#fff, #fff),
-            linear-gradient(#fff, #fff), linear-gradient(#fff, #fff),
-            linear-gradient(#fff, #fff), linear-gradient(#fff, #fff)
-           !important`,
-
-          backgroundPosition: `
-            top left, top left,        
-            top right, top right,      
-            bottom left, bottom left,   
-            bottom right, bottom right 
-          !important`,
-
-          backgroundRepeat: 'no-repeat !important',
-
-          backgroundSize: `
-            ${forCropAngle}px 4px, 4px ${forCropAngle}px,  
-            ${forCropAngle}px 4px, 4px ${forCropAngle}px,  
-            ${forCropAngle}px 4px, 4px ${forCropAngle}px,  
-            ${forCropAngle}px 4px, 4px ${forCropAngle}px    
-          !important`,
-          '&::after': { display: 'none !important', content: 'none' },
-          '&::before': { display: 'none !important', content: 'none' }
-        },
-
-        '& .ReactCrop__rule-of-thirds-vt': {
-          width: '1px !important',
-          height: '100% !important'
-        },
-        '& .ReactCrop__rule-of-thirds-hz': {
-          height: '1px !important',
-          width: '100% !important'
-        }
-      }}
-    >
+    <Box data-testid="CropView" data-reset-seq={resetSeq} sx={cropViewContainer(imgDimensions, forCropAngle)}>
       {renderImage()}
     </Box>
   );

@@ -23,5 +23,5 @@ export const styles = {
   addBtn: {
     maxWidth: '250px',
     alignSelf: 'flex-start'
-  }
+  },
 };

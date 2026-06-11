@@ -4,6 +4,7 @@ import { Box } from '@mui/material';
 import CollapsibleBlock from '../../design-system/collapsible-block/CollapsibleBlock';
 import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
 import { QuoteBlock } from '../Liatoshynsky-office/quote-block/QuoteBlock';
+import { styles } from './IntroSection.styles';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { ImagePreviewBlock } from '~/ds-components/photo-block/PhotoBlock';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
@@ -39,7 +40,7 @@ export const IntroSection = () => {
         }
       />
 
-      <Box sx={{ marginTop: '15px' }}>
+      <Box sx={styles.imageWrapper}>
         <ImagePreviewBlock
           imageUrl={getImageUrl(block.image)}
           fileName={block.image.src || ''}
@@ -56,7 +57,7 @@ export const IntroSection = () => {
       </Box>
 
       <CustomTextField
-        fieldType='formatting'
+        fieldType="formatting"
         title="Підпис до зображення"
         label="Текст підпису"
         value={block.image.caption[currentLocale]}
@@ -69,7 +70,7 @@ export const IntroSection = () => {
         }
       />
 
-      <Box sx={{ marginTop: '15px' }}>
+      <Box sx={styles.quoteWrapper}>
         <QuoteBlock
           title={block.quote.source[currentLocale]}
           description={block.quote.text[currentLocale]}

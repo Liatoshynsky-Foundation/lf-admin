@@ -5,6 +5,7 @@ import { Upload } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { getFilePageContentWrapper, styles } from './FilesPageContent.styles';
 import {
   FILE_TABS,
   FILES_EMPTY_STATE_DESCRIPTION,
@@ -37,7 +38,6 @@ import {
   FileInfoSidebar,
   type FileUsageLink
 } from '~/shared/components/file-info-sidebar/FileInfoSidebar';
-import { SIDEBAR_WIDTH } from '~/shared/components/file-info-sidebar/FileInfoSidebar.styles';
 import {
   FilesCardsLayout,
   type FilesCardsLayoutItem,
@@ -57,7 +57,6 @@ import { RenameFileModal } from '~/shared/components/rename-file-modal/RenameFil
 import { ViewToggle } from '~/shared/components/view-toggle';
 import { useAllAssets } from '~/shared/hooks/use-assets/useAssets';
 import { useFilesFiltering } from '~/shared/hooks/use-files';
-import { mainHexPalette as colors } from '~/shared/theme/colors';
 import { AssetType, useCreateAssetMutation, useDeleteAssetMutation } from '~/types/graphql/generated/graphql';
 
 type FilesPageFileItem = FilesCardsLayoutItem & {
@@ -214,7 +213,8 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
     const createResult = await createAsset({
       variables: {
         input: {
-          filename: originalName || filename,
+          filename: filename,
+          originalname: originalName,
           url: url,
           mimeType: mimeType,
           sizeBytes: size,
@@ -234,7 +234,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
     return (data?.allAssets ?? []).map((asset) => ({
       id: asset.id,
       type: assetCardTypeMap[asset.type],
-      name: asset.filename,
+      name: asset.originalname || asset.filename,
       dateAdded: formatDateAdded(asset.createdAt),
       createdAtRaw: asset.createdAt,
       isStarred: asset.isStarred,
@@ -348,19 +348,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
     : null;
 
   return (
-    <Box
-      sx={{
-        width: '100%',
-        maxWidth: '100%',
-        minWidth: 0,
-        overflowX: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '20px',
-        pr: { xs: 0, md: sidebarFile ? `${SIDEBAR_WIDTH}px` : 0 },
-        transition: 'padding-right 0.2s ease'
-      }}
-    >
+    <Box sx={getFilePageContentWrapper(Boolean(sidebarFile))}>
       <PageHeader
         title={FILES_PAGE_TITLE}
         activeTab={activeTab}
@@ -370,22 +358,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
             variant="contained"
             onClick={handleOpenUploadFlow}
             endIcon={<Upload size={20} aria-hidden="true" />}
-            sx={{
-              borderRadius: '20px',
-              px: '24px',
-              py: '8px',
-              minHeight: '40px',
-              textTransform: 'none',
-              color: colors.black,
-              boxShadow: 'none',
-              fontSize: '16px',
-              lineHeight: 1.5,
-              bgcolor: colors.yellow[500],
-              '&:hover': {
-                bgcolor: colors.yellow[600],
-                boxShadow: 'none'
-              }
-            }}
+            sx={styles.pageHeaderButton}
           >
             {FILES_UPLOAD_BUTTON_LABEL}
           </Button>

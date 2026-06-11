@@ -19,6 +19,11 @@ export interface CropRect {
   height: number;
 }
 
+export type LocalizedCropRect = {
+  uk: CropRect | null;
+  en: CropRect | null;
+};
+
 export interface CropResult {
   rect: CropRect;
 }

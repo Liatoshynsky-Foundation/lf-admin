@@ -5,6 +5,7 @@ const skipMock = jest.fn(() => ({ limit: limitMock }));
 const sortMock = jest.fn(() => ({ skip: skipMock }));
 const findMock = jest.fn(() => ({ sort: sortMock }));
 const countDocumentsMock = jest.fn();
+const deleteManyMock = jest.fn();
 
 jest.doMock('~/infrastructure/db/connect', () => ({
   __esModule: true,
@@ -18,7 +19,8 @@ jest.doMock('mongoose', () => ({
       db: {
         collection: jest.fn(() => ({
           find: findMock,
-          countDocuments: countDocumentsMock
+          countDocuments: countDocumentsMock,
+          deleteMany: deleteManyMock
         }))
       }
     }
@@ -86,6 +88,29 @@ describe('logRepository', () => {
       ],
       pagination: { page: 2, limit: 10, total: 1 }
     });
+  });
+
+  it('deletes all logs when no level is provided', async () => {
+    const { deleteLogs } = await import('./logRepository');
+
+    deleteManyMock.mockResolvedValue({ deletedCount: 42 });
+
+    const result = await deleteLogs();
+
+    expect(mockDbConnect).toHaveBeenCalled();
+    expect(deleteManyMock).toHaveBeenCalledWith({});
+    expect(result).toBe(42);
+  });
+
+  it('deletes logs for a specific level when provided', async () => {
+    const { deleteLogs } = await import('./logRepository');
+
+    deleteManyMock.mockResolvedValue({ deletedCount: 5 });
+
+    const result = await deleteLogs('error');
+
+    expect(deleteManyMock).toHaveBeenCalledWith({ level: 'error' });
+    expect(result).toBe(5);
   });
 
   it('returns warn logs when warn filter is requested', async () => {
