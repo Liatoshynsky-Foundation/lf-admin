@@ -1,7 +1,6 @@
 import { JSONContent } from '@tiptap/react';
 
 import { PAGE_IDS } from '~/constants/pageBlocks';
-import { ensureIds } from '~/lib/utils/ensureIds';
 import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 import { EditBlockSkeleton } from '~/shared/components/edit-block-skeleton/EditBlockSkeleton';
@@ -46,7 +45,7 @@ export const EditParagraphsBlock = <T extends BlockIdsWithDescription>({ blockId
     setField(pageId, blockId, 'description', newDescription);
   };
 
-  const paragraphs = ensureIds(block.description[currentLocale].content || []);
+  const paragraphs = block.description[currentLocale].content || [];
   if (!paragraphs || paragraphs.length === 0) return null;
 
   return (
@@ -55,7 +54,7 @@ export const EditParagraphsBlock = <T extends BlockIdsWithDescription>({ blockId
         (
           <CustomTextField
             fieldType="formatting"
-            key={paragraphNode.id}
+            key={i}
             title={`Текст ${i + 1} абзацу`}
             label="Текст"
             value={paragraphNode}

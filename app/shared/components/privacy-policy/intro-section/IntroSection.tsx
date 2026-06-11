@@ -5,7 +5,6 @@ import CollapsibleBlock from '../../design-system/collapsible-block/CollapsibleB
 import { CustomTextField } from '../../design-system/text-field/TextField';
 import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
-import { ensureIds } from '~/lib/utils/ensureIds';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 import { IntroSectionBlock } from '~/types/store/pages/privacy-policy';
@@ -33,12 +32,12 @@ export const IntroSection = () => {
     setField(pageId, blockId, fieldKey, newDescription);
   };
 
-  const paragraphs = ensureIds(paragraphsKeys.map((key) =>
+  const paragraphs = paragraphsKeys.map((key) =>
     ({
       key,
       value: block[key][currentLocale]
     })
-  ));
+  );
 
   if (!paragraphs || paragraphs.length === 0) return null;
 
@@ -48,7 +47,7 @@ export const IntroSection = () => {
         (
           <CustomTextField
             fieldType="formatting"
-            key={paragraphNode.id}
+            key={paragraphNode.key}
             title={`Текст ${i + 1} абзацу`}
             label="Текст"
             value={paragraphNode.value}
