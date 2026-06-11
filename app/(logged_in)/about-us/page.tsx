@@ -1,6 +1,7 @@
 'use client';
 import { Box } from '@mui/material';
 
+import { styles } from './page.styles';
 import { PAGE_IDS } from '~/constants/pageBlocks';
 import { FoundationFounders } from '~/shared/components/about-us/foundation-founders/FoundationFounders';
 import { IntroSection } from '~/shared/components/about-us/Intro-section/IntroSection';
@@ -23,7 +24,7 @@ export default function Page() {
   const { save, loading: saveLoading } = useSavePageBlocks(pageSlug);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', p: '32px', width: '100%', gap: '32px' }}>
+    <Box sx={styles.pageContainer}>
       <Header
         title="Про нас"
         onPreview={preview}

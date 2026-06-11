@@ -64,7 +64,7 @@ const OurMission = () => {
   const { block } = usePageBlock(pageId, blockId);
   const setField = useStore((state) => state.setField);
 
-  if (!block) return <Skeleton sx={{ height: '60px' }} />;
+  if (!block) return <Skeleton sx={styles.skeletonPlaceholder} />;
 
   const missionList: MissionListItemWithId[] = ensureIds(block.list);
 

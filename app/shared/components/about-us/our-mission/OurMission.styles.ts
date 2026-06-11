@@ -17,5 +17,9 @@ export const styles = {
   imageBlockWrapper: {
     display: 'flex',
     flexDirection: 'column'
+  },
+
+  skeletonPlaceholder: {
+    height: '60px'
   }
 };

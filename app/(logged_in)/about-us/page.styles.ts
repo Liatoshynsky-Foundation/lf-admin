@@ -1,9 +1,11 @@
 import { SxProps, Theme } from '@mui/material';
 
 export const styles = {
-  container: {
+  pageContainer: {
     display: 'flex',
     flexDirection: 'column',
-    width: '100%'
+    p: '32px',
+    width: '100%',
+    gap: '32px'
   }
 } satisfies Record<string, SxProps<Theme>>;

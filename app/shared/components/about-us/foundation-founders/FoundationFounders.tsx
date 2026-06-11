@@ -22,7 +22,7 @@ export const FoundationFounders = () => {
   const currentLocale: keyof LocalizedString = useStore((state) => state.locale);
   const setField = useStore((state) => state.setField);
 
-  if (!block) return <Skeleton sx={{ height: '60px' }} />;
+  if (!block) return <Skeleton sx={styles.skeletonPlaceholder} />;
 
   const memberList: TeamMemberWithId[] = ensureIds(block.members);
 

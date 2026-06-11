@@ -1,9 +1,12 @@
 import { SxProps, Theme } from '@mui/material';
 
 export const styles = {
-  container: {
+  mainPageContentWrapper: {
     display: 'flex',
     flexDirection: 'column',
-    width: '100%'
+    gap: '32px'
+  },
+  activeTabContainer: {
+    width: '400px'
   }
 } satisfies Record<string, SxProps<Theme>>;

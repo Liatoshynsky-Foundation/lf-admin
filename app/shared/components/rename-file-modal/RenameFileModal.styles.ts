@@ -36,5 +36,12 @@ export const renameFileModalStyles: Record<string, SxProps<Theme>> = {
 
   cancelButton: {
     width: '131px'
+  },
+  renameFileIcon: {
+    color: 'black',
+    p: 0
+  },
+  renameFileText: {
+    lineHeight: '1.4'
   }
 };

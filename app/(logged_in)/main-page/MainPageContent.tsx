@@ -2,6 +2,7 @@
 
 import { Box, Typography } from '@mui/material';
 
+import { styles } from './MainPageContent.styles';
 import PageCard from '~/shared/components/page-card/PageCard';
 import { PageHeader, PageHeaderTab } from '~/shared/components/page-header/PageHeader';
 
@@ -36,11 +37,11 @@ const items = [
 
 export function MainPagesContent({ activeTab }: MainPagesContentProps) {
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+    <Box sx={styles.mainPageContentWrapper}>
       <PageHeader title="Основні сторінки" activeTab={activeTab} tabs={MAIN_PAGE_TABS} />
 
       {activeTab === 'foundation' && (
-        <Box sx={{ width: '400px' }}>
+        <Box sx={styles.activeTabContainer}>
           {items.map((item) => (
             <Box key={item.id}>
               <PageCard
