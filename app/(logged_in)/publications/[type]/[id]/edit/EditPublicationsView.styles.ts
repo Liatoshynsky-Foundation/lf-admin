@@ -1,4 +1,9 @@
+import { SxProps, Theme } from '@mui/material';
+
 export const styles = {
+  loadingContainer: {
+    p: 4
+  },
   container: {
     width: '100%',
     bgcolor: 'adminBlue.50'
@@ -6,30 +11,13 @@ export const styles = {
   header: {
     bgcolor: 'white'
   },
-  menu: {
-    mt: 1,
-    '& .MuiPaper-root': {
-      '&::-webkit-scrollbar': {
-        display: 'none'
-      },
-      msOverflowStyle: 'none',
-      scrollbarWidth: 'none',
-
-      overflowY: 'auto'
-    }
-  },
   menuSubheader: {
     height: 26,
     display: 'flex',
     alignItems: 'center'
   },
-  menuItem: {
-    p: '10px 16px',
-    borderRadius: '8px',
-    height: 44
-  },
   draftCaption: {
-    color: 'red.600',
+    color: 'red.600'
   },
   mainContent: {
     minHeight: '100vh',
@@ -45,5 +33,8 @@ export const styles = {
       maxWidth: '1136px',
       bgcolor: 'white'
     }
+  },
+  contentDevider: {
+    my: '7px'
   }
-};
+} satisfies Record<string, SxProps<Theme>>;

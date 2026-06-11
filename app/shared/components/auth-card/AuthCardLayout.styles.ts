@@ -1,3 +1,5 @@
+import { SxProps, Theme } from '@mui/material';
+
 export const styles = {
   outerContainer: {
     display: 'flex',
@@ -16,18 +18,18 @@ export const styles = {
     width: '100%',
     display: 'flex',
     flexDirection: 'column',
-    gap: '40px'
+    gap: 5
   },
   header: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '8px',
+    gap: 1,
     width: '100%'
   },
-  TitleAndSubtitle: {
+  titleAndSubtitle: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '8px'
+    gap: 1
   },
   title: {
     textAlign: 'center'
@@ -36,5 +38,10 @@ export const styles = {
     fontWeight: 400,
     textAlign: 'center',
     color: 'adminBlue.800'
+  },
+  imageContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    width: '100%'
   }
-};
+} satisfies Record<string, SxProps<Theme>>;

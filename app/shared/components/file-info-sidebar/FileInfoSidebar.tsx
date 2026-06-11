@@ -243,13 +243,7 @@ export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAct
               {isDownloading ? (
                 <Box
                   component="span"
-                  sx={{
-                    display: 'flex',
-                    width: '20px',
-                    height: '20px',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
+                  sx={styles.downloadSpinner}
                 >
                   <CircularProgress size={16} color="inherit" />
                 </Box>
@@ -271,10 +265,7 @@ export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAct
       />
 
       <Box
-        sx={{
-          ...styles.preview(isImagePreview),
-          cursor: isImagePreview ? 'pointer' : 'default'
-        }}
+        sx={styles.preview(isImagePreview)}
         onClick={openPreview}
         role={isImagePreview ? 'button' : undefined}
         tabIndex={isImagePreview ? 0 : -1}

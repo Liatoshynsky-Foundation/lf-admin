@@ -5,6 +5,7 @@ import { Upload } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { styles } from './page.styles';
 import Alert from '~/ds-components/alert/Alert';
 import Button from '~/ds-components/button/Button';
 import ButtonGroup from '~/ds-components/button-group/ButtonGroup';
@@ -112,8 +113,8 @@ const sortSelectOrders: Record<SortField, { value: SortOrder; label: string }[]>
 };
 
 const SandboxSection = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <Box sx={{ display: 'flex', flexDirection: 'column', gap: '16px', pb: 2 }}>
-    <Typography variant="h4" sx={{ backgroundColor: 'peachpuff', padding: '8px 16px', borderRadius: '8px' }}>
+  <Box sx={styles.sandboxWrapper}>
+    <Typography variant="h4" sx={styles.sandboxText}>
       Тестування {title}
     </Typography>
     {children}
@@ -188,7 +189,7 @@ export default function StyleGuide() {
   ];
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '24px', padding: '40px' }}>
+    <Box sx={styles.pageWrapper}>
       <SandboxSection title="Alert">
         <Typography variant="h6">1. Variant: Filled</Typography>
         <Alert severity="error" variant="filled" title="Title" description="Description" label="Label" />
@@ -196,7 +197,7 @@ export default function StyleGuide() {
         <Alert severity="info" variant="filled" title="Title" description="Description" label="Label" />
         <Alert severity="success" variant="filled" title="Title" description="Description" label="Label" />
 
-        <Typography variant="h6" sx={{ mt: 4 }}>
+        <Typography variant="h6" sx={styles.blockSeparator}>
           2. Variant: Outlined
         </Typography>
         <Alert severity="error" variant="outlined" title="Title" description="Description" label="Label" />
@@ -217,13 +218,7 @@ export default function StyleGuide() {
         </Button>
 
         <Typography variant="h6">3. Variant: Filled, Palette: Secondary, Size: Large</Typography>
-        <Box
-          sx={{
-            backgroundColor: 'black',
-            padding: '16px',
-            borderRadius: '8px'
-          }}
-        >
+        <Box sx={styles.downloadWrapper}>
           <Button
             fullWidth
             size="large"
@@ -236,13 +231,7 @@ export default function StyleGuide() {
         </Box>
 
         <Typography variant="h6">4. Variant: Outlined, Palette: Secondary, Size: Small</Typography>
-        <Box
-          sx={{
-            backgroundColor: 'black',
-            padding: '16px',
-            borderRadius: '8px'
-          }}
-        >
+        <Box sx={styles.downloadWrapper}>
           <Button
             fullWidth
             size="small"
@@ -264,7 +253,7 @@ export default function StyleGuide() {
         <Typography variant="h6">1. Palette: Primary, Size: Small (Default)</Typography>
         <ButtonGroup buttons={['Опція 1', 'Опція 2', 'Опція 3']} defaultActiveButton={0} />
 
-        <Typography variant="h6" sx={{ mt: 2 }}>
+        <Typography variant="h6" sx={styles.componentVariantSeparator}>
           2. Palette: Primary, Size: Big
         </Typography>
         <ButtonGroup
@@ -274,12 +263,12 @@ export default function StyleGuide() {
           palette="primary"
         />
 
-        <Typography variant="h6" sx={{ mt: 2 }}>
+        <Typography variant="h6" sx={styles.componentVariantSeparator}>
           3. Palette: Secondary, Size: Small
         </Typography>
         <ButtonGroup buttons={['Опція 1', 'Опція 2', 'Опція 3']} defaultActiveButton={0} palette="secondary" />
 
-        <Typography variant="h6" sx={{ mt: 2 }}>
+        <Typography variant="h6" sx={styles.componentVariantSeparator}>
           4. Palette: Secondary, Size: Big
         </Typography>
         <ButtonGroup
@@ -289,12 +278,12 @@ export default function StyleGuide() {
           palette="secondary"
         />
 
-        <Typography variant="h6" sx={{ mt: 2 }}>
+        <Typography variant="h6" sx={styles.componentVariantSeparator}>
           5. Palette: Tertiary, Size: Small
         </Typography>
         <ButtonGroup buttons={['Опція 1', 'Опція 2', 'Опція 3']} defaultActiveButton={0} palette="tertiary" />
 
-        <Typography variant="h6" sx={{ mt: 2 }}>
+        <Typography variant="h6" sx={styles.componentVariantSeparator}>
           6. Palette: Tertiary, Size: Big
         </Typography>
         <ButtonGroup
@@ -344,13 +333,13 @@ export default function StyleGuide() {
       <SandboxSection title="CustomTextField">
         <CustomTextField
           title="Заголовок сторінки"
-          titleSx={{ fontSize: 18, fontWeight: 700 }}
+          titleSx={styles.textFieldInput}
           label="Заголовок сторінки"
         ></CustomTextField>
       </SandboxSection>
 
       <SandboxSection title="TooltipCustom">
-        <Typography variant="h6" sx={{ mt: 2 }}>
+        <Typography variant="h6" sx={styles.componentVariantSeparator}>
           1. Default
         </Typography>
 
@@ -360,7 +349,7 @@ export default function StyleGuide() {
           </Button>
         </TooltipCustom>
 
-        <Typography variant="h6" sx={{ mt: 2 }}>
+        <Typography variant="h6" sx={styles.componentVariantSeparator}>
           2. With an arrow
         </Typography>
 
@@ -370,7 +359,7 @@ export default function StyleGuide() {
           </Button>
         </TooltipCustom>
 
-        <Typography variant="h6" sx={{ mt: 2 }}>
+        <Typography variant="h6" sx={styles.componentVariantSeparator}>
           3. Without children as default Typography
         </Typography>
 
@@ -378,21 +367,15 @@ export default function StyleGuide() {
           <TooltipCustom
             text="Hover text"
             wrapperProps={{
-              sx: {
-                width: '100%',
-                border: '1px dashed grey',
-                p: 1,
-                display: 'inline-block',
-                cursor: 'help'
-              }
+              sx: styles.customToolTipWrapper
             }}
             textProps={{
-              sx: { fontWeight: 'bold' }
+              sx: styles.customToolTipText
             }}
           />
         </Box>
 
-        <Typography variant="h6" sx={{ mt: 2 }}>
+        <Typography variant="h6" sx={styles.componentVariantSeparator}>
           4. Controllable
         </Typography>
 
@@ -424,19 +407,19 @@ export default function StyleGuide() {
       </SandboxSection>
 
       <SandboxSection title="HeaderRightActions">
-        <Typography variant="h6" sx={{ mt: 2 }}>
+        <Typography variant="h6" sx={styles.componentVariantSeparator}>
           1. Mode: create
         </Typography>
 
         <HeaderRightActions mode="create"></HeaderRightActions>
 
-        <Typography variant="h6" sx={{ mt: 2 }}>
+        <Typography variant="h6" sx={styles.componentVariantSeparator}>
           2. Mode: seo
         </Typography>
 
         <HeaderRightActions mode="seo"></HeaderRightActions>
 
-        <Typography variant="h6" sx={{ mt: 2 }}>
+        <Typography variant="h6" sx={styles.componentVariantSeparator}>
           3. Mode: edit
         </Typography>
 
@@ -526,7 +509,7 @@ export default function StyleGuide() {
           maxWidth="400px"
         />
 
-        <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: '8px', maxWidth: '400px' }}>
+        <Box sx={styles.searchStatePreview}>
           <Typography variant="body1">
             <strong>Значення state:</strong> {searchValue || 'немає'}
           </Typography>
@@ -655,7 +638,7 @@ export default function StyleGuide() {
       </SandboxSection>
 
       <SandboxSection title="GalleryCard">
-        <Box sx={{ maxWidth: '400px', padding: '10px', backgroundColor: '#232529' }}>
+        <Box sx={styles.mediaContainer}>
           <GalleryCard
             src="https://shorturl.at/xkStA"
             fileName="File"
@@ -668,7 +651,7 @@ export default function StyleGuide() {
 
       <SandboxSection title="SearchButton">
         {' '}
-        <Box sx={{ maxWidth: '400px', padding: '10px', backgroundColor: 'grey' }}>
+        <Box sx={styles.searchButtonContainer}>
           <SearchButton value="Search" onSearch={() => {}} placeholder="Search..." />
         </Box>
       </SandboxSection>
@@ -678,7 +661,7 @@ export default function StyleGuide() {
       </SandboxSection>
 
       <SandboxSection title="UsedCard">
-        <Box sx={{ maxWidth: '400px', padding: '10px', backgroundColor: '#232529' }}>
+        <Box sx={styles.mediaContainer}>
           <UsedCard src="https://shorturl.at/xkStA" fileName="File 1" locale="uk" onClick={() => {}} />
         </Box>
       </SandboxSection>
@@ -692,13 +675,13 @@ export default function StyleGuide() {
       </SandboxSection>
 
       <SandboxSection title="FileView">
-        <Box sx={{ maxWidth: '400px', padding: '10px', backgroundColor: '#232529' }}>
+        <Box sx={styles.mediaContainer}>
           <FileView file={mockPdfFile} />
         </Box>
       </SandboxSection>
 
       <SandboxSection title="UploadView">
-        <Box sx={{ maxWidth: '400px', padding: '10px', backgroundColor: '#232529' }}>
+        <Box sx={styles.mediaContainer}>
           <UploadView selected={null} onPick={() => {}} />
         </Box>
       </SandboxSection>

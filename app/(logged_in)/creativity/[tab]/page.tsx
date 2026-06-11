@@ -1,6 +1,7 @@
 import { Box } from '@mui/material';
 import { notFound } from 'next/navigation';
 
+import { styles } from '../page.styles';
 import { WorksPageContent } from '../WorksPageContent';
 import { WORKS_TABS, type WorksTabValue } from '~/constants/creativity';
 
@@ -20,16 +21,9 @@ export default async function WorksTabPage({ params }: WorksTabPageProps) {
   }
 
   return (
-    <Box
-      sx={{
-        width: '100%',
-        maxWidth: '100%',
-        boxSizing: 'border-box',
-        px: { xs: '16px', lg: '24px', xl: '32px' },
-        py: '32px'
-      }}
-    >
+    <Box sx={styles.pageContainer}>
       <WorksPageContent activeTab={tab as WorksTabValue} />
     </Box>
   );
 }
+

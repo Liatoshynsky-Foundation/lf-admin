@@ -21,6 +21,7 @@ import {
 } from '@mui/material';
 import { type SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
+import { getLogItemAccordion, styles } from './LogsPageClient.styles';
 import type { LogEntry, LogLevel, LogsResponse } from '~/back-shared/types/logs';
 
 const LEVEL_OPTIONS: Array<{ value: LogLevel | 'all'; label: string }> = [
@@ -38,25 +39,6 @@ const LEVEL_COLORS: Record<LogLevel, 'error' | 'warning' | 'info' | 'default'> =
   debug: 'default'
 };
 
-const LEVEL_ACCENTS: Record<LogLevel, { border: string; background: string }> = {
-  error: {
-    border: 'rgba(211, 47, 47, 0.28)',
-    background: 'rgba(211, 47, 47, 0.05)'
-  },
-  warn: {
-    border: 'rgba(237, 108, 2, 0.28)',
-    background: 'rgba(237, 108, 2, 0.05)'
-  },
-  info: {
-    border: 'rgba(2, 136, 209, 0.28)',
-    background: 'rgba(2, 136, 209, 0.05)'
-  },
-  debug: {
-    border: 'rgba(97, 97, 97, 0.28)',
-    background: 'rgba(97, 97, 97, 0.05)'
-  }
-};
-
 const formatTimestamp = (value: string) => {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString('uk-UA');
@@ -66,7 +48,7 @@ const JsonBlock = ({ value }: { value?: Record<string, unknown> }) => {
   if (!value || Object.keys(value).length === 0) return null;
 
   return (
-    <Typography component="pre" sx={{ m: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: 13 }}>
+    <Typography component="pre" sx={styles.jsonBlock}>
       {JSON.stringify(value, null, 2)}
     </Typography>
   );
@@ -74,31 +56,28 @@ const JsonBlock = ({ value }: { value?: Record<string, unknown> }) => {
 
 const LogItem = ({ item }: { item: LogEntry }) => {
   const hasStatusCode = typeof item.meta.statusCode === 'number';
-  const hasDetails = Boolean(item.meta.method || item.meta.url || hasStatusCode || item.meta.stack || item.meta.metadata || item.meta.raw);
+  const hasDetails = Boolean(
+    item.meta.method || item.meta.url || hasStatusCode || item.meta.stack || item.meta.metadata || item.meta.raw
+  );
   const noDetails = !hasDetails;
-  const accent = LEVEL_ACCENTS[item.level];
 
   return (
-    <Accordion
-      disableGutters
-      sx={{
-        borderRadius: 2,
-        overflow: 'hidden',
-        border: `1px solid ${accent.border}`,
-        backgroundColor: accent.background,
-        '&:before': { display: 'none' }
-      }}
-    >
-      <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 2 }}>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} width="100%" alignItems={{ xs: 'flex-start', sm: 'center' }}>
+    <Accordion disableGutters sx={getLogItemAccordion(item.level)}>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={styles.accordionSummary}>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={1.5}
+          width="100%"
+          alignItems={{ xs: 'flex-start', sm: 'center' }}
+        >
           <Chip label={item.level.toUpperCase()} color={LEVEL_COLORS[item.level]} size="small" />
-          <Typography sx={{ flexGrow: 1, fontWeight: 700 }}>{item.message}</Typography>
+          <Typography sx={styles.typographyText}>{item.message}</Typography>
           <Typography variant="body2" color="text.secondary">
             {formatTimestamp(item.timestamp)}
           </Typography>
         </Stack>
       </AccordionSummary>
-      <AccordionDetails sx={{ px: 2, pb: 2 }}>
+      <AccordionDetails sx={styles.accordionDetails}>
         <Stack spacing={1}>
           {item.meta.method ? (
             <Typography variant="body2">
@@ -116,7 +95,7 @@ const LogItem = ({ item }: { item: LogEntry }) => {
             </Typography>
           ) : null}
           {item.meta.stack ? (
-            <Typography component="pre" sx={{ m: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: 13 }}>
+            <Typography component="pre" sx={styles.jsonBlock}>
               {item.meta.stack}
             </Typography>
           ) : null}
@@ -208,6 +187,7 @@ const LogsPageClient = () => {
       setPage(1);
       setReloadKey((value) => value + 1);
     } catch (error) {
+      // eslint-disable-next-line
       console.warn(error);
     } finally {
       setDialogOpen(false);
@@ -250,9 +230,14 @@ const LogsPageClient = () => {
 
   return (
     <Stack spacing={2.5}>
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'flex-start', sm: 'flex-start' }} justifyContent="space-between">
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={1.5}
+        alignItems={{ xs: 'flex-start', sm: 'flex-start' }}
+        justifyContent="space-between"
+      >
         <Stack spacing={0.5}>
-          <Typography variant="h4" sx={{ fontWeight: 800 }}>
+          <Typography variant="h4" sx={styles.pageTitle}>
             Logs
           </Typography>
           <Typography variant="body2" color="text.secondary">
@@ -263,17 +248,13 @@ const LogsPageClient = () => {
           variant="contained"
           onClick={openClearDialog}
           disabled={loading || clearing || noLogs}
-          sx={{
-            backgroundColor: 'common.black',
-            color: 'common.white',
-            '&:hover': { backgroundColor: 'common.black' }
-          }}
+          sx={styles.clearLogsButton}
         >
           {clearLabel}
         </Button>
       </Stack>
 
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+      <Box sx={styles.tabsContainer}>
         <Tabs value={level} onChange={onLevelChange} variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile>
           {LEVEL_OPTIONS.map((option) => (
             <Tab key={option.value} value={option.value} label={option.label} />
@@ -287,7 +268,9 @@ const LogsPageClient = () => {
 
       {content}
 
-      {hasItems && totalPages > 1 ? <Pagination count={totalPages} page={page} onChange={(_, value) => setPage(value)} /> : null}
+      {hasItems && totalPages > 1 ? (
+        <Pagination count={totalPages} page={page} onChange={(_, value) => setPage(value)} />
+      ) : null}
 
       <Dialog open={dialogOpen} onClose={closeClearDialog}>
         <DialogTitle>{clearDialogTitle}</DialogTitle>

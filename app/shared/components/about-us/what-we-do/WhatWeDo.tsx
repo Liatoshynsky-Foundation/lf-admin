@@ -1,7 +1,8 @@
 import { Skeleton } from '@mui/material';
-import { JSONContent} from '@tiptap/react';
+import { JSONContent } from '@tiptap/react';
 
 import { EditableSectionList, SectionListItem } from '../../accordion-blocks/editable-section-list/EditableSectionList';
+import { styles } from './WhatWeDo.styles';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { ensureIds } from '~/lib/utils/ensureIds';
@@ -19,7 +20,7 @@ const WhatWeDo = () => {
   const currentLocale: keyof LocalizedString = useStore((state) => state.locale);
   const setField = useStore((state) => state.setField);
 
-  if (!block) return <Skeleton sx={{ height: '60px' }} />;
+  if (!block) return <Skeleton sx={styles.skeletonPlaceholder} />;
 
   const itemList: WhatWeDolItemWithId[] = ensureIds(block.items);
 

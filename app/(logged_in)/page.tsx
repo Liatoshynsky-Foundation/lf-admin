@@ -1,8 +1,8 @@
 'use client';
-
 import { Box } from '@mui/material';
 import React from 'react';
 
+import { styles } from './page.styles';
 import { fetchPreview } from '~/lib/utils/fetchPreview';
 import { Header } from '~/shared/components/header/Header';
 import { useStore } from '~/store';
@@ -27,7 +27,7 @@ export default function Home() {
   const onCancel = () => discardChanges(pageData.url);
 
   return (
-    <Box sx={{ width: '100%', p: '32px' }}>
+    <Box sx={styles.container}>
       <Header
         title={pageData.title}
         onPreview={onPreview}
