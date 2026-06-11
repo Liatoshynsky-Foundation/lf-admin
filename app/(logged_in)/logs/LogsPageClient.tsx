@@ -207,6 +207,8 @@ const LogsPageClient = () => {
 
       setPage(1);
       setReloadKey((value) => value + 1);
+    } catch (error) {
+      console.warn(error);
     } finally {
       setDialogOpen(false);
       setClearing(false);
