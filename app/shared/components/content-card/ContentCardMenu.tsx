@@ -1,8 +1,6 @@
-import { Menu, MenuItem } from '@mui/material';
-import { useRouter } from 'next/navigation';
+import BaseCardMenu from '../base-card/BaseCardMenu';
 
-import { ContentType } from './ContentCard';
-import styles from './ContentCardMenu.styles';
+export type ContentType = 'news' | 'events' | 'media';
 
 interface ContentCardMenuProps {
   id: string;
@@ -13,25 +11,20 @@ interface ContentCardMenuProps {
 }
 
 const ContentCardMenu = ({ id, type, anchorEl, onClose, setDeleteModalOpen }: ContentCardMenuProps) => {
-  const router = useRouter();
-  const open = Boolean(anchorEl);
+  const seoHref = `/publications/${type}/${id}/seo`;
 
-  const href = `/publications/${type}/${id}/seo`;
+  const contentMenuItems = [
+    {
+      text: 'SEO налаштування',
+      href: seoHref
+    },
+    {
+      text: 'Видалити',
+      onClick: () => setDeleteModalOpen(true)
+    }
+  ];
 
-  const handleDeleteClick = () => {
-    setDeleteModalOpen(true);
-  };
-
-  return (
-    <Menu anchorEl={anchorEl} open={open} onClose={onClose} sx={styles.menu} disableAutoFocusItem disableScrollLock>
-      <MenuItem onClick={() => router.push(href)} sx={styles.menuItem}>
-        SEO налаштування
-      </MenuItem>
-      <MenuItem onClick={handleDeleteClick} sx={styles.menuItem}>
-        Видалити
-      </MenuItem>
-    </Menu>
-  );
+  return <BaseCardMenu anchorEl={anchorEl} onClose={onClose} menuItems={contentMenuItems} />;
 };
 
 export default ContentCardMenu;
