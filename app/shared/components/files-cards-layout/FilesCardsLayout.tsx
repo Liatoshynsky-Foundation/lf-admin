@@ -1,5 +1,6 @@
 import { Box } from '@mui/material';
 
+import CardsGrid from '../cards-grid/CardsGrid';
 import FileCard, { type FileType } from '../file-card';
 import MinimizedFileCard from '../minimized-file-card/MinimizedFileCard';
 import { styles } from './FilesCardsLayout.styles';
@@ -58,26 +59,23 @@ export function FilesCardsLayout({ view, items, onItemClick, onItemAction }: Fil
   }
 
   return (
-    <Box sx={styles.root} data-testid="FilesCardsLayout-grid">
-      <Box sx={styles.grid}>
-        {items.map((item) => (
-          <Box key={item.id} sx={styles.gridItem}>
-            <FileCard
-              fileType={item.type}
-              fileData={{
-                id: item.id,
-                name: item.name,
-                dateAdded: item.dateAdded,
-                isStarred: item.isStarred,
-                usageLinks: item.usageLinks,
-                imageSrc: item.imageSrc
-              }}
-              onClick={() => onItemClick?.(item)}
-              onAction={(action) => onItemAction?.(action, item)}
-            />
-          </Box>
-        ))}
-      </Box>
-    </Box>
+    <CardsGrid dataTestId="FilesCardsLayout-grid">
+      {items.map((item) => (
+        <FileCard
+          key={item.id}
+          fileType={item.type}
+          fileData={{
+            id: item.id,
+            name: item.name,
+            dateAdded: item.dateAdded,
+            isStarred: item.isStarred,
+            usageLinks: item.usageLinks,
+            imageSrc: item.imageSrc
+          }}
+          onClick={() => onItemClick?.(item)}
+          onAction={(action) => onItemAction?.(action, item)}
+        />
+      ))}
+    </CardsGrid>
   );
 }

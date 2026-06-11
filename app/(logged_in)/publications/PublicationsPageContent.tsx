@@ -26,6 +26,7 @@ import {
   type PublicationsTabValue
 } from '~/constants/publications';
 import type { FilesSortValue } from '~/constants/sort';
+import CardsGrid from '~/shared/components/cards-grid/CardsGrid';
 import ContentCard, { type ContentType } from '~/shared/components/content-card/ContentCard';
 import DropdownMenu from '~/shared/components/dropdown-menu/DropdownMenu';
 import { EmptyState } from '~/shared/components/empty-state';
@@ -517,23 +518,22 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
 
     if (visibleItems.length) {
       return (
-        <Box sx={styles.cardGrid}>
+        <CardsGrid>
           {visibleItems.map((item) => (
-            <Box key={item.id} sx={styles.cardWrapper}>
-              <ContentCard
-                id={item.id}
-                type={item.cardType}
-                coverImage={item.coverImage}
-                title={item.titleData}
-                status={item.cardStatus}
-                updatedAt={item.updatedAt}
-                createdAt={item.createdAt}
-                publishedAt={item.publishedAt}
-                editHref={getPublicationEditHref(item)}
-              />
-            </Box>
+            <ContentCard
+              key={item.id}
+              id={item.id}
+              type={item.cardType}
+              coverImage={item.coverImage}
+              title={item.titleData}
+              status={item.cardStatus}
+              updatedAt={item.updatedAt}
+              createdAt={item.createdAt}
+              publishedAt={item.publishedAt}
+              editHref={getPublicationEditHref(item)}
+            />
           ))}
-        </Box>
+        </CardsGrid>
       );
     }
 
