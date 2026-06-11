@@ -1,10 +1,12 @@
+'use client';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import BaseCard from '../base-card/BaseCard';
+import BaseCardMenu from '../base-card/BaseCardMenu';
 import DeleteCardModal from '../delete-card-modal/DeleteCardModal';
 import ContentCardBadge from './ContentCardBadge';
-import ContentCardMenu from './ContentCardMenu';
+import ContentCardMenuItems from './ContentCardMenuItems';
 import { getStatus } from '~/lib/utils/getStatus';
 import { useDeleteEvent } from '~/shared/hooks/use-events/useEvents';
 import { useDeleteMediaMention } from '~/shared/hooks/use-media-mentions/useMediaMentions';
@@ -78,26 +80,24 @@ const ContentCard = ({
 
   return (
     <BaseCard
-      coverImage={coverImage}
-      altText={altText}
-      titleText={titleText}
+      coverImage={{ src: coverImage.src, alt: altText }}
+      title={{ text: titleText }}
       infoText={getStatus(status, createdAt, updatedAt, publishedAt)}
-      badge={<ContentCardBadge type={type} status={status} localizations={localizedKeys} />}
+      contentUpperSection={<ContentCardBadge type={type} status={status} localizations={localizedKeys} />}
       actionButton={{
         text: 'Редагувати',
         href: editHref,
         onClick
       }}
-      modalElement={
+      contentBottomSection={
         <DeleteCardModal open={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} onDelete={handleDelete} />
       }
-      renderMenu={(anchorEl, handleClose) => (
-        <ContentCardMenu
-          id={id}
-          type={type}
+      renderMenu={(anchorEl, handleClose, direction) => (
+        <BaseCardMenu
           anchorEl={anchorEl}
           onClose={handleClose}
-          setDeleteModalOpen={setDeleteModalOpen}
+          menuItems={ContentCardMenuItems({ type, id, setDeleteModalOpen })}
+          menuDirection={direction}
         />
       )}
     />

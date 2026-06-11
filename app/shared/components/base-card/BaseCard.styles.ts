@@ -37,13 +37,8 @@ const styles: Record<string, SxProps<Theme>> = {
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: '4px',
-    overflow: 'hidden'
-  },
-
-  titleContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px'
+    overflow: 'hidden',
+  
   },
 
   title: {

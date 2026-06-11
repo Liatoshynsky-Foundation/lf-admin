@@ -1,7 +1,8 @@
 import BaseCard from '../base-card/BaseCard';
-import PageCardMenu from './PageCardMenu';
-import { formatDate } from '~/lib/utils/formatDate';
-import type { LocalizedString } from '~/types/common';
+import BaseCardMenu from '../base-card/BaseCardMenu';
+import PageCardMenuItems from './PageCardMenuItems';
+import { LocalizedString } from '~/types/common';
+import { formatDate } from '~/utils/formatDate';
 
 interface PageCardProps {
   coverImage: { src: string; alt: { uk: string; en: string } };
@@ -18,17 +19,21 @@ const PageCard = ({ coverImage, title, updatedAt, editHref, editSeoHref, onClick
 
   return (
     <BaseCard
-      coverImage={coverImage}
-      altText={altText}
-      titleText={titleText}
+      coverImage={{ src: coverImage.src, alt: altText }}
+      title={{ text: titleText }}
       infoText={updatedAt ? `Змінено ${formatDate(updatedAt)}` : ''}
       actionButton={{
         text: 'Редагувати',
         href: editHref,
         onClick: onClick
       }}
-      renderMenu={(anchorEl, handleClose) => (
-        <PageCardMenu anchorEl={anchorEl} onClose={handleClose} editSeoHref={editSeoHref} />
+      renderMenu={(anchorEl, handleClose, direction) => (
+        <BaseCardMenu
+          anchorEl={anchorEl}
+          onClose={handleClose}
+          menuItems={PageCardMenuItems({ editSeoHref })}
+          menuDirection={direction}
+        />
       )}
     />
   );

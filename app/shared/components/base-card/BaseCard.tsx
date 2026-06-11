@@ -1,22 +1,15 @@
+'use client';
 import { Box, Card, CardContent, IconButton, Typography } from '@mui/material';
 import { EllipsisVertical } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
 import Button from '../design-system/button/Button';
+import TooltipCustom from '../design-system/tooltip/Tooltip';
 import styles from './BaseCard.styles';
 import ImageWithFallback from './ImageWithFallback';
-import TooltipCustom from '~/ds-components/tooltip/Tooltip';
 
 const FALLBACK_IMAGE_SRC = '/images/image.png';
-
-interface BaseCardImage {
-  src: string;
-  alt: {
-    uk: string;
-    en: string;
-  };
-}
 
 interface BaseCardActionButton {
   text: string;
@@ -25,39 +18,54 @@ interface BaseCardActionButton {
 }
 
 interface BaseCardProps {
-  coverImage: BaseCardImage;
-  altText: string;
-  titleText: string;
+  coverImage: { src: string; alt: string };
+  title: { text: string; icon?: React.ReactNode };
   infoText?: string;
   actionButton?: BaseCardActionButton;
-  badge?: React.ReactNode;
-  modalElement?: React.ReactNode;
-  renderMenu: (anchorEl: HTMLElement | null, handleClose: () => void) => React.ReactNode;
+  contentUpperSection?: React.ReactNode;
+  contentBottomSection?: React.ReactNode;
+  spaceBetweenContent?: number;
+  renderMenu: (
+    anchorEl: HTMLElement | null,
+    handleClose: () => void,
+    oppositeDirection: 'left' | 'right'
+  ) => React.ReactNode;
 }
 
 const BaseCard = ({
   coverImage,
-  altText,
-  titleText,
+  title,
   infoText,
   actionButton,
-  badge,
-  modalElement,
-  renderMenu
+  contentUpperSection,
+  contentBottomSection,
+  renderMenu,
+  spaceBetweenContent = 200
 }: BaseCardProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [isTitleTruncated, setIsTitleTruncated] = useState(false);
+  const [menuDirection, setMenuDirection] = useState<'left' | 'right'>('right');
 
   const titleRef = useRef<HTMLHeadingElement | null>(null);
-  const [isTitleTruncated, setIsTitleTruncated] = useState(false);
 
   useEffect(() => {
     const element = titleRef.current;
     if (!element) return;
     setIsTitleTruncated(element.scrollHeight > element.clientHeight);
-  }, [titleText]);
+  }, [title]);
 
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
     setAnchorEl(anchorEl ? null : event.currentTarget);
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const spaceOnRight = window.innerWidth - rect.right;
+
+    if (spaceOnRight > spaceBetweenContent) {
+      setMenuDirection('left');
+    } else {
+      setMenuDirection('right');
+    }
   };
 
   const handleMenuClose = () => {
@@ -70,7 +78,6 @@ const BaseCard = ({
     const handleScroll = () => {
       setAnchorEl(null);
     };
-
     window.addEventListener('scroll', handleScroll, true);
 
     return () => {
@@ -78,33 +85,45 @@ const BaseCard = ({
     };
   }, [anchorEl]);
 
+  const oppositeDirection = menuDirection === 'left' ? 'right' : 'left';
+
   return (
     <Card sx={styles.card}>
       <Box sx={styles.imageContainer}>
-        <ImageWithFallback key={coverImage.src} src={coverImage.src} fallbackSrc={FALLBACK_IMAGE_SRC} alt={altText} />
+        <ImageWithFallback
+          key={coverImage.src}
+          src={coverImage.src}
+          fallbackSrc={FALLBACK_IMAGE_SRC}
+          alt={coverImage.alt}
+        />
       </Box>
 
       <CardContent sx={styles.cardContent}>
-        {badge}
+        {contentUpperSection}
 
         <Box sx={styles.mainInfo}>
-          <Box sx={styles.titleContainer}>
-            <TooltipCustom title={isTitleTruncated ? titleText : ''}>
-              <Typography ref={titleRef} variant="subtitle1" component="h3" sx={styles.title}>
-                {titleText}
+          <TooltipCustom title={isTitleTruncated ? title.text : ''}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, width: '100%' }}>
+              {title.icon}
+              <Typography ref={titleRef} variant="subtitle1" component="h3" sx={title.icon ? {} : styles.title}>
+                {title.text}
               </Typography>
-            </TooltipCustom>
-            <Typography variant="caption" sx={styles.date}>
-              {infoText}
-            </Typography>
+            </Box>
+          </TooltipCustom>
+
+          <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
+            <IconButton data-testid="menu-button" onClick={handleMenuClick}>
+              <EllipsisVertical size={20} />
+            </IconButton>
+
+            {renderMenu(anchorEl, handleMenuClose, oppositeDirection)}
           </Box>
-
-          <IconButton data-testid="menu-button" onClick={handleMenuClick}>
-            <EllipsisVertical size={20} />
-            {renderMenu(anchorEl, handleMenuClose)}
-          </IconButton>
         </Box>
-
+        {infoText && (
+          <Typography variant="caption" sx={styles.date}>
+            {infoText}
+          </Typography>
+        )}
         {actionButton && (
           <Button
             variant="filled"
@@ -116,9 +135,9 @@ const BaseCard = ({
             {actionButton.text}
           </Button>
         )}
-      </CardContent>
 
-      {modalElement}
+        {contentBottomSection}
+      </CardContent>
     </Card>
   );
 };
