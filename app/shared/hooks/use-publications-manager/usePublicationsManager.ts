@@ -9,15 +9,17 @@ import {
   PublicationsItemType
 } from '~/constants/publications';
 import { isContentEmpty } from '~/shared/components/content-editor';
-import { useEventById, useUpdateEvent } from '~/shared/hooks/use-events/useEvents';
+import { useDeleteEvent , useEventById, useUpdateEvent } from '~/shared/hooks/use-events/useEvents';
 import { useMediaMentionById, useUpdateMediaMention } from '~/shared/hooks/use-media-mentions/useMediaMentions';
-import { useNewsById, useUpdateNews } from '~/shared/hooks/use-news/useNews';
+import { useDeleteNews , useNewsById, useUpdateNews } from '~/shared/hooks/use-news/useNews';
 import { type EventStatus, type MediaStatus, type NewsStatus } from '~/types/graphql/generated/graphql';
 
 export function usePublicationManager(type: PublicationsItemType, id: string) {
   const news = useNewsById(id, { skip: type !== 'news' });
   const event = useEventById(id, { skip: type !== 'events' });
   const media = useMediaMentionById(id, { skip: type !== 'media' });
+  const [deleteNews] = useDeleteNews();
+  const [deleteEvent] = useDeleteEvent();
 
   const [updateNews] = useUpdateNews();
   const [updateEvent] = useUpdateEvent();
@@ -98,6 +100,17 @@ export function usePublicationManager(type: PublicationsItemType, id: string) {
     setEditorResetKey((prev) => prev + 1);
   };
 
+  const deleteResource = async () => {
+    switch (type) {
+    case 'news':
+      return deleteNews({ id });
+    case 'events':
+      return deleteEvent({ id });
+    default:
+      throw new Error(`Unsupported publication type for delete: ${type}`);
+    }
+  };
+
   return {
     currentData,
     isLoading,
@@ -109,7 +122,7 @@ export function usePublicationManager(type: PublicationsItemType, id: string) {
     setCurrentLanguage,
     editorResetKey,
     resetEditorState,
-
-    updateResource
+    updateResource,
+    deleteResource
   };
 }

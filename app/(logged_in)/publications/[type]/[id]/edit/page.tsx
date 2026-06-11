@@ -8,7 +8,6 @@ import CreatePublicationsView from '../../create/CreatePublicationsView';
 import { EditPublicationsView } from './EditPublicationsView';
 import {
   CONTENT_MUTATION_RESULTS,
-  DEFAULT_EMPTY_DOCUMENT,
   MenuActionId,
   PUBLICATIONS_BASE_PATH,
   PublicationsItemType
@@ -78,24 +77,19 @@ export default function EditPublicationsPage() {
       }
 
       case MenuActionId.DELETE_DRAFT: {
-        const localeKey = manager.currentLanguage === 'UA' ? 'uk' : 'en';
-
-        const emptyContent = {
-          content: {
-            ...manager.editedContent,
-            [localeKey]: { content: { ...DEFAULT_EMPTY_DOCUMENT } }
-          }
-        };
-
-        const currentStatus =
-            (manager.currentData?.status as unknown as BaseContentStatuses) ?? BaseContentStatuses.Draft;
-
-        const { data } = await manager.updateResource(currentStatus, emptyContent);
-
+        const { data } = await manager.deleteResource();
         if (data) {
-          toast.success(CONTENT_MUTATION_RESULTS.draftDeleted);
-          latestBlocksRef.current = null;
-          manager.resetEditorState(emptyContent.content);
+          toast.success(CONTENT_MUTATION_RESULTS.publicationDeleted);
+          router.push(PUBLICATIONS_BASE_PATH);
+        }
+        break;
+      }
+
+      case MenuActionId.CANCEL_PUBLICATION: {
+        const { data } = await manager.updateResource(BaseContentStatuses.Draft, contentPayload);
+        if (data) {
+          toast.success(CONTENT_MUTATION_RESULTS.publicationUnpublished);
+          router.push(PUBLICATIONS_BASE_PATH);
         }
         break;
       }
@@ -107,7 +101,7 @@ export default function EditPublicationsPage() {
   };
 
   return type === 'media' ? (
-    <CreatePublicationsView data={publicationData}  mode='edit'/>
+    <CreatePublicationsView data={publicationData} mode="edit" />
   ) : (
     <EditPublicationsView
       type={type}
@@ -119,6 +113,7 @@ export default function EditPublicationsPage() {
       onLanguageChange={manager.setCurrentLanguage}
       onEditorChange={handleEditorChange}
       onAction={handleMenuAction}
+      onDeleteConfirm={() => handleMenuAction(MenuActionId.DELETE_DRAFT)}
       onSeoClick={() => router.push(`${PUBLICATIONS_BASE_PATH}/${type}/${id}/seo`)}
     />
   );

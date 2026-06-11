@@ -153,6 +153,7 @@ export enum MenuActionId {
   PUBLISH = 'PUBLISH',
   SAVE_DRAFT = 'SAVE_DRAFT',
   PUBLICATE_AND_EXIT = 'PUBLICATE_AND_EXIT',
+  CANCEL_PUBLICATION = 'CANCEL_PUBLICATION',
   DELETE_DRAFT = 'DELETE_DRAFT'
 }
 
@@ -167,7 +168,8 @@ export const HEADER_MENU_OPTIONS: HEADER_MENU_OPTIONS_TYPE = {
   baseActions: [
     { id: MenuActionId.PUBLISH, label: 'Опублікувати' },
     { id: MenuActionId.PUBLICATE_AND_EXIT, label: 'Опублікувати і вийти' },
-    { id: MenuActionId.DELETE_DRAFT, label: 'Видалити чернетку' }
+    { id: MenuActionId.CANCEL_PUBLICATION, label: 'Скасувати публікацію' },
+    { id: MenuActionId.DELETE_DRAFT, label: 'Видалити' }
   ]
 } as const;
 
@@ -176,7 +178,9 @@ export type MUTATION_RESULT = Record<string, string>;
 export const CONTENT_MUTATION_RESULTS: MUTATION_RESULT = {
   draftPublished: 'Чернетку опубліковано успішно',
   draftSaved: 'Чернетку збережено успішно',
-  draftDeleted: 'Чернетку видалено успішно'
+  draftDeleted: 'Чернетку видалено успішно',
+  publicationDeleted: 'Публікацію видалено',
+  publicationUnpublished: 'Публікацію скасовано'
 };
 
 export const DEFAULT_EMPTY_DOCUMENT: SerializedContent = {

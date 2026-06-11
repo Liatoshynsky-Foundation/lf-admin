@@ -2,6 +2,7 @@ import { Box, Divider, ListSubheader, Menu, MenuItem, Typography } from '@mui/ma
 import { MouseEvent, useState } from 'react';
 
 import { styles } from './EditPublicationsView.styles';
+import DeleteCardModal from '~/components/delete-card-modal/DeleteCardModal';
 import {
   ACTIONS_TYPE,
   EditorLanguage,
@@ -32,10 +33,11 @@ export type EditPublicationsViewProps = {
   currentData: PublicationViewData | null | undefined;
   editedContent: LocalizedEditorState | null;
   editorResetKey: number;
-  currentLanguage: EditorLanguage; 
+  currentLanguage: EditorLanguage;
   onLanguageChange: (lang: EditorLanguage) => void;
   onEditorChange: (content: SerializedContent, localeKey: 'uk' | 'en') => void;
   onAction: (actionId: MenuActionId) => void;
+  onDeleteConfirm: () => void;
   onSeoClick: () => void;
 };
 
@@ -49,9 +51,11 @@ export function EditPublicationsView({
   onLanguageChange,
   onEditorChange,
   onAction,
+  onDeleteConfirm,
   onSeoClick
 }: Readonly<EditPublicationsViewProps>) {
   const [anchors, setAnchors] = useState<MenuAnchor>({});
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const localeKey = currentLanguage === 'UA' ? 'uk' : 'en';
 
@@ -96,7 +100,7 @@ export function EditPublicationsView({
           />
         )}
         <Badge variant={type} label={PublicationsChipLabels[type]} />
-        <Badge variant='draft' />
+        <Badge variant="draft" />
       </DividedHeader>
 
       <Box sx={styles.mainContent}>
@@ -173,11 +177,31 @@ export function EditPublicationsView({
         sx={styles.menu}
       >
         {publishActions.map((action) => (
-          <MenuItem sx={styles.menuItem} key={action.id} onClick={() => handlePublishActionClick(action.id)}>
+          <MenuItem
+            sx={styles.menuItem}
+            key={action.id}
+            onClick={() => {
+              if (action.id === MenuActionId.DELETE_DRAFT) {
+                setDeleteModalOpen(true);
+                handleClose('publish');
+                return;
+              }
+              handlePublishActionClick(action.id);
+            }}
+          >
             <Typography variant="textMd">{action.label}</Typography>
           </MenuItem>
         ))}
       </Menu>
+
+      <DeleteCardModal
+        open={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onDelete={() => {
+          onDeleteConfirm();
+          setDeleteModalOpen(false);
+        }}
+      />
     </Box>
   );
 }
