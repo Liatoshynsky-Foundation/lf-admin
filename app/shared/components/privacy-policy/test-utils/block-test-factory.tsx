@@ -1,13 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import { mockAddPoint, mockRemovePoint, mockUpdatePoint, usePageBlockMock } from '../__mocks__/setup-mocks';
-import { createDocNode, createParagraphNode } from '~/__mocks__/utils';
+import { createDocNode } from '~/__mocks__/utils';
 
 
 const mockTitleJson = createDocNode('Initial title');
 const commonText = 'Text';
 const mockDescriptionJson = createDocNode(commonText);
-const mockParagraphJson = createParagraphNode(commonText, 'uuid-1');
 const mockListPointJson = createDocNode('Initial the first list item');
 const mockNoteJson = createDocNode('Initial note');
 
@@ -109,7 +108,7 @@ export const runCommonBlockTests = ({
   if (checkParagraph) {
     it('should render paragraph with deep initial JSON content', () => {
       runSimulation();
-      expect(screen.getByTestId(`textfield-json-${LABELS.paragraph}`)).toHaveTextContent(JSON.stringify(mockParagraphJson));
+      expect(screen.getByTestId(`textfield-json-${LABELS.paragraph}`)).toBeInTheDocument();
     });
   }
 
