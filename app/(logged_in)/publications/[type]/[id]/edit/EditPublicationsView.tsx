@@ -3,6 +3,7 @@ import { MouseEvent, useState } from 'react';
 
 import { sharedMenuStyles } from '../../shared/shared-publication.styles';
 import { styles } from './EditPublicationsView.styles';
+import DeleteCardModal from '~/components/delete-card-modal/DeleteCardModal';
 import {
   ACTIONS_TYPE,
   EditorLanguage,
@@ -37,6 +38,7 @@ export type EditPublicationsViewProps = {
   onLanguageChange: (lang: EditorLanguage) => void;
   onEditorChange: (content: SerializedContent, localeKey: 'uk' | 'en') => void;
   onAction: (actionId: MenuActionId) => void;
+  onDeleteConfirm: () => void;
   onSeoClick: () => void;
 };
 
@@ -50,9 +52,11 @@ export function EditPublicationsView({
   onLanguageChange,
   onEditorChange,
   onAction,
+  onDeleteConfirm,
   onSeoClick
 }: Readonly<EditPublicationsViewProps>) {
   const [anchors, setAnchors] = useState<MenuAnchor>({});
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const localeKey = currentLanguage === 'UA' ? 'uk' : 'en';
 
@@ -174,11 +178,31 @@ export function EditPublicationsView({
         sx={sharedMenuStyles.menu}
       >
         {publishActions.map((action) => (
-          <MenuItem sx={sharedMenuStyles.menuItem} key={action.id} onClick={() => handlePublishActionClick(action.id)}>
+          <MenuItem
+            sx={sharedMenuStyles.menuItem}
+            key={action.id}
+            onClick={() => {
+              if (action.id === MenuActionId.DELETE) {
+                setDeleteModalOpen(true);
+                handleClose('publish');
+                return;
+              }
+              handlePublishActionClick(action.id);
+            }}
+          >
             <Typography variant="textMd">{action.label}</Typography>
           </MenuItem>
         ))}
       </Menu>
+
+      <DeleteCardModal
+        open={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onDelete={() => {
+          onDeleteConfirm();
+          setDeleteModalOpen(false);
+        }}
+      />
     </Box>
   );
 }

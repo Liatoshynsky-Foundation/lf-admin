@@ -43,7 +43,8 @@ const baseMockManager = {
   setCurrentLanguage: jest.fn(),
   editorResetKey: 0,
   resetEditorState: jest.fn(),
-  updateResource: jest.fn().mockResolvedValue({ data: { id: '1' } })
+  updateResource: jest.fn().mockResolvedValue({ data: { id: '1' } }),
+  deleteResource: jest.fn().mockResolvedValue({ data: { id: '1' } })
 };
 
 jest.mock('./EditPublicationsView', () => ({
@@ -60,7 +61,7 @@ jest.mock('./EditPublicationsView', () => ({
       />
       <button data-testid="trigger-publish" onClick={() => props.onAction(MenuActionId.PUBLISH)} />
       <button data-testid="trigger-save-exit" onClick={() => props.onAction(MenuActionId.PUBLICATE_AND_EXIT)} />
-      <button data-testid="trigger-delete" onClick={() => props.onAction(MenuActionId.DELETE_DRAFT)} />
+      <button data-testid="trigger-delete" onClick={props.onDeleteConfirm} />
       <button data-testid="trigger-seo" onClick={props.onSeoClick} />
     </div>
   )
@@ -167,32 +168,15 @@ describe('EditPublicationsPage Container', () => {
     });
   });
 
-  it('should handle DELETE_DRAFT action correctly for the active language', async () => {
-    (usePublicationManager as jest.Mock).mockReturnValue({
-      ...baseMockManager,
-      currentLanguage: 'UA',
-      currentData: { status: BaseContentStatuses.Editing }
-    });
-
+  it('should handle delete confirmation by deleting the publication and redirecting', async () => {
     render(<EditPublicationsPage />);
 
     fireEvent.click(screen.getByTestId('trigger-delete'));
 
     await waitFor(() => {
-      expect(baseMockManager.updateResource).toHaveBeenCalledWith(
-        BaseContentStatuses.Editing,
-        expect.objectContaining({
-          content: expect.objectContaining({
-            uk: expect.objectContaining({
-              content: expect.objectContaining({ blocks: [] })
-            })
-          })
-        })
-      );
-
-      expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.draftDeleted);
-
-      expect(baseMockManager.resetEditorState).toHaveBeenCalled();
+      expect(baseMockManager.deleteResource).toHaveBeenCalledTimes(1);
+      expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationDeleted);
+      expect(mockPush).toHaveBeenCalledWith('/publications');
     });
   });
 

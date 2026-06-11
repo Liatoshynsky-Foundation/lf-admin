@@ -15,15 +15,19 @@ jest.mock('~/constants/publications', () => ({
 const mockUpdateNews = jest.fn();
 const mockUpdateEvent = jest.fn();
 const mockUpdateMedia = jest.fn();
+const mockDeleteNews = jest.fn();
+const mockDeleteEvent = jest.fn();
 
 jest.mock('~/shared/hooks/use-news/useNews', () => ({
   useNewsById: jest.fn(),
-  useUpdateNews: () => [mockUpdateNews]
+  useUpdateNews: () => [mockUpdateNews],
+  useDeleteNews: () => [mockDeleteNews]
 }));
 
 jest.mock('~/shared/hooks/use-events/useEvents', () => ({
   useEventById: jest.fn(),
-  useUpdateEvent: () => [mockUpdateEvent]
+  useUpdateEvent: () => [mockUpdateEvent],
+  useDeleteEvent: () => [mockDeleteEvent]
 }));
 
 jest.mock('~/shared/hooks/use-media-mentions/useMediaMentions', () => ({
@@ -160,6 +164,28 @@ describe('usePublicationManager Hook', () => {
         url: 'abc',
         status: BaseContentStatuses.Published
       });
+    });
+  });
+
+  describe('deleteResource Mutation Logic', () => {
+    it('should call deleteNews for news type', async () => {
+      const { result } = renderHook(() => usePublicationManager('news', '1'));
+
+      await act(async () => {
+        await result.current.deleteResource();
+      });
+
+      expect(mockDeleteNews).toHaveBeenCalledWith({ id: '1' });
+    });
+
+    it('should call deleteEvent for events type', async () => {
+      const { result } = renderHook(() => usePublicationManager('events', '2'));
+
+      await act(async () => {
+        await result.current.deleteResource();
+      });
+
+      expect(mockDeleteEvent).toHaveBeenCalledWith({ id: '2' });
     });
   });
 
