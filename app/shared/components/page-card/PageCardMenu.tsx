@@ -1,6 +1,4 @@
-import { Menu, MenuItem } from '@mui/material';
-
-import styles from './PageCardMenu.styles';
+import BaseCardMenu from '../base-card/BaseCardMenu';
 
 interface PageCardMenuProps {
   anchorEl: HTMLElement | null;
@@ -9,25 +7,14 @@ interface PageCardMenuProps {
 }
 
 const PageCardMenu = ({ anchorEl, onClose, editSeoHref }: PageCardMenuProps) => {
-  const open = Boolean(anchorEl);
+  const contentMenuItems = [
+    {
+      text: 'SEO налаштування',
+      href: editSeoHref
+    }
+  ];
 
-  return (
-    <Menu
-      anchorEl={anchorEl}
-      open={open}
-      onClose={onClose}
-      sx={styles.menu}
-      disableAutoFocusItem
-      anchorOrigin={{
-        vertical: 'top',
-        horizontal: 'right'
-      }}
-    >
-      <MenuItem component="a" href={editSeoHref} sx={styles.menuItem} onClick={onClose}>
-        Редагувати SEO
-      </MenuItem>
-    </Menu>
-  );
+  return <BaseCardMenu anchorEl={anchorEl} onClose={onClose} menuItems={contentMenuItems} />;
 };
 
 export default PageCardMenu;
