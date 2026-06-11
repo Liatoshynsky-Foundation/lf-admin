@@ -5,6 +5,7 @@ import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
 import { FoundationBlock } from './foundation-block/FoundationBlock';
+import { styles } from './LiatoshynskyFoundation.styles';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { proseToText } from '~/lib/utils/prose';
@@ -24,7 +25,7 @@ export const LiatoshynskyFoundation = () => {
 
   const currentLocale: 'uk' | 'en' = useStore((state) => state.locale);
 
-  if (!block) return <Skeleton sx={{ height: '60px' }} />;
+  if (!block) return <Skeleton sx={styles.skeletonPlaceholder} />;
 
   const mainText = block.ourOrganisation?.[currentLocale];
   const handleMainTextChange = (val: JSONContent) => {

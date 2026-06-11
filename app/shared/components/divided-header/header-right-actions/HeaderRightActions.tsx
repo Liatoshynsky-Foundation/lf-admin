@@ -39,7 +39,7 @@ export default function HeaderRightActions(props: HeaderRightActionsProps) {
     case 'create':
       return (
         <>
-          <IconButton onClick={props.onPreview} sx={{ color: 'text.primary' }} aria-label="Передогляд">
+          <IconButton onClick={props.onPreview} sx={styles.createContentIcon} aria-label="Передогляд">
             <EyeIcon size={24} strokeWidth={1.5} />
           </IconButton>
           <Button disabled={disabled} onClick={props.onEdit} variant="contained" color="tertiary" disableElevation>

@@ -1,6 +1,6 @@
 import { SxProps } from '@mui/material';
 
-export const styles: Record<string, SxProps> = {
+export const styles = {
   body: {
     display: 'flex',
     alignItems: 'flex-start',
@@ -12,4 +12,4 @@ export const styles: Record<string, SxProps> = {
     alignItems: 'center',
     flexDirection: 'column'
   }
-};
+} satisfies Record<string, SxProps>;

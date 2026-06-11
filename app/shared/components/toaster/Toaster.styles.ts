@@ -14,7 +14,9 @@ export const slideOut = keyframes`
 
 export const styles = {
   toastContainer: {
-    width: '375px',
+    minWidth: '375px',
+    maxWidth: '500px',
+    width: 'fit-content',
     minHeight: '56px',
     padding: '12px 16px',
     borderRadius: '12px',

@@ -1,6 +1,7 @@
 import { Box, Divider, ListSubheader, Menu, MenuItem, Typography } from '@mui/material';
 import { MouseEvent, useState } from 'react';
 
+import { sharedMenuStyles } from '../../shared/shared-publication.styles';
 import { styles } from './EditPublicationsView.styles';
 import DeleteCardModal from '~/components/delete-card-modal/DeleteCardModal';
 import {
@@ -68,7 +69,7 @@ export function EditPublicationsView({
     handleClose('publish');
   };
 
-  if (isLoading || editedContent === null) return <Box sx={{ p: 4 }}>{'Завантаження...'}</Box>;
+  if (isLoading || editedContent === null) return <Box sx={styles.loadingContainer}>{'Завантаження...'}</Box>;
 
   const initialBlocks = editedContent[localeKey]?.content?.blocks;
   const isContentValid = Array.isArray(initialBlocks) && initialBlocks.length;
@@ -124,8 +125,8 @@ export function EditPublicationsView({
         disableScrollLock
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-        slotProps={{ paper: { sx: { width: 205 } } }}
-        sx={styles.menu}
+        slotProps={{ paper: { sx: sharedMenuStyles.navigationMenuPaper } }}
+        sx={sharedMenuStyles.menu}
       >
         <ListSubheader sx={styles.menuSubheader}>
           <Typography variant="subtitle2">{'Мовні версії'}</Typography>
@@ -142,7 +143,7 @@ export function EditPublicationsView({
                 onLanguageChange(locale);
                 handleClose('navigation');
               }}
-              sx={styles.menuItem}
+              sx={sharedMenuStyles.menuItem}
             >
               <Typography variant="textMd">{label}</Typography>
               {isDraft && (
@@ -154,13 +155,13 @@ export function EditPublicationsView({
           );
         })}
 
-        <Divider sx={{ my: '7px' }} />
+        <Divider sx={styles.contentDevider} />
         <MenuItem
           onClick={() => {
             onSeoClick();
             handleClose('navigation');
           }}
-          sx={styles.menuItem}
+          sx={sharedMenuStyles.menuItem}
         >
           <Typography variant="textMd">{'SEO налаштування'}</Typography>
         </MenuItem>
@@ -173,12 +174,12 @@ export function EditPublicationsView({
         disableScrollLock
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        slotProps={{ paper: { sx: { width: 260 } } }}
-        sx={styles.menu}
+        slotProps={{ paper: { sx: sharedMenuStyles.publishMenuPaper } }}
+        sx={sharedMenuStyles.menu}
       >
         {publishActions.map((action) => (
           <MenuItem
-            sx={styles.menuItem}
+            sx={sharedMenuStyles.menuItem}
             key={action.id}
             onClick={() => {
               if (action.id === MenuActionId.DELETE_DRAFT) {

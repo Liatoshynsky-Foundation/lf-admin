@@ -103,6 +103,27 @@ const normalizePagination = (page?: number, limit?: number) => ({
   limit: Math.min(MAX_LIMIT, Math.max(1, limit ?? DEFAULT_LIMIT))
 });
 
+export const deleteLogs = async (level?: LogLevel): Promise<number> => {
+  await dbConnect();
+
+  const db = mongoose.connection.db;
+
+  if (!db) {
+    throw new Error('Database connection is not available');
+  }
+
+  const filters: Record<string, unknown> = {};
+
+  if (level && isAllowedLevel(level)) {
+    filters.level = level;
+  }
+
+  const collection = db.collection<RawLogDocument>('logger');
+  const result = await collection.deleteMany(filters);
+
+  return result.deletedCount ?? 0;
+};
+
 export const getLogs = async (query: Partial<LogsQuery> = {}): Promise<LogsResponse> => {
   await dbConnect();
 

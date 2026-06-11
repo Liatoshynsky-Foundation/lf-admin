@@ -1,7 +1,7 @@
 import { CONTENT_VERSION, SerializedContent } from '~/shared/components/content-editor/types';
 import { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import type { FilterOption } from '~/shared/components/selector/FilterSelect';
-import { CropRect } from '~/types/common';
+import { CropRect, LocalizedCropRect } from '~/types/common';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 export const PUBLICATIONS_TYPES = ['events', 'news', 'media'] as const;
@@ -236,7 +236,7 @@ export interface FetchedPublicationData {
   coverImage?: {
     src?: string | null;
     alt?: { uk?: string | null; en?: string | null } | null;
-    crop?: CropRect | null;
+    crop?: CropRect | LocalizedCropRect | null;
   } | null;
   allowIndexation?: {
     uk?: boolean | null;

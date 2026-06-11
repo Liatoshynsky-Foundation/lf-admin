@@ -216,5 +216,13 @@ export const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center'
+  },
+
+  downloadSpinner: {
+    display: 'flex',
+    width: '20px',
+    height: '20px',
+    alignItems: 'center',
+    justifyContent: 'center'
   }
 };
