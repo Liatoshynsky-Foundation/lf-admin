@@ -1,8 +1,8 @@
 import { act, renderHook } from '@testing-library/react';
 
 import { emptyDoc, List, usePointsList } from './usePointsList';
+import { setFieldMock } from '~/shared/components/privacy-policy/__mocks__/setup-mocks';
 
-const mockSetField = jest.fn();
 const initialList: List = [{ id: '1', en: emptyDoc, uk: emptyDoc }, { id: '2', en: emptyDoc, uk: emptyDoc }];
 const pageId = 'page-1';
 const blockId = 'block-1';
@@ -11,14 +11,11 @@ const currentLocale = 'uk' as const;
 const defaultMockedProps = {
   blockId,
   list: initialList,
-  setField: mockSetField,
+  setField: setFieldMock,
   currentLocale,
   pageId
 };
 
-beforeAll(() => {
-  crypto.randomUUID = jest.fn(() => 'uuid-1') as typeof crypto.randomUUID;
-});
 
 
 describe('usePointsList', () => {
@@ -50,7 +47,7 @@ describe('usePointsList', () => {
       value: emptyDoc
     });
 
-    expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'list', expectedList);
+    expect(setFieldMock).toHaveBeenCalledWith(pageId, blockId, 'list', expectedList);
   });
 
   it('should call setField with a filtered list when removePoint is called', () => {
@@ -62,7 +59,7 @@ describe('usePointsList', () => {
     });
 
     const filteredList = initialList.filter((point) => point.id !== deleteId);
-    expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'list', filteredList);
+    expect(setFieldMock).toHaveBeenCalledWith(pageId, blockId, 'list', filteredList);
   });
   it('should call setField with correct points when updatePoint is called', () => {
     const { result } = renderHook(() => usePointsList(defaultMockedProps));
@@ -76,7 +73,7 @@ describe('usePointsList', () => {
 
     const expectedList = initialList.map((point) => (point.id === updatePayload.id ? { ...point, [currentLocale]: newContent } : point));
 
-    expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'list', expectedList);
+    expect(setFieldMock).toHaveBeenCalledWith(pageId, blockId, 'list', expectedList);
 
   });
 });

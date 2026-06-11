@@ -42,7 +42,8 @@ export const EditDescriptionListNoteBlock = <T extends BlockWithDescriptionListN
 
   const { addPoint, removePoint, updatePoint, points } = usePointsList({
     list,
-    setField: setField,
+    setField,
+    listFieldName,
     currentLocale,
     pageId,
     blockId

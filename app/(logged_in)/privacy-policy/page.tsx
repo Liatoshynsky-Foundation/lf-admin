@@ -4,6 +4,7 @@ import { Box } from '@mui/material';
 import { PAGE_IDS } from '~/constants/pageBlocks';
 import { Header } from '~/shared/components/header/Header';
 import { ContactUs } from '~/shared/components/privacy-policy/contact-us/ContactUs';
+import { Cookies } from '~/shared/components/privacy-policy/cookies/Cookies';
 import { DataRetention } from '~/shared/components/privacy-policy/data-retention/DataRetention';
 import { DataUsage } from '~/shared/components/privacy-policy/data-usage/DataUsage';
 import { DataWeCollect } from '~/shared/components/privacy-policy/data-we-collect/DataWeCollect';
@@ -13,7 +14,6 @@ import { NewsletterSubscription } from '~/shared/components/privacy-policy/newsl
 import { SocialNetworks } from '~/shared/components/privacy-policy/social-networks/SocialNetworks';
 import { TargetedAds } from '~/shared/components/privacy-policy/targeted-ads/TargetedAds';
 import { UserRights } from '~/shared/components/privacy-policy/user-rights/UserRights';
-import { Cookies } from '~/shared/components/privacy-policy/сookies/Cookies';
 import { usePageEditor } from '~/shared/hooks/use-page-editor/usePageEditor';
 import { useSavePageBlocks } from '~/shared/hooks/use-save-page/UseSavePage';
 import { useStore } from '~/store';

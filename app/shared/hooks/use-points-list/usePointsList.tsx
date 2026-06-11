@@ -10,6 +10,7 @@ export type List = (LocalizedJSON & {
 export interface UsePointsListProps<K extends keyof BlocksMap> {
   blockId: K,
   setField: <F extends keyof BlocksMap[K]>(pageId: string, blockId: K, field: F, value: BlocksMap[K][F]) => void,
+  listFieldName?: Extract<keyof BlocksMap[K], string>,
   list: List,
   currentLocale: 'uk' | 'en',
   pageId: string,
@@ -17,7 +18,7 @@ export interface UsePointsListProps<K extends keyof BlocksMap> {
 
 export const emptyDoc: JSONContent = { type: 'doc', content: [] };
 
-export const usePointsList = <K extends keyof BlocksMap>({ list, setField, currentLocale, pageId, blockId }: UsePointsListProps<K>) => {
+export const usePointsList = <K extends keyof BlocksMap>({ list, setField, listFieldName = 'list' as Extract<keyof BlocksMap[K], string>, currentLocale, pageId, blockId }: UsePointsListProps<K>) => {
 
   const points: ListPoint[] = list.map((item) => ({
     id: item.id,
@@ -35,7 +36,7 @@ export const usePointsList = <K extends keyof BlocksMap>({ list, setField, curre
         [currentLocale]: newP.value
       };
     });
-    setField(pageId, blockId, 'list' as keyof BlocksMap[K], updatedFullList as BlocksMap[K][keyof BlocksMap[K]]);
+    setField(pageId, blockId, listFieldName, updatedFullList as BlocksMap[K][keyof BlocksMap[K]]);
   };
 
   const addPoint = (): ListPoint => {

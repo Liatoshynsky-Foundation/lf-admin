@@ -27,7 +27,7 @@ describe('DataWeCollect', () => {
     checkDescription: true,
     checkNote: true,
     checkList: true,
-    usePointsListMock: usePointsListMock
+    usePointsListMock
   });
 });
 

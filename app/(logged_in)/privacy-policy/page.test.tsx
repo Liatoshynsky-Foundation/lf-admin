@@ -35,8 +35,8 @@ jest.mock('~/shared/components/privacy-policy/targeted-ads/TargetedAds', () => (
 jest.mock('~/shared/components/privacy-policy/user-rights/UserRights', () => ({
   UserRights: () => <div data-testid="user-rights">UserRights</div>
 }));
-jest.mock('~/shared/components/privacy-policy/сookies/Cookies', () => ({
-  Cookies: () => <div data-testid="сookies">Cookies</div>
+jest.mock('~/shared/components/privacy-policy/cookies/Cookies', () => ({
+  Cookies: () => <div data-testid="cookies">Cookies</div>
 }));
 
 
@@ -55,7 +55,7 @@ describe('Privacy Policy', () => {
       'social-networks',
       'targeted-ads',
       'user-rights',
-      'сookies'
+      'cookies'
     ]
   });
 });

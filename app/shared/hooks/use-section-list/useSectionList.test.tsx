@@ -6,11 +6,6 @@ import { useSectionList } from './useSectionList';
 import { ensureIds } from '~/lib/utils/ensureIds';
 import { setFieldMock } from '~/shared/components/privacy-policy/__mocks__/setup-mocks';
 
-Object.defineProperty(globalThis, 'crypto', {
-  value: {
-    randomUUID: jest.fn(() => 'uuid-1'),
-  },
-});
 
 jest.mock('~/store', () => ({
   useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock }) => unknown) =>
@@ -18,7 +13,7 @@ jest.mock('~/store', () => ({
 }));
 
 const inputSectionsList = [
-  { id: '1', subtitle: { uk: emptyDoc, en: emptyDoc }, list: [{ id: 'point-1', uk: emptyDoc, en: emptyDoc }] }, 
+  { id: '1', subtitle: { uk: emptyDoc, en: emptyDoc }, list: [{ id: 'point-1', uk: emptyDoc, en: emptyDoc }] },
   { id: '2', subtitle: { uk: emptyDoc, en: emptyDoc }, list: [{ id: 'point-2', uk: emptyDoc, en: emptyDoc }] }
 ];
 
@@ -30,7 +25,7 @@ const sectionIdMocked = '1';
 
 const defaultMockedProps = {
   blockId,
-  sectionsList:inputSectionsList,
+  sectionsList: inputSectionsList,
   setField: setFieldMock,
   currentLocale,
   pageId
@@ -43,10 +38,9 @@ const sections = inputSectionsList.map((sl) => ({
 }));
 
 describe('useSectionList', () => {
-  beforeEach(() => { jest.clearAllMocks(); });
   it('should initalize sections with correct structure', () => {
     const { result } = renderHook(() => useSectionList(defaultMockedProps));
-   
+
 
     expect(result.current.sections).toEqual(sections);
   });

@@ -1,14 +1,10 @@
 import { render, screen } from '@testing-library/react';
 
-import { usePageBlockMock } from '../__mocks__/setup-mocks';
 import { runCommonBlockTests } from '../test-utils/block-test-factory';
 import { IntroSection } from './IntroSection';
 import { createDocNode } from '~/__mocks__/utils';
 
-beforeAll(() => {
-  let counter = 0;
-  crypto.randomUUID = jest.fn(() => `uuid-${++counter}`) as typeof crypto.randomUUID;
-});
+
 const mockTrustAndSecurityJson = createDocNode('Initial trust and security');
 const mockAgreementJson = createDocNode('Initial agreement');
 
@@ -23,11 +19,6 @@ const keys = {
 };
 
 describe('IntroSection', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-
-    usePageBlockMock.mockReturnValue({ block: mockBlock });
-  });
   runCommonBlockTests({
     Component: IntroSection,
     mockBlock,

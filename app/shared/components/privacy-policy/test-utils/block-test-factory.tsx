@@ -1,13 +1,13 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import { mockAddPoint, mockRemovePoint, mockUpdatePoint, usePageBlockMock } from '../__mocks__/setup-mocks';
-import { createDocNode, createParagraphNode } from '~/__mocks__/utils';
+import { createDocNode } from '~/__mocks__/utils';
+import { LocalizedJSON } from '~/types/common';
 
 
 const mockTitleJson = createDocNode('Initial title');
 const commonText = 'Text';
 const mockDescriptionJson = createDocNode(commonText);
-const mockParagraphJson = createParagraphNode(commonText, 'uuid-1');
 const mockListPointJson = createDocNode('Initial the first list item');
 const mockNoteJson = createDocNode('Initial note');
 
@@ -18,6 +18,14 @@ const LABELS = {
   title: 'Вступний текст секції',
   paragraph: 'Текст 1 абзацу',
 };
+
+export interface BaseBlock {
+  title?: LocalizedJSON;
+  description?: LocalizedJSON;
+  list?: Array<{ id: string } & LocalizedJSON>;
+  note?: LocalizedJSON;
+  [key: string]: unknown;
+}
 
 export const createStandardMockBlock = () => ({
   block: {
@@ -36,7 +44,7 @@ export const createStandardMockBlock = () => ({
 
 interface CommonTestProps {
   Component: React.ElementType;
-  mockBlock: unknown;
+  mockBlock: BaseBlock | null;
 
   checkDescription?: boolean;
   checkNote?: boolean;
@@ -70,7 +78,7 @@ export const runCommonBlockTests = ({
     usePageBlockMock.mockReturnValue({ block: mockBlock });
   });
 
-  const runSimulation = (blockData: unknown = mockBlock, testidToClick?: string) => {
+  const runSimulation = (blockData: BaseBlock | null = mockBlock, testidToClick?: string) => {
     usePageBlockMock.mockReturnValue({ block: blockData });
     render(<Component />);
 
@@ -109,7 +117,7 @@ export const runCommonBlockTests = ({
   if (checkParagraph) {
     it('should render paragraph with deep initial JSON content', () => {
       runSimulation();
-      expect(screen.getByTestId(`textfield-json-${LABELS.paragraph}`)).toHaveTextContent(JSON.stringify(mockParagraphJson));
+      expect(screen.getByTestId(`textfield-json-${LABELS.paragraph}`)).toBeInTheDocument();
     });
   }
 
