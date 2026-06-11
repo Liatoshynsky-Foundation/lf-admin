@@ -1,6 +1,7 @@
 import { Box } from '@mui/material';
 import { notFound } from 'next/navigation';
 
+import { styles } from '../page.styles';
 import { PublicationsPageContent } from '../PublicationsPageContent';
 import { PUBLICATIONS_TABS, type PublicationsTabValue } from '~/constants/publications';
 
@@ -20,7 +21,7 @@ export default async function PublicationsTypePage({ params }: PublicationsTypeP
   }
 
   return (
-    <Box sx={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', p: '32px' }}>
+    <Box sx={styles.pageContainer}>
       <PublicationsPageContent activeTab={type as PublicationsTabValue} />
     </Box>
   );

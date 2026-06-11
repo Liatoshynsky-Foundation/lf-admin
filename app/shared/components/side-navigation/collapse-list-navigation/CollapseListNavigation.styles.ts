@@ -1,4 +1,4 @@
-import { alpha } from '@mui/material';
+import { alpha, SxProps, Theme } from '@mui/material';
 
 import { mainHexPalette, shadowColors } from '~/shared/theme/colors';
 
@@ -40,5 +40,8 @@ export const styles = {
     '& .MuiListItemText-root': {
       margin: 0
     }
+  },
+  openNavbarPopper: {
+    zIndex: 1000
   }
-};
+} satisfies Record<string, SxProps<Theme>>;

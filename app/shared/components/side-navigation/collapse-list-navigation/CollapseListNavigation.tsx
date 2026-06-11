@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { LinkElement } from '../link-element/LinkElement';
 import { ListElement } from '../list-element/ListElement';
 import { styles as SideNavigationStyles } from '../SideNavigation.styles';
-import { styles } from './CollapeListNavigation.styles';
+import { styles } from './CollapseListNavigation.styles';
 
 export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({
   openNavbar,
@@ -106,7 +106,7 @@ export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({
             enabled: false
           }
         ]}
-        sx={{ zIndex: 1000 }}
+        sx={styles.openNavbarPopper}
       >
         <Paper sx={styles.floatingSubmenu}>
           <List disablePadding>{collapseContent}</List>

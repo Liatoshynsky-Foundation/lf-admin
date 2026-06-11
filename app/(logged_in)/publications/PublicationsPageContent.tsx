@@ -5,6 +5,7 @@ import { ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useRef, useState } from 'react';
 
+import { styles } from './PublicationsPageContent.styles';
 import {
   PUBLICATIONS_CREATE_OPTIONS,
   PUBLICATIONS_EMPTY_STATE_DESCRIPTION,
@@ -31,12 +32,10 @@ import DropdownMenu from '~/shared/components/dropdown-menu/DropdownMenu';
 import { EmptyState } from '~/shared/components/empty-state';
 import { FilteringToolbar, SortSelect } from '~/shared/components/filtering-toolbar';
 import { PageHeader } from '~/shared/components/page-header/PageHeader';
-import { filterSelectStyles } from '~/shared/components/selector/FilterSelect.styles';
 import { useAllEvents } from '~/shared/hooks/use-events/useEvents';
 import { useAllMediaMentions } from '~/shared/hooks/use-media-mentions/useMediaMentions';
 import { useAllNews } from '~/shared/hooks/use-news/useNews';
 import { usePublicationsFiltering } from '~/shared/hooks/use-publications';
-import { mainHexPalette as colors } from '~/shared/theme/colors';
 import type { LocalizedString } from '~/types/common';
 import { type AllEventsQuery, type AllMediaMentionsQuery, type AllNewsQuery } from '~/types/graphql/generated/graphql';
 import { normalizeSearch } from '~/utils/normalizeSearch';
@@ -375,22 +374,7 @@ function PublicationsCreateAction() {
         endIcon={<ChevronDown size={18} aria-hidden="true" />}
         aria-haspopup="menu"
         aria-expanded={Boolean(anchorEl)}
-        sx={{
-          borderRadius: '20px',
-          px: '24px',
-          py: '8px',
-          minHeight: '40px',
-          textTransform: 'none',
-          color: colors.black,
-          boxShadow: 'none',
-          fontSize: '16px',
-          lineHeight: 1.5,
-          bgcolor: colors.yellow[500],
-          '&:hover': {
-            bgcolor: colors.yellow[600],
-            boxShadow: 'none'
-          }
-        }}
+        sx={styles.createActionButton}
       >
         Створити
       </Button>
@@ -400,35 +384,18 @@ function PublicationsCreateAction() {
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleCloseMenu}
-        sx={{
-          '& .MuiPaper-root': {
-            width: '170px'
-          }
-        }}
+        sx={styles.createActionDropdownMenu}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
         menuList={
-          <Box sx={{ px: '8px', py: '4px' }}>
+          <Box sx={styles.menuListWrapper}>
             {PUBLICATIONS_CREATE_OPTIONS.map((option) => (
               <MenuItem
                 key={option.id}
                 component={Link}
                 href={option.href}
                 onClick={handleCloseMenu}
-                sx={{
-                  ...filterSelectStyles.menuItem,
-                  minHeight: 'auto',
-                  px: '12px',
-                  py: '8px',
-                  borderRadius: '8px',
-                  color: colors.black,
-                  '&:hover': {
-                    bgcolor: 'rgba(0, 0, 0, 0.04)'
-                  },
-                  '&.Mui-focusVisible': {
-                    bgcolor: 'rgba(0, 0, 0, 0.04)'
-                  }
-                }}
+                sx={styles.createActionMenuItem}
               >
                 {option.label}
               </MenuItem>
@@ -574,16 +541,7 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
   })();
 
   return (
-    <Box
-      sx={{
-        width: '100%',
-        maxWidth: '100%',
-        minWidth: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '20px'
-      }}
-    >
+    <Box sx={styles.pageContainer}>
       <PageHeader
         title={PUBLICATIONS_PAGE_TITLE}
         activeTab={activeTab}

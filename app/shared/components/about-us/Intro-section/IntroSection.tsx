@@ -3,6 +3,7 @@ import { Box, Skeleton } from '@mui/material';
 
 import CollapsibleBlock from '../../design-system/collapsible-block/CollapsibleBlock';
 import { QuoteBlock } from '../Liatoshynsky-office/quote-block/QuoteBlock';
+import { styles } from './IntroSection.styles';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { ImagePreviewBlock } from '~/ds-components/photo-block/PhotoBlock';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
@@ -21,7 +22,7 @@ export const IntroSection = () => {
   const currentLocale: keyof LocalizedString = useStore((state) => state.locale);
   const setField = useStore((state) => state.setField);
 
-  if (!block) return <Skeleton sx={{ height: '60px' }} />;
+  if (!block) return <Skeleton sx={styles.skeletonPlaceholder} />;
 
   return (
     <CollapsibleBlock title="Вступна секція">
@@ -38,7 +39,7 @@ export const IntroSection = () => {
         }
       />
 
-      <Box sx={{ marginTop: '15px' }}>
+      <Box sx={styles.imageWrapper}>
         <ImagePreviewBlock
           imageUrl={getImageUrl(block.image)}
           fileName={block.image.src || ''}
@@ -55,7 +56,7 @@ export const IntroSection = () => {
       </Box>
 
       <CustomTextField
-        fieldType='formatting'
+        fieldType="formatting"
         title="Підпис до зображення"
         label="Текст підпису"
         value={block.image.caption[currentLocale]}
@@ -68,7 +69,7 @@ export const IntroSection = () => {
         }
       />
 
-      <Box sx={{ marginTop: '15px' }}>
+      <Box sx={styles.quoteWrapper}>
         <QuoteBlock
           title={block.quote.source[currentLocale]}
           description={block.quote.text[currentLocale]}

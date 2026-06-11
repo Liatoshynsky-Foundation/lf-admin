@@ -69,6 +69,10 @@ MONGO_PORT=
 JWT_ACCESS_TOKEN_SECRET=
 JWT_REFRESH_TOKEN_SECRET=
 
+# Logs retention (in seconds) — controls how long application logs live in MongoDB.
+# Defaults to 7 days (604800) when unset or invalid.
+LOG_RETENTION_SECONDS=604800
+
 # Storage Environment - determines the environment context
 # Set to 'production' for production, 'development' (default) for development
 STORAGE_ENV=development
@@ -218,12 +222,6 @@ formData.append('fileType', 'image'); // Optional: image, document, video, audio
 formData.append('validationRules', JSON.stringify({ maxSize: 5242880 })); // Optional
 formData.append('metadata', JSON.stringify({ author: 'Admin' })); // Optional
 
-### Logs History
-
-- Application logs are written by Winston to MongoDB when `MONGO_URL` is configured.
-- Logs are stored in the same MongoDB database as the application, in the `logger` collection.
-- The logs page reads data through `GET /api/logs`, which fetches documents directly from the `logger` collection.
-
 const response = await fetch('/api/uploads/single', {
   method: 'POST',
   body: formData
@@ -232,6 +230,20 @@ const response = await fetch('/api/uploads/single', {
 const result = await response.json();
 // Returns: { success: true, data: { filename, originalName, url, size, mimeType, metadata } }
 ```
+
+### Logs History
+
+- Application logs are written by Winston to MongoDB when `MONGO_URL` is configured.
+- Logs are stored in the same MongoDB database as the application, in the `logger` collection.
+- The logs page reads data through `GET /api/logs`, which fetches documents directly from the `logger` collection.
+
+#### Retention and cleanup
+
+- Logs auto-expire via a MongoDB TTL index on the `timestamp` field. The index is created by `winston-mongodb` on the first write.
+- Retention period is controlled by `LOG_RETENTION_SECONDS` (defaults to `604800` — 7 days). Set it in `.env` to change how long logs are kept.
+- Manual cleanup is available on the `/logs` admin page: an admin can clear all logs or only logs of the currently selected level (a confirmation dialog protects against accidental clicks).
+- The manual clear is exposed as `DELETE /api/logs` (optional `?level=error|warn|info|debug`) and requires a valid admin access token cookie.
+- Changing `LOG_RETENTION_SECONDS` only affects future writes; MongoDB will update the TTL index lazily — to apply a new value immediately, drop the existing index from the `logger` collection and let it be re-created on the next log write.
 
 #### Configuration Examples
 

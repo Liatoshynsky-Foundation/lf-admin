@@ -101,8 +101,8 @@ export default function ResetPasswordForm({ token: _token }: Readonly<ResetPassw
               </InputAdornment>
             }
           />
-          <Box sx={{ mt: -1, mb: 2 }}>
-            <Typography sx={{ fontSize: '12px', color: '#666' }}>{PASSWORD_HINT}</Typography>
+          <Box sx={styles.passwordHintContainer}>
+            <Typography sx={styles.passwordHintText}>{PASSWORD_HINT}</Typography>
           </Box>
 
           <PasswordField

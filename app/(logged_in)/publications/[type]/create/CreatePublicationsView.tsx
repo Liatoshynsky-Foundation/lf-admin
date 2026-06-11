@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import { MouseEvent, useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 
-import { styles as editStyles } from '../[id]/edit/EditPublicationsView.styles';
-import { styles } from './page.styles';
+import { sharedMenuStyles } from '../shared/shared-publication.styles';
+import { styles } from './CreatePublicationsView.styles';
 import {
   ACTIONS_TYPE,
   ADMIN_TITLE_LABELS,
@@ -197,11 +197,11 @@ export default function CreatePublicationsView({ data, mode = 'create' }: Readon
           disableScrollLock
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-          slotProps={{ paper: { sx: { width: 260 } } }}
-          sx={editStyles.menu}
+          slotProps={{ paper: { sx: sharedMenuStyles.publishMenuPaper } }}
+          sx={sharedMenuStyles.menu}
         >
           {actions.map((action) => (
-            <MenuItem sx={editStyles.menuItem} key={action.id} onClick={() => handleMenuAction(action.id)}>
+            <MenuItem sx={sharedMenuStyles.menuItem} key={action.id} onClick={() => handleMenuAction(action.id)}>
               <Typography variant="textMd">{action.label}</Typography>
             </MenuItem>
           ))}

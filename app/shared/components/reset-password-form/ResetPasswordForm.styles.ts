@@ -22,5 +22,13 @@ export const styles = {
       backgroundColor: mainHexPalette.yellow[600],
       boxShadow: 'none'
     }
+  },
+  passwordHintText: {
+    fontSize: '12px',
+    color: '#666'
+  },
+  passwordHintContainer: {
+    mt: -1,
+    mb: 2
   }
 };

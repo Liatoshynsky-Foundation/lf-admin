@@ -15,11 +15,11 @@ export const AuthCardLayout = ({ title, subtitle, children }: AuthCardLayoutProp
     <Box sx={styles.outerContainer}>
       <Box sx={styles.container}>
         <Box sx={styles.header}>
-          <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+          <Box sx={styles.imageContainer}>
             <Image src="./icons/logo.svg" alt="logo" width={96} height={80} />
           </Box>
 
-          <Box sx={styles.TitleAndSubtitle}>
+          <Box sx={styles.titleAndSubtitle}>
             <Typography sx={styles.title} variant="h6">
               {title}
             </Typography>

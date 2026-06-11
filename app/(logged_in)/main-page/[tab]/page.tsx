@@ -2,6 +2,7 @@ import { Box } from '@mui/material';
 import { notFound } from 'next/navigation';
 
 import { MainPagesContent } from '../MainPageContent';
+import { styles } from './page.styles';
 
 const validTabs = new Set(['all', 'foundation']);
 
@@ -19,7 +20,7 @@ export default async function MainPagesTabPage({ params }: MainPagesTabProps) {
   }
 
   return (
-    <Box sx={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', p: '32px' }}>
+    <Box sx={styles.mainPageTabContainer}>
       <MainPagesContent activeTab={tab} />
     </Box>
   );

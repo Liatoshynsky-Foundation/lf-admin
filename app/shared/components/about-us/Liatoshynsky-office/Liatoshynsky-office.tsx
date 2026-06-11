@@ -3,6 +3,7 @@
 import { Skeleton } from '@mui/material';
 import { JSONContent } from '@tiptap/react';
 
+import { styles } from './LiatoshynskyOffice.styles';
 import { QuoteBlock } from './quote-block/QuoteBlock';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
@@ -19,7 +20,7 @@ export const LiatoshynskyOffice = () => {
 
   const currentLocale: keyof LocalizedString = useStore((state) => state.locale);
 
-  if (!block) return <Skeleton sx={{ height: '60px' }} />;
+  if (!block) return <Skeleton sx={styles.skeletonPlaceholder} />;
 
   const handleTitleChange = (val: JSONContent) => {
     setField(pageId, blockId, 'quote', {
