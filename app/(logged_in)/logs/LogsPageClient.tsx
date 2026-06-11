@@ -6,14 +6,20 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
+  Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Pagination,
   Stack,
   Tab,
   Tabs,
   Typography
 } from '@mui/material';
-import { type SyntheticEvent, useEffect, useState } from 'react';
+import { type SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
 import type { LogEntry, LogLevel, LogsResponse } from '~/back-shared/types/logs';
 
@@ -133,6 +139,9 @@ const LogsPageClient = () => {
   const [items, setItems] = useState<LogEntry[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -162,7 +171,7 @@ const LogsPageClient = () => {
 
     loadLogs();
     return () => controller.abort();
-  }, [level, page]);
+  }, [level, page, reloadKey]);
 
   const totalPages = Math.max(1, Math.ceil(total / 20));
   const hasItems = items.length > 0;
@@ -172,6 +181,43 @@ const LogsPageClient = () => {
     setLevel(value);
     setPage(1);
   };
+
+  const openClearDialog = (): void => setDialogOpen(true);
+  const closeClearDialog = (): void => {
+    if (!clearing) {
+      setDialogOpen(false);
+    }
+  };
+
+  const confirmClear = useCallback(async (): Promise<void> => {
+    setClearing(true);
+
+    try {
+      const params = new URLSearchParams();
+      if (level !== 'all') params.set('level', level);
+
+      const response = await fetch(`/api/logs?${params.toString()}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to clear logs');
+      }
+
+      setPage(1);
+      setReloadKey((value) => value + 1);
+    } catch (error) {
+      console.warn(error);
+    } finally {
+      setDialogOpen(false);
+      setClearing(false);
+    }
+  }, [level]);
+
+  const noLogs = total === 0;
+  const capitalizedLevel = level === 'all' ? '' : `${level[0].toUpperCase()}${level.slice(1)}`;
+  const clearLabel = level === 'all' ? 'Видалити всі логи' : `Видалити ${capitalizedLevel} логи`;
 
   let content: React.ReactNode;
   if (loading) {
@@ -196,15 +242,35 @@ const LogsPageClient = () => {
     );
   }
 
+  const clearDialogTitle = level === 'all' ? 'Видалити всі логи?' : `Видалити логи рівня "${level.toUpperCase()}"?`;
+  const clearDialogText =
+    level === 'all'
+      ? 'Усі записи з колекції logger буде видалено без можливості відновлення.'
+      : 'Записи поточної вкладки буде видалено без можливості відновлення.';
+
   return (
     <Stack spacing={2.5}>
-      <Stack spacing={0.5}>
-        <Typography variant="h4" sx={{ fontWeight: 800 }}>
-          Logs
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Логи з MongoDB. Деталі відкриваються по кліку на запис.
-        </Typography>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'flex-start', sm: 'flex-start' }} justifyContent="space-between">
+        <Stack spacing={0.5}>
+          <Typography variant="h4" sx={{ fontWeight: 800 }}>
+            Logs
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Логи з MongoDB. Деталі відкриваються по кліку на запис.
+          </Typography>
+        </Stack>
+        <Button
+          variant="contained"
+          onClick={openClearDialog}
+          disabled={loading || clearing || noLogs}
+          sx={{
+            backgroundColor: 'common.black',
+            color: 'common.white',
+            '&:hover': { backgroundColor: 'common.black' }
+          }}
+        >
+          {clearLabel}
+        </Button>
       </Stack>
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
@@ -222,6 +288,21 @@ const LogsPageClient = () => {
       {content}
 
       {hasItems && totalPages > 1 ? <Pagination count={totalPages} page={page} onChange={(_, value) => setPage(value)} /> : null}
+
+      <Dialog open={dialogOpen} onClose={closeClearDialog}>
+        <DialogTitle>{clearDialogTitle}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>{clearDialogText}</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeClearDialog} disabled={clearing}>
+            Скасувати
+          </Button>
+          <Button onClick={confirmClear} color="error" variant="contained" disabled={clearing} autoFocus>
+            {clearing ? 'Видалення...' : 'Видалити'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   );
 };
