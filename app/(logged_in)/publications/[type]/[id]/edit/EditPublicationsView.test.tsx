@@ -65,10 +65,21 @@ jest.mock('~/shared/components/divided-header/header-right-actions/HeaderRightAc
   };
 });
 
+jest.mock('~/components/delete-card-modal/DeleteCardModal', () => ({
+  __esModule: true,
+  default: ({ open, onDelete }: { open: boolean; onDelete: () => void }) =>
+    open ? (
+      <button data-testid="confirm-delete" onClick={onDelete}>
+        confirm delete
+      </button>
+    ) : null
+}));
+
 describe('EditPublicationsView Component', () => {
   const mockOnLanguageChange = jest.fn();
   const mockOnEditorChange = jest.fn();
   const mockOnAction = jest.fn();
+  const mockOnDeleteConfirm = jest.fn();
   const mockOnSeoClick = jest.fn();
 
   const defaultProps: EditPublicationsViewProps = {
@@ -84,6 +95,7 @@ describe('EditPublicationsView Component', () => {
     onLanguageChange: mockOnLanguageChange,
     onEditorChange: mockOnEditorChange,
     onAction: mockOnAction,
+    onDeleteConfirm: mockOnDeleteConfirm,
     onSeoClick: mockOnSeoClick,
   };
 
@@ -165,5 +177,19 @@ describe('EditPublicationsView Component', () => {
 
     expect(mockOnAction).toHaveBeenCalledTimes(1);
     expect(mockOnAction).toHaveBeenCalledWith(MenuActionId.PUBLISH);
+  });
+
+  it('should open delete modal and call onDeleteConfirm when deletion is confirmed', () => {
+    render(<EditPublicationsView {...defaultProps} />);
+
+    fireEvent.click(screen.getByTestId('mock-publish-menu-btn'));
+    fireEvent.click(screen.getByText('Видалити'));
+
+    expect(screen.getByTestId('confirm-delete')).toBeInTheDocument();
+    expect(mockOnAction).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByTestId('confirm-delete'));
+
+    expect(mockOnDeleteConfirm).toHaveBeenCalledTimes(1);
   });
 });
