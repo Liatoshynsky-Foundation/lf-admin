@@ -88,7 +88,7 @@ export default function CreatePublicationsView({ data, mode = 'create' }: Readon
   const handleClose = () => setAnchor(null);
 
   const actions = (HEADER_MENU_OPTIONS.baseActions as ACTIONS_TYPE[]).filter(
-    (a) => a.id !== MenuActionId.DELETE_DRAFT && a.id !== MenuActionId.PUBLISH
+    (a) => a.id !== MenuActionId.DELETE && a.id !== MenuActionId.PUBLISH
   );
 
   const handleMenuAction = async (actionId: MenuActionId) => {

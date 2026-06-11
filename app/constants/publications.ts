@@ -154,7 +154,7 @@ export enum MenuActionId {
   SAVE_DRAFT = 'SAVE_DRAFT',
   PUBLICATE_AND_EXIT = 'PUBLICATE_AND_EXIT',
   CANCEL_PUBLICATION = 'CANCEL_PUBLICATION',
-  DELETE_DRAFT = 'DELETE_DRAFT'
+  DELETE = 'DELETE'
 }
 
 export type ACTIONS_TYPE = {
@@ -169,7 +169,7 @@ export const HEADER_MENU_OPTIONS: HEADER_MENU_OPTIONS_TYPE = {
     { id: MenuActionId.PUBLISH, label: 'Опублікувати' },
     { id: MenuActionId.PUBLICATE_AND_EXIT, label: 'Опублікувати і вийти' },
     { id: MenuActionId.CANCEL_PUBLICATION, label: 'Скасувати публікацію' },
-    { id: MenuActionId.DELETE_DRAFT, label: 'Видалити' }
+    { id: MenuActionId.DELETE, label: 'Видалити' }
   ]
 } as const;
 

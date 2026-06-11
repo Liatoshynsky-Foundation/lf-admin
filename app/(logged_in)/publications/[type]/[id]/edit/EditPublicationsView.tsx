@@ -182,7 +182,7 @@ export function EditPublicationsView({
             sx={sharedMenuStyles.menuItem}
             key={action.id}
             onClick={() => {
-              if (action.id === MenuActionId.DELETE_DRAFT) {
+              if (action.id === MenuActionId.DELETE) {
                 setDeleteModalOpen(true);
                 handleClose('publish');
                 return;

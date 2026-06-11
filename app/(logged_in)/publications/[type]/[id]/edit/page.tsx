@@ -76,7 +76,7 @@ export default function EditPublicationsPage() {
         break;
       }
 
-      case MenuActionId.DELETE_DRAFT: {
+      case MenuActionId.DELETE: {
         const { data } = await manager.deleteResource();
         if (data) {
           toast.success(CONTENT_MUTATION_RESULTS.publicationDeleted);
@@ -113,7 +113,7 @@ export default function EditPublicationsPage() {
       onLanguageChange={manager.setCurrentLanguage}
       onEditorChange={handleEditorChange}
       onAction={handleMenuAction}
-      onDeleteConfirm={() => handleMenuAction(MenuActionId.DELETE_DRAFT)}
+      onDeleteConfirm={() => handleMenuAction(MenuActionId.DELETE)}
       onSeoClick={() => router.push(`${PUBLICATIONS_BASE_PATH}/${type}/${id}/seo`)}
     />
   );
