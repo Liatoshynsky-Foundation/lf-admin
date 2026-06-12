@@ -1,10 +1,16 @@
 'use client';
+import { Typography } from '@mui/material';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-import BaseCard from '../base-card/BaseCard';
 import BaseCardMenu from '../base-card/BaseCardMenu';
+import CardLayout from '../base-card/CardLayout';
+import { infoText } from '../base-card/CardLayout.styles';
+import ImageWithFallback from '../base-card/ImageWithFallback';
+import TitleWithTooltip from '../base-card/TitleWithTooltip';
 import DeleteCardModal from '../delete-card-modal/DeleteCardModal';
+import Button from '../design-system/button/Button';
 import ContentCardBadge from './ContentCardBadge';
 import ContentCardMenuItems from './ContentCardMenuItems';
 import { getStatus } from '~/lib/utils/getStatus';
@@ -62,6 +68,8 @@ const ContentCard = ({
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
+  const FALLBACK_IMAGE_SRC = '/images/image.png';
+
   async function handleDelete() {
     try {
       let result;
@@ -78,22 +86,40 @@ const ContentCard = ({
     }
   }
 
+  const coverImageNode = (
+    <ImageWithFallback key={coverImage.src} src={coverImage.src} fallbackSrc={FALLBACK_IMAGE_SRC} alt={altText} />
+  );
+
+  const titleNode = <TitleWithTooltip text={titleText} />;
+
+  const badgeNode = <ContentCardBadge type={type} status={status} localizations={localizedKeys} />;
+
+  const infoNode = (
+    <Typography variant="caption" sx={infoText}>
+      {getStatus(status, createdAt, updatedAt, publishedAt)}
+    </Typography>
+  );
+
+  const actionButtonNode = (
+    <Button
+      variant="filled"
+      color="primary"
+      href={editHref}
+      LinkComponent={editHref ? Link : undefined}
+      onClick={editHref ? undefined : onClick}
+    >
+      {'Редагувати'}
+    </Button>
+  );
+
   return (
     <>
-      <BaseCard
-        coverImage={{
-          src: coverImage.src,
-          alt: { uk: coverImage.alt.uk, en: coverImage.alt.en }
-        }}
-        altText={altText}
-        titleText={titleText}
-        infoText={getStatus(status, createdAt, updatedAt, publishedAt)}
-        badge={<ContentCardBadge type={type} status={status} localizations={localizedKeys} />}
-        actionButton={{
-          text: 'Редагувати',
-          href: editHref,
-          onClick
-        }}
+      <CardLayout
+        coverImage={coverImageNode}
+        title={titleNode}
+        contentUpper={badgeNode}
+        info={infoNode}
+        contentBottom={actionButtonNode}
         renderMenu={(anchorEl, handleClose, direction) => (
           <BaseCardMenu
             anchorEl={anchorEl}
@@ -103,6 +129,7 @@ const ContentCard = ({
           />
         )}
       />
+
       <DeleteCardModal open={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} onDelete={handleDelete} />
     </>
   );

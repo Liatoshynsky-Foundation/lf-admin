@@ -61,7 +61,17 @@ const styles: Record<string, any> = {
     gap: '4px',
     width: '100%'
   },
+};
 
+export const infoText = {
+  color: 'blue.600',
+  fontStyle: 'italic',
+  display: 'block',
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  minWidth: 0,
+  flexShrink: 1,
 };
 
 export default styles;
