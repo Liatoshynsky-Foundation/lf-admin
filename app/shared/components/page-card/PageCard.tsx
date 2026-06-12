@@ -1,10 +1,10 @@
 import { Typography } from '@mui/material';
 import Link from 'next/link';
 
-import CardLayout from '../base-card/CardLayout';
-import { infoText } from '../base-card/CardLayout.styles';
-import ImageWithFallback from '../base-card/ImageWithFallback';
-import TitleWithTooltip from '../base-card/TitleWithTooltip';
+import CardLayout from '../cards-layout/CardLayout';
+import { infoText } from '../cards-layout/CardLayout.styles';
+import ImageWithFallback from '../cards-layout/ImageWithFallback';
+import TitleWithTooltip from '../cards-layout/TitleWithTooltip';
 import Button from '../design-system/button/Button';
 import PageCardMenuItems from './PageCardMenuItems';
 import { LocalizedString } from '~/types/common';

@@ -4,8 +4,8 @@ import { EllipsisVertical } from 'lucide-react';
 import Image from 'next/image';
 import { MouseEvent, useEffect, useState } from 'react';
 
-import DropdownMenu from '../dropdown-menu/DropdownMenu';
-import { FileMenuActions } from '../dropdown-menu/FileMenuActions';
+import CardMenu from '../cards-layout/CardMenu';
+import FileCardMenuItems from '../file-card/FileCardMenuItems';
 import LinkIcon from '~/public/icons/link.svg';
 import StarIcon from '~/public/icons/star-1.svg';
 import { styles } from '~/shared/components/minimized-file-card/MinimizedFileCard.styles';
@@ -144,36 +144,18 @@ const MinimizedFileCard = ({
           <EllipsisVertical size={ICON_SIZE} />
         </IconButton>
       </Stack>
-
-      <DropdownMenu
-        disableScrollLock
-        transitionDuration={0}
-        disableAutoFocus
-        disableEnforceFocus
-        disableRestoreFocus
+      <CardMenu
         anchorEl={anchorEl}
-        open={isMenuOpen}
         onClose={handleCloseMenu}
-        onClick={(e) => e.stopPropagation()}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        slotProps={{
-          paper: {
-            sx: styles.dropdownPaper
-          }
-        }}
-        menuList={
-          <FileMenuActions
-            isStarred={starred}
-            isStarLoading={isUpdatingStar}
-            onCloseMenu={handleCloseMenu}
-            onOpenDetails={() => onClick?.()}
-            onRename={() => onAction?.('rename', id)}
-            onDelete={() => onAction?.('delete', id)}
-            onDownload={() => onAction?.('download', id)}
-            onToggleStar={handleToggleStar}
-          />
-        }
+        menuItems={FileCardMenuItems({
+          isStarred: starred,
+          isStarLoading: isUpdatingStar,
+          onOpenDetails: () => onClick?.(),
+          onRename: () => onAction?.('rename', id),
+          onToggleStar: handleToggleStar,
+          onDownload: () => onAction?.('download', id),
+          onDelete: () => onAction?.('delete', id)
+        })}
       />
     </Paper>
   );

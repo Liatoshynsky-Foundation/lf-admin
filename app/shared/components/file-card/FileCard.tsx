@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { MouseEvent, useState } from 'react';
 import toast from 'react-hot-toast';
 
-import CardLayout from '../base-card/CardLayout';
+import CardLayout from '../cards-layout/CardLayout';
 import { styles } from './FileCard.styles';
 import FileCardMenuItems from './FileCardMenuItems';
 import TooltipCustom from '~/ds-components/tooltip/Tooltip';

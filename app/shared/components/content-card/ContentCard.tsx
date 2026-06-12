@@ -4,10 +4,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-import CardLayout from '../base-card/CardLayout';
-import { infoText } from '../base-card/CardLayout.styles';
-import ImageWithFallback from '../base-card/ImageWithFallback';
-import TitleWithTooltip from '../base-card/TitleWithTooltip';
+import CardLayout from '../cards-layout/CardLayout';
+import { infoText } from '../cards-layout/CardLayout.styles';
+import ImageWithFallback from '../cards-layout/ImageWithFallback';
+import TitleWithTooltip from '../cards-layout/TitleWithTooltip';
 import DeleteCardModal from '../delete-card-modal/DeleteCardModal';
 import Button from '../design-system/button/Button';
 import ContentCardBadge from './ContentCardBadge';

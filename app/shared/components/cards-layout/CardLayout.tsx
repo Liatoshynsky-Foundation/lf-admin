@@ -3,8 +3,8 @@ import { Box, Card, CardContent, IconButton } from '@mui/material';
 import { EllipsisVertical } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import BaseCardMenu from './BaseCardMenu';
 import styles from './CardLayout.styles';
+import CardMenu from './CardMenu';
 
 interface MenuItem {
   text: { name: string; icon?: React.ReactNode };
@@ -67,8 +67,6 @@ const CardLayout = ({
     };
   }, [anchorEl]);
 
-  const oppositeDirection = menuDirection === 'left' ? 'right' : 'left';
-
   return (
     <Card sx={styles.card(interactive)}>
       <Box sx={styles.imageContainer}>{coverImage}</Box>
@@ -83,12 +81,12 @@ const CardLayout = ({
               <IconButton data-testid="menu-button" onClick={handleMenuClick}>
                 <EllipsisVertical size={20} />
               </IconButton>
-              <BaseCardMenu
+              <CardMenu
                 key="base-card-menu"
                 anchorEl={anchorEl}
                 onClose={handleMenuClose}
                 menuItems={items}
-                menuDirection={oppositeDirection}
+                menuDirection={menuDirection}
               />
             </Box>
           </Box>
