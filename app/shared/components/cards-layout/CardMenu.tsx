@@ -10,21 +10,22 @@ interface MenuItemConfig {
   onClick?: () => void;
 }
 
-interface BaseCardMenuProps {
+interface CardMenuProps {
   anchorEl: HTMLElement | null;
   onClose: () => void;
   menuItems: MenuItemConfig[];
   menuDirection?: 'left' | 'right';
 }
 
-const CardMenu = ({ anchorEl, onClose, menuItems, menuDirection = 'right' }: BaseCardMenuProps) => {
+const CardMenu = ({ anchorEl, onClose, menuItems, menuDirection = 'right' }: CardMenuProps) => {
   const menuList = menuItems.map((item) => (
     <MenuItem
       key={item.text.name}
       component={item.href ? Link : 'li'}
       href={item.href ?? undefined}
       sx={styles.menuItem}
-      onClick={() => {
+      onClick={(e: React.MouseEvent<HTMLLIElement>) => {
+        e.stopPropagation();
         item.onClick?.();
         onClose();
       }}
