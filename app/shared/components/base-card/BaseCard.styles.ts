@@ -1,44 +1,13 @@
-import { SxProps, Theme } from '@mui/material';
+import { alpha, SxProps, Theme } from '@mui/material';
+
+import { mainHexPalette as colors } from '~/shared/theme/colors';
 
 const styles: Record<string, SxProps<Theme>> = {
-  card: {
-    display: 'flex',
-    flexDirection: 'column',
-    minHeight: '266px',
-    width: '100%',
-    maxWidth: '100%',
-    borderRadius: '16px',
-    overflow: 'hidden',
-    border: '1px solid',
-    borderColor: 'blue.200',
-    boxShadow: 0,
-  },
-
-  imageContainer: {
-    width: '100%',
-    height: '148px',
-    overflow: 'hidden',
-  },
-
-  cardContent: {
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    gap: '16px',
-    p: '16px',
-    overflow: 'hidden',
-    '&:last-child': {
-      pb: '16px'
+  touchable: {
+    '&:hover': {
+      opacity: 0.95,
+      boxShadow: `0 2px 8px ${alpha(colors.black, 0.1)}`
     }
-  },
-
-  mainInfo: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: '4px',
-    overflow: 'hidden',
-  
   },
 
   title: {
@@ -51,14 +20,15 @@ const styles: Record<string, SxProps<Theme>> = {
     WebkitBoxOrient: 'vertical',
     overflow: 'hidden',
   },
-  
+
   date: {
     color: 'blue.600',
     fontStyle: 'italic',
-    mt: 'auto',
+    display: 'block',
     whiteSpace: 'nowrap',
     overflow: 'hidden',
-    textOverflow: 'ellipsis',
+    minWidth: 0,
+    flexShrink: 1,
   }
 };
 

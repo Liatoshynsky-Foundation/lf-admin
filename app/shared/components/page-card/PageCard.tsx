@@ -19,8 +19,12 @@ const PageCard = ({ coverImage, title, updatedAt, editHref, editSeoHref, onClick
 
   return (
     <BaseCard
-      coverImage={{ src: coverImage.src, alt: altText }}
-      title={{ text: titleText }}
+      coverImage={{
+        src: coverImage.src,
+        alt: { uk: coverImage.alt.uk, en: coverImage.alt.en }
+      }}
+      altText={altText}
+      titleText={titleText}
       infoText={updatedAt ? `Змінено ${formatDate(updatedAt)}` : ''}
       actionButton={{
         text: 'Редагувати',

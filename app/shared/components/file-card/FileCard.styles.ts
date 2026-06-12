@@ -30,7 +30,10 @@ export const styles = {
   },
 
   fileTitle: {
-    lineHeight: '1.5'
+    color: 'text.primary',
+    display: '-webkit-box',
+    WebkitLineClamp: 1,
+    WebkitBoxOrient: 'vertical',
   },
 
   fileDate: {
@@ -55,7 +58,7 @@ export const styles = {
     justifyContent: 'space-between',
     marginTop: '16px',
     padding: '0 16px',
-    gap: '8px'
+    gap: '8px',
   },
 
   menuButton: (isMenuOpen: boolean): SxProps => ({
@@ -69,9 +72,8 @@ export const styles = {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '0 16px',
-    marginBottom: '16px',
-    flexShrink: 0
+    flexShrink: 0,
+    
   },
 
   iconWrapper: {

@@ -79,28 +79,32 @@ const ContentCard = ({
   }
 
   return (
-    <BaseCard
-      coverImage={{ src: coverImage.src, alt: altText }}
-      title={{ text: titleText }}
-      infoText={getStatus(status, createdAt, updatedAt, publishedAt)}
-      contentUpperSection={<ContentCardBadge type={type} status={status} localizations={localizedKeys} />}
-      actionButton={{
-        text: 'Редагувати',
-        href: editHref,
-        onClick
-      }}
-      contentBottomSection={
-        <DeleteCardModal open={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} onDelete={handleDelete} />
-      }
-      renderMenu={(anchorEl, handleClose, direction) => (
-        <BaseCardMenu
-          anchorEl={anchorEl}
-          onClose={handleClose}
-          menuItems={ContentCardMenuItems({ type, id, setDeleteModalOpen })}
-          menuDirection={direction}
-        />
-      )}
-    />
+    <>
+      <BaseCard
+        coverImage={{
+          src: coverImage.src,
+          alt: { uk: coverImage.alt.uk, en: coverImage.alt.en }
+        }}
+        altText={altText}
+        titleText={titleText}
+        infoText={getStatus(status, createdAt, updatedAt, publishedAt)}
+        badge={<ContentCardBadge type={type} status={status} localizations={localizedKeys} />}
+        actionButton={{
+          text: 'Редагувати',
+          href: editHref,
+          onClick
+        }}
+        renderMenu={(anchorEl, handleClose, direction) => (
+          <BaseCardMenu
+            anchorEl={anchorEl}
+            onClose={handleClose}
+            menuItems={ContentCardMenuItems({ type, id, setDeleteModalOpen })}
+            menuDirection={direction}
+          />
+        )}
+      />
+      <DeleteCardModal open={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} onDelete={handleDelete} />
+    </>
   );
 };
 
