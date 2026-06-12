@@ -53,9 +53,13 @@ export const CustomFormattingField = ({ value, onChange, label = 'Текст', s
   });
 
   useEffect(() => {
-    if (editor && value) {
-      editor.commands.setContent(value, { emitUpdate: false });
-    }
+    if (!editor || !value) return;
+    const currentContent = editor.getJSON();
+    const newContent = value;
+
+    const isNotEqual = JSON.stringify(currentContent) !== JSON.stringify(newContent);
+    
+    if (isNotEqual)  editor.commands.setContent(value, { emitUpdate: false });
   }, [value, editor]);
 
   const isActive = Boolean(isFocused || (editor && !editor.isEmpty));
