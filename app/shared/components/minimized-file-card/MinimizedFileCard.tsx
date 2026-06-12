@@ -1,12 +1,12 @@
 'use client';
 import { Box, IconButton, Paper, Stack, Typography } from '@mui/material';
+import { EllipsisVertical } from 'lucide-react';
 import Image from 'next/image';
-import { MouseEvent, useEffect,useState } from 'react';
+import { MouseEvent, useEffect, useState } from 'react';
 
 import DropdownMenu from '../dropdown-menu/DropdownMenu';
 import { FileMenuActions } from '../dropdown-menu/FileMenuActions';
 import LinkIcon from '~/public/icons/link.svg';
-import MenuIcon from '~/public/icons/menu.svg';
 import StarIcon from '~/public/icons/star-1.svg';
 import { styles } from '~/shared/components/minimized-file-card/MinimizedFileCard.styles';
 import { useUpdateAssetMutation } from '~/types/graphql/generated/graphql';
@@ -124,7 +124,7 @@ const MinimizedFileCard = ({
           )}
           {linked && (
             <Box aria-label="File is linked to other pages" sx={styles.linkIconWrapper}>
-              <LinkIcon width={ICON_SIZE} height={ICON_SIZE} aria-hidden/>
+              <LinkIcon width={ICON_SIZE} height={ICON_SIZE} aria-hidden />
             </Box>
           )}
         </Stack>
@@ -136,15 +136,12 @@ const MinimizedFileCard = ({
         </Typography>
 
         <IconButton
-          sx={[
-            styles.menuButton, 
-            isMenuOpen && styles.menuButtonActive
-          ]}
+          sx={[styles.menuButton, isMenuOpen && styles.menuButtonActive]}
           size="small"
           aria-label="Open file menu"
           onClick={handleMenuClick}
         >
-          <MenuIcon width={ICON_SIZE} height={ICON_SIZE} aria-hidden />
+          <EllipsisVertical size={ICON_SIZE} />
         </IconButton>
       </Stack>
 

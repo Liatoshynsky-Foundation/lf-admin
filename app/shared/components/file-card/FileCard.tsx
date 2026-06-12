@@ -1,5 +1,6 @@
 'use client';
 import { Box, IconButton, Paper, Stack, Typography } from '@mui/material';
+import { EllipsisVertical } from 'lucide-react';
 import Image from 'next/image';
 import { MouseEvent, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -121,7 +122,7 @@ const FileCard = ({ fileType, fileData, onClick, onAction }: FileCardProps) => {
           aria-label="Open file menu"
           onClick={handleMenuClick}
         >
-          <Image src="/icons/menu.svg" width={ICON_SIZE} height={ICON_SIZE} alt="Menu icon" aria-hidden />
+          <EllipsisVertical size={ICON_SIZE} />
         </IconButton>
       </Stack>
 
