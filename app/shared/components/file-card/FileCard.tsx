@@ -1,6 +1,6 @@
 'use client';
-'use client';
-import { Box, IconButton, Paper, Stack, Typography } from '@mui/material';
+
+import { Box, Stack, Typography } from '@mui/material';
 import Image from 'next/image';
 import { MouseEvent, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -79,6 +79,32 @@ const FileCard = ({ fileType, fileData, onClick, onAction }: FileCardProps) => {
       )}
     </Box>
   );
+
+  const title = (
+    <Stack
+      direction="row"
+      alignItems="center"
+      gap="8px"
+      sx={{ height: '100%', width: '100%', minWidth: 0, flexGrow: 1 }}
+    >
+      <Image
+        src={`/icons/${fileTypeIcon}.svg`}
+        width={ICON_SIZE}
+        height={ICON_SIZE}
+        alt={`${fileType} icon`}
+        style={{ width: ICON_SIZE, height: ICON_SIZE, flexShrink: 0 }}
+      />
+      <Typography variant="subtitle1" sx={styles.fileTitle}>
+        {name}
+      </Typography>
+    </Stack>
+  );
+
+  const info = (
+    <Stack sx={{ ...styles.metadataSection, width: '100%' }}>
+      <Typography variant="caption" sx={styles.fileDate}>
+        {dateAdded}
+      </Typography>
 
       <Stack direction="row" gap="8px" alignItems="center">
         {isStarred && (
