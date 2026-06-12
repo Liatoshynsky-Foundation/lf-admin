@@ -8,7 +8,7 @@ interface ContentCardMenuProps {
 const PageCardMenuItems = ({editSeoHref }: ContentCardMenuProps) => {
   return [
     {
-      text: 'SEO налаштування',
+      text: { name: 'SEO налаштування' },
       href: editSeoHref
     }
   ];

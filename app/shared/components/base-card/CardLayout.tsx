@@ -3,30 +3,33 @@ import { Box, Card, CardContent, IconButton } from '@mui/material';
 import { EllipsisVertical } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+import BaseCardMenu from './BaseCardMenu';
 import styles from './CardLayout.styles';
+
+interface MenuItem {
+  text: { name: string; icon?: React.ReactNode };
+  href?: string;
+  onClick?: () => void;
+}
 
 interface CardLayoutProps {
   coverImage: React.ReactNode;
   title: React.ReactNode;
   info: React.ReactNode;
+  items: MenuItem[];
   contentUpper?: React.ReactNode;
   contentBottom?: React.ReactNode;
   spaceBetweenContent?: number;
   interactive?: boolean;
-  renderMenu: (
-    anchorEl: HTMLElement | null,
-    handleClose: () => void,
-    oppositeDirection: 'left' | 'right'
-  ) => React.ReactNode;
 }
 
 const CardLayout = ({
   coverImage,
   title,
   info,
+  items,
   contentBottom,
   contentUpper,
-  renderMenu,
   interactive = false,
   spaceBetweenContent = 200
 }: CardLayoutProps) => {
@@ -80,7 +83,13 @@ const CardLayout = ({
               <IconButton data-testid="menu-button" onClick={handleMenuClick}>
                 <EllipsisVertical size={20} />
               </IconButton>
-              {renderMenu(anchorEl, handleMenuClose, oppositeDirection)}
+              <BaseCardMenu
+                key="base-card-menu"
+                anchorEl={anchorEl}
+                onClose={handleMenuClose}
+                menuItems={items}
+                menuDirection={oppositeDirection}
+              />
             </Box>
           </Box>
           {info}

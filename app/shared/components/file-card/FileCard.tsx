@@ -6,9 +6,8 @@ import { MouseEvent, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import CardLayout from '../base-card/CardLayout';
-import DropdownMenu from '../dropdown-menu/DropdownMenu';
-import { FileMenuActions } from '../dropdown-menu/FileMenuActions';
 import { styles } from './FileCard.styles';
+import FileCardMenuItems from './FileCardMenuItems';
 import TooltipCustom from '~/ds-components/tooltip/Tooltip';
 import { formatUsageCount } from '~/lib/utils/formatUsageCount';
 import { useUpdateAssetMutation } from '~/types/graphql/generated/graphql';
@@ -108,6 +107,16 @@ const FileCard = ({ fileType, fileData, onClick, onAction }: FileCardProps) => {
     </Stack>
   );
 
+  const items = FileCardMenuItems({
+    isStarred,
+    isStarLoading: isUpdatingStar,
+    onOpenDetails: () => onClick?.(),
+    onRename: () => onAction?.('rename', id),
+    onToggleStar: handleToggleStar,
+    onDownload: () => onAction?.('download', id),
+    onDelete: () => onAction?.('delete', id)
+  });
+
   return (
     <Box onClick={onClick}>
       <CardLayout
@@ -116,39 +125,7 @@ const FileCard = ({ fileType, fileData, onClick, onAction }: FileCardProps) => {
         info={info}
         spaceBetweenContent={400}
         interactive={true}
-        renderMenu={(anchorEl, handleClose, oppositeDirection) => (
-          <DropdownMenu
-            disableScrollLock
-            transitionDuration={0}
-            disableAutoFocus
-            disableEnforceFocus
-            disableRestoreFocus
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleClose}
-            onClick={(e) => e.stopPropagation()}
-            anchorOrigin={{
-              vertical: 'top',
-              horizontal: oppositeDirection === 'right' ? 'right' : 'left'
-            }}
-            transformOrigin={{
-              vertical: 'top',
-              horizontal: oppositeDirection === 'right' ? 'left' : 'right'
-            }}
-            menuList={
-              <FileMenuActions
-                isStarred={isStarred}
-                onCloseMenu={handleClose}
-                isStarLoading={isUpdatingStar}
-                onOpenDetails={() => onClick?.()}
-                onRename={() => onAction?.('rename', id)}
-                onDelete={() => onAction?.('delete', id)}
-                onDownload={() => onAction?.('download', id)}
-                onToggleStar={handleToggleStar}
-              />
-            }
-          />
-        )}
+        items={items}
       />
     </Box>
   );

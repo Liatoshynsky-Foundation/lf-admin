@@ -1,7 +1,6 @@
 import { Typography } from '@mui/material';
 import Link from 'next/link';
 
-import BaseCardMenu from '../base-card/BaseCardMenu';
 import CardLayout from '../base-card/CardLayout';
 import { infoText } from '../base-card/CardLayout.styles';
 import ImageWithFallback from '../base-card/ImageWithFallback';
@@ -50,20 +49,15 @@ const PageCard = ({ coverImage, title, updatedAt, editHref, editSeoHref, onClick
     </Button>
   );
 
+  const items = PageCardMenuItems({ editSeoHref });
+
   return (
     <CardLayout
       coverImage={coverImageNode}
       title={titleNode}
       info={infoNode}
       contentBottom={actionButtonNode}
-      renderMenu={(anchorEl, handleClose, direction) => (
-        <BaseCardMenu
-          anchorEl={anchorEl}
-          onClose={handleClose}
-          menuItems={PageCardMenuItems({ editSeoHref })}
-          menuDirection={direction}
-        />
-      )}
+      items={items}
     />
   );
 };

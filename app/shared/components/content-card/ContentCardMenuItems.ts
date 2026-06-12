@@ -12,11 +12,11 @@ const ContentCardMenuItems = ({ id, type, setDeleteModalOpen }: ContentCardMenuP
 
   return [
     {
-      text: 'SEO налаштування',
+      text: { name: 'SEO налаштування' },
       href: seoHref
     },
     {
-      text: 'Видалити',
+      text: { name: 'Видалити' },
       onClick: () => setDeleteModalOpen(true)
     }
   ];

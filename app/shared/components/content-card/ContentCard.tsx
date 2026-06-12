@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-import BaseCardMenu from '../base-card/BaseCardMenu';
 import CardLayout from '../base-card/CardLayout';
 import { infoText } from '../base-card/CardLayout.styles';
 import ImageWithFallback from '../base-card/ImageWithFallback';
@@ -112,6 +111,8 @@ const ContentCard = ({
     </Button>
   );
 
+  const items = ContentCardMenuItems({ id, type, setDeleteModalOpen });
+
   return (
     <>
       <CardLayout
@@ -120,14 +121,7 @@ const ContentCard = ({
         contentUpper={badgeNode}
         info={infoNode}
         contentBottom={actionButtonNode}
-        renderMenu={(anchorEl, handleClose, direction) => (
-          <BaseCardMenu
-            anchorEl={anchorEl}
-            onClose={handleClose}
-            menuItems={ContentCardMenuItems({ type, id, setDeleteModalOpen })}
-            menuDirection={direction}
-          />
-        )}
+        items={items}
       />
 
       <DeleteCardModal open={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} onDelete={handleDelete} />
