@@ -81,13 +81,7 @@ const CardLayout = ({
               <IconButton data-testid="menu-button" onClick={handleMenuClick}>
                 <EllipsisVertical size={20} />
               </IconButton>
-              <CardMenu
-                key="base-card-menu"
-                anchorEl={anchorEl}
-                onClose={handleMenuClose}
-                menuItems={items}
-                menuDirection={menuDirection}
-              />
+              <CardMenu anchorEl={anchorEl} onClose={handleMenuClose} menuItems={items} menuDirection={menuDirection} />
             </Box>
           </Box>
           {info}

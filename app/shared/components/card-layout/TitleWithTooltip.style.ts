@@ -1,6 +1,6 @@
 import { SxProps, Theme } from '@mui/material';
 
-const styles: Record<string, any> = {
+const styles = {
   title: (lineClamp: number = 2, fontWeight: number = 700): SxProps<Theme> => ({
     fontWeight: fontWeight,
     color: 'text.primary',

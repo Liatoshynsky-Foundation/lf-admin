@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { MouseEvent, useState } from 'react';
 import toast from 'react-hot-toast';
 
-import CardLayout from '../cards-layout/CardLayout';
+import CardLayout from '../card-layout/CardLayout';
 import { styles } from './FileCard.styles';
 import FileCardMenuItems from './FileCardMenuItems';
 import TooltipCustom from '~/ds-components/tooltip/Tooltip';
@@ -68,7 +68,7 @@ const FileCard = ({ fileType, fileData, onClick, onAction }: FileCardProps) => {
 
   const fileTypeIcon = FILE_TYPES[fileType] || FILE_TYPES.image;
 
-  const coverImage = (
+  const imageNode = (
     <Box sx={styles.imageSection}>
       {fileType === 'image' && imageSrc ? (
         <Image src={imageSrc} alt={name} fill style={{ objectFit: 'cover' }} sizes="301px" />
@@ -80,7 +80,7 @@ const FileCard = ({ fileType, fileData, onClick, onAction }: FileCardProps) => {
     </Box>
   );
 
-  const title = (
+  const titleNode = (
     <Stack
       direction="row"
       alignItems="center"
@@ -100,7 +100,7 @@ const FileCard = ({ fileType, fileData, onClick, onAction }: FileCardProps) => {
     </Stack>
   );
 
-  const info = (
+  const infoNode = (
     <Stack sx={{ ...styles.metadataSection, width: '100%' }}>
       <Typography variant="caption" sx={styles.fileDate}>
         {dateAdded}
@@ -133,7 +133,7 @@ const FileCard = ({ fileType, fileData, onClick, onAction }: FileCardProps) => {
     </Stack>
   );
 
-  const items = FileCardMenuItems({
+  const itemsNode = FileCardMenuItems({
     isStarred,
     isStarLoading: isUpdatingStar,
     onOpenDetails: () => onClick?.(),
@@ -146,12 +146,12 @@ const FileCard = ({ fileType, fileData, onClick, onAction }: FileCardProps) => {
   return (
     <Box onClick={onClick}>
       <CardLayout
-        coverImage={coverImage}
-        title={title}
-        info={info}
+        coverImage={imageNode}
+        title={titleNode}
+        info={infoNode}
         spaceBetweenContent={400}
         interactive={true}
-        items={items}
+        items={itemsNode}
       />
     </Box>
   );

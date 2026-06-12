@@ -4,10 +4,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-import CardLayout from '../cards-layout/CardLayout';
-import { infoText } from '../cards-layout/CardLayout.styles';
-import ImageWithFallback from '../cards-layout/ImageWithFallback';
-import TitleWithTooltip from '../cards-layout/TitleWithTooltip';
+import CardLayout from '../card-layout/CardLayout';
+import { infoText } from '../card-layout/CardLayout.styles';
+import ImageWithFallback from '../card-layout/ImageWithFallback';
+import TitleWithTooltip from '../card-layout/TitleWithTooltip';
 import DeleteCardModal from '../delete-card-modal/DeleteCardModal';
 import Button from '../design-system/button/Button';
 import ContentCardBadge from './ContentCardBadge';
@@ -72,9 +72,14 @@ const ContentCard = ({
   async function handleDelete() {
     try {
       let result;
-      if (type === 'news') result = await deleteNews({ id });
-      else if (type === 'events') result = await deleteEvent({ id });
-      else if (type === 'media') result = await deleteMediaMention(id);
+
+      if (type === 'news') {
+        result = await deleteNews({ id });
+      } else if (type === 'events') {
+        result = await deleteEvent({ id });
+      } else if (type === 'media') {
+        result = await deleteMediaMention(id);
+      }
 
       if (result?.data) {
         setDeleteModalOpen(false);
@@ -111,7 +116,7 @@ const ContentCard = ({
     </Button>
   );
 
-  const items = ContentCardMenuItems({ id, type, setDeleteModalOpen });
+  const itemsNode = ContentCardMenuItems({ id, type, setDeleteModalOpen });
 
   return (
     <>
@@ -121,7 +126,7 @@ const ContentCard = ({
         contentUpper={badgeNode}
         info={infoNode}
         contentBottom={actionButtonNode}
-        items={items}
+        items={itemsNode}
       />
 
       <DeleteCardModal open={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} onDelete={handleDelete} />

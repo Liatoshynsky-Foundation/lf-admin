@@ -1,9 +1,9 @@
-import { alpha } from '@mui/material';
+import { alpha, SxProps, Theme } from '@mui/material';
 
 import { mainHexPalette as colors } from '~/shared/theme/colors';
 
-const styles: Record<string, any> = {
-  card: (interactive: boolean) => ({
+const styles = {
+  card: (interactive: boolean): SxProps<Theme> => ({
     display: 'flex',
     flexDirection: 'column',
     minHeight: '266px',
@@ -27,7 +27,7 @@ const styles: Record<string, any> = {
   imageContainer: {
     width: '100%',
     overflow: 'hidden',
-  },
+  } as SxProps<Theme>,
 
   cardContent: {
     display: 'flex',
@@ -36,7 +36,7 @@ const styles: Record<string, any> = {
     gap: '16px',
     overflow: 'hidden',
     padding: '16px !important' ,
-  },
+  } as SxProps<Theme>,
 
   fullInfo: {
     display: 'flex',
@@ -45,7 +45,7 @@ const styles: Record<string, any> = {
     gap: '8px',
     justifyContent: 'space-between',
     overflow: 'hidden'
-  },
+  } as SxProps<Theme>,
 
   mainInfo: {
     display: 'flex',
@@ -53,17 +53,17 @@ const styles: Record<string, any> = {
     justifyContent: 'space-between',
     gap: '4px',
     overflow: 'hidden'
-  },
+  } as SxProps<Theme>,
 
   titleContainer: {
     display: 'flex',
     flexDirection: 'column',
     gap: '4px',
     width: '100%'
-  },
+  } as SxProps<Theme>
 };
 
-export const infoText = {
+export const infoText: SxProps<Theme> = {
   color: 'blue.600',
   fontStyle: 'italic',
   display: 'block',

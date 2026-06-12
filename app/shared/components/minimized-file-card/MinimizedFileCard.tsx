@@ -4,7 +4,7 @@ import { EllipsisVertical } from 'lucide-react';
 import Image from 'next/image';
 import { MouseEvent, useEffect, useState } from 'react';
 
-import CardMenu from '../cards-layout/CardMenu';
+import CardMenu from '../card-layout/CardMenu';
 import FileCardMenuItems from '../file-card/FileCardMenuItems';
 import LinkIcon from '~/public/icons/link.svg';
 import StarIcon from '~/public/icons/star-1.svg';

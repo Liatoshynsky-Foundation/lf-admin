@@ -7,10 +7,10 @@ jest.mock('~/lib/utils/formatDate', () => ({
   formatDate: (date: string) => `formatted-${date}`
 }));
 
-jest.mock('./PageCardMenu', () => {
+jest.mock('~/shared/components/card-layout/CardMenu', () => {
   return {
     __esModule: true,
-    default: React.forwardRef<HTMLDivElement, any>(function PageCardMenuMock(props, ref) {
+    default: React.forwardRef<HTMLDivElement, any>(function CardMenuMock(props, ref) {
       return <div ref={ref} data-testid="page-card-menu" data-open={Boolean(props.anchorEl)} />;
     })
   };
@@ -18,8 +18,6 @@ jest.mock('./PageCardMenu', () => {
 
 describe('PageCard Component', () => {
   const mockProps = {
-    id: '1',
-    slug: 'test-slug',
     coverImage: {
       src: '/image.png',
       alt: {
@@ -31,7 +29,6 @@ describe('PageCard Component', () => {
       uk: 'Test page title',
       en: 'Test page title EN'
     },
-    status: 'draft',
     updatedAt: '2025-02-01',
     editHref: '/edit-page',
     editSeoHref: '/edit-page-seo',
