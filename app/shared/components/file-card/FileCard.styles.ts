@@ -34,6 +34,7 @@ export const styles = {
     display: '-webkit-box',
     WebkitLineClamp: 1,
     WebkitBoxOrient: 'vertical',
+    wordBreak: 'break-all',
   },
 
   fileDate: {
