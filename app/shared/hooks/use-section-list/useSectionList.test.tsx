@@ -4,13 +4,8 @@ import { act } from 'react';
 import { emptyDoc } from '../use-points-list/usePointsList';
 import { useSectionList } from './useSectionList';
 import { ensureIds } from '~/lib/utils/ensureIds';
-import { setFieldMock } from '~/shared/components/privacy-policy/__mocks__/setup-mocks';
+import { mockSetField } from '~/shared/components/privacy-policy/__mocks__/setup-mocks';
 
-
-jest.mock('~/store', () => ({
-  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock }) => unknown) =>
-    selector({ locale: 'uk', setField: setFieldMock })
-}));
 
 const inputSectionsList = [
   { id: '1', subtitle: { uk: emptyDoc, en: emptyDoc }, list: [{ id: 'point-1', uk: emptyDoc, en: emptyDoc }] },
@@ -26,7 +21,7 @@ const sectionIdMocked = '1';
 const defaultMockedProps = {
   blockId,
   sectionsList: inputSectionsList,
-  setField: setFieldMock,
+  setField: mockSetField,
   currentLocale,
   pageId
 };
@@ -38,6 +33,9 @@ const sections = inputSectionsList.map((sl) => ({
 }));
 
 describe('useSectionList', () => {
+  beforeEach(() => {
+    jest.clearAllMocks(); 
+  });
   it('should initalize sections with correct structure', () => {
     const { result } = renderHook(() => useSectionList(defaultMockedProps));
 
@@ -66,7 +64,7 @@ describe('useSectionList', () => {
       result.current.updateListPoint(sectionIdMocked, updatedPoint);
     });
 
-    expect(setFieldMock).toHaveBeenCalledWith(pageId, blockId, 'sections', expectedNewSections);
+    expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'sections', expectedNewSections);
   });
 
   it('should call setField with with correct sectionId when addListPoint is called', () => {
@@ -87,7 +85,7 @@ describe('useSectionList', () => {
       result.current.addListPoint(sectionIdMocked);
     });
 
-    expect(setFieldMock).toHaveBeenCalledWith(pageId, blockId, 'sections',
+    expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'sections',
       expectedNewSections
     );
   });
@@ -109,6 +107,6 @@ describe('useSectionList', () => {
       result.current.removeListPoint(sectionIdMocked, pointDeleteId);
     });
 
-    expect(setFieldMock).toHaveBeenCalledWith(pageId, blockId, 'sections', expectedNewSections);
+    expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'sections', expectedNewSections);
   });
 });

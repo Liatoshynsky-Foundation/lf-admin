@@ -27,7 +27,7 @@ export const DataWeCollect = () => {
   const rawSections = block?.sections || [];
   const sectionsList: DataWeCollectItemWithId[] = ensureIds(rawSections);
 
-  const { sections, addListPoint, removeListPoint, updateListPoint } = useSectionList({ blockId, pageId, sectionsList, currentLocale });
+  const { sections, addListPoint, removeListPoint, updateListPoint, updateSectionSubtitle } = useSectionList({ blockId, pageId, sectionsList, currentLocale, setField });
 
   if (!block) return <EditBlockSkeleton />;
 
@@ -45,14 +45,6 @@ export const DataWeCollect = () => {
     });
   };
 
-  const handleChangeSectionSubtitle = (sectionId: string, value: JSONContent) => {
-    const updatedSections = sectionsList.map((section) =>
-      section.id === sectionId
-        ? { ...section, subtitle: { ...section.subtitle, [currentLocale]: value } }
-        : section
-    );
-    setField(pageId, blockId, 'sections', updatedSections);
-  };
 
   return (
     <CollapsibleBlock title="Які дані ми збираємо та чому">
@@ -69,7 +61,7 @@ export const DataWeCollect = () => {
               fieldType="formatting"
               title={`Список ${index + 1}`}
               value={section.title}
-              onChange={(value) => handleChangeSectionSubtitle(section.id, value)}
+              onChange={(value) => updateSectionSubtitle(section.id, value)}
             />
             <ConfigurableList<LocalizedJSON & {
               id: string;

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import { mockAddPoint, mockRemovePoint, mockUpdatePoint, setFieldMock } from '../../__mocks__/setup-mocks';
+import { mockAddPoint, mockRemovePoint, mockSetField,mockUpdatePoint } from '../../__mocks__/setup-mocks';
 import { BlockWithDescriptionListNote, EditDescriptionListNoteBlock } from './EditDescriptionListNoteBlock';
 import { createDocNode } from '~/__mocks__/utils';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
@@ -12,10 +12,6 @@ jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock'
 jest.mock('~/shared/components/design-system/text-field/TextField');
 
 jest.mock('~/shared/components/privacy-policy/components/points-list/PointsList');
-jest.mock('~/store', () => ({
-  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock }) => unknown) =>
-    selector({ locale: 'uk', setField: setFieldMock })
-}));
 jest.mock('~/shared/hooks/use-points-list/usePointsList', () => ({
   usePointsList: jest.fn()
 }));
@@ -93,7 +89,7 @@ describe('EditDescriptionListNoteBlock', () => {
     (_scenario, triggerId, storeKey, expectedPayload) => {
       runSimulation(triggerId);
 
-      expect(setFieldMock).toHaveBeenCalledWith(
+      expect(mockSetField).toHaveBeenCalledWith(
         PAGE_IDS.PRIVACY_POLICY,
         BLOCK_IDS.COOKIES,
         storeKey,

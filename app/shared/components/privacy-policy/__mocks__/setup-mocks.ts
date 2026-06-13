@@ -1,19 +1,28 @@
 
 export const usePageBlockMock = jest.fn();
 export const usePointsListMock = jest.fn();
-export const setFieldMock = jest.fn();
+export const mockSetField = jest.fn();
 
 export const mockAddPoint = jest.fn();
 export const mockRemovePoint = jest.fn();
 export const mockUpdatePoint = jest.fn();
+
+export const mockStoreState = {
+  locale: 'uk',
+  setField: mockSetField
+};
+
+export const setMockLocale = (locale: 'uk' | 'en') => {
+  mockStoreState.locale = locale;
+};
 
 jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: () => usePageBlockMock()
 }));
 
 jest.mock('~/store', () => ({
-  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock }) => unknown) =>
-    selector({ locale: 'uk', setField: setFieldMock })
+  useStore: (selector: (state: typeof mockStoreState) => unknown) => 
+    selector(mockStoreState)
 }));
 
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');

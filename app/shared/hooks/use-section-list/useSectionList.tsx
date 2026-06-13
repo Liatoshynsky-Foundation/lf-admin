@@ -1,7 +1,6 @@
 import { JSONContent } from '@tiptap/react';
 
 import { ensureIds } from '~/lib/utils/ensureIds';
-import { useStore } from '~/store';
 import { LocalizedJSON } from '~/types/common';
 import { BlocksMap } from '~/types/store/pages';
 
@@ -16,14 +15,14 @@ interface UseSectionListProps<K extends BlockIdsWithSections> {
     subtitle: LocalizedJSON;
     list: LocalizedJSON[];
   }[],
+  setField: <F extends keyof BlocksMap[K]>(pageId: string, blockId: K, field: F, value: BlocksMap[K][F]) => void,
   pageId: string,
   currentLocale: 'uk' | 'en',
 }
 
 
-export const useSectionList = <K extends BlockIdsWithSections>({ pageId, blockId, sectionsList, currentLocale }: UseSectionListProps<K>) => {
+export const useSectionList = <K extends BlockIdsWithSections>({ pageId, blockId, setField, sectionsList, currentLocale }: UseSectionListProps<K>) => {
   const emptyDoc: JSONContent = { type: 'doc', content: [] };
-  const setField = useStore((state) => state.setField);
 
   const sections = sectionsList.map((item) => ({
     id: item.id,
@@ -84,11 +83,21 @@ export const useSectionList = <K extends BlockIdsWithSections>({ pageId, blockId
     handleUpdateSectionList(sectionId, newPoints);
   };
 
+  const handleChangeSectionSubtitle = (sectionId: string, value: JSONContent) => {
+    const updatedSections = sectionsList.map((section) =>
+      section.id === sectionId
+        ? { ...section, subtitle: { ...section.subtitle, [currentLocale]: value } }
+        : section
+    );
+    setField(pageId, blockId, 'sections', updatedSections);
+  };
+
   return {
     sections,
     addListPoint: handleAddSectionListPoint,
     removeListPoint: handleDeleteSectionListPoint,
-    updateListPoint: handleChangeSectionListPoint
+    updateListPoint: handleChangeSectionListPoint,
+    updateSectionSubtitle: handleChangeSectionSubtitle
   };
 };
 
