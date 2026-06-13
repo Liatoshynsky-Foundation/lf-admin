@@ -72,7 +72,7 @@ export const DataWeCollect = () => {
                   <CustomTextField
                     fieldType="formatting"
                     label="Текст пункту"
-                    value={item[currentLocale]}
+                    value={item?.[currentLocale] ?? { type: 'doc', content: [] }}
                     onChange={(value) => onChange({ ...item, [currentLocale]: value })}
                   />
                 </Box>
