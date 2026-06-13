@@ -52,6 +52,7 @@ interface CommonTestProps {
   checkList?: boolean;
   checkParagraph?: boolean;
   usePointsListMock?: jest.Mock;
+  useSectionListMock?: jest.Mock;
 }
 
 export const runCommonBlockTests = ({
@@ -62,7 +63,8 @@ export const runCommonBlockTests = ({
   checkTitle,
   checkList,
   checkParagraph,
-  usePointsListMock
+  usePointsListMock,
+  useSectionListMock
 }: CommonTestProps) => {
 
   beforeEach(() => {
@@ -73,6 +75,19 @@ export const runCommonBlockTests = ({
         removePoint: mockRemovePoint,
         updatePoint: mockUpdatePoint,
         points: [{ id: '1', text: 'Текст пункту' }]
+      });
+    }
+    if (useSectionListMock) {
+      useSectionListMock.mockReturnValue({
+        addListPoint: jest.fn(),
+        removeListPoint: jest.fn(),
+        updateListPoint: jest.fn(),
+        updateSectionSubtitle: jest.fn(),
+        sections: [{ 
+          id: '1', 
+          title: createDocNode('Mock Title'), 
+          points: [{ id: 'p1', uk: createDocNode('pt'), en: createDocNode('pt') }] 
+        }]
       });
     }
     usePageBlockMock.mockReturnValue({ block: mockBlock });
@@ -130,6 +145,15 @@ export const runCommonBlockTests = ({
 
   if (checkList && usePointsListMock) {
     it('should render list of points with deep initial JSON content', () => {
+      runSimulation();
+
+      const elements = screen.getAllByTestId(`textfield-json-${LABELS.list}`);
+      expect(elements.length).toBeGreaterThan(0);
+    });
+  }
+
+  if (checkList && useSectionListMock) {
+    it('should render section list items with deep initial JSON content', () => {
       runSimulation();
 
       const elements = screen.getAllByTestId(`textfield-json-${LABELS.list}`);

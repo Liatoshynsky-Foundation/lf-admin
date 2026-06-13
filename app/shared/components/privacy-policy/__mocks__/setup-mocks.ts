@@ -1,5 +1,6 @@
 
 export const usePageBlockMock = jest.fn();
+export const useSectionListMock = jest.fn();
 export const usePointsListMock = jest.fn();
 export const mockSetField = jest.fn();
 

@@ -1,5 +1,5 @@
 
-import { usePointsListMock } from '../__mocks__/setup-mocks';
+import { useSectionListMock } from '../__mocks__/setup-mocks';
 import { createStandardMockBlock, runCommonBlockTests } from '../test-utils/block-test-factory';
 import { DataWeCollect } from './DataWeCollect';
 import { createDocNode } from '~/__mocks__/utils';
@@ -7,7 +7,9 @@ import { DataWeCollectBlock } from '~/types/store/pages/privacy-policy';
 
 
 jest.mock('~/components/configurable-list/ConfigurableList');
-
+jest.mock('~/shared/hooks/use-section-list/useSectionList', () => ({
+  useSectionList: useSectionListMock
+}));
 const { block: standardMockBlock } = createStandardMockBlock();
 
 const mockNoteJson = createDocNode('Initial note');
@@ -27,7 +29,7 @@ describe('DataWeCollect', () => {
     checkDescription: true,
     checkNote: true,
     checkList: true,
-    usePointsListMock
+    useSectionListMock
   });
 });
 
