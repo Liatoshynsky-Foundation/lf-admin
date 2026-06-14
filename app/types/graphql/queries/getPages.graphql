@@ -1,0 +1,21 @@
+query GetPages($category: String) {
+  pages(category: $category) {
+    id
+    slug
+    title {
+      uk
+      en
+    }
+    status
+    pageType
+    category
+    coverImage {
+      src
+      alt {
+        uk
+        en 
+      }
+    }
+    updatedAt
+  }
+}

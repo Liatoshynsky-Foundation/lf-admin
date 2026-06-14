@@ -2,9 +2,10 @@ import { GraphQLError } from 'graphql';
 
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
-import { PageStatus } from '~/types/enums/common.enums';
+import { PageCategory, PageStatus } from '~/types/enums/common.enums';
 
 type PageBlocksArgs = { slug: string; status?: PageStatus };
+type PagesArgs = { category: PageCategory };
 
 export const Query = {
   pageBlocks: async (_: unknown, { slug, status = PageStatus.Published }: PageBlocksArgs, context: GraphQLContext) => {
@@ -22,5 +23,20 @@ export const Query = {
       throw new GraphQLError('Page not found', { extensions: { code: 'NOT_FOUND' } });
     }
     return page;
+  },
+
+  pages: async (_: unknown, { category }: PagesArgs, context: GraphQLContext) => {
+    if (!context.admin) {
+      throw new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
+        extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
+      });
+    }
+    const repo = context.requestContainer.cradle.pageRepository;
+    const pages = await repo.findPages(category);
+
+    if (!pages || pages.length === 0) {
+      throw new GraphQLError('Page not found', { extensions: { code: 'NOT_FOUND' } });
+    }
+    return pages;
   }
 };

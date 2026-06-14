@@ -1,5 +1,6 @@
+import { LocalizedImage } from './BaseContent';
 import { BlockData } from '~/store/types';
-import { PageStatus } from '~/types/enums/common.enums';
+import { PageCategories, PageStatus } from '~/types/enums/common.enums';
 
 export type LocalizedTitle = {
   uk: string;
@@ -12,6 +13,8 @@ export type BasePage = {
   title: LocalizedTitle;
   status: PageStatus;
   pageType: string;
+  category: PageCategories;
+  coverImage: LocalizedImage;
   blocks: Record<string, BlockData>;
   createdAt: string;
   updatedAt: string;

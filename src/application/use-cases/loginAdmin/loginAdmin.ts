@@ -10,7 +10,6 @@ export const loginAdmin = ({ adminRepository }: { adminRepository: AdminReposito
   return {
     execute: async (email: string, password: string): Promise<{ id: string; type: adminTypes }> => {
       const validatedEmail = zEmailSchema.parse(email);
-
       const admin = await adminRepository.findByEmail(validatedEmail);
       if (!admin) throw new LoginError(errors.WRONG_EMAIL);
 
