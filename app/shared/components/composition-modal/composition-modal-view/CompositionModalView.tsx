@@ -13,7 +13,7 @@ import {
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { Dayjs } from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import React, { useState } from 'react';
 
 import Alert from '../../design-system/alert/Alert';
@@ -24,7 +24,20 @@ import { styles } from './CompositionModalView.styles';
 import { AudioEntry, CompositionFileType, NoteEntry } from '~/constants/creativity';
 import { sxToArray } from '~/lib/utils/sxToArray';
 
-interface CompositionModalViewProps {
+type Entry = AudioEntry | NoteEntry;
+
+export interface CompositionModeSection extends Pick<CompositionModalViewProps, 'onTriggerUpload'> {
+  mode: 'audio' | 'notes';
+  title: string;
+  entries: Entry[];
+  suggestions: string[];
+  fileType: CompositionFileType;
+  onAdd: () => void;
+  onUpdate: (id: string, updatedData: Partial<Entry>) => void;
+  onDelete: (id: string) => void;
+}
+
+export interface CompositionModalViewProps {
   dialogTitle?: string;
   isOpen: boolean;
   isLoadingData: boolean;
@@ -36,7 +49,7 @@ interface CompositionModalViewProps {
 }
 
 export const CompositionModalView: React.FC<CompositionModalViewProps> = ({
-  dialogTitle='Нова композиція',
+  dialogTitle = 'Нова композиція',
   isOpen,
   isLoadingData,
   suggestions,
@@ -77,9 +90,11 @@ export const CompositionModalView: React.FC<CompositionModalViewProps> = ({
     onClose();
   };
 
+  const validateYear = (year: Dayjs) => year > dayjs('1900') && year < dayjs();
+
   if (isLoadingData) return null;
 
-  const sections = [
+  const sections: ReadonlyArray<CompositionModeSection> = [
     {
       mode: 'audio' as const,
       title: 'Аудіо',
@@ -106,6 +121,8 @@ export const CompositionModalView: React.FC<CompositionModalViewProps> = ({
   ];
 
   const hasNoFiles = audioEntries.length === 0 && noteEntries.length === 0;
+  const onUpload = (section: CompositionModeSection, entry: Entry) =>
+    section.onTriggerUpload(section.mode, (fileName: string) => section.onUpdate(entry.id, { fileName }));
 
   return (
     <Dialog disableScrollLock open={isOpen} sx={{ ...styles.dialog, ...sxToArray(sx) }} onClose={onClose} fullWidth>
@@ -130,6 +147,8 @@ export const CompositionModalView: React.FC<CompositionModalViewProps> = ({
                   label="Рік *"
                   views={['year']}
                   value={year}
+                  minDate={dayjs('1900')}
+                  maxDate={dayjs()}
                   onChange={(newValue: Dayjs | null) => setYear(newValue)}
                   sx={styles.datePicker}
                 />
@@ -151,11 +170,7 @@ export const CompositionModalView: React.FC<CompositionModalViewProps> = ({
                       date={'date' in entry ? entry.date : null}
                       onSelect={(val: string | null) => section.onUpdate(entry.id, { name: val })}
                       onDateChange={(val: Dayjs | null) => section.onUpdate(entry.id, { date: val })}
-                      onUpload={() =>
-                        section.onTriggerUpload(section.mode, (fileName: string) =>
-                          section.onUpdate(entry.id, { fileName })
-                        )
-                      }
+                      onUpload={() => onUpload(section, entry)}
                       onDelete={() => section.onDelete(entry.id)}
                     />
 
@@ -191,7 +206,7 @@ export const CompositionModalView: React.FC<CompositionModalViewProps> = ({
           variant="contained"
           color="tertiary"
           onClick={handleSave}
-          disabled={!title.trim() || !genre.trim() || !year || isSaving}
+          disabled={!title.trim() || !genre.trim() || !year || isSaving || !validateYear(year)}
           disableElevation
           sx={styles.saveButton}
         >

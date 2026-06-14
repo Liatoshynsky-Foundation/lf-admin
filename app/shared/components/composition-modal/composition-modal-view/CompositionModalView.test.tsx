@@ -1,8 +1,37 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import React from 'react';
 
 import { CompositionModalView } from './CompositionModalView';
+
+// --- TYPES & INTERFACES FOR MOCKS ---
+
+interface MockDatePickerProps {
+  readonly label: string;
+  readonly value: Dayjs | null;
+  readonly onChange: (val: Dayjs | null) => void;
+}
+
+interface MockActionableSuggestItemProps {
+  readonly mode: 'audio' | 'notes';
+  readonly value: string | null;
+  readonly date: Dayjs | null;
+  readonly onSelect: (val: string | null) => void;
+  readonly onDateChange: (val: Dayjs | null) => void;
+  readonly onUpload: () => void;
+  readonly onDelete: () => void;
+}
+
+interface MockFileItemProps {
+  readonly fileName: string;
+  readonly fileType: string;
+  readonly onDelete: () => void;
+}
+
+interface MockAlertProps {
+  readonly description: string;
+  readonly onClose: () => void;
+}
 
 jest.mock('@mui/x-date-pickers/LocalizationProvider', () => ({
   __esModule: true,
@@ -11,18 +40,12 @@ jest.mock('@mui/x-date-pickers/LocalizationProvider', () => ({
 
 jest.mock('@mui/x-date-pickers/DatePicker', () => ({
   __esModule: true,
-  DatePicker: ({
-    label,
-    value,
-    onChange
-  }: {
-    readonly label: string;
-    readonly value: unknown;
-    readonly onChange: (val: unknown) => void;
-  }) => (
+  DatePicker: ({ label, value, onChange }: MockDatePickerProps) => (
     <div data-testid="mock-date-picker">
       <span data-testid="date-picker-label">{label}</span>
-      <span data-testid="date-picker-value">{value ? String(value) : 'null'}</span>
+      <span data-testid="date-picker-value">
+        {value && typeof value.year === 'function' ? String(value.year()) : 'null'}
+      </span>
       <button data-testid="trigger-date-select" onClick={() => onChange(dayjs('2026-01-01'))}>
         Select 2026
       </button>
@@ -42,22 +65,14 @@ jest.mock('../label-action-row/LabelActionRow', () => ({
   )
 }));
 
-interface MockActionableSuggestItemProps {
-  readonly mode: 'audio' | 'notes';
-  readonly value: string | null;
-  readonly date: unknown;
-  readonly onSelect: (val: string | null) => void;
-  readonly onDateChange: (val: unknown) => void;
-  readonly onUpload: () => void;
-  readonly onDelete: () => void;
-}
-
 jest.mock('../actionable-suggest-item/ActionableSuggestItem', () => ({
   __esModule: true,
   default: ({ mode, value, date, onSelect, onDateChange, onUpload, onDelete }: MockActionableSuggestItemProps) => (
     <div data-testid={`suggest-item-${mode}`}>
       <span data-testid="suggest-value">{value || 'empty'}</span>
-      <span data-testid="suggest-date">{date ? String(date) : 'empty-date'}</span>
+      <span data-testid="suggest-date">
+        {date && date.isValid() ? date.format('YYYY-MM-DD') : 'empty-date'}
+      </span>
       <button data-testid="action-select-item" onClick={() => onSelect('Selected Item')}>
         Select Track
       </button>
@@ -70,22 +85,13 @@ jest.mock('../actionable-suggest-item/ActionableSuggestItem', () => ({
       <button data-testid="action-delete-item" onClick={onDelete}>
         Delete Row
       </button>
-      2016
     </div>
   )
 }));
 
 jest.mock('../file-item/FileItem', () => ({
   __esModule: true,
-  default: ({
-    fileName,
-    fileType,
-    onDelete
-  }: {
-    readonly fileName: string;
-    readonly fileType: string;
-    readonly onDelete: () => void;
-  }) => (
+  default: ({ fileName, fileType, onDelete }: MockFileItemProps) => (
     <div data-testid={`file-item-${fileType}`}>
       <span data-testid="file-name-text">{fileName}</span>
       <button data-testid="action-remove-file" onClick={onDelete}>
@@ -97,7 +103,7 @@ jest.mock('../file-item/FileItem', () => ({
 
 jest.mock('../../design-system/alert/Alert', () => ({
   __esModule: true,
-  default: ({ description, onClose }: { readonly description: string; readonly onClose: () => void }) => (
+  default: ({ description, onClose }: MockAlertProps) => (
     <div data-testid="info-alert">
       <p>{description}</p>
       <button data-testid="action-close-alert" onClick={onClose}>
@@ -116,12 +122,12 @@ describe('CompositionModalView', () => {
   let onCloseMock: jest.Mock;
   let onTriggerUploadMock: jest.Mock;
   let onSaveMock: jest.Mock;
+
   beforeAll(() => {
     if (!globalThis.crypto) {
       // @ts-expect-error Mocking partial crypto object for test environment compatibility
       globalThis.crypto = {};
     }
-
     globalThis.crypto.randomUUID = jest.fn(() => 'mocked-stable-uuid') as typeof crypto.randomUUID;
   });
 
@@ -170,13 +176,15 @@ describe('CompositionModalView', () => {
   it('should allow typing values directly inside text inputs and select year fields cleanly via targeted event firing', () => {
     renderComponent();
 
+    expect(screen.getByTestId('date-picker-value')).toHaveTextContent('null');
+
     fireEvent.change(screen.getByLabelText(/Назва твору/), { target: { value: 'Melody in F' } });
     fireEvent.change(screen.getByLabelText('Жанр *'), { target: { value: 'Classical' } });
     fireEvent.click(screen.getByTestId('trigger-date-select'));
 
     expect(screen.getByLabelText(/Назва твору/)).toHaveValue('Melody in F');
     expect(screen.getByLabelText('Жанр *')).toHaveValue('Classical');
-    expect(screen.getByTestId('date-picker-value')).toHaveTextContent('Wed, 31 Dec 2025 22:00:00 GMT');
+    expect(screen.getByTestId('date-picker-value')).toHaveTextContent('2026');
   });
 
   it('should cleanly append dynamic rows to audio and notes entry sections when add action triggers execute', () => {
@@ -200,7 +208,7 @@ describe('CompositionModalView', () => {
     fireEvent.click(within(notesContainer).getByTestId('action-date-item'));
 
     expect(within(notesContainer).getByTestId('suggest-value')).toHaveTextContent('Selected Item');
-    expect(within(notesContainer).getByTestId('suggest-date')).not.toHaveTextContent('empty-date');
+    expect(within(notesContainer).getByTestId('suggest-date')).toHaveTextContent('2026-06-14');
   });
 
   it('should successfully run file upload routines through the upload handler and render file items with targeted file names', () => {

@@ -5,7 +5,7 @@ import LabelActionRow from './LabelActionRow';
 
 jest.mock('~/lib/utils/sxToArray', () => ({
   __esModule: true,
-  sxToArray: (sx: unknown) => (Array.isArray(sx) ? sx : sx ? [sx] : [])
+  sxToArray: jest.fn(() => [])
 }));
 
 describe('LabelActionRow', () => {

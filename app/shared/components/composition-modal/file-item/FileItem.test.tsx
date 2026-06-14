@@ -20,7 +20,7 @@ jest.mock('~/constants/files', () => ({
 
 describe('FileItem', () => {
   const MOCK_FILE_NAME = 'project-specification.pdf';
-  const MOCK_FILE_TYPE: CompositionFileType = 'pdf' as CompositionFileType;
+  const MOCK_FILE_TYPE: CompositionFileType = 'pdf';
   let onDeleteMock: jest.Mock;
 
   beforeEach(() => {

@@ -23,11 +23,11 @@ import { AssetType, useCreateAssetMutation } from '~/types/graphql/generated/gra
 interface CompositionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  mode: 'create' | 'edit';
-  sx: SxProps<Theme>;
+  mode?: 'create' | 'edit';
+  sx?: SxProps<Theme>;
 }
 
-const CompositionModal: React.FC<CompositionModalProps> = ({ isOpen, onClose, mode, sx }) => {
+const CompositionModal: React.FC<CompositionModalProps> = ({ isOpen, onClose, mode = 'create', sx }) => {
   const { data, loading, refetch } = useAllAssets();
   const [createAsset] = useCreateAssetMutation();
 
@@ -150,7 +150,6 @@ const CompositionModal: React.FC<CompositionModalProps> = ({ isOpen, onClose, mo
     notes: NoteEntry[]
   ) => {
     try {
-      // TODO: Replace with actual onSave(create or update) mutation
       // eslint-disable-next-line no-console
       console.log('Saving composition:', { title, genre, year: year?.year(), audio, notes });
 
