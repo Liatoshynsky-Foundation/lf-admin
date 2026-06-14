@@ -92,7 +92,7 @@ export const CompositionModalView: React.FC<CompositionModalViewProps> = ({
   const hasNoFiles = audioEntries.length === 0 && noteEntries.length === 0;
 
   return (
-    <Dialog open={isOpen} sx={styles.dialog} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog disableScrollLock open={isOpen} sx={styles.dialog} onClose={onClose} fullWidth>
       <DialogTitle sx={styles.dialogTitle}>Нова композиція</DialogTitle>
 
       <DialogContent sx={styles.dialogContent}>
