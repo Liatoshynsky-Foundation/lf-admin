@@ -1,17 +1,14 @@
 'use client';
 
+import { SxProps } from '@mui/material';
+import { Theme } from '@mui/system';
 import { Dayjs } from 'dayjs';
 import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { CompositionModalView } from './composition-modal-view/CompositionModalView';
 import { AudioEntry, NoteEntry } from '~/constants/creativity';
-import {
-  FILES_UPLOAD_ACCEPT,
-  FILES_UPLOAD_ALLOWED_EXTENSIONS,
-  FILES_UPLOAD_ALLOWED_MIME_TYPES,
-  FILES_UPLOAD_ERROR,
-  FILES_UPLOAD_FAILED_ERROR} from '~/constants/files';
+import { FILES_UPLOAD_FAILED_ERROR } from '~/constants/files';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
 import type { MediaModalRenderers } from '~/shared/components/media-modal/MediaModal.renderers';
 import type {
@@ -23,32 +20,14 @@ import { UploadView } from '~/shared/components/media-modal/views/upload-view/Up
 import { useAllAssets } from '~/shared/hooks/use-assets/useAssets';
 import { AssetType, useCreateAssetMutation } from '~/types/graphql/generated/graphql';
 
-const supportedUploadMimeTypes = new Set<string>(FILES_UPLOAD_ALLOWED_MIME_TYPES);
-const supportedUploadExtensions = new Set<string>(FILES_UPLOAD_ALLOWED_EXTENSIONS);
-
-const isFilesSupportedFile = (file: File): boolean => {
-  const mimeType = file.type.toLowerCase();
-  if (mimeType) return supportedUploadMimeTypes.has(mimeType);
-  const extension = file.name.split('.').pop()?.toLowerCase();
-  return Boolean(extension && supportedUploadExtensions.has(extension));
-};
-
-const renderFilesUpload: MediaModalRenderers['upload'] = (props) => (
-  <UploadView
-    {...props}
-    accept={FILES_UPLOAD_ACCEPT}
-    invalidFileError={FILES_UPLOAD_ERROR}
-    isAllowedFile={isFilesSupportedFile}
-    ariaLabel="Upload file"
-  />
-);
-
 interface CompositionModalProps {
   isOpen: boolean;
   onClose: () => void;
+  mode: 'create' | 'edit';
+  sx: SxProps<Theme>;
 }
 
-const CompositionModal: React.FC<CompositionModalProps> = ({ isOpen, onClose }) => {
+const CompositionModal: React.FC<CompositionModalProps> = ({ isOpen, onClose, mode, sx }) => {
   const { data, loading, refetch } = useAllAssets();
   const [createAsset] = useCreateAssetMutation();
 
@@ -59,6 +38,36 @@ const CompositionModal: React.FC<CompositionModalProps> = ({ isOpen, onClose }) 
     mode: 'audio' | 'notes';
     onSuccess: (fileName: string) => void;
       } | null>(null);
+
+  const dynamicRenderers = useMemo<Partial<MediaModalRenderers>>(() => {
+    const isAudioMode = uploadTarget?.mode === 'audio';
+
+    const dynamicAccept = isAudioMode ? 'audio/*' : 'application/pdf,.pdf';
+    const dynamicInvalidError = isAudioMode ? 'Очікується аудіо файл' : 'Очікується PDF файл';
+
+    const dynamicIsAllowedFile = (file: File): boolean => {
+      const mimeType = file.type.toLowerCase();
+      const extension = file.name.split('.').pop()?.toLowerCase();
+
+      if (isAudioMode) {
+        return mimeType.startsWith('audio/') || ['mp3', 'wav', 'ogg', 'm4a'].includes(extension || '');
+      } else {
+        return mimeType === 'application/pdf' || extension === 'pdf';
+      }
+    };
+
+    return {
+      upload: (props) => (
+        <UploadView
+          {...props}
+          accept={dynamicAccept}
+          invalidFileError={dynamicInvalidError}
+          isAllowedFile={dynamicIsAllowedFile}
+          ariaLabel={isAudioMode ? 'Завантажити аудіо' : 'Завантажити ноти'}
+        />
+      )
+    };
+  }, [uploadTarget?.mode]);
 
   const suggestions = useMemo(() => {
     const audioFiles = new Set<string>();
@@ -99,7 +108,7 @@ const CompositionModal: React.FC<CompositionModalProps> = ({ isOpen, onClose }) 
     const type = file.type.toLowerCase();
     let assetType = '';
     if (type.startsWith('audio/')) assetType = 'audio';
-    else if (type.endsWith('/pdf')) assetType = 'pdf';
+    else if (type.endsWith('/pdf') || type === 'application/pdf') assetType = 'pdf';
 
     try {
       const finalFilename = originalName || filename;
@@ -141,7 +150,7 @@ const CompositionModal: React.FC<CompositionModalProps> = ({ isOpen, onClose }) 
     notes: NoteEntry[]
   ) => {
     try {
-      // TODO: Replace with actual createComposition mutation
+      // TODO: Replace with actual onSave(create or update) mutation
       // eslint-disable-next-line no-console
       console.log('Saving composition:', { title, genre, year: year?.year(), audio, notes });
 
@@ -156,12 +165,14 @@ const CompositionModal: React.FC<CompositionModalProps> = ({ isOpen, onClose }) 
   return (
     <>
       <CompositionModalView
+        dialogTitle={mode === 'create' ? 'Нова композиція' : 'Редагування композиції'}
         isOpen={isOpen}
         isLoadingData={loading}
         suggestions={suggestions}
         onClose={onClose}
         onSave={handleSaveComposition}
         onTriggerUpload={handleTriggerUpload}
+        sx={sx}
       />
 
       <MediaModal
@@ -169,7 +180,7 @@ const CompositionModal: React.FC<CompositionModalProps> = ({ isOpen, onClose }) 
         initial={uploadModalInitial}
         onClose={handleCloseUploadFlow}
         onApply={handleUploadApply}
-        renderers={{ upload: renderFilesUpload }}
+        renderers={dynamicRenderers} // <-- Now using the dynamic renderers!
         hideTabs={true}
       />
     </>
