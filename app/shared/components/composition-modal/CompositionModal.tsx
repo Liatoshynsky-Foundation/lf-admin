@@ -50,11 +50,11 @@ const DynamicUploadView: React.FC<DynamicUploadViewProps> = ({ isAudioMode, ...p
 interface CompositionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  mode: 'create' | 'edit';
-  sx: SxProps<Theme>;
+  mode?: 'create' | 'edit';
+  sx?: SxProps<Theme>;
 }
 
-const CompositionModal: React.FC<CompositionModalProps> = ({ isOpen, onClose, mode, sx }) => {
+const CompositionModal: React.FC<CompositionModalProps> = ({ isOpen, onClose, mode='create', sx }) => {
   const { data, loading, refetch } = useAllAssets();
   const [createAsset] = useCreateAssetMutation();
 
