@@ -70,6 +70,7 @@ jest.mock('../actionable-suggest-item/ActionableSuggestItem', () => ({
       <button data-testid="action-delete-item" onClick={onDelete}>
         Delete Row
       </button>
+      2016
     </div>
   )
 }));
@@ -155,7 +156,7 @@ describe('CompositionModalView', () => {
 
     expect(screen.getByText('Нова композиція')).toBeInTheDocument();
     expect(screen.getByLabelText(/Назва твору/)).toHaveValue('');
-    expect(screen.getByLabelText('Жанр')).toHaveValue('');
+    expect(screen.getByLabelText('Жанр *')).toHaveValue('');
     expect(screen.getByTestId('info-alert')).toHaveTextContent(/Додайте файли для відкритого доступу/);
   });
 
@@ -170,12 +171,12 @@ describe('CompositionModalView', () => {
     renderComponent();
 
     fireEvent.change(screen.getByLabelText(/Назва твору/), { target: { value: 'Melody in F' } });
-    fireEvent.change(screen.getByLabelText('Жанр'), { target: { value: 'Classical' } });
+    fireEvent.change(screen.getByLabelText('Жанр *'), { target: { value: 'Classical' } });
     fireEvent.click(screen.getByTestId('trigger-date-select'));
 
     expect(screen.getByLabelText(/Назва твору/)).toHaveValue('Melody in F');
-    expect(screen.getByLabelText('Жанр')).toHaveValue('Classical');
-    expect(screen.getByTestId('date-picker-value')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Жанр *')).toHaveValue('Classical');
+    expect(screen.getByTestId('date-picker-value')).toHaveTextContent('Wed, 31 Dec 2025 22:00:00 GMT');
   });
 
   it('should cleanly append dynamic rows to audio and notes entry sections when add action triggers execute', () => {
@@ -232,7 +233,7 @@ describe('CompositionModalView', () => {
     renderComponent();
 
     fireEvent.change(screen.getByLabelText(/Назва твору/), { target: { value: 'Symphony No. 5' } });
-    fireEvent.change(screen.getByLabelText('Жанр'), { target: { value: 'Orchestral' } });
+    fireEvent.change(screen.getByLabelText('Жанр *'), { target: { value: 'Orchestral' } });
     fireEvent.click(screen.getByTestId('trigger-date-select'));
 
     fireEvent.click(screen.getByTestId('btn-add-Аудіо'));

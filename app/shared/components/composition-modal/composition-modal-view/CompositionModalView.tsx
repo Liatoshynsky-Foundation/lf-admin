@@ -1,4 +1,15 @@
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle,Stack, TextField } from '@mui/material';
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Stack,
+  SxProps,
+  TextField,
+  Theme
+} from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -11,23 +22,28 @@ import FileItem from '../file-item/FileItem';
 import LabelActionRow from '../label-action-row/LabelActionRow';
 import { styles } from './CompositionModalView.styles';
 import { AudioEntry, CompositionFileType, NoteEntry } from '~/constants/creativity';
+import { sxToArray } from '~/lib/utils/sxToArray';
 
 interface CompositionModalViewProps {
+  dialogTitle?: string;
   isOpen: boolean;
   isLoadingData: boolean;
   suggestions: { audio: string[]; notes: string[] };
   onClose: () => void;
   onTriggerUpload: (mode: 'audio' | 'notes', onSuccess: (fileName: string) => void) => void;
   onSave: (title: string, genre: string, year: Dayjs | null, audio: AudioEntry[], notes: NoteEntry[]) => Promise<void>;
+  sx?: SxProps<Theme>;
 }
 
 export const CompositionModalView: React.FC<CompositionModalViewProps> = ({
+  dialogTitle='Нова композиція',
   isOpen,
   isLoadingData,
   suggestions,
   onClose,
   onTriggerUpload,
-  onSave
+  onSave,
+  sx
 }) => {
   const [title, setTitle] = useState('');
   const [genre, setGenre] = useState('');
@@ -92,8 +108,8 @@ export const CompositionModalView: React.FC<CompositionModalViewProps> = ({
   const hasNoFiles = audioEntries.length === 0 && noteEntries.length === 0;
 
   return (
-    <Dialog disableScrollLock open={isOpen} sx={styles.dialog} onClose={onClose} fullWidth>
-      <DialogTitle sx={styles.dialogTitle}>Нова композиція</DialogTitle>
+    <Dialog disableScrollLock open={isOpen} sx={{ ...styles.dialog, ...sxToArray(sx) }} onClose={onClose} fullWidth>
+      <DialogTitle sx={styles.dialogTitle}>{dialogTitle}</DialogTitle>
 
       <DialogContent sx={styles.dialogContent}>
         <Stack spacing={4} sx={styles.contentContainer}>
@@ -107,11 +123,11 @@ export const CompositionModalView: React.FC<CompositionModalViewProps> = ({
             />
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={styles.genreYearRow}>
-              <TextField label="Жанр" value={genre} onChange={(e) => setGenre(e.target.value)} fullWidth />
+              <TextField label="Жанр" value={genre} onChange={(e) => setGenre(e.target.value)} required fullWidth />
 
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <DatePicker
-                  label="Рік"
+                  label="Рік *"
                   views={['year']}
                   value={year}
                   onChange={(newValue: Dayjs | null) => setYear(newValue)}
