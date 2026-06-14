@@ -94,7 +94,7 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
               },
               crop: null,
               uploadResult: {
-                url: 'http://storage/audio.mp3',
+                url: 'https://storage/audio.mp3',
                 filename: 'hashed_audio.mp3',
                 originalName: 'symphony.mp3',
                 mimeType: 'audio/mp3',
@@ -117,7 +117,7 @@ const mockAssets = [
 
 const runSimulation = (isOpen = true, loading = false, allAssets: unknown = mockAssets) => {
   useAllAssetsMock.mockReturnValue({ data: { allAssets }, loading, refetch: refetchMock });
-  render(<CompositionModal isOpen={isOpen} onClose={jest.fn()} />);
+  render(<CompositionModal mode='create' isOpen={isOpen} sx={{}} onClose={jest.fn()} />);
 };
 
 describe('CompositionModal', () => {
@@ -163,7 +163,7 @@ describe('CompositionModal', () => {
         variables: {
           input: {
             filename: 'symphony.mp3',
-            url: 'http://storage/audio.mp3',
+            url: 'https://storage/audio.mp3',
             mimeType: 'audio/mp3',
             sizeBytes: 2048,
             type: 'audio'

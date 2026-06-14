@@ -1,7 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
-import FileItem, { FILE_TYPES, FileType } from './FileItem';
+import FileItem from './FileItem';
+import { COMPOSITION_FILE_TYPES, CompositionFileType } from '~/constants/creativity';
 
 jest.mock('next/image', () => ({
   __esModule: true,
@@ -19,7 +20,7 @@ jest.mock('~/constants/files', () => ({
 
 describe('FileItem', () => {
   const MOCK_FILE_NAME = 'project-specification.pdf';
-  const MOCK_FILE_TYPE: FileType = 'pdf' as FileType;
+  const MOCK_FILE_TYPE: CompositionFileType = 'pdf' as CompositionFileType;
   let onDeleteMock: jest.Mock;
 
   beforeEach(() => {
@@ -44,7 +45,7 @@ describe('FileItem', () => {
 
     const iconElement = screen.getByTestId('file-icon') as HTMLImageElement;
     expect(iconElement).toBeInTheDocument();
-    expect(iconElement.src).toContain(`/icons/${FILE_TYPES[MOCK_FILE_TYPE]}.svg`);
+    expect(iconElement.src).toContain(`/icons/${COMPOSITION_FILE_TYPES[MOCK_FILE_TYPE]}.svg`);
     expect(iconElement.alt).toBe(`${MOCK_FILE_TYPE} file icon`);
   });
 
