@@ -10,23 +10,19 @@ import { CompositionModalView } from './composition-modal-view/CompositionModalV
 import { AudioEntry, NoteEntry } from '~/constants/creativity';
 import { FILES_UPLOAD_FAILED_ERROR } from '~/constants/files';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
-import type { MediaModalRenderers } from '~/shared/components/media-modal/MediaModal.renderers';
+import type { MediaModalRenderers, UploadRendererProps } from '~/shared/components/media-modal/MediaModal.renderers';
 import type {
   MediaModalOpenState,
   MediaModalResult,
   UploadResult
 } from '~/shared/components/media-modal/MediaModal.types';
-import { Props as UploadProps, UploadView } from '~/shared/components/media-modal/views/upload-view/UploadView';
+import { UploadView } from '~/shared/components/media-modal/views/upload-view/UploadView';
 import { useAllAssets } from '~/shared/hooks/use-assets/useAssets';
 import { AssetType, useCreateAssetMutation } from '~/types/graphql/generated/graphql';
 
-interface DynamicUploadWrapperProps extends UploadProps {
-  mode: 'audio' | 'notes' | undefined;
-}
+type DynamicUploadViewProps = UploadRendererProps & { isAudioMode: boolean };
 
-export const DynamicUploadWrapper = ({ mode, ...restProps }: DynamicUploadWrapperProps) => {
-  const isAudioMode = mode === 'audio';
-
+const DynamicUploadView: React.FC<DynamicUploadViewProps> = ({ isAudioMode, ...props }) => {
   const dynamicAccept = isAudioMode ? 'audio/*' : 'application/pdf,.pdf';
   const dynamicInvalidError = isAudioMode ? 'Очікується аудіо файл' : 'Очікується PDF файл';
 
@@ -42,7 +38,7 @@ export const DynamicUploadWrapper = ({ mode, ...restProps }: DynamicUploadWrappe
 
   return (
     <UploadView
-      {...restProps}
+      {...props}
       accept={dynamicAccept}
       invalidFileError={dynamicInvalidError}
       isAllowedFile={dynamicIsAllowedFile}
@@ -54,11 +50,11 @@ export const DynamicUploadWrapper = ({ mode, ...restProps }: DynamicUploadWrappe
 interface CompositionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  mode?: 'create' | 'edit';
-  sx?: SxProps<Theme>;
+  mode: 'create' | 'edit';
+  sx: SxProps<Theme>;
 }
 
-const CompositionModal: React.FC<CompositionModalProps> = ({ isOpen, onClose, mode = 'create', sx }) => {
+const CompositionModal: React.FC<CompositionModalProps> = ({ isOpen, onClose, mode, sx }) => {
   const { data, loading, refetch } = useAllAssets();
   const [createAsset] = useCreateAssetMutation();
 
@@ -70,13 +66,15 @@ const CompositionModal: React.FC<CompositionModalProps> = ({ isOpen, onClose, mo
     onSuccess: (fileName: string) => void;
       } | null>(null);
 
-  const dynamicRenderers = useMemo<Partial<MediaModalRenderers>>(() => {
-    const targetMode = uploadTarget?.mode;
+  const isAudioMode = uploadTarget?.mode === 'audio';
 
-    return {
-      upload: (props) => <DynamicUploadWrapper {...props} mode={targetMode} />
-    };
-  }, [uploadTarget?.mode]);
+  const renderUpload = React.useCallback((props: UploadRendererProps) => (
+    <DynamicUploadView {...props} isAudioMode={isAudioMode} />
+  ), [isAudioMode]);
+
+  const dynamicRenderers = useMemo<Partial<MediaModalRenderers>>(() => ({
+    upload: renderUpload
+  }), [renderUpload]);
 
   const suggestions = useMemo(() => {
     const audioFiles = new Set<string>();
