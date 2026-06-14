@@ -5,7 +5,7 @@ import { PointsList, PointsListProps } from './PointsList';
 import { ListPoint } from '~/shared/hooks/use-points-list/usePointsList';
 
 
-jest.mock('~/components/configurable-list/ConfigurableList');
+jest.mock('~/shared/components/configurable-list/ConfigurableList');
 
 const defaultProps: PointsListProps = {
   points: [],
@@ -36,6 +36,7 @@ describe('PointsList', () => {
         { id: '2', value: { type: 'doc', content: [] } },
       ];
       runSimulation({...defaultProps, points});
+      
       expect(screen.getByText('Додати пункт')).toBeInTheDocument();
     });
   });
