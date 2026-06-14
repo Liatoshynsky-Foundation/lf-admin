@@ -4,8 +4,6 @@ import React from 'react';
 
 import { CompositionModalView } from './CompositionModalView';
 
-// --- TYPES & INTERFACES FOR MOCKS ---
-
 interface MockDatePickerProps {
   readonly label: string;
   readonly value: Dayjs | null;
@@ -71,7 +69,7 @@ jest.mock('../actionable-suggest-item/ActionableSuggestItem', () => ({
     <div data-testid={`suggest-item-${mode}`}>
       <span data-testid="suggest-value">{value || 'empty'}</span>
       <span data-testid="suggest-date">
-        {date && date.isValid() ? date.format('YYYY-MM-DD') : 'empty-date'}
+        {date?.isValid() ? date.format('YYYY-MM-DD') : 'empty-date'}
       </span>
       <button data-testid="action-select-item" onClick={() => onSelect('Selected Item')}>
         Select Track

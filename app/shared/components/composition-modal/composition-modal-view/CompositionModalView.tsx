@@ -100,7 +100,7 @@ export const CompositionModalView: React.FC<CompositionModalViewProps> = ({
       title: 'Аудіо',
       entries: audioEntries,
       suggestions: suggestions.audio,
-      fileType: 'audio' as CompositionFileType,
+      fileType: 'audio',
       onAdd: () => setAudioEntries((prev) => [...prev, { id: crypto.randomUUID(), name: null, fileName: null }]),
       onUpdate: handleUpdateAudio,
       onDelete: (id: string) => setAudioEntries((prev) => prev.filter((e) => e.id !== id)),
@@ -111,7 +111,7 @@ export const CompositionModalView: React.FC<CompositionModalViewProps> = ({
       title: 'Ноти',
       entries: noteEntries,
       suggestions: suggestions.notes,
-      fileType: 'pdf' as CompositionFileType,
+      fileType: 'pdf',
       onAdd: () =>
         setNoteEntries((prev) => [...prev, { id: crypto.randomUUID(), name: null, date: null, fileName: null }]),
       onUpdate: handleUpdateNote,

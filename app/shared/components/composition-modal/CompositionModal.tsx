@@ -16,9 +16,40 @@ import type {
   MediaModalResult,
   UploadResult
 } from '~/shared/components/media-modal/MediaModal.types';
-import { UploadView } from '~/shared/components/media-modal/views/upload-view/UploadView';
+import { Props as UploadProps, UploadView } from '~/shared/components/media-modal/views/upload-view/UploadView';
 import { useAllAssets } from '~/shared/hooks/use-assets/useAssets';
 import { AssetType, useCreateAssetMutation } from '~/types/graphql/generated/graphql';
+
+interface DynamicUploadWrapperProps extends UploadProps {
+  mode: 'audio' | 'notes' | undefined;
+}
+
+export const DynamicUploadWrapper = ({ mode, ...restProps }: DynamicUploadWrapperProps) => {
+  const isAudioMode = mode === 'audio';
+
+  const dynamicAccept = isAudioMode ? 'audio/*' : 'application/pdf,.pdf';
+  const dynamicInvalidError = isAudioMode ? 'Очікується аудіо файл' : 'Очікується PDF файл';
+
+  const dynamicIsAllowedFile = (file: File): boolean => {
+    const mimeType = file.type.toLowerCase();
+    const extension = file.name.split('.').pop()?.toLowerCase();
+
+    if (isAudioMode) {
+      return mimeType.startsWith('audio/') || ['mp3', 'wav', 'ogg', 'm4a'].includes(extension || '');
+    }
+    return mimeType === 'application/pdf' || extension === 'pdf';
+  };
+
+  return (
+    <UploadView
+      {...restProps}
+      accept={dynamicAccept}
+      invalidFileError={dynamicInvalidError}
+      isAllowedFile={dynamicIsAllowedFile}
+      ariaLabel={isAudioMode ? 'Завантажити аудіо' : 'Завантажити ноти'}
+    />
+  );
+};
 
 interface CompositionModalProps {
   isOpen: boolean;
@@ -40,32 +71,10 @@ const CompositionModal: React.FC<CompositionModalProps> = ({ isOpen, onClose, mo
       } | null>(null);
 
   const dynamicRenderers = useMemo<Partial<MediaModalRenderers>>(() => {
-    const isAudioMode = uploadTarget?.mode === 'audio';
-
-    const dynamicAccept = isAudioMode ? 'audio/*' : 'application/pdf,.pdf';
-    const dynamicInvalidError = isAudioMode ? 'Очікується аудіо файл' : 'Очікується PDF файл';
-
-    const dynamicIsAllowedFile = (file: File): boolean => {
-      const mimeType = file.type.toLowerCase();
-      const extension = file.name.split('.').pop()?.toLowerCase();
-
-      if (isAudioMode) {
-        return mimeType.startsWith('audio/') || ['mp3', 'wav', 'ogg', 'm4a'].includes(extension || '');
-      } else {
-        return mimeType === 'application/pdf' || extension === 'pdf';
-      }
-    };
+    const targetMode = uploadTarget?.mode;
 
     return {
-      upload: (props) => (
-        <UploadView
-          {...props}
-          accept={dynamicAccept}
-          invalidFileError={dynamicInvalidError}
-          isAllowedFile={dynamicIsAllowedFile}
-          ariaLabel={isAudioMode ? 'Завантажити аудіо' : 'Завантажити ноти'}
-        />
-      )
+      upload: (props) => <DynamicUploadWrapper {...props} mode={targetMode} />
     };
   }, [uploadTarget?.mode]);
 
