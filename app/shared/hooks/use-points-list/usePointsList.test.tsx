@@ -30,22 +30,14 @@ describe('usePointsList', () => {
   it('should call setField with a new list when addPoint is called', () => {
     const { result } = renderHook(() => usePointsList(defaultMockedProps));
 
-    let createdPoint;
-
     act(() => {
-      createdPoint = result.current.addPoint();
+      result.current.addPoint();
     });
-
     const expectedList = [...initialList, {
       id: 'uuid-1',
       uk: emptyDoc,
       en: emptyDoc,
     }];
-
-    expect(createdPoint).toStrictEqual({
-      id: 'uuid-1',
-      value: emptyDoc
-    });
 
     expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'list', expectedList);
   });

@@ -68,8 +68,6 @@ export const useSectionList = <K extends BlockIdsWithSections>({ pageId, blockId
     const newPoints = [...currentPoints, newPoint];
 
     handleUpdateSectionList(sectionId, newPoints);
-
-    return newPoint;
   };
 
   const handleDeleteSectionListPoint = (sectionId: string, pointId: string) => {

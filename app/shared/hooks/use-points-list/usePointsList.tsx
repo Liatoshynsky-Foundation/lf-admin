@@ -39,13 +39,12 @@ export const usePointsList = <K extends keyof BlocksMap>({ list, setField, listF
     setField(pageId, blockId, listFieldName, updatedFullList as BlocksMap[K][keyof BlocksMap[K]]);
   };
 
-  const addPoint = (): ListPoint => {
+  const addPoint = () => {
     const newPoint = {
       id: crypto.randomUUID(),
       value: emptyDoc
     };
     updatePoints([...points, newPoint]);
-    return newPoint;
   };
 
   const removePoint = (id: string) => {

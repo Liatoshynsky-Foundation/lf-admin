@@ -6,7 +6,7 @@ import { ListPoint } from '~/shared/hooks/use-points-list/usePointsList';
 
 export interface PointsListProps {
     points: ListPoint[],
-    addPoint: () => ListPoint;
+    addPoint: () => void;
     updatePoint: (newValue: ListPoint) => void;
     removePoint: (id: string) => void;
 }
