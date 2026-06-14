@@ -54,6 +54,18 @@ export const FILES_UPLOAD_ALLOWED_EXTENSIONS = [
   'xlsx'
 ] as const;
 
+export const FILE_TYPES = {
+  img: 'img',
+  audio: 'audio',
+  pdf: 'pdf',
+  doc: 'doc',
+  xls: 'xls',
+  'video-file': 'video-file',
+  archive: 'zip'
+} as const;
+
+export type FileType = keyof typeof FILE_TYPES;
+
 export const FILES_UPLOAD_ACCEPT = [
   ...FILES_UPLOAD_ALLOWED_MIME_TYPES,
   ...FILES_UPLOAD_ALLOWED_EXTENSIONS.map((ext) => `.${ext}`)
@@ -88,3 +100,4 @@ export const USAGE_FILTER_OPTIONS: ReadonlyArray<{ value: string; label: string 
   { value: 'research', label: 'Наукові праці' },
   { value: 'unused', label: 'Не використані' }
 ];
+
