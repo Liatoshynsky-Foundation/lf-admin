@@ -6,16 +6,23 @@ import { styles } from './MainPageContent.styles';
 import CardsGrid from '~/shared/components/cards-grid/CardsGrid';
 import PageCard from '~/shared/components/page-card/PageCard';
 import { PageHeader, PageHeaderTab } from '~/shared/components/page-header/PageHeader';
+import type { PageCategory as PageCategoryType} from '~/types/enums/common.enums';
+import { PageCategory } from '~/types/enums/common.enums';
 import { useGetPagesQuery } from '~/types/graphql/generated/graphql';
 
+export type ValidTab = 'all' | Extract<PageCategoryType, 'foundation' | 'other'>;
+
 type MainPagesContentProps = Readonly<{
-  activeTab: string;
+  activeTab: ValidTab
 }>;
 
 const MAIN_PAGE_TABS: readonly PageHeaderTab[] = [
-  { value: 'foundation', label: 'Фундація', href: '/main-page' },
-  { value: 'other', label: 'Інші', href: '/' },
+  { value: 'all', label: 'Всі', href: '/main-page' },
+  { value: PageCategory.Foundation, label: 'Фундація', href: '/main-page/foundation' },
+  { value: PageCategory.Other, label: 'Інші', href: '/main-page/other' },
 ];
+
+const ALLOWED_SLUGS = new Set(['about-us', 'privacy-policy']);
 
 export function MainPagesContent({ activeTab }: MainPagesContentProps) {
   const { data, loading } = useGetPagesQuery({
@@ -24,12 +31,16 @@ export function MainPagesContent({ activeTab }: MainPagesContentProps) {
 
   if (loading || !data) return null;
 
+  const visiblePages = data.pages.filter((item) => 
+    ALLOWED_SLUGS.has(item.slug)
+  );
+
   return (
     <Box sx={styles.mainPageContentWrapper}>
       <PageHeader title="Основні сторінки" activeTab={activeTab} tabs={MAIN_PAGE_TABS} />
       <CardsGrid columns={{ smCols: 1, mdCols: 2, xlCols: 3 }}>
         {
-          data.pages.map((item) => (
+          visiblePages.map((item) => (
             <PageCard
               key={item.id}
               coverImage={item.coverImage}

@@ -6,7 +6,7 @@ import { styles } from './page.styles';
 export default async function MainPagesPage() {
   return (
     <Box sx={styles.mainPageWrapper}>
-      <MainPagesContent activeTab="other" />
+      <MainPagesContent activeTab="all" />
     </Box>
   );
 }
