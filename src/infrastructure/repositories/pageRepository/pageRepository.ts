@@ -1,4 +1,4 @@
-import { Model, Types } from 'mongoose';
+import { FilterQuery, Model, Types } from 'mongoose';
 
 import { JsonObject, Patch } from '~/back-shared/types/pages/types';
 import { BasePage, LocalizedTitle } from '~/domain/entities/Page';
@@ -117,7 +117,7 @@ export const PageRepository = ({ PageModel, DraftPageModel }: PageRepoDeps): Pag
 
     findPages: async (category?: PageCategory) => {
       await dbConnect();
-      const query: any = {};
+      const query: FilterQuery<DbPage> = {};
       if (category) query.category = category;
 
       const docs = await PageModel.find(query).lean<DbPage[]>();
