@@ -110,7 +110,7 @@ describe('CustomFormattingField', () => {
   });
 
   describe('3. Value Synchronization', () => {
-    it('should call onChange with updated JSON when the editor content changes', () => {
+    it('should call onChange once with updated JSON when the editor content changes', () => {
       const updatedJSON: JSONContent = { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Hello' }] }] };
       mockGetJSON.mockReturnValue(updatedJSON);
 
@@ -119,17 +119,26 @@ describe('CustomFormattingField', () => {
 
       fireEvent.input(editorContent);
 
-      expect(mockGetJSON).toHaveBeenCalledTimes(1);
       expect(mockOnChange).toHaveBeenCalledTimes(1);
       expect(mockOnChange).toHaveBeenCalledWith(updatedJSON);
     });
 
-    it('should call editor.commands.setContent when the external value prop changes', () => {
+    it('should call editor.getJSON twice when the editor content changes', () => {
+      const updatedJSON: JSONContent = { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Hello' }] }] };
+      mockGetJSON.mockReturnValue(updatedJSON);
+
+      render(<CustomFormattingField value={defaultJSON} onChange={mockOnChange} />);
+      const editorContent = screen.getByTestId('editor-content');
+
+      fireEvent.input(editorContent);
+
+      expect(mockGetJSON).toHaveBeenCalledTimes(2);
+    });
+
+    it('should call editor.commands.setContent ONLY when the external value prop changes', () => {
       const { rerender } = render(<CustomFormattingField value={defaultJSON} onChange={mockOnChange} />);
-
-      expect(mockSetContent).toHaveBeenCalledWith(defaultJSON, { emitUpdate: false });
-      mockSetContent.mockClear();
-
+      
+      expect(mockSetContent).not.toHaveBeenCalled();
       const newJSON: JSONContent = { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'New content from parent' }] }] };
       rerender(<CustomFormattingField value={newJSON} onChange={mockOnChange} />);
 
