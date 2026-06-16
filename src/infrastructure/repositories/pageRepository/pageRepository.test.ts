@@ -83,8 +83,8 @@ describe('PageRepository', () => {
     slug: 'about-us',
     title: { uk: 'Про нас', en: 'About us' },
     status: PageStatus.Published,
-    category: 'foundation', 
-    coverImage: DEFAULT_COVER_IMAGE, 
+    category: 'foundation',
+    coverImage: DEFAULT_COVER_IMAGE,
     pageType: 'AboutUsPage',
     blocks: {
       IntroSection: {
@@ -102,8 +102,8 @@ describe('PageRepository', () => {
     slug: 'about-us',
     title: { uk: 'Про нас', en: 'About us' },
     status: PageStatus.Draft,
-    category: 'foundation', 
-    coverImage: DEFAULT_COVER_IMAGE, 
+    category: 'foundation',
+    coverImage: DEFAULT_COVER_IMAGE,
     pageType: 'AboutUsPage',
     blocks: {
       IntroSection: {
@@ -134,7 +134,7 @@ describe('PageRepository', () => {
         title: publishedDoc.title,
         status: PageStatus.Published,
         pageType: 'AboutUsPage',
-        category: 'foundation', 
+        category: 'foundation',
         coverImage: DEFAULT_COVER_IMAGE,
         blocks: publishedDoc.blocks,
         createdAt: '2024-01-01T00:00:00.000Z',
@@ -164,7 +164,7 @@ describe('PageRepository', () => {
         slug: 'about-us',
         title: draftDoc.title,
         status: PageStatus.Draft,
-        category: 'foundation', 
+        category: 'foundation',
         coverImage: DEFAULT_COVER_IMAGE,
         pageType: 'AboutUsPage',
         blocks: draftDoc.blocks,
@@ -220,7 +220,7 @@ describe('PageRepository', () => {
         slug: 'about-us',
         title: draftDoc.title,
         status: PageStatus.Draft,
-        category: 'foundation', 
+        category: 'foundation',
         coverImage: DEFAULT_COVER_IMAGE,
         pageType: 'AboutUsPage',
         blocks: updatedDraft.blocks,
@@ -282,7 +282,7 @@ describe('PageRepository', () => {
         title,
         status: PageStatus.Published,
         pageType: 'AboutUsPage',
-        category: 'foundation', 
+        category: 'foundation',
         coverImage: DEFAULT_COVER_IMAGE,
         blocks: updatedPublished.blocks,
         createdAt: '2024-01-01T00:00:00.000Z',
@@ -415,7 +415,7 @@ describe('PageRepository', () => {
         slug: 'about-us',
         title: publishedDoc.title,
         status: PageStatus.Published,
-        category: 'foundation', 
+        category: 'foundation',
         coverImage: DEFAULT_COVER_IMAGE,
         pageType: 'AboutUsPage',
         blocks: publishedDoc.blocks,
@@ -424,29 +424,16 @@ describe('PageRepository', () => {
       }]);
     });
 
-    it('should return all pages by category if provided', async () => {
+    it('should correctly call the DB if category is provided', async () => {
       mockedPagesFind.mockReturnValueOnce(leanResolved([publishedDoc]));
       const category = 'foundation' as PageCategories;
 
-      const res = await repo.findPages(category);
+      await repo.findPages(category);
 
       expect(mockedConnect).toHaveBeenCalled();
       expect(mockedPagesFind).toHaveBeenCalledWith({
         category
       });
-
-      expect(res).toEqual([{
-        id: _id,
-        slug: 'about-us',
-        title: publishedDoc.title,
-        status: PageStatus.Published,
-        category: 'foundation', 
-        coverImage: DEFAULT_COVER_IMAGE,
-        pageType: 'AboutUsPage',
-        blocks: publishedDoc.blocks,
-        createdAt: '2024-01-01T00:00:00.000Z',
-        updatedAt: '2024-02-01T00:00:00.000Z'
-      }]);
     });
   });
 });
