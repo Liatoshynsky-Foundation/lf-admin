@@ -15,6 +15,11 @@ const pageBaseSchema = new Schema<BasePage>(
       enum: [PageStatus.Draft, PageStatus.Published] as const,
       required: true,
       default: PageStatus.Published
+    },
+    blocksOrder: {
+      type: [String],
+      required: true,
+      default: [] 
     }
   },
   {

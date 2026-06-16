@@ -12,6 +12,7 @@ type Page {
   status: String!
   pageType: String!
   blocks: JSON!
+  blocksOrder: [String!]!
   createdAt: String!
   updatedAt: String!
 }

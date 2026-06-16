@@ -13,6 +13,7 @@ export type BasePage = {
   status: PageStatus;
   pageType: string;
   blocks: Record<string, BlockData>;
+  blocksOrder: string[];
   createdAt: string;
   updatedAt: string;
 };

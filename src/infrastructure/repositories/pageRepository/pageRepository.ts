@@ -13,6 +13,7 @@ type DbPage = {
   status: BasePage['status'];
   pageType: string;
   blocks: BasePage['blocks'];
+  blocksOrder: BasePage['blocksOrder'];
   createdAt: Date | string;
   updatedAt: Date | string;
 };
@@ -30,6 +31,7 @@ const toEntity = (doc: DbPage): BasePage => ({
   status: doc.status,
   pageType: doc.pageType,
   blocks: doc.blocks,
+  blocksOrder: doc.blocksOrder,
   createdAt: toIso(doc.createdAt) as unknown as BasePage['createdAt'],
   updatedAt: toIso(doc.updatedAt) as unknown as BasePage['updatedAt']
 });
