@@ -72,7 +72,7 @@ export default function PublicatiosSeoPage() {
   };
 
   return (
-    <Box>
+    <Box sx={{ width: '100%' }}>
       <DividedHeader
         originUrl={PUBLICATIONS_BASE_PATH}
         rightActionsComponent={
