@@ -19,8 +19,17 @@ const TitleWithTooltip = ({ text, lineClamp, fontWeight }: TitleWithTooltipProps
     const element = titleRef.current;
     if (!element) return;
 
-    setIsTitleTruncated(element.scrollHeight > element.clientHeight);
-  }, [text]);
+    const checkOverflow = () => {
+      const hasOverflow = element.scrollHeight > element.clientHeight;
+      setIsTitleTruncated((prev) => (prev === hasOverflow ? prev : hasOverflow));
+    };
+
+    const resizeObserver = new ResizeObserver(checkOverflow);
+    resizeObserver.observe(element);
+    checkOverflow();
+
+    return () => resizeObserver.disconnect();
+  }, []);
 
   return (
     <TooltipCustom title={isTitleTruncated ? text : ''}>
