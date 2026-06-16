@@ -5,7 +5,7 @@ import dbConnect from '~/infrastructure/db/connect';
 import PageModel from '~/infrastructure/models/page.model';
 import { PageCategories, PageStatus } from '~/types/enums/common.enums';
 
-const DEFAULT_COVER_IMAGE = {
+export const DEFAULT_COVER_IMAGE = {
   src: '/images/image.jpg',
   alt: { uk: 'Зображення', en: 'Image' },
   caption: { uk: '', en: '' },
