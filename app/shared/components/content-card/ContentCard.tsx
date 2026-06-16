@@ -1,15 +1,17 @@
-import { Box, Card, CardContent, CardMedia, IconButton, Typography } from '@mui/material';
-import { EllipsisVertical } from 'lucide-react';
+'use client';
+import { Typography } from '@mui/material';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 
+import CardLayout from '../card-layout/CardLayout';
+import { infoText } from '../card-layout/CardLayout.styles';
+import ImageWithFallback from '../card-layout/ImageWithFallback';
+import TitleWithTooltip from '../card-layout/TitleWithTooltip';
 import DeleteCardModal from '../delete-card-modal/DeleteCardModal';
 import Button from '../design-system/button/Button';
-import styles from './ContentCard.styles';
 import ContentCardBadge from './ContentCardBadge';
-import ContentCardMenu from './ContentCardMenu';
-import TooltipCustom from '~/ds-components/tooltip/Tooltip';
+import ContentCardMenuItems from './ContentCardMenuItems';
 import { getStatus } from '~/lib/utils/getStatus';
 import { useDeleteEvent } from '~/shared/hooks/use-events/useEvents';
 import { useDeleteMediaMention } from '~/shared/hooks/use-media-mentions/useMediaMentions';
@@ -17,8 +19,6 @@ import { useDeleteNews } from '~/shared/hooks/use-news/useNews';
 import type { LocalizedString } from '~/types/common';
 
 export type ContentType = 'news' | 'events' | 'media';
-
-const FALLBACK_IMAGE_SRC = '/images/image.png';
 
 interface ContentCardImage {
   src: string;
@@ -53,7 +53,6 @@ const ContentCard = ({
   editHref,
   onClick
 }: ContentCardProps) => {
-  const [imageSrc, setImageSrc] = useState(coverImage.src || FALLBACK_IMAGE_SRC);
   const localizedKeys = Object.entries(title)
     .filter(([, value]) => Boolean(value?.trim()))
     .map(([key]) => key);
@@ -66,51 +65,9 @@ const ContentCard = ({
   const [deleteEvent] = useDeleteEvent();
   const [deleteMediaMention] = useDeleteMediaMention();
 
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
-  const titleRef = useRef<HTMLHeadingElement | null>(null);
-  const [isTitleTruncated, setIsTitleTruncated] = useState(false);
-
-  useEffect(() => {
-    const element = titleRef.current;
-
-    if (!element) return;
-
-    setIsTitleTruncated(element.scrollHeight > element.clientHeight);
-  }, [titleText]);
-
-  useEffect(() => {
-    setImageSrc(coverImage.src || FALLBACK_IMAGE_SRC);
-  }, [coverImage.src]);
-
-  const handleImageError = () => {
-    if (imageSrc !== FALLBACK_IMAGE_SRC) {
-      setImageSrc(FALLBACK_IMAGE_SRC);
-    }
-  };
-
-  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(anchorEl ? null : event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  useEffect(() => {
-    if (!anchorEl) return;
-
-    const handleScroll = () => {
-      setAnchorEl(null);
-    };
-
-    window.addEventListener('scroll', handleScroll, true);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll, true);
-    };
-  }, [anchorEl]);
+  const FALLBACK_IMAGE_SRC = '/images/image.png';
 
   async function handleDelete() {
     try {
@@ -133,49 +90,48 @@ const ContentCard = ({
     }
   }
 
-  return (
-    <Card sx={styles.card}>
-      <CardMedia component="img" height="148" image={imageSrc} alt={altText} onError={handleImageError} />
-      <CardContent sx={styles.cardContent}>
-        <ContentCardBadge type={type} status={status} localizations={localizedKeys}></ContentCardBadge>
-        <Box sx={styles.mainInfo}>
-          <TooltipCustom title={isTitleTruncated ? titleText : ''}>
-            <Typography ref={titleRef} variant="subtitle1" component="h3" sx={styles.title}>
-              {titleText}
-            </Typography>
-          </TooltipCustom>
-          <IconButton
-            data-testid="menu-button"
-            onClick={handleMenuClick}
-            sx={styles.menuButton}
-            className={anchorEl ? 'active' : ''}
-          >
-            <EllipsisVertical size={20} />
-          </IconButton>
+  const coverImageNode = (
+    <ImageWithFallback key={coverImage.src} src={coverImage.src} fallbackSrc={FALLBACK_IMAGE_SRC} alt={altText} />
+  );
 
-          <ContentCardMenu
-            id={id}
-            type={type}
-            anchorEl={anchorEl}
-            onClose={handleMenuClose}
-            setDeleteModalOpen={setDeleteModalOpen}
-          />
-        </Box>
-        <Typography variant="caption" sx={styles.date}>
-          {getStatus(status, createdAt, updatedAt, publishedAt)}
-        </Typography>
-        <Button
-          variant="filled"
-          color="primary"
-          href={editHref}
-          LinkComponent={editHref ? Link : undefined}
-          onClick={editHref ? undefined : onClick}
-        >
-          Редагувати
-        </Button>
-      </CardContent>
+  const titleNode = <TitleWithTooltip text={titleText} />;
+
+  const badgeNode = <ContentCardBadge type={type} status={status} localizations={localizedKeys} />;
+
+  const infoNode = (
+    <Typography variant="caption" sx={infoText}>
+      {getStatus(status, createdAt, updatedAt, publishedAt)}
+    </Typography>
+  );
+
+  const actionButtonNode = (
+    <Button
+      variant="filled"
+      color="primary"
+      href={editHref}
+      LinkComponent={editHref ? Link : undefined}
+      onClick={editHref ? undefined : onClick}
+    >
+      {'Редагувати'}
+    </Button>
+  );
+
+  const itemsNode = ContentCardMenuItems({ id, type, setDeleteModalOpen });
+
+  return (
+    <>
+      <CardLayout
+        coverImage={coverImageNode}
+        title={titleNode}
+        contentUpper={badgeNode}
+        info={infoNode}
+        contentBottom={actionButtonNode}
+        items={itemsNode}
+      />
+
       <DeleteCardModal open={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} onDelete={handleDelete} />
-    </Card>
+    </>
   );
 };
+
 export default ContentCard;

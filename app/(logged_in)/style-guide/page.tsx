@@ -25,7 +25,6 @@ import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
 import ProgressStatus from '~/shared/components/divided-header/progress-status/ProgressStatus';
 import { TitleDropdown } from '~/shared/components/divided-header/title-dropdown/TitleDropdown';
-import { FileMenuActions } from '~/shared/components/dropdown-menu/FileMenuActions';
 import { EmptyState } from '~/shared/components/empty-state';
 import FileCard from '~/shared/components/file-card';
 import { FileInfoSidebar } from '~/shared/components/file-info-sidebar/FileInfoSidebar';
@@ -792,18 +791,6 @@ export default function StyleGuide() {
             ...(isRefsIncluded && { usageRefs: [{ pageId: 'id1', blockId: 'block1' }] })
           }}
           isDeleting={isDeletingToggled}
-        />
-      </SandboxSection>
-
-      <SandboxSection title="FileMenuActions">
-        <FileMenuActions
-          isStarred
-          onCloseMenu={() => {}}
-          onOpenDetails={() => {}}
-          onRename={() => {}}
-          onToggleStar={() => {}}
-          onDownload={() => {}}
-          onDelete={() => {}}
         />
       </SandboxSection>
     </Box>
