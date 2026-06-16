@@ -18,7 +18,7 @@ describe('emailService', () => {
     mockSendMail = transport.sendMail as jest.Mock;
 
     process.env.SMTP_USER = 'test@example.com';
-    process.env.NEXT_PUBLIC_CLIENT_BASE_URL = 'http://test-url.com';
+    process.env.NEXT_PUBLIC_CLIENT_BASE_URL = 'https://test-url.com';
   });
 
   afterEach(() => {
@@ -28,7 +28,7 @@ describe('emailService', () => {
 
   it('should send an email with the correct parameters', async () => {
     const to = 'admin@example.com';
-    const resetLink = 'http://test-url.com/reset-password?token=123';
+    const resetLink = 'https://test-url.com/reset-password?token=123';
 
     await sendPasswordResetEmail(to, resetLink);
 
@@ -40,7 +40,7 @@ describe('emailService', () => {
     expect(mailOptions.to).toBe(to);
     expect(mailOptions.subject).toBe('Відновлення пароля');
     expect(mailOptions.html).toContain(resetLink);
-    expect(mailOptions.html).toContain('http://test-url.com/icons/logo_png.png');
+    expect(mailOptions.html).toContain('https://test-url.com/icons/logo_png.png');
   });
 
   it('should use localhost fallback if NEXT_PUBLIC_CLIENT_BASE_URL is not provided', async () => {

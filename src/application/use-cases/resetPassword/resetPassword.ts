@@ -10,7 +10,7 @@ export const resetPassword = ({ adminRepository }: { adminRepository: AdminRepos
 
       const admin = await adminRepository.findByResetToken(token);
 
-      if (!admin || !admin.resetPasswordExpires || admin.resetPasswordExpires.getTime() < Date.now()) {
+      if (!admin?.resetPasswordExpires || admin.resetPasswordExpires.getTime() < Date.now()) {
         throw new Error(
           'Посилання для відновлення пароля вже було використано або втратило чинність. Будь ласка, створіть новий запит на відновлення пароля.'
         );

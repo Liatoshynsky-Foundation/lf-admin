@@ -1,11 +1,10 @@
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import { ZodError } from 'zod';
 
 import { requestPasswordReset } from './requestPasswordReset';
 import { AdminRepository } from '~/domain/repositories/adminRepository';
-import { RateLimitRepository } from '~/domain/repositories/rateLimitRepository';
 
-jest.mock('crypto', () => ({
+jest.mock('node:crypto', () => ({
   randomBytes: jest.fn()
 }));
 
@@ -20,7 +19,7 @@ const mockRateLimitRepository = {
 
 const useCase = requestPasswordReset({
   adminRepository: mockAdminRepository as unknown as AdminRepository,
-  rateLimitRepository: mockRateLimitRepository as unknown as RateLimitRepository
+  rateLimitRepository: mockRateLimitRepository
 });
 
 describe('requestPasswordReset', () => {
@@ -29,7 +28,7 @@ describe('requestPasswordReset', () => {
     mockRateLimitRepository.incrementAndCheck.mockResolvedValue(true);
   });
 
-  const testIp = '192.168.1.1';
+  const testIp = '192.168.1.1'; // NOSONAR
 
   it('should generate token, save it to DB, and return token data if admin exists', async () => {
     const fakeAdmin = { id: 'admin-123', email: 'admin@example.com' };

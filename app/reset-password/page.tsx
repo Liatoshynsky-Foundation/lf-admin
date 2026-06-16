@@ -10,7 +10,7 @@ type ResetPasswordPageProps = {
 
 async function verifyToken(token: string): Promise<boolean> {
   try {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+    const appUrl = process.env.NEXT_PUBLIC_CLIENT_BASE_URL ?? 'http://localhost:3000';
     const res = await fetch(`${appUrl}/api/graphql`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -22,7 +22,7 @@ jest.mock('~/shared/components/auth-card/AuthCardLayout', () => ({
 }));
 
 const mockFetch = (verifyResult: boolean) => {
-  global.fetch = jest.fn().mockResolvedValue({
+  globalThis.fetch = jest.fn().mockResolvedValue({
     json: () => Promise.resolve({ data: { verifyResetToken: verifyResult } })
   });
 };
@@ -58,7 +58,7 @@ describe('ResetPasswordPage (Server Component)', () => {
   });
 
   it('renders error if fetch throws', async () => {
-    global.fetch = jest.fn().mockRejectedValue(new Error('Network error'));
+    globalThis.fetch = jest.fn().mockRejectedValue(new Error('Network error'));
     const UI = await ResetPasswordPage({ searchParams: Promise.resolve({ token: 'some-token' }) });
     render(UI);
 

@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 
 import { AdminRepository } from '~/domain/repositories/adminRepository';
 import { RateLimitRepository } from '~/domain/repositories/rateLimitRepository';

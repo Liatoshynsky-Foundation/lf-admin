@@ -19,7 +19,7 @@ export const AdminRepository = (): AdminRepositoryType => ({
   findByResetToken: async (token: string) => {
     await dbConnect();
     const admin = await Admin.findOne({ resetPasswordToken: token });
-    return admin ? admin : null;
+    return admin;
   },
   updatePasswordAndClearToken: async (adminId: string, hashedPassword: string) => {
     await dbConnect();
