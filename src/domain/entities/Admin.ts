@@ -5,4 +5,6 @@ export interface Admin {
   type: adminTypes;
   email: string;
   password: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpires?: Date | null;
 }
