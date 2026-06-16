@@ -205,7 +205,18 @@ export default function CreatePublicationsView({ data, mode = 'create', onDelete
           sx={sharedMenuStyles.menu}
         >
           {actions.map((action) => (
-            <MenuItem sx={sharedMenuStyles.menuItem} key={action.id} onClick={() => handleMenuAction(action.id)}>
+            <MenuItem
+              sx={sharedMenuStyles.menuItem}
+              key={action.id}
+              onClick={() => {
+                if (action.id === MenuActionId.DELETE) {
+                  setDeleteModalOpen(true);
+                  handleClose();
+                  return;
+                }
+                void handleMenuAction(action.id);
+              }}
+            >
               <Typography variant="textMd">{action.label}</Typography>
             </MenuItem>
           ))}

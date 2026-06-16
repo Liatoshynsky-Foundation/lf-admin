@@ -17,6 +17,7 @@ const mockUpdateEvent = jest.fn();
 const mockUpdateMedia = jest.fn();
 const mockDeleteNews = jest.fn();
 const mockDeleteEvent = jest.fn();
+const mockDeleteMedia = jest.fn();
 
 jest.mock('~/shared/hooks/use-news/useNews', () => ({
   useNewsById: jest.fn(),
@@ -32,7 +33,8 @@ jest.mock('~/shared/hooks/use-events/useEvents', () => ({
 
 jest.mock('~/shared/hooks/use-media-mentions/useMediaMentions', () => ({
   useMediaMentionById: jest.fn(),
-  useUpdateMediaMention: () => [mockUpdateMedia]
+  useUpdateMediaMention: () => [mockUpdateMedia],
+  useDeleteMediaMention: () => [mockDeleteMedia]
 }));
 
 import { useEventById } from '~/shared/hooks/use-events/useEvents';
@@ -186,6 +188,16 @@ describe('usePublicationManager Hook', () => {
       });
 
       expect(mockDeleteEvent).toHaveBeenCalledWith({ id: '2' });
+    });
+
+    it('should call deleteMedia for media type', async () => {
+      const { result } = renderHook(() => usePublicationManager('media', '3'));
+
+      await act(async () => {
+        await result.current.deleteResource();
+      });
+
+      expect(mockDeleteMedia).toHaveBeenCalledWith('3');
     });
   });
 

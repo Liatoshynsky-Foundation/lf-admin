@@ -9,9 +9,9 @@ import {
   PublicationsItemType
 } from '~/constants/publications';
 import { isContentEmpty } from '~/shared/components/content-editor';
-import { useDeleteEvent , useEventById, useUpdateEvent } from '~/shared/hooks/use-events/useEvents';
-import { useMediaMentionById, useUpdateMediaMention } from '~/shared/hooks/use-media-mentions/useMediaMentions';
-import { useDeleteNews , useNewsById, useUpdateNews } from '~/shared/hooks/use-news/useNews';
+import { useDeleteEvent, useEventById, useUpdateEvent } from '~/shared/hooks/use-events/useEvents';
+import { useDeleteMediaMention, useMediaMentionById, useUpdateMediaMention } from '~/shared/hooks/use-media-mentions/useMediaMentions';
+import { useDeleteNews, useNewsById, useUpdateNews } from '~/shared/hooks/use-news/useNews';
 import { type EventStatus, type MediaStatus, type NewsStatus } from '~/types/graphql/generated/graphql';
 
 export function usePublicationManager(type: PublicationsItemType, id: string) {
@@ -20,6 +20,7 @@ export function usePublicationManager(type: PublicationsItemType, id: string) {
   const media = useMediaMentionById(id, { skip: type !== 'media' });
   const [deleteNews] = useDeleteNews();
   const [deleteEvent] = useDeleteEvent();
+  const [deleteMedia] = useDeleteMediaMention();
 
   const [updateNews] = useUpdateNews();
   const [updateEvent] = useUpdateEvent();
@@ -106,6 +107,8 @@ export function usePublicationManager(type: PublicationsItemType, id: string) {
       return deleteNews({ id });
     case 'events':
       return deleteEvent({ id });
+    case 'media':
+      return deleteMedia(id);
     default:
       throw new Error(`Unsupported publication type for delete: ${type}`);
     }
