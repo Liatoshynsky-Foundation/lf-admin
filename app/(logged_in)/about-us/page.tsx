@@ -1,6 +1,4 @@
 'use client';
-import { DragEndEvent } from '@dnd-kit/core';
-import { arrayMove } from '@dnd-kit/sortable';
 import { Box } from '@mui/material';
 import { JSX, useEffect, useState } from 'react';
 
@@ -14,11 +12,11 @@ import OurGoals from '~/shared/components/about-us/our-goals/OurGoals';
 import OurMission from '~/shared/components/about-us/our-mission/OurMission';
 import WhatWeDo from '~/shared/components/about-us/what-we-do/WhatWeDo';
 import { Header } from '~/shared/components/header/Header';
-import { SortableBoard } from '~/shared/components/sortable-board/SortableBoard';
-import { SortableContainer } from '~/shared/components/sortable-container/SortableContainer';
 import { SortableItemWrapper } from '~/shared/components/sortable-item-wrapper/SortableItemWrapper';
+import { SortableList } from '~/shared/components/sortable-list/SortableList';
 import { usePageEditor } from '~/shared/hooks/use-page-editor/usePageEditor';
 import { useSavePageBlocks } from '~/shared/hooks/use-save-page/UseSavePage';
+import { useSortableDragEnd } from '~/shared/hooks/use-sortable-drag-end/useSortableDragEnd';
 import { useStore } from '~/store';
 
 
@@ -46,17 +44,9 @@ export default function Page() {
     'intro', 'foundation', 'mission', 'goals', 'office', 'what-we-do', 'founders'
   ]);
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      setBlocksOrder((currentBlocksOrder) => {
-        const oldIndex = currentBlocksOrder.indexOf(active.id as string);
-        const newIndex = currentBlocksOrder.indexOf(over.id as string);
-
-        return arrayMove(currentBlocksOrder, oldIndex, newIndex);
-      });
-    }
-  };
+  const { handleDragEnd } = useSortableDragEnd(blocksOrder, (reordered) => {
+    setBlocksOrder(reordered);
+  });
 
   useEffect(() => {
     setIsMounted(true);
@@ -76,15 +66,13 @@ export default function Page() {
         isSaving={editorLoading || saveLoading}
         onLanguageChange={(lang: 'uk' | 'en') => setLocale(lang)}
       />
-      <SortableBoard onDragEnd={handleDragEnd} >
-        <SortableContainer id='1' items={blocksOrder}>
-          {blocksOrder.map((blockId) => (
-            <SortableItemWrapper id={blockId} key={blockId}>
-              {BLOCKS_CONFIG[blockId]}
-            </SortableItemWrapper>
-          ))}
-        </SortableContainer>
-      </SortableBoard>
+      <SortableList onDragEnd={handleDragEnd} id="1" items={blocksOrder}>
+        {blocksOrder.map((blockId) => (
+          <SortableItemWrapper id={blockId} key={blockId}>
+            {BLOCKS_CONFIG[blockId]}
+          </SortableItemWrapper>
+        ))}
+      </SortableList>
     </Box>
   );
 }
