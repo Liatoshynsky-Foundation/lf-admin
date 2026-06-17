@@ -35,7 +35,7 @@ export const Query = {
     const pages = await repo.findPages(category);
 
     if (!pages || pages.length === 0) {
-      throw new GraphQLError('Page not found', { extensions: { code: 'NOT_FOUND' } });
+      throw new GraphQLError('Pages not found', { extensions: { code: 'NOT_FOUND' } });
     }
     return pages;
   }
