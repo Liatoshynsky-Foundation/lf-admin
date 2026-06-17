@@ -43,6 +43,10 @@ export interface EditState {
     [pageId: string]: string[]
   }
 
+  originalBlocksOrder: {
+    [pageId: string]: string[]
+  }
+
   locale: 'uk' | 'en';
   setLocale: (locale: 'uk' | 'en') => void;
   setField: <P extends string, K extends keyof BlocksMap, F extends keyof BlocksMap[K]>(

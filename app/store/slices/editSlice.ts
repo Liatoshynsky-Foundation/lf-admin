@@ -21,10 +21,13 @@ const resolveIsTmp = (field: string, value: unknown): boolean | undefined => {
 export const createEditSlice: StateCreator<EditState> = (set, get) => ({
   isChanged: false,
   isInitialized: false,
+
   blocks: {},
-  blocksOrder: {},
-  locale: 'uk',
   originalBlocks: {},
+
+  blocksOrder: {},
+  originalBlocksOrder: {},
+  locale: 'uk',
 
   setField: <K extends keyof BlocksMap, F extends keyof BlocksMap[K]>(
     pageId: string,
@@ -103,6 +106,7 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
         }
       },
       blocksOrder: {
+        ...get().blocksOrder,
         [pageId]: blocksOrder
       },
       isChanged: isInit ? get().isChanged : true,
@@ -113,17 +117,22 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
         ...get().originalBlocks,
         [pageId]: clone(blocks)
       };
+      nextState.originalBlocksOrder = {
+        ...get().originalBlocksOrder,
+        [pageId]: [...blocksOrder]
+      };
     }
     set(nextState as EditState);
   },
 
   setBlocksOrder: (pageId: string, blocksOrder: string[]) => {
-    const nextState: Partial<EditState> = {
+    set({
       blocksOrder: {
+        ...get().blocksOrder,
         [pageId]: blocksOrder
       },
-    };
-    set(nextState as EditState);
+      isChanged: true
+    });
   },
 
   saveAsDraft: (_pageId: string) => {
@@ -132,10 +141,15 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
 
   discardChanges: (pageId: string) => {
     const original = get().originalBlocks[pageId] || {};
+    const originalOrder = get().originalBlocksOrder[pageId] || [];
     set({
       blocks: {
         ...get().blocks,
         [pageId]: clone(original)
+      },
+      blocksOrder: {
+        ...get().blocksOrder,
+        [pageId]: [...originalOrder]
       },
       isChanged: false
     });
