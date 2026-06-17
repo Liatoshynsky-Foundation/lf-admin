@@ -8,8 +8,6 @@ import { PageCategories, PageStatus } from '~/types/enums/common.enums';
 export const DEFAULT_COVER_IMAGE = {
   src: '/images/image.jpg',
   alt: { uk: 'Зображення', en: 'Image' },
-  caption: { uk: '', en: '' },
-  isTmp: false
 };
 
 jest.mock('../../db/connect', () => ({
