@@ -18,6 +18,7 @@ import { usePageEditor } from '~/shared/hooks/use-page-editor/usePageEditor';
 import { useSavePageBlocks } from '~/shared/hooks/use-save-page/UseSavePage';
 import { useSortableDragEnd } from '~/shared/hooks/use-sortable-drag-end/useSortableDragEnd';
 import { useStore } from '~/store';
+import { useGetPageQuery } from '~/types/graphql/generated/graphql';
 
 
 const BLOCKS_CONFIG: Record<string, JSX.Element> = {
@@ -37,23 +38,34 @@ export default function Page() {
   const setLocale = useStore((s) => s.setLocale);
   const discardChanges = useStore((s) => s.discardChanges);
 
+  const { data, loading: queryLoading } = useGetPageQuery({
+    variables: { slug: pageSlug }
+  });
+
+  const setPageData = useStore((state) => state.setPageData);
+
+  useEffect(() => {
+    if (data?.pageBlocks) {
+      setPageData(pageSlug, data.pageBlocks.blocks, data.pageBlocks.blocksOrder, true);
+    }
+  }, [data, setPageData, pageSlug]);
+
+
   const { preview, loading: editorLoading } = usePageEditor(pageSlug);
   const { save, loading: saveLoading } = useSavePageBlocks(pageSlug);
-
-  const [blocksOrder, setBlocksOrder] = useState([
-    'intro', 'foundation', 'mission', 'goals', 'office', 'what-we-do', 'founders'
-  ]);
+  const blocksOrder = useStore((s) => s.blocksOrder[pageSlug]);
+  const setBlocksOrder = useStore((s) => s.setBlocksOrder);
 
   const { handleDragEnd } = useSortableDragEnd(blocksOrder, (reordered) => {
-    setBlocksOrder(reordered);
+    setBlocksOrder(pageSlug, reordered);
   });
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  if (!isMounted) {
-    return null; 
+  if (!isMounted || queryLoading) {
+    return null;
   }
 
   return (
@@ -66,13 +78,15 @@ export default function Page() {
         isSaving={editorLoading || saveLoading}
         onLanguageChange={(lang: 'uk' | 'en') => setLocale(lang)}
       />
-      <SortableList onDragEnd={handleDragEnd} id="1" items={blocksOrder}>
-        {blocksOrder.map((blockId) => (
-          <SortableItemWrapper id={blockId} key={blockId}>
-            {BLOCKS_CONFIG[blockId]}
-          </SortableItemWrapper>
-        ))}
-      </SortableList>
+      {blocksOrder && blocksOrder.length > 0 && (
+        <SortableList onDragEnd={handleDragEnd} id="1" items={blocksOrder}>
+          {blocksOrder.map((blockId) => (
+            <SortableItemWrapper id={blockId} key={blockId}>
+              {BLOCKS_CONFIG[blockId]}
+            </SortableItemWrapper>
+          ))}
+        </SortableList>
+      )}
     </Box>
   );
 }

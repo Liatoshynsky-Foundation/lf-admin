@@ -22,6 +22,7 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
   isChanged: false,
   isInitialized: false,
   blocks: {},
+  blocksOrder: {},
   locale: 'uk',
   originalBlocks: {},
 
@@ -91,7 +92,7 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
     });
   },
 
-  setPageData: <T extends Record<string, BlockData>>(pageId: string, blocks: T, isInit = false) => {
+  setPageData: <T extends Record<string, BlockData>>(pageId: string, blocks: T, blocksOrder: string[], isInit = false) => {
     const prevPageBlocks = get().blocks[pageId] || {};
     const nextState: Partial<EditState> = {
       blocks: {
@@ -100,6 +101,9 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
           ...prevPageBlocks,
           ...blocks
         }
+      },
+      blocksOrder: {
+        [pageId]: blocksOrder
       },
       isChanged: isInit ? get().isChanged : true,
       isInitialized: isInit ? true : get().isInitialized
@@ -110,6 +114,15 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
         [pageId]: clone(blocks)
       };
     }
+    set(nextState as EditState);
+  },
+
+  setBlocksOrder: (pageId: string, blocksOrder: string[]) => {
+    const nextState: Partial<EditState> = {
+      blocksOrder: {
+        [pageId]: blocksOrder
+      },
+    };
     set(nextState as EditState);
   },
 

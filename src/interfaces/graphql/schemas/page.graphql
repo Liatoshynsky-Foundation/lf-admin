@@ -29,11 +29,13 @@ input UpdatePageBlocksInput {
 input UpsertPageDraftInput {
   slug: String!
   blocks: JSON!
+  blocksOrder: [String!]!
 }
 
 input PublishPageInput {
   slug: String!
   blocks: JSON
+  blocksOrder: [String!]!
 }
 
 extend type Mutation {

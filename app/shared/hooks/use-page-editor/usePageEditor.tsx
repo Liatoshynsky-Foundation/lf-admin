@@ -26,11 +26,12 @@ export const usePageEditor = (slug: string) => {
 
   const preview = async () => {
     const blocks = useStore.getState().blocks[slug];
+    const blocksOrder = useStore.getState().blocksOrder[slug];
     if (!blocks) throw new Error('No page blocks found');
 
     const response = await safeMutate<UpsertPageDraftMutation, UpsertPageDraftMutationVariables>(
       upsertDraft,
-      { input: { slug, blocks } },
+      { input: { slug, blocks, blocksOrder } },
       'Network error while creating draft',
       'Failed to create draft'
     );
@@ -44,6 +45,7 @@ export const usePageEditor = (slug: string) => {
   const publish = async () => {
     const state = useStore.getState();
     const current = state.blocks[slug];
+    const currentBlocksOrder = state.blocksOrder[slug];
     const baseline = state.originalBlocks?.[slug];
 
     if (!current) throw new Error('No page blocks found');
@@ -51,7 +53,7 @@ export const usePageEditor = (slug: string) => {
 
     const response = await safeMutate<PublishPageMutation, PublishPageMutationVariables>(
       publishMutate,
-      { input: { slug, blocks: current } },
+      { input: { slug, blocks: current, blocksOrder: currentBlocksOrder } },
       'Network error while publishing',
       'Failed to publish page'
     );

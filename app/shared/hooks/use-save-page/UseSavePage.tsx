@@ -24,6 +24,7 @@ export const useSavePageBlocks = (slug: string) => {
   const save = async () => {
     const state = useStore.getState();
     const current = state.blocks[slug];
+    const currentBlocksOrder = state.blocksOrder[slug];
     const baseline = state.originalBlocks?.[slug];
 
     if (current == null) throw new Error('No page blocks found');
@@ -31,14 +32,14 @@ export const useSavePageBlocks = (slug: string) => {
 
     await safeMutate<UpsertPageDraftMutation, UpsertPageDraftMutationVariables>(
       upsertDraft,
-      { input: { slug, blocks: current } },
+      { input: { slug, blocks: current, blocksOrder:currentBlocksOrder } },
       'Network error while saving draft',
       'Failed to save draft'
     );
 
     const response = await safeMutate<PublishPageMutation, PublishPageMutationVariables>(
       publishMutate,
-      { input: { slug, blocks: current } },
+      { input: { slug, blocks: current, blocksOrder:currentBlocksOrder } },
       'Network error while publishing',
       'Failed to publish page'
     );
