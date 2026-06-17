@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, userEvent, within } from '@storybook/test';
+import { screen } from '@testing-library/react';
 import { graphql, HttpResponse } from 'msw';
 
 import { withMswHandlers } from '../../.storybook/msw';
@@ -19,8 +20,8 @@ type Story = StoryObj<typeof meta>;
 
 async function submitEmail(canvasElement: HTMLElement, email: string) {
   const canvas = within(canvasElement);
-  await userEvent.type(await canvas.findByLabelText(/Електронна адреса/i), email);
-  await userEvent.click(await canvas.findByRole('button', { name: /Відновити пароль/i }));
+  await userEvent.type(await canvas.findByLabelText(/Електронна пошта/i), email);
+  await userEvent.click(await canvas.findByRole('button', { name: /Надіслати інструкції/i }));
   return canvas;
 }
 
@@ -51,6 +52,6 @@ export const ServerError: Story = {
   },
   async play({ canvasElement }) {
     await submitEmail(canvasElement, 'admin@example.com');
-    await expect(await within(canvasElement).findByText(/Сталася помилка/i)).toBeInTheDocument();
+    await expect(await screen.findByText(/Сталася помилка/i)).toBeInTheDocument(); // fix: screen замість within
   }
 };

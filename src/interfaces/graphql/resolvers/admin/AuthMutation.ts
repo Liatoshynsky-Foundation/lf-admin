@@ -11,8 +11,10 @@ import {
   JWT_REFRESH_TOKEN_LIFETIME,
   REFRESH_TOKEN_COOKIE_NAME
 } from '~/back-constants/index';
-import { LoginArgs } from '~/back-shared/types/admin/types';
+import { LoginArgs, RequestResetArgs, ResetPasswordArgs } from '~/back-shared/types/admin/types';
 import { GraphQLContext } from '~/back-shared/types/container/types';
+import logger from '~/src/middleware/logger/logger';
+import { sendPasswordResetEmail } from '~/src/shared/utils/emailService/emailService'; // Перевір свій шлях
 
 export const authMutation = {
   login: async (_: unknown, args: LoginArgs, { requestContainer, setCookie }: GraphQLContext) => {
@@ -119,5 +121,50 @@ export const authMutation = {
         extensions: { code: 'UNAUTHENTICATED' }
       });
     }
+  },
+  requestPasswordReset: async (_: unknown, args: RequestResetArgs, context: GraphQLContext) => {
+    const { requestContainer, req } = context;
+    const requestPasswordReset = requestContainer.cradle.requestPasswordResetUseCase;
+
+    const ip = (req?.headers['x-forwarded-for'] as string) || req?.socket?.remoteAddress || 'unknown-ip';
+
+    const resetData = await requestPasswordReset.execute(args.email, ip);
+
+    if (resetData) {
+      const appUrl = process.env.NEXT_PUBLIC_CLIENT_BASE_URL || 'http://localhost:3000';
+      const resetLink = `${appUrl}/reset-password?token=${resetData.token}`;
+
+      try {
+        await sendPasswordResetEmail(resetData.email, resetLink);
+
+        if (logger) {
+          logger.info(`Password reset email successfully sent to ${args.email}`);
+        }
+      } catch (emailError) {
+        if (logger) {
+          logger.error('Failed to send password reset email', {
+            error: emailError instanceof Error ? emailError.message : String(emailError),
+            email: args.email
+          });
+        }
+      }
+    }
+
+    return {
+      __typename: 'SuccessPayload',
+      success: true,
+      message: 'Якщо обліковий запис із цією електронною адресою існує, ми надіслали інструкції для відновлення пароля.'
+    };
+  },
+  resetPassword: async (_: unknown, args: ResetPasswordArgs, { requestContainer }: GraphQLContext) => {
+    const resetPasswordUseCase = requestContainer.cradle.resetPasswordUseCase;
+
+    await resetPasswordUseCase.execute(args.token, args.password);
+
+    return {
+      __typename: 'SuccessPayload',
+      success: true,
+      message: 'Пароль успішно змінено. Увійдіть з новим паролем.'
+    };
   }
 };

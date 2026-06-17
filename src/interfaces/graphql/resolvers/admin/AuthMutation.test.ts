@@ -5,6 +5,17 @@ import { ZodError } from 'zod';
 import { authMutation } from './AuthMutation';
 import { LoginError } from '~/back-constants/apolloCustomErrors/adminErrors';
 import { GraphQLContext } from '~/back-shared/types/container/types';
+import logger from '~/src/middleware/logger/logger';
+import { sendPasswordResetEmail } from '~/src/shared/utils/emailService/emailService';
+
+jest.mock('~/src/shared/utils/emailService/emailService');
+jest.mock('~/src/middleware/logger/logger', () => ({
+  __esModule: true,
+  default: {
+    info: jest.fn(),
+    error: jest.fn()
+  }
+}));
 
 const mockLoginAdmin = { execute: jest.fn() };
 const mockTokenService = { generateTokens: jest.fn(), verifyRefreshToken: jest.fn() };
@@ -14,21 +25,29 @@ const mockRefreshTokenRepo = {
   deleteByJti: jest.fn(),
   deleteAllForAdmin: jest.fn()
 };
+const mockRequestPasswordResetUseCase = { execute: jest.fn() };
+const mockResetPasswordUseCase = { execute: jest.fn() };
 
 const mockRequestContainer = {
   cradle: {
     loginAdmin: mockLoginAdmin,
     createTokenService: mockTokenService,
-    refreshTokenRepository: mockRefreshTokenRepo
+    refreshTokenRepository: mockRefreshTokenRepo,
+    requestPasswordResetUseCase: mockRequestPasswordResetUseCase,
+    resetPasswordUseCase: mockResetPasswordUseCase
   }
 };
 
 const baseMockContext: Partial<GraphQLContext> = {
-  requestContainer: mockRequestContainer as any,
+  requestContainer: mockRequestContainer as unknown as GraphQLContext['requestContainer'],
   setCookie: jest.fn(),
   deleteCookie: jest.fn(),
   refreshTokenFromCookie: undefined,
-  admin: null
+  admin: null,
+  req: {
+    headers: { 'x-forwarded-for': '127.0.0.1' },
+    socket: { remoteAddress: '127.0.0.1' }
+  } as unknown as GraphQLContext['req']
 };
 
 beforeEach(() => {
@@ -173,6 +192,13 @@ describe('GraphQL Mutations', () => {
       expect(result).toEqual({ __typename: 'RefreshTokenPayload', success: true });
     });
 
+    it('should throw GraphQLError if refreshTokenFromCookie is not provided', async () => {
+      const contextWithNoToken = { ...baseMockContext, refreshTokenFromCookie: undefined };
+      await expect(authMutation.refreshToken(null, {}, contextWithNoToken as GraphQLContext)).rejects.toThrow(
+        GraphQLError
+      );
+    });
+
     it('should delete all sessions and throw an error if the JTI is not valid', async () => {
       mockTokenService.verifyRefreshToken.mockReturnValue(oldPayload);
       mockRefreshTokenRepo.exists.mockResolvedValue(false);
@@ -197,6 +223,66 @@ describe('GraphQL Mutations', () => {
 
       await expect(authMutation.refreshToken(null, {}, mockContext as GraphQLContext)).rejects.toThrow(GraphQLError);
       expect(mockContext.deleteCookie).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('requestPasswordReset', () => {
+    const mockArgs = { email: 'admin@example.com' };
+
+    it('should process request, send email, log info and return success payload', async () => {
+      mockRequestPasswordResetUseCase.execute.mockResolvedValue({
+        email: mockArgs.email,
+        token: 'reset-token-123'
+      });
+      (sendPasswordResetEmail as jest.Mock).mockResolvedValue(undefined);
+
+      const result = await authMutation.requestPasswordReset(null, mockArgs, baseMockContext as GraphQLContext);
+
+      expect(mockRequestPasswordResetUseCase.execute).toHaveBeenCalledWith(mockArgs.email, '127.0.0.1');
+      expect(sendPasswordResetEmail).toHaveBeenCalledWith(mockArgs.email, expect.stringContaining('reset-token-123'));
+      expect(logger.info).toHaveBeenCalled();
+
+      expect(result).toEqual({
+        __typename: 'SuccessPayload',
+        success: true,
+        message:
+          'Якщо обліковий запис із цією електронною адресою існує, ми надіслали інструкції для відновлення пароля.'
+      });
+    });
+
+    it('should return success payload even if email sending fails, and log the error', async () => {
+      mockRequestPasswordResetUseCase.execute.mockResolvedValue({
+        email: mockArgs.email,
+        token: 'reset-token-123'
+      });
+
+      const smtpError = new Error('SMTP connection failed');
+      (sendPasswordResetEmail as jest.Mock).mockRejectedValue(smtpError);
+
+      const result = await authMutation.requestPasswordReset(null, mockArgs, baseMockContext as GraphQLContext);
+
+      expect(result.success).toBe(true);
+      expect(logger.error).toHaveBeenCalledWith(
+        'Failed to send password reset email',
+        expect.objectContaining({ email: mockArgs.email })
+      );
+    });
+  });
+
+  describe('resetPassword', () => {
+    const mockArgs = { token: 'valid-token', password: 'NewPassword123!' };
+
+    it('should successfully reset password and return success payload', async () => {
+      mockResetPasswordUseCase.execute.mockResolvedValue(true);
+
+      const result = await authMutation.resetPassword(null, mockArgs, baseMockContext as GraphQLContext);
+
+      expect(mockResetPasswordUseCase.execute).toHaveBeenCalledWith(mockArgs.token, mockArgs.password);
+      expect(result).toEqual({
+        __typename: 'SuccessPayload',
+        success: true,
+        message: 'Пароль успішно змінено. Увійдіть з новим паролем.'
+      });
     });
   });
 });
