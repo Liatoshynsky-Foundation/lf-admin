@@ -1,3 +1,5 @@
+import { Box } from '@mui/material';
+
 import Badge from '~/shared/components/badge/Badge';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
@@ -6,15 +8,15 @@ type StatusWithDateStatus = (typeof BaseContentStatuses)[keyof typeof BaseConten
 
 type StatusWithDateProps = Readonly<{
   status: StatusWithDateStatus;
-  createdAt?: string;
-  updatedAt?: string;
-  publishedAt?: string;
-  dividerColor: string;
 }>;
 
 export function StatusWithDate({ status }: StatusWithDateProps) {
   const normalizedStatus: StatusChipStatus =
     status === BaseContentStatuses.Draft ? BaseContentStatuses.Draft : BaseContentStatuses.Published;
 
-  return <Badge variant={normalizedStatus} />;
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', p: '10px 16px' }}>
+      <Badge variant={normalizedStatus} />
+    </Box>
+  );
 }

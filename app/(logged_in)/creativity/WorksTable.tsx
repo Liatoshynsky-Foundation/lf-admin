@@ -5,9 +5,9 @@ import { ChevronRight, MoreVertical } from 'lucide-react';
 import Link from 'next/link';
 import { useRef, useState } from 'react';
 
-import { StatusWithDate } from './components/StatusWithDate';
 import { type WorkStatus } from './works.mock';
 import { getContextMenuDropdownItem, getGroupedWorkRowSx, styles, TABLE_DIVIDER_COLOR } from './WorksTable.styles';
+import { COLUMNS, GROUP_MENU_ITEMS, WORK_MENU_ITEMS } from './WorksTableConent';
 import { WORKS_BASE_PATH } from '~/constants/creativity';
 import PencilIcon from '~/public/icons/pencil.svg';
 import DropdownMenu from '~/shared/components/dropdown-menu/DropdownMenu';
@@ -53,24 +53,6 @@ type ColumnConfig = {
   renderWork: (data: TableGroupRowData | TableIndividualWorkData) => React.ReactNode;
   renderSub?: (work: { id: string; title: string; year: string }) => React.ReactNode;
 };
-
-const GROUP_MENU_ITEMS = [
-  { id: 'edit', label: 'Редагувати' },
-  { id: 'publish', label: 'Опублікувати' },
-  { id: 'unpublish', label: 'Зняти з публікації' },
-  { id: 'ungroup', label: 'Розгрупувати' },
-  { id: 'seo', label: 'SEO налаштування' },
-  { id: 'share', label: 'Поширити' },
-  { id: 'delete', label: 'Видалити', danger: true }
-] as const;
-
-const WORK_MENU_ITEMS = [
-  { id: 'upload_audio', label: 'Завантажити аудіо' },
-  { id: 'upload_pdf', label: 'Завантажити PDF' },
-  { id: 'seo', label: 'SEO налаштування' },
-  { id: 'share', label: 'Поширити' },
-  { id: 'delete', label: 'Видалити', danger: true }
-] as const;
 
 function useDropdownState() {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
@@ -171,12 +153,17 @@ function GroupedRow({
 
             const cellStyle = {
               minWidth: 0,
-              ...(col.hasRightDivider ? { borderRight: `1px solid ${TABLE_DIVIDER_COLOR}`, pr: '10px' } : {}),
-              ...(col.id === 'status' ? { display: 'flex', justifyContent: 'center', width: '100%' } : {})
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              pr: col.hasRightDivider ? '10px' : 0,
+              borderRight: col.hasRightDivider ? `1px solid ${TABLE_DIVIDER_COLOR}` : 'none',
+              ...(col.id === 'status' ? { justifyContent: 'center', width: '100%' } : { justifyContent: 'flex-start' })
             };
 
             const textStyle = {
               ...(col.id === 'title' ? styles.mainRowText : styles.metaText),
+              width: '100%',
               ...(col.id === 'status' ? { textAlign: 'center' } : { textAlign: 'left' })
             };
 
@@ -207,17 +194,44 @@ function GroupedRow({
               <Box sx={styles.markerColumn} />
 
               {columns.map((col) => {
+                if (col.id === 'opus') {
+                  return (
+                    <Box
+                      key={col.id}
+                      sx={{
+                        height: '100%',
+                        borderRight: 'none'
+                      }}
+                    />
+                  );
+                }
+
                 const content = col.renderSub ? col.renderSub(work) : null;
+
+                const hasContent = content !== null && content !== '';
 
                 const cellStyle = {
                   minWidth: 0,
-                  ...(col.id === 'status' ? { display: 'flex', justifyContent: 'center', width: '100%' } : {})
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  pr: col.hasRightDivider && hasContent ? '10px' : 0,
+                  borderRight: col.hasRightDivider && hasContent ? `1px solid ${TABLE_DIVIDER_COLOR}` : 'none',
+                  ...(col.id === 'status'
+                    ? { justifyContent: 'center', width: '100%' }
+                    : { justifyContent: 'flex-start' })
                 };
 
                 return (
                   <Box key={col.id} sx={cellStyle}>
                     {typeof content === 'string' ? (
-                      <Typography sx={{ ...styles.subRowText, textAlign: col.id === 'status' ? 'center' : 'left' }}>
+                      <Typography
+                        sx={{
+                          ...styles.subRowText,
+                          width: '100%',
+                          textAlign: col.id === 'status' ? 'center' : 'left'
+                        }}
+                      >
                         {content}
                       </Typography>
                     ) : (
@@ -258,14 +272,18 @@ function IndividualWorkRow({
 
         const cellStyle = {
           minWidth: 0,
-          // Об'єднуємо клітинку Опуси (яку пропустили) та Назва разом за допомогою span 2
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          pr: col.hasRightDivider ? '10px' : 0,
+          borderRight: col.hasRightDivider ? `1px solid ${TABLE_DIVIDER_COLOR}` : 'none',
           ...(col.id === 'title' ? { gridColumn: 'span 2' } : {}),
-          ...(col.hasRightDivider ? { borderRight: `1px solid ${TABLE_DIVIDER_COLOR}`, pr: '10px' } : {}),
-          ...(col.id === 'status' ? { display: 'flex', justifyContent: 'center', width: '100%' } : {})
+          ...(col.id === 'status' ? { justifyContent: 'center', width: '100%' } : { justifyContent: 'flex-start' })
         };
 
         const textStyle = {
           ...(col.id === 'title' ? styles.mainRowText : styles.metaText),
+          width: '100%',
           ...(col.id === 'status' ? { textAlign: 'center' } : { textAlign: 'left' })
         };
 
@@ -292,67 +310,6 @@ export function WorksTable({
   showUngrouped,
   showIndividualWorks
 }: WorksTableProps) {
-  const COLUMNS: readonly ColumnConfig[] = [
-    {
-      id: 'opus',
-      headerLabel: 'Опуси',
-      width: '88px',
-      hasRightDivider: true,
-      renderWork: (data) => ('numberLabel' in data ? data.numberLabel : ''),
-      renderSub: () => null
-    },
-    {
-      id: 'title',
-      headerLabel: 'Назва',
-      width: 'minmax(220px, 1fr)',
-      renderWork: (data) => data.title,
-      renderSub: (work) => work.title
-    },
-    {
-      id: 'genre',
-      headerLabel: 'Жанр',
-      width: '216px',
-      renderWork: (data) => ('genre' in data ? data.genre : ''),
-      renderSub: () => null
-    },
-    {
-      id: 'years',
-      headerLabel: 'Роки',
-      width: '96px',
-      hasRightDivider: true,
-      renderWork: (data) => {
-        if ('startDate' in data) {
-          return data.endDate && data.endDate !== data.startDate
-            ? `${data.startDate} - ${data.endDate}`
-            : data.startDate;
-        }
-        return data.year;
-      },
-      renderSub: () => null
-    },
-    {
-      id: 'status',
-      headerLabel: 'Статус',
-      width: '48px',
-      hasRightDivider: true,
-      renderWork: (data) => {
-        if ('status' in data) {
-          return (
-            <StatusWithDate
-              status={data.status}
-              createdAt={'createdAt' in data ? data.createdAt : data.updatedAt}
-              updatedAt={data.updatedAt}
-              publishedAt={'publishedAt' in data ? data.publishedAt : undefined}
-              dividerColor={TABLE_DIVIDER_COLOR}
-            />
-          );
-        }
-        return null;
-      },
-      renderSub: () => null
-    }
-  ];
-
   const gridTemplate = COLUMNS.map((c) => c.width).join(' ');
 
   return (
@@ -362,6 +319,7 @@ export function WorksTable({
         {COLUMNS.map((col) => (
           <Typography
             key={col.id}
+            className={col.id === 'status' ? 'status-header' : ''}
             sx={{
               ...styles.tableHeaderText,
               textAlign: col.id === 'status' ? 'center' : 'left',

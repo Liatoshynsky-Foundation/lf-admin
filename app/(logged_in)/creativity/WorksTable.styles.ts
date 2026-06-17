@@ -4,9 +4,9 @@ import { alpha } from '@mui/material/styles';
 import { filterSelectStyles } from '~/shared/components/selector/FilterSelect.styles';
 import { mainHexPalette as colors } from '~/shared/theme/colors';
 
-export const TABLE_DIVIDER_COLOR = '#CDD4DE';
-const HORIZONTAL_ROW_DIVIDER_COLOR = '#D9DCE866';
-const ACTIONS_COLUMN_WIDTH = '88px';
+export const TABLE_DIVIDER_COLOR = '#E6E7ED';
+const HORIZONTAL_ROW_DIVIDER_COLOR = '#E6E7ED';
+const ACTIONS_COLUMN_WIDTH = '80px';
 
 const SINGLE_LINE_ELLIPSIS = {
   whiteSpace: 'nowrap',
@@ -37,13 +37,15 @@ export const styles = {
     alignItems: 'center',
     justifyContent: 'flex-end',
     width: ACTIONS_COLUMN_WIDTH,
+    gap: '0px',
+    flexShrink: 0,
   },
 
   gridRowBase: (gridTemplate: string): SxProps<Theme> => ({
     display: 'grid',
     gridTemplateColumns: `1px ${gridTemplate} ${ACTIONS_COLUMN_WIDTH}`,
     columnGap: '8px',
-    alignItems: 'center',
+    alignItems: 'stretch',
     minWidth: 0,
   }),
 
@@ -51,7 +53,7 @@ export const styles = {
     display: 'grid',
     gridTemplateColumns: `1px ${gridTemplate} ${ACTIONS_COLUMN_WIDTH}`,
     columnGap: '8px',
-    alignItems: 'center',
+    alignItems: 'stretch',
     borderBottom: `1px solid ${HORIZONTAL_ROW_DIVIDER_COLOR}`,
     minWidth: 0,
     py: '12px',
@@ -67,6 +69,13 @@ export const styles = {
       py: '8px',
       borderBottom: `1px solid ${HORIZONTAL_ROW_DIVIDER_COLOR}`,
       minWidth: 0,
+      '& .status-header': {
+        overflow: 'visible',
+        textOverflow: 'clip',
+        whiteSpace: 'nowrap',
+        width: 'auto',
+        display: 'inline-block',
+      }
     };
   },
 
@@ -97,18 +106,20 @@ export const styles = {
 
   accordion: {
     border: 'none',
+    borderRadius: '0px !important',
     borderBottom: `1px solid ${HORIZONTAL_ROW_DIVIDER_COLOR}`,
     backgroundColor: 'transparent',
-    mb: '4px',
+    boxShadow: 'none',
     overflow: 'hidden',
     '&:before': { display: 'none' },
-    '&.Mui-expanded': { mb: '4px' },
   },
   accordionSummary: {
     px: 0,
+    border: 'none',
+    boxShadow: 'none',
     minHeight: '56px',
     flexDirection: 'row-reverse',
-    borderBottom: `1px solid ${HORIZONTAL_ROW_DIVIDER_COLOR}`,
+  
     '& .MuiAccordionSummary-expandIconWrapper': {
       width: '26px',
       height: '26px',
@@ -125,6 +136,9 @@ export const styles = {
       minWidth: 0,
       width: '100%',
     },
+    '&.Mui-expanded': {
+      borderBottom: `1px solid ${HORIZONTAL_ROW_DIVIDER_COLOR}`,
+    },
     '&.Mui-expanded .MuiAccordionSummary-expandIconWrapper': {
       transform: 'rotate(90deg)',
     },
@@ -140,30 +154,34 @@ export const styles = {
   },
   contentMenuButton: {
     color: '#190D03',
-    width: '32px',
-    height: '32px',
+    width: '40px',
+    height: '40px',
     p: 0,
     borderRadius: '50%',
     '&:hover': {
       bgcolor: 'rgba(25,13,3,0.08)',
     },
   },
-  editActionWrapper: (theme: Theme) => ({
+  editActionWrapper: () => ({
     width: '40px',
     height: '40px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    mr: theme.spacing(-1.5),
+    mr: 0,
     flexShrink: 0,
   }),
+  
   editActionButton: {
     color: colors.black,
-    width: '32px',
-    height: '32px',
+    width: '40px',
+    height: '40px',
     p: 0,
     borderRadius: '50%',
-    '& svg': { width: '18px', height: '18px' },
+    '& svg': { 
+      width: '20px', 
+      height: '20px' 
+    },
     '&:hover': {
       bgcolor: alpha(colors.black, 0.08),
     },
@@ -182,7 +200,7 @@ export const styles = {
 export const getGroupedWorkRowSx = (gridTemplate: string, isLast: boolean): SxProps<Theme> => ({
   display: 'grid',
   gridTemplateColumns: `1px ${gridTemplate} ${ACTIONS_COLUMN_WIDTH}`,
-  alignItems: 'center',
+  alignItems: 'stretch',
   borderBottom: isLast ? 'none' : `1px solid ${HORIZONTAL_ROW_DIVIDER_COLOR}`,
   minWidth: 0,
   columnGap: '8px',
