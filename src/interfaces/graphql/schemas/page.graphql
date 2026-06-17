@@ -5,14 +5,18 @@ type LocalizedString {
   en: String
 }
 
+type PageCoverImage {
+  src: String!
+  alt: LocalizedString!
+}
+
 type Page {
   id: ID!
   slug: String!
   title: LocalizedString!
   status: String!
-  pageType: String!
   category: String!
-  coverImage: LocalizedImage!
+  coverImage: PageCoverImage!
   blocks: JSON!
   createdAt: String!
   updatedAt: String!

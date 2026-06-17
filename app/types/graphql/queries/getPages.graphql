@@ -7,7 +7,6 @@ query GetPages($category: String) {
       en
     }
     status
-    pageType
     category
     coverImage {
       src

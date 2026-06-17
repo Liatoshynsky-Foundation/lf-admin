@@ -3,8 +3,6 @@ import { Db } from 'mongodb';
 const DEFAULT_COVER_IMAGE = {
   src: '/images/image.jpg',
   alt: { uk: 'Зображення', en: 'Image' },
-  caption: { uk: '', en: '' },
-  isTmp: false
 };
 
 const MIGRATION_CONFIG = {
