@@ -6,46 +6,12 @@ import { mainHexPalette as colors } from '~/shared/theme/colors';
 
 export const TABLE_DIVIDER_COLOR = '#CDD4DE';
 const HORIZONTAL_ROW_DIVIDER_COLOR = '#D9DCE866';
-const NUMBER_COLUMN_WIDTH = '48px';
-const GROUP_GENRE_COLUMN_WIDTH = '220px';
-const GROUP_YEARS_COLUMN_WIDTH = '96px';
-const STATUS_COLUMN_WIDTH = '310px';
 const ACTIONS_COLUMN_WIDTH = '88px';
 
 const SINGLE_LINE_ELLIPSIS = {
   whiteSpace: 'nowrap',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
-} satisfies SxProps<Theme>;
-
-const WORK_ROW_GRID_SX = {
-  display: 'grid',
-  gridTemplateColumns: `1px minmax(220px, 1fr) ${GROUP_GENRE_COLUMN_WIDTH} ${GROUP_YEARS_COLUMN_WIDTH} ${STATUS_COLUMN_WIDTH} ${ACTIONS_COLUMN_WIDTH}`,
-  alignItems: 'center',
-  borderBottom: `1px solid ${HORIZONTAL_ROW_DIVIDER_COLOR}`,
-  minWidth: 0,
-} satisfies SxProps<Theme>;
-
-const META_TEXT_SX = {
-  color: 'text.secondary',
-  fontSize: '14px',
-  minWidth: 0,
-  ...SINGLE_LINE_ELLIPSIS,
-} satisfies SxProps<Theme>;
-
-const TITLE_TEXT_SX = {
-  fontSize: '15px',
-  minWidth: 0,
-  ...SINGLE_LINE_ELLIPSIS,
-} satisfies SxProps<Theme>;
-
-const TABLE_HEADER_TEXT_SX = {
-  fontSize: '16px',
-  lineHeight: '22px',
-  fontWeight: 700,
-  color: '#63666E',
-  fontStyle: 'normal',
-  ...SINGLE_LINE_ELLIPSIS,
 } satisfies SxProps<Theme>;
 
 const MENU_ITEM_BASE_SX = {
@@ -57,88 +23,78 @@ const MENU_ITEM_BASE_SX = {
 } satisfies SxProps<Theme>;
 
 export const styles = {
-  contextMenuWrapper: {
-    width: '40px',
-    height: '40px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
+  worksListContainer: {
+    pt: '12px',
   },
-  contentMenuButton: {
-    color: '#190D03',
-    width: '32px',
-    height: '32px',
-    p: 0,
-    borderRadius: '50%',
-    '&:hover': {
-      bgcolor: 'rgba(25,13,3,0.08)',
-    },
+  markerColumn: {
+    width: '1px',
+  },
+  actionsSpacer: {
+    width: ACTIONS_COLUMN_WIDTH,
   },
   rowActionsCell: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'flex-end',
+    width: ACTIONS_COLUMN_WIDTH,
   },
-  individualWorkRow: {
-    ...WORK_ROW_GRID_SX,
-    columnGap: '8px',
-    py: '12px',
-  },
-  markerColumn: {
-    width: '1px',
-  },
-  genreSpacer: {
-    width: GROUP_GENRE_COLUMN_WIDTH,
-  },
-  workRowTitle: {
-    fontSize: '14px',
-    fontWeight: 500,
-    minWidth: 0,
-    flex: 1,
-    ...SINGLE_LINE_ELLIPSIS,
-  },
-  yearText: {
-    ...META_TEXT_SX,
-    fontWeight: 500,
-    width: GROUP_YEARS_COLUMN_WIDTH,
-    textAlign: 'left',
-  },
-  tableHeaderText: TABLE_HEADER_TEXT_SX,
-  menuList: {
-    px: '8px',
-    py: '4px',
-  },
-  editActionWrapper: (theme: Theme) => ({
-    width: '40px',
-    height: '40px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    mr: theme.spacing(-1.5),
-    flexShrink: 0,
-  }),
-  editActionButton: {
-    color: colors.black,
-    width: '32px',
-    height: '32px',
-    p: 0,
-    borderRadius: '50%',
-    '& svg': { width: '18px', height: '18px' },
-    '&:hover': {
-      bgcolor: alpha(colors.black, 0.08),
-    },
-  },
-  tableHeader: {
+
+  gridRowBase: (gridTemplate: string): SxProps<Theme> => ({
     display: 'grid',
-    gridTemplateColumns: `1px calc(${NUMBER_COLUMN_WIDTH} + 26px) minmax(220px, 1fr) ${GROUP_GENRE_COLUMN_WIDTH} ${GROUP_YEARS_COLUMN_WIDTH} ${STATUS_COLUMN_WIDTH} ${ACTIONS_COLUMN_WIDTH}`,
+    gridTemplateColumns: `1px ${gridTemplate} ${ACTIONS_COLUMN_WIDTH}`,
     columnGap: '8px',
     alignItems: 'center',
-    px: 0,
-    py: '8px',
+    minWidth: 0,
+  }),
+
+  individualWorkRow: (gridTemplate: string): SxProps<Theme> => ({
+    display: 'grid',
+    gridTemplateColumns: `1px ${gridTemplate} ${ACTIONS_COLUMN_WIDTH}`,
+    columnGap: '8px',
+    alignItems: 'center',
     borderBottom: `1px solid ${HORIZONTAL_ROW_DIVIDER_COLOR}`,
     minWidth: 0,
+    py: '12px',
+  }),
+
+  tableHeader: (gridTemplate: string, firstColWidth: string): SxProps<Theme> => {
+    const restTemplates = gridTemplate.substring(gridTemplate.indexOf(' ') + 1);
+    return {
+      display: 'grid',
+      gridTemplateColumns: `1px calc(${firstColWidth} + 26px) ${restTemplates} ${ACTIONS_COLUMN_WIDTH}`,
+      columnGap: '8px',
+      alignItems: 'center',
+      py: '8px',
+      borderBottom: `1px solid ${HORIZONTAL_ROW_DIVIDER_COLOR}`,
+      minWidth: 0,
+    };
   },
+
+  tableHeaderText: {
+    fontSize: '16px',
+    lineHeight: '22px',
+    fontWeight: 700,
+    color: '#63666E',
+    fontStyle: 'normal',
+    ...SINGLE_LINE_ELLIPSIS,
+  },
+
+  mainRowText: {
+    fontSize: '15px',
+    fontWeight: 600,
+    ...SINGLE_LINE_ELLIPSIS,
+  },
+  subRowText: {
+    fontSize: '14px',
+    fontWeight: 500,
+    ...SINGLE_LINE_ELLIPSIS,
+  },
+  metaText: {
+    color: 'text.secondary',
+    fontSize: '14px',
+    ...SINGLE_LINE_ELLIPSIS,
+  },
+
   accordion: {
     border: 'none',
     borderBottom: `1px solid ${HORIZONTAL_ROW_DIVIDER_COLOR}`,
@@ -173,86 +129,59 @@ export const styles = {
       transform: 'rotate(90deg)',
     },
   },
-  accordionSummaryContent: {
-    display: 'grid',
-    gridTemplateColumns: `1px ${NUMBER_COLUMN_WIDTH} minmax(220px, 1fr) ${GROUP_GENRE_COLUMN_WIDTH} ${GROUP_YEARS_COLUMN_WIDTH} ${STATUS_COLUMN_WIDTH} ${ACTIONS_COLUMN_WIDTH}`,
-    columnGap: '8px',
+
+  contextMenuWrapper: {
+    width: '40px',
+    height: '40px',
+    display: 'flex',
     alignItems: 'center',
-    minWidth: 0,
+    justifyContent: 'center',
+    flexShrink: 0,
   },
-  accordionSummaryContentSpacer: {
-    width: '1px',
-    alignSelf: 'stretch',
-    backgroundColor: 'transparent',
+  contentMenuButton: {
+    color: '#190D03',
+    width: '32px',
+    height: '32px',
+    p: 0,
+    borderRadius: '50%',
+    '&:hover': {
+      bgcolor: 'rgba(25,13,3,0.08)',
+    },
   },
-  accordionDetails: {
-    pl: 0,
-    pr: 0,
-    pt: 0,
-    pb: 0,
-  },
-  opusNumberTypography: {
-    fontWeight: 600,
-    fontStyle: 'italic',
-    fontSize: '14px',
-    color: 'text.secondary',
-    width: NUMBER_COLUMN_WIDTH,
-    borderRight: `1px solid ${TABLE_DIVIDER_COLOR}`,
-    pr: '10px',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
+  editActionWrapper: (theme: Theme) => ({
+    width: '40px',
+    height: '40px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    mr: theme.spacing(-1.5),
+    flexShrink: 0,
+  }),
+  editActionButton: {
+    color: colors.black,
+    width: '32px',
+    height: '32px',
+    p: 0,
+    borderRadius: '50%',
+    '& svg': { width: '18px', height: '18px' },
+    '&:hover': {
+      bgcolor: alpha(colors.black, 0.08),
+    },
   },
   contextMenuDropdown: {
     '& .MuiPaper-root': {
       width: '200px',
     },
   },
-  statusSpacer: {
-    width: STATUS_COLUMN_WIDTH,
+  menuList: {
+    px: '8px',
+    py: '4px',
   },
-  tableHeaderFirstText: {
-    ...TABLE_HEADER_TEXT_SX,
-    textAlign: 'left',
-    justifySelf: 'start',
-    width: '100%',
-    pl: 0,
-  },
-  actionsSpacer: {
-    width: ACTIONS_COLUMN_WIDTH,
-  },
-  groupTitleText: {
-    ...TITLE_TEXT_SX,
-    fontWeight: 600,
-  },
-  groupGenreText: {
-    ...META_TEXT_SX,
-    fontWeight: 600,
-    width: GROUP_GENRE_COLUMN_WIDTH,
-  },
-  groupYearsText: {
-    ...META_TEXT_SX,
-    fontWeight: 600,
-    width: GROUP_YEARS_COLUMN_WIDTH,
-    textAlign: 'left',
-  },
-  statusColumnWrapper: {
-    width: STATUS_COLUMN_WIDTH,
-    minWidth: 0,
-  },
-  individualWorkYearText: {
-    ...META_TEXT_SX,
-    width: GROUP_YEARS_COLUMN_WIDTH,
-    textAlign: 'left',
-  },
-  worksListContainer: {
-    pt: '12px',
-  },
-} satisfies Record<string, SxProps<Theme> | ((theme: Theme) => SxProps<Theme>)>;
+};
 
-export const getGroupedWorkRowSx = (isLast: boolean): SxProps<Theme> => ({
+export const getGroupedWorkRowSx = (gridTemplate: string, isLast: boolean): SxProps<Theme> => ({
   display: 'grid',
-  gridTemplateColumns: `1px minmax(220px, 1fr) ${GROUP_GENRE_COLUMN_WIDTH} ${GROUP_YEARS_COLUMN_WIDTH} ${STATUS_COLUMN_WIDTH} ${ACTIONS_COLUMN_WIDTH}`,
+  gridTemplateColumns: `1px ${gridTemplate} ${ACTIONS_COLUMN_WIDTH}`,
   alignItems: 'center',
   borderBottom: isLast ? 'none' : `1px solid ${HORIZONTAL_ROW_DIVIDER_COLOR}`,
   minWidth: 0,

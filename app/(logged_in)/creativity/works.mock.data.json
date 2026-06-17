@@ -23,7 +23,7 @@
     "genre": "Романс, мистецька пісня",
     "language": "uk",
     "yearRange": "1930-1940",
-    "status": "draft",
+    "status": "published",
     "createdAt": "2025-09-09T00:00:00.000Z",
     "updatedAt": "2025-09-11T00:00:00.000Z",
     "works": [
@@ -39,7 +39,7 @@
     "genre": "Романс, мистецька пісня",
     "language": "bilingual",
     "yearRange": "1922",
-    "status": "draft",
+    "status": "published",
     "updatedAt": "2025-09-11T00:00:00.000Z",
     "works": [{ "id": "work-3-1", "title": "№1 «Ноктюрн»", "year": "1922" }]
   },
@@ -82,7 +82,7 @@
     "genre": "Симфонія",
     "language": "uk",
     "yearRange": "1926-1927",
-    "status": "draft",
+    "status": "published",
     "updatedAt": "2025-09-09T00:00:00.000Z",
     "works": [
       { "id": "work-6-1", "title": "I. Прелюдія", "year": "1926" },
@@ -113,7 +113,7 @@
     "genre": "Романс, мистецька пісня",
     "language": "uk",
     "yearRange": "1922",
-    "status": "draft",
+    "status": "published",
     "createdAt": "2025-09-10T00:00:00.000Z",
     "updatedAt": "2025-09-11T00:00:00.000Z",
     "works": [
@@ -129,7 +129,7 @@
     "genre": "Романс, мистецька пісня",
     "language": "bilingual",
     "yearRange": "1922",
-    "status": "draft",
+    "status": "published",
     "updatedAt": "2025-09-11T00:00:00.000Z",
     "works": [
       { "id": "bo-work-3-1", "title": "Пісня №2", "year": "1922" },
@@ -144,7 +144,7 @@
     "genre": "Романс, мистецька пісня",
     "language": "en",
     "yearRange": "1922",
-    "status": "draft",
+    "status": "published",
     "updatedAt": "2025-09-11T00:00:00.000Z",
     "works": [
       { "id": "bo-work-4-1", "title": "Пісня без опусу", "year": "1922" },
@@ -175,7 +175,7 @@
     "genre": "Хор",
     "language": "uk",
     "yearRange": "1934-1938",
-    "status": "draft",
+    "status": "published",
     "updatedAt": "2025-09-14T00:00:00.000Z",
     "works": [
       { "id": "bo-work-6-1", "title": "Ave Maria (без опусу)", "year": "1934" },

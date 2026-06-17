@@ -12,7 +12,6 @@ import { WORKS_BASE_PATH } from '~/constants/creativity';
 import PencilIcon from '~/public/icons/pencil.svg';
 import DropdownMenu from '~/shared/components/dropdown-menu/DropdownMenu';
 
-// ── Types ────────────────────────────────────────────────────────────────────
 export type TableGroupRowData = Readonly<{
   id: string;
   numberLabel: string;
@@ -46,7 +45,15 @@ type WorksTableProps = Readonly<{
   showIndividualWorks: boolean;
 }>;
 
-// ── Menus Configuration ──────────────────────────────────────────────────────
+type ColumnConfig = {
+  id: string;
+  headerLabel: string;
+  width: string;
+  hasRightDivider?: boolean;
+  renderWork: (data: TableGroupRowData | TableIndividualWorkData) => React.ReactNode;
+  renderSub?: (work: { id: string; title: string; year: string }) => React.ReactNode;
+};
+
 const GROUP_MENU_ITEMS = [
   { id: 'edit', label: 'Редагувати' },
   { id: 'publish', label: 'Опублікувати' },
@@ -65,9 +72,6 @@ const WORK_MENU_ITEMS = [
   { id: 'delete', label: 'Видалити', danger: true }
 ] as const;
 
-type ContextMenuItem = { id: string; label: string; danger?: boolean };
-
-// ── Sub-components (State & Row logic) ───────────────────────────────────────
 function useDropdownState() {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -85,14 +89,10 @@ function useDropdownState() {
   return { anchorEl, triggerRef, handleOpen, handleClose };
 }
 
-function DropdownItemsList<T extends { id: string }>({
+function ContextMenu({
   items,
-  renderItem
-}: Readonly<{ items: readonly T[]; renderItem: (item: T) => React.ReactNode }>) {
-  return <Box sx={styles.menuList}>{items.map((item) => renderItem(item))}</Box>;
-}
-
-function ContextMenu({ items, triggerLabel }: Readonly<{ items: readonly ContextMenuItem[]; triggerLabel: string }>) {
+  triggerLabel
+}: Readonly<{ items: readonly { id: string; label: string; danger?: boolean }[]; triggerLabel: string }>) {
   const { anchorEl, triggerRef, handleOpen, handleClose } = useDropdownState();
 
   return (
@@ -120,14 +120,13 @@ function ContextMenu({ items, triggerLabel }: Readonly<{ items: readonly Context
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         menuList={
-          <DropdownItemsList
-            items={items}
-            renderItem={(item) => (
+          <Box sx={styles.menuList}>
+            {items.map((item) => (
               <MenuItem key={item.id} onClick={handleClose} sx={getContextMenuDropdownItem(item.danger)}>
                 {item.label}
               </MenuItem>
-            )}
-          />
+            ))}
+          </Box>
         }
       />
     </>
@@ -150,58 +149,44 @@ function EditAction({ href, label }: Readonly<{ href: string; label: string }>) 
   );
 }
 
-function WorkRowCells({ title, year }: Readonly<{ title: string; year: string }>) {
-  return (
-    <>
-      <Typography sx={styles.workRowTitle}>{title}</Typography>
-      <Box sx={styles.genreSpacer} />
-      <Typography sx={styles.yearText}>{year}</Typography>
-      <Box sx={styles.statusSpacer} />
-      <Box sx={styles.rowActionsCell}>
-        <ContextMenu items={WORK_MENU_ITEMS} triggerLabel={`Дії твору ${title}`} />
-      </Box>
-    </>
-  );
-}
-
-function WorksTableHeader() {
-  return (
-    <Box sx={styles.tableHeader}>
-      <Box sx={styles.markerColumn} />
-      <Typography sx={styles.tableHeaderFirstText}>Опуси</Typography>
-      <Typography sx={styles.tableHeaderText}>Назва</Typography>
-      <Typography sx={styles.tableHeaderText}>Жанр</Typography>
-      <Typography sx={styles.tableHeaderText}>Роки</Typography>
-      <Typography sx={styles.tableHeaderText}>Статус</Typography>
-      <Box sx={styles.actionsSpacer} />
-    </Box>
-  );
-}
-
-function formatGroupYears(startDate: string, endDate?: string): string {
-  if (!endDate || endDate === startDate) return startDate;
-  return `${startDate} - ${endDate}`;
-}
-
-function GroupedRow({ group, defaultExpanded }: Readonly<{ group: TableGroupRowData; defaultExpanded?: boolean }>) {
+function GroupedRow({
+  group,
+  columns,
+  gridTemplate,
+  defaultExpanded
+}: Readonly<{
+  group: TableGroupRowData;
+  columns: readonly ColumnConfig[];
+  gridTemplate: string;
+  defaultExpanded?: boolean;
+}>) {
   return (
     <Accordion defaultExpanded={defaultExpanded} disableGutters elevation={0} sx={styles.accordion}>
       <AccordionSummary expandIcon={<ChevronRight size={18} />} sx={styles.accordionSummary}>
-        <Box sx={styles.accordionSummaryContent}>
-          <Box sx={styles.accordionSummaryContentSpacer} />
-          <Typography sx={styles.opusNumberTypography}>{group.numberLabel}</Typography>
-          <Typography sx={styles.groupTitleText}>{group.title}</Typography>
-          <Typography sx={styles.groupGenreText}>{group.genre}</Typography>
-          <Typography sx={styles.groupYearsText}>{formatGroupYears(group.startDate, group.endDate)}</Typography>
-          <Box sx={styles.statusColumnWrapper}>
-            <StatusWithDate
-              status={group.status}
-              createdAt={group.createdAt}
-              updatedAt={group.updatedAt}
-              publishedAt={group.publishedAt}
-              dividerColor={TABLE_DIVIDER_COLOR}
-            />
-          </Box>
+        <Box sx={styles.gridRowBase(gridTemplate)}>
+          <Box sx={styles.markerColumn} />
+
+          {columns.map((col) => {
+            const content = col.renderWork(group);
+
+            const cellStyle = {
+              minWidth: 0,
+              ...(col.hasRightDivider ? { borderRight: `1px solid ${TABLE_DIVIDER_COLOR}`, pr: '10px' } : {}),
+              ...(col.id === 'status' ? { display: 'flex', justifyContent: 'center', width: '100%' } : {})
+            };
+
+            const textStyle = {
+              ...(col.id === 'title' ? styles.mainRowText : styles.metaText),
+              ...(col.id === 'status' ? { textAlign: 'center' } : { textAlign: 'left' })
+            };
+
+            return (
+              <Box key={col.id} sx={cellStyle}>
+                {typeof content === 'string' ? <Typography sx={textStyle}>{content}</Typography> : content}
+              </Box>
+            );
+          })}
+
           <Box sx={styles.rowActionsCell}>
             <EditAction href={`${WORKS_BASE_PATH}/group/${group.id}/edit`} label={`Редагувати групу ${group.title}`} />
             <ContextMenu items={GROUP_MENU_ITEMS} triggerLabel={`Дії групи ${group.title}`} />
@@ -210,11 +195,41 @@ function GroupedRow({ group, defaultExpanded }: Readonly<{ group: TableGroupRowD
       </AccordionSummary>
 
       {group.works.length > 0 && (
-        <AccordionDetails sx={styles.accordionDetails}>
+        <AccordionDetails sx={{ p: 0 }}>
           {group.works.map((work, index) => (
-            <Box key={work.id} sx={getGroupedWorkRowSx(index === group.works.length - 1)}>
+            <Box
+              key={work.id}
+              sx={{
+                ...getGroupedWorkRowSx(gridTemplate, index === group.works.length - 1),
+                pl: '32px'
+              }}
+            >
               <Box sx={styles.markerColumn} />
-              <WorkRowCells title={work.title} year={work.year} />
+
+              {columns.map((col) => {
+                const content = col.renderSub ? col.renderSub(work) : null;
+
+                const cellStyle = {
+                  minWidth: 0,
+                  ...(col.id === 'status' ? { display: 'flex', justifyContent: 'center', width: '100%' } : {})
+                };
+
+                return (
+                  <Box key={col.id} sx={cellStyle}>
+                    {typeof content === 'string' ? (
+                      <Typography sx={{ ...styles.subRowText, textAlign: col.id === 'status' ? 'center' : 'left' }}>
+                        {content}
+                      </Typography>
+                    ) : (
+                      content
+                    )}
+                  </Box>
+                );
+              })}
+
+              <Box sx={styles.rowActionsCell}>
+                <ContextMenu items={WORK_MENU_ITEMS} triggerLabel={`Дії твору ${work.title}`} />
+              </Box>
             </Box>
           ))}
         </AccordionDetails>
@@ -223,15 +238,46 @@ function GroupedRow({ group, defaultExpanded }: Readonly<{ group: TableGroupRowD
   );
 }
 
-function IndividualWorkRow({ work }: Readonly<{ work: TableIndividualWorkData }>) {
+function IndividualWorkRow({
+  work,
+  columns,
+  gridTemplate
+}: Readonly<{
+  work: TableIndividualWorkData;
+  columns: readonly ColumnConfig[];
+  gridTemplate: string;
+}>) {
   return (
-    <Box sx={styles.individualWorkRow}>
+    <Box sx={styles.individualWorkRow(gridTemplate)}>
       <Box sx={styles.markerColumn} />
-      <Typography sx={styles.workRowTitle}>{work.title}</Typography>
-      <Box sx={styles.genreSpacer} />
-      <Typography sx={styles.individualWorkYearText}>{work.year}</Typography>
-      <Box sx={styles.statusSpacer} />
+
+      {columns.map((col) => {
+        if (col.id === 'opus') return null;
+
+        const content = col.renderWork(work);
+
+        const cellStyle = {
+          minWidth: 0,
+          // Об'єднуємо клітинку Опуси (яку пропустили) та Назва разом за допомогою span 2
+          ...(col.id === 'title' ? { gridColumn: 'span 2' } : {}),
+          ...(col.hasRightDivider ? { borderRight: `1px solid ${TABLE_DIVIDER_COLOR}`, pr: '10px' } : {}),
+          ...(col.id === 'status' ? { display: 'flex', justifyContent: 'center', width: '100%' } : {})
+        };
+
+        const textStyle = {
+          ...(col.id === 'title' ? styles.mainRowText : styles.metaText),
+          ...(col.id === 'status' ? { textAlign: 'center' } : { textAlign: 'left' })
+        };
+
+        return (
+          <Box key={col.id} sx={cellStyle}>
+            {typeof content === 'string' ? <Typography sx={textStyle}>{content}</Typography> : content}
+          </Box>
+        );
+      })}
+
       <Box sx={styles.rowActionsCell}>
+        <EditAction href={`${WORKS_BASE_PATH}/work/${work.id}/edit`} label={`Редагувати твір ${work.title}`} />
         <ContextMenu items={WORK_MENU_ITEMS} triggerLabel={`Дії твору ${work.title}`} />
       </Box>
     </Box>
@@ -246,16 +292,102 @@ export function WorksTable({
   showUngrouped,
   showIndividualWorks
 }: WorksTableProps) {
+  const COLUMNS: readonly ColumnConfig[] = [
+    {
+      id: 'opus',
+      headerLabel: 'Опуси',
+      width: '88px',
+      hasRightDivider: true,
+      renderWork: (data) => ('numberLabel' in data ? data.numberLabel : ''),
+      renderSub: () => null
+    },
+    {
+      id: 'title',
+      headerLabel: 'Назва',
+      width: 'minmax(220px, 1fr)',
+      renderWork: (data) => data.title,
+      renderSub: (work) => work.title
+    },
+    {
+      id: 'genre',
+      headerLabel: 'Жанр',
+      width: '216px',
+      renderWork: (data) => ('genre' in data ? data.genre : ''),
+      renderSub: () => null
+    },
+    {
+      id: 'years',
+      headerLabel: 'Роки',
+      width: '96px',
+      hasRightDivider: true,
+      renderWork: (data) => {
+        if ('startDate' in data) {
+          return data.endDate && data.endDate !== data.startDate
+            ? `${data.startDate} - ${data.endDate}`
+            : data.startDate;
+        }
+        return data.year;
+      },
+      renderSub: () => null
+    },
+    {
+      id: 'status',
+      headerLabel: 'Статус',
+      width: '48px',
+      hasRightDivider: true,
+      renderWork: (data) => {
+        if ('status' in data) {
+          return (
+            <StatusWithDate
+              status={data.status}
+              createdAt={'createdAt' in data ? data.createdAt : data.updatedAt}
+              updatedAt={data.updatedAt}
+              publishedAt={'publishedAt' in data ? data.publishedAt : undefined}
+              dividerColor={TABLE_DIVIDER_COLOR}
+            />
+          );
+        }
+        return null;
+      },
+      renderSub: () => null
+    }
+  ];
+
+  const gridTemplate = COLUMNS.map((c) => c.width).join(' ');
+
   return (
     <Box sx={styles.worksListContainer}>
-      <WorksTableHeader />
+      <Box sx={styles.tableHeader(gridTemplate, COLUMNS[0].width)}>
+        <Box sx={styles.markerColumn} />
+        {COLUMNS.map((col) => (
+          <Typography
+            key={col.id}
+            sx={{
+              ...styles.tableHeaderText,
+              textAlign: col.id === 'status' ? 'center' : 'left',
+              width: '100%'
+            }}
+          >
+            {col.headerLabel}
+          </Typography>
+        ))}
+        <Box sx={styles.actionsSpacer} />
+      </Box>
 
-      {showOpus && visibleOpusGroups.map((group) => <GroupedRow key={group.id} group={group} defaultExpanded />)}
+      {showOpus &&
+        visibleOpusGroups.map((group) => (
+          <GroupedRow key={group.id} group={group} columns={COLUMNS} gridTemplate={gridTemplate} defaultExpanded />
+        ))}
 
       {showUngrouped &&
-        visibleUngroupedGroups.map((group) => <GroupedRow key={group.id} group={group} defaultExpanded />)}
+        visibleUngroupedGroups.map((group) => (
+          <GroupedRow key={group.id} group={group} columns={COLUMNS} gridTemplate={gridTemplate} defaultExpanded />
+        ))}
 
-      {showIndividualWorks && visibleUngroupedWorks.map((work) => <IndividualWorkRow key={work.id} work={work} />)}
+      {showIndividualWorks &&
+        visibleUngroupedWorks.map((work) => (
+          <IndividualWorkRow key={work.id} work={work} columns={COLUMNS} gridTemplate={gridTemplate} />
+        ))}
     </Box>
   );
 }
