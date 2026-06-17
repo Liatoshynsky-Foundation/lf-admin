@@ -22,7 +22,6 @@ import { useGetPageQuery } from '~/types/graphql/generated/graphql';
 
 
 const BLOCKS_CONFIG: Record<string, JSX.Element> = {
-  'intro': <IntroSection />,
   'foundation': <LiatoshynskyFoundation />,
   'mission': <OurMission />,
   'goals': <OurGoals />,
@@ -56,8 +55,10 @@ export default function Page() {
   const blocksOrder = useStore((s) => s.blocksOrder[pageSlug]);
   const setBlocksOrder = useStore((s) => s.setBlocksOrder);
 
-  const { handleDragEnd } = useSortableDragEnd(blocksOrder, (reordered) => {
-    setBlocksOrder(pageSlug, reordered);
+  const sortableBlocks = blocksOrder && blocksOrder.filter((blockId) => blockId !== 'intro');
+
+  const { handleDragEnd } = useSortableDragEnd(sortableBlocks, (reordered) => {
+    setBlocksOrder(pageSlug, ['intro', ...reordered]);
   });
 
   useEffect(() => {
@@ -78,9 +79,10 @@ export default function Page() {
         isSaving={editorLoading || saveLoading}
         onLanguageChange={(lang: 'uk' | 'en') => setLocale(lang)}
       />
-      {blocksOrder && blocksOrder.length > 0 && (
-        <SortableList onDragEnd={handleDragEnd} id="1" items={blocksOrder}>
-          {blocksOrder.map((blockId) => (
+      <IntroSection />
+      {sortableBlocks && sortableBlocks.length > 0 && (
+        <SortableList onDragEnd={handleDragEnd} id="1" items={sortableBlocks}>
+          {sortableBlocks.map((blockId) => (
             <SortableItemWrapper id={blockId} key={blockId}>
               {BLOCKS_CONFIG[blockId]}
             </SortableItemWrapper>
