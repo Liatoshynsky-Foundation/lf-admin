@@ -126,7 +126,7 @@ const OurMission = () => {
 
 
   return (
-    <CollapsibleBlock title="Наша місія">
+    <CollapsibleBlock title="Наша місія" grip>
       <Box sx={styles.wrapper}>
         <CustomTextField
           fieldType="formatting"

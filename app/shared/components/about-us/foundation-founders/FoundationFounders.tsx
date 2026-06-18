@@ -13,7 +13,6 @@ import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 import { ImageType, LocalizedString } from '~/types/common';
 import { TeamMemberWithId } from '~/types/store/pages/about-us/blocks/foundationFounderBlock';
-
 export const FoundationFounders = () => {
   const pageId = PAGE_IDS.ABOUT_US;
   const blockId = BLOCK_IDS.FOUNDATION_FOUNDERS;
@@ -70,7 +69,7 @@ export const FoundationFounders = () => {
   };
 
   return (
-    <CollapsibleBlock title="Команда Фундації">
+    <CollapsibleBlock title="Команда Фундації" grip>
       <CustomTextField
         fieldType="formatting"
         title="Вступний текст секції"

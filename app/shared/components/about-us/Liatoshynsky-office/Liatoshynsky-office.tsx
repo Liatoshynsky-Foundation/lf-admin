@@ -43,7 +43,7 @@ export const LiatoshynskyOffice = () => {
   };
 
   return (
-    <CollapsibleBlock title="Кабінет Лятошинського">
+    <CollapsibleBlock title="Кабінет Лятошинського" grip>
       <QuoteBlock
         title={block.quote.source[currentLocale]}
         description={block.quote.text[currentLocale]}

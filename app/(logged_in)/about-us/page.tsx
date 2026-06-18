@@ -1,6 +1,6 @@
 'use client';
 import { Box } from '@mui/material';
-import { JSX, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { styles } from './page.styles';
 import { PAGE_IDS } from '~/constants/pageBlocks';
@@ -21,13 +21,13 @@ import { useStore } from '~/store';
 import { useGetPageQuery } from '~/types/graphql/generated/graphql';
 
 
-const BLOCKS_CONFIG: Record<string, JSX.Element> = {
-  'foundation': <LiatoshynskyFoundation />,
-  'mission': <OurMission />,
-  'goals': <OurGoals />,
-  'office': <LiatoshynskyOffice />,
-  'what-we-do': <WhatWeDo />,
-  'founders': <FoundationFounders />
+const BLOCKS_CONFIG: Record<string, () => React.JSX.Element> = {
+  'foundation': LiatoshynskyFoundation,
+  'mission': OurMission,
+  'goals': OurGoals,
+  'office': LiatoshynskyOffice,
+  'what-we-do': WhatWeDo,
+  'founders': FoundationFounders
 };
 
 export default function Page() {
@@ -55,7 +55,7 @@ export default function Page() {
   const blocksOrder = useStore((s) => s.blocksOrder[pageSlug]);
   const setBlocksOrder = useStore((s) => s.setBlocksOrder);
 
-  const sortableBlocks = blocksOrder && blocksOrder.filter((blockId) => blockId !== 'intro');
+  const sortableBlocks = blocksOrder?.filter((blockId) => blockId !== 'intro');
 
   const { handleDragEnd } = useSortableDragEnd(sortableBlocks, (reordered) => {
     setBlocksOrder(pageSlug, ['intro', ...reordered]);
@@ -82,11 +82,15 @@ export default function Page() {
       <IntroSection />
       {sortableBlocks && sortableBlocks.length > 0 && (
         <SortableList onDragEnd={handleDragEnd} id="1" items={sortableBlocks}>
-          {sortableBlocks.map((blockId) => (
-            <SortableItemWrapper id={blockId} key={blockId}>
-              {BLOCKS_CONFIG[blockId]}
-            </SortableItemWrapper>
-          ))}
+          {sortableBlocks.map((blockId) => {
+            const BlockComponent = BLOCKS_CONFIG[blockId];
+            
+            return (
+              <SortableItemWrapper id={blockId} key={blockId} dragHandle={true}>
+                {BlockComponent && <BlockComponent />}
+              </SortableItemWrapper>
+            );
+          })}
         </SortableList>
       )}
     </Box>

@@ -71,7 +71,7 @@ const OurGoals = () => {
     );
 
   return (
-    <CollapsibleBlock title="Наші цілі">
+    <CollapsibleBlock title="Наші цілі" grip>
       <EditableSectionList
         title={block.title[currentLocale]}
         onTitleChange={handleTitleChange}

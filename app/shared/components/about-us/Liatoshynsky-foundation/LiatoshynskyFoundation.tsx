@@ -14,7 +14,6 @@ import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 import { ProseDoc } from '~/types/common';
 import { getImageUrl } from '~/utils/getImageUrl';
-
 export const LiatoshynskyFoundation = () => {
   const pageId = PAGE_IDS.ABOUT_US;
   const blockId = BLOCK_IDS.LIATOSHYNSKY_FOUNDATION;
@@ -55,7 +54,7 @@ export const LiatoshynskyFoundation = () => {
   };
 
   return (
-    <CollapsibleBlock title="Фундація Лятошинського">
+    <CollapsibleBlock title="Фундація Лятошинського" grip>
       <FoundationBlock
         mainText={mainText}
         paragraphs={paragraphs}

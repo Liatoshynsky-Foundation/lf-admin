@@ -61,7 +61,7 @@ const WhatWeDo = () => {
     );
 
   return (
-    <CollapsibleBlock title="Що ми робимо">
+    <CollapsibleBlock title="Що ми робимо" grip>
       <EditableSectionList
         title={block.title[currentLocale]}
         onTitleChange={handleTitleChange}
