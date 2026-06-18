@@ -29,7 +29,7 @@ const TitleWithTooltip = ({ text, lineClamp, fontWeight }: TitleWithTooltipProps
     checkOverflow();
 
     return () => resizeObserver.disconnect();
-  }, []);
+  }, [text]);
 
   return (
     <TooltipCustom title={isTitleTruncated ? text : ''}>
