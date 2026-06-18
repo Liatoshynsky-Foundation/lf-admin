@@ -4,12 +4,14 @@ import ListSubheader from '@mui/material/ListSubheader';
 import { AdditionalElement, ListElementType } from 'app/types/sideNavigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useCallback, useState } from 'react';
 
 import { CollapseListNavigation } from './collapse-list-navigation/CollapseListNavigation';
 import { LinkElement } from './link-element/LinkElement';
 import { NAVIGATION_DATA } from './SideNavigation.consts';
 import { styles } from './SideNavigation.styles';
+import { useStore } from '~/store';
 
 function isAdditionalElement(item: ListElementType | AdditionalElement): item is AdditionalElement {
   return 'collapseElements' in item && 'element' in item;
@@ -36,6 +38,21 @@ export const SideBarNavigation = () => {
       return newSet;
     });
   }, []);
+
+  const pathname = usePathname();
+
+  const dirtyPaths = useStore((state) => state.dirtyPaths);
+  const setPendingNavigation = useStore((state) => state.setPendingNavigation);
+  const setDiscardModalOpen = useStore((state) => state.setDiscardModalOpen);
+
+  const handleLogoClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (dirtyPaths[pathname]) {
+      e.preventDefault();
+
+      setPendingNavigation('/');
+      setDiscardModalOpen(true);
+    }
+  };
 
   function renderItems(items: (ListElementType | AdditionalElement)[]) {
     return items.map((item) => {
@@ -66,7 +83,7 @@ export const SideBarNavigation = () => {
           <Image src={`/icons/chevron${open ? 'Left' : 'Right'}.svg`} alt="" width={24} height={24} />
         </IconButton>
         <Box sx={styles.topSection}>
-          <Link href="/" aria-label="go to home page" style={{ textDecoration: 'none' }}>
+          <Link href="/" aria-label="go to home page" style={{ textDecoration: 'none' }} onClick={handleLogoClick}>
             <Box sx={styles.logoBlock}>
               <Image src="/icons/logo.svg" alt="logo" width={open ? 63.85 : 80} height={open ? 24.22 : 32} />
               {open && (

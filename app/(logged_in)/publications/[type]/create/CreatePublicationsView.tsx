@@ -2,8 +2,8 @@ import { Box, Menu, MenuItem, TextField, Typography } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { useRouter } from 'next/navigation';
-import { MouseEvent, useCallback, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { MouseEvent, useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { sharedMenuStyles } from '../shared/shared-publication.styles';
@@ -18,6 +18,7 @@ import {
   PUBLICATIONS_BASE_PATH
 } from '~/constants/publications';
 import { normalizeFetchedCrop } from '~/lib/utils/CropperHelper';
+import DiscardChangesModal from '~/shared/components/design-system/discard-changes-modal/DiscardChangesModal';
 import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
 import SeoCollapsibleBlock from '~/shared/components/forms/seo-collapsible-block/SeoCollapsibleBlock';
@@ -25,6 +26,7 @@ import { SeoCanonicalUrlField } from '~/shared/components/forms/seo-metadata-for
 import { SeoDateTimeFields } from '~/shared/components/forms/seo-metadata-form/seo-datetime-fields/SeoDateTimeFields';
 import { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
+import { useStore } from '~/store';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 interface PublicationViewProps {
@@ -49,9 +51,43 @@ export default function CreatePublicationsView({ data, mode = 'create' }: Readon
     handleDateTimeChange
   } = data;
   const router = useRouter();
+
+  const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
+  const [pendingRoute, setPendingRoute] = useState<string | null>(null);
+
+  const navigateWithGuard = (href: string) => {
+    if (!data.hasUnsavedChanges) {
+      router.push(href);
+      return;
+    }
+
+    setPendingRoute(href);
+    setIsDiscardModalOpen(true);
+  };
+
+  const handleDiscardConfirm = () => {
+    if (pendingRoute) {
+      router.push(pendingRoute);
+    }
+
+    setPendingRoute(null);
+    setIsDiscardModalOpen(false);
+  };
+
+  const handleDiscardCancel = () => {
+    setPendingRoute(null);
+    setIsDiscardModalOpen(false);
+  };
+
+  const pathname = usePathname();
+  const setDirtyPath = useStore((state) => state.setDirtyPath);
+
+  useEffect(() => {
+    setDirtyPath(pathname, data.hasUnsavedChanges);
+  }, [pathname, data.hasUnsavedChanges, setDirtyPath]);
+
   const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null);
   const isOpen = Boolean(anchor);
-  console.log(data.hasUnsavedChanges);
 
   const eventsExtraFields = useCallback(
     (_locale: 'uk' | 'en', value: SeoBlockValue['meta']['uk']) => (
@@ -136,9 +172,15 @@ export default function CreatePublicationsView({ data, mode = 'create' }: Readon
 
   return (
     <>
+      <DiscardChangesModal
+        open={isDiscardModalOpen}
+        handleClose={handleDiscardCancel}
+        handleSubmit={handleDiscardConfirm}
+      />
       {mode !== 'seo' && (
         <DividedHeader
           originUrl={PUBLICATIONS_BASE_PATH}
+          onBackClick={() => navigateWithGuard(PUBLICATIONS_BASE_PATH)}
           rightActionsComponent={
             publicationType === 'media' ? (
               <HeaderRightActions
