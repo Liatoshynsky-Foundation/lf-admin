@@ -3,11 +3,11 @@
 import { Box } from '@mui/material';
 import React from 'react';
 
-import { StatusWithDate } from './components/StatusWithDate';
 import { WorkStatus } from './works.mock';
 import { styles } from './WorksTable.styles';
 import { COLUMNS, GROUP_MENU_ITEMS, WORK_MENU_ITEMS } from './WorksTableConent';
 import { WORKS_BASE_PATH } from '~/constants/creativity';
+import { StatusBadge } from '~/shared/components/table-layout/components/StatusBadge';
 import {
   BaseRowData,
   GroupRowRenderer,
@@ -53,7 +53,7 @@ const worksGroupRenderer: GroupRowRenderer<TableGroupRowData, TableGroupRowData[
         ? `${group.startDate} - ${group.endDate}`
         : group.startDate;
     case 'status':
-      return <StatusWithDate status={group.status} />;
+      return <StatusBadge status={group.status} />;
     default:
       return null;
     }
@@ -74,7 +74,7 @@ const worksIndividualRenderer: IndividualRowRenderer<TableIndividualWorkData> = 
     case 'years':
       return work.year;
     case 'status':
-      return <StatusWithDate status={work.status} />;
+      return <StatusBadge status={work.status} />;
     default:
       return null;
     }
