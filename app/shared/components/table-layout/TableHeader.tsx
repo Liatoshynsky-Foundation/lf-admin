@@ -28,17 +28,13 @@ export function HeaderRow({ columns, gridTemplate }: HeaderRowProps) {
         <Typography
           key={col.id}
           className={col.id === 'status' ? 'status-header' : ''}
-          sx={{
-            ...styles.tableHeaderText,
-            textAlign: col.align ?? (col.id === 'status' ? 'center' : 'left'),
-            width: '100%'
-          }}
+          sx={styles.headerTextCell(col.id, col.align)}
         >
           {col.headerLabel}
         </Typography>
       ))}
 
-      <Box sx={{ ...styles.actionsSpacer }} />
+      <Box sx={styles.actionsSpacer} />
     </Box>
   );
 }

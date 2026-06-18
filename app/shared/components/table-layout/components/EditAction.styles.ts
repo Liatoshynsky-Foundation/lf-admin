@@ -18,10 +18,6 @@ export const styles = {
     height: '40px',
     p: 0,
     borderRadius: '50%',
-    '& svg': { 
-      width: '20px', 
-      height: '20px',
-    },
     '&:hover': {
       bgcolor: alpha(colors.black, 0.08),
     },

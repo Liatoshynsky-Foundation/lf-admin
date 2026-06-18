@@ -13,7 +13,7 @@ export function EditAction({ href, label }: Readonly<{ href: string; label: stri
         aria-label={label}
         sx={styles.editActionButton}
       >
-        <Pencil size={18} />
+        <Pencil size={20} />
       </IconButton>
     </Box>
   );
