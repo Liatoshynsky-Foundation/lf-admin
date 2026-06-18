@@ -1,6 +1,6 @@
-import fs from 'fs';
 import type { Db, ObjectId } from 'mongodb';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const TARGET_COLLECTION = 'pages';
 const TARGET_SLUGS = ['biography', 'cooperation'];
