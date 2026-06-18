@@ -51,6 +51,7 @@ export default function CreatePublicationsView({ data, mode = 'create' }: Readon
   const router = useRouter();
   const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null);
   const isOpen = Boolean(anchor);
+  console.log(data.hasUnsavedChanges);
 
   const eventsExtraFields = useCallback(
     (_locale: 'uk' | 'en', value: SeoBlockValue['meta']['uk']) => (
