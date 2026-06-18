@@ -9,7 +9,6 @@ export default function DiscardModalProvider({ children }: { readonly children: 
   const router = useRouter();
 
   const [open, setOpen] = useState(false);
-  // const { pendingPath, confirmNavigation, cancelNavigation } = useStayPage();
 
   const pendingNavigation = useStore((state) => state.pendingNavigation);
   const isDiscardModalOpen = useStore((state) => state.isDiscardModalOpen);
@@ -17,8 +16,6 @@ export default function DiscardModalProvider({ children }: { readonly children: 
   const setDiscardModalOpen = useStore((state) => state.setDiscardModalOpen);
 
   const handleCancel = () => {
-    // cancelNavigation();
-
     setPendingNavigation(null);
     setDiscardModalOpen(false);
 
@@ -30,18 +27,10 @@ export default function DiscardModalProvider({ children }: { readonly children: 
 
       setPendingNavigation(null);
       setDiscardModalOpen(false);
-    } else {
-      // confirmNavigation();
     }
 
     setOpen(false);
   };
-
-  // useBeforeRouteChange(() => {
-  //   if (pendingPath) {
-  //     setOpen(true);
-  //   }
-  // });
 
   useEffect(() => {
     if (isDiscardModalOpen) {
