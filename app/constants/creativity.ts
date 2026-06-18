@@ -1,4 +1,5 @@
 import type { FilterOption } from '~/shared/components/selector/FilterSelect';
+import { HeaderConfig } from '~/shared/components/table-layout/TableHeader';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 export type WorksTabValue = 'all' | 'opus' | 'ungrouped' | 'works';
@@ -86,3 +87,53 @@ export const WORKS_ERROR_STATE_DESCRIPTION = 'Спробуйте оновити 
 
 export const WORKS_PUBLISH_RESTRICTION_MESSAGE =
   'Твір не може бути опублікований без групи (Опусу). Призначте твір до опусу і спробуйте знову.';
+
+export const GROUP_MENU_ITEMS = [
+  { id: 'edit', label: 'Редагувати' },
+  { id: 'publish', label: 'Опублікувати' },
+  { id: 'unpublish', label: 'Зняти з публікації' },
+  { id: 'ungroup', label: 'Розгрупувати' },
+  { id: 'seo', label: 'SEO налаштування' },
+  { id: 'share', label: 'Поширити' },
+  { id: 'delete', label: 'Видалити', danger: true }
+] as const;
+
+export const WORK_MENU_ITEMS = [
+  { id: 'upload_audio', label: 'Завантажити аудіо' },
+  { id: 'upload_pdf', label: 'Завантажити PDF' },
+  { id: 'seo', label: 'SEO налаштування' },
+  { id: 'share', label: 'Поширити' },
+  { id: 'delete', label: 'Видалити', danger: true }
+] as const;
+
+export const COLUMNS: readonly HeaderConfig[] = [
+  {
+    id: 'opus',
+    headerLabel: 'Опуси',
+    width: '88px',
+    hasRightDivider: true
+  },
+  {
+    id: 'title',
+    headerLabel: 'Назва',
+    width: 'minmax(220px, 1fr)'
+  },
+  {
+    id: 'genre',
+    headerLabel: 'Жанр',
+    width: '216px'
+  },
+  {
+    id: 'years',
+    headerLabel: 'Роки',
+    width: '96px',
+    hasRightDivider: true
+  },
+  {
+    id: 'status',
+    headerLabel: 'Статус',
+    width: '48px',
+    hasRightDivider: true,
+    align: 'center'
+  }
+];

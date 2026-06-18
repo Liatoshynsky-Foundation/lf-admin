@@ -5,8 +5,7 @@ import React from 'react';
 
 import { WorkStatus } from './works.mock';
 import { styles } from './WorksTable.styles';
-import { COLUMNS, GROUP_MENU_ITEMS, WORK_MENU_ITEMS } from './WorksTableConent';
-import { WORKS_BASE_PATH } from '~/constants/creativity';
+import { COLUMNS, GROUP_MENU_ITEMS, WORK_MENU_ITEMS, WORKS_BASE_PATH } from '~/constants/creativity';
 import { StatusBadge } from '~/shared/components/table-layout/components/StatusBadge';
 import {
   BaseRowData,
