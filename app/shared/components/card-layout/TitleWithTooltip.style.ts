@@ -10,6 +10,7 @@ const styles = {
     WebkitLineClamp: lineClamp,
     WebkitBoxOrient: 'vertical',
     overflow: 'hidden',
+    wordBreak: 'break-word'
   }),
 };
 

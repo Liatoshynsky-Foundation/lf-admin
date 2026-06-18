@@ -16,6 +16,12 @@ jest.mock('~/shared/components/card-layout/CardMenu', () => {
   };
 });
 
+globalThis.ResizeObserver = jest.fn().mockImplementation((callback) => ({
+  observe: jest.fn(() => callback()),
+  unobserve: jest.fn(),
+  disconnect: jest.fn()
+}));
+
 describe('PageCard Component', () => {
   const mockProps = {
     coverImage: {
