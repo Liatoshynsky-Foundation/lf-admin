@@ -2,8 +2,8 @@ import { Box, Menu, MenuItem, TextField, Typography } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { usePathname, useRouter } from 'next/navigation';
-import { MouseEvent, useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { MouseEvent, useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { sharedMenuStyles } from '../shared/shared-publication.styles';
@@ -19,18 +19,15 @@ import {
   PUBLICATIONS_BASE_PATH
 } from '~/constants/publications';
 import { normalizeFetchedCrop } from '~/lib/utils/CropperHelper';
-import DiscardChangesModal from '~/shared/components/design-system/discard-changes-modal/DiscardChangesModal';
 import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
 import SeoCollapsibleBlock from '~/shared/components/forms/seo-collapsible-block/SeoCollapsibleBlock';
-import {
-  SeoCanonicalUrlField
-} from '~/shared/components/forms/seo-metadata-form/seo-canonicalurl-field/SeoCanonicalUrlField';
+import { SeoCanonicalUrlField } from '~/shared/components/forms/seo-metadata-form/seo-canonicalurl-field/SeoCanonicalUrlField';
 import { SeoDateTimeFields } from '~/shared/components/forms/seo-metadata-form/seo-datetime-fields/SeoDateTimeFields';
 import { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
+import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
 import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
-import { useStore } from '~/store';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 interface PublicationViewProps {
@@ -39,7 +36,11 @@ interface PublicationViewProps {
   onDeleteConfirm?: () => void;
 }
 
-export default function CreatePublicationsView({ data, mode = 'create', onDeleteConfirm }: Readonly<PublicationViewProps>) {
+export default function CreatePublicationsView({
+  data,
+  mode = 'create',
+  onDeleteConfirm
+}: Readonly<PublicationViewProps>) {
   const {
     publicationType,
     adminTitle,
@@ -57,31 +58,9 @@ export default function CreatePublicationsView({ data, mode = 'create', onDelete
   } = data;
   const router = useRouter();
 
-  const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
-  const [pendingRoute, setPendingRoute] = useState<string | null>(null);
+  useUnsavedChanges(data.hasUnsavedChanges);
 
   const { navigate } = useNavigationGuard();
-
-  const handleDiscardConfirm = () => {
-    if (pendingRoute) {
-      router.push(pendingRoute);
-    }
-
-    setPendingRoute(null);
-    setIsDiscardModalOpen(false);
-  };
-
-  const handleDiscardCancel = () => {
-    setPendingRoute(null);
-    setIsDiscardModalOpen(false);
-  };
-
-  const pathname = usePathname();
-  const setDirtyPath = useStore((state) => state.setDirtyPath);
-
-  useEffect(() => {
-    setDirtyPath(pathname, data.hasUnsavedChanges);
-  }, [pathname, data.hasUnsavedChanges, setDirtyPath]);
 
   const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null);
   const isOpen = Boolean(anchor);
@@ -169,11 +148,6 @@ export default function CreatePublicationsView({ data, mode = 'create', onDelete
 
   return (
     <>
-      <DiscardChangesModal
-        open={isDiscardModalOpen}
-        handleClose={handleDiscardCancel}
-        handleSubmit={handleDiscardConfirm}
-      />
       {mode !== 'seo' && (
         <DividedHeader
           originUrl={PUBLICATIONS_BASE_PATH}

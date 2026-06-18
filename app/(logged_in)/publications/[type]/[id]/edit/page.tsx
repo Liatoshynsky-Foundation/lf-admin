@@ -1,7 +1,7 @@
 'use client';
 
-import { notFound, useParams, usePathname, useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { notFound, useParams, useRouter } from 'next/navigation';
+import { useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 
 import CreatePublicationsView from '../../create/CreatePublicationsView';
@@ -13,11 +13,10 @@ import {
   PublicationsItemType
 } from '~/constants/publications';
 import { SerializedContent } from '~/shared/components/content-editor';
-import DiscardChangesModal from '~/shared/components/design-system/discard-changes-modal/DiscardChangesModal';
 import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
 import { usePublicationManager } from '~/shared/hooks/use-publications-manager/usePublicationsManager';
+import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
 import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
-import { useStore } from '~/store';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 type Params = {
@@ -31,11 +30,7 @@ export default function EditPublicationsPage() {
 
   const manager = usePublicationManager(type, id);
 
-  const pathname = usePathname();
-  const setDirtyPath = useStore((state) => state.setDirtyPath);
-
-  const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
-  const [pendingRoute, setPendingRoute] = useState<string | null>(null);
+  useUnsavedChanges(manager.hasUnsavedChanges);
 
   const publicationData = useUpsertPublication({ type, id });
 
@@ -43,30 +38,6 @@ export default function EditPublicationsPage() {
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const { navigate } = useNavigationGuard();
-
-  const handleDiscardConfirm = () => {
-    if (pendingRoute) {
-      router.push(pendingRoute);
-    }
-
-    setIsDiscardModalOpen(false);
-    setPendingRoute(null);
-  };
-
-  const handleDiscardCancel = () => {
-    setIsDiscardModalOpen(false);
-    setPendingRoute(null);
-  };
-
-  useEffect(() => {
-    setDirtyPath(pathname, manager.hasUnsavedChanges);
-  }, [pathname, manager.hasUnsavedChanges, setDirtyPath]);
-
-  useEffect(() => {
-    return () => {
-      setDirtyPath(pathname, false);
-    };
-  }, [pathname, setDirtyPath]);
 
   useEffect(() => {
     return () => {
@@ -138,11 +109,6 @@ export default function EditPublicationsPage() {
   };
   return (
     <>
-      <DiscardChangesModal
-        open={isDiscardModalOpen}
-        handleClose={handleDiscardCancel}
-        handleSubmit={handleDiscardConfirm}
-      />
       {type === 'media' ? (
         <CreatePublicationsView data={publicationData} mode="edit" />
       ) : (
