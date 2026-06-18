@@ -86,7 +86,7 @@ export default function Page() {
             const BlockComponent = BLOCKS_CONFIG[blockId];
             
             return (
-              <SortableItemWrapper id={blockId} key={blockId} dragHandle={true}>
+              <SortableItemWrapper id={blockId} key={blockId}>
                 {BlockComponent && <BlockComponent />}
               </SortableItemWrapper>
             );

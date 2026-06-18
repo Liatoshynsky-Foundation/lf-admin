@@ -3,15 +3,17 @@ import { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
 import { useSortable } from '@dnd-kit/sortable';
 import { createContext, useContext, useMemo } from 'react';
 
+import { Grip } from '../grip/Grip';
 import { styles } from './SortableItemWrapper.style';
 
 interface SortableItemWrapperProps {
   id: string;
   children: React.ReactNode;
-  dragHandle?: boolean;
+  gripHandle?: boolean;
 }
 
 export const SortableItemContext = createContext<{ id: string, attributes: DraggableAttributes, listeners: SyntheticListenerMap | undefined } | null>(null);
+
 export const useSortableItemContext = () => {
   const context = useContext(SortableItemContext);
   if (!context) {
@@ -19,7 +21,8 @@ export const useSortableItemContext = () => {
   }
   return context;
 };
-export const SortableItemWrapper = ({ id, children, dragHandle = false }: SortableItemWrapperProps) => {
+
+export const SortableItemWrapper = ({ id, children, gripHandle = false }: SortableItemWrapperProps) => {
   const {
     attributes,
     listeners,
@@ -29,13 +32,13 @@ export const SortableItemWrapper = ({ id, children, dragHandle = false }: Sortab
     isDragging,
   } = useSortable({ id });
 
-  const draggingProps = dragHandle ? {} : { ...attributes, ...listeners };
 
   const defaultValue = useMemo(() => ({ id, attributes, listeners }), [id, attributes, listeners]);
-  
+
   return (
-    <div ref={setNodeRef} style={styles.getItemStyles(transform, isDragging, transition)} {...draggingProps}>
+    <div ref={setNodeRef} style={styles.getItemStyles(transform, isDragging, transition, gripHandle)}>
       <SortableItemContext.Provider value={defaultValue}>
+        {gripHandle && <Grip />}
         {children}
       </SortableItemContext.Provider>
     </div>

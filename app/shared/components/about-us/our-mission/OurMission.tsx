@@ -155,7 +155,7 @@ const OurMission = () => {
               onDelete={handleDeleteMissionPoint}
               onCreate={handleAddMissionPoint}
               renderItem={({ item, onChange }) => (
-                <SortableItemWrapper id={item.id as string} key={item.id}>
+                <SortableItemWrapper id={item.id as string} key={item.id} gripHandle>
                   <CustomTextField
                     fieldType="formatting"
                     label="Пункт місії"
