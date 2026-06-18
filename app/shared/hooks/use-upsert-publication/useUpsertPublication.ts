@@ -181,7 +181,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
 
       setInitialState({
         adminTitle: fetchedData.adminTitle || '',
-        publishDate: mainDate ? String(mainDate) : null,
+        publishDate: safeParseDate(mainDate)?.toISOString() ?? null,
         seoValue: {
           meta: { uk: getLangMeta('uk'), en: getLangMeta('en') },
           ogImage: fetchedData.coverImage?.src || null,

@@ -14,6 +14,7 @@ import {
 } from '~/constants/publications';
 import { SerializedContent } from '~/shared/components/content-editor';
 import DiscardChangesModal from '~/shared/components/design-system/discard-changes-modal/DiscardChangesModal';
+import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
 import { usePublicationManager } from '~/shared/hooks/use-publications-manager/usePublicationsManager';
 import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
 import { useStore } from '~/store';
@@ -41,15 +42,7 @@ export default function EditPublicationsPage() {
   const latestBlocksRef = useRef<SerializedContent | null>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const navigateWithGuard = (href: string) => {
-    if (!manager.hasUnsavedChanges) {
-      router.push(href);
-      return;
-    }
-
-    setPendingRoute(href);
-    setIsDiscardModalOpen(true);
-  };
+  const { navigate } = useNavigationGuard();
 
   const handleDiscardConfirm = () => {
     if (pendingRoute) {
@@ -71,6 +64,12 @@ export default function EditPublicationsPage() {
 
   useEffect(() => {
     return () => {
+      setDirtyPath(pathname, false);
+    };
+  }, [pathname, setDirtyPath]);
+
+  useEffect(() => {
+    return () => {
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     };
   }, []);
@@ -86,9 +85,10 @@ export default function EditPublicationsPage() {
 
     debounceTimerRef.current = setTimeout(() => {
       if (latestBlocksRef.current) {
-        manager.setEditedContent((prev) =>
-          prev ? { ...prev, [localeKey]: { content: latestBlocksRef.current! } } : prev
-        );
+        manager.setEditedContent((prev) => {
+          const next = prev ? { ...prev, [localeKey]: { content: latestBlocksRef.current! } } : prev;
+          return next;
+        });
       }
     }, 500);
   };
@@ -157,8 +157,8 @@ export default function EditPublicationsPage() {
           onEditorChange={handleEditorChange}
           onAction={handleMenuAction}
           onDeleteConfirm={() => handleMenuAction(MenuActionId.DELETE)}
-          onSeoClick={() => navigateWithGuard(`${PUBLICATIONS_BASE_PATH}/${type}/${id}/seo`)}
-          onBackClick={() => navigateWithGuard(PUBLICATIONS_BASE_PATH)}
+          onSeoClick={() => navigate(`${PUBLICATIONS_BASE_PATH}/${type}/${id}/seo`)}
+          onBackClick={() => navigate(PUBLICATIONS_BASE_PATH)}
         />
       )}
     </>

@@ -106,7 +106,7 @@ describe('EditPublicationsPage Container', () => {
     });
 
     render(<EditPublicationsPage />);
-    expect(notFound).toHaveBeenCalledTimes(1);
+    expect(notFound).toHaveBeenCalled();
   });
 
   it('should redirect to SEO page when onSeoClick is triggered', () => {

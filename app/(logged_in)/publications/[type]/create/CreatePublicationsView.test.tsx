@@ -9,7 +9,8 @@ import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useU
 
 const mockPush = jest.fn();
 jest.mock('next/navigation', () => ({
-  useRouter: jest.fn(() => ({ push: mockPush }))
+  useRouter: jest.fn(() => ({ push: mockPush })),
+  usePathname: jest.fn(() => '/publications/news/create')
 }));
 
 jest.mock('@mui/x-date-pickers/DatePicker', () => ({

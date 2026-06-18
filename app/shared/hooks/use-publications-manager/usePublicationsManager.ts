@@ -8,10 +8,11 @@ import {
   PublicationResource,
   PublicationsItemType
 } from '~/constants/publications';
+import { hasContentChanges } from '~/lib/utils/hasContentChanges';
 import { isContentEmpty } from '~/shared/components/content-editor';
-import { useDeleteEvent , useEventById, useUpdateEvent } from '~/shared/hooks/use-events/useEvents';
+import { useDeleteEvent, useEventById, useUpdateEvent } from '~/shared/hooks/use-events/useEvents';
 import { useMediaMentionById, useUpdateMediaMention } from '~/shared/hooks/use-media-mentions/useMediaMentions';
-import { useDeleteNews , useNewsById, useUpdateNews } from '~/shared/hooks/use-news/useNews';
+import { useDeleteNews, useNewsById, useUpdateNews } from '~/shared/hooks/use-news/useNews';
 import { type EventStatus, type MediaStatus, type NewsStatus } from '~/types/graphql/generated/graphql';
 
 export function usePublicationManager(type: PublicationsItemType, id: string) {
@@ -80,7 +81,7 @@ export function usePublicationManager(type: PublicationsItemType, id: string) {
   const hasUnsavedChanges = useMemo(() => {
     if (!editedContent || !initialContent) return false;
 
-    return JSON.stringify(editedContent) !== JSON.stringify(initialContent);
+    return hasContentChanges(editedContent, initialContent);
   }, [editedContent, initialContent]);
 
   const updateResource: PublicationResource = async (status, extra = {}) => {

@@ -2,31 +2,17 @@
 
 import { LinkElementProps } from 'app/types/sideNavigation';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 
 import { ListElement } from '../list-element/ListElement';
-import { useStore } from '~/store';
+import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
 
 export const LinkElement: React.FC<LinkElementProps> = ({ element, open, handleClick, sxItem = {}, children }) => {
-  const pathname = usePathname();
+  const { interceptLinkClick } = useNavigationGuard();
 
-  const dirtyPaths = useStore((state) => state.dirtyPaths);
-  const setPendingNavigation = useStore((state) => state.setPendingNavigation);
-  const setDiscardModalOpen = useStore((state) => state.setDiscardModalOpen);
-
-  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    const href = element.href ?? '/';
-
-    if (dirtyPaths[pathname]) {
-      e.preventDefault();
-
-      setPendingNavigation(href);
-      setDiscardModalOpen(true);
-    }
-  };
+  const href = element.href ?? '/';
 
   return (
-    <Link href={element.href ?? '/'} key={element.href} onClick={handleLinkClick}>
+    <Link href={element.href ?? '/'} key={element.href} onClick={(e) => interceptLinkClick(e, href)}>
       <ListElement element={element} open={open} handleClick={handleClick} sxItem={sxItem} />
       {children}
     </Link>

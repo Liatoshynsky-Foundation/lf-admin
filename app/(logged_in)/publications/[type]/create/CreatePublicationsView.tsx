@@ -25,6 +25,7 @@ import SeoCollapsibleBlock from '~/shared/components/forms/seo-collapsible-block
 import { SeoCanonicalUrlField } from '~/shared/components/forms/seo-metadata-form/seo-canonicalurl-field/SeoCanonicalUrlField';
 import { SeoDateTimeFields } from '~/shared/components/forms/seo-metadata-form/seo-datetime-fields/SeoDateTimeFields';
 import { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
+import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
 import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
 import { useStore } from '~/store';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
@@ -55,15 +56,7 @@ export default function CreatePublicationsView({ data, mode = 'create' }: Readon
   const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
   const [pendingRoute, setPendingRoute] = useState<string | null>(null);
 
-  const navigateWithGuard = (href: string) => {
-    if (!data.hasUnsavedChanges) {
-      router.push(href);
-      return;
-    }
-
-    setPendingRoute(href);
-    setIsDiscardModalOpen(true);
-  };
+  const { navigate } = useNavigationGuard();
 
   const handleDiscardConfirm = () => {
     if (pendingRoute) {
@@ -180,7 +173,7 @@ export default function CreatePublicationsView({ data, mode = 'create' }: Readon
       {mode !== 'seo' && (
         <DividedHeader
           originUrl={PUBLICATIONS_BASE_PATH}
-          onBackClick={() => navigateWithGuard(PUBLICATIONS_BASE_PATH)}
+          onBackClick={() => navigate(PUBLICATIONS_BASE_PATH)}
           rightActionsComponent={
             publicationType === 'media' ? (
               <HeaderRightActions
