@@ -101,7 +101,11 @@ export default function EditPublicationsPage() {
   };
 
   return type === 'media' ? (
-    <CreatePublicationsView data={publicationData} mode="edit" />
+    <CreatePublicationsView
+      data={publicationData}
+      mode="edit"
+      onDeleteConfirm={() => handleMenuAction(MenuActionId.DELETE)}
+    />
   ) : (
     <EditPublicationsView
       type={type}
