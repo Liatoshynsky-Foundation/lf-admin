@@ -18,7 +18,7 @@ const CollapsibleBlock = ({ title, children, sx, grip = false, childrenContainer
   return (
     <Accordion {...props} sx={[styles.root, ...(sxToArray(sx))]}>
       <AccordionSummary expandIcon={<ChevronIcon width={24} height={24} aria-label="Expand" />} sx={styles.summary}>
-        {grip && <Grip />}
+        {grip && <Grip orientation='horizontal'/>}
         {title}
       </AccordionSummary>
       <AccordionDetails data-testid="inserted-container" sx={childrenContainerSx}>
