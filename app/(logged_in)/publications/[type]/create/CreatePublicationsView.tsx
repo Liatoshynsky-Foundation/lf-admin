@@ -22,9 +22,7 @@ import { normalizeFetchedCrop } from '~/lib/utils/CropperHelper';
 import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
 import SeoCollapsibleBlock from '~/shared/components/forms/seo-collapsible-block/SeoCollapsibleBlock';
-import {
-  SeoCanonicalUrlField
-} from '~/shared/components/forms/seo-metadata-form/seo-canonicalurl-field/SeoCanonicalUrlField';
+import { SeoCanonicalUrlField } from '~/shared/components/forms/seo-metadata-form/seo-canonicalurl-field/SeoCanonicalUrlField';
 import { SeoDateTimeFields } from '~/shared/components/forms/seo-metadata-form/seo-datetime-fields/SeoDateTimeFields';
 import { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
@@ -36,7 +34,11 @@ interface PublicationViewProps {
   onDeleteConfirm?: () => void;
 }
 
-export default function CreatePublicationsView({ data, mode = 'create', onDeleteConfirm }: Readonly<PublicationViewProps>) {
+export default function CreatePublicationsView({
+  data,
+  mode = 'create',
+  onDeleteConfirm
+}: Readonly<PublicationViewProps>) {
   const {
     publicationType,
     adminTitle,
@@ -101,7 +103,7 @@ export default function CreatePublicationsView({ data, mode = 'create', onDelete
       case MenuActionId.PUBLISH: {
         const id = await handleSave(BaseContentStatuses.Published);
         if (id) {
-          toast.success(CONTENT_MUTATION_RESULTS.draftPublished);
+          toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
         }
         break;
       }
@@ -109,7 +111,7 @@ export default function CreatePublicationsView({ data, mode = 'create', onDelete
       case MenuActionId.PUBLICATE_AND_EXIT: {
         const id = await handleSave(BaseContentStatuses.Published);
         if (id) {
-          toast.success(CONTENT_MUTATION_RESULTS.draftPublished);
+          toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
           router.push(PUBLICATIONS_BASE_PATH);
         }
         break;
