@@ -18,7 +18,7 @@ interface ConfigurableListProps<T extends ConfigurableListItem> {
   renderItem: (params: RenderItemParams<T>) => React.ReactNode;
   addBtnLabel: string;
   editable: boolean;
-  onCreate: () => T;
+  onCreate: () => void;
   onChange: (newValue: T) => void;
   onDelete: (id: T['id']) => void;
   separator?: boolean;
