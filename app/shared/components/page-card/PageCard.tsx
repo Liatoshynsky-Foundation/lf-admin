@@ -1,27 +1,17 @@
-import { Box, Card, CardContent, IconButton, Typography } from '@mui/material';
-import { EllipsisVertical } from 'lucide-react';
+import { Typography } from '@mui/material';
 import Link from 'next/link';
-import { useState } from 'react';
 
+import CardLayout from '../card-layout/CardLayout';
+import { infoText } from '../card-layout/CardLayout.styles';
+import ImageWithFallback from '../card-layout/ImageWithFallback';
+import TitleWithTooltip from '../card-layout/TitleWithTooltip';
 import Button from '../design-system/button/Button';
-import ImageWithFallback from './ImageWithFallback';
-import styles from './PageCard.styles';
-import PageCardMenu from './PageCardMenu';
-import { formatDate } from '~/lib/utils/formatDate';
-import type { LocalizedString } from '~/types/common';
-
-const FALLBACK_IMAGE_SRC = '/images/image.png';
-
-interface PageCardImage {
-  src: string;
-  alt: {
-    uk: string;
-    en: string;
-  };
-}
+import PageCardMenuItems from './PageCardMenuItems';
+import { LocalizedString } from '~/types/common';
+import { formatDate } from '~/utils/formatDate';
 
 interface PageCardProps {
-  coverImage: PageCardImage;
+  coverImage: { src: string; alt: { uk: string; en: string } };
   title: Partial<LocalizedString>;
   updatedAt?: string;
   editHref: string;
@@ -29,54 +19,47 @@ interface PageCardProps {
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
+const FALLBACK_IMAGE_SRC = '/images/image.png';
+
 const PageCard = ({ coverImage, title, updatedAt, editHref, editSeoHref, onClick }: PageCardProps) => {
   const titleText = title.uk || title.en || '';
   const altText = coverImage.alt.uk || coverImage.alt.en || titleText;
 
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const coverImageNode = (
+    <ImageWithFallback key={coverImage.src} src={coverImage.src} fallbackSrc={FALLBACK_IMAGE_SRC} alt={altText} />
+  );
 
-  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(anchorEl ? null : event.currentTarget);
-  };
+  const titleNode = <TitleWithTooltip text={titleText} />;
 
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
+  const infoNode = (
+    <Typography variant="caption" sx={infoText}>
+      {updatedAt ? `Змінено ${formatDate(updatedAt)}` : ''}
+    </Typography>
+  );
+
+  const actionButtonNode = (
+    <Button
+      variant="filled"
+      color="primary"
+      href={editHref}
+      LinkComponent={editHref ? Link : undefined}
+      onClick={editHref ? undefined : onClick}
+    >
+      {'Редагувати'}
+    </Button>
+  );
+
+  const items = PageCardMenuItems({ editSeoHref });
 
   return (
-    <Card sx={styles.card}>
-      <Box sx={styles.imageContainer}>
-        <ImageWithFallback key={coverImage.src} src={coverImage.src} fallbackSrc={FALLBACK_IMAGE_SRC} alt={altText} />
-      </Box>
-
-      <CardContent sx={styles.cardContent}>
-        <Box sx={styles.mainInfo}>
-          <Box sx={styles.titleContainer}>
-            <Typography variant="subtitle1" component="h3" sx={styles.title}>
-              {titleText}
-            </Typography>
-            <Typography variant="caption" sx={styles.date}>
-              Змінено {updatedAt ? formatDate(updatedAt) : ''}
-            </Typography>
-          </Box>
-
-          <IconButton data-testid="menu-button" onClick={handleMenuClick}>
-            <EllipsisVertical size={20} />
-            <PageCardMenu anchorEl={anchorEl} onClose={handleMenuClose} editSeoHref={editSeoHref} />
-          </IconButton>
-        </Box>
-
-        <Button
-          variant="filled"
-          color="primary"
-          href={editHref}
-          LinkComponent={editHref ? Link : undefined}
-          onClick={editHref ? undefined : onClick}
-        >
-          Редагувати
-        </Button>
-      </CardContent>
-    </Card>
+    <CardLayout
+      coverImage={coverImageNode}
+      title={titleNode}
+      info={infoNode}
+      contentBottom={actionButtonNode}
+      items={items}
+    />
   );
 };
+
 export default PageCard;

@@ -11,11 +11,22 @@ import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { renderHelperText } from '~/lib/utils/renderHelperText';
 import { validateEmail } from '~/lib/utils/validateEmail';
 import { AuthCardLayout } from '~/shared/components/auth-card/AuthCardLayout';
+import { useRequestPasswordResetMutation } from '~/types/graphql/generated/graphql';
 
 export default function ForgotPasswordForm() {
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const [requestPasswordReset, { loading }] = useRequestPasswordResetMutation({
+    onCompleted: () => {
+      toast.success('Лист для відновлення надіслано');
+      setIsSubmitted(true);
+    },
+    onError: () => {
+      toast.error('Сталася помилка. Спробуйте ще раз.');
+    }
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
@@ -27,11 +38,9 @@ export default function ForgotPasswordForm() {
     const error = validateEmail(email);
     setEmailError(error);
     if (!error) {
-      setIsSubmitted(true);
-      toast.success('Лист для відновлення надіслано');
+      requestPasswordReset({ variables: { email } });
     }
   };
-
   if (isSubmitted) {
     return (
       <AuthCardLayout title="Відновлення паролю" subtitle="">
@@ -66,8 +75,8 @@ export default function ForgotPasswordForm() {
           }}
         />
 
-        <Button variant="contained" sx={styles.buttonSubmit} type="submit" fullWidth>
-          Надіслати інструкції
+        <Button variant="contained" sx={styles.buttonSubmit} type="submit" fullWidth disabled={loading}>
+          {loading ? 'Надсилання...' : 'Надіслати інструкції'}
         </Button>
       </Box>
     </AuthCardLayout>

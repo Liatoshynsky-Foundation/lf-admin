@@ -7,6 +7,12 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
   useUpdateAssetMutation: () => [jest.fn(), { loading: false }]
 }));
 
+globalThis.ResizeObserver = jest.fn().mockImplementation((callback) => ({
+  observe: jest.fn(() => callback()),
+  unobserve: jest.fn(),
+  disconnect: jest.fn()
+}));
+
 describe('FileCard', () => {
   const mockOnClick = jest.fn();
 
@@ -92,7 +98,7 @@ describe('FileCard', () => {
   it('should stop propagation when menu button is clicked', () => {
     render(<FileCard fileType="image" fileData={defaultFileData} onClick={mockOnClick} />);
 
-    const menuButton = screen.getByLabelText('Open file menu');
+    const menuButton = screen.getByTestId('menu-button');
     fireEvent.click(menuButton);
 
     expect(mockOnClick).not.toHaveBeenCalled();
@@ -133,7 +139,7 @@ describe('FileCard', () => {
   it('should not call onClick when onClick is not provided', () => {
     render(<FileCard fileType="image" fileData={defaultFileData} />);
 
-    const menuButton = screen.getByLabelText('Open file menu');
+    const menuButton = screen.getByTestId('menu-button');
     expect(() => fireEvent.click(menuButton)).not.toThrow();
   });
 });

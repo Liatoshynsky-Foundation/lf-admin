@@ -1,4 +1,6 @@
-export const styles = {
+import { SxProps, Theme } from '@mui/material';
+
+export const styles: Record<string, SxProps<Theme>>  = {
   badgeContainer: {
     display: 'flex',
     alignItems: 'center',

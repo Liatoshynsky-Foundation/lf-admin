@@ -16,8 +16,6 @@ describe('HeaderRightActions Component', () => {
   const mockOnEdit = jest.fn();
   const mockOnPreview = jest.fn();
   const mockOnPublish = jest.fn();
-  const mockOnSave = jest.fn();
-  const mockOnCancel = jest.fn();
   const mockOnMenuOpen = jest.fn();
 
   beforeEach(() => {
@@ -96,25 +94,25 @@ describe('HeaderRightActions Component', () => {
     it('should render cancel and save buttons', () => {
       render(<HeaderRightActions mode="seo" />);
 
-      expect(screen.getByRole('button', { name: 'Скасувати' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Зберегти' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Опублікувати' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Відкрити меню параметрів' })).toBeInTheDocument();
     });
 
     it('should trigger onCancel and onSave correctly', () => {
-      render(<HeaderRightActions mode="seo" onCancel={mockOnCancel} onSave={mockOnSave} />);
+      render(<HeaderRightActions mode="seo" onPublish={mockOnPublish} onMenuOpen={mockOnMenuOpen} />);
 
-      fireEvent.click(screen.getByRole('button', { name: 'Скасувати' }));
-      expect(mockOnCancel).toHaveBeenCalledTimes(1);
+      fireEvent.click(screen.getByRole('button', { name: 'Опублікувати' }));
+      expect(mockOnPublish).toHaveBeenCalledTimes(1);
 
-      fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
-      expect(mockOnSave).toHaveBeenCalledTimes(1);
+      fireEvent.click(screen.getByRole('button', { name: 'Відкрити меню параметрів' }));
+      expect(mockOnMenuOpen).toHaveBeenCalledTimes(1);
     });
 
     it('should disable only the save button when disabled prop is true', () => {
       render(<HeaderRightActions mode="seo" disabled={true} />);
 
-      expect(screen.getByRole('button', { name: 'Скасувати' })).not.toBeDisabled();
-      expect(screen.getByRole('button', { name: 'Зберегти' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Опублікувати' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Відкрити меню параметрів' })).toBeDisabled();
     });
   });
 

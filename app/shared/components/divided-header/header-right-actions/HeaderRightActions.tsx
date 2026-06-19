@@ -27,6 +27,8 @@ type SeoModeProps = BaseProps & {
   mode: 'seo';
   onSave?: () => void;
   onCancel?: () => void;
+  onPublish?: () => void;
+  onMenuOpen?: (event: MouseEvent<HTMLButtonElement>) => void;
 };
 
 export type HeaderRightActionsProps = CreateModeProps | EditModeProps | SeoModeProps;
@@ -84,12 +86,29 @@ export default function HeaderRightActions(props: HeaderRightActionsProps) {
     case 'seo':
       return (
         <Stack spacing="12px" marginLeft="8px" direction="row" role="group" aria-label="Дії збереження">
-          <Button onClick={props.onCancel} variant="outlined" color="primary">
-              Скасувати
-          </Button>
-          <Button disabled={disabled} onClick={props.onSave} variant="contained" color="tertiary" disableElevation>
-              Зберегти
-          </Button>
+          <Box sx={styles.group} role="group" aria-label="Дії публікації">
+            <Button
+              disabled={disabled}
+              onClick={props.onPublish}
+              variant="contained"
+              color="tertiary"
+              disableElevation
+              sx={styles.groupLeft}
+            >
+              Опублікувати
+            </Button>
+            <Button
+              disabled={disabled}
+              aria-label="Відкрити меню параметрів"
+              onClick={props.onMenuOpen}
+              variant="contained"
+              color="tertiary"
+              disableElevation
+              sx={styles.groupRight}
+            >
+              <ChevronDown size={20} />
+            </Button>
+          </Box>
         </Stack>
       );
 
