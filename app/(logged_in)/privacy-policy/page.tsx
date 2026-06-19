@@ -76,7 +76,7 @@ export default function Page() {
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', p: '32px', width: '100%', gap: '32px' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', p: '32px', width: '100%', height:'100%', overflow: 'hidden', gap: '32px' }}>
       <Header
         title="Політика конфіденційності"
         onPreview={preview}
