@@ -9,8 +9,22 @@ type ResetPasswordPageProps = {
 };
 
 async function verifyToken(token: string): Promise<boolean> {
-  // here will be fetch to back
-  return token === 'valid-token-123';
+  try {
+    const appUrl = process.env.NEXT_PUBLIC_CLIENT_BASE_URL ?? 'http://localhost:3000';
+    const res = await fetch(`${appUrl}/api/graphql`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: 'query VerifyResetToken($token: String!) { verifyResetToken(token: $token) }',
+        variables: { token }
+      }),
+      cache: 'no-store'
+    });
+    const json = await res.json();
+    return json?.data?.verifyResetToken === true;
+  } catch {
+    return false;
+  }
 }
 
 export default async function ResetPasswordPage({ searchParams }: Readonly<ResetPasswordPageProps>) {

@@ -6,6 +6,7 @@ import { MouseEvent, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import CardLayout from '../card-layout/CardLayout';
+import TitleWithTooltip from '../card-layout/TitleWithTooltip';
 import { styles } from './FileCard.styles';
 import FileCardMenuItems from './FileCardMenuItems';
 import TooltipCustom from '~/ds-components/tooltip/Tooltip';
@@ -94,9 +95,8 @@ const FileCard = ({ fileType, fileData, onClick, onAction }: FileCardProps) => {
         alt={`${fileType} icon`}
         style={{ width: ICON_SIZE, height: ICON_SIZE, flexShrink: 0 }}
       />
-      <Typography variant="subtitle1" sx={styles.fileTitle}>
-        {name}
-      </Typography>
+
+      <TitleWithTooltip text={name} fontWeight={500} lineClamp={1} />
     </Stack>
   );
 

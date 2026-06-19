@@ -1,9 +1,16 @@
 union LoginResult = LoginPayload | ErrorPayload
+union PasswordResetResult = SuccessPayload | ErrorPayload
+
+extend type Query {
+  verifyResetToken(token: String!): Boolean!
+}
 
 extend type Mutation {
   login(email: String!, password: String!): LoginResult!
   logout: Boolean!
   refreshToken: RefreshTokenPayload!
+  requestPasswordReset(email: String!): PasswordResetResult!
+  resetPassword(token: String!, password: String!): PasswordResetResult!
 }
 
 type LoginPayload {
@@ -20,4 +27,9 @@ type ErrorPayload {
   success: Boolean!
   message: String!
   statusCode: Int!
+}
+
+type SuccessPayload {
+  success: Boolean!
+  message: String!
 }

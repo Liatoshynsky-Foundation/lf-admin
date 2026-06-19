@@ -8,7 +8,10 @@ import { LoginError } from '~/back-constants/apolloCustomErrors/adminErrors';
 jest.mock('bcrypt');
 
 const mockAdminRepository = {
-  findByEmail: jest.fn()
+  findByEmail: jest.fn(),
+  setResetToken: jest.fn(),
+  findByResetToken: jest.fn(),
+  updatePasswordAndClearToken: jest.fn()
 };
 
 const useCase = loginAdmin({ adminRepository: mockAdminRepository });

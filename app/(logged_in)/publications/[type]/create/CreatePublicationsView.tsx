@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 
 import { sharedMenuStyles } from '../shared/shared-publication.styles';
 import { styles } from './CreatePublicationsView.styles';
+import DeleteCardModal from '~/components/delete-card-modal/DeleteCardModal';
 import {
   ACTIONS_TYPE,
   ADMIN_TITLE_LABELS,
@@ -21,7 +22,9 @@ import { normalizeFetchedCrop } from '~/lib/utils/CropperHelper';
 import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
 import SeoCollapsibleBlock from '~/shared/components/forms/seo-collapsible-block/SeoCollapsibleBlock';
-import { SeoCanonicalUrlField } from '~/shared/components/forms/seo-metadata-form/seo-canonicalurl-field/SeoCanonicalUrlField';
+import {
+  SeoCanonicalUrlField
+} from '~/shared/components/forms/seo-metadata-form/seo-canonicalurl-field/SeoCanonicalUrlField';
 import { SeoDateTimeFields } from '~/shared/components/forms/seo-metadata-form/seo-datetime-fields/SeoDateTimeFields';
 import { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
@@ -30,9 +33,10 @@ import { BaseContentStatuses } from '~/types/enums/common.enums';
 interface PublicationViewProps {
   data: ReturnType<typeof useUpsertPublication>;
   mode?: 'edit' | 'create' | 'seo';
+  onDeleteConfirm?: () => void;
 }
 
-export default function CreatePublicationsView({ data, mode = 'create' }: Readonly<PublicationViewProps>) {
+export default function CreatePublicationsView({ data, mode = 'create', onDeleteConfirm }: Readonly<PublicationViewProps>) {
   const {
     publicationType,
     adminTitle,
@@ -51,6 +55,7 @@ export default function CreatePublicationsView({ data, mode = 'create' }: Readon
   const router = useRouter();
   const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null);
   const isOpen = Boolean(anchor);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const eventsExtraFields = useCallback(
     (_locale: 'uk' | 'en', value: SeoBlockValue['meta']['uk']) => (
@@ -87,9 +92,7 @@ export default function CreatePublicationsView({ data, mode = 'create' }: Readon
 
   const handleClose = () => setAnchor(null);
 
-  const actions = (HEADER_MENU_OPTIONS.baseActions as ACTIONS_TYPE[]).filter(
-    (a) => a.id !== MenuActionId.DELETE && a.id !== MenuActionId.PUBLISH
-  );
+  const actions = (HEADER_MENU_OPTIONS.baseActions as ACTIONS_TYPE[]).filter((a) => a.id !== MenuActionId.PUBLISH);
 
   const handleMenuAction = async (actionId: MenuActionId) => {
     handleClose();
@@ -103,15 +106,16 @@ export default function CreatePublicationsView({ data, mode = 'create' }: Readon
         break;
       }
 
-      case MenuActionId.SAVE_DRAFT: {
-        const id = await handleSave(BaseContentStatuses.Draft);
+      case MenuActionId.PUBLICATE_AND_EXIT: {
+        const id = await handleSave(BaseContentStatuses.Published);
         if (id) {
-          toast.success(CONTENT_MUTATION_RESULTS.draftSaved);
+          toast.success(CONTENT_MUTATION_RESULTS.draftPublished);
+          router.push(PUBLICATIONS_BASE_PATH);
         }
         break;
       }
 
-      case MenuActionId.PUBLICATE_AND_EXIT: {
+      case MenuActionId.CANCEL_PUBLICATION: {
         const id = await handleSave(BaseContentStatuses.Draft);
         if (id) {
           toast.success(CONTENT_MUTATION_RESULTS.draftSaved);
@@ -201,11 +205,31 @@ export default function CreatePublicationsView({ data, mode = 'create' }: Readon
           sx={sharedMenuStyles.menu}
         >
           {actions.map((action) => (
-            <MenuItem sx={sharedMenuStyles.menuItem} key={action.id} onClick={() => handleMenuAction(action.id)}>
+            <MenuItem
+              sx={sharedMenuStyles.menuItem}
+              key={action.id}
+              onClick={() => {
+                if (action.id === MenuActionId.DELETE) {
+                  setDeleteModalOpen(true);
+                  handleClose();
+                  return;
+                }
+                void handleMenuAction(action.id);
+              }}
+            >
               <Typography variant="textMd">{action.label}</Typography>
             </MenuItem>
           ))}
         </Menu>
+
+        <DeleteCardModal
+          open={deleteModalOpen}
+          onClose={() => setDeleteModalOpen(false)}
+          onDelete={() => {
+            onDeleteConfirm?.();
+            setDeleteModalOpen(false);
+          }}
+        />
       </Box>
     </>
   );

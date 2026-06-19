@@ -2,6 +2,12 @@ import { render, screen, waitFor } from '@testing-library/react';
 
 import TitleWithTooltip from './TitleWithTooltip';
 
+globalThis.ResizeObserver = jest.fn().mockImplementation((callback) => ({
+  observe: jest.fn(() => callback()),
+  unobserve: jest.fn(),
+  disconnect: jest.fn()
+}));
+
 jest.mock('~/ds-components/tooltip/Tooltip', () => {
   return function MockTooltip({ title, children }: any) {
     return (
