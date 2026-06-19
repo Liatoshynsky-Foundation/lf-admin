@@ -1,4 +1,4 @@
-import { Accordion, AccordionDetails, AccordionProps, AccordionSummary } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionProps, AccordionSummary, Box } from '@mui/material';
 import React from 'react';
 
 import { Grip } from '../../grip/Grip';
@@ -18,7 +18,11 @@ const CollapsibleBlock = ({ title, children, sx, grip = false, childrenContainer
   return (
     <Accordion {...props} sx={[styles.root, ...(sxToArray(sx))]}>
       <AccordionSummary expandIcon={<ChevronIcon width={24} height={24} aria-label="Expand" />} sx={styles.summary}>
-        {grip && <Grip orientation='horizontal'/>}
+        {grip && (
+          <Box sx={styles.gripWrapper}>
+            <Grip orientation='horizontal'/>
+          </Box>
+        )}
         {title}
       </AccordionSummary>
       <AccordionDetails data-testid="inserted-container" sx={childrenContainerSx}>

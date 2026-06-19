@@ -17,5 +17,10 @@ export const getStyles = (hasGrip: boolean): Record<string, SxProps<Theme>> => (
     '& .MuiAccordionSummary-expandIconWrapper': {
       marginBottom: '13px', 
     }
+  },
+  gripWrapper: {
+    width: '100%',
+    display: 'flex',
+    justifyContent: 'center',
   }
 });

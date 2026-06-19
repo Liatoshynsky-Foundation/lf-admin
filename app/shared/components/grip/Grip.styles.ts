@@ -3,7 +3,8 @@ export const styles = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    width: 'auto',
+    width: '24px',  
+    height: '24px', 
     cursor: 'grab',
     '&:active': {
       cursor: 'grabbing',
