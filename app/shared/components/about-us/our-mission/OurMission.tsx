@@ -1,10 +1,11 @@
 'use client';
 
-import { Skeleton, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import { JSONContent } from '@tiptap/react';
 
+import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
 import { styles } from './OurMission.styles';
 import ConfigurableList from '~/components/configurable-list/ConfigurableList';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
@@ -64,7 +65,7 @@ const OurMission = () => {
   const { block } = usePageBlock(pageId, blockId);
   const setField = useStore((state) => state.setField);
 
-  if (!block) return <Skeleton sx={styles.skeletonPlaceholder} />;
+  if (!block) return <EditBlockSkeleton />;
 
   const missionList: MissionListItemWithId[] = ensureIds(block.list);
 

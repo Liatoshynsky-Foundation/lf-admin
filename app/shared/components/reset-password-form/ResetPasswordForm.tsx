@@ -1,5 +1,4 @@
 'use client';
-
 import { Box, Button, InputAdornment, Typography } from '@mui/material';
 import { Lock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -8,9 +7,11 @@ import toast from 'react-hot-toast';
 
 import PasswordField from '../design-system/password-field/PasswordField';
 import { styles } from './ResetPasswordForm.styles';
+import { resetPasswordErrors } from '~/constants/errors';
 import { placeholderStyle } from '~/constants/styles';
 import { renderHelperText } from '~/lib/utils/renderHelperText';
 import { AuthCardLayout } from '~/shared/components/auth-card/AuthCardLayout';
+import { useResetPasswordMutation } from '~/types/graphql/generated/graphql';
 
 interface ResetPasswordFormProps {
   token: string;
@@ -19,26 +20,40 @@ interface ResetPasswordFormProps {
 const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])/;
 
 const validatePassword = (password: string): string | null => {
-  if (!password.trim()) return 'Введіть новий пароль';
-  if (password.length < 10) return 'Пароль не відповідає вимогам безпеки';
-  if (password.length > 72) return 'Пароль не відповідає вимогам безпеки';
-  if (!passwordRegex.test(password)) return 'Пароль не відповідає вимогам безпеки';
+  if (!password.trim()) return resetPasswordErrors.EMPTY_PASSWORD;
+  if (password.length < 10) return resetPasswordErrors.REQUIREMENTS_NOT_MET;
+  if (password.length > 72) return resetPasswordErrors.REQUIREMENTS_NOT_MET;
+  if (!passwordRegex.test(password)) return resetPasswordErrors.REQUIREMENTS_NOT_MET;
   return null;
 };
 
 const PASSWORD_HINT =
   'Пароль має містити щонайменше 10 символів, включаючи велику літеру, цифру та спеціальний символ (наприклад, !@#$%). Максимальна довжина — 72 символи.';
 
-export default function ResetPasswordForm({ token: _token }: Readonly<ResetPasswordFormProps>) {
+export default function ResetPasswordForm({ token }: Readonly<ResetPasswordFormProps>) {
   const router = useRouter();
-
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
-
   const [confirmPassword, setConfirmPassword] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
-
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const [resetPasswordMutation, { loading }] = useResetPasswordMutation({
+    onCompleted: (data) => {
+      if (data.resetPassword.__typename === 'SuccessPayload') {
+        toast.success('Пароль успішно змінено. Увійдіть з новим паролем.');
+        router.push('/login');
+        return;
+      }
+      if (data.resetPassword.__typename === 'ErrorPayload') {
+        toast.error(data.resetPassword.message);
+      }
+    },
+    onError: (error) => {
+      const message = error.graphQLErrors[0]?.message;
+      toast.error(message ?? 'Сталася помилка, спробуйте ще раз');
+    }
+  });
 
   const validate = () => {
     setIsSubmitted(true);
@@ -49,7 +64,7 @@ export default function ResetPasswordForm({ token: _token }: Readonly<ResetPassw
     if (!confirmPassword.trim()) {
       confirmError = 'Підтвердіть пароль';
     } else if (password !== confirmPassword) {
-      confirmError = 'Паролі не збігаються';
+      confirmError = resetPasswordErrors.PASSWORDS_MISMATCH;
     }
     setConfirmPasswordError(confirmError);
 
@@ -69,16 +84,7 @@ export default function ResetPasswordForm({ token: _token }: Readonly<ResetPassw
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validate()) {
-      try {
-        const responseDataSuccess = true;
-
-        if (responseDataSuccess) {
-          toast.success('Пароль успішно змінено. Увійдіть з новим паролем.');
-          router.push('/login');
-        }
-      } catch {
-        toast.error('Сталася помилка, спробуйте ще раз');
-      }
+      resetPasswordMutation({ variables: { token, password } });
     }
   };
 
@@ -104,7 +110,6 @@ export default function ResetPasswordForm({ token: _token }: Readonly<ResetPassw
           <Box sx={styles.passwordHintContainer}>
             <Typography sx={styles.passwordHintText}>{PASSWORD_HINT}</Typography>
           </Box>
-
           <PasswordField
             label="Повторіть пароль *"
             value={confirmPassword}
@@ -121,9 +126,8 @@ export default function ResetPasswordForm({ token: _token }: Readonly<ResetPassw
             }
           />
         </Box>
-
-        <Button variant="contained" sx={styles.buttonSubmit} type="submit" fullWidth>
-          Змінити пароль
+        <Button variant="contained" sx={styles.buttonSubmit} type="submit" fullWidth disabled={loading}>
+          {loading ? 'Збереження...' : 'Змінити пароль'}
         </Button>
       </Box>
     </AuthCardLayout>

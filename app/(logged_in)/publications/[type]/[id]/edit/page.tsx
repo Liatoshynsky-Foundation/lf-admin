@@ -13,7 +13,9 @@ import {
   PublicationsItemType
 } from '~/constants/publications';
 import { SerializedContent } from '~/shared/components/content-editor';
+import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
 import { usePublicationManager } from '~/shared/hooks/use-publications-manager/usePublicationsManager';
+import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
 import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
@@ -27,10 +29,15 @@ export default function EditPublicationsPage() {
   const router = useRouter();
 
   const manager = usePublicationManager(type, id);
+
+  useUnsavedChanges(manager.hasUnsavedChanges);
+
   const publicationData = useUpsertPublication({ type, id });
 
   const latestBlocksRef = useRef<SerializedContent | null>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const { navigate } = useNavigationGuard();
 
   useEffect(() => {
     return () => {
@@ -49,9 +56,10 @@ export default function EditPublicationsPage() {
 
     debounceTimerRef.current = setTimeout(() => {
       if (latestBlocksRef.current) {
-        manager.setEditedContent((prev) =>
-          prev ? { ...prev, [localeKey]: { content: latestBlocksRef.current! } } : prev
-        );
+        manager.setEditedContent((prev) => {
+          const next = prev ? { ...prev, [localeKey]: { content: latestBlocksRef.current! } } : prev;
+          return next;
+        });
       }
     }, 500);
   };
@@ -99,22 +107,26 @@ export default function EditPublicationsPage() {
       console.error(`Action ${actionId} failed`, err);
     }
   };
-
-  return type === 'media' ? (
-    <CreatePublicationsView data={publicationData} mode="edit" />
-  ) : (
-    <EditPublicationsView
-      type={type}
-      isLoading={manager.isLoading}
-      currentData={manager.currentData}
-      editedContent={manager.editedContent}
-      editorResetKey={manager.editorResetKey}
-      currentLanguage={manager.currentLanguage}
-      onLanguageChange={manager.setCurrentLanguage}
-      onEditorChange={handleEditorChange}
-      onAction={handleMenuAction}
-      onDeleteConfirm={() => handleMenuAction(MenuActionId.DELETE)}
-      onSeoClick={() => router.push(`${PUBLICATIONS_BASE_PATH}/${type}/${id}/seo`)}
-    />
+  return (
+    <>
+      {type === 'media' ? (
+        <CreatePublicationsView data={publicationData} mode="edit" />
+      ) : (
+        <EditPublicationsView
+          type={type}
+          isLoading={manager.isLoading}
+          currentData={manager.currentData}
+          editedContent={manager.editedContent}
+          editorResetKey={manager.editorResetKey}
+          currentLanguage={manager.currentLanguage}
+          onLanguageChange={manager.setCurrentLanguage}
+          onEditorChange={handleEditorChange}
+          onAction={handleMenuAction}
+          onDeleteConfirm={() => handleMenuAction(MenuActionId.DELETE)}
+          onSeoClick={() => navigate(`${PUBLICATIONS_BASE_PATH}/${type}/${id}/seo`)}
+          onBackClick={() => navigate(PUBLICATIONS_BASE_PATH)}
+        />
+      )}
+    </>
   );
 }

@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { createDocNode } from '../__mocks__/utils';
 import WhatWeDo from './WhatWeDo';
+import { createDocNode } from '~/__mocks__/utils';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { WhatWeDolItemWithId } from '~/types/store/pages/about-us/blocks/whatWeDoBlock';
 

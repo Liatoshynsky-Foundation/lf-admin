@@ -13,12 +13,25 @@ export type DividedHeaderProps = {
   rightActionsComponent?: ReactNode;
   children?: ReactNode;
   sx?: SxProps<Theme>;
+  onBackClick?: () => void;
 };
 
-export default function DividedHeader({ originUrl = '/', rightActionsComponent, children, sx }: Readonly<DividedHeaderProps>) {
+export default function DividedHeader({
+  originUrl = '/',
+  rightActionsComponent,
+  children,
+  sx,
+  onBackClick
+}: Readonly<DividedHeaderProps>) {
   const router = useRouter();
 
-  const handleReturn = () => router.push(originUrl);
+  const handleReturn = () => {
+    if (onBackClick) {
+      onBackClick();
+      return;
+    }
+    router.push(originUrl);
+  };
 
   return (
     <Box sx={[styles.container, ...sxToArray(sx)]}>
@@ -27,9 +40,7 @@ export default function DividedHeader({ originUrl = '/', rightActionsComponent, 
           <ChevronLeft strokeWidth="1.5px" size={24} />
         </IconButton>
 
-        <Box sx={styles.children}>
-          {children}
-        </Box>
+        <Box sx={styles.children}>{children}</Box>
       </Box>
       <Box>{rightActionsComponent}</Box>
     </Box>
