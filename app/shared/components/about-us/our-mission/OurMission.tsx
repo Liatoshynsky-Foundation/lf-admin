@@ -1,10 +1,11 @@
 'use client';
 
-import { Skeleton, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import { JSONContent } from '@tiptap/react';
 
+import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
 import { SortableItemWrapper } from '../../sortable-item-wrapper/SortableItemWrapper';
 import { SortableList } from '../../sortable-list/SortableList';
 import { styles } from './OurMission.styles';
@@ -72,7 +73,7 @@ const OurMission = () => {
     setField(pageId, blockId, 'list', reordered);
   });
 
-  if (!block) return <Skeleton sx={styles.skeletonPlaceholder} />;
+  if (!block) return <EditBlockSkeleton />;
 
 
   const missionPoints: MissionPoint[] = missionList.map((item) => ({

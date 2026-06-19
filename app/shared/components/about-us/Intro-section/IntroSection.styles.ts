@@ -7,7 +7,4 @@ export const styles = {
   quoteWrapper: {
     marginTop: '15px'
   },
-  skeletonPlaceholder: {
-    height: '60px'
-  }
 } satisfies Record<string, SxProps<Theme>>;

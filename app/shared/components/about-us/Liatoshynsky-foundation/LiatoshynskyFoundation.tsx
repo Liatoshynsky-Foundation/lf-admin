@@ -1,11 +1,10 @@
 'use client';
 
-import { Skeleton } from '@mui/material';
 import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
+import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
 import { FoundationBlock } from './foundation-block/FoundationBlock';
-import { styles } from './LiatoshynskyFoundation.styles';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { proseToText } from '~/lib/utils/prose';
@@ -24,7 +23,7 @@ export const LiatoshynskyFoundation = () => {
 
   const currentLocale: 'uk' | 'en' = useStore((state) => state.locale);
 
-  if (!block) return <Skeleton sx={styles.skeletonPlaceholder} />;
+  if (!block) return <EditBlockSkeleton />;
 
   const mainText = block.ourOrganisation?.[currentLocale];
   const handleMainTextChange = (val: JSONContent) => {

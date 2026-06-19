@@ -1,7 +1,8 @@
 'use client';
-import { Skeleton, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import { JSONContent } from '@tiptap/react';
 
+import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
 import { styles } from './FoundationFounders.style';
 import ConfigurableList from '~/components/configurable-list/ConfigurableList';
 import { ContributorCard } from '~/components/contributor-card/ContributorCard';
@@ -21,7 +22,7 @@ export const FoundationFounders = () => {
   const currentLocale: keyof LocalizedString = useStore((state) => state.locale);
   const setField = useStore((state) => state.setField);
 
-  if (!block) return <Skeleton sx={styles.skeletonPlaceholder} />;
+  if (!block) return <EditBlockSkeleton />;
 
   const memberList: TeamMemberWithId[] = ensureIds(block.members);
 

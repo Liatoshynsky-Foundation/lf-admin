@@ -71,7 +71,12 @@ export interface EditState {
 export interface NavigationState {
   dirtyPaths: Record<string, boolean>;
   setDirtyPath: (path: string, isDirty: boolean) => void;
-}
 
+  pendingNavigation: string | null;
+  setPendingNavigation: (path: string | null) => void;
+
+  isDiscardModalOpen: boolean;
+  setDiscardModalOpen: (open: boolean) => void;
+}
 
 export type BlockData<K extends keyof BlocksMap = keyof BlocksMap> = BlocksMap[K];

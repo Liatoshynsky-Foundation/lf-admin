@@ -1,8 +1,7 @@
-import { Skeleton } from '@mui/material';
-import { JSONContent } from '@tiptap/react';
+import {JSONContent}from '@tiptap/react';
 
 import { EditableSectionList, SectionListItem } from '../../accordion-blocks/editable-section-list/EditableSectionList';
-import { styles } from './OurGoals.styles';
+import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { ensureIds } from '~/lib/utils/ensureIds';
@@ -27,7 +26,7 @@ const OurGoals = () => {
     setField(pageId, blockId, 'goals', reordered);
   });
 
-  if (!block) return <Skeleton sx={styles.skeletonPlaceholder} />;
+  if (!block) return <EditBlockSkeleton />;
 
   const goalPoints: SectionListItem[] = goalList.map((item) => ({
     id: item.id,

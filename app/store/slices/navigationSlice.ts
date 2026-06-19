@@ -7,5 +7,17 @@ export const createNavigationSlice: StateCreator<NavigationState> = (set) => ({
   setDirtyPath: (path, isDirty) =>
     set((state) => ({
       dirtyPaths: { ...state.dirtyPaths, [path]: isDirty }
+    })),
+  pendingNavigation: null,
+
+  setPendingNavigation: (path) =>
+    set(() => ({
+      pendingNavigation: path
+    })),
+  isDiscardModalOpen: false,
+
+  setDiscardModalOpen: (open) =>
+    set(() => ({
+      isDiscardModalOpen: open
     }))
 });

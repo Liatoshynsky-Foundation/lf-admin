@@ -83,6 +83,13 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
   const [seoValue, setSeoValue] = useState<SeoBlockValue>(initialSeoValue);
 
   const [crop, setCrop] = useState<ImageCropData>(null);
+
+  const [initialState, setInitialState] = useState<{
+    adminTitle: string;
+    publishDate: string | null;
+    seoValue: SeoBlockValue;
+    crop: ImageCropData;
+  } | null>(null);
   const [forceShowErrors, setForceShowErrors] = useState(false);
 
   const latestDataRef = useRef({
@@ -170,6 +177,24 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
           uk: fetchedData.ticketUrl?.uk || '',
           en: fetchedData.ticketUrl?.en || ''
         }
+      });
+
+      setInitialState({
+        adminTitle: fetchedData.adminTitle || '',
+        publishDate: safeParseDate(mainDate)?.toISOString() ?? null,
+        seoValue: {
+          meta: { uk: getLangMeta('uk'), en: getLangMeta('en') },
+          ogImage: fetchedData.coverImage?.src || null,
+          allowIndexing: {
+            uk: fetchedData.allowIndexation?.uk ?? true,
+            en: fetchedData.allowIndexation?.en ?? true
+          },
+          ticketUrl: {
+            uk: fetchedData.ticketUrl?.uk || '',
+            en: fetchedData.ticketUrl?.en || ''
+          }
+        },
+        crop: fetchedData.coverImage?.crop ?? null
       });
 
       isInitializedRef.current = true;
@@ -272,6 +297,21 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     }));
   }, []);
 
+  const hasUnsavedChanges =
+    initialState !== null &&
+    JSON.stringify({
+      adminTitle,
+      publishDate: publishDate?.toISOString() ?? null,
+      seoValue,
+      crop
+    }) !==
+      JSON.stringify({
+        adminTitle: initialState.adminTitle,
+        publishDate: initialState.publishDate,
+        seoValue: initialState.seoValue,
+        crop: initialState.crop
+      });
+
   return {
     isEditing,
     isLoading: isEditing && (newsQuery.loading || eventQuery.loading || mediaQuery.loading),
@@ -286,12 +326,13 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     setPublishDate: changePublishDate,
     seoValue,
     setSeoValue: changeSeoValue,
+    hasUnsavedChanges,
 
     crop,
     setCrop: changeCrop,
 
     forceShowErrors,
     handleSave,
-    handleDateTimeChange,
+    handleDateTimeChange
   };
 };

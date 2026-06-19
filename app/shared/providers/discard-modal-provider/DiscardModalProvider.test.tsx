@@ -1,30 +1,26 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import DiscardModalProvider from './DiscardModalProvider';
 
+const pushMock = jest.fn();
+const setPendingNavigation = jest.fn();
+const setDiscardModalOpen = jest.fn();
+
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: pushMock
+  })
+}));
+
 jest.mock('~/store', () => ({
-  useStore: () => ({
-    __esModule: true,
-    default: jest.fn((selector) => selector({ isChanged: true, blocks: { page1: { block1: {} } } }))
-  })
-}));
-
-const confirmNavigation = jest.fn();
-const cancelNavigation = jest.fn();
-
-jest.mock('~/shared/hooks/use-stay-page/useStayPage', () => ({
-  useStayPage: () => ({
-    pendingPath: '/new-path',
-    confirmNavigation,
-    cancelNavigation
-  })
-}));
-
-let beforeRouteChangeCb: any = null;
-jest.mock('~/shared/hooks/use-before-route-change/useBeforeRouteChange', () => ({
-  useBeforeRouteChange: (cb: any) => {
-    beforeRouteChangeCb = cb;
-  }
+  useStore: jest.fn((selector) =>
+    selector({
+      pendingNavigation: '/target-page',
+      isDiscardModalOpen: true,
+      setPendingNavigation,
+      setDiscardModalOpen
+    })
+  )
 }));
 
 jest.mock('~/shared/components/design-system/discard-changes-modal/DiscardChangesModal', () => ({
@@ -41,7 +37,6 @@ jest.mock('~/shared/components/design-system/discard-changes-modal/DiscardChange
 describe('DiscardModalProvider', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    beforeRouteChangeCb = null;
   });
 
   it('should render children', () => {
@@ -54,48 +49,40 @@ describe('DiscardModalProvider', () => {
     expect(screen.getByTestId('child')).toBeInTheDocument();
   });
 
-  it('should open modal when pendingPath exists and route change occurs', () => {
+  it('should open modal when discard modal state is true', () => {
     render(
       <DiscardModalProvider>
         <div>child</div>
       </DiscardModalProvider>
     );
-    expect(screen.queryByText('Cancel')).not.toBeInTheDocument();
-    act(() => {
-      beforeRouteChangeCb();
-    });
-
     expect(screen.getByText('Cancel')).toBeInTheDocument();
     expect(screen.getByText('Confirm')).toBeInTheDocument();
   });
 
-  it('should call cancelNavigation when cancel is clicked', () => {
+  it('should clear navigation state when cancel is clicked', () => {
     render(
       <DiscardModalProvider>
         <div>child</div>
       </DiscardModalProvider>
     );
-    act(() => {
-      beforeRouteChangeCb();
-    });
+
     fireEvent.click(screen.getByText('Cancel'));
 
-    expect(cancelNavigation).toHaveBeenCalled();
-    expect(screen.queryByText('Cancel')).not.toBeInTheDocument();
+    expect(setPendingNavigation).toHaveBeenCalledWith(null);
+    expect(setDiscardModalOpen).toHaveBeenCalledWith(false);
   });
 
-  it('should call confirmNavigation when confirm is clicked', () => {
+  it('should navigate to pending path when confirm is clicked', () => {
     render(
       <DiscardModalProvider>
         <div>child</div>
       </DiscardModalProvider>
     );
-    act(() => {
-      beforeRouteChangeCb();
-    });
+
     fireEvent.click(screen.getByText('Confirm'));
 
-    expect(confirmNavigation).toHaveBeenCalled();
-    expect(screen.queryByText('Confirm')).not.toBeInTheDocument();
+    expect(pushMock).toHaveBeenCalledWith('/target-page');
+    expect(setPendingNavigation).toHaveBeenCalledWith(null);
+    expect(setDiscardModalOpen).toHaveBeenCalledWith(false);
   });
 });

@@ -1,42 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { createDocNode } from '../../about-us/__mocks__/utils';
 import { EditableSectionList, SectionListItem } from './EditableSectionList';
-
-interface MockConfigurableListProps<T> {
-  readonly items: readonly T[];
-  readonly renderItem: (props: { readonly item: T }) => React.ReactNode;
-  readonly onCreate: () => void;
-  readonly onDelete: (id: string | number) => void;
-}
-
-jest.mock('~/components/configurable-list/ConfigurableList', () => ({
-  __esModule: true,
-  default: <T extends { readonly id: string | number }>({
-    items,
-    renderItem,
-    onCreate,
-    onDelete
-  }: MockConfigurableListProps<T>) => (
-    <div>
-      {items.map((item) => (
-        <div key={item.id} data-testid="item">
-          {renderItem({ item })}
-          <button data-testid={`delete-${item.id}`} onClick={() => onDelete(item.id)}>
-            Видалити
-          </button>
-        </div>
-      ))}
-      <button data-testid="add-btn" onClick={onCreate}>
-        Додати пункт
-      </button>
-    </div>
-  )
-}));
-
+import { createDocNode } from '~/__mocks__/utils';
 
 jest.mock('~/shared/components/design-system/text-field/TextField');
+jest.mock('~/components/configurable-list/ConfigurableList');
 
 const mockTitleJson = createDocNode('Test Section Title');
 

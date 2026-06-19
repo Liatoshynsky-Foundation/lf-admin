@@ -1,8 +1,7 @@
-import { Skeleton } from '@mui/material';
-import { JSONContent } from '@tiptap/react';
+import { JSONContent} from '@tiptap/react';
 
 import { EditableSectionList, SectionListItem } from '../../accordion-blocks/editable-section-list/EditableSectionList';
-import { styles } from './WhatWeDo.styles';
+import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { ensureIds } from '~/lib/utils/ensureIds';
@@ -22,12 +21,12 @@ const WhatWeDo = () => {
   const setField = useStore((state) => state.setField);
 
   const itemList: WhatWeDolItemWithId[] = block ? ensureIds(block.items) : [];
-
+  
   const { handleDragEnd } = useSortableDragEnd(itemList, (reordered) => {
     setField(pageId, blockId, 'items', reordered);
   });
-
-  if (!block) return <Skeleton sx={styles.skeletonPlaceholder} />;
+  
+  if (!block) return <EditBlockSkeleton />;
 
   const points: SectionListItem[] = itemList.map((item) => ({
     id: item.id,
