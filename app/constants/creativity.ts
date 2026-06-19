@@ -1,5 +1,4 @@
 import type { FilterOption } from '~/shared/components/selector/FilterSelect';
-import { HeaderConfig } from '~/shared/components/table-layout/TableHeader';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 export type WorksTabValue = 'all' | 'opus' | 'ungrouped' | 'works';
@@ -105,35 +104,3 @@ export const WORK_MENU_ITEMS = [
   { id: 'share', label: 'Поширити' },
   { id: 'delete', label: 'Видалити', danger: true }
 ] as const;
-
-export const COLUMNS: readonly HeaderConfig[] = [
-  {
-    id: 'opus',
-    headerLabel: 'Опуси',
-    width: '88px',
-    hasRightDivider: true
-  },
-  {
-    id: 'title',
-    headerLabel: 'Назва',
-    width: 'minmax(220px, 1fr)'
-  },
-  {
-    id: 'genre',
-    headerLabel: 'Жанр',
-    width: '216px'
-  },
-  {
-    id: 'years',
-    headerLabel: 'Роки',
-    width: '104px',
-    hasRightDivider: true
-  },
-  {
-    id: 'status',
-    headerLabel: 'Статус',
-    width: '48px',
-    hasRightDivider: true,
-    align: 'center'
-  }
-];

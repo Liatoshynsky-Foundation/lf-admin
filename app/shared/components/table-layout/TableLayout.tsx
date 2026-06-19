@@ -5,12 +5,12 @@ import React from 'react';
 
 import { GroupedRow } from './row-variants/GroupedRow';
 import { PlainRow } from './row-variants/PlainRow';
-import { BaseRowData } from './row-variants/Row.types';
-import { HeaderConfig, HeaderRow } from './TableHeader';
+import { BaseRowData, ColumnsConfig } from './row-variants/Row.types';
+import { HeaderRow } from './TableHeader';
 
 type TableLayoutProps<TGroup, TSub, TPlain> = Readonly<{
   data: readonly BaseRowData<TGroup, TSub, TPlain>[];
-  columns: readonly HeaderConfig[];
+  columns: readonly ColumnsConfig[];
 }>;
 
 export function TableLayout<TGroup, TSub, TPlain>({ data, columns }: TableLayoutProps<TGroup, TSub, TPlain>) {

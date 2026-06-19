@@ -32,6 +32,7 @@ export const styles = {
     display: 'flex',
     alignItems: 'center',
     pr: hasRightDivider ? '10px' : 0,
+    pl: hasBorderLeft ? '10px' : 0,
     borderRight: hasRightDivider ? BORDER : 'none',
     borderLeft: hasBorderLeft ? BORDER : 'none',
     ...(colId === 'title' ? { gridColumn: 'span 2' } : {}),

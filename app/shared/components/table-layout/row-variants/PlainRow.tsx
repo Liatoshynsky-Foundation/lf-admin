@@ -3,13 +3,12 @@ import React from 'react';
 
 import { ContextMenu } from '../components/ContextMenu';
 import { EditAction } from '../components/EditAction';
-import { HeaderConfig } from '../TableHeader';
 import { styles } from './PlainRow.styles';
-import { IndividualRowRenderer, RowActionConfig } from './Row.types';
+import { ColumnsConfig, IndividualRowRenderer, RowActionConfig } from './Row.types';
 
 type PlainRowProps<TPlain> = Readonly<{
   plainData: TPlain;
-  columns: readonly HeaderConfig[];
+  columns: readonly ColumnsConfig[];
   gridTemplate: string;
   renderer: IndividualRowRenderer<TPlain>;
   actions?: RowActionConfig;
@@ -24,7 +23,7 @@ export function PlainRow<TPlain>({ plainData, columns, gridTemplate, renderer, a
         const content = renderer.renderPlainCell(col.id, plainData);
 
         return (
-          <Box key={col.id} sx={styles.plainCell(col.id, col.hasRightDivider)}>
+          <Box key={col.id} sx={styles.plainCell(col.id, col.hasRightDivider, col.hasLeftDivider)}>
             {typeof content === 'string' ? (
               <Typography sx={styles.plainCellText(col.id)}>{content}</Typography>
             ) : (

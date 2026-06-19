@@ -63,13 +63,15 @@ export const styles = {
     width: customWidth ?? ACTIONS_COLUMN_WIDTH,
   }),
 
-  groupCell: (colId: string, hasRightDivider?: boolean): SxProps<Theme> => ({
+  groupCell: (colId: string, hasRightDivider?: boolean, hasLeftDivider?: boolean): SxProps<Theme> => ({
     minWidth: 0,
     height: '100%',
     display: 'flex',
     alignItems: 'center',
     pr: hasRightDivider ? '10px' : 0,
+    pl: hasLeftDivider ? '10px' : 0,
     borderRight: hasRightDivider ? BORDER : 'none',
+    borderLeft: hasLeftDivider ? BORDER : 'none',
     ...(colId === 'status' ? { justifyContent: 'center', width: '100%' } : { justifyContent: 'flex-start' }),
   }),
 
@@ -80,13 +82,15 @@ export const styles = {
     ...(colId === 'status' ? { textAlign: 'center' } : { textAlign: 'left' }),
   }),
 
-  subCell: (colId: string, hasRightDivider?: boolean, hasContent?: boolean): SxProps<Theme> => ({
+  subCell: (colId: string, hasRightDivider?: boolean, hasLeftDivider?: boolean, hasContent?: boolean): SxProps<Theme> => ({
     minWidth: 0,
     height: '100%',
     display: 'flex',
     alignItems: 'center',
     pr: hasRightDivider && hasContent ? '10px' : 0,
+    pl: hasLeftDivider && hasContent ? '10px' : 0,
     borderRight: hasRightDivider && hasContent ? BORDER : 'none',
+    borderLeft: hasLeftDivider && hasContent ? BORDER : 'none',
     ...(colId === 'status' ? { justifyContent: 'center', width: '100%' } : { justifyContent: 'flex-start' }),
   }),
 

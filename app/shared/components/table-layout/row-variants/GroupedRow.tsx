@@ -4,14 +4,13 @@ import React from 'react';
 
 import { ContextMenu } from '../components/ContextMenu';
 import { EditAction } from '../components/EditAction';
-import { HeaderConfig } from '../TableHeader';
 import { styles } from './GroupedRow.styles';
-import { GroupRowRenderer, RowActionConfig } from './Row.types';
+import { ColumnsConfig, GroupRowRenderer, RowActionConfig } from './Row.types';
 
 type GroupedRowProps<TGroup, TSub> = Readonly<{
   groupData: TGroup;
   subRows: readonly TSub[];
-  columns: readonly HeaderConfig[];
+  columns: readonly ColumnsConfig[];
   gridTemplate: string;
   actionsColumnWidth?: string;
   renderer: GroupRowRenderer<TGroup, TSub>;
@@ -39,7 +38,7 @@ export function GroupedRow<TGroup, TSub>({
             const content = renderer.renderGroupCell(col.id, groupData);
 
             return (
-              <Box key={col.id} sx={styles.groupCell(col.id, col.hasRightDivider)}>
+              <Box key={col.id} sx={styles.groupCell(col.id, col.hasRightDivider, col.hasLeftDivider)}>
                 {typeof content === 'string' ? (
                   <Typography sx={styles.groupCellText(col.id)}>{content}</Typography>
                 ) : (
@@ -77,7 +76,7 @@ export function GroupedRow<TGroup, TSub>({
                   const hasContent = content !== null && content !== '';
 
                   return (
-                    <Box key={col.id} sx={styles.subCell(col.id, col.hasRightDivider, hasContent)}>
+                    <Box key={col.id} sx={styles.subCell(col.id, col.hasRightDivider, col.hasLeftDivider, hasContent)}>
                       {typeof content === 'string' ? (
                         <Typography sx={styles.subCellText(col.id)}>{content}</Typography>
                       ) : (

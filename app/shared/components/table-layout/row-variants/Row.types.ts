@@ -31,3 +31,12 @@ export type GroupRowRenderer<TGroup, TSub> = {
 export type IndividualRowRenderer<TPlain> = {
   renderPlainCell: (colId: string, plainItem: TPlain) => React.ReactNode;
 };
+
+export type ColumnsConfig = {
+  id: string;
+  headerLabel: string;
+  width: string;
+  hasRightDivider?: boolean;
+  hasLeftDivider?: boolean;
+  align?: 'left' | 'center' | 'right';
+};

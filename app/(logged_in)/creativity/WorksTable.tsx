@@ -5,14 +5,47 @@ import React from 'react';
 
 import { WorkStatus } from './works.mock';
 import { styles } from './WorksTable.styles';
-import { COLUMNS, GROUP_MENU_ITEMS, WORK_MENU_ITEMS, WORKS_BASE_PATH } from '~/constants/creativity';
+import { GROUP_MENU_ITEMS, WORK_MENU_ITEMS, WORKS_BASE_PATH } from '~/constants/creativity';
 import { StatusBadge } from '~/shared/components/table-layout/components/StatusBadge';
 import {
   BaseRowData,
+  ColumnsConfig,
   GroupRowRenderer,
   IndividualRowRenderer
 } from '~/shared/components/table-layout/row-variants/Row.types';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
+
+export const COLUMNS: readonly ColumnsConfig[] = [
+  {
+    id: 'opus',
+    headerLabel: 'Опуси',
+    width: '88px',
+    hasRightDivider: true
+  },
+  {
+    id: 'title',
+    headerLabel: 'Назва',
+    width: 'minmax(220px, 1fr)'
+  },
+  {
+    id: 'genre',
+    headerLabel: 'Жанр',
+    width: '216px'
+  },
+  {
+    id: 'years',
+    headerLabel: 'Роки',
+    width: '104px'
+  },
+  {
+    id: 'status',
+    headerLabel: 'Статус',
+    width: '48px',
+    hasRightDivider: true,
+    hasLeftDivider: true,
+    align: 'center'
+  }
+];
 
 export type TableGroupRowData = Readonly<{
   id: string;

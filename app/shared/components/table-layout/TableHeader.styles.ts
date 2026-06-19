@@ -33,9 +33,9 @@ export const styles = {
     ...SINGLE_LINE_ELLIPSIS,
   },
 
-  headerTextCell: (colId: string, align?: 'left' | 'center' | 'right'): SxProps<Theme> => ({
+  headerTextCell: (): SxProps<Theme> => ({
     ...styles.tableHeaderText,
-    textAlign: align ?? (colId === 'status' ? 'center' : 'left'),
+    textAlign: 'left',
     width: '100%',
   }),
 };
