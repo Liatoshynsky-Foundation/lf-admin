@@ -7,6 +7,7 @@ import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { ensureIds } from '~/lib/utils/ensureIds';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
+import { useSortableDragEnd } from '~/shared/hooks/use-sortable-drag-end/useSortableDragEnd';
 import { useStore } from '~/store';
 import { LocalizedString } from '~/types/common';
 import type { GoalItemWithId } from '~/types/store/pages/about-us/blocks/ourGoalsBlock';
@@ -20,9 +21,13 @@ const OurGoals = () => {
   const currentLocale: keyof LocalizedString = useStore((state) => state.locale);
   const setField = useStore((state) => state.setField);
 
-  if (!block) return <Skeleton sx={styles.skeletonPlaceholder} />;
+  const goalList: GoalItemWithId[] = block ? ensureIds(block.goals) : [];
 
-  const goalList: GoalItemWithId[] = ensureIds(block.goals);
+  const { handleDragEnd } = useSortableDragEnd(goalList, (reordered) => {
+    setField(pageId, blockId, 'goals', reordered);
+  });
+
+  if (!block) return <Skeleton sx={styles.skeletonPlaceholder} />;
 
   const goalPoints: SectionListItem[] = goalList.map((item) => ({
     id: item.id,
@@ -79,6 +84,7 @@ const OurGoals = () => {
         onChangeItem={handleChangeItem}
         onCreateItem={handleCreateItem}
         onDeleteItem={handleDeleteItem}
+        onDragEnd={handleDragEnd}
         sectionLabel="Пункти секції:"
       />
     </CollapsibleBlock>

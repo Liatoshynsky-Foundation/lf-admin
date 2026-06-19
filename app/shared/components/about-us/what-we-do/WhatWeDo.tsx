@@ -7,6 +7,7 @@ import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { ensureIds } from '~/lib/utils/ensureIds';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
+import { useSortableDragEnd } from '~/shared/hooks/use-sortable-drag-end/useSortableDragEnd';
 import { useStore } from '~/store';
 import { LocalizedString } from '~/types/common';
 import type { WhatWeDolItemWithId } from '~/types/store/pages/about-us/blocks/whatWeDoBlock';
@@ -20,9 +21,13 @@ const WhatWeDo = () => {
   const currentLocale: keyof LocalizedString = useStore((state) => state.locale);
   const setField = useStore((state) => state.setField);
 
-  if (!block) return <Skeleton sx={styles.skeletonPlaceholder} />;
+  const itemList: WhatWeDolItemWithId[] = block ? ensureIds(block.items) : [];
 
-  const itemList: WhatWeDolItemWithId[] = ensureIds(block.items);
+  const { handleDragEnd } = useSortableDragEnd(itemList, (reordered) => {
+    setField(pageId, blockId, 'items', reordered);
+  });
+
+  if (!block) return <Skeleton sx={styles.skeletonPlaceholder} />;
 
   const points: SectionListItem[] = itemList.map((item) => ({
     id: item.id,
@@ -69,6 +74,7 @@ const WhatWeDo = () => {
         onChangeItem={handleChangeItem}
         onCreateItem={handleCreateItem}
         onDeleteItem={handleDeleteItem}
+        onDragEnd={handleDragEnd}
         sectionLabel="Пункти секції:"
       />
     </CollapsibleBlock>
