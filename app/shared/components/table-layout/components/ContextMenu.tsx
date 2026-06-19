@@ -34,7 +34,7 @@ export function ContextMenu({
           aria-expanded={Boolean(anchorEl)}
           sx={styles.contentMenuButton}
         >
-          <MoreVertical size={22} color="#190D03" />
+          <MoreVertical size={22} />
         </IconButton>
       </Box>
 
@@ -46,6 +46,14 @@ export function ContextMenu({
         sx={styles.contextMenuDropdown}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        slotProps={{
+          backdrop: {
+            onClick: (e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }
+          }
+        }}
         menuList={
           <Box sx={styles.menuList}>
             {items.map((item) => (
