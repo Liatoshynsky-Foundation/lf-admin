@@ -22,8 +22,6 @@ type HeaderRowProps = Readonly<{
 export function HeaderRow({ columns, gridTemplate }: HeaderRowProps) {
   return (
     <Box sx={styles.tableHeader(gridTemplate, columns[0]?.width ?? 'auto')}>
-      <Box sx={styles.markerColumn} />
-
       {columns.map((col) => (
         <Typography
           key={col.id}

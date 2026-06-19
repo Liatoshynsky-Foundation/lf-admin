@@ -55,7 +55,7 @@ export function ContextMenu({
           }
         }}
         menuList={
-          <Box sx={styles.menuList}>
+          <Box>
             {items.map((item) => (
               <MenuItem key={item.id} onClick={handleClose} sx={getContextMenuDropdownItem(item.danger)}>
                 {item.label}

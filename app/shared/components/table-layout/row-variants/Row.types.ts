@@ -11,7 +11,7 @@ export type BaseRowData<TGroup, TSub, TPlain> =
       id: string;
       groupData: TGroup;
       subRows: readonly TSub[];
-	  renderer: GroupRowRenderer<TGroup, TSub>;
+	    renderer: GroupRowRenderer<TGroup, TSub>;
       actions?: RowActionConfig;
       subRowActions?: (subItem: TSub) => RowActionConfig;
     }
@@ -19,7 +19,7 @@ export type BaseRowData<TGroup, TSub, TPlain> =
       type: 'individual';
       id: string;
       plainData: TPlain;
-	  renderer: IndividualRowRenderer<TPlain>;
+	    renderer: IndividualRowRenderer<TPlain>;
       actions?: RowActionConfig;
     };
 

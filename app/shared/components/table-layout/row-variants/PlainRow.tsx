@@ -18,8 +18,6 @@ type PlainRowProps<TPlain> = Readonly<{
 export function PlainRow<TPlain>({ plainData, columns, gridTemplate, renderer, actions }: PlainRowProps<TPlain>) {
   return (
     <Box sx={styles.individualWorkRow(gridTemplate)}>
-      <Box sx={styles.markerColumn} />
-
       {columns.map((col) => {
         if (col.id === 'opus' || col.id === 'group') return null;
 

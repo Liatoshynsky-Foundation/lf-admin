@@ -1,19 +1,11 @@
 import { SxProps, Theme } from '@mui/material';
 
-export const TABLE_DIVIDER_COLOR = '#E6E7ED';
-const HORIZONTAL_ROW_DIVIDER_COLOR = '#E6E7ED';
+import { BORDER, SINGLE_LINE_ELLIPSIS, TABLE_GAP, TABLE_TEXT, TWO_LINE_ELLIPSIS } from '../TableLayout.styles';
+
 const ACTIONS_COLUMN_WIDTH = '80px';
 
-const SINGLE_LINE_ELLIPSIS = {
-  whiteSpace: 'nowrap',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-} satisfies SxProps<Theme>;
 
 export const styles = {
-  markerColumn: {
-    width: '1px',
-  },
   rowActionsCell: {
     display: 'flex',
     alignItems: 'center',
@@ -48,20 +40,20 @@ export const styles = {
 
   gridRowBase: (gridTemplate: string): SxProps<Theme> => ({
     display: 'grid',
-    gridTemplateColumns: `1px ${gridTemplate} ${ACTIONS_COLUMN_WIDTH}`,
-    columnGap: '8px',
+    gridTemplateColumns: `${gridTemplate} ${ACTIONS_COLUMN_WIDTH}`,
+    columnGap: TABLE_GAP,
     alignItems: 'stretch',
     minWidth: 0,
   }),
 
   groupedSubRow: (gridTemplate: string, isLast: boolean): SxProps<Theme> => ({
     display: 'grid',
-    gridTemplateColumns: `1px ${gridTemplate} ${ACTIONS_COLUMN_WIDTH}`,
+    gridTemplateColumns: `${gridTemplate} ${ACTIONS_COLUMN_WIDTH}`,
     alignItems: 'stretch',
-    borderBottom: isLast ? 'none' : `1px solid ${HORIZONTAL_ROW_DIVIDER_COLOR}`,
+    borderBottom: isLast ? 'none' : BORDER,
     minWidth: 0,
-    columnGap: '8px',
-    py: '8px',
+    columnGap: TABLE_GAP,
+    py: '12px',
     px: 0,
     pl: '32px',
   }),
@@ -77,12 +69,13 @@ export const styles = {
     display: 'flex',
     alignItems: 'center',
     pr: hasRightDivider ? '10px' : 0,
-    borderRight: hasRightDivider ? `1px solid ${TABLE_DIVIDER_COLOR}` : 'none',
+    borderRight: hasRightDivider ? BORDER : 'none',
     ...(colId === 'status' ? { justifyContent: 'center', width: '100%' } : { justifyContent: 'flex-start' }),
   }),
 
   groupCellText: (colId: string): SxProps<Theme> => ({
-    ...(colId === 'title' ? styles.mainRowText : styles.metaText),
+    ...TABLE_TEXT,
+    ...TWO_LINE_ELLIPSIS,
     width: '100%',
     ...(colId === 'status' ? { textAlign: 'center' } : { textAlign: 'left' }),
   }),
@@ -93,12 +86,13 @@ export const styles = {
     display: 'flex',
     alignItems: 'center',
     pr: hasRightDivider && hasContent ? '10px' : 0,
-    borderRight: hasRightDivider && hasContent ? `1px solid ${TABLE_DIVIDER_COLOR}` : 'none',
+    borderRight: hasRightDivider && hasContent ? BORDER : 'none',
     ...(colId === 'status' ? { justifyContent: 'center', width: '100%' } : { justifyContent: 'flex-start' }),
   }),
 
   subCellText: (colId: string): SxProps<Theme> => ({
-    ...styles.subRowText,
+    ...TABLE_TEXT,
+    ...TWO_LINE_ELLIPSIS,
     width: '100%',
     textAlign: colId === 'status' ? 'center' : 'left',
   }),
@@ -106,7 +100,7 @@ export const styles = {
   accordion: {
     border: 'none',
     borderRadius: '0px !important',
-    borderBottom: `1px solid ${HORIZONTAL_ROW_DIVIDER_COLOR}`,
+    borderBottom: BORDER,
     backgroundColor: 'transparent',
     boxShadow: 'none',
     overflow: 'hidden',
@@ -130,12 +124,12 @@ export const styles = {
     },
     '& .MuiAccordionSummary-content': {
       display: 'block',
-      my: '12px',
+      my: '20px',
       minWidth: 0,
       width: '100%',
     },
     '&.Mui-expanded': {
-      borderBottom: `1px solid ${HORIZONTAL_ROW_DIVIDER_COLOR}`,
+      borderBottom: BORDER,
     },
     '&.Mui-expanded .MuiAccordionSummary-expandIconWrapper': {
       transform: 'rotate(90deg)',

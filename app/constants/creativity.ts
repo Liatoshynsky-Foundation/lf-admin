@@ -126,7 +126,7 @@ export const COLUMNS: readonly HeaderConfig[] = [
   {
     id: 'years',
     headerLabel: 'Роки',
-    width: '96px',
+    width: '104px',
     hasRightDivider: true
   },
   {

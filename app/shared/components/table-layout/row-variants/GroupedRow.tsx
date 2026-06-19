@@ -35,8 +35,6 @@ export function GroupedRow<TGroup, TSub>({
     <Accordion defaultExpanded={defaultExpanded} disableGutters elevation={0} sx={styles.accordion}>
       <AccordionSummary expandIcon={<ChevronRight size={18} />} sx={styles.accordionSummary}>
         <Box sx={styles.gridRowBase(gridTemplate)}>
-          <Box sx={styles.markerColumn} />
-
           {columns.map((col) => {
             const content = renderer.renderGroupCell(col.id, groupData);
 
@@ -70,8 +68,6 @@ export function GroupedRow<TGroup, TSub>({
 
             return (
               <Box key={index} sx={styles.groupedSubRow(gridTemplate, isLast)}>
-                <Box sx={styles.markerColumn} />
-
                 {columns.map((col) => {
                   if (col.id === 'opus' || col.id === 'group') {
                     return <Box key={col.id} sx={styles.emptySubCell} />;

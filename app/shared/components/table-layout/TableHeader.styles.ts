@@ -1,20 +1,8 @@
 import { SxProps, Theme } from '@mui/material';
 
-export const TABLE_DIVIDER_COLOR = '#E6E7ED';
-const HORIZONTAL_ROW_DIVIDER_COLOR = '#E6E7ED';
-const ACTIONS_COLUMN_WIDTH = '80px';
-
-const SINGLE_LINE_ELLIPSIS = {
-  whiteSpace: 'nowrap',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-} satisfies SxProps<Theme>;
+import { ACTIONS_COLUMN_WIDTH, HORIZONTAL_ROW_DIVIDER_COLOR, SINGLE_LINE_ELLIPSIS, TABLE_GAP } from './TableLayout.styles';
 
 export const styles = {
-  markerColumn: {
-    width: '1px',
-  },
-  
   actionsSpacer: {
     width: ACTIONS_COLUMN_WIDTH,
   },
@@ -23,27 +11,24 @@ export const styles = {
     const restTemplates = gridTemplate.substring(gridTemplate.indexOf(' ') + 1);
     return {
       display: 'grid',
-      gridTemplateColumns: `1px calc(${firstColWidth} + 26px) ${restTemplates} ${ACTIONS_COLUMN_WIDTH}`,
-      columnGap: '8px',
+      gridTemplateColumns: `calc(${firstColWidth} + 26px) ${restTemplates} ${ACTIONS_COLUMN_WIDTH}`,
+      columnGap: TABLE_GAP,
       alignItems: 'center',
-      py: '8px',
-      borderBottom: `1px solid ${HORIZONTAL_ROW_DIVIDER_COLOR}`,
+      py: '16px',
+      borderBottom: '2px solid',
+      borderBottomColor: HORIZONTAL_ROW_DIVIDER_COLOR,
       minWidth: 0,
       '& .status-header': {
         overflow: 'visible',
-        textOverflow: 'clip',
-        whiteSpace: 'nowrap',
-        width: 'auto',
-        display: 'inline-block',
       },
     };
   },
 
   tableHeaderText: {
     fontSize: '16px',
-    lineHeight: '22px',
+    lineHeight: '20px',
     fontWeight: 700,
-    color: '#63666E',
+    color: 'blue.700',
     fontStyle: 'normal',
     ...SINGLE_LINE_ELLIPSIS,
   },
