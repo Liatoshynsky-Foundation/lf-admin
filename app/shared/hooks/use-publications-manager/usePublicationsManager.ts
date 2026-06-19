@@ -1,5 +1,5 @@
 import { Block } from '@blocknote/core';
-import { useEffect, useMemo,useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
   DEFAULT_EMPTY_DOCUMENT,
@@ -8,6 +8,7 @@ import {
   PublicationResource,
   PublicationsItemType
 } from '~/constants/publications';
+import { hasContentChanges } from '~/lib/utils/hasContentChanges';
 import { isContentEmpty } from '~/shared/components/content-editor';
 import { useDeleteEvent, useEventById, useUpdateEvent } from '~/shared/hooks/use-events/useEvents';
 import { useDeleteMediaMention, useMediaMentionById, useUpdateMediaMention } from '~/shared/hooks/use-media-mentions/useMediaMentions';
@@ -46,6 +47,7 @@ export function usePublicationManager(type: PublicationsItemType, id: string) {
   }, [type, news.data, event.data, media.data]);
 
   const [editedContent, setEditedContent] = useState<LocalizedEditorState | null>(null);
+  const [initialContent, setInitialContent] = useState<LocalizedEditorState | null>(null);
   const [currentLanguage, setCurrentLanguage] = useState<EditorLanguage>('UA');
   const [editorResetKey, setEditorResetKey] = useState<number>(0);
 
@@ -67,12 +69,21 @@ export function usePublicationManager(type: PublicationsItemType, id: string) {
         }
       });
 
-      setEditedContent({
+      const initialState = {
         uk: createSafeLangObj(resourceData?.uk?.content?.blocks),
         en: createSafeLangObj(resourceData?.en?.content?.blocks)
-      });
+      };
+
+      setEditedContent(initialState);
+      setInitialContent(initialState);
     }
   }, [isLoading, editedContent, type, activeQuery.data, news.data, event.data]);
+
+  const hasUnsavedChanges = useMemo(() => {
+    if (!editedContent || !initialContent) return false;
+
+    return hasContentChanges(editedContent, initialContent);
+  }, [editedContent, initialContent]);
 
   const updateResource: PublicationResource = async (status, extra = {}) => {
     switch (type) {
@@ -121,6 +132,7 @@ export function usePublicationManager(type: PublicationsItemType, id: string) {
 
     editedContent,
     setEditedContent,
+    hasUnsavedChanges,
     currentLanguage,
     setCurrentLanguage,
     editorResetKey,

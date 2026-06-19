@@ -2,8 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
-import { createDocNode } from '../__mocks__/utils';
 import { LiatoshynskyFoundation } from './LiatoshynskyFoundation';
+import { createDocNode } from '~/__mocks__/utils';
 import { CropRect } from '~/types/graphql/generated/graphql';
 
 interface MockParagraph {

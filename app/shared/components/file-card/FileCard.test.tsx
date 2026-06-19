@@ -7,6 +7,12 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
   useUpdateAssetMutation: () => [jest.fn(), { loading: false }]
 }));
 
+globalThis.ResizeObserver = jest.fn().mockImplementation((callback) => ({
+  observe: jest.fn(() => callback()),
+  unobserve: jest.fn(),
+  disconnect: jest.fn()
+}));
+
 describe('FileCard', () => {
   const mockOnClick = jest.fn();
 

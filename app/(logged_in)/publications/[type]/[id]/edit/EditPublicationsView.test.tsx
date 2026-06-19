@@ -1,19 +1,18 @@
 import { Block } from '@blocknote/core';
-import { fireEvent,render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React, { MouseEvent } from 'react';
 
 import { EditPublicationsView, EditPublicationsViewProps } from './EditPublicationsView';
 import { EditorLanguage, MenuActionId } from '~/constants/publications';
 import { SerializedContent } from '~/shared/components/content-editor';
 
-
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(() => ({
     push: jest.fn(),
     replace: jest.fn(),
-    prefetch: jest.fn(),
+    prefetch: jest.fn()
   })),
-  useParams: jest.fn(() => ({})),
+  useParams: jest.fn(() => ({}))
 }));
 
 type MockContentEditorProps = {
@@ -27,13 +26,13 @@ jest.mock('~/shared/components/content-editor', () => ({
       data-testid="mock-content-editor"
       defaultValue={initialContent ? 'has-content' : ''}
       onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        persistence.onChange({ 
-          blocks: [{ type: 'paragraph', content: e.target.value }] 
+        persistence.onChange({
+          blocks: [{ type: 'paragraph', content: e.target.value }]
         } as unknown as SerializedContent);
       }}
     />
   ),
-  isContentEmpty: (blocks?: unknown[]) => !blocks || blocks.length === 0,
+  isContentEmpty: (blocks?: unknown[]) => !blocks || blocks.length === 0
 }));
 
 type MockTitleDropdownProps = {
@@ -46,7 +45,7 @@ jest.mock('~/shared/components/divided-header/title-dropdown/TitleDropdown', () 
     <button data-testid="mock-title-dropdown" onClick={onMenuOpen}>
       {title ?? 'Empty Title'}
     </button>
-  ),
+  )
 }));
 
 type MockHeaderRightActionsProps = {
@@ -58,8 +57,12 @@ jest.mock('~/shared/components/divided-header/header-right-actions/HeaderRightAc
   return function MockHeaderRightActions({ onMenuOpen, onPublish }: MockHeaderRightActionsProps) {
     return (
       <div data-testid="mock-header-actions">
-        <button data-testid="mock-publish-quick-btn" onClick={onPublish}>Quick Publish</button>
-        <button data-testid="mock-publish-menu-btn" onClick={onMenuOpen}>Open Publish Menu</button>
+        <button data-testid="mock-publish-quick-btn" onClick={onPublish}>
+          Quick Publish
+        </button>
+        <button data-testid="mock-publish-menu-btn" onClick={onMenuOpen}>
+          Open Publish Menu
+        </button>
       </div>
     );
   };
@@ -88,7 +91,7 @@ describe('EditPublicationsView Component', () => {
     currentData: { adminTitle: 'Test News Title' },
     editedContent: {
       uk: { content: { blocks: [], version: '1', lastModified: '' } },
-      en: { content: { blocks: [], version: '1', lastModified: '' } },
+      en: { content: { blocks: [], version: '1', lastModified: '' } }
     },
     editorResetKey: 0,
     currentLanguage: 'UA',
@@ -97,6 +100,7 @@ describe('EditPublicationsView Component', () => {
     onAction: mockOnAction,
     onDeleteConfirm: mockOnDeleteConfirm,
     onSeoClick: mockOnSeoClick,
+    onBackClick: jest.fn()
   };
 
   beforeEach(() => {
@@ -115,7 +119,7 @@ describe('EditPublicationsView Component', () => {
 
   it('should render the layout correctly for news', () => {
     render(<EditPublicationsView {...defaultProps} />);
-    
+
     expect(screen.getByTestId('mock-title-dropdown')).toHaveTextContent('Test News Title');
     expect(screen.getByTestId('mock-content-editor')).toBeInTheDocument();
     expect(screen.getByText('Чернетка')).toBeInTheDocument();
@@ -123,14 +127,14 @@ describe('EditPublicationsView Component', () => {
 
   it('should render the layout correctly for media (no editor)', () => {
     render(<EditPublicationsView {...defaultProps} type="media" />);
-    
+
     expect(screen.getByText('Редагування Ми у ЗМІ')).toBeInTheDocument();
     expect(screen.queryByTestId('mock-content-editor')).not.toBeInTheDocument();
   });
 
   it('should trigger onEditorChange when the user types in the editor', () => {
     render(<EditPublicationsView {...defaultProps} currentLanguage="EN" />);
-    
+
     const editor = screen.getByTestId('mock-content-editor');
     fireEvent.change(editor, { target: { value: 'New text' } });
 
@@ -143,7 +147,7 @@ describe('EditPublicationsView Component', () => {
 
   it('should trigger onLanguageChange when a new language is selected from the menu', () => {
     render(<EditPublicationsView {...defaultProps} currentLanguage="UA" />);
-    
+
     fireEvent.click(screen.getByTestId('mock-title-dropdown'));
     fireEvent.click(screen.getByText('Англійська'));
 
@@ -153,7 +157,7 @@ describe('EditPublicationsView Component', () => {
 
   it('should trigger onSeoClick when the SEO option is selected from the menu', () => {
     render(<EditPublicationsView {...defaultProps} />);
-    
+
     fireEvent.click(screen.getByTestId('mock-title-dropdown'));
     fireEvent.click(screen.getByText('SEO налаштування'));
 
@@ -162,7 +166,7 @@ describe('EditPublicationsView Component', () => {
 
   it('should trigger onAction when a publish menu item is clicked', () => {
     render(<EditPublicationsView {...defaultProps} />);
-    
+
     fireEvent.click(screen.getByTestId('mock-publish-menu-btn'));
     fireEvent.click(screen.getByText('Опублікувати і вийти'));
 
@@ -172,7 +176,7 @@ describe('EditPublicationsView Component', () => {
 
   it('should handle the quick publish button from HeaderRightActions directly', () => {
     render(<EditPublicationsView {...defaultProps} />);
-    
+
     fireEvent.click(screen.getByTestId('mock-publish-quick-btn'));
 
     expect(mockOnAction).toHaveBeenCalledTimes(1);

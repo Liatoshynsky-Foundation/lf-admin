@@ -24,8 +24,4 @@ export const styles = {
     maxWidth: '250px',
     alignSelf: 'flex-start'
   },
-
-  skeletonPlaceholder: {
-    height: '60px'
-  }
 };

@@ -2,6 +2,19 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import { CollapseListNavigation } from './CollapseListNavigation';
 
+const mockPush = jest.fn();
+
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: mockPush,
+    replace: jest.fn(),
+    back: jest.fn(),
+    refresh: jest.fn(),
+    prefetch: jest.fn()
+  }),
+  usePathname: () => '/test'
+}));
+
 describe('Collapse List Navigation', () => {
   const elementsTest = {
     element: { title: 'TestTitle', iconSrc: 'icon.svg' },

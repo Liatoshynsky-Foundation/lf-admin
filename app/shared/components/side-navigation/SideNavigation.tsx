@@ -10,6 +10,7 @@ import { CollapseListNavigation } from './collapse-list-navigation/CollapseListN
 import { LinkElement } from './link-element/LinkElement';
 import { NAVIGATION_DATA } from './SideNavigation.consts';
 import { styles } from './SideNavigation.styles';
+import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
 
 function isAdditionalElement(item: ListElementType | AdditionalElement): item is AdditionalElement {
   return 'collapseElements' in item && 'element' in item;
@@ -36,6 +37,8 @@ export const SideBarNavigation = () => {
       return newSet;
     });
   }, []);
+
+  const { interceptLinkClick } = useNavigationGuard();
 
   function renderItems(items: (ListElementType | AdditionalElement)[]) {
     return items.map((item) => {
@@ -66,7 +69,12 @@ export const SideBarNavigation = () => {
           <Image src={`/icons/chevron${open ? 'Left' : 'Right'}.svg`} alt="" width={24} height={24} />
         </IconButton>
         <Box sx={styles.topSection}>
-          <Link href="/" aria-label="go to home page" style={{ textDecoration: 'none' }}>
+          <Link
+            href="/"
+            aria-label="go to home page"
+            style={{ textDecoration: 'none' }}
+            onClick={(e) => interceptLinkClick(e, '/')}
+          >
             <Box sx={styles.logoBlock}>
               <Image src="/icons/logo.svg" alt="logo" width={open ? 63.85 : 80} height={open ? 24.22 : 32} />
               {open && (

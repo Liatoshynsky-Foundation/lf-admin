@@ -28,7 +28,9 @@ describe('PublicationsTypePage', () => {
   });
 
   it('calls notFound for an invalid type', async () => {
-    await expect(PublicationsTypePage({ params: Promise.resolve({ type: 'invalid' }) })).rejects.toThrow('NEXT_NOT_FOUND');
+    await expect(PublicationsTypePage({ params: Promise.resolve({ type: 'invalid' }) })).rejects.toThrow(
+      'NEXT_NOT_FOUND'
+    );
 
     expect(notFound).toHaveBeenCalled();
   });
