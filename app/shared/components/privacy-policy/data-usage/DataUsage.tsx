@@ -10,6 +10,7 @@ import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { ensureIds } from '~/lib/utils/ensureIds';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { usePointsList } from '~/shared/hooks/use-points-list/usePointsList';
+import { useSortableDragEnd } from '~/shared/hooks/use-sortable-drag-end/useSortableDragEnd';
 import { useStore } from '~/store';
 import { DataUsageItemWithId } from '~/types/store/pages/privacy-policy';
 
@@ -25,14 +26,18 @@ export const DataUsage = () => {
   const rawList = block?.list || [];
   const list: DataUsageItemWithId[] = ensureIds(rawList);
 
-  const { addPoint, removePoint, updatePoint, points } = usePointsList({ 
-    list, 
-    setField, 
-    currentLocale, 
-    pageId, 
-    blockId 
+  const { addPoint, removePoint, updatePoint, updateAllPoints, points } = usePointsList({
+    list,
+    setField,
+    currentLocale,
+    pageId,
+    blockId
   });
-  
+
+  const { handleDragEnd } = useSortableDragEnd(points, (reordered) => {
+    updateAllPoints(reordered);
+  });
+
   if (!block) return <EditBlockSkeleton />;
 
   const handleChangeTitleText = (value: JSONContent) => {
@@ -43,7 +48,7 @@ export const DataUsage = () => {
   };
 
   return (
-    <CollapsibleBlock title="Як ми використовуємо ваші дані">
+    <CollapsibleBlock title="Як ми використовуємо ваші дані" grip>
       <CustomTextField
         fieldType="formatting"
         title="Вступний текст секції"
@@ -52,7 +57,13 @@ export const DataUsage = () => {
       />
 
       {points.length > 0 && (
-        <PointsList points={points} addPoint={addPoint} removePoint={removePoint} updatePoint={updatePoint} />
+        <PointsList
+          points={points}
+          addPoint={addPoint}
+          removePoint={removePoint}
+          updatePoint={updatePoint}
+          onDragEnd={handleDragEnd}
+        />
       )}
 
     </CollapsibleBlock>

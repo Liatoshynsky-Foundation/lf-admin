@@ -15,7 +15,6 @@ import { useStore } from '~/store';
 import { LocalizedJSON } from '~/types/common';
 import { DataWeCollectItemWithId } from '~/types/store/pages/privacy-policy';
 
-
 export const DataWeCollect = () => {
   const pageId = PAGE_IDS.PRIVACY_POLICY;
   const blockId = BLOCK_IDS.DATA_WE_COLLECT;
@@ -45,9 +44,8 @@ export const DataWeCollect = () => {
     });
   };
 
-
   return (
-    <CollapsibleBlock title="Які дані ми збираємо та чому">
+    <CollapsibleBlock title="Які дані ми збираємо та чому" grip>
       <CustomTextField
         fieldType="formatting"
         title="Вступний текст секції"

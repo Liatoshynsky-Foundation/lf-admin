@@ -6,6 +6,7 @@ import CollapsibleBlock from '~/shared/components/design-system/collapsible-bloc
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 import { PointsList } from '~/shared/components/privacy-policy/components/points-list/PointsList';
 import { usePointsList } from '~/shared/hooks/use-points-list/usePointsList';
+import { useSortableDragEnd } from '~/shared/hooks/use-sortable-drag-end/useSortableDragEnd';
 import { useStore } from '~/store';
 import { LocalizedJSON } from '~/types/common';
 import { BlocksMap } from '~/types/store/pages';
@@ -40,13 +41,17 @@ export const EditDescriptionListNoteBlock = <T extends BlockWithDescriptionListN
   const rawList = block[listFieldName] as Array<LocalizedJSON & { id?: string }>;
   const list = ensureIds(rawList);
 
-  const { addPoint, removePoint, updatePoint, points } = usePointsList({
+  const { addPoint, removePoint, updatePoint, updateAllPoints, points } = usePointsList({
     list,
     setField,
     listFieldName,
     currentLocale,
     pageId,
     blockId
+  });
+
+  const { handleDragEnd } = useSortableDragEnd(points, (reordered) => {
+    updateAllPoints(reordered);
   });
 
   const handleTextChange = (fieldName: 'description' | 'note', value: JSONContent) => {
@@ -61,7 +66,7 @@ export const EditDescriptionListNoteBlock = <T extends BlockWithDescriptionListN
   const noteBlock = block.note;
 
   return (
-    <CollapsibleBlock title={title}>
+    <CollapsibleBlock title={title} grip>
       {descriptionBlock && (
         <CustomTextField
           fieldType="formatting"
@@ -77,6 +82,7 @@ export const EditDescriptionListNoteBlock = <T extends BlockWithDescriptionListN
           addPoint={addPoint}
           removePoint={removePoint}
           updatePoint={updatePoint}
+          onDragEnd={handleDragEnd}
         />
       )}
 
