@@ -8,6 +8,7 @@ import { SortableList } from '~/shared/components/sortable-list/SortableList';
 import { ListPoint } from '~/shared/hooks/use-points-list/usePointsList';
 
 export interface PointsListProps {
+  id: string;
   points: ListPoint[];
   addPoint: () => void;
   updatePoint: (newValue: ListPoint) => void;
@@ -15,7 +16,7 @@ export interface PointsListProps {
   onDragEnd?: (event: DragEndEvent) => void;
 }
 
-export const PointsList = ({ points, addPoint, updatePoint, removePoint, onDragEnd }: PointsListProps) => {
+export const PointsList = ({ id, points, addPoint, updatePoint, removePoint, onDragEnd }: PointsListProps) => {
   const renderItem = ({ item, onChange }: { item: ListPoint; onChange: (newValue: ListPoint) => void }) => {
     const field = (
       <CustomTextField
@@ -55,7 +56,7 @@ export const PointsList = ({ points, addPoint, updatePoint, removePoint, onDragE
         Пункти:
       </Typography>
       {onDragEnd ? (
-        <SortableList id="points-list" items={points.map((p) => p.id)} onDragEnd={onDragEnd}>
+        <SortableList id={`points-list-${id}`} items={points.map((p) => p.id)} onDragEnd={onDragEnd}>
           {listContent}
         </SortableList>
       ) : (

@@ -58,6 +58,7 @@ export const DataUsage = () => {
 
       {points.length > 0 && (
         <PointsList
+          id="data-usage"
           points={points}
           addPoint={addPoint}
           removePoint={removePoint}

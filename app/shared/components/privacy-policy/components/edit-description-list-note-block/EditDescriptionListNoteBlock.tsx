@@ -78,6 +78,7 @@ export const EditDescriptionListNoteBlock = <T extends BlockWithDescriptionListN
 
       {points.length > 0 && (
         <PointsList
+          id={blockId}
           points={points}
           addPoint={addPoint}
           removePoint={removePoint}
