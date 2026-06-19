@@ -3,13 +3,14 @@ import { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
 import { useSortable } from '@dnd-kit/sortable';
 import { createContext, useContext, useMemo } from 'react';
 
-import { Grip } from '../grip/Grip';
+import { Grip, GripPosition } from '../grip/Grip';
 import { styles } from './SortableItemWrapper.style';
 
 interface SortableItemWrapperProps {
   id: string;
   children: React.ReactNode;
   gripHandle?: boolean;
+  gripPosition?: GripPosition;
 }
 
 export const SortableItemContext = createContext<{ id: string, attributes: DraggableAttributes, listeners: SyntheticListenerMap | undefined } | null>(null);
@@ -22,7 +23,7 @@ export const useSortableItemContext = () => {
   return context;
 };
 
-export const SortableItemWrapper = ({ id, children, gripHandle = false }: SortableItemWrapperProps) => {
+export const SortableItemWrapper = ({ id, children, gripHandle = false, gripPosition = 'center' }: SortableItemWrapperProps) => {
   const {
     attributes,
     listeners,
@@ -36,9 +37,9 @@ export const SortableItemWrapper = ({ id, children, gripHandle = false }: Sortab
   const defaultValue = useMemo(() => ({ id, attributes, listeners }), [id, attributes, listeners]);
 
   return (
-    <div ref={setNodeRef} style={styles.getItemStyles(transform, isDragging, transition, gripHandle)}>
+    <div ref={setNodeRef} style={styles.getItemStyles(transform, isDragging, transition, gripHandle, gripPosition)}>
       <SortableItemContext.Provider value={defaultValue}>
-        {gripHandle && <Grip />}
+        {gripHandle && <Grip gripPosition={gripPosition} />}
         {children}
       </SortableItemContext.Provider>
     </div>

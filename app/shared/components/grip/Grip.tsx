@@ -7,17 +7,24 @@ import { useSortableItemContext } from '../sortable-item-wrapper/SortableItemWra
 import { styles } from './Grip.styles';
 import GripVertical from '~/public/icons/grip-vertical.svg';
 
+export type GripPosition = 'center' | 'top'
 interface GripProps {
-  orientation?: 'horizontal' | 'vertical'
+  orientation?: 'horizontal' | 'vertical';
+  gripPosition?: GripPosition;
 }
-export const Grip = ({ orientation = 'vertical' }: GripProps) => {
+
+export const Grip = ({ orientation = 'vertical', gripPosition = 'center' }: GripProps) => {
   const { attributes, listeners } = useSortableItemContext();
 
   return (
     <Box
       {...attributes}
       {...listeners}
-      sx={{...styles.box, ...styles.getGripStyles(orientation)}}
+      sx={{
+        ...styles.box,
+        ...styles.getGripStyles(orientation),
+        ...(gripPosition === 'top' && { marginTop: '12px' })
+      }}
     >
       <GripVertical size={20} />
     </Box>

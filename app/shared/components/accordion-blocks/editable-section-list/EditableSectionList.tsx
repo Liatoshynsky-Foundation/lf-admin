@@ -55,7 +55,7 @@ export const EditableSectionList = <ItemType extends SectionListItem>({
 
     if (onDragEnd) {
       return (
-        <SortableItemWrapper id={item.id as string} key={item.id} gripHandle>
+        <SortableItemWrapper id={item.id as string} key={item.id} gripHandle gripPosition="top">
           {fields}
         </SortableItemWrapper>
       );
