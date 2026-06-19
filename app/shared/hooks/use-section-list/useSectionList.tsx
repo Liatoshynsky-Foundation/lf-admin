@@ -95,7 +95,8 @@ export const useSectionList = <K extends BlockIdsWithSections>({ pageId, blockId
     addListPoint: handleAddSectionListPoint,
     removeListPoint: handleDeleteSectionListPoint,
     updateListPoint: handleChangeSectionListPoint,
-    updateSectionSubtitle: handleChangeSectionSubtitle
+    updateSectionSubtitle: handleChangeSectionSubtitle,
+    updateSectionList: handleUpdateSectionList,
   };
 };
 
