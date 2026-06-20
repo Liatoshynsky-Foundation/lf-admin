@@ -1,5 +1,6 @@
 'use client';
 
+import { DragEndEvent } from '@dnd-kit/core';
 import { Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
@@ -15,8 +16,8 @@ import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock
 import { ImagePreviewBlock } from '~/ds-components/photo-block/PhotoBlock';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { ensureIds } from '~/lib/utils/ensureIds';
+import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
-import { useSortableDragEnd } from '~/shared/hooks/use-sortable-drag-end/useSortableDragEnd';
 import { useStore } from '~/store';
 import { ConfigurableListItem } from '~/types/accordionBlocks';
 import { CropResult, LocalizedJSON } from '~/types/common';
@@ -69,9 +70,11 @@ const OurMission = () => {
   const setField = useStore((state) => state.setField);
   const missionList: MissionListItemWithId[] = block ? ensureIds(block.list) : [];
   
-  const { handleDragEnd } = useSortableDragEnd(missionList, (reordered) => {
-    setField(pageId, blockId, 'list', reordered);
-  });
+  const handleDragEnd = (event: DragEndEvent) => {
+    handleSortableDragEnd(event, missionList, (reordered) => {
+      setField(pageId, blockId, 'list', reordered);
+    });
+  };
 
   if (!block) return <EditBlockSkeleton />;
 

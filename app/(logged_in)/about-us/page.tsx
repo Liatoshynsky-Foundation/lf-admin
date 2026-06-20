@@ -1,9 +1,11 @@
 'use client';
+import { DragEndEvent } from '@dnd-kit/core';
 import { Box } from '@mui/material';
 import { useEffect, useState } from 'react';
 
 import { styles } from './page.styles';
 import { PAGE_IDS } from '~/constants/pageBlocks';
+import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { FoundationFounders } from '~/shared/components/about-us/foundation-founders/FoundationFounders';
 import { IntroSection } from '~/shared/components/about-us/Intro-section/IntroSection';
 import { LiatoshynskyFoundation } from '~/shared/components/about-us/Liatoshynsky-foundation/LiatoshynskyFoundation';
@@ -16,7 +18,6 @@ import { SortableItemWrapper } from '~/shared/components/sortable-item-wrapper/S
 import { SortableList } from '~/shared/components/sortable-list/SortableList';
 import { usePageEditor } from '~/shared/hooks/use-page-editor/usePageEditor';
 import { useSavePageBlocks } from '~/shared/hooks/use-save-page/UseSavePage';
-import { useSortableDragEnd } from '~/shared/hooks/use-sortable-drag-end/useSortableDragEnd';
 import { useStore } from '~/store';
 import { useGetPageQuery } from '~/types/graphql/generated/graphql';
 
@@ -57,9 +58,11 @@ export default function Page() {
 
   const sortableBlocks = blocksOrder?.filter((blockId) => blockId !== 'intro');
 
-  const { handleDragEnd } = useSortableDragEnd(sortableBlocks, (reordered) => {
-    setBlocksOrder(pageSlug, ['intro', ...reordered]);
-  });
+  const handleDragEnd = (event: DragEndEvent) => {
+    handleSortableDragEnd(event, sortableBlocks, (reordered) => {
+      setBlocksOrder(pageSlug, ['intro', ...reordered]);
+    });
+  };
 
   useEffect(() => {
     setIsMounted(true);

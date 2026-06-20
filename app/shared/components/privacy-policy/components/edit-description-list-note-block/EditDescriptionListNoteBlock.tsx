@@ -1,12 +1,13 @@
+import { DragEndEvent } from '@dnd-kit/core';
 import { JSONContent } from '@tiptap/react';
 
 import { PAGE_IDS } from '~/constants/pageBlocks';
 import { ensureIds } from '~/lib/utils/ensureIds';
+import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 import { PointsList } from '~/shared/components/privacy-policy/components/points-list/PointsList';
 import { usePointsList } from '~/shared/hooks/use-points-list/usePointsList';
-import { useSortableDragEnd } from '~/shared/hooks/use-sortable-drag-end/useSortableDragEnd';
 import { useStore } from '~/store';
 import { LocalizedJSON } from '~/types/common';
 import { BlocksMap } from '~/types/store/pages';
@@ -50,9 +51,11 @@ export const EditDescriptionListNoteBlock = <T extends BlockWithDescriptionListN
     blockId
   });
 
-  const { handleDragEnd } = useSortableDragEnd(points, (reordered) => {
-    updateAllPoints(reordered);
-  });
+  const handleDragEnd = (event: DragEndEvent) => {
+    handleSortableDragEnd(event, points, (reordered) => {
+      updateAllPoints(reordered);
+    });
+  };
 
   const handleTextChange = (fieldName: 'description' | 'note', value: JSONContent) => {
     const currentValue = block[fieldName];

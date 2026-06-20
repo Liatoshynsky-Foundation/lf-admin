@@ -1,3 +1,4 @@
+import { DragEndEvent } from '@dnd-kit/core';
 import { JSONContent} from '@tiptap/react';
 
 import { EditableSectionList, SectionListItem } from '../../accordion-blocks/editable-section-list/EditableSectionList';
@@ -5,8 +6,8 @@ import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { ensureIds } from '~/lib/utils/ensureIds';
+import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
-import { useSortableDragEnd } from '~/shared/hooks/use-sortable-drag-end/useSortableDragEnd';
 import { useStore } from '~/store';
 import { LocalizedString } from '~/types/common';
 import type { WhatWeDolItemWithId } from '~/types/store/pages/about-us/blocks/whatWeDoBlock';
@@ -22,9 +23,11 @@ const WhatWeDo = () => {
 
   const itemList: WhatWeDolItemWithId[] = block ? ensureIds(block.items) : [];
   
-  const { handleDragEnd } = useSortableDragEnd(itemList, (reordered) => {
-    setField(pageId, blockId, 'items', reordered);
-  });
+  const handleDragEnd = (event: DragEndEvent) => {
+    handleSortableDragEnd(event, itemList, (reordered) => {
+      setField(pageId, blockId, 'items', reordered);
+    });
+  };
   
   if (!block) return <EditBlockSkeleton />;
 

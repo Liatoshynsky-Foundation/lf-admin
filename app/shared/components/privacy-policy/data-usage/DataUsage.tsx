@@ -1,5 +1,6 @@
 'use client';
 
+import { DragEndEvent } from '@dnd-kit/core';
 import { JSONContent } from '@tiptap/react';
 
 import CollapsibleBlock from '../../design-system/collapsible-block/CollapsibleBlock';
@@ -8,9 +9,9 @@ import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
 import { PointsList } from '../components/points-list/PointsList';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { ensureIds } from '~/lib/utils/ensureIds';
+import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { usePointsList } from '~/shared/hooks/use-points-list/usePointsList';
-import { useSortableDragEnd } from '~/shared/hooks/use-sortable-drag-end/useSortableDragEnd';
 import { useStore } from '~/store';
 import { DataUsageItemWithId } from '~/types/store/pages/privacy-policy';
 
@@ -34,9 +35,11 @@ export const DataUsage = () => {
     blockId
   });
 
-  const { handleDragEnd } = useSortableDragEnd(points, (reordered) => {
-    updateAllPoints(reordered);
-  });
+  const handleDragEnd = (event: DragEndEvent) => {
+    handleSortableDragEnd(event, points, (reordered) => {
+      updateAllPoints(reordered);
+    });
+  };
 
   if (!block) return <EditBlockSkeleton />;
 

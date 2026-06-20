@@ -1,5 +1,6 @@
 'use client';
 
+import { DragEndEvent } from '@dnd-kit/core';
 import { Box } from '@mui/material';
 import { JSONContent } from '@tiptap/react';
 
@@ -7,7 +8,7 @@ import ConfigurableList from '../../configurable-list/ConfigurableList';
 import { CustomTextField } from '../../design-system/text-field/TextField';
 import { SortableItemWrapper } from '../../sortable-item-wrapper/SortableItemWrapper';
 import { SortableList } from '../../sortable-list/SortableList';
-import { useSortableDragEnd } from '~/shared/hooks/use-sortable-drag-end/useSortableDragEnd';
+import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { LocalizedJSON } from '~/types/common';
 
 export interface DataWeCollectSectionProps {
@@ -37,9 +38,11 @@ export const DataWeCollectSection = ({
   addListPoint,
   removeListPoint,
 }: DataWeCollectSectionProps) => {
-  const { handleDragEnd } = useSortableDragEnd(section.points, (reordered) => {
-    updateSectionList(section.id, reordered);
-  });
+  const handleDragEnd = (event: DragEndEvent) => {
+    handleSortableDragEnd(event, section.points, (reordered) => {
+      updateSectionList(section.id, reordered);
+    });
+  };
 
   return (
     <>

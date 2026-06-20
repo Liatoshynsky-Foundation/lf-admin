@@ -1,3 +1,4 @@
+import { DragEndEvent } from '@dnd-kit/core';
 import {JSONContent}from '@tiptap/react';
 
 import { EditableSectionList, SectionListItem } from '../../accordion-blocks/editable-section-list/EditableSectionList';
@@ -5,8 +6,8 @@ import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { ensureIds } from '~/lib/utils/ensureIds';
+import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
-import { useSortableDragEnd } from '~/shared/hooks/use-sortable-drag-end/useSortableDragEnd';
 import { useStore } from '~/store';
 import { LocalizedString } from '~/types/common';
 import type { GoalItemWithId } from '~/types/store/pages/about-us/blocks/ourGoalsBlock';
@@ -22,9 +23,11 @@ const OurGoals = () => {
 
   const goalList: GoalItemWithId[] = block ? ensureIds(block.goals) : [];
 
-  const { handleDragEnd } = useSortableDragEnd(goalList, (reordered) => {
-    setField(pageId, blockId, 'goals', reordered);
-  });
+  const handleDragEnd = (event: DragEndEvent) => {
+    handleSortableDragEnd(event, goalList, (reordered) => {
+      setField(pageId, blockId, 'goals', reordered);
+    });
+  };
 
   if (!block) return <EditBlockSkeleton />;
 
