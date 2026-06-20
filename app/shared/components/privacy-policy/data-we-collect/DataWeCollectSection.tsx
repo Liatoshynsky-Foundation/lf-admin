@@ -14,9 +14,9 @@ export interface DataWeCollectSectionProps {
   section: {
     id: string;
     title: JSONContent;
-    points: (LocalizedJSON & {
+    points: Array<LocalizedJSON & {
       id: string;
-    })[];
+    }>;
   };
   listTitle: string;
   currentLocale: 'uk' | 'en';
