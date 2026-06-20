@@ -26,7 +26,7 @@ export const Grip = ({ orientation = 'vertical', gripPosition = 'center' }: Grip
         ...(gripPosition === 'top' && { marginTop: '12px' })
       }}
     >
-      <GripVertical size={20} />
+      <GripVertical width={24} height={24} />
     </Box>
   );
 };

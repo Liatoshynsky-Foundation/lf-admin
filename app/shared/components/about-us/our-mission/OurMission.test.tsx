@@ -26,6 +26,7 @@ jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
 }));
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
 jest.mock('~/ds-components/text-field/TextField');
+jest.mock('~/components/grip/Grip');
 
 jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
   __esModule: true,

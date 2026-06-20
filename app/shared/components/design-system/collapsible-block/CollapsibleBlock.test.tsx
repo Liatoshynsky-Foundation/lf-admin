@@ -9,9 +9,7 @@ jest.mock('~/public/icons/chevron-down.svg', () => {
   return DummyChevron;
 });
 
-jest.mock('../../grip/Grip', () => ({
-  Grip: () => <div data-testid="grip-mock" />
-}));
+jest.mock('../../grip/Grip');
 
 describe('CollapsibleBlock', () => {
   const titleText = 'Test Block';

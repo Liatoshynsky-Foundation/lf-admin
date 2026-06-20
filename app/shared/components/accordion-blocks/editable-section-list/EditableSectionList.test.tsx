@@ -6,6 +6,7 @@ import { createDocNode } from '~/__mocks__/utils';
 
 jest.mock('~/shared/components/design-system/text-field/TextField');
 jest.mock('~/components/configurable-list/ConfigurableList');
+jest.mock('~/components/grip/Grip');
 
 const mockTitleJson = createDocNode('Test Section Title');
 
@@ -88,4 +89,21 @@ describe('EditableSectionList', () => {
       assertOutcome();
     }
   );
+
+  it('should render the drag grip if onDragEnd is provided', () => {
+    const onDragEndMock = jest.fn();
+    render(
+      <EditableSectionList
+        title={mockTitleJson}
+        onTitleChange={onTitleChange}
+        items={mockItems}
+        onChangeItem={onChangeItem}
+        onCreateItem={onCreateItem}
+        onDeleteItem={onDeleteItem}
+        sectionLabel="Test Label"
+        onDragEnd={onDragEndMock}
+      />
+    );
+    expect(screen.getAllByTestId('grip-mock')).toHaveLength(mockItems.length);
+  });
 });

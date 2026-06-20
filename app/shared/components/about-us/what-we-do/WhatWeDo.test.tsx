@@ -14,6 +14,7 @@ jest.mock('~/store', () => ({
 }));
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
 jest.mock('~/components/accordion-blocks/editable-section-list/EditableSectionList');
+jest.mock('~/components/grip/Grip');
 jest.mock('~/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: () => usePageBlockMock()
 }));
