@@ -4,6 +4,7 @@ import { DragEndEvent } from '@dnd-kit/core';
 import { PAGE_IDS } from '~/constants/pageBlocks';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { FoundationFounders } from '~/shared/components/about-us/foundation-founders/FoundationFounders';
+import { IntroSection } from '~/shared/components/about-us/Intro-section/IntroSection';
 import { LiatoshynskyFoundation } from '~/shared/components/about-us/Liatoshynsky-foundation/LiatoshynskyFoundation';
 import { LiatoshynskyOffice } from '~/shared/components/about-us/Liatoshynsky-office/Liatoshynsky-office';
 import OurGoals from '~/shared/components/about-us/our-goals/OurGoals';
@@ -40,6 +41,7 @@ export default function Page() {
 
   return (
     <EditablePageLayout headerTitle="Про нас" pageSlug={pageSlug}>
+      <IntroSection />
       {sortableBlocks && sortableBlocks.length > 0 && (
         <SortableList onDragEnd={handleDragEnd} id="1" items={sortableBlocks}>
           {sortableBlocks.map((blockId) => {

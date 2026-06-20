@@ -7,23 +7,7 @@ jest.mock('~/utils/fetchPreview', () => ({
   fetchPreview: jest.fn()
 }));
 
-jest.mock('~/components/header/Header', () => ({
-  Header: jest.fn(({ title, onPreview, onLanguageChange, onSave, isSaving }) => (
-    <div data-testid="header">
-      <h1>{title}</h1>
-      <button onClick={onPreview} data-testid="preview-btn">
-        Preview
-      </button>
-      <button onClick={onLanguageChange} data-testid="lang-btn">
-        Change Language
-      </button>
-      <button onClick={onSave} data-testid="save-btn">
-        Save
-      </button>
-      {isSaving && <span data-testid="saving">Saving...</span>}
-    </div>
-  ))
-}));
+jest.mock('~/shared/components/header/Header');
 
 describe('Home component', () => {
   beforeEach(() => {

@@ -81,7 +81,7 @@ describe('PageMutation', () => {
 
       await PageMutation.upsertPageDraft({}, { input: { slug: 's', blocks, blocksOrder: [] } }, mockContext);
 
-      expect(mockRepo.createDraft).toHaveBeenCalledWith('s', expect.anything(), mockBasePage);
+      expect(mockRepo.createDraft).toHaveBeenCalledWith('s', expect.anything(), [], mockBasePage);
     });
 
     it('should call syncImagesCrops and copy blobs when crop data is present', async () => {
