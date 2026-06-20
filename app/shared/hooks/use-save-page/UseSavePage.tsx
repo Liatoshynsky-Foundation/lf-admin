@@ -31,7 +31,7 @@ export const useSavePageBlocks = (slug: string) => {
     const baselineBlocksOrder = state.originalBlocksOrder[slug];
 
     if (current == null) throw new Error('No page blocks found');
-    if (!hasChanged(current, baseline) && !hasChanged(current, baselineBlocksOrder)) throw new Error('Nothing to save');
+    if (!hasChanged(current, baseline) && !hasChanged(currentBlocksOrder, baselineBlocksOrder)) throw new Error('Nothing to save');
 
     await safeMutate<UpsertPageDraftMutation, UpsertPageDraftMutationVariables>(
       upsertDraft,
