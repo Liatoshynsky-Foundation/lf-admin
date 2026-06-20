@@ -13,6 +13,7 @@ type StoreState = {
   locale: 'uk' | 'en';
   isChanged?: boolean;
   saveAsDraft: (slug: string) => void;
+  blocksOrder: Record<string, unknown>;
 };
 
 let storeState: StoreState;
@@ -46,7 +47,8 @@ describe('usePageEditor › preview', () => {
       blocks: { test: { IntroSection: { title: 't' } } },
       originalBlocks: {},
       locale: 'uk',
-      saveAsDraft: markSavedMock
+      saveAsDraft: markSavedMock,
+      blocksOrder: { test: ['IntroSection'] }
     };
   });
 
@@ -57,7 +59,7 @@ describe('usePageEditor › preview', () => {
     await result.current.preview();
 
     expect(upsertMock).toHaveBeenCalledWith({
-      variables: { input: { slug: 'test', blocks: { IntroSection: { title: 't' } } } }
+      variables: { input: { slug: 'test', blocks: { IntroSection: { title: 't' } }, blocksOrder: ['IntroSection'] } }
     });
     expect(fetchPreviewMock).toHaveBeenCalledWith({ slug: 'test', lang: 'uk', draftId: '123' });
   });
