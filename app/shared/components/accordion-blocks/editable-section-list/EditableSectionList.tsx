@@ -39,7 +39,7 @@ export const EditableSectionList = <ItemType extends SectionListItem>({
   const listContent = (
     <ConfigurableList
       items={items}
-      renderItem={({ item }: { item: ItemType }) => (
+      renderItem={({ item }) => (
         <EditableSectionListItem
           item={item}
           onChangeItem={onChangeItem}
