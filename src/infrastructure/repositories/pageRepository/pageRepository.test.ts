@@ -99,6 +99,7 @@ describe('PageRepository', () => {
         quote: { text: { uk: 'Чернетка Цитата', en: 'Draft Quote' }, author: 'Draft Author' }
       }
     },
+    blocksOrder: ['Block1', 'Intro'],
     createdAt,
     updatedAt
   };
@@ -151,6 +152,7 @@ describe('PageRepository', () => {
         status: PageStatus.Draft,
         pageType: 'AboutUsPage',
         blocks: draftDoc.blocks,
+        blocksOrder: draftDoc.blocksOrder,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-02-01T00:00:00.000Z'
       });
@@ -330,7 +332,7 @@ describe('PageRepository', () => {
     });
   });
 
-  describe('createDraft with crop', () => {
+  describe('createDraft', () => {
     it('should save a new draft with crop data in blocks', async () => {
       const crop = { x: 10, y: 10, width: 100, height: 100 };
       const blocks = {
@@ -350,9 +352,24 @@ describe('PageRepository', () => {
       const resBlocks = res.blocks as unknown as Record<string, MockImageWithCrop>;
       expect(resBlocks.IntroSection.image?.crop).toEqual(crop);
     });
+
+    it('should save a new draft with blocksOrder', async () => {
+      const blocks = {};
+      const blocksOrder = ['Intro', 'Section'];
+
+      const newDraftDoc = { ...draftDoc, _id: 'new-draft-id', blocks, blocksOrder };
+      const mockSave = jest.fn().mockResolvedValue({
+        toObject: jest.fn().mockReturnValue(newDraftDoc)
+      });
+      DraftPageModelMock.mockImplementationOnce(() => ({ save: mockSave }));
+
+      const res = await repo.createDraft('about-us', blocks, blocksOrder, publishedDoc as unknown as BasePage);
+
+      expect(res.blocksOrder).toEqual(blocksOrder);
+    });
   });
 
-  describe('applyPatchToDraft with crop', () => {
+  describe('applyPatchToDraft', () => {
     it('should apply patch containing crop to draft blocks', async () => {
       const crop = { x: 25, y: 25, width: 50, height: 50 };
       const patch: Patch = { $set: { 'IntroSection.image.crop': crop } };
@@ -367,6 +384,19 @@ describe('PageRepository', () => {
 
       const resBlocks = res.blocks as unknown as Record<string, MockImageWithCrop>;
       expect(resBlocks.IntroSection.image?.crop).toEqual(crop);
+    });
+
+    it('should apply new blocksOrder to a draft', async () => {
+      const newBlocksOrder = ['Intro', 'Block1'];
+      const updatedDraft = {
+        ...draftDoc,
+        blocksOrder: newBlocksOrder
+      };
+
+      mockedDraftFindOneAndUpdate.mockReturnValueOnce(leanResolved(updatedDraft));
+      const res = await repo.applyPatchToDraft('about-us', newBlocksOrder, {});
+
+      expect(res.blocksOrder).toEqual(newBlocksOrder);
     });
   });
 
