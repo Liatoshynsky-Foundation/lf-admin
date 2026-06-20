@@ -15,7 +15,7 @@ import { SortableList } from '~/shared/components/sortable-list/SortableList';
 import { useStore } from '~/store';
 
 
-export const BLOCKS_CONFIG: Record<string, () => React.JSX.Element> = {
+const BLOCKS_CONFIG: Record<string, () => React.JSX.Element> = {
   'foundation': LiatoshynskyFoundation,
   'mission': OurMission,
   'goals': OurGoals,
