@@ -1,11 +1,9 @@
 'use client';
 import { DragEndEvent } from '@dnd-kit/core';
-import { Box } from '@mui/material';
-import { useEffect, useState } from 'react';
 
 import { PAGE_IDS } from '~/constants/pageBlocks';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
-import { Header } from '~/shared/components/header/Header';
+import { EditablePageLayout } from '~/shared/components/editable-page-layout/EditablePageLayout';
 import { ContactUs } from '~/shared/components/privacy-policy/contact-us/ContactUs';
 import { Cookies } from '~/shared/components/privacy-policy/cookies/Cookies';
 import { DataRetention } from '~/shared/components/privacy-policy/data-retention/DataRetention';
@@ -19,10 +17,7 @@ import { TargetedAds } from '~/shared/components/privacy-policy/targeted-ads/Tar
 import { UserRights } from '~/shared/components/privacy-policy/user-rights/UserRights';
 import { SortableItemWrapper } from '~/shared/components/sortable-item-wrapper/SortableItemWrapper';
 import { SortableList } from '~/shared/components/sortable-list/SortableList';
-import { usePageEditor } from '~/shared/hooks/use-page-editor/usePageEditor';
-import { useSavePageBlocks } from '~/shared/hooks/use-save-page/UseSavePage';
 import { useStore } from '~/store';
-import { useGetPageQuery } from '~/types/graphql/generated/graphql';
 
 
 const BLOCKS_CONFIG: Record<string, () => React.JSX.Element> = {
@@ -40,24 +35,6 @@ const BLOCKS_CONFIG: Record<string, () => React.JSX.Element> = {
 
 export default function Page() {
   const pageSlug = PAGE_IDS.PRIVACY_POLICY;
-  const [isMounted, setIsMounted] = useState(false);
-
-  const setLocale = useStore((s) => s.setLocale);
-  const discardChanges = useStore((s) => s.discardChanges);
-
-  const { preview, loading: editorLoading } = usePageEditor(pageSlug);
-  const { save, loading: saveLoading } = useSavePageBlocks(pageSlug);
-  const { data, loading: queryLoading } = useGetPageQuery({
-    variables: { slug: pageSlug }
-  });
-
-  const setPageData = useStore((state) => state.setPageData);
-
-  useEffect(() => {
-    if (data?.pageBlocks) {
-      setPageData(pageSlug, data.pageBlocks.blocks, data.pageBlocks.blocksOrder, true);
-    }
-  }, [data, setPageData, pageSlug]);
 
   const blocksOrder = useStore((s) => s.blocksOrder[pageSlug]);
   const setBlocksOrder = useStore((s) => s.setBlocksOrder);
@@ -70,24 +47,8 @@ export default function Page() {
     });
   };
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted || queryLoading) {
-    return null;
-  }
-
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', p: '32px', width: '100%', height:'100%', overflow: 'hidden', gap: '32px' }}>
-      <Header
-        title="Політика конфіденційності"
-        onPreview={preview}
-        onSave={save}
-        onCancel={() => discardChanges(pageSlug)}
-        isSaving={editorLoading || saveLoading}
-        onLanguageChange={(lang: 'uk' | 'en') => setLocale(lang)}
-      />
+    <EditablePageLayout headerTitle="Політика конфіденційності" pageSlug={pageSlug}>
       <IntroSection />
       {sortableBlocks && sortableBlocks.length > 0 && (
         <SortableList onDragEnd={handleDragEnd} id="1" items={sortableBlocks}>
@@ -102,6 +63,7 @@ export default function Page() {
           })}
         </SortableList>
       )}
-    </Box>
+    </EditablePageLayout>
+
   );
 }
