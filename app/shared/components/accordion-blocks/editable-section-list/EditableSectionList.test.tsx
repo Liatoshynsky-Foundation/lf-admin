@@ -5,8 +5,31 @@ import { EditableSectionList, SectionListItem } from './EditableSectionList';
 import { createDocNode } from '~/__mocks__/utils';
 
 jest.mock('~/shared/components/design-system/text-field/TextField');
-jest.mock('~/components/configurable-list/ConfigurableList');
+jest.mock('~/components/configurable-list/ConfigurableList', () => ({
+  __esModule: true,
+  default: ({ onChange, onCreate, onDelete, items, renderItem, addBtnLabel }: any) => (
+    <div data-testid="configurable-list">
+      <button
+        data-testid="trigger-configurable-list-change"
+        onClick={() => onChange({ id: '1', field: 'title', value: { type: 'doc', content: [] } })}
+      >
+        Trigger Change
+      </button>
+      <button data-testid="add-btn" onClick={onCreate}>
+        {addBtnLabel}
+      </button>
+      <button data-testid="delete-1" onClick={() => onDelete('1')}>Delete 1</button>
+      <button data-testid="delete-2" onClick={() => onDelete('2')}>Delete 2</button>
+      {items.map((item: any) => (
+        <div key={item.id} data-testid="item">
+          {renderItem({ item })}
+        </div>
+      ))}
+    </div>
+  )
+}));
 jest.mock('~/components/grip/Grip');
+jest.mock('../../sortable-list/SortableList');
 
 const mockTitleJson = createDocNode('Test Section Title');
 
@@ -90,7 +113,7 @@ describe('EditableSectionList', () => {
     }
   );
 
-  it('should render the drag grip if onDragEnd is provided', () => {
+  it('should render the drag grip if onDragEnd is provided and trigger onDragEnd callback', () => {
     const onDragEndMock = jest.fn();
     render(
       <EditableSectionList
@@ -105,5 +128,15 @@ describe('EditableSectionList', () => {
       />
     );
     expect(screen.getAllByTestId('grip-mock')).toHaveLength(mockItems.length);
+    fireEvent.click(screen.getByTestId('mock-sortable-list'));
+    expect(onDragEndMock).toHaveBeenCalledWith({
+      active: { id: '1' },
+      over: { id: '2' }
+    });
+  });
+
+  it('should correctly propagate item onChange through ConfigurableList', () => {
+    fireEvent.click(screen.getByTestId('trigger-configurable-list-change'));
+    expect(onChangeItem).toHaveBeenCalledWith('1', 'title', { type: 'doc', content: [] });
   });
 });

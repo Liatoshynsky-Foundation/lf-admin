@@ -54,8 +54,9 @@ export const useSectionList = <K extends BlockIdsWithSections>({ pageId, blockId
 
   const handleAddSectionListPoint = (sectionId: string) => {
     const currentSection = sections.find(s => s.id === sectionId);
+    if (!currentSection) return;
 
-    const currentPoints = currentSection?.points || [];
+    const currentPoints = currentSection.points;
     const newPoint = { id: crypto.randomUUID(), uk: emptyDoc, en: emptyDoc };
     const newPoints = [...currentPoints, newPoint];
 

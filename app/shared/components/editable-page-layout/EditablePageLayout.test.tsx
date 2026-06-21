@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { EditablePageLayout } from './EditablePageLayout';
@@ -171,6 +171,22 @@ describe('EditablePageLayout', () => {
       runSimulation();
 
       expect(screen.getByTestId('saving-flag')).toHaveTextContent('false');
+    });
+
+    it('should trigger preview, save, cancel and language change callbacks when header controls are clicked', () => {
+      runSimulation();
+
+      fireEvent.click(screen.getByTestId('preview-btn'));
+      expect(mockPreview).toHaveBeenCalled();
+
+      fireEvent.click(screen.getByTestId('save-btn'));
+      expect(mockSave).toHaveBeenCalled();
+
+      fireEvent.click(screen.getByTestId('cancel-btn'));
+      expect(mockDiscardChanges).toHaveBeenCalledWith(pageSlug);
+
+      fireEvent.click(screen.getByTestId('lang-en'));
+      expect(mockSetLocale).toHaveBeenCalledWith('en');
     });
   });
 });
