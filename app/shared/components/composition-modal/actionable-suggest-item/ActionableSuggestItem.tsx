@@ -30,7 +30,7 @@ const ActionableSuggestItem: React.FC<ActionableSuggestItemProps> = ({
   onDateChange
 }) => {
   const label = mode === 'audio' ? 'Назва аудіо *' : 'Назва нот *';
-  const placeholder = mode === 'audio' ? 'Введіть назву нот' : 'Введіть назву аудіо';
+  const placeholder = mode === 'audio' ? 'Введіть назву аудіо' : 'Введіть назву нот';
 
   return (
     <Stack direction="row" spacing={1} alignItems="center" sx={styles.container}>
