@@ -135,7 +135,7 @@ describe('LoginPage', () => {
     submitFormHelper(test);
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(loginErrors.INVALID_CREDENTIALS, { id: 'login-error' });
+      expect(toast.error).toHaveBeenCalledWith(loginErrors.INVALID_CREDENTIALS);
     });
   });
 
@@ -156,7 +156,7 @@ describe('LoginPage', () => {
     submitFormHelper('some-password');
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(loginErrors.TOO_MANY_ATTEMPTS, { id: 'login-error' });
+      expect(toast.error).toHaveBeenCalledWith(loginErrors.TOO_MANY_ATTEMPTS);
     });
   });
 
@@ -167,7 +167,7 @@ describe('LoginPage', () => {
     submitFormHelper(test);
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(loginErrors.UNEXPECTED_ERROR, { id: 'login-error' });
+      expect(toast.error).toHaveBeenCalledWith(loginErrors.UNEXPECTED_ERROR);
     });
   });
 });

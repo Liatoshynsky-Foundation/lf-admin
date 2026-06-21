@@ -26,14 +26,14 @@ export default function LoginPage() {
         setTriggerErrorClear(Date.now());
 
         if (result.message === loginErrors.TOO_MANY_ATTEMPTS) {
-          toast.error(loginErrors.TOO_MANY_ATTEMPTS, { id: 'login-error' });
+          toast.error(loginErrors.TOO_MANY_ATTEMPTS);
         } else {
-          toast.error(loginErrors.INVALID_CREDENTIALS || result.message, { id: 'login-error' });
+          toast.error(loginErrors.INVALID_CREDENTIALS || result.message);
         }
 
         return;
       }
-      toast.error(loginErrors.UNEXPECTED_ERROR, { id: 'login-error' });
+      toast.error(loginErrors.UNEXPECTED_ERROR);
       setTriggerErrorClear(Date.now());
     },
     onError: () => {
