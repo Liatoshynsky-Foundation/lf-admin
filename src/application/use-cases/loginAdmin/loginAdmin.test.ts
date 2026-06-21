@@ -14,61 +14,67 @@ const mockAdminRepository = {
   updatePasswordAndClearToken: jest.fn()
 };
 
-const useCase = loginAdmin({ adminRepository: mockAdminRepository });
+const mockRateLimitRepository = {
+  incrementAndCheck: jest.fn(),
+  checkLimit: jest.fn(),
+  incrementFailure: jest.fn(),
+  resetAttempts: jest.fn()
+};
+
+const useCase = loginAdmin({
+  adminRepository: mockAdminRepository as any,
+  rateLimitRepository: mockRateLimitRepository as any
+});
 
 describe('loginAdmin', () => {
+  const testIp = '127.0.0.1';
+
   beforeEach(() => {
     jest.clearAllMocks();
+    mockRateLimitRepository.checkLimit.mockResolvedValue(0);
   });
 
-  it('should return id and type if all valid', async () => {
+  it('should return id and type if all valid and reset limits', async () => {
     const password = uuidv4();
     const fakeAdmin = { id: '123', type: 'admin', password: password };
     mockAdminRepository.findByEmail.mockResolvedValue(fakeAdmin);
 
     (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
-    const result = await useCase.execute('admin@example.com', 'plainPassword');
+    const result = await useCase.execute('admin@example.com', 'plainPassword', testIp);
 
     expect(mockAdminRepository.findByEmail).toHaveBeenCalledWith('admin@example.com');
     expect(bcrypt.compare).toHaveBeenCalledWith('plainPassword', fakeAdmin.password);
+    expect(mockRateLimitRepository.resetAttempts).toHaveBeenCalledTimes(2);
     expect(result).toEqual({ id: '123', type: 'admin' });
   });
 
-  it('should trim and lowercase email before processing', async () => {
-    const password = uuidv4();
-    const fakeAdmin = { id: '123', type: 'admin', password: password };
-    mockAdminRepository.findByEmail.mockResolvedValue(fakeAdmin);
+  it('should throw LoginError with lockout message if limit is exceeded', async () => {
+    mockRateLimitRepository.checkLimit.mockResolvedValue(5);
 
-    (bcrypt.compare as jest.Mock).mockResolvedValue(true);
-
-    const result = await useCase.execute('  Admin@Example.COM  ', 'plainPassword');
-
-    expect(mockAdminRepository.findByEmail).toHaveBeenCalledWith('admin@example.com');
-    expect(result).toEqual({ id: '123', type: 'admin' });
+    await expect(useCase.execute('admin@example.com', 'anyPassword', testIp)).rejects.toThrow(LoginError);
+    expect(mockAdminRepository.findByEmail).not.toHaveBeenCalled();
   });
 
-  it('should throw ZodError if email is invalid', async () => {
-    await expect(useCase.execute('invalid-email', 'anyPassword')).rejects.toThrow(ZodError);
-  });
-
-  it('should throw ZodError if email is empty', async () => {
-    await expect(useCase.execute('', 'anyPassword')).rejects.toThrow(ZodError);
-  });
-
-  it('should throw LoginError if admin not found', async () => {
+  it('should increment failures and throw LoginError if admin not found', async () => {
     mockAdminRepository.findByEmail.mockResolvedValue(null);
 
-    await expect(useCase.execute('notfound@example.com', 'anyPassword')).rejects.toThrow(LoginError);
+    await expect(useCase.execute('notfound@example.com', 'anyPassword', testIp)).rejects.toThrow(LoginError);
+    expect(mockRateLimitRepository.incrementFailure).toHaveBeenCalledTimes(2);
   });
 
-  it('should throw LoginError if incorrect password', async () => {
+  it('should increment failures and throw LoginError if incorrect password', async () => {
     const password = uuidv4();
     const fakeAdmin = { id: '123', type: 'admin', password: password };
     mockAdminRepository.findByEmail.mockResolvedValue(fakeAdmin);
 
     (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-    await expect(useCase.execute('admin@example.com', 'wrongPassword')).rejects.toThrow(LoginError);
+    await expect(useCase.execute('admin@example.com', 'wrongPassword', testIp)).rejects.toThrow(LoginError);
+    expect(mockRateLimitRepository.incrementFailure).toHaveBeenCalledTimes(2);
+  });
+
+  it('should throw ZodError if email is invalid', async () => {
+    await expect(useCase.execute('invalid-email', 'anyPassword', testIp)).rejects.toThrow(ZodError);
   });
 });

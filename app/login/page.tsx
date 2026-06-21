@@ -13,7 +13,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [triggerErrorClear, setTriggerErrorClear] = useState<number>(0);
 
-  const [loginMutation] = useLoginMutation({
+  const [loginMutation, { loading }] = useLoginMutation({
     onCompleted: (data) => {
       const result = data.login;
 
@@ -24,7 +24,13 @@ export default function LoginPage() {
       }
       if (result.__typename === 'ErrorPayload') {
         setTriggerErrorClear(Date.now());
-        toast.error(loginErrors.INVALID_CREDENTIALS || result.message);
+
+        if (result.message === loginErrors.TOO_MANY_ATTEMPTS) {
+          toast.error(loginErrors.TOO_MANY_ATTEMPTS, { id: 'login-error' });
+        } else {
+          toast.error(loginErrors.INVALID_CREDENTIALS || result.message, { id: 'login-error' });
+        }
+
         return;
       }
       toast.error(loginErrors.UNEXPECTED_ERROR);
@@ -45,5 +51,5 @@ export default function LoginPage() {
     });
   };
 
-  return <LoginModal onSubmit={handleLoginSubmit} submitError={triggerErrorClear.toString()} />;
+  return <LoginModal onSubmit={handleLoginSubmit} submitError={triggerErrorClear.toString()} loading={loading} />;
 }
