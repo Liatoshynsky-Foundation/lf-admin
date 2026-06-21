@@ -76,9 +76,7 @@ export const CompositionModalView: React.FC<CompositionModalViewProps> = ({
     setNoteEntries((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates } : e)));
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    await onSave(title, genre, year, audioEntries, noteEntries);
+  const clearInput = () => {
     setIsSaving(false);
 
     setTitle('');
@@ -88,6 +86,18 @@ export const CompositionModalView: React.FC<CompositionModalViewProps> = ({
     setNoteEntries([]);
     setShowAlert(true);
     onClose();
+  };
+
+  const handleCancel = () => {
+    onClose();
+    clearInput();
+
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    await onSave(title, genre, year, audioEntries, noteEntries);
+    clearInput();
   };
 
   const validateYear = (year: Dayjs) => year > dayjs('1900') && year < dayjs();
@@ -199,7 +209,7 @@ export const CompositionModalView: React.FC<CompositionModalViewProps> = ({
       </DialogContent>
 
       <DialogActions sx={styles.dialogActions}>
-        <Button onClick={onClose} disabled={isSaving} variant="outlined" sx={styles.cancelButton}>
+        <Button onClick={handleCancel} disabled={isSaving} variant="outlined" sx={styles.cancelButton}>
           Скасувати
         </Button>
         <Button

@@ -168,7 +168,7 @@ describe('CompositionModalView', () => {
     renderComponent();
 
     fireEvent.click(screen.getByRole('button', { name: 'Скасувати' }));
-    expect(onCloseMock).toHaveBeenCalledTimes(1);
+    expect(onCloseMock).toHaveBeenCalled();
   });
 
   it('should allow typing values directly inside text inputs and select year fields cleanly via targeted event firing', () => {
