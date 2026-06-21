@@ -4,17 +4,19 @@ import { ZodError } from 'zod';
 
 import { loginAdmin } from './loginAdmin';
 import { LoginError } from '~/back-constants/apolloCustomErrors/adminErrors';
+import { AdminRepository } from '~/domain/repositories/adminRepository';
+import { RateLimitRepository } from '~/domain/repositories/rateLimitRepository';
 
 jest.mock('bcrypt');
 
-const mockAdminRepository = {
+const mockAdminRepository: jest.Mocked<AdminRepository> = {
   findByEmail: jest.fn(),
   setResetToken: jest.fn(),
   findByResetToken: jest.fn(),
   updatePasswordAndClearToken: jest.fn()
 };
 
-const mockRateLimitRepository = {
+const mockRateLimitRepository: jest.Mocked<RateLimitRepository> = {
   incrementAndCheck: jest.fn(),
   checkLimit: jest.fn(),
   incrementFailure: jest.fn(),
@@ -22,8 +24,8 @@ const mockRateLimitRepository = {
 };
 
 const useCase = loginAdmin({
-  adminRepository: mockAdminRepository as any,
-  rateLimitRepository: mockRateLimitRepository as any
+  adminRepository: mockAdminRepository,
+  rateLimitRepository: mockRateLimitRepository
 });
 
 describe('loginAdmin', () => {
@@ -36,7 +38,12 @@ describe('loginAdmin', () => {
 
   it('should return id and type if all valid and reset limits', async () => {
     const password = uuidv4();
-    const fakeAdmin = { id: '123', type: 'admin', password: password };
+    const fakeAdmin = {
+      id: '123',
+      type: 'admin' as const,
+      email: 'admin@example.com',
+      password: password
+    };
     mockAdminRepository.findByEmail.mockResolvedValue(fakeAdmin);
 
     (bcrypt.compare as jest.Mock).mockResolvedValue(true);
@@ -65,7 +72,12 @@ describe('loginAdmin', () => {
 
   it('should increment failures and throw LoginError if incorrect password', async () => {
     const password = uuidv4();
-    const fakeAdmin = { id: '123', type: 'admin', password: password };
+    const fakeAdmin = {
+      id: '123',
+      type: 'admin' as const,
+      email: 'admin@example.com',
+      password: password
+    };
     mockAdminRepository.findByEmail.mockResolvedValue(fakeAdmin);
 
     (bcrypt.compare as jest.Mock).mockResolvedValue(false);
