@@ -29,6 +29,7 @@ jest.mock('~/store', () => ({
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
 jest.mock('~/ds-components/text-field/TextField');
 jest.mock('~/shared/components/privacy-policy/components/points-list/PointsList');
+jest.mock('~/shared/components/sortable-list/SortableList');
 jest.mock('~/components/grip/Grip');
 
 const MOCK_UUID = 'uuid-1';

@@ -15,6 +15,7 @@ describe('EditParagraphsBlock', () => {
     Component: () => <EditParagraphsBlock blockId={mockBlockId} title={mockTitle} />,
     mockBlock: createStandardMockBlock().block,
     checkParagraph: true,
+    checkGrip: true,
   });
   it('should render a correct title if provided', () => {
     usePageBlockMock.mockReturnValue({ block: createStandardMockBlock().block });

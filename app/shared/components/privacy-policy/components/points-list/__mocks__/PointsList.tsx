@@ -3,6 +3,7 @@ import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
+import { SortableList } from '~/shared/components/sortable-list/__mocks__/SortableList';
 
 interface MockPointsListProps<T> {
   id: string;
@@ -20,7 +21,8 @@ export const PointsList = <T extends { readonly id: string; readonly value: JSON
   updatePoint,
   removePoint,
   onDragEnd
-}: MockPointsListProps<T>) => (
+}: MockPointsListProps<T>) => {
+  const content = (
     <div data-testid="points-list" data-list-id={id} data-has-drag={onDragEnd ? 'true' : 'false'}>
       <button data-testid="trigger-add-point" onClick={addPoint}>
       Add
@@ -41,3 +43,14 @@ export const PointsList = <T extends { readonly id: string; readonly value: JSON
       ))}
     </div>
   );
+
+  if (onDragEnd) {
+    return (
+      <SortableList items={points.map((p) => p.id)} onDragEnd={onDragEnd}>
+        {content}
+      </SortableList>
+    );
+  }
+
+  return content;
+};

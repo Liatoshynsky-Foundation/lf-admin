@@ -27,6 +27,7 @@ jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
 jest.mock('~/ds-components/text-field/TextField');
 jest.mock('~/components/grip/Grip');
+jest.mock('../../sortable-list/SortableList');
 
 jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
   __esModule: true,
@@ -154,4 +155,30 @@ describe('OurMission', () => {
       );
     }
   );
+
+  it('should render the grip handle and handle drag-and-drop reordering', () => {
+    const doubleMockBlock = {
+      title: { uk: mockTitleJson },
+      list: [
+        { id: '1', uk: mockItemJson, en: { type: 'doc', content: [] } },
+        { id: '2', uk: mockItemJson, en: { type: 'doc', content: [] } }
+      ],
+      smallImage: mockBlock.smallImage,
+      bigImage: mockBlock.bigImage
+    };
+    usePageBlockMock.mockReturnValue({ block: doubleMockBlock });
+
+    render(<OurMission />);
+
+    expect(screen.getByTestId('collapsible-block-grip')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('mock-sortable-list'));
+
+    expect(setFieldMock).toHaveBeenCalledWith(
+      PAGE_IDS.ABOUT_US,
+      BLOCK_IDS.OUR_MISSION,
+      'list',
+      [doubleMockBlock.list[1], doubleMockBlock.list[0]]
+    );
+  });
 });

@@ -120,4 +120,36 @@ describe('WhatWeDo', () => {
 
     expect(setFieldMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.WHAT_WE_DO, storeKey, expectedPayload);
   });
+
+  it('should render the grip handle and handle drag-and-drop reordering', () => {
+    const doubleMockBlock = {
+      title: { uk: mockBlockTitleJson },
+      items: [
+        {
+          id: '1',
+          title: { uk: mockItemTitleJson, en: {} },
+          description: { uk: mockItemDescJson, en: { type: 'doc', content: [] } }
+        },
+        {
+          id: '2',
+          title: { uk: mockItemTitleJson, en: {} },
+          description: { uk: mockItemDescJson, en: { type: 'doc', content: [] } }
+        }
+      ]
+    };
+    usePageBlockMock.mockReturnValue({ block: doubleMockBlock });
+
+    render(<WhatWeDo />);
+
+    expect(screen.getByTestId('collapsible-block-grip')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('trigger-drag-end'));
+
+    expect(setFieldMock).toHaveBeenCalledWith(
+      PAGE_IDS.ABOUT_US,
+      BLOCK_IDS.WHAT_WE_DO,
+      'items',
+      [doubleMockBlock.items[1], doubleMockBlock.items[0]]
+    );
+  });
 });

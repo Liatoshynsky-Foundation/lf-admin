@@ -51,6 +51,7 @@ interface CommonTestProps {
   checkTitle?: boolean;
   checkList?: boolean;
   checkParagraph?: boolean;
+  checkGrip?: boolean;
   usePointsListMock?: jest.Mock;
   useSectionListMock?: jest.Mock;
 }
@@ -63,6 +64,7 @@ export const runCommonBlockTests = ({
   checkTitle,
   checkList,
   checkParagraph,
+  checkGrip,
   usePointsListMock,
   useSectionListMock
 }: CommonTestProps) => {
@@ -114,6 +116,17 @@ export const runCommonBlockTests = ({
     expect(screen.queryByTestId('collapsible')).not.toBeInTheDocument();
     expect(document.querySelector('.MuiSkeleton-root')).toBeInTheDocument();
   });
+
+  if (checkGrip !== undefined) {
+    it(`should ${checkGrip ? '' : 'NOT '}render grip handle`, () => {
+      runSimulation();
+      if (checkGrip) {
+        expect(screen.getByTestId('collapsible-block-grip')).toBeInTheDocument();
+      } else {
+        expect(screen.queryByTestId('collapsible-block-grip')).not.toBeInTheDocument();
+      }
+    });
+  }
 
   if (checkTitle) {
     it('should render title with deep initial JSON content', () => {
