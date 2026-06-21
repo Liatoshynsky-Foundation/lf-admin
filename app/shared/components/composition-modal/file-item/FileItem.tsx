@@ -20,7 +20,7 @@ const FileItem: React.FC<FileItemProps> = ({ fileName, fileType, onDelete }) => 
     <Stack direction="row" spacing={1} alignItems="center" sx={styles.wrapper}>
       <Box sx={styles.fileContainer}>
         <Image
-          src={`/icons/${COMPOSITION_FILE_TYPES[fileType]}.svg`}
+          src={`/icons/${COMPOSITION_FILE_TYPES[fileType] || 'file-text' }.svg`}
           width={ICON_SIZE}
           height={ICON_SIZE}
           alt={`${fileType} file icon`}
