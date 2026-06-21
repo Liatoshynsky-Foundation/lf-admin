@@ -33,7 +33,7 @@ export default function LoginPage() {
 
         return;
       }
-      toast.error(loginErrors.UNEXPECTED_ERROR);
+      toast.error(loginErrors.UNEXPECTED_ERROR, { id: 'login-error' });
       setTriggerErrorClear(Date.now());
     },
     onError: () => {

@@ -135,7 +135,7 @@ describe('LoginPage', () => {
     submitFormHelper(test);
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Invalid credentials', { id: 'login-error' });
+      expect(toast.error).toHaveBeenCalledWith(loginErrors.INVALID_CREDENTIALS, { id: 'login-error' });
     });
   });
 
