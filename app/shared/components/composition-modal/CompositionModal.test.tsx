@@ -22,7 +22,6 @@ interface MockMediaModalProps {
   readonly onApply: (result: MediaModalResult & { uploadResult?: UploadResult }) => Promise<void>;
 }
 
-const refetchMock = jest.fn();
 const useAllAssetsMock = jest.fn();
 const createAssetMutationMock = jest.fn();
 
@@ -116,8 +115,8 @@ const mockAssets = [
 ];
 
 const runSimulation = (isOpen = true, loading = false, allAssets: unknown = mockAssets) => {
-  useAllAssetsMock.mockReturnValue({ data: { allAssets }, loading, refetch: refetchMock });
-  render(<CompositionModal mode='create' isOpen={isOpen} sx={{}} onClose={jest.fn()} />);
+  useAllAssetsMock.mockReturnValue({ data: { allAssets }, loading });
+  render(<CompositionModal mode="create" isOpen={isOpen} sx={{}} onClose={jest.fn()} />);
 };
 
 describe('CompositionModal', () => {
@@ -151,28 +150,29 @@ describe('CompositionModal', () => {
     expect(screen.queryByTestId('media-modal')).not.toBeInTheDocument();
   });
 
-  it('should process asset mutation uploads, dispatch updates to store pipelines, refetch data cache collections, and emit status toasts on success', async () => {
+  it('should process asset mutation uploads, dispatch updates to store pipelines, update cache inline, and emit status toasts on success', async () => {
     runSimulation();
 
     fireEvent.click(screen.getByTestId('action-trigger-upload-audio'));
-
     fireEvent.click(screen.getByTestId('media-modal-apply-audio'));
 
     await waitFor(() => {
-      expect(createAssetMutationMock).toHaveBeenCalledWith({
-        variables: {
-          input: {
-            filename: 'symphony.mp3',
-            url: 'https://storage/audio.mp3',
-            mimeType: 'audio/mp3',
-            sizeBytes: 2048,
-            type: 'audio'
-          }
-        }
-      });
+      expect(createAssetMutationMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variables: {
+            input: {
+              filename: 'symphony.mp3',
+              url: 'https://storage/audio.mp3',
+              mimeType: 'audio/mp3',
+              sizeBytes: 2048,
+              type: 'audio'
+            }
+          },
+          update: expect.any(Function) 
+        })
+      );
     });
 
-    expect(refetchMock).toHaveBeenCalledTimes(1);
     expect(toast.success).toHaveBeenCalledWith('Файл успішно завантажено');
     await waitFor(() => {
       expect(screen.queryByTestId('media-modal')).not.toBeInTheDocument();
@@ -189,7 +189,6 @@ describe('CompositionModal', () => {
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Network drop error');
     });
-    expect(refetchMock).not.toHaveBeenCalled();
   });
 
   it('should execute composition storage paths flawlessly on submission actions', async () => {

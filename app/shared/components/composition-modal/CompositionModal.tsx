@@ -1,5 +1,6 @@
 'use client';
 
+import { Reference } from '@apollo/client';
 import { SxProps } from '@mui/material';
 import { Theme } from '@mui/system';
 import { Dayjs } from 'dayjs';
@@ -54,8 +55,8 @@ interface CompositionModalProps {
   sx?: SxProps<Theme>;
 }
 
-const CompositionModal: React.FC<CompositionModalProps> = ({ isOpen, onClose, mode='create', sx }) => {
-  const { data, loading, refetch } = useAllAssets();
+const CompositionModal: React.FC<CompositionModalProps> = ({ isOpen, onClose, mode = 'create', sx }) => {
+  const { data, loading } = useAllAssets();
   const [createAsset] = useCreateAssetMutation();
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -68,13 +69,17 @@ const CompositionModal: React.FC<CompositionModalProps> = ({ isOpen, onClose, mo
 
   const isAudioMode = uploadTarget?.mode === 'audio';
 
-  const renderUpload = React.useCallback((props: UploadRendererProps) => (
-    <DynamicUploadView {...props} isAudioMode={isAudioMode} />
-  ), [isAudioMode]);
+  const renderUpload = React.useCallback(
+    (props: UploadRendererProps) => <DynamicUploadView {...props} isAudioMode={isAudioMode} />,
+    [isAudioMode]
+  );
 
-  const dynamicRenderers = useMemo<Partial<MediaModalRenderers>>(() => ({
-    upload: renderUpload
-  }), [renderUpload]);
+  const dynamicRenderers = useMemo<Partial<MediaModalRenderers>>(
+    () => ({
+      upload: renderUpload
+    }),
+    [renderUpload]
+  );
 
   const suggestions = useMemo(() => {
     const audioFiles = new Set<string>();
@@ -129,14 +134,34 @@ const CompositionModal: React.FC<CompositionModalProps> = ({ isOpen, onClose, mo
             sizeBytes: size,
             type: assetType
           }
+        },
+        update: (cache, { data }) => {
+          const newAsset = data?.createAsset;
+          if (!newAsset) return;
+
+          cache.modify({
+            fields: {
+              allAssets(existingAssetRefs = []) {
+                const newAssetId = cache.identify(newAsset);
+                
+                if (!newAssetId) return existingAssetRefs; 
+                const newAssetRef = { __ref: newAssetId };
+
+                const isDuplicate = existingAssetRefs.some(
+                  (ref: Reference) => ref.__ref === newAssetRef.__ref
+                );
+
+                if (isDuplicate) return existingAssetRefs;
+                return [...existingAssetRefs, newAssetRef];
+              }
+            }
+          });
         }
       });
 
       if (!createResult.data?.createAsset) {
         throw new Error(FILES_UPLOAD_FAILED_ERROR);
       }
-
-      await refetch();
 
       if (uploadTarget) {
         uploadTarget.onSuccess(finalFilename);
