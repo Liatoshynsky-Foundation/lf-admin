@@ -19,6 +19,7 @@ const defaultMockedProps = {
 
 
 describe('usePointsList', () => {
+  beforeEach(()=>jest.clearAllMocks());
   it('should initialize points array with id and currentLocale value', () => {
     const { result } = renderHook(() => usePointsList(defaultMockedProps));
     expect(result.current.points).toEqual([
@@ -68,4 +69,25 @@ describe('usePointsList', () => {
     expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'list', expectedList);
 
   });
+
+  it('should call setField with correct updated list when updateAllPoints is called', () => {
+    const { result } = renderHook(() => usePointsList(defaultMockedProps));
+
+    const newPoints = [
+      { id: '1', value: { type: 'doc', content: [{ type: 'text', text: 'New 1' }] } },
+      { id: '2', value: { type: 'doc', content: [{ type: 'text', text: 'New 2' }] } }
+    ];
+
+    act(() => {
+      result.current.updateAllPoints(newPoints);
+    });
+
+    const expectedList = [
+      { id: '1', uk: newPoints[0].value, en: emptyDoc },
+      { id: '2', uk: newPoints[1].value, en: emptyDoc }
+    ];
+
+    expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'list', expectedList);
+  });
 });
+
