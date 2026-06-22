@@ -1,7 +1,7 @@
 import { Db } from 'mongodb';
 
 const DEFAULT_COVER_IMAGE = {
-  src: '/images/image.jpg',
+  src: 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/about-us-foundation-first.png',
   alt: { uk: 'Зображення', en: 'Image' },
 };
 
