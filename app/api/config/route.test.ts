@@ -1,5 +1,14 @@
 import { GET } from './route';
 
+jest.mock('next/server', () => ({
+  NextResponse: {
+    json: (body: any) => ({
+      status: 200,
+      json: async () => body
+    })
+  }
+}));
+
 describe('GET /api/config', () => {
   const originalEnv = process.env;
 
