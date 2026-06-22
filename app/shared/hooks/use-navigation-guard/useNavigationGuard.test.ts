@@ -2,6 +2,7 @@ import { renderHook } from '@testing-library/react';
 import { usePathname, useRouter } from 'next/navigation';
 
 import { useNavigationGuard } from './useNavigationGuard';
+import { BACK_NAVIGATION } from '~/constants/navigation';
 import { useStore } from '~/store';
 
 jest.mock('~/store');
@@ -13,6 +14,7 @@ const mockedUseRouter = jest.mocked(useRouter);
 
 describe('useNavigationGuard', () => {
   const push = jest.fn();
+  const back = jest.fn();
   const setPendingNavigation = jest.fn();
   const setDiscardModalOpen = jest.fn();
 
@@ -22,7 +24,8 @@ describe('useNavigationGuard', () => {
     mockedUsePathname.mockReturnValue('/page1');
 
     mockedUseRouter.mockReturnValue({
-      push
+      push,
+      back
     } as any);
   });
 
@@ -146,5 +149,43 @@ describe('useNavigationGuard', () => {
     expect(preventDefault).not.toHaveBeenCalled();
     expect(setPendingNavigation).not.toHaveBeenCalled();
     expect(setDiscardModalOpen).not.toHaveBeenCalled();
+  });
+
+  it('should navigate back directly when page is not dirty', () => {
+    mockedUseStore.mockImplementation((selector) =>
+      selector({
+        dirtyPaths: {},
+        setPendingNavigation,
+        setDiscardModalOpen
+      } as any)
+    );
+
+    const { result } = renderHook(() => useNavigationGuard());
+
+    result.current.navigateBack();
+
+    expect(back).toHaveBeenCalled();
+    expect(setPendingNavigation).not.toHaveBeenCalled();
+    expect(setDiscardModalOpen).not.toHaveBeenCalled();
+  });
+
+  it('should open discard modal when navigating back from dirty page', () => {
+    mockedUseStore.mockImplementation((selector) =>
+      selector({
+        dirtyPaths: {
+          '/page1': true
+        },
+        setPendingNavigation,
+        setDiscardModalOpen
+      } as any)
+    );
+
+    const { result } = renderHook(() => useNavigationGuard());
+
+    result.current.navigateBack();
+
+    expect(back).not.toHaveBeenCalled();
+    expect(setPendingNavigation).toHaveBeenCalledWith(BACK_NAVIGATION);
+    expect(setDiscardModalOpen).toHaveBeenCalledWith(true);
   });
 });
