@@ -2,6 +2,7 @@
 import { useRouter } from 'next/navigation';
 import { ReactNode, useEffect, useState } from 'react';
 
+import { BACK_NAVIGATION } from '~/constants/navigation';
 import DiscardChangesModal from '~/shared/components/design-system/discard-changes-modal/DiscardChangesModal';
 import { useStore } from '~/store';
 
@@ -22,13 +23,19 @@ export default function DiscardModalProvider({ children }: { readonly children: 
     setOpen(false);
   };
   const handleConfirm = () => {
-    if (pendingNavigation) {
-      router.push(pendingNavigation);
-
-      setPendingNavigation(null);
-      setDiscardModalOpen(false);
+    if (!pendingNavigation) {
+      setOpen(false);
+      return;
     }
 
+    if (pendingNavigation === BACK_NAVIGATION) {
+      router.back();
+    } else {
+      router.push(pendingNavigation);
+    }
+
+    setPendingNavigation(null);
+    setDiscardModalOpen(false);
     setOpen(false);
   };
 
