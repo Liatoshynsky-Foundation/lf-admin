@@ -5,12 +5,14 @@ import { DraftPageModel } from '~/infrastructure/models/draftPage.model';
 import EventModel from '~/infrastructure/models/event.model';
 import NewsModel from '~/infrastructure/models/news.model';
 import PageModel from '~/infrastructure/models/page.model';
+import { RateLimit } from '~/infrastructure/models/rateLimit.model';
 import { AdminRepository } from '~/infrastructure/repositories/adminRepository/adminRepository';
 import { AssetRepository } from '~/infrastructure/repositories/assetRepository/assetRepository';
-import {EventsRepository} from '~/infrastructure/repositories/eventRepository/eventRepository';
+import { EventsRepository } from '~/infrastructure/repositories/eventRepository/eventRepository';
 import { MediaMentionsRepository } from '~/infrastructure/repositories/mediaMentionRepository/mediaMentionRepository';
 import { NewsRepository } from '~/infrastructure/repositories/newsRepository/newsRepository';
 import { PageRepository } from '~/infrastructure/repositories/pageRepository/pageRepository';
+import { RateLimitRepository } from '~/infrastructure/repositories/rateLimitRepository/rateLimitRepository';
 import { RefreshTokenRepository } from '~/infrastructure/repositories/refreshTokenRepository/refreshTokenRepository';
 import { MediaMentionModel } from '~/src/infrastructure/models/mediaMention.model';
 
@@ -22,6 +24,7 @@ export type RepositoriesModule = {
   newsRepository: ReturnType<typeof NewsRepository>;
   mediaMentionsRepository: ReturnType<typeof MediaMentionsRepository>;
   eventsRepository: ReturnType<typeof EventsRepository>;
+  rateLimitRepository: ReturnType<typeof RateLimitRepository>;
 };
 
 export const registerRepositories = (container: AwilixContainer) => {
@@ -33,6 +36,8 @@ export const registerRepositories = (container: AwilixContainer) => {
     MediaMentionsModel: asValue(MediaMentionModel),
     EventModel: asValue(EventModel),
 
+    RateLimitModel: asValue(RateLimit),
+
     adminRepository: asFunction(AdminRepository).scoped(),
     refreshTokenRepository: asFunction(RefreshTokenRepository).scoped(),
 
@@ -41,5 +46,6 @@ export const registerRepositories = (container: AwilixContainer) => {
     mediaMentionsRepository: asFunction(MediaMentionsRepository).scoped(),
     eventsRepository: asFunction(EventsRepository).scoped(),
     assetsRepository: asFunction(AssetRepository).scoped(),
+    rateLimitRepository: asFunction(RateLimitRepository).scoped()
   });
 };

@@ -92,6 +92,12 @@ jest.mock('../delete-card-modal/DeleteCardModal', () => ({
     ) : null
 }));
 
+globalThis.ResizeObserver = jest.fn().mockImplementation((callback) => ({
+  observe: jest.fn(() => callback()),
+  unobserve: jest.fn(),
+  disconnect: jest.fn()
+}));
+
 describe('ContentCard', () => {
   const defaultProps = {
     id: '1',

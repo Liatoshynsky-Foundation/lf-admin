@@ -9,14 +9,6 @@ export const styles: Record<string, SxProps<Theme>> = {
     backgroundColor: 'adminBlue.100'
   },
 
-  fileTitle: {
-    color: 'text.primary',
-    display: '-webkit-box',
-    WebkitLineClamp: 1,
-    WebkitBoxOrient: 'vertical',
-    wordBreak: 'break-all',
-  },
-
   fileDate: {
     fontSize: '16px',
     fontStyle: 'italic',

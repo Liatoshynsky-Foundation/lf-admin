@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { createDocNode } from '../../__mocks__/utils';
 import { FoundationBlock } from './FoundationBlock';
+import { createDocNode } from '~/__mocks__/utils';
 
 
 interface MockImagePreviewBlockProps {
