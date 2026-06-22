@@ -4,7 +4,7 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable';
 
-interface SortableContainerProps {
+export interface SortableContainerProps {
   id: string;
   items: string[];
   children: React.ReactNode

@@ -36,6 +36,10 @@ describe('DataWeCollect', () => {
 
   it('should handle drag-and-drop reordering', () => {
     const mockUpdateSectionList = jest.fn();
+
+    const point1 = { id: 'p1', uk: createDocNode('pt1'), en: createDocNode('pt1') };
+    const point2 = { id: 'p2', uk: createDocNode('pt2'), en: createDocNode('pt2') };
+
     useSectionListMock.mockReturnValue({
       addListPoint: jest.fn(),
       removeListPoint: jest.fn(),
@@ -45,24 +49,15 @@ describe('DataWeCollect', () => {
       sections: [{ 
         id: 'section-1', 
         title: createDocNode('Mock Title'), 
-        points: [
-          { id: 'p1', uk: createDocNode('pt1'), en: createDocNode('pt1') },
-          { id: 'p2', uk: createDocNode('pt2'), en: createDocNode('pt2') }
-        ] 
+        points: [point1, point2] 
       }]
     });
     usePageBlockMock.mockReturnValue({ block: mockBlock });
-
     render(<DataWeCollect />);
-
     fireEvent.click(screen.getByTestId('mock-sortable-list'));
-
     expect(mockUpdateSectionList).toHaveBeenCalledWith(
       'section-1',
-      [
-        { id: 'p2', uk: createDocNode('pt2'), en: createDocNode('pt2') },
-        { id: 'p1', uk: createDocNode('pt1'), en: createDocNode('pt1') }
-      ]
+      [point2, point1]
     );
   });
 });

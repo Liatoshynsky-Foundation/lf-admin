@@ -8,7 +8,7 @@ interface SortableListMockProps {
 
 export const SortableList = ({ children, onDragEnd, items }: SortableListMockProps) => {
   return (
-    <button
+    <div // NOSONAR - was explicitly added to avoid triggering sonarqube(typescript:S6848) & sonarqube(typescript:S1082)
       data-testid="mock-sortable-list"
       onClick={(e: any) => {
         if(!onDragEnd) return;
@@ -23,6 +23,6 @@ export const SortableList = ({ children, onDragEnd, items }: SortableListMockPro
       }}
     >
       {children}
-    </button>
+    </div>
   );
 };

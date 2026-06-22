@@ -5,29 +5,7 @@ import { EditableSectionList, SectionListItem } from './EditableSectionList';
 import { createDocNode } from '~/__mocks__/utils';
 
 jest.mock('~/shared/components/design-system/text-field/TextField');
-jest.mock('~/components/configurable-list/ConfigurableList', () => ({
-  __esModule: true,
-  default: ({ onChange, onCreate, onDelete, items, renderItem, addBtnLabel }: any) => (
-    <div data-testid="configurable-list">
-      <button
-        data-testid="trigger-configurable-list-change"
-        onClick={() => onChange({ id: '1', field: 'title', value: { type: 'doc', content: [] } })}
-      >
-        Trigger Change
-      </button>
-      <button data-testid="add-btn" onClick={onCreate}>
-        {addBtnLabel}
-      </button>
-      <button data-testid="delete-1" onClick={() => onDelete('1')}>Delete 1</button>
-      <button data-testid="delete-2" onClick={() => onDelete('2')}>Delete 2</button>
-      {items.map((item: any) => (
-        <div key={item.id} data-testid="item">
-          {renderItem({ item })}
-        </div>
-      ))}
-    </div>
-  )
-}));
+jest.mock('~/components/configurable-list/ConfigurableList');
 jest.mock('~/components/grip/Grip');
 jest.mock('../../sortable-list/SortableList');
 
