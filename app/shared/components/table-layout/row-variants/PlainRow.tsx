@@ -1,26 +1,34 @@
+'use client';
+
 import { Box, Typography } from '@mui/material';
 import React from 'react';
 
 import { ContextMenu } from '../components/ContextMenu';
 import { EditAction } from '../components/EditAction';
 import { styles } from './PlainRow.styles';
-import { ColumnsConfig, IndividualRowRenderer, RowActionConfig } from './Row.types';
+import { ColumnDef, MenuItem } from './Row.types';
 
-type PlainRowProps<TPlain> = Readonly<{
+type PlainRowProps<TGroup, TSub, TPlain> = Readonly<{
   plainData: TPlain;
-  columns: readonly ColumnsConfig[];
+  columns: readonly ColumnDef<TGroup, TSub, TPlain>[];
   gridTemplate: string;
-  renderer: IndividualRowRenderer<TPlain>;
-  actions?: RowActionConfig;
+  editAction?: { editHref: string; editLabel: string };
+  menuActions?: { menuItems: readonly MenuItem[]; menuTriggerLabel: string };
 }>;
 
-export function PlainRow<TPlain>({ plainData, columns, gridTemplate, renderer, actions }: PlainRowProps<TPlain>) {
+export function PlainRow<TGroup, TSub, TPlain>({
+  plainData,
+  columns,
+  gridTemplate,
+  editAction,
+  menuActions
+}: PlainRowProps<TGroup, TSub, TPlain>) {
   return (
     <Box sx={styles.individualWorkRow(gridTemplate)}>
       {columns.map((col) => {
-        if (col.id === 'opus' || col.id === 'group') return null;
+        if (!col.renderPlain) return null;
 
-        const content = renderer.renderPlainCell(col.id, plainData);
+        const content = col.renderPlain ? col.renderPlain(plainData) : null;
 
         return (
           <Box key={col.id} sx={styles.plainCell(col.id, col.hasRightDivider, col.hasLeftDivider)}>
@@ -34,12 +42,8 @@ export function PlainRow<TPlain>({ plainData, columns, gridTemplate, renderer, a
       })}
 
       <Box sx={styles.rowActionsCell}>
-        {actions ? (
-          <>
-            {actions.editHref && <EditAction href={actions.editHref} label={actions.editLabel ?? ''} />}
-            <ContextMenu items={actions.menuItems} triggerLabel={actions.menuTriggerLabel} />
-          </>
-        ) : null}
+        {editAction && <EditAction href={editAction.editHref} label={editAction.editLabel} />}
+        {menuActions && <ContextMenu items={menuActions.menuItems} triggerLabel={menuActions.menuTriggerLabel} />}
       </Box>
     </Box>
   );

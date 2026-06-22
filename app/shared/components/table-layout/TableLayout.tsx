@@ -5,12 +5,12 @@ import React from 'react';
 
 import { GroupedRow } from './row-variants/GroupedRow';
 import { PlainRow } from './row-variants/PlainRow';
-import { BaseRowData, ColumnsConfig } from './row-variants/Row.types';
+import { BaseRowData, ColumnDef } from './row-variants/Row.types';
 import { HeaderRow } from './TableHeader';
 
 type TableLayoutProps<TGroup, TSub, TPlain> = Readonly<{
   data: readonly BaseRowData<TGroup, TSub, TPlain>[];
-  columns: readonly ColumnsConfig[];
+  columns: readonly ColumnDef<TGroup, TSub, TPlain>[];
 }>;
 
 export function TableLayout<TGroup, TSub, TPlain>({ data, columns }: TableLayoutProps<TGroup, TSub, TPlain>) {
@@ -29,8 +29,8 @@ export function TableLayout<TGroup, TSub, TPlain>({ data, columns }: TableLayout
               subRows={item.subRows}
               columns={columns}
               gridTemplate={gridTemplate}
-              renderer={item.renderer}
-              actions={item.actions}
+              editAction={item.editAction}
+              menuActions={item.menuActions}
               subRowActions={item.subRowActions}
               defaultExpanded
             />
@@ -44,8 +44,8 @@ export function TableLayout<TGroup, TSub, TPlain>({ data, columns }: TableLayout
               plainData={item.plainData}
               columns={columns}
               gridTemplate={gridTemplate}
-              renderer={item.renderer}
-              actions={item.actions}
+              editAction={item.editAction}
+              menuActions={item.menuActions}
             />
           );
         }

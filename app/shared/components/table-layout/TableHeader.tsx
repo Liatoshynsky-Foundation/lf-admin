@@ -3,15 +3,14 @@
 import { Box, Typography } from '@mui/material';
 import React from 'react';
 
-import { ColumnsConfig } from './row-variants/Row.types';
+import { ColumnDef } from './row-variants/Row.types';
 import { styles } from './TableHeader.styles';
 
-type HeaderRowProps = Readonly<{
-  columns: readonly ColumnsConfig[];
+type HeaderRowProps<TGroup, TSub, TPlain> = Readonly<{
+  columns: readonly ColumnDef<TGroup, TSub, TPlain>[];
   gridTemplate: string;
 }>;
-
-export function HeaderRow({ columns, gridTemplate }: HeaderRowProps) {
+export function HeaderRow<TGroup, TSub, TPlain>({ columns, gridTemplate }: HeaderRowProps<TGroup, TSub, TPlain>) {
   return (
     <Box sx={styles.tableHeader(gridTemplate, columns[0]?.width ?? 'auto')}>
       {columns.map((col) => (

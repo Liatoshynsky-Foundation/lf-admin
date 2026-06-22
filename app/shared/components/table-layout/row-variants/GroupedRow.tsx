@@ -1,3 +1,5 @@
+'use client';
+
 import { Accordion, AccordionDetails, AccordionSummary, Box, Typography } from '@mui/material';
 import { ChevronRight } from 'lucide-react';
 import React from 'react';
@@ -5,18 +7,19 @@ import React from 'react';
 import { ContextMenu } from '../components/ContextMenu';
 import { EditAction } from '../components/EditAction';
 import { styles } from './GroupedRow.styles';
-import { ColumnsConfig, GroupRowRenderer, RowActionConfig } from './Row.types';
+import { ColumnDef, MenuItem } from './Row.types';
 
 type GroupedRowProps<TGroup, TSub> = Readonly<{
   groupData: TGroup;
   subRows: readonly TSub[];
-  columns: readonly ColumnsConfig[];
+  columns: readonly ColumnDef<TGroup, TSub, any>[];
   gridTemplate: string;
   actionsColumnWidth?: string;
-  renderer: GroupRowRenderer<TGroup, TSub>;
-  actions?: RowActionConfig;
-  subRowActions?: (subItem: TSub) => RowActionConfig;
+  editAction?: { editHref: string; editLabel: string };
+  menuActions?: { menuItems: readonly MenuItem[]; menuTriggerLabel: string };
+  subRowActions?: (subItem: TSub) => { menuItems: readonly MenuItem[]; menuTriggerLabel: string };
   defaultExpanded?: boolean;
+  status?: string;
 }>;
 
 export function GroupedRow<TGroup, TSub>({
@@ -25,8 +28,8 @@ export function GroupedRow<TGroup, TSub>({
   columns,
   gridTemplate,
   actionsColumnWidth,
-  renderer,
-  actions,
+  editAction,
+  menuActions,
   subRowActions,
   defaultExpanded = false
 }: GroupedRowProps<TGroup, TSub>) {
@@ -35,7 +38,7 @@ export function GroupedRow<TGroup, TSub>({
       <AccordionSummary expandIcon={<ChevronRight size={18} />} sx={styles.accordionSummary}>
         <Box sx={styles.gridRowBase(gridTemplate)}>
           {columns.map((col) => {
-            const content = renderer.renderGroupCell(col.id, groupData);
+            const content = col.renderGroup ? col.renderGroup(groupData) : null;
 
             return (
               <Box key={col.id} sx={styles.groupCell(col.id, col.hasRightDivider, col.hasLeftDivider)}>
@@ -49,12 +52,8 @@ export function GroupedRow<TGroup, TSub>({
           })}
 
           <Box sx={styles.actionsCellWithWidth(actionsColumnWidth)}>
-            {actions && (
-              <>
-                {actions.editHref && <EditAction href={actions.editHref} label={actions.editLabel ?? ''} />}
-                <ContextMenu items={actions.menuItems} triggerLabel={actions.menuTriggerLabel} />
-              </>
-            )}
+            {editAction && <EditAction href={editAction.editHref} label={editAction.editLabel} />}
+            {menuActions && <ContextMenu items={menuActions.menuItems} triggerLabel={menuActions.menuTriggerLabel} />}
           </Box>
         </Box>
       </AccordionSummary>
@@ -68,11 +67,7 @@ export function GroupedRow<TGroup, TSub>({
             return (
               <Box key={index} sx={styles.groupedSubRow(gridTemplate, isLast)}>
                 {columns.map((col) => {
-                  if (col.id === 'opus' || col.id === 'group') {
-                    return <Box key={col.id} sx={styles.emptySubCell} />;
-                  }
-
-                  const content = renderer.renderSubCell(col.id, subItem);
+                  const content = col.renderSub ? col.renderSub(subItem, groupData) : null;
                   const hasContent = content !== null && content !== '';
 
                   return (
@@ -88,15 +83,10 @@ export function GroupedRow<TGroup, TSub>({
 
                 <Box sx={styles.actionsCellWithWidth(actionsColumnWidth)}>
                   {currentSubActions && (
-                    <>
-                      {currentSubActions.editHref && (
-                        <EditAction href={currentSubActions.editHref} label={currentSubActions.editLabel ?? ''} />
-                      )}
-                      <ContextMenu
-                        items={currentSubActions.menuItems}
-                        triggerLabel={currentSubActions.menuTriggerLabel}
-                      />
-                    </>
+                    <ContextMenu
+                      items={currentSubActions.menuItems}
+                      triggerLabel={currentSubActions.menuTriggerLabel}
+                    />
                   )}
                 </Box>
               </Box>

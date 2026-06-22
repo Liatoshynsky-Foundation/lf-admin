@@ -1,9 +1,6 @@
 import { SxProps, Theme } from '@mui/material';
 
-import { BORDER, TABLE_GAP, TABLE_TEXT } from '../TableLayout.styles';
-
-const ACTIONS_COLUMN_WIDTH = '80px';
-
+import { ACTIONS_COLUMN_WIDTH, BORDER, TABLE_GAP, TABLE_TEXT } from '../TableLayout.styles';
 
 export const styles = {
 

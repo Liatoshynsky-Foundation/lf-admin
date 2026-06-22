@@ -1,8 +1,20 @@
+import React from 'react';
+
+export type MenuItem = {
+  id: string;
+  label: string;
+  danger?: boolean;
+};
+
 export type RowActionConfig = {
-  editHref?: string;
-  editLabel?: string;
-  menuItems: readonly { id: string; label: string; danger?: boolean }[];
-  menuTriggerLabel: string;
+  editAction?: {
+    editHref: string;
+    editLabel: string;
+  };
+  menuActions?: {
+    menuItems: readonly MenuItem[];
+    menuTriggerLabel: string;
+  };
 };
 
 export type BaseRowData<TGroup, TSub, TPlain> =
@@ -11,32 +23,27 @@ export type BaseRowData<TGroup, TSub, TPlain> =
       id: string;
       groupData: TGroup;
       subRows: readonly TSub[];
-	    renderer: GroupRowRenderer<TGroup, TSub>;
-      actions?: RowActionConfig;
-      subRowActions?: (subItem: TSub) => RowActionConfig;
+      editAction?: { editHref: string; editLabel: string };
+      menuActions?: { menuItems: readonly MenuItem[]; menuTriggerLabel: string };
+      subRowActions?: (sub: TSub) => { menuItems: readonly MenuItem[]; menuTriggerLabel: string };
     }
   | {
       type: 'individual';
       id: string;
       plainData: TPlain;
-	    renderer: IndividualRowRenderer<TPlain>;
-      actions?: RowActionConfig;
+      editAction?: { editHref: string; editLabel: string };
+      menuActions?: { menuItems: readonly MenuItem[]; menuTriggerLabel: string };
     };
 
-export type GroupRowRenderer<TGroup, TSub> = {
-  renderGroupCell: (colId: string, groupItem: TGroup) => React.ReactNode;
-  renderSubCell: (colId: string, subItem: TSub) => React.ReactNode;
-};
-
-export type IndividualRowRenderer<TPlain> = {
-  renderPlainCell: (colId: string, plainItem: TPlain) => React.ReactNode;
-};
-
-export type ColumnsConfig = {
+export type ColumnDef<TGroup, TSub, TPlain> = {
   id: string;
   headerLabel: string;
   width: string;
   hasRightDivider?: boolean;
   hasLeftDivider?: boolean;
   align?: 'left' | 'center' | 'right';
+
+  renderGroup?: (group: TGroup) => React.ReactNode;
+  renderSub?: (sub: TSub, group: TGroup) => React.ReactNode;
+  renderPlain?: (plain: TPlain) => React.ReactNode;
 };
