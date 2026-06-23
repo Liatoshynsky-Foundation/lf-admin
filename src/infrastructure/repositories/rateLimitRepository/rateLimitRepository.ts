@@ -19,5 +19,29 @@ export const RateLimitRepository = (): RateLimitRepositoryType => ({
     );
 
     return record.count <= limit;
+  },
+  checkLimit: async (key: string) => {
+    await dbConnect();
+    const record = await RateLimit.findOne({ key });
+    return record ? record.count : 0;
+  },
+
+  incrementFailure: async (key: string, windowMinutes: number) => {
+    await dbConnect();
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + windowMinutes * 60 * 1000);
+    await RateLimit.findOneAndUpdate(
+      { key },
+      {
+        $inc: { count: 1 },
+        $setOnInsert: { expiresAt }
+      },
+      { upsert: true, setDefaultsOnInsert: true }
+    );
+  },
+
+  resetAttempts: async (key: string) => {
+    await dbConnect();
+    await RateLimit.deleteMany({ key });
   }
 });
