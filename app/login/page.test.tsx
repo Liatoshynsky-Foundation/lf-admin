@@ -135,7 +135,28 @@ describe('LoginPage', () => {
     submitFormHelper(test);
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(loginErrors.INVALID_CREDENTIALS || 'Invalid credentials');
+      expect(toast.error).toHaveBeenCalledWith(loginErrors.INVALID_CREDENTIALS);
+    });
+  });
+
+  it('should handle lockout error message properly', async () => {
+    const mockLockoutMutationResponse: LoginMutation = {
+      login: {
+        __typename: 'ErrorPayload',
+        success: false,
+        message: loginErrors.TOO_MANY_ATTEMPTS,
+        statusCode: 401
+      }
+    };
+    mockedUseLoginMutation.mockImplementation(({ onCompleted }) => {
+      const mockLoginFn = jest.fn().mockImplementation(() => act(() => onCompleted(mockLockoutMutationResponse)));
+      return [mockLoginFn, { loading: false }];
+    });
+
+    submitFormHelper('some-password');
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(loginErrors.TOO_MANY_ATTEMPTS);
     });
   });
 
