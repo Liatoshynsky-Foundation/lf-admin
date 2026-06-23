@@ -1,4 +1,4 @@
-query GetPages($category: String) {
+query GetPages($category: PageCategories) {
   pages(category: $category) {
     id
     slug

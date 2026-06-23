@@ -1,16 +1,18 @@
 import { Db } from 'mongodb';
 
+import { PageCategories } from '~/types/enums/common.enums';
+
 const DEFAULT_COVER_IMAGE = {
   src: 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/about-us-foundation-first.png',
   alt: { uk: 'Зображення', en: 'Image' },
 };
 
 const MIGRATION_CONFIG = {
-  'biography': 'borys-liatoshynsky',
-  'research': 'borys-liatoshynsky',
-  'about-us': 'foundation',
-  'cooperation': 'cooperation',
-  'privacy-policy': 'other',
+  'biography': PageCategories.BorysLiatoshynsky,
+  'research': PageCategories.BorysLiatoshynsky,
+  'about-us': PageCategories.Foundation,
+  'cooperation': PageCategories.Cooperation,
+  'privacy-policy': PageCategories.Other,
 };
 
 export async function up(db: Db): Promise<void> {

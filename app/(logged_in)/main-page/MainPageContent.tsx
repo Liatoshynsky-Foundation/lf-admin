@@ -6,11 +6,11 @@ import { styles } from './MainPageContent.styles';
 import CardsGrid from '~/shared/components/cards-grid/CardsGrid';
 import PageCard from '~/shared/components/page-card/PageCard';
 import { PageHeader, PageHeaderTab } from '~/shared/components/page-header/PageHeader';
-import type { PageCategory as PageCategoryType} from '~/types/enums/common.enums';
 import { PageCategory } from '~/types/enums/common.enums';
+import type { PageCategories as PageCategoriesType} from '~/types/graphql/generated/graphql';
 import { useGetPagesQuery } from '~/types/graphql/generated/graphql';
 
-export type ValidTab = 'all' | Extract<PageCategoryType, 'foundation' | 'other'>;
+export type ValidTab = 'all' | Extract<PageCategoriesType, 'foundation' | 'other'>;
 
 type MainPagesContentProps = Readonly<{
   activeTab: ValidTab

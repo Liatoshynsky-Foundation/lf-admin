@@ -4,7 +4,7 @@ export enum PageStatus {
 }
 
 export enum PageCategories {
-  BorysLiatoshynsky = 'BorysLiatoshynsky',
+  BorysLiatoshynsky = 'borys_liatoshynsky',
   Foundation = 'foundation',
   Cooperation = 'cooperation',
   Archive = 'archive', 
