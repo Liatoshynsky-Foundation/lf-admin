@@ -1,9 +1,14 @@
 import { Db } from 'mongodb';
 
 import { PageCategories } from '~/types/enums/common.enums';
+const baseStorageUrl = process.env.STORAGE_BASE_URL;
+
+if (!baseStorageUrl) {
+  throw new Error('Provide STORAGE_BASE_URL');
+}
 
 const DEFAULT_COVER_IMAGE = {
-  src: 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/about-us-foundation-first.png',
+  src: `${baseStorageUrl}/photos/about-us-foundation-first.png`,
   alt: { uk: 'Зображення', en: 'Image' },
 };
 
@@ -30,7 +35,7 @@ export async function down(db: Db): Promise<void> {
   const slugs = Object.keys(MIGRATION_CONFIG);
 
   await db.collection('pages').updateMany(
-    { slug: { $in: slugs } }, 
+    { slug: { $in: slugs } },
     { $unset: { category: '', coverImage: '' } }
   );
 }
