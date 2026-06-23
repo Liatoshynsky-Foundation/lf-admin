@@ -1,8 +1,9 @@
-import { Box, Divider, Typography } from '@mui/material';
+import { Box, Divider, MenuItem,Typography } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs, { Dayjs } from 'dayjs';
+import { useEffect,useState } from 'react';
 
 import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
@@ -16,14 +17,40 @@ type OpusDetailsSectionProps = {
     additionalText: string;
     opusTitle: MultilingualText;
     creationDate: string;
-    genre: MultilingualText;
   };
+  derivedGenre: string;
   currentLanguage: string;
+  errors: Record<string, string>;
   onChange: (field: string, value: string, isMultilingual?: boolean) => void;
 };
 
-export const OpusDetailsSection = ({ data, currentLanguage, onChange }: OpusDetailsSectionProps) => {
+export const OpusDetailsSection = ({ data, derivedGenre, currentLanguage, errors, onChange }: OpusDetailsSectionProps) => {
   const langKey = currentLanguage === 'UA' ? 'uk' : 'en';
+  const [isPrefixMenuOpen, setIsPrefixMenuOpen] = useState(false);
+
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  const handleBlur = (field: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  };
+
+  const titlePrefixError = (touched.titlePrefix && !data.titlePrefix) || Boolean(errors.titlePrefix);
+  const opusNumberError = (touched.opusNumber && (!data.opusNumber || data.opusNumber.toString().trim() === '')) || Boolean(errors.opusNumber);
+  const opusTitleError = (touched.opusTitle && (!data.opusTitle[langKey] || data.opusTitle[langKey].trim() === '')) || Boolean(errors.opusTitle);
+
+  useEffect(() => {
+    if (!isPrefixMenuOpen) return;
+
+    const handleScroll = () => {
+      setIsPrefixMenuOpen(false);
+    };
+
+    window.addEventListener('scroll', handleScroll, { capture: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll, { capture: true });
+    };
+  }, [isPrefixMenuOpen]);
 
   return (
     <CollapsibleBlock title="Деталі" defaultExpanded>
@@ -47,14 +74,33 @@ export const OpusDetailsSection = ({ data, currentLanguage, onChange }: OpusDeta
         <Box sx={{ display: 'flex', gap: 2, width: '50%' }}>
           <Box sx={{ flex: 3 }}>
             <CustomTextField
+              select
               label="Назва"
-              value={data.titlePrefix}
-              InputProps={{
-                readOnly: true
-              }}
+              value={data.titlePrefix || ''}
+              onChange={(e) => onChange('titlePrefix', e.target.value)}
               required
               fullWidth
-            />
+              error={titlePrefixError}
+              helperText={titlePrefixError ? (errors.titlePrefix || 'Обов’язкове поле') : ''}
+              SelectProps={{
+                open: isPrefixMenuOpen,
+                onOpen: () => setIsPrefixMenuOpen(true),
+                onClose: () => setIsPrefixMenuOpen(false),
+                MenuProps: {
+                  disableScrollLock: true
+                },
+                IconComponent: () => null
+              }}
+              sx={{
+                '& .MuiInput-underline:before, & .MuiInput-underline:after, & .MuiInput-underline:hover:not(.Mui-disabled):before':
+                  {
+                    borderBottom: 'none'
+                  }
+              }}
+            >
+              <MenuItem value="Op.">Op.</MenuItem>
+              <MenuItem value="Bo.">Bo.</MenuItem>
+            </CustomTextField>
           </Box>
           <Box sx={{ flex: 3 }}>
             <CustomTextField
@@ -64,6 +110,9 @@ export const OpusDetailsSection = ({ data, currentLanguage, onChange }: OpusDeta
               onChange={(e) => onChange('opusNumber', e.target.value)}
               required
               fullWidth
+              error={opusNumberError}
+              helperText={opusNumberError ? (errors.opusNumber || 'Обов’язкове поле') : ''}
+              onBlur={() => handleBlur('opusNumber')}
               sx={{
                 '& input[type=number]': {
                   MozAppearance: 'textfield'
@@ -86,11 +135,14 @@ export const OpusDetailsSection = ({ data, currentLanguage, onChange }: OpusDeta
         </Box>
 
         <CustomTextField
-          label="Назва опусу"
+          label="Назва групи"
           value={data.opusTitle[langKey]}
           onChange={(e) => onChange('opusTitle', e.target.value, true)}
           required
           fullWidth
+          error={opusTitleError}
+          helperText={opusTitleError ? (errors.opusTitle || 'Обов’язкове поле') : ''}
+          onBlur={() => handleBlur('opusTitle')}
         />
 
         <Box sx={{ display: 'flex', gap: 2 }}>
@@ -127,7 +179,7 @@ export const OpusDetailsSection = ({ data, currentLanguage, onChange }: OpusDeta
                           borderColor: 'black',
                           borderWidth: '1px'
                         }
-                    },
+                    }
                   }
                 }}
               />
@@ -136,10 +188,19 @@ export const OpusDetailsSection = ({ data, currentLanguage, onChange }: OpusDeta
           <Box sx={{ flex: 9.4 }}>
             <CustomTextField
               label="Жанр"
-              value={data.genre[langKey]}
-              onChange={(e) => onChange('genre', e.target.value, true)}
-              required
+              value={derivedGenre || 'Жанри відсутні'}
               fullWidth
+              InputProps={{
+                readOnly: true, 
+                sx: {
+                  '& input': {
+                    textAlign: 'left', 
+                    textOverflow: 'ellipsis', 
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                  }
+                }
+              }}
             />
           </Box>
         </Box>

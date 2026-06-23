@@ -1,7 +1,9 @@
-import { Box, Divider,IconButton, Typography } from '@mui/material';
-import { Trash2 } from 'lucide-react';
+import { Box, Divider, IconButton, Typography } from '@mui/material';
+import { useState } from 'react';
 
 import PlusIcon from '~/public/icons/plus.svg';
+import TrashIcon from '~/public/icons/trash.svg';
+import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
 import Button from '~/shared/components/design-system/button/Button';
 import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
 import { ImagePreviewBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
@@ -35,12 +37,17 @@ export const OpusPhotosSection = ({ photos, onChange }: OpusPhotosSectionProps) 
     onChange([...photos, newPhoto]);
   };
 
-  const handleDeletePhoto = (idToRemove: string) => {
-    onChange(photos.filter((photo) => photo.id !== idToRemove));
+  const handleUpdatePhoto = <K extends keyof PhotoItem>(idToUpdate: string, field: K, value: PhotoItem[K]) => {
+    onChange(photos.map((photo) => (photo.id === idToUpdate ? { ...photo, [field]: value } : photo)));
   };
 
-  const handleUpdatePhoto = (idToUpdate: string, field: keyof PhotoItem, value: any) => {
-    onChange(photos.map((photo) => (photo.id === idToUpdate ? { ...photo, [field]: value } : photo)));
+  const [photoIdToDelete, setPhotoIdToDelete] = useState<string | null>(null);
+
+  const handleConfirmDelete = () => {
+    if (photoIdToDelete) {
+      onChange(photos.filter((photo) => photo.id !== photoIdToDelete));
+      setPhotoIdToDelete(null);
+    }
   };
 
   return (
@@ -49,7 +56,6 @@ export const OpusPhotosSection = ({ photos, onChange }: OpusPhotosSectionProps) 
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {photos.map((photo, index) => (
             <Box key={photo.id} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-             
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
                 <Typography variant="body2" sx={{ fontWeight: 500 }} color="text.secondary">
                   {index === 0 ? 'Зображення 1' : `Зображення ${index + 1}`}
@@ -58,11 +64,14 @@ export const OpusPhotosSection = ({ photos, onChange }: OpusPhotosSectionProps) 
                 <Divider sx={{ flexGrow: 1, borderColor: '#E0E2E8' }} />
 
                 <IconButton
-                  onClick={() => handleDeletePhoto(photo.id)}
-                  size="small"
-                  sx={{ color: 'text.secondary', '&:hover': { color: 'error.main' } }}
+                  onClick={() => setPhotoIdToDelete(photo.id)}
+                  sx={{
+                    color: '#131414',
+                    width: '34px',
+                    height: '34px',
+                  }}
                 >
-                  <Trash2 size={20} />
+                  <TrashIcon />
                 </IconButton>
               </Box>
 
@@ -106,6 +115,13 @@ export const OpusPhotosSection = ({ photos, onChange }: OpusPhotosSectionProps) 
           </Button>
         </Box>
       </Box>
+
+      <DeleteCardModal
+        open={Boolean(photoIdToDelete)}
+        onClose={() => setPhotoIdToDelete(null)}
+        onDelete={handleConfirmDelete}
+        description="Ви збираєтесь видалити зображення. Ви впевнені, що хочете продовжити? "
+      />
     </CollapsibleBlock>
   );
 };
