@@ -15,7 +15,8 @@ export const loginErrors = {
   UNEXPECTED_ERROR: 'Непередбачена помилка. Спробуйте ще раз.',
   INVALID_PASSWORD: 'Неправильний пароль',
   EMPTY_EMAIL: 'Будь ласка, вкажіть вашу електронну адресу',
-  INVALID_EMAIL: 'Введіть коректну електронну пошту'
+  INVALID_EMAIL: 'Введіть коректну електронну пошту',
+  TOO_MANY_ATTEMPTS: 'Забагато невдалих спроб входу. Спробуйте ще раз через 15 хвилин.'
 };
 
 export const forgotPasswordErrors = {

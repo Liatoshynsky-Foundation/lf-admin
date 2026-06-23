@@ -71,7 +71,7 @@ describe('GraphQL Mutations', () => {
       mockLoginAdmin.execute.mockResolvedValue(mockAdmin);
       mockTokenService.generateTokens.mockReturnValue(mockTokens);
       const result = await authMutation.login(null, mockArgs, baseMockContext as GraphQLContext);
-      expect(mockLoginAdmin.execute).toHaveBeenCalledWith(mockArgs.email, mockArgs.password);
+      expect(mockLoginAdmin.execute).toHaveBeenCalledWith(mockArgs.email, mockArgs.password, '127.0.0.1');
       expect(mockTokenService.generateTokens).toHaveBeenCalledWith(mockAdmin);
       expect(mockRefreshTokenRepo.add).toHaveBeenCalledWith(
         mockAdmin.id,

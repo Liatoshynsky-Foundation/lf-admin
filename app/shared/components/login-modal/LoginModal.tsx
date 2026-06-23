@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Button, InputAdornment } from '@mui/material';
+import { Box, Button, CircularProgress,InputAdornment } from '@mui/material';
 import { Lock, Mail } from 'lucide-react';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
@@ -15,7 +15,7 @@ import { renderHelperText } from '~/lib/utils/renderHelperText';
 import { validateEmail } from '~/lib/utils/validateEmail';
 import { LoginModalProps } from '~/types/adminLogin';
 
-const LoginModal = ({ onSubmit, submitError }: LoginModalProps) => {
+const LoginModal = ({ onSubmit, submitError, loading }: LoginModalProps) => {
   const [username, setUsername] = useState('');
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [password, setPassword] = useState('');
@@ -111,8 +111,15 @@ const LoginModal = ({ onSubmit, submitError }: LoginModalProps) => {
           />
         </Box>
         <Box sx={styles.buttonsContainer}>
-          <Button variant="contained" sx={styles.buttonLogin} type="submit" fullWidth>
-            Увійти
+          <Button
+            variant="contained"
+            sx={styles.buttonLogin}
+            type="submit"
+            fullWidth
+            disabled={loading}
+            startIcon={loading ? <CircularProgress size={20} color="inherit" /> : undefined}
+          >
+            {loading ? 'Вхід...' : 'Увійти'}
           </Button>
           <Button component={Link} href="/forgot-password" variant="outlined" sx={styles.buttonReset} fullWidth>
             Забули пароль?
