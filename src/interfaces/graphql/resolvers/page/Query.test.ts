@@ -24,6 +24,17 @@ describe('page Query', () => {
     await expect(Query.pageBlocks({}, { slug: 'x' }, ctx)).rejects.toThrow(GraphQLError);
   });
 
+  describe('pageBlocks with draft status', () => {
+    it('should return page when found (draft)', async () => {
+      const page = { id: 'd', blocks: [] };
+      const repo = { getPublishedBySlug: jest.fn(), getDraftBySlug: jest.fn().mockResolvedValue(page) };
+      const ctx = { admin: true, requestContainer: { cradle: { pageRepository: repo } } } as unknown as GraphQLContext;
+      const res = await Query.pageBlocks({}, { slug: 'd', status: PageStatus.Draft }, ctx);
+      expect(res).toBe(page);
+      expect(repo.getDraftBySlug).toHaveBeenCalledWith('d');
+    });
+  });
+
   describe('pages', () => {
     it('should throw if not admin', async () => {
       await expect(
@@ -42,6 +53,14 @@ describe('page Query', () => {
 
     it('should throw NOT_FOUND when pages list is empty', async () => {
       const repo = { findPages: jest.fn().mockResolvedValue([]) };
+      const ctx = { admin: true, requestContainer: { cradle: { pageRepository: repo } } } as unknown as GraphQLContext;
+      await expect(
+        Query.pages({}, { category: 'foundation' as any }, ctx)
+      ).rejects.toThrow(GraphQLError);
+    });
+
+    it('should throw NOT_FOUND when pages is null', async () => {
+      const repo = { findPages: jest.fn().mockResolvedValue(null) };
       const ctx = { admin: true, requestContainer: { cradle: { pageRepository: repo } } } as unknown as GraphQLContext;
       await expect(
         Query.pages({}, { category: 'foundation' as any }, ctx)
