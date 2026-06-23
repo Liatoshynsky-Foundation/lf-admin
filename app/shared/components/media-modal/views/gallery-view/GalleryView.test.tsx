@@ -251,4 +251,50 @@ describe('GalleryView', () => {
     expect(screen.getByText('piano-studio.jpg')).toBeInTheDocument();
     expect(screen.queryByText('composer-portrait.jpg')).not.toBeInTheDocument();
   });
+
+  it('should display originalname instead of filename when available', () => {
+    (useAllAssetsQuery as jest.Mock).mockReturnValue({
+      data: {
+        allAssets: [
+          {
+            id: 'asset-1',
+            url: 'https://example.com/piano-studio.jpg',
+            filename: '1234567890-hash.jpg',
+            originalname: 'piano-studio.jpg',
+            isStarred: false,
+            tags: [],
+            usageRefs: []
+          }
+        ]
+      },
+      loading: false
+    });
+
+    renderGalleryView();
+
+    expect(screen.getByText('piano-studio.jpg')).toBeInTheDocument();
+    expect(screen.queryByText('1234567890-hash.jpg')).not.toBeInTheDocument();
+  });
+
+  it('should fall back to filename when originalname is missing', () => {
+    (useAllAssetsQuery as jest.Mock).mockReturnValue({
+      data: {
+        allAssets: [
+          {
+            id: 'asset-1',
+            url: 'https://example.com/piano-studio.jpg',
+            filename: 'piano-studio.jpg',
+            isStarred: false,
+            tags: [],
+            usageRefs: []
+          }
+        ]
+      },
+      loading: false
+    });
+
+    renderGalleryView();
+
+    expect(screen.getByText('piano-studio.jpg')).toBeInTheDocument();
+  });
 });
