@@ -23,4 +23,29 @@ describe('page Query', () => {
     const ctx = { admin: true, requestContainer: { cradle: { pageRepository: repo } } } as unknown as GraphQLContext;
     await expect(Query.pageBlocks({}, { slug: 'x' }, ctx)).rejects.toThrow(GraphQLError);
   });
+
+  describe('pages', () => {
+    it('should throw if not admin', async () => {
+      await expect(
+        Query.pages({}, { category: 'foundation' as any }, { admin: false } as unknown as GraphQLContext)
+      ).rejects.toThrow(GraphQLError);
+    });
+
+    it('should return pages list when pages are found', async () => {
+      const mockPages = [{ id: 'p1', title: 'Page 1' }];
+      const repo = { findPages: jest.fn().mockResolvedValue(mockPages) };
+      const ctx = { admin: true, requestContainer: { cradle: { pageRepository: repo } } } as unknown as GraphQLContext;
+      const res = await Query.pages({}, { category: 'foundation' as any }, ctx);
+      expect(res).toBe(mockPages);
+      expect(repo.findPages).toHaveBeenCalledWith('foundation');
+    });
+
+    it('should throw NOT_FOUND when pages list is empty', async () => {
+      const repo = { findPages: jest.fn().mockResolvedValue([]) };
+      const ctx = { admin: true, requestContainer: { cradle: { pageRepository: repo } } } as unknown as GraphQLContext;
+      await expect(
+        Query.pages({}, { category: 'foundation' as any }, ctx)
+      ).rejects.toThrow(GraphQLError);
+    });
+  });
 });
