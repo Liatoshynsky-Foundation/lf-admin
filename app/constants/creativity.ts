@@ -79,21 +79,3 @@ export const WORKS_ERROR_STATE_DESCRIPTION = 'Спробуйте оновити 
 
 export const WORKS_PUBLISH_RESTRICTION_MESSAGE =
   'Твір не може бути опублікований без групи (Опусу). Призначте твір до опусу і спробуйте знову.';
-
-export const GROUP_MENU_ITEMS = [
-  { id: 'edit', label: 'Редагувати' },
-  { id: 'publish', label: 'Опублікувати' },
-  { id: 'unpublish', label: 'Зняти з публікації' },
-  { id: 'ungroup', label: 'Розгрупувати' },
-  { id: 'seo', label: 'SEO налаштування' },
-  { id: 'share', label: 'Поширити' },
-  { id: 'delete', label: 'Видалити', danger: true }
-] as const;
-
-export const WORK_MENU_ITEMS = [
-  { id: 'upload_audio', label: 'Завантажити аудіо' },
-  { id: 'upload_pdf', label: 'Завантажити PDF' },
-  { id: 'seo', label: 'SEO налаштування' },
-  { id: 'share', label: 'Поширити' },
-  { id: 'delete', label: 'Видалити', danger: true }
-] as const;

@@ -3,8 +3,8 @@
 import { Box, Typography } from '@mui/material';
 import React from 'react';
 
-import { ColumnDef } from './row-variants/Row.types';
-import { styles } from './TableHeader.styles';
+import { styles } from './HeaderRow.styles';
+import { ColumnDef } from './Row.types';
 
 type HeaderRowProps<TGroup, TSub, TPlain> = Readonly<{
   columns: readonly ColumnDef<TGroup, TSub, TPlain>[];

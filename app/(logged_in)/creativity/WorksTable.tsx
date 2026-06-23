@@ -5,7 +5,8 @@ import React from 'react';
 
 import { WorkStatus } from './works.mock';
 import { styles } from './WorksTable.styles';
-import { GROUP_MENU_ITEMS, WORK_MENU_ITEMS, WORKS_BASE_PATH } from '~/constants/creativity';
+import { GroupMenuItems, WorkMenuItems } from './WorksTableMenusItems';
+import { WORKS_BASE_PATH } from '~/constants/creativity';
 import { RowActions } from '~/shared/components/table-layout/components/RowActions';
 import { StatusBadge } from '~/shared/components/table-layout/components/StatusBadge';
 import { BaseRowData, ColumnDef, MenuItem } from '~/shared/components/table-layout/row-variants/Row.types';
@@ -13,7 +14,7 @@ import { TableLayout } from '~/shared/components/table-layout/TableLayout';
 
 type ActionFields = {
   editAction?: { editHref: string; editLabel: string };
-  menuActions?: { menuItems: readonly MenuItem[]; menuTriggerLabel: string };
+  menuActions?: { menuItems: readonly (readonly MenuItem[])[]; menuTriggerLabel: string };
 };
 
 export type GroupRowData = Readonly<{
@@ -44,8 +45,8 @@ export type OpusWork = Readonly<{
   id: string;
   title: string;
   year: string;
-}>;
-
+}> &
+  ActionFields;
 export type IndividualWork = Readonly<{
   id: string;
   title: string;
@@ -54,6 +55,8 @@ export type IndividualWork = Readonly<{
   status: WorkStatus;
 }> &
   ActionFields;
+
+const modalMock = () => {};
 
 export const columns: readonly ColumnDef<GroupHeaderData, OpusWork, IndividualWork>[] = [
   {
@@ -102,14 +105,7 @@ export const columns: readonly ColumnDef<GroupHeaderData, OpusWork, IndividualWo
     width: '80px',
     align: 'right',
     renderGroup: (group) => <RowActions editAction={group.editAction} menuActions={group.menuActions} />,
-    renderSub: (work) => (
-      <RowActions
-        menuActions={{
-          menuItems: WORK_MENU_ITEMS,
-          menuTriggerLabel: `Дії твору ${work.title}`
-        }}
-      />
-    ),
+    renderSub: (work) => <RowActions menuActions={work.menuActions} />,
     renderPlain: (work) => <RowActions editAction={work.editAction} menuActions={work.menuActions} />
   }
 ];
@@ -123,52 +119,6 @@ type WorksTableProps = Readonly<{
   showIndividualWorks: boolean;
 }>;
 
-function groupsRow(group: GroupRowData): BaseRowData<GroupHeaderData, OpusWork, IndividualWork> {
-  return {
-    type: 'group',
-    id: group.id,
-    groupData: {
-      numberLabel: group.numberLabel,
-      title: group.title,
-      genre: group.genre,
-      startDate: group.startDate,
-      endDate: group.endDate,
-      status: group.status,
-      editAction: {
-        editHref: `${WORKS_BASE_PATH}/group/${group.id}/edit`,
-        editLabel: `Редагувати групу ${group.title}`
-      },
-      menuActions: {
-        menuItems: GROUP_MENU_ITEMS,
-        menuTriggerLabel: `Дії групи ${group.title}`
-      }
-    },
-    subRows: group.works
-  };
-}
-
-function individualWorkRow(work: IndividualWork): BaseRowData<GroupHeaderData, OpusWork, IndividualWork> {
-  return {
-    type: 'individual',
-    id: work.id,
-    plainData: {
-      id: work.id,
-      title: work.title,
-      genre: work.genre,
-      year: work.year,
-      status: work.status,
-      editAction: {
-        editHref: `${WORKS_BASE_PATH}/work/${work.id}/edit`,
-        editLabel: `Редагувати твір ${work.title}`
-      },
-      menuActions: {
-        menuItems: WORK_MENU_ITEMS,
-        menuTriggerLabel: `Дії твору ${work.title}`
-      }
-    }
-  };
-}
-
 export function WorksTable({
   visibleOpusGroups,
   visibleUngroupedGroups,
@@ -177,6 +127,77 @@ export function WorksTable({
   showUngrouped,
   showIndividualWorks
 }: WorksTableProps) {
+  function groupsRow(group: GroupRowData): BaseRowData<GroupHeaderData, OpusWork, IndividualWork> {
+    const isPublished = group.status === 'published';
+
+    return {
+      type: 'group',
+      id: group.id,
+      groupData: {
+        numberLabel: group.numberLabel,
+        title: group.title,
+        genre: group.genre,
+        startDate: group.startDate,
+        endDate: group.endDate,
+        status: group.status,
+        editAction: {
+          editHref: `${WORKS_BASE_PATH}/group/${group.id}/edit`,
+          editLabel: `Редагувати групу ${group.title}`
+        },
+        menuActions: {
+          menuItems: GroupMenuItems({
+            id: group.id,
+            isPublished,
+            setHideModalOpen: modalMock,
+            setPublicationModalOpen: modalMock
+          }),
+          menuTriggerLabel: `Дії групи ${group.title}`
+        }
+      },
+      subRows: group.works.map((work) => ({
+        id: work.id,
+        title: work.title,
+        year: work.year,
+        menuActions: {
+          menuItems: WorkMenuItems({
+            id: work.id,
+            isPublished,
+            setDeleteModalOpen: modalMock
+          }),
+          menuTriggerLabel: `Дії твору ${work.title}`
+        }
+      }))
+    };
+  }
+
+  function individualWorkRow(work: IndividualWork): BaseRowData<GroupHeaderData, OpusWork, IndividualWork> {
+    const isPublished = work.status === 'published';
+
+    return {
+      type: 'individual',
+      id: work.id,
+      plainData: {
+        id: work.id,
+        title: work.title,
+        genre: work.genre,
+        year: work.year,
+        status: work.status,
+        editAction: {
+          editHref: `${WORKS_BASE_PATH}/work/${work.id}/edit`,
+          editLabel: `Редагувати твір ${work.title}`
+        },
+        menuActions: {
+          menuItems: WorkMenuItems({
+            id: work.id,
+            isPublished,
+            setDeleteModalOpen: modalMock
+          }),
+          menuTriggerLabel: `Дії твору ${work.title}`
+        }
+      }
+    };
+  }
+
   const rows: BaseRowData<GroupHeaderData, OpusWork, IndividualWork>[] = [];
 
   const pushGroupRows = (groups: readonly GroupRowData[]) => {

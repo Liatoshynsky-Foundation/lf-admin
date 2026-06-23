@@ -3,16 +3,18 @@ import React from 'react';
 export type MenuItem = {
   id: string;
   label: string;
-  danger?: boolean;
+  href?: string;
+  onClick?: () => void;
 };
 
+// Змінюємо readonly MenuItem[] на масив масивів для секцій
 export type RowActionConfig = {
   editAction?: {
     editHref: string;
     editLabel: string;
   };
   menuActions?: {
-    menuItems: readonly MenuItem[];
+    menuItems: readonly (readonly MenuItem[])[]; // Двовимірний масив
     menuTriggerLabel: string;
   };
 };
@@ -24,8 +26,7 @@ export type BaseRowData<TGroup, TSub, TPlain> =
       groupData: TGroup;
       subRows: readonly TSub[];
       editAction?: { editHref: string; editLabel: string };
-      menuActions?: { menuItems: readonly MenuItem[]; menuTriggerLabel: string };
-      subRowActions?: (sub: TSub) => { menuItems: readonly MenuItem[]; menuTriggerLabel: string };
+      menuActions?: { menuItems: readonly (readonly MenuItem[])[]; menuTriggerLabel: string };
       isDefaultExpanded?: boolean;
     }
   | {
@@ -33,7 +34,7 @@ export type BaseRowData<TGroup, TSub, TPlain> =
       id: string;
       plainData: TPlain;
       editAction?: { editHref: string; editLabel: string };
-      menuActions?: { menuItems: readonly MenuItem[]; menuTriggerLabel: string };
+      menuActions?: { menuItems: readonly (readonly MenuItem[])[]; menuTriggerLabel: string };
     };
 
 export type ColumnDef<TGroup, TSub, TPlain> = {

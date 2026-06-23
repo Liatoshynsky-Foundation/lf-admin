@@ -1,5 +1,6 @@
 import { SxProps, Theme } from '@mui/material';
 
+import { HORIZONTAL_ROW_DIVIDER_COLOR } from '../TableLayout.styles';
 import { filterSelectStyles } from '~/shared/components/selector/FilterSelect.styles';
 
 const MENU_ITEM_BASE_SX = {
@@ -31,12 +32,17 @@ export const styles = {
   },
   contextMenuDropdown: {
     '& .MuiPaper-root': {
-      width: '200px',
+      width: 'hug-content',
     },
   },
   menuItem: {
     ...MENU_ITEM_BASE_SX,
-  }
+  },
+  divider: {
+    height: '1px',
+    backgroundColor: HORIZONTAL_ROW_DIVIDER_COLOR,
+    my: '8px',
+  },
 };
 
 export const getContextMenuDropdownItem = (isDanger?: boolean): SxProps<Theme> => ({

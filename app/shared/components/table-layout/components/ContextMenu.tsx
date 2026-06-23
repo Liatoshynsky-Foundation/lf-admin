@@ -1,45 +1,65 @@
-import { Box, IconButton, MenuItem } from '@mui/material';
-import { Link, MoreVertical } from 'lucide-react';
-import React, { useRef, useState } from 'react';
+'use client';
+
+import { Box, IconButton, Link, MenuItem } from '@mui/material';
+import { MoreVertical } from 'lucide-react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import DropdownMenu from '../../dropdown-menu/DropdownMenu';
+import { MenuItem as MenuItemType } from '../row-variants/Row.types';
 import { styles } from './ContextMenu.styles';
 
 export function ContextMenu({
   items,
   triggerLabel
 }: Readonly<{
-  items: readonly { id: string; label: string; href?: string; onClick?: () => void }[];
+  items: readonly (readonly MenuItemType[])[];
   triggerLabel: string;
 }>) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
 
-  const handleOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleOpen = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
-  };
+  }, []);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setAnchorEl(null);
     requestAnimationFrame(() => triggerRef.current?.focus());
-  };
+  }, []);
 
-  const menuList = items.map((item) => (
-    <MenuItem
-      key={item.id}
-      component={item.href ? Link : 'li'}
-      href={item.href ?? undefined}
-      sx={styles.menuItem}
-      onClick={(e: React.MouseEvent<HTMLLIElement>) => {
-        e.stopPropagation();
-        item.onClick?.();
-        handleClose();
-      }}
-    >
-      {item.label}
-    </MenuItem>
-  ));
+  const menuList = useMemo(() => {
+    return items.flatMap((group, groupIndex) => {
+      const renderedGroup = group.map((item) => {
+        return (
+          <MenuItem
+            key={item.id}
+            component={item.href ? Link : 'li'}
+            href={item.href ?? undefined}
+            sx={styles.menuItem}
+            onClick={(e: React.MouseEvent<HTMLLIElement>) => {
+              e.stopPropagation();
+              item.onClick?.();
+              handleClose();
+            }}
+          >
+            {item.label}
+          </MenuItem>
+        );
+      });
+
+      if (groupIndex < items.length - 1) {
+        renderedGroup.push(<Box key={`divider-${groupIndex}`} data-testid="menu-divider" sx={styles.divider} />);
+      }
+
+      return renderedGroup;
+    });
+  }, [items, handleClose]);
+
+  const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    e.preventDefault();
+  }, []);
 
   return (
     <>
@@ -67,10 +87,7 @@ export function ContextMenu({
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         slotProps={{
           backdrop: {
-            onClick: (e) => {
-              e.stopPropagation();
-              e.preventDefault();
-            }
+            onClick: handleBackdropClick
           }
         }}
         menuList={menuList}

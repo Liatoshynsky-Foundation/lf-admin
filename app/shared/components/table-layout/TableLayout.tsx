@@ -4,9 +4,9 @@ import { Box } from '@mui/material';
 import React from 'react';
 
 import { GroupedRow } from './row-variants/GroupedRow';
+import { HeaderRow } from './row-variants/HeaderRow';
 import { PlainRow } from './row-variants/PlainRow';
 import { BaseRowData, ColumnDef } from './row-variants/Row.types';
-import { HeaderRow } from './TableHeader';
 
 type TableLayoutProps<TGroup, TSub, TPlain> = Readonly<{
   data: readonly BaseRowData<TGroup, TSub, TPlain>[];

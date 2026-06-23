@@ -1,6 +1,6 @@
 import { SxProps, Theme } from '@mui/material';
 
-import {  BORDER_WIDTH, HORIZONTAL_ROW_DIVIDER_COLOR, SINGLE_LINE_ELLIPSIS, TABLE_GAP } from './TableLayout.styles';
+import {  BORDER_WIDTH, HORIZONTAL_ROW_DIVIDER_COLOR, SINGLE_LINE_ELLIPSIS, TABLE_GAP } from '../TableLayout.styles';
 
 export const styles = {
 

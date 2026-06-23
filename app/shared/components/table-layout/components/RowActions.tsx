@@ -4,11 +4,11 @@ import React from 'react';
 import { MenuItem } from '../row-variants/Row.types';
 import { ContextMenu } from './ContextMenu';
 import { EditAction } from './EditAction';
-import { styles } from './Rowctions.styles';
+import { styles } from './RowActions.styles';
 
 type RowActionsProps = Readonly<{
   editAction?: { editHref: string; editLabel: string };
-  menuActions?: { menuItems: readonly MenuItem[]; menuTriggerLabel: string };
+  menuActions?: { menuItems: readonly (readonly MenuItem[])[]; menuTriggerLabel: string };
 }>;
 
 export function RowActions({ editAction, menuActions }: RowActionsProps) {

@@ -17,12 +17,13 @@ export function PlainRow<TGroup, TSub, TPlain>({
   columns,
   gridTemplate
 }: PlainRowProps<TGroup, TSub, TPlain>) {
-  const withGroups = columns.some((col) => col.renderGroup);
+  const withGroups = columns.some((col) => col.renderGroup || col.renderSub);
 
   return (
     <Box sx={styles.individualWorkRow(gridTemplate)}>
       {columns.map((col) => {
         if (!col.renderPlain) return null;
+
         const content = col.renderPlain(plainData);
         const hasSpan = withGroups && col.id === 'title';
 
