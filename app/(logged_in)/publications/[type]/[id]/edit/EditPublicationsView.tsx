@@ -40,6 +40,7 @@ export type EditPublicationsViewProps = {
   onAction: (actionId: MenuActionId) => void;
   onDeleteConfirm: () => void;
   onSeoClick: () => void;
+  onBackClick: () => void;
 };
 
 export function EditPublicationsView({
@@ -53,6 +54,7 @@ export function EditPublicationsView({
   onEditorChange,
   onAction,
   onDeleteConfirm,
+  onBackClick,
   onSeoClick
 }: Readonly<EditPublicationsViewProps>) {
   const [anchors, setAnchors] = useState<MenuAnchor>({});
@@ -80,6 +82,7 @@ export function EditPublicationsView({
   return (
     <Box sx={styles.container}>
       <DividedHeader
+        onBackClick={onBackClick}
         sx={styles.header}
         originUrl={PUBLICATIONS_BASE_PATH}
         rightActionsComponent={

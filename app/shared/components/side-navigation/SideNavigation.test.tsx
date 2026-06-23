@@ -2,6 +2,17 @@ import { fireEvent, render, screen } from '@testing-library/react';
 
 import { SideBarNavigation } from './SideNavigation';
 
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    refresh: jest.fn(),
+    back: jest.fn(),
+    prefetch: jest.fn()
+  }),
+  usePathname: () => '/'
+}));
+
 describe('Side Navigation', () => {
   beforeEach(() => {
     render(<SideBarNavigation />);
