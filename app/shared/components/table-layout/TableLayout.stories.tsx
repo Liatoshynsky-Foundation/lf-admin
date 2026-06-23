@@ -12,7 +12,7 @@ import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 type ActionFields = {
   editAction?: { editHref: string; editLabel: string };
-  menuActions?: { menuItems: readonly MenuItem[]; menuTriggerLabel: string };
+  menuActions?: { menuItems: readonly (readonly MenuItem[])[]; menuTriggerLabel: string };
 };
 
 type GroupHeaderData = {
@@ -24,12 +24,7 @@ type GroupHeaderData = {
   status: BaseContentStatuses;
 } & ActionFields;
 
-type GroupSubRowData = {
-  id: string;
-  title: string;
-  year: string;
-};
-
+type GroupSubRowData = { id: string; title: string; year: string } & ActionFields;
 type IndividualRowData = {
   id: string;
   title: string;
@@ -38,18 +33,15 @@ type IndividualRowData = {
   status: BaseContentStatuses;
 } & ActionFields;
 
-const MOCK_WORK_MENU_ITEMS: readonly MenuItem[] = [
-  { id: 'edit', label: 'Редагувати' },
-  { id: 'delete', label: 'Видалити', danger: true }
+const mockItems: readonly (readonly MenuItem[])[] = [
+  [
+    { id: 'edit', label: 'Редагувати', href: '/edit' } as MenuItem,
+    { id: 'delete', label: 'Видалити', onClick: () => {} } as MenuItem
+  ]
 ];
 
-const columns: readonly ColumnDef<GroupHeaderData, GroupSubRowData, IndividualRowData>[] = [
-  {
-    id: 'group',
-    headerLabel: 'Номер',
-    width: '40px',
-    renderGroup: (g) => g.numberLabel
-  },
+const baseColumns: readonly ColumnDef<GroupHeaderData, GroupSubRowData, IndividualRowData>[] = [
+  { id: 'group', headerLabel: 'Номер', width: '40px', renderGroup: (g) => g.numberLabel },
   {
     id: 'title',
     headerLabel: 'Назва',
@@ -58,13 +50,7 @@ const columns: readonly ColumnDef<GroupHeaderData, GroupSubRowData, IndividualRo
     renderSub: (w) => w.title,
     renderPlain: (w) => w.title
   },
-  {
-    id: 'genre',
-    headerLabel: 'Жанр',
-    width: '106px',
-    renderGroup: (g) => g.genre,
-    renderPlain: (w) => w.genre
-  },
+  { id: 'genre', headerLabel: 'Жанр', width: '106px', renderGroup: (g) => g.genre, renderPlain: (w) => w.genre },
   {
     id: 'years',
     headerLabel: 'Роки',
@@ -81,120 +67,90 @@ const columns: readonly ColumnDef<GroupHeaderData, GroupSubRowData, IndividualRo
     align: 'center',
     renderGroup: (g) => <StatusBadge status={g.status} />,
     renderPlain: (w) => <StatusBadge status={w.status} />
-  },
-  {
-    id: 'actions',
-    headerLabel: '',
-    width: '80px',
-    align: 'right',
-    renderGroup: (g) => <RowActions editAction={g.editAction} menuActions={g.menuActions} />,
-    renderSub: (w) => (
-      <RowActions
-        menuActions={{
-          menuItems: MOCK_WORK_MENU_ITEMS,
-          menuTriggerLabel: `Дії твору ${w.title}`
-        }}
-      />
-    ),
-    renderPlain: (w) => <RowActions editAction={w.editAction} menuActions={w.menuActions} />
   }
 ];
 
-const mockGroupsOnly: BaseRowData<GroupHeaderData, GroupSubRowData, IndividualRowData>[] = [
+const actionsColumn = (width: string): ColumnDef<GroupHeaderData, GroupSubRowData, IndividualRowData> => {
+  return {
+    id: 'actions',
+    headerLabel: '',
+    width: width ?? '80px',
+    align: 'right',
+    renderGroup: (g) => <RowActions editAction={g.editAction} menuActions={g.menuActions} />,
+    renderSub: (w) => <RowActions menuActions={w.menuActions} />,
+    renderPlain: (w) => <RowActions editAction={w.editAction} menuActions={w.menuActions} />
+  };
+};
+
+const columnsWithActions = [...baseColumns, actionsColumn('80px')];
+const columnsWithSmallerActions = [...baseColumns, actionsColumn('40px')];
+
+const createMockData = (
+  withEdit: boolean,
+  withMenu: boolean
+): BaseRowData<GroupHeaderData, GroupSubRowData, IndividualRowData>[] => [
   {
     type: 'group',
     id: 'group-1',
     groupData: {
       numberLabel: '1',
-      title: 'Антологія класичної музики (Група)',
+      title: 'Група з підрядками',
       genre: 'Classical',
       startDate: '2020',
       endDate: '2022',
       status: BaseContentStatuses.Draft,
-      editAction: { editHref: '#', editLabel: 'Редагувати групу' },
-      menuActions: { menuItems: MOCK_WORK_MENU_ITEMS, menuTriggerLabel: 'меню групи' }
+      ...(withEdit && { editAction: { editHref: '/edit', editLabel: 'Редагувати групу' } }),
+      ...(withMenu && { menuActions: { menuItems: mockItems, menuTriggerLabel: 'меню групи' } })
     },
     subRows: [
-      { id: 'sub-1', title: 'Частина 1: Епоха бароко', year: '2020' },
-      { id: 'sub-2', title: 'Частина 2: Класицизм', year: '2021' }
+      {
+        id: 'sub-1',
+        title: 'Частина 1: Епоха бароко',
+        year: '2020',
+        ...(withMenu && { menuActions: { menuItems: mockItems, menuTriggerLabel: 'Дії твору' } })
+      }
     ]
   },
   {
     type: 'group',
-    id: 'group-2',
+    id: 'group-empty-subrows',
     groupData: {
       numberLabel: '2',
-      title: 'Трилогія ретроспектив',
-      genre: 'Jazz',
-      startDate: '2024',
+      title: 'Порожня група',
+      genre: 'Pop',
+      startDate: '2026',
       status: BaseContentStatuses.Published,
-      editAction: { editHref: '#', editLabel: 'Редагувати групу' },
-      menuActions: { menuItems: MOCK_WORK_MENU_ITEMS, menuTriggerLabel: 'меню групи' }
+      ...(withEdit && { editAction: { editHref: '/edit', editLabel: 'Редагувати групу' } }),
+      ...(withMenu && { menuActions: { menuItems: mockItems, menuTriggerLabel: 'меню групи' } })
     },
-    subRows: [{ id: 'sub-3', title: 'Сесія I: Витоки', year: '2024' }]
-  }
-];
-
-const mockIndividualsOnly: BaseRowData<GroupHeaderData, GroupSubRowData, IndividualRowData>[] = [
+    subRows: []
+  },
   {
     type: 'individual',
     id: 'individual-1',
     plainData: {
       id: 'individual-1',
-      title: 'Окремий музичний твір (Поодинокий)',
+      title: 'Окремий рядок',
       genre: 'Jazz',
       year: '2023',
       status: BaseContentStatuses.Published,
-      editAction: { editHref: '#', editLabel: 'Редагувати твір' },
-      menuActions: { menuItems: MOCK_WORK_MENU_ITEMS, menuTriggerLabel: 'меню елемента' }
-    }
-  },
-  {
-    type: 'individual',
-    id: 'individual-2',
-    plainData: {
-      id: 'individual-2',
-      title: 'Сингл року',
-      genre: 'Classical',
-      year: '2025',
-      status: BaseContentStatuses.Draft,
-      editAction: { editHref: '#', editLabel: 'Редагувати твір' },
-      menuActions: { menuItems: [], menuTriggerLabel: 'меню елемента' }
+      ...(withEdit && { editAction: { editHref: '/edit', editLabel: 'Редагувати твір' } }),
+      ...(withMenu && { menuActions: { menuItems: mockItems, menuTriggerLabel: 'меню елемента' } })
     }
   }
 ];
 
-const mockAllData = [...mockGroupsOnly, ...mockIndividualsOnly];
+const mockAllData = createMockData(true, true);
+const mockGroupsOnly = mockAllData.filter((item) => item.type === 'group');
+const mockIndividualsOnly = mockAllData.filter((item) => item.type === 'individual');
+const mockWithoutEditActions = createMockData(false, true);
+const mockPureDataOnly = createMockData(false, false);
 
 const meta: Meta<typeof TableLayout> = {
   title: 'Shared/TableLayout',
   component: TableLayout,
   tags: ['autodocs'],
-  argTypes: {
-    data: {
-      control: 'object',
-      description: 'Array of items supporting both nested groups and individual rows.'
-    },
-    columns: {
-      control: 'object',
-      description:
-        'Column definitions containing widths, headers, alignment, right/left dividers and type-specific render functions.'
-    }
-  },
-  parameters: {
-    docs: {
-      description: {
-        component: `
-A flexible grid table designed to display two types of content structures:
-
-* **Group Mode (\`type: 'group'\`)** renders a parent group header with collapsible sub-rows.
-* **Individual Mode (\`type: 'individual'\`)** for standalone items without nesting.
-
-Each column handles its own layout using explicit renderers (\`renderGroup\`, \`renderSub\`, \`renderPlain\`).
-        `
-      }
-    }
-  },
+  argTypes: { data: { control: 'object' }, columns: { control: 'object' } },
   decorators: [
     (Story) => (
       <Box sx={{ width: '100%', maxWidth: '1200px', p: 2 }}>
@@ -205,33 +161,20 @@ Each column handles its own layout using explicit renderers (\`renderGroup\`, \`
 };
 
 export default meta;
-
 type Story = StoryObj<typeof TableLayout<GroupHeaderData, GroupSubRowData, IndividualRowData>>;
 
-export const Default: Story = {
-  args: {
-    columns,
-    data: mockAllData
-  }
+export const Default: Story = { args: { columns: columnsWithActions, data: mockAllData } };
+export const WithGroupsOnly: Story = { args: { columns: columnsWithActions, data: mockGroupsOnly } };
+export const WithIndividualsOnly: Story = { args: { columns: columnsWithActions, data: mockIndividualsOnly } };
+
+export const WithoutEditActions: Story = {
+  name: 'Without Edit Actions (Menu Only)',
+  args: { columns: columnsWithSmallerActions, data: mockWithoutEditActions }
 };
 
-export const WithGroupsOnly: Story = {
-  args: {
-    columns,
-    data: mockGroupsOnly
-  }
+export const PureDataOnly: Story = {
+  name: 'No Actions Column',
+  args: { columns: baseColumns, data: mockPureDataOnly }
 };
 
-export const WithIndividualsOnly: Story = {
-  args: {
-    columns,
-    data: mockIndividualsOnly
-  }
-};
-
-export const Empty: Story = {
-  args: {
-    columns,
-    data: []
-  }
-};
+export const Empty: Story = { args: { columns: columnsWithActions, data: [] } };
