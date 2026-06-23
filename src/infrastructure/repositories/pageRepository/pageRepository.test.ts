@@ -6,7 +6,7 @@ import PageModel from '~/infrastructure/models/page.model';
 import { PageCategories, PageStatus } from '~/types/enums/common.enums';
 
 export const DEFAULT_COVER_IMAGE = {
-  src: '/images/image.jpg',
+  src: '/fake-image.png',
   alt: { uk: 'Зображення', en: 'Image' },
 };
 

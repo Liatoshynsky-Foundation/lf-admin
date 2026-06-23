@@ -17,7 +17,7 @@ export async function up(db: Db): Promise<void> {
   const operations = Object.entries(MIGRATION_CONFIG).map(([slug, category]) => ({
     updateOne: {
       filter: { slug: slug },
-      update: { $set: { category: category, coverImage: DEFAULT_COVER_IMAGE } }
+      update: [{ $set: { category: category, coverImage: { $ifNull: ['$coverImage', DEFAULT_COVER_IMAGE] } } }]
     }
   }));
 
@@ -25,8 +25,10 @@ export async function up(db: Db): Promise<void> {
 }
 
 export async function down(db: Db): Promise<void> {
+  const slugs = Object.keys(MIGRATION_CONFIG);
+
   await db.collection('pages').updateMany(
-    {},
+    { slug: { $in: slugs } }, 
     { $unset: { category: '', coverImage: '' } }
   );
 }
