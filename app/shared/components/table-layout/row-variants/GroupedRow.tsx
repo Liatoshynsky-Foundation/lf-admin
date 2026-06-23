@@ -19,7 +19,6 @@ type GroupedRowProps<TGroup, TSub> = Readonly<{
   menuActions?: { menuItems: readonly MenuItem[]; menuTriggerLabel: string };
   subRowActions?: (subItem: TSub) => { menuItems: readonly MenuItem[]; menuTriggerLabel: string };
   defaultExpanded?: boolean;
-  status?: string;
 }>;
 
 export function GroupedRow<TGroup, TSub>({

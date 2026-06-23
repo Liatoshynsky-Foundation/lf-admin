@@ -14,7 +14,7 @@ export function HeaderRow<TGroup, TSub, TPlain>({ columns, gridTemplate }: Heade
   return (
     <Box sx={styles.tableHeader(gridTemplate, columns[0]?.width ?? 'auto')}>
       {columns.map((col) => (
-        <Typography key={col.id} className={col.id === 'status' ? 'status-header' : ''} sx={styles.headerTextCell()}>
+        <Typography key={col.id} sx={styles.headerTextCell()}>
           {col.headerLabel}
         </Typography>
       ))}

@@ -81,7 +81,7 @@ const columns: readonly ColumnDef<GroupHeaderData, OpusWork, IndividualWork>[] =
   {
     id: 'status',
     headerLabel: 'Статус',
-    width: '48px',
+    width: '60px',
     hasRightDivider: true,
     hasLeftDivider: true,
     align: 'center',

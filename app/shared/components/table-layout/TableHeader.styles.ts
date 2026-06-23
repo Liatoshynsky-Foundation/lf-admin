@@ -1,6 +1,6 @@
 import { SxProps, Theme } from '@mui/material';
 
-import { ACTIONS_COLUMN_WIDTH, HORIZONTAL_ROW_DIVIDER_COLOR, SINGLE_LINE_ELLIPSIS, TABLE_GAP } from './TableLayout.styles';
+import { ACTIONS_COLUMN_WIDTH, BORDER_WIDTH, HORIZONTAL_ROW_DIVIDER_COLOR, SINGLE_LINE_ELLIPSIS, TABLE_GAP } from './TableLayout.styles';
 
 export const styles = {
   actionsSpacer: {
@@ -15,12 +15,9 @@ export const styles = {
       columnGap: TABLE_GAP,
       alignItems: 'center',
       py: '16px',
-      borderBottom: '2px solid',
+      borderBottom: `${BORDER_WIDTH} solid`,
       borderBottomColor: HORIZONTAL_ROW_DIVIDER_COLOR,
       minWidth: 0,
-      '& .status-header': {
-        overflow: 'visible',
-      },
     };
   },
 

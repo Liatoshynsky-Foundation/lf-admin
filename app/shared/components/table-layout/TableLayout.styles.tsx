@@ -1,9 +1,8 @@
 import { SxProps, Theme } from '@mui/material';
 
-// export const HORIZONTAL_ROW_DIVIDER_COLOR = 'blue.100';
-export const HORIZONTAL_ROW_DIVIDER_COLOR = '#D9DCE866';
+export const HORIZONTAL_ROW_DIVIDER_COLOR = 'blue.100';
 export const ACTIONS_COLUMN_WIDTH = '80px';
-export const BORDER = `2px solid ${HORIZONTAL_ROW_DIVIDER_COLOR}`;
+export const BORDER_WIDTH = '2px';
 
 export const TABLE_GAP = '16px';
 

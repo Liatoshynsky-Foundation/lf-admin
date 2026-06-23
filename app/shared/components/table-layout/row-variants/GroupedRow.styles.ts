@@ -1,6 +1,6 @@
 import { SxProps, Theme } from '@mui/material';
 
-import { ACTIONS_COLUMN_WIDTH, BORDER, SINGLE_LINE_ELLIPSIS, TABLE_GAP, TABLE_TEXT, TWO_LINE_ELLIPSIS } from '../TableLayout.styles';
+import { ACTIONS_COLUMN_WIDTH,  BORDER_WIDTH, HORIZONTAL_ROW_DIVIDER_COLOR, SINGLE_LINE_ELLIPSIS, TABLE_GAP, TABLE_TEXT, TWO_LINE_ELLIPSIS } from '../TableLayout.styles';
 
 export const styles = {
   rowActionsCell: {
@@ -47,7 +47,8 @@ export const styles = {
     display: 'grid',
     gridTemplateColumns: `${gridTemplate} ${ACTIONS_COLUMN_WIDTH}`,
     alignItems: 'stretch',
-    borderBottom: isLast ? 'none' : BORDER,
+    borderBottom: isLast ? 'none' : `${BORDER_WIDTH} solid`,
+    borderBottomColor: HORIZONTAL_ROW_DIVIDER_COLOR,
     minWidth: 0,
     columnGap: TABLE_GAP,
     py: '12px',
@@ -67,8 +68,10 @@ export const styles = {
     alignItems: 'center',
     pr: hasRightDivider ? '10px' : 0,
     pl: hasLeftDivider ? '10px' : 0,
-    borderRight: hasRightDivider ? BORDER : 'none',
-    borderLeft: hasLeftDivider ? BORDER : 'none',
+    borderRight: hasRightDivider ? `${BORDER_WIDTH} solid` : 'none',
+    borderRightColor: hasRightDivider ? HORIZONTAL_ROW_DIVIDER_COLOR : 'transparent',
+    borderLeft: hasLeftDivider ? `${BORDER_WIDTH} solid` : 'none',
+    borderLeftColor: hasLeftDivider ? HORIZONTAL_ROW_DIVIDER_COLOR : 'transparent',
     ...(colId === 'status' ? { justifyContent: 'center', width: '100%' } : { justifyContent: 'flex-start' }),
   }),
 
@@ -86,8 +89,10 @@ export const styles = {
     alignItems: 'center',
     pr: hasRightDivider && hasContent ? '10px' : 0,
     pl: hasLeftDivider && hasContent ? '10px' : 0,
-    borderRight: hasRightDivider && hasContent ? BORDER : 'none',
-    borderLeft: hasLeftDivider && hasContent ? BORDER : 'none',
+    borderRight: hasRightDivider && hasContent ? `${BORDER_WIDTH} solid` : 'none',
+    borderRightColor: hasRightDivider && hasContent ? HORIZONTAL_ROW_DIVIDER_COLOR : 'transparent',
+    borderLeft: hasLeftDivider && hasContent ? `${BORDER_WIDTH} solid` : 'none',
+    borderLeftColor: hasLeftDivider && hasContent ? HORIZONTAL_ROW_DIVIDER_COLOR : 'transparent',
     ...(colId === 'status' ? { justifyContent: 'center', width: '100%' } : { justifyContent: 'flex-start' }),
   }),
 
@@ -101,7 +106,8 @@ export const styles = {
   accordion: {
     border: 'none',
     borderRadius: '0px !important',
-    borderBottom: BORDER,
+    borderBottom: `${BORDER_WIDTH} solid`,
+    borderBottomColor: HORIZONTAL_ROW_DIVIDER_COLOR,
     backgroundColor: 'transparent',
     boxShadow: 'none',
     overflow: 'hidden',
@@ -130,7 +136,8 @@ export const styles = {
       width: '100%',
     },
     '&.Mui-expanded': {
-      borderBottom: BORDER,
+      borderBottom: `${BORDER_WIDTH} solid`,
+      borderBottomColor: HORIZONTAL_ROW_DIVIDER_COLOR,
     },
     '&.Mui-expanded .MuiAccordionSummary-expandIconWrapper': {
       transform: 'rotate(90deg)',
