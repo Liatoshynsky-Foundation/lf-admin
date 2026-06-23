@@ -4,20 +4,14 @@ import { Accordion, AccordionDetails, AccordionSummary, Box, Typography } from '
 import { ChevronRight } from 'lucide-react';
 import React from 'react';
 
-import { ContextMenu } from '../components/ContextMenu';
-import { EditAction } from '../components/EditAction';
 import { styles } from './GroupedRow.styles';
-import { ColumnDef, MenuItem } from './Row.types';
+import { ColumnDef } from './Row.types';
 
 type GroupedRowProps<TGroup, TSub> = Readonly<{
   groupData: TGroup;
   subRows: readonly TSub[];
   columns: readonly ColumnDef<TGroup, TSub, any>[];
   gridTemplate: string;
-  actionsColumnWidth?: string;
-  editAction?: { editHref: string; editLabel: string };
-  menuActions?: { menuItems: readonly MenuItem[]; menuTriggerLabel: string };
-  subRowActions?: (subItem: TSub) => { menuItems: readonly MenuItem[]; menuTriggerLabel: string };
   defaultExpanded?: boolean;
 }>;
 
@@ -26,10 +20,6 @@ export function GroupedRow<TGroup, TSub>({
   subRows,
   columns,
   gridTemplate,
-  actionsColumnWidth,
-  editAction,
-  menuActions,
-  subRowActions,
   defaultExpanded = false
 }: GroupedRowProps<TGroup, TSub>) {
   return (
@@ -40,7 +30,7 @@ export function GroupedRow<TGroup, TSub>({
             const content = col.renderGroup ? col.renderGroup(groupData) : null;
 
             return (
-              <Box key={col.id} sx={styles.groupCell(col.id, col.hasRightDivider, col.hasLeftDivider)}>
+              <Box key={col.id} sx={styles.groupCell(col.hasRightDivider, col.hasLeftDivider, col.align)}>
                 {typeof content === 'string' ? (
                   <Typography sx={styles.groupCellText(col.id)}>{content}</Typography>
                 ) : (
@@ -49,18 +39,12 @@ export function GroupedRow<TGroup, TSub>({
               </Box>
             );
           })}
-
-          <Box sx={styles.actionsCellWithWidth(actionsColumnWidth)}>
-            {editAction && <EditAction href={editAction.editHref} label={editAction.editLabel} />}
-            {menuActions && <ContextMenu items={menuActions.menuItems} triggerLabel={menuActions.menuTriggerLabel} />}
-          </Box>
         </Box>
       </AccordionSummary>
 
-      {subRows.length > 0 && (
+      {subRows && subRows.length > 0 && (
         <AccordionDetails sx={styles.accordionDetails}>
           {subRows.map((subItem, index) => {
-            const currentSubActions = subRowActions?.(subItem);
             const isLast = index === subRows.length - 1;
 
             return (
@@ -70,7 +54,10 @@ export function GroupedRow<TGroup, TSub>({
                   const hasContent = content !== null && content !== '';
 
                   return (
-                    <Box key={col.id} sx={styles.subCell(col.id, col.hasRightDivider, col.hasLeftDivider, hasContent)}>
+                    <Box
+                      key={col.id}
+                      sx={styles.subCell(col.hasRightDivider, col.hasLeftDivider, hasContent, col.align)}
+                    >
                       {typeof content === 'string' ? (
                         <Typography sx={styles.subCellText(col.id)}>{content}</Typography>
                       ) : (
@@ -79,15 +66,6 @@ export function GroupedRow<TGroup, TSub>({
                     </Box>
                   );
                 })}
-
-                <Box sx={styles.actionsCellWithWidth(actionsColumnWidth)}>
-                  {currentSubActions && (
-                    <ContextMenu
-                      items={currentSubActions.menuItems}
-                      triggerLabel={currentSubActions.menuTriggerLabel}
-                    />
-                  )}
-                </Box>
               </Box>
             );
           })}

@@ -29,25 +29,12 @@ export function TableLayout<TGroup, TSub, TPlain>({ data, columns }: TableLayout
               subRows={item.subRows}
               columns={columns}
               gridTemplate={gridTemplate}
-              editAction={item.editAction}
-              menuActions={item.menuActions}
-              subRowActions={item.subRowActions}
-              defaultExpanded
             />
           );
         }
 
         if (item.type === 'individual') {
-          return (
-            <PlainRow
-              key={item.id}
-              plainData={item.plainData}
-              columns={columns}
-              gridTemplate={gridTemplate}
-              editAction={item.editAction}
-              menuActions={item.menuActions}
-            />
-          );
+          return <PlainRow key={item.id} plainData={item.plainData} columns={columns} gridTemplate={gridTemplate} />;
         }
 
         return null;

@@ -18,8 +18,6 @@ export function HeaderRow<TGroup, TSub, TPlain>({ columns, gridTemplate }: Heade
           {col.headerLabel}
         </Typography>
       ))}
-
-      <Box sx={styles.actionsSpacer} />
     </Box>
   );
 }

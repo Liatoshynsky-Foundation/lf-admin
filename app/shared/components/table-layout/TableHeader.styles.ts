@@ -1,17 +1,15 @@
 import { SxProps, Theme } from '@mui/material';
 
-import { ACTIONS_COLUMN_WIDTH, BORDER_WIDTH, HORIZONTAL_ROW_DIVIDER_COLOR, SINGLE_LINE_ELLIPSIS, TABLE_GAP } from './TableLayout.styles';
+import {  BORDER_WIDTH, HORIZONTAL_ROW_DIVIDER_COLOR, SINGLE_LINE_ELLIPSIS, TABLE_GAP } from './TableLayout.styles';
 
 export const styles = {
-  actionsSpacer: {
-    width: ACTIONS_COLUMN_WIDTH,
-  },
+
 
   tableHeader: (gridTemplate: string, firstColWidth: string): SxProps<Theme> => {
     const restTemplates = gridTemplate.substring(gridTemplate.indexOf(' ') + 1);
     return {
       display: 'grid',
-      gridTemplateColumns: `calc(${firstColWidth} + 26px) ${restTemplates} ${ACTIONS_COLUMN_WIDTH}`,
+      gridTemplateColumns: `calc(${firstColWidth} + 26px) ${restTemplates}`,
       columnGap: TABLE_GAP,
       alignItems: 'center',
       py: '16px',

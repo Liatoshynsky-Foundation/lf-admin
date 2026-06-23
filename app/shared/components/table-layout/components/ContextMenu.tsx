@@ -1,14 +1,17 @@
 import { Box, IconButton, MenuItem } from '@mui/material';
-import { MoreVertical } from 'lucide-react';
+import { Link, MoreVertical } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 
 import DropdownMenu from '../../dropdown-menu/DropdownMenu';
-import { getContextMenuDropdownItem, styles } from './ContextMenu.styles';
+import { styles } from './ContextMenu.styles';
 
 export function ContextMenu({
   items,
   triggerLabel
-}: Readonly<{ items: readonly { id: string; label: string; danger?: boolean }[]; triggerLabel: string }>) {
+}: Readonly<{
+  items: readonly { id: string; label: string; href?: string; onClick?: () => void }[];
+  triggerLabel: string;
+}>) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
 
@@ -21,6 +24,22 @@ export function ContextMenu({
     setAnchorEl(null);
     requestAnimationFrame(() => triggerRef.current?.focus());
   };
+
+  const menuList = items.map((item) => (
+    <MenuItem
+      key={item.id}
+      component={item.href ? Link : 'li'}
+      href={item.href ?? undefined}
+      sx={styles.menuItem}
+      onClick={(e: React.MouseEvent<HTMLLIElement>) => {
+        e.stopPropagation();
+        item.onClick?.();
+        handleClose();
+      }}
+    >
+      {item.label}
+    </MenuItem>
+  ));
 
   return (
     <>
@@ -54,15 +73,7 @@ export function ContextMenu({
             }
           }
         }}
-        menuList={
-          <Box>
-            {items.map((item) => (
-              <MenuItem key={item.id} onClick={handleClose} sx={getContextMenuDropdownItem(item.danger)}>
-                {item.label}
-              </MenuItem>
-            ))}
-          </Box>
-        }
+        menuList={menuList}
       />
     </>
   );

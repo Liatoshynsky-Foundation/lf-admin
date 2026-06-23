@@ -6,9 +6,15 @@ import React from 'react';
 import { WorkStatus } from './works.mock';
 import { styles } from './WorksTable.styles';
 import { GROUP_MENU_ITEMS, WORK_MENU_ITEMS, WORKS_BASE_PATH } from '~/constants/creativity';
+import { RowActions } from '~/shared/components/table-layout/components/RowActions';
 import { StatusBadge } from '~/shared/components/table-layout/components/StatusBadge';
-import { BaseRowData, ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
+import { BaseRowData, ColumnDef, MenuItem } from '~/shared/components/table-layout/row-variants/Row.types';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
+
+type ActionFields = {
+  editAction?: { editHref: string; editLabel: string };
+  menuActions?: { menuItems: readonly MenuItem[]; menuTriggerLabel: string };
+};
 
 export type GroupRowData = Readonly<{
   id: string;
@@ -31,7 +37,8 @@ export type GroupHeaderData = Readonly<{
   startDate: string;
   endDate?: string;
   status: WorkStatus;
-}>;
+}> &
+  ActionFields;
 
 export type OpusWork = Readonly<{
   id: string;
@@ -45,9 +52,10 @@ export type IndividualWork = Readonly<{
   year: string;
   genre: string;
   status: WorkStatus;
-}>;
+}> &
+  ActionFields;
 
-const columns: readonly ColumnDef<GroupHeaderData, OpusWork, IndividualWork>[] = [
+export const columns: readonly ColumnDef<GroupHeaderData, OpusWork, IndividualWork>[] = [
   {
     id: 'opus',
     headerLabel: 'Опуси',
@@ -87,6 +95,22 @@ const columns: readonly ColumnDef<GroupHeaderData, OpusWork, IndividualWork>[] =
     align: 'center',
     renderGroup: (group) => <StatusBadge status={group.status} />,
     renderPlain: (work) => <StatusBadge status={work.status} />
+  },
+  {
+    id: 'actions',
+    headerLabel: '',
+    width: '80px',
+    align: 'right',
+    renderGroup: (group) => <RowActions editAction={group.editAction} menuActions={group.menuActions} />,
+    renderSub: (work) => (
+      <RowActions
+        menuActions={{
+          menuItems: WORK_MENU_ITEMS,
+          menuTriggerLabel: `Дії твору ${work.title}`
+        }}
+      />
+    ),
+    renderPlain: (work) => <RowActions editAction={work.editAction} menuActions={work.menuActions} />
   }
 ];
 
@@ -109,21 +133,17 @@ function groupsRow(group: GroupRowData): BaseRowData<GroupHeaderData, OpusWork, 
       genre: group.genre,
       startDate: group.startDate,
       endDate: group.endDate,
-      status: group.status
+      status: group.status,
+      editAction: {
+        editHref: `${WORKS_BASE_PATH}/group/${group.id}/edit`,
+        editLabel: `Редагувати групу ${group.title}`
+      },
+      menuActions: {
+        menuItems: GROUP_MENU_ITEMS,
+        menuTriggerLabel: `Дії групи ${group.title}`
+      }
     },
-    subRows: group.works,
-    editAction: {
-      editHref: `${WORKS_BASE_PATH}/group/${group.id}/edit`,
-      editLabel: `Редагувати групу ${group.title}`
-    },
-    menuActions: {
-      menuItems: GROUP_MENU_ITEMS,
-      menuTriggerLabel: `Дії групи ${group.title}`
-    },
-    subRowActions: (work) => ({
-      menuItems: WORK_MENU_ITEMS,
-      menuTriggerLabel: `Дії твору ${work.title}`
-    })
+    subRows: group.works
   };
 }
 
@@ -136,15 +156,15 @@ function individualWorkRow(work: IndividualWork): BaseRowData<GroupHeaderData, O
       title: work.title,
       genre: work.genre,
       year: work.year,
-      status: work.status
-    },
-    editAction: {
-      editHref: `${WORKS_BASE_PATH}/work/${work.id}/edit`,
-      editLabel: `Редагувати твір ${work.title}`
-    },
-    menuActions: {
-      menuItems: WORK_MENU_ITEMS,
-      menuTriggerLabel: `Дії твору ${work.title}`
+      status: work.status,
+      editAction: {
+        editHref: `${WORKS_BASE_PATH}/work/${work.id}/edit`,
+        editLabel: `Редагувати твір ${work.title}`
+      },
+      menuActions: {
+        menuItems: WORK_MENU_ITEMS,
+        menuTriggerLabel: `Дії твору ${work.title}`
+      }
     }
   };
 }

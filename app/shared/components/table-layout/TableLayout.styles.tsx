@@ -26,3 +26,9 @@ export const TABLE_TEXT = {
   fontWeight: 600,
   lineHeight: '150%'
 } satisfies SxProps<Theme>;
+
+export const alignToJustify: Record<'left' | 'center' | 'right', string> = {
+  left: 'flex-start',
+  center: 'center',
+  right: 'flex-end'
+};

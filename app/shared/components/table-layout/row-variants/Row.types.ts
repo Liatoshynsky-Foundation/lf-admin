@@ -26,6 +26,7 @@ export type BaseRowData<TGroup, TSub, TPlain> =
       editAction?: { editHref: string; editLabel: string };
       menuActions?: { menuItems: readonly MenuItem[]; menuTriggerLabel: string };
       subRowActions?: (sub: TSub) => { menuItems: readonly MenuItem[]; menuTriggerLabel: string };
+      isDefaultExpanded?: boolean;
     }
   | {
       type: 'individual';
@@ -37,8 +38,8 @@ export type BaseRowData<TGroup, TSub, TPlain> =
 
 export type ColumnDef<TGroup, TSub, TPlain> = {
   id: string;
-  headerLabel: string;
-  width: string;
+  headerLabel?: string;
+  width?: string;
   hasRightDivider?: boolean;
   hasLeftDivider?: boolean;
   align?: 'left' | 'center' | 'right';

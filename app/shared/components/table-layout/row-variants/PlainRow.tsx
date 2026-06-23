@@ -3,48 +3,39 @@
 import { Box, Typography } from '@mui/material';
 import React from 'react';
 
-import { ContextMenu } from '../components/ContextMenu';
-import { EditAction } from '../components/EditAction';
 import { styles } from './PlainRow.styles';
-import { ColumnDef, MenuItem } from './Row.types';
+import { ColumnDef } from './Row.types';
 
 type PlainRowProps<TGroup, TSub, TPlain> = Readonly<{
   plainData: TPlain;
   columns: readonly ColumnDef<TGroup, TSub, TPlain>[];
   gridTemplate: string;
-  editAction?: { editHref: string; editLabel: string };
-  menuActions?: { menuItems: readonly MenuItem[]; menuTriggerLabel: string };
 }>;
 
 export function PlainRow<TGroup, TSub, TPlain>({
   plainData,
   columns,
-  gridTemplate,
-  editAction,
-  menuActions
+  gridTemplate
 }: PlainRowProps<TGroup, TSub, TPlain>) {
+  const withGroups = columns.some((col) => col.renderGroup);
+
   return (
     <Box sx={styles.individualWorkRow(gridTemplate)}>
       {columns.map((col) => {
         if (!col.renderPlain) return null;
-
-        const content = col.renderPlain ? col.renderPlain(plainData) : null;
+        const content = col.renderPlain(plainData);
+        const hasSpan = withGroups && col.id === 'title';
 
         return (
-          <Box key={col.id} sx={styles.plainCell(col.id, col.hasRightDivider, col.hasLeftDivider)}>
+          <Box key={col.id} sx={styles.plainCell(col.hasRightDivider, col.hasLeftDivider, col.align, hasSpan)}>
             {typeof content === 'string' ? (
-              <Typography sx={styles.plainCellText(col.id)}>{content}</Typography>
+              <Typography sx={styles.plainCellText(col.align)}>{content}</Typography>
             ) : (
               content
             )}
           </Box>
         );
       })}
-
-      <Box sx={styles.rowActionsCell}>
-        {editAction && <EditAction href={editAction.editHref} label={editAction.editLabel} />}
-        {menuActions && <ContextMenu items={menuActions.menuItems} triggerLabel={menuActions.menuTriggerLabel} />}
-      </Box>
     </Box>
   );
 }

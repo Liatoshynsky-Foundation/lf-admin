@@ -41,7 +41,6 @@ export const styles = {
 
 export const getContextMenuDropdownItem = (isDanger?: boolean): SxProps<Theme> => ({
   ...MENU_ITEM_BASE_SX,
-  color: isDanger ? 'error.main' : 'colors.black',
   '&:hover': {
     bgcolor: isDanger ? 'rgba(211,47,47,0.04)' : 'rgba(0, 0, 0, 0.04)',
   },

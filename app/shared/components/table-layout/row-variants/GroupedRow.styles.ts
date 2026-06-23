@@ -1,6 +1,6 @@
 import { SxProps, Theme } from '@mui/material';
 
-import { ACTIONS_COLUMN_WIDTH,  BORDER_WIDTH, HORIZONTAL_ROW_DIVIDER_COLOR, SINGLE_LINE_ELLIPSIS, TABLE_GAP, TABLE_TEXT, TWO_LINE_ELLIPSIS } from '../TableLayout.styles';
+import { ACTIONS_COLUMN_WIDTH,  alignToJustify,  BORDER_WIDTH, HORIZONTAL_ROW_DIVIDER_COLOR, SINGLE_LINE_ELLIPSIS, TABLE_GAP, TABLE_TEXT, TWO_LINE_ELLIPSIS } from '../TableLayout.styles';
 
 export const styles = {
   rowActionsCell: {
@@ -37,7 +37,7 @@ export const styles = {
 
   gridRowBase: (gridTemplate: string): SxProps<Theme> => ({
     display: 'grid',
-    gridTemplateColumns: `${gridTemplate} ${ACTIONS_COLUMN_WIDTH}`,
+    gridTemplateColumns: `${gridTemplate}`,
     columnGap: TABLE_GAP,
     alignItems: 'stretch',
     minWidth: 0,
@@ -45,7 +45,7 @@ export const styles = {
 
   groupedSubRow: (gridTemplate: string, isLast: boolean): SxProps<Theme> => ({
     display: 'grid',
-    gridTemplateColumns: `${gridTemplate} ${ACTIONS_COLUMN_WIDTH}`,
+    gridTemplateColumns: `${gridTemplate} `,
     alignItems: 'stretch',
     borderBottom: isLast ? 'none' : `${BORDER_WIDTH} solid`,
     borderBottomColor: HORIZONTAL_ROW_DIVIDER_COLOR,
@@ -61,7 +61,11 @@ export const styles = {
     width: customWidth ?? ACTIONS_COLUMN_WIDTH,
   }),
 
-  groupCell: (colId: string, hasRightDivider?: boolean, hasLeftDivider?: boolean): SxProps<Theme> => ({
+  groupCell: (
+    hasRightDivider?: boolean, 
+    hasLeftDivider?: boolean, 
+    align: 'left' | 'center' | 'right' = 'left'
+  ): SxProps<Theme> => ({
     minWidth: 0,
     height: '100%',
     display: 'flex',
@@ -72,7 +76,7 @@ export const styles = {
     borderRightColor: hasRightDivider ? HORIZONTAL_ROW_DIVIDER_COLOR : 'transparent',
     borderLeft: hasLeftDivider ? `${BORDER_WIDTH} solid` : 'none',
     borderLeftColor: hasLeftDivider ? HORIZONTAL_ROW_DIVIDER_COLOR : 'transparent',
-    ...(colId === 'status' ? { justifyContent: 'center', width: '100%' } : { justifyContent: 'flex-start' }),
+    justifyContent: alignToJustify[align], 
   }),
 
   groupCellText: (colId: string): SxProps<Theme> => ({
@@ -82,7 +86,12 @@ export const styles = {
     ...(colId === 'status' ? { textAlign: 'center' } : { textAlign: 'left' }),
   }),
 
-  subCell: (colId: string, hasRightDivider?: boolean, hasLeftDivider?: boolean, hasContent?: boolean): SxProps<Theme> => ({
+  subCell: (
+    hasRightDivider?: boolean, 
+    hasLeftDivider?: boolean, 
+    hasContent?: boolean,
+    align: 'left' | 'center' | 'right' = 'left'
+  ): SxProps<Theme> => ({
     minWidth: 0,
     height: '100%',
     display: 'flex',
@@ -93,7 +102,8 @@ export const styles = {
     borderRightColor: hasRightDivider && hasContent ? HORIZONTAL_ROW_DIVIDER_COLOR : 'transparent',
     borderLeft: hasLeftDivider && hasContent ? `${BORDER_WIDTH} solid` : 'none',
     borderLeftColor: hasLeftDivider && hasContent ? HORIZONTAL_ROW_DIVIDER_COLOR : 'transparent',
-    ...(colId === 'status' ? { justifyContent: 'center', width: '100%' } : { justifyContent: 'flex-start' }),
+    
+    justifyContent: alignToJustify[align],
   }),
 
   subCellText: (colId: string): SxProps<Theme> => ({

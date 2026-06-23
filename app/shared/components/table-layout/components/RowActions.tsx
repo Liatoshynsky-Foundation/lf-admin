@@ -1,0 +1,23 @@
+import { Box } from '@mui/material';
+import React from 'react';
+
+import { MenuItem } from '../row-variants/Row.types';
+import { ContextMenu } from './ContextMenu';
+import { EditAction } from './EditAction';
+import { styles } from './Rowctions.styles';
+
+type RowActionsProps = Readonly<{
+  editAction?: { editHref: string; editLabel: string };
+  menuActions?: { menuItems: readonly MenuItem[]; menuTriggerLabel: string };
+}>;
+
+export function RowActions({ editAction, menuActions }: RowActionsProps) {
+  if (!editAction && !menuActions) return null;
+
+  return (
+    <Box sx={styles.rowActionsCell}>
+      {editAction && <EditAction href={editAction.editHref} label={editAction.editLabel} />}
+      {menuActions && <ContextMenu items={menuActions.menuItems} triggerLabel={menuActions.menuTriggerLabel} />}
+    </Box>
+  );
+}
