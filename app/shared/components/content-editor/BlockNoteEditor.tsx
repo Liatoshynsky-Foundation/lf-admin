@@ -13,6 +13,7 @@ import { BlockNoteView } from '@blocknote/mantine';
 import { FormattingToolbarController, SuggestionMenuController, useCreateBlockNote } from '@blocknote/react';
 import { Box } from '@mui/material';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import { styles } from './BlockNoteEditor.styles';
 import { CroppedImageBlock } from './cropped-image-block/CroppedImageBlock';
@@ -50,6 +51,44 @@ export const customSchema = BlockNoteSchema.create(
   })
 );
 
+const RESTRICTED_SYMBOLS_REGEX = /[\p{Extended_Pictographic}\p{S}]/gu;
+const getCleanedText = (input: string) => {
+  if (RESTRICTED_SYMBOLS_REGEX.test(input)) {
+    toast.error('Використання емодзі та спецсимволів не дозволено');
+    return input.replace(RESTRICTED_SYMBOLS_REGEX, '');
+  }
+  return input;
+};
+
+
+const proccessHTML = (html: string) => {
+  const parser = new DOMParser();
+
+  const doc = parser.parseFromString(html, 'text/html');
+  doc.querySelectorAll('*').forEach((el) => {
+    el.removeAttribute('style');
+    el.removeAttribute('class');
+  });
+
+  const walker = document.createTreeWalker(
+    doc.body,
+    NodeFilter.SHOW_TEXT,
+    null
+  );
+
+  let node: Node | null = null;
+
+  while ((node = walker.nextNode())) {
+    if (node.nodeValue !== null) {
+      node.nodeValue = getCleanedText(node.nodeValue);
+    }
+  }
+
+  return doc.body.innerHTML;
+};
+
+
+
 export const BlockNoteEditor = (props: BlockNoteEditorProps) => {
   const {
     initialContent,
@@ -83,7 +122,23 @@ export const BlockNoteEditor = (props: BlockNoteEditorProps) => {
       schema: customSchema,
       uploadFile: handleSilentFileUpload,
       initialContent: initialContent || undefined,
-      placeholders: { default: placeholder }
+      placeholders: { default: placeholder },
+      pasteHandler({ event, editor: editorInstance, defaultPasteHandler }) {
+        const clipboardData = event.clipboardData;
+        if (!clipboardData) return defaultPasteHandler();
+
+        const html = clipboardData.getData('text/html');
+        const text = clipboardData.getData('text/plain');
+        if (html) {
+          const cleanedHTML = proccessHTML(html);
+          const blocks = editor.tryParseHTMLToBlocks(cleanedHTML);
+          editor.insertBlocks(blocks, editor.getTextCursorPosition().block, 'after');
+        } else if (text) {
+          const cleanedText = getCleanedText(text);
+          editorInstance.insertInlineContent(cleanedText);
+        }
+        return true;
+      },
     },
     [isMounted]
   );
@@ -123,7 +178,7 @@ export const BlockNoteEditor = (props: BlockNoteEditorProps) => {
 
   const renderFormattingToolbar = useCallback(
     () => (
-      <CustomFormattingToolbar  openMediaModal={openMediaModal} />
+      <CustomFormattingToolbar openMediaModal={openMediaModal} />
     ),
     [openMediaModal]
   );
