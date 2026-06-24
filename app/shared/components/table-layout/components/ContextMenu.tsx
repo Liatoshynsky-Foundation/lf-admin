@@ -6,6 +6,55 @@ import DropdownMenu from '../../dropdown-menu/DropdownMenu';
 import { MenuItem as MenuItemType } from '../row-variants/Row.types';
 import { styles } from './ContextMenu.styles';
 
+function buildMenuItemKey(item: MenuItemType): string {
+  return `menu-item-${item.id}`;
+}
+
+function buildDividerKey(groupId: string): string {
+  return `divider-${groupId}`;
+}
+
+function deriveGroupId(group: readonly MenuItemType[]): string {
+  return group.map((item) => item.id).join('-');
+}
+
+function MenuItemComponent({ item, onClose }: Readonly<{ item: MenuItemType; onClose: () => void }>) {
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLLIElement>) => {
+      e.stopPropagation();
+      item.onClick?.();
+      onClose();
+    },
+    [item, onClose]
+  );
+
+  return (
+    <MenuItem
+      key={buildMenuItemKey(item)}
+      component={item.href ? Link : 'li'}
+      href={item.href}
+      sx={styles.menuItem}
+      onClick={handleClick}
+    >
+      {item.label}
+    </MenuItem>
+  );
+}
+
+function buildMenuList(items: readonly (readonly MenuItemType[])[], onClose: () => void): React.ReactNode[] {
+  return items.flatMap((group, groupIndex) => {
+    const groupId = deriveGroupId(group);
+    const menuItems = group.map((item) => (
+      <MenuItemComponent key={buildMenuItemKey(item)} item={item} onClose={onClose} />
+    ));
+
+    const isLastGroup = groupIndex === items.length - 1;
+    if (isLastGroup) return menuItems;
+
+    return [...menuItems, <Box key={buildDividerKey(groupId)} data-testid="menu-divider" sx={styles.divider} />];
+  });
+}
+
 export function ContextMenu({
   items,
   triggerLabel
@@ -26,35 +75,12 @@ export function ContextMenu({
     requestAnimationFrame(() => triggerRef.current?.focus());
   }, []);
 
-  const menuList = useMemo(() => {
-    return items.flatMap((group, groupIndex) => {
-      return [
-        ...group.map((item) => (
-          <MenuItem
-            key={item.id}
-            component={item.href ? Link : 'li'}
-            href={item.href}
-            sx={styles.menuItem}
-            onClick={(e: React.MouseEvent<HTMLLIElement>) => {
-              e.stopPropagation();
-              item.onClick?.();
-              handleClose();
-            }}
-          >
-            {item.label}
-          </MenuItem>
-        )),
-        ...(groupIndex < items.length - 1
-          ? [<Box key={`divider-${groupIndex}`} data-testid="menu-divider" sx={styles.divider} />]
-          : [])
-      ];
-    });
-  }, [items, handleClose]);
-
   const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
     e.preventDefault();
   }, []);
+
+  const menuList = useMemo(() => buildMenuList(items, handleClose), [items, handleClose]);
 
   return (
     <>
