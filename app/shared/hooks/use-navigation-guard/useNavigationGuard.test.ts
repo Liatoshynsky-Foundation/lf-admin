@@ -2,7 +2,9 @@ import { renderHook } from '@testing-library/react';
 import { usePathname, useRouter } from 'next/navigation';
 
 import { useNavigationGuard } from './useNavigationGuard';
+import { BACK_NAVIGATION } from '~/constants/navigation';
 import { useStore } from '~/store';
+import type { StoreState } from '~/store/types';
 
 jest.mock('~/store');
 jest.mock('next/navigation');
@@ -13,27 +15,32 @@ const mockedUseRouter = jest.mocked(useRouter);
 
 describe('useNavigationGuard', () => {
   const push = jest.fn();
+  const back = jest.fn();
   const setPendingNavigation = jest.fn();
   const setDiscardModalOpen = jest.fn();
+
+  const mockStore = (dirtyPaths: Record<string, boolean> = {}): StoreState =>
+    ({
+      dirtyPaths,
+      setPendingNavigation,
+      setDiscardModalOpen
+    }) as unknown as StoreState;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
     mockedUsePathname.mockReturnValue('/page1');
 
-    mockedUseRouter.mockReturnValue({
-      push
-    } as any);
+    const mockRouter: Partial<ReturnType<typeof useRouter>> = {
+      push,
+      back
+    };
+
+    mockedUseRouter.mockReturnValue(mockRouter as ReturnType<typeof useRouter>);
   });
 
   it('should navigate directly when page is not dirty', () => {
-    mockedUseStore.mockImplementation((selector) =>
-      selector({
-        dirtyPaths: {},
-        setPendingNavigation,
-        setDiscardModalOpen
-      } as any)
-    );
+    mockedUseStore.mockImplementation((selector) => selector(mockStore()));
 
     const { result } = renderHook(() => useNavigationGuard());
 
@@ -46,13 +53,11 @@ describe('useNavigationGuard', () => {
 
   it('should open discard modal when page is dirty', () => {
     mockedUseStore.mockImplementation((selector) =>
-      selector({
-        dirtyPaths: {
+      selector(
+        mockStore({
           '/page1': true
-        },
-        setPendingNavigation,
-        setDiscardModalOpen
-      } as any)
+        })
+      )
     );
 
     const { result } = renderHook(() => useNavigationGuard());
@@ -66,13 +71,11 @@ describe('useNavigationGuard', () => {
 
   it('should not open discard modal when another route is dirty', () => {
     mockedUseStore.mockImplementation((selector) =>
-      selector({
-        dirtyPaths: {
+      selector(
+        mockStore({
           '/page2': true
-        },
-        setPendingNavigation,
-        setDiscardModalOpen
-      } as any)
+        })
+      )
     );
 
     const { result } = renderHook(() => useNavigationGuard());
@@ -85,13 +88,7 @@ describe('useNavigationGuard', () => {
   });
 
   it('should not prevent link click when page is not dirty', () => {
-    mockedUseStore.mockImplementation((selector) =>
-      selector({
-        dirtyPaths: {},
-        setPendingNavigation,
-        setDiscardModalOpen
-      } as any)
-    );
+    mockedUseStore.mockImplementation((selector) => selector(mockStore()));
 
     const preventDefault = jest.fn();
 
@@ -106,13 +103,11 @@ describe('useNavigationGuard', () => {
 
   it('should prevent link click and open discard modal when page is dirty', () => {
     mockedUseStore.mockImplementation((selector) =>
-      selector({
-        dirtyPaths: {
+      selector(
+        mockStore({
           '/page1': true
-        },
-        setPendingNavigation,
-        setDiscardModalOpen
-      } as any)
+        })
+      )
     );
 
     const preventDefault = jest.fn();
@@ -128,13 +123,11 @@ describe('useNavigationGuard', () => {
 
   it('should not intercept link click when another route is dirty', () => {
     mockedUseStore.mockImplementation((selector) =>
-      selector({
-        dirtyPaths: {
+      selector(
+        mockStore({
           '/page2': true
-        },
-        setPendingNavigation,
-        setDiscardModalOpen
-      } as any)
+        })
+      )
     );
 
     const preventDefault = jest.fn();
@@ -146,5 +139,35 @@ describe('useNavigationGuard', () => {
     expect(preventDefault).not.toHaveBeenCalled();
     expect(setPendingNavigation).not.toHaveBeenCalled();
     expect(setDiscardModalOpen).not.toHaveBeenCalled();
+  });
+
+  it('should navigate back directly when page is not dirty', () => {
+    mockedUseStore.mockImplementation((selector) => selector(mockStore()));
+
+    const { result } = renderHook(() => useNavigationGuard());
+
+    result.current.navigateBack();
+
+    expect(back).toHaveBeenCalled();
+    expect(setPendingNavigation).not.toHaveBeenCalled();
+    expect(setDiscardModalOpen).not.toHaveBeenCalled();
+  });
+
+  it('should open discard modal when navigating back from dirty page', () => {
+    mockedUseStore.mockImplementation((selector) =>
+      selector(
+        mockStore({
+          '/page1': true
+        })
+      )
+    );
+
+    const { result } = renderHook(() => useNavigationGuard());
+
+    result.current.navigateBack();
+
+    expect(back).not.toHaveBeenCalled();
+    expect(setPendingNavigation).toHaveBeenCalledWith(BACK_NAVIGATION);
+    expect(setDiscardModalOpen).toHaveBeenCalledWith(true);
   });
 });
