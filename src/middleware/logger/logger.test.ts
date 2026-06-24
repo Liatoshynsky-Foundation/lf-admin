@@ -1,3 +1,4 @@
+jest.unmock('~/src/middleware/logger/logger');
 import type { TransformableInfo } from 'logform';
 import type { Logger } from 'winston';
 
