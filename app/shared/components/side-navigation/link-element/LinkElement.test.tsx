@@ -2,6 +2,12 @@ import { render, screen } from '@testing-library/react';
 
 import { LinkElement } from './LinkElement';
 
+jest.mock('~/shared/hooks/use-navigation-guard/useNavigationGuard', () => ({
+  useNavigationGuard: () => ({
+    navigate: jest.fn()
+  })
+}));
+
 describe('Link element', () => {
   it('should render with a link to homepage without href', () => {
     render(<LinkElement open element={{ title: 'TestTitle', iconSrc: 'icon.svg' }} />);

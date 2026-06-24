@@ -2,8 +2,8 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import type { JSONContent } from '@tiptap/react';
 import React from 'react';
 
-import { createDocNode } from '../__mocks__/utils';
 import { IntroSection } from './IntroSection';
+import { createDocNode } from '~/__mocks__/utils';
 
 interface MockQuoteBlockProps {
   readonly title: JSONContent;

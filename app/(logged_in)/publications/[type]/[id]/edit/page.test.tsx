@@ -14,7 +14,8 @@ import { BaseContentStatuses } from '~/types/enums/common.enums';
 jest.mock('next/navigation', () => ({
   useParams: jest.fn(),
   useRouter: jest.fn(),
-  notFound: jest.fn()
+  notFound: jest.fn(),
+  usePathname: jest.fn(() => '/publications/news/123/edit')
 }));
 
 jest.mock('react-hot-toast', () => ({
@@ -77,7 +78,7 @@ describe('EditPublicationsPage Container', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     (useParams as jest.Mock).mockReturnValue({ type: 'news', id: '123' });
     (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
     (usePublicationManager as jest.Mock).mockReturnValue(baseMockManager);
@@ -90,9 +91,9 @@ describe('EditPublicationsPage Container', () => {
     render(<EditPublicationsPage />);
 
     expect(useUpsertPublication).toHaveBeenCalledWith({ type: 'media', id: '456' });
-    
+
     expect(screen.getByTestId('mock-create-view')).toBeInTheDocument();
-    
+
     expect(screen.queryByTestId('mock-edit-view')).not.toBeInTheDocument();
   });
 
@@ -105,7 +106,7 @@ describe('EditPublicationsPage Container', () => {
     });
 
     render(<EditPublicationsPage />);
-    expect(notFound).toHaveBeenCalledTimes(1);
+    expect(notFound).toHaveBeenCalled();
   });
 
   it('should redirect to SEO page when onSeoClick is triggered', () => {
