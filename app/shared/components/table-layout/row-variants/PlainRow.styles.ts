@@ -1,15 +1,15 @@
 import { SxProps, Theme } from '@mui/material';
 
-import { alignToJustify, BORDER_WIDTH, HORIZONTAL_ROW_DIVIDER_COLOR, TABLE_GAP, TABLE_TEXT } from '../TableLayout.styles';
+import { alignToJustify, tableBorderWidth, tableDividerColor, tableGap, tableText } from '../TableLayout.styles';
 
 export const styles = {
   individualWorkRow: (gridTemplate: string): SxProps<Theme> => ({
     display: 'grid',
     gridTemplateColumns: `${gridTemplate}`,
-    columnGap: TABLE_GAP,
+    columnGap: tableGap,
     alignItems: 'stretch',
-    borderBottom: `${BORDER_WIDTH} solid`,
-    borderBottomColor: HORIZONTAL_ROW_DIVIDER_COLOR,
+    borderBottom: `${tableBorderWidth} solid`,
+    borderBottomColor: tableDividerColor,
     minWidth: 0,
     py: '20px',
   }),
@@ -26,16 +26,16 @@ export const styles = {
     alignItems: 'center',
     pr: hasRightDivider ? '10px' : 0,
     pl: hasLeftDivider ? '10px' : 0,
-    borderRight: hasRightDivider ? `${BORDER_WIDTH} solid` : 'none',
-    borderRightColor: hasRightDivider ? HORIZONTAL_ROW_DIVIDER_COLOR : 'transparent',
-    borderLeft: hasLeftDivider ? `${BORDER_WIDTH} solid` : 'none',
-    borderLeftColor: hasLeftDivider ? HORIZONTAL_ROW_DIVIDER_COLOR : 'transparent',
+    borderRight: hasRightDivider ? `${tableBorderWidth} solid` : 'none',
+    borderRightColor: hasRightDivider ? tableDividerColor : 'transparent',
+    borderLeft: hasLeftDivider ? `${tableBorderWidth} solid` : 'none',
+    borderLeftColor: hasLeftDivider ? tableDividerColor : 'transparent',
     gridColumn: `span ${hasSpan ? 2 : 1}`,
     justifyContent: align ?? alignToJustify[align],
   }),
 
   plainCellText: (align: 'left' | 'center' | 'right' = 'left'): SxProps<Theme> => ({
-    ...TABLE_TEXT,
+    ...tableText,
     width: '100%',
     textAlign: align,
   }),

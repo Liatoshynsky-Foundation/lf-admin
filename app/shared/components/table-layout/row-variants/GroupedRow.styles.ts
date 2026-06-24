@@ -1,16 +1,8 @@
 import { SxProps, Theme } from '@mui/material';
 
-import { ACTIONS_COLUMN_WIDTH,  alignToJustify,  BORDER_WIDTH, HORIZONTAL_ROW_DIVIDER_COLOR, SINGLE_LINE_ELLIPSIS, TABLE_GAP, TABLE_TEXT, TWO_LINE_ELLIPSIS } from '../TableLayout.styles';
+import { alignToJustify,  singleLineEllipsis, tableBorderWidth, tableDividerColor, tableGap, tableText, twoLineEllipsis } from '../TableLayout.styles';
 
 export const styles = {
-  rowActionsCell: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    width: ACTIONS_COLUMN_WIDTH,
-    gap: '0px',
-    flexShrink: 0,
-  },
   accordionDetails: {
     p: 0,
   },
@@ -22,23 +14,23 @@ export const styles = {
   mainRowText: {
     fontSize: '15px',
     fontWeight: 600,
-    ...SINGLE_LINE_ELLIPSIS,
+    ...singleLineEllipsis,
   },
   subRowText: {
     fontSize: '14px',
     fontWeight: 500,
-    ...SINGLE_LINE_ELLIPSIS,
+    ...singleLineEllipsis,
   },
   metaText: {
     color: 'text.secondary',
     fontSize: '14px',
-    ...SINGLE_LINE_ELLIPSIS,
+    ...singleLineEllipsis,
   },
 
   gridRowBase: (gridTemplate: string): SxProps<Theme> => ({
     display: 'grid',
     gridTemplateColumns: `${gridTemplate}`,
-    columnGap: TABLE_GAP,
+    columnGap: tableGap,
     alignItems: 'stretch',
     minWidth: 0,
   }),
@@ -47,18 +39,13 @@ export const styles = {
     display: 'grid',
     gridTemplateColumns: `${gridTemplate} `,
     alignItems: 'stretch',
-    borderBottom: isLast ? 'none' : `${BORDER_WIDTH} solid`,
-    borderBottomColor: HORIZONTAL_ROW_DIVIDER_COLOR,
+    borderBottom: isLast ? 'none' : `${tableBorderWidth} solid`,
+    borderBottomColor: tableDividerColor,
     minWidth: 0,
-    columnGap: TABLE_GAP,
+    columnGap: tableGap,
     py: '12px',
     px: 0,
     pl: '32px',
-  }),
-
-  actionsCellWithWidth: (customWidth?: string): SxProps<Theme> => ({
-    ...styles.rowActionsCell,
-    width: customWidth ?? ACTIONS_COLUMN_WIDTH,
   }),
 
   groupCell: (
@@ -72,16 +59,16 @@ export const styles = {
     alignItems: 'center',
     pr: hasRightDivider ? '10px' : 0,
     pl: hasLeftDivider ? '10px' : 0,
-    borderRight: hasRightDivider ? `${BORDER_WIDTH} solid` : 'none',
-    borderRightColor: hasRightDivider ? HORIZONTAL_ROW_DIVIDER_COLOR : 'transparent',
-    borderLeft: hasLeftDivider ? `${BORDER_WIDTH} solid` : 'none',
-    borderLeftColor: hasLeftDivider ? HORIZONTAL_ROW_DIVIDER_COLOR : 'transparent',
+    borderRight: hasRightDivider ? `${tableBorderWidth} solid` : 'none',
+    borderRightColor: hasRightDivider ? tableDividerColor : 'transparent',
+    borderLeft: hasLeftDivider ? `${tableBorderWidth} solid` : 'none',
+    borderLeftColor: hasLeftDivider ? tableDividerColor : 'transparent',
     justifyContent: alignToJustify[align], 
   }),
 
   groupCellText: (colId: string): SxProps<Theme> => ({
-    ...TABLE_TEXT,
-    ...TWO_LINE_ELLIPSIS,
+    ...tableText,
+    ...twoLineEllipsis,
     width: '100%',
     ...(colId === 'status' ? { textAlign: 'center' } : { textAlign: 'left' }),
   }),
@@ -98,17 +85,17 @@ export const styles = {
     alignItems: 'center',
     pr: hasRightDivider && hasContent ? '10px' : 0,
     pl: hasLeftDivider && hasContent ? '10px' : 0,
-    borderRight: hasRightDivider && hasContent ? `${BORDER_WIDTH} solid` : 'none',
-    borderRightColor: hasRightDivider && hasContent ? HORIZONTAL_ROW_DIVIDER_COLOR : 'transparent',
-    borderLeft: hasLeftDivider && hasContent ? `${BORDER_WIDTH} solid` : 'none',
-    borderLeftColor: hasLeftDivider && hasContent ? HORIZONTAL_ROW_DIVIDER_COLOR : 'transparent',
+    borderRight: hasRightDivider && hasContent ? `${tableBorderWidth} solid` : 'none',
+    borderRightColor: hasRightDivider && hasContent ? tableDividerColor : 'transparent',
+    borderLeft: hasLeftDivider && hasContent ? `${tableBorderWidth} solid` : 'none',
+    borderLeftColor: hasLeftDivider && hasContent ? tableDividerColor : 'transparent',
     
     justifyContent: alignToJustify[align],
   }),
 
   subCellText: (colId: string): SxProps<Theme> => ({
-    ...TABLE_TEXT,
-    ...TWO_LINE_ELLIPSIS,
+    ...tableText,
+    ...twoLineEllipsis,
     width: '100%',
     textAlign: colId === 'status' ? 'center' : 'left',
   }),
@@ -116,8 +103,8 @@ export const styles = {
   accordion: {
     border: 'none',
     borderRadius: '0px !important',
-    borderBottom: `${BORDER_WIDTH} solid`,
-    borderBottomColor: HORIZONTAL_ROW_DIVIDER_COLOR,
+    borderBottom: `${tableBorderWidth} solid`,
+    borderBottomColor: tableDividerColor,
     backgroundColor: 'transparent',
     boxShadow: 'none',
     overflow: 'hidden',
@@ -146,8 +133,8 @@ export const styles = {
       width: '100%',
     },
     '&.Mui-expanded': {
-      borderBottom: `${BORDER_WIDTH} solid`,
-      borderBottomColor: HORIZONTAL_ROW_DIVIDER_COLOR,
+      borderBottom: `${tableBorderWidth} solid`,
+      borderBottomColor: tableDividerColor,
     },
     '&.Mui-expanded .MuiAccordionSummary-expandIconWrapper': {
       transform: 'rotate(90deg)',

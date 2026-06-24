@@ -1,18 +1,17 @@
 import { SxProps, Theme } from '@mui/material';
 
-export const HORIZONTAL_ROW_DIVIDER_COLOR = 'blue.100';
-export const ACTIONS_COLUMN_WIDTH = '80px';
-export const BORDER_WIDTH = '2px';
+export const tableDividerColor = 'blue.100';
+export const tableBorderWidth = '2px';
 
-export const TABLE_GAP = '16px';
+export const tableGap = '16px';
 
-export const SINGLE_LINE_ELLIPSIS = {
+export const singleLineEllipsis = {
   whiteSpace: 'nowrap',
   overflow: 'hidden',
   textOverflow: 'ellipsis'
 } satisfies SxProps<Theme>;
 
-export const TWO_LINE_ELLIPSIS = {
+export const twoLineEllipsis = {
   display: '-webkit-box',
   WebkitLineClamp: 2,
   WebkitBoxOrient: 'vertical',
@@ -21,7 +20,7 @@ export const TWO_LINE_ELLIPSIS = {
   wordBreak: 'break-word'
 } satisfies SxProps<Theme>;
 
-export const TABLE_TEXT = {
+export const tableText = {
   fontSize: '16px',
   fontWeight: 600,
   lineHeight: '150%'

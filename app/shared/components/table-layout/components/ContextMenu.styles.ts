@@ -1,9 +1,9 @@
 import { SxProps, Theme } from '@mui/material';
 
-import { HORIZONTAL_ROW_DIVIDER_COLOR } from '../TableLayout.styles';
+import { tableDividerColor } from '../TableLayout.styles';
 import { filterSelectStyles } from '~/shared/components/selector/FilterSelect.styles';
 
-const MENU_ITEM_BASE_SX = {
+const menuItems = {
   ...filterSelectStyles.menuItem,
   minHeight: 'auto',
   px: '16px',
@@ -36,17 +36,17 @@ export const styles = {
     },
   },
   menuItem: {
-    ...MENU_ITEM_BASE_SX,
+    ...menuItems,
   },
   divider: {
     height: '1px',
-    backgroundColor: HORIZONTAL_ROW_DIVIDER_COLOR,
+    backgroundColor: tableDividerColor,
     my: '8px',
   },
 };
 
 export const getContextMenuDropdownItem = (isDanger?: boolean): SxProps<Theme> => ({
-  ...MENU_ITEM_BASE_SX,
+  ...menuItems,
   '&:hover': {
     bgcolor: isDanger ? 'rgba(211,47,47,0.04)' : 'rgba(0, 0, 0, 0.04)',
   },

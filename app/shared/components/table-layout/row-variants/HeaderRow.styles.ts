@@ -1,6 +1,6 @@
 import { SxProps, Theme } from '@mui/material';
 
-import {  BORDER_WIDTH, HORIZONTAL_ROW_DIVIDER_COLOR, SINGLE_LINE_ELLIPSIS, TABLE_GAP } from '../TableLayout.styles';
+import {  singleLineEllipsis, tableBorderWidth, tableDividerColor, tableGap } from '../TableLayout.styles';
 
 export const styles = {
 
@@ -10,11 +10,11 @@ export const styles = {
     return {
       display: 'grid',
       gridTemplateColumns: `calc(${firstColWidth} + 26px) ${restTemplates}`,
-      columnGap: TABLE_GAP,
+      columnGap: tableGap,
       alignItems: 'center',
       py: '16px',
-      borderBottom: `${BORDER_WIDTH} solid`,
-      borderBottomColor: HORIZONTAL_ROW_DIVIDER_COLOR,
+      borderBottom: `${tableBorderWidth} solid`,
+      borderBottomColor: tableDividerColor,
       minWidth: 0,
     };
   },
@@ -25,7 +25,7 @@ export const styles = {
     fontWeight: 700,
     color: 'blue.700',
     fontStyle: 'normal',
-    ...SINGLE_LINE_ELLIPSIS,
+    ...singleLineEllipsis,
   },
 
   headerTextCell: (): SxProps<Theme> => ({
