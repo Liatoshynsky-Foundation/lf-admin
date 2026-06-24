@@ -1,5 +1,3 @@
-'use client';
-
 import { Box, IconButton, Link, MenuItem } from '@mui/material';
 import { MoreVertical } from 'lucide-react';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
@@ -30,12 +28,12 @@ export function ContextMenu({
 
   const menuList = useMemo(() => {
     return items.flatMap((group, groupIndex) => {
-      const renderedGroup = group.map((item) => {
-        return (
+      return [
+        ...group.map((item) => (
           <MenuItem
             key={item.id}
             component={item.href ? Link : 'li'}
-            href={item.href ?? undefined}
+            href={item.href}
             sx={styles.menuItem}
             onClick={(e: React.MouseEvent<HTMLLIElement>) => {
               e.stopPropagation();
@@ -45,14 +43,11 @@ export function ContextMenu({
           >
             {item.label}
           </MenuItem>
-        );
-      });
-
-      if (groupIndex < items.length - 1) {
-        renderedGroup.push(<Box key={`divider-${groupIndex}`} data-testid="menu-divider" sx={styles.divider} />);
-      }
-
-      return renderedGroup;
+        )),
+        ...(groupIndex < items.length - 1
+          ? [<Box key={`divider-${groupIndex}`} data-testid="menu-divider" sx={styles.divider} />]
+          : [])
+      ];
     });
   }, [items, handleClose]);
 

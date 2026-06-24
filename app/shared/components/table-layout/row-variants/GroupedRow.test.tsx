@@ -5,16 +5,20 @@ import { GroupedRow } from './GroupedRow';
 import { ColumnDef } from './Row.types';
 
 type MockGroup = { title: string };
-type MockSub = { name: string };
+type MockSub = { id: string; name: string };
 
 describe('GroupedRow', () => {
   const mockGroupData: MockGroup = { title: 'Group 1' };
-  const mockSubRows: MockSub[] = [{ name: 'Subgroup 1' }, { name: 'Subgroup 2' }];
+
+  const mockSubRows: MockSub[] = [
+    { id: 'sub-1', name: 'Subgroup 1' },
+    { id: 'sub-2', name: 'Subgroup 2' }
+  ];
   const mockGridTemplate = '1fr 2fr';
 
   it('should render group header with string and component content', () => {
     const dataId = 'custom-group-node';
-    const columns: ColumnDef<MockGroup, MockSub, any>[] = [
+    const columns: ColumnDef<MockGroup, MockSub, undefined>[] = [
       {
         id: 'title',
         renderGroup: (g) => g.title,
@@ -35,7 +39,7 @@ describe('GroupedRow', () => {
   });
 
   it('should render sub-rows with correct values inside expanded details', () => {
-    const columns: ColumnDef<MockGroup, MockSub, any>[] = [
+    const columns: ColumnDef<MockGroup, MockSub, undefined>[] = [
       {
         id: 'title',
         renderSub: (s) => s.name,
@@ -58,7 +62,7 @@ describe('GroupedRow', () => {
   });
 
   it('should handle missing sub-row content gracefully', () => {
-    const columns: ColumnDef<MockGroup, MockSub, any>[] = [
+    const columns: ColumnDef<MockGroup, MockSub, undefined>[] = [
       {
         id: 'empty-col',
         renderSub: () => null
@@ -68,7 +72,7 @@ describe('GroupedRow', () => {
     const { container } = render(
       <GroupedRow
         groupData={mockGroupData}
-        subRows={[{ name: 'Sub' }]}
+        subRows={[{ id: 'sub-empty', name: 'Sub' }]}
         columns={columns}
         gridTemplate={mockGridTemplate}
         defaultExpanded={true}
@@ -79,7 +83,7 @@ describe('GroupedRow', () => {
   });
 
   it('should not render AccordionDetails if subRows array is empty', () => {
-    const columns: ColumnDef<MockGroup, MockSub, any>[] = [
+    const columns: ColumnDef<MockGroup, MockSub, undefined>[] = [
       {
         id: 'title',
         renderGroup: (g) => g.title

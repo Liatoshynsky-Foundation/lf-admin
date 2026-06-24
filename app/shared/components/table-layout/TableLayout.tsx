@@ -1,5 +1,3 @@
-'use client';
-
 import { Box } from '@mui/material';
 import React from 'react';
 
@@ -29,6 +27,7 @@ export function TableLayout<TGroup, TSub, TPlain>({ data, columns }: TableLayout
               subRows={item.subRows}
               columns={columns}
               gridTemplate={gridTemplate}
+              defaultExpanded={item.isDefaultExpanded}
             />
           );
         }

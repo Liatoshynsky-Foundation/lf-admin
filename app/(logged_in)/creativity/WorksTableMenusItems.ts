@@ -1,4 +1,3 @@
-// WorksTableMenusItems.ts
 import { MenuItem } from '~/shared/components/table-layout/row-variants/Row.types';
 
 interface GroupMenuProps {
