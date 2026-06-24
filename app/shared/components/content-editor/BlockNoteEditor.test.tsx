@@ -353,7 +353,7 @@ describe('BlockNoteEditor', () => {
       };
 
       const defaultPasteHandler = jest.fn();
-      capturedCreateOptions?.pasteHandler({ event, mockEditor, defaultPasteHandler });
+      capturedCreateOptions?.pasteHandler({ event, editor: mockEditor, defaultPasteHandler });
       expect(mockEditor.insertInlineContent).toHaveBeenCalledWith(correctPlainText);
     });
 
@@ -373,7 +373,7 @@ describe('BlockNoteEditor', () => {
       mockEditor.tryParseHTMLToBlocks.mockReturnValueOnce(mockParsedBlocks);
 
       const defaultPasteHandler = jest.fn();
-      capturedCreateOptions?.pasteHandler({ event, mockEditor, defaultPasteHandler });
+      capturedCreateOptions?.pasteHandler({ event, editor: mockEditor, defaultPasteHandler });
       expect(mockEditor.tryParseHTMLToBlocks).toHaveBeenCalledWith(correctHTML);
       expect(mockEditor.insertBlocks).toHaveBeenCalledWith(mockParsedBlocks, mockCursorBlock, 'after');
     });
@@ -393,7 +393,7 @@ describe('BlockNoteEditor', () => {
       const sanitizedText = 'Test';
 
       const defaultPasteHandler = jest.fn();
-      capturedCreateOptions?.pasteHandler({ event, mockEditor, defaultPasteHandler });
+      capturedCreateOptions?.pasteHandler({ event, editor: mockEditor, defaultPasteHandler });
 
       expect(toast.error).toHaveBeenCalledWith('Використання емодзі та спецсимволів не дозволено');
       expect(mockEditor.insertInlineContent).toHaveBeenCalledWith(sanitizedText);
@@ -414,7 +414,7 @@ describe('BlockNoteEditor', () => {
       const mockParsedBlocks = createMockParsedBlocks('test');
       mockEditor.tryParseHTMLToBlocks.mockReturnValueOnce(mockParsedBlocks);
       const defaultPasteHandler = jest.fn();
-      capturedCreateOptions?.pasteHandler({ event, mockEditor, defaultPasteHandler });
+      capturedCreateOptions?.pasteHandler({ event, editor: mockEditor, defaultPasteHandler });
 
       expect(mockEditor.tryParseHTMLToBlocks).toHaveBeenCalledWith('<p>test </p>');
       expect(mockEditor.insertBlocks).toHaveBeenCalledWith(mockParsedBlocks, mockCursorBlock, 'after');
