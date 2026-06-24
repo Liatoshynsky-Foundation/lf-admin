@@ -1,6 +1,6 @@
 'use client';
 
-import { Reference } from '@apollo/client';
+import { ApolloCache, FetchResult, NormalizedCacheObject, Reference } from '@apollo/client';
 import { SxProps } from '@mui/material';
 import { Theme } from '@mui/system';
 import { Dayjs } from 'dayjs';
@@ -19,7 +19,7 @@ import type {
 } from '~/shared/components/media-modal/MediaModal.types';
 import { UploadView } from '~/shared/components/media-modal/views/upload-view/UploadView';
 import { useAllAssets } from '~/shared/hooks/use-assets/useAssets';
-import { AssetType, useCreateAssetMutation } from '~/types/graphql/generated/graphql';
+import { AssetType, CreateAssetMutation, useCreateAssetMutation } from '~/types/graphql/generated/graphql';
 
 type DynamicUploadViewProps = UploadRendererProps & { isAudioMode: boolean };
 
@@ -111,6 +111,31 @@ const CompositionModal: React.FC<CompositionModalProps> = ({ isOpen, onClose, mo
     setUploadTarget(null);
   };
 
+  const updateAllAssetsCache = (
+    cache: ApolloCache<NormalizedCacheObject>,
+    { data }: FetchResult<CreateAssetMutation>
+  ) => {
+    const newAsset = data?.createAsset;
+    if (!newAsset) return;
+
+    cache.modify<{ allAssets: Reference[] }>({
+      fields: {
+        allAssets(existingAssetRefs = []) {
+          const newAssetId = cache.identify(newAsset);
+          if (!newAssetId) return existingAssetRefs;
+
+          const newAssetRef: Reference = { __ref: newAssetId };
+
+          const isDuplicate = existingAssetRefs.some((ref) => ref.__ref === newAssetRef.__ref);
+
+          if (isDuplicate) return existingAssetRefs;
+
+          return [...existingAssetRefs, newAssetRef];
+        }
+      }
+    });
+  };
+
   const handleUploadApply = async (result: MediaModalResult & { uploadResult?: UploadResult }) => {
     if (result.selected.kind !== 'upload' || !result.uploadResult) return;
 
@@ -135,28 +160,7 @@ const CompositionModal: React.FC<CompositionModalProps> = ({ isOpen, onClose, mo
             type: assetType
           }
         },
-        update: (cache, { data }) => {
-          const newAsset = data?.createAsset;
-          if (!newAsset) return;
-
-          cache.modify({
-            fields: {
-              allAssets(existingAssetRefs = []) {
-                const newAssetId = cache.identify(newAsset);
-                
-                if (!newAssetId) return existingAssetRefs; 
-                const newAssetRef = { __ref: newAssetId };
-
-                const isDuplicate = existingAssetRefs.some(
-                  (ref: Reference) => ref.__ref === newAssetRef.__ref
-                );
-
-                if (isDuplicate) return existingAssetRefs;
-                return [...existingAssetRefs, newAssetRef];
-              }
-            }
-          });
-        }
+        update: updateAllAssetsCache
       });
 
       if (!createResult.data?.createAsset) {
