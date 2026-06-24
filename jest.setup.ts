@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 
-jest.mock('src/middleware/logger/logger', () => ({
+jest.mock('~/src/middleware/logger/logger', () => ({
   logger: {
     info: jest.fn(),
     error: jest.fn(),
