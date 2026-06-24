@@ -51,11 +51,13 @@ export const customSchema = BlockNoteSchema.create(
   })
 );
 
-const RESTRICTED_SYMBOLS_REGEX = /[\p{Extended_Pictographic}\p{S}]/gu;
+const RESTRICTED_SYMBOLS_REGEX = /[\p{Extended_Pictographic}\p{So}]/gu;
 const getCleanedText = (input: string) => {
   if (RESTRICTED_SYMBOLS_REGEX.test(input)) {
     toast.error('Використання емодзі та спецсимволів не дозволено');
-    return input.replace(RESTRICTED_SYMBOLS_REGEX, '');
+    return input
+      .replace(RESTRICTED_SYMBOLS_REGEX, '')
+      .replace(/[ \t]{2,}/g, ' ');
   }
   return input;
 };
@@ -134,7 +136,7 @@ export const BlockNoteEditor = (props: BlockNoteEditorProps) => {
           const blocks = editor.tryParseHTMLToBlocks(cleanedHTML);
           editor.insertBlocks(blocks, editor.getTextCursorPosition().block, 'after');
         } else if (text) {
-          const cleanedText = getCleanedText(text);
+          const cleanedText = getCleanedText(text).trim();
           editorInstance.insertInlineContent(cleanedText);
         }
         return true;

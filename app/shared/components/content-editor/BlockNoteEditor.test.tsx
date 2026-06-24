@@ -1,5 +1,9 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+import toast from 'react-hot-toast';
+jest.mock('react-hot-toast', () => ({
+  error: jest.fn()
+}));
 
 import { BlockNoteEditor } from './BlockNoteEditor';
 import { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
@@ -23,6 +27,7 @@ type MockBlock = {
 type CreateOptions = {
   uploadFile: (file: File) => Promise<string>;
   onChange?: () => void;
+  pasteHandler: ({ event, editor, defaultPasteHandler }: any) => void;
 };
 
 const mockUpdateBlock = jest.fn();
@@ -30,10 +35,16 @@ const mockUpdateBlock = jest.fn();
 let mockDocumentState: MockBlock[] = [];
 let capturedCreateOptions: CreateOptions | null = null;
 let captureSlashMenuOpenMediaModal: (() => Promise<MediaModalResult | null>) | null = null;
-
+const mockCursorBlock = jest.fn();
 const mockEditor = {
   document: mockDocumentState,
-  updateBlock: mockUpdateBlock
+  updateBlock: mockUpdateBlock,
+  insertBlocks: jest.fn(),
+  insertInlineContent: jest.fn(),
+  tryParseHTMLToBlocks: jest.fn(),
+  getTextCursorPosition: () => ({
+    block: mockCursorBlock
+  })
 };
 
 jest.mock('@blocknote/core', () => ({
@@ -166,6 +177,28 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
     );
   }
 }));
+
+const createMockParsedBlocks = (contentText: string) => (
+  [
+    {
+      id: 'mock-block-id-1',
+      type: 'paragraph',
+      props: {
+        textColor: 'default',
+        backgroundColor: 'default',
+        textAlignment: 'left'
+      },
+      content: [
+        {
+          type: 'text',
+          text: contentText,
+          styles: {}
+        }
+      ],
+      children: []
+    }
+  ]
+);
 
 describe('BlockNoteEditor', () => {
   beforeEach(() => {
@@ -303,6 +336,88 @@ describe('BlockNoteEditor', () => {
 
       expect(screen.queryByTestId('media-modal')).not.toBeInTheDocument();
       expect(promiseResult).toBeNull();
+    });
+  });
+
+  describe('5. Paste Behaviour', () => {
+    it('should allow to paste valid plain text', () => {
+      render(<BlockNoteEditor />);
+      const correctPlainText = 'dfsdfsd';
+      const event = {
+        clipboardData: {
+          getData: (type: 'text/html' | 'text/plain') => {
+            if (type === 'text/plain') return correctPlainText;
+            return null;
+          }
+        }
+      };
+
+      const defaultPasteHandler = jest.fn();
+      capturedCreateOptions?.pasteHandler({ event, mockEditor, defaultPasteHandler });
+      expect(mockEditor.insertInlineContent).toHaveBeenCalledWith(correctPlainText);
+    });
+
+    it('should allow to paste valid html', () => {
+      render(<BlockNoteEditor />);
+      const correctHTML = '<p>dfsdfsd</p>';
+      const event = {
+        clipboardData: {
+          getData: (type: 'text/html' | 'text/plain') => {
+            if (type === 'text/html') return correctHTML;
+            return null;
+          }
+        }
+      };
+
+      const mockParsedBlocks = createMockParsedBlocks('dfsdfsd');
+      mockEditor.tryParseHTMLToBlocks.mockReturnValueOnce(mockParsedBlocks);
+
+      const defaultPasteHandler = jest.fn();
+      capturedCreateOptions?.pasteHandler({ event, mockEditor, defaultPasteHandler });
+      expect(mockEditor.tryParseHTMLToBlocks).toHaveBeenCalledWith(correctHTML);
+      expect(mockEditor.insertBlocks).toHaveBeenCalledWith(mockParsedBlocks, mockCursorBlock, 'after');
+    });
+
+
+    it('should remove emojiis and special symbols like (😀 🎉 ★ ♞ ♣) from pasted text and show error toast', () => {
+      render(<BlockNoteEditor />);
+      const invalidPlainText = 'Test 😀 🎉 ★ ♞ ♣';
+      const event = {
+        clipboardData: {
+          getData: (type: 'text/html' | 'text/plain') => {
+            if (type === 'text/plain') return invalidPlainText;
+            return null;
+          }
+        }
+      };
+      const sanitizedText = 'Test';
+
+      const defaultPasteHandler = jest.fn();
+      capturedCreateOptions?.pasteHandler({ event, mockEditor, defaultPasteHandler });
+
+      expect(toast.error).toHaveBeenCalledWith('Використання емодзі та спецсимволів не дозволено');
+      expect(mockEditor.insertInlineContent).toHaveBeenCalledWith(sanitizedText);
+    });
+
+
+    it('should remove any styles & emojiis or special symblos from pasted HTML and show error toast', () => {
+      render(<BlockNoteEditor />);
+      const formattedHTML = '<p style={} class={}>test 😀 🎉 ★ ♞ ♣</p>';
+      const event = {
+        clipboardData: {
+          getData: (type: 'text/html' | 'text/plain') => {
+            if (type === 'text/html') return formattedHTML;
+            return null;
+          }
+        }
+      };
+      const mockParsedBlocks = createMockParsedBlocks('test');
+      mockEditor.tryParseHTMLToBlocks.mockReturnValueOnce(mockParsedBlocks);
+      const defaultPasteHandler = jest.fn();
+      capturedCreateOptions?.pasteHandler({ event, mockEditor, defaultPasteHandler });
+
+      expect(mockEditor.tryParseHTMLToBlocks).toHaveBeenCalledWith('<p>test </p>');
+      expect(mockEditor.insertBlocks).toHaveBeenCalledWith(mockParsedBlocks, mockCursorBlock, 'after');
     });
   });
 });
