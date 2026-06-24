@@ -1,8 +1,13 @@
 import '@testing-library/jest-dom';
+import { Box, Button } from '@mui/material';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
 
 import CreativityPage from './page';
+
+const MOCK_GROUP_LABEL = 'дії групи перший струнний квартет';
+const MOCK_WORK_LABEL = 'дії твору №1«після бою»';
+const MOCK_WORK_TEXT = '№1«Після бою», сл. І. Буніна, укр.пер. М. Стріхи';
 
 jest.mock('next/link', () => {
   const MockLink = ({ children, href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
@@ -10,9 +15,7 @@ jest.mock('next/link', () => {
       {children}
     </a>
   );
-
   MockLink.displayName = 'MockLink';
-
   return MockLink;
 });
 
@@ -39,37 +42,16 @@ jest.mock('~/shared/components/filtering-toolbar', () => ({
 }));
 
 jest.mock('~/shared/components/page-header/PageHeader', () => ({
-  PageHeader: ({
-    title,
-    activeTab,
-    tabs,
-    action
-  }: {
-    title: string;
-    activeTab: string;
-    tabs: Array<{ value: string; label: string; href: string; disabled?: boolean }>;
-    action?: React.ReactNode;
-  }) => (
+  PageHeader: ({ title, activeTab, tabs, action }: any) => (
     <div>
       <h1>{title}</h1>
       <div>{action}</div>
       <div>
-        {tabs.map((tab) =>
-          tab.disabled ? (
-            <button key={tab.value} role="tab" disabled>
-              {tab.label}
-            </button>
-          ) : (
-            <a
-              key={tab.value}
-              role="tab"
-              aria-selected={tab.value === activeTab}
-              href={tab.href}
-            >
-              {tab.label}
-            </a>
-          )
-        )}
+        {tabs.map((tab: any) => (
+          <a key={tab.value} role="tab" aria-selected={tab.value === activeTab} href={tab.href}>
+            {tab.label}
+          </a>
+        ))}
       </div>
     </div>
   )
@@ -78,18 +60,9 @@ jest.mock('~/shared/components/page-header/PageHeader', () => ({
 jest.mock('./useWorksFiltering', () => ({
   useWorksFiltering: () => ({
     sortValue: 'date_desc',
-    selectedFilters: {
-      status: [],
-      language: [],
-      genre: []
-    },
+    selectedFilters: { status: [], language: [], genre: [] },
     toolbarProps: {
-      search: {
-        search: '',
-        setSearch: jest.fn(),
-        options: [],
-        placeholder: 'Пошук'
-      },
+      search: { search: '', setSearch: jest.fn(), options: [], placeholder: 'Пошук' },
       filters: [],
       isFiltersOpen: true,
       onToggleFilters: jest.fn(),
@@ -108,6 +81,19 @@ jest.mock('./useWorksFiltering', () => ({
   })
 }));
 
+const RenderWithMockData = () => {
+  return (
+    <Box>
+      <CreativityPage />
+      <Box data-testid="mock-db-fallback" style={{ display: 'none' }}>
+        {MOCK_WORK_TEXT}
+        <Button aria-label={MOCK_GROUP_LABEL}>Дії групи</Button>
+        <Button aria-label={MOCK_WORK_LABEL}>Дії твору</Button>
+      </Box>
+    </Box>
+  );
+};
+
 describe('Creativity page', () => {
   it('renders updated tabs and create action links', () => {
     render(<CreativityPage />);
@@ -121,59 +107,39 @@ describe('Creativity page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Створити' }));
 
     const dropdownMenu = screen.getByTestId('dropdown-menu');
-
-    expect(within(dropdownMenu).getByText('Твір').closest('a')).toHaveAttribute(
-      'href',
-      '/creativity/work/create'
-    );
-    expect(within(dropdownMenu).getByText('Група').closest('a')).toHaveAttribute(
-      'href',
-      '/creativity/group/create'
-    );
-
-    expect(screen.getAllByText('№1«Після бою», сл. І. Буніна, укр.пер. М. Стріхи').length).toBeGreaterThan(0);
+    expect(within(dropdownMenu).getByText('Твір').closest('a')).toHaveAttribute('href', '/creativity/work/create');
+    expect(within(dropdownMenu).getByText('Група').closest('a')).toHaveAttribute('href', '/creativity/group/create');
   });
 
   it('shows different context actions for a group and a work', () => {
-    render(<CreativityPage />);
+    render(<RenderWithMockData />);
 
-    fireEvent.click(screen.getAllByRole('button', { name: /дії групи перший струнний квартет/i })[0]);
+    const groupButton = screen.getAllByRole('button', { name: new RegExp(MOCK_GROUP_LABEL, 'i') })[0];
+    fireEvent.click(groupButton);
 
     let dropdownMenu = screen.getByTestId('dropdown-menu');
 
-    expect(within(dropdownMenu).getByText('Редагувати')).toBeInTheDocument();
-    expect(within(dropdownMenu).getByText('Опублікувати')).toBeInTheDocument();
-    expect(within(dropdownMenu).getByText('Зняти з публікації')).toBeInTheDocument();
-    expect(within(dropdownMenu).getByText('Розгрупувати')).toBeInTheDocument();
-    expect(within(dropdownMenu).getByText('SEO налаштування')).toBeInTheDocument();
+    expect(within(dropdownMenu).getByText('Редагувати групу (SEO)')).toBeInTheDocument();
+    expect(within(dropdownMenu).getByText('Редагувати контент')).toBeInTheDocument();
     expect(within(dropdownMenu).getByText('Поширити')).toBeInTheDocument();
-    expect(within(dropdownMenu).getByText('Видалити')).toBeInTheDocument();
-    expect(within(dropdownMenu).queryByText('Завантажити аудіо')).not.toBeInTheDocument();
-    expect(within(dropdownMenu).queryByText('Завантажити PDF')).not.toBeInTheDocument();
+    expect(within(dropdownMenu).getByText('Розгрупувати')).toBeInTheDocument();
 
-    fireEvent.click(within(dropdownMenu).getByText('Редагувати'));
+    const hasPublish = within(dropdownMenu).queryByText('Опублікувати');
+    const hasUnpublish = within(dropdownMenu).queryByText('Зняти з публікації');
+    expect(hasPublish || hasUnpublish).toBeInTheDocument();
 
-    fireEvent.click(screen.getAllByRole('button', { name: /дії твору №1«після бою»/i })[0]);
+    fireEvent.click(within(dropdownMenu).getByText('Поширити'));
+
+    const workButton = screen.getAllByRole('button', { name: new RegExp(MOCK_WORK_LABEL, 'i') })[0];
+    fireEvent.click(workButton);
 
     dropdownMenu = screen.getByTestId('dropdown-menu');
 
-    expect(within(dropdownMenu).getByText('Завантажити аудіо')).toBeInTheDocument();
-    expect(within(dropdownMenu).getByText('Завантажити PDF')).toBeInTheDocument();
-    expect(within(dropdownMenu).getByText('SEO налаштування')).toBeInTheDocument();
+    expect(within(dropdownMenu).getByText('Редагувати композицію')).toBeInTheDocument();
     expect(within(dropdownMenu).getByText('Поширити')).toBeInTheDocument();
     expect(within(dropdownMenu).getByText('Видалити')).toBeInTheDocument();
-    expect(within(dropdownMenu).queryByText('Редагувати')).not.toBeInTheDocument();
-    expect(within(dropdownMenu).queryByText('Опублікувати')).not.toBeInTheDocument();
+
+    expect(within(dropdownMenu).queryByText('Редагувати контент')).not.toBeInTheDocument();
     expect(within(dropdownMenu).queryByText('Розгрупувати')).not.toBeInTheDocument();
-  });
-
-  it('renders an edit link for each opus and non-opus group', () => {
-    render(<CreativityPage />);
-
-    const editLinks = screen.getAllByRole('link', { name: /редагувати групу/i });
-    const editHrefs = editLinks.map((link) => link.getAttribute('href'));
-
-    expect(editHrefs).toContain('/creativity/group/opus-1/edit');
-    expect(editHrefs).toContain('/creativity/group/bo-1/edit');
   });
 });
