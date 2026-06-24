@@ -63,7 +63,7 @@ const getCleanedText = (input: string) => {
 };
 
 
-const proccessHTML = (html: string) => {
+const processHTML = (html: string) => {
   const parser = new DOMParser();
 
   const doc = parser.parseFromString(html, 'text/html');
@@ -132,7 +132,7 @@ export const BlockNoteEditor = (props: BlockNoteEditorProps) => {
         const html = clipboardData.getData('text/html');
         const text = clipboardData.getData('text/plain');
         if (html) {
-          const cleanedHTML = proccessHTML(html);
+          const cleanedHTML = processHTML(html);
           const blocks = editor.tryParseHTMLToBlocks(cleanedHTML);
           editor.insertBlocks(blocks, editor.getTextCursorPosition().block, 'after');
         } else if (text) {
