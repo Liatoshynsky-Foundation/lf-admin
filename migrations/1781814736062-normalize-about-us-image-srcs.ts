@@ -56,6 +56,31 @@ function isImageDocument(value: unknown): value is ImageDocument {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value));
 }
 
+function getKnownSourceValues(item: MigrationMapItem): Set<string> {
+  return new Set(
+    [item.src, item.newSrc, item.previousNewSrc].filter(
+      (value): value is string => Boolean(value)
+    )
+  );
+}
+
+function createUpdateFilter(
+  $set: Record<string, string>,
+  $unset: Record<string, ''>
+): UpdateFilter<MongoDocument> | null {
+  const update: UpdateFilter<MongoDocument> = {};
+
+  if (Object.keys($set).length > 0) {
+    update.$set = $set;
+  }
+
+  if (Object.keys($unset).length > 0) {
+    update.$unset = $unset;
+  }
+
+  return update.$set || update.$unset ? update : null;
+}
+
 function collectUpUpdates(
   document: MongoDocument,
   migrationMap: MigrationMapItem[]
@@ -70,13 +95,14 @@ function collectUpUpdates(
       return;
     }
 
-    const knownSourceValues = [item.src, item.newSrc, item.previousNewSrc].filter(Boolean);
+    const knownSourceValues = getKnownSourceValues(item);
+    const isKnownSource = knownSourceValues.has(image.src as string);
 
-    if (knownSourceValues.includes(image.src as string) && image.src !== item.newSrc) {
+    if (isKnownSource && image.src !== item.newSrc) {
       $set[`${item.path}.src`] = item.newSrc;
     }
 
-    if (knownSourceValues.includes(image.src as string)) {
+    if (isKnownSource) {
       $unset[`${item.path}.generatedSrc`] = '';
     }
   });
@@ -134,17 +160,9 @@ async function normalizeAboutUsImageSrcs(
           ? collectUpUpdates(document, migrationMap)
           : collectDownUpdates(document, migrationMap);
 
-      const update: UpdateFilter<MongoDocument> = {};
+      const update = createUpdateFilter($set, $unset);
 
-      if (Object.keys($set).length > 0) {
-        update.$set = $set;
-      }
-
-      if (Object.keys($unset).length > 0) {
-        update.$unset = $unset;
-      }
-
-      if (!update.$set && !update.$unset) {
+      if (!update) {
         continue;
       }
 
