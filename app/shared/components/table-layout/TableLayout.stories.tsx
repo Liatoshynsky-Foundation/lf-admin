@@ -22,15 +22,18 @@ type GroupHeaderData = {
   startDate: string;
   endDate?: string;
   status: BaseContentStatuses;
+  updatedAt: string;
 } & ActionFields;
 
 type GroupSubRowData = { id: string; title: string; year: string } & ActionFields;
+
 type IndividualRowData = {
   id: string;
   title: string;
   year: string;
   genre: string;
   status: BaseContentStatuses;
+  updatedAt: string;
 } & ActionFields;
 
 const mockItems: readonly (readonly MenuItem[])[] = [
@@ -65,8 +68,8 @@ const baseColumns: readonly ColumnDef<GroupHeaderData, GroupSubRowData, Individu
     hasRightDivider: true,
     hasLeftDivider: true,
     align: 'center',
-    renderGroup: (g) => <StatusBadge status={g.status} />,
-    renderPlain: (w) => <StatusBadge status={w.status} />
+    renderGroup: (g) => <StatusBadge status={g.status} updatedAt={g.updatedAt} />,
+    renderPlain: (w) => <StatusBadge status={w.status} updatedAt={w.updatedAt} />
   }
 ];
 
@@ -99,6 +102,7 @@ const createMockData = (
       startDate: '2020',
       endDate: '2022',
       status: BaseContentStatuses.Draft,
+      updatedAt: '2026-06-20T10:00:00.000Z',
       ...(withEdit && { editAction: { editHref: '/edit', editLabel: 'Редагувати групу' } }),
       ...(withMenu && { menuActions: { menuItems: mockItems, menuTriggerLabel: 'меню групи' } })
     },
@@ -120,6 +124,7 @@ const createMockData = (
       genre: 'Pop',
       startDate: '2026',
       status: BaseContentStatuses.Published,
+      updatedAt: '2026-06-24T15:30:00.000Z',
       ...(withEdit && { editAction: { editHref: '/edit', editLabel: 'Редагувати групу' } }),
       ...(withMenu && { menuActions: { menuItems: mockItems, menuTriggerLabel: 'меню групи' } })
     },
@@ -134,6 +139,7 @@ const createMockData = (
       genre: 'Jazz',
       year: '2023',
       status: BaseContentStatuses.Published,
+      updatedAt: '2026-06-25T02:59:27.000Z',
       ...(withEdit && { editAction: { editHref: '/edit', editLabel: 'Редагувати твір' } }),
       ...(withMenu && { menuActions: { menuItems: mockItems, menuTriggerLabel: 'меню елемента' } })
     }

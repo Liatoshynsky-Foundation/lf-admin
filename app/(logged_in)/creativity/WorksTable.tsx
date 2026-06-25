@@ -25,9 +25,7 @@ export type GroupRowData = Readonly<{
   startDate: string;
   endDate?: string;
   status: WorkStatus;
-  createdAt: string;
   updatedAt: string;
-  publishedAt?: string;
   works: ReadonlyArray<{ id: string; title: string; year: string }>;
 }>;
 
@@ -38,6 +36,7 @@ export type GroupHeaderData = Readonly<{
   startDate: string;
   endDate?: string;
   status: WorkStatus;
+  updatedAt: string;
 }> &
   ActionFields;
 
@@ -47,12 +46,14 @@ export type OpusWork = Readonly<{
   year: string;
 }> &
   ActionFields;
+
 export type IndividualWork = Readonly<{
   id: string;
   title: string;
   year: string;
   genre: string;
   status: WorkStatus;
+  updatedAt: string;
 }> &
   ActionFields;
 
@@ -96,8 +97,8 @@ export const columns: readonly ColumnDef<GroupHeaderData, OpusWork, IndividualWo
     hasRightDivider: true,
     hasLeftDivider: true,
     align: 'center',
-    renderGroup: (group) => <StatusBadge status={group.status} />,
-    renderPlain: (work) => <StatusBadge status={work.status} />
+    renderGroup: (group) => <StatusBadge status={group.status} updatedAt={group.updatedAt} />,
+    renderPlain: (work) => <StatusBadge status={work.status} updatedAt={work.updatedAt} />
   },
   {
     id: 'actions',
@@ -140,6 +141,7 @@ export function WorksTable({
         startDate: group.startDate,
         endDate: group.endDate,
         status: group.status,
+        updatedAt: group.updatedAt,
         editAction: {
           editHref: `${WORKS_BASE_PATH}/group/${group.id}/edit`,
           editLabel: `Редагувати групу ${group.title}`
@@ -182,6 +184,7 @@ export function WorksTable({
         genre: work.genre,
         year: work.year,
         status: work.status,
+        updatedAt: work.updatedAt,
         editAction: {
           editHref: `${WORKS_BASE_PATH}/work/${work.id}/edit`,
           editLabel: `Редагувати твір ${work.title}`
