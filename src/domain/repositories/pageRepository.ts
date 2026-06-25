@@ -1,5 +1,6 @@
 import { BasePage, LocalizedTitle } from '~/domain/entities/Page';
 import { Patch } from '~/src/shared/types/pages/types';
+import { PageCategory } from '~/types/enums/common.enums';
 
 export type PageRepository = {
   getPublishedBySlug(slug: string): Promise<BasePage | null>;
@@ -7,4 +8,5 @@ export type PageRepository = {
   createDraft(slug: string, blocks: unknown, source: BasePage): Promise<BasePage>;
   applyPatchToDraft(slug: string, patch: Patch): Promise<BasePage>;
   applyPatchToPublished(slug: string, patch: Patch, title: LocalizedTitle, pageType: string): Promise<BasePage>;
+  findPages(category?: PageCategory): Promise<BasePage[]>;
 };
