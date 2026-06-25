@@ -31,6 +31,7 @@ type CreateOptions = {
 };
 
 const mockUpdateBlock = jest.fn();
+const mockDefaultPasteHandler = jest.fn();
 
 let mockDocumentState: MockBlock[] = [];
 let capturedCreateOptions: CreateOptions | null = null;
@@ -178,27 +179,6 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
   }
 }));
 
-const createMockParsedBlocks = (contentText: string) => (
-  [
-    {
-      id: 'mock-block-id-1',
-      type: 'paragraph',
-      props: {
-        textColor: 'default',
-        backgroundColor: 'default',
-        textAlignment: 'left'
-      },
-      content: [
-        {
-          type: 'text',
-          text: contentText,
-          styles: {}
-        }
-      ],
-      children: []
-    }
-  ]
-);
 
 describe('BlockNoteEditor', () => {
   beforeEach(() => {
@@ -335,11 +315,58 @@ describe('BlockNoteEditor', () => {
       });
 
       expect(screen.queryByTestId('media-modal')).not.toBeInTheDocument();
-      expect(promiseResult).toBeNull();
+      expect(promiseResult).toBe('');;
     });
   });
 
   describe('5. Paste Behaviour', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      if (typeof DataTransfer === 'undefined') {
+        const mockedDataTransfer = class {
+          constructor() {
+            this.data = {};
+            this.files = [];
+            this.items = {
+              add: (file) => this.files.push(file),
+              clear: () => { this.files = []; }
+            };
+          }
+
+          setData(format, value) {
+            this.data[format] = value;
+          }
+
+          getData(format) {
+            return this.data[format] || '';
+          }
+        };
+
+        globalThis.DataTransfer = mockedDataTransfer;
+      }
+    });
+
+    it('calls defaultPasteHandler immediately if clipboardData is missing', () => {
+      render(<BlockNoteEditor />);
+      const event = { clipboardData: null };
+
+      capturedCreateOptions?.pasteHandler({ event, defaultPasteHandler: mockDefaultPasteHandler });
+      expect(mockDefaultPasteHandler).toHaveBeenCalledTimes(1);
+    });
+    it('should return default handler if both html and text are empty', () => {
+      render(<BlockNoteEditor />);
+      const event = {
+        clipboardData: {
+          getData: jest.fn().mockReturnValue('') 
+        }
+      };
+      
+      capturedCreateOptions?.pasteHandler({ event, defaultPasteHandler: mockDefaultPasteHandler });
+
+      expect(mockDefaultPasteHandler).toHaveBeenCalledTimes(1);
+      expect(event.clipboardData.getData).toHaveBeenCalledWith('text/html');
+      expect(event.clipboardData.getData).toHaveBeenCalledWith('text/plain');
+    });
     it('should allow to paste valid plain text', () => {
       render(<BlockNoteEditor />);
       const correctPlainText = 'dfsdfsd';
@@ -352,9 +379,10 @@ describe('BlockNoteEditor', () => {
         }
       };
 
-      const defaultPasteHandler = jest.fn();
-      capturedCreateOptions?.pasteHandler({ event, editor: mockEditor, defaultPasteHandler });
-      expect(mockEditor.insertInlineContent).toHaveBeenCalledWith(correctPlainText);
+      capturedCreateOptions?.pasteHandler({ event, defaultPasteHandler: mockDefaultPasteHandler });
+      expect(event.clipboardData.getData('text/html')).toBe('');;
+      expect(event.clipboardData.getData('text/plain')).toBe('dfsdfsd');
+      expect(mockDefaultPasteHandler).toHaveBeenCalled();
     });
 
     it('should allow to paste valid html', () => {
@@ -369,13 +397,10 @@ describe('BlockNoteEditor', () => {
         }
       };
 
-      const mockParsedBlocks = createMockParsedBlocks('dfsdfsd');
-      mockEditor.tryParseHTMLToBlocks.mockReturnValueOnce(mockParsedBlocks);
-
-      const defaultPasteHandler = jest.fn();
-      capturedCreateOptions?.pasteHandler({ event, editor: mockEditor, defaultPasteHandler });
-      expect(mockEditor.tryParseHTMLToBlocks).toHaveBeenCalledWith(correctHTML);
-      expect(mockEditor.insertInlineContent).toHaveBeenCalledWith(mockParsedBlocks[0].content);
+      capturedCreateOptions?.pasteHandler({ event, defaultPasteHandler: mockDefaultPasteHandler });
+      expect(event.clipboardData.getData('text/html')).toBe(correctHTML);
+      expect(event.clipboardData.getData('text/plain')).toBe('');;
+      expect(mockDefaultPasteHandler).toHaveBeenCalled();
     });
 
 
@@ -392,11 +417,11 @@ describe('BlockNoteEditor', () => {
       };
       const sanitizedText = 'Test';
 
-      const defaultPasteHandler = jest.fn();
-      capturedCreateOptions?.pasteHandler({ event, editor: mockEditor, defaultPasteHandler });
-
+      capturedCreateOptions?.pasteHandler({ event, defaultPasteHandler: mockDefaultPasteHandler });
+      expect(event.clipboardData.getData('text/html')).toBe('');;
+      expect(event.clipboardData.getData('text/plain')).toBe(sanitizedText);
+      expect(mockDefaultPasteHandler).toHaveBeenCalled();
       expect(toast.error).toHaveBeenCalledWith('Використання емодзі та спецсимволів не дозволено');
-      expect(mockEditor.insertInlineContent).toHaveBeenCalledWith(sanitizedText);
     });
 
 
@@ -411,13 +436,11 @@ describe('BlockNoteEditor', () => {
           }
         }
       };
-      const mockParsedBlocks = createMockParsedBlocks('test');
-      mockEditor.tryParseHTMLToBlocks.mockReturnValueOnce(mockParsedBlocks);
-      const defaultPasteHandler = jest.fn();
-      capturedCreateOptions?.pasteHandler({ event, editor: mockEditor, defaultPasteHandler });
 
-      expect(mockEditor.tryParseHTMLToBlocks).toHaveBeenCalledWith('<p>test </p>');
-      expect(mockEditor.insertInlineContent).toHaveBeenCalledWith(mockParsedBlocks[0].content);
+      capturedCreateOptions?.pasteHandler({ event, defaultPasteHandler: mockDefaultPasteHandler });
+      expect(event.clipboardData.getData('text/html')).toBe('<p>test </p>');
+      expect(event.clipboardData.getData('text/plain')).toBe('');
+      expect(toast.error).toHaveBeenCalledWith('Використання емодзі та спецсимволів не дозволено');
     });
   });
 });

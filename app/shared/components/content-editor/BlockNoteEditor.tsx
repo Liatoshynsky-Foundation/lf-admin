@@ -164,26 +164,42 @@ export const BlockNoteEditor = (props: BlockNoteEditorProps) => {
       uploadFile: handleSilentFileUpload,
       initialContent: initialContent || undefined,
       placeholders: { default: placeholder },
-      pasteHandler({ event, editor: editorInstance, defaultPasteHandler }) {
+      pasteHandler({ event, defaultPasteHandler }) {
         const clipboardData = event.clipboardData;
         if (!clipboardData) return defaultPasteHandler();
 
         const html = clipboardData.getData('text/html');
         const text = clipboardData.getData('text/plain');
-        if (html) {
-          const cleanedHTML = processHTML(html);
-          const blocks = editorInstance.tryParseHTMLToBlocks(cleanedHTML);
 
-          blocks.forEach((block) => {
-            if (Array.isArray(block.content)) {
-              editorInstance.insertInlineContent(block.content);
-            }
-          });
-        } else if (text) {
-          const cleanedText = getCleanedText(text).trim();
-          editorInstance.insertInlineContent(cleanedText);
+        if (!html && !text) {
+          return defaultPasteHandler();
         }
-        return true;
+
+        const cleanedHTML = html ? processHTML(html) : '';
+        const cleanedText = text ? getCleanedText(text).trim() : '';
+
+
+        const dt = new DataTransfer();
+
+        if (cleanedHTML) dt.setData('text/html', cleanedHTML);
+        if (cleanedText) dt.setData('text/plain', cleanedText);
+
+
+        if (clipboardData.files && clipboardData.files.length > 0) {
+          [...clipboardData.files].forEach((file) => {
+            dt.items.add(file);
+          });
+        }
+
+        try {
+          Object.defineProperty(event, 'clipboardData', {
+            value: dt,
+          });
+        } catch (e) {
+          toast.error('Помилка обробки вставленого тексту');
+          console.error('Помилка обробки вставленого тексту:', e);
+        }
+        return defaultPasteHandler();
       },
     },
     [isMounted]
