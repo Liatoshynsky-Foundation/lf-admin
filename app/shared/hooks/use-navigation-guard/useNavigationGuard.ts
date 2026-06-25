@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 
+import { BACK_NAVIGATION } from '~/constants/navigation';
 import { useStore } from '~/store';
 
 export const useNavigationGuard = () => {
@@ -31,8 +32,19 @@ export const useNavigationGuard = () => {
     }
   };
 
+  const navigateBack = () => {
+    if (dirtyPaths[pathname]) {
+      setPendingNavigation(BACK_NAVIGATION);
+      setDiscardModalOpen(true);
+      return;
+    }
+
+    router.back();
+  };
+
   return {
     navigate,
+    navigateBack,
     interceptLinkClick
   };
 };

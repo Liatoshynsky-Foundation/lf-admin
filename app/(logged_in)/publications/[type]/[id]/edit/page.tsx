@@ -37,7 +37,7 @@ export default function EditPublicationsPage() {
   const latestBlocksRef = useRef<SerializedContent | null>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const { navigate } = useNavigationGuard();
+  const { navigate, navigateBack } = useNavigationGuard();
 
   useEffect(() => {
     return () => {
@@ -124,7 +124,7 @@ export default function EditPublicationsPage() {
           onAction={handleMenuAction}
           onDeleteConfirm={() => handleMenuAction(MenuActionId.DELETE)}
           onSeoClick={() => navigate(`${PUBLICATIONS_BASE_PATH}/${type}/${id}/seo`)}
-          onBackClick={() => navigate(PUBLICATIONS_BASE_PATH)}
+          onBackClick={navigateBack}
         />
       )}
     </>
