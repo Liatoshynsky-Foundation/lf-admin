@@ -33,14 +33,14 @@ describe('LoginModal', () => {
   });
 
   it('renders all inputs and buttons', () => {
-    render(<LoginModal onSubmit={mockOnSubmit} submitError={null} />);
+    render(<LoginModal onSubmit={mockOnSubmit} submitError={null} loading={false} />);
     expect(screen.getByPlaceholderText('Введіть електронну пошту')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Введіть пароль')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /увійти/i })).toBeInTheDocument();
   });
 
   it('shows validation errors when submitting empty fields', () => {
-    render(<LoginModal onSubmit={mockOnSubmit} submitError={null} />);
+    render(<LoginModal onSubmit={mockOnSubmit} submitError={null} loading={false} />);
 
     const submitButton = screen.getByRole('button', { name: /увійти/i });
     fireEvent.click(submitButton);
@@ -51,7 +51,7 @@ describe('LoginModal', () => {
   });
 
   it('calls onSubmit with correct data when form is valid', () => {
-    render(<LoginModal onSubmit={mockOnSubmit} submitError={null} />);
+    render(<LoginModal onSubmit={mockOnSubmit} submitError={null} loading={false} />);
 
     const emailInput = screen.getByPlaceholderText('Введіть електронну пошту');
     const passwordInput = screen.getByPlaceholderText('Введіть пароль');
@@ -68,7 +68,7 @@ describe('LoginModal', () => {
   });
 
   it('clears password field when submitError changes', () => {
-    const { rerender } = render(<LoginModal onSubmit={mockOnSubmit} submitError={null} />);
+    const { rerender } = render(<LoginModal onSubmit={mockOnSubmit} submitError={null} loading={false} />);
 
     const passwordInput = screen.getByPlaceholderText('Введіть пароль');
     fireEvent.change(passwordInput, { target: { value: 'password123' } });

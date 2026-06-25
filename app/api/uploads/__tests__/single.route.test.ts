@@ -11,6 +11,17 @@ Object.assign(globalThis, { TextDecoder, TextEncoder });
 
 jest.mock('../upload-handler');
 
+jest.mock(
+  'winston-mongodb',
+  () => ({
+    MongoDB: jest.fn().mockImplementation(() => ({
+      on: jest.fn(),
+      log: jest.fn()
+    }))
+  }),
+  { virtual: true }
+);
+
 interface UndiciWebGlobals {
   fetch: typeof fetch;
   Request: typeof Request;

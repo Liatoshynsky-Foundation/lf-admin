@@ -14,18 +14,22 @@ import {
 import { LoginArgs, RequestResetArgs, ResetPasswordArgs } from '~/back-shared/types/admin/types';
 import { GraphQLContext } from '~/back-shared/types/container/types';
 import logger from '~/src/middleware/logger/logger';
-import { sendPasswordResetEmail } from '~/src/shared/utils/emailService/emailService'; // Перевір свій шлях
+import { sendPasswordResetEmail } from '~/src/shared/utils/emailService/emailService';
 
 export const authMutation = {
-  login: async (_: unknown, args: LoginArgs, { requestContainer, setCookie }: GraphQLContext) => {
+  login: async (_: unknown, args: LoginArgs, { requestContainer, setCookie, req }: GraphQLContext) => {
     const loginAdmin = requestContainer.cradle.loginAdmin;
     const createTokenService = requestContainer.cradle.createTokenService;
     const refreshTokenRepo = requestContainer.cradle.refreshTokenRepository;
+
+    const ip = (req?.headers['x-forwarded-for'] as string) || req?.socket?.remoteAddress || 'unknown-ip';
+
     try {
-      const admin = await loginAdmin.execute(args.email, args.password);
+      const admin = await loginAdmin.execute(args.email, args.password, ip);
       const { accessToken, refreshToken, refreshTokenJti } = createTokenService.generateTokens(admin);
 
       await refreshTokenRepo.add(admin.id, refreshTokenJti, JWT_REFRESH_TOKEN_LIFETIME, admin.type);
+
       setCookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, {
         ...commonCookieOptions,
         maxAge: JWT_ACCESS_TOKEN_LIFETIME
@@ -63,6 +67,7 @@ export const authMutation = {
       throw err;
     }
   },
+
   logout: async (
     _: unknown,
     __: unknown,
@@ -81,6 +86,7 @@ export const authMutation = {
     deleteCookie(REFRESH_TOKEN_COOKIE_NAME, { path: '/' });
     return true;
   },
+
   refreshToken: async (
     _: unknown,
     __: unknown,
@@ -92,9 +98,11 @@ export const authMutation = {
 
     const tokenService = requestContainer.cradle.createTokenService;
     const refreshTokenRepo = requestContainer.cradle.refreshTokenRepository;
+
     try {
       const oldPayload = tokenService.verifyRefreshToken(refreshTokenFromCookie);
       const isJtiValid = await refreshTokenRepo.exists(oldPayload.jti);
+
       if (!isJtiValid) {
         await refreshTokenRepo.deleteAllForAdmin(oldPayload.id);
         throw new Error(errors.REFRESH_TOKEN_REVOKED);
@@ -122,6 +130,7 @@ export const authMutation = {
       });
     }
   },
+
   requestPasswordReset: async (_: unknown, args: RequestResetArgs, context: GraphQLContext) => {
     const { requestContainer, req } = context;
     const requestPasswordReset = requestContainer.cradle.requestPasswordResetUseCase;
@@ -156,6 +165,7 @@ export const authMutation = {
       message: 'Якщо обліковий запис із цією електронною адресою існує, ми надіслали інструкції для відновлення пароля.'
     };
   },
+
   resetPassword: async (_: unknown, args: ResetPasswordArgs, { requestContainer }: GraphQLContext) => {
     const resetPasswordUseCase = requestContainer.cradle.resetPasswordUseCase;
 
