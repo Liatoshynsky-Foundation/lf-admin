@@ -6,8 +6,10 @@ import dayjs, { Dayjs } from 'dayjs';
 import { useEffect, useState } from 'react';
 
 import { styles } from './GroupDetailsSection.styles';
+import { GroupDataField } from '~/constants/creativity';
 import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
+
 
 type MultilingualText = { uk: string; en: string };
 
@@ -24,7 +26,7 @@ type GroupDetailsSectionProps = {
   derivedGenre: string;
   currentLanguage: string;
   errors: Record<string, string>;
-  onChange: (field: string, value: string, isMultilingual?: boolean) => void;
+  onChange: (field: GroupDataField, value: string, isMultilingual?: boolean) => void;
 };
 
 export const GroupDetailsSection = ({ data, derivedGenre, currentLanguage, errors, onChange }: GroupDetailsSectionProps) => {

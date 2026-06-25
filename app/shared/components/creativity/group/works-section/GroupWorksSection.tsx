@@ -1,8 +1,9 @@
 import { Autocomplete, Box, Divider, IconButton, Paper, Typography } from '@mui/material';
 import { createFilterOptions } from '@mui/material/Autocomplete';
-import { useState } from 'react';
+import { HTMLAttributes, ReactNode, useState } from 'react';
 
 import { styles } from './GroupWorksSection.styles';
+import {GroupWork} from '~/constants/creativity';
 import PencilIcon from '~/public/icons/pencil.svg';
 import PlusIcon from '~/public/icons/plus.svg';
 import TrashIcon from '~/public/icons/trash.svg';
@@ -11,19 +12,30 @@ import Button from '~/shared/components/design-system/button/Button';
 import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 
-export type WorkItem = {
-  id: string;
-  title: string;
-  genre?: { uk: string; en: string };
-};
-
 type GroupWorksSectionProps = {
-  works: WorkItem[];
-  availableWorks: WorkItem[];
-  onChange: (works: WorkItem[]) => void;
+  works: GroupWork[];
+  availableWorks: GroupWork[];
+  onChange: (works: GroupWork[]) => void;
 };
 
-const filter = createFilterOptions<WorkItem>();
+type AutocompletePaperProps = HTMLAttributes<HTMLElement> & {
+  children?: ReactNode;
+  isInputEmpty: boolean;
+  onSelectCreate: () => void;
+};
+
+const AutocompletePaper = ({ children, isInputEmpty, onSelectCreate, ...paperProps }: AutocompletePaperProps) => (
+  <Paper {...paperProps} sx={styles.autocompletePaper}>
+    {!isInputEmpty && children}
+
+    <Box onMouseDown={(e) => e.preventDefault()} onClick={onSelectCreate} sx={styles.createWorkBox}>
+      <PlusIcon style={{ width: '20px', height: '20px' }} />
+      <Typography sx={styles.createWorkText}>Створити новий твір</Typography>
+    </Box>
+  </Paper>
+);
+
+const filter = createFilterOptions<GroupWork>();
 
 export const GroupWorksSection = ({ works, availableWorks, onChange }: GroupWorksSectionProps) => {
   const [editingWorkId, setEditingWorkId] = useState<string | null>(null);
@@ -32,7 +44,7 @@ export const GroupWorksSection = ({ works, availableWorks, onChange }: GroupWork
 
   const handleAddWork = () => {
     const newId = crypto.randomUUID();
-    const newWork: WorkItem = {
+    const newWork: GroupWork = {
       id: newId,
       title: ''
     };
@@ -42,7 +54,7 @@ export const GroupWorksSection = ({ works, availableWorks, onChange }: GroupWork
     setSearchValues((prev) => ({ ...prev, [newId]: '' }));
   };
 
-  const handleSelectWork = (currentId: string, selectedWork: WorkItem | null) => {
+  const handleSelectWork = (currentId: string, selectedWork: GroupWork | null) => {
     if (selectedWork) {
       onChange(
         works.map((work) =>
@@ -87,7 +99,7 @@ export const GroupWorksSection = ({ works, availableWorks, onChange }: GroupWork
           {works.map((work) => {
             const isEditing = editingWorkId === work.id;
 
-            const currentSearchValue = searchValues[work.id] !== undefined ? searchValues[work.id] : work.title;
+            const currentSearchValue = searchValues[work.id] ?? work.title;
             const isInputEmpty = currentSearchValue.trim() === '';
 
             return (
@@ -122,20 +134,11 @@ export const GroupWorksSection = ({ works, availableWorks, onChange }: GroupWork
                       setSearchValues((prev) => ({ ...prev, [work.id]: newInputValue }));
                     }}
                     PaperComponent={(paperProps) => (
-                      <Paper {...paperProps} sx={styles.autocompletePaper}>
-                        {!isInputEmpty && paperProps.children}
-
-                        <Box
-                          onMouseDown={(e) => e.preventDefault()}
-                          onClick={() => {
-                            setEditingWorkId(null);
-                          }}
-                          sx={styles.createWorkBox}
-                        >
-                          <PlusIcon style={{ width: '20px', height: '20px' }} />
-                          <Typography sx={styles.createWorkText}>Створити новий твір</Typography>
-                        </Box>
-                      </Paper>
+                      <AutocompletePaper
+                        {...paperProps}
+                        isInputEmpty={isInputEmpty}
+                        onSelectCreate={() => setEditingWorkId(null)}
+                      />
                     )}
                     renderInput={(params) => <CustomTextField {...params} placeholder="Назва твору" fullWidth />}
                   />

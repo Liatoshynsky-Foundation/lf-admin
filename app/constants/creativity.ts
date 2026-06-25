@@ -1,3 +1,4 @@
+import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import type { FilterOption } from '~/shared/components/selector/FilterSelect';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
@@ -86,3 +87,43 @@ export const WORKS_ERROR_STATE_DESCRIPTION = 'Спробуйте оновити 
 
 export const WORKS_PUBLISH_RESTRICTION_MESSAGE =
   'Твір не може бути опублікований без групи (Опусу). Призначте твір до опусу і спробуйте знову.';
+
+export interface GroupWork {
+  id: string;
+  title: string;
+  genre?: { uk: string; en: string };
+}
+
+export interface GroupPhoto {
+  id: string;
+  src: string;
+  fileName: string;
+  caption: string;
+  altText: string;
+  crop: MediaModalResult['crop'] | null;
+}
+
+export interface GroupPerformance {
+  id: string;
+  url: string;
+  caption: string;
+}
+
+export interface GroupData {
+  titlePrefix: string;
+  groupNumber: string;
+  additionalText: string;
+  groupTitle: { uk: string; en: string }; 
+  creationYear: string;
+  endYear: string;
+  dateAdditionalText: { uk: string; en: string };
+  parts: { uk: string; en: string };
+  description: { uk: Record<string, unknown>; en: Record<string, unknown> };
+  photos: GroupPhoto[];
+  works: GroupWork[];
+  performancesTitle: string;
+  performances: GroupPerformance[];
+  status: string;
+}
+
+export type GroupDataField = keyof GroupData;

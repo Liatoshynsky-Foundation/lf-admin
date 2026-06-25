@@ -1,6 +1,7 @@
 import { Box } from '@mui/material';
 
 import {styles} from './GroupIntroSection.styles';
+import { GroupDataField } from '~/constants/creativity';
 import { EditorLanguage } from '~/constants/publications';
 import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
@@ -15,7 +16,7 @@ type GroupIntroSectionProps = {
     description: MultilingualRichText;
   };
   currentLanguage: EditorLanguage;
-  onChange: (field: string, value: unknown, isMultilingual?: boolean) => void;
+  onChange: (field: GroupDataField, value: unknown, isMultilingual?: boolean) => void;
 };
 
 export const GroupIntroSection = ({ data, currentLanguage, onChange }: GroupIntroSectionProps) => {

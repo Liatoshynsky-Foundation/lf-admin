@@ -20,6 +20,10 @@ type MockCustomTextFieldProps = {
     readOnly?: boolean;
     sx?: object;
   };
+  SelectProps?: {
+    onOpen?: () => void;
+    onClose?: () => void;
+  };
   select?: boolean;
   type?: string;
   required?: boolean;
@@ -39,9 +43,26 @@ jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock'
 }));
 
 jest.mock('~/shared/components/design-system/text-field/TextField', () => ({
-  CustomTextField: ({ label, value, onChange, onBlur, error, helperText, InputProps, inputProps}: MockCustomTextFieldProps) => (
+  CustomTextField: ({
+    label,
+    value,
+    onChange,
+    onBlur,
+    error,
+    helperText,
+    InputProps,
+    inputProps,
+    SelectProps
+  }: MockCustomTextFieldProps) => (
     <div data-testid={`mock-field-wrapper-${label}`}>
       <label htmlFor={`input-${label}`}>{label}</label>
+
+      {SelectProps?.onOpen && (
+        <button data-testid={`trigger-open-${label}`} onClick={SelectProps.onOpen}>
+          Open Select
+        </button>
+      )}
+
       <input
         id={`input-${label}`}
         data-testid={`mock-input-${label}`}
@@ -171,5 +192,31 @@ describe('GroupDetailsSection Component', () => {
 
     expect(screen.getByTestId('error-Назва')).toHaveTextContent('Спеціальна помилка префіксу');
     expect(screen.getByTestId('error-Рік створення')).toHaveTextContent('Заповніть рік');
+  });
+  it('should close prefix menu when window is scrolled (covers lines 47-56)', () => {
+    render(<GroupDetailsSection {...defaultProps} />);
+
+    fireEvent.click(screen.getByTestId('trigger-open-Назва'));
+
+    fireEvent.scroll(window);
+
+  });
+
+  it('should show validation errors on blur for groupNumber and groupTitle fields', () => {
+    const propsWithEmptyFields = {
+      ...defaultProps,
+      data: {
+        ...defaultProps.data,
+        groupNumber: '',
+        groupTitle: { uk: '', en: '' }
+      }
+    };
+    render(<GroupDetailsSection {...propsWithEmptyFields} />);
+
+    fireEvent.blur(screen.getByTestId('mock-input-Номер'));
+    expect(screen.getByTestId('error-Номер')).toHaveTextContent('Обов’язкове поле');
+
+    fireEvent.blur(screen.getByTestId('mock-input-Назва групи'));
+    expect(screen.getByTestId('error-Назва групи')).toHaveTextContent('Обов’язкове поле');
   });
 });

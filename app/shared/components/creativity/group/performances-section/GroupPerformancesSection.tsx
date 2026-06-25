@@ -1,7 +1,8 @@
-import { Box, Divider, IconButton, Tooltip,Typography } from '@mui/material';
+import { Box, Divider, IconButton, Tooltip, Typography } from '@mui/material';
 import { useState } from 'react';
 
 import { styles } from './GroupPerformancesSection.styles';
+import { GroupPerformance } from '~/constants/creativity';
 import PlusIcon from '~/public/icons/plus.svg';
 import TrashIcon from '~/public/icons/trash.svg';
 import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
@@ -9,17 +10,17 @@ import Button from '~/shared/components/design-system/button/Button';
 import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 
-export type PerformanceItem = {
-  id: string;
-  url: string;
-  caption: string;
-};
+// export type PerformanceItem = {
+//   id: string;
+//   url: string;
+//   caption: string;
+// };
 
 type GroupPerformancesSectionProps = {
   sectionTitle: string;
-  performances: PerformanceItem[];
+  performances: GroupPerformance[];
   onChangeSectionTitle: (title: string) => void;
-  onChangePerformances: (performances: PerformanceItem[]) => void;
+  onChangePerformances: (performances: GroupPerformance[]) => void;
 };
 
 const renderLinkPreview = (url: string) => {
@@ -27,7 +28,8 @@ const renderLinkPreview = (url: string) => {
 
   const validUrl = url.startsWith('http') ? url : `https://${url}`;
 
-  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/);
+  const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/;
+  const ytMatch = regex.exec(url);
 
   if (ytMatch) {
     const videoId = ytMatch[1];
@@ -53,13 +55,7 @@ const renderLinkPreview = (url: string) => {
   }
 
   return (
-    <Box
-      component="a"
-      href={validUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      sx={styles.linkText}
-    >
+    <Box component="a" href={validUrl} target="_blank" rel="noopener noreferrer" sx={styles.linkText}>
       Перейти за посиланням
     </Box>
   );
@@ -74,7 +70,7 @@ export const GroupPerformancesSection = ({
   const [performanceIdToDelete, setPerformanceIdToDelete] = useState<string | null>(null);
 
   const handleAddPerformance = () => {
-    const newPerformance: PerformanceItem = {
+    const newPerformance: GroupPerformance = {
       id: crypto.randomUUID(),
       url: '',
       caption: ''
@@ -89,7 +85,7 @@ export const GroupPerformancesSection = ({
     }
   };
 
-  const handleUpdatePerformance = (idToUpdate: string, field: keyof PerformanceItem, value: string) => {
+  const handleUpdatePerformance = (idToUpdate: string, field: keyof GroupPerformance, value: string) => {
     onChangePerformances(performances.map((item) => (item.id === idToUpdate ? { ...item, [field]: value } : item)));
   };
 
@@ -114,12 +110,10 @@ export const GroupPerformancesSection = ({
           {performances.map((item) => (
             <Box key={item.id} sx={styles.performanceItemRow}>
               <Box sx={styles.inputsWrapper}>
-            
-
                 <Tooltip
                   title={renderLinkPreview(item.url)}
                   placement="top-start"
-                  enterDelay={400} 
+                  enterDelay={400}
                   slotProps={{
                     tooltip: {
                       sx: styles.tooltipBox

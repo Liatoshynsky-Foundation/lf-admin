@@ -1,13 +1,13 @@
-// group.mock.ts
+import { GroupData, GroupPerformance, GroupPhoto,GroupWork } from '~/constants/creativity';
 
-export const mockAvailableWorks = [
+export const mockAvailableWorks: GroupWork[] = [
   { id: 'free-1', title: 'Соната №2 для фортепіано', genre: { uk: 'Соната', en: 'Sonata' } },
   { id: 'free-2', title: 'Симфонія №4', genre: { uk: 'Симфонія', en: 'Symphony' } },
   { id: 'free-3', title: 'Прелюдія до мінор', genre: { uk: 'Прелюдія', en: 'Prelude' } },
   { id: 'free-4', title: 'Український квінтет (вільний запис)', genre: { uk: 'Квінтет', en: 'Quintet' } }
 ];
 
-export const mockInitialGroupData = {
+export const mockInitialGroupData: GroupData = {
   titlePrefix: 'Op.',
   groupNumber: '42',
   additionalText: 'bis',
@@ -26,34 +26,9 @@ export const mockInitialGroupData = {
     en: 'I. Allegro e poco agitato \nII. Lento e tranquillo \nIII. Allegro \nIV. Allegro risoluto'
   },
   description: {
-    uk: {
-      type: 'doc',
-      content: [
-        {
-          type: 'paragraph',
-          content: [
-            {
-              type: 'text',
-              text: 'Лібрето опери за мотивами історичної повісті Івана Франка «Захар Беркут» уклав драматург, критик та теоретик театру Яків Мамонтов. Твір написаний на замовлення Народного комісаріату освіти України. Опера має три редакції: перша українська редакція (1929), московська редакція (1930, існує лише в клавірі, ніколи не була виконана), друга українська редакція (середина 1960-х років, є скороченим варіантом першої української редакції).'
-            }
-          ]
-        }
-      ]
-    } as Record<string, unknown>,
-    en: {
-      type: 'doc',
-      content: [
-        {
-          type: 'paragraph',
-          content: [
-            {
-              type: 'text',
-              text: 'The libretto of the opera, based on the historical story of Ivan Franko\'s "Zahar Berkut", was written by the dramatist, critic, and theater theorist Yakiv Mamontov. The work was written on order of the People\'s Commissariat of Education of Ukraine. The opera has three versions: the first Ukrainian version (1929), the Moscow version (1930, exists only in harpsichord arrangement, was never performed), and the second Ukrainian version (mid-1960s, is a shortened version of the first Ukrainian version).'
-            }
-          ]
-        }
-      ]
-    } as Record<string, unknown>
+    // Вказуємо як Record<string, unknown>, оскільки це структура TipTap
+    uk: { type: 'doc', content: [] } as Record<string, unknown>,
+    en: { type: 'doc', content: [] } as Record<string, unknown>
   },
   photos: [
     {
@@ -72,7 +47,7 @@ export const mockInitialGroupData = {
       altText: 'Назва файлу зображення',
       crop: null
     }
-  ],
+  ] as GroupPhoto[],
   works: [
     {
       id: 'mock-work-1',
@@ -89,7 +64,7 @@ export const mockInitialGroupData = {
       title: '№3«Був цар», сл. Г. Гейне, укр. пер. М. Стріхи',
       genre: { uk: 'Пісня', en: 'Song' }
     }
-  ],
+  ] as GroupWork[],
   performancesTitle: 'Версії виконання опери "Золотий обруч"',
   performances: [
     {
@@ -102,6 +77,6 @@ export const mockInitialGroupData = {
       url: 'https://lf-client-stage-a3ama9eydjfucnbj.polandcentral-01.azurewebsites.net/uk',
       caption: 'Симфонічна сюїта на теми з опери, Львівська національна філармонія (2024 р.)'
     }
-  ],
+  ] as GroupPerformance[],
   status: 'draft'
 };

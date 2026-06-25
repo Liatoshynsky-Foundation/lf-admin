@@ -2,6 +2,7 @@ import { Box, Divider, IconButton, Typography } from '@mui/material';
 import { useState } from 'react';
 
 import { styles } from './GroupPhotosSection.styles';
+import { GroupPhoto } from '~/constants/creativity';
 import PlusIcon from '~/public/icons/plus.svg';
 import TrashIcon from '~/public/icons/trash.svg';
 import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
@@ -11,23 +12,14 @@ import { ImagePreviewBlock } from '~/shared/components/design-system/photo-block
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 
-export type PhotoItem = {
-  id: string;
-  src: string;
-  fileName: string;
-  caption: string;
-  altText: string;
-  crop?: MediaModalResult['crop'] | null;
-};
-
 type GroupPhotosSectionProps = {
-  photos: PhotoItem[];
-  onChange: (photos: PhotoItem[]) => void;
+  photos: GroupPhoto[];
+  onChange: (photos: GroupPhoto[]) => void;
 };
 
 export const GroupPhotosSection = ({ photos, onChange }: GroupPhotosSectionProps) => {
   const handleAddPhoto = () => {
-    const newPhoto: PhotoItem = {
+    const newPhoto: GroupPhoto = {
       id: crypto.randomUUID(),
       src: '',
       fileName: '',
@@ -38,7 +30,7 @@ export const GroupPhotosSection = ({ photos, onChange }: GroupPhotosSectionProps
     onChange([...photos, newPhoto]);
   };
 
-  const handleUpdatePhoto = (idToUpdate: string, updates: Partial<PhotoItem>) => {
+  const handleUpdatePhoto = (idToUpdate: string, updates: Partial<GroupPhoto>) => {
     onChange(photos.map((photo) => (photo.id === idToUpdate ? { ...photo, ...updates } : photo)));
   };
 

@@ -17,6 +17,7 @@ import { MouseEvent, useState } from 'react';
 
 import { mockAvailableWorks, mockInitialGroupData } from './group.mock';
 import { styles } from './GroupContentView.styles';
+import { GroupData, GroupDataField } from '~/constants/creativity';
 import { EditorLanguage, LANGUAGE_OPTIONS } from '~/constants/publications';
 import { GroupDetailsSection } from '~/shared/components/creativity/group/details-section/GroupDetailsSection';
 import { GroupIntroSection } from '~/shared/components/creativity/group/intro-section/GroupIntroSection';
@@ -44,21 +45,16 @@ const PUBLISH_MENU_OPTIONS = [
 ];
 
 export const GroupContentView = ({ id }: GroupContentViewProps) => {
-  const [groupData, setGroupData] = useState(mockInitialGroupData);
-
+  const [groupData, setGroupData] = useState<GroupData>(mockInitialGroupData);
   const [isDirty, setIsDirty] = useState(false);
-
-  useUnsavedChanges(isDirty);
   const { navigate } = useNavigationGuard();
-
+  useUnsavedChanges(isDirty);
   const handleBackClick = () => {
     const previousUrl = document.referrer;
-    
+
     const cameFromSettings = previousUrl.includes(`/creativity/group/${id}/edit`);
 
-    const targetUrl = cameFromSettings 
-      ? `/creativity/group/${id}/edit`
-      : '/creativity';
+    const targetUrl = cameFromSettings ? `/creativity/group/${id}/edit` : '/creativity';
 
     navigate(targetUrl);
   };
@@ -97,19 +93,26 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleFieldChange = (field: string, value: unknown, isMultilingual = false) => {
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: '' }));
+  const handleFieldChange = (
+    field: GroupDataField, 
+    value: unknown, 
+    isMultilingual = false
+  ) => {
+    if (errors[field as string]) {
+      setErrors((prev) => ({ ...prev, [field as string]: '' }));
     }
 
     setGroupData((prev) => {
       if (isMultilingual) {
-        const langKey = currentLanguage === 'UA' ? 'uk' : 'en';
+        const currentFieldData = prev[field] && typeof prev[field] === 'object'
+          ? (prev[field] as Record<string, unknown>)
+          : {};
+
         return {
           ...prev,
           [field]: {
-            ...(prev[field as keyof typeof prev] as object),
-            [langKey]: value
+            ...currentFieldData,
+            [langKey]: value 
           }
         };
       }
@@ -148,7 +151,7 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
         <TitleDropdown
           type="multilingual"
           language={currentLanguage}
-          title={groupData.groupTitle[currentLanguage === 'UA' ? 'uk' : 'en'] || 'Редагування опусу'}
+          title={groupData.groupTitle[langKey] || 'Редагування опусу'}
           onMenuOpen={(e) => handleOpen(e, 'navigation')}
         />
 
@@ -239,18 +242,14 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
             return [
               <Divider key={`divider-${action.id}`} sx={{ my: 0.5 }} />,
               <MenuItem key={action.id} onClick={() => handleMenuOptionClick(action.id)} sx={styles.publishMenuItem}>
-                <Typography variant="textMd" >
-                  {action.label}
-                </Typography>
+                <Typography variant="textMd">{action.label}</Typography>
               </MenuItem>
             ];
           }
 
           return (
             <MenuItem key={action.id} onClick={() => handleMenuOptionClick(action.id)} sx={styles.publishMenuItem}>
-              <Typography variant="textMd" >
-                {action.label}
-              </Typography>
+              <Typography variant="textMd">{action.label}</Typography>
             </MenuItem>
           );
         })}
