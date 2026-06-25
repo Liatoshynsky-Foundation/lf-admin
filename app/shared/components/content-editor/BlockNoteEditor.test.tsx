@@ -320,29 +320,43 @@ describe('BlockNoteEditor', () => {
   });
 
   describe('5. Paste Behaviour', () => {
+    let originalDataTransfer: any;
+
     beforeEach(() => {
       jest.clearAllMocks();
+    });
+
+    beforeAll(() => {
+      originalDataTransfer = globalThis.DataTransfer;
       if (typeof DataTransfer === 'undefined') {
-        const mockedDataTransfer = class {
+        class MockDataTransfer {
+          data: Record<string, string>;
           constructor() {
             this.data = {};
-            this.files = [];
-            this.items = {
-              add: (file) => this.files.push(file),
-              clear: () => { this.files = []; }
-            };
           }
-
-          setData(format, value) {
-            this.data[format] = value;
-          }
-
-          getData(format) {
+          getData(format: string): string {
             return this.data[format] || '';
           }
-        };
 
-        globalThis.DataTransfer = mockedDataTransfer;
+          setData(format: string, data: string): void {
+            this.data[format] = data;
+          }
+        }
+
+        Object.defineProperty(globalThis, 'DataTransfer', {
+          value: MockDataTransfer 
+        });
+      }
+    });
+
+    afterAll(() => {
+      if (originalDataTransfer) {
+        Object.defineProperty(globalThis, 'DataTransfer', {
+          value: originalDataTransfer,
+          configurable: true,
+        });
+      } else {
+        delete (globalThis as any).DataTransfer;
       }
     });
 
@@ -357,10 +371,10 @@ describe('BlockNoteEditor', () => {
       render(<BlockNoteEditor />);
       const event = {
         clipboardData: {
-          getData: jest.fn().mockReturnValue('') 
+          getData: jest.fn().mockReturnValue('')
         }
       };
-      
+
       capturedCreateOptions?.pasteHandler({ event, defaultPasteHandler: mockDefaultPasteHandler });
 
       expect(mockDefaultPasteHandler).toHaveBeenCalledTimes(1);
