@@ -315,7 +315,7 @@ describe('BlockNoteEditor', () => {
       });
 
       expect(screen.queryByTestId('media-modal')).not.toBeInTheDocument();
-      expect(promiseResult).toBe('');;
+      expect(promiseResult).toBeNull();
     });
   });
 
@@ -394,7 +394,7 @@ describe('BlockNoteEditor', () => {
       };
 
       capturedCreateOptions?.pasteHandler({ event, defaultPasteHandler: mockDefaultPasteHandler });
-      expect(event.clipboardData.getData('text/html')).toBe('');;
+      expect(event.clipboardData.getData('text/html')).toBe('');
       expect(event.clipboardData.getData('text/plain')).toBe('dfsdfsd');
       expect(mockDefaultPasteHandler).toHaveBeenCalled();
     });
@@ -413,7 +413,7 @@ describe('BlockNoteEditor', () => {
 
       capturedCreateOptions?.pasteHandler({ event, defaultPasteHandler: mockDefaultPasteHandler });
       expect(event.clipboardData.getData('text/html')).toBe(correctHTML);
-      expect(event.clipboardData.getData('text/plain')).toBe('');;
+      expect(event.clipboardData.getData('text/plain')).toBe('');
       expect(mockDefaultPasteHandler).toHaveBeenCalled();
     });
 
@@ -432,7 +432,7 @@ describe('BlockNoteEditor', () => {
       const sanitizedText = 'Test';
 
       capturedCreateOptions?.pasteHandler({ event, defaultPasteHandler: mockDefaultPasteHandler });
-      expect(event.clipboardData.getData('text/html')).toBe('');;
+      expect(event.clipboardData.getData('text/html')).toBe('');
       expect(event.clipboardData.getData('text/plain')).toBe(sanitizedText);
       expect(mockDefaultPasteHandler).toHaveBeenCalled();
       expect(toast.error).toHaveBeenCalledWith('Використання емодзі та спецсимволів не дозволено');
