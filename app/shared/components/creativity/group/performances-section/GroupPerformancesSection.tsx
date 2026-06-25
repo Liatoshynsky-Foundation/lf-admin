@@ -1,6 +1,7 @@
-import { Box, Divider,IconButton, Typography } from '@mui/material';
+import { Box, Divider, IconButton, Tooltip,Typography } from '@mui/material';
 import { useState } from 'react';
 
+import { styles } from './GroupPerformancesSection.styles';
 import PlusIcon from '~/public/icons/plus.svg';
 import TrashIcon from '~/public/icons/trash.svg';
 import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
@@ -14,19 +15,62 @@ export type PerformanceItem = {
   caption: string;
 };
 
-type OpusPerformancesSectionProps = {
+type GroupPerformancesSectionProps = {
   sectionTitle: string;
   performances: PerformanceItem[];
   onChangeSectionTitle: (title: string) => void;
   onChangePerformances: (performances: PerformanceItem[]) => void;
 };
 
-export const OpusPerformancesSection = ({
+const renderLinkPreview = (url: string) => {
+  if (!url) return null;
+
+  const validUrl = url.startsWith('http') ? url : `https://${url}`;
+
+  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/);
+
+  if (ytMatch) {
+    const videoId = ytMatch[1];
+    return (
+      <Box
+        component="a"
+        href={validUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        sx={{ display: 'block', textDecoration: 'none', color: 'inherit' }}
+      >
+        <Box
+          component="img"
+          src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
+          alt="YouTube Preview"
+          sx={styles.tooltipView}
+        />
+        <Typography variant="caption" sx={styles.videoText}>
+          Відкрити відео
+        </Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Box
+      component="a"
+      href={validUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      sx={styles.linkText}
+    >
+      Перейти за посиланням
+    </Box>
+  );
+};
+
+export const GroupPerformancesSection = ({
   sectionTitle,
   performances,
   onChangeSectionTitle,
   onChangePerformances
-}: OpusPerformancesSectionProps) => {
+}: GroupPerformancesSectionProps) => {
   const [performanceIdToDelete, setPerformanceIdToDelete] = useState<string | null>(null);
 
   const handleAddPerformance = () => {
@@ -51,7 +95,7 @@ export const OpusPerformancesSection = ({
 
   return (
     <CollapsibleBlock title="Всі версії виконання опису" defaultExpanded>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
+      <Box sx={styles.mainContainer}>
         <CustomTextField
           label="Заголовок секції"
           value={sectionTitle}
@@ -59,23 +103,40 @@ export const OpusPerformancesSection = ({
           fullWidth
         />
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+        <Box sx={styles.headerRow}>
+          <Typography variant="body2" color="text.secondary" sx={styles.typographyTitle}>
             Пункти секції:
           </Typography>
-          <Divider sx={{ flexGrow: 1, borderColor: '#E0E2E8' }} />
+          <Divider sx={styles.divider} />
         </Box>
 
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <Box sx={styles.performancesList}>
           {performances.map((item) => (
-            <Box key={item.id} sx={{ display: 'flex', alignItems: 'start', gap: 2 }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, flexGrow: 1 }}>
-                <CustomTextField
-                  label="Canonical URL"
-                  value={item.url}
-                  onChange={(e) => handleUpdatePerformance(item.id, 'url', e.target.value)}
-                  fullWidth
-                />
+            <Box key={item.id} sx={styles.performanceItemRow}>
+              <Box sx={styles.inputsWrapper}>
+            
+
+                <Tooltip
+                  title={renderLinkPreview(item.url)}
+                  placement="top-start"
+                  enterDelay={400} 
+                  slotProps={{
+                    tooltip: {
+                      sx: styles.tooltipBox
+                    }
+                  }}
+                >
+                  <Box sx={{ width: '100%' }}>
+                    {' '}
+                    <CustomTextField
+                      label="Canonical URL"
+                      value={item.url}
+                      onChange={(e) => handleUpdatePerformance(item.id, 'url', e.target.value)}
+                      fullWidth
+                    />
+                  </Box>
+                </Tooltip>
+
                 <CustomTextField
                   label="Підпис"
                   value={item.caption}
@@ -84,27 +145,20 @@ export const OpusPerformancesSection = ({
                 />
               </Box>
 
-              <IconButton
-                onClick={() => setPerformanceIdToDelete(item.id)}
-                sx={{
-                  color: '#131414',
-                  width: '34px',
-                  height: '34px'
-                }}
-              >
+              <IconButton onClick={() => setPerformanceIdToDelete(item.id)} sx={styles.actionIcon}>
                 <TrashIcon />
               </IconButton>
             </Box>
           ))}
         </Box>
 
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
+        <Box sx={styles.addBtnWrapper}>
           <Button
             variant="outlined"
             color="primary"
             startIcon={<PlusIcon />}
             onClick={handleAddPerformance}
-            sx={{ borderRadius: '20px', textTransform: 'none' }}
+            sx={styles.addBtn}
           >
             Додати пункт
           </Button>

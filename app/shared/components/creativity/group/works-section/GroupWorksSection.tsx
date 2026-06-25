@@ -1,13 +1,8 @@
-import {
-  Autocomplete,
-  Box,
-  Divider,
-  IconButton,
-  Paper,
-  Typography} from '@mui/material';
+import { Autocomplete, Box, Divider, IconButton, Paper, Typography } from '@mui/material';
 import { createFilterOptions } from '@mui/material/Autocomplete';
 import { useState } from 'react';
 
+import { styles } from './GroupWorksSection.styles';
 import PencilIcon from '~/public/icons/pencil.svg';
 import PlusIcon from '~/public/icons/plus.svg';
 import TrashIcon from '~/public/icons/trash.svg';
@@ -22,7 +17,7 @@ export type WorkItem = {
   genre?: { uk: string; en: string };
 };
 
-type OpusWorksSectionProps = {
+type GroupWorksSectionProps = {
   works: WorkItem[];
   availableWorks: WorkItem[];
   onChange: (works: WorkItem[]) => void;
@@ -30,11 +25,11 @@ type OpusWorksSectionProps = {
 
 const filter = createFilterOptions<WorkItem>();
 
-export const OpusWorksSection = ({ works, availableWorks, onChange }: OpusWorksSectionProps) => {
+export const GroupWorksSection = ({ works, availableWorks, onChange }: GroupWorksSectionProps) => {
   const [editingWorkId, setEditingWorkId] = useState<string | null>(null);
   const [workIdToDelete, setWorkIdToDelete] = useState<string | null>(null);
   const [searchValues, setSearchValues] = useState<Record<string, string>>({});
-  
+
   const handleAddWork = () => {
     const newId = crypto.randomUUID();
     const newWork: WorkItem = {
@@ -75,33 +70,20 @@ export const OpusWorksSection = ({ works, availableWorks, onChange }: OpusWorksS
 
   return (
     <CollapsibleBlock title="Твори" defaultExpanded>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box sx={styles.mainContainer}>
+        <Box sx={styles.headerRow}>
           <Typography variant="body2" color="text.secondary">
             Твори в групі
           </Typography>
 
-          <Divider sx={{ flexGrow: 1, borderColor: '#E0E2E8' }} />
+          <Divider sx={styles.divider} />
 
-          <Button
-            variant="outlined"
-            color="primary"
-            onClick={handleAddWork}
-            sx={{
-              borderRadius: '20px',
-              textTransform: 'none',
-              backgroundColor: '#190D03',
-              color: '#ffffff',
-              '&:hover': {
-                backgroundColor: '#222222'
-              }
-            }}
-          >
+          <Button variant="outlined" color="primary" onClick={handleAddWork} sx={styles.addBtnTop}>
             Додати
           </Button>
         </Box>
 
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Box sx={styles.worksList}>
           {works.map((work) => {
             const isEditing = editingWorkId === work.id;
 
@@ -109,8 +91,8 @@ export const OpusWorksSection = ({ works, availableWorks, onChange }: OpusWorksS
             const isInputEmpty = currentSearchValue.trim() === '';
 
             return (
-              <Box key={work.id} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box sx={{ flexGrow: 1 }}>
+              <Box key={work.id} sx={styles.workItemRow}>
+                <Box sx={styles.autocompleteWrapper}>
                   <Autocomplete
                     disabled={!isEditing}
                     options={availableWorks}
@@ -140,15 +122,7 @@ export const OpusWorksSection = ({ works, availableWorks, onChange }: OpusWorksS
                       setSearchValues((prev) => ({ ...prev, [work.id]: newInputValue }));
                     }}
                     PaperComponent={(paperProps) => (
-                      <Paper
-                        {...paperProps}
-                        sx={{
-                          borderRadius: '12px',
-                          mt: 1,
-                          boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.05)',
-                          overflow: 'hidden'
-                        }}
-                      >
+                      <Paper {...paperProps} sx={styles.autocompletePaper}>
                         {!isInputEmpty && paperProps.children}
 
                         <Box
@@ -156,37 +130,28 @@ export const OpusWorksSection = ({ works, availableWorks, onChange }: OpusWorksS
                           onClick={() => {
                             setEditingWorkId(null);
                           }}
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1.5,
-                            px: 2,
-                            py: '6px',
-                            cursor: 'pointer',
-                            color: 'text.primary',
-                            transition: 'background-color 0.2s',
-                            '&:hover': {
-                              backgroundColor: 'action.hover'
-                            }
-                          }}
+                          sx={styles.createWorkBox}
                         >
                           <PlusIcon style={{ width: '20px', height: '20px' }} />
-                          <Typography sx={{ fontSize: '16px' }}>Створити новий твір</Typography>
+                          <Typography sx={styles.createWorkText}>Створити новий твір</Typography>
                         </Box>
                       </Paper>
                     )}
                     renderInput={(params) => <CustomTextField {...params} placeholder="Назва твору" fullWidth />}
                   />
                 </Box>
-                <Box sx={{ display: 'flex', gap: 1 }}>
+
+                <Box sx={styles.actionButtonsWrapper}>
                   <IconButton
-                    sx={{ color: '#131414', width: '34px', height: '34px' }}
+                    data-testid="edit-work-btn"
+                    sx={styles.actionIcon}
                     onClick={() => setEditingWorkId(isEditing ? null : work.id)}
                   >
                     <PencilIcon />
                   </IconButton>
                   <IconButton
-                    sx={{ color: '#131414', width: '34px', height: '34px' }}
+                    data-testid="delete-work-btn"
+                    sx={styles.actionIcon}
                     onClick={() => setWorkIdToDelete(work.id)}
                   >
                     <TrashIcon />
@@ -195,18 +160,6 @@ export const OpusWorksSection = ({ works, availableWorks, onChange }: OpusWorksS
               </Box>
             );
           })}
-        </Box>
-
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
-          <Button
-            variant="outlined"
-            color="primary"
-            startIcon={<PlusIcon />}
-            onClick={handleAddWork}
-            sx={{ borderRadius: '20px', textTransform: 'none' }}
-          >
-            Додати пункт
-          </Button>
         </Box>
       </Box>
 

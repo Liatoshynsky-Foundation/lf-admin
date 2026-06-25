@@ -1,6 +1,7 @@
 import { Box, Divider, IconButton, Typography } from '@mui/material';
 import { useState } from 'react';
 
+import { styles } from './GroupPhotosSection.styles';
 import PlusIcon from '~/public/icons/plus.svg';
 import TrashIcon from '~/public/icons/trash.svg';
 import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
@@ -19,12 +20,12 @@ export type PhotoItem = {
   crop?: MediaModalResult['crop'] | null;
 };
 
-type OpusPhotosSectionProps = {
+type GroupPhotosSectionProps = {
   photos: PhotoItem[];
   onChange: (photos: PhotoItem[]) => void;
 };
 
-export const OpusPhotosSection = ({ photos, onChange }: OpusPhotosSectionProps) => {
+export const GroupPhotosSection = ({ photos, onChange }: GroupPhotosSectionProps) => {
   const handleAddPhoto = () => {
     const newPhoto: PhotoItem = {
       id: crypto.randomUUID(),
@@ -37,8 +38,8 @@ export const OpusPhotosSection = ({ photos, onChange }: OpusPhotosSectionProps) 
     onChange([...photos, newPhoto]);
   };
 
-  const handleUpdatePhoto = <K extends keyof PhotoItem>(idToUpdate: string, field: K, value: PhotoItem[K]) => {
-    onChange(photos.map((photo) => (photo.id === idToUpdate ? { ...photo, [field]: value } : photo)));
+  const handleUpdatePhoto = (idToUpdate: string, updates: Partial<PhotoItem>) => {
+    onChange(photos.map((photo) => (photo.id === idToUpdate ? { ...photo, ...updates } : photo)));
   };
 
   const [photoIdToDelete, setPhotoIdToDelete] = useState<string | null>(null);
@@ -52,24 +53,22 @@ export const OpusPhotosSection = ({ photos, onChange }: OpusPhotosSectionProps) 
 
   return (
     <CollapsibleBlock title="Фото" defaultExpanded>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <Box sx={styles.mainContainer}>
+        <Box sx={styles.photosList}>
           {photos.map((photo, index) => (
-            <Box key={photo.id} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
-                <Typography variant="body2" sx={{ fontWeight: 500 }} color="text.secondary">
+            <Box key={photo.id} sx={styles.photoItem}>
+              <Box sx={styles.photoHeader}>
+                <Typography variant="body2" sx={styles.typographyIndex} color="text.secondary">
                   {index === 0 ? 'Зображення 1' : `Зображення ${index + 1}`}
                 </Typography>
 
-                <Divider sx={{ flexGrow: 1, borderColor: '#E0E2E8' }} />
+                <Divider sx={styles.divider} />
 
                 <IconButton
+                  aria-label="Видалити зображення"
+                  data-testid="delete-photo-btn"
                   onClick={() => setPhotoIdToDelete(photo.id)}
-                  sx={{
-                    color: '#131414',
-                    width: '34px',
-                    height: '34px',
-                  }}
+                  sx={styles.actionIcon}
                 >
                   <TrashIcon />
                 </IconButton>
@@ -81,20 +80,22 @@ export const OpusPhotosSection = ({ photos, onChange }: OpusPhotosSectionProps) 
                 altText={photo.altText}
                 showAlternativeText
                 stackSpacing="5px"
-                onChangeAltText={(newAlt: string) => handleUpdatePhoto(photo.id, 'altText', newAlt)}
+                onChangeAltText={(newAlt: string) => handleUpdatePhoto(photo.id, { altText: newAlt })}
                 initialCrop={photo.crop}
                 onChangeImage={(url: string, crop?: MediaModalResult['crop']) => {
-                  handleUpdatePhoto(photo.id, 'src', url);
-                  handleUpdatePhoto(photo.id, 'crop', crop ?? null);
+                  handleUpdatePhoto(photo.id, {
+                    src: url,
+                    crop: crop ?? null
+                  });
                 }}
               />
 
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <Box sx={{ flex: 1 }}>
+              <Box sx={styles.captionWrapper}>
+                <Box sx={styles.captionInputWrapper}>
                   <CustomTextField
                     label="Підпис до зображення"
                     value={photo.caption}
-                    onChange={(e) => handleUpdatePhoto(photo.id, 'caption', e.target.value)}
+                    onChange={(e) => handleUpdatePhoto(photo.id, { caption: e.target.value })}
                     fullWidth
                   />
                 </Box>
@@ -103,14 +104,8 @@ export const OpusPhotosSection = ({ photos, onChange }: OpusPhotosSectionProps) 
           ))}
         </Box>
 
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
-          <Button
-            variant="outlined"
-            color="primary"
-            startIcon={<PlusIcon />}
-            onClick={handleAddPhoto}
-            sx={{ borderRadius: '20px', textTransform: 'none' }}
-          >
+        <Box sx={styles.addBtnWrapper}>
+          <Button variant="outlined" color="primary" startIcon={<PlusIcon />} onClick={handleAddPhoto}>
             Додати пункт
           </Button>
         </Box>
