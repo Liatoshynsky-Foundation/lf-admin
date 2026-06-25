@@ -63,14 +63,14 @@ const defaultFileUploadHandler = async (file: File): Promise<string> => {
 };
 
 export const customSchema = BlockNoteSchema.create(
-  BlockNoteSchema.create({
+  {
     blockSpecs: {
       ...defaultBlockSpecs,
       image: CroppedImageBlock()
     },
     inlineContentSpecs: defaultInlineContentSpecs,
     styleSpecs: defaultStyleSpecs
-  })
+  }
 );
 
 const RESTRICTED_SYMBOLS_REGEX = /[\p{Extended_Pictographic}\p{So}]/gu;
@@ -172,8 +172,13 @@ export const BlockNoteEditor = (props: BlockNoteEditorProps) => {
         const text = clipboardData.getData('text/plain');
         if (html) {
           const cleanedHTML = processHTML(html);
-          const blocks = editor.tryParseHTMLToBlocks(cleanedHTML);
-          editor.insertBlocks(blocks, editor.getTextCursorPosition().block, 'after');
+          const blocks = editorInstance.tryParseHTMLToBlocks(cleanedHTML);
+
+          blocks.forEach((block) => {
+            if (Array.isArray(block.content)) {
+              editorInstance.insertInlineContent(block.content);
+            }
+          });
         } else if (text) {
           const cleanedText = getCleanedText(text).trim();
           editorInstance.insertInlineContent(cleanedText);
@@ -210,13 +215,13 @@ export const BlockNoteEditor = (props: BlockNoteEditorProps) => {
   const handleEditorChange = useCallback(() => {
     if (editor) {
       const charCount = getCharCount(editor);
-      
+
       if (charCount > MAX_CHARS_LIMIT) {
         toast.error(MAX_CHARS_EXCEEDED_MSG);
 
         editor.undo();
-      
-        return; 
+
+        return;
       }
 
       if (onChange) {

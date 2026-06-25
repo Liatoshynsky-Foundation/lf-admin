@@ -375,7 +375,7 @@ describe('BlockNoteEditor', () => {
       const defaultPasteHandler = jest.fn();
       capturedCreateOptions?.pasteHandler({ event, editor: mockEditor, defaultPasteHandler });
       expect(mockEditor.tryParseHTMLToBlocks).toHaveBeenCalledWith(correctHTML);
-      expect(mockEditor.insertBlocks).toHaveBeenCalledWith(mockParsedBlocks, mockCursorBlock, 'after');
+      expect(mockEditor.insertInlineContent).toHaveBeenCalledWith(mockParsedBlocks[0].content);
     });
 
 
@@ -417,7 +417,7 @@ describe('BlockNoteEditor', () => {
       capturedCreateOptions?.pasteHandler({ event, editor: mockEditor, defaultPasteHandler });
 
       expect(mockEditor.tryParseHTMLToBlocks).toHaveBeenCalledWith('<p>test </p>');
-      expect(mockEditor.insertBlocks).toHaveBeenCalledWith(mockParsedBlocks, mockCursorBlock, 'after');
+      expect(mockEditor.insertInlineContent).toHaveBeenCalledWith(mockParsedBlocks[0].content);
     });
   });
 });
