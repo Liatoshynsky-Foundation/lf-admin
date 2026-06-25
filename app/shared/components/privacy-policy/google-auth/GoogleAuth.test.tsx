@@ -11,6 +11,7 @@ describe('GoogleAuth', () => {
     checkNote: true,
     checkList: true,
     usePointsListMock,
+    checkGrip: true,
   });
 });
 

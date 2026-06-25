@@ -1,66 +1,57 @@
 'use client';
 
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 
 import { styles } from './MainPageContent.styles';
 import CardsGrid from '~/shared/components/cards-grid/CardsGrid';
 import PageCard from '~/shared/components/page-card/PageCard';
 import { PageHeader, PageHeaderTab } from '~/shared/components/page-header/PageHeader';
+import { PageCategory } from '~/types/enums/common.enums';
+import type { PageCategories as PageCategoriesType} from '~/types/graphql/generated/graphql';
+import { useGetPagesQuery } from '~/types/graphql/generated/graphql';
+
+export type ValidTab = 'all' | Extract<PageCategoriesType, 'foundation' | 'other'>;
 
 type MainPagesContentProps = Readonly<{
-  activeTab: string;
+  activeTab: ValidTab
 }>;
 
 const MAIN_PAGE_TABS: readonly PageHeaderTab[] = [
-  { value: 'all', label: 'Всі', href: '/main-page/all' },
-  { value: 'foundation', label: 'Фундація', href: '/main-page' }
+  { value: 'all', label: 'Всі', href: '/main-page' },
+  { value: PageCategory.Foundation, label: 'Фундація', href: '/main-page/foundation' },
+  { value: PageCategory.Other, label: 'Інші', href: '/main-page/other' },
 ];
 
-const items = [
-  {
-    id: '1',
-    coverImage: {
-      src: '/images/temp_page-card-static.png',
-      alt: {
-        uk: 'Сторінка Про нас статична зображення',
-        en: 'About Us page static image'
-      }
-    },
-    titleData: {
-      uk: 'Про нас',
-      en: 'About us'
-    },
-    updatedAt: '2025-09-11',
-    editHref: '/about-us',
-    editSeoHref: '/about-us'
-  }
-];
+const ALLOWED_SLUGS = new Set(['about-us', 'privacy-policy']);
 
 export function MainPagesContent({ activeTab }: MainPagesContentProps) {
+  const { data, loading } = useGetPagesQuery({
+    variables: { category: activeTab === 'all' ? undefined : activeTab }
+  });
+
+  if (loading || !data) return null;
+
+  const visiblePages = data.pages.filter((item) => 
+    ALLOWED_SLUGS.has(item.slug)
+  );
+
   return (
     <Box sx={styles.mainPageContentWrapper}>
       <PageHeader title="Основні сторінки" activeTab={activeTab} tabs={MAIN_PAGE_TABS} />
-
-      {activeTab === 'foundation' && (
-        <CardsGrid columns={{ smCols: 1, mdCols: 2, xlCols: 3 }}>
-          {items.map((item) => (
+      <CardsGrid columns={{ smCols: 1, mdCols: 2, xlCols: 3 }}>
+        {
+          visiblePages.map((item) => (
             <PageCard
               key={item.id}
               coverImage={item.coverImage}
-              title={item.titleData}
+              title={item.title}
               updatedAt={item.updatedAt}
-              editHref={item.editHref}
-              editSeoHref={item.editSeoHref}
+              editHref={`/${item.slug}`}
+              editSeoHref={item.slug}
             />
-          ))}
-        </CardsGrid>
-      )}
-
-      {activeTab === 'all' && (
-        <Box>
-          <Typography>Тут згодом буде список усіх сторінок</Typography>
-        </Box>
-      )}
+          ))
+        }
+      </CardsGrid>
     </Box>
   );
 }

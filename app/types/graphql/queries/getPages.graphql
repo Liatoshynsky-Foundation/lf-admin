@@ -1,0 +1,20 @@
+query GetPages($category: PageCategories) {
+  pages(category: $category) {
+    id
+    slug
+    title {
+      uk
+      en
+    }
+    status
+    category
+    coverImage {
+      src
+      alt {
+        uk
+        en 
+      }
+    }
+    updatedAt
+  }
+}

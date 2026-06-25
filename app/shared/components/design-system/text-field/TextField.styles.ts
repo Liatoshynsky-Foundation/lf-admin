@@ -1,4 +1,7 @@
 export const styles = {
+  boxStyles: {
+    width: '100%'
+  },
   textField: {
     '& .MuiInputLabel-root[data-shrink="false"] ~ .MuiInputBase-root input': {
       opacity: 0,

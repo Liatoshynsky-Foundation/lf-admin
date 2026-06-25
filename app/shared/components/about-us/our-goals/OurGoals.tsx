@@ -1,3 +1,4 @@
+import { DragEndEvent } from '@dnd-kit/core';
 import {JSONContent}from '@tiptap/react';
 
 import { EditableSectionList, SectionListItem } from '../../accordion-blocks/editable-section-list/EditableSectionList';
@@ -5,6 +6,7 @@ import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { ensureIds } from '~/lib/utils/ensureIds';
+import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 import { LocalizedString } from '~/types/common';
@@ -19,9 +21,15 @@ const OurGoals = () => {
   const currentLocale: keyof LocalizedString = useStore((state) => state.locale);
   const setField = useStore((state) => state.setField);
 
-  if (!block) return <EditBlockSkeleton />;
+  const goalList: GoalItemWithId[] = block ? ensureIds(block.goals) : [];
 
-  const goalList: GoalItemWithId[] = ensureIds(block.goals);
+  const handleDragEnd = (event: DragEndEvent) => {
+    handleSortableDragEnd(event, goalList, (reordered) => {
+      setField(pageId, blockId, 'goals', reordered);
+    });
+  };
+
+  if (!block) return <EditBlockSkeleton />;
 
   const goalPoints: SectionListItem[] = goalList.map((item) => ({
     id: item.id,
@@ -70,7 +78,7 @@ const OurGoals = () => {
     );
 
   return (
-    <CollapsibleBlock title="Наші цілі">
+    <CollapsibleBlock title="Наші цілі" grip>
       <EditableSectionList
         title={block.title[currentLocale]}
         onTitleChange={handleTitleChange}
@@ -78,6 +86,7 @@ const OurGoals = () => {
         onChangeItem={handleChangeItem}
         onCreateItem={handleCreateItem}
         onDeleteItem={handleDeleteItem}
+        onDragEnd={handleDragEnd}
         sectionLabel="Пункти секції:"
       />
     </CollapsibleBlock>

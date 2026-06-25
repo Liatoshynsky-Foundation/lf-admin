@@ -97,4 +97,27 @@ describe('EditDescriptionListNoteBlock', () => {
       );
     }
   );
+
+  it('should handle drag-and-drop reordering', () => {
+    const mockUpdateAllPoints = jest.fn();
+    (usePointsList as jest.Mock).mockReturnValue({
+      addPoint: mockAddPoint,
+      removePoint: mockRemovePoint,
+      updatePoint: mockUpdatePoint,
+      updateAllPoints: mockUpdateAllPoints,
+      points: [
+        { id: '1', value: { type: 'doc', content: [{ text: 'Пункт 1' }] } },
+        { id: '2', value: { type: 'doc', content: [{ text: 'Пункт 2' }] } }
+      ]
+    });
+
+    render(<EditDescriptionListNoteBlock {...defaultMockProps} />);
+
+    fireEvent.click(screen.getByTestId('mock-sortable-list'));
+
+    expect(mockUpdateAllPoints).toHaveBeenCalledWith([
+      { id: '2', value: { type: 'doc', content: [{ text: 'Пункт 2' }] } },
+      { id: '1', value: { type: 'doc', content: [{ text: 'Пункт 1' }] } }
+    ]);
+  });
 });

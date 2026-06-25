@@ -4,6 +4,7 @@ mutation UpsertPageDraft($input: UpsertPageDraftInput!) {
     slug
     status
     blocks
+    blocksOrder
     updatedAt
     __typename
   }

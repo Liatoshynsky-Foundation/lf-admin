@@ -21,9 +21,13 @@ const resolveIsTmp = (field: string, value: unknown): boolean | undefined => {
 export const createEditSlice: StateCreator<EditState> = (set, get) => ({
   isChanged: false,
   isInitialized: false,
+
   blocks: {},
-  locale: 'uk',
   originalBlocks: {},
+
+  blocksOrder: {},
+  originalBlocksOrder: {},
+  locale: 'uk',
 
   setField: <K extends keyof BlocksMap, F extends keyof BlocksMap[K]>(
     pageId: string,
@@ -91,7 +95,7 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
     });
   },
 
-  setPageData: <T extends Record<string, BlockData>>(pageId: string, blocks: T, isInit = false) => {
+  setPageData: <T extends Record<string, BlockData>>(pageId: string, blocks: T, blocksOrder: string[], isInit = false) => {
     const prevPageBlocks = get().blocks[pageId] || {};
     const nextState: Partial<EditState> = {
       blocks: {
@@ -101,6 +105,10 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
           ...blocks
         }
       },
+      blocksOrder: {
+        ...get().blocksOrder,
+        [pageId]: blocksOrder
+      },
       isChanged: isInit ? get().isChanged : true,
       isInitialized: isInit ? true : get().isInitialized
     };
@@ -109,8 +117,22 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
         ...get().originalBlocks,
         [pageId]: clone(blocks)
       };
+      nextState.originalBlocksOrder = {
+        ...get().originalBlocksOrder,
+        [pageId]: [...blocksOrder]
+      };
     }
     set(nextState as EditState);
+  },
+
+  setBlocksOrder: (pageId: string, blocksOrder: string[]) => {
+    set({
+      blocksOrder: {
+        ...get().blocksOrder,
+        [pageId]: blocksOrder
+      },
+      isChanged: true
+    });
   },
 
   saveAsDraft: (_pageId: string) => {
@@ -119,10 +141,15 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
 
   discardChanges: (pageId: string) => {
     const original = get().originalBlocks[pageId] || {};
+    const originalOrder = get().originalBlocksOrder[pageId] || [];
     set({
       blocks: {
         ...get().blocks,
         [pageId]: clone(original)
+      },
+      blocksOrder: {
+        ...get().blocksOrder,
+        [pageId]: [...originalOrder]
       },
       isChanged: false
     });

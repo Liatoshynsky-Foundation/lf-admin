@@ -14,6 +14,7 @@ type StoreState = {
   saveAsDraft: (slug: string) => void;
   blocks: Record<string, unknown>;
   originalBlocks?: Record<string, unknown>;
+  blocksOrder: Record<string, unknown>;
 };
 
 let storeState: StoreState;
@@ -54,7 +55,8 @@ describe('usePageEditor', () => {
       isChanged: true,
       saveAsDraft: markSavedMock,
       blocks: { test: { IntroSection: { title: 't' } } },
-      originalBlocks: { test: { IntroSection: { title: 'old' } } }
+      originalBlocks: { test: { IntroSection: { title: 'old' } } },
+      blocksOrder: { test: ['IntroSection'] }
     };
   });
 
@@ -76,7 +78,7 @@ describe('usePageEditor', () => {
       const { result } = renderHook(() => usePageEditor('test'));
       await result.current.preview();
       expect(upsertDraftMock).toHaveBeenCalledWith({
-        variables: { input: { slug: 'test', blocks: { IntroSection: { title: 't' } } } }
+        variables: { input: { slug: 'test', blocks: { IntroSection: { title: 't' } }, blocksOrder: ['IntroSection'] } }
       });
       expect(fetchPreviewMock).toHaveBeenCalledWith({ slug: 'test', lang: 'uk', draftId: '123' });
     });
@@ -102,7 +104,7 @@ describe('usePageEditor', () => {
       const { result } = renderHook(() => usePageEditor('test'));
       const res = await result.current.publish();
       expect(publishMock).toHaveBeenCalledWith({
-        variables: { input: { slug: 'test', blocks: { IntroSection: { title: 't' } } } }
+        variables: { input: { slug: 'test', blocks: { IntroSection: { title: 't' } }, blocksOrder: ['IntroSection'] } }
       });
       expect(markSavedMock).toHaveBeenCalledWith('test');
       expect(res).toEqual(published);
