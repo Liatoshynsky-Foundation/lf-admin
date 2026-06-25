@@ -109,4 +109,70 @@ describe('useSectionList', () => {
 
     expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'sections', expectedNewSections);
   });
+
+  it('should call setField with correct updated sections when updateSectionSubtitle is called', () => {
+    const { result } = renderHook(() => useSectionList(defaultMockedProps));
+    const newSubtitle = { type: 'doc', content: [{ type: 'text', text: 'New Subtitle' }] };
+
+    const expectedNewSections = inputSectionsList.map((section) => {
+      if (section.id === sectionIdMocked) {
+        return {
+          ...section,
+          subtitle: { ...section.subtitle, uk: newSubtitle }
+        };
+      }
+      return section;
+    });
+
+    act(() => {
+      result.current.updateSectionSubtitle(sectionIdMocked, newSubtitle);
+    });
+
+    expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'sections', expectedNewSections);
+  });
+
+  it('should call setField with correct updated sections when updateSectionList is called', () => {
+    const { result } = renderHook(() => useSectionList(defaultMockedProps));
+    const newPoints = [{ id: 'point-1-new', uk: emptyDoc, en: emptyDoc }];
+
+    const expectedNewSections = inputSectionsList.map((section) => {
+      if (section.id === sectionIdMocked) {
+        return {
+          ...section,
+          list: newPoints
+        };
+      }
+      return section;
+    });
+
+    act(() => {
+      result.current.updateSectionList(sectionIdMocked, newPoints);
+    });
+
+    expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'sections', expectedNewSections);
+  });
+
+  it('should return early and not call setField when updateListPoint is called with invalid sectionId', () => {
+    const { result } = renderHook(() => useSectionList(defaultMockedProps));
+    act(() => {
+      result.current.updateListPoint('non-existent', { id: 'point-1', uk: emptyDoc, en: emptyDoc });
+    });
+    expect(mockSetField).not.toHaveBeenCalled();
+  });
+
+  it('should return early and not call setField when removeListPoint is called with invalid sectionId', () => {
+    const { result } = renderHook(() => useSectionList(defaultMockedProps));
+    act(() => {
+      result.current.removeListPoint('non-existent', 'point-1');
+    });
+    expect(mockSetField).not.toHaveBeenCalled();
+  });
+
+  it('should return early and not call setField when updateSectionList is called with invalid sectionId', () => {
+    const { result } = renderHook(() => useSectionList(defaultMockedProps));
+    act(() => {
+      result.current.updateSectionList('non-existent', []);
+    });
+    expect(mockSetField).not.toHaveBeenCalled();
+  });
 });

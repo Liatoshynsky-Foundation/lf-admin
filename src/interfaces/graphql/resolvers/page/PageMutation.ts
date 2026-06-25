@@ -10,8 +10,8 @@ import { blobStorageService } from '~/src/application/use-cases/uploadService/up
 import { JsonObject } from '~/src/shared/types/pages/types';
 import type { Page, Scalars } from '~/types/graphql/generated/graphql';
 
-type UpsertPageDraftArgs = { input: { slug: string; blocks: Scalars['JSON']['input'] } };
-type PublishPageArgs = { input: { slug: string; blocks?: Scalars['JSON']['input'] } };
+type UpsertPageDraftArgs = { input: { slug: string; blocks: Scalars['JSON']['input'], blocksOrder: string[] } };
+type PublishPageArgs = { input: { slug: string; blocks?: Scalars['JSON']['input'], blocksOrder: string[] } };
 
 export const PageMutation = {
   async upsertPageDraft(
@@ -32,7 +32,7 @@ export const PageMutation = {
 
     const repo = requestContainer.cradle.pageRepository;
 
-    const { slug, blocks } = input;
+    const { slug, blocks, blocksOrder } = input;
 
     const imageSrcs = extractImageSrcs(blocks);
     if (imageSrcs.length) {
@@ -49,18 +49,18 @@ export const PageMutation = {
       if (!published) {
         throw new Error(`Cannot upsert draft: no source (draft or published) for slug="${slug}"`);
       }
-      resultPage = (await repo.createDraft(slug, cleanedBlocks, published)) as Page;
+      resultPage = await repo.createDraft(slug, cleanedBlocks, blocksOrder, published);
     } else {
       const changes = createDotNotationPatch(
-         
         (existingDraft.blocks as unknown as JsonObject) || {}, // NOSONAR
         (cleanedBlocks as JsonObject) || {} // NOSONAR
       );
-
-      if (!Object.keys(changes.$set ?? {}).length && !Object.keys(changes.$unset ?? {}).length) {
-        resultPage = existingDraft as Page;
+      const hasOrderChanged = JSON.stringify(existingDraft.blocksOrder) !== JSON.stringify(blocksOrder);
+     
+      if (!Object.keys(changes.$set ?? {}).length && !Object.keys(changes.$unset ?? {}).length && !hasOrderChanged) {
+        resultPage = existingDraft;
       } else {
-        resultPage = (await repo.applyPatchToDraft(slug, changes)) as Page;
+        resultPage = await repo.applyPatchToDraft(slug, blocksOrder, changes);
       }
     }
 
@@ -82,7 +82,7 @@ export const PageMutation = {
 
     const repo = requestContainer.cradle.pageRepository;
 
-    const { slug, blocks } = input;
+    const { slug, blocks, blocksOrder } = input;
 
     let blocksToPublish = blocks;
 
@@ -111,12 +111,12 @@ export const PageMutation = {
     }
 
     const changes = createDotNotationPatch(
-       
+
       (publishedPage?.blocks as unknown as JsonObject) || {}, // NOSONAR
       (cleanedBlocks as JsonObject) || {} // NOSONAR
     );
 
-    const resultPage = (await repo.applyPatchToPublished(slug, changes, title, pageType)) as Page;
+    const resultPage = (await repo.applyPatchToPublished(slug, changes, blocksOrder, title, pageType)) as Page;
 
     await syncImagesCrops(resultPage.id, blocksToPublish);
 

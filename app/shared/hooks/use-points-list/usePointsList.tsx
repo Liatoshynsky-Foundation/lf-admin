@@ -62,6 +62,7 @@ export const usePointsList = <K extends keyof BlocksMap>({ list, setField, listF
     addPoint,
     removePoint,
     updatePoint,
+    updateAllPoints: updatePoints,
     points
   };
 };

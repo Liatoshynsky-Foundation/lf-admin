@@ -17,6 +17,7 @@ jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
 }));
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
 jest.mock('~/components/accordion-blocks/editable-section-list/EditableSectionList');
+jest.mock('~/components/grip/Grip');
 
 const TARGET_ID = 'target-id-1';
 const emptyDoc = { uk: { type: 'doc', content: [] }, en: { type: 'doc', content: [] } };
@@ -115,4 +116,36 @@ describe('OurGoals', () => {
       );
     }
   );
+
+  it('should render the grip handle and handle drag-and-drop reordering', () => {
+    const doubleMockBlock = {
+      title: { uk: mockBlockTitleJson },
+      goals: [
+        {
+          id: '1',
+          title: { uk: mockGoalTitleJson, en: { type: 'doc', content: [] } },
+          description: { uk: mockGoalDescJson, en: { type: 'doc', content: [] } }
+        },
+        {
+          id: '2',
+          title: { uk: mockGoalTitleJson, en: { type: 'doc', content: [] } },
+          description: { uk: mockGoalDescJson, en: { type: 'doc', content: [] } }
+        }
+      ]
+    };
+    usePageBlockMock.mockReturnValue({ block: doubleMockBlock });
+
+    render(<OurGoals />);
+
+    expect(screen.getByTestId('collapsible-block-grip')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('trigger-drag-end'));
+
+    expect(setFieldMock).toHaveBeenCalledWith(
+      PAGE_IDS.ABOUT_US,
+      BLOCK_IDS.OUR_GOALS,
+      'goals',
+      [doubleMockBlock.goals[1], doubleMockBlock.goals[0]]
+    );
+  });
 });

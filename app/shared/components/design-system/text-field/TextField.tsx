@@ -25,7 +25,7 @@ export const CustomTextField: React.FC<Props> = (allProps) => {
   const { title, titleSx, ...props } = allProps;
 
   return (
-    <Box>
+    <Box sx={styles.boxStyles}>
       {title && (
         <Typography variant="subtitle2" sx={{ ...styles.titleStyles, ...titleSx }}>
           {title}

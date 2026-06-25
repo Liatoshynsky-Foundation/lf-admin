@@ -39,6 +39,14 @@ export interface EditState {
     };
   };
 
+  blocksOrder: {
+    [pageId: string]: string[]
+  }
+
+  originalBlocksOrder: {
+    [pageId: string]: string[]
+  }
+
   locale: 'uk' | 'en';
   setLocale: (locale: 'uk' | 'en') => void;
   setField: <P extends string, K extends keyof BlocksMap, F extends keyof BlocksMap[K]>(
@@ -53,7 +61,8 @@ export interface EditState {
     data: Partial<BlocksMap[K]>,
     isInit?: boolean
   ) => void;
-  setPageData: <T extends Record<string, BlockData>>(pageId: string, blocks: T, isInit?: boolean) => void;
+  setPageData: <T extends Record<string, BlockData>>(pageId: string, blocks: T, blocksOrder: string[], isInit?: boolean) => void;
+  setBlocksOrder: (pageId: string, blocksOrder: string[]) => void;
   saveAsDraft: (pageId: string) => void;
   publishPage: (pageId: string) => void;
   discardChanges: (pageId: string) => void;

@@ -16,8 +16,8 @@ export interface MockEditableSectionListProps {
   readonly onCreateItem: () => { readonly id: string };
   readonly onDeleteItem: (id: string) => void;
   readonly sectionLabel: string;
+  readonly onDragEnd?: (event: any) => void;
 }
-
 
 export const EditableSectionList = ({
   title,
@@ -26,7 +26,8 @@ export const EditableSectionList = ({
   onChangeItem,
   onCreateItem,
   onDeleteItem,
-  sectionLabel
+  sectionLabel,
+  onDragEnd
 }: MockEditableSectionListProps) => (
   <div data-testid="editable-section-list" data-label={sectionLabel}>
     <div data-testid="main-title-json">{JSON.stringify(title)}</div>
@@ -36,6 +37,14 @@ export const EditableSectionList = ({
     >
       Change Main Title
     </button>
+    {onDragEnd && (
+      <button
+        data-testid="trigger-drag-end"
+        onClick={() => onDragEnd({ active: { id: '1' }, over: { id: '2' } })}
+      >
+        Drag End
+      </button>
+    )}
     {items.map((item) => (
       <div key={item.id} data-testid={`goal-item-${item.id}`}>
         <span data-testid={`item-title-${item.id}`}>{JSON.stringify(item.title)}</span>

@@ -1,3 +1,4 @@
+import { DragEndEvent } from '@dnd-kit/core';
 import { JSONContent} from '@tiptap/react';
 
 import { EditableSectionList, SectionListItem } from '../../accordion-blocks/editable-section-list/EditableSectionList';
@@ -5,6 +6,7 @@ import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { ensureIds } from '~/lib/utils/ensureIds';
+import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 import { LocalizedString } from '~/types/common';
@@ -19,9 +21,15 @@ const WhatWeDo = () => {
   const currentLocale: keyof LocalizedString = useStore((state) => state.locale);
   const setField = useStore((state) => state.setField);
 
+  const itemList: WhatWeDolItemWithId[] = block ? ensureIds(block.items) : [];
+  
+  const handleDragEnd = (event: DragEndEvent) => {
+    handleSortableDragEnd(event, itemList, (reordered) => {
+      setField(pageId, blockId, 'items', reordered);
+    });
+  };
+  
   if (!block) return <EditBlockSkeleton />;
-
-  const itemList: WhatWeDolItemWithId[] = ensureIds(block.items);
 
   const points: SectionListItem[] = itemList.map((item) => ({
     id: item.id,
@@ -60,7 +68,7 @@ const WhatWeDo = () => {
     );
 
   return (
-    <CollapsibleBlock title="Що ми робимо">
+    <CollapsibleBlock title="Що ми робимо" grip>
       <EditableSectionList
         title={block.title[currentLocale]}
         onTitleChange={handleTitleChange}
@@ -68,6 +76,7 @@ const WhatWeDo = () => {
         onChangeItem={handleChangeItem}
         onCreateItem={handleCreateItem}
         onDeleteItem={handleDeleteItem}
+        onDragEnd={handleDragEnd}
         sectionLabel="Пункти секції:"
       />
     </CollapsibleBlock>

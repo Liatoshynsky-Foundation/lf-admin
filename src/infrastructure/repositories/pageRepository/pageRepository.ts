@@ -15,6 +15,7 @@ type DbPage = {
   category: BasePage['category'];
   coverImage: BasePage['coverImage'];
   blocks: BasePage['blocks'];
+  blocksOrder: BasePage['blocksOrder'];
   createdAt: Date | string;
   updatedAt: Date | string;
 };
@@ -34,6 +35,7 @@ const toEntity = (doc: DbPage): BasePage => ({
   category: doc.category,
   coverImage: doc.coverImage,
   blocks: doc.blocks,
+  blocksOrder: doc.blocksOrder,
   createdAt: toIso(doc.createdAt) as unknown as BasePage['createdAt'],
   updatedAt: toIso(doc.updatedAt) as unknown as BasePage['updatedAt']
 });
@@ -62,22 +64,28 @@ export const PageRepository = ({ PageModel, DraftPageModel }: PageRepoDeps): Pag
     getDraftBySlug: (slug: string) => getBySlug(DraftPageModel, slug),
     getPublishedBySlug: (slug: string) => getBySlug(PageModel, slug),
 
-    createDraft: async (slug: string, blocks: unknown, source: BasePage): Promise<BasePage> => {
+    createDraft: async (slug: string, blocks: unknown, blocksOrder: string[], source: BasePage): Promise<BasePage> => {
       await dbConnect();
       const newDraft = await new DraftPageModel({
         slug,
         status: PageStatus.Draft,
         title: source.title,
         pageType: source.pageType,
-        blocks
+        blocks,
+        blocksOrder
       }).save();
 
       return toEntity(newDraft.toObject() as unknown as DbPage);
     },
 
-    applyPatchToDraft: async (slug: string, patch: Patch): Promise<BasePage> => {
+    applyPatchToDraft: async (slug: string, blocksOrder: string[], patch: Patch): Promise<BasePage> => {
       await dbConnect();
       const updateQuery = buildMongoUpdateQuery('blocks', patch);
+
+      updateQuery.$set = {
+        ...updateQuery.$set,
+        blocksOrder
+      };
 
       const updated = await DraftPageModel.findOneAndUpdate({ slug }, updateQuery, { new: true }).lean<DbPage>();
 
@@ -88,6 +96,7 @@ export const PageRepository = ({ PageModel, DraftPageModel }: PageRepoDeps): Pag
     applyPatchToPublished: async (
       slug: string,
       patch: Patch,
+      blocksOrder: string[],
       title: LocalizedTitle,
       pageType: string
     ): Promise<BasePage> => {
@@ -98,6 +107,7 @@ export const PageRepository = ({ PageModel, DraftPageModel }: PageRepoDeps): Pag
       updateQuery.$set.title = title;
       updateQuery.$set.pageType = pageType;
       updateQuery.$set.status = PageStatus.Published;
+      updateQuery.$set.blocksOrder = blocksOrder;
 
       const updated = await PageModel.findOneAndUpdate(
         { slug },

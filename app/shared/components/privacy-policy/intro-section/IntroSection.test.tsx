@@ -22,6 +22,7 @@ describe('IntroSection', () => {
   runCommonBlockTests({
     Component: IntroSection,
     mockBlock,
+    checkGrip: false,
   });
   it('should render trust and security & agreement paragraphs', () => {
     render(<IntroSection />);

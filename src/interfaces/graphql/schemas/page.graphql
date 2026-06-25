@@ -26,6 +26,7 @@ type Page {
   category: PageCategories!
   coverImage: PageCoverImage!
   blocks: JSON!
+  blocksOrder: [String!]!
   createdAt: String!
   updatedAt: String!
 }
@@ -43,11 +44,13 @@ input UpdatePageBlocksInput {
 input UpsertPageDraftInput {
   slug: String!
   blocks: JSON!
+  blocksOrder: [String!]!
 }
 
 input PublishPageInput {
   slug: String!
   blocks: JSON
+  blocksOrder: [String!]!
 }
 
 extend type Mutation {

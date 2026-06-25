@@ -1,7 +1,9 @@
+import { DragEndEvent } from '@dnd-kit/core';
 import { JSONContent } from '@tiptap/react';
 
 import { PAGE_IDS } from '~/constants/pageBlocks';
 import { ensureIds } from '~/lib/utils/ensureIds';
+import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 import { PointsList } from '~/shared/components/privacy-policy/components/points-list/PointsList';
@@ -40,7 +42,7 @@ export const EditDescriptionListNoteBlock = <T extends BlockWithDescriptionListN
   const rawList = block[listFieldName] as Array<LocalizedJSON & { id?: string }>;
   const list = ensureIds(rawList);
 
-  const { addPoint, removePoint, updatePoint, points } = usePointsList({
+  const { addPoint, removePoint, updatePoint, updateAllPoints, points } = usePointsList({
     list,
     setField,
     listFieldName,
@@ -48,6 +50,12 @@ export const EditDescriptionListNoteBlock = <T extends BlockWithDescriptionListN
     pageId,
     blockId
   });
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    handleSortableDragEnd(event, points, (reordered) => {
+      updateAllPoints(reordered);
+    });
+  };
 
   const handleTextChange = (fieldName: 'description' | 'note', value: JSONContent) => {
     const currentValue = block[fieldName];
@@ -61,7 +69,7 @@ export const EditDescriptionListNoteBlock = <T extends BlockWithDescriptionListN
   const noteBlock = block.note;
 
   return (
-    <CollapsibleBlock title={title}>
+    <CollapsibleBlock title={title} grip>
       {descriptionBlock && (
         <CustomTextField
           fieldType="formatting"
@@ -73,10 +81,12 @@ export const EditDescriptionListNoteBlock = <T extends BlockWithDescriptionListN
 
       {points.length > 0 && (
         <PointsList
+          id={blockId}
           points={points}
           addPoint={addPoint}
           removePoint={removePoint}
           updatePoint={updatePoint}
+          onDragEnd={handleDragEnd}
         />
       )}
 

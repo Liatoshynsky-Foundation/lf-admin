@@ -22,6 +22,7 @@ export type BasePage = {
   category: PageCategories;
   coverImage: PageCoverImage;
   blocks: Record<string, BlockData>;
+  blocksOrder: string[];
   createdAt: string;
   updatedAt: string;
 };

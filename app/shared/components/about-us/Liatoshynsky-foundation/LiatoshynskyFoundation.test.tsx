@@ -82,6 +82,7 @@ jest.mock('./foundation-block/FoundationBlock', () => ({
 }));
 
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
+jest.mock('~/components/grip/Grip');
 
 jest.mock('~/lib/utils/prose', () => ({ proseToText: String }));
 
