@@ -1,7 +1,8 @@
+import { Box } from '@mui/material';
 import { render } from '@testing-library/react';
 import React from 'react';
 
-import { GroupRowData, WorksTable } from './WorksTable';
+import { GroupRowData, IndividualWork, WorksTable } from './WorksTable';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 const mockTableLayout = jest.fn();
@@ -9,7 +10,7 @@ const mockTableLayout = jest.fn();
 jest.mock('~/shared/components/table-layout/TableLayout', () => ({
   TableLayout: (props: unknown) => {
     mockTableLayout(props);
-    return <div data-testid="table-layout" />;
+    return <Box data-testid="table-layout" />;
   }
 }));
 
@@ -21,7 +22,6 @@ const group: GroupRowData = {
   startDate: '2020',
   endDate: '2022',
   status: BaseContentStatuses.Draft,
-  createdAt: '2024-01-01',
   updatedAt: '2024-01-01',
   works: [
     {
@@ -32,12 +32,13 @@ const group: GroupRowData = {
   ]
 };
 
-const individualWork = {
+const individualWork: IndividualWork = {
   id: 'individual-1',
   title: 'Individual work',
   year: '2023',
   genre: 'Opera',
-  status: BaseContentStatuses.Published
+  status: BaseContentStatuses.Published,
+  updatedAt: '2024-01-02'
 };
 
 describe('WorksTable', () => {
