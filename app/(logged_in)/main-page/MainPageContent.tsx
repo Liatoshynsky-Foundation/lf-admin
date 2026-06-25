@@ -46,7 +46,7 @@ export function MainPagesContent({ activeTab }: MainPagesContentProps) {
               coverImage={item.coverImage}
               title={item.title}
               updatedAt={item.updatedAt}
-              editHref={item.slug}
+              editHref={`/${item.slug}`}
               editSeoHref={item.slug}
             />
           ))

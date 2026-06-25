@@ -143,4 +143,24 @@ describe('MainPagesContent Component', () => {
       variables: { category: PageCategory.Foundation }
     });
   });
+
+  it('should render PageCard with editHref always pointing to /slug', () => {
+    const mockPages = [
+      { id: '1', slug: 'about-us', title: 'About Us', coverImage: 'img1.png', updatedAt: '2026-06-23' },
+      { id: '2', slug: 'privacy-policy', title: 'Privacy Policy', coverImage: 'img2.png', updatedAt: '2026-06-23' },
+    ];
+
+    (useGetPagesQuery as jest.Mock).mockReturnValue({
+      loading: false,
+      data: { pages: mockPages },
+    });
+
+    render(<MainPagesContent activeTab="all" />);
+
+    const cards = screen.getAllByTestId('mock-page-card');
+    expect(cards).toHaveLength(2);
+
+    expect(screen.getByText('/about-us')).toBeInTheDocument();
+    expect(screen.getByText('/privacy-policy')).toBeInTheDocument();
+  });
 });
