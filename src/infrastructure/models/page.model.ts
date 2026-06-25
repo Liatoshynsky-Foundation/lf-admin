@@ -1,7 +1,7 @@
 import mongoose, { Model, Schema } from 'mongoose';
 
 import { BasePage } from '~/domain/entities/Page';
-import { PageStatus } from '~/types/enums/common.enums';
+import { PageCategory,PageStatus } from '~/types/enums/common.enums';
 
 const pageBaseSchema = new Schema<BasePage>(
   {
@@ -9,6 +9,21 @@ const pageBaseSchema = new Schema<BasePage>(
     title: {
       uk: { type: String, required: true },
       en: { type: String, required: true }
+    },
+    category: {
+      type: String,
+      enum: PageCategory,
+      required: true,
+    },
+    coverImage: {
+      src: {
+        type: String,
+        required: true,
+      },
+      alt: {
+        type: String,
+        required: true
+      }
     },
     status: {
       type: String,

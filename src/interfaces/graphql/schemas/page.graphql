@@ -5,12 +5,26 @@ type LocalizedString {
   en: String
 }
 
+type PageCoverImage {
+  src: String!
+  alt: LocalizedString!
+}
+
+enum PageCategories {
+  borys_liatoshynsky
+  foundation
+  cooperation
+  archive 
+  other
+}
+
 type Page {
   id: ID!
   slug: String!
   title: LocalizedString!
   status: String!
-  pageType: String!
+  category: PageCategories!
+  coverImage: PageCoverImage!
   blocks: JSON!
   blocksOrder: [String!]!
   createdAt: String!
@@ -19,6 +33,7 @@ type Page {
 
 extend type Query {
   pageBlocks(slug: String!, status: String = "published"): Page
+  pages(category: PageCategories): [Page!]!
 }
 
 input UpdatePageBlocksInput {

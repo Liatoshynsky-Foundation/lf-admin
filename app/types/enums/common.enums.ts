@@ -3,6 +3,17 @@ export enum PageStatus {
   Published = 'published'
 }
 
+export enum PageCategories {
+  BorysLiatoshynsky = 'borys_liatoshynsky',
+  Foundation = 'foundation',
+  Cooperation = 'cooperation',
+  Archive = 'archive', 
+  Other = 'other'
+}
+export type PageCategory = PageCategories
+export const PageCategory = PageCategories;
+
+
 export enum BaseContentStatuses {
   Draft = 'draft',
   Published = 'published',

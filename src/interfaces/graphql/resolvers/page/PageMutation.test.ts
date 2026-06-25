@@ -5,8 +5,9 @@ import { PageMutation } from './PageMutation';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import type { BasePage } from '~/domain/entities/Page';
 import type { PageRepository } from '~/src/domain/repositories/pageRepository';
-import { PageStatus } from '~/types/enums/common.enums';
-import { Scalars } from '~/types/graphql/generated/graphql';
+import { DEFAULT_COVER_IMAGE } from '~/src/infrastructure/repositories/pageRepository/pageRepository.test';
+import { PageCategories, PageStatus } from '~/types/enums/common.enums';
+import {Scalars} from '~/types/graphql/generated/graphql';
 
 jest.mock('mongoose', () => ({
   Types: {
@@ -40,7 +41,8 @@ describe('PageMutation', () => {
     getPublishedBySlug: jest.fn(),
     createDraft: jest.fn(),
     applyPatchToDraft: jest.fn(),
-    applyPatchToPublished: jest.fn()
+    applyPatchToPublished: jest.fn(),
+    findPages: jest.fn()
   };
 
   const mockContext = {
@@ -54,6 +56,8 @@ describe('PageMutation', () => {
     title: { uk: 'Т', en: 'T' },
     status: PageStatus.Published,
     pageType: 'AboutUsPage',
+    category: PageCategories.Foundation,
+    coverImage: DEFAULT_COVER_IMAGE,
     blocks: {},
     blocksOrder: [''],
     createdAt: new Date().toISOString(),

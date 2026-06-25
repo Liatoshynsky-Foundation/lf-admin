@@ -1,10 +1,10 @@
-import { Model, Types } from 'mongoose';
+import { FilterQuery, Model, Types } from 'mongoose';
 
 import { JsonObject, Patch } from '~/back-shared/types/pages/types';
 import { BasePage, LocalizedTitle } from '~/domain/entities/Page';
 import dbConnect from '~/infrastructure/db/connect';
 import { PageRepository as PageRepositoryType } from '~/src/domain/repositories/pageRepository';
-import { PageStatus } from '~/types/enums/common.enums';
+import { PageCategory, PageStatus } from '~/types/enums/common.enums';
 
 type DbPage = {
   _id: Types.ObjectId;
@@ -12,6 +12,8 @@ type DbPage = {
   title: BasePage['title'];
   status: BasePage['status'];
   pageType: string;
+  category: BasePage['category'];
+  coverImage: BasePage['coverImage'];
   blocks: BasePage['blocks'];
   blocksOrder: BasePage['blocksOrder'];
   createdAt: Date | string;
@@ -30,6 +32,8 @@ const toEntity = (doc: DbPage): BasePage => ({
   title: doc.title,
   status: doc.status,
   pageType: doc.pageType,
+  category: doc.category,
+  coverImage: doc.coverImage,
   blocks: doc.blocks,
   blocksOrder: doc.blocksOrder,
   createdAt: toIso(doc.createdAt) as unknown as BasePage['createdAt'],
@@ -119,6 +123,15 @@ export const PageRepository = ({ PageModel, DraftPageModel }: PageRepoDeps): Pag
 
       if (!updated) throw new Error('Error during publishing the page');
       return toEntity(updated);
-    }
+    },
+
+    findPages: async (category?: PageCategory) => {
+      await dbConnect();
+      const query: FilterQuery<DbPage> = {};
+      if (category) query.category = category;
+
+      const docs = await PageModel.find(query).lean<DbPage[]>();
+      return docs.map(toEntity);
+    },
   };
 };

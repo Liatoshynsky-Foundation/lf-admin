@@ -1,0 +1,1 @@
+export const BACK_NAVIGATION = '__NAVIGATION_BACK__';

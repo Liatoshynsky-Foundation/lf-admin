@@ -13,6 +13,7 @@ import { BlockNoteView } from '@blocknote/mantine';
 import { FormattingToolbarController, SuggestionMenuController, useCreateBlockNote } from '@blocknote/react';
 import { Box } from '@mui/material';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import { styles } from './BlockNoteEditor.styles';
 import { CroppedImageBlock } from './cropped-image-block/CroppedImageBlock';
@@ -22,6 +23,28 @@ import { getCustomSlashMenuItems } from '~/lib/utils/getCustomSlashMenuItems';
 import { sxToArray } from '~/lib/utils/sxToArray';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
+
+const MAX_CHARS_LIMIT = 5000;
+const MAX_CHARS_EXCEEDED_MSG = `Вміст не повинен перевищувати ${MAX_CHARS_LIMIT} символів.`;
+
+type TiptapInternal = {
+  _tiptapEditor?: {
+    state?: {
+      doc?: {
+        textContent?: string;
+      };
+    };
+    editorState?: {
+      doc?: {
+        textContent?: string;
+      };
+    };
+    commands: {
+      undo: () => void;
+    };
+  };
+};
+
 
 const DEFAULT_EDITOR_SETTINGS = {
   placeholder: 'Почніть вводити текст або використайте "/" для команд...',
@@ -49,6 +72,23 @@ export const customSchema = BlockNoteSchema.create(
     styleSpecs: defaultStyleSpecs
   })
 );
+
+const getDocTextContent = (editorInstance: unknown): string => {
+  const internal = editorInstance as TiptapInternal;
+  const tiptap = internal?._tiptapEditor;
+  if (!tiptap) return '';
+  const docState = tiptap.state || tiptap.editorState;
+
+  const textContent = docState?.doc?.textContent || '';
+
+  return textContent;
+};
+
+const getCharCount = (editorInstance: unknown) => {
+  const textContent = getDocTextContent(editorInstance);
+  return textContent.length;
+};
+
 
 export const BlockNoteEditor = (props: BlockNoteEditorProps) => {
   const {
@@ -112,8 +152,20 @@ export const BlockNoteEditor = (props: BlockNoteEditorProps) => {
   }, []);
 
   const handleEditorChange = useCallback(() => {
-    if (onChange && editor) {
-      onChange(editor.document as Block[]);
+    if (editor) {
+      const charCount = getCharCount(editor);
+      
+      if (charCount > MAX_CHARS_LIMIT) {
+        toast.error(MAX_CHARS_EXCEEDED_MSG);
+
+        editor.undo();
+      
+        return; 
+      }
+
+      if (onChange) {
+        onChange(editor.document as Block[]);
+      }
     }
   }, [editor, onChange]);
 

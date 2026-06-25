@@ -3,7 +3,12 @@ import type { Patch } from '~/back-shared/types/pages/types';
 import type { BasePage } from '~/domain/entities/Page';
 import dbConnect from '~/infrastructure/db/connect';
 import PageModel from '~/infrastructure/models/page.model';
-import { PageStatus } from '~/types/enums/common.enums';
+import { PageCategories, PageStatus } from '~/types/enums/common.enums';
+
+export const DEFAULT_COVER_IMAGE = {
+  src: '/fake-image.png',
+  alt: { uk: 'Зображення', en: 'Image' },
+};
 
 jest.mock('../../db/connect', () => ({
   __esModule: true,
@@ -15,6 +20,7 @@ jest.mock('../../models/page.model', () => ({
   default: {
     findOne: jest.fn(),
     findOneAndUpdate: jest.fn(),
+    find: jest.fn(),
     save: jest.fn()
   }
 }));
@@ -39,6 +45,7 @@ jest.mock('../../models/draftPage.model', () => {
 const mockedConnect = dbConnect as unknown as jest.Mock;
 const mockedPageFindOne = (PageModel as unknown as { findOne: jest.Mock }).findOne;
 const mockedPageFindOneAndUpdate = (PageModel as unknown as { findOneAndUpdate: jest.Mock }).findOneAndUpdate;
+const mockedPagesFind = (PageModel as unknown as { find: jest.Mock }).find;
 
 const DraftPageModelMock = jest.requireMock('../../models/draftPage.model').default;
 const mockedDraftFindOne = DraftPageModelMock.findOne;
@@ -74,6 +81,8 @@ describe('PageRepository', () => {
     slug: 'about-us',
     title: { uk: 'Про нас', en: 'About us' },
     status: PageStatus.Published,
+    category: 'foundation',
+    coverImage: DEFAULT_COVER_IMAGE,
     pageType: 'AboutUsPage',
     blocks: {
       IntroSection: {
@@ -91,6 +100,8 @@ describe('PageRepository', () => {
     slug: 'about-us',
     title: { uk: 'Про нас', en: 'About us' },
     status: PageStatus.Draft,
+    category: 'foundation',
+    coverImage: DEFAULT_COVER_IMAGE,
     pageType: 'AboutUsPage',
     blocks: {
       IntroSection: {
@@ -122,6 +133,8 @@ describe('PageRepository', () => {
         title: publishedDoc.title,
         status: PageStatus.Published,
         pageType: 'AboutUsPage',
+        category: 'foundation',
+        coverImage: DEFAULT_COVER_IMAGE,
         blocks: publishedDoc.blocks,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-02-01T00:00:00.000Z'
@@ -150,6 +163,8 @@ describe('PageRepository', () => {
         slug: 'about-us',
         title: draftDoc.title,
         status: PageStatus.Draft,
+        category: 'foundation',
+        coverImage: DEFAULT_COVER_IMAGE,
         pageType: 'AboutUsPage',
         blocks: draftDoc.blocks,
         blocksOrder: draftDoc.blocksOrder,
@@ -207,6 +222,8 @@ describe('PageRepository', () => {
         title: draftDoc.title,
         status: PageStatus.Draft,
         blocksOrder: ['IntroSection', 'WhatWeDo'],
+        category: 'foundation',
+        coverImage: DEFAULT_COVER_IMAGE,
         pageType: 'AboutUsPage',
         blocks: updatedDraft.blocks,
         createdAt: '2024-01-01T00:00:00.000Z',
@@ -271,6 +288,8 @@ describe('PageRepository', () => {
         status: PageStatus.Published,
         pageType: 'AboutUsPage',
         blocksOrder,
+        category: 'foundation',
+        coverImage: DEFAULT_COVER_IMAGE,
         blocks: updatedPublished.blocks,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-05-01T00:00:00.000Z'
@@ -417,6 +436,40 @@ describe('PageRepository', () => {
 
       const resBlocks = res.blocks as unknown as Record<string, MockImageWithCrop>;
       expect(resBlocks.OurMission.bigImage?.crop).toEqual(crop);
+    });
+  });
+
+  describe('findPages', () => {
+    it('should return all pages if no category is provided', async () => {
+      mockedPagesFind.mockReturnValueOnce(leanResolved([publishedDoc]));
+
+      const res = await repo.findPages();
+
+      expect(mockedConnect).toHaveBeenCalled();
+      expect(res).toEqual([{
+        id: _id,
+        slug: 'about-us',
+        title: publishedDoc.title,
+        status: PageStatus.Published,
+        category: 'foundation',
+        coverImage: DEFAULT_COVER_IMAGE,
+        pageType: 'AboutUsPage',
+        blocks: publishedDoc.blocks,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-02-01T00:00:00.000Z'
+      }]);
+    });
+
+    it('should correctly call the DB if category is provided', async () => {
+      mockedPagesFind.mockReturnValueOnce(leanResolved([publishedDoc]));
+      const category = 'foundation' as PageCategories;
+
+      await repo.findPages(category);
+
+      expect(mockedConnect).toHaveBeenCalled();
+      expect(mockedPagesFind).toHaveBeenCalledWith({
+        category
+      });
     });
   });
 });
