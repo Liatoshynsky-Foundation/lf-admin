@@ -92,7 +92,7 @@ describe('ActionableSuggestItem', () => {
     renderComponent({ mode: 'audio', value: 'Sonata No. 1' });
 
     expect(screen.getByLabelText('Назва аудіо *')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Введіть назву нот')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Введіть назву аудіо')).toBeInTheDocument();
     expect(screen.queryByTestId('mock-date-picker')).not.toBeInTheDocument();
   });
 
@@ -101,7 +101,7 @@ describe('ActionableSuggestItem', () => {
     renderComponent({ mode: 'notes', value: 'Nocturne Op. 9', date: mockDate });
 
     expect(screen.getByLabelText('Назва нот *')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Введіть назву аудіо')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Введіть назву нот')).toBeInTheDocument();
     expect(screen.getByTestId('mock-date-picker')).toBeInTheDocument();
     expect(screen.getByLabelText('Дата видання *')).toBeInTheDocument();
     expect(screen.getByTestId('date-picker-input')).toHaveValue('20/05/2026');
