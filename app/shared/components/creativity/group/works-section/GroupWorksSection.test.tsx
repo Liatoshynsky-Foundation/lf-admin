@@ -1,12 +1,16 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React, { ReactNode } from 'react';
 
-import { GroupWorksSection, WorkItem } from './GroupWorksSection';
+import { GroupWorksSection } from './GroupWorksSection';
+import { GroupWork } from '~/constants/creativity';
 
-Object.defineProperty(global, 'crypto', {
-  value: {
-    randomUUID: () => 'mock-uuid-1234'
-  }
+beforeAll(() => {
+  Object.defineProperty(window, 'crypto', {
+    value: {
+      randomUUID: () => 'mock-uuid-1234'
+    },
+    configurable: true
+  });
 });
 
 type MockCollapsibleBlockProps = {
@@ -91,12 +95,12 @@ jest.mock('~/public/icons/plus.svg', () => ({
 
 const mockOnChange = jest.fn();
 
-const defaultWorks: WorkItem[] = [
+const defaultWorks: GroupWork[] = [
   { id: '1', title: 'Симфонія №1' },
   { id: '2', title: 'Соната' }
 ];
 
-const availableWorks: WorkItem[] = [
+const availableWorks: GroupWork[] = [
   { id: '3', title: 'Доступний твір 1', genre: { uk: 'Жанр', en: 'Genre' } }
 ];
 
@@ -124,10 +128,12 @@ describe('GroupWorksSection Component', () => {
     expect(newWorksArray).toHaveLength(3);
     expect(newWorksArray[2].id).toBe('mock-uuid-1234');
     expect(newWorksArray[2].title).toBe('');
+    expect((newWorksArray[2] as any).rowId).toBe('mock-uuid-1234');
   });
 
   it('should update the work when an existing option is selected from Autocomplete', () => {
-    render(<GroupWorksSection works={defaultWorks} availableWorks={availableWorks} onChange={mockOnChange} />);
+    const worksWithRowId = [{ ...defaultWorks[0], rowId: 'stable-row-id-1' }, defaultWorks[1]];
+    render(<GroupWorksSection works={worksWithRowId} availableWorks={availableWorks} onChange={mockOnChange} />);
 
     fireEvent.click(screen.getByTestId('trigger-select-1'));
 
@@ -137,6 +143,7 @@ describe('GroupWorksSection Component', () => {
     expect(updatedWorks[0].id).toBe('3');
     expect(updatedWorks[0].title).toBe('Доступний твір 1');
     expect(updatedWorks[0].genre).toEqual({ uk: 'Жанр', en: 'Genre' });
+    expect((updatedWorks[0] as any).rowId).toBe('stable-row-id-1');
   });
 
   it('should clear the work title if the selection is cleared', () => {

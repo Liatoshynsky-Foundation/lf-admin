@@ -26,7 +26,6 @@ export const mockInitialGroupData: GroupData = {
     en: 'I. Allegro e poco agitato \nII. Lento e tranquillo \nIII. Allegro \nIV. Allegro risoluto'
   },
   description: {
-    // Вказуємо як Record<string, unknown>, оскільки це структура TipTap
     uk: { type: 'doc', content: [] } as Record<string, unknown>,
     en: { type: 'doc', content: [] } as Record<string, unknown>
   },

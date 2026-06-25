@@ -198,7 +198,7 @@ describe('GroupContentView Container', () => {
     expect(screen.getByText('Сторінка у розробці')).toBeInTheDocument();
   });
 
-  it('should navigate back to /edit if document.referrer contains the edit URL (lines 55-64)', () => {
+  it('should navigate back to /edit if document.referrer contains the edit URL', () => {
     Object.defineProperty(document, 'referrer', { value: '/creativity/group/123/edit', configurable: true });
     render(<GroupContentView id="123" />);
 
@@ -206,7 +206,7 @@ describe('GroupContentView Container', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/creativity/group/123/edit');
   });
 
-  it('should navigate back to /creativity if document.referrer does NOT contain edit URL (lines 55-64)', () => {
+  it('should navigate back to /creativity if document.referrer does NOT contain edit URL', () => {
     Object.defineProperty(document, 'referrer', { value: 'https://some-other-site.com', configurable: true });
     render(<GroupContentView id="123" />);
 
@@ -214,7 +214,7 @@ describe('GroupContentView Container', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/creativity');
   });
 
-  it('should update multilingual fields and clear errors upon typing (lines 84-85, 93-94)', () => {
+  it('should update multilingual fields and clear errors upon typing', () => {
     render(<GroupContentView id="123" />);
 
     fireEvent.click(screen.getByTestId('clear-group-title'));
@@ -225,7 +225,7 @@ describe('GroupContentView Container', () => {
     expect(screen.queryByTestId('error-groupTitle')).not.toBeInTheDocument();
   });
 
-  it('should bypass validation and open info modal when DELETE menu option is clicked (lines 102-103)', async () => {
+  it('should bypass validation and open info modal when DELETE menu option is clicked', async () => {
     render(<GroupContentView id="123" />);
     fireEvent.click(screen.getByTestId('trigger-publish-menu'));
     const menuItems = await screen.findAllByRole('menuitem');
@@ -240,7 +240,7 @@ describe('GroupContentView Container', () => {
     expect(await screen.findByText('Сторінка у розробці')).toBeInTheDocument();
   });
 
-  it('should change current language when a language menu item is clicked (lines 214-216)', async () => {
+  it('should change current language when a language menu item is clicked', async () => {
     render(<GroupContentView id="123" />);
 
     fireEvent.click(screen.getByTestId('trigger-title-menu'));

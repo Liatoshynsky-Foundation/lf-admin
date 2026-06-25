@@ -99,7 +99,11 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
     isMultilingual = false
   ) => {
     if (errors[field as string]) {
-      setErrors((prev) => ({ ...prev, [field as string]: '' }));
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field as string];
+        return newErrors;
+      });
     }
 
     setGroupData((prev) => {

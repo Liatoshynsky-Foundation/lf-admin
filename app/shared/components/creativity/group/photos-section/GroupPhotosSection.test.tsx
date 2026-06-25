@@ -1,7 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React, { ChangeEvent, MouseEvent,ReactNode } from 'react';
 
-import { GroupPhotosSection, PhotoItem } from './GroupPhotosSection';
+import { GroupPhotosSection } from './GroupPhotosSection';
+import { GroupPhoto } from '~/constants/creativity';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 
 Object.defineProperty(global, 'crypto', {
@@ -104,7 +105,7 @@ jest.mock('~/shared/components/delete-card-modal/DeleteCardModal', () => ({
 
 const mockOnChange = jest.fn();
 
-const defaultPhotos: PhotoItem[] = [
+const defaultPhotos: GroupPhoto[] = [
   { id: '1', src: 'img1.jpg', fileName: 'file1', caption: 'Caption 1', altText: 'Alt 1', crop: null },
   { id: '2', src: 'img2.jpg', fileName: 'file2', caption: 'Caption 2', altText: 'Alt 2', crop: null }
 ];

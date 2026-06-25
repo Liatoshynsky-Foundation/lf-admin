@@ -1,9 +1,9 @@
 import { Autocomplete, Box, Divider, IconButton, Paper, Typography } from '@mui/material';
 import { createFilterOptions } from '@mui/material/Autocomplete';
-import { HTMLAttributes, ReactNode, useState } from 'react';
+import { createContext, forwardRef, useContext, useState } from 'react';
 
 import { styles } from './GroupWorksSection.styles';
-import {GroupWork} from '~/constants/creativity';
+import { GroupWork } from '~/constants/creativity';
 import PencilIcon from '~/public/icons/pencil.svg';
 import PlusIcon from '~/public/icons/plus.svg';
 import TrashIcon from '~/public/icons/trash.svg';
@@ -12,28 +12,48 @@ import Button from '~/shared/components/design-system/button/Button';
 import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 
+interface LocalGroupWork extends GroupWork {
+  rowId?: string;
+}
+
 type GroupWorksSectionProps = {
   works: GroupWork[];
   availableWorks: GroupWork[];
   onChange: (works: GroupWork[]) => void;
 };
 
-type AutocompletePaperProps = HTMLAttributes<HTMLElement> & {
-  children?: ReactNode;
+interface AutocompletePaperContextType {
   isInputEmpty: boolean;
   onSelectCreate: () => void;
+}
+
+const AutocompletePaperContext = createContext<AutocompletePaperContextType>({
+  isInputEmpty: true,
+  onSelectCreate: () => {}
+});
+
+const AutocompletePaper = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLElement>>((props, ref) => {
+  const { isInputEmpty, onSelectCreate } = useContext(AutocompletePaperContext);
+
+  return (
+    <Paper {...props} ref={ref} sx={styles.autocompletePaper}>
+      {!isInputEmpty && props.children}
+
+      <Box onMouseDown={(e) => e.preventDefault()} onClick={onSelectCreate} sx={styles.createWorkBox}>
+        <PlusIcon style={{ width: '20px', height: '20px' }} />
+        <Typography sx={styles.createWorkText}>Створити новий твір</Typography>
+      </Box>
+    </Paper>
+  );
+});
+AutocompletePaper.displayName = 'AutocompletePaper';
+
+const generateUniqueId = (): string => {
+  if (typeof window !== 'undefined' && window.crypto && typeof window.crypto.randomUUID === 'function') {
+    return window.crypto.randomUUID();
+  }
+  return `ui-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 };
-
-const AutocompletePaper = ({ children, isInputEmpty, onSelectCreate, ...paperProps }: AutocompletePaperProps) => (
-  <Paper {...paperProps} sx={styles.autocompletePaper}>
-    {!isInputEmpty && children}
-
-    <Box onMouseDown={(e) => e.preventDefault()} onClick={onSelectCreate} sx={styles.createWorkBox}>
-      <PlusIcon style={{ width: '20px', height: '20px' }} />
-      <Typography sx={styles.createWorkText}>Створити новий твір</Typography>
-    </Box>
-  </Paper>
-);
 
 const filter = createFilterOptions<GroupWork>();
 
@@ -43,10 +63,11 @@ export const GroupWorksSection = ({ works, availableWorks, onChange }: GroupWork
   const [searchValues, setSearchValues] = useState<Record<string, string>>({});
 
   const handleAddWork = () => {
-    const newId = crypto.randomUUID();
-    const newWork: GroupWork = {
+    const newId = generateUniqueId();
+    const newWork: LocalGroupWork = {
       id: newId,
-      title: ''
+      title: '',
+      rowId: newId
     };
     onChange([...works, newWork]);
     setEditingWorkId(newId);
@@ -59,7 +80,13 @@ export const GroupWorksSection = ({ works, availableWorks, onChange }: GroupWork
       onChange(
         works.map((work) =>
           work.id === currentId
-            ? { ...work, id: selectedWork.id, title: selectedWork.title, genre: selectedWork.genre }
+            ? {
+              ...work,
+              id: selectedWork.id,
+              title: selectedWork.title,
+              genre: selectedWork.genre,
+              rowId: (work as LocalGroupWork).rowId || work.id
+            }
             : work
         )
       );
@@ -96,52 +123,51 @@ export const GroupWorksSection = ({ works, availableWorks, onChange }: GroupWork
         </Box>
 
         <Box sx={styles.worksList}>
-          {works.map((work) => {
+          {works.map((work: LocalGroupWork) => {
             const isEditing = editingWorkId === work.id;
 
             const currentSearchValue = searchValues[work.id] ?? work.title;
             const isInputEmpty = currentSearchValue.trim() === '';
+            const itemKey = work.rowId || work.id;
 
             return (
-              <Box key={work.id} sx={styles.workItemRow}>
+              <Box key={itemKey} sx={styles.workItemRow}>
                 <Box sx={styles.autocompleteWrapper}>
-                  <Autocomplete
-                    disabled={!isEditing}
-                    options={availableWorks}
-                    getOptionLabel={(option) => (typeof option === 'string' ? option : option.title)}
-                    value={work}
-                    isOptionEqualToValue={(option, val) => option.id === val.id}
-                    getOptionDisabled={(option) => {
-                      return works.some((w) => w.id === option.id && w.id !== work.id);
-                    }}
-                    disableClearable
-                    forcePopupIcon={false}
-                    noOptionsText="Такого твору немає"
-                    filterOptions={(options, params) => {
-                      if (params.inputValue.trim() === '') {
-                        return [];
-                      }
-                      return filter(options, params);
-                    }}
-                    onChange={(_, newValue) => {
-                      if (newValue && typeof newValue !== 'string') {
-                        handleSelectWork(work.id, newValue);
-                      } else if (!newValue) {
-                        handleUpdateWorkText(work.id, '');
-                      }
-                    }}
-                    onInputChange={(_, newInputValue) => {
-                      setSearchValues((prev) => ({ ...prev, [work.id]: newInputValue }));
-                    }}
-                    PaperComponent={(paperProps) => (
-                      <AutocompletePaper
-                        {...paperProps}
-                        isInputEmpty={isInputEmpty}
-                        onSelectCreate={() => setEditingWorkId(null)}
-                      />
-                    )}
-                    renderInput={(params) => <CustomTextField {...params} placeholder="Назва твору" fullWidth />}
-                  />
+                  <AutocompletePaperContext.Provider
+                    value={{ isInputEmpty, onSelectCreate: () => setEditingWorkId(null) }}
+                  >
+                    <Autocomplete
+                      disabled={!isEditing}
+                      options={availableWorks}
+                      getOptionLabel={(option) => (typeof option === 'string' ? option : option.title)}
+                      value={work}
+                      isOptionEqualToValue={(option, val) => option.id === val.id}
+                      getOptionDisabled={(option) => {
+                        return works.some((w) => w.id === option.id && w.id !== work.id);
+                      }}
+                      disableClearable
+                      forcePopupIcon={false}
+                      noOptionsText="Такого твору немає"
+                      filterOptions={(options, params) => {
+                        if (params.inputValue.trim() === '') {
+                          return [];
+                        }
+                        return filter(options, params);
+                      }}
+                      onChange={(_, newValue) => {
+                        if (newValue && typeof newValue !== 'string') {
+                          handleSelectWork(work.id, newValue);
+                        } else if (!newValue) {
+                          handleUpdateWorkText(work.id, '');
+                        }
+                      }}
+                      onInputChange={(_, newInputValue) => {
+                        setSearchValues((prev) => ({ ...prev, [work.id]: newInputValue }));
+                      }}
+                      PaperComponent={AutocompletePaper}
+                      renderInput={(params) => <CustomTextField {...params} placeholder="Назва твору" fullWidth />}
+                    />
+                  </AutocompletePaperContext.Provider>
                 </Box>
 
                 <Box sx={styles.actionButtonsWrapper}>

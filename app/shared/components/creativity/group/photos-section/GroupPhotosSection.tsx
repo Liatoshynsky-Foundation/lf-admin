@@ -17,10 +17,23 @@ type GroupPhotosSectionProps = {
   onChange: (photos: GroupPhoto[]) => void;
 };
 
+const generateUniqueId = (): string => {
+  if (typeof window !== 'undefined' && window.crypto && typeof window.crypto.randomUUID === 'function') {
+    return window.crypto.randomUUID();
+  }
+  return `ui-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+};
+
 export const GroupPhotosSection = ({ photos, onChange }: GroupPhotosSectionProps) => {
+  const getPhotoKey = (photo: GroupPhoto) => {
+    const cropStr = photo.crop?.rect ? JSON.stringify(photo.crop.rect) : 'no-crop';
+    return `${photo.id}-${cropStr}`;
+  };
+  const [photoIdToDelete, setPhotoIdToDelete] = useState<string | null>(null);
+
   const handleAddPhoto = () => {
     const newPhoto: GroupPhoto = {
-      id: crypto.randomUUID(),
+      id: generateUniqueId(),
       src: '',
       fileName: '',
       caption: '',
@@ -33,8 +46,6 @@ export const GroupPhotosSection = ({ photos, onChange }: GroupPhotosSectionProps
   const handleUpdatePhoto = (idToUpdate: string, updates: Partial<GroupPhoto>) => {
     onChange(photos.map((photo) => (photo.id === idToUpdate ? { ...photo, ...updates } : photo)));
   };
-
-  const [photoIdToDelete, setPhotoIdToDelete] = useState<string | null>(null);
 
   const handleConfirmDelete = () => {
     if (photoIdToDelete) {
@@ -51,7 +62,7 @@ export const GroupPhotosSection = ({ photos, onChange }: GroupPhotosSectionProps
             <Box key={photo.id} sx={styles.photoItem}>
               <Box sx={styles.photoHeader}>
                 <Typography variant="body2" sx={styles.typographyIndex} color="text.secondary">
-                  {index === 0 ? 'Зображення 1' : `Зображення ${index + 1}`}
+                  {`Зображення ${index + 1}`}
                 </Typography>
 
                 <Divider sx={styles.divider} />
@@ -67,6 +78,7 @@ export const GroupPhotosSection = ({ photos, onChange }: GroupPhotosSectionProps
               </Box>
 
               <ImagePreviewBlock
+                key={getPhotoKey(photo)}
                 imageUrl={photo.src}
                 fileName={photo.fileName}
                 altText={photo.altText}

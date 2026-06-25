@@ -23,6 +23,7 @@ type MockCustomTextFieldProps = {
   SelectProps?: {
     onOpen?: () => void;
     onClose?: () => void;
+    open?: boolean;
   };
   select?: boolean;
   type?: string;
@@ -34,7 +35,15 @@ type MockCustomTextFieldProps = {
 type MockDatePickerProps = {
   onChange: (value: { format: (fmt: string) => string } | null) => void;
   label?: string;
-  slotProps?: any;
+  slotProps?: {
+    textField?: {
+      error?: boolean;
+      helperText?: ReactNode;
+      onBlur?: () => void;
+      required?: boolean;
+      sx?: object;
+    };
+  };
 };
 
 jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock', () => ({
@@ -58,9 +67,18 @@ jest.mock('~/shared/components/design-system/text-field/TextField', () => ({
       <label htmlFor={`input-${label}`}>{label}</label>
 
       {SelectProps?.onOpen && (
-        <button data-testid={`trigger-open-${label}`} onClick={SelectProps.onOpen}>
-          Open Select
-        </button>
+        <>
+          <button
+            data-testid={`trigger-open-${label}`}
+            onClick={SelectProps.onOpen}
+            data-is-open={String(SelectProps.open)}
+          >
+            Open Select
+          </button>
+          <button data-testid={`trigger-close-${label}`} onClick={SelectProps.onClose}>
+            Close Select
+          </button>
+        </>
       )}
 
       <input
@@ -144,7 +162,7 @@ describe('GroupDetailsSection Component', () => {
     const langInput = screen.getByTestId('mock-input-dateAdditionalText');
     fireEvent.change(langInput, { target: { value: 'новий текст' } });
 
-    expect(mockOnChange).toHaveBeenCalledWith('dateAdditionalText', 'новий текст');
+    expect(mockOnChange).toHaveBeenCalledWith('dateAdditionalText', 'новий текст', true);
   });
 
   it('should format year and call onChange when dates are selected', () => {
@@ -193,13 +211,14 @@ describe('GroupDetailsSection Component', () => {
     expect(screen.getByTestId('error-Назва')).toHaveTextContent('Спеціальна помилка префіксу');
     expect(screen.getByTestId('error-Рік створення')).toHaveTextContent('Заповніть рік');
   });
-  it('should close prefix menu when window is scrolled (covers lines 47-56)', () => {
+  it('should close prefix menu when window is scrolled', () => {
     render(<GroupDetailsSection {...defaultProps} />);
+    const triggerBtn = screen.getByTestId('trigger-open-Назва');
+    fireEvent.click(triggerBtn);
 
-    fireEvent.click(screen.getByTestId('trigger-open-Назва'));
-
+    expect(triggerBtn).toHaveAttribute('data-is-open', 'true');
     fireEvent.scroll(window);
-
+    expect(triggerBtn).toHaveAttribute('data-is-open', 'false');
   });
 
   it('should show validation errors on blur for groupNumber and groupTitle fields', () => {
@@ -218,5 +237,32 @@ describe('GroupDetailsSection Component', () => {
 
     fireEvent.blur(screen.getByTestId('mock-input-Назва групи'));
     expect(screen.getByTestId('error-Назва групи')).toHaveTextContent('Обов’язкове поле');
+  });
+  it('should call onChange with correct parameters for all text fields', () => {
+    render(<GroupDetailsSection {...defaultProps} />);
+
+    fireEvent.change(screen.getByTestId('mock-input-Номер'), { target: { value: '99' } });
+    expect(mockOnChange).toHaveBeenCalledWith('groupNumber', '99');
+
+    fireEvent.change(screen.getByTestId('mock-input-Назва'), { target: { value: 'Bo.' } });
+    expect(mockOnChange).toHaveBeenCalledWith('titlePrefix', 'Bo.');
+
+    fireEvent.change(screen.getByTestId('mock-input-additionalText-top'), {
+      target: { value: 'новий додатковий текст' }
+    });
+    expect(mockOnChange).toHaveBeenCalledWith('additionalText', 'новий додатковий текст');
+
+    fireEvent.change(screen.getByTestId('mock-input-Назва групи'), { target: { value: 'Новий Квартет' } });
+    expect(mockOnChange).toHaveBeenCalledWith('groupTitle', 'Новий Квартет', true);
+  });
+
+  it('should handle SelectProps onClose for title prefix', () => {
+    render(<GroupDetailsSection {...defaultProps} />);
+
+    fireEvent.click(screen.getByTestId('trigger-open-Назва'));
+
+    const closeBtn = screen.getByTestId('trigger-close-Назва');
+    expect(closeBtn).toBeInTheDocument();
+    fireEvent.click(closeBtn);
   });
 });

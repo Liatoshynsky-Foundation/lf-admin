@@ -14,7 +14,7 @@ type MockCollapsibleBlockProps = {
 type MockCustomTextFieldProps = {
   label: string;
   value?: unknown;
-  onChange?: any; 
+  onChange?: ((e: ChangeEvent<HTMLInputElement>) => void) | ((value: unknown) => void); 
   fieldType?: string;
 };
 
@@ -38,7 +38,11 @@ jest.mock('~/shared/components/design-system/text-field/TextField', () => ({
           </span>
           <button
             data-testid={`trigger-richtext-${label}`}
-            onClick={() => onChange({ type: 'doc', content: [{ text: 'Новий опис' }] })}
+            onClick={() => {
+              if (typeof onChange === 'function') {
+                (onChange as (value: unknown) => void)({ type: 'doc', content: [{ text: 'Новий опис' }] });
+              }
+            }}
           />
         </div>
       );
@@ -48,8 +52,12 @@ jest.mock('~/shared/components/design-system/text-field/TextField', () => ({
       <div data-testid={`mock-field-wrapper-${label}`}>
         <input
           data-testid={`mock-input-${label}`}
-          value={(value as string) || ''}
-          onChange={onChange as (e: ChangeEvent<HTMLInputElement>) => void}
+          value={typeof value === 'string' ? value : ''}
+          onChange={(e) => {
+            if (typeof onChange === 'function') {
+              (onChange as (e: ChangeEvent<HTMLInputElement>) => void)(e);
+            }
+          }}
         />
       </div>
     );

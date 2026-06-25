@@ -80,6 +80,7 @@ export const GroupDetailsSection = ({ data, derivedGenre, currentLanguage, error
               label="Назва"
               value={data.titlePrefix || ''}
               onChange={(e) => onChange('titlePrefix', e.target.value)}
+              onBlur={() => handleBlur('titlePrefix')}
               required
               fullWidth
               error={titlePrefixError}
@@ -115,7 +116,7 @@ export const GroupDetailsSection = ({ data, derivedGenre, currentLanguage, error
             <CustomTextField
               label="Додатковий текст"
               value={data.additionalText}
-              onChange={(e) => onChange('additionalText', e.target.value, true)}
+              onChange={(e) => onChange('additionalText', e.target.value)}
               fullWidth
               inputProps={{ 'data-testid': 'mock-input-additionalText-top' }}
             />
@@ -182,7 +183,7 @@ export const GroupDetailsSection = ({ data, derivedGenre, currentLanguage, error
             <CustomTextField
               label="Додатковий текст"
               value={data.dateAdditionalText[langKey]}
-              onChange={(e) => onChange('dateAdditionalText', e.target.value)}
+              onChange={(e) => onChange('dateAdditionalText', e.target.value, true)}
               fullWidth
               inputProps={{ 'data-testid': 'mock-input-dateAdditionalText' }}
             />

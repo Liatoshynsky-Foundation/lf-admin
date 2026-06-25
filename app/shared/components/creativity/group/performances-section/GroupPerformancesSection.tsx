@@ -10,12 +10,6 @@ import Button from '~/shared/components/design-system/button/Button';
 import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 
-// export type PerformanceItem = {
-//   id: string;
-//   url: string;
-//   caption: string;
-// };
-
 type GroupPerformancesSectionProps = {
   sectionTitle: string;
   performances: GroupPerformance[];
@@ -23,12 +17,19 @@ type GroupPerformancesSectionProps = {
   onChangePerformances: (performances: GroupPerformance[]) => void;
 };
 
+const generateUniqueId = (): string => {
+  if (typeof window !== 'undefined' && window.crypto && typeof window.crypto.randomUUID === 'function') {
+    return window.crypto.randomUUID();
+  }
+  return `ui-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+};
+
 const renderLinkPreview = (url: string) => {
   if (!url) return null;
 
   const validUrl = url.startsWith('http') ? url : `https://${url}`;
 
-  const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/;
+  const regex = /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]+)/;
   const ytMatch = regex.exec(url);
 
   if (ytMatch) {
@@ -71,7 +72,7 @@ export const GroupPerformancesSection = ({
 
   const handleAddPerformance = () => {
     const newPerformance: GroupPerformance = {
-      id: crypto.randomUUID(),
+      id: generateUniqueId(),
       url: '',
       caption: ''
     };

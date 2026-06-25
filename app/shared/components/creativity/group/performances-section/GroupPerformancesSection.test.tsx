@@ -83,7 +83,8 @@ const defaultProps = {
 describe('GroupPerformancesSection Component', () => {
   beforeAll(() => {
     Object.defineProperty(window, 'crypto', {
-      value: { randomUUID: () => 'mock-uuid-1234' }
+      value: { randomUUID: () => 'mock-uuid-1234' },
+      configurable: true
     });
   });
 
