@@ -11,7 +11,30 @@ import { cropViewContainer, styles } from './CropView.styles';
 const canCreateObjectUrl = () => typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function';
 const canRevokeObjectUrl = () => typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function';
 
-const MIN_NATURAL_HEIGHT = 100; // Should be 800, but mosst of the images are much smaller e.g. 336 × 400 or even 816 x 498, what should i do with them?
+const MIN_NATURAL_HEIGHT = 800;
+
+function calculateInitialRect(naturalWidth: number, naturalHeight: number, aspectRatio?: number) {
+  let rectWidth = naturalWidth;
+  let rectHeight = naturalHeight;
+  let x = 0;
+  let y = 0;
+
+  if (aspectRatio) {
+    const imgAspect = naturalWidth / naturalHeight;
+
+    if (imgAspect > aspectRatio) {
+      rectHeight = naturalHeight;
+      rectWidth = rectHeight * aspectRatio;
+      x = (naturalWidth - rectWidth) / 2;
+    } else {
+      rectWidth = naturalWidth;
+      rectHeight = rectWidth / aspectRatio;
+      y = (naturalHeight - rectHeight) / 2;
+    }
+  }
+
+  return { x, y, width: rectWidth, height: rectHeight };
+}
 
 export function CropView({
   selected,
@@ -93,26 +116,8 @@ export function CropView({
   useEffect(() => {
     if (resetSeq > 0 && imgRef.current) {
       const img = imgRef.current;
-      let rectWidth = img.naturalWidth;
-      let rectHeight = img.naturalHeight;
-      let x = 0;
-      let y = 0;
-
-      if (aspectRatio) {
-        const imgAspect = img.naturalWidth / img.naturalHeight;
-
-        if (imgAspect > aspectRatio) {
-          rectHeight = img.naturalHeight;
-          rectWidth = rectHeight * aspectRatio;
-          x = (img.naturalWidth - rectWidth) / 2;
-        } else {
-          rectWidth = img.naturalWidth;
-          rectHeight = rectWidth / aspectRatio;
-          y = (img.naturalHeight - rectHeight) / 2;
-        }
-      }
-
-      applyCrop({ x, y, width: rectWidth, height: rectHeight }, img);
+      const initialRect = calculateInitialRect(img.naturalWidth, img.naturalHeight, aspectRatio);
+      applyCrop(initialRect, img);
     }
   }, [resetSeq, applyCrop, aspectRatio]);
 
@@ -132,33 +137,14 @@ export function CropView({
     const domMinWidth = aspectRatio ? domMinHeight * aspectRatio : undefined;
 
     setMinDOMDimensions({ width: domMinWidth, height: domMinHeight });
-    setMinDOMDimensions({ width: domMinWidth, height: domMinHeight });
 
     if (stateCrop?.rect) {
       applyCrop(stateCrop.rect, img);
       return;
     }
 
-    let rectWidth = img.naturalWidth;
-    let rectHeight = img.naturalHeight;
-    let x = 0;
-    let y = 0;
-
-    if (aspectRatio) {
-      const imgAspect = img.naturalWidth / img.naturalHeight;
-
-      if (imgAspect > aspectRatio) {
-        rectHeight = img.naturalHeight;
-        rectWidth = rectHeight * aspectRatio;
-        x = (img.naturalWidth - rectWidth) / 2;
-      } else {
-        rectWidth = img.naturalWidth;
-        rectHeight = rectWidth / aspectRatio;
-        y = (img.naturalHeight - rectHeight) / 2;
-      }
-    }
-
-    applyCrop({ x, y, width: rectWidth, height: rectHeight }, img);
+    const initialRect = calculateInitialRect(img.naturalWidth, img.naturalHeight, aspectRatio);
+    applyCrop(initialRect, img);
   };
 
   const handleCropChange = (pixelCrop: PixelCrop) => {
