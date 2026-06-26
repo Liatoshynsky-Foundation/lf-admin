@@ -9,6 +9,7 @@ import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
 import { styles } from './OurMission.styles';
 import ConfigurableList from '~/components/configurable-list/ConfigurableList';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
+import { CROP_RATIOS } from '~/constants/publications';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { ImagePreviewBlock } from '~/ds-components/photo-block/PhotoBlock';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
@@ -34,17 +35,19 @@ type MissionImageBlockProps = {
   image: MissionImage;
   locale: 'uk' | 'en';
   title: string;
+  aspectRatio?: number;
   onChangeCaption: (value: JSONContent) => void;
   onChangeImage: (url: string, crop?: CropResult | null) => void;
 };
 
-const MissionImageBlock = ({ image, locale, title, onChangeCaption, onChangeImage }: MissionImageBlockProps) => (
+const MissionImageBlock = ({ image, locale, title, aspectRatio, onChangeCaption, onChangeImage }: MissionImageBlockProps) => (
   <Box sx={styles.imageBlockWrapper}>
     <ImagePreviewBlock
       imageUrl={getImageUrl(image)}
       title={title}
       fileName={image.src || ''}
       initialCrop={image.crop}
+      aspectRatio = {aspectRatio}
       onChangeImage={onChangeImage}
     />
     <CustomTextField
@@ -162,6 +165,7 @@ const OurMission = () => {
           image={block.smallImage}
           locale={currentLocale}
           title="Перше зображення секції"
+          aspectRatio={CROP_RATIOS.FUNDATION_PROFILE_SMALL}
           onChangeCaption={(value) => handleCaptionChange('smallImage', value)}
           onChangeImage={(url, crop) => handleImageChange('smallImage', url, crop)}
         />
@@ -172,6 +176,7 @@ const OurMission = () => {
           image={block.bigImage}
           locale={currentLocale}
           title="Друге зображення секції"
+          aspectRatio={CROP_RATIOS.FUNDATION_PROFILE_BIG}
           onChangeCaption={(value) => handleCaptionChange('bigImage', value)}
           onChangeImage={(url, crop) => handleImageChange('bigImage', url, crop)}
         />
