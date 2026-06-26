@@ -1,6 +1,6 @@
 import { Autocomplete, Box, Divider, IconButton, Paper, Typography } from '@mui/material';
 import { createFilterOptions } from '@mui/material/Autocomplete';
-import { createContext, forwardRef, useContext, useState } from 'react';
+import { createContext, forwardRef, useCallback,useContext, useMemo,useState  } from 'react';
 
 import { styles } from './GroupWorksSection.styles';
 import { GroupWork } from '~/constants/creativity';
@@ -31,6 +31,20 @@ const AutocompletePaperContext = createContext<AutocompletePaperContextType>({
   isInputEmpty: true,
   onSelectCreate: () => {}
 });
+
+const AutocompleteContextProvider = ({
+  isInputEmpty,
+  onSelectCreate,
+  children
+}: {
+  isInputEmpty: boolean;
+  onSelectCreate: () => void;
+  children: React.ReactNode;
+}) => {
+  const contextValue = useMemo(() => ({ isInputEmpty, onSelectCreate }), [isInputEmpty, onSelectCreate]);
+
+  return <AutocompletePaperContext.Provider value={contextValue}>{children}</AutocompletePaperContext.Provider>;
+};
 
 const AutocompletePaper = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLElement>>((props, ref) => {
   const { isInputEmpty, onSelectCreate } = useContext(AutocompletePaperContext);
@@ -110,6 +124,8 @@ export const GroupWorksSection = ({ works, availableWorks, onChange }: GroupWork
     }
   };
 
+  const handleCloseEdit = useCallback(() => setEditingWorkId(null), []);
+
   return (
     <CollapsibleBlock title="Твори" defaultExpanded>
       <Box sx={styles.mainContainer}>
@@ -136,9 +152,7 @@ export const GroupWorksSection = ({ works, availableWorks, onChange }: GroupWork
             return (
               <Box key={itemKey} sx={styles.workItemRow}>
                 <Box sx={styles.autocompleteWrapper}>
-                  <AutocompletePaperContext.Provider
-                    value={{ isInputEmpty, onSelectCreate: () => setEditingWorkId(null) }}
-                  >
+                  <AutocompleteContextProvider isInputEmpty={isInputEmpty} onSelectCreate={handleCloseEdit}>
                     <Autocomplete
                       disabled={!isEditing}
                       options={availableWorks}
@@ -170,7 +184,7 @@ export const GroupWorksSection = ({ works, availableWorks, onChange }: GroupWork
                       PaperComponent={AutocompletePaper}
                       renderInput={(params) => <CustomTextField {...params} placeholder="Назва твору" fullWidth />}
                     />
-                  </AutocompletePaperContext.Provider>
+                  </AutocompleteContextProvider>
                 </Box>
 
                 <Box sx={styles.actionButtonsWrapper}>
