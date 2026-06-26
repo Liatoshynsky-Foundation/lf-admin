@@ -49,10 +49,13 @@ const AutocompletePaper = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLEl
 AutocompletePaper.displayName = 'AutocompletePaper';
 
 const generateUniqueId = (): string => {
-  if (typeof window !== 'undefined' && window.crypto && typeof window.crypto.randomUUID === 'function') {
-    return window.crypto.randomUUID();
+  if (typeof globalThis !== 'undefined' && globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID();
   }
-  return `ui-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+
+  const array = new Uint32Array(1);
+  globalThis.crypto.getRandomValues(array);
+  return `ui-${Date.now()}-${array[0].toString(36)}`;
 };
 
 const filter = createFilterOptions<GroupWork>();
