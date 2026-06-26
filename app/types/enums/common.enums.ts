@@ -1,6 +1,6 @@
 export enum PageStatus {
-  Draft = 'draft',
-  Published = 'published'
+  Unpublished = 'unpublished',
+  Hidden = 'hidden'
 }
 
 export enum PageCategories {
@@ -19,7 +19,7 @@ export enum BaseContentStatuses {
   Published = 'published',
   Hidden = 'hidden',
   Archived = 'archived',
-  Editing = 'editing'
+  Editing = 'editing',
 }
 
 export const NewsStatus = BaseContentStatuses;
