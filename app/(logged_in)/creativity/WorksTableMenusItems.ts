@@ -1,3 +1,4 @@
+import { WORKS_BASE_PATH } from '~/constants/creativity';
 import { MenuItem } from '~/shared/components/table-layout/row-variants/Row.types';
 
 interface GroupMenuProps {
@@ -20,10 +21,10 @@ export const GroupMenuItems = ({
   setPublicationModalOpen,
 }: GroupMenuProps): readonly (readonly MenuItem[])[] => [
   [
-    { id: 'edit-seo', label: 'Редагувати групу (SEO)', href: `/creativity/group/${id}/seo` },
-    { id: 'edit-content', label: 'Редагувати контент', href: `/creativity/group/${id}/content` },
-    { id: 'share', label: 'Поширити', href: `/creativity/group/${id}/share` },
-    { id: 'ungroup', label: 'Розгрупувати', href: `/creativity/group/${id}/ungroup` },
+    { id: 'edit-seo', label: 'Редагувати групу (SEO)', href: `${WORKS_BASE_PATH}/group/${id}/seo` },
+    { id: 'edit-content', label: 'Редагувати контент', href: `${WORKS_BASE_PATH}/group/${id}/content` },
+    { id: 'share', label: 'Поширити', href: `${WORKS_BASE_PATH}/group/${id}/share` },
+    { id: 'ungroup', label: 'Розгрупувати', href: `${WORKS_BASE_PATH}/group/${id}/ungroup` },
   ],
   [
     isPublished
@@ -37,8 +38,8 @@ export const WorkMenuItems = ({
   setDeleteModalOpen,
 }: WorkMenuProps): readonly (readonly MenuItem[])[] => [
   [
-    { id: 'edit', label: 'Редагувати композицію', href: `/creativity/${id}/edit` },
-    { id: 'share', label: 'Поширити', href: `/creativity/${id}/share` },
+    { id: 'edit', label: 'Редагувати композицію', href: `${WORKS_BASE_PATH}/${id}/edit` },
+    { id: 'share', label: 'Поширити', href: `${WORKS_BASE_PATH}/${id}/share` },
   ],
   [
     { id: 'delete', label: 'Видалити', onClick: () => setDeleteModalOpen(true) },
