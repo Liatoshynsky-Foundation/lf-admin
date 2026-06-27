@@ -28,8 +28,8 @@ export function StatusBadge({ status, updatedAt }: StatusWithDateProps) {
 
   const isDraft = status === BaseContentStatuses.Draft;
   const textStatus = isDraft ? 'Редаговано' : 'Опубліковано';
-  const formattedDate = updatedAt ? new Date(updatedAt).toLocaleDateString('uk-UA') : '';
-  const tooltipTitle = formattedDate ? `${textStatus} ${formattedDate}` : textStatus;
+  const formattedDate = new Date(updatedAt).toLocaleDateString('uk-UA');
+  const tooltipTitle = `${textStatus} ${formattedDate}`;
 
   return (
     <TooltipCustom title={tooltipTitle} placement="top" showArrow>
