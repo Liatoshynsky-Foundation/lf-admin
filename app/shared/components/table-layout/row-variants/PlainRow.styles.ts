@@ -31,7 +31,7 @@ export const styles = {
     borderLeft: hasLeftDivider ? `${tableBorderWidth} solid` : 'none',
     borderLeftColor: hasLeftDivider ? tableDividerColor : 'transparent',
     gridColumn: `span ${hasSpan ? 2 : 1}`,
-    justifyContent: align ?? alignToJustify[align],
+    justifyContent: alignToJustify[align],
   }),
 
   plainCellText: (align: 'left' | 'center' | 'right' = 'left'): SxProps<Theme> => ({
