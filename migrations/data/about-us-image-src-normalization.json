@@ -1,7 +1,7 @@
 [
   {
     "path": "blocks.IntroSection.image",
-    "src": "https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/main-foundation-section.jpg",
+    "src": "https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/1781038740980-691fd77d478a85e7.png",
     "generatedSrc": null,
     "newSrc": "https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/main-foundation-section.jpg"
   },
@@ -45,14 +45,12 @@
     "path": "blocks.FoundationFounders.members.3.photo",
     "src": "https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/1780361643950-0d86a77f23678e8e.jpg",
     "generatedSrc": "https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/1780361643950-0d86a77f23678e8e.jpg",
-    "previousNewSrc": "https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/light-logo.svg",
     "newSrc": ""
   },
   {
     "path": "blocks.FoundationFounders.members.4.photo",
-    "src": "Taisia-Bilyanska",
+    "src": "/api/blob-url?folderName=photos&blobName=Taisia-Bilyanska",
     "generatedSrc": "/api/blob-url?folderName=photos&blobName=Taisia-Bilyanska",
-    "previousNewSrc": "https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/light-logo.svg",
     "newSrc": ""
   }
 ]
