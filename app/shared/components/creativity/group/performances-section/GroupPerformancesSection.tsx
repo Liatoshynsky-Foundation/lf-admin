@@ -7,7 +7,6 @@ import PlusIcon from '~/public/icons/plus.svg';
 import TrashIcon from '~/public/icons/trash.svg';
 import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
 import Button from '~/shared/components/design-system/button/Button';
-import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 
 type GroupPerformancesSectionProps = {
@@ -21,7 +20,7 @@ const generateUniqueId = (): string => {
   if (typeof globalThis !== 'undefined' && globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') {
     return globalThis.crypto.randomUUID();
   }
-   
+
   const array = new Uint32Array(1);
   globalThis.crypto.getRandomValues(array);
   return `ui-${Date.now()}-${array[0].toString(36)}`;
@@ -94,7 +93,7 @@ export const GroupPerformancesSection = ({
   };
 
   return (
-    <CollapsibleBlock title="Всі версії виконання опису" defaultExpanded>
+    <>
       <Box sx={styles.mainContainer}>
         <CustomTextField
           label="Заголовок секції"
@@ -169,6 +168,6 @@ export const GroupPerformancesSection = ({
         onDelete={handleConfirmDelete}
         description="Ви збираєтеся видалити цей пункт. Ви впевнені, що хочете продовжити?"
       />
-    </CollapsibleBlock>
+    </>
   );
 };

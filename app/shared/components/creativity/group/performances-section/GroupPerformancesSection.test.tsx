@@ -9,16 +9,6 @@ type MockCustomTextFieldProps = {
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
 };
 
-jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock', () => ({
-  __esModule: true,
-  default: ({ children, title }: { children: ReactNode; title: string }) => (
-    <div data-testid="mock-collapsible-block">
-      <span>{title}</span>
-      {children}
-    </div>
-  )
-}));
-
 jest.mock('~/shared/components/design-system/text-field/TextField', () => ({
   CustomTextField: ({ label, value, onChange }: MockCustomTextFieldProps) => (
     <div data-testid={`mock-field-wrapper-${label}`}>

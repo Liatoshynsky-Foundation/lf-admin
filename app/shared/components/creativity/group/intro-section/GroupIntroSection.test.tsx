@@ -1,15 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import React, { ChangeEvent, ReactNode } from 'react';
+import React, { ChangeEvent } from 'react';
 
 import { GroupIntroSection } from './GroupIntroSection';
 import { EditorLanguage } from '~/constants/publications';
-
-
-type MockCollapsibleBlockProps = {
-  children: ReactNode;
-  title?: string;
-  defaultExpanded?: boolean;
-};
 
 type MockCustomTextFieldProps = {
   label: string;
@@ -17,16 +10,6 @@ type MockCustomTextFieldProps = {
   onChange?: ((e: ChangeEvent<HTMLInputElement>) => void) | ((value: unknown) => void); 
   fieldType?: string;
 };
-
-jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock', () => ({
-  __esModule: true,
-  default: ({ children, title }: MockCollapsibleBlockProps) => (
-    <div data-testid="mock-collapsible-block">
-      <h2>{title}</h2>
-      {children}
-    </div>
-  )
-}));
 
 jest.mock('~/shared/components/design-system/text-field/TextField', () => ({
   CustomTextField: ({ label, value, onChange, fieldType }: MockCustomTextFieldProps) => {
@@ -86,7 +69,6 @@ describe('GroupIntroSection Component', () => {
   it('should render fields with correct Ukrainian initial values', () => {
     render(<GroupIntroSection {...defaultProps} />);
 
-    expect(screen.getByTestId('mock-collapsible-block')).toBeInTheDocument();
     expect(screen.getByTestId('mock-input-Частини')).toHaveValue('Частина 1 (Укр)');
     expect(screen.getByTestId('value-Опис')).toHaveTextContent('has-value');
   });

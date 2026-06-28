@@ -24,6 +24,7 @@ import { GroupIntroSection } from '~/shared/components/creativity/group/intro-se
 import { GroupPerformancesSection } from '~/shared/components/creativity/group/performances-section/GroupPerformancesSection';
 import { GroupPhotosSection } from '~/shared/components/creativity/group/photos-section/GroupPhotosSection';
 import { GroupWorksSection } from '~/shared/components/creativity/group/works-section/GroupWorksSection';
+import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
 import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
 import ProgressStatus from '~/shared/components/divided-header/progress-status/ProgressStatus';
@@ -75,12 +76,15 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
+    const numberVal = Number(groupData.groupNumber);
 
     if (!groupData.titlePrefix) {
       newErrors.titlePrefix = 'Оберіть тип';
     }
     if (!groupData.groupNumber || groupData.groupNumber.toString().trim() === '') {
       newErrors.groupNumber = 'Обов’язкове поле';
+    } else if (numberVal < 0) {
+      newErrors.groupNumber = 'Значення не може бути від\'ємним';
     }
     if (!groupData.groupTitle[langKey] || groupData.groupTitle[langKey].trim() === '') {
       newErrors.groupTitle = 'Обов’язкове поле';
@@ -93,11 +97,7 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleFieldChange = (
-    field: GroupDataField, 
-    value: unknown, 
-    isMultilingual = false
-  ) => {
+  const handleFieldChange = (field: GroupDataField, value: unknown, isMultilingual = false) => {
     if (errors[field as string]) {
       setErrors((prev) => {
         const newErrors = { ...prev };
@@ -108,15 +108,14 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
 
     setGroupData((prev) => {
       if (isMultilingual) {
-        const currentFieldData = prev[field] && typeof prev[field] === 'object'
-          ? (prev[field] as Record<string, unknown>)
-          : {};
+        const currentFieldData =
+          prev[field] && typeof prev[field] === 'object' ? (prev[field] as Record<string, unknown>) : {};
 
         return {
           ...prev,
           [field]: {
             ...currentFieldData,
-            [langKey]: value 
+            [langKey]: value
           }
         };
       }
@@ -167,32 +166,43 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
           Заповнення контентом не є обов’язковим
         </Typography>
 
-        <GroupDetailsSection
-          currentLanguage={currentLanguage}
-          data={groupData}
-          derivedGenre={derivedGenres}
-          errors={errors}
-          onChange={handleFieldChange}
-        />
-        <GroupIntroSection currentLanguage={currentLanguage} data={groupData} onChange={handleFieldChange} />
+        <CollapsibleBlock title="Деталі" defaultExpanded>
+          <GroupDetailsSection
+            currentLanguage={currentLanguage}
+            data={groupData}
+            derivedGenre={derivedGenres}
+            errors={errors}
+            onChange={handleFieldChange}
+          />
+        </CollapsibleBlock>
 
-        <GroupPhotosSection
-          photos={groupData.photos}
-          onChange={(newPhotos) => handleFieldChange('photos', newPhotos)}
-        />
+        <CollapsibleBlock title="Вступна секція" defaultExpanded>
+          <GroupIntroSection currentLanguage={currentLanguage} data={groupData} onChange={handleFieldChange} />
+        </CollapsibleBlock>
 
-        <GroupWorksSection
-          works={groupData.works}
-          availableWorks={mockAvailableWorks}
-          onChange={(newWorks) => handleFieldChange('works', newWorks)}
-        />
+        <CollapsibleBlock title="Фото" defaultExpanded>
+          <GroupPhotosSection
+            photos={groupData.photos}
+            onChange={(newPhotos) => handleFieldChange('photos', newPhotos)}
+          />
+        </CollapsibleBlock>
 
-        <GroupPerformancesSection
-          sectionTitle={groupData.performancesTitle}
-          performances={groupData.performances}
-          onChangeSectionTitle={(newTitle) => handleFieldChange('performancesTitle', newTitle)}
-          onChangePerformances={(newPerformances) => handleFieldChange('performances', newPerformances)}
-        />
+        <CollapsibleBlock title="Твори" defaultExpanded>
+          <GroupWorksSection
+            works={groupData.works}
+            availableWorks={mockAvailableWorks}
+            onChange={(newWorks) => handleFieldChange('works', newWorks)}
+          />
+        </CollapsibleBlock>
+
+        <CollapsibleBlock title="Всі версії виконання опису" defaultExpanded>
+          <GroupPerformancesSection
+            sectionTitle={groupData.performancesTitle}
+            performances={groupData.performances}
+            onChangeSectionTitle={(newTitle) => handleFieldChange('performancesTitle', newTitle)}
+            onChangePerformances={(newPerformances) => handleFieldChange('performances', newPerformances)}
+          />
+        </CollapsibleBlock>
       </Box>
 
       <Menu

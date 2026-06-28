@@ -16,11 +16,6 @@ type MockButtonProps = {
   onClick?: (e: MouseEvent<HTMLButtonElement>) => void;
 };
 
-type MockCollapsibleBlockProps = {
-  children: ReactNode;
-  title?: string;
-};
-
 type MockCustomTextFieldProps = {
   label: string;
   value?: string;
@@ -47,13 +42,6 @@ jest.mock('~/public/icons/trash.svg', () => ({
 jest.mock('~/public/icons/plus.svg', () => ({
   __esModule: true,
   default: () => <span data-testid="icon-plus" />
-}));
-
-jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock', () => ({
-  __esModule: true,
-  default: ({ children }: MockCollapsibleBlockProps) => (
-    <div data-testid="mock-collapsible-block">{children}</div>
-  )
 }));
 
 jest.mock('~/shared/components/design-system/button/Button', () => ({

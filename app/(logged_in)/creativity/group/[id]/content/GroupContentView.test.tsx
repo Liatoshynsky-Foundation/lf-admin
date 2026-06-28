@@ -56,6 +56,15 @@ type MockDividedHeaderProps = {
   onBackClick?: () => void;
 };
 
+jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock', () => ({
+  __esModule: true,
+  default: ({ children, title }: { children: React.ReactNode; title: string }) => (
+    <div data-testid={`mock-collapsible-${title}`}>
+      {children}
+    </div>
+  )
+}));
+
 jest.mock('~/shared/components/divided-header/header-right-actions/HeaderRightActions', () => ({
   __esModule: true,
   default: ({ onPublish, disabled, onMenuOpen }: MockHeaderActionsProps) => (
@@ -96,11 +105,6 @@ jest.mock('~/shared/components/divided-header/title-dropdown/TitleDropdown', () 
 jest.mock('~/shared/components/divided-header/progress-status/ProgressStatus', () => ({
   __esModule: true,
   default: () => <div data-testid="mock-progress-status" />
-}));
-
-jest.mock('~/shared/components/badge/Badge', () => ({
-  __esModule: true,
-  default: () => <div data-testid="mock-badge" />
 }));
 
 jest.mock('~/shared/components/creativity/group/details-section/GroupDetailsSection', () => ({

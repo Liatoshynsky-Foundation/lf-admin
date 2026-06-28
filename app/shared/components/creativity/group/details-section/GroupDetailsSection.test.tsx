@@ -3,12 +3,6 @@ import React, { ChangeEvent, FocusEvent, ReactNode } from 'react';
 
 import { GroupDetailsSection } from './GroupDetailsSection';
 
-type MockCollapsibleBlockProps = {
-  children: ReactNode;
-  title?: string;
-  defaultExpanded?: boolean;
-};
-
 type MockCustomTextFieldProps = {
   label: string;
   value?: unknown;
@@ -45,11 +39,6 @@ type MockDatePickerProps = {
     };
   };
 };
-
-jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock', () => ({
-  __esModule: true,
-  default: ({ children }: MockCollapsibleBlockProps) => <div data-testid="mock-collapsible-block">{children}</div>
-}));
 
 jest.mock('~/shared/components/design-system/text-field/TextField', () => ({
   CustomTextField: ({
@@ -180,6 +169,16 @@ describe('GroupDetailsSection Component', () => {
 
     fireEvent.click(screen.getByTestId('trigger-date-clear-Рік створення'));
     expect(mockOnChange).toHaveBeenCalledWith('creationYear', '');
+  });
+
+  it('should show validation error when groupNumber is negative', () => {
+    const propsWithNegativeNumber = {
+      ...defaultProps,
+      data: { ...defaultProps.data, groupNumber: '-5' }
+    };
+    render(<GroupDetailsSection {...propsWithNegativeNumber} />);
+    fireEvent.blur(screen.getByTestId('mock-input-Номер'));
+    expect(screen.getByTestId('error-Номер')).toHaveTextContent('Значення не може бути від\'ємним');
   });
 
   it('should display validation error when required creation year is empty after blur', () => {

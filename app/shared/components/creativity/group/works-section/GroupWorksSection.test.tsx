@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import React, { ReactNode } from 'react';
+import React from 'react';
 
 import { GroupWorksSection } from './GroupWorksSection';
 import { GroupWork } from '~/constants/creativity';
@@ -12,11 +12,6 @@ beforeAll(() => {
     configurable: true
   });
 });
-
-type MockCollapsibleBlockProps = {
-  children: ReactNode;
-  title?: string;
-};
 
 type MockDeleteModalProps = {
   open: boolean;
@@ -52,13 +47,6 @@ jest.mock('@mui/material', () => {
     )
   };
 });
-
-jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock', () => ({
-  __esModule: true,
-  default: ({ children }: MockCollapsibleBlockProps) => (
-    <div data-testid="mock-collapsible-block">{children}</div>
-  )
-}));
 
 jest.mock('~/shared/components/design-system/button/Button', () => ({
   __esModule: true,

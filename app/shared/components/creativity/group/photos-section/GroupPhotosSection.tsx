@@ -7,7 +7,6 @@ import PlusIcon from '~/public/icons/plus.svg';
 import TrashIcon from '~/public/icons/trash.svg';
 import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
 import Button from '~/shared/components/design-system/button/Button';
-import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
 import { ImagePreviewBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
@@ -58,7 +57,7 @@ export const GroupPhotosSection = ({ photos, onChange }: GroupPhotosSectionProps
   };
 
   return (
-    <CollapsibleBlock title="Фото" defaultExpanded>
+    <>
       <Box sx={styles.mainContainer}>
         <Box sx={styles.photosList}>
           {photos.map((photo, index) => (
@@ -124,6 +123,6 @@ export const GroupPhotosSection = ({ photos, onChange }: GroupPhotosSectionProps
         onDelete={handleConfirmDelete}
         description="Ви збираєтесь видалити зображення. Ви впевнені, що хочете продовжити? "
       />
-    </CollapsibleBlock>
+    </>
   );
 };

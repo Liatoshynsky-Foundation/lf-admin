@@ -1,6 +1,6 @@
 import { Autocomplete, Box, Divider, IconButton, Paper, Typography } from '@mui/material';
 import { createFilterOptions } from '@mui/material/Autocomplete';
-import { createContext, forwardRef, useCallback,useContext, useMemo,useState  } from 'react';
+import { createContext, forwardRef, useCallback, useContext, useMemo, useState } from 'react';
 
 import { styles } from './GroupWorksSection.styles';
 import { GroupWork } from '~/constants/creativity';
@@ -9,7 +9,6 @@ import PlusIcon from '~/public/icons/plus.svg';
 import TrashIcon from '~/public/icons/trash.svg';
 import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
 import Button from '~/shared/components/design-system/button/Button';
-import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 
 interface LocalGroupWork extends GroupWork {
@@ -127,7 +126,7 @@ export const GroupWorksSection = ({ works, availableWorks, onChange }: GroupWork
   const handleCloseEdit = useCallback(() => setEditingWorkId(null), []);
 
   return (
-    <CollapsibleBlock title="Твори" defaultExpanded>
+    <>
       <Box sx={styles.mainContainer}>
         <Box sx={styles.headerRow}>
           <Typography variant="body2" color="text.secondary">
@@ -215,6 +214,6 @@ export const GroupWorksSection = ({ works, availableWorks, onChange }: GroupWork
         onDelete={handleConfirmDelete}
         description="Ви збираєтесь видалити файл. Ви впевнені, що хочете продовжити?"
       />
-    </CollapsibleBlock>
+    </>
   );
 };
