@@ -147,7 +147,7 @@ describe('ContributorCard', () => {
     });
 
     const img = screen.getByTestId('preview-img') as HTMLImageElement;
-    expect(img.src).toContain('/images/oval-contributor-card.png');
+    expect(img.src).toContain('/images/light-logo.svg');
   });
 
   it('should call onChangePhoto with updated photo configurations when uploading an image file asset', () => {

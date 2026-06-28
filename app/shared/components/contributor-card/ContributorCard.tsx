@@ -45,7 +45,7 @@ export const ContributorCard = ({
   return (
     <Stack display="flex" flexDirection="row" gap="16px" width="100%">
       <ImagePreviewBlock
-        imageUrl={contributor.photo.generatedSrc || contributor.photo.src || '/images/oval-contributor-card.png'}
+        imageUrl={contributor.photo.generatedSrc || contributor.photo.src || '/images/light-logo.svg'}
         fileName={proseToText(contributor.photo.alt[currentLocale] as ProseDoc)}
         initialCrop={(contributor.photo as unknown as { crop: CropResult }).crop}
         onChangeImage={handleChangeImage}
