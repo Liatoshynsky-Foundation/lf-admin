@@ -1,3 +1,5 @@
+import { Dayjs } from 'dayjs';
+
 import type { FilterOption } from '~/shared/components/selector/FilterSelect';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
@@ -79,3 +81,23 @@ export const WORKS_ERROR_STATE_DESCRIPTION = 'Спробуйте оновити 
 
 export const WORKS_PUBLISH_RESTRICTION_MESSAGE =
   'Твір не може бути опублікований без групи (Опусу). Призначте твір до опусу і спробуйте знову.';
+
+export interface AudioEntry {
+  id: string;
+  name: string | null;
+  fileName: string | null;
+}
+
+export interface NoteEntry {
+  id: string;
+  name: string | null;
+  date: Dayjs | null;
+  fileName: string | null;
+}
+
+export const COMPOSITION_FILE_TYPES = {
+  audio: 'audio',
+  pdf: 'pdf'
+} as const;
+
+export type CompositionFileType = keyof typeof COMPOSITION_FILE_TYPES;
