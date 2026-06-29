@@ -1,3 +1,5 @@
+import { Dayjs } from 'dayjs';
+
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import type { FilterOption } from '~/shared/components/selector/FilterSelect';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
@@ -34,7 +36,6 @@ export const WORKS_BASE_PATH = '/creativity';
 export const WORKS_STATUSES = [
   BaseContentStatuses.Draft,
   BaseContentStatuses.Published,
-  BaseContentStatuses.Editing
 ] as const;
 
 export const WORKS_TABS: ReadonlyArray<WorksTabConfig> = [
@@ -49,11 +50,6 @@ export const WORKS_CREATE_OPTIONS: ReadonlyArray<WorksCreateOption> = [
   { id: 'group', label: 'Група', href: `${WORKS_BASE_PATH}/group/create` },
 ];
 
-const WORKS_STATUS_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
-  { value: BaseContentStatuses.Draft, label: 'Чернетка' },
-  { value: BaseContentStatuses.Published, label: 'Опублікований' },
-  { value: BaseContentStatuses.Editing, label: 'Опублікований з чернеткою' }
-];
 
 const WORKS_LANGUAGE_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
   { value: 'uk', label: 'Українська' },
@@ -70,7 +66,6 @@ const WORKS_GENRE_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
 ];
 
 export const WORKS_FILTERS: ReadonlyArray<WorksFilterConfig> = [
-  { id: 'status', label: 'Статус', options: WORKS_STATUS_FILTER_OPTIONS, menuMinWidth: 170 },
   { id: 'language', label: 'Мова', options: WORKS_LANGUAGE_FILTER_OPTIONS, menuMinWidth: 205 },
   { id: 'genre', label: 'Жанр', options: WORKS_GENRE_FILTER_OPTIONS, menuMinWidth: 220 }
 ];
@@ -127,3 +122,22 @@ export interface GroupData {
 }
 
 export type GroupDataField = keyof GroupData;
+export interface AudioEntry {
+  id: string;
+  name: string | null;
+  fileName: string | null;
+}
+
+export interface NoteEntry {
+  id: string;
+  name: string | null;
+  date: Dayjs | null;
+  fileName: string | null;
+}
+
+export const COMPOSITION_FILE_TYPES = {
+  audio: 'audio',
+  pdf: 'pdf'
+} as const;
+
+export type CompositionFileType = keyof typeof COMPOSITION_FILE_TYPES;

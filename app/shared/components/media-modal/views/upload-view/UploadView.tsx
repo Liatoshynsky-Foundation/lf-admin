@@ -10,7 +10,7 @@ import { styles } from './UploadView.styles';
 import CloudUploadIcon from '~/public/icons/cloud-upload.svg';
 import Button from '~/shared/components/design-system/button/Button';
 
-type Props = Readonly<{
+export type Props = Readonly<{
   selected: UploadMedia | null;
   onPick: (selected: UploadMedia) => void;
   accept?: string;

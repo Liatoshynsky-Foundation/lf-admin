@@ -3,6 +3,7 @@ import { Stack } from '@mui/material';
 import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
+import { CROP_RATIOS } from '~/constants/publications';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { proseToText } from '~/lib/utils/prose';
 import { ImagePreviewBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
@@ -48,6 +49,7 @@ export const ContributorCard = ({
         imageUrl={contributor.photo.generatedSrc || contributor.photo.src || '/images/light-logo.svg'}
         fileName={proseToText(contributor.photo.alt[currentLocale] as ProseDoc)}
         initialCrop={(contributor.photo as unknown as { crop: CropResult }).crop}
+        aspectRatio={CROP_RATIOS.TEAM_AVATAR}
         onChangeImage={handleChangeImage}
         direction="column"
         buttonSpacing="8px"
