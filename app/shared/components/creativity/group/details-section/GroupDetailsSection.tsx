@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 
 import { styles } from './GroupDetailsSection.styles';
 import { GroupDataField } from '~/constants/creativity';
+import { EditorLanguage } from '~/constants/publications';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 
 type MultilingualText = { uk: string; en: string };
@@ -22,7 +23,7 @@ type GroupDetailsSectionProps = {
     dateAdditionalText: MultilingualText;
   };
   derivedGenre: string;
-  currentLanguage: string;
+  currentLanguage: EditorLanguage;
   errors: Record<string, string>;
   onChange: (field: GroupDataField, value: string, isMultilingual?: boolean) => void;
 };

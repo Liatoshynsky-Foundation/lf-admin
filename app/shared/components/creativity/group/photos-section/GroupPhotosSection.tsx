@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { styles } from './GroupPhotosSection.styles';
 import { GroupPhoto } from '~/constants/creativity';
+import { generateUniqueId } from '~/lib/utils/generateUniqueId';
 import PlusIcon from '~/public/icons/plus.svg';
 import TrashIcon from '~/public/icons/trash.svg';
 import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
@@ -14,16 +15,6 @@ import type { MediaModalResult } from '~/shared/components/media-modal/MediaModa
 type GroupPhotosSectionProps = {
   photos: GroupPhoto[];
   onChange: (photos: GroupPhoto[]) => void;
-};
-
-const generateUniqueId = (): string => {
-  if (typeof globalThis !== 'undefined' && globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') {
-    return globalThis.crypto.randomUUID();
-  }
-
-  const array = new Uint32Array(1);
-  globalThis.crypto.getRandomValues(array);
-  return `ui-${Date.now()}-${array[0].toString(36)}`;
 };
 
 export const GroupPhotosSection = ({ photos, onChange }: GroupPhotosSectionProps) => {

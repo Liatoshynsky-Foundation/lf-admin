@@ -4,6 +4,7 @@ import { createContext, forwardRef, useCallback, useContext, useMemo, useState }
 
 import { styles } from './GroupWorksSection.styles';
 import { GroupWork } from '~/constants/creativity';
+import { generateUniqueId } from '~/lib/utils/generateUniqueId';
 import PencilIcon from '~/public/icons/pencil.svg';
 import PlusIcon from '~/public/icons/plus.svg';
 import TrashIcon from '~/public/icons/trash.svg';
@@ -60,16 +61,6 @@ const AutocompletePaper = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLEl
   );
 });
 AutocompletePaper.displayName = 'AutocompletePaper';
-
-const generateUniqueId = (): string => {
-  if (typeof globalThis !== 'undefined' && globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') {
-    return globalThis.crypto.randomUUID();
-  }
-
-  const array = new Uint32Array(1);
-  globalThis.crypto.getRandomValues(array);
-  return `ui-${Date.now()}-${array[0].toString(36)}`;
-};
 
 const filter = createFilterOptions<GroupWork>();
 

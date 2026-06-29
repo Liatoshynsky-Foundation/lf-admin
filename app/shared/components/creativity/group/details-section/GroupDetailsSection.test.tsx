@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React, { ChangeEvent, FocusEvent, ReactNode } from 'react';
 
 import { GroupDetailsSection } from './GroupDetailsSection';
+import { EditorLanguage } from '~/constants/publications';
 
 type MockCustomTextFieldProps = {
   label: string;
@@ -116,7 +117,7 @@ const defaultProps = {
     dateAdditionalText: { uk: 'приблизно', en: 'approx.' }
   },
   derivedGenre: 'Соната',
-  currentLanguage: 'UA',
+  currentLanguage: 'UA' as EditorLanguage,
   errors: {} as Record<string, string>,
   onChange: mockOnChange
 };
@@ -139,7 +140,7 @@ describe('GroupDetailsSection Component', () => {
   });
 
   it('should switch groupTitle value when language changes to EN', () => {
-    const propsEN = { ...defaultProps, currentLanguage: 'EN' };
+    const propsEN = { ...defaultProps, currentLanguage: 'EN' as EditorLanguage };
     render(<GroupDetailsSection {...propsEN} />);
 
     expect(screen.getByTestId('mock-input-Назва групи')).toHaveValue('Quartet');

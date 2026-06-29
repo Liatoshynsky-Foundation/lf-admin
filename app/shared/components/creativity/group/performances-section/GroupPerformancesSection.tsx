@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { styles } from './GroupPerformancesSection.styles';
 import { GroupPerformance } from '~/constants/creativity';
+import { generateUniqueId } from '~/lib/utils/generateUniqueId';
 import PlusIcon from '~/public/icons/plus.svg';
 import TrashIcon from '~/public/icons/trash.svg';
 import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
@@ -14,16 +15,6 @@ type GroupPerformancesSectionProps = {
   performances: GroupPerformance[];
   onChangeSectionTitle: (title: string) => void;
   onChangePerformances: (performances: GroupPerformance[]) => void;
-};
-
-const generateUniqueId = (): string => {
-  if (typeof globalThis !== 'undefined' && globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') {
-    return globalThis.crypto.randomUUID();
-  }
-
-  const array = new Uint32Array(1);
-  globalThis.crypto.getRandomValues(array);
-  return `ui-${Date.now()}-${array[0].toString(36)}`;
 };
 
 const renderLinkPreview = (url: string) => {
