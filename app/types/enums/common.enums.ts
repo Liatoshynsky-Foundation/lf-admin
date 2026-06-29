@@ -1,6 +1,6 @@
 export enum PageStatus {
-  Unpublished = 'unpublished',
-  Hidden = 'hidden'
+  Draft = 'draft',
+  Published = 'published'
 }
 
 export enum PageCategories {

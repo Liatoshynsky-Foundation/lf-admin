@@ -8,7 +8,7 @@ import { styles } from './StatusBadge.styles';
 import Badge from '~/shared/components/badge/Badge';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
-type StatusChipStatus = typeof BaseContentStatuses.Draft | typeof BaseContentStatuses.Published;
+type StatusChipStatus = typeof BaseContentStatuses.Hidden | typeof BaseContentStatuses.Published;
 type StatusWithDateStatus = (typeof BaseContentStatuses)[keyof typeof BaseContentStatuses];
 
 type StatusWithDateProps = Readonly<{
@@ -18,7 +18,9 @@ type StatusWithDateProps = Readonly<{
 
 export function StatusBadge({ status, updatedAt }: StatusWithDateProps) {
   const normalizedStatus: StatusChipStatus =
-    status === BaseContentStatuses.Draft ? BaseContentStatuses.Draft : BaseContentStatuses.Published;
+    status === BaseContentStatuses.Draft || status === BaseContentStatuses.Hidden
+      ? BaseContentStatuses.Hidden
+      : BaseContentStatuses.Published;
 
   const badgeContent = <Badge variant={normalizedStatus} />;
 
