@@ -7,6 +7,7 @@ describe('ContactUs', () => {
     Component: ContactUs,
     mockBlock: createStandardMockBlock().block,
     checkParagraph: true,
+    checkGrip: true,
   });
 });
 

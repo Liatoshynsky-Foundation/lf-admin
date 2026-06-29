@@ -23,6 +23,12 @@ const ConfigurableList = <T extends { readonly id: string; readonly value: JSONC
   onDelete
 }: MockConfigurableListProps<T>) => (
     <div data-testid="configurable-list">
+      <button
+        data-testid="trigger-configurable-list-change"
+        onClick={() => onChange({ id: '1', field: 'title', value: { type: 'doc', content: [] } } as unknown as T)}
+      >
+      Trigger Change
+      </button>
       {items.map((item) => (
         <div key={item.id} data-testid="item">
           {renderItem({

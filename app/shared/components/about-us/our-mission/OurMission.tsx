@@ -1,11 +1,14 @@
 'use client';
 
+import { DragEndEvent } from '@dnd-kit/core';
 import { Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import { JSONContent } from '@tiptap/react';
 
 import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
+import { SortableItemWrapper } from '../../sortable-item-wrapper/SortableItemWrapper';
+import { SortableList } from '../../sortable-list/SortableList';
 import { styles } from './OurMission.styles';
 import ConfigurableList from '~/components/configurable-list/ConfigurableList';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
@@ -13,6 +16,7 @@ import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock
 import { ImagePreviewBlock } from '~/ds-components/photo-block/PhotoBlock';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { ensureIds } from '~/lib/utils/ensureIds';
+import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 import { ConfigurableListItem } from '~/types/accordionBlocks';
@@ -64,10 +68,16 @@ const OurMission = () => {
 
   const { block } = usePageBlock(pageId, blockId);
   const setField = useStore((state) => state.setField);
+  const missionList: MissionListItemWithId[] = block ? ensureIds(block.list) : [];
+  
+  const handleDragEnd = (event: DragEndEvent) => {
+    handleSortableDragEnd(event, missionList, (reordered) => {
+      setField(pageId, blockId, 'list', reordered);
+    });
+  };
 
   if (!block) return <EditBlockSkeleton />;
 
-  const missionList: MissionListItemWithId[] = ensureIds(block.list);
 
   const missionPoints: MissionPoint[] = missionList.map((item) => ({
     id: item.id,
@@ -118,8 +128,9 @@ const OurMission = () => {
     } as typeof image);
   };
 
+
   return (
-    <CollapsibleBlock title="Наша місія">
+    <CollapsibleBlock title="Наша місія" grip>
       <Box sx={styles.wrapper}>
         <CustomTextField
           fieldType="formatting"
@@ -135,23 +146,31 @@ const OurMission = () => {
           <Typography variant="subtitle1" component="h4" sx={styles.pointHeader}>
             Текст секції:
           </Typography>
-          <ConfigurableList<MissionPoint>
-            items={missionPoints}
-            addBtnLabel="Додати пункт"
-            editable
-            onChange={({ id, value }) => handleChangeMissionPoint(id, value)}
-            onDelete={handleDeleteMissionPoint}
-            onCreate={handleAddMissionPoint}
-            renderItem={({ item, onChange }) => (
-              <CustomTextField
-                fieldType="formatting"
-                label="Пункт місії"
-                value={item.value}
-                onChange={(value) => onChange({ ...item, value })}
-              />
-            )}
-            separator={false}
-          />
+          <SortableList
+            id="mission points"
+            items={missionPoints.map((p) => p.id as string)}
+            onDragEnd={handleDragEnd}
+          >
+            <ConfigurableList<MissionPoint>
+              items={missionPoints}
+              addBtnLabel="Додати пункт"
+              editable
+              onChange={({ id, value }) => handleChangeMissionPoint(id, value)}
+              onDelete={handleDeleteMissionPoint}
+              onCreate={handleAddMissionPoint}
+              renderItem={({ item, onChange }) => (
+                <SortableItemWrapper id={item.id as string} key={item.id} gripHandle>
+                  <CustomTextField
+                    fieldType="formatting"
+                    label="Пункт місії"
+                    value={item.value}
+                    onChange={(value) => onChange({ ...item, value })}
+                  />
+                </SortableItemWrapper>
+              )}
+              separator={false}
+            />
+          </SortableList>
         </>
       )}
 

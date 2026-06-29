@@ -9,6 +9,8 @@ jest.mock('~/public/icons/chevron-down.svg', () => {
   return DummyChevron;
 });
 
+jest.mock('../../grip/Grip');
+
 describe('CollapsibleBlock', () => {
   const titleText = 'Test Block';
 
@@ -44,5 +46,14 @@ describe('CollapsibleBlock', () => {
     fireEvent.click(screen.getByText(titleText));
 
     expect(cont).not.toHaveStyle('visibility: hidden');
+  });
+
+  it('should render the draggable grip if grip is true', ()=> {
+    render(
+      <CollapsibleBlock title={titleText} grip >
+        <div>Child Content</div>
+      </CollapsibleBlock>
+    );
+    expect(screen.getByTestId('grip-mock')).toBeInTheDocument();
   });
 });

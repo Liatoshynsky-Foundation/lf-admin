@@ -5,14 +5,25 @@ const previewMock = jest.fn();
 const saveMock = jest.fn();
 const setLocaleMock = jest.fn();
 const discardChangesMock = jest.fn();
+export const setBlocksOrderMock = jest.fn();
 
 jest.mock('~/store', () => ({
   useStore: (
-    selector: (state: { setLocale: (l: 'uk' | 'en') => void; discardChanges: (slug: string) => void }) => unknown
+    selector: (state: {
+      setLocale: (l: 'uk' | 'en') => void;
+      discardChanges: (slug: string) => void;
+      blocksOrder: Record<string, string[]>;
+      setBlocksOrder: jest.Mock;
+    }) => unknown
   ) =>
     selector({
       setLocale: setLocaleMock,
-      discardChanges: discardChangesMock
+      discardChanges: discardChangesMock,
+      blocksOrder: {
+        'about-us': ['intro', 'foundation', 'mission', 'goals', 'office', 'what-we-do', 'founders'],
+        'privacy-policy': ['IntroSection', 'DataWeCollect', 'DataUsage', 'Cookies', 'GoogleAuth', 'SocialNetworks', 'TargetedAds', 'NewsletterSubscription', 'DataRetention', 'UserRights', 'ContactUs']
+      },
+      setBlocksOrder: setBlocksOrderMock
     })
 }));
 
@@ -31,49 +42,25 @@ jest.mock('~/shared/hooks/use-save-page/UseSavePage', () => ({
     data: null
   }))
 }));
+jest.mock('~/shared/components/editable-page-layout/EditablePageLayout');
 
-jest.mock('~/shared/components/header/Header', () => ({
-  Header: ({
-    title,
-    onPreview,
-    onSave,
-    onCancel,
-    isSaving,
-    onLanguageChange
-  }: {
-    title: string;
-    onPreview: () => void;
-    onSave: () => void;
-    onCancel: () => void;
-    isSaving: boolean;
-    onLanguageChange: (lang: 'uk' | 'en') => void;
-  }) => (
-    <div data-testid="header">
-      <span data-testid="title">{title}</span>
-      <button data-testid="preview-btn" onClick={onPreview}>
-        preview
-      </button>
-      <button data-testid="save-btn" onClick={onSave}>
-        save
-      </button>
-      <button data-testid="cancel-btn" onClick={onCancel}>
-        cancel
-      </button>
-      <span data-testid="saving-flag">{String(isSaving)}</span>
-      <button data-testid="lang-en" onClick={() => onLanguageChange('en')}>
-        set-en
-      </button>
-    </div>
-  )
+jest.mock('~/shared/components/sortable-item-wrapper/SortableItemWrapper', () => ({
+  SortableItemWrapper: ({ children }: any) => <div>{children}</div>,
 }));
 
 interface EditPagesCommonTestsProps {
   Page: React.ElementType;
   pageId: string;
   childTestIds: string[];
+  expectedReorderedBlocks: string[];
 }
 
-export const editPagesCommonTests = ({ Page, pageId, childTestIds }: EditPagesCommonTestsProps) => {
+export const editPagesCommonTests = ({
+  Page,
+  pageId,
+  childTestIds,
+  expectedReorderedBlocks
+}: EditPagesCommonTestsProps) => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -154,6 +141,30 @@ export const editPagesCommonTests = ({ Page, pageId, childTestIds }: EditPagesCo
     };
     render(<Page />);
     expect(useSavePageBlocks).toHaveBeenCalledWith(pageId);
+  });
+
+  it('should call setBlocksOrder with reordered blocks when drag ends', () => {
+    render(<Page />);
+
+    const list = screen.getByTestId('mock-sortable-list');
+    fireEvent.click(list);
+
+    expect(setBlocksOrderMock).toHaveBeenCalledWith(
+      pageId,
+      expect.arrayContaining(expectedReorderedBlocks)
+    );
+  });
+
+  it('should always keep the first block at index 0 after reordering', () => {
+    render(<Page />);
+
+    const list = screen.getByTestId('mock-sortable-list');
+    fireEvent.click(list);
+
+    const lastCallArgs = setBlocksOrderMock.mock.calls[0];
+    const newBlocksOrder = lastCallArgs[1];
+
+    expect(newBlocksOrder[0]).toBe(childTestIds[0]);
   });
 };
 

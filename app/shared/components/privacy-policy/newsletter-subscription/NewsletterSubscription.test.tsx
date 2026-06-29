@@ -7,5 +7,6 @@ describe('NewsletterSubscription', () => {
     Component: NewsletterSubscription,
     mockBlock: createStandardMockBlock().block,
     checkParagraph: true,
+    checkGrip: true,
   });
 });

@@ -5,7 +5,8 @@ import { PageMutation } from './PageMutation';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import type { BasePage } from '~/domain/entities/Page';
 import type { PageRepository } from '~/src/domain/repositories/pageRepository';
-import { PageStatus } from '~/types/enums/common.enums';
+import { DEFAULT_COVER_IMAGE } from '~/src/infrastructure/repositories/pageRepository/pageRepository.test';
+import { PageCategories, PageStatus } from '~/types/enums/common.enums';
 import {Scalars} from '~/types/graphql/generated/graphql';
 
 jest.mock('mongoose', () => ({
@@ -40,7 +41,8 @@ describe('PageMutation', () => {
     getPublishedBySlug: jest.fn(),
     createDraft: jest.fn(),
     applyPatchToDraft: jest.fn(),
-    applyPatchToPublished: jest.fn()
+    applyPatchToPublished: jest.fn(),
+    findPages: jest.fn()
   };
 
   const mockContext = {
@@ -54,7 +56,10 @@ describe('PageMutation', () => {
     title: { uk: 'Т', en: 'T' },
     status: PageStatus.Published,
     pageType: 'AboutUsPage',
+    category: PageCategories.Foundation,
+    coverImage: DEFAULT_COVER_IMAGE,
     blocks: {},
+    blocksOrder: [''],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
@@ -67,7 +72,7 @@ describe('PageMutation', () => {
     it('should throw UNAUTHENTICATED if not admin', async () => {
       const emptyContext = { admin: false } as unknown as GraphQLContext;
       await expect(
-        PageMutation.upsertPageDraft({}, { input: { slug: 's', blocks: {} } }, emptyContext)
+        PageMutation.upsertPageDraft({}, { input: { slug: 's', blocks: {}, blocksOrder: [] } }, emptyContext)
       ).rejects.toThrow(GraphQLError);
     });
 
@@ -78,9 +83,9 @@ describe('PageMutation', () => {
       mockRepo.getPublishedBySlug.mockResolvedValue(mockBasePage);
       mockRepo.createDraft.mockResolvedValue(mockBasePage);
 
-      await PageMutation.upsertPageDraft({}, { input: { slug: 's', blocks } }, mockContext);
+      await PageMutation.upsertPageDraft({}, { input: { slug: 's', blocks, blocksOrder: [] } }, mockContext);
 
-      expect(mockRepo.createDraft).toHaveBeenCalledWith('s', expect.anything(), mockBasePage);
+      expect(mockRepo.createDraft).toHaveBeenCalledWith('s', expect.anything(), [], mockBasePage);
     });
 
     it('should call syncImagesCrops and copy blobs when crop data is present', async () => {
@@ -94,7 +99,7 @@ describe('PageMutation', () => {
       mockRepo.getDraftBySlug.mockResolvedValue(mockBasePage);
       mockRepo.applyPatchToDraft.mockResolvedValue({ ...mockBasePage, blocks: (blocks as unknown) as Record<string, any> });
 
-      await PageMutation.upsertPageDraft({}, { input: { slug: 's', blocks } }, mockContext);
+      await PageMutation.upsertPageDraft({}, { input: { slug: 's', blocks, blocksOrder: [] } }, mockContext);
 
       expect(mockCopyBlobs).toHaveBeenCalledWith('tmp', 'photos', ['photo.jpg']);
       expect(helpers.syncImagesCrops).toHaveBeenCalledWith(mockBasePage.id, blocks);
@@ -116,7 +121,7 @@ describe('PageMutation', () => {
       mockRepo.getDraftBySlug.mockResolvedValue(mockBasePage);
       mockRepo.applyPatchToPublished.mockResolvedValue({ ...mockBasePage, blocks: (blocks as unknown) as Record<string, import('~/store/types').BlockData> });
 
-      await PageMutation.publishPage({}, { input: { slug: 'test', blocks } }, mockContext);
+      await PageMutation.publishPage({}, { input: { slug: 'test', blocks, blocksOrder: [] } }, mockContext);
 
       expect(mockCopyBlobs).toHaveBeenCalledWith('tmp', 'photos', ['new.jpg']);
       expect(helpers.syncImagesCrops).toHaveBeenCalledWith(mockBasePage.id, blocks);
@@ -134,7 +139,7 @@ describe('PageMutation', () => {
       mockRepo.getPublishedBySlug.mockResolvedValue(null);
       mockRepo.applyPatchToPublished.mockResolvedValue({ ...mockBasePage, blocks: draftBlocks });
 
-      await PageMutation.publishPage({}, { input: { slug: 'test' } }, mockContext);
+      await PageMutation.publishPage({}, { input: { slug: 'test', blocksOrder: [] } }, mockContext);
 
       expect(mockRepo.applyPatchToPublished).toHaveBeenCalled();
       expect(helpers.syncImagesCrops).toHaveBeenCalledWith(mockBasePage.id, draftBlocks);
@@ -145,7 +150,7 @@ describe('PageMutation', () => {
       mockRepo.getDraftBySlug.mockResolvedValue(null);
 
       await expect(
-        PageMutation.publishPage({}, { input: { slug: 'unknown', blocks: {} } }, mockContext)
+        PageMutation.publishPage({}, { input: { slug: 'unknown', blocks: {}, blocksOrder: [] } }, mockContext)
       ).rejects.toThrow(/no source \(draft or published\)/);
     });
   });

@@ -6,6 +6,8 @@ import { createDocNode } from '~/__mocks__/utils';
 
 jest.mock('~/shared/components/design-system/text-field/TextField');
 jest.mock('~/components/configurable-list/ConfigurableList');
+jest.mock('~/components/grip/Grip');
+jest.mock('../../sortable-list/SortableList');
 
 const mockTitleJson = createDocNode('Test Section Title');
 
@@ -88,4 +90,31 @@ describe('EditableSectionList', () => {
       assertOutcome();
     }
   );
+
+  it('should render the drag grip if onDragEnd is provided and trigger onDragEnd callback', () => {
+    const onDragEndMock = jest.fn();
+    render(
+      <EditableSectionList
+        title={mockTitleJson}
+        onTitleChange={onTitleChange}
+        items={mockItems}
+        onChangeItem={onChangeItem}
+        onCreateItem={onCreateItem}
+        onDeleteItem={onDeleteItem}
+        sectionLabel="Test Label"
+        onDragEnd={onDragEndMock}
+      />
+    );
+    expect(screen.getAllByTestId('grip-mock')).toHaveLength(mockItems.length);
+    fireEvent.click(screen.getByTestId('mock-sortable-list'));
+    expect(onDragEndMock).toHaveBeenCalledWith({
+      active: { id: '1' },
+      over: { id: '2' }
+    });
+  });
+
+  it('should correctly propagate item onChange through ConfigurableList', () => {
+    fireEvent.click(screen.getByTestId('trigger-configurable-list-change'));
+    expect(onChangeItem).toHaveBeenCalledWith('1', 'title', { type: 'doc', content: [] });
+  });
 });

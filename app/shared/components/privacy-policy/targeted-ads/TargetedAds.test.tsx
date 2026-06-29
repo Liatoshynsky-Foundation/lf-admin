@@ -7,6 +7,7 @@ describe('TargetedAds', () => {
     Component: TargetedAds,
     mockBlock: createStandardMockBlock().block,
     checkParagraph: true,
+    checkGrip: true,
   });
 });
 

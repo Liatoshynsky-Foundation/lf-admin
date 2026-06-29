@@ -11,6 +11,7 @@ const config: Config = {
   collectCoverageFrom: [
     'app/**/*.{js,jsx,ts,tsx}',
     '!app/**/*.{test,d}.{js,jsx,ts,tsx}',
+    '!app/**/*.stories.{js,jsx,ts,tsx}',
     '!app/layout.tsx',
     '!app/types/**',
     'src/**/*.{js,ts}',
@@ -53,13 +54,16 @@ const config: Config = {
   modulePaths: ['<rootDir>/app', '<rootDir>/src'],
   testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/dist/', '<rootDir>/coverage/'],
   transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': ['ts-jest', { useESM: true }],
+    '^.+\\.(js|jsx|ts|tsx)$': ['ts-jest', { useESM: true }]
   },
-  transformIgnorePatterns: ['node_modules/(?!(mongoose|mongodb|bson|lodash-es|@azure|@blocknote|uuid|@aws-sdk|@smithy)/)'],
+  transformIgnorePatterns: [
+    'node_modules/(?!(mongoose|mongodb|bson|lodash-es|@azure|@blocknote|uuid|@aws-sdk|@smithy)/)'
+  ],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   testTimeout: 15000,
   detectOpenHandles: true,
-  forceExit: true
+  forceExit: true,
+  maxWorkers: process.env.CI ? 2 : '50%'
 };
 
 export default createJestConfig(config);

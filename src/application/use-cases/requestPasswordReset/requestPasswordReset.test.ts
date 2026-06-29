@@ -3,6 +3,7 @@ import { ZodError } from 'zod';
 
 import { requestPasswordReset } from './requestPasswordReset';
 import { AdminRepository } from '~/domain/repositories/adminRepository';
+import { RateLimitRepository } from '~/domain/repositories/rateLimitRepository';
 
 jest.mock('node:crypto', () => ({
   randomBytes: jest.fn()
@@ -13,8 +14,11 @@ const mockAdminRepository = {
   setResetToken: jest.fn()
 };
 
-const mockRateLimitRepository = {
-  incrementAndCheck: jest.fn()
+const mockRateLimitRepository: jest.Mocked<RateLimitRepository> = {
+  incrementAndCheck: jest.fn(),
+  checkLimit: jest.fn(),
+  incrementFailure: jest.fn(),
+  resetAttempts: jest.fn()
 };
 
 const useCase = requestPasswordReset({
