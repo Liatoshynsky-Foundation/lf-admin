@@ -25,6 +25,7 @@ export type MediaModalFlowProps = {
   renderers: MediaModalRenderers;
   directory?: string;
   hideTabs?: boolean;
+  aspectRatio?: number;
 };
 
 const isNonImageUploadSelection = (selected: SelectedMedia | null): boolean => {
@@ -42,7 +43,8 @@ export function MediaModalFlow({
   initial,
   renderers,
   directory,
-  hideTabs
+  hideTabs,
+  aspectRatio
 }: Readonly<MediaModalFlowProps>) {
   const [state, dispatch] = useReducer(reducer, initial, buildInitialState);
 
@@ -231,7 +233,8 @@ export function MediaModalFlow({
         crop: state.crop,
         onBaseline: handleCropBaseline,
         resetSeq: state.resetSeq,
-        onChange: handleCropChange
+        onChange: handleCropChange,
+        aspectRatio
       });
     }
 
