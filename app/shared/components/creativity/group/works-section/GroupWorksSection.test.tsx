@@ -25,19 +25,10 @@ jest.mock('@mui/material', () => {
     ...originalModule,
     Autocomplete: ({ options, value, onChange, onInputChange, PaperComponent, disabled }: any) => (
       <div data-testid={`mock-autocomplete-${value?.id}`} data-disabled={disabled}>
-        <button 
-          data-testid={`trigger-select-${value?.id}`} 
-          onClick={() => onChange(null, options[0])} 
-        />
-        <button 
-          data-testid={`trigger-clear-${value?.id}`} 
-          onClick={() => onChange(null, null)} 
-        />
-        <input 
-          data-testid={`trigger-input-${value?.id}`} 
-          onChange={(e) => onInputChange(null, e.target.value)} 
-        />
-        
+        <button data-testid={`trigger-select-${value?.id}`} onClick={() => onChange(null, options[0])} />
+        <button data-testid={`trigger-clear-${value?.id}`} onClick={() => onChange(null, null)} />
+        <input data-testid={`trigger-input-${value?.id}`} onChange={(e) => onInputChange(null, e.target.value)} />
+
         {PaperComponent && !disabled && (
           <PaperComponent>
             <div data-testid="paper-children">Options</div>
@@ -48,10 +39,26 @@ jest.mock('@mui/material', () => {
   };
 });
 
+jest.mock('~/shared/components/composition-modal/CompositionModal', () => ({
+  __esModule: true,
+  default: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+    if (!isOpen) return null;
+    return (
+      <div data-testid="mock-composition-modal">
+        <button data-testid="close-composition-modal" onClick={onClose}>
+          Close
+        </button>
+      </div>
+    );
+  }
+}));
+
 jest.mock('~/shared/components/design-system/button/Button', () => ({
   __esModule: true,
   default: ({ children, onClick }: any) => (
-    <button data-testid="mock-button-add" onClick={onClick}>{children}</button>
+    <button data-testid="mock-button-add" onClick={onClick}>
+      {children}
+    </button>
   )
 }));
 
@@ -61,8 +68,12 @@ jest.mock('~/shared/components/delete-card-modal/DeleteCardModal', () => ({
     if (!open) return null;
     return (
       <div data-testid="mock-delete-modal">
-        <button data-testid="modal-confirm" onClick={onDelete}>Confirm</button>
-        <button data-testid="modal-cancel" onClick={onClose}>Cancel</button>
+        <button data-testid="modal-confirm" onClick={onDelete}>
+          Confirm
+        </button>
+        <button data-testid="modal-cancel" onClick={onClose}>
+          Cancel
+        </button>
       </div>
     );
   }
@@ -88,9 +99,7 @@ const defaultWorks: GroupWork[] = [
   { id: '2', title: 'Соната' }
 ];
 
-const availableWorks: GroupWork[] = [
-  { id: '3', title: 'Доступний твір 1', genre: { uk: 'Жанр', en: 'Genre' } }
-];
+const availableWorks: GroupWork[] = [{ id: '3', title: 'Доступний твір 1', genre: { uk: 'Жанр', en: 'Genre' } }];
 
 describe('GroupWorksSection Component', () => {
   beforeEach(() => {
@@ -112,7 +121,7 @@ describe('GroupWorksSection Component', () => {
 
     expect(mockOnChange).toHaveBeenCalledTimes(1);
     const newWorksArray = mockOnChange.mock.calls[0][0];
-    
+
     expect(newWorksArray).toHaveLength(3);
     expect(newWorksArray[2].id).toBe('mock-uuid-1234');
     expect(newWorksArray[2].title).toBe('');
@@ -127,7 +136,7 @@ describe('GroupWorksSection Component', () => {
 
     expect(mockOnChange).toHaveBeenCalledTimes(1);
     const updatedWorks = mockOnChange.mock.calls[0][0];
-    
+
     expect(updatedWorks[0].id).toBe('3');
     expect(updatedWorks[0].title).toBe('Доступний твір 1');
     expect(updatedWorks[0].genre).toEqual({ uk: 'Жанр', en: 'Genre' });
@@ -141,7 +150,7 @@ describe('GroupWorksSection Component', () => {
 
     expect(mockOnChange).toHaveBeenCalledTimes(1);
     const updatedWorks = mockOnChange.mock.calls[0][0];
-    
+
     expect(updatedWorks[0].title).toBe('');
   });
 
@@ -167,7 +176,7 @@ describe('GroupWorksSection Component', () => {
 
     expect(mockOnChange).toHaveBeenCalledTimes(1);
     const updatedWorks = mockOnChange.mock.calls[0][0];
-    
+
     expect(updatedWorks).toHaveLength(1);
     expect(updatedWorks[0].id).toBe('1');
   });
@@ -194,5 +203,31 @@ describe('GroupWorksSection Component', () => {
 
     expect(screen.getByTestId('mock-autocomplete-1')).toHaveAttribute('data-disabled', 'true');
     expect(mockOnChange).not.toHaveBeenCalled();
+  });
+
+  it('should open CompositionModal when "Create" option is selected', () => {
+    render(<GroupWorksSection works={defaultWorks} availableWorks={availableWorks} onChange={mockOnChange} />);
+
+    const editButtons = screen.getAllByTestId('edit-work-btn');
+    fireEvent.click(editButtons[0]);
+
+    const createOption = screen.getByText('Створити новий твір');
+    fireEvent.click(createOption);
+
+    expect(screen.getByTestId('mock-composition-modal')).toBeInTheDocument();
+  });
+
+  it('should close CompositionModal when onClose is triggered', () => {
+    render(<GroupWorksSection works={defaultWorks} availableWorks={availableWorks} onChange={mockOnChange} />);
+    const editButtons = screen.getAllByTestId('edit-work-btn');
+    fireEvent.click(editButtons[0]);
+
+    const createOption = screen.getByText('Створити новий твір');
+    fireEvent.click(createOption);
+
+    expect(screen.getByTestId('mock-composition-modal')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('close-composition-modal'));
+    expect(screen.queryByTestId('mock-composition-modal')).not.toBeInTheDocument();
   });
 });

@@ -8,6 +8,7 @@ import { generateUniqueId } from '~/lib/utils/generateUniqueId';
 import PencilIcon from '~/public/icons/pencil.svg';
 import PlusIcon from '~/public/icons/plus.svg';
 import TrashIcon from '~/public/icons/trash.svg';
+import CompositionModal from '~/shared/components/composition-modal/CompositionModal';
 import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
 import Button from '~/shared/components/design-system/button/Button';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
@@ -68,6 +69,8 @@ export const GroupWorksSection = ({ works, availableWorks, onChange }: GroupWork
   const [editingWorkId, setEditingWorkId] = useState<string | null>(null);
   const [workIdToDelete, setWorkIdToDelete] = useState<string | null>(null);
   const [searchValues, setSearchValues] = useState<Record<string, string>>({});
+
+  const [isCompositionModalOpen, setIsCompositionModalOpen] = useState(false);
 
   const handleAddWork = () => {
     const newId = generateUniqueId();
@@ -142,7 +145,13 @@ export const GroupWorksSection = ({ works, availableWorks, onChange }: GroupWork
             return (
               <Box key={itemKey} sx={styles.workItemRow}>
                 <Box sx={styles.autocompleteWrapper}>
-                  <AutocompleteContextProvider isInputEmpty={isInputEmpty} onSelectCreate={handleCloseEdit}>
+                  <AutocompleteContextProvider
+                    isInputEmpty={isInputEmpty}
+                    onSelectCreate={() => {
+                      handleCloseEdit();
+                      setIsCompositionModalOpen(true);
+                    }}
+                  >
                     <Autocomplete
                       disabled={!isEditing}
                       options={availableWorks}
@@ -205,6 +214,8 @@ export const GroupWorksSection = ({ works, availableWorks, onChange }: GroupWork
         onDelete={handleConfirmDelete}
         description="Ви збираєтесь видалити файл. Ви впевнені, що хочете продовжити?"
       />
+
+      <CompositionModal isOpen={isCompositionModalOpen} onClose={() => setIsCompositionModalOpen(false)} />
     </>
   );
 };
