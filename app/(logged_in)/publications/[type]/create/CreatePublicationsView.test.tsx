@@ -1,17 +1,58 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import dayjs from 'dayjs';
-import React, { ReactNode } from 'react';
+import React, { MouseEvent, ReactNode } from 'react';
+import toast from 'react-hot-toast';
 
 import CreatePublicationsView from './CreatePublicationsView';
-import { initialSeoValue, PublicationsItemType } from '~/constants/publications';
+import {
+  CONTENT_MUTATION_RESULTS,
+  initialSeoValue,
+  PUBLICATIONS_BASE_PATH,
+  PublicationsItemType
+} from '~/constants/publications';
 import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 const mockPush = jest.fn();
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(() => ({ push: mockPush })),
   usePathname: jest.fn(() => '/publications/news/create')
 }));
+
+jest.mock('react-hot-toast', () => ({
+  success: jest.fn(),
+  error: jest.fn()
+}));
+
+jest.mock('~/shared/hooks/use-navigation-guard/useNavigationGuard', () => ({
+  useNavigationGuard: jest.fn(() => ({ navigateBack: jest.fn() }))
+}));
+
+jest.mock('~/shared/hooks/use-unsaved-changes/useUnsavedChanges', () => ({
+  useUnsavedChanges: jest.fn()
+}));
+
+jest.mock('~/shared/components/divided-header/header-right-actions/HeaderRightActions', () => {
+  return function MockHeaderRightActions({
+    onMenuOpen,
+    onPublish
+  }: {
+    onMenuOpen?: (e: MouseEvent<HTMLButtonElement>) => void;
+    onPublish?: () => void;
+  }) {
+    return (
+      <div>
+        <button data-testid="btn-publish" onClick={onPublish}>
+          Publish
+        </button>
+        <button data-testid="btn-open-menu" onClick={(e) => onMenuOpen?.(e)}>
+          Menu
+        </button>
+      </div>
+    );
+  };
+});
 
 jest.mock('@mui/x-date-pickers/DatePicker', () => ({
   DatePicker: ({ label, value, onChange }: { label: string; value: any; onChange: (val: any) => void }) => (
@@ -160,6 +201,49 @@ describe('CreatePublicationsView Component', () => {
       const passedValue = mockSetPublishDate.mock.calls[0][0] as dayjs.Dayjs;
       expect(dayjs.isDayjs(passedValue)).toBe(true);
       expect(passedValue.toISOString()).toBe('2024-05-10T10:00:00.000Z');
+    });
+  });
+
+  describe('Publish actions and toast notifications', () => {
+    it('should show publicationPublished toast when media publish succeeds', async () => {
+      const handleSave = jest.fn().mockResolvedValue('media-123');
+      const mockData = createMockData({ publicationType: 'media', handleSave });
+
+      render(<CreatePublicationsView data={mockData} />);
+      fireEvent.click(screen.getByTestId('btn-publish'));
+
+      await waitFor(() => {
+        expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
+        expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublished);
+      });
+    });
+
+    it('should not show toast when media publish returns no id', async () => {
+      const handleSave = jest.fn().mockResolvedValue(null);
+      const mockData = createMockData({ publicationType: 'media', handleSave });
+
+      render(<CreatePublicationsView data={mockData} />);
+      fireEvent.click(screen.getByTestId('btn-publish'));
+
+      await waitFor(() => {
+        expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
+      });
+      expect(toast.success).not.toHaveBeenCalled();
+    });
+
+    it('should show publicationPublished toast and redirect on publish and exit', async () => {
+      const handleSave = jest.fn().mockResolvedValue('media-123');
+      const mockData = createMockData({ publicationType: 'media', handleSave });
+
+      render(<CreatePublicationsView data={mockData} />);
+      fireEvent.click(screen.getByTestId('btn-open-menu'));
+      fireEvent.click(screen.getByText('Опублікувати і вийти'));
+
+      await waitFor(() => {
+        expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
+        expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublished);
+        expect(mockPush).toHaveBeenCalledWith(PUBLICATIONS_BASE_PATH);
+      });
     });
   });
 });
