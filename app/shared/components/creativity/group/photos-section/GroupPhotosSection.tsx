@@ -1,9 +1,8 @@
 import { Box, Divider, IconButton, Typography } from '@mui/material';
-import { useState } from 'react';
 
 import { styles } from './GroupPhotosSection.styles';
+import { useGroupPhotos } from './useGroupPhotos';
 import { GroupPhoto } from '~/constants/creativity';
-import { generateUniqueId } from '~/lib/utils/generateUniqueId';
 import PlusIcon from '~/public/icons/plus.svg';
 import TrashIcon from '~/public/icons/trash.svg';
 import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
@@ -18,34 +17,14 @@ type GroupPhotosSectionProps = {
 };
 
 export const GroupPhotosSection = ({ photos, onChange }: GroupPhotosSectionProps) => {
-  const getPhotoKey = (photo: GroupPhoto) => {
-    const cropStr = photo.crop?.rect ? JSON.stringify(photo.crop.rect) : 'no-crop';
-    return `${photo.id}-${cropStr}`;
-  };
-  const [photoIdToDelete, setPhotoIdToDelete] = useState<string | null>(null);
-
-  const handleAddPhoto = () => {
-    const newPhoto: GroupPhoto = {
-      id: generateUniqueId(),
-      src: '',
-      fileName: '',
-      caption: '',
-      altText: '',
-      crop: null
-    };
-    onChange([...photos, newPhoto]);
-  };
-
-  const handleUpdatePhoto = (idToUpdate: string, updates: Partial<GroupPhoto>) => {
-    onChange(photos.map((photo) => (photo.id === idToUpdate ? { ...photo, ...updates } : photo)));
-  };
-
-  const handleConfirmDelete = () => {
-    if (photoIdToDelete) {
-      onChange(photos.filter((photo) => photo.id !== photoIdToDelete));
-      setPhotoIdToDelete(null);
-    }
-  };
+  const {
+    photoIdToDelete,
+    setPhotoIdToDelete,
+    getPhotoKey,
+    handleAddPhoto,
+    handleUpdatePhoto,
+    handleConfirmDelete
+  } = useGroupPhotos(photos, onChange);
 
   return (
     <>

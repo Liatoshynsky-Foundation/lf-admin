@@ -1,15 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import React, { ChangeEvent, MouseEvent,ReactNode } from 'react';
+import React, { ChangeEvent, MouseEvent, ReactNode } from 'react';
 
 import { GroupPhotosSection } from './GroupPhotosSection';
+import { useGroupPhotos } from './useGroupPhotos'; 
 import { GroupPhoto } from '~/constants/creativity';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
-
-Object.defineProperty(global, 'crypto', {
-  value: {
-    randomUUID: () => 'mock-uuid-1234'
-  }
-});
 
 type MockButtonProps = {
   children: ReactNode;
@@ -33,6 +28,8 @@ type MockDeleteModalProps = {
   onClose: () => void;
   onDelete: () => void;
 };
+
+jest.mock('./useGroupPhotos');
 
 jest.mock('~/public/icons/trash.svg', () => ({
   __esModule: true,
@@ -69,7 +66,7 @@ jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
 jest.mock('~/shared/components/design-system/text-field/TextField', () => ({
   CustomTextField: ({ label, value, onChange }: MockCustomTextFieldProps) => (
     <input
-      data-testid={`mock-input-${value}`}
+      data-testid={`mock-input-${label}`}
       value={value || ''}
       onChange={onChange}
       aria-label={label}
@@ -90,17 +87,32 @@ jest.mock('~/shared/components/delete-card-modal/DeleteCardModal', () => ({
   }
 }));
 
-
-const mockOnChange = jest.fn();
-
 const defaultPhotos: GroupPhoto[] = [
   { id: '1', src: 'img1.jpg', fileName: 'file1', caption: 'Caption 1', altText: 'Alt 1', crop: null },
   { id: '2', src: 'img2.jpg', fileName: 'file2', caption: 'Caption 2', altText: 'Alt 2', crop: null }
 ];
 
-describe('GroupPhotosSection Component', () => {
+describe('GroupPhotosSection UI Component', () => {
+  const mockOnChange = jest.fn();
+  
+  const mockHandleAddPhoto = jest.fn();
+  const mockHandleUpdatePhoto = jest.fn();
+  const mockHandleConfirmDelete = jest.fn();
+  const mockSetPhotoIdToDelete = jest.fn();
+
+  const mockedUseGroupPhotos = useGroupPhotos as jest.Mock;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    
+    mockedUseGroupPhotos.mockReturnValue({
+      photoIdToDelete: null,
+      setPhotoIdToDelete: mockSetPhotoIdToDelete,
+      getPhotoKey: (photo: GroupPhoto) => `${photo.id}-no-crop`,
+      handleAddPhoto: mockHandleAddPhoto,
+      handleUpdatePhoto: mockHandleUpdatePhoto,
+      handleConfirmDelete: mockHandleConfirmDelete
+    });
   });
 
   it('should render the list of photos with correct indices', () => {
@@ -108,89 +120,70 @@ describe('GroupPhotosSection Component', () => {
 
     expect(screen.getByText('Зображення 1')).toBeInTheDocument();
     expect(screen.getByText('Зображення 2')).toBeInTheDocument();
-    expect(screen.getByTestId('mock-input-Caption 1')).toBeInTheDocument();
+    
+    const captionInputs = screen.getAllByTestId('mock-input-Підпис до зображення');
+    expect(captionInputs[0]).toHaveValue('Caption 1');
+    expect(captionInputs[1]).toHaveValue('Caption 2');
   });
 
-  it('should add a new photo when the add button is clicked', () => {
+  it('should call handleAddPhoto when the add button is clicked', () => {
     render(<GroupPhotosSection photos={defaultPhotos} onChange={mockOnChange} />);
 
     fireEvent.click(screen.getByTestId('mock-button-add'));
-
-    expect(mockOnChange).toHaveBeenCalledTimes(1);
-    const newPhotosArray = mockOnChange.mock.calls[0][0];
-    
-    expect(newPhotosArray).toHaveLength(3);
-    expect(newPhotosArray[2].id).toBe('mock-uuid-1234');
-    expect(newPhotosArray[2].src).toBe('');
+    expect(mockHandleAddPhoto).toHaveBeenCalledTimes(1);
   });
 
-  it('should update caption when typing in the text field', () => {
+  it('should call handleUpdatePhoto when typing in the caption text field', () => {
     render(<GroupPhotosSection photos={defaultPhotos} onChange={mockOnChange} />);
 
-    const captionInput = screen.getByTestId('mock-input-Caption 1');
-    fireEvent.change(captionInput, { target: { value: 'Updated Caption' } });
+    const captionInputs = screen.getAllByTestId('mock-input-Підпис до зображення');
+    fireEvent.change(captionInputs[0], { target: { value: 'Updated Caption' } });
 
-    expect(mockOnChange).toHaveBeenCalledTimes(1);
-    const updatedPhotos = mockOnChange.mock.calls[0][0];
-    expect(updatedPhotos[0].caption).toBe('Updated Caption');
+    expect(mockHandleUpdatePhoto).toHaveBeenCalledWith('1', { caption: 'Updated Caption' });
   });
 
-  it('should update alt text from ImagePreviewBlock', () => {
+  it('should call handleUpdatePhoto when alt text is updated from ImagePreviewBlock', () => {
     render(<GroupPhotosSection photos={defaultPhotos} onChange={mockOnChange} />);
 
     fireEvent.click(screen.getByTestId('trigger-alt-img1.jpg'));
-
-    expect(mockOnChange).toHaveBeenCalledTimes(1);
-    const updatedPhotos = mockOnChange.mock.calls[0][0];
-    expect(updatedPhotos[0].altText).toBe('New Alt Text');
+    expect(mockHandleUpdatePhoto).toHaveBeenCalledWith('1', { altText: 'New Alt Text' });
   });
 
-  it('should update both src and crop simultaneously when changed in ImagePreviewBlock', () => {
+  it('should call handleUpdatePhoto when src and crop are updated from ImagePreviewBlock', () => {
     render(<GroupPhotosSection photos={defaultPhotos} onChange={mockOnChange} />);
 
     fireEvent.click(screen.getByTestId('trigger-img-img1.jpg'));
-
-    expect(mockOnChange).toHaveBeenCalledTimes(1);
-    const updatedPhotos = mockOnChange.mock.calls[0][0];
     
-    expect(updatedPhotos[0].src).toBe('new-url.jpg');
-    expect(updatedPhotos[0].crop).toEqual({ rect: { width: 50, height: 50, x: 0, y: 0 } });
+    expect(mockHandleUpdatePhoto).toHaveBeenCalledWith('1', {
+      src: 'new-url.jpg',
+      crop: { rect: { width: 50, height: 50, x: 0, y: 0 } }
+    });
   });
 
-  it('should open delete modal when trash icon is clicked', () => {
+  it('should call setPhotoIdToDelete when trash icon is clicked', () => {
     render(<GroupPhotosSection photos={defaultPhotos} onChange={mockOnChange} />);
 
-    expect(screen.queryByTestId('mock-delete-modal')).not.toBeInTheDocument();
     const trashButtons = screen.getAllByTestId('delete-photo-btn');
     fireEvent.click(trashButtons[0]);
+
+    expect(mockSetPhotoIdToDelete).toHaveBeenCalledWith('1');
+  });
+
+  it('should pass photoIdToDelete to DeleteCardModal and call handleConfirmDelete', () => {
+    mockedUseGroupPhotos.mockReturnValue({
+      photoIdToDelete: '1',
+      setPhotoIdToDelete: mockSetPhotoIdToDelete,
+      getPhotoKey: (photo: GroupPhoto) => `${photo.id}-no-crop`,
+      handleAddPhoto: mockHandleAddPhoto,
+      handleUpdatePhoto: mockHandleUpdatePhoto,
+      handleConfirmDelete: mockHandleConfirmDelete
+    });
+
+    render(<GroupPhotosSection photos={defaultPhotos} onChange={mockOnChange} />);
 
     expect(screen.getByTestId('mock-delete-modal')).toBeInTheDocument();
-  });
-
-  it('should delete photo when confirmed in modal', () => {
-    render(<GroupPhotosSection photos={defaultPhotos} onChange={mockOnChange} />);
-
-    const trashButtons = screen.getAllByTestId('delete-photo-btn');
-    fireEvent.click(trashButtons[0]);
-
     fireEvent.click(screen.getByTestId('modal-confirm'));
 
-    expect(mockOnChange).toHaveBeenCalledTimes(1);
-    const updatedPhotos = mockOnChange.mock.calls[0][0];
-    
-    expect(updatedPhotos).toHaveLength(1);
-    expect(updatedPhotos[0].id).toBe('2');
-  });
-
-  it('should close modal without deleting when cancelled', () => {
-    render(<GroupPhotosSection photos={defaultPhotos} onChange={mockOnChange} />);
-
-    const trashButtons = screen.getAllByTestId('delete-photo-btn');
-    fireEvent.click(trashButtons[0]);
-
-    fireEvent.click(screen.getByTestId('modal-cancel'));
-
-    expect(mockOnChange).not.toHaveBeenCalled();
-    expect(screen.queryByTestId('mock-delete-modal')).not.toBeInTheDocument();
+    expect(mockHandleConfirmDelete).toHaveBeenCalledTimes(1);
   });
 });

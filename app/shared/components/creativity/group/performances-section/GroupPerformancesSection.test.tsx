@@ -71,9 +71,18 @@ const defaultProps = {
 };
 
 describe('GroupPerformancesSection Component', () => {
+  const originalCrypto = global.crypto;
+
   beforeAll(() => {
-    Object.defineProperty(window, 'crypto', {
+    Object.defineProperty(global, 'crypto', {
       value: { randomUUID: () => 'mock-uuid-1234' },
+      configurable: true
+    });
+  });
+
+  afterAll(() => {
+    Object.defineProperty(global, 'crypto', {
+      value: originalCrypto,
       configurable: true
     });
   });
