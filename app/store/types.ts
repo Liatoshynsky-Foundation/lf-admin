@@ -26,6 +26,7 @@ export interface AdminUserState {
 export interface EditState {
   isChanged: boolean;
   isInitialized: boolean;
+  initializedPages: Record<string, boolean>;
 
   blocks: {
     [pageId: string]: {
