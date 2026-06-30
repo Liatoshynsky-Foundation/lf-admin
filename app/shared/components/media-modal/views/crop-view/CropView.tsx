@@ -1,5 +1,3 @@
-'use client';
-
 import 'react-image-crop/dist/ReactCrop.css';
 import { Box, Typography } from '@mui/material';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -13,7 +11,17 @@ const canRevokeObjectUrl = () => typeof URL !== 'undefined' && typeof URL.revoke
 
 const MIN_NATURAL_HEIGHT = 800;
 
-function calculateInitialRect(naturalWidth: number, naturalHeight: number, aspectRatio?: number) {
+interface Size {
+  width: number;
+  height: number;
+}
+
+interface Rect extends Size {
+  x: number;
+  y: number;
+}
+
+function calculateInitialRect(naturalWidth: number, naturalHeight: number, aspectRatio?: number): Rect {
   let rectWidth = naturalWidth;
   let rectHeight = naturalHeight;
   let x = 0;
@@ -36,6 +44,36 @@ function calculateInitialRect(naturalWidth: number, naturalHeight: number, aspec
   return { x, y, width: rectWidth, height: rectHeight };
 }
 
+function calculateContainSize(imgNatural: Size, container: Size): Size {
+  if (imgNatural.width <= container.width && imgNatural.height <= container.height) {
+    return { width: imgNatural.width, height: imgNatural.height };
+  }
+
+  const imgRatio = imgNatural.width / imgNatural.height;
+  const containerRatio = container.width / container.height;
+
+  return imgRatio > containerRatio
+    ? { width: container.width, height: container.width / imgRatio }
+    : { width: container.height * imgRatio, height: container.height };
+}
+
+function calculateMinDomDimensions(
+  img: HTMLImageElement,
+  displayHeight: number,
+  aspectRatio?: number
+): { width?: number; height: number } {
+  const maxPossibleNaturalHeight = aspectRatio
+    ? Math.min(img.naturalHeight, img.naturalWidth / aspectRatio)
+    : img.naturalHeight;
+
+  const actualMinNaturalHeight = Math.min(MIN_NATURAL_HEIGHT, maxPossibleNaturalHeight);
+  const scaleY = displayHeight / img.naturalHeight;
+  const domMinHeight = actualMinNaturalHeight * scaleY;
+  const domMinWidth = aspectRatio ? domMinHeight * aspectRatio : undefined;
+
+  return { width: domMinWidth, height: domMinHeight };
+}
+
 export function CropView({
   selected,
   crop: stateCrop,
@@ -49,17 +87,22 @@ export function CropView({
   const [imgError, setImgError] = useState(false);
 
   const [crop, setCrop] = useState<PixelCrop>();
-  const [imgDimensions, setImgDimensions] = useState<{ width: number; height: number } | null>(null);
-
+  const [imgDimensions, setImgDimensions] = useState<Size | null>(null);
   const [minDOMDimensions, setMinDOMDimensions] = useState<{ width?: number; height?: number }>({});
 
   const imgRef = useRef<HTMLImageElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const latestRef = useRef({ crop, stateCrop, imgDimensions });
+  latestRef.current = { crop, stateCrop, imgDimensions };
 
   const forCropAngle = imgDimensions ? Math.min(imgDimensions.width, imgDimensions.height) * 0.1 : 40;
 
   useEffect(() => {
     setImgError(false);
     setImgDimensions(null);
+    latestRef.current.imgDimensions = null;
+    setCrop(undefined);
   }, [selected.id]);
 
   useEffect(() => {
@@ -86,19 +129,13 @@ export function CropView({
     return selected.src;
   }, [selected, uploadObjectUrl]);
 
-  const didInitForSelectedRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (didInitForSelectedRef.current !== selected.id) {
-      setCrop(undefined);
-      didInitForSelectedRef.current = selected.id;
-    }
-  }, [selected.id]);
-
   const applyCrop = useCallback(
-    (rect: { x: number; y: number; width: number; height: number }, img: HTMLImageElement) => {
-      const scaleX = img.width / img.naturalWidth;
-      const scaleY = img.height / img.naturalHeight;
+    (rect: Rect, img: HTMLImageElement, overrideSize?: Size) => {
+      const displayWidth = overrideSize?.width ?? img.width;
+      const displayHeight = overrideSize?.height ?? img.height;
+
+      const scaleX = displayWidth / img.naturalWidth;
+      const scaleY = displayHeight / img.naturalHeight;
 
       setCrop({
         unit: 'px',
@@ -114,6 +151,53 @@ export function CropView({
   );
 
   useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      const img = imgRef.current;
+      if (!img || img.naturalWidth === 0 || img.naturalHeight === 0) return;
+
+      const { crop: currentCrop, stateCrop: latestStateCrop, imgDimensions: oldDimensions } = latestRef.current;
+
+      const newDimensions = calculateContainSize(
+        { width: img.naturalWidth, height: img.naturalHeight },
+        { width: container.clientWidth, height: container.clientHeight }
+      );
+
+      setImgDimensions(newDimensions);
+      latestRef.current.imgDimensions = newDimensions;
+
+      const { width: domMinWidth, height: domMinHeight } = calculateMinDomDimensions(
+        img,
+        newDimensions.height,
+        aspectRatio
+      );
+      setMinDOMDimensions({ width: domMinWidth, height: domMinHeight });
+
+      if (currentCrop && oldDimensions && oldDimensions.width > 0 && oldDimensions.height > 0) {
+        const resizeScaleX = newDimensions.width / oldDimensions.width;
+        const resizeScaleY = newDimensions.height / oldDimensions.height;
+
+        setCrop({
+          unit: 'px',
+          x: currentCrop.x * resizeScaleX,
+          y: currentCrop.y * resizeScaleY,
+          width: currentCrop.width * resizeScaleX,
+          height: currentCrop.height * resizeScaleY
+        });
+      } else {
+        const activeRect =
+          latestStateCrop?.rect ?? calculateInitialRect(img.naturalWidth, img.naturalHeight, aspectRatio);
+        applyCrop(activeRect, img, newDimensions);
+      }
+    });
+
+    resizeObserver.observe(container);
+    return () => resizeObserver.disconnect();
+  }, [applyCrop, aspectRatio]);
+
+  useEffect(() => {
     if (resetSeq > 0 && imgRef.current) {
       const img = imgRef.current;
       const initialRect = calculateInitialRect(img.naturalWidth, img.naturalHeight, aspectRatio);
@@ -123,19 +207,11 @@ export function CropView({
 
   const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
-    setImgDimensions({ width: img.width, height: img.height });
+    const dimensions = { width: img.width, height: img.height };
+    setImgDimensions(dimensions);
+    latestRef.current.imgDimensions = dimensions;
 
-    let maxPossibleNaturalHeight = img.naturalHeight;
-    if (aspectRatio) {
-      maxPossibleNaturalHeight = Math.min(img.naturalHeight, img.naturalWidth / aspectRatio);
-    }
-
-    const actualMinNaturalHeight = Math.min(MIN_NATURAL_HEIGHT, maxPossibleNaturalHeight);
-
-    const scaleY = img.height / img.naturalHeight;
-    const domMinHeight = actualMinNaturalHeight * scaleY;
-    const domMinWidth = aspectRatio ? domMinHeight * aspectRatio : undefined;
-
+    const { width: domMinWidth, height: domMinHeight } = calculateMinDomDimensions(img, img.height, aspectRatio);
     setMinDOMDimensions({ width: domMinWidth, height: domMinHeight });
 
     if (stateCrop?.rect) {
@@ -181,7 +257,7 @@ export function CropView({
     }
 
     return (
-      <Box sx={styles.imageContainer}>
+      <Box ref={containerRef} sx={styles.imageContainer}>
         <ReactCrop
           crop={crop}
           onChange={handleCropChange}
@@ -199,9 +275,7 @@ export function CropView({
             src={previewSrc}
             alt=""
             onLoad={onImageLoad}
-            onError={() => {
-              setImgError(true);
-            }}
+            onError={() => setImgError(true)}
             style={styles.cropComponentImage}
           />
         </ReactCrop>
