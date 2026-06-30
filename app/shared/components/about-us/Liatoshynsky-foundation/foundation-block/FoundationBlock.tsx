@@ -5,6 +5,7 @@ import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
 import {MediaModalResult} from '~/components/media-modal/MediaModal.types';
+import { CROP_RATIOS } from '~/constants/publications';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { ImagePreviewBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
 
@@ -56,6 +57,7 @@ export const FoundationBlock = ({
         initialCrop={initialCrop}
         onChangeImage={onImageChange}
         title="Основне зображення"
+        aspectRatio={CROP_RATIOS.FUNDATION_PROFILE_SMALL}
       />
     </Box>
   );

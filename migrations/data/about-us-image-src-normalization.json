@@ -1,0 +1,56 @@
+[
+  {
+    "path": "blocks.IntroSection.image",
+    "src": "https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/1781038740980-691fd77d478a85e7.png",
+    "generatedSrc": null,
+    "newSrc": "https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/main-foundation-section.jpg"
+  },
+  {
+    "path": "blocks.FoundationInfo.image",
+    "src": "https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/1781091955085-b0d498065bcfb3a9.png",
+    "generatedSrc": null,
+    "newSrc": "https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/about-us-composer-portrait.png"
+  },
+  {
+    "path": "blocks.OurMission.smallImage",
+    "src": "blob-url.jpeg",
+    "generatedSrc": null,
+    "newSrc": "https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/about-us-gomon-piano.jpeg"
+  },
+  {
+    "path": "blocks.OurMission.bigImage",
+    "src": "mission-2",
+    "generatedSrc": "/api/blob-url?folderName=photos&blobName=mission-2",
+    "newSrc": "https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/about-us-gomon-telephon.jpeg"
+  },
+  {
+    "path": "blocks.FoundationFounders.members.0.photo",
+    "src": "Tetyana-Homon",
+    "generatedSrc": "blob:http://localhost:3000/...",
+    "newSrc": "https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/about-us-gomon.png"
+  },
+  {
+    "path": "blocks.FoundationFounders.members.1.photo",
+    "src": "Iryna-Tykova",
+    "generatedSrc": "/api/blob-url?folderName=photos&blobName=Iryna-Tykova",
+    "newSrc": "https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/about-us-tukova.jpeg"
+  },
+  {
+    "path": "blocks.FoundationFounders.members.2.photo",
+    "src": "https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/biography-tetiana-gomon.png",
+    "generatedSrc": "https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/biography-tetiana-gomon.png",
+    "newSrc": "https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/about-us-bilianska.png"
+  },
+  {
+    "path": "blocks.FoundationFounders.members.3.photo",
+    "src": "https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/1780361643950-0d86a77f23678e8e.jpg",
+    "generatedSrc": "https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/1780361643950-0d86a77f23678e8e.jpg",
+    "newSrc": ""
+  },
+  {
+    "path": "blocks.FoundationFounders.members.4.photo",
+    "src": "/api/blob-url?folderName=photos&blobName=Taisia-Bilyanska",
+    "generatedSrc": "/api/blob-url?folderName=photos&blobName=Taisia-Bilyanska",
+    "newSrc": ""
+  }
+]

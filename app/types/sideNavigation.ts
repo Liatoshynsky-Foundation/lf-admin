@@ -1,4 +1,5 @@
 import { SxProps, Theme } from '@mui/material';
+import React from 'react';
 
 export interface ListElementType {
   title: string;
@@ -16,6 +17,7 @@ export interface LinkElementProps {
   sxItem?: SxProps<Theme>;
   handleClick?: () => void;
   children?: React.ReactNode;
+  onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 export interface CollapseListNavigationProps {
   openNavbar: boolean;

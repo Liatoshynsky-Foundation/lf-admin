@@ -14,6 +14,9 @@ jest.mock('@blocknote/react', () => ({
   useBlockNoteEditor: jest.fn(),
   blockTypeSelectItems: jest.fn(),
   getFormattingToolbarItems: jest.fn(),
+  TextAlignButton: ({ textAlignment }: { textAlignment: string }) => (
+    <span data-testid={`text-align-${textAlignment}`}>{textAlignment}</span>
+  ),
   FormattingToolbar: ({ children }: { children: (React.ReactElement | ToolbarItem)[] }) => (
     <div data-testid="formatting-toolbar">
       {Array.isArray(children)
@@ -122,5 +125,19 @@ describe('CustomFormattingToolbar', () => {
 
     fireEvent.click(customButton);
     expect(mockOpenMediaModal).toHaveBeenCalledTimes(1);
+  });
+
+  it('should insert TextAlignButton with justify textAlignment after textAlignRightButton', () => {
+    (getFormattingToolbarItems as jest.Mock).mockReturnValue([
+      { key: 'textAlignLeftButton' },
+      { key: 'textAlignCenterButton' },
+      { key: 'textAlignRightButton' }
+    ]);
+
+    render(<CustomFormattingToolbar openMediaModal={mockOpenMediaModal} />);
+
+    expect(screen.getByTestId('default-item-textAlignRightButton')).toBeInTheDocument();
+
+    expect(screen.getByTestId('text-align-justify')).toBeInTheDocument();
   });
 });
