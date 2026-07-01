@@ -23,7 +23,7 @@ interface FilterArgs {
 interface PaginatedArgs {
   page: number;
   limit: number;
-  filters?: FilterArgs['filters'];
+  filters?: NonNullable<FilterArgs['filters']>;
 }
 interface CountArgs {
   status?: string;
