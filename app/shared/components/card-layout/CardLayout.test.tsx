@@ -51,7 +51,7 @@ const defaultItems = [
   { text: { name: 'Delete' }, href: '/delete' }
 ];
 
-const renderCardLayout = (overrides = {}) =>
+const renderCardLayout = (overrides: Partial<React.ComponentProps<typeof CardLayout>> = {}) =>
   render(
     <CardLayout
       coverImage={<div data-testid="cover" />}
@@ -234,13 +234,19 @@ describe('CardLayout', () => {
     it('passes interactive=true to styles.card', async () => {
       const styles = (await import('./CardLayout.styles')).default;
       renderCardLayout({ interactive: true });
-      expect(styles.card).toHaveBeenCalledWith(true);
+      expect(styles.card).toHaveBeenCalledWith(true, false);
     });
 
     it('passes interactive=false (default) to styles.card', async () => {
       const styles = (await import('./CardLayout.styles')).default;
       renderCardLayout();
-      expect(styles.card).toHaveBeenCalledWith(false);
+      expect(styles.card).toHaveBeenCalledWith(false, false);
+    });
+
+    it('passes isSelected=true to styles.card', async () => {
+      const styles = (await import('./CardLayout.styles')).default;
+      renderCardLayout({ isSelected: true });
+      expect(styles.card).toHaveBeenCalledWith(false, true);
     });
   });
 });

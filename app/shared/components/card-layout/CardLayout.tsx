@@ -21,6 +21,7 @@ interface CardLayoutProps {
   contentBottom?: React.ReactNode;
   spaceBetweenContent?: number;
   interactive?: boolean;
+  isSelected?: boolean;
 }
 
 const CardLayout = ({
@@ -31,6 +32,7 @@ const CardLayout = ({
   contentBottom,
   contentUpper,
   interactive = false,
+  isSelected = false,
   spaceBetweenContent = 200
 }: CardLayoutProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -68,7 +70,7 @@ const CardLayout = ({
   }, [anchorEl]);
 
   return (
-    <Card sx={styles.card(interactive)}>
+    <Card sx={styles.card(interactive, isSelected)}>
       <Box sx={styles.imageContainer}>{coverImage}</Box>
 
       <CardContent sx={styles.cardContent}>
