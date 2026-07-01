@@ -69,12 +69,14 @@ describe('CompositionRepository', () => {
     updateManyMock.mockResolvedValue({});
   });
 
-  it('findByOpusId returns compositions for the opus', async () => {
-    findMock.mockReturnValue({ lean: jest.fn().mockResolvedValue([createMockDoc()]) });
+  it('findByOpusId returns compositions for the opus ordered by drag position', async () => {
+    const sortMock = jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue([createMockDoc()]) });
+    findMock.mockReturnValue({ sort: sortMock });
 
     const result = await repository.findByOpusId(opusId);
 
     expect(findMock).toHaveBeenCalledWith({ opusId });
+    expect(sortMock).toHaveBeenCalledWith({ order: 1, _id: 1 });
     expect(result).toHaveLength(1);
     expect(result[0].title.uk).toBe('Після бою');
     expect(result[0].opusId).toBe(opusId);

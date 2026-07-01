@@ -10,8 +10,6 @@ import {
 import { Opus } from '~/domain/entities/Opus';
 import { OpusStatus } from '~/types/enums/common.enums';
 
-// Lenient description sub-schema: uk/en optional so existing lean docs and
-// partially-filled admin SEO data both stay valid.
 const opusDescriptionSchema = new Schema(
   {
     uk: { type: String, default: '' },
@@ -23,13 +21,10 @@ const opusDescriptionSchema = new Schema(
 
 const opusSchema = new Schema(
   {
-    // Canonical lf-client fields (shared collection).
     number: { type: String, required: true, unique: true, index: true },
     title: { type: translatedFieldSchema, required: true },
     releaseYear: { type: Number, default: null },
 
-    // Admin extensions — all optional, no new unique indexes, so the existing
-    // lean `opus` documents written by lf-client remain valid.
     numberKind: { type: String, enum: ['op', 'woo'], default: 'op' },
     name: { type: String, default: null },
     additionalText: { type: String, default: null },

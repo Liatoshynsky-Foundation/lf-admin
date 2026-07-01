@@ -50,14 +50,8 @@ export default function OpusView({ data, mode = 'create' }: Readonly<OpusViewPro
         return;
       }
 
-      if (mode === 'create') {
-        toast.success(OPUS_MUTATION_RESULTS.created);
-        router.push(`${OPUS_GROUP_PATH}/${id}/edit`);
-
-        return;
-      }
-
-      toast.success(OPUS_MUTATION_RESULTS.updated);
+      toast.success(mode === 'create' ? OPUS_MUTATION_RESULTS.created : OPUS_MUTATION_RESULTS.updated);
+      router.push(`${OPUS_GROUP_PATH}/${id}/content`);
     } catch (error) {
       toast.error(`Помилка: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -68,15 +62,13 @@ export default function OpusView({ data, mode = 'create' }: Readonly<OpusViewPro
       <DividedHeader
         originUrl={OPUSES_BASE_PATH}
         rightActionsComponent={
-          <Box sx={styles.headerActions}>
-            <ProgressStatus isSaved={isSaved} />
-            <HeaderRightActions mode="create" onEdit={onEdit} editLabel="Перейти до редагування" />
-          </Box>
+          <HeaderRightActions mode="create" onEdit={onEdit} editLabel="Перейти до редагування" />
         }
       >
         <Typography variant="h7">
           {mode === 'edit' ? OPUS_PAGE_TITLES.edit : OPUS_PAGE_TITLES.create}
         </Typography>
+        <ProgressStatus isSaved={isSaved} />
       </DividedHeader>
 
       <Box sx={styles.contentWrapper}>

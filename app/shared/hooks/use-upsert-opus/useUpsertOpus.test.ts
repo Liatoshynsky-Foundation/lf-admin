@@ -21,7 +21,7 @@ describe('useUpsertOpus', () => {
     const { result } = renderHook(() => useUpsertOpus());
 
     expect(result.current.details.name).toBe('');
-    expect(result.current.detailsErrors).toEqual({ number: '', name: '', creationYear: '', genre: '' });
+    expect(result.current.detailsErrors).toEqual({ number: '', name: '', creationYear: '' });
     expect(result.current.isEditing).toBe(false);
   });
 

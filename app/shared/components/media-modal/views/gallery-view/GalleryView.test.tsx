@@ -32,7 +32,7 @@ jest.mock('~/shared/hooks/use-galllery-photo/useGallery', () => ({
 }));
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
-  AssetType: { Image: 'IMAGE' },
+  AssetType: { Image: 'IMAGE', Audio: 'AUDIO', Pdf: 'PDF' },
   useAllAssetsQuery: jest.fn()
 }));
 
@@ -227,6 +227,46 @@ describe('GalleryView', () => {
 
     expect(screen.getByText('piano-studio.jpg')).toBeInTheDocument();
     expect(screen.queryByText('composer-portrait.jpg')).not.toBeInTheDocument();
+  });
+
+  it('should render the audio gallery and list only audio files for mediaKind="audio"', () => {
+    (useGalleryFiles as jest.Mock).mockReturnValue({
+      files: [
+        {
+          filename: 'song.mp3',
+          originalName: 'song.mp3',
+          mimeType: 'audio/mpeg',
+          size: 1,
+          createdAt: '2024-01-01T00:00:00.000Z',
+          url: 'https://example.com/song.mp3'
+        },
+        {
+          filename: 'cover.jpg',
+          originalName: 'cover.jpg',
+          mimeType: 'image/jpeg',
+          size: 1,
+          createdAt: '2024-01-01T00:00:00.000Z',
+          url: 'https://example.com/cover.jpg'
+        }
+      ],
+      isLoading: false,
+      error: null
+    });
+
+    render(
+      <GalleryView
+        selected={null}
+        onPick={mockOnPick}
+        filters={mockFilters}
+        onFiltersChange={mockOnFiltersChange}
+        mediaKind="audio"
+      />
+    );
+
+    expect(screen.getByText('Усі аудіо')).toBeInTheDocument();
+    expect(useGalleryFiles).toHaveBeenCalledWith('compositions');
+    expect(screen.getByText('song.mp3')).toBeInTheDocument();
+    expect(screen.queryByText('cover.jpg')).not.toBeInTheDocument();
   });
 
   it('should match items by usage page from asset usageRefs', () => {

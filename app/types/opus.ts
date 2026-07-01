@@ -11,8 +11,6 @@ export interface OpusMediaFileData {
 
 export interface OpusCompositionData {
   id: string;
-  // DB `compositions._id` when this row references an existing composition
-  // (from search or when editing); undefined for brand-new rows.
   compositionId?: string;
   title: string;
   genre: string;
@@ -37,7 +35,6 @@ export interface OpusDetailsErrors {
   number: string;
   name: string;
   creationYear: string;
-  genre: string;
 }
 
 export interface OpusCompositionInput {
@@ -54,7 +51,13 @@ export interface OpusCompositionSuggestion {
   title?: { uk?: string | null; en?: string | null } | null;
   genre?: string | null;
   year?: number | null;
-  sheetMusic?: Array<{ url: string; isFree?: boolean | null; dateUploaded?: string | null }> | null;
+  sheetMusic?: Array<{
+    url: string;
+    name?: string | null;
+    publishDate?: string | null;
+    isFree?: boolean | null;
+    dateUploaded?: string | null;
+  }> | null;
   audios?: Array<{ name?: string | null; url?: string | null }> | null;
 }
 
@@ -86,7 +89,13 @@ export interface FetchedOpusData {
     year?: number | null;
     audioAvailable?: boolean | null;
     sheetAvailable?: boolean | null;
-    sheetMusic?: Array<{ url: string; isFree?: boolean | null; dateUploaded?: string | null }> | null;
+    sheetMusic?: Array<{
+    url: string;
+    name?: string | null;
+    publishDate?: string | null;
+    isFree?: boolean | null;
+    dateUploaded?: string | null;
+  }> | null;
     audios?: Array<{ name?: string | null; url?: string | null }> | null;
   }> | null;
 }

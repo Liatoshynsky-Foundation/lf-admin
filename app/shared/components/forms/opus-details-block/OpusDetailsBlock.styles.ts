@@ -33,10 +33,28 @@ export const styles: Record<string, SxProps<Theme>> = {
     '& .MuiOutlinedInput-root': { borderRadius: '8px' }
   },
 
-  nameField: {
-    flex: 2,
-    minWidth: '200px',
+  noteField: {
+    width: { xs: '100%', md: '320px' },
+    flexShrink: 0,
     '& .MuiOutlinedInput-root': { borderRadius: '8px' }
+  },
+
+  nameField: {
+    width: '100%',
+    '& .MuiOutlinedInput-root': { borderRadius: '8px' }
+  },
+
+  genreField: {
+    flex: 2,
+    minWidth: '160px',
+    '& .MuiOutlinedInput-root': { borderRadius: '8px' }
+  },
+
+  yearSeparator: {
+    display: { xs: 'none', md: 'flex' },
+    alignItems: 'center',
+    color: 'text.secondary',
+    flexShrink: 0
   },
 
   compositionsHeader: {
@@ -71,10 +89,17 @@ export const styles: Record<string, SxProps<Theme>> = {
     gap: '12px'
   },
 
+  compositionRowDragging: {
+    opacity: 0.5
+  },
+
   dragHandle: {
+    display: 'flex',
+    alignItems: 'center',
     cursor: 'grab',
     flexShrink: 0,
-    color: '#9ca3af'
+    color: '#9ca3af',
+    '&:active': { cursor: 'grabbing' }
   },
 
   compositionInput: {
@@ -88,7 +113,7 @@ export const styles: Record<string, SxProps<Theme>> = {
   },
 
   deletePaper: {
-    width: '480px',
+    width: '572px',
     maxWidth: '90vw',
     borderRadius: '16px',
     padding: '32px'
@@ -96,7 +121,7 @@ export const styles: Record<string, SxProps<Theme>> = {
 
   deleteHeader: {
     display: 'flex',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: '16px'
   },

@@ -83,7 +83,12 @@ const mapComposition = (composition: GQLComposition): CompositionInput => {
     categories: [],
     audioAvailable: audios.length > 0,
     sheetAvailable: notesWithFiles.length > 0,
-    sheetMusic: notesWithFiles.map((note) => ({ url: note.fileUrl as string, isFree: true })),
+    sheetMusic: notesWithFiles.map((note) => ({
+      url: note.fileUrl as string,
+      name: note.name ?? null,
+      publishDate: note.publishDate ?? null,
+      isFree: true
+    })),
     audios: audios.map((audio) => ({ name: audio.name ?? null, url: audio.fileUrl ?? null }))
   };
 };

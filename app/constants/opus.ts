@@ -14,12 +14,12 @@ export const OPUS_PAGE_TITLES = {
 export const OPUS_DETAILS_LABELS = {
   blockTitle: 'Деталі',
   numberKind: 'Назва',
-  number: '№',
+  number: 'Номер',
   name: 'Назва опусу',
-  additionalText: 'Додатковий текст',
+  additionalText: 'Примітка',
   creationYear: 'Рік створення',
   endYear: 'Рік закінчення',
-  datesNote: 'Додатковий текст',
+  datesNote: 'Уточнення',
   genre: 'Жанр',
   compositions: 'Твори в опусі',
   addComposition: 'Додати'
@@ -27,8 +27,25 @@ export const OPUS_DETAILS_LABELS = {
 
 export const OPUS_NUMBER_KIND_OPTIONS = [
   { value: 'op', label: 'Op.' },
-  { value: 'woo', label: 'В/о' }
+  { value: 'woo', label: 'B/o.' }
 ] as const;
+
+export const OPUS_FIELD_LIMITS = {
+  name: { min: 2, max: 250 },
+  additionalText: 40,
+  datesNote: 40,
+  genre: 150
+} as const;
+
+export const OPUS_YEAR_RANGE = { min: 1900, max: 3000 } as const;
+
+export const OPUS_VALIDATION_MESSAGES = {
+  numberRequired: 'Вкажіть номер.',
+  numberInvalid: 'Номер має бути цілим позитивним числом.',
+  nameRequired: 'Введіть назву групи.',
+  nameTooShort: 'Введіть щонайменше 2 символи.',
+  creationYearRequired: 'Вкажіть рік складання.'
+} as const;
 
 export const COMPOSITION_MODAL_LABELS = {
   createTitle: 'Нова композиція',

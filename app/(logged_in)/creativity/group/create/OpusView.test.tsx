@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { ReactNode } from 'react';
 
 import OpusView from './OpusView';
 import { initialOpusDetails, initialOpusSeoValue } from '~/constants/opus';
@@ -28,6 +29,14 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
   MediaModal: () => null
 }));
 
+jest.mock('@mui/x-date-pickers/LocalizationProvider', () => ({
+  LocalizationProvider: ({ children }: { children: ReactNode }) => <>{children}</>
+}));
+
+jest.mock('@mui/x-date-pickers/DatePicker', () => ({
+  DatePicker: ({ label }: { label: string }) => <input aria-label={label} readOnly value="" />
+}));
+
 const createMockData = (
   overrides: Partial<ReturnType<typeof useUpsertOpus>> = {}
 ): ReturnType<typeof useUpsertOpus> => ({
@@ -35,7 +44,7 @@ const createMockData = (
   isLoading: false,
   details: initialOpusDetails,
   setDetails: jest.fn(),
-  detailsErrors: { number: '', name: '', creationYear: '', genre: '' },
+  detailsErrors: { number: '', name: '', creationYear: '' },
   seoValue: initialOpusSeoValue,
   setSeoValue: jest.fn(),
   crop: null,
@@ -65,7 +74,7 @@ describe('OpusView Component', () => {
     expect(screen.getByText('Редагування опусу')).toBeInTheDocument();
   });
 
-  it('saves and redirects to the group edit page on successful create', async () => {
+  it('saves and redirects to the advanced content editor on successful create', async () => {
     const handleSave = jest.fn().mockResolvedValue('new-opus-id');
     render(<OpusView data={createMockData({ handleSave })} mode="create" />);
 
@@ -74,7 +83,20 @@ describe('OpusView Component', () => {
     await waitFor(() => {
       expect(handleSave).toHaveBeenCalled();
       expect(mockToastSuccess).toHaveBeenCalled();
-      expect(mockPush).toHaveBeenCalledWith('/creativity/group/new-opus-id/edit');
+      expect(mockPush).toHaveBeenCalledWith('/creativity/group/new-opus-id/content');
+    });
+  });
+
+  it('saves and redirects to the advanced content editor on successful edit', async () => {
+    const handleSave = jest.fn().mockResolvedValue('existing-opus-id');
+    render(<OpusView data={createMockData({ isEditing: true, handleSave })} mode="edit" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Перейти до редагування' }));
+
+    await waitFor(() => {
+      expect(handleSave).toHaveBeenCalled();
+      expect(mockToastSuccess).toHaveBeenCalled();
+      expect(mockPush).toHaveBeenCalledWith('/creativity/group/existing-opus-id/content');
     });
   });
 

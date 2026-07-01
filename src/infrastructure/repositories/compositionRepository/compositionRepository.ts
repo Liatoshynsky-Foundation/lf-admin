@@ -7,6 +7,7 @@ import dbConnect from '~/infrastructure/db/connect';
 export type DbComposition = {
   _id: { toString(): string };
   opusId?: { toString(): string } | null;
+  order?: number | null;
   title: Composition['title'];
   year?: number | null;
   genre?: string | null;
@@ -27,6 +28,7 @@ type CompositionRepoDeps = Readonly<{
 const toEntity = (doc: DbComposition): Composition => ({
   id: doc._id.toString(),
   opusId: doc.opusId ? doc.opusId.toString() : null,
+  order: doc.order ?? 0,
   title: doc.title,
   year: doc.year ?? undefined,
   genre: doc.genre ?? undefined,
@@ -48,7 +50,7 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
       return [];
     }
 
-    const docs = await CompositionModel.find({ opusId }).lean<DbComposition[]>();
+    const docs = await CompositionModel.find({ opusId }).sort({ order: 1, _id: 1 }).lean<DbComposition[]>();
     return docs.map(toEntity);
   };
 
@@ -82,13 +84,13 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
 
     const results: Composition[] = [];
 
-    for (const input of inputs) {
-      const { id, ...fields } = input;
+    for (let index = 0; index < inputs.length; index += 1) {
+      const { id, ...fields } = inputs[index];
 
       if (id && mongoose.Types.ObjectId.isValid(id)) {
         const updated = await CompositionModel.findByIdAndUpdate(
           id,
-          { ...fields, opusId },
+          { ...fields, opusId, order: index },
           { new: true }
         ).lean<DbComposition>();
 
@@ -96,7 +98,7 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
           results.push(toEntity(updated));
         }
       } else {
-        const created = await new CompositionModel({ ...fields, opusId }).save();
+        const created = await new CompositionModel({ ...fields, opusId, order: index }).save();
         results.push(toEntity(created.toObject() as unknown as DbComposition));
       }
     }

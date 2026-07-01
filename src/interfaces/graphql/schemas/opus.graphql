@@ -13,6 +13,8 @@ enum OpusNumberKind {
 
 type OpusSheetMusic {
   url: String!
+  name: String
+  publishDate: String
   isFree: Boolean
   dateUploaded: String
 }
@@ -25,6 +27,7 @@ type CompositionAudio {
 type Composition {
   id: ID!
   opusId: ID
+  order: Int
   title: LocalizedString!
   year: Int
   genre: String

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 
 import OpusDetailsBlock from './OpusDetailsBlock';
 import { initialOpusDetails } from '~/constants/opus';
@@ -7,6 +7,14 @@ import type { OpusDetailsErrors, OpusDetailsValue } from '~/types/opus';
 
 jest.mock('~/shared/components/media-modal/MediaModal', () => ({
   MediaModal: () => null
+}));
+
+jest.mock('@mui/x-date-pickers/LocalizationProvider', () => ({
+  LocalizationProvider: ({ children }: { children: ReactNode }) => <>{children}</>
+}));
+
+jest.mock('@mui/x-date-pickers/DatePicker', () => ({
+  DatePicker: ({ label }: { label: string }) => <input aria-label={label} readOnly value="" />
 }));
 
 jest.mock('./composition-title-input/CompositionTitleInput', () => ({
@@ -18,7 +26,7 @@ jest.mock('./composition-title-input/CompositionTitleInput', () => ({
 
 const Harness = ({
   initial = initialOpusDetails,
-  errors = { number: '', name: '', creationYear: '', genre: '' }
+  errors = { number: '', name: '', creationYear: '' }
 }: {
   initial?: OpusDetailsValue;
   errors?: OpusDetailsErrors;
@@ -32,17 +40,18 @@ describe('OpusDetailsBlock', () => {
   it('renders the new detail fields', () => {
     render(<Harness />);
 
-    expect(screen.getByLabelText('№ *')).toBeInTheDocument();
+    expect(screen.getByLabelText('Номер *')).toBeInTheDocument();
     expect(screen.getByLabelText('Назва опусу *')).toBeInTheDocument();
     expect(screen.getByLabelText('Рік створення *')).toBeInTheDocument();
     expect(screen.getByLabelText('Рік закінчення')).toBeInTheDocument();
-    expect(screen.getByLabelText('Жанр *')).toBeInTheDocument();
+    expect(screen.getByLabelText('Жанр')).toBeInTheDocument();
   });
 
   it('shows validation errors for the required fields', () => {
-    render(<Harness errors={{ number: 'Обовʼязкове поле', name: 'Обовʼязкове поле', creationYear: '', genre: '' }} />);
+    render(<Harness errors={{ number: 'Вкажіть номер.', name: 'Введіть назву групи.', creationYear: '' }} />);
 
-    expect(screen.getAllByText('Обовʼязкове поле')).toHaveLength(2);
+    expect(screen.getByText('Вкажіть номер.')).toBeInTheDocument();
+    expect(screen.getByText('Введіть назву групи.')).toBeInTheDocument();
   });
 
   it('updates the opus title field', () => {

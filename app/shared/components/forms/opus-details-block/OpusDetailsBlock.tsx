@@ -7,8 +7,9 @@ import { useState } from 'react';
 import CompositionModal from './composition-modal/CompositionModal';
 import CompositionTitleInput from './composition-title-input/CompositionTitleInput';
 import { styles } from './OpusDetailsBlock.styles';
+import YearPicker from './year-picker/YearPicker';
 import Button from '~/components/design-system/button/Button';
-import { OPUS_DELETE_MODAL, OPUS_DETAILS_LABELS, OPUS_NUMBER_KIND_OPTIONS } from '~/constants/opus';
+import { OPUS_DELETE_MODAL, OPUS_DETAILS_LABELS, OPUS_FIELD_LIMITS, OPUS_NUMBER_KIND_OPTIONS } from '~/constants/opus';
 import { createCompositionId } from '~/shared/hooks/use-upsert-opus/useUpsertOpus';
 import type { OpusCompositionData, OpusCompositionSuggestion, OpusDetailsErrors, OpusDetailsValue } from '~/types/opus';
 
@@ -33,6 +34,7 @@ export default function OpusDetailsBlock({ value, onChange, errors }: Readonly<O
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [editingComposition, setEditingComposition] = useState<OpusCompositionData | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
 
   const updateField = <Key extends keyof OpusDetailsValue>(key: Key, fieldValue: OpusDetailsValue[Key]): void => {
     onChange((prev) => ({ ...prev, [key]: fieldValue }));
@@ -73,8 +75,9 @@ export default function OpusDetailsBlock({ value, onChange, errors }: Readonly<O
             })),
             notes: (suggestion.sheetMusic ?? []).map((sheet) => ({
               id: createCompositionId(),
-              name: fileNameFromUrl(sheet.url),
-              fileUrl: sheet.url ?? undefined
+              name: sheet.name ?? fileNameFromUrl(sheet.url),
+              fileUrl: sheet.url ?? undefined,
+              publishDate: sheet.publishDate ?? ''
             }))
           }
           : item
@@ -113,15 +116,43 @@ export default function OpusDetailsBlock({ value, onChange, errors }: Readonly<O
     setDeleteTargetId(null);
   };
 
+  const moveComposition = (from: number, to: number): void => {
+    onChange((prev) => {
+      if (from === to || from < 0 || to < 0 || from >= prev.compositions.length || to >= prev.compositions.length) {
+        return prev;
+      }
+
+      const compositions = [...prev.compositions];
+      const [moved] = compositions.splice(from, 1);
+      compositions.splice(to, 0, moved);
+
+      return { ...prev, compositions };
+    });
+  };
+
+  const handleDragEnter = (index: number): void => {
+    if (draggingIndex === null || draggingIndex === index) {
+      return;
+    }
+
+    moveComposition(draggingIndex, index);
+    setDraggingIndex(index);
+  };
+
+  const handleDragEnd = (): void => {
+    setDraggingIndex(null);
+  };
+
   return (
     <Box sx={styles.container}>
       <Box sx={styles.fieldsRow}>
         <TextField
           select
-          label={`${OPUS_DETAILS_LABELS.numberKind} *`}
+          label={OPUS_DETAILS_LABELS.numberKind}
           value={value.numberKind}
           onChange={(event) => updateField('numberKind', event.target.value as OpusDetailsValue['numberKind'])}
           sx={styles.kindField}
+          slotProps={{ select: { MenuProps: { disableScrollLock: true } } }}
         >
           {OPUS_NUMBER_KIND_OPTIONS.map((option) => (
             <MenuItem key={option.value} value={option.value}>
@@ -137,38 +168,42 @@ export default function OpusDetailsBlock({ value, onChange, errors }: Readonly<O
           error={Boolean(errors.number)}
           helperText={errors.number}
           sx={styles.numberField}
+          slotProps={{ htmlInput: { inputMode: 'numeric' } }}
         />
 
         <TextField
           label={OPUS_DETAILS_LABELS.additionalText}
           value={value.additionalText}
           onChange={(event) => updateField('additionalText', event.target.value)}
-          sx={styles.field}
-        />
-
-        <TextField
-          label={`${OPUS_DETAILS_LABELS.name} *`}
-          value={value.name}
-          onChange={(event) => updateField('name', event.target.value)}
-          error={Boolean(errors.name)}
-          helperText={errors.name}
-          sx={styles.nameField}
+          sx={styles.noteField}
+          slotProps={{ htmlInput: { maxLength: OPUS_FIELD_LIMITS.additionalText } }}
         />
       </Box>
 
+      <TextField
+        label={`${OPUS_DETAILS_LABELS.name} *`}
+        value={value.name}
+        onChange={(event) => updateField('name', event.target.value)}
+        error={Boolean(errors.name)}
+        helperText={errors.name}
+        sx={styles.nameField}
+        slotProps={{ htmlInput: { maxLength: OPUS_FIELD_LIMITS.name.max } }}
+      />
+
       <Box sx={styles.fieldsRow}>
-        <TextField
+        <YearPicker
           label={`${OPUS_DETAILS_LABELS.creationYear} *`}
           value={value.creationYear}
-          onChange={(event) => updateField('creationYear', event.target.value)}
+          onChange={(year) => updateField('creationYear', year)}
           error={Boolean(errors.creationYear)}
           helperText={errors.creationYear}
           sx={styles.field}
         />
-        <TextField
+        <Box sx={styles.yearSeparator}>–</Box>
+        <YearPicker
           label={OPUS_DETAILS_LABELS.endYear}
           value={value.endYear}
-          onChange={(event) => updateField('endYear', event.target.value)}
+          onChange={(year) => updateField('endYear', year)}
           sx={styles.field}
         />
         <TextField
@@ -176,14 +211,14 @@ export default function OpusDetailsBlock({ value, onChange, errors }: Readonly<O
           value={value.datesNote}
           onChange={(event) => updateField('datesNote', event.target.value)}
           sx={styles.field}
+          slotProps={{ htmlInput: { maxLength: OPUS_FIELD_LIMITS.datesNote } }}
         />
         <TextField
-          label={`${OPUS_DETAILS_LABELS.genre} *`}
+          label={OPUS_DETAILS_LABELS.genre}
           value={value.genre}
           onChange={(event) => updateField('genre', event.target.value)}
-          error={Boolean(errors.genre)}
-          helperText={errors.genre}
-          sx={styles.field}
+          sx={styles.genreField}
+          slotProps={{ htmlInput: { maxLength: OPUS_FIELD_LIMITS.genre } }}
         />
       </Box>
 
@@ -196,9 +231,25 @@ export default function OpusDetailsBlock({ value, onChange, errors }: Readonly<O
       </Box>
 
       <Box sx={styles.compositionsList}>
-        {value.compositions.map((composition) => (
-          <Box key={composition.id} sx={styles.compositionRow}>
-            <GripVertical size={20} strokeWidth={1.5} style={styles.dragHandle as React.CSSProperties} />
+        {value.compositions.map((composition, index) => (
+          <Box
+            key={composition.id}
+            sx={{
+              ...(styles.compositionRow as object),
+              ...(draggingIndex === index ? (styles.compositionRowDragging as object) : {})
+            }}
+            onDragEnter={() => handleDragEnter(index)}
+            onDragOver={(event) => event.preventDefault()}
+          >
+            <Box
+              draggable
+              onDragStart={() => setDraggingIndex(index)}
+              onDragEnd={handleDragEnd}
+              sx={styles.dragHandle}
+              aria-label="Перемістити"
+            >
+              <GripVertical size={20} strokeWidth={1.5} />
+            </Box>
             <Box sx={styles.compositionInput}>
               <CompositionTitleInput
                 value={composition.title}

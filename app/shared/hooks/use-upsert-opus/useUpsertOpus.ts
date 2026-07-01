@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { initialOpusDetails, initialOpusSeoValue, REQUIRED_FIELD_ERROR } from '~/constants/opus';
+import {
+  initialOpusDetails,
+  initialOpusSeoValue,
+  OPUS_FIELD_LIMITS,
+  OPUS_VALIDATION_MESSAGES
+} from '~/constants/opus';
 import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import { useCreateOpus, useOpusById, useUpdateOpus } from '~/shared/hooks/use-opuses/useOpuses';
 import { CropRect } from '~/types/common';
@@ -63,8 +68,7 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}) => {
   const [detailsErrors, setDetailsErrors] = useState<OpusDetailsErrors>({
     number: '',
     name: '',
-    creationYear: '',
-    genre: ''
+    creationYear: ''
   });
   const [seoValue, setSeoValue] = useState<SeoBlockValue>(initialOpusSeoValue);
   const [crop, setCrop] = useState<CropRect | null>(null);
@@ -83,8 +87,7 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}) => {
     setDetailsErrors((prev) => ({
       number: next.number.trim() ? '' : prev.number,
       name: next.name.trim() ? '' : prev.name,
-      creationYear: next.creationYear.trim() ? '' : prev.creationYear,
-      genre: next.genre.trim() ? '' : prev.genre
+      creationYear: next.creationYear.trim() ? '' : prev.creationYear
     }));
   };
 
@@ -134,8 +137,9 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}) => {
         })),
         notes: (composition.sheetMusic ?? []).map((sheet) => ({
           id: createCompositionId(),
-          name: fileNameFromUrl(sheet.url),
-          fileUrl: sheet.url ?? undefined
+          name: sheet.name ?? fileNameFromUrl(sheet.url),
+          fileUrl: sheet.url ?? undefined,
+          publishDate: sheet.publishDate ?? ''
         }))
       }))
     });
@@ -169,16 +173,37 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}) => {
   }, [isEditing, opusQuery.data]);
 
   const validate = (value: OpusDetailsValue): boolean => {
+    const number = value.number.trim();
+    const name = value.name.trim();
+    const creationYear = value.creationYear.trim();
+
+    let numberError = '';
+
+    if (!number) {
+      numberError = OPUS_VALIDATION_MESSAGES.numberRequired;
+    } else if (!/^\d+$/.test(number) || Number(number) <= 0) {
+      numberError = OPUS_VALIDATION_MESSAGES.numberInvalid;
+    }
+
+    let nameError = '';
+
+    if (!name) {
+      nameError = OPUS_VALIDATION_MESSAGES.nameRequired;
+    } else if (name.length < OPUS_FIELD_LIMITS.name.min) {
+      nameError = OPUS_VALIDATION_MESSAGES.nameTooShort;
+    }
+
+    const creationYearError = creationYear ? '' : OPUS_VALIDATION_MESSAGES.creationYearRequired;
+
     const errors: OpusDetailsErrors = {
-      number: value.number.trim() ? '' : REQUIRED_FIELD_ERROR,
-      name: value.name.trim() ? '' : REQUIRED_FIELD_ERROR,
-      creationYear: value.creationYear.trim() ? '' : REQUIRED_FIELD_ERROR,
-      genre: value.genre.trim() ? '' : REQUIRED_FIELD_ERROR
+      number: numberError,
+      name: nameError,
+      creationYear: creationYearError
     };
 
     setDetailsErrors(errors);
 
-    return !errors.number && !errors.name && !errors.creationYear && !errors.genre;
+    return !numberError && !nameError && !creationYearError;
   };
 
   const handleSave = async (status: BaseContentStatuses): Promise<string | undefined> => {
@@ -201,7 +226,7 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}) => {
       creationYear: currentDetails.creationYear.trim(),
       endYear: currentDetails.endYear.trim() || undefined,
       datesNote: currentDetails.datesNote.trim() || undefined,
-      genre: currentDetails.genre.trim(),
+      genre: currentDetails.genre.trim() || undefined,
       compositions: currentDetails.compositions.map(toCompositionInput),
       adminTitle: opusName,
       title: { uk: ukMeta.title.trim() || opusName, en: enMeta.title.trim() || opusName },

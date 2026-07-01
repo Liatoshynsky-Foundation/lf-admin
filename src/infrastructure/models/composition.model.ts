@@ -6,6 +6,8 @@ import { Composition } from '~/domain/entities/Composition';
 const sheetMusicSchema = new Schema(
   {
     url: { type: String, required: true },
+    name: { type: String, default: null },
+    publishDate: { type: String, default: null },
     isFree: { type: Boolean, default: false },
     dateUploaded: { type: Date, default: Date.now }
   },
@@ -23,9 +25,9 @@ const compositionAudioSchema = new Schema(
 const compositionSchema = new Schema(
   {
     opusId: { type: Schema.Types.ObjectId, ref: 'Opus', default: null, index: true },
+    order: { type: Number, default: 0 },
     title: { type: translatedFieldSchema, required: true },
     year: { type: Number, default: null },
-    // admin-only text round-trip; the canonical genres/categories are ObjectId refs.
     genre: { type: String, default: null },
     genres: { type: [Schema.Types.ObjectId], ref: 'Genre', default: [] },
     categories: { type: [Schema.Types.ObjectId], ref: 'Category', default: [] },

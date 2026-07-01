@@ -9,6 +9,7 @@ import Button from '~/components/design-system/button/Button';
 import { COMPOSITION_MODAL_LABELS, REQUIRED_FIELD_ERROR } from '~/constants/opus';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
+import { isAudioUploadFile, isPdfUploadFile } from '~/shared/components/media-modal/MediaModal.utils';
 import { createCompositionId } from '~/shared/hooks/use-upsert-opus/useUpsertOpus';
 import type { OpusCompositionData, OpusMediaFileData } from '~/types/opus';
 
@@ -124,6 +125,7 @@ export default function CompositionModal({
   };
 
   const hasFiles = composition.audios.length > 0 || composition.notes.some((note) => Boolean(note.fileUrl));
+  const isAudioTarget = mediaTarget?.field === 'audios';
 
   return (
     <Dialog open={open} onClose={onClose} disableScrollLock PaperProps={{ sx: styles.paper }}>
@@ -275,11 +277,15 @@ export default function CompositionModal({
 
       <MediaModal
         open={Boolean(mediaTarget)}
-        initial={{ tab: 'UPLOAD' }}
-        hideTabs
+        initial={{ tab: 'GALLERY' }}
         onClose={() => setMediaTarget(null)}
         onApply={handleMediaApply}
-        directory={mediaTarget?.field === 'audios' ? 'compositions' : 'uploads'}
+        directory={isAudioTarget ? 'compositions' : 'uploads'}
+        mediaKind={isAudioTarget ? 'audio' : 'pdf'}
+        accept={isAudioTarget ? 'audio/*' : 'application/pdf'}
+        isAllowedFile={isAudioTarget ? isAudioUploadFile : isPdfUploadFile}
+        invalidFileError={isAudioTarget ? 'Підтримуються лише аудіофайли' : 'Підтримуються лише PDF-файли'}
+        uploadAriaLabel={isAudioTarget ? 'Завантажити аудіофайл' : 'Завантажити PDF-файл'}
       />
     </Dialog>
   );

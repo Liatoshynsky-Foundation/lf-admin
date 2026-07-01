@@ -8,12 +8,6 @@ export const styles: Record<string, SxProps<Theme>> = {
     width: '100%'
   },
 
-  headerActions: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '16px'
-  },
-
   contentWrapper: {
     display: 'flex',
     flexDirection: 'column',

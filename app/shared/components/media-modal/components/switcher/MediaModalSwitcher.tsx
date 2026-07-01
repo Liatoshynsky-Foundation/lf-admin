@@ -11,9 +11,10 @@ import UploadIcon from '~/public/icons/upload.svg';
 type Props = Readonly<{
   value: MediaModalTab;
   onChange: (v: MediaModalTab) => void;
+  galleryLabel?: string;
 }>;
 
-export function MediaModalSwitcher({ value, onChange }: Props) {
+export function MediaModalSwitcher({ value, onChange, galleryLabel = 'Галерея' }: Props) {
   const isGallery = value === 'GALLERY';
   const isUpload = value === 'UPLOAD';
   const isUsed = value === 'USED';
@@ -29,7 +30,7 @@ export function MediaModalSwitcher({ value, onChange }: Props) {
         data-testid="MediaModalSwitcher-galleryTab"
       >
         <GalleryIcon aria-hidden focusable={false} />
-        Галерея
+        {galleryLabel}
       </Button>
 
       <Button

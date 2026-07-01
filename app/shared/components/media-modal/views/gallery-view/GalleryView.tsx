@@ -8,18 +8,46 @@ import { GalleryCard } from '../../components/gallery-card/GalleryCard';
 import { MediaGrid } from '../../components/media-grid/MediaGrid';
 import { SearchButton } from '../../components/search-button/SearchButton';
 import type { GalleryFilters } from '../../flow/MediaModalFlowState';
-import type { GalleryMedia } from '../../MediaModal.types';
+import type { GalleryMedia, MediaKind } from '../../MediaModal.types';
+import { matchesAudio, matchesPdf } from '../../MediaModal.utils';
 import { sharedViewStyles } from '../shared-view.styles';
 import { useDebounce } from '~/hooks/use-debounce/useDebounce';
 import { matchesSearch, sortByDateAndName } from '~/lib/utils/filterHelpers';
 import { type GalleryFile, useGalleryFiles } from '~/shared/hooks/use-galllery-photo/useGallery';
 import { AssetType, useAllAssetsQuery } from '~/types/graphql/generated/graphql';
 
+type MediaKindConfig = {
+  folder: string;
+  assetType: AssetType;
+  title: string;
+  iconSrc?: string;
+  matchesFile?: (mimeType: string, filename: string) => boolean;
+};
+
+const MEDIA_KIND_CONFIG: Record<MediaKind, MediaKindConfig> = {
+  image: { folder: 'photos', assetType: AssetType.Image, title: 'Усі зображення' },
+  audio: {
+    folder: 'compositions',
+    assetType: AssetType.Audio,
+    title: 'Усі аудіо',
+    iconSrc: '/icons/audio.svg',
+    matchesFile: matchesAudio
+  },
+  pdf: {
+    folder: 'uploads',
+    assetType: AssetType.Pdf,
+    title: 'Усі файли',
+    iconSrc: '/icons/pdf.svg',
+    matchesFile: matchesPdf
+  }
+};
+
 type Props = Readonly<{
   selected: GalleryMedia | null;
   onPick: (selected: GalleryMedia) => void;
   filters: GalleryFilters;
   onFiltersChange: (filters: Partial<GalleryFilters>) => void;
+  mediaKind?: MediaKind;
 }>;
 
 type GalleryItem = {
@@ -70,11 +98,12 @@ const matchesUsageFilter = (item: GalleryItem, filter: string): boolean => {
   return item.usageRefs.some((ref) => ref.pageId === filter);
 };
 
-export function GalleryView({ selected: _selected, onPick, filters, onFiltersChange }: Props) {
-  const { files: r2Files, isLoading: r2Loading } = useGalleryFiles();
+export function GalleryView({ selected: _selected, onPick, filters, onFiltersChange, mediaKind = 'image' }: Props) {
+  const config = MEDIA_KIND_CONFIG[mediaKind];
+  const { files: r2Files, isLoading: r2Loading } = useGalleryFiles(config.folder);
 
   const { data: assetsData, loading: assetsLoading } = useAllAssetsQuery({
-    variables: { filters: { type: AssetType.Image } }
+    variables: { filters: { type: config.assetType } }
   });
 
   const debouncedSearchValue = useDebounce(filters.search, 200);
@@ -99,6 +128,7 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
   const galleryItems = useMemo((): GalleryItem[] => {
     return r2Files
       .filter((file): file is GalleryFile & { url: string } => Boolean(file.url))
+      .filter((file) => !config.matchesFile || config.matchesFile(file.mimeType ?? '', file.filename ?? ''))
       .map((file) => {
         const asset = assetByUrl[file.url];
         return {
@@ -112,7 +142,7 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
           createdAt: file.createdAt
         };
       });
-  }, [r2Files, assetByUrl]);
+  }, [r2Files, assetByUrl, config]);
 
   const filteredAndSortedItems = useMemo(
     () =>
@@ -143,7 +173,7 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
     <Box data-testid="GalleryView" sx={sharedViewStyles.container}>
       <Box sx={sharedViewStyles.header}>
         <Typography variant="h6" sx={sharedViewStyles.title}>
-          Усі зображення
+          {config.title}
         </Typography>
 
         <Box sx={sharedViewStyles.controlsGroup}>
@@ -179,6 +209,7 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
           renderCard={(item) => (
             <GalleryCard
               src={item.url}
+              iconSrc={config.iconSrc}
               fileName={item.originalname || item.filename}
               isStarred={item.isStarred}
               usageLocations={getPageNames(item.usageRefs)}

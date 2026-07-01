@@ -2,6 +2,8 @@ import { LocalizedString } from '~/domain/entities/BaseContent';
 
 export type CompositionSheetMusic = {
   url: string;
+  name?: string | null;
+  publishDate?: string | null;
   isFree?: boolean;
   dateUploaded?: string | null;
 };
@@ -19,6 +21,7 @@ export type CompositionAudio = {
 export type Composition = {
   id: string;
   opusId?: string | null;
+  order?: number;
   title: LocalizedString;
   year?: number | null;
   genre?: string | null;

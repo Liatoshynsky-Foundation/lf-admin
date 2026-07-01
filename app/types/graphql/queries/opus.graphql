@@ -55,6 +55,8 @@ query OpusById($id: ID!) {
       sheetAvailable
       sheetMusic {
         url
+        name
+        publishDate
         isFree
         dateUploaded
       }
@@ -100,6 +102,8 @@ query SearchCompositions($search: String!) {
     sheetAvailable
     sheetMusic {
       url
+      name
+      publishDate
       isFree
       dateUploaded
     }

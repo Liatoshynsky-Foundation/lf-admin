@@ -1,6 +1,5 @@
 import { Composition } from '~/domain/entities/Composition';
 
-// `id` references an existing `compositions._id` to link/update instead of create.
 export type CompositionInput = Omit<Composition, 'id' | 'createdAt' | 'updatedAt'> & { id?: string };
 
 export interface ICompositionRepository {
