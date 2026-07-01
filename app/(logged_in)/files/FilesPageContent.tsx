@@ -332,7 +332,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
       return;
     }
 
-    const animationFrameId = window.requestAnimationFrame(() => {
+    const animationFrameId = globalThis.requestAnimationFrame(() => {
       fileCardRefs.current[selectedFileId]?.scrollIntoView({
         block: 'nearest',
         inline: 'nearest',
@@ -341,7 +341,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
     });
 
     return () => {
-      window.cancelAnimationFrame(animationFrameId);
+      globalThis.cancelAnimationFrame(animationFrameId);
     };
   }, [selectedFileId]);
 
@@ -356,10 +356,10 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    globalThis.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      globalThis.removeEventListener('keydown', handleKeyDown);
     };
   }, [selectedFileId]);
 
