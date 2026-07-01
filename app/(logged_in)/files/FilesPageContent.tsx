@@ -2,7 +2,7 @@
 
 import { Box, Button } from '@mui/material';
 import { Upload } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { getFilePageContentWrapper, styles } from './FilesPageContent.styles';
@@ -166,7 +166,7 @@ const usageToLink = (pageId?: string | null) => {
 export function FilesPageContent({ activeTab }: FilesPageContentProps) {
   const [view, setView] = useState<FilesCardsLayoutView>('grid');
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
-  const [hasInitializedSelection, setHasInitializedSelection] = useState(false);
+  const fileCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [deleteModalState, setDeleteModalState] = useState<{ open: boolean; fileId: string | null }>({
     open: false,
@@ -181,6 +181,14 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
   const { data, loading, error, refetch } = useAllAssets();
   const [createAsset] = useCreateAssetMutation();
   const [deleteAsset, { loading: isDeleting }] = useDeleteAssetMutation();
+
+  const handleItemRef = useCallback((itemId: string, node: HTMLDivElement | null) => {
+    fileCardRefs.current[itemId] = node;
+  }, []);
+
+  const handleItemClick = useCallback((item: FilesCardsLayoutItem) => {
+    setSelectedFileId(item.id);
+  }, []);
 
   const handleOpenUploadFlow = () => {
     setUploadModalInitial({ tab: 'UPLOAD' });
@@ -285,8 +293,9 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
       toast.success('Файл успішно видалено');
       setDeleteModalState({ open: false, fileId: null });
       if (selectedFileId === id) setSelectedFileId(null);
-    } catch (error: any) {
-      toast.error(error.message || 'Не вдалося видалити файл. Спробуйте пізніше.');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Не вдалося видалити файл. Спробуйте пізніше.';
+      toast.error(message);
     }
   };
 
@@ -310,20 +319,49 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
   useEffect(() => {
     if (!filteredFiles.length) {
       setSelectedFileId(null);
-      setHasInitializedSelection(false);
-      return;
-    }
-
-    if (!hasInitializedSelection) {
-      setSelectedFileId(filteredFiles[0].id);
-      setHasInitializedSelection(true);
       return;
     }
 
     if (selectedFileId && !filteredFiles.some((file) => file.id === selectedFileId)) {
-      setSelectedFileId(filteredFiles[0].id);
+      setSelectedFileId(null);
     }
-  }, [filteredFiles, hasInitializedSelection, selectedFileId]);
+  }, [filteredFiles, selectedFileId]);
+
+  useEffect(() => {
+    if (!selectedFileId) {
+      return;
+    }
+
+    const animationFrameId = window.requestAnimationFrame(() => {
+      fileCardRefs.current[selectedFileId]?.scrollIntoView({
+        block: 'nearest',
+        inline: 'nearest',
+        behavior: 'smooth'
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(animationFrameId);
+    };
+  }, [selectedFileId]);
+
+  useEffect(() => {
+    if (!selectedFileId) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSelectedFileId(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedFileId]);
 
   const selectedFile = useMemo(
     () => filteredFiles.find((file) => file.id === selectedFileId) ?? null,
@@ -372,36 +410,43 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
         bottomTrailingContent={<SortSelect {...sortProps} minWidth={208} dataTestId="files-sort-select" />}
       />
 
-      {loading && <EmptyState title={FILES_LOADING_STATE_TITLE} description={FILES_LOADING_STATE_DESCRIPTION} />}
+      <Box sx={styles.contentLayout}>
+        <Box sx={styles.filesArea}>
+          {loading && <EmptyState title={FILES_LOADING_STATE_TITLE} description={FILES_LOADING_STATE_DESCRIPTION} />}
 
-      {!loading && error && <EmptyState title={FILES_ERROR_STATE_TITLE} description={FILES_ERROR_STATE_DESCRIPTION} />}
+          {!loading && error && <EmptyState title={FILES_ERROR_STATE_TITLE} description={FILES_ERROR_STATE_DESCRIPTION} />}
 
-      {!loading && !error && filteredFiles.length > 0 && (
-        <FilesCardsLayout
-          view={view}
-          items={filteredFiles}
-          onItemClick={(item) => setSelectedFileId(item.id)}
-          onItemAction={handleItemAction}
-        />
-      )}
+          {!loading && !error && filteredFiles.length > 0 && (
+            <FilesCardsLayout
+              view={view}
+              items={filteredFiles}
+              selectedItemId={selectedFileId}
+              gridColumns={sidebarFile ? { xlCols: 3 } : undefined}
+              setItemRef={handleItemRef}
+              onItemClick={handleItemClick}
+              onItemAction={handleItemAction}
+            />
+          )}
 
-      {hasNoFiles && isFavoritesTab && !hasActiveCriteria && (
-        <EmptyState
-          title={FILES_FAVORITES_EMPTY_STATE_TITLE}
-          description={FILES_FAVORITES_EMPTY_STATE_DESCRIPTION}
-          icon={<FavouriteStarIcon />}
-          action={{ label: FILES_FAVORITES_EMPTY_STATE_BUTTON, href: '/files' }}
-        />
-      )}
+          {hasNoFiles && isFavoritesTab && !hasActiveCriteria && (
+            <EmptyState
+              title={FILES_FAVORITES_EMPTY_STATE_TITLE}
+              description={FILES_FAVORITES_EMPTY_STATE_DESCRIPTION}
+              icon={<FavouriteStarIcon />}
+              action={{ label: FILES_FAVORITES_EMPTY_STATE_BUTTON, href: '/files' }}
+            />
+          )}
 
-      {hasNoFiles && hasActiveCriteria && (
-        <EmptyState title={FILES_EMPTY_STATE_NO_RESULTS_TITLE} description={FILES_EMPTY_STATE_NO_RESULTS_DESCRIPTION} />
-      )}
+          {hasNoFiles && hasActiveCriteria && (
+            <EmptyState title={FILES_EMPTY_STATE_NO_RESULTS_TITLE} description={FILES_EMPTY_STATE_NO_RESULTS_DESCRIPTION} />
+          )}
 
-      {hasNoFiles && !isFavoritesTab && !hasActiveCriteria && (
-        <EmptyState title={FILES_EMPTY_STATE_TITLE} description={FILES_EMPTY_STATE_DESCRIPTION} />
-      )}
+          {hasNoFiles && !isFavoritesTab && !hasActiveCriteria && (
+            <EmptyState title={FILES_EMPTY_STATE_TITLE} description={FILES_EMPTY_STATE_DESCRIPTION} />
+          )}
+        </Box>
 
+      </Box>
       {sidebarFile && (
         <FileInfoSidebar
           file={sidebarFile}
