@@ -17,10 +17,13 @@ export type Props = Readonly<{
   invalidFileError?: string;
   isAllowedFile?: (file: File) => boolean;
   ariaLabel?: string;
+  maxSizeBytes?: number;
+  fileTooLargeError?: string;
 }>;
 
 const DROP_HINT = 'Перетягніть файл сюди або оберіть вручну';
 const ERROR_ONLY_IMAGES = 'Підтримуються лише зображення';
+const ERROR_FILE_TOO_LARGE = 'Файл перевищує максимально допустимий розмір';
 
 const buildUploadId = (file: File): string => `${file.lastModified}-${file.size}-${file.name}`;
 
@@ -29,7 +32,9 @@ export function UploadView({
   accept = 'image/*',
   invalidFileError = ERROR_ONLY_IMAGES,
   isAllowedFile = isImageUploadFile,
-  ariaLabel = 'Upload image'
+  ariaLabel = 'Upload image',
+  maxSizeBytes,
+  fileTooLargeError = ERROR_FILE_TOO_LARGE
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const messageId = useId();
@@ -49,6 +54,11 @@ export function UploadView({
         return;
       }
 
+      if (maxSizeBytes && file.size > maxSizeBytes) {
+        setError(fileTooLargeError);
+        return;
+      }
+
       setError(null);
 
       onPick({
@@ -58,7 +68,7 @@ export function UploadView({
         file
       });
     },
-    [invalidFileError, isAllowedFile, onPick]
+    [invalidFileError, isAllowedFile, onPick, maxSizeBytes, fileTooLargeError]
   );
 
   const handleFileChange = useCallback(

@@ -141,3 +141,6 @@ export const COMPOSITION_FILE_TYPES = {
 } as const;
 
 export type CompositionFileType = keyof typeof COMPOSITION_FILE_TYPES;
+
+export const SHEET_MUSIC_MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
+export const SHEET_MUSIC_FILE_SIZE_ERROR = 'Розмір файлу перевищує максимально допустимий ліміт (50 МБ).';

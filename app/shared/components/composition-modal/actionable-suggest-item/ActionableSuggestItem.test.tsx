@@ -103,7 +103,7 @@ describe('ActionableSuggestItem', () => {
     expect(screen.getByLabelText('Назва нот *')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Введіть назву нот')).toBeInTheDocument();
     expect(screen.getByTestId('mock-date-picker')).toBeInTheDocument();
-    expect(screen.getByLabelText('Дата видання *')).toBeInTheDocument();
+    expect(screen.getByLabelText('Дата видання')).toBeInTheDocument();
     expect(screen.getByTestId('date-picker-input')).toHaveValue('20/05/2026');
   });
 
