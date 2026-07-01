@@ -186,9 +186,9 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
     fileCardRefs.current[itemId] = node;
   }, []);
 
-  const handleItemClick = useCallback((item: FilesCardsLayoutItem) => {
+  const handleItemClick = (item: FilesCardsLayoutItem) => {
     setSelectedFileId(item.id);
-  }, []);
+  };
 
   const handleOpenUploadFlow = () => {
     setUploadModalInitial({ tab: 'UPLOAD' });
@@ -332,17 +332,11 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
       return;
     }
 
-    const animationFrameId = globalThis.requestAnimationFrame(() => {
-      fileCardRefs.current[selectedFileId]?.scrollIntoView({
-        block: 'nearest',
-        inline: 'nearest',
-        behavior: 'smooth'
-      });
+    fileCardRefs.current[selectedFileId]?.scrollIntoView({
+      block: 'nearest',
+      inline: 'nearest',
+      behavior: 'smooth'
     });
-
-    return () => {
-      globalThis.cancelAnimationFrame(animationFrameId);
-    };
   }, [selectedFileId]);
 
   useEffect(() => {
