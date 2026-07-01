@@ -74,6 +74,7 @@ jest.mock('~/lib/utils/getCustomSlashMenuItems', () => ({
 }));
 
 jest.mock('@blocknote/react', () => ({
+  useBlockNoteEditor: jest.fn(),
   useCreateBlockNote: jest.fn((options: CreateOptions) => {
     capturedCreateOptions = options;
     return mockEditor;
@@ -132,12 +133,8 @@ jest.mock('./cropped-image-block/CroppedImageBlock', () => ({
   CroppedImageBlock: jest.fn(() => ({}))
 }));
 
-jest.mock('./custom-replace-button/CustomReplaceButton', () => ({
-  CustomReplaceButton: ({ openMediaModal }: { openMediaModal: () => Promise<MediaModalResult | null> }) => (
-    <button data-testid="custom-replace-button" onClick={openMediaModal}>
-      Replace
-    </button>
-  )
+jest.mock('./custom-formatting-toolbar/CustomFormattingToolbar', () => ({
+  CustomFormattingToolbar: jest.fn(() => <div data-testid="custom-formatting-toolbar" />)
 }));
 
 jest.mock('~/shared/components/media-modal/MediaModal', () => ({
@@ -198,14 +195,6 @@ describe('BlockNoteEditor', () => {
       expect(editor).toHaveAttribute('data-editable', 'true');
       expect(screen.getByTestId('suggestion-menu-controller')).toBeInTheDocument();
       expect(screen.getByTestId('formatting-toolbar-controller')).toBeInTheDocument();
-    });
-
-    it('should inject the CustomReplaceButton into the formatting toolbar', async () => {
-      render(<BlockNoteEditor />);
-      await screen.findByTestId('blocknote-editor');
-
-      expect(screen.getByTestId('custom-replace-button')).toBeInTheDocument();
-      expect(screen.queryByText('replaceFileButton')).not.toBeInTheDocument();
     });
   });
 

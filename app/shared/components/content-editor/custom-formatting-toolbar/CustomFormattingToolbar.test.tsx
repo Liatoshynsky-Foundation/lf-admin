@@ -1,4 +1,4 @@
-import { getFormattingToolbarItems } from '@blocknote/react';
+import { blockTypeSelectItems, getFormattingToolbarItems, useBlockNoteEditor } from '@blocknote/react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
@@ -11,6 +11,8 @@ type ToolbarItem = {
 };
 
 jest.mock('@blocknote/react', () => ({
+  useBlockNoteEditor: jest.fn(),
+  blockTypeSelectItems: jest.fn(),
   getFormattingToolbarItems: jest.fn(),
   TextAlignButton: ({ textAlignment }: { textAlignment: string }) => (
     <span data-testid={`text-align-${textAlignment}`}>{textAlignment}</span>
@@ -41,9 +43,54 @@ jest.mock('../custom-replace-button/CustomReplaceButton', () => ({
 
 describe('CustomFormattingToolbar', () => {
   const mockOpenMediaModal = jest.fn<Promise<MediaModalResult | null>, []>();
+  const mockDictionary = { some: 'dict' };
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    (useBlockNoteEditor as jest.Mock).mockReturnValue({ dictionary: mockDictionary });
+    (blockTypeSelectItems as jest.Mock).mockReturnValue([
+      { type: 'paragraph', name: 'Paragraph' },
+      { type: 'numberedListItem', name: 'Numbered List' },
+      { type: 'heading', name: 'Heading 1' },
+      { type: 'heading', name: 'Toggle Heading 1' },
+      { type: 'quote', name: 'Quote' },
+      { type: 'toggleListItem', name: 'Toggle List Item' }
+    ]);
+  });
+
+  it('should filter out specific block types and names from defaultDropdownItems', () => {
+    (getFormattingToolbarItems as jest.Mock).mockReturnValue([]);
+
+    render(<CustomFormattingToolbar openMediaModal={mockOpenMediaModal} />);
+
+    expect(blockTypeSelectItems).toHaveBeenCalledWith(mockDictionary);
+    expect(getFormattingToolbarItems).toHaveBeenCalledWith([
+      { type: 'paragraph', name: 'Paragraph' },
+      { type: 'numberedListItem', name: 'Numbered List' },
+      { type: 'heading', name: 'Heading 1' },
+    ]);
+  });
+
+  it('should strip away specific buttons from the main toolbar items (strike, color, nest, unnest)', () => {
+    (getFormattingToolbarItems as jest.Mock).mockReturnValue([
+      { key: 'boldButton' },
+      { key: 'strikeStyleButton' },
+      { key: 'colorStyleButton' },
+      { key: 'nestBlockButton' },
+      { key: 'unnestBlockButton' },
+      { key: 'italicButton' }
+    ]);
+
+    render(<CustomFormattingToolbar openMediaModal={mockOpenMediaModal} />);
+
+    expect(screen.getByTestId('default-item-boldButton')).toBeInTheDocument();
+    expect(screen.getByTestId('default-item-italicButton')).toBeInTheDocument();
+
+    expect(screen.queryByTestId('default-item-strikeStyleButton')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('default-item-colorStyleButton')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('default-item-nestBlockButton')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('default-item-unnestBlockButton')).not.toBeInTheDocument();
   });
 
   it('should render standard items and not inject CustomReplaceButton if replaceFileButton is missing', () => {
@@ -55,10 +102,8 @@ describe('CustomFormattingToolbar', () => {
     render(<CustomFormattingToolbar openMediaModal={mockOpenMediaModal} />);
 
     expect(screen.getByTestId('formatting-toolbar')).toBeInTheDocument();
-    
     expect(screen.getByTestId('default-item-boldButton')).toBeInTheDocument();
     expect(screen.getByTestId('default-item-italicButton')).toBeInTheDocument();
-    
     expect(screen.queryByTestId('custom-replace-button')).not.toBeInTheDocument();
   });
 
@@ -73,7 +118,6 @@ describe('CustomFormattingToolbar', () => {
 
     expect(screen.getByTestId('default-item-boldButton')).toBeInTheDocument();
     expect(screen.getByTestId('default-item-italicButton')).toBeInTheDocument();
-
     expect(screen.queryByTestId('default-item-replaceFileButton')).not.toBeInTheDocument();
 
     const customButton = screen.getByTestId('custom-replace-button');
