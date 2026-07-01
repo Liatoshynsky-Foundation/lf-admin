@@ -24,12 +24,12 @@ jest.mock('../../design-system/tooltip/Tooltip', () => ({
 }));
 
 describe('StatusBadge', () => {
-  it('should pass "Draft" variant to Badge when status is Draft', () => {
+  it('should pass "Draft" variant to Badge when status is Hidden', () => {
     render(<StatusBadge status={BaseContentStatuses.Draft} />);
 
     const badge = screen.getByTestId('mock-badge');
     expect(badge).toBeInTheDocument();
-    expect(badge).toHaveAttribute('data-variant', BaseContentStatuses.Draft);
+    expect(badge).toHaveAttribute('data-variant', BaseContentStatuses.Hidden);
   });
 
   it('should pass "Published" variant to Badge when status is Published', () => {
