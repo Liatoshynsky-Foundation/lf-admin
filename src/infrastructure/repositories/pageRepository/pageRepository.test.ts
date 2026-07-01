@@ -3,7 +3,12 @@ import type { Patch } from '~/back-shared/types/pages/types';
 import type { BasePage } from '~/domain/entities/Page';
 import dbConnect from '~/infrastructure/db/connect';
 import PageModel from '~/infrastructure/models/page.model';
-import { PageStatus } from '~/types/enums/common.enums';
+import { PageCategories, PageStatus } from '~/types/enums/common.enums';
+
+export const DEFAULT_COVER_IMAGE = {
+  src: '/fake-image.png',
+  alt: { uk: 'Зображення', en: 'Image' },
+};
 
 jest.mock('../../db/connect', () => ({
   __esModule: true,
@@ -15,6 +20,7 @@ jest.mock('../../models/page.model', () => ({
   default: {
     findOne: jest.fn(),
     findOneAndUpdate: jest.fn(),
+    find: jest.fn(),
     save: jest.fn()
   }
 }));
@@ -39,6 +45,7 @@ jest.mock('../../models/draftPage.model', () => {
 const mockedConnect = dbConnect as unknown as jest.Mock;
 const mockedPageFindOne = (PageModel as unknown as { findOne: jest.Mock }).findOne;
 const mockedPageFindOneAndUpdate = (PageModel as unknown as { findOneAndUpdate: jest.Mock }).findOneAndUpdate;
+const mockedPagesFind = (PageModel as unknown as { find: jest.Mock }).find;
 
 const DraftPageModelMock = jest.requireMock('../../models/draftPage.model').default;
 const mockedDraftFindOne = DraftPageModelMock.findOne;
@@ -74,6 +81,8 @@ describe('PageRepository', () => {
     slug: 'about-us',
     title: { uk: 'Про нас', en: 'About us' },
     status: PageStatus.Published,
+    category: 'foundation',
+    coverImage: DEFAULT_COVER_IMAGE,
     pageType: 'AboutUsPage',
     blocks: {
       IntroSection: {
@@ -91,6 +100,8 @@ describe('PageRepository', () => {
     slug: 'about-us',
     title: { uk: 'Про нас', en: 'About us' },
     status: PageStatus.Draft,
+    category: 'foundation',
+    coverImage: DEFAULT_COVER_IMAGE,
     pageType: 'AboutUsPage',
     blocks: {
       IntroSection: {
@@ -99,6 +110,7 @@ describe('PageRepository', () => {
         quote: { text: { uk: 'Чернетка Цитата', en: 'Draft Quote' }, author: 'Draft Author' }
       }
     },
+    blocksOrder: ['Block1', 'Intro'],
     createdAt,
     updatedAt
   };
@@ -121,6 +133,8 @@ describe('PageRepository', () => {
         title: publishedDoc.title,
         status: PageStatus.Published,
         pageType: 'AboutUsPage',
+        category: 'foundation',
+        coverImage: DEFAULT_COVER_IMAGE,
         blocks: publishedDoc.blocks,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-02-01T00:00:00.000Z'
@@ -149,8 +163,11 @@ describe('PageRepository', () => {
         slug: 'about-us',
         title: draftDoc.title,
         status: PageStatus.Draft,
+        category: 'foundation',
+        coverImage: DEFAULT_COVER_IMAGE,
         pageType: 'AboutUsPage',
         blocks: draftDoc.blocks,
+        blocksOrder: draftDoc.blocksOrder,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-02-01T00:00:00.000Z'
       });
@@ -182,18 +199,19 @@ describe('PageRepository', () => {
             quote: { text: draftDoc.blocks.IntroSection.quote.text }
           }
         },
+        blocksOrder: ['IntroSection', 'WhatWeDo'],
         updatedAt: new Date('2024-03-01T00:00:00.000Z')
       };
 
       mockedDraftFindOneAndUpdate.mockReturnValueOnce(leanResolved(updatedDraft));
 
-      const res = await repo.applyPatchToDraft('about-us', patch);
+      const res = await repo.applyPatchToDraft('about-us', ['IntroSection', 'WhatWeDo'], patch);
 
       expect(mockedConnect).toHaveBeenCalled();
       expect(mockedDraftFindOneAndUpdate).toHaveBeenCalledWith(
         { slug: 'about-us' },
         {
-          $set: { 'blocks.IntroSection.title.uk': 'Оновлений Вступ' },
+          $set: { 'blocks.IntroSection.title.uk': 'Оновлений Вступ', 'blocksOrder': ['IntroSection', 'WhatWeDo'] },
           $unset: { 'blocks.IntroSection.quote.author': '' }
         },
         { new: true }
@@ -203,6 +221,9 @@ describe('PageRepository', () => {
         slug: 'about-us',
         title: draftDoc.title,
         status: PageStatus.Draft,
+        blocksOrder: ['IntroSection', 'WhatWeDo'],
+        category: 'foundation',
+        coverImage: DEFAULT_COVER_IMAGE,
         pageType: 'AboutUsPage',
         blocks: updatedDraft.blocks,
         createdAt: '2024-01-01T00:00:00.000Z',
@@ -214,7 +235,7 @@ describe('PageRepository', () => {
       const patch: Patch = { $set: { 'IntroSection.title.uk': 'Оновлений Вступ' } };
       mockedDraftFindOneAndUpdate.mockReturnValueOnce(leanResolved(null));
 
-      await expect(repo.applyPatchToDraft('missing', patch)).rejects.toThrow('Error during creating draft page');
+      await expect(repo.applyPatchToDraft('missing', ['IntroSection', 'WhatWeDo'], patch)).rejects.toThrow('Error during creating draft page');
     });
   });
 
@@ -224,6 +245,7 @@ describe('PageRepository', () => {
         $set: { 'IntroSection.title.uk': 'Опублікований Вступ' },
         $unset: { 'IntroSection.quote.author': '' }
       };
+      const blocksOrder = ['IntroSection', 'WhatWeDo'];
       const title = { uk: 'Про нас', en: 'About us' };
       const pageType = 'AboutUsPage';
 
@@ -236,12 +258,13 @@ describe('PageRepository', () => {
             quote: { text: publishedDoc.blocks.IntroSection.quote.text }
           }
         },
+        blocksOrder,
         updatedAt: new Date('2024-05-01T00:00:00.000Z')
       };
 
       mockedPageFindOneAndUpdate.mockReturnValueOnce(leanResolved(updatedPublished));
 
-      const res = await repo.applyPatchToPublished('about-us', patch, title, pageType);
+      const res = await repo.applyPatchToPublished('about-us', patch, blocksOrder, title, pageType);
 
       expect(mockedConnect).toHaveBeenCalled();
       expect(mockedPageFindOneAndUpdate).toHaveBeenCalledWith(
@@ -251,6 +274,7 @@ describe('PageRepository', () => {
             'blocks.IntroSection.title.uk': 'Опублікований Вступ',
             title,
             pageType,
+            blocksOrder,
             status: PageStatus.Published
           },
           $unset: { 'blocks.IntroSection.quote.author': '' }
@@ -263,6 +287,9 @@ describe('PageRepository', () => {
         title,
         status: PageStatus.Published,
         pageType: 'AboutUsPage',
+        blocksOrder,
+        category: 'foundation',
+        coverImage: DEFAULT_COVER_IMAGE,
         blocks: updatedPublished.blocks,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-05-01T00:00:00.000Z'
@@ -273,10 +300,11 @@ describe('PageRepository', () => {
       const patch: Patch = { $set: { 'IntroSection.title.uk': 'Опублікований Вступ' } };
       const title = { uk: 'Про нас', en: 'About us' };
       const pageType = 'AboutUsPage';
+      const blocksOrder = ['IntroSection', 'WhatWeDo'];
 
       mockedPageFindOneAndUpdate.mockReturnValueOnce(leanResolved(null));
 
-      await expect(repo.applyPatchToPublished('about-us', patch, title, pageType)).rejects.toThrow(
+      await expect(repo.applyPatchToPublished('about-us', patch, blocksOrder, title, pageType)).rejects.toThrow(
         'Error during publishing the page'
       );
     });
@@ -300,12 +328,13 @@ describe('PageRepository', () => {
             ...publishedDoc.blocks.IntroSection,
             image: { ...publishedDoc.blocks.IntroSection.image, crop }
           }
-        }
+        },
+        blocksOrder: ['']
       };
 
       mockedPageFindOneAndUpdate.mockReturnValueOnce(leanResolved(updatedDoc));
 
-      const res = await repo.applyPatchToPublished('about-us', patch, title, pageType);
+      const res = await repo.applyPatchToPublished('about-us', patch, [''], title, pageType);
 
       const introSection = res.blocks.IntroSection as unknown as MockImageWithCrop;
       expect(introSection.image?.crop).toEqual(crop);
@@ -322,7 +351,7 @@ describe('PageRepository', () => {
     });
   });
 
-  describe('createDraft with crop', () => {
+  describe('createDraft', () => {
     it('should save a new draft with crop data in blocks', async () => {
       const crop = { x: 10, y: 10, width: 100, height: 100 };
       const blocks = {
@@ -337,14 +366,29 @@ describe('PageRepository', () => {
       });
       DraftPageModelMock.mockImplementationOnce(() => ({ save: mockSave }));
 
-      const res = await repo.createDraft('about-us', blocks, publishedDoc as unknown as BasePage);
+      const res = await repo.createDraft('about-us', blocks, [''], publishedDoc as unknown as BasePage);
 
       const resBlocks = res.blocks as unknown as Record<string, MockImageWithCrop>;
       expect(resBlocks.IntroSection.image?.crop).toEqual(crop);
     });
+
+    it('should save a new draft with blocksOrder', async () => {
+      const blocks = {};
+      const blocksOrder = ['Intro', 'Section'];
+
+      const newDraftDoc = { ...draftDoc, _id: 'new-draft-id', blocks, blocksOrder };
+      const mockSave = jest.fn().mockResolvedValue({
+        toObject: jest.fn().mockReturnValue(newDraftDoc)
+      });
+      DraftPageModelMock.mockImplementationOnce(() => ({ save: mockSave }));
+
+      const res = await repo.createDraft('about-us', blocks, blocksOrder, publishedDoc as unknown as BasePage);
+
+      expect(res.blocksOrder).toEqual(blocksOrder);
+    });
   });
 
-  describe('applyPatchToDraft with crop', () => {
+  describe('applyPatchToDraft', () => {
     it('should apply patch containing crop to draft blocks', async () => {
       const crop = { x: 25, y: 25, width: 50, height: 50 };
       const patch: Patch = { $set: { 'IntroSection.image.crop': crop } };
@@ -355,10 +399,23 @@ describe('PageRepository', () => {
       };
 
       mockedDraftFindOneAndUpdate.mockReturnValueOnce(leanResolved(updatedDraft));
-      const res = await repo.applyPatchToDraft('about-us', patch);
+      const res = await repo.applyPatchToDraft('about-us', [''], patch);
 
       const resBlocks = res.blocks as unknown as Record<string, MockImageWithCrop>;
       expect(resBlocks.IntroSection.image?.crop).toEqual(crop);
+    });
+
+    it('should apply new blocksOrder to a draft', async () => {
+      const newBlocksOrder = ['Intro', 'Block1'];
+      const updatedDraft = {
+        ...draftDoc,
+        blocksOrder: newBlocksOrder
+      };
+
+      mockedDraftFindOneAndUpdate.mockReturnValueOnce(leanResolved(updatedDraft));
+      const res = await repo.applyPatchToDraft('about-us', newBlocksOrder, {});
+
+      expect(res.blocksOrder).toEqual(newBlocksOrder);
     });
   });
 
@@ -375,10 +432,44 @@ describe('PageRepository', () => {
       };
 
       mockedPageFindOneAndUpdate.mockReturnValueOnce(leanResolved(updatedDoc));
-      const res = await repo.applyPatchToPublished('about-us', patch, title, pageType);
+      const res = await repo.applyPatchToPublished('about-us', patch, [''], title, pageType);
 
       const resBlocks = res.blocks as unknown as Record<string, MockImageWithCrop>;
       expect(resBlocks.OurMission.bigImage?.crop).toEqual(crop);
+    });
+  });
+
+  describe('findPages', () => {
+    it('should return all pages if no category is provided', async () => {
+      mockedPagesFind.mockReturnValueOnce(leanResolved([publishedDoc]));
+
+      const res = await repo.findPages();
+
+      expect(mockedConnect).toHaveBeenCalled();
+      expect(res).toEqual([{
+        id: _id,
+        slug: 'about-us',
+        title: publishedDoc.title,
+        status: PageStatus.Published,
+        category: 'foundation',
+        coverImage: DEFAULT_COVER_IMAGE,
+        pageType: 'AboutUsPage',
+        blocks: publishedDoc.blocks,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-02-01T00:00:00.000Z'
+      }]);
+    });
+
+    it('should correctly call the DB if category is provided', async () => {
+      mockedPagesFind.mockReturnValueOnce(leanResolved([publishedDoc]));
+      const category = 'foundation' as PageCategories;
+
+      await repo.findPages(category);
+
+      expect(mockedConnect).toHaveBeenCalled();
+      expect(mockedPagesFind).toHaveBeenCalledWith({
+        category
+      });
     });
   });
 });

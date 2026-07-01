@@ -56,7 +56,7 @@ export const EditParagraphsBlock = <T extends BlockIdsWithDescription>({ blockId
   if (!paragraphs || paragraphs.length === 0) return null;
 
   return (
-    <CollapsibleBlock title={title}>
+    <CollapsibleBlock title={title} grip>
       {paragraphs.map((paragraphNode, i) =>
         (
           <CustomTextField

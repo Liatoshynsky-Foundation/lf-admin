@@ -35,6 +35,7 @@ export type CropRendererProps = {
   onBaseline: (crop: CropResult | null) => void;
   resetSeq: number;
   onChange: (crop: CropResult | null) => void;
+  aspectRatio?: number;
 };
 
 export type MediaModalRenderers = {

@@ -20,11 +20,11 @@ describe('MainPage Routing & Pages', () => {
     jest.clearAllMocks();
   });
 
-  it('root page renders "foundation" tab by default', async () => {
+  it('root page renders "all" tab by default', async () => {
     const ui = await MainPagesPage();
     render(ui);
 
-    expect(screen.getByTestId('mock-content')).toHaveTextContent('Passed tab: foundation');
+    expect(screen.getByTestId('mock-content')).toHaveTextContent('Passed tab: all');
   });
 
   it('dynamic page renders the correct tab from params', async () => {

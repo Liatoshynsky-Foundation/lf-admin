@@ -7,6 +7,7 @@ describe('SocialNetworks', () => {
     Component: SocialNetworks,
     mockBlock: createStandardMockBlock().block,
     checkParagraph: true,
+    checkGrip: true,
   });
 });
 

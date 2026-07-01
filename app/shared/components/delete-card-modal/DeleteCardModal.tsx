@@ -8,9 +8,10 @@ interface DeleteCardModalProps {
   open: boolean;
   onClose: () => void;
   onDelete: () => void;
+  description?: string;
 }
 
-const DeleteCardModal = ({ open, onClose, onDelete }: DeleteCardModalProps) => {
+const DeleteCardModal = ({ open, onClose, onDelete, description }: DeleteCardModalProps) => {
   return (
     <Dialog open={open} onClose={onClose}>
       <Box sx={styles.closeIcon} onClick={onClose}>
@@ -18,7 +19,7 @@ const DeleteCardModal = ({ open, onClose, onDelete }: DeleteCardModalProps) => {
       </Box>
       <DialogTitle>Підтвердити видалення</DialogTitle>
       <DialogContent>
-        <Typography>Ви впевнені, що хочете видалити цю картку? </Typography>
+        <Typography>{description || 'Ви впевнені, що хочете видалити цю картку?'} </Typography>
       </DialogContent>
       <DialogActions sx={styles.actions}>
         <Button variant="filled" size="medium" sx={styles.deleteBtn} onClick={onDelete}>

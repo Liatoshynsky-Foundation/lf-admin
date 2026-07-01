@@ -30,6 +30,7 @@ export type MediaModalFlowProps = {
   invalidFileError?: string;
   uploadAriaLabel?: string;
   mediaKind?: MediaKind;
+  aspectRatio?: number;
 };
 
 const isNonImageUploadSelection = (selected: SelectedMedia | null): boolean => {
@@ -52,7 +53,8 @@ export function MediaModalFlow({
   isAllowedFile,
   invalidFileError,
   uploadAriaLabel,
-  mediaKind = 'image'
+  mediaKind = 'image',
+  aspectRatio
 }: Readonly<MediaModalFlowProps>) {
   const [state, dispatch] = useReducer(reducer, initial, buildInitialState);
 
@@ -253,7 +255,8 @@ export function MediaModalFlow({
         crop: state.crop,
         onBaseline: handleCropBaseline,
         resetSeq: state.resetSeq,
-        onChange: handleCropChange
+        onChange: handleCropChange,
+        aspectRatio
       });
     }
 

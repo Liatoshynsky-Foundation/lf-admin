@@ -24,6 +24,7 @@ jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
     </div>
   )
 }));
+jest.mock('~/components/grip/Grip');
 
 jest.mock('./quote-block/QuoteBlock', () => ({
   QuoteBlock: ({

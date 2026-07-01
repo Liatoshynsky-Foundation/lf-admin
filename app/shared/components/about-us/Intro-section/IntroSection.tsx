@@ -6,6 +6,7 @@ import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
 import { QuoteBlock } from '../Liatoshynsky-office/quote-block/QuoteBlock';
 import { styles } from './IntroSection.styles';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
+import { CROP_RATIOS } from '~/constants/publications';
 import { ImagePreviewBlock } from '~/ds-components/photo-block/PhotoBlock';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
@@ -45,6 +46,7 @@ export const IntroSection = () => {
           imageUrl={getImageUrl(block.image)}
           fileName={block.image.src || ''}
           initialCrop={block.image.crop}
+          aspectRatio={CROP_RATIOS.HERO_BANNER}
           onChangeImage={(url: string, crop?: MediaModalResult['crop']) => {
             setField(pageId, blockId, 'image', {
               ...block.image,

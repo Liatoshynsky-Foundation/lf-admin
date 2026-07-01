@@ -10,6 +10,7 @@ describe('UserRights', () => {
     checkNote: true,
     checkList: true,
     usePointsListMock,
+    checkGrip: true,
   });
 });
 

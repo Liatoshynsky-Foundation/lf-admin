@@ -1,13 +1,13 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 
-import { editPagesCommonTests } from '../__mocks__/edit-pages-factory';
+import { editPagesCommonTests  } from '../__mocks__/edit-pages-factory';
 import Page from './page';
 import { PAGE_IDS } from '~/constants/pageBlocks';
 
 
 jest.mock('~/shared/components/about-us/Intro-section/IntroSection', () => ({
-  IntroSection: () => <div data-testid="intro-section">IntroSection</div>
+  IntroSection: () => <div data-testid="intro">IntroSection</div>
 }));
 
 jest.mock('~/shared/components/about-us/Liatoshynsky-foundation/LiatoshynskyFoundation', () => ({
@@ -16,12 +16,12 @@ jest.mock('~/shared/components/about-us/Liatoshynsky-foundation/LiatoshynskyFoun
 
 jest.mock('~/shared/components/about-us/our-mission/OurMission', () => ({
   __esModule: true,
-  default: () => <div data-testid="our-mission">OurMission</div>
+  default: () => <div data-testid="mission">OurMission</div>
 }));
 
 jest.mock('~/shared/components/about-us/our-goals/OurGoals', () => ({
   __esModule: true,
-  default: () => <div data-testid="our-goals">OurGoals</div>
+  default: () => <div data-testid="goals">OurGoals</div>
 }));
 
 jest.mock('~/shared/components/about-us/Liatoshynsky-office/Liatoshynsky-office', () => ({
@@ -34,8 +34,10 @@ jest.mock('~/shared/components/about-us/what-we-do/WhatWeDo', () => ({
 }));
 
 jest.mock('~/shared/components/about-us/foundation-founders/FoundationFounders', () => ({
-  FoundationFounders: () => <div data-testid="foundation-founders">FoundationFounders</div>
+  FoundationFounders: () => <div data-testid="founders">FoundationFounders</div>
 }));
+
+jest.mock('~/shared/components/sortable-list/SortableList');
 
 
 describe('About Page', () => {
@@ -43,13 +45,14 @@ describe('About Page', () => {
     Page,
     pageId: PAGE_IDS.ABOUT_US,
     childTestIds: [
-      'intro-section',
+      'intro',
       'foundation',
-      'our-mission',
-      'our-goals',
+      'mission',
+      'goals',
       'office',
       'what-we-do',
-      'foundation-founders'
-    ]
+      'founders'
+    ],
+    expectedReorderedBlocks: ['intro', 'mission', 'goals']
   });
 });

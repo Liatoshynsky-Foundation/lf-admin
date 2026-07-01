@@ -11,6 +11,7 @@ import Button from '~/ds-components/button/Button';
 import ButtonGroup from '~/ds-components/button-group/ButtonGroup';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import FavouriteStarIcon from '~/public/icons/favourite-star.svg';
+import CompositionModal from '~/shared/components/composition-modal/CompositionModal';
 import ContentCard from '~/shared/components/content-card/ContentCard';
 import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
 import DeleteFileModal from '~/shared/components/delete-file-modal/DeleteFileModal';
@@ -135,9 +136,12 @@ export default function StyleGuide() {
   const [isFiltersOpen, setIsFiltersOpen] = useState<boolean>(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+
   const [isMediaModalContainerOpen, setIsMediaModalContainerOpen] = useState(false);
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [isRenameFileModalOpen, setIsRenameFileModalOpen] = useState(false);
+  const [isCompositionModalOpen, setIsCompositionModalOpen] = useState(false);
+
   const [currentField, setCurrentField] = useState<SortField>('date');
   const [currentOrder, setCurrentOrder] = useState<SortOrder>('newest');
   const [currentView, setCurrentView] = useState<FilesCardsLayoutView>('grid');
@@ -792,6 +796,12 @@ export default function StyleGuide() {
           }}
           isDeleting={isDeletingToggled}
         />
+      </SandboxSection>
+      <SandboxSection title="CompositionModal">
+        <Button color='tertiary' variant="filled" sx={{ mt: 2 }} onClick={() => setIsCompositionModalOpen(true)}>
+          Open modal
+        </Button>
+        <CompositionModal isOpen={isCompositionModalOpen} onClose={() => setIsCompositionModalOpen(false)} />
       </SandboxSection>
     </Box>
   );

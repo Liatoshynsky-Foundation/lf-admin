@@ -1,3 +1,6 @@
+import { Dayjs } from 'dayjs';
+
+import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import type { FilterOption } from '~/shared/components/selector/FilterSelect';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
@@ -33,7 +36,6 @@ export const WORKS_BASE_PATH = '/creativity';
 export const WORKS_STATUSES = [
   BaseContentStatuses.Draft,
   BaseContentStatuses.Published,
-  BaseContentStatuses.Editing
 ] as const;
 
 export const WORKS_TABS: ReadonlyArray<WorksTabConfig> = [
@@ -48,11 +50,6 @@ export const WORKS_CREATE_OPTIONS: ReadonlyArray<WorksCreateOption> = [
   { id: 'group', label: 'Група', href: `${WORKS_BASE_PATH}/group/create` },
 ];
 
-const WORKS_STATUS_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
-  { value: BaseContentStatuses.Draft, label: 'Чернетка' },
-  { value: BaseContentStatuses.Published, label: 'Опублікований' },
-  { value: BaseContentStatuses.Editing, label: 'Опублікований з чернеткою' }
-];
 
 const WORKS_LANGUAGE_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
   { value: 'uk', label: 'Українська' },
@@ -69,7 +66,6 @@ const WORKS_GENRE_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
 ];
 
 export const WORKS_FILTERS: ReadonlyArray<WorksFilterConfig> = [
-  { id: 'status', label: 'Статус', options: WORKS_STATUS_FILTER_OPTIONS, menuMinWidth: 170 },
   { id: 'language', label: 'Мова', options: WORKS_LANGUAGE_FILTER_OPTIONS, menuMinWidth: 205 },
   { id: 'genre', label: 'Жанр', options: WORKS_GENRE_FILTER_OPTIONS, menuMinWidth: 220 }
 ];
@@ -86,3 +82,62 @@ export const WORKS_ERROR_STATE_DESCRIPTION = 'Спробуйте оновити 
 
 export const WORKS_PUBLISH_RESTRICTION_MESSAGE =
   'Твір не може бути опублікований без групи (Опусу). Призначте твір до опусу і спробуйте знову.';
+
+export interface GroupWork {
+  id: string;
+  title: string;
+  genre?: { uk: string; en: string };
+}
+
+export interface GroupPhoto {
+  id: string;
+  src: string;
+  fileName: string;
+  caption: string;
+  altText: string;
+  crop: MediaModalResult['crop'] | null;
+}
+
+export interface GroupPerformance {
+  id: string;
+  url: string;
+  caption: string;
+}
+
+export interface GroupData {
+  titlePrefix: string;
+  groupNumber: string;
+  additionalText: string;
+  groupTitle: { uk: string; en: string }; 
+  creationYear: string;
+  endYear: string;
+  dateAdditionalText: { uk: string; en: string };
+  parts: { uk: string; en: string };
+  description: { uk: Record<string, unknown>; en: Record<string, unknown> };
+  photos: GroupPhoto[];
+  works: GroupWork[];
+  performancesTitle: string;
+  performances: GroupPerformance[];
+  status: string;
+}
+
+export type GroupDataField = keyof GroupData;
+export interface AudioEntry {
+  id: string;
+  name: string | null;
+  fileName: string | null;
+}
+
+export interface NoteEntry {
+  id: string;
+  name: string | null;
+  date: Dayjs | null;
+  fileName: string | null;
+}
+
+export const COMPOSITION_FILE_TYPES = {
+  audio: 'audio',
+  pdf: 'pdf'
+} as const;
+
+export type CompositionFileType = keyof typeof COMPOSITION_FILE_TYPES;

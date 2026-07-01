@@ -30,11 +30,7 @@ export const useSectionList = <K extends BlockIdsWithSections>({ pageId, blockId
     points: ensureIds(item.list)
   }));
 
-  const handleUpdateSectionList = (sectionId: string, newPoints: {
-    id: string;
-    uk: JSONContent;
-    en: JSONContent;
-  }[]) => {
+  const handleUpdateSectionList = (sectionId: string, newPoints: Array<LocalizedJSON & { id: string }>) => {
     const updatedSection = sectionsList.find((s) => s.id === sectionId);
 
     if (!updatedSection) return;
@@ -45,11 +41,7 @@ export const useSectionList = <K extends BlockIdsWithSections>({ pageId, blockId
     setField(pageId, blockId, 'sections', newSections);
   };
 
-  const handleChangeSectionListPoint = (sectionId: string, updatedPoint: {
-    id: string;
-    uk: JSONContent;
-    en: JSONContent;
-  }) => {
+  const handleChangeSectionListPoint = (sectionId: string, updatedPoint: LocalizedJSON & { id: string }) => {
     const currentSection = sections.find(s => s.id === sectionId);
 
     if (!currentSection) return;
@@ -62,8 +54,9 @@ export const useSectionList = <K extends BlockIdsWithSections>({ pageId, blockId
 
   const handleAddSectionListPoint = (sectionId: string) => {
     const currentSection = sections.find(s => s.id === sectionId);
+    if (!currentSection) return;
 
-    const currentPoints = currentSection?.points || [];
+    const currentPoints = currentSection.points;
     const newPoint = { id: crypto.randomUUID(), uk: emptyDoc, en: emptyDoc };
     const newPoints = [...currentPoints, newPoint];
 
@@ -95,7 +88,8 @@ export const useSectionList = <K extends BlockIdsWithSections>({ pageId, blockId
     addListPoint: handleAddSectionListPoint,
     removeListPoint: handleDeleteSectionListPoint,
     updateListPoint: handleChangeSectionListPoint,
-    updateSectionSubtitle: handleChangeSectionSubtitle
+    updateSectionSubtitle: handleChangeSectionSubtitle,
+    updateSectionList: handleUpdateSectionList,
   };
 };
 

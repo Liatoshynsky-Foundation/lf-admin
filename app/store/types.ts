@@ -26,6 +26,7 @@ export interface AdminUserState {
 export interface EditState {
   isChanged: boolean;
   isInitialized: boolean;
+  initializedPages: Record<string, boolean>;
 
   blocks: {
     [pageId: string]: {
@@ -38,6 +39,14 @@ export interface EditState {
       [blockId in keyof BlocksMap]?: BlocksMap[blockId];
     };
   };
+
+  blocksOrder: {
+    [pageId: string]: string[]
+  }
+
+  originalBlocksOrder: {
+    [pageId: string]: string[]
+  }
 
   locale: 'uk' | 'en';
   setLocale: (locale: 'uk' | 'en') => void;
@@ -53,7 +62,8 @@ export interface EditState {
     data: Partial<BlocksMap[K]>,
     isInit?: boolean
   ) => void;
-  setPageData: <T extends Record<string, BlockData>>(pageId: string, blocks: T, isInit?: boolean) => void;
+  setPageData: <T extends Record<string, BlockData>>(pageId: string, blocks: T, blocksOrder: string[], isInit?: boolean) => void;
+  setBlocksOrder: (pageId: string, blocksOrder: string[]) => void;
   saveAsDraft: (pageId: string) => void;
   publishPage: (pageId: string) => void;
   discardChanges: (pageId: string) => void;

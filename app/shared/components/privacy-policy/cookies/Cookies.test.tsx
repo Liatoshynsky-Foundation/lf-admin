@@ -11,6 +11,7 @@ describe('Cookies', () => {
     checkNote: true,
     checkList: true,
     usePointsListMock,
+    checkGrip: true,
   });
 });
 

@@ -23,6 +23,7 @@ jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
 }));
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
 jest.mock('~/ds-components/text-field/TextField');
+jest.mock('~/components/grip/Grip');
 
 jest.mock('~/components/configurable-list/ConfigurableList');
 jest.mock('~/components/contributor-card/ContributorCard', () => ({

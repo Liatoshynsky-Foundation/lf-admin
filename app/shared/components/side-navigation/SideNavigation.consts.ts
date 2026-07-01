@@ -47,5 +47,6 @@ export const NAVIGATION_DATA = {
         { title: 'Системні логи', href: '/logs' }
       ]
     }
-  ]
+  ],
+  footer: [{ title: 'Вийти', iconSrc: 'logout', href: '' }]
 };

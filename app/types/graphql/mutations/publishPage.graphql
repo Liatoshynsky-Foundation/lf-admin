@@ -4,6 +4,7 @@ mutation PublishPage($input: PublishPageInput!) {
     slug
     status
     blocks
+    blocksOrder
     updatedAt
     __typename
   }

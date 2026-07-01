@@ -60,7 +60,7 @@ export default function CreatePublicationsView({
 
   useUnsavedChanges(data.hasUnsavedChanges);
 
-  const { navigate } = useNavigationGuard();
+  const { navigateBack } = useNavigationGuard();
 
   const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null);
   const isOpen = Boolean(anchor);
@@ -151,7 +151,7 @@ export default function CreatePublicationsView({
       {mode !== 'seo' && (
         <DividedHeader
           originUrl={PUBLICATIONS_BASE_PATH}
-          onBackClick={() => navigate(PUBLICATIONS_BASE_PATH)}
+          onBackClick={navigateBack}
           rightActionsComponent={
             publicationType === 'media' ? (
               <HeaderRightActions
