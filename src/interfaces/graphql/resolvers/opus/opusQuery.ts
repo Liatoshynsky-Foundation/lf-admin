@@ -18,7 +18,7 @@ interface SearchArgs {
   search: string;
 }
 interface FilterArgs {
-  filters?: Parameters<typeof mapFilters>[0];
+  filters?: NonNullable<Parameters<typeof mapFilters>[0]>;
 }
 interface PaginatedArgs {
   page: number;

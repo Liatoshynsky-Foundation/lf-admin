@@ -20,7 +20,7 @@ const yearToValue = (year: string): Dayjs | null => {
   return year && Number.isInteger(parsed) ? dayjs(`${parsed}-01-01`) : null;
 };
 
-const valueToYear = (value: Dayjs | null): string => (value && value.isValid() ? String(value.year()) : '');
+const valueToYear = (value: Dayjs | null): string => (value?.isValid() ? String(value.year()) : '');
 
 interface YearPickerProps {
   label: string;

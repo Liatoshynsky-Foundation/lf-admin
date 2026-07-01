@@ -15,8 +15,8 @@ export type DbComposition = {
   categories?: Array<{ toString(): string }>;
   audioAvailable?: boolean;
   sheetAvailable?: boolean;
-  sheetMusic?: Composition['sheetMusic'];
-  audios?: Composition['audios'];
+  sheetMusic: Composition['sheetMusic'];
+  audios: Composition['audios'];
   createdAt: string;
   updatedAt: string;
 };
@@ -115,7 +115,7 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
       return [];
     }
 
-    const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 
     const docs = await CompositionModel.find({
       $or: [

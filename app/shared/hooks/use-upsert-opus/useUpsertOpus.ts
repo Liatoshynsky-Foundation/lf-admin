@@ -129,7 +129,7 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}) => {
         compositionId: composition.id,
         title: composition.title?.uk ?? '',
         genre: composition.genre ?? '',
-        year: composition.year != null ? String(composition.year) : '',
+        year: composition.year == null ? '' : String(composition.year),
         audios: (composition.audios ?? []).map((audio) => ({
           id: createCompositionId(),
           name: audio.name ?? fileNameFromUrl(audio.url),

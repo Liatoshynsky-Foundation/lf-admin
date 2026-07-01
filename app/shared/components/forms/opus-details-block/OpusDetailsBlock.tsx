@@ -11,7 +11,13 @@ import YearPicker from './year-picker/YearPicker';
 import Button from '~/components/design-system/button/Button';
 import { OPUS_DELETE_MODAL, OPUS_DETAILS_LABELS, OPUS_FIELD_LIMITS, OPUS_NUMBER_KIND_OPTIONS } from '~/constants/opus';
 import { createCompositionId } from '~/shared/hooks/use-upsert-opus/useUpsertOpus';
-import type { OpusCompositionData, OpusCompositionSuggestion, OpusDetailsErrors, OpusDetailsValue } from '~/types/opus';
+import type {
+  OpusCompositionData,
+  OpusCompositionSuggestion,
+  OpusDetailsErrors,
+  OpusDetailsValue,
+  OpusMediaFileData
+} from '~/types/opus';
 
 const fileNameFromUrl = (url?: string | null): string => {
   if (!url) {
@@ -22,6 +28,22 @@ const fileNameFromUrl = (url?: string | null): string => {
 
   return decodeURIComponent(segment.split('?')[0]);
 };
+
+type SuggestionAudio = NonNullable<OpusCompositionSuggestion['audios']>[number];
+type SuggestionSheet = NonNullable<OpusCompositionSuggestion['sheetMusic']>[number];
+
+const toSuggestionAudio = (audio: SuggestionAudio): OpusMediaFileData => ({
+  id: createCompositionId(),
+  name: audio.name ?? fileNameFromUrl(audio.url),
+  fileUrl: audio.url ?? undefined
+});
+
+const toSuggestionNote = (sheet: SuggestionSheet): OpusMediaFileData => ({
+  id: createCompositionId(),
+  name: sheet.name ?? fileNameFromUrl(sheet.url),
+  fileUrl: sheet.url ?? undefined,
+  publishDate: sheet.publishDate ?? ''
+});
 
 interface OpusDetailsBlockProps {
   value: OpusDetailsValue;
@@ -67,18 +89,9 @@ export default function OpusDetailsBlock({ value, onChange, errors }: Readonly<O
             compositionId: suggestion.id,
             title: suggestion.title?.uk ?? suggestion.title?.en ?? '',
             genre: suggestion.genre ?? '',
-            year: suggestion.year != null ? String(suggestion.year) : '',
-            audios: (suggestion.audios ?? []).map((audio) => ({
-              id: createCompositionId(),
-              name: audio.name ?? fileNameFromUrl(audio.url),
-              fileUrl: audio.url ?? undefined
-            })),
-            notes: (suggestion.sheetMusic ?? []).map((sheet) => ({
-              id: createCompositionId(),
-              name: sheet.name ?? fileNameFromUrl(sheet.url),
-              fileUrl: sheet.url ?? undefined,
-              publishDate: sheet.publishDate ?? ''
-            }))
+            year: suggestion.year == null ? '' : String(suggestion.year),
+            audios: (suggestion.audios ?? []).map(toSuggestionAudio),
+            notes: (suggestion.sheetMusic ?? []).map(toSuggestionNote)
           }
           : item
       )

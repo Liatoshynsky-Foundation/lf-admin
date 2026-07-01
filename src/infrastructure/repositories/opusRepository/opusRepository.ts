@@ -12,7 +12,7 @@ export type DbOpus = {
   number: string;
   title: Opus['title'];
   releaseYear?: number | null;
-  numberKind?: Opus['numberKind'];
+  numberKind: Opus['numberKind'];
   name?: string | null;
   additionalText?: string | null;
   creationYear?: string | null;
@@ -21,12 +21,12 @@ export type DbOpus = {
   genre?: string | null;
   adminTitle?: string | null;
   slug?: string | null;
-  description?: Opus['description'];
-  keywords?: Opus['keywords'];
-  allowIndexation?: Opus['allowIndexation'];
-  coverImage?: Opus['coverImage'];
-  status?: Opus['status'];
-  meta?: Opus['meta'];
+  description: Opus['description'];
+  keywords: Opus['keywords'];
+  allowIndexation: Opus['allowIndexation'];
+  coverImage: Opus['coverImage'];
+  status: Opus['status'];
+  meta: Opus['meta'];
   publishedAt?: string | null;
   createdAt: string;
   updatedAt: string;

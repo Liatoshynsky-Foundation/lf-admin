@@ -1,27 +1,11 @@
 import { NAVIGATION_DATA } from './SideNavigation.consts';
 
-const collectNavigationHrefs = (): string[] => {
-  const sections = [NAVIGATION_DATA.main, NAVIGATION_DATA.content, NAVIGATION_DATA.other];
-  const hrefs: string[] = [];
-
-  for (const section of sections) {
-    for (const item of section) {
-      if ('href' in item && item.href) {
-        hrefs.push(item.href);
-      }
-
-      if ('collapseElements' in item && item.collapseElements) {
-        for (const child of item.collapseElements) {
-          if (child.href) {
-            hrefs.push(child.href);
-          }
-        }
-      }
-    }
-  }
-
-  return hrefs;
-};
+const collectNavigationHrefs = (): string[] =>
+  Object.values(NAVIGATION_DATA)
+    .flat()
+    .flatMap((item) => ('collapseElements' in item && item.collapseElements ? item.collapseElements : [item]))
+    .map((entry) => ('href' in entry ? entry.href : undefined))
+    .filter((href): href is string => Boolean(href));
 
 const NAVIGATION_HREFS = collectNavigationHrefs();
 

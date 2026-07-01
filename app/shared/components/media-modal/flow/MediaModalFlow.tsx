@@ -33,6 +33,8 @@ export type MediaModalFlowProps = {
   aspectRatio?: number;
 };
 
+const GALLERY_LABELS: Record<MediaKind, string> = { image: 'Галерея', audio: 'Аудіо', pdf: 'Файли' };
+
 const isNonImageUploadSelection = (selected: SelectedMedia | null): boolean => {
   if (selected?.kind !== 'upload') {
     return false;
@@ -59,7 +61,7 @@ export function MediaModalFlow({
   const [state, dispatch] = useReducer(reducer, initial, buildInitialState);
 
   const cropEnabled = mediaKind === 'image';
-  const galleryLabel = mediaKind === 'audio' ? 'Аудіо' : mediaKind === 'pdf' ? 'Файли' : 'Галерея';
+  const galleryLabel = GALLERY_LABELS[mediaKind];
 
   const { isApplying, applyError, clearApplyState, clearApplyError, cancelInFlightApply, handleClose, runApply } =
     useMediaModalApply({ open, onClose, onApply, directory });

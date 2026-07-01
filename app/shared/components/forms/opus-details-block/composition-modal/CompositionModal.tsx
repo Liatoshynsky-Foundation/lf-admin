@@ -93,7 +93,7 @@ export default function CompositionModal({
   };
 
   const handleMediaApply = (result: MediaModalResult): void => {
-    const url = result.uploadResult?.url ?? (result.selected.kind !== 'upload' ? result.selected.src : undefined);
+    const url = result.uploadResult?.url ?? (result.selected.kind === 'upload' ? undefined : result.selected.src);
     const fileName = result.uploadResult?.originalName ?? result.selected.fileName ?? '';
 
     if (!url || !mediaTarget) {

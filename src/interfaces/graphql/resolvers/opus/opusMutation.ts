@@ -93,6 +93,34 @@ const mapComposition = (composition: GQLComposition): CompositionInput => {
   };
 };
 
+const buildOpusUpdateData = (
+  input: UpdateOpusGQLInput,
+  existingOpus: Opus,
+  number: string | undefined
+): UpdateOpusInput => {
+  const candidate: UpdateOpusInput = {
+    number,
+    numberKind: number === undefined ? undefined : (input.numberKind ?? existingOpus.numberKind),
+    title: input.title,
+    name: input.name,
+    additionalText: input.additionalText,
+    creationYear: input.creationYear,
+    releaseYear: input.creationYear === undefined ? undefined : parseYear(input.creationYear),
+    endYear: input.endYear,
+    datesNote: input.datesNote,
+    genre: input.genre,
+    adminTitle: input.adminTitle,
+    description: input.description,
+    keywords: input.keywords,
+    allowIndexation: input.allowIndexation,
+    coverImage: input.coverImage,
+    status: input.status,
+    publishedAt: input.publishedAt
+  };
+
+  return Object.fromEntries(Object.entries(candidate).filter(([, value]) => value !== undefined)) as UpdateOpusInput;
+};
+
 export const OpusMutation = {
   createOpus: async (_: unknown, { input }: CreateOpusArgs, context: GraphQLContext): Promise<Opus> => {
     assertAuthenticated(context);
@@ -192,26 +220,7 @@ export const OpusMutation = {
       }
     }
 
-    const updateData: UpdateOpusInput = {
-      ...(number !== undefined && { number, numberKind: input.numberKind ?? existingOpus.numberKind }),
-      ...(input.title !== undefined && { title: input.title }),
-      ...(input.name !== undefined && { name: input.name }),
-      ...(input.additionalText !== undefined && { additionalText: input.additionalText }),
-      ...(input.creationYear !== undefined && {
-        creationYear: input.creationYear,
-        releaseYear: parseYear(input.creationYear)
-      }),
-      ...(input.endYear !== undefined && { endYear: input.endYear }),
-      ...(input.datesNote !== undefined && { datesNote: input.datesNote }),
-      ...(input.genre !== undefined && { genre: input.genre }),
-      ...(input.adminTitle !== undefined && { adminTitle: input.adminTitle }),
-      ...(input.description !== undefined && { description: input.description }),
-      ...(input.keywords !== undefined && { keywords: input.keywords }),
-      ...(input.allowIndexation !== undefined && { allowIndexation: input.allowIndexation }),
-      ...(input.coverImage !== undefined && { coverImage: input.coverImage }),
-      ...(input.status !== undefined && { status: input.status }),
-      ...(input.publishedAt !== undefined && { publishedAt: input.publishedAt })
-    };
+    const updateData = buildOpusUpdateData(input, existingOpus, number);
 
     if (input.name) {
       await processSlugUpdate(id, input.name, repo, updateData);
@@ -226,9 +235,9 @@ export const OpusMutation = {
     }
 
     const compositions =
-      input.compositions !== undefined
-        ? await compositionsRepo.syncForOpus(id, input.compositions.map(mapComposition))
-        : await compositionsRepo.findByOpusId(id);
+      input.compositions === undefined
+        ? await compositionsRepo.findByOpusId(id)
+        : await compositionsRepo.syncForOpus(id, input.compositions.map(mapComposition));
 
     if (input.coverImage?.crop) {
       await syncImagesCrops(opus.id, input.coverImage, { isCoverImage: true });
