@@ -255,7 +255,7 @@ describe('CompositionModal', () => {
     });
   });
 
-  it('should process pdf asset type mutation uploads successfully', async () => {
+  it('should process pdf asset type mutation uploads successfully with simulation', async () => {
     runSimulation();
 
     fireEvent.click(screen.getByTestId('action-trigger-upload-notes'));
