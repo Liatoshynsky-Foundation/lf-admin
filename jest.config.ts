@@ -41,6 +41,8 @@ const config: Config = {
   preset: 'ts-jest',
   testEnvironment: 'jest-environment-jsdom',
   moduleNameMapper: {
+    '^~/back-config$': '<rootDir>/src/back-config',
+    '^~/uploads/(.*)$': '<rootDir>/src/uploads/$1',
     '^lodash-es$': 'lodash',
     '^~/public/(.*)$': '<rootDir>/public/$1',
     '^~/utils/(.*)$': '<rootDir>/app/lib/utils/$1',
