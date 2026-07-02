@@ -200,6 +200,11 @@ jest.mock('~/shared/components/content-card/ContentCard', () => ({
   default: () => <div data-testid="content-card" />
 }));
 
+jest.mock('~/shared/components/composition-modal/CompositionModal', () => ({
+  __esModule: true,
+  default: () => <div data-testid="composition-modal" />
+}));
+
 jest.mock('~/shared/components/delete-card-modal/DeleteCardModal', () => ({
   __esModule: true,
   default: ({ open, onClose }: OpenCloseProps) =>
