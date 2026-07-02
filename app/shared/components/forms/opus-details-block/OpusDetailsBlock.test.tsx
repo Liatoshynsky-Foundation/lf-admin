@@ -1,28 +1,62 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
-import { ReactNode, useState } from 'react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { ReactElement, ReactNode, useState } from 'react';
 
 import OpusDetailsBlock from './OpusDetailsBlock';
 import { initialOpusDetails } from '~/constants/opus';
-import type { OpusDetailsErrors, OpusDetailsValue } from '~/types/opus';
+import type {
+  OpusCompositionData,
+  OpusCompositionSuggestion,
+  OpusDetailsErrors,
+  OpusDetailsValue
+} from '~/types/opus';
+
+let mockSuggestion: OpusCompositionSuggestion = {};
 
 jest.mock('~/shared/components/media-modal/MediaModal', () => ({
-  MediaModal: () => null
+  MediaModal: (): null => null
 }));
 
 jest.mock('@mui/x-date-pickers/LocalizationProvider', () => ({
-  LocalizationProvider: ({ children }: { children: ReactNode }) => <>{children}</>
+  LocalizationProvider: ({ children }: { children: ReactNode }): ReactElement => <>{children}</>
 }));
 
 jest.mock('@mui/x-date-pickers/DatePicker', () => ({
-  DatePicker: ({ label }: { label: string }) => <input aria-label={label} readOnly value="" />
+  DatePicker: ({ label }: { label: string }): ReactElement => <input aria-label={label} readOnly value="" />
 }));
 
 jest.mock('./composition-title-input/CompositionTitleInput', () => ({
   __esModule: true,
-  default: ({ value, onChangeText }: { value: string; onChangeText: (next: string) => void }) => (
-    <input aria-label="composition-title" value={value} onChange={(event) => onChangeText(event.target.value)} />
+  default: ({
+    value,
+    onChangeText,
+    onSelectSuggestion,
+    onCreateNew
+  }: {
+    value: string;
+    onChangeText: (next: string) => void;
+    onSelectSuggestion: (suggestion: OpusCompositionSuggestion) => void;
+    onCreateNew: () => void;
+  }): ReactElement => (
+    <div>
+      <input aria-label="composition-title" value={value} onChange={(event) => onChangeText(event.target.value)} />
+      <button type="button" aria-label="select-suggestion" onClick={() => onSelectSuggestion(mockSuggestion)}>
+        suggest
+      </button>
+      <button type="button" aria-label="create-new" onClick={onCreateNew}>
+        create
+      </button>
+    </div>
   )
 }));
+
+const makeComposition = (id: string, title: string): OpusCompositionData => ({
+  id,
+  title,
+  genre: '',
+  year: '',
+  audios: [],
+  notes: []
+});
 
 const Harness = ({
   initial = initialOpusDetails,
@@ -30,7 +64,7 @@ const Harness = ({
 }: {
   initial?: OpusDetailsValue;
   errors?: OpusDetailsErrors;
-}) => {
+}): ReactElement => {
   const [value, setValue] = useState<OpusDetailsValue>(initial);
 
   return <OpusDetailsBlock value={value} onChange={setValue} errors={errors} />;
@@ -62,6 +96,26 @@ describe('OpusDetailsBlock', () => {
     expect(nameField).toHaveValue('Соната');
   });
 
+  it('updates the number, note and number-kind fields', () => {
+    render(<Harness />);
+
+    const numberField = screen.getByLabelText('Номер *');
+    fireEvent.change(numberField, { target: { value: '14' } });
+    expect(numberField).toHaveValue('14');
+
+    const noteField = screen.getByLabelText('Примітка');
+    fireEvent.change(noteField, { target: { value: 'bis' } });
+    expect(noteField).toHaveValue('bis');
+
+    const genreField = screen.getByLabelText('Жанр');
+    fireEvent.change(genreField, { target: { value: 'Симфонія' } });
+    expect(genreField).toHaveValue('Симфонія');
+
+    fireEvent.mouseDown(screen.getByRole('combobox'));
+    fireEvent.click(screen.getByRole('option', { name: 'B/o.' }));
+    expect(screen.getByRole('combobox')).toHaveTextContent('B/o.');
+  });
+
   it('adds an inline composition row when "Додати" is clicked', () => {
     render(<Harness />);
 
@@ -70,6 +124,117 @@ describe('OpusDetailsBlock', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Додати' }));
 
     expect(screen.getAllByRole('button', { name: 'Редагувати' })).toHaveLength(1);
+  });
+
+  it('updates the title of the targeted composition only', () => {
+    const initial: OpusDetailsValue = {
+      ...initialOpusDetails,
+      compositions: [makeComposition('c1', 'Перший'), makeComposition('c2', 'Другий')]
+    };
+    render(<Harness initial={initial} />);
+
+    const titleInputs = screen.getAllByLabelText('composition-title');
+    fireEvent.change(titleInputs[0], { target: { value: 'Оновлений' } });
+
+    expect(screen.getAllByLabelText('composition-title')[0]).toHaveValue('Оновлений');
+    expect(screen.getAllByLabelText('composition-title')[1]).toHaveValue('Другий');
+  });
+
+  it('fills a composition from a full suggestion and opens the edit modal', () => {
+    const initial: OpusDetailsValue = {
+      ...initialOpusDetails,
+      compositions: [makeComposition('c1', ''), makeComposition('c2', 'Другий')]
+    };
+    render(<Harness initial={initial} />);
+
+    mockSuggestion = {
+      id: 'sugg-1',
+      title: { uk: 'Повна назва' },
+      genre: 'Соната',
+      year: 1921,
+      audios: [{ name: 'Мій запис', url: 'https://cdn/a.mp3' }],
+      sheetMusic: [{ url: 'https://cdn/s.pdf', name: 'Партитура', publishDate: '2021' }]
+    };
+    fireEvent.click(screen.getAllByRole('button', { name: 'select-suggestion' })[0]);
+
+    expect(screen.getAllByLabelText('composition-title')[0]).toHaveValue('Повна назва');
+    expect(screen.getAllByLabelText('composition-title')[1]).toHaveValue('Другий');
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Редагувати' })[0]);
+
+    expect(screen.getByText('Редагування композиції')).toBeInTheDocument();
+    expect(screen.getByText('Мій запис')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Партитура')).toBeInTheDocument();
+  });
+
+  it('fills compositions from partial and empty suggestions', () => {
+    const initial: OpusDetailsValue = {
+      ...initialOpusDetails,
+      compositions: [makeComposition('c1', ''), makeComposition('c2', '')]
+    };
+    render(<Harness initial={initial} />);
+
+    mockSuggestion = {
+      title: { uk: null, en: 'English title' },
+      genre: null,
+      year: null,
+      audios: [{ url: 'https://cdn/audio.mp3' }, { name: null, url: null }],
+      sheetMusic: [{ url: 'https://cdn/sheet.pdf' }]
+    };
+    fireEvent.click(screen.getAllByRole('button', { name: 'select-suggestion' })[0]);
+    expect(screen.getAllByLabelText('composition-title')[0]).toHaveValue('English title');
+
+    mockSuggestion = { title: null, audios: null, sheetMusic: null };
+    fireEvent.click(screen.getAllByRole('button', { name: 'select-suggestion' })[1]);
+    expect(screen.getAllByLabelText('composition-title')[1]).toHaveValue('');
+  });
+
+  it('opens the create modal from the composition input', () => {
+    const initial: OpusDetailsValue = {
+      ...initialOpusDetails,
+      compositions: [makeComposition('c1', 'Твір')]
+    };
+    render(<Harness initial={initial} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'create-new' }));
+
+    expect(screen.getByText('Нова композиція')).toBeInTheDocument();
+  });
+
+  it('applies the modal changes on submit and closes it', async () => {
+    const initial: OpusDetailsValue = {
+      ...initialOpusDetails,
+      compositions: [makeComposition('c1', 'Перший'), makeComposition('c2', 'Другий')]
+    };
+    render(<Harness initial={initial} />);
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Редагувати' })[0]);
+    expect(screen.getByText('Редагування композиції')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
+
+    await waitFor(() => expect(screen.queryByText('Редагування композиції')).not.toBeInTheDocument());
+  });
+
+  it('reorders compositions via drag and drop', () => {
+    const initial: OpusDetailsValue = {
+      ...initialOpusDetails,
+      compositions: [makeComposition('c1', 'Перший'), makeComposition('c2', 'Другий')]
+    };
+    render(<Harness initial={initial} />);
+
+    fireEvent.dragEnter(screen.getAllByLabelText('Перемістити')[1]);
+    expect(screen.getAllByLabelText('composition-title')[0]).toHaveValue('Перший');
+
+    fireEvent.dragStart(screen.getAllByLabelText('Перемістити')[0]);
+    fireEvent.dragOver(screen.getAllByLabelText('Перемістити')[1]);
+    fireEvent.dragEnter(screen.getAllByLabelText('Перемістити')[0]);
+    fireEvent.dragEnter(screen.getAllByLabelText('Перемістити')[1]);
+    fireEvent.dragEnd(screen.getAllByLabelText('Перемістити')[0]);
+
+    const titles = screen.getAllByLabelText('composition-title');
+    expect(titles[0]).toHaveValue('Другий');
+    expect(titles[1]).toHaveValue('Перший');
   });
 
   it('removes a composition after delete confirmation', () => {
@@ -87,5 +252,35 @@ describe('OpusDetailsBlock', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Видалити' }));
 
     expect(screen.queryByDisplayValue('Твір для видалення')).not.toBeInTheDocument();
+  });
+
+  it('closes the delete dialog via cancel without removing the composition', async () => {
+    const initial: OpusDetailsValue = {
+      ...initialOpusDetails,
+      compositions: [makeComposition('c1', 'Залишити')]
+    };
+    render(<Harness initial={initial} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Видалити' }));
+    const dialog = screen.getByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Скасувати' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.getByDisplayValue('Залишити')).toBeInTheDocument();
+  });
+
+  it('closes the delete dialog via the close icon', async () => {
+    const initial: OpusDetailsValue = {
+      ...initialOpusDetails,
+      compositions: [makeComposition('c1', 'Залишити')]
+    };
+    render(<Harness initial={initial} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Видалити' }));
+    const dialog = screen.getByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Закрити' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.getByDisplayValue('Залишити')).toBeInTheDocument();
   });
 });

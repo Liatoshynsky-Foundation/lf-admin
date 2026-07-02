@@ -119,6 +119,76 @@ describe('OpusRepository', () => {
       await expect(repository.create(createInput)).rejects.toThrow('Opus with number "op.1" already exists');
       expect(saveMock).not.toHaveBeenCalled();
     });
+
+    it('defaults meta views to 0 when the input has no meta', async (): Promise<void> => {
+      const inputWithoutMeta: CreateOpusInput = {
+        number: 'op.2',
+        title: { uk: 'Опус', en: 'Opus' }
+      };
+      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(null) });
+      saveMock.mockResolvedValue({ toObject: () => createMockOpusDoc({ number: 'op.2' }) });
+
+      const result = await repository.create(inputWithoutMeta);
+
+      expect(MockModel).toHaveBeenCalledWith(expect.objectContaining({ meta: { views: 0 } }));
+      expect(result.number).toBe('op.2');
+    });
+  });
+
+  describe('toEntity mapping', () => {
+    it('applies fallback defaults for nullish optional fields', async (): Promise<void> => {
+      const doc = createMockOpusDoc({
+        releaseYear: null,
+        numberKind: undefined,
+        name: null,
+        creationYear: null,
+        genre: null,
+        adminTitle: null,
+        slug: null,
+        description: null,
+        keywords: null,
+        allowIndexation: null,
+        coverImage: null,
+        status: undefined,
+        meta: undefined,
+        additionalText: 'Додатковий текст',
+        endYear: '1925',
+        datesNote: 'Нотатка про дати',
+        publishedAt: '2026-01-01T00:00:00.000Z'
+      });
+      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
+
+      const result = await repository.findByNumber('op.1');
+
+      expect(result?.releaseYear).toBeUndefined();
+      expect(result?.numberKind).toBe('op');
+      expect(result?.name).toBeUndefined();
+      expect(result?.additionalText).toBe('Додатковий текст');
+      expect(result?.creationYear).toBeUndefined();
+      expect(result?.endYear).toBe('1925');
+      expect(result?.datesNote).toBe('Нотатка про дати');
+      expect(result?.genre).toBeUndefined();
+      expect(result?.adminTitle).toBeUndefined();
+      expect(result?.slug).toBeUndefined();
+      expect(result?.description).toBeUndefined();
+      expect(result?.keywords).toBeUndefined();
+      expect(result?.allowIndexation).toBeUndefined();
+      expect(result?.coverImage).toBeUndefined();
+      expect(result?.status).toBeUndefined();
+      expect(result?.meta).toEqual({ views: 0 });
+      expect(result?.publishedAt).toBe('2026-01-01T00:00:00.000Z');
+    });
+
+    it('keeps provided optional values instead of applying fallbacks', async (): Promise<void> => {
+      const doc = createMockOpusDoc({ numberKind: 'woo', meta: { views: 42 } });
+      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
+
+      const result = await repository.findByNumber('op.1');
+
+      expect(result?.numberKind).toBe('woo');
+      expect(result?.releaseYear).toBe(1922);
+      expect(result?.meta).toEqual({ views: 42 });
+    });
   });
 
   describe('findAll', () => {

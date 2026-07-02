@@ -194,6 +194,216 @@ describe('OpusMutation Resolvers', () => {
       expect(mockRepo.update).toHaveBeenCalled();
       expect(mockCompositionsRepo.syncForOpus).toHaveBeenCalledWith('1', []);
     });
+
+    it('should compose a bare prefix and null out every optional field when they are absent', async (): Promise<void> => {
+      const input: CreateOpusGQLInput = { title: { uk: 'Лише назва', en: 'Title only' } };
+      (mockRepo.create as jest.Mock).mockResolvedValue(createMockEntity({ id: 'opus-min' }));
+
+      await OpusMutation.createOpus({}, { input }, adminContext);
+
+      expect(mockRepo.findByNumber).toHaveBeenCalledWith('op');
+      expect(mockRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          number: 'op',
+          numberKind: 'op',
+          name: null,
+          additionalText: null,
+          creationYear: null,
+          releaseYear: null,
+          endYear: null,
+          datesNote: null,
+          genre: null,
+          adminTitle: null,
+          description: null,
+          keywords: null,
+          allowIndexation: null,
+          coverImage: null,
+          status: OpusStatus.Draft,
+          publishedAt: null
+        })
+      );
+      expect(mockCompositionsRepo.syncForOpus).toHaveBeenCalledWith('opus-min', []);
+      expect(helpers.syncImagesCrops).not.toHaveBeenCalled();
+      expect(helpers.markImagesAsUsed).not.toHaveBeenCalled();
+    });
+
+    it('should forward every optional field on create when they are all present', async (): Promise<void> => {
+      const input = createMockInput({
+        additionalText: 'Додатковий текст',
+        endYear: '1925',
+        datesNote: 'Примітка до дат',
+        publishedAt: '2024-06-01',
+        status: OpusStatus.Published
+      });
+      (mockRepo.create as jest.Mock).mockResolvedValue(createMockEntity({ id: 'opus-full' }));
+
+      await OpusMutation.createOpus({}, { input }, adminContext);
+
+      expect(mockRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          additionalText: 'Додатковий текст',
+          endYear: '1925',
+          datesNote: 'Примітка до дат',
+          publishedAt: '2024-06-01',
+          releaseYear: 1922,
+          status: OpusStatus.Published
+        })
+      );
+    });
+
+    it('should throw NAME_REQUIRED_FOR_SLUG when both the trimmed name and title.uk are empty', async (): Promise<void> => {
+      const input = { name: '   ', title: { uk: '', en: 'Opus' } } as CreateOpusGQLInput;
+
+      await expect(OpusMutation.createOpus({}, { input }, adminContext)).rejects.toThrow(
+        'Opus name is required to generate a slug'
+      );
+      expect(mockRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('should map compositions with and without media files on create', async (): Promise<void> => {
+      const input = createMockInput({
+        compositions: [
+          {
+            id: 'c1',
+            title: 'Перша частина',
+            genre: 'Симфонія',
+            year: '1930',
+            notes: [
+              { name: 'partytura', fileUrl: 'http://cdn/n1.pdf', publishDate: '2020-01-01' },
+              { name: 'draft', fileUrl: 'http://cdn/n2.pdf' },
+              { name: 'no-file-note' }
+            ],
+            audios: [
+              { name: 'запис', fileUrl: 'http://cdn/a1.mp3' },
+              { name: 'audio-no-url' },
+              { name: '', fileUrl: null }
+            ]
+          },
+          { title: 'Друга частина' }
+        ]
+      });
+      (mockRepo.create as jest.Mock).mockResolvedValue(createMockEntity({ id: 'opus-comp' }));
+
+      await OpusMutation.createOpus({}, { input }, adminContext);
+
+      expect(mockCompositionsRepo.syncForOpus).toHaveBeenCalledWith('opus-comp', [
+        expect.objectContaining({
+          id: 'c1',
+          opusId: null,
+          title: { uk: 'Перша частина', en: 'Перша частина' },
+          year: 1930,
+          genre: 'Симфонія',
+          audioAvailable: true,
+          sheetAvailable: true,
+          sheetMusic: [
+            { url: 'http://cdn/n1.pdf', name: 'partytura', publishDate: '2020-01-01', isFree: true },
+            { url: 'http://cdn/n2.pdf', name: 'draft', publishDate: null, isFree: true }
+          ],
+          audios: [
+            { name: 'запис', url: 'http://cdn/a1.mp3' },
+            { name: 'audio-no-url', url: null }
+          ]
+        }),
+        expect.objectContaining({
+          id: undefined,
+          year: null,
+          genre: null,
+          audioAvailable: false,
+          sheetAvailable: false,
+          sheetMusic: [],
+          audios: []
+        })
+      ]);
+    });
+
+    it('should recompose the number and pass the duplicate check when it changes on update', async (): Promise<void> => {
+      (mockRepo.findById as jest.Mock).mockResolvedValue(
+        createMockEntity({ id: '1', number: 'op.1', numberKind: 'op' })
+      );
+      (mockRepo.update as jest.Mock).mockResolvedValue(createMockEntity({ id: '1', number: 'wo.5' }));
+
+      await OpusMutation.updateOpus(
+        {},
+        { id: '1', input: { numberKind: 'woo', number: '5', creationYear: '1931' } },
+        adminContext
+      );
+
+      expect(mockRepo.findByNumber).toHaveBeenCalledWith('wo.5');
+      expect(mockRepo.update).toHaveBeenCalledWith(
+        '1',
+        expect.objectContaining({ number: 'wo.5', numberKind: 'woo', creationYear: '1931', releaseYear: 1931 })
+      );
+    });
+
+    it('should throw a duplicate error when the recomposed update number belongs to another opus', async (): Promise<void> => {
+      (mockRepo.findById as jest.Mock).mockResolvedValue(
+        createMockEntity({ id: '1', number: 'op.1', numberKind: 'op' })
+      );
+      (mockRepo.findByNumber as jest.Mock).mockResolvedValue(
+        createMockEntity({ id: 'other', number: 'op.5' })
+      );
+
+      await expect(
+        OpusMutation.updateOpus({}, { id: '1', input: { number: '5' } }, adminContext)
+      ).rejects.toThrow('Opus with number "op.5" already exists');
+      expect(mockRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('should skip the duplicate check when the recomposed number is unchanged on update', async (): Promise<void> => {
+      (mockRepo.findById as jest.Mock).mockResolvedValue(
+        createMockEntity({ id: '1', number: 'op.1', numberKind: 'op' })
+      );
+      (mockRepo.update as jest.Mock).mockResolvedValue(createMockEntity({ id: '1', number: 'op.1' }));
+
+      await OpusMutation.updateOpus({}, { id: '1', input: { numberKind: 'op', number: '1' } }, adminContext);
+
+      expect(mockRepo.findByNumber).not.toHaveBeenCalled();
+      expect(mockRepo.update).toHaveBeenCalled();
+    });
+
+    it('should throw OPUS_NOT_FOUND when repo.update resolves to null', async (): Promise<void> => {
+      (mockRepo.findById as jest.Mock).mockResolvedValue(createMockEntity({ id: '1' }));
+      (mockRepo.update as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        OpusMutation.updateOpus({}, { id: '1', input: { name: 'x' } }, adminContext)
+      ).rejects.toThrow('Opus with id "1" not found');
+    });
+
+    it('should keep existing compositions when compositions are omitted on update', async (): Promise<void> => {
+      (mockRepo.findById as jest.Mock).mockResolvedValue(createMockEntity({ id: '1' }));
+      (mockRepo.update as jest.Mock).mockResolvedValue(createMockEntity({ id: '1' }));
+      mockCompositionsRepo.findByOpusId.mockResolvedValue([]);
+
+      await OpusMutation.updateOpus({}, { id: '1', input: { name: 'Оновлено' } }, adminContext);
+
+      expect(mockCompositionsRepo.findByOpusId).toHaveBeenCalledWith('1');
+      expect(mockCompositionsRepo.syncForOpus).not.toHaveBeenCalled();
+    });
+
+    it('should sync crops and mark the cover image as used on update when a crop is present', async (): Promise<void> => {
+      (mockRepo.findById as jest.Mock).mockResolvedValue(createMockEntity({ id: '1' }));
+      (mockRepo.update as jest.Mock).mockResolvedValue(createMockEntity({ id: '1' }));
+
+      const coverImage = { src: 'opus.jpg', alt: { uk: '', en: '' }, crop: { x: 1, y: 1, width: 10, height: 10 } };
+
+      await OpusMutation.updateOpus({}, { id: '1', input: { coverImage } }, adminContext);
+
+      expect(helpers.syncImagesCrops).toHaveBeenCalledWith('1', coverImage, { isCoverImage: true });
+      expect(helpers.markImagesAsUsed).toHaveBeenCalled();
+    });
+
+    it('should mark the cover image as used but skip crop sync on update when no crop is present', async (): Promise<void> => {
+      (mockRepo.findById as jest.Mock).mockResolvedValue(createMockEntity({ id: '1' }));
+      (mockRepo.update as jest.Mock).mockResolvedValue(createMockEntity({ id: '1' }));
+
+      const coverImage = { src: 'opus.jpg', alt: { uk: '', en: '' } };
+
+      await OpusMutation.updateOpus({}, { id: '1', input: { coverImage } }, adminContext);
+
+      expect(helpers.syncImagesCrops).not.toHaveBeenCalled();
+      expect(helpers.markImagesAsUsed).toHaveBeenCalled();
+    });
   });
 
   describe('Deletion', () => {
