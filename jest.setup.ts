@@ -52,9 +52,7 @@ if (globalThis.fetch === undefined) {
   globalWithMessaging.MessagePort = savedMessagePort;
 }
 
-if (globalThis.structuredClone === undefined) {
-  globalThis.structuredClone = <T>(obj: T): T => JSON.parse(JSON.stringify(obj));
-}
+globalThis.structuredClone ??= <T>(obj: T): T => JSON.parse(JSON.stringify(obj)); // NOSONAR
 
 Object.defineProperty(globalThis, 'matchMedia', {
   writable: true,
