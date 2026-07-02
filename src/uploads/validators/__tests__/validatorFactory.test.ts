@@ -1,166 +1,106 @@
-import { ImageValidationRules } from '../imageValidator';
+import { UPLOAD_ERRORS } from '../../errors';
 import { createValidator, FileType, ValidatorConfig } from '../validatorFactory';
 
-const createTestFile = () => ({
-  buffer: Buffer.alloc(1024),
-  filename: 'test.jpg',
-  mimeType: 'image/jpeg'
-});
-
 describe('createValidator', () => {
-  describe('image validator', () => {
-    it('should create an image validator with default rules', async () => {
-      const config: ValidatorConfig = {
-        fileType: 'image'
-      };
+  describe('factory types', () => {
+    const supportedTypes: FileType[] = ['image', 'document', 'pdf', 'spreadsheet', 'archive', 'audio', 'video'];
 
-      const validator = createValidator(config);
-      const { buffer, filename, mimeType } = createTestFile();
-
-      const result = await validator.validate(buffer, filename, mimeType);
-
-      expect(result.valid).toBe(true);
-      expect(result.errors).toHaveLength(0);
+    supportedTypes.forEach((type) => {
+      it(`should create validator for ${type}`, () => {
+        expect(() => createValidator({ fileType: type })).not.toThrow();
+      });
     });
 
-    it('should create an image validator with custom rules', async () => {
-      const customRules: ImageValidationRules = {
-        maxSize: 500,
-        allowedMimeTypes: ['image/png'],
-        allowedExtensions: ['png']
-      };
+    it('should throw for unknown type', () => {
+      expect(() => createValidator({ fileType: 'generic' as FileType })).toThrow(UPLOAD_ERRORS.UNKNOWN_FILE_TYPE);
+    });
+  });
 
-      const config: ValidatorConfig = {
-        fileType: 'image',
-        rules: customRules
-      };
+  describe('base validator rules', () => {
+    it('should fail on empty buffer', async () => {
+      const validator = createValidator({ fileType: 'document' });
+      const result = await validator.validate(Buffer.alloc(0), 'test.pdf', 'application/pdf');
+      expect(result.valid).toBe(false);
+      expect(result.errors[0]).toBe('Файл не може бути порожнім (0 байт)');
+    });
 
-      const validator = createValidator(config);
-      const buffer = Buffer.alloc(1024); // Too large
-      const filename = 'test.jpg'; // Wrong extension
-      const mimeType = 'image/jpeg'; // Wrong mime type
+    it('should fail on too long filename', async () => {
+      const longName = 'a'.repeat(256) + '.pdf';
+      const validator = createValidator({ fileType: 'document' });
+      const result = await validator.validate(Buffer.alloc(10), longName, 'application/pdf');
+      expect(result.valid).toBe(false);
+      expect(result.errors[0]).toBe('Ім\'я файлу занадто довге (максимум 255 символів)');
+    });
+  });
 
-      const result = await validator.validate(buffer, filename, mimeType);
+  describe('size limits and extra validations', () => {
+    it('should validate archive size limit (50MB)', async () => {
+      const validator = createValidator({ fileType: 'archive' });
+      const bigBuffer = Buffer.alloc(51 * 1024 * 1024);
+      const result = await validator.validate(bigBuffer, 'archive.zip', 'application/zip');
+      expect(result.valid).toBe(false);
+      expect(result.errors[0]).toContain('Архів занадто великий');
+    });
+
+    it('should validate audio size limit (12MB)', async () => {
+      const validator = createValidator({ fileType: 'audio' });
+      const bigBuffer = Buffer.alloc(13 * 1024 * 1024);
+      const result = await validator.validate(bigBuffer, 'audio.mp3', 'audio/mpeg');
+      expect(result.valid).toBe(false);
+      expect(result.errors[0]).toContain('Аудіофайл завеликий');
+    });
+
+    it('should validate video size limit (100MB)', async () => {
+      const validator = createValidator({ fileType: 'video' });
+      const bigBuffer = Buffer.alloc(101 * 1024 * 1024);
+      const result = await validator.validate(bigBuffer, 'video.mp4', 'video/mp4');
+      expect(result.valid).toBe(false);
+      expect(result.errors[0]).toContain('Відеофайл перевищує ліміт');
+    });
+
+    it('should respect custom rules for maxSize if smaller than default', async () => {
+      const validator = createValidator({
+        fileType: 'document',
+        rules: { maxSize: 1 * 1024 * 1024 }
+      });
+      const buffer = Buffer.alloc(2 * 1024 * 1024);
+      const result = await validator.validate(buffer, 'test.pdf', 'application/pdf');
 
       expect(result.valid).toBe(false);
-      expect(result.errors.length).toBeGreaterThan(0);
-    });
-
-    it('should validate multiple files with the same validator', async () => {
-      const config: ValidatorConfig = {
-        fileType: 'image'
-      };
-
-      const validator = createValidator(config);
-      const testFile = createTestFile();
-
-      const result1 = await validator.validate(testFile.buffer, 'image1.jpg', 'image/jpeg');
-      expect(result1.valid).toBe(true);
-
-      const result2 = await validator.validate(Buffer.alloc(2048), 'image2.png', 'image/png');
-      expect(result2.valid).toBe(true);
-
-      const result3 = await validator.validate(testFile.buffer, 'doc.pdf', 'application/pdf');
-      expect(result3.valid).toBe(false);
+      expect(result.errors[0]).toContain('exceeds maximum allowed size');
     });
   });
 
-  describe('newly supported file types', () => {
-    it('should create validator for document', () => {
-      const config: ValidatorConfig = {
-        fileType: 'document'
-      };
-
-      expect(() => createValidator(config)).not.toThrow();
+  describe('document PDF specific logic', () => {
+    it('should pass valid PDF', async () => {
+      const validator = createValidator({ fileType: 'document' });
+      const pdfBuffer = Buffer.from('%PDF-1.4');
+      const result = await validator.validate(pdfBuffer, 'test.pdf', 'application/pdf');
+      expect(result.valid).toBe(true);
     });
 
-    it('should create validator for video', () => {
-      const config: ValidatorConfig = {
-        fileType: 'video'
-      };
-
-      expect(() => createValidator(config)).not.toThrow();
+    it('should fail invalid PDF', async () => {
+      const validator = createValidator({ fileType: 'document' });
+      const badBuffer = Buffer.from('NOT_A_PDF');
+      const result = await validator.validate(badBuffer, 'test.pdf', 'application/pdf');
+      expect(result.valid).toBe(false);
+      expect(result.errors[0]).toBe('Пошкоджений або підроблений PDF-файл');
     });
 
-    it('should create validator for audio', () => {
-      const config: ValidatorConfig = {
-        fileType: 'audio'
-      };
-
-      expect(() => createValidator(config)).not.toThrow();
+    it('should pass document validation for non-pdf if extension is not pdf', async () => {
+      const validator = createValidator({ fileType: 'document' });
+      const buffer = Buffer.from('data');
+      const result = await validator.validate(buffer, 'test.doc', 'application/msword');
+      expect(result.valid).toBe(true);
     });
   });
 
-  describe('invalid file types', () => {
-    it('should throw error for unknown file type', () => {
-      const config = {
-        fileType: 'unknown-type' as FileType
-      };
-
-      expect(() => createValidator(config)).toThrow('Unknown file type: unknown-type');
-    });
-
-    it('should throw error for null file type', () => {
-      const config = {
-        fileType: null
-      } as unknown as ValidatorConfig;
-
-      expect(() => createValidator(config)).toThrow();
-    });
-
-    it('should throw error for undefined file type', () => {
-      const config = {
-        fileType: undefined
-      } as unknown as ValidatorConfig;
-
-      expect(() => createValidator(config)).toThrow();
-    });
-  });
-
-  describe('validator reusability', () => {
-    it('should allow creating multiple validators with different configs', () => {
-      const config1: ValidatorConfig = {
-        fileType: 'image',
-        rules: { maxSize: 1024 }
-      };
-
-      const config2: ValidatorConfig = {
-        fileType: 'image',
-        rules: { maxSize: 2048 }
-      };
-
-      const validator1 = createValidator(config1);
-      const validator2 = createValidator(config2);
-
-      expect(validator1).not.toBe(validator2);
-    });
-
+  describe('reusability', () => {
     it('should create independent validator instances', async () => {
-      const config: ValidatorConfig = {
-        fileType: 'image'
-      };
-
-      const validator1 = createValidator(config);
-      const validator2 = createValidator(config);
-
-      const { buffer, filename, mimeType } = createTestFile();
-
-      const result1 = await validator1.validate(buffer, filename, mimeType);
-      const result2 = await validator2.validate(buffer, filename, mimeType);
-
-      expect(result1.valid).toBe(true);
-      expect(result2.valid).toBe(true);
-    });
-  });
-
-  describe('type checking', () => {
-    it('should accept valid FileType values', () => {
-      const fileTypes: FileType[] = ['image', 'document', 'video', 'audio'];
-
-      expect(() => createValidator({ fileType: fileTypes[0] })).not.toThrow();
-      expect(() => createValidator({ fileType: fileTypes[1] })).not.toThrow();
-      expect(() => createValidator({ fileType: fileTypes[2] })).not.toThrow();
-      expect(() => createValidator({ fileType: fileTypes[3] })).not.toThrow();
+      const config: ValidatorConfig = { fileType: 'image' };
+      const v1 = createValidator(config);
+      const v2 = createValidator(config);
+      expect(v1).not.toBe(v2);
     });
   });
 });

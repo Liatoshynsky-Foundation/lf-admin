@@ -4,16 +4,17 @@ import type { SxProps, Theme } from '@mui/material/styles';
 import { mainHexPalette as colors } from '~/shared/theme/colors';
 
 export const SIDEBAR_WIDTH = 320;
+export type FileInfoSidebarVariant = 'fixed' | 'inline';
 
 export const styles = {
-  root: {
+  root: (variant: FileInfoSidebarVariant = 'fixed'): SxProps<Theme> => ({
     width: `${SIDEBAR_WIDTH}px`,
-    height: '100dvh',
+    height: variant === 'inline' ? 'calc(100dvh - 48px)' : '100dvh',
     bgcolor: colors.blue[100],
 
-    position: 'fixed',
-    top: 0,
-    right: 0,
+    position: variant === 'inline' ? 'sticky' : 'fixed',
+    top: variant === 'inline' ? '24px' : 0,
+    right: variant === 'inline' ? 'auto' : 0,
 
     display: 'flex',
     flexDirection: 'column',
@@ -25,7 +26,7 @@ export const styles = {
 
     overflowY: 'auto',
     scrollbarWidth: 'none'
-  },
+  }),
   header: {
     position: 'sticky',
     top: 0,
