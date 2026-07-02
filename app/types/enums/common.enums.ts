@@ -19,7 +19,7 @@ export enum BaseContentStatuses {
   Published = 'published',
   Hidden = 'hidden',
   Archived = 'archived',
-  Editing = 'editing'
+  Editing = 'editing',
 }
 
 export const NewsStatus = BaseContentStatuses;

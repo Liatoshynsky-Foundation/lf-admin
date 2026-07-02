@@ -7,7 +7,7 @@
     "genre": "Струнний квартет",
     "language": "uk",
     "yearRange": "1920-1930",
-    "status": "published",
+    "status": "hidden",
     "updatedAt": "2025-09-11T00:00:00.000Z",
     "works": [
       { "id": "work-1-1", "title": "№1«Після бою», сл. І. Буніна, укр.пер. М. Стріхи", "year": "1922" },
@@ -23,7 +23,7 @@
     "genre": "Романс, мистецька пісня",
     "language": "uk",
     "yearRange": "1930-1940",
-    "status": "published",
+    "status": "draft",
     "createdAt": "2025-09-09T00:00:00.000Z",
     "updatedAt": "2025-09-11T00:00:00.000Z",
     "works": [

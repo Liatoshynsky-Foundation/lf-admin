@@ -24,12 +24,12 @@ jest.mock('../../design-system/tooltip/Tooltip', () => ({
 }));
 
 describe('StatusBadge', () => {
-  it('should pass "Draft" variant to Badge when status is Draft', () => {
+  it('should pass "Draft" variant to Badge when status is Hidden', () => {
     render(<StatusBadge status={BaseContentStatuses.Draft} />);
 
     const badge = screen.getByTestId('mock-badge');
     expect(badge).toBeInTheDocument();
-    expect(badge).toHaveAttribute('data-variant', BaseContentStatuses.Draft);
+    expect(badge).toHaveAttribute('data-variant', BaseContentStatuses.Hidden);
   });
 
   it('should pass "Published" variant to Badge when status is Published', () => {
@@ -40,13 +40,13 @@ describe('StatusBadge', () => {
     expect(badge).toHaveAttribute('data-variant', BaseContentStatuses.Published);
   });
 
-  it('should normalize other statuses to "Published" variant', () => {
+  it('should normalize other statuses to "Hidden" variant', () => {
     const fallbackStatus = 'SOME_OTHER_STATUS' as BaseContentStatuses;
     render(<StatusBadge status={fallbackStatus} />);
 
     const badge = screen.getByTestId('mock-badge');
     expect(badge).toBeInTheDocument();
-    expect(badge).toHaveAttribute('data-variant', BaseContentStatuses.Published);
+    expect(badge).toHaveAttribute('data-variant', BaseContentStatuses.Hidden);
   });
 
   it('should not wrap in tooltip if updatedAt is missing', () => {

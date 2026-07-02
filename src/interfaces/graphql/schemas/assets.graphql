@@ -74,16 +74,3 @@ extend type Mutation {
   createAsset(input: CreateAssetInput!): Asset!
   deleteAsset(id: ID!): Boolean!
 }
-
-input CreateAssetInput {
-  filename: String!
-  mimeType: String!
-  sizeBytes: Int!
-  url: String!
-  type: String! # 'image', 'audio', 'document', 'archive', etc.
-  description: String
-}
-
-extend type Mutation {
-  createAsset(input: CreateAssetInput!): Asset!
-}

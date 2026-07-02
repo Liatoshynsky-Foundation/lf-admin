@@ -11,6 +11,7 @@ import { RowActions } from '~/shared/components/table-layout/components/RowActio
 import { StatusBadge } from '~/shared/components/table-layout/components/StatusBadge';
 import { BaseRowData, ColumnDef, MenuItem } from '~/shared/components/table-layout/row-variants/Row.types';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 type ActionFields = {
   editAction?: { editHref: string; editLabel: string };
@@ -129,7 +130,7 @@ export function WorksTable({
   showIndividualWorks
 }: WorksTableProps) {
   function groupsRow(group: GroupRowData): BaseRowData<GroupHeaderData, OpusWork, IndividualWork> {
-    const isPublished = group.status === 'published';
+    const isPublished = group.status === BaseContentStatuses.Published;
 
     return {
       type: 'group',
@@ -173,7 +174,7 @@ export function WorksTable({
   }
 
   function individualWorkRow(work: IndividualWork): BaseRowData<GroupHeaderData, OpusWork, IndividualWork> {
-    const isPublished = work.status === 'published';
+    const isPublished = work.status === BaseContentStatuses.Published;
 
     return {
       type: 'individual',

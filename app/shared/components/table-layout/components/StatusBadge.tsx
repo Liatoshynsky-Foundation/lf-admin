@@ -8,7 +8,7 @@ import { styles } from './StatusBadge.styles';
 import Badge from '~/shared/components/badge/Badge';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
-type StatusChipStatus = typeof BaseContentStatuses.Draft | typeof BaseContentStatuses.Published;
+type StatusChipStatus = typeof BaseContentStatuses.Hidden | typeof BaseContentStatuses.Published;
 type StatusWithDateStatus = (typeof BaseContentStatuses)[keyof typeof BaseContentStatuses];
 
 type StatusWithDateProps = Readonly<{
@@ -18,7 +18,7 @@ type StatusWithDateProps = Readonly<{
 
 export function StatusBadge({ status, updatedAt }: StatusWithDateProps) {
   const normalizedStatus: StatusChipStatus =
-    status === BaseContentStatuses.Draft ? BaseContentStatuses.Draft : BaseContentStatuses.Published;
+    status === BaseContentStatuses.Published ? BaseContentStatuses.Published : BaseContentStatuses.Hidden;
 
   const badgeContent = <Badge variant={normalizedStatus} />;
 
@@ -26,8 +26,8 @@ export function StatusBadge({ status, updatedAt }: StatusWithDateProps) {
     return badgeContent;
   }
 
-  const isDraft = status === BaseContentStatuses.Draft;
-  const textStatus = isDraft ? 'Редаговано' : 'Опубліковано';
+  const isHidden = normalizedStatus === BaseContentStatuses.Hidden;
+  const textStatus = isHidden ? 'Редаговано' : 'Опубліковано';
   const formattedDate = new Date(updatedAt).toLocaleDateString('uk-UA');
   const tooltipTitle = `${textStatus} ${formattedDate}`;
 

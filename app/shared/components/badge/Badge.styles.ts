@@ -8,11 +8,13 @@ export const badgeColors = {
   events: chipsColors.eventChipBg,
   media: chipsColors.mediaChipBg,
   draft: chipsColors.draft,
-  published: chipsColors.published
+  published: chipsColors.published,
+  hidden: chipsColors.hidden
 };
 
 const badgeConfigs: Partial<Record<BadgeVariant, SxProps>> = {
   published: { color: 'adminBlue.50', borderRadius: '15px' },
+  hidden: { color: 'adminBlue.50', borderRadius: '15px' },
 };
 
 const baseBadgeStyles = {
