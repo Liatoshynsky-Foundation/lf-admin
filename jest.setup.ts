@@ -1,12 +1,13 @@
 import '@testing-library/jest-dom';
-import { ReadableStream, TransformStream,WritableStream } from 'stream/web';
+import { ReadableStream, TransformStream, WritableStream } from 'node:stream/web';
+import { TextDecoder, TextEncoder } from 'node:util';
+import type { MessageChannel as MessageChannelType, MessagePort as MessagePortType } from 'node:worker_threads';
 import type {
   fetch as fetchType,
   Headers as HeadersType,
   Request as RequestType,
-  Response as ResponseType} from 'undici';
-import { TextDecoder, TextEncoder } from 'util';
-import type { MessageChannel as MessageChannelType, MessagePort as MessagePortType } from 'worker_threads';
+  Response as ResponseType
+} from 'undici';
 
 globalThis.TextEncoder = TextEncoder;
 globalThis.TextDecoder = TextDecoder as typeof globalThis.TextDecoder;
@@ -20,9 +21,9 @@ type GlobalWithMessaging = typeof globalThis & {
   MessagePort: typeof globalThis.MessagePort;
 };
 
-if (typeof globalThis.fetch === 'undefined') {
+if (globalThis.fetch === undefined) {
   /* eslint-disable-next-line @typescript-eslint/no-require-imports */
-  const { MessageChannel: WTMC, MessagePort: WTMP } = require('worker_threads') as {
+  const { MessageChannel: WTMC, MessagePort: WTMP } = require('node:worker_threads') as {
     MessageChannel: typeof MessageChannelType;
     MessagePort: typeof MessagePortType;
   };
@@ -51,7 +52,7 @@ if (typeof globalThis.fetch === 'undefined') {
   globalWithMessaging.MessagePort = savedMessagePort;
 }
 
-if (typeof globalThis.structuredClone === 'undefined') {
+if (globalThis.structuredClone === undefined) {
   globalThis.structuredClone = <T>(obj: T): T => JSON.parse(JSON.stringify(obj));
 }
 
@@ -69,7 +70,7 @@ Object.defineProperty(globalThis, 'matchMedia', {
   }))
 });
 
-global.fetch = jest.fn(() =>
+globalThis.fetch = jest.fn(() =>
   Promise.resolve({
     ok: true,
     status: 200,

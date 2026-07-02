@@ -805,7 +805,7 @@ describe('StyleGuide Page', () => {
   });
 });
 
-type FindPredicate<T> = (value: T, index: number, obj: T[]) => boolean;
+type FindPredicate<T> = (value: T, index: number, obj: T[]) => unknown;
 
 describe('StyleGuide - activeFieldLabel branch coverage', () => {
   test('should trigger the fallback branch (?? "") when no field matches', () => {

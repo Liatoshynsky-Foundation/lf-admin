@@ -143,7 +143,7 @@ describe('ContentEditor', () => {
     await waitFor(() => expect(onSaveComplete).toHaveBeenCalledWith(false));
   });
 
-  it('clears the previous auto-save timer before setting a new one', async () => {
+  it('calls clearTimeout when a new change arrives before the previous auto-save timer fires', async () => {
     const clearSpy = jest.spyOn(global, 'clearTimeout');
 
     render(<ContentEditor initialContent={[]} persistence={persistence} />);

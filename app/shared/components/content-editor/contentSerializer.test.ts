@@ -39,7 +39,7 @@ describe('contentSerializer utilities', () => {
     expect(deserializeContent([paragraphBlock])).toEqual([paragraphBlock]);
     expect(deserializeContent(null)).toBeNull();
     expect(deserializeContent(undefined)).toBeNull();
-    expect(deserializeContent({ foo: 'bar' } as unknown)).toBeNull();
+    expect(deserializeContent({ foo: 'bar' } as unknown as Parameters<typeof deserializeContent>[0])).toBeNull();
   });
 
   it('validates content shape correctly', () => {
