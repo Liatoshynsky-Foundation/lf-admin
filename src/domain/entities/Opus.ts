@@ -14,13 +14,6 @@ export type OpusDescription = {
   };
 };
 
-/**
- * Opus = a "group" in the shared `opus` collection (also read by lf-client).
- * Required fields (number, title) are the canonical lf-client shape; everything
- * else is an optional admin extension so existing lean documents stay valid.
- * `compositions` is joined relationally from the `compositions` collection at
- * query time — it is NOT stored on the opus document.
- */
 export type Opus = {
   id: string;
   number: string;

@@ -64,11 +64,6 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
     await CompositionModel.deleteMany({ opusId });
   };
 
-  // Reconcile an opus's compositions WITHOUT duplicating rows:
-  //  - rows with an `id` update/link the existing composition (reassign opusId),
-  //  - rows without an `id` create a new composition,
-  //  - compositions previously under this opus but dropped from the form are
-  //    unlinked (opusId -> null, i.e. they become "ungrouped"), never duplicated.
   const syncForOpus = async (opusId: string, inputs: CompositionInput[]): Promise<Composition[]> => {
     await dbConnect();
 

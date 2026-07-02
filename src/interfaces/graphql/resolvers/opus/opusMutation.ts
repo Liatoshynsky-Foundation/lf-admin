@@ -55,7 +55,6 @@ const assertAuthenticated = (context: GraphQLContext): void => {
   }
 };
 
-// numberKind + digits -> the canonical `number` lf-client reads, e.g. "op.50" / "wo.3".
 const composeOpusNumber = (kind: OpusNumberKind | undefined, num: string | undefined): string => {
   const digits = (num ?? '').trim();
   const prefix = kind === 'woo' ? 'wo' : 'op';

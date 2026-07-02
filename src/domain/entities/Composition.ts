@@ -13,11 +13,6 @@ export type CompositionAudio = {
   url?: string | null;
 };
 
-/**
- * Composition (a "Твір"/work) in the shared `compositions` collection.
- * Belongs to an opus via `opusId` (null = ungrouped). `genre` is an admin-only
- * text round-trip field; `genres`/`categories` are ObjectId refs in the real model.
- */
 export type Composition = {
   id: string;
   opusId?: string | null;
