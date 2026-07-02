@@ -1,9 +1,9 @@
-import { config as appConfig } from '~/back-config';
-import { initializeUploadModule } from '~/uploads/initialize';
-import { UploadOptions } from '~/uploads/types';
+import { config as appConfig } from '../../../src/config';
+import { initializeUploadModule } from '../../../src/uploads/initialize';
+import { UploadOptions } from '../../../src/uploads/types';
 
 export interface RouteParams {
-    params: Promise<{ filename: string }>;
+  params: Promise<{ filename: string }>;
 }
 
 let uploadModule: ReturnType<typeof initializeUploadModule> | null = null;

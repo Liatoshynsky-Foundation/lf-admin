@@ -1,6 +1,7 @@
 import { CreateNewsGQLInput, NewsMutation, UpdateNewsGQLInput } from './newsMutation';
 import type { News } from '~/domain/entities/News';
 import { createMockContext } from '~/interfaces/graphql/resolvers/testUtils';
+import { newsServiceErrors } from '~/src/constants/errors';
 import { INewsRepository } from '~/src/domain/repositories/newsRepository';
 import { NewsStatus } from '~/types/enums/common.enums';
 
@@ -9,18 +10,22 @@ jest.mock('mongoose');
 import * as helpers from '../helpers';
 
 jest.mock('./processNewsContent/processNewsContent', () => ({
-  processNewsContent: jest.fn(<T>(input: T): Promise<T> => Promise.resolve(input)),
+  processNewsContent: jest.fn(<T>(input: T): Promise<T> => Promise.resolve(input))
 }));
 
 jest.mock('~/src/shared/utils/slugGenerator/slugGenerator', () => ({
-  generateUniqueSlug: jest.fn((title: string) =>
-    Promise.resolve(`slug-${title.toLowerCase()}`)
-  ),
+  generateUniqueSlug: jest.fn((title: string) => Promise.resolve(`slug-${title.toLowerCase()}`))
 }));
 
 jest.mock('../helpers', () => ({
   ...jest.requireActual('../helpers'),
   syncImagesCrops: jest.fn(),
+  extractTitleForSlug: jest.fn((title) => title?.uk || title?.en || ''),
+  processSlugUpdate: jest.fn((id, title, repo, updateData) => {
+    updateData.slug = 'slug-оновлено';
+    return Promise.resolve();
+  }),
+  markImagesAsUsed: jest.fn()
 }));
 
 describe('NewsMutation Resolvers', () => {
@@ -33,7 +38,9 @@ describe('NewsMutation Resolvers', () => {
     incrementViews: jest.fn()
   };
 
+  const id = 'news-123';
   const adminContext = createMockContext(true, 'newsRepository', mockRepo);
+  const userContext = createMockContext(false, 'newsRepository', mockRepo);
 
   const baseInput: CreateNewsGQLInput = {
     adminTitle: 'Test News',
@@ -75,14 +82,20 @@ describe('NewsMutation Resolvers', () => {
   describe('Security & Validation', () => {
     it('should throw error if title is empty (required for slug)', async () => {
       const invalidInput = { ...baseInput, title: { uk: '', en: '' } };
-      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext))
-        .rejects.toThrow();
+      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toThrow();
     });
 
     it('should throw error if title uk is missing (via partial object)', async () => {
       const invalidInput = { ...baseInput, title: { uk: '' } } as unknown as CreateNewsGQLInput;
-      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext))
-        .rejects.toThrow();
+      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toThrow();
+    });
+
+    it('should throw GraphQLError for createNews if user is unauthenticated', async () => {
+      await expect(NewsMutation.createNews({}, { input: baseInput }, userContext)).rejects.toThrow();
+    });
+
+    it('should throw GraphQLError for updateNews if user is unauthenticated', async () => {
+      await expect(NewsMutation.updateNews({}, { id: '1', input: {} }, userContext)).rejects.toThrow();
     });
   });
 
@@ -98,11 +111,19 @@ describe('NewsMutation Resolvers', () => {
       expect(helpers.syncImagesCrops).toHaveBeenCalledWith('new-id', baseInput.coverImage, { isCoverImage: true });
       expect(helpers.syncImagesCrops).toHaveBeenCalledWith('new-id', baseInput.content);
     });
+
+    it('should use NewsStatus.Draft as default status if status field is completely omitted', async () => {
+      const { status: _status, ...inputWithoutStatus } = baseInput;
+      mockAction('findBySlug', null);
+      mockAction('create', createMockNews({ id: 'default-id' }));
+
+      await NewsMutation.createNews({}, { input: inputWithoutStatus as CreateNewsGQLInput }, adminContext);
+
+      expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({ status: NewsStatus.Draft }));
+    });
   });
 
   describe('updateNews', () => {
-    const id = 'news-123';
-
     it('should update title, re-generate slug and sync crops', async () => {
       const updateInput: UpdateNewsGQLInput = {
         title: { uk: 'Оновлено', en: 'Updated' },
@@ -120,14 +141,51 @@ describe('NewsMutation Resolvers', () => {
       expect(helpers.syncImagesCrops).toHaveBeenCalledWith(id, updateInput.content);
     });
 
+    it('should fall back to empty content object structure during processContentFields execution if content property is missing', async () => {
+      const updateInputWithoutContent: UpdateNewsGQLInput = {
+        description: { uk: 'New Description', en: 'New Desc' }
+      };
+      mockAction('findById', createMockNews({ id }));
+      mockAction('update', createMockNews({ id }));
+
+      await NewsMutation.updateNews({}, { id, input: updateInputWithoutContent }, adminContext);
+
+      expect(mockRepo.update).toHaveBeenCalled();
+    });
+
     it('should throw if news not found during slug update', async () => {
       mockAction('findById', null);
+      const expectedError = newsServiceErrors.NEWS_NOT_FOUND(id);
 
       await expect(
         NewsMutation.updateNews({}, { id, input: { title: { uk: 'Т', en: 'E' } } }, adminContext)
-      ).rejects.toThrow();
+      ).rejects.toThrow(expectedError);
 
       expect(mockRepo.findById).toHaveBeenCalledWith(id);
+    });
+
+    it('should throw GraphQLError immediately if news is not found at all, even without title updates', async () => {
+      mockAction('findById', null);
+      const expectedError = newsServiceErrors.NEWS_NOT_FOUND(id);
+
+      await expect(
+        NewsMutation.updateNews(
+          {},
+          { id, input: { description: { uk: 'New Description', en: 'New Desc' } } },
+          adminContext
+        )
+      ).rejects.toThrow(expectedError);
+
+      expect(mockRepo.findById).toHaveBeenCalledWith(id);
+    });
+
+    it('should throw GraphQLError if the target repository update result resolves to empty falsy values', async () => {
+      mockAction('findById', createMockNews({ id }));
+      mockAction('update', null);
+
+      await expect(
+        NewsMutation.updateNews({}, { id, input: { description: { uk: 'Test', en: 'Test' } } }, adminContext)
+      ).rejects.toThrow();
     });
 
     it('should call findById for existence check but not for slug update if title is missing', async () => {

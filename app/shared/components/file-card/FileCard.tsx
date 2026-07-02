@@ -39,11 +39,12 @@ export interface FileCardData {
 export interface FileCardProps {
   fileType: FileType;
   fileData: FileCardData;
+  isSelected?: boolean;
   onClick?: () => void;
   onAction?: (action: 'rename' | 'delete' | 'download', fileId: string) => void;
 }
 
-const FileCard = ({ fileType, fileData, onClick, onAction }: FileCardProps) => {
+const FileCard = ({ fileType, fileData, isSelected = false, onClick, onAction }: FileCardProps) => {
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
 
   const { id, name, dateAdded, isStarred = false, usageLinks, imageSrc } = fileData;
@@ -151,6 +152,7 @@ const FileCard = ({ fileType, fileData, onClick, onAction }: FileCardProps) => {
         info={infoNode}
         spaceBetweenContent={400}
         interactive={true}
+        isSelected={isSelected}
         items={itemsNode}
       />
     </Box>
