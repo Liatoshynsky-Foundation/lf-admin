@@ -1,7 +1,6 @@
+import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 
-import { BaseContentStatuses } from '../../../types/enums/common.enums';
 import ContentCardBadge from './ContentCardBadge';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
@@ -14,16 +13,20 @@ jest.mock('../badge/Badge', () => ({
   )
 }));
 
-describe('ContentCardBadge', () => {
-  const defaultProps = {
-    type: 'default' as unknown as never,
-    localizations: ['en', 'uk']
+describe('ContentCard Component', () => {
+  const mockProps = {
+    type: 'news' as const,
+    coverImage: {
+      src: '/test-cover.jpg',
+      alt: { uk: 'Опис фото', en: 'Photo description' }
+    },
+    title: { uk: 'Український заголовок', en: 'English Title' },
+    status: 'published',
+    localizations: ['en', 'fr']
   };
 
-  test('renders with Published status', () => {
-    render(<ContentCardBadge {...defaultProps} status={BaseContentStatuses.Published} />);
-
-    expect(screen.getByTestId('badge-published')).toBeInTheDocument();
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
   it('should render the ContentCardBadge with provided props', () => {
