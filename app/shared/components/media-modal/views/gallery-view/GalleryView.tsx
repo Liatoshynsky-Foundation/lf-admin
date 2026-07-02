@@ -74,7 +74,8 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
   const { files: r2Files, isLoading: r2Loading } = useGalleryFiles();
 
   const { data: assetsData, loading: assetsLoading } = useAllAssetsQuery({
-    variables: { filters: { type: AssetType.Image } }
+    variables: { filters: { type: AssetType.Image } },
+    fetchPolicy: 'cache-and-network'
   });
 
   const debouncedSearchValue = useDebounce(filters.search, 200);
