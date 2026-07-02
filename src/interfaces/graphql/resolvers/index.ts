@@ -8,6 +8,8 @@ import { MediaMentionsMutation } from './media-mentions/mediaMentionMutation';
 import { MediaMentionsQuery } from './media-mentions/mediaMentionQuery';
 import { NewsMutation } from './news/newsMutation';
 import { NewsQuery } from './news/newsQuery';
+import { OpusMutation } from './opus/opusMutation';
+import { OpusQuery } from './opus/opusQuery';
 import { PageMutation } from './page/PageMutation';
 import { Query as AdminQuery } from './page/Query';
 
@@ -19,6 +21,7 @@ export const resolvers = {
     ...NewsMutation,
     ...MediaMentionsMutation,
     ...EventsMutation,
+    ...OpusMutation,
     ...AssetsMutation
   },
   Query: {
@@ -27,6 +30,7 @@ export const resolvers = {
     ...NewsQuery,
     ...MediaMentionsQuery,
     ...EventsQuery,
+    ...OpusQuery,
     ...AssetsQuery
   }
 };

@@ -14,10 +14,19 @@ type GalleryCardProps = Readonly<{
   isStarred: boolean;
   usageLocations?: string[];
   onClick: () => void;
+  iconSrc?: string;
   testId?: string;
 }>;
 
-export function GalleryCard({ src, fileName, isStarred, usageLocations = [], onClick, testId }: GalleryCardProps) {
+export function GalleryCard({
+  src,
+  fileName,
+  isStarred,
+  usageLocations = [],
+  onClick,
+  iconSrc,
+  testId
+}: GalleryCardProps) {
   const isUsed = usageLocations.length > 0;
 
   const topRightContent = (isUsed || isStarred) && (
@@ -61,6 +70,7 @@ export function GalleryCard({ src, fileName, isStarred, usageLocations = [], onC
       src={src}
       alt={fileName}
       onClick={onClick}
+      iconSrc={iconSrc}
       topRightContent={topRightContent}
       bottomContent={fileName}
       testId={testId}

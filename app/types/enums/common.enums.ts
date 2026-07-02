@@ -31,6 +31,9 @@ export type MediaStatus = BaseContentStatuses;
 export const EventStatus = BaseContentStatuses;
 export type EventStatus = BaseContentStatuses;
 
+export const OpusStatus = BaseContentStatuses;
+export type OpusStatus = BaseContentStatuses;
+
 export enum SortOrder {
   Asc = 'asc',
   Desc = 'desc'

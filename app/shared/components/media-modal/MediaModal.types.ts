@@ -3,6 +3,8 @@ import { CropResult } from '~/types/common';
 export type MediaModalTab = 'GALLERY' | 'UPLOAD' | 'USED';
 export type MediaModalStep = 'SELECT' | 'CROP';
 
+export type MediaKind = 'image' | 'audio' | 'pdf';
+
 export type Locale = 'uk' | 'en';
 
 export type GalleryMedia = {

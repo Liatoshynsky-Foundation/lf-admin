@@ -8,7 +8,12 @@ import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { CompositionModalView } from './composition-modal-view/CompositionModalView';
-import { AudioEntry, NoteEntry } from '~/constants/creativity';
+import {
+  AudioEntry,
+  NoteEntry,
+  SHEET_MUSIC_FILE_SIZE_ERROR,
+  SHEET_MUSIC_MAX_FILE_SIZE_BYTES
+} from '~/constants/creativity';
 import { FILES_UPLOAD_FAILED_ERROR } from '~/constants/files';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
 import type { MediaModalRenderers, UploadRendererProps } from '~/shared/components/media-modal/MediaModal.renderers';
@@ -44,6 +49,8 @@ const DynamicUploadView: React.FC<DynamicUploadViewProps> = ({ isAudioMode, ...p
       invalidFileError={dynamicInvalidError}
       isAllowedFile={dynamicIsAllowedFile}
       ariaLabel={isAudioMode ? 'Завантажити аудіо' : 'Завантажити ноти'}
+      maxSizeBytes={isAudioMode ? undefined : SHEET_MUSIC_MAX_FILE_SIZE_BYTES}
+      fileTooLargeError={isAudioMode ? undefined : SHEET_MUSIC_FILE_SIZE_ERROR}
     />
   );
 };

@@ -7,7 +7,7 @@ import { MediaModalContainer } from '../components/container/MediaModalContainer
 import { MediaModalSwitcher } from '../components/switcher/MediaModalSwitcher';
 import type { MediaModalRenderers } from '../MediaModal.renderers';
 import { styles } from '../MediaModal.styles';
-import type { MediaModalOpenState, MediaModalResult, MediaModalTab, SelectedMedia } from '../MediaModal.types';
+import type { MediaKind, MediaModalOpenState, MediaModalResult, MediaModalTab, SelectedMedia } from '../MediaModal.types';
 import { isImageUploadFile } from '../MediaModal.utils';
 import { FileView } from '../views/file-view/FileView';
 import { buildInitialState, GalleryFilters, isSameCrop, reducer, UsedFilters } from './MediaModalFlowState';
@@ -25,8 +25,15 @@ export type MediaModalFlowProps = {
   renderers: MediaModalRenderers;
   directory?: string;
   hideTabs?: boolean;
+  accept?: string;
+  isAllowedFile?: (file: File) => boolean;
+  invalidFileError?: string;
+  uploadAriaLabel?: string;
+  mediaKind?: MediaKind;
   aspectRatio?: number;
 };
+
+const GALLERY_LABELS: Record<MediaKind, string> = { image: 'Галерея', audio: 'Аудіо', pdf: 'Файли' };
 
 const isNonImageUploadSelection = (selected: SelectedMedia | null): boolean => {
   if (selected?.kind !== 'upload') {
@@ -44,9 +51,17 @@ export function MediaModalFlow({
   renderers,
   directory,
   hideTabs,
+  accept,
+  isAllowedFile,
+  invalidFileError,
+  uploadAriaLabel,
+  mediaKind = 'image',
   aspectRatio
 }: Readonly<MediaModalFlowProps>) {
   const [state, dispatch] = useReducer(reducer, initial, buildInitialState);
+
+  const cropEnabled = mediaKind === 'image';
+  const galleryLabel = GALLERY_LABELS[mediaKind];
 
   const { isApplying, applyError, clearApplyState, clearApplyError, cancelInFlightApply, handleClose, runApply } =
     useMediaModalApply({ open, onClose, onApply, directory });
@@ -90,14 +105,16 @@ export function MediaModalFlow({
       if (isApplying) return;
       clearApplyError();
 
-      if (isNonImageUploadSelection(selected)) {
-        dispatch({ type: 'PICK', selected });
+      const shouldCrop = cropEnabled && !isNonImageUploadSelection(selected);
+
+      if (shouldCrop) {
+        dispatch({ type: 'PICK_AND_CROP', selected });
         return;
       }
 
-      dispatch({ type: 'PICK_AND_CROP', selected });
+      dispatch({ type: 'PICK', selected });
     },
-    [clearApplyError, isApplying]
+    [clearApplyError, isApplying, cropEnabled]
   );
 
   const handleClearFile = useCallback(() => {
@@ -152,7 +169,11 @@ export function MediaModalFlow({
     void runApply(result);
   }, [isApplying, runApply, state.crop, state.selected]);
 
-  const canApplySelectedUpload = state.step === 'SELECT' && isNonImageUploadSelection(state.selected);
+  const isUploadFileView =
+    state.tab === 'UPLOAD' && state.selected?.kind === 'upload' && isNonImageUploadSelection(state.selected);
+
+  const canApplySelection =
+    state.step === 'SELECT' && Boolean(state.selected) && (!cropEnabled || isNonImageUploadSelection(state.selected));
 
   const getHeaderLeftContent = () => {
     if (isCrop) {
@@ -175,7 +196,10 @@ export function MediaModalFlow({
 
   const headerLeft = getHeaderLeftContent();
 
-  const headerCenter = isCrop || hideTabs ? null : <MediaModalSwitcher value={state.tab} onChange={handleTabChange} />;
+  const headerCenter =
+    isCrop || hideTabs ? null : (
+      <MediaModalSwitcher value={state.tab} onChange={handleTabChange} galleryLabel={galleryLabel} />
+    );
 
   const headerRight = isCrop ? (
     <IconButton
@@ -190,7 +214,7 @@ export function MediaModalFlow({
   ) : null;
 
   const footerLeft =
-    isCrop || canApplySelectedUpload ? (
+    isCrop || isUploadFileView ? (
       <Button
         color="secondary"
         variant="outlined"
@@ -203,7 +227,7 @@ export function MediaModalFlow({
     ) : null;
 
   const footerRight =
-    isCrop || canApplySelectedUpload ? (
+    isCrop || canApplySelection ? (
       <>
         <Button
           color="secondary"
@@ -243,7 +267,8 @@ export function MediaModalFlow({
         selected: state.selected?.kind === 'gallery' ? state.selected : null,
         onPick: pickAndCrop,
         filters: state.filters.gallery,
-        onFiltersChange: handleGalleryFiltersChange
+        onFiltersChange: handleGalleryFiltersChange,
+        mediaKind
       });
     }
 
@@ -254,7 +279,11 @@ export function MediaModalFlow({
 
       return renderers.upload({
         selected: state.selected?.kind === 'upload' ? state.selected : null,
-        onPick: pickAndCrop
+        onPick: pickAndCrop,
+        accept,
+        isAllowedFile,
+        invalidFileError,
+        ariaLabel: uploadAriaLabel
       });
     }
 
@@ -262,7 +291,8 @@ export function MediaModalFlow({
       selected: state.selected?.kind === 'used' ? state.selected : null,
       onPick: pickAndCrop,
       filters: state.filters.used,
-      onFiltersChange: handleUsedFiltersChange
+      onFiltersChange: handleUsedFiltersChange,
+      mediaKind
     });
   };
 
