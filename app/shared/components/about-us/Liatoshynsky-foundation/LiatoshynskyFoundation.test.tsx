@@ -33,6 +33,9 @@ jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: (pageId: string, blockId: string) => usePageBlockMock(pageId, blockId)
 }));
 
+jest.mock('../../edit-block-skeleton/EditBlockSkeleton', () => ({
+  EditBlockSkeleton: () => <div data-testid="edit-block-skeleton" />
+}));
 
 jest.mock('./foundation-block/FoundationBlock', () => ({
   FoundationBlock: ({
@@ -46,13 +49,16 @@ jest.mock('./foundation-block/FoundationBlock', () => ({
   }: MockFoundationBlockProps) => (
     <div>
       <div data-testid="main-text-json">{JSON.stringify(mainText)}</div>
-      <button data-testid="trigger-main-text-change" onClick={() => onMainTextChange(createDocNode('New Organisation Text'))}>
+      <button
+        data-testid="trigger-main-text-change"
+        onClick={() => onMainTextChange(createDocNode('New Organisation Text'))}
+      >
         Change Main Text
       </button>
 
       {paragraphs.map((p, idx) => {
         const stableId = p.id || `para-${idx}`;
-        
+
         return (
           <div key={stableId} data-testid={`paragraph-wrapper-${stableId}`}>
             <div data-testid={`paragraph-json-${stableId}`}>{JSON.stringify(p.text)}</div>
@@ -68,7 +74,7 @@ jest.mock('./foundation-block/FoundationBlock', () => ({
           </div>
         );
       })}
-
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={imageUrl} alt="Foundation" data-testid="image" />
       <span data-testid="file-name">{fileName}</span>
       <button
@@ -77,12 +83,17 @@ jest.mock('./foundation-block/FoundationBlock', () => ({
       >
         Change Image
       </button>
+      <button data-testid="trigger-image-change-no-crop" onClick={() => onImageChange('new-image-url.jpg')}>
+        Change Image No Crop
+      </button>
     </div>
   )
 }));
 
-jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
-jest.mock('~/components/grip/Grip');
+jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
+  __esModule: true,
+  default: ({ children }: { children: React.ReactNode }) => <div data-testid="collapsible-block">{children}</div>
+}));
 
 jest.mock('~/lib/utils/prose', () => ({ proseToText: String }));
 
@@ -102,16 +113,23 @@ const mockBlock = {
 describe('LiatoshynskyFoundation', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    usePageBlockMock.mockReturnValue({ block: mockBlock, blockId: 'FoundationInfo' });
+  });
+
+  it('should render skeleton when block data is null', () => {
+    usePageBlockMock.mockReturnValue({ block: null, blockId: 'FoundationInfo' });
     render(<LiatoshynskyFoundation />);
+
+    expect(screen.getByTestId('edit-block-skeleton')).toBeInTheDocument();
+    expect(screen.queryByTestId('collapsible-block')).not.toBeInTheDocument();
   });
 
   it('should render all rich text fields with serialized JSON initial values and image source props', () => {
+    usePageBlockMock.mockReturnValue({ block: mockBlock, blockId: 'FoundationInfo' });
+    render(<LiatoshynskyFoundation />);
+
     expect(screen.getByTestId('main-text-json')).toHaveTextContent(JSON.stringify(mockNodes.org));
-    
     expect(screen.getByTestId('paragraph-json-para-0')).toHaveTextContent(JSON.stringify(mockNodes.name));
     expect(screen.getByTestId('paragraph-json-para-1')).toHaveTextContent(JSON.stringify(mockNodes.belief));
-    
     expect(screen.getByTestId('image')).toHaveAttribute('src', '/api/blob-url?folderName=photos&blobName=image-src');
     expect(screen.getByTestId('file-name')).toHaveTextContent('Image Caption');
   });
@@ -144,14 +162,30 @@ describe('LiatoshynskyFoundation', () => {
   ])(
     'should correctly dispatch setField parameters when modifying %s',
     (_scenario, triggerId, storeKey, expectedPayload) => {
+      usePageBlockMock.mockReturnValue({ block: mockBlock, blockId: 'FoundationInfo' });
+      render(<LiatoshynskyFoundation />);
+
       fireEvent.click(screen.getByTestId(triggerId));
 
-      expect(setFieldMock).toHaveBeenCalledWith(
-        'about-us',
-        'FoundationInfo',
-        storeKey,
-        expectedPayload
-      );
+      expect(setFieldMock).toHaveBeenCalledWith('about-us', 'FoundationInfo', storeKey, expectedPayload);
     }
   );
+
+  it('should correctly set crop to null when onImageChange is triggered without crop parameter', () => {
+    usePageBlockMock.mockReturnValue({ block: mockBlock, blockId: 'FoundationInfo' });
+    render(<LiatoshynskyFoundation />);
+
+    fireEvent.click(screen.getByTestId('trigger-image-change-no-crop'));
+
+    expect(setFieldMock).toHaveBeenCalledWith(
+      'about-us',
+      'FoundationInfo',
+      'image',
+      expect.objectContaining({
+        src: 'new-image-url.jpg',
+        isTmp: false,
+        crop: null
+      })
+    );
+  });
 });

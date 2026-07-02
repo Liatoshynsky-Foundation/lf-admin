@@ -23,7 +23,6 @@ export const IntroSection = () => {
   const paragraphsKeys = ['trustAndSecurity', 'agreement'] as const;
 
   const onParagraphChange = (val: JSONContent, fieldKey: 'trustAndSecurity' | 'agreement') => {
-
     const newDescription: IntroSectionBlock[typeof fieldKey] = {
       ...block[fieldKey],
       [currentLocale]: val
@@ -32,29 +31,25 @@ export const IntroSection = () => {
     setField(pageId, blockId, fieldKey, newDescription);
   };
 
-  const paragraphs = paragraphsKeys.map((key) =>
-    ({
-      key,
-      value: block[key][currentLocale]
-    })
-  );
+  const paragraphs = paragraphsKeys.map((key) => ({
+    key,
+    value: block[key][currentLocale]
+  }));
 
   if (!paragraphs || paragraphs.length === 0) return null;
 
   return (
     <CollapsibleBlock title="Вступна секція">
-      {paragraphs.map((paragraphNode, i) =>
-        (
-          <CustomTextField
-            fieldType="formatting"
-            key={paragraphNode.key}
-            title={`Текст ${i + 1} абзацу`}
-            label="Текст"
-            value={paragraphNode.value}
-            onChange={(value) => onParagraphChange(value, paragraphNode.key)}
-          />
-        )
-      )}
+      {paragraphs.map((paragraphNode, i) => (
+        <CustomTextField
+          fieldType="formatting"
+          key={paragraphNode.key}
+          title={`Текст ${i + 1} абзацу`}
+          label="Текст"
+          value={paragraphNode.value}
+          onChange={(value) => onParagraphChange(value, paragraphNode.key)}
+        />
+      ))}
     </CollapsibleBlock>
   );
 };

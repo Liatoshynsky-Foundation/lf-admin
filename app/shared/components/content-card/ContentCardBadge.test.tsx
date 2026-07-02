@@ -1,31 +1,36 @@
-import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 
+import { BaseContentStatuses } from '../../../types/enums/common.enums';
 import ContentCardBadge from './ContentCardBadge';
 
-jest.mock('./ContentCardBadge', () => ({
+jest.mock('../badge/Badge', () => ({
   __esModule: true,
-  default: () => <div data-testid="badge-mock">Badge Mock</div>
+  default: ({ variant }: { variant: string }) => <div data-testid={`badge-${variant}`} />
 }));
 
-describe('ContentCard Component', () => {
-  const mockProps = {
-    type: 'news' as const,
-    coverImage: {
-      src: '/test-cover.jpg',
-      alt: { uk: 'Опис фото', en: 'Photo description' }
-    },
-    title: { uk: 'Український заголовок', en: 'English Title' },
-    status: 'published',
-    localizations: ['en', 'fr']
+describe('ContentCardBadge', () => {
+  const defaultProps = {
+    type: 'default' as unknown as never,
+    localizations: ['en', 'uk']
   };
 
-  beforeEach(() => {
-    jest.clearAllMocks();
+  test('renders with Published status', () => {
+    render(<ContentCardBadge {...defaultProps} status={BaseContentStatuses.Published} />);
+
+    expect(screen.getByTestId('badge-published')).toBeInTheDocument();
   });
 
-  it('should render the ContentCardBadge with provided props', () => {
-    render(<ContentCardBadge {...mockProps} />);
-    expect(screen.getByTestId('badge-mock')).toBeInTheDocument();
+  test('renders with Draft status', () => {
+    render(<ContentCardBadge {...defaultProps} status={BaseContentStatuses.Draft} />);
+
+    expect(screen.getByTestId('badge-draft')).toBeInTheDocument();
+  });
+
+  test('does not render status badge if status is unknown', () => {
+    render(<ContentCardBadge {...defaultProps} status={'some-random-status' as unknown as BaseContentStatuses} />);
+
+    expect(screen.queryByTestId('badge-published')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('badge-draft')).not.toBeInTheDocument();
   });
 });
