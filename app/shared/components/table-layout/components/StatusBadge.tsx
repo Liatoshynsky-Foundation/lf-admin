@@ -18,9 +18,7 @@ type StatusWithDateProps = Readonly<{
 
 export function StatusBadge({ status, updatedAt }: StatusWithDateProps) {
   const normalizedStatus: StatusChipStatus =
-    status === BaseContentStatuses.Draft || status === BaseContentStatuses.Hidden
-      ? BaseContentStatuses.Hidden
-      : BaseContentStatuses.Published;
+    status === BaseContentStatuses.Published ? BaseContentStatuses.Published : BaseContentStatuses.Hidden;
 
   const badgeContent = <Badge variant={normalizedStatus} />;
 
