@@ -29,6 +29,7 @@ type SeoModeProps = BaseProps & {
   onCancel?: () => void;
   onPublish?: () => void;
   onMenuOpen?: (event: MouseEvent<HTMLButtonElement>) => void;
+  isPageSeo?: boolean;
 };
 
 export type HeaderRightActionsProps = CreateModeProps | EditModeProps | SeoModeProps;
@@ -87,27 +88,43 @@ export default function HeaderRightActions(props: HeaderRightActionsProps) {
       return (
         <Stack spacing="12px" marginLeft="8px" direction="row" role="group" aria-label="Дії збереження">
           <Box sx={styles.group} role="group" aria-label="Дії публікації">
+            {props.onCancel && (
+              <Button
+                disabled={disabled}
+                onClick={props.onCancel}
+                variant="outlined"
+                color="primary"
+                disableElevation
+                sx={{ mr: '12px' }}
+              >
+                  Скасувати
+              </Button>
+            )}
+
             <Button
               disabled={disabled}
               onClick={props.onPublish}
               variant="contained"
               color="tertiary"
               disableElevation
-              sx={styles.groupLeft}
+              sx={props.isPageSeo ? {} : styles.groupLeft}
             >
-              Опублікувати
+              {props.isPageSeo ? 'Зберегти' : 'Опублікувати'}
             </Button>
-            <Button
-              disabled={disabled}
-              aria-label="Відкрити меню параметрів"
-              onClick={props.onMenuOpen}
-              variant="contained"
-              color="tertiary"
-              disableElevation
-              sx={styles.groupRight}
-            >
-              <ChevronDown size={20} />
-            </Button>
+
+            {props.onMenuOpen && (
+              <Button
+                disabled={disabled}
+                aria-label="Відкрити меню параметрів"
+                onClick={props.onMenuOpen}
+                variant="contained"
+                color="tertiary"
+                disableElevation
+                sx={styles.groupRight}
+              >
+                <ChevronDown size={20} />
+              </Button>
+            )}
           </Box>
         </Stack>
       );
