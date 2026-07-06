@@ -10,6 +10,22 @@ const draftPageSchema = new Schema<BasePage>(
       uk: { type: String, required: true },
       en: { type: String, required: true }
     },
+    description: {
+      uk: { type: String, required: true },
+      en: { type: String, required: true }
+    },
+    keywords: {
+      uk: { type: String, required: true },
+      en: { type: String, required: true }
+    },
+    canonicalUrl: {
+      uk: { type: String, required: false },
+      en: { type: String, required: false }
+    },
+    allowIndexation: {
+      uk: { type: Boolean, required: true, default: true },
+      en: { type: Boolean, required: true, default: true }
+    },
     status: {
       type: String,
       enum: [PageStatus.Draft],

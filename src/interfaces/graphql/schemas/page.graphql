@@ -14,7 +14,7 @@ enum PageCategories {
   borys_liatoshynsky
   foundation
   cooperation
-  archive 
+  archive
   other
 }
 
@@ -29,6 +29,10 @@ type Page {
   blocksOrder: [String!]!
   createdAt: String!
   updatedAt: String!
+  description: LocalizedString!
+  keywords: LocalizedString
+  canonicalUrl: LocalizedString
+  allowIndexation: LocalizedBoolean!
 }
 
 extend type Query {
@@ -39,6 +43,19 @@ extend type Query {
 input UpdatePageBlocksInput {
   slug: String!
   blocks: JSON!
+}
+
+input UpdatePageSeoInput {
+  slug: String!
+  title: JSON
+  description: JSON
+  keywords: JSON
+  canonicalUrl: JSON
+  allowIndexation: JSON
+}
+
+extend type Mutation {
+  updatePageSeo(input: UpdatePageSeoInput!): Page!
 }
 
 input UpsertPageDraftInput {

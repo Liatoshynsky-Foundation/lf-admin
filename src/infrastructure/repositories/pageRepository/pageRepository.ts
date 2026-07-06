@@ -5,6 +5,7 @@ import { BasePage, LocalizedTitle } from '~/domain/entities/Page';
 import dbConnect from '~/infrastructure/db/connect';
 import { PageRepository as PageRepositoryType } from '~/src/domain/repositories/pageRepository';
 import { PageCategory, PageStatus } from '~/types/enums/common.enums';
+import { UpdatePageSeoInput } from '~/types/graphql/generated/graphql';
 
 type DbPage = {
   _id: Types.ObjectId;
@@ -18,6 +19,10 @@ type DbPage = {
   blocksOrder: BasePage['blocksOrder'];
   createdAt: Date | string;
   updatedAt: Date | string;
+  description: BasePage['description'];
+  keywords: BasePage['keywords'];
+  canonicalUrl: BasePage['canonicalUrl'];
+  allowIndexation: BasePage['allowIndexation'];
 };
 
 type PageRepoDeps = Readonly<{
@@ -37,7 +42,11 @@ const toEntity = (doc: DbPage): BasePage => ({
   blocks: doc.blocks,
   blocksOrder: doc.blocksOrder,
   createdAt: toIso(doc.createdAt) as unknown as BasePage['createdAt'],
-  updatedAt: toIso(doc.updatedAt) as unknown as BasePage['updatedAt']
+  updatedAt: toIso(doc.updatedAt) as unknown as BasePage['updatedAt'],
+  description: doc.description,
+  keywords: doc.keywords,
+  canonicalUrl: doc.canonicalUrl,
+  allowIndexation: doc.allowIndexation
 });
 
 const getBySlug = async (model: Model<BasePage>, slug: string): Promise<BasePage | null> => {
@@ -72,7 +81,11 @@ export const PageRepository = ({ PageModel, DraftPageModel }: PageRepoDeps): Pag
         title: source.title,
         pageType: source.pageType,
         blocks,
-        blocksOrder
+        blocksOrder,
+        description: source.description,
+        keywords: source.keywords,
+        canonicalUrl: source.canonicalUrl,
+        allowIndexation: source.allowIndexation
       }).save();
 
       return toEntity(newDraft.toObject() as unknown as DbPage);
@@ -109,17 +122,13 @@ export const PageRepository = ({ PageModel, DraftPageModel }: PageRepoDeps): Pag
       updateQuery.$set.status = PageStatus.Published;
       updateQuery.$set.blocksOrder = blocksOrder;
 
-      const updated = await PageModel.findOneAndUpdate(
-        { slug },
-        updateQuery,
-        {
-          new: true,
-          upsert: true,
-          runValidators: true,
-          context: 'query',
-          strict: false
-        }
-      ).lean<DbPage>();
+      const updated = await PageModel.findOneAndUpdate({ slug }, updateQuery, {
+        new: true,
+        upsert: true,
+        runValidators: true,
+        context: 'query',
+        strict: false
+      }).lean<DbPage>();
 
       if (!updated) throw new Error('Error during publishing the page');
       return toEntity(updated);
@@ -133,5 +142,35 @@ export const PageRepository = ({ PageModel, DraftPageModel }: PageRepoDeps): Pag
       const docs = await PageModel.find(query).lean<DbPage[]>();
       return docs.map(toEntity);
     },
+
+    updatePageSeo: async (slug: string, input: UpdatePageSeoInput): Promise<BasePage> => {
+      await dbConnect();
+
+      const $set: Record<string, unknown> = {};
+
+      if (input.title != null) $set.title = input.title;
+      if (input.description != null) $set.description = input.description;
+      if (input.keywords != null) $set.keywords = input.keywords;
+      if (input.canonicalUrl != null) $set.canonicalUrl = input.canonicalUrl;
+      if (input.allowIndexation != null) $set.allowIndexation = input.allowIndexation;
+
+      if (Object.keys($set).length === 0) {
+        const existing = await PageModel.findOne({ slug }).lean<DbPage>();
+        if (!existing) throw new Error(`Page not found: slug="${slug}"`);
+        return toEntity(existing);
+      }
+
+      const updated = await PageModel.findOneAndUpdate(
+        { slug },
+        { $set },
+        { new: true, runValidators: true }
+      ).lean<DbPage>();
+
+      if (!updated) throw new Error(`Page not found: slug="${slug}"`);
+
+      await DraftPageModel.updateOne({ slug }, { $set });
+
+      return toEntity(updated);
+    }
   };
 };

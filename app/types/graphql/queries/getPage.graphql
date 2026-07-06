@@ -1,6 +1,0 @@
-query GetPage($slug: String!) {
-  pageBlocks(slug: $slug) {
-    blocks
-    blocksOrder
-  }
-}
