@@ -13,9 +13,9 @@ import {
   MenuItem,
   Typography
 } from '@mui/material';
-import { MouseEvent, useState } from 'react';
+import { MouseEvent, useEffect,useState } from 'react';
+import toast from 'react-hot-toast';
 
-import { mockAvailableWorks, mockInitialGroupData } from './group.mock';
 import { styles } from './GroupContentView.styles';
 import { GroupData, GroupDataField } from '~/constants/creativity';
 import { EditorLanguage, LANGUAGE_OPTIONS } from '~/constants/publications';
@@ -30,7 +30,10 @@ import HeaderRightActions from '~/shared/components/divided-header/header-right-
 import ProgressStatus from '~/shared/components/divided-header/progress-status/ProgressStatus';
 import { TitleDropdown } from '~/shared/components/divided-header/title-dropdown/TitleDropdown';
 import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
+import { useOpusById } from '~/shared/hooks/use-opuses/useOpuses';
 import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
+import { OpusNumberKind, OpusStatus,useUpdateOpusMutation } from '~/types/graphql/generated/graphql';
 
 type AnchorId = 'navigation' | 'publish';
 type MenuAnchor = Partial<Record<AnchorId, HTMLButtonElement>>;
@@ -45,11 +48,226 @@ const PUBLISH_MENU_OPTIONS = [
   { id: 'DELETE', label: 'Видалити' }
 ];
 
+const parseDescription = (desc: unknown): Record<string, unknown> => {
+  if (!desc) return { type: 'doc', content: [] };
+
+  if (typeof desc === 'object') return desc as Record<string, unknown>;
+
+  if (typeof desc === 'string') {
+    try {
+      return JSON.parse(desc);
+    } catch {
+      return {
+        type: 'doc',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: desc }] }]
+      };
+    }
+  }
+
+  return { type: 'doc', content: [] };
+};
+
+const mapNumberKindToPrefix = (kind: string | null | undefined): string => {
+  if (!kind) return 'Op.';
+
+  const lowerKind = kind.toLowerCase();
+  if (lowerKind === 'woo') return 'Bo.';
+
+  return 'Op.';
+};
+
+const getFileNameFromUrl = (url?: string | null): string => {
+  if (!url) return '';
+  try {
+    const segment = url.split('/').pop() ?? url;
+    return decodeURIComponent(segment.split('?')[0]);
+  } catch {
+    return 'file';
+  }
+};
+
 export const GroupContentView = ({ id }: GroupContentViewProps) => {
-  const [groupData, setGroupData] = useState<GroupData>(mockInitialGroupData);
-  const [isDirty, setIsDirty] = useState(false);
+  const { data, loading, error } = useOpusById(id);
   const { navigate } = useNavigationGuard();
+
+  const [groupData, setGroupData] = useState<GroupData | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState<EditorLanguage>('UA');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [anchors, setAnchors] = useState<MenuAnchor>({});
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
+
+  const [updateOpus, { loading: isSaving }] = useUpdateOpusMutation();
+
   useUnsavedChanges(isDirty);
+
+  useEffect(() => {
+    const fetchedOpus = data?.opusById;
+
+    if (fetchedOpus) {
+      setGroupData({
+        titlePrefix: mapNumberKindToPrefix(fetchedOpus.numberKind),
+        groupNumber: fetchedOpus.number ? String(fetchedOpus.number).replace(/^(op|woo|wo|bo)[.\-\s]*/i, '') : '',
+        genre: fetchedOpus.genre ?? '',
+        additionalText: fetchedOpus.additionalText ?? '',
+        groupTitle: {
+          uk: fetchedOpus.title?.uk ?? '',
+          en: fetchedOpus.title?.en ?? ''
+        },
+        creationYear: fetchedOpus.creationYear ? String(fetchedOpus.creationYear) : '',
+        endYear: fetchedOpus.endYear ? String(fetchedOpus.endYear) : '',
+        dateAdditionalText: {
+          uk: fetchedOpus.datesNote ?? '',
+          en: ''
+        },
+        status: fetchedOpus.status || 'draft',
+        parts: { uk: '', en: '' },
+        description: {
+          uk: parseDescription(fetchedOpus.introDescription?.uk),
+          en: parseDescription(fetchedOpus.introDescription?.en)
+        },
+        photos: (fetchedOpus.gallery || []).map((photo: any) => ({
+          id: photo.id,
+          url: photo.url,
+          src: photo.url,
+          description: photo.description?.uk || '',
+          caption: { uk: photo.description?.uk || '', en: photo.description?.en || '' }
+        })),
+        performancesTitle: '',
+        performances: (fetchedOpus.performances || []).map((perf: any) => ({
+          id: perf.id,
+          title: perf.title?.uk || '',
+          caption: { uk: perf.title?.uk || '', en: perf.title?.en || '' },
+          videoUrl: perf.videoUrl || '',
+          url: perf.videoUrl || '',
+          performers: perf.performers || ''
+        })),
+        works: (fetchedOpus.compositions || []).map((comp: any) => ({
+          id: comp.id || `composition-${Math.random()}`,
+          compositionId: comp.id,
+          title: comp.title?.uk ?? '',
+          genre: comp.genre ?? '',
+          year: comp.year != null ? String(comp.year) : '',
+          audios: (comp.audios || []).map((audio: any) => ({
+            id: `audio-${Math.random()}`,
+            name: audio.name ?? getFileNameFromUrl(audio.url),
+            fileUrl: audio.url ?? undefined
+          })),
+          notes: (comp.sheetMusic || []).map((sheet: any) => ({
+            id: `note-${Math.random()}`,
+            name: sheet.name ?? getFileNameFromUrl(sheet.url),
+            fileUrl: sheet.url ?? undefined,
+            publishDate: sheet.publishDate ?? ''
+          }))
+        }))
+      });
+    }
+  }, [data]);
+
+  if (error) {
+    return (
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <Typography color="error" variant="h6">
+          Помилка завантаження даних
+        </Typography>
+        <Typography color="text.secondary">{error.message}</Typography>
+      </Box>
+    );
+  }
+
+  if (loading || !groupData) {
+    return (
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <Typography>Завантаження...</Typography>
+      </Box>
+    );
+  }
+
+  const handleSave = async (statusToSave?: BaseContentStatuses) => {
+    if (!groupData) return;
+
+    let mappedStatus: OpusStatus | undefined = undefined;
+
+    if (statusToSave === BaseContentStatuses.Published) {
+      mappedStatus = OpusStatus.Published;
+    } else if (statusToSave === BaseContentStatuses.Draft) {
+      mappedStatus = OpusStatus.Draft;
+    }
+
+    try {
+      const input = {
+        numberKind: groupData.titlePrefix === 'Bo.' ? OpusNumberKind.Woo : OpusNumberKind.Op,
+        number: String(groupData.groupNumber || ''),
+        genre: String(groupData.genre || ''),
+        additionalText: String(groupData.additionalText || ''),
+        ...(mappedStatus && { status: mappedStatus }),
+
+        title: {
+          uk: String(groupData.groupTitle?.uk || ''),
+          en: String(groupData.groupTitle?.en || '')
+        },
+        creationYear: groupData.creationYear ? String(groupData.creationYear) : null,
+        endYear: groupData.endYear ? String(groupData.endYear) : null,
+        datesNote: groupData.dateAdditionalText?.uk ? String(groupData.dateAdditionalText.uk) : null,
+
+        introDescription: {
+          uk: groupData.description?.uk ? JSON.stringify(groupData.description.uk) : '""',
+          en: groupData.description?.en ? JSON.stringify(groupData.description.en) : '""'
+        },
+
+        compositions: groupData.works.map((work) => ({
+          id: work.compositionId?.startsWith('composition-') ? undefined : work.compositionId,
+          title: { uk: String(work.title || ''), en: '' },
+          genre: String(work.genre || ''),
+
+          year: work.year ? String(work.year) : null,
+
+          audios: (work.audios || []).map((a) => ({
+            name: String(a.name || ''),
+            url: a.fileUrl ? String(a.fileUrl) : undefined
+          })),
+          sheetMusic: (work.notes || []).map((n) => ({
+            name: String(n.name || ''),
+            url: n.fileUrl ? String(n.fileUrl) : undefined,
+            publishDate: n.publishDate ? String(n.publishDate) : undefined
+          }))
+        })),
+
+        gallery: (groupData.photos || []).map((photo) => ({
+          id: photo.id?.startsWith('photo-') ? undefined : photo.id,
+          url: photo.url ? String(photo.url) : photo.src ? String(photo.src) : '',
+          description: {
+            uk: typeof photo.description === 'string' ? String(photo.description) : String(photo.caption?.uk || ''),
+            en: String(photo.caption?.en || '')
+          }
+        })),
+
+        performances: (groupData.performances || []).map((perf) => ({
+          id: perf.id?.startsWith('perf-') ? undefined : perf.id,
+          title: {
+            uk: typeof perf.title === 'string' ? String(perf.title) : String(perf.caption?.uk || ''),
+            en: String(perf.caption?.en || '')
+          },
+          videoUrl: perf.videoUrl ? String(perf.videoUrl) : perf.url ? String(perf.url) : '',
+
+          performers: Array.isArray(perf.performers) ? perf.performers.join(', ') : String(perf.performers || '')
+        }))
+      };
+
+      await updateOpus({
+        variables: {
+          id: id,
+          input: input
+        }
+      });
+
+      toast.success('Контент успішно збережено!');
+    } catch (error) {
+      console.error('Помилка при збереженні контенту опусу:', error);
+      toast.error('Помилка при збереженні. Перевірте консоль.');
+    }
+  };
+
   const handleBackClick = () => {
     const previousUrl = document.referrer;
 
@@ -60,36 +278,29 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
     navigate(targetUrl);
   };
 
-  const [currentLanguage, setCurrentLanguage] = useState<EditorLanguage>('UA');
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [anchors, setAnchors] = useState<MenuAnchor>({});
-
-  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
-
   const handleOpen = (event: MouseEvent<HTMLElement>, menuId: AnchorId) =>
     setAnchors((prev) => ({ ...prev, [menuId]: event.currentTarget as HTMLButtonElement }));
 
   const handleClose = (menuId: AnchorId) => setAnchors((prev) => ({ ...prev, [menuId]: undefined }));
 
   const langKey = currentLanguage === 'UA' ? 'uk' : 'en';
-  const derivedGenres = Array.from(new Set(groupData.works.map((w) => w.genre?.[langKey]).filter(Boolean))).join(', ');
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    const numberVal = Number(groupData.groupNumber);
 
-    if (!groupData.titlePrefix) {
-      newErrors.titlePrefix = 'Оберіть тип';
-    }
-    if (!groupData.groupNumber || groupData.groupNumber.toString().trim() === '') {
+    if (!groupData?.groupNumber || String(groupData.groupNumber).trim() === '') {
       newErrors.groupNumber = 'Обов’язкове поле';
-    } else if (numberVal < 0) {
-      newErrors.groupNumber = 'Значення не може бути від\'ємним';
     }
-    if (!groupData.groupTitle[langKey] || groupData.groupTitle[langKey].trim() === '') {
+
+    if (!groupData?.groupTitle?.uk || String(groupData.groupTitle.uk).trim() === '') {
       newErrors.groupTitle = 'Обов’язкове поле';
     }
-    if (!groupData.creationYear || groupData.creationYear.trim() === '') {
+
+    if (!groupData?.titlePrefix || String(groupData.titlePrefix).trim() === '') {
+      newErrors.titlePrefix = 'Обов’язкове поле';
+    }
+
+    if (!groupData?.creationYear || String(groupData.creationYear).trim() === '') {
       newErrors.creationYear = 'Обов’язкове поле';
     }
 
@@ -107,6 +318,7 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
     }
 
     setGroupData((prev) => {
+      if (!prev) return null;
       if (isMultilingual) {
         const currentFieldData =
           prev[field] && typeof prev[field] === 'object' ? (prev[field] as Record<string, unknown>) : {};
@@ -125,15 +337,29 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
     setIsDirty(true);
   };
 
-  const handlePublishClick = () => {
+  const handlePublishClick = async () => {
     if (!validate()) return;
-    setIsInfoModalOpen(true);
+    await handleSave(BaseContentStatuses.Published);
+    setIsDirty(false);
   };
 
-  const handleMenuOptionClick = (optionId: string) => {
+  const handleMenuOptionClick = async (optionId: string) => {
     handleClose('publish');
-    if (optionId !== 'DELETE' && !validate()) return;
-    setIsInfoModalOpen(true);
+
+    if (optionId === 'DELETE') {
+      return;
+    }
+
+    if (!validate()) return;
+
+    if (optionId === 'PUBLISH') {
+      await handleSave(BaseContentStatuses.Published);
+      setIsDirty(false);
+    } else if (optionId === 'PUBLISH_AND_EXIT') {
+      await handleSave(BaseContentStatuses.Published);
+      setIsDirty(false);
+      handleBackClick();
+    }
   };
 
   return (
@@ -145,7 +371,7 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
         rightActionsComponent={
           <HeaderRightActions
             mode="edit"
-            disabled={!isDirty}
+            disabled={!isDirty || isSaving}
             onPublish={handlePublishClick}
             onMenuOpen={(e) => handleOpen(e, 'publish')}
           />
@@ -170,7 +396,6 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
           <GroupDetailsSection
             currentLanguage={currentLanguage}
             data={groupData}
-            derivedGenre={derivedGenres}
             errors={errors}
             onChange={handleFieldChange}
           />
@@ -188,11 +413,7 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
         </CollapsibleBlock>
 
         <CollapsibleBlock title="Твори" defaultExpanded>
-          <GroupWorksSection
-            works={groupData.works}
-            availableWorks={mockAvailableWorks}
-            onChange={(newWorks) => handleFieldChange('works', newWorks)}
-          />
+          <GroupWorksSection works={groupData.works} onChange={(newWorks) => handleFieldChange('works', newWorks)} />
         </CollapsibleBlock>
 
         <CollapsibleBlock title="Всі версії виконання опису" defaultExpanded>

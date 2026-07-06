@@ -1,221 +1,202 @@
-import { Autocomplete, Box, Divider, IconButton, Paper, Typography } from '@mui/material';
-import { createFilterOptions } from '@mui/material/Autocomplete';
-import { createContext, forwardRef, useCallback, useContext, useMemo, useState } from 'react';
+import { Box, Dialog, IconButton, Typography } from '@mui/material';
+import { GripVertical, Pencil, Trash2, X } from 'lucide-react';
+import { useState } from 'react';
 
 import { styles } from './GroupWorksSection.styles';
-import { GroupWork } from '~/constants/creativity';
-import { generateUniqueId } from '~/lib/utils/generateUniqueId';
-import PencilIcon from '~/public/icons/pencil.svg';
-import PlusIcon from '~/public/icons/plus.svg';
-import TrashIcon from '~/public/icons/trash.svg';
-import CompositionModal from '~/shared/components/composition-modal/CompositionModal';
-import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
-import Button from '~/shared/components/design-system/button/Button';
-import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
+import Button from '~/components/design-system/button/Button';
+import { OPUS_DELETE_MODAL, OPUS_DETAILS_LABELS } from '~/constants/opus';
+import CompositionModal from '~/shared/components/forms/opus-details-block/composition-modal/CompositionModal';
+import CompositionTitleInput from '~/shared/components/forms/opus-details-block/composition-title-input/CompositionTitleInput';
+import type { OpusCompositionData, OpusCompositionSuggestion, OpusMediaFileData } from '~/types/opus';
 
-interface LocalGroupWork extends GroupWork {
-  rowId?: string;
-}
+const fileNameFromUrl = (url?: string | null): string => {
+  if (!url) return '';
+  const segment = url.split('/').pop() ?? url;
+  return decodeURIComponent(segment.split('?')[0]);
+};
+
+const toSuggestionAudio = (audio: any): OpusMediaFileData => ({
+  id: `audio-${Date.now()}-${Math.random()}`,
+  name: audio.name ?? fileNameFromUrl(audio.url),
+  fileUrl: audio.url ?? undefined
+});
+
+const toSuggestionNote = (sheet: any): OpusMediaFileData => ({
+  id: `note-${Date.now()}-${Math.random()}`,
+  name: sheet.name ?? fileNameFromUrl(sheet.url),
+  fileUrl: sheet.url ?? undefined,
+  publishDate: sheet.publishDate ?? ''
+});
 
 type GroupWorksSectionProps = {
-  works: GroupWork[];
-  availableWorks: GroupWork[];
-  onChange: (works: GroupWork[]) => void;
+  works: OpusCompositionData[];
+  onChange: (works: OpusCompositionData[]) => void;
 };
 
-interface AutocompletePaperContextType {
-  isInputEmpty: boolean;
-  onSelectCreate: () => void;
-}
+export const GroupWorksSection = ({ works, onChange }: GroupWorksSectionProps) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
 
-const AutocompletePaperContext = createContext<AutocompletePaperContextType>({
-  isInputEmpty: true,
-  onSelectCreate: () => {}
-});
-
-const AutocompleteContextProvider = ({
-  isInputEmpty,
-  onSelectCreate,
-  children
-}: {
-  isInputEmpty: boolean;
-  onSelectCreate: () => void;
-  children: React.ReactNode;
-}) => {
-  const contextValue = useMemo(() => ({ isInputEmpty, onSelectCreate }), [isInputEmpty, onSelectCreate]);
-
-  return <AutocompletePaperContext.Provider value={contextValue}>{children}</AutocompletePaperContext.Provider>;
-};
-
-const AutocompletePaper = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLElement>>((props, ref) => {
-  const { isInputEmpty, onSelectCreate } = useContext(AutocompletePaperContext);
-
-  return (
-    <Paper {...props} ref={ref} sx={styles.autocompletePaper}>
-      {!isInputEmpty && props.children}
-
-      <Box onMouseDown={(e) => e.preventDefault()} onClick={onSelectCreate} sx={styles.createWorkBox}>
-        <PlusIcon style={{ width: '20px', height: '20px' }} />
-        <Typography sx={styles.createWorkText}>Створити новий твір</Typography>
-      </Box>
-    </Paper>
-  );
-});
-AutocompletePaper.displayName = 'AutocompletePaper';
-
-const filter = createFilterOptions<GroupWork>();
-
-export const GroupWorksSection = ({ works, availableWorks, onChange }: GroupWorksSectionProps) => {
-  const [editingWorkId, setEditingWorkId] = useState<string | null>(null);
-  const [workIdToDelete, setWorkIdToDelete] = useState<string | null>(null);
-  const [searchValues, setSearchValues] = useState<Record<string, string>>({});
-
-  const [isCompositionModalOpen, setIsCompositionModalOpen] = useState(false);
-
-  const handleAddWork = () => {
-    const newId = generateUniqueId();
-    const newWork: LocalGroupWork = {
-      id: newId,
+  const addComposition = () => {
+    const newComposition: OpusCompositionData = {
+      id: `composition-${Date.now()}`,
       title: '',
-      rowId: newId
+      genre: '',
+      year: '',
+      audios: [],
+      notes: []
     };
-    onChange([...works, newWork]);
-    setEditingWorkId(newId);
-
-    setSearchValues((prev) => ({ ...prev, [newId]: '' }));
+    onChange([...works, newComposition]);
   };
 
-  const handleSelectWork = (currentId: string, selectedWork: GroupWork | null) => {
-    if (selectedWork) {
-      onChange(
-        works.map((work) =>
-          work.id === currentId
-            ? {
-              ...work,
-              id: selectedWork.id,
-              title: selectedWork.title,
-              genre: selectedWork.genre,
-              rowId: (work as LocalGroupWork).rowId || work.id
-            }
-            : work
-        )
-      );
+  const openCreateModal = (index: number) => {
+    setModalMode('create');
+    setEditingIndex(index);
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (index: number) => {
+    setModalMode('edit');
+    setEditingIndex(index);
+    setIsModalOpen(true);
+  };
+
+  const updateCompositionTitle = (id: string, title: string) => {
+    const updatedWorks = works.map((item) => (item.id === id ? { ...item, title } : item));
+    onChange(updatedWorks);
+  };
+
+  const fillComposition = (index: number, suggestion: OpusCompositionSuggestion) => {
+    const updatedWorks = [...works];
+    updatedWorks[index] = {
+      ...updatedWorks[index],
+      compositionId: suggestion.id,
+      title: suggestion.title?.uk ?? suggestion.title?.en ?? '',
+      genre: suggestion.genre ?? '',
+      year: suggestion.year == null ? '' : String(suggestion.year),
+      audios: (suggestion.audios ?? []).map(toSuggestionAudio),
+      notes: (suggestion.sheetMusic ?? []).map(toSuggestionNote)
+    };
+    onChange(updatedWorks);
+  };
+
+  const handleModalSubmit = (compositionData: OpusCompositionData) => {
+    const updatedWorks = [...works];
+    if (editingIndex !== null) {
+      updatedWorks[editingIndex] = compositionData;
     }
+    onChange(updatedWorks);
+    setIsModalOpen(false);
   };
 
-  const handleUpdateWorkText = (idToUpdate: string, value: string) => {
-    onChange(works.map((work) => (work.id === idToUpdate ? { ...work, title: value } : work)));
-  };
-
-  const handleConfirmDelete = () => {
-    if (workIdToDelete) {
-      onChange(works.filter((work) => work.id !== workIdToDelete));
-      if (editingWorkId === workIdToDelete) {
-        setEditingWorkId(null);
-      }
-      setWorkIdToDelete(null);
+  const handleDeleteConfirm = () => {
+    if (deleteTargetId) {
+      const updatedWorks = works.filter((item) => item.id !== deleteTargetId);
+      onChange(updatedWorks);
     }
+    setDeleteTargetId(null);
   };
 
-  const handleCloseEdit = useCallback(() => setEditingWorkId(null), []);
+  const moveComposition = (from: number, to: number) => {
+    if (from === to || from < 0 || to < 0 || from >= works.length || to >= works.length) return;
+    
+    const updatedWorks = [...works];
+    const [moved] = updatedWorks.splice(from, 1);
+    updatedWorks.splice(to, 0, moved);
+    onChange(updatedWorks);
+  };
+
+  const handleDragEnter = (index: number) => {
+    if (draggingIndex === null || draggingIndex === index) return;
+    moveComposition(draggingIndex, index);
+    setDraggingIndex(index);
+  };
 
   return (
-    <>
-      <Box sx={styles.mainContainer}>
-        <Box sx={styles.headerRow}>
-          <Typography variant="body2" color="text.secondary">
-            Твори в групі
-          </Typography>
+    <Box sx={styles.container}>
+      <Box sx={styles.compositionsHeader}>
+        <Typography sx={styles.compositionsTitle}>{OPUS_DETAILS_LABELS.compositions}</Typography>
+        <Box sx={styles.compositionsDivider} />
+        <Button variant="outlined" sx={styles.addBtnTop} onClick={addComposition}>
+          {OPUS_DETAILS_LABELS.addComposition}
+        </Button>
+      </Box>
 
-          <Divider sx={styles.divider} />
+      <Box sx={styles.compositionsList}>
+        {works.map((composition, index) => (
+          <Box
+            key={composition.id}
+            sx={{
+              ...(styles.compositionRow as object),
+              ...(draggingIndex === index ? (styles.compositionRowDragging as object) : {})
+            }}
+            onDragEnter={() => handleDragEnter(index)}
+            onDragOver={(event) => event.preventDefault()}
+          >
+            <Box
+              draggable
+              onDragStart={() => setDraggingIndex(index)}
+              onDragEnd={() => setDraggingIndex(null)}
+              sx={styles.dragHandle}
+              aria-label="Перемістити"
+            >
+              <GripVertical size={20} strokeWidth={1.5} />
+            </Box>
+            
+            <Box sx={styles.compositionInput}>
+              <CompositionTitleInput
+                value={composition.title}
+                onChangeText={(title) => updateCompositionTitle(composition.id, title)}
+                onSelectSuggestion={(suggestion) => fillComposition(index, suggestion)}
+                onCreateNew={() => openCreateModal(index)}
+              />
+            </Box>
 
-          <Button variant="outlined" color="primary" onClick={handleAddWork} sx={styles.addBtnTop}>
-            Додати
+            <IconButton aria-label="Редагувати" onClick={() => openEditModal(index)} sx={styles.rowIcon}>
+              <Pencil size={18} strokeWidth={1.5} />
+            </IconButton>
+            <IconButton aria-label="Видалити" onClick={() => setDeleteTargetId(composition.id)} sx={styles.rowIcon}>
+              <Trash2 size={18} strokeWidth={1.5} />
+            </IconButton>
+          </Box>
+        ))}
+      </Box>
+
+      {isModalOpen && (
+        <CompositionModal
+          open={isModalOpen}
+          mode={modalMode}
+          initialValue={editingIndex !== null ? works[editingIndex] : undefined}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleModalSubmit}
+        />
+      )}
+
+      <Dialog
+        open={Boolean(deleteTargetId)}
+        onClose={() => setDeleteTargetId(null)}
+        disableScrollLock
+        PaperProps={{ sx: styles.deletePaper }}
+      >
+        <Box sx={styles.deleteHeader}>
+          <Typography sx={styles.deleteTitle}>{OPUS_DELETE_MODAL.title}</Typography>
+          <IconButton aria-label="Закрити" onClick={() => setDeleteTargetId(null)}>
+            <X size={24} strokeWidth={1.5} />
+          </IconButton>
+        </Box>
+        <Typography sx={styles.deleteDescription}>{OPUS_DELETE_MODAL.description}</Typography>
+        <Box sx={styles.deleteActions}>
+          <Button variant="filled" size="medium" color="secondary" onClick={handleDeleteConfirm} sx={styles.deleteButton}>
+            {OPUS_DELETE_MODAL.confirm}
+          </Button>
+          <Button variant="outlined" size="medium" color="primary" onClick={() => setDeleteTargetId(null)}>
+            {OPUS_DELETE_MODAL.cancel}
           </Button>
         </Box>
-
-        <Box sx={styles.worksList}>
-          {works.map((work: LocalGroupWork) => {
-            const isEditing = editingWorkId === work.id;
-
-            const currentSearchValue = searchValues[work.id] ?? work.title;
-            const isInputEmpty = currentSearchValue.trim() === '';
-            const itemKey = work.rowId || work.id;
-
-            return (
-              <Box key={itemKey} sx={styles.workItemRow}>
-                <Box sx={styles.autocompleteWrapper}>
-                  <AutocompleteContextProvider
-                    isInputEmpty={isInputEmpty}
-                    onSelectCreate={() => {
-                      handleCloseEdit();
-                      setIsCompositionModalOpen(true);
-                    }}
-                  >
-                    <Autocomplete
-                      disabled={!isEditing}
-                      options={availableWorks}
-                      getOptionLabel={(option) => (typeof option === 'string' ? option : option.title)}
-                      value={work}
-                      isOptionEqualToValue={(option, val) => option.id === val.id}
-                      getOptionDisabled={(option) => {
-                        return works.some((w) => w.id === option.id && w.id !== work.id);
-                      }}
-                      disableClearable
-                      forcePopupIcon={false}
-                      noOptionsText="Такого твору немає"
-                      filterOptions={(options, params) => {
-                        if (params.inputValue.trim() === '') {
-                          return [];
-                        }
-                        return filter(options, params);
-                      }}
-                      onChange={(_, newValue) => {
-                        if (newValue && typeof newValue !== 'string') {
-                          handleSelectWork(work.id, newValue);
-                        } else if (!newValue) {
-                          handleUpdateWorkText(work.id, '');
-                        }
-                      }}
-                      onInputChange={(_, newInputValue) => {
-                        setSearchValues((prev) => ({ ...prev, [work.id]: newInputValue }));
-                      }}
-                      PaperComponent={AutocompletePaper}
-                      renderInput={(params) => <CustomTextField {...params} placeholder="Назва твору" fullWidth />}
-                    />
-                  </AutocompleteContextProvider>
-                </Box>
-
-                <Box sx={styles.actionButtonsWrapper}>
-                  <IconButton
-                    data-testid="edit-work-btn"
-                    sx={styles.actionIcon}
-                    onClick={() => setEditingWorkId(isEditing ? null : work.id)}
-                  >
-                    <PencilIcon />
-                  </IconButton>
-                  <IconButton
-                    data-testid="delete-work-btn"
-                    sx={styles.actionIcon}
-                    onClick={() => setWorkIdToDelete(work.id)}
-                  >
-                    <TrashIcon />
-                  </IconButton>
-                </Box>
-              </Box>
-            );
-          })}
-        </Box>
-      </Box>
-
-      <DeleteCardModal
-        open={Boolean(workIdToDelete)}
-        onClose={() => setWorkIdToDelete(null)}
-        onDelete={handleConfirmDelete}
-        description="Ви збираєтесь видалити файл. Ви впевнені, що хочете продовжити?"
-      />
-
-      <CompositionModal isOpen={isCompositionModalOpen} onClose={() => setIsCompositionModalOpen(false)} />
-    </>
+      </Dialog>
+    </Box>
   );
 };

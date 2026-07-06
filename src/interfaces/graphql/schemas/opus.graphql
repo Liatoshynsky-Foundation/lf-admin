@@ -41,6 +41,19 @@ type Composition {
   updatedAt: String
 }
 
+type OpusGalleryItem {
+  id: ID!
+  url: String!
+  description: LocalizedString
+}
+
+type OpusPerformance {
+  id: ID!
+  title: LocalizedString
+  videoUrl: String
+  performers: String
+}
+
 type Opus {
   id: ID!
   number: String!
@@ -56,8 +69,13 @@ type Opus {
   adminTitle: String
   slug: String
   description: LocalizedString
+  introDescription: LocalizedString
   keywords: LocalizedString
   coverImage: LocalizedImage
+
+  gallery: [OpusGalleryItem!]
+  performances: [OpusPerformance!]
+
   allowIndexation: LocalizedBoolean
   status: OpusStatus
   compositions: [Composition!]
@@ -110,6 +128,9 @@ input CreateOpusInput {
   adminTitle: String
   title: JSON!
   description: JSON
+  introDescription: JSON
+  gallery: JSON
+  performances: JSON
   keywords: JSON
   allowIndexation: JSON
   coverImage: JSON
@@ -130,6 +151,9 @@ input UpdateOpusInput {
   adminTitle: String
   title: JSON
   description: JSON
+  introDescription: JSON
+  gallery: JSON
+  performances: JSON
   keywords: JSON
   allowIndexation: JSON
   coverImage: JSON

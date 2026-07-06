@@ -3,6 +3,7 @@ import { Dayjs } from 'dayjs';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import type { FilterOption } from '~/shared/components/selector/FilterSelect';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
+import { OpusCompositionData } from '~/types/opus';
 
 export type WorksTabValue = 'all' | 'opus' | 'ungrouped' | 'works';
 
@@ -91,23 +92,31 @@ export interface GroupWork {
 }
 
 export interface GroupPhoto {
-  id: string;
-  src: string;
-  fileName: string;
-  caption: string;
-  altText: string;
-  crop: MediaModalResult['crop'] | null;
+  id?: string;
+  src?: string;
+  fileName?: string;
+  caption?: { uk: string; en: string };
+  altText?: string;
+  crop?: MediaModalResult['crop'] | null;
+
+  url?: string;
+  description?: { uk: string; en: string };
 }
 
 export interface GroupPerformance {
-  id: string;
-  url: string;
-  caption: string;
+  id?: string;
+  url?: string;
+  caption?: { uk: string; en: string };
+
+  title?: { uk: string; en: string };
+  videoUrl?: string;
+  performers?: string;
 }
 
 export interface GroupData {
   titlePrefix: string;
   groupNumber: string;
+  genre: string;
   additionalText: string;
   groupTitle: { uk: string; en: string }; 
   creationYear: string;
@@ -116,7 +125,7 @@ export interface GroupData {
   parts: { uk: string; en: string };
   description: { uk: Record<string, unknown>; en: Record<string, unknown> };
   photos: GroupPhoto[];
-  works: GroupWork[];
+  works: OpusCompositionData[];
   performancesTitle: string;
   performances: GroupPerformance[];
   status: string;

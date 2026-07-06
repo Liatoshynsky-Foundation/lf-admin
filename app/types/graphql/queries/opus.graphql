@@ -21,6 +21,10 @@ query OpusById($id: ID!) {
       uk
       en
     }
+    introDescription {
+      uk
+      en
+    }
     keywords {
       uk
       en
@@ -41,6 +45,23 @@ query OpusById($id: ID!) {
         width
         height
       }
+    }
+    gallery {
+      id
+      url
+      description {
+        uk
+        en
+      }
+    }
+    performances {
+      id
+      title {
+        uk
+        en
+      }
+      videoUrl
+      performers
     }
     compositions {
       id

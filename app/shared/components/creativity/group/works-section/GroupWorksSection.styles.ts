@@ -1,9 +1,30 @@
-import { SxProps, Theme } from '@mui/material';
+import { Theme } from '@mui/material/styles';
+import { SxProps } from '@mui/system';
 
-export const styles = {
-  mainContainer: { display: 'flex', flexDirection: 'column', gap: 3, mt: 2 },
-  headerRow: { display: 'flex', alignItems: 'center', gap: 2 },
-  divider: { flexGrow: 1 },
+export const styles: Record<string, SxProps<Theme>> = {
+  container: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '20px',
+    width: '100%'
+  },
+  compositionsHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+    marginTop: '8px'
+  },
+  compositionsTitle: {
+    fontSize: '14px',
+    color: 'text.secondary',
+    flexShrink: 0,
+    whiteSpace: 'nowrap'
+  },
+  compositionsDivider: {
+    flex: 1,
+    height: '1px',
+    bgcolor: 'divider'
+  },
   addBtnTop: {
     backgroundColor: 'black',
     color: 'white',
@@ -11,29 +32,62 @@ export const styles = {
       backgroundColor: 'rgb(52, 42, 33)'
     }
   },
-  worksList: { display: 'flex', flexDirection: 'column', gap: 2 },
-  workItemRow: { display: 'flex', alignItems: 'center', gap: 2 },
-  autocompleteWrapper: { flexGrow: 1 },
-  autocompletePaper: {
-    borderRadius: '12px',
-    mt: 1,
-    boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.05)',
-    overflow: 'hidden'
+  compositionsList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px'
   },
-  createWorkBox: {
+  compositionRow: {
     display: 'flex',
     alignItems: 'center',
-    gap: 1.5,
-    px: 2,
-    py: '6px',
-    cursor: 'pointer',
-    color: 'text.primary',
-    transition: 'background-color 0.2s',
-    '&:hover': {
-      backgroundColor: 'action.hover'
-    }
+    gap: '12px'
   },
-  createWorkText: { fontSize: '16px' },
-  actionButtonsWrapper: { display: 'flex', gap: 1 },
-  actionIcon: { color: 'black', width: '34px', height: '34px' }
-} satisfies Record<string, SxProps<Theme>>;
+  compositionRowDragging: {
+    opacity: 0.5
+  },
+  dragHandle: {
+    display: 'flex',
+    alignItems: 'center',
+    cursor: 'grab',
+    flexShrink: 0,
+    color: '#9ca3af',
+    '&:active': { cursor: 'grabbing' }
+  },
+  compositionInput: {
+    flex: 1,
+    '& .MuiOutlinedInput-root': { borderRadius: '8px' }
+  },
+  rowIcon: {
+    color: 'text.primary',
+    flexShrink: 0
+  },
+  deletePaper: {
+    width: '572px',
+    maxWidth: '90vw',
+    borderRadius: '16px',
+    padding: '32px'
+  },
+  deleteHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '16px'
+  },
+  deleteTitle: {
+    fontSize: '24px',
+    fontWeight: 700
+  },
+  deleteDescription: {
+    fontSize: '15px',
+    color: 'text.secondary',
+    marginBottom: '32px'
+  },
+  deleteActions: {
+    display: 'flex',
+    gap: '16px'
+  },
+  deleteButton: {
+    backgroundColor: '#d64218',
+    '&:hover': { backgroundColor: '#b8350f' }
+  }
+};
