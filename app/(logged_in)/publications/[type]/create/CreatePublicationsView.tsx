@@ -186,7 +186,7 @@ export default function CreatePublicationsView({
           <TextField
             label={ADMIN_TITLE_LABELS[publicationType]}
             value={adminTitle}
-            onChange={(e) => setAdminTitle(e.target.value)}
+            onChange={(e) => setAdminTitle(e.target.value.toUpperCase())}
             error={Boolean(adminTitleError)}
             helperText={adminTitleError}
             sx={styles.textField}

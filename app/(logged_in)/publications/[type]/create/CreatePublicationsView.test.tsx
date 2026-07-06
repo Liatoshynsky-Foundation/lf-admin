@@ -119,20 +119,21 @@ describe('CreatePublicationsView Component', () => {
   });
 
   describe('User Interactions', () => {
-    it('should call setAdminTitle when the admin title input changes', () => {
+    it('should call setAdminTitle & convert a text to uppercase when the admin title input changes', () => {
       const mockSetAdminTitle = jest.fn();
       const mockData = createMockData({
         publicationType: 'news',
         setAdminTitle: mockSetAdminTitle
       });
+      const title = 'New Test Title';
 
       render(<CreatePublicationsView data={mockData} />);
 
       const input = screen.getByLabelText('Назва новини в адмінці');
-      fireEvent.change(input, { target: { value: 'New Test Title' } });
+      fireEvent.change(input, { target: { value: title } });
 
       expect(mockSetAdminTitle).toHaveBeenCalledTimes(1);
-      expect(mockSetAdminTitle).toHaveBeenCalledWith('New Test Title');
+      expect(mockSetAdminTitle).toHaveBeenCalledWith(title.toUpperCase());
     });
 
     it('should display an error message on the admin title field if adminTitleError is present', () => {
