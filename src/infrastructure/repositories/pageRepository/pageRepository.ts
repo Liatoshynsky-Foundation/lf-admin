@@ -43,7 +43,7 @@ const toEntity = (doc: DbPage): BasePage => ({
   blocksOrder: doc.blocksOrder,
   createdAt: toIso(doc.createdAt) as unknown as BasePage['createdAt'],
   updatedAt: toIso(doc.updatedAt) as unknown as BasePage['updatedAt'],
-  description: doc.description,
+  description: doc.description ?? { uk: '', en: '' },
   keywords: doc.keywords,
   canonicalUrl: doc.canonicalUrl,
   allowIndexation: doc.allowIndexation

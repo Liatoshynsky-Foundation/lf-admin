@@ -24,7 +24,7 @@ export type BasePage = {
   blocksOrder: string[];
   keywords: LocalizedString;
   canonicalUrl?: LocalizedString | null;
-  description: LocalizedString | null;
+  description: LocalizedString;
   allowIndexation: LocalizedBoolean;
   createdAt: string;
   updatedAt: string;
