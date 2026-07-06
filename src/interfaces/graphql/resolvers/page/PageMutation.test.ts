@@ -42,7 +42,8 @@ describe('PageMutation', () => {
     createDraft: jest.fn(),
     applyPatchToDraft: jest.fn(),
     applyPatchToPublished: jest.fn(),
-    findPages: jest.fn()
+    findPages: jest.fn(),
+    updatePageSeo: jest.fn()
   };
 
   const mockContext = {
@@ -60,6 +61,9 @@ describe('PageMutation', () => {
     coverImage: DEFAULT_COVER_IMAGE,
     blocks: {},
     blocksOrder: [''],
+    description: { uk: '', en: '' },
+    keywords: { uk: '', en: '' },
+    allowIndexation: { uk: true, en: true },
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
@@ -152,6 +156,43 @@ describe('PageMutation', () => {
       await expect(
         PageMutation.publishPage({}, { input: { slug: 'unknown', blocks: {}, blocksOrder: [] } }, mockContext)
       ).rejects.toThrow(/no source \(draft or published\)/);
+    });
+  });
+
+  describe('updatePageSeo', () => {
+    const seoInput = {
+      slug: 'about-us',
+      title: { uk: 'SEO Заголовок', en: 'SEO Title' },
+      description: { uk: 'SEO Опис', en: 'SEO Description' },
+      keywords: { uk: 'ключові слова', en: 'keywords' },
+      canonicalUrl: { uk: 'https://example.com/uk', en: 'https://example.com/en' },
+      allowIndexation: { uk: false, en: true }
+    };
+
+    it('should throw UNAUTHENTICATED if not admin', async () => {
+      const emptyContext = { admin: false } as unknown as GraphQLContext;
+
+      await expect(
+        PageMutation.updatePageSeo({}, { input: seoInput }, emptyContext)
+      ).rejects.toThrow(GraphQLError);
+    });
+
+    it('should call repo.updatePageSeo and return the updated page', async () => {
+      const updatedPage = {
+        ...mockBasePage,
+        title: seoInput.title,
+        description: seoInput.description,
+        keywords: seoInput.keywords,
+        canonicalUrl: seoInput.canonicalUrl,
+        allowIndexation: seoInput.allowIndexation
+      };
+
+      mockRepo.updatePageSeo.mockResolvedValue(updatedPage);
+
+      const res = await PageMutation.updatePageSeo({}, { input: seoInput }, mockContext);
+
+      expect(mockRepo.updatePageSeo).toHaveBeenCalledWith('about-us', seoInput);
+      expect(res).toEqual(updatedPage);
     });
   });
 });
