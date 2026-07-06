@@ -10,5 +10,8 @@ export const styles: Record<string, SxProps<Theme>> = {
   listItem: {
     width: '100%',
     minWidth: 0
+  },
+  gridItem: {
+    minWidth: 0
   }
 };

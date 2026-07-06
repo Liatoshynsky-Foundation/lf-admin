@@ -14,6 +14,7 @@ type CreateModeProps = BaseProps & {
   mode: 'create';
   onEdit?: () => void;
   onPreview?: () => void;
+  editLabel?: string;
 };
 
 type EditModeProps = BaseProps & {
@@ -46,7 +47,7 @@ export default function HeaderRightActions(props: HeaderRightActionsProps) {
             <EyeIcon size={24} strokeWidth={1.5} />
           </IconButton>
           <Button disabled={disabled} onClick={props.onEdit} variant="contained" color="tertiary" disableElevation>
-              Редагувати
+            {props.editLabel ?? 'Редагувати'}
           </Button>
         </>
       );

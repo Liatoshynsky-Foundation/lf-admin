@@ -1,0 +1,45 @@
+import { LocalizedBoolean, LocalizedImage, LocalizedString } from '~/domain/entities/BaseContent';
+import { Composition } from '~/domain/entities/Composition';
+import { OpusStatus } from '~/types/enums/common.enums';
+
+export type OpusNumberKind = 'op' | 'woo';
+
+export type OpusDescription = {
+  uk: string;
+  en: string;
+  meta?: {
+    description?: { uk: string; en: string };
+    canonicalUrl?: { uk: string; en: string };
+    metaTitle?: { uk: string; en: string };
+  };
+};
+
+export type Opus = {
+  id: string;
+  number: string;
+  title: LocalizedString;
+  releaseYear?: number | null;
+
+  numberKind?: OpusNumberKind;
+  name?: string | null;
+  additionalText?: string | null;
+  creationYear?: string | null;
+  endYear?: string | null;
+  datesNote?: string | null;
+  genre?: string | null;
+
+  adminTitle?: string | null;
+  slug?: string;
+  description?: OpusDescription | null;
+  keywords?: LocalizedString | null;
+  allowIndexation?: LocalizedBoolean | null;
+  coverImage?: LocalizedImage | null;
+  status?: OpusStatus;
+  meta?: { views: number };
+  publishedAt?: string | null;
+
+  compositions?: Composition[];
+
+  createdAt: string;
+  updatedAt: string;
+};

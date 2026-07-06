@@ -13,13 +13,13 @@ export type GalleryFile = {
   directory?: string;
 };
 
-export function useGalleryFiles() {
+export function useGalleryFiles(folder = 'photos') {
   const [files, setFiles] = useState<GalleryFile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/uploads?folder=photos')
+    fetch(`/api/uploads?folder=${encodeURIComponent(folder)}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.success) {
@@ -36,6 +36,6 @@ export function useGalleryFiles() {
       })
       .catch(() => setError(galleryErrors.FAILED_TO_FETCH))
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [folder]);
   return { files, isLoading, error };
 }

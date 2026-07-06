@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 
 import DeleteFileModal from '../delete-file-modal/DeleteFileModal';
 import TooltipCustom from '../design-system/tooltip/Tooltip';
-import { styles } from './FileInfoSidebar.styles';
+import { type FileInfoSidebarVariant, styles } from './FileInfoSidebar.styles';
 import { ImagePreviewModal } from './image-preview-modal/ImagePreviewModal';
 import { useAutosavedDescription } from './useAutosavedDescription';
 import { downloadFile } from '~/lib/utils/downloadFile';
@@ -56,6 +56,7 @@ export type FileSidebarAction =
 
 export type FileInfoSidebarProps = {
   file?: FileDetailsSidebarFile | null;
+  variant?: FileInfoSidebarVariant;
 
   onClose: () => void;
 
@@ -88,7 +89,13 @@ const RowText = ({ children }: { children: React.ReactNode }) => (
   <Typography variant='textMd' sx={styles.rowText}>{children}</Typography>
 );
 
-export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAction }: Readonly<FileInfoSidebarProps>) {
+export function FileInfoSidebar({
+  file,
+  variant = 'fixed',
+  onClose,
+  onDescriptionSave,
+  onRequestAction
+}: Readonly<FileInfoSidebarProps>) {
   const theme = useTheme();
   const fileId = file?.id;
   const filename = file?.filename ?? '—';
@@ -158,7 +165,7 @@ export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAct
     try {
       await deleteAsset({
         variables: { id },
-        update: (cache: ApolloCache<any>) => {
+        update: (cache: ApolloCache<unknown>) => {
           cache.evict({ id: cache.identify({ __typename: 'Asset', id }) });
           cache.gc();
         }
@@ -183,7 +190,7 @@ export function FileInfoSidebar({ file, onClose, onDescriptionSave, onRequestAct
     : null;
 
   return (
-    <Box sx={styles.root}>
+    <Box sx={styles.root(variant)}>
       <Box sx={styles.header}>
         <Box sx={styles.headerIcon}>
           <TypeIcon />

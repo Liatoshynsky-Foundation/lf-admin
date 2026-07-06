@@ -54,6 +54,22 @@ describe('List Element', () => {
     expect(screen.getByRole('button')).not.toHaveClass('Mui-selected');
   });
 
+  it('should not select a parent route when a deeper sibling route matches', () => {
+    mockedPathname = '/creativity/opus';
+
+    render(<ListElement element={{ title: 'Твори', href: '/creativity' }} open={true} />);
+
+    expect(screen.getByRole('button')).not.toHaveClass('Mui-selected');
+  });
+
+  it('should select the most specific route', () => {
+    mockedPathname = '/creativity/opus';
+
+    render(<ListElement element={{ title: 'Опуси', href: '/creativity/opus' }} open={true} />);
+
+    expect(screen.getByRole('button')).toHaveClass('Mui-selected');
+  });
+
   it('should render children', () => {
     render(
       <ListElement element={element} open={true}>

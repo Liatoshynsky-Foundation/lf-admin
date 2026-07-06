@@ -3,14 +3,14 @@ import { alpha } from '@mui/material';
 import { mainHexPalette as colors } from '~/shared/theme/colors';
 
 export const styles = {
-  container: {
+  container: (isSelected = false) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
     p: '11px 16px',
     borderRadius: '16px',
-    borderColor: 'blue.300',
-    backgroundColor: 'white',
+    borderColor: isSelected ? 'blue.700' : 'blue.300',
+    backgroundColor: isSelected ? 'adminBlue.100' : 'white',
     cursor: 'pointer',
     transition: 'background-color 0.2s, border-color 0.2s',
     '&:hover': {
@@ -20,7 +20,7 @@ export const styles = {
       backgroundColor: 'adminBlue.100',
       borderColor: 'blue.700'
     }
-  },
+  }),
 
   content: {
     gap: '8px'

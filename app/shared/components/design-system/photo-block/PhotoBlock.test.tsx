@@ -193,6 +193,13 @@ describe('ImagePreviewBlock', () => {
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
 
+  it('disables "Редагувати" but keeps "Змінити зображення" enabled when there is no image', () => {
+    renderComponent({ imageUrl: '' });
+
+    expect(screen.getByRole('button', { name: /редагувати/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /змінити зображення/i })).toBeEnabled();
+  });
+
   it('updates preview when imageUrl changes', () => {
     const { rerender } = renderComponent({ imageUrl: 'first.jpg' });
     expect(screen.getByAltText('Selected')).toHaveAttribute('src', 'first.jpg');

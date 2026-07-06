@@ -3,7 +3,7 @@ import { alpha, SxProps, Theme } from '@mui/material';
 import { mainHexPalette as colors } from '~/shared/theme/colors';
 
 const styles = {
-  card: (interactive: boolean): SxProps<Theme> => ({
+  card: (interactive: boolean, isSelected = false): SxProps<Theme> => ({
     display: 'flex',
     flexDirection: 'column',
     minHeight: '266px',
@@ -12,13 +12,15 @@ const styles = {
     borderRadius: '16px',
     overflow: 'hidden',
     border: '1px solid',
-    borderColor: 'blue.200',
+    borderColor: isSelected ? 'blue.700' : 'blue.200',
+    backgroundColor: isSelected ? 'adminBlue.100' : 'white',
     boxShadow: 0,
     cursor: interactive ? 'pointer' : 'default',
-    transition: interactive ? 'box-shadow 0.2s, opacity 0.2s' : 'none',
+    transition: interactive ? 'background-color 0.2s, border-color 0.2s, box-shadow 0.2s, opacity 0.2s' : 'none',
     '&:hover': interactive
       ? {
         opacity: 0.95,
+        backgroundColor: 'adminBlue.100',
         boxShadow: `0 2px 8px ${alpha(colors.black, 0.1)}`
       }
       : {}

@@ -63,15 +63,55 @@ const defaultFileUploadHandler = async (file: File): Promise<string> => {
 };
 
 export const customSchema = BlockNoteSchema.create(
-  BlockNoteSchema.create({
+  {
     blockSpecs: {
       ...defaultBlockSpecs,
       image: CroppedImageBlock()
     },
     inlineContentSpecs: defaultInlineContentSpecs,
     styleSpecs: defaultStyleSpecs
-  })
+  }
 );
+
+const RESTRICTED_SYMBOLS_REGEX = /[\p{Extended_Pictographic}\p{So}]/gu;
+const getCleanedText = (input: string) => {
+  if (RESTRICTED_SYMBOLS_REGEX.test(input)) {
+    toast.error('Використання емодзі та спецсимволів не дозволено');
+    return input
+      .replace(RESTRICTED_SYMBOLS_REGEX, '')
+      .replace(/[ \t]{2,}/g, ' ');
+  }
+  return input;
+};
+
+
+const processHTML = (html: string) => {
+  const parser = new DOMParser();
+
+  const doc = parser.parseFromString(html, 'text/html');
+  doc.querySelectorAll('*').forEach((el) => {
+    el.removeAttribute('style');
+    el.removeAttribute('class');
+  });
+
+  const walker = document.createTreeWalker(
+    doc.body,
+    NodeFilter.SHOW_TEXT,
+    null
+  );
+
+  let node: Node | null = null;
+
+  while ((node = walker.nextNode())) {
+    if (node.nodeValue !== null) {
+      node.nodeValue = getCleanedText(node.nodeValue);
+    }
+  }
+
+  return doc.body.innerHTML;
+};
+
+
 
 const getDocTextContent = (editorInstance: unknown): string => {
   const internal = editorInstance as TiptapInternal;
@@ -123,7 +163,44 @@ export const BlockNoteEditor = (props: BlockNoteEditorProps) => {
       schema: customSchema,
       uploadFile: handleSilentFileUpload,
       initialContent: initialContent || undefined,
-      placeholders: { default: placeholder }
+      placeholders: { default: placeholder },
+      pasteHandler({ event, defaultPasteHandler }) {
+        const clipboardData = event.clipboardData;
+        if (!clipboardData) return defaultPasteHandler();
+
+        const html = clipboardData.getData('text/html');
+        const text = clipboardData.getData('text/plain');
+
+        if (!html && !text) {
+          return defaultPasteHandler();
+        }
+
+        const cleanedHTML = html ? processHTML(html) : '';
+        const cleanedText = text ? getCleanedText(text).trim() : '';
+
+
+        const dt = new DataTransfer();
+
+        if (cleanedHTML) dt.setData('text/html', cleanedHTML);
+        if (cleanedText) dt.setData('text/plain', cleanedText);
+
+
+        if (clipboardData.files && clipboardData.files.length > 0) {
+          [...clipboardData.files].forEach((file) => {
+            dt.items.add(file);
+          });
+        }
+
+        try {
+          Object.defineProperty(event, 'clipboardData', {
+            value: dt,
+          });
+        } catch (e) {
+          toast.error('Помилка обробки вставленого тексту');
+          console.error('Помилка обробки вставленого тексту:', e);
+        }
+        return defaultPasteHandler();
+      },
     },
     [isMounted]
   );
@@ -154,13 +231,13 @@ export const BlockNoteEditor = (props: BlockNoteEditorProps) => {
   const handleEditorChange = useCallback(() => {
     if (editor) {
       const charCount = getCharCount(editor);
-      
+
       if (charCount > MAX_CHARS_LIMIT) {
         toast.error(MAX_CHARS_EXCEEDED_MSG);
 
         editor.undo();
-      
-        return; 
+
+        return;
       }
 
       if (onChange) {
@@ -175,7 +252,7 @@ export const BlockNoteEditor = (props: BlockNoteEditorProps) => {
 
   const renderFormattingToolbar = useCallback(
     () => (
-      <CustomFormattingToolbar  openMediaModal={openMediaModal} />
+      <CustomFormattingToolbar openMediaModal={openMediaModal} />
     ),
     [openMediaModal]
   );

@@ -1,0 +1,153 @@
+enum OpusStatus {
+  draft
+  published
+  hidden
+  archived
+  editing
+}
+
+enum OpusNumberKind {
+  op
+  woo
+}
+
+type OpusSheetMusic {
+  url: String!
+  name: String
+  publishDate: String
+  isFree: Boolean
+  dateUploaded: String
+}
+
+type CompositionAudio {
+  name: String
+  url: String
+}
+
+type Composition {
+  id: ID!
+  opusId: ID
+  order: Int
+  title: LocalizedString!
+  year: Int
+  genre: String
+  genres: [ID!]
+  categories: [ID!]
+  audioAvailable: Boolean
+  sheetAvailable: Boolean
+  sheetMusic: [OpusSheetMusic!]
+  audios: [CompositionAudio!]
+  createdAt: String
+  updatedAt: String
+}
+
+type Opus {
+  id: ID!
+  number: String!
+  numberKind: OpusNumberKind
+  title: LocalizedString!
+  releaseYear: Int
+  name: String
+  additionalText: String
+  creationYear: String
+  endYear: String
+  datesNote: String
+  genre: String
+  adminTitle: String
+  slug: String
+  description: LocalizedString
+  keywords: LocalizedString
+  coverImage: LocalizedImage
+  allowIndexation: LocalizedBoolean
+  status: OpusStatus
+  compositions: [Composition!]
+  createdAt: String!
+  updatedAt: String!
+  publishedAt: String
+  meta: ContentMeta
+}
+
+type PaginatedOpuses {
+  items: [Opus!]!
+  total: Int!
+  page: Int!
+  totalPages: Int!
+}
+
+enum OpusSortBy {
+  number
+  releaseYear
+  createdAt
+  updatedAt
+  publishedAt
+}
+
+input OpusSortOptions {
+  field: OpusSortBy!
+  order: SortOrder!
+}
+
+input OpusFiltersInput {
+  statuses: [OpusStatus!]
+  limit: Int
+  skip: Int
+  slug: String
+  search: String
+  languages: [ContentLanguage!]
+  sort: [OpusSortOptions!]
+}
+
+input CreateOpusInput {
+  numberKind: OpusNumberKind
+  number: String
+  name: String
+  additionalText: String
+  creationYear: String
+  endYear: String
+  datesNote: String
+  genre: String
+  compositions: JSON
+  adminTitle: String
+  title: JSON!
+  description: JSON
+  keywords: JSON
+  allowIndexation: JSON
+  coverImage: JSON
+  status: OpusStatus
+  publishedAt: String
+}
+
+input UpdateOpusInput {
+  numberKind: OpusNumberKind
+  number: String
+  name: String
+  additionalText: String
+  creationYear: String
+  endYear: String
+  datesNote: String
+  genre: String
+  compositions: JSON
+  adminTitle: String
+  title: JSON
+  description: JSON
+  keywords: JSON
+  allowIndexation: JSON
+  coverImage: JSON
+  status: OpusStatus
+  publishedAt: String
+}
+
+extend type Query {
+  opusById(id: ID!): Opus
+  opusByNumber(number: String!): Opus
+  searchCompositions(search: String!): [Composition!]!
+  allOpuses(filters: OpusFiltersInput): [Opus!]!
+  paginatedOpuses(page: Int!, limit: Int!, filters: OpusFiltersInput): PaginatedOpuses!
+  opusesCount(status: OpusStatus): Int!
+}
+
+extend type Mutation {
+  createOpus(input: CreateOpusInput!): Opus!
+  updateOpus(id: ID!, input: UpdateOpusInput!): Opus!
+  deleteOpus(id: ID!): Boolean!
+}

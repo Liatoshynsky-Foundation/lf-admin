@@ -30,6 +30,7 @@ interface ImagePreviewBlockProps extends StackProps {
   showAlternativeText?: boolean;
   disabled?: boolean;
   locale?: 'uk' | 'en';
+  aspectRatio?: number;
 }
 
 export const ImagePreviewBlock = ({
@@ -47,7 +48,8 @@ export const ImagePreviewBlock = ({
   altText,
   onChangeAltText,
   disabled = false,
-  locale = 'uk'
+  locale = 'uk',
+  aspectRatio
 }: ImagePreviewBlockProps) => {
   const [previewImage, setPreviewImage] = useState<string>(imageUrl);
 
@@ -184,7 +186,7 @@ export const ImagePreviewBlock = ({
               size="small"
               onClick={openEditCrop}
               sx={styles.editButton}
-              disabled={disabled}
+              disabled={disabled || !previewImage}
             >
               Редагувати
             </Button>
@@ -210,6 +212,7 @@ export const ImagePreviewBlock = ({
         onClose={closeMediaModal}
         onApply={handleApplyMediaModal}
         directory="photos"
+        aspectRatio={aspectRatio}
       />
     </Box>
   );
