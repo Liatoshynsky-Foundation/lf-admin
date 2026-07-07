@@ -21,6 +21,7 @@ const resolveIsTmp = (field: string, value: unknown): boolean | undefined => {
 export const createEditSlice: StateCreator<EditState> = (set, get) => ({
   isChanged: false,
   isInitialized: false,
+  initializedPages: {},
 
   blocks: {},
   originalBlocks: {},
@@ -96,6 +97,10 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
   },
 
   setPageData: <T extends Record<string, BlockData>>(pageId: string, blocks: T, blocksOrder: string[], isInit = false) => {
+    if (isInit && get().initializedPages[pageId]) {
+      return;
+    }
+
     const prevPageBlocks = get().blocks[pageId] || {};
     const nextState: Partial<EditState> = {
       blocks: {
@@ -121,6 +126,10 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
         ...get().originalBlocksOrder,
         [pageId]: [...blocksOrder]
       };
+      nextState.initializedPages = {
+        ...get().initializedPages,
+        [pageId]: true
+      };
     }
     set(nextState as EditState);
   },
@@ -142,6 +151,7 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
   discardChanges: (pageId: string) => {
     const original = get().originalBlocks[pageId] || {};
     const originalOrder = get().originalBlocksOrder[pageId] || [];
+    const { [pageId]: _removed, ...remainingInitialized } = get().initializedPages;
     set({
       blocks: {
         ...get().blocks,
@@ -151,6 +161,7 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
         ...get().blocksOrder,
         [pageId]: [...originalOrder]
       },
+      initializedPages: remainingInitialized,
       isChanged: false
     });
   },

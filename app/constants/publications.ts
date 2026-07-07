@@ -267,3 +267,12 @@ export const ADMIN_TITLE_LABELS: Record<PublicationsItemType, string> = {
   news: 'Назва новини в адмінці',
   media: 'Назва публікації в адмінці'
 };
+
+export const CROP_RATIOS = {
+  HERO_BANNER: 816 / 300,
+  FUNDATION_PROFILE_SMALL: 336 / 400,
+  FUNDATION_PROFILE_BIG: 816 / 498,
+  TEAM_AVATAR: 200 / 180,
+  SOCIAL_MEDIA_PREVIEW: 295 / 225
+} as const;
+

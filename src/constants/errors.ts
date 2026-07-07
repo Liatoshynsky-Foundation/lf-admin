@@ -35,6 +35,14 @@ export const newsServiceErrors = {
   TITLE_REQUIRED_FOR_SLUG: 'Title is required to generate a slug'
 };
 
+export const opusServiceErrors = {
+  NUMBER_ALREADY_EXISTS: (number: string) => `Opus with number "${number}" already exists`,
+  NUMBER_GENERATION_FAILED: 'Failed to generate a unique opus number',
+  NAME_REQUIRED_FOR_SLUG: 'Opus name is required to generate a slug',
+  OPUS_NOT_FOUND: (id: string) => `Opus with id "${id}" not found`,
+  FAILED_TO_DELETE: (id: string) => `Opus with id "${id}" not found or could not be deleted`
+};
+
 export const MediaMentionsServiceErrors = {
   INVALID_URL: newError('The provided URL is invalid'),
   NOT_FOUND: newError('Media mention not found'),

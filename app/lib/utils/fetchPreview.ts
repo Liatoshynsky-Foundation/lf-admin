@@ -8,20 +8,33 @@ type ConfigResponse = {
   clientAppUrl: string;
 };
 
+type PreviewProxyResponse = {
+  previewSecret: string;
+};
+
 export const fetchPreview = async ({ slug, lang, draftId }: PreviewProps) => {
   const response = await fetch('/api/config');
   const data: ConfigResponse = await response.json();
-  const previewApiUrl = `${data.clientAppUrl}/api/preview?lang=${lang}&slug=${slug}&draftId=${draftId}`;
 
-  try {
-    await fetch(previewApiUrl, {
-      method: 'GET',
-      credentials: 'include'
-    });
-  } catch {
-    //eslint-disable-next-line no-console
-    console.warn('Temporary preview fetch failed');
+  const proxyResponse = await fetch('/api/preview-proxy', {
+    method: 'GET',
+    credentials: 'include'
+  });
+
+  if (!proxyResponse.ok) {
+    throw new Error('Failed to obtain preview credentials');
   }
+
+  const { previewSecret } = (await proxyResponse.json()) as PreviewProxyResponse;
+
+  const params = new URLSearchParams({
+    lang,
+    slug,
+    draftId: String(draftId),
+    previewSecret
+  });
+
+  const previewApiUrl = `${data.clientAppUrl}/api/preview?${params}`;
 
   window.open(previewApiUrl, '_blank');
 };

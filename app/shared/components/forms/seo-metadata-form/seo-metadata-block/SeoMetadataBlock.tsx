@@ -157,6 +157,7 @@ export default function SeoMetadataBlock({
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, en: val } })}
         showAlternativeText={showAlternativeText}
         extraFieldsBeforeKeywords={extraFieldsBeforeKeywords}
+        forceShowErrors={forceShowErrors}
         crop={crop?.en ?? null}
         onChangeCrop={(newEnCrop) => 
           onChangeCrop?.({ uk: crop?.uk ?? null, en: newEnCrop })

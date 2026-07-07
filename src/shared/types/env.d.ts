@@ -10,5 +10,6 @@ namespace NodeJS {
     JWT_ACCESS_TOKEN_SECRET: string;
     JWT_REFRESH_TOKEN_SECRET: string;
     CLIENT_BASE_URL: string;
+    PREVIEW_SECRET?: string;
   }
 }

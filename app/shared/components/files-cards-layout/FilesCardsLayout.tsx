@@ -20,6 +20,14 @@ export type FilesCardsLayoutItem = {
 type FilesCardsLayoutProps = Readonly<{
   view: FilesCardsLayoutView;
   items: FilesCardsLayoutItem[];
+  selectedItemId?: string | null;
+  gridColumns?: {
+    xsCols?: number;
+    smCols?: number;
+    mdCols?: number;
+    xlCols?: number;
+  };
+  setItemRef?: (itemId: string, node: HTMLDivElement | null) => void;
   onItemClick?: (item: FilesCardsLayoutItem) => void;
   onItemAction?: (action: 'rename' | 'delete' | 'download', item: FilesCardsLayoutItem) => void;
 }>;
@@ -34,13 +42,27 @@ const minimizedTypeMap: Record<FileType, 'img' | 'audio' | 'pdf' | 'doc' | 'xls'
   archive: 'archive'
 };
 
-export function FilesCardsLayout({ view, items, onItemClick, onItemAction }: FilesCardsLayoutProps) {
+export function FilesCardsLayout({
+  view,
+  items,
+  selectedItemId,
+  gridColumns,
+  setItemRef,
+  onItemClick,
+  onItemAction
+}: FilesCardsLayoutProps) {
   if (view === 'list') {
     return (
       <Box sx={styles.root} data-testid="FilesCardsLayout-list">
         <Box sx={styles.list}>
           {items.map((item) => (
-            <Box key={item.id} sx={styles.listItem}>
+            <Box
+              key={item.id}
+              ref={(node: HTMLDivElement | null) => {
+                setItemRef?.(item.id, node);
+              }}
+              sx={styles.listItem}
+            >
               <MinimizedFileCard
                 id={item.id}
                 fileType={minimizedTypeMap[item.type]}
@@ -48,6 +70,7 @@ export function FilesCardsLayout({ view, items, onItemClick, onItemAction }: Fil
                 linked={!!item.usageLinks && item.usageLinks > 0}
                 name={item.name}
                 date={item.dateAdded}
+                isSelected={item.id === selectedItemId}
                 onClick={() => onItemClick?.(item)}
                 onAction={(action) => onItemAction?.(action, item)}
               />
@@ -59,22 +82,30 @@ export function FilesCardsLayout({ view, items, onItemClick, onItemAction }: Fil
   }
 
   return (
-    <CardsGrid dataTestId="FilesCardsLayout-grid">
+    <CardsGrid columns={gridColumns} dataTestId="FilesCardsLayout-grid">
       {items.map((item) => (
-        <FileCard
+        <Box
           key={item.id}
-          fileType={item.type}
-          fileData={{
-            id: item.id,
-            name: item.name,
-            dateAdded: item.dateAdded,
-            isStarred: item.isStarred,
-            usageLinks: item.usageLinks,
-            imageSrc: item.imageSrc
+          ref={(node: HTMLDivElement | null) => {
+            setItemRef?.(item.id, node);
           }}
-          onClick={() => onItemClick?.(item)}
-          onAction={(action) => onItemAction?.(action, item)}
-        />
+          sx={styles.gridItem}
+        >
+          <FileCard
+            fileType={item.type}
+            fileData={{
+              id: item.id,
+              name: item.name,
+              dateAdded: item.dateAdded,
+              isStarred: item.isStarred,
+              usageLinks: item.usageLinks,
+              imageSrc: item.imageSrc
+            }}
+            isSelected={item.id === selectedItemId}
+            onClick={() => onItemClick?.(item)}
+            onAction={(action) => onItemAction?.(action, item)}
+          />
+        </Box>
       ))}
     </CardsGrid>
   );

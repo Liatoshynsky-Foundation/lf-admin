@@ -32,6 +32,7 @@ interface MinimizedFileCardProps {
   linked?: boolean;
   name: string;
   date: string;
+  isSelected?: boolean;
   onClick?: () => void;
   onAction?: (action: 'rename' | 'delete' | 'download', fileId: string) => void;
   onMenuClick?: (e: MouseEvent<HTMLButtonElement>) => void;
@@ -44,6 +45,7 @@ const MinimizedFileCard = ({
   linked = false,
   name,
   date,
+  isSelected = false,
   onClick,
   onAction,
   onMenuClick
@@ -96,7 +98,7 @@ const MinimizedFileCard = ({
   const isMenuOpen = Boolean(anchorEl);
 
   return (
-    <Paper variant="outlined" sx={styles.container} onClick={onClick}>
+    <Paper variant="outlined" sx={styles.container(isSelected)} onClick={onClick}>
       <Stack direction="row" sx={styles.content} alignItems="center" flexGrow={1}>
         <Image
           src={`/icons/${FILE_TYPES[fileType]}.svg`}

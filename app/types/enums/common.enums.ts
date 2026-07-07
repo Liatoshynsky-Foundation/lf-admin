@@ -19,7 +19,7 @@ export enum BaseContentStatuses {
   Published = 'published',
   Hidden = 'hidden',
   Archived = 'archived',
-  Editing = 'editing'
+  Editing = 'editing',
 }
 
 export const NewsStatus = BaseContentStatuses;
@@ -30,6 +30,9 @@ export type MediaStatus = BaseContentStatuses;
 
 export const EventStatus = BaseContentStatuses;
 export type EventStatus = BaseContentStatuses;
+
+export const OpusStatus = BaseContentStatuses;
+export type OpusStatus = BaseContentStatuses;
 
 export enum SortOrder {
   Asc = 'asc',

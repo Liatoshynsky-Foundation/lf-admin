@@ -1,21 +1,35 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 
 import { SelectedMedia } from '../../MediaModal.types';
 import { CropView } from './CropView';
 
+let resizeCallback: ResizeObserverCallback | null = null;
+
 beforeAll(() => {
   globalThis.URL.createObjectURL = jest.fn(() => 'blob:test-url');
   globalThis.URL.revokeObjectURL = jest.fn();
+
+  globalThis.ResizeObserver = class ResizeObserver {
+    constructor(callback: ResizeObserverCallback) {
+      resizeCallback = callback;
+    }
+    observe = jest.fn();
+    unobserve = jest.fn();
+    disconnect = jest.fn(() => {
+      resizeCallback = null;
+    });
+  };
 });
 
 afterEach(() => {
   jest.clearAllMocks();
+  resizeCallback = null;
 });
 
 jest.mock('react-image-crop', () => ({
   __esModule: true,
-  default: ({ children, onChange, onComplete }: any) => (
-    <div data-testid="mock-react-crop">
+  default: ({ children, onChange, onComplete, crop }: any) => (
+    <div data-testid="mock-react-crop" data-current-crop={JSON.stringify(crop)}>
       {children}
       <button
         data-testid="trigger-change"
@@ -150,5 +164,62 @@ describe('CropView', () => {
       <CropView selected={defaultSelected} crop={null} resetSeq={5} onBaseline={jest.fn()} onChange={jest.fn()} />
     );
     expect(screen.getByTestId('CropView')).toHaveAttribute('data-reset-seq', '5');
+  });
+
+  it('should scale down the internal crop state proportionally when container shrinks', () => {
+    render(
+      <CropView selected={defaultSelected} crop={null} resetSeq={0} onBaseline={jest.fn()} onChange={jest.fn()} />
+    );
+
+    const imgInitialSozes = { width: 400, height: 300, naturalWidth: 800, naturalHeight: 600 };
+    const cropPosition = { x: 0, y: 0 };
+    const newContainerSize = { width: 200, height: 150 };
+    const img = screen.getByAltText('');
+    const container = screen.getByTestId('mock-react-crop').parentElement;
+
+    Object.defineProperty(img, 'width', { value: imgInitialSozes.width, configurable: true });
+    Object.defineProperty(img, 'height', { value: imgInitialSozes.height, configurable: true });
+    Object.defineProperty(img, 'naturalWidth', { value: imgInitialSozes.naturalWidth, configurable: true });
+    Object.defineProperty(img, 'naturalHeight', { value: imgInitialSozes.naturalHeight, configurable: true });
+
+    Object.defineProperty(container, 'clientWidth', { value: imgInitialSozes.width, configurable: true });
+    Object.defineProperty(container, 'clientHeight', { value: imgInitialSozes.height, configurable: true });
+
+    act(() => {
+      fireEvent.load(img);
+    });
+
+    const mockReactCropBefore = screen.getByTestId('mock-react-crop');
+    const cropBefore = JSON.parse(mockReactCropBefore.dataset.currentCrop || '{}');
+    expect(cropBefore).toEqual({
+      unit: 'px',
+      x: cropPosition.x,
+      y: cropPosition.y,
+      width: imgInitialSozes.width,
+      height: imgInitialSozes.height
+    });
+
+    Object.defineProperty(container, 'clientWidth', { value: newContainerSize.width, configurable: true });
+    Object.defineProperty(container, 'clientHeight', { value: newContainerSize.height, configurable: true });
+
+    Object.defineProperty(img, 'width', { value: newContainerSize.width, configurable: true });
+    Object.defineProperty(img, 'height', { value: newContainerSize.height, configurable: true });
+
+    if (resizeCallback) {
+      act(() => {
+        resizeCallback!([], {} as ResizeObserver);
+      });
+    }
+
+    const mockReactCropAfter = screen.getByTestId('mock-react-crop');
+    const cropAfter = JSON.parse(mockReactCropAfter.dataset.currentCrop || '{}');
+
+    expect(cropAfter).toEqual({
+      unit: 'px',
+      x: cropPosition.x,
+      y: cropPosition.y,
+      width: newContainerSize.width,
+      height: newContainerSize.height
+    });
   });
 });

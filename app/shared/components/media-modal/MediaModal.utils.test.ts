@@ -1,4 +1,4 @@
-import { isImageUploadFile } from './MediaModal.utils';
+import { isAnyAllowedFile, isAudioUploadFile, isImageUploadFile, isPdfUploadFile } from './MediaModal.utils';
 
 const createFile = (name: string, type: string) => new File(['x'], name, { type });
 
@@ -30,5 +30,79 @@ describe('isImageUploadFile', () => {
     ])('should return %s for extension %s', (expected, name) => {
       expect(isImageUploadFile(createFile(name, ''))).toBe(expected);
     });
+  });
+});
+
+describe('isAudioUploadFile', () => {
+  it.each<readonly [boolean, string, string]>([
+    [true, 'audio/mpeg', 'song.mp3'],
+    [true, 'audio/wav', 'clip.wav'],
+    [false, 'image/png', 'photo.png'],
+    [false, 'application/pdf', 'doc.pdf']
+  ])('should return %s for MIME %s (%s)', (expected, mimeType, name) => {
+    expect(isAudioUploadFile(createFile(name, mimeType))).toBe(expected);
+  });
+
+  it.each<readonly [boolean, string]>([
+    [true, 'song.mp3'],
+    [true, 'clip.WAV'],
+    [true, 'track.flac'],
+    [false, 'doc.pdf'],
+    [false, 'photo.png']
+  ])('should return %s for extension %s when MIME is empty', (expected, name) => {
+    expect(isAudioUploadFile(createFile(name, ''))).toBe(expected);
+  });
+});
+
+describe('isPdfUploadFile', () => {
+  it.each<readonly [boolean, string, string]>([
+    [true, 'application/pdf', 'sheet.pdf'],
+    [false, 'audio/mpeg', 'song.mp3'],
+    [false, 'image/png', 'photo.png']
+  ])('should return %s for MIME %s (%s)', (expected, mimeType, name) => {
+    expect(isPdfUploadFile(createFile(name, mimeType))).toBe(expected);
+  });
+
+  it.each<readonly [boolean, string]>([
+    [true, 'sheet.pdf'],
+    [true, 'SHEET.PDF'],
+    [false, 'song.mp3'],
+    [false, 'notes.doc']
+  ])('should return %s for extension %s when MIME is empty', (expected, name) => {
+    expect(isPdfUploadFile(createFile(name, ''))).toBe(expected);
+  });
+});
+
+describe('isAnyAllowedFile', () => {
+  it('accepts a RAR archive when the extension is allowed', () => {
+    expect(isAnyAllowedFile(createFile('archive.rar', 'application/x-rar-compressed'))).toBe(true);
+  });
+
+  it('rejects a non-RAR archive when the extension is not allowed', () => {
+    expect(isAnyAllowedFile(createFile('archive.tar', 'application/octet-stream'))).toBe(false);
+  });
+
+  it('accepts files with a valid extension and a valid MIME type', () => {
+    expect(isAnyAllowedFile(createFile('photo.png', 'image/png'))).toBe(true);
+  });
+
+  it('rejects files with a valid extension but an invalid MIME type', () => {
+    expect(isAnyAllowedFile(createFile('photo.png', 'text/plain'))).toBe(false);
+  });
+
+  it('accepts files with an empty MIME type when the extension is allowed', () => {
+    expect(isAnyAllowedFile(createFile('photo.png', ''))).toBe(true);
+  });
+
+  it('accepts files with octet-stream MIME type when the extension is allowed', () => {
+    expect(isAnyAllowedFile(createFile('photo.png', 'application/octet-stream'))).toBe(true);
+  });
+
+  it('rejects files with an unsupported extension even if MIME type is valid', () => {
+    expect(isAnyAllowedFile(createFile('document.exe', 'application/pdf'))).toBe(false);
+  });
+
+  it('rejects files with an unsupported extension and empty MIME type', () => {
+    expect(isAnyAllowedFile(createFile('document.exe', ''))).toBe(false);
   });
 });

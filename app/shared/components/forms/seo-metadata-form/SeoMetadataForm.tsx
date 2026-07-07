@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 
 import { SeoBaseFields } from './seo-base-fields/SeoBaseFields';
 import { styles } from './SeoMetadataForm.styles';
+import { CROP_RATIOS } from '~/constants/publications';
 import { ImagePreviewBlock as PhotoBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
 import TooltipCustom from '~/shared/components/design-system/tooltip/Tooltip';
 import { CropRect, CropResult } from '~/types/common';
@@ -150,6 +151,7 @@ export default function SeoMetadataForm({
         imageUrl={ogImagePreview || ''}
         fileName={displayFileName}
         onChangeImage={handleImageChange}
+        aspectRatio={CROP_RATIOS.SOCIAL_MEDIA_PREVIEW}
         disabled={isUploading}
         buttonSpacing="8px"
         stackSpacing="0"

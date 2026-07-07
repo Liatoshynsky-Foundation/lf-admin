@@ -3,20 +3,20 @@ import React from 'react';
 
 import PageCard from './PageCard';
 
-jest.mock('~/lib/utils/formatDate', () => ({
+jest.mock('~/utils/formatDate', () => ({
   formatDate: (date: string) => `formatted-${date}`
 }));
 
 jest.mock('~/shared/components/card-layout/CardMenu', () => {
   return {
     __esModule: true,
-    default: React.forwardRef<HTMLDivElement, any>(function CardMenuMock(props, ref) {
+    default: React.forwardRef<HTMLDivElement, { anchorEl: unknown }>(function CardMenuMock(props, ref) {
       return <div ref={ref} data-testid="page-card-menu" data-open={Boolean(props.anchorEl)} />;
     })
   };
 });
 
-globalThis.ResizeObserver = jest.fn().mockImplementation((callback) => ({
+globalThis.ResizeObserver = jest.fn().mockImplementation((callback: () => void) => ({
   observe: jest.fn(() => callback()),
   unobserve: jest.fn(),
   disconnect: jest.fn()
@@ -93,5 +93,66 @@ describe('PageCard Component', () => {
     fireEvent.error(imageElement);
 
     expect(imageElement).toHaveAttribute('src', '/images/image.png');
+  });
+
+  it('falls back to english title and english alt when ukrainian versions are missing', () => {
+    const fallbackProps = {
+      ...mockProps,
+      title: { en: 'English Title' },
+      coverImage: {
+        src: '/image.png',
+        alt: { uk: '', en: 'English Alt' }
+      }
+    };
+
+    render(<PageCard {...fallbackProps} />);
+
+    expect(screen.getByText('English Title')).toBeInTheDocument();
+    expect(screen.getByAltText('English Alt')).toBeInTheDocument();
+  });
+
+  it('falls back to empty title string and titleText for alt when both language objects are empty', () => {
+    const emptyProps = {
+      ...mockProps,
+      title: {},
+      coverImage: {
+        src: '/image.png',
+        alt: { uk: '', en: '' }
+      }
+    };
+
+    const { container } = render(<PageCard {...emptyProps} />);
+
+    const img = container.querySelector('img');
+    expect(img).toHaveAttribute('alt', '');
+  });
+
+  it('renders empty string for infoNode when updatedAt is not provided', () => {
+    const noDateProps = {
+      ...mockProps,
+      updatedAt: undefined
+    };
+
+    const { container } = render(<PageCard {...noDateProps} />);
+
+    const typographyElement = container.querySelector('.MuiTypography-caption');
+    expect(typographyElement).toHaveTextContent('');
+  });
+
+  it('handles empty editHref by omitting link components and using onClick', () => {
+    const mockOnClick = jest.fn();
+    const noHrefProps = {
+      ...mockProps,
+      editHref: null as unknown as string,
+      onClick: mockOnClick
+    };
+
+    render(<PageCard {...noHrefProps} />);
+
+    const button = screen.getByRole('button', { name: 'Редагувати' });
+    expect(button).not.toHaveAttribute('href');
+
+    fireEvent.click(button);
+    expect(mockOnClick).toHaveBeenCalledTimes(1);
   });
 });

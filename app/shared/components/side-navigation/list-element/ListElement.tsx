@@ -3,19 +3,8 @@ import { LinkElementProps } from 'app/types/sideNavigation';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
+import { isActivePath } from '../SideNavigation.utils';
 import { styles } from './ListElement.styles';
-
-const isActivePath = (href: string | undefined, pathName: string | null) => {
-  if (!href || !pathName) {
-    return false;
-  }
-
-  if (href === '/') {
-    return pathName === href;
-  }
-
-  return pathName === href || pathName.startsWith(`${href}/`);
-};
 
 export const ListElement: React.FC<LinkElementProps> = ({
   element,

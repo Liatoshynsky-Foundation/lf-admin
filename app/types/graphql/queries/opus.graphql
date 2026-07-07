@@ -1,0 +1,115 @@
+query OpusById($id: ID!) {
+  opusById(id: $id) {
+    id
+    number
+    numberKind
+    title {
+      uk
+      en
+    }
+    releaseYear
+    name
+    additionalText
+    creationYear
+    endYear
+    datesNote
+    genre
+    adminTitle
+    slug
+    status
+    description {
+      uk
+      en
+    }
+    keywords {
+      uk
+      en
+    }
+    allowIndexation {
+      uk
+      en
+    }
+    coverImage {
+      src
+      alt {
+        uk
+        en
+      }
+      crop {
+        x
+        y
+        width
+        height
+      }
+    }
+    compositions {
+      id
+      opusId
+      title {
+        uk
+        en
+      }
+      year
+      genre
+      audioAvailable
+      sheetAvailable
+      sheetMusic {
+        url
+        name
+        publishDate
+        isFree
+        dateUploaded
+      }
+      audios {
+        name
+        url
+      }
+    }
+    publishedAt
+    createdAt
+    updatedAt
+  }
+}
+
+query AllOpuses($filters: OpusFiltersInput) {
+  allOpuses(filters: $filters) {
+    id
+    number
+    numberKind
+    title {
+      uk
+      en
+    }
+    releaseYear
+    genre
+    status
+    updatedAt
+    createdAt
+  }
+}
+
+query SearchCompositions($search: String!) {
+  searchCompositions(search: $search) {
+    id
+    opusId
+    title {
+      uk
+      en
+    }
+    year
+    genre
+    audioAvailable
+    sheetAvailable
+    sheetMusic {
+      url
+      name
+      publishDate
+      isFree
+      dateUploaded
+    }
+    audios {
+      name
+      url
+    }
+  }
+}
