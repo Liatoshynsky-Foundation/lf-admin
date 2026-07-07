@@ -10,6 +10,13 @@ export const DEFAULT_COVER_IMAGE = {
   alt: { uk: 'Зображення', en: 'Image' },
 };
 
+const DEFAULT_MAPPED_SEO = {
+  description: { uk: '', en: '' },
+  keywords: undefined,
+  canonicalUrl: undefined,
+  allowIndexation: undefined
+};
+
 jest.mock('../../db/connect', () => ({
   __esModule: true,
   default: jest.fn().mockResolvedValue(undefined)
@@ -138,6 +145,8 @@ describe('PageRepository', () => {
         category: 'foundation',
         coverImage: DEFAULT_COVER_IMAGE,
         blocks: publishedDoc.blocks,
+        blocksOrder: undefined,
+        ...DEFAULT_MAPPED_SEO,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-02-01T00:00:00.000Z'
       });
@@ -170,6 +179,7 @@ describe('PageRepository', () => {
         pageType: 'AboutUsPage',
         blocks: draftDoc.blocks,
         blocksOrder: draftDoc.blocksOrder,
+        ...DEFAULT_MAPPED_SEO,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-02-01T00:00:00.000Z'
       });
@@ -228,6 +238,7 @@ describe('PageRepository', () => {
         coverImage: DEFAULT_COVER_IMAGE,
         pageType: 'AboutUsPage',
         blocks: updatedDraft.blocks,
+        ...DEFAULT_MAPPED_SEO,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-03-01T00:00:00.000Z'
       });
@@ -293,6 +304,7 @@ describe('PageRepository', () => {
         category: 'foundation',
         coverImage: DEFAULT_COVER_IMAGE,
         blocks: updatedPublished.blocks,
+        ...DEFAULT_MAPPED_SEO,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-05-01T00:00:00.000Z'
       });
@@ -457,6 +469,8 @@ describe('PageRepository', () => {
         coverImage: DEFAULT_COVER_IMAGE,
         pageType: 'AboutUsPage',
         blocks: publishedDoc.blocks,
+        blocksOrder: undefined,
+        ...DEFAULT_MAPPED_SEO,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-02-01T00:00:00.000Z'
       }]);
