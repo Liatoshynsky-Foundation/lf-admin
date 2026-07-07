@@ -22,6 +22,9 @@ export type DbOpus = {
   adminTitle?: string | null;
   slug?: string | null;
   description: Opus['description'];
+  introDescription?: Opus['introDescription'];
+  parts?: Opus['parts'];
+  gallery: Opus['gallery'];
   keywords: Opus['keywords'];
   allowIndexation: Opus['allowIndexation'];
   coverImage: Opus['coverImage'];
@@ -51,6 +54,24 @@ const toEntity = (doc: DbOpus): Opus =>
     adminTitle: doc.adminTitle ?? undefined,
     slug: doc.slug ?? undefined,
     description: doc.description ?? undefined,
+    introDescription: doc.introDescription ?? undefined,
+    parts: doc.parts ?? undefined,
+    gallery:
+      doc.gallery?.map((item) => ({
+        id: (item as any)._id?.toString() ?? '',
+        src: item.src,
+        description: item.description,
+        altText: item.altText,
+        crop:
+          item.crop && item.crop.x !== undefined && item.crop.y !== undefined
+            ? {
+              x: Number(item.crop.x) || 0,
+              y: Number(item.crop.y) || 0,
+              width: Number(item.crop.width) || 0,
+              height: Number(item.crop.height) || 0
+            }
+            : null
+      })) ?? [],
     keywords: doc.keywords ?? undefined,
     allowIndexation: doc.allowIndexation ?? undefined,
     coverImage: doc.coverImage ?? undefined,

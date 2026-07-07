@@ -75,6 +75,8 @@ export interface FetchedOpusData {
   status?: OpusStatus | null;
   title?: { uk?: string | null; en?: string | null } | null;
   description?: { uk?: string | null; en?: string | null } | null;
+  introDescription?: { uk?: string | null; en?: string | null } | null;
+  parts?: { uk?: string | null; en?: string | null } | null;
   keywords?: { uk?: string | null; en?: string | null } | null;
   allowIndexation?: { uk?: boolean | null; en?: boolean | null } | null;
   coverImage?: {

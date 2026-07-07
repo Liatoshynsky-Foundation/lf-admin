@@ -21,6 +21,10 @@ query OpusById($id: ID!) {
       uk
       en
     }
+    parts {
+      uk
+      en
+    }
     introDescription {
       uk
       en
@@ -48,10 +52,20 @@ query OpusById($id: ID!) {
     }
     gallery {
       id
-      url
+      src
       description {
         uk
         en
+      }
+      altText {
+        uk
+        en
+      }
+      crop {
+        x
+        y
+        width
+        height
       }
     }
     performances {
@@ -89,6 +103,38 @@ query OpusById($id: ID!) {
     publishedAt
     createdAt
     updatedAt
+
+    introDescription {
+      uk
+      en
+    }
+    gallery {
+      id
+      src
+      description {
+        uk
+        en
+      }
+      altText {
+        uk
+        en
+      }
+      crop {
+        x
+        y
+        width
+        height
+      }
+    }
+    performances {
+      id
+      title {
+        uk
+        en
+      }
+      videoUrl
+      performers
+    }
   }
 }
 

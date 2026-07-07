@@ -20,6 +20,32 @@ mutation UpdateOpus($id: ID!, $input: UpdateOpusInput!) {
       uk
       en
     }
+    introDescription {
+      uk
+      en
+    }
+    parts {
+      uk
+      en
+    }
+    gallery {
+      id
+      src
+      description {
+        uk
+        en
+      }
+      altText {
+        uk
+        en
+      }
+      crop {
+        x
+        y
+        width
+        height
+      }
+    }
     updatedAt
   }
 }

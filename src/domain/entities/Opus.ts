@@ -15,9 +15,11 @@ export type OpusDescription = {
 };
 
 export type OpusGalleryItem = {
-  id?: string;
-  url: string;
+  id: string;
+  src: string;
   description?: LocalizedString | null;
+  altText?: LocalizedString | null;
+  crop?: { x: number; y: number; width: number; height: number } | null;
 };
 
 export type OpusPerformance = {
@@ -45,6 +47,7 @@ export type Opus = {
   slug?: string;
   description?: OpusDescription | null;
   introDescription?: OpusDescription | null;
+  parts?: OpusDescription | null;
   keywords?: LocalizedString | null;
   allowIndexation?: LocalizedBoolean | null;
   coverImage?: LocalizedImage | null;

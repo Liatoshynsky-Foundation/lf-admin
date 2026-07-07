@@ -5,7 +5,7 @@ import { opusServiceErrors } from '~/back-constants/errors';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
 import { LocalizedBoolean, LocalizedImage, LocalizedString } from '~/domain/entities/BaseContent';
-import type { Opus, OpusDescription, OpusNumberKind } from '~/domain/entities/Opus';
+import type { Opus, OpusDescription, OpusGalleryItem, OpusNumberKind, OpusPerformance } from '~/domain/entities/Opus';
 import { CompositionInput } from '~/domain/repositories/compositionRepository';
 import { CreateOpusInput, UpdateOpusInput } from '~/domain/repositories/opusRepository';
 import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerator';
@@ -35,6 +35,12 @@ export type CreateOpusGQLInput = {
   adminTitle?: string;
   title: LocalizedString;
   description?: OpusDescription;
+
+  introDescription?: OpusDescription; 
+  parts?: OpusDescription;
+  gallery?: OpusGalleryItem[];
+  performances?: OpusPerformance[]
+
   keywords?: LocalizedString;
   allowIndexation?: LocalizedBoolean;
   coverImage?: LocalizedImage;
@@ -114,7 +120,12 @@ const buildOpusUpdateData = (
     allowIndexation: input.allowIndexation,
     coverImage: input.coverImage,
     status: input.status,
-    publishedAt: input.publishedAt
+    publishedAt: input.publishedAt,
+
+    introDescription: input.introDescription,
+    parts: input.parts,
+    gallery: input.gallery,
+    performances: input.performances
   };
 
   return Object.fromEntries(Object.entries(candidate).filter(([, value]) => value !== undefined)) as UpdateOpusInput;
@@ -163,6 +174,8 @@ export const OpusMutation = {
       adminTitle: input.adminTitle ?? null,
       slug,
       description: input.description ?? null,
+      introDescription: input.introDescription ?? null,
+      parts: input.parts ?? null,
       keywords: input.keywords ?? null,
       allowIndexation: input.allowIndexation ?? null,
       coverImage: input.coverImage ?? null,

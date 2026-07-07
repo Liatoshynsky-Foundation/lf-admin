@@ -43,8 +43,10 @@ type Composition {
 
 type OpusGalleryItem {
   id: ID!
-  url: String!
+  src: String!
   description: LocalizedString
+  altText: LocalizedString
+  crop: CropRect
 }
 
 type OpusPerformance {
@@ -70,6 +72,7 @@ type Opus {
   slug: String
   description: LocalizedString
   introDescription: LocalizedString
+  parts: LocalizedString
   keywords: LocalizedString
   coverImage: LocalizedImage
 
@@ -129,6 +132,7 @@ input CreateOpusInput {
   title: JSON!
   description: JSON
   introDescription: JSON
+  parts: JSON
   gallery: JSON
   performances: JSON
   keywords: JSON
@@ -152,6 +156,7 @@ input UpdateOpusInput {
   title: JSON
   description: JSON
   introDescription: JSON
+  parts: JSON
   gallery: JSON
   performances: JSON
   keywords: JSON

@@ -13,7 +13,7 @@ import {
   MenuItem,
   Typography
 } from '@mui/material';
-import { MouseEvent, useEffect,useState } from 'react';
+import { MouseEvent, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { styles } from './GroupContentView.styles';
@@ -33,7 +33,7 @@ import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavig
 import { useOpusById } from '~/shared/hooks/use-opuses/useOpuses';
 import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
-import { OpusNumberKind, OpusStatus,useUpdateOpusMutation } from '~/types/graphql/generated/graphql';
+import { OpusNumberKind, OpusStatus, useUpdateOpusMutation } from '~/types/graphql/generated/graphql';
 
 type AnchorId = 'navigation' | 'publish';
 type MenuAnchor = Partial<Record<AnchorId, HTMLButtonElement>>;
@@ -121,17 +121,21 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
           en: ''
         },
         status: fetchedOpus.status || 'draft',
-        parts: { uk: '', en: '' },
+        parts: {
+          uk: fetchedOpus.parts?.uk ?? '',
+          en: fetchedOpus.parts?.en ?? ''
+        },
         description: {
           uk: parseDescription(fetchedOpus.introDescription?.uk),
           en: parseDescription(fetchedOpus.introDescription?.en)
         },
         photos: (fetchedOpus.gallery || []).map((photo: any) => ({
           id: photo.id,
-          url: photo.url,
-          src: photo.url,
-          description: photo.description?.uk || '',
-          caption: { uk: photo.description?.uk || '', en: photo.description?.en || '' }
+          src: photo.src || '',
+          fileName: '',
+          caption: { uk: photo.description?.uk || '', en: photo.description?.en || '' },
+          altText: { uk: photo.altText?.uk || '', en: photo.altText?.en || '' },
+          crop: photo.crop || null
         })),
         performancesTitle: '',
         performances: (fetchedOpus.performances || []).map((perf: any) => ({
@@ -210,6 +214,11 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
         endYear: groupData.endYear ? String(groupData.endYear) : null,
         datesNote: groupData.dateAdditionalText?.uk ? String(groupData.dateAdditionalText.uk) : null,
 
+        parts: {
+          uk: String(groupData.parts?.uk || ''),
+          en: String(groupData.parts?.en || '')
+        },
+
         introDescription: {
           uk: groupData.description?.uk ? JSON.stringify(groupData.description.uk) : '""',
           en: groupData.description?.en ? JSON.stringify(groupData.description.en) : '""'
@@ -234,24 +243,39 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
         })),
 
         gallery: (groupData.photos || []).map((photo) => ({
-          id: photo.id?.startsWith('photo-') ? undefined : photo.id,
-          url: photo.url ? String(photo.url) : photo.src ? String(photo.src) : '',
+          id: photo.id?.startsWith('photo-') || photo.id?.includes('-') ? undefined : photo.id,
+          src: photo.src ? String(photo.src) : '',
           description: {
-            uk: typeof photo.description === 'string' ? String(photo.description) : String(photo.caption?.uk || ''),
-            en: String(photo.caption?.en || '')
-          }
+            uk: photo.caption?.uk || '',
+            en: photo.caption?.en || ''
+          },
+          altText: {
+            uk: photo.altText?.uk || '',
+            en: photo.altText?.en || ''
+          },
+          crop: photo.crop || null
         })),
 
-        performances: (groupData.performances || []).map((perf) => ({
-          id: perf.id?.startsWith('perf-') ? undefined : perf.id,
-          title: {
-            uk: typeof perf.title === 'string' ? String(perf.title) : String(perf.caption?.uk || ''),
-            en: String(perf.caption?.en || '')
-          },
-          videoUrl: perf.videoUrl ? String(perf.videoUrl) : perf.url ? String(perf.url) : '',
+        performances: (groupData.performances || []).map((perf) => {
+          const ukTitle =
+            typeof perf.title === 'string' && perf.title
+              ? String(perf.title)
+              : typeof perf.caption === 'string' && perf.caption
+                ? String(perf.caption)
+                : String(perf.caption?.uk || '');
 
-          performers: Array.isArray(perf.performers) ? perf.performers.join(', ') : String(perf.performers || '')
-        }))
+          const enTitle = typeof perf.caption === 'string' ? '' : String(perf.caption?.en || '');
+
+          return {
+            id: perf.id?.startsWith('perf-') ? undefined : perf.id,
+            title: {
+              uk: ukTitle || 'Без назви',
+              en: enTitle || ukTitle || 'Untitled'
+            },
+            videoUrl: perf.videoUrl ? String(perf.videoUrl) : perf.url ? String(perf.url) : '',
+            performers: Array.isArray(perf.performers) ? perf.performers.join(', ') : String(perf.performers || '')
+          };
+        })
       };
 
       await updateOpus({
@@ -407,6 +431,7 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
 
         <CollapsibleBlock title="Фото" defaultExpanded>
           <GroupPhotosSection
+            currentLanguage={currentLanguage}
             photos={groupData.photos}
             onChange={(newPhotos) => handleFieldChange('photos', newPhotos)}
           />

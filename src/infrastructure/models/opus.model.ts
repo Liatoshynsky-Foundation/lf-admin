@@ -19,23 +19,6 @@ const opusDescriptionSchema = new Schema(
   { _id: false }
 );
 
-const galleryItemSchema = new Schema(
-  {
-    url: { type: String, required: true },
-    description: { type: translatedFieldSchema, default: null }
-  },
-  { _id: true }
-);
-
-const performanceSchema = new Schema(
-  {
-    title: { type: translatedFieldSchema, default: null },
-    videoUrl: { type: String, default: null },
-    performers: { type: String, default: null }
-  },
-  { _id: true }
-);
-
 const opusSchema = new Schema(
   {
     number: { type: String, required: true, unique: true, index: true },
@@ -53,12 +36,41 @@ const opusSchema = new Schema(
     adminTitle: { type: String, default: null },
     slug: { type: String, default: null },
     description: { type: opusDescriptionSchema, default: null },
-    introDescription: { type: opusDescriptionSchema, default: null },
+    introDescription: {
+      uk: { type: String, default: '' },
+      en: { type: String, default: '' }
+    },
+    parts: {
+      uk: { type: String, default: '' },
+      en: { type: String, default: '' }
+    },
     keywords: { type: optionalTranslatedFieldSchema, default: null },
     allowIndexation: { type: translatedBooleanSchema, default: null },
     coverImage: { type: localizedImageSchema, default: null },
-    gallery: { type: [galleryItemSchema], default: [] },
-    performances: { type: [performanceSchema], default: [] },
+    gallery: [
+      {
+        src: { type: String, required: true },
+        description: {
+          uk: { type: String, default: '' },
+          en: { type: String, default: '' }
+        },
+        altText: {
+          uk: { type: String, default: '' },
+          en: { type: String, default: '' }
+        },
+        crop: { type: Schema.Types.Mixed, default: null }
+      }
+    ],
+    performances: [
+      {
+        title: {
+          uk: { type: String, default: '' },
+          en: { type: String, default: '' }
+        },
+        videoUrl: { type: String, default: '' },
+        performers: { type: String, default: '' }
+      }
+    ],
     status: {
       type: String,
       enum: Array.from(Object.values(OpusStatus)),

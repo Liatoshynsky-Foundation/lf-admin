@@ -95,8 +95,8 @@ export interface GroupPhoto {
   id?: string;
   src?: string;
   fileName?: string;
-  caption?: { uk: string; en: string };
-  altText?: string;
+  caption: { uk: string; en: string };
+  altText: { uk: string; en: string };
   crop?: MediaModalResult['crop'] | null;
 
   url?: string;
