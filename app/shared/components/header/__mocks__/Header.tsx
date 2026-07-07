@@ -29,7 +29,7 @@ export const Header = ({
       cancel
     </button>
     <span data-testid="saving-flag">{String(isSaving)}</span>
-    <span data-testid="actions-disabled-flag">{isActionsDisabled}</span>
+    <span data-testid="actions-disabled-flag">{String(isActionsDisabled)}</span>
     <button data-testid="lang-en" onClick={() => onLanguageChange('en')}>
       set-en
     </button>
