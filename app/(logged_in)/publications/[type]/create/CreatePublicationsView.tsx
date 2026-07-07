@@ -110,7 +110,7 @@ export default function CreatePublicationsView({
       case MenuActionId.PUBLISH: {
         const id = await handleSave(BaseContentStatuses.Published);
         if (id) {
-          toast.success(CONTENT_MUTATION_RESULTS.draftPublished);
+          toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
         }
         break;
       }
@@ -118,7 +118,7 @@ export default function CreatePublicationsView({
       case MenuActionId.PUBLICATE_AND_EXIT: {
         const id = await handleSave(BaseContentStatuses.Published);
         if (id) {
-          toast.success(CONTENT_MUTATION_RESULTS.draftPublished);
+          toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
           router.push(PUBLICATIONS_BASE_PATH);
         }
         break;
