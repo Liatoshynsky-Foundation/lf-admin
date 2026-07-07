@@ -24,6 +24,7 @@ export const EditablePageLayout = ({
   const [isMounted, setIsMounted] = useState(false);
 
   const setLocale = useStore((s) => s.setLocale);
+  const isChanged = useStore((s) => s.isChanged);
   const discardChanges = useStore((s) => s.discardChanges);
 
   const { data, loading: queryLoading } = useGetPageQuery({
@@ -56,6 +57,7 @@ export const EditablePageLayout = ({
         title={headerTitle}
         onPreview={preview}
         onSave={save}
+        isActionsDisabled={!isChanged}
         onCancel={() => discardChanges(pageSlug)}
         isSaving={editorLoading || saveLoading}
         onLanguageChange={(lang: 'uk' | 'en') => setLocale(lang)}

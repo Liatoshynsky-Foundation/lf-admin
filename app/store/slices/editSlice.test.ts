@@ -149,18 +149,36 @@ describe('editSlice', () => {
     expect(store.getState().isChanged).toBe(true);
   });
 
-  it('should save as draft (reset isChanged)', () => {
+  it.each([
+    {
+      method: 'saveAsDraft' as const,
+      desc: 'save as draft (reset isChanged, originalBlocks & originalBlocksOrder are updated)'
+    },
+    {
+      method: 'publishPage' as const,
+      desc: 'publish page (reset isChanged, blocks & blocksOrder are updated)'
+    },
+  ])('should $desc', ({ method }) => {
     store.getState().setField(PAGE_ID, BLOCK_ID, 'title' as FieldKey, 'New' as FieldValue);
     expect(store.getState().isChanged).toBe(true);
 
-    store.getState().saveAsDraft(PAGE_ID);
+    store.getState()[method](PAGE_ID);
     expect(store.getState().isChanged).toBe(false);
-  });
 
-  it('should publish page (reset isChanged)', () => {
-    store.getState().setField(PAGE_ID, BLOCK_ID, 'title' as FieldKey, 'New' as FieldValue);
-    store.getState().publishPage(PAGE_ID);
-    expect(store.getState().isChanged).toBe(false);
+    const currentBlocks = store.getState().blocks;
+    const currentBlocksOrder = store.getState().blocksOrder;
+    const newBlocks = store.getState().blocks[PAGE_ID];
+    const newBlocksOrder = store.getState().blocksOrder[PAGE_ID];
+
+
+    expect(store.getState().originalBlocks).toStrictEqual({
+      ...currentBlocks,
+      [PAGE_ID]: newBlocks
+    });
+    expect(store.getState().originalBlocksOrder).toStrictEqual({
+      ...currentBlocksOrder,
+      [PAGE_ID]: newBlocksOrder
+    });
   });
 
   it('should discard changes and restore from original', () => {

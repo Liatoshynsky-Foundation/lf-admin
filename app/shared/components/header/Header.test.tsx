@@ -7,13 +7,13 @@ type HeaderProps = {
   onPreview: () => void;
   onSave: () => void;
   isSaving: boolean;
-  onLanguageChange: (lang: 'ua' | 'en') => void;
+  onLanguageChange: (lang: 'uk' | 'en') => void;
   children?: React.ReactNode;
 };
 
 jest.mock('../language-switcher/LanguageSwitcher', () => ({
   __esModule: true,
-  default: ({ languageSwitcher }: { languageSwitcher: (lang: 'ua' | 'en') => void }) => (
+  default: ({ languageSwitcher }: { languageSwitcher: (lang: 'uk' | 'en') => void }) => (
     <button data-testid="language-switcher" onClick={() => languageSwitcher('en')}>
       Switch Language
     </button>
@@ -37,7 +37,8 @@ describe('Header', () => {
     onSave: jest.fn(),
     onCancel: jest.fn(),
     isSaving: false,
-    onLanguageChange: jest.fn()
+    onLanguageChange: jest.fn(),
+    isActionsDisabled: true,
   };
 
   beforeEach(() => {
