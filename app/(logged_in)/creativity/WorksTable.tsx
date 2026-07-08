@@ -27,7 +27,7 @@ export type GroupRowData = Readonly<{
   endDate?: string;
   status: WorkStatus;
   updatedAt: string;
-  works: ReadonlyArray<{ id: string; title: string; year: string }>;
+  works: ReadonlyArray<{ id: string; title: string }>;
 }>;
 
 export type GroupHeaderData = Readonly<{
@@ -44,7 +44,6 @@ export type GroupHeaderData = Readonly<{
 export type OpusWork = Readonly<{
   id: string;
   title: string;
-  year: string;
 }> &
   ActionFields;
 
@@ -115,7 +114,7 @@ export const columns: readonly ColumnDef<GroupHeaderData, OpusWork, IndividualWo
 type WorksTableProps = Readonly<{
   visibleOpusGroups: readonly GroupRowData[];
   visibleUngroupedGroups: readonly GroupRowData[];
-  visibleUngroupedWorks: readonly IndividualWork[];
+  // visibleUngroupedWorks: readonly IndividualWork[];
   showOpus: boolean;
   showUngrouped: boolean;
   showIndividualWorks: boolean;
@@ -124,10 +123,10 @@ type WorksTableProps = Readonly<{
 export function WorksTable({
   visibleOpusGroups,
   visibleUngroupedGroups,
-  visibleUngroupedWorks,
+  // visibleUngroupedWorks,
   showOpus,
-  showUngrouped,
-  showIndividualWorks
+  showUngrouped
+  // showIndividualWorks
 }: WorksTableProps) {
   function groupsRow(group: GroupRowData): BaseRowData<GroupHeaderData, OpusWork, IndividualWork> {
     const isPublished = group.status === BaseContentStatuses.Published;
@@ -160,7 +159,6 @@ export function WorksTable({
       subRows: group.works.map((work) => ({
         id: work.id,
         title: work.title,
-        year: work.year,
         menuActions: {
           menuItems: WorkMenuItems({
             id: work.id,
@@ -173,34 +171,34 @@ export function WorksTable({
     };
   }
 
-  function individualWorkRow(work: IndividualWork): BaseRowData<GroupHeaderData, OpusWork, IndividualWork> {
-    const isPublished = work.status === BaseContentStatuses.Published;
+  // function individualWorkRow(work: IndividualWork): BaseRowData<GroupHeaderData, OpusWork, IndividualWork> {
+  //   const isPublished = work.status === BaseContentStatuses.Published;
 
-    return {
-      type: 'individual',
-      id: work.id,
-      plainData: {
-        id: work.id,
-        title: work.title,
-        genre: work.genre,
-        year: work.year,
-        status: work.status,
-        updatedAt: work.updatedAt,
-        editAction: {
-          editHref: `${WORKS_BASE_PATH}/work/${work.id}/edit`,
-          editLabel: `Редагувати твір ${work.title}`
-        },
-        menuActions: {
-          menuItems: WorkMenuItems({
-            id: work.id,
-            isPublished,
-            setDeleteModalOpen: modalMock
-          }),
-          menuTriggerLabel: `Дії твору ${work.title}`
-        }
-      }
-    };
-  }
+  //   return {
+  //     type: 'individual',
+  //     id: work.id,
+  //     plainData: {
+  //       id: work.id,
+  //       title: work.title,
+  //       genre: work.genre,
+  //       year: work.year,
+  //       status: work.status,
+  //       updatedAt: work.updatedAt,
+  //       editAction: {
+  //         editHref: `${WORKS_BASE_PATH}/work/${work.id}/edit`,
+  //         editLabel: `Редагувати твір ${work.title}`
+  //       },
+  //       menuActions: {
+  //         menuItems: WorkMenuItems({
+  //           id: work.id,
+  //           isPublished,
+  //           setDeleteModalOpen: modalMock
+  //         }),
+  //         menuTriggerLabel: `Дії твору ${work.title}`
+  //       }
+  //     }
+  //   };
+  // }
 
   const rows: BaseRowData<GroupHeaderData, OpusWork, IndividualWork>[] = [];
 
@@ -213,11 +211,11 @@ export function WorksTable({
   if (showOpus) pushGroupRows(visibleOpusGroups);
   if (showUngrouped) pushGroupRows(visibleUngroupedGroups);
 
-  if (showIndividualWorks) {
-    visibleUngroupedWorks.forEach((work) => {
-      rows.push(individualWorkRow(work));
-    });
-  }
+  // if (showIndividualWorks) {
+  //   visibleUngroupedWorks.forEach((work) => {
+  //     rows.push(individualWorkRow(work));
+  //   });
+  // }
 
   return (
     <Box sx={styles.worksListContainer}>

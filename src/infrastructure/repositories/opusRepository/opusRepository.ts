@@ -6,6 +6,7 @@ import { Opus } from '~/domain/entities/Opus';
 import { CreateOpusInput, IOpusRepository, OpusFilters } from '~/domain/repositories/opusRepository';
 import dbConnect from '~/infrastructure/db/connect';
 import { buildBaseQuery, createToEntity, getBaseSort } from '~/infrastructure/repositories/helpers';
+import { OpusNumberKind } from '~/types/graphql/generated/graphql';
 
 export type DbOpus = {
   _id: { toString(): string };
@@ -15,7 +16,7 @@ export type DbOpus = {
   numberKind: Opus['numberKind'];
   name?: string | null;
   additionalText?: string | null;
-  creationYear?: string | null;
+  creationYear: string;
   endYear?: string | null;
   datesNote?: string | null;
   genre?: string | null;
@@ -41,10 +42,10 @@ const toEntity = (doc: DbOpus): Opus =>
     number: doc.number,
     title: doc.title,
     releaseYear: doc.releaseYear ?? undefined,
-    numberKind: doc.numberKind ?? 'op',
+    numberKind: doc.numberKind ?? OpusNumberKind.Op,
     name: doc.name ?? undefined,
     additionalText: doc.additionalText ?? undefined,
-    creationYear: doc.creationYear ?? undefined,
+    creationYear: doc.creationYear ?? '',
     endYear: doc.endYear ?? undefined,
     datesNote: doc.datesNote ?? undefined,
     genre: doc.genre ?? undefined,

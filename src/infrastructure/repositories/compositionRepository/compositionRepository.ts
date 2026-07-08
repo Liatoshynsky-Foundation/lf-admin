@@ -1,7 +1,7 @@
 import mongoose, { Model } from 'mongoose';
 
 import { Composition } from '~/domain/entities/Composition';
-import { CompositionInput, ICompositionRepository } from '~/domain/repositories/compositionRepository';
+import { CompositionFilters, CompositionInput, ICompositionRepository } from '~/domain/repositories/compositionRepository';
 import dbConnect from '~/infrastructure/db/connect';
 
 export type DbComposition = {
@@ -12,7 +12,6 @@ export type DbComposition = {
   year?: number | null;
   genre?: string | null;
   genres?: Array<{ toString(): string }>;
-  categories?: Array<{ toString(): string }>;
   audioAvailable?: boolean;
   sheetAvailable?: boolean;
   sheetMusic: Composition['sheetMusic'];
@@ -33,7 +32,6 @@ const toEntity = (doc: DbComposition): Composition => ({
   year: doc.year ?? undefined,
   genre: doc.genre ?? undefined,
   genres: (doc.genres ?? []).map((value) => value.toString()),
-  categories: (doc.categories ?? []).map((value) => value.toString()),
   audioAvailable: doc.audioAvailable ?? false,
   sheetAvailable: doc.sheetAvailable ?? false,
   sheetMusic: doc.sheetMusic ?? [],
@@ -124,5 +122,60 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
     return docs.map(toEntity);
   };
 
-  return { findByOpusId, syncForOpus, deleteByOpusId, searchByTitle };
+  const findByOpusIds = async (opusIds: string[]): Promise<Composition[]> => {
+    await dbConnect();
+
+    const validIds = opusIds
+      .filter((id) => mongoose.Types.ObjectId.isValid(id))
+      .map((id) => new mongoose.Types.ObjectId(id));
+
+    if (!validIds.length) {
+      return [];
+    }
+
+    const docs = await CompositionModel.find({ opusId: { $in: validIds } })
+      .sort({ order: 1, _id: 1 })
+      .lean<DbComposition[]>();
+
+    return docs.map(toEntity);
+  };
+
+  const findStandalonePaginated = async (
+    filters: CompositionFilters,
+    page: number,
+    pageSize: number
+  ): Promise<{ items: Composition[]; total: number }> => {
+    await dbConnect();
+
+    const query: any = { opusId: null };
+
+    if (filters.search?.trim()) {
+      const searchRegex = new RegExp(filters.search.trim().replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`), 'i');
+      query.$or = [
+        { 'title.uk': searchRegex },
+        { 'title.en': searchRegex }
+      ];
+    }
+
+    const [docs, total] = await Promise.all([
+      CompositionModel.find(query)
+        .sort({ createdAt: -1 })
+        .skip(page * pageSize)
+        .limit(pageSize)
+        .lean<DbComposition[]>(),
+      CompositionModel.countDocuments(query)
+    ]);
+
+    return { items: docs.map(toEntity), total };
+  };
+
+  return {
+    findByOpusId,
+    syncForOpus,
+    deleteByOpusId,
+    searchByTitle,
+    findByOpusIds,
+    findStandalonePaginated
+  };
 };
+

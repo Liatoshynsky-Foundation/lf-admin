@@ -80,11 +80,19 @@ query AllOpuses($filters: OpusFiltersInput) {
       uk
       en
     }
-    releaseYear
     genre
     status
+    creationYear
+    endYear
     updatedAt
     createdAt
+    compositions {
+      id
+      title {
+        uk
+        en
+      }
+    }
   }
 }
 

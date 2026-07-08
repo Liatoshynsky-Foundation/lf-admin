@@ -6,7 +6,6 @@ import { graphqlErrors } from '~/constants/errors';
 import { Composition } from '~/domain/entities/Composition';
 import { Opus } from '~/domain/entities/Opus';
 import { OpusFilters } from '~/domain/repositories/opusRepository';
-import { OpusStatus } from '~/types/enums/common.enums';
 
 interface IdArgs {
   id: string;
@@ -25,9 +24,9 @@ interface PaginatedArgs {
   limit: number;
   filters?: NonNullable<FilterArgs['filters']>;
 }
-interface CountArgs {
-  status?: string;
-}
+// interface CountArgs {
+//   status?: string;
+// }
 
 const assertAuthenticated = (context: GraphQLContext): void => {
   if (!context.admin) {
@@ -68,9 +67,31 @@ export const OpusQuery = {
     return context.requestContainer.cradle.compositionsRepository.searchByTitle(search);
   },
 
-  allOpuses: endpointHandler<FilterArgs, Opus[]>(async ({ args: { filters }, repo }) =>
-    repo.findAll(mapFilters<OpusFilters>(filters))
-  ),
+  allOpuses: endpointHandler<FilterArgs, Opus[]>(async ({ args: { filters }, repo, requestContainer }) => {
+    const opuses = await repo.findAll(mapFilters<OpusFilters>(filters));
+    if (!opuses || opuses.length === 0) return [];
+
+    const opusIds = opuses.map((o) => o.id);
+    const compositionsRepo = requestContainer.cradle.compositionsRepository;
+    const allCompositions = await compositionsRepo.findByOpusIds(opusIds);
+
+    const compositionsByOpusId = new Map<string, typeof allCompositions>();
+  
+    for (const comp of allCompositions) {
+      if (comp.opusId) {
+        const idStr = String(comp.opusId);
+        if (!compositionsByOpusId.has(idStr)) {
+          compositionsByOpusId.set(idStr, []);
+        }
+      compositionsByOpusId.get(idStr)!.push(comp);
+      }
+    }
+
+    return opuses.map((opus) => ({
+      ...opus,
+      compositions: compositionsByOpusId.get(String(opus.id)) ?? []
+    }));
+  }),
 
   paginatedOpuses: endpointHandler<
     PaginatedArgs,
@@ -79,7 +100,7 @@ export const OpusQuery = {
     repo.findPaginated(page, limit, mapFilters<OpusFilters>(filters))
   ),
 
-  opusesCount: endpointHandler<CountArgs, number>(async ({ args: { status }, repo }) =>
-    repo.count(status ? { statuses: [status as OpusStatus] } : undefined)
-  )
+  // opusesCount: endpointHandler<CountArgs, number>(async ({ args: { status }, repo }) =>
+  //   repo.count(status ? { statuses: [status as OpusStatus] } : undefined)
+  // )
 };
