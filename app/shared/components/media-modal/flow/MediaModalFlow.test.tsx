@@ -17,9 +17,12 @@ import { MockDsButton } from '../test-utils/mockDsButton';
 import { MediaModalFlow } from './MediaModalFlow';
 import type { CropResult } from '~/types/common';
 
+const mockUploadFile = jest.fn();
+const mockFetch = jest.fn();
+
 jest.mock('~/hooks/use-upload/useUpload', () => ({
   useUpload: () => ({
-    uploadFile: jest.fn().mockResolvedValue({ id: 'upload-pdf-1', fileName: 'doc.pdf' })
+    uploadFile: mockUploadFile
   })
 }));
 
@@ -240,6 +243,22 @@ async function pickAndEnterCrop(user: ReturnType<typeof userEvent.setup>) {
 describe('MediaModalFlow', () => {
   const user = userEvent.setup();
 
+  beforeEach(() => {
+    jest.clearAllMocks();
+    globalThis.fetch = mockFetch;
+    mockUploadFile.mockResolvedValue({
+      url: 'https://r2.example.com/uploads/doc.pdf',
+      filename: 'generated-doc.pdf',
+      originalName: 'doc.pdf',
+      mimeType: 'application/pdf',
+      size: 1024
+    });
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ data: { createAsset: { id: 'asset-1' } } })
+    });
+  });
+
   it('should render select step without footer', () => {
     renderOpen({ tab: 'GALLERY' });
 
@@ -326,6 +345,87 @@ describe('MediaModalFlow', () => {
     });
 
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+  });
+
+  it('should create asset record after upload when persistence is enabled', async () => {
+    const onApply = jest.fn().mockResolvedValue(undefined);
+
+    const renderers = createRenderers();
+    renderers.upload = ({ selected, onPick }: Readonly<UploadRendererProps>) => (
+      <div data-testid="UploadView" data-selected={selected ? selected.fileName : 'none'}>
+        <button
+          type="button"
+          data-testid="UploadView-pickPdf"
+          onClick={() =>
+            onPick({
+              kind: 'upload',
+              id: 'upload-pdf-1',
+              fileName: 'doc.pdf',
+              file: new File(['x'], 'doc.pdf', { type: 'application/pdf' })
+            })
+          }
+        >
+          pick
+        </button>
+      </div>
+    );
+
+    renderOpen({ tab: 'UPLOAD' }, { onApply, renderers, persistUploadAsAsset: true });
+
+    await user.click(screen.getByTestId('UploadView-pickPdf'));
+    await user.click(await screen.findByTestId('MediaModal-applyButton'));
+
+    await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/graphql',
+      expect.objectContaining({
+        method: 'POST',
+        body: expect.stringContaining('createAsset')
+      })
+    );
+
+    const requestBody = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(requestBody.variables.input).toEqual({
+      filename: 'generated-doc.pdf',
+      originalname: 'doc.pdf',
+      url: 'https://r2.example.com/uploads/doc.pdf',
+      mimeType: 'application/pdf',
+      sizeBytes: 1024,
+      type: 'pdf'
+    });
+    await waitFor(() => expect(onApply).toHaveBeenCalled());
+  });
+
+  it('should skip asset creation after upload when persistence is disabled', async () => {
+    const onApply = jest.fn().mockResolvedValue(undefined);
+
+    const renderers = createRenderers();
+    renderers.upload = ({ selected, onPick }: Readonly<UploadRendererProps>) => (
+      <div data-testid="UploadView" data-selected={selected ? selected.fileName : 'none'}>
+        <button
+          type="button"
+          data-testid="UploadView-pickPdf"
+          onClick={() =>
+            onPick({
+              kind: 'upload',
+              id: 'upload-pdf-1',
+              fileName: 'doc.pdf',
+              file: new File(['x'], 'doc.pdf', { type: 'application/pdf' })
+            })
+          }
+        >
+          pick
+        </button>
+      </div>
+    );
+
+    renderOpen({ tab: 'UPLOAD' }, { onApply, renderers, persistUploadAsAsset: false });
+
+    await user.click(screen.getByTestId('UploadView-pickPdf'));
+    await user.click(await screen.findByTestId('MediaModal-applyButton'));
+
+    await waitFor(() => expect(onApply).toHaveBeenCalled());
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it('should enter crop after pick and show crop actions', async () => {

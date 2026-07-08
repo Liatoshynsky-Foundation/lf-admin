@@ -26,6 +26,7 @@ export type MediaModalFlowProps = {
   directory?: string;
   hideTabs?: boolean;
   aspectRatio?: number;
+  persistUploadAsAsset?: boolean;
 };
 
 const isNonImageUploadSelection = (selected: SelectedMedia | null): boolean => {
@@ -44,12 +45,13 @@ export function MediaModalFlow({
   renderers,
   directory,
   hideTabs,
-  aspectRatio
+  aspectRatio,
+  persistUploadAsAsset
 }: Readonly<MediaModalFlowProps>) {
   const [state, dispatch] = useReducer(reducer, initial, buildInitialState);
 
   const { isApplying, applyError, clearApplyState, clearApplyError, cancelInFlightApply, handleClose, runApply } =
-    useMediaModalApply({ open, onClose, onApply, directory });
+    useMediaModalApply({ open, onClose, onApply, directory, persistUploadAsAsset });
 
   const latestInitialRef = useRef<MediaModalOpenState | undefined>(initial);
   useEffect(() => {

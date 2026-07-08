@@ -26,11 +26,11 @@ export type MediaModalProps = Omit<MediaModalFlowProps, 'renderers'> & {
   renderers?: Partial<MediaModalRenderers>;
 };
 
-export function MediaModal({ renderers: overrides, ...rest }: Readonly<MediaModalProps>) {
+export function MediaModal({ renderers: overrides, persistUploadAsAsset = true, ...rest }: Readonly<MediaModalProps>) {
   const renderers = useMemo<MediaModalRenderers>(() => {
     if (!overrides) return DEFAULT_RENDERERS;
     return { ...DEFAULT_RENDERERS, ...overrides };
   }, [overrides]);
 
-  return <MediaModalFlow {...rest} renderers={renderers} />;
+  return <MediaModalFlow {...rest} persistUploadAsAsset={persistUploadAsAsset} renderers={renderers} />;
 }

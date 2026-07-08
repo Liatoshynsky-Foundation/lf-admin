@@ -62,6 +62,7 @@ export type FileInfoSidebarProps = {
 
   onToggleStar?: (fileId: string, next: boolean) => void;
   onDescriptionSave?: (fileId: string, description: string) => Promise<void> | void;
+  onDeleteRequest?: (fileId: string) => void;
 
   onRequestAction?: (action: FileSidebarAction) => void;
 };
@@ -93,7 +94,9 @@ export function FileInfoSidebar({
   file,
   variant = 'fixed',
   onClose,
+  onToggleStar,
   onDescriptionSave,
+  onDeleteRequest,
   onRequestAction
 }: Readonly<FileInfoSidebarProps>) {
   const theme = useTheme();
@@ -152,6 +155,11 @@ export function FileInfoSidebar({
     if (!file?.id) return;
 
     try {
+      if (onToggleStar) {
+        await onToggleStar(file.id, !isStarred);
+        return;
+      }
+
       await updateAsset({
         variables: {
           id: file.id,
@@ -231,7 +239,14 @@ export function FileInfoSidebar({
         <TooltipCustom title="Видалити" showArrow>
           <IconButton
             sx={styles.actionBtn}
-            onClick={() => setIsDeleteModalOpen(true)}
+            onClick={() => {
+              if (fileId && onDeleteRequest) {
+                onDeleteRequest(fileId);
+                return;
+              }
+
+              setIsDeleteModalOpen(true);
+            }}
             aria-label="Видалити"
             disabled={!canEdit}
           >

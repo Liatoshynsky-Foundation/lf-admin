@@ -42,9 +42,10 @@ export interface FileCardProps {
   isSelected?: boolean;
   onClick?: () => void;
   onAction?: (action: 'rename' | 'delete' | 'download', fileId: string) => void;
+  onToggleStar?: (fileId: string, next: boolean) => Promise<void> | void;
 }
 
-const FileCard = ({ fileType, fileData, isSelected = false, onClick, onAction }: FileCardProps) => {
+const FileCard = ({ fileType, fileData, isSelected = false, onClick, onAction, onToggleStar }: FileCardProps) => {
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
 
   const { id, name, dateAdded, isStarred = false, usageLinks, imageSrc } = fileData;
@@ -52,6 +53,11 @@ const FileCard = ({ fileType, fileData, isSelected = false, onClick, onAction }:
 
   const handleToggleStar = async () => {
     try {
+      if (onToggleStar) {
+        await onToggleStar(id, !isStarred);
+        return;
+      }
+
       await updateAsset({
         variables: {
           id,

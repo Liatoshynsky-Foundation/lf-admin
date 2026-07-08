@@ -30,6 +30,7 @@ type FilesCardsLayoutProps = Readonly<{
   setItemRef?: (itemId: string, node: HTMLDivElement | null) => void;
   onItemClick?: (item: FilesCardsLayoutItem) => void;
   onItemAction?: (action: 'rename' | 'delete' | 'download', item: FilesCardsLayoutItem) => void;
+  onItemToggleStar?: (item: FilesCardsLayoutItem, next: boolean) => Promise<void> | void;
 }>;
 
 const minimizedTypeMap: Record<FileType, 'img' | 'audio' | 'pdf' | 'doc' | 'xls' | 'video-file' | 'archive'> = {
@@ -49,7 +50,8 @@ export function FilesCardsLayout({
   gridColumns,
   setItemRef,
   onItemClick,
-  onItemAction
+  onItemAction,
+  onItemToggleStar
 }: FilesCardsLayoutProps) {
   if (view === 'list') {
     return (
@@ -73,6 +75,7 @@ export function FilesCardsLayout({
                 isSelected={item.id === selectedItemId}
                 onClick={() => onItemClick?.(item)}
                 onAction={(action) => onItemAction?.(action, item)}
+                onToggleStar={(_, next) => onItemToggleStar?.(item, next)}
               />
             </Box>
           ))}
@@ -104,6 +107,7 @@ export function FilesCardsLayout({
             isSelected={item.id === selectedItemId}
             onClick={() => onItemClick?.(item)}
             onAction={(action) => onItemAction?.(action, item)}
+            onToggleStar={(_, next) => onItemToggleStar?.(item, next)}
           />
         </Box>
       ))}

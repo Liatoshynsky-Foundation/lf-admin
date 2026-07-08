@@ -35,6 +35,7 @@ interface MinimizedFileCardProps {
   isSelected?: boolean;
   onClick?: () => void;
   onAction?: (action: 'rename' | 'delete' | 'download', fileId: string) => void;
+  onToggleStar?: (fileId: string, next: boolean) => Promise<void> | void;
   onMenuClick?: (e: MouseEvent<HTMLButtonElement>) => void;
 }
 
@@ -48,6 +49,7 @@ const MinimizedFileCard = ({
   isSelected = false,
   onClick,
   onAction,
+  onToggleStar,
   onMenuClick
 }: MinimizedFileCardProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -81,6 +83,11 @@ const MinimizedFileCard = ({
 
   const handleToggleStar = async () => {
     try {
+      if (onToggleStar) {
+        await onToggleStar(id, !starred);
+        return;
+      }
+
       await updateAsset({
         variables: {
           id,
