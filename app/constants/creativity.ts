@@ -107,10 +107,6 @@ export interface GroupPerformance {
   id?: string;
   url?: string;
   caption?: { uk: string; en: string };
-
-  title?: { uk: string; en: string };
-  videoUrl?: string;
-  performers?: string;
 }
 
 export interface GroupData {

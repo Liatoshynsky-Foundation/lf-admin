@@ -26,7 +26,7 @@ const opusSchema = new Schema(
     releaseYear: { type: Number, default: null },
 
     numberKind: { type: String, enum: ['op', 'woo'], default: 'op' },
-    name: { type: String, default: null },
+    name: { type: translatedFieldSchema, default: { uk: '', en: '' } },
     additionalText: { type: String, default: null },
     creationYear: { type: String, default: null },
     endYear: { type: String, default: null },
@@ -47,6 +47,7 @@ const opusSchema = new Schema(
     keywords: { type: optionalTranslatedFieldSchema, default: null },
     allowIndexation: { type: translatedBooleanSchema, default: null },
     coverImage: { type: localizedImageSchema, default: null },
+    performancesTitle: { type: optionalTranslatedFieldSchema, default: null },
     gallery: [
       {
         src: { type: String, required: true },
@@ -68,7 +69,6 @@ const opusSchema = new Schema(
           en: { type: String, default: '' }
         },
         videoUrl: { type: String, default: '' },
-        performers: { type: String, default: '' }
       }
     ],
     status: {

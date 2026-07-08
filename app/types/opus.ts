@@ -66,7 +66,7 @@ export interface FetchedOpusData {
   numberKind?: OpusNumberKind | null;
   number: string;
   releaseYear?: number | null;
-  name?: string | null;
+  name?: { uk?: string | null; en?: string | null } | null;
   additionalText?: string | null;
   creationYear?: string | null;
   endYear?: string | null;

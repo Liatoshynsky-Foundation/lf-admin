@@ -1,5 +1,5 @@
 import { Box, Dialog, IconButton, Typography } from '@mui/material';
-import { GripVertical, Pencil, Trash2, X } from 'lucide-react';
+import { Pencil, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 
 import { styles } from './GroupWorksSection.styles';
@@ -38,7 +38,6 @@ export const GroupWorksSection = ({ works, onChange }: GroupWorksSectionProps) =
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
-  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
 
   const addComposition = () => {
     const newComposition: OpusCompositionData = {
@@ -100,21 +99,6 @@ export const GroupWorksSection = ({ works, onChange }: GroupWorksSectionProps) =
     setDeleteTargetId(null);
   };
 
-  const moveComposition = (from: number, to: number) => {
-    if (from === to || from < 0 || to < 0 || from >= works.length || to >= works.length) return;
-    
-    const updatedWorks = [...works];
-    const [moved] = updatedWorks.splice(from, 1);
-    updatedWorks.splice(to, 0, moved);
-    onChange(updatedWorks);
-  };
-
-  const handleDragEnter = (index: number) => {
-    if (draggingIndex === null || draggingIndex === index) return;
-    moveComposition(draggingIndex, index);
-    setDraggingIndex(index);
-  };
-
   return (
     <Box sx={styles.container}>
       <Box sx={styles.compositionsHeader}>
@@ -131,21 +115,8 @@ export const GroupWorksSection = ({ works, onChange }: GroupWorksSectionProps) =
             key={composition.id}
             sx={{
               ...(styles.compositionRow as object),
-              ...(draggingIndex === index ? (styles.compositionRowDragging as object) : {})
             }}
-            onDragEnter={() => handleDragEnter(index)}
-            onDragOver={(event) => event.preventDefault()}
           >
-            <Box
-              draggable
-              onDragStart={() => setDraggingIndex(index)}
-              onDragEnd={() => setDraggingIndex(null)}
-              sx={styles.dragHandle}
-              aria-label="Перемістити"
-            >
-              <GripVertical size={20} strokeWidth={1.5} />
-            </Box>
-            
             <Box sx={styles.compositionInput}>
               <CompositionTitleInput
                 value={composition.title}

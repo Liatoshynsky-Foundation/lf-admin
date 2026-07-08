@@ -25,7 +25,7 @@ type GQLComposition = {
 export type CreateOpusGQLInput = {
   numberKind?: OpusNumberKind;
   number?: string;
-  name?: string;
+  name?: LocalizedString;
   additionalText?: string;
   creationYear?: string;
   endYear?: string;
@@ -39,6 +39,7 @@ export type CreateOpusGQLInput = {
   introDescription?: OpusDescription; 
   parts?: OpusDescription;
   gallery?: OpusGalleryItem[];
+  performancesTitle?: LocalizedString;
   performances?: OpusPerformance[]
 
   keywords?: LocalizedString;
@@ -125,6 +126,7 @@ const buildOpusUpdateData = (
     introDescription: input.introDescription,
     parts: input.parts,
     gallery: input.gallery,
+    performancesTitle: input.performancesTitle,
     performances: input.performances
   };
 
@@ -148,7 +150,7 @@ export const OpusMutation = {
       });
     }
 
-    const nameForSlug = input.name?.trim() || input.title?.uk;
+    const nameForSlug = input.name?.uk?.trim() || input.title?.uk;
 
     if (!nameForSlug) {
       throw new GraphQLError(opusServiceErrors.NAME_REQUIRED_FOR_SLUG, {

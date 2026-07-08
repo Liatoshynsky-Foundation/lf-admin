@@ -51,7 +51,7 @@ export default function OpusView({ data, mode = 'create' }: Readonly<OpusViewPro
       }
 
       toast.success(mode === 'create' ? OPUS_MUTATION_RESULTS.created : OPUS_MUTATION_RESULTS.updated);
-      router.push(`${OPUS_GROUP_PATH}/${id}/content`);
+      router.push(`${OPUS_GROUP_PATH}/${id}/content?from=${mode}`);
     } catch (error) {
       toast.error(`Помилка: ${error instanceof Error ? error.message : String(error)}`);
     }

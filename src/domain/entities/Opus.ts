@@ -26,7 +26,6 @@ export type OpusPerformance = {
   id?: string;
   title?: LocalizedString | null;
   videoUrl?: string | null;
-  performers?: string | null;
 };
 
 export type Opus = {
@@ -36,7 +35,7 @@ export type Opus = {
   releaseYear?: number | null;
 
   numberKind?: OpusNumberKind;
-  name?: string | null;
+  name?: LocalizedString | null;
   additionalText?: string | null;
   creationYear?: string | null;
   endYear?: string | null;
@@ -53,6 +52,8 @@ export type Opus = {
   coverImage?: LocalizedImage | null;
 
   gallery?: OpusGalleryItem[];
+
+  performancesTitle?: LocalizedString | null;
   performances?: OpusPerformance[];
 
   status?: OpusStatus;

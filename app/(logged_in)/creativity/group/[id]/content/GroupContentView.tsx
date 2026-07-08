@@ -13,6 +13,7 @@ import {
   MenuItem,
   Typography
 } from '@mui/material';
+import { useSearchParams } from 'next/navigation';
 import { MouseEvent, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -76,19 +77,23 @@ const mapNumberKindToPrefix = (kind: string | null | undefined): string => {
   return 'Op.';
 };
 
-const getFileNameFromUrl = (url?: string | null): string => {
+let compositionIdCounter = 0;
+
+const createCompositionId = (): string => {
+  compositionIdCounter += 1;
+  return `composition-${compositionIdCounter}`;
+};
+
+const fileNameFromUrl = (url?: string | null): string => {
   if (!url) return '';
-  try {
-    const segment = url.split('/').pop() ?? url;
-    return decodeURIComponent(segment.split('?')[0]);
-  } catch {
-    return 'file';
-  }
+  const segment = url.split('/').pop() ?? url;
+  return decodeURIComponent(segment.split('?')[0]);
 };
 
 export const GroupContentView = ({ id }: GroupContentViewProps) => {
   const { data, loading, error } = useOpusById(id);
   const { navigate } = useNavigationGuard();
+  const searchParams = useSearchParams();
 
   const [groupData, setGroupData] = useState<GroupData | null>(null);
   const [isDirty, setIsDirty] = useState(false);
@@ -96,6 +101,8 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [anchors, setAnchors] = useState<MenuAnchor>({});
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
+  const [publishedTitle, setPublishedTitle] = useState({ uk: '', en: '' });
+  const [isDetailsExpanded, setIsDetailsExpanded] = useState(true);
 
   const [updateOpus, { loading: isSaving }] = useUpdateOpusMutation();
 
@@ -105,14 +112,18 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
     const fetchedOpus = data?.opusById;
 
     if (fetchedOpus) {
+      const titleObj = {
+        uk: fetchedOpus.name?.uk ?? '',
+        en: fetchedOpus.name?.en ?? ''
+      };
       setGroupData({
         titlePrefix: mapNumberKindToPrefix(fetchedOpus.numberKind),
         groupNumber: fetchedOpus.number ? String(fetchedOpus.number).replace(/^(op|woo|wo|bo)[.\-\s]*/i, '') : '',
         genre: fetchedOpus.genre ?? '',
         additionalText: fetchedOpus.additionalText ?? '',
         groupTitle: {
-          uk: fetchedOpus.title?.uk ?? '',
-          en: fetchedOpus.title?.en ?? ''
+          uk: fetchedOpus.name?.uk ?? '',
+          en: fetchedOpus.name?.en ?? ''
         },
         creationYear: fetchedOpus.creationYear ? String(fetchedOpus.creationYear) : '',
         endYear: fetchedOpus.endYear ? String(fetchedOpus.endYear) : '',
@@ -137,34 +148,38 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
           altText: { uk: photo.altText?.uk || '', en: photo.altText?.en || '' },
           crop: photo.crop || null
         })),
-        performancesTitle: '',
+        performancesTitle: fetchedOpus.performancesTitle?.uk ?? fetchedOpus.performancesTitle?.en ?? '',
         performances: (fetchedOpus.performances || []).map((perf: any) => ({
           id: perf.id,
-          title: perf.title?.uk || '',
-          caption: { uk: perf.title?.uk || '', en: perf.title?.en || '' },
-          videoUrl: perf.videoUrl || '',
-          url: perf.videoUrl || '',
-          performers: perf.performers || ''
+          url: perf.videoUrl ?? '',
+          caption: {
+            uk: perf.title?.uk ?? '',
+            en: perf.title?.en ?? ''
+          }
         })),
-        works: (fetchedOpus.compositions || []).map((comp: any) => ({
-          id: comp.id || `composition-${Math.random()}`,
-          compositionId: comp.id,
-          title: comp.title?.uk ?? '',
-          genre: comp.genre ?? '',
-          year: comp.year != null ? String(comp.year) : '',
-          audios: (comp.audios || []).map((audio: any) => ({
-            id: `audio-${Math.random()}`,
-            name: audio.name ?? getFileNameFromUrl(audio.url),
-            fileUrl: audio.url ?? undefined
-          })),
-          notes: (comp.sheetMusic || []).map((sheet: any) => ({
-            id: `note-${Math.random()}`,
-            name: sheet.name ?? getFileNameFromUrl(sheet.url),
-            fileUrl: sheet.url ?? undefined,
-            publishDate: sheet.publishDate ?? ''
+        works: (fetchedOpus.compositions || [])
+          .slice()
+          .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
+          .map((composition: any) => ({
+            id: createCompositionId(),
+            compositionId: composition.id,
+            title: composition.title?.uk ?? composition.title?.en ?? '',
+            genre: composition.genre ?? '',
+            year: composition.year == null ? '' : String(composition.year),
+            audios: (composition.audios ?? []).map((audio: any) => ({
+              id: createCompositionId(),
+              name: audio.name ?? fileNameFromUrl(audio.url),
+              fileUrl: audio.url ?? undefined
+            })),
+            notes: (composition.sheetMusic ?? []).map((sheet: any) => ({
+              id: createCompositionId(),
+              name: sheet.name ?? fileNameFromUrl(sheet.url),
+              fileUrl: sheet.url ?? undefined,
+              publishDate: sheet.publishDate ?? ''
+            }))
           }))
-        }))
       });
+      setPublishedTitle(titleObj);
     }
   }, [data]);
 
@@ -206,7 +221,7 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
         additionalText: String(groupData.additionalText || ''),
         ...(mappedStatus && { status: mappedStatus }),
 
-        title: {
+        name: {
           uk: String(groupData.groupTitle?.uk || ''),
           en: String(groupData.groupTitle?.en || '')
         },
@@ -224,22 +239,26 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
           en: groupData.description?.en ? JSON.stringify(groupData.description.en) : '""'
         },
 
-        compositions: groupData.works.map((work) => ({
-          id: work.compositionId?.startsWith('composition-') ? undefined : work.compositionId,
-          title: { uk: String(work.title || ''), en: '' },
-          genre: String(work.genre || ''),
-
-          year: work.year ? String(work.year) : null,
-
-          audios: (work.audios || []).map((a) => ({
-            name: String(a.name || ''),
-            url: a.fileUrl ? String(a.fileUrl) : undefined
-          })),
-          sheetMusic: (work.notes || []).map((n) => ({
-            name: String(n.name || ''),
-            url: n.fileUrl ? String(n.fileUrl) : undefined,
-            publishDate: n.publishDate ? String(n.publishDate) : undefined
-          }))
+        compositions: (groupData.works || []).map((work, index) => ({
+          id: work.compositionId,
+          title: work.title.trim(),
+          genre: work.genre.trim() || undefined,
+          year: work.year.trim() || undefined,
+          order: index + 1,
+          audios: (work.audios || [])
+            .filter((audio) => audio.name.trim())
+            .map((audio) => ({
+              name: audio.name.trim(),
+              fileUrl: audio.fileUrl,
+              publishDate: audio.publishDate
+            })),
+          notes: (work.notes || [])
+            .filter((note) => note.name.trim())
+            .map((note) => ({
+              name: note.name.trim(),
+              fileUrl: note.fileUrl,
+              publishDate: note.publishDate
+            }))
         })),
 
         gallery: (groupData.photos || []).map((photo) => ({
@@ -256,26 +275,22 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
           crop: photo.crop || null
         })),
 
-        performances: (groupData.performances || []).map((perf) => {
-          const ukTitle =
-            typeof perf.title === 'string' && perf.title
-              ? String(perf.title)
-              : typeof perf.caption === 'string' && perf.caption
-                ? String(perf.caption)
-                : String(perf.caption?.uk || '');
+        performancesTitle: {
+          uk: String(groupData.performancesTitle || ''),
+          en: String(groupData.performancesTitle || '')
+        },
+        performances: (groupData.performances || [])
+          .map((perf) => ({
+            id: perf.id?.includes('-') ? undefined : perf.id,
 
-          const enTitle = typeof perf.caption === 'string' ? '' : String(perf.caption?.en || '');
-
-          return {
-            id: perf.id?.startsWith('perf-') ? undefined : perf.id,
             title: {
-              uk: ukTitle || 'Без назви',
-              en: enTitle || ukTitle || 'Untitled'
+              uk: (perf.caption?.uk || '').trim(),
+              en: (perf.caption?.en || '').trim()
             },
-            videoUrl: perf.videoUrl ? String(perf.videoUrl) : perf.url ? String(perf.url) : '',
-            performers: Array.isArray(perf.performers) ? perf.performers.join(', ') : String(perf.performers || '')
-          };
-        })
+
+            videoUrl: (perf.url || '').trim()
+          }))
+          .filter((perf) => perf.videoUrl || perf.title.uk || perf.title.en)
       };
 
       await updateOpus({
@@ -287,19 +302,19 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
 
       toast.success('Контент успішно збережено!');
     } catch (error) {
-      console.error('Помилка при збереженні контенту опусу:', error);
+      console.error('Помилка при збереженні контенту групи:', error);
       toast.error('Помилка при збереженні. Перевірте консоль.');
     }
   };
 
   const handleBackClick = () => {
-    const previousUrl = document.referrer;
+    const from = searchParams?.get('from');
 
-    const cameFromSettings = previousUrl.includes(`/creativity/group/${id}/edit`);
-
-    const targetUrl = cameFromSettings ? `/creativity/group/${id}/edit` : '/creativity';
-
-    navigate(targetUrl);
+    if (from === 'create' || from === 'edit') {
+      navigate(`/creativity/group/${id}/edit`);
+    } else {
+      navigate('/creativity');
+    }
   };
 
   const handleOpen = (event: MouseEvent<HTMLElement>, menuId: AnchorId) =>
@@ -312,8 +327,12 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!groupData?.groupNumber || String(groupData.groupNumber).trim() === '') {
+    const numberValue = String(groupData?.groupNumber || '').trim();
+
+    if (!numberValue) {
       newErrors.groupNumber = 'Обов’язкове поле';
+    } else if (!/^\d+$/.test(numberValue) || Number(numberValue) <= 0) {
+      newErrors.groupNumber = 'Номер має бути цілим позитивним числом.';
     }
 
     if (!groupData?.groupTitle?.uk || String(groupData.groupTitle.uk).trim() === '') {
@@ -362,8 +381,17 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
   };
 
   const handlePublishClick = async () => {
-    if (!validate()) return;
+    if (isSaving) return;
+    const isValid = validate();
+
+    if (!isValid) {
+      toast.error('Заповніть усі обов’язкові поля перед публікацією.');
+      setIsDetailsExpanded(true);
+      return;
+    }
+
     await handleSave(BaseContentStatuses.Published);
+    setPublishedTitle(groupData.groupTitle);
     setIsDirty(false);
   };
 
@@ -374,7 +402,11 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
       return;
     }
 
-    if (!validate()) return;
+    if (!validate()) {
+      toast.error('Заповніть усі обов’язкові поля перед публікацією.');
+      setIsDetailsExpanded(true);
+      return;
+    }
 
     if (optionId === 'PUBLISH') {
       await handleSave(BaseContentStatuses.Published);
@@ -382,7 +414,12 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
     } else if (optionId === 'PUBLISH_AND_EXIT') {
       await handleSave(BaseContentStatuses.Published);
       setIsDirty(false);
-      handleBackClick();
+      setTimeout(() => {
+        navigate('/creativity'); 
+      }, 0);
+    }
+    else {
+      setIsInfoModalOpen(true);
     }
   };
 
@@ -393,18 +430,13 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
         originUrl="/creativity"
         onBackClick={handleBackClick}
         rightActionsComponent={
-          <HeaderRightActions
-            mode="edit"
-            disabled={!isDirty || isSaving}
-            onPublish={handlePublishClick}
-            onMenuOpen={(e) => handleOpen(e, 'publish')}
-          />
+          <HeaderRightActions mode="edit" onPublish={handlePublishClick} onMenuOpen={(e) => handleOpen(e, 'publish')} />
         }
       >
         <TitleDropdown
           type="multilingual"
           language={currentLanguage}
-          title={groupData.groupTitle[langKey] || 'Редагування опусу'}
+          title={publishedTitle[langKey] || 'Редагування контенту групи'}
           onMenuOpen={(e) => handleOpen(e, 'navigation')}
         />
 
@@ -416,7 +448,11 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
           Заповнення контентом не є обов’язковим
         </Typography>
 
-        <CollapsibleBlock title="Деталі" defaultExpanded>
+        <CollapsibleBlock
+          title="Деталі"
+          expanded={isDetailsExpanded}
+          onChange={(_, isExpanded) => setIsDetailsExpanded(isExpanded)}
+        >
           <GroupDetailsSection
             currentLanguage={currentLanguage}
             data={groupData}
@@ -443,6 +479,7 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
 
         <CollapsibleBlock title="Всі версії виконання опису" defaultExpanded>
           <GroupPerformancesSection
+            currentLanguage={currentLanguage}
             sectionTitle={groupData.performancesTitle}
             performances={groupData.performances}
             onChangeSectionTitle={(newTitle) => handleFieldChange('performancesTitle', newTitle)}

@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 
 import { styles } from './GroupDetailsSection.styles';
 import { GroupDataField } from '~/constants/creativity';
+import { OPUS_FIELD_LIMITS } from '~/constants/opus';
 import { EditorLanguage } from '~/constants/publications';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 
@@ -28,12 +29,7 @@ type GroupDetailsSectionProps = {
   onChange: (field: GroupDataField, value: string, isMultilingual?: boolean) => void;
 };
 
-export const GroupDetailsSection = ({
-  data,
-  currentLanguage,
-  errors,
-  onChange
-}: GroupDetailsSectionProps) => {
+export const GroupDetailsSection = ({ data, currentLanguage, errors, onChange }: GroupDetailsSectionProps) => {
   const langKey = (currentLanguage === 'UA' ? 'uk' : 'en') as 'uk' | 'en';
   const [isPrefixMenuOpen, setIsPrefixMenuOpen] = useState(false);
 
@@ -206,6 +202,9 @@ export const GroupDetailsSection = ({
             value={data.genre || ''}
             onChange={(e) => onChange('genre', e.target.value)}
             fullWidth
+            inputProps={{
+              maxLength: OPUS_FIELD_LIMITS.genre
+            }}
             error={!!errors.genre}
             helperText={errors.genre}
           />

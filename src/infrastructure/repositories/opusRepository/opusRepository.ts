@@ -13,7 +13,7 @@ export type DbOpus = {
   title: Opus['title'];
   releaseYear?: number | null;
   numberKind: Opus['numberKind'];
-  name?: string | null;
+  name?: Opus['name'];
   additionalText?: string | null;
   creationYear?: string | null;
   endYear?: string | null;
@@ -25,6 +25,8 @@ export type DbOpus = {
   introDescription?: Opus['introDescription'];
   parts?: Opus['parts'];
   gallery: Opus['gallery'];
+  performancesTitle?: Opus['performancesTitle'];
+  performances: Opus['performances'];
   keywords: Opus['keywords'];
   allowIndexation: Opus['allowIndexation'];
   coverImage: Opus['coverImage'];
@@ -45,7 +47,7 @@ const toEntity = (doc: DbOpus): Opus =>
     title: doc.title,
     releaseYear: doc.releaseYear ?? undefined,
     numberKind: doc.numberKind ?? 'op',
-    name: doc.name ?? undefined,
+    name: typeof doc.name === 'string' ? { uk: doc.name, en: doc.name } : (doc.name ?? { uk: '', en: '' }),
     additionalText: doc.additionalText ?? undefined,
     creationYear: doc.creationYear ?? undefined,
     endYear: doc.endYear ?? undefined,
@@ -56,6 +58,7 @@ const toEntity = (doc: DbOpus): Opus =>
     description: doc.description ?? undefined,
     introDescription: doc.introDescription ?? undefined,
     parts: doc.parts ?? undefined,
+    performancesTitle: doc.performancesTitle ?? undefined,
     gallery:
       doc.gallery?.map((item) => ({
         id: (item as any)._id?.toString() ?? '',
@@ -71,6 +74,12 @@ const toEntity = (doc: DbOpus): Opus =>
               height: Number(item.crop.height) || 0
             }
             : null
+      })) ?? [],
+    performances:
+      doc.performances?.map((perf: any) => ({
+        id: perf._id?.toString() ?? '',
+        title: perf.title,
+        videoUrl: perf.videoUrl
       })) ?? [],
     keywords: doc.keywords ?? undefined,
     allowIndexation: doc.allowIndexation ?? undefined,

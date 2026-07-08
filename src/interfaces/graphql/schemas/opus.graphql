@@ -53,7 +53,6 @@ type OpusPerformance {
   id: ID!
   title: LocalizedString
   videoUrl: String
-  performers: String
 }
 
 type Opus {
@@ -62,7 +61,7 @@ type Opus {
   numberKind: OpusNumberKind
   title: LocalizedString!
   releaseYear: Int
-  name: String
+  name: LocalizedString
   additionalText: String
   creationYear: String
   endYear: String
@@ -77,6 +76,7 @@ type Opus {
   coverImage: LocalizedImage
 
   gallery: [OpusGalleryItem!]
+  performancesTitle: LocalizedString
   performances: [OpusPerformance!]
 
   allowIndexation: LocalizedBoolean
@@ -121,7 +121,7 @@ input OpusFiltersInput {
 input CreateOpusInput {
   numberKind: OpusNumberKind
   number: String
-  name: String
+  name: JSON
   additionalText: String
   creationYear: String
   endYear: String
@@ -134,6 +134,7 @@ input CreateOpusInput {
   introDescription: JSON
   parts: JSON
   gallery: JSON
+  performancesTitle: JSON
   performances: JSON
   keywords: JSON
   allowIndexation: JSON
@@ -145,7 +146,7 @@ input CreateOpusInput {
 input UpdateOpusInput {
   numberKind: OpusNumberKind
   number: String
-  name: String
+  name: JSON
   additionalText: String
   creationYear: String
   endYear: String
@@ -158,6 +159,7 @@ input UpdateOpusInput {
   introDescription: JSON
   parts: JSON
   gallery: JSON
+  performancesTitle: JSON
   performances: JSON
   keywords: JSON
   allowIndexation: JSON
