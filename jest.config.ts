@@ -4,6 +4,7 @@ import nextJest from 'next/jest';
 const createJestConfig = nextJest({
   dir: './'
 });
+const isCI = !!process.env.CI;
 
 const config: Config = {
   bail: 1,
@@ -26,7 +27,7 @@ const config: Config = {
     '!src/validators/**/*.{js,ts}'
   ],
   coverageDirectory: 'coverage',
-  coverageProvider: 'v8',
+  coverageProvider: 'babel',
   coverageThreshold: {
     global: {
       branches: 80,
@@ -35,11 +36,14 @@ const config: Config = {
       statements: 80
     }
   },
-  coverageReporters: ['text', 'lcov', 'json', 'html'],
+  coverageReporters: isCI ? ['text', 'lcov'] : ['text'],
   moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx'],
   preset: 'ts-jest',
   testEnvironment: 'jest-environment-jsdom',
   moduleNameMapper: {
+    '^~/back-config$': '<rootDir>/src/back-config',
+    '^~/uploads/(.*)$': '<rootDir>/src/uploads/$1',
+    '^lodash-es$': 'lodash',
     '^~/public/(.*)$': '<rootDir>/public/$1',
     '^~/utils/(.*)$': '<rootDir>/app/lib/utils/$1',
     '^~/ds-components/(.*)$': '<rootDir>/app/shared/components/design-system/$1',
@@ -49,6 +53,7 @@ const config: Config = {
     '^~/domain/(.*)$': '<rootDir>/src/domain/$1',
     '^~/types/(.*)$': '<rootDir>/app/types/$1',
     '^~/src/(.*)$': '<rootDir>/src/$1',
+    '^~/middleware/(.*)$': '<rootDir>/src/middleware/$1',
     '^~/(.*)$': '<rootDir>/app/$1'
   },
   modulePaths: ['<rootDir>/app', '<rootDir>/src'],
@@ -61,9 +66,9 @@ const config: Config = {
   ],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   testTimeout: 15000,
-  detectOpenHandles: true,
+  detectOpenHandles: isCI,
   forceExit: true,
-  maxWorkers: process.env.CI ? 2 : '50%'
+  maxWorkers: isCI ? 2 : '50%'
 };
 
 export default createJestConfig(config);

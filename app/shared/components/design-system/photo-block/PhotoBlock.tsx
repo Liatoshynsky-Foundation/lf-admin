@@ -186,7 +186,7 @@ export const ImagePreviewBlock = ({
               size="small"
               onClick={openEditCrop}
               sx={styles.editButton}
-              disabled={disabled}
+              disabled={disabled || !previewImage}
             >
               Редагувати
             </Button>

@@ -47,7 +47,7 @@ const ActionableSuggestItem: React.FC<ActionableSuggestItemProps> = ({
       {mode === 'notes' && (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <DatePicker
-            label="Дата видання *"
+            label="Дата видання"
             format="DD/MM/YYYY"
             value={date}
             onChange={(newValue) => onDateChange?.(newValue)}

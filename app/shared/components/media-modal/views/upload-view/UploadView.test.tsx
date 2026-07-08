@@ -30,6 +30,13 @@ const renderView = (overrides?: Partial<React.ComponentProps<typeof UploadView>>
 
 const createFile = (name: string, type: string) => new File(['dummy'], name, { type });
 
+const createSizedFile = (name: string, type: string, size: number): File => {
+  const file = createFile(name, type);
+  Object.defineProperty(file, 'size', { value: size });
+
+  return file;
+};
+
 describe('UploadView', () => {
   afterEach(() => {
     jest.restoreAllMocks();
@@ -165,5 +172,40 @@ describe('UploadView', () => {
     expect(onPick).toHaveBeenCalledTimes(1);
     expect(onPick.mock.calls[0]?.[0]).toMatchObject({ fileName: 'doc.pdf' });
     expect(onPick.mock.calls[0]?.[0]?.file).toBe(file);
+  });
+
+  it('should reject a file exceeding maxSizeBytes and show the provided error', () => {
+    const onPick = jest.fn();
+    renderView({
+      onPick,
+      isAllowedFile: () => true,
+      maxSizeBytes: 50 * 1024 * 1024,
+      fileTooLargeError: 'Розмір файлу перевищує максимально допустимий ліміт (50 МБ).'
+    });
+
+    const input = screen.getByTestId('UploadView-fileInput');
+    const file = createSizedFile('big.pdf', 'application/pdf', 60 * 1024 * 1024);
+
+    fireEvent.change(input, { target: { files: [file] } });
+
+    expect(onPick).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toHaveTextContent(/перевищує максимально допустимий ліміт/i);
+  });
+
+  it('should accept a file within the maxSizeBytes limit', () => {
+    const onPick = jest.fn();
+    renderView({
+      onPick,
+      isAllowedFile: () => true,
+      maxSizeBytes: 50 * 1024 * 1024
+    });
+
+    const input = screen.getByTestId('UploadView-fileInput');
+    const file = createSizedFile('ok.pdf', 'application/pdf', 10 * 1024 * 1024);
+
+    fireEvent.change(input, { target: { files: [file] } });
+
+    expect(onPick).toHaveBeenCalledTimes(1);
+    expect(onPick.mock.calls[0]?.[0]).toMatchObject({ fileName: 'ok.pdf' });
   });
 });

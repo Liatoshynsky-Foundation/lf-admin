@@ -180,7 +180,8 @@ export const CONTENT_MUTATION_RESULTS: MUTATION_RESULT = {
   draftSaved: 'Чернетку збережено успішно',
   draftDeleted: 'Чернетку видалено успішно',
   publicationDeleted: 'Публікацію видалено',
-  publicationUnpublished: 'Публікацію скасовано'
+  publicationUnpublished: 'Публікацію скасовано',
+  publicationPublished: 'Публікацію опубліковано успішно'
 };
 
 export const DEFAULT_EMPTY_DOCUMENT: SerializedContent = {

@@ -1,0 +1,29 @@
+mutation CreateOpus($input: CreateOpusInput!) {
+  createOpus(input: $input) {
+    id
+    number
+    numberKind
+    title {
+      uk
+      en
+    }
+    createdAt
+  }
+}
+
+mutation UpdateOpus($id: ID!, $input: UpdateOpusInput!) {
+  updateOpus(id: $id, input: $input) {
+    id
+    number
+    numberKind
+    title {
+      uk
+      en
+    }
+    updatedAt
+  }
+}
+
+mutation DeleteOpus($id: ID!) {
+  deleteOpus(id: $id)
+}

@@ -157,7 +157,8 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
           sizeBytes: size,
           type: assetType
         }
-      }
+      },
+      refetchQueries: ['AllAssets']
     });
 
     if (!createResult.data?.createAsset) {

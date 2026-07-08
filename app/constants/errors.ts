@@ -85,6 +85,15 @@ export const EventsErrors = {
   FAILED_TO_UPDATE_STATUS: 'Failed to update event status'
 };
 
+export const OpusErrors = {
+  NETWORK_ERROR_CREATE: 'Network error while creating opus',
+  FAILED_TO_CREATE: 'Failed to create opus',
+  NETWORK_ERROR_UPDATE: 'Network error while updating opus',
+  FAILED_TO_UPDATE: 'Failed to update opus',
+  NETWORK_ERROR_DELETE: 'Network error while deleting opus',
+  FAILED_TO_DELETE: 'Failed to delete opus'
+};
+
 export const galleryErrors = {
   FAILED_TO_FETCH: 'Upload files failed'
 };

@@ -24,6 +24,9 @@ jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
     </div>
   )
 }));
+jest.mock('../../edit-block-skeleton/EditBlockSkeleton', () => ({
+  EditBlockSkeleton: () => <div data-testid="edit-block-skeleton" />
+}));
 jest.mock('~/components/grip/Grip');
 
 jest.mock('./quote-block/QuoteBlock', () => ({
@@ -85,6 +88,15 @@ describe('LiatoshynskyOffice', () => {
     renderComponent();
     expect(getTitleInput()).toHaveValue(hardcodedData.mainQuote);
     expect(getDescriptionInput()).toHaveValue(hardcodedData.description);
+  });
+
+  it('should render skeleton when block is missing', () => {
+    usePageBlockMock.mockReturnValue({ loading: false, error: undefined, block: undefined });
+
+    renderComponent();
+
+    expect(screen.getByTestId('edit-block-skeleton')).toBeInTheDocument();
+    expect(screen.queryByTestId('collapsible-block')).not.toBeInTheDocument();
   });
 
   it('should update quote title', () => {
