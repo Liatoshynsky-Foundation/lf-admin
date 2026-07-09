@@ -24,7 +24,7 @@ const createMockOpusDoc = (overrides: Partial<DbOpus> = {}): DbOpus => ({
   title: { uk: 'Опус', en: 'Opus' },
   releaseYear: 1922,
   numberKind: 'op',
-  name: 'Перший струнний квартет',
+  name: { uk: 'Перший струнний квартет', en: 'First string quartet' },
   creationYear: '1922',
   genre: 'Струнний квартет',
   adminTitle: 'Перший струнний квартет',
@@ -71,7 +71,7 @@ describe('OpusRepository', () => {
     title: { uk: 'Опус', en: 'Opus' },
     releaseYear: 1922,
     numberKind: 'op',
-    name: 'Новий опус',
+    name: { uk: 'Новий опус', en: 'New Opus' },
     creationYear: '1922',
     genre: 'Струнний квартет',
     adminTitle: 'Новий опус',
@@ -162,7 +162,7 @@ describe('OpusRepository', () => {
 
       expect(result?.releaseYear).toBeUndefined();
       expect(result?.numberKind).toBe('op');
-      expect(result?.name).toBeUndefined();
+      expect(result?.name).toEqual({ uk: '', en: '' });
       expect(result?.additionalText).toBe('Додатковий текст');
       expect(result?.creationYear).toBeUndefined();
       expect(result?.endYear).toBe('1925');

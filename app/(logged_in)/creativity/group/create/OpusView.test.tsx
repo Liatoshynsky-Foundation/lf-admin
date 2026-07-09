@@ -83,7 +83,7 @@ describe('OpusView Component', () => {
     await waitFor(() => {
       expect(handleSave).toHaveBeenCalled();
       expect(mockToastSuccess).toHaveBeenCalled();
-      expect(mockPush).toHaveBeenCalledWith('/creativity/group/new-opus-id/content');
+      expect(mockPush).toHaveBeenCalledWith('/creativity/group/new-opus-id/content?from=create');
     });
   });
 
@@ -96,7 +96,7 @@ describe('OpusView Component', () => {
     await waitFor(() => {
       expect(handleSave).toHaveBeenCalled();
       expect(mockToastSuccess).toHaveBeenCalled();
-      expect(mockPush).toHaveBeenCalledWith('/creativity/group/existing-opus-id/content');
+      expect(mockPush).toHaveBeenCalledWith('/creativity/group/existing-opus-id/content?from=edit');
     });
   });
 

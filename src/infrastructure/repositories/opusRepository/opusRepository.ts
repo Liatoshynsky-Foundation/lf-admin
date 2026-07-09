@@ -2,10 +2,25 @@ import { Model } from 'mongoose';
 
 import { createBaseRepository } from '../baseRepository/baseRepository';
 import { opusServiceErrors } from '~/back-constants/errors';
+import { LocalizedString } from '~/domain/entities/BaseContent';
 import { Opus } from '~/domain/entities/Opus';
 import { CreateOpusInput, IOpusRepository, OpusFilters } from '~/domain/repositories/opusRepository';
 import dbConnect from '~/infrastructure/db/connect';
 import { buildBaseQuery, createToEntity, getBaseSort } from '~/infrastructure/repositories/helpers';
+
+export type DbOpusGalleryItem = {
+  _id?: { toString(): string };
+  src: string;
+  description?: LocalizedString | null;
+  altText?: LocalizedString | null;
+  crop?: { x?: number; y?: number; width?: number; height?: number } | null;
+};
+
+export type DbOpusPerformance = {
+  _id?: { toString(): string };
+  title?: LocalizedString | null;
+  videoUrl?: string | null;
+};
 
 export type DbOpus = {
   _id: { toString(): string };
@@ -24,9 +39,9 @@ export type DbOpus = {
   description: Opus['description'];
   introDescription?: Opus['introDescription'];
   parts?: Opus['parts'];
-  gallery: Opus['gallery'];
+  gallery?: DbOpusGalleryItem[];
   performancesTitle?: Opus['performancesTitle'];
-  performances: Opus['performances'];
+  performances?: DbOpusPerformance[];
   keywords: Opus['keywords'];
   allowIndexation: Opus['allowIndexation'];
   coverImage: Opus['coverImage'];
@@ -61,7 +76,7 @@ const toEntity = (doc: DbOpus): Opus =>
     performancesTitle: doc.performancesTitle ?? undefined,
     gallery:
       doc.gallery?.map((item) => ({
-        id: (item as any)._id?.toString() ?? '',
+        id: item._id?.toString() ?? '',
         src: item.src,
         description: item.description,
         altText: item.altText,
@@ -76,7 +91,7 @@ const toEntity = (doc: DbOpus): Opus =>
             : null
       })) ?? [],
     performances:
-      doc.performances?.map((perf: any) => ({
+      doc.performances?.map((perf) => ({
         id: perf._id?.toString() ?? '',
         title: perf.title,
         videoUrl: perf.videoUrl

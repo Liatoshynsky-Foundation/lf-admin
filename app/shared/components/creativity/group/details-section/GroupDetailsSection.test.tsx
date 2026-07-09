@@ -114,7 +114,8 @@ const defaultProps = {
     groupTitle: { uk: 'Квартет', en: 'Quartet' },
     creationYear: '1922',
     endYear: '1924',
-    dateAdditionalText: { uk: 'приблизно', en: 'approx.' }
+    dateAdditionalText: { uk: 'приблизно', en: 'approx.' },
+    genre: ''
   },
   derivedGenre: 'Соната',
   currentLanguage: 'UA' as EditorLanguage,

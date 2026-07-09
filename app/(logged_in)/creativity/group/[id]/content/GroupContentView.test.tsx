@@ -1,79 +1,58 @@
-import { MenuItemProps,MenuProps } from '@mui/material';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import React, { MouseEvent,PropsWithChildren } from 'react';
+import { fireEvent,render, screen } from '@testing-library/react';
 
 import { GroupContentView } from './GroupContentView';
-import { GroupDataField } from '~/constants/creativity';
-import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
-import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
+import { useGroupContent } from '~/shared/hooks/use-group-content/useGroupContent';
 
-jest.mock('~/shared/hooks/use-navigation-guard/useNavigationGuard', () => ({
-  useNavigationGuard: jest.fn()
-}));
-
-jest.mock('~/shared/hooks/use-unsaved-changes/useUnsavedChanges', () => ({
-  useUnsavedChanges: jest.fn()
-}));
-
-jest.mock('~/constants/publications', () => ({
-  LANGUAGE_OPTIONS: [
-    { locale: 'UA', key: 'uk', label: 'UA' },
-    { locale: 'EN', key: 'en', label: 'EN' }
-  ]
-}));
-
-jest.mock('@mui/material', () => {
-  const originalModule = jest.requireActual('@mui/material');
-  return {
-    ...originalModule,
-    Menu: ({ open, children }: Partial<MenuProps>) => {
-      return open ? <div data-testid="mock-menu" role="menu">{children}</div> : null;
-    },
-    MenuItem: ({ onClick, children }: PropsWithChildren<MenuItemProps>) => {
-      return (
-        <li role="menuitem" onClick={onClick} style={{ cursor: 'pointer' }}>
-          {children}
-        </li>
-      );
-    },
-  };
-});
-
-type MockHeaderActionsProps = {
-  onPublish: () => void;
-  disabled: boolean;
-  onMenuOpen: (event: React.MouseEvent<HTMLButtonElement>) => void;
-};
-
-type MockDetailsSectionProps = {
-  onChange: (field: GroupDataField, value: unknown, isMultilingual?: boolean) => void;
-  errors: Record<string, string>;
-};
-
-type MockDividedHeaderProps = {
-  children: React.ReactNode;
-  rightActionsComponent: React.ReactNode;
-  onBackClick?: () => void;
-};
+jest.mock('~/shared/hooks/use-group-content/useGroupContent');
 
 jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
-  default: ({ children, title }: { children: React.ReactNode; title: string }) => (
-    <div data-testid={`mock-collapsible-${title}`}>
+  default: ({ title, children, onChange }: any) => (
+    <div data-testid={`collapsible-block-${title}`}>
+      <button data-testid={`toggle-${title}`} onClick={() => onChange?.(null, false)}>
+        Toggle {title}
+      </button>
       {children}
     </div>
   )
 }));
 
-jest.mock('~/shared/components/divided-header/header-right-actions/HeaderRightActions', () => ({
-  __esModule: true,
-  default: ({ onPublish, disabled, onMenuOpen }: MockHeaderActionsProps) => (
-    <div data-testid="mock-header-actions">
-      <button data-testid="trigger-publish" onClick={onPublish} disabled={disabled}>
-        Publish
+jest.mock('~/shared/components/creativity/group/details-section/GroupDetailsSection', () => ({
+  GroupDetailsSection: () => <div data-testid="group-details-section" />
+}));
+
+jest.mock('~/shared/components/creativity/group/intro-section/GroupIntroSection', () => ({
+  GroupIntroSection: () => <div data-testid="group-intro-section" />
+}));
+
+jest.mock('~/shared/components/creativity/group/photos-section/GroupPhotosSection', () => ({
+  GroupPhotosSection: ({ onChange }: any) => (
+    <div data-testid="group-photos-section">
+      <button data-testid="change-photos" onClick={() => onChange([])}>
+        Change Photos
       </button>
-      <button data-testid="trigger-publish-menu" onClick={onMenuOpen}>
-        Menu
+    </div>
+  )
+}));
+
+jest.mock('~/shared/components/creativity/group/works-section/GroupWorksSection', () => ({
+  GroupWorksSection: ({ onChange }: any) => (
+    <div data-testid="group-works-section">
+      <button data-testid="change-works" onClick={() => onChange([])}>
+        Change Works
+      </button>
+    </div>
+  )
+}));
+
+jest.mock('~/shared/components/creativity/group/performances-section/GroupPerformancesSection', () => ({
+  GroupPerformancesSection: ({ onChangeSectionTitle, onChangePerformances }: any) => (
+    <div data-testid="group-performances-section">
+      <button data-testid="change-perf-title" onClick={() => onChangeSectionTitle('New Title')}>
+        Change Perf Title
+      </button>
+      <button data-testid="change-perfs" onClick={() => onChangePerformances([])}>
+        Change Perfs
       </button>
     </div>
   )
@@ -81,175 +60,199 @@ jest.mock('~/shared/components/divided-header/header-right-actions/HeaderRightAc
 
 jest.mock('~/shared/components/divided-header/DividedHeader', () => ({
   __esModule: true,
-  default: ({ children, rightActionsComponent, onBackClick }: MockDividedHeaderProps) => (
-    <div data-testid="mock-divided-header">
-      <button data-testid="trigger-back-btn" onClick={onBackClick}>
-        Back
-      </button>
+  default: ({ onBackClick, rightActionsComponent, children }: any) => (
+    <div data-testid="divided-header">
+      <button onClick={onBackClick}>Back</button>
       {children}
       {rightActionsComponent}
     </div>
   )
 }));
 
-jest.mock('~/shared/components/divided-header/title-dropdown/TitleDropdown', () => ({
-  TitleDropdown: ({ onMenuOpen }: { onMenuOpen: (event: MouseEvent<HTMLButtonElement>) => void }) => (
-    <div data-testid="mock-title-dropdown">
-      <button data-testid="trigger-title-menu" onClick={onMenuOpen}>
-        Title Menu
-      </button>
-    </div>
-  )
-}));
-
-jest.mock('~/shared/components/divided-header/progress-status/ProgressStatus', () => ({
+jest.mock('~/shared/components/divided-header/header-right-actions/HeaderRightActions', () => ({
   __esModule: true,
-  default: () => <div data-testid="mock-progress-status" />
-}));
-
-jest.mock('~/shared/components/creativity/group/details-section/GroupDetailsSection', () => ({
-  GroupDetailsSection: ({ onChange, errors }: MockDetailsSectionProps) => (
-    <div data-testid="mock-details-section">
-      <button data-testid="clear-group-number" onClick={() => onChange('groupNumber', '')} />
-      <button data-testid="clear-group-title" onClick={() => onChange('groupTitle', '', true)} />
-      <button data-testid="make-valid-change" onClick={() => onChange('additionalText', 'some text')} />
-      <button data-testid="trigger-multilingual-change" onClick={() => onChange('groupTitle', 'Нова назва', true)} />
-
-      {errors.groupNumber && <span data-testid="error-groupNumber">{errors.groupNumber}</span>}
-      {errors.groupTitle && <span data-testid="error-groupTitle">{errors.groupTitle}</span>}
+  default: ({ onPublish, onMenuOpen }: any) => (
+    <div data-testid="header-right-actions">
+      <button onClick={onPublish}>Publish Action</button>
+      <button onClick={(e) => onMenuOpen(e)}>Menu Open</button>
     </div>
   )
 }));
 
-jest.mock('~/shared/components/creativity/group/intro-section/GroupIntroSection', () => ({
-  GroupIntroSection: () => <div data-testid="mock-intro-section" />
+jest.mock('~/shared/components/divided-header/title-dropdown/TitleDropdown', () => ({
+  TitleDropdown: ({ title, onMenuOpen }: any) => (
+    <button onClick={onMenuOpen} data-testid="title-dropdown">
+      {title}
+    </button>
+  )
 }));
 
-jest.mock('~/shared/components/creativity/group/photos-section/GroupPhotosSection', () => ({
-  GroupPhotosSection: () => <div data-testid="mock-photos-section" />
-}));
+const mockUseGroupContent = {
+  loading: false,
+  error: undefined,
+  groupData: {
+    titlePrefix: 'Op.',
+    groupNumber: '1',
+    groupTitle: { uk: 'Тестова група', en: 'Test group' },
+    genre: '',
+    additionalText: '',
+    creationYear: '',
+    endYear: '',
+    dateAdditionalText: { uk: '', en: '' },
+    status: 'draft',
+    parts: { uk: '', en: '' },
+    description: { uk: {}, en: {} },
+    photos: [],
+    performancesTitle: '',
+    performances: [],
+    works: []
+  },
+  isDirty: false,
+  currentLanguage: 'UA',
+  errors: {},
+  anchors: {},
+  isInfoModalOpen: false,
+  publishedTitle: { uk: 'Тестова група', en: 'Test group' },
+  isDetailsExpanded: true,
+  langKey: 'uk',
+  setCurrentLanguage: jest.fn(),
+  setIsInfoModalOpen: jest.fn(),
+  setIsDetailsExpanded: jest.fn(),
+  handleBackClick: jest.fn(),
+  handleOpen: jest.fn(),
+  handleClose: jest.fn(),
+  handleFieldChange: jest.fn(),
+  handlePublishClick: jest.fn(),
+  handleMenuOptionClick: jest.fn()
+};
 
-jest.mock('~/shared/components/creativity/group/works-section/GroupWorksSection', () => ({
-  GroupWorksSection: () => <div data-testid="mock-works-section" />
-}));
-
-jest.mock('~/shared/components/creativity/group/performances-section/GroupPerformancesSection', () => ({
-  GroupPerformancesSection: () => <div data-testid="mock-performances-section" />
-}));
-
-describe('GroupContentView Container', () => {
-  const mockNavigate = jest.fn();
-
+describe('GroupContentView Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (useNavigationGuard as jest.Mock).mockReturnValue({ navigate: mockNavigate });
+    (useGroupContent as jest.Mock).mockReturnValue(mockUseGroupContent);
   });
 
-  it('should render the component and all its sections successfully', () => {
-    render(<GroupContentView id="123" />);
-    expect(screen.getByText('Заповнення контентом не є обов’язковим')).toBeInTheDocument();
-  });
+  describe('Conditional Rendering', () => {
+    it('should render loading state when data is not ready', () => {
+      (useGroupContent as jest.Mock).mockReturnValue({ ...mockUseGroupContent, loading: true, groupData: null });
+      render(<GroupContentView id="123" />);
+      expect(screen.getByText('Завантаження...')).toBeInTheDocument();
+    });
 
-  it('should track unsaved changes using useUnsavedChanges hook when fields are modified', () => {
-    render(<GroupContentView id="123" />);
-    expect(useUnsavedChanges).toHaveBeenCalledWith(false);
+    it('should render error state correctly', () => {
+      (useGroupContent as jest.Mock).mockReturnValue({ ...mockUseGroupContent, error: new Error('Server Error') });
+      render(<GroupContentView id="123" />);
+      expect(screen.getByText('Помилка завантаження даних')).toBeInTheDocument();
+    });
 
-    fireEvent.click(screen.getByTestId('make-valid-change'));
-    expect(useUnsavedChanges).toHaveBeenCalledWith(true);
-  });
-
-  it('should open the info modal when "Publish" is clicked and data is valid', () => {
-    render(<GroupContentView id="123" />);
-
-    fireEvent.click(screen.getByTestId('make-valid-change'));
-    fireEvent.click(screen.getByTestId('trigger-publish'));
-    expect(screen.getByText('Сторінка у розробці')).toBeInTheDocument();
-  });
-
-  it('should close the info modal when the "Зрозуміло" button is clicked', async () => {
-    render(<GroupContentView id="123" />);
-
-    fireEvent.click(screen.getByTestId('make-valid-change'));
-    fireEvent.click(screen.getByTestId('trigger-publish'));
-    expect(screen.getByText('Сторінка у розробці')).toBeInTheDocument();
-    fireEvent.click(screen.getByText('Зрозуміло'));
-
-    await waitFor(() => {
-      expect(screen.queryByText('Сторінка у розробці')).not.toBeInTheDocument();
+    it('should render the main layout and all sections successfully', () => {
+      render(<GroupContentView id="123" />);
+      expect(screen.getByTestId('group-details-section')).toBeInTheDocument();
+      expect(screen.getByTestId('group-intro-section')).toBeInTheDocument();
+      expect(screen.getByTestId('group-photos-section')).toBeInTheDocument();
+      expect(screen.getByTestId('group-works-section')).toBeInTheDocument();
+      expect(screen.getByTestId('group-performances-section')).toBeInTheDocument();
     });
   });
 
-  it('should show validation errors and NOT open the modal if required fields are empty', () => {
-    render(<GroupContentView id="123" />);
+  describe('Header & Navigation Actions', () => {
+    it('should call handleBackClick when Back button is clicked', () => {
+      render(<GroupContentView id="123" />);
+      fireEvent.click(screen.getByText('Back'));
+      expect(mockUseGroupContent.handleBackClick).toHaveBeenCalledTimes(1);
+    });
 
-    fireEvent.click(screen.getByTestId('clear-group-number'));
-    fireEvent.click(screen.getByTestId('clear-group-title'));
+    it('should call handlePublishClick when Publish action is clicked', () => {
+      render(<GroupContentView id="123" />);
+      fireEvent.click(screen.getByText('Publish Action'));
+      expect(mockUseGroupContent.handlePublishClick).toHaveBeenCalledTimes(1);
+    });
 
-    fireEvent.click(screen.getByTestId('trigger-publish'));
+    it('should open navigation menu when TitleDropdown is clicked', () => {
+      render(<GroupContentView id="123" />);
+      fireEvent.click(screen.getByTestId('title-dropdown'));
+      expect(mockUseGroupContent.handleOpen).toHaveBeenCalledWith(expect.anything(), 'navigation');
+    });
 
-    expect(screen.queryByText('Сторінка у розробці')).not.toBeInTheDocument();
-
-    expect(screen.getByTestId('error-groupNumber')).toHaveTextContent('Обов’язкове поле');
-    expect(screen.getByTestId('error-groupTitle')).toHaveTextContent('Обов’язкове поле');
+    it('should open publish menu when RightAction menu button is clicked', () => {
+      render(<GroupContentView id="123" />);
+      fireEvent.click(screen.getByText('Menu Open'));
+      expect(mockUseGroupContent.handleOpen).toHaveBeenCalledWith(expect.anything(), 'publish');
+    });
   });
 
-  it('should open the info modal when selecting a valid option from the dropdown menu', () => {
-    render(<GroupContentView id="123" />);
+  describe('Menus & Dialogs', () => {
+    it('should render language menu options and handle selection', () => {
+      const anchorElement = document.createElement('button');
+      (useGroupContent as jest.Mock).mockReturnValue({
+        ...mockUseGroupContent,
+        anchors: { navigation: anchorElement }
+      });
 
-    fireEvent.click(screen.getByTestId('trigger-publish-menu'));
-    fireEvent.click(screen.getByText('Опублікувати і вийти'));
+      render(<GroupContentView id="123" />);
+      const menuItems = screen.getAllByRole('menuitem');
+      fireEvent.click(menuItems[1]);
 
-    expect(screen.getByText('Сторінка у розробці')).toBeInTheDocument();
+      expect(mockUseGroupContent.setCurrentLanguage).toHaveBeenCalled();
+      expect(mockUseGroupContent.handleClose).toHaveBeenCalledWith('navigation');
+    });
+
+    it('should render publish menu options and handle action click', () => {
+      const anchorElement = document.createElement('button');
+      (useGroupContent as jest.Mock).mockReturnValue({ ...mockUseGroupContent, anchors: { publish: anchorElement } });
+
+      render(<GroupContentView id="123" />);
+
+      fireEvent.click(screen.getByText('Опублікувати і вийти'));
+      expect(mockUseGroupContent.handleMenuOptionClick).toHaveBeenCalledWith('PUBLISH_AND_EXIT');
+    });
   });
 
-  it('should navigate back to /edit if document.referrer contains the edit URL', () => {
-    Object.defineProperty(document, 'referrer', { value: '/creativity/group/123/edit', configurable: true });
-    render(<GroupContentView id="123" />);
+  describe('Inline Callbacks & Edge Cases Coverage', () => {
+    it('should trigger inline onChange handlers for child sections', () => {
+      render(<GroupContentView id="123" />);
 
-    fireEvent.click(screen.getByTestId('trigger-back-btn'));
-    expect(mockNavigate).toHaveBeenCalledWith('/creativity/group/123/edit');
-  });
+      fireEvent.click(screen.getByTestId('toggle-Деталі'));
+      expect(mockUseGroupContent.setIsDetailsExpanded).toHaveBeenCalledWith(false);
 
-  it('should navigate back to /creativity if document.referrer does NOT contain edit URL', () => {
-    Object.defineProperty(document, 'referrer', { value: 'https://some-other-site.com', configurable: true });
-    render(<GroupContentView id="123" />);
+      fireEvent.click(screen.getByTestId('change-photos'));
+      expect(mockUseGroupContent.handleFieldChange).toHaveBeenCalledWith('photos', []);
 
-    fireEvent.click(screen.getByTestId('trigger-back-btn'));
-    expect(mockNavigate).toHaveBeenCalledWith('/creativity');
-  });
+      fireEvent.click(screen.getByTestId('change-works'));
+      expect(mockUseGroupContent.handleFieldChange).toHaveBeenCalledWith('works', []);
 
-  it('should update multilingual fields and clear errors upon typing', () => {
-    render(<GroupContentView id="123" />);
+      fireEvent.click(screen.getByTestId('change-perf-title'));
+      expect(mockUseGroupContent.handleFieldChange).toHaveBeenCalledWith('performancesTitle', 'New Title');
 
-    fireEvent.click(screen.getByTestId('clear-group-title'));
-    fireEvent.click(screen.getByTestId('trigger-publish'));
-    expect(screen.getByTestId('error-groupTitle')).toBeInTheDocument();
+      fireEvent.click(screen.getByTestId('change-perfs'));
+      expect(mockUseGroupContent.handleFieldChange).toHaveBeenCalledWith('performances', []);
+    });
 
-    fireEvent.click(screen.getByTestId('trigger-multilingual-change'));
-    expect(screen.queryByTestId('error-groupTitle')).not.toBeInTheDocument();
-  });
+    it('should handle DELETE action click', () => {
+      const anchorElement = document.createElement('button');
+      (useGroupContent as jest.Mock).mockReturnValue({
+        ...mockUseGroupContent,
+        anchors: { publish: anchorElement }
+      });
 
-  it('should bypass validation and open info modal when DELETE menu option is clicked', async () => {
-    render(<GroupContentView id="123" />);
-    fireEvent.click(screen.getByTestId('trigger-publish-menu'));
-    const menuItems = await screen.findAllByRole('menuitem');
-    const deleteOption = menuItems.find(item => item.textContent === 'Видалити');
-    
-    if (!deleteOption) {
-      throw new Error('Не вдалося знайти пункт \'Видалити\' у списку меню');
-    }
+      render(<GroupContentView id="123" />);
 
-    fireEvent.click(deleteOption);
-    
-    expect(await screen.findByText('Сторінка у розробці')).toBeInTheDocument();
-  });
+      fireEvent.click(screen.getByText('Видалити'));
+      expect(mockUseGroupContent.handleMenuOptionClick).toHaveBeenCalledWith('DELETE');
+    });
+    it('should trigger onClose for Menu', () => {
+      const anchorElement = document.createElement('button');
+      (useGroupContent as jest.Mock).mockReturnValue({
+        ...mockUseGroupContent,
+        anchors: { publish: anchorElement }
+      });
 
-  it('should change current language when a language menu item is clicked', async () => {
-    render(<GroupContentView id="123" />);
+      render(<GroupContentView id="123" />);
 
-    fireEvent.click(screen.getByTestId('trigger-title-menu'));
-    const enMenuItem = await screen.findByText('EN');
-    fireEvent.click(enMenuItem);
-    expect(screen.getByTestId('trigger-title-menu')).toBeInTheDocument();
+      const menu = screen.getByRole('menu');
+      fireEvent.keyDown(menu, { key: 'Escape', code: 'Escape' });
+
+      expect(mockUseGroupContent.handleClose).toHaveBeenCalledWith('publish');
+    });
   });
 });

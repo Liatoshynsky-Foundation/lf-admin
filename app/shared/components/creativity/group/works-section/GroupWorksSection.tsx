@@ -7,6 +7,7 @@ import Button from '~/components/design-system/button/Button';
 import { OPUS_DELETE_MODAL, OPUS_DETAILS_LABELS } from '~/constants/opus';
 import CompositionModal from '~/shared/components/forms/opus-details-block/composition-modal/CompositionModal';
 import CompositionTitleInput from '~/shared/components/forms/opus-details-block/composition-title-input/CompositionTitleInput';
+import { createCompositionId } from '~/shared/hooks/use-group-content/useGroupContent';
 import type { OpusCompositionData, OpusCompositionSuggestion, OpusMediaFileData } from '~/types/opus';
 
 const fileNameFromUrl = (url?: string | null): string => {
@@ -15,18 +16,25 @@ const fileNameFromUrl = (url?: string | null): string => {
   return decodeURIComponent(segment.split('?')[0]);
 };
 
-const toSuggestionAudio = (audio: any): OpusMediaFileData => ({
-  id: `audio-${Date.now()}-${Math.random()}`,
-  name: audio.name ?? fileNameFromUrl(audio.url),
-  fileUrl: audio.url ?? undefined
-});
+type AudioItem = NonNullable<OpusCompositionSuggestion['audios']>[number];
+type SheetMusicItem = NonNullable<OpusCompositionSuggestion['sheetMusic']>[number];
 
-const toSuggestionNote = (sheet: any): OpusMediaFileData => ({
-  id: `note-${Date.now()}-${Math.random()}`,
-  name: sheet.name ?? fileNameFromUrl(sheet.url),
-  fileUrl: sheet.url ?? undefined,
-  publishDate: sheet.publishDate ?? ''
-});
+export const toSuggestionAudio = (audio: AudioItem): OpusMediaFileData => {
+  return {
+    id: createCompositionId(),
+    name: audio.name ?? fileNameFromUrl(audio.url),
+    fileUrl: audio.url ?? undefined,
+  };
+};
+
+export const toSuggestionNote = (sheet: SheetMusicItem): OpusMediaFileData => {
+  return {
+    id: createCompositionId(),
+    name: sheet.name ?? fileNameFromUrl(sheet.url),
+    fileUrl: sheet.url ?? undefined,
+    publishDate: sheet.publishDate ?? '',
+  };
+};
 
 type GroupWorksSectionProps = {
   works: OpusCompositionData[];
