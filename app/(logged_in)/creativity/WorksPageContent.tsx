@@ -14,8 +14,13 @@ import {
   WORKS_EMPTY_STATE_NO_RESULTS_DESCRIPTION,
   WORKS_EMPTY_STATE_NO_RESULTS_TITLE,
   WORKS_EMPTY_STATE_TITLE,
+  WORKS_ERROR_STATE_DESCRIPTION,
+  WORKS_ERROR_STATE_TITLE,
+  WORKS_LOADING_STATE_DESCRIPTION,
+  WORKS_LOADING_STATE_TITLE,
   WORKS_PAGE_TITLE,
   WORKS_TABS,
+  WorksLanguageValue,
   WorksStatusValue,
   type WorksTabValue
 } from '~/constants/creativity';
@@ -41,6 +46,10 @@ type GroupRowData = Readonly<{
   id: string;
   numberLabel: string;
   title: string;
+  titleData: {
+    uk?: string | null;
+    en?: string | null;
+  };
   genre: string;
   startDate: string;
   endDate?: string;
@@ -52,6 +61,21 @@ type GroupRowData = Readonly<{
   works: ReadonlyArray<{ id: string; title: string }>;
 }>;
 
+type CompositionRowData = Readonly<{
+  id: string;
+  title: string;
+  titleData: {
+    uk?: string | null;
+    en?: string | null;
+  };
+  year: string;
+  genre: string;
+  status: WorksStatusValue;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+}>;
+
 const localizedTitle = (title: { uk: string; en: string }) => title.uk || title.en;
 
 function toGroupRowData(opus: GqlOpus): GroupRowData {
@@ -61,6 +85,7 @@ function toGroupRowData(opus: GqlOpus): GroupRowData {
     id: opus.id,
     numberLabel: opus.number,
     title: localizedTitle(opus.title),
+    titleData: opus.title,
     genre: opus.genre ?? '',
     startDate: opus.creationYear,
     endDate: opus.endYear ?? undefined,
@@ -75,30 +100,32 @@ function toGroupRowData(opus: GqlOpus): GroupRowData {
   };
 }
 
-function toStandaloneRowData(composition: GqlComposition) {
+function toStandaloneRowData(composition: GqlComposition): CompositionRowData {
   const safeStatus = (composition.status as unknown as WorksStatusValue) || BaseContentStatuses.Draft;
 
   return {
     id: composition.id,
     title: localizedTitle(composition.title),
+    titleData: composition.title,
     year: composition.year ? String(composition.year) : '',
     genre: composition.genre ?? '',
     status: safeStatus,
+    createdAt: composition.createdAt,
     updatedAt: composition.updatedAt
   };
 }
 
-function sortGroups<T extends { title: string; updatedAt: string }>(
+function sortGroups<T extends { title: string; createdAt: string }>(
   groups: readonly T[],
   sortValue: FilesSortValue
 ): T[] {
   return [...groups].sort((left, right) => {
     if (sortValue === 'date_desc') {
-      return new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime();
+      return Number(right.createdAt) - Number(left.createdAt);
     }
 
     if (sortValue === 'date_asc') {
-      return new Date(left.updatedAt).getTime() - new Date(right.updatedAt).getTime();
+      return Number(left.createdAt) - Number(right.createdAt);
     }
 
     if (sortValue === 'name_asc') {
@@ -184,6 +211,69 @@ function WorksCreateAction() {
   );
 }
 
+type ClientFilteringResult = readonly [GroupRowData[], GroupRowData[], ReturnType<typeof toStandaloneRowData>[]];
+
+const clientFiltering = (
+  opusGroupsData: AllOpusesQuery | undefined,
+  ungroupedGroupsData: AllOpusesQuery | undefined,
+  compositionsData: AllCompositionsQuery | undefined,
+  selectedFilters: Readonly<{
+    status: readonly WorksStatusValue[];
+    language: readonly WorksLanguageValue[];
+  }>,
+  sortValue: FilesSortValue,
+  matchesSearch: (text: string) => boolean
+): ClientFilteringResult => {
+  const getLanguage = (value: { uk?: string | null; en?: string | null }): WorksLanguageValue => {
+    const hasUk = Boolean(value.uk?.trim());
+    const hasEn = Boolean(value.en?.trim());
+
+    if (hasUk && hasEn) {
+      return 'bilingual';
+    }
+
+    if (hasEn) {
+      return 'en';
+    }
+
+    return 'uk';
+  };
+
+  const matchesStatus = (status: WorksStatusValue) =>
+    selectedFilters.status.length === 0 || selectedFilters.status.includes(status);
+
+  const matchesLanguage = (title: { uk?: string | null; en?: string | null }) =>
+    selectedFilters.language.length === 0 || selectedFilters.language.includes(getLanguage(title));
+
+  const matchGroup = (group: { title: string; numberLabel: string; genre: string }) =>
+    matchesSearch(group.title) || matchesSearch(group.numberLabel) || matchesSearch(group.genre);
+
+  const matchComposition = (work: { title: string; genre: string }) =>
+    matchesSearch(work.title) || matchesSearch(work.genre);
+
+  const mappedOpusGroups = sortGroups(
+    (opusGroupsData?.allOpuses ?? [])
+      .map(toGroupRowData)
+      .filter((group) => matchGroup(group) && matchesLanguage(group.titleData) && matchesStatus(group.status)),
+    sortValue
+  );
+
+  const mappedUngroupedGroups = sortGroups(
+    (ungroupedGroupsData?.allOpuses ?? [])
+      .map(toGroupRowData)
+      .filter((group) => matchGroup(group) && matchesLanguage(group.titleData) && matchesStatus(group.status)),
+    sortValue
+  );
+
+  const visibleUngroupedWorks = sortGroups(
+    (compositionsData?.allCompositions ?? [])
+      .map(toStandaloneRowData)
+      .filter((work) => matchComposition(work) && matchesLanguage(work.titleData) && matchesStatus(work.status)),
+    sortValue
+  );
+  return [mappedOpusGroups, mappedUngroupedGroups, visibleUngroupedWorks] as const;
+};
+
 export function WorksPageContent({ activeTab }: WorksPageContentProps) {
   const { sortValue, selectedFilters, toolbarProps, sortProps } = useWorksFiltering();
 
@@ -215,50 +305,41 @@ export function WorksPageContent({ activeTab }: WorksPageContentProps) {
     error: compositionsError
   } = useAllCompositions({}, { skip: !showCompositions });
 
-  const matchesGenre = (genre: string) => selectedFilters.genre.length === 0 || selectedFilters.genre.includes(genre);
-
-  const mappedOpusGroups = sortGroups(
-    (opusGroupsData?.allOpuses ?? []).map(toGroupRowData).filter((group) => {
-      return matchesSearch(group.title) || matchesSearch(group.numberLabel);
-    }),
-    sortValue
+  const [mappedOpusGroups, mappedUngroupedGroups, visibleUngroupedWorks] = clientFiltering(
+    opusGroupsData,
+    ungroupedGroupsData,
+    compositionsData,
+    selectedFilters,
+    sortValue,
+    matchesSearch
   );
 
-  const mappedUngroupedGroups = sortGroups(
-    (ungroupedGroupsData?.allOpuses ?? []).map(toGroupRowData).filter((group) => {
-      return matchesSearch(group.title) || matchesSearch(group.numberLabel);
-    }),
-    sortValue
-  );
+  const hasOpus = mappedOpusGroups.length > 0;
+  const hasUngrouped = mappedUngroupedGroups.length > 0;
+  const hasCompositions = visibleUngroupedWorks.length > 0;
 
-  const visibleUngroupedWorks = sortGroups(
-    (compositionsData?.allCompositions ?? [])
-      .map(toStandaloneRowData)
-      .filter((work) => matchesGenre(work.genre) && matchesSearch(work.title)),
-    sortValue
-  );
-
+  const hasBaseItems =
+    (showOpus && hasOpus) || (showUngrouped && hasUngrouped) || (showCompositions && hasCompositions);
   const hasActiveCriteria = Boolean(searchValue) || Boolean(toolbarProps.activeFiltersCount);
   const isLoading =
     (showOpus && isOpusGroupsLoading) ||
     (showUngrouped && isUngroupedGroupsLoading) ||
     (showCompositions && isCompositionsLoading);
-  const hasError = opusGroupsError || ungroupedGroupsError || compositionsError;
+  const activeError = opusGroupsError ?? ungroupedGroupsError ?? compositionsError;
+
+  const shouldShowLoadingState = !hasBaseItems && isLoading;
+  const shouldShowErrorState = !hasBaseItems && Boolean(activeError);
 
   const content = (() => {
-    if (isLoading) {
-      return null;
+    if (shouldShowLoadingState) {
+      return <EmptyState title={WORKS_LOADING_STATE_TITLE} description={WORKS_LOADING_STATE_DESCRIPTION} />;
     }
 
-    if (hasError) {
-      return null;
+    if (shouldShowErrorState) {
+      return <EmptyState title={WORKS_ERROR_STATE_TITLE} description={WORKS_ERROR_STATE_DESCRIPTION} />;
     }
 
-    const hasOpus = showOpus && mappedOpusGroups.length > 0;
-    const hasUngrouped = showUngrouped && mappedUngroupedGroups.length > 0;
-    const hasCompositions = showCompositions && visibleUngroupedWorks.length > 0;
-
-    if (!hasOpus && !hasUngrouped && !hasCompositions) {
+    if (!hasBaseItems) {
       return (
         <EmptyState
           title={hasActiveCriteria ? WORKS_EMPTY_STATE_NO_RESULTS_TITLE : WORKS_EMPTY_STATE_TITLE}
