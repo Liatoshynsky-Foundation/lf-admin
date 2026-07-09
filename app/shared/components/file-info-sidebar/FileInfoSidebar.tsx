@@ -60,7 +60,7 @@ export type FileInfoSidebarProps = {
 
   onClose: () => void;
 
-  onToggleStar?: (fileId: string, next: boolean) => void;
+  onToggleStar?: (fileId: string, next: boolean) => Promise<void> | void;
   onDescriptionSave?: (fileId: string, description: string) => Promise<void> | void;
   onDeleteRequest?: (fileId: string) => void;
 
