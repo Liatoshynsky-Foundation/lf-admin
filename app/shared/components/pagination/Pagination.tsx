@@ -12,7 +12,7 @@ interface PaginationProps extends Omit<MuiPaginationProps, 'count' | 'page' | 'o
 }
 
 
-export const Pagination = ({ totalPages, currentPage, onPageChange }: Readonly<PaginationProps>) => {
+export const Pagination = ({ totalPages, currentPage, onPageChange, ...rest }: Readonly<PaginationProps>) => {
   return (
     <MuiPagination count={totalPages} page={currentPage} onChange={onPageChange} renderItem={(item) => (
       <PaginationItem
@@ -22,6 +22,6 @@ export const Pagination = ({ totalPages, currentPage, onPageChange }: Readonly<P
         }}
         {...item}
       />
-    )} />
+    )} {...rest} />
   );
 };
