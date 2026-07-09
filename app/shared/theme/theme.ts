@@ -1292,12 +1292,6 @@ export const createAdminTheme = () =>
             alignItems: 'center',
             gap: '4px',           
             flexWrap: 'nowrap',
-            '&>li:first-child': {
-              marginRight: '28px'
-            },
-            '&>li:last-child': {
-              marginLeft: '28px'
-            }
           },
         },
       },
@@ -1320,6 +1314,12 @@ export const createAdminTheme = () =>
               borderColor: mainHexPalette.black,
               padding: '8px',
               color: mainHexPalette.black
+            }),
+            ...(ownerState.type === 'previous' && {
+              marginRight: '28px'
+            }),
+            ...(ownerState.type === 'next' && {
+              marginLeft: '28px'
             }),
             ...((ownerState.type === 'start-ellipsis' || ownerState.type === 'end-ellipsis') && {
               display: 'flex',
