@@ -1279,6 +1279,50 @@ export const createAdminTheme = () =>
           }
         ]
       },
+      MuiPagination: {
+        styleOverrides: {
+          root: {
+            display: 'inline-flex',
+            gap: '100px',
+            justifyContent: 'center',
+            alignItems: 'center'
+          },
+          ul: {
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',           
+            flexWrap: 'nowrap',
+            '&>li:first-child': {
+              marginRight: '28px'
+            },
+            '&>li:last-child': {
+              marginLeft: '28px'
+            }
+          },
+        },
+      },
+      MuiPaginationItem: {
+        styleOverrides: {
+          root: ({ ownerState }) => ({
+            borderRadius: '50%',
+            minWidth: 40,
+            margin: 0, 
+            height: 40,
+            fontWeight: 500,
+            lineHeight: 1.5,
+            fontSize: 16,
+            ...(ownerState.selected && {
+              backgroundColor: mainHexPalette.blue[200],
+            }),
+            ...((ownerState.type === 'previous' || ownerState.type === 'next') && {
+              border: '1px solid',
+              borderColor: mainHexPalette.black,
+              padding: '8px',
+              color: mainHexPalette.black
+            }) 
+          }),
+        },
+      },
       MuiTooltip: {
         styleOverrides: {
           tooltip: ({ theme }) => ({

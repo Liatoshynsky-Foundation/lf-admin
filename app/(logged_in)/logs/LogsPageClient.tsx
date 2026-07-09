@@ -13,7 +13,6 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  Pagination,
   Stack,
   Tab,
   Tabs,
@@ -23,6 +22,7 @@ import { type SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
 import { getLogItemAccordion, styles } from './LogsPageClient.styles';
 import type { LogEntry, LogLevel, LogsResponse } from '~/back-shared/types/logs';
+import { Pagination } from '~/shared/components/pagination/Pagination';
 
 const LEVEL_OPTIONS: Array<{ value: LogLevel | 'all'; label: string }> = [
   { value: 'all', label: 'Усі' },
@@ -269,7 +269,7 @@ const LogsPageClient = () => {
       {content}
 
       {hasItems && totalPages > 1 ? (
-        <Pagination count={totalPages} page={page} onChange={(_, value) => setPage(value)} />
+        <Pagination totalPages={totalPages} currentPage={page} onPageChange={(_, value) => setPage(value)}/>
       ) : null}
 
       <Dialog open={dialogOpen} onClose={closeClearDialog}>
