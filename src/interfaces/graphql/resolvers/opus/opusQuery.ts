@@ -27,9 +27,6 @@ interface PaginatedArgs {
   limit: number;
   filters?: NonNullable<FilterArgs['filters']>;
 }
-// interface CountArgs {
-//   status?: string;
-// }
 
 const assertAuthenticated = (context: GraphQLContext): void => {
   if (!context.admin) {
@@ -107,8 +104,4 @@ export const OpusQuery = {
   >(async ({ args: { page, limit, filters }, repo }) =>
     repo.findPaginated(page, limit, mapFilters<OpusFilters>(filters))
   ),
-
-  // opusesCount: endpointHandler<CountArgs, number>(async ({ args: { status }, repo }) =>
-  //   repo.count(status ? { statuses: [status as OpusStatus] } : undefined)
-  // )
 };

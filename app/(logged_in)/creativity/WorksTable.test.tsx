@@ -26,8 +26,7 @@ const group: GroupRowData = {
   works: [
     {
       id: 'work-1',
-      title: 'Work 1',
-      year: '2020'
+      title: 'Work 1'
     }
   ]
 };

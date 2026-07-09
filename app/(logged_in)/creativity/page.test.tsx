@@ -5,9 +5,45 @@ import React from 'react';
 
 import CreativityPage from './page';
 
-const MOCK_GROUP_LABEL = 'дії групи перший струнний квартет';
-const MOCK_WORK_LABEL = 'дії твору №1«після бою»';
-const MOCK_WORK_TEXT = '№1«Після бою», сл. І. Буніна, укр.пер. М. Стріхи';
+const MOCK_GROUP_LABEL = 'Дії групи Перший струнний квартет';
+const MOCK_WORK_LABEL = 'Дії твору №1 «Після бою»';
+const MOCK_WORK_TEXT = '№1 «Після бою»';
+
+jest.mock('~/shared/hooks/use-opuses/useOpuses', () => ({
+  useAllOpusGroups: jest.fn(() => ({
+    data: {
+      allOpuses: [
+        {
+          id: '1',
+          title: { uk: 'Перший струнний квартет', en: 'First String Quartet' },
+          type: 'group'
+        }
+      ]
+    },
+    loading: false,
+    error: undefined
+  })),
+  useAllUngroupedGroups: jest.fn(() => ({
+    data: { allOpuses: [] },
+    loading: false,
+    error: undefined
+  }))
+}));
+
+jest.mock('~/shared/hooks/use-compositions/useCompositions', () => ({
+  useAllCompositions: jest.fn(() => ({
+    data: {
+      allCompositions: [
+        {
+          id: '2',
+          title: { uk: '№1 «Після бою»', en: 'No.1 After the fight' }
+        }
+      ]
+    },
+    loading: false,
+    error: undefined
+  }))
+}));
 
 jest.mock('next/link', () => {
   const MockLink = ({ children, href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
@@ -41,13 +77,26 @@ jest.mock('~/shared/components/filtering-toolbar', () => ({
   )
 }));
 
+interface TabItem {
+  value: string;
+  label: string;
+  href: string;
+}
+
+interface PageHeaderProps {
+  title: string;
+  activeTab: string;
+  tabs: TabItem[];
+  action: React.ReactNode;
+}
+
 jest.mock('~/shared/components/page-header/PageHeader', () => ({
-  PageHeader: ({ title, activeTab, tabs, action }: any) => (
+  PageHeader: ({ title, activeTab, tabs, action }: PageHeaderProps) => (
     <div>
       <h1>{title}</h1>
       <div>{action}</div>
       <div>
-        {tabs.map((tab: any) => (
+        {tabs.map((tab: TabItem) => (
           <a key={tab.value} role="tab" aria-selected={tab.value === activeTab} href={tab.href}>
             {tab.label}
           </a>

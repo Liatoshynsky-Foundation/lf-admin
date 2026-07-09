@@ -1,6 +1,8 @@
 import { Model } from 'mongoose';
 
 import { CompositionRepository, DbComposition } from './compositionRepository';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
+
 
 jest.mock('mongoose', () => ({
   Types: {
@@ -22,11 +24,11 @@ const createMockDoc = (overrides: Partial<DbComposition> = {}): DbComposition =>
   year: 1920,
   genre: 'Романс',
   genres: [],
-  categories: [],
   audioAvailable: false,
   sheetAvailable: false,
   sheetMusic: [],
   audios: [],
+  status: BaseContentStatuses.Draft,
   createdAt: '2026-01-01',
   updatedAt: '2026-01-01',
   ...overrides
@@ -39,7 +41,6 @@ const compositionInput = (id?: string) => ({
   year: 1920,
   genre: 'Романс',
   genres: [],
-  categories: [],
   audioAvailable: false,
   sheetAvailable: false,
   sheetMusic: [],
@@ -127,7 +128,6 @@ describe('CompositionRepository', () => {
       year: null,
       genre: null,
       genres: undefined,
-      categories: undefined,
       audioAvailable: undefined,
       sheetAvailable: undefined,
       sheetMusic: undefined,
@@ -143,7 +143,6 @@ describe('CompositionRepository', () => {
     expect(result.year).toBeUndefined();
     expect(result.genre).toBeUndefined();
     expect(result.genres).toEqual([]);
-    expect(result.categories).toEqual([]);
     expect(result.audioAvailable).toBe(false);
     expect(result.sheetAvailable).toBe(false);
     expect(result.sheetMusic).toEqual([]);
@@ -153,7 +152,6 @@ describe('CompositionRepository', () => {
   it('findByOpusId maps genre and category refs to string ids', async (): Promise<void> => {
     const doc = createMockDoc({
       genres: [{ toString: (): string => 'genre-1' }],
-      categories: [{ toString: (): string => 'category-1' }]
     });
     const sortMock = jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue([doc]) });
     findMock.mockReturnValue({ sort: sortMock });
@@ -161,7 +159,6 @@ describe('CompositionRepository', () => {
     const [result] = await repository.findByOpusId(opusId);
 
     expect(result.genres).toEqual(['genre-1']);
-    expect(result.categories).toEqual(['category-1']);
   });
 
   it('findByOpusId returns an empty array for an invalid opusId', async (): Promise<void> => {

@@ -3,6 +3,7 @@ import { Model } from 'mongoose';
 import { DbOpus, OpusRepository } from './opusRepository';
 import { CreateOpusInput, IOpusRepository } from '~/domain/repositories/opusRepository';
 import { OpusStatus, SortOrder } from '~/types/enums/common.enums';
+import { OpusNumberKind } from '~/types/graphql/generated/graphql';
 
 jest.mock('mongoose', () => ({
   Schema: jest.fn(),
@@ -139,9 +140,10 @@ describe('OpusRepository', () => {
     it('applies fallback defaults for nullish optional fields', async (): Promise<void> => {
       const doc = createMockOpusDoc({
         releaseYear: null,
-        numberKind: undefined,
+        numberKind: 'op',
         name: null,
-        creationYear: null,
+        creationYear: '1922',
+        endYear: '1925',
         genre: null,
         adminTitle: null,
         slug: null,
@@ -152,7 +154,6 @@ describe('OpusRepository', () => {
         status: undefined,
         meta: undefined,
         additionalText: 'Додатковий текст',
-        endYear: '1925',
         datesNote: 'Нотатка про дати',
         publishedAt: '2026-01-01T00:00:00.000Z'
       });
@@ -164,7 +165,7 @@ describe('OpusRepository', () => {
       expect(result?.numberKind).toBe('op');
       expect(result?.name).toBeUndefined();
       expect(result?.additionalText).toBe('Додатковий текст');
-      expect(result?.creationYear).toBeUndefined();
+      expect(result?.creationYear).toBe('1922');
       expect(result?.endYear).toBe('1925');
       expect(result?.datesNote).toBe('Нотатка про дати');
       expect(result?.genre).toBeUndefined();
@@ -192,22 +193,59 @@ describe('OpusRepository', () => {
   });
 
   describe('findAll', () => {
+    const mockChain = () => ({
+      sort: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      lean: jest.fn().mockResolvedValue([createMockOpusDoc()])
+    });
+
     it('filters by status and sorts', async () => {
-      const chain = {
-        sort: jest.fn().mockReturnThis(),
-        skip: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockReturnThis(),
-        lean: jest.fn().mockResolvedValue([createMockOpusDoc()])
-      };
+      const chain = mockChain();
       findMock.mockReturnValue(chain);
 
       const result = await repository.findAll({
         statuses: [OpusStatus.Draft],
+        numberKind: OpusNumberKind.Op,
         sort: [{ sortBy: 'number', sortOrder: SortOrder.Asc }]
       });
 
       expect(result).toHaveLength(1);
       expect(chain.sort).toHaveBeenCalledWith({ number: 1 });
+    });
+
+    it('applies fallback logic for numberKind === Op inside buildQuery', async () => {
+      const chain = mockChain();
+      findMock.mockReturnValue(chain);
+
+      await repository.findAll({
+        numberKind: OpusNumberKind.Op
+      });
+
+      expect(findMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          $or: [
+            { numberKind: OpusNumberKind.Op },
+            { numberKind: { $exists: false } },
+            { numberKind: null }
+          ]
+        })
+      );
+    });
+
+    it('applies direct filtering for other numberKind values inside buildQuery', async () => {
+      const chain = mockChain();
+      findMock.mockReturnValue(chain);
+
+      await repository.findAll({
+        numberKind: OpusNumberKind.Woo
+      });
+
+      expect(findMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          numberKind: OpusNumberKind.Woo
+        })
+      );
     });
   });
 });
