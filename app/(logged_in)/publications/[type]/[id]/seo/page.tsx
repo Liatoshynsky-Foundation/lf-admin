@@ -3,14 +3,17 @@
 import { Box, Menu, MenuItem, Typography } from '@mui/material';
 import { notFound, useParams, useRouter } from 'next/navigation';
 import { MouseEvent, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import { sharedMenuStyles } from '../../shared/shared-publication.styles';
 import CreatePublicationView from '~/(logged_in)/publications/[type]/create/CreatePublicationsView';
 import {
+  CONTENT_MUTATION_RESULTS,
   PAGE_TITLES,
   PUBLICATIONS_BASE_PATH,
   PUBLICATIONS_TYPES,
-  PublicationsItemType} from '~/constants/publications';
+  PublicationsItemType
+} from '~/constants/publications';
 import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
 import { TitleDropdown } from '~/shared/components/divided-header/title-dropdown/TitleDropdown';
@@ -40,11 +43,13 @@ export default function PublicatiosSeoPage() {
 
   const handlePublishAndExit = () => {
     publicationData?.handleSave(BaseContentStatuses.Published);
+    toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
     router.push(PUBLICATIONS_BASE_PATH);
   };
 
   const handlePublish = () => {
     publicationData?.handleSave(BaseContentStatuses.Published);
+    toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
   };
 
   const handleUnpublish = () => {
