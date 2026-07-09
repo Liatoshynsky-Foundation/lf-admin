@@ -1311,6 +1311,7 @@ export const createAdminTheme = () =>
             fontWeight: 500,
             lineHeight: 1.5,
             fontSize: 16,
+            paddingBlock: '8px',
             ...(ownerState.selected && {
               backgroundColor: mainHexPalette.blue[200],
             }),
@@ -1319,7 +1320,12 @@ export const createAdminTheme = () =>
               borderColor: mainHexPalette.black,
               padding: '8px',
               color: mainHexPalette.black
-            }) 
+            }),
+            ...((ownerState.type === 'start-ellipsis' || ownerState.type === 'end-ellipsis') && {
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }),
           }),
         },
       },
