@@ -1,5 +1,7 @@
 import mongoose, { Model } from 'mongoose';
 
+import { createBaseRepository } from '../baseRepository/baseRepository';
+import { buildBaseQuery, getBaseSort } from '../helpers';
 import { Composition } from '~/domain/entities/Composition';
 import { CompositionFilters, CompositionInput, ICompositionRepository } from '~/domain/repositories/compositionRepository';
 import dbConnect from '~/infrastructure/db/connect';
@@ -16,6 +18,7 @@ export type DbComposition = {
   sheetAvailable?: boolean;
   sheetMusic: Composition['sheetMusic'];
   audios: Composition['audios'];
+  status: Composition['status'];
   createdAt: string;
   updatedAt: string;
 };
@@ -36,11 +39,23 @@ const toEntity = (doc: DbComposition): Composition => ({
   sheetAvailable: doc.sheetAvailable ?? false,
   sheetMusic: doc.sheetMusic ?? [],
   audios: doc.audios ?? [],
+  status: doc.status,
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt
 });
 
 export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps): ICompositionRepository => {
+  const baseRepo = createBaseRepository<Composition, DbComposition, CompositionFilters>({
+    model: CompositionModel,
+    toEntity,
+    buildQuery: (filters) => {
+      const query = buildBaseQuery(filters);
+      if (filters?.isStandalone) query.opusId = null;
+      return query;
+    },
+    getDefaultSort: getBaseSort
+  });
+
   const findByOpusId = async (opusId: string): Promise<Composition[]> => {
     await dbConnect();
 
@@ -140,42 +155,13 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
     return docs.map(toEntity);
   };
 
-  const findStandalonePaginated = async (
-    filters: CompositionFilters,
-    page: number,
-    pageSize: number
-  ): Promise<{ items: Composition[]; total: number }> => {
-    await dbConnect();
-
-    const query: any = { opusId: null };
-
-    if (filters.search?.trim()) {
-      const searchRegex = new RegExp(filters.search.trim().replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`), 'i');
-      query.$or = [
-        { 'title.uk': searchRegex },
-        { 'title.en': searchRegex }
-      ];
-    }
-
-    const [docs, total] = await Promise.all([
-      CompositionModel.find(query)
-        .sort({ createdAt: -1 })
-        .skip(page * pageSize)
-        .limit(pageSize)
-        .lean<DbComposition[]>(),
-      CompositionModel.countDocuments(query)
-    ]);
-
-    return { items: docs.map(toEntity), total };
-  };
-
   return {
+    ...baseRepo,
     findByOpusId,
     syncForOpus,
     deleteByOpusId,
     searchByTitle,
-    findByOpusIds,
-    findStandalonePaginated
+    findByOpusIds
   };
 };
 
