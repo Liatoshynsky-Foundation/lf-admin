@@ -9,37 +9,13 @@ import { useOpusById } from '~/shared/hooks/use-opuses/useOpuses';
 import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { OpusNumberKind, OpusStatus, useUpdateOpusMutation } from '~/types/graphql/generated/graphql';
-import { OpusCompositionSuggestion } from '~/types/opus';
+import { FetchedOpusData,OpusCompositionSuggestion } from '~/types/opus';
 
 type AnchorId = 'navigation' | 'publish';
 type MenuAnchor = Partial<Record<AnchorId, HTMLButtonElement>>;
 
 type AudioItem = NonNullable<OpusCompositionSuggestion['audios']>[number];
 type SheetMusicItem = NonNullable<OpusCompositionSuggestion['sheetMusic']>[number];
-
-type GraphQlGalleryItem = {
-  id?: string;
-  src?: string | null;
-  description?: { uk?: string | null; en?: string | null } | null;
-  altText?: { uk?: string | null; en?: string | null } | null;
-  crop?: { x?: number; y?: number; width?: number; height?: number } | null;
-};
-
-type GraphQlPerformance = {
-  id?: string;
-  videoUrl?: string | null;
-  title?: { uk?: string | null; en?: string | null } | null;
-};
-
-type GraphQlComposition = {
-  id?: string;
-  title?: { uk?: string | null; en?: string | null } | null;
-  genre?: string | null;
-  year?: number | null;
-  order?: number | null;
-  audios?: AudioItem[] | null;
-  sheetMusic?: SheetMusicItem[] | null;
-};
 
 const parseDescription = (desc: unknown): Record<string, unknown> => {
   if (!desc) return { type: 'doc', content: [] };
@@ -101,7 +77,7 @@ export const useGroupContent = (id: string) => {
   }, [shouldExitAfterSave, navigate]);
 
   useEffect(() => {
-    const fetchedOpus = data?.opusById;
+    const fetchedOpus = data?.opusById as FetchedOpusData | undefined;
 
     if (fetchedOpus) {
       const titleObj = {
@@ -132,7 +108,7 @@ export const useGroupContent = (id: string) => {
           uk: parseDescription(fetchedOpus.introDescription?.uk),
           en: parseDescription(fetchedOpus.introDescription?.en)
         },
-        photos: (fetchedOpus.gallery || []).map((photo: GraphQlGalleryItem) => {
+        photos: (fetchedOpus.gallery || []).map((photo) => {
           const mappedCrop = photo.crop
             ? ({
               x: photo.crop.x ?? 0,
@@ -158,7 +134,7 @@ export const useGroupContent = (id: string) => {
           };
         }),
         performancesTitle: fetchedOpus.performancesTitle?.uk ?? fetchedOpus.performancesTitle?.en ?? '',
-        performances: (fetchedOpus.performances || []).map((perf: GraphQlPerformance) => ({
+        performances: (fetchedOpus.performances || []).map((perf) => ({
           id: perf.id,
           url: perf.videoUrl ?? '',
           caption: {
@@ -168,8 +144,8 @@ export const useGroupContent = (id: string) => {
         })),
         works: (fetchedOpus.compositions || [])
           .slice()
-          .sort((a: GraphQlComposition, b: GraphQlComposition) => (a.order ?? 0) - (b.order ?? 0))
-          .map((composition: GraphQlComposition) => ({
+          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+          .map((composition) => ({
             id: createCompositionId(),
             compositionId: composition.id,
             title: composition.title?.uk ?? composition.title?.en ?? '',

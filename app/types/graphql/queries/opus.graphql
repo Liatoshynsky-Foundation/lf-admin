@@ -91,6 +91,7 @@ query OpusById($id: ID!) {
         en
       }
       year
+      order
       genre
       audioAvailable
       sheetAvailable

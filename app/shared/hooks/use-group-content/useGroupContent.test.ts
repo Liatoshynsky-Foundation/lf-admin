@@ -99,14 +99,14 @@ describe('useGroupContent Hook', () => {
             ...mockFetchedOpus,
             introDescription: {
               uk: '{"type":"doc","content":[{"type":"text","text":"Valid JSON"}]}',
-              en: { type: 'doc', content: [] } 
+              en: { type: 'doc', content: [] }
             },
             compositions: [
               {
                 id: 'comp-1',
                 title: { uk: 'Comp 1' },
-                audios: [{ name: null, url: 'https://cdn.com/track.mp3?token=123' }], 
-                sheetMusic: [{ name: null, url: null }] 
+                audios: [{ name: null, url: 'https://cdn.com/track.mp3?token=123' }],
+                sheetMusic: [{ name: null, url: null }]
               }
             ]
           }
@@ -192,6 +192,40 @@ describe('useGroupContent Hook', () => {
       const { result } = renderHook(() => useGroupContent('test-id'));
 
       expect(result.current.error).toBe(mockError);
+    });
+
+    it('should return empty doc when description is null', () => {
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: { opusById: { ...mockFetchedOpus, introDescription: null } },
+        loading: false
+      });
+      const { result } = renderHook(() => useGroupContent('test-id'));
+
+      waitFor(() => {
+        expect(result.current.groupData?.description.uk).toEqual({ type: 'doc', content: [] });
+      });
+    });
+
+    it('should handle compositions with null or undefined order in sort', async () => {
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: {
+          opusById: {
+            ...mockFetchedOpus,
+            compositions: [
+              { id: 'comp-1', order: null },
+              { id: 'comp-2', order: 2 }
+            ]
+          }
+        },
+        loading: false
+      });
+
+      const { result } = renderHook(() => useGroupContent('test-id'));
+
+      await waitFor(() => {
+        expect(result.current.groupData?.works).toBeDefined();
+        expect(result.current.groupData?.works[0].compositionId).toBe('comp-1');
+      });
     });
   });
 
@@ -286,7 +320,7 @@ describe('useGroupContent Hook', () => {
 
     it('should clear specific validation error when the field is updated', async () => {
       (useOpusById as jest.Mock).mockReturnValue({
-        data: { opusById: { ...mockFetchedOpus, number: '' } }, 
+        data: { opusById: { ...mockFetchedOpus, number: '' } },
         loading: false
       });
       const { result } = renderHook(() => useGroupContent('test-id'));
@@ -353,9 +387,7 @@ describe('useGroupContent Hook', () => {
           opusById: {
             ...mockFetchedOpus,
             gallery: [{ id: 'photo-1', src: 'img.jpg', crop: null, altText: null, description: null }],
-            performances: [
-              { id: 'perf-1', title: null, videoUrl: null } // Completely empty performance
-            ]
+            performances: [{ id: 'perf-1', title: null, videoUrl: null }]
           }
         },
         loading: false
@@ -370,9 +402,7 @@ describe('useGroupContent Hook', () => {
 
       const calledInput = mockUpdateOpus.mock.calls[0][0].variables.input;
 
-      // Перевірка, що порожній перформанс відфільтровано
       expect(calledInput.performances).toHaveLength(0);
-      // Перевірка, що crop залишився null
       expect(calledInput.gallery[0].crop).toBeNull();
     });
     it('should clear temporary IDs for photos/performances on save', async () => {
@@ -531,6 +561,83 @@ describe('useGroupContent Hook', () => {
 
       expect(mockUpdateOpus).not.toHaveBeenCalled();
       expect(toast.error).not.toHaveBeenCalled();
+    });
+
+    it('should trigger validation error for empty titlePrefix', async () => {
+      (useOpusById as jest.Mock).mockReturnValue({ data: { opusById: mockFetchedOpus }, loading: false });
+      const { result } = renderHook(() => useGroupContent('test-id'));
+
+      act(() => {
+        result.current.handleFieldChange('titlePrefix' as any, '');
+      });
+
+      await act(async () => {
+        await result.current.handlePublishClick();
+      });
+
+      expect(result.current.errors.titlePrefix).toBe('Обов’язкове поле');
+    });
+
+    it('should expand details and return early when validation fails on publish', async () => {
+      const invalidOpus = {
+        ...mockFetchedOpus,
+        number: '',
+        name: { uk: '', en: '' }
+      };
+
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: { opusById: invalidOpus },
+        loading: false
+      });
+      const { result } = renderHook(() => useGroupContent('test-id'));
+      await waitFor(() => {
+        expect(result.current.groupData).not.toBeNull();
+      });
+      act(() => {
+        result.current.setIsDetailsExpanded(false);
+      });
+      expect(result.current.isDetailsExpanded).toBe(false);
+      await act(async () => {
+        await result.current.handlePublishClick();
+      });
+      expect(toast.error).toHaveBeenCalledWith('Заповніть усі обов’язкові поля перед публікацією.');
+      expect(result.current.isDetailsExpanded).toBe(true);
+    });
+
+    it('should filter out compositions notes with empty names during save', async () => {
+      const dataWithEmptyNote = {
+        ...mockFetchedOpus,
+        compositions: [
+          {
+            id: 'c1',
+            title: { uk: 'Test Title' },
+            sheetMusic: [
+              { name: '', url: 'test.pdf' },
+              { name: 'Valid', url: 'test2.pdf' }
+            ]
+          }
+        ]
+      };
+
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: { opusById: dataWithEmptyNote },
+        loading: false
+      });
+
+      const { result } = renderHook(() => useGroupContent('test-id'));
+      await waitFor(() => {
+        expect(result.current.groupData).not.toBeNull();
+      });
+
+      await act(async () => {
+        await result.current.handlePublishClick();
+      });
+
+      const lastCall = mockUpdateOpus.mock.calls[mockUpdateOpus.mock.calls.length - 1][0];
+      const input = lastCall.variables.input;
+      const notes = input.compositions[0].notes;
+      expect(notes).toHaveLength(1);
+      expect(notes[0].name).toBe('Valid');
     });
   });
 

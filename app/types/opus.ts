@@ -84,20 +84,34 @@ export interface FetchedOpusData {
     alt?: { uk?: string | null; en?: string | null } | null;
     crop?: { x: number; y: number; width: number; height: number } | null;
   } | null;
+  gallery?: Array<{
+    id?: string;
+    src?: string | null;
+    description?: { uk?: string | null; en?: string | null } | null;
+    altText?: { uk?: string | null; en?: string | null } | null;
+    crop?: { x?: number; y?: number; width?: number; height?: number } | null;
+  }> | null;
+  performancesTitle?: { uk?: string | null; en?: string | null } | null;
+  performances?: Array<{
+    id?: string;
+    title?: { uk?: string | null; en?: string | null } | null;
+    videoUrl?: string | null;
+  }> | null;
   compositions?: Array<{
     id?: string;
     title?: { uk?: string | null; en?: string | null } | null;
     genre?: string | null;
     year?: number | null;
+    order?: number | null;
     audioAvailable?: boolean | null;
     sheetAvailable?: boolean | null;
     sheetMusic?: Array<{
-    url: string;
-    name?: string | null;
-    publishDate?: string | null;
-    isFree?: boolean | null;
-    dateUploaded?: string | null;
-  }> | null;
+      url: string;
+      name?: string | null;
+      publishDate?: string | null;
+      isFree?: boolean | null;
+      dateUploaded?: string | null;
+    }> | null;
     audios?: Array<{ name?: string | null; url?: string | null }> | null;
   }> | null;
 }
