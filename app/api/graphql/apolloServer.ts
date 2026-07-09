@@ -13,7 +13,7 @@ export const getApolloServer = (): ApolloServer => {
     introspection: process.env.NODE_ENV !== 'production',
     validationRules: [
       depthLimit(5),
-      createComplexityLimitRule(2000, { onCost: (cost: number) => logger.log('Query cost:', cost) })
+      createComplexityLimitRule(1500, { onCost: (cost: number) => logger.log('Query cost:', cost) })
     ]
   });
   return apolloServer;

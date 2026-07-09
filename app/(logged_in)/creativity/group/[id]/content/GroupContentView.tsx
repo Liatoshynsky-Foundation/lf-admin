@@ -9,8 +9,8 @@ import {
   Typography
 } from '@mui/material';
 
-import { styles } from './GroupContentView.styles'; //
-import { LANGUAGE_OPTIONS } from '~/constants/publications';//
+import { styles } from './GroupContentView.styles';
+import { LANGUAGE_OPTIONS } from '~/constants/publications';
 import { GroupDetailsSection } from '~/shared/components/creativity/group/details-section/GroupDetailsSection';
 import { GroupIntroSection } from '~/shared/components/creativity/group/intro-section/GroupIntroSection';
 import { GroupPerformancesSection } from '~/shared/components/creativity/group/performances-section/GroupPerformancesSection';
@@ -21,7 +21,7 @@ import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
 import ProgressStatus from '~/shared/components/divided-header/progress-status/ProgressStatus';
 import { TitleDropdown } from '~/shared/components/divided-header/title-dropdown/TitleDropdown';
-import { useGroupContent } from '~/shared/hooks/use-group-content/useGroupContent';//
+import { useGroupContent } from '~/shared/hooks/use-group-content/useGroupContent';
 
 type GroupContentViewProps = Readonly<{
   id: string;

@@ -1,4 +1,5 @@
-import { fireEvent,render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import React, { MouseEvent, ReactNode, SyntheticEvent } from 'react';
 
 import { GroupContentView } from './GroupContentView';
 import { useGroupContent } from '~/shared/hooks/use-group-content/useGroupContent';
@@ -7,7 +8,15 @@ jest.mock('~/shared/hooks/use-group-content/useGroupContent');
 
 jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
-  default: ({ title, children, onChange }: any) => (
+  default: ({
+    title,
+    children,
+    onChange
+  }: {
+    title: string;
+    children: ReactNode;
+    onChange?: (event: SyntheticEvent | null, isExpanded: boolean) => void;
+  }) => (
     <div data-testid={`collapsible-block-${title}`}>
       <button data-testid={`toggle-${title}`} onClick={() => onChange?.(null, false)}>
         Toggle {title}
@@ -26,7 +35,7 @@ jest.mock('~/shared/components/creativity/group/intro-section/GroupIntroSection'
 }));
 
 jest.mock('~/shared/components/creativity/group/photos-section/GroupPhotosSection', () => ({
-  GroupPhotosSection: ({ onChange }: any) => (
+  GroupPhotosSection: ({ onChange }: { onChange: (photos: unknown[]) => void }) => (
     <div data-testid="group-photos-section">
       <button data-testid="change-photos" onClick={() => onChange([])}>
         Change Photos
@@ -36,7 +45,7 @@ jest.mock('~/shared/components/creativity/group/photos-section/GroupPhotosSectio
 }));
 
 jest.mock('~/shared/components/creativity/group/works-section/GroupWorksSection', () => ({
-  GroupWorksSection: ({ onChange }: any) => (
+  GroupWorksSection: ({ onChange }: { onChange: (works: unknown[]) => void }) => (
     <div data-testid="group-works-section">
       <button data-testid="change-works" onClick={() => onChange([])}>
         Change Works
@@ -46,7 +55,13 @@ jest.mock('~/shared/components/creativity/group/works-section/GroupWorksSection'
 }));
 
 jest.mock('~/shared/components/creativity/group/performances-section/GroupPerformancesSection', () => ({
-  GroupPerformancesSection: ({ onChangeSectionTitle, onChangePerformances }: any) => (
+  GroupPerformancesSection: ({
+    onChangeSectionTitle,
+    onChangePerformances
+  }: {
+    onChangeSectionTitle: (title: string) => void;
+    onChangePerformances: (performances: unknown[]) => void;
+  }) => (
     <div data-testid="group-performances-section">
       <button data-testid="change-perf-title" onClick={() => onChangeSectionTitle('New Title')}>
         Change Perf Title
@@ -60,7 +75,15 @@ jest.mock('~/shared/components/creativity/group/performances-section/GroupPerfor
 
 jest.mock('~/shared/components/divided-header/DividedHeader', () => ({
   __esModule: true,
-  default: ({ onBackClick, rightActionsComponent, children }: any) => (
+  default: ({
+    onBackClick,
+    rightActionsComponent,
+    children
+  }: {
+    onBackClick: () => void;
+    rightActionsComponent?: ReactNode;
+    children?: ReactNode;
+  }) => (
     <div data-testid="divided-header">
       <button onClick={onBackClick}>Back</button>
       {children}
@@ -71,7 +94,13 @@ jest.mock('~/shared/components/divided-header/DividedHeader', () => ({
 
 jest.mock('~/shared/components/divided-header/header-right-actions/HeaderRightActions', () => ({
   __esModule: true,
-  default: ({ onPublish, onMenuOpen }: any) => (
+  default: ({
+    onPublish,
+    onMenuOpen
+  }: {
+    onPublish: () => void;
+    onMenuOpen: (e: MouseEvent<HTMLButtonElement>) => void;
+  }) => (
     <div data-testid="header-right-actions">
       <button onClick={onPublish}>Publish Action</button>
       <button onClick={(e) => onMenuOpen(e)}>Menu Open</button>
@@ -80,7 +109,7 @@ jest.mock('~/shared/components/divided-header/header-right-actions/HeaderRightAc
 }));
 
 jest.mock('~/shared/components/divided-header/title-dropdown/TitleDropdown', () => ({
-  TitleDropdown: ({ title, onMenuOpen }: any) => (
+  TitleDropdown: ({ title, onMenuOpen }: { title: string; onMenuOpen: (e: MouseEvent<HTMLButtonElement>) => void }) => (
     <button onClick={onMenuOpen} data-testid="title-dropdown">
       {title}
     </button>

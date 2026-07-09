@@ -28,7 +28,7 @@ export type DbOpus = {
   title: Opus['title'];
   releaseYear?: number | null;
   numberKind: Opus['numberKind'];
-  name?: Opus['name'];
+  name: Opus['name'];
   additionalText?: string | null;
   creationYear?: string | null;
   endYear?: string | null;
@@ -37,10 +37,10 @@ export type DbOpus = {
   adminTitle?: string | null;
   slug?: string | null;
   description: Opus['description'];
-  introDescription?: Opus['introDescription'];
-  parts?: Opus['parts'];
+  introDescription: Opus['introDescription'];
+  parts: Opus['parts'];
   gallery?: DbOpusGalleryItem[];
-  performancesTitle?: Opus['performancesTitle'];
+  performancesTitle: Opus['performancesTitle'];
   performances?: DbOpusPerformance[];
   keywords: Opus['keywords'];
   allowIndexation: Opus['allowIndexation'];
@@ -81,7 +81,7 @@ const toEntity = (doc: DbOpus): Opus =>
         description: item.description,
         altText: item.altText,
         crop:
-          item.crop && item.crop.x !== undefined && item.crop.y !== undefined
+          item.crop?.x !== undefined && item.crop?.y !== undefined
             ? {
               x: Number(item.crop.x) || 0,
               y: Number(item.crop.y) || 0,

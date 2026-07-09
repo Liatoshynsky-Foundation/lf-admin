@@ -143,7 +143,7 @@ export const useGroupContent = (id: string) => {
                 x: photo.crop.x ?? 0,
                 y: photo.crop.y ?? 0,
                 width: photo.crop.width ?? 0,
-                height: photo.crop.height ?? 0,
+                height: photo.crop.height ?? 0
               }
             } as unknown as GroupPhoto['crop'])
             : null;
@@ -267,9 +267,11 @@ export const useGroupContent = (id: string) => {
 
       await updateOpus({ variables: { id, input } });
       toast.success('Контент успішно збережено!');
+      return true;
     } catch (error) {
       console.error('Помилка при збереженні контенту групи:', error);
       toast.error('Помилка при збереженні. Перевірте консоль.');
+      return false;
     }
   };
 
@@ -326,7 +328,8 @@ export const useGroupContent = (id: string) => {
     setGroupData((prev) => {
       if (!prev) return null;
       if (isMultilingual) {
-        const currentFieldData = prev[field] && typeof prev[field] === 'object' ? (prev[field] as Record<string, unknown>) : {};
+        const currentFieldData =
+          prev[field] && typeof prev[field] === 'object' ? (prev[field] as Record<string, unknown>) : {};
         return { ...prev, [field]: { ...currentFieldData, [langKey]: value } };
       }
       return { ...prev, [field]: value };
@@ -341,9 +344,11 @@ export const useGroupContent = (id: string) => {
       setIsDetailsExpanded(true);
       return;
     }
-    await handleSave(BaseContentStatuses.Published);
-    setPublishedTitle(groupData!.groupTitle);
-    setIsDirty(false);
+    const isSuccess = await handleSave(BaseContentStatuses.Published);
+    if (isSuccess) {
+      setPublishedTitle(groupData!.groupTitle);
+      setIsDirty(false);
+    }
   };
 
   const handleMenuOptionClick = async (optionId: string) => {

@@ -32,6 +32,9 @@ const createMockOpusDoc = (overrides: Partial<DbOpus> = {}): DbOpus => ({
   status: OpusStatus.Draft,
   coverImage: { src: 'img.jpg', alt: { uk: 'а', en: 'a' }, caption: { uk: '', en: '' } },
   description: { uk: 'Опис', en: 'Desc' },
+  introDescription: { uk: '', en: '' },
+  parts: { uk: '', en: '' },
+  performancesTitle: null,
   keywords: { uk: 'к', en: 'k' },
   allowIndexation: { uk: true, en: true },
   publishedAt: null,
@@ -188,6 +191,65 @@ describe('OpusRepository', () => {
       expect(result?.numberKind).toBe('woo');
       expect(result?.releaseYear).toBe(1922);
       expect(result?.meta).toEqual({ views: 42 });
+    });
+
+    it('maps gallery and performances correctly including edge cases', async (): Promise<void> => {
+      const doc = createMockOpusDoc({
+        gallery: [
+          {
+            _id: { toString: () => 'gal1' },
+            src: 'image1.jpg',
+            description: { uk: 'Опис 1', en: 'Desc 1' },
+            altText: { uk: 'Альт 1', en: 'Alt 1' },
+            crop: { x: 10, y: 20, width: 100, height: 200 }
+          },
+          {
+            _id: { toString: () => 'gal2' },
+            src: 'image2.jpg',
+            crop: { width: 100, height: 100 }
+          },
+          {
+            src: 'image3.jpg',
+            description: undefined,
+            altText: undefined,
+            crop: null
+          }
+        ],
+        performances: [
+          {
+            _id: { toString: () => 'perf1' },
+            title: { uk: 'Виступ 1', en: 'Perf 1' },
+            videoUrl: 'https://youtube.com/watch?v=1'
+          },
+          {
+            title: null,
+            videoUrl: 'https://youtube.com/watch?v=2'
+          }
+        ]
+      });
+
+      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
+
+      const result = await repository.findByNumber('op.1');
+
+      expect(result?.gallery).toHaveLength(3);
+      expect(result?.gallery?.[0]).toEqual({
+        id: 'gal1',
+        src: 'image1.jpg',
+        description: { uk: 'Опис 1', en: 'Desc 1' },
+        altText: { uk: 'Альт 1', en: 'Alt 1' },
+        crop: { x: 10, y: 20, width: 100, height: 200 }
+      });
+      expect(result?.gallery?.[1]?.crop).toBeNull();
+      expect(result?.gallery?.[2]?.id).toBe('');
+
+      expect(result?.performances).toHaveLength(2);
+      expect(result?.performances?.[0]).toEqual({
+        id: 'perf1',
+        title: { uk: 'Виступ 1', en: 'Perf 1' },
+        videoUrl: 'https://youtube.com/watch?v=1'
+      });
+      expect(result?.performances?.[1]?.id).toBe('');
     });
   });
 
