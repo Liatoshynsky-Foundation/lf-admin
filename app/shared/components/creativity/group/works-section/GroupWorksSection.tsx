@@ -1,10 +1,11 @@
-import { Box, Dialog, IconButton, Typography } from '@mui/material';
-import { Pencil, Trash2, X } from 'lucide-react';
+import { Box, IconButton, Typography } from '@mui/material';
+import { Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { styles } from './GroupWorksSection.styles';
 import Button from '~/components/design-system/button/Button';
-import { OPUS_DELETE_MODAL, OPUS_DETAILS_LABELS } from '~/constants/opus';
+import { OPUS_DETAILS_LABELS } from '~/constants/opus';
+import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
 import CompositionModal from '~/shared/components/forms/opus-details-block/composition-modal/CompositionModal';
 import CompositionTitleInput from '~/shared/components/forms/opus-details-block/composition-title-input/CompositionTitleInput';
 import { createCompositionId } from '~/shared/hooks/use-group-content/useGroupContent';
@@ -23,7 +24,7 @@ export const toSuggestionAudio = (audio: AudioItem): OpusMediaFileData => {
   return {
     id: createCompositionId(),
     name: audio.name ?? fileNameFromUrl(audio.url),
-    fileUrl: audio.url ?? undefined,
+    fileUrl: audio.url ?? undefined
   };
 };
 
@@ -32,7 +33,7 @@ export const toSuggestionNote = (sheet: SheetMusicItem): OpusMediaFileData => {
     id: createCompositionId(),
     name: sheet.name ?? fileNameFromUrl(sheet.url),
     fileUrl: sheet.url ?? undefined,
-    publishDate: sheet.publishDate ?? '',
+    publishDate: sheet.publishDate ?? ''
   };
 };
 
@@ -122,7 +123,7 @@ export const GroupWorksSection = ({ works, onChange }: GroupWorksSectionProps) =
           <Box
             key={composition.id}
             sx={{
-              ...(styles.compositionRow as object),
+              ...(styles.compositionRow as object)
             }}
           >
             <Box sx={styles.compositionInput}>
@@ -154,28 +155,11 @@ export const GroupWorksSection = ({ works, onChange }: GroupWorksSectionProps) =
         />
       )}
 
-      <Dialog
+      <DeleteCompositionModal
         open={Boolean(deleteTargetId)}
         onClose={() => setDeleteTargetId(null)}
-        disableScrollLock
-        PaperProps={{ sx: styles.deletePaper }}
-      >
-        <Box sx={styles.deleteHeader}>
-          <Typography sx={styles.deleteTitle}>{OPUS_DELETE_MODAL.title}</Typography>
-          <IconButton aria-label="Закрити" onClick={() => setDeleteTargetId(null)}>
-            <X size={24} strokeWidth={1.5} />
-          </IconButton>
-        </Box>
-        <Typography sx={styles.deleteDescription}>{OPUS_DELETE_MODAL.description}</Typography>
-        <Box sx={styles.deleteActions}>
-          <Button variant="filled" size="medium" color="secondary" onClick={handleDeleteConfirm} sx={styles.deleteButton}>
-            {OPUS_DELETE_MODAL.confirm}
-          </Button>
-          <Button variant="outlined" size="medium" color="primary" onClick={() => setDeleteTargetId(null)}>
-            {OPUS_DELETE_MODAL.cancel}
-          </Button>
-        </Box>
-      </Dialog>
+        onConfirm={handleDeleteConfirm}
+      />
     </Box>
   );
 };
