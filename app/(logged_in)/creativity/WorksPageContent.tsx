@@ -16,6 +16,7 @@ import {
   WORKS_EMPTY_STATE_TITLE,
   WORKS_PAGE_TITLE,
   WORKS_TABS,
+  WorksStatusValue,
   type WorksTabValue
 } from '~/constants/creativity';
 import type { FilesSortValue } from '~/constants/sort';
@@ -26,7 +27,7 @@ import { PageHeader } from '~/shared/components/page-header/PageHeader';
 import { useAllCompositions } from '~/shared/hooks/use-compositions/useCompositions';
 import { useAllOpusGroups, useAllUngroupedGroups } from '~/shared/hooks/use-opuses/useOpuses';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
-import { AllCompositionsQuery, type AllOpusesQuery, OpusNumberKind } from '~/types/graphql/generated/graphql';
+import { AllCompositionsQuery, type AllOpusesQuery } from '~/types/graphql/generated/graphql';
 import { normalizeSearch } from '~/utils/normalizeSearch';
 
 type WorksPageContentProps = Readonly<{
@@ -43,7 +44,7 @@ type GroupRowData = Readonly<{
   genre: string;
   startDate: string;
   endDate?: string;
-  status: BaseContentStatuses;
+  status: WorksStatusValue;
   createdAt: string;
   updatedAt: string;
   publishedAt?: string;
@@ -54,7 +55,7 @@ type GroupRowData = Readonly<{
 const localizedTitle = (title: { uk: string; en: string }) => title.uk || title.en;
 
 function toGroupRowData(opus: GqlOpus): GroupRowData {
-  const safeStatus = (opus.status as unknown as BaseContentStatuses) || BaseContentStatuses.Draft;
+  const safeStatus = (opus.status as unknown as WorksStatusValue) || BaseContentStatuses.Draft;
 
   return {
     id: opus.id,
@@ -75,7 +76,7 @@ function toGroupRowData(opus: GqlOpus): GroupRowData {
 }
 
 function toStandaloneRowData(composition: GqlComposition) {
-  const safeStatus = (composition.status as unknown as BaseContentStatuses) || BaseContentStatuses.Draft;
+  const safeStatus = (composition.status as unknown as WorksStatusValue) || BaseContentStatuses.Draft;
 
   return {
     id: composition.id,
@@ -214,22 +215,18 @@ export function WorksPageContent({ activeTab }: WorksPageContentProps) {
     error: compositionsError
   } = useAllCompositions({}, { skip: !showCompositions });
 
-  console.log(compositionsData);
-
   const matchesGenre = (genre: string) => selectedFilters.genre.length === 0 || selectedFilters.genre.includes(genre);
 
   const mappedOpusGroups = sortGroups(
     (opusGroupsData?.allOpuses ?? []).map(toGroupRowData).filter((group) => {
-      const isOp = !group.numberKind || group.numberKind.toLowerCase() === OpusNumberKind.Op;
-      return isOp && matchesGenre(group.genre) && (matchesSearch(group.title) || matchesSearch(group.numberLabel));
+      return matchesSearch(group.title) || matchesSearch(group.numberLabel);
     }),
     sortValue
   );
 
   const mappedUngroupedGroups = sortGroups(
     (ungroupedGroupsData?.allOpuses ?? []).map(toGroupRowData).filter((group) => {
-      const isWoo = group.numberKind?.toLowerCase() === OpusNumberKind.Woo;
-      return isWoo && matchesGenre(group.genre) && (matchesSearch(group.title) || matchesSearch(group.numberLabel));
+      return matchesSearch(group.title) || matchesSearch(group.numberLabel);
     }),
     sortValue
   );

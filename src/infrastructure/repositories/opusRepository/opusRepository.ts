@@ -42,7 +42,7 @@ const toEntity = (doc: DbOpus): Opus =>
     number: doc.number,
     title: doc.title,
     releaseYear: doc.releaseYear ?? undefined,
-    numberKind: doc.numberKind ?? OpusNumberKind.Op,
+    numberKind: doc.numberKind,
     name: doc.name ?? undefined,
     additionalText: doc.additionalText ?? undefined,
     creationYear: doc.creationYear ?? '',
@@ -64,7 +64,21 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
   const baseRepo = createBaseRepository<Opus, DbOpus, OpusFilters>({
     model: OpusModel,
     toEntity,
-    buildQuery: (filters) => buildBaseQuery(filters),
+    buildQuery: (filters) => {
+      const query = buildBaseQuery(filters) ?? {};
+      if (filters?.numberKind) {
+        if (filters.numberKind === OpusNumberKind.Op) {
+          query.$or = [
+            { numberKind: OpusNumberKind.Op },
+            { numberKind: { $exists: false } },
+            { numberKind: null }
+          ];
+        } else {
+          query.numberKind = filters.numberKind;
+        }
+      }
+      return query;
+    },
     getDefaultSort: getBaseSort
   });
 

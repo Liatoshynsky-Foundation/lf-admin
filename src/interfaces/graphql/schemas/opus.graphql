@@ -1,9 +1,6 @@
 enum OpusStatus {
   draft
   published
-  hidden
-  archived
-  editing
 }
 
 enum OpusNumberKind {

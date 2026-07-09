@@ -34,7 +34,6 @@ export const WORKS_PAGE_TITLE = 'Творчість';
 export const WORKS_BASE_PATH = '/creativity';
 
 export const WORKS_STATUSES = [
-  BaseContentStatuses.Hidden,
   BaseContentStatuses.Draft,
   BaseContentStatuses.Published,
 ] as const;

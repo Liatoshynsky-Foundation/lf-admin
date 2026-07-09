@@ -6,6 +6,7 @@ import { graphqlErrors } from '~/constants/errors';
 import { Composition } from '~/domain/entities/Composition';
 import { Opus } from '~/domain/entities/Opus';
 import { OpusFilters } from '~/domain/repositories/opusRepository';
+import { OpusNumberKind } from '~/types/graphql/generated/graphql';
 
 interface IdArgs {
   id: string;
@@ -17,7 +18,9 @@ interface SearchArgs {
   search: string;
 }
 interface FilterArgs {
-  filters?: NonNullable<Parameters<typeof mapFilters>[0]>;
+  filters?: NonNullable<Parameters<typeof mapFilters>[0]> & {
+    numberKind?: OpusNumberKind;
+  };
 }
 interface PaginatedArgs {
   page: number;
@@ -68,7 +71,12 @@ export const OpusQuery = {
   },
 
   allOpuses: endpointHandler<FilterArgs, Opus[]>(async ({ args: { filters }, repo, requestContainer }) => {
-    const opuses = await repo.findAll(mapFilters<OpusFilters>(filters));
+    const mappedFilters: OpusFilters = {
+      ...mapFilters<OpusFilters>(filters),
+      numberKind: filters?.numberKind ?? OpusNumberKind.Op
+    };
+    
+    const opuses = await repo.findAll(mappedFilters);
     if (!opuses || opuses.length === 0) return [];
 
     const opusIds = opuses.map((o) => o.id);
