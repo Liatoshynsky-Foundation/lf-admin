@@ -191,7 +191,7 @@ describe('FileInfoSidebar', () => {
     expect(onToggleStar).toHaveBeenCalledWith('f1', true);
   });
 
-  it('should ignore custom favorite handler errors', async () => {
+  it('should show error toast when custom favorite handler fails', async () => {
     const onToggleStar = jest.fn().mockRejectedValue(new Error('Favorite failed'));
 
     render(<FileInfoSidebar file={baseFile} onClose={jest.fn()} onToggleStar={onToggleStar} />);
@@ -201,7 +201,7 @@ describe('FileInfoSidebar', () => {
     await waitFor(() => {
       expect(onToggleStar).toHaveBeenCalledWith('f1', true);
     });
-    expect(toast.error).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith('Favorite failed');
   });
 
   it('should update asset favorite state when onToggleStar is not provided', async () => {
@@ -230,7 +230,7 @@ describe('FileInfoSidebar', () => {
     expect(onToggleStar).toHaveBeenCalledWith('f1', false);
   });
 
-  it('should ignore favorite update errors', async () => {
+  it('should show error toast when favorite update fails', async () => {
     mockUpdateAsset.mockRejectedValueOnce(new Error('Update failed'));
 
     render(<FileInfoSidebar file={baseFile} onClose={jest.fn()} />);
@@ -240,7 +240,20 @@ describe('FileInfoSidebar', () => {
     await waitFor(() => {
       expect(mockUpdateAsset).toHaveBeenCalledTimes(1);
     });
-    expect(toast.error).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith('Update failed');
+  });
+
+  it('should show fallback error toast when favorite update fails without Error instance', async () => {
+    mockUpdateAsset.mockRejectedValueOnce('Update failed');
+
+    render(<FileInfoSidebar file={baseFile} onClose={jest.fn()} />);
+
+    fireEvent.click(screen.getByLabelText('Додати в обрані'));
+
+    await waitFor(() => {
+      expect(mockUpdateAsset).toHaveBeenCalledTimes(1);
+    });
+    expect(toast.error).toHaveBeenCalledWith('Не вдалося оновити статус обраного файлу. Спробуйте пізніше.');
   });
 
   it('should call onDeleteRequest when delete button is clicked', () => {

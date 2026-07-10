@@ -68,6 +68,7 @@ export type FileInfoSidebarProps = {
 };
 
 const AUTOSAVE_DEBOUNCE_MS = 1800;
+const FAVORITE_UPDATE_ERROR = 'Не вдалося оновити статус обраного файлу. Спробуйте пізніше.';
 
 const TYPE_ICON: Record<FileDetailsSidebarFile['type'], React.ComponentType> = {
   image: PictureIcon,
@@ -166,7 +167,9 @@ export function FileInfoSidebar({
           input: { isStarred: !isStarred }
         }
       });
-    } catch {}
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : FAVORITE_UPDATE_ERROR);
+    }
   };
 
   const handleDeleteConfirm = async (id: string) => {

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import toast from 'react-hot-toast';
 
@@ -13,6 +13,7 @@ import {
 import { downloadFile } from '~/lib/utils/downloadFile';
 import { useAllAssets } from '~/shared/hooks/use-assets/useAssets';
 import { useFilesFiltering } from '~/shared/hooks/use-files';
+import type { GalleryFile } from '~/shared/hooks/use-galllery-photo/useGallery';
 import {
   AssetType,
   useCreateAssetMutation,
@@ -53,6 +54,15 @@ const baseAsset = {
   sizeBytes: 500,
   createdBy: 'John Doe' as string | null,
   description: 'A nice photo' as string | null
+};
+
+const orphanR2File: GalleryFile = {
+  filename: 'orphan-stored.jpg',
+  originalName: 'orphan.jpg',
+  mimeType: 'image/jpeg',
+  size: 2048,
+  createdAt: '2024-02-20T00:00:00.000Z',
+  url: 'https://r2.example.com/photos/orphan-stored.jpg'
 };
 
 interface SetupHooksParams {
@@ -99,7 +109,7 @@ interface FilesCardsLayoutProps {
   setItemRef: (id: string, node: HTMLDivElement | null) => void;
   onItemClick: (item: TestFileItem) => void;
   onItemAction: (action: 'rename' | 'delete' | 'download', item: TestFileItem) => void;
-  onItemToggleStar: (item: TestFileItem, next: boolean) => void;
+  onItemToggleStar: (item: TestFileItem, next: boolean) => void | Promise<void>;
 }
 
 interface FileInfoSidebarProps {
@@ -173,16 +183,22 @@ jest.mock('~/shared/hooks/use-files', () => ({
   useFilesFiltering: jest.fn()
 }));
 
+const mockRemoveR2FileByUrl = jest.fn();
+const mockFetch = jest.fn();
+let mockR2Files: GalleryFile[] = [];
+let mockR2Loading = false;
+let mockR2Error: Error | null = null;
+
 jest.mock('~/shared/hooks/use-files/useHybridFiles', () => {
   const actual = jest.requireActual('~/shared/hooks/use-files/useHybridFiles');
 
   return {
     ...actual,
     useR2Files: jest.fn(() => ({
-      files: [],
-      loading: false,
-      error: null,
-      removeFileByUrl: jest.fn()
+      files: mockR2Files,
+      loading: mockR2Loading,
+      error: mockR2Error,
+      removeFileByUrl: mockRemoveR2FileByUrl
     }))
   };
 });
@@ -401,6 +417,14 @@ beforeEach(() => {
   mockMediaModalOnApply = null;
   deleteModalOnConfirm = null;
   capturedUploadViewProps = null;
+  mockFetch.mockResolvedValue({
+    ok: true,
+    json: jest.fn().mockResolvedValue({ success: true })
+  });
+  globalThis.fetch = mockFetch as unknown as typeof fetch;
+  mockR2Files = [];
+  mockR2Loading = false;
+  mockR2Error = null;
 });
 
 describe('FilesPageContent', () => {
@@ -675,6 +699,63 @@ describe('FilesPageContent', () => {
     });
   });
 
+  it('deletes an orphan R2 file from cloud storage without creating a Mongo asset first', async () => {
+    mockR2Files = [orphanR2File];
+    const createAsset = jest.fn();
+    const deleteAsset = jest.fn();
+
+    setupHooks({ assets: [], createAsset, deleteAsset });
+    render(<FilesPageContent activeTab="all" />);
+
+    expect(await screen.findByTestId('files-cards-layout')).toBeInTheDocument();
+    const orphanItem = capturedCardsProps?.items[0];
+    expect(orphanItem).toBeDefined();
+
+    if (!orphanItem) return;
+
+    fireEvent.click(screen.getByText(`delete-${orphanItem.id}`));
+    expect(await screen.findByTestId('delete-modal')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('confirm-delete'));
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith('/api/uploads/orphan-stored.jpg?folder=photos', { method: 'DELETE' });
+      expect(createAsset).not.toHaveBeenCalled();
+      expect(deleteAsset).not.toHaveBeenCalled();
+      expect(mockRemoveR2FileByUrl).toHaveBeenCalledWith(orphanR2File.url);
+      expect(toast.success).toHaveBeenCalledWith('Файл успішно видалено');
+    });
+  });
+
+  it('keeps an orphan R2 file visible when cloud delete fails', async () => {
+    mockR2Files = [orphanR2File];
+    mockFetch.mockResolvedValue({
+      ok: false,
+      json: jest.fn().mockResolvedValue({ success: false, error: 'Failed to delete file' })
+    });
+    const createAsset = jest.fn();
+    const deleteAsset = jest.fn();
+
+    setupHooks({ assets: [], createAsset, deleteAsset });
+    render(<FilesPageContent activeTab="all" />);
+
+    expect(await screen.findByTestId('files-cards-layout')).toBeInTheDocument();
+    const orphanItem = capturedCardsProps?.items[0];
+    expect(orphanItem).toBeDefined();
+
+    if (!orphanItem) return;
+
+    fireEvent.click(screen.getByText(`delete-${orphanItem.id}`));
+    fireEvent.click(await screen.findByText('confirm-delete'));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Failed to delete file');
+      expect(mockRemoveR2FileByUrl).not.toHaveBeenCalled();
+      expect(createAsset).not.toHaveBeenCalled();
+      expect(deleteAsset).not.toHaveBeenCalled();
+    });
+  });
+
   it('shows error toast when delete fails with an Error', async () => {
     const deleteAsset = jest.fn().mockRejectedValue(new Error('boom'));
     setupHooks({ assets: [baseAsset], deleteAsset });
@@ -726,6 +807,51 @@ describe('FilesPageContent', () => {
         }
       });
       expect(refetch).toHaveBeenCalled();
+    });
+  });
+
+  it('reuses pending lazy asset creation for concurrent orphan actions', async () => {
+    mockR2Files = [orphanR2File];
+    let resolveCreateAsset: (value: { data: { createAsset: { id: string } } }) => void = jest.fn();
+    const createAsset = jest.fn(
+      () =>
+        new Promise<{ data: { createAsset: { id: string } } }>((resolve) => {
+          resolveCreateAsset = resolve;
+        })
+    );
+    const updateAsset = jest.fn().mockResolvedValue({ data: { updateAsset: { id: 'created-orphan-id' } } });
+
+    setupHooks({ assets: [], createAsset, updateAsset });
+    render(<FilesPageContent activeTab="all" />);
+
+    expect(await screen.findByTestId('files-cards-layout')).toBeInTheDocument();
+    const orphanItem = capturedCardsProps?.items[0];
+    expect(orphanItem).toBeDefined();
+
+    if (!orphanItem || !capturedCardsProps) return;
+
+    await act(async () => {
+      const firstUpdate = capturedCardsProps?.onItemToggleStar(orphanItem, true);
+      const secondUpdate = capturedCardsProps?.onItemToggleStar(orphanItem, false);
+
+      resolveCreateAsset({ data: { createAsset: { id: 'created-orphan-id' } } });
+
+      await Promise.all([firstUpdate, secondUpdate]);
+    });
+
+    expect(createAsset).toHaveBeenCalledTimes(1);
+    expect(updateAsset).toHaveBeenCalledTimes(2);
+    expect(updateAsset).toHaveBeenCalledWith({
+      variables: {
+        id: 'created-orphan-id',
+        input: { isStarred: true }
+      }
+    });
+    expect(updateAsset).toHaveBeenCalledWith({
+      variables: {
+        id: 'created-orphan-id',
+        input: { isStarred: false }
+      }
     });
   });
 

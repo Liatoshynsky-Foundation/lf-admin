@@ -3,6 +3,7 @@ import { Box, IconButton, Paper, Stack, Typography } from '@mui/material';
 import { EllipsisVertical } from 'lucide-react';
 import Image from 'next/image';
 import { MouseEvent, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import CardMenu from '../card-layout/CardMenu';
 import FileCardMenuItems from '../file-card/FileCardMenuItems';
@@ -12,6 +13,7 @@ import { styles } from '~/shared/components/minimized-file-card/MinimizedFileCar
 import { useUpdateAssetMutation } from '~/types/graphql/generated/graphql';
 
 const ICON_SIZE = 20;
+const FAVORITE_UPDATE_ERROR = 'Не вдалося оновити статус обраного файлу. Спробуйте пізніше.';
 
 const FILE_TYPES = {
   img: 'img',
@@ -94,7 +96,9 @@ const MinimizedFileCard = ({
           input: { isStarred: !starred }
         }
       });
-    } catch {}
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : FAVORITE_UPDATE_ERROR);
+    }
   };
 
   const handleStarClick = (e: MouseEvent<HTMLDivElement>) => {

@@ -78,6 +78,34 @@ const isFilesSupportedFile = (file: File): boolean => {
   return Boolean(extension && supportedUploadExtensions.has(extension));
 };
 
+const getR2DeleteEndpoint = (fileUrl: string): string => {
+  const parsedUrl = new URL(fileUrl, 'http://localhost');
+  const pathParts = parsedUrl.pathname.split('/').filter(Boolean).map(decodeURIComponent);
+  const filename = pathParts.pop();
+
+  if (!filename) {
+    throw new Error('Не вдалося визначити файл для видалення.');
+  }
+
+  const folder = pathParts.join('/');
+  const encodedFilename = encodeURIComponent(filename);
+
+  if (!folder) {
+    return `/api/uploads/${encodedFilename}`;
+  }
+
+  return `/api/uploads/${encodedFilename}?folder=${encodeURIComponent(folder)}`;
+};
+
+const deleteR2FileByUrl = async (fileUrl: string): Promise<void> => {
+  const response = await fetch(getR2DeleteEndpoint(fileUrl), { method: 'DELETE' });
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok || data?.success === false) {
+    throw new Error(data?.error ?? 'Не вдалося видалити файл із Cloudflare R2.');
+  }
+};
+
 const renderFilesUpload: MediaModalRenderers['upload'] = (props) => (
   <UploadView
     {...props}
@@ -92,6 +120,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
   const [view, setView] = useState<FilesCardsLayoutView>('grid');
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const fileCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const pendingAssetCreationRef = useRef<Record<string, Promise<string>>>({});
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [deleteModalState, setDeleteModalState] = useState<{ open: boolean; fileId: string | null }>({
     open: false,
@@ -181,25 +210,42 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
       return file.id;
     }
 
-    const createResult = await createAsset({
-      variables: {
-        input: toCreateAssetInput(file)
+    const assetKey = file.downloadUrl ?? file.id;
+    const pendingAssetCreation = pendingAssetCreationRef.current[assetKey];
+
+    if (pendingAssetCreation) {
+      return pendingAssetCreation;
+    }
+
+    const assetCreation = (async () => {
+      const createResult = await createAsset({
+        variables: {
+          input: toCreateAssetInput(file)
+        }
+      });
+
+      const createdAsset = createResult.data?.createAsset;
+
+      if (!createdAsset) {
+        throw new Error(FILES_UPLOAD_FAILED_ERROR);
       }
-    });
 
-    const createdAsset = createResult.data?.createAsset;
+      await refetch();
 
-    if (!createdAsset) {
-      throw new Error(FILES_UPLOAD_FAILED_ERROR);
+      if (selectedFileId === fileId) {
+        setSelectedFileId(createdAsset.id);
+      }
+
+      return createdAsset.id;
+    })();
+
+    pendingAssetCreationRef.current[assetKey] = assetCreation;
+
+    try {
+      return await assetCreation;
+    } finally {
+      delete pendingAssetCreationRef.current[assetKey];
     }
-
-    await refetch();
-
-    if (selectedFileId === fileId) {
-      setSelectedFileId(createdAsset.id);
-    }
-
-    return createdAsset.id;
   };
 
   const updatePersistedAsset = async (
@@ -240,8 +286,23 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
   const handleDeleteConfirm = async (id: string) => {
     try {
       const fileToDelete = allFiles.find((file) => file.id === id);
-      const fileUrlToDelete = fileToDelete?.downloadUrl ?? fileToDelete?.id;
-      const persistedId = await ensureAssetPersisted(id);
+
+      if (!fileToDelete) {
+        throw new Error('Файл не знайдено');
+      }
+
+      const fileUrlToDelete = fileToDelete.downloadUrl ?? fileToDelete.id;
+
+      if (fileToDelete.isOrphan) {
+        await deleteR2FileByUrl(fileUrlToDelete);
+        toast.success('Файл успішно видалено');
+        setDeleteModalState({ open: false, fileId: null });
+        if (selectedFileId === id) setSelectedFileId(null);
+        removeR2FileByUrl(fileUrlToDelete);
+        return;
+      }
+
+      const persistedId = fileToDelete.id;
 
       await deleteAsset({
         variables: { id: persistedId },
@@ -253,7 +314,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
       toast.success('Файл успішно видалено');
       setDeleteModalState({ open: false, fileId: null });
       if (selectedFileId === id || selectedFileId === persistedId) setSelectedFileId(null);
-      if (fileUrlToDelete) removeR2FileByUrl(fileUrlToDelete);
+      removeR2FileByUrl(fileUrlToDelete);
       await refetch();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Не вдалося видалити файл. Спробуйте пізніше.';

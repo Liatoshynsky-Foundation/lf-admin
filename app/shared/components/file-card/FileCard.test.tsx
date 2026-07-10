@@ -230,7 +230,20 @@ describe('FileCard', () => {
     fireEvent.click(screen.getByText('Додати в обрані'));
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('');
+      expect(toast.error).toHaveBeenCalledWith('Favorite failed');
+    });
+  });
+
+  it('should show fallback error toast when favorite update fails without Error instance', async () => {
+    mockUpdateAsset.mockRejectedValueOnce('Favorite failed');
+
+    render(<FileCard fileType="image" fileData={defaultFileData} />);
+
+    fireEvent.click(screen.getByTestId('menu-button'));
+    fireEvent.click(screen.getByText('Додати в обрані'));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Не вдалося оновити статус обраного файлу. Спробуйте пізніше.');
     });
   });
 

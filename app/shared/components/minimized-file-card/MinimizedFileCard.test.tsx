@@ -1,5 +1,6 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import toast from 'react-hot-toast';
 
 import MinimizedFileCard from './MinimizedFileCard';
 
@@ -24,6 +25,13 @@ jest.mock('~/public/icons/star-1.svg', () => ({
 jest.mock('~/types/graphql/generated/graphql', () => ({
   ...jest.requireActual('~/types/graphql/generated/graphql'),
   useUpdateAssetMutation: () => [mockUpdateAsset, { loading: mockIsUpdatingStar }]
+}));
+
+jest.mock('react-hot-toast', () => ({
+  __esModule: true,
+  default: {
+    error: jest.fn()
+  }
 }));
 
 describe('MinimizedFileCard', () => {
@@ -182,6 +190,34 @@ describe('MinimizedFileCard', () => {
         id: 'test-id-123',
         input: { isStarred: true }
       }
+    });
+  });
+
+  it('should show error toast when favorite update fails', async () => {
+    const user = userEvent.setup();
+    mockUpdateAsset.mockRejectedValueOnce(new Error('Favorite failed'));
+
+    render(<MinimizedFileCard {...defaultProps} />);
+
+    await user.click(screen.getByLabelText('Open file menu'));
+    await user.click(screen.getByText('Додати в обрані'));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Favorite failed');
+    });
+  });
+
+  it('should show fallback error toast when favorite update fails without Error instance', async () => {
+    const user = userEvent.setup();
+    mockUpdateAsset.mockRejectedValueOnce('Favorite failed');
+
+    render(<MinimizedFileCard {...defaultProps} />);
+
+    await user.click(screen.getByLabelText('Open file menu'));
+    await user.click(screen.getByText('Додати в обрані'));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Не вдалося оновити статус обраного файлу. Спробуйте пізніше.');
     });
   });
 

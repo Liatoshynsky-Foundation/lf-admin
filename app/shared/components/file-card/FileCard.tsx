@@ -14,6 +14,7 @@ import { formatUsageCount } from '~/lib/utils/formatUsageCount';
 import { useUpdateAssetMutation } from '~/types/graphql/generated/graphql';
 
 const ICON_SIZE = 21;
+const FAVORITE_UPDATE_ERROR = 'Не вдалося оновити статус обраного файлу. Спробуйте пізніше.';
 
 const FILE_TYPES = {
   image: 'img',
@@ -64,8 +65,8 @@ const FileCard = ({ fileType, fileData, isSelected = false, onClick, onAction, o
           input: { isStarred: !isStarred }
         }
       });
-    } catch {
-      toast.error('');
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : FAVORITE_UPDATE_ERROR);
     }
   };
 
