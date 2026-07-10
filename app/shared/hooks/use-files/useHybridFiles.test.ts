@@ -86,13 +86,11 @@ describe('useHybridFiles', () => {
   });
 
   it('uses display name as originalname when orphan original name is missing', () => {
+    const fileWithoutOriginalName = { ...orphanR2File };
+    delete (fileWithoutOriginalName as Partial<typeof orphanR2File>).originalName;
+
     const { result } = renderHook(() =>
-      useHybridFiles([], [
-        {
-          ...orphanR2File,
-          originalName: undefined
-        }
-      ])
+      useHybridFiles([], [fileWithoutOriginalName as typeof orphanR2File])
     );
 
     expect(toCreateAssetInput(result.current[0])).toMatchObject({
@@ -188,7 +186,7 @@ describe('useHybridFiles', () => {
         {
           ...orphanR2File,
           filename: '',
-          originalName: undefined,
+          originalName: '',
           mimeType,
           url: `https://r2.example.com/files/${label}`
         }
@@ -204,7 +202,7 @@ describe('useHybridFiles', () => {
         {
           ...orphanR2File,
           filename: '',
-          originalName: undefined,
+          originalName: '',
           mimeType: '',
           url: 'https://r2.example.com/files/no-format'
         }
@@ -228,7 +226,7 @@ describe('useHybridFiles', () => {
         {
           ...orphanR2File,
           filename,
-          originalName: undefined,
+          originalName: '',
           mimeType,
           url: `https://r2.example.com/files/${filename}`
         }
