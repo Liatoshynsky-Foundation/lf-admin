@@ -117,6 +117,20 @@ describe('editSlice', () => {
   });
 
   describe('setPageData', () => {
+    it('should early return from if the page is already initialized & we pass isInit=true', () => {
+      const state = store.getState();
+      state.initializedPages = {
+        [PAGE_ID]: true
+      };
+      const blocks = state.blocks;
+      const blocksPayload = { [BLOCK_ID as string]: { text: 'A' } } as unknown as SetPageDataPayload;
+
+      store.getState().setPageData(PAGE_ID, blocksPayload, [BLOCK_ID as string], true);
+
+
+      const stateAfter = store.getState();
+      expect(stateAfter.blocks).toStrictEqual(blocks);
+    });
     it('should set blocks and order, and mark as changed if not init', () => {
       const blocksPayload = { [BLOCK_ID as string]: { text: 'A' } } as unknown as SetPageDataPayload;
 
