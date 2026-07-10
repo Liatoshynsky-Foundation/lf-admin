@@ -93,8 +93,8 @@ describe('Pagination', () => {
       expect(screen.getByTestId('total-pages')).toHaveTextContent('');
     });
     it.each([
-      { prop: 'hideNextButton', testId: 'next-page-btn', shouldHide: true },
-      { prop: 'hidePrevButton', testId: 'prev-page-btn', shouldHide: true },
+      { prop: 'hideNextButton', testId: 'interactive-next-page-btn', shouldHide: true },
+      { prop: 'hidePrevButton', testId: 'interactive-prev-page-btn', shouldHide: true },
     ])('should hide the $testId button if $prop is $shouldHide', 
       ({ prop, testId, shouldHide }) => {
         renderComponent({ [prop]: shouldHide });
@@ -107,7 +107,7 @@ describe('Pagination', () => {
       const user = userEvent.setup();
       renderComponent();
 
-      await user.click(screen.getByTestId('next-page-btn'));
+      await user.click(screen.getByTestId('interactive-next-page-btn'));
       expect(mockOnPageChange).toHaveBeenCalledWith(expect.any(Object), defaultProps.currentPage as number + 1);
     });
   });
