@@ -157,7 +157,6 @@ const FileCard = ({ fileType, fileData, isSelected = false, onClick, onAction, o
         coverImage={imageNode}
         title={titleNode}
         info={infoNode}
-        spaceBetweenContent={400}
         interactive={true}
         isSelected={isSelected}
         items={itemsNode}

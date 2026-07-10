@@ -11,14 +11,18 @@ const ContentCardMenuItems = ({ id, type, setDeleteModalOpen }: ContentCardMenuP
   const seoHref = `/publications/${type}/${id}/seo`;
 
   return [
-    {
-      text: { name: 'SEO налаштування' },
-      href: seoHref
-    },
-    {
-      text: { name: 'Видалити' },
-      onClick: () => setDeleteModalOpen(true)
-    }
+    [
+      {
+        id: 'seo-settings',
+        text: { name: 'SEO налаштування' },
+        href: seoHref
+      },
+      {
+        id: 'delete',
+        text: { name: 'Видалити' },
+        onClick: () => setDeleteModalOpen(true)
+      }
+    ]
   ];
 };
 

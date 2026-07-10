@@ -21,15 +21,15 @@ export const GroupMenuItems = ({
   setPublicationModalOpen,
 }: GroupMenuProps): readonly (readonly MenuItem[])[] => [
   [
-    { id: 'edit-seo', label: 'Редагувати групу (SEO)', href: `${WORKS_BASE_PATH}/group/${id}/seo` },
-    { id: 'edit-content', label: 'Редагувати контент', href: `${WORKS_BASE_PATH}/group/${id}/content` },
-    { id: 'share', label: 'Поширити', href: `${WORKS_BASE_PATH}/group/${id}/share` },
-    { id: 'ungroup', label: 'Розгрупувати', href: `${WORKS_BASE_PATH}/group/${id}/ungroup` },
+    { id: 'edit-seo', text: {name: 'Редагувати групу (SEO)'}, href: `${WORKS_BASE_PATH}/group/${id}/seo` },
+    { id: 'edit-content', text: {name: 'Редагувати контент'}, href: `${WORKS_BASE_PATH}/group/${id}/content` },
+    { id: 'share', text: {name: 'Поширити'}, href: `${WORKS_BASE_PATH}/group/${id}/share` },
+    { id: 'ungroup', text: {name: 'Розгрупувати'}, href: `${WORKS_BASE_PATH}/group/${id}/ungroup` },
   ],
   [
     isPublished
-      ? { id: 'unpublish', label: 'Зняти з публікації', onClick: () => setHideModalOpen(true) }
-      : { id: 'publish', label: 'Опублікувати', onClick: () => setPublicationModalOpen(true) },
+      ? { id: 'unpublish', text: {name: 'Зняти з публікації'}, onClick: () => setHideModalOpen(true) }
+      : { id: 'publish', text: {name: 'Опублікувати'}, onClick: () => setPublicationModalOpen(true) },
   ],
 ];
 
@@ -38,10 +38,10 @@ export const WorkMenuItems = ({
   setDeleteModalOpen,
 }: WorkMenuProps): readonly (readonly MenuItem[])[] => [
   [
-    { id: 'edit', label: 'Редагувати композицію', href: `${WORKS_BASE_PATH}/${id}/edit` },
-    { id: 'share', label: 'Поширити', href: `${WORKS_BASE_PATH}/${id}/share` },
+    { id: 'edit', text: {name: 'Редагувати композицію'}, href: `${WORKS_BASE_PATH}/${id}/edit` },
+    { id: 'share', text: {name: 'Поширити'}, href: `${WORKS_BASE_PATH}/${id}/share` },
   ],
   [
-    { id: 'delete', label: 'Видалити', onClick: () => setDeleteModalOpen(true) },
+    { id: 'delete', text: {name: 'Видалити'}, onClick: () => setDeleteModalOpen(true) },
   ],
 ];

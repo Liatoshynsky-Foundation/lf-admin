@@ -3,6 +3,8 @@ import { Info } from 'lucide-react';
 import Image from 'next/image';
 import React from 'react';
 
+import { ActionMenuGroups } from '../dropdown-menu/ActionMenu';
+
 export interface FileCardMenuProps {
   isStarred?: boolean;
   isStarLoading?: boolean;
@@ -21,7 +23,7 @@ const FileCardMenuItems = ({
   onToggleStar,
   onDownload,
   onDelete
-}: FileCardMenuProps) => {
+}: FileCardMenuProps): ActionMenuGroups => {
   const renderStarIcon = () => {
     if (isStarLoading) {
       return <CircularProgress size={20} color="inherit" />;
@@ -33,44 +35,51 @@ const FileCardMenuItems = ({
   };
 
   return [
-    {
-      text: {
-        name: 'Відкрити деталі',
-        icon: <Info size={24} strokeWidth={1.5} />
+    [
+      {
+        id: 'details',
+        text: {
+          name: 'Відкрити деталі',
+          icon: <Info size={24} strokeWidth={1.5} />
+        },
+        onClick: onOpenDetails
       },
-      onClick: onOpenDetails
-    },
-    {
-      text: {
-        name: 'Перейменувати',
-        icon: <Image src="/icons/pen-line.svg" width={18} height={17} alt="Rename" />
+      {
+        id: 'rename',
+        text: {
+          name: 'Перейменувати',
+          icon: <Image src="/icons/pen-line.svg" width={18} height={17} alt="Rename" />
+        },
+        onClick: onRename
       },
-      onClick: onRename
-    },
-    {
-      text: {
-        name: isStarred ? 'Забрати з обраних' : 'Додати в обрані',
-        icon: renderStarIcon()
+      {
+        id: 'toggle-star',
+        text: {
+          name: isStarred ? 'Забрати з обраних' : 'Додати в обрані',
+          icon: renderStarIcon()
+        },
+        onClick: () => {
+          if (isStarLoading) return;
+          onToggleStar();
+        }
       },
-      onClick: () => {
-        if (isStarLoading) return;
-        onToggleStar();
+      {
+        id: 'download',
+        text: {
+          name: 'Завантажити',
+          icon: <Image src="/icons/download.svg" width={18} height={18} alt="Download" />
+        },
+        onClick: onDownload
+      },
+      {
+        id: 'delete',
+        text: {
+          name: 'Видалити',
+          icon: <Image src="/icons/empty-trash.svg" width={18} height={20} alt="Delete" />
+        },
+        onClick: onDelete
       }
-    },
-    {
-      text: {
-        name: 'Завантажити',
-        icon: <Image src="/icons/download.svg" width={18} height={18} alt="Download" />
-      },
-      onClick: onDownload
-    },
-    {
-      text: {
-        name: 'Видалити',
-        icon: <Image src="/icons/empty-trash.svg" width={18} height={20} alt="Delete" />
-      },
-      onClick: onDelete
-    }
+    ]
   ];
 };
 
