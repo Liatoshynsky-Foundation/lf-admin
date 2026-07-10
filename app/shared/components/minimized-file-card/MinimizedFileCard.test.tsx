@@ -1,7 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import MinimizedFileCard from './MinimizedFileCard';
+
+const mockUpdateAsset = jest.fn();
+let mockIsUpdatingStar = false;
 
 jest.mock('~/public/icons/link.svg', () => ({
   __esModule: true,
@@ -20,7 +23,7 @@ jest.mock('~/public/icons/star-1.svg', () => ({
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
   ...jest.requireActual('~/types/graphql/generated/graphql'),
-  useUpdateAssetMutation: () => [jest.fn(), { loading: false }]
+  useUpdateAssetMutation: () => [mockUpdateAsset, { loading: mockIsUpdatingStar }]
 }));
 
 describe('MinimizedFileCard', () => {
@@ -29,6 +32,11 @@ describe('MinimizedFileCard', () => {
     name: 'Test File',
     date: '10.10.2025'
   };
+
+  afterEach(() => {
+    mockIsUpdatingStar = false;
+    jest.clearAllMocks();
+  });
 
   it('should render component with required props and default file type', () => {
     render(<MinimizedFileCard {...defaultProps} />);
@@ -123,5 +131,95 @@ describe('MinimizedFileCard', () => {
 
     expect(handleMenuClick).toHaveBeenCalledTimes(1);
     expect(handleClick).not.toHaveBeenCalled();
+  });
+
+  it('should call menu actions with file id', async () => {
+    const handleClick = jest.fn();
+    const handleAction = jest.fn();
+    const user = userEvent.setup();
+
+    render(<MinimizedFileCard {...defaultProps} onClick={handleClick} onAction={handleAction} />);
+
+    await user.click(screen.getByLabelText('Open file menu'));
+    await user.click(screen.getByText('Відкрити деталі'));
+    expect(handleClick).toHaveBeenCalledTimes(1);
+
+    await user.click(screen.getByLabelText('Open file menu'));
+    await user.click(screen.getByText('Перейменувати'));
+    expect(handleAction).toHaveBeenCalledWith('rename', 'test-id-123');
+
+    await user.click(screen.getByLabelText('Open file menu'));
+    await user.click(screen.getByText('Завантажити'));
+    expect(handleAction).toHaveBeenCalledWith('download', 'test-id-123');
+
+    await user.click(screen.getByLabelText('Open file menu'));
+    await user.click(screen.getByText('Видалити'));
+    expect(handleAction).toHaveBeenCalledWith('delete', 'test-id-123');
+  });
+
+  it('should call onToggleStar from menu', async () => {
+    const handleToggleStar = jest.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+
+    render(<MinimizedFileCard {...defaultProps} onToggleStar={handleToggleStar} />);
+
+    await user.click(screen.getByLabelText('Open file menu'));
+    await user.click(screen.getByText('Додати в обрані'));
+
+    expect(handleToggleStar).toHaveBeenCalledWith('test-id-123', true);
+  });
+
+  it('should update asset favorite state when onToggleStar is not provided', async () => {
+    const user = userEvent.setup();
+
+    render(<MinimizedFileCard {...defaultProps} />);
+
+    await user.click(screen.getByLabelText('Open file menu'));
+    await user.click(screen.getByText('Додати в обрані'));
+
+    expect(mockUpdateAsset).toHaveBeenCalledWith({
+      variables: {
+        id: 'test-id-123',
+        input: { isStarred: true }
+      }
+    });
+  });
+
+  it('should toggle starred file from visible star icon without opening card', async () => {
+    const handleClick = jest.fn();
+    const handleToggleStar = jest.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+
+    render(<MinimizedFileCard {...defaultProps} starred onClick={handleClick} onToggleStar={handleToggleStar} />);
+
+    await user.click(screen.getByLabelText('Starred file'));
+
+    expect(handleToggleStar).toHaveBeenCalledWith('test-id-123', false);
+    expect(handleClick).not.toHaveBeenCalled();
+  });
+
+  it('should close menu on resize', async () => {
+    const user = userEvent.setup();
+
+    render(<MinimizedFileCard {...defaultProps} />);
+
+    await user.click(screen.getByLabelText('Open file menu'));
+    expect(screen.getByText('Відкрити деталі')).toBeInTheDocument();
+
+    act(() => {
+      globalThis.dispatchEvent(new Event('resize'));
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Відкрити деталі')).not.toBeInTheDocument();
+    });
+  });
+
+  it('should render waiting cursor while favorite state is updating', () => {
+    mockIsUpdatingStar = true;
+
+    render(<MinimizedFileCard {...defaultProps} starred />);
+
+    expect(screen.getByLabelText('Starred file')).toHaveStyle({ cursor: 'wait' });
   });
 });

@@ -148,9 +148,9 @@ function CropRenderer({ selected, crop, resetSeq, onBaseline, onChange }: Readon
   );
 }
 
-function GalleryRenderer({ selected, onPick }: Readonly<GalleryRendererProps>) {
+function GalleryRenderer({ filters, selected, onFiltersChange, onPick }: Readonly<GalleryRendererProps>) {
   return (
-    <div data-testid="GalleryView" data-selected={selected ? selected.id : 'none'}>
+    <div data-filters={JSON.stringify(filters)} data-testid="GalleryView" data-selected={selected ? selected.id : 'none'}>
       <button
         type="button"
         data-testid="GalleryView-pick"
@@ -165,6 +165,13 @@ function GalleryRenderer({ selected, onPick }: Readonly<GalleryRendererProps>) {
         }
       >
         pick
+      </button>
+      <button
+        type="button"
+        data-testid="GalleryView-filter"
+        onClick={() => onFiltersChange({ search: 'liatoshynsky' })}
+      >
+        filter
       </button>
     </div>
   );
@@ -191,9 +198,9 @@ function UploadRenderer({ selected, onPick }: Readonly<UploadRendererProps>) {
   );
 }
 
-function UsedRenderer({ selected, onPick }: Readonly<UsedRendererProps>) {
+function UsedRenderer({ filters, selected, onFiltersChange, onPick }: Readonly<UsedRendererProps>) {
   return (
-    <div data-testid="UsedView" data-selected={selected ? selected.id : 'none'}>
+    <div data-filters={JSON.stringify(filters)} data-testid="UsedView" data-selected={selected ? selected.id : 'none'}>
       <button
         type="button"
         data-testid="UsedView-pick"
@@ -208,6 +215,13 @@ function UsedRenderer({ selected, onPick }: Readonly<UsedRendererProps>) {
         }
       >
         pick
+      </button>
+      <button
+        type="button"
+        data-testid="UsedView-filter"
+        onClick={() => onFiltersChange({ language: 'en' })}
+      >
+        filter
       </button>
     </div>
   );
@@ -300,6 +314,35 @@ describe('MediaModalFlow', () => {
     expect(screen.getByTestId('UploadView')).toBeInTheDocument();
   });
 
+  it('should update gallery and used filters from renderers', async () => {
+    renderOpen({ tab: 'GALLERY' });
+
+    await user.click(screen.getByTestId('GalleryView-filter'));
+    expect(screen.getByTestId('GalleryView')).toHaveAttribute(
+      'data-filters',
+      JSON.stringify({ search: 'liatoshynsky', favorites: '', usage: '' })
+    );
+
+    await user.click(screen.getByTestId('MediaModalSwitcher-usedTab'));
+    await user.click(screen.getByTestId('UsedView-filter'));
+    expect(screen.getByTestId('UsedView')).toHaveAttribute('data-filters', JSON.stringify({ search: '', language: 'en' }));
+  });
+
+  it('should cancel in-flight apply state when modal closes', () => {
+    const props: ComponentProps<typeof MediaModalFlow> = {
+      open: true,
+      onClose: jest.fn(),
+      onApply: jest.fn(),
+      renderers: createRenderers()
+    };
+
+    const { rerender } = render(<MediaModalFlow {...props} />);
+
+    rerender(<MediaModalFlow {...props} open={false} />);
+
+    expect(screen.queryByTestId('MediaModal')).not.toBeInTheDocument();
+  });
+
   it('should apply non-image upload without crop step', async () => {
     const onClose = jest.fn();
     const onApply = jest.fn().mockResolvedValue(undefined);
@@ -345,6 +388,37 @@ describe('MediaModalFlow', () => {
     });
 
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+  });
+
+  it('should clear selected upload file and return to upload picker', async () => {
+    const renderers = createRenderers();
+    renderers.upload = ({ selected, onPick }: Readonly<UploadRendererProps>) => (
+      <div data-testid="UploadView" data-selected={selected ? selected.fileName : 'none'}>
+        <button
+          type="button"
+          data-testid="UploadView-pickPdf"
+          onClick={() =>
+            onPick({
+              kind: 'upload',
+              id: 'upload-pdf-1',
+              fileName: 'doc.pdf',
+              file: new File(['x'], 'doc.pdf', { type: 'application/pdf' })
+            })
+          }
+        >
+          pick
+        </button>
+      </div>
+    );
+
+    renderOpen({ tab: 'UPLOAD' }, { renderers });
+
+    await user.click(screen.getByTestId('UploadView-pickPdf'));
+    expect(screen.getByTestId('MediaModal-backButton')).toBeInTheDocument();
+
+    await user.click(screen.getByTestId('MediaModal-backButton'));
+
+    expect(screen.getByTestId('UploadView')).toHaveAttribute('data-selected', 'none');
   });
 
   it('should create asset record after upload when persistence is enabled', async () => {
@@ -437,6 +511,16 @@ describe('MediaModalFlow', () => {
     expect(screen.getByTestId('MediaModal-footer')).toBeInTheDocument();
     expect(screen.getByTestId('MediaModal-backButton')).toBeInTheDocument();
     expect(screen.getByTestId('MediaModal-resetButton')).toBeDisabled();
+  });
+
+  it('should go back from crop step to select step', async () => {
+    renderOpen({ tab: 'GALLERY' });
+
+    await pickAndEnterCrop(user);
+    await user.click(screen.getByTestId('MediaModal-backButton'));
+
+    expect(screen.getByTestId('GalleryView')).toBeInTheDocument();
+    expect(screen.queryByTestId('CropView')).not.toBeInTheDocument();
   });
 
   it('should enable reset after resize and reset back to initial crop', async () => {

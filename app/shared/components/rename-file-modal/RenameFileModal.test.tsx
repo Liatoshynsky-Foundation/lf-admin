@@ -96,6 +96,49 @@ describe('RenameFileModal', () => {
     });
   });
 
+  it('calls onRename when custom rename handler is provided', async () => {
+    const user = userEvent.setup();
+    const onRename = jest.fn().mockResolvedValue(undefined);
+
+    render(<RenameFileModal {...defaultProps} onRename={onRename} />);
+
+    const input = screen.getByDisplayValue('old_name');
+    await user.clear(input);
+    await user.type(input, 'custom_name');
+
+    const saveButton = screen.getByRole('button', { name: /зберегти/i });
+    await user.click(saveButton);
+
+    expect(onRename).toHaveBeenCalledWith('file-123', 'custom_name.jpg');
+    expect(mockUpdateAsset).not.toHaveBeenCalled();
+
+    await waitFor(() => {
+      expect(mockOnClose).toHaveBeenCalledTimes(1);
+      expect(toast.success).toHaveBeenCalledWith('Файл успішно перейменовано');
+    });
+  });
+
+  it('renames files without extension', async () => {
+    const user = userEvent.setup();
+    mockUpdateAsset.mockResolvedValueOnce({ data: {} });
+
+    render(<RenameFileModal {...defaultProps} currentFilename="README" />);
+
+    const input = screen.getByDisplayValue('README');
+    await user.clear(input);
+    await user.type(input, 'CHANGELOG');
+
+    const saveButton = screen.getByRole('button', { name: /зберегти/i });
+    await user.click(saveButton);
+
+    expect(mockUpdateAsset).toHaveBeenCalledWith({
+      variables: {
+        id: 'file-123',
+        input: { filename: 'CHANGELOG' }
+      }
+    });
+  });
+
   it('shows error toast on API failure', async () => {
     const user = userEvent.setup();
     mockUpdateAsset.mockRejectedValueOnce(new Error('API Error'));
