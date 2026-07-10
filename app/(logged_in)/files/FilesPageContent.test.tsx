@@ -99,6 +99,7 @@ interface FilesCardsLayoutProps {
   setItemRef: (id: string, node: HTMLDivElement | null) => void;
   onItemClick: (item: TestFileItem) => void;
   onItemAction: (action: 'rename' | 'delete' | 'download', item: TestFileItem) => void;
+  onItemToggleStar: (item: TestFileItem, next: boolean) => void;
 }
 
 interface FileInfoSidebarProps {
@@ -107,6 +108,9 @@ interface FileInfoSidebarProps {
     filename: string;
   };
   onClose: () => void;
+  onToggleStar: (fileId: string, next: boolean) => void;
+  onDescriptionSave: (fileId: string, description: string) => void;
+  onDeleteRequest: (fileId: string) => void;
   onRequestAction: (action: { type: 'rename' | 'unknown'; fileId: string }) => void;
 }
 
@@ -140,6 +144,7 @@ interface RenameFileModalProps {
   fileId: string;
   currentFilename: string;
   onClose: () => void;
+  onRename: (fileId: string, filename: string) => void;
 }
 
 interface DeleteFileModalProps {
@@ -250,6 +255,7 @@ jest.mock('~/shared/components/files-cards-layout', () => ({
             <button onClick={() => props.onItemAction('rename', item)}>rename-{item.id}</button>
             <button onClick={() => props.onItemAction('delete', item)}>delete-{item.id}</button>
             <button onClick={() => props.onItemAction('download', item)}>download-{item.id}</button>
+            <button onClick={() => props.onItemToggleStar(item, true)}>star-{item.id}</button>
             <div ref={(node) => props.setItemRef(item.id, node)} />
           </div>
         ))}
@@ -259,10 +265,20 @@ jest.mock('~/shared/components/files-cards-layout', () => ({
 }));
 
 jest.mock('~/shared/components/file-info-sidebar/FileInfoSidebar', () => ({
-  FileInfoSidebar: ({ file, onClose, onRequestAction }: FileInfoSidebarProps) => (
+  FileInfoSidebar: ({
+    file,
+    onClose,
+    onToggleStar,
+    onDescriptionSave,
+    onDeleteRequest,
+    onRequestAction
+  }: FileInfoSidebarProps) => (
     <div data-testid="file-info-sidebar">
       <span>{file.filename}</span>
       <button onClick={onClose}>close-sidebar</button>
+      <button onClick={() => onToggleStar(file.id, true)}>sidebar-star</button>
+      <button onClick={() => onDescriptionSave(file.id, 'Updated description')}>sidebar-description</button>
+      <button onClick={() => onDeleteRequest(file.id)}>sidebar-delete</button>
       <button onClick={() => onRequestAction({ type: 'rename', fileId: file.id })}>request-rename</button>
       <button onClick={() => onRequestAction({ type: 'unknown' as 'rename', fileId: file.id })}>request-unknown</button>
     </div>
@@ -313,10 +329,11 @@ jest.mock('~/shared/components/media-modal/views/upload-view/UploadView', () => 
 }));
 
 jest.mock('~/shared/components/rename-file-modal/RenameFileModal', () => ({
-  RenameFileModal: ({ open, fileId, currentFilename, onClose }: RenameFileModalProps) =>
+  RenameFileModal: ({ open, fileId, currentFilename, onClose, onRename }: RenameFileModalProps) =>
     open ? (
       <div data-testid="rename-modal">
         rename {fileId} {currentFilename}
+        <button onClick={() => onRename(fileId, 'renamed.png')}>confirm-rename</button>
         <button onClick={onClose}>close-rename</button>
       </div>
     ) : null
@@ -692,6 +709,80 @@ describe('FilesPageContent', () => {
 
     await waitFor(() => {
       expect(downloadFile).toHaveBeenCalledWith(baseAsset.url, baseAsset.originalname);
+    });
+  });
+
+  it('updates favorite state from file card action', async () => {
+    const { updateAsset, refetch } = setupHooks({ assets: [baseAsset] });
+    render(<FilesPageContent activeTab="all" />);
+
+    fireEvent.click(screen.getByText('star-1'));
+
+    await waitFor(() => {
+      expect(updateAsset).toHaveBeenCalledWith({
+        variables: {
+          id: '1',
+          input: { isStarred: true }
+        }
+      });
+      expect(refetch).toHaveBeenCalled();
+    });
+  });
+
+  it('updates favorite and description from sidebar actions', async () => {
+    const { updateAsset } = setupHooks({ assets: [baseAsset] });
+    render(<FilesPageContent activeTab="all" />);
+
+    fireEvent.click(screen.getByText('select-1'));
+    expect(await screen.findByTestId('file-info-sidebar')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('sidebar-star'));
+    fireEvent.click(screen.getByText('sidebar-description'));
+
+    await waitFor(() => {
+      expect(updateAsset).toHaveBeenCalledWith({
+        variables: {
+          id: '1',
+          input: { isStarred: true }
+        }
+      });
+      expect(updateAsset).toHaveBeenCalledWith({
+        variables: {
+          id: '1',
+          input: { description: 'Updated description' }
+        }
+      });
+    });
+  });
+
+  it('opens delete modal from sidebar delete request', async () => {
+    setupHooks({ assets: [baseAsset] });
+    render(<FilesPageContent activeTab="all" />);
+
+    fireEvent.click(screen.getByText('select-1'));
+    expect(await screen.findByTestId('file-info-sidebar')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('sidebar-delete'));
+
+    expect(await screen.findByTestId('delete-modal')).toBeInTheDocument();
+  });
+
+  it('renames a file from rename modal confirm action', async () => {
+    const { updateAsset } = setupHooks({ assets: [baseAsset] });
+    render(<FilesPageContent activeTab="all" />);
+
+    fireEvent.click(screen.getByText('rename-1'));
+    expect(await screen.findByTestId('rename-modal')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('confirm-rename'));
+
+    await waitFor(() => {
+      expect(updateAsset).toHaveBeenCalledWith({
+        variables: {
+          id: '1',
+          input: { filename: 'renamed.png' }
+        }
+      });
     });
   });
 

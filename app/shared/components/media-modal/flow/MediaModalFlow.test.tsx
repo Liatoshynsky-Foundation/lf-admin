@@ -144,6 +144,9 @@ function CropRenderer({ selected, crop, resetSeq, onBaseline, onChange }: Readon
       <button type="button" data-testid="CropView-resize" onClick={() => onChange(resizedCrop)}>
         resize
       </button>
+      <button type="button" data-testid="CropView-baseline" onClick={() => onBaseline(resizedCrop)}>
+        baseline
+      </button>
     </div>
   );
 }
@@ -304,6 +307,21 @@ describe('MediaModalFlow', () => {
     expect(screen.getByTestId('UploadView')).toHaveAttribute('data-selected', 'a.png');
   });
 
+  it('should derive tab from initial selected used item', () => {
+    renderOpen({
+      selected: {
+        kind: 'used',
+        id: 'used-1-en',
+        fileName: 'used-1.png',
+        src: '/demo/used-1.png',
+        locale: 'en'
+      }
+    });
+
+    expect(screen.getByTestId('MediaModalSwitcher')).toHaveAttribute('data-value', 'USED');
+    expect(screen.getByTestId('UsedView')).toHaveAttribute('data-selected', 'used-1-en');
+  });
+
   it('should switch tabs in select step', async () => {
     renderOpen({ tab: 'GALLERY' });
 
@@ -312,6 +330,32 @@ describe('MediaModalFlow', () => {
 
     await user.click(screen.getByTestId('MediaModalSwitcher-uploadTab'));
     expect(screen.getByTestId('UploadView')).toBeInTheDocument();
+  });
+
+  it('should hide tabs and render upload header when hideTabs is enabled', () => {
+    renderOpen({ tab: 'UPLOAD' }, { hideTabs: true });
+
+    expect(screen.getByText('Завантажити файл')).toBeInTheDocument();
+    expect(screen.queryByTestId('MediaModalSwitcher')).not.toBeInTheDocument();
+    expect(screen.getByTestId('UploadView')).toBeInTheDocument();
+  });
+
+  it('should apply gallery selection without crop when media kind is pdf', async () => {
+    const onApply = jest.fn().mockResolvedValue(undefined);
+
+    renderOpen({ tab: 'GALLERY' }, { mediaKind: 'pdf', onApply });
+
+    await user.click(screen.getByTestId('GalleryView-pick'));
+    expect(screen.queryByTestId('CropView')).not.toBeInTheDocument();
+
+    await user.click(screen.getByTestId('MediaModal-applyButton'));
+
+    await waitFor(() => {
+      expect(onApply).toHaveBeenCalledWith(expect.objectContaining({
+        selected: expect.objectContaining({ id: 'gallery-1-uk' }),
+        crop: null
+      }));
+    });
   });
 
   it('should update gallery and used filters from renderers', async () => {
@@ -500,6 +544,101 @@ describe('MediaModalFlow', () => {
 
     await waitFor(() => expect(onApply).toHaveBeenCalled());
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it('should ignore tab changes and gallery picks while apply is in progress', async () => {
+    let resolveApply: () => void = () => {};
+    const onApply = jest.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveApply = resolve;
+        })
+    );
+
+    renderOpen({ tab: 'GALLERY' }, { mediaKind: 'pdf', onApply });
+
+    await user.click(screen.getByTestId('GalleryView-pick'));
+    await user.click(screen.getByTestId('MediaModal-applyButton'));
+    await waitFor(() => expect(screen.getByTestId('MediaModal-applyButton')).toBeDisabled());
+
+    await user.click(screen.getByTestId('MediaModalSwitcher-uploadTab'));
+    await user.click(screen.getByTestId('GalleryView-pick'));
+
+    expect(screen.getByTestId('MediaModalSwitcher')).toHaveAttribute('data-value', 'GALLERY');
+    expect(screen.getByTestId('GalleryView')).toHaveAttribute('data-selected', 'gallery-1-uk');
+
+    resolveApply();
+    await waitFor(() => expect(onApply).toHaveBeenCalledTimes(1));
+  });
+
+  it('should ignore upload clear while apply is in progress', async () => {
+    let resolveApply: () => void = () => {};
+    const onApply = jest.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveApply = resolve;
+        })
+    );
+
+    const renderers = createRenderers();
+    renderers.upload = ({ selected, onPick }: Readonly<UploadRendererProps>) => (
+      <div data-testid="UploadView" data-selected={selected ? selected.fileName : 'none'}>
+        <button
+          type="button"
+          data-testid="UploadView-pickPdf"
+          onClick={() =>
+            onPick({
+              kind: 'upload',
+              id: 'upload-pdf-1',
+              fileName: 'doc.pdf',
+              file: new File(['x'], 'doc.pdf', { type: 'application/pdf' })
+            })
+          }
+        >
+          pick
+        </button>
+      </div>
+    );
+
+    renderOpen({ tab: 'UPLOAD' }, { onApply, renderers });
+
+    await user.click(screen.getByTestId('UploadView-pickPdf'));
+    await user.click(screen.getByTestId('MediaModal-applyButton'));
+    await waitFor(() => expect(screen.getByTestId('MediaModal-applyButton')).toBeDisabled());
+
+    await user.click(screen.getByTestId('MediaModal-backButton'));
+
+    expect(screen.getByTestId('MediaModal-backButton')).toBeInTheDocument();
+    expect(screen.queryByTestId('UploadView')).not.toBeInTheDocument();
+
+    resolveApply();
+    await waitFor(() => expect(onApply).toHaveBeenCalledTimes(1));
+  });
+
+  it('should ignore crop actions while apply is in progress', async () => {
+    let resolveApply: () => void = () => {};
+    const onApply = jest.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveApply = resolve;
+        })
+    );
+
+    renderOpen({ tab: 'GALLERY' }, { onApply });
+
+    await pickAndEnterCrop(user);
+    await user.click(screen.getByTestId('MediaModal-applyButton'));
+    await waitFor(() => expect(screen.getByTestId('MediaModal-applyButton')).toBeDisabled());
+
+    await user.click(screen.getByTestId('MediaModal-backButton'));
+    await user.click(screen.getByTestId('CropView-resize'));
+    await user.click(screen.getByTestId('CropView-baseline'));
+
+    expect(screen.getByTestId('CropView')).toBeInTheDocument();
+    expect(screen.getByTestId('CropView')).toHaveAttribute('data-crop', JSON.stringify(initialCrop));
+
+    resolveApply();
+    await waitFor(() => expect(onApply).toHaveBeenCalledTimes(1));
   });
 
   it('should enter crop after pick and show crop actions', async () => {

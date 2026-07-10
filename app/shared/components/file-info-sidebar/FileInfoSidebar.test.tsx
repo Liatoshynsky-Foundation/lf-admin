@@ -191,6 +191,19 @@ describe('FileInfoSidebar', () => {
     expect(onToggleStar).toHaveBeenCalledWith('f1', true);
   });
 
+  it('should ignore custom favorite handler errors', async () => {
+    const onToggleStar = jest.fn().mockRejectedValue(new Error('Favorite failed'));
+
+    render(<FileInfoSidebar file={baseFile} onClose={jest.fn()} onToggleStar={onToggleStar} />);
+
+    fireEvent.click(screen.getByLabelText('Додати в обрані'));
+
+    await waitFor(() => {
+      expect(onToggleStar).toHaveBeenCalledWith('f1', true);
+    });
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
   it('should update asset favorite state when onToggleStar is not provided', async () => {
     render(<FileInfoSidebar file={baseFile} onClose={jest.fn()} />);
 
@@ -303,6 +316,22 @@ describe('FileInfoSidebar', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
+  it('should show fallback error toast when local delete fails without Error instance', async () => {
+    const onClose = jest.fn();
+    const deletableFile: FileDetailsSidebarFile = { ...baseFile, usageLinks: [] };
+    mockDeleteAsset.mockRejectedValueOnce('Delete failed');
+
+    render(<FileInfoSidebar file={deletableFile} onClose={onClose} />);
+
+    fireEvent.click(screen.getByLabelText('Видалити'));
+    fireEvent.click(screen.getByRole('button', { name: 'Видалити' }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Не вдалося видалити файл. Спробуйте пізніше.');
+    });
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it('should request rename and download, and open delete modal', async () => {
     const onRequestAction = jest.fn();
 
@@ -364,6 +393,14 @@ describe('FileInfoSidebar', () => {
     fireEvent.click(screen.getByLabelText('Open image preview'));
 
     expect(screen.getByTestId('ImagePreviewModal')).toHaveAttribute('data-alt', 'cat.png');
+  });
+
+  it('should open image preview modal from Space key', () => {
+    render(<FileInfoSidebar file={baseFile} onClose={jest.fn()} />);
+
+    fireEvent.keyDown(screen.getByRole('button', { name: 'cat.png' }), { key: ' ' });
+
+    expect(screen.getByTestId('ImagePreviewModal')).toHaveAttribute('data-src', '/cat.png');
   });
 
   it('should not open image preview modal from keyboard for non-image previews', () => {

@@ -6,6 +6,27 @@ import toast from 'react-hot-toast';
 import { RenameFileModal } from './RenameFileModal';
 import { useUpdateAssetMutation } from '~/types/graphql/generated/graphql';
 
+jest.mock('@mui/material', () => {
+  const actual = jest.requireActual('@mui/material');
+
+  return {
+    ...actual,
+    Button: ({
+      children,
+      disabled,
+      onClick
+    }: {
+      children: React.ReactNode;
+      disabled?: boolean;
+      onClick?: () => void;
+    }) => (
+      <button type="button" aria-disabled={disabled ? 'true' : 'false'} onClick={onClick}>
+        {children}
+      </button>
+    )
+  };
+});
+
 jest.mock('react-hot-toast', () => ({
   success: jest.fn(),
   error: jest.fn()
@@ -55,7 +76,7 @@ describe('RenameFileModal', () => {
     render(<RenameFileModal {...defaultProps} />);
 
     const saveButton = screen.getByRole('button', { name: /зберегти/i });
-    expect(saveButton).toBeDisabled();
+    expect(saveButton).toHaveAttribute('aria-disabled', 'true');
   });
 
   it('disables save button if filename is empty (only spaces)', async () => {
@@ -67,7 +88,45 @@ describe('RenameFileModal', () => {
     await user.type(input, '   ');
 
     const saveButton = screen.getByRole('button', { name: /зберегти/i });
-    expect(saveButton).toBeDisabled();
+    expect(saveButton).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('shows validation error and disables save button when filename contains forbidden characters', async () => {
+    const user = userEvent.setup();
+    render(<RenameFileModal {...defaultProps} />);
+
+    const input = screen.getByDisplayValue('old_name');
+    await user.clear(input);
+    await user.type(input, 'bad/name');
+
+    expect(screen.getByText(String.raw`Ім'я файлу містить заборонені символи: \ / : * ? " < > |`)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /зберегти/i })).toHaveAttribute('aria-disabled', 'true');
+    expect(mockUpdateAsset).not.toHaveBeenCalled();
+  });
+
+  it('guards against saving invalid filename even if save handler is triggered', async () => {
+    const user = userEvent.setup();
+    render(<RenameFileModal {...defaultProps} />);
+
+    const input = screen.getByDisplayValue('old_name');
+    await user.clear(input);
+    await user.type(input, 'bad/name');
+
+    await user.click(screen.getByRole('button', { name: /зберегти/i }));
+
+    expect(toast.error).toHaveBeenCalledWith('Ім\'я файлу містить заборонені символи');
+    expect(mockUpdateAsset).not.toHaveBeenCalled();
+    expect(mockOnClose).not.toHaveBeenCalled();
+  });
+
+  it('closes without saving when save handler is triggered for unchanged filename', async () => {
+    const user = userEvent.setup();
+    render(<RenameFileModal {...defaultProps} />);
+
+    await user.click(screen.getByRole('button', { name: /зберегти/i }));
+
+    expect(mockOnClose).toHaveBeenCalledTimes(1);
+    expect(mockUpdateAsset).not.toHaveBeenCalled();
   });
 
   it('calls API and shows success toast on valid submit (appends extension automatically)', async () => {
@@ -115,6 +174,26 @@ describe('RenameFileModal', () => {
     await waitFor(() => {
       expect(mockOnClose).toHaveBeenCalledTimes(1);
       expect(toast.success).toHaveBeenCalledWith('Файл успішно перейменовано');
+    });
+  });
+
+  it('shows error toast when custom rename handler fails', async () => {
+    const user = userEvent.setup();
+    const onRename = jest.fn().mockRejectedValue(new Error('Rename failed'));
+
+    render(<RenameFileModal {...defaultProps} onRename={onRename} />);
+
+    const input = screen.getByDisplayValue('old_name');
+    await user.clear(input);
+    await user.type(input, 'custom_name');
+
+    const saveButton = screen.getByRole('button', { name: /зберегти/i });
+    await user.click(saveButton);
+
+    await waitFor(() => {
+      expect(onRename).toHaveBeenCalledWith('file-123', 'custom_name.jpg');
+      expect(toast.error).toHaveBeenCalledWith('Помилка при перейменуванні файлу');
+      expect(mockOnClose).not.toHaveBeenCalled();
     });
   });
 
@@ -167,7 +246,7 @@ describe('RenameFileModal', () => {
     const cancelButton = screen.getByRole('button', { name: /скасувати/i });
 
     expect(input).toBeDisabled();
-    expect(saveButton).toBeDisabled();
-    expect(cancelButton).toBeDisabled();
+    expect(saveButton).toHaveAttribute('aria-disabled', 'true');
+    expect(cancelButton).toHaveAttribute('aria-disabled', 'true');
   });
 });
