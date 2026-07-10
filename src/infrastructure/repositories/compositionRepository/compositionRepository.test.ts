@@ -4,13 +4,22 @@ import { CompositionRepository, DbComposition } from './compositionRepository';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 
-jest.mock('mongoose', () => ({
-  Types: {
-    ObjectId: {
-      isValid: (id: string) => /^[0-9a-fA-F]{24}$/.test(id)
+jest.mock('mongoose', () => {
+  const MockObjectId = function (this: { toString: () => string }, id: string) {
+    this.toString = () => id;
+  };
+  
+  type ObjectIdMock = typeof MockObjectId & { isValid: (id: string) => boolean };
+  
+  (MockObjectId as unknown as ObjectIdMock).isValid = (id: string) => 
+    /^[0-9a-fA-F]{24}$/.test(id);
+
+  return {
+    Types: {
+      ObjectId: MockObjectId
     }
-  }
-}));
+  };
+});
 
 jest.mock('~/infrastructure/db/connect', () => jest.fn());
 
@@ -222,5 +231,72 @@ describe('CompositionRepository', () => {
     await repository.deleteByOpusId('not-a-valid-object-id');
 
     expect(deleteManyMock).not.toHaveBeenCalled();
+  });
+
+  describe('buildQuery configuration (lines 52-54)', () => {
+    it('should set opusId to null in query when isStandalone filter is true', async () => {
+      const mockQueryBuilder = {
+        sort: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        lean: jest.fn().mockResolvedValue([createMockDoc()])
+      };
+      findMock.mockReturnValue(mockQueryBuilder);
+
+      await repository.findAll({ isStandalone: true });
+
+      expect(findMock).toHaveBeenCalledWith(
+        expect.objectContaining({ opusId: null })
+      );
+    });
+
+    it('should not modify opusId in query when isStandalone filter is false', async () => {
+      const mockQueryBuilder = {
+        sort: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        lean: jest.fn().mockResolvedValue([createMockDoc()])
+      };
+      findMock.mockReturnValue(mockQueryBuilder);
+
+      await repository.findAll({ isStandalone: false });
+
+      expect(findMock).not.toHaveBeenCalledWith(
+        expect.objectContaining({ opusId: null })
+      );
+    });
+  });
+
+  it('should return an empty array if no valid opusIds are provided', async () => {
+    const result = await repository.findByOpusIds(['invalid-id-1', 'invalid-id-2']);
+
+    expect(result).toEqual([]);
+    expect(findMock).not.toHaveBeenCalled();
+  });
+
+  it('should return an empty array if the input array is empty', async () => {
+    const result = await repository.findByOpusIds([]);
+
+    expect(result).toEqual([]);
+    expect(findMock).not.toHaveBeenCalled();
+  });
+
+  it('should fetch and map compositions for valid opusIds', async () => {
+    const sortMock = jest.fn().mockReturnValue({
+      lean: jest.fn().mockResolvedValue([createMockDoc()])
+    });
+    findMock.mockReturnValue({ sort: sortMock });
+
+    const validId1 = '65eddf5e2f1a2b3c4d5e6f7a';
+    const validId2 = '65eddf5e2f1a2b3c4d5e6f7b';
+
+    const result = await repository.findByOpusIds([validId1, validId2, 'invalid-id']);
+
+    expect(findMock).toHaveBeenCalledWith({
+      opusId: { $in: [expect.any(Object), expect.any(Object)] }
+    });
+    expect(sortMock).toHaveBeenCalledWith({ order: 1, _id: 1 });
+    expect(result).toHaveLength(1);
+    expect(result[0].opusId).toBe(opusId);
   });
 });

@@ -1,5 +1,6 @@
 import { Model } from 'mongoose';
 
+import { buildBaseQuery } from '../helpers';
 import { DbOpus, OpusRepository } from './opusRepository';
 import { CreateOpusInput, IOpusRepository } from '~/domain/repositories/opusRepository';
 import { OpusStatus, SortOrder } from '~/types/enums/common.enums';
@@ -16,6 +17,14 @@ jest.mock('mongoose', () => ({
 }));
 
 jest.mock('~/src/infrastructure/db/connect', () => jest.fn());
+
+jest.mock('~/infrastructure/repositories/helpers', () => {
+  const originalModule = jest.requireActual('~/infrastructure/repositories/helpers');
+  return {
+    ...originalModule,
+    buildBaseQuery: jest.fn().mockImplementation((filters) => originalModule.buildBaseQuery(filters)),
+  };
+});
 
 const mockId = '65eddf5e2f1a2b3c4d5e6f7a';
 
@@ -246,6 +255,29 @@ describe('OpusRepository', () => {
           numberKind: OpusNumberKind.Woo
         })
       );
+    });
+
+    it('applies fallback for missing creationYear', async () => {
+      const doc = createMockOpusDoc({ creationYear: undefined });
+      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
+
+      const result = await repository.findByNumber('op.1');
+
+      expect(result?.creationYear).toBe('');
+    });
+    it('uses fallback empty object when buildBaseQuery returns null', async () => {
+      const chain = mockChain();
+      findMock.mockReturnValue(chain);
+
+      (buildBaseQuery as jest.Mock).mockReturnValueOnce(null);
+
+      await repository.findAll({
+        numberKind: OpusNumberKind.Woo
+      });
+
+      expect(findMock).toHaveBeenCalledWith({
+        numberKind: OpusNumberKind.Woo
+      });
     });
   });
 });

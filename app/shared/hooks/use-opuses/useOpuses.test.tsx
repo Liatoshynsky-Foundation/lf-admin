@@ -6,6 +6,7 @@ import {
   useCreateOpus,
   useDeleteOpus,
   useOpusById,
+  useSearchCompositions,
   useUpdateOpus
 } from './useOpuses';
 
@@ -15,6 +16,7 @@ const mockDeleteMutate = jest.fn();
 
 const mockUseOpusByIdQuery = jest.fn();
 const mockUseAllOpusesQuery = jest.fn();
+const mockUseSearchCompositionsQuery = jest.fn();
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
   OpusNumberKind: {
@@ -27,7 +29,8 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
   useDeleteOpusMutation: () => [mockDeleteMutate, {}],
 
   useOpusByIdQuery: (options: unknown) => mockUseOpusByIdQuery(options),
-  useAllOpusesQuery: (options: unknown) => mockUseAllOpusesQuery(options)
+  useAllOpusesQuery: (options: unknown) => mockUseAllOpusesQuery(options),
+  useSearchCompositionsQuery: (options: unknown) => mockUseSearchCompositionsQuery(options)
 }));
 
 describe('useOpuses hooks', () => {
@@ -190,6 +193,42 @@ describe('useOpuses hooks', () => {
     renderHook(() => useAllUngroupedGroups(undefined, { skip: true }));
 
     expect(mockUseAllOpusesQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        skip: true
+      })
+    );
+  });
+});
+
+describe('useSearchCompositions', () => {
+  beforeEach(() => {
+    mockUseSearchCompositionsQuery.mockReturnValue({ data: undefined, loading: false });
+  });
+
+  it('requests compositions with the provided search term', () => {
+    renderHook(() => useSearchCompositions('Beethoven'));
+
+    expect(mockUseSearchCompositionsQuery).toHaveBeenCalledWith({
+      variables: { search: 'Beethoven' },
+      fetchPolicy: 'network-only',
+      skip: false
+    });
+  });
+
+  it('skips the query when search term is empty', () => {
+    renderHook(() => useSearchCompositions(''));
+
+    expect(mockUseSearchCompositionsQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        skip: true
+      })
+    );
+  });
+
+  it('skips the query when skip option is explicitly set to true', () => {
+    renderHook(() => useSearchCompositions('Bach', { skip: true }));
+
+    expect(mockUseSearchCompositionsQuery).toHaveBeenCalledWith(
       expect.objectContaining({
         skip: true
       })

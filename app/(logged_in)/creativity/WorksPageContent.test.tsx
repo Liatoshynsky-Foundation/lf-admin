@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
+import React, { act } from 'react';
 
 import { useWorksFiltering } from './useWorksFiltering';
 import { WorksPageContent } from './WorksPageContent';
@@ -79,6 +79,17 @@ describe('WorksPageContent Branches Coverage', () => {
           status: 'published',
           createdAt: '1700000000',
           updatedAt: '1700000000',
+          compositions: []
+        },
+        {
+          id: '2',
+          number: 'Op. 2',
+          title: { uk: 'Симфонія 2', en: 'Symphony 2' },
+          genre: 'Симфонія',
+          creationYear: '2021',
+          status: 'published',
+          createdAt: '1600000000',
+          updatedAt: '1600000000',
           compositions: []
         }
       ]
@@ -233,6 +244,172 @@ describe('WorksPageContent Branches Coverage', () => {
     } as unknown as ReturnType<typeof useAllOpusGroups>;
     mockedUseAllOpusGroups.mockReturnValue(errorResponse);
     rerender(<WorksPageContent activeTab="all" />);
+    expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
+  });
+
+  it('covers all sorting branches (date_asc, name_asc, name_desc)', () => {
+    mockedUseAllOpusGroups.mockReturnValue({
+      data: {
+        allOpuses: [
+          { id: '1', number: 'Op. 1', title: { uk: 'Б Твір' }, createdAt: '1000', compositions: [] },
+          { id: '2', number: 'Op. 2', title: { uk: 'А Твір' }, createdAt: '2000', compositions: [] }
+        ]
+      },
+      loading: false,
+      error: undefined
+    } as unknown as ReturnType<typeof useAllOpusGroups>);
+
+    const sorts: ('date_asc' | 'name_asc' | 'name_desc')[] = ['date_asc', 'name_asc', 'name_desc'];
+
+    sorts.forEach((sort) => {
+      mockedUseWorksFiltering.mockReturnValue({
+        ...defaultFilteringMock,
+        sortValue: sort
+      } as unknown as ReturnType<typeof useWorksFiltering>);
+
+      render(<WorksPageContent activeTab="opus" />);
+    });
+
+    expect(screen.getAllByTestId('mock-works-table').length).toBeGreaterThan(0);
+  });
+
+  it('covers missing status, missing genre, and individual language branches (uk, en)', () => {
+    mockedUseAllOpusGroups.mockReturnValue({
+      data: {
+        allOpuses: [
+          {
+            id: '1',
+            number: 'Op. 1',
+            title: { uk: ' ', en: 'Only English Title' },
+            genre: null,
+            status: null,
+            createdAt: '1700000000',
+            compositions: [{ id: 'c1', title: { uk: '', en: 'Comp En' } }]
+          }
+        ]
+      },
+      loading: false,
+      error: undefined
+    } as unknown as ReturnType<typeof useAllOpusGroups>);
+
+    mockedUseAllCompositions.mockReturnValue({
+      data: {
+        allCompositions: [
+          {
+            id: '10',
+            title: { uk: 'Суто Укр', en: '' },
+            year: null,
+            genre: undefined,
+            status: undefined,
+            createdAt: '1700000000'
+          }
+        ]
+      },
+      loading: false,
+      error: undefined
+    } as unknown as ReturnType<typeof useAllCompositions>);
+
+    mockedUseWorksFiltering.mockReturnValue({
+      ...defaultFilteringMock,
+      selectedFilters: { status: [], language: ['en', 'uk'] }
+    } as unknown as ReturnType<typeof useWorksFiltering>);
+
+    render(<WorksPageContent activeTab="all" />);
+    expect(screen.getByTestId('mock-works-table')).toBeInTheDocument();
+  });
+
+  it('covers empty states when basic filters return no results without search query', () => {
+    mockedUseWorksFiltering.mockReturnValue({
+      ...defaultFilteringMock,
+      toolbarProps: {
+        ...defaultFilteringMock.toolbarProps,
+        search: { search: '' },
+        activeFiltersCount: 0
+      },
+      selectedFilters: { status: ['archived'], language: [] }
+    } as unknown as ReturnType<typeof useWorksFiltering>);
+
+    render(<WorksPageContent activeTab="all" />);
+    expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
+  });
+
+  it('renders dropdown items on create button interaction and handles closing focus', () => {
+    jest.useFakeTimers();
+    mockedUseWorksFiltering.mockReturnValue(defaultFilteringMock as unknown as ReturnType<typeof useWorksFiltering>);
+
+    render(<WorksPageContent activeTab="all" />);
+    const createButton = screen.getByRole('button', { name: /створити/i });
+
+    fireEvent.click(createButton);
+    expect(screen.getByTestId('dropdown-menu')).toBeInTheDocument();
+    const menuItems = screen.getAllByRole('menuitem');
+
+    fireEvent.click(menuItems[0]);
+    act(() => {
+      jest.runAllTimers();
+    });
+
+    expect(createButton).toHaveFocus();
+    jest.useRealTimers();
+  });
+
+  it('covers fallback branches for empty search object and missing compositions', () => {
+    mockedUseWorksFiltering.mockReturnValue({
+      ...defaultFilteringMock,
+      toolbarProps: {
+        ...defaultFilteringMock.toolbarProps,
+        search: undefined
+      }
+    } as unknown as ReturnType<typeof useWorksFiltering>);
+
+    mockedUseAllOpusGroups.mockReturnValue({
+      data: {
+        allOpuses: [
+          {
+            id: 'mock-id',
+            number: 'Op. 99',
+            title: { uk: 'Без композицій' },
+            createdAt: '1700000000',
+            compositions: undefined
+          }
+        ]
+      },
+      loading: false,
+      error: undefined
+    } as unknown as ReturnType<typeof useAllOpusGroups>);
+
+    render(<WorksPageContent activeTab="opus" />);
+    expect(screen.getByTestId('mock-works-table')).toBeInTheDocument();
+  });
+
+  it('covers handleToggle branch when create button is clicked twice to close menu', () => {
+    mockedUseWorksFiltering.mockReturnValue(defaultFilteringMock as unknown as ReturnType<typeof useWorksFiltering>);
+
+    render(<WorksPageContent activeTab="all" />);
+    const createButton = screen.getByRole('button', { name: /створити/i });
+
+    fireEvent.click(createButton);
+    expect(screen.getByTestId('dropdown-menu')).toBeInTheDocument();
+
+    fireEvent.click(createButton);
+    expect(screen.queryByTestId('dropdown-menu')).not.toBeInTheDocument();
+  });
+
+  it('renders Error state explicitly when loading is complete and error exists', () => {
+    mockedUseWorksFiltering.mockReturnValue(defaultFilteringMock as unknown as ReturnType<typeof useWorksFiltering>);
+
+    const errorResponse = {
+      data: undefined,
+      loading: false,
+      error: new Error('GraphQL Failure')
+    };
+
+    mockedUseAllOpusGroups.mockReturnValue(errorResponse as unknown as ReturnType<typeof useAllOpusGroups>);
+    mockedUseAllUngroupedGroups.mockReturnValue(errorResponse as unknown as ReturnType<typeof useAllOpusGroups>);
+    mockedUseAllCompositions.mockReturnValue(errorResponse as unknown as ReturnType<typeof useAllCompositions>);
+
+    render(<WorksPageContent activeTab="all" />);
+
     expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
   });
 });

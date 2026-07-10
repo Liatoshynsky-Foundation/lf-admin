@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 
 import { useWorksFiltering } from './useWorksFiltering';
+import { FilesSortValue } from '~/constants/sort';
 
 jest.mock('~/constants/creativity', () => ({
   WORKS_STATUSES: ['draft', 'published', 'archived'],
@@ -249,6 +250,17 @@ describe('useWorksFiltering', () => {
       expect(result.current.sortProps.fieldValue).toBe('name');
       expect(result.current.sortProps.triggerLabel).toBe('Назва (Я-А)');
       expect(window.localStorage.getItem(SORT_STORAGE_KEY)).toBe('name_desc');
+    });
+
+    it('uses fallback first sort option when sortValue is not found in SORT_OPTIONS', () => {
+      const { result } = renderHook(() => useWorksFiltering());
+
+      act(() => {
+        result.current.sortProps.onValueChange('invalid_sort_value' as unknown as FilesSortValue);
+      });
+
+      expect(result.current.sortValue).toBe('invalid_sort_value');
+      expect(result.current.sortProps.triggerLabel).toBe('Дата (нові)');
     });
   });
 
