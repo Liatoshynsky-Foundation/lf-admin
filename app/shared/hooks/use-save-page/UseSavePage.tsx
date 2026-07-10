@@ -1,5 +1,4 @@
 'use client';
-import isEqual from 'fast-deep-equal';
 import toast from 'react-hot-toast';
 
 import { TOAST_MESSAGES } from '~/constants';
@@ -14,9 +13,6 @@ import {
   useUpsertPageDraftMutation
 } from '~/types/graphql/generated/graphql';
 
-const hasChanged = (current: unknown, baseline: unknown): boolean =>
-  baseline === undefined || (current !== baseline && !isEqual(current, baseline));
-
 export const useSavePageBlocks = (slug: string) => {
   const markSaved = useStore((s) => s.saveAsDraft);
 
@@ -27,14 +23,10 @@ export const useSavePageBlocks = (slug: string) => {
     const state = useStore.getState();
 
     const current = state.blocks[slug];
-    const baseline = state.originalBlocks?.[slug];
 
     const currentBlocksOrder = state.blocksOrder[slug];
-    const baselineBlocksOrder = state.originalBlocksOrder[slug];
 
     if (current == null) throw new Error('No page blocks found');
-    if (!hasChanged(current, baseline) && !hasChanged(currentBlocksOrder, baselineBlocksOrder)) throw new Error('Nothing to save');
-
     await safeMutate<UpsertPageDraftMutation, UpsertPageDraftMutationVariables>(
       upsertDraft,
       { input: { slug, blocks: current, blocksOrder: currentBlocksOrder } },
