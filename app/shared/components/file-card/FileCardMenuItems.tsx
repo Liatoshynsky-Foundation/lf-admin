@@ -35,51 +35,53 @@ const FileCardMenuItems = ({
   };
 
   return [
-    [
-      {
-        id: 'details',
-        text: {
-          name: 'Відкрити деталі',
-          icon: <Info size={24} strokeWidth={1.5} />
+    {
+      items: [
+        {
+          id: 'details',
+          text: {
+            name: 'Відкрити деталі',
+            icon: <Info size={24} strokeWidth={1.5} />
+          },
+          onClick: onOpenDetails
         },
-        onClick: onOpenDetails
-      },
-      {
-        id: 'rename',
-        text: {
-          name: 'Перейменувати',
-          icon: <Image src="/icons/pen-line.svg" width={18} height={17} alt="Rename" />
+        {
+          id: 'rename',
+          text: {
+            name: 'Перейменувати',
+            icon: <Image src="/icons/pen-line.svg" width={18} height={17} alt="Rename" />
+          },
+          onClick: onRename
         },
-        onClick: onRename
-      },
-      {
-        id: 'toggle-star',
-        text: {
-          name: isStarred ? 'Забрати з обраних' : 'Додати в обрані',
-          icon: renderStarIcon()
+        {
+          id: 'toggle-star',
+          text: {
+            name: isStarred ? 'Забрати з обраних' : 'Додати в обрані',
+            icon: renderStarIcon()
+          },
+          onClick: () => {
+            if (isStarLoading) return;
+            onToggleStar();
+          }
         },
-        onClick: () => {
-          if (isStarLoading) return;
-          onToggleStar();
+        {
+          id: 'download',
+          text: {
+            name: 'Завантажити',
+            icon: <Image src="/icons/download.svg" width={18} height={18} alt="Download" />
+          },
+          onClick: onDownload
+        },
+        {
+          id: 'delete',
+          text: {
+            name: 'Видалити',
+            icon: <Image src="/icons/empty-trash.svg" width={18} height={20} alt="Delete" />
+          },
+          onClick: onDelete
         }
-      },
-      {
-        id: 'download',
-        text: {
-          name: 'Завантажити',
-          icon: <Image src="/icons/download.svg" width={18} height={18} alt="Download" />
-        },
-        onClick: onDownload
-      },
-      {
-        id: 'delete',
-        text: {
-          name: 'Видалити',
-          icon: <Image src="/icons/empty-trash.svg" width={18} height={20} alt="Delete" />
-        },
-        onClick: onDelete
-      }
-    ]
+      ]
+    }
   ];
 };
 

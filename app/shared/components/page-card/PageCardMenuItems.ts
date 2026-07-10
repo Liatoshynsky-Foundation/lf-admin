@@ -6,13 +6,15 @@ interface ContentCardMenuProps {
 
 const PageCardMenuItems = ({editSeoHref }: ContentCardMenuProps) => {
   return [
-    [
-      {
-        id: 'seo-settings',
-        text: { name: 'SEO налаштування' },
-        href: editSeoHref
-      }
-    ]
+    {
+      items: [
+        {
+          id: 'seo-settings',
+          text: { name: 'SEO налаштування' },
+          href: editSeoHref
+        }
+      ]
+    }
   ];
 };
 

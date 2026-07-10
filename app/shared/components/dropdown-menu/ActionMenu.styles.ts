@@ -4,15 +4,15 @@ import { tableDividerColor } from '../table-layout/TableLayout.styles';
 
 const styles: Record<string, SxProps<Theme>> = {
   menu: {
-    margin: '8px',
     '& .MuiMenu-list': {
       padding: '8px'
     }
   },
   menuItem: {
+    height: '44px',
     '&:hover': {
       borderRadius: '8px',
-      backgroundColor: 'adminBlue.200'
+      backgroundColor: 'adminBlue.100'
     }
   },
   menuItemContent: {
@@ -20,13 +20,14 @@ const styles: Record<string, SxProps<Theme>> = {
     alignItems: 'start',
     gap: '12px',
     width: '100%',
-    minWidth: '100px'
-
+    minWidth: '100px',
   },
   menuItemIcon: {
     display: 'flex',
     alignItems: 'center',
-    width: '25px',
+    justifyContent: 'center',
+    width: '24px',
+    flexShrink: 0,
   },
   menuItemText: {
     whiteSpace: 'nowrap'
@@ -34,7 +35,14 @@ const styles: Record<string, SxProps<Theme>> = {
   divider: {
     height: '1px',
     backgroundColor: tableDividerColor,
-    my: '8px'
+    my: '8px',
+    mx: '-8px'
+  },
+  menuGroupTitle: {
+    pointerEvents: 'none',
+    typography: 'subtitle2',
+    paddingTop: '4px',
+    paddingBottom: '4px',
   }
 };
 
