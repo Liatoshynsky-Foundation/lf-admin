@@ -13,6 +13,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Pagination, 
   Stack,
   Tab,
   Tabs,
@@ -22,8 +23,7 @@ import { type SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
 import { getLogItemAccordion, styles } from './LogsPageClient.styles';
 import type { LogEntry, LogLevel, LogsResponse } from '~/back-shared/types/logs';
-import { Pagination } from '~/shared/components/pagination/Pagination';
-import { usePageQueryParam } from '~/shared/hooks/use-page-query-param/usePageQueryParam';
+
 
 const LEVEL_OPTIONS: Array<{ value: LogLevel | 'all'; label: string }> = [
   { value: 'all', label: 'Усі' },
@@ -115,14 +115,13 @@ const LogItem = ({ item }: { item: LogEntry }) => {
 
 const LogsPageClient = () => {
   const [level, setLevel] = useState<LogLevel | 'all'>('all');
+  const [page, setPage] = useState(1);
   const [items, setItems] = useState<LogEntry[]>([]);
-  const [total, setTotal] = useState<number | null>(null);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [clearing, setClearing] = useState(false);
-  const totalPages = total === null ? Infinity : Math.max(1, Math.ceil(total / 20));
-  const { page, setPage } = usePageQueryParam({ totalPages });
 
   useEffect(() => {
     const controller = new AbortController();
@@ -154,7 +153,7 @@ const LogsPageClient = () => {
     return () => controller.abort();
   }, [level, page, reloadKey]);
 
-
+  const totalPages = Math.max(1, Math.ceil(total / 20));
   const hasItems = items.length > 0;
   const noItems = items.length === 0;
 
@@ -271,7 +270,7 @@ const LogsPageClient = () => {
       {content}
 
       {hasItems && totalPages > 1 ? (
-        <Pagination totalPages={totalPages} currentPage={page} onPageChange={(_, value) => setPage(value)} />
+        <Pagination count={totalPages} page={page} onChange={(_, value) => setPage(value)} />
       ) : null}
 
       <Dialog open={dialogOpen} onClose={closeClearDialog}>
