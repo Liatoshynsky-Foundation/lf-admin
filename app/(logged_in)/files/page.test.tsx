@@ -366,23 +366,28 @@ describe('Files page', () => {
   });
 
   it('removes a deleted R2-only file from the visible list immediately', async () => {
-    mockFetch.mockResolvedValue({
-      json: () =>
-        Promise.resolve({
-          success: true,
-          data: [
-            {
-              filename: 'direct-upload.jpg',
-              originalName: 'direct-upload.jpg',
-              mimeType: 'image/jpeg',
-              size: 1024,
-              uploadedAt: '2026-07-08T10:00:00.000Z',
-              url: 'https://r2.example.com/photos/direct-upload.jpg',
-              path: 'photos/direct-upload.jpg'
-            }
-          ]
-        })
-    });
+    mockFetch
+      .mockResolvedValueOnce({
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: [
+              {
+                filename: 'direct-upload.jpg',
+                originalName: 'direct-upload.jpg',
+                mimeType: 'image/jpeg',
+                size: 1024,
+                uploadedAt: '2026-07-08T10:00:00.000Z',
+                url: 'https://r2.example.com/photos/direct-upload.jpg',
+                path: 'photos/direct-upload.jpg'
+              }
+            ]
+          })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ success: true })
+      });
 
     render(<Page />);
 
@@ -393,7 +398,10 @@ describe('Files page', () => {
     fireEvent.click(screen.getByTestId(`delete-${orphanId}`));
     fireEvent.click(screen.getByTestId('confirm-delete'));
 
-    await waitFor(() => expect(mockDeleteAsset).toHaveBeenCalled());
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith('/api/uploads/direct-upload.jpg?folder=photos', { method: 'DELETE' });
+    });
+    expect(mockDeleteAsset).not.toHaveBeenCalled();
     await waitFor(() => expect(screen.getByTestId('items-count')).toHaveTextContent('2'));
     expect(screen.queryByTestId(`item-${orphanId}`)).not.toBeInTheDocument();
   });
