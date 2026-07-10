@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import { GroupWorksSection } from './GroupWorksSection';
-import { OPUS_DELETE_MODAL,OPUS_DETAILS_LABELS } from '~/constants/opus';
+import { OPUS_DELETE_MODAL, OPUS_DETAILS_LABELS } from '~/constants/opus';
 import type { OpusCompositionData, OpusCompositionSuggestion } from '~/types/opus';
 
 jest.mock('lucide-react', () => ({
@@ -37,6 +37,31 @@ jest.mock('~/shared/components/forms/opus-details-block/composition-title-input/
         }
       >
         Suggest
+      </button>
+      <button
+        data-testid={`suggest-partial-btn-${value}`}
+        onClick={() =>
+          onSelectSuggestion({
+            id: 'suggestion-partial',
+            title: { en: 'English Title' },
+            genre: undefined,
+            year: null as unknown as number,
+            audios: [{ name: 'CustomAudio.mp3', url: undefined }],
+            sheetMusic: [{ name: 'CustomNote.pdf', url: 'test.com', publishDate: '2023-01-01' }]
+          } as OpusCompositionSuggestion)
+        }
+      >
+        Suggest Partial
+      </button>
+      <button
+        data-testid={`suggest-empty-btn-${value}`}
+        onClick={() =>
+          onSelectSuggestion({
+            id: 'suggestion-empty'
+          } as unknown as OpusCompositionSuggestion)
+        }
+      >
+        Suggest Empty
       </button>
       <button data-testid={`create-new-btn-${value}`} onClick={onCreateNew}>
         Create New
@@ -247,5 +272,38 @@ describe('GroupWorksSection Component', () => {
     await waitFor(() => {
       expect(screen.queryByText(OPUS_DELETE_MODAL.title)).not.toBeInTheDocument();
     });
+  });
+
+  it('fills composition data with partial suggestion', () => {
+    render(<GroupWorksSection works={defaultWorks} onChange={mockOnChange} />);
+
+    const suggestPartialBtn = screen.getByTestId('suggest-partial-btn-Симфонія №1');
+    fireEvent.click(suggestPartialBtn);
+
+    expect(mockOnChange).toHaveBeenCalledTimes(1);
+    const updatedWorks = mockOnChange.mock.calls[0][0];
+
+    expect(updatedWorks[0].title).toBe('English Title');
+    expect(updatedWorks[0].genre).toBe('');
+    expect(updatedWorks[0].year).toBe('');
+
+    expect(updatedWorks[0].audios[0].name).toBe('CustomAudio.mp3');
+    expect(updatedWorks[0].audios[0].fileUrl).toBeUndefined();
+
+    expect(updatedWorks[0].notes[0].name).toBe('CustomNote.pdf');
+    expect(updatedWorks[0].notes[0].publishDate).toBe('2023-01-01');
+  });
+
+  it('fills composition data with completely empty suggestion', () => {
+    render(<GroupWorksSection works={defaultWorks} onChange={mockOnChange} />);
+
+    const suggestEmptyBtn = screen.getByTestId('suggest-empty-btn-Симфонія №1');
+    fireEvent.click(suggestEmptyBtn);
+    expect(mockOnChange).toHaveBeenCalledTimes(1);
+    const updatedWorks = mockOnChange.mock.calls[0][0];
+
+    expect(updatedWorks[0].title).toBe('');
+    expect(updatedWorks[0].audios).toEqual([]);
+    expect(updatedWorks[0].notes).toEqual([]);
   });
 });

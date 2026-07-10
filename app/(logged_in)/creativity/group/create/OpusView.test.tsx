@@ -5,6 +5,14 @@ import OpusView from './OpusView';
 import { initialOpusDetails, initialOpusSeoValue } from '~/constants/opus';
 import { useUpsertOpus } from '~/shared/hooks/use-upsert-opus/useUpsertOpus';
 
+interface MockSeoMetadataBlockProps {
+  onChangeCrop: (
+    newCrop: {
+      uk: { x: number; y: number; width: number; height: number } | null;
+    } | null
+  ) => void;
+}
+
 const mockPush = jest.fn();
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(() => ({ push: mockPush }))
@@ -22,7 +30,19 @@ jest.mock('react-hot-toast', () => ({
 
 jest.mock('~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock', () => ({
   __esModule: true,
-  default: () => <div data-testid="mock-seo-metadata-block" />
+  default: ({ onChangeCrop }: MockSeoMetadataBlockProps) => (
+    <div data-testid="mock-seo-metadata-block">
+      <button
+        data-testid="mock-change-crop-btn"
+        onClick={() => onChangeCrop({ uk: { x: 0, y: 0, width: 100, height: 100 } })}
+      >
+        Change Crop
+      </button>
+      <button data-testid="mock-change-crop-null-btn" onClick={() => onChangeCrop(null)}>
+        Change Crop Null
+      </button>
+    </div>
+  )
 }));
 
 jest.mock('~/shared/components/media-modal/MediaModal', () => ({
@@ -110,5 +130,53 @@ describe('OpusView Component', () => {
       expect(handleSave).toHaveBeenCalled();
     });
     expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('shows error toast when save fails with an Error instance', async () => {
+    const handleSave = jest.fn().mockRejectedValue(new Error('Network error'));
+    render(<OpusView data={createMockData({ handleSave })} mode="create" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Перейти до редагування' }));
+
+    await waitFor(() => {
+      expect(handleSave).toHaveBeenCalled();
+      expect(mockToastError).toHaveBeenCalledWith('Помилка: Network error');
+    });
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('shows error toast when save fails with a string error', async () => {
+    const handleSave = jest.fn().mockRejectedValue('Something went wrong');
+    render(<OpusView data={createMockData({ handleSave })} mode="create" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Перейти до редагування' }));
+
+    await waitFor(() => {
+      expect(handleSave).toHaveBeenCalled();
+      expect(mockToastError).toHaveBeenCalledWith('Помилка: Something went wrong');
+    });
+  });
+
+  it('calls setCrop with new crop data when onChangeCrop is triggered', () => {
+    const setCropMock = jest.fn();
+    render(<OpusView data={createMockData({ setCrop: setCropMock })} mode="create" />);
+
+    fireEvent.click(screen.getByTestId('mock-change-crop-btn'));
+
+    expect(setCropMock).toHaveBeenCalledWith({ x: 0, y: 0, width: 100, height: 100 });
+  });
+
+  it('calls setCrop with null when onChangeCrop is triggered without uk crop', () => {
+    const setCropMock = jest.fn();
+    render(<OpusView data={createMockData({ setCrop: setCropMock })} mode="create" />);
+    fireEvent.click(screen.getByTestId('mock-change-crop-null-btn'));
+
+    expect(setCropMock).toHaveBeenCalledWith(null);
+  });
+
+  it('uses default "create" mode when mode prop is not explicitly provided', () => {
+    render(<OpusView data={createMockData()} />);
+
+    expect(screen.getByText('Створення опусу')).toBeInTheDocument();
   });
 });

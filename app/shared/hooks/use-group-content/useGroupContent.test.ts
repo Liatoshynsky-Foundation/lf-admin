@@ -7,6 +7,7 @@ import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavig
 import { useOpusById } from '~/shared/hooks/use-opuses/useOpuses';
 import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
 import { useUpdateOpusMutation } from '~/types/graphql/generated/graphql';
+import { OpusCompositionData } from '~/types/opus';
 
 const mockNavigate = jest.fn();
 const mockUpdateOpus = jest.fn();
@@ -204,6 +205,52 @@ describe('useGroupContent Hook', () => {
       waitFor(() => {
         expect(result.current.groupData?.description.uk).toEqual({ type: 'doc', content: [] });
       });
+    });
+
+    it('should return default empty doc for unsupported description types', async () => {
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: {
+          opusById: {
+            ...mockFetchedOpus,
+            introDescription: { uk: 123, en: true }
+          }
+        },
+        loading: false
+      });
+
+      const { result } = renderHook(() => useGroupContent('test-id'));
+
+      await waitFor(() => {
+        expect(result.current.groupData?.description.uk).toEqual({ type: 'doc', content: [] });
+        expect(result.current.groupData?.description.en).toEqual({ type: 'doc', content: [] });
+      });
+    });
+
+    it('should show validation error and expand details when handleMenuOptionClick fails validation', async () => {
+      const invalidOpus = {
+        ...mockFetchedOpus,
+        name: { uk: '', en: '' }
+      };
+
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: { opusById: invalidOpus },
+        loading: false
+      });
+
+      const { result } = renderHook(() => useGroupContent('test-id'));
+
+      await waitFor(() => {
+        expect(result.current.groupData).not.toBeNull();
+      });
+      act(() => {
+        result.current.setIsDetailsExpanded(false);
+      });
+      await act(async () => {
+        await result.current.handleMenuOptionClick('PUBLISH');
+      });
+      expect(toast.error).toHaveBeenCalledWith('Заповніть усі обов’язкові поля перед публікацією.');
+      expect(result.current.isDetailsExpanded).toBe(true);
+      expect(mockUpdateOpus).not.toHaveBeenCalled();
     });
 
     it('should handle compositions with null or undefined order in sort', async () => {
@@ -434,22 +481,17 @@ describe('useGroupContent Hook', () => {
       expect(calledInput.performances[1].id).toBe('60d5ec49f2');
     });
 
-    it('should handle save error (catch block) and show error toast', async () => {
-      (useOpusById as jest.Mock).mockReturnValue({ data: { opusById: mockFetchedOpus }, loading: false });
-      mockUpdateOpus.mockRejectedValue(new Error('Server error'));
-
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    it('should navigate to edit page on handleBackClick if "from" param is "create"', () => {
+      const mockSearchParams = { get: jest.fn().mockReturnValue('create') };
+      jest.spyOn(nextNavigation, 'useSearchParams').mockReturnValue(mockSearchParams as any);
 
       const { result } = renderHook(() => useGroupContent('test-id'));
 
-      await act(async () => {
-        await result.current.handlePublishClick();
+      act(() => {
+        result.current.handleBackClick();
       });
 
-      expect(toast.error).toHaveBeenCalledWith('Помилка при збереженні. Перевірте консоль.');
-      expect(consoleSpy).toHaveBeenCalled();
-
-      consoleSpy.mockRestore();
+      expect(mockNavigate).toHaveBeenCalledWith('/creativity/group/test-id/edit');
     });
 
     it('should return early from handlePublishClick if isSaving is true', async () => {
@@ -638,6 +680,74 @@ describe('useGroupContent Hook', () => {
       const notes = input.compositions[0].notes;
       expect(notes).toHaveLength(1);
       expect(notes[0].name).toBe('Valid');
+    });
+
+    it('should cover all edge-case fallbacks (null arrays, sparse crops, Bo. prefix, empty strings)', async () => {
+      const sparseData = {
+        ...mockFetchedOpus,
+        performancesTitle: { uk: null, en: 'EN Only' },
+        performances: null,
+        gallery: [
+          {
+            id: 'photo-1',
+            src: null,
+            description: null,
+            altText: null,
+            crop: { x: null, y: null, width: null, height: null }
+          }
+        ]
+      };
+
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: { opusById: sparseData },
+        loading: false
+      });
+
+      mockUpdateOpus.mockResolvedValue({ data: { updateOpus: { id: 'test-id' } } });
+
+      const { result } = renderHook(() => useGroupContent('test-id'));
+
+      await waitFor(() => {
+        expect(result.current.groupData).not.toBeNull();
+      });
+
+      act(() => {
+        result.current.handleFieldChange('titlePrefix' as any, 'Bo.');
+
+        result.current.handleFieldChange('works', [
+          {
+            compositionId: 'c1',
+            title: 'Test',
+            genre: '',
+            year: '',
+            audios: null,
+            notes: null
+          } as unknown as OpusCompositionData
+        ]);
+        result.current.handleFieldChange('photos', null);
+        result.current.handleFieldChange('genre', null);
+        result.current.handleFieldChange('additionalText', null);
+      });
+      await act(async () => {
+        await result.current.handlePublishClick();
+      });
+      const calledInput = mockUpdateOpus.mock.calls[0][0].variables.input;
+      expect(calledInput.numberKind).toBe('woo');
+      expect(calledInput.genre).toBe('');
+      expect(calledInput.additionalText).toBe('');
+      expect(calledInput.gallery).toEqual([]);
+      expect(calledInput.compositions[0].audios).toEqual([]);
+    });
+
+    it('should cover completely missing performancesTitle (fallback to empty string)', async () => {
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: { opusById: { ...mockFetchedOpus, performancesTitle: null } },
+        loading: false
+      });
+      const { result } = renderHook(() => useGroupContent('test-id'));
+      await waitFor(() => {
+        expect(result.current.groupData?.performancesTitle).toBe('');
+      });
     });
   });
 

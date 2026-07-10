@@ -174,8 +174,6 @@ export const useGroupContent = (id: string) => {
     let mappedStatus: OpusStatus | undefined = undefined;
     if (statusToSave === BaseContentStatuses.Published) {
       mappedStatus = OpusStatus.Published;
-    } else if (statusToSave === BaseContentStatuses.Draft) {
-      mappedStatus = OpusStatus.Draft;
     }
 
     try {

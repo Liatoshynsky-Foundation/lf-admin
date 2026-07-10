@@ -266,4 +266,42 @@ describe('GroupDetailsSection Component', () => {
     expect(closeBtn).toBeInTheDocument();
     fireEvent.click(closeBtn);
   });
+
+  it('should handle onChange and display external errors for the Genre field', () => {
+    const propsWithGenreError = {
+      ...defaultProps,
+      errors: { genre: 'Невірний жанр' }
+    };
+    render(<GroupDetailsSection {...propsWithGenreError} />);
+
+    expect(screen.getByTestId('error-Жанр')).toHaveTextContent('Невірний жанр');
+    const genreInput = screen.getByTestId('mock-input-Жанр');
+    fireEvent.change(genreInput, { target: { value: 'Новий жанр' } });
+
+    expect(mockOnChange).toHaveBeenCalledWith('genre', 'Новий жанр');
+  });
+
+  it('should cover all edge-case fallbacks and validation priorities (groupNumber prop error, prefix blur, empty dates/numbers)', () => {
+    const edgeCaseProps = {
+      ...defaultProps,
+      data: {
+        ...defaultProps.data,
+        titlePrefix: '',
+        groupNumber: undefined as unknown as string,
+        endYear: ''
+      },
+      errors: {
+        groupNumber: 'Зовнішня помилка номера'
+      }
+    };
+
+    render(<GroupDetailsSection {...edgeCaseProps} />);
+
+    expect(screen.getByTestId('error-Номер')).toHaveTextContent('Зовнішня помилка номера');
+    expect(screen.getByTestId('mock-input-Номер')).toHaveValue('');
+
+    const prefixInput = screen.getByTestId('mock-input-Назва');
+    fireEvent.blur(prefixInput);
+    expect(screen.getByTestId('error-Назва')).toHaveTextContent('Обов’язкове поле');
+  });
 });
