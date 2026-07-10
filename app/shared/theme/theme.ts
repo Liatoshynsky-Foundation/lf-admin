@@ -1313,8 +1313,12 @@ export const createAdminTheme = () =>
               border: '1px solid',
               borderColor: mainHexPalette.black,
               padding: '8px',
-              color: mainHexPalette.black
+              color: mainHexPalette.black,
+              '& path': {
+                stroke: 'currentColor', 
+              },
             }),
+           
             ...(ownerState.type === 'previous' && {
               marginRight: '28px'
             }),
