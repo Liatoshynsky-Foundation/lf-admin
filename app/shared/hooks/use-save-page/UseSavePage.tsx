@@ -1,5 +1,7 @@
 'use client';
+import toast from 'react-hot-toast';
 
+import { TOAST_MESSAGES } from '~/constants';
 import { safeMutate } from '~/lib/utils/safeMutate';
 import { useStore } from '~/store';
 import {
@@ -43,6 +45,7 @@ export const useSavePageBlocks = (slug: string) => {
     if (!published) throw new Error('Server did not return published page');
 
     markSaved(slug);
+    toast.success(TOAST_MESSAGES.SUCCESS_SAVE_DATA);
     return published;
   };
 
