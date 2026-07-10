@@ -3,13 +3,14 @@
 import { Pagination as MuiPagination, PaginationItem, PaginationProps as MuiPaginationProps } from '@mui/material';
 import { ChangeEvent } from 'react';
 
+import { styles } from './Pagination.styles';
 import ChevronLeftIcon from '~/public/icons/chevronLeft.svg';
 import ChevronRightIcon from '~/public/icons/chevronRight.svg';
 
 export interface PaginationProps extends Omit<MuiPaginationProps, 'count' | 'page' | 'onChange'> {
-    totalPages?: number
-    currentPage?: number
-    onPageChange?: (event: ChangeEvent<unknown>, page: number) => void;
+  totalPages?: number
+  currentPage?: number
+  onPageChange?: (event: ChangeEvent<unknown>, page: number) => void;
 }
 
 export const Pagination = ({ totalPages, currentPage, onPageChange, ...rest }: Readonly<PaginationProps>) =>
@@ -20,6 +21,7 @@ export const Pagination = ({ totalPages, currentPage, onPageChange, ...rest }: R
           previous: ChevronLeftIcon,
           next: ChevronRightIcon,
         }}
+        sx={styles.paginationItem}
         {...item}
       />
     )} {...rest} />
