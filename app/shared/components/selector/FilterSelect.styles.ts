@@ -87,4 +87,37 @@ export const filterSelectStyles = {
     flexShrink: 0,
     color: disabled ? 'blue.700' : 'black'
   }),
+  
+  dropdownMenu: (menuMinWidth?: number): SxProps => ({
+    '& .MuiPaper-root': {
+	  minWidth: menuMinWidth ? `${menuMinWidth}px` : undefined
+    }
+  }),
+
+  menuListWrapper: {
+    padding: '0 8px'
+  },
+
+  menuItemsContainer: {
+    maxHeight: '220px',
+    overflowY: 'auto',
+
+    scrollbarWidth: 'none',
+
+    '&::-webkit-scrollbar': {
+	  display: 'none'
+    }
+  },
+
+  menuItem: {
+    fontWeight: 600
+  },
+
+  divider: {
+    my: 1
+  },
+
+  clearButton: {
+    textTransform: 'none'
+  }
 };

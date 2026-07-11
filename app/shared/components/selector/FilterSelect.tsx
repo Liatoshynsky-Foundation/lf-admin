@@ -1,12 +1,20 @@
 'use client';
 
-import { Box, Chip, Typography } from '@mui/material';
+import { Box, Chip, Divider, Typography } from '@mui/material';
 import { ChevronDown } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
-import { FilterOption, FilterSelectMenu } from '../dropdown-menu/FilterMenu';
+import Button from '../design-system/button/Button';
+import DropdownMenu from '../dropdown-menu/DropdownMenu';
 import { filterSelectStyles } from './FilterSelect.styles';
+import FilterSelectItem from './FilterSelectItem/FilterSelectItem';
 import CloseIcon from '~/public/icons/close.svg';
+import { useMenuScrollClose } from '~/shared/hooks/use-menu-scroll-close/useMenuScrollClose';
+
+export interface FilterOption {
+  value: string;
+  label: string;
+}
 
 export interface FilterSelectProps {
   label: string;
@@ -47,6 +55,10 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
   const [uncontrolledValues, setUncontrolledValues] = useState<string[]>(
     () => value ?? defaultValue ?? defaultValues ?? []
   );
+  const { disableTransition, handleClose } = useMenuScrollClose({
+    open: Boolean(anchorEl),
+    onClose: () => setAnchorEl(null)
+  });
   const triggerRef = useRef<HTMLDivElement | null>(null);
   const selectedValues = value ?? uncontrolledValues;
 
@@ -66,22 +78,6 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
     if (disabled) return;
     setAnchorEl((prev) => (prev ? null : triggerRef.current));
   };
-
-  const handleCloseMenu = () => {
-    setAnchorEl(null);
-    requestAnimationFrame(() => triggerRef.current?.focus());
-  };
-
-  useEffect(() => {
-    if (!anchorEl) return;
-
-    const handleScroll = () => handleCloseMenu();
-    window.addEventListener('scroll', handleScroll, true);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll, true);
-    };
-  }, [anchorEl]);
 
   const handleOptionClick = (option: FilterOption) => {
     const isSelected = selectedValues.includes(option.value);
@@ -108,7 +104,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
     updateSelectedValues(newValues);
 
     if (maxSelections === 1) {
-      handleCloseMenu();
+      handleClose();
     }
   };
 
@@ -121,6 +117,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
     });
   };
 
+  const isMaxReached = maxSelections ? selectedValues.length >= maxSelections : false;
   const selectedOptionsCount = selectedValues.length;
   const selectedOptionsLabel = useMemo(() => {
     return selectedValues.map((val) => options.find((opt) => opt.value === val)?.label ?? val).join(', ');
@@ -163,18 +160,45 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
         </Box>
       </Box>
 
-      <FilterSelectMenu
+      <DropdownMenu
+        disableScrollLock
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
-        onClose={handleCloseMenu}
-        menuMinWidth={menuMinWidth}
-        menuItems={options}
-        selectedValues={selectedValues}
-        maxSelections={maxSelections}
-        hideClearAction={hideClearAction}
-        clearLabel={clearLabel}
-        onOptionClick={handleOptionClick}
-        onClearAll={clearAll}
+        onClose={handleClose}
+        sx={filterSelectStyles.dropdownMenu(menuMinWidth)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        maxHeight={300}
+        transitionDuration={disableTransition ? 0 : undefined}
+        menuList={
+          <Box sx={filterSelectStyles.menuListWrapper}>
+            <Box sx={filterSelectStyles.menuItemsContainer}>
+              {options.map((option) => {
+                const isSelected = selectedValues.includes(option.value);
+                const optionDisabled = !isSelected && isMaxReached;
+
+                return (
+                  <FilterSelectItem
+                    key={option.value}
+                    label={option.label}
+                    onClick={() => !optionDisabled && handleOptionClick(option)}
+                    selected={isSelected}
+                    disabled={optionDisabled}
+                    sx={filterSelectStyles.menuItem}
+                  />
+                );
+              })}
+            </Box>
+            {!hideClearAction && (
+              <>
+                <Divider sx={filterSelectStyles.divider} />
+                <Button variant="text" onClick={clearAll} sx={filterSelectStyles.clearButton}>
+                  {clearLabel}
+                </Button>
+              </>
+            )}
+          </Box>
+        }
       />
     </Box>
   );

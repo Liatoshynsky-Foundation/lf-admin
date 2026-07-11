@@ -1,11 +1,11 @@
-import { Box, ListSubheader, MenuItem } from '@mui/material';
-import { MenuProps as MuiMenuProps } from '@mui/material/Menu';
+import { Box, ListSubheader, MenuItem, PopoverOrigin } from '@mui/material';
 import { Check } from 'lucide-react';
 import Link from 'next/link';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import styles from './ActionMenu.styles';
 import DropdownMenu from './DropdownMenu';
+import { useMenuScrollClose } from '~/shared/hooks/use-menu-scroll-close/useMenuScrollClose';
 
 export interface MenuItemConfig {
   id: string;
@@ -31,9 +31,9 @@ interface MenuProps {
   anchorEl: HTMLElement | null;
   onClose: () => void;
   menuItems: ActionMenuGroups;
-  menuDirection?: 'left' | 'right';
-  anchorOrigin?: MuiMenuProps['anchorOrigin'];
-  transformOrigin?: MuiMenuProps['transformOrigin'];
+  anchorOrigin?: PopoverOrigin;
+  transformOrigin?: PopoverOrigin;
+  isSelectable?: boolean;
 }
 function buildMenuItemKey(item: MenuItemConfig): string {
   return `menu-item-${item.id}`;
@@ -46,10 +46,10 @@ function buildDividerKey(groupId: string): string {
 interface MenuItemComponentProps {
   item: MenuItemConfig;
   onClose: () => void;
-  reserveEndIconSpace?: boolean;
+  isSelectable?: boolean;
 }
 
-function MenuItemComponent({ item, onClose, reserveEndIconSpace }: Readonly<MenuItemComponentProps>) {
+function MenuItemComponent({ item, onClose, isSelectable }: Readonly<MenuItemComponentProps>) {
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLLIElement>) => {
       e.stopPropagation();
@@ -61,10 +61,17 @@ function MenuItemComponent({ item, onClose, reserveEndIconSpace }: Readonly<Menu
   );
 
   const content = (
-    <Box sx={styles.menuItemContent}>
-      <Box sx={styles.menuItemText}>{item.text.name}</Box>
+    <Box sx={styles.menuContent}>
+      <Box sx={styles.menuItemContent}>
+        {item.text.icon && (
+          <Box component="span" sx={styles.menuItemIcon}>
+            {item.text.icon}
+          </Box>
+        )}
+        <Box sx={styles.menuItemText}>{item.text.name}</Box>
+      </Box>
 
-      {reserveEndIconSpace && <Box sx={styles.menuItemEndIcon}>{item.selected && <Check size={20} />}</Box>}
+      {isSelectable && <Box sx={styles.menuItemEndIcon}>{item.selected && <Check size={20} />}</Box>}
     </Box>
   );
 
@@ -85,17 +92,12 @@ function deriveGroupId(group: readonly MenuItemConfig[]): string {
   return group.map((item) => item.id).join('-');
 }
 
-function buildMenuList(groups: ActionMenuGroups, onClose: () => void, hasSelectedItems: boolean): React.ReactNode[] {
+function buildMenuList(groups: ActionMenuGroups, onClose: () => void, isSelectable: boolean): React.ReactNode[] {
   return groups.flatMap((group, groupIndex) => {
     const groupId = deriveGroupId(group.items);
 
     const menuItems = group.items.map((item) => (
-      <MenuItemComponent
-        key={buildMenuItemKey(item)}
-        item={item}
-        onClose={onClose}
-        reserveEndIconSpace={hasSelectedItems}
-      />
+      <MenuItemComponent key={buildMenuItemKey(item)} item={item} onClose={onClose} isSelectable={isSelectable} />
     ));
 
     if (group.title) {
@@ -119,18 +121,18 @@ const ActionMenu = ({
   anchorEl,
   onClose,
   menuItems = [],
-  menuDirection = 'right',
   anchorOrigin,
-  transformOrigin
+  transformOrigin,
+  isSelectable = false
 }: MenuProps) => {
-  const hasSelectedItems = useMemo(
-    () => menuItems.some((group) => group.items.some((item) => item.selected)),
-    [menuItems]
-  );
+  const { disableTransition, handleClose } = useMenuScrollClose({
+    open: Boolean(anchorEl),
+    onClose
+  });
 
   const menuList = useMemo(
-    () => buildMenuList(menuItems, onClose, hasSelectedItems),
-    [menuItems, onClose, hasSelectedItems]
+    () => buildMenuList(menuItems, handleClose, isSelectable),
+    [menuItems, handleClose, isSelectable]
   );
 
   const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -138,24 +140,12 @@ const ActionMenu = ({
     e.preventDefault();
   }, []);
 
-  useEffect(() => {
-    if (!anchorEl) return;
-
-    const handleScroll = () => {
-      onClose();
-    };
-    window.addEventListener('scroll', handleScroll, true);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll, true);
-    };
-  }, [anchorEl, onClose]);
-
   return (
     <DropdownMenu
       anchorEl={anchorEl}
       open={Boolean(anchorEl)}
-      onClose={onClose}
+      onClose={handleClose}
+      transitionDuration={disableTransition ? 0 : undefined}
       menuList={menuList}
       sx={styles.menu}
       disableAutoFocusItem
@@ -168,13 +158,13 @@ const ActionMenu = ({
       anchorOrigin={
         anchorOrigin ?? {
           vertical: 'top',
-          horizontal: menuDirection === 'right' ? 'left' : 'right'
+          horizontal: 'left'
         }
       }
       transformOrigin={
         transformOrigin ?? {
           vertical: 'top',
-          horizontal: menuDirection === 'right' ? 'right' : 'left'
+          horizontal: 'right'
         }
       }
     />

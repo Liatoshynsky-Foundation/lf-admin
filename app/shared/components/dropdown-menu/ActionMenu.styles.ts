@@ -22,7 +22,7 @@ const styles: Record<string, SxProps<Theme>> = {
       backgroundColor: 'adminBlue.100'
     }
   },
-  menuItemContent: {
+  menuContent: {
     display: 'flex',
     alignItems: 'start',
     gap: '12px',
@@ -30,12 +30,10 @@ const styles: Record<string, SxProps<Theme>> = {
     minWidth: '100px',
     justifyContent: 'space-between',
   },
-  menuItemEndIcon: {
-    width: 24,
+  menuItemContent: {
     display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexShrink: 0,
+    alignItems: 'start',
+    gap: '12px',
   },
   menuItemIcon: {
     display: 'flex',
@@ -47,7 +45,14 @@ const styles: Record<string, SxProps<Theme>> = {
   menuItemText: {
     whiteSpace: 'nowrap'
   },
-
+  menuItemEndIcon: {
+    width: 24,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  
   divider: {
     height: '1px',
     backgroundColor: tableDividerColor,

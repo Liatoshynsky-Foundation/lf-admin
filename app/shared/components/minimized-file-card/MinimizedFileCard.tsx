@@ -2,7 +2,7 @@
 import { Box, IconButton, Paper, Stack, Typography } from '@mui/material';
 import { EllipsisVertical } from 'lucide-react';
 import Image from 'next/image';
-import { MouseEvent, useEffect, useState } from 'react';
+import { MouseEvent, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import ActionMenu from '../dropdown-menu/ActionMenu';
@@ -56,22 +56,6 @@ const MinimizedFileCard = ({
 }: MinimizedFileCardProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [updateAsset, { loading: isUpdatingStar }] = useUpdateAssetMutation();
-
-  useEffect(() => {
-    const handleResizeOrScroll = () => {
-      if (anchorEl) {
-        setAnchorEl(null);
-      }
-    };
-
-    window.addEventListener('resize', handleResizeOrScroll);
-    window.addEventListener('scroll', handleResizeOrScroll, true);
-
-    return () => {
-      window.removeEventListener('resize', handleResizeOrScroll);
-      window.removeEventListener('scroll', handleResizeOrScroll, true);
-    };
-  }, [anchorEl]);
 
   const handleMenuClick = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();

@@ -7,12 +7,10 @@ import { styles } from './ContextMenu.styles';
 
 export function ContextMenu({
   items,
-  triggerLabel,
-  menuDirection = 'right'
+  triggerLabel
 }: Readonly<{
   items: ActionMenuGroups;
   triggerLabel: string;
-  menuDirection?: 'left' | 'right';
 }>) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -42,7 +40,7 @@ export function ContextMenu({
         </IconButton>
       </Box>
 
-      <ActionMenu anchorEl={anchorEl} onClose={handleClose} menuItems={items} menuDirection={menuDirection} />
+      <ActionMenu anchorEl={anchorEl} onClose={handleClose} menuItems={items} />
     </>
   );
 }

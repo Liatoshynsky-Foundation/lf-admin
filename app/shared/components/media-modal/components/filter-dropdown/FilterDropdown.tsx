@@ -78,6 +78,7 @@ export function FilterDropdown({ label, value, options, onChange, testId = 'Filt
         anchorEl={anchorEl}
         onClose={handleClose}
         menuItems={menuItems}
+        isSelectable={true}
         anchorOrigin={{
           vertical: 'bottom',
           horizontal: 'left'

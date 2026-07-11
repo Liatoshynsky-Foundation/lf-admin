@@ -68,7 +68,14 @@ const CardLayout = ({
                 anchorEl={anchorEl}
                 onClose={handleMenuClose}
                 menuItems={items}
-                menuDirection={menuDirection}
+                anchorOrigin={{
+                  vertical: 'top',
+                  horizontal: menuDirection === 'left' ? 'right' : 'left'
+                }}
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: menuDirection === 'left' ? 'left' : 'right'
+                }}
               />
             </Box>
           </Box>

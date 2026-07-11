@@ -4,11 +4,10 @@ import { Badge, Box, Button, IconButton, Tooltip } from '@mui/material';
 import { Filter, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import { FilterOption } from '../dropdown-menu/FilterMenu';
 import { styles } from './FilteringToolbar.styles';
 import { ControlPanel } from '~/shared/components/control-panel';
 import { Search, type SearchProps } from '~/shared/components/search/Search';
-import { FilterSelect } from '~/shared/components/selector/FilterSelect';
+import { FilterOption, FilterSelect } from '~/shared/components/selector/FilterSelect';
 
 export type FilteringToolbarFilterConfig = Readonly<{
   id: string;

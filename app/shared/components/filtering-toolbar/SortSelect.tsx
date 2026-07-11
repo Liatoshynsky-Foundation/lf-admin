@@ -64,7 +64,7 @@ export function SortSelect<FieldValue extends string, SortValue extends string>(
 
   const groups = [
     {
-      title: fieldSectionLabel.toUpperCase(),
+      title: fieldSectionLabel,
       items: fieldOptions.map((option) => ({
         id: option.value,
         text: {
@@ -75,7 +75,7 @@ export function SortSelect<FieldValue extends string, SortValue extends string>(
       }))
     },
     {
-      title: orderSectionLabel.toUpperCase(),
+      title: orderSectionLabel,
       items: orderOptions[fieldValue].map((option) => ({
         id: option.value,
         text: {
@@ -117,6 +117,7 @@ export function SortSelect<FieldValue extends string, SortValue extends string>(
         anchorEl={anchorEl}
         onClose={handleCloseMenu}
         menuItems={groups}
+        isSelectable={true}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
       />
