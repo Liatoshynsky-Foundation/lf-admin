@@ -4,10 +4,11 @@ import { Badge, Box, Button, IconButton, Tooltip } from '@mui/material';
 import { Filter, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import { FilterOption } from '../dropdown-menu/FilterMenu';
 import { styles } from './FilteringToolbar.styles';
 import { ControlPanel } from '~/shared/components/control-panel';
 import { Search, type SearchProps } from '~/shared/components/search/Search';
-import { type FilterOption, FilterSelect } from '~/shared/components/selector/FilterSelect';
+import { FilterSelect } from '~/shared/components/selector/FilterSelect';
 
 export type FilteringToolbarFilterConfig = Readonly<{
   id: string;
@@ -161,11 +162,7 @@ function renderClearFiltersButton({
     >
       <span>
         {resolvedActiveFiltersCount > 0 ? (
-          <IconButton
-            aria-label="clear-filters"
-            onClick={onClearFilters}
-            sx={styles.clearButton}
-          >
+          <IconButton aria-label="clear-filters" onClick={onClearFilters} sx={styles.clearButton}>
             <X size={22} strokeWidth={1.75} />
           </IconButton>
         ) : null}
@@ -189,9 +186,7 @@ function renderBottomContent({
 
   return (
     <Box sx={styles.bottomContentWrapper}>
-      <Box
-        sx={styles.bottomContentRow}
-      >
+      <Box sx={styles.bottomContentRow}>
         <Box sx={styles.filtersList}>
           {filters.map((filter) => (
             <FilterSelect

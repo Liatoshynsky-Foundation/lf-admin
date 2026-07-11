@@ -1,12 +1,12 @@
 'use client';
 
-import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
-import { Box, Menu, MenuItem } from '@mui/material';
+import { Box } from '@mui/material';
+import { ChevronDown } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { filterDropdownStyles } from './FilterDropdown.styles';
-import ChevronDownIcon from '~/public/icons/chevronDown.svg';
+import ActionMenu from '~/shared/components/dropdown-menu/ActionMenu';
 
 type FilterOption = {
   value: string;
@@ -32,11 +32,6 @@ export function FilterDropdown({ label, value, options, onChange, testId = 'Filt
     setAnchorEl(null);
   };
 
-  const handleSelect = (optionValue: string) => {
-    onChange(optionValue);
-    handleClose();
-  };
-
   const handleClear = (e: React.MouseEvent) => {
     e.stopPropagation();
     onChange('');
@@ -44,6 +39,19 @@ export function FilterDropdown({ label, value, options, onChange, testId = 'Filt
 
   const selectedOption = options.find((opt) => opt.value === value);
   const hasValue = Boolean(value);
+
+  const menuItems = [
+    {
+      items: options.map((option) => ({
+        id: option.value,
+        text: {
+          name: option.label
+        },
+        selected: option.value === value,
+        onClick: () => onChange(option.value)
+      }))
+    }
+  ];
 
   return (
     <>
@@ -56,27 +64,29 @@ export function FilterDropdown({ label, value, options, onChange, testId = 'Filt
               </Box>
               <CloseIcon sx={filterDropdownStyles.closeIcon} />
             </Box>
-            <ChevronDownIcon width={24} height={24} aria-hidden focusable={false} />
+            <ChevronDown size={24} />
           </>
         ) : (
           <>
             <span>{label}</span>
-            <ChevronDownIcon width={24} height={24} aria-hidden focusable={false} />
+            <ChevronDown size={24} />
           </>
         )}
       </Box>
 
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
-        {options.map((option) => {
-          const isSelected = option.value === value;
-          return (
-            <MenuItem key={option.value} onClick={() => handleSelect(option.value)} sx={filterDropdownStyles.menuItem}>
-              <span>{option.label}</span>
-              {isSelected && <CheckIcon sx={filterDropdownStyles.checkIcon} />}
-            </MenuItem>
-          );
-        })}
-      </Menu>
+      <ActionMenu
+        anchorEl={anchorEl}
+        onClose={handleClose}
+        menuItems={menuItems}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left'
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'left'
+        }}
+      />
     </>
   );
 }

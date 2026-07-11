@@ -16,8 +16,8 @@ export interface MenuItemConfig {
 
   href?: string;
   onClick?: () => void;
-
   selected?: boolean;
+  disabled?: boolean;
 }
 
 export interface MenuGroup {
@@ -64,7 +64,7 @@ function MenuItemComponent({ item, onClose, reserveEndIconSpace }: Readonly<Menu
     <Box sx={styles.menuItemContent}>
       <Box sx={styles.menuItemText}>{item.text.name}</Box>
 
-      {reserveEndIconSpace && <Box sx={styles.menuItemEndIcon}>{item.selected && <Check />}</Box>}
+      {reserveEndIconSpace && <Box sx={styles.menuItemEndIcon}>{item.selected && <Check size={20} />}</Box>}
     </Box>
   );
 
@@ -73,6 +73,7 @@ function MenuItemComponent({ item, onClose, reserveEndIconSpace }: Readonly<Menu
       component={item.href ? Link : 'li'}
       href={item.href}
       selected={item.selected}
+      disabled={item.disabled}
       sx={styles.menuItem}
       onClick={handleClick}
     >
