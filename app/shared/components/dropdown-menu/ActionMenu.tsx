@@ -126,8 +126,8 @@ const ActionMenu = ({
   isSelectable = false
 }: MenuProps) => {
   const { disableTransition, handleClose } = useMenuScrollClose({
-    open: Boolean(anchorEl),
-    onClose
+    onClose,
+    anchorEl
   });
 
   const menuList = useMemo(
@@ -155,18 +155,8 @@ const ActionMenu = ({
           onClick: handleBackdropClick
         }
       }}
-      anchorOrigin={
-        anchorOrigin ?? {
-          vertical: 'top',
-          horizontal: 'left'
-        }
-      }
-      transformOrigin={
-        transformOrigin ?? {
-          vertical: 'top',
-          horizontal: 'right'
-        }
-      }
+      anchorOrigin={anchorOrigin}
+      transformOrigin={transformOrigin}
     />
   );
 };

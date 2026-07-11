@@ -1,24 +1,35 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 interface UseMenuScrollCloseOptions {
-  open: boolean;
   onClose: () => void;
+  anchorEl: HTMLElement | null;
 }
 
-export function useMenuScrollClose({ open, onClose }: UseMenuScrollCloseOptions) {
-  const [disableTransition, setDisableTransition] = useState(false);
+export function useMenuScrollClose({ onClose, anchorEl }: UseMenuScrollCloseOptions) {
+  const disableTransitionRef = useRef(false);
+  const initialTop = useRef<number | null>(null);
+
+  const open = Boolean(anchorEl);
 
   const handleClose = useCallback(() => {
-    setDisableTransition(false);
+    disableTransitionRef.current = false;
     onClose();
   }, [onClose]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !anchorEl) return;
+
+    initialTop.current = anchorEl.getBoundingClientRect().top;
 
     const handleScroll = () => {
-      setDisableTransition(true);
-      onClose();
+      if (initialTop.current === null) return;
+
+      const currentTop = anchorEl.getBoundingClientRect().top;
+
+      if (Math.abs(currentTop - initialTop.current) > 100) {
+        disableTransitionRef.current = true;
+        onClose();
+      }
     };
 
     window.addEventListener('scroll', handleScroll, true);
@@ -26,10 +37,16 @@ export function useMenuScrollClose({ open, onClose }: UseMenuScrollCloseOptions)
     return () => {
       window.removeEventListener('scroll', handleScroll, true);
     };
-  }, [open, onClose]);
+  }, [open, anchorEl, onClose]);
+
+  useEffect(() => {
+    if (!open) {
+      disableTransitionRef.current = false;
+    }
+  }, [open]);
 
   return {
-    disableTransition,
+    disableTransition: disableTransitionRef.current,
     handleClose
   };
 }

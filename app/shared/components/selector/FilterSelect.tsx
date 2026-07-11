@@ -56,8 +56,8 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
     () => value ?? defaultValue ?? defaultValues ?? []
   );
   const { disableTransition, handleClose } = useMenuScrollClose({
-    open: Boolean(anchorEl),
-    onClose: () => setAnchorEl(null)
+    onClose: () => setAnchorEl(null),
+    anchorEl
   });
   const triggerRef = useRef<HTMLDivElement | null>(null);
   const selectedValues = value ?? uncontrolledValues;

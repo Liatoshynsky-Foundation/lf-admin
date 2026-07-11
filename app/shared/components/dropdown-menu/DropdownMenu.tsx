@@ -12,12 +12,12 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({
   menuList,
   sx,
   anchorOrigin = {
-    vertical: 'bottom',
+    vertical: 'top',
     horizontal: 'left'
   },
   transformOrigin = {
     vertical: 'top',
-    horizontal: 'left'
+    horizontal: 'right'
   },
   ...props
 }) => {
