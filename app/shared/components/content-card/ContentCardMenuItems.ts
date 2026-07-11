@@ -9,7 +9,6 @@ interface ContentCardMenuProps {
 
 const ContentCardMenuItems = ({ id, type, setDeleteModalOpen }: ContentCardMenuProps) => {
   const seoHref = `/publications/${type}/${id}/seo`;
-  const detailsHref = `/publications/${type}`;
   const editUkHref = `/publications/${type}/${id}/edit?lang=uk`;
   const editEnHref = `/publications/${type}/${id}/edit?lang=en`;
 
@@ -19,11 +18,6 @@ const ContentCardMenuItems = ({ id, type, setDeleteModalOpen }: ContentCardMenuP
       items: [
         { id: 'uk', text: { name: 'Українська' }, href: editUkHref },
         { id: 'en', text: { name: 'Англійська' }, href: editEnHref }
-      ]
-    },
-    {
-      items: [
-        { id: 'details', text: { name: 'Деталі новини' }, href: detailsHref }
       ]
     },
     {

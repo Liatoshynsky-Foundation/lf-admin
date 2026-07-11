@@ -1,12 +1,11 @@
 'use client';
 
-import { Box, Divider, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { ChevronDown } from 'lucide-react';
 import { useRef, useState } from 'react';
 
+import ActionMenu from '../dropdown-menu/ActionMenu';
 import { styles } from './SortSelect.styles';
-import DropdownMenu from '~/shared/components/dropdown-menu/DropdownMenu';
-import FilterSelectItem from '~/shared/components/selector/FilterSelectItem/FilterSelectItem';
 
 export type SortFieldOption<FieldValue extends string> = {
   value: FieldValue;
@@ -63,6 +62,34 @@ export function SortSelect<FieldValue extends string, SortValue extends string>(
     requestAnimationFrame(() => triggerRef.current?.focus());
   };
 
+  const groups = [
+    {
+      title: fieldSectionLabel.toUpperCase(),
+      items: fieldOptions.map((option) => ({
+        id: option.value,
+        text: {
+          name: option.label
+        },
+        selected: fieldValue === option.value,
+        onClick: () => onFieldChange(option.value)
+      }))
+    },
+    {
+      title: orderSectionLabel.toUpperCase(),
+      items: orderOptions[fieldValue].map((option) => ({
+        id: option.value,
+        text: {
+          name: option.label
+        },
+        selected: value === option.value,
+        onClick: () => {
+          onValueChange(option.value);
+          handleCloseMenu();
+        }
+      }))
+    }
+  ];
+
   return (
     <>
       <Box
@@ -78,60 +105,20 @@ export function SortSelect<FieldValue extends string, SortValue extends string>(
           minWidth: `${minWidth}px`
         }}
       >
-        <Typography variant='textMd' sx={styles.label(disabled)}>{triggerLabel}</Typography>
+        <Typography variant="textMd" sx={styles.label(disabled)}>
+          {triggerLabel}
+        </Typography>
         <Box sx={styles.dropdownIcon(disabled)}>
           <ChevronDown size={16} strokeWidth={2.25} aria-hidden="true" />
         </Box>
       </Box>
 
-      <DropdownMenu
-        disableScrollLock
+      <ActionMenu
         anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
         onClose={handleCloseMenu}
-        sx={styles.dropdownMenu(minWidth)}
+        menuItems={groups}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-        menuList={
-          <Box sx={styles.menuList}>
-            <Typography
-              sx={styles.sortMethodHeading}
-            >
-              {fieldSectionLabel}
-            </Typography>
-
-            {fieldOptions.map((option) => (
-              <FilterSelectItem
-                key={option.value}
-                label={option.label}
-                selected={fieldValue === option.value}
-                onClick={() => onFieldChange(option.value)}
-                sx={styles.menuItem}
-              />
-            ))}
-
-            <Divider sx={styles.divider} />
-
-            <Typography
-              sx={styles.sortMethodHeading}
-            >
-              {orderSectionLabel}
-            </Typography>
-
-            {orderOptions[fieldValue].map((option) => (
-              <FilterSelectItem
-                key={option.value}
-                label={option.label}
-                selected={value === option.value}
-                onClick={() => {
-                  onValueChange(option.value);
-                  handleCloseMenu();
-                }}
-                sx={styles.menuItem}
-              />
-            ))}
-          </Box>
-        }
       />
     </>
   );

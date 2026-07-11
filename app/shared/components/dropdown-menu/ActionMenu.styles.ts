@@ -8,6 +8,13 @@ const styles: Record<string, SxProps<Theme>> = {
       padding: '8px'
     }
   },
+  menuGroupTitle: {
+    pointerEvents: 'none',
+    typography: 'subtitle2',
+    paddingTop: '4px',
+    paddingBottom: '4px',
+  },
+
   menuItem: {
     height: '44px',
     '&:hover': {
@@ -21,6 +28,14 @@ const styles: Record<string, SxProps<Theme>> = {
     gap: '12px',
     width: '100%',
     minWidth: '100px',
+    justifyContent: 'space-between',
+  },
+  menuItemEndIcon: {
+    width: 24,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
   },
   menuItemIcon: {
     display: 'flex',
@@ -32,18 +47,13 @@ const styles: Record<string, SxProps<Theme>> = {
   menuItemText: {
     whiteSpace: 'nowrap'
   },
+
   divider: {
     height: '1px',
     backgroundColor: tableDividerColor,
     my: '8px',
     mx: '-8px'
   },
-  menuGroupTitle: {
-    pointerEvents: 'none',
-    typography: 'subtitle2',
-    paddingTop: '4px',
-    paddingBottom: '4px',
-  }
 };
 
 export default styles;

@@ -1,7 +1,7 @@
 'use client';
 import { Box, Card, CardContent, IconButton } from '@mui/material';
 import { EllipsisVertical } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import ActionMenu, { ActionMenuGroups } from '../dropdown-menu/ActionMenu';
 import styles from './CardLayout.styles';
@@ -49,19 +49,6 @@ const CardLayout = ({
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
-
-  useEffect(() => {
-    if (!anchorEl) return;
-
-    const handleScroll = () => {
-      setAnchorEl(null);
-    };
-    window.addEventListener('scroll', handleScroll, true);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll, true);
-    };
-  }, [anchorEl]);
 
   return (
     <Card sx={styles.card(interactive, isSelected)}>

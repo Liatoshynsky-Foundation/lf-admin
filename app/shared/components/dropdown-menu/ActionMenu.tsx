@@ -1,16 +1,23 @@
 import { Box, ListSubheader, MenuItem } from '@mui/material';
 import { MenuProps as MuiMenuProps } from '@mui/material/Menu';
+import { Check } from 'lucide-react';
 import Link from 'next/link';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 
 import styles from './ActionMenu.styles';
 import DropdownMenu from './DropdownMenu';
 
 export interface MenuItemConfig {
   id: string;
-  text: { name: string; icon?: React.ReactNode };
+  text: {
+    name: string;
+    icon?: React.ReactNode;
+  };
+
   href?: string;
   onClick?: () => void;
+
+  selected?: boolean;
 }
 
 export interface MenuGroup {
@@ -28,7 +35,6 @@ interface MenuProps {
   anchorOrigin?: MuiMenuProps['anchorOrigin'];
   transformOrigin?: MuiMenuProps['transformOrigin'];
 }
-
 function buildMenuItemKey(item: MenuItemConfig): string {
   return `menu-item-${item.id}`;
 }
@@ -40,12 +46,14 @@ function buildDividerKey(groupId: string): string {
 interface MenuItemComponentProps {
   item: MenuItemConfig;
   onClose: () => void;
+  reserveEndIconSpace?: boolean;
 }
 
-function MenuItemComponent({ item, onClose }: Readonly<MenuItemComponentProps>) {
+function MenuItemComponent({ item, onClose, reserveEndIconSpace }: Readonly<MenuItemComponentProps>) {
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLLIElement>) => {
       e.stopPropagation();
+
       item.onClick?.();
       onClose();
     },
@@ -54,34 +62,39 @@ function MenuItemComponent({ item, onClose }: Readonly<MenuItemComponentProps>) 
 
   const content = (
     <Box sx={styles.menuItemContent}>
-      {item.text.icon && (
-        <Box component="span" sx={styles.menuItemIcon}>
-          {item.text.icon}
-        </Box>
-      )}
-      <Box component="span" sx={styles.menuItemText}>
-        {item.text.name}
-      </Box>
+      <Box sx={styles.menuItemText}>{item.text.name}</Box>
+
+      {reserveEndIconSpace && <Box sx={styles.menuItemEndIcon}>{item.selected && <Check />}</Box>}
     </Box>
   );
 
   return (
-    <MenuItem component={item.href ? Link : 'li'} href={item.href} sx={styles.menuItem} onClick={handleClick}>
+    <MenuItem
+      component={item.href ? Link : 'li'}
+      href={item.href}
+      selected={item.selected}
+      sx={styles.menuItem}
+      onClick={handleClick}
+    >
       {content}
     </MenuItem>
   );
 }
-
 function deriveGroupId(group: readonly MenuItemConfig[]): string {
   return group.map((item) => item.id).join('-');
 }
 
-function buildMenuList(groups: ActionMenuGroups, onClose: () => void): React.ReactNode[] {
+function buildMenuList(groups: ActionMenuGroups, onClose: () => void, hasSelectedItems: boolean): React.ReactNode[] {
   return groups.flatMap((group, groupIndex) => {
     const groupId = deriveGroupId(group.items);
 
     const menuItems = group.items.map((item) => (
-      <MenuItemComponent key={buildMenuItemKey(item)} item={item} onClose={onClose} />
+      <MenuItemComponent
+        key={buildMenuItemKey(item)}
+        item={item}
+        onClose={onClose}
+        reserveEndIconSpace={hasSelectedItems}
+      />
     ));
 
     if (group.title) {
@@ -109,12 +122,33 @@ const ActionMenu = ({
   anchorOrigin,
   transformOrigin
 }: MenuProps) => {
-  const menuList = useMemo(() => buildMenuList(menuItems, onClose), [menuItems, onClose]);
+  const hasSelectedItems = useMemo(
+    () => menuItems.some((group) => group.items.some((item) => item.selected)),
+    [menuItems]
+  );
+
+  const menuList = useMemo(
+    () => buildMenuList(menuItems, onClose, hasSelectedItems),
+    [menuItems, onClose, hasSelectedItems]
+  );
 
   const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
     e.preventDefault();
   }, []);
+
+  useEffect(() => {
+    if (!anchorEl) return;
+
+    const handleScroll = () => {
+      onClose();
+    };
+    window.addEventListener('scroll', handleScroll, true);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [anchorEl, onClose]);
 
   return (
     <DropdownMenu
