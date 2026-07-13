@@ -12,6 +12,7 @@ import {
   PUBLICATIONS_BASE_PATH,
   PublicationsItemType
 } from '~/constants/publications';
+import { fetchPreview } from '~/lib/utils/fetchPreview';
 import { SerializedContent } from '~/shared/components/content-editor';
 import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
 import { usePublicationManager } from '~/shared/hooks/use-publications-manager/usePublicationsManager';
@@ -64,6 +65,15 @@ export default function EditPublicationsPage() {
     }, 500);
   };
 
+  const handlePreview = async () => {
+    const locale = manager.currentLanguage === 'UA' ? 'uk' : 'en';
+    try {
+      await fetchPreview({ slug: 'news', lang: locale, draftId: id });
+    } catch (err) {
+      toast.error(`Помилка: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
+
   const handleMenuAction = async (actionId: MenuActionId) => {
     const contentPayload = { content: manager.editedContent };
 
@@ -110,7 +120,7 @@ export default function EditPublicationsPage() {
   return (
     <>
       {type === 'media' ? (
-        <CreatePublicationsView data={publicationData} mode="edit" />
+        <CreatePublicationsView data={publicationData} mode="edit" onPreview={handlePreview} />
       ) : (
         <EditPublicationsView
           type={type}
@@ -125,6 +135,7 @@ export default function EditPublicationsPage() {
           onDeleteConfirm={() => handleMenuAction(MenuActionId.DELETE)}
           onSeoClick={() => navigate(`${PUBLICATIONS_BASE_PATH}/${type}/${id}/seo`)}
           onBackClick={navigateBack}
+          onPreview={handlePreview}
         />
       )}
     </>

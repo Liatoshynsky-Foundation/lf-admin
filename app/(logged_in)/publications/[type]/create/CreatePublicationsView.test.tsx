@@ -36,13 +36,16 @@ jest.mock('~/shared/hooks/use-unsaved-changes/useUnsavedChanges', () => ({
 jest.mock('~/shared/components/divided-header/header-right-actions/HeaderRightActions', () => {
   return function MockHeaderRightActions({
     onMenuOpen,
-    onPublish
+    onPublish,
+    onPreview
   }: {
     onMenuOpen?: (e: MouseEvent<HTMLButtonElement>) => void;
     onPublish?: () => void;
+    onPreview?: () => void;
   }) {
     return (
       <div>
+        <button data-testid='btn-preview' onClick={onPreview}>Preview</button>
         <button data-testid="btn-publish" onClick={onPublish}>
           Publish
         </button>
@@ -202,6 +205,18 @@ describe('CreatePublicationsView Component', () => {
       const passedValue = mockSetPublishDate.mock.calls[0][0] as dayjs.Dayjs;
       expect(dayjs.isDayjs(passedValue)).toBe(true);
       expect(passedValue.toISOString()).toBe('2024-05-10T10:00:00.000Z');
+    });
+
+    it('should trigger onPreview when a eye icon is clicked', () => {
+      const mockOnPreview = jest.fn();
+      const mockData = createMockData({
+        publicationType: 'news',
+      });
+      render(<CreatePublicationsView data={mockData} onPreview={mockOnPreview}/>);
+
+      fireEvent.click(screen.getByTestId('btn-preview'));
+
+      expect(mockOnPreview).toHaveBeenCalledTimes(1);
     });
   });
 

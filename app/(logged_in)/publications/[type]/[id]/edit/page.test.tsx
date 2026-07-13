@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { EditPublicationsViewProps } from './EditPublicationsView';
 import EditPublicationsPage from './page';
 import { CONTENT_MUTATION_RESULTS, LocalizedEditorState, MenuActionId } from '~/constants/publications';
+import { fetchPreview } from '~/lib/utils/fetchPreview';
 import { SerializedContent } from '~/shared/components/content-editor';
 import { usePublicationManager } from '~/shared/hooks/use-publications-manager/usePublicationsManager';
 import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
@@ -29,6 +30,10 @@ jest.mock('~/shared/hooks/use-publications-manager/usePublicationsManager', () =
 
 jest.mock('~/shared/hooks/use-upsert-publication/useUpsertPublication', () => ({
   useUpsertPublication: jest.fn()
+}));
+
+jest.mock('~/lib/utils/fetchPreview', () => ({
+  fetchPreview: jest.fn()
 }));
 
 const baseMockManager = {
@@ -64,6 +69,7 @@ jest.mock('./EditPublicationsView', () => ({
       <button data-testid="trigger-save-exit" onClick={() => props.onAction(MenuActionId.PUBLICATE_AND_EXIT)} />
       <button data-testid="trigger-delete" onClick={props.onDeleteConfirm} />
       <button data-testid="trigger-seo" onClick={props.onSeoClick} />
+      <button data-testid="trigger-preview" onClick={props.onPreview} />
     </div>
   )
 }));
@@ -115,6 +121,28 @@ describe('EditPublicationsPage Container', () => {
     fireEvent.click(screen.getByTestId('trigger-seo'));
 
     expect(mockPush).toHaveBeenCalledWith('/publications/news/123/seo');
+  });
+
+  it('should redirect to preview page when onPreview is triggered', () => {
+    (fetchPreview as jest.Mock).mockResolvedValue(null);
+    render(<EditPublicationsPage />);
+
+    fireEvent.click(screen.getByTestId('trigger-preview'));
+
+    expect(fetchPreview).toHaveBeenCalledTimes(1);
+    expect(fetchPreview).toHaveBeenCalledWith({ slug: 'news', lang: 'uk', draftId: '123' });
+  });
+
+  it('should show an error toast if on redirect to preview page when onPreview is triggered fetchPreview rejects', async () => {
+    (fetchPreview as jest.Mock).mockRejectedValue(new Error('New Error'));
+    render(<EditPublicationsPage />);
+
+    fireEvent.click(screen.getByTestId('trigger-preview'));
+
+    expect(fetchPreview).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Помилка: New Error');
+    });
   });
 
   it('should debounce editor changes and update state after 500ms', () => {
@@ -188,7 +216,7 @@ describe('EditPublicationsPage Container', () => {
       updateResource: jest.fn().mockRejectedValue(new Error(errorMessage))
     });
 
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
 
     render(<EditPublicationsPage />);
 

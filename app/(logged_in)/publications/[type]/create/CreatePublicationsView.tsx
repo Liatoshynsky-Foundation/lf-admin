@@ -34,12 +34,14 @@ interface PublicationViewProps {
   data: ReturnType<typeof useUpsertPublication>;
   mode?: 'edit' | 'create' | 'seo';
   onDeleteConfirm?: () => void;
+  onPreview?: () => void;
 }
 
 export default function CreatePublicationsView({
   data,
   mode = 'create',
-  onDeleteConfirm
+  onDeleteConfirm,
+  onPreview
 }: Readonly<PublicationViewProps>) {
   const {
     publicationType,
@@ -158,9 +160,10 @@ export default function CreatePublicationsView({
                 mode="edit"
                 onPublish={() => handleMenuAction(MenuActionId.PUBLISH)}
                 onMenuOpen={handleOpen}
+                onPreview={onPreview}
               />
             ) : (
-              <HeaderRightActions mode="create" onEdit={onEdit} />
+              <HeaderRightActions mode="create" onEdit={onEdit} onPreview={onPreview} />
             )
           }
         >

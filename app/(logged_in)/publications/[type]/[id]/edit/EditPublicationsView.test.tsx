@@ -51,12 +51,16 @@ jest.mock('~/shared/components/divided-header/title-dropdown/TitleDropdown', () 
 type MockHeaderRightActionsProps = {
   onMenuOpen: (e: MouseEvent<HTMLButtonElement>) => void;
   onPublish: () => void;
+  onPreview: () => void;
 };
 
 jest.mock('~/shared/components/divided-header/header-right-actions/HeaderRightActions', () => {
-  return function MockHeaderRightActions({ onMenuOpen, onPublish }: MockHeaderRightActionsProps) {
+  return function MockHeaderRightActions({ onMenuOpen, onPublish, onPreview }: MockHeaderRightActionsProps) {
     return (
       <div data-testid="mock-header-actions">
+        <button data-testid="mock-preview-btn" onClick={onPreview}>
+          Preview
+        </button>
         <button data-testid="mock-publish-quick-btn" onClick={onPublish}>
           Quick Publish
         </button>
@@ -181,6 +185,15 @@ describe('EditPublicationsView Component', () => {
 
     expect(mockOnAction).toHaveBeenCalledTimes(1);
     expect(mockOnAction).toHaveBeenCalledWith(MenuActionId.PUBLISH);
+  });
+
+  it('should trigger onPreview when a eye icon is clicked', () => {
+    const mockOnPreview = jest.fn();
+    render(<EditPublicationsView {...defaultProps} onPreview={mockOnPreview}/>);
+
+    fireEvent.click(screen.getByTestId('mock-preview-btn'));
+
+    expect(mockOnPreview).toHaveBeenCalledTimes(1);
   });
 
   it('should open delete modal and call onDeleteConfirm when deletion is confirmed', () => {
