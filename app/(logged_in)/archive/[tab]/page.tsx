@@ -1,7 +1,7 @@
 import { Box } from '@mui/material';
 import { notFound } from 'next/navigation';
 
-import { ArchivePageContent } from '../(componets)/ArchivePageContent';
+import { ArchivePageContent } from '../(components)/ArchivePageContent';
 import { styles } from '../page.styles';
 import { ARCHIVE_TABS, type ArchiveTabValue } from '~/constants/archive';
 

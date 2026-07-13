@@ -1,6 +1,6 @@
 import { Box } from '@mui/material';
 
-import { ArchivePageContent } from './(componets)/ArchivePageContent';
+import { ArchivePageContent } from './(components)/ArchivePageContent';
 import { styles } from './page.styles';
 
 export default function ArchivePage() {
