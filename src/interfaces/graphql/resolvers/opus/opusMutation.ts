@@ -86,7 +86,6 @@ const mapComposition = (composition: GQLComposition): CompositionInput => {
     year: parseYear(composition.year ?? undefined),
     genre: composition.genre ?? null,
     genres: [],
-    categories: [],
     audioAvailable: audios.length > 0,
     sheetAvailable: notesWithFiles.length > 0,
     sheetMusic: notesWithFiles.map((note) => ({

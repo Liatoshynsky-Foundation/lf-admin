@@ -7,6 +7,7 @@ import { Opus } from '~/domain/entities/Opus';
 import { CreateOpusInput, IOpusRepository, OpusFilters } from '~/domain/repositories/opusRepository';
 import dbConnect from '~/infrastructure/db/connect';
 import { buildBaseQuery, createToEntity, getBaseSort } from '~/infrastructure/repositories/helpers';
+import { OpusNumberKind } from '~/types/graphql/generated/graphql';
 
 export type DbOpusGalleryItem = {
   _id?: { toString(): string };
@@ -30,7 +31,7 @@ export type DbOpus = {
   numberKind: Opus['numberKind'];
   name: Opus['name'];
   additionalText?: string | null;
-  creationYear?: string | null;
+  creationYear: string;
   endYear?: string | null;
   datesNote?: string | null;
   genre?: string | null;
@@ -64,7 +65,7 @@ const toEntity = (doc: DbOpus): Opus =>
     numberKind: doc.numberKind ?? 'op',
     name: typeof doc.name === 'string' ? { uk: doc.name, en: doc.name } : (doc.name ?? { uk: '', en: '' }),
     additionalText: doc.additionalText ?? undefined,
-    creationYear: doc.creationYear ?? undefined,
+    creationYear: doc.creationYear ?? '',
     endYear: doc.endYear ?? undefined,
     datesNote: doc.datesNote ?? undefined,
     genre: doc.genre ?? undefined,
@@ -108,7 +109,21 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
   const baseRepo = createBaseRepository<Opus, DbOpus, OpusFilters>({
     model: OpusModel,
     toEntity,
-    buildQuery: (filters) => buildBaseQuery(filters),
+    buildQuery: (filters) => {
+      const query = buildBaseQuery(filters) ?? {};
+      if (filters?.numberKind) {
+        if (filters.numberKind === OpusNumberKind.Op) {
+          query.$or = [
+            { numberKind: OpusNumberKind.Op },
+            { numberKind: { $exists: false } },
+            { numberKind: null }
+          ];
+        } else {
+          query.numberKind = filters.numberKind;
+        }
+      }
+      return query;
+    },
     getDefaultSort: getBaseSort
   });
 

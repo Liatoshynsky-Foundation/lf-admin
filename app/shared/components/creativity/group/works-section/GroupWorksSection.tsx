@@ -7,7 +7,7 @@ import { OPUS_DETAILS_LABELS } from '~/constants/opus';
 import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
 import CompositionModal from '~/shared/components/forms/opus-details-block/composition-modal/CompositionModal';
 import CompositionTitleInput from '~/shared/components/forms/opus-details-block/composition-title-input/CompositionTitleInput';
-import { useCompositions } from '~/shared/hooks/use-compositions/useCompositions';
+import { useCompositionsForm } from '~/shared/hooks/use-compositions/useCompositions';
 import type { OpusCompositionData } from '~/types/opus';
 
 type GroupWorksSectionProps = {
@@ -30,7 +30,7 @@ export const GroupWorksSection = ({ works, onChange }: GroupWorksSectionProps) =
     fillComposition,
     handleModalSubmit,
     handleDeleteConfirm
-  } = useCompositions(works, onChange);
+  } = useCompositionsForm(works, onChange);
 
   return (
     <Box sx={styles.container}>

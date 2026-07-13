@@ -2,7 +2,15 @@ import { Box } from '@mui/material';
 import { render } from '@testing-library/react';
 import React from 'react';
 
-import { GroupRowData, IndividualWork, WorksTable } from './WorksTable';
+import {
+  columns as originalColumns,
+  GroupHeaderData,
+  GroupRowData,
+  IndividualWork,
+  OpusWork,
+  WorksTable
+} from './WorksTable';
+import { BaseRowData, MenuItem } from '~/shared/components/table-layout/row-variants/Row.types';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 const mockTableLayout = jest.fn();
@@ -26,8 +34,7 @@ const group: GroupRowData = {
   works: [
     {
       id: 'work-1',
-      title: 'Work 1',
-      year: '2020'
+      title: 'Work 1'
     }
   ]
 };
@@ -159,5 +166,153 @@ describe('WorksTable', () => {
         expect.objectContaining({ id: 'actions', headerLabel: '' })
       ])
     );
+  });
+
+  it('covers all column rendering functions and logic branches (renderGroup, renderSub, renderPlain) directly', () => {
+    render(
+      <WorksTable
+        visibleOpusGroups={[group]}
+        visibleUngroupedGroups={[]}
+        visibleUngroupedWorks={[individualWork]}
+        showOpus
+        showUngrouped={false}
+        showIndividualWorks
+      />
+    );
+
+    const { data: rowsData } = mockTableLayout.mock.calls[0][0];
+    const groupRow = rowsData.find((r: { type: string }) => r.type === 'group');
+    const individualRow = rowsData.find((r: { type: string }) => r.type === 'individual');
+
+    originalColumns.forEach((col) => {
+      if (col.renderGroup) col.renderGroup(groupRow.groupData);
+      if (col.renderSub) col.renderSub(groupRow.subRows[0], groupRow.groupData);
+      if (col.renderPlain) col.renderPlain(individualRow.plainData);
+    });
+
+    const yearsColumn = originalColumns.find((c) => c.id === 'years');
+
+    if (yearsColumn?.renderGroup) {
+      expect(
+        yearsColumn.renderGroup({
+          startDate: '2020',
+          endDate: '2020',
+          numberLabel: '',
+          title: '',
+          genre: '',
+          status: BaseContentStatuses.Draft,
+          updatedAt: ''
+        })
+      ).toBe('2020');
+      expect(
+        yearsColumn.renderGroup({
+          startDate: '2020',
+          endDate: undefined,
+          numberLabel: '',
+          title: '',
+          genre: '',
+          status: BaseContentStatuses.Draft,
+          updatedAt: ''
+        })
+      ).toBe('2020');
+      expect(
+        yearsColumn.renderGroup({
+          startDate: '2020',
+          endDate: '2022',
+          numberLabel: '',
+          title: '',
+          genre: '',
+          status: BaseContentStatuses.Draft,
+          updatedAt: ''
+        })
+      ).toBe('2020 - 2022');
+    }
+
+    const groupMenu = groupRow.groupData.menuActions.menuItems;
+    groupMenu.flat().forEach((menuItem: { onClick?: () => void }) => {
+      if (menuItem && typeof menuItem.onClick === 'function') {
+        menuItem.onClick();
+      }
+    });
+
+    const workMenu = individualRow.plainData.menuActions.menuItems;
+    workMenu.flat().forEach((menuItem: { onClick?: () => void }) => {
+      if (menuItem && typeof menuItem.onClick === 'function') {
+        menuItem.onClick();
+      }
+    });
+  });
+
+  it('covers group row mapping when group status is Published', () => {
+    const publishedGroup: GroupRowData = {
+      ...group,
+      status: BaseContentStatuses.Published
+    };
+
+    render(
+      <WorksTable
+        visibleOpusGroups={[publishedGroup]}
+        visibleUngroupedGroups={[]}
+        visibleUngroupedWorks={[]}
+        showOpus
+        showUngrouped={false}
+        showIndividualWorks={false}
+      />
+    );
+
+    const { data } = mockTableLayout.mock.calls[0][0];
+    expect(data[0].groupData.status).toBe(BaseContentStatuses.Published);
+  });
+
+  it('covers all actions and menu item clicks for both published and draft states in WorksTableMenusItems', () => {
+    render(
+      <WorksTable
+        visibleOpusGroups={[{ ...group, status: BaseContentStatuses.Published }]}
+        visibleUngroupedGroups={[]}
+        visibleUngroupedWorks={[{ ...individualWork, status: BaseContentStatuses.Draft }]}
+        showOpus
+        showUngrouped={false}
+        showIndividualWorks
+      />
+    );
+
+    const { data: rowsData } = mockTableLayout.mock.calls[0][0] as {
+      data: readonly BaseRowData<GroupHeaderData, OpusWork, IndividualWork>[];
+    };
+
+    const triggerMenuClicks = (menuItems: readonly (readonly MenuItem[])[]) => {
+      menuItems.flat().forEach((item) => {
+        if (item && typeof item.onClick === 'function') {
+          item.onClick();
+        }
+      });
+    };
+
+    rowsData.forEach((row) => {
+      if (row.type === 'group' && row.groupData) {
+        const groupHeader = row.groupData as GroupHeaderData;
+        if (groupHeader.menuActions?.menuItems) {
+          triggerMenuClicks(groupHeader.menuActions.menuItems);
+        }
+
+        if (row.subRows) {
+          row.subRows.forEach((subRow) => {
+            const subRowWithMenu = subRow as unknown as BaseRowData<unknown, OpusWork, IndividualWork>;
+            if (subRowWithMenu.menuActions?.menuItems) {
+              triggerMenuClicks(subRowWithMenu.menuActions.menuItems);
+            }
+          });
+        }
+      }
+
+      if (row.type === 'individual' && row.plainData) {
+        const plainDataWithMenu = row.plainData as unknown as BaseRowData<unknown, OpusWork, IndividualWork>;
+        if (plainDataWithMenu.menuActions?.menuItems) {
+          triggerMenuClicks(plainDataWithMenu.menuActions.menuItems);
+        }
+      }
+    });
+
+    expect(mockTableLayout).toHaveBeenCalled();
   });
 });

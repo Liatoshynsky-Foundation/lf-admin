@@ -3,10 +3,9 @@
 import { Box } from '@mui/material';
 import React from 'react';
 
-import { WorkStatus } from './works.mock';
 import { styles } from './WorksTable.styles';
 import { GroupMenuItems, WorkMenuItems } from './WorksTableMenusItems';
-import { WORKS_BASE_PATH } from '~/constants/creativity';
+import { WORKS_BASE_PATH, WorksStatusValue } from '~/constants/creativity';
 import { RowActions } from '~/shared/components/table-layout/components/RowActions';
 import { StatusBadge } from '~/shared/components/table-layout/components/StatusBadge';
 import { BaseRowData, ColumnDef, MenuItem } from '~/shared/components/table-layout/row-variants/Row.types';
@@ -25,9 +24,9 @@ export type GroupRowData = Readonly<{
   genre: string;
   startDate: string;
   endDate?: string;
-  status: WorkStatus;
+  status: WorksStatusValue;
   updatedAt: string;
-  works: ReadonlyArray<{ id: string; title: string; year: string }>;
+  works: ReadonlyArray<{ id: string; title: string }>;
 }>;
 
 export type GroupHeaderData = Readonly<{
@@ -36,7 +35,7 @@ export type GroupHeaderData = Readonly<{
   genre: string;
   startDate: string;
   endDate?: string;
-  status: WorkStatus;
+  status: WorksStatusValue;
   updatedAt: string;
 }> &
   ActionFields;
@@ -44,7 +43,6 @@ export type GroupHeaderData = Readonly<{
 export type OpusWork = Readonly<{
   id: string;
   title: string;
-  year: string;
 }> &
   ActionFields;
 
@@ -53,7 +51,7 @@ export type IndividualWork = Readonly<{
   title: string;
   year: string;
   genre: string;
-  status: WorkStatus;
+  status: WorksStatusValue;
   updatedAt: string;
 }> &
   ActionFields;
@@ -160,7 +158,6 @@ export function WorksTable({
       subRows: group.works.map((work) => ({
         id: work.id,
         title: work.title,
-        year: work.year,
         menuActions: {
           menuItems: WorkMenuItems({
             id: work.id,

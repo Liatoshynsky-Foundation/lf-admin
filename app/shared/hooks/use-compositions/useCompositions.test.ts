@@ -1,11 +1,18 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { toSuggestionAudio, toSuggestionNote, useCompositions } from './useCompositions';
+import { toSuggestionAudio, toSuggestionNote, useAllCompositions, useCompositionsForm } from './useCompositions';
+import { CompositionFiltersInput, useAllCompositionsQuery } from '~/types/graphql/generated/graphql';
 import { OpusCompositionData, OpusCompositionSuggestion } from '~/types/opus';
 
 jest.mock('~/shared/hooks/use-group-content/useGroupContent', () => ({
   createCompositionId: jest.fn(() => 'mocked-id')
 }));
+
+jest.mock('~/types/graphql/generated/graphql', () => ({
+  useAllCompositionsQuery: jest.fn()
+}));
+
+const mockedUseAllCompositionsQuery = jest.mocked(useAllCompositionsQuery);
 
 describe('useCompositions helpers', () => {
   it('toSuggestionAudio formats audio correctly', () => {
@@ -64,7 +71,7 @@ describe('useCompositions Hook', () => {
   });
 
   it('adds a new empty composition', () => {
-    const { result } = renderHook(() => useCompositions(defaultWorks, mockOnChange));
+    const { result } = renderHook(() => useCompositionsForm(defaultWorks, mockOnChange));
 
     act(() => {
       result.current.addComposition();
@@ -78,7 +85,7 @@ describe('useCompositions Hook', () => {
   });
 
   it('updates composition title', () => {
-    const { result } = renderHook(() => useCompositions(defaultWorks, mockOnChange));
+    const { result } = renderHook(() => useCompositionsForm(defaultWorks, mockOnChange));
 
     act(() => {
       result.current.updateCompositionTitle('1', 'Нова Симфонія');
@@ -89,7 +96,7 @@ describe('useCompositions Hook', () => {
   });
 
   it('fills composition data from partial suggestion', () => {
-    const { result } = renderHook(() => useCompositions(defaultWorks, mockOnChange));
+    const { result } = renderHook(() => useCompositionsForm(defaultWorks, mockOnChange));
 
     const suggestion: OpusCompositionSuggestion = {
       id: 'suggestion-partial',
@@ -111,7 +118,7 @@ describe('useCompositions Hook', () => {
   });
 
   it('fills composition data with completely empty suggestion', () => {
-    const { result } = renderHook(() => useCompositions(defaultWorks, mockOnChange));
+    const { result } = renderHook(() => useCompositionsForm(defaultWorks, mockOnChange));
 
     act(() => {
       result.current.fillComposition(0, { id: 'empty-id' } as OpusCompositionSuggestion);
@@ -123,7 +130,7 @@ describe('useCompositions Hook', () => {
   });
 
   it('manages modal states for create and edit', () => {
-    const { result } = renderHook(() => useCompositions(defaultWorks, mockOnChange));
+    const { result } = renderHook(() => useCompositionsForm(defaultWorks, mockOnChange));
 
     act(() => {
       result.current.openCreateModal(1);
@@ -145,7 +152,7 @@ describe('useCompositions Hook', () => {
   });
 
   it('handles modal submit to update existing composition', () => {
-    const { result } = renderHook(() => useCompositions(defaultWorks, mockOnChange));
+    const { result } = renderHook(() => useCompositionsForm(defaultWorks, mockOnChange));
 
     act(() => {
       result.current.openEditModal(1);
@@ -161,7 +168,7 @@ describe('useCompositions Hook', () => {
   });
 
   it('handles delete confirmation', () => {
-    const { result } = renderHook(() => useCompositions(defaultWorks, mockOnChange));
+    const { result } = renderHook(() => useCompositionsForm(defaultWorks, mockOnChange));
 
     act(() => {
       result.current.setDeleteTargetId('1');
@@ -178,7 +185,7 @@ describe('useCompositions Hook', () => {
   });
 
   it('fills composition data with full suggestion (uk title, year, genre)', () => {
-    const { result } = renderHook(() => useCompositions(defaultWorks, mockOnChange));
+    const { result } = renderHook(() => useCompositionsForm(defaultWorks, mockOnChange));
 
     const suggestion: OpusCompositionSuggestion = {
       id: 'sugg-full',
@@ -198,7 +205,7 @@ describe('useCompositions Hook', () => {
   });
 
   it('handleModalSubmit does not mutate works if editingIndex is null', () => {
-    const { result } = renderHook(() => useCompositions(defaultWorks, mockOnChange));
+    const { result } = renderHook(() => useCompositionsForm(defaultWorks, mockOnChange));
 
     act(() => {
       result.current.handleModalSubmit({ id: 'new-id', title: 'test', genre: '', year: '', audios: [], notes: [] });
@@ -210,7 +217,7 @@ describe('useCompositions Hook', () => {
   });
 
   it('handleDeleteConfirm does nothing if deleteTargetId is null', () => {
-    const { result } = renderHook(() => useCompositions(defaultWorks, mockOnChange));
+    const { result } = renderHook(() => useCompositionsForm(defaultWorks, mockOnChange));
 
     act(() => {
       result.current.handleDeleteConfirm();
@@ -218,5 +225,78 @@ describe('useCompositions Hook', () => {
 
     expect(mockOnChange).not.toHaveBeenCalled();
     expect(result.current.deleteTargetId).toBeNull();
+  });
+});
+
+describe('useAllCompositions', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockedUseAllCompositionsQuery.mockReturnValue({ data: undefined } as ReturnType<typeof useAllCompositionsQuery>);
+  });
+
+  it('calls query with standalone filter', () => {
+    renderHook(() => useAllCompositions());
+
+    expect(mockedUseAllCompositionsQuery).toHaveBeenCalledWith({
+      variables: {
+        filters: {
+          isStandalone: true
+        }
+      },
+      fetchPolicy: 'network-only',
+      skip: undefined
+    });
+  });
+
+  it('merges provided filters', () => {
+    const filters: CompositionFiltersInput = {
+      search: 'Symphony'
+    };
+
+    renderHook(() => useAllCompositions(filters));
+
+    expect(mockedUseAllCompositionsQuery).toHaveBeenCalledWith({
+      variables: {
+        filters: {
+          ...filters,
+          isStandalone: true
+        }
+      },
+      fetchPolicy: 'network-only',
+      skip: undefined
+    });
+  });
+
+  it('passes skip option', () => {
+    renderHook(() => useAllCompositions(undefined, { skip: true }));
+
+    expect(mockedUseAllCompositionsQuery).toHaveBeenCalledWith({
+      variables: {
+        filters: {
+          isStandalone: true
+        }
+      },
+      fetchPolicy: 'network-only',
+      skip: true
+    });
+  });
+
+  it('overrides isStandalone to true even if false is passed', () => {
+    const filters: CompositionFiltersInput = {
+      isStandalone: false
+    };
+
+    renderHook(() => useAllCompositions(filters));
+
+    expect(mockedUseAllCompositionsQuery).toHaveBeenCalledWith({
+      variables: {
+        filters: {
+          ...filters,
+          isStandalone: true
+        }
+      },
+      fetchPolicy: 'network-only',
+      skip: undefined
+    });
   });
 });

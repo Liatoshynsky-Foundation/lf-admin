@@ -6,7 +6,7 @@ import { graphqlErrors } from '~/constants/errors';
 import { Composition } from '~/domain/entities/Composition';
 import { Opus } from '~/domain/entities/Opus';
 import { OpusFilters } from '~/domain/repositories/opusRepository';
-import { OpusStatus } from '~/types/enums/common.enums';
+import { OpusNumberKind } from '~/types/graphql/generated/graphql';
 
 interface IdArgs {
   id: string;
@@ -18,15 +18,14 @@ interface SearchArgs {
   search: string;
 }
 interface FilterArgs {
-  filters?: NonNullable<Parameters<typeof mapFilters>[0]>;
+  filters?: NonNullable<Parameters<typeof mapFilters>[0]> & {
+    numberKind?: OpusNumberKind;
+  };
 }
 interface PaginatedArgs {
   page: number;
   limit: number;
   filters?: NonNullable<FilterArgs['filters']>;
-}
-interface CountArgs {
-  status?: string;
 }
 
 const assertAuthenticated = (context: GraphQLContext): void => {
@@ -68,9 +67,36 @@ export const OpusQuery = {
     return context.requestContainer.cradle.compositionsRepository.searchByTitle(search);
   },
 
-  allOpuses: endpointHandler<FilterArgs, Opus[]>(async ({ args: { filters }, repo }) =>
-    repo.findAll(mapFilters<OpusFilters>(filters))
-  ),
+  allOpuses: endpointHandler<FilterArgs, Opus[]>(async ({ args: { filters }, repo, requestContainer }) => {
+    const mappedFilters: OpusFilters = {
+      ...mapFilters<OpusFilters>(filters),
+      numberKind: filters?.numberKind ?? OpusNumberKind.Op
+    };
+    
+    const opuses = await repo.findAll(mappedFilters);
+    if (!opuses || opuses.length === 0) return [];
+
+    const opusIds = opuses.map((o) => o.id);
+    const compositionsRepo = requestContainer.cradle.compositionsRepository;
+    const allCompositions = await compositionsRepo.findByOpusIds(opusIds);
+
+    const compositionsByOpusId = new Map<string, typeof allCompositions>();
+  
+    for (const comp of allCompositions) {
+      if (comp.opusId) {
+        const idStr = String(comp.opusId);
+        if (!compositionsByOpusId.has(idStr)) {
+          compositionsByOpusId.set(idStr, []);
+        }
+      compositionsByOpusId.get(idStr)!.push(comp);
+      }
+    }
+
+    return opuses.map((opus) => ({
+      ...opus,
+      compositions: compositionsByOpusId.get(String(opus.id)) ?? []
+    }));
+  }),
 
   paginatedOpuses: endpointHandler<
     PaginatedArgs,
@@ -78,8 +104,4 @@ export const OpusQuery = {
   >(async ({ args: { page, limit, filters }, repo }) =>
     repo.findPaginated(page, limit, mapFilters<OpusFilters>(filters))
   ),
-
-  opusesCount: endpointHandler<CountArgs, number>(async ({ args: { status }, repo }) =>
-    repo.count(status ? { statuses: [status as OpusStatus] } : undefined)
-  )
 };

@@ -45,7 +45,6 @@ export function useWorksFiltering(): Readonly<{
   selectedFilters: Readonly<{
     status: readonly WorksStatusValue[];
     language: readonly WorksLanguageValue[];
-    genre: readonly string[];
   }>;
   toolbarProps: WorksFilteringToolbarProps;
   sortProps: WorksFilteringSortProps;
@@ -54,7 +53,6 @@ export function useWorksFiltering(): Readonly<{
   const [search, setSearch] = useState('');
   const [statusFilters, setStatusFilters] = useState<WorksStatusValue[]>([]);
   const [languageFilters, setLanguageFilters] = useState<WorksLanguageValue[]>([]);
-  const [genreFilters, setGenreFilters] = useState<string[]>([]);
   const [sortValue, setSortValue] = useState<FilesSortValue>('date_desc');
 
   useEffect(() => {
@@ -64,7 +62,7 @@ export function useWorksFiltering(): Readonly<{
     }
   }, []);
 
-  const activeFiltersCount = statusFilters.length + languageFilters.length + genreFilters.length;
+  const activeFiltersCount = statusFilters.length + languageFilters.length;
   const currentSortField: SortFieldValue = sortValue.startsWith('date') ? 'date' : 'name';
   const currentSortOption = SORT_OPTIONS.find((option) => option.value === sortValue) ?? SORT_OPTIONS[0];
 
@@ -75,7 +73,6 @@ export function useWorksFiltering(): Readonly<{
   const clearFilters = useCallback(() => {
     setStatusFilters([]);
     setLanguageFilters([]);
-    setGenreFilters([]);
   }, []);
 
   const handleSortFieldChange = useCallback((field: SortFieldValue) => {
@@ -99,13 +96,11 @@ export function useWorksFiltering(): Readonly<{
       const filterValues: Record<WorksFilterId, string[]> = {
         status: statusFilters,
         language: languageFilters,
-        genre: genreFilters
       };
 
       const filterOnChange: Record<WorksFilterId, (value: string[]) => void> = {
         status: (value) => setStatusFilters(value.filter(isWorksStatusValue)),
         language: (value) => setLanguageFilters(value.filter(isWorksLanguageValue)),
-        genre: (value) => setGenreFilters(value)
       };
 
       return WORKS_FILTERS.map((filter) => ({
@@ -118,7 +113,7 @@ export function useWorksFiltering(): Readonly<{
         onChange: filterOnChange[filter.id]
       }));
     },
-    [statusFilters, languageFilters, genreFilters]
+    [statusFilters, languageFilters]
   );
 
   const toolbarProps: WorksFilteringToolbarProps = useMemo(
@@ -156,7 +151,6 @@ export function useWorksFiltering(): Readonly<{
     selectedFilters: {
       status: statusFilters,
       language: languageFilters,
-      genre: genreFilters
     },
     toolbarProps,
     sortProps
