@@ -14,6 +14,7 @@ import { formatUsageCount } from '~/lib/utils/formatUsageCount';
 import { useUpdateAssetMutation } from '~/types/graphql/generated/graphql';
 
 const ICON_SIZE = 21;
+const FAVORITE_UPDATE_ERROR = 'Не вдалося оновити статус обраного файлу. Спробуйте пізніше.';
 
 const FILE_TYPES = {
   image: 'img',
@@ -42,9 +43,10 @@ export interface FileCardProps {
   isSelected?: boolean;
   onClick?: () => void;
   onAction?: (action: 'rename' | 'delete' | 'download', fileId: string) => void;
+  onToggleStar?: (fileId: string, next: boolean) => Promise<void> | void;
 }
 
-const FileCard = ({ fileType, fileData, isSelected = false, onClick, onAction }: FileCardProps) => {
+const FileCard = ({ fileType, fileData, isSelected = false, onClick, onAction, onToggleStar }: FileCardProps) => {
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
 
   const { id, name, dateAdded, isStarred = false, usageLinks, imageSrc } = fileData;
@@ -52,14 +54,19 @@ const FileCard = ({ fileType, fileData, isSelected = false, onClick, onAction }:
 
   const handleToggleStar = async () => {
     try {
+      if (onToggleStar) {
+        await onToggleStar(id, !isStarred);
+        return;
+      }
+
       await updateAsset({
         variables: {
           id,
           input: { isStarred: !isStarred }
         }
       });
-    } catch {
-      toast.error('');
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : FAVORITE_UPDATE_ERROR);
     }
   };
 

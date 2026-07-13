@@ -31,6 +31,7 @@ export type MediaModalFlowProps = {
   uploadAriaLabel?: string;
   mediaKind?: MediaKind;
   aspectRatio?: number;
+  persistUploadAsAsset?: boolean;
 };
 
 const GALLERY_LABELS: Record<MediaKind, string> = { image: 'Галерея', audio: 'Аудіо', pdf: 'Файли' };
@@ -56,7 +57,8 @@ export function MediaModalFlow({
   invalidFileError,
   uploadAriaLabel,
   mediaKind = 'image',
-  aspectRatio
+  aspectRatio,
+  persistUploadAsAsset
 }: Readonly<MediaModalFlowProps>) {
   const [state, dispatch] = useReducer(reducer, initial, buildInitialState);
 
@@ -64,7 +66,7 @@ export function MediaModalFlow({
   const galleryLabel = GALLERY_LABELS[mediaKind];
 
   const { isApplying, applyError, clearApplyState, clearApplyError, cancelInFlightApply, handleClose, runApply } =
-    useMediaModalApply({ open, onClose, onApply, directory });
+    useMediaModalApply({ open, onClose, onApply, directory, persistUploadAsAsset });
 
   const latestInitialRef = useRef<MediaModalOpenState | undefined>(initial);
   useEffect(() => {

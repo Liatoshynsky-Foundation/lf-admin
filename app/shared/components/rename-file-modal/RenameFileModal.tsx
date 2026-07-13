@@ -12,9 +12,10 @@ export type RenameFileModalProps = {
   onClose: () => void;
   fileId: string;
   currentFilename: string;
+  onRename?: (fileId: string, filename: string) => Promise<void> | void;
 };
 
-export function RenameFileModal({ open, onClose, fileId, currentFilename }: Readonly<RenameFileModalProps>) {
+export function RenameFileModal({ open, onClose, fileId, currentFilename, onRename }: Readonly<RenameFileModalProps>) {
   const { initialBaseName, extension } = useMemo(() => {
     const lastDotIndex = currentFilename.lastIndexOf('.');
     const hasExtension = lastDotIndex > 0;
@@ -50,6 +51,13 @@ export function RenameFileModal({ open, onClose, fileId, currentFilename }: Read
     }
 
     try {
+      if (onRename) {
+        await onRename(fileId, newFilename);
+        onClose();
+        toast.success('Файл успішно перейменовано');
+        return;
+      }
+
       await updateAsset({
         variables: {
           id: fileId,

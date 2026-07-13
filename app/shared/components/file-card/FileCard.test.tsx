@@ -1,10 +1,21 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import toast from 'react-hot-toast';
 
 import FileCard, { FileCardData, FileType } from './FileCard';
 
+const mockUpdateAsset = jest.fn();
+let mockIsUpdatingStar = false;
+
 jest.mock('~/types/graphql/generated/graphql', () => ({
   ...jest.requireActual('~/types/graphql/generated/graphql'),
-  useUpdateAssetMutation: () => [jest.fn(), { loading: false }]
+  useUpdateAssetMutation: () => [mockUpdateAsset, { loading: mockIsUpdatingStar }]
+}));
+
+jest.mock('react-hot-toast', () => ({
+  __esModule: true,
+  default: {
+    error: jest.fn()
+  }
 }));
 
 globalThis.ResizeObserver = jest.fn().mockImplementation((callback) => ({
@@ -25,6 +36,7 @@ describe('FileCard', () => {
   };
 
   afterEach(() => {
+    mockIsUpdatingStar = false;
     jest.clearAllMocks();
   });
 
@@ -59,6 +71,14 @@ describe('FileCard', () => {
 
   it('should not display star icon when isStarred is false', () => {
     render(<FileCard fileType="image" fileData={defaultFileData} />);
+
+    expect(screen.queryByAltText('Starred file')).not.toBeInTheDocument();
+  });
+
+  it('should treat missing isStarred as false', () => {
+    const { isStarred: _isStarred, ...fileDataWithoutStarFlag } = defaultFileData;
+
+    render(<FileCard fileType="image" fileData={fileDataWithoutStarFlag} />);
 
     expect(screen.queryByAltText('Starred file')).not.toBeInTheDocument();
   });
@@ -114,6 +134,12 @@ describe('FileCard', () => {
     });
   });
 
+  it('should fallback to image icon for unknown file type', () => {
+    render(<FileCard fileType={'unknown' as FileType} fileData={defaultFileData} />);
+
+    expect(screen.getByAltText('unknown icon')).toHaveAttribute('src', '/icons/img.svg');
+  });
+
   it('should display correct tooltip text for single usage link', () => {
     const linkedFileData = { ...defaultFileData, usageLinks: 1 };
     render(<FileCard fileType="image" fileData={linkedFileData} />);
@@ -133,6 +159,7 @@ describe('FileCard', () => {
     if (linkIcon) {
       fireEvent.mouseEnter(linkIcon);
       expect(screen.getByText('Використовується на сайті: 5 звʼязок')).toBeInTheDocument();
+      fireEvent.mouseLeave(linkIcon);
     }
   });
 
@@ -141,5 +168,105 @@ describe('FileCard', () => {
 
     const menuButton = screen.getByTestId('menu-button');
     expect(() => fireEvent.click(menuButton)).not.toThrow();
+  });
+
+  it('should call menu actions with file id', () => {
+    const onAction = jest.fn();
+
+    render(<FileCard fileType="image" fileData={defaultFileData} onAction={onAction} onClick={mockOnClick} />);
+
+    fireEvent.click(screen.getByTestId('menu-button'));
+    fireEvent.click(screen.getByText('Відкрити деталі'));
+    expect(mockOnClick).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByTestId('menu-button'));
+    fireEvent.click(screen.getByText('Перейменувати'));
+    expect(onAction).toHaveBeenCalledWith('rename', 'test-file-123');
+
+    fireEvent.click(screen.getByTestId('menu-button'));
+    fireEvent.click(screen.getByText('Завантажити'));
+    expect(onAction).toHaveBeenCalledWith('download', 'test-file-123');
+
+    fireEvent.click(screen.getByTestId('menu-button'));
+    fireEvent.click(screen.getByText('Видалити'));
+    expect(onAction).toHaveBeenCalledWith('delete', 'test-file-123');
+  });
+
+  it('should call onToggleStar from menu', async () => {
+    const onToggleStar = jest.fn().mockResolvedValue(undefined);
+
+    render(<FileCard fileType="image" fileData={defaultFileData} onToggleStar={onToggleStar} />);
+
+    fireEvent.click(screen.getByTestId('menu-button'));
+    fireEvent.click(screen.getByText('Додати в обрані'));
+
+    await waitFor(() => {
+      expect(onToggleStar).toHaveBeenCalledWith('test-file-123', true);
+    });
+  });
+
+  it('should update asset favorite state when onToggleStar is not provided', async () => {
+    render(<FileCard fileType="image" fileData={defaultFileData} />);
+
+    fireEvent.click(screen.getByTestId('menu-button'));
+    fireEvent.click(screen.getByText('Додати в обрані'));
+
+    await waitFor(() => {
+      expect(mockUpdateAsset).toHaveBeenCalledWith({
+        variables: {
+          id: 'test-file-123',
+          input: { isStarred: true }
+        }
+      });
+    });
+  });
+
+  it('should show error toast when favorite update fails', async () => {
+    mockUpdateAsset.mockRejectedValueOnce(new Error('Favorite failed'));
+
+    render(<FileCard fileType="image" fileData={defaultFileData} />);
+
+    fireEvent.click(screen.getByTestId('menu-button'));
+    fireEvent.click(screen.getByText('Додати в обрані'));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Favorite failed');
+    });
+  });
+
+  it('should show fallback error toast when favorite update fails without Error instance', async () => {
+    mockUpdateAsset.mockRejectedValueOnce('Favorite failed');
+
+    render(<FileCard fileType="image" fileData={defaultFileData} />);
+
+    fireEvent.click(screen.getByTestId('menu-button'));
+    fireEvent.click(screen.getByText('Додати в обрані'));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Не вдалося оновити статус обраного файлу. Спробуйте пізніше.');
+    });
+  });
+
+  it('should toggle starred file from visible star icon', async () => {
+    const onToggleStar = jest.fn().mockResolvedValue(undefined);
+    const starredFileData = { ...defaultFileData, isStarred: true };
+
+    render(<FileCard fileType="image" fileData={starredFileData} onClick={mockOnClick} onToggleStar={onToggleStar} />);
+
+    fireEvent.click(screen.getByAltText('Starred file'));
+
+    await waitFor(() => {
+      expect(onToggleStar).toHaveBeenCalledWith('test-file-123', false);
+    });
+    expect(mockOnClick).not.toHaveBeenCalled();
+  });
+
+  it('should render waiting cursor while favorite state is updating', () => {
+    mockIsUpdatingStar = true;
+    const starredFileData = { ...defaultFileData, isStarred: true };
+
+    render(<FileCard fileType="image" fileData={starredFileData} />);
+
+    expect(screen.getByAltText('Starred file').closest('div')).toHaveStyle({ cursor: 'wait' });
   });
 });

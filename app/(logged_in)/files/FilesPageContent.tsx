@@ -20,7 +20,6 @@ import {
   FILES_LOADING_STATE_DESCRIPTION,
   FILES_LOADING_STATE_TITLE,
   FILES_PAGE_TITLE,
-  FILES_UNKNOWN_SECTION_LABEL,
   FILES_UPLOAD_ACCEPT,
   FILES_UPLOAD_ALLOWED_EXTENSIONS,
   FILES_UPLOAD_ALLOWED_MIME_TYPES,
@@ -33,11 +32,7 @@ import { downloadFile } from '~/lib/utils/downloadFile';
 import FavouriteStarIcon from '~/public/icons/favourite-star.svg';
 import DeleteFileModal from '~/shared/components/delete-file-modal/DeleteFileModal';
 import { EmptyState } from '~/shared/components/empty-state';
-import {
-  type FileDetailsSidebarFile,
-  FileInfoSidebar,
-  type FileUsageLink
-} from '~/shared/components/file-info-sidebar/FileInfoSidebar';
+import { type FileDetailsSidebarFile, FileInfoSidebar } from '~/shared/components/file-info-sidebar/FileInfoSidebar';
 import {
   FilesCardsLayout,
   type FilesCardsLayoutItem,
@@ -57,32 +52,16 @@ import { RenameFileModal } from '~/shared/components/rename-file-modal/RenameFil
 import { ViewToggle } from '~/shared/components/view-toggle';
 import { useAllAssets } from '~/shared/hooks/use-assets/useAssets';
 import { useFilesFiltering } from '~/shared/hooks/use-files';
-import { AssetType, useCreateAssetMutation, useDeleteAssetMutation } from '~/types/graphql/generated/graphql';
-
-type FilesPageFileItem = FilesCardsLayoutItem & {
-  description?: string;
-  format?: string;
-  createdAtRaw?: string;
-  size?: string;
-  previewUrl?: string;
-  downloadUrl?: string;
-  addedBy?: { name: string; avatarUrl?: string };
-  usage: FileUsageLink[];
-};
+import {
+  toCreateAssetInput,
+  useHybridFiles,
+  useR2Files
+} from '~/shared/hooks/use-files/useHybridFiles';
+import { AssetType, useCreateAssetMutation, useDeleteAssetMutation, useUpdateAssetMutation } from '~/types/graphql/generated/graphql';
 
 type FilesPageContentProps = Readonly<{
   activeTab: FilesTabValue;
 }>;
-
-const assetCardTypeMap: Record<AssetType, FilesCardsLayoutItem['type']> = {
-  [AssetType.Image]: 'image',
-  [AssetType.Pdf]: 'pdf',
-  [AssetType.Audio]: 'audio',
-  [AssetType.Document]: 'document',
-  [AssetType.Spreadsheet]: 'spreadsheet',
-  [AssetType.Video]: 'video',
-  [AssetType.Archive]: 'archive'
-};
 
 const supportedUploadMimeTypes = new Set<string>(FILES_UPLOAD_ALLOWED_MIME_TYPES);
 const supportedUploadExtensions = new Set<string>(FILES_UPLOAD_ALLOWED_EXTENSIONS);
@@ -99,6 +78,34 @@ const isFilesSupportedFile = (file: File): boolean => {
   return Boolean(extension && supportedUploadExtensions.has(extension));
 };
 
+const getR2DeleteEndpoint = (fileUrl: string): string => {
+  const parsedUrl = new URL(fileUrl, 'http://localhost');
+  const pathParts = parsedUrl.pathname.split('/').filter(Boolean).map(decodeURIComponent);
+  const filename = pathParts.pop();
+
+  if (!filename) {
+    throw new Error('Не вдалося визначити файл для видалення.');
+  }
+
+  const folder = pathParts.join('/');
+  const encodedFilename = encodeURIComponent(filename);
+
+  if (!folder) {
+    return `/api/uploads/${encodedFilename}`;
+  }
+
+  return `/api/uploads/${encodedFilename}?folder=${encodeURIComponent(folder)}`;
+};
+
+const deleteR2FileByUrl = async (fileUrl: string): Promise<void> => {
+  const response = await fetch(getR2DeleteEndpoint(fileUrl), { method: 'DELETE' });
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok || data?.success === false) {
+    throw new Error(data?.error ?? 'Не вдалося видалити файл із Cloudflare R2.');
+  }
+};
+
 const renderFilesUpload: MediaModalRenderers['upload'] = (props) => (
   <UploadView
     {...props}
@@ -109,64 +116,11 @@ const renderFilesUpload: MediaModalRenderers['upload'] = (props) => (
   />
 );
 
-const formatDateAdded = (value: string) => {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleDateString('uk-UA');
-};
-
-const formatFileSize = (sizeBytes: number) => {
-  if (sizeBytes < 1024) {
-    return `${sizeBytes} B`;
-  }
-
-  const sizeKb = sizeBytes / 1024;
-  if (sizeKb < 1024) {
-    return `${sizeKb.toFixed(1)} KB`;
-  }
-
-  const sizeMb = sizeKb / 1024;
-  return `${sizeMb.toFixed(1)} MB`;
-};
-
-const formatFromMimeType = (mimeType: string, filename: string) => {
-  const ext = filename.split('.').pop()?.toLowerCase();
-
-  if (ext) {
-    if (ext === 'jpeg') return 'jpg';
-    return ext;
-  }
-
-  const byMime = mimeType.split('/')[1]?.toLowerCase();
-  if (!byMime) return undefined;
-
-  if (byMime.includes('spreadsheetml')) return 'xlsx';
-  if (byMime.includes('wordprocessingml')) return 'docx';
-  if (byMime.includes('zip')) return 'zip';
-  if (byMime.includes('rar')) return 'rar';
-  if (byMime.includes('svg')) return 'svg';
-  if (byMime === 'jpeg') return 'jpg';
-  if (byMime === 'wave' || byMime === 'x-wav') return 'wav';
-
-  return byMime;
-};
-
-const usageToLink = (pageId?: string | null) => {
-  if (!pageId) {
-    return undefined;
-  }
-
-  return pageId.startsWith('/') ? pageId : `/${pageId}`;
-};
-
 export function FilesPageContent({ activeTab }: FilesPageContentProps) {
   const [view, setView] = useState<FilesCardsLayoutView>('grid');
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const fileCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const pendingAssetCreationRef = useRef<Record<string, Promise<string>>>({});
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [deleteModalState, setDeleteModalState] = useState<{ open: boolean; fileId: string | null }>({
     open: false,
@@ -178,9 +132,13 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
     fileId: '',
     currentFilename: ''
   });
-  const { data, loading, error, refetch } = useAllAssets();
+  const { data, loading: assetsLoading, error: assetsError, refetch } = useAllAssets();
+  const { files: r2Files, loading: r2Loading, error: r2Error, removeFileByUrl: removeR2FileByUrl } = useR2Files();
   const [createAsset] = useCreateAssetMutation();
+  const [updateAsset] = useUpdateAssetMutation();
   const [deleteAsset, { loading: isDeleting }] = useDeleteAssetMutation();
+  const loading = assetsLoading || r2Loading;
+  const error = assetsError || r2Error;
 
   const handleItemRef = useCallback((itemId: string, node: HTMLDivElement | null) => {
     fileCardRefs.current[itemId] = node;
@@ -208,15 +166,15 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
     const file = result.selected.file;
     const { url, filename, originalName, mimeType, size } = result.uploadResult;
 
-    let assetType = 'document';
+    let assetType = AssetType.Document;
     const type = file.type.toLowerCase();
     const name = file.name.toLowerCase();
 
-    if (type.includes('spreadsheet') || name.endsWith('.xlsx') || name.endsWith('.xls')) assetType = 'spreadsheet';
-    else if (type.includes('pdf') || name.endsWith('.pdf')) assetType = 'pdf';
-    else if (type.includes('zip') || type.includes('rar') || name.endsWith('.rar')) assetType = 'archive';
-    else if (type.startsWith('audio/')) assetType = 'audio';
-    else if (type.startsWith('image/')) assetType = 'image';
+    if (type.includes('spreadsheet') || name.endsWith('.xlsx') || name.endsWith('.xls')) assetType = AssetType.Spreadsheet;
+    else if (type.includes('pdf') || name.endsWith('.pdf')) assetType = AssetType.Pdf;
+    else if (type.includes('zip') || type.includes('rar') || name.endsWith('.rar')) assetType = AssetType.Archive;
+    else if (type.startsWith('audio/')) assetType = AssetType.Audio;
+    else if (type.startsWith('image/')) assetType = AssetType.Image;
 
     const createResult = await createAsset({
       variables: {
@@ -239,29 +197,72 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
     await refetch();
   };
 
-  const allFiles = useMemo<FilesPageFileItem[]>(() => {
-    return (data?.allAssets ?? []).map((asset) => ({
-      id: asset.id,
-      type: assetCardTypeMap[asset.type],
-      name: asset.originalname || asset.filename,
-      dateAdded: formatDateAdded(asset.createdAt),
-      createdAtRaw: asset.createdAt,
-      isStarred: asset.isStarred,
-      usageLinks: asset.usageRefs.length,
-      downloadUrl: asset.url,
-      imageSrc: asset.type === AssetType.Image ? asset.url : undefined,
-      previewUrl: asset.type === AssetType.Image ? asset.url : undefined,
-      format: formatFromMimeType(asset.mimeType, asset.filename),
-      size: formatFileSize(asset.sizeBytes),
-      addedBy: asset.createdBy ? { name: asset.createdBy } : undefined,
-      usage: asset.usageRefs.map((usageRef, index) => ({
-        id: `${asset.id}-${index}`,
-        label: usageRef.pageId ?? FILES_UNKNOWN_SECTION_LABEL,
-        href: usageToLink(usageRef.pageId)
-      })),
-      description: asset.description ?? undefined
-    }));
-  }, [data?.allAssets]);
+  const allFiles = useHybridFiles(data?.allAssets, r2Files);
+
+  const ensureAssetPersisted = async (fileId: string): Promise<string> => {
+    const file = allFiles.find((item) => item.id === fileId);
+
+    if (!file) {
+      throw new Error('Файл не знайдено');
+    }
+
+    if (!file.isOrphan) {
+      return file.id;
+    }
+
+    const assetKey = file.downloadUrl ?? file.id;
+    const pendingAssetCreation = pendingAssetCreationRef.current[assetKey];
+
+    if (pendingAssetCreation) {
+      return pendingAssetCreation;
+    }
+
+    const assetCreation = (async () => {
+      const createResult = await createAsset({
+        variables: {
+          input: toCreateAssetInput(file)
+        }
+      });
+
+      const createdAsset = createResult.data?.createAsset;
+
+      if (!createdAsset) {
+        throw new Error(FILES_UPLOAD_FAILED_ERROR);
+      }
+
+      await refetch();
+
+      if (selectedFileId === fileId) {
+        setSelectedFileId(createdAsset.id);
+      }
+
+      return createdAsset.id;
+    })();
+
+    pendingAssetCreationRef.current[assetKey] = assetCreation;
+
+    try {
+      return await assetCreation;
+    } finally {
+      delete pendingAssetCreationRef.current[assetKey];
+    }
+  };
+
+  const updatePersistedAsset = async (
+    fileId: string,
+    input: { isStarred?: boolean; filename?: string; description?: string }
+  ) => {
+    const persistedId = await ensureAssetPersisted(fileId);
+
+    await updateAsset({
+      variables: {
+        id: persistedId,
+        input
+      }
+    });
+
+    await refetch();
+  };
 
   const handleDownload = async (fileUrl: string, filename: string) => {
     await downloadFile(fileUrl, filename);
@@ -284,16 +285,37 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
 
   const handleDeleteConfirm = async (id: string) => {
     try {
+      const fileToDelete = allFiles.find((file) => file.id === id);
+
+      if (!fileToDelete) {
+        throw new Error('Файл не знайдено');
+      }
+
+      const fileUrlToDelete = fileToDelete.downloadUrl ?? fileToDelete.id;
+
+      if (fileToDelete.isOrphan) {
+        await deleteR2FileByUrl(fileUrlToDelete);
+        toast.success('Файл успішно видалено');
+        setDeleteModalState({ open: false, fileId: null });
+        if (selectedFileId === id) setSelectedFileId(null);
+        removeR2FileByUrl(fileUrlToDelete);
+        return;
+      }
+
+      const persistedId = fileToDelete.id;
+
       await deleteAsset({
-        variables: { id },
+        variables: { id: persistedId },
         update: (cache) => {
-          cache.evict({ id: cache.identify({ __typename: 'Asset', id }) });
+          cache.evict({ id: cache.identify({ __typename: 'Asset', id: persistedId }) });
           cache.gc();
         }
       });
       toast.success('Файл успішно видалено');
       setDeleteModalState({ open: false, fileId: null });
-      if (selectedFileId === id) setSelectedFileId(null);
+      if (selectedFileId === id || selectedFileId === persistedId) setSelectedFileId(null);
+      removeR2FileByUrl(fileUrlToDelete);
+      await refetch();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Не вдалося видалити файл. Спробуйте пізніше.';
       toast.error(message);
@@ -420,6 +442,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
               setItemRef={handleItemRef}
               onItemClick={handleItemClick}
               onItemAction={handleItemAction}
+              onItemToggleStar={(item, next) => updatePersistedAsset(item.id, { isStarred: next })}
             />
           )}
 
@@ -446,6 +469,9 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
         <FileInfoSidebar
           file={sidebarFile}
           onClose={() => setSelectedFileId(null)}
+          onToggleStar={(fileId, next) => updatePersistedAsset(fileId, { isStarred: next })}
+          onDescriptionSave={(fileId, description) => updatePersistedAsset(fileId, { description })}
+          onDeleteRequest={(fileId) => setDeleteModalState({ open: true, fileId })}
           onRequestAction={(action) => {
             if (action.type === 'rename') {
               setRenameModalState({
@@ -464,12 +490,14 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
         onApply={handleUploadApply}
         renderers={{ upload: renderFilesUpload }}
         hideTabs={true}
+        persistUploadAsAsset={false}
       />
       <RenameFileModal
         open={renameModalState.open}
         fileId={renameModalState.fileId}
         currentFilename={renameModalState.currentFilename}
         onClose={() => setRenameModalState((prev) => ({ ...prev, open: false }))}
+        onRename={(fileId, filename) => updatePersistedAsset(fileId, { filename })}
       />
       <DeleteFileModal
         disableScrollLock
