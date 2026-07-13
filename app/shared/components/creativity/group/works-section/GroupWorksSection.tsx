@@ -1,221 +1,89 @@
-import { Autocomplete, Box, Divider, IconButton, Paper, Typography } from '@mui/material';
-import { createFilterOptions } from '@mui/material/Autocomplete';
-import { createContext, forwardRef, useCallback, useContext, useMemo, useState } from 'react';
+import { Box, IconButton, Typography } from '@mui/material';
+import { Pencil, Trash2 } from 'lucide-react';
 
 import { styles } from './GroupWorksSection.styles';
-import { GroupWork } from '~/constants/creativity';
-import { generateUniqueId } from '~/lib/utils/generateUniqueId';
-import PencilIcon from '~/public/icons/pencil.svg';
-import PlusIcon from '~/public/icons/plus.svg';
-import TrashIcon from '~/public/icons/trash.svg';
-import CompositionModal from '~/shared/components/composition-modal/CompositionModal';
-import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
-import Button from '~/shared/components/design-system/button/Button';
-import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
-
-interface LocalGroupWork extends GroupWork {
-  rowId?: string;
-}
+import Button from '~/components/design-system/button/Button';
+import { OPUS_DETAILS_LABELS } from '~/constants/opus';
+import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
+import CompositionModal from '~/shared/components/forms/opus-details-block/composition-modal/CompositionModal';
+import CompositionTitleInput from '~/shared/components/forms/opus-details-block/composition-title-input/CompositionTitleInput';
+import { useCompositions } from '~/shared/hooks/use-compositions/useCompositions';
+import type { OpusCompositionData } from '~/types/opus';
 
 type GroupWorksSectionProps = {
-  works: GroupWork[];
-  availableWorks: GroupWork[];
-  onChange: (works: GroupWork[]) => void;
+  works: OpusCompositionData[];
+  onChange: (works: OpusCompositionData[]) => void;
 };
 
-interface AutocompletePaperContextType {
-  isInputEmpty: boolean;
-  onSelectCreate: () => void;
-}
-
-const AutocompletePaperContext = createContext<AutocompletePaperContextType>({
-  isInputEmpty: true,
-  onSelectCreate: () => {}
-});
-
-const AutocompleteContextProvider = ({
-  isInputEmpty,
-  onSelectCreate,
-  children
-}: {
-  isInputEmpty: boolean;
-  onSelectCreate: () => void;
-  children: React.ReactNode;
-}) => {
-  const contextValue = useMemo(() => ({ isInputEmpty, onSelectCreate }), [isInputEmpty, onSelectCreate]);
-
-  return <AutocompletePaperContext.Provider value={contextValue}>{children}</AutocompletePaperContext.Provider>;
-};
-
-const AutocompletePaper = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLElement>>((props, ref) => {
-  const { isInputEmpty, onSelectCreate } = useContext(AutocompletePaperContext);
+export const GroupWorksSection = ({ works, onChange }: GroupWorksSectionProps) => {
+  const {
+    isModalOpen,
+    modalMode,
+    editingIndex,
+    deleteTargetId,
+    setDeleteTargetId,
+    addComposition,
+    openCreateModal,
+    openEditModal,
+    closeModal,
+    updateCompositionTitle,
+    fillComposition,
+    handleModalSubmit,
+    handleDeleteConfirm
+  } = useCompositions(works, onChange);
 
   return (
-    <Paper {...props} ref={ref} sx={styles.autocompletePaper}>
-      {!isInputEmpty && props.children}
-
-      <Box onMouseDown={(e) => e.preventDefault()} onClick={onSelectCreate} sx={styles.createWorkBox}>
-        <PlusIcon style={{ width: '20px', height: '20px' }} />
-        <Typography sx={styles.createWorkText}>Створити новий твір</Typography>
-      </Box>
-    </Paper>
-  );
-});
-AutocompletePaper.displayName = 'AutocompletePaper';
-
-const filter = createFilterOptions<GroupWork>();
-
-export const GroupWorksSection = ({ works, availableWorks, onChange }: GroupWorksSectionProps) => {
-  const [editingWorkId, setEditingWorkId] = useState<string | null>(null);
-  const [workIdToDelete, setWorkIdToDelete] = useState<string | null>(null);
-  const [searchValues, setSearchValues] = useState<Record<string, string>>({});
-
-  const [isCompositionModalOpen, setIsCompositionModalOpen] = useState(false);
-
-  const handleAddWork = () => {
-    const newId = generateUniqueId();
-    const newWork: LocalGroupWork = {
-      id: newId,
-      title: '',
-      rowId: newId
-    };
-    onChange([...works, newWork]);
-    setEditingWorkId(newId);
-
-    setSearchValues((prev) => ({ ...prev, [newId]: '' }));
-  };
-
-  const handleSelectWork = (currentId: string, selectedWork: GroupWork | null) => {
-    if (selectedWork) {
-      onChange(
-        works.map((work) =>
-          work.id === currentId
-            ? {
-              ...work,
-              id: selectedWork.id,
-              title: selectedWork.title,
-              genre: selectedWork.genre,
-              rowId: (work as LocalGroupWork).rowId || work.id
-            }
-            : work
-        )
-      );
-    }
-  };
-
-  const handleUpdateWorkText = (idToUpdate: string, value: string) => {
-    onChange(works.map((work) => (work.id === idToUpdate ? { ...work, title: value } : work)));
-  };
-
-  const handleConfirmDelete = () => {
-    if (workIdToDelete) {
-      onChange(works.filter((work) => work.id !== workIdToDelete));
-      if (editingWorkId === workIdToDelete) {
-        setEditingWorkId(null);
-      }
-      setWorkIdToDelete(null);
-    }
-  };
-
-  const handleCloseEdit = useCallback(() => setEditingWorkId(null), []);
-
-  return (
-    <>
-      <Box sx={styles.mainContainer}>
-        <Box sx={styles.headerRow}>
-          <Typography variant="body2" color="text.secondary">
-            Твори в групі
-          </Typography>
-
-          <Divider sx={styles.divider} />
-
-          <Button variant="outlined" color="primary" onClick={handleAddWork} sx={styles.addBtnTop}>
-            Додати
-          </Button>
-        </Box>
-
-        <Box sx={styles.worksList}>
-          {works.map((work: LocalGroupWork) => {
-            const isEditing = editingWorkId === work.id;
-
-            const currentSearchValue = searchValues[work.id] ?? work.title;
-            const isInputEmpty = currentSearchValue.trim() === '';
-            const itemKey = work.rowId || work.id;
-
-            return (
-              <Box key={itemKey} sx={styles.workItemRow}>
-                <Box sx={styles.autocompleteWrapper}>
-                  <AutocompleteContextProvider
-                    isInputEmpty={isInputEmpty}
-                    onSelectCreate={() => {
-                      handleCloseEdit();
-                      setIsCompositionModalOpen(true);
-                    }}
-                  >
-                    <Autocomplete
-                      disabled={!isEditing}
-                      options={availableWorks}
-                      getOptionLabel={(option) => (typeof option === 'string' ? option : option.title)}
-                      value={work}
-                      isOptionEqualToValue={(option, val) => option.id === val.id}
-                      getOptionDisabled={(option) => {
-                        return works.some((w) => w.id === option.id && w.id !== work.id);
-                      }}
-                      disableClearable
-                      forcePopupIcon={false}
-                      noOptionsText="Такого твору немає"
-                      filterOptions={(options, params) => {
-                        if (params.inputValue.trim() === '') {
-                          return [];
-                        }
-                        return filter(options, params);
-                      }}
-                      onChange={(_, newValue) => {
-                        if (newValue && typeof newValue !== 'string') {
-                          handleSelectWork(work.id, newValue);
-                        } else if (!newValue) {
-                          handleUpdateWorkText(work.id, '');
-                        }
-                      }}
-                      onInputChange={(_, newInputValue) => {
-                        setSearchValues((prev) => ({ ...prev, [work.id]: newInputValue }));
-                      }}
-                      PaperComponent={AutocompletePaper}
-                      renderInput={(params) => <CustomTextField {...params} placeholder="Назва твору" fullWidth />}
-                    />
-                  </AutocompleteContextProvider>
-                </Box>
-
-                <Box sx={styles.actionButtonsWrapper}>
-                  <IconButton
-                    data-testid="edit-work-btn"
-                    sx={styles.actionIcon}
-                    onClick={() => setEditingWorkId(isEditing ? null : work.id)}
-                  >
-                    <PencilIcon />
-                  </IconButton>
-                  <IconButton
-                    data-testid="delete-work-btn"
-                    sx={styles.actionIcon}
-                    onClick={() => setWorkIdToDelete(work.id)}
-                  >
-                    <TrashIcon />
-                  </IconButton>
-                </Box>
-              </Box>
-            );
-          })}
-        </Box>
+    <Box sx={styles.container}>
+      <Box sx={styles.compositionsHeader}>
+        <Typography sx={styles.compositionsTitle}>{OPUS_DETAILS_LABELS.compositions}</Typography>
+        <Box sx={styles.compositionsDivider} />
+        <Button variant="outlined" sx={styles.addBtnTop} onClick={addComposition}>
+          {OPUS_DETAILS_LABELS.addComposition}
+        </Button>
       </Box>
 
-      <DeleteCardModal
-        open={Boolean(workIdToDelete)}
-        onClose={() => setWorkIdToDelete(null)}
-        onDelete={handleConfirmDelete}
-        description="Ви збираєтесь видалити файл. Ви впевнені, що хочете продовжити?"
+      <Box sx={styles.compositionsList}>
+        {works.map((composition, index) => (
+          <Box
+            key={composition.id}
+            sx={{
+              ...(styles.compositionRow as object)
+            }}
+          >
+            <Box sx={styles.compositionInput}>
+              <CompositionTitleInput
+                value={composition.title}
+                onChangeText={(title) => updateCompositionTitle(composition.id, title)}
+                onSelectSuggestion={(suggestion) => fillComposition(index, suggestion)}
+                onCreateNew={() => openCreateModal(index)}
+              />
+            </Box>
+
+            <IconButton aria-label="Редагувати" onClick={() => openEditModal(index)} sx={styles.rowIcon}>
+              <Pencil size={18} strokeWidth={1.5} />
+            </IconButton>
+            <IconButton aria-label="Видалити" onClick={() => setDeleteTargetId(composition.id)} sx={styles.rowIcon}>
+              <Trash2 size={18} strokeWidth={1.5} />
+            </IconButton>
+          </Box>
+        ))}
+      </Box>
+
+      {isModalOpen && (
+        <CompositionModal
+          open={isModalOpen}
+          mode={modalMode}
+          initialValue={editingIndex !== null ? works[editingIndex] : undefined}
+          onClose={closeModal}
+          onSubmit={handleModalSubmit}
+        />
+      )}
+
+      <DeleteCompositionModal
+        open={Boolean(deleteTargetId)}
+        onClose={() => setDeleteTargetId(null)}
+        onConfirm={handleDeleteConfirm}
       />
-
-      <CompositionModal isOpen={isCompositionModalOpen} onClose={() => setIsCompositionModalOpen(false)} />
-    </>
+    </Box>
   );
 };

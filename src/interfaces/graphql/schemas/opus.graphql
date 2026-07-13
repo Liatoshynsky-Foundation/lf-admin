@@ -41,13 +41,27 @@ type Composition {
   updatedAt: String
 }
 
+type OpusGalleryItem {
+  id: ID!
+  src: String!
+  description: LocalizedString
+  altText: LocalizedString
+  crop: CropRect
+}
+
+type OpusPerformance {
+  id: ID!
+  title: LocalizedString
+  videoUrl: String
+}
+
 type Opus {
   id: ID!
   number: String!
   numberKind: OpusNumberKind
   title: LocalizedString!
   releaseYear: Int
-  name: String
+  name: LocalizedString
   additionalText: String
   creationYear: String
   endYear: String
@@ -56,8 +70,15 @@ type Opus {
   adminTitle: String
   slug: String
   description: LocalizedString
+  introDescription: LocalizedString
+  parts: LocalizedString
   keywords: LocalizedString
   coverImage: LocalizedImage
+
+  gallery: [OpusGalleryItem!]
+  performancesTitle: LocalizedString
+  performances: [OpusPerformance!]
+
   allowIndexation: LocalizedBoolean
   status: OpusStatus
   compositions: [Composition!]
@@ -100,7 +121,7 @@ input OpusFiltersInput {
 input CreateOpusInput {
   numberKind: OpusNumberKind
   number: String
-  name: String
+  name: JSON
   additionalText: String
   creationYear: String
   endYear: String
@@ -110,6 +131,11 @@ input CreateOpusInput {
   adminTitle: String
   title: JSON!
   description: JSON
+  introDescription: JSON
+  parts: JSON
+  gallery: JSON
+  performancesTitle: JSON
+  performances: JSON
   keywords: JSON
   allowIndexation: JSON
   coverImage: JSON
@@ -120,7 +146,7 @@ input CreateOpusInput {
 input UpdateOpusInput {
   numberKind: OpusNumberKind
   number: String
-  name: String
+  name: JSON
   additionalText: String
   creationYear: String
   endYear: String
@@ -130,6 +156,11 @@ input UpdateOpusInput {
   adminTitle: String
   title: JSON
   description: JSON
+  introDescription: JSON
+  parts: JSON
+  gallery: JSON
+  performancesTitle: JSON
+  performances: JSON
   keywords: JSON
   allowIndexation: JSON
   coverImage: JSON

@@ -1,7 +1,7 @@
 'use client';
 
-import { Box, Dialog, IconButton, MenuItem, TextField, Typography } from '@mui/material';
-import { GripVertical, Pencil, Trash2, X } from 'lucide-react';
+import { Box, IconButton, MenuItem, TextField, Typography } from '@mui/material';
+import { GripVertical, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import CompositionModal from './composition-modal/CompositionModal';
@@ -9,7 +9,8 @@ import CompositionTitleInput from './composition-title-input/CompositionTitleInp
 import { styles } from './OpusDetailsBlock.styles';
 import YearPicker from './year-picker/YearPicker';
 import Button from '~/components/design-system/button/Button';
-import { OPUS_DELETE_MODAL, OPUS_DETAILS_LABELS, OPUS_FIELD_LIMITS, OPUS_NUMBER_KIND_OPTIONS } from '~/constants/opus';
+import { OPUS_DETAILS_LABELS, OPUS_FIELD_LIMITS, OPUS_NUMBER_KIND_OPTIONS } from '~/constants/opus';
+import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
 import { createCompositionId } from '~/shared/hooks/use-upsert-opus/useUpsertOpus';
 import type {
   OpusCompositionData,
@@ -289,34 +290,11 @@ export default function OpusDetailsBlock({ value, onChange, errors }: Readonly<O
         onSubmit={handleModalSubmit}
       />
 
-      <Dialog
+      <DeleteCompositionModal
         open={Boolean(deleteTargetId)}
         onClose={() => setDeleteTargetId(null)}
-        disableScrollLock
-        PaperProps={{ sx: styles.deletePaper }}
-      >
-        <Box sx={styles.deleteHeader}>
-          <Typography sx={styles.deleteTitle}>{OPUS_DELETE_MODAL.title}</Typography>
-          <IconButton aria-label="Закрити" onClick={() => setDeleteTargetId(null)}>
-            <X size={24} strokeWidth={1.5} />
-          </IconButton>
-        </Box>
-        <Typography sx={styles.deleteDescription}>{OPUS_DELETE_MODAL.description}</Typography>
-        <Box sx={styles.deleteActions}>
-          <Button
-            variant="filled"
-            size="medium"
-            color="secondary"
-            onClick={handleDeleteConfirm}
-            sx={styles.deleteButton}
-          >
-            {OPUS_DELETE_MODAL.confirm}
-          </Button>
-          <Button variant="outlined" size="medium" color="primary" onClick={() => setDeleteTargetId(null)}>
-            {OPUS_DELETE_MODAL.cancel}
-          </Button>
-        </Box>
-      </Dialog>
+        onConfirm={handleDeleteConfirm}
+      />
     </Box>
   );
 }

@@ -5,7 +5,7 @@ import { opusServiceErrors } from '~/back-constants/errors';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
 import { LocalizedBoolean, LocalizedImage, LocalizedString } from '~/domain/entities/BaseContent';
-import type { Opus, OpusDescription, OpusNumberKind } from '~/domain/entities/Opus';
+import type { Opus, OpusDescription, OpusGalleryItem, OpusNumberKind, OpusPerformance } from '~/domain/entities/Opus';
 import { CompositionInput } from '~/domain/repositories/compositionRepository';
 import { CreateOpusInput, UpdateOpusInput } from '~/domain/repositories/opusRepository';
 import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerator';
@@ -25,7 +25,7 @@ type GQLComposition = {
 export type CreateOpusGQLInput = {
   numberKind?: OpusNumberKind;
   number?: string;
-  name?: string;
+  name?: LocalizedString;
   additionalText?: string;
   creationYear?: string;
   endYear?: string;
@@ -35,6 +35,13 @@ export type CreateOpusGQLInput = {
   adminTitle?: string;
   title: LocalizedString;
   description?: OpusDescription;
+
+  introDescription?: OpusDescription; 
+  parts?: OpusDescription;
+  gallery?: OpusGalleryItem[];
+  performancesTitle?: LocalizedString;
+  performances?: OpusPerformance[]
+
   keywords?: LocalizedString;
   allowIndexation?: LocalizedBoolean;
   coverImage?: LocalizedImage;
@@ -114,7 +121,13 @@ const buildOpusUpdateData = (
     allowIndexation: input.allowIndexation,
     coverImage: input.coverImage,
     status: input.status,
-    publishedAt: input.publishedAt
+    publishedAt: input.publishedAt,
+
+    introDescription: input.introDescription,
+    parts: input.parts,
+    gallery: input.gallery,
+    performancesTitle: input.performancesTitle,
+    performances: input.performances
   };
 
   return Object.fromEntries(Object.entries(candidate).filter(([, value]) => value !== undefined)) as UpdateOpusInput;
@@ -137,7 +150,7 @@ export const OpusMutation = {
       });
     }
 
-    const nameForSlug = input.name?.trim() || input.title?.uk;
+    const nameForSlug = input.name?.uk?.trim() || input.title?.uk;
 
     if (!nameForSlug) {
       throw new GraphQLError(opusServiceErrors.NAME_REQUIRED_FOR_SLUG, {
@@ -163,6 +176,8 @@ export const OpusMutation = {
       adminTitle: input.adminTitle ?? null,
       slug,
       description: input.description ?? null,
+      introDescription: input.introDescription ?? null,
+      parts: input.parts ?? null,
       keywords: input.keywords ?? null,
       allowIndexation: input.allowIndexation ?? null,
       coverImage: input.coverImage ?? null,

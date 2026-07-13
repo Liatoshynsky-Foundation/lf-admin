@@ -2,10 +2,25 @@ import { Model } from 'mongoose';
 
 import { createBaseRepository } from '../baseRepository/baseRepository';
 import { opusServiceErrors } from '~/back-constants/errors';
+import { LocalizedString } from '~/domain/entities/BaseContent';
 import { Opus } from '~/domain/entities/Opus';
 import { CreateOpusInput, IOpusRepository, OpusFilters } from '~/domain/repositories/opusRepository';
 import dbConnect from '~/infrastructure/db/connect';
 import { buildBaseQuery, createToEntity, getBaseSort } from '~/infrastructure/repositories/helpers';
+
+export type DbOpusGalleryItem = {
+  _id?: { toString(): string };
+  src: string;
+  description?: LocalizedString | null;
+  altText?: LocalizedString | null;
+  crop?: { x?: number; y?: number; width?: number; height?: number } | null;
+};
+
+export type DbOpusPerformance = {
+  _id?: { toString(): string };
+  title?: LocalizedString | null;
+  videoUrl?: string | null;
+};
 
 export type DbOpus = {
   _id: { toString(): string };
@@ -13,7 +28,7 @@ export type DbOpus = {
   title: Opus['title'];
   releaseYear?: number | null;
   numberKind: Opus['numberKind'];
-  name?: string | null;
+  name: Opus['name'];
   additionalText?: string | null;
   creationYear?: string | null;
   endYear?: string | null;
@@ -22,6 +37,11 @@ export type DbOpus = {
   adminTitle?: string | null;
   slug?: string | null;
   description: Opus['description'];
+  introDescription: Opus['introDescription'];
+  parts: Opus['parts'];
+  gallery?: DbOpusGalleryItem[];
+  performancesTitle: Opus['performancesTitle'];
+  performances?: DbOpusPerformance[];
   keywords: Opus['keywords'];
   allowIndexation: Opus['allowIndexation'];
   coverImage: Opus['coverImage'];
@@ -42,7 +62,7 @@ const toEntity = (doc: DbOpus): Opus =>
     title: doc.title,
     releaseYear: doc.releaseYear ?? undefined,
     numberKind: doc.numberKind ?? 'op',
-    name: doc.name ?? undefined,
+    name: typeof doc.name === 'string' ? { uk: doc.name, en: doc.name } : (doc.name ?? { uk: '', en: '' }),
     additionalText: doc.additionalText ?? undefined,
     creationYear: doc.creationYear ?? undefined,
     endYear: doc.endYear ?? undefined,
@@ -51,6 +71,31 @@ const toEntity = (doc: DbOpus): Opus =>
     adminTitle: doc.adminTitle ?? undefined,
     slug: doc.slug ?? undefined,
     description: doc.description ?? undefined,
+    introDescription: doc.introDescription ?? undefined,
+    parts: doc.parts ?? undefined,
+    performancesTitle: doc.performancesTitle ?? undefined,
+    gallery:
+      doc.gallery?.map((item) => ({
+        id: item._id?.toString() ?? '',
+        src: item.src,
+        description: item.description,
+        altText: item.altText,
+        crop:
+          item.crop?.x !== undefined && item.crop?.y !== undefined
+            ? {
+              x: Number(item.crop.x) || 0,
+              y: Number(item.crop.y) || 0,
+              width: Number(item.crop.width) || 0,
+              height: Number(item.crop.height) || 0
+            }
+            : null
+      })) ?? [],
+    performances:
+      doc.performances?.map((perf) => ({
+        id: perf._id?.toString() ?? '',
+        title: perf.title,
+        videoUrl: perf.videoUrl
+      })) ?? [],
     keywords: doc.keywords ?? undefined,
     allowIndexation: doc.allowIndexation ?? undefined,
     coverImage: doc.coverImage ?? undefined,
