@@ -22,7 +22,6 @@ export type Composition = {
   year?: number | null;
   genre?: string | null;
   genres?: string[];
-  categories?: string[];
   audioAvailable?: boolean;
   sheetAvailable?: boolean;
   sheetMusic?: CompositionSheetMusic[];

@@ -42,6 +42,12 @@ jest.mock('~/shared/components/empty-state', () => ({
   EmptyState: ({ title }: { title: string }) => <div data-testid="mock-empty-state">{title}</div>
 }));
 
+jest.mock('@mui/material/ButtonBase/TouchRipple', () => {
+  return function MockTouchRipple() {
+    return null;
+  };
+});
+
 const mockedUseWorksFiltering = jest.mocked(useWorksFiltering);
 const mockedUseAllOpusGroups = jest.mocked(useAllOpusGroups);
 const mockedUseAllUngroupedGroups = jest.mocked(useAllUngroupedGroups);
@@ -194,13 +200,16 @@ describe('WorksPageContent Branches Coverage', () => {
     expect(screen.getByText('Створити')).toBeInTheDocument();
   });
 
-  it('renders dropdown items on create button interaction', () => {
+  it('renders dropdown items on create button interaction', async () => {
     mockedUseWorksFiltering.mockReturnValue(defaultFilteringMock as unknown as ReturnType<typeof useWorksFiltering>);
 
     render(<WorksPageContent activeTab="all" />);
 
     const createButton = screen.getByRole('button', { name: /створити/i });
-    fireEvent.click(createButton);
+
+    await act(async () => {
+      fireEvent.click(createButton);
+    });
 
     expect(screen.getByTestId('dropdown-menu')).toBeInTheDocument();
   });

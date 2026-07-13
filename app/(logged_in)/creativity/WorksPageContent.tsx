@@ -80,12 +80,13 @@ const localizedTitle = (title: { uk: string; en: string }) => title.uk || title.
 
 function toGroupRowData(opus: GqlOpus): GroupRowData {
   const safeStatus = (opus.status as unknown as WorksStatusValue) || BaseContentStatuses.Draft;
+  const safeName = opus.name ?? { uk: '', en: '' };
 
   return {
     id: opus.id,
     numberLabel: opus.number,
-    title: localizedTitle(opus.title),
-    titleData: opus.title,
+    title: localizedTitle(safeName),
+    titleData: safeName,
     genre: opus.genre ?? '',
     startDate: opus.creationYear,
     endDate: opus.endYear ?? undefined,
@@ -229,7 +230,7 @@ const clientFiltering = (
     const hasEn = Boolean(value.en?.trim());
 
     if (hasUk && hasEn) {
-      return 'bilingual';
+      return 'bilingual'; 
     }
 
     if (hasEn) {

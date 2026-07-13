@@ -1,4 +1,4 @@
-import { CompositionsQuery } from './compositionsQuery'; // скоригуйте шлях за потреби
+import { CompositionsQuery } from './compositionsQuery';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { Composition } from '~/domain/entities/Composition';
 import type { ICompositionRepository } from '~/domain/repositories/compositionRepository';

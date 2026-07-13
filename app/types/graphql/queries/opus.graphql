@@ -122,6 +122,10 @@ query AllOpuses($filters: OpusFiltersInput) {
       uk
       en
     }
+    name {
+      uk
+      en
+    }
     genre
     status
     creationYear

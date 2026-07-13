@@ -15,7 +15,7 @@ jest.mock('~/shared/hooks/use-opuses/useOpuses', () => ({
       allOpuses: [
         {
           id: '1',
-          title: { uk: 'Перший струнний квартет', en: 'First String Quartet' },
+          name: { uk: 'Перший струнний квартет', en: 'First String Quartet' },
           type: 'group'
         }
       ]
