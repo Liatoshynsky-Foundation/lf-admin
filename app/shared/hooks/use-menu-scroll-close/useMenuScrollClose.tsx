@@ -7,8 +7,6 @@ interface UseMenuScrollCloseOptions {
 
 export function useMenuScrollClose({ onClose, anchorEl }: UseMenuScrollCloseOptions) {
   const disableTransitionRef = useRef(false);
-  const initialTop = useRef<number | null>(null);
-
   const open = Boolean(anchorEl);
 
   const handleClose = useCallback(() => {
@@ -19,14 +17,11 @@ export function useMenuScrollClose({ onClose, anchorEl }: UseMenuScrollCloseOpti
   useEffect(() => {
     if (!open || !anchorEl) return;
 
-    initialTop.current = anchorEl.getBoundingClientRect().top;
-
     const handleScroll = () => {
-      if (initialTop.current === null) return;
+      const rect = anchorEl.getBoundingClientRect();
+      const isFullyOffscreen = rect.bottom < 0 || rect.top > window.innerHeight;
 
-      const currentTop = anchorEl.getBoundingClientRect().top;
-
-      if (Math.abs(currentTop - initialTop.current) > 100) {
+      if (isFullyOffscreen) {
         disableTransitionRef.current = true;
         onClose();
       }

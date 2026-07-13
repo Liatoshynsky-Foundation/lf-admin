@@ -59,7 +59,6 @@ export function SortSelect<FieldValue extends string, SortValue extends string>(
 
   const handleCloseMenu = () => {
     setAnchorEl(null);
-    requestAnimationFrame(() => triggerRef.current?.focus());
   };
 
   const groups = [

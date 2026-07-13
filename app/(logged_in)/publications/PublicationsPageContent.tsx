@@ -1,8 +1,7 @@
 'use client';
 
-import { Box, Button, MenuItem } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import { ChevronDown } from 'lucide-react';
-import Link from 'next/link';
 import { useMemo, useRef, useState } from 'react';
 
 import { styles } from './PublicationsPageContent.styles';
@@ -28,7 +27,7 @@ import {
 import type { FilesSortValue } from '~/constants/sort';
 import CardsGrid from '~/shared/components/cards-grid/CardsGrid';
 import ContentCard, { type ContentType } from '~/shared/components/content-card/ContentCard';
-import DropdownMenu from '~/shared/components/dropdown-menu/DropdownMenu';
+import ActionMenu from '~/shared/components/dropdown-menu/ActionMenu';
 import { EmptyState } from '~/shared/components/empty-state';
 import { FilteringToolbar, SortSelect } from '~/shared/components/filtering-toolbar';
 import { PageHeader } from '~/shared/components/page-header/PageHeader';
@@ -362,7 +361,6 @@ function PublicationsCreateAction() {
 
   const handleCloseMenu = () => {
     setAnchorEl(null);
-    requestAnimationFrame(() => triggerRef.current?.focus());
   };
 
   return (
@@ -379,29 +377,22 @@ function PublicationsCreateAction() {
         Створити
       </Button>
 
-      <DropdownMenu
-        disableScrollLock
+      <ActionMenu
         anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
         onClose={handleCloseMenu}
-        sx={styles.createActionDropdownMenu}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-        menuList={
-          <Box sx={styles.menuListWrapper}>
-            {PUBLICATIONS_CREATE_OPTIONS.map((option) => (
-              <MenuItem
-                key={option.id}
-                component={Link}
-                href={option.href}
-                onClick={handleCloseMenu}
-                sx={styles.createActionMenuItem}
-              >
-                {option.label}
-              </MenuItem>
-            ))}
-          </Box>
-        }
+        menuItems={[
+          {
+            items: PUBLICATIONS_CREATE_OPTIONS.map((option) => ({
+              id: option.id,
+              href: option.href,
+              text: {
+                name: option.label
+              }
+            }))
+          }
+        ]}
       />
     </>
   );

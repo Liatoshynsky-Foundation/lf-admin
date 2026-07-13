@@ -1,4 +1,5 @@
 import { Block } from '@blocknote/core';
+import { Box, Button, TextField } from '@mui/material';
 import { fireEvent, render, screen } from '@testing-library/react';
 import React, { MouseEvent } from 'react';
 
@@ -22,10 +23,13 @@ type MockContentEditorProps = {
 
 jest.mock('~/shared/components/content-editor', () => ({
   ContentEditor: ({ persistence, initialContent }: MockContentEditorProps) => (
-    <textarea
-      data-testid="mock-content-editor"
+    <TextField
+      slotProps={{
+        htmlInput: { 'data-testid': 'mock-content-editor' }
+      }}
+      multiline
       defaultValue={initialContent ? 'has-content' : ''}
-      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
         persistence.onChange({
           blocks: [{ type: 'paragraph', content: e.target.value }]
         } as unknown as SerializedContent);
@@ -42,9 +46,9 @@ type MockTitleDropdownProps = {
 
 jest.mock('~/shared/components/divided-header/title-dropdown/TitleDropdown', () => ({
   TitleDropdown: ({ onMenuOpen, title }: MockTitleDropdownProps) => (
-    <button data-testid="mock-title-dropdown" onClick={onMenuOpen}>
+    <Button data-testid="mock-title-dropdown" onClick={onMenuOpen}>
       {title ?? 'Empty Title'}
-    </button>
+    </Button>
   )
 }));
 
@@ -56,25 +60,30 @@ type MockHeaderRightActionsProps = {
 jest.mock('~/shared/components/divided-header/header-right-actions/HeaderRightActions', () => {
   return function MockHeaderRightActions({ onMenuOpen, onPublish }: MockHeaderRightActionsProps) {
     return (
-      <div data-testid="mock-header-actions">
-        <button data-testid="mock-publish-quick-btn" onClick={onPublish}>
+      <Box data-testid="mock-header-actions">
+        <Button data-testid="mock-publish-quick-btn" onClick={onPublish}>
           Quick Publish
-        </button>
-        <button data-testid="mock-publish-menu-btn" onClick={onMenuOpen}>
+        </Button>
+        <Button data-testid="mock-publish-menu-btn" onClick={onMenuOpen}>
           Open Publish Menu
-        </button>
-      </div>
+        </Button>
+      </Box>
     );
   };
 });
 
 jest.mock('~/components/delete-card-modal/DeleteCardModal', () => ({
   __esModule: true,
-  default: ({ open, onDelete }: { open: boolean; onDelete: () => void }) =>
+  default: ({ open, onDelete, onClose }: { open: boolean; onDelete: () => void; onClose: () => void }) =>
     open ? (
-      <button data-testid="confirm-delete" onClick={onDelete}>
-        confirm delete
-      </button>
+      <Box data-testid="delete-modal-wrapper">
+        <Button data-testid="confirm-delete" onClick={onDelete}>
+          confirm delete
+        </Button>
+        <Button data-testid="close-delete-modal" onClick={onClose}>
+          cancel delete
+        </Button>
+      </Box>
     ) : null
 }));
 
@@ -84,6 +93,7 @@ describe('EditPublicationsView Component', () => {
   const mockOnAction = jest.fn();
   const mockOnDeleteConfirm = jest.fn();
   const mockOnSeoClick = jest.fn();
+  const mockOnBackClick = jest.fn();
 
   const defaultProps: EditPublicationsViewProps = {
     type: 'news',
@@ -100,7 +110,7 @@ describe('EditPublicationsView Component', () => {
     onAction: mockOnAction,
     onDeleteConfirm: mockOnDeleteConfirm,
     onSeoClick: mockOnSeoClick,
-    onBackClick: jest.fn()
+    onBackClick: mockOnBackClick
   };
 
   beforeEach(() => {
@@ -123,6 +133,18 @@ describe('EditPublicationsView Component', () => {
     expect(screen.getByTestId('mock-title-dropdown')).toHaveTextContent('Test News Title');
     expect(screen.getByTestId('mock-content-editor')).toBeInTheDocument();
     expect(screen.getByText('Чернетка')).toBeInTheDocument();
+  });
+
+  it('should pass initialContent to editor when content is valid', () => {
+    const propsWithContent: EditPublicationsViewProps = {
+      ...defaultProps,
+      editedContent: {
+        uk: { content: { blocks: [{ id: '1' }] as unknown as Block[], version: '1', lastModified: '' } },
+        en: { content: { blocks: [], version: '1', lastModified: '' } }
+      }
+    };
+    render(<EditPublicationsView {...propsWithContent} />);
+    expect(screen.getByTestId('mock-content-editor')).toHaveValue('has-content');
   });
 
   it('should render the layout correctly for media (no editor)', () => {
@@ -195,5 +217,50 @@ describe('EditPublicationsView Component', () => {
     fireEvent.click(screen.getByTestId('confirm-delete'));
 
     expect(mockOnDeleteConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it('should close the delete modal when onClose is triggered', () => {
+    render(<EditPublicationsView {...defaultProps} />);
+
+    fireEvent.click(screen.getByTestId('mock-publish-menu-btn'));
+    fireEvent.click(screen.getByText('Видалити'));
+
+    expect(screen.getByTestId('delete-modal-wrapper')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('close-delete-modal'));
+
+    expect(screen.queryByTestId('delete-modal-wrapper')).not.toBeInTheDocument();
+    expect(mockOnDeleteConfirm).not.toHaveBeenCalled();
+  });
+
+  it('should render an empty title in TitleDropdown when currentData or adminTitle is missing', () => {
+    const propsWithoutTitle: EditPublicationsViewProps = {
+      ...defaultProps,
+      currentData: null
+    };
+
+    render(<EditPublicationsView {...propsWithoutTitle} />);
+
+    expect(screen.getByTestId('mock-title-dropdown')).toHaveTextContent('');
+  });
+
+  it('should trigger onAction when the PUBLISH menu item is clicked', () => {
+    render(<EditPublicationsView {...defaultProps} />);
+
+    fireEvent.click(screen.getByTestId('mock-publish-menu-btn'));
+    fireEvent.click(screen.getByText('Опублікувати'));
+
+    expect(mockOnAction).toHaveBeenCalledTimes(1);
+    expect(mockOnAction).toHaveBeenCalledWith(MenuActionId.PUBLISH);
+  });
+
+  it('should trigger onAction when the CANCEL_PUBLICATION menu item is clicked', () => {
+    render(<EditPublicationsView {...defaultProps} />);
+
+    fireEvent.click(screen.getByTestId('mock-publish-menu-btn'));
+    fireEvent.click(screen.getByText('Скасувати публікацію'));
+
+    expect(mockOnAction).toHaveBeenCalledTimes(1);
+    expect(mockOnAction).toHaveBeenCalledWith(MenuActionId.CANCEL_PUBLICATION);
   });
 });

@@ -1,3 +1,4 @@
+import { Box } from '@mui/material';
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
@@ -7,13 +8,15 @@ jest.mock('~/utils/formatDate', () => ({
   formatDate: (date: string) => `formatted-${date}`
 }));
 
-jest.mock('~/shared/components/card-layout/CardMenu', () => {
-  return {
-    __esModule: true,
-    default: React.forwardRef<HTMLDivElement, { anchorEl: unknown }>(function CardMenuMock(props, ref) {
-      return <div ref={ref} data-testid="page-card-menu" data-open={Boolean(props.anchorEl)} />;
-    })
-  };
+jest.mock('~/shared/components/dropdown-menu/ActionMenu', () => {
+  interface ActionMenuProps {
+    anchorEl: HTMLElement | null;
+  }
+  const MockActionMenu = ({ anchorEl }: ActionMenuProps) => (
+    <Box data-testid="page-card-menu" data-open={Boolean(anchorEl).toString()} />
+  );
+  MockActionMenu.displayName = 'MockActionMenu';
+  return MockActionMenu;
 });
 
 globalThis.ResizeObserver = jest.fn().mockImplementation((callback: () => void) => ({
@@ -54,14 +57,15 @@ describe('PageCard Component', () => {
     render(<PageCard {...mockProps} />);
 
     const menuButton = screen.getByTestId('menu-button');
-    const menuElement = screen.getByTestId('page-card-menu');
-
+  
+    let menuElement = screen.getByTestId('page-card-menu');
     expect(menuButton).toBeInTheDocument();
     expect(menuElement).toBeInTheDocument();
     expect(menuElement).toHaveAttribute('data-open', 'false');
 
     fireEvent.click(menuButton);
 
+    menuElement = screen.getByTestId('page-card-menu');
     expect(menuElement).toHaveAttribute('data-open', 'true');
   });
 

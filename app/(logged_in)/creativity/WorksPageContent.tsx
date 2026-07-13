@@ -1,8 +1,7 @@
 'use client';
 
-import { Box, Button, MenuItem } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import { ChevronDown } from 'lucide-react';
-import Link from 'next/link';
 import { useRef, useState } from 'react';
 
 import { useWorksFiltering } from './useWorksFiltering';
@@ -25,7 +24,7 @@ import {
   type WorksTabValue
 } from '~/constants/creativity';
 import type { FilesSortValue } from '~/constants/sort';
-import DropdownMenu from '~/shared/components/dropdown-menu/DropdownMenu';
+import ActionMenu from '~/shared/components/dropdown-menu/ActionMenu';
 import { EmptyState } from '~/shared/components/empty-state';
 import { FilteringToolbar, SortSelect } from '~/shared/components/filtering-toolbar';
 import { PageHeader } from '~/shared/components/page-header/PageHeader';
@@ -143,7 +142,6 @@ function useDropdownState() {
 
   const handleClose = () => {
     setAnchorEl(null);
-    requestAnimationFrame(() => triggerRef.current?.focus());
   };
 
   const handleToggle = () => {
@@ -151,16 +149,6 @@ function useDropdownState() {
   };
 
   return { anchorEl, triggerRef, handleClose, handleToggle };
-}
-
-function DropdownItemsList<T extends { id: string }>({
-  items,
-  renderItem
-}: Readonly<{
-  items: readonly T[];
-  renderItem: (item: T) => React.ReactNode;
-}>) {
-  return <Box sx={styles.menuList}>{items.map((item) => renderItem(item))}</Box>;
 }
 
 function WorksCreateAction() {
@@ -183,30 +171,22 @@ function WorksCreateAction() {
         Створити
       </Button>
 
-      <DropdownMenu
-        disableScrollLock
+      <ActionMenu
         anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
         onClose={handleCloseMenu}
-        sx={styles.createDropdownMenu}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-        menuList={
-          <DropdownItemsList
-            items={WORKS_CREATE_OPTIONS}
-            renderItem={(option) => (
-              <MenuItem
-                key={option.id}
-                component={Link}
-                href={option.href}
-                onClick={handleCloseMenu}
-                sx={styles.createMenuItem}
-              >
-                {option.label}
-              </MenuItem>
-            )}
-          />
-        }
+        menuItems={[
+          {
+            items: WORKS_CREATE_OPTIONS.map((option) => ({
+              id: option.id,
+              href: option.href,
+              text: {
+                name: option.label
+              }
+            }))
+          }
+        ]}
       />
     </>
   );
@@ -230,7 +210,7 @@ const clientFiltering = (
     const hasEn = Boolean(value.en?.trim());
 
     if (hasUk && hasEn) {
-      return 'bilingual'; 
+      return 'bilingual';
     }
 
     if (hasEn) {

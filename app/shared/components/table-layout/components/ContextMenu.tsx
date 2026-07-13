@@ -22,7 +22,6 @@ export function ContextMenu({
 
   const handleClose = useCallback(() => {
     setAnchorEl(null);
-    requestAnimationFrame(() => triggerRef.current?.focus());
   }, []);
 
   return (
@@ -40,7 +39,19 @@ export function ContextMenu({
         </IconButton>
       </Box>
 
-      <ActionMenu anchorEl={anchorEl} onClose={handleClose} menuItems={items} />
+      <ActionMenu
+        anchorEl={anchorEl}
+        onClose={handleClose}
+        menuItems={items}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right'
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right'
+        }}
+      />
     </>
   );
 }

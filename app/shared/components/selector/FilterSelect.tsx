@@ -181,7 +181,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
                   <FilterSelectItem
                     key={option.value}
                     label={option.label}
-                    onClick={() => !optionDisabled && handleOptionClick(option)}
+                    onClick={() => handleOptionClick(option)}
                     selected={isSelected}
                     disabled={optionDisabled}
                     sx={filterSelectStyles.menuItem}
