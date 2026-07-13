@@ -145,7 +145,20 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
   },
 
   saveAsDraft: (_pageId: string) => {
-    set({ isChanged: false });
+    const newBlocks = get().blocks[_pageId];
+    const newBlocksOrder = get().blocksOrder[_pageId];
+
+    set({
+      isChanged: false,
+      originalBlocks: {
+        ...get().blocks,
+        [_pageId]: newBlocks
+      },
+      originalBlocksOrder: {
+        ...get().blocksOrder,
+        [_pageId]: newBlocksOrder
+      }
+    });
   },
 
   discardChanges: (pageId: string) => {
@@ -167,7 +180,20 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
   },
 
   publishPage: (_pageId: string) => {
-    set({ isChanged: false });
+    const newBlocks = get().blocks[_pageId];
+    const newBlocksOrder = get().blocksOrder[_pageId];
+
+    set({
+      isChanged: false,
+      originalBlocks: {
+        ...get().blocks,
+        [_pageId]: newBlocks
+      },
+      originalBlocksOrder: {
+        ...get().blocksOrder,
+        [_pageId]: newBlocksOrder
+      }
+    });
   },
 
   setLocale: (locale: 'uk' | 'en') => set({ locale })

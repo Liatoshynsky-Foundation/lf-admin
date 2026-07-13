@@ -7,13 +7,13 @@ type HeaderProps = {
   onPreview: () => void;
   onSave: () => void;
   isSaving: boolean;
-  onLanguageChange: (lang: 'ua' | 'en') => void;
+  onLanguageChange: (lang: 'uk' | 'en') => void;
   children?: React.ReactNode;
 };
 
 jest.mock('../language-switcher/LanguageSwitcher', () => ({
   __esModule: true,
-  default: ({ languageSwitcher }: { languageSwitcher: (lang: 'ua' | 'en') => void }) => (
+  default: ({ languageSwitcher }: { languageSwitcher: (lang: 'uk' | 'en') => void }) => (
     <button data-testid="language-switcher" onClick={() => languageSwitcher('en')}>
       Switch Language
     </button>
@@ -37,48 +37,106 @@ describe('Header', () => {
     onSave: jest.fn(),
     onCancel: jest.fn(),
     isSaving: false,
-    onLanguageChange: jest.fn()
+    onLanguageChange: jest.fn(),
+    isActionsDisabled: true,
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('should render title and description', () => {
-    render(<Header {...defaultProps} />);
-    expect(screen.getByText('Про нас')).toBeInTheDocument();
-    expect(screen.getByText('Редагуйте та змінюйте вміст сторінки “Про нас”.')).toBeInTheDocument();
+  describe('UI', () => {
+    it('should render title, description & "Скасувати зміни" and "Зберегти" buttons ', () => {
+      render(<Header {...defaultProps} />);
+      expect(screen.getByText('Про нас')).toBeInTheDocument();
+      expect(screen.getByText('Редагуйте та змінюйте вміст сторінки “Про нас”.')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Скасувати зміни/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Зберегти/i })).toBeInTheDocument();
+    });
+  });
+  describe('actions logic', () => {
+
+    it.each([
+      {
+        verb: 'call',
+        buttonName: 'Попередній перегляд',
+        propsAction: 'onPreview' as const,
+        props: { isActionsDisabled: false },
+        expectedCall: true,
+        condition: ''
+      },
+      {
+        verb: 'NOT call',
+        buttonName: 'Зберегти',
+        propsAction: 'onSave' as const,
+        props: { isActionsDisabled: true },
+        expectedCall: false,
+        condition: 'if isActionsDisabled is true'
+      },
+      {
+        verb: 'NOT call',
+        buttonName: 'Скасувати зміни',
+        propsAction: 'onCancel' as const,
+        props: { isActionsDisabled: true },
+        expectedCall: false,
+        condition: 'if isActionsDisabled is true'
+      },
+      {
+        verb: 'call',
+        buttonName: 'Зберегти',
+        propsAction: 'onSave' as const,
+        props: { isActionsDisabled: false },
+        expectedCall: true,
+        condition: 'if isActionsDisabled is false'
+      },
+      {
+        verb: 'call',
+        buttonName: 'Скасувати зміни',
+        propsAction: 'onCancel' as const,
+        props: { isActionsDisabled: false },
+        expectedCall: true,
+        condition: 'if isActionsDisabled is false'
+      },
+    ])(
+      'should $verb $propsAction when "$buttonName" button is clicked $condition',
+      ({ buttonName, propsAction, props, expectedCall }) => {
+        const mergedProps = { ...defaultProps, ...props };
+        render(<Header {...mergedProps} />);
+
+        const button = screen.getByRole('button', { name: new RegExp(buttonName, 'i') });
+        fireEvent.click(button);
+
+        if (expectedCall) {
+          expect(mergedProps[propsAction]).toHaveBeenCalledTimes(1);
+        } else {
+          expect(mergedProps[propsAction]).not.toHaveBeenCalled();
+        }
+      }
+    );
+
+    it('should call onLanguageChange when LanguageSwitcher is used', () => {
+      render(<Header {...defaultProps} />);
+      const switcher = screen.getByTestId('language-switcher');
+      fireEvent.click(switcher);
+      expect(defaultProps.onLanguageChange).toHaveBeenCalledWith('en');
+    });
   });
 
-  it('should call onPreview when "Попередній перегляд" button is clicked', () => {
-    render(<Header {...defaultProps} />);
-    const previewButton = screen.getByRole('button', { name: /Попередній перегляд/i });
-    fireEvent.click(previewButton);
-    expect(defaultProps.onPreview).toHaveBeenCalledTimes(1);
-  });
+  describe('UI states', () => {
+    it('should disable "Зберегти" button when isSaving is true', () => {
+      render(<Header {...defaultProps} isSaving={true} />);
+      const saveButton = screen.getByRole('button', { name: /Зберегти/i });
+      expect(saveButton).toBeDisabled();
+    });
 
-  it('should call onSave when "Зберегти" button is clicked', () => {
-    render(<Header {...defaultProps} />);
-    const saveButton = screen.getByRole('button', { name: /Зберегти/i });
-    fireEvent.click(saveButton);
-    expect(defaultProps.onSave).toHaveBeenCalledTimes(1);
-  });
+    it('should disable "Скасувати зміни" and "Зберегти" buttons when isActionsDisabled is true', () => {
+      render(<Header {...defaultProps} isActionsDisabled={true} />);
 
-  it('should disable "Зберегти" button when isSaving is true', () => {
-    render(<Header {...defaultProps} isSaving={true} />);
-    const saveButton = screen.getByRole('button', { name: /Зберегти/i });
-    expect(saveButton).toBeDisabled();
-  });
+      const cancelButton = screen.getByRole('button', { name: /Скасувати зміни/i });
+      const saveButton = screen.getByRole('button', { name: /Зберегти/i });
 
-  it('should render "Скасувати зміни" button', () => {
-    render(<Header {...defaultProps} />);
-    expect(screen.getByRole('button', { name: /Скасувати зміни/i })).toBeInTheDocument();
-  });
-
-  it('should call onLanguageChange when LanguageSwitcher is used', () => {
-    render(<Header {...defaultProps} />);
-    const switcher = screen.getByTestId('language-switcher');
-    fireEvent.click(switcher);
-    expect(defaultProps.onLanguageChange).toHaveBeenCalledWith('en');
+      expect(cancelButton).toBeDisabled();
+      expect(saveButton).toBeDisabled();
+    });
   });
 });
