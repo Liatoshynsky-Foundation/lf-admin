@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { styles } from './GroupPerformancesSection.styles';
 import { GroupPerformance } from '~/constants/creativity';
+import { EditorLanguage } from '~/constants/publications';
 import { generateUniqueId } from '~/lib/utils/generateUniqueId';
 import PlusIcon from '~/public/icons/plus.svg';
 import TrashIcon from '~/public/icons/trash.svg';
@@ -11,6 +12,7 @@ import Button from '~/shared/components/design-system/button/Button';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 
 type GroupPerformancesSectionProps = {
+  currentLanguage: EditorLanguage;
   sectionTitle: string;
   performances: GroupPerformance[];
   onChangeSectionTitle: (title: string) => void;
@@ -56,18 +58,21 @@ const renderLinkPreview = (url: string) => {
 };
 
 export const GroupPerformancesSection = ({
+  currentLanguage,
   sectionTitle,
   performances,
   onChangeSectionTitle,
   onChangePerformances
 }: GroupPerformancesSectionProps) => {
+  const langKey = currentLanguage === 'UA' ? 'uk' : 'en';
+
   const [performanceIdToDelete, setPerformanceIdToDelete] = useState<string | null>(null);
 
   const handleAddPerformance = () => {
     const newPerformance: GroupPerformance = {
       id: generateUniqueId(),
       url: '',
-      caption: ''
+      caption: { uk: '', en: '' }
     };
     onChangePerformances([...performances, newPerformance]);
   };
@@ -79,8 +84,27 @@ export const GroupPerformancesSection = ({
     }
   };
 
-  const handleUpdatePerformance = (idToUpdate: string, field: keyof GroupPerformance, value: string) => {
-    onChangePerformances(performances.map((item) => (item.id === idToUpdate ? { ...item, [field]: value } : item)));
+  const handleUpdateUrl = (idToUpdate: string, value: string) => {
+    onChangePerformances(
+      performances.map((item) => (item.id === idToUpdate ? { ...item, url: value } : item))
+    );
+  };
+
+  const handleUpdateCaption = (idToUpdate: string, value: string) => {
+    onChangePerformances(
+      performances.map((item) =>
+        item.id === idToUpdate
+          ? {
+            ...item,
+            caption: {
+              uk: item.caption?.uk || '',
+              en: item.caption?.en || '',
+              [langKey]: value           
+            }
+          }
+          : item
+      )
+    );
   };
 
   return (
@@ -105,7 +129,7 @@ export const GroupPerformancesSection = ({
             <Box key={item.id} sx={styles.performanceItemRow}>
               <Box sx={styles.inputsWrapper}>
                 <Tooltip
-                  title={renderLinkPreview(item.url)}
+                  title={renderLinkPreview(item.url || '')}
                   placement="top-start"
                   enterDelay={400}
                   slotProps={{
@@ -119,7 +143,7 @@ export const GroupPerformancesSection = ({
                     <CustomTextField
                       label="Canonical URL"
                       value={item.url}
-                      onChange={(e) => handleUpdatePerformance(item.id, 'url', e.target.value)}
+                      onChange={(e) => handleUpdateUrl(item.id || '', e.target.value)}
                       fullWidth
                     />
                   </Box>
@@ -127,13 +151,13 @@ export const GroupPerformancesSection = ({
 
                 <CustomTextField
                   label="Підпис"
-                  value={item.caption}
-                  onChange={(e) => handleUpdatePerformance(item.id, 'caption', e.target.value)}
+                  value={item.caption?.[langKey] || ''}
+                  onChange={(e) => handleUpdateCaption(item.id || '', e.target.value)}
                   fullWidth
                 />
               </Box>
 
-              <IconButton onClick={() => setPerformanceIdToDelete(item.id)} sx={styles.actionIcon}>
+              <IconButton onClick={() => setPerformanceIdToDelete(item.id || '')} sx={styles.actionIcon}>
                 <TrashIcon />
               </IconButton>
             </Box>

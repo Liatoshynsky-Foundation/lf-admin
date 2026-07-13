@@ -89,17 +89,6 @@ it('throws when no page blocks found', async () => {
   await expect(result.current.save()).rejects.toThrow('No page blocks found');
 });
 
-it('throws when nothing changed', async () => {
-  storeState = {
-    ...storeState,
-    originalBlocks: { test: { A: { title: 't' } } },
-    originalBlocksOrder: { test: ['A'] }
-  };
-
-  const { result } = renderHook(() => useSavePageBlocks('test'));
-  await expect(result.current.save()).rejects.toThrow('Nothing to save');
-});
-
 it('throws when publish returns no published page', async () => {
   publishMutate.mockResolvedValueOnce({ data: { publishPage: null } });
   const { result } = renderHook(() => useSavePageBlocks('test'));

@@ -61,10 +61,11 @@ const mockOnChangeSectionTitle = jest.fn();
 const mockOnChangePerformances = jest.fn();
 
 const defaultProps = {
+  currentLanguage: 'UA' as const,
   sectionTitle: 'Тестовий заголовок виступів',
   performances: [
-    { id: '1', url: 'https://youtube.com/watch?v=123', caption: 'Перший виступ' },
-    { id: '2', url: 'https://example.com', caption: 'Другий виступ' }
+    { id: '1', url: 'https://youtube.com/watch?v=123', caption: { uk: 'Перший виступ', en: 'First performance' } },
+    { id: '2', url: 'https://example.com', caption: { uk: 'Другий виступ', en: 'Second performance' } }
   ],
   onChangeSectionTitle: mockOnChangeSectionTitle,
   onChangePerformances: mockOnChangePerformances
@@ -127,7 +128,7 @@ describe('GroupPerformancesSection Component', () => {
     expect(mockOnChangePerformances).toHaveBeenCalledTimes(1);
     expect(mockOnChangePerformances).toHaveBeenCalledWith([
       ...defaultProps.performances,
-      { id: 'mock-uuid-1234', url: '', caption: '' }
+      { id: 'mock-uuid-1234', url: '', caption: { uk: '', en: '' } }
     ]);
   });
 
@@ -139,7 +140,7 @@ describe('GroupPerformancesSection Component', () => {
 
     expect(mockOnChangePerformances).toHaveBeenCalledTimes(1);
     expect(mockOnChangePerformances).toHaveBeenCalledWith([
-      { id: '1', url: 'https://new-link.com', caption: 'Перший виступ' },
+      { id: '1', url: 'https://new-link.com', caption: { uk: 'Перший виступ', en: 'First performance' } },
       defaultProps.performances[1]
     ]);
   });
@@ -153,7 +154,7 @@ describe('GroupPerformancesSection Component', () => {
     expect(mockOnChangePerformances).toHaveBeenCalledTimes(1);
     expect(mockOnChangePerformances).toHaveBeenCalledWith([
       defaultProps.performances[0],
-      { id: '2', url: 'https://example.com', caption: 'Оновлений підпис' }
+      { id: '2', url: 'https://example.com', caption: { uk: 'Оновлений підпис', en: 'Second performance' } }
     ]);
   });
 
@@ -192,5 +193,69 @@ describe('GroupPerformancesSection Component', () => {
 
     expect(mockOnChangePerformances).not.toHaveBeenCalled();
     expect(screen.queryByTestId('mock-delete-modal')).not.toBeInTheDocument();
+  });
+
+  it('should handle empty URL and URL without HTTP protocol correctly', () => {
+    const propsWithEdgeCaseUrls = {
+      ...defaultProps,
+      performances: [
+        { id: '3', url: '', caption: { uk: 'Порожній', en: 'Empty' } },
+        { id: '4', url: 'example.com/video', caption: { uk: 'Без HTTP', en: 'No HTTP' } }
+      ]
+    };
+
+    render(<GroupPerformancesSection {...propsWithEdgeCaseUrls} />);
+
+    const urlInputs = screen.getAllByTestId('mock-input-Canonical URL');
+    expect(urlInputs).toHaveLength(2);
+    expect(urlInputs[0]).toHaveValue('');
+    expect(urlInputs[1]).toHaveValue('example.com/video');
+  });
+
+  it('should update caption in English and handle missing caption objects', () => {
+    const propsWithEnglish = {
+      ...defaultProps,
+      currentLanguage: 'EN' as const,
+      performances: [{ id: '3', url: 'https://youtube.com' }]
+    };
+
+    render(<GroupPerformancesSection {...propsWithEnglish} />);
+
+    const captionInputs = screen.getAllByTestId('mock-input-Підпис');
+    expect(captionInputs[0]).toHaveValue('');
+    fireEvent.change(captionInputs[0], { target: { value: 'Updated EN Caption' } });
+    expect(mockOnChangePerformances).toHaveBeenCalledWith([
+      {
+        id: '3',
+        url: 'https://youtube.com',
+        caption: {
+          uk: '',
+          en: 'Updated EN Caption'
+        }
+      }
+    ]);
+  });
+
+  it('should handle undefined item.id correctly (fallback to empty string)', () => {
+    const propsWithoutId = {
+      ...defaultProps,
+      performances: [
+        {
+          id: undefined,
+          url: 'https://test.com',
+          caption: { uk: 'Тест', en: 'Test' }
+        }
+      ]
+    };
+
+    render(<GroupPerformancesSection {...propsWithoutId} />);
+
+    const urlInput = screen.getByTestId('mock-input-Canonical URL');
+    fireEvent.change(urlInput, { target: { value: 'https://test.com/new' } });
+    const captionInput = screen.getByTestId('mock-input-Підпис');
+    fireEvent.change(captionInput, { target: { value: 'Новий підпис' } });
+    const trashIcon = screen.getByTestId('icon-trash');
+    fireEvent.click(trashIcon);
+    expect(mockOnChangePerformances).toHaveBeenCalled();
   });
 });

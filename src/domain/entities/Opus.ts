@@ -14,6 +14,20 @@ export type OpusDescription = {
   };
 };
 
+export type OpusGalleryItem = {
+  id: string;
+  src: string;
+  description?: LocalizedString | null;
+  altText?: LocalizedString | null;
+  crop?: { x: number; y: number; width: number; height: number } | null;
+};
+
+export type OpusPerformance = {
+  id?: string;
+  title?: LocalizedString | null;
+  videoUrl?: string | null;
+};
+
 export type Opus = {
   id: string;
   number: string;
@@ -21,7 +35,7 @@ export type Opus = {
   releaseYear?: number | null;
 
   numberKind?: OpusNumberKind;
-  name?: string | null;
+  name?: LocalizedString | null;
   additionalText?: string | null;
   creationYear?: string | null;
   endYear?: string | null;
@@ -31,9 +45,17 @@ export type Opus = {
   adminTitle?: string | null;
   slug?: string;
   description?: OpusDescription | null;
+  introDescription?: OpusDescription | null;
+  parts?: OpusDescription | null;
   keywords?: LocalizedString | null;
   allowIndexation?: LocalizedBoolean | null;
   coverImage?: LocalizedImage | null;
+
+  gallery?: OpusGalleryItem[];
+
+  performancesTitle?: LocalizedString | null;
+  performances?: OpusPerformance[];
+
   status?: OpusStatus;
   meta?: { views: number };
   publishedAt?: string | null;

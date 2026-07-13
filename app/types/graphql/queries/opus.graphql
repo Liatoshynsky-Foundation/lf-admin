@@ -8,7 +8,10 @@ query OpusById($id: ID!) {
       en
     }
     releaseYear
-    name
+    name {
+      uk
+      en
+    }
     additionalText
     creationYear
     endYear
@@ -18,6 +21,14 @@ query OpusById($id: ID!) {
     slug
     status
     description {
+      uk
+      en
+    }
+    parts {
+      uk
+      en
+    }
+    introDescription {
       uk
       en
     }
@@ -42,6 +53,36 @@ query OpusById($id: ID!) {
         height
       }
     }
+    gallery {
+      id
+      src
+      description {
+        uk
+        en
+      }
+      altText {
+        uk
+        en
+      }
+      crop {
+        x
+        y
+        width
+        height
+      }
+    }
+    performancesTitle {
+      uk
+      en
+    }
+    performances {
+      id
+      title {
+        uk
+        en
+      }
+      videoUrl
+    }
     compositions {
       id
       opusId
@@ -50,6 +91,7 @@ query OpusById($id: ID!) {
         en
       }
       year
+      order
       genre
       audioAvailable
       sheetAvailable

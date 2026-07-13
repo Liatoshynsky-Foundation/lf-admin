@@ -10,9 +10,7 @@ jest.mock('mongoose');
 import * as helpers from '../helpers';
 
 jest.mock('~/src/shared/utils/slugGenerator/slugGenerator', () => ({
-  generateUniqueSlug: jest.fn((title: string) =>
-    Promise.resolve(`slug-${title.toLowerCase().replaceAll(/\s+/g, '-')}`)
-  )
+  generateUniqueSlug: jest.fn((title: string) => Promise.resolve(`slug-${title.toLowerCase().replaceAll(/\s+/g, '-')}`))
 }));
 
 jest.mock('../helpers', () => ({
@@ -60,7 +58,7 @@ describe('OpusMutation Resolvers', () => {
     title: { uk: 'Тест', en: 'Test' },
     releaseYear: 1922,
     numberKind: 'op',
-    name: 'Перший струнний квартет',
+    name: { uk: 'Перший струнний квартет', en: 'First string quartet' },
     creationYear: '1922',
     genre: 'Струнний квартет',
     adminTitle: 'Перший струнний квартет',
@@ -79,7 +77,7 @@ describe('OpusMutation Resolvers', () => {
   const createMockInput = (overrides: Partial<CreateOpusGQLInput> = {}): CreateOpusGQLInput => ({
     numberKind: 'op',
     number: '1',
-    name: 'Новий опус',
+    name: { uk: 'Новий опус', en: 'New Opus' },
     creationYear: '1922',
     genre: 'Струнний квартет',
     compositions: [],
@@ -127,7 +125,11 @@ describe('OpusMutation Resolvers', () => {
 
       expect(result.slug).toBe('slug-новий-опус');
       expect(mockRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ number: 'op.1', name: 'Новий опус', status: OpusStatus.Draft })
+        expect.objectContaining({
+          number: 'op.1',
+          name: { uk: 'Новий опус', en: 'New Opus' },
+          status: OpusStatus.Draft
+        })
       );
       expect(mockCompositionsRepo.syncForOpus).toHaveBeenCalledWith('opus-1', []);
     });
@@ -175,22 +177,22 @@ describe('OpusMutation Resolvers', () => {
     it('should throw OPUS_NOT_FOUND when updating a missing opus', async () => {
       (mockRepo.findById as jest.Mock).mockResolvedValue(null);
 
-      await expect(
-        OpusMutation.updateOpus({}, { id: 'missing', input: { name: 'x' } }, adminContext)
-      ).rejects.toThrow('Opus with id "missing" not found');
+      await expect(OpusMutation.updateOpus({}, { id: 'missing', input: { name: { uk: 'x', en: 'x' } } }, adminContext)).rejects.toThrow(
+        'Opus with id "missing" not found'
+      );
     });
 
     it('should update opus and replace its compositions', async () => {
       (mockRepo.findById as jest.Mock).mockResolvedValue(createMockEntity({ id: '1' }));
-      (mockRepo.update as jest.Mock).mockResolvedValue(createMockEntity({ id: '1', name: 'Оновлено' }));
+      (mockRepo.update as jest.Mock).mockResolvedValue(createMockEntity({ id: '1', name: { uk: 'Оновлено', en: 'Updated' } }));
 
       const result = await OpusMutation.updateOpus(
         {},
-        { id: '1', input: { name: 'Оновлено', compositions: [] } },
+        { id: '1', input: { name: { uk: 'Оновлено', en: 'Updated' }, compositions: [] } },
         adminContext
       );
 
-      expect(result.name).toBe('Оновлено');
+      expect(result.name).toEqual({ uk: 'Оновлено', en: 'Updated' });
       expect(mockRepo.update).toHaveBeenCalled();
       expect(mockCompositionsRepo.syncForOpus).toHaveBeenCalledWith('1', []);
     });
@@ -252,7 +254,8 @@ describe('OpusMutation Resolvers', () => {
     });
 
     it('should throw NAME_REQUIRED_FOR_SLUG when both the trimmed name and title.uk are empty', async (): Promise<void> => {
-      const input = { name: '    ', title: { uk: '', en: 'Opus' } } as CreateOpusGQLInput;
+
+      const input = { name: { uk: '   ', en: '   ' }, title: { uk: '', en: 'Opus' } } as CreateOpusGQLInput;
 
       await expect(OpusMutation.createOpus({}, { input }, adminContext)).rejects.toThrow(
         'Opus name is required to generate a slug'
@@ -329,13 +332,11 @@ describe('OpusMutation Resolvers', () => {
       (mockRepo.findById as jest.Mock).mockResolvedValue(
         createMockEntity({ id: '1', number: 'op.1', numberKind: 'op' })
       );
-      (mockRepo.findByNumber as jest.Mock).mockResolvedValue(
-        createMockEntity({ id: 'other', number: 'op.5' })
-      );
+      (mockRepo.findByNumber as jest.Mock).mockResolvedValue(createMockEntity({ id: 'other', number: 'op.5' }));
 
-      await expect(
-        OpusMutation.updateOpus({}, { id: '1', input: { number: '5' } }, adminContext)
-      ).rejects.toThrow('Opus with number "op.5" already exists');
+      await expect(OpusMutation.updateOpus({}, { id: '1', input: { number: '5' } }, adminContext)).rejects.toThrow(
+        'Opus with number "op.5" already exists'
+      );
       expect(mockRepo.update).not.toHaveBeenCalled();
     });
 
@@ -355,9 +356,9 @@ describe('OpusMutation Resolvers', () => {
       (mockRepo.findById as jest.Mock).mockResolvedValue(createMockEntity({ id: '1' }));
       (mockRepo.update as jest.Mock).mockResolvedValue(null);
 
-      await expect(
-        OpusMutation.updateOpus({}, { id: '1', input: { name: 'x' } }, adminContext)
-      ).rejects.toThrow('Opus with id "1" not found');
+      await expect(OpusMutation.updateOpus({}, { id: '1', input: { name: { uk: 'x', en: 'x' } } }, adminContext)).rejects.toThrow(
+        'Opus with id "1" not found'
+      );
     });
 
     it('should keep existing compositions when compositions are omitted on update', async (): Promise<void> => {
@@ -365,7 +366,7 @@ describe('OpusMutation Resolvers', () => {
       (mockRepo.update as jest.Mock).mockResolvedValue(createMockEntity({ id: '1' }));
       (mockCompositionsRepo.findByOpusId as jest.Mock).mockResolvedValue([]);
 
-      await OpusMutation.updateOpus({}, { id: '1', input: { name: 'Оновлено' } }, adminContext);
+      await OpusMutation.updateOpus({}, { id: '1', input: { name: { uk: 'Оновлено', en: 'Updated' } } }, adminContext);
 
       expect(mockCompositionsRepo.findByOpusId).toHaveBeenCalledWith('1');
     });

@@ -25,7 +25,7 @@ describe('useGroupPhotos Hook', () => {
   const mockOnChange = jest.fn();
   
   const defaultPhotos: GroupPhoto[] = [
-    { id: '1', src: 'img1.jpg', fileName: 'file1', caption: 'Caption 1', altText: 'Alt 1', crop: null }
+    { id: '1', src: 'img1.jpg', fileName: 'file1', caption: { uk: 'Caption 1', en: 'EN' }, altText: { uk: 'Alt 1', en: 'EN' }, crop: null }
   ];
 
   beforeEach(() => {
@@ -42,7 +42,7 @@ describe('useGroupPhotos Hook', () => {
     const { result } = renderHook(() => useGroupPhotos(defaultPhotos, mockOnChange));
     
     const keyWithoutCrop = result.current.getPhotoKey(defaultPhotos[0]);
-    expect(keyWithoutCrop).toBe('1-no-crop');
+    expect(keyWithoutCrop).toBe('1-no-crop-img1.jpg');
 
     const photoWithCrop: GroupPhoto = { 
       ...defaultPhotos[0], 
@@ -50,7 +50,7 @@ describe('useGroupPhotos Hook', () => {
       crop: { rect: { x: 10, y: 10, width: 100, height: 100 } } 
     };
     const keyWithCrop = result.current.getPhotoKey(photoWithCrop);
-    expect(keyWithCrop).toBe('2-{"x":10,"y":10,"width":100,"height":100}');
+    expect(keyWithCrop).toBe('2-{"x":10,"y":10,"width":100,"height":100}-img1.jpg');
   });
 
   it('should add a new photo with a generated ID when handleAddPhoto is called', () => {
@@ -67,8 +67,8 @@ describe('useGroupPhotos Hook', () => {
         id: 'mock-uuid-1234',
         src: '', 
         fileName: '', 
-        caption: '', 
-        altText: '', 
+        caption: { uk: '', en: '' }, 
+        altText: { uk: '', en: '' }, 
         crop: null 
       }
     ]);
@@ -78,12 +78,12 @@ describe('useGroupPhotos Hook', () => {
     const { result } = renderHook(() => useGroupPhotos(defaultPhotos, mockOnChange));
     
     act(() => {
-      result.current.handleUpdatePhoto('1', { caption: 'Оновлений підпис' });
+      result.current.handleUpdatePhoto('1', { caption: { uk: 'Оновлений підпис', en: 'Updated Caption' } });
     });
 
     expect(mockOnChange).toHaveBeenCalledTimes(1);
     expect(mockOnChange).toHaveBeenCalledWith([
-      { ...defaultPhotos[0], caption: 'Оновлений підпис' }
+      { ...defaultPhotos[0], caption: { uk: 'Оновлений підпис', en: 'Updated Caption' } }
     ]);
   });
 
@@ -91,7 +91,7 @@ describe('useGroupPhotos Hook', () => {
     const { result } = renderHook(() => useGroupPhotos(defaultPhotos, mockOnChange));
     
     act(() => {
-      result.current.handleUpdatePhoto('non-existent-id', { caption: 'Text' });
+      result.current.handleUpdatePhoto('non-existent-id', { caption: { uk: 'Оновлений підпис', en: 'Updated Caption' } });
     });
 
     expect(mockOnChange).toHaveBeenCalledWith(defaultPhotos);

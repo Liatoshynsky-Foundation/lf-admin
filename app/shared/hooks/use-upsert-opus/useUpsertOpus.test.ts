@@ -24,7 +24,7 @@ const fullFetchedOpus: FetchedOpusData = {
   id: 'opus-1',
   numberKind: 'woo',
   number: 'Op. 42',
-  name: 'Симфонія',
+  name: { uk: 'Симфонія', en: 'Symphony' },
   additionalText: 'Примітка',
   creationYear: '1921',
   endYear: '1923',
@@ -190,7 +190,7 @@ describe('useUpsertOpus', () => {
 
     const payload = mockCreateOpus.mock.calls[0][0];
     expect(payload).toEqual(
-      expect.objectContaining({ numberKind: 'op', number: '42', name: 'Соната', adminTitle: 'Соната' })
+      expect.objectContaining({ numberKind: 'op', number: '42', name: { uk: 'Соната', en: 'Соната' }, adminTitle: 'Соната' })
     );
     expect(payload.publishedAt).toBeUndefined();
     expect(payload.coverImage.crop).toBeUndefined();
@@ -379,7 +379,7 @@ describe('useUpsertOpus', () => {
 
     const args = mockUpdateOpus.mock.calls[0][0];
     expect(args.id).toBe('opus-1');
-    expect(args.input).toEqual(expect.objectContaining({ name: 'Симфонія', number: '42' }));
+    expect(args.input).toEqual(expect.objectContaining({ name: { uk: 'Симфонія', en: 'Симфонія' }, number: '42' }));
     expect(result.current.isSaved).toBe(true);
   });
 
