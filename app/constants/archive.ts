@@ -17,8 +17,6 @@ export const ARCHIVE_STATUSES = [
   BaseContentStatuses.Published,
 ] as const;
 
-export type ArchiveStatusValue = (typeof ARCHIVE_STATUSES)[number];
-
 export const ARCHIVE_STATUS_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
   { value: 'all', label: 'Усі'}, 
   { value: BaseContentStatuses.Hidden, label: 'Приховано' },
