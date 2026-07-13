@@ -69,8 +69,7 @@ describe('ActionMenu', () => {
         {
           id: 'item-2',
           text: { name: 'Item 2 Link' },
-          href: '/test-path',
-          disabled: true
+          href: '/test-path'
         }
       ]
     },

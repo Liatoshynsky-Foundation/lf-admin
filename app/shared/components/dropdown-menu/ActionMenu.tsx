@@ -17,7 +17,6 @@ export interface MenuItemConfig {
   href?: string;
   onClick?: () => void;
   selected?: boolean;
-  disabled?: boolean;
 }
 
 export interface MenuGroup {
@@ -27,7 +26,7 @@ export interface MenuGroup {
 
 export type ActionMenuGroups = readonly MenuGroup[];
 
-interface MenuProps {
+export interface MenuProps {
   anchorEl: HTMLElement | null;
   onClose: () => void;
   menuItems: ActionMenuGroups;
@@ -80,7 +79,6 @@ function MenuItemComponent({ item, onClose, isSelectable }: Readonly<MenuItemCom
       component={item.href ? Link : 'li'}
       href={item.href}
       selected={item.selected}
-      disabled={item.disabled}
       sx={styles.menuItem}
       onClick={handleClick}
     >
