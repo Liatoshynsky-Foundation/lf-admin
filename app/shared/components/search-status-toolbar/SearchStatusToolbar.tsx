@@ -13,11 +13,7 @@ export const SearchStatusToolbar = ({ dataTestId, searchProps, statusFilterProps
   return (
     <ControlPanel
       dataTestId={dataTestId}
-      leftContent={
-        <>
-          <Search {...searchProps} />
-        </>
-      }
+      leftContent={<Search {...searchProps} />}
       rightContent={(
         <FilterSelect
           {...statusFilterProps}

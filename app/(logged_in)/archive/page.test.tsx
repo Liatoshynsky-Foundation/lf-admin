@@ -3,7 +3,7 @@ import React from 'react';
 
 import ArchivePage from './page';
 
-jest.mock('./(componets)/ArchivePageContent', () => ({
+jest.mock('./(components)/ArchivePageContent', () => ({
   __esModule: true,
   ArchivePageContent: ({ activeTab }: { activeTab: string }) => (
     <div data-testid="archive-page-content-mock">
