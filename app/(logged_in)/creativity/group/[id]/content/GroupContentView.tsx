@@ -10,6 +10,8 @@ import {
 } from '@mui/material';
 
 import { styles } from './GroupContentView.styles';
+import { GroupContentViewError } from './GroupContentViewError';
+import { GroupContentViewLoading } from './GroupContentViewLoading';
 import { LANGUAGE_OPTIONS } from '~/constants/publications';
 import { GroupDetailsSection } from '~/shared/components/creativity/group/details-section/GroupDetailsSection';
 import { GroupIntroSection } from '~/shared/components/creativity/group/intro-section/GroupIntroSection';
@@ -56,22 +58,11 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
   } = useGroupContent(id);
 
   if (error) {
-    return (
-      <Box sx={{ p: 4, textAlign: 'center' }}>
-        <Typography color="error" variant="h6">
-          Помилка завантаження даних
-        </Typography>
-        <Typography color="text.secondary">{error.message}</Typography>
-      </Box>
-    );
+    return <GroupContentViewError message={error.message} />;
   }
 
   if (loading || !groupData) {
-    return (
-      <Box sx={{ p: 4, textAlign: 'center' }}>
-        <Typography>Завантаження...</Typography>
-      </Box>
-    );
+    return <GroupContentViewLoading />;
   }
 
   return (
