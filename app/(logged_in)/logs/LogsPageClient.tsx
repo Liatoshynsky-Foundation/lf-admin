@@ -13,7 +13,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  Pagination,
+  Pagination, 
   Stack,
   Tab,
   Tabs,
@@ -23,6 +23,7 @@ import { type SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
 import { getLogItemAccordion, styles } from './LogsPageClient.styles';
 import type { LogEntry, LogLevel, LogsResponse } from '~/back-shared/types/logs';
+
 
 const LEVEL_OPTIONS: Array<{ value: LogLevel | 'all'; label: string }> = [
   { value: 'all', label: 'Усі' },
