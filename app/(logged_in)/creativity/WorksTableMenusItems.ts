@@ -25,7 +25,7 @@ export const GroupMenuItems = ({
       { id: 'edit-seo', text: { name: 'Редагувати групу (SEO)' }, href: `${WORKS_BASE_PATH}/group/${id}/seo` },
       { id: 'edit-content', text: { name: 'Редагувати контент' }, href: `${WORKS_BASE_PATH}/group/${id}/content` },
       { id: 'share', text: { name: 'Поширити' }, href: `${WORKS_BASE_PATH}/group/${id}/share` },
-      { id: 'ungroup', text: { name: 'Розгрупувати' }, href: `${WORKS_BASE_PATH}/group/${id}/ungroup` },
+      { id: 'isPublished', text: { name: 'Розгрупувати' }, href: `${WORKS_BASE_PATH}/group/${id}/ungroup` },
     ],
   },
   {

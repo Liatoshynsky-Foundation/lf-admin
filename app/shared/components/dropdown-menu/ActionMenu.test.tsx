@@ -36,7 +36,6 @@ jest.mock('./DropdownMenu', () => {
   });
 });
 
-// Мокаємо Next.js Link
 jest.mock('next/link', () => {
   interface LinkMockProps {
     href: string;
