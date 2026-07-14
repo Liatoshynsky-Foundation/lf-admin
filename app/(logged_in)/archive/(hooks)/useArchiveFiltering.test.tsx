@@ -8,7 +8,7 @@ describe('useArchiveFiltering', () => {
     const { result } = renderHook(() => useArchiveFiltering());
 
     expect(result.current).toStrictEqual({
-      activeStatusFilters: [],
+      activeStatusFilters: [ARCHIVE_STATUS_FILTER_OPTIONS[0].value],
       searchProps: {
         search: '',
         options: [],
@@ -19,7 +19,7 @@ describe('useArchiveFiltering', () => {
       statusFilterProps: {
         label: 'Статус',
         options: ARCHIVE_STATUS_FILTER_OPTIONS,
-        value: [],
+        value: [ARCHIVE_STATUS_FILTER_OPTIONS[0].value],
         maxSelections: 1,
         hideClearAction: true,
         onChange: expect.any(Function)

@@ -11,7 +11,7 @@ export const useArchiveFiltering = (): {
   statusFilterProps: FilterSelectProps
 } => {
   const [search, setSearch] = useState<string>('');
-  const [statusFilters, setStatusFilters] = useState<string[]>([]);
+  const [statusFilters, setStatusFilters] = useState<string[]>([ARCHIVE_STATUS_FILTER_OPTIONS[0].value]);
 
   const activeStatusFilters = statusFilters;
 
