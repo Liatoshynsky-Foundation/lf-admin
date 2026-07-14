@@ -36,9 +36,10 @@ jest.mock('~/lib/utils/fetchPreview', () => ({
   fetchPreview: jest.fn()
 }));
 
+const dbSlug = 'slug-from-db';
 const baseMockManager = {
   isLoading: false,
-  currentData: { status: BaseContentStatuses.Draft, adminTitle: 'Test Data' },
+  currentData: { status: BaseContentStatuses.Draft, adminTitle: 'Test Data', slug: dbSlug },
   hasError: false,
   editedContent: {
     uk: { content: { blocks: [], version: '1', lastModified: '' } },
@@ -74,21 +75,33 @@ jest.mock('./EditPublicationsView', () => ({
   )
 }));
 
+const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+
 jest.mock('../../create/CreatePublicationsView', () => ({
   __esModule: true,
   default: () => <div data-testid="mock-create-view" />
 }));
+
+const mockHandleSave = jest.fn().mockResolvedValue(undefined);
 
 describe('EditPublicationsPage Container', () => {
   const mockPush = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
+    errorSpy.mockClear(); 
+
 
     (useParams as jest.Mock).mockReturnValue({ type: 'news', id: '123' });
     (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
     (usePublicationManager as jest.Mock).mockReturnValue(baseMockManager);
-    (useUpsertPublication as jest.Mock).mockReturnValue({ mockUpsertData: true });
+    (useUpsertPublication as jest.Mock).mockReturnValue({
+      mockUpsertData: true, handleSave: mockHandleSave
+    });
+  });
+
+  afterAll(() => {
+    errorSpy.mockRestore();
   });
 
   it('should render CreatePublicationsView if type is media', () => {
@@ -123,14 +136,38 @@ describe('EditPublicationsPage Container', () => {
     expect(mockPush).toHaveBeenCalledWith('/publications/news/123/seo');
   });
 
-  it('should redirect to preview page when onPreview is triggered', () => {
+  it('should redirect to preview page when onPreview is triggered', async () => {
     (fetchPreview as jest.Mock).mockResolvedValue(null);
     render(<EditPublicationsPage />);
 
     fireEvent.click(screen.getByTestId('trigger-preview'));
 
-    expect(fetchPreview).toHaveBeenCalledTimes(1);
-    expect(fetchPreview).toHaveBeenCalledWith({ slug: 'news', lang: 'uk', draftId: '123' });
+
+    await waitFor(() => {
+      expect(fetchPreview).toHaveBeenCalledTimes(1);
+    });
+    expect(fetchPreview).toHaveBeenCalledWith({ slug: `news/${dbSlug}`, lang: 'uk', draftId: '123' });
+
+  });
+
+  it('should not redirect to preview page when onPreview is triggered if no slug from manager', async () => {
+    (usePublicationManager as jest.Mock).mockReturnValue({
+      ...baseMockManager,
+      currentData: {
+        status: 'draft',
+        adminTitle: 'fdfsdfsd',
+      }
+    });
+
+    render(<EditPublicationsPage />);
+
+    fireEvent.click(screen.getByTestId('trigger-preview'));
+
+    await waitFor(() => {
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Не вдалося завантажити slug для попереднього перегляду'));
+    });
+
+    expect(fetchPreview).not.toHaveBeenCalled();
   });
 
   it('should show an error toast if on redirect to preview page when onPreview is triggered fetchPreview rejects', async () => {
@@ -139,10 +176,10 @@ describe('EditPublicationsPage Container', () => {
 
     fireEvent.click(screen.getByTestId('trigger-preview'));
 
-    expect(fetchPreview).toHaveBeenCalledTimes(1);
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Помилка: New Error');
     });
+    expect(fetchPreview).toHaveBeenCalledTimes(1);
   });
 
   it('should debounce editor changes and update state after 500ms', () => {

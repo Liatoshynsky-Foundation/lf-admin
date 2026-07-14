@@ -65,10 +65,31 @@ export default function EditPublicationsPage() {
     }, 500);
   };
 
+  const getPreviewSlug = ({ publicationType, dbSlug }: { publicationType: PublicationsItemType, dbSlug: string }) => {
+    if (publicationType === 'media') return '/news?tab=press';
+    return `${publicationType}/${dbSlug}`;
+  };
+
   const handlePreview = async () => {
     const locale = manager.currentLanguage === 'UA' ? 'uk' : 'en';
+    const slug = manager.currentData?.slug;
+
+    if (!slug) {
+      console.error('Не вдалося завантажити slug для попереднього перегляду');
+      return;
+    }
+    
     try {
-      await fetchPreview({ slug: 'news', lang: locale, draftId: id });
+      const currentStatus = BaseContentStatuses.Draft;
+
+      await publicationData.handleSave(currentStatus);
+
+      await manager.updateResource(currentStatus, {
+        content: manager.editedContent
+      });
+      
+      const previewSlug = getPreviewSlug({ publicationType: type, dbSlug: slug });
+      await fetchPreview({ slug: previewSlug, lang: locale, draftId: id });
     } catch (err) {
       toast.error(`Помилка: ${err instanceof Error ? err.message : String(err)}`);
     }
