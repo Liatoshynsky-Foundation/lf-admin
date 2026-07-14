@@ -20,11 +20,13 @@ jest.mock('./ContextMenu', () => ({
   )
 }));
 
-const mockMenuItems: readonly (readonly MenuItem[])[] = [
-  [
-    { id: 'download', label: 'Download', href: '/works/1/download' },
-    { id: 'delete', label: 'Delete', href: '/works/1/delete' }
-  ]
+const mockMenuItems = [
+  {
+    items: [
+      { id: 'download', text: { name: 'Download' }, href: '/works/1/download' },
+      { id: 'delete', text: { name: 'Delete' }, href: '/works/1/delete' }
+    ]
+  }
 ];
 
 describe('RowActions', () => {
@@ -61,7 +63,7 @@ describe('RowActions', () => {
     const contextMenu = screen.getByTestId('mock-context-menu');
     expect(contextMenu).toBeInTheDocument();
     expect(contextMenu).toHaveTextContent(menuActionsData.menuTriggerLabel);
-    expect(contextMenu).toHaveAttribute('data-items-count', '2');
+    expect(contextMenu).toHaveAttribute('data-items-count', '1');
 
     expect(screen.queryByTestId('mock-edit-action')).not.toBeInTheDocument();
   });
