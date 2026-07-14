@@ -71,7 +71,7 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
     await dbConnect();
 
     if (!mongoose.Types.ObjectId.isValid(opusId)) {
-      return;
+      throw new Error(`Invalid opusId: ${opusId}`);
     }
 
     await CompositionModel.deleteMany({ opusId });
@@ -81,7 +81,7 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
     await dbConnect();
 
     if (!mongoose.Types.ObjectId.isValid(opusId)) {
-      return;
+      throw new Error(`Invalid opusId: ${opusId}`);
     }
 
     await CompositionModel.updateMany({ opusId }, { $set: { opusId: null } });
