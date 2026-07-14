@@ -1,7 +1,9 @@
 import mongoose, { Model } from 'mongoose';
 
+import { createBaseRepository } from '../baseRepository/baseRepository';
+import { buildBaseQuery, getBaseSort } from '../helpers';
 import { Composition } from '~/domain/entities/Composition';
-import { CompositionInput, ICompositionRepository } from '~/domain/repositories/compositionRepository';
+import { CompositionFilters, CompositionInput, ICompositionRepository } from '~/domain/repositories/compositionRepository';
 import dbConnect from '~/infrastructure/db/connect';
 
 export type DbComposition = {
@@ -12,11 +14,11 @@ export type DbComposition = {
   year?: number | null;
   genre?: string | null;
   genres?: Array<{ toString(): string }>;
-  categories?: Array<{ toString(): string }>;
   audioAvailable?: boolean;
   sheetAvailable?: boolean;
   sheetMusic: Composition['sheetMusic'];
   audios: Composition['audios'];
+  status: Composition['status'];
   createdAt: string;
   updatedAt: string;
 };
@@ -33,16 +35,27 @@ const toEntity = (doc: DbComposition): Composition => ({
   year: doc.year ?? undefined,
   genre: doc.genre ?? undefined,
   genres: (doc.genres ?? []).map((value) => value.toString()),
-  categories: (doc.categories ?? []).map((value) => value.toString()),
   audioAvailable: doc.audioAvailable ?? false,
   sheetAvailable: doc.sheetAvailable ?? false,
   sheetMusic: doc.sheetMusic ?? [],
   audios: doc.audios ?? [],
+  status: doc.status,
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt
 });
 
 export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps): ICompositionRepository => {
+  const baseRepo = createBaseRepository<Composition, DbComposition, CompositionFilters>({
+    model: CompositionModel,
+    toEntity,
+    buildQuery: (filters) => {
+      const query = buildBaseQuery(filters);
+      if (filters?.isStandalone) query.opusId = null;
+      return query;
+    },
+    getDefaultSort: getBaseSort
+  });
+
   const findByOpusId = async (opusId: string): Promise<Composition[]> => {
     await dbConnect();
 
@@ -131,5 +144,32 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
     return docs.map(toEntity);
   };
 
-  return { findByOpusId, syncForOpus, deleteByOpusId, unlinckByOpusId, searchByTitle };
+  const findByOpusIds = async (opusIds: string[]): Promise<Composition[]> => {
+    await dbConnect();
+
+    const validIds = opusIds
+      .filter((id) => mongoose.Types.ObjectId.isValid(id))
+      .map((id) => new mongoose.Types.ObjectId(id));
+
+    if (!validIds.length) {
+      return [];
+    }
+
+    const docs = await CompositionModel.find({ opusId: { $in: validIds } })
+      .sort({ order: 1, _id: 1 })
+      .lean<DbComposition[]>();
+
+    return docs.map(toEntity);
+  };
+
+  return {
+    ...baseRepo,
+    findByOpusId,
+    syncForOpus,
+    deleteByOpusId,
+    unlinckByOpusId,
+    searchByTitle,
+    findByOpusIds
+  };
 };
+

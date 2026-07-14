@@ -1,44 +1,11 @@
 enum OpusStatus {
   draft
   published
-  hidden
-  archived
-  editing
 }
 
 enum OpusNumberKind {
   op
   woo
-}
-
-type OpusSheetMusic {
-  url: String!
-  name: String
-  publishDate: String
-  isFree: Boolean
-  dateUploaded: String
-}
-
-type CompositionAudio {
-  name: String
-  url: String
-}
-
-type Composition {
-  id: ID!
-  opusId: ID
-  order: Int
-  title: LocalizedString!
-  year: Int
-  genre: String
-  genres: [ID!]
-  categories: [ID!]
-  audioAvailable: Boolean
-  sheetAvailable: Boolean
-  sheetMusic: [OpusSheetMusic!]
-  audios: [CompositionAudio!]
-  createdAt: String
-  updatedAt: String
 }
 
 type OpusGalleryItem {
@@ -63,7 +30,7 @@ type Opus {
   releaseYear: Int
   name: LocalizedString
   additionalText: String
-  creationYear: String
+  creationYear: String!
   endYear: String
   datesNote: String
   genre: String
@@ -116,6 +83,7 @@ input OpusFiltersInput {
   search: String
   languages: [ContentLanguage!]
   sort: [OpusSortOptions!]
+  numberKind: OpusNumberKind
 }
 
 input CreateOpusInput {

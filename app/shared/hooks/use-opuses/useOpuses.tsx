@@ -10,6 +10,7 @@ import {
   type CreateOpusMutationVariables,
   type DeleteOpusMutationVariables,
   type OpusFiltersInput,
+  OpusNumberKind,
   type UpdateOpusMutation,
   type UpdateOpusMutationVariables,
   useAllOpusesQuery,
@@ -27,8 +28,19 @@ type QueryHookOptions = Readonly<{
 export const useOpusById = (id: string, options: QueryHookOptions = {}) =>
   useOpusByIdQuery({ variables: { id }, fetchPolicy: 'network-only', skip: options.skip || !id });
 
-export const useAllOpuses = (filters?: OpusFiltersInput, options: QueryHookOptions = {}) =>
-  useAllOpusesQuery({ variables: { filters }, fetchPolicy: 'network-only', skip: options.skip });
+export const useAllOpusGroups = (filters?: OpusFiltersInput, options: QueryHookOptions = {}) =>
+  useAllOpusesQuery({
+    variables: { filters: { ...filters, numberKind: OpusNumberKind.Op } },
+    fetchPolicy: 'network-only',
+    skip: options.skip
+  });
+
+export const useAllUngroupedGroups = (filters?: OpusFiltersInput, options: QueryHookOptions = {}) =>
+  useAllOpusesQuery({
+    variables: { filters: { ...filters, numberKind: OpusNumberKind.Woo } },
+    fetchPolicy: 'network-only',
+    skip: options.skip
+  });
 
 export const useSearchCompositions = (search: string, options: QueryHookOptions = {}) =>
   useSearchCompositionsQuery({ variables: { search }, fetchPolicy: 'network-only', skip: options.skip || !search });

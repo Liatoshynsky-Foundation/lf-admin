@@ -3,7 +3,7 @@ import React from 'react';
 
 import { GroupWorksSection } from './GroupWorksSection';
 import { OPUS_DELETE_MODAL, OPUS_DETAILS_LABELS } from '~/constants/opus';
-import { useCompositions } from '~/shared/hooks/use-compositions/useCompositions';
+import { useCompositionsForm } from '~/shared/hooks/use-compositions/useCompositions';
 import type { OpusCompositionData, OpusCompositionSuggestion } from '~/types/opus';
 
 jest.mock('lucide-react', () => ({
@@ -12,7 +12,7 @@ jest.mock('lucide-react', () => ({
 }));
 
 jest.mock('~/shared/hooks/use-compositions/useCompositions');
-const mockUseCompositions = useCompositions as jest.MockedFunction<typeof useCompositions>;
+const mockUseCompositions = useCompositionsForm as jest.MockedFunction<typeof useCompositionsForm>;
 
 interface MockTitleInputProps {
   value: string;

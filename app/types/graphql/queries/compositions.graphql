@@ -1,0 +1,16 @@
+query AllCompositions($filters: CompositionFiltersInput) {
+  allCompositions(filters: $filters) {
+    id
+    opusId
+    title {
+      uk
+      en
+    }
+    genre
+    genres
+    status
+    year
+    updatedAt
+    createdAt
+  }
+}
