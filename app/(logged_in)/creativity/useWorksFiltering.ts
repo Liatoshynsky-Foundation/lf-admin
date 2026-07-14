@@ -49,7 +49,7 @@ export function useWorksFiltering(): Readonly<{
   toolbarProps: WorksFilteringToolbarProps;
   sortProps: WorksFilteringSortProps;
 }> {
-  const [isFiltersOpen, setIsFiltersOpen] = useState(true);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilters, setStatusFilters] = useState<WorksStatusValue[]>([]);
   const [languageFilters, setLanguageFilters] = useState<WorksLanguageValue[]>([]);

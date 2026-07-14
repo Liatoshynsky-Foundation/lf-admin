@@ -2,12 +2,13 @@
 
 import { Box, Button } from '@mui/material';
 import { ChevronDown } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { ChangeEvent, useRef, useState } from 'react';
 
 import { useWorksFiltering } from './useWorksFiltering';
 import { styles } from './WorksPageContent.styles';
 import { WorksTable } from './WorksTable';
 import {
+  ITEMS_PER_PAGE,
   WORKS_CREATE_OPTIONS,
   WORKS_EMPTY_STATE_DESCRIPTION,
   WORKS_EMPTY_STATE_NO_RESULTS_DESCRIPTION,
@@ -28,6 +29,7 @@ import ActionMenu from '~/shared/components/dropdown-menu/ActionMenu';
 import { EmptyState } from '~/shared/components/empty-state';
 import { FilteringToolbar, SortSelect } from '~/shared/components/filtering-toolbar';
 import { PageHeader } from '~/shared/components/page-header/PageHeader';
+import { Pagination } from '~/shared/components/pagination/Pagination';
 import { useAllCompositions } from '~/shared/hooks/use-compositions/useCompositions';
 import { useAllOpusGroups, useAllUngroupedGroups } from '~/shared/hooks/use-opuses/useOpuses';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
@@ -256,7 +258,12 @@ const clientFiltering = (
 };
 
 export function WorksPageContent({ activeTab }: WorksPageContentProps) {
+  const [page, setPage] = useState(1);
   const { sortValue, selectedFilters, toolbarProps, sortProps } = useWorksFiltering();
+
+  const handlePageChange = (_: ChangeEvent<unknown>, value: number) => {
+    setPage(value);
+  };
 
   const searchValue = (toolbarProps.search?.search ?? '').trim().toLowerCase();
   const normalizedSearch = normalizeSearch(searchValue);
@@ -295,6 +302,17 @@ export function WorksPageContent({ activeTab }: WorksPageContentProps) {
     matchesSearch
   );
 
+  const allItems = [...mappedOpusGroups, ...mappedUngroupedGroups, ...visibleUngroupedWorks];
+  const totalItems = allItems.length;
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+
+  const paginatedItems = allItems.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+  const paginatedIds = new Set(paginatedItems.map((item) => item.id));
+
+  const paginatedOpusGroups = mappedOpusGroups.filter((group) => paginatedIds.has(group.id));
+  const paginatedUngroupedGroups = mappedUngroupedGroups.filter((group) => paginatedIds.has(group.id));
+  const paginatedUngroupedWorks = visibleUngroupedWorks.filter((work) => paginatedIds.has(work.id));
+
   const hasOpus = mappedOpusGroups.length > 0;
   const hasUngrouped = mappedUngroupedGroups.length > 0;
   const hasCompositions = visibleUngroupedWorks.length > 0;
@@ -331,9 +349,9 @@ export function WorksPageContent({ activeTab }: WorksPageContentProps) {
 
     return (
       <WorksTable
-        visibleOpusGroups={mappedOpusGroups}
-        visibleUngroupedGroups={mappedUngroupedGroups}
-        visibleUngroupedWorks={visibleUngroupedWorks}
+        visibleOpusGroups={paginatedOpusGroups}
+        visibleUngroupedGroups={paginatedUngroupedGroups}
+        visibleUngroupedWorks={paginatedUngroupedWorks}
         showOpus={showOpus}
         showUngrouped={showUngrouped}
         showIndividualWorks={showCompositions}
@@ -352,6 +370,8 @@ export function WorksPageContent({ activeTab }: WorksPageContentProps) {
       />
 
       {content}
+
+      {totalPages > 1 && <Pagination totalPages={totalPages} currentPage={page} onPageChange={handlePageChange} />}
     </Box>
   );
 }
