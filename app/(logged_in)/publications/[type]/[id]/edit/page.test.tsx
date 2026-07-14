@@ -71,6 +71,7 @@ jest.mock('./EditPublicationsView', () => ({
       <button data-testid="trigger-delete" onClick={props.onDeleteConfirm} />
       <button data-testid="trigger-seo" onClick={props.onSeoClick} />
       <button data-testid="trigger-preview" onClick={props.onPreview} />
+      <button data-testid="trigger-cancel-publication" onClick={() => props.onAction(MenuActionId.CANCEL_PUBLICATION)} />
     </div>
   )
 }));
@@ -89,7 +90,7 @@ describe('EditPublicationsPage Container', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    errorSpy.mockClear(); 
+    errorSpy.mockClear();
 
 
     (useParams as jest.Mock).mockReturnValue({ type: 'news', id: '123' });
@@ -134,6 +135,20 @@ describe('EditPublicationsPage Container', () => {
     fireEvent.click(screen.getByTestId('trigger-seo'));
 
     expect(mockPush).toHaveBeenCalledWith('/publications/news/123/seo');
+  });
+
+  it('should handle CANCEL_PUBLICATION action and redirect router', async () => {
+    render(<EditPublicationsPage />);
+
+    fireEvent.click(screen.getByTestId('trigger-cancel-publication'));
+
+    await waitFor(() => {
+      expect(baseMockManager.updateResource).toHaveBeenCalledWith(BaseContentStatuses.Draft, {
+        content: baseMockManager.editedContent
+      });
+      expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationUnpublished);
+      expect(mockPush).toHaveBeenCalledWith('/publications');
+    });
   });
 
   it('should redirect to preview page when onPreview is triggered', async () => {

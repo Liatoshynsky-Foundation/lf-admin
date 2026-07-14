@@ -117,6 +117,32 @@ describe('EditPublicationsView Component', () => {
     expect(screen.getByText('Завантаження...')).toBeInTheDocument();
   });
 
+  it('should render empty string for TitleDropdown title if currentData?.adminTitle is null', () => {
+    const propsWithNullTitle = {
+      ...defaultProps,
+      currentData: { adminTitle: null } 
+    };
+    render(<EditPublicationsView {...propsWithNullTitle} />);
+
+    const dropdown = screen.getByTestId('mock-title-dropdown');
+  
+    expect(dropdown).toHaveTextContent('');
+  });
+  it('should render undefined for media ContentEditor initialContent if isContentValid is not valid', () => {
+    const propsWithEmptyBlocks = {
+      ...defaultProps,
+      editedContent: {
+        uk: { content: { blocks: [], version: '1', lastModified: '' } },
+        en: { content: { blocks: [], version: '1', lastModified: '' } }
+      }
+    };
+    render(<EditPublicationsView {...propsWithEmptyBlocks} />);
+
+    const editor = screen.getByTestId('mock-content-editor');
+
+    expect(editor).toHaveValue('');
+  });
+
   it('should render the loading state when editedContent is null', () => {
     render(<EditPublicationsView {...defaultProps} editedContent={null} />);
     expect(screen.getByText('Завантаження...')).toBeInTheDocument();
