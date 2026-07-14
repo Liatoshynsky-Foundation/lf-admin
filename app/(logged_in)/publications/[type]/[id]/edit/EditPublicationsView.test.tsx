@@ -1,5 +1,5 @@
 import { Block } from '@blocknote/core';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React, { MouseEvent } from 'react';
 
 import { EditPublicationsView, EditPublicationsViewProps } from './EditPublicationsView';
@@ -74,11 +74,12 @@ jest.mock('~/shared/components/divided-header/header-right-actions/HeaderRightAc
 
 jest.mock('~/components/delete-card-modal/DeleteCardModal', () => ({
   __esModule: true,
-  default: ({ open, onDelete }: { open: boolean; onDelete: () => void }) =>
+  default: ({ open, onDelete, onClose }: { open: boolean; onDelete: () => void; onClose: () => void; }) =>
     open ? (
-      <button data-testid="confirm-delete" onClick={onDelete}>
-        confirm delete
-      </button>
+      <div data-testid="delete-modal">
+        <button data-testid="confirm-delete" onClick={onDelete}>confirm delete</button>
+        <button data-testid="close-delete-modal" onClick={onClose}>cancel</button>
+      </div>
     ) : null
 }));
 
@@ -149,7 +150,7 @@ describe('EditPublicationsView Component', () => {
     );
   });
 
-  it('should trigger onLanguageChange when a new language is selected from the menu', () => {
+  it('should trigger onLanguageChange when a new language is selected from the menu', async () => {
     render(<EditPublicationsView {...defaultProps} currentLanguage="UA" />);
 
     fireEvent.click(screen.getByTestId('mock-title-dropdown'));
@@ -157,15 +158,22 @@ describe('EditPublicationsView Component', () => {
 
     expect(mockOnLanguageChange).toHaveBeenCalledTimes(1);
     expect(mockOnLanguageChange).toHaveBeenCalledWith('EN' as EditorLanguage);
+    await waitFor(() => {
+      expect(screen.queryByText('Англійська')).not.toBeInTheDocument();
+    });
   });
 
-  it('should trigger onSeoClick when the SEO option is selected from the menu', () => {
+  it('should trigger onSeoClick when the SEO option is selected from the menu', async () => {
     render(<EditPublicationsView {...defaultProps} />);
 
     fireEvent.click(screen.getByTestId('mock-title-dropdown'));
     fireEvent.click(screen.getByText('SEO налаштування'));
 
     expect(mockOnSeoClick).toHaveBeenCalledTimes(1);
+
+    await waitFor(() => {
+      expect(screen.queryByText('SEO налаштування')).not.toBeInTheDocument();
+    });
   });
 
   it('should trigger onAction when a publish menu item is clicked', () => {
@@ -189,14 +197,15 @@ describe('EditPublicationsView Component', () => {
 
   it('should trigger onPreview when a eye icon is clicked', () => {
     const mockOnPreview = jest.fn();
-    render(<EditPublicationsView {...defaultProps} onPreview={mockOnPreview}/>);
+    render(<EditPublicationsView {...defaultProps} onPreview={mockOnPreview} />);
 
     fireEvent.click(screen.getByTestId('mock-preview-btn'));
 
     expect(mockOnPreview).toHaveBeenCalledTimes(1);
   });
 
-  it('should open delete modal and call onDeleteConfirm when deletion is confirmed', () => {
+
+  it('should open delete modal and call onDeleteConfirm when deletion is confirmed', async () => {
     render(<EditPublicationsView {...defaultProps} />);
 
     fireEvent.click(screen.getByTestId('mock-publish-menu-btn'));
@@ -208,5 +217,49 @@ describe('EditPublicationsView Component', () => {
     fireEvent.click(screen.getByTestId('confirm-delete'));
 
     expect(mockOnDeleteConfirm).toHaveBeenCalledTimes(1);
+
+    await waitFor(() => {
+      expect(screen.queryByText('Видалити')).not.toBeInTheDocument();
+    });
+  });
+
+
+  it('should close the navigation menu when pressing Escape (Line 130)', async () => {
+    render(<EditPublicationsView {...defaultProps} />);
+
+    fireEvent.click(screen.getByTestId('mock-title-dropdown'));
+
+    fireEvent.keyDown(screen.getByRole('presentation'), { key: 'Escape', code: 'Escape' });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Мовні версії')).not.toBeInTheDocument();
+    });
+  });
+
+  it('should close the publish menu when pressing Escape (Line 179)', async () => {
+    render(<EditPublicationsView {...defaultProps} />);
+
+    fireEvent.click(screen.getByTestId('mock-publish-menu-btn'));
+
+    fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape', code: 'Escape' });
+
+    await waitFor(() => {
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    });
+  });
+
+  it('should close delete modal when onClose is triggered (Line 206)', async () => {
+    render(<EditPublicationsView {...defaultProps} />);
+
+    fireEvent.click(screen.getByTestId('mock-publish-menu-btn'));
+    fireEvent.click(screen.getByText('Видалити'));
+
+    expect(screen.getByTestId('delete-modal')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('close-delete-modal'));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('delete-modal')).not.toBeInTheDocument();
+    });
   });
 });
