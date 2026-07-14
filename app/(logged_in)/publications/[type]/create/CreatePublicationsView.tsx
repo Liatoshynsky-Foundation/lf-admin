@@ -19,6 +19,8 @@ import {
   PUBLICATIONS_BASE_PATH
 } from '~/constants/publications';
 import { normalizeFetchedCrop } from '~/lib/utils/CropperHelper';
+import { fetchPreview } from '~/lib/utils/fetchPreview';
+import { getPreviewSlug } from '~/lib/utils/getPreviewSlug';
 import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
 import SeoCollapsibleBlock from '~/shared/components/forms/seo-collapsible-block/SeoCollapsibleBlock';
@@ -88,7 +90,7 @@ export default function CreatePublicationsView({
       <SeoCanonicalUrlField
         value={value.canonicalUrl ?? ''}
         onChange={(val) => onChange({ ...value, canonicalUrl: val })}
-        onBlur={() => {}}
+        onBlur={() => { }}
         forceShowErrors={forceShowErrors}
       />
     ),
@@ -105,21 +107,46 @@ export default function CreatePublicationsView({
 
   const actions = (HEADER_MENU_OPTIONS.baseActions as ACTIONS_TYPE[]).filter((a) => a.id !== MenuActionId.PUBLISH);
 
+  const fallbackOnPreview = async () => {
+    const result = await handleSave(BaseContentStatuses.Draft);
+    if (!result) {
+      toast.error('Виникла помилка при отриманні даних для попереднього перегляду');
+      console.error('Receiving the result from handleSave for preview had failed: ', result);
+      return;
+    };
+
+    const { id, slug } = result;
+
+    if (!slug || !id) {
+      toast.error('Виникла помилка при отриманні даних для попереднього перегляду');
+      console.error('Not slug or id was found for preview');
+      return;
+    }
+
+    const locale = seoValue.meta.uk.title ? 'uk' : 'en';
+
+    await fetchPreview({
+      slug: getPreviewSlug({ publicationType, dbSlug: slug }),
+      lang: locale,
+      draftId: id || ''
+    });
+  };
+
   const handleMenuAction = async (actionId: MenuActionId) => {
     handleClose();
     try {
       switch (actionId) {
       case MenuActionId.PUBLISH: {
-        const id = await handleSave(BaseContentStatuses.Published);
-        if (id) {
+        const result = await handleSave(BaseContentStatuses.Published);
+        if (result?.id) {
           toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
         }
         break;
       }
 
       case MenuActionId.PUBLICATE_AND_EXIT: {
-        const id = await handleSave(BaseContentStatuses.Published);
-        if (id) {
+        const result = await handleSave(BaseContentStatuses.Published);
+        if (result?.id) {
           toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
           router.push(PUBLICATIONS_BASE_PATH);
         }
@@ -127,8 +154,8 @@ export default function CreatePublicationsView({
       }
 
       case MenuActionId.CANCEL_PUBLICATION: {
-        const id = await handleSave(BaseContentStatuses.Draft);
-        if (id) {
+        const result = await handleSave(BaseContentStatuses.Draft);
+        if (result?.id) {
           toast.success(CONTENT_MUTATION_RESULTS.draftSaved);
           router.push(PUBLICATIONS_BASE_PATH);
         }
@@ -142,9 +169,9 @@ export default function CreatePublicationsView({
   };
 
   const onEdit = async () => {
-    const id = await handleSave(BaseContentStatuses.Draft);
-    if (id) {
-      router.push(`${PUBLICATIONS_BASE_PATH}/${publicationType}/${id}/edit`);
+    const result = await handleSave(BaseContentStatuses.Draft);
+    if (result?.id) {
+      router.push(`${PUBLICATIONS_BASE_PATH}/${publicationType}/${result.id}/edit`);
     }
   };
 
@@ -160,10 +187,10 @@ export default function CreatePublicationsView({
                 mode="edit"
                 onPublish={() => handleMenuAction(MenuActionId.PUBLISH)}
                 onMenuOpen={handleOpen}
-                onPreview={onPreview}
+                onPreview={onPreview || fallbackOnPreview}
               />
             ) : (
-              <HeaderRightActions mode="create" onEdit={onEdit} onPreview={onPreview} />
+              <HeaderRightActions mode="create" onEdit={onEdit} onPreview={onPreview || fallbackOnPreview} />
             )
           }
         >

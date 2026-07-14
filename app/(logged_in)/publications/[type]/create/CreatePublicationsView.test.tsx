@@ -212,7 +212,7 @@ describe('CreatePublicationsView Component', () => {
       const mockData = createMockData({
         publicationType: 'news',
       });
-      render(<CreatePublicationsView data={mockData} onPreview={mockOnPreview}/>);
+      render(<CreatePublicationsView data={mockData} onPreview={mockOnPreview} />);
 
       fireEvent.click(screen.getByTestId('btn-preview'));
 
@@ -222,7 +222,7 @@ describe('CreatePublicationsView Component', () => {
 
   describe('Publish actions and toast notifications', () => {
     it('should show publicationPublished toast when media publish succeeds', async () => {
-      const handleSave = jest.fn().mockResolvedValue('media-123');
+      const handleSave = jest.fn().mockResolvedValue({ id: 'media-123' });
       const mockData = createMockData({ publicationType: 'media', handleSave });
 
       render(<CreatePublicationsView data={mockData} />);
@@ -248,7 +248,7 @@ describe('CreatePublicationsView Component', () => {
     });
 
     it('should show publicationPublished toast and redirect on publish and exit', async () => {
-      const handleSave = jest.fn().mockResolvedValue('media-123');
+      const handleSave = jest.fn().mockResolvedValue({ id: 'media-123' });
       const mockData = createMockData({ publicationType: 'media', handleSave });
 
       render(<CreatePublicationsView data={mockData} />);

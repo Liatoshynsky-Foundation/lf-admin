@@ -13,6 +13,7 @@ import {
   PublicationsItemType
 } from '~/constants/publications';
 import { fetchPreview } from '~/lib/utils/fetchPreview';
+import { getPreviewSlug } from '~/lib/utils/getPreviewSlug';
 import { SerializedContent } from '~/shared/components/content-editor';
 import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
 import { usePublicationManager } from '~/shared/hooks/use-publications-manager/usePublicationsManager';
@@ -65,16 +66,12 @@ export default function EditPublicationsPage() {
     }, 500);
   };
 
-  const getPreviewSlug = ({ publicationType, dbSlug }: { publicationType: PublicationsItemType, dbSlug: string }) => {
-    if (publicationType === 'media') return '/news?tab=press';
-    return `${publicationType}/${dbSlug}`;
-  };
-
   const handlePreview = async () => {
     const locale = manager.currentLanguage === 'UA' ? 'uk' : 'en';
     const slug = manager.currentData?.slug;
 
     if (!slug) {
+      toast.error('Виникла помилка при отриманні даних для попереднього перегляду');
       console.error('Не вдалося завантажити slug для попереднього перегляду');
       return;
     }

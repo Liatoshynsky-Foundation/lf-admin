@@ -40,23 +40,23 @@ jest.mock('~/shared/hooks/use-media-mentions/useMediaMentions', () => ({
 const createValidSeoState = (type: PublicationsItemType): SeoBlockValue => ({
   ...initialSeoValue,
   meta: {
-    uk: { 
-      title: 'UK Title', 
-      description: 'UK Desc', 
-      keywords: '', 
-      canonicalUrl: type === 'media' ? 'https://example.com' : '', 
-      startDateTime: undefined, 
-      endDateTime: undefined, 
-      altText: { uk: '', en: '' } 
+    uk: {
+      title: 'UK Title',
+      description: 'UK Desc',
+      keywords: '',
+      canonicalUrl: type === 'media' ? 'https://example.com' : '',
+      startDateTime: undefined,
+      endDateTime: undefined,
+      altText: { uk: '', en: '' }
     },
-    en: { 
-      title: 'EN Title', 
-      description: 'EN Desc', 
-      keywords: '', 
-      canonicalUrl: type === 'media' ? 'https://example.com' : '', 
-      startDateTime: undefined, 
-      endDateTime: undefined, 
-      altText: { uk: '', en: '' } 
+    en: {
+      title: 'EN Title',
+      description: 'EN Desc',
+      keywords: '',
+      canonicalUrl: type === 'media' ? 'https://example.com' : '',
+      startDateTime: undefined,
+      endDateTime: undefined,
+      altText: { uk: '', en: '' }
     }
   },
   ticketUrl: type === 'events' ? { uk: 'https://tickets.com/uk', en: 'https://tickets.com/en' } : { uk: '', en: '' },
@@ -161,7 +161,8 @@ describe('useUpsertPublication Hook', () => {
 
       let returnedId;
       await act(async () => {
-        returnedId = await result.current.handleSave(BaseContentStatuses.Draft);
+        const resultData = await result.current.handleSave(BaseContentStatuses.Draft);
+        returnedId = resultData?.id;
       });
 
       expect(mockCreateNews).toHaveBeenCalledWith(
@@ -171,7 +172,7 @@ describe('useUpsertPublication Hook', () => {
           content: { uk: { content: { blocks: [] } }, en: { content: { blocks: [] } } }
         })
       );
-      
+
       expect(returnedId).toBe('new-news-99');
     });
 
@@ -186,17 +187,18 @@ describe('useUpsertPublication Hook', () => {
 
       let returnedId;
       await act(async () => {
-        returnedId = await result.current.handleSave(BaseContentStatuses.Published);
+        const resultData = await result.current.handleSave(BaseContentStatuses.Published);
+        returnedId = resultData?.id;
       });
 
       expect(mockCreateEvent).toHaveBeenCalledWith(
         expect.objectContaining({
           adminTitle: 'Valid Event Title',
-          status: EventStatus.Published, 
+          status: EventStatus.Published,
           ticketUrl: { uk: 'https://tickets.com/uk', en: 'https://tickets.com/en' }
         })
       );
-      
+
       expect(returnedId).toBe('new-event-77');
     });
   });
@@ -213,15 +215,16 @@ describe('useUpsertPublication Hook', () => {
 
       let returnedId;
       await act(async () => {
-        returnedId = await result.current.handleSave(BaseContentStatuses.Editing);
+        const resultData = await result.current.handleSave(BaseContentStatuses.Editing);
+        returnedId = resultData?.id;
       });
 
       expect(mockUpdateMedia).toHaveBeenCalledWith('media-55', expect.objectContaining({
         adminTitle: 'Updated Media Title',
-        status: MediaStatus.Editing, 
-        url: 'https://example.com' 
+        status: MediaStatus.Editing,
+        url: 'https://example.com'
       }));
-      
+
       expect(returnedId).toBe('media-55');
     });
   });
