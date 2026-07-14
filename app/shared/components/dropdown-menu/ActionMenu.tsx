@@ -148,6 +148,7 @@ const ActionMenu = ({
       sx={styles.menu}
       disableAutoFocusItem
       disableScrollLock
+      
       slotProps={{
         backdrop: {
           onClick: handleBackdropClick

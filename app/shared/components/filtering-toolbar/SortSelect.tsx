@@ -117,8 +117,8 @@ export function SortSelect<FieldValue extends string, SortValue extends string>(
         onClose={handleCloseMenu}
         menuItems={groups}
         isSelectable={true}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'center' }}
       />
     </>
   );

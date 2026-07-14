@@ -380,8 +380,8 @@ function PublicationsCreateAction() {
       <ActionMenu
         anchorEl={anchorEl}
         onClose={handleCloseMenu}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'center' }}
         menuItems={[
           {
             items: PUBLICATIONS_CREATE_OPTIONS.map((option) => ({

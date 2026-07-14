@@ -322,7 +322,7 @@ describe('useGroupContent Hook', () => {
       act(() => {
         result.current.handleClose('publish');
       });
-      expect(result.current.anchors['publish']).toBeUndefined();
+      expect(result.current.anchors['publish']).toBeNull();
     });
 
     it('should change current language correctly', () => {
@@ -411,7 +411,7 @@ describe('useGroupContent Hook', () => {
       act(() => {
         result.current.handleFieldChange('photos', [
           { id: 'photo-12345', src: 'img1.jpg', caption: { uk: '', en: '' }, altText: { uk: '', en: '' }, crop: null },
-          { id: '60d5ec49f1', src: 'img2.jpg', caption: { uk: '', en: '' }, altText: { uk: '', en: '' }, crop: null } // Справжній ID
+          { id: '60d5ec49f1', src: 'img2.jpg', caption: { uk: '', en: '' }, altText: { uk: '', en: '' }, crop: null }
         ]);
         result.current.handleFieldChange('performances', [
           { id: 'temp-perf-123', url: 'url1', caption: { uk: '1', en: '1' } }

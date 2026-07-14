@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface UseMenuScrollCloseOptions {
   onClose: () => void;
@@ -6,11 +6,11 @@ interface UseMenuScrollCloseOptions {
 }
 
 export function useMenuScrollClose({ onClose, anchorEl }: UseMenuScrollCloseOptions) {
-  const disableTransitionRef = useRef(false);
+  const [disableTransition, setDisableTransition] = useState(false);
   const open = Boolean(anchorEl);
 
   const handleClose = useCallback(() => {
-    disableTransitionRef.current = false;
+    setDisableTransition(false);
     onClose();
   }, [onClose]);
 
@@ -22,26 +22,20 @@ export function useMenuScrollClose({ onClose, anchorEl }: UseMenuScrollCloseOpti
       const isFullyOffscreen = rect.bottom < 0 || rect.top > window.innerHeight;
 
       if (isFullyOffscreen) {
-        disableTransitionRef.current = true;
+        setDisableTransition(true);
         onClose();
       }
     };
 
     window.addEventListener('scroll', handleScroll, true);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll, true);
-    };
+    return () => window.removeEventListener('scroll', handleScroll, true);
   }, [open, anchorEl, onClose]);
 
   useEffect(() => {
     if (!open) {
-      disableTransitionRef.current = false;
+      setDisableTransition(false);
     }
   }, [open]);
 
-  return {
-    disableTransition: disableTransitionRef.current,
-    handleClose
-  };
+  return { disableTransition, handleClose };
 }

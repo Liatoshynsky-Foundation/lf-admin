@@ -22,7 +22,11 @@ export const PublishMenuItems = ({
         id: MenuActionId.CANCEL_PUBLICATION,
         text: { name: 'Скасувати публікацію' },
         onClick: () => handlePublishActionClick(MenuActionId.CANCEL_PUBLICATION),
-      },
+      }
+    ],
+  },
+  {
+    items: [
       {
         id: MenuActionId.DELETE,
         text: { name: 'Видалити' },

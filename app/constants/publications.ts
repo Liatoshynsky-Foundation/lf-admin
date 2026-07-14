@@ -162,17 +162,6 @@ export type ACTIONS_TYPE = {
   label: string;
 };
 
-export type HEADER_MENU_OPTIONS_TYPE = Record<string, ReadonlyArray<ACTIONS_TYPE>>;
-
-export const HEADER_MENU_OPTIONS: HEADER_MENU_OPTIONS_TYPE = {
-  baseActions: [
-    { id: MenuActionId.PUBLISH, label: 'Опублікувати' },
-    { id: MenuActionId.PUBLICATE_AND_EXIT, label: 'Опублікувати і вийти' },
-    { id: MenuActionId.CANCEL_PUBLICATION, label: 'Скасувати публікацію' },
-    { id: MenuActionId.DELETE, label: 'Видалити' }
-  ]
-} as const;
-
 export type MUTATION_RESULT = Record<string, string>;
 
 export const CONTENT_MUTATION_RESULTS: MUTATION_RESULT = {

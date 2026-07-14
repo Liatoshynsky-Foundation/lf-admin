@@ -12,7 +12,7 @@ import { OpusNumberKind, OpusStatus, useUpdateOpusMutation } from '~/types/graph
 import { FetchedOpusData,OpusCompositionSuggestion } from '~/types/opus';
 
 type AnchorId = 'navigation' | 'publish';
-type MenuAnchor = Partial<Record<AnchorId, HTMLButtonElement>>;
+type MenuAnchor = Record<AnchorId, HTMLButtonElement | null>;
 
 type AudioItem = NonNullable<OpusCompositionSuggestion['audios']>[number];
 type SheetMusicItem = NonNullable<OpusCompositionSuggestion['sheetMusic']>[number];
@@ -61,7 +61,10 @@ export const useGroupContent = (id: string) => {
   const [isDirty, setIsDirty] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState<EditorLanguage>('UA');
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [anchors, setAnchors] = useState<MenuAnchor>({});
+  const [anchors, setAnchors] = useState<MenuAnchor>({
+    navigation: null,
+    publish: null
+  });
   const [publishedTitle, setPublishedTitle] = useState({ uk: '', en: '' });
   const [isDetailsExpanded, setIsDetailsExpanded] = useState(true);
   const [shouldExitAfterSave, setShouldExitAfterSave] = useState(false);
@@ -261,7 +264,7 @@ export const useGroupContent = (id: string) => {
   const handleOpen = (event: MouseEvent<HTMLElement>, menuId: AnchorId) =>
     setAnchors((prev) => ({ ...prev, [menuId]: event.currentTarget as HTMLButtonElement }));
 
-  const handleClose = (menuId: AnchorId) => setAnchors((prev) => ({ ...prev, [menuId]: undefined }));
+  const handleClose = (menuId: AnchorId) => setAnchors((prev) => ({ ...prev, [menuId]: null }));
 
   const langKey = currentLanguage === 'UA' ? 'uk' : 'en';
 

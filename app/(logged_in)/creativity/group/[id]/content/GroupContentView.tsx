@@ -1,18 +1,11 @@
 'use client';
 
-import {
-  Box,
-  Divider,
-  ListSubheader,
-  Menu,
-  MenuItem,
-  Typography
-} from '@mui/material';
+import { Box, Typography } from '@mui/material';
 
+import { NavigationMenuItems, PublishMenuItems } from './GroupContentMenuItems';
 import { styles } from './GroupContentView.styles';
 import { GroupContentViewError } from './GroupContentViewError';
 import { GroupContentViewLoading } from './GroupContentViewLoading';
-import { LANGUAGE_OPTIONS } from '~/constants/publications';
 import { GroupDetailsSection } from '~/shared/components/creativity/group/details-section/GroupDetailsSection';
 import { GroupIntroSection } from '~/shared/components/creativity/group/intro-section/GroupIntroSection';
 import { GroupPerformancesSection } from '~/shared/components/creativity/group/performances-section/GroupPerformancesSection';
@@ -23,17 +16,12 @@ import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
 import ProgressStatus from '~/shared/components/divided-header/progress-status/ProgressStatus';
 import { TitleDropdown } from '~/shared/components/divided-header/title-dropdown/TitleDropdown';
+import ActionMenu from '~/shared/components/dropdown-menu/ActionMenu';
 import { useGroupContent } from '~/shared/hooks/use-group-content/useGroupContent';
 
 type GroupContentViewProps = Readonly<{
   id: string;
 }>;
-
-const PUBLISH_MENU_OPTIONS = [
-  { id: 'PUBLISH', label: 'Опублікувати' },
-  { id: 'PUBLISH_AND_EXIT', label: 'Опублікувати і вийти' },
-  { id: 'DELETE', label: 'Видалити' }
-];
 
 export const GroupContentView = ({ id }: GroupContentViewProps) => {
   const {
@@ -130,69 +118,25 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
         </CollapsibleBlock>
       </Box>
 
-      <Menu
+      <ActionMenu
         anchorEl={anchors['navigation']}
-        open={Boolean(anchors['navigation'])}
         onClose={() => handleClose('navigation')}
-        disableScrollLock
+        menuItems={NavigationMenuItems({
+          onLanguageChange: setCurrentLanguage
+        })}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-        slotProps={{
-          paper: {
-            sx: styles.navigationMenuPaper
-          }
-        }}
-      >
-        <ListSubheader sx={styles.menuSubheader}>
-          <Typography variant="subtitle2" color="text.secondary">
-            {'Мовні версії'}
-          </Typography>
-        </ListSubheader>
+      />
 
-        {LANGUAGE_OPTIONS.map(({ locale, key, label }) => (
-          <MenuItem
-            key={key}
-            onClick={() => {
-              setCurrentLanguage(locale);
-              handleClose('navigation');
-            }}
-            sx={styles.menuItemLanguage}
-          >
-            <Typography variant="textMd">{label}</Typography>
-          </MenuItem>
-        ))}
-      </Menu>
-
-      <Menu
-        anchorEl={anchors['publish']}
-        open={Boolean(anchors['publish'])}
+      <ActionMenu
+        anchorEl={anchors.publish}
         onClose={() => handleClose('publish')}
-        disableScrollLock
+        menuItems={PublishMenuItems({
+          onAction: handleMenuOptionClick
+        })}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        slotProps={{
-          paper: {
-            sx: styles.publishMenuPaper
-          }
-        }}
-      >
-        {PUBLISH_MENU_OPTIONS.map((action) => {
-          if (action.id === 'DELETE') {
-            return [
-              <Divider key={`divider-${action.id}`} sx={{ my: 0.5 }} />,
-              <MenuItem key={action.id} onClick={() => handleMenuOptionClick(action.id)} sx={styles.publishMenuItem}>
-                <Typography variant="textMd">{action.label}</Typography>
-              </MenuItem>
-            ];
-          }
-
-          return (
-            <MenuItem key={action.id} onClick={() => handleMenuOptionClick(action.id)} sx={styles.publishMenuItem}>
-              <Typography variant="textMd">{action.label}</Typography>
-            </MenuItem>
-          );
-        })}
-      </Menu>
+      />
     </Box>
   );
 };

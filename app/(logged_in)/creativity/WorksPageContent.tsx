@@ -174,8 +174,8 @@ function WorksCreateAction() {
       <ActionMenu
         anchorEl={anchorEl}
         onClose={handleCloseMenu}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'center' }}
         menuItems={[
           {
             items: WORKS_CREATE_OPTIONS.map((option) => ({

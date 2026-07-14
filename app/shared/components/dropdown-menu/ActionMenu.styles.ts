@@ -4,6 +4,10 @@ import { tableDividerColor } from '../table-layout/TableLayout.styles';
 
 const styles: Record<string, SxProps<Theme>> = {
   menu: {
+    '& .MuiPaper-root': {
+      willChange: 'transform, opacity',
+      backfaceVisibility: 'hidden'
+    },
     '& .MuiMenu-list': {
       padding: '8px'
     }
@@ -13,6 +17,7 @@ const styles: Record<string, SxProps<Theme>> = {
     typography: 'subtitle2',
     paddingTop: '4px',
     paddingBottom: '4px',
+    position: 'static',
   },
 
   menuItem: {
