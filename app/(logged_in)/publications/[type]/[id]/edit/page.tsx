@@ -81,9 +81,10 @@ export default function EditPublicationsPage() {
 
       await publicationData.handleSave(currentStatus);
 
-      await manager.updateResource(currentStatus, {
-        content: manager.editedContent
-      });
+      await manager.updateResource(
+        currentStatus,
+        type === 'media' ? {} : { content: manager.editedContent }
+      );
       
       const previewSlug = getPreviewSlug({ publicationType: type, dbSlug: slug });
       await fetchPreview({ slug: previewSlug, lang: locale, draftId: id });
@@ -93,7 +94,7 @@ export default function EditPublicationsPage() {
   };
 
   const handleMenuAction = async (actionId: MenuActionId) => {
-    const contentPayload = { content: manager.editedContent };
+    const contentPayload = type === 'media' ? {} : { content: manager.editedContent };
 
     try {
       switch (actionId) {
