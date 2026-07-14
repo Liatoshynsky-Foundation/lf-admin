@@ -6,5 +6,6 @@ export interface ICompositionRepository {
   findByOpusId(opusId: string): Promise<Composition[]>;
   syncForOpus(opusId: string, inputs: CompositionInput[]): Promise<Composition[]>;
   deleteByOpusId(opusId: string): Promise<void>;
+  unlinckByOpusId(opusId: string): Promise<void>;
   searchByTitle(search: string): Promise<Composition[]>;
 }

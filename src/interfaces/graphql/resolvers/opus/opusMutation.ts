@@ -271,7 +271,7 @@ export const OpusMutation = {
     const repo = context.requestContainer.cradle.opusRepository;
     const compositionsRepo = context.requestContainer.cradle.compositionsRepository;
 
-    await compositionsRepo.deleteByOpusId(id);
+    await compositionsRepo.unlinckByOpusId(id);
 
     return repo.delete(id);
   }

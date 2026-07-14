@@ -64,6 +64,16 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
     await CompositionModel.deleteMany({ opusId });
   };
 
+  const unlinckByOpusId = async (opusId: string): Promise<void> => {
+    await dbConnect();
+
+    if (!mongoose.Types.ObjectId.isValid(opusId)) {
+      return;
+    }
+
+    await CompositionModel.updateMany({ opusId }, { $set: { opusId: null } });
+  };
+
   const syncForOpus = async (opusId: string, inputs: CompositionInput[]): Promise<Composition[]> => {
     await dbConnect();
 
@@ -113,10 +123,7 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
     const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 
     const docs = await CompositionModel.find({
-      $or: [
-        { 'title.uk': { $regex: escaped, $options: 'i' } },
-        { 'title.en': { $regex: escaped, $options: 'i' } }
-      ]
+      $or: [{ 'title.uk': { $regex: escaped, $options: 'i' } }, { 'title.en': { $regex: escaped, $options: 'i' } }]
     })
       .limit(10)
       .lean<DbComposition[]>();
@@ -124,5 +131,5 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
     return docs.map(toEntity);
   };
 
-  return { findByOpusId, syncForOpus, deleteByOpusId, searchByTitle };
+  return { findByOpusId, syncForOpus, deleteByOpusId, unlinckByOpusId, searchByTitle };
 };

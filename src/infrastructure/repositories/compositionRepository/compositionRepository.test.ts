@@ -105,11 +105,9 @@ describe('CompositionRepository', () => {
       { opusId, _id: { $nin: [existingCompositionId] } },
       { $set: { opusId: null } }
     );
-    expect(findByIdAndUpdateMock).toHaveBeenCalledWith(
-      existingCompositionId,
-      expect.objectContaining({ opusId }),
-      { new: true }
-    );
+    expect(findByIdAndUpdateMock).toHaveBeenCalledWith(existingCompositionId, expect.objectContaining({ opusId }), {
+      new: true
+    });
     expect(saveMock).not.toHaveBeenCalled();
     expect(result).toHaveLength(1);
   });
@@ -205,10 +203,7 @@ describe('CompositionRepository', () => {
     const result = await repository.searchByTitle('  Після  ');
 
     expect(findMock).toHaveBeenCalledWith({
-      $or: [
-        { 'title.uk': { $regex: 'Після', $options: 'i' } },
-        { 'title.en': { $regex: 'Після', $options: 'i' } }
-      ]
+      $or: [{ 'title.uk': { $regex: 'Після', $options: 'i' } }, { 'title.en': { $regex: 'Після', $options: 'i' } }]
     });
     expect(limitMock).toHaveBeenCalledWith(10);
     expect(result).toHaveLength(1);
@@ -225,5 +220,17 @@ describe('CompositionRepository', () => {
     await repository.deleteByOpusId('not-a-valid-object-id');
 
     expect(deleteManyMock).not.toHaveBeenCalled();
+  });
+
+  it('unlinkByOpusId sets opusId to null for a valid opusId', async (): Promise<void> => {
+    await repository.unlinckByOpusId(opusId);
+
+    expect(updateManyMock).toHaveBeenCalledWith({ opusId }, { $set: { opusId: null } });
+  });
+
+  it('unlinkByOpusId does nothing for an invalid opusId', async (): Promise<void> => {
+    await repository.unlinckByOpusId('not-a-valid-object-id');
+
+    expect(updateManyMock).not.toHaveBeenCalled();
   });
 });
