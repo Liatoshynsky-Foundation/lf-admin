@@ -9,6 +9,7 @@ import {
   PUBLICATIONS_TYPES,
   PublicationsItemType
 } from '~/constants/publications';
+import { checkIsSeoInvalid } from '~/lib/utils/checkIsSeoInvalid';
 import { buildCoverImageCropPayload } from '~/lib/utils/CropperHelper';
 import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import { useCreateEvent, useEventById, useUpdateEvent } from '~/shared/hooks/use-events/useEvents';
@@ -20,37 +21,6 @@ import {
 import { useCreateNews, useNewsById, useUpdateNews } from '~/shared/hooks/use-news/useNews';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { EventStatus, MediaStatus, NewsStatus } from '~/types/graphql/generated/graphql';
-
-const isValidUrl = (url: string): boolean => {
-  try {
-    new URL(url);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-const checkIsSeoInvalid = (
-  ukMeta: SeoBlockValue['meta']['uk'],
-  enMeta: SeoBlockValue['meta']['en'],
-  publicationType: PublicationsItemType,
-  ticketUrl: SeoBlockValue['ticketUrl']
-): boolean => {
-  if (!ukMeta.title.trim() || !enMeta.title.trim()) return true;
-  if (!ukMeta.description.trim() || !enMeta.description.trim()) return true;
-
-  if (publicationType === 'media') {
-    const ukUrl = ukMeta.canonicalUrl ?? '';
-    const enUrl = enMeta.canonicalUrl ?? '';
-    return !ukUrl.trim() || !enUrl.trim() || !isValidUrl(ukUrl) || !isValidUrl(enUrl);
-  }
-  if (publicationType === 'events') {
-    const ukUrl = ticketUrl?.uk ?? '';
-    const enUrl = ticketUrl?.en ?? '';
-    return !ukUrl.trim() || !enUrl.trim() || !isValidUrl(ukUrl) || !isValidUrl(enUrl);
-  }
-  return false;
-};
 
 interface UseUpsertPublicationProps {
   type: PublicationsItemType;

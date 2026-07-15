@@ -1,4 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
+import dayjs from 'dayjs';
 
 import { useUpsertPublication } from './useUpsertPublication';
 import { FetchedPublicationData, initialSeoValue, PublicationsItemType } from '~/constants/publications';
@@ -80,6 +81,7 @@ describe('useUpsertPublication Hook', () => {
       expect(result.current.adminTitle).toBe('');
       expect(result.current.seoValue).toEqual(initialSeoValue);
       expect(result.current.isLoading).toBe(false);
+      expect(result.current.pageTitle).toBe('Створення Новини');
     });
 
     it('should initialize in Edit mode and populate state from fetched data', async () => {
@@ -102,6 +104,25 @@ describe('useUpsertPublication Hook', () => {
         expect(result.current.adminTitle).toBe('Fetched Title');
         expect(result.current.seoValue.meta.uk.title).toBe('UK T');
         expect(result.current.publishDate?.toISOString()).toBe('2024-01-01T12:00:00.000Z');
+      });
+    });
+
+    it('should initialize in Edit mode and populate adminTitle with an empty string', async () => {
+      const fetchedNewsData: FetchedPublicationData = {
+        adminTitle: '',
+        newsDate: '2024-01-01T12:00:00Z',
+        title: { uk: 'UK T', en: 'EN T' },
+        description: { uk: 'UK D', en: 'EN D' },
+        allowIndexation: { uk: true, en: true },
+        coverImage: { src: 'img.png', crop: null, alt: { uk: '', en: '' } }
+      };
+
+      mockNewsQuery.mockReturnValue({ data: { newsById: fetchedNewsData }, loading: false });
+
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news', id: '123' }));
+
+      await waitFor(() => {
+        expect(result.current.adminTitle).toBe('');
       });
     });
 
@@ -151,21 +172,204 @@ describe('useUpsertPublication Hook', () => {
       });
     });
 
-    it('should call changeSeoValue on initialize with correct meta');
-    it('should call changeSeoValue on initialize with fallback for properties to null if fetchedData has undefined properties');
+    describe('getLangMeta branch coverage', () => {
+      it('should handle missing titles, descriptions, keywords, alts, and dates (falsy fallbacks)', async () => {
+        const fetchedNewsData: FetchedPublicationData = {
+          adminTitle: 'Fetched News',
+          newsDate: '2024-01-01T12:00:00Z',
+          title: undefined,
+          description: undefined,
+          keywords: undefined,
+          allowIndexation: { uk: true, en: true },
+          coverImage: {
+            src: 'img.png',
+            crop: null,
+            alt: undefined
+          }
+        };
 
+        mockNewsQuery.mockReturnValue({ data: { newsById: fetchedNewsData }, loading: false });
 
-    describe('getLangMeta', ()=>{
-      it('should return correct object if data is provided', async ()=>{
-      
+        const { result } = renderHook(() => useUpsertPublication({ type: 'news', id: '123' }));
+
+        await waitFor(() => {
+          expect(result.current.seoValue.meta.uk).toStrictEqual({
+            title: '',
+            description: '',
+            keywords: '',
+            canonicalUrl: '',
+            altText: { uk: '', en: '' },
+            startDateTime: undefined,
+            endDateTime: undefined
+          });
+          expect(result.current.seoValue.meta.en).toStrictEqual({
+            title: '',
+            description: '',
+            keywords: '',
+            canonicalUrl: '',
+            altText: { uk: '', en: '' },
+            startDateTime: undefined,
+            endDateTime: undefined
+          });
+        });
       });
-      it('should return fallback data for returned object if data is missing');
+
+      it('should handle media type with url and populated fields', async () => {
+        const fetchedMediaData: FetchedPublicationData = {
+          adminTitle: 'Fetched Media',
+          publishedAt: '2024-01-01T12:00:00Z',
+          title: { uk: 'UK T', en: 'EN T' },
+          description: { uk: 'UK D', en: 'EN D' },
+          keywords: { uk: 'kw1', en: 'kw2' },
+          url: 'https://media-url.com',
+          allowIndexation: { uk: true, en: true },
+          coverImage: {
+            src: 'img.png',
+            crop: null,
+            alt: { uk: 'Alt UK', en: 'Alt EN' }
+          }
+        };
+
+        mockMediaQuery.mockReturnValue({ data: { mediaMentionById: fetchedMediaData }, loading: false });
+
+        const { result } = renderHook(() => useUpsertPublication({ type: 'media', id: '123' }));
+
+        await waitFor(() => {
+          const { uk, en } = result.current.seoValue.meta;
+          expect(uk.canonicalUrl).toBe('https://media-url.com');
+          expect(en.canonicalUrl).toBe('https://media-url.com');
+          expect(uk.keywords).toBe('kw1');
+          expect(en.keywords).toBe('kw2');
+          expect(uk.altText?.uk).toBe('Alt UK');
+          expect(uk.altText?.en).toBe('Alt EN');
+        });
+      });
+
+      it('should handle media type without url (falls back to empty string)', async () => {
+        const fetchedMediaData: FetchedPublicationData = {
+          adminTitle: 'Fetched Media No Url',
+          publishedAt: '2024-01-01T12:00:00Z',
+          title: { uk: 'UK T', en: 'EN T' },
+          description: { uk: 'UK D', en: 'EN D' },
+          url: undefined,
+          allowIndexation: { uk: true, en: true },
+          coverImage: {
+            src: 'img.png',
+            crop: null,
+            alt: { uk: 'Alt UK', en: 'Alt EN' }
+          }
+        };
+
+        mockMediaQuery.mockReturnValue({ data: { mediaMentionById: fetchedMediaData }, loading: false });
+
+        const { result } = renderHook(() => useUpsertPublication({ type: 'media', id: '123' }));
+
+        await waitFor(() => {
+          const { uk, en } = result.current.seoValue.meta;
+          expect(uk.canonicalUrl).toBe('');
+          expect(en.canonicalUrl).toBe('');
+        });
+      });
+
+      it('should parse startDateTime and endDateTime for events', async () => {
+        const fetchedEventsData: FetchedPublicationData = {
+          adminTitle: 'Fetched Event',
+          publishedAt: '2024-01-01T12:00:00Z',
+          title: { uk: 'UK T', en: 'EN T' },
+          description: { uk: 'UK D', en: 'EN D' },
+          allowIndexation: { uk: true, en: true },
+          coverImage: { src: 'img.png', crop: null, alt: { uk: '', en: '' } },
+          eventDateTimeStart: '2024-05-01T10:00:00Z',
+          eventDateTimeEnd: '2024-05-01T12:00:00Z'
+        };
+
+        mockEventQuery.mockReturnValue({ data: { eventById: fetchedEventsData }, loading: false });
+
+        const { result } = renderHook(() => useUpsertPublication({ type: 'events', id: '123' }));
+
+        await waitFor(() => {
+          const { uk, en } = result.current.seoValue.meta;
+          expect(uk.startDateTime).toBe('2024-05-01T10:00:00.000Z');
+          expect(uk.endDateTime).toBe('2024-05-01T12:00:00.000Z');
+          expect(en.startDateTime).toBe('2024-05-01T10:00:00.000Z');
+          expect(en.endDateTime).toBe('2024-05-01T12:00:00.000Z');
+        });
+      });
     });
+
+
   });
 
+  describe('initialState branch coverage', () => {
+    it('should handle falsy/missing values for adminTitle, publishDate, ogImage, and allowIndexation', async () => {
+      const fetchedNewsData: FetchedPublicationData = {
+        adminTitle: undefined,
+        newsDate: undefined,
+        title: { uk: 'UK', en: 'EN' },
+        description: { uk: 'UK D', en: 'EN D' },
+        allowIndexation: undefined,
+        coverImage: {
+          src: undefined,
+          crop: null,
+          alt: { uk: '', en: '' }
+        }
+      };
 
+      mockNewsQuery.mockReturnValue({ data: { newsById: fetchedNewsData }, loading: false });
 
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news', id: '123' }));
+
+      await waitFor(() => {
+        expect(result.current.adminTitle).toBe('');
+        expect(result.current.publishDate).toBeNull();
+        expect(result.current.seoValue.ogImage).toBeNull();
+        expect(result.current.seoValue.allowIndexing.uk).toBe(true);
+        expect(result.current.seoValue.allowIndexing.en).toBe(true);
+        expect(result.current.hasUnsavedChanges).toBe(false);
+      });
+    });
+
+    it('should handle truthy/provided values for adminTitle, publishDate, ogImage, and allowIndexation', async () => {
+      const fetchedNewsData: FetchedPublicationData = {
+        adminTitle: 'Custom Admin Title',
+        newsDate: '2024-01-01T12:00:00Z',
+        title: { uk: 'UK', en: 'EN' },
+        description: { uk: 'UK D', en: 'EN D' },
+        allowIndexation: { uk: false, en: false },
+        coverImage: {
+          src: 'https://site.com/image.png',
+          crop: null,
+          alt: { uk: '', en: '' }
+        }
+      };
+
+      mockNewsQuery.mockReturnValue({ data: { newsById: fetchedNewsData }, loading: false });
+
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news', id: '123' }));
+
+      await waitFor(() => {
+        expect(result.current.adminTitle).toBe('Custom Admin Title');
+        expect(result.current.publishDate?.toISOString()).toBe('2024-01-01T12:00:00.000Z');
+        expect(result.current.seoValue.ogImage).toBe('https://site.com/image.png');
+        expect(result.current.seoValue.allowIndexing.uk).toBe(false);
+        expect(result.current.seoValue.allowIndexing.en).toBe(false);
+        expect(result.current.hasUnsavedChanges).toBe(false);
+      });
+    });
+  });
   describe('Validation Logic', () => {
+    it('should return early and do nothing if type is invalid', async () => {
+      const { result } = renderHook(() => useUpsertPublication({ type: 'invalid-type' as PublicationsItemType }));
+
+      let resultData;
+      await act(async () => {
+        resultData = await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(resultData).toBeUndefined();
+      expect(mockCreateNews).not.toHaveBeenCalled();
+    });
+
     it('should block save and show errors if adminTitle is empty', async () => {
       const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
 
@@ -392,38 +596,51 @@ describe('useUpsertPublication Hook', () => {
       expect(returnedId).toBe('news-55');
     });
 
+    it('should correctly update start and end DateTimes via handleDateTimeChange', () => {
+      const { result } = renderHook(() => useUpsertPublication({ type: 'events' }));
 
-
-
-    describe('Helper Functions', () => {
-      it('should correctly update start and end DateTimes via handleDateTimeChange', () => {
-        const { result } = renderHook(() => useUpsertPublication({ type: 'events' }));
-
-        act(() => {
-          result.current.handleDateTimeChange('2025-01-01T00:00:00Z', '2025-01-02T00:00:00Z');
-        });
-
-        expect(result.current.seoValue.meta.uk.startDateTime).toBe('2025-01-01T00:00:00Z');
-        expect(result.current.seoValue.meta.uk.endDateTime).toBe('2025-01-02T00:00:00Z');
-        expect(result.current.seoValue.meta.en.startDateTime).toBe('2025-01-01T00:00:00Z');
+      act(() => {
+        result.current.handleDateTimeChange('2025-01-01T00:00:00Z', '2025-01-02T00:00:00Z');
       });
 
-      it('should return true for isSeoInvalid if URL is totally invalid', async () => {
-        const { result } = renderHook(() => useUpsertPublication({ type: 'media' }));
+      expect(result.current.seoValue.meta.uk.startDateTime).toBe('2025-01-01T00:00:00Z');
+      expect(result.current.seoValue.meta.uk.endDateTime).toBe('2025-01-02T00:00:00Z');
+      expect(result.current.seoValue.meta.en.startDateTime).toBe('2025-01-01T00:00:00Z');
+    });
+  });
 
-        act(() => {
-          result.current.setAdminTitle('Valid Title');
-          const invalidSeo = createValidSeoState('media');
-          invalidSeo.meta.uk.canonicalUrl = 'not-a-url-at-all';
-          result.current.setSeoValue(invalidSeo);
-        });
+  describe('hasUnsavedChanges', () => {
+    it('should be false initially and true after modifying publishDate, and false if reverted to null', async () => {
+      const fetchedNewsData: FetchedPublicationData = {
+        adminTitle: 'Fetched Title',
+        newsDate: null,
+        title: { uk: 'UK', en: 'EN' },
+        description: { uk: 'UK D', en: 'EN D' },
+        allowIndexation: { uk: true, en: true },
+        coverImage: { src: 'img.png', crop: null, alt: { uk: '', en: '' } }
+      };
 
-        await act(async () => {
-          await result.current.handleSave(BaseContentStatuses.Published);
-        });
+      mockNewsQuery.mockReturnValue({ data: { newsById: fetchedNewsData }, loading: false });
 
-        expect(result.current.forceShowErrors).toBe(true);
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news', id: '123' }));
+
+      await waitFor(() => {
+        expect(result.current.publishDate).toBeNull();
+        expect(result.current.hasUnsavedChanges).toBe(false);
       });
+
+      act(() => {
+        result.current.setPublishDate(dayjs('2024-01-01T12:00:00Z'));
+      });
+
+      expect(result.current.hasUnsavedChanges).toBe(true);
+
+      act(() => {
+        result.current.setPublishDate(null);
+      });
+
+      expect(result.current.publishDate).toBeNull();
+      expect(result.current.hasUnsavedChanges).toBe(false);
     });
   });
 });
