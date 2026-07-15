@@ -1,5 +1,6 @@
 import dayjs, { type Dayjs } from 'dayjs';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import {
   FetchedPublicationData,
@@ -79,6 +80,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
 
   const [adminTitle, setAdminTitle] = useState('');
   const [adminTitleError, setAdminTitleError] = useState('');
+  const [canonicalUrlError, setCanonicalUrlError] = useState('');
   const [publishDate, setPublishDate] = useState<Dayjs | null>(null);
   const [seoValue, setSeoValue] = useState<SeoBlockValue>(initialSeoValue);
 
@@ -282,8 +284,23 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       const resultId = await saveStrategies[publicationType]?.();
 
       return resultId;
-    } catch {
-      // errors are handled by safeMutate
+    } catch (error: unknown) {
+      console.log('Error: ', error);
+      if (error instanceof Error) {
+        const errorMessage = error.message || '';
+
+        if (errorMessage.includes('E11000')) {
+          let errorMsg = '';
+          if (errorMessage.includes('url_1')) {
+            errorMsg = 'Публікація з таким canonical URL вже існує.';
+          } else {
+            errorMsg = 'Публікація з такими даними вже існує.';
+          }
+          setCanonicalUrlError(errorMsg);
+        } else {
+          toast.error('Щось пішло не так.');
+        }
+      }
     }
   };
 
@@ -305,12 +322,12 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       seoValue,
       crop
     }) !==
-      JSON.stringify({
-        adminTitle: initialState.adminTitle,
-        publishDate: initialState.publishDate,
-        seoValue: initialState.seoValue,
-        crop: initialState.crop
-      });
+    JSON.stringify({
+      adminTitle: initialState.adminTitle,
+      publishDate: initialState.publishDate,
+      seoValue: initialState.seoValue,
+      crop: initialState.crop
+    });
 
   return {
     isEditing,
@@ -322,6 +339,8 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     setAdminTitle: changeAdminTitle,
     adminTitleError,
     setAdminTitleError,
+    canonicalUrlError,
+    setCanonicalUrlError,
     publishDate,
     setPublishDate: changePublishDate,
     seoValue,

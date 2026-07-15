@@ -46,6 +46,7 @@ export default function CreatePublicationsView({
     adminTitle,
     setAdminTitle,
     adminTitleError,
+    canonicalUrlError,
     publishDate,
     setPublishDate,
     seoValue,
@@ -85,12 +86,13 @@ export default function CreatePublicationsView({
     ) => (
       <SeoCanonicalUrlField
         value={value.canonicalUrl ?? ''}
+        externalError={canonicalUrlError}
         onChange={(val) => onChange({ ...value, canonicalUrl: val })}
-        onBlur={() => {}}
+        onBlur={() => { }}
         forceShowErrors={forceShowErrors}
       />
     ),
-    [forceShowErrors]
+    [forceShowErrors, canonicalUrlError]
   );
 
   let seoExtraFields: typeof eventsExtraFields | typeof mediaExtraFields | undefined;
