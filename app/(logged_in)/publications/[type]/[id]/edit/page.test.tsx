@@ -80,7 +80,11 @@ const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
 
 jest.mock('../../create/CreatePublicationsView', () => ({
   __esModule: true,
-  default: () => <div data-testid="mock-create-view" />
+  default: ({ onPreview }: { onPreview?: () => void }) => (
+    <div data-testid="mock-create-view">
+      {onPreview && <button data-testid="trigger-media-preview" onClick={onPreview} />}
+    </div>
+  )
 }));
 
 const mockHandleSave = jest.fn().mockResolvedValue(undefined);
@@ -151,7 +155,7 @@ describe('EditPublicationsPage Container', () => {
     });
   });
 
-  it('should redirect to preview page when onPreview is triggered', async () => {
+  it('should redirect to UK preview page when onPreview is triggered', async () => {
     (fetchPreview as jest.Mock).mockResolvedValue(null);
     render(<EditPublicationsPage />);
 
@@ -179,6 +183,7 @@ describe('EditPublicationsPage Container', () => {
     fireEvent.click(screen.getByTestId('trigger-preview'));
 
     await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Виникла помилка при отриманні даних для попереднього перегляду');
       expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Не вдалося завантажити slug для попереднього перегляду'));
     });
 
@@ -202,6 +207,7 @@ describe('EditPublicationsPage Container', () => {
     render(<EditPublicationsPage />);
 
     fireEvent.click(screen.getByTestId('trigger-editor-change'));
+    fireEvent.click(screen.getByTestId('trigger-editor-change'));
 
     expect(baseMockManager.setEditedContent).not.toHaveBeenCalled();
 
@@ -219,8 +225,12 @@ describe('EditPublicationsPage Container', () => {
 
     expect(newState?.uk?.content.blocks[0].content).toBe('new');
 
+    const nullState = stateUpdater(null);
+    expect(nullState).toBeNull();
+
     jest.useRealTimers();
   });
+
 
   it('should handle PUBLISH action correctly', async () => {
     render(<EditPublicationsPage />);
@@ -276,6 +286,70 @@ describe('EditPublicationsPage Container', () => {
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith(`Помилка: ${errorMessage}`);
+      expect(consoleSpy).toHaveBeenCalled();
+    });
+
+    consoleSpy.mockRestore();
+  });
+
+  it('should redirect to EN preview page when onPreview is triggered and language is EN', async () => {
+    (usePublicationManager as jest.Mock).mockReturnValue({
+      ...baseMockManager,
+      currentLanguage: 'EN'
+    });
+    (fetchPreview as jest.Mock).mockResolvedValue(null);
+    render(<EditPublicationsPage />);
+
+    fireEvent.click(screen.getByTestId('trigger-preview'));
+
+    await waitFor(() => {
+      expect(fetchPreview).toHaveBeenCalledTimes(1);
+    });
+    expect(fetchPreview).toHaveBeenCalledWith({ slug: `news/${dbSlug}`, lang: 'en', draftId: '123' });
+  });
+
+  it('should handle preview for media type', async () => {
+    (useParams as jest.Mock).mockReturnValue({ type: 'media', id: '456' });
+    (fetchPreview as jest.Mock).mockResolvedValue(null);
+
+    render(<EditPublicationsPage />);
+
+    fireEvent.click(screen.getByTestId('trigger-media-preview'));
+
+    await waitFor(() => {
+      expect(fetchPreview).toHaveBeenCalledTimes(1);
+    });
+    expect(fetchPreview).toHaveBeenCalledWith({ slug: '/news?tab=press', lang: 'uk', draftId: '456' });
+  });
+
+  it('should show an error toast when onPreview is triggered and handleSave throws a non-Error string', async () => {
+    (useUpsertPublication as jest.Mock).mockReturnValue({
+      mockUpsertData: true,
+      handleSave: jest.fn().mockRejectedValue('String Error')
+    });
+    render(<EditPublicationsPage />);
+
+    fireEvent.click(screen.getByTestId('trigger-preview'));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Помилка: String Error');
+    });
+  });
+
+  it('should catch non-Error mutation errors and trigger a toast.error', async () => {
+    (usePublicationManager as jest.Mock).mockReturnValue({
+      ...baseMockManager,
+      updateResource: jest.fn().mockRejectedValue('String Mutation Error')
+    });
+
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+
+    render(<EditPublicationsPage />);
+
+    fireEvent.click(screen.getByTestId('trigger-publish'));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Помилка: String Mutation Error');
       expect(consoleSpy).toHaveBeenCalled();
     });
 

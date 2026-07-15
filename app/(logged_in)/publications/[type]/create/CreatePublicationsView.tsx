@@ -128,7 +128,7 @@ export default function CreatePublicationsView({
     await fetchPreview({
       slug: getPreviewSlug({ publicationType, dbSlug: slug }),
       lang: locale,
-      draftId: id || ''
+      draftId: id
     });
   };
 

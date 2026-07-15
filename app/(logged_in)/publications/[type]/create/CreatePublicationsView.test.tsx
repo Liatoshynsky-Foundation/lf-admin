@@ -7,9 +7,11 @@ import CreatePublicationsView from './CreatePublicationsView';
 import {
   CONTENT_MUTATION_RESULTS,
   initialSeoValue,
+  MenuActionId,
   PUBLICATIONS_BASE_PATH,
   PublicationsItemType
 } from '~/constants/publications';
+import { fetchPreview } from '~/lib/utils/fetchPreview';
 import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
@@ -37,21 +39,28 @@ jest.mock('~/shared/components/divided-header/header-right-actions/HeaderRightAc
   return function MockHeaderRightActions({
     onMenuOpen,
     onPublish,
-    onPreview
+    onPreview,
+    onEdit
   }: {
     onMenuOpen?: (e: MouseEvent<HTMLButtonElement>) => void;
     onPublish?: () => void;
     onPreview?: () => void;
+    onEdit?: () => void;
   }) {
     return (
       <div>
-        <button data-testid='btn-preview' onClick={onPreview}>Preview</button>
+        <button data-testid="btn-preview" onClick={onPreview}>Preview</button>
         <button data-testid="btn-publish" onClick={onPublish}>
           Publish
         </button>
         <button data-testid="btn-open-menu" onClick={(e) => onMenuOpen?.(e)}>
           Menu
         </button>
+        {onEdit && (
+          <button data-testid="btn-edit" onClick={onEdit}>
+            Edit
+          </button>
+        )}
       </div>
     );
   };
@@ -80,27 +89,90 @@ jest.mock('~/shared/components/forms/seo-metadata-form/seo-datetime-fields/SeoDa
 }));
 
 jest.mock('~/shared/components/forms/seo-metadata-form/seo-canonicalurl-field/SeoCanonicalUrlField', () => ({
-  SeoCanonicalUrlField: () => <div data-testid="mock-seo-canonical-url-field" />
+  SeoCanonicalUrlField: ({
+    value,
+    onChange,
+    onBlur
+  }: {
+    value: string;
+    onChange: (val: string) => void;
+    onBlur?: () => void;
+  }) => (
+    <div data-testid="mock-seo-canonical-url-field">
+      <input
+        data-testid="canonical-url-input"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
+      />
+    </div>
+  )
 }));
 
 type MockSeoBlockProps = {
   children: ReactNode;
-  extraFields?: (locale: 'uk' | 'en', value: SeoBlockValue['meta']['uk'], onChange: () => void) => ReactNode;
+  extraFields?: (
+    locale: 'uk' | 'en',
+    value: SeoBlockValue['meta']['uk'],
+    onChange: (val: SeoBlockValue['meta']['uk']) => void
+  ) => ReactNode;
+  value?: any;
+  onChange?: (val: any) => void;
 };
 
 jest.mock('~/shared/components/forms/seo-collapsible-block/SeoCollapsibleBlock', () => {
-  return function MockSeoCollapsibleBlock({ children, extraFields }: MockSeoBlockProps) {
-    const dummyValue: SeoBlockValue['meta']['uk'] = { title: '', description: '', keywords: '' };
+  return function MockSeoCollapsibleBlock({ children, extraFields, value, onChange }: MockSeoBlockProps) {
+    const dummyValue = value?.meta?.uk || { title: '', description: '', keywords: '' };
 
     return (
       <div data-testid="mock-seo-collapsible-block">
         <div data-testid="seo-children">{children}</div>
 
-        <div data-testid="seo-extra-fields">{extraFields ? extraFields('uk', dummyValue, jest.fn()) : null}</div>
+        <div data-testid="seo-extra-fields">
+          {extraFields && onChange
+            ? extraFields('uk', dummyValue, (val) =>
+              onChange({
+                ...value,
+                meta: {
+                  ...value.meta,
+                  uk: val
+                }
+              })
+            )
+            : null}
+        </div>
       </div>
     );
   };
 });
+
+jest.mock('~/components/delete-card-modal/DeleteCardModal', () => {
+  return function MockDeleteCardModal({
+    open,
+    onClose,
+    onDelete
+  }: {
+    open: boolean;
+    onClose: () => void;
+    onDelete: () => void;
+  }) {
+    if (!open) return null;
+    return (
+      <div data-testid="mock-delete-modal">
+        <button data-testid="btn-close-delete-modal" onClick={onClose}>Close</button>
+        <button data-testid="btn-confirm-delete-modal" onClick={onDelete}>Delete</button>
+      </div>
+    );
+  };
+});
+
+jest.mock('~/lib/utils/fetchPreview', () => ({
+  fetchPreview: jest.fn().mockResolvedValue(undefined)
+}));
+
+jest.mock('~/lib/utils/getPreviewSlug', () => ({
+  getPreviewSlug: jest.fn(({ dbSlug }) => `/preview/${dbSlug}`)
+}));
 
 const createMockData = (
   overrides: Partial<ReturnType<typeof useUpsertPublication>> = {}
@@ -127,9 +199,16 @@ const createMockData = (
   ...overrides
 });
 
+const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+
 describe('CreatePublicationsView Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    errorSpy.mockClear();
+  });
+
+  afterAll(() => {
+    errorSpy.mockRestore();
   });
 
   describe('Rendering by Publication Type', () => {
@@ -159,6 +238,27 @@ describe('CreatePublicationsView Component', () => {
 
       expect(screen.getByLabelText('Назва публікації в адмінці')).toBeInTheDocument();
       expect(screen.getByTestId('mock-seo-canonical-url-field')).toBeInTheDocument();
+    });
+  });
+
+  describe('Rendering by Mode', () => {
+    it('should render correct title in edit mode', () => {
+      const mockData = createMockData({ publicationType: 'news' });
+      render(<CreatePublicationsView data={mockData} mode="edit" />);
+      expect(screen.getByText('Редагування Новини')).toBeInTheDocument();
+    });
+
+    it('should render correct title in create mode', () => {
+      const mockData = createMockData({ publicationType: 'news' });
+      render(<CreatePublicationsView data={mockData} mode="create" />);
+      expect(screen.getByText('Створення Новини')).toBeInTheDocument();
+    });
+
+    it('should not render DividedHeader in seo mode', () => {
+      const mockData = createMockData({ publicationType: 'news' });
+      render(<CreatePublicationsView data={mockData} mode="seo" />);
+      expect(screen.queryByText('Створення Новини')).not.toBeInTheDocument();
+      expect(screen.queryByText('Редагування Новини')).not.toBeInTheDocument();
     });
   });
 
@@ -260,6 +360,241 @@ describe('CreatePublicationsView Component', () => {
         expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublished);
         expect(mockPush).toHaveBeenCalledWith(PUBLICATIONS_BASE_PATH);
       });
+    });
+  });
+
+  describe('SEO Canonical URL Field (Line 92)', () => {
+    it('should call setSeoValue when Canonical URL input changes', () => {
+      const mockSetSeoValue = jest.fn();
+      const mockData = createMockData({
+        publicationType: 'media',
+        seoValue: {
+          ...initialSeoValue,
+          meta: {
+            ...initialSeoValue.meta,
+            uk: { ...initialSeoValue.meta.uk, canonicalUrl: 'http://old.url' }
+          }
+        },
+        setSeoValue: mockSetSeoValue
+      });
+
+      render(<CreatePublicationsView data={mockData} />);
+
+      const input = screen.getByTestId('canonical-url-input');
+      fireEvent.change(input, { target: { value: 'http://new.url' } });
+      fireEvent.blur(input);
+
+      expect(mockSetSeoValue).toHaveBeenCalledTimes(1);
+      expect(mockSetSeoValue).toHaveBeenCalledWith(
+        expect.objectContaining({
+          meta: expect.objectContaining({
+            uk: expect.objectContaining({
+              canonicalUrl: 'http://new.url'
+            })
+          })
+        })
+      );
+    });
+  });
+
+  describe('Preview actions (fallbackOnPreview, Lines 111-128)', () => {
+    let originalConsoleError: typeof console.error;
+
+    beforeAll(() => {
+      originalConsoleError = console.error;
+      console.error = jest.fn();
+    });
+
+    afterAll(() => {
+      console.error = originalConsoleError;
+    });
+
+    it('should show error toast if handleSave returns null/undefined', async () => {
+      const handleSave = jest.fn().mockResolvedValue(null);
+      const mockData = createMockData({ publicationType: 'news', handleSave });
+
+      render(<CreatePublicationsView data={mockData} />);
+      fireEvent.click(screen.getByTestId('btn-preview'));
+
+      await waitFor(() => {
+        expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
+        expect(toast.error).toHaveBeenCalledWith('Виникла помилка при отриманні даних для попереднього перегляду');
+        expect(console.error).toHaveBeenCalled();
+      });
+    });
+
+    it('should show error toast if handleSave returns object with missing id or slug', async () => {
+      const handleSave = jest.fn().mockResolvedValue({ id: '', slug: '' });
+      const mockData = createMockData({ publicationType: 'news', handleSave });
+
+      render(<CreatePublicationsView data={mockData} />);
+      fireEvent.click(screen.getByTestId('btn-preview'));
+
+      await waitFor(() => {
+        expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
+        expect(toast.error).toHaveBeenCalledWith('Виникла помилка при отриманні даних для попереднього перегляду');
+        expect(console.error).toHaveBeenCalled();
+      });
+    });
+
+    it('should call fetchPreview with locale "uk" if seoValue.meta.uk.title is populated', async () => {
+      const handleSave = jest.fn().mockResolvedValue({ id: '123', slug: 'news-slug' });
+      const seoValue = {
+        ...initialSeoValue,
+        meta: {
+          ...initialSeoValue.meta,
+          uk: { ...initialSeoValue.meta.uk, title: 'Ukrainian Title' }
+        }
+      };
+      const mockData = createMockData({ publicationType: 'news', handleSave, seoValue });
+
+      render(<CreatePublicationsView data={mockData} />);
+      fireEvent.click(screen.getByTestId('btn-preview'));
+
+      await waitFor(() => {
+        expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
+        expect(fetchPreview).toHaveBeenCalledWith({
+          slug: '/preview/news-slug',
+          lang: 'uk',
+          draftId: '123'
+        });
+      });
+    });
+
+    it('should call fetchPreview with locale "en" if seoValue.meta.uk.title is empty', async () => {
+      const handleSave = jest.fn().mockResolvedValue({ id: '123', slug: 'news-slug' });
+      const seoValue = {
+        ...initialSeoValue,
+        meta: {
+          ...initialSeoValue.meta,
+          uk: { ...initialSeoValue.meta.uk, title: '' }
+        }
+      };
+      const mockData = createMockData({ publicationType: 'news', handleSave, seoValue });
+
+      render(<CreatePublicationsView data={mockData} />);
+      fireEvent.click(screen.getByTestId('btn-preview'));
+
+      await waitFor(() => {
+        expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
+        expect(fetchPreview).toHaveBeenCalledWith({
+          slug: '/preview/news-slug',
+          lang: 'en',
+          draftId: '123'
+        });
+      });
+    });
+  });
+
+  describe('Menu actions (Lines 157-167)', () => {
+   
+    it('should successfully cancel publication, save draft and redirect', async () => {
+      const handleSave = jest.fn().mockResolvedValue({ id: 'media-123' });
+      const mockData = createMockData({ publicationType: 'media', handleSave });
+
+      render(<CreatePublicationsView data={mockData} />);
+      fireEvent.click(screen.getByTestId('btn-open-menu'));
+      fireEvent.click(screen.getByText('Скасувати публікацію'));
+
+      await waitFor(() => {
+        expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
+        expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.draftSaved);
+        expect(mockPush).toHaveBeenCalledWith(PUBLICATIONS_BASE_PATH);
+      });
+    });
+
+    it('should handle error when action fails with Error instance', async () => {
+      const errorMsg = 'Save failed';
+      const handleSave = jest.fn().mockRejectedValue(new Error(errorMsg));
+      const mockData = createMockData({ publicationType: 'media', handleSave });
+
+      render(<CreatePublicationsView data={mockData} />);
+      fireEvent.click(screen.getByTestId('btn-publish'));
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(`Помилка: ${errorMsg}`);
+        expect(console.error).toHaveBeenCalledWith(`Action ${MenuActionId.PUBLISH} failed`, expect.any(Error));
+      });
+    });
+
+    it('should handle error when action fails with string error', async () => {
+      const errorMsg = 'Unexpected string error';
+      const handleSave = jest.fn().mockRejectedValue(errorMsg);
+      const mockData = createMockData({ publicationType: 'media', handleSave });
+
+      render(<CreatePublicationsView data={mockData} />);
+      fireEvent.click(screen.getByTestId('btn-publish'));
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(`Помилка: ${errorMsg}`);
+        expect(console.error).toHaveBeenCalledWith(`Action ${MenuActionId.PUBLISH} failed`, errorMsg);
+      });
+    });
+  });
+
+  describe('onEdit action (Lines 172-174)', () => {
+    it('should save draft and redirect to edit page when edit button is clicked', async () => {
+      const handleSave = jest.fn().mockResolvedValue({ id: 'news-456' });
+      const mockData = createMockData({ publicationType: 'news', handleSave });
+
+      render(<CreatePublicationsView data={mockData} />);
+      fireEvent.click(screen.getByTestId('btn-edit'));
+
+      await waitFor(() => {
+        expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
+        expect(mockPush).toHaveBeenCalledWith(`${PUBLICATIONS_BASE_PATH}/news/news-456/edit`);
+      });
+    });
+
+    it('should not redirect if handleSave returns no ID during edit', async () => {
+      const handleSave = jest.fn().mockResolvedValue(null);
+      const mockData = createMockData({ publicationType: 'news', handleSave });
+
+      render(<CreatePublicationsView data={mockData} />);
+      fireEvent.click(screen.getByTestId('btn-edit'));
+
+      await waitFor(() => {
+        expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
+      });
+      expect(mockPush).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Delete actions (Lines 253-255, 267-270)', () => {
+    it('should open delete modal, and call onDeleteConfirm on confirm', async () => {
+      const mockOnDeleteConfirm = jest.fn();
+      const mockData = createMockData({ publicationType: 'media' });
+
+      render(<CreatePublicationsView data={mockData} onDeleteConfirm={mockOnDeleteConfirm} />);
+
+      expect(screen.queryByTestId('mock-delete-modal')).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('btn-open-menu'));
+      fireEvent.click(screen.getByText('Видалити'));
+
+      expect(screen.getByTestId('mock-delete-modal')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('btn-confirm-delete-modal'));
+
+      expect(mockOnDeleteConfirm).toHaveBeenCalledTimes(1);
+      expect(screen.queryByTestId('mock-delete-modal')).not.toBeInTheDocument();
+    });
+
+    it('should close delete modal without calling onDeleteConfirm on close', async () => {
+      const mockOnDeleteConfirm = jest.fn();
+      const mockData = createMockData({ publicationType: 'media' });
+
+      render(<CreatePublicationsView data={mockData} onDeleteConfirm={mockOnDeleteConfirm} />);
+
+      fireEvent.click(screen.getByTestId('btn-open-menu'));
+      fireEvent.click(screen.getByText('Видалити'));
+
+      expect(screen.getByTestId('mock-delete-modal')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('btn-close-delete-modal'));
+
+      expect(mockOnDeleteConfirm).not.toHaveBeenCalled();
+      expect(screen.queryByTestId('mock-delete-modal')).not.toBeInTheDocument();
     });
   });
 });

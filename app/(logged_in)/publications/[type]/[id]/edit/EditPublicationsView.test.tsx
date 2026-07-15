@@ -143,6 +143,21 @@ describe('EditPublicationsView Component', () => {
     expect(editor).toHaveValue('');
   });
 
+  it('should pass initialContent to ContentEditor if isContentValid is true', () => {
+    const mockBlocks = [{ id: '1', type: 'paragraph', content: [], props: {} }] as unknown as Block[];
+    const propsWithBlocks = {
+      ...defaultProps,
+      editedContent: {
+        uk: { content: { blocks: mockBlocks, version: '1', lastModified: '' } },
+        en: { content: { blocks: [], version: '1', lastModified: '' } }
+      }
+    };
+    render(<EditPublicationsView {...propsWithBlocks} />);
+
+    const editor = screen.getByTestId('mock-content-editor');
+    expect(editor).toHaveValue('has-content');
+  });
+
   it('should render the loading state when editedContent is null', () => {
     render(<EditPublicationsView {...defaultProps} editedContent={null} />);
     expect(screen.getByText('Завантаження...')).toBeInTheDocument();
