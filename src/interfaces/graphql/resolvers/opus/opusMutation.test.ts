@@ -8,6 +8,7 @@ import { OpusStatus } from '~/types/enums/common.enums';
 jest.mock('mongoose');
 
 import * as helpers from '../helpers';
+import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerator';
 
 jest.mock('~/src/shared/utils/slugGenerator/slugGenerator', () => ({
   generateUniqueSlug: jest.fn((title: string) => Promise.resolve(`slug-${title.toLowerCase().replaceAll(/\s+/g, '-')}`))
@@ -34,6 +35,7 @@ describe('OpusMutation Resolvers', () => {
     findByOpusId: jest.fn(),
     syncForOpus: jest.fn(),
     deleteByOpusId: jest.fn(),
+    unlinckByOpusId: jest.fn(),
     searchByTitle: jest.fn()
   };
 
@@ -91,6 +93,15 @@ describe('OpusMutation Resolvers', () => {
     ...overrides
   });
 
+  const mockSlugWithCheckExists = () => {
+    (generateUniqueSlug as jest.Mock).mockImplementationOnce(
+      async (title: string, { checkExists }: { checkExists: (candidate: string) => Promise<boolean> }) => {
+        await checkExists(`slug-${title}`);
+        return `slug-${title.toLowerCase().replaceAll(/\s+/g, '-')}`;
+      }
+    );
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
     (mockRepo.findBySlug as jest.Mock).mockResolvedValue(null);
@@ -98,6 +109,7 @@ describe('OpusMutation Resolvers', () => {
     (mockCompositionsRepo.syncForOpus as jest.Mock).mockResolvedValue([]);
     (mockCompositionsRepo.findByOpusId as jest.Mock).mockResolvedValue([]);
     (mockCompositionsRepo.deleteByOpusId as jest.Mock).mockResolvedValue(undefined);
+    (mockCompositionsRepo.unlinckByOpusId as jest.Mock).mockResolvedValue(undefined);
   });
 
   describe('Security/Authentication', () => {
@@ -177,14 +189,16 @@ describe('OpusMutation Resolvers', () => {
     it('should throw OPUS_NOT_FOUND when updating a missing opus', async () => {
       (mockRepo.findById as jest.Mock).mockResolvedValue(null);
 
-      await expect(OpusMutation.updateOpus({}, { id: 'missing', input: { name: { uk: 'x', en: 'x' } } }, adminContext)).rejects.toThrow(
-        'Opus with id "missing" not found'
-      );
+      await expect(
+        OpusMutation.updateOpus({}, { id: 'missing', input: { name: { uk: 'x', en: 'x' } } }, adminContext)
+      ).rejects.toThrow('Opus with id "missing" not found');
     });
 
     it('should update opus and replace its compositions', async () => {
       (mockRepo.findById as jest.Mock).mockResolvedValue(createMockEntity({ id: '1' }));
-      (mockRepo.update as jest.Mock).mockResolvedValue(createMockEntity({ id: '1', name: { uk: 'Оновлено', en: 'Updated' } }));
+      (mockRepo.update as jest.Mock).mockResolvedValue(
+        createMockEntity({ id: '1', name: { uk: 'Оновлено', en: 'Updated' } })
+      );
 
       const result = await OpusMutation.updateOpus(
         {},
@@ -356,9 +370,9 @@ describe('OpusMutation Resolvers', () => {
       (mockRepo.findById as jest.Mock).mockResolvedValue(createMockEntity({ id: '1' }));
       (mockRepo.update as jest.Mock).mockResolvedValue(null);
 
-      await expect(OpusMutation.updateOpus({}, { id: '1', input: { name: { uk: 'x', en: 'x' } } }, adminContext)).rejects.toThrow(
-        'Opus with id "1" not found'
-      );
+      await expect(
+        OpusMutation.updateOpus({}, { id: '1', input: { name: { uk: 'x', en: 'x' } } }, adminContext)
+      ).rejects.toThrow('Opus with id "1" not found');
     });
 
     it('should keep existing compositions when compositions are omitted on update', async (): Promise<void> => {
@@ -394,6 +408,35 @@ describe('OpusMutation Resolvers', () => {
       expect(helpers.syncImagesCrops).not.toHaveBeenCalled();
       expect(helpers.markImagesAsUsed).toHaveBeenCalled();
     });
+
+    it('should invoke checkExists and call findBySlug during createOpus slug generation', async () => {
+      const input = createMockInput();
+      (mockRepo.create as jest.Mock).mockResolvedValue(createMockEntity({ id: 'opus-slug-test' }));
+
+      mockSlugWithCheckExists();
+
+      await OpusMutation.createOpus({}, { input }, adminContext);
+
+      expect(mockRepo.findBySlug).toHaveBeenCalled();
+    });
+
+    it('should fallback to existingOpus.numberKind when updating number without numberKind', async () => {
+      (mockRepo.findById as jest.Mock).mockResolvedValue(
+        createMockEntity({ id: '1', number: 'op.1', numberKind: 'op' })
+      );
+      (mockRepo.findByNumber as jest.Mock).mockResolvedValue(null);
+      (mockRepo.update as jest.Mock).mockResolvedValue(createMockEntity({ id: '1' }));
+
+      await OpusMutation.updateOpus({}, { id: '1', input: { number: '10' } }, adminContext);
+
+      expect(mockRepo.update).toHaveBeenCalledWith(
+        '1',
+        expect.objectContaining({
+          number: 'op.10',
+          numberKind: 'op'
+        })
+      );
+    });
   });
 
   describe('Deletion', () => {
@@ -403,12 +446,12 @@ describe('OpusMutation Resolvers', () => {
       );
     });
 
-    it('deleteOpus: should delete compositions and the opus if admin', async () => {
+    it('deleteOpus: should unlink compositions and delete the opus if admin', async () => {
       (mockRepo.delete as jest.Mock).mockResolvedValue(true);
 
       const result = await OpusMutation.deleteOpus({}, { id: '1' }, adminContext);
 
-      expect(mockCompositionsRepo.deleteByOpusId).toHaveBeenCalledWith('1');
+      expect(mockCompositionsRepo.unlinckByOpusId).toHaveBeenCalledWith('1');
       expect(mockRepo.delete).toHaveBeenCalledWith('1');
       expect(result).toBe(true);
     });

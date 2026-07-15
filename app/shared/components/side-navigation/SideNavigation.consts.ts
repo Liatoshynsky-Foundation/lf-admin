@@ -17,7 +17,7 @@ export const NAVIGATION_DATA = {
         { title: 'Твори', href: '/creativity' },
         { title: 'Опуси', href: '/creativity/opus' },
         { title: 'Дослідження та наукові праці', href: '/research' },
-        { title: 'Архів кабінету-музею', href: '', disabled: true }
+        { title: 'Архів кабінету-музею', href: '/archive' }
       ]
     },
     {
