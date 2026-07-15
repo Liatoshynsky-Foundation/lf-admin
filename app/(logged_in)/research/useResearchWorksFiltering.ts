@@ -1,10 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import type { ResearchWorkStatus } from './research.mock';
-import { type FilesSortValue, SORT_FIELD_OPTIONS, SORT_OPTIONS,SORT_ORDER_OPTIONS, type SortFieldValue } from '~/constants/sort';
+import { type FilesSortValue, SORT_FIELD_OPTIONS, SORT_ORDER_OPTIONS, type SortFieldValue } from '~/constants/sort';
 import type { FilteringToolbarProps, SortSelectProps } from '~/shared/components/filtering-toolbar';
+import { useSortValue } from '~/shared/hooks/use-sort-value/useSortValue';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 const SORT_STORAGE_KEY = 'research_works_sort';
@@ -16,9 +17,6 @@ const RESEARCH_STATUS_OPTIONS = [
 
 const isResearchStatusValue = (value: string): value is ResearchWorkStatus =>
   Object.values(BaseContentStatuses).includes(value as BaseContentStatuses);
-
-const VALID_SORT_VALUES: ReadonlySet<string> = new Set(['date_desc', 'date_asc', 'name_asc', 'name_desc']);
-const isFilesSortValue = (value: string): value is FilesSortValue => VALID_SORT_VALUES.has(value);
 
 export type ResearchWorksFilteringToolbarProps = Pick <
   FilteringToolbarProps,
@@ -39,18 +37,11 @@ export function useResearchWorksFiltering(): Readonly<{
   const [isFiltersOpen, setIsFiltersOpen] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilters, setStatusFilters] = useState<ResearchWorkStatus[]>([]);
-  const [sortValue, setSortValue] = useState<FilesSortValue>('date_desc');
 
-  useEffect(() => {
-    const saved = localStorage.getItem(SORT_STORAGE_KEY);
-    if (saved && isFilesSortValue(saved)) {
-      setSortValue(saved);
-    }
-  }, []);
+  const { sortValue, currentSortField, currentSortOption, handleSortFieldChange, handleSortValueChange } =
+    useSortValue(SORT_STORAGE_KEY);
 
   const activeFiltersCount = statusFilters.length;
-  const currentSortField: SortFieldValue = sortValue.startsWith('date') ? 'date' : 'name';
-  const currentSortOption = SORT_OPTIONS.find((option) => option.value === sortValue) ?? SORT_OPTIONS[0];
 
   const toggleFilters = useCallback(() => {
     setIsFiltersOpen((previous) => !previous);
@@ -58,22 +49,6 @@ export function useResearchWorksFiltering(): Readonly<{
 
   const clearFilters = useCallback(() => {
     setStatusFilters([]);
-  }, []);
-
-  const handleSortFieldChange = useCallback((field: SortFieldValue) => {
-    setSortValue((previous) => {
-      const isDate = field === 'date';
-      const prefix = isDate ? 'date' : 'name';
-      const defaultSort: FilesSortValue = isDate ? 'date_desc' : 'name_asc';
-      const nextValue: FilesSortValue = previous.startsWith(prefix) ? (previous as FilesSortValue) : defaultSort;
-      localStorage.setItem(SORT_STORAGE_KEY, nextValue);
-      return nextValue;
-    });
-  }, []);
-
-  const handleSortValueChange = useCallback((nextValue: FilesSortValue) => {
-    setSortValue(nextValue);
-    localStorage.setItem(SORT_STORAGE_KEY, nextValue);
   }, []);
 
   const toolbarProps: ResearchWorksFilteringToolbarProps = useMemo(
