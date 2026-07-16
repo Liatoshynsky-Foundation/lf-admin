@@ -1,4 +1,5 @@
-import { GroupMenuItems, WorkMenuItems } from './WorksTableMenusItems';
+import { GroupMenuItems, WorkMenuItems } from './WorksTableMenuItems';
+import { WORKS_BASE_PATH } from '~/constants/creativity';
 import { MenuItemConfig } from '~/shared/components/dropdown-menu/ActionMenu';
 
 describe('WorksTableMenusItems', () => {
@@ -9,6 +10,24 @@ describe('WorksTableMenusItems', () => {
       }
     });
   };
+
+  it('should build GroupMenuItems with correct static menu items', () => {
+    const groups = GroupMenuItems({
+      id: 'group-1',
+      isPublished: true,
+      setHideModalOpen: jest.fn(),
+      setPublicationModalOpen: jest.fn(),
+    });
+
+    expect(groups[0].items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'edit-seo', href: `${WORKS_BASE_PATH}/group/group-1/seo` }),
+        expect.objectContaining({ id: 'edit-content', href: `${WORKS_BASE_PATH}/group/group-1/content` }),
+        expect.objectContaining({ id: 'share', href: `${WORKS_BASE_PATH}/group/group-1/share` }),
+        expect.objectContaining({ id: 'ungroup', href: `${WORKS_BASE_PATH}/group/group-1/ungroup` }),
+      ])
+    );
+  });
 
   it('should build GroupMenuItems with unpublish action when isPublished is true', () => {
     const setHideModalOpen = jest.fn();
@@ -21,19 +40,9 @@ describe('WorksTableMenusItems', () => {
       setPublicationModalOpen,
     });
 
-    expect(groups).toHaveLength(2);
+    expect(groups[1].items[0].id).toBe('unpublish');
 
-    expect(groups[0].items).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: 'edit-seo', href: '/creativity/group/group-1/seo' }),
-        expect.objectContaining({ id: 'edit-content', href: '/creativity/group/group-1/content' }),
-        expect.objectContaining({ id: 'share', href: '/creativity/group/group-1/share' }),
-        expect.objectContaining({ id: 'isPublished', href: '/creativity/group/group-1/ungroup' }),
-      ])
-    );
-
-    groups.forEach((group) => triggerItemClicks(group.items));
-
+    triggerItemClicks(groups[1].items);
     expect(setHideModalOpen).toHaveBeenCalledWith(true);
     expect(setPublicationModalOpen).not.toHaveBeenCalled();
   });
@@ -51,8 +60,7 @@ describe('WorksTableMenusItems', () => {
 
     expect(groups[1].items[0].id).toBe('publish');
 
-    groups.forEach((group) => triggerItemClicks(group.items));
-
+    triggerItemClicks(groups[1].items);
     expect(setPublicationModalOpen).toHaveBeenCalledWith(true);
     expect(setHideModalOpen).not.toHaveBeenCalled();
   });
@@ -70,8 +78,8 @@ describe('WorksTableMenusItems', () => {
 
     expect(groups[0].items).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: 'edit', href: '/creativity/work-1/edit' }),
-        expect.objectContaining({ id: 'share', href: '/creativity/work-1/share' }),
+        expect.objectContaining({ id: 'edit', href: `${WORKS_BASE_PATH}/work-1/edit` }),
+        expect.objectContaining({ id: 'share', href: `${WORKS_BASE_PATH}/work-1/share` }),
       ])
     );
 

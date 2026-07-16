@@ -4,7 +4,7 @@ import { Box } from '@mui/material';
 import React from 'react';
 
 import { styles } from './WorksTable.styles';
-import { GroupMenuItems, WorkMenuItems } from './WorksTableMenusItems';
+import { GroupMenuItems, WorkMenuItems } from './WorksTableMenuItems';
 import { WORKS_BASE_PATH, WorksStatusValue } from '~/constants/creativity';
 import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import { RowActions } from '~/shared/components/table-layout/components/RowActions';

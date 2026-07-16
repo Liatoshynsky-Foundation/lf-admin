@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { MouseEvent, useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 
-import { PublishMenuItems } from './CreatePublicationsManuItems';
+import { PublishMenuItems } from './CreatePublicationsMenuItems';
 import { styles } from './CreatePublicationsView.styles';
 import DeleteCardModal from '~/components/delete-card-modal/DeleteCardModal';
 import {

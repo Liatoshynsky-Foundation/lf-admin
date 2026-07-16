@@ -55,15 +55,6 @@ export const PublishMenuItems = ({
   {
     items: [
       {
-        id: MenuActionId.PUBLISH,
-        text: { name: 'Опублікувати' },
-        onClick: () => handlePublishActionClick(MenuActionId.PUBLISH),
-      }
-    ],
-  },
-  {
-    items: [
-      {
         id: MenuActionId.PUBLICATE_AND_EXIT,
         text: { name: 'Опублікувати і вийти' },
         onClick: () => handlePublishActionClick(MenuActionId.PUBLICATE_AND_EXIT),

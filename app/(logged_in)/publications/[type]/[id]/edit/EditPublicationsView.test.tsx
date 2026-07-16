@@ -244,16 +244,6 @@ describe('EditPublicationsView Component', () => {
     expect(screen.getByTestId('mock-title-dropdown')).toHaveTextContent('');
   });
 
-  it('should trigger onAction when the PUBLISH menu item is clicked', () => {
-    render(<EditPublicationsView {...defaultProps} />);
-
-    fireEvent.click(screen.getByTestId('mock-publish-menu-btn'));
-    fireEvent.click(screen.getByText('Опублікувати'));
-
-    expect(mockOnAction).toHaveBeenCalledTimes(1);
-    expect(mockOnAction).toHaveBeenCalledWith(MenuActionId.PUBLISH);
-  });
-
   it('should trigger onAction when the CANCEL_PUBLICATION menu item is clicked', () => {
     render(<EditPublicationsView {...defaultProps} />);
 
