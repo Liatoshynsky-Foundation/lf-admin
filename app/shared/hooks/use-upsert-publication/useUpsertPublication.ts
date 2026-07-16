@@ -36,7 +36,7 @@ const checkIsSeoInvalid = (
   publicationType: PublicationsItemType,
   ticketUrl: SeoBlockValue['ticketUrl']
 ): boolean => {
-  if (!ukMeta.title.trim() || !enMeta.title.trim()) return true;
+  if (ukMeta.title.trim().length < 2 || enMeta.title.trim().length < 2) return true;
   if (!ukMeta.description.trim() || !enMeta.description.trim()) return true;
 
   if (publicationType === 'media') {

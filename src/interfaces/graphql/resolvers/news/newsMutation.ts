@@ -10,7 +10,7 @@ import {
 import { processNewsContent } from './processNewsContent/processNewsContent';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
-import {LocalizedBoolean, LocalizedContent, LocalizedImage, LocalizedString} from '~/domain/entities/BaseContent';
+import { LocalizedBoolean, LocalizedContent, LocalizedImage, LocalizedString } from '~/domain/entities/BaseContent';
 import type { News } from '~/domain/entities/News';
 import { newsServiceErrors } from '~/src/constants/errors';
 import { CreateNewsInput, UpdateNewsInput } from '~/src/domain/repositories/newsRepository';
@@ -34,7 +34,9 @@ export type UpdateNewsGQLInput = Partial<CreateNewsGQLInput>;
 
 type CreateNewsArgs = { input: CreateNewsGQLInput };
 type UpdateNewsArgs = { id: string; input: UpdateNewsGQLInput };
-interface IdArgs { id: string }
+interface IdArgs {
+  id: string;
+}
 
 const processContentFields = async (input: UpdateNewsGQLInput, updateData: UpdateNewsInput): Promise<void> => {
   const contentToProcess = {
@@ -70,8 +72,8 @@ export const NewsMutation = {
 
     const titleForSlug = extractTitleForSlug(input.title);
 
-    if (!titleForSlug) {
-      throw new Error(newsServiceErrors.TITLE_REQUIRED_FOR_SLUG);
+    if (titleForSlug.trim().length < 2) {
+      throw new Error(newsServiceErrors.TITLE_TOO_SHORT_FOR_SLUG);
     }
 
     const slug = await generateUniqueSlug(titleForSlug, {
@@ -132,6 +134,10 @@ export const NewsMutation = {
     }
 
     if (input.title) {
+      const titleForSlug = extractTitleForSlug(input.title);
+      if (titleForSlug.trim().length < 2) {
+        throw new Error(newsServiceErrors.TITLE_TOO_SHORT_FOR_SLUG);
+      }
       await processSlugUpdate(id, input.title, repo, updateData);
     }
 

@@ -93,6 +93,7 @@ export default function SeoMetadataForm({
   const validateField = (field: keyof LocalizedMeta, val: string) => {
     switch (field) {
     case 'title':
+      return val.trim().length < 2 ? 'Мінімум 2 символа' : '';
     case 'description':
       return val.trim() ? '' : 'Обовʼязкове поле';
     case 'canonicalUrl':
@@ -214,12 +215,7 @@ export default function SeoMetadataForm({
       <Box sx={styles.indexingCheckboxContainer}>
         <FormControlLabel
           label={'Дозволити індексацію сторінки пошуковими системами'}
-          control={
-            <Checkbox
-              checked={allowIndexing}
-              onChange={(e) => onIndexingChange(e.target.checked)}
-            />
-          }
+          control={<Checkbox checked={allowIndexing} onChange={(e) => onIndexingChange(e.target.checked)} />}
           sx={styles.indexingCheckbox}
         />
         <TooltipCustom title={'Дозволити індексацію сторінки пошуковими системами'}>

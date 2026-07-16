@@ -41,15 +41,17 @@ export default function PublicatiosSeoPage() {
   };
   const handleClosePublish = () => setPublishAnchor(null);
 
-  const handlePublishAndExit = () => {
-    publicationData?.handleSave(BaseContentStatuses.Published);
-    toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
-    router.push(PUBLICATIONS_BASE_PATH);
+  const handlePublishAndExit = async () => {
+    const id = await publicationData?.handleSave(BaseContentStatuses.Published);
+    if (id) {
+      toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
+      router.push(PUBLICATIONS_BASE_PATH);
+    }
   };
 
-  const handlePublish = () => {
-    publicationData?.handleSave(BaseContentStatuses.Published);
-    toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
+  const handlePublish = async () => {
+    const id = await publicationData?.handleSave(BaseContentStatuses.Published);
+    if (id) toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
   };
 
   const handleUnpublish = () => {
