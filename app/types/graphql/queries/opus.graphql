@@ -142,6 +142,49 @@ query AllOpuses($filters: OpusFiltersInput) {
   }
 }
 
+query PaginatedWorks($input: WorksInput!) {
+  paginatedWorks(input: $input) {
+    totalItems
+    totalPages
+
+    groups {
+      id
+      number
+      numberKind
+      name {
+        uk
+        en
+      }
+      genre
+      status
+      creationYear
+      endYear
+      updatedAt
+      createdAt
+      compositions {
+        id
+        title {
+          uk
+          en
+        }
+      }
+    }
+
+    works {
+      id
+      title {
+        uk
+        en
+      }
+      genre
+      status
+      year
+      updatedAt
+      createdAt
+    }
+  }
+}
+
 query SearchCompositions($search: String!) {
   searchCompositions(search: $search) {
     id

@@ -1,18 +1,11 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { toSuggestionAudio, toSuggestionNote, useAllCompositions, useCompositionsForm } from './useCompositions';
-import { CompositionFiltersInput, useAllCompositionsQuery } from '~/types/graphql/generated/graphql';
+import { toSuggestionAudio, toSuggestionNote, useCompositionsForm } from './useCompositions';
 import { OpusCompositionData, OpusCompositionSuggestion } from '~/types/opus';
 
 jest.mock('~/shared/hooks/use-group-content/useGroupContent', () => ({
   createCompositionId: jest.fn(() => 'mocked-id')
 }));
-
-jest.mock('~/types/graphql/generated/graphql', () => ({
-  useAllCompositionsQuery: jest.fn()
-}));
-
-const mockedUseAllCompositionsQuery = jest.mocked(useAllCompositionsQuery);
 
 describe('useCompositions helpers', () => {
   it('toSuggestionAudio formats audio correctly', () => {
@@ -225,78 +218,5 @@ describe('useCompositions Hook', () => {
 
     expect(mockOnChange).not.toHaveBeenCalled();
     expect(result.current.deleteTargetId).toBeNull();
-  });
-});
-
-describe('useAllCompositions', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockedUseAllCompositionsQuery.mockReturnValue({ data: undefined } as ReturnType<typeof useAllCompositionsQuery>);
-  });
-
-  it('calls query with standalone filter', () => {
-    renderHook(() => useAllCompositions());
-
-    expect(mockedUseAllCompositionsQuery).toHaveBeenCalledWith({
-      variables: {
-        filters: {
-          isStandalone: true
-        }
-      },
-      fetchPolicy: 'network-only',
-      skip: undefined
-    });
-  });
-
-  it('merges provided filters', () => {
-    const filters: CompositionFiltersInput = {
-      search: 'Symphony'
-    };
-
-    renderHook(() => useAllCompositions(filters));
-
-    expect(mockedUseAllCompositionsQuery).toHaveBeenCalledWith({
-      variables: {
-        filters: {
-          ...filters,
-          isStandalone: true
-        }
-      },
-      fetchPolicy: 'network-only',
-      skip: undefined
-    });
-  });
-
-  it('passes skip option', () => {
-    renderHook(() => useAllCompositions(undefined, { skip: true }));
-
-    expect(mockedUseAllCompositionsQuery).toHaveBeenCalledWith({
-      variables: {
-        filters: {
-          isStandalone: true
-        }
-      },
-      fetchPolicy: 'network-only',
-      skip: true
-    });
-  });
-
-  it('overrides isStandalone to true even if false is passed', () => {
-    const filters: CompositionFiltersInput = {
-      isStandalone: false
-    };
-
-    renderHook(() => useAllCompositions(filters));
-
-    expect(mockedUseAllCompositionsQuery).toHaveBeenCalledWith({
-      variables: {
-        filters: {
-          ...filters,
-          isStandalone: true
-        }
-      },
-      fetchPolicy: 'network-only',
-      skip: undefined
-    });
   });
 });

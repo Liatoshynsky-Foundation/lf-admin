@@ -22,13 +22,46 @@ type OpusPerformance {
   videoUrl: String
 }
 
+input WorksFiltersInput {
+  statuses: [OpusStatus]
+  languages: [ContentLanguage]
+}
+
+enum WorksSortBy {
+  number
+  releaseYear
+  createdAt
+  updatedAt
+  publishedAt
+}
+
+input WorksSortOptions {
+  field: WorksSortBy!
+  order: SortOrder!
+}
+
+enum WorksTab {
+  all
+  opus
+  woo
+  works
+}
+
+input WorksInput {
+  tab: WorksTab
+  search: String
+  filters: WorksFiltersInput
+  page: Int
+  pageSize: Int
+}
+
 type Opus {
   id: ID!
   number: String!
-  numberKind: OpusNumberKind
+  numberKind: OpusNumberKind!
   title: LocalizedString!
   releaseYear: Int
-  name: LocalizedString
+  name: LocalizedString!
   additionalText: String
   creationYear: String!
   endYear: String
@@ -136,11 +169,22 @@ input UpdateOpusInput {
   publishedAt: String
 }
 
+type PaginatedWorks {
+  groups: [Opus!]!
+  works: [Composition!]!
+
+  totalItems: Int!
+  totalPages: Int!
+}
+
 extend type Query {
   opusById(id: ID!): Opus
   opusByNumber(number: String!): Opus
   searchCompositions(search: String!): [Composition!]!
+
   allOpuses(filters: OpusFiltersInput): [Opus!]!
+  paginatedWorks(input: WorksInput!): PaginatedWorks!
+
   paginatedOpuses(page: Int!, limit: Int!, filters: OpusFiltersInput): PaginatedOpuses!
   opusesCount(status: OpusStatus): Int!
 }

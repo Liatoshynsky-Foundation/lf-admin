@@ -1,7 +1,6 @@
 import { useState } from 'react';
 
 import { createCompositionId } from '~/shared/hooks/use-group-content/useGroupContent';
-import { CompositionFiltersInput, useAllCompositionsQuery } from '~/types/graphql/generated/graphql';
 import type { OpusCompositionData, OpusCompositionSuggestion, OpusMediaFileData } from '~/types/opus';
 
 const fileNameFromUrl = (url?: string | null): string => {
@@ -25,15 +24,6 @@ export const toSuggestionNote = (sheet: SheetMusicItem): OpusMediaFileData => ({
   fileUrl: sheet.url ?? undefined,
   publishDate: sheet.publishDate ?? ''
 });
-
-type QueryHookOptions = Readonly<{ skip?: boolean }>;
-
-export const useAllCompositions = (filters?: CompositionFiltersInput, options: QueryHookOptions = {}) =>
-  useAllCompositionsQuery({
-    variables: { filters: { ...filters, isStandalone: true } },
-    fetchPolicy: 'network-only',
-    skip: options.skip
-  });
 
 export const useCompositionsForm = (works: OpusCompositionData[], onChange: (works: OpusCompositionData[]) => void) => {
   const [isModalOpen, setIsModalOpen] = useState(false);

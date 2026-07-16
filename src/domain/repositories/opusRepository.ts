@@ -10,7 +10,7 @@ export type UpdateOpusInput = Partial<Omit<Opus, 'id' | 'createdAt' | 'updatedAt
 
 export type OpusFilters = FiltersInput & {
   statuses?: OpusStatus[];
-  numberKind: OpusNumberKind;
+  numberKind?: OpusNumberKind;
 };
 
 export interface IOpusRepository extends IBaseRepository<Opus, OpusFilters> {
