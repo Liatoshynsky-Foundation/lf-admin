@@ -282,10 +282,11 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       };
 
       const resultId = await saveStrategies[publicationType]?.();
+      setCanonicalUrlError('');
 
       return resultId;
     } catch (error: unknown) {
-      console.log('Error: ', error);
+      console.error('Error: ', error);
       if (error instanceof Error) {
         const errorMessage = error.message || '';
 

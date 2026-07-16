@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { notFound, useParams, useRouter } from 'next/navigation';
 import React, { MouseEvent, ReactNode } from 'react';
 import toast from 'react-hot-toast';
@@ -81,7 +81,9 @@ describe('PublicatiosSeoPage Container', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+
     (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
+    mockHandleSave.mockResolvedValue('id');
     (useUpsertPublication as jest.Mock).mockReturnValue({
       handleSave: mockHandleSave
     } as unknown as ReturnType<typeof useUpsertPublication>);
@@ -104,30 +106,57 @@ describe('PublicatiosSeoPage Container', () => {
       expect(screen.getByTestId('mock-title-dropdown')).toHaveTextContent('Редагування Новини');
     });
 
-    it('should handle save and cancel actions by routing to base path', () => {
+    it('should handle save and cancel actions by routing to base path', async () => {
       fireEvent.click(screen.getByTestId('btn-save'));
-      expect(mockHandleSave).toHaveBeenCalledTimes(1);
-
+      await waitFor(() => {
+        expect(mockHandleSave).toHaveBeenCalledTimes(1);
+      });
       fireEvent.click(screen.getByTestId('btn-cancel'));
-
-      expect(mockPush).toHaveBeenCalledTimes(2);
-      expect(mockPush).toHaveBeenCalledWith(PUBLICATIONS_BASE_PATH);
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledTimes(2);
+        expect(mockPush).toHaveBeenCalledWith(PUBLICATIONS_BASE_PATH);
+      });
     });
 
-    it('should show publicationPublished toast when publish is triggered', () => {
+    it('should show publicationPublished toast when publish is triggered', async () => {
       fireEvent.click(screen.getByTestId('btn-publish'));
-
-      expect(mockHandleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
-      expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublished);
+      await waitFor(() => {
+        expect(mockHandleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
+        expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublished);
+      });
     });
 
-    it('should show publicationPublished toast and redirect on publish and exit', () => {
+    it('should show publicationPublished toast and redirect on publish and exit', async () => {
       fireEvent.click(screen.getByTestId('btn-open-publish-menu'));
       fireEvent.click(screen.getByText('Опублікувати і вийти'));
 
-      expect(mockHandleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
-      expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublished);
-      expect(mockPush).toHaveBeenCalledWith(PUBLICATIONS_BASE_PATH);
+      await waitFor(() => {
+        expect(mockHandleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
+        expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublished);
+        expect(mockPush).toHaveBeenCalledWith(PUBLICATIONS_BASE_PATH);
+      });
+    });
+
+    it('should NOT show publicationPublished toast with redirect on publish and exit if handleSave doesn\'t return id', async () => {
+      mockHandleSave.mockResolvedValue(null);
+      fireEvent.click(screen.getByTestId('btn-open-publish-menu'));
+      fireEvent.click(screen.getByText('Опублікувати і вийти'));
+
+      await waitFor(() => {
+        expect(mockHandleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
+        expect(toast.success).not.toHaveBeenCalled();
+        expect(mockPush).not.toHaveBeenCalled();
+      });
+
+    });
+    it('should NOT show publicationPublished toast when publish is triggered if handleSave doesn\'t return id', async () => {
+      mockHandleSave.mockResolvedValue(null);
+      fireEvent.click(screen.getByTestId('btn-publish'));
+      await waitFor(() => {
+        expect(mockHandleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
+        expect(toast.success).not.toHaveBeenCalled();
+        expect(mockPush).not.toHaveBeenCalled();
+      });
     });
   });
 });

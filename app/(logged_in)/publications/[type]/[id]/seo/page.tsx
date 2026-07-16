@@ -32,7 +32,7 @@ export default function PublicatiosSeoPage() {
   const publicationData = useUpsertPublication({ type, id });
 
   const [navigationAnchor, setNavigationAnchor] = useState<HTMLButtonElement | null>(null);
-  const [publishAnchor, setPublishAnchor] = useState<HTMLButtonElement | null>(null); // +
+  const [publishAnchor, setPublishAnchor] = useState<HTMLButtonElement | null>(null);
 
   if (!PUBLICATIONS_TYPES.includes(type)) notFound();
 
@@ -41,21 +41,28 @@ export default function PublicatiosSeoPage() {
   };
   const handleClosePublish = () => setPublishAnchor(null);
 
-  const handlePublishAndExit = () => {
-    publicationData?.handleSave(BaseContentStatuses.Published);
-    toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
-    router.push(PUBLICATIONS_BASE_PATH);
+  const handlePublishAndExit = async () => {
+    const id = await publicationData?.handleSave(BaseContentStatuses.Published);
+    if (id) {
+      toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
+      router.push(PUBLICATIONS_BASE_PATH);
+    }
   };
 
-  const handlePublish = () => {
-    publicationData?.handleSave(BaseContentStatuses.Published);
-    toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
+  const handlePublish = async () => {
+    const id = await publicationData?.handleSave(BaseContentStatuses.Published);
+    if (id) {
+      toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
+    }
   };
 
-  const handleUnpublish = () => {
-    publicationData?.handleSave(BaseContentStatuses.Draft);
-    handleClosePublish();
-    router.push(PUBLICATIONS_BASE_PATH);
+  const handleUnpublish = async () => {
+    const id = await publicationData?.handleSave(BaseContentStatuses.Draft);
+    if (id) {
+      toast.success(CONTENT_MUTATION_RESULTS.publicationUnpublished);
+      handleClosePublish();
+      router.push(PUBLICATIONS_BASE_PATH);
+    }
   };
 
   const handleOpenNavigation = (event: MouseEvent<HTMLElement>) => {
@@ -71,9 +78,12 @@ export default function PublicatiosSeoPage() {
   };
 
   const handleCancel = () => router.push(PUBLICATIONS_BASE_PATH);
-  const handleSave = () => {
-    publicationData?.handleSave(BaseContentStatuses.Draft);
-    router.push(PUBLICATIONS_BASE_PATH);
+  const handleSave = async () => {
+    const id = await publicationData?.handleSave(BaseContentStatuses.Draft);
+    if (id) {
+      toast.success(CONTENT_MUTATION_RESULTS.draftSaved);
+      router.push(PUBLICATIONS_BASE_PATH);
+    }
   };
 
   return (
