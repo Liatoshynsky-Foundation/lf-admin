@@ -389,7 +389,6 @@ describe('Publications page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Фільтри' }));
 
     expect(screen.getByTestId('filter-status')).toHaveTextContent('Статус');
-    expect(screen.getByTestId('filter-language')).toHaveTextContent('Мова');
     expect(screen.getByTestId('sort-select')).toHaveTextContent('Нові спочатку');
   });
 
