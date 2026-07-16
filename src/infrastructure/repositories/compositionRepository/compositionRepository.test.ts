@@ -3,16 +3,14 @@ import { Model } from 'mongoose';
 import { CompositionRepository, DbComposition } from './compositionRepository';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
-
 jest.mock('mongoose', () => {
   const MockObjectId = function (this: { toString: () => string }, id: string) {
     this.toString = () => id;
   };
-  
+
   type ObjectIdMock = typeof MockObjectId & { isValid: (id: string) => boolean };
-  
-  (MockObjectId as unknown as ObjectIdMock).isValid = (id: string) => 
-    /^[0-9a-fA-F]{24}$/.test(id);
+
+  (MockObjectId as unknown as ObjectIdMock).isValid = (id: string) => /^[0-9a-fA-F]{24}$/.test(id);
 
   return {
     Types: {
@@ -115,11 +113,9 @@ describe('CompositionRepository', () => {
       { opusId, _id: { $nin: [existingCompositionId] } },
       { $set: { opusId: null } }
     );
-    expect(findByIdAndUpdateMock).toHaveBeenCalledWith(
-      existingCompositionId,
-      expect.objectContaining({ opusId }),
-      { new: true }
-    );
+    expect(findByIdAndUpdateMock).toHaveBeenCalledWith(existingCompositionId, expect.objectContaining({ opusId }), {
+      new: true
+    });
     expect(saveMock).not.toHaveBeenCalled();
     expect(result).toHaveLength(1);
   });
@@ -160,7 +156,7 @@ describe('CompositionRepository', () => {
 
   it('findByOpusId maps genre and category refs to string ids', async (): Promise<void> => {
     const doc = createMockDoc({
-      genres: [{ toString: (): string => 'genre-1' }],
+      genres: [{ toString: (): string => 'genre-1' }]
     });
     const sortMock = jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue([doc]) });
     findMock.mockReturnValue({ sort: sortMock });
@@ -211,10 +207,7 @@ describe('CompositionRepository', () => {
     const result = await repository.searchByTitle('  Після  ');
 
     expect(findMock).toHaveBeenCalledWith({
-      $or: [
-        { 'title.uk': { $regex: 'Після', $options: 'i' } },
-        { 'title.en': { $regex: 'Після', $options: 'i' } }
-      ]
+      $or: [{ 'title.uk': { $regex: 'Після', $options: 'i' } }, { 'title.en': { $regex: 'Після', $options: 'i' } }]
     });
     expect(limitMock).toHaveBeenCalledWith(10);
     expect(result).toHaveLength(1);
@@ -227,10 +220,26 @@ describe('CompositionRepository', () => {
     expect(deleteManyMock).toHaveBeenCalledWith({ opusId });
   });
 
-  it('deleteByOpusId does nothing for an invalid opusId', async (): Promise<void> => {
-    await repository.deleteByOpusId('not-a-valid-object-id');
+  it('deleteByOpusId throws an error for an invalid opusId', async (): Promise<void> => {
+    await expect(repository.deleteByOpusId('not-a-valid-object-id')).rejects.toThrow(
+      'Invalid opusId: not-a-valid-object-id'
+    );
 
     expect(deleteManyMock).not.toHaveBeenCalled();
+  });
+
+  it('unlinkByOpusId sets opusId to null for a valid opusId', async (): Promise<void> => {
+    await repository.unlinckByOpusId(opusId);
+
+    expect(updateManyMock).toHaveBeenCalledWith({ opusId }, { $set: { opusId: null } });
+  });
+
+  it('unlinkByOpusId throws an error for an invalid opusId', async (): Promise<void> => {
+    await expect(repository.unlinckByOpusId('not-a-valid-object-id')).rejects.toThrow(
+      'Invalid opusId: not-a-valid-object-id'
+    );
+
+    expect(updateManyMock).not.toHaveBeenCalled();
   });
 
   describe('buildQuery configuration (lines 52-54)', () => {
@@ -245,9 +254,7 @@ describe('CompositionRepository', () => {
 
       await repository.findAll({ isStandalone: true });
 
-      expect(findMock).toHaveBeenCalledWith(
-        expect.objectContaining({ opusId: null })
-      );
+      expect(findMock).toHaveBeenCalledWith(expect.objectContaining({ opusId: null }));
     });
 
     it('should not modify opusId in query when isStandalone filter is false', async () => {
@@ -261,9 +268,7 @@ describe('CompositionRepository', () => {
 
       await repository.findAll({ isStandalone: false });
 
-      expect(findMock).not.toHaveBeenCalledWith(
-        expect.objectContaining({ opusId: null })
-      );
+      expect(findMock).not.toHaveBeenCalledWith(expect.objectContaining({ opusId: null }));
     });
   });
 

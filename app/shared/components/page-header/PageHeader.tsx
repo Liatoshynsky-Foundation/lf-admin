@@ -24,7 +24,7 @@ export const PageHeader = ({ title, action, tabs, activeTab }: PageHeaderProps) 
   return (
     <Box sx={styles.container}>
       <Box sx={styles.headerRow}>
-        <Typography variant="h6">
+        <Typography variant="h4">
           {title}
         </Typography>
 

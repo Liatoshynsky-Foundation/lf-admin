@@ -1,5 +1,4 @@
 'use client';
-
 import { Box, Typography } from '@mui/material';
 
 import { NavigationMenuItems, PublishMenuItems } from './GroupContentMenuItems';
@@ -11,6 +10,7 @@ import { GroupIntroSection } from '~/shared/components/creativity/group/intro-se
 import { GroupPerformancesSection } from '~/shared/components/creativity/group/performances-section/GroupPerformancesSection';
 import { GroupPhotosSection } from '~/shared/components/creativity/group/photos-section/GroupPhotosSection';
 import { GroupWorksSection } from '~/shared/components/creativity/group/works-section/GroupWorksSection';
+import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
 import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
 import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
@@ -42,7 +42,10 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
     handleClose,
     handleFieldChange,
     handlePublishClick,
-    handleMenuOptionClick
+    handleMenuOptionClick,
+    isDeleteModalOpen,
+    setIsDeleteModalOpen,
+    handleConfirmDelete
   } = useGroupContent(id);
 
   if (error) {
@@ -136,6 +139,13 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
         })}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      />
+
+      <DeleteCardModal
+        open={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onDelete={handleConfirmDelete}
+        description="Ви впевнені, що хочете видалити цю групу?"
       />
     </Box>
   );
