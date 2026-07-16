@@ -116,6 +116,17 @@ jest.mock('~/shared/components/divided-header/title-dropdown/TitleDropdown', () 
   )
 }));
 
+jest.mock('~/shared/components/delete-card-modal/DeleteCardModal', () => ({
+  __esModule: true,
+  default: ({ onClose }: { onClose: () => void }) => (
+    <div data-testid="delete-card-modal">
+      <button data-testid="close-modal-button" onClick={onClose}>
+        Close Modal
+      </button>
+    </div>
+  )
+}));
+
 const mockUseGroupContent = {
   loading: false,
   error: undefined,
@@ -140,6 +151,7 @@ const mockUseGroupContent = {
   currentLanguage: 'UA',
   errors: {},
   anchors: {},
+  setIsDeleteModalOpen: jest.fn(),
   isInfoModalOpen: false,
   publishedTitle: { uk: 'Тестова група', en: 'Test group' },
   isDetailsExpanded: true,
@@ -208,6 +220,18 @@ describe('GroupContentView Component', () => {
       fireEvent.click(screen.getByText('Menu Open'));
       expect(mockUseGroupContent.handleOpen).toHaveBeenCalledWith(expect.anything(), 'publish');
     });
+
+    it('should display default fallback title if publishedTitle is empty', () => {
+      (useGroupContent as jest.Mock).mockReturnValue({
+        ...mockUseGroupContent,
+        publishedTitle: { uk: '', en: '' },
+        langKey: 'uk'
+      });
+
+      render(<GroupContentView id="123" />);
+
+      expect(screen.getByText('Редагування контенту групи')).toBeInTheDocument();
+    });
   });
 
   describe('Menus & Dialogs', () => {
@@ -234,6 +258,36 @@ describe('GroupContentView Component', () => {
 
       fireEvent.click(screen.getByText('Опублікувати і вийти'));
       expect(mockUseGroupContent.handleMenuOptionClick).toHaveBeenCalledWith('PUBLISH_AND_EXIT');
+    });
+
+    it('should call handleClose("navigation") when navigation menu is closed via Escape', () => {
+      const anchorElement = document.createElement('button');
+      (useGroupContent as jest.Mock).mockReturnValue({
+        ...mockUseGroupContent,
+        anchors: { navigation: anchorElement }
+      });
+
+      render(<GroupContentView id="123" />);
+
+      const menu = document.querySelector('.MuiMenu-paper');
+      if (menu) {
+        fireEvent.keyDown(menu, { key: 'Escape', code: 'Escape' });
+      }
+
+      expect(mockUseGroupContent.handleClose).toHaveBeenCalledWith('navigation');
+    });
+
+    it('should call setIsDeleteModalOpen(false) when DeleteCardModal is closed', () => {
+      (useGroupContent as jest.Mock).mockReturnValue({
+        ...mockUseGroupContent,
+        isDeleteModalOpen: true
+      });
+
+      render(<GroupContentView id="123" />);
+
+      fireEvent.click(screen.getByTestId('close-modal-button'));
+
+      expect(mockUseGroupContent.setIsDeleteModalOpen).toHaveBeenCalledWith(false);
     });
   });
 
