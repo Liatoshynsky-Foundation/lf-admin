@@ -50,7 +50,7 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
     toEntity,
     buildQuery: (filters) => {
       const query = buildBaseQuery(filters);
-      if (filters?.isStandalone) query.opusId = null;
+      if (filters?.opusId) query.opusId = filters.opusId;
       return query;
     },
     getDefaultSort: getBaseSort

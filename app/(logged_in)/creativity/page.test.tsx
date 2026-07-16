@@ -1,5 +1,4 @@
 import '@testing-library/jest-dom';
-import { Box, Button } from '@mui/material';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
 
@@ -7,19 +6,11 @@ import CreativityPage from './page';
 
 const MOCK_GROUP_LABEL = 'Дії групи Перший струнний квартет';
 const MOCK_WORK_LABEL = 'Дії твору №1 «Після бою»';
-const MOCK_WORK_TEXT = '№1 «Після бою»';
 
 jest.mock('~/shared/hooks/use-opuses/useOpuses', () => ({
+  usePaginatedWorks: jest.fn(),
   useAllOpusGroups: jest.fn(() => ({
-    data: {
-      allOpuses: [
-        {
-          id: '1',
-          name: { uk: 'Перший струнний квартет', en: 'First String Quartet' },
-          type: 'group'
-        }
-      ]
-    },
+    data: { allOpuses: [{ id: '1', name: { uk: 'Перший струнний квартет' }, type: 'group' }] },
     loading: false,
     error: undefined
   })),
@@ -77,6 +68,16 @@ jest.mock('~/shared/components/filtering-toolbar', () => ({
   )
 }));
 
+jest.mock('./useWorksFiltering', () => ({
+  useWorksFiltering: jest.fn(() => ({
+    requestFilters: {},
+    sortValue: 'default',
+    selectedFilters: { status: null, language: null },
+    toolbarProps: { search: { search: '' }, activeFiltersCount: 0 },
+    sortProps: {}
+  }))
+}));
+
 interface TabItem {
   value: string;
   label: string;
@@ -107,7 +108,7 @@ jest.mock('~/shared/components/page-header/PageHeader', () => ({
 }));
 
 jest.mock('./useWorksFiltering', () => ({
-  useWorksFiltering: () => ({
+  useWorksFiltering: jest.fn(() => ({
     sortValue: 'date_desc',
     selectedFilters: { status: [], language: [], genre: [] },
     toolbarProps: {
@@ -127,23 +128,26 @@ jest.mock('./useWorksFiltering', () => ({
       onFieldChange: jest.fn(),
       onValueChange: jest.fn()
     }
-  })
+  }))
 }));
 
-const RenderWithMockData = () => {
-  return (
-    <Box>
-      <CreativityPage />
-      <Box data-testid="mock-db-fallback" style={{ display: 'none' }}>
-        {MOCK_WORK_TEXT}
-        <Button aria-label={MOCK_GROUP_LABEL}>Дії групи</Button>
-        <Button aria-label={MOCK_WORK_LABEL}>Дії твору</Button>
-      </Box>
-    </Box>
-  );
-};
+import { usePaginatedWorks } from '~/shared/hooks/use-opuses/useOpuses';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
+
+const mockUsePaginatedWorks = usePaginatedWorks as jest.Mock;
 
 describe('Creativity page', () => {
+  beforeEach(() => {
+    mockUsePaginatedWorks.mockReset();
+    mockUsePaginatedWorks.mockReturnValue({
+      items: [],
+      totalPages: 0,
+      totalItems: 0,
+      loading: false,
+      error: null
+    });
+  });
+
   it('renders updated tabs and create action links', () => {
     render(<CreativityPage />);
 
@@ -161,13 +165,36 @@ describe('Creativity page', () => {
   });
 
   it('shows different context actions for a group and a work', () => {
-    render(<RenderWithMockData />);
+    mockUsePaginatedWorks.mockReturnValue({
+      items: {
+        groups: [
+          {
+            id: '1',
+            number: '1',
+            numberKind: 'op',
+            name: 'Перший струнний квартет',
+            genre: 'Струнний квартет',
+            startDate: '2020',
+            endDate: undefined,
+            status: BaseContentStatuses.Published,
+            updatedAt: '2024-01-01',
+            works: [{ id: '2', title: '№1 «Після бою»' }]
+          }
+        ],
+        works: []
+      },
+      totalPages: 1,
+      totalItems: 1,
+      loading: false,
+      error: null
+    });
+
+    render(<CreativityPage />);
 
     const groupButton = screen.getAllByRole('button', { name: new RegExp(MOCK_GROUP_LABEL, 'i') })[0];
     fireEvent.click(groupButton);
 
     let dropdownMenu = screen.getByTestId('dropdown-menu');
-
     expect(within(dropdownMenu).getByText('Редагувати групу (SEO)')).toBeInTheDocument();
     expect(within(dropdownMenu).getByText('Редагувати контент')).toBeInTheDocument();
     expect(within(dropdownMenu).getByText('Поширити')).toBeInTheDocument();
@@ -179,15 +206,16 @@ describe('Creativity page', () => {
 
     fireEvent.click(within(dropdownMenu).getByText('Поширити'));
 
+    const accordionToggle = screen.getByRole('button', { name: /^1 op/ });
+    fireEvent.click(accordionToggle);
+
     const workButton = screen.getAllByRole('button', { name: new RegExp(MOCK_WORK_LABEL, 'i') })[0];
     fireEvent.click(workButton);
 
     dropdownMenu = screen.getByTestId('dropdown-menu');
-
     expect(within(dropdownMenu).getByText('Редагувати композицію')).toBeInTheDocument();
     expect(within(dropdownMenu).getByText('Поширити')).toBeInTheDocument();
     expect(within(dropdownMenu).getByText('Видалити')).toBeInTheDocument();
-
     expect(within(dropdownMenu).queryByText('Редагувати контент')).not.toBeInTheDocument();
     expect(within(dropdownMenu).queryByText('Розгрупувати')).not.toBeInTheDocument();
   });

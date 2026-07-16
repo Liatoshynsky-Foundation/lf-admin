@@ -3,20 +3,14 @@ import React, { act } from 'react';
 
 import { useWorksFiltering } from './useWorksFiltering';
 import { WorksPageContent } from './WorksPageContent';
-import { useAllCompositions } from '~/shared/hooks/use-compositions/useCompositions';
-import { useAllOpusGroups, useAllUngroupedGroups } from '~/shared/hooks/use-opuses/useOpuses';
+import { usePaginatedWorks } from '~/shared/hooks/use-opuses/useOpuses';
 
 jest.mock('./useWorksFiltering', () => ({
   useWorksFiltering: jest.fn()
 }));
 
 jest.mock('~/shared/hooks/use-opuses/useOpuses', () => ({
-  useAllOpusGroups: jest.fn(),
-  useAllUngroupedGroups: jest.fn()
-}));
-
-jest.mock('~/shared/hooks/use-compositions/useCompositions', () => ({
-  useAllCompositions: jest.fn()
+  usePaginatedWorks: jest.fn()
 }));
 
 jest.mock('~/shared/components/dropdown-menu/DropdownMenu', () => ({
@@ -48,13 +42,48 @@ jest.mock('@mui/material/ButtonBase/TouchRipple', () => {
   };
 });
 
+jest.mock('~/shared/components/pagination/Pagination', () => ({
+  Pagination: ({
+    onPageChange,
+    currentPage,
+    totalPages
+  }: {
+    onPageChange: (event: React.ChangeEvent<unknown>, value: number) => void;
+    currentPage: number;
+    totalPages: number;
+  }) => (
+    <div data-testid="mock-pagination">
+      <span data-testid="pagination-current-page">{currentPage}</span>
+      <span data-testid="pagination-total-pages">{totalPages}</span>
+      <button
+        type="button"
+        data-testid="pagination-next-page-button"
+        onClick={(event) => onPageChange(event as unknown as React.ChangeEvent<unknown>, currentPage + 1)}
+      >
+        Next
+      </button>
+    </div>
+  )
+}));
+
+jest.mock('~/shared/components/dropdown-menu/ActionMenu', () => ({
+  __esModule: true,
+  default: ({ anchorEl, onClose }: { anchorEl: HTMLElement | null; onClose: () => void }) =>
+    anchorEl ? (
+      <div data-testid="dropdown-menu">
+        <button type="button" data-testid="dropdown-menu-close-button" onClick={onClose}>
+          Close
+        </button>
+      </div>
+    ) : null
+}));
+
 const mockedUseWorksFiltering = jest.mocked(useWorksFiltering);
-const mockedUseAllOpusGroups = jest.mocked(useAllOpusGroups);
-const mockedUseAllUngroupedGroups = jest.mocked(useAllUngroupedGroups);
-const mockedUseAllCompositions = jest.mocked(useAllCompositions);
+const mockedUsePaginatedWorks = jest.mocked(usePaginatedWorks);
 
 describe('WorksPageContent', () => {
   const defaultFilteringMock = {
+    requestFilters: {},
     sortValue: 'date_desc' as const,
     selectedFilters: {
       status: [],
@@ -73,60 +102,40 @@ describe('WorksPageContent', () => {
     }
   };
 
-  const mockOpusResponse = {
-    data: {
-      allOpuses: [
-        {
-          id: '1',
-          number: 'Op. 1',
-          title: { uk: 'Симфонія 1', en: 'Symphony 1' },
-          genre: 'Симфонія',
-          creationYear: '2020',
-          status: 'published',
-          createdAt: '1700000000',
-          updatedAt: '1700000000',
-          compositions: []
-        },
-        {
-          id: '2',
-          number: 'Op. 2',
-          title: { uk: 'Симфонія 2', en: 'Symphony 2' },
-          genre: 'Симфонія',
-          creationYear: '2021',
-          status: 'published',
-          createdAt: '1600000000',
-          updatedAt: '1600000000',
-          compositions: []
-        }
-      ]
-    },
+  const mockPaginatedResponse = {
+    items: [
+      {
+        id: '1',
+        number: 'Op. 1',
+        name: { uk: 'Симфонія 1', en: 'Symphony 1' },
+        genre: 'Симфонія',
+        creationYear: '2020',
+        status: 'published',
+        createdAt: '1700000000',
+        updatedAt: '1700000000',
+        compositions: []
+      },
+      {
+        id: '2',
+        number: 'Op. 2',
+        name: { uk: 'Симфонія 2', en: 'Symphony 2' },
+        genre: 'Симфонія',
+        creationYear: '2021',
+        status: 'published',
+        createdAt: '1600000000',
+        updatedAt: '1600000000',
+        compositions: []
+      }
+    ],
+    totalPages: 1,
+    totalItems: 2,
     loading: false,
-    error: undefined
-  } as unknown as ReturnType<typeof useAllOpusGroups>;
-
-  const mockCompositionResponse = {
-    data: {
-      allCompositions: [
-        {
-          id: '10',
-          title: { uk: 'Твір 1', en: 'Work 1' },
-          year: 2021,
-          genre: 'Вокал',
-          status: 'draft',
-          createdAt: '1700000000',
-          updatedAt: '1700000000'
-        }
-      ]
-    },
-    loading: false,
-    error: undefined
-  } as unknown as ReturnType<typeof useAllCompositions>;
+    error: null
+  } as unknown as ReturnType<typeof usePaginatedWorks>;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockedUseAllOpusGroups.mockReturnValue(mockOpusResponse);
-    mockedUseAllUngroupedGroups.mockReturnValue(mockOpusResponse);
-    mockedUseAllCompositions.mockReturnValue(mockCompositionResponse);
+    mockedUsePaginatedWorks.mockReturnValue(mockPaginatedResponse);
   });
 
   it('renders correctly with default empty filters and handles search filtering layout', () => {
@@ -165,12 +174,13 @@ describe('WorksPageContent', () => {
       selectedFilters: { status: ['published'], language: ['uk'], genre: [] },
       toolbarProps: { ...defaultFilteringMock.toolbarProps, activeFiltersCount: 1 }
     } as unknown as ReturnType<typeof useWorksFiltering>);
+
     rerender(<WorksPageContent activeTab="all" />);
 
     expect(screen.getByText('Створити')).toBeInTheDocument();
   });
 
-  it('covers specific search match cases for full mock queries inside filtering loop', () => {
+  it('covers rerenders across tabs for different search queries without crashing', () => {
     mockedUseWorksFiltering.mockReturnValue({
       ...defaultFilteringMock,
       toolbarProps: {
@@ -193,7 +203,7 @@ describe('WorksPageContent', () => {
 
       rerender(<WorksPageContent activeTab="all" />);
       rerender(<WorksPageContent activeTab="opus" />);
-      rerender(<WorksPageContent activeTab="ungrouped" />);
+      rerender(<WorksPageContent activeTab="woo" />);
       rerender(<WorksPageContent activeTab="works" />);
     });
 
@@ -206,7 +216,6 @@ describe('WorksPageContent', () => {
     render(<WorksPageContent activeTab="all" />);
 
     const createButton = screen.getByRole('button', { name: /створити/i });
-
     await act(async () => {
       fireEvent.click(createButton);
     });
@@ -224,6 +233,14 @@ describe('WorksPageContent', () => {
       }
     } as unknown as ReturnType<typeof useWorksFiltering>);
 
+    mockedUsePaginatedWorks.mockReturnValue({
+      items: [],
+      totalPages: 0,
+      totalItems: 0,
+      loading: false,
+      error: null
+    } as unknown as ReturnType<typeof usePaginatedWorks>);
+
     render(<WorksPageContent activeTab="all" />);
 
     expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
@@ -232,42 +249,33 @@ describe('WorksPageContent', () => {
   it('renders Loading and Error states', () => {
     mockedUseWorksFiltering.mockReturnValue(defaultFilteringMock as unknown as ReturnType<typeof useWorksFiltering>);
 
-    const loadingResponse = { data: undefined, loading: true, error: undefined } as unknown as ReturnType<
-      typeof useAllOpusGroups
-    >;
-    mockedUseAllOpusGroups.mockReturnValue(loadingResponse);
-    mockedUseAllUngroupedGroups.mockReturnValue(loadingResponse);
-    mockedUseAllCompositions.mockReturnValue({
-      data: undefined,
+    const loadingResponse = {
+      items: [],
+      totalPages: 0,
+      totalItems: 0,
       loading: true,
-      error: undefined
-    } as unknown as ReturnType<typeof useAllCompositions>);
+      error: null
+    } as unknown as ReturnType<typeof usePaginatedWorks>;
+
+    mockedUsePaginatedWorks.mockReturnValue(loadingResponse);
 
     const { rerender } = render(<WorksPageContent activeTab="all" />);
     expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
 
     const errorResponse = {
-      data: undefined,
+      items: [],
+      totalPages: 0,
+      totalItems: 0,
       loading: false,
       error: new Error('GraphQL Error')
-    } as unknown as ReturnType<typeof useAllOpusGroups>;
-    mockedUseAllOpusGroups.mockReturnValue(errorResponse);
+    } as unknown as ReturnType<typeof usePaginatedWorks>;
+
+    mockedUsePaginatedWorks.mockReturnValue(errorResponse);
     rerender(<WorksPageContent activeTab="all" />);
     expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
   });
 
-  it('covers all sorting branches (date_asc, name_asc, name_desc)', () => {
-    mockedUseAllOpusGroups.mockReturnValue({
-      data: {
-        allOpuses: [
-          { id: '1', number: 'Op. 1', title: { uk: 'Б Твір' }, createdAt: '1000', compositions: [] },
-          { id: '2', number: 'Op. 2', title: { uk: 'А Твір' }, createdAt: '2000', compositions: [] }
-        ]
-      },
-      loading: false,
-      error: undefined
-    } as unknown as ReturnType<typeof useAllOpusGroups>);
-
+  it('covers sort value branches passed through to useWorksFiltering (date_asc, name_asc, name_desc)', () => {
     const sorts: ('date_asc' | 'name_asc' | 'name_desc')[] = ['date_asc', 'name_asc', 'name_desc'];
 
     sorts.forEach((sort) => {
@@ -282,48 +290,32 @@ describe('WorksPageContent', () => {
     expect(screen.getAllByTestId('mock-works-table').length).toBeGreaterThan(0);
   });
 
-  it('covers missing status, missing genre, and individual language branches (uk, en)', () => {
-    mockedUseAllOpusGroups.mockReturnValue({
-      data: {
-        allOpuses: [
-          {
-            id: '1',
-            number: 'Op. 1',
-            title: { uk: ' ', en: 'Only English Title' },
-            genre: null,
-            status: null,
-            createdAt: '1700000000',
-            compositions: [{ id: 'c1', title: { uk: '', en: 'Comp En' } }]
-          }
-        ]
-      },
-      loading: false,
-      error: undefined
-    } as unknown as ReturnType<typeof useAllOpusGroups>);
-
-    mockedUseAllCompositions.mockReturnValue({
-      data: {
-        allCompositions: [
-          {
-            id: '10',
-            title: { uk: 'Суто Укр', en: '' },
-            year: null,
-            genre: undefined,
-            status: undefined,
-            createdAt: '1700000000'
-          }
-        ]
-      },
-      loading: false,
-      error: undefined
-    } as unknown as ReturnType<typeof useAllCompositions>);
-
+  it('renders works table when items come back with partial/missing optional fields', () => {
     mockedUseWorksFiltering.mockReturnValue({
       ...defaultFilteringMock,
-      selectedFilters: { status: [], language: ['en', 'uk'] }
+      selectedFilters: { status: [], language: ['en', 'uk'], genre: [] }
     } as unknown as ReturnType<typeof useWorksFiltering>);
 
+    mockedUsePaginatedWorks.mockReturnValue({
+      items: [
+        {
+          id: '1',
+          number: 'Op. 1',
+          name: { uk: ' ', en: 'Only English Title' },
+          genre: null,
+          status: null,
+          createdAt: '1700000000',
+          compositions: [{ id: 'c1', title: { uk: '', en: 'Comp En' } }]
+        }
+      ],
+      totalPages: 1,
+      totalItems: 1,
+      loading: false,
+      error: null
+    } as unknown as ReturnType<typeof usePaginatedWorks>);
+
     render(<WorksPageContent activeTab="all" />);
+
     expect(screen.getByTestId('mock-works-table')).toBeInTheDocument();
   });
 
@@ -335,14 +327,23 @@ describe('WorksPageContent', () => {
         search: { search: '' },
         activeFiltersCount: 0
       },
-      selectedFilters: { status: ['archived'], language: [] }
+      selectedFilters: { status: ['archived'], language: [], genre: [] }
     } as unknown as ReturnType<typeof useWorksFiltering>);
 
+    mockedUsePaginatedWorks.mockReturnValue({
+      items: [],
+      totalPages: 0,
+      totalItems: 0,
+      loading: false,
+      error: null
+    } as unknown as ReturnType<typeof usePaginatedWorks>);
+
     render(<WorksPageContent activeTab="all" />);
+
     expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
   });
 
-  it('covers fallback branches for empty search object and missing compositions', () => {
+  it('covers fallback branch for empty/undefined search object', () => {
     mockedUseWorksFiltering.mockReturnValue({
       ...defaultFilteringMock,
       toolbarProps: {
@@ -351,23 +352,24 @@ describe('WorksPageContent', () => {
       }
     } as unknown as ReturnType<typeof useWorksFiltering>);
 
-    mockedUseAllOpusGroups.mockReturnValue({
-      data: {
-        allOpuses: [
-          {
-            id: 'mock-id',
-            number: 'Op. 99',
-            title: { uk: 'Без композицій' },
-            createdAt: '1700000000',
-            compositions: undefined
-          }
-        ]
-      },
+    mockedUsePaginatedWorks.mockReturnValue({
+      items: [
+        {
+          id: 'mock-id',
+          number: 'Op. 99',
+          name: { uk: 'Без композицій' },
+          createdAt: '1700000000',
+          compositions: undefined
+        }
+      ],
+      totalPages: 1,
+      totalItems: 1,
       loading: false,
-      error: undefined
-    } as unknown as ReturnType<typeof useAllOpusGroups>);
+      error: null
+    } as unknown as ReturnType<typeof usePaginatedWorks>);
 
     render(<WorksPageContent activeTab="opus" />);
+
     expect(screen.getByTestId('mock-works-table')).toBeInTheDocument();
   });
 
@@ -375,8 +377,8 @@ describe('WorksPageContent', () => {
     mockedUseWorksFiltering.mockReturnValue(defaultFilteringMock as unknown as ReturnType<typeof useWorksFiltering>);
 
     render(<WorksPageContent activeTab="all" />);
-    const createButton = screen.getByRole('button', { name: /створити/i });
 
+    const createButton = screen.getByRole('button', { name: /створити/i });
     fireEvent.click(createButton);
     expect(screen.getByTestId('dropdown-menu')).toBeInTheDocument();
 
@@ -387,18 +389,57 @@ describe('WorksPageContent', () => {
   it('renders Error state explicitly when loading is complete and error exists', () => {
     mockedUseWorksFiltering.mockReturnValue(defaultFilteringMock as unknown as ReturnType<typeof useWorksFiltering>);
 
-    const errorResponse = {
-      data: undefined,
+    mockedUsePaginatedWorks.mockReturnValue({
+      items: [],
+      totalPages: 0,
+      totalItems: 0,
       loading: false,
       error: new Error('GraphQL Failure')
-    };
-
-    mockedUseAllOpusGroups.mockReturnValue(errorResponse as unknown as ReturnType<typeof useAllOpusGroups>);
-    mockedUseAllUngroupedGroups.mockReturnValue(errorResponse as unknown as ReturnType<typeof useAllOpusGroups>);
-    mockedUseAllCompositions.mockReturnValue(errorResponse as unknown as ReturnType<typeof useAllCompositions>);
+    } as unknown as ReturnType<typeof usePaginatedWorks>);
 
     render(<WorksPageContent activeTab="all" />);
 
     expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
+  });
+
+  it('updates the current page when pagination triggers handlePageChange', () => {
+    mockedUseWorksFiltering.mockReturnValue(defaultFilteringMock as unknown as ReturnType<typeof useWorksFiltering>);
+
+    mockedUsePaginatedWorks.mockReturnValue({
+      items: [
+        {
+          id: '1',
+          number: 'Op. 1',
+          name: { uk: 'Симфонія 1' },
+          createdAt: '1700000000',
+          compositions: []
+        }
+      ],
+      totalPages: 3,
+      totalItems: 30,
+      loading: false,
+      error: null
+    } as unknown as ReturnType<typeof usePaginatedWorks>);
+
+    render(<WorksPageContent activeTab="all" />);
+
+    expect(screen.getByTestId('pagination-current-page')).toHaveTextContent('1');
+
+    fireEvent.click(screen.getByTestId('pagination-next-page-button'));
+
+    expect(screen.getByTestId('pagination-current-page')).toHaveTextContent('2');
+  });
+
+  it('closes the create dropdown menu when handleClose is invoked via onClose', () => {
+    mockedUseWorksFiltering.mockReturnValue(defaultFilteringMock as unknown as ReturnType<typeof useWorksFiltering>);
+
+    render(<WorksPageContent activeTab="all" />);
+
+    const createButton = screen.getByRole('button', { name: /створити/i });
+    fireEvent.click(createButton);
+    expect(screen.getByTestId('dropdown-menu')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('dropdown-menu-close-button'));
+    expect(screen.queryByTestId('dropdown-menu')).not.toBeInTheDocument();
   });
 });

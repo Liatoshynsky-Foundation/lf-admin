@@ -156,7 +156,7 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
       type: 'group',
       id: group.id,
       groupData: {
-        numberLabel: group.number + (group.numberKind === 'op' ? ' op' : ' bo'),
+        numberLabel: group.number,
         title: group.name,
         genre: group.genre,
         startDate: group.startDate,

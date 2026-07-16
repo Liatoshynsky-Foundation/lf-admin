@@ -29,31 +29,32 @@ describe('CompositionsQuery Resolvers', () => {
     jest.clearAllMocks();
   });
 
-  it('allCompositions should call repo.findAll with mapped filters and explicit isStandalone', async () => {
+  it('allCompositions should call repo.findAll with mapped filters and explicit opusId', async () => {
     (mockCompositionsRepo.findAll as jest.Mock).mockResolvedValue([mockCompositionEntity]);
 
+    const opusId = 'opus-123';
     const result = await CompositionsQuery.allCompositions(
       {}, 
-      { filters: { isStandalone: true } }, 
+      { filters: { opusId: opusId } }, 
       adminContext
     );
 
     expect(mockCompositionsRepo.findAll).toHaveBeenCalledWith(
       expect.objectContaining({
-        isStandalone: true
+        opusId: opusId,
       })
     );
     expect(result).toEqual([mockCompositionEntity]);
   });
 
-  it('allCompositions should call repo.findAll with undefined isStandalone if filter is omitted', async () => {
+  it('allCompositions should call repo.findAll with undefined opusId if filter is omitted', async () => {
     (mockCompositionsRepo.findAll as jest.Mock).mockResolvedValue([mockCompositionEntity]);
 
     await CompositionsQuery.allCompositions({}, { filters: {} }, adminContext);
 
     expect(mockCompositionsRepo.findAll).toHaveBeenCalledWith(
       expect.objectContaining({
-        isStandalone: undefined
+        opusId: undefined
       })
     );
   });
