@@ -63,7 +63,7 @@ export const styles = {
 
   contentWrapper: {
     position: 'relative',
-    padding: '0 16px',
+    padding: '12px',
     minHeight: '48px',
     display: 'flex',
     alignItems: 'center'

@@ -8,11 +8,15 @@ import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavig
 import { useOpusById } from '~/shared/hooks/use-opuses/useOpuses';
 import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
-import { OpusNumberKind, OpusStatus, useUpdateOpusMutation } from '~/types/graphql/generated/graphql';
-import { FetchedOpusData,OpusCompositionSuggestion } from '~/types/opus';
+import {
+  OpusNumberKind,
+  OpusStatus,
+  useDeleteOpusMutation,
+  useUpdateOpusMutation} from '~/types/graphql/generated/graphql';
+import { FetchedOpusData, OpusCompositionSuggestion } from '~/types/opus';
 
 type AnchorId = 'navigation' | 'publish';
-type MenuAnchor = Partial<Record<AnchorId, HTMLButtonElement>>;
+type MenuAnchor = Record<AnchorId, HTMLButtonElement | null>;
 
 type AudioItem = NonNullable<OpusCompositionSuggestion['audios']>[number];
 type SheetMusicItem = NonNullable<OpusCompositionSuggestion['sheetMusic']>[number];
@@ -61,12 +65,17 @@ export const useGroupContent = (id: string) => {
   const [isDirty, setIsDirty] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState<EditorLanguage>('UA');
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [anchors, setAnchors] = useState<MenuAnchor>({});
+  const [anchors, setAnchors] = useState<MenuAnchor>({
+    navigation: null,
+    publish: null
+  });
   const [publishedTitle, setPublishedTitle] = useState({ uk: '', en: '' });
   const [isDetailsExpanded, setIsDetailsExpanded] = useState(true);
   const [shouldExitAfterSave, setShouldExitAfterSave] = useState(false);
-
   const [updateOpus, { loading: isSaving }] = useUpdateOpusMutation();
+
+  const [deleteOpus, { loading: isDeleting }] = useDeleteOpusMutation();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useUnsavedChanges(isDirty && !shouldExitAfterSave);
 
@@ -261,7 +270,7 @@ export const useGroupContent = (id: string) => {
   const handleOpen = (event: MouseEvent<HTMLElement>, menuId: AnchorId) =>
     setAnchors((prev) => ({ ...prev, [menuId]: event.currentTarget as HTMLButtonElement }));
 
-  const handleClose = (menuId: AnchorId) => setAnchors((prev) => ({ ...prev, [menuId]: undefined }));
+  const handleClose = (menuId: AnchorId) => setAnchors((prev) => ({ ...prev, [menuId]: null }));
 
   const langKey = currentLanguage === 'UA' ? 'uk' : 'en';
 
@@ -325,9 +334,24 @@ export const useGroupContent = (id: string) => {
     }
   };
 
+  const handleConfirmDelete = async () => {
+    try {
+      await deleteOpus({ variables: { id } });
+      toast.success('Групу успішно видалено');
+      setIsDeleteModalOpen(false);
+      navigate('/creativity'); 
+    } catch (error) {
+      console.error('Помилка при видаленні:', error);
+      toast.error('Помилка при видаленні групи.');
+    }
+  };
+
   const handleMenuOptionClick = async (optionId: string) => {
     handleClose('publish');
-    if (optionId === 'DELETE') return;
+    if (optionId === 'DELETE') {
+      setIsDeleteModalOpen(true);
+      return;
+    }
 
     if (!validate()) {
       toast.error('Заповніть усі обов’язкові поля перед публікацією.');
@@ -363,6 +387,10 @@ export const useGroupContent = (id: string) => {
     handleClose,
     handleFieldChange,
     handlePublishClick,
-    handleMenuOptionClick
+    handleMenuOptionClick,
+    isDeleteModalOpen,
+    setIsDeleteModalOpen,
+    handleConfirmDelete,
+    isDeleting
   };
 };

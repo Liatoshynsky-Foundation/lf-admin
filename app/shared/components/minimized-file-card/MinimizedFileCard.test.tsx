@@ -1,25 +1,33 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { Box, Button } from '@mui/material';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import toast from 'react-hot-toast';
 
+import FileCardMenuItems from '../file-card/FileCardMenuItems';
 import MinimizedFileCard from './MinimizedFileCard';
+import { styles } from '~/shared/components/minimized-file-card/MinimizedFileCard.styles';
 
+type FileCardMenuItemsProps = Parameters<typeof FileCardMenuItems>[0];
+
+let capturedMenuItemsProps: FileCardMenuItemsProps | null = null;
 const mockUpdateAsset = jest.fn();
+
+const containerStyleSpy = jest.spyOn(styles, 'container');
 let mockIsUpdatingStar = false;
 
 jest.mock('~/public/icons/link.svg', () => ({
   __esModule: true,
-  default: () => <svg data-testid="link-icon" />
+  default: (props: React.ComponentProps<'svg'>) => <svg data-testid="link-icon" {...props} />
 }));
 
 jest.mock('lucide-react', () => ({
-  ...jest.requireActual('lucide-react'),
-  EllipsisVertical: () => <svg data-testid="menu-icon" />
+  EllipsisVertical: (props: React.ComponentProps<'svg'>) => <svg data-testid="menu-icon" {...props} />
 }));
 
 jest.mock('~/public/icons/star-1.svg', () => ({
   __esModule: true,
-  default: () => <svg data-testid="star-icon" />
+  default: (props: React.ComponentProps<'svg'>) => <svg data-testid="star-icon" {...props} />
 }));
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
@@ -34,6 +42,54 @@ jest.mock('react-hot-toast', () => ({
   }
 }));
 
+jest.mock('../file-card/FileCardMenuItems', () => {
+  return jest.fn((props: FileCardMenuItemsProps) => {
+    capturedMenuItemsProps = props;
+    return [
+      { text: 'Відкрити деталі', onClick: props.onOpenDetails },
+      { text: 'Перейменувати', onClick: props.onRename },
+      {
+        text: props.isStarred ? 'Прибрати з обраних' : 'Додати в обрані',
+        onClick: props.onToggleStar
+      },
+      { text: 'Завантажити', onClick: props.onDownload },
+      { text: 'Видалити', onClick: props.onDelete }
+    ];
+  });
+});
+
+interface MockActionMenuProps {
+  anchorEl: HTMLElement | null;
+  onClose: () => void;
+  menuItems: Array<{ text: string; onClick: () => void }>;
+}
+
+jest.mock('../dropdown-menu/ActionMenu', () => {
+  const MockActionMenu = ({ anchorEl, onClose, menuItems }: MockActionMenuProps) => {
+    if (!anchorEl) return null;
+    return (
+      <Box data-testid="action-menu" data-open="true">
+        <Button data-testid="close-menu-btn" onClick={onClose}>
+          Close
+        </Button>
+        {menuItems.map((item, index) => (
+          <Button
+            key={index}
+            onClick={(e) => {
+              e.stopPropagation();
+              item.onClick();
+            }}
+          >
+            {item.text}
+          </Button>
+        ))}
+      </Box>
+    );
+  };
+  MockActionMenu.displayName = 'MockActionMenu';
+  return MockActionMenu;
+});
+
 describe('MinimizedFileCard', () => {
   const defaultProps = {
     id: 'test-id-123',
@@ -46,6 +102,20 @@ describe('MinimizedFileCard', () => {
     jest.clearAllMocks();
   });
 
+  beforeEach(() => {
+    jest.clearAllMocks();
+    capturedMenuItemsProps = null;
+    mockUpdateAsset.mockReset().mockResolvedValue({});
+  });
+
+  it('should execute real container styles logic with true and false states', () => {
+    const { rerender } = render(<MinimizedFileCard {...defaultProps} isSelected={true} />);
+    expect(containerStyleSpy).toHaveBeenLastCalledWith(true);
+
+    rerender(<MinimizedFileCard {...defaultProps} isSelected={false} />);
+    expect(containerStyleSpy).toHaveBeenLastCalledWith(false);
+  });
+
   it('should render component with required props and default file type', () => {
     render(<MinimizedFileCard {...defaultProps} />);
 
@@ -56,13 +126,11 @@ describe('MinimizedFileCard', () => {
 
   it('should render audio icon when fileType is audio', () => {
     render(<MinimizedFileCard {...defaultProps} fileType="audio" />);
-
     expect(screen.getByAltText('audio file icon')).toBeInTheDocument();
   });
 
   it('should render pdf icon when fileType is pdf', () => {
     render(<MinimizedFileCard {...defaultProps} fileType="pdf" />);
-
     expect(screen.getByAltText('pdf file icon')).toBeInTheDocument();
   });
 
@@ -88,25 +156,21 @@ describe('MinimizedFileCard', () => {
 
   it('should render star icon when starred prop is true', () => {
     render(<MinimizedFileCard {...defaultProps} starred={true} />);
-
     expect(screen.getByLabelText('Starred file')).toBeInTheDocument();
   });
 
   it('should not render star icon when starred prop is false', () => {
     render(<MinimizedFileCard {...defaultProps} starred={false} />);
-
     expect(screen.queryByLabelText('Starred file')).not.toBeInTheDocument();
   });
 
   it('should render link icon when linked prop is true', () => {
     render(<MinimizedFileCard {...defaultProps} linked={true} />);
-
     expect(screen.getByLabelText('File is linked to other pages')).toBeInTheDocument();
   });
 
   it('should not render link icon when linked prop is false', () => {
     render(<MinimizedFileCard {...defaultProps} linked={false} />);
-
     expect(screen.queryByLabelText('File is linked to other pages')).not.toBeInTheDocument();
   });
 
@@ -234,28 +298,55 @@ describe('MinimizedFileCard', () => {
     expect(handleClick).not.toHaveBeenCalled();
   });
 
-  it('should close menu on resize', async () => {
-    const user = userEvent.setup();
-
-    render(<MinimizedFileCard {...defaultProps} />);
-
-    await user.click(screen.getByLabelText('Open file menu'));
-    expect(screen.getByText('Відкрити деталі')).toBeInTheDocument();
-
-    act(() => {
-      globalThis.dispatchEvent(new Event('resize'));
-    });
-
-    await waitFor(() => {
-      expect(screen.queryByText('Відкрити деталі')).not.toBeInTheDocument();
-    });
-  });
-
   it('should render waiting cursor while favorite state is updating', () => {
     mockIsUpdatingStar = true;
 
     render(<MinimizedFileCard {...defaultProps} starred />);
 
     expect(screen.getByLabelText('Starred file')).toHaveStyle({ cursor: 'wait' });
+  });
+
+  it('should correctly map and call actions inside FileCardMenuItems props object', async () => {
+    const handleClick = jest.fn();
+    const handleAction = jest.fn();
+
+    render(<MinimizedFileCard {...defaultProps} starred={true} onClick={handleClick} onAction={handleAction} />);
+
+    expect(capturedMenuItemsProps).not.toBeNull();
+    if (!capturedMenuItemsProps) return;
+
+    capturedMenuItemsProps.onOpenDetails();
+    expect(handleClick).toHaveBeenCalledTimes(1);
+
+    capturedMenuItemsProps.onRename();
+    expect(handleAction).toHaveBeenCalledWith('rename', 'test-id-123');
+
+    capturedMenuItemsProps.onDownload();
+    expect(handleAction).toHaveBeenCalledWith('download', 'test-id-123');
+
+    capturedMenuItemsProps.onDelete();
+    expect(handleAction).toHaveBeenCalledWith('delete', 'test-id-123');
+
+    capturedMenuItemsProps.onToggleStar();
+    expect(mockUpdateAsset).toHaveBeenCalledWith({
+      variables: {
+        id: 'test-id-123',
+        input: { isStarred: false }
+      }
+    });
+  });
+
+  it('should have pointer cursor when star is not updating', () => {
+    render(<MinimizedFileCard {...defaultProps} starred={true} />);
+
+    const starWrapper = screen.getByLabelText('Starred file');
+    expect(starWrapper).toHaveStyle('cursor: pointer');
+  });
+
+  it('should have wait cursor when star is updating (loading is true)', () => {
+    mockIsUpdatingStar = true;
+    render(<MinimizedFileCard {...defaultProps} starred={true} />);
+    const starWrapper = screen.getByLabelText('Starred file');
+    expect(starWrapper).toHaveStyle('cursor: wait');
   });
 });

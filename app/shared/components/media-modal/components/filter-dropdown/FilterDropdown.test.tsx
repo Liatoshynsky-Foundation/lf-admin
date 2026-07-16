@@ -3,9 +3,8 @@ import userEvent from '@testing-library/user-event';
 
 import { FilterDropdown } from './FilterDropdown';
 
-jest.mock('~/public/icons/chevronDown.svg', () => ({
-  __esModule: true,
-  default: () => <svg data-testid="chevron-icon" />
+jest.mock('lucide-react', () => ({
+  ChevronDown: () => <svg data-testid="chevron-icon" />
 }));
 
 const mockOptions = [

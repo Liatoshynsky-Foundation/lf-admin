@@ -6,11 +6,12 @@ import { useGroupContent } from './useGroupContent';
 import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
 import { useOpusById } from '~/shared/hooks/use-opuses/useOpuses';
 import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
-import { useUpdateOpusMutation } from '~/types/graphql/generated/graphql';
+import { useDeleteOpusMutation, useUpdateOpusMutation } from '~/types/graphql/generated/graphql';
 import { OpusCompositionData } from '~/types/opus';
 
 const mockNavigate = jest.fn();
 const mockUpdateOpus = jest.fn();
+const mockDeleteOpus = jest.fn();
 
 jest.mock('next/navigation', () => ({
   useSearchParams: jest.fn(() => ({
@@ -37,6 +38,7 @@ jest.mock('~/shared/hooks/use-opuses/useOpuses', () => ({
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
   useUpdateOpusMutation: jest.fn(),
+  useDeleteOpusMutation: jest.fn(),
   OpusNumberKind: { Op: 'op', Woo: 'woo' },
   OpusStatus: { Draft: 'draft', Published: 'published' }
 }));
@@ -90,6 +92,7 @@ describe('useGroupContent Hook', () => {
     (useNavigationGuard as jest.Mock).mockReturnValue({ navigate: mockNavigate });
     (useOpusById as jest.Mock).mockReturnValue({ data: undefined, loading: false, error: undefined });
     (useUpdateOpusMutation as jest.Mock).mockReturnValue([mockUpdateOpus, { loading: false }]);
+    (useDeleteOpusMutation as jest.Mock).mockReturnValue([mockDeleteOpus, { loading: false }]);
   });
 
   describe('Initialization & Data Parsing', () => {
@@ -274,6 +277,57 @@ describe('useGroupContent Hook', () => {
         expect(result.current.groupData?.works[0].compositionId).toBe('comp-1');
       });
     });
+
+    it('should handle compositions sort with null orders and map null audio urls to undefined', async () => {
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: {
+          opusById: {
+            ...mockFetchedOpus,
+            compositions: [
+              { id: 'comp-1', order: null, audios: [{ name: 'Track', url: null }] },
+              { id: 'comp-2', order: undefined, audios: [] }
+            ]
+          }
+        },
+        loading: false
+      });
+
+      const { result } = renderHook(() => useGroupContent('test-id'));
+
+      await waitFor(() => {
+        expect(result.current.groupData?.works).toBeDefined();
+        expect(result.current.groupData?.works[0].audios[0].fileUrl).toBeUndefined();
+      });
+    });
+
+    it('should apply default fallback values when fetched optional fields are null or undefined', async () => {
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: {
+          opusById: {
+            ...mockFetchedOpus,
+            status: null,
+            genre: null,
+            additionalText: undefined,
+            name: { uk: null, en: undefined },
+            parts: null
+          }
+        },
+        loading: false
+      });
+
+      const { result } = renderHook(() => useGroupContent('test-id'));
+
+      await waitFor(() => {
+        expect(result.current.groupData).not.toBeNull();
+        expect(result.current.groupData?.status).toBe('draft');
+        expect(result.current.groupData?.genre).toBe('');
+        expect(result.current.groupData?.additionalText).toBe('');
+        expect(result.current.groupData?.groupTitle.uk).toBe('');
+        expect(result.current.groupData?.groupTitle.en).toBe('');
+        expect(result.current.groupData?.parts.uk).toBe('');
+        expect(result.current.groupData?.parts.en).toBe('');
+      });
+    });
   });
 
   describe('UI State & Menu Interactions', () => {
@@ -322,7 +376,7 @@ describe('useGroupContent Hook', () => {
       act(() => {
         result.current.handleClose('publish');
       });
-      expect(result.current.anchors['publish']).toBeUndefined();
+      expect(result.current.anchors['publish']).toBeNull();
     });
 
     it('should change current language correctly', () => {
@@ -411,7 +465,7 @@ describe('useGroupContent Hook', () => {
       act(() => {
         result.current.handleFieldChange('photos', [
           { id: 'photo-12345', src: 'img1.jpg', caption: { uk: '', en: '' }, altText: { uk: '', en: '' }, crop: null },
-          { id: '60d5ec49f1', src: 'img2.jpg', caption: { uk: '', en: '' }, altText: { uk: '', en: '' }, crop: null } // Справжній ID
+          { id: '60d5ec49f1', src: 'img2.jpg', caption: { uk: '', en: '' }, altText: { uk: '', en: '' }, crop: null }
         ]);
         result.current.handleFieldChange('performances', [
           { id: 'temp-perf-123', url: 'url1', caption: { uk: '1', en: '1' } }
@@ -594,13 +648,14 @@ describe('useGroupContent Hook', () => {
       jest.useRealTimers();
     });
 
-    it('should bypass validation for DELETE option', async () => {
+    it('should open delete modal and bypass validation for DELETE option', async () => {
       const { result } = renderHook(() => useGroupContent('test-id'));
 
-      await act(async () => {
-        await result.current.handleMenuOptionClick('DELETE');
+      act(() => {
+        result.current.handleMenuOptionClick('DELETE');
       });
 
+      expect(result.current.isDeleteModalOpen).toBe(true);
       expect(mockUpdateOpus).not.toHaveBeenCalled();
       expect(toast.error).not.toHaveBeenCalled();
     });
@@ -748,6 +803,151 @@ describe('useGroupContent Hook', () => {
       await waitFor(() => {
         expect(result.current.groupData?.performancesTitle).toBe('');
       });
+    });
+
+    it('should successfully delete opus, show toast, close modal and navigate on handleConfirmDelete', async () => {
+      mockDeleteOpus.mockResolvedValue({});
+      const { result } = renderHook(() => useGroupContent('test-id'));
+
+      act(() => {
+        result.current.setIsDeleteModalOpen(true);
+      });
+
+      await act(async () => {
+        await result.current.handleConfirmDelete();
+      });
+
+      expect(mockDeleteOpus).toHaveBeenCalledWith({ variables: { id: 'test-id' } });
+      expect(toast.success).toHaveBeenCalledWith('Групу успішно видалено');
+      expect(result.current.isDeleteModalOpen).toBe(false);
+      expect(mockNavigate).toHaveBeenCalledWith('/creativity');
+    });
+
+    it('should handle errors during handleConfirmDelete, show error toast and keep modal open', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      mockDeleteOpus.mockRejectedValue(new Error('GraphQL Error'));
+      const { result } = renderHook(() => useGroupContent('test-id'));
+
+      act(() => {
+        result.current.setIsDeleteModalOpen(true);
+      });
+
+      await act(async () => {
+        await result.current.handleConfirmDelete();
+      });
+
+      expect(mockDeleteOpus).toHaveBeenCalledWith({ variables: { id: 'test-id' } });
+      expect(toast.error).toHaveBeenCalledWith('Помилка при видаленні групи.');
+      expect(result.current.isDeleteModalOpen).toBe(true);
+      expect(mockNavigate).not.toHaveBeenCalled();
+
+      consoleSpy.mockRestore();
+    });
+
+    it('should abort handleSave and not call updateOpus if validation fails', async () => {
+      const { result } = renderHook(() => useGroupContent('test-id'));
+
+      await act(async () => {
+        await result.current.handlePublishClick();
+      });
+
+      expect(mockUpdateOpus).not.toHaveBeenCalled();
+
+      expect(toast.error).toHaveBeenCalledWith('Заповніть усі обов’язкові поля перед публікацією.');
+    });
+
+    it('should return early from handleSave if groupData is null', async () => {
+      (useOpusById as jest.Mock).mockReturnValue({ data: undefined, loading: true });
+      const { result } = renderHook(() => useGroupContent('test-id'));
+
+      await act(async () => {
+        await result.current.handlePublishClick();
+      });
+
+      expect(mockUpdateOpus).not.toHaveBeenCalled();
+    });
+
+    it('should use fallbacks for optional fields during save', async () => {
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: {
+          opusById: {
+            ...mockFetchedOpus,
+            endYear: 2025,
+            datesNote: 'Important note'
+          }
+        },
+        loading: false
+      });
+
+      mockUpdateOpus.mockResolvedValue({ data: { updateOpus: { id: 'test-id' } } });
+      const { result } = renderHook(() => useGroupContent('test-id'));
+
+      await waitFor(() => expect(result.current.groupData).not.toBeNull());
+
+      act(() => {
+        result.current.handleFieldChange('parts', { uk: '', en: '' });
+        result.current.handleFieldChange('description', { uk: null, en: null });
+        result.current.handleFieldChange('works', null);
+        result.current.handleFieldChange('performances', null);
+        result.current.handleFieldChange('performancesTitle', '');
+        result.current.handleFieldChange('groupTitle', { uk: 'Valid UK Title', en: '' });
+      });
+
+      await act(async () => {
+        await result.current.handlePublishClick();
+      });
+
+      const calledInput = mockUpdateOpus.mock.calls[0][0].variables.input;
+
+      expect(calledInput.endYear).toBe('2025');
+      expect(calledInput.datesNote).toBe('Important note');
+      expect(calledInput.compositions).toEqual([]);
+      expect(calledInput.performances).toEqual([]);
+      expect(calledInput.introDescription.uk).toBe('""');
+    });
+
+    it('should handle missing numberKind and empty photo src', async () => {
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: {
+          opusById: {
+            ...mockFetchedOpus,
+            numberKind: null,
+            gallery: [
+              { id: 'photo-1', src: '', crop: null }
+            ]
+          }
+        },
+        loading: false
+      });
+
+      mockUpdateOpus.mockResolvedValue({ data: { updateOpus: { id: 'test-id' } } });
+      const { result } = renderHook(() => useGroupContent('test-id'));
+
+      await waitFor(() => expect(result.current.groupData).not.toBeNull());
+
+      await act(async () => {
+        await result.current.handlePublishClick();
+      });
+
+      expect(result.current.groupData?.titlePrefix).toBe('Op.');
+      const calledInput = mockUpdateOpus.mock.calls[0][0].variables.input;
+      expect(calledInput.gallery[0].src).toBe('');
+    });
+
+    it('should fallback to empty object when updating a multilingual field but previous value is primitive', async () => {
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: { opusById: mockFetchedOpus },
+        loading: false
+      });
+      const { result } = renderHook(() => useGroupContent('test-id'));
+
+      await waitFor(() => expect(result.current.groupData).not.toBeNull());
+
+      act(() => {
+        result.current.handleFieldChange('genre', 'Pop', true);
+      });
+
+      expect((result.current.groupData?.genre as any).uk).toBe('Pop');
     });
   });
 

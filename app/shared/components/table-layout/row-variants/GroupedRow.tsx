@@ -22,7 +22,7 @@ export function GroupedRow<TGroup, TSub, TPlain>({
 }: GroupedRowProps<TGroup, TSub, TPlain>) {
   return (
     <Accordion defaultExpanded={defaultExpanded} disableGutters elevation={0} sx={styles.accordion}>
-      <AccordionSummary expandIcon={<ChevronRight size={18} />} sx={styles.accordionSummary}>
+      <AccordionSummary component="div" expandIcon={<ChevronRight size={18} />} sx={styles.accordionSummary}>
         <Box sx={styles.gridRowBase(gridTemplate)}>
           {columns.map((col) => {
             const content = col.renderGroup ? col.renderGroup(groupData) : null;

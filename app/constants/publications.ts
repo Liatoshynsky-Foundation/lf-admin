@@ -161,7 +161,6 @@ export type ACTIONS_TYPE = {
   id: MenuActionId;
   label: string;
 };
-
 export type HEADER_MENU_OPTIONS_TYPE = Record<string, ReadonlyArray<ACTIONS_TYPE>>;
 
 export const HEADER_MENU_OPTIONS: HEADER_MENU_OPTIONS_TYPE = {
@@ -172,7 +171,6 @@ export const HEADER_MENU_OPTIONS: HEADER_MENU_OPTIONS_TYPE = {
     { id: MenuActionId.DELETE, label: 'Видалити' }
   ]
 } as const;
-
 export type MUTATION_RESULT = Record<string, string>;
 
 export const CONTENT_MUTATION_RESULTS: MUTATION_RESULT = {

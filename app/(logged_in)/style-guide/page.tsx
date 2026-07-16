@@ -798,7 +798,7 @@ export default function StyleGuide() {
         />
       </SandboxSection>
       <SandboxSection title="CompositionModal">
-        <Button color='tertiary' variant="filled" sx={{ mt: 2 }} onClick={() => setIsCompositionModalOpen(true)}>
+        <Button color="tertiary" variant="filled" sx={{ mt: 2 }} onClick={() => setIsCompositionModalOpen(true)}>
           Open modal
         </Button>
         <CompositionModal isOpen={isCompositionModalOpen} onClose={() => setIsCompositionModalOpen(false)} />
