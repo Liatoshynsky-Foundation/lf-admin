@@ -1,4 +1,3 @@
-
 export type ContentType = 'news' | 'events' | 'media';
 
 interface ContentCardMenuProps {
@@ -8,8 +7,13 @@ interface ContentCardMenuProps {
 const PageCardMenuItems = ({editSeoHref }: ContentCardMenuProps) => {
   return [
     {
-      text: { name: 'SEO налаштування' },
-      href: editSeoHref
+      items: [
+        {
+          id: 'seo-settings',
+          text: { name: 'SEO налаштування' },
+          href: editSeoHref
+        }
+      ]
     }
   ];
 };

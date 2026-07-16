@@ -106,16 +106,10 @@ export const PUBLICATIONS_CREATE_OPTIONS: ReadonlyArray<PublicationsCreateOption
 );
 
 const PUBLICATIONS_STATUS_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
-  { value: BaseContentStatuses.Draft, label: 'Чернетка' },
+  { value: BaseContentStatuses.Draft, label: 'Чернетка (прихована)' },
   { value: BaseContentStatuses.Published, label: 'Опублікована' },
-  { value: BaseContentStatuses.Editing, label: 'Опублікована з чернеткою' }
 ];
 
-const PUBLICATIONS_LANGUAGE_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
-  { value: 'uk', label: 'Українська' },
-  { value: 'en', label: 'Англійська' },
-  { value: 'bilingual', label: 'Двомовна' }
-];
 
 export const PUBLICATIONS_FILTERS: ReadonlyArray<PublicationsFilterConfig> = [
   {
@@ -124,12 +118,6 @@ export const PUBLICATIONS_FILTERS: ReadonlyArray<PublicationsFilterConfig> = [
     options: PUBLICATIONS_STATUS_FILTER_OPTIONS,
     menuMinWidth: 170
   },
-  {
-    id: 'language',
-    label: 'Мова',
-    options: PUBLICATIONS_LANGUAGE_FILTER_OPTIONS,
-    menuMinWidth: 205
-  }
 ];
 
 export type PublicationLanguageOption = Readonly<{
@@ -161,17 +149,6 @@ export type ACTIONS_TYPE = {
   id: MenuActionId;
   label: string;
 };
-
-export type HEADER_MENU_OPTIONS_TYPE = Record<string, ReadonlyArray<ACTIONS_TYPE>>;
-
-export const HEADER_MENU_OPTIONS: HEADER_MENU_OPTIONS_TYPE = {
-  baseActions: [
-    { id: MenuActionId.PUBLISH, label: 'Опублікувати' },
-    { id: MenuActionId.PUBLICATE_AND_EXIT, label: 'Опублікувати і вийти' },
-    { id: MenuActionId.CANCEL_PUBLICATION, label: 'Скасувати публікацію' },
-    { id: MenuActionId.DELETE, label: 'Видалити' }
-  ]
-} as const;
 
 export type MUTATION_RESULT = Record<string, string>;
 

@@ -20,6 +20,16 @@ mutation UpdateOpus($id: ID!, $input: UpdateOpusInput!) {
       uk
       en
     }
+    name {
+      uk
+      en
+    }
+    additionalText
+    creationYear
+    endYear
+    datesNote
+    genre
+    status
     compositions {
       id
       order

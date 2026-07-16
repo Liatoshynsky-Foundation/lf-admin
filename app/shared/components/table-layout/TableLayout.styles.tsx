@@ -1,6 +1,6 @@
 import { SxProps, Theme } from '@mui/material';
 
-export const tableDividerColor = 'blue.100';
+export const tableDividerColor = 'blue.200';
 export const tableBorderWidth = '2px';
 
 export const tableGap = '16px';

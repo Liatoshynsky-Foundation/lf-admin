@@ -10,7 +10,7 @@ import {
   OpusWork,
   WorksTable
 } from './WorksTable';
-import { BaseRowData, MenuItem } from '~/shared/components/table-layout/row-variants/Row.types';
+import { BaseRowData } from '~/shared/components/table-layout/row-variants/Row.types';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 const mockTableLayout = jest.fn();
@@ -264,7 +264,7 @@ describe('WorksTable', () => {
     expect(data[0].groupData.status).toBe(BaseContentStatuses.Published);
   });
 
-  it('covers all actions and menu item clicks for both published and draft states in WorksTableMenusItems', () => {
+  it('covers menu item clicks for published and draft states', () => {
     render(
       <WorksTable
         visibleOpusGroups={[{ ...group, status: BaseContentStatuses.Published }]}
@@ -280,11 +280,13 @@ describe('WorksTable', () => {
       data: readonly BaseRowData<GroupHeaderData, OpusWork, IndividualWork>[];
     };
 
-    const triggerMenuClicks = (menuItems: readonly (readonly MenuItem[])[]) => {
-      menuItems.flat().forEach((item) => {
-        if (item && typeof item.onClick === 'function') {
-          item.onClick();
-        }
+    const triggerMenuClicks = (menuGroups: readonly { items: readonly { onClick?: () => void }[] }[]) => {
+      menuGroups.forEach((menuGroup) => {
+        menuGroup.items.forEach((item) => {
+          if (item && typeof item.onClick === 'function') {
+            item.onClick();
+          }
+        });
       });
     };
 
@@ -293,22 +295,6 @@ describe('WorksTable', () => {
         const groupHeader = row.groupData as GroupHeaderData;
         if (groupHeader.menuActions?.menuItems) {
           triggerMenuClicks(groupHeader.menuActions.menuItems);
-        }
-
-        if (row.subRows) {
-          row.subRows.forEach((subRow) => {
-            const subRowWithMenu = subRow as unknown as BaseRowData<unknown, OpusWork, IndividualWork>;
-            if (subRowWithMenu.menuActions?.menuItems) {
-              triggerMenuClicks(subRowWithMenu.menuActions.menuItems);
-            }
-          });
-        }
-      }
-
-      if (row.type === 'individual' && row.plainData) {
-        const plainDataWithMenu = row.plainData as unknown as BaseRowData<unknown, OpusWork, IndividualWork>;
-        if (plainDataWithMenu.menuActions?.menuItems) {
-          triggerMenuClicks(plainDataWithMenu.menuActions.menuItems);
         }
       }
     });

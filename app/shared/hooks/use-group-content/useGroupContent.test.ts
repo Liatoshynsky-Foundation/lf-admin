@@ -376,7 +376,7 @@ describe('useGroupContent Hook', () => {
       act(() => {
         result.current.handleClose('publish');
       });
-      expect(result.current.anchors['publish']).toBeUndefined();
+      expect(result.current.anchors['publish']).toBeNull();
     });
 
     it('should change current language correctly', () => {
