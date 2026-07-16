@@ -20,7 +20,6 @@ import {
   WORKS_LOADING_STATE_TITLE,
   WORKS_PAGE_TITLE,
   WORKS_TABS,
-  WorksLanguageValue,
   type WorksTabValue
 } from '~/constants/creativity';
 import ActionMenu from '~/shared/components/dropdown-menu/ActionMenu';
@@ -29,7 +28,7 @@ import { FilteringToolbar, SortSelect } from '~/shared/components/filtering-tool
 import { PageHeader } from '~/shared/components/page-header/PageHeader';
 import { Pagination } from '~/shared/components/pagination/Pagination';
 import { usePaginatedWorks } from '~/shared/hooks/use-opuses/useOpuses';
-import { BaseContentStatuses } from '~/types/enums/common.enums';
+import { WorksTab } from '~/types/graphql/generated/graphql';
 import { normalizeSearch } from '~/utils/normalizeSearch';
 
 type WorksPageContentProps = Readonly<{
@@ -95,7 +94,7 @@ function WorksCreateAction() {
 export function WorksPageContent({ activeTab }: WorksPageContentProps) {
   const [page, setPage] = useState(1);
 
-  const { sortValue, selectedFilters, toolbarProps, sortProps } = useWorksFiltering();
+  const { requestFilters, sortValue, selectedFilters, toolbarProps, sortProps } = useWorksFiltering();
   const searchValue = normalizeSearch(toolbarProps.search?.search ?? '');
 
   useEffect(() => {
@@ -106,15 +105,10 @@ export function WorksPageContent({ activeTab }: WorksPageContentProps) {
     setPage(value);
   };
 
-  const { items, totalPages, totalItems, loading, error } = usePaginatedWorks({
-    tab: activeTab,
-    search: searchValue,
-    filters: {
-      statuses: selectedFilters.status as BaseContentStatuses[],
-      languages: selectedFilters.language as WorksLanguageValue[]
-    },
-    page,
-    pageSize: ITEMS_PER_PAGE
+  const { items, totalPages, totalItems, loading, error } = usePaginatedWorks(activeTab as WorksTab, {
+    ...requestFilters,
+    limit: ITEMS_PER_PAGE,
+    skip: (page - 1) * ITEMS_PER_PAGE
   });
 
   const hasBaseItems = totalItems > 0;

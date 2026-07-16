@@ -5,7 +5,6 @@ import React from 'react';
 
 import { styles } from './WorksTable.styles';
 import { GroupMenuItems, WorkMenuItems } from './WorksTableMenuItems';
-import { GroupMenuItems, WorkMenuItems } from './WorksTableMenusItems';
 import {
   AllTab,
   OpusTab,
@@ -230,20 +229,20 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
     });
   };
 
- swich (activeTab) {
+  switch (activeTab) {
   case WORKS_TABS_NAMES.ALL:
     pushGroupRows(items.groups);
-      items.works.forEach((work) => rows.push(individualWorkRow(work)));
+    items.works.forEach((work) => rows.push(individualWorkRow(work)));
     break;
 
   case WORKS_TABS_NAMES.OPUS:
-    se WORKS_TABS_NAMES.WOO:
-      pushGroupRows(items.groups);
+  case WORKS_TABS_NAMES.WOO:
+    pushGroupRows(items.groups);
     break;
 
   case WORKS_TABS_NAMES.WORKS:
-      items.works.forEach((work) => rows.push(individualWorkRow(work)));
-      break;
+    items.works.forEach((work) => rows.push(individualWorkRow(work)));
+    break;
   }
 
   return (

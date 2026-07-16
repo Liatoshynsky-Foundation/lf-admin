@@ -3,12 +3,10 @@
 import { useCallback } from 'react';
 
 import { GroupRowData, IndividualWork } from '~/(logged_in)/creativity/WorksTable';
-import { WorksLanguageValue, WorksTabValue } from '~/constants/creativity';
 import { OpusErrors } from '~/constants/errors';
 import { safeMutate } from '~/lib/utils/safeMutate';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import {
-  ContentLanguage,
   type CreateOpusInput,
   type CreateOpusMutation,
   type CreateOpusMutationVariables,
@@ -22,6 +20,7 @@ import {
   usePaginatedWorksQuery,
   useSearchCompositionsQuery,
   useUpdateOpusMutation,
+  WorksFiltersInput,
   WorksTab
 } from '~/types/graphql/generated/graphql';
 
@@ -31,55 +30,11 @@ type QueryHookOptions = Readonly<{
 export const useOpusById = (id: string, options: QueryHookOptions = {}) =>
   useOpusByIdQuery({ variables: { id }, fetchPolicy: 'network-only', skip: options.skip || !id });
 
-const TAB_TO_GQL: Record<WorksTabValue, WorksTab> = {
-  all: WorksTab.All,
-  opus: WorksTab.Opus,
-  woo: WorksTab.Woo,
-  works: WorksTab.Works
-};
-
-const LANGUAGE_TO_GQL: Record<WorksLanguageValue, ContentLanguage> = {
-  uk: ContentLanguage.Uk,
-  en: ContentLanguage.En,
-  bilingual: ContentLanguage.Bilingual
-};
-
-const STATUS_TO_GQL: Record<BaseContentStatuses.Draft | BaseContentStatuses.Published, OpusStatus> = {
-  [BaseContentStatuses.Draft]: OpusStatus.Draft,
-  [BaseContentStatuses.Published]: OpusStatus.Published
-};
-
-type UsePaginatedWorksArgs = Readonly<{
-  tab: WorksTabValue;
-  search?: string;
-  filters?: {
-    statuses?: BaseContentStatuses[];
-    languages?: WorksLanguageValue[];
-  };
-  page?: number;
-  pageSize?: number;
-}>;
-
-export function usePaginatedWorks({ tab, search, filters, page, pageSize }: UsePaginatedWorksArgs) {
+export function usePaginatedWorks(tab?: WorksTab | null, filters?: WorksFiltersInput | null) {
   const { data, loading, error } = usePaginatedWorksQuery({
     variables: {
-      input: {
-        tab: TAB_TO_GQL[tab],
-        search,
-        filters: filters
-          ? {
-            statuses: filters.statuses
-              ?.filter(
-                (status): status is BaseContentStatuses.Draft | BaseContentStatuses.Published =>
-                  status === BaseContentStatuses.Draft || status === BaseContentStatuses.Published
-              )
-              .map((status) => STATUS_TO_GQL[status]),
-            languages: filters.languages?.map((lang) => LANGUAGE_TO_GQL[lang])
-          }
-          : undefined,
-        page,
-        pageSize
-      }
+      tab,
+      filters
     },
     fetchPolicy: 'network-only'
   });
@@ -93,7 +48,11 @@ export function usePaginatedWorks({ tab, search, filters, page, pageSize }: UseP
     startDate: g.creationYear,
     status: g.status === OpusStatus.Published ? BaseContentStatuses.Published : BaseContentStatuses.Draft,
     updatedAt: g.updatedAt,
-    works: g.compositions?.map((c) => ({ id: c.id, title: c.title.uk })) ?? []
+    works:
+      g.compositions?.map((c) => ({
+        id: c.id,
+        title: c.title.uk
+      })) ?? []
   }));
 
   const works: IndividualWork[] = (data?.paginatedWorks.works ?? []).map((w) => ({
@@ -108,7 +67,7 @@ export function usePaginatedWorks({ tab, search, filters, page, pageSize }: UseP
   return {
     items: { groups, works },
     totalPages: data?.paginatedWorks.totalPages ?? 0,
-    totalItems: data?.paginatedWorks.totalItems ?? 0,
+    totalItems: data?.paginatedWorks.total ?? 0,
     loading,
     error
   };

@@ -17,6 +17,15 @@ import {
   type SortFieldValue
 } from '~/constants/sort';
 import type { FilteringToolbarProps, SortSelectProps } from '~/shared/components/filtering-toolbar';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
+import {
+  ContentLanguage,
+  OpusStatus,
+  SortOrder,
+  type WorksFiltersInput,
+  WorksSortBy,
+  type WorksSortOptions
+} from '~/types/graphql/generated/graphql';
 
 const SORT_STORAGE_KEY = 'works_sort';
 
@@ -40,7 +49,38 @@ const VALID_SORT_VALUES: ReadonlySet<string> = new Set(['date_desc', 'date_asc',
 
 const isFilesSortValue = (value: string): value is FilesSortValue => VALID_SORT_VALUES.has(value);
 
+const mapWorksStatus = (status: WorksStatusValue): OpusStatus => {
+  if (status === BaseContentStatuses.Published) {
+    return OpusStatus.Published;
+  }
+  return OpusStatus.Draft;
+};
+
+const mapWorksLanguage = (language: WorksLanguageValue): ContentLanguage => {
+  if (language === 'bilingual') {
+    return ContentLanguage.Bilingual;
+  }
+  if (language === 'en') {
+    return ContentLanguage.En;
+  }
+  return ContentLanguage.Uk;
+};
+
+const mapWorksSort = (sortValue: FilesSortValue): WorksSortOptions[] => {
+  if (sortValue === 'name_asc') {
+    return [{ field: WorksSortBy.Number, order: SortOrder.Asc }];
+  }
+  if (sortValue === 'name_desc') {
+    return [{ field: WorksSortBy.Number, order: SortOrder.Desc }];
+  }
+  if (sortValue === 'date_asc') {
+    return [{ field: WorksSortBy.CreatedAt, order: SortOrder.Asc }];
+  }
+  return [{ field: WorksSortBy.CreatedAt, order: SortOrder.Desc }];
+};
+
 export function useWorksFiltering(): Readonly<{
+  requestFilters: Omit<WorksFiltersInput, 'limit' | 'skip'>;
   sortValue: FilesSortValue;
   selectedFilters: Readonly<{
     status: readonly WorksStatusValue[];
@@ -146,7 +186,18 @@ export function useWorksFiltering(): Readonly<{
     [currentSortField, currentSortOption.label, handleSortFieldChange, handleSortValueChange, sortValue]
   );
 
+  const requestFilters = useMemo<Omit<WorksFiltersInput, 'limit' | 'skip'>>(
+    () => ({
+      search: search.trim() || undefined,
+      languages: languageFilters.length ? languageFilters.map(mapWorksLanguage) : undefined,
+      statuses: statusFilters.length ? statusFilters.map(mapWorksStatus) : undefined,
+      sort: mapWorksSort(sortValue)
+    }),
+    [languageFilters, search, statusFilters, sortValue]
+  );
+
   return {
+    requestFilters,
     sortValue,
     selectedFilters: {
       status: statusFilters,

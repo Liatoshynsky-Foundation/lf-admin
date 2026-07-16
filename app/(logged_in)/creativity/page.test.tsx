@@ -150,7 +150,7 @@ describe('Creativity page', () => {
     expect(screen.getByText('Творчість')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Всі' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('tab', { name: 'Опуси' })).toHaveAttribute('href', '/creativity/opus');
-    expect(screen.getByRole('tab', { name: 'Безопусні' })).toHaveAttribute('href', '/creativity/ungrouped');
+    expect(screen.getByRole('tab', { name: 'Безопусні' })).toHaveAttribute('href', '/creativity/woo');
     expect(screen.getByRole('tab', { name: 'Твори' })).toHaveAttribute('href', '/creativity/works');
 
     fireEvent.click(screen.getByRole('button', { name: 'Створити' }));

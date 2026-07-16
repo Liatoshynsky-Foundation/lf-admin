@@ -110,21 +110,39 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
     model: OpusModel,
     toEntity,
     buildQuery: (filters) => {
-      const query = buildBaseQuery(filters) ?? {};
+      
+      const query = buildBaseQuery(filters, [
+        'genre',
+        'name.uk',
+        'name.en',
+      ]) ?? {};
+
       if (filters?.numberKind) {
-        if (filters.numberKind === OpusNumberKind.Op) {
-          query.$or = [
+        const numberKindCondition =
+      filters.numberKind === OpusNumberKind.Op
+        ? {
+          $or: [
             { numberKind: OpusNumberKind.Op },
             { numberKind: { $exists: false } },
             { numberKind: null }
-          ];
-        } else {
-          query.numberKind = filters.numberKind;
+          ]
         }
+        : {
+          numberKind: filters.numberKind
+        };
+
+        if (Object.keys(query).length === 0) {
+          return numberKindCondition;
+        }
+
+        return {
+          $and: [query, numberKindCondition]
+        };
       }
+
       return query;
     },
-    getDefaultSort: getBaseSort
+    getDefaultSort: getBaseSort 
   });
 
   const findByNumber = async (number: string): Promise<Opus | null> => {

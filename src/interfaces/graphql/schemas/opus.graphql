@@ -8,6 +8,20 @@ enum OpusNumberKind {
   woo
 }
 
+enum WorksTab {
+  all
+  opus
+  woo
+  works
+}
+
+enum WorksSortBy {
+  number
+  createdAt
+  updatedAt
+  publishedAt
+}
+
 type OpusGalleryItem {
   id: ID!
   src: String!
@@ -20,39 +34,6 @@ type OpusPerformance {
   id: ID!
   title: LocalizedString
   videoUrl: String
-}
-
-input WorksFiltersInput {
-  statuses: [OpusStatus]
-  languages: [ContentLanguage]
-}
-
-enum WorksSortBy {
-  number
-  releaseYear
-  createdAt
-  updatedAt
-  publishedAt
-}
-
-input WorksSortOptions {
-  field: WorksSortBy!
-  order: SortOrder!
-}
-
-enum WorksTab {
-  all
-  opus
-  woo
-  works
-}
-
-input WorksInput {
-  tab: WorksTab
-  search: String
-  filters: WorksFiltersInput
-  page: Int
-  pageSize: Int
 }
 
 type Opus {
@@ -88,35 +69,27 @@ type Opus {
   meta: ContentMeta
 }
 
-type PaginatedOpuses {
-  items: [Opus!]!
+type PaginatedWorks {
+  groups: [Opus!]!
+  works: [Composition!]!
+
   total: Int!
   page: Int!
   totalPages: Int!
 }
 
-enum OpusSortBy {
-  number
-  releaseYear
-  createdAt
-  updatedAt
-  publishedAt
-}
-
-input OpusSortOptions {
-  field: OpusSortBy!
+input WorksSortOptions {
+  field: WorksSortBy!
   order: SortOrder!
 }
 
-input OpusFiltersInput {
-  statuses: [OpusStatus!]
+input WorksFiltersInput {
+  statuses: [OpusStatus]
+  languages: [ContentLanguage]
+  search: String
   limit: Int
   skip: Int
-  slug: String
-  search: String
-  languages: [ContentLanguage!]
-  sort: [OpusSortOptions!]
-  numberKind: OpusNumberKind
+  sort: [WorksSortOptions!]
 }
 
 input CreateOpusInput {
@@ -169,23 +142,11 @@ input UpdateOpusInput {
   publishedAt: String
 }
 
-type PaginatedWorks {
-  groups: [Opus!]!
-  works: [Composition!]!
-
-  totalItems: Int!
-  totalPages: Int!
-}
-
 extend type Query {
   opusById(id: ID!): Opus
   opusByNumber(number: String!): Opus
   searchCompositions(search: String!): [Composition!]!
-
-  allOpuses(filters: OpusFiltersInput): [Opus!]!
-  paginatedWorks(input: WorksInput!): PaginatedWorks!
-
-  paginatedOpuses(page: Int!, limit: Int!, filters: OpusFiltersInput): PaginatedOpuses!
+  paginatedWorks(tab: WorksTab, filters: WorksFiltersInput): PaginatedWorks!
   opusesCount(status: OpusStatus): Int!
 }
 
