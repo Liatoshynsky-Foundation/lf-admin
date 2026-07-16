@@ -19,24 +19,20 @@ describe('usePublicationsFiltering', () => {
     act(() => {
       result.current.toolbarProps.search?.setSearch(' фестиваль ');
       result.current.toolbarProps.filters?.[0]?.onChange(['editing']);
-      result.current.toolbarProps.filters?.[1]?.onChange(['bilingual']);
     });
 
     expect(result.current.requestFilters.news).toEqual({
       search: 'фестиваль',
-      languages: ['bilingual'],
       statuses: ['editing'],
       sort: [{ field: NewsSortBy.CreatedAt, order: 'desc' }]
     });
     expect(result.current.requestFilters.media).toEqual({
       search: 'фестиваль',
-      languages: ['bilingual'],
       statuses: ['editing'],
       sort: [{ field: MediaMentionsSortBy.CreatedAt, order: 'desc' }]
     });
     expect(result.current.requestFilters.events).toEqual({
       search: 'фестиваль',
-      languages: ['bilingual'],
       statuses: ['editing'],
       sort: [{ field: EventSortBy.CreatedAt, order: 'desc' }]
     });
