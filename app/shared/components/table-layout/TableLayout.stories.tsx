@@ -5,14 +5,15 @@ import type { Meta, StoryObj } from '@storybook/react';
 import React from 'react';
 
 import { RowActions } from './components/RowActions';
-import { BaseRowData, ColumnDef, MenuItem } from './row-variants/Row.types';
+import { BaseRowData, ColumnDef } from './row-variants/Row.types';
 import { TableLayout } from './TableLayout';
+import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import { StatusBadge } from '~/shared/components/table-layout/components/StatusBadge';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 type ActionFields = {
   editAction?: { editHref: string; editLabel: string };
-  menuActions?: { menuItems: readonly (readonly MenuItem[])[]; menuTriggerLabel: string };
+  menuActions?: { menuItems: ActionMenuGroups; menuTriggerLabel: string };
 };
 
 type GroupHeaderData = {
@@ -36,11 +37,16 @@ type IndividualRowData = {
   updatedAt: string;
 } & ActionFields;
 
-const mockItems: readonly (readonly MenuItem[])[] = [
-  [
-    { id: 'edit', label: 'Редагувати', href: '/edit' } as MenuItem,
-    { id: 'delete', label: 'Видалити', onClick: () => {} } as MenuItem
-  ]
+const mockItems: ActionMenuGroups = [
+  {
+    items: [
+      { id: 'edit', text: { name: 'Редагувати' }, href: '/edit' },
+      { id: 'share', text: { name: 'Поширити' }, href: '/share' }
+    ]
+  },
+  {
+    items: [{ id: 'delete', text: { name: 'Видалити' }, onClick: () => console.log('Delete clicked') }]
+  }
 ];
 
 const baseColumns: readonly ColumnDef<GroupHeaderData, GroupSubRowData, IndividualRowData>[] = [

@@ -1,11 +1,11 @@
 'use client';
 
-import { Box, Menu, MenuItem, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import { notFound, useParams, useRouter } from 'next/navigation';
 import { MouseEvent, useState } from 'react';
 import toast from 'react-hot-toast';
 
-import { sharedMenuStyles } from '../../shared/shared-publication.styles';
+import { NavigationMenuItems, PublishMenuItems } from './SeoMenuItems';
 import CreatePublicationView from '~/(logged_in)/publications/[type]/create/CreatePublicationsView';
 import {
   CONTENT_MUTATION_RESULTS,
@@ -17,6 +17,7 @@ import {
 import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
 import { TitleDropdown } from '~/shared/components/divided-header/title-dropdown/TitleDropdown';
+import ActionMenu from '~/shared/components/dropdown-menu/ActionMenu';
 import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
@@ -76,6 +77,11 @@ export default function PublicatiosSeoPage() {
     router.push(PUBLICATIONS_BASE_PATH);
   };
 
+  const handlePublishExitClick = () => {
+    handlePublishAndExit();
+    handleClosePublish();
+  };
+
   return (
     <Box sx={{ width: '100%' }}>
       <DividedHeader
@@ -98,55 +104,26 @@ export default function PublicatiosSeoPage() {
         />
       </DividedHeader>
 
-      <Menu
+      <ActionMenu
         anchorEl={navigationAnchor}
-        open={Boolean(navigationAnchor)}
         onClose={handleCloseNavigation}
-        disableScrollLock
+        menuItems={NavigationMenuItems({
+          handleEditClick
+        })}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-        slotProps={{ paper: { sx: sharedMenuStyles.navigationMenuPaper } }}
-        sx={sharedMenuStyles.menu}
-      >
-        <MenuItem
-          onClick={() => {
-            handleEditClick();
-            handleCloseNavigation();
-          }}
-          sx={sharedMenuStyles.menuItem}
-        >
-          <Typography variant="textMd">{'Редагування контенту'}</Typography>
-        </MenuItem>
-      </Menu>
+      />
 
-      <Menu
+      <ActionMenu
         anchorEl={publishAnchor}
-        open={Boolean(publishAnchor)}
         onClose={handleClosePublish}
-        disableScrollLock
+        menuItems={PublishMenuItems({
+          handlePublishExitClick,
+          handleUnpublish
+        })}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        slotProps={{ paper: { sx: sharedMenuStyles.publishMenuPaper } }}
-        sx={sharedMenuStyles.menu}
-      >
-        <MenuItem
-          onClick={() => {
-            handlePublishAndExit();
-            handleClosePublish();
-          }}
-          sx={sharedMenuStyles.menuItem}
-        >
-          <Typography variant="textMd">{'Опублікувати і вийти'}</Typography>
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            handleUnpublish();
-          }}
-          sx={sharedMenuStyles.menuItem}
-        >
-          <Typography variant="textMd">{'Скасувати публікацію'}</Typography>
-        </MenuItem>
-      </Menu>
+      />
 
       <CreatePublicationView data={publicationData} mode="seo" />
     </Box>
