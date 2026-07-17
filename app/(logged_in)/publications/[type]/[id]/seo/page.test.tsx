@@ -1,5 +1,5 @@
 import { Box, Button, Menu, MenuItem } from '@mui/material';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { notFound, useParams, useRouter } from 'next/navigation';
 import React, { MouseEvent, ReactNode } from 'react';
 import toast from 'react-hot-toast';
@@ -146,20 +146,22 @@ describe('PublicatiosSeoPage Container', () => {
       expect(mockPush).toHaveBeenCalledWith(PUBLICATIONS_BASE_PATH);
     });
 
-    it('should show publicationPublished toast when publish is triggered', () => {
+    it('should show publicationPublished toast when publish is triggered', async () => {
+      mockHandleSave.mockResolvedValueOnce('123');
       fireEvent.click(screen.getByTestId('btn-publish'));
 
       expect(mockHandleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
-      expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublished);
+      await waitFor(() => expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublished));
     });
 
-    it('should show publicationPublished toast and redirect on publish and exit', () => {
+    it('should show publicationPublished toast and redirect on publish and exit', async () => {
+      mockHandleSave.mockResolvedValueOnce('123');
       fireEvent.click(screen.getByTestId('btn-open-publish-menu'));
       fireEvent.click(screen.getByText('Опублікувати і вийти'));
 
       expect(mockHandleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
-      expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublished);
-      expect(mockPush).toHaveBeenCalledWith(PUBLICATIONS_BASE_PATH);
+      await waitFor(() => expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublished));
+      await waitFor(() => expect(mockPush).toHaveBeenCalledWith(PUBLICATIONS_BASE_PATH));
     });
 
     it('should handle unpublish action from publication menu', () => {
