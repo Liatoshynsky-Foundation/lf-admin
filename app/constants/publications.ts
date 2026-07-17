@@ -161,7 +161,6 @@ export type ACTIONS_TYPE = {
   id: MenuActionId;
   label: string;
 };
-
 export type MUTATION_RESULT = Record<string, string>;
 
 export const CONTENT_MUTATION_RESULTS: MUTATION_RESULT = {
