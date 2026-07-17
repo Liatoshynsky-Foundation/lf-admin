@@ -144,6 +144,8 @@ export enum MenuActionId {
   DELETE = 'DELETE'
 } 
 
+
+
 export type ACTIONS_TYPE = {
   id: MenuActionId;
   label: string;
@@ -155,6 +157,29 @@ export const CONTENT_MUTATION_RESULTS: MUTATION_RESULT = {
   publicationDeleted: 'Публікацію видалено',
   publicationUnpublished: 'Публікацію скасовано',
   publicationPublished: 'Публікацію опубліковано успішно'
+} as const;
+
+export type MenuActionConfig = {
+  status: BaseContentStatuses;
+  toastMessage: string;
+};
+
+export const MENU_ACTION_CONFIGS: Record<
+  Exclude<MenuActionId, MenuActionId.DELETE>,
+  MenuActionConfig
+> = {
+  [MenuActionId.PUBLISH]: {
+    status: BaseContentStatuses.Published,
+    toastMessage: CONTENT_MUTATION_RESULTS.publicationPublished
+  },
+  [MenuActionId.PUBLICATE_AND_EXIT]: {
+    status: BaseContentStatuses.Published,
+    toastMessage: CONTENT_MUTATION_RESULTS.publicationPublished
+  },
+  [MenuActionId.CANCEL_PUBLICATION]: {
+    status: BaseContentStatuses.Draft,
+    toastMessage: CONTENT_MUTATION_RESULTS.publicationUnpublished
+  },
 } as const;
 
 

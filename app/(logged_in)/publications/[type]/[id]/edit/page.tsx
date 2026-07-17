@@ -8,6 +8,7 @@ import CreatePublicationsView from '../../create/CreatePublicationsView';
 import { EditPublicationsView } from './EditPublicationsView';
 import {
   CONTENT_MUTATION_RESULTS,
+  MENU_ACTION_CONFIGS,
   MenuActionId,
   PUBLICATIONS_BASE_PATH,
   PublicationsItemType
@@ -17,7 +18,6 @@ import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavig
 import { usePublicationManager } from '~/shared/hooks/use-publications-manager/usePublicationsManager';
 import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
 import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
-import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 type Params = {
   type: PublicationsItemType;
@@ -70,15 +70,19 @@ export default function EditPublicationsPage() {
     try {
       switch (actionId) {
       case MenuActionId.PUBLISH: {
-        const { data } = await manager.updateResource(BaseContentStatuses.Published, contentPayload);
-        if (data) toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
+        const { status, toastMessage } = MENU_ACTION_CONFIGS.PUBLISH;
+
+        const { data } = await manager.updateResource(status, contentPayload);
+        if (data) toast.success(toastMessage);
         break;
       }
 
       case MenuActionId.PUBLICATE_AND_EXIT: {
-        const { data } = await manager.updateResource(BaseContentStatuses.Published, contentPayload);
+        const { status, toastMessage } = MENU_ACTION_CONFIGS.PUBLICATE_AND_EXIT;
+
+        const { data } = await manager.updateResource(status, contentPayload);
         if (data) {
-          toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
+          toast.success(toastMessage);
           router.push(PUBLICATIONS_BASE_PATH);
         }
         break;
@@ -94,9 +98,11 @@ export default function EditPublicationsPage() {
       }
 
       case MenuActionId.CANCEL_PUBLICATION: {
-        const { data } = await manager.updateResource(BaseContentStatuses.Draft, contentPayload);
+        const { status, toastMessage } = MENU_ACTION_CONFIGS.CANCEL_PUBLICATION;
+
+        const { data } = await manager.updateResource(status, contentPayload);
         if (data) {
-          toast.success(CONTENT_MUTATION_RESULTS.publicationUnpublished);
+          toast.success(toastMessage);
           router.push(PUBLICATIONS_BASE_PATH);
         }
         break;
