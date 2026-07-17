@@ -19,6 +19,8 @@ export async function up(db: Db): Promise<void> {
 
 export async function down(db: Db): Promise<void> {
   for (const collection of TARGET_COLLECTIONS) {
-    await db.collection(collection).updateMany({}, { $unset: { description: '', keywords: '', canonicalUrl: '' } });
+    await db
+      .collection(collection)
+      .updateMany({}, { $unset: { description: '', keywords: '', canonicalUrl: '', allowIndexation: '' } });
   }
 }

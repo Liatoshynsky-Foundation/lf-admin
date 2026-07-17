@@ -15,8 +15,8 @@ const draftPageSchema = new Schema<BasePage>(
       en: { type: String, required: true }
     },
     keywords: {
-      uk: { type: String, required: true },
-      en: { type: String, required: true }
+      uk: { type: String, required: false, default: '' },
+      en: { type: String, required: false, default: '' }
     },
     canonicalUrl: {
       uk: { type: String, required: false },
