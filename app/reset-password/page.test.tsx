@@ -21,15 +21,17 @@ jest.mock('~/shared/components/auth-card/AuthCardLayout', () => ({
   }
 }));
 
-const mockFetch = (verifyResult: boolean) => {
-  globalThis.fetch = jest.fn().mockResolvedValue({
-    json: () => Promise.resolve({ data: { verifyResetToken: verifyResult } })
-  });
-};
+const mockExecute = jest.fn();
+
+jest.mock('~/container/index', () => ({
+  createRootContainer: jest.fn(() => ({
+    resolve: jest.fn(() => ({ execute: mockExecute }))
+  }))
+}));
 
 describe('ResetPasswordPage (Server Component)', () => {
   afterEach(() => {
-    jest.restoreAllMocks();
+    jest.clearAllMocks();
   });
 
   it('renders error if no token is provided', async () => {
@@ -41,7 +43,7 @@ describe('ResetPasswordPage (Server Component)', () => {
   });
 
   it('renders the form when token is valid', async () => {
-    mockFetch(true);
+    mockExecute.mockResolvedValue(true);
     const UI = await ResetPasswordPage({ searchParams: Promise.resolve({ token: 'valid-token-123' }) });
     render(UI);
 
@@ -49,7 +51,7 @@ describe('ResetPasswordPage (Server Component)', () => {
   });
 
   it('renders error if token is expired or already used', async () => {
-    mockFetch(false);
+    mockExecute.mockResolvedValue(false);
     const UI = await ResetPasswordPage({ searchParams: Promise.resolve({ token: 'expired-token' }) });
     render(UI);
 
@@ -57,8 +59,8 @@ describe('ResetPasswordPage (Server Component)', () => {
     expect(screen.getByText(/Посилання для відновлення пароля вже було використано/i)).toBeInTheDocument();
   });
 
-  it('renders error if fetch throws', async () => {
-    globalThis.fetch = jest.fn().mockRejectedValue(new Error('Network error'));
+  it('renders error if use case throws', async () => {
+    mockExecute.mockRejectedValue(new Error('DB error'));
     const UI = await ResetPasswordPage({ searchParams: Promise.resolve({ token: 'some-token' }) });
     render(UI);
 
