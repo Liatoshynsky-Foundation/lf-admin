@@ -23,7 +23,7 @@ jest.mock('~/shared/components/auth-card/AuthCardLayout', () => ({
 
 const mockExecute = jest.fn();
 
-jest.mock('~/container/index', () => ({
+jest.mock('../../src/container', () => ({
   createRootContainer: jest.fn(() => ({
     resolve: jest.fn(() => ({ execute: mockExecute }))
   }))
