@@ -62,8 +62,13 @@ describe('usePageSeo', () => {
       await Promise.resolve();
     });
 
-    expect(result.current.seoValue.meta.uk.title).toBe('Про нас');
-    expect(result.current.seoValue.meta.en.title).toBe('About us');
+    expect(result.current.seoValue.meta).toEqual(
+      expect.objectContaining({
+        uk: expect.objectContaining({ title: 'Про нас' }),
+        en: expect.objectContaining({ title: 'About us' })
+      })
+    );
+
     expect(result.current.seoValue.ogImage).toBe('/cover.png');
     expect(result.current.seoValue.allowIndexing).toEqual({ uk: false, en: true });
   });
