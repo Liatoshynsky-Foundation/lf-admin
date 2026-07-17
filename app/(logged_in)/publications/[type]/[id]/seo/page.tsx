@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import { NavigationMenuItems, PublishMenuItems } from './SeoMenuItems';
 import CreatePublicationView from '~/(logged_in)/publications/[type]/create/CreatePublicationsView';
 import {
-  CONTENT_MUTATION_RESULTS,
+  MENU_ACTION_CONFIGS,
   PAGE_TITLES,
   PUBLICATIONS_BASE_PATH,
   PUBLICATIONS_TYPES,
@@ -19,7 +19,6 @@ import HeaderRightActions from '~/shared/components/divided-header/header-right-
 import { TitleDropdown } from '~/shared/components/divided-header/title-dropdown/TitleDropdown';
 import ActionMenu from '~/shared/components/dropdown-menu/ActionMenu';
 import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
-import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 type Params = {
   type: PublicationsItemType;
@@ -43,19 +42,23 @@ export default function PublicatiosSeoPage() {
   const handleClosePublish = () => setPublishAnchor(null);
 
   const handlePublishAndExit = () => {
-    publicationData?.handleSave(BaseContentStatuses.Published);
-    toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
+    const { status, toastMessage } = MENU_ACTION_CONFIGS.PUBLICATE_AND_EXIT;
+    publicationData?.handleSave(status);
+    toast.success(toastMessage);
     router.push(PUBLICATIONS_BASE_PATH);
   };
 
   const handlePublish = () => {
-    publicationData?.handleSave(BaseContentStatuses.Published);
-    toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
+    const { status, toastMessage } = MENU_ACTION_CONFIGS.PUBLISH;
+    publicationData?.handleSave(status);
+    toast.success(toastMessage);
   };
 
   const handleUnpublish = () => {
-    publicationData?.handleSave(BaseContentStatuses.Draft);
+    const { status, toastMessage } = MENU_ACTION_CONFIGS.CANCEL_PUBLICATION;
+    publicationData?.handleSave(status);
     handleClosePublish();
+    toast.success(toastMessage);
     router.push(PUBLICATIONS_BASE_PATH);
   };
 
@@ -71,12 +74,6 @@ export default function PublicatiosSeoPage() {
     router.push(`${PUBLICATIONS_BASE_PATH}/${type}/${id}/edit`);
   };
 
-  const handleCancel = () => router.push(PUBLICATIONS_BASE_PATH);
-  const handleSave = () => {
-    publicationData?.handleSave(BaseContentStatuses.Draft);
-    router.push(PUBLICATIONS_BASE_PATH);
-  };
-
   const handlePublishExitClick = () => {
     handlePublishAndExit();
     handleClosePublish();
@@ -89,8 +86,6 @@ export default function PublicatiosSeoPage() {
         rightActionsComponent={
           <HeaderRightActions
             mode="seo"
-            onSave={handleSave}
-            onCancel={handleCancel}
             onPublish={handlePublish}
             onMenuOpen={handleOpenPublish}
           />

@@ -136,16 +136,6 @@ describe('PublicatiosSeoPage Container', () => {
       expect(screen.getByTestId('mock-title-dropdown')).toHaveTextContent('Редагування Новини');
     });
 
-    it('should handle save and cancel actions by routing to base path', () => {
-      fireEvent.click(screen.getByTestId('btn-save'));
-      expect(mockHandleSave).toHaveBeenCalledTimes(1);
-
-      fireEvent.click(screen.getByTestId('btn-cancel'));
-
-      expect(mockPush).toHaveBeenCalledTimes(2);
-      expect(mockPush).toHaveBeenCalledWith(PUBLICATIONS_BASE_PATH);
-    });
-
     it('should show publicationPublished toast when publish is triggered', () => {
       fireEvent.click(screen.getByTestId('btn-publish'));
 
@@ -167,6 +157,7 @@ describe('PublicatiosSeoPage Container', () => {
       fireEvent.click(screen.getByText('Скасувати публікацію'));
 
       expect(mockHandleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
+      expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationUnpublished);
       expect(mockPush).toHaveBeenCalledWith(PUBLICATIONS_BASE_PATH);
     });
 
@@ -191,12 +182,12 @@ describe('PublicatiosSeoPage Container', () => {
   });
 
   describe('when publicationData is missing (null/undefined)', () => {
-    it('should not throw and should still redirect when data is missing', () => {
+    it('should not throw and should not redirect when data is missing', () => {
       (useUpsertPublication as jest.Mock).mockReturnValue(undefined);
       setup('news');
 
       fireEvent.click(screen.getByTestId('btn-save'));
-      expect(mockPush).toHaveBeenCalledWith(PUBLICATIONS_BASE_PATH);
+      expect(mockPush).not.toHaveBeenCalled();
     });
   });
 });
