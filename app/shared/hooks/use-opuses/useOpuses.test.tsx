@@ -283,4 +283,44 @@ describe('usePaginatedWorks', () => {
     expect(result.current.totalItems).toBe(0);
     expect(result.current.totalPages).toBe(0);
   });
+
+  it('maps statuses correctly for groups and works', () => {
+    mockUsePaginatedWorksQuery.mockReturnValue({
+      loading: false,
+      data: {
+        paginatedWorks: {
+          total: 2,
+          totalPages: 1,
+          groups: [
+            {
+              id: 'g1',
+              number: 'Op.1',
+              numberKind: 'op',
+              name: { uk: 'Group' },
+              genre: 'Genre',
+              creationYear: '2024',
+              status: OpusStatus.Draft,
+              updatedAt: 'today',
+              compositions: []
+            }
+          ],
+          works: [
+            {
+              id: 'w1',
+              title: { uk: 'Standalone' },
+              year: '2023',
+              genre: 'Genre',
+              status: OpusStatus.Published,
+              updatedAt: 'today'
+            }
+          ]
+        }
+      }
+    });
+
+    const { result } = renderHook(() => usePaginatedWorks());
+
+    expect(result.current.items.groups[0].status).toBe(BaseContentStatuses.Draft);
+    expect(result.current.items.works[0].status).toBe(BaseContentStatuses.Published);
+  });
 });
