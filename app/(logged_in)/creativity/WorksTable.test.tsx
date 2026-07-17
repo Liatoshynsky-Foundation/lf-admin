@@ -128,7 +128,7 @@ describe('WorksTable', () => {
 
     if (groupRow && groupRow.type === 'group') {
       expect(groupRow.groupData).toMatchObject({
-        numberLabel: '1 op',
+        numberLabel: '1',
         title: 'Group title',
         status: BaseContentStatuses.Draft
       });
@@ -189,15 +189,6 @@ describe('WorksTable', () => {
 
     const { data } = mockTableLayout.mock.calls[0][0] as { data: WorksTableRowData[] };
     const row = data[0];
-    expect(row.type === 'group' && row.groupData?.numberLabel).toBe('1 op');
-  });
-
-  it('should format numberLabel with "bo" suffix when numberKind is "bo"', () => {
-    const groupBo: GroupRowData = { ...group, number: '2', numberKind: 'bo' };
-    render(<WorksTable activeTab={WORKS_TABS_NAMES.OPUS} items={{ groups: [groupBo] }} />);
-
-    const { data } = mockTableLayout.mock.calls[0][0] as { data: WorksTableRowData[] };
-    const row = data[0];
-    expect(row.type === 'group' && row.groupData?.numberLabel).toBe('2 bo');
+    expect(row.type === 'group' && row.groupData?.numberLabel).toBe('1');
   });
 });

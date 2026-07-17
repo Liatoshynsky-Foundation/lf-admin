@@ -1,15 +1,16 @@
 import { Composition } from '~/src/domain/entities/Composition';
 import { Opus } from '~/src/domain/entities/Opus';
-import { QueryFilters } from '~/src/domain/repositories/baseRepository';
 import { CompositionFilters, ICompositionRepository } from '~/src/domain/repositories/compositionRepository';
 import { IOpusRepository, OpusFilters } from '~/src/domain/repositories/opusRepository';
 import { OpusNumberKind, WorksTab } from '~/types/graphql/generated/graphql';
 
-export const mappedGroups = async (repo: IOpusRepository, compositionsRepo: ICompositionRepository, filters: QueryFilters<OpusFilters>) => {
-  const total = await repo.count(filters);
+export const mappedGroups = async (
+  repo: IOpusRepository,
+  compositionsRepo: ICompositionRepository,
+  filters: OpusFilters
+) => {  const total = await repo.count(filters);
 
-  let groups: Opus[] = await repo.findAll(filters
-  );
+  let groups: Opus[] = await repo.findAll(filters);
 
   const opusIds = groups.map((o) => o.id);
   const allCompositions: Composition[] = await compositionsRepo.findByOpusIds(opusIds);
@@ -34,7 +35,10 @@ export const mappedGroups = async (repo: IOpusRepository, compositionsRepo: ICom
   return { groups, total};
 };
 
-export const mappedCompositions = async (repo: ICompositionRepository, filters: QueryFilters<CompositionFilters> & { opusId?: string | null }) => {
+export const mappedCompositions = async (
+  repo: ICompositionRepository,
+  filters: CompositionFilters & { opusId?: string | null }
+) => {
   const total = await repo.count(filters);
   const works = await repo.findAll(filters);
 

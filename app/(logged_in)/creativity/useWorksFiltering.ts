@@ -97,9 +97,7 @@ export function useWorksFiltering(): Readonly<{
 
   useEffect(() => {
     const saved = localStorage.getItem(SORT_STORAGE_KEY);
-    if (saved && isFilesSortValue(saved)) {
-      setSortValue(saved);
-    }
+    if (saved && isFilesSortValue(saved)) setSortValue(saved);
   }, []);
 
   const activeFiltersCount = statusFilters.length + languageFilters.length;

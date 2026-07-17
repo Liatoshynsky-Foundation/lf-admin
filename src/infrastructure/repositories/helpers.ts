@@ -103,3 +103,43 @@ export const getBaseSort = (filters?: FiltersInput): Record<string, 1 | -1> => {
 
   return { createdAt: -1 };
 };
+export const fieldCondition = <TDb>(
+  field: string,
+  value: string | string[] | undefined | null,
+  fallbackValue?: string
+): FilterQuery<TDb> | null => {
+  const isEmpty = value === undefined || value === null || (Array.isArray(value) && value.length === 0);
+  if (isEmpty) {
+    return null;
+  }
+
+  const values = Array.isArray(value) ? value : [value];
+  const includesFallback = fallbackValue !== undefined && values.includes(fallbackValue);
+
+  if (!includesFallback) {
+    return { [field]: Array.isArray(value) ? { $in: values } : value } as FilterQuery<TDb>;
+  }
+
+  const fallbackCondition = {
+    $or: [{ [field]: fallbackValue }, { [field]: { $exists: false } }, { [field]: null }]
+  };
+
+  const otherValues = values.filter((v) => v !== fallbackValue);
+  if (otherValues.length === 0) {
+    return fallbackCondition as FilterQuery<TDb>;
+  }
+
+  return { $or: [fallbackCondition, { [field]: { $in: otherValues } }] } as FilterQuery<TDb>;
+};
+
+export const combineConditions = <TDb>(
+  conditions: (FilterQuery<TDb> | null | undefined)[]
+): FilterQuery<TDb> => {
+  const nonEmpty = conditions.filter(
+    (c): c is FilterQuery<TDb> => Boolean(c && Object.keys(c).length > 0)
+  );
+
+  if (nonEmpty.length === 0) return {} as FilterQuery<TDb>;
+  if (nonEmpty.length === 1) return nonEmpty[0];
+  return { $and: nonEmpty } as FilterQuery<TDb>;
+};

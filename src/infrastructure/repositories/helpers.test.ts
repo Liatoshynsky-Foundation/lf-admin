@@ -1,4 +1,4 @@
-import { buildBaseQuery, createToEntity, getBaseSort } from './helpers';
+import { buildBaseQuery, combineConditions, createToEntity, fieldCondition, getBaseSort } from './helpers';
 import { BaseEntity } from '~/domain/repositories/baseRepository';
 import { SortByDate, SortOrder } from '~/types/enums/common.enums';
 
@@ -130,5 +130,116 @@ describe('Repository Helpers', () => {
       const result = getBaseSort(filters);
       expect(result).toEqual({ createdAt: -1 });
     });
+  });
+});
+
+describe('getLanguageCondition and language filtering', () => {
+  it('should build query for "uk" language', () => {
+    const result = buildBaseQuery({ languages: ['uk'] });
+    expect(result).toEqual({
+      $or: [{
+        $and: [{ 'title.uk': { $nin: ['', null] } }, { 'title.en': { $in: ['', null] } }]
+      }]
+    });
+  });
+
+  it('should build query for "en" language', () => {
+    const result = buildBaseQuery({ languages: ['en'] });
+    expect(result).toEqual({
+      $or: [{
+        $and: [{ 'title.en': { $nin: ['', null] } }, { 'title.uk': { $in: ['', null] } }]
+      }]
+    });
+  });
+
+  it('should build query for "bilingual" language', () => {
+    const result = buildBaseQuery({ languages: ['bilingual'] });
+    expect(result).toEqual({
+      $or: [{
+        $and: [{ 'title.uk': { $nin: ['', null] } }, { 'title.en': { $nin: ['', null] } }]
+      }]
+    });
+  });
+
+  it('should ignore unknown languages (returning null) and empty language arrays', () => {
+    const result = buildBaseQuery({ languages: [] });
+    expect(result).toEqual({});
+  });
+
+  it('should combine multiple valid languages with $or', () => {
+    const result = buildBaseQuery({ languages: ['uk', 'en'] });
+    expect(result).toEqual({
+      $or: [
+        { $and: [{ 'title.uk': { $nin: ['', null] } }, { 'title.en': { $in: ['', null] } }] },
+        { $and: [{ 'title.en': { $nin: ['', null] } }, { 'title.uk': { $in: ['', null] } }] }
+      ]
+    });
+  });
+});
+
+describe('fieldCondition', () => {
+  it('should return null for undefined, null, or empty array values', () => {
+    expect(fieldCondition('status', undefined)).toBeNull();
+    expect(fieldCondition('status', null)).toBeNull();
+    expect(fieldCondition('status', [])).toBeNull();
+  });
+
+  it('should return simple field match for single value', () => {
+    expect(fieldCondition('status', 'draft')).toEqual({ status: 'draft' });
+  });
+
+  it('should return $in operator for array of values', () => {
+    expect(fieldCondition('status', ['draft', 'published'])).toEqual({ 
+      status: { $in: ['draft', 'published'] } 
+    });
+  });
+
+  it('should handle fallbackValue correctly', () => {
+    const field = 'category';
+    const fallback = 'uncategorized';
+      
+    const result = fieldCondition(field, ['news', fallback], fallback);
+    expect(result).toEqual({
+      $or: [
+        { $or: [{ [field]: fallback }, { [field]: { $exists: false } }, { [field]: null }] },
+        { [field]: { $in: ['news'] } }
+      ]
+    });
+  });
+
+  it('should return only fallback query if no other values provided', () => {
+    const field = 'category';
+    const fallback = 'uncategorized';
+      
+    const result = fieldCondition(field, [fallback], fallback);
+    expect(result).toEqual({
+      $or: [{ [field]: fallback }, { [field]: { $exists: false } }, { [field]: null }]
+    });
+  });
+});
+
+describe('combineConditions', () => {
+  it('should return empty object if all conditions are null/undefined or empty', () => {
+    expect(combineConditions([null, undefined])).toEqual({});
+    expect(combineConditions([{}])).toEqual({});
+  });
+
+  it('should return the single non-empty condition as is', () => {
+    const cond = { status: 'published' };
+    expect(combineConditions([null, cond])).toEqual(cond);
+  });
+
+  it('should combine multiple conditions with $and', () => {
+    const cond1 = { status: 'published' };
+    const cond2 = { slug: 'test' };
+      
+    expect(combineConditions([cond1, cond2])).toEqual({
+      $and: [cond1, cond2]
+    });
+  });
+
+  it('should filter out empty objects before combining', () => {
+    const cond1 = { status: 'published' };
+    expect(combineConditions([cond1, {}])).toEqual(cond1);
   });
 });

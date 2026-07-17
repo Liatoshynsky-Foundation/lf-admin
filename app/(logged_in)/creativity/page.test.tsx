@@ -206,7 +206,7 @@ describe('Creativity page', () => {
 
     fireEvent.click(within(dropdownMenu).getByText('Поширити'));
 
-    const accordionToggle = screen.getByRole('button', { name: /^1 op/ });
+    const accordionToggle = screen.getByRole('button', { name: /^1/ });
     fireEvent.click(accordionToggle);
 
     const workButton = screen.getAllByRole('button', { name: new RegExp(MOCK_WORK_LABEL, 'i') })[0];

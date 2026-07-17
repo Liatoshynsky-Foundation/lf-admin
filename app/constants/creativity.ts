@@ -72,7 +72,7 @@ const WORKS_LANGUAGE_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
 const WORKS_STATUS_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
   {
     value: BaseContentStatuses.Draft,
-    label: 'Приховане'
+    label: 'Чернетка (приховано)'
   },
   {
     value: BaseContentStatuses.Published,
