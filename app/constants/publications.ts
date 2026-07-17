@@ -139,11 +139,10 @@ export const PublicationsChipLabels: Record<PublicationsItemType, string> = {
 
 export enum MenuActionId {
   PUBLISH = 'PUBLISH',
-  SAVE_DRAFT = 'SAVE_DRAFT',
   PUBLICATE_AND_EXIT = 'PUBLICATE_AND_EXIT',
   CANCEL_PUBLICATION = 'CANCEL_PUBLICATION',
   DELETE = 'DELETE'
-}
+} 
 
 export type ACTIONS_TYPE = {
   id: MenuActionId;
@@ -153,13 +152,11 @@ export type ACTIONS_TYPE = {
 export type MUTATION_RESULT = Record<string, string>;
 
 export const CONTENT_MUTATION_RESULTS: MUTATION_RESULT = {
-  draftPublished: 'Чернетку опубліковано успішно',
-  draftSaved: 'Чернетку збережено успішно',
-  draftDeleted: 'Чернетку видалено успішно',
   publicationDeleted: 'Публікацію видалено',
   publicationUnpublished: 'Публікацію скасовано',
   publicationPublished: 'Публікацію опубліковано успішно'
-};
+} as const;
+
 
 export const DEFAULT_EMPTY_DOCUMENT: SerializedContent = {
   blocks: [],
@@ -228,7 +225,7 @@ export const PAGE_TITLES: Record<PublicationsItemType, string> = {
   events: 'Події',
   news: 'Новини',
   media: 'Ми у ЗМІ'
-};
+} as const;
 
 export const initialSeoValue: SeoBlockValue = {
   meta: {
@@ -243,7 +240,7 @@ export const ADMIN_TITLE_LABELS: Record<PublicationsItemType, string> = {
   events: 'Назва події в адмінці',
   news: 'Назва новини в адмінці',
   media: 'Назва публікації в адмінці'
-};
+} as const;
 
 export const CROP_RATIOS = {
   HERO_BANNER: 816 / 300,

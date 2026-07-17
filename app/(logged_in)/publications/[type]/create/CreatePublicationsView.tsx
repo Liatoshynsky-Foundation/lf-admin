@@ -123,7 +123,7 @@ export default function CreatePublicationsView({
       case MenuActionId.CANCEL_PUBLICATION: {
         const id = await handleSave(BaseContentStatuses.Draft);
         if (id) {
-          toast.success(CONTENT_MUTATION_RESULTS.draftSaved);
+          toast.success(CONTENT_MUTATION_RESULTS.publicationUnpublished);
           router.push(PUBLICATIONS_BASE_PATH);
         }
         break;

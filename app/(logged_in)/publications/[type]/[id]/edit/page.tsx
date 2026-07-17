@@ -71,14 +71,14 @@ export default function EditPublicationsPage() {
       switch (actionId) {
       case MenuActionId.PUBLISH: {
         const { data } = await manager.updateResource(BaseContentStatuses.Published, contentPayload);
-        if (data) toast.success(CONTENT_MUTATION_RESULTS.draftPublished);
+        if (data) toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
         break;
       }
 
       case MenuActionId.PUBLICATE_AND_EXIT: {
-        const { data } = await manager.updateResource(BaseContentStatuses.Draft, contentPayload);
+        const { data } = await manager.updateResource(BaseContentStatuses.Published, contentPayload);
         if (data) {
-          toast.success(CONTENT_MUTATION_RESULTS.draftSaved);
+          toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
           router.push(PUBLICATIONS_BASE_PATH);
         }
         break;

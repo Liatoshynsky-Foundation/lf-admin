@@ -156,7 +156,7 @@ describe('EditPublicationsPage Container', () => {
       expect(baseMockManager.updateResource).toHaveBeenCalledWith(BaseContentStatuses.Published, {
         content: baseMockManager.editedContent
       });
-      expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.draftPublished);
+      expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublished);
     });
   });
 
@@ -166,10 +166,10 @@ describe('EditPublicationsPage Container', () => {
     fireEvent.click(screen.getByTestId('trigger-save-exit'));
 
     await waitFor(() => {
-      expect(baseMockManager.updateResource).toHaveBeenCalledWith(BaseContentStatuses.Draft, {
+      expect(baseMockManager.updateResource).toHaveBeenCalledWith(BaseContentStatuses.Published, {
         content: baseMockManager.editedContent
       });
-      expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.draftSaved);
+      expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublished);
       expect(mockPush).toHaveBeenCalledWith('/publications');
     });
   });

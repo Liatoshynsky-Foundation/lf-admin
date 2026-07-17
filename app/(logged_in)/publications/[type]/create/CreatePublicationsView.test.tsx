@@ -355,7 +355,7 @@ describe('CreatePublicationsView Component', () => {
       expect(mockPush).not.toHaveBeenCalled();
     });
 
-    it('should show draftSaved toast and redirect on cancel publication', async () => {
+    it('should show publication unpublished toast and redirect on cancel publication', async () => {
       const handleSave = jest.fn().mockResolvedValue('media-123');
       const mockData = createMockData({ publicationType: 'media', handleSave });
       render(<CreatePublicationsView data={mockData} />);
@@ -363,7 +363,7 @@ describe('CreatePublicationsView Component', () => {
       fireEvent.click(screen.getByText('Скасувати публікацію'));
       await waitFor(() => {
         expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
-        expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.draftSaved);
+        expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationUnpublished);
         expect(mockPush).toHaveBeenCalledWith(PUBLICATIONS_BASE_PATH);
       });
     });
