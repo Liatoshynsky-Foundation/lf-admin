@@ -87,7 +87,7 @@ describe('SeoMetadataForm', () => {
     const input = screen.getByLabelText(/meta title/i);
     await user.click(input);
     await user.tab();
-    expect(await screen.findByText(/обовʼязкове поле/i)).toBeInTheDocument();
+    expect(await screen.findByText(/мінімум 2 символа/i)).toBeInTheDocument();
   });
 
   it('calls onIndexingChange', async () => {
