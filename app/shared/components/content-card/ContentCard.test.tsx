@@ -1,246 +1,338 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import type { MouseEventHandler, ReactNode } from 'react';
+import { Box, Button } from '@mui/material';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
 
+import CardLayout from '../card-layout/CardLayout';
 import ContentCard, { ContentType } from './ContentCard';
 
-const TEST_IDS = {
-  menuButton: 'menu-button',
-  menuClose: 'menu-close',
-  openDelete: 'open-delete',
-  confirmDelete: 'confirm-delete',
-  badge: 'badge'
-} as const;
+interface CardLayoutMockProps {
+  coverImage: React.ReactNode;
+  title: React.ReactNode;
+  contentUpper: React.ReactNode;
+  info: React.ReactNode;
+  contentBottom: React.ReactNode;
+  items: Array<{ id: string; text: { name: string }; onClick?: () => void }>;
+}
 
-jest.mock('~/shared/components/card-layout/CardMenu', () => ({
-  __esModule: true,
-  default: ({
-    onClose,
-    menuItems
-  }: {
-    onClose: () => void;
-    menuItems: Array<{ text: { name: string }; onClick?: () => void }>;
-  }) => (
-    <div>
-      <button onClick={onClose} data-testid="menu-close">
-        close menu
-      </button>
-      {menuItems.map((item) => (
-        <button
-          key={item.text.name}
-          onClick={item.onClick}
-          data-testid={item.text.name === 'Видалити' ? TEST_IDS.openDelete : undefined}
-        >
-          {item.text.name}
-        </button>
-      ))}
-    </div>
-  )
+interface DeleteCardModalMockProps {
+  open: boolean;
+  onClose: () => void;
+  onDelete: () => Promise<void>;
+}
+
+interface ImageWithFallbackMockProps {
+  src: string;
+  fallbackSrc: string;
+  alt: string;
+}
+
+jest.mock('../card-layout/CardLayout', () => {
+  return jest
+    .fn()
+    .mockImplementation(({ coverImage, title, contentUpper, info, contentBottom, items }: CardLayoutMockProps) => (
+      <Box data-testid="card-layout">
+        <Box data-testid="cover-image-container">{coverImage}</Box>
+        <Box data-testid="title-container">{title}</Box>
+        <Box data-testid="content-upper-container">{contentUpper}</Box>
+        <Box data-testid="info-container">{info}</Box>
+        <Box data-testid="content-bottom-container">{contentBottom}</Box>
+        <Box data-testid="menu-items-container">
+          {items.map((group) =>
+            ('items' in group
+              ? (group.items as Array<{ id: string; text: { name: string }; onClick?: () => void }>)
+              : []
+            ).map((item) => (
+              <Button key={item.id} data-testid={`menu-btn-${item.id}`} onClick={item.onClick}>
+                {item.text.name}
+              </Button>
+            ))
+          )}
+        </Box>
+      </Box>
+    ));
+});
+
+jest.mock('../card-layout/ImageWithFallback', () => {
+  return jest.fn().mockImplementation(({ src, fallbackSrc, alt }: ImageWithFallbackMockProps) => {
+    const [currentSrc, setCurrentSrc] = React.useState(src);
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={currentSrc} alt={alt} data-testid="card-image" onError={() => setCurrentSrc(fallbackSrc)} />;
+  });
+});
+
+jest.mock('../card-layout/TitleWithTooltip', () => {
+  return jest.fn().mockImplementation(({ text }: { text: string }) => <Box data-testid="title-text">{text}</Box>);
+});
+
+jest.mock('./ContentCardBadge', () => {
+  return jest.fn().mockImplementation(() => <div data-testid="badge" />);
+});
+
+jest.mock('../delete-card-modal/DeleteCardModal', () => {
+  return jest.fn().mockImplementation(({ open, onClose, onDelete }: DeleteCardModalMockProps) =>
+    open ? (
+      <Box data-testid="delete-modal">
+        <Button data-testid="confirm-delete-btn" onClick={onDelete}>
+          Confirm
+        </Button>
+        <Button data-testid="close-delete-btn" onClick={onClose}>
+          Close
+        </Button>
+      </Box>
+    ) : null
+  );
+});
+
+jest.mock('~/lib/utils/getStatus', () => ({
+  getStatus: (status: string) => `status-${status}`
 }));
 
-jest.mock('~/lib/utils/formatDate', () => ({
-  formatDate: (date: string) => `formatted-${date}`
-}));
-
-jest.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: jest.fn(),
-    replace: jest.fn(),
-    refresh: jest.fn(),
-    back: jest.fn(),
-    forward: jest.fn(),
-    prefetch: jest.fn()
-  })
-}));
+const mockDeleteNewsFn = jest.fn();
+const mockDeleteEventFn = jest.fn();
+const mockDeleteMediaFn = jest.fn();
 
 jest.mock('~/shared/hooks/use-news/useNews', () => ({
-  useDeleteNews: () => [jest.fn()]
+  useDeleteNews: () => [mockDeleteNewsFn]
 }));
 
 jest.mock('~/shared/hooks/use-events/useEvents', () => ({
-  useDeleteEvent: () => [jest.fn()]
+  useDeleteEvent: () => [mockDeleteEventFn]
 }));
 
 jest.mock('~/shared/hooks/use-media-mentions/useMediaMentions', () => ({
-  useDeleteMediaMention: () => [jest.fn()]
+  useDeleteMediaMention: () => [mockDeleteMediaFn]
 }));
 
-jest.mock('../design-system/button/Button', () => ({
-  __esModule: true,
-  default: ({
-    children,
-    href,
-    onClick
-  }: {
-    children: ReactNode;
-    href?: string;
-    onClick?: MouseEventHandler<HTMLButtonElement>;
-  }) => (href ? <a href={href}>{children}</a> : <button onClick={onClick}>{children}</button>)
+const mockRefresh = jest.fn();
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    refresh: mockRefresh
+  })
 }));
 
-jest.mock('./ContentCardBadge', () => ({
-  __esModule: true,
-  default: () => <div data-testid="badge" />
-}));
-
-jest.mock('../delete-card-modal/DeleteCardModal', () => ({
-  __esModule: true,
-  default: ({ open, onDelete }: { open: boolean; onDelete: () => void }) =>
-    open ? (
-      <button onClick={onDelete} data-testid="confirm-delete">
-        confirm delete
-      </button>
-    ) : null
-}));
-
-globalThis.ResizeObserver = jest.fn().mockImplementation((callback) => ({
-  observe: jest.fn(() => callback()),
-  unobserve: jest.fn(),
-  disconnect: jest.fn()
-}));
+const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
 describe('ContentCard', () => {
   const defaultProps = {
-    id: '1',
-    slug: 'test-slug',
+    id: '123',
     type: 'news' as ContentType,
     coverImage: {
-      src: '/image.png',
+      src: '/initial-image.png',
       alt: {
-        uk: 'Image UA',
-        en: 'Image EN'
+        uk: 'Альтернативний текст UA',
+        en: 'Alternative text EN'
       }
     },
     title: {
-      uk: 'Test title',
-      en: 'Test title EN'
+      uk: 'Український заголовок',
+      en: 'English title'
     },
     status: 'draft',
-    createdAt: '2024-01-01',
-    onClick: jest.fn(),
-    onClickMenu: jest.fn()
+    onClick: jest.fn()
   };
+
+  beforeEach(() => {
+    mockDeleteNewsFn.mockResolvedValue({ data: true });
+    mockDeleteEventFn.mockResolvedValue({ data: true });
+    mockDeleteMediaFn.mockResolvedValue({ data: true });
+  });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  it('should render title', () => {
+  it('should render correct title and call getStatus utility', () => {
     render(<ContentCard {...defaultProps} />);
-
-    expect(screen.getByText('Test title')).toBeInTheDocument();
+    expect(screen.getByTestId('title-text')).toHaveTextContent('Український заголовок');
+    expect(screen.getByTestId('info-container')).toHaveTextContent('status-draft');
   });
 
-  it('should render badge component', () => {
-    render(<ContentCard {...defaultProps} />);
-
-    expect(screen.getByTestId('badge')).toBeInTheDocument();
+  it('should fallback to English title if Ukrainian is missing', () => {
+    render(<ContentCard {...defaultProps} title={{ uk: '', en: 'Only English Title' }} />);
+    expect(screen.getByTestId('title-text')).toHaveTextContent('Only English Title');
   });
 
-  it('should display draft status with created date', () => {
-    render(<ContentCard {...defaultProps} />);
-
-    expect(screen.getByText('Створено formatted-2024-01-01')).toBeInTheDocument();
-  });
-
-  it('should display published status with updated date', () => {
-    render(<ContentCard {...defaultProps} status="published" updatedAt="2024-02-01" />);
-
-    expect(screen.getByText('Редаговано formatted-2024-02-01')).toBeInTheDocument();
-  });
-
-  it('should display published status with published date', () => {
-    render(<ContentCard {...defaultProps} status="published" publishedAt="2024-03-01" />);
-
-    expect(screen.getByText('Опубліковано formatted-2024-03-01')).toBeInTheDocument();
-  });
-
-  it('should call onClick when edit button is clicked', () => {
-    render(<ContentCard {...defaultProps} />);
-
-    fireEvent.click(screen.getByText('Редагувати'));
-
-    expect(defaultProps.onClick).toHaveBeenCalledTimes(1);
-  });
-
-  it('should render edit button as link when href is provided', () => {
-    render(<ContentCard {...defaultProps} editHref="/publications/news/test-slug/edit" />);
-
-    expect(screen.getByRole('link', { name: 'Редагувати' })).toHaveAttribute(
-      'href',
-      '/publications/news/test-slug/edit'
+  it('should handle alternative text fallback scenarios', () => {
+    const { rerender } = render(
+      <ContentCard {...defaultProps} coverImage={{ src: '/img.png', alt: { uk: '', en: 'Alt EN' } }} />
     );
-  });
+    expect(screen.getByTestId('card-image')).toHaveAttribute('alt', 'Alt EN');
 
-  it('should render image with correct src and alt', () => {
-    render(<ContentCard {...defaultProps} />);
-
-    const img = screen.getByAltText('Image UA');
-
-    expect(img).toHaveAttribute('src', '/image.png');
-    expect(img).toHaveAttribute('alt', 'Image UA');
-  });
-
-  it('should fallback to default image when cover image fails to load', () => {
-    render(
+    rerender(
       <ContentCard
         {...defaultProps}
-        coverImage={{
-          src: '/news-mock-images/image1.jpg',
-          alt: {
-            uk: 'Broken image',
-            en: 'Broken image'
-          }
-        }}
+        coverImage={{ src: '/img.png', alt: { uk: '', en: '' } }}
+        title={{ uk: 'Заголовок як альт' }}
       />
     );
+    expect(screen.getByTestId('card-image')).toHaveAttribute('alt', 'Заголовок як альт');
+  });
 
-    const img = screen.getByAltText('Broken image');
+  it('should fallback to default image when initial image src fails to load', () => {
+    render(<ContentCard {...defaultProps} />);
+    const img = screen.getByTestId('card-image');
 
     fireEvent.error(img);
-
     expect(img).toHaveAttribute('src', '/images/image.png');
   });
 
-  it('should open menu when three dots button is clicked', () => {
+  it('should render edit button and trigger onClick when editHref is omitted', () => {
     render(<ContentCard {...defaultProps} />);
-    fireEvent.click(screen.getByTestId(TEST_IDS.menuButton));
-    expect(screen.getByTestId(TEST_IDS.menuButton)).toBeInTheDocument();
+    const editBtn = screen.getByRole('button', { name: 'Редагувати' });
+
+    fireEvent.click(editBtn);
+    expect(defaultProps.onClick).toHaveBeenCalledTimes(1);
   });
 
-  it('should close menu when clicked again', () => {
-    render(<ContentCard {...defaultProps} />);
-    const menuButton = screen.getByTestId(TEST_IDS.menuButton);
-    fireEvent.click(menuButton);
-    fireEvent.click(menuButton);
-    expect(screen.getByTestId(TEST_IDS.menuButton)).toBeInTheDocument();
+  it('should render edit button as link when editHref is provided', () => {
+    render(<ContentCard {...defaultProps} editHref="/edit-page" />);
+    const editLink = screen.getByRole('link', { name: 'Редагувати' });
+
+    expect(editLink).toHaveAttribute('href', '/edit-page');
   });
 
-  it('should close menu when onClose is called', () => {
+  it('should open and close the delete modal correctly', () => {
     render(<ContentCard {...defaultProps} />);
-    fireEvent.click(screen.getByTestId(TEST_IDS.menuButton));
-    expect(screen.getByTestId(TEST_IDS.menuClose)).toBeInTheDocument();
-    fireEvent.click(screen.getByTestId(TEST_IDS.menuClose));
-    expect(screen.getByTestId(TEST_IDS.menuButton)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('menu-btn-delete'));
+    expect(screen.getByTestId('delete-modal')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('close-delete-btn'));
+    expect(screen.queryByTestId('delete-modal')).not.toBeInTheDocument();
   });
 
-  it('should open delete modal when delete is clicked', () => {
-    render(<ContentCard {...defaultProps} />);
-    fireEvent.click(screen.getByTestId(TEST_IDS.menuButton));
-    fireEvent.click(screen.getByTestId(TEST_IDS.openDelete));
-    expect(screen.getByTestId(TEST_IDS.confirmDelete)).toBeInTheDocument();
+  it('should fallback to an empty string if both Ukrainian and English titles are missing', () => {
+    render(<ContentCard {...defaultProps} title={{ uk: '', en: '' }} />);
+
+    expect(screen.getByTestId('title-text')).toHaveTextContent('');
   });
 
-  describe('Deletion flow', () => {
-    it.each([
-      { type: 'news', label: 'deleteNews' },
-      { type: 'events', label: 'deleteEvent' },
-      { type: 'media', label: 'deleteMediaMention' }
-    ])('should handle deletion for $type', async ({ type }) => {
-      render(<ContentCard {...defaultProps} type={type as ContentType} />);
-      fireEvent.click(screen.getByTestId(TEST_IDS.menuButton));
-      fireEvent.click(screen.getByTestId(TEST_IDS.openDelete));
-      fireEvent.click(screen.getByTestId(TEST_IDS.confirmDelete));
-      expect(screen.getByTestId(TEST_IDS.menuButton)).toBeInTheDocument();
+  describe('Deletion handling across content types', () => {
+    it('should successfully delete news content type', async () => {
+      render(<ContentCard {...defaultProps} type="news" />);
+
+      fireEvent.click(screen.getByTestId('menu-btn-delete'));
+      fireEvent.click(screen.getByTestId('confirm-delete-btn'));
+
+      await waitFor(() => {
+        expect(mockDeleteNewsFn).toHaveBeenCalledWith({ id: '123' });
+        expect(mockRefresh).toHaveBeenCalledTimes(1);
+        expect(screen.queryByTestId('delete-modal')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should successfully delete events content type', async () => {
+      render(<ContentCard {...defaultProps} type="events" />);
+
+      fireEvent.click(screen.getByTestId('menu-btn-delete'));
+      fireEvent.click(screen.getByTestId('confirm-delete-btn'));
+
+      await waitFor(() => {
+        expect(mockDeleteEventFn).toHaveBeenCalledWith({ id: '123' });
+        expect(mockRefresh).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    it('should successfully delete media content type', async () => {
+      render(<ContentCard {...defaultProps} type="media" />);
+
+      fireEvent.click(screen.getByTestId('menu-btn-delete'));
+      fireEvent.click(screen.getByTestId('confirm-delete-btn'));
+
+      await waitFor(() => {
+        expect(mockDeleteMediaFn).toHaveBeenCalledWith('123');
+        expect(mockRefresh).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    it('should gracefully catch and log errors during failed deletion execution', async () => {
+      mockDeleteNewsFn.mockRejectedValueOnce(new Error('Network Failure'));
+      render(<ContentCard {...defaultProps} type="news" />);
+
+      fireEvent.click(screen.getByTestId('menu-btn-delete'));
+      fireEvent.click(screen.getByTestId('confirm-delete-btn'));
+
+      await waitFor(() => {
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error deleting:', expect.any(Error));
+        expect(screen.getByTestId('delete-modal')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('ContentCard menu items (ContentCardMenuItems integration)', () => {
+    const menuProps = {
+      ...defaultProps,
+      id: 'card-42',
+      type: 'events' as ContentType
+    };
+
+    const getMenuGroups = () => {
+      render(<ContentCard {...menuProps} />);
+      const lastCallProps = (CardLayout as unknown as jest.Mock).mock.calls.at(-1)?.[0];
+      return lastCallProps.items as Array<{
+        title?: string;
+        items: Array<{ id: string; text: { name: string }; href?: string; onClick?: () => void }>;
+      }>;
+    };
+
+    it('should build a "Мовні версії" group with correct uk/en edit links', () => {
+      const groups = getMenuGroups();
+      const languageGroup = groups.find((group) => group.title === 'Мовні версії');
+
+      expect(languageGroup).toBeDefined();
+      expect(languageGroup?.items).toEqual([
+        { id: 'uk', text: { name: 'Українська' }, href: '/publications/events/card-42/edit?lang=uk' },
+        { id: 'en', text: { name: 'Англійська' }, href: '/publications/events/card-42/edit?lang=en' }
+      ]);
+    });
+
+    it('should build the second group with correct seo/hide/delete items', () => {
+      const groups = getMenuGroups();
+      const actionsGroup = groups.find((group) => !group.title);
+
+      expect(actionsGroup).toBeDefined();
+
+      const seoItem = actionsGroup?.items.find((item) => item.id === 'seo-settings');
+      expect(seoItem).toEqual(
+        expect.objectContaining({
+          text: { name: 'SEO налаштування' },
+          href: '/publications/events/card-42/seo'
+        })
+      );
+
+      const hideItem = actionsGroup?.items.find((item) => item.id === 'hide');
+      expect(hideItem?.text).toEqual({ name: 'Зняти з публікації' });
+      expect(typeof hideItem?.onClick).toBe('function');
+    });
+
+    it('should not throw when clicking "Зняти з публікації" (no-op handler)', () => {
+      const groups = getMenuGroups();
+      const actionsGroup = groups.find((group) => !group.title);
+      const hideItem = actionsGroup?.items.find((item) => item.id === 'hide');
+
+      expect(() => hideItem?.onClick?.()).not.toThrow();
+    });
+
+    it('should generate correct hrefs for different content types', () => {
+      render(<ContentCard {...defaultProps} id="777" type="media" />);
+      const lastCallProps = (CardLayout as unknown as jest.Mock).mock.calls.at(-1)?.[0];
+      const groups = lastCallProps.items as Array<{
+        title?: string;
+        items: Array<{ id: string; href?: string }>;
+      }>;
+
+      const languageGroup = groups.find((group) => group.title === 'Мовні версії');
+      const ukItem = languageGroup?.items.find((item) => item.id === 'uk');
+      const enItem = languageGroup?.items.find((item) => item.id === 'en');
+
+      expect(ukItem?.href).toBe('/publications/media/777/edit?lang=uk');
+      expect(enItem?.href).toBe('/publications/media/777/edit?lang=en');
+    });
+
+    it('should open the delete modal when clicking the "Видалити" item via onClick', () => {
+      render(<ContentCard {...defaultProps} />);
+      fireEvent.click(screen.getByTestId('menu-btn-delete'));
+      expect(screen.getByTestId('delete-modal')).toBeInTheDocument();
     });
   });
 });

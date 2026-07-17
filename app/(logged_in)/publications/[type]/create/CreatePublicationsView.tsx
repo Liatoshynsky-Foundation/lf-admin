@@ -1,4 +1,4 @@
-import { Box, Menu, MenuItem, TextField, Typography } from '@mui/material';
+import { Box, TextField, Typography } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -6,14 +6,12 @@ import { useRouter } from 'next/navigation';
 import { MouseEvent, useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 
-import { sharedMenuStyles } from '../shared/shared-publication.styles';
+import { PublishMenuItems } from './CreatePublicationsMenuItems';
 import { styles } from './CreatePublicationsView.styles';
 import DeleteCardModal from '~/components/delete-card-modal/DeleteCardModal';
 import {
-  ACTIONS_TYPE,
   ADMIN_TITLE_LABELS,
   CONTENT_MUTATION_RESULTS,
-  HEADER_MENU_OPTIONS,
   MenuActionId,
   PAGE_TITLES,
   PUBLICATIONS_BASE_PATH
@@ -23,6 +21,7 @@ import { fetchPreview } from '~/lib/utils/fetchPreview';
 import { getPreviewSlug } from '~/lib/utils/getPreviewSlug';
 import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
+import ActionMenu from '~/shared/components/dropdown-menu/ActionMenu';
 import SeoCollapsibleBlock from '~/shared/components/forms/seo-collapsible-block/SeoCollapsibleBlock';
 import { SeoCanonicalUrlField } from '~/shared/components/forms/seo-metadata-form/seo-canonicalurl-field/SeoCanonicalUrlField';
 import { SeoDateTimeFields } from '~/shared/components/forms/seo-metadata-form/seo-datetime-fields/SeoDateTimeFields';
@@ -67,7 +66,6 @@ export default function CreatePublicationsView({
   const { navigateBack } = useNavigationGuard();
 
   const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null);
-  const isOpen = Boolean(anchor);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const eventsExtraFields = useCallback(
@@ -105,7 +103,6 @@ export default function CreatePublicationsView({
 
   const handleClose = () => setAnchor(null);
 
-  const actions = (HEADER_MENU_OPTIONS.baseActions as ACTIONS_TYPE[]).filter((a) => a.id !== MenuActionId.PUBLISH);
 
   const fallbackOnPreview = async () => {
     const result = await handleSave(BaseContentStatuses.Draft);
@@ -234,33 +231,19 @@ export default function CreatePublicationsView({
           </LocalizationProvider>
         </SeoCollapsibleBlock>
 
-        <Menu
+        <ActionMenu
           anchorEl={anchor}
-          open={isOpen}
           onClose={handleClose}
-          disableScrollLock
+          menuItems={PublishMenuItems({
+            MenuActionId,
+            setDeleteModalOpen,
+            handlePublishActionClick: (actionId) => {
+              void handleMenuAction(actionId);
+            }
+          })}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-          slotProps={{ paper: { sx: sharedMenuStyles.publishMenuPaper } }}
-          sx={sharedMenuStyles.menu}
-        >
-          {actions.map((action) => (
-            <MenuItem
-              sx={sharedMenuStyles.menuItem}
-              key={action.id}
-              onClick={() => {
-                if (action.id === MenuActionId.DELETE) {
-                  setDeleteModalOpen(true);
-                  handleClose();
-                  return;
-                }
-                void handleMenuAction(action.id);
-              }}
-            >
-              <Typography variant="textMd">{action.label}</Typography>
-            </MenuItem>
-          ))}
-        </Menu>
+        />
 
         <DeleteCardModal
           open={deleteModalOpen}

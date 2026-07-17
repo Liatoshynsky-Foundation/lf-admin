@@ -1,3 +1,4 @@
+import { Box, Button, Menu, MenuItem } from '@mui/material';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { notFound, useParams, useRouter } from 'next/navigation';
 import React, { MouseEvent, ReactNode } from 'react';
@@ -5,6 +6,7 @@ import toast from 'react-hot-toast';
 
 import PublicatiosSeoPage from './page';
 import { CONTENT_MUTATION_RESULTS, PUBLICATIONS_BASE_PATH } from '~/constants/publications';
+import { ActionMenuGroups, MenuGroup } from '~/shared/components/dropdown-menu/ActionMenu';
 import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
@@ -31,10 +33,10 @@ jest.mock('~/(logged_in)/publications/[type]/create/CreatePublicationsView', () 
 jest.mock('~/shared/components/divided-header/DividedHeader', () => ({
   __esModule: true,
   default: ({ children, rightActionsComponent }: { children: ReactNode; rightActionsComponent: ReactNode }) => (
-    <div>
+    <Box>
       {children}
       {rightActionsComponent}
-    </div>
+    </Box>
   )
 }));
 
@@ -53,23 +55,53 @@ jest.mock('~/shared/components/divided-header/header-right-actions/HeaderRightAc
     mode: string;
   }) => (
     <>
-      <button data-testid="btn-save" onClick={onSave} />
-      <button data-testid="btn-cancel" onClick={onCancel} />
-      <button data-testid="btn-publish" onClick={onPublish} />
-      <button data-testid="btn-open-publish-menu" onClick={(e) => onMenuOpen?.(e)} />
+      <Button data-testid="btn-save" onClick={onSave} />
+      <Button data-testid="btn-cancel" onClick={onCancel} />
+      <Button data-testid="btn-publish" onClick={onPublish} />
+      <Button data-testid="btn-open-publish-menu" onClick={(e) => onMenuOpen?.(e)} />
     </>
   )
 }));
 
 jest.mock('~/shared/components/divided-header/title-dropdown/TitleDropdown', () => ({
-  TitleDropdown: ({ type, title, renderMenuOpen }: { type: string; title: string; renderMenuOpen: boolean }) => (
-    <div data-testid="mock-title-dropdown">
-      <span data-type={type} data-open={renderMenuOpen} />
-      {title}
-    </div>
+  TitleDropdown: ({
+    title,
+    onMenuOpen
+  }: {
+    type: string;
+    title: string;
+    onMenuOpen?: (e: MouseEvent<HTMLButtonElement>) => void;
+  }) => (
+    <Box data-testid="mock-title-dropdown">
+      <Button data-testid="btn-open-nav-menu" onClick={(e) => onMenuOpen?.(e)}>
+        {title}
+      </Button>
+    </Box>
   )
 }));
 
+jest.mock('~/shared/components/dropdown-menu/ActionMenu', () => ({
+  __esModule: true,
+  default: ({
+    anchorEl,
+    onClose,
+    menuItems
+  }: {
+    anchorEl: HTMLElement | null;
+    onClose: () => void;
+    menuItems: ActionMenuGroups;
+  }) => (
+    <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={onClose}>
+      {menuItems.flatMap((group: MenuGroup, gIdx) =>
+        group.items.map((item, iIdx) => (
+          <MenuItem key={`${gIdx}-${iIdx}`} onClick={item.onClick}>
+            {item.text.name}
+          </MenuItem>
+        ))
+      )}
+    </Menu>
+  )
+}));
 describe('PublicatiosSeoPage Container', () => {
   const mockHandleSave = jest.fn();
   const mockPush = jest.fn();
@@ -127,6 +159,43 @@ describe('PublicatiosSeoPage Container', () => {
 
       expect(mockHandleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
       expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublished);
+      expect(mockPush).toHaveBeenCalledWith(PUBLICATIONS_BASE_PATH);
+    });
+
+    it('should handle unpublish action from publication menu', () => {
+      fireEvent.click(screen.getByTestId('btn-open-publish-menu'));
+      fireEvent.click(screen.getByText('Скасувати публікацію'));
+
+      expect(mockHandleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
+      expect(mockPush).toHaveBeenCalledWith(PUBLICATIONS_BASE_PATH);
+    });
+
+    it('should redirect to edit page when editing content from navigation menu', () => {
+      fireEvent.click(screen.getByTestId('btn-open-nav-menu'));
+      fireEvent.click(screen.getByText('Редагування контенту'));
+
+      expect(mockPush).toHaveBeenCalledWith(`${PUBLICATIONS_BASE_PATH}/news/123/edit`);
+    });
+
+    it('should close the navigation menu when handleCloseNavigation is triggered via ActionMenu onClose', () => {
+      fireEvent.click(screen.getByTestId('btn-open-nav-menu'));
+
+      expect(screen.getByRole('menu')).toBeInTheDocument();
+
+      const presentation = screen.getByRole('presentation');
+      const backdrop = presentation.firstChild as HTMLElement;
+      if (backdrop) fireEvent.click(backdrop);
+
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('when publicationData is missing (null/undefined)', () => {
+    it('should not throw and should still redirect when data is missing', () => {
+      (useUpsertPublication as jest.Mock).mockReturnValue(undefined);
+      setup('news');
+
+      fireEvent.click(screen.getByTestId('btn-save'));
       expect(mockPush).toHaveBeenCalledWith(PUBLICATIONS_BASE_PATH);
     });
   });

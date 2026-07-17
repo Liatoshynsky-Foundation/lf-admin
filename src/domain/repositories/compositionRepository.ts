@@ -12,6 +12,7 @@ export interface ICompositionRepository extends IBaseRepository<Composition, Com
   findByOpusId(opusId: string): Promise<Composition[]>;
   syncForOpus(opusId: string, inputs: CompositionInput[]): Promise<Composition[]>;
   deleteByOpusId(opusId: string): Promise<void>;
+  unlinckByOpusId(opusId: string): Promise<void>;
   searchByTitle(search: string): Promise<Composition[]>;
   findByOpusIds(opusIds: string[]): Promise<Composition[]>;
 }

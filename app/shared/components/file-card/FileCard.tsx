@@ -44,9 +44,18 @@ export interface FileCardProps {
   onClick?: () => void;
   onAction?: (action: 'rename' | 'delete' | 'download', fileId: string) => void;
   onToggleStar?: (fileId: string, next: boolean) => Promise<void> | void;
+  isFileInfoSidebarOpen?: boolean;
 }
 
-const FileCard = ({ fileType, fileData, isSelected = false, onClick, onAction, onToggleStar }: FileCardProps) => {
+const FileCard = ({
+  fileType,
+  fileData,
+  isSelected = false,
+  onClick,
+  onAction,
+  onToggleStar,
+  isFileInfoSidebarOpen
+}: FileCardProps) => {
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
 
   const { id, name, dateAdded, isStarred = false, usageLinks, imageSrc } = fileData;
@@ -157,10 +166,10 @@ const FileCard = ({ fileType, fileData, isSelected = false, onClick, onAction, o
         coverImage={imageNode}
         title={titleNode}
         info={infoNode}
-        spaceBetweenContent={400}
         interactive={true}
         isSelected={isSelected}
         items={itemsNode}
+        spaceBetweenContent={isFileInfoSidebarOpen ? 500 : 200}
       />
     </Box>
   );

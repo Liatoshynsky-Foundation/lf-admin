@@ -2,7 +2,10 @@ import React from 'react';
 
 export type MenuItem = {
   id: string;
-  label: string;
+  text: {
+    name: string;
+    icon?: React.ReactNode;
+  };
   href?: string;
   onClick?: () => void;
 };

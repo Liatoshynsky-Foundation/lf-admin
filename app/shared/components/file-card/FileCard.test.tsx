@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import toast from 'react-hot-toast';
+import { Box, Button } from '@mui/material';
+import { fireEvent, render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 
 import FileCard, { FileCardData, FileType } from './FileCard';
 
@@ -18,7 +18,97 @@ jest.mock('react-hot-toast', () => ({
   }
 }));
 
-globalThis.ResizeObserver = jest.fn().mockImplementation((callback) => ({
+jest.mock('./FileCardMenuItems', () => {
+  interface MenuItemsProps {
+    isStarred: boolean;
+    isStarLoading: boolean;
+    onOpenDetails: () => void;
+    onRename: () => void;
+    onToggleStar: () => void;
+    onDownload: () => void;
+    onDelete: () => void;
+  }
+
+  const MockMenuItems = (props: MenuItemsProps) => (
+    <Box data-testid="menu-items">
+      <Button
+        data-testid="menu-btn-details"
+        onClick={(e) => {
+          e.stopPropagation();
+          props.onOpenDetails();
+        }}
+      >
+        Details
+      </Button>
+      <Button
+        data-testid="menu-btn-rename"
+        onClick={(e) => {
+          e.stopPropagation();
+          props.onRename();
+        }}
+      >
+        Rename
+      </Button>
+      <Button
+        data-testid="menu-btn-star"
+        onClick={(e) => {
+          e.stopPropagation();
+          props.onToggleStar();
+        }}
+      >
+        Toggle Star
+      </Button>
+      <Button
+        data-testid="menu-btn-download"
+        onClick={(e) => {
+          e.stopPropagation();
+          props.onDownload();
+        }}
+      >
+        Download
+      </Button>
+      <Button
+        data-testid="menu-btn-delete"
+        onClick={(e) => {
+          e.stopPropagation();
+          props.onDelete();
+        }}
+      >
+        Delete
+      </Button>
+    </Box>
+  );
+  MockMenuItems.displayName = 'MockMenuItems';
+  return MockMenuItems;
+});
+
+jest.mock('../card-layout/CardLayout', () => {
+  interface CardLayoutProps {
+    coverImage: React.ReactNode;
+    title: React.ReactNode;
+    info: React.ReactNode;
+    items: React.ReactNode;
+    spaceBetweenContent: number;
+  }
+
+  const MockCardLayout = ({ coverImage, title, info, items, spaceBetweenContent }: CardLayoutProps) => (
+    <Box data-testid="card-layout" data-space-between={spaceBetweenContent}>
+      <Box data-testid="cover-image">{coverImage}</Box>
+      <Box data-testid="title">{title}</Box>
+      <Box data-testid="info">{info}</Box>
+      <Box data-testid="items">{items}</Box>
+    </Box>
+  );
+  MockCardLayout.displayName = 'MockCardLayout';
+  return MockCardLayout;
+});
+
+const mockToastError = jest.fn();
+jest.mock('react-hot-toast', () => ({
+  error: (message: string) => mockToastError(message)
+}));
+
+globalThis.ResizeObserver = jest.fn().mockImplementation((callback: () => void) => ({
   observe: jest.fn(() => callback()),
   unobserve: jest.fn(),
   disconnect: jest.fn()
@@ -26,6 +116,7 @@ globalThis.ResizeObserver = jest.fn().mockImplementation((callback) => ({
 
 describe('FileCard', () => {
   const mockOnClick = jest.fn();
+  const mockOnAction = jest.fn();
 
   const defaultFileData: FileCardData = {
     id: 'test-file-123',
@@ -35,9 +126,34 @@ describe('FileCard', () => {
     imageSrc: '/test-image.jpg'
   };
 
+  beforeEach(() => {
+    mockUpdateAsset.mockReturnValue(Promise.resolve({ data: {} }));
+  });
+
   afterEach(() => {
     mockIsUpdatingStar = false;
     jest.clearAllMocks();
+  });
+
+  it('should fallback to default value for isStarred when it is undefined in fileData', () => {
+    const fileDataWithoutStarred = { ...defaultFileData };
+    delete fileDataWithoutStarred.isStarred;
+
+    render(<FileCard fileType="image" fileData={fileDataWithoutStarred as FileCardData} />);
+
+    expect(screen.queryByAltText('Starred file')).not.toBeInTheDocument();
+  });
+
+  it('should apply correct cursor styles depending on isUpdatingStar loading state', () => {
+    const starredFileData = { ...defaultFileData, isStarred: true };
+    const { rerender } = render(<FileCard fileType="image" fileData={starredFileData} />);
+    const starWrapperBefore = screen.getByAltText('Starred file').closest('div');
+    expect(starWrapperBefore).toHaveStyle('cursor: pointer');
+
+    mockIsUpdatingStar = true;
+    rerender(<FileCard fileType="image" fileData={starredFileData} />);
+    const starWrapperAfter = screen.getByAltText('Starred file').closest('div');
+    expect(starWrapperAfter).toHaveStyle('cursor: wait');
   });
 
   it('should render the component with all required props', () => {
@@ -62,6 +178,13 @@ describe('FileCard', () => {
     expect(placeholder).toBeInTheDocument();
   });
 
+  it('should fallback to image placeholder if file type is unknown', () => {
+    const unknownData = { ...defaultFileData, imageSrc: undefined };
+    render(<FileCard fileType={'unknown' as FileType} fileData={unknownData} />);
+
+    expect(screen.getByAltText('unknown placeholder')).toBeInTheDocument();
+  });
+
   it('should display star icon when isStarred is true', () => {
     const starredFileData = { ...defaultFileData, isStarred: true };
     render(<FileCard fileType="image" fileData={starredFileData} />);
@@ -81,6 +204,33 @@ describe('FileCard', () => {
     render(<FileCard fileType="image" fileData={fileDataWithoutStarFlag} />);
 
     expect(screen.queryByAltText('Starred file')).not.toBeInTheDocument();
+  });
+
+  it('should call updateAsset when star icon is clicked and stop propagation', async () => {
+    const starredFileData = { ...defaultFileData, isStarred: true };
+    render(<FileCard fileType="image" fileData={starredFileData} onClick={mockOnClick} />);
+
+    const starIcon = screen.getByAltText('Starred file');
+    fireEvent.click(starIcon);
+
+    expect(mockUpdateAsset).toHaveBeenCalledWith({
+      variables: {
+        id: 'test-file-123',
+        input: { isStarred: false }
+      }
+    });
+    expect(mockOnClick).not.toHaveBeenCalled();
+  });
+
+  it('should show error toast if updateAsset fails', async () => {
+    mockUpdateAsset.mockRejectedValueOnce(new Error('GraphQL Error'));
+    const starredFileData = { ...defaultFileData, isStarred: true };
+    render(<FileCard fileType="image" fileData={starredFileData} />);
+    const starIcon = screen.getByAltText('Starred file');
+    fireEvent.click(starIcon);
+    await waitFor(() => {
+      expect(mockToastError).toHaveBeenCalledWith('GraphQL Error');
+    });
   });
 
   it('should display usage link icon when usageLinks is greater than 0', () => {
@@ -103,25 +253,30 @@ describe('FileCard', () => {
     expect(screen.queryByAltText('Linked file')).not.toBeInTheDocument();
   });
 
-  it('should call onClick when image section is clicked', () => {
-    render(<FileCard fileType="image" fileData={defaultFileData} onClick={mockOnClick} />);
+  it('should handle tooltip open/close states on mouse events', async () => {
+    const linkedFileData = { ...defaultFileData, usageLinks: 1 };
+    render(<FileCard fileType="image" fileData={linkedFileData} />);
 
-    const image = screen.getByAltText('Test Image.jpg');
-    const imageSection = image.closest('div');
-    if (imageSection) {
-      fireEvent.click(imageSection);
+    const linkIcon = screen.getByAltText('Linked file').closest('div');
+
+    if (!linkIcon) {
+      throw new Error('Link icon container not found');
     }
 
-    expect(mockOnClick).toHaveBeenCalledTimes(1);
+    fireEvent.mouseEnter(linkIcon);
+    expect(screen.getByText(/Використовується на сайті:/)).toBeInTheDocument();
+
+    fireEvent.mouseLeave(linkIcon);
+    await waitForElementToBeRemoved(() => screen.queryByText(/Використовується на сайті:/));
   });
 
-  it('should stop propagation when menu button is clicked', () => {
+  it('should call onClick when root component is clicked', () => {
     render(<FileCard fileType="image" fileData={defaultFileData} onClick={mockOnClick} />);
 
-    const menuButton = screen.getByTestId('menu-button');
-    fireEvent.click(menuButton);
+    const cardLayout = screen.getByTestId('card-layout');
+    fireEvent.click(cardLayout);
 
-    expect(mockOnClick).not.toHaveBeenCalled();
+    expect(mockOnClick).toHaveBeenCalledTimes(1);
   });
 
   it('should render correct file type icon for different file types', () => {
@@ -140,15 +295,24 @@ describe('FileCard', () => {
     expect(screen.getByAltText('unknown icon')).toHaveAttribute('src', '/icons/img.svg');
   });
 
-  it('should display correct tooltip text for single usage link', () => {
-    const linkedFileData = { ...defaultFileData, usageLinks: 1 };
-    render(<FileCard fileType="image" fileData={linkedFileData} />);
+  it('should trigger menu item callbacks correctly', async () => {
+    render(<FileCard fileType="image" fileData={defaultFileData} onClick={mockOnClick} onAction={mockOnAction} />);
 
-    const linkIcon = screen.getByAltText('Linked file').closest('div');
-    if (linkIcon) {
-      fireEvent.mouseEnter(linkIcon);
-      expect(screen.getByText('Використовується на сайті: 1 звʼязка')).toBeInTheDocument();
-    }
+    fireEvent.click(screen.getByTestId('menu-btn-details'));
+    expect(mockOnClick).toHaveBeenCalledTimes(1);
+    mockOnClick.mockClear();
+
+    fireEvent.click(screen.getByTestId('menu-btn-rename'));
+    expect(mockOnAction).toHaveBeenCalledWith('rename', 'test-file-123');
+
+    fireEvent.click(screen.getByTestId('menu-btn-download'));
+    expect(mockOnAction).toHaveBeenCalledWith('download', 'test-file-123');
+
+    fireEvent.click(screen.getByTestId('menu-btn-delete'));
+    expect(mockOnAction).toHaveBeenCalledWith('delete', 'test-file-123');
+
+    fireEvent.click(screen.getByTestId('menu-btn-star'));
+    expect(mockUpdateAsset).toHaveBeenCalled();
   });
 
   it('should display correct tooltip text for multiple usage links', () => {
@@ -163,42 +327,45 @@ describe('FileCard', () => {
     }
   });
 
-  it('should not call onClick when onClick is not provided', () => {
+  it('should not throw if onAction or onClick are not provided for menu items', () => {
     render(<FileCard fileType="image" fileData={defaultFileData} />);
 
-    const menuButton = screen.getByTestId('menu-button');
-    expect(() => fireEvent.click(menuButton)).not.toThrow();
+    expect(() => fireEvent.click(screen.getByTestId('menu-btn-details'))).not.toThrow();
+    expect(() => fireEvent.click(screen.getByTestId('menu-btn-rename'))).not.toThrow();
+    expect(() => fireEvent.click(screen.getByTestId('menu-btn-download'))).not.toThrow();
+    expect(() => fireEvent.click(screen.getByTestId('menu-btn-delete'))).not.toThrow();
+  });
+
+  it('should adjust spaceBetweenContent based on isFileInfoSidebarOpen', () => {
+    const { rerender } = render(<FileCard fileType="image" fileData={defaultFileData} isFileInfoSidebarOpen={true} />);
+    expect(screen.getByTestId('card-layout')).toHaveAttribute('data-space-between', '500');
+
+    rerender(<FileCard fileType="image" fileData={defaultFileData} isFileInfoSidebarOpen={false} />);
+    expect(screen.getByTestId('card-layout')).toHaveAttribute('data-space-between', '200');
   });
 
   it('should call menu actions with file id', () => {
     const onAction = jest.fn();
-
     render(<FileCard fileType="image" fileData={defaultFileData} onAction={onAction} onClick={mockOnClick} />);
 
-    fireEvent.click(screen.getByTestId('menu-button'));
-    fireEvent.click(screen.getByText('Відкрити деталі'));
+    fireEvent.click(screen.getByTestId('menu-btn-details'));
     expect(mockOnClick).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByTestId('menu-button'));
-    fireEvent.click(screen.getByText('Перейменувати'));
+    fireEvent.click(screen.getByTestId('menu-btn-rename'));
     expect(onAction).toHaveBeenCalledWith('rename', 'test-file-123');
 
-    fireEvent.click(screen.getByTestId('menu-button'));
-    fireEvent.click(screen.getByText('Завантажити'));
+    fireEvent.click(screen.getByTestId('menu-btn-download'));
     expect(onAction).toHaveBeenCalledWith('download', 'test-file-123');
 
-    fireEvent.click(screen.getByTestId('menu-button'));
-    fireEvent.click(screen.getByText('Видалити'));
+    fireEvent.click(screen.getByTestId('menu-btn-delete'));
     expect(onAction).toHaveBeenCalledWith('delete', 'test-file-123');
   });
 
   it('should call onToggleStar from menu', async () => {
     const onToggleStar = jest.fn().mockResolvedValue(undefined);
-
     render(<FileCard fileType="image" fileData={defaultFileData} onToggleStar={onToggleStar} />);
 
-    fireEvent.click(screen.getByTestId('menu-button'));
-    fireEvent.click(screen.getByText('Додати в обрані'));
+    fireEvent.click(screen.getByTestId('menu-btn-star'));
 
     await waitFor(() => {
       expect(onToggleStar).toHaveBeenCalledWith('test-file-123', true);
@@ -208,8 +375,7 @@ describe('FileCard', () => {
   it('should update asset favorite state when onToggleStar is not provided', async () => {
     render(<FileCard fileType="image" fileData={defaultFileData} />);
 
-    fireEvent.click(screen.getByTestId('menu-button'));
-    fireEvent.click(screen.getByText('Додати в обрані'));
+    fireEvent.click(screen.getByTestId('menu-btn-star'));
 
     await waitFor(() => {
       expect(mockUpdateAsset).toHaveBeenCalledWith({
@@ -223,27 +389,23 @@ describe('FileCard', () => {
 
   it('should show error toast when favorite update fails', async () => {
     mockUpdateAsset.mockRejectedValueOnce(new Error('Favorite failed'));
-
     render(<FileCard fileType="image" fileData={defaultFileData} />);
 
-    fireEvent.click(screen.getByTestId('menu-button'));
-    fireEvent.click(screen.getByText('Додати в обрані'));
+    fireEvent.click(screen.getByTestId('menu-btn-star'));
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Favorite failed');
+      expect(mockToastError).toHaveBeenCalledWith('Favorite failed');
     });
   });
 
   it('should show fallback error toast when favorite update fails without Error instance', async () => {
     mockUpdateAsset.mockRejectedValueOnce('Favorite failed');
-
     render(<FileCard fileType="image" fileData={defaultFileData} />);
 
-    fireEvent.click(screen.getByTestId('menu-button'));
-    fireEvent.click(screen.getByText('Додати в обрані'));
+    fireEvent.click(screen.getByTestId('menu-btn-star'));
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Не вдалося оновити статус обраного файлу. Спробуйте пізніше.');
+      expect(mockToastError).toHaveBeenCalledWith('Не вдалося оновити статус обраного файлу. Спробуйте пізніше.');
     });
   });
 
