@@ -26,7 +26,7 @@ const opusSchema = new Schema(
     releaseYear: { type: Number, default: null },
 
     numberKind: { type: String, enum: ['op', 'woo'], default: 'op' },
-    name: { type: String, default: null },
+    name: { type: translatedFieldSchema, default: { uk: '', en: '' } },
     additionalText: { type: String, default: null },
     creationYear: { type: String, default: null },
     endYear: { type: String, default: null },
@@ -36,9 +36,41 @@ const opusSchema = new Schema(
     adminTitle: { type: String, default: null },
     slug: { type: String, default: null },
     description: { type: opusDescriptionSchema, default: null },
+    introDescription: {
+      uk: { type: String, default: '' },
+      en: { type: String, default: '' }
+    },
+    parts: {
+      uk: { type: String, default: '' },
+      en: { type: String, default: '' }
+    },
     keywords: { type: optionalTranslatedFieldSchema, default: null },
     allowIndexation: { type: translatedBooleanSchema, default: null },
     coverImage: { type: localizedImageSchema, default: null },
+    performancesTitle: { type: optionalTranslatedFieldSchema, default: null },
+    gallery: [
+      {
+        src: { type: String, required: true },
+        description: {
+          uk: { type: String, default: '' },
+          en: { type: String, default: '' }
+        },
+        altText: {
+          uk: { type: String, default: '' },
+          en: { type: String, default: '' }
+        },
+        crop: { type: Schema.Types.Mixed, default: null }
+      }
+    ],
+    performances: [
+      {
+        title: {
+          uk: { type: String, default: '' },
+          en: { type: String, default: '' }
+        },
+        videoUrl: { type: String, default: '' },
+      }
+    ],
     status: {
       type: String,
       enum: Array.from(Object.values(OpusStatus)),

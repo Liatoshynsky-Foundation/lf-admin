@@ -2,50 +2,67 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { GroupWorksSection } from './GroupWorksSection';
-import { GroupWork } from '~/constants/creativity';
+import { OPUS_DELETE_MODAL, OPUS_DETAILS_LABELS } from '~/constants/opus';
+import { useCompositionsForm } from '~/shared/hooks/use-compositions/useCompositions';
+import type { OpusCompositionData, OpusCompositionSuggestion } from '~/types/opus';
 
-beforeAll(() => {
-  Object.defineProperty(window, 'crypto', {
-    value: {
-      randomUUID: () => 'mock-uuid-1234'
-    },
-    configurable: true
-  });
-});
+jest.mock('lucide-react', () => ({
+  Pencil: () => <span data-testid="icon-pencil" />,
+  Trash2: () => <span data-testid="icon-trash" />
+}));
 
-type MockDeleteModalProps = {
+jest.mock('~/shared/hooks/use-compositions/useCompositions');
+const mockUseCompositions = useCompositionsForm as jest.MockedFunction<typeof useCompositionsForm>;
+
+interface MockTitleInputProps {
+  value: string;
+  onChangeText: (text: string) => void;
+  onSelectSuggestion: (suggestion: OpusCompositionSuggestion) => void;
+  onCreateNew: () => void;
+}
+
+interface MockCompositionModalProps {
+  open: boolean;
+  mode: 'create' | 'edit';
+  initialValue?: OpusCompositionData;
+  onClose: () => void;
+  onSubmit: (data: OpusCompositionData) => void;
+}
+
+interface MockDeleteCompositionModalProps {
   open: boolean;
   onClose: () => void;
-  onDelete: () => void;
-};
+  onConfirm: () => void;
+}
 
-jest.mock('@mui/material', () => {
-  const originalModule = jest.requireActual('@mui/material');
-  return {
-    ...originalModule,
-    Autocomplete: ({ options, value, onChange, onInputChange, PaperComponent, disabled }: any) => (
-      <div data-testid={`mock-autocomplete-${value?.id}`} data-disabled={disabled}>
-        <button data-testid={`trigger-select-${value?.id}`} onClick={() => onChange(null, options[0])} />
-        <button data-testid={`trigger-clear-${value?.id}`} onClick={() => onChange(null, null)} />
-        <input data-testid={`trigger-input-${value?.id}`} onChange={(e) => onInputChange(null, e.target.value)} />
-
-        {PaperComponent && !disabled && (
-          <PaperComponent>
-            <div data-testid="paper-children">Options</div>
-          </PaperComponent>
-        )}
-      </div>
-    )
-  };
-});
-
-jest.mock('~/shared/components/composition-modal/CompositionModal', () => ({
+jest.mock('~/shared/components/forms/opus-details-block/composition-title-input/CompositionTitleInput', () => ({
   __esModule: true,
-  default: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
-    if (!isOpen) return null;
+  default: ({ value, onChangeText, onSelectSuggestion, onCreateNew }: MockTitleInputProps) => (
+    <div data-testid={`composition-title-input-${value}`}>
+      <input data-testid={`title-input-${value}`} value={value} onChange={(e) => onChangeText(e.target.value)} />
+      <button
+        data-testid={`suggest-btn-${value}`}
+        onClick={() => onSelectSuggestion({ id: 'sugg-1' } as OpusCompositionSuggestion)}
+      >
+        Suggest
+      </button>
+      <button data-testid={`create-new-btn-${value}`} onClick={onCreateNew}>
+        Create
+      </button>
+    </div>
+  )
+}));
+
+jest.mock('~/shared/components/forms/opus-details-block/composition-modal/CompositionModal', () => ({
+  __esModule: true,
+  default: ({ open, mode, initialValue, onClose, onSubmit }: MockCompositionModalProps) => {
+    if (!open) return null;
     return (
-      <div data-testid="mock-composition-modal">
-        <button data-testid="close-composition-modal" onClick={onClose}>
+      <div data-testid="composition-modal" data-mode={mode} data-has-initial={Boolean(initialValue)}>
+        <button data-testid="modal-submit-btn" onClick={() => onSubmit({ id: 'updated' } as OpusCompositionData)}>
+          Submit
+        </button>
+        <button data-testid="modal-close-btn" onClick={onClose}>
           Close
         </button>
       </div>
@@ -53,181 +70,143 @@ jest.mock('~/shared/components/composition-modal/CompositionModal', () => ({
   }
 }));
 
-jest.mock('~/shared/components/design-system/button/Button', () => ({
-  __esModule: true,
-  default: ({ children, onClick }: any) => (
-    <button data-testid="mock-button-add" onClick={onClick}>
-      {children}
-    </button>
-  )
-}));
-
-jest.mock('~/shared/components/delete-card-modal/DeleteCardModal', () => ({
-  __esModule: true,
-  default: ({ open, onClose, onDelete }: MockDeleteModalProps) => {
+jest.mock('~/shared/components/delete-composition-modal/DeleteCompositionModal', () => ({
+  DeleteCompositionModal: ({ open, onClose, onConfirm }: MockDeleteCompositionModalProps) => {
     if (!open) return null;
     return (
-      <div data-testid="mock-delete-modal">
-        <button data-testid="modal-confirm" onClick={onDelete}>
-          Confirm
-        </button>
-        <button data-testid="modal-cancel" onClick={onClose}>
-          Cancel
-        </button>
+      <div data-testid="delete-modal">
+        <span>{OPUS_DELETE_MODAL.title}</span>
+        <button onClick={onConfirm}>{OPUS_DELETE_MODAL.confirm}</button>
+        <button onClick={onClose}>{OPUS_DELETE_MODAL.cancel}</button>
       </div>
     );
   }
 }));
 
-jest.mock('~/public/icons/pencil.svg', () => ({
-  __esModule: true,
-  default: () => <span data-testid="icon-pencil" />
-}));
-jest.mock('~/public/icons/trash.svg', () => ({
-  __esModule: true,
-  default: () => <span data-testid="icon-trash" />
-}));
-jest.mock('~/public/icons/plus.svg', () => ({
-  __esModule: true,
-  default: () => <span data-testid="icon-plus" />
-}));
-
-const mockOnChange = jest.fn();
-
-const defaultWorks: GroupWork[] = [
-  { id: '1', title: 'Симфонія №1' },
-  { id: '2', title: 'Соната' }
+const defaultWorks: OpusCompositionData[] = [
+  { id: '1', title: 'Симфонія №1', genre: '', year: '', audios: [], notes: [] },
+  { id: '2', title: 'Соната', genre: '', year: '', audios: [], notes: [] }
 ];
 
-const availableWorks: GroupWork[] = [{ id: '3', title: 'Доступний твір 1', genre: { uk: 'Жанр', en: 'Genre' } }];
-
 describe('GroupWorksSection Component', () => {
+  const mockHookReturns = {
+    isModalOpen: false,
+    modalMode: 'create' as const,
+    editingIndex: null as number | null,
+    deleteTargetId: null as string | null,
+    setDeleteTargetId: jest.fn(),
+    addComposition: jest.fn(),
+    openCreateModal: jest.fn(),
+    openEditModal: jest.fn(),
+    closeModal: jest.fn(),
+    updateCompositionTitle: jest.fn(),
+    fillComposition: jest.fn(),
+    handleModalSubmit: jest.fn(),
+    handleDeleteConfirm: jest.fn()
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseCompositions.mockReturnValue(mockHookReturns);
   });
 
-  it('should render the list of works successfully', () => {
-    render(<GroupWorksSection works={defaultWorks} availableWorks={availableWorks} onChange={mockOnChange} />);
+  it('renders the list of works successfully', () => {
+    render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
 
-    expect(screen.getByTestId('mock-autocomplete-1')).toBeInTheDocument();
-    expect(screen.getByTestId('mock-autocomplete-2')).toBeInTheDocument();
+    expect(screen.getByText(OPUS_DETAILS_LABELS.compositions)).toBeInTheDocument();
+    expect(screen.getByTestId('composition-title-input-Симфонія №1')).toBeInTheDocument();
+    expect(screen.getAllByTestId('icon-pencil')).toHaveLength(2);
   });
 
-  it('should add a new work and enable edit mode for it', () => {
-    render(<GroupWorksSection works={defaultWorks} availableWorks={availableWorks} onChange={mockOnChange} />);
+  it('calls addComposition when add button is clicked', () => {
+    render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
 
-    const addButton = screen.getByTestId('mock-button-add');
-    fireEvent.click(addButton);
-
-    expect(mockOnChange).toHaveBeenCalledTimes(1);
-    const newWorksArray = mockOnChange.mock.calls[0][0];
-
-    expect(newWorksArray).toHaveLength(3);
-    expect(newWorksArray[2].id).toBe('mock-uuid-1234');
-    expect(newWorksArray[2].title).toBe('');
-    expect((newWorksArray[2] as any).rowId).toBe('mock-uuid-1234');
+    fireEvent.click(screen.getByText(OPUS_DETAILS_LABELS.addComposition));
+    expect(mockHookReturns.addComposition).toHaveBeenCalledTimes(1);
   });
 
-  it('should update the work when an existing option is selected from Autocomplete', () => {
-    const worksWithRowId = [{ ...defaultWorks[0], rowId: 'stable-row-id-1' }, defaultWorks[1]];
-    render(<GroupWorksSection works={worksWithRowId} availableWorks={availableWorks} onChange={mockOnChange} />);
+  it('calls updateCompositionTitle when typing in input', () => {
+    render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
 
-    fireEvent.click(screen.getByTestId('trigger-select-1'));
-
-    expect(mockOnChange).toHaveBeenCalledTimes(1);
-    const updatedWorks = mockOnChange.mock.calls[0][0];
-
-    expect(updatedWorks[0].id).toBe('3');
-    expect(updatedWorks[0].title).toBe('Доступний твір 1');
-    expect(updatedWorks[0].genre).toEqual({ uk: 'Жанр', en: 'Genre' });
-    expect((updatedWorks[0] as any).rowId).toBe('stable-row-id-1');
+    fireEvent.change(screen.getByTestId('title-input-Симфонія №1'), { target: { value: 'Нова назва' } });
+    expect(mockHookReturns.updateCompositionTitle).toHaveBeenCalledWith('1', 'Нова назва');
   });
 
-  it('should clear the work title if the selection is cleared', () => {
-    render(<GroupWorksSection works={defaultWorks} availableWorks={availableWorks} onChange={mockOnChange} />);
+  it('calls fillComposition when suggestion is selected', () => {
+    render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
 
-    fireEvent.click(screen.getByTestId('trigger-clear-1'));
-
-    expect(mockOnChange).toHaveBeenCalledTimes(1);
-    const updatedWorks = mockOnChange.mock.calls[0][0];
-
-    expect(updatedWorks[0].title).toBe('');
+    fireEvent.click(screen.getByTestId('suggest-btn-Симфонія №1'));
+    expect(mockHookReturns.fillComposition).toHaveBeenCalledWith(0, { id: 'sugg-1' });
   });
 
-  it('should toggle edit mode when the pencil icon is clicked', () => {
-    render(<GroupWorksSection works={defaultWorks} availableWorks={availableWorks} onChange={mockOnChange} />);
+  it('calls openEditModal when pencil icon is clicked', () => {
+    render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
 
-    expect(screen.getByTestId('mock-autocomplete-1')).toHaveAttribute('data-disabled', 'true');
-
-    const editButtons = screen.getAllByTestId('edit-work-btn');
-    fireEvent.click(editButtons[0]);
-
-    expect(screen.getByTestId('mock-autocomplete-1')).toHaveAttribute('data-disabled', 'false');
+    fireEvent.click(screen.getAllByTestId('icon-pencil')[1]);
+    expect(mockHookReturns.openEditModal).toHaveBeenCalledWith(1);
   });
 
-  it('should open delete modal and delete work when confirmed', () => {
-    render(<GroupWorksSection works={defaultWorks} availableWorks={availableWorks} onChange={mockOnChange} />);
+  it('calls setDeleteTargetId when trash icon is clicked', () => {
+    render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
 
-    const deleteButtons = screen.getAllByTestId('delete-work-btn');
-    fireEvent.click(deleteButtons[1]);
-
-    expect(screen.getByTestId('mock-delete-modal')).toBeInTheDocument();
-    fireEvent.click(screen.getByTestId('modal-confirm'));
-
-    expect(mockOnChange).toHaveBeenCalledTimes(1);
-    const updatedWorks = mockOnChange.mock.calls[0][0];
-
-    expect(updatedWorks).toHaveLength(1);
-    expect(updatedWorks[0].id).toBe('1');
+    fireEvent.click(screen.getAllByTestId('icon-trash')[0]);
+    expect(mockHookReturns.setDeleteTargetId).toHaveBeenCalledWith('1');
   });
 
-  it('should update local searchValues when typing in Autocomplete', () => {
-    render(<GroupWorksSection works={defaultWorks} availableWorks={availableWorks} onChange={mockOnChange} />);
+  it('renders modal when isModalOpen is true and calls submit/close', () => {
+    mockUseCompositions.mockReturnValue({ ...mockHookReturns, isModalOpen: true, modalMode: 'edit' });
+    render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
 
-    const editButtons = screen.getAllByTestId('edit-work-btn');
-    fireEvent.click(editButtons[0]);
+    expect(screen.getByTestId('composition-modal')).toBeInTheDocument();
 
-    const input = screen.getByTestId('trigger-input-1');
-    fireEvent.change(input, { target: { value: 'Трохи ввів текст' } });
+    fireEvent.click(screen.getByTestId('modal-submit-btn'));
+    expect(mockHookReturns.handleModalSubmit).toHaveBeenCalledWith({ id: 'updated' });
 
-    expect(mockOnChange).not.toHaveBeenCalled();
-    expect(screen.getByText('Створити новий твір')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('modal-close-btn'));
+    expect(mockHookReturns.closeModal).toHaveBeenCalled();
   });
 
-  it('should exit edit mode when "Створити новий твір" is clicked', () => {
-    render(<GroupWorksSection works={defaultWorks} availableWorks={availableWorks} onChange={mockOnChange} />);
-    const editButtons = screen.getAllByTestId('edit-work-btn');
-    fireEvent.click(editButtons[0]);
-    const createNewBtn = screen.getByText('Створити новий твір');
-    fireEvent.click(createNewBtn);
+  it('renders delete modal when deleteTargetId is set and calls confirm/close', () => {
+    mockUseCompositions.mockReturnValue({ ...mockHookReturns, deleteTargetId: '1' });
+    render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
 
-    expect(screen.getByTestId('mock-autocomplete-1')).toHaveAttribute('data-disabled', 'true');
-    expect(mockOnChange).not.toHaveBeenCalled();
+    expect(screen.getByTestId('delete-modal')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText(OPUS_DELETE_MODAL.confirm));
+    expect(mockHookReturns.handleDeleteConfirm).toHaveBeenCalled();
+
+    fireEvent.click(screen.getByText(OPUS_DELETE_MODAL.cancel));
+    expect(mockHookReturns.setDeleteTargetId).toHaveBeenCalledWith(null);
   });
 
-  it('should open CompositionModal when "Create" option is selected', () => {
-    render(<GroupWorksSection works={defaultWorks} availableWorks={availableWorks} onChange={mockOnChange} />);
+  it('calls openCreateModal when create new button is clicked', () => {
+    render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
 
-    const editButtons = screen.getAllByTestId('edit-work-btn');
-    fireEvent.click(editButtons[0]);
-
-    const createOption = screen.getByText('Створити новий твір');
-    fireEvent.click(createOption);
-
-    expect(screen.getByTestId('mock-composition-modal')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('create-new-btn-Симфонія №1'));
+    expect(mockHookReturns.openCreateModal).toHaveBeenCalledWith(0);
   });
 
-  it('should close CompositionModal when onClose is triggered', () => {
-    render(<GroupWorksSection works={defaultWorks} availableWorks={availableWorks} onChange={mockOnChange} />);
-    const editButtons = screen.getAllByTestId('edit-work-btn');
-    fireEvent.click(editButtons[0]);
+  it('passes initialValue to modal when editingIndex is not null (Edit mode)', () => {
+    mockUseCompositions.mockReturnValue({
+      ...mockHookReturns,
+      isModalOpen: true,
+      modalMode: 'edit',
+      editingIndex: 1
+    });
 
-    const createOption = screen.getByText('Створити новий твір');
-    fireEvent.click(createOption);
+    render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
+    expect(screen.getByTestId('composition-modal')).toHaveAttribute('data-has-initial', 'true');
+  });
 
-    expect(screen.getByTestId('mock-composition-modal')).toBeInTheDocument();
+  it('passes undefined as initialValue to modal when editingIndex is null (Create mode)', () => {
+    mockUseCompositions.mockReturnValue({
+      ...mockHookReturns,
+      isModalOpen: true,
+      modalMode: 'create',
+      editingIndex: null
+    });
 
-    fireEvent.click(screen.getByTestId('close-composition-modal'));
-    expect(screen.queryByTestId('mock-composition-modal')).not.toBeInTheDocument();
+    render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
+    expect(screen.getByTestId('composition-modal')).toHaveAttribute('data-has-initial', 'false');
   });
 });

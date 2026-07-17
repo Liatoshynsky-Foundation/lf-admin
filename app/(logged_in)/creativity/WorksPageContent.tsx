@@ -1,12 +1,10 @@
 'use client';
 
-import { Box, Button, MenuItem } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import { ChevronDown } from 'lucide-react';
-import Link from 'next/link';
 import { useRef, useState } from 'react';
 
 import { useWorksFiltering } from './useWorksFiltering';
-import { type OpusGroup, type UngroupedGroup, WORKS_MOCK_DATA, type WorkStatus } from './works.mock';
 import { styles } from './WorksPageContent.styles';
 import { WorksTable } from './WorksTable';
 import {
@@ -15,89 +13,119 @@ import {
   WORKS_EMPTY_STATE_NO_RESULTS_DESCRIPTION,
   WORKS_EMPTY_STATE_NO_RESULTS_TITLE,
   WORKS_EMPTY_STATE_TITLE,
+  WORKS_ERROR_STATE_DESCRIPTION,
+  WORKS_ERROR_STATE_TITLE,
+  WORKS_LOADING_STATE_DESCRIPTION,
+  WORKS_LOADING_STATE_TITLE,
   WORKS_PAGE_TITLE,
-  WORKS_STATUSES,
   WORKS_TABS,
-  type WorksStatusValue,
+  WorksLanguageValue,
+  WorksStatusValue,
   type WorksTabValue
 } from '~/constants/creativity';
 import type { FilesSortValue } from '~/constants/sort';
-import DropdownMenu from '~/shared/components/dropdown-menu/DropdownMenu';
+import ActionMenu from '~/shared/components/dropdown-menu/ActionMenu';
 import { EmptyState } from '~/shared/components/empty-state';
 import { FilteringToolbar, SortSelect } from '~/shared/components/filtering-toolbar';
 import { PageHeader } from '~/shared/components/page-header/PageHeader';
+import { useAllCompositions } from '~/shared/hooks/use-compositions/useCompositions';
+import { useAllOpusGroups, useAllUngroupedGroups } from '~/shared/hooks/use-opuses/useOpuses';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
+import { AllCompositionsQuery, type AllOpusesQuery } from '~/types/graphql/generated/graphql';
 import { normalizeSearch } from '~/utils/normalizeSearch';
 
 type WorksPageContentProps = Readonly<{
   activeTab: WorksTabValue;
 }>;
 
+type GqlOpus = AllOpusesQuery['allOpuses'][number];
+type GqlComposition = AllCompositionsQuery['allCompositions'][number];
+
 type GroupRowData = Readonly<{
   id: string;
   numberLabel: string;
   title: string;
+  titleData: {
+    uk?: string | null;
+    en?: string | null;
+  };
   genre: string;
   startDate: string;
   endDate?: string;
-  status: WorkStatus;
+  status: WorksStatusValue;
   createdAt: string;
   updatedAt: string;
   publishedAt?: string;
-  works: ReadonlyArray<{ id: string; title: string; year: string }>;
+  numberKind?: string | null;
+  works: ReadonlyArray<{ id: string; title: string }>;
 }>;
 
-type GroupFilterData = Readonly<{
+type CompositionRowData = Readonly<{
+  id: string;
   title: string;
+  titleData: {
+    uk?: string | null;
+    en?: string | null;
+  };
+  year: string;
   genre: string;
-  language: 'uk' | 'en' | 'bilingual';
-  status: WorkStatus;
+  status: WorksStatusValue;
+  createdAt: string;
   updatedAt: string;
-  works: ReadonlyArray<{ title: string }>;
+  publishedAt?: string;
 }>;
 
-type FilterableItemData = Readonly<{
-  title: string;
-  genre: string;
-  language: 'uk' | 'en' | 'bilingual';
-  status: WorkStatus;
-  updatedAt: string;
-}>;
+const localizedTitle = (title: { uk: string; en: string }) => title.uk || title.en;
 
-function isWorksStatusValue(status: WorkStatus): status is WorksStatusValue {
-  return WORKS_STATUSES.includes(status as WorksStatusValue);
-}
-
-function toGroupRowData(group: OpusGroup | UngroupedGroup): GroupRowData {
-  const [rawStartDate, rawEndDate] = group.yearRange.split('-').map((part) => part.trim());
-  const startDate = rawStartDate || group.updatedAt.slice(0, 4);
-  const endDate = rawEndDate || undefined;
+function toGroupRowData(opus: GqlOpus): GroupRowData {
+  const safeStatus = (opus.status as unknown as WorksStatusValue) || BaseContentStatuses.Draft;
+  const safeName = opus.name ?? { uk: '', en: '' };
 
   return {
-    id: group.id,
-    numberLabel: 'opusNumber' in group ? group.opusNumber : group.boNumber,
-    title: group.title,
-    genre: group.genre,
-    startDate,
-    endDate,
-    status: group.status,
-    createdAt: group.createdAt ?? group.updatedAt,
-    updatedAt: group.updatedAt,
-    publishedAt: group.publishedAt,
-    works: group.works
+    id: opus.id,
+    numberLabel: opus.number,
+    title: localizedTitle(safeName),
+    titleData: safeName,
+    genre: opus.genre ?? '',
+    startDate: opus.creationYear,
+    endDate: opus.endYear ?? undefined,
+    status: safeStatus,
+    createdAt: opus.createdAt,
+    updatedAt: opus.updatedAt,
+    numberKind: opus.numberKind,
+    works: (opus.compositions ?? []).map((c) => ({
+      id: c.id,
+      title: localizedTitle(c.title)
+    }))
   };
 }
 
-function sortGroups<T extends { title: string; updatedAt: string }>(
+function toStandaloneRowData(composition: GqlComposition): CompositionRowData {
+  const safeStatus = (composition.status as unknown as WorksStatusValue) || BaseContentStatuses.Draft;
+
+  return {
+    id: composition.id,
+    title: localizedTitle(composition.title),
+    titleData: composition.title,
+    year: composition.year ? String(composition.year) : '',
+    genre: composition.genre ?? '',
+    status: safeStatus,
+    createdAt: composition.createdAt,
+    updatedAt: composition.updatedAt
+  };
+}
+
+function sortGroups<T extends { title: string; createdAt: string }>(
   groups: readonly T[],
   sortValue: FilesSortValue
 ): T[] {
   return [...groups].sort((left, right) => {
     if (sortValue === 'date_desc') {
-      return new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime();
+      return Number(right.createdAt) - Number(left.createdAt);
     }
 
     if (sortValue === 'date_asc') {
-      return new Date(left.updatedAt).getTime() - new Date(right.updatedAt).getTime();
+      return Number(left.createdAt) - Number(right.createdAt);
     }
 
     if (sortValue === 'name_asc') {
@@ -112,34 +140,17 @@ function useDropdownState() {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
 
-  const handleOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.stopPropagation();
-    setAnchorEl(event.currentTarget);
-  };
-
   const handleClose = () => {
     setAnchorEl(null);
-    requestAnimationFrame(() => triggerRef.current?.focus());
   };
 
   const handleToggle = () => {
     setAnchorEl((previous) => (previous ? null : triggerRef.current));
   };
 
-  return { anchorEl, triggerRef, handleOpen, handleClose, handleToggle };
+  return { anchorEl, triggerRef, handleClose, handleToggle };
 }
 
-function DropdownItemsList<T extends { id: string }>({
-  items,
-  renderItem
-}: Readonly<{
-  items: readonly T[];
-  renderItem: (item: T) => React.ReactNode;
-}>) {
-  return <Box sx={styles.menuList}>{items.map((item) => renderItem(item))}</Box>;
-}
-
-// ── Create button (same pattern as PublicationsCreateAction) ──────────────────
 function WorksCreateAction() {
   const { anchorEl, triggerRef, handleClose, handleToggle } = useDropdownState();
 
@@ -160,36 +171,90 @@ function WorksCreateAction() {
         Створити
       </Button>
 
-      <DropdownMenu
-        disableScrollLock
+      <ActionMenu
         anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
         onClose={handleCloseMenu}
-        sx={styles.createDropdownMenu}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-        menuList={
-          <DropdownItemsList
-            items={WORKS_CREATE_OPTIONS}
-            renderItem={(option) => (
-              <MenuItem
-                key={option.id}
-                component={Link}
-                href={option.href}
-                onClick={handleCloseMenu}
-                sx={styles.createMenuItem}
-              >
-                {option.label}
-              </MenuItem>
-            )}
-          />
-        }
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+        menuItems={[
+          {
+            items: WORKS_CREATE_OPTIONS.map((option) => ({
+              id: option.id,
+              href: option.href,
+              text: {
+                name: option.label
+              }
+            }))
+          }
+        ]}
       />
     </>
   );
 }
 
-// ── Main page content ─────────────────────────────────────────────────────────
+type ClientFilteringResult = readonly [GroupRowData[], GroupRowData[], ReturnType<typeof toStandaloneRowData>[]];
+
+const clientFiltering = (
+  opusGroupsData: AllOpusesQuery | undefined,
+  ungroupedGroupsData: AllOpusesQuery | undefined,
+  compositionsData: AllCompositionsQuery | undefined,
+  selectedFilters: Readonly<{
+    status: readonly WorksStatusValue[];
+    language: readonly WorksLanguageValue[];
+  }>,
+  sortValue: FilesSortValue,
+  matchesSearch: (text: string) => boolean
+): ClientFilteringResult => {
+  const getLanguage = (value: { uk?: string | null; en?: string | null }): WorksLanguageValue => {
+    const hasUk = Boolean(value.uk?.trim());
+    const hasEn = Boolean(value.en?.trim());
+
+    if (hasUk && hasEn) {
+      return 'bilingual';
+    }
+
+    if (hasEn) {
+      return 'en';
+    }
+
+    return 'uk';
+  };
+
+  const matchesStatus = (status: WorksStatusValue) =>
+    selectedFilters.status.length === 0 || selectedFilters.status.includes(status);
+
+  const matchesLanguage = (title: { uk?: string | null; en?: string | null }) =>
+    selectedFilters.language.length === 0 || selectedFilters.language.includes(getLanguage(title));
+
+  const matchGroup = (group: { title: string; numberLabel: string; genre: string }) =>
+    matchesSearch(group.title) || matchesSearch(group.numberLabel) || matchesSearch(group.genre);
+
+  const matchComposition = (work: { title: string; genre: string }) =>
+    matchesSearch(work.title) || matchesSearch(work.genre);
+
+  const mappedOpusGroups = sortGroups(
+    (opusGroupsData?.allOpuses ?? [])
+      .map(toGroupRowData)
+      .filter((group) => matchGroup(group) && matchesLanguage(group.titleData) && matchesStatus(group.status)),
+    sortValue
+  );
+
+  const mappedUngroupedGroups = sortGroups(
+    (ungroupedGroupsData?.allOpuses ?? [])
+      .map(toGroupRowData)
+      .filter((group) => matchGroup(group) && matchesLanguage(group.titleData) && matchesStatus(group.status)),
+    sortValue
+  );
+
+  const visibleUngroupedWorks = sortGroups(
+    (compositionsData?.allCompositions ?? [])
+      .map(toStandaloneRowData)
+      .filter((work) => matchComposition(work) && matchesLanguage(work.titleData) && matchesStatus(work.status)),
+    sortValue
+  );
+  return [mappedOpusGroups, mappedUngroupedGroups, visibleUngroupedWorks] as const;
+};
+
 export function WorksPageContent({ activeTab }: WorksPageContentProps) {
   const { sortValue, selectedFilters, toolbarProps, sortProps } = useWorksFiltering();
 
@@ -199,67 +264,63 @@ export function WorksPageContent({ activeTab }: WorksPageContentProps) {
   const matchesSearch = (text: string) =>
     !normalizedSearch || normalizeSearch(text.toLowerCase()).includes(normalizedSearch);
 
-  const matchesSelectedFilters = (item: FilterableItemData) => {
-    const statusMatches =
-      isWorksStatusValue(item.status) &&
-      (selectedFilters.status.length === 0 || selectedFilters.status.includes(item.status));
-    const languageMatches = selectedFilters.language.length === 0 || selectedFilters.language.includes(item.language);
-    const genreMatches = selectedFilters.genre.length === 0 || selectedFilters.genre.includes(item.genre);
+  const showOpus = activeTab === 'all' || activeTab === 'opus';
+  const showUngrouped = activeTab === 'all' || activeTab === 'ungrouped';
+  const showCompositions = activeTab === 'all' || activeTab === 'works';
 
-    return statusMatches && languageMatches && genreMatches;
-  };
+  const {
+    data: opusGroupsData,
+    loading: isOpusGroupsLoading,
+    error: opusGroupsError
+  } = useAllOpusGroups({}, { skip: !showOpus });
 
-  const getVisibleGroups = <T extends GroupFilterData>(groups: readonly T[], numberSelector: (group: T) => string) =>
-    sortGroups(
-      groups.filter(
-        (group) =>
-          matchesSelectedFilters(group) &&
-          (matchesSearch(group.title) ||
-            matchesSearch(numberSelector(group)) ||
-            matchesSearch(group.genre) ||
-            group.works.some((work) => matchesSearch(work.title)))
-      ),
-      sortValue
-    );
+  const {
+    data: ungroupedGroupsData,
+    loading: isUngroupedGroupsLoading,
+    error: ungroupedGroupsError
+  } = useAllUngroupedGroups({}, { skip: !showUngrouped });
 
-  const visibleOpusGroups = getVisibleGroups(WORKS_MOCK_DATA.opusGroups, (group) => group.opusNumber);
+  const {
+    data: compositionsData,
+    loading: isCompositionsLoading,
+    error: compositionsError
+  } = useAllCompositions({}, { skip: !showCompositions });
 
-  const visibleUngroupedGroups = getVisibleGroups(WORKS_MOCK_DATA.ungroupedGroups, (group) => group.boNumber);
-
-  const allUngroupedWorks = WORKS_MOCK_DATA.ungroupedGroups.flatMap((group) =>
-    group.works.map((work) => ({
-      id: work.id,
-      title: work.title,
-      year: work.year,
-      genre: group.genre,
-      status: group.status,
-      updatedAt: group.updatedAt,
-      language: group.language
-    }))
+  const [mappedOpusGroups, mappedUngroupedGroups, visibleUngroupedWorks] = clientFiltering(
+    opusGroupsData,
+    ungroupedGroupsData,
+    compositionsData,
+    selectedFilters,
+    sortValue,
+    matchesSearch
   );
 
-  const visibleUngroupedWorks = sortGroups(
-    allUngroupedWorks.filter(
-      (work) => matchesSelectedFilters(work) && (matchesSearch(work.title) || matchesSearch(work.genre))
-    ),
-    sortValue
-  );
+  const hasOpus = mappedOpusGroups.length > 0;
+  const hasUngrouped = mappedUngroupedGroups.length > 0;
+  const hasCompositions = visibleUngroupedWorks.length > 0;
 
+  const hasBaseItems =
+    (showOpus && hasOpus) || (showUngrouped && hasUngrouped) || (showCompositions && hasCompositions);
   const hasActiveCriteria = Boolean(searchValue) || Boolean(toolbarProps.activeFiltersCount);
+  const isLoading =
+    (showOpus && isOpusGroupsLoading) ||
+    (showUngrouped && isUngroupedGroupsLoading) ||
+    (showCompositions && isCompositionsLoading);
+  const activeError = opusGroupsError ?? ungroupedGroupsError ?? compositionsError;
+
+  const shouldShowLoadingState = !hasBaseItems && isLoading;
+  const shouldShowErrorState = !hasBaseItems && Boolean(activeError);
 
   const content = (() => {
-    const showOpus = activeTab === 'all' || activeTab === 'opus';
-    const showUngrouped = activeTab === 'all' || activeTab === 'ungrouped';
-    const showIndividualWorks = activeTab === 'all' || activeTab === 'works';
+    if (shouldShowLoadingState) {
+      return <EmptyState title={WORKS_LOADING_STATE_TITLE} description={WORKS_LOADING_STATE_DESCRIPTION} />;
+    }
 
-    const mappedOpusGroups = visibleOpusGroups.map(toGroupRowData);
-    const mappedUngroupedGroups = visibleUngroupedGroups.map(toGroupRowData);
+    if (shouldShowErrorState) {
+      return <EmptyState title={WORKS_ERROR_STATE_TITLE} description={WORKS_ERROR_STATE_DESCRIPTION} />;
+    }
 
-    const hasOpus = showOpus && mappedOpusGroups.length > 0;
-    const hasUngrouped = showUngrouped && mappedUngroupedGroups.length > 0;
-    const hasIndividualWorks = showIndividualWorks && visibleUngroupedWorks.length > 0;
-
-    if (!hasOpus && !hasUngrouped && !hasIndividualWorks) {
+    if (!hasBaseItems) {
       return (
         <EmptyState
           title={hasActiveCriteria ? WORKS_EMPTY_STATE_NO_RESULTS_TITLE : WORKS_EMPTY_STATE_TITLE}
@@ -275,7 +336,7 @@ export function WorksPageContent({ activeTab }: WorksPageContentProps) {
         visibleUngroupedWorks={visibleUngroupedWorks}
         showOpus={showOpus}
         showUngrouped={showUngrouped}
-        showIndividualWorks={showIndividualWorks}
+        showIndividualWorks={showCompositions}
       />
     );
   })();

@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 
 import { useWorksFiltering } from './useWorksFiltering';
+import { FilesSortValue } from '~/constants/sort';
 
 jest.mock('~/constants/creativity', () => ({
   WORKS_STATUSES: ['draft', 'published', 'archived'],
@@ -24,15 +25,6 @@ jest.mock('~/constants/creativity', () => ({
         { value: 'bilingual', label: 'Двомовний' }
       ],
       menuMinWidth: 160
-    },
-    {
-      id: 'genre',
-      label: 'Жанр',
-      options: [
-        { value: 'poetry', label: 'Поезія' },
-        { value: 'prose', label: 'Проза' }
-      ],
-      menuMinWidth: 200
     }
   ]
 }));
@@ -66,18 +58,18 @@ describe('useWorksFiltering', () => {
       const { result } = renderHook(() => useWorksFiltering());
 
       expect(result.current.sortValue).toBe('date_desc');
-      expect(result.current.selectedFilters).toEqual({ status: [], language: [], genre: [] });
+      expect(result.current.selectedFilters).toEqual({ status: [], language: [] });
       expect(result.current.toolbarProps.isFiltersOpen).toBe(true);
       expect(result.current.toolbarProps.activeFiltersCount).toBe(0);
       expect(result.current.toolbarProps.search!.search).toBe('');
       expect(result.current.toolbarProps.search!.placeholder).toBe('Пошук');
     });
 
-    it('exposes three filter configs derived from WORKS_FILTERS', () => {
+    it('exposes two filter configs derived from WORKS_FILTERS', () => {
       const { result } = renderHook(() => useWorksFiltering());
 
-      expect(result.current.toolbarProps.filters).toHaveLength(3);
-      expect(result.current.toolbarProps.filters!.map((f) => f.id)).toEqual(['status', 'language', 'genre']);
+      expect(result.current.toolbarProps.filters).toHaveLength(2);
+      expect(result.current.toolbarProps.filters!.map((f) => f.id)).toEqual(['status', 'language']);
       result.current.toolbarProps.filters!.forEach((filter) => {
         expect(filter.hideClearAction).toBe(true);
       });
@@ -171,19 +163,7 @@ describe('useWorksFiltering', () => {
       expect(result.current.toolbarProps.activeFiltersCount).toBe(2);
     });
 
-    it('sets genre filters without extra validation, accepting any string values', () => {
-      const { result } = renderHook(() => useWorksFiltering());
-      const genreFilter = result.current.toolbarProps.filters!.find((f) => f.id === 'genre')!;
-
-      act(() => {
-        genreFilter.onChange(['poetry', 'anything-else']);
-      });
-
-      expect(result.current.selectedFilters.genre).toEqual(['poetry', 'anything-else']);
-      expect(result.current.toolbarProps.activeFiltersCount).toBe(2);
-    });
-
-    it('accumulates activeFiltersCount across all three filter groups', () => {
+    it('accumulates activeFiltersCount across all two filter groups', () => {
       const { result } = renderHook(() => useWorksFiltering());
       const filters = result.current.toolbarProps.filters!;
 
@@ -193,11 +173,8 @@ describe('useWorksFiltering', () => {
       act(() => {
         filters.find((f) => f.id === 'language')!.onChange(['uk', 'en']);
       });
-      act(() => {
-        filters.find((f) => f.id === 'genre')!.onChange(['poetry']);
-      });
 
-      expect(result.current.toolbarProps.activeFiltersCount).toBe(4);
+      expect(result.current.toolbarProps.activeFiltersCount).toBe(3);
     });
 
     it('clears all filters via onClearFilters', () => {
@@ -210,16 +187,13 @@ describe('useWorksFiltering', () => {
       act(() => {
         filters.find((f) => f.id === 'language')!.onChange(['uk']);
       });
-      act(() => {
-        filters.find((f) => f.id === 'genre')!.onChange(['poetry']);
-      });
-      expect(result.current.toolbarProps.activeFiltersCount).toBe(3);
+      expect(result.current.toolbarProps.activeFiltersCount).toBe(2);
 
       act(() => {
         result.current.toolbarProps.onClearFilters!();
       });
 
-      expect(result.current.selectedFilters).toEqual({ status: [], language: [], genre: [] });
+      expect(result.current.selectedFilters).toEqual({ status: [], language: [] });
       expect(result.current.toolbarProps.activeFiltersCount).toBe(0);
     });
   });
@@ -276,6 +250,17 @@ describe('useWorksFiltering', () => {
       expect(result.current.sortProps.fieldValue).toBe('name');
       expect(result.current.sortProps.triggerLabel).toBe('Назва (Я-А)');
       expect(window.localStorage.getItem(SORT_STORAGE_KEY)).toBe('name_desc');
+    });
+
+    it('uses fallback first sort option when sortValue is not found in SORT_OPTIONS', () => {
+      const { result } = renderHook(() => useWorksFiltering());
+
+      act(() => {
+        result.current.sortProps.onValueChange('invalid_sort_value' as unknown as FilesSortValue);
+      });
+
+      expect(result.current.sortValue).toBe('invalid_sort_value');
+      expect(result.current.sortProps.triggerLabel).toBe('Дата (нові)');
     });
   });
 

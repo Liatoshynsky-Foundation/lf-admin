@@ -8,7 +8,7 @@ export const useGroupPhotos = (photos: GroupPhoto[], onChange: (photos: GroupPho
 
   const getPhotoKey = (photo: GroupPhoto) => {
     const cropStr = photo.crop?.rect ? JSON.stringify(photo.crop.rect) : 'no-crop';
-    return `${photo.id}-${cropStr}`;
+    return `${photo.id}-${cropStr}-${photo.src}`;
   };
 
   const handleAddPhoto = () => {
@@ -16,8 +16,8 @@ export const useGroupPhotos = (photos: GroupPhoto[], onChange: (photos: GroupPho
       id: generateUniqueId(),
       src: '',
       fileName: '',
-      caption: '',
-      altText: '',
+      caption: { uk: '', en: '' },
+      altText: { uk: '', en: '' },
       crop: null
     };
     onChange([...photos, newPhoto]);

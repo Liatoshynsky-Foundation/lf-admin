@@ -11,13 +11,18 @@ const mockSetLocale = jest.fn();
 const mockDiscardChanges = jest.fn();
 const mockSetPageData = jest.fn();
 
+const defaultStoreState = {
+  setLocale: mockSetLocale,
+  discardChanges: mockDiscardChanges,
+  setPageData: mockSetPageData,
+  isChanged: false,
+};
+
+let mockStoreState = { ...defaultStoreState };
+
 jest.mock('~/store', () => ({
   useStore: jest.fn((selector) =>
-    selector({
-      setLocale: mockSetLocale,
-      discardChanges: mockDiscardChanges,
-      setPageData: mockSetPageData,
-    })
+    selector(mockStoreState)
   ),
 }));
 
@@ -61,6 +66,8 @@ describe('EditablePageLayout', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    mockStoreState = { ...defaultStoreState };
 
     (useGetPageQuery as jest.Mock).mockReturnValue({
       data: null,
@@ -173,7 +180,19 @@ describe('EditablePageLayout', () => {
       expect(screen.getByTestId('saving-flag')).toHaveTextContent('false');
     });
 
-    it('should trigger preview, save, cancel and language change callbacks when header controls are clicked', () => {
+    it('should pass isActionsDisabled as true on initial render (when isChanged is false)', () => {
+      runSimulation();
+      expect(screen.getByTestId('actions-disabled-flag')).toHaveTextContent('true');
+    });
+
+    it('should pass isActionsDisabled as false when isChanged is true', () => {
+      mockStoreState.isChanged = true;
+      runSimulation();
+      expect(screen.getByTestId('actions-disabled-flag')).toHaveTextContent('false');
+    });
+
+    it('should trigger preview, save, cancel and language change callbacks when header controls are clicked and isChanged is true', () => {
+      mockStoreState.isChanged = true;
       runSimulation();
 
       fireEvent.click(screen.getByTestId('preview-btn'));

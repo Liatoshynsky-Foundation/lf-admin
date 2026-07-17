@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import toast from 'react-hot-toast';
 
@@ -13,7 +13,13 @@ import {
 import { downloadFile } from '~/lib/utils/downloadFile';
 import { useAllAssets } from '~/shared/hooks/use-assets/useAssets';
 import { useFilesFiltering } from '~/shared/hooks/use-files';
-import { AssetType, useCreateAssetMutation, useDeleteAssetMutation } from '~/types/graphql/generated/graphql';
+import type { GalleryFile } from '~/shared/hooks/use-galllery-photo/useGallery';
+import {
+  AssetType,
+  useCreateAssetMutation,
+  useDeleteAssetMutation,
+  useUpdateAssetMutation
+} from '~/types/graphql/generated/graphql';
 
 Element.prototype.scrollIntoView = jest.fn();
 
@@ -50,6 +56,15 @@ const baseAsset = {
   description: 'A nice photo' as string | null
 };
 
+const orphanR2File: GalleryFile = {
+  filename: 'orphan-stored.jpg',
+  originalName: 'orphan.jpg',
+  mimeType: 'image/jpeg',
+  size: 2048,
+  createdAt: '2024-02-20T00:00:00.000Z',
+  url: 'https://r2.example.com/photos/orphan-stored.jpg'
+};
+
 interface SetupHooksParams {
   assets?: Array<typeof baseAsset>;
   loading?: boolean;
@@ -57,6 +72,7 @@ interface SetupHooksParams {
   refetch?: jest.Mock;
   createAsset?: jest.Mock;
   deleteAsset?: jest.Mock;
+  updateAsset?: jest.Mock;
   deleteLoading?: boolean;
   filteredFiles?: TestFileItem[];
 }
@@ -93,6 +109,7 @@ interface FilesCardsLayoutProps {
   setItemRef: (id: string, node: HTMLDivElement | null) => void;
   onItemClick: (item: TestFileItem) => void;
   onItemAction: (action: 'rename' | 'delete' | 'download', item: TestFileItem) => void;
+  onItemToggleStar: (item: TestFileItem, next: boolean) => void | Promise<void>;
 }
 
 interface FileInfoSidebarProps {
@@ -101,6 +118,9 @@ interface FileInfoSidebarProps {
     filename: string;
   };
   onClose: () => void;
+  onToggleStar: (fileId: string, next: boolean) => void;
+  onDescriptionSave: (fileId: string, description: string) => void;
+  onDeleteRequest: (fileId: string) => void;
   onRequestAction: (action: { type: 'rename' | 'unknown'; fileId: string }) => void;
 }
 
@@ -134,6 +154,7 @@ interface RenameFileModalProps {
   fileId: string;
   currentFilename: string;
   onClose: () => void;
+  onRename: (fileId: string, filename: string) => void;
 }
 
 interface DeleteFileModalProps {
@@ -162,12 +183,33 @@ jest.mock('~/shared/hooks/use-files', () => ({
   useFilesFiltering: jest.fn()
 }));
 
+const mockRemoveR2FileByUrl = jest.fn();
+const mockFetch = jest.fn();
+let mockR2Files: GalleryFile[] = [];
+let mockR2Loading = false;
+let mockR2Error: Error | null = null;
+
+jest.mock('~/shared/hooks/use-files/useHybridFiles', () => {
+  const actual = jest.requireActual('~/shared/hooks/use-files/useHybridFiles');
+
+  return {
+    ...actual,
+    useR2Files: jest.fn(() => ({
+      files: mockR2Files,
+      loading: mockR2Loading,
+      error: mockR2Error,
+      removeFileByUrl: mockRemoveR2FileByUrl
+    }))
+  };
+});
+
 jest.mock('~/types/graphql/generated/graphql', () => {
   const actual = jest.requireActual('~/types/graphql/generated/graphql');
   return {
     ...actual,
     useCreateAssetMutation: jest.fn(),
-    useDeleteAssetMutation: jest.fn()
+    useDeleteAssetMutation: jest.fn(),
+    useUpdateAssetMutation: jest.fn()
   };
 });
 
@@ -229,6 +271,7 @@ jest.mock('~/shared/components/files-cards-layout', () => ({
             <button onClick={() => props.onItemAction('rename', item)}>rename-{item.id}</button>
             <button onClick={() => props.onItemAction('delete', item)}>delete-{item.id}</button>
             <button onClick={() => props.onItemAction('download', item)}>download-{item.id}</button>
+            <button onClick={() => props.onItemToggleStar(item, true)}>star-{item.id}</button>
             <div ref={(node) => props.setItemRef(item.id, node)} />
           </div>
         ))}
@@ -238,10 +281,20 @@ jest.mock('~/shared/components/files-cards-layout', () => ({
 }));
 
 jest.mock('~/shared/components/file-info-sidebar/FileInfoSidebar', () => ({
-  FileInfoSidebar: ({ file, onClose, onRequestAction }: FileInfoSidebarProps) => (
+  FileInfoSidebar: ({
+    file,
+    onClose,
+    onToggleStar,
+    onDescriptionSave,
+    onDeleteRequest,
+    onRequestAction
+  }: FileInfoSidebarProps) => (
     <div data-testid="file-info-sidebar">
       <span>{file.filename}</span>
       <button onClick={onClose}>close-sidebar</button>
+      <button onClick={() => onToggleStar(file.id, true)}>sidebar-star</button>
+      <button onClick={() => onDescriptionSave(file.id, 'Updated description')}>sidebar-description</button>
+      <button onClick={() => onDeleteRequest(file.id)}>sidebar-delete</button>
       <button onClick={() => onRequestAction({ type: 'rename', fileId: file.id })}>request-rename</button>
       <button onClick={() => onRequestAction({ type: 'unknown' as 'rename', fileId: file.id })}>request-unknown</button>
     </div>
@@ -292,10 +345,11 @@ jest.mock('~/shared/components/media-modal/views/upload-view/UploadView', () => 
 }));
 
 jest.mock('~/shared/components/rename-file-modal/RenameFileModal', () => ({
-  RenameFileModal: ({ open, fileId, currentFilename, onClose }: RenameFileModalProps) =>
+  RenameFileModal: ({ open, fileId, currentFilename, onClose, onRename }: RenameFileModalProps) =>
     open ? (
       <div data-testid="rename-modal">
         rename {fileId} {currentFilename}
+        <button onClick={() => onRename(fileId, 'renamed.png')}>confirm-rename</button>
         <button onClick={onClose}>close-rename</button>
       </div>
     ) : null
@@ -322,6 +376,7 @@ function setupHooks({
   error = undefined,
   refetch = jest.fn(),
   createAsset = jest.fn().mockResolvedValue({ data: { createAsset: { id: 'new-1' } } }),
+  updateAsset = jest.fn().mockResolvedValue({ data: { updateAsset: { id: '1' } } }),
   deleteAsset = jest.fn().mockImplementation(async (options) => {
     if (options?.update) {
       const mockCache = {
@@ -345,6 +400,7 @@ function setupHooks({
 
   (useCreateAssetMutation as jest.Mock).mockReturnValue([createAsset]);
   (useDeleteAssetMutation as jest.Mock).mockReturnValue([deleteAsset, { loading: deleteLoading }]);
+  (useUpdateAssetMutation as jest.Mock).mockReturnValue([updateAsset]);
 
   (useFilesFiltering as jest.Mock).mockImplementation((allFiles: TestFileItem[]) => ({
     filteredFiles: filteredFiles ?? allFiles,
@@ -352,7 +408,7 @@ function setupHooks({
     sortProps: {}
   }));
 
-  return { refetch, createAsset, deleteAsset };
+  return { refetch, createAsset, deleteAsset, updateAsset };
 }
 
 beforeEach(() => {
@@ -361,6 +417,14 @@ beforeEach(() => {
   mockMediaModalOnApply = null;
   deleteModalOnConfirm = null;
   capturedUploadViewProps = null;
+  mockFetch.mockResolvedValue({
+    ok: true,
+    json: jest.fn().mockResolvedValue({ success: true })
+  });
+  globalThis.fetch = mockFetch as unknown as typeof fetch;
+  mockR2Files = [];
+  mockR2Loading = false;
+  mockR2Error = null;
 });
 
 describe('FilesPageContent', () => {
@@ -526,15 +590,32 @@ describe('FilesPageContent', () => {
 
   it('renders files list with mapped fields (formats, sizes, usage)', () => {
     const assets = [
-      { ...baseAsset, id: '1', type: AssetType.Image, mimeType: 'image/png', filename: 'a.png', sizeBytes: 100 },
-      { ...baseAsset, id: '2', type: AssetType.Pdf, mimeType: 'application/pdf', filename: 'b.pdf', sizeBytes: 2048 },
+      {
+        ...baseAsset,
+        id: '1',
+        type: AssetType.Image,
+        mimeType: 'image/png',
+        filename: 'a.png',
+        sizeBytes: 100,
+        url: 'https://example.com/a.png'
+      },
+      {
+        ...baseAsset,
+        id: '2',
+        type: AssetType.Pdf,
+        mimeType: 'application/pdf',
+        filename: 'b.pdf',
+        sizeBytes: 2048,
+        url: 'https://example.com/b.pdf'
+      },
       {
         ...baseAsset,
         id: '3',
         type: AssetType.Spreadsheet,
         mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         filename: 'c',
-        sizeBytes: 5 * 1024 * 1024
+        sizeBytes: 5 * 1024 * 1024,
+        url: 'https://example.com/c'
       },
       {
         ...baseAsset,
@@ -544,7 +625,8 @@ describe('FilesPageContent', () => {
         filename: 'd',
         sizeBytes: 10,
         createdBy: null,
-        description: null
+        description: null,
+        url: 'https://example.com/d'
       }
     ];
     setupHooks({ assets });
@@ -617,6 +699,63 @@ describe('FilesPageContent', () => {
     });
   });
 
+  it('deletes an orphan R2 file from cloud storage without creating a Mongo asset first', async () => {
+    mockR2Files = [orphanR2File];
+    const createAsset = jest.fn();
+    const deleteAsset = jest.fn();
+
+    setupHooks({ assets: [], createAsset, deleteAsset });
+    render(<FilesPageContent activeTab="all" />);
+
+    expect(await screen.findByTestId('files-cards-layout')).toBeInTheDocument();
+    const orphanItem = capturedCardsProps?.items[0];
+    expect(orphanItem).toBeDefined();
+
+    if (!orphanItem) return;
+
+    fireEvent.click(screen.getByText(`delete-${orphanItem.id}`));
+    expect(await screen.findByTestId('delete-modal')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('confirm-delete'));
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith('/api/uploads/orphan-stored.jpg?folder=photos', { method: 'DELETE' });
+      expect(createAsset).not.toHaveBeenCalled();
+      expect(deleteAsset).not.toHaveBeenCalled();
+      expect(mockRemoveR2FileByUrl).toHaveBeenCalledWith(orphanR2File.url);
+      expect(toast.success).toHaveBeenCalledWith('Файл успішно видалено');
+    });
+  });
+
+  it('keeps an orphan R2 file visible when cloud delete fails', async () => {
+    mockR2Files = [orphanR2File];
+    mockFetch.mockResolvedValue({
+      ok: false,
+      json: jest.fn().mockResolvedValue({ success: false, error: 'Failed to delete file' })
+    });
+    const createAsset = jest.fn();
+    const deleteAsset = jest.fn();
+
+    setupHooks({ assets: [], createAsset, deleteAsset });
+    render(<FilesPageContent activeTab="all" />);
+
+    expect(await screen.findByTestId('files-cards-layout')).toBeInTheDocument();
+    const orphanItem = capturedCardsProps?.items[0];
+    expect(orphanItem).toBeDefined();
+
+    if (!orphanItem) return;
+
+    fireEvent.click(screen.getByText(`delete-${orphanItem.id}`));
+    fireEvent.click(await screen.findByText('confirm-delete'));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Failed to delete file');
+      expect(mockRemoveR2FileByUrl).not.toHaveBeenCalled();
+      expect(createAsset).not.toHaveBeenCalled();
+      expect(deleteAsset).not.toHaveBeenCalled();
+    });
+  });
+
   it('shows error toast when delete fails with an Error', async () => {
     const deleteAsset = jest.fn().mockRejectedValue(new Error('boom'));
     setupHooks({ assets: [baseAsset], deleteAsset });
@@ -651,6 +790,125 @@ describe('FilesPageContent', () => {
 
     await waitFor(() => {
       expect(downloadFile).toHaveBeenCalledWith(baseAsset.url, baseAsset.originalname);
+    });
+  });
+
+  it('updates favorite state from file card action', async () => {
+    const { updateAsset, refetch } = setupHooks({ assets: [baseAsset] });
+    render(<FilesPageContent activeTab="all" />);
+
+    fireEvent.click(screen.getByText('star-1'));
+
+    await waitFor(() => {
+      expect(updateAsset).toHaveBeenCalledWith({
+        variables: {
+          id: '1',
+          input: { isStarred: true }
+        }
+      });
+      expect(refetch).toHaveBeenCalled();
+    });
+  });
+
+  it('reuses pending lazy asset creation for concurrent orphan actions', async () => {
+    mockR2Files = [orphanR2File];
+    let resolveCreateAsset: (value: { data: { createAsset: { id: string } } }) => void = jest.fn();
+    const createAsset = jest.fn(
+      () =>
+        new Promise<{ data: { createAsset: { id: string } } }>((resolve) => {
+          resolveCreateAsset = resolve;
+        })
+    );
+    const updateAsset = jest.fn().mockResolvedValue({ data: { updateAsset: { id: 'created-orphan-id' } } });
+
+    setupHooks({ assets: [], createAsset, updateAsset });
+    render(<FilesPageContent activeTab="all" />);
+
+    expect(await screen.findByTestId('files-cards-layout')).toBeInTheDocument();
+    const orphanItem = capturedCardsProps?.items[0];
+    expect(orphanItem).toBeDefined();
+
+    if (!orphanItem || !capturedCardsProps) return;
+
+    await act(async () => {
+      const firstUpdate = capturedCardsProps?.onItemToggleStar(orphanItem, true);
+      const secondUpdate = capturedCardsProps?.onItemToggleStar(orphanItem, false);
+
+      resolveCreateAsset({ data: { createAsset: { id: 'created-orphan-id' } } });
+
+      await Promise.all([firstUpdate, secondUpdate]);
+    });
+
+    expect(createAsset).toHaveBeenCalledTimes(1);
+    expect(updateAsset).toHaveBeenCalledTimes(2);
+    expect(updateAsset).toHaveBeenCalledWith({
+      variables: {
+        id: 'created-orphan-id',
+        input: { isStarred: true }
+      }
+    });
+    expect(updateAsset).toHaveBeenCalledWith({
+      variables: {
+        id: 'created-orphan-id',
+        input: { isStarred: false }
+      }
+    });
+  });
+
+  it('updates favorite and description from sidebar actions', async () => {
+    const { updateAsset } = setupHooks({ assets: [baseAsset] });
+    render(<FilesPageContent activeTab="all" />);
+
+    fireEvent.click(screen.getByText('select-1'));
+    expect(await screen.findByTestId('file-info-sidebar')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('sidebar-star'));
+    fireEvent.click(screen.getByText('sidebar-description'));
+
+    await waitFor(() => {
+      expect(updateAsset).toHaveBeenCalledWith({
+        variables: {
+          id: '1',
+          input: { isStarred: true }
+        }
+      });
+      expect(updateAsset).toHaveBeenCalledWith({
+        variables: {
+          id: '1',
+          input: { description: 'Updated description' }
+        }
+      });
+    });
+  });
+
+  it('opens delete modal from sidebar delete request', async () => {
+    setupHooks({ assets: [baseAsset] });
+    render(<FilesPageContent activeTab="all" />);
+
+    fireEvent.click(screen.getByText('select-1'));
+    expect(await screen.findByTestId('file-info-sidebar')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('sidebar-delete'));
+
+    expect(await screen.findByTestId('delete-modal')).toBeInTheDocument();
+  });
+
+  it('renames a file from rename modal confirm action', async () => {
+    const { updateAsset } = setupHooks({ assets: [baseAsset] });
+    render(<FilesPageContent activeTab="all" />);
+
+    fireEvent.click(screen.getByText('rename-1'));
+    expect(await screen.findByTestId('rename-modal')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('confirm-rename'));
+
+    await waitFor(() => {
+      expect(updateAsset).toHaveBeenCalledWith({
+        variables: {
+          id: '1',
+          input: { filename: 'renamed.png' }
+        }
+      });
     });
   });
 

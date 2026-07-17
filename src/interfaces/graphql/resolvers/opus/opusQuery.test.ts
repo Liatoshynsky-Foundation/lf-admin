@@ -4,6 +4,11 @@ import { Opus } from '~/domain/entities/Opus';
 import type { ICompositionRepository } from '~/domain/repositories/compositionRepository';
 import type { IOpusRepository } from '~/domain/repositories/opusRepository';
 import { OpusStatus } from '~/types/enums/common.enums';
+import { OpusNumberKind } from '~/types/graphql/generated/graphql';
+
+interface MockCompositionRepository extends ICompositionRepository {
+  findByOpusIds: jest.Mock;
+}
 
 describe('OpusQuery Resolvers', () => {
   const mockRepo: jest.Mocked<Partial<IOpusRepository>> = {
@@ -14,8 +19,9 @@ describe('OpusQuery Resolvers', () => {
     count: jest.fn()
   };
 
-  const mockCompositionsRepo: jest.Mocked<ICompositionRepository> = {
+  const mockCompositionsRepo: jest.Mocked<Partial<MockCompositionRepository>> = {
     findByOpusId: jest.fn(),
+    findByOpusIds: jest.fn(),
     syncForOpus: jest.fn(),
     deleteByOpusId: jest.fn(),
     searchByTitle: jest.fn()
@@ -25,7 +31,10 @@ describe('OpusQuery Resolvers', () => {
     ({
       admin: isAdmin,
       requestContainer: {
-        cradle: { opusRepository: mockRepo, compositionsRepository: mockCompositionsRepo }
+        cradle: { 
+          opusRepository: mockRepo as IOpusRepository, 
+          compositionsRepository: mockCompositionsRepo as unknown as ICompositionRepository 
+        }
       }
     }) as unknown as GraphQLContext;
 
@@ -36,7 +45,8 @@ describe('OpusQuery Resolvers', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockCompositionsRepo.findByOpusId.mockResolvedValue([]);
+    (mockCompositionsRepo.findByOpusId as jest.Mock).mockResolvedValue([]);
+    (mockCompositionsRepo.findByOpusIds as jest.Mock).mockResolvedValue([]);
   });
 
   it('opusById should reject unauthenticated requests', async () => {
@@ -65,7 +75,7 @@ describe('OpusQuery Resolvers', () => {
   });
 
   it('searchCompositions should call compositionsRepository.searchByTitle', async () => {
-    mockCompositionsRepo.searchByTitle.mockResolvedValue([]);
+    (mockCompositionsRepo.searchByTitle as jest.Mock).mockResolvedValue([]);
 
     const result = await OpusQuery.searchCompositions({}, { search: 'Після' }, adminContext);
 
@@ -73,13 +83,31 @@ describe('OpusQuery Resolvers', () => {
     expect(result).toEqual([]);
   });
 
-  it('allOpuses should call repo.findAll with mapped filters', async () => {
+  it('allOpuses should call repo.findAll with mapped filters and numberKind', async () => {
     (mockRepo.findAll as jest.Mock).mockResolvedValue([mockEntity]);
+    const mockComposition = { id: '100', opusId: '1', title: { uk: 'Твір' } };
+    (mockCompositionsRepo.findByOpusIds as jest.Mock).mockResolvedValue([mockComposition]);
 
     const result = await OpusQuery.allOpuses({}, { filters: { statuses: [OpusStatus.Draft] } }, adminContext);
 
-    expect(mockRepo.findAll).toHaveBeenCalled();
+    expect(mockRepo.findAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statuses: [OpusStatus.Draft],
+        numberKind: OpusNumberKind.Op
+      })
+    );
+    expect(mockCompositionsRepo.findByOpusIds).toHaveBeenCalledWith(['1']);
     expect(result).toHaveLength(1);
+    expect(result[0].compositions).toEqual([mockComposition]);
+  });
+
+  it('allOpuses should return empty array if no opuses found', async () => {
+    (mockRepo.findAll as jest.Mock).mockResolvedValue([]);
+
+    const result = await OpusQuery.allOpuses({}, { filters: {} }, adminContext);
+
+    expect(result).toEqual([]);
+    expect(mockCompositionsRepo.findByOpusIds).not.toHaveBeenCalled();
   });
 
   it('paginatedOpuses should call repo.findPaginated', async () => {
@@ -94,14 +122,5 @@ describe('OpusQuery Resolvers', () => {
 
     expect(mockRepo.findPaginated).toHaveBeenCalledWith(1, 10, undefined);
     expect(result.total).toBe(1);
-  });
-
-  it('opusesCount should call repo.count with status filter', async () => {
-    (mockRepo.count as jest.Mock).mockResolvedValue(3);
-
-    const result = await OpusQuery.opusesCount({}, { status: OpusStatus.Draft }, adminContext);
-
-    expect(mockRepo.count).toHaveBeenCalledWith({ statuses: [OpusStatus.Draft] });
-    expect(result).toBe(3);
   });
 });

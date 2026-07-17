@@ -60,13 +60,15 @@ export type FileInfoSidebarProps = {
 
   onClose: () => void;
 
-  onToggleStar?: (fileId: string, next: boolean) => void;
+  onToggleStar?: (fileId: string, next: boolean) => Promise<void> | void;
   onDescriptionSave?: (fileId: string, description: string) => Promise<void> | void;
+  onDeleteRequest?: (fileId: string) => void;
 
   onRequestAction?: (action: FileSidebarAction) => void;
 };
 
 const AUTOSAVE_DEBOUNCE_MS = 1800;
+const FAVORITE_UPDATE_ERROR = 'Не вдалося оновити статус обраного файлу. Спробуйте пізніше.';
 
 const TYPE_ICON: Record<FileDetailsSidebarFile['type'], React.ComponentType> = {
   image: PictureIcon,
@@ -93,7 +95,9 @@ export function FileInfoSidebar({
   file,
   variant = 'fixed',
   onClose,
+  onToggleStar,
   onDescriptionSave,
+  onDeleteRequest,
   onRequestAction
 }: Readonly<FileInfoSidebarProps>) {
   const theme = useTheme();
@@ -152,13 +156,20 @@ export function FileInfoSidebar({
     if (!file?.id) return;
 
     try {
+      if (onToggleStar) {
+        await onToggleStar(file.id, !isStarred);
+        return;
+      }
+
       await updateAsset({
         variables: {
           id: file.id,
           input: { isStarred: !isStarred }
         }
       });
-    } catch {}
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : FAVORITE_UPDATE_ERROR);
+    }
   };
 
   const handleDeleteConfirm = async (id: string) => {
@@ -231,7 +242,14 @@ export function FileInfoSidebar({
         <TooltipCustom title="Видалити" showArrow>
           <IconButton
             sx={styles.actionBtn}
-            onClick={() => setIsDeleteModalOpen(true)}
+            onClick={() => {
+              if (fileId && onDeleteRequest) {
+                onDeleteRequest(fileId);
+                return;
+              }
+
+              setIsDeleteModalOpen(true);
+            }}
             aria-label="Видалити"
             disabled={!canEdit}
           >

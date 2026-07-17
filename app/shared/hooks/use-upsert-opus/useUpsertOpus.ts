@@ -118,7 +118,7 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}) => {
     changeDetails({
       numberKind: fetched.numberKind ?? 'op',
       number: parseOpusNumber(fetched.number ?? ''),
-      name: fetched.name ?? '',
+      name: fetched.name?.uk ?? '',
       additionalText: fetched.additionalText ?? '',
       creationYear: fetched.creationYear ?? '',
       endYear: fetched.endYear ?? '',
@@ -221,7 +221,10 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}) => {
     const input = {
       numberKind: currentDetails.numberKind as unknown as OpusNumberKind,
       number: currentDetails.number.trim(),
-      name: opusName,
+      name: { 
+        uk: opusName, 
+        en: opusName 
+      },
       additionalText: currentDetails.additionalText.trim() || undefined,
       creationYear: currentDetails.creationYear.trim(),
       endYear: currentDetails.endYear.trim() || undefined,

@@ -3,6 +3,7 @@ import { Box, Divider, IconButton, Typography } from '@mui/material';
 import { styles } from './GroupPhotosSection.styles';
 import { useGroupPhotos } from './useGroupPhotos';
 import { GroupPhoto } from '~/constants/creativity';
+import { EditorLanguage } from '~/constants/publications';
 import PlusIcon from '~/public/icons/plus.svg';
 import TrashIcon from '~/public/icons/trash.svg';
 import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
@@ -13,18 +14,20 @@ import type { MediaModalResult } from '~/shared/components/media-modal/MediaModa
 
 type GroupPhotosSectionProps = {
   photos: GroupPhoto[];
+  currentLanguage: EditorLanguage;
   onChange: (photos: GroupPhoto[]) => void;
 };
 
-export const GroupPhotosSection = ({ photos, onChange }: GroupPhotosSectionProps) => {
+export const GroupPhotosSection = ({ photos, currentLanguage, onChange }: GroupPhotosSectionProps) => {
   const {
     photoIdToDelete,
     setPhotoIdToDelete,
-    getPhotoKey,
     handleAddPhoto,
     handleUpdatePhoto,
     handleConfirmDelete
   } = useGroupPhotos(photos, onChange);
+
+  const langKey = currentLanguage === 'UA' ? 'uk' : 'en';
 
   return (
     <>
@@ -42,7 +45,7 @@ export const GroupPhotosSection = ({ photos, onChange }: GroupPhotosSectionProps
                 <IconButton
                   aria-label="Видалити зображення"
                   data-testid="delete-photo-btn"
-                  onClick={() => setPhotoIdToDelete(photo.id)}
+                  onClick={() => setPhotoIdToDelete(photo.id || '')}
                   sx={styles.actionIcon}
                 >
                   <TrashIcon />
@@ -50,16 +53,20 @@ export const GroupPhotosSection = ({ photos, onChange }: GroupPhotosSectionProps
               </Box>
 
               <ImagePreviewBlock
-                key={getPhotoKey(photo)}
-                imageUrl={photo.src}
+                key={`preview-${photo.id}-${photo.src}`}
+                imageUrl={photo.src || ''}
                 fileName={photo.fileName}
-                altText={photo.altText}
+                altText={photo.altText?.[langKey] || ''}
                 showAlternativeText
                 stackSpacing="5px"
-                onChangeAltText={(newAlt: string) => handleUpdatePhoto(photo.id, { altText: newAlt })}
+                onChangeAltText={(newAlt: string) => {
+                  handleUpdatePhoto(photo.id || '', { 
+                    altText: { ...photo.altText, [langKey]: newAlt } 
+                  });
+                }}
                 initialCrop={photo.crop}
                 onChangeImage={(url: string, crop?: MediaModalResult['crop']) => {
-                  handleUpdatePhoto(photo.id, {
+                  handleUpdatePhoto(photo.id || '', {
                     src: url,
                     crop: crop ?? null
                   });
@@ -70,8 +77,12 @@ export const GroupPhotosSection = ({ photos, onChange }: GroupPhotosSectionProps
                 <Box sx={styles.captionInputWrapper}>
                   <CustomTextField
                     label="Підпис до зображення"
-                    value={photo.caption}
-                    onChange={(e) => handleUpdatePhoto(photo.id, { caption: e.target.value })}
+                    value={photo.caption?.[langKey] || ''}
+                    onChange={(e) => {
+                      handleUpdatePhoto(photo.id || '', { 
+                        caption: { ...photo.caption, [langKey]: e.target.value } 
+                      });
+                    }}
                     fullWidth
                   />
                 </Box>

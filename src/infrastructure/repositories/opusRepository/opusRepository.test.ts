@@ -1,8 +1,10 @@
 import { Model } from 'mongoose';
 
+import { buildBaseQuery } from '../helpers';
 import { DbOpus, OpusRepository } from './opusRepository';
 import { CreateOpusInput, IOpusRepository } from '~/domain/repositories/opusRepository';
 import { OpusStatus, SortOrder } from '~/types/enums/common.enums';
+import { OpusNumberKind } from '~/types/graphql/generated/graphql';
 
 jest.mock('mongoose', () => ({
   Schema: jest.fn(),
@@ -16,6 +18,14 @@ jest.mock('mongoose', () => ({
 
 jest.mock('~/src/infrastructure/db/connect', () => jest.fn());
 
+jest.mock('~/infrastructure/repositories/helpers', () => {
+  const originalModule = jest.requireActual('~/infrastructure/repositories/helpers');
+  return {
+    ...originalModule,
+    buildBaseQuery: jest.fn().mockImplementation((filters) => originalModule.buildBaseQuery(filters)),
+  };
+});
+
 const mockId = '65eddf5e2f1a2b3c4d5e6f7a';
 
 const createMockOpusDoc = (overrides: Partial<DbOpus> = {}): DbOpus => ({
@@ -24,7 +34,7 @@ const createMockOpusDoc = (overrides: Partial<DbOpus> = {}): DbOpus => ({
   title: { uk: 'Опус', en: 'Opus' },
   releaseYear: 1922,
   numberKind: 'op',
-  name: 'Перший струнний квартет',
+  name: { uk: 'Перший струнний квартет', en: 'First string quartet' },
   creationYear: '1922',
   genre: 'Струнний квартет',
   adminTitle: 'Перший струнний квартет',
@@ -32,6 +42,9 @@ const createMockOpusDoc = (overrides: Partial<DbOpus> = {}): DbOpus => ({
   status: OpusStatus.Draft,
   coverImage: { src: 'img.jpg', alt: { uk: 'а', en: 'a' }, caption: { uk: '', en: '' } },
   description: { uk: 'Опис', en: 'Desc' },
+  introDescription: { uk: '', en: '' },
+  parts: { uk: '', en: '' },
+  performancesTitle: null,
   keywords: { uk: 'к', en: 'k' },
   allowIndexation: { uk: true, en: true },
   publishedAt: null,
@@ -71,7 +84,7 @@ describe('OpusRepository', () => {
     title: { uk: 'Опус', en: 'Opus' },
     releaseYear: 1922,
     numberKind: 'op',
-    name: 'Новий опус',
+    name: { uk: 'Новий опус', en: 'New Opus' },
     creationYear: '1922',
     genre: 'Струнний квартет',
     adminTitle: 'Новий опус',
@@ -139,9 +152,10 @@ describe('OpusRepository', () => {
     it('applies fallback defaults for nullish optional fields', async (): Promise<void> => {
       const doc = createMockOpusDoc({
         releaseYear: null,
-        numberKind: undefined,
+        numberKind: 'op',
         name: null,
-        creationYear: null,
+        creationYear: '1922',
+        endYear: '1925',
         genre: null,
         adminTitle: null,
         slug: null,
@@ -152,7 +166,6 @@ describe('OpusRepository', () => {
         status: undefined,
         meta: undefined,
         additionalText: 'Додатковий текст',
-        endYear: '1925',
         datesNote: 'Нотатка про дати',
         publishedAt: '2026-01-01T00:00:00.000Z'
       });
@@ -162,9 +175,9 @@ describe('OpusRepository', () => {
 
       expect(result?.releaseYear).toBeUndefined();
       expect(result?.numberKind).toBe('op');
-      expect(result?.name).toBeUndefined();
+      expect(result?.name).toEqual({ uk: '', en: '' });
       expect(result?.additionalText).toBe('Додатковий текст');
-      expect(result?.creationYear).toBeUndefined();
+      expect(result?.creationYear).toBe('1922');
       expect(result?.endYear).toBe('1925');
       expect(result?.datesNote).toBe('Нотатка про дати');
       expect(result?.genre).toBeUndefined();
@@ -189,25 +202,144 @@ describe('OpusRepository', () => {
       expect(result?.releaseYear).toBe(1922);
       expect(result?.meta).toEqual({ views: 42 });
     });
+
+    it('maps gallery and performances correctly including edge cases', async (): Promise<void> => {
+      const doc = createMockOpusDoc({
+        gallery: [
+          {
+            _id: { toString: () => 'gal1' },
+            src: 'image1.jpg',
+            description: { uk: 'Опис 1', en: 'Desc 1' },
+            altText: { uk: 'Альт 1', en: 'Alt 1' },
+            crop: { x: 10, y: 20, width: 100, height: 200 }
+          },
+          {
+            _id: { toString: () => 'gal2' },
+            src: 'image2.jpg',
+            crop: { width: 100, height: 100 }
+          },
+          {
+            src: 'image3.jpg',
+            description: undefined,
+            altText: undefined,
+            crop: null
+          }
+        ],
+        performances: [
+          {
+            _id: { toString: () => 'perf1' },
+            title: { uk: 'Виступ 1', en: 'Perf 1' },
+            videoUrl: 'https://youtube.com/watch?v=1'
+          },
+          {
+            title: null,
+            videoUrl: 'https://youtube.com/watch?v=2'
+          }
+        ]
+      });
+
+      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
+
+      const result = await repository.findByNumber('op.1');
+
+      expect(result?.gallery).toHaveLength(3);
+      expect(result?.gallery?.[0]).toEqual({
+        id: 'gal1',
+        src: 'image1.jpg',
+        description: { uk: 'Опис 1', en: 'Desc 1' },
+        altText: { uk: 'Альт 1', en: 'Alt 1' },
+        crop: { x: 10, y: 20, width: 100, height: 200 }
+      });
+      expect(result?.gallery?.[1]?.crop).toBeNull();
+      expect(result?.gallery?.[2]?.id).toBe('');
+
+      expect(result?.performances).toHaveLength(2);
+      expect(result?.performances?.[0]).toEqual({
+        id: 'perf1',
+        title: { uk: 'Виступ 1', en: 'Perf 1' },
+        videoUrl: 'https://youtube.com/watch?v=1'
+      });
+      expect(result?.performances?.[1]?.id).toBe('');
+    });
   });
 
   describe('findAll', () => {
+    const mockChain = () => ({
+      sort: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      lean: jest.fn().mockResolvedValue([createMockOpusDoc()])
+    });
+
     it('filters by status and sorts', async () => {
-      const chain = {
-        sort: jest.fn().mockReturnThis(),
-        skip: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockReturnThis(),
-        lean: jest.fn().mockResolvedValue([createMockOpusDoc()])
-      };
+      const chain = mockChain();
       findMock.mockReturnValue(chain);
 
       const result = await repository.findAll({
         statuses: [OpusStatus.Draft],
+        numberKind: OpusNumberKind.Op,
         sort: [{ sortBy: 'number', sortOrder: SortOrder.Asc }]
       });
 
       expect(result).toHaveLength(1);
       expect(chain.sort).toHaveBeenCalledWith({ number: 1 });
+    });
+
+    it('applies fallback logic for numberKind === Op inside buildQuery', async () => {
+      const chain = mockChain();
+      findMock.mockReturnValue(chain);
+
+      await repository.findAll({
+        numberKind: OpusNumberKind.Op
+      });
+
+      expect(findMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          $or: [
+            { numberKind: OpusNumberKind.Op },
+            { numberKind: { $exists: false } },
+            { numberKind: null }
+          ]
+        })
+      );
+    });
+
+    it('applies direct filtering for other numberKind values inside buildQuery', async () => {
+      const chain = mockChain();
+      findMock.mockReturnValue(chain);
+
+      await repository.findAll({
+        numberKind: OpusNumberKind.Woo
+      });
+
+      expect(findMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          numberKind: OpusNumberKind.Woo
+        })
+      );
+    });
+
+    it('applies fallback for missing creationYear', async () => {
+      const doc = createMockOpusDoc({ creationYear: undefined });
+      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
+
+      const result = await repository.findByNumber('op.1');
+
+      expect(result?.creationYear).toBe('');
+    });
+    it('uses fallback empty object when buildBaseQuery returns null', async () => {
+      const chain = mockChain();
+      findMock.mockReturnValue(chain);
+
+      (buildBaseQuery as jest.Mock).mockReturnValueOnce(null);
+
+      await repository.findAll({
+        numberKind: OpusNumberKind.Woo
+      });
+
+      expect(findMock).toHaveBeenCalledWith({
+        numberKind: OpusNumberKind.Woo
+      });
     });
   });
 });

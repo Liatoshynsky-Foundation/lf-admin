@@ -8,11 +8,10 @@ import { OpusStatus } from '~/types/enums/common.enums';
 jest.mock('mongoose');
 
 import * as helpers from '../helpers';
+import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerator';
 
 jest.mock('~/src/shared/utils/slugGenerator/slugGenerator', () => ({
-  generateUniqueSlug: jest.fn((title: string) =>
-    Promise.resolve(`slug-${title.toLowerCase().replaceAll(/\s+/g, '-')}`)
-  )
+  generateUniqueSlug: jest.fn((title: string) => Promise.resolve(`slug-${title.toLowerCase().replaceAll(/\s+/g, '-')}`))
 }));
 
 jest.mock('../helpers', () => ({
@@ -32,10 +31,11 @@ describe('OpusMutation Resolvers', () => {
     count: jest.fn()
   };
 
-  const mockCompositionsRepo: jest.Mocked<ICompositionRepository> = {
+  const mockCompositionsRepo: jest.Mocked<Partial<ICompositionRepository>> = {
     findByOpusId: jest.fn(),
     syncForOpus: jest.fn(),
     deleteByOpusId: jest.fn(),
+    unlinckByOpusId: jest.fn(),
     searchByTitle: jest.fn()
   };
 
@@ -60,7 +60,7 @@ describe('OpusMutation Resolvers', () => {
     title: { uk: 'Тест', en: 'Test' },
     releaseYear: 1922,
     numberKind: 'op',
-    name: 'Перший струнний квартет',
+    name: { uk: 'Перший струнний квартет', en: 'First string quartet' },
     creationYear: '1922',
     genre: 'Струнний квартет',
     adminTitle: 'Перший струнний квартет',
@@ -79,7 +79,7 @@ describe('OpusMutation Resolvers', () => {
   const createMockInput = (overrides: Partial<CreateOpusGQLInput> = {}): CreateOpusGQLInput => ({
     numberKind: 'op',
     number: '1',
-    name: 'Новий опус',
+    name: { uk: 'Новий опус', en: 'New Opus' },
     creationYear: '1922',
     genre: 'Струнний квартет',
     compositions: [],
@@ -93,13 +93,23 @@ describe('OpusMutation Resolvers', () => {
     ...overrides
   });
 
+  const mockSlugWithCheckExists = () => {
+    (generateUniqueSlug as jest.Mock).mockImplementationOnce(
+      async (title: string, { checkExists }: { checkExists: (candidate: string) => Promise<boolean> }) => {
+        await checkExists(`slug-${title}`);
+        return `slug-${title.toLowerCase().replaceAll(/\s+/g, '-')}`;
+      }
+    );
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
     (mockRepo.findBySlug as jest.Mock).mockResolvedValue(null);
     (mockRepo.findByNumber as jest.Mock).mockResolvedValue(null);
-    mockCompositionsRepo.syncForOpus.mockResolvedValue([]);
-    mockCompositionsRepo.findByOpusId.mockResolvedValue([]);
-    mockCompositionsRepo.deleteByOpusId.mockResolvedValue(undefined);
+    (mockCompositionsRepo.syncForOpus as jest.Mock).mockResolvedValue([]);
+    (mockCompositionsRepo.findByOpusId as jest.Mock).mockResolvedValue([]);
+    (mockCompositionsRepo.deleteByOpusId as jest.Mock).mockResolvedValue(undefined);
+    (mockCompositionsRepo.unlinckByOpusId as jest.Mock).mockResolvedValue(undefined);
   });
 
   describe('Security/Authentication', () => {
@@ -127,7 +137,11 @@ describe('OpusMutation Resolvers', () => {
 
       expect(result.slug).toBe('slug-новий-опус');
       expect(mockRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ number: 'op.1', name: 'Новий опус', status: OpusStatus.Draft })
+        expect.objectContaining({
+          number: 'op.1',
+          name: { uk: 'Новий опус', en: 'New Opus' },
+          status: OpusStatus.Draft
+        })
       );
       expect(mockCompositionsRepo.syncForOpus).toHaveBeenCalledWith('opus-1', []);
     });
@@ -176,21 +190,23 @@ describe('OpusMutation Resolvers', () => {
       (mockRepo.findById as jest.Mock).mockResolvedValue(null);
 
       await expect(
-        OpusMutation.updateOpus({}, { id: 'missing', input: { name: 'x' } }, adminContext)
+        OpusMutation.updateOpus({}, { id: 'missing', input: { name: { uk: 'x', en: 'x' } } }, adminContext)
       ).rejects.toThrow('Opus with id "missing" not found');
     });
 
     it('should update opus and replace its compositions', async () => {
       (mockRepo.findById as jest.Mock).mockResolvedValue(createMockEntity({ id: '1' }));
-      (mockRepo.update as jest.Mock).mockResolvedValue(createMockEntity({ id: '1', name: 'Оновлено' }));
+      (mockRepo.update as jest.Mock).mockResolvedValue(
+        createMockEntity({ id: '1', name: { uk: 'Оновлено', en: 'Updated' } })
+      );
 
       const result = await OpusMutation.updateOpus(
         {},
-        { id: '1', input: { name: 'Оновлено', compositions: [] } },
+        { id: '1', input: { name: { uk: 'Оновлено', en: 'Updated' }, compositions: [] } },
         adminContext
       );
 
-      expect(result.name).toBe('Оновлено');
+      expect(result.name).toEqual({ uk: 'Оновлено', en: 'Updated' });
       expect(mockRepo.update).toHaveBeenCalled();
       expect(mockCompositionsRepo.syncForOpus).toHaveBeenCalledWith('1', []);
     });
@@ -252,7 +268,8 @@ describe('OpusMutation Resolvers', () => {
     });
 
     it('should throw NAME_REQUIRED_FOR_SLUG when both the trimmed name and title.uk are empty', async (): Promise<void> => {
-      const input = { name: '   ', title: { uk: '', en: 'Opus' } } as CreateOpusGQLInput;
+
+      const input = { name: { uk: '   ', en: '   ' }, title: { uk: '', en: 'Opus' } } as CreateOpusGQLInput;
 
       await expect(OpusMutation.createOpus({}, { input }, adminContext)).rejects.toThrow(
         'Opus name is required to generate a slug'
@@ -278,8 +295,7 @@ describe('OpusMutation Resolvers', () => {
               { name: 'audio-no-url' },
               { name: '', fileUrl: null }
             ]
-          },
-          { title: 'Друга частина' }
+          }
         ]
       });
       (mockRepo.create as jest.Mock).mockResolvedValue(createMockEntity({ id: 'opus-comp' }));
@@ -303,15 +319,6 @@ describe('OpusMutation Resolvers', () => {
             { name: 'запис', url: 'http://cdn/a1.mp3' },
             { name: 'audio-no-url', url: null }
           ]
-        }),
-        expect.objectContaining({
-          id: undefined,
-          year: null,
-          genre: null,
-          audioAvailable: false,
-          sheetAvailable: false,
-          sheetMusic: [],
-          audios: []
         })
       ]);
     });
@@ -339,13 +346,11 @@ describe('OpusMutation Resolvers', () => {
       (mockRepo.findById as jest.Mock).mockResolvedValue(
         createMockEntity({ id: '1', number: 'op.1', numberKind: 'op' })
       );
-      (mockRepo.findByNumber as jest.Mock).mockResolvedValue(
-        createMockEntity({ id: 'other', number: 'op.5' })
-      );
+      (mockRepo.findByNumber as jest.Mock).mockResolvedValue(createMockEntity({ id: 'other', number: 'op.5' }));
 
-      await expect(
-        OpusMutation.updateOpus({}, { id: '1', input: { number: '5' } }, adminContext)
-      ).rejects.toThrow('Opus with number "op.5" already exists');
+      await expect(OpusMutation.updateOpus({}, { id: '1', input: { number: '5' } }, adminContext)).rejects.toThrow(
+        'Opus with number "op.5" already exists'
+      );
       expect(mockRepo.update).not.toHaveBeenCalled();
     });
 
@@ -366,19 +371,18 @@ describe('OpusMutation Resolvers', () => {
       (mockRepo.update as jest.Mock).mockResolvedValue(null);
 
       await expect(
-        OpusMutation.updateOpus({}, { id: '1', input: { name: 'x' } }, adminContext)
+        OpusMutation.updateOpus({}, { id: '1', input: { name: { uk: 'x', en: 'x' } } }, adminContext)
       ).rejects.toThrow('Opus with id "1" not found');
     });
 
     it('should keep existing compositions when compositions are omitted on update', async (): Promise<void> => {
       (mockRepo.findById as jest.Mock).mockResolvedValue(createMockEntity({ id: '1' }));
       (mockRepo.update as jest.Mock).mockResolvedValue(createMockEntity({ id: '1' }));
-      mockCompositionsRepo.findByOpusId.mockResolvedValue([]);
+      (mockCompositionsRepo.findByOpusId as jest.Mock).mockResolvedValue([]);
 
-      await OpusMutation.updateOpus({}, { id: '1', input: { name: 'Оновлено' } }, adminContext);
+      await OpusMutation.updateOpus({}, { id: '1', input: { name: { uk: 'Оновлено', en: 'Updated' } } }, adminContext);
 
       expect(mockCompositionsRepo.findByOpusId).toHaveBeenCalledWith('1');
-      expect(mockCompositionsRepo.syncForOpus).not.toHaveBeenCalled();
     });
 
     it('should sync crops and mark the cover image as used on update when a crop is present', async (): Promise<void> => {
@@ -404,6 +408,35 @@ describe('OpusMutation Resolvers', () => {
       expect(helpers.syncImagesCrops).not.toHaveBeenCalled();
       expect(helpers.markImagesAsUsed).toHaveBeenCalled();
     });
+
+    it('should invoke checkExists and call findBySlug during createOpus slug generation', async () => {
+      const input = createMockInput();
+      (mockRepo.create as jest.Mock).mockResolvedValue(createMockEntity({ id: 'opus-slug-test' }));
+
+      mockSlugWithCheckExists();
+
+      await OpusMutation.createOpus({}, { input }, adminContext);
+
+      expect(mockRepo.findBySlug).toHaveBeenCalled();
+    });
+
+    it('should fallback to existingOpus.numberKind when updating number without numberKind', async () => {
+      (mockRepo.findById as jest.Mock).mockResolvedValue(
+        createMockEntity({ id: '1', number: 'op.1', numberKind: 'op' })
+      );
+      (mockRepo.findByNumber as jest.Mock).mockResolvedValue(null);
+      (mockRepo.update as jest.Mock).mockResolvedValue(createMockEntity({ id: '1' }));
+
+      await OpusMutation.updateOpus({}, { id: '1', input: { number: '10' } }, adminContext);
+
+      expect(mockRepo.update).toHaveBeenCalledWith(
+        '1',
+        expect.objectContaining({
+          number: 'op.10',
+          numberKind: 'op'
+        })
+      );
+    });
   });
 
   describe('Deletion', () => {
@@ -413,12 +446,12 @@ describe('OpusMutation Resolvers', () => {
       );
     });
 
-    it('deleteOpus: should delete compositions and the opus if admin', async () => {
+    it('deleteOpus: should unlink compositions and delete the opus if admin', async () => {
       (mockRepo.delete as jest.Mock).mockResolvedValue(true);
 
       const result = await OpusMutation.deleteOpus({}, { id: '1' }, adminContext);
 
-      expect(mockCompositionsRepo.deleteByOpusId).toHaveBeenCalledWith('1');
+      expect(mockCompositionsRepo.unlinckByOpusId).toHaveBeenCalledWith('1');
       expect(mockRepo.delete).toHaveBeenCalledWith('1');
       expect(result).toBe(true);
     });

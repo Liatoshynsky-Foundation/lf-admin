@@ -1,14 +1,14 @@
 import { Box } from '@mui/material';
 import React from 'react';
 
-import { MenuItem } from '../row-variants/Row.types';
+import { ActionMenuGroups } from '../../dropdown-menu/ActionMenu';
 import { ContextMenu } from './ContextMenu';
 import { EditAction } from './EditAction';
 import { styles } from './RowActions.styles';
 
 type RowActionsProps = Readonly<{
   editAction?: { editHref: string; editLabel: string };
-  menuActions?: { menuItems: readonly (readonly MenuItem[])[]; menuTriggerLabel: string };
+  menuActions?: { menuItems: ActionMenuGroups; menuTriggerLabel: string };
 }>;
 
 export function RowActions({ editAction, menuActions }: RowActionsProps) {

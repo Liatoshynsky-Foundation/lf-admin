@@ -30,7 +30,6 @@ const compositionSchema = new Schema(
     year: { type: Number, default: null },
     genre: { type: String, default: null },
     genres: { type: [Schema.Types.ObjectId], ref: 'Genre', default: [] },
-    categories: { type: [Schema.Types.ObjectId], ref: 'Category', default: [] },
     audioAvailable: { type: Boolean, default: false },
     sheetAvailable: { type: Boolean, default: false },
     sheetMusic: { type: [sheetMusicSchema], default: [] },

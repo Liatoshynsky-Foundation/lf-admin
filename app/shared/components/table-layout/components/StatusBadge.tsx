@@ -5,6 +5,7 @@ import React from 'react';
 
 import TooltipCustom from '../../design-system/tooltip/Tooltip';
 import { styles } from './StatusBadge.styles';
+import { formatDate } from '~/lib/utils/formatDate';
 import Badge from '~/shared/components/badge/Badge';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
@@ -28,7 +29,7 @@ export function StatusBadge({ status, updatedAt }: StatusWithDateProps) {
 
   const isHidden = normalizedStatus === BaseContentStatuses.Hidden;
   const textStatus = isHidden ? 'Редаговано' : 'Опубліковано';
-  const formattedDate = new Date(updatedAt).toLocaleDateString('uk-UA');
+  const formattedDate = formatDate(updatedAt);
   const tooltipTitle = `${textStatus} ${formattedDate}`;
 
   return (

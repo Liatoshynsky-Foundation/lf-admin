@@ -1,12 +1,17 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+import toast from 'react-hot-toast';
 
 import { type FileDetailsSidebarFile, FileInfoSidebar } from './FileInfoSidebar';
+import { downloadFile } from '~/lib/utils/downloadFile';
+
+const mockUpdateAsset = jest.fn();
+const mockDeleteAsset = jest.fn();
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
   ...jest.requireActual('~/types/graphql/generated/graphql'),
-  useUpdateAssetMutation: () => [jest.fn(), { loading: false }],
-  useDeleteAssetMutation: () => [jest.fn(), { loading: false }]
+  useUpdateAssetMutation: () => [mockUpdateAsset, { loading: false }],
+  useDeleteAssetMutation: () => [mockDeleteAsset, { loading: false }]
 }));
 
 jest.mock('../design-system/tooltip/Tooltip', () => ({
@@ -31,6 +36,19 @@ jest.mock('~/shared/components/design-system/text-field/TextField', () => ({
 jest.mock('~/lib/utils/formatUsageCount', () => ({
   __esModule: true,
   formatUsageCount: String
+}));
+
+jest.mock('~/lib/utils/downloadFile', () => ({
+  __esModule: true,
+  downloadFile: jest.fn().mockResolvedValue(undefined)
+}));
+
+jest.mock('react-hot-toast', () => ({
+  __esModule: true,
+  default: {
+    success: jest.fn(),
+    error: jest.fn()
+  }
 }));
 
 jest.mock('~/public/icons/close.svg', () => ({ __esModule: true, default: () => <svg data-testid="CloseIcon" /> }));
@@ -74,10 +92,21 @@ jest.mock('./useAutosavedDescription', () => ({
   })
 }));
 
+jest.mock('./image-preview-modal/ImagePreviewModal', () => ({
+  __esModule: true,
+  ImagePreviewModal: ({ open, src, alt }: { open: boolean; src: string; alt: string }) =>
+    open ? <div data-testid="ImagePreviewModal" data-src={src} data-alt={alt} /> : null
+}));
+
 describe('FileInfoSidebar', () => {
   beforeEach(() => {
     commitMock.mockClear();
     setDraftMock.mockClear();
+    mockUpdateAsset.mockClear();
+    mockDeleteAsset.mockClear();
+    (downloadFile as jest.Mock).mockClear();
+    (toast.success as jest.Mock).mockClear();
+    (toast.error as jest.Mock).mockClear();
   });
 
   const baseFile: FileDetailsSidebarFile = {
@@ -121,6 +150,16 @@ describe('FileInfoSidebar', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it('should render fallback values when file is missing', () => {
+    render(<FileInfoSidebar file={null} onClose={jest.fn()} />);
+
+    expect(screen.getAllByText('—').length).toBeGreaterThan(0);
+    expect(screen.getByText('Формат: —')).toBeInTheDocument();
+    expect(screen.getByText('Розмір: —')).toBeInTheDocument();
+    expect(screen.getByText('Немає попереднього перегляду')).toBeInTheDocument();
+    expect(screen.getByTestId('desc')).toBeDisabled();
+  });
+
   it('should render ArchiveIcon when file type is archive', () => {
     const archiveFile: FileDetailsSidebarFile = { ...baseFile, type: 'archive' };
     render(<FileInfoSidebar file={archiveFile} onClose={jest.fn()} />);
@@ -142,7 +181,171 @@ describe('FileInfoSidebar', () => {
     expect(screen.getByLabelText('Завантажити')).toBeDisabled();
   });
 
-  it('should request rename and download, and open delete modal', () => {
+  it('should call onToggleStar when favorite button is clicked', () => {
+    const onToggleStar = jest.fn();
+
+    render(<FileInfoSidebar file={baseFile} onClose={jest.fn()} onToggleStar={onToggleStar} />);
+
+    fireEvent.click(screen.getByLabelText('Додати в обрані'));
+
+    expect(onToggleStar).toHaveBeenCalledWith('f1', true);
+  });
+
+  it('should show error toast when custom favorite handler fails', async () => {
+    const onToggleStar = jest.fn().mockRejectedValue(new Error('Favorite failed'));
+
+    render(<FileInfoSidebar file={baseFile} onClose={jest.fn()} onToggleStar={onToggleStar} />);
+
+    fireEvent.click(screen.getByLabelText('Додати в обрані'));
+
+    await waitFor(() => {
+      expect(onToggleStar).toHaveBeenCalledWith('f1', true);
+    });
+    expect(toast.error).toHaveBeenCalledWith('Favorite failed');
+  });
+
+  it('should update asset favorite state when onToggleStar is not provided', async () => {
+    render(<FileInfoSidebar file={baseFile} onClose={jest.fn()} />);
+
+    fireEvent.click(screen.getByLabelText('Додати в обрані'));
+
+    await waitFor(() => {
+      expect(mockUpdateAsset).toHaveBeenCalledWith({
+        variables: {
+          id: 'f1',
+          input: { isStarred: true }
+        }
+      });
+    });
+  });
+
+  it('should toggle starred file to not starred', () => {
+    const onToggleStar = jest.fn();
+    const starredFile: FileDetailsSidebarFile = { ...baseFile, isStarred: true };
+
+    render(<FileInfoSidebar file={starredFile} onClose={jest.fn()} onToggleStar={onToggleStar} />);
+
+    fireEvent.click(screen.getByLabelText('Забрати з обраних'));
+
+    expect(onToggleStar).toHaveBeenCalledWith('f1', false);
+  });
+
+  it('should show error toast when favorite update fails', async () => {
+    mockUpdateAsset.mockRejectedValueOnce(new Error('Update failed'));
+
+    render(<FileInfoSidebar file={baseFile} onClose={jest.fn()} />);
+
+    fireEvent.click(screen.getByLabelText('Додати в обрані'));
+
+    await waitFor(() => {
+      expect(mockUpdateAsset).toHaveBeenCalledTimes(1);
+    });
+    expect(toast.error).toHaveBeenCalledWith('Update failed');
+  });
+
+  it('should show fallback error toast when favorite update fails without Error instance', async () => {
+    mockUpdateAsset.mockRejectedValueOnce('Update failed');
+
+    render(<FileInfoSidebar file={baseFile} onClose={jest.fn()} />);
+
+    fireEvent.click(screen.getByLabelText('Додати в обрані'));
+
+    await waitFor(() => {
+      expect(mockUpdateAsset).toHaveBeenCalledTimes(1);
+    });
+    expect(toast.error).toHaveBeenCalledWith('Не вдалося оновити статус обраного файлу. Спробуйте пізніше.');
+  });
+
+  it('should call onDeleteRequest when delete button is clicked', () => {
+    const onDeleteRequest = jest.fn();
+
+    render(<FileInfoSidebar file={baseFile} onClose={jest.fn()} onDeleteRequest={onDeleteRequest} />);
+
+    fireEvent.click(screen.getByLabelText('Видалити'));
+
+    expect(onDeleteRequest).toHaveBeenCalledWith('f1');
+    expect(screen.queryByText('Видалення неможливе')).not.toBeInTheDocument();
+  });
+
+  it('should delete asset from local delete modal when onDeleteRequest is not provided', async () => {
+    const onClose = jest.fn();
+    const deletableFile: FileDetailsSidebarFile = { ...baseFile, usageLinks: [] };
+    const cache = {
+      evict: jest.fn(),
+      gc: jest.fn(),
+      identify: jest.fn().mockReturnValue('Asset:f1')
+    };
+
+    render(<FileInfoSidebar file={deletableFile} onClose={onClose} />);
+
+    fireEvent.click(screen.getByLabelText('Видалити'));
+    fireEvent.click(screen.getByRole('button', { name: 'Видалити' }));
+
+    await waitFor(() => {
+      expect(mockDeleteAsset).toHaveBeenCalledWith({
+        variables: { id: 'f1' },
+        update: expect.any(Function)
+      });
+    });
+    const update = mockDeleteAsset.mock.calls[0][0].update;
+    update(cache);
+
+    expect(cache.identify).toHaveBeenCalledWith({ __typename: 'Asset', id: 'f1' });
+    expect(cache.evict).toHaveBeenCalledWith({ id: 'Asset:f1' });
+    expect(cache.gc).toHaveBeenCalledTimes(1);
+    expect(toast.success).toHaveBeenCalledWith('Файл успішно видалено');
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('should close local delete modal without deleting when cancel is clicked', async () => {
+    const deletableFile: FileDetailsSidebarFile = { ...baseFile, usageLinks: [] };
+
+    render(<FileInfoSidebar file={deletableFile} onClose={jest.fn()} />);
+
+    fireEvent.click(screen.getByLabelText('Видалити'));
+    expect(screen.getByText('Підтвердити видалення')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Скасувати' }));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Підтвердити видалення')).not.toBeInTheDocument();
+    });
+    expect(mockDeleteAsset).not.toHaveBeenCalled();
+  });
+
+  it('should show error toast when local delete fails', async () => {
+    const onClose = jest.fn();
+    const deletableFile: FileDetailsSidebarFile = { ...baseFile, usageLinks: [] };
+    mockDeleteAsset.mockRejectedValueOnce(new Error('Delete failed'));
+
+    render(<FileInfoSidebar file={deletableFile} onClose={onClose} />);
+
+    fireEvent.click(screen.getByLabelText('Видалити'));
+    fireEvent.click(screen.getByRole('button', { name: 'Видалити' }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Delete failed');
+    });
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('should show fallback error toast when local delete fails without Error instance', async () => {
+    const onClose = jest.fn();
+    const deletableFile: FileDetailsSidebarFile = { ...baseFile, usageLinks: [] };
+    mockDeleteAsset.mockRejectedValueOnce('Delete failed');
+
+    render(<FileInfoSidebar file={deletableFile} onClose={onClose} />);
+
+    fireEvent.click(screen.getByLabelText('Видалити'));
+    fireEvent.click(screen.getByRole('button', { name: 'Видалити' }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Не вдалося видалити файл. Спробуйте пізніше.');
+    });
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('should request rename and download, and open delete modal', async () => {
     const onRequestAction = jest.fn();
 
     render(<FileInfoSidebar file={baseFile} onClose={jest.fn()} onRequestAction={onRequestAction} />);
@@ -152,6 +355,9 @@ describe('FileInfoSidebar', () => {
 
     fireEvent.click(screen.getByLabelText('Завантажити'));
     expect(onRequestAction).toHaveBeenCalledWith({ type: 'download', fileId: 'f1' });
+    await waitFor(() => {
+      expect(downloadFile).toHaveBeenCalledWith('https://example.com/cat.png', 'cat.png');
+    });
 
     fireEvent.click(screen.getByLabelText('Видалити'));
     expect(screen.getByText('Видалення неможливе')).toBeInTheDocument();
@@ -167,6 +373,57 @@ describe('FileInfoSidebar', () => {
     expect(img.src).toContain('/cat.png');
 
     expect(document.querySelector('.previewOverlay')).toBeTruthy();
+  });
+
+  it('should render usage text when usage link has no href', () => {
+    const fileWithPlainUsage: FileDetailsSidebarFile = {
+      ...baseFile,
+      usageLinks: [{ id: 'u1', label: 'Plain usage' }]
+    };
+
+    render(<FileInfoSidebar file={fileWithPlainUsage} onClose={jest.fn()} />);
+
+    expect(screen.getByText('Plain usage')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Plain usage' })).not.toBeInTheDocument();
+  });
+
+  it('should open image preview modal when preview is clicked', () => {
+    render(<FileInfoSidebar file={baseFile} onClose={jest.fn()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'cat.png' }));
+
+    expect(screen.getByTestId('ImagePreviewModal')).toHaveAttribute('data-src', '/cat.png');
+    expect(screen.getByTestId('ImagePreviewModal')).toHaveAttribute('data-alt', 'cat.png');
+  });
+
+  it('should open image preview modal from keyboard and overlay click', () => {
+    render(<FileInfoSidebar file={baseFile} onClose={jest.fn()} />);
+
+    fireEvent.keyDown(screen.getByRole('button', { name: 'cat.png' }), { key: 'Enter' });
+
+    expect(screen.getByTestId('ImagePreviewModal')).toHaveAttribute('data-src', '/cat.png');
+
+    fireEvent.click(screen.getByLabelText('Open image preview'));
+
+    expect(screen.getByTestId('ImagePreviewModal')).toHaveAttribute('data-alt', 'cat.png');
+  });
+
+  it('should open image preview modal from Space key', () => {
+    render(<FileInfoSidebar file={baseFile} onClose={jest.fn()} />);
+
+    fireEvent.keyDown(screen.getByRole('button', { name: 'cat.png' }), { key: ' ' });
+
+    expect(screen.getByTestId('ImagePreviewModal')).toHaveAttribute('data-src', '/cat.png');
+  });
+
+  it('should not open image preview modal from keyboard for non-image previews', () => {
+    const pdfFile: FileDetailsSidebarFile = { ...baseFile, type: 'pdf', previewUrl: '/doc-preview.png' };
+
+    render(<FileInfoSidebar file={pdfFile} onClose={jest.fn()} />);
+
+    fireEvent.keyDown(screen.getByText('cat.png').closest('.MuiBox-root') as HTMLElement, { key: 'Enter' });
+
+    expect(screen.queryByTestId('ImagePreviewModal')).not.toBeInTheDocument();
   });
 
   it('should show "Немає попереднього перегляду" when previewUrl missing', () => {

@@ -2,9 +2,10 @@
 import { Box, IconButton, Paper, Stack, Typography } from '@mui/material';
 import { EllipsisVertical } from 'lucide-react';
 import Image from 'next/image';
-import { MouseEvent, useEffect, useState } from 'react';
+import { MouseEvent, useState } from 'react';
+import toast from 'react-hot-toast';
 
-import CardMenu from '../card-layout/CardMenu';
+import ActionMenu from '../dropdown-menu/ActionMenu';
 import FileCardMenuItems from '../file-card/FileCardMenuItems';
 import LinkIcon from '~/public/icons/link.svg';
 import StarIcon from '~/public/icons/star-1.svg';
@@ -12,6 +13,7 @@ import { styles } from '~/shared/components/minimized-file-card/MinimizedFileCar
 import { useUpdateAssetMutation } from '~/types/graphql/generated/graphql';
 
 const ICON_SIZE = 20;
+const FAVORITE_UPDATE_ERROR = 'Не вдалося оновити статус обраного файлу. Спробуйте пізніше.';
 
 const FILE_TYPES = {
   img: 'img',
@@ -35,6 +37,7 @@ interface MinimizedFileCardProps {
   isSelected?: boolean;
   onClick?: () => void;
   onAction?: (action: 'rename' | 'delete' | 'download', fileId: string) => void;
+  onToggleStar?: (fileId: string, next: boolean) => Promise<void> | void;
   onMenuClick?: (e: MouseEvent<HTMLButtonElement>) => void;
 }
 
@@ -48,26 +51,11 @@ const MinimizedFileCard = ({
   isSelected = false,
   onClick,
   onAction,
+  onToggleStar,
   onMenuClick
 }: MinimizedFileCardProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [updateAsset, { loading: isUpdatingStar }] = useUpdateAssetMutation();
-
-  useEffect(() => {
-    const handleResizeOrScroll = () => {
-      if (anchorEl) {
-        setAnchorEl(null);
-      }
-    };
-
-    window.addEventListener('resize', handleResizeOrScroll);
-    window.addEventListener('scroll', handleResizeOrScroll, true);
-
-    return () => {
-      window.removeEventListener('resize', handleResizeOrScroll);
-      window.removeEventListener('scroll', handleResizeOrScroll, true);
-    };
-  }, [anchorEl]);
 
   const handleMenuClick = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -81,13 +69,20 @@ const MinimizedFileCard = ({
 
   const handleToggleStar = async () => {
     try {
+      if (onToggleStar) {
+        await onToggleStar(id, !starred);
+        return;
+      }
+
       await updateAsset({
         variables: {
           id,
           input: { isStarred: !starred }
         }
       });
-    } catch {}
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : FAVORITE_UPDATE_ERROR);
+    }
   };
 
   const handleStarClick = (e: MouseEvent<HTMLDivElement>) => {
@@ -146,7 +141,7 @@ const MinimizedFileCard = ({
           <EllipsisVertical size={ICON_SIZE} />
         </IconButton>
       </Stack>
-      <CardMenu
+      <ActionMenu
         anchorEl={anchorEl}
         onClose={handleCloseMenu}
         menuItems={FileCardMenuItems({

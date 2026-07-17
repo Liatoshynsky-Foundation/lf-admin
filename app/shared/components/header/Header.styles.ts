@@ -9,5 +9,12 @@ export const styles = {
     alignItems: 'center',
     flexWrap: 'wrap',
     gap: 2
+  },
+  
+  actionButton: {
+    '&.Mui-disabled': {
+      cursor: 'not-allowed',
+      pointerEvents: 'auto'
+    }
   }
 };

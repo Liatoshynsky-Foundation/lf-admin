@@ -1,9 +1,6 @@
 enum OpusStatus {
   draft
   published
-  hidden
-  archived
-  editing
 }
 
 enum OpusNumberKind {
@@ -11,34 +8,18 @@ enum OpusNumberKind {
   woo
 }
 
-type OpusSheetMusic {
-  url: String!
-  name: String
-  publishDate: String
-  isFree: Boolean
-  dateUploaded: String
-}
-
-type CompositionAudio {
-  name: String
-  url: String
-}
-
-type Composition {
+type OpusGalleryItem {
   id: ID!
-  opusId: ID
-  order: Int
-  title: LocalizedString!
-  year: Int
-  genre: String
-  genres: [ID!]
-  categories: [ID!]
-  audioAvailable: Boolean
-  sheetAvailable: Boolean
-  sheetMusic: [OpusSheetMusic!]
-  audios: [CompositionAudio!]
-  createdAt: String
-  updatedAt: String
+  src: String!
+  description: LocalizedString
+  altText: LocalizedString
+  crop: CropRect
+}
+
+type OpusPerformance {
+  id: ID!
+  title: LocalizedString
+  videoUrl: String
 }
 
 type Opus {
@@ -47,17 +28,24 @@ type Opus {
   numberKind: OpusNumberKind
   title: LocalizedString!
   releaseYear: Int
-  name: String
+  name: LocalizedString
   additionalText: String
-  creationYear: String
+  creationYear: String!
   endYear: String
   datesNote: String
   genre: String
   adminTitle: String
   slug: String
   description: LocalizedString
+  introDescription: LocalizedString
+  parts: LocalizedString
   keywords: LocalizedString
   coverImage: LocalizedImage
+
+  gallery: [OpusGalleryItem!]
+  performancesTitle: LocalizedString
+  performances: [OpusPerformance!]
+
   allowIndexation: LocalizedBoolean
   status: OpusStatus
   compositions: [Composition!]
@@ -95,12 +83,13 @@ input OpusFiltersInput {
   search: String
   languages: [ContentLanguage!]
   sort: [OpusSortOptions!]
+  numberKind: OpusNumberKind
 }
 
 input CreateOpusInput {
   numberKind: OpusNumberKind
   number: String
-  name: String
+  name: JSON
   additionalText: String
   creationYear: String
   endYear: String
@@ -110,6 +99,11 @@ input CreateOpusInput {
   adminTitle: String
   title: JSON!
   description: JSON
+  introDescription: JSON
+  parts: JSON
+  gallery: JSON
+  performancesTitle: JSON
+  performances: JSON
   keywords: JSON
   allowIndexation: JSON
   coverImage: JSON
@@ -120,7 +114,7 @@ input CreateOpusInput {
 input UpdateOpusInput {
   numberKind: OpusNumberKind
   number: String
-  name: String
+  name: JSON
   additionalText: String
   creationYear: String
   endYear: String
@@ -130,6 +124,11 @@ input UpdateOpusInput {
   adminTitle: String
   title: JSON
   description: JSON
+  introDescription: JSON
+  parts: JSON
+  gallery: JSON
+  performancesTitle: JSON
+  performances: JSON
   keywords: JSON
   allowIndexation: JSON
   coverImage: JSON

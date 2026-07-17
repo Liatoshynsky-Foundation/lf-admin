@@ -3,12 +3,13 @@ import { Dayjs } from 'dayjs';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import type { FilterOption } from '~/shared/components/selector/FilterSelect';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
+import { OpusCompositionData } from '~/types/opus';
 
 export type WorksTabValue = 'all' | 'opus' | 'ungrouped' | 'works';
 
 export type WorksStatusValue = (typeof WORKS_STATUSES)[number];
 export type WorksLanguageValue = 'uk' | 'en' | 'bilingual';
-export type WorksFilterId = 'status' | 'language' | 'genre';
+export type WorksFilterId = 'status' | 'language';
 
 export type WorksTabConfig = Readonly<{
   value: WorksTabValue;
@@ -34,7 +35,6 @@ export const WORKS_PAGE_TITLE = 'Творчість';
 export const WORKS_BASE_PATH = '/creativity';
 
 export const WORKS_STATUSES = [
-  BaseContentStatuses.Hidden,
   BaseContentStatuses.Draft,
   BaseContentStatuses.Published,
 ] as const;
@@ -51,24 +51,36 @@ export const WORKS_CREATE_OPTIONS: ReadonlyArray<WorksCreateOption> = [
   { id: 'group', label: 'Група', href: `${WORKS_BASE_PATH}/group/create` },
 ];
 
-
 const WORKS_LANGUAGE_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
   { value: 'uk', label: 'Українська' },
   { value: 'en', label: 'Англійська' },
   { value: 'bilingual', label: 'Двомовна' }
 ];
 
-const WORKS_GENRE_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
-  { value: 'Струнний квартет', label: 'Струнний квартет' },
-  { value: 'Романс, мистецька пісня', label: 'Романс, мистецька пісня' },
-  { value: 'Симфонія', label: 'Симфонія' },
-  { value: 'Соната', label: 'Соната' },
-  { value: 'Хор', label: 'Хор' }
+const WORKS_STATUS_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
+  {
+    value: BaseContentStatuses.Draft,
+    label: 'Приховане'
+  },
+  {
+    value: BaseContentStatuses.Published,
+    label: 'Опубліковане'
+  }
 ];
 
 export const WORKS_FILTERS: ReadonlyArray<WorksFilterConfig> = [
-  { id: 'language', label: 'Мова', options: WORKS_LANGUAGE_FILTER_OPTIONS, menuMinWidth: 205 },
-  { id: 'genre', label: 'Жанр', options: WORKS_GENRE_FILTER_OPTIONS, menuMinWidth: 220 }
+  {
+    id: 'status',
+    label: 'Статус',
+    options: WORKS_STATUS_FILTER_OPTIONS,
+    menuMinWidth: 150
+  },
+  {
+    id: 'language',
+    label: 'Мова',
+    options: WORKS_LANGUAGE_FILTER_OPTIONS,
+    menuMinWidth: 205
+  }
 ];
 
 export const WORKS_EMPTY_STATE_TITLE = 'Твори відсутні';
@@ -91,23 +103,27 @@ export interface GroupWork {
 }
 
 export interface GroupPhoto {
-  id: string;
-  src: string;
-  fileName: string;
-  caption: string;
-  altText: string;
-  crop: MediaModalResult['crop'] | null;
+  id?: string;
+  src?: string;
+  fileName?: string;
+  caption: { uk: string; en: string };
+  altText: { uk: string; en: string };
+  crop?: MediaModalResult['crop'] | null;
+
+  url?: string;
+  description?: { uk: string; en: string };
 }
 
 export interface GroupPerformance {
-  id: string;
-  url: string;
-  caption: string;
+  id?: string;
+  url?: string;
+  caption?: { uk: string; en: string };
 }
 
 export interface GroupData {
   titlePrefix: string;
   groupNumber: string;
+  genre: string;
   additionalText: string;
   groupTitle: { uk: string; en: string }; 
   creationYear: string;
@@ -116,7 +132,7 @@ export interface GroupData {
   parts: { uk: string; en: string };
   description: { uk: Record<string, unknown>; en: Record<string, unknown> };
   photos: GroupPhoto[];
-  works: GroupWork[];
+  works: OpusCompositionData[];
   performancesTitle: string;
   performances: GroupPerformance[];
   status: string;

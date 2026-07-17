@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 
 import { styles } from './GroupDetailsSection.styles';
 import { GroupDataField } from '~/constants/creativity';
+import { OPUS_FIELD_LIMITS } from '~/constants/opus';
 import { EditorLanguage } from '~/constants/publications';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 
@@ -21,20 +22,14 @@ type GroupDetailsSectionProps = {
     creationYear: string;
     endYear: string;
     dateAdditionalText: MultilingualText;
+    genre: string;
   };
-  derivedGenre: string;
   currentLanguage: EditorLanguage;
   errors: Record<string, string>;
   onChange: (field: GroupDataField, value: string, isMultilingual?: boolean) => void;
 };
 
-export const GroupDetailsSection = ({
-  data,
-  derivedGenre,
-  currentLanguage,
-  errors,
-  onChange
-}: GroupDetailsSectionProps) => {
+export const GroupDetailsSection = ({ data, currentLanguage, errors, onChange }: GroupDetailsSectionProps) => {
   const langKey = (currentLanguage === 'UA' ? 'uk' : 'en') as 'uk' | 'en';
   const [isPrefixMenuOpen, setIsPrefixMenuOpen] = useState(false);
 
@@ -114,7 +109,7 @@ export const GroupDetailsSection = ({
           <CustomTextField
             type="number"
             label="Номер"
-            value={data.groupNumber}
+            value={data.groupNumber !== undefined && data.groupNumber !== null ? String(data.groupNumber) : ''}
             onChange={(e) => onChange('groupNumber', e.target.value)}
             required
             fullWidth
@@ -204,12 +199,14 @@ export const GroupDetailsSection = ({
         <Box sx={{ flex: 4 }}>
           <CustomTextField
             label="Жанр"
-            value={derivedGenre || 'Жанри відсутні'}
+            value={data.genre || ''}
+            onChange={(e) => onChange('genre', e.target.value)}
             fullWidth
-            InputProps={{
-              readOnly: true,
-              sx: styles.readOnlyInput
+            inputProps={{
+              maxLength: OPUS_FIELD_LIMITS.genre
             }}
+            error={!!errors.genre}
+            helperText={errors.genre}
           />
         </Box>
       </Box>

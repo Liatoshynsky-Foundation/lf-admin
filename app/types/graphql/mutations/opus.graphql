@@ -20,6 +20,73 @@ mutation UpdateOpus($id: ID!, $input: UpdateOpusInput!) {
       uk
       en
     }
+    name {
+      uk
+      en
+    }
+    additionalText
+    creationYear
+    endYear
+    datesNote
+    genre
+    status
+    compositions {
+      id
+      order
+      title {
+        uk
+        en
+      }
+      genre
+      year
+      audios {
+        name
+        url
+      }
+      sheetMusic {
+        name
+        url
+        publishDate
+      }
+    }
+    introDescription {
+      uk
+      en
+    }
+    parts {
+      uk
+      en
+    }
+    gallery {
+      id
+      src
+      description {
+        uk
+        en
+      }
+      altText {
+        uk
+        en
+      }
+      crop {
+        x
+        y
+        width
+        height
+      }
+    }
+    performancesTitle {
+      uk
+      en
+    }
+    performances {
+      id
+      title {
+        uk
+        en
+      }
+      videoUrl
+    }
     updatedAt
   }
 }

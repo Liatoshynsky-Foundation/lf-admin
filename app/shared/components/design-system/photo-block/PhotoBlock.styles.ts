@@ -1,3 +1,4 @@
+
 export const PREVIEW_W = 196;
 export const PREVIEW_H = 120;
 
@@ -61,26 +62,16 @@ export const styles = {
     fontStyle: 'italic'
   },
 
+  imageActionButton: {
+    gap: '8px'
+  },
+
   editButton: {
     width: '127px',
-
-    '& .MuiButton-startIcon svg': {
-      marginRight: '-8px',
-      width: '16px',
-      height: '24px',
-      marginTop: '6px'
-    }
   },
 
   changeButton: {
     width: '190px',
-
-    '& .MuiButton-startIcon svg': {
-      marginRight: '-8px',
-      width: '16px',
-      height: '24px',
-      marginTop: '6px'
-    }
   },
 
   fileNameText: {
