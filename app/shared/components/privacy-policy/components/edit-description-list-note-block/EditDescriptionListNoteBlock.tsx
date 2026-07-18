@@ -24,7 +24,7 @@ export type BlockWithDescriptionListNote = {
 
 interface EditDescriptionListNoteBlockProps<T extends BlockWithDescriptionListNote> {
   blockId: T;
-  block: BlocksMap[T] & DescriptionListNoteStructure;
+  block: BlocksMap[T] & DescriptionListNoteStructure & { title?: LocalizedJSON; hidden?: boolean };
   title: string;
   listFieldName: Extract<keyof BlocksMap[T], string>
 }
@@ -60,14 +60,14 @@ export const EditDescriptionListNoteBlock = <T extends BlockWithDescriptionListN
   };
 
   const handleTextChange = (fieldName: 'title' | 'description' | 'note', value: JSONContent) => {
-    const currentValue = (block as unknown as Record<string, Record<'uk' | 'en', JSONContent>>)[fieldName];
+    const currentValue = block[fieldName];
     setField(pageId, blockId, fieldName as Extract<keyof BlocksMap[T], string>, {
       ...currentValue,
       [currentLocale]: value
     } as BlocksMap[T][Extract<keyof BlocksMap[T], string>]);
   };
 
-  const sectionTitleBlock = 'title' in block ? (block as { title?: Record<'uk' | 'en', JSONContent> }).title : undefined;
+  const sectionTitleBlock = block.title;
   const descriptionBlock = block.description;
   const noteBlock = block.note;
 
@@ -77,7 +77,7 @@ export const EditDescriptionListNoteBlock = <T extends BlockWithDescriptionListN
     <CollapsibleBlock
       title={headerTitle}
       grip
-      hidden={(block as { hidden?: boolean }).hidden}
+      hidden={block.hidden}
       onToggleVisibility={() => toggleBlockVisibility(pageId, blockId)}
     >
       {sectionTitleBlock && (

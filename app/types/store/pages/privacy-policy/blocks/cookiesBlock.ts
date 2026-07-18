@@ -1,4 +1,4 @@
-import type { LocalizedJSON } from '~/types/common';
+import type { LocalizedJSON, WithHidden } from '~/types/common';
 
 export type CookiesItemWithId = {
   id: string;
@@ -9,5 +9,4 @@ export type CookiesBlock = {
   description: LocalizedJSON;
   list: CookiesItemWithId[];
   note: LocalizedJSON;
-  hidden?: boolean;
-};
+} & WithHidden;

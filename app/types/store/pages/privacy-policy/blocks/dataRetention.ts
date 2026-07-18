@@ -1,7 +1,6 @@
-import { LocalizedJSON } from '~/types/common';
+import { LocalizedJSON, WithHidden } from '~/types/common';
 
 export type DataRetentionBlock = {
     title: LocalizedJSON;
     description: LocalizedJSON;
-    hidden?: boolean;
-}
+} & WithHidden

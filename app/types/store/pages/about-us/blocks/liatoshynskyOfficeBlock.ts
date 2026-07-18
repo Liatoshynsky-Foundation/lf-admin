@@ -1,9 +1,8 @@
 import { JSONContent } from '@tiptap/react';
 
-import { TipTapQuoteBlock } from '~/types/common';
+import { TipTapQuoteBlock, WithHidden } from '~/types/common';
 
-export interface LiatoshynskyOfficeBlock {
+export interface LiatoshynskyOfficeBlock extends WithHidden {
   quote: TipTapQuoteBlock;
   title?: Record<'uk' | 'en', JSONContent>;
-  hidden?: boolean;
 }

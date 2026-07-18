@@ -109,3 +109,7 @@ export const WrapError = <T>(err: ErrorMessage): Result<T> => ({ ok: false, erro
 
 export const isSuccess = <T>(r: Result<T>): r is { ok: true; value: T } => r.ok;
 export const isError = <T>(r: Result<T>): r is { ok: false; error: ErrorMessage } => !r.ok;
+
+export interface WithHidden {
+  hidden: boolean;
+}

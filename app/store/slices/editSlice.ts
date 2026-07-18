@@ -150,9 +150,6 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
 
     if (!prevBlock) return;
 
-    // `hidden` is an optional, block-agnostic flag: not every block type in
-    // BlocksMap declares it (account-related blocks intentionally don't),
-    // so we narrow it locally instead of widening the shared type union.
     const isHidden = (prevBlock as { hidden?: boolean }).hidden;
 
     const newBlock = {
