@@ -95,7 +95,7 @@ jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
   default: ({ children }: { children: React.ReactNode }) => <div data-testid="collapsible-block">{children}</div>
 }));
 
-jest.mock('~/lib/utils/prose', () => ({ proseToText: String }));
+jest.mock('~/lib/utils/prose', () => ({ proseToText: String, proseToHeaderText: (doc: unknown, fallback: string) => (doc ? String(doc) : fallback) }));
 
 const mockNodes = {
   org: createDocNode('Organisation Text'),

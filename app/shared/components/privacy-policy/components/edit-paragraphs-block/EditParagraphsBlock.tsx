@@ -59,10 +59,18 @@ export const EditParagraphsBlock = <T extends BlockIdsWithDescription>({ blockId
   const blockTitle = 'title' in block ? (block as { title?: Record<'uk' | 'en', JSONContent> }).title : undefined;
 
   const onTitleChange = (value: JSONContent) => {
-    setField(pageId, blockId, 'title', {
-      ...blockTitle,
+    const fallbackTitle: Record<'uk' | 'en', JSONContent> = { uk: {} as JSONContent, en: {} as JSONContent };
+    const newTitle = {
+      ...(blockTitle ?? fallbackTitle),
       [currentLocale]: value
-    });
+    };
+
+    setField(
+      pageId,
+      blockId,
+      'title' as Extract<keyof BlocksMap[T], string>,
+      newTitle as BlocksMap[T][Extract<keyof BlocksMap[T], string>]
+    );
   };
 
   if (!paragraphs || paragraphs.length === 0) return null;
@@ -73,7 +81,7 @@ export const EditParagraphsBlock = <T extends BlockIdsWithDescription>({ blockId
     <CollapsibleBlock
       title={headerTitle}
       grip
-      hidden={block.hidden}
+      hidden={(block as { hidden?: boolean }).hidden}
       onToggleVisibility={() => toggleBlockVisibility(pageId, blockId)}
     >
       {blockTitle && (

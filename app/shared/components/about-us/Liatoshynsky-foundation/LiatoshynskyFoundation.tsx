@@ -44,7 +44,7 @@ export const LiatoshynskyFoundation = () => {
 
   type LocalizedProse = Record<'uk' | 'en', JSONContent>;
 
-  const paragraphKeys: (keyof typeof block)[] = ['ourName', 'ourBelief'];
+  const paragraphKeys: ('ourName' | 'ourBelief')[] = ['ourName', 'ourBelief'];
 
   const paragraphs = paragraphKeys.map((key) => {
     const localized = block[key] as LocalizedProse;

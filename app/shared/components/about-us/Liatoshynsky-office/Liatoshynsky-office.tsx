@@ -25,8 +25,10 @@ export const LiatoshynskyOffice = () => {
   if (!block) return <EditBlockSkeleton />;
 
   const handleSectionTitleChange = (val: JSONContent) => {
+    const fallbackTitle: Record<'uk' | 'en', JSONContent> = { uk: {} as JSONContent, en: {} as JSONContent };
+
     setField(pageId, blockId, 'title', {
-      ...block.title,
+      ...(block.title ?? fallbackTitle),
       [currentLocale]: val
     });
   };
