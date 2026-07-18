@@ -1,18 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { expect, fn, userEvent, within } from '@storybook/test';
+import { expect, userEvent, within } from '@storybook/test';
 import { graphql, HttpResponse } from 'msw';
 
+import { resetContainerMock } from '../../.storybook/mocks/container';
 import { getRouter } from '../../.storybook/mocks/next-navigation';
 import { withMswHandlers } from '../../.storybook/msw';
 import ResetPasswordPage from './page';
-
-const mockExecute = fn();
-
-jest.mock('~/container/index', () => ({
-  createRootContainer: jest.fn(() => ({
-    resolve: jest.fn(() => ({ execute: mockExecute }))
-  }))
-}));
 
 const meta = {
   title: 'Pages/ResetPasswordPage',
@@ -25,8 +18,7 @@ const meta = {
     nextNavigation: { pathname: '/reset-password' }
   },
   beforeEach: () => {
-    mockExecute.mockReset();
-    mockExecute.mockResolvedValue(true);
+    resetContainerMock();
   }
 } satisfies Meta<typeof ResetPasswordPage>;
 
