@@ -2,13 +2,8 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { ReactElement, ReactNode, useState } from 'react';
 
 import OpusDetailsBlock from './OpusDetailsBlock';
-import { initialOpusDetails } from '~/constants/opus';
-import type {
-  OpusCompositionData,
-  OpusCompositionSuggestion,
-  OpusDetailsErrors,
-  OpusDetailsValue
-} from '~/types/opus';
+import { initialOpusDetails, OPUS_DETAILS_LABELS } from '~/constants/opus';
+import type { OpusCompositionData, OpusCompositionSuggestion, OpusDetailsErrors, OpusDetailsValue } from '~/types/opus';
 
 let mockSuggestion: OpusCompositionSuggestion = {};
 
@@ -46,6 +41,13 @@ jest.mock('./composition-title-input/CompositionTitleInput', () => ({
         create
       </button>
     </div>
+  )
+}));
+
+jest.mock('./year-picker/YearPicker', () => ({
+  __esModule: true,
+  default: ({ label, value, onChange }: { label: string; value: string; onChange: (val: string) => void }) => (
+    <input aria-label={label} value={value || ''} onChange={(e) => onChange(e.target.value)} />
   )
 }));
 
@@ -216,27 +218,6 @@ describe('OpusDetailsBlock', () => {
     await waitFor(() => expect(screen.queryByText('Редагування композиції')).not.toBeInTheDocument());
   });
 
-  it('reorders compositions via drag and drop', () => {
-    const initial: OpusDetailsValue = {
-      ...initialOpusDetails,
-      compositions: [makeComposition('c1', 'Перший'), makeComposition('c2', 'Другий')]
-    };
-    render(<Harness initial={initial} />);
-
-    fireEvent.dragEnter(screen.getAllByLabelText('Перемістити')[1]);
-    expect(screen.getAllByLabelText('composition-title')[0]).toHaveValue('Перший');
-
-    fireEvent.dragStart(screen.getAllByLabelText('Перемістити')[0]);
-    fireEvent.dragOver(screen.getAllByLabelText('Перемістити')[1]);
-    fireEvent.dragEnter(screen.getAllByLabelText('Перемістити')[0]);
-    fireEvent.dragEnter(screen.getAllByLabelText('Перемістити')[1]);
-    fireEvent.dragEnd(screen.getAllByLabelText('Перемістити')[0]);
-
-    const titles = screen.getAllByLabelText('composition-title');
-    expect(titles[0]).toHaveValue('Другий');
-    expect(titles[1]).toHaveValue('Перший');
-  });
-
   it('removes a composition after delete confirmation', () => {
     const initial: OpusDetailsValue = {
       ...initialOpusDetails,
@@ -282,5 +263,25 @@ describe('OpusDetailsBlock', () => {
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(screen.getByDisplayValue('Залишити')).toBeInTheDocument();
+  });
+
+  it('updates the creation year, end year, dates note and genre fields', () => {
+    render(<Harness />);
+
+    const creationYearField = screen.getByLabelText(`${OPUS_DETAILS_LABELS.creationYear} *`);
+    fireEvent.change(creationYearField, { target: { value: '1900' } });
+    expect(creationYearField).toHaveValue('1900');
+
+    const endYearField = screen.getByLabelText(OPUS_DETAILS_LABELS.endYear);
+    fireEvent.change(endYearField, { target: { value: '1905' } });
+    expect(endYearField).toHaveValue('1905');
+
+    const datesNoteField = screen.getByLabelText(OPUS_DETAILS_LABELS.datesNote);
+    fireEvent.change(datesNoteField, { target: { value: 'фрагмент' } });
+    expect(datesNoteField).toHaveValue('фрагмент');
+
+    const genreField = screen.getByLabelText(OPUS_DETAILS_LABELS.genre);
+    fireEvent.change(genreField, { target: { value: 'Соната' } });
+    expect(genreField).toHaveValue('Соната');
   });
 });

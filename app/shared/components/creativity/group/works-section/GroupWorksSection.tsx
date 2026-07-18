@@ -1,12 +1,14 @@
-import { Box, IconButton, Typography } from '@mui/material';
-import { Pencil, Trash2 } from 'lucide-react';
+import { DragEndEvent } from '@dnd-kit/core';
+import { Box, Typography } from '@mui/material';
 
 import { styles } from './GroupWorksSection.styles';
+import { SortableWorkRow } from './SortableWorkRow';
 import Button from '~/components/design-system/button/Button';
 import { OPUS_DETAILS_LABELS } from '~/constants/opus';
+import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
 import CompositionModal from '~/shared/components/forms/opus-details-block/composition-modal/CompositionModal';
-import CompositionTitleInput from '~/shared/components/forms/opus-details-block/composition-title-input/CompositionTitleInput';
+import { SortableList } from '~/shared/components/sortable-list/SortableList';
 import { useCompositionsForm } from '~/shared/hooks/use-compositions/useCompositions';
 import type { OpusCompositionData } from '~/types/opus';
 
@@ -32,6 +34,10 @@ export const GroupWorksSection = ({ works, onChange }: GroupWorksSectionProps) =
     handleDeleteConfirm
   } = useCompositionsForm(works, onChange);
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    handleSortableDragEnd(event, works, onChange);
+  };
+
   return (
     <Box sx={styles.container}>
       <Box sx={styles.compositionsHeader}>
@@ -43,30 +49,20 @@ export const GroupWorksSection = ({ works, onChange }: GroupWorksSectionProps) =
       </Box>
 
       <Box sx={styles.compositionsList}>
-        {works.map((composition, index) => (
-          <Box
-            key={composition.id}
-            sx={{
-              ...(styles.compositionRow as object)
-            }}
-          >
-            <Box sx={styles.compositionInput}>
-              <CompositionTitleInput
-                value={composition.title}
-                onChangeText={(title) => updateCompositionTitle(composition.id, title)}
-                onSelectSuggestion={(suggestion) => fillComposition(index, suggestion)}
-                onCreateNew={() => openCreateModal(index)}
-              />
-            </Box>
-
-            <IconButton aria-label="Редагувати" onClick={() => openEditModal(index)} sx={styles.rowIcon}>
-              <Pencil size={18} strokeWidth={1.5} />
-            </IconButton>
-            <IconButton aria-label="Видалити" onClick={() => setDeleteTargetId(composition.id)} sx={styles.rowIcon}>
-              <Trash2 size={18} strokeWidth={1.5} />
-            </IconButton>
-          </Box>
-        ))}
+        <SortableList id="group-works-list" items={works.map((work) => work.id)} onDragEnd={handleDragEnd}>
+          {works.map((composition, index) => (
+            <SortableWorkRow
+              key={composition.id}
+              composition={composition}
+              index={index}
+              updateCompositionTitle={updateCompositionTitle}
+              fillComposition={fillComposition}
+              openCreateModal={openCreateModal}
+              openEditModal={openEditModal}
+              setDeleteTargetId={setDeleteTargetId}
+            />
+          ))}
+        </SortableList>
       </Box>
 
       {isModalOpen && (
