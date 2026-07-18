@@ -18,10 +18,11 @@ describe('EditParagraphsBlock', () => {
     checkGrip: true,
   });
   it('should render a correct title if provided', () => {
-    usePageBlockMock.mockReturnValue({ block: createStandardMockBlock().block });
+    const blockWithoutTitle = { ...createStandardMockBlock().block, title: undefined };
+    usePageBlockMock.mockReturnValue({ block: blockWithoutTitle });
 
     render(<EditParagraphsBlock blockId={mockBlockId} title={mockTitle} />);
-    expect(screen.getByText('Initial title')).toBeInTheDocument();
+    expect(screen.getByText(mockTitle)).toBeInTheDocument();
   });
   it('should return null if block does not have description or content is empty', () => {
     usePageBlockMock.mockReturnValue({
