@@ -17,11 +17,12 @@ const mockNoteJson = createDocNode('Initial note');
 const mockSubtitleJson = createDocNode('Initial subtitle');
 const mockListItem1 = createDocNode('Initial list item 1');
 
-const mockBlock: DataWeCollectBlock = {
+const mockBlock = {
   ...standardMockBlock,
   sections: [{ id: '1', list: [{ uk: mockListItem1, en: mockListItem1 }], subtitle: { uk: mockSubtitleJson, en: mockSubtitleJson } }],
   note: { uk: mockNoteJson, en: mockNoteJson },
-};
+  hidden: false,
+} satisfies DataWeCollectBlock;
 
 describe('DataWeCollect', () => {
   runCommonBlockTests({
