@@ -19,11 +19,6 @@ export const textToProse = (text: string): ProseDoc => ({
   content: text ? [{ type: 'paragraph', content: [{ type: 'text', text }] }] : []
 });
 
-/**
- * Plain, single-line text for UI labels (e.g. a CollapsibleBlock/accordion
- * header) that must live-reflect an editable rich-text title. Falls back to
- * `fallback` when the doc is empty, so section headers never render blank.
- */
 export const proseToHeaderText = (doc?: ProseDoc, fallback = ''): string => {
   const text = proseToText(doc).replace(/\s+/g, ' ').trim();
   return text || fallback;
