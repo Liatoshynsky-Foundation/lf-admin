@@ -64,6 +64,7 @@ export interface EditState {
   ) => void;
   setPageData: <T extends Record<string, BlockData>>(pageId: string, blocks: T, blocksOrder: string[], isInit?: boolean) => void;
   setBlocksOrder: (pageId: string, blocksOrder: string[]) => void;
+  toggleBlockVisibility: <P extends string, K extends keyof BlocksMap>(pageId: P, blockId: K) => void;
   saveAsDraft: (pageId: string) => void;
   publishPage: (pageId: string) => void;
   discardChanges: (pageId: string) => void;

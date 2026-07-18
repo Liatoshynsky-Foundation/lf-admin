@@ -12,4 +12,5 @@ export type GoalItemWithId = {
 export type OurGoalsBlock = {
   title: LocalizedJSON;
   goals: GoalItemWithId[];
+  hidden?: boolean;
 };

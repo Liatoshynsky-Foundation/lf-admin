@@ -144,6 +144,34 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
     });
   },
 
+  toggleBlockVisibility: <K extends keyof BlocksMap>(pageId: string, blockId: K) => {
+    const prevPageBlocks = get().blocks[pageId] || {};
+    const prevBlock = prevPageBlocks[blockId];
+
+    if (!prevBlock) return;
+
+    // `hidden` is an optional, block-agnostic flag: not every block type in
+    // BlocksMap declares it (account-related blocks intentionally don't),
+    // so we narrow it locally instead of widening the shared type union.
+    const isHidden = (prevBlock as { hidden?: boolean }).hidden;
+
+    const newBlock = {
+      ...prevBlock,
+      hidden: !isHidden
+    } as BlocksMap[K];
+
+    set({
+      blocks: {
+        ...get().blocks,
+        [pageId]: {
+          ...prevPageBlocks,
+          [blockId]: newBlock
+        }
+      },
+      isChanged: true
+    });
+  },
+
   saveAsDraft: (_pageId: string) => {
     const newBlocks = get().blocks[_pageId];
     const newBlocksOrder = get().blocksOrder[_pageId];

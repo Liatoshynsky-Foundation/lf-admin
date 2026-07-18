@@ -6,4 +6,5 @@ export interface IntroSectionBlock {
   title: JSONContent;
   image: ImageBlock;
   quote: TipTapQuoteBlock;
+  hidden?: boolean;
 }

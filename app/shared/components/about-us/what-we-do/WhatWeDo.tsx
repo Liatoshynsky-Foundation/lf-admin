@@ -6,10 +6,11 @@ import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { ensureIds } from '~/lib/utils/ensureIds';
+import { proseToHeaderText } from '~/lib/utils/prose';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
-import { LocalizedString } from '~/types/common';
+import { LocalizedString, ProseDoc } from '~/types/common';
 import type { WhatWeDolItemWithId } from '~/types/store/pages/about-us/blocks/whatWeDoBlock';
 
 const WhatWeDo = () => {
@@ -20,15 +21,16 @@ const WhatWeDo = () => {
 
   const currentLocale: keyof LocalizedString = useStore((state) => state.locale);
   const setField = useStore((state) => state.setField);
+  const toggleBlockVisibility = useStore((state) => state.toggleBlockVisibility);
 
   const itemList: WhatWeDolItemWithId[] = block ? ensureIds(block.items) : [];
-  
+
   const handleDragEnd = (event: DragEndEvent) => {
     handleSortableDragEnd(event, itemList, (reordered) => {
       setField(pageId, blockId, 'items', reordered);
     });
   };
-  
+
   if (!block) return <EditBlockSkeleton />;
 
   const points: SectionListItem[] = itemList.map((item) => ({
@@ -67,8 +69,15 @@ const WhatWeDo = () => {
       itemList.filter((item) => item.id !== id)
     );
 
+  const headerTitle = proseToHeaderText(block.title?.[currentLocale] as ProseDoc, 'Що ми робимо');
+
   return (
-    <CollapsibleBlock title="Що ми робимо" grip>
+    <CollapsibleBlock
+      title={headerTitle}
+      grip
+      hidden={block.hidden}
+      onToggleVisibility={() => toggleBlockVisibility(pageId, blockId)}
+    >
       <EditableSectionList
         title={block.title[currentLocale]}
         onTitleChange={handleTitleChange}

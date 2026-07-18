@@ -9,4 +9,5 @@ export type CookiesBlock = {
   description: LocalizedJSON;
   list: CookiesItemWithId[];
   note: LocalizedJSON;
+  hidden?: boolean;
 };

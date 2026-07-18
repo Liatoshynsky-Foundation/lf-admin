@@ -8,4 +8,5 @@ export type DataUsageBlock = {
   title: LocalizedJSON;
   description: LocalizedJSON;
   list: DataUsageItemWithId[];
+  hidden?: boolean;
 };

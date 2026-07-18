@@ -3,6 +3,7 @@ import { JSONContent } from '@tiptap/react';
 import { ImageType } from '~/types/common';
 
 export type FoundationInfo = {
+  title: Record<'uk' | 'en', JSONContent>;
   ourOrganisation: Record<'uk' | 'en', JSONContent>;
   ourName: Record<'uk' | 'en', JSONContent
   >;
@@ -14,4 +15,5 @@ export type FoundationInfo = {
     bigImage: ImageType;
     list: Record<'uk' | 'en', JSONContent>[];
   };
+  hidden?: boolean;
 };

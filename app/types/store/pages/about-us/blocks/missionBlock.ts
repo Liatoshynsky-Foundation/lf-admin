@@ -14,4 +14,5 @@ export type OurMissionBlock = {
   smallImage: ImageType;
   bigImage: ImageType;
   list: MissionListItem[];
+  hidden?: boolean;
 };

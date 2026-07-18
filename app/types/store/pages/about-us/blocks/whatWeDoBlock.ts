@@ -12,4 +12,5 @@ export type WhatWeDolItemWithId = {
 export type WhatWeDoBlock = {
   title: LocalizedJSON;
   items: WhatWeDolItemWithId[];
+  hidden?: boolean;
 };

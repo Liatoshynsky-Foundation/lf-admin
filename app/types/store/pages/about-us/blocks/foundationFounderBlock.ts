@@ -14,4 +14,5 @@ export type FoundationFoundersBlock = {
   titleText: LocalizedJSON;
   listTitle: LocalizedJSON;
   members: TeamMember[];
+  hidden?: boolean;
 };

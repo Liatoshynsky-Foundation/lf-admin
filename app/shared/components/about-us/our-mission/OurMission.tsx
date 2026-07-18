@@ -17,11 +17,12 @@ import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock
 import { ImagePreviewBlock } from '~/ds-components/photo-block/PhotoBlock';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { ensureIds } from '~/lib/utils/ensureIds';
+import { proseToHeaderText } from '~/lib/utils/prose';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 import { ConfigurableListItem } from '~/types/accordionBlocks';
-import { CropResult, LocalizedJSON } from '~/types/common';
+import { CropResult, LocalizedJSON, ProseDoc } from '~/types/common';
 import { MissionListItemWithId } from '~/types/store/pages/about-us/blocks/missionBlock';
 import { getImageUrl } from '~/utils/getImageUrl';
 
@@ -71,8 +72,9 @@ const OurMission = () => {
 
   const { block } = usePageBlock(pageId, blockId);
   const setField = useStore((state) => state.setField);
+  const toggleBlockVisibility = useStore((state) => state.toggleBlockVisibility);
   const missionList: MissionListItemWithId[] = block ? ensureIds(block.list) : [];
-  
+
   const handleDragEnd = (event: DragEndEvent) => {
     handleSortableDragEnd(event, missionList, (reordered) => {
       setField(pageId, blockId, 'list', reordered);
@@ -132,8 +134,15 @@ const OurMission = () => {
   };
 
 
+  const headerTitle = proseToHeaderText(block.title?.[currentLocale] as ProseDoc, 'Наша місія');
+
   return (
-    <CollapsibleBlock title="Наша місія" grip>
+    <CollapsibleBlock
+      title={headerTitle}
+      grip
+      hidden={block.hidden}
+      onToggleVisibility={() => toggleBlockVisibility(pageId, blockId)}
+    >
       <Box sx={styles.wrapper}>
         <CustomTextField
           fieldType="formatting"

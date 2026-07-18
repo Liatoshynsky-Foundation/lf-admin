@@ -14,4 +14,5 @@ export type DataWeCollectBlock = {
   sections: DataWeCollectItemWithId[];
   description: LocalizedJSON;
   note: LocalizedJSON;
+  hidden?: boolean;
 };

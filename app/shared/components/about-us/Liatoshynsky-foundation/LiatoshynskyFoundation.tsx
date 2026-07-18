@@ -7,7 +7,8 @@ import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
 import { FoundationBlock } from './foundation-block/FoundationBlock';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
-import { proseToText } from '~/lib/utils/prose';
+import { CustomTextField } from '~/ds-components/text-field/TextField';
+import { proseToHeaderText, proseToText } from '~/lib/utils/prose';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
@@ -20,10 +21,18 @@ export const LiatoshynskyFoundation = () => {
   const { block } = usePageBlock(pageId, blockId);
 
   const setField = useStore((state) => state.setField);
+  const toggleBlockVisibility = useStore((state) => state.toggleBlockVisibility);
 
   const currentLocale: 'uk' | 'en' = useStore((state) => state.locale);
 
   if (!block) return <EditBlockSkeleton />;
+
+  const handleTitleChange = (val: JSONContent) => {
+    setField(pageId, blockId, 'title', {
+      ...block.title,
+      [currentLocale]: val
+    });
+  };
 
   const mainText = block.ourOrganisation?.[currentLocale];
   const handleMainTextChange = (val: JSONContent) => {
@@ -52,8 +61,22 @@ export const LiatoshynskyFoundation = () => {
     });
   };
 
+  const headerTitle = proseToHeaderText(block.title?.[currentLocale] as ProseDoc, 'Фундація Лятошинського');
+
   return (
-    <CollapsibleBlock title="Фундація Лятошинського" grip>
+    <CollapsibleBlock
+      title={headerTitle}
+      grip
+      hidden={block.hidden}
+      onToggleVisibility={() => toggleBlockVisibility(pageId, blockId)}
+    >
+      <CustomTextField
+        fieldType="formatting"
+        title="Заголовок секції"
+        label="Текст заголовку"
+        value={block.title?.[currentLocale]}
+        onChange={handleTitleChange}
+      />
       <FoundationBlock
         mainText={mainText}
         paragraphs={paragraphs}

@@ -2,11 +2,13 @@ import { JSONContent } from '@tiptap/react';
 import { useRef } from 'react';
 
 import { PAGE_IDS } from '~/constants/pageBlocks';
+import { proseToHeaderText } from '~/lib/utils/prose';
 import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 import { EditBlockSkeleton } from '~/shared/components/edit-block-skeleton/EditBlockSkeleton';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
+import { ProseDoc } from '~/types/common';
 import { BlocksMap } from '~/types/store/pages';
 
 type BlockIdsWithDescription = {
@@ -26,10 +28,11 @@ export const EditParagraphsBlock = <T extends BlockIdsWithDescription>({ blockId
   const { block } = usePageBlock(pageId, blockId);
   const currentLocale = useStore((state) => state.locale);
   const setField = useStore((state) => state.setField);
+  const toggleBlockVisibility = useStore((state) => state.toggleBlockVisibility);
 
   const paragraphs = block?.description[currentLocale].content || [];
   const stableIds = useRef<string[]>([]);
-  
+
   if (stableIds.current.length === 0) {
     stableIds.current = paragraphs.map(() => crypto.randomUUID());
   }
@@ -53,10 +56,36 @@ export const EditParagraphsBlock = <T extends BlockIdsWithDescription>({ blockId
     setField(pageId, blockId, 'description', newDescription);
   };
 
+  const blockTitle = 'title' in block ? (block as { title?: Record<'uk' | 'en', JSONContent> }).title : undefined;
+
+  const onTitleChange = (value: JSONContent) => {
+    setField(pageId, blockId, 'title', {
+      ...blockTitle,
+      [currentLocale]: value
+    });
+  };
+
   if (!paragraphs || paragraphs.length === 0) return null;
 
+  const headerTitle = proseToHeaderText(blockTitle?.[currentLocale] as ProseDoc, title);
+
   return (
-    <CollapsibleBlock title={title} grip>
+    <CollapsibleBlock
+      title={headerTitle}
+      grip
+      hidden={block.hidden}
+      onToggleVisibility={() => toggleBlockVisibility(pageId, blockId)}
+    >
+      {blockTitle && (
+        <CustomTextField
+          fieldType="formatting"
+          title="Заголовок секції"
+          label="Текст заголовку"
+          value={blockTitle[currentLocale]}
+          onChange={onTitleChange}
+        />
+      )}
+
       {paragraphs.map((paragraphNode, i) =>
         (
           <CustomTextField

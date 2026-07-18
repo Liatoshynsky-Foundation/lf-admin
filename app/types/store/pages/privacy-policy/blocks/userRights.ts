@@ -9,4 +9,5 @@ export type UserRightsBlock = {
     description: LocalizedJSON; 
     list: UserRightsItemWithId[];
     note: LocalizedJSON; 
+    hidden?: boolean;
 }

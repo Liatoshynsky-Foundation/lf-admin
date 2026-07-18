@@ -9,10 +9,12 @@ import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
 import { PointsList } from '../components/points-list/PointsList';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { ensureIds } from '~/lib/utils/ensureIds';
+import { proseToHeaderText } from '~/lib/utils/prose';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { usePointsList } from '~/shared/hooks/use-points-list/usePointsList';
 import { useStore } from '~/store';
+import { ProseDoc } from '~/types/common';
 import { DataUsageItemWithId } from '~/types/store/pages/privacy-policy';
 
 
@@ -23,6 +25,7 @@ export const DataUsage = () => {
   const { block } = usePageBlock(pageId, blockId);
   const currentLocale = useStore((state) => state.locale);
   const setField = useStore((state) => state.setField);
+  const toggleBlockVisibility = useStore((state) => state.toggleBlockVisibility);
 
   const rawList = block?.list || [];
   const list: DataUsageItemWithId[] = ensureIds(rawList);
@@ -50,8 +53,15 @@ export const DataUsage = () => {
     });
   };
 
+  const headerTitle = proseToHeaderText(block.title?.[currentLocale] as ProseDoc, 'Як ми використовуємо ваші дані');
+
   return (
-    <CollapsibleBlock title="Як ми використовуємо ваші дані" grip>
+    <CollapsibleBlock
+      title={headerTitle}
+      grip
+      hidden={block.hidden}
+      onToggleVisibility={() => toggleBlockVisibility(pageId, blockId)}
+    >
       <CustomTextField
         fieldType="formatting"
         title="Вступний текст секції"
