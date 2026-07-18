@@ -21,7 +21,7 @@ describe('EditParagraphsBlock', () => {
     usePageBlockMock.mockReturnValue({ block: createStandardMockBlock().block });
 
     render(<EditParagraphsBlock blockId={mockBlockId} title={mockTitle} />);
-    expect(screen.getByText(mockTitle)).toBeInTheDocument();
+    expect(screen.getByText('Initial title')).toBeInTheDocument();
   });
   it('should return null if block does not have description or content is empty', () => {
     usePageBlockMock.mockReturnValue({
