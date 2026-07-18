@@ -5,7 +5,7 @@ import { CompositionFilters } from '~/src/domain/repositories/compositionReposit
 
 interface FilterArgs {
   filters?: NonNullable<Parameters<typeof mapFilters>[0]> & {
-    opusId?: string | null;
+    isStandalone?: boolean | null;
   };
 }
 
@@ -15,7 +15,7 @@ export const CompositionsQuery = {
   allCompositions: endpointHandler<FilterArgs, Composition[]>(async ({ args: { filters }, repo }) => {
     const mappedFilters: CompositionFilters = {
       ...mapFilters<CompositionFilters>(filters),
-      opusId: filters?.opusId ?? undefined
+      isStandalone: filters?.isStandalone ?? null,
     };
 
     const compositions = await repo.findAll(mappedFilters);

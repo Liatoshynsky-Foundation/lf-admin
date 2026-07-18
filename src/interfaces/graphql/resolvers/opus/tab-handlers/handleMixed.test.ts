@@ -93,7 +93,7 @@ describe('handleMixed', () => {
     );
     expect(mappedCompositions).toHaveBeenCalledWith(
       compositionsRepo,
-      { opusId: null, skip: 0, limit: 2 }
+      { isStandalone: true, skip: 0, limit: 2 }
     );
 
     expect(result).toEqual({
@@ -122,7 +122,7 @@ describe('handleMixed', () => {
     expect(mappedGroups).not.toHaveBeenCalled();
     expect(mappedCompositions).toHaveBeenCalledWith(
       compositionsRepo,
-      { opusId: null, skip: 5, limit: 5 }
+      { isStandalone: true, skip: 5, limit: 5 }
     );
 
     expect(result).toEqual({
@@ -198,7 +198,7 @@ describe('handleMixed', () => {
       expect.objectContaining({
         search: 'test',
         statuses: ['draft'],
-        opusId: null,
+        isStandalone: true,
       })
     );
   });

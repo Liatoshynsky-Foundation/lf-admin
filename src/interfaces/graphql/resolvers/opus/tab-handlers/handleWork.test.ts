@@ -8,8 +8,7 @@ jest.mock('../../helpers', () => ({
   mapFilters: jest.fn(),
 }));
 
-
-describe('handleWorksTab', () => {
+describe('handleWorks', () => {
   const compositionsRepo = {
     count: jest.fn(),
     findAll: jest.fn(),
@@ -40,12 +39,12 @@ describe('handleWorksTab', () => {
 
     expect(compositionsRepo.count).toHaveBeenCalledWith({
       search: 'test',
-      opusId: null,
+      isStandalone: true,
     });
 
     expect(compositionsRepo.findAll).toHaveBeenCalledWith({
       search: 'test',
-      opusId: null,
+      isStandalone: true,
     });
 
     expect(result).toEqual({
@@ -71,11 +70,11 @@ describe('handleWorksTab', () => {
     );
 
     expect(compositionsRepo.count).toHaveBeenCalledWith({
-      opusId: null,
+      isStandalone: true,
     });
 
     expect(compositionsRepo.findAll).toHaveBeenCalledWith({
-      opusId: null,
+      isStandalone: true,
     });
 
     expect(result).toEqual({

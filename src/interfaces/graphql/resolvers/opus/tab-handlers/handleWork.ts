@@ -10,9 +10,9 @@ export async function handleWorksTab(
   page: number,
   pageSize: number,
 ): Promise<PaginatedWorksResult> {
-  const mappedFilters: QueryFilters<CompositionFilters> & { opusId?: string | null } = {
+  const mappedFilters: QueryFilters<CompositionFilters> = {
     ...mapFilters(filters),
-    opusId: null
+    isStandalone: true
   };
   const worksResult = await mappedCompositions(compositionsRepo, mappedFilters);
   

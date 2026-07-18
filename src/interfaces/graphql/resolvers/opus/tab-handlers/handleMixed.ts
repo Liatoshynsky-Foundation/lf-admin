@@ -24,7 +24,7 @@ export async function handleMixed(
 
   const compositionFilters: CompositionFilters = {
     ...mapFilters<CompositionFilters>(filters),
-    opusId: null
+    isStandalone: true
   };
 
   const totalOp = await repo.count(opFilters);

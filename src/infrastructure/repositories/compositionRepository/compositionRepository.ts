@@ -55,7 +55,8 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
       return combineConditions<DbComposition>([
         query,
         fieldCondition<DbComposition>('status', filters?.statuses as unknown as string[], OpusStatus.Draft as string),
-        filters?.opusId ? { opusId: filters.opusId } : null
+        filters?.isStandalone === true ? { opusId: null } : null,
+        filters?.isStandalone === false ? { opusId: { $ne: null } } : null
       ]);
     },
     getDefaultSort: getBaseSort
