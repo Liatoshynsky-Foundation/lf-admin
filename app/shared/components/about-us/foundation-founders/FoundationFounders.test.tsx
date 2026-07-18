@@ -13,10 +13,11 @@ export interface MockContributorCardProps {
 }
 
 const setFieldMock = jest.fn();
+const toggleBlockVisibilityMock = jest.fn();
 const usePageBlockMock = jest.fn();
 jest.mock('~/store', () => ({
-  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock }) => unknown) =>
-    selector({ locale: 'uk', setField: setFieldMock })
+  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock; readonly toggleBlockVisibility: typeof toggleBlockVisibilityMock }) => unknown) =>
+    selector({ locale: 'uk', setField: setFieldMock, toggleBlockVisibility: toggleBlockVisibilityMock })
 }));
 jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: () => usePageBlockMock()
@@ -89,6 +90,12 @@ describe('FoundationFounders', () => {
 
     expect(screen.getByTestId('textfield-json-Вступний текст секції')).toHaveTextContent(JSON.stringify(mockIntroJson));
     expect(screen.getByTestId('textfield-json-Заголовок секції')).toHaveTextContent(JSON.stringify(mockListTitleJson));
+  });
+
+  it('should call toggleBlockVisibility with pageId and blockId when the visibility toggle is clicked', () => {
+    runSimulation(defaultMockBlock, 'collapsible-block-toggle-visibility');
+
+    expect(toggleBlockVisibilityMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.FOUNDATION_FOUNDERS);
   });
 
   it.each([

@@ -14,6 +14,8 @@ describe('DataUsage', () => {
     usePointsListMock,
     mockBlock: createStandardMockBlock().block,
     checkGrip: true,
+    checkToggleVisibility: true,
+    blockId: BLOCK_IDS.DATA_USAGE,
   });
 
   it('should handle drag-and-drop reordering', () => {

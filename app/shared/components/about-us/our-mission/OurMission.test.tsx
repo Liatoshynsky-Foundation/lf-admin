@@ -14,12 +14,13 @@ interface MockImagePreviewBlockProps {
 }
 
 const setFieldMock = jest.fn();
+const toggleBlockVisibilityMock = jest.fn();
 const usePageBlockMock = jest.fn();
 jest.mock('~/utils/uploadToTmpFolder', () => ({ handleUploadImage: jest.fn() }));
 jest.mock('~/types/graphql/generated/graphql', () => ({ useUploadBlobMutation: () => [jest.fn()] }));
 jest.mock('~/store', () => ({
-  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock }) => unknown) =>
-    selector({ locale: 'uk', setField: setFieldMock })
+  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock; readonly toggleBlockVisibility: typeof toggleBlockVisibilityMock }) => unknown) =>
+    selector({ locale: 'uk', setField: setFieldMock, toggleBlockVisibility: toggleBlockVisibilityMock })
 }));
 jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: () => usePageBlockMock()
@@ -155,6 +156,12 @@ describe('OurMission', () => {
       );
     }
   );
+
+  it('should call toggleBlockVisibility with pageId and blockId when the visibility toggle is clicked', () => {
+    runSimulation('collapsible-block-toggle-visibility');
+
+    expect(toggleBlockVisibilityMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_MISSION);
+  });
 
   it('should render the grip handle and handle drag-and-drop reordering', () => {
     const doubleMockBlock = {

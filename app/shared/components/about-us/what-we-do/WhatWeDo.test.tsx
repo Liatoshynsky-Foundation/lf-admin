@@ -7,10 +7,11 @@ import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { WhatWeDolItemWithId } from '~/types/store/pages/about-us/blocks/whatWeDoBlock';
 
 const setFieldMock = jest.fn();
+const toggleBlockVisibilityMock = jest.fn();
 const usePageBlockMock = jest.fn();
 jest.mock('~/store', () => ({
-  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock }) => unknown) =>
-    selector({ locale: 'uk', setField: setFieldMock })
+  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock; readonly toggleBlockVisibility: typeof toggleBlockVisibilityMock }) => unknown) =>
+    selector({ locale: 'uk', setField: setFieldMock, toggleBlockVisibility: toggleBlockVisibilityMock })
 }));
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
 jest.mock('~/components/accordion-blocks/editable-section-list/EditableSectionList');
@@ -119,6 +120,12 @@ describe('WhatWeDo', () => {
     runSimulation(triggerId);
 
     expect(setFieldMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.WHAT_WE_DO, storeKey, expectedPayload);
+  });
+
+  it('should call toggleBlockVisibility with pageId and blockId when the visibility toggle is clicked', () => {
+    runSimulation('collapsible-block-toggle-visibility');
+
+    expect(toggleBlockVisibilityMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.WHAT_WE_DO);
   });
 
   it('should render the grip handle and handle drag-and-drop reordering', () => {

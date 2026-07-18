@@ -4,6 +4,7 @@ import React from 'react';
 
 import { LiatoshynskyFoundation } from './LiatoshynskyFoundation';
 import { createDocNode } from '~/__mocks__/utils';
+import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { CropRect } from '~/types/graphql/generated/graphql';
 
 interface MockParagraph {
@@ -22,11 +23,12 @@ interface MockFoundationBlockProps {
 }
 
 const setFieldMock = jest.fn();
+const toggleBlockVisibilityMock = jest.fn();
 const usePageBlockMock = jest.fn();
 
 jest.mock('~/store', () => ({
-  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock }) => unknown) =>
-    selector({ locale: 'uk', setField: setFieldMock })
+  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock; readonly toggleBlockVisibility: typeof toggleBlockVisibilityMock }) => unknown) =>
+    selector({ locale: 'uk', setField: setFieldMock, toggleBlockVisibility: toggleBlockVisibilityMock })
 }));
 
 jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
@@ -92,7 +94,22 @@ jest.mock('./foundation-block/FoundationBlock', () => ({
 
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
-  default: ({ children }: { children: React.ReactNode }) => <div data-testid="collapsible-block">{children}</div>
+  default: ({
+    children,
+    onToggleVisibility
+  }: {
+    children: React.ReactNode;
+    onToggleVisibility?: () => void;
+  }) => (
+    <div data-testid="collapsible-block">
+      {onToggleVisibility && (
+        <button data-testid="collapsible-block-toggle-visibility" onClick={onToggleVisibility}>
+          Toggle visibility
+        </button>
+      )}
+      {children}
+    </div>
+  )
 }));
 
 jest.mock('~/lib/utils/prose', () => ({ proseToText: String, proseToHeaderText: (doc: unknown, fallback: string) => (doc ? String(doc) : fallback) }));
@@ -132,6 +149,15 @@ describe('LiatoshynskyFoundation', () => {
     expect(screen.getByTestId('paragraph-json-para-1')).toHaveTextContent(JSON.stringify(mockNodes.belief));
     expect(screen.getByTestId('image')).toHaveAttribute('src', '/api/blob-url?folderName=photos&blobName=image-src');
     expect(screen.getByTestId('file-name')).toHaveTextContent('Image Caption');
+  });
+
+  it('should call toggleBlockVisibility with pageId and blockId when the visibility toggle is clicked', () => {
+    usePageBlockMock.mockReturnValue({ block: mockBlock, blockId: 'FoundationInfo' });
+    render(<LiatoshynskyFoundation />);
+
+    fireEvent.click(screen.getByTestId('collapsible-block-toggle-visibility'));
+
+    expect(toggleBlockVisibilityMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.LIATOSHYNSKY_FOUNDATION);
   });
 
   it.each([

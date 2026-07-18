@@ -4,6 +4,7 @@ import { usePageBlockMock,useSectionListMock } from '../__mocks__/setup-mocks';
 import { createStandardMockBlock, runCommonBlockTests } from '../test-utils/block-test-factory';
 import { DataWeCollect } from './DataWeCollect';
 import { createDocNode } from '~/__mocks__/utils';
+import { BLOCK_IDS } from '~/constants/pageBlocks';
 import { DataWeCollectBlock } from '~/types/store/pages/privacy-policy';
 
 jest.mock('~/components/configurable-list/ConfigurableList');
@@ -33,6 +34,8 @@ describe('DataWeCollect', () => {
     checkList: true,
     useSectionListMock,
     checkGrip: true,
+    checkToggleVisibility: true,
+    blockId: BLOCK_IDS.DATA_WE_COLLECT,
   });
 
   it('should handle drag-and-drop reordering', () => {

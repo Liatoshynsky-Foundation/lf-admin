@@ -7,10 +7,11 @@ import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { GoalItemWithId } from '~/types/store/pages/about-us/blocks/ourGoalsBlock';
 
 const setFieldMock = jest.fn();
+const toggleBlockVisibilityMock = jest.fn();
 const usePageBlockMock = jest.fn();
 jest.mock('~/store', () => ({
-  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock }) => unknown) =>
-    selector({ locale: 'uk', setField: setFieldMock })
+  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock; readonly toggleBlockVisibility: typeof toggleBlockVisibilityMock }) => unknown) =>
+    selector({ locale: 'uk', setField: setFieldMock, toggleBlockVisibility: toggleBlockVisibilityMock })
 }));
 jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: () => usePageBlockMock()
@@ -116,6 +117,12 @@ describe('OurGoals', () => {
       );
     }
   );
+
+  it('should call toggleBlockVisibility with pageId and blockId when the visibility toggle is clicked', () => {
+    setupTest('collapsible-block-toggle-visibility');
+
+    expect(toggleBlockVisibilityMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_GOALS);
+  });
 
   it('should render the grip handle and handle drag-and-drop reordering', () => {
     const doubleMockBlock = {
