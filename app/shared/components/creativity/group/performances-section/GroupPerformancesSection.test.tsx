@@ -1,16 +1,85 @@
+import { DragEndEvent } from '@dnd-kit/core';
 import { fireEvent, render, screen } from '@testing-library/react';
-import React, { ChangeEvent, ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 
 import { GroupPerformancesSection } from './GroupPerformancesSection';
+import { PerformanceRowProps } from './PerformanceRow';
+import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 
-type MockCustomTextFieldProps = {
-  label: string;
-  value?: unknown;
-  onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
+const MOCK_UUID = 'mock-uuid-1234';
+
+const MOCK_TEXTS = {
+  sectionTitle: 'Тестовий заголовок виступів',
+  newSectionTitle: 'Нова назва секції',
+  updatedCaption: 'updated caption',
+  updatedUrl: 'updated-url'
 };
 
+const MOCK_URLS = {
+  youtube: 'https://youtube.com',
+  example: 'https://example.com',
+  youtubeWatch: 'https://youtube.com/watch?v=abc123',
+  youtubeShort: 'https://youtu.be/xyz789',
+  plainText: 'example.com/page',
+  expectedPlainLink: 'https://example.com/page'
+};
+
+const MOCK_YOUTUBE_IDS = {
+  watch: 'abc123',
+  short: 'xyz789'
+};
+
+let capturedRenderLinkPreview: ((url: string) => React.ReactNode) | null = null;
+let capturedOnDragEnd: ((event: DragEndEvent) => void) | null = null;
+
+jest.mock('./PerformanceRow', () => ({
+  PerformanceRow: ({ item, onUpdateUrl, onUpdateCaption, onDeleteRequest, renderLinkPreview }: PerformanceRowProps) => {
+    capturedRenderLinkPreview = renderLinkPreview;
+    return (
+      <div data-testid={`mock-performance-row-${item.id}`}>
+        <button
+          data-testid={`mock-update-url-${item.id}`}
+          onClick={() => onUpdateUrl(item.id ?? '', MOCK_TEXTS.updatedUrl)}
+        >
+          update url
+        </button>
+        <button
+          data-testid={`mock-update-caption-${item.id}`}
+          onClick={() => onUpdateCaption(item.id ?? '', MOCK_TEXTS.updatedCaption)}
+        >
+          update caption
+        </button>
+        <button data-testid={`mock-delete-${item.id}`} onClick={() => onDeleteRequest(item.id ?? '')}>
+          delete
+        </button>
+      </div>
+    );
+  }
+}));
+
+jest.mock('~/shared/components/sortable-list/SortableList', () => ({
+  SortableList: ({ children, onDragEnd }: { children: ReactNode; onDragEnd: (event: DragEndEvent) => void }) => {
+    capturedOnDragEnd = onDragEnd;
+    return <div data-testid="mock-sortable-list">{children}</div>;
+  }
+}));
+
+jest.mock('~/shared/components/sortable-item-wrapper/SortableItemWrapper', () => ({
+  SortableItemWrapper: ({ children, id }: { children: ReactNode; id: string }) => (
+    <div data-testid={`mock-sortable-item-${id}`}>{children}</div>
+  )
+}));
+
 jest.mock('~/shared/components/design-system/text-field/TextField', () => ({
-  CustomTextField: ({ label, value, onChange }: MockCustomTextFieldProps) => (
+  CustomTextField: ({
+    label,
+    value,
+    onChange
+  }: {
+    label: string;
+    value?: unknown;
+    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  }) => (
     <div data-testid={`mock-field-wrapper-${label}`}>
       <label htmlFor={`input-${label}`}>{label}</label>
       <input
@@ -52,9 +121,12 @@ jest.mock('~/public/icons/plus.svg', () => ({
   default: () => <span data-testid="icon-plus" />
 }));
 
-jest.mock('~/public/icons/trash.svg', () => ({
-  __esModule: true,
-  default: () => <span data-testid="icon-trash" />
+jest.mock('~/lib/utils/generateUniqueId', () => ({
+  generateUniqueId: () => 'mock-uuid-1234'
+}));
+
+jest.mock('~/lib/utils/sortableDragEndHelper', () => ({
+  handleSortableDragEnd: jest.fn()
 }));
 
 const mockOnChangeSectionTitle = jest.fn();
@@ -62,121 +134,90 @@ const mockOnChangePerformances = jest.fn();
 
 const defaultProps = {
   currentLanguage: 'UA' as const,
-  sectionTitle: 'Тестовий заголовок виступів',
+  sectionTitle: MOCK_TEXTS.sectionTitle,
   performances: [
-    { id: '1', url: 'https://youtube.com/watch?v=123', caption: { uk: 'Перший виступ', en: 'First performance' } },
-    { id: '2', url: 'https://example.com', caption: { uk: 'Другий виступ', en: 'Second performance' } }
+    { id: '1', url: MOCK_URLS.youtube, caption: { uk: 'Перший виступ', en: 'First performance' } },
+    { id: '2', url: MOCK_URLS.example, caption: { uk: 'Другий виступ', en: 'Second performance' } }
   ],
   onChangeSectionTitle: mockOnChangeSectionTitle,
   onChangePerformances: mockOnChangePerformances
 };
 
 describe('GroupPerformancesSection Component', () => {
-  const originalCrypto = global.crypto;
-
-  beforeAll(() => {
-    Object.defineProperty(global, 'crypto', {
-      value: { randomUUID: () => 'mock-uuid-1234' },
-      configurable: true
-    });
-  });
-
-  afterAll(() => {
-    Object.defineProperty(global, 'crypto', {
-      value: originalCrypto,
-      configurable: true
-    });
-  });
-
   beforeEach(() => {
     jest.clearAllMocks();
+    capturedRenderLinkPreview = null;
+    capturedOnDragEnd = null;
   });
 
-  it('should render correctly with initial props', () => {
+  it('should render section title and a row for each performance', () => {
     render(<GroupPerformancesSection {...defaultProps} />);
 
-    expect(screen.getByTestId('mock-input-Заголовок секції')).toHaveValue('Тестовий заголовок виступів');
-
-    const urlInputs = screen.getAllByTestId('mock-input-Canonical URL');
-    const captionInputs = screen.getAllByTestId('mock-input-Підпис');
-
-    expect(urlInputs).toHaveLength(2);
-    expect(urlInputs[0]).toHaveValue('https://youtube.com/watch?v=123');
-    expect(urlInputs[1]).toHaveValue('https://example.com');
-
-    expect(captionInputs).toHaveLength(2);
-    expect(captionInputs[0]).toHaveValue('Перший виступ');
-    expect(captionInputs[1]).toHaveValue('Другий виступ');
+    expect(screen.getByTestId('mock-input-Заголовок секції')).toHaveValue(MOCK_TEXTS.sectionTitle);
+    expect(screen.getByTestId('mock-performance-row-1')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-performance-row-2')).toBeInTheDocument();
   });
 
   it('should call onChangeSectionTitle when section title input changes', () => {
     render(<GroupPerformancesSection {...defaultProps} />);
 
-    const titleInput = screen.getByTestId('mock-input-Заголовок секції');
-    fireEvent.change(titleInput, { target: { value: 'Нова назва секції' } });
+    fireEvent.change(screen.getByTestId('mock-input-Заголовок секції'), {
+      target: { value: MOCK_TEXTS.newSectionTitle }
+    });
 
     expect(mockOnChangeSectionTitle).toHaveBeenCalledTimes(1);
-    expect(mockOnChangeSectionTitle).toHaveBeenCalledWith('Нова назва секції');
+    expect(mockOnChangeSectionTitle).toHaveBeenCalledWith(MOCK_TEXTS.newSectionTitle);
   });
 
   it('should add a new performance when "Додати пункт" is clicked', () => {
     render(<GroupPerformancesSection {...defaultProps} />);
 
-    const addButton = screen.getByTestId('mock-button-add');
-    fireEvent.click(addButton);
+    fireEvent.click(screen.getByTestId('mock-button-add'));
 
     expect(mockOnChangePerformances).toHaveBeenCalledTimes(1);
     expect(mockOnChangePerformances).toHaveBeenCalledWith([
       ...defaultProps.performances,
-      { id: 'mock-uuid-1234', url: '', caption: { uk: '', en: '' } }
+      { id: MOCK_UUID, url: '', caption: { uk: '', en: '' } }
     ]);
   });
 
-  it('should update performance URL correctly', () => {
+  it('should update performance URL correctly via PerformanceRow callback', () => {
     render(<GroupPerformancesSection {...defaultProps} />);
 
-    const urlInputs = screen.getAllByTestId('mock-input-Canonical URL');
-    fireEvent.change(urlInputs[0], { target: { value: 'https://new-link.com' } });
+    fireEvent.click(screen.getByTestId('mock-update-url-1'));
 
     expect(mockOnChangePerformances).toHaveBeenCalledTimes(1);
     expect(mockOnChangePerformances).toHaveBeenCalledWith([
-      { id: '1', url: 'https://new-link.com', caption: { uk: 'Перший виступ', en: 'First performance' } },
+      { ...defaultProps.performances[0], url: MOCK_TEXTS.updatedUrl },
       defaultProps.performances[1]
     ]);
   });
 
-  it('should update performance caption correctly', () => {
+  it('should update performance caption correctly via PerformanceRow callback', () => {
     render(<GroupPerformancesSection {...defaultProps} />);
 
-    const captionInputs = screen.getAllByTestId('mock-input-Підпис');
-    fireEvent.change(captionInputs[1], { target: { value: 'Оновлений підпис' } });
+    fireEvent.click(screen.getByTestId('mock-update-caption-2'));
 
     expect(mockOnChangePerformances).toHaveBeenCalledTimes(1);
     expect(mockOnChangePerformances).toHaveBeenCalledWith([
       defaultProps.performances[0],
-      { id: '2', url: 'https://example.com', caption: { uk: 'Оновлений підпис', en: 'Second performance' } }
+      { ...defaultProps.performances[1], caption: { uk: MOCK_TEXTS.updatedCaption, en: 'Second performance' } }
     ]);
   });
 
-  it('should open delete modal when trash icon is clicked', () => {
+  it('should open delete modal when delete is requested from a row', () => {
     render(<GroupPerformancesSection {...defaultProps} />);
 
     expect(screen.queryByTestId('mock-delete-modal')).not.toBeInTheDocument();
-
-    const trashIcons = screen.getAllByTestId('icon-trash');
-    fireEvent.click(trashIcons[1]);
-
+    fireEvent.click(screen.getByTestId('mock-delete-2'));
     expect(screen.getByTestId('mock-delete-modal')).toBeInTheDocument();
   });
 
   it('should delete performance when confirmed in the modal', () => {
     render(<GroupPerformancesSection {...defaultProps} />);
 
-    const trashIcons = screen.getAllByTestId('icon-trash');
-    fireEvent.click(trashIcons[0]);
-
-    const confirmButton = screen.getByTestId('modal-confirm');
-    fireEvent.click(confirmButton);
+    fireEvent.click(screen.getByTestId('mock-delete-1'));
+    fireEvent.click(screen.getByTestId('modal-confirm'));
 
     expect(mockOnChangePerformances).toHaveBeenCalledTimes(1);
     expect(mockOnChangePerformances).toHaveBeenCalledWith([defaultProps.performances[1]]);
@@ -185,77 +226,84 @@ describe('GroupPerformancesSection Component', () => {
   it('should close delete modal without deleting when canceled', () => {
     render(<GroupPerformancesSection {...defaultProps} />);
 
-    const trashIcons = screen.getAllByTestId('icon-trash');
-    fireEvent.click(trashIcons[0]);
-
-    const cancelButton = screen.getByTestId('modal-cancel');
-    fireEvent.click(cancelButton);
+    fireEvent.click(screen.getByTestId('mock-delete-1'));
+    fireEvent.click(screen.getByTestId('modal-cancel'));
 
     expect(mockOnChangePerformances).not.toHaveBeenCalled();
     expect(screen.queryByTestId('mock-delete-modal')).not.toBeInTheDocument();
   });
 
-  it('should handle empty URL and URL without HTTP protocol correctly', () => {
-    const propsWithEdgeCaseUrls = {
-      ...defaultProps,
-      performances: [
-        { id: '3', url: '', caption: { uk: 'Порожній', en: 'Empty' } },
-        { id: '4', url: 'example.com/video', caption: { uk: 'Без HTTP', en: 'No HTTP' } }
-      ]
-    };
+  it('should call handleSortableDragEnd with event, performances and onChangePerformances', () => {
+    render(<GroupPerformancesSection {...defaultProps} />);
 
-    render(<GroupPerformancesSection {...propsWithEdgeCaseUrls} />);
+    const dragEvent = { active: { id: '1' }, over: { id: '2' } } as DragEndEvent;
+    capturedOnDragEnd?.(dragEvent);
 
-    const urlInputs = screen.getAllByTestId('mock-input-Canonical URL');
-    expect(urlInputs).toHaveLength(2);
-    expect(urlInputs[0]).toHaveValue('');
-    expect(urlInputs[1]).toHaveValue('example.com/video');
+    expect(handleSortableDragEnd).toHaveBeenCalledTimes(1);
+    expect(handleSortableDragEnd).toHaveBeenCalledWith(dragEvent, defaultProps.performances, mockOnChangePerformances);
   });
 
-  it('should update caption in English and handle missing caption objects', () => {
-    const propsWithEnglish = {
+  it('should fallback caption.uk to empty string when item.caption is missing (langKey=uk)', () => {
+    const propsWithoutCaption = {
       ...defaultProps,
-      currentLanguage: 'EN' as const,
-      performances: [{ id: '3', url: 'https://youtube.com' }]
+      performances: [{ id: '3', url: MOCK_URLS.youtube }]
     };
 
-    render(<GroupPerformancesSection {...propsWithEnglish} />);
+    render(<GroupPerformancesSection {...propsWithoutCaption} />);
+    fireEvent.click(screen.getByTestId('mock-update-caption-3'));
 
-    const captionInputs = screen.getAllByTestId('mock-input-Підпис');
-    expect(captionInputs[0]).toHaveValue('');
-    fireEvent.change(captionInputs[0], { target: { value: 'Updated EN Caption' } });
     expect(mockOnChangePerformances).toHaveBeenCalledWith([
-      {
-        id: '3',
-        url: 'https://youtube.com',
-        caption: {
-          uk: '',
-          en: 'Updated EN Caption'
-        }
-      }
+      { id: '3', url: MOCK_URLS.youtube, caption: { uk: MOCK_TEXTS.updatedCaption, en: '' } }
     ]);
   });
 
-  it('should handle undefined item.id correctly (fallback to empty string)', () => {
-    const propsWithoutId = {
+  it('should fallback caption.en to empty string when item.caption is missing (langKey=en)', () => {
+    const propsWithoutCaption = {
       ...defaultProps,
-      performances: [
-        {
-          id: undefined,
-          url: 'https://test.com',
-          caption: { uk: 'Тест', en: 'Test' }
-        }
-      ]
+      currentLanguage: 'EN' as const,
+      performances: [{ id: '3', url: MOCK_URLS.youtube }]
     };
 
-    render(<GroupPerformancesSection {...propsWithoutId} />);
+    render(<GroupPerformancesSection {...propsWithoutCaption} />);
+    fireEvent.click(screen.getByTestId('mock-update-caption-3'));
 
-    const urlInput = screen.getByTestId('mock-input-Canonical URL');
-    fireEvent.change(urlInput, { target: { value: 'https://test.com/new' } });
-    const captionInput = screen.getByTestId('mock-input-Підпис');
-    fireEvent.change(captionInput, { target: { value: 'Новий підпис' } });
-    const trashIcon = screen.getByTestId('icon-trash');
-    fireEvent.click(trashIcon);
-    expect(mockOnChangePerformances).toHaveBeenCalled();
+    expect(mockOnChangePerformances).toHaveBeenCalledWith([
+      { id: '3', url: MOCK_URLS.youtube, caption: { uk: '', en: MOCK_TEXTS.updatedCaption } }
+    ]);
+  });
+
+  describe('renderLinkPreview', () => {
+    it('should return null for empty url', () => {
+      render(<GroupPerformancesSection {...defaultProps} />);
+      expect(capturedRenderLinkPreview?.('')).toBeNull();
+    });
+
+    it('should render YouTube preview for youtube.com/watch url', () => {
+      render(<GroupPerformancesSection {...defaultProps} />);
+
+      const { container } = render(<>{capturedRenderLinkPreview?.(MOCK_URLS.youtubeWatch)}</>);
+
+      const img = container.querySelector('img[alt="YouTube Preview"]');
+      expect(img).toHaveAttribute('src', `https://img.youtube.com/vi/${MOCK_YOUTUBE_IDS.watch}/mqdefault.jpg`);
+      expect(screen.getByText('Відкрити відео')).toBeInTheDocument();
+    });
+
+    it('should render YouTube preview for youtu.be short url', () => {
+      render(<GroupPerformancesSection {...defaultProps} />);
+
+      const { container } = render(<>{capturedRenderLinkPreview?.(MOCK_URLS.youtubeShort)}</>);
+
+      const img = container.querySelector('img[alt="YouTube Preview"]');
+      expect(img).toHaveAttribute('src', `https://img.youtube.com/vi/${MOCK_YOUTUBE_IDS.short}/mqdefault.jpg`);
+    });
+
+    it('should render plain link preview for non-YouTube url', () => {
+      render(<GroupPerformancesSection {...defaultProps} />);
+
+      render(<>{capturedRenderLinkPreview?.(MOCK_URLS.plainText)}</>);
+
+      const link = screen.getByText('Перейти за посиланням');
+      expect(link).toHaveAttribute('href', MOCK_URLS.expectedPlainLink);
+    });
   });
 });

@@ -1,15 +1,19 @@
-import { Box, Divider, IconButton, Tooltip, Typography } from '@mui/material';
+import { DragEndEvent } from '@dnd-kit/core';
+import { Box, Divider, Typography } from '@mui/material';
 import { useState } from 'react';
 
 import { styles } from './GroupPerformancesSection.styles';
+import { PerformanceRow } from './PerformanceRow';
 import { GroupPerformance } from '~/constants/creativity';
 import { EditorLanguage } from '~/constants/publications';
 import { generateUniqueId } from '~/lib/utils/generateUniqueId';
+import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import PlusIcon from '~/public/icons/plus.svg';
-import TrashIcon from '~/public/icons/trash.svg';
 import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
 import Button from '~/shared/components/design-system/button/Button';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
+import { SortableItemWrapper } from '~/shared/components/sortable-item-wrapper/SortableItemWrapper';
+import { SortableList } from '~/shared/components/sortable-list/SortableList';
 
 type GroupPerformancesSectionProps = {
   currentLanguage: EditorLanguage;
@@ -65,7 +69,6 @@ export const GroupPerformancesSection = ({
   onChangePerformances
 }: GroupPerformancesSectionProps) => {
   const langKey = currentLanguage === 'UA' ? 'uk' : 'en';
-
   const [performanceIdToDelete, setPerformanceIdToDelete] = useState<string | null>(null);
 
   const handleAddPerformance = () => {
@@ -85,9 +88,7 @@ export const GroupPerformancesSection = ({
   };
 
   const handleUpdateUrl = (idToUpdate: string, value: string) => {
-    onChangePerformances(
-      performances.map((item) => (item.id === idToUpdate ? { ...item, url: value } : item))
-    );
+    onChangePerformances(performances.map((item) => (item.id === idToUpdate ? { ...item, url: value } : item)));
   };
 
   const handleUpdateCaption = (idToUpdate: string, value: string) => {
@@ -99,12 +100,16 @@ export const GroupPerformancesSection = ({
             caption: {
               uk: item.caption?.uk || '',
               en: item.caption?.en || '',
-              [langKey]: value           
+              [langKey]: value
             }
           }
           : item
       )
     );
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    handleSortableDragEnd(event, performances, onChangePerformances);
   };
 
   return (
@@ -116,52 +121,34 @@ export const GroupPerformancesSection = ({
           onChange={(e) => onChangeSectionTitle(e.target.value)}
           fullWidth
         />
-
         <Box sx={styles.headerRow}>
           <Typography variant="body2" color="text.secondary" sx={styles.typographyTitle}>
             Пункти секції:
           </Typography>
           <Divider sx={styles.divider} />
         </Box>
-
+        
         <Box sx={styles.performancesList}>
-          {performances.map((item) => (
-            <Box key={item.id} sx={styles.performanceItemRow}>
-              <Box sx={styles.inputsWrapper}>
-                <Tooltip
-                  title={renderLinkPreview(item.url || '')}
-                  placement="top-start"
-                  enterDelay={400}
-                  slotProps={{
-                    tooltip: {
-                      sx: styles.tooltipBox
-                    }
-                  }}
-                >
-                  <Box sx={{ width: '100%' }}>
-                    {' '}
-                    <CustomTextField
-                      label="Canonical URL"
-                      value={item.url}
-                      onChange={(e) => handleUpdateUrl(item.id || '', e.target.value)}
-                      fullWidth
-                    />
-                  </Box>
-                </Tooltip>
-
-                <CustomTextField
-                  label="Підпис"
-                  value={item.caption?.[langKey] || ''}
-                  onChange={(e) => handleUpdateCaption(item.id || '', e.target.value)}
-                  fullWidth
-                />
-              </Box>
-
-              <IconButton onClick={() => setPerformanceIdToDelete(item.id || '')} sx={styles.actionIcon}>
-                <TrashIcon />
-              </IconButton>
-            </Box>
-          ))}
+          <SortableList
+            id="group-performances-list"
+            items={performances.map((item) => item.id)}
+            onDragEnd={handleDragEnd}
+          >
+            {performances.map((item) => (
+              <SortableItemWrapper key={item.id} id={item.id} gripPosition="top" gripHandle>
+                <Box sx={styles.performanceItemRow}>
+                  <PerformanceRow
+                    item={item}
+                    langKey={langKey}
+                    renderLinkPreview={renderLinkPreview}
+                    onUpdateUrl={handleUpdateUrl}
+                    onUpdateCaption={handleUpdateCaption}
+                    onDeleteRequest={setPerformanceIdToDelete}
+                  />
+                </Box>
+              </SortableItemWrapper>
+            ))}
+          </SortableList>
         </Box>
 
         <Box sx={styles.addBtnWrapper}>
