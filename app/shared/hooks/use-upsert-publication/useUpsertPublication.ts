@@ -206,7 +206,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     const commonInput = {
       adminTitle,
       title: { uk: ukMeta.title || adminTitle, en: enMeta.title || adminTitle },
-      description: { uk: ukMeta.description || '', en: enMeta.description || '' },
+      description: { uk: ukMeta.description, en: enMeta.description },
       keywords: { uk: ukMeta.keywords || '', en: enMeta.keywords || '' },
       allowIndexation: { uk: seoValue.allowIndexing.uk, en: seoValue.allowIndexing.en },
       publishedAt: publishDate?.toISOString(),

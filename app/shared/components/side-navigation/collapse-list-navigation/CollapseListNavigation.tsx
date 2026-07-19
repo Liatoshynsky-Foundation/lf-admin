@@ -62,12 +62,7 @@ export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({
 
   return (
     <Box sx={{ position: 'relative' }} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-      <ListElement
-        element={element}
-        open={openNavbar}
-        handleClick={openNavbar ? handleClick : undefined}
-        sxItem={{ mb: '0' }}
-      >
+      <ListElement element={element} open={openNavbar} handleClick={handleClick} sxItem={{ mb: '0' }}>
         {openNavbar && (
           <Box
             sx={{

@@ -17,10 +17,6 @@ function isAdditionalElement(item: ListElementType | AdditionalElement): item is
   return 'collapseElements' in item && 'element' in item;
 }
 
-function isLinkElement(item: ListElementType | AdditionalElement): item is ListElementType {
-  return !('collapseElements' in item && 'element' in item);
-}
-
 export const SideBarNavigation = () => {
   const [open, setOpen] = useState(true);
   const [expandedSubmenus, setExpandedSubmenus] = useState<Set<string>>(new Set());
@@ -53,25 +49,24 @@ export const SideBarNavigation = () => {
             onExpansionChange={(isExpanded) => handleSubmenuExpansion(item.element.title, isExpanded)}
           />
         );
-      } else if (isLinkElement(item)) {
-        const isLogoutBtn = item.title === 'Вийти';
-        return (
-          <LinkElement
-            key={item.title}
-            element={isLogoutBtn ? { ...item, href: '#' } : item}
-            open={open}
-            onClick={
-              isLogoutBtn
-                ? (e) => {
-                  e.preventDefault();
-                  setIsLogoutModalOpen(true);
-                }
-                : undefined
-            }
-          />
-        );
       }
-      throw new Error('Invalid navigation item');
+
+      const isLogoutBtn = item.title === 'Вийти';
+      return (
+        <LinkElement
+          key={item.title}
+          element={isLogoutBtn ? { ...item, href: '#' } : item}
+          open={open}
+          onClick={
+            isLogoutBtn
+              ? (e) => {
+                e.preventDefault();
+                setIsLogoutModalOpen(true);
+              }
+              : undefined
+          }
+        />
+      );
     });
   }
 
