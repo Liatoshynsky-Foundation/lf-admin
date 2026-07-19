@@ -87,7 +87,9 @@ jest.mock('../../create/CreatePublicationsView', () => ({
   )
 }));
 
-const mockHandleSave = jest.fn().mockResolvedValue(undefined);
+
+const handleSaveSlug = 'slug';
+const mockHandleSave = jest.fn().mockResolvedValue({ id: 11, slug: handleSaveSlug });
 
 describe('EditPublicationsPage Container', () => {
   const mockPush = jest.fn();
@@ -165,7 +167,7 @@ describe('EditPublicationsPage Container', () => {
     await waitFor(() => {
       expect(fetchPreview).toHaveBeenCalledTimes(1);
     });
-    expect(fetchPreview).toHaveBeenCalledWith({ slug: `news/${dbSlug}`, lang: 'uk', draftId: '123' });
+    expect(fetchPreview).toHaveBeenCalledWith({ slug: `news/${handleSaveSlug}`, lang: 'uk', draftId: '123' });
 
   });
 
@@ -305,7 +307,7 @@ describe('EditPublicationsPage Container', () => {
     await waitFor(() => {
       expect(fetchPreview).toHaveBeenCalledTimes(1);
     });
-    expect(fetchPreview).toHaveBeenCalledWith({ slug: `news/${dbSlug}`, lang: 'en', draftId: '123' });
+    expect(fetchPreview).toHaveBeenCalledWith({ slug: `news/${handleSaveSlug}`, lang: 'en', draftId: '123' });
   });
 
   it('should handle preview for media type', async () => {
@@ -335,6 +337,27 @@ describe('EditPublicationsPage Container', () => {
       expect(toast.error).toHaveBeenCalledWith('Помилка: String Error');
     });
   });
+
+  it.each([
+    ['handleSave returns undefined', undefined],
+    ['handleSave returns id undefined', { slug: 'slug' }],
+    ['handleSave returns slug undefined', { id: '11' }],
+  ])('should show an error toast when onPreview is triggered and %s', async (_, resolvedValue) => {
+    (useUpsertPublication as jest.Mock).mockReturnValue({
+      mockUpsertData: true,
+      handleSave: jest.fn().mockResolvedValue(resolvedValue)
+    });
+
+    render(<EditPublicationsPage />);
+
+    fireEvent.click(screen.getByTestId('trigger-preview'));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Виникла помилка підчас публікації для попереднього перегляду');
+      expect(fetchPreview).not.toHaveBeenCalled();
+    });
+  });
+
 
   it('should catch non-Error mutation errors and trigger a toast.error', async () => {
     (usePublicationManager as jest.Mock).mockReturnValue({

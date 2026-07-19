@@ -75,18 +75,23 @@ export default function EditPublicationsPage() {
       console.error('Не вдалося завантажити slug для попереднього перегляду');
       return;
     }
-    
+
     try {
       const currentStatus = BaseContentStatuses.Draft;
 
-      await publicationData.handleSave(currentStatus);
+      const result = await publicationData.handleSave(currentStatus);
+
+      if (!result?.id || !result?.slug) {
+        toast.error('Виникла помилка підчас публікації для попереднього перегляду');
+        return;
+      }
 
       await manager.updateResource(
         currentStatus,
         type === 'media' ? {} : { content: manager.editedContent }
       );
-      
-      const previewSlug = getPreviewSlug({ publicationType: type, dbSlug: slug });
+
+      const previewSlug = getPreviewSlug({ publicationType: type, dbSlug: result.slug });
       await fetchPreview({ slug: previewSlug, lang: locale, draftId: id });
     } catch (err) {
       toast.error(`Помилка: ${err instanceof Error ? err.message : String(err)}`);
