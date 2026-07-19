@@ -28,23 +28,26 @@ describe('useResearchWorksFiltering', () => {
   });
 
   describe('initial state', () => {
-    it('starts with default sort, empty filters, empty search and filters panel open', () => {
+    it('starts with default sort, empty status filter and empty search', () => {
       const { result } = renderHook(() => useResearchWorksFiltering());
 
       expect(result.current.sortValue).toBe('date_desc');
       expect(result.current.selectedFilters).toEqual({ status: [] });
-      expect(result.current.toolbarProps.isFiltersOpen).toBe(true);
-      expect(result.current.toolbarProps.activeFiltersCount).toBe(0);
+      expect(result.current.activeFiltersCount).toBe(0);
       expect(result.current.toolbarProps.search!.search).toBe('');
       expect(result.current.toolbarProps.search!.placeholder).toBe('Пошук');
     });
 
-    it('exposes a single status filter config', () => {
+    it('exposes status filter props', () => {
       const { result } = renderHook(() => useResearchWorksFiltering());
 
-      expect(result.current.toolbarProps.filters).toHaveLength(1);
-      expect(result.current.toolbarProps.filters![0].id).toBe('status');
-      expect(result.current.toolbarProps.filters![0].hideClearAction).toBe(true);
+      expect(result.current.statusFilterProps.label).toBe('Статус');
+      expect(result.current.statusFilterProps.value).toEqual([]);
+      expect(result.current.statusFilterProps.hideClearAction).toBe(true);
+      expect(result.current.statusFilterProps.options).toEqual([
+        { value: BaseContentStatuses.Published, label: 'Опубліковано' },
+        { value: BaseContentStatuses.Hidden, label: 'Приховано' }
+      ]);
     });
 
     it('sets sortProps triggerLabel to the label of the default sort option', () => {
@@ -94,53 +97,33 @@ describe('useResearchWorksFiltering', () => {
     });
   });
 
-  describe('filters panel toggle', () => {
-    it('toggles isFiltersOpen from true to false and back', () => {
-      const { result } = renderHook(() => useResearchWorksFiltering());
-
-      act(() => {
-        result.current.toolbarProps.onToggleFilters!();
-      });
-      expect(result.current.toolbarProps.isFiltersOpen).toBe(false);
-
-      act(() => {
-        result.current.toolbarProps.onToggleFilters!();
-      });
-      expect(result.current.toolbarProps.isFiltersOpen).toBe(true);
-    });
-  });
-
-  describe('filter selection', () => {
+  describe('status filter selection', () => {
     it('sets status filters and keeps only valid status entries', () => {
       const { result } = renderHook(() => useResearchWorksFiltering());
-      const statusFilter = result.current.toolbarProps.filters![0];
 
       act(() => {
-        statusFilter.onChange([BaseContentStatuses.Published, BaseContentStatuses.Hidden, 'not-a-status']);
+        result.current.statusFilterProps.onChange([
+          BaseContentStatuses.Published,
+          BaseContentStatuses.Hidden,
+          'not-a-status'
+        ]);
       });
 
       expect(result.current.selectedFilters.status).toEqual([
         BaseContentStatuses.Published,
         BaseContentStatuses.Hidden
       ]);
-      expect(result.current.toolbarProps.activeFiltersCount).toBe(2);
+      expect(result.current.activeFiltersCount).toBe(2);
     });
 
-    it('clears all filters via onClearFilters', () => {
+    it('updates statusFilterProps.value to reflect the selected filters', () => {
       const { result } = renderHook(() => useResearchWorksFiltering());
-      const statusFilter = result.current.toolbarProps.filters![0];
 
       act(() => {
-        statusFilter.onChange([BaseContentStatuses.Published]);
-      });
-      expect(result.current.toolbarProps.activeFiltersCount).toBe(1);
-
-      act(() => {
-        result.current.toolbarProps.onClearFilters!();
+        result.current.statusFilterProps.onChange([BaseContentStatuses.Published]);
       });
 
-      expect(result.current.selectedFilters).toEqual({ status: [] });
-      expect(result.current.toolbarProps.activeFiltersCount).toBe(0);
+      expect(result.current.statusFilterProps.value).toEqual([BaseContentStatuses.Published]);
     });
   });
 
@@ -196,31 +179,6 @@ describe('useResearchWorksFiltering', () => {
       expect(result.current.sortProps.fieldValue).toBe('name');
       expect(result.current.sortProps.triggerLabel).toBe('Назва (Я-А)');
       expect(window.localStorage.getItem(SORT_STORAGE_KEY)).toBe('name_desc');
-    });
-  });
-
-  describe('referential stability', () => {
-    it('keeps toolbarProps and sortProps stable across unrelated rerenders', () => {
-      const { result, rerender } = renderHook(() => useResearchWorksFiltering());
-
-      const firstToolbarProps = result.current.toolbarProps;
-      const firstSortProps = result.current.sortProps;
-
-      rerender();
-
-      expect(result.current.toolbarProps).toBe(firstToolbarProps);
-      expect(result.current.sortProps).toBe(firstSortProps);
-    });
-
-    it('produces a new toolbarProps reference after search changes', () => {
-      const { result } = renderHook(() => useResearchWorksFiltering());
-      const firstToolbarProps = result.current.toolbarProps;
-
-      act(() => {
-        result.current.toolbarProps.search!.setSearch('нове значення');
-      });
-
-      expect(result.current.toolbarProps).not.toBe(firstToolbarProps);
     });
   });
 });

@@ -1,13 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { RESEARCH_WORKS_MOCK_DATA } from './research.mock';
+import { RESEARCH_WORKS_MOCK_DATA, type ResearchWork } from './research.mock';
 import { ResearchPageContent } from './ResearchPageContent';
 import { useResearchWorksFiltering } from './useResearchWorksFiltering';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 jest.mock('./research.mock', () => ({
-  RESEARCH_WORKS_MOCK_DATA: []
+  RESEARCH_WORKS_MOCK_DATA: [] as ResearchWork[]
 }));
 
 jest.mock('./useResearchWorksFiltering', () => ({
@@ -28,17 +28,16 @@ jest.mock('~/shared/components/page-header/PageHeader', () => ({
   )
 }));
 
-jest.mock('./ResearchTable', () => ({
-  ResearchTable: ({ works }: { works: readonly { id: string }[] }) => (
-    <div data-testid="mock-research-table">{works.length}</div>
-  )
-}));
-
-jest.mock('~/shared/components/empty-state', () => ({
-  EmptyState: ({ title, description }: { title: string; description: string }) => (
-    <div data-testid="mock-empty-state">
-      <span>{title}</span>
-      <span>{description}</span>
+jest.mock('./ResearchContent', () => ({
+  ResearchContent: ({
+    visibleWorks,
+    hasActiveCriteria
+  }: {
+    visibleWorks: readonly { id: string }[];
+    hasActiveCriteria: boolean;
+  }) => (
+    <div data-testid="mock-research-content" data-has-active-criteria={String(hasActiveCriteria)}>
+      {visibleWorks.length}
     </div>
   )
 }));
@@ -64,21 +63,27 @@ describe('ResearchPageContent', () => {
       status: []
     },
     toolbarProps: {
-      search: { search: '' },
-      activeFiltersCount: 0,
-      filters: []
+      search: { search: '' }
     },
     sortProps: {
       value: 'date_desc',
       onChange: jest.fn(),
       options: []
-    }
+    },
+    statusFilterProps: {
+      label: 'Статус',
+      options: [],
+      value: [],
+      hideClearAction: true,
+      onChange: jest.fn()
+    },
+    activeFiltersCount: 0
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
     RESEARCH_WORKS_MOCK_DATA.length = 0;
-    RESEARCH_WORKS_MOCK_DATA.push(sampleWork as never);
+    RESEARCH_WORKS_MOCK_DATA.push(sampleWork);
   });
 
   it('renders page title and create action link', () => {
@@ -92,55 +97,50 @@ describe('ResearchPageContent', () => {
     expect(screen.getByText('+ Додати роботу').closest('a')).toHaveAttribute('href', '/research/create');
   });
 
-  it('renders the research table when mock data matches filters', () => {
+  it('passes filtered works to ResearchContent when mock data matches filters', () => {
     mockedUseResearchWorksFiltering.mockReturnValue(
       defaultFilteringMock as unknown as ReturnType<typeof useResearchWorksFiltering>
     );
 
     render(<ResearchPageContent />);
 
-    expect(screen.getByTestId('mock-research-table')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-research-content')).toHaveTextContent('1');
   });
 
   it('filters visible works by status when a status filter is selected', () => {
     mockedUseResearchWorksFiltering.mockReturnValue({
       ...defaultFilteringMock,
       selectedFilters: { status: ['published'] },
-      toolbarProps: { ...defaultFilteringMock.toolbarProps, activeFiltersCount: 1 }
+      activeFiltersCount: 1
     } as unknown as ReturnType<typeof useResearchWorksFiltering>);
 
     render(<ResearchPageContent />);
 
-    expect(screen.getByTestId('mock-research-table')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-research-content')).toBeInTheDocument();
   });
 
-  it('shows the default empty state when there is no data and no active criteria', () => {
-    RESEARCH_WORKS_MOCK_DATA.length = 0;
-
+  it('passes hasActiveCriteria as false when there is no search and no active filters', () => {
     mockedUseResearchWorksFiltering.mockReturnValue(
       defaultFilteringMock as unknown as ReturnType<typeof useResearchWorksFiltering>
     );
 
     render(<ResearchPageContent />);
 
-    expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
-    expect(screen.getByText('Наукових робіт ще немає.')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-research-content')).toHaveAttribute('data-has-active-criteria', 'false');
   });
 
-  it('shows the no-results empty state when search has active criteria but matches nothing', () => {
+  it('passes hasActiveCriteria as true when search has active criteria', () => {
     mockedUseResearchWorksFiltering.mockReturnValue({
       ...defaultFilteringMock,
       toolbarProps: {
-        ...defaultFilteringMock.toolbarProps,
-        search: { search: 'non-existent-random-query-string-abc-123' },
-        activeFiltersCount: 1
-      }
+        search: { search: 'non-existent-random-query-string-abc-123' }
+      },
+      activeFiltersCount: 1
     } as unknown as ReturnType<typeof useResearchWorksFiltering>);
 
     render(<ResearchPageContent />);
 
-    expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
-    expect(screen.getByText('Нічого не знайдено')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-research-content')).toHaveAttribute('data-has-active-criteria', 'true');
   });
 
   it('matches search against author, bibliographic description and keywords', () => {
@@ -154,14 +154,14 @@ describe('ResearchPageContent', () => {
 
     render(<ResearchPageContent />);
 
-    expect(screen.getByTestId('mock-research-table')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-research-content')).toHaveTextContent('1');
   });
 
   it('sorts visible works by name_asc, producing an ascending author order', () => {
     RESEARCH_WORKS_MOCK_DATA.length = 0;
     RESEARCH_WORKS_MOCK_DATA.push(
-      { ...sampleWork, id: '1', author: 'Іванов' } as never,
-      { ...sampleWork, id: '2', author: 'Архимович' } as never
+      { ...sampleWork, id: '1', author: 'Іванов' },
+      { ...sampleWork, id: '2', author: 'Архимович' }
     );
 
     mockedUseResearchWorksFiltering.mockReturnValue({
@@ -171,14 +171,14 @@ describe('ResearchPageContent', () => {
 
     render(<ResearchPageContent />);
 
-    expect(screen.getByTestId('mock-research-table')).toHaveTextContent('2');
+    expect(screen.getByTestId('mock-research-content')).toHaveTextContent('2');
   });
 
   it('sorts visible works by name_desc, producing a descending author order', () => {
     RESEARCH_WORKS_MOCK_DATA.length = 0;
     RESEARCH_WORKS_MOCK_DATA.push(
-      { ...sampleWork, id: '1', author: 'Іванов' } as never,
-      { ...sampleWork, id: '2', author: 'Архимович' } as never
+      { ...sampleWork, id: '1', author: 'Іванов' },
+      { ...sampleWork, id: '2', author: 'Архимович' }
     );
 
     mockedUseResearchWorksFiltering.mockReturnValue({
@@ -188,6 +188,16 @@ describe('ResearchPageContent', () => {
 
     render(<ResearchPageContent />);
 
-    expect(screen.getByTestId('mock-research-table')).toHaveTextContent('2');
+    expect(screen.getByTestId('mock-research-content')).toHaveTextContent('2');
+  });
+  it('passes hasActiveCriteria as true when a status filter is active even without search text', () => {
+    mockedUseResearchWorksFiltering.mockReturnValue({
+      ...defaultFilteringMock,
+      activeFiltersCount: 1
+    } as unknown as ReturnType<typeof useResearchWorksFiltering>);
+
+    render(<ResearchPageContent />);
+
+    expect(screen.getByTestId('mock-research-content')).toHaveAttribute('data-has-active-criteria', 'true');
   });
 });

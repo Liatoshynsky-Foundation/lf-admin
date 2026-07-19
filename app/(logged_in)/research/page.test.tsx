@@ -55,12 +55,7 @@ jest.mock('./useResearchWorksFiltering', () => ({
     sortValue: 'date_desc',
     selectedFilters: { status: [] },
     toolbarProps: {
-      search: { search: '', setSearch: jest.fn(), options: [], placeholder: 'Пошук' },
-      filters: [],
-      isFiltersOpen: true,
-      onToggleFilters: jest.fn(),
-      activeFiltersCount: 0,
-      onClearFilters: jest.fn()
+      search: { search: '', setSearch: jest.fn(), options: [], placeholder: 'Пошук' }
     },
     sortProps: {
       fieldOptions: [],
@@ -70,7 +65,15 @@ jest.mock('./useResearchWorksFiltering', () => ({
       triggerLabel: 'Нові спочатку',
       onFieldChange: jest.fn(),
       onValueChange: jest.fn()
-    }
+    },
+    statusFilterProps: {
+      label: 'Статус',
+      options: [],
+      value: [],
+      hideClearAction: true,
+      onChange: jest.fn()
+    },
+    activeFiltersCount: 0
   })
 }));
 
