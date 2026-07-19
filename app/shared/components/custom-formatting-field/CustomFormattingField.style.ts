@@ -40,18 +40,22 @@ export const styles = {
     transition: 'all 0.2s ease-out'
   }),
 
-  fieldset: (isFocused: boolean | null, hasError: boolean = false) => ({
-    position: 'absolute',
-    top: -5,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    borderRadius: '8px',
-    borderStyle: 'solid',
-    borderWidth: '1px',
-    pl: '12px',
-    borderColor: hasError ? 'error.main' : isFocused ? 'blue.500' : 'gray',
-  }),
+  fieldset: (isFocused: boolean | null, hasError: boolean = false) => {
+    const borderColor = hasError ? 'error.main' : isFocused ? 'blue.500' : 'gray';
+
+    return {
+      position: 'absolute',
+      top: -5,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      borderRadius: '8px',
+      borderStyle: 'solid',
+      borderWidth: '1px',
+      pl: '12px',
+      borderColor
+    };
+  },
 
   helperText: {
     color: 'error.main',
