@@ -42,6 +42,7 @@ export const ARCHIVE_CASE_MODAL_LABELS = {
   addFile: 'Додати файл',
   invalidPdfError: 'Очікується PDF файл',
   maximumSizeError: 'Файл занадто великий', 
+  mustBeNumber: 'Значення має бути числом',
   detailedDescription: 'Детальний опис справи',
   documents: 'Документи справи',
   cancel: 'Скасувати',

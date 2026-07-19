@@ -18,9 +18,10 @@ import { useArchiveCaseModal } from '~/shared/hooks/use-archive-case-modal/useAr
 
 interface ArchiveCaseModalProps {
   isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
 }
 
-export const ArchiveCaseModal = ({ isOpen }: ArchiveCaseModalProps) => {
+export const ArchiveCaseModal = ({ isOpen, setIsOpen }: ArchiveCaseModalProps) => {
   const {
     descriptionNumber,
     setDescriptionNumber,
@@ -44,7 +45,11 @@ export const ArchiveCaseModal = ({ isOpen }: ArchiveCaseModalProps) => {
     handleApplyPdf,
     handleDeletePdf,
     handleSelectPdfSuggestion,
-  } = useArchiveCaseModal();
+    pdfFileSuggestions,
+    handleSave,
+    handleCancel,
+    isSubmitDisabled
+  } = useArchiveCaseModal({ setIsOpen });
 
   return (
     <>
@@ -81,8 +86,8 @@ export const ArchiveCaseModal = ({ isOpen }: ArchiveCaseModalProps) => {
               </Stack>
               <TextField label={ARCHIVE_CASE_MODAL_LABELS.caseName} value={caseName} onChange={(e) => setCaseName(e.target.value)} required fullWidth />
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                <TextField sx={styles.shortTextField} label={ARCHIVE_CASE_MODAL_LABELS.caseDates} value={sheetsNumber} onChange={(e) => setSheetsNumber(e.target.value)} required />
-                <TextField sx={styles.shortTextField} label={ARCHIVE_CASE_MODAL_LABELS.sheets} value={caseDate} onChange={(e) => setCaseDate(e.target.value)} required />
+                <TextField  sx={styles.shortTextField} label={ARCHIVE_CASE_MODAL_LABELS.sheets} value={sheetsNumber} onChange={(e) => setSheetsNumber(e.target.value)} required />
+                <TextField sx={styles.shortTextField} label={ARCHIVE_CASE_MODAL_LABELS.caseDates} value={caseDate} onChange={(e) => setCaseDate(e.target.value)} required />
               </Stack>
               <TextField label={ARCHIVE_CASE_MODAL_LABELS.documentsComposition} value={caseDescriptions} onChange={(e) => setCaseDescriptions(e.target.value)} required fullWidth />
               <Box>
@@ -102,7 +107,7 @@ export const ArchiveCaseModal = ({ isOpen }: ArchiveCaseModalProps) => {
                       ) : (
                         <ActionableSuggestItem
                           mode='pdf'
-                          suggestions={['']}
+                          suggestions={pdfFileSuggestions}
                           onSelect={handleSelectPdfSuggestion}
                           onUpload={handleOpenUploadFlow}
                           onDelete={handleDeletePdf}
@@ -130,7 +135,7 @@ export const ArchiveCaseModal = ({ isOpen }: ArchiveCaseModalProps) => {
         </DialogContent>
 
         <DialogActions sx={styles.dialogActions}>
-          <Button variant='outlined' sx={styles.cancelButton}>
+          <Button variant='outlined' sx={styles.cancelButton} onClick={handleCancel}>
             {ARCHIVE_CASE_MODAL_LABELS.cancel}
           </Button>
           <Button
@@ -138,6 +143,8 @@ export const ArchiveCaseModal = ({ isOpen }: ArchiveCaseModalProps) => {
             color='tertiary'
             disableElevation
             sx={styles.saveButton}
+            onClick={handleSave}
+            disabled={isSubmitDisabled}
           >
             {ARCHIVE_CASE_MODAL_LABELS.save}
           </Button>
