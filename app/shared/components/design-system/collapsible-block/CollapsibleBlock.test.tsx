@@ -9,6 +9,18 @@ jest.mock('~/public/icons/chevron-down.svg', () => {
   return DummyChevron;
 });
 
+jest.mock('~/public/icons/eye.svg', () => {
+  const Eye = () => <span>eye</span>;
+  Eye.displayName = 'Eye';
+  return Eye;
+});
+
+jest.mock('~/public/icons/eye-closed.svg', () => {
+  const EyeClosed = () => <span>closed eye</span>;
+  EyeClosed.displayName = 'EyeClosed';
+  return EyeClosed;
+});
+
 jest.mock('../../grip/Grip');
 
 describe('CollapsibleBlock', () => {
