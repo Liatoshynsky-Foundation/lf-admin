@@ -9,6 +9,7 @@ import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { proseToHeaderText } from '~/lib/utils/prose';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
+import { useTitleValidation } from '~/shared/hooks/use-title-validation/useTitleValidation';
 import { useStore } from '~/store';
 import { LocalizedString, ProseDoc } from '~/types/common';
 
@@ -21,6 +22,8 @@ export const LiatoshynskyOffice = () => {
   const toggleBlockVisibility = useStore((state) => state.toggleBlockVisibility);
 
   const currentLocale: keyof LocalizedString = useStore((state) => state.locale);
+
+  const titleValidation = useTitleValidation(`${pageId}:${blockId}:title`, block?.title?.[currentLocale] as ProseDoc);
 
   if (!block) return <EditBlockSkeleton />;
 
@@ -68,6 +71,9 @@ export const LiatoshynskyOffice = () => {
         label="Текст заголовку"
         value={block.title?.[currentLocale]}
         onChange={handleSectionTitleChange}
+        onBlur={titleValidation.onBlur}
+        error={titleValidation.error}
+        helperText={titleValidation.helperText}
       />
       <QuoteBlock
         title={block.quote.source[currentLocale]}

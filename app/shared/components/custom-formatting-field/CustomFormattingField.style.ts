@@ -29,18 +29,18 @@ export const styles = {
     }
   },
 
-  label: (isActive: boolean | null) => ({
+  label: (isActive: boolean | null, hasError: boolean = false) => ({
     position: 'absolute',
     left: '14px',
     top: isActive ? '-6px' : '14px',
     fontSize: isActive ? '12px' : '16px',
-    color: 'text.secondary',
+    color: hasError ? 'error.main' : 'text.secondary',
     pointerEvents: isActive ? 'none' : 'auto',
     cursor: 'text',
     transition: 'all 0.2s ease-out'
   }),
 
-  fieldset: (isFocused: boolean | null) => ({
+  fieldset: (isFocused: boolean | null, hasError: boolean = false) => ({
     position: 'absolute',
     top: -5,
     bottom: 0,
@@ -50,8 +50,15 @@ export const styles = {
     borderStyle: 'solid',
     borderWidth: '1px',
     pl: '12px',
-    borderColor: isFocused ? 'blue.500' : 'gray',
+    borderColor: hasError ? 'error.main' : isFocused ? 'blue.500' : 'gray',
   }),
+
+  helperText: {
+    color: 'error.main',
+    fontSize: '12px',
+    mt: '4px',
+    ml: '14px'
+  },
 
   legend: (isActive: boolean) => ({
     display: 'block',

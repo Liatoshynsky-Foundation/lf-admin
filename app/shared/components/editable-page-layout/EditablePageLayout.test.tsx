@@ -16,6 +16,7 @@ const defaultStoreState = {
   discardChanges: mockDiscardChanges,
   setPageData: mockSetPageData,
   isChanged: false,
+  invalidFields: {},
 };
 
 let mockStoreState = { ...defaultStoreState };
@@ -206,6 +207,38 @@ describe('EditablePageLayout', () => {
 
       fireEvent.click(screen.getByTestId('lang-en'));
       expect(mockSetLocale).toHaveBeenCalledWith('en');
+    });
+  });
+
+  describe('Save disabled on invalid titles', () => {
+    it('should pass isSaveDisabled as false when there are no invalid fields', () => {
+      runSimulation();
+      expect(screen.getByTestId('save-disabled-flag')).toHaveTextContent('false');
+    });
+
+    it('should pass isSaveDisabled as true when at least one field is invalid', () => {
+      mockStoreState.invalidFields = { 'privacy-policy:Cookies:title': true };
+      runSimulation();
+      expect(screen.getByTestId('save-disabled-flag')).toHaveTextContent('true');
+    });
+  });
+
+  describe('Content lock while saving', () => {
+    it('should disable pointer events on the content when saving is in progress', () => {
+      (useSavePageBlocks as jest.Mock).mockReturnValue({
+        save: mockSave,
+        loading: true,
+      });
+
+      runSimulation();
+
+      expect(screen.getByTestId('editable-page-content')).toHaveStyle('pointer-events: none');
+    });
+
+    it('should keep pointer events enabled on the content when not saving', () => {
+      runSimulation();
+
+      expect(screen.getByTestId('editable-page-content')).toHaveStyle('pointer-events: auto');
     });
   });
 });

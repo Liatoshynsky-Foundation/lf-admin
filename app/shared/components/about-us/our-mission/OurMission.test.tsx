@@ -10,17 +10,18 @@ import { MissionListItemWithId } from '~/types/store/pages/about-us/blocks/missi
 interface MockImagePreviewBlockProps {
   readonly title: string;
   readonly imageUrl: string;
-  readonly onChangeImage: (url: string) => void;
+  readonly onChangeImage: (url: string, crop?: unknown) => void;
 }
 
 const setFieldMock = jest.fn();
 const toggleBlockVisibilityMock = jest.fn();
+const setFieldValidityMock = jest.fn();
 const usePageBlockMock = jest.fn();
 jest.mock('~/utils/uploadToTmpFolder', () => ({ handleUploadImage: jest.fn() }));
 jest.mock('~/types/graphql/generated/graphql', () => ({ useUploadBlobMutation: () => [jest.fn()] }));
 jest.mock('~/store', () => ({
-  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock; readonly toggleBlockVisibility: typeof toggleBlockVisibilityMock }) => unknown) =>
-    selector({ locale: 'uk', setField: setFieldMock, toggleBlockVisibility: toggleBlockVisibilityMock })
+  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock; readonly toggleBlockVisibility: typeof toggleBlockVisibilityMock; readonly setFieldValidity: typeof setFieldValidityMock }) => unknown) =>
+    selector({ locale: 'uk', setField: setFieldMock, toggleBlockVisibility: toggleBlockVisibilityMock, setFieldValidity: setFieldValidityMock })
 }));
 jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: () => usePageBlockMock()
@@ -38,6 +39,12 @@ jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
       <button data-testid={`upload-${title}`} onClick={() => onChangeImage('new-image-path.jpg')}>
         Upload
       </button>
+      <button
+        data-testid={`upload-with-crop-${title}`}
+        onClick={() => onChangeImage('new-image-path.jpg', { rect: { x: 0, y: 0, width: 10, height: 10 } })}
+      >
+        Upload With Crop
+      </button>
     </div>
   )
 }));
@@ -49,7 +56,9 @@ const keys = {
   title: 'Заголовок секції',
   item: 'Пункт місії',
   caption: 'Підпис до зображення (Перше зображення секції)',
-  upload: 'Перше зображення секції'
+  upload: 'Перше зображення секції',
+  bigCaption: 'Підпис до зображення (Друге зображення секції)',
+  bigUpload: 'Друге зображення секції'
 };
 
 beforeAll(() => {
@@ -99,6 +108,27 @@ describe('OurMission', () => {
     expect(screen.getByTestId(`textfield-json-${keys.item}`)).toHaveTextContent(JSON.stringify(mockItemJson));
   });
 
+  it('should render skeleton when no block exists', () => {
+    usePageBlockMock.mockReturnValue({ block: null });
+
+    render(<OurMission />);
+
+    expect(screen.queryByTestId('collapsible-block')).not.toBeInTheDocument();
+    expect(document.querySelector('.MuiSkeleton-root')).toBeInTheDocument();
+  });
+
+  it('should still render the image block when the image src is an empty string', () => {
+    const blockWithEmptySrc = {
+      ...mockBlock,
+      smallImage: { ...mockBlock.smallImage, src: '' }
+    };
+    usePageBlockMock.mockReturnValue({ block: blockWithEmptySrc });
+
+    render(<OurMission />);
+
+    expect(screen.getByTestId(`image-block-${keys.upload}`)).toBeInTheDocument();
+  });
+
   it.each([
     [
       'section title changes',
@@ -142,6 +172,20 @@ describe('OurMission', () => {
       `upload-${keys.upload}`,
       'smallImage',
       expect.objectContaining({ src: 'new-image-path.jpg', isTmp: false, crop: null })
+    ],
+    [
+      'editing layout image configuration captions for the second image',
+      `trigger-change-${keys.bigCaption}`,
+      'bigImage',
+      expect.objectContaining({
+        caption: expect.objectContaining({ uk: createDocNode(`Updated ${keys.bigCaption}`) })
+      })
+    ],
+    [
+      'propagating new asset paths through upload channels for the second image',
+      `upload-${keys.bigUpload}`,
+      'bigImage',
+      expect.objectContaining({ src: 'new-image-path.jpg', isTmp: false, crop: null })
     ]
   ])(
     'should correctly invoke setField upon %s',
@@ -161,6 +205,23 @@ describe('OurMission', () => {
     runSimulation('collapsible-block-toggle-visibility');
 
     expect(toggleBlockVisibilityMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_MISSION);
+  });
+
+  it('should mark the title as invalid after blur when it is empty, and clear the flag on unmount', () => {
+    usePageBlockMock.mockReturnValue({
+      block: { ...mockBlock, title: { uk: { type: 'doc', content: [] } } }
+    });
+
+    const { unmount } = render(<OurMission />);
+
+    fireEvent.click(screen.getByTestId(`trigger-blur-${keys.title}`));
+
+    expect(screen.getByTestId(`textfield-error-${keys.title}`)).toBeInTheDocument();
+    expect(setFieldValidityMock).toHaveBeenCalledWith(`${PAGE_IDS.ABOUT_US}:${BLOCK_IDS.OUR_MISSION}:title`, true);
+
+    unmount();
+
+    expect(setFieldValidityMock).toHaveBeenLastCalledWith(`${PAGE_IDS.ABOUT_US}:${BLOCK_IDS.OUR_MISSION}:title`, false);
   });
 
   it('should render the grip handle and handle drag-and-drop reordering', () => {
@@ -187,5 +248,62 @@ describe('OurMission', () => {
       'list',
       [doubleMockBlock.list[1], doubleMockBlock.list[0]]
     );
+  });
+
+  it('should leave unrelated mission points untouched when updating a single point in a multi-point list', () => {
+    const doubleMockBlock = {
+      title: { uk: mockTitleJson },
+      list: [
+        { id: '1', uk: mockItemJson, en: { type: 'doc', content: [] } },
+        { id: '2', uk: mockItemJson, en: { type: 'doc', content: [] } }
+      ] as MissionListItemWithId[],
+      smallImage: mockBlock.smallImage,
+      bigImage: mockBlock.bigImage
+    };
+    usePageBlockMock.mockReturnValue({ block: doubleMockBlock });
+
+    render(<OurMission />);
+    fireEvent.click(screen.getAllByTestId(`trigger-change-${keys.item}`)[0]);
+
+    expect(setFieldMock).toHaveBeenCalledWith(
+      PAGE_IDS.ABOUT_US,
+      BLOCK_IDS.OUR_MISSION,
+      'list',
+      [
+        expect.objectContaining({ id: '1', uk: createDocNode(`Updated ${keys.item}`) }),
+        doubleMockBlock.list[1]
+      ]
+    );
+  });
+
+  it('should propagate a provided crop through onChangeImage instead of falling back to null', () => {
+    runSimulation(`upload-with-crop-${keys.upload}`);
+
+    expect(setFieldMock).toHaveBeenCalledWith(
+      PAGE_IDS.ABOUT_US,
+      BLOCK_IDS.OUR_MISSION,
+      'smallImage',
+      expect.objectContaining({ src: 'new-image-path.jpg', isTmp: false, crop: { rect: { x: 0, y: 0, width: 10, height: 10 } } })
+    );
+  });
+
+  it('should not render the mission points list when there are no points', () => {
+    usePageBlockMock.mockReturnValue({
+      block: { ...mockBlock, list: [] }
+    });
+
+    render(<OurMission />);
+
+    expect(screen.queryByTestId('configurable-list')).not.toBeInTheDocument();
+  });
+
+  it('should not render image blocks when smallImage and bigImage are absent', () => {
+    const { smallImage: _smallImage, bigImage: _bigImage, ...blockWithoutImages } = mockBlock;
+    usePageBlockMock.mockReturnValue({ block: blockWithoutImages });
+
+    render(<OurMission />);
+
+    expect(screen.queryByTestId(`image-block-${keys.upload}`)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(`image-block-${keys.bigUpload}`)).not.toBeInTheDocument();
   });
 });

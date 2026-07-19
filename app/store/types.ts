@@ -28,6 +28,9 @@ export interface EditState {
   isInitialized: boolean;
   initializedPages: Record<string, boolean>;
 
+  invalidFields: Record<string, boolean>;
+  setFieldValidity: (key: string, isInvalid: boolean) => void;
+
   blocks: {
     [pageId: string]: {
       [blockId in keyof BlocksMap]?: BlocksMap[blockId];

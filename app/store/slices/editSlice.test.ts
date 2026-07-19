@@ -33,6 +33,30 @@ describe('editSlice', () => {
     expect(state.blocksOrder).toEqual({});
     expect(state.originalBlocksOrder).toEqual({});
     expect(state.locale).toBe('uk');
+    expect(state.invalidFields).toEqual({});
+  });
+
+  describe('setFieldValidity', () => {
+    const KEY = `${PAGE_ID}:${BLOCK_ID}:title`;
+
+    it('should add a key to invalidFields when marked invalid', () => {
+      store.getState().setFieldValidity(KEY, true);
+      expect(store.getState().invalidFields).toEqual({ [KEY]: true });
+    });
+
+    it('should remove the key from invalidFields when marked valid again', () => {
+      store.getState().setFieldValidity(KEY, true);
+      store.getState().setFieldValidity(KEY, false);
+      expect(store.getState().invalidFields).toEqual({});
+    });
+
+    it('should be a no-op when setting the same validity twice', () => {
+      store.getState().setFieldValidity(KEY, false);
+      const stateBefore = store.getState().invalidFields;
+
+      store.getState().setFieldValidity(KEY, false);
+      expect(store.getState().invalidFields).toBe(stateBefore);
+    });
   });
 
   describe('setField', () => {
@@ -209,6 +233,31 @@ describe('editSlice', () => {
     expect(state.blocks[PAGE_ID]).toEqual(initBlocks);
     expect(state.blocksOrder[PAGE_ID]).toEqual([BLOCK_ID]);
     expect(state.isChanged).toBe(false);
+  });
+
+  it('should clear invalidFields for the page on discardChanges, but keep other pages untouched', () => {
+    const key = `${PAGE_ID}:${BLOCK_ID}:title`;
+    const otherPageKey = 'other-page:OtherBlock:title';
+
+    store.getState().setFieldValidity(key, true);
+    store.getState().setFieldValidity(otherPageKey, true);
+
+    store.getState().discardChanges(PAGE_ID);
+
+    expect(store.getState().invalidFields).toEqual({ [otherPageKey]: true });
+  });
+
+  it('should clear invalidFields for the page when setPageData is called with isInit=true', () => {
+    const key = `${PAGE_ID}:${BLOCK_ID}:title`;
+    const otherPageKey = 'other-page:OtherBlock:title';
+
+    store.getState().setFieldValidity(key, true);
+    store.getState().setFieldValidity(otherPageKey, true);
+
+    const initBlocks = { [BLOCK_ID as string]: { v: 1 } } as unknown as SetPageDataPayload;
+    store.getState().setPageData(PAGE_ID, initBlocks, [BLOCK_ID as string], true);
+
+    expect(store.getState().invalidFields).toEqual({ [otherPageKey]: true });
   });
 
   it('should handle discard changes when no original data exists', () => {

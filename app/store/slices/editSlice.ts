@@ -7,6 +7,11 @@ const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v));
 
 const IMAGE_FIELDS = new Set(['image', 'smallImage', 'bigImage', 'photo']);
 
+const clearInvalidFieldsForPage = (invalidFields: Record<string, boolean>, pageId: string): Record<string, boolean> => {
+  const prefix = `${pageId}:`;
+  return Object.fromEntries(Object.entries(invalidFields).filter(([key]) => !key.startsWith(prefix)));
+};
+
 const resolveIsTmp = (field: string, value: unknown): boolean | undefined => {
   if (!IMAGE_FIELDS.has(field)) return undefined;
   if (!value || typeof value !== 'object') return undefined;
@@ -22,6 +27,20 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
   isChanged: false,
   isInitialized: false,
   initializedPages: {},
+
+  invalidFields: {},
+  setFieldValidity: (key: string, isInvalid: boolean) => {
+    const current = get().invalidFields;
+    if (Boolean(current[key]) === isInvalid) return;
+
+    const next = { ...current };
+    if (isInvalid) {
+      next[key] = true;
+    } else {
+      delete next[key];
+    }
+    set({ invalidFields: next });
+  },
 
   blocks: {},
   originalBlocks: {},
@@ -130,6 +149,7 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
         ...get().initializedPages,
         [pageId]: true
       };
+      nextState.invalidFields = clearInvalidFieldsForPage(get().invalidFields, pageId);
     }
     set(nextState as EditState);
   },
@@ -200,6 +220,7 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
         [pageId]: [...originalOrder]
       },
       initializedPages: remainingInitialized,
+      invalidFields: clearInvalidFieldsForPage(get().invalidFields, pageId),
       isChanged: false
     });
   },

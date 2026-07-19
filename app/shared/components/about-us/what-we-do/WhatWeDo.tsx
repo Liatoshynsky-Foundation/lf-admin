@@ -9,6 +9,7 @@ import { ensureIds } from '~/lib/utils/ensureIds';
 import { proseToHeaderText } from '~/lib/utils/prose';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
+import { useTitleValidation } from '~/shared/hooks/use-title-validation/useTitleValidation';
 import { useStore } from '~/store';
 import { LocalizedString, ProseDoc } from '~/types/common';
 import type { WhatWeDolItemWithId } from '~/types/store/pages/about-us/blocks/whatWeDoBlock';
@@ -24,6 +25,8 @@ const WhatWeDo = () => {
   const toggleBlockVisibility = useStore((state) => state.toggleBlockVisibility);
 
   const itemList: WhatWeDolItemWithId[] = block ? ensureIds(block.items) : [];
+
+  const titleValidation = useTitleValidation(`${pageId}:${blockId}:title`, block?.title?.[currentLocale] as ProseDoc);
 
   const handleDragEnd = (event: DragEndEvent) => {
     handleSortableDragEnd(event, itemList, (reordered) => {
@@ -81,6 +84,9 @@ const WhatWeDo = () => {
       <EditableSectionList
         title={block.title[currentLocale]}
         onTitleChange={handleTitleChange}
+        onTitleBlur={titleValidation.onBlur}
+        titleError={titleValidation.error}
+        titleHelperText={titleValidation.helperText}
         items={points}
         onChangeItem={handleChangeItem}
         onCreateItem={handleCreateItem}

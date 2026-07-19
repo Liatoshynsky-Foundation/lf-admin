@@ -9,6 +9,7 @@ import { ensureIds } from '~/lib/utils/ensureIds';
 import { proseToHeaderText } from '~/lib/utils/prose';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
+import { useTitleValidation } from '~/shared/hooks/use-title-validation/useTitleValidation';
 import { useStore } from '~/store';
 import { LocalizedString, ProseDoc } from '~/types/common';
 import type { GoalItemWithId } from '~/types/store/pages/about-us/blocks/ourGoalsBlock';
@@ -24,6 +25,8 @@ const OurGoals = () => {
   const toggleBlockVisibility = useStore((state) => state.toggleBlockVisibility);
 
   const goalList: GoalItemWithId[] = block ? ensureIds(block.goals) : [];
+
+  const titleValidation = useTitleValidation(`${pageId}:${blockId}:title`, block?.title?.[currentLocale] as ProseDoc);
 
   const handleDragEnd = (event: DragEndEvent) => {
     handleSortableDragEnd(event, goalList, (reordered) => {
@@ -91,6 +94,9 @@ const OurGoals = () => {
       <EditableSectionList
         title={block.title[currentLocale]}
         onTitleChange={handleTitleChange}
+        onTitleBlur={titleValidation.onBlur}
+        titleError={titleValidation.error}
+        titleHelperText={titleValidation.helperText}
         items={goalPoints}
         onChangeItem={handleChangeItem}
         onCreateItem={handleCreateItem}

@@ -6,10 +6,11 @@ import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 
 const setFieldMock = jest.fn();
 const toggleBlockVisibilityMock = jest.fn();
+const setFieldValidityMock = jest.fn();
 
 jest.mock('~/store', () => ({
-  useStore: (selector: (s: { locale: 'uk'; setField: typeof setFieldMock; toggleBlockVisibility: typeof toggleBlockVisibilityMock }) => unknown) =>
-    selector({ locale: 'uk', setField: setFieldMock, toggleBlockVisibility: toggleBlockVisibilityMock })
+  useStore: (selector: (s: { locale: 'uk'; setField: typeof setFieldMock; toggleBlockVisibility: typeof toggleBlockVisibilityMock; setFieldValidity: typeof setFieldValidityMock }) => unknown) =>
+    selector({ locale: 'uk', setField: setFieldMock, toggleBlockVisibility: toggleBlockVisibilityMock, setFieldValidity: setFieldValidityMock })
 }));
 
 const usePageBlockMock = jest.fn();
@@ -164,6 +165,25 @@ describe('LiatoshynskyOffice', () => {
         uk: createDocNode('Updated Заголовок секції'),
         en: {}
       })
+    );
+  });
+
+  it('should mark the title as invalid after blur when it is empty, and clear the flag on unmount', () => {
+    const { unmount } = renderComponent();
+
+    fireEvent.click(screen.getByTestId('trigger-blur-Заголовок секції'));
+
+    expect(screen.getByTestId('textfield-error-Заголовок секції')).toBeInTheDocument();
+    expect(setFieldValidityMock).toHaveBeenCalledWith(
+      `${PAGE_IDS.ABOUT_US}:${BLOCK_IDS.LIATOSHYNSKY_OFFICE}:title`,
+      true
+    );
+
+    unmount();
+
+    expect(setFieldValidityMock).toHaveBeenLastCalledWith(
+      `${PAGE_IDS.ABOUT_US}:${BLOCK_IDS.LIATOSHYNSKY_OFFICE}:title`,
+      false
     );
   });
 });

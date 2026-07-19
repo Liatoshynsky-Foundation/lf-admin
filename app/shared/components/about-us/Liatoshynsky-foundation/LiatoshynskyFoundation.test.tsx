@@ -24,16 +24,19 @@ interface MockFoundationBlockProps {
 
 const setFieldMock = jest.fn();
 const toggleBlockVisibilityMock = jest.fn();
+const setFieldValidityMock = jest.fn();
 const usePageBlockMock = jest.fn();
 
 jest.mock('~/store', () => ({
-  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock; readonly toggleBlockVisibility: typeof toggleBlockVisibilityMock }) => unknown) =>
-    selector({ locale: 'uk', setField: setFieldMock, toggleBlockVisibility: toggleBlockVisibilityMock })
+  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock; readonly toggleBlockVisibility: typeof toggleBlockVisibilityMock; readonly setFieldValidity: typeof setFieldValidityMock }) => unknown) =>
+    selector({ locale: 'uk', setField: setFieldMock, toggleBlockVisibility: toggleBlockVisibilityMock, setFieldValidity: setFieldValidityMock })
 }));
 
 jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: (pageId: string, blockId: string) => usePageBlockMock(pageId, blockId)
 }));
+
+jest.mock('~/ds-components/text-field/TextField');
 
 jest.mock('../../edit-block-skeleton/EditBlockSkeleton', () => ({
   EditBlockSkeleton: () => <div data-testid="edit-block-skeleton" />
@@ -158,6 +161,27 @@ describe('LiatoshynskyFoundation', () => {
     fireEvent.click(screen.getByTestId('collapsible-block-toggle-visibility'));
 
     expect(toggleBlockVisibilityMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.LIATOSHYNSKY_FOUNDATION);
+  });
+
+  it('should mark the title as invalid after blur when it is empty, and clear the flag on unmount', () => {
+    usePageBlockMock.mockReturnValue({ block: { ...mockBlock, title: { uk: '' } }, blockId: 'FoundationInfo' });
+
+    const { unmount } = render(<LiatoshynskyFoundation />);
+
+    fireEvent.click(screen.getByTestId('trigger-blur-Заголовок секції'));
+
+    expect(screen.getByTestId('textfield-error-Заголовок секції')).toBeInTheDocument();
+    expect(setFieldValidityMock).toHaveBeenCalledWith(
+      `${PAGE_IDS.ABOUT_US}:${BLOCK_IDS.LIATOSHYNSKY_FOUNDATION}:title`,
+      true
+    );
+
+    unmount();
+
+    expect(setFieldValidityMock).toHaveBeenLastCalledWith(
+      `${PAGE_IDS.ABOUT_US}:${BLOCK_IDS.LIATOSHYNSKY_FOUNDATION}:title`,
+      false
+    );
   });
 
   it.each([

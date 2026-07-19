@@ -12,6 +12,7 @@ import { ensureIds } from '~/lib/utils/ensureIds';
 import { proseToHeaderText } from '~/lib/utils/prose';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useSectionList } from '~/shared/hooks/use-section-list/useSectionList';
+import { useTitleValidation } from '~/shared/hooks/use-title-validation/useTitleValidation';
 import { useStore } from '~/store';
 import { ProseDoc } from '~/types/common';
 import { DataWeCollectItemWithId } from '~/types/store/pages/privacy-policy';
@@ -29,6 +30,8 @@ export const DataWeCollect = () => {
   const sectionsList: DataWeCollectItemWithId[] = ensureIds(rawSections);
 
   const { sections, addListPoint, removeListPoint, updateListPoint, updateSectionSubtitle, updateSectionList } = useSectionList({ blockId, pageId, sectionsList, currentLocale, setField });
+
+  const titleValidation = useTitleValidation(`${pageId}:${blockId}:title`, block?.title?.[currentLocale] as ProseDoc);
 
   if (!block) return <EditBlockSkeleton />;
 
@@ -68,6 +71,9 @@ export const DataWeCollect = () => {
         label="Текст заголовку"
         value={block.title?.[currentLocale]}
         onChange={handleChangeTitle}
+        onBlur={titleValidation.onBlur}
+        error={titleValidation.error}
+        helperText={titleValidation.helperText}
       />
 
       <CustomTextField

@@ -9,6 +9,7 @@ import CollapsibleBlock from '~/shared/components/design-system/collapsible-bloc
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 import { PointsList } from '~/shared/components/privacy-policy/components/points-list/PointsList';
 import { usePointsList } from '~/shared/hooks/use-points-list/usePointsList';
+import { useTitleValidation } from '~/shared/hooks/use-title-validation/useTitleValidation';
 import { useStore } from '~/store';
 import { LocalizedJSON, ProseDoc } from '~/types/common';
 import { BlocksMap } from '~/types/store/pages';
@@ -72,6 +73,7 @@ export const EditDescriptionListNoteBlock = <T extends BlockWithDescriptionListN
   const noteBlock = block.note;
 
   const headerTitle = proseToHeaderText(sectionTitleBlock?.[currentLocale] as ProseDoc, title);
+  const titleValidation = useTitleValidation(`${pageId}:${blockId}:title`, sectionTitleBlock?.[currentLocale] as ProseDoc);
 
   return (
     <CollapsibleBlock
@@ -87,6 +89,9 @@ export const EditDescriptionListNoteBlock = <T extends BlockWithDescriptionListN
           label="Текст заголовку"
           value={sectionTitleBlock[currentLocale]}
           onChange={(value) => handleTextChange('title', value)}
+          onBlur={titleValidation.onBlur}
+          error={titleValidation.error}
+          helperText={titleValidation.helperText}
         />
       )}
 

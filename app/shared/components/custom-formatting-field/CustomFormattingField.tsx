@@ -20,12 +20,15 @@ export interface Props {
   onChange: (value: JSONContent) => void;
   label?: string;
   sx?: SxProps<Theme>;
+  error?: boolean;
+  helperText?: string;
+  onBlur?: () => void;
 }
 const OneLineDoc = Document.extend({
   content: 'paragraph'
 });
 
-export const CustomFormattingField = ({ value, onChange, label = 'Текст', sx }: Props) => {
+export const CustomFormattingField = ({ value, onChange, label = 'Текст', sx, error = false, helperText, onBlur }: Props) => {
   const [isFocused, setIsFocused] = useState(false);
 
   const editor = useEditor({
@@ -51,7 +54,10 @@ export const CustomFormattingField = ({ value, onChange, label = 'Текст', s
       onChange(editor.getJSON());
     },
     onFocus: () => setIsFocused(true),
-    onBlur: () => setIsFocused(false)
+    onBlur: () => {
+      setIsFocused(false);
+      onBlur?.();
+    }
   });
 
   useEffect(() => {
@@ -68,11 +74,11 @@ export const CustomFormattingField = ({ value, onChange, label = 'Текст', s
 
   return (
     <Box sx={[styles.container, ...sxToArray(sx)]}>
-      <Box component="label" onClick={() => editor?.commands.focus()} sx={styles.label(isActive)}>
+      <Box component="label" onClick={() => editor?.commands.focus()} sx={styles.label(isActive, error)}>
         {label}
       </Box>
 
-      <Box component="fieldset" sx={styles.fieldset(isFocused)}>
+      <Box component="fieldset" sx={styles.fieldset(isFocused, error)}>
         <Box
           component="legend"
           sx={styles.legend(isActive)}
@@ -94,6 +100,12 @@ export const CustomFormattingField = ({ value, onChange, label = 'Текст', s
           <EditorContent editor={editor} />
         </Box>
       </Box>
+
+      {error && helperText && (
+        <Box sx={styles.helperText} data-testid="formatting-field-error">
+          {helperText}
+        </Box>
+      )}
     </Box>
   );
 };

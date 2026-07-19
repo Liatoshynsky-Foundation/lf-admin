@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import { usePageBlockMock,useSectionListMock } from '../__mocks__/setup-mocks';
+import { mockSetField, mockSetFieldValidity, usePageBlockMock,useSectionListMock } from '../__mocks__/setup-mocks';
 import { createStandardMockBlock, runCommonBlockTests } from '../test-utils/block-test-factory';
 import { DataWeCollect } from './DataWeCollect';
 import { createDocNode } from '~/__mocks__/utils';
-import { BLOCK_IDS } from '~/constants/pageBlocks';
+import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { DataWeCollectBlock } from '~/types/store/pages/privacy-policy';
 
 jest.mock('~/components/configurable-list/ConfigurableList');
@@ -63,5 +63,40 @@ describe('DataWeCollect', () => {
       'section-1',
       [point2, point1]
     );
+  });
+
+  it.each([
+    ['title', 'Заголовок секції', 'title'],
+    ['description', 'Вступний текст секції', 'description'],
+    ['note', 'Додаткова інформація', 'note']
+  ])('should update the %s via onChange, merging into the existing localized value', (_label, fieldLabel, storeKey) => {
+    usePageBlockMock.mockReturnValue({ block: mockBlock });
+
+    render(<DataWeCollect />);
+    fireEvent.click(screen.getByTestId(`trigger-change-${fieldLabel}`));
+
+    expect(mockSetField).toHaveBeenCalledWith(
+      PAGE_IDS.PRIVACY_POLICY,
+      BLOCK_IDS.DATA_WE_COLLECT,
+      storeKey,
+      expect.objectContaining({ uk: createDocNode(`Updated ${fieldLabel}`) })
+    );
+  });
+
+  it('should mark the title as invalid after blur when it is empty, and clear the flag on unmount', () => {
+    usePageBlockMock.mockReturnValue({
+      block: { ...mockBlock, title: { uk: { type: 'doc', content: [] } } }
+    });
+
+    const { unmount } = render(<DataWeCollect />);
+
+    fireEvent.click(screen.getByTestId('trigger-blur-Заголовок секції'));
+
+    expect(screen.getByTestId('textfield-error-Заголовок секції')).toBeInTheDocument();
+    expect(mockSetFieldValidity).toHaveBeenCalledWith(`${PAGE_IDS.PRIVACY_POLICY}:${BLOCK_IDS.DATA_WE_COLLECT}:title`, true);
+
+    unmount();
+
+    expect(mockSetFieldValidity).toHaveBeenLastCalledWith(`${PAGE_IDS.PRIVACY_POLICY}:${BLOCK_IDS.DATA_WE_COLLECT}:title`, false);
   });
 });

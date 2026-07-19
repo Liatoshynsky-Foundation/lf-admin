@@ -11,6 +11,7 @@ import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { proseToHeaderText, proseToText } from '~/lib/utils/prose';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
+import { useTitleValidation } from '~/shared/hooks/use-title-validation/useTitleValidation';
 import { useStore } from '~/store';
 import { ProseDoc } from '~/types/common';
 import { getImageUrl } from '~/utils/getImageUrl';
@@ -24,6 +25,8 @@ export const LiatoshynskyFoundation = () => {
   const toggleBlockVisibility = useStore((state) => state.toggleBlockVisibility);
 
   const currentLocale: 'uk' | 'en' = useStore((state) => state.locale);
+
+  const titleValidation = useTitleValidation(`${pageId}:${blockId}:title`, block?.title?.[currentLocale] as ProseDoc);
 
   if (!block) return <EditBlockSkeleton />;
 
@@ -76,6 +79,9 @@ export const LiatoshynskyFoundation = () => {
         label="Текст заголовку"
         value={block.title?.[currentLocale]}
         onChange={handleTitleChange}
+        onBlur={titleValidation.onBlur}
+        error={titleValidation.error}
+        helperText={titleValidation.helperText}
       />
       <FoundationBlock
         mainText={mainText}

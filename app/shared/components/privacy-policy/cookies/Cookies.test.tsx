@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import { mockSetField, usePageBlockMock, usePointsListMock } from '../__mocks__/setup-mocks';
+import { mockSetField, mockSetFieldValidity, usePageBlockMock, usePointsListMock } from '../__mocks__/setup-mocks';
 import { createStandardMockBlock, runCommonBlockTests } from '../test-utils/block-test-factory';
 import { Cookies } from './Cookies';
 import { createDocNode } from '~/__mocks__/utils';
@@ -32,6 +32,23 @@ describe('Cookies', () => {
       'title',
       expect.objectContaining({ uk: createDocNode('Updated Заголовок секції') })
     );
+  });
+
+  it('should mark the title as invalid after blur when it is empty, and clear the flag on unmount', () => {
+    usePageBlockMock.mockReturnValue({
+      block: { ...createStandardMockBlock().block, title: { uk: { type: 'doc', content: [] } } }
+    });
+
+    const { unmount } = render(<Cookies />);
+
+    fireEvent.click(screen.getByTestId('trigger-blur-Заголовок секції'));
+
+    expect(screen.getByTestId('textfield-error-Заголовок секції')).toBeInTheDocument();
+    expect(mockSetFieldValidity).toHaveBeenCalledWith(`${PAGE_IDS.PRIVACY_POLICY}:${BLOCK_IDS.COOKIES}:title`, true);
+
+    unmount();
+
+    expect(mockSetFieldValidity).toHaveBeenLastCalledWith(`${PAGE_IDS.PRIVACY_POLICY}:${BLOCK_IDS.COOKIES}:title`, false);
   });
 });
 

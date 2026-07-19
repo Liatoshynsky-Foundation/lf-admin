@@ -20,6 +20,7 @@ import { ensureIds } from '~/lib/utils/ensureIds';
 import { proseToHeaderText } from '~/lib/utils/prose';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
+import { useTitleValidation } from '~/shared/hooks/use-title-validation/useTitleValidation';
 import { useStore } from '~/store';
 import { ConfigurableListItem } from '~/types/accordionBlocks';
 import { CropResult, LocalizedJSON, ProseDoc } from '~/types/common';
@@ -74,6 +75,8 @@ const OurMission = () => {
   const setField = useStore((state) => state.setField);
   const toggleBlockVisibility = useStore((state) => state.toggleBlockVisibility);
   const missionList: MissionListItemWithId[] = block ? ensureIds(block.list) : [];
+
+  const titleValidation = useTitleValidation(`${pageId}:${blockId}:title`, block?.title?.[currentLocale] as ProseDoc);
 
   const handleDragEnd = (event: DragEndEvent) => {
     handleSortableDragEnd(event, missionList, (reordered) => {
@@ -150,6 +153,9 @@ const OurMission = () => {
           label="Текст заголовка"
           value={block.title?.[currentLocale]}
           onChange={(value) => setField(pageId, blockId, 'title', { ...block.title, [currentLocale]: value })}
+          onBlur={titleValidation.onBlur}
+          error={titleValidation.error}
+          helperText={titleValidation.helperText}
         />
       </Box>
 

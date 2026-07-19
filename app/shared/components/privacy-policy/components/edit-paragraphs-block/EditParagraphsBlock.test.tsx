@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import { mockSetField, usePageBlockMock } from '../../__mocks__/setup-mocks';
+import { mockSetField, mockSetFieldValidity, usePageBlockMock } from '../../__mocks__/setup-mocks';
 import { createStandardMockBlock, runCommonBlockTests } from '../../test-utils/block-test-factory';
 import { EditParagraphsBlock } from './EditParagraphsBlock';
 import { createDocNode } from '~/__mocks__/utils';
@@ -41,6 +41,41 @@ describe('EditParagraphsBlock', () => {
       'title',
       expect.objectContaining({ uk: createDocNode('Updated Заголовок секції') })
     );
+  });
+
+  it('should update a paragraph via onChange, merging the updated value into the description content array', () => {
+    usePageBlockMock.mockReturnValue({ block: createStandardMockBlock().block });
+
+    render(<EditParagraphsBlock blockId={mockBlockId} title={mockTitle} />);
+    fireEvent.click(screen.getByTestId('trigger-change-Текст 1 абзацу'));
+
+    expect(mockSetField).toHaveBeenCalledWith(
+      PAGE_IDS.PRIVACY_POLICY,
+      mockBlockId,
+      'description',
+      expect.objectContaining({
+        uk: expect.objectContaining({
+          content: [createDocNode('Updated Текст 1 абзацу')]
+        })
+      })
+    );
+  });
+
+  it('should mark the title as invalid after blur when it is empty, and clear the flag on unmount', () => {
+    usePageBlockMock.mockReturnValue({
+      block: { ...createStandardMockBlock().block, title: { uk: { type: 'doc', content: [] } } }
+    });
+
+    const { unmount } = render(<EditParagraphsBlock blockId={mockBlockId} title={mockTitle} />);
+
+    fireEvent.click(screen.getByTestId('trigger-blur-Заголовок секції'));
+
+    expect(screen.getByTestId('textfield-error-Заголовок секції')).toBeInTheDocument();
+    expect(mockSetFieldValidity).toHaveBeenCalledWith(`${PAGE_IDS.PRIVACY_POLICY}:${mockBlockId}:title`, true);
+
+    unmount();
+
+    expect(mockSetFieldValidity).toHaveBeenLastCalledWith(`${PAGE_IDS.PRIVACY_POLICY}:${mockBlockId}:title`, false);
   });
 
   it('should return null if block does not have description or content is empty', () => {

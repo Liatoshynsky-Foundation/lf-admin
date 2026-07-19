@@ -12,6 +12,7 @@ import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { ensureIds } from '~/lib/utils/ensureIds';
 import { proseToHeaderText } from '~/lib/utils/prose';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
+import { useTitleValidation } from '~/shared/hooks/use-title-validation/useTitleValidation';
 import { useStore } from '~/store';
 import { ImageType, LocalizedString, ProseDoc } from '~/types/common';
 import { TeamMemberWithId } from '~/types/store/pages/about-us/blocks/foundationFounderBlock';
@@ -23,6 +24,9 @@ export const FoundationFounders = () => {
   const currentLocale: keyof LocalizedString = useStore((state) => state.locale);
   const setField = useStore((state) => state.setField);
   const toggleBlockVisibility = useStore((state) => state.toggleBlockVisibility);
+
+  const titleTextValidation = useTitleValidation(`${pageId}:${blockId}:titleText`, block?.titleText?.[currentLocale] as ProseDoc);
+  const listTitleValidation = useTitleValidation(`${pageId}:${blockId}:listTitle`, block?.listTitle?.[currentLocale] as ProseDoc);
 
   if (!block) return <EditBlockSkeleton />;
 
@@ -86,6 +90,9 @@ export const FoundationFounders = () => {
         label="Текст заголовку"
         value={block.titleText[currentLocale]}
         onChange={(value) => handleChangeTitleText(value)}
+        onBlur={titleTextValidation.onBlur}
+        error={titleTextValidation.error}
+        helperText={titleTextValidation.helperText}
       />
 
       <CustomTextField
@@ -94,6 +101,9 @@ export const FoundationFounders = () => {
         label="Текст заголовку"
         value={block.listTitle[currentLocale]}
         onChange={(value) => handleChangeListTitle(value)}
+        onBlur={listTitleValidation.onBlur}
+        error={listTitleValidation.error}
+        helperText={listTitleValidation.helperText}
       />
 
       <Typography sx={styles.contributorsTitle} variant="subtitle1">
