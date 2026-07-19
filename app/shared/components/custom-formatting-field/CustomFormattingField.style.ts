@@ -41,7 +41,12 @@ export const styles = {
   }),
 
   fieldset: (isFocused: boolean | null, hasError: boolean = false) => {
-    const borderColor = hasError ? 'error.main' : isFocused ? 'blue.500' : 'gray';
+    let borderColor = 'gray';
+    if (hasError) {
+      borderColor = 'error.main';
+    } else if (isFocused) {
+      borderColor = 'blue.500';
+    }
 
     return {
       position: 'absolute',
