@@ -44,4 +44,11 @@ describe('LabelActionRow', () => {
 
     expect(actionMock).toHaveBeenCalledTimes(1);
   });
+
+  it('should render the button as disabled when the disabled prop is true', () => {
+    renderRow({ disabled: true });
+
+    const addButton = screen.getByRole('button', { name: 'Додати' });
+    expect(addButton).toBeDisabled();
+  });
 });
