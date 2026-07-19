@@ -104,33 +104,39 @@ export default function CreatePublicationsView({
     try {
       switch (actionId) {
       case MenuActionId.PUBLISH: {
-        const { status, toastMessage } = MENU_ACTION_CONFIGS.PUBLISH;
+        const { status, toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS.PUBLISH;
         const id = await handleSave(status);
 
         if (id) {
           toast.success(toastMessage);
+        } else {
+          toast.error(toastErrorMessage);
         }
         break;
       }
 
       case MenuActionId.PUBLICATE_AND_EXIT: {
-        const { status, toastMessage } = MENU_ACTION_CONFIGS.PUBLICATE_AND_EXIT;
+        const { status, toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS.PUBLICATE_AND_EXIT;
         const id = await handleSave(status);
 
         if (id) {
           toast.success(toastMessage);
           router.push(PUBLICATIONS_BASE_PATH);
+        } else {
+          toast.error(toastErrorMessage);
         }
         break;
       }
 
       case MenuActionId.CANCEL_PUBLICATION: {
-        const { status, toastMessage } = MENU_ACTION_CONFIGS.CANCEL_PUBLICATION;
+        const { status, toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS.CANCEL_PUBLICATION;
 
         const id = await handleSave(status);
         if (id) {
           toast.success(toastMessage);
           router.push(PUBLICATIONS_BASE_PATH);
+        } else {
+          toast.error(toastErrorMessage);
         }
         break;
       }

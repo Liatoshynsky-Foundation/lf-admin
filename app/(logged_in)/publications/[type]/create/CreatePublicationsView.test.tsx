@@ -8,6 +8,7 @@ import CreatePublicationsView from './CreatePublicationsView';
 import {
   CONTENT_MUTATION_RESULTS,
   initialSeoValue,
+  MENU_ACTION_CONFIGS,
   MenuActionId,
   PAGE_TITLES,
   PUBLICATIONS_BASE_PATH,
@@ -318,7 +319,7 @@ describe('CreatePublicationsView Component', () => {
       });
     });
 
-    it('should not show toast when media publish returns no id', async () => {
+    it('should show toast.error when media publish returns no id', async () => {
       const handleSave = jest.fn().mockResolvedValue(null);
       const mockData = createMockData({ publicationType: 'media', handleSave });
       render(<CreatePublicationsView data={mockData} />);
@@ -326,6 +327,7 @@ describe('CreatePublicationsView Component', () => {
       await waitFor(() => {
         expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
       });
+      expect(toast.error).toHaveBeenCalledWith(MENU_ACTION_CONFIGS.PUBLISH.toastErrorMessage);
       expect(toast.success).not.toHaveBeenCalled();
     });
 
@@ -342,7 +344,7 @@ describe('CreatePublicationsView Component', () => {
       });
     });
 
-    it('should not toast or redirect on publish and exit when no id is returned', async () => {
+    it('should show toast.error and not redirect on publish and exit when no id is returned', async () => {
       const handleSave = jest.fn().mockResolvedValue(null);
       const mockData = createMockData({ publicationType: 'media', handleSave });
       render(<CreatePublicationsView data={mockData} />);
@@ -351,6 +353,7 @@ describe('CreatePublicationsView Component', () => {
       await waitFor(() => {
         expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
       });
+      expect(toast.error).toHaveBeenCalledWith(MENU_ACTION_CONFIGS.PUBLICATE_AND_EXIT.toastErrorMessage);
       expect(toast.success).not.toHaveBeenCalled();
       expect(mockPush).not.toHaveBeenCalled();
     });
@@ -368,7 +371,7 @@ describe('CreatePublicationsView Component', () => {
       });
     });
 
-    it('should not toast or redirect on cancel publication when no id is returned', async () => {
+    it('should show toast.error and not redirect on cancel publication when no id is returned', async () => {
       const handleSave = jest.fn().mockResolvedValue(null);
       const mockData = createMockData({ publicationType: 'media', handleSave });
       render(<CreatePublicationsView data={mockData} />);
@@ -377,6 +380,7 @@ describe('CreatePublicationsView Component', () => {
       await waitFor(() => {
         expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
       });
+      expect(toast.error).toHaveBeenCalledWith(MENU_ACTION_CONFIGS.CANCEL_PUBLICATION.toastErrorMessage);
       expect(toast.success).not.toHaveBeenCalled();
       expect(mockPush).not.toHaveBeenCalled();
     });

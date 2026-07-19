@@ -32,7 +32,7 @@ export default function PublicatiosSeoPage() {
   const publicationData = useUpsertPublication({ type, id });
 
   const [navigationAnchor, setNavigationAnchor] = useState<HTMLButtonElement | null>(null);
-  const [publishAnchor, setPublishAnchor] = useState<HTMLButtonElement | null>(null); // +
+  const [publishAnchor, setPublishAnchor] = useState<HTMLButtonElement | null>(null);
 
   if (!PUBLICATIONS_TYPES.includes(type)) notFound();
 
@@ -41,25 +41,37 @@ export default function PublicatiosSeoPage() {
   };
   const handleClosePublish = () => setPublishAnchor(null);
 
-  const handlePublishAndExit = () => {
-    const { status, toastMessage } = MENU_ACTION_CONFIGS.PUBLICATE_AND_EXIT;
-    publicationData?.handleSave(status);
-    toast.success(toastMessage);
-    router.push(PUBLICATIONS_BASE_PATH);
+  const handlePublishAndExit = async () => {
+    const { status, toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS.PUBLICATE_AND_EXIT;
+    const id = await publicationData?.handleSave(status);
+    if (id) {
+      toast.success(toastMessage);
+      router.push(PUBLICATIONS_BASE_PATH);
+    } else {
+      toast.error(toastErrorMessage);
+    }
   };
 
-  const handlePublish = () => {
-    const { status, toastMessage } = MENU_ACTION_CONFIGS.PUBLISH;
-    publicationData?.handleSave(status);
-    toast.success(toastMessage);
+  const handlePublish = async () => {
+    const { status, toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS.PUBLISH;
+    const id = await publicationData?.handleSave(status);
+    if (id) {
+      toast.success(toastMessage);
+    } else {
+      toast.error(toastErrorMessage);
+    }
   };
 
-  const handleUnpublish = () => {
-    const { status, toastMessage } = MENU_ACTION_CONFIGS.CANCEL_PUBLICATION;
-    publicationData?.handleSave(status);
-    handleClosePublish();
-    toast.success(toastMessage);
-    router.push(PUBLICATIONS_BASE_PATH);
+  const handleUnpublish = async () => {
+    const { status, toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS.CANCEL_PUBLICATION;
+    const id = await publicationData?.handleSave(status);
+    if (id) {
+      handleClosePublish();
+      toast.success(toastMessage);
+      router.push(PUBLICATIONS_BASE_PATH);
+    } else {
+      toast.error(toastErrorMessage);
+    }
   };
 
   const handleOpenNavigation = (event: MouseEvent<HTMLElement>) => {
@@ -74,8 +86,8 @@ export default function PublicatiosSeoPage() {
     router.push(`${PUBLICATIONS_BASE_PATH}/${type}/${id}/edit`);
   };
 
-  const handlePublishExitClick = () => {
-    handlePublishAndExit();
+  const handlePublishExitClick = async () => {
+    await handlePublishAndExit();
     handleClosePublish();
   };
 

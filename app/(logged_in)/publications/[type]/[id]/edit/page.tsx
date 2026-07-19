@@ -70,20 +70,26 @@ export default function EditPublicationsPage() {
     try {
       switch (actionId) {
       case MenuActionId.PUBLISH: {
-        const { status, toastMessage } = MENU_ACTION_CONFIGS.PUBLISH;
+        const { status, toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS.PUBLISH;
 
         const { data } = await manager.updateResource(status, contentPayload);
-        if (data) toast.success(toastMessage);
+        if (data) {
+          toast.success(toastMessage);
+        } else {
+          toast.error(toastErrorMessage);
+        }
         break;
       }
 
       case MenuActionId.PUBLICATE_AND_EXIT: {
-        const { status, toastMessage } = MENU_ACTION_CONFIGS.PUBLICATE_AND_EXIT;
+        const { status, toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS.PUBLICATE_AND_EXIT;
 
         const { data } = await manager.updateResource(status, contentPayload);
         if (data) {
           toast.success(toastMessage);
           router.push(PUBLICATIONS_BASE_PATH);
+        } else {
+          toast.error(toastErrorMessage);
         }
         break;
       }
@@ -93,17 +99,21 @@ export default function EditPublicationsPage() {
         if (data) {
           toast.success(CONTENT_MUTATION_RESULTS.publicationDeleted);
           router.push(PUBLICATIONS_BASE_PATH);
+        } else {
+          toast.error('Виникла помилка при видаленні публікації. Спробуйте ще раз.');
         }
         break;
       }
 
       case MenuActionId.CANCEL_PUBLICATION: {
-        const { status, toastMessage } = MENU_ACTION_CONFIGS.CANCEL_PUBLICATION;
+        const { status, toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS.CANCEL_PUBLICATION;
 
         const { data } = await manager.updateResource(status, contentPayload);
         if (data) {
           toast.success(toastMessage);
           router.push(PUBLICATIONS_BASE_PATH);
+        } else {
+          toast.error(toastErrorMessage);
         }
         break;
       }

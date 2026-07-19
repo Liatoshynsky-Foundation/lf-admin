@@ -1,11 +1,11 @@
 import { Box, Button, Menu, MenuItem } from '@mui/material';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { notFound, useParams, useRouter } from 'next/navigation';
 import React, { MouseEvent, ReactNode } from 'react';
 import toast from 'react-hot-toast';
 
 import PublicatiosSeoPage from './page';
-import { CONTENT_MUTATION_RESULTS, PUBLICATIONS_BASE_PATH } from '~/constants/publications';
+import { CONTENT_MUTATION_RESULTS, MENU_ACTION_CONFIGS, PUBLICATIONS_BASE_PATH } from '~/constants/publications';
 import { ActionMenuGroups, MenuGroup } from '~/shared/components/dropdown-menu/ActionMenu';
 import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
@@ -113,6 +113,7 @@ describe('PublicatiosSeoPage Container', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockHandleSave.mockResolvedValue('123');
     (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
     (useUpsertPublication as jest.Mock).mockReturnValue({
       handleSave: mockHandleSave
@@ -136,29 +137,35 @@ describe('PublicatiosSeoPage Container', () => {
       expect(screen.getByTestId('mock-title-dropdown')).toHaveTextContent('Редагування Новини');
     });
 
-    it('should show publicationPublished toast when publish is triggered', () => {
+    it('should show publicationPublished toast when publish is triggered', async () => {
       fireEvent.click(screen.getByTestId('btn-publish'));
 
-      expect(mockHandleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
-      expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublished);
+      await waitFor(() => {
+        expect(mockHandleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
+        expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublished);
+      });
     });
 
-    it('should show publicationPublished toast and redirect on publish and exit', () => {
+    it('should show publicationPublished toast and redirect on publish and exit', async () => {
       fireEvent.click(screen.getByTestId('btn-open-publish-menu'));
       fireEvent.click(screen.getByText('Опублікувати і вийти'));
 
-      expect(mockHandleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
-      expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublished);
-      expect(mockPush).toHaveBeenCalledWith(PUBLICATIONS_BASE_PATH);
+      await waitFor(() => {
+        expect(mockHandleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
+        expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublished);
+        expect(mockPush).toHaveBeenCalledWith(PUBLICATIONS_BASE_PATH);
+      });
     });
 
-    it('should handle unpublish action from publication menu', () => {
+    it('should handle unpublish action from publication menu', async () => {
       fireEvent.click(screen.getByTestId('btn-open-publish-menu'));
       fireEvent.click(screen.getByText('Скасувати публікацію'));
 
-      expect(mockHandleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
-      expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationUnpublished);
-      expect(mockPush).toHaveBeenCalledWith(PUBLICATIONS_BASE_PATH);
+      await waitFor(() => {
+        expect(mockHandleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
+        expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationUnpublished);
+        expect(mockPush).toHaveBeenCalledWith(PUBLICATIONS_BASE_PATH);
+      });
     });
 
     it('should redirect to edit page when editing content from navigation menu', () => {
@@ -179,8 +186,50 @@ describe('PublicatiosSeoPage Container', () => {
 
       expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     });
-  });
 
+  });
+  describe('when handleSave returns undefined', () => {
+    it.each([
+      {
+        name: 'publish',
+        trigger: () => fireEvent.click(screen.getByTestId('btn-publish')),
+        status: BaseContentStatuses.Published,
+        errorToast: MENU_ACTION_CONFIGS.PUBLISH.toastErrorMessage
+      },
+      {
+        name: 'publish and exit',
+        trigger: () => {
+          fireEvent.click(screen.getByTestId('btn-open-publish-menu'));
+          fireEvent.click(screen.getByText('Опублікувати і вийти'));
+        },
+        status: BaseContentStatuses.Published,
+        errorToast: MENU_ACTION_CONFIGS.PUBLICATE_AND_EXIT.toastErrorMessage
+      },
+      {
+        name: 'cancel publication',
+        trigger: () => {
+          fireEvent.click(screen.getByTestId('btn-open-publish-menu'));
+          fireEvent.click(screen.getByText('Скасувати публікацію'));
+        },
+        status: BaseContentStatuses.Draft,
+        errorToast: MENU_ACTION_CONFIGS.CANCEL_PUBLICATION.toastErrorMessage
+      }
+    ])(
+      'should show toast.error with $errorToast and not redirect on $name',
+      async ({ trigger, status, errorToast }) => {
+        mockHandleSave.mockResolvedValue(undefined);
+        setup('news');
+        trigger();
+
+        await waitFor(() => {
+          expect(mockHandleSave).toHaveBeenCalledWith(status);
+          expect(toast.error).toHaveBeenCalledWith(errorToast);
+          expect(mockPush).not.toHaveBeenCalled();
+        });
+      }
+    );
+  });
+   
   describe('when publicationData is missing (null/undefined)', () => {
     it('should not throw and should not redirect when data is missing', () => {
       (useUpsertPublication as jest.Mock).mockReturnValue(undefined);

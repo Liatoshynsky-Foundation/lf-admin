@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 
 import { EditPublicationsViewProps } from './EditPublicationsView';
 import EditPublicationsPage from './page';
-import { CONTENT_MUTATION_RESULTS, LocalizedEditorState, MenuActionId } from '~/constants/publications';
+import { CONTENT_MUTATION_RESULTS, LocalizedEditorState, MENU_ACTION_CONFIGS, MenuActionId } from '~/constants/publications';
 import { SerializedContent } from '~/shared/components/content-editor';
 import { usePublicationManager } from '~/shared/hooks/use-publications-manager/usePublicationsManager';
 import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
@@ -45,8 +45,8 @@ const baseMockManager = {
   setCurrentLanguage: jest.fn(),
   editorResetKey: 0,
   resetEditorState: jest.fn(),
-  updateResource: jest.fn().mockResolvedValue({ data: { id: '1' } }),
-  deleteResource: jest.fn().mockResolvedValue({ data: { id: '1' } })
+  updateResource: jest.fn(),
+  deleteResource: jest.fn()
 };
 
 jest.mock('./EditPublicationsView', () => ({
@@ -83,7 +83,8 @@ describe('EditPublicationsPage Container', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-
+    baseMockManager.updateResource.mockResolvedValue({ data: { id: '1' } });
+    baseMockManager.deleteResource.mockResolvedValue({ data: { id: '1' } });
     (useParams as jest.Mock).mockReturnValue({ type: 'news', id: '123' });
     (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
     (usePublicationManager as jest.Mock).mockReturnValue(baseMockManager);
@@ -174,7 +175,7 @@ describe('EditPublicationsPage Container', () => {
     });
   });
 
-  it('should handle delete confirmation by deleting the publication and redirecting', async () => {
+  it('should handle DELETE action confirmation by deleting the publication and redirecting', async () => {
     render(<EditPublicationsPage />);
 
     fireEvent.click(screen.getByTestId('trigger-delete'));
@@ -186,25 +187,55 @@ describe('EditPublicationsPage Container', () => {
     });
   });
 
-  it('should catch mutation errors and trigger a toast.error', async () => {
-    const errorMessage = 'Network Failure';
-    (usePublicationManager as jest.Mock).mockReturnValue({
-      ...baseMockManager,
-      updateResource: jest.fn().mockRejectedValue(new Error(errorMessage))
+  describe('when manager action handlers return data as null', () => {
+    it('should trigger toast.error and not call mockPush when PUBLISH returns data null', async () => {
+      baseMockManager.updateResource.mockResolvedValue({ data: null });
+
+      render(<EditPublicationsPage />);
+      fireEvent.click(screen.getByTestId('trigger-publish'));
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(MENU_ACTION_CONFIGS.PUBLISH.toastErrorMessage);
+        expect(mockPush).not.toHaveBeenCalled();
+      });
     });
 
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    it('should trigger toast.error and not call mockPush when PUBLICATE_AND_EXIT returns data null', async () => {
+      baseMockManager.updateResource.mockResolvedValue({ data: null });
 
-    render(<EditPublicationsPage />);
+      render(<EditPublicationsPage />);
+      fireEvent.click(screen.getByTestId('trigger-save-exit'));
 
-    fireEvent.click(screen.getByTestId('trigger-publish'));
-
-    await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(`Помилка: ${errorMessage}`);
-      expect(consoleSpy).toHaveBeenCalled();
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(MENU_ACTION_CONFIGS.PUBLICATE_AND_EXIT.toastErrorMessage);
+        expect(mockPush).not.toHaveBeenCalled();
+      });
     });
 
-    consoleSpy.mockRestore();
+    it('should trigger toast.error and not call mockPush when CANCEL_PUBLICATION returns data null', async () => {
+      baseMockManager.updateResource.mockResolvedValue({ data: null });
+
+      render(<EditPublicationsPage />);
+      fireEvent.click(screen.getByTestId('trigger-cancel-publication'));
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(MENU_ACTION_CONFIGS.CANCEL_PUBLICATION.toastErrorMessage);
+        expect(mockPush).not.toHaveBeenCalled();
+      });
+    });
+
+    it('should trigger toast.error and not call mockPush when DELETE returns data null', async () => {
+      baseMockManager.deleteResource.mockResolvedValue({ data: null });
+
+      render(<EditPublicationsPage />);
+      fireEvent.click(screen.getByTestId('trigger-delete'));
+
+      await waitFor(() => {
+        expect(baseMockManager.deleteResource).toHaveBeenCalledTimes(1);
+        expect(toast.error).toHaveBeenCalledWith('Виникла помилка при видаленні публікації. Спробуйте ще раз.');
+        expect(mockPush).not.toHaveBeenCalled();
+      });
+    });
   });
 
   it('should handle CANCEL_PUBLICATION action, show toast success and redirect', async () => {

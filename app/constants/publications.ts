@@ -153,15 +153,19 @@ export type ACTIONS_TYPE = {
 
 export type MUTATION_RESULT = Record<string, string>;
 
+
 export const CONTENT_MUTATION_RESULTS: MUTATION_RESULT = {
   publicationDeleted: 'Публікацію видалено',
   publicationUnpublished: 'Публікацію скасовано',
-  publicationPublished: 'Публікацію опубліковано успішно'
+  publicationPublished: 'Публікацію опубліковано успішно',
+  publicationPublishError: 'Виникла помилка при публікації. Спробуйте ще раз.',
+  publicationUnpublishError: 'Виникла помилка при скасуванні публікації. Спробуйте ще раз.'
 } as const;
 
 export type MenuActionConfig = {
   status: BaseContentStatuses;
   toastMessage: string;
+  toastErrorMessage: string;
 };
 
 export const MENU_ACTION_CONFIGS: Record<
@@ -170,15 +174,18 @@ export const MENU_ACTION_CONFIGS: Record<
 > = {
   [MenuActionId.PUBLISH]: {
     status: BaseContentStatuses.Published,
-    toastMessage: CONTENT_MUTATION_RESULTS.publicationPublished
+    toastMessage: CONTENT_MUTATION_RESULTS.publicationPublished,
+    toastErrorMessage: CONTENT_MUTATION_RESULTS.publicationPublishError
   },
   [MenuActionId.PUBLICATE_AND_EXIT]: {
     status: BaseContentStatuses.Published,
-    toastMessage: CONTENT_MUTATION_RESULTS.publicationPublished
+    toastMessage: CONTENT_MUTATION_RESULTS.publicationPublished,
+    toastErrorMessage: CONTENT_MUTATION_RESULTS.publicationPublishError
   },
   [MenuActionId.CANCEL_PUBLICATION]: {
     status: BaseContentStatuses.Draft,
-    toastMessage: CONTENT_MUTATION_RESULTS.publicationUnpublished
+    toastMessage: CONTENT_MUTATION_RESULTS.publicationUnpublished,
+    toastErrorMessage: CONTENT_MUTATION_RESULTS.publicationUnpublishError
   },
 } as const;
 
