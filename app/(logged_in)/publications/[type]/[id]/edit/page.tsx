@@ -64,59 +64,40 @@ export default function EditPublicationsPage() {
     }, 500);
   };
 
+  const performUpdateAction = async (actionId: keyof typeof MENU_ACTION_CONFIGS) => {
+    const { status, toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS[actionId];
+    const { data } = await manager.updateResource(status, { content: manager.editedContent });
+    return { data, toastMessage, toastErrorMessage };
+  };
+
+  const performDeleteAction = async () => {
+    const { data } = await manager.deleteResource();
+    return {
+      data,
+      toastMessage: CONTENT_MUTATION_RESULTS.publicationDeleted,
+      toastErrorMessage: 'Виникла помилка при видаленні публікації. Спробуйте ще раз.',
+    };
+  };
+
+  const NAVIGATE_AFTER_ACTIONS = new Set<MenuActionId>([
+    MenuActionId.PUBLICATE_AND_EXIT,
+    MenuActionId.DELETE,
+    MenuActionId.CANCEL_PUBLICATION,
+  ]);
+
   const handleMenuAction = async (actionId: MenuActionId) => {
-    const contentPayload = { content: manager.editedContent };
-
     try {
-      switch (actionId) {
-      case MenuActionId.PUBLISH: {
-        const { status, toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS.PUBLISH;
+      const { data, toastErrorMessage, toastMessage } = actionId === MenuActionId.DELETE ? await performDeleteAction() : await performUpdateAction(actionId);
 
-        const { data } = await manager.updateResource(status, contentPayload);
-        if (data) {
-          toast.success(toastMessage);
-        } else {
-          toast.error(toastErrorMessage);
-        }
-        break;
+      if (!data) {
+        toast.error(toastErrorMessage);
+        return;
       }
 
-      case MenuActionId.PUBLICATE_AND_EXIT: {
-        const { status, toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS.PUBLICATE_AND_EXIT;
-
-        const { data } = await manager.updateResource(status, contentPayload);
-        if (data) {
-          toast.success(toastMessage);
-          router.push(PUBLICATIONS_BASE_PATH);
-        } else {
-          toast.error(toastErrorMessage);
-        }
-        break;
-      }
-
-      case MenuActionId.DELETE: {
-        const { data } = await manager.deleteResource();
-        if (data) {
-          toast.success(CONTENT_MUTATION_RESULTS.publicationDeleted);
-          router.push(PUBLICATIONS_BASE_PATH);
-        } else {
-          toast.error('Виникла помилка при видаленні публікації. Спробуйте ще раз.');
-        }
-        break;
-      }
-
-      case MenuActionId.CANCEL_PUBLICATION: {
-        const { status, toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS.CANCEL_PUBLICATION;
-
-        const { data } = await manager.updateResource(status, contentPayload);
-        if (data) {
-          toast.success(toastMessage);
-          router.push(PUBLICATIONS_BASE_PATH);
-        } else {
-          toast.error(toastErrorMessage);
-        }
-        break;
-      }
+      toast.success(toastMessage);
+      
+      if (NAVIGATE_AFTER_ACTIONS.has(actionId)) {
+        router.push(PUBLICATIONS_BASE_PATH);
       }
     } catch (err) {
       toast.error(`Помилка: ${err instanceof Error ? err.message : String(err)}`);
