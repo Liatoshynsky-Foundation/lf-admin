@@ -2,12 +2,13 @@ import { DragEndEvent } from '@dnd-kit/core';
 import { Box, Typography } from '@mui/material';
 
 import { styles } from './GroupWorksSection.styles';
-import { SortableWorkRow } from './SortableWorkRow';
+import { WorkRow } from './WorkRow';
 import Button from '~/components/design-system/button/Button';
 import { OPUS_DETAILS_LABELS } from '~/constants/opus';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
 import CompositionModal from '~/shared/components/forms/opus-details-block/composition-modal/CompositionModal';
+import { SortableItemWrapper } from '~/shared/components/sortable-item-wrapper/SortableItemWrapper';
 import { SortableList } from '~/shared/components/sortable-list/SortableList';
 import { useCompositionsForm } from '~/shared/hooks/use-compositions/useCompositions';
 import type { OpusCompositionData } from '~/types/opus';
@@ -51,16 +52,17 @@ export const GroupWorksSection = ({ works, onChange }: GroupWorksSectionProps) =
       <Box sx={styles.compositionsList}>
         <SortableList id="group-works-list" items={works.map((work) => work.id)} onDragEnd={handleDragEnd}>
           {works.map((composition, index) => (
-            <SortableWorkRow
-              key={composition.id}
-              composition={composition}
-              index={index}
-              updateCompositionTitle={updateCompositionTitle}
-              fillComposition={fillComposition}
-              openCreateModal={openCreateModal}
-              openEditModal={openEditModal}
-              setDeleteTargetId={setDeleteTargetId}
-            />
+            <SortableItemWrapper key={composition.id} id={composition.id} gripHandle={true}>
+              <WorkRow
+                composition={composition}
+                index={index}
+                updateCompositionTitle={updateCompositionTitle}
+                fillComposition={fillComposition}
+                openCreateModal={openCreateModal}
+                openEditModal={openEditModal}
+                setDeleteTargetId={setDeleteTargetId}
+              />
+            </SortableItemWrapper>
           ))}
         </SortableList>
       </Box>

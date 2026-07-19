@@ -51,6 +51,14 @@ jest.mock('./year-picker/YearPicker', () => ({
   )
 }));
 
+jest.mock('~/shared/components/sortable-item-wrapper/SortableItemWrapper', () => ({
+  SortableItemWrapper: ({ children }: { children: ReactNode }) => <>{children}</>
+}));
+
+jest.mock('~/shared/components/sortable-list/SortableList', () => ({
+  SortableList: ({ children }: { children: ReactNode }) => <div>{children}</div>
+}));
+
 const makeComposition = (id: string, title: string): OpusCompositionData => ({
   id,
   title,

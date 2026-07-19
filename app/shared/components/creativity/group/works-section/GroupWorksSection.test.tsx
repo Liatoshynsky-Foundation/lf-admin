@@ -3,14 +3,16 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React, { ReactNode } from 'react';
 
 import { GroupWorksSection } from './GroupWorksSection';
-import { SortableWorkRowProps } from './SortableWorkRow';
+import { WorkRowProps } from './WorkRow';
 import { OPUS_DELETE_MODAL, OPUS_DETAILS_LABELS } from '~/constants/opus';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { useCompositionsForm } from '~/shared/hooks/use-compositions/useCompositions';
 import type { OpusCompositionData, OpusCompositionSuggestion } from '~/types/opus';
 
 const TEST_IDS = {
+  wrapper: (id: string) => `wrapper-${id}`,
   row: (id: string) => `row-${id}`,
+  rowIndex: (id: string) => `row-index-${id}`,
   titleInput: (id: string) => `title-input-${id}`,
   suggestBtn: (id: string) => `suggest-btn-${id}`,
   createBtn: (id: string) => `create-btn-${id}`,
@@ -23,27 +25,52 @@ const TEST_IDS = {
   sortableList: 'sortable-list'
 };
 
-jest.mock('./SortableWorkRow', () => ({
-  SortableWorkRow: ({
+const mockSuggestion: OpusCompositionSuggestion = {
+  id: 'sugg',
+  title: 'Suggested title',
+  genre: '',
+  year: ''
+} as unknown as OpusCompositionSuggestion;
+
+const mockUpdatedComposition: OpusCompositionData = {
+  id: 'updated',
+  title: 'Updated title',
+  genre: '',
+  year: '',
+  audios: [],
+  notes: []
+};
+
+jest.mock('./WorkRow', () => ({
+  WorkRow: ({
     composition,
+    index,
     updateCompositionTitle,
     fillComposition,
     openCreateModal,
     openEditModal,
     setDeleteTargetId
-  }: SortableWorkRowProps) => (
-    <div data-testid={TEST_IDS.row(composition.id)}>
+  }: WorkRowProps) => (
+    <div data-testid={TEST_IDS.row(composition.id)} data-index={TEST_IDS.rowIndex(String(index))}>
       <button
         data-testid={TEST_IDS.titleInput(composition.id)}
         onClick={() => updateCompositionTitle(composition.id, 'New')}
       />
       <button
         data-testid={TEST_IDS.suggestBtn(composition.id)}
-        onClick={() => fillComposition(0, { id: 'sugg' } as OpusCompositionSuggestion)}
+        onClick={() => fillComposition(index, mockSuggestion)}
       />
-      <button data-testid={TEST_IDS.createBtn(composition.id)} onClick={() => openCreateModal(0)} />
-      <button data-testid={TEST_IDS.editBtn(composition.id)} onClick={() => openEditModal(0)} />
+      <button data-testid={TEST_IDS.createBtn(composition.id)} onClick={() => openCreateModal(index)} />
+      <button data-testid={TEST_IDS.editBtn(composition.id)} onClick={() => openEditModal(index)} />
       <button data-testid={TEST_IDS.deleteBtn(composition.id)} onClick={() => setDeleteTargetId(composition.id)} />
+    </div>
+  )
+}));
+
+jest.mock('~/shared/components/sortable-item-wrapper/SortableItemWrapper', () => ({
+  SortableItemWrapper: ({ id, gripHandle, children }: { id: string; gripHandle: boolean; children: ReactNode }) => (
+    <div data-testid={TEST_IDS.wrapper(id)} data-grip-handle={String(gripHandle)}>
+      {children}
     </div>
   )
 }));
@@ -53,8 +80,16 @@ jest.mock('~/lib/utils/sortableDragEndHelper', () => ({
 }));
 
 jest.mock('~/shared/components/sortable-list/SortableList', () => ({
-  SortableList: ({ children, onDragEnd }: { children: ReactNode; onDragEnd: (event: DragEndEvent) => void }) => (
-    <div data-testid={TEST_IDS.sortableList} onClick={() => onDragEnd({} as DragEndEvent)}>
+  SortableList: ({
+    children,
+    onDragEnd,
+    items
+  }: {
+    children: ReactNode;
+    onDragEnd: (event: DragEndEvent) => void;
+    items: string[];
+  }) => (
+    <div data-testid={TEST_IDS.sortableList} data-items={items.join(',')} onClick={() => onDragEnd({} as DragEndEvent)}>
       {children}
     </div>
   )
@@ -83,7 +118,7 @@ jest.mock('~/shared/components/forms/opus-details-block/composition-modal/Compos
     if (!open) return null;
     return (
       <div data-testid={TEST_IDS.modal} data-mode={mode} data-has-initial={Boolean(initialValue)}>
-        <button data-testid={TEST_IDS.modalSubmit} onClick={() => onSubmit({ id: 'updated' } as OpusCompositionData)}>
+        <button data-testid={TEST_IDS.modalSubmit} onClick={() => onSubmit(mockUpdatedComposition)}>
           Submit
         </button>
         <button data-testid={TEST_IDS.modalClose} onClick={onClose}>
@@ -131,29 +166,69 @@ describe('GroupWorksSection Component', () => {
     mockUseCompositions.mockReturnValue(mockHookReturns);
   });
 
-  it('renders the list of works successfully', () => {
+  it('renders the section title and add button', () => {
     render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
     expect(screen.getByText(OPUS_DETAILS_LABELS.compositions)).toBeInTheDocument();
+    expect(screen.getByText(OPUS_DETAILS_LABELS.addComposition)).toBeInTheDocument();
+  });
+
+  it('calls addComposition when the add button is clicked', () => {
+    render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
+    fireEvent.click(screen.getByText(OPUS_DETAILS_LABELS.addComposition));
+    expect(mockHookReturns.addComposition).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the list of works wrapped in SortableItemWrapper with correct props', () => {
+    render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
+
+    const wrapperOne = screen.getByTestId(TEST_IDS.wrapper('1'));
+    const wrapperTwo = screen.getByTestId(TEST_IDS.wrapper('2'));
+
+    expect(wrapperOne).toBeInTheDocument();
+    expect(wrapperOne).toHaveAttribute('data-grip-handle', 'true');
+    expect(wrapperTwo).toBeInTheDocument();
+    expect(wrapperTwo).toHaveAttribute('data-grip-handle', 'true');
+
     expect(screen.getByTestId(TEST_IDS.row('1'))).toBeInTheDocument();
     expect(screen.getByTestId(TEST_IDS.row('2'))).toBeInTheDocument();
   });
 
-  it('calls openEditModal when edit button is clicked in row', () => {
+  it('passes the correct ids to SortableList', () => {
+    render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
+    expect(screen.getByTestId(TEST_IDS.sortableList)).toHaveAttribute('data-items', '1,2');
+  });
+
+  it('calls openEditModal with correct index when edit button is clicked in row', () => {
     render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
     fireEvent.click(screen.getByTestId(TEST_IDS.editBtn('1')));
     expect(mockHookReturns.openEditModal).toHaveBeenCalledWith(0);
+
+    fireEvent.click(screen.getByTestId(TEST_IDS.editBtn('2')));
+    expect(mockHookReturns.openEditModal).toHaveBeenCalledWith(1);
   });
 
-  it('calls setDeleteTargetId when trash button is clicked', () => {
+  it('calls setDeleteTargetId with correct id when trash button is clicked', () => {
     render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
     fireEvent.click(screen.getByTestId(TEST_IDS.deleteBtn('1')));
     expect(mockHookReturns.setDeleteTargetId).toHaveBeenCalledWith('1');
   });
 
-  it('calls fillComposition when suggestion is selected', () => {
+  it('calls updateCompositionTitle with correct id when title input changes', () => {
+    render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
+    fireEvent.click(screen.getByTestId(TEST_IDS.titleInput('2')));
+    expect(mockHookReturns.updateCompositionTitle).toHaveBeenCalledWith('2', 'New');
+  });
+
+  it('calls fillComposition with correct index and suggestion when suggestion is selected', () => {
     render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
     fireEvent.click(screen.getByTestId(TEST_IDS.suggestBtn('1')));
-    expect(mockHookReturns.fillComposition).toHaveBeenCalledWith(0, { id: 'sugg' });
+    expect(mockHookReturns.fillComposition).toHaveBeenCalledWith(0, mockSuggestion);
+  });
+
+  it('calls openCreateModal with correct index when create new button is clicked', () => {
+    render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
+    fireEvent.click(screen.getByTestId(TEST_IDS.createBtn('2')));
+    expect(mockHookReturns.openCreateModal).toHaveBeenCalledWith(1);
   });
 
   it('renders modal when isModalOpen is true and calls submit/close', () => {
@@ -162,24 +237,14 @@ describe('GroupWorksSection Component', () => {
 
     expect(screen.getByTestId(TEST_IDS.modal)).toBeInTheDocument();
     fireEvent.click(screen.getByTestId(TEST_IDS.modalSubmit));
-    expect(mockHookReturns.handleModalSubmit).toHaveBeenCalledWith({ id: 'updated' });
+    expect(mockHookReturns.handleModalSubmit).toHaveBeenCalledWith(mockUpdatedComposition);
     fireEvent.click(screen.getByTestId(TEST_IDS.modalClose));
-    expect(mockHookReturns.closeModal).toHaveBeenCalled();
+    expect(mockHookReturns.closeModal).toHaveBeenCalledTimes(1);
   });
 
-  it('renders delete modal when deleteTargetId is set and calls confirm/close', () => {
-    mockUseCompositions.mockReturnValue({ ...mockHookReturns, deleteTargetId: '1' });
+  it('does not render modal when isModalOpen is false', () => {
     render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
-
-    expect(screen.getByTestId(TEST_IDS.deleteModal)).toBeInTheDocument();
-    fireEvent.click(screen.getByText(OPUS_DELETE_MODAL.confirm));
-    expect(mockHookReturns.handleDeleteConfirm).toHaveBeenCalled();
-  });
-
-  it('calls openCreateModal when create new button is clicked', () => {
-    render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
-    fireEvent.click(screen.getByTestId(TEST_IDS.createBtn('1')));
-    expect(mockHookReturns.openCreateModal).toHaveBeenCalledWith(0);
+    expect(screen.queryByTestId(TEST_IDS.modal)).not.toBeInTheDocument();
   });
 
   it('passes initialValue to modal when editingIndex is not null (Edit mode)', () => {
@@ -191,7 +256,9 @@ describe('GroupWorksSection Component', () => {
     });
 
     render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
-    expect(screen.getByTestId(TEST_IDS.modal)).toHaveAttribute('data-has-initial', 'true');
+    const modal = screen.getByTestId(TEST_IDS.modal);
+    expect(modal).toHaveAttribute('data-has-initial', 'true');
+    expect(modal).toHaveAttribute('data-mode', 'edit');
   });
 
   it('passes undefined as initialValue to modal when editingIndex is null (Create mode)', () => {
@@ -203,7 +270,23 @@ describe('GroupWorksSection Component', () => {
     });
 
     render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
-    expect(screen.getByTestId(TEST_IDS.modal)).toHaveAttribute('data-has-initial', 'false');
+    const modal = screen.getByTestId(TEST_IDS.modal);
+    expect(modal).toHaveAttribute('data-has-initial', 'false');
+    expect(modal).toHaveAttribute('data-mode', 'create');
+  });
+
+  it('renders delete modal when deleteTargetId is set and calls confirm', () => {
+    mockUseCompositions.mockReturnValue({ ...mockHookReturns, deleteTargetId: '1' });
+    render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
+
+    expect(screen.getByTestId(TEST_IDS.deleteModal)).toBeInTheDocument();
+    fireEvent.click(screen.getByText(OPUS_DELETE_MODAL.confirm));
+    expect(mockHookReturns.handleDeleteConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not render delete modal when deleteTargetId is null', () => {
+    render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
+    expect(screen.queryByTestId(TEST_IDS.deleteModal)).not.toBeInTheDocument();
   });
 
   it('resets deleteTargetId to null when delete modal is closed', () => {
@@ -214,9 +297,16 @@ describe('GroupWorksSection Component', () => {
     expect(mockHookReturns.setDeleteTargetId).toHaveBeenCalledWith(null);
   });
 
-  it('calls handleSortableDragEnd when DragEnd event is triggered', () => {
-    render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
+  it('calls handleSortableDragEnd with works and onChange when DragEnd event is triggered', () => {
+    const onChange = jest.fn();
+    render(<GroupWorksSection works={defaultWorks} onChange={onChange} />);
     fireEvent.click(screen.getByTestId(TEST_IDS.sortableList));
-    expect(handleSortableDragEnd).toHaveBeenCalledWith(expect.any(Object), defaultWorks, expect.any(Function));
+    expect(handleSortableDragEnd).toHaveBeenCalledWith(expect.any(Object), defaultWorks, onChange);
+  });
+
+  it('renders correctly with an empty works list', () => {
+    render(<GroupWorksSection works={[]} onChange={jest.fn()} />);
+    expect(screen.getByText(OPUS_DETAILS_LABELS.compositions)).toBeInTheDocument();
+    expect(screen.queryByTestId(TEST_IDS.wrapper('1'))).not.toBeInTheDocument();
   });
 });
