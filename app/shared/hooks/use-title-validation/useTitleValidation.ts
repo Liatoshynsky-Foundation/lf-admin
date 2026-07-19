@@ -6,13 +6,6 @@ import { ProseDoc } from '~/types/common';
 
 const EMPTY_TITLE_MESSAGE = 'Заголовок не може бути порожнім';
 
-/**
- * Tracks emptiness validation for a single rich-text title field and mirrors
- * the result into the shared store so the page-level Save button can be
- * disabled while any title on the page is invalid.
- *
- * `key` must be unique per field across the whole app, e.g. `${pageId}:${blockId}:title`.
- */
 export const useTitleValidation = (key: string, value?: ProseDoc) => {
   const setFieldValidity = useStore((state) => state.setFieldValidity);
   const [touched, setTouched] = useState(false);
