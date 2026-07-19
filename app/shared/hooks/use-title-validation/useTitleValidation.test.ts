@@ -2,6 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 
 import { useTitleValidation } from './useTitleValidation';
 import { createDocNode } from '~/__mocks__/utils';
+import { ProseDoc } from '~/types/common';
 
 const mockSetFieldValidity = jest.fn();
 
@@ -11,7 +12,7 @@ jest.mock('~/store', () => ({
 }));
 
 const KEY = 'privacy-policy:Cookies:title';
-const emptyDoc = { type: 'doc', content: [] };
+const emptyDoc: ProseDoc = { type: 'doc', content: [] };
 
 describe('useTitleValidation', () => {
   beforeEach(() => {
@@ -52,7 +53,7 @@ describe('useTitleValidation', () => {
     rerender({ value: emptyDoc });
     expect(result.current.error).toBe(true);
 
-    rerender({ value: createDocNode('Some title') });
+    rerender({ value: createDocNode('Some title') as ProseDoc });
     expect(result.current.error).toBe(false);
     expect(mockSetFieldValidity).toHaveBeenLastCalledWith(KEY, false);
   });
