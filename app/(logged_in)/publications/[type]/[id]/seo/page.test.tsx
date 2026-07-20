@@ -115,7 +115,6 @@ describe('PublicatiosSeoPage Container', () => {
     jest.clearAllMocks();
     mockHandleSave.mockResolvedValue('123');
     (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
-    mockHandleSave.mockResolvedValue('id');
     (useUpsertPublication as jest.Mock).mockReturnValue({
       handleSave: mockHandleSave
     } as unknown as ReturnType<typeof useUpsertPublication>);
@@ -157,27 +156,34 @@ describe('PublicatiosSeoPage Container', () => {
         expect(mockPush).toHaveBeenCalledWith(PUBLICATIONS_BASE_PATH);
       });
     });
-    it('should NOT show publicationPublished toast with redirect on publish and exit if handleSave doesn\'t return id', async () => {
-      mockHandleSave.mockResolvedValue(null);
-      fireEvent.click(screen.getByTestId('btn-open-publish-menu'));
-      fireEvent.click(screen.getByText('Опублікувати і вийти'));
+    it.each([
+      {
+        condition: 'with redirect on publish and exit',
+        triggerAction: () => {
+          fireEvent.click(screen.getByTestId('btn-open-publish-menu'));
+          fireEvent.click(screen.getByText('Опублікувати і вийти'));
+        },
+      },
+      {
+        condition: 'when publish is triggered',
+        triggerAction: () => {
+          fireEvent.click(screen.getByTestId('btn-publish'));
+        },
+      },
+    ])(
+      'should NOT show publicationPublished toast $condition if handleSave doesn\'t return id',
+      async ({ triggerAction }) => {
+        mockHandleSave.mockResolvedValue({ slug: 'some-slug' });
+    
+        triggerAction();
 
-      await waitFor(() => {
-        expect(mockHandleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
-        expect(toast.success).not.toHaveBeenCalled();
-        expect(mockPush).not.toHaveBeenCalled();
-      });
-
-    });
-    it('should NOT show publicationPublished toast when publish is triggered if handleSave doesn\'t return id', async () => {
-      mockHandleSave.mockResolvedValue(null);
-      fireEvent.click(screen.getByTestId('btn-publish'));
-      await waitFor(() => {
-        expect(mockHandleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
-        expect(toast.success).not.toHaveBeenCalled();
-        expect(mockPush).not.toHaveBeenCalled();
-      });
-    });
+        await waitFor(() => {
+          expect(mockHandleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
+          expect(toast.success).not.toHaveBeenCalled();
+          expect(mockPush).not.toHaveBeenCalled();
+        });
+      }
+    );
     it('should handle unpublish action from publication menu', async () => {
       fireEvent.click(screen.getByTestId('btn-open-publish-menu'));
       fireEvent.click(screen.getByText('Скасувати публікацію'));
