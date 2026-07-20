@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 
 import { styles } from './GroupPerformancesSection.styles';
 import { PerformanceRow } from './PerformanceRow';
-import { GroupPerformance } from '~/constants/creativity';
+import { GroupPerformance, NormalizedGroupPerformance } from '~/constants/creativity';
 import { EditorLanguage } from '~/constants/publications';
 import { generateUniqueId } from '~/lib/utils/generateUniqueId';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
@@ -71,6 +71,7 @@ export const GroupPerformancesSection = ({
   const langKey = currentLanguage === 'UA' ? 'uk' : 'en';
   const [performanceIdToDelete, setPerformanceIdToDelete] = useState<string | null>(null);
 
+  console.log('performances', performances);
   const preparedPerformances = useMemo(() => {
     return performances.map((item) => ({
       ...item,
@@ -79,7 +80,7 @@ export const GroupPerformancesSection = ({
   }, [performances]);
 
   const handleAddPerformance = () => {
-    const newPerformance: GroupPerformance = {
+    const newPerformance: NormalizedGroupPerformance = {
       id: generateUniqueId(),
       url: '',
       caption: { uk: '', en: '' }

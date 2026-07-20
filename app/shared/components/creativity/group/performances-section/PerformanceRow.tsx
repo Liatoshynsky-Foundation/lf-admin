@@ -2,11 +2,11 @@ import { Box, IconButton, Tooltip } from '@mui/material';
 import { Trash2 } from 'lucide-react';
 
 import { styles } from './GroupPerformancesSection.styles';
-import type { GroupPerformance } from '~/constants/creativity';
+import { NormalizedGroupPerformance } from '~/constants/creativity';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 
 export type PerformanceRowProps = {
-  item: GroupPerformance;
+  item: NormalizedGroupPerformance;
   langKey: 'uk' | 'en';
   renderLinkPreview: (url: string) => React.ReactNode;
   onUpdateUrl: (id: string, value: string) => void;

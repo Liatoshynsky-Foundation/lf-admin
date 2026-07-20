@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React, { ChangeEvent } from 'react';
 
 import { PerformanceRow, PerformanceRowProps } from './PerformanceRow';
-import type { GroupPerformance } from '~/constants/creativity';
+import type { NormalizedGroupPerformance } from '~/constants/creativity';
 
 const LABELS = {
   canonicalUrl: 'Canonical URL',
@@ -63,7 +63,7 @@ const mockOnUpdateCaption = jest.fn();
 const mockOnDeleteRequest = jest.fn();
 const mockRenderLinkPreview = jest.fn(() => <span data-testid="mock-link-preview" />);
 
-const baseItem: GroupPerformance = {
+const baseItem: NormalizedGroupPerformance = {
   id: MOCK_IDS.base,
   url: MOCK_URLS.base,
   caption: { uk: MOCK_CAPTIONS.uk, en: MOCK_CAPTIONS.en }
