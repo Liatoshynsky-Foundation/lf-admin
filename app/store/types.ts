@@ -31,6 +31,9 @@ export interface EditState {
   invalidFields: Record<string, boolean>;
   setFieldValidity: (key: string, isInvalid: boolean) => void;
 
+  isSaving: boolean;
+  setIsSaving: (isSaving: boolean) => void;
+
   blocks: {
     [pageId: string]: {
       [blockId in keyof BlocksMap]?: BlocksMap[blockId];

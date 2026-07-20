@@ -7,6 +7,7 @@ import { sxToArray } from '~/lib/utils/sxToArray';
 import ChevronIcon from '~/public/icons/chevron-down.svg';
 import EyeIcon from '~/public/icons/eye.svg';
 import EyeClosedIcon from '~/public/icons/eye-closed.svg';
+import { useStore } from '~/store';
 
 interface CollapsibleBlockProps extends AccordionProps {
   title: string;
@@ -26,8 +27,9 @@ const CollapsibleBlock = ({
   onToggleVisibility,
   ...props
 }: CollapsibleBlockProps) => {
+  const isSaving = useStore((state) => state.isSaving);
 
-  const styles = getStyles(grip, hidden);
+  const styles = getStyles(grip, hidden, isSaving);
 
   return (
     <Accordion {...props} sx={[styles.root, ...(sxToArray(sx))]}>

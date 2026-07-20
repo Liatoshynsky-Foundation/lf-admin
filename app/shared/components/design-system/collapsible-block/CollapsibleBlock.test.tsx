@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import CollapsibleBlock from './CollapsibleBlock';
+import { useStore } from '~/store';
 
 jest.mock('~/public/icons/chevron-down.svg', () => {
   const DummyChevron = () => <svg data-testid="chevron-icon" />;
@@ -25,6 +26,10 @@ jest.mock('../../grip/Grip');
 
 describe('CollapsibleBlock', () => {
   const titleText = 'Test Block';
+
+  afterEach(() => {
+    useStore.setState({ isSaving: false });
+  });
 
   it('should render the title', () => {
     render(
@@ -124,5 +129,33 @@ describe('CollapsibleBlock', () => {
 
     fireEvent.keyDown(toggle, { key: ' ' });
     expect(onToggleVisibility).toHaveBeenCalledTimes(2);
+  });
+
+  it('should lock its own pointer events and dim itself when a save is in progress', () => {
+    useStore.setState({ isSaving: true });
+
+    const { container } = render(
+      <CollapsibleBlock title={titleText}>
+        <div>Child Content</div>
+      </CollapsibleBlock>
+    );
+
+    const accordionRoot = container.firstChild as HTMLElement;
+    expect(accordionRoot).toHaveStyle('pointer-events: none');
+    expect(accordionRoot).toHaveStyle('opacity: 0.6');
+  });
+
+  it('should keep pointer events enabled when not saving', () => {
+    useStore.setState({ isSaving: false });
+
+    const { container } = render(
+      <CollapsibleBlock title={titleText}>
+        <div>Child Content</div>
+      </CollapsibleBlock>
+    );
+
+    const accordionRoot = container.firstChild as HTMLElement;
+    expect(accordionRoot).toHaveStyle('pointer-events: auto');
+    expect(accordionRoot).toHaveStyle('opacity: 1');
   });
 });

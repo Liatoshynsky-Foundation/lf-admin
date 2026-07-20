@@ -42,6 +42,12 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
     set({ invalidFields: next });
   },
 
+  isSaving: false,
+  setIsSaving: (isSaving: boolean) => {
+    if (get().isSaving === isSaving) return;
+    set({ isSaving });
+  },
+
   blocks: {},
   originalBlocks: {},
 

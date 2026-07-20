@@ -34,6 +34,7 @@ describe('editSlice', () => {
     expect(state.originalBlocksOrder).toEqual({});
     expect(state.locale).toBe('uk');
     expect(state.invalidFields).toEqual({});
+    expect(state.isSaving).toBe(false);
   });
 
   describe('setFieldValidity', () => {
@@ -56,6 +57,27 @@ describe('editSlice', () => {
 
       store.getState().setFieldValidity(KEY, false);
       expect(store.getState().invalidFields).toBe(stateBefore);
+    });
+  });
+
+  describe('setIsSaving', () => {
+    it('should set isSaving to true', () => {
+      store.getState().setIsSaving(true);
+      expect(store.getState().isSaving).toBe(true);
+    });
+
+    it('should set isSaving back to false', () => {
+      store.getState().setIsSaving(true);
+      store.getState().setIsSaving(false);
+      expect(store.getState().isSaving).toBe(false);
+    });
+
+    it('should be a no-op when setting the same value twice', () => {
+      store.getState().setIsSaving(false);
+      const stateBefore = store.getState();
+
+      store.getState().setIsSaving(false);
+      expect(store.getState()).toBe(stateBefore);
     });
   });
 

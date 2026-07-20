@@ -27,6 +27,7 @@ export const EditablePageLayout = ({
   const isChanged = useStore((s) => s.isChanged);
   const discardChanges = useStore((s) => s.discardChanges);
   const hasInvalidFields = useStore((s) => Object.values(s.invalidFields).some(Boolean));
+  const setIsSaving = useStore((s) => s.setIsSaving);
 
   const { data, loading: queryLoading } = useGetPageQuery({
     variables: { slug: pageSlug }
@@ -49,6 +50,12 @@ export const EditablePageLayout = ({
     setIsMounted(true);
   }, []);
 
+  // Mirrored into the store (instead of locking the whole content wrapper here) so each
+  // CollapsibleBlock can lock itself individually without disrupting the dnd-kit SortableList layout.
+  useEffect(() => {
+    setIsSaving(isSaving);
+  }, [isSaving, setIsSaving]);
+
   if (!isMounted || queryLoading) {
     return null;
   }
@@ -65,7 +72,7 @@ export const EditablePageLayout = ({
         isSaving={isSaving}
         onLanguageChange={(lang: 'uk' | 'en') => setLocale(lang)}
       />
-      <Box data-testid="editable-page-content" sx={styles.contentWrapper(isSaving)}>{children}</Box>
+      {children}
     </Box>
   );
 };

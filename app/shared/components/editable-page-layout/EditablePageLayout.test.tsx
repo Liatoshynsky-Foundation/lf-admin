@@ -10,11 +10,13 @@ import { useGetPageQuery } from '~/types/graphql/generated/graphql';
 const mockSetLocale = jest.fn();
 const mockDiscardChanges = jest.fn();
 const mockSetPageData = jest.fn();
+const mockSetIsSaving = jest.fn();
 
 const defaultStoreState = {
   setLocale: mockSetLocale,
   discardChanges: mockDiscardChanges,
   setPageData: mockSetPageData,
+  setIsSaving: mockSetIsSaving,
   isChanged: false,
   invalidFields: {},
 };
@@ -223,8 +225,11 @@ describe('EditablePageLayout', () => {
     });
   });
 
-  describe('Content lock while saving', () => {
-    it('should disable pointer events on the content when saving is in progress', () => {
+  describe('Saving state sync', () => {
+    // The wrapper itself no longer locks pointer-events (that broke the dnd-kit
+    // SortableList layout on about-us/privacy-policy edit pages). Instead, isSaving is
+    // mirrored into the store so each CollapsibleBlock can lock itself individually.
+    it('should push isSaving=true into the store when a save is in progress', () => {
       (useSavePageBlocks as jest.Mock).mockReturnValue({
         save: mockSave,
         loading: true,
@@ -232,13 +237,24 @@ describe('EditablePageLayout', () => {
 
       runSimulation();
 
-      expect(screen.getByTestId('editable-page-content')).toHaveStyle('pointer-events: none');
+      expect(mockSetIsSaving).toHaveBeenCalledWith(true);
     });
 
-    it('should keep pointer events enabled on the content when not saving', () => {
+    it('should push isSaving=true into the store when the editor/preview is loading', () => {
+      (usePageEditor as jest.Mock).mockReturnValue({
+        preview: mockPreview,
+        loading: true,
+      });
+
       runSimulation();
 
-      expect(screen.getByTestId('editable-page-content')).toHaveStyle('pointer-events: auto');
+      expect(mockSetIsSaving).toHaveBeenCalledWith(true);
+    });
+
+    it('should push isSaving=false into the store when neither is loading', () => {
+      runSimulation();
+
+      expect(mockSetIsSaving).toHaveBeenCalledWith(false);
     });
   });
 });
