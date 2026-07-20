@@ -1,7 +1,8 @@
 import { Box } from '@mui/material';
-import { render } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { useWorksTableActions } from './useWorksTableActions';
 import {
   columns as originalColumns,
   GroupHeaderData,
@@ -20,6 +21,25 @@ jest.mock('~/shared/components/table-layout/TableLayout', () => ({
     mockTableLayout(props);
     return <Box data-testid="table-layout" />;
   }
+}));
+
+jest.mock('~/shared/components/delete-card-modal/DeleteCardModal', () => ({
+  __esModule: true,
+  default: ({ open, onClose, onDelete }: { open: boolean; onClose: () => void; onDelete: () => void }) =>
+    open ? (
+      <div data-testid="delete-card-modal">
+        <button data-testid="modal-close" onClick={onClose}>
+          Close
+        </button>
+        <button data-testid="modal-delete" onClick={onDelete}>
+          Delete
+        </button>
+      </div>
+    ) : null
+}));
+
+jest.mock('./useWorksTableActions', () => ({
+  useWorksTableActions: jest.fn()
 }));
 
 const group: GroupRowData = {
@@ -49,8 +69,20 @@ const individualWork: IndividualWork = {
 };
 
 describe('WorksTable', () => {
+  const mockSetGroupToUngroup = jest.fn();
+  const mockHandlePublishStatusChange = jest.fn();
+  const mockHandleConfirmUngroup = jest.fn();
+  const mockHandleShareGroup = jest.fn();
+
   beforeEach(() => {
     jest.clearAllMocks();
+    (useWorksTableActions as jest.Mock).mockReturnValue({
+      groupToUngroup: null,
+      setGroupToUngroup: mockSetGroupToUngroup,
+      handlePublishStatusChange: mockHandlePublishStatusChange,
+      handleConfirmUngroup: mockHandleConfirmUngroup,
+      handleShareGroup: mockHandleShareGroup
+    });
   });
 
   it('should render opus groups when showOpus is true', () => {
@@ -264,10 +296,13 @@ describe('WorksTable', () => {
     expect(data[0].groupData.status).toBe(BaseContentStatuses.Published);
   });
 
-  it('covers menu item clicks for published and draft states', () => {
+  it('covers menu item clicks for published and draft states and triggers hook actions', () => {
     render(
       <WorksTable
-        visibleOpusGroups={[{ ...group, status: BaseContentStatuses.Published }]}
+        visibleOpusGroups={[
+          { ...group, id: 'group-draft', status: BaseContentStatuses.Draft },
+          { ...group, id: 'group-published', status: BaseContentStatuses.Published }
+        ]}
         visibleUngroupedGroups={[]}
         visibleUngroupedWorks={[{ ...individualWork, status: BaseContentStatuses.Draft }]}
         showOpus
@@ -296,9 +331,56 @@ describe('WorksTable', () => {
         if (groupHeader.menuActions?.menuItems) {
           triggerMenuClicks(groupHeader.menuActions.menuItems);
         }
+
+        if (row.subRows) {
+          row.subRows.forEach((subRow: OpusWork) => {
+            if (subRow.menuActions?.menuItems) {
+              triggerMenuClicks(subRow.menuActions.menuItems);
+            }
+          });
+        }
+      }
+
+      if (row.type === 'individual' && row.plainData) {
+        if (row.plainData.menuActions?.menuItems) {
+          triggerMenuClicks(row.plainData.menuActions.menuItems);
+        }
       }
     });
 
-    expect(mockTableLayout).toHaveBeenCalled();
+    expect(mockHandleShareGroup).toHaveBeenCalled();
+    expect(mockSetGroupToUngroup).toHaveBeenCalled();
+
+    expect(mockHandlePublishStatusChange).toHaveBeenCalledWith('group-draft', 'published');
+    expect(mockHandlePublishStatusChange).toHaveBeenCalledWith('group-published', 'draft');
+  });
+
+  it('renders DeleteCardModal and handles modal actions when groupToUngroup is set', () => {
+    (useWorksTableActions as jest.Mock).mockReturnValue({
+      groupToUngroup: 'group-1',
+      setGroupToUngroup: mockSetGroupToUngroup,
+      handlePublishStatusChange: mockHandlePublishStatusChange,
+      handleConfirmUngroup: mockHandleConfirmUngroup,
+      handleShareGroup: mockHandleShareGroup
+    });
+
+    render(
+      <WorksTable
+        visibleOpusGroups={[group]}
+        visibleUngroupedGroups={[]}
+        visibleUngroupedWorks={[]}
+        showOpus
+        showUngrouped={false}
+        showIndividualWorks={false}
+      />
+    );
+
+    expect(screen.getByTestId('delete-card-modal')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('modal-close'));
+    expect(mockSetGroupToUngroup).toHaveBeenCalledWith(null);
+
+    fireEvent.click(screen.getByTestId('modal-delete'));
+    expect(mockHandleConfirmUngroup).toHaveBeenCalled();
   });
 });

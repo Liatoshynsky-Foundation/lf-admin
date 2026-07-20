@@ -77,6 +77,15 @@ jest.mock('~/shared/components/filtering-toolbar', () => ({
   )
 }));
 
+jest.mock('./useWorksTableActions', () => ({
+  useWorksTableActions: jest.fn(() => ({
+    groupToUngroup: null,
+    setGroupToUngroup: jest.fn(),
+    handlePublishStatusChange: jest.fn(),
+    handleConfirmUngroup: jest.fn(),
+    handleShareGroup: jest.fn(),
+  })),
+}));
 interface TabItem {
   value: string;
   label: string;
