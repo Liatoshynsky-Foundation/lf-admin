@@ -19,6 +19,14 @@ jest.mock('~/shared/hooks/use-news/useNews', () => ({
   useDeleteNews: () => [mockDeleteNews]
 }));
 
+const mockToastError = jest.fn();
+jest.mock('react-hot-toast', () => ({
+  __esModule: true,
+  default: {
+    error: (msg: string) => mockToastError(msg)
+  }
+}));
+
 const mockCreateEvent = jest.fn();
 const mockUpdateEvent = jest.fn();
 const mockEventQuery = jest.fn();
@@ -210,10 +218,11 @@ describe('useUpsertPublication Hook', () => {
       );
 
       expect(result.current.canonicalUrlError).toBe('Публікація з таким canonical URL вже існує.');
+      expect(mockToastError).not.toHaveBeenCalled();
     });
 
 
-    it('should NOT create a News publication and set an error', async () => {
+    it('should NOT create a News publication and show the error toast', async () => {
       mockCreateNews.mockRejectedValue(new Error('Error E11000'));
       const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
 
@@ -234,7 +243,8 @@ describe('useUpsertPublication Hook', () => {
         })
       );
 
-      expect(result.current.canonicalUrlError).toBe('Публікація з такими даними вже існує.');
+      expect(mockToastError).toHaveBeenCalledWith('Публікація з такими даними вже існує.');
+      expect(result.current.canonicalUrlError).toBe('');
     });
 
     it('should successfully create an Event and return ID', async () => {

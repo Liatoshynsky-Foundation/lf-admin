@@ -22,6 +22,24 @@ import { useCreateNews, useNewsById, useUpdateNews } from '~/shared/hooks/use-ne
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { EventStatus, MediaStatus, NewsStatus } from '~/types/graphql/generated/graphql';
 
+
+
+const ERROR_CONFIG: Array<{
+  key: string;
+  handle: (ctx: { setCanonicalUrlError: (msg: string) => void }) => void;
+}> = [
+  {
+    key: 'url_1',
+    handle: ({ setCanonicalUrlError }) =>
+      setCanonicalUrlError('Публікація з таким canonical URL вже існує.')
+  },
+  {
+    key: 'E11000',
+    handle: () =>
+      toast.error('Публікація з такими даними вже існує.')
+  }
+];
+
 const isValidUrl = (url: string): boolean => {
   try {
     new URL(url);
@@ -289,18 +307,14 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       console.error('Error: ', error);
       if (error instanceof Error) {
         const errorMessage = error.message || '';
-
-        if (errorMessage.includes('E11000')) {
-          let errorMsg = '';
-          if (errorMessage.includes('url_1')) {
-            errorMsg = 'Публікація з таким canonical URL вже існує.';
-          } else {
-            errorMsg = 'Публікація з такими даними вже існує.';
-          }
-          setCanonicalUrlError(errorMsg);
-        } else {
-          toast.error('Щось пішло не так.');
+        const matched = ERROR_CONFIG.find((item) => errorMessage.includes(item.key));
+        
+        if (!matched) {
+          toast.error('Щось пішло не так. Спробуйте ще раз.');
+          return;
         }
+
+        matched.handle({ setCanonicalUrlError });
       }
     }
   };
