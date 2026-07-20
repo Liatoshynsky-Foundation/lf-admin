@@ -1,3 +1,17 @@
+type BorderState = 'hasError' | 'isFocused' | 'default';
+
+const BORDER_COLORS: Record<BorderState, string> = {
+  hasError: 'error.main',
+  isFocused: 'blue.500',
+  default: 'gray'
+};
+
+const getBorderState = (isFocused: boolean | null, hasError: boolean): BorderState => {
+  if (hasError) return 'hasError';
+  if (isFocused) return 'isFocused';
+  return 'default';
+};
+
 export const styles = {
   container: {
     position: 'relative',
@@ -40,27 +54,18 @@ export const styles = {
     transition: 'all 0.2s ease-out'
   }),
 
-  fieldset: (isFocused: boolean | null, hasError: boolean = false) => {
-    let borderColor = 'gray';
-    if (hasError) {
-      borderColor = 'error.main';
-    } else if (isFocused) {
-      borderColor = 'blue.500';
-    }
-
-    return {
-      position: 'absolute',
-      top: -5,
-      bottom: 0,
-      left: 0,
-      right: 0,
-      borderRadius: '8px',
-      borderStyle: 'solid',
-      borderWidth: '1px',
-      pl: '12px',
-      borderColor
-    };
-  },
+  fieldset: (isFocused: boolean | null, hasError: boolean = false) => ({
+    position: 'absolute',
+    top: -5,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderRadius: '8px',
+    borderStyle: 'solid',
+    borderWidth: '1px',
+    pl: '12px',
+    borderColor: BORDER_COLORS[getBorderState(isFocused, hasError)]
+  }),
 
   helperText: {
     color: 'error.main',
