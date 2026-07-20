@@ -1,5 +1,6 @@
 import mongoose, { Model, Schema } from 'mongoose';
 
+import { pageSeoSchemaFields } from './commonSchemas';
 import { BasePage } from '~/domain/entities/Page';
 import { PageCategory, PageStatus } from '~/types/enums/common.enums';
 
@@ -15,22 +16,7 @@ const pageBaseSchema = new Schema<BasePage>(
       enum: PageCategory,
       required: true
     },
-    description: {
-      uk: { type: String, required: true },
-      en: { type: String, required: true }
-    },
-    keywords: {
-      uk: { type: String, required: false, default: '' },
-      en: { type: String, required: false, default: '' }
-    },
-    canonicalUrl: {
-      uk: { type: String, required: false },
-      en: { type: String, required: false }
-    },
-    allowIndexation: {
-      uk: { type: Boolean, required: true, default: true },
-      en: { type: Boolean, required: true, default: true }
-    },
+    ...pageSeoSchemaFields,
     coverImage: {
       src: {
         type: String,

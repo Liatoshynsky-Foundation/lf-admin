@@ -1,5 +1,6 @@
 import mongoose, { Model, Schema } from 'mongoose';
 
+import { pageSeoSchemaFields } from './commonSchemas';
 import { BasePage } from '~/domain/entities/Page';
 import { PageStatus } from '~/types/enums/common.enums';
 
@@ -10,22 +11,7 @@ const draftPageSchema = new Schema<BasePage>(
       uk: { type: String, required: true },
       en: { type: String, required: true }
     },
-    description: {
-      uk: { type: String, required: true },
-      en: { type: String, required: true }
-    },
-    keywords: {
-      uk: { type: String, required: false, default: '' },
-      en: { type: String, required: false, default: '' }
-    },
-    canonicalUrl: {
-      uk: { type: String, required: false },
-      en: { type: String, required: false }
-    },
-    allowIndexation: {
-      uk: { type: Boolean, required: true, default: true },
-      en: { type: Boolean, required: true, default: true }
-    },
+    ...pageSeoSchemaFields,
     status: {
       type: String,
       enum: [PageStatus.Draft],

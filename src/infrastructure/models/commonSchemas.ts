@@ -48,7 +48,7 @@ export const translatedBooleanSchema = new mongoose.Schema(
 
 export const localizedImageSchema = new mongoose.Schema(
   {
-    src: {type: String, required: true},
+    src: { type: String, required: true },
     alt: translatedFieldSchema,
     caption: translatedFieldSchema,
     isTmp: { type: Boolean, default: false },
@@ -106,5 +106,24 @@ export const baseContentSchemaFields = {
       default: 0,
       required: true
     }
+  }
+};
+
+export const pageSeoSchemaFields = {
+  description: {
+    uk: { type: String, required: true },
+    en: { type: String, required: true }
+  },
+  keywords: {
+    uk: { type: String, required: false, default: '' },
+    en: { type: String, required: false, default: '' }
+  },
+  canonicalUrl: {
+    uk: { type: String, required: false },
+    en: { type: String, required: false }
+  },
+  allowIndexation: {
+    uk: { type: Boolean, required: true, default: true },
+    en: { type: Boolean, required: true, default: true }
   }
 };
