@@ -1,6 +1,7 @@
 import { Typography } from '@mui/material';
 import React from 'react';
 
+import { createRootContainer } from '~/container/index';
 import { AuthCardLayout } from '~/shared/components/auth-card/AuthCardLayout';
 import ResetPasswordForm from '~/shared/components/reset-password-form/ResetPasswordForm';
 
@@ -10,18 +11,9 @@ type ResetPasswordPageProps = {
 
 async function verifyToken(token: string): Promise<boolean> {
   try {
-    const appUrl = process.env.NEXT_PUBLIC_CLIENT_BASE_URL ?? 'http://localhost:3000';
-    const res = await fetch(`${appUrl}/api/graphql`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: 'query VerifyResetToken($token: String!) { verifyResetToken(token: $token) }',
-        variables: { token }
-      }),
-      cache: 'no-store'
-    });
-    const json = await res.json();
-    return json?.data?.verifyResetToken === true;
+    const container = createRootContainer();
+    const verifyResetTokenUseCase = container.resolve('verifyResetTokenUseCase');
+    return await verifyResetTokenUseCase.execute(token);
   } catch {
     return false;
   }

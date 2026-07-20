@@ -26,8 +26,6 @@ type EditModeProps = BaseProps & {
 
 type SeoModeProps = BaseProps & {
   mode: 'seo';
-  onSave?: () => void;
-  onCancel?: () => void;
   onPublish?: () => void;
   onMenuOpen?: (event: MouseEvent<HTMLButtonElement>) => void;
 };
