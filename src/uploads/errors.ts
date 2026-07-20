@@ -17,12 +17,6 @@ export const UPLOAD_ERRORS = {
   GENERIC_VALIDATOR_NOT_IMPLEMENTED: 'Generic validator not yet implemented',
   UNKNOWN_FILE_TYPE: 'Unknown file type',
 
-  // Storage errors - Azure
-  AZURE_URL_NOT_DEFINED: 'Azure SAS URL is not defined',
-  FAILED_TO_UPLOAD_BLOB: 'Failed to upload blob to Azure',
-  FAILED_TO_DELETE_BLOB: 'Failed to delete blob from Azure',
-  BLOB_DOES_NOT_EXIST: 'Blob does not exist',
-
   // Storage errors - Cloud (AWS/GCP/Cloudflare)
   S3_CLIENT_NOT_INITIALIZED: 'S3 client not initialized',
   CLOUDFLARE_ENDPOINT_REQUIRED: 'Cloudflare R2 storage requires endpoint configuration',
