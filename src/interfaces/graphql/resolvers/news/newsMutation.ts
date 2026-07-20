@@ -72,7 +72,9 @@ export const NewsMutation = {
 
     const titleForSlug = extractTitleForSlug(input.title);
 
-    if (titleForSlug.trim().length < 2) {
+    if (!titleForSlug) {
+      throw new Error(newsServiceErrors.TITLE_REQUIRED_FOR_SLUG);
+    } else if (titleForSlug.trim().length < 2) {
       throw new Error(newsServiceErrors.TITLE_TOO_SHORT_FOR_SLUG);
     }
 
@@ -135,9 +137,12 @@ export const NewsMutation = {
 
     if (input.title) {
       const titleForSlug = extractTitleForSlug(input.title);
-      if (titleForSlug.trim().length < 2) {
+      if (!titleForSlug) {
+        throw new Error(newsServiceErrors.TITLE_REQUIRED_FOR_SLUG);
+      } else if (titleForSlug.trim().length < 2) {
         throw new Error(newsServiceErrors.TITLE_TOO_SHORT_FOR_SLUG);
       }
+
       await processSlugUpdate(id, input.title, repo, updateData);
     }
 
