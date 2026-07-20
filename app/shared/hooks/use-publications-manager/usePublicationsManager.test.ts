@@ -179,13 +179,10 @@ describe('usePublicationManager Hook', () => {
 
     it('should throw an error if updateResource if called with invalid type ', async () => {
       const { result } = renderHook(() => usePublicationManager('non-existing-type' as PublicationsItemType, '1'));
-      await act(async () => {
-        try {
-          await result.current.updateResource(BaseContentStatuses.Archived);
-        } catch (error: any) {
-          expect(error.message).toBe('Unsupported publication type for mutation: non-existing-type');
-        }
-      });
+     
+      await expect(result.current.updateResource(BaseContentStatuses.Archived)).rejects.toThrow(
+        'Unsupported publication type for delete: non-existing-type'
+      );
     });
   });
 
@@ -222,13 +219,10 @@ describe('usePublicationManager Hook', () => {
 
     it('should throw an error if deleteResource if called with invalid type ', async () => {
       const { result } = renderHook(() => usePublicationManager('non-existing-type' as PublicationsItemType, '1'));
-      await act(async () => {
-        try {
-          await result.current.deleteResource();
-        } catch (error: any) {
-          expect(error.message).toBe('Unsupported publication type for delete: non-existing-type');
-        }
-      });
+      
+      await expect(result.current.deleteResource()).rejects.toThrow(
+        'Unsupported publication type for delete: non-existing-type'
+      );
     });
 
   });
