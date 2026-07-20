@@ -1,4 +1,4 @@
-import type { LocalizedJSON } from '~/types/common';
+import type { LocalizedJSON, WithHidden } from '~/types/common';
 
 export type DataUsageItemWithId = {
   id: string;
@@ -8,4 +8,4 @@ export type DataUsageBlock = {
   title: LocalizedJSON;
   description: LocalizedJSON;
   list: DataUsageItemWithId[];
-};
+} & WithHidden;

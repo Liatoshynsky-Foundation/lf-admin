@@ -117,4 +117,28 @@ describe('EditableSectionList', () => {
     fireEvent.click(screen.getByTestId('trigger-configurable-list-change'));
     expect(onChangeItem).toHaveBeenCalledWith('1', 'title', { type: 'doc', content: [] });
   });
+
+  it('should forward onTitleBlur, titleError and titleHelperText to the title text field', () => {
+    const onTitleBlur = jest.fn();
+    render(
+      <EditableSectionList
+        title={mockTitleJson}
+        onTitleChange={onTitleChange}
+        onTitleBlur={onTitleBlur}
+        titleError
+        titleHelperText="Заголовок не може бути порожнім"
+        items={mockItems}
+        onChangeItem={onChangeItem}
+        onCreateItem={onCreateItem}
+        onDeleteItem={onDeleteItem}
+        sectionLabel="Test Label"
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('trigger-blur-Заголовок секції'));
+    expect(onTitleBlur).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('textfield-error-Заголовок секції')).toHaveTextContent(
+      'Заголовок не може бути порожнім'
+    );
+  });
 });

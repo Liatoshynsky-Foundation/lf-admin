@@ -3,13 +3,15 @@ import { JSONContent } from '@tiptap/react';
 
 import { PAGE_IDS } from '~/constants/pageBlocks';
 import { ensureIds } from '~/lib/utils/ensureIds';
+import { proseToHeaderText } from '~/lib/utils/prose';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 import { PointsList } from '~/shared/components/privacy-policy/components/points-list/PointsList';
 import { usePointsList } from '~/shared/hooks/use-points-list/usePointsList';
+import { useTitleValidation } from '~/shared/hooks/use-title-validation/useTitleValidation';
 import { useStore } from '~/store';
-import { LocalizedJSON } from '~/types/common';
+import { LocalizedJSON, ProseDoc } from '~/types/common';
 import { BlocksMap } from '~/types/store/pages';
 
 export interface DescriptionListNoteStructure {
@@ -23,7 +25,7 @@ export type BlockWithDescriptionListNote = {
 
 interface EditDescriptionListNoteBlockProps<T extends BlockWithDescriptionListNote> {
   blockId: T;
-  block: BlocksMap[T] & DescriptionListNoteStructure;
+  block: BlocksMap[T] & DescriptionListNoteStructure & { title?: LocalizedJSON; hidden?: boolean };
   title: string;
   listFieldName: Extract<keyof BlocksMap[T], string>
 }
@@ -38,6 +40,7 @@ export const EditDescriptionListNoteBlock = <T extends BlockWithDescriptionListN
 
   const currentLocale = useStore((state) => state.locale);
   const setField = useStore((state) => state.setField);
+  const toggleBlockVisibility = useStore((state) => state.toggleBlockVisibility);
 
   const rawList = block[listFieldName] as Array<LocalizedJSON & { id?: string }>;
   const list = ensureIds(rawList);
@@ -57,19 +60,41 @@ export const EditDescriptionListNoteBlock = <T extends BlockWithDescriptionListN
     });
   };
 
-  const handleTextChange = (fieldName: 'description' | 'note', value: JSONContent) => {
+  const handleTextChange = (fieldName: 'title' | 'description' | 'note', value: JSONContent) => {
     const currentValue = block[fieldName];
-    setField(pageId, blockId, fieldName, {
+    setField(pageId, blockId, fieldName as Extract<keyof BlocksMap[T], string>, {
       ...currentValue,
       [currentLocale]: value
-    });
+    } as BlocksMap[T][Extract<keyof BlocksMap[T], string>]);
   };
 
+  const sectionTitleBlock = block.title;
   const descriptionBlock = block.description;
   const noteBlock = block.note;
 
+  const headerTitle = proseToHeaderText(sectionTitleBlock?.[currentLocale] as ProseDoc, title);
+  const titleValidation = useTitleValidation(`${pageId}:${blockId}:title`, sectionTitleBlock?.[currentLocale] as ProseDoc);
+
   return (
-    <CollapsibleBlock title={title} grip>
+    <CollapsibleBlock
+      title={headerTitle}
+      grip
+      hidden={block.hidden}
+      onToggleVisibility={() => toggleBlockVisibility(pageId, blockId)}
+    >
+      {sectionTitleBlock && (
+        <CustomTextField
+          fieldType="formatting"
+          title="Заголовок секції"
+          label="Текст заголовку"
+          value={sectionTitleBlock[currentLocale]}
+          onChange={(value) => handleTextChange('title', value)}
+          onBlur={titleValidation.onBlur}
+          error={titleValidation.error}
+          helperText={titleValidation.helperText}
+        />
+      )}
+
       {descriptionBlock && (
         <CustomTextField
           fieldType="formatting"

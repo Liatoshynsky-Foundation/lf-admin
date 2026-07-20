@@ -5,15 +5,31 @@ import { Grip } from '../../grip/Grip';
 import { getStyles } from './CollapsibleBlock.styles';
 import { sxToArray } from '~/lib/utils/sxToArray';
 import ChevronIcon from '~/public/icons/chevron-down.svg';
+import EyeIcon from '~/public/icons/eye.svg';
+import EyeClosedIcon from '~/public/icons/eye-closed.svg';
+import { useStore } from '~/store';
+
 interface CollapsibleBlockProps extends AccordionProps {
   title: string;
   childrenContainerSx?: object;
   grip?: boolean;
+  hidden?: boolean;
+  onToggleVisibility?: () => void;
 }
 
-const CollapsibleBlock = ({ title, children, sx, grip = false, childrenContainerSx, ...props }: CollapsibleBlockProps) => {
-  
-  const styles = getStyles(grip);
+const CollapsibleBlock = ({
+  title,
+  children,
+  sx,
+  grip = false,
+  childrenContainerSx,
+  hidden = false,
+  onToggleVisibility,
+  ...props
+}: CollapsibleBlockProps) => {
+  const isSaving = useStore((state) => state.isSaving);
+
+  const styles = getStyles(grip, hidden, isSaving);
 
   return (
     <Accordion {...props} sx={[styles.root, ...(sxToArray(sx))]}>
@@ -23,7 +39,32 @@ const CollapsibleBlock = ({ title, children, sx, grip = false, childrenContainer
             <Grip orientation='horizontal'/>
           </Box>
         )}
-        {title}
+        <Box sx={styles.titleRow}>
+          <Box component="span" sx={styles.titleText}>
+            {title}
+          </Box>
+          {onToggleVisibility && (
+            <Box
+              component="span"
+              role="button"
+              tabIndex={0}
+              aria-label={hidden ? 'Показати розділ' : 'Приховати розділ'}
+              onClick={(event) => {
+                event.stopPropagation();
+                onToggleVisibility();
+              }}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter' && event.key !== ' ') return;
+                event.preventDefault();
+                event.stopPropagation();
+                onToggleVisibility();
+              }}
+              sx={styles.visibilityToggle}
+            >
+              {hidden ? <EyeClosedIcon /> : <EyeIcon />}
+            </Box>
+          )}
+        </Box>
       </AccordionSummary>
       <AccordionDetails data-testid="inserted-container" sx={childrenContainerSx}>
         {children}

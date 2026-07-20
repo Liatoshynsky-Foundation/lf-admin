@@ -18,3 +18,8 @@ export const textToProse = (text: string): ProseDoc => ({
   type: 'doc',
   content: text ? [{ type: 'paragraph', content: [{ type: 'text', text }] }] : []
 });
+
+export const proseToHeaderText = (doc?: ProseDoc, fallback = ''): string => {
+  const text = proseToText(doc).replace(/\s+/g, ' ').trim();
+  return text || fallback;
+};

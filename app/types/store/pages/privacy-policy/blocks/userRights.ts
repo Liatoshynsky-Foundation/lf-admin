@@ -1,12 +1,12 @@
-import { LocalizedJSON } from '~/types/common';
+import { LocalizedJSON, WithHidden } from '~/types/common';
 
 export type UserRightsItemWithId = {
     id: string;
 } & LocalizedJSON
 
 export type UserRightsBlock = {
-    title: LocalizedJSON; 
-    description: LocalizedJSON; 
+    title: LocalizedJSON;
+    description: LocalizedJSON;
     list: UserRightsItemWithId[];
-    note: LocalizedJSON; 
-}
+    note: LocalizedJSON;
+} & WithHidden
