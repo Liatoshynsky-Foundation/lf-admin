@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { ViewToggle } from './ViewToggle';
+import { ViewToggle } from './index';
 
 describe('ViewToggle', () => {
   it('calls onChange with list when list button is clicked', async () => {

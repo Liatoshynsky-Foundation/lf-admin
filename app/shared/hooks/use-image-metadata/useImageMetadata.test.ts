@@ -77,4 +77,17 @@ describe('useImageMetadata', () => {
 
     expect(result.current.fileName).toBe('image.png');
   });
+
+  it('should use unknown fallback when filename cannot be extracted', async () => {
+    const { result } = renderHook(() => useImageMetadata('/'));
+
+    await waitFor(() => {
+      expect(result.current.dimensions).toEqual({
+        width: mockImageWidth,
+        height: mockImageHeight
+      });
+    });
+
+    expect(result.current.fileName).toBe('unknown');
+  });
 });

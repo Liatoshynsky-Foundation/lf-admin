@@ -1,4 +1,5 @@
-import { fireEvent,render, screen } from '@testing-library/react';
+import { ButtonBase } from '@mui/material';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import PasswordField from './PasswordField';
 
@@ -43,5 +44,27 @@ describe('PasswordField', () => {
   it('renders with custom label if provided', () => {
     render(<PasswordField label="Новий пароль *" helperText={null} />);
     expect(screen.getByLabelText('Новий пароль *')).toBeInTheDocument();
+  });
+
+  it('should prevent default behavior on mouse down and mouse up on the visibility button', () => {
+    const buttonBaseRaw = ButtonBase as unknown as Record<string, Record<string, boolean>>;
+    const originalDefaultProps = buttonBaseRaw.defaultProps;
+    buttonBaseRaw.defaultProps = { ...originalDefaultProps, disableRipple: true };
+
+    render(<PasswordField helperText={null} />);
+
+    const toggleButton = screen.getByRole('button', { name: /display the password/i });
+
+    const mouseDownEvent = fireEvent.mouseDown(toggleButton);
+    const mouseUpEvent = fireEvent.mouseUp(toggleButton);
+
+    expect(mouseDownEvent).toBe(false);
+    expect(mouseUpEvent).toBe(false);
+
+    if (originalDefaultProps) {
+      buttonBaseRaw.defaultProps = originalDefaultProps;
+    } else {
+      delete buttonBaseRaw.defaultProps;
+    }
   });
 });

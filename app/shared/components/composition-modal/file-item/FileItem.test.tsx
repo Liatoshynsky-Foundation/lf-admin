@@ -3,10 +3,10 @@ import React from 'react';
 
 import FileItem from './FileItem';
 import { COMPOSITION_FILE_TYPES, CompositionFileType } from '~/constants/creativity';
-
 jest.mock('next/image', () => ({
   __esModule: true,
   default: ({ src, alt, width, height }: { src: string; alt: string; width: number; height: number }) => (
+    /* eslint-disable-next-line @next/next/no-img-element */
     <img src={src} alt={alt} data-testid="file-icon" width={width} height={height} />
   )
 }));
@@ -29,12 +29,7 @@ describe('FileItem', () => {
 
   const renderComponent = (overrides = {}) => {
     return render(
-      <FileItem
-        fileName={MOCK_FILE_NAME}
-        fileType={MOCK_FILE_TYPE}
-        onDelete={onDeleteMock}
-        {...overrides}
-      />
+      <FileItem fileName={MOCK_FILE_NAME} fileType={MOCK_FILE_TYPE} onDelete={onDeleteMock} {...overrides} />
     );
   };
 
@@ -64,5 +59,12 @@ describe('FileItem', () => {
     fireEvent.click(deleteButton);
 
     expect(onDeleteMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('should use fallback icon when file type is not found in configuration maps', () => {
+    renderComponent({ fileType: 'unknown-type' as CompositionFileType });
+
+    const iconElement = screen.getByTestId('file-icon') as HTMLImageElement;
+    expect(iconElement.src).toContain('/icons/file-text.svg');
   });
 });

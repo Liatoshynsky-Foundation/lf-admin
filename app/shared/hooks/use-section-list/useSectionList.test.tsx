@@ -1,19 +1,34 @@
-import { renderHook } from '@testing-library/react';
-import { act } from 'react';
+import { act, renderHook } from '@testing-library/react';
 
 import { emptyDoc } from '../use-points-list/usePointsList';
 import { useSectionList } from './useSectionList';
 import { ensureIds } from '~/lib/utils/ensureIds';
 import { mockSetField } from '~/shared/components/privacy-policy/__mocks__/setup-mocks';
 
+beforeAll(() => {
+  Object.defineProperty(global, 'crypto', {
+    value: {
+      randomUUID: () => 'uuid-1'
+    },
+    writable: true,
+    configurable: true
+  });
+});
 
 const inputSectionsList = [
-  { id: '1', subtitle: { uk: emptyDoc, en: emptyDoc }, list: [{ id: 'point-1', uk: emptyDoc, en: emptyDoc }] },
+  {
+    id: '1',
+    subtitle: { uk: emptyDoc, en: emptyDoc },
+    list: [
+      { id: 'point-1', uk: emptyDoc, en: emptyDoc },
+      { id: 'point-1-other', uk: emptyDoc, en: emptyDoc }
+    ]
+  },
   { id: '2', subtitle: { uk: emptyDoc, en: emptyDoc }, list: [{ id: 'point-2', uk: emptyDoc, en: emptyDoc }] }
 ];
 
 const pageId = 'page-1';
-const blockId = 'block-1' as any;
+const blockId = 'block-1' as string;
 const currentLocale = 'uk' as const;
 
 const sectionIdMocked = '1';
@@ -29,16 +44,15 @@ const defaultMockedProps = {
 const sections = inputSectionsList.map((sl) => ({
   id: sl.id,
   title: sl.subtitle[currentLocale],
-  points: ensureIds(sl.list),
+  points: ensureIds(sl.list)
 }));
 
 describe('useSectionList', () => {
   beforeEach(() => {
-    jest.clearAllMocks(); 
+    jest.clearAllMocks();
   });
   it('should initalize sections with correct structure', () => {
     const { result } = renderHook(() => useSectionList(defaultMockedProps));
-
 
     expect(result.current.sections).toEqual(sections);
   });
@@ -54,7 +68,7 @@ describe('useSectionList', () => {
       if (section.id === sectionIdMocked) {
         return {
           ...section,
-          list: section.list.map((p) => p.id === updatedPoint.id ? updatedPoint : p)
+          list: section.list.map((p) => (p.id === updatedPoint.id ? updatedPoint : p))
         };
       }
       return section;
@@ -85,9 +99,7 @@ describe('useSectionList', () => {
       result.current.addListPoint(sectionIdMocked);
     });
 
-    expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'sections',
-      expectedNewSections
-    );
+    expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'sections', expectedNewSections);
   });
 
   it('should call setField with with correct sectionId & pointId when removeListPoint is called', () => {
@@ -172,6 +184,14 @@ describe('useSectionList', () => {
     const { result } = renderHook(() => useSectionList(defaultMockedProps));
     act(() => {
       result.current.updateSectionList('non-existent', []);
+    });
+    expect(mockSetField).not.toHaveBeenCalled();
+  });
+
+  it('should return early and not call setField when addListPoint is called with invalid sectionId', () => {
+    const { result } = renderHook(() => useSectionList(defaultMockedProps));
+    act(() => {
+      result.current.addListPoint('non-existent');
     });
     expect(mockSetField).not.toHaveBeenCalled();
   });

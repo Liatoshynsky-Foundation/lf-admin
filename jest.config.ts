@@ -17,6 +17,8 @@ const config: Config = {
     '!app/layout.tsx',
     '!app/types/**',
     '!app/**/*.styles.{ts,tsx}',
+    '!app/**/*.style.{ts,tsx}',
+    '!app/**/test-utils/**',
     'src/**/*.{js,ts}',
     '!src/**/*.styles.{ts,tsx}',
     '!src/**/*.{test,d}.{js,ts}',

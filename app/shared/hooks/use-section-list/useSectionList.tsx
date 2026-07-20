@@ -6,22 +6,27 @@ import { BlocksMap } from '~/types/store/pages';
 
 type BlockIdsWithSections = {
   [K in keyof BlocksMap]: 'sections' extends keyof BlocksMap[K] ? K : never;
-}[keyof BlocksMap]
+}[keyof BlocksMap];
 
 interface UseSectionListProps<K extends BlockIdsWithSections> {
-  blockId: K,
+  blockId: K;
   sectionsList: {
     id: string;
     subtitle: LocalizedJSON;
     list: LocalizedJSON[];
-  }[],
-  setField: <F extends keyof BlocksMap[K]>(pageId: string, blockId: K, field: F, value: BlocksMap[K][F]) => void,
-  pageId: string,
-  currentLocale: 'uk' | 'en',
+  }[];
+  setField: <F extends keyof BlocksMap[K]>(pageId: string, blockId: K, field: F, value: BlocksMap[K][F]) => void;
+  pageId: string;
+  currentLocale: 'uk' | 'en';
 }
 
-
-export const useSectionList = <K extends BlockIdsWithSections>({ pageId, blockId, setField, sectionsList, currentLocale }: UseSectionListProps<K>) => {
+export const useSectionList = <K extends BlockIdsWithSections>({
+  pageId,
+  blockId,
+  setField,
+  sectionsList,
+  currentLocale
+}: UseSectionListProps<K>) => {
   const emptyDoc: JSONContent = { type: 'doc', content: [] };
 
   const sections = sectionsList.map((item) => ({
@@ -36,24 +41,23 @@ export const useSectionList = <K extends BlockIdsWithSections>({ pageId, blockId
     if (!updatedSection) return;
 
     const newSections = sectionsList.map((section) =>
-      section.id === sectionId ? { ...section, list: newPoints } : section);
+      section.id === sectionId ? { ...section, list: newPoints } : section
+    );
 
     setField(pageId, blockId, 'sections', newSections);
   };
 
   const handleChangeSectionListPoint = (sectionId: string, updatedPoint: LocalizedJSON & { id: string }) => {
-    const currentSection = sections.find(s => s.id === sectionId);
+    const currentSection = sections.find((s) => s.id === sectionId);
 
     if (!currentSection) return;
     const currentPoints = currentSection.points;
-    const newPoints = currentPoints.map((p) =>
-      p.id === updatedPoint.id ? updatedPoint : p
-    );
+    const newPoints = currentPoints.map((p) => (p.id === updatedPoint.id ? updatedPoint : p));
     handleUpdateSectionList(sectionId, newPoints);
   };
 
   const handleAddSectionListPoint = (sectionId: string) => {
-    const currentSection = sections.find(s => s.id === sectionId);
+    const currentSection = sections.find((s) => s.id === sectionId);
     if (!currentSection) return;
 
     const currentPoints = currentSection.points;
@@ -64,7 +68,7 @@ export const useSectionList = <K extends BlockIdsWithSections>({ pageId, blockId
   };
 
   const handleDeleteSectionListPoint = (sectionId: string, pointId: string) => {
-    const currentSection = sections.find(s => s.id === sectionId);
+    const currentSection = sections.find((s) => s.id === sectionId);
 
     if (!currentSection) return;
 
@@ -76,9 +80,7 @@ export const useSectionList = <K extends BlockIdsWithSections>({ pageId, blockId
 
   const handleChangeSectionSubtitle = (sectionId: string, value: JSONContent) => {
     const updatedSections = sectionsList.map((section) =>
-      section.id === sectionId
-        ? { ...section, subtitle: { ...section.subtitle, [currentLocale]: value } }
-        : section
+      section.id === sectionId ? { ...section, subtitle: { ...section.subtitle, [currentLocale]: value } } : section
     );
     setField(pageId, blockId, 'sections', updatedSections);
   };
@@ -89,7 +91,6 @@ export const useSectionList = <K extends BlockIdsWithSections>({ pageId, blockId
     removeListPoint: handleDeleteSectionListPoint,
     updateListPoint: handleChangeSectionListPoint,
     updateSectionSubtitle: handleChangeSectionSubtitle,
-    updateSectionList: handleUpdateSectionList,
+    updateSectionList: handleUpdateSectionList
   };
 };
-
