@@ -103,9 +103,46 @@ describe('CustomFormattingField', () => {
       const editorContent = screen.getByTestId('editor-content');
 
       fireEvent.focus(editorContent);
-      
-      
+
+
       fireEvent.blur(editorContent);
+    });
+
+    it('should call the external onBlur prop when the editor loses focus', () => {
+      const mockOnBlur = jest.fn();
+      render(<CustomFormattingField value={defaultJSON} onChange={mockOnChange} onBlur={mockOnBlur} />);
+      const editorContent = screen.getByTestId('editor-content');
+
+      fireEvent.blur(editorContent);
+
+      expect(mockOnBlur).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not throw when the editor loses focus without an onBlur prop', () => {
+      render(<CustomFormattingField value={defaultJSON} onChange={mockOnChange} />);
+      const editorContent = screen.getByTestId('editor-content');
+
+      expect(() => fireEvent.blur(editorContent)).not.toThrow();
+    });
+  });
+
+  describe('4. Validation state', () => {
+    it('should not render helper text when error is false', () => {
+      render(<CustomFormattingField value={defaultJSON} onChange={mockOnChange} error={false} helperText="Заголовок не може бути порожнім" />);
+
+      expect(screen.queryByTestId('formatting-field-error')).not.toBeInTheDocument();
+    });
+
+    it('should render helper text when error is true', () => {
+      render(<CustomFormattingField value={defaultJSON} onChange={mockOnChange} error helperText="Заголовок не може бути порожнім" />);
+
+      expect(screen.getByTestId('formatting-field-error')).toHaveTextContent('Заголовок не може бути порожнім');
+    });
+
+    it('should not render helper text when error is true but no helperText is provided', () => {
+      render(<CustomFormattingField value={defaultJSON} onChange={mockOnChange} error />);
+
+      expect(screen.queryByTestId('formatting-field-error')).not.toBeInTheDocument();
     });
   });
 

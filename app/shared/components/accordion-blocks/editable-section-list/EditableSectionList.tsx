@@ -17,6 +17,9 @@ export type SectionListItem = ConfigurableListItem & {
 type EditableSectionListProps<ItemType extends SectionListItem> = {
   title: JSONContent;
   onTitleChange: (value: JSONContent) => void;
+  onTitleBlur?: () => void;
+  titleError?: boolean;
+  titleHelperText?: string;
   items: ItemType[];
   onChangeItem: (id: string, field: 'title' | 'description', value: JSONContent) => void;
   onCreateItem: () => ItemType;
@@ -28,6 +31,9 @@ type EditableSectionListProps<ItemType extends SectionListItem> = {
 export const EditableSectionList = <ItemType extends SectionListItem>({
   title,
   onTitleChange,
+  onTitleBlur,
+  titleError,
+  titleHelperText,
   items,
   onChangeItem,
   onCreateItem,
@@ -63,6 +69,9 @@ export const EditableSectionList = <ItemType extends SectionListItem>({
         label="Текст заголовку"
         value={title}
         onChange={(value) => onTitleChange(value)}
+        onBlur={onTitleBlur}
+        error={titleError}
+        helperText={titleHelperText}
       />
       <Box>
         <Typography variant="subtitle1" sx={styles.title}>

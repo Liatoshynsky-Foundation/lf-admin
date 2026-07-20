@@ -11,6 +11,9 @@ export interface MockSectionListItem {
 export interface MockEditableSectionListProps {
   readonly title: JSONContent;
   readonly onTitleChange: (value: JSONContent) => void;
+  readonly onTitleBlur?: () => void;
+  readonly titleError?: boolean;
+  readonly titleHelperText?: string;
   readonly items: readonly MockSectionListItem[];
   readonly onChangeItem: (id: string, field: 'title' | 'description', value: JSONContent) => void;
   readonly onCreateItem: () => { readonly id: string };
@@ -22,6 +25,9 @@ export interface MockEditableSectionListProps {
 export const EditableSectionList = ({
   title,
   onTitleChange,
+  onTitleBlur,
+  titleError,
+  titleHelperText,
   items,
   onChangeItem,
   onCreateItem,
@@ -37,6 +43,15 @@ export const EditableSectionList = ({
     >
       Change Main Title
     </button>
+    <button data-testid="trigger-main-title-clear" onClick={() => onTitleChange({ type: 'doc', content: [] })}>
+      Clear Main Title
+    </button>
+    {onTitleBlur && (
+      <button data-testid="trigger-main-title-blur" onClick={onTitleBlur}>
+        Blur Main Title
+      </button>
+    )}
+    {titleError && <span data-testid="main-title-error">{titleHelperText}</span>}
     {onDragEnd && (
       <button
         data-testid="trigger-drag-end"

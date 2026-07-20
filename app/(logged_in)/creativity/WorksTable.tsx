@@ -3,6 +3,7 @@
 import { Box } from '@mui/material';
 import React from 'react';
 
+import { useWorksTableActions } from './useWorksTableActions';
 import { styles } from './WorksTable.styles';
 import { GroupMenuItems, WorkMenuItems } from './WorksTableMenuItems';
 import {
@@ -14,12 +15,14 @@ import {
   WorksStatusValue,
   WorksTab
 } from '~/constants/creativity';
+import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
 import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import { RowActions } from '~/shared/components/table-layout/components/RowActions';
 import { StatusBadge } from '~/shared/components/table-layout/components/StatusBadge';
 import { BaseRowData, ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
+import { OpusStatus } from '~/types/graphql/generated/graphql';
 
 type ActionFields = {
   editAction?: { editHref: string; editLabel: string };
@@ -149,6 +152,9 @@ type WorksTableProps =
     };
 
 export function WorksTable({ items, activeTab }: WorksTableProps) {
+  const { groupToUngroup, setGroupToUngroup, handlePublishStatusChange, handleConfirmUngroup, handleShareGroup } =
+    useWorksTableActions();
+
   function groupsRow(group: GroupRowData): BaseRowData<GroupHeaderData, OpusWork, IndividualWork> {
     const isPublished = group.status === BaseContentStatuses.Published;
 
@@ -171,8 +177,10 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
           menuItems: GroupMenuItems({
             id: group.id,
             isPublished,
-            setHideModalOpen: modalMock,
-            setPublicationModalOpen: modalMock
+            onPublish: (id) => handlePublishStatusChange(id, OpusStatus.Published),
+            onUnpublish: (id) => handlePublishStatusChange(id, OpusStatus.Draft),
+            onUngroup: (id) => setGroupToUngroup(id),
+            onShare: (id) => handleShareGroup(id)
           }),
           menuTriggerLabel: `Дії групи ${group.name}`
         }
@@ -248,6 +256,14 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
   return (
     <Box sx={styles.worksListContainer}>
       <TableLayout data={rows} columns={columns} />
+      <DeleteCardModal
+        open={!!groupToUngroup}
+        onClose={() => setGroupToUngroup(null)}
+        onDelete={handleConfirmUngroup}
+        title="Підтвердити розгрупування"
+        confirmButtonText="Розгрупувати"
+        description="Ви впевнені, що хочете розгрупувати групу? Опис сторінки буде видалено, але композиції залишаться в системі."
+      />
     </Box>
   );
 }

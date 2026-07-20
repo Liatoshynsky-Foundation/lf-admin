@@ -1,7 +1,8 @@
 import { Box } from '@mui/material';
-import { render } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { useWorksTableActions } from './useWorksTableActions';
 import {
   columns as originalColumns,
   GroupHeaderData,
@@ -11,22 +12,43 @@ import {
   WorksTable
 } from './WorksTable';
 import { WORKS_TABS_NAMES } from '~/constants/creativity';
+import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import { BaseRowData, ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
+import { OpusStatus } from '~/types/graphql/generated/graphql';
+
+type WorksTableRowData = BaseRowData<GroupHeaderData, OpusWork, IndividualWork>;
 
 const mockTableLayout = jest.fn();
 
 jest.mock('~/shared/components/table-layout/TableLayout', () => ({
   TableLayout: (props: {
     data: WorksTableRowData[];
-    columns: ColumnDef<GroupHeaderData, OpusWork, IndividualWork>;
+    columns: readonly ColumnDef<GroupHeaderData, OpusWork, IndividualWork>[];
   }) => {
     mockTableLayout(props);
     return <Box data-testid="table-layout" />;
   }
 }));
 
-type WorksTableRowData = BaseRowData<GroupHeaderData, OpusWork, IndividualWork>;
+jest.mock('~/shared/components/delete-card-modal/DeleteCardModal', () => ({
+  __esModule: true,
+  default: ({ open, onClose, onDelete }: { open: boolean; onClose: () => void; onDelete: () => void }) =>
+    open ? (
+      <div data-testid="delete-card-modal">
+        <button data-testid="modal-close" onClick={onClose}>
+          Close
+        </button>
+        <button data-testid="modal-delete" onClick={onDelete}>
+          Delete
+        </button>
+      </div>
+    ) : null
+}));
+
+jest.mock('./useWorksTableActions', () => ({
+  useWorksTableActions: jest.fn()
+}));
 
 const group: GroupRowData = {
   id: 'group-1',
@@ -51,8 +73,20 @@ const individualWork: IndividualWork = {
 };
 
 describe('WorksTable', () => {
+  const mockSetGroupToUngroup = jest.fn();
+  const mockHandlePublishStatusChange = jest.fn();
+  const mockHandleConfirmUngroup = jest.fn();
+  const mockHandleShareGroup = jest.fn();
+
   beforeEach(() => {
     jest.clearAllMocks();
+    (useWorksTableActions as jest.Mock).mockReturnValue({
+      groupToUngroup: null,
+      setGroupToUngroup: mockSetGroupToUngroup,
+      handlePublishStatusChange: mockHandlePublishStatusChange,
+      handleConfirmUngroup: mockHandleConfirmUngroup,
+      handleShareGroup: mockHandleShareGroup
+    });
   });
 
   it('should render opus groups when activeTab is Opus', () => {
@@ -100,30 +134,69 @@ describe('WorksTable', () => {
   });
 
   it('should trigger menu actions successfully', () => {
-    render(<WorksTable activeTab={WORKS_TABS_NAMES.ALL} items={{ groups: [group], works: [individualWork] }} />);
+    const groupDraft: GroupRowData = { ...group, id: 'group-draft', status: BaseContentStatuses.Draft };
+    const groupPublished: GroupRowData = { ...group, id: 'group-published', status: BaseContentStatuses.Published };
+
+    render(
+      <WorksTable
+        activeTab={WORKS_TABS_NAMES.ALL}
+        items={{ groups: [groupDraft, groupPublished], works: [individualWork] }}
+      />
+    );
 
     const { data: rowsData } = mockTableLayout.mock.calls[0][0] as { data: WorksTableRowData[] };
 
-    rowsData.forEach((row) => {
-      const actions = row.type === 'group' ? row.groupData?.menuActions : row.plainData?.menuActions;
-
-      if (actions?.menuItems) {
-        actions.menuItems.flat().forEach((item) => {
+    const triggerMenuClicks = (menuGroups: ActionMenuGroups | undefined) => {
+      menuGroups?.forEach((menuGroup) => {
+        menuGroup.items.forEach((item) => {
           if (item && 'onClick' in item && typeof item.onClick === 'function') {
             item.onClick();
           }
         });
+      });
+    };
+
+    rowsData.forEach((row) => {
+      const actions = row.type === 'group' ? row.groupData?.menuActions : row.plainData?.menuActions;
+      triggerMenuClicks(actions?.menuItems);
+
+      if (row.type === 'group' && row.subRows) {
+        row.subRows.forEach((subRow) => {
+          triggerMenuClicks(subRow.menuActions?.menuItems);
+        });
       }
     });
 
-    expect(mockTableLayout).toHaveBeenCalled();
+    expect(mockHandleShareGroup).toHaveBeenCalled();
+    expect(mockSetGroupToUngroup).toHaveBeenCalled();
+    expect(mockHandlePublishStatusChange).toHaveBeenCalledWith('group-draft', OpusStatus.Published);
+    expect(mockHandlePublishStatusChange).toHaveBeenCalledWith('group-published', OpusStatus.Draft);
+  });
+
+  it('renders DeleteCardModal and handles modal actions when groupToUngroup is set', () => {
+    (useWorksTableActions as jest.Mock).mockReturnValue({
+      groupToUngroup: 'group-1',
+      setGroupToUngroup: mockSetGroupToUngroup,
+      handlePublishStatusChange: mockHandlePublishStatusChange,
+      handleConfirmUngroup: mockHandleConfirmUngroup,
+      handleShareGroup: mockHandleShareGroup
+    });
+
+    render(<WorksTable activeTab={WORKS_TABS_NAMES.OPUS} items={{ groups: [group] }} />);
+
+    expect(screen.getByTestId('delete-card-modal')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('modal-close'));
+    expect(mockSetGroupToUngroup).toHaveBeenCalledWith(null);
+
+    fireEvent.click(screen.getByTestId('modal-delete'));
+    expect(mockHandleConfirmUngroup).toHaveBeenCalled();
   });
 
   it('should correctly map GroupRowData to groupData internal format', () => {
     render(<WorksTable activeTab={WORKS_TABS_NAMES.OPUS} items={{ groups: [group] }} />);
 
     const { data } = mockTableLayout.mock.calls[0][0] as { data: WorksTableRowData[] };
-
     const groupRow = data.find((row) => row.type === 'group');
 
     if (groupRow && groupRow.type === 'group') {
@@ -146,7 +219,8 @@ describe('WorksTable', () => {
 
     originalColumns.forEach((col) => {
       if (col.renderGroup) col.renderGroup(groupRow.groupData as GroupHeaderData);
-      if (col.renderSub && groupRow.subRows) col.renderSub(groupRow.subRows[0], groupRow.groupData as GroupHeaderData);
+      if (col.renderSub && groupRow.subRows)
+        col.renderSub(groupRow.subRows[0] as OpusWork, groupRow.groupData as GroupHeaderData);
       if (col.renderPlain) col.renderPlain(individualRow.plainData as IndividualWork);
     });
 

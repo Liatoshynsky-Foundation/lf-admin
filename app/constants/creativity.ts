@@ -132,6 +132,8 @@ export interface GroupPerformance {
   caption?: { uk: string; en: string };
 }
 
+export type NormalizedGroupPerformance = GroupPerformance & { id: string };
+
 export interface GroupData {
   titlePrefix: string;
   groupNumber: string;

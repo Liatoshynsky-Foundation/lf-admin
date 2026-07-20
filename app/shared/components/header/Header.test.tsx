@@ -138,5 +138,25 @@ describe('Header', () => {
       expect(cancelButton).toBeDisabled();
       expect(saveButton).toBeDisabled();
     });
+
+    it('should disable only the "Зберегти" button when isSaveDisabled is true, leaving "Скасувати зміни" enabled', () => {
+      render(<Header {...defaultProps} isActionsDisabled={false} isSaveDisabled={true} />);
+
+      const cancelButton = screen.getByRole('button', { name: /Скасувати зміни/i });
+      const saveButton = screen.getByRole('button', { name: /Зберегти/i });
+
+      expect(cancelButton).not.toBeDisabled();
+      expect(saveButton).toBeDisabled();
+      expect(saveButton).toHaveAttribute('title', 'Виправте порожні заголовки розділів перед збереженням');
+    });
+
+    it('should keep the "Зберегти" button enabled when isSaveDisabled is false', () => {
+      render(<Header {...defaultProps} isActionsDisabled={false} isSaveDisabled={false} />);
+
+      const saveButton = screen.getByRole('button', { name: /Зберегти/i });
+
+      expect(saveButton).not.toBeDisabled();
+      expect(saveButton).not.toHaveAttribute('title');
+    });
   });
 });

@@ -6,6 +6,7 @@ const saveMock = jest.fn();
 const setLocaleMock = jest.fn();
 const discardChangesMock = jest.fn();
 export const setBlocksOrderMock = jest.fn();
+export const setFieldValidityMock = jest.fn();
 
 jest.mock('~/store', () => ({
   useStore: (
@@ -14,6 +15,7 @@ jest.mock('~/store', () => ({
       discardChanges: (slug: string) => void;
       blocksOrder: Record<string, string[]>;
       setBlocksOrder: jest.Mock;
+      setFieldValidity: jest.Mock;
     }) => unknown
   ) =>
     selector({
@@ -23,7 +25,8 @@ jest.mock('~/store', () => ({
         'about-us': ['intro', 'foundation', 'mission', 'goals', 'office', 'what-we-do', 'founders'],
         'privacy-policy': ['IntroSection', 'DataWeCollect', 'DataUsage', 'Cookies', 'GoogleAuth', 'SocialNetworks', 'TargetedAds', 'NewsletterSubscription', 'DataRetention', 'UserRights', 'ContactUs']
       },
-      setBlocksOrder: setBlocksOrderMock
+      setBlocksOrder: setBlocksOrderMock,
+      setFieldValidity: setFieldValidityMock
     })
 }));
 

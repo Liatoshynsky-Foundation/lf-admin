@@ -7,10 +7,12 @@ import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { WhatWeDolItemWithId } from '~/types/store/pages/about-us/blocks/whatWeDoBlock';
 
 const setFieldMock = jest.fn();
+const toggleBlockVisibilityMock = jest.fn();
+const setFieldValidityMock = jest.fn();
 const usePageBlockMock = jest.fn();
 jest.mock('~/store', () => ({
-  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock }) => unknown) =>
-    selector({ locale: 'uk', setField: setFieldMock })
+  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock; readonly toggleBlockVisibility: typeof toggleBlockVisibilityMock; readonly setFieldValidity: typeof setFieldValidityMock }) => unknown) =>
+    selector({ locale: 'uk', setField: setFieldMock, toggleBlockVisibility: toggleBlockVisibilityMock, setFieldValidity: setFieldValidityMock })
 }));
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
 jest.mock('~/components/accordion-blocks/editable-section-list/EditableSectionList');
@@ -119,6 +121,58 @@ describe('WhatWeDo', () => {
     runSimulation(triggerId);
 
     expect(setFieldMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.WHAT_WE_DO, storeKey, expectedPayload);
+  });
+
+  it('should call toggleBlockVisibility with pageId and blockId when the visibility toggle is clicked', () => {
+    runSimulation('collapsible-block-toggle-visibility');
+
+    expect(toggleBlockVisibilityMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.WHAT_WE_DO);
+  });
+
+  it('should leave unrelated items untouched when updating a single item in a multi-item list', () => {
+    const otherItem = {
+      id: 'other-item-id',
+      title: { uk: mockItemTitleJson, en: {} },
+      description: { uk: mockItemDescJson, en: { type: 'doc', content: [] } }
+    };
+    const multiItemBlock = {
+      title: { uk: mockBlockTitleJson },
+      items: [mockBlock.items[0], otherItem] as WhatWeDolItemWithId[]
+    };
+    usePageBlockMock.mockReturnValue({ block: multiItemBlock });
+
+    render(<WhatWeDo />);
+    fireEvent.click(screen.getByTestId(`trigger-item-title-change-${ITEM_ID}`));
+
+    expect(setFieldMock).toHaveBeenCalledWith(
+      PAGE_IDS.ABOUT_US,
+      BLOCK_IDS.WHAT_WE_DO,
+      'items',
+      [
+        expect.objectContaining({
+          id: ITEM_ID,
+          title: expect.objectContaining({ uk: createDocNode('Updated Item Title') })
+        }),
+        otherItem
+      ]
+    );
+  });
+
+  it('should mark the title as invalid after blur when it is empty, and clear the flag on unmount', () => {
+    usePageBlockMock.mockReturnValue({
+      block: { ...mockBlock, title: { uk: { type: 'doc', content: [] } } }
+    });
+
+    const { unmount } = render(<WhatWeDo />);
+
+    fireEvent.click(screen.getByTestId('trigger-main-title-blur'));
+
+    expect(screen.getByTestId('main-title-error')).toBeInTheDocument();
+    expect(setFieldValidityMock).toHaveBeenCalledWith(`${PAGE_IDS.ABOUT_US}:${BLOCK_IDS.WHAT_WE_DO}:title`, true);
+
+    unmount();
+
+    expect(setFieldValidityMock).toHaveBeenLastCalledWith(`${PAGE_IDS.ABOUT_US}:${BLOCK_IDS.WHAT_WE_DO}:title`, false);
   });
 
   it('should render the grip handle and handle drag-and-drop reordering', () => {

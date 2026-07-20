@@ -139,27 +139,55 @@ export const PublicationsChipLabels: Record<PublicationsItemType, string> = {
 
 export enum MenuActionId {
   PUBLISH = 'PUBLISH',
-  SAVE_DRAFT = 'SAVE_DRAFT',
   PUBLICATE_AND_EXIT = 'PUBLICATE_AND_EXIT',
   CANCEL_PUBLICATION = 'CANCEL_PUBLICATION',
   DELETE = 'DELETE'
-}
+} 
+
+
 
 export type ACTIONS_TYPE = {
   id: MenuActionId;
   label: string;
 };
-
 export type MUTATION_RESULT = Record<string, string>;
 
+
 export const CONTENT_MUTATION_RESULTS: MUTATION_RESULT = {
-  draftPublished: 'Чернетку опубліковано успішно',
-  draftSaved: 'Чернетку збережено успішно',
-  draftDeleted: 'Чернетку видалено успішно',
   publicationDeleted: 'Публікацію видалено',
   publicationUnpublished: 'Публікацію скасовано',
-  publicationPublished: 'Публікацію опубліковано успішно'
+  publicationPublished: 'Публікацію опубліковано успішно',
+  publicationPublishError: 'Виникла помилка при публікації. Спробуйте ще раз.',
+  publicationUnpublishError: 'Виникла помилка при скасуванні публікації. Спробуйте ще раз.'
+} as const;
+
+export type MenuActionConfig = {
+  status: BaseContentStatuses;
+  toastMessage: string;
+  toastErrorMessage: string;
 };
+
+export const MENU_ACTION_CONFIGS: Record<
+  Exclude<MenuActionId, MenuActionId.DELETE>,
+  MenuActionConfig
+> = {
+  [MenuActionId.PUBLISH]: {
+    status: BaseContentStatuses.Published,
+    toastMessage: CONTENT_MUTATION_RESULTS.publicationPublished,
+    toastErrorMessage: CONTENT_MUTATION_RESULTS.publicationPublishError
+  },
+  [MenuActionId.PUBLICATE_AND_EXIT]: {
+    status: BaseContentStatuses.Published,
+    toastMessage: CONTENT_MUTATION_RESULTS.publicationPublished,
+    toastErrorMessage: CONTENT_MUTATION_RESULTS.publicationPublishError
+  },
+  [MenuActionId.CANCEL_PUBLICATION]: {
+    status: BaseContentStatuses.Draft,
+    toastMessage: CONTENT_MUTATION_RESULTS.publicationUnpublished,
+    toastErrorMessage: CONTENT_MUTATION_RESULTS.publicationUnpublishError
+  },
+} as const;
+
 
 export const DEFAULT_EMPTY_DOCUMENT: SerializedContent = {
   blocks: [],
@@ -228,7 +256,7 @@ export const PAGE_TITLES: Record<PublicationsItemType, string> = {
   events: 'Події',
   news: 'Новини',
   media: 'Ми у ЗМІ'
-};
+} as const;
 
 export const initialSeoValue: SeoBlockValue = {
   meta: {
@@ -243,7 +271,7 @@ export const ADMIN_TITLE_LABELS: Record<PublicationsItemType, string> = {
   events: 'Назва події в адмінці',
   news: 'Назва новини в адмінці',
   media: 'Назва публікації в адмінці'
-};
+} as const;
 
 export const CROP_RATIOS = {
   HERO_BANNER: 816 / 300,
