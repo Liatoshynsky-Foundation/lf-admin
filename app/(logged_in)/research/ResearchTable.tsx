@@ -7,14 +7,14 @@ import { styles } from './ResearchTable.styles';
 import { RESEARCH_BASE_PATH } from '~/constants/research';
 import { RowActions } from '~/shared/components/table-layout/components/RowActions';
 import { StatusBadge } from '~/shared/components/table-layout/components/StatusBadge';
-import type { BaseRowData, ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
+import type { BaseRowData, ColumnDef, MenuItem } from '~/shared/components/table-layout/row-variants/Row.types';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
 import { twoLineEllipsis } from '~/shared/components/table-layout/TableLayout.styles';
 
 type PlainWork = ResearchWork & {
   editAction?: { editHref: string; editLabel: string };
   menuActions?: {
-    menuItems: readonly (readonly { id: string; label: string; href?: string; onClick?: () => void }[])[];
+    menuItems: readonly (readonly MenuItem[])[];
     menuTriggerLabel: string;
   };
 };
