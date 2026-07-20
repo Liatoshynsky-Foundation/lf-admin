@@ -1,6 +1,6 @@
 import { DragEndEvent } from '@dnd-kit/core';
 import { Box, Divider, Typography } from '@mui/material';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { styles } from './GroupPerformancesSection.styles';
 import { PerformanceRow } from './PerformanceRow';
@@ -71,29 +71,36 @@ export const GroupPerformancesSection = ({
   const langKey = currentLanguage === 'UA' ? 'uk' : 'en';
   const [performanceIdToDelete, setPerformanceIdToDelete] = useState<string | null>(null);
 
+  const preparedPerformances = useMemo(() => {
+    return performances.map((item) => ({
+      ...item,
+      id: item.id || generateUniqueId()
+    }));
+  }, [performances]);
+
   const handleAddPerformance = () => {
     const newPerformance: GroupPerformance = {
       id: generateUniqueId(),
       url: '',
       caption: { uk: '', en: '' }
     };
-    onChangePerformances([...performances, newPerformance]);
+    onChangePerformances([...preparedPerformances, newPerformance]);
   };
 
   const handleConfirmDelete = () => {
     if (performanceIdToDelete) {
-      onChangePerformances(performances.filter((item) => item.id !== performanceIdToDelete));
+      onChangePerformances(preparedPerformances.filter((item) => item.id !== performanceIdToDelete));
       setPerformanceIdToDelete(null);
     }
   };
 
   const handleUpdateUrl = (idToUpdate: string, value: string) => {
-    onChangePerformances(performances.map((item) => (item.id === idToUpdate ? { ...item, url: value } : item)));
+    onChangePerformances(preparedPerformances.map((item) => (item.id === idToUpdate ? { ...item, url: value } : item)));
   };
 
   const handleUpdateCaption = (idToUpdate: string, value: string) => {
     onChangePerformances(
-      performances.map((item) =>
+      preparedPerformances.map((item) =>
         item.id === idToUpdate
           ? {
             ...item,
@@ -109,7 +116,7 @@ export const GroupPerformancesSection = ({
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    handleSortableDragEnd(event, performances, onChangePerformances);
+    handleSortableDragEnd(event, preparedPerformances, onChangePerformances);
   };
 
   return (
@@ -127,14 +134,14 @@ export const GroupPerformancesSection = ({
           </Typography>
           <Divider sx={styles.divider} />
         </Box>
-        
+
         <Box sx={styles.performancesList}>
           <SortableList
             id="group-performances-list"
-            items={performances.map((item) => item.id)}
+            items={preparedPerformances.map((item) => item.id)}
             onDragEnd={handleDragEnd}
           >
-            {performances.map((item) => (
+            {preparedPerformances.map((item) => (
               <SortableItemWrapper key={item.id} id={item.id} gripPosition="top" gripHandle>
                 <Box sx={styles.performanceItemRow}>
                   <PerformanceRow

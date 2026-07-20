@@ -115,7 +115,7 @@ export interface GroupPhoto {
 }
 
 export interface GroupPerformance {
-  id: string;
+  id?: string;
   url?: string;
   caption?: { uk: string; en: string };
 }

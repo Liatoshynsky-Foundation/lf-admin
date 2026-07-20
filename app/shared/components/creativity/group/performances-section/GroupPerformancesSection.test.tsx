@@ -272,6 +272,17 @@ describe('GroupPerformancesSection Component', () => {
     ]);
   });
 
+  it('should generate missing IDs for legacy performances', () => {
+    const propsWithMissingIds = {
+      ...defaultProps,
+      performances: [{ url: MOCK_URLS.youtube, caption: { uk: 'Без ID', en: '' } }]
+    };
+
+    render(<GroupPerformancesSection {...propsWithMissingIds} />);
+
+    expect(screen.getByTestId(`mock-performance-row-${MOCK_UUID}`)).toBeInTheDocument();
+  });
+
   describe('renderLinkPreview', () => {
     it('should return null for empty url', () => {
       render(<GroupPerformancesSection {...defaultProps} />);
