@@ -309,14 +309,14 @@ describe('BlockNoteEditor', () => {
   });
 
   describe('5. Paste Behaviour', () => {
-    let originalDataTransfer: any;
+    let originalDataTransferDescriptor: PropertyDescriptor | undefined;
 
     beforeEach(() => {
       jest.clearAllMocks();
     });
 
     beforeAll(() => {
-      originalDataTransfer = globalThis.DataTransfer;
+      originalDataTransferDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'DataTransfer');
       if (typeof DataTransfer === 'undefined') {
         class MockDataTransfer {
           data: Record<string, string>;
@@ -333,19 +333,22 @@ describe('BlockNoteEditor', () => {
         }
 
         Object.defineProperty(globalThis, 'DataTransfer', {
-          value: MockDataTransfer 
+          configurable: true,
+          writable: true,
+          value: MockDataTransfer
         });
       }
     });
 
     afterAll(() => {
-      if (originalDataTransfer) {
-        Object.defineProperty(globalThis, 'DataTransfer', {
-          value: originalDataTransfer,
-          configurable: true,
-        });
+      if (originalDataTransferDescriptor) {
+        Object.defineProperty(globalThis, 'DataTransfer', originalDataTransferDescriptor);
       } else {
-        delete (globalThis as any).DataTransfer;
+        Object.defineProperty(globalThis, 'DataTransfer', {
+          configurable: true,
+          writable: true,
+          value: undefined
+        });
       }
     });
 
