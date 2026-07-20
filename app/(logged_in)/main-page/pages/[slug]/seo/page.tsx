@@ -15,7 +15,7 @@ export default function PageSeoPage() {
   const { slug } = useParams();
   const router = useRouter();
 
-  const { seoValue, setSeoValue, handleSave, pageExtraFields } = usePageSeo(slug as string);
+  const { seoValue, setSeoValue, handleSave, pageExtraFields, loading } = usePageSeo(slug as string);
 
   const handleCancel = () => {
     router.push(MAIN_PAGE_BASE_PATH);
@@ -26,7 +26,14 @@ export default function PageSeoPage() {
       <DividedHeader
         originUrl={MAIN_PAGE_BASE_PATH}
         rightActionsComponent={
-          <HeaderRightActions mode="seo" onSave={handleSave} onCancel={handleCancel} onPublish={handleSave} isPageSeo />
+          <HeaderRightActions
+            mode="seo"
+            onSave={handleSave}
+            onCancel={handleCancel}
+            onPublish={handleSave}
+            isPageSeo
+            disabled={loading}
+          />
         }
       >
         <TitleDropdown type="SEO" title={`${seoValue.meta.uk.title}`} renderMenuOpen={true} />
