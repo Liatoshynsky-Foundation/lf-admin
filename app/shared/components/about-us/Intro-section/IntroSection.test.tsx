@@ -20,9 +20,6 @@ jest.mock('~/store', () => ({
     selector({ locale: 'uk', setField: setFieldMock })
 }));
 
-jest.mock('~/utils/uploadToTmpFolder', () => ({ handleUploadImage: jest.fn() }));
-jest.mock('~/types/graphql/generated/graphql', () => ({ useUploadBlobMutation: () => [jest.fn()] }));
-
 jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: (pageId: string, blockId: string) => usePageBlockMock(pageId, blockId)
 }));
