@@ -205,10 +205,13 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       const emptyContent = { uk: { content: { blocks: [] } }, en: { content: { blocks: [] } } };
       const isUpdate = isEditing && id;
 
-      const saveStrategies: Record<string, () => Promise<{
-        id: string | undefined;
-        slug: string | undefined;
-      }>> = {
+      const saveStrategies: Record<
+        string,
+        () => Promise<{
+          id: string | undefined;
+          slug: string | undefined;
+        }>
+      > = {
         events: async () => {
           const payload = {
             ...commonInput,
@@ -218,7 +221,11 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
             ticketUrl: seoValue.ticketUrl,
             status: status as unknown as EventStatus
           };
-          if (isUpdate) return updateEvent({ id, input: payload }).then((data) => ({ id: data.data?.updateEvent.id, slug: data.data?.updateEvent.slug }));
+          if (isUpdate)
+            return updateEvent({ id, input: payload }).then((data) => ({
+              id: data.data?.updateEvent.id,
+              slug: data.data?.updateEvent.slug
+            }));
           return createEvent({
             ...payload,
             content: emptyContent
@@ -230,7 +237,11 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
             newsDate: commonInput.publishedAt,
             status: status as unknown as NewsStatus
           };
-          if (isUpdate) return updateNews({ id, input: payload }).then((data) => ({ id: data.data?.updateNews.id, slug: data.data?.updateNews.slug }));
+          if (isUpdate)
+            return updateNews({ id, input: payload }).then((data) => ({
+              id: data.data?.updateNews.id,
+              slug: data.data?.updateNews.slug
+            }));
           return createNews({
             ...payload,
             content: emptyContent
@@ -244,10 +255,10 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
           };
           if (isUpdate) {
             const response = await updateMediaMention(id, payload);
-            return ({ id: response.data?.updateMediaMention?.id, slug: response.data?.updateMediaMention?.slug });
+            return { id: response.data?.updateMediaMention?.id, slug: response.data?.updateMediaMention?.slug };
           } else {
             const response = await createMediaMention(payload);
-            return ({ id: response.data?.createMediaMention?.id, slug: response.data?.createMediaMention?.slug });
+            return { id: response.data?.createMediaMention?.id, slug: response.data?.createMediaMention?.slug };
           }
         }
       };
@@ -278,12 +289,12 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       seoValue,
       crop
     }) !==
-    JSON.stringify({
-      adminTitle: initialState.adminTitle,
-      publishDate: initialState.publishDate,
-      seoValue: initialState.seoValue,
-      crop: initialState.crop
-    });
+      JSON.stringify({
+        adminTitle: initialState.adminTitle,
+        publishDate: initialState.publishDate,
+        seoValue: initialState.seoValue,
+        crop: initialState.crop
+      });
 
   return {
     isEditing,

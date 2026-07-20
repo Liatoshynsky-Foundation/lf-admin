@@ -186,7 +186,6 @@ describe('PublicatiosSeoPage Container', () => {
 
       expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     });
-
   });
   describe('when handleSave returns undefined', () => {
     it.each([
@@ -229,7 +228,7 @@ describe('PublicatiosSeoPage Container', () => {
       }
     );
   });
-   
+
   describe('when publicationData is missing (null/undefined)', () => {
     it('should not throw and should not redirect when data is missing', () => {
       (useUpsertPublication as jest.Mock).mockReturnValue(undefined);

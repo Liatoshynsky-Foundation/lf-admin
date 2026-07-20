@@ -80,14 +80,25 @@ describe('NewsMutation Resolvers', () => {
   beforeEach(() => jest.clearAllMocks());
 
   describe('Security & Validation', () => {
-    it('should throw error if title is empty (required for slug)', async () => {
+    it('should throw TITLE_REQUIRED_FOR_SLUG if title is empty', async () => {
       const invalidInput = { ...baseInput, title: { uk: '', en: '' } };
-      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toThrow();
+      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toThrow(
+        newsServiceErrors.TITLE_REQUIRED_FOR_SLUG
+      );
     });
 
-    it('should throw error if title uk is missing (via partial object)', async () => {
+    it('should throw TITLE_REQUIRED_FOR_SLUG if title uk is missing (via partial object)', async () => {
       const invalidInput = { ...baseInput, title: { uk: '' } } as unknown as CreateNewsGQLInput;
-      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toThrow();
+      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toThrow(
+        newsServiceErrors.TITLE_REQUIRED_FOR_SLUG
+      );
+    });
+
+    it('should throw TITLE_TOO_SHORT_FOR_SLUG if title has fewer than 2 characters', async () => {
+      const invalidInput = { ...baseInput, title: { uk: 'Т', en: 'T' } };
+      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toThrow(
+        newsServiceErrors.TITLE_TOO_SHORT_FOR_SLUG
+      );
     });
 
     it('should throw GraphQLError for createNews if user is unauthenticated', async () => {
@@ -139,6 +150,26 @@ describe('NewsMutation Resolvers', () => {
       expect(result.slug).toBe('slug-оновлено');
       expect(helpers.syncImagesCrops).toHaveBeenCalledWith(id, updateInput.coverImage, { isCoverImage: true });
       expect(helpers.syncImagesCrops).toHaveBeenCalledWith(id, updateInput.content);
+    });
+
+    it('should throw TITLE_REQUIRED_FOR_SLUG if updated title is empty', async () => {
+      mockAction('findById', createMockNews({ id }));
+
+      await expect(
+        NewsMutation.updateNews({}, { id, input: { title: { uk: '', en: '' } } }, adminContext)
+      ).rejects.toThrow(newsServiceErrors.TITLE_REQUIRED_FOR_SLUG);
+
+      expect(mockRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('should throw TITLE_TOO_SHORT_FOR_SLUG if updated title has fewer than 2 characters', async () => {
+      mockAction('findById', createMockNews({ id }));
+
+      await expect(
+        NewsMutation.updateNews({}, { id, input: { title: { uk: 'Т', en: 'T' } } }, adminContext)
+      ).rejects.toThrow(newsServiceErrors.TITLE_TOO_SHORT_FOR_SLUG);
+
+      expect(mockRepo.update).not.toHaveBeenCalled();
     });
 
     it('should fall back to empty content object structure during processContentFields execution if content property is missing', async () => {
