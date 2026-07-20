@@ -240,7 +240,7 @@ export function WorksTable({
         onDelete={handleConfirmUngroup}
         title="Підтвердити розгрупування" 
         confirmButtonText="Розгрупувати"
-        description="Ви впевнені, що хочете розгрупувати цю групу?"
+        description="Ви впевнені, що хочете розгрупувати групу? Опис сторінки буде видалено, але композиції залишаться в системі."
       />
     </Box>
   );

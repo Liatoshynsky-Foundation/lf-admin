@@ -1,5 +1,5 @@
 import { Box } from '@mui/material';
-import { fireEvent,render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { useWorksTableActions } from './useWorksTableActions';
@@ -330,6 +330,20 @@ describe('WorksTable', () => {
         const groupHeader = row.groupData as GroupHeaderData;
         if (groupHeader.menuActions?.menuItems) {
           triggerMenuClicks(groupHeader.menuActions.menuItems);
+        }
+
+        if (row.subRows) {
+          row.subRows.forEach((subRow: OpusWork) => {
+            if (subRow.menuActions?.menuItems) {
+              triggerMenuClicks(subRow.menuActions.menuItems);
+            }
+          });
+        }
+      }
+
+      if (row.type === 'individual' && row.plainData) {
+        if (row.plainData.menuActions?.menuItems) {
+          triggerMenuClicks(row.plainData.menuActions.menuItems);
         }
       }
     });
