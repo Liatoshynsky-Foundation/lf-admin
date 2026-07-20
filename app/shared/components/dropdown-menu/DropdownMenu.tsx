@@ -11,23 +11,14 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({
   maxHeight,
   menuList,
   sx,
-  anchorOrigin = {
-    vertical: 'bottom',
-    horizontal: 'left'
-  },
-  transformOrigin = {
-    vertical: 'top',
-    horizontal: 'left'
-  },
+  anchorOrigin = { vertical: 'top', horizontal: 'left' },
+  transformOrigin = { vertical: 'top', horizontal: 'right' },
   ...props
 }) => {
   return (
     <Menu
-      PaperProps={{
-        style: {
-          maxHeight
-        }
-      }}
+      disableRestoreFocus
+      PaperProps={{ style: { maxHeight } }}
       anchorOrigin={anchorOrigin}
       transformOrigin={transformOrigin}
       sx={{ ...sx }}

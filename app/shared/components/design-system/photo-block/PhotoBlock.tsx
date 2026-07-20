@@ -185,7 +185,7 @@ export const ImagePreviewBlock = ({
               color="primary"
               size="small"
               onClick={openEditCrop}
-              sx={styles.editButton}
+              sx={[styles.imageActionButton, styles.editButton]}
               disabled={disabled || !previewImage}
             >
               Редагувати
@@ -197,7 +197,7 @@ export const ImagePreviewBlock = ({
               color="primary"
               size="small"
               onClick={openChangeImage}
-              sx={styles.changeButton}
+              sx={[styles.imageActionButton, styles.changeButton]}
               disabled={disabled}
             >
               Змінити зображення

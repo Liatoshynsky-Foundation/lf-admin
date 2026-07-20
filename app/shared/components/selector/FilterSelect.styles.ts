@@ -87,10 +87,10 @@ export const filterSelectStyles = {
     flexShrink: 0,
     color: disabled ? 'blue.700' : 'black'
   }),
-
+  
   dropdownMenu: (menuMinWidth?: number): SxProps => ({
     '& .MuiPaper-root': {
-      minWidth: menuMinWidth ? `${menuMinWidth}px` : undefined
+	  minWidth: menuMinWidth ? `${menuMinWidth}px` : undefined
     }
   }),
 
@@ -105,7 +105,7 @@ export const filterSelectStyles = {
     scrollbarWidth: 'none',
 
     '&::-webkit-scrollbar': {
-      display: 'none'
+	  display: 'none'
     }
   },
 

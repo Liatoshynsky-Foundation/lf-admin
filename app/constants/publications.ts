@@ -106,16 +106,10 @@ export const PUBLICATIONS_CREATE_OPTIONS: ReadonlyArray<PublicationsCreateOption
 );
 
 const PUBLICATIONS_STATUS_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
-  { value: BaseContentStatuses.Draft, label: 'Чернетка' },
+  { value: BaseContentStatuses.Draft, label: 'Чернетка (прихована)' },
   { value: BaseContentStatuses.Published, label: 'Опублікована' },
-  { value: BaseContentStatuses.Editing, label: 'Опублікована з чернеткою' }
 ];
 
-const PUBLICATIONS_LANGUAGE_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
-  { value: 'uk', label: 'Українська' },
-  { value: 'en', label: 'Англійська' },
-  { value: 'bilingual', label: 'Двомовна' }
-];
 
 export const PUBLICATIONS_FILTERS: ReadonlyArray<PublicationsFilterConfig> = [
   {
@@ -124,12 +118,6 @@ export const PUBLICATIONS_FILTERS: ReadonlyArray<PublicationsFilterConfig> = [
     options: PUBLICATIONS_STATUS_FILTER_OPTIONS,
     menuMinWidth: 170
   },
-  {
-    id: 'language',
-    label: 'Мова',
-    options: PUBLICATIONS_LANGUAGE_FILTER_OPTIONS,
-    menuMinWidth: 205
-  }
 ];
 
 export type PublicationLanguageOption = Readonly<{
@@ -151,38 +139,56 @@ export const PublicationsChipLabels: Record<PublicationsItemType, string> = {
 
 export enum MenuActionId {
   PUBLISH = 'PUBLISH',
-  SAVE_DRAFT = 'SAVE_DRAFT',
   PUBLICATE_AND_EXIT = 'PUBLICATE_AND_EXIT',
   CANCEL_PUBLICATION = 'CANCEL_PUBLICATION',
   DELETE = 'DELETE'
-}
+} 
+
+
 
 export type ACTIONS_TYPE = {
   id: MenuActionId;
   label: string;
 };
 
-export type HEADER_MENU_OPTIONS_TYPE = Record<string, ReadonlyArray<ACTIONS_TYPE>>;
-
-export const HEADER_MENU_OPTIONS: HEADER_MENU_OPTIONS_TYPE = {
-  baseActions: [
-    { id: MenuActionId.PUBLISH, label: 'Опублікувати' },
-    { id: MenuActionId.PUBLICATE_AND_EXIT, label: 'Опублікувати і вийти' },
-    { id: MenuActionId.CANCEL_PUBLICATION, label: 'Скасувати публікацію' },
-    { id: MenuActionId.DELETE, label: 'Видалити' }
-  ]
-} as const;
-
 export type MUTATION_RESULT = Record<string, string>;
 
+
 export const CONTENT_MUTATION_RESULTS: MUTATION_RESULT = {
-  draftPublished: 'Чернетку опубліковано успішно',
-  draftSaved: 'Чернетку збережено успішно',
-  draftDeleted: 'Чернетку видалено успішно',
   publicationDeleted: 'Публікацію видалено',
   publicationUnpublished: 'Публікацію скасовано',
-  publicationPublished: 'Публікацію опубліковано успішно'
+  publicationPublished: 'Публікацію опубліковано успішно',
+  publicationPublishError: 'Виникла помилка при публікації. Спробуйте ще раз.',
+  publicationUnpublishError: 'Виникла помилка при скасуванні публікації. Спробуйте ще раз.'
+} as const;
+
+export type MenuActionConfig = {
+  status: BaseContentStatuses;
+  toastMessage: string;
+  toastErrorMessage: string;
 };
+
+export const MENU_ACTION_CONFIGS: Record<
+  Exclude<MenuActionId, MenuActionId.DELETE>,
+  MenuActionConfig
+> = {
+  [MenuActionId.PUBLISH]: {
+    status: BaseContentStatuses.Published,
+    toastMessage: CONTENT_MUTATION_RESULTS.publicationPublished,
+    toastErrorMessage: CONTENT_MUTATION_RESULTS.publicationPublishError
+  },
+  [MenuActionId.PUBLICATE_AND_EXIT]: {
+    status: BaseContentStatuses.Published,
+    toastMessage: CONTENT_MUTATION_RESULTS.publicationPublished,
+    toastErrorMessage: CONTENT_MUTATION_RESULTS.publicationPublishError
+  },
+  [MenuActionId.CANCEL_PUBLICATION]: {
+    status: BaseContentStatuses.Draft,
+    toastMessage: CONTENT_MUTATION_RESULTS.publicationUnpublished,
+    toastErrorMessage: CONTENT_MUTATION_RESULTS.publicationUnpublishError
+  },
+} as const;
+
 
 export const DEFAULT_EMPTY_DOCUMENT: SerializedContent = {
   blocks: [],
@@ -251,7 +257,7 @@ export const PAGE_TITLES: Record<PublicationsItemType, string> = {
   events: 'Події',
   news: 'Новини',
   media: 'Ми у ЗМІ'
-};
+} as const;
 
 export const initialSeoValue: SeoBlockValue = {
   meta: {
@@ -266,7 +272,7 @@ export const ADMIN_TITLE_LABELS: Record<PublicationsItemType, string> = {
   events: 'Назва події в адмінці',
   news: 'Назва новини в адмінці',
   media: 'Назва публікації в адмінці'
-};
+} as const;
 
 export const CROP_RATIOS = {
   HERO_BANNER: 816 / 300,
