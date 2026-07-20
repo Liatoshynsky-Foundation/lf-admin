@@ -2,45 +2,76 @@
 
 import { useCallback } from 'react';
 
+import { GroupRowData, IndividualWork } from '~/(logged_in)/creativity/WorksTable';
 import { OpusErrors } from '~/constants/errors';
 import { safeMutate } from '~/lib/utils/safeMutate';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
 import {
   type CreateOpusInput,
   type CreateOpusMutation,
   type CreateOpusMutationVariables,
   type DeleteOpusMutationVariables,
-  type OpusFiltersInput,
-  OpusNumberKind,
+  OpusStatus,
   type UpdateOpusMutation,
   type UpdateOpusMutationVariables,
-  useAllOpusesQuery,
   useCreateOpusMutation,
   useDeleteOpusMutation,
   useOpusByIdQuery,
+  usePaginatedWorksQuery,
   useSearchCompositionsQuery,
-  useUpdateOpusMutation
+  useUpdateOpusMutation,
+  WorksFiltersInput,
+  WorksTab
 } from '~/types/graphql/generated/graphql';
 
 type QueryHookOptions = Readonly<{
   skip?: boolean;
 }>;
-
 export const useOpusById = (id: string, options: QueryHookOptions = {}) =>
   useOpusByIdQuery({ variables: { id }, fetchPolicy: 'network-only', skip: options.skip || !id });
 
-export const useAllOpusGroups = (filters?: OpusFiltersInput, options: QueryHookOptions = {}) =>
-  useAllOpusesQuery({
-    variables: { filters: { ...filters, numberKind: OpusNumberKind.Op } },
-    fetchPolicy: 'network-only',
-    skip: options.skip
+export function usePaginatedWorks(tab?: WorksTab | null, filters?: WorksFiltersInput | null) {
+  const { data, loading, error } = usePaginatedWorksQuery({
+    variables: {
+      tab,
+      filters
+    },
+    fetchPolicy: 'network-only'
   });
 
-export const useAllUngroupedGroups = (filters?: OpusFiltersInput, options: QueryHookOptions = {}) =>
-  useAllOpusesQuery({
-    variables: { filters: { ...filters, numberKind: OpusNumberKind.Woo } },
-    fetchPolicy: 'network-only',
-    skip: options.skip
-  });
+  const groups: GroupRowData[] = (data?.paginatedWorks.groups ?? []).map((g) => ({
+    id: g.id,
+    number: g.number,
+    numberKind: g.numberKind === 'op' ? 'op' : 'bo',
+    name: g.name.uk,
+    genre: g.genre ?? '',
+    startDate: g.creationYear,
+    status: g.status === OpusStatus.Published ? BaseContentStatuses.Published : BaseContentStatuses.Draft,
+    updatedAt: g.updatedAt,
+    works:
+      g.compositions?.map((c) => ({
+        id: c.id,
+        title: c.title.uk
+      })) ?? []
+  }));
+
+  const works: IndividualWork[] = (data?.paginatedWorks.works ?? []).map((w) => ({
+    id: w.id,
+    title: w.title.uk,
+    year: w.year,
+    genre: w.genre,
+    status: w.status === OpusStatus.Published ? BaseContentStatuses.Published : BaseContentStatuses.Draft,
+    updatedAt: w.updatedAt
+  }));
+
+  return {
+    items: { groups, works },
+    totalPages: data?.paginatedWorks.totalPages ?? 0,
+    totalItems: data?.paginatedWorks.total ?? 0,
+    loading,
+    error
+  };
+}
 
 export const useSearchCompositions = (search: string, options: QueryHookOptions = {}) =>
   useSearchCompositionsQuery({ variables: { search }, fetchPolicy: 'network-only', skip: options.skip || !search });

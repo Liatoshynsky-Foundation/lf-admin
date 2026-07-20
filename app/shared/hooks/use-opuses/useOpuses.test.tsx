@@ -1,37 +1,37 @@
 import { act, renderHook } from '@testing-library/react';
 
 import {
-  useAllOpusGroups,
-  useAllUngroupedGroups,
   useCreateOpus,
   useDeleteOpus,
   useOpusById,
+  usePaginatedWorks,
   useSearchCompositions,
   useUpdateOpus
 } from './useOpuses';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
+import { OpusStatus, WorksTab } from '~/types/graphql/generated/graphql';
 
 const mockCreateMutate = jest.fn();
 const mockUpdateMutate = jest.fn();
 const mockDeleteMutate = jest.fn();
 
 const mockUseOpusByIdQuery = jest.fn();
-const mockUseAllOpusesQuery = jest.fn();
+const mockUsePaginatedWorksQuery = jest.fn();
 const mockUseSearchCompositionsQuery = jest.fn();
 
-jest.mock('~/types/graphql/generated/graphql', () => ({
-  OpusNumberKind: {
-    Op: 'OP',
-    Woo: 'WOO'
-  },
+jest.mock('~/types/graphql/generated/graphql', () => {
+  const actual = jest.requireActual('~/types/graphql/generated/graphql');
 
-  useCreateOpusMutation: () => [mockCreateMutate, {}],
-  useUpdateOpusMutation: () => [mockUpdateMutate, {}],
-  useDeleteOpusMutation: () => [mockDeleteMutate, {}],
-
-  useOpusByIdQuery: (options: unknown) => mockUseOpusByIdQuery(options),
-  useAllOpusesQuery: (options: unknown) => mockUseAllOpusesQuery(options),
-  useSearchCompositionsQuery: (options: unknown) => mockUseSearchCompositionsQuery(options)
-}));
+  return {
+    ...actual,
+    useCreateOpusMutation: () => [mockCreateMutate, {}],
+    useUpdateOpusMutation: () => [mockUpdateMutate, {}],
+    useDeleteOpusMutation: () => [mockDeleteMutate, {}],
+    useOpusByIdQuery: (options: unknown) => mockUseOpusByIdQuery(options),
+    usePaginatedWorksQuery: (options: unknown) => mockUsePaginatedWorksQuery(options),
+    useSearchCompositionsQuery: (options: unknown) => mockUseSearchCompositionsQuery(options)
+  };
+});
 
 describe('useOpuses hooks', () => {
   beforeEach(() => {
@@ -122,82 +122,6 @@ describe('useOpuses hooks', () => {
       })
     );
   });
-
-  it('useAllOpusGroups requests Op groups', () => {
-    mockUseAllOpusesQuery.mockReturnValue({
-      data: undefined,
-      loading: false
-    });
-
-    renderHook(() => useAllOpusGroups({}));
-
-    expect(mockUseAllOpusesQuery).toHaveBeenCalledWith(
-      expect.objectContaining({
-        variables: {
-          filters: {
-            numberKind: 'OP'
-          }
-        },
-        fetchPolicy: 'network-only',
-        skip: undefined
-      })
-    );
-  });
-
-  it('useAllUngroupedGroups requests Woo groups', () => {
-    mockUseAllOpusesQuery.mockReturnValue({
-      data: undefined,
-      loading: false
-    });
-
-    renderHook(() =>
-      useAllUngroupedGroups({
-        statuses: undefined
-      })
-    );
-
-    expect(mockUseAllOpusesQuery).toHaveBeenCalledWith(
-      expect.objectContaining({
-        variables: {
-          filters: {
-            numberKind: 'WOO'
-          }
-        },
-        fetchPolicy: 'network-only',
-        skip: undefined
-      })
-    );
-  });
-
-  it('passes skip option to useAllOpusGroups', () => {
-    mockUseAllOpusesQuery.mockReturnValue({
-      data: undefined,
-      loading: false
-    });
-
-    renderHook(() => useAllOpusGroups(undefined, { skip: true }));
-
-    expect(mockUseAllOpusesQuery).toHaveBeenCalledWith(
-      expect.objectContaining({
-        skip: true
-      })
-    );
-  });
-
-  it('passes skip option to useAllUngroupedGroups', () => {
-    mockUseAllOpusesQuery.mockReturnValue({
-      data: undefined,
-      loading: false
-    });
-
-    renderHook(() => useAllUngroupedGroups(undefined, { skip: true }));
-
-    expect(mockUseAllOpusesQuery).toHaveBeenCalledWith(
-      expect.objectContaining({
-        skip: true
-      })
-    );
-  });
 });
 
 describe('useSearchCompositions', () => {
@@ -233,5 +157,170 @@ describe('useSearchCompositions', () => {
         skip: true
       })
     );
+  });
+});
+
+describe('usePaginatedWorks', () => {
+  it('requests paginated works with provided variables', () => {
+    mockUsePaginatedWorksQuery.mockReturnValue({
+      data: undefined,
+      loading: false,
+      error: undefined
+    });
+
+    renderHook(() =>
+      usePaginatedWorks(WorksTab.Opus, {
+        search: 'test'
+      })
+    );
+
+    expect(mockUsePaginatedWorksQuery).toHaveBeenCalledWith({
+      variables: {
+        tab: WorksTab.Opus,
+        filters: {
+          search: 'test'
+        }
+      },
+      fetchPolicy: 'network-only'
+    });
+  });
+
+  it('maps groups and works', () => {
+    mockUsePaginatedWorksQuery.mockReturnValue({
+      loading: false,
+      error: undefined,
+      data: {
+        paginatedWorks: {
+          total: 2,
+          totalPages: 1,
+          groups: [
+            {
+              id: 'g1',
+              number: 'Op.1',
+              numberKind: 'op',
+              name: { uk: 'Group' },
+              genre: 'Genre',
+              creationYear: '2024',
+              status: OpusStatus.Published,
+              updatedAt: 'today',
+              compositions: [
+                {
+                  id: 'c1',
+                  title: {
+                    uk: 'Work'
+                  }
+                }
+              ]
+            }
+          ],
+          works: [
+            {
+              id: 'w1',
+              title: {
+                uk: 'Standalone'
+              },
+              year: '2023',
+              genre: 'Genre',
+              status: OpusStatus.Draft,
+              updatedAt: 'today'
+            }
+          ]
+        }
+      }
+    });
+
+    const { result } = renderHook(() => usePaginatedWorks());
+
+    expect(result.current.items).toEqual({
+      groups: [
+        {
+          id: 'g1',
+          number: 'Op.1',
+          numberKind: 'op',
+          name: 'Group',
+          genre: 'Genre',
+          startDate: '2024',
+          status: BaseContentStatuses.Published,
+          updatedAt: 'today',
+          works: [
+            {
+              id: 'c1',
+              title: 'Work'
+            }
+          ]
+        }
+      ],
+      works: [
+        {
+          id: 'w1',
+          title: 'Standalone',
+          year: '2023',
+          genre: 'Genre',
+          status: BaseContentStatuses.Draft,
+          updatedAt: 'today'
+        }
+      ]
+    });
+
+    expect(result.current.totalItems).toBe(2);
+    expect(result.current.totalPages).toBe(1);
+  });
+
+  it('returns empty collections when no data', () => {
+    mockUsePaginatedWorksQuery.mockReturnValue({
+      data: undefined,
+      loading: false,
+      error: undefined
+    });
+
+    const { result } = renderHook(() => usePaginatedWorks());
+
+    expect(result.current.items).toEqual({
+      groups: [],
+      works: []
+    });
+
+    expect(result.current.totalItems).toBe(0);
+    expect(result.current.totalPages).toBe(0);
+  });
+
+  it('maps statuses correctly for groups and works', () => {
+    mockUsePaginatedWorksQuery.mockReturnValue({
+      loading: false,
+      data: {
+        paginatedWorks: {
+          total: 2,
+          totalPages: 1,
+          groups: [
+            {
+              id: 'g1',
+              number: 'Op.1',
+              numberKind: 'op',
+              name: { uk: 'Group' },
+              genre: 'Genre',
+              creationYear: '2024',
+              status: OpusStatus.Draft,
+              updatedAt: 'today',
+              compositions: []
+            }
+          ],
+          works: [
+            {
+              id: 'w1',
+              title: { uk: 'Standalone' },
+              year: '2023',
+              genre: 'Genre',
+              status: OpusStatus.Published,
+              updatedAt: 'today'
+            }
+          ]
+        }
+      }
+    });
+
+    const { result } = renderHook(() => usePaginatedWorks());
+
+    expect(result.current.items.groups[0].status).toBe(BaseContentStatuses.Draft);
+    expect(result.current.items.works[0].status).toBe(BaseContentStatuses.Published);
   });
 });

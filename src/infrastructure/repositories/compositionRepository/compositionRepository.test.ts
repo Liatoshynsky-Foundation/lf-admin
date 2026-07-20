@@ -242,8 +242,8 @@ describe('CompositionRepository', () => {
     expect(updateManyMock).not.toHaveBeenCalled();
   });
 
-  describe('buildQuery configuration (lines 52-54)', () => {
-    it('should set opusId to null in query when isStandalone filter is true', async () => {
+  describe('buildQuery configuration', () => {
+    it('should set opusId to null in query when isStandalone is true', async () => {
       const mockQueryBuilder = {
         sort: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
@@ -257,7 +257,7 @@ describe('CompositionRepository', () => {
       expect(findMock).toHaveBeenCalledWith(expect.objectContaining({ opusId: null }));
     });
 
-    it('should not modify opusId in query when isStandalone filter is false', async () => {
+    it('should set opusId to { $ne: null } in query when isStandalone is false', async () => {
       const mockQueryBuilder = {
         sort: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
@@ -268,7 +268,22 @@ describe('CompositionRepository', () => {
 
       await repository.findAll({ isStandalone: false });
 
-      expect(findMock).not.toHaveBeenCalledWith(expect.objectContaining({ opusId: null }));
+      expect(findMock).toHaveBeenCalledWith(expect.objectContaining({ opusId: { $ne: null } }));
+    });
+
+    it('should not include opusId filter when isStandalone is not provided', async () => {
+      const mockQueryBuilder = {
+        sort: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        lean: jest.fn().mockResolvedValue([createMockDoc()])
+      };
+      findMock.mockReturnValue(mockQueryBuilder);
+
+      await repository.findAll({});
+      const callArgs = findMock.mock.calls[0][0];
+  
+      expect(callArgs).not.toHaveProperty('opusId'); 
     });
   });
 

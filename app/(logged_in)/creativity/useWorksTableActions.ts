@@ -2,7 +2,12 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { WORKS_BASE_PATH } from '~/constants/creativity';
-import { OpusStatus, useDeleteOpusMutation, useUpdateOpusMutation } from '~/types/graphql/generated/graphql';
+import {
+  OpusStatus,
+  PaginatedWorksDocument,
+  useDeleteOpusMutation,
+  useUpdateOpusMutation
+} from '~/types/graphql/generated/graphql';
 
 export function useWorksTableActions() {
   const [updateOpus] = useUpdateOpusMutation();
@@ -39,7 +44,8 @@ export function useWorksTableActions() {
     try {
       await deleteOpus({
         variables: { id: groupToUngroup },
-        refetchQueries: ['AllOpuses', 'AllCompositions']
+        refetchQueries: [PaginatedWorksDocument],
+        awaitRefetchQueries: true
       });
       toast.success('Групу успішно розгруповано');
       setGroupToUngroup(null);

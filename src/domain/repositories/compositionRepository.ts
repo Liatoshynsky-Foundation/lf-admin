@@ -3,7 +3,7 @@ import { FiltersInput, IBaseRepository } from '~/domain/repositories/baseReposit
 
 export type CompositionFilters = FiltersInput & {
   statuses?: string[];
-  isStandalone?: boolean;
+  isStandalone?: boolean | null;
 };
 
 export type CompositionInput = Omit<Composition, 'id' | 'createdAt' | 'updatedAt'> & { id?: string };

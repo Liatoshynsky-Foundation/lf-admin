@@ -4,6 +4,11 @@ import { BaseEntity, FiltersInput } from '~/domain/repositories/baseRepository';
 
 const NON_EMPTY_STRING_QUERY = { $nin: ['', null] } as const;
 const EMPTY_STRING_QUERY = { $in: ['', null] } as const;
+const DEFAULT_SEARCH_FIELDS = [
+  'adminTitle',
+  'title.uk',
+  'title.en'
+] as const;
 
 const escapeRegex = (value: string): string => value.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 
@@ -43,7 +48,10 @@ export const createToEntity = <
     ...extraFields
   }) as TEntity;
 
-export const buildBaseQuery = <TDb>(filters?: FiltersInput & { statuses?: string[] }): FilterQuery<TDb> => {
+export const buildBaseQuery = <TDb>(
+  filters?: FiltersInput & { statuses?: string[] },
+  searchFields: readonly string[] = DEFAULT_SEARCH_FIELDS
+): FilterQuery<TDb> => {
   const conditions: FilterQuery<TDb>[] = [];
 
   if (filters?.statuses?.length) {
@@ -54,11 +62,13 @@ export const buildBaseQuery = <TDb>(filters?: FiltersInput & { statuses?: string
     conditions.push({ slug: filters.slug } as FilterQuery<TDb>);
   }
 
-  if (filters?.search?.trim()) {
-    const searchRegex = new RegExp(escapeRegex(filters.search.trim()), 'i');
+  if (filters?.search?.trim() && searchFields.length) {
+    const regex = new RegExp(escapeRegex(filters.search.trim()), 'i');
 
     conditions.push({
-      $or: [{ adminTitle: searchRegex }, { 'title.uk': searchRegex }, { 'title.en': searchRegex }]
+      $or: searchFields.map((field) => ({
+        [field]: regex
+      }))
     } as FilterQuery<TDb>);
   }
 
@@ -92,4 +102,44 @@ export const getBaseSort = (filters?: FiltersInput): Record<string, 1 | -1> => {
   }
 
   return { createdAt: -1 };
+};
+export const fieldCondition = <TDb>(
+  field: string,
+  value: string | string[] | undefined | null,
+  fallbackValue?: string
+): FilterQuery<TDb> | null => {
+  const isEmpty = value === undefined || value === null || (Array.isArray(value) && value.length === 0);
+  if (isEmpty) {
+    return null;
+  }
+
+  const values = Array.isArray(value) ? value : [value];
+  const includesFallback = fallbackValue !== undefined && values.includes(fallbackValue);
+
+  if (!includesFallback) {
+    return { [field]: Array.isArray(value) ? { $in: values } : value } as FilterQuery<TDb>;
+  }
+
+  const fallbackCondition = {
+    $or: [{ [field]: fallbackValue }, { [field]: { $exists: false } }, { [field]: null }]
+  };
+
+  const otherValues = values.filter((v) => v !== fallbackValue);
+  if (otherValues.length === 0) {
+    return fallbackCondition as FilterQuery<TDb>;
+  }
+
+  return { $or: [fallbackCondition, { [field]: { $in: otherValues } }] } as FilterQuery<TDb>;
+};
+
+export const combineConditions = <TDb>(
+  conditions: (FilterQuery<TDb> | null | undefined)[]
+): FilterQuery<TDb> => {
+  const nonEmpty = conditions.filter(
+    (c): c is FilterQuery<TDb> => Boolean(c && Object.keys(c).length > 0)
+  );
+
+  if (nonEmpty.length === 0) return {} as FilterQuery<TDb>;
+  if (nonEmpty.length === 1) return nonEmpty[0];
+  return { $and: nonEmpty } as FilterQuery<TDb>;
 };

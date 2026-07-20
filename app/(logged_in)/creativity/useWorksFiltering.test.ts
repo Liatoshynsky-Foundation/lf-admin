@@ -54,12 +54,12 @@ describe('useWorksFiltering', () => {
   });
 
   describe('initial state', () => {
-    it('starts with default sort, empty filters, empty search and filters panel open', () => {
+    it('starts with default sort, empty filters, empty search and filters panel closed', () => {
       const { result } = renderHook(() => useWorksFiltering());
 
       expect(result.current.sortValue).toBe('date_desc');
       expect(result.current.selectedFilters).toEqual({ status: [], language: [] });
-      expect(result.current.toolbarProps.isFiltersOpen).toBe(true);
+      expect(result.current.toolbarProps.isFiltersOpen).toBe(false);
       expect(result.current.toolbarProps.activeFiltersCount).toBe(0);
       expect(result.current.toolbarProps.search!.search).toBe('');
       expect(result.current.toolbarProps.search!.placeholder).toBe('Пошук');
@@ -123,18 +123,18 @@ describe('useWorksFiltering', () => {
   });
 
   describe('filters panel toggle', () => {
-    it('toggles isFiltersOpen from true to false and back', () => {
+    it('toggles isFiltersOpen from false to true and back', () => {
       const { result } = renderHook(() => useWorksFiltering());
 
       act(() => {
-        result.current.toolbarProps.onToggleFilters!();
-      });
-      expect(result.current.toolbarProps.isFiltersOpen).toBe(false);
-
-      act(() => {
-        result.current.toolbarProps.onToggleFilters!();
+      result.current.toolbarProps.onToggleFilters!();
       });
       expect(result.current.toolbarProps.isFiltersOpen).toBe(true);
+
+      act(() => {
+      result.current.toolbarProps.onToggleFilters!();
+      });
+      expect(result.current.toolbarProps.isFiltersOpen).toBe(false);
     });
   });
 

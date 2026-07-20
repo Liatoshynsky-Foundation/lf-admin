@@ -113,31 +113,46 @@ query OpusById($id: ID!) {
   }
 }
 
-query AllOpuses($filters: OpusFiltersInput) {
-  allOpuses(filters: $filters) {
-    id
-    number
-    numberKind
-    title {
-      uk
-      en
+query PaginatedWorks($tab: WorksTab, $filters: WorksFiltersInput) {
+  paginatedWorks(tab: $tab, filters: $filters) {
+    total
+    page
+    totalPages
+
+    groups {
+      id
+      number
+      numberKind
+      name {
+        uk
+        en
+      }
+      genre
+      status
+      creationYear
+      endYear
+      updatedAt
+      createdAt
+      compositions {
+        id
+        title {
+          uk
+          en
+        }
+      }
     }
-    name {
-      uk
-      en
-    }
-    genre
-    status
-    creationYear
-    endYear
-    updatedAt
-    createdAt
-    compositions {
+
+    works {
       id
       title {
         uk
         en
       }
+      genre
+      status
+      year
+      updatedAt
+      createdAt
     }
   }
 }

@@ -29,7 +29,7 @@ describe('CompositionsQuery Resolvers', () => {
     jest.clearAllMocks();
   });
 
-  it('allCompositions should call repo.findAll with mapped filters and explicit isStandalone', async () => {
+  it('allCompositions should call repo.findAll with mapped filters and explicit opusId', async () => {
     (mockCompositionsRepo.findAll as jest.Mock).mockResolvedValue([mockCompositionEntity]);
 
     const result = await CompositionsQuery.allCompositions(
@@ -40,7 +40,7 @@ describe('CompositionsQuery Resolvers', () => {
 
     expect(mockCompositionsRepo.findAll).toHaveBeenCalledWith(
       expect.objectContaining({
-        isStandalone: true
+        isStandalone: true,
       })
     );
     expect(result).toEqual([mockCompositionEntity]);
@@ -53,7 +53,7 @@ describe('CompositionsQuery Resolvers', () => {
 
     expect(mockCompositionsRepo.findAll).toHaveBeenCalledWith(
       expect.objectContaining({
-        isStandalone: undefined
+        isStandalone: null
       })
     );
   });

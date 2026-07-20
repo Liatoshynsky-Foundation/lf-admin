@@ -2,12 +2,13 @@
 
 import { Box, Button } from '@mui/material';
 import { ChevronDown } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
 
 import { useWorksFiltering } from './useWorksFiltering';
 import { styles } from './WorksPageContent.styles';
 import { WorksTable } from './WorksTable';
 import {
+  ITEMS_PER_PAGE,
   WORKS_CREATE_OPTIONS,
   WORKS_EMPTY_STATE_DESCRIPTION,
   WORKS_EMPTY_STATE_NO_RESULTS_DESCRIPTION,
@@ -19,122 +20,20 @@ import {
   WORKS_LOADING_STATE_TITLE,
   WORKS_PAGE_TITLE,
   WORKS_TABS,
-  WorksLanguageValue,
-  WorksStatusValue,
   type WorksTabValue
 } from '~/constants/creativity';
-import type { FilesSortValue } from '~/constants/sort';
 import ActionMenu from '~/shared/components/dropdown-menu/ActionMenu';
 import { EmptyState } from '~/shared/components/empty-state';
 import { FilteringToolbar, SortSelect } from '~/shared/components/filtering-toolbar';
 import { PageHeader } from '~/shared/components/page-header/PageHeader';
-import { useAllCompositions } from '~/shared/hooks/use-compositions/useCompositions';
-import { useAllOpusGroups, useAllUngroupedGroups } from '~/shared/hooks/use-opuses/useOpuses';
-import { BaseContentStatuses } from '~/types/enums/common.enums';
-import { AllCompositionsQuery, type AllOpusesQuery } from '~/types/graphql/generated/graphql';
+import { Pagination } from '~/shared/components/pagination/Pagination';
+import { usePaginatedWorks } from '~/shared/hooks/use-opuses/useOpuses';
+import { WorksTab } from '~/types/graphql/generated/graphql';
 import { normalizeSearch } from '~/utils/normalizeSearch';
 
 type WorksPageContentProps = Readonly<{
   activeTab: WorksTabValue;
 }>;
-
-type GqlOpus = AllOpusesQuery['allOpuses'][number];
-type GqlComposition = AllCompositionsQuery['allCompositions'][number];
-
-type GroupRowData = Readonly<{
-  id: string;
-  numberLabel: string;
-  title: string;
-  titleData: {
-    uk?: string | null;
-    en?: string | null;
-  };
-  genre: string;
-  startDate: string;
-  endDate?: string;
-  status: WorksStatusValue;
-  createdAt: string;
-  updatedAt: string;
-  publishedAt?: string;
-  numberKind?: string | null;
-  works: ReadonlyArray<{ id: string; title: string }>;
-}>;
-
-type CompositionRowData = Readonly<{
-  id: string;
-  title: string;
-  titleData: {
-    uk?: string | null;
-    en?: string | null;
-  };
-  year: string;
-  genre: string;
-  status: WorksStatusValue;
-  createdAt: string;
-  updatedAt: string;
-  publishedAt?: string;
-}>;
-
-const localizedTitle = (title: { uk: string; en: string }) => title.uk || title.en;
-
-function toGroupRowData(opus: GqlOpus): GroupRowData {
-  const safeStatus = (opus.status as unknown as WorksStatusValue) || BaseContentStatuses.Draft;
-  const safeName = opus.name ?? { uk: '', en: '' };
-
-  return {
-    id: opus.id,
-    numberLabel: opus.number,
-    title: localizedTitle(safeName),
-    titleData: safeName,
-    genre: opus.genre ?? '',
-    startDate: opus.creationYear,
-    endDate: opus.endYear ?? undefined,
-    status: safeStatus,
-    createdAt: opus.createdAt,
-    updatedAt: opus.updatedAt,
-    numberKind: opus.numberKind,
-    works: (opus.compositions ?? []).map((c) => ({
-      id: c.id,
-      title: localizedTitle(c.title)
-    }))
-  };
-}
-
-function toStandaloneRowData(composition: GqlComposition): CompositionRowData {
-  const safeStatus = (composition.status as unknown as WorksStatusValue) || BaseContentStatuses.Draft;
-
-  return {
-    id: composition.id,
-    title: localizedTitle(composition.title),
-    titleData: composition.title,
-    year: composition.year ? String(composition.year) : '',
-    genre: composition.genre ?? '',
-    status: safeStatus,
-    createdAt: composition.createdAt,
-    updatedAt: composition.updatedAt
-  };
-}
-
-function sortGroups<T extends { title: string; createdAt: string }>(
-  groups: readonly T[],
-  sortValue: FilesSortValue
-): T[] {
-  return [...groups].sort((left, right) => {
-    if (sortValue === 'date_desc') {
-      return Number(right.createdAt) - Number(left.createdAt);
-    }
-
-    if (sortValue === 'date_asc') {
-      return Number(left.createdAt) - Number(right.createdAt);
-    }
-
-    if (sortValue === 'name_asc') {
-      return left.title.localeCompare(right.title, 'uk', { sensitivity: 'base' });
-    }
-
-    return right.title.localeCompare(left.title, 'uk', { sensitivity: 'base' });
-  });
-}
 
 function useDropdownState() {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
@@ -192,124 +91,31 @@ function WorksCreateAction() {
   );
 }
 
-type ClientFilteringResult = readonly [GroupRowData[], GroupRowData[], ReturnType<typeof toStandaloneRowData>[]];
+export function WorksPageContent({ activeTab }: WorksPageContentProps) {
+  const [page, setPage] = useState(1);
 
-const clientFiltering = (
-  opusGroupsData: AllOpusesQuery | undefined,
-  ungroupedGroupsData: AllOpusesQuery | undefined,
-  compositionsData: AllCompositionsQuery | undefined,
-  selectedFilters: Readonly<{
-    status: readonly WorksStatusValue[];
-    language: readonly WorksLanguageValue[];
-  }>,
-  sortValue: FilesSortValue,
-  matchesSearch: (text: string) => boolean
-): ClientFilteringResult => {
-  const getLanguage = (value: { uk?: string | null; en?: string | null }): WorksLanguageValue => {
-    const hasUk = Boolean(value.uk?.trim());
-    const hasEn = Boolean(value.en?.trim());
+  const { requestFilters, sortValue, selectedFilters, toolbarProps, sortProps } = useWorksFiltering();
+  const searchValue = normalizeSearch(toolbarProps.search?.search ?? '');
 
-    if (hasUk && hasEn) {
-      return 'bilingual';
-    }
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab, searchValue, selectedFilters.status, selectedFilters.language, sortValue]);
 
-    if (hasEn) {
-      return 'en';
-    }
-
-    return 'uk';
+  const handlePageChange = (_: ChangeEvent<unknown>, value: number) => {
+    setPage(value);
   };
 
-  const matchesStatus = (status: WorksStatusValue) =>
-    selectedFilters.status.length === 0 || selectedFilters.status.includes(status);
+  const { items, totalPages, totalItems, loading, error } = usePaginatedWorks(activeTab as WorksTab, {
+    ...requestFilters,
+    limit: ITEMS_PER_PAGE,
+    skip: (page - 1) * ITEMS_PER_PAGE
+  });
 
-  const matchesLanguage = (title: { uk?: string | null; en?: string | null }) =>
-    selectedFilters.language.length === 0 || selectedFilters.language.includes(getLanguage(title));
-
-  const matchGroup = (group: { title: string; numberLabel: string; genre: string }) =>
-    matchesSearch(group.title) || matchesSearch(group.numberLabel) || matchesSearch(group.genre);
-
-  const matchComposition = (work: { title: string; genre: string }) =>
-    matchesSearch(work.title) || matchesSearch(work.genre);
-
-  const mappedOpusGroups = sortGroups(
-    (opusGroupsData?.allOpuses ?? [])
-      .map(toGroupRowData)
-      .filter((group) => matchGroup(group) && matchesLanguage(group.titleData) && matchesStatus(group.status)),
-    sortValue
-  );
-
-  const mappedUngroupedGroups = sortGroups(
-    (ungroupedGroupsData?.allOpuses ?? [])
-      .map(toGroupRowData)
-      .filter((group) => matchGroup(group) && matchesLanguage(group.titleData) && matchesStatus(group.status)),
-    sortValue
-  );
-
-  const visibleUngroupedWorks = sortGroups(
-    (compositionsData?.allCompositions ?? [])
-      .map(toStandaloneRowData)
-      .filter((work) => matchComposition(work) && matchesLanguage(work.titleData) && matchesStatus(work.status)),
-    sortValue
-  );
-  return [mappedOpusGroups, mappedUngroupedGroups, visibleUngroupedWorks] as const;
-};
-
-export function WorksPageContent({ activeTab }: WorksPageContentProps) {
-  const { sortValue, selectedFilters, toolbarProps, sortProps } = useWorksFiltering();
-
-  const searchValue = (toolbarProps.search?.search ?? '').trim().toLowerCase();
-  const normalizedSearch = normalizeSearch(searchValue);
-
-  const matchesSearch = (text: string) =>
-    !normalizedSearch || normalizeSearch(text.toLowerCase()).includes(normalizedSearch);
-
-  const showOpus = activeTab === 'all' || activeTab === 'opus';
-  const showUngrouped = activeTab === 'all' || activeTab === 'ungrouped';
-  const showCompositions = activeTab === 'all' || activeTab === 'works';
-
-  const {
-    data: opusGroupsData,
-    loading: isOpusGroupsLoading,
-    error: opusGroupsError
-  } = useAllOpusGroups({}, { skip: !showOpus });
-
-  const {
-    data: ungroupedGroupsData,
-    loading: isUngroupedGroupsLoading,
-    error: ungroupedGroupsError
-  } = useAllUngroupedGroups({}, { skip: !showUngrouped });
-
-  const {
-    data: compositionsData,
-    loading: isCompositionsLoading,
-    error: compositionsError
-  } = useAllCompositions({}, { skip: !showCompositions });
-
-  const [mappedOpusGroups, mappedUngroupedGroups, visibleUngroupedWorks] = clientFiltering(
-    opusGroupsData,
-    ungroupedGroupsData,
-    compositionsData,
-    selectedFilters,
-    sortValue,
-    matchesSearch
-  );
-
-  const hasOpus = mappedOpusGroups.length > 0;
-  const hasUngrouped = mappedUngroupedGroups.length > 0;
-  const hasCompositions = visibleUngroupedWorks.length > 0;
-
-  const hasBaseItems =
-    (showOpus && hasOpus) || (showUngrouped && hasUngrouped) || (showCompositions && hasCompositions);
+  const hasBaseItems = totalItems > 0;
   const hasActiveCriteria = Boolean(searchValue) || Boolean(toolbarProps.activeFiltersCount);
-  const isLoading =
-    (showOpus && isOpusGroupsLoading) ||
-    (showUngrouped && isUngroupedGroupsLoading) ||
-    (showCompositions && isCompositionsLoading);
-  const activeError = opusGroupsError ?? ungroupedGroupsError ?? compositionsError;
 
-  const shouldShowLoadingState = !hasBaseItems && isLoading;
-  const shouldShowErrorState = !hasBaseItems && Boolean(activeError);
+  const shouldShowLoadingState = !hasBaseItems && loading;
+  const shouldShowErrorState = !hasBaseItems && Boolean(error);
 
   const content = (() => {
     if (shouldShowLoadingState) {
@@ -329,16 +135,7 @@ export function WorksPageContent({ activeTab }: WorksPageContentProps) {
       );
     }
 
-    return (
-      <WorksTable
-        visibleOpusGroups={mappedOpusGroups}
-        visibleUngroupedGroups={mappedUngroupedGroups}
-        visibleUngroupedWorks={visibleUngroupedWorks}
-        showOpus={showOpus}
-        showUngrouped={showUngrouped}
-        showIndividualWorks={showCompositions}
-      />
-    );
+    return <WorksTable items={items} activeTab={activeTab} />;
   })();
 
   return (
@@ -352,6 +149,8 @@ export function WorksPageContent({ activeTab }: WorksPageContentProps) {
       />
 
       {content}
+
+      {totalPages > 1 && <Pagination totalPages={totalPages} currentPage={page} onPageChange={handlePageChange} />}
     </Box>
   );
 }

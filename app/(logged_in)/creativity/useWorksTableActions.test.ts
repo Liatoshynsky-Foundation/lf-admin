@@ -12,6 +12,7 @@ jest.mock('react-hot-toast', () => ({
 jest.mock('~/types/graphql/generated/graphql', () => ({
   useUpdateOpusMutation: jest.fn(),
   useDeleteOpusMutation: jest.fn(),
+  PaginatedWorksDocument: { kind: 'Document' },
   OpusStatus: {
     Published: 'PUBLISHED',
     Draft: 'DRAFT'
@@ -145,7 +146,8 @@ describe('useWorksTableActions', () => {
 
       expect(mockDeleteOpus).toHaveBeenCalledWith({
         variables: { id: 'group-123' },
-        refetchQueries: ['AllOpuses', 'AllCompositions']
+        refetchQueries: [{ kind: 'Document' }],
+        awaitRefetchQueries: true
       });
       expect(toast.success).toHaveBeenCalledWith('Групу успішно розгруповано');
       expect(result.current.groupToUngroup).toBeNull();

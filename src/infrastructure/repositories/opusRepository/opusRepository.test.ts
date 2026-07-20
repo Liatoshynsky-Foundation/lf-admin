@@ -261,6 +261,34 @@ describe('OpusRepository', () => {
       });
       expect(result?.performances?.[1]?.id).toBe('');
     });
+
+    it('normalizes crop coordinates, falling back to 0 for invalid/missing values', async (): Promise<void> => {
+      const doc = createMockOpusDoc({
+        gallery: [
+          {
+            _id: { toString: () => 'gal-crop' },
+            src: 'crop.jpg',
+            crop: {
+              x: '5' as unknown as number,
+              y: 0,
+              width: undefined as unknown as number,
+              height: 'not-a-number' as unknown as number
+            }
+          }
+        ]
+      });
+      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
+
+      const result = await repository.findByNumber('op.1');
+
+      expect(result?.gallery?.[0]?.crop).toEqual({
+        x: 5,
+        y: 0,
+        width: 0,
+        height: 0
+      });
+    });
+
   });
 
   describe('findAll', () => {
@@ -340,6 +368,55 @@ describe('OpusRepository', () => {
       expect(findMock).toHaveBeenCalledWith({
         numberKind: OpusNumberKind.Woo
       });
+    });
+
+    it('falls back numberKind to "op" when nullish', async (): Promise<void> => {
+      const doc = createMockOpusDoc({ numberKind: undefined });
+      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
+
+      const result = await repository.findByNumber('op.1');
+
+      expect(result?.numberKind).toBe('op');
+    });
+
+    it('converts a string name into a bilingual object', async (): Promise<void> => {
+      const doc = createMockOpusDoc({
+        name: 'Просто рядкова назва' as unknown as DbOpus['name']
+      });
+      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
+
+      const result = await repository.findByNumber('op.1');
+
+      expect(result?.name).toEqual({
+        uk: 'Просто рядкова назва',
+        en: 'Просто рядкова назва'
+      });
+    });
+
+    it('sets introDescription and parts to undefined when nullish', async (): Promise<void> => {
+      const doc = createMockOpusDoc({
+        introDescription: null,
+        parts: undefined
+      });
+      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
+
+      const result = await repository.findByNumber('op.1');
+
+      expect(result?.introDescription).toBeUndefined();
+      expect(result?.parts).toBeUndefined();
+    });
+
+    it('keeps provided introDescription and parts values', async (): Promise<void> => {
+      const doc = createMockOpusDoc({
+        introDescription: { uk: 'Вступ', en: 'Intro' },
+        parts: { uk: 'Частини', en: 'Parts' }
+      });
+      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
+
+      const result = await repository.findByNumber('op.1');
+
+      expect(result?.introDescription).toEqual({ uk: 'Вступ', en: 'Intro' });
+      expect(result?.parts).toEqual({ uk: 'Частини', en: 'Parts' });
     });
   });
 });

@@ -6,8 +6,8 @@ import { LocalizedString } from '~/domain/entities/BaseContent';
 import { Opus } from '~/domain/entities/Opus';
 import { CreateOpusInput, IOpusRepository, OpusFilters } from '~/domain/repositories/opusRepository';
 import dbConnect from '~/infrastructure/db/connect';
-import { buildBaseQuery, createToEntity, getBaseSort } from '~/infrastructure/repositories/helpers';
-import { OpusNumberKind } from '~/types/graphql/generated/graphql';
+import { buildBaseQuery, combineConditions, createToEntity, fieldCondition, getBaseSort } from '~/infrastructure/repositories/helpers';
+import { OpusNumberKind, OpusStatus } from '~/types/graphql/generated/graphql';
 
 export type DbOpusGalleryItem = {
   _id?: { toString(): string };
@@ -110,19 +110,13 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
     model: OpusModel,
     toEntity,
     buildQuery: (filters) => {
-      const query = buildBaseQuery(filters) ?? {};
-      if (filters?.numberKind) {
-        if (filters.numberKind === OpusNumberKind.Op) {
-          query.$or = [
-            { numberKind: OpusNumberKind.Op },
-            { numberKind: { $exists: false } },
-            { numberKind: null }
-          ];
-        } else {
-          query.numberKind = filters.numberKind;
-        }
-      }
-      return query;
+      const query = buildBaseQuery({ ...filters, statuses: undefined }, ['genre', 'name.uk', 'name.en']) ?? {};
+
+      return combineConditions<DbOpus>([
+        query,
+        fieldCondition<DbOpus>('status', filters?.statuses as unknown as string[], OpusStatus.Draft as string),
+        fieldCondition<DbOpus>('numberKind', filters?.numberKind as unknown as string, OpusNumberKind.Op as string)
+      ]);
     },
     getDefaultSort: getBaseSort
   });

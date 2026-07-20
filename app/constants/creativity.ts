@@ -5,7 +5,19 @@ import type { FilterOption } from '~/shared/components/selector/FilterSelect';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { OpusCompositionData } from '~/types/opus';
 
-export type WorksTabValue = 'all' | 'opus' | 'ungrouped' | 'works';
+
+export const WORKS_TABS_NAMES = {
+  ALL: 'all',
+  OPUS: 'opus',
+  WOO: 'woo',
+  WORKS: 'works'
+} as const;
+
+export type WorksTabValue = (typeof WORKS_TABS_NAMES)[keyof typeof WORKS_TABS_NAMES];
+export type AllTab = typeof WORKS_TABS_NAMES.ALL;
+export type OpusTab = typeof WORKS_TABS_NAMES.OPUS;
+export type WooTab = typeof WORKS_TABS_NAMES.WOO;
+export type WorksTab = typeof WORKS_TABS_NAMES.WORKS;
 
 export type WorksStatusValue = (typeof WORKS_STATUSES)[number];
 export type WorksLanguageValue = 'uk' | 'en' | 'bilingual';
@@ -40,10 +52,10 @@ export const WORKS_STATUSES = [
 ] as const;
 
 export const WORKS_TABS: ReadonlyArray<WorksTabConfig> = [
-  { value: 'all', label: 'Всі', href: WORKS_BASE_PATH },
-  { value: 'opus', label: 'Опуси', href: `${WORKS_BASE_PATH}/opus` },
-  { value: 'ungrouped', label: 'Безопусні', href: `${WORKS_BASE_PATH}/ungrouped` },
-  { value: 'works', label: 'Твори', href: `${WORKS_BASE_PATH}/works` }
+  { value: WORKS_TABS_NAMES.ALL, label: 'Всі', href: WORKS_BASE_PATH },
+  { value: WORKS_TABS_NAMES.OPUS, label: 'Опуси', href: `${WORKS_BASE_PATH}/opus` },
+  { value: WORKS_TABS_NAMES.WOO, label: 'Безопусні', href: `${WORKS_BASE_PATH}/woo` },
+  { value: WORKS_TABS_NAMES.WORKS, label: 'Твори', href: `${WORKS_BASE_PATH}/works` }
 ];
 
 export const WORKS_CREATE_OPTIONS: ReadonlyArray<WorksCreateOption> = [
@@ -60,7 +72,7 @@ const WORKS_LANGUAGE_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
 const WORKS_STATUS_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
   {
     value: BaseContentStatuses.Draft,
-    label: 'Приховане'
+    label: 'Чернетка (приховано)'
   },
   {
     value: BaseContentStatuses.Published,
@@ -163,3 +175,5 @@ export type CompositionFileType = keyof typeof COMPOSITION_FILE_TYPES;
 
 export const SHEET_MUSIC_MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 export const SHEET_MUSIC_FILE_SIZE_ERROR = 'Розмір файлу перевищує максимально допустимий ліміт (50 МБ).';
+
+export const ITEMS_PER_PAGE = 8;

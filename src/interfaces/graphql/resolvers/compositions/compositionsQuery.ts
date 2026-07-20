@@ -15,7 +15,7 @@ export const CompositionsQuery = {
   allCompositions: endpointHandler<FilterArgs, Composition[]>(async ({ args: { filters }, repo }) => {
     const mappedFilters: CompositionFilters = {
       ...mapFilters<CompositionFilters>(filters),
-      isStandalone: filters?.isStandalone ?? undefined
+      isStandalone: filters?.isStandalone ?? null,
     };
 
     const compositions = await repo.findAll(mappedFilters);

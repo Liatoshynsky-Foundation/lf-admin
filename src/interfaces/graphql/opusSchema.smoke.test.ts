@@ -19,7 +19,8 @@ describe('GraphQL schema (opus SDL wiring)', () => {
     expect(mutationFields.deleteOpus).toBeDefined();
 
     const queryFields = schema.getQueryType()?.getFields() ?? {};
-    expect(queryFields.allOpuses).toBeDefined();
     expect(queryFields.opusById).toBeDefined();
+    expect(queryFields.searchCompositions).toBeDefined();
+    expect(queryFields.paginatedWorks).toBeDefined();
   });
 });

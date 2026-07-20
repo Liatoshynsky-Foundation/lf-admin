@@ -1,10 +1,11 @@
 import mongoose, { Model } from 'mongoose';
 
 import { createBaseRepository } from '../baseRepository/baseRepository';
-import { buildBaseQuery, getBaseSort } from '../helpers';
+import { buildBaseQuery, combineConditions, fieldCondition, getBaseSort } from '../helpers';
 import { Composition } from '~/domain/entities/Composition';
 import { CompositionFilters, CompositionInput, ICompositionRepository } from '~/domain/repositories/compositionRepository';
 import dbConnect from '~/infrastructure/db/connect';
+import { OpusStatus } from '~/types/graphql/generated/graphql';
 
 export type DbComposition = {
   _id: { toString(): string };
@@ -49,9 +50,14 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
     model: CompositionModel,
     toEntity,
     buildQuery: (filters) => {
-      const query = buildBaseQuery(filters);
-      if (filters?.isStandalone) query.opusId = null;
-      return query;
+      const query = buildBaseQuery({ ...filters, statuses: undefined }, ['genre', 'title.uk', 'title.en']) ?? {};
+
+      return combineConditions<DbComposition>([
+        query,
+        fieldCondition<DbComposition>('status', filters?.statuses as unknown as string[], OpusStatus.Draft as string),
+        filters?.isStandalone === true ? { opusId: null } : null,
+        filters?.isStandalone === false ? { opusId: { $ne: null } } : null
+      ]);
     },
     getDefaultSort: getBaseSort
   });

@@ -6,7 +6,15 @@ import React from 'react';
 import { useWorksTableActions } from './useWorksTableActions';
 import { styles } from './WorksTable.styles';
 import { GroupMenuItems, WorkMenuItems } from './WorksTableMenuItems';
-import { WORKS_BASE_PATH, WorksStatusValue } from '~/constants/creativity';
+import {
+  AllTab,
+  OpusTab,
+  WooTab,
+  WORKS_BASE_PATH,
+  WORKS_TABS_NAMES,
+  WorksStatusValue,
+  WorksTab
+} from '~/constants/creativity';
 import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
 import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import { RowActions } from '~/shared/components/table-layout/components/RowActions';
@@ -23,8 +31,9 @@ type ActionFields = {
 
 export type GroupRowData = Readonly<{
   id: string;
-  numberLabel: string;
-  title: string;
+  number: string;
+  numberKind: 'op' | 'bo';
+  name: string;
   genre: string;
   startDate: string;
   endDate?: string;
@@ -53,8 +62,8 @@ export type OpusWork = Readonly<{
 export type IndividualWork = Readonly<{
   id: string;
   title: string;
-  year: string;
-  genre: string;
+  year: string | number | null | undefined;
+  genre: string | null | undefined;
   status: WorksStatusValue;
   updatedAt: string;
 }> &
@@ -114,31 +123,37 @@ export const columns: readonly ColumnDef<GroupHeaderData, OpusWork, IndividualWo
   }
 ];
 
-type WorksTableProps = Readonly<{
-  visibleOpusGroups: readonly GroupRowData[];
-  visibleUngroupedGroups: readonly GroupRowData[];
-  visibleUngroupedWorks: readonly IndividualWork[];
-  showOpus: boolean;
-  showUngrouped: boolean;
-  showIndividualWorks: boolean;
+type GroupItems = Readonly<{
+  groups: GroupRowData[];
 }>;
 
-export function WorksTable({
-  visibleOpusGroups,
-  visibleUngroupedGroups,
-  visibleUngroupedWorks,
-  showOpus,
-  showUngrouped,
-  showIndividualWorks
-}: WorksTableProps) {
+type WorksItems = Readonly<{
+  works: IndividualWork[];
+}>;
 
-  const {
-    groupToUngroup,
-    setGroupToUngroup,
-    handlePublishStatusChange,
-    handleConfirmUngroup,
-    handleShareGroup
-  } = useWorksTableActions();
+type AllItems = GroupItems & WorksItems;
+
+type WorksTableProps =
+  | {
+      activeTab: AllTab;
+      items: AllItems;
+    }
+  | {
+      activeTab: OpusTab;
+      items: GroupItems;
+    }
+  | {
+      activeTab: WooTab;
+      items: GroupItems;
+    }
+  | {
+      activeTab: WorksTab;
+      items: WorksItems;
+    };
+
+export function WorksTable({ items, activeTab }: WorksTableProps) {
+  const { groupToUngroup, setGroupToUngroup, handlePublishStatusChange, handleConfirmUngroup, handleShareGroup } =
+    useWorksTableActions();
 
   function groupsRow(group: GroupRowData): BaseRowData<GroupHeaderData, OpusWork, IndividualWork> {
     const isPublished = group.status === BaseContentStatuses.Published;
@@ -147,8 +162,8 @@ export function WorksTable({
       type: 'group',
       id: group.id,
       groupData: {
-        numberLabel: group.numberLabel,
-        title: group.title,
+        numberLabel: group.number,
+        title: group.name,
         genre: group.genre,
         startDate: group.startDate,
         endDate: group.endDate,
@@ -156,7 +171,7 @@ export function WorksTable({
         updatedAt: group.updatedAt,
         editAction: {
           editHref: `${WORKS_BASE_PATH}/group/${group.id}/edit`,
-          editLabel: `Редагувати групу ${group.title}`
+          editLabel: `Редагувати групу ${group.name}`
         },
         menuActions: {
           menuItems: GroupMenuItems({
@@ -167,7 +182,7 @@ export function WorksTable({
             onUngroup: (id) => setGroupToUngroup(id),
             onShare: (id) => handleShareGroup(id)
           }),
-          menuTriggerLabel: `Дії групи ${group.title}`
+          menuTriggerLabel: `Дії групи ${group.name}`
         }
       },
       subRows: group.works.map((work) => ({
@@ -222,23 +237,30 @@ export function WorksTable({
     });
   };
 
-  if (showOpus) pushGroupRows(visibleOpusGroups);
-  if (showUngrouped) pushGroupRows(visibleUngroupedGroups);
+  switch (activeTab) {
+  case WORKS_TABS_NAMES.ALL:
+    pushGroupRows(items.groups);
+    items.works.forEach((work) => rows.push(individualWorkRow(work)));
+    break;
 
-  if (showIndividualWorks) {
-    visibleUngroupedWorks.forEach((work) => {
-      rows.push(individualWorkRow(work));
-    });
+  case WORKS_TABS_NAMES.OPUS:
+  case WORKS_TABS_NAMES.WOO:
+    pushGroupRows(items.groups);
+    break;
+
+  case WORKS_TABS_NAMES.WORKS:
+    items.works.forEach((work) => rows.push(individualWorkRow(work)));
+    break;
   }
 
   return (
     <Box sx={styles.worksListContainer}>
       <TableLayout data={rows} columns={columns} />
       <DeleteCardModal
-        open={!!groupToUngroup} 
-        onClose={() => setGroupToUngroup(null)} 
+        open={!!groupToUngroup}
+        onClose={() => setGroupToUngroup(null)}
         onDelete={handleConfirmUngroup}
-        title="Підтвердити розгрупування" 
+        title="Підтвердити розгрупування"
         confirmButtonText="Розгрупувати"
         description="Ви впевнені, що хочете розгрупувати групу? Опис сторінки буде видалено, але композиції залишаться в системі."
       />

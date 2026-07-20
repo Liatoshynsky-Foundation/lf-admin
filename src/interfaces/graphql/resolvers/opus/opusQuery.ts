@@ -1,12 +1,14 @@
 import { GraphQLError } from 'graphql';
 
 import { endpointRepositoryHandler, mapFilters } from '../helpers';
+import { handleGroup } from './tab-handlers/handleGroup';
+import { handleMixed } from './tab-handlers/handleMixed';
+import { handleWorksTab } from './tab-handlers/handleWork';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
 import { Composition } from '~/domain/entities/Composition';
 import { Opus } from '~/domain/entities/Opus';
-import { OpusFilters } from '~/domain/repositories/opusRepository';
-import { OpusNumberKind } from '~/types/graphql/generated/graphql';
+import { WorksTab } from '~/types/graphql/generated/graphql';
 
 interface IdArgs {
   id: string;
@@ -17,15 +19,19 @@ interface NumberArgs {
 interface SearchArgs {
   search: string;
 }
-interface FilterArgs {
-  filters?: NonNullable<Parameters<typeof mapFilters>[0]> & {
-    numberKind?: OpusNumberKind;
-  };
+
+export type WorksFilter = NonNullable<Parameters<typeof mapFilters>[0]>;
+export interface PaginatedWorksArgs {
+  tab?: WorksTab;
+  filters?: WorksFilter;
 }
-interface PaginatedArgs {
+
+export interface PaginatedWorksResult {
+  groups: Opus[];
+  works: Composition[];
+  total: number;
   page: number;
-  limit: number;
-  filters?: NonNullable<FilterArgs['filters']>;
+  totalPages: number;
 }
 
 const assertAuthenticated = (context: GraphQLContext): void => {
@@ -67,41 +73,18 @@ export const OpusQuery = {
     return context.requestContainer.cradle.compositionsRepository.searchByTitle(search);
   },
 
-  allOpuses: endpointHandler<FilterArgs, Opus[]>(async ({ args: { filters }, repo, requestContainer }) => {
-    const mappedFilters: OpusFilters = {
-      ...mapFilters<OpusFilters>(filters),
-      numberKind: filters?.numberKind ?? OpusNumberKind.Op
-    };
-    
-    const opuses = await repo.findAll(mappedFilters);
-    if (!opuses || opuses.length === 0) return [];
-
-    const opusIds = opuses.map((o) => o.id);
+  paginatedWorks: endpointHandler<PaginatedWorksArgs, PaginatedWorksResult>(async ({ args, repo, requestContainer }) => {
+    const { tab, filters } = args;
     const compositionsRepo = requestContainer.cradle.compositionsRepository;
-    const allCompositions = await compositionsRepo.findByOpusIds(opusIds);
+    const pageSize = filters?.limit ?? 10;
+    const skip = filters?.skip ?? 0;
+    const page = Math.floor(skip / pageSize) + 1;
 
-    const compositionsByOpusId = new Map<string, typeof allCompositions>();
-  
-    for (const comp of allCompositions) {
-      if (comp.opusId) {
-        const idStr = String(comp.opusId);
-        if (!compositionsByOpusId.has(idStr)) {
-          compositionsByOpusId.set(idStr, []);
-        }
-      compositionsByOpusId.get(idStr)!.push(comp);
-      }
+    if (tab === WorksTab.Opus || tab === WorksTab.Woo) {
+      return handleGroup(tab, repo, filters, page, compositionsRepo, pageSize);
+    } else if (tab === WorksTab.Works) {
+      return handleWorksTab(compositionsRepo, filters, page, pageSize);
     }
-
-    return opuses.map((opus) => ({
-      ...opus,
-      compositions: compositionsByOpusId.get(String(opus.id)) ?? []
-    }));
+    return handleMixed(repo, compositionsRepo, filters, page, pageSize);
   }),
-
-  paginatedOpuses: endpointHandler<
-    PaginatedArgs,
-    { items: Opus[]; total: number; page: number; totalPages: number }
-  >(async ({ args: { page, limit, filters }, repo }) =>
-    repo.findPaginated(page, limit, mapFilters<OpusFilters>(filters))
-  ),
 };
