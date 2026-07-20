@@ -226,9 +226,6 @@ describe('EditablePageLayout', () => {
   });
 
   describe('Saving state sync', () => {
-    // The wrapper itself no longer locks pointer-events (that broke the dnd-kit
-    // SortableList layout on about-us/privacy-policy edit pages). Instead, isSaving is
-    // mirrored into the store so each CollapsibleBlock can lock itself individually.
     it('should push isSaving=true into the store when a save is in progress', () => {
       (useSavePageBlocks as jest.Mock).mockReturnValue({
         save: mockSave,
