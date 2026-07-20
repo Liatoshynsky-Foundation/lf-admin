@@ -9,7 +9,7 @@ export const styles = {
   typographyTitle: { fontWeight: 500 },
   divider: { flexGrow: 1},
   performancesList: { display: 'flex', flexDirection: 'column', gap: 4 },
-  performanceItemRow: { display: 'flex', alignItems: 'start', gap: 2 },
+  performanceItemRow: { display: 'flex', alignItems: 'start', gap: 2 , flexGrow: 1 },
   inputsWrapper: { display: 'flex', flexDirection: 'column', gap: 2, flexGrow: 1 },
   tooltipBox: {padding: '8px', backgroundColor: 'gray.800'},
   actionIcon: { color: 'black', width: '34px', height: '34px' },

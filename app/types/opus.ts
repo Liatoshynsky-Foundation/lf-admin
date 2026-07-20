@@ -93,7 +93,7 @@ export interface FetchedOpusData {
   }> | null;
   performancesTitle?: { uk?: string | null; en?: string | null } | null;
   performances?: Array<{
-    id?: string;
+    id: string;
     title?: { uk?: string | null; en?: string | null } | null;
     videoUrl?: string | null;
   }> | null;
