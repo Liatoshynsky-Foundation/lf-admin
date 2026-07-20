@@ -12,7 +12,7 @@ import { DeleteResult, StorageAdapter, StorageMetadata, StorageResult } from './
 import logger from '~/middleware/logger/logger';
 
 export interface CloudStorageOptions {
-  provider: 'aws' | 'gcp' | 'azure' | 'cloudflare';
+  provider: 'aws' | 'gcp' | 'cloudflare';
   bucket: string;
   region?: string;
   endpoint?: string;
@@ -250,8 +250,6 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
       return `https://${bucket}.s3.${region || 'us-east-1'}.amazonaws.com/${cleanName}`;
     case 'gcp':
       return `https://storage.googleapis.com/${bucket}/${cleanName}`;
-    case 'azure':
-      return `https://${bucket}.blob.core.windows.net/${cleanName}`;
     default:
       return null;
     }

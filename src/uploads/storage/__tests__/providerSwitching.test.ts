@@ -1,5 +1,4 @@
 import { UPLOAD_ERRORS } from '../../errors';
-import { AzureBlobStorageAdapter } from '../azureBlobStorage';
 import { createStorageAdapter, createStorageFromEnv } from '../storageFactory';
 import { StorageConfig } from '../types';
 
@@ -13,9 +12,6 @@ jest.mock('../../../middleware/logger/logger', () => ({
   }
 }));
 
-jest.mock('@azure/storage-blob', () => ({
-  BlobServiceClient: jest.fn(),
-}));
 jest.mock('@aws-sdk/client-s3', () => ({
   S3Client: jest.fn(),
 }));
@@ -33,22 +29,6 @@ describe('Storage Provider Switching', () => {
   });
 
   describe('createStorageAdapter (Manual Config)', () => {
-    it('should create Azure adapter with correct properties', () => {
-      const config: StorageConfig = {
-        type: 'azure-blob',
-        azureContainerName: 'test-container',
-        azureFolderPrefix: 'custom-uploads',
-        baseUrl: 'https://cdn.example.com'
-      };
-
-      const adapter = createStorageAdapter(config);
-
-      const azureAdapter = adapter as AzureBlobStorageAdapter;
-      expect(azureAdapter).toHaveProperty('copyBlobsToNewFolder');
-      expect(azureAdapter).toHaveProperty('streamBlob');
-      expect(azureAdapter.store).toBeDefined();
-    });
-
     it('should create Cloud adapter for AWS S3', () => {
       const config: StorageConfig = {
         type: 'cloud',
@@ -108,17 +88,6 @@ describe('Storage Provider Switching', () => {
   });
 
   describe('createStorageFromEnv (Environment Config)', () => {
-    it('should initialize Azure storage from process.env', () => {
-      process.env.STORAGE_TYPE = 'azure-blob';
-      process.env.AZURE_CONTAINER_NAME = 'env-container';
-      process.env.AZURE_SAS_URL = 'https://env.blob.core.windows.net?sas';
-
-      const adapter = createStorageFromEnv();
-
-      expect(adapter).toBeDefined();
-      expect((adapter as AzureBlobStorageAdapter).constructBlobUrl).toBeDefined();
-    });
-
     it('should initialize Cloudflare storage from process.env', () => {
       process.env.STORAGE_TYPE = 'cloud';
       process.env.CLOUD_PROVIDER = 'cloudflare';
@@ -147,10 +116,13 @@ describe('Storage Provider Switching', () => {
     });
 
     it('should correctly apply STORAGE_BASE_URL if provided', () => {
-      process.env.STORAGE_TYPE = 'azure-blob';
-      process.env.AZURE_CONTAINER_NAME = 'test';
+      process.env.STORAGE_TYPE = 'cloud';
+      process.env.CLOUD_PROVIDER = 'cloudflare';
+      process.env.CLOUD_BUCKET = 'test';
+      process.env.CLOUD_ENDPOINT = 'https://test.r2.cloudflarestorage.com';
+      process.env.CLOUD_ACCESS_KEY = 'key';
+      process.env.CLOUD_SECRET_KEY = 'secret';
       process.env.STORAGE_BASE_URL = 'https://my-proxy.com';
-      process.env.AZURE_SAS_URL = 'https://test.blob.core.windows.net?sas';
 
       const adapter = createStorageFromEnv();
 

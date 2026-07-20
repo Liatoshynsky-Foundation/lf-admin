@@ -31,7 +31,7 @@ export const initializeUploadModule = (config: Config) => {
     },
     storageInfo: {
       storageType: storageConfig.type,
-      storageProvider: storageConfig.type === 'cloud' ? storageConfig.cloudProvider : undefined
+      storageProvider: storageConfig.cloudProvider
     }
   };
 };

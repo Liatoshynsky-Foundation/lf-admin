@@ -13,7 +13,7 @@ export const getJWT = {
 
 export const logRetentionSeconds = Number.parseInt(process.env.LOG_RETENTION_SECONDS ?? String(SEVEN_DAYS_IN_SECONDS), 10);
 
-export type CloudProvider = 'aws' | 'gcp' | 'azure' | 'cloudflare';
+export type CloudProvider = 'aws' | 'gcp' | 'cloudflare';
 
 export interface UploadConfig {
   storage: StorageConfig;
@@ -46,8 +46,6 @@ const storageConfig: StorageConfig = {
       projectId: process.env.CLOUD_PROJECT_ID
     }
   },
-  azureContainerName: process.env.AZURE_CONTAINER_NAME,
-  azureFolderPrefix: process.env.AZURE_FOLDER_PREFIX || 'uploads',
   baseUrl: process.env.STORAGE_BASE_URL
 };
 
