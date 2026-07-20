@@ -71,7 +71,6 @@ export const GroupPerformancesSection = ({
   const langKey = currentLanguage === 'UA' ? 'uk' : 'en';
   const [performanceIdToDelete, setPerformanceIdToDelete] = useState<string | null>(null);
 
-  console.log('performances', performances);
   const preparedPerformances = useMemo(() => {
     return performances.map((item) => ({
       ...item,
