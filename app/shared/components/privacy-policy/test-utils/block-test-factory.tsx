@@ -1,7 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import { mockAddPoint, mockRemovePoint, mockUpdatePoint, usePageBlockMock } from '../__mocks__/setup-mocks';
+import { mockAddPoint, mockRemovePoint, mockToggleBlockVisibility, mockUpdatePoint, usePageBlockMock } from '../__mocks__/setup-mocks';
 import { createDocNode } from '~/__mocks__/utils';
+import { PAGE_IDS } from '~/constants/pageBlocks';
 import { LocalizedJSON } from '~/types/common';
 
 
@@ -52,6 +53,8 @@ interface CommonTestProps {
   checkList?: boolean;
   checkParagraph?: boolean;
   checkGrip?: boolean;
+  checkToggleVisibility?: boolean;
+  blockId?: string;
   usePointsListMock?: jest.Mock;
   useSectionListMock?: jest.Mock;
 }
@@ -65,6 +68,8 @@ export const runCommonBlockTests = ({
   checkList,
   checkParagraph,
   checkGrip,
+  checkToggleVisibility,
+  blockId,
   usePointsListMock,
   useSectionListMock
 }: CommonTestProps) => {
@@ -125,6 +130,16 @@ export const runCommonBlockTests = ({
       } else {
         expect(screen.queryByTestId('collapsible-block-grip')).not.toBeInTheDocument();
       }
+    });
+  }
+
+  if (checkToggleVisibility && blockId) {
+    it('should call toggleBlockVisibility with pageId and blockId when the visibility toggle is clicked', () => {
+      runSimulation();
+
+      fireEvent.click(screen.getByTestId('collapsible-block-toggle-visibility'));
+
+      expect(mockToggleBlockVisibility).toHaveBeenCalledWith(PAGE_IDS.PRIVACY_POLICY, blockId);
     });
   }
 

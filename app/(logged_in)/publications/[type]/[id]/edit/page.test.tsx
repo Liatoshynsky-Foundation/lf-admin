@@ -1,4 +1,3 @@
-import { Box, Button } from '@mui/material';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { notFound, useParams, useRouter } from 'next/navigation';
 import React from 'react';
@@ -6,7 +5,8 @@ import toast from 'react-hot-toast';
 
 import { EditPublicationsViewProps } from './EditPublicationsView';
 import EditPublicationsPage from './page';
-import { CONTENT_MUTATION_RESULTS, LocalizedEditorState, MenuActionId } from '~/constants/publications';
+import { CONTENT_MUTATION_RESULTS, LocalizedEditorState,MENU_ACTION_CONFIGS, MenuActionId } from '~/constants/publications';
+import { fetchPreview } from '~/lib/utils/fetchPreview';
 import { SerializedContent } from '~/shared/components/content-editor';
 import { usePublicationManager } from '~/shared/hooks/use-publications-manager/usePublicationsManager';
 import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
@@ -32,9 +32,14 @@ jest.mock('~/shared/hooks/use-upsert-publication/useUpsertPublication', () => ({
   useUpsertPublication: jest.fn()
 }));
 
+jest.mock('~/lib/utils/fetchPreview', () => ({
+  fetchPreview: jest.fn()
+}));
+
+const dbSlug = 'slug-from-db';
 const baseMockManager = {
   isLoading: false,
-  currentData: { status: BaseContentStatuses.Draft, adminTitle: 'Test Data' },
+  currentData: { status: BaseContentStatuses.Draft, adminTitle: 'Test Data', slug: dbSlug },
   hasError: false,
   editedContent: {
     uk: { content: { blocks: [], version: '1', lastModified: '' } },
@@ -45,14 +50,14 @@ const baseMockManager = {
   setCurrentLanguage: jest.fn(),
   editorResetKey: 0,
   resetEditorState: jest.fn(),
-  updateResource: jest.fn().mockResolvedValue({ data: { id: '1' } }),
-  deleteResource: jest.fn().mockResolvedValue({ data: { id: '1' } })
+  updateResource: jest.fn(),
+  deleteResource: jest.fn()
 };
 
 jest.mock('./EditPublicationsView', () => ({
   EditPublicationsView: (props: EditPublicationsViewProps) => (
-    <Box data-testid="mock-edit-view">
-      <Button
+    <div data-testid="mock-edit-view">
+      <button
         data-testid="trigger-editor-change"
         onClick={() =>
           props.onEditorChange(
@@ -61,33 +66,51 @@ jest.mock('./EditPublicationsView', () => ({
           )
         }
       />
-      <Button data-testid="trigger-publish" onClick={() => props.onAction(MenuActionId.PUBLISH)} />
-      <Button data-testid="trigger-save-exit" onClick={() => props.onAction(MenuActionId.PUBLICATE_AND_EXIT)} />
-      <Button data-testid="trigger-delete" onClick={props.onDeleteConfirm} />
-      <Button data-testid="trigger-seo" onClick={props.onSeoClick} />
-      <Button
-        data-testid="trigger-cancel-publication"
-        onClick={() => props.onAction(MenuActionId.CANCEL_PUBLICATION)}
-      />
-    </Box>
+      <button data-testid="trigger-publish" onClick={() => props.onAction(MenuActionId.PUBLISH)} />
+      <button data-testid="trigger-save-exit" onClick={() => props.onAction(MenuActionId.PUBLICATE_AND_EXIT)} />
+      <button data-testid="trigger-delete" onClick={props.onDeleteConfirm} />
+      <button data-testid="trigger-seo" onClick={props.onSeoClick} />
+      <button data-testid="trigger-preview" onClick={props.onPreview} />
+      <button data-testid="trigger-cancel-publication" onClick={() => props.onAction(MenuActionId.CANCEL_PUBLICATION)} />
+    </div>
   )
 }));
 
+const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+
 jest.mock('../../create/CreatePublicationsView', () => ({
   __esModule: true,
-  default: () => <div data-testid="mock-create-view" />
+  default: ({ onPreview }: { onPreview?: () => void }) => (
+    <div data-testid="mock-create-view">
+      {onPreview && <button data-testid="trigger-media-preview" onClick={onPreview} />}
+    </div>
+  )
 }));
+
+
+const handleSaveSlug = 'slug';
+const mockHandleSave = jest.fn().mockResolvedValue({ id: 11, slug: handleSaveSlug });
 
 describe('EditPublicationsPage Container', () => {
   const mockPush = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
+    errorSpy.mockClear();
 
+
+    baseMockManager.updateResource.mockResolvedValue({ data: { id: '1' } });
+    baseMockManager.deleteResource.mockResolvedValue({ data: { id: '1' } });
     (useParams as jest.Mock).mockReturnValue({ type: 'news', id: '123' });
     (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
     (usePublicationManager as jest.Mock).mockReturnValue(baseMockManager);
-    (useUpsertPublication as jest.Mock).mockReturnValue({ mockUpsertData: true });
+    (useUpsertPublication as jest.Mock).mockReturnValue({
+      mockUpsertData: true, handleSave: mockHandleSave
+    });
+  });
+
+  afterAll(() => {
+    errorSpy.mockRestore();
   });
 
   it('should render CreatePublicationsView if type is media', () => {
@@ -122,10 +145,72 @@ describe('EditPublicationsPage Container', () => {
     expect(mockPush).toHaveBeenCalledWith('/publications/news/123/seo');
   });
 
+  it('should handle CANCEL_PUBLICATION action and redirect router', async () => {
+    render(<EditPublicationsPage />);
+
+    fireEvent.click(screen.getByTestId('trigger-cancel-publication'));
+
+    await waitFor(() => {
+      expect(baseMockManager.updateResource).toHaveBeenCalledWith(BaseContentStatuses.Draft, {
+        content: baseMockManager.editedContent
+      });
+      expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationUnpublished);
+      expect(mockPush).toHaveBeenCalledWith('/publications');
+    });
+  });
+
+  it('should redirect to UK preview page when onPreview is triggered', async () => {
+    (fetchPreview as jest.Mock).mockResolvedValue(null);
+    render(<EditPublicationsPage />);
+
+    fireEvent.click(screen.getByTestId('trigger-preview'));
+
+
+    await waitFor(() => {
+      expect(fetchPreview).toHaveBeenCalledTimes(1);
+    });
+    expect(fetchPreview).toHaveBeenCalledWith({ slug: `news/${handleSaveSlug}`, lang: 'uk', draftId: '123' });
+
+  });
+
+  it('should not redirect to preview page when onPreview is triggered if no slug from manager', async () => {
+    (usePublicationManager as jest.Mock).mockReturnValue({
+      ...baseMockManager,
+      currentData: {
+        status: 'draft',
+        adminTitle: 'fdfsdfsd',
+      }
+    });
+
+    render(<EditPublicationsPage />);
+
+    fireEvent.click(screen.getByTestId('trigger-preview'));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Виникла помилка при отриманні даних для попереднього перегляду');
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Не вдалося завантажити slug для попереднього перегляду'));
+    });
+
+    expect(fetchPreview).not.toHaveBeenCalled();
+  });
+
+  it('should show an error toast if on redirect to preview page when onPreview is triggered fetchPreview rejects', async () => {
+    (fetchPreview as jest.Mock).mockRejectedValue(new Error('New Error'));
+    render(<EditPublicationsPage />);
+
+    fireEvent.click(screen.getByTestId('trigger-preview'));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Помилка: New Error');
+    });
+    expect(fetchPreview).toHaveBeenCalledTimes(1);
+  });
+
   it('should debounce editor changes and update state after 500ms', () => {
     jest.useFakeTimers();
     render(<EditPublicationsPage />);
 
+    fireEvent.click(screen.getByTestId('trigger-editor-change'));
     fireEvent.click(screen.getByTestId('trigger-editor-change'));
 
     expect(baseMockManager.setEditedContent).not.toHaveBeenCalled();
@@ -144,8 +229,12 @@ describe('EditPublicationsPage Container', () => {
 
     expect(newState?.uk?.content.blocks[0].content).toBe('new');
 
+    const nullState = stateUpdater(null);
+    expect(nullState).toBeNull();
+
     jest.useRealTimers();
   });
+
 
   it('should handle PUBLISH action correctly', async () => {
     render(<EditPublicationsPage />);
@@ -156,7 +245,7 @@ describe('EditPublicationsPage Container', () => {
       expect(baseMockManager.updateResource).toHaveBeenCalledWith(BaseContentStatuses.Published, {
         content: baseMockManager.editedContent
       });
-      expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.draftPublished);
+      expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublished);
     });
   });
 
@@ -166,15 +255,15 @@ describe('EditPublicationsPage Container', () => {
     fireEvent.click(screen.getByTestId('trigger-save-exit'));
 
     await waitFor(() => {
-      expect(baseMockManager.updateResource).toHaveBeenCalledWith(BaseContentStatuses.Draft, {
+      expect(baseMockManager.updateResource).toHaveBeenCalledWith(BaseContentStatuses.Published, {
         content: baseMockManager.editedContent
       });
-      expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.draftSaved);
+      expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublished);
       expect(mockPush).toHaveBeenCalledWith('/publications');
     });
   });
 
-  it('should handle delete confirmation by deleting the publication and redirecting', async () => {
+  it('should handle DELETE action confirmation by deleting the publication and redirecting', async () => {
     render(<EditPublicationsPage />);
 
     fireEvent.click(screen.getByTestId('trigger-delete'));
@@ -186,100 +275,136 @@ describe('EditPublicationsPage Container', () => {
     });
   });
 
-  it('should catch mutation errors and trigger a toast.error', async () => {
-    const errorMessage = 'Network Failure';
-    (usePublicationManager as jest.Mock).mockReturnValue({
-      ...baseMockManager,
-      updateResource: jest.fn().mockRejectedValue(new Error(errorMessage))
-    });
+  describe('when manager action handlers return data as null', () => {
+    it('should trigger toast.error and not call mockPush when PUBLISH returns data null', async () => {
+      baseMockManager.updateResource.mockResolvedValue({ data: null });
 
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      render(<EditPublicationsPage />);
+      fireEvent.click(screen.getByTestId('trigger-publish'));
 
-    render(<EditPublicationsPage />);
-
-    fireEvent.click(screen.getByTestId('trigger-publish'));
-
-    await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(`Помилка: ${errorMessage}`);
-      expect(consoleSpy).toHaveBeenCalled();
-    });
-
-    consoleSpy.mockRestore();
-  });
-
-  it('should handle CANCEL_PUBLICATION action, show toast success and redirect', async () => {
-    render(<EditPublicationsPage />);
-
-    fireEvent.click(screen.getByTestId('trigger-cancel-publication'));
-
-    await waitFor(() => {
-      expect(baseMockManager.updateResource).toHaveBeenCalledWith(BaseContentStatuses.Draft, {
-        content: baseMockManager.editedContent
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(MENU_ACTION_CONFIGS.PUBLISH.toastErrorMessage);
+        expect(mockPush).not.toHaveBeenCalled();
       });
-      expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationUnpublished);
-      expect(mockPush).toHaveBeenCalledWith('/publications');
+    });
+
+    it('should trigger toast.error and not call mockPush when PUBLICATE_AND_EXIT returns data null', async () => {
+      baseMockManager.updateResource.mockResolvedValue({ data: null });
+
+      render(<EditPublicationsPage />);
+      fireEvent.click(screen.getByTestId('trigger-save-exit'));
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(MENU_ACTION_CONFIGS.PUBLICATE_AND_EXIT.toastErrorMessage);
+        expect(mockPush).not.toHaveBeenCalled();
+      });
+    });
+
+    it('should trigger toast.error and not call mockPush when CANCEL_PUBLICATION returns data null', async () => {
+      baseMockManager.updateResource.mockResolvedValue({ data: null });
+
+      render(<EditPublicationsPage />);
+      fireEvent.click(screen.getByTestId('trigger-cancel-publication'));
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(MENU_ACTION_CONFIGS.CANCEL_PUBLICATION.toastErrorMessage);
+        expect(mockPush).not.toHaveBeenCalled();
+      });
+    });
+
+    it('should trigger toast.error and not call mockPush when DELETE returns data null', async () => {
+      baseMockManager.deleteResource.mockResolvedValue({ data: null });
+
+      render(<EditPublicationsPage />);
+      fireEvent.click(screen.getByTestId('trigger-delete'));
+
+      await waitFor(() => {
+        expect(baseMockManager.deleteResource).toHaveBeenCalledTimes(1);
+        expect(toast.error).toHaveBeenCalledWith('Виникла помилка при видаленні публікації. Спробуйте ще раз.');
+        expect(mockPush).not.toHaveBeenCalled();
+      });
     });
   });
 
-  it('should clear previous timeout when editor changes multiple times (clearTimeout coverage)', () => {
-    jest.useFakeTimers();
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
-
-    render(<EditPublicationsPage />);
-
-    const trigger = screen.getByTestId('trigger-editor-change');
-
-    fireEvent.click(trigger);
-    expect(clearTimeoutSpy).not.toHaveBeenCalled();
-
-    fireEvent.click(trigger);
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
-
-    act(() => {
-      jest.advanceTimersByTime(500);
-    });
-
-    clearTimeoutSpy.mockRestore();
-    jest.useRealTimers();
-  });
-
-  it('should return null in setEditedContent updater if prev state is null', () => {
-    jest.useFakeTimers();
-    render(<EditPublicationsPage />);
-
-    fireEvent.click(screen.getByTestId('trigger-editor-change'));
-
-    act(() => {
-      jest.advanceTimersByTime(500);
-    });
-
-    const stateUpdater = baseMockManager.setEditedContent.mock.calls[0][0] as (
-      prev: LocalizedEditorState | null
-    ) => LocalizedEditorState | null;
-
-    const newState = stateUpdater(null);
-
-    expect(newState).toBeNull();
-
-    jest.useRealTimers();
-  });
-
-  it('should catch non-Error exceptions and format them using String(err)', async () => {
-    const rawErrorMessage = 'Fatal Database String Error';
-
+  it('should redirect to EN preview page when onPreview is triggered and language is EN', async () => {
     (usePublicationManager as jest.Mock).mockReturnValue({
       ...baseMockManager,
-      updateResource: jest.fn().mockRejectedValue(rawErrorMessage)
+      currentLanguage: 'EN'
+    });
+    (fetchPreview as jest.Mock).mockResolvedValue(null);
+    render(<EditPublicationsPage />);
+
+    fireEvent.click(screen.getByTestId('trigger-preview'));
+
+    await waitFor(() => {
+      expect(fetchPreview).toHaveBeenCalledTimes(1);
+    });
+    expect(fetchPreview).toHaveBeenCalledWith({ slug: `news/${handleSaveSlug}`, lang: 'en', draftId: '123' });
+  });
+
+  it('should handle preview for media type', async () => {
+    (useParams as jest.Mock).mockReturnValue({ type: 'media', id: '456' });
+    (fetchPreview as jest.Mock).mockResolvedValue(null);
+
+    render(<EditPublicationsPage />);
+
+    fireEvent.click(screen.getByTestId('trigger-media-preview'));
+
+    await waitFor(() => {
+      expect(fetchPreview).toHaveBeenCalledTimes(1);
+    });
+    expect(fetchPreview).toHaveBeenCalledWith({ slug: '/news?tab=press', lang: 'uk', draftId: '456' });
+  });
+
+  it('should show an error toast when onPreview is triggered and handleSave throws a non-Error string', async () => {
+    (useUpsertPublication as jest.Mock).mockReturnValue({
+      mockUpsertData: true,
+      handleSave: jest.fn().mockRejectedValue('String Error')
+    });
+    render(<EditPublicationsPage />);
+
+    fireEvent.click(screen.getByTestId('trigger-preview'));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Помилка: String Error');
+    });
+  });
+
+  it.each([
+    ['handleSave returns undefined', undefined],
+    ['handleSave returns id undefined', { slug: 'slug' }],
+    ['handleSave returns slug undefined', { id: '11' }],
+  ])('should show an error toast when onPreview is triggered and %s', async (_, resolvedValue) => {
+    (useUpsertPublication as jest.Mock).mockReturnValue({
+      mockUpsertData: true,
+      handleSave: jest.fn().mockResolvedValue(resolvedValue)
     });
 
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    render(<EditPublicationsPage />);
+
+    fireEvent.click(screen.getByTestId('trigger-preview'));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Виникла помилка підчас публікації для попереднього перегляду');
+      expect(fetchPreview).not.toHaveBeenCalled();
+    });
+  });
+
+
+  it('should catch non-Error mutation errors and trigger a toast.error', async () => {
+    (usePublicationManager as jest.Mock).mockReturnValue({
+      ...baseMockManager,
+      updateResource: jest.fn().mockRejectedValue('String Mutation Error')
+    });
+
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
 
     render(<EditPublicationsPage />);
 
     fireEvent.click(screen.getByTestId('trigger-publish'));
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(`Помилка: ${rawErrorMessage}`);
+      expect(toast.error).toHaveBeenCalledWith('Помилка: String Mutation Error');
       expect(consoleSpy).toHaveBeenCalled();
     });
 

@@ -10,12 +10,15 @@ import { useGetPageQuery } from '~/types/graphql/generated/graphql';
 const mockSetLocale = jest.fn();
 const mockDiscardChanges = jest.fn();
 const mockSetPageData = jest.fn();
+const mockSetIsSaving = jest.fn();
 
 const defaultStoreState = {
   setLocale: mockSetLocale,
   discardChanges: mockDiscardChanges,
   setPageData: mockSetPageData,
+  setIsSaving: mockSetIsSaving,
   isChanged: false,
+  invalidFields: {},
 };
 
 let mockStoreState = { ...defaultStoreState };
@@ -206,6 +209,49 @@ describe('EditablePageLayout', () => {
 
       fireEvent.click(screen.getByTestId('lang-en'));
       expect(mockSetLocale).toHaveBeenCalledWith('en');
+    });
+  });
+
+  describe('Save disabled on invalid titles', () => {
+    it('should pass isSaveDisabled as false when there are no invalid fields', () => {
+      runSimulation();
+      expect(screen.getByTestId('save-disabled-flag')).toHaveTextContent('false');
+    });
+
+    it('should pass isSaveDisabled as true when at least one field is invalid', () => {
+      mockStoreState.invalidFields = { 'privacy-policy:Cookies:title': true };
+      runSimulation();
+      expect(screen.getByTestId('save-disabled-flag')).toHaveTextContent('true');
+    });
+  });
+
+  describe('Saving state sync', () => {
+    it('should push isSaving=true into the store when a save is in progress', () => {
+      (useSavePageBlocks as jest.Mock).mockReturnValue({
+        save: mockSave,
+        loading: true,
+      });
+
+      runSimulation();
+
+      expect(mockSetIsSaving).toHaveBeenCalledWith(true);
+    });
+
+    it('should push isSaving=true into the store when the editor/preview is loading', () => {
+      (usePageEditor as jest.Mock).mockReturnValue({
+        preview: mockPreview,
+        loading: true,
+      });
+
+      runSimulation();
+
+      expect(mockSetIsSaving).toHaveBeenCalledWith(true);
+    });
+
+    it('should push isSaving=false into the store when neither is loading', () => {
+      runSimulation();
+
+      expect(mockSetIsSaving).toHaveBeenCalledWith(false);
     });
   });
 });

@@ -1,7 +1,7 @@
-import { act,renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 
 import { usePublicationManager } from './usePublicationsManager';
-import { LocalizedEditorState } from '~/constants/publications';
+import { LocalizedEditorState, PublicationsItemType } from '~/constants/publications';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 jest.mock('~/shared/components/content-editor', () => ({
@@ -62,7 +62,7 @@ describe('usePublicationManager Hook', () => {
 
       expect(result.current.currentData).toEqual(mockNewsData.newsById);
       expect(result.current.isLoading).toBe(false);
-      
+
       expect(useNewsById).toHaveBeenCalledWith('1', { skip: false });
       expect(useEventById).toHaveBeenCalledWith('1', { skip: true });
       expect(useMediaMentionById).toHaveBeenCalledWith('1', { skip: true });
@@ -96,6 +96,15 @@ describe('usePublicationManager Hook', () => {
 
       expect(result.current.currentLanguage).toBe('UA');
       expect(result.current.editedContent?.uk?.content?.blocks.length).toBe(1);
+    });
+
+    it('should return currentData=null if type is not valid', () => {
+      (useNewsById as jest.Mock).mockReturnValue({ data: undefined, loading: false, error: undefined });
+      (useEventById as jest.Mock).mockReturnValue({ data: undefined, loading: false, error: undefined });
+      (useMediaMentionById as jest.Mock).mockReturnValue({ data: undefined, loading: false, error: undefined });
+      const { result } = renderHook(() => usePublicationManager('non-existing-type' as PublicationsItemType, '1'));
+
+      expect(result.current.currentData).toBeNull();
     });
 
     it('should initialize content and fallback to EN if UK is empty but EN exists', () => {
@@ -167,6 +176,14 @@ describe('usePublicationManager Hook', () => {
         status: BaseContentStatuses.Published
       });
     });
+
+    it('should throw an error if updateResource if called with invalid type ', async () => {
+      const { result } = renderHook(() => usePublicationManager('non-existing-type' as PublicationsItemType, '1'));
+     
+      await expect(result.current.updateResource(BaseContentStatuses.Archived)).rejects.toThrow(
+        'Unsupported publication type for mutation: non-existing-type'
+      );
+    });
   });
 
   describe('deleteResource Mutation Logic', () => {
@@ -199,6 +216,15 @@ describe('usePublicationManager Hook', () => {
 
       expect(mockDeleteMedia).toHaveBeenCalledWith('3');
     });
+
+    it('should throw an error if deleteResource if called with invalid type ', async () => {
+      const { result } = renderHook(() => usePublicationManager('non-existing-type' as PublicationsItemType, '1'));
+      
+      await expect(result.current.deleteResource()).rejects.toThrow(
+        'Unsupported publication type for delete: non-existing-type'
+      );
+    });
+
   });
 
   describe('State Reset Logic', () => {

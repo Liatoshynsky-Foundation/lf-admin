@@ -1,4 +1,4 @@
-import { ImageType, LocalizedJSON } from '~/types/common';
+import { ImageType, LocalizedJSON, WithHidden } from '~/types/common';
 
 export type TeamMember = {
   photo: ImageType;
@@ -14,4 +14,4 @@ export type FoundationFoundersBlock = {
   titleText: LocalizedJSON;
   listTitle: LocalizedJSON;
   members: TeamMember[];
-};
+} & WithHidden;

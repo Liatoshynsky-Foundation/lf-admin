@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import { NavigationMenuItems, PublishMenuItems } from './SeoMenuItems';
 import CreatePublicationView from '~/(logged_in)/publications/[type]/create/CreatePublicationsView';
 import {
-  CONTENT_MUTATION_RESULTS,
+  MENU_ACTION_CONFIGS,
   PAGE_TITLES,
   PUBLICATIONS_BASE_PATH,
   PUBLICATIONS_TYPES,
@@ -19,7 +19,6 @@ import HeaderRightActions from '~/shared/components/divided-header/header-right-
 import { TitleDropdown } from '~/shared/components/divided-header/title-dropdown/TitleDropdown';
 import ActionMenu from '~/shared/components/dropdown-menu/ActionMenu';
 import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
-import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 type Params = {
   type: PublicationsItemType;
@@ -33,7 +32,7 @@ export default function PublicatiosSeoPage() {
   const publicationData = useUpsertPublication({ type, id });
 
   const [navigationAnchor, setNavigationAnchor] = useState<HTMLButtonElement | null>(null);
-  const [publishAnchor, setPublishAnchor] = useState<HTMLButtonElement | null>(null); // +
+  const [publishAnchor, setPublishAnchor] = useState<HTMLButtonElement | null>(null);
 
   if (!PUBLICATIONS_TYPES.includes(type)) notFound();
 
@@ -43,22 +42,36 @@ export default function PublicatiosSeoPage() {
   const handleClosePublish = () => setPublishAnchor(null);
 
   const handlePublishAndExit = async () => {
-    const id = await publicationData?.handleSave(BaseContentStatuses.Published);
+    const { status, toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS.PUBLICATE_AND_EXIT;
+    const id = await publicationData?.handleSave(status);
     if (id) {
-      toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
+      toast.success(toastMessage);
       router.push(PUBLICATIONS_BASE_PATH);
+    } else {
+      toast.error(toastErrorMessage);
     }
   };
 
   const handlePublish = async () => {
-    const id = await publicationData?.handleSave(BaseContentStatuses.Published);
-    if (id) toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
+    const { status, toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS.PUBLISH;
+    const id = await publicationData?.handleSave(status);
+    if (id) {
+      toast.success(toastMessage);
+    } else {
+      toast.error(toastErrorMessage);
+    }
   };
 
-  const handleUnpublish = () => {
-    publicationData?.handleSave(BaseContentStatuses.Draft);
-    handleClosePublish();
-    router.push(PUBLICATIONS_BASE_PATH);
+  const handleUnpublish = async () => {
+    const { status, toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS.CANCEL_PUBLICATION;
+    const id = await publicationData?.handleSave(status);
+    if (id) {
+      handleClosePublish();
+      toast.success(toastMessage);
+      router.push(PUBLICATIONS_BASE_PATH);
+    } else {
+      toast.error(toastErrorMessage);
+    }
   };
 
   const handleOpenNavigation = (event: MouseEvent<HTMLElement>) => {
@@ -73,14 +86,8 @@ export default function PublicatiosSeoPage() {
     router.push(`${PUBLICATIONS_BASE_PATH}/${type}/${id}/edit`);
   };
 
-  const handleCancel = () => router.push(PUBLICATIONS_BASE_PATH);
-  const handleSave = () => {
-    publicationData?.handleSave(BaseContentStatuses.Draft);
-    router.push(PUBLICATIONS_BASE_PATH);
-  };
-
-  const handlePublishExitClick = () => {
-    handlePublishAndExit();
+  const handlePublishExitClick = async () => {
+    await handlePublishAndExit();
     handleClosePublish();
   };
 
@@ -89,13 +96,7 @@ export default function PublicatiosSeoPage() {
       <DividedHeader
         originUrl={PUBLICATIONS_BASE_PATH}
         rightActionsComponent={
-          <HeaderRightActions
-            mode="seo"
-            onSave={handleSave}
-            onCancel={handleCancel}
-            onPublish={handlePublish}
-            onMenuOpen={handleOpenPublish}
-          />
+          <HeaderRightActions mode="seo" onPublish={handlePublish} onMenuOpen={handleOpenPublish} />
         }
       >
         <TitleDropdown

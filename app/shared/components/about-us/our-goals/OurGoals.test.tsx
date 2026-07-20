@@ -7,10 +7,12 @@ import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { GoalItemWithId } from '~/types/store/pages/about-us/blocks/ourGoalsBlock';
 
 const setFieldMock = jest.fn();
+const toggleBlockVisibilityMock = jest.fn();
+const setFieldValidityMock = jest.fn();
 const usePageBlockMock = jest.fn();
 jest.mock('~/store', () => ({
-  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock }) => unknown) =>
-    selector({ locale: 'uk', setField: setFieldMock })
+  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock; readonly toggleBlockVisibility: typeof toggleBlockVisibilityMock; readonly setFieldValidity: typeof setFieldValidityMock }) => unknown) =>
+    selector({ locale: 'uk', setField: setFieldMock, toggleBlockVisibility: toggleBlockVisibilityMock, setFieldValidity: setFieldValidityMock })
 }));
 jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: () => usePageBlockMock()
@@ -116,6 +118,55 @@ describe('OurGoals', () => {
       );
     }
   );
+
+  it('should call toggleBlockVisibility with pageId and blockId when the visibility toggle is clicked', () => {
+    setupTest('collapsible-block-toggle-visibility');
+
+    expect(toggleBlockVisibilityMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_GOALS);
+  });
+
+  it('should leave unrelated goal items untouched when updating a single item in a multi-item list', () => {
+    const otherGoal = {
+      id: 'other-id',
+      title: { uk: mockGoalTitleJson, en: { type: 'doc', content: [] } },
+      description: { uk: mockGoalDescJson, en: { type: 'doc', content: [] } }
+    };
+    const multiItemBlock = {
+      title: { uk: mockBlockTitleJson },
+      goals: [mockBlock.goals[0], otherGoal] as GoalItemWithId[]
+    };
+    usePageBlockMock.mockReturnValue({ block: multiItemBlock });
+
+    render(<OurGoals />);
+    fireEvent.click(screen.getByTestId(`trigger-item-title-change-${TARGET_ID}`));
+
+    expect(setFieldMock).toHaveBeenCalledWith(
+      PAGE_IDS.ABOUT_US,
+      BLOCK_IDS.OUR_GOALS,
+      'goals',
+      [
+        expect.objectContaining({ id: TARGET_ID, title: expect.objectContaining({ uk: createDocNode('Updated Item Title') }) }),
+        otherGoal
+      ]
+    );
+  });
+
+  it('should mark the title as invalid after blur when it is empty, and clear the flag on unmount', () => {
+    usePageBlockMock.mockReturnValue({
+      block: { ...mockBlock, title: { uk: { type: 'doc', content: [] } } }
+    });
+
+    const { unmount } = render(<OurGoals />);
+
+    fireEvent.click(screen.getByTestId('trigger-main-title-blur'));
+
+    expect(screen.getByTestId('main-title-error')).toBeInTheDocument();
+    expect(setFieldValidityMock).toHaveBeenCalledWith(`${PAGE_IDS.ABOUT_US}:${BLOCK_IDS.OUR_GOALS}:title`, true);
+
+    unmount();
+
+    expect(setFieldValidityMock).toHaveBeenLastCalledWith(`${PAGE_IDS.ABOUT_US}:${BLOCK_IDS.OUR_GOALS}:title`, false);
+  });
 
   it('should render the grip handle and handle drag-and-drop reordering', () => {
     const doubleMockBlock = {
