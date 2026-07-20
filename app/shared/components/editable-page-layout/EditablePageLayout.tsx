@@ -50,8 +50,6 @@ export const EditablePageLayout = ({
     setIsMounted(true);
   }, []);
 
-  // Mirrored into the store (instead of locking the whole content wrapper here) so each
-  // CollapsibleBlock can lock itself individually without disrupting the dnd-kit SortableList layout.
   useEffect(() => {
     setIsSaving(isSaving);
   }, [isSaving, setIsSaving]);
