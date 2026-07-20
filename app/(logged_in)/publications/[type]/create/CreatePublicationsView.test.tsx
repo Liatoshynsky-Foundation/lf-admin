@@ -7,6 +7,7 @@ import CreatePublicationsView from './CreatePublicationsView';
 import {
   CONTENT_MUTATION_RESULTS,
   initialSeoValue,
+  MENU_ACTION_CONFIGS,
   MenuActionId,
   PUBLICATIONS_BASE_PATH,
   PublicationsItemType
@@ -334,7 +335,7 @@ describe('CreatePublicationsView Component', () => {
       });
     });
 
-    it('should not show toast when media publish returns no id', async () => {
+    it('should show toast.error when media publish returns no id', async () => {
       const handleSave = jest.fn().mockResolvedValue(null);
       const mockData = createMockData({ publicationType: 'media', handleSave });
 
@@ -344,6 +345,7 @@ describe('CreatePublicationsView Component', () => {
       await waitFor(() => {
         expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
       });
+      expect(toast.error).toHaveBeenCalledWith(MENU_ACTION_CONFIGS.PUBLISH.toastErrorMessage);
       expect(toast.success).not.toHaveBeenCalled();
     });
 
@@ -486,10 +488,23 @@ describe('CreatePublicationsView Component', () => {
     });
   });
 
-  describe('Menu actions (Lines 157-167)', () => {
-   
-    it('should successfully cancel publication, save draft and redirect', async () => {
-      const handleSave = jest.fn().mockResolvedValue({ id: 'media-123' });
+  describe('Menu actions', () => {
+    it('should show toast.error and not redirect on publish and exit when no id is returned', async () => {
+      const handleSave = jest.fn().mockResolvedValue(null);
+      const mockData = createMockData({ publicationType: 'media', handleSave });
+      render(<CreatePublicationsView data={mockData} />);
+      fireEvent.click(screen.getByTestId('btn-open-menu'));
+      fireEvent.click(screen.getByText('Опублікувати і вийти'));
+      await waitFor(() => {
+        expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
+      });
+      expect(toast.error).toHaveBeenCalledWith(MENU_ACTION_CONFIGS.PUBLICATE_AND_EXIT.toastErrorMessage);
+      expect(toast.success).not.toHaveBeenCalled();
+      expect(mockPush).not.toHaveBeenCalled();
+    });
+
+    it('should show publication unpublished toast and redirect on cancel publication', async () => {
+      const handleSave = jest.fn().mockResolvedValue('media-123');
       const mockData = createMockData({ publicationType: 'media', handleSave });
 
       render(<CreatePublicationsView data={mockData} />);
@@ -498,41 +513,42 @@ describe('CreatePublicationsView Component', () => {
 
       await waitFor(() => {
         expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
-        expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.draftSaved);
+        expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationUnpublished);
         expect(mockPush).toHaveBeenCalledWith(PUBLICATIONS_BASE_PATH);
       });
     });
 
-    it('should handle error when action fails with Error instance', async () => {
-      const errorMsg = 'Save failed';
-      const handleSave = jest.fn().mockRejectedValue(new Error(errorMsg));
+    it('should show toast.error and not redirect on cancel publication when no id is returned', async () => {
+      const handleSave = jest.fn().mockResolvedValue(null);
       const mockData = createMockData({ publicationType: 'media', handleSave });
-
       render(<CreatePublicationsView data={mockData} />);
-      fireEvent.click(screen.getByTestId('btn-publish'));
-
+      fireEvent.click(screen.getByTestId('btn-open-menu'));
+      fireEvent.click(screen.getByText('Скасувати публікацію'));
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(`Помилка: ${errorMsg}`);
-        expect(console.error).toHaveBeenCalledWith(`Action ${MenuActionId.PUBLISH} failed`, expect.any(Error));
+        expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
       });
-    });
-
-    it('should handle error when action fails with string error', async () => {
-      const errorMsg = 'Unexpected string error';
-      const handleSave = jest.fn().mockRejectedValue(errorMsg);
-      const mockData = createMockData({ publicationType: 'media', handleSave });
-
-      render(<CreatePublicationsView data={mockData} />);
-      fireEvent.click(screen.getByTestId('btn-publish'));
-
-      await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(`Помилка: ${errorMsg}`);
-        expect(console.error).toHaveBeenCalledWith(`Action ${MenuActionId.PUBLISH} failed`, errorMsg);
-      });
+      expect(toast.error).toHaveBeenCalledWith(MENU_ACTION_CONFIGS.CANCEL_PUBLICATION.toastErrorMessage);
+      expect(toast.success).not.toHaveBeenCalled();
+      expect(mockPush).not.toHaveBeenCalled();
     });
   });
 
-  describe('onEdit action (Lines 172-174)', () => {
+  it('should handle error when action fails with string error', async () => {
+    const errorMsg = 'Unexpected string error';
+    const handleSave = jest.fn().mockRejectedValue(errorMsg);
+    const mockData = createMockData({ publicationType: 'media', handleSave });
+
+    render(<CreatePublicationsView data={mockData} />);
+    fireEvent.click(screen.getByTestId('btn-publish'));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(`Помилка: ${errorMsg}`);
+      expect(console.error).toHaveBeenCalledWith(`Action ${MenuActionId.PUBLISH} failed`, errorMsg);
+    });
+  });
+
+
+  describe('onEdit action', () => {
     it('should save draft and redirect to edit page when edit button is clicked', async () => {
       const handleSave = jest.fn().mockResolvedValue({ id: 'news-456' });
       const mockData = createMockData({ publicationType: 'news', handleSave });
@@ -560,7 +576,7 @@ describe('CreatePublicationsView Component', () => {
     });
   });
 
-  describe('Delete actions (Lines 253-255, 267-270)', () => {
+  describe('Delete actions ', () => {
     it('should open delete modal, and call onDeleteConfirm on confirm', async () => {
       const mockOnDeleteConfirm = jest.fn();
       const mockData = createMockData({ publicationType: 'media' });
@@ -598,3 +614,4 @@ describe('CreatePublicationsView Component', () => {
     });
   });
 });
+

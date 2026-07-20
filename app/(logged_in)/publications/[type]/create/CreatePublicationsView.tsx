@@ -11,7 +11,7 @@ import { styles } from './CreatePublicationsView.styles';
 import DeleteCardModal from '~/components/delete-card-modal/DeleteCardModal';
 import {
   ADMIN_TITLE_LABELS,
-  CONTENT_MUTATION_RESULTS,
+  MENU_ACTION_CONFIGS,
   MenuActionId,
   PAGE_TITLES,
   PUBLICATIONS_BASE_PATH
@@ -134,27 +134,39 @@ export default function CreatePublicationsView({
     try {
       switch (actionId) {
       case MenuActionId.PUBLISH: {
-        const result = await handleSave(BaseContentStatuses.Published);
-        if (result?.id) {
-          toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
+        const { status, toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS.PUBLISH;
+        const id = await handleSave(status);
+
+        if (id) {
+          toast.success(toastMessage);
+        } else {
+          toast.error(toastErrorMessage);
         }
         break;
       }
 
       case MenuActionId.PUBLICATE_AND_EXIT: {
-        const result = await handleSave(BaseContentStatuses.Published);
-        if (result?.id) {
-          toast.success(CONTENT_MUTATION_RESULTS.publicationPublished);
+        const { status, toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS.PUBLICATE_AND_EXIT;
+        const id = await handleSave(status);
+
+        if (id) {
+          toast.success(toastMessage);
           router.push(PUBLICATIONS_BASE_PATH);
+        } else {
+          toast.error(toastErrorMessage);
         }
         break;
       }
 
       case MenuActionId.CANCEL_PUBLICATION: {
-        const result = await handleSave(BaseContentStatuses.Draft);
-        if (result?.id) {
-          toast.success(CONTENT_MUTATION_RESULTS.draftSaved);
+        const { status, toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS.CANCEL_PUBLICATION;
+
+        const id = await handleSave(status);
+        if (id) {
+          toast.success(toastMessage);
           router.push(PUBLICATIONS_BASE_PATH);
+        } else {
+          toast.error(toastErrorMessage);
         }
         break;
       }

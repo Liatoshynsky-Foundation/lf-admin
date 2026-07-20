@@ -4,13 +4,10 @@ import svgr from 'vite-plugin-svgr';
 
 const config: StorybookConfig = {
   stories: ['../app/**/*.stories.@(ts|tsx)'],
-  addons: [
-    '@storybook/addon-essentials',
-    '@storybook/addon-interactions',
-  ],
+  addons: ['@storybook/addon-essentials', '@storybook/addon-interactions'],
   framework: {
     name: '@storybook/react-vite',
-    options: {},
+    options: {}
   },
   staticDirs: ['../public'],
   viteFinal: async (config) => {
@@ -21,7 +18,7 @@ const config: StorybookConfig = {
     config.esbuild = {
       ...(typeof config.esbuild === 'object' ? config.esbuild : {}),
       jsx: 'automatic',
-      jsxImportSource: 'react',
+      jsxImportSource: 'react'
     };
 
     config.optimizeDeps = config.optimizeDeps || {};
@@ -35,6 +32,7 @@ const config: StorybookConfig = {
     config.resolve = config.resolve || {};
     config.resolve.alias = {
       ...config.resolve.alias,
+      '~/container/index': path.resolve(__dirname, './mocks/container.ts'),
       '~/src': path.resolve(__dirname, '../src'),
       '~/ds-components': path.resolve(__dirname, '../app/shared/components/design-system'),
       '~/components': path.resolve(__dirname, '../app/shared/components'),
@@ -48,7 +46,7 @@ const config: StorybookConfig = {
       'next/image': path.resolve(__dirname, './mocks/next-image.tsx'),
       'next/link': path.resolve(__dirname, './mocks/next-link.tsx'),
       'next/navigation': path.resolve(__dirname, './mocks/next-navigation.ts'),
-      '~': path.resolve(__dirname, '../app'),
+      '~': path.resolve(__dirname, '../app')
     };
 
     config.plugins = config.plugins || [];
@@ -58,7 +56,9 @@ const config: StorybookConfig = {
     config.build.chunkSizeWarningLimit = 1000;
     config.build.rollupOptions = config.build.rollupOptions || {};
     config.build.rollupOptions.onwarn = (warning, warn) => {
-      const isSourcemapReportingWarning = typeof warning.message === 'string' && warning.message.includes('Error when using sourcemap for reporting an error');
+      const isSourcemapReportingWarning =
+        typeof warning.message === 'string' &&
+        warning.message.includes('Error when using sourcemap for reporting an error');
       const isModuleDirectiveWarning =
         warning.code === 'MODULE_LEVEL_DIRECTIVE' &&
         typeof warning.id === 'string' &&
@@ -67,7 +67,8 @@ const config: StorybookConfig = {
           warning.id.includes('/node_modules/lucide-react/') ||
           warning.id.includes('/app/'));
 
-      const isStorybookEvalWarning = warning.code === 'EVAL' && typeof warning.id === 'string' && warning.id.includes('/node_modules/@storybook/');
+      const isStorybookEvalWarning =
+        warning.code === 'EVAL' && typeof warning.id === 'string' && warning.id.includes('/node_modules/@storybook/');
 
       if (isSourcemapReportingWarning || isModuleDirectiveWarning || isStorybookEvalWarning) {
         return;
@@ -84,11 +85,11 @@ const config: StorybookConfig = {
     return config;
   },
   typescript: {
-    reactDocgen: 'react-docgen-typescript',
+    reactDocgen: 'react-docgen-typescript'
   },
   docs: {
-    autodocs: 'tag',
-  },
+    autodocs: 'tag'
+  }
 };
 
 export default config;

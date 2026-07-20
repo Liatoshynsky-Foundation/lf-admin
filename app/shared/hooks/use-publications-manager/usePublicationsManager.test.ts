@@ -181,7 +181,7 @@ describe('usePublicationManager Hook', () => {
       const { result } = renderHook(() => usePublicationManager('non-existing-type' as PublicationsItemType, '1'));
      
       await expect(result.current.updateResource(BaseContentStatuses.Archived)).rejects.toThrow(
-        'Unsupported publication type for delete: non-existing-type'
+        'Unsupported publication type for mutation: non-existing-type'
       );
     });
   });
