@@ -62,6 +62,8 @@ jest.mock('~/shared/components/minimized-file-card/MinimizedFileCard', () => ({
 }));
 
 describe('FilesCardsLayout', () => {
+  const FALLBACK_IMAGE_SRC = 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/about-us-foundation-first.png';
+
   const items: FilesCardsLayoutItem[] = [
     {
       id: '1',
@@ -69,7 +71,7 @@ describe('FilesCardsLayout', () => {
       name: 'image-1.jpg',
       dateAdded: '2026-03-01',
       usageLinks: 2,
-      imageSrc: '/images/foundation-first.png'
+      imageSrc: FALLBACK_IMAGE_SRC
     },
     {
       id: '2',
