@@ -28,7 +28,7 @@ export function usePublicationManager(type: PublicationsItemType, id: string) {
   const [updateMedia] = useUpdateMediaMention();
 
   const queryMap = useMemo(() => ({ news, events: event, media }), [news, event, media]);
-  const activeQuery = queryMap[type];
+  const activeQuery = queryMap[type] ?? { loading: false, error: undefined, data: undefined };
 
   const isLoading = activeQuery.loading;
   const hasError = activeQuery.error;

@@ -13,11 +13,14 @@ import {
   PUBLICATIONS_BASE_PATH,
   PublicationsItemType
 } from '~/constants/publications';
+import { fetchPreview } from '~/lib/utils/fetchPreview';
+import { getPreviewSlug } from '~/lib/utils/getPreviewSlug';
 import { SerializedContent } from '~/shared/components/content-editor';
 import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
 import { usePublicationManager } from '~/shared/hooks/use-publications-manager/usePublicationsManager';
 import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
 import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 type Params = {
   type: PublicationsItemType;
@@ -64,6 +67,38 @@ export default function EditPublicationsPage() {
     }, 500);
   };
 
+  const handlePreview = async () => {
+    const locale = manager.currentLanguage === 'UA' ? 'uk' : 'en';
+    const slug = manager.currentData?.slug;
+
+    if (!slug) {
+      toast.error('Виникла помилка при отриманні даних для попереднього перегляду');
+      console.error('Не вдалося завантажити slug для попереднього перегляду');
+      return;
+    }
+
+    try {
+      const currentStatus = BaseContentStatuses.Draft;
+
+      const result = await publicationData.handleSave(currentStatus);
+
+      if (!result?.id || !result?.slug) {
+        toast.error('Виникла помилка підчас публікації для попереднього перегляду');
+        return;
+      }
+
+      await manager.updateResource(
+        currentStatus,
+        type === 'media' ? {} : { content: manager.editedContent }
+      );
+
+      const previewSlug = getPreviewSlug({ publicationType: type, dbSlug: result.slug });
+      await fetchPreview({ slug: previewSlug, lang: locale, draftId: id });
+    } catch (err) {
+      toast.error(`Помилка: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
+
   const performUpdateAction = async (actionId: keyof typeof MENU_ACTION_CONFIGS) => {
     const { status, toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS[actionId];
     const { data } = await manager.updateResource(status, { content: manager.editedContent });
@@ -104,10 +139,11 @@ export default function EditPublicationsPage() {
       console.error(`Action ${actionId} failed`, err);
     }
   };
+
   return (
     <>
       {type === 'media' ? (
-        <CreatePublicationsView data={publicationData} mode="edit" />
+        <CreatePublicationsView data={publicationData} mode="edit" onPreview={handlePreview} />
       ) : (
         <EditPublicationsView
           type={type}
@@ -122,6 +158,7 @@ export default function EditPublicationsPage() {
           onDeleteConfirm={() => handleMenuAction(MenuActionId.DELETE)}
           onSeoClick={() => navigate(`${PUBLICATIONS_BASE_PATH}/${type}/${id}/seo`)}
           onBackClick={navigateBack}
+          onPreview={handlePreview}
         />
       )}
     </>
