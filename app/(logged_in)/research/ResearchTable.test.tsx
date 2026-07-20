@@ -82,11 +82,15 @@ describe('ResearchTable', () => {
 
     expect(plainData.menuActions.menuTriggerLabel).toBe('Дії для роботи Архимович Лідія');
     expect(plainData.menuActions.menuItems).toEqual([
-      [
-        { id: 'edit', label: 'Редагувати', href: '/research/work-1/edit' },
-        { id: 'share', label: 'Поширити' }
-      ],
-      [{ id: 'delete', label: 'Видалити' }]
+      {
+        items: [
+          { id: 'edit', text: { name: 'Редагувати' }, href: '/research/work-1/edit' },
+          { id: 'share', text: { name: 'Поширити' } }
+        ]
+      },
+      {
+        items: [{ id: 'delete', text: { name: 'Видалити' } }]
+      }
     ]);
   });
 

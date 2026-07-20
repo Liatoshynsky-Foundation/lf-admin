@@ -5,16 +5,17 @@ import { Box, Typography } from '@mui/material';
 import type { ResearchWork } from './research.mock';
 import { styles } from './ResearchTable.styles';
 import { RESEARCH_BASE_PATH } from '~/constants/research';
+import type { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import { RowActions } from '~/shared/components/table-layout/components/RowActions';
 import { StatusBadge } from '~/shared/components/table-layout/components/StatusBadge';
-import type { BaseRowData, ColumnDef, MenuItem } from '~/shared/components/table-layout/row-variants/Row.types';
+import type { BaseRowData, ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
 import { twoLineEllipsis } from '~/shared/components/table-layout/TableLayout.styles';
 
 type PlainWork = ResearchWork & {
   editAction?: { editHref: string; editLabel: string };
   menuActions?: {
-    menuItems: readonly (readonly MenuItem[])[];
+    menuItems: ActionMenuGroups;
     menuTriggerLabel: string;
   };
 };
@@ -80,11 +81,15 @@ export function ResearchTable({ works }: Readonly<{ works: readonly ResearchWork
       },
       menuActions: {
         menuItems: [
-          [
-            { id: 'edit', label: 'Редагувати', href: `${RESEARCH_BASE_PATH}/${work.id}/edit` },
-            { id: 'share', label: 'Поширити' }
-          ],
-          [{ id: 'delete', label: 'Видалити' }]
+          {
+            items: [
+              { id: 'edit', text: { name: 'Редагувати' }, href: `${RESEARCH_BASE_PATH}/${work.id}/edit` },
+              { id: 'share', text: { name: 'Поширити' } }
+            ]
+          },
+          {
+            items: [{ id: 'delete', text: { name: 'Видалити' } }]
+          }
         ],
         menuTriggerLabel: `Дії для роботи ${work.author}`
       }
