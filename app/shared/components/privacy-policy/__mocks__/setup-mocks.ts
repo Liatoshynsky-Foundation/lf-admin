@@ -3,6 +3,8 @@ export const usePageBlockMock = jest.fn();
 export const useSectionListMock = jest.fn();
 export const usePointsListMock = jest.fn();
 export const mockSetField = jest.fn();
+export const mockToggleBlockVisibility = jest.fn();
+export const mockSetFieldValidity = jest.fn();
 
 export const mockAddPoint = jest.fn();
 export const mockRemovePoint = jest.fn();
@@ -10,7 +12,9 @@ export const mockUpdatePoint = jest.fn();
 
 export const mockStoreState = {
   locale: 'uk',
-  setField: mockSetField
+  setField: mockSetField,
+  toggleBlockVisibility: mockToggleBlockVisibility,
+  setFieldValidity: mockSetFieldValidity
 };
 
 export const setMockLocale = (locale: 'uk' | 'en') => {

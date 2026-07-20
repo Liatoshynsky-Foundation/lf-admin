@@ -1,4 +1,4 @@
-import { ImageType, ProseDoc } from '~/types/common';
+import { ImageType, ProseDoc, WithHidden } from '~/types/common';
 
 export type MissionListItem = {
   uk: ProseDoc;
@@ -14,4 +14,4 @@ export type OurMissionBlock = {
   smallImage: ImageType;
   bigImage: ImageType;
   list: MissionListItem[];
-};
+} & WithHidden;

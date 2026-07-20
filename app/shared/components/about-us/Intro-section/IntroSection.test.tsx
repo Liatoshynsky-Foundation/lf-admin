@@ -96,7 +96,7 @@ describe('IntroSection', () => {
   it('should render all fields with type-safe structural JSON states', () => {
     runSimulation();
 
-    expect(screen.getByText('Вступна секція')).toBeInTheDocument();
+    expect(screen.getByText('Initial Title')).toBeInTheDocument();
     expect(screen.getByTestId(`textfield-json-${titles.page}`)).toHaveTextContent(JSON.stringify(mockNodes.title));
     expect(screen.getByTestId(`textfield-json-${titles.caption}`)).toHaveTextContent(JSON.stringify(mockNodes.caption));
     expect(screen.getByTestId('quote-title-json')).toHaveTextContent(JSON.stringify(mockNodes.author));

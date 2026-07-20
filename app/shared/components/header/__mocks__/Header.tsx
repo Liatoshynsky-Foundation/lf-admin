@@ -7,7 +7,8 @@ export const Header = ({
   onCancel,
   isSaving,
   onLanguageChange,
-  isActionsDisabled
+  isActionsDisabled,
+  isSaveDisabled
 }: {
   title: string;
   onPreview: () => void;
@@ -16,6 +17,7 @@ export const Header = ({
   isSaving: boolean;
   onLanguageChange: (lang: 'uk' | 'en') => void;
   isActionsDisabled?: boolean;
+  isSaveDisabled?: boolean;
 }) => (
   <div data-testid="header">
     <span data-testid="title">{title}</span>
@@ -30,6 +32,7 @@ export const Header = ({
     </button>
     <span data-testid="saving-flag">{String(isSaving)}</span>
     <span data-testid="actions-disabled-flag">{String(isActionsDisabled)}</span>
+    <span data-testid="save-disabled-flag">{String(isSaveDisabled)}</span>
     <button data-testid="lang-en" onClick={() => onLanguageChange('en')}>
       set-en
     </button>

@@ -9,10 +9,11 @@ import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { CROP_RATIOS } from '~/constants/publications';
 import { ImagePreviewBlock } from '~/ds-components/photo-block/PhotoBlock';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
+import { proseToHeaderText } from '~/lib/utils/prose';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
-import { LocalizedString } from '~/types/common';
+import { LocalizedString, ProseDoc } from '~/types/common';
 import { getImageUrl } from '~/utils/getImageUrl';
 
 export const IntroSection = () => {
@@ -26,8 +27,10 @@ export const IntroSection = () => {
 
   if (!block) return <EditBlockSkeleton />;
 
+  const headerTitle = proseToHeaderText(block.title[currentLocale] as ProseDoc, 'Вступна секція');
+
   return (
-    <CollapsibleBlock title="Вступна секція">
+    <CollapsibleBlock title={headerTitle}>
       <CustomTextField
         fieldType="formatting"
         title="Заголовок сторінки"

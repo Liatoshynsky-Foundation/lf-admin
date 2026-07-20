@@ -5,10 +5,12 @@ import WhatWeDo from '../../about-us/what-we-do/WhatWeDo';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 
 const setFieldMock = jest.fn();
+const setFieldValidityMock = jest.fn();
 
-type StoreState = { locale: 'uk'; setField: typeof setFieldMock };
+type StoreState = { locale: 'uk'; setField: typeof setFieldMock; setFieldValidity: typeof setFieldValidityMock };
 jest.mock('~/store', () => ({
-  useStore: (selector: (state: StoreState) => unknown) => selector({ locale: 'uk', setField: setFieldMock })
+  useStore: (selector: (state: StoreState) => unknown) =>
+    selector({ locale: 'uk', setField: setFieldMock, setFieldValidity: setFieldValidityMock })
 }));
 
 const usePageBlockMock = jest.fn();

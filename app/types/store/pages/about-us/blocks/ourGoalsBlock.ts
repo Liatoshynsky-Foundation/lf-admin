@@ -1,4 +1,4 @@
-import type { LocalizedJSON } from '~/types/common';
+import type { LocalizedJSON, WithHidden } from '~/types/common';
 
 export type GoalItem = {
   title: LocalizedJSON;
@@ -12,4 +12,4 @@ export type GoalItemWithId = {
 export type OurGoalsBlock = {
   title: LocalizedJSON;
   goals: GoalItemWithId[];
-};
+} & WithHidden;

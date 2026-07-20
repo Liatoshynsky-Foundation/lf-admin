@@ -15,9 +15,19 @@ type HeaderProps = {
   isSaving: boolean;
   onLanguageChange: (lang: 'uk' | 'en') => void;
   isActionsDisabled?: boolean;
+  isSaveDisabled?: boolean;
 };
 
-export const Header = ({ title, onPreview, onSave, onCancel, isSaving, onLanguageChange, isActionsDisabled }: HeaderProps) => {
+export const Header = ({
+  title,
+  onPreview,
+  onSave,
+  onCancel,
+  isSaving,
+  onLanguageChange,
+  isActionsDisabled,
+  isSaveDisabled
+}: HeaderProps) => {
   return (
     <Box sx={styles.container}>
       <Box>
@@ -48,7 +58,14 @@ export const Header = ({ title, onPreview, onSave, onCancel, isSaving, onLanguag
           <Button variant="outlined" color="primary" sx={styles.actionButton} onClick={onCancel} disabled={isActionsDisabled}>
             Скасувати зміни
           </Button>
-          <Button variant="filled" color="primary" sx={styles.actionButton} onClick={onSave} disabled={isSaving || isActionsDisabled}>
+          <Button
+            variant="filled"
+            color="primary"
+            sx={styles.actionButton}
+            onClick={onSave}
+            disabled={isSaving || isActionsDisabled || isSaveDisabled}
+            title={isSaveDisabled ? 'Виправте порожні заголовки розділів перед збереженням' : undefined}
+          >
             Зберегти
           </Button>
         </Stack>

@@ -28,6 +28,12 @@ export interface EditState {
   isInitialized: boolean;
   initializedPages: Record<string, boolean>;
 
+  invalidFields: Record<string, boolean>;
+  setFieldValidity: (key: string, isInvalid: boolean) => void;
+
+  isSaving: boolean;
+  setIsSaving: (isSaving: boolean) => void;
+
   blocks: {
     [pageId: string]: {
       [blockId in keyof BlocksMap]?: BlocksMap[blockId];
@@ -64,6 +70,7 @@ export interface EditState {
   ) => void;
   setPageData: <T extends Record<string, BlockData>>(pageId: string, blocks: T, blocksOrder: string[], isInit?: boolean) => void;
   setBlocksOrder: (pageId: string, blocksOrder: string[]) => void;
+  toggleBlockVisibility: <P extends string, K extends keyof BlocksMap>(pageId: P, blockId: K) => void;
   saveAsDraft: (pageId: string) => void;
   publishPage: (pageId: string) => void;
   discardChanges: (pageId: string) => void;

@@ -10,6 +10,7 @@ import {
   PUBLICATIONS_TYPES,
   PublicationsItemType
 } from '~/constants/publications';
+import { checkIsSeoInvalid } from '~/lib/utils/checkIsSeoInvalid';
 import { buildCoverImageCropPayload } from '~/lib/utils/CropperHelper';
 import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import { useCreateEvent, useEventById, useUpdateEvent } from '~/shared/hooks/use-events/useEvents';
@@ -21,8 +22,6 @@ import {
 import { useCreateNews, useNewsById, useUpdateNews } from '~/shared/hooks/use-news/useNews';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { EventStatus, MediaStatus, NewsStatus } from '~/types/graphql/generated/graphql';
-
-
 
 const ERROR_CONFIG: Array<{
   key: string;
@@ -39,38 +38,6 @@ const ERROR_CONFIG: Array<{
       toast.error('Публікація з такими даними вже існує.')
   }
 ];
-
-const isValidUrl = (url: string): boolean => {
-  try {
-    new URL(url);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-const checkIsSeoInvalid = (
-  ukMeta: SeoBlockValue['meta']['uk'],
-  enMeta: SeoBlockValue['meta']['en'],
-  publicationType: PublicationsItemType,
-  ticketUrl: SeoBlockValue['ticketUrl']
-): boolean => {
-  if (!ukMeta.title.trim() || !enMeta.title.trim()) return true;
-  if (!ukMeta.description.trim() || !enMeta.description.trim()) return true;
-
-  if (publicationType === 'media') {
-    const ukUrl = ukMeta.canonicalUrl ?? '';
-    const enUrl = enMeta.canonicalUrl ?? '';
-    return !ukUrl.trim() || !enUrl.trim() || !isValidUrl(ukUrl) || !isValidUrl(enUrl);
-  }
-  if (publicationType === 'events') {
-    const ukUrl = ticketUrl?.uk ?? '';
-    const enUrl = ticketUrl?.en ?? '';
-    return !ukUrl.trim() || !enUrl.trim() || !isValidUrl(ukUrl) || !isValidUrl(enUrl);
-  }
-  return false;
-};
-
 interface UseUpsertPublicationProps {
   type: PublicationsItemType;
   id?: string;
@@ -255,7 +222,10 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       const emptyContent = { uk: { content: { blocks: [] } }, en: { content: { blocks: [] } } };
       const isUpdate = isEditing && id;
 
-      const saveStrategies: Record<string, () => Promise<string | void>> = {
+      const saveStrategies: Record<string, () => Promise<{
+        id: string | undefined;
+        slug: string | undefined;
+      }>> = {
         events: async () => {
           const payload = {
             ...commonInput,
@@ -265,11 +235,11 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
             ticketUrl: seoValue.ticketUrl,
             status: status as unknown as EventStatus
           };
-          if (isUpdate) return updateEvent({ id, input: payload }).then(() => id);
+          if (isUpdate) return updateEvent({ id, input: payload }).then((data) => ({ id: data.data?.updateEvent.id, slug: data.data?.updateEvent.slug }));
           return createEvent({
             ...payload,
             content: emptyContent
-          }).then((r) => r.data?.createEvent?.id);
+          }).then((r) => ({ id: r.data?.createEvent?.id, slug: r.data?.createEvent?.slug }));
         },
         news: async () => {
           const payload = {
@@ -277,11 +247,11 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
             newsDate: commonInput.publishedAt,
             status: status as unknown as NewsStatus
           };
-          if (isUpdate) return updateNews({ id, input: payload }).then(() => id);
+          if (isUpdate) return updateNews({ id, input: payload }).then((data) => ({ id: data.data?.updateNews.id, slug: data.data?.updateNews.slug }));
           return createNews({
             ...payload,
             content: emptyContent
-          }).then((r) => r.data?.createNews?.id);
+          }).then((r) => ({ id: r.data?.createNews?.id, slug: r.data?.createNews?.slug }));
         },
         media: async () => {
           const payload = {
@@ -291,18 +261,18 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
           };
           if (isUpdate) {
             const response = await updateMediaMention(id, payload);
-            return response.data?.updateMediaMention.id;
+            return ({ id: response.data?.updateMediaMention?.id, slug: response.data?.updateMediaMention?.slug });
           } else {
             const response = await createMediaMention(payload);
-            return response.data?.createMediaMention.id;
+            return ({ id: response.data?.createMediaMention?.id, slug: response.data?.createMediaMention?.slug });
           }
         }
       };
 
-      const resultId = await saveStrategies[publicationType]?.();
+      const result = await saveStrategies[publicationType]?.();
       setCanonicalUrlError('');
 
-      return resultId;
+      return { id: result?.id, slug: result.slug };
     } catch (error: unknown) {
       console.error('Error: ', error);
       if (error instanceof Error) {

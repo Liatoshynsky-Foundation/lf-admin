@@ -7,9 +7,11 @@ import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
 import { FoundationBlock } from './foundation-block/FoundationBlock';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
-import { proseToText } from '~/lib/utils/prose';
+import { CustomTextField } from '~/ds-components/text-field/TextField';
+import { proseToHeaderText, proseToText } from '~/lib/utils/prose';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
+import { useTitleValidation } from '~/shared/hooks/use-title-validation/useTitleValidation';
 import { useStore } from '~/store';
 import { ProseDoc } from '~/types/common';
 import { getImageUrl } from '~/utils/getImageUrl';
@@ -20,10 +22,20 @@ export const LiatoshynskyFoundation = () => {
   const { block } = usePageBlock(pageId, blockId);
 
   const setField = useStore((state) => state.setField);
+  const toggleBlockVisibility = useStore((state) => state.toggleBlockVisibility);
 
   const currentLocale: 'uk' | 'en' = useStore((state) => state.locale);
 
+  const titleValidation = useTitleValidation(`${pageId}:${blockId}:title`, block?.title?.[currentLocale] as ProseDoc);
+
   if (!block) return <EditBlockSkeleton />;
+
+  const handleTitleChange = (val: JSONContent) => {
+    setField(pageId, blockId, 'title', {
+      ...block.title,
+      [currentLocale]: val
+    });
+  };
 
   const mainText = block.ourOrganisation?.[currentLocale];
   const handleMainTextChange = (val: JSONContent) => {
@@ -35,7 +47,7 @@ export const LiatoshynskyFoundation = () => {
 
   type LocalizedProse = Record<'uk' | 'en', JSONContent>;
 
-  const paragraphKeys: (keyof typeof block)[] = ['ourName', 'ourBelief'];
+  const paragraphKeys: ('ourName' | 'ourBelief')[] = ['ourName', 'ourBelief'];
 
   const paragraphs = paragraphKeys.map((key) => {
     const localized = block[key] as LocalizedProse;
@@ -52,8 +64,25 @@ export const LiatoshynskyFoundation = () => {
     });
   };
 
+  const headerTitle = proseToHeaderText(block.title?.[currentLocale] as ProseDoc, 'Фундація Лятошинського');
+
   return (
-    <CollapsibleBlock title="Фундація Лятошинського" grip>
+    <CollapsibleBlock
+      title={headerTitle}
+      grip
+      hidden={block.hidden}
+      onToggleVisibility={() => toggleBlockVisibility(pageId, blockId)}
+    >
+      <CustomTextField
+        fieldType="formatting"
+        title="Заголовок секції"
+        label="Текст заголовку"
+        value={block.title?.[currentLocale]}
+        onChange={handleTitleChange}
+        onBlur={titleValidation.onBlur}
+        error={titleValidation.error}
+        helperText={titleValidation.helperText}
+      />
       <FoundationBlock
         mainText={mainText}
         paragraphs={paragraphs}
