@@ -52,12 +52,13 @@ import { RenameFileModal } from '~/shared/components/rename-file-modal/RenameFil
 import { ViewToggle } from '~/shared/components/view-toggle';
 import { useAllAssets } from '~/shared/hooks/use-assets/useAssets';
 import { useFilesFiltering } from '~/shared/hooks/use-files';
+import { toCreateAssetInput, useHybridFiles, useR2Files } from '~/shared/hooks/use-files/useHybridFiles';
 import {
-  toCreateAssetInput,
-  useHybridFiles,
-  useR2Files
-} from '~/shared/hooks/use-files/useHybridFiles';
-import { AssetType, useCreateAssetMutation, useDeleteAssetMutation, useUpdateAssetMutation } from '~/types/graphql/generated/graphql';
+  AssetType,
+  useCreateAssetMutation,
+  useDeleteAssetMutation,
+  useUpdateAssetMutation
+} from '~/types/graphql/generated/graphql';
 
 type FilesPageContentProps = Readonly<{
   activeTab: FilesTabValue;
@@ -170,7 +171,8 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
     const type = file.type.toLowerCase();
     const name = file.name.toLowerCase();
 
-    if (type.includes('spreadsheet') || name.endsWith('.xlsx') || name.endsWith('.xls')) assetType = AssetType.Spreadsheet;
+    if (type.includes('spreadsheet') || name.endsWith('.xlsx') || name.endsWith('.xls'))
+      assetType = AssetType.Spreadsheet;
     else if (type.includes('pdf') || name.endsWith('.pdf')) assetType = AssetType.Pdf;
     else if (type.includes('zip') || type.includes('rar') || name.endsWith('.rar')) assetType = AssetType.Archive;
     else if (type.startsWith('audio/')) assetType = AssetType.Audio;
@@ -431,7 +433,9 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
         <Box sx={styles.filesArea}>
           {loading && <EmptyState title={FILES_LOADING_STATE_TITLE} description={FILES_LOADING_STATE_DESCRIPTION} />}
 
-          {!loading && error && <EmptyState title={FILES_ERROR_STATE_TITLE} description={FILES_ERROR_STATE_DESCRIPTION} />}
+          {!loading && error && (
+            <EmptyState title={FILES_ERROR_STATE_TITLE} description={FILES_ERROR_STATE_DESCRIPTION} />
+          )}
 
           {!loading && !error && filteredFiles.length > 0 && (
             <FilesCardsLayout
@@ -443,6 +447,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
               onItemClick={handleItemClick}
               onItemAction={handleItemAction}
               onItemToggleStar={(item, next) => updatePersistedAsset(item.id, { isStarred: next })}
+              isFileInfoSidebarOpen={Boolean(sidebarFile)}
             />
           )}
 
@@ -456,14 +461,16 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
           )}
 
           {hasNoFiles && hasActiveCriteria && (
-            <EmptyState title={FILES_EMPTY_STATE_NO_RESULTS_TITLE} description={FILES_EMPTY_STATE_NO_RESULTS_DESCRIPTION} />
+            <EmptyState
+              title={FILES_EMPTY_STATE_NO_RESULTS_TITLE}
+              description={FILES_EMPTY_STATE_NO_RESULTS_DESCRIPTION}
+            />
           )}
 
           {hasNoFiles && !isFavoritesTab && !hasActiveCriteria && (
             <EmptyState title={FILES_EMPTY_STATE_TITLE} description={FILES_EMPTY_STATE_DESCRIPTION} />
           )}
         </Box>
-
       </Box>
       {sidebarFile && (
         <FileInfoSidebar

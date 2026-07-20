@@ -31,6 +31,7 @@ type FilesCardsLayoutProps = Readonly<{
   onItemClick?: (item: FilesCardsLayoutItem) => void;
   onItemAction?: (action: 'rename' | 'delete' | 'download', item: FilesCardsLayoutItem) => void;
   onItemToggleStar?: (item: FilesCardsLayoutItem, next: boolean) => Promise<void> | void;
+  isFileInfoSidebarOpen?: boolean;
 }>;
 
 const minimizedTypeMap: Record<FileType, 'img' | 'audio' | 'pdf' | 'doc' | 'xls' | 'video-file' | 'archive'> = {
@@ -51,7 +52,8 @@ export function FilesCardsLayout({
   setItemRef,
   onItemClick,
   onItemAction,
-  onItemToggleStar
+  onItemToggleStar,
+  isFileInfoSidebarOpen
 }: FilesCardsLayoutProps) {
   if (view === 'list') {
     return (
@@ -108,6 +110,7 @@ export function FilesCardsLayout({
             onClick={() => onItemClick?.(item)}
             onAction={(action) => onItemAction?.(action, item)}
             onToggleStar={(_, next) => onItemToggleStar?.(item, next)}
+            isFileInfoSidebarOpen={isFileInfoSidebarOpen}
           />
         </Box>
       ))}

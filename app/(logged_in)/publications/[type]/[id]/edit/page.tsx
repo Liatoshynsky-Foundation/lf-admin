@@ -8,6 +8,7 @@ import CreatePublicationsView from '../../create/CreatePublicationsView';
 import { EditPublicationsView } from './EditPublicationsView';
 import {
   CONTENT_MUTATION_RESULTS,
+  MENU_ACTION_CONFIGS,
   MenuActionId,
   PUBLICATIONS_BASE_PATH,
   PublicationsItemType
@@ -17,7 +18,6 @@ import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavig
 import { usePublicationManager } from '~/shared/hooks/use-publications-manager/usePublicationsManager';
 import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
 import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
-import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 type Params = {
   type: PublicationsItemType;
@@ -64,43 +64,40 @@ export default function EditPublicationsPage() {
     }, 500);
   };
 
+  const performUpdateAction = async (actionId: keyof typeof MENU_ACTION_CONFIGS) => {
+    const { status, toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS[actionId];
+    const { data } = await manager.updateResource(status, { content: manager.editedContent });
+    return { data, toastMessage, toastErrorMessage };
+  };
+
+  const performDeleteAction = async () => {
+    const { data } = await manager.deleteResource();
+    return {
+      data,
+      toastMessage: CONTENT_MUTATION_RESULTS.publicationDeleted,
+      toastErrorMessage: 'Виникла помилка при видаленні публікації. Спробуйте ще раз.',
+    };
+  };
+
+  const NAVIGATE_AFTER_ACTIONS = new Set<MenuActionId>([
+    MenuActionId.PUBLICATE_AND_EXIT,
+    MenuActionId.DELETE,
+    MenuActionId.CANCEL_PUBLICATION,
+  ]);
+
   const handleMenuAction = async (actionId: MenuActionId) => {
-    const contentPayload = { content: manager.editedContent };
-
     try {
-      switch (actionId) {
-      case MenuActionId.PUBLISH: {
-        const { data } = await manager.updateResource(BaseContentStatuses.Published, contentPayload);
-        if (data) toast.success(CONTENT_MUTATION_RESULTS.draftPublished);
-        break;
+      const { data, toastErrorMessage, toastMessage } = actionId === MenuActionId.DELETE ? await performDeleteAction() : await performUpdateAction(actionId);
+
+      if (!data) {
+        toast.error(toastErrorMessage);
+        return;
       }
 
-      case MenuActionId.PUBLICATE_AND_EXIT: {
-        const { data } = await manager.updateResource(BaseContentStatuses.Draft, contentPayload);
-        if (data) {
-          toast.success(CONTENT_MUTATION_RESULTS.draftSaved);
-          router.push(PUBLICATIONS_BASE_PATH);
-        }
-        break;
-      }
-
-      case MenuActionId.DELETE: {
-        const { data } = await manager.deleteResource();
-        if (data) {
-          toast.success(CONTENT_MUTATION_RESULTS.publicationDeleted);
-          router.push(PUBLICATIONS_BASE_PATH);
-        }
-        break;
-      }
-
-      case MenuActionId.CANCEL_PUBLICATION: {
-        const { data } = await manager.updateResource(BaseContentStatuses.Draft, contentPayload);
-        if (data) {
-          toast.success(CONTENT_MUTATION_RESULTS.publicationUnpublished);
-          router.push(PUBLICATIONS_BASE_PATH);
-        }
-        break;
-      }
+      toast.success(toastMessage);
+      
+      if (NAVIGATE_AFTER_ACTIONS.has(actionId)) {
+        router.push(PUBLICATIONS_BASE_PATH);
       }
     } catch (err) {
       toast.error(`Помилка: ${err instanceof Error ? err.message : String(err)}`);

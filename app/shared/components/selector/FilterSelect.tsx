@@ -1,13 +1,15 @@
 'use client';
 
-import { Box, Button, Chip, Divider, Typography } from '@mui/material';
+import { Box, Chip, Divider, Typography } from '@mui/material';
 import { ChevronDown } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
+import Button from '../design-system/button/Button';
+import DropdownMenu from '../dropdown-menu/DropdownMenu';
 import { filterSelectStyles } from './FilterSelect.styles';
 import FilterSelectItem from './FilterSelectItem/FilterSelectItem';
 import CloseIcon from '~/public/icons/close.svg';
-import DropdownMenu from '~/shared/components/dropdown-menu/DropdownMenu';
+import { useMenuScrollClose } from '~/shared/hooks/use-menu-scroll-close/useMenuScrollClose';
 
 export interface FilterOption {
   value: string;
@@ -50,15 +52,18 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
   onRemove
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [uncontrolledValues, setUncontrolledValues] = useState<string[]>(() => value ?? defaultValue ?? defaultValues ?? []);
+  const [uncontrolledValues, setUncontrolledValues] = useState<string[]>(
+    () => value ?? defaultValue ?? defaultValues ?? []
+  );
+  const { disableTransition, handleClose } = useMenuScrollClose({
+    onClose: () => setAnchorEl(null),
+    anchorEl
+  });
   const triggerRef = useRef<HTMLDivElement | null>(null);
   const selectedValues = value ?? uncontrolledValues;
 
   useEffect(() => {
-    if (value !== undefined) {
-      return;
-    }
-
+    if (value !== undefined) return;
     setUncontrolledValues(defaultValue ?? defaultValues ?? []);
   }, [defaultValue, defaultValues, value]);
 
@@ -66,18 +71,12 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
     if (value === undefined) {
       setUncontrolledValues(nextValues);
     }
-
     onChange?.(nextValues);
   };
 
   const handleToggleMenu = () => {
     if (disabled) return;
     setAnchorEl((prev) => (prev ? null : triggerRef.current));
-  };
-
-  const handleCloseMenu = () => {
-    setAnchorEl(null);
-    requestAnimationFrame(() => triggerRef.current?.focus());
   };
 
   const handleOptionClick = (option: FilterOption) => {
@@ -93,7 +92,6 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
         const previousOption = options.find((item) => item.value === previousValue);
         onRemove?.(previousValue, previousOption?.label ?? '', []);
       }
-
       newValues = [option.value];
       onAdd?.(option.value, option.label, newValues);
     } else if (!maxSelections || selectedValues.length < maxSelections) {
@@ -106,26 +104,25 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
     updateSelectedValues(newValues);
 
     if (maxSelections === 1) {
-      handleCloseMenu();
+      handleClose();
     }
   };
 
   const clearAll = () => {
     const removed = [...selectedValues];
     updateSelectedValues([]);
-    removed.forEach((value) => {
-      const option = options.find((item) => item.value === value);
-      onRemove?.(value, option?.label ?? '', []);
+    removed.forEach((val) => {
+      const option = options.find((item) => item.value === val);
+      onRemove?.(val, option?.label ?? '', []);
     });
   };
 
-  const selectedOptionsCount = selectedValues.length;
   const isMaxReached = maxSelections ? selectedValues.length >= maxSelections : false;
+  const selectedOptionsCount = selectedValues.length;
   const selectedOptionsLabel = useMemo(() => {
-    return selectedValues
-      .map((value) => options.find((option) => option.value === value)?.label ?? value)
-      .join(', ');
+    return selectedValues.map((val) => options.find((opt) => opt.value === val)?.label ?? val).join(', ');
   }, [options, selectedValues]);
+
   const triggerAriaLabel = selectedOptionsCount > 0 && !hideCounterChip ? `${label}: ${selectedOptionsLabel}` : label;
 
   return (
@@ -141,7 +138,9 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
         aria-label={triggerAriaLabel}
       >
         {(selectedOptionsCount === 0 || hideCounterChip) && (
-          <Typography variant='textMd' sx={filterSelectStyles.label(disabled)}>{label}</Typography>
+          <Typography variant="textMd" sx={filterSelectStyles.label(disabled)}>
+            {label}
+          </Typography>
         )}
         <Box sx={filterSelectStyles.chipContainer}>
           {selectedOptionsCount > 0 && !hideCounterChip && (
@@ -165,11 +164,12 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
         disableScrollLock
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
-        onClose={handleCloseMenu}
+        onClose={handleClose}
         sx={filterSelectStyles.dropdownMenu(menuMinWidth)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
         maxHeight={300}
+        transitionDuration={disableTransition ? 0 : undefined}
         menuList={
           <Box sx={filterSelectStyles.menuListWrapper}>
             <Box sx={filterSelectStyles.menuItemsContainer}>
@@ -181,7 +181,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
                   <FilterSelectItem
                     key={option.value}
                     label={option.label}
-                    onClick={() => !optionDisabled && handleOptionClick(option)}
+                    onClick={() => handleOptionClick(option)}
                     selected={isSelected}
                     disabled={optionDisabled}
                     sx={filterSelectStyles.menuItem}

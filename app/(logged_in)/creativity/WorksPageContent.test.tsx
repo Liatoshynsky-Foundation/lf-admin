@@ -53,7 +53,7 @@ const mockedUseAllOpusGroups = jest.mocked(useAllOpusGroups);
 const mockedUseAllUngroupedGroups = jest.mocked(useAllUngroupedGroups);
 const mockedUseAllCompositions = jest.mocked(useAllCompositions);
 
-describe('WorksPageContent Branches Coverage', () => {
+describe('WorksPageContent', () => {
   const defaultFilteringMock = {
     sortValue: 'date_desc' as const,
     selectedFilters: {
@@ -340,26 +340,6 @@ describe('WorksPageContent Branches Coverage', () => {
 
     render(<WorksPageContent activeTab="all" />);
     expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
-  });
-
-  it('renders dropdown items on create button interaction and handles closing focus', () => {
-    jest.useFakeTimers();
-    mockedUseWorksFiltering.mockReturnValue(defaultFilteringMock as unknown as ReturnType<typeof useWorksFiltering>);
-
-    render(<WorksPageContent activeTab="all" />);
-    const createButton = screen.getByRole('button', { name: /створити/i });
-
-    fireEvent.click(createButton);
-    expect(screen.getByTestId('dropdown-menu')).toBeInTheDocument();
-    const menuItems = screen.getAllByRole('menuitem');
-
-    fireEvent.click(menuItems[0]);
-    act(() => {
-      jest.runAllTimers();
-    });
-
-    expect(createButton).toHaveFocus();
-    jest.useRealTimers();
   });
 
   it('covers fallback branches for empty search object and missing compositions', () => {

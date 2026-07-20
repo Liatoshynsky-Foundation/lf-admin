@@ -1,14 +1,11 @@
-import { Box, Divider, ListSubheader, Menu, MenuItem, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { MouseEvent, useState } from 'react';
 
-import { sharedMenuStyles } from '../../shared/shared-publication.styles';
+import { NavigationMenuItems, PublishMenuItems } from './EditPublicationMenuItems';
 import { styles } from './EditPublicationsView.styles';
 import DeleteCardModal from '~/components/delete-card-modal/DeleteCardModal';
 import {
-  ACTIONS_TYPE,
   EditorLanguage,
-  HEADER_MENU_OPTIONS,
-  LANGUAGE_OPTIONS,
   LocalizedEditorState,
   MenuActionId,
   PUBLICATIONS_BASE_PATH,
@@ -20,9 +17,10 @@ import { ContentEditor, isContentEmpty, SerializedContent } from '~/shared/compo
 import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
 import { TitleDropdown } from '~/shared/components/divided-header/title-dropdown/TitleDropdown';
+import ActionMenu from '~/shared/components/dropdown-menu/ActionMenu';
 
 type AnchorId = 'navigation' | 'publish';
-type MenuAnchor = Partial<Record<AnchorId, HTMLButtonElement>>;
+type MenuAnchor = Record<AnchorId, HTMLButtonElement | null>;
 
 export type PublicationViewData = {
   adminTitle?: string | null;
@@ -57,14 +55,17 @@ export function EditPublicationsView({
   onBackClick,
   onSeoClick
 }: Readonly<EditPublicationsViewProps>) {
-  const [anchors, setAnchors] = useState<MenuAnchor>({});
+  const [anchors, setAnchors] = useState<MenuAnchor>({
+    navigation: null,
+    publish: null
+  });
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const localeKey = currentLanguage === 'UA' ? 'uk' : 'en';
 
   const handleOpen = (event: MouseEvent<HTMLElement>, id: AnchorId) =>
     setAnchors((prev) => ({ ...prev, [id]: event.currentTarget as HTMLButtonElement }));
-  const handleClose = (id: AnchorId) => setAnchors((prev) => ({ ...prev, [id]: undefined }));
+  const handleClose = (id: AnchorId) => setAnchors((prev) => ({ ...prev, [id]: null }));
 
   const handlePublishActionClick = (actionId: MenuActionId) => {
     onAction(actionId);
@@ -75,9 +76,6 @@ export function EditPublicationsView({
 
   const initialBlocks = editedContent[localeKey]?.content?.blocks;
   const isContentValid = Array.isArray(initialBlocks) && initialBlocks.length;
-  const publishActions = (HEADER_MENU_OPTIONS.baseActions as ACTIONS_TYPE[]).filter(
-    (a) => a.id !== MenuActionId.PUBLISH
-  );
 
   return (
     <Box sx={styles.container}>
@@ -121,82 +119,30 @@ export function EditPublicationsView({
         )}
       </Box>
 
-      <Menu
+      <ActionMenu
         anchorEl={anchors['navigation']}
-        open={Boolean(anchors['navigation'])}
         onClose={() => handleClose('navigation')}
-        disableScrollLock
+        menuItems={NavigationMenuItems({
+          editedContent,
+          isContentEmpty,
+          onLanguageChange,
+          onSeoClick
+        })}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-        slotProps={{ paper: { sx: sharedMenuStyles.navigationMenuPaper } }}
-        sx={sharedMenuStyles.menu}
-      >
-        <ListSubheader sx={styles.menuSubheader}>
-          <Typography variant="subtitle2">{'Мовні версії'}</Typography>
-        </ListSubheader>
+      />
 
-        {LANGUAGE_OPTIONS.map(({ locale, key, label }) => {
-          const blocks = editedContent?.[key]?.content?.blocks;
-          const isDraft = !isContentEmpty(blocks);
-
-          return (
-            <MenuItem
-              key={key}
-              onClick={() => {
-                onLanguageChange(locale);
-                handleClose('navigation');
-              }}
-              sx={sharedMenuStyles.menuItem}
-            >
-              <Typography variant="textMd">{label}</Typography>
-              {isDraft && (
-                <Typography variant="subtitle2" sx={styles.draftCaption}>
-                  {'(чернетка)'}
-                </Typography>
-              )}
-            </MenuItem>
-          );
-        })}
-
-        <Divider sx={styles.contentDevider} />
-        <MenuItem
-          onClick={() => {
-            onSeoClick();
-            handleClose('navigation');
-          }}
-          sx={sharedMenuStyles.menuItem}
-        >
-          <Typography variant="textMd">{'SEO налаштування'}</Typography>
-        </MenuItem>
-      </Menu>
-
-      <Menu
+      <ActionMenu
         anchorEl={anchors['publish']}
-        open={Boolean(anchors['publish'])}
         onClose={() => handleClose('publish')}
-        disableScrollLock
+        menuItems={PublishMenuItems({
+          MenuActionId,
+          setDeleteModalOpen,
+          handlePublishActionClick
+        })}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        slotProps={{ paper: { sx: sharedMenuStyles.publishMenuPaper } }}
-        sx={sharedMenuStyles.menu}
-      >
-        {publishActions.map((action) => (
-          <MenuItem
-            sx={sharedMenuStyles.menuItem}
-            key={action.id}
-            onClick={() => {
-              if (action.id === MenuActionId.DELETE) {
-                setDeleteModalOpen(true);
-                handleClose('publish');
-                return;
-              }
-              handlePublishActionClick(action.id);
-            }}
-          >
-            <Typography variant="textMd">{action.label}</Typography>
-          </MenuItem>
-        ))}
-      </Menu>
+      />
 
       <DeleteCardModal
         open={deleteModalOpen}

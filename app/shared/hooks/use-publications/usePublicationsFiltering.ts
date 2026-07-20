@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState } from 'react';
 
 import {
   PUBLICATIONS_FILTERS,
-  type PublicationsLanguageValue,
   type PublicationsStatusValue
 } from '~/constants/publications';
 import {
@@ -15,7 +14,6 @@ import {
 import type { FilteringToolbarProps, SortSelectProps } from '~/shared/components/filtering-toolbar';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import {
-  ContentLanguage,
   EventFiltersInput,
   EventSortBy,
   EventStatus,
@@ -64,17 +62,6 @@ const mapPublicationStatus = <TStatus extends string>(
   return statusEnum[PUBLICATION_STATUS_TO_ENUM_KEY[status]];
 };
 
-const mapPublicationLanguageToApiLanguage = (language: PublicationsLanguageValue): ContentLanguage => {
-  if (language === 'bilingual') {
-    return ContentLanguage.Bilingual;
-  }
-
-  if (language === 'en') {
-    return ContentLanguage.En;
-  }
-
-  return ContentLanguage.Uk;
-};
 
 type BaseContentSortEnum<TField extends string> = Readonly<{
   AdminTitle: TField;
@@ -130,10 +117,9 @@ export function usePublicationsFiltering(): Readonly<{
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilters, setStatusFilters] = useState<PublicationsStatusValue[]>([]);
-  const [languageFilters, setLanguageFilters] = useState<PublicationsLanguageValue[]>([]);
   const [sortValue, setSortValue] = useState<FilesSortValue>(getInitialSortValue);
 
-  const activeFiltersCount = statusFilters.length + languageFilters.length;
+  const activeFiltersCount = statusFilters.length;
   const currentSortOption = SORT_OPTIONS.find((option) => option.value === sortValue) ?? SORT_OPTIONS[0];
   const currentSortField: SortFieldValue = sortValue.startsWith('date') ? 'date' : 'name';
   const normalizedSearch = search.trim();
@@ -141,24 +127,21 @@ export function usePublicationsFiltering(): Readonly<{
     () => ({
       news: {
         search: normalizedSearch || undefined,
-        languages: languageFilters.length ? languageFilters.map(mapPublicationLanguageToApiLanguage) : undefined,
         statuses: statusFilters.length ? statusFilters.map((status) => mapPublicationStatus(status, NewsStatus)) : undefined,
         sort: getBaseContentSortOptions(sortValue, NewsSortBy) as NonNullable<NewsFiltersInput['sort']>
       },
       events: {
         search: normalizedSearch || undefined,
-        languages: languageFilters.length ? languageFilters.map(mapPublicationLanguageToApiLanguage) : undefined,
         statuses: statusFilters.length ? statusFilters.map((status) => mapPublicationStatus(status, EventStatus)) : undefined,
         sort: getBaseContentSortOptions(sortValue, EventSortBy) as NonNullable<EventFiltersInput['sort']>
       },
       media: {
         search: normalizedSearch || undefined,
-        languages: languageFilters.length ? languageFilters.map(mapPublicationLanguageToApiLanguage) : undefined,
         statuses: statusFilters.length ? statusFilters.map((status) => mapPublicationStatus(status, MediaStatus)) : undefined,
         sort: getBaseContentSortOptions(sortValue, MediaMentionsSortBy) as NonNullable<MediaMentionsFiltersInput['sort']>
       }
     }),
-    [languageFilters, normalizedSearch, sortValue, statusFilters]
+    [normalizedSearch, sortValue, statusFilters]
   );
 
   const toggleFilters = useCallback(() => {
@@ -167,7 +150,6 @@ export function usePublicationsFiltering(): Readonly<{
 
   const clearFilters = useCallback(() => {
     setStatusFilters([]);
-    setLanguageFilters([]);
   }, []);
 
   const handleSortFieldChange = useCallback((field: SortFieldValue) => {
@@ -198,15 +180,13 @@ export function usePublicationsFiltering(): Readonly<{
         id: filter.id,
         label: filter.label,
         options: filter.options,
-        value: filter.id === 'status' ? statusFilters : languageFilters,
+        value: statusFilters,
         hideClearAction: true,
         menuMinWidth: filter.menuMinWidth,
         onChange:
-          filter.id === 'status'
-            ? (value: string[]) => setStatusFilters(value as PublicationsStatusValue[])
-            : (value: string[]) => setLanguageFilters(value as PublicationsLanguageValue[])
+          (value: string[]) => setStatusFilters(value as PublicationsStatusValue[])
       })),
-    [languageFilters, statusFilters]
+    [statusFilters]
   );
 
   const toolbarProps = useMemo<PublicationsFilteringToolbarProps>(

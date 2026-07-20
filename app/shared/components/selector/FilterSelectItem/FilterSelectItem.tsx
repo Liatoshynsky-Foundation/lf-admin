@@ -1,8 +1,8 @@
-import { MenuItem, MenuItemProps, Typography } from '@mui/material';
+import { Box, MenuItem, MenuItemProps, Typography } from '@mui/material';
+import { Check } from 'lucide-react';
 import React from 'react';
 
 import { styles } from './FilterSelectItem.styles';
-import CheckmarkIcon from '~/public/icons/checkmark.svg';
 
 export interface FilterSelectItemProps extends MenuItemProps {
   label: string;
@@ -11,8 +11,13 @@ export interface FilterSelectItemProps extends MenuItemProps {
 const FilterSelectItem = ({ label, sx, selected, ...props }: FilterSelectItemProps) => {
   return (
     <MenuItem selected={selected} sx={[styles.menuItem, ...(Array.isArray(sx) ? sx : [sx])]} {...props}>
-      <Typography variant="textMd">{label}</Typography>
-      {selected && <CheckmarkIcon width={15} height={11} aria-hidden />}
+      <Box sx={styles.content}>
+        <Typography variant="textMd" sx={styles.label}>
+          {label}
+        </Typography>
+
+        <Box sx={styles.endIcon}>{selected && <Check size={20} />}</Box>
+      </Box>
     </MenuItem>
   );
 };
