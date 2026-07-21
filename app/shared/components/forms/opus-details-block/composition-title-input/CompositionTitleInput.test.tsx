@@ -5,8 +5,7 @@ import CompositionTitleInput from './CompositionTitleInput';
 const mockUseSearchCompositions = jest.fn();
 
 jest.mock('~/shared/hooks/use-opuses/useOpuses', () => ({
-  useSearchCompositions: (search: string, options: { skip?: boolean }) =>
-    mockUseSearchCompositions(search, options)
+  useSearchCompositions: (search: string, options: { skip?: boolean }) => mockUseSearchCompositions(search, options)
 }));
 
 jest.mock('~/shared/hooks/use-debounce/useDebounce', () => ({
@@ -71,5 +70,76 @@ describe('CompositionTitleInput', () => {
     fireEvent.click(screen.getByText('Після бою'));
 
     expect(onSelectSuggestion).toHaveBeenCalledWith(expect.objectContaining({ genre: 'Романс' }));
+  });
+
+  it('does not trigger actions when free solo text is submitted', () => {
+    const onSelectSuggestion = jest.fn();
+    const onCreateNew = jest.fn();
+
+    render(
+      <CompositionTitleInput
+        {...baseProps}
+        value="Власний текст"
+        onSelectSuggestion={onSelectSuggestion}
+        onCreateNew={onCreateNew}
+      />
+    );
+
+    const input = screen.getByRole('combobox');
+
+    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
+
+    expect(onSelectSuggestion).not.toHaveBeenCalled();
+    expect(onCreateNew).not.toHaveBeenCalled();
+  });
+
+  it('renders english title when ukrainian title is missing', () => {
+    mockUseSearchCompositions.mockReturnValue({
+      data: {
+        searchCompositions: [
+          {
+            id: 'c1',
+            title: { uk: null, en: 'After Battle' },
+            genre: 'Romance',
+            year: 1920,
+            sheetMusic: [],
+            audios: []
+          }
+        ]
+      }
+    });
+
+    render(<CompositionTitleInput {...baseProps} value="After" />);
+
+    const input = screen.getByRole('combobox');
+    fireEvent.focus(input);
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+
+    expect(screen.getByText('After Battle')).toBeInTheDocument();
+  });
+
+  it('renders empty title when both ukrainian and english titles are missing', () => {
+    mockUseSearchCompositions.mockReturnValue({
+      data: {
+        searchCompositions: [
+          {
+            id: 'c1',
+            title: { uk: null, en: null },
+            genre: 'Romance',
+            year: 1920,
+            sheetMusic: [],
+            audios: []
+          }
+        ]
+      }
+    });
+
+    render(<CompositionTitleInput {...baseProps} value="A" />);
+
+    const input = screen.getByRole('combobox');
+    fireEvent.focus(input);
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+
+    expect(screen.getByText('Створити новий твір')).toBeInTheDocument();
   });
 });

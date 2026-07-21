@@ -20,7 +20,7 @@ interface CompositionOption {
   suggestion?: OpusCompositionSuggestion;
 }
 
-interface CompositionTitleInputProps {
+export interface CompositionTitleInputProps {
   value: string;
   onChangeText: (title: string) => void;
   onSelectSuggestion: (suggestion: OpusCompositionSuggestion) => void;
@@ -82,12 +82,7 @@ export default function CompositionTitleInput({
         const { key: _key, ...rest } = props;
 
         return (
-          <Box
-            component="li"
-            key={option.id}
-            {...rest}
-            sx={option.isCreate ? styles.createOption : styles.option}
-          >
+          <Box component="li" key={option.id} {...rest} sx={option.isCreate ? styles.createOption : styles.option}>
             {option.isCreate && <Plus size={18} strokeWidth={1.75} />}
             <Typography sx={styles.optionText}>{option.title}</Typography>
           </Box>

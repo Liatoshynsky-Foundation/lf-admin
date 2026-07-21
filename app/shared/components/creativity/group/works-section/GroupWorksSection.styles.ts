@@ -1,6 +1,10 @@
 import { Theme } from '@mui/material/styles';
 import { SxProps } from '@mui/system';
 
+const inputStyle = {
+  '& .MuiOutlinedInput-root': { borderRadius: '8px' }
+};
+
 export const styles: Record<string, SxProps<Theme>> = {
   container: {
     display: 'flex',
@@ -37,25 +41,9 @@ export const styles: Record<string, SxProps<Theme>> = {
     flexDirection: 'column',
     gap: '8px'
   },
-  compositionRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px'
-  },
-  compositionRowDragging: {
-    opacity: 0.5
-  },
-  dragHandle: {
-    display: 'flex',
-    alignItems: 'center',
-    cursor: 'grab',
-    flexShrink: 0,
-    color: '#9ca3af',
-    '&:active': { cursor: 'grabbing' }
-  },
   compositionInput: {
     flex: 1,
-    '& .MuiOutlinedInput-root': { borderRadius: '8px' }
+    ...inputStyle
   },
   rowIcon: {
     color: 'text.primary',
