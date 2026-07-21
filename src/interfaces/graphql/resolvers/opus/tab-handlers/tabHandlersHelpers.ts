@@ -21,7 +21,11 @@ export const attachCompositionsToGroups = async (
   groups: Opus[],
   compositionsRepo: ICompositionRepository
 ): Promise<OpusWithCompositions[]> => {
-  const uniqueIds = [...new Set(groups.flatMap((group) => group.compositions ?? []))];
+  const allCompositionIds = groups.flatMap((group) => 
+    (group.compositions ?? []).map((id) => id.toString())
+  );
+  
+  const uniqueIds = [...new Set(allCompositionIds)];
 
   if (uniqueIds.length === 0) {
     return groups.map((group) => ({ ...group, compositions: [] }));
@@ -29,10 +33,14 @@ export const attachCompositionsToGroups = async (
 
   const compositions = await compositionsRepo.findByIds(uniqueIds);
 
-  return groups.map((group) => ({
-    ...group,
-    compositions: orderCompositionsByIds(group.compositions ?? [], compositions)
-  }));
+  return groups.map((group) => {
+    const groupCompIds = (group.compositions ?? []).map((id) => id.toString());
+    
+    return {
+      ...group,
+      compositions: orderCompositionsByIds(groupCompIds, compositions)
+    };
+  });
 };
 
 export const mappedGroups = async (
@@ -50,8 +58,8 @@ export const mappedGroups = async (
   const total = await repo.count(mappedFilters);
   const groups: Opus[] = await repo.findAll(mappedFilters);
   
-  console.log('total:', total);
-  console.log('groups:', groups);
+  // console.log('total:', total);
+  // console.log('groups:', groups);
   return { groups, total };
 };
 

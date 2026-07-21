@@ -115,7 +115,8 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
       return combineConditions<DbOpus>([
         query,
         fieldCondition<DbOpus>('status', filters?.statuses as unknown as string[], OpusStatus.Draft as string),
-        fieldCondition<DbOpus>('numberKind', filters?.numberKind as unknown as string, OpusNumberKind.Op as string)
+        fieldCondition<DbOpus>('numberKind', filters?.numberKind as unknown as string, OpusNumberKind.Op as string),
+        { number: { $type: 'number' } }
       ]);
     },
     getDefaultSort: getBaseSort

@@ -47,6 +47,7 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
     setIsDeleteModalOpen,
     handleConfirmDelete
   } = useGroupContent(id);
+  console.log('GroupContentView called with id:', groupData);
 
   if (error) {
     return <GroupContentViewError message={error.message} />;

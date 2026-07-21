@@ -110,6 +110,7 @@ export function WorksPageContent({ activeTab }: WorksPageContentProps) {
     limit: ITEMS_PER_PAGE,
     skip: (page - 1) * ITEMS_PER_PAGE
   });
+  console.log('items:', items);
 
   const hasBaseItems = totalItems > 0;
   const hasActiveCriteria = Boolean(searchValue) || Boolean(toolbarProps.activeFiltersCount);

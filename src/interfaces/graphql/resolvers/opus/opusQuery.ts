@@ -28,7 +28,7 @@ export interface PaginatedWorksArgs {
 }
 
 export interface PaginatedWorksResult {
-  groups: Opus[];
+  groups: OpusWithCompositions[];
   works: Composition[];
   total: number;
   page: number;
@@ -65,8 +65,8 @@ export const OpusQuery = {
       await context.requestContainer.cradle.compositionsRepository.findByIds(compositionIds)
     );
 
-    console.log('opusById called with id:', opus);
-    console.log('compositions:', compositions);
+    // console.log('opusById called with id:', opus);
+    // console.log('compositions:', compositions);
 
     return { ...opus, compositions };
   },
@@ -86,6 +86,7 @@ export const OpusQuery = {
   },
 
   paginatedWorks: endpointHandler<PaginatedWorksArgs, PaginatedWorksResult>(async ({ args, repo, requestContainer }) => {
+    // console.log('paginatedWorks called with args:', args);
     const { tab, filters } = args;
     const pageSize = filters?.limit ?? 10;
     const skip = filters?.skip ?? 0;
@@ -93,9 +94,14 @@ export const OpusQuery = {
     const compositionsRepo = requestContainer.cradle.compositionsRepository;
 
     if (tab === WorksTab.Op || tab === WorksTab.Sineop) {
-      return handleGroup(tab, repo, compositionsRepo, filters, page, pageSize);
+      const result = await handleGroup(tab, repo, compositionsRepo, filters, page, pageSize);
+      // console.log('handleGroup result:', result);
+      return result;
     } else if (tab === WorksTab.Compositions) {
-      return handleWork(tab, repo, compositionsRepo, filters, page, pageSize);
+
+      const result = await handleWork(tab, repo, compositionsRepo, filters, page, pageSize);
+      console.log('handleWork result:', result);
+      return result;
     }
     return handleMixed(repo, compositionsRepo, filters, page, pageSize);
   }),

@@ -15,8 +15,6 @@ export async function handleWork (
   const groupsResult = await mappedGroups(repo, tab, filters);
   const compositionIds = groupsResult.groups[0]?.compositions ?? [];
   const compositions = await compositionRepo.findByIds(compositionIds);
-  console.log('groupsResult:', groupsResult);
-  console.log('compositions:', compositions);
 
   return {
     groups: [],

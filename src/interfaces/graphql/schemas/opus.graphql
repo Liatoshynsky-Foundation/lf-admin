@@ -42,7 +42,6 @@ type Opus {
   number: Float!
   numberKind: OpusNumberKind!
   title: LocalizedString!
-  releaseYear: Int
   name: LocalizedString!
   additionalText: String
   creationYear: String!

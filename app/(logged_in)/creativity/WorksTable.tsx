@@ -39,11 +39,12 @@ export type GroupRowData = Readonly<{
   endDate?: string;
   status: WorksStatusValue;
   updatedAt: string;
-  works: ReadonlyArray<{ id: string; name: string }>;
+  compositions: ReadonlyArray<{ id: string; name: string }>;
 }>;
 
 export type GroupHeaderData = Readonly<{
   numberLabel: number;
+  numberKind: 'op' | 'sineop';
   name: string;
   genre: string;
   startDate: string;
@@ -77,7 +78,7 @@ export const columns: readonly ColumnDef<GroupHeaderData, OpusWork, IndividualWo
     headerLabel: 'Опуси',
     width: '88px',
     hasRightDivider: true,
-    renderGroup: (group) => group.numberLabel
+    renderGroup: (group) => `${group.numberKind === 'op' ? 'op.' : 'sine-op.'} ${group.numberLabel}`
   },
   {
     id: 'title',
@@ -163,6 +164,7 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
       id: group.id,
       groupData: {
         numberLabel: group.number,
+        numberKind: group.numberKind,
         name: group.name,
         genre: group.genre,
         startDate: group.startDate,
@@ -185,7 +187,7 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
           menuTriggerLabel: `Дії групи ${group.name}`
         }
       },
-      subRows: group.works.map((work) => ({
+      subRows: group.compositions.map((work) => ({
         id: work.id,
         name: work.name,
         menuActions: {

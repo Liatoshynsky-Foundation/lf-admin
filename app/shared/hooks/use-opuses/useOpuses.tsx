@@ -39,6 +39,8 @@ export function usePaginatedWorks(tab?: WorksTab | null, filters?: WorksFiltersI
     fetchPolicy: 'network-only'
   });
 
+  console.log('data:', data);
+
   const groups: GroupRowData[] = (data?.paginatedWorks.groups ?? []).map((g) => ({
     id: g.id,
     number: g.number,
@@ -48,7 +50,7 @@ export function usePaginatedWorks(tab?: WorksTab | null, filters?: WorksFiltersI
     startDate: g.creationYear,
     status: g.status === OpusStatus.Published ? BaseContentStatuses.Published : BaseContentStatuses.Draft,
     updatedAt: g.updatedAt,
-    works:
+    compositions:
       g.compositions?.map((c) => ({
         id: c.id,
         name: c.name.uk
