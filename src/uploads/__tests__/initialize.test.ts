@@ -13,14 +13,12 @@ jest.mock('../../middleware/logger/logger', () => ({
 }));
 
 describe('Upload Module Initialization', () => {
-  const createMockConfig = (storageType: 'azure-blob' | 'cloud'): Config => ({
+  const createMockConfig = (): Config => ({
     uploads: {
       storage: {
-        type: storageType,
-        azureContainerName: 'test-container',
-        azureFolderPrefix: 'uploads',
-        cloudProvider: storageType === 'cloud' ? 'cloudflare' : undefined,
-        cloudConfig: storageType === 'cloud' ? {
+        type: 'cloud',
+        cloudProvider: 'cloudflare',
+        cloudConfig: {
           bucket: 'my-bucket',
           region: 'auto',
           endpoint: 'https://r2.com',
@@ -28,7 +26,7 @@ describe('Upload Module Initialization', () => {
             accessKeyId: 'key',
             secretAccessKey: 'secret'
           }
-        } : undefined,
+        },
         baseUrl: 'http://localhost'
       },
       maxFileSize: 1024,
@@ -40,17 +38,8 @@ describe('Upload Module Initialization', () => {
     jest.clearAllMocks();
   });
 
-  it('should correctly initialize with Azure Blob storage', () => {
-    const config = createMockConfig('azure-blob');
-    const uploadModule = initializeUploadModule(config);
-
-    expect(uploadModule.storageInfo.storageType).toBe('azure-blob');
-    expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('AZURE-BLOB'));
-    expect(uploadModule.uploadLimits.fileSize).toBe(1024);
-  });
-
   it('should correctly initialize with Cloud storage (Cloudflare)', () => {
-    const config = createMockConfig('cloud');
+    const config = createMockConfig();
     const uploadModule = initializeUploadModule(config);
 
     expect(uploadModule.storageInfo.storageType).toBe('cloud');
@@ -59,7 +48,7 @@ describe('Upload Module Initialization', () => {
   });
 
   it('should map cloud credentials correctly from config', () => {
-    const config = createMockConfig('cloud');
+    const config = createMockConfig();
     const uploadModule = initializeUploadModule(config);
 
     expect(uploadModule.controller).toBeDefined();

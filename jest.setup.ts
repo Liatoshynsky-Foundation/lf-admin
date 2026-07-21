@@ -85,36 +85,3 @@ jest.mock('~/middleware/logger/logger', () => ({
     debug: jest.fn()
   }
 }));
-
-jest.mock('@azure/storage-blob', () => {
-  type MockBlobServiceClient = jest.Mock & {
-    fromConnectionString: jest.Mock;
-  };
-
-  const mockBlockBlobClient = {
-    upload: jest.fn().mockResolvedValue({}),
-    uploadData: jest.fn().mockResolvedValue({}),
-    download: jest.fn().mockResolvedValue({}),
-    delete: jest.fn().mockResolvedValue({}),
-    exists: jest.fn().mockResolvedValue(true),
-    getProperties: jest.fn().mockResolvedValue({}),
-    url: 'https://mock.blob.url/test'
-  };
-
-  const mockContainerClient = {
-    getBlockBlobClient: jest.fn().mockReturnValue(mockBlockBlobClient),
-    listBlobsFlat: jest.fn().mockReturnValue([])
-  };
-
-  const mockBlobServiceClient = jest.fn().mockImplementation(() => ({
-    getContainerClient: jest.fn().mockReturnValue(mockContainerClient)
-  })) as MockBlobServiceClient;
-
-  mockBlobServiceClient.fromConnectionString = jest.fn().mockReturnValue({
-    getContainerClient: jest.fn().mockReturnValue(mockContainerClient)
-  });
-
-  return {
-    BlobServiceClient: mockBlobServiceClient
-  };
-});

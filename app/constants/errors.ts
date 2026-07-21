@@ -4,8 +4,7 @@ export const errors = {
   MISSING_MONGO_URL: '❌ mongoUrl is not defined or is empty',
   FAILED_TO_CONNECT_DB: '❌ Failed to connect to the database',
   RESPONSE_NOT_OK: '❌ HTTP error! Response is not 200 OK',
-  FAILED_TO_REFRESH: 'Failed to refresh token',
-  AZURE_URL_NOT_DEFINED: 'AZURE_SAS_URL environment variable is not defined'
+  FAILED_TO_REFRESH: 'Failed to refresh token'
 };
 
 export const loginErrors = {

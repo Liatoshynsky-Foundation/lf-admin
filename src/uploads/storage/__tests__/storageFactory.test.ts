@@ -2,7 +2,6 @@ import { createCloudStorage } from '../cloudStorage';
 import { createStorageAdapter, createStorageFromEnv } from '../storageFactory';
 import { StorageAdapter, StorageConfig, StorageType } from '../types';
 
-jest.mock('@azure/storage-blob');
 jest.mock('../../../middleware/logger/logger', () => ({
   default: {
     info: jest.fn(),
@@ -12,7 +11,6 @@ jest.mock('../../../middleware/logger/logger', () => ({
   }
 }));
 jest.mock('../cloudStorage');
-jest.mock('../azureBlobStorage');
 
 const mockCreateCloudStorage = createCloudStorage as jest.MockedFunction<typeof createCloudStorage>;
 
@@ -165,30 +163,6 @@ describe('storageFactory', () => {
         );
       });
 
-      it('should create Azure cloud storage adapter', () => {
-        const config: StorageConfig = {
-          type: 'cloud',
-          cloudProvider: 'azure',
-          cloudConfig: {
-            bucket: 'test-bucket',
-            credentials: {
-              accessKeyId: 'test-key',
-              secretAccessKey: 'test-secret'
-            }
-          }
-        };
-
-        mockCreateCloudStorage.mockReturnValue(mockAdapter);
-
-        createStorageAdapter(config);
-
-        expect(createCloudStorage).toHaveBeenCalledWith(
-          expect.objectContaining({
-            provider: 'azure',
-            bucket: 'test-bucket'
-          })
-        );
-      });
     });
 
     describe('unknown storage type', () => {

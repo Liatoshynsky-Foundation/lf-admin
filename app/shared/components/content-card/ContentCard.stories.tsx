@@ -3,6 +3,8 @@ import { fn } from '@storybook/test';
 
 import ContentCard from './ContentCard';
 
+const FALLBACK_IMAGE_SRC = 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/about-us-foundation-first.png';
+
 const meta = {
   title: 'Shared/ContentCard',
   component: ContentCard,
@@ -62,7 +64,7 @@ export const NewsCard: Story = {
     type: 'news',
     id: '1',
     coverImage: {
-      src: '/images/image.png',
+      src: FALLBACK_IMAGE_SRC,
       alt: { uk: 'Новина', en: 'News' }
     },
     title: { uk: 'Заголовок новини', en: 'News Title' },
@@ -78,7 +80,7 @@ export const EventCard: Story = {
     type: 'events',
     id: '2',
     coverImage: {
-      src: '/images/image.png',
+      src: FALLBACK_IMAGE_SRC,
       alt: { uk: 'Подія', en: 'Event' }
     },
     title: { uk: 'Концерт до дня народження Лятошинського' },
@@ -94,7 +96,7 @@ export const MediaCard: Story = {
     type: 'media',
     id: '3',
     coverImage: {
-      src: '/images/image.png',
+      src: FALLBACK_IMAGE_SRC,
       alt: { uk: 'ЗМІ', en: 'Media' }
     },
     title: { uk: 'Публікація у ЗМІ' },
@@ -124,7 +126,7 @@ export const WithClickHandler: Story = {
     type: 'news',
     id: '5',
     coverImage: {
-      src: '/images/image.png',
+      src: FALLBACK_IMAGE_SRC,
       alt: { uk: 'Новина', en: 'News' }
     },
     title: { uk: 'Картка з onClick замість href' },

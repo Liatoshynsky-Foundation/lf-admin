@@ -17,8 +17,6 @@ const setFieldMock = jest.fn();
 const toggleBlockVisibilityMock = jest.fn();
 const setFieldValidityMock = jest.fn();
 const usePageBlockMock = jest.fn();
-jest.mock('~/utils/uploadToTmpFolder', () => ({ handleUploadImage: jest.fn() }));
-jest.mock('~/types/graphql/generated/graphql', () => ({ useUploadBlobMutation: () => [jest.fn()] }));
 jest.mock('~/store', () => ({
   useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock; readonly toggleBlockVisibility: typeof toggleBlockVisibilityMock; readonly setFieldValidity: typeof setFieldValidityMock }) => unknown) =>
     selector({ locale: 'uk', setField: setFieldMock, toggleBlockVisibility: toggleBlockVisibilityMock, setFieldValidity: setFieldValidityMock })

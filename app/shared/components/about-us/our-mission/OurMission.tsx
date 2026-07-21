@@ -116,8 +116,7 @@ const OurMission = () => {
   };
 
   const handleCaptionChange = (key: 'smallImage' | 'bigImage', value: JSONContent) => {
-    const image = block[key];
-    if (!image) return;
+    const image = block[key]!;
     setField(pageId, blockId, key, {
       ...image,
       caption: { ...image.caption, [currentLocale]: value }
@@ -125,8 +124,7 @@ const OurMission = () => {
   };
 
   const handleImageChange = (key: 'smallImage' | 'bigImage', url: string, crop?: CropResult | null) => {
-    const image = block[key];
-    if (!image) return;
+    const image = block[key]!;
 
     setField(pageId, blockId, key, {
       ...image,

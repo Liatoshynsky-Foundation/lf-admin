@@ -3,6 +3,8 @@ import { fn } from '@storybook/test';
 
 import FileCard from './FileCard';
 
+const FALLBACK_IMAGE_SRC = 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/about-us-foundation-first.png';
+
 const meta = {
   title: 'Shared/FileCard',
   component: FileCard,
@@ -45,7 +47,7 @@ export const ImageFile: Story = {
       id: 'file-1',
       name: 'concert-photo.jpg',
       dateAdded: '15.01.2025',
-      imageSrc: '/images/image.png',
+      imageSrc: FALLBACK_IMAGE_SRC,
       isStarred: false,
       usageLinks: 3,
     },
@@ -102,7 +104,7 @@ export const StarredImage: Story = {
       id: 'file-5',
       name: 'starred-photo.png',
       dateAdded: '01.01.2025',
-      imageSrc: '/images/image.png',
+      imageSrc: FALLBACK_IMAGE_SRC,
       isStarred: true,
       usageLinks: 5,
     },

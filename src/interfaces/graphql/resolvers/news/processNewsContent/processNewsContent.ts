@@ -1,50 +1,6 @@
 import { extractImageSrcs } from '~/application/use-cases/extractImageSrc/extractImageSrc';
 import { removeTmpFlagsRecursively } from '~/application/use-cases/removeTmpFlags/removeTmpFlags';
-import { blobStorageService } from '~/application/use-cases/uploadService/upload';
 import { JsonValue } from '~/back-shared/types/pages/types';
-
-const shouldProcessImageSource = (src: string): boolean => {
-  if (!src || typeof src !== 'string') {
-    return false;
-  }
-
-  const trimmedSrc = src.trim();
-
-  if (trimmedSrc.startsWith('http://') || trimmedSrc.startsWith('https://')) {
-    return false;
-  }
-
-  if (trimmedSrc.startsWith('data:')) {
-    return false;
-  }
-
-  return trimmedSrc.length > 0;
-};
-
-const replaceImageSources = (data: JsonValue, replacementMap: Map<string, string>): JsonValue => {
-  if (!data || typeof data !== 'object') {
-    return data;
-  }
-
-  if (Array.isArray(data)) {
-    return data.map((item) => replaceImageSources(item, replacementMap));
-  }
-
-  const result: Record<string, unknown> = {};
-  const obj = data as Record<string, unknown>;
-
-  for (const [key, value] of Object.entries(obj)) {
-    if (key === 'src' && typeof value === 'string' && replacementMap.has(value)) {
-      result[key] = replacementMap.get(value);
-    } else if (typeof value === 'object' && value !== null) {
-      result[key] = replaceImageSources(value as JsonValue, replacementMap);
-    } else {
-      result[key] = value;
-    }
-  }
-
-  return result as JsonValue;
-};
 
 export type LocalizedContent = {
   uk: unknown;
@@ -88,59 +44,6 @@ const extractAllImageSources = (input: NewsContentInput): string[] => {
   return Array.from(allImages);
 };
 
-const processImageUpload = async (
-  oldSrc: string,
-  uploadService: ReturnType<typeof blobStorageService>,
-  replacementMap: Map<string, string>
-): Promise<void> => {
-  if (!shouldProcessImageSource(oldSrc)) {
-    return;
-  }
-
-  try {
-    await uploadService.copyBlobsToNewFolder('tmp', 'photos', [oldSrc]);
-
-    const newUrl = uploadService.constructBlobUrl('photos', oldSrc);
-    replacementMap.set(oldSrc, newUrl);
-
-    try {
-      await uploadService.deleteFile('tmp', oldSrc);
-    } catch (deleteError) {
-      console.error(`Failed to delete tmp blob ${oldSrc}:`, deleteError);
-    }
-  } catch (error) {
-    console.error(`Failed to process image ${oldSrc}:`, error);
-  }
-};
-
-const applyImageReplacements = <T extends NewsContentInput>(input: T, replacementMap: Map<string, string>): T => {
-  const updatedInput = structuredClone(input);
-
-  if (updatedInput.content.uk) {
-    updatedInput.content.uk = replaceImageSources(updatedInput.content.uk as JsonValue, replacementMap);
-  }
-
-  if (updatedInput.content.en) {
-    updatedInput.content.en = replaceImageSources(updatedInput.content.en as JsonValue, replacementMap);
-  }
-
-  if (updatedInput.description?.uk) {
-    updatedInput.description.uk = replaceImageSources(updatedInput.description.uk as JsonValue, replacementMap);
-  }
-
-  if (updatedInput.description?.en) {
-    updatedInput.description.en = replaceImageSources(updatedInput.description.en as JsonValue, replacementMap);
-  }
-
-  if (updatedInput.coverImage?.src && replacementMap.has(updatedInput.coverImage.src)) {
-    const newSrc = replacementMap.get(updatedInput.coverImage.src);
-    if (newSrc) {
-      updatedInput.coverImage.src = newSrc;
-    }
-  }
-  return updatedInput;
-};
-
 export const processNewsContent = async <T extends NewsContentInput>(input: T): Promise<T> => {
   const imageSources = extractAllImageSources(input);
 
@@ -148,19 +51,5 @@ export const processNewsContent = async <T extends NewsContentInput>(input: T): 
     return input;
   }
 
-  const uploadService = blobStorageService();
-  const replacementMap = new Map<string, string>();
-
-  for (const oldSrc of imageSources) {
-    await processImageUpload(oldSrc, uploadService, replacementMap);
-  }
-
-  if (replacementMap.size === 0) {
-    return input;
-  }
-
-  const updatedInput = applyImageReplacements(input, replacementMap);
-  const cleanedInput = removeTmpFlagsRecursively(updatedInput);
-
-  return cleanedInput;
+  return removeTmpFlagsRecursively(input) as T;
 };

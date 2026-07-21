@@ -461,7 +461,7 @@ export default function StyleGuide() {
             dateAdded: '01.01.2001',
             isStarred: true,
             usageLinks: 2,
-            imageSrc: '/images/image.png'
+            imageSrc: 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/about-us-foundation-first.png'
           }}
         />
       </SandboxSection>
