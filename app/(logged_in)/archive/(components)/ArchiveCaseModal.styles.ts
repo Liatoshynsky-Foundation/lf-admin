@@ -55,5 +55,11 @@ export const styles: Record<string, SxProps<Theme>> = {
   saveButton: {
     width: '100%',
     borderRadius: '28px'
+  },
+  multilineTextField: {
+    '& .MuiInputBase-root': {
+      height: 'auto',
+      p: '12px 16px'
+    }
   }
 };

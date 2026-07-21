@@ -11,7 +11,6 @@ import ActionableSuggestItem from '~/shared/components/composition-modal/actiona
 import FileItem from '~/shared/components/composition-modal/file-item/FileItem';
 import LabelActionRow from '~/shared/components/composition-modal/label-action-row/LabelActionRow';
 import LabelRow from '~/shared/components/composition-modal/label-row/LabelRow';
-import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
 import UploadView from '~/shared/components/media-modal/views/upload-view/UploadView';
 import { useArchiveCaseModal } from '~/shared/hooks/use-archive-case-modal/useArchiveCaseModal';
@@ -120,13 +119,14 @@ export const ArchiveCaseModal = ({ isOpen, setIsOpen }: ArchiveCaseModalProps) =
 
               <Stack spacing={2}>
                 <LabelRow title={ARCHIVE_CASE_MODAL_LABELS.detailedDescription} />
-                <CustomTextField
-                  fieldType='formatting'
+                <TextField
+                  multiline
                   label={ARCHIVE_CASE_MODAL_LABELS.documents}
+                  rows={3}
                   value={detailedCaseDescription}
-                  onChange={(value) =>
-                    setDetailedCaseDescription(value)
-                  }
+                  onChange={(e) => setDetailedCaseDescription(e.target.value)}
+                  fullWidth
+                  sx={styles.multilineTextField}
                 />
               </Stack>
             </Stack>
@@ -135,7 +135,7 @@ export const ArchiveCaseModal = ({ isOpen, setIsOpen }: ArchiveCaseModalProps) =
         </DialogContent>
 
         <DialogActions sx={styles.dialogActions}>
-          <Button variant='outlined' sx={styles.cancelButton} onClick={handleCancel}>
+          <Button variant='outlined' sx={styles.cancelButton} onClick={handleCancel} disabled={isSubmitDisabled}>
             {ARCHIVE_CASE_MODAL_LABELS.cancel}
           </Button>
           <Button

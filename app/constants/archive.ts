@@ -1,5 +1,3 @@
-import { JSONContent } from '@tiptap/react';
-
 import { FilterOption } from '~/shared/components/selector/FilterSelect';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
@@ -55,19 +53,4 @@ export const PDF_FILE_ACCEPT = 'application/pdf,.pdf';
 export const INITIAL_PDF_ENTRY: PdfEntry = {
   name: null,
   fileName: null,
-};
-
-export const INITIAL_DETAILED_CASE_DESCRIPTION: JSONContent = {
-  type: 'doc',
-  content: [
-    {
-      type: 'paragraph',
-      content: [
-        {
-          type: 'text',
-          text: '',
-        },
-      ],
-    },
-  ],
 };

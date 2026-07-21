@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 
 import { useArchiveCaseModal, type UseArchiveCaseModalProps } from './useArchiveCaseModal';
-import { INITIAL_DETAILED_CASE_DESCRIPTION, INITIAL_PDF_ENTRY } from '~/constants/archive';
+import { INITIAL_PDF_ENTRY } from '~/constants/archive';
 import { AssetType } from '~/types/graphql/generated/graphql';
 
 const useAllAssetsMock = jest.fn();
@@ -43,7 +43,7 @@ describe('useArchiveCaseModal', () => {
           setCaseDate: expect.any(Function),
           currentPdfFile: INITIAL_PDF_ENTRY,
           setCurrentPdfFile: expect.any(Function),
-          detailedCaseDescription: INITIAL_DETAILED_CASE_DESCRIPTION,
+          detailedCaseDescription: '',
           setDetailedCaseDescription: expect.any(Function),
           caseName: '',
           setCaseName: expect.any(Function),
@@ -173,11 +173,13 @@ describe('useArchiveCaseModal', () => {
         result.current.setDescriptionNumber('10');
         result.current.setCaseNumber('123');
         result.current.setCaseName('Case Title');
+        result.current.setDetailedCaseDescription('Some detailed description');
       });
 
       expect(result.current.descriptionNumber).toBe('10');
       expect(result.current.caseNumber).toBe('123');
       expect(result.current.caseName).toBe('Case Title');
+      expect(result.current.detailedCaseDescription).toBe('Some detailed description');
 
       act(() => {
         result.current.clearInputs();
@@ -186,6 +188,7 @@ describe('useArchiveCaseModal', () => {
       expect(result.current.descriptionNumber).toBe('');
       expect(result.current.caseNumber).toBe('');
       expect(result.current.caseName).toBe('');
+      expect(result.current.detailedCaseDescription).toBe('');
     });
   });
 

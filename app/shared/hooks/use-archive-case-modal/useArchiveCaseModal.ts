@@ -1,9 +1,7 @@
-import { JSONContent } from '@tiptap/react';
 import { useMemo, useState } from 'react';
 
 import { useAllAssets } from '../use-assets/useAssets';
 import {
-  INITIAL_DETAILED_CASE_DESCRIPTION,
   INITIAL_PDF_ENTRY,
   PDF_MIME_TYPE,
   PdfEntry,
@@ -22,14 +20,13 @@ export const useArchiveCaseModal = ({ setIsOpen }: UseArchiveCaseModalProps) => 
   const [sheetsNumber, setSheetsNumber] = useState('');
   const [caseDate, setCaseDate] = useState('');
   const [currentPdfFile, setCurrentPdfFile] = useState<PdfEntry>(INITIAL_PDF_ENTRY);
-  const [detailedCaseDescription, setDetailedCaseDescription] =
-    useState<JSONContent>(INITIAL_DETAILED_CASE_DESCRIPTION);
+  const [detailedCaseDescription, setDetailedCaseDescription] = useState<string>('');
   const [caseName, setCaseName] = useState<string>('');
   const [caseDescriptions, setCaseDescriptions] = useState<string>('');
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
-  const isDirty = descriptionNumber.trim() || caseNumber.trim() || sheetsNumber.trim() || caseDate.trim() || currentPdfFile.fileName ||currentPdfFile.name || detailedCaseDescription || caseName.trim() || caseDescriptions.trim();
+  const isDirty = descriptionNumber.trim() || caseNumber.trim() || sheetsNumber.trim() || caseDate.trim() || currentPdfFile.fileName || currentPdfFile.name || detailedCaseDescription.trim() || caseName.trim() || caseDescriptions.trim();
   
   const clearInputs = () => {
     setDescriptionNumber('');
@@ -37,7 +34,7 @@ export const useArchiveCaseModal = ({ setIsOpen }: UseArchiveCaseModalProps) => 
     setSheetsNumber('');
     setCaseDate('');
     setCurrentPdfFile(INITIAL_PDF_ENTRY);
-    setDetailedCaseDescription(INITIAL_DETAILED_CASE_DESCRIPTION);
+    setDetailedCaseDescription('');
     setCaseName('');
     setCaseDescriptions('');
   };
