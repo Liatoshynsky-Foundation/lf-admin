@@ -9,7 +9,7 @@ import { GroupMenuItems, WorkMenuItems } from './WorksTableMenuItems';
 import {
   AllTab,
   OpusTab,
-  WooTab,
+  SineopTab,
   WORKS_BASE_PATH,
   WORKS_TABS_NAMES,
   WorksStatusValue,
@@ -31,20 +31,20 @@ type ActionFields = {
 
 export type GroupRowData = Readonly<{
   id: string;
-  number: string;
-  numberKind: 'op' | 'bo';
+  number: number;
+  numberKind: 'op' | 'sineop';
   name: string;
   genre: string;
   startDate: string;
   endDate?: string;
   status: WorksStatusValue;
   updatedAt: string;
-  works: ReadonlyArray<{ id: string; title: string }>;
+  works: ReadonlyArray<{ id: string; name: string }>;
 }>;
 
 export type GroupHeaderData = Readonly<{
-  numberLabel: string;
-  title: string;
+  numberLabel: number;
+  name: string;
   genre: string;
   startDate: string;
   endDate?: string;
@@ -55,13 +55,13 @@ export type GroupHeaderData = Readonly<{
 
 export type OpusWork = Readonly<{
   id: string;
-  title: string;
+  name: string;
 }> &
   ActionFields;
 
 export type IndividualWork = Readonly<{
   id: string;
-  title: string;
+  name: string;
   year: string | number | null | undefined;
   genre: string | null | undefined;
   status: WorksStatusValue;
@@ -83,9 +83,9 @@ export const columns: readonly ColumnDef<GroupHeaderData, OpusWork, IndividualWo
     id: 'title',
     headerLabel: 'Назва',
     width: 'minmax(220px, 1fr)',
-    renderGroup: (group) => group.title,
-    renderSub: (work) => work.title,
-    renderPlain: (work) => work.title
+    renderGroup: (group) => group.name,
+    renderSub: (work) => work.name,
+    renderPlain: (work) => work.name
   },
   {
     id: 'genre',
@@ -143,7 +143,7 @@ type WorksTableProps =
       items: GroupItems;
     }
   | {
-      activeTab: WooTab;
+      activeTab: SineopTab;
       items: GroupItems;
     }
   | {
@@ -163,7 +163,7 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
       id: group.id,
       groupData: {
         numberLabel: group.number,
-        title: group.name,
+        name: group.name,
         genre: group.genre,
         startDate: group.startDate,
         endDate: group.endDate,
@@ -187,14 +187,14 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
       },
       subRows: group.works.map((work) => ({
         id: work.id,
-        title: work.title,
+        name: work.name,
         menuActions: {
           menuItems: WorkMenuItems({
             id: work.id,
             isPublished,
             setDeleteModalOpen: modalMock
           }),
-          menuTriggerLabel: `Дії твору ${work.title}`
+          menuTriggerLabel: `Дії твору ${work.name}`
         }
       }))
     };
@@ -208,14 +208,14 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
       id: work.id,
       plainData: {
         id: work.id,
-        title: work.title,
+        name: work.name,
         genre: work.genre,
         year: work.year,
         status: work.status,
         updatedAt: work.updatedAt,
         editAction: {
           editHref: `${WORKS_BASE_PATH}/work/${work.id}/edit`,
-          editLabel: `Редагувати твір ${work.title}`
+          editLabel: `Редагувати твір ${work.name}`
         },
         menuActions: {
           menuItems: WorkMenuItems({
@@ -223,7 +223,7 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
             isPublished,
             setDeleteModalOpen: modalMock
           }),
-          menuTriggerLabel: `Дії твору ${work.title}`
+          menuTriggerLabel: `Дії твору ${work.name}`
         }
       }
     };
@@ -244,7 +244,7 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
     break;
 
   case WORKS_TABS_NAMES.OPUS:
-  case WORKS_TABS_NAMES.WOO:
+  case WORKS_TABS_NAMES.SINEOP:
     pushGroupRows(items.groups);
     break;
 

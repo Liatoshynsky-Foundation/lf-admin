@@ -8,15 +8,15 @@ import { OpusCompositionData } from '~/types/opus';
 
 export const WORKS_TABS_NAMES = {
   ALL: 'all',
-  OPUS: 'opus',
-  WOO: 'woo',
-  WORKS: 'works'
+  OPUS: 'op',
+  SINEOP: 'sineop',
+  WORKS: 'compositions'
 } as const;
 
 export type WorksTabValue = (typeof WORKS_TABS_NAMES)[keyof typeof WORKS_TABS_NAMES];
 export type AllTab = typeof WORKS_TABS_NAMES.ALL;
 export type OpusTab = typeof WORKS_TABS_NAMES.OPUS;
-export type WooTab = typeof WORKS_TABS_NAMES.WOO;
+export type SineopTab = typeof WORKS_TABS_NAMES.SINEOP;
 export type WorksTab = typeof WORKS_TABS_NAMES.WORKS;
 
 export type WorksStatusValue = (typeof WORKS_STATUSES)[number];
@@ -53,9 +53,9 @@ export const WORKS_STATUSES = [
 
 export const WORKS_TABS: ReadonlyArray<WorksTabConfig> = [
   { value: WORKS_TABS_NAMES.ALL, label: 'Всі', href: WORKS_BASE_PATH },
-  { value: WORKS_TABS_NAMES.OPUS, label: 'Опуси', href: `${WORKS_BASE_PATH}/opus` },
-  { value: WORKS_TABS_NAMES.WOO, label: 'Безопусні', href: `${WORKS_BASE_PATH}/woo` },
-  { value: WORKS_TABS_NAMES.WORKS, label: 'Твори', href: `${WORKS_BASE_PATH}/works` }
+  { value: WORKS_TABS_NAMES.OPUS, label: 'Опуси', href: `${WORKS_BASE_PATH}/op` },
+  { value: WORKS_TABS_NAMES.SINEOP, label: 'Безопусні', href: `${WORKS_BASE_PATH}/sineop` },
+  { value: WORKS_TABS_NAMES.WORKS, label: 'Твори', href: `${WORKS_BASE_PATH}/compositions` }
 ];
 
 export const WORKS_CREATE_OPTIONS: ReadonlyArray<WorksCreateOption> = [
@@ -110,7 +110,7 @@ export const WORKS_PUBLISH_RESTRICTION_MESSAGE =
 
 export interface GroupWork {
   id: string;
-  title: string;
+  name: string;
   genre?: { uk: string; en: string };
 }
 
@@ -146,7 +146,7 @@ export interface GroupData {
   parts: { uk: string; en: string };
   description: { uk: Record<string, unknown>; en: Record<string, unknown> };
   photos: GroupPhoto[];
-  works: OpusCompositionData[];
+  compositions: OpusCompositionData[];
   performancesTitle: string;
   performances: GroupPerformance[];
   status: string;

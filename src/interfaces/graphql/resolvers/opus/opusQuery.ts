@@ -3,7 +3,8 @@ import { GraphQLError } from 'graphql';
 import { endpointRepositoryHandler, mapFilters } from '../helpers';
 import { handleGroup } from './tab-handlers/handleGroup';
 import { handleMixed } from './tab-handlers/handleMixed';
-import { handleWorksTab } from './tab-handlers/handleWork';
+import { handleWork } from './tab-handlers/handleWork';
+import { orderCompositionsByIds } from './tab-handlers/tabHandlersHelpers';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
 import { Composition } from '~/domain/entities/Composition';
@@ -14,7 +15,7 @@ interface IdArgs {
   id: string;
 }
 interface NumberArgs {
-  number: string;
+  number: number;
 }
 interface SearchArgs {
   search: string;
@@ -34,6 +35,10 @@ export interface PaginatedWorksResult {
   totalPages: number;
 }
 
+type OpusWithCompositions = Omit<Opus, 'compositions'> & {
+  compositions: Composition[];
+};
+
 const assertAuthenticated = (context: GraphQLContext): void => {
   if (!context.admin) {
     throw new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
@@ -45,16 +50,23 @@ const assertAuthenticated = (context: GraphQLContext): void => {
 const endpointHandler = endpointRepositoryHandler('opusRepository');
 
 export const OpusQuery = {
-  opusById: async (_: unknown, { id }: IdArgs, context: GraphQLContext): Promise<Opus | null> => {
+  opusById: async (_: unknown, { id }: IdArgs, context: GraphQLContext): Promise<OpusWithCompositions | null> => {
     assertAuthenticated(context);
-
+    
     const opus = await context.requestContainer.cradle.opusRepository.findById(id);
 
     if (!opus) {
       return null;
     }
 
-    const compositions = await context.requestContainer.cradle.compositionsRepository.findByOpusId(id);
+    const compositionIds = (opus.compositions ?? []).map((comp): string => comp.toString());
+    const compositions = orderCompositionsByIds(
+      compositionIds,
+      await context.requestContainer.cradle.compositionsRepository.findByIds(compositionIds)
+    );
+
+    console.log('opusById called with id:', opus);
+    console.log('compositions:', compositions);
 
     return { ...opus, compositions };
   },
@@ -75,15 +87,15 @@ export const OpusQuery = {
 
   paginatedWorks: endpointHandler<PaginatedWorksArgs, PaginatedWorksResult>(async ({ args, repo, requestContainer }) => {
     const { tab, filters } = args;
-    const compositionsRepo = requestContainer.cradle.compositionsRepository;
     const pageSize = filters?.limit ?? 10;
     const skip = filters?.skip ?? 0;
     const page = Math.floor(skip / pageSize) + 1;
+    const compositionsRepo = requestContainer.cradle.compositionsRepository;
 
-    if (tab === WorksTab.Opus || tab === WorksTab.Woo) {
-      return handleGroup(tab, repo, filters, page, compositionsRepo, pageSize);
-    } else if (tab === WorksTab.Works) {
-      return handleWorksTab(compositionsRepo, filters, page, pageSize);
+    if (tab === WorksTab.Op || tab === WorksTab.Sineop) {
+      return handleGroup(tab, repo, compositionsRepo, filters, page, pageSize);
+    } else if (tab === WorksTab.Compositions) {
+      return handleWork(tab, repo, compositionsRepo, filters, page, pageSize);
     }
     return handleMixed(repo, compositionsRepo, filters, page, pageSize);
   }),

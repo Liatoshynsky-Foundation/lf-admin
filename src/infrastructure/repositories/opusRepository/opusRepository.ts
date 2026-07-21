@@ -25,11 +25,10 @@ export type DbOpusPerformance = {
 
 export type DbOpus = {
   _id: { toString(): string };
-  number: string;
-  title: Opus['title'];
-  releaseYear?: number | null;
-  numberKind: Opus['numberKind'];
+  number: number;
   name: Opus['name'];
+  numberKind: Opus['numberKind'];
+  title: Opus['title'];
   additionalText?: string | null;
   creationYear: string;
   endYear?: string | null;
@@ -51,6 +50,7 @@ export type DbOpus = {
   publishedAt?: string | null;
   createdAt: string;
   updatedAt: string;
+  compositions: string[];
 };
 
 type OpusRepoDeps = Readonly<{
@@ -61,7 +61,6 @@ const toEntity = (doc: DbOpus): Opus =>
   createToEntity<Opus, DbOpus>(doc, {
     number: doc.number,
     title: doc.title,
-    releaseYear: doc.releaseYear ?? undefined,
     numberKind: doc.numberKind ?? 'op',
     name: typeof doc.name === 'string' ? { uk: doc.name, en: doc.name } : (doc.name ?? { uk: '', en: '' }),
     additionalText: doc.additionalText ?? undefined,
@@ -102,7 +101,8 @@ const toEntity = (doc: DbOpus): Opus =>
     coverImage: doc.coverImage ?? undefined,
     status: doc.status ?? undefined,
     meta: doc.meta ?? { views: 0 },
-    publishedAt: doc.publishedAt ?? undefined
+    publishedAt: doc.publishedAt ?? undefined,
+    compositions: doc.compositions ?? undefined,
   });
 
 export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => {
@@ -121,7 +121,7 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
     getDefaultSort: getBaseSort
   });
 
-  const findByNumber = async (number: string): Promise<Opus | null> => {
+  const findByNumber = async (number: number): Promise<Opus | null> => {
     await dbConnect();
 
     if (!number) {
@@ -129,8 +129,38 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
     }
 
     const doc = await OpusModel.findOne({ number }).lean<DbOpus>();
+    console.log('found doc:', doc);
     return doc ? toEntity(doc) : null;
   };
+
+  const moveCompositionsToLooseOpus = async (compositionIds: string[]): Promise<void> => {
+    if (compositionIds.length === 0) {
+      return;
+    }
+
+    const looseOpus = await OpusModel.findOne({ numberKind: 'compositions' }).lean<{ _id: string }>();
+
+    if (!looseOpus) {
+      await new OpusModel({
+        numberKind: 'compositions',
+        number: 0,
+        compositions: compositionIds
+      }).save();
+      return;
+    }
+
+    await OpusModel.updateOne(
+      { _id: looseOpus._id },
+      { $addToSet: { compositions: { $each: compositionIds } } }
+    );
+  };
+
+  const unlink = async (opusId: string): Promise<void> => {
+    await dbConnect();
+    const opus = await OpusModel.findById(opusId).lean<{ compositions?: string[] }>();
+    await moveCompositionsToLooseOpus(opus?.compositions ?? []);
+  };
+
 
   return {
     ...baseRepo,
@@ -151,6 +181,8 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
 
       const newOpus = await new OpusModel(opusData).save();
       return toEntity(newOpus.toObject() as unknown as DbOpus);
-    }
+    },
+    unlink,
+    moveCompositionsToLooseOpus
   };
 };

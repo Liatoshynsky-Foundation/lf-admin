@@ -42,7 +42,7 @@ export function usePaginatedWorks(tab?: WorksTab | null, filters?: WorksFiltersI
   const groups: GroupRowData[] = (data?.paginatedWorks.groups ?? []).map((g) => ({
     id: g.id,
     number: g.number,
-    numberKind: g.numberKind === 'op' ? 'op' : 'bo',
+    numberKind: g.numberKind === 'op' ? 'op' : 'sineop',
     name: g.name.uk,
     genre: g.genre ?? '',
     startDate: g.creationYear,
@@ -51,16 +51,16 @@ export function usePaginatedWorks(tab?: WorksTab | null, filters?: WorksFiltersI
     works:
       g.compositions?.map((c) => ({
         id: c.id,
-        title: c.title.uk
+        name: c.name.uk
       })) ?? []
   }));
 
   const works: IndividualWork[] = (data?.paginatedWorks.works ?? []).map((w) => ({
     id: w.id,
-    title: w.title.uk,
+    name: w.name.uk,
     year: w.year,
     genre: w.genre,
-    status: w.status === OpusStatus.Published ? BaseContentStatuses.Published : BaseContentStatuses.Draft,
+    status: BaseContentStatuses.Draft,
     updatedAt: w.updatedAt
   }));
 

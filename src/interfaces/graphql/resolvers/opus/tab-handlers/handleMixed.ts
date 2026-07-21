@@ -1,9 +1,8 @@
-import { mapFilters } from '../../helpers';
 import { PaginatedWorksResult, WorksFilter } from '../opusQuery';
-import { mappedCompositions, mappedGroups, totalPages } from './tabHandlersHelpers';
-import { CompositionFilters, ICompositionRepository } from '~/src/domain/repositories/compositionRepository';
-import { IOpusRepository, OpusFilters } from '~/src/domain/repositories/opusRepository';
-import { OpusNumberKind } from '~/types/graphql/generated/graphql';
+import { attachCompositionsToGroups, mappedGroups, orderCompositionsByIds, totalPages } from './tabHandlersHelpers';
+import { ICompositionRepository } from '~/src/domain/repositories/compositionRepository';
+import { IOpusRepository } from '~/src/domain/repositories/opusRepository';
+import { WorksTab } from '~/types/graphql/generated/graphql';
 
 export async function handleMixed(
   repo: IOpusRepository,
@@ -12,73 +11,49 @@ export async function handleMixed(
   page: number,
   pageSize: number
 ): Promise<PaginatedWorksResult> {
-  const opFilters: OpusFilters = {
-    ...mapFilters<OpusFilters>(filters),
-    numberKind: OpusNumberKind.Op
-  };
+  const opResult = await mappedGroups(repo, WorksTab.Op, filters);
+  const sineopResult = await mappedGroups(repo, WorksTab.Sineop, filters);
+  const standaloneResult = await mappedGroups(repo, WorksTab.Compositions, filters);
 
-  const wooFilters: OpusFilters = {
-    ...mapFilters<OpusFilters>(filters),
-    numberKind: OpusNumberKind.Woo
-  };
+  const standaloneCompositionIds = standaloneResult.groups[0]?.compositions ?? [];
+  const standaloneCompositions = standaloneCompositionIds.length
+    ? orderCompositionsByIds(
+      standaloneCompositionIds,
+      await compositionsRepo.findByIds(standaloneCompositionIds)
+    )
+    : [];
 
-  const compositionFilters: CompositionFilters = {
-    ...mapFilters<CompositionFilters>(filters),
-    isStandalone: true
-  };
-
-  const totalOp = await repo.count(opFilters);
-  const totalWoo = await repo.count(wooFilters);
-  const totalWorks = await compositionsRepo.count(compositionFilters);
-
-  const totalGroups = totalOp + totalWoo;
+  const totalGroups = opResult.total + sineopResult.total;
+  const totalWorks = standaloneCompositions.length;
   const totalItems = totalGroups + totalWorks;
 
   const offset = (page - 1) * pageSize;
 
   const groups = [];
   const works = [];
-
   let remaining = pageSize;
 
-  if (offset < totalOp && remaining > 0) {
-    const take = Math.min(remaining, totalOp - offset);
-
-    const result = await mappedGroups(repo, compositionsRepo, {
-      ...opFilters,
-      skip: offset,
-      limit: take
-    });
-
-    groups.push(...result.groups);
+  if (offset < opResult.total && remaining > 0) {
+    const take = Math.min(remaining, opResult.total - offset);
+    const opGroups = await attachCompositionsToGroups(opResult.groups.slice(offset, offset + take), compositionsRepo);
+    groups.push(...opGroups);
     remaining -= take;
   }
 
-  const wooOffset = Math.max(0, offset - totalOp);
-
-  if (remaining > 0 && wooOffset < totalWoo) {
-    const take = Math.min(remaining, totalWoo - wooOffset);
-
-    const result = await mappedGroups(repo, compositionsRepo, {
-      ...wooFilters,
-      skip: wooOffset,
-      limit: take
-    });
-
-    groups.push(...result.groups);
+  const sineopOffset = Math.max(0, offset - opResult.total);
+  if (remaining > 0 && sineopOffset < sineopResult.total) {
+    const take = Math.min(remaining, sineopResult.total - sineopOffset);
+    const sineopGroups = await attachCompositionsToGroups(
+      sineopResult.groups.slice(sineopOffset, sineopOffset + take),
+      compositionsRepo
+    );
+    groups.push(...sineopGroups);
     remaining -= take;
   }
 
   const worksOffset = Math.max(0, offset - totalGroups);
-
-  if (remaining > 0) {
-    const result = await mappedCompositions(compositionsRepo, {
-      ...compositionFilters,
-      skip: worksOffset,
-      limit: remaining
-    });
-
-    works.push(...result.works);
+  if (remaining > 0 && worksOffset < totalWorks) {
+    works.push(...standaloneCompositions.slice(worksOffset, worksOffset + remaining));
   }
 
   return {

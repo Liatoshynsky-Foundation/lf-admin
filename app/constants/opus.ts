@@ -50,7 +50,7 @@ export const OPUS_VALIDATION_MESSAGES = {
 export const COMPOSITION_MODAL_LABELS = {
   createTitle: 'Нова композиція',
   editTitle: 'Редагування композиції',
-  title: 'Назва твору',
+  name: 'Назва твору',
   genre: 'Жанр',
   year: 'Рік',
   audio: 'Аудіо',

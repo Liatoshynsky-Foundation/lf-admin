@@ -6,6 +6,7 @@ import {
   OPUS_FIELD_LIMITS,
   OPUS_VALIDATION_MESSAGES
 } from '~/constants/opus';
+import { generateUniqueId } from '~/lib/utils/generateUniqueId';
 import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import { useCreateOpus, useOpusById, useUpdateOpus } from '~/shared/hooks/use-opuses/useOpuses';
 import { CropRect } from '~/types/common';
@@ -19,17 +20,11 @@ import type {
   OpusDetailsValue
 } from '~/types/opus';
 
-let compositionIdCounter = 0;
-
-export const createCompositionId = (): string => {
-  compositionIdCounter += 1;
-
-  return `composition-${compositionIdCounter}`;
-};
+export const createCompositionId = (): string => generateUniqueId();
 
 const toCompositionInput = (composition: OpusCompositionData): OpusCompositionInput => ({
-  id: composition.compositionId,
-  title: composition.title.trim(),
+  id: composition.id,
+  name: composition.name.trim(),
   genre: composition.genre.trim() || undefined,
   year: composition.year.trim() || undefined,
   audios: composition.audios
@@ -40,7 +35,6 @@ const toCompositionInput = (composition: OpusCompositionData): OpusCompositionIn
     .map((note) => ({ name: note.name.trim(), fileUrl: note.fileUrl, publishDate: note.publishDate }))
 });
 
-const parseOpusNumber = (number: string): string => number.replace(/^(op|woo|wo|bo)[.\-\s]*/i, '');
 
 const fileNameFromUrl = (url?: string | null): string => {
   if (!url) {
@@ -117,17 +111,17 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}) => {
 
     changeDetails({
       numberKind: fetched.numberKind ?? 'op',
-      number: parseOpusNumber(fetched.number ?? ''),
+      number: fetched.number.toString() ?? '',
       name: fetched.name?.uk ?? '',
       additionalText: fetched.additionalText ?? '',
       creationYear: fetched.creationYear ?? '',
       endYear: fetched.endYear ?? '',
       datesNote: fetched.datesNote ?? '',
       genre: fetched.genre ?? '',
-      compositions: (fetched.compositions ?? []).map((composition) => ({
-        id: createCompositionId(),
-        compositionId: composition.id,
-        title: composition.title?.uk ?? '',
+      compositions: (fetched.compositions ?? []).map((composition, index) => ({
+        id: composition.id,
+        order: composition.order ?? index + 1,
+        name: composition.name?.uk ?? '',
         genre: composition.genre ?? '',
         year: composition.year == null ? '' : String(composition.year),
         audios: (composition.audios ?? []).map((audio) => ({
@@ -217,10 +211,9 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}) => {
 
     const { uk: ukMeta, en: enMeta } = currentSeo.meta;
     const opusName = currentDetails.name.trim();
-
     const input = {
       numberKind: currentDetails.numberKind as unknown as OpusNumberKind,
-      number: currentDetails.number.trim(),
+      number: Number(currentDetails.number.trim()),
       name: { 
         uk: opusName, 
         en: opusName 
@@ -245,10 +238,15 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}) => {
       status: status as unknown as OpusStatus,
       publishedAt: status === BaseContentStatuses.Published ? new Date().toISOString() : undefined
     };
+    console.log('input Opus :', input); 
+
 
     if (isEditing && id) {
       const response = await updateOpus({ id, input });
       const updatedId = response.data?.updateOpus?.id;
+
+      console.log('Updated Opus ID:', updatedId); 
+      console.log('Updated Opus response:', response); 
 
       if (updatedId) {
         setIsSaved(true);
@@ -259,6 +257,8 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}) => {
 
     const response = await createOpus(input);
     const createdId = response.data?.createOpus?.id;
+    console.log('Created Opus ID:', createdId); 
+    console.log('Created Opus response:', response); 
 
     if (createdId) {
       setIsSaved(true);

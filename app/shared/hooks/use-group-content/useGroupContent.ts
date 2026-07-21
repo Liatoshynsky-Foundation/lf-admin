@@ -2,6 +2,7 @@ import { useSearchParams } from 'next/navigation';
 import { MouseEvent, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { createCompositionId } from '../use-upsert-opus/useUpsertOpus';
 import { GroupData, GroupDataField, GroupPhoto } from '~/constants/creativity';
 import { EditorLanguage } from '~/constants/publications';
 import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
@@ -42,12 +43,6 @@ const mapNumberKindToPrefix = (kind: string | null | undefined): string => {
   const lowerKind = kind.toLowerCase();
   if (lowerKind === 'woo') return 'Bo.';
   return 'Op.';
-};
-
-let compositionIdCounter = 0;
-export const createCompositionId = (): string => {
-  compositionIdCounter += 1;
-  return `composition-${compositionIdCounter}`;
 };
 
 const fileNameFromUrl = (url?: string | null): string => {
@@ -151,27 +146,24 @@ export const useGroupContent = (id: string) => {
             en: perf.title?.en ?? ''
           }
         })),
-        works: (fetchedOpus.compositions || [])
-          .slice()
-          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-          .map((composition) => ({
+        compositions: (fetchedOpus.compositions || []).map((composition, index) => ({
+          id: composition.id,
+          order: composition.order ?? index + 1,
+          name: composition.name?.uk ?? composition.name?.en ?? '',
+          genre: composition.genre ?? '',
+          year: composition.year == null ? '' : String(composition.year),
+          audios: (composition.audios ?? []).map((audio: AudioItem) => ({
             id: createCompositionId(),
-            compositionId: composition.id,
-            title: composition.title?.uk ?? composition.title?.en ?? '',
-            genre: composition.genre ?? '',
-            year: composition.year == null ? '' : String(composition.year),
-            audios: (composition.audios ?? []).map((audio: AudioItem) => ({
-              id: createCompositionId(),
-              name: audio.name ?? fileNameFromUrl(audio.url),
-              fileUrl: audio.url ?? undefined
-            })),
-            notes: (composition.sheetMusic ?? []).map((sheet: SheetMusicItem) => ({
-              id: createCompositionId(),
-              name: sheet.name ?? fileNameFromUrl(sheet.url),
-              fileUrl: sheet.url ?? undefined,
-              publishDate: sheet.publishDate ?? ''
-            }))
+            name: audio.name ?? fileNameFromUrl(audio.url),
+            fileUrl: audio.url ?? undefined
+          })),
+          notes: (composition.sheetMusic ?? []).map((sheet: SheetMusicItem) => ({
+            id: createCompositionId(),
+            name: sheet.name ?? fileNameFromUrl(sheet.url),
+            fileUrl: sheet.url ?? undefined,
+            publishDate: sheet.publishDate ?? ''
           }))
+        }))
       });
       setPublishedTitle(titleObj);
     }
@@ -187,8 +179,8 @@ export const useGroupContent = (id: string) => {
 
     try {
       const input = {
-        numberKind: groupData.titlePrefix === 'Bo.' ? OpusNumberKind.Woo : OpusNumberKind.Op,
-        number: String(groupData.groupNumber || ''),
+        numberKind: groupData.titlePrefix === 'Bo.' ? OpusNumberKind.Sineop : OpusNumberKind.Op,
+        number: Number(groupData.groupNumber.trim()),
         genre: String(groupData.genre || ''),
         additionalText: String(groupData.additionalText || ''),
         ...(mappedStatus && { status: mappedStatus }),
@@ -207,9 +199,9 @@ export const useGroupContent = (id: string) => {
           uk: groupData.description?.uk ? JSON.stringify(groupData.description.uk) : '""',
           en: groupData.description?.en ? JSON.stringify(groupData.description.en) : '""'
         },
-        compositions: (groupData.works || []).map((work, index) => ({
-          id: work.compositionId,
-          title: work.title.trim(),
+        compositions: (groupData.compositions || []).map((work, index) => ({
+          id: work.id,
+          name: work.name.trim(),
           genre: work.genre.trim() || undefined,
           year: work.year.trim() || undefined,
           order: index + 1,

@@ -3,7 +3,7 @@ mutation CreateOpus($input: CreateOpusInput!) {
     id
     number
     numberKind
-    title {
+    name {
       uk
       en
     }
@@ -32,8 +32,7 @@ mutation UpdateOpus($id: ID!, $input: UpdateOpusInput!) {
     status
     compositions {
       id
-      order
-      title {
+      name {
         uk
         en
       }

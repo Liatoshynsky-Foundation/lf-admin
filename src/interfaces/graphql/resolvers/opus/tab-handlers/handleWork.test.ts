@@ -1,6 +1,5 @@
 import { mapFilters } from '../../helpers';
 import { WorksFilter } from '../opusQuery';
-import { handleWorksTab } from './handleWork';
 import { Composition } from '~/src/domain/entities/Composition';
 import type { ICompositionRepository } from '~/src/domain/repositories/compositionRepository';
 

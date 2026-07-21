@@ -5,14 +5,15 @@ enum OpusStatus {
 
 enum OpusNumberKind {
   op
-  woo
+  sineop
+  compositions
 }
 
 enum WorksTab {
   all
-  opus
-  woo
-  works
+  op
+  sineop
+  compositions
 }
 
 enum WorksSortBy {
@@ -38,7 +39,7 @@ type OpusPerformance {
 
 type Opus {
   id: ID!
-  number: String!
+  number: Float!
   numberKind: OpusNumberKind!
   title: LocalizedString!
   releaseYear: Int
@@ -94,7 +95,7 @@ input WorksFiltersInput {
 
 input CreateOpusInput {
   numberKind: OpusNumberKind
-  number: String
+  number: Float
   name: JSON
   additionalText: String
   creationYear: String
@@ -119,7 +120,7 @@ input CreateOpusInput {
 
 input UpdateOpusInput {
   numberKind: OpusNumberKind
-  number: String
+  number: Float
   name: JSON
   additionalText: String
   creationYear: String
@@ -144,7 +145,7 @@ input UpdateOpusInput {
 
 extend type Query {
   opusById(id: ID!): Opus
-  opusByNumber(number: String!): Opus
+  opusByNumber(number: Float!): Opus
   searchCompositions(search: String!): [Composition!]!
   paginatedWorks(tab: WorksTab, filters: WorksFiltersInput): PaginatedWorks!
   opusesCount(status: OpusStatus): Int!

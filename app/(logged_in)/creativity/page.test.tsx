@@ -21,21 +21,6 @@ jest.mock('~/shared/hooks/use-opuses/useOpuses', () => ({
   }))
 }));
 
-jest.mock('~/shared/hooks/use-compositions/useCompositions', () => ({
-  useAllCompositions: jest.fn(() => ({
-    data: {
-      allCompositions: [
-        {
-          id: '2',
-          title: { uk: '№1 «Після бою»', en: 'No.1 After the fight' }
-        }
-      ]
-    },
-    loading: false,
-    error: undefined
-  }))
-}));
-
 jest.mock('next/link', () => {
   const MockLink = ({ children, href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
     <a href={String(href)} {...props}>

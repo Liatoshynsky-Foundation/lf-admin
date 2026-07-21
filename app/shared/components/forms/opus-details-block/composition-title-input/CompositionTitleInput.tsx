@@ -40,7 +40,7 @@ export default function CompositionTitleInput({
   const options = useMemo<CompositionOption[]>(() => {
     const suggestions = (data?.searchCompositions ?? []).map((suggestion, index) => ({
       id: `suggestion-${index}-${suggestion.id}`,
-      title: suggestion.title?.uk ?? suggestion.title?.en ?? '',
+      title: suggestion.name?.uk ?? suggestion.name?.en ?? '',
       isCreate: false,
       suggestion
     }));
