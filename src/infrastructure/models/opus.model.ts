@@ -23,7 +23,7 @@ const opusSchema = new Schema(
   {
     number: { type: Number, required: true, unique: true, index: true, set: (v: unknown) => (v != null ? Number(v) : v) },
     title: { type: translatedFieldSchema, required: true },
-    numberKind: { type: String, enum: ['op', 'sineop', 'composition'], default: 'op' },
+    numberKind: { type: String, enum: ['op', 'sineop', 'compositions'], default: 'op' },
     name: { type: translatedFieldSchema, default: { uk: '', en: '' } },
     additionalText: { type: String, default: null },
     creationYear: { type: String, default: null },

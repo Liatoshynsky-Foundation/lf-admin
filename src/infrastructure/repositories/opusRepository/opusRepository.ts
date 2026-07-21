@@ -139,11 +139,14 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
     }
 
     const looseOpus = await OpusModel.findOne({ numberKind: 'compositions' }).lean<{ _id: string }>();
-
+    console.log(OpusModel.schema.path('numberKind').options.enum);
     if (!looseOpus) {
       await new OpusModel({
         numberKind: 'compositions',
         number: 0,
+        name: { uk: 'Без номера', en: 'Without number' },
+        title: { uk: 'Без номера', en: 'Without number' },
+        adminTitle: 'Без номера',
         compositions: compositionIds
       }).save();
       return;
@@ -160,7 +163,6 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
     const opus = await OpusModel.findById(opusId).lean<{ compositions?: string[] }>();
     await moveCompositionsToLooseOpus(opus?.compositions ?? []);
   };
-
 
   return {
     ...baseRepo,

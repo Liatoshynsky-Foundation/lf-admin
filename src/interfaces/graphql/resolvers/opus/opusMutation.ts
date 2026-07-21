@@ -282,7 +282,6 @@ export const OpusMutation = {
     assertAuthenticated(context);
 
     const repo = context.requestContainer.cradle.opusRepository;
-
     await repo.unlink(id);
 
     return repo.delete(id);
