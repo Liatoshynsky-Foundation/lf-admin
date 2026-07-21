@@ -1,6 +1,7 @@
 'use client';
 
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField } from '@mui/material';
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Stack, TextField, Typography } from '@mui/material';
+import { X } from 'lucide-react';
 import React from 'react';
 
 import { styles } from './ArchiveCaseModalView.styles';
@@ -12,6 +13,7 @@ import LabelRow from '~/shared/components/composition-modal/label-row/LabelRow';
 
 export interface ArchiveCaseModalViewProps {
   isOpen: boolean;
+  onClose: () => void;
   descriptionNumber: string;
   setDescriptionNumber: (value: string) => void;
   caseNumber: string;
@@ -38,6 +40,7 @@ export interface ArchiveCaseModalViewProps {
 
 export const ArchiveCaseModalView = ({
   isOpen,
+  onClose,
   descriptionNumber,
   setDescriptionNumber,
   caseNumber,
@@ -62,8 +65,13 @@ export const ArchiveCaseModalView = ({
   isSubmitDisabled,
 }: ArchiveCaseModalViewProps) => {
   return (
-    <Dialog disableScrollLock open={isOpen} sx={{ ...styles.dialog }} fullWidth>
-      <DialogTitle sx={styles.dialogTitle}>{ARCHIVE_CASE_MODAL_LABELS.title}</DialogTitle>
+    <Dialog disableScrollLock open={isOpen} sx={{ ...styles.dialog }} onClose={onClose} fullWidth>
+      <DialogTitle sx={styles.dialogHeaderBox}>
+        <Typography sx={styles.dialogTitle}>{ARCHIVE_CASE_MODAL_LABELS.title}</Typography>
+        <IconButton aria-label="Закрити" onClick={onClose} sx={styles.closeButton}>
+          <X size={24} strokeWidth={1.5} />
+        </IconButton>
+      </DialogTitle>
 
       <DialogContent sx={styles.dialogContent}>
         <Stack spacing={4} sx={styles.contentContainer}>

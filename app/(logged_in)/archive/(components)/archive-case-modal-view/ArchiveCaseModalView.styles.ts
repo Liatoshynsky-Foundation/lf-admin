@@ -21,6 +21,12 @@ export const styles: Record<string, SxProps<Theme>> = {
       height: 48
     }
   },
+  dialogHeaderBox: {
+    display: 'flex',
+    p: 0,
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  }, 
   dialogTitle: {
     typography: 'h6',
     lineHeight: 1.2,

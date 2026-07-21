@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 
 import { useAllAssets } from '../use-assets/useAssets';
-import { useUnsavedChanges } from '../use-unsaved-changes/useUnsavedChanges';
 import {
   INITIAL_PDF_ENTRY,
   PDF_MIME_TYPE,
@@ -29,8 +28,6 @@ export const useArchiveCaseModal = ({ setIsOpen }: UseArchiveCaseModalProps) => 
 
   const isDirty = Boolean(descriptionNumber.trim() || caseNumber.trim() || sheetsNumber.trim() || caseDate.trim() || currentPdfFile.fileName || currentPdfFile.name || detailedCaseDescription.trim() || caseName.trim() || caseDescriptions.trim());
 
-  useUnsavedChanges(isDirty);
-  
   const clearInputs = () => {
     setDescriptionNumber('');
     setCaseNumber('');

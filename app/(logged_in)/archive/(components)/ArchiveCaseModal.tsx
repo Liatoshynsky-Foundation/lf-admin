@@ -70,6 +70,7 @@ export const ArchiveCaseModal = ({ isOpen, setIsOpen }: ArchiveCaseModalProps) =
 
       <ArchiveCaseModalView
         isOpen={isOpen}
+        onClose={handleCancel}
         descriptionNumber={descriptionNumber}
         setDescriptionNumber={setDescriptionNumber}
         caseNumber={caseNumber}
