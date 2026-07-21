@@ -57,9 +57,7 @@ export const mappedGroups = async (
   
   const total = await repo.count(mappedFilters);
   const groups: Opus[] = await repo.findAll(mappedFilters);
-  
-  // console.log('total:', total);
-  // console.log('groups:', groups);
+
   return { groups, total };
 };
 

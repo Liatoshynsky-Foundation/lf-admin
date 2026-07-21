@@ -52,7 +52,6 @@ interface UseUpsertOpusProps {
 
 export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}) => {
   const isEditing = Boolean(id);
-
   const opusQuery = useOpusById(id ?? '', { skip: !isEditing });
 
   const [createOpus] = useCreateOpus();
@@ -104,7 +103,6 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}) => {
     }
 
     const fetched = opusQuery.data?.opusById as FetchedOpusData | undefined | null;
-
     if (!fetched) {
       return;
     }
@@ -118,9 +116,8 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}) => {
       endYear: fetched.endYear ?? '',
       datesNote: fetched.datesNote ?? '',
       genre: fetched.genre ?? '',
-      compositions: (fetched.compositions ?? []).map((composition, index) => ({
+      compositions: (fetched.compositions ?? []).map((composition) => ({
         id: composition.id,
-        order: composition.order ?? index + 1,
         name: composition.name?.uk ?? '',
         genre: composition.genre ?? '',
         year: composition.year == null ? '' : String(composition.year),
@@ -238,15 +235,11 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}) => {
       status: status as unknown as OpusStatus,
       publishedAt: status === BaseContentStatuses.Published ? new Date().toISOString() : undefined
     };
-    console.log('input Opus :', input); 
 
 
     if (isEditing && id) {
       const response = await updateOpus({ id, input });
       const updatedId = response.data?.updateOpus?.id;
-
-      console.log('Updated Opus ID:', updatedId); 
-      console.log('Updated Opus response:', response); 
 
       if (updatedId) {
         setIsSaved(true);
@@ -257,8 +250,6 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}) => {
 
     const response = await createOpus(input);
     const createdId = response.data?.createOpus?.id;
-    console.log('Created Opus ID:', createdId); 
-    console.log('Created Opus response:', response); 
 
     if (createdId) {
       setIsSaved(true);

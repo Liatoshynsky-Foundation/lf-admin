@@ -130,7 +130,6 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
     }
 
     const doc = await OpusModel.findOne({ number }).lean<DbOpus>();
-    console.log('found doc:', doc);
     return doc ? toEntity(doc) : null;
   };
 

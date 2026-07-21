@@ -6,11 +6,11 @@ import {
   OpusStatus,
   PaginatedWorksDocument,
   useDeleteOpusMutation,
-  useUpdateOpusMutation
+  useUpdateOpusStatusMutation
 } from '~/types/graphql/generated/graphql';
 
 export function useWorksTableActions() {
-  const [updateOpus] = useUpdateOpusMutation();
+  const [UpdateOpusStatus] = useUpdateOpusStatusMutation();
   const [deleteOpus] = useDeleteOpusMutation();
 
   const [groupToUngroup, setGroupToUngroup] = useState<string | null>(null);
@@ -25,11 +25,27 @@ export function useWorksTableActions() {
   };
 
   const handlePublishStatusChange = async (id: string, newStatus: OpusStatus) => {
+    console.log(`Changing publish status for opus ${id} to ${newStatus}`);
     try {
-      await updateOpus({
+      await UpdateOpusStatus({
         variables: {
           id,
-          input: { status: newStatus }
+          status: newStatus
+        },
+        update(cache, { data }) {
+          if (!data?.updateOpusStatus) return;
+
+          cache.modify({
+            id: cache.identify({
+              __typename: 'Opus',
+              id: data.updateOpusStatus.id
+            }),
+            fields: {
+              status() {
+                return data.updateOpusStatus.status;
+              }
+            }
+          });
         }
       });
       toast.success(newStatus === OpusStatus.Published ? 'Групу опубліковано' : 'Групу знято з публікації');

@@ -142,6 +142,11 @@ input UpdateOpusInput {
   publishedAt: String
 }
 
+type UpdateOpusStatusPayload {
+  id: ID!
+  status: OpusStatus!
+}
+
 extend type Query {
   opusById(id: ID!): Opus
   opusByNumber(number: Float!): Opus
@@ -153,5 +158,6 @@ extend type Query {
 extend type Mutation {
   createOpus(input: CreateOpusInput!): Opus!
   updateOpus(id: ID!, input: UpdateOpusInput!): Opus!
+  updateOpusStatus(id: ID!, status: OpusStatus!): UpdateOpusStatusPayload!
   deleteOpus(id: ID!): Boolean!
 }

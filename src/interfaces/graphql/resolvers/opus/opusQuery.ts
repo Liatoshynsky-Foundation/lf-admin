@@ -54,6 +54,7 @@ export const OpusQuery = {
     assertAuthenticated(context);
     
     const opus = await context.requestContainer.cradle.opusRepository.findById(id);
+    
 
     if (!opus) {
       return null;
@@ -64,9 +65,6 @@ export const OpusQuery = {
       compositionIds,
       await context.requestContainer.cradle.compositionsRepository.findByIds(compositionIds)
     );
-
-    // console.log('opusById called with id:', opus);
-    // console.log('compositions:', compositions);
 
     return { ...opus, compositions };
   },
@@ -86,7 +84,6 @@ export const OpusQuery = {
   },
 
   paginatedWorks: endpointHandler<PaginatedWorksArgs, PaginatedWorksResult>(async ({ args, repo, requestContainer }) => {
-    // console.log('paginatedWorks called with args:', args);
     const { tab, filters } = args;
     const pageSize = filters?.limit ?? 10;
     const skip = filters?.skip ?? 0;
@@ -95,7 +92,6 @@ export const OpusQuery = {
 
     if (tab === WorksTab.Op || tab === WorksTab.Sineop) {
       const result = await handleGroup(tab, repo, compositionsRepo, filters, page, pageSize);
-      // console.log('handleGroup result:', result);
       return result;
     } else if (tab === WorksTab.Compositions) {
 

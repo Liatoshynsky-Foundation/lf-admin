@@ -39,8 +39,6 @@ export function usePaginatedWorks(tab?: WorksTab | null, filters?: WorksFiltersI
     fetchPolicy: 'network-only'
   });
 
-  console.log('data:', data);
-
   const groups: GroupRowData[] = (data?.paginatedWorks.groups ?? []).map((g) => ({
     id: g.id,
     number: g.number,

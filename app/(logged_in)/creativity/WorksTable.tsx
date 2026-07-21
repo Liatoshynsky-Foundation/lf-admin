@@ -76,9 +76,9 @@ export const columns: readonly ColumnDef<GroupHeaderData, OpusWork, IndividualWo
   {
     id: 'opus',
     headerLabel: 'Опуси',
-    width: '88px',
+    width: '128px',
     hasRightDivider: true,
-    renderGroup: (group) => `${group.numberKind === 'op' ? 'op.' : 'sine-op.'} ${group.numberLabel}`
+    renderGroup: (group) => `${group.numberKind === 'op' ? 'op.' : 'sine op.'} ${group.numberLabel}`
   },
   {
     id: 'title',

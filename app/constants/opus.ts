@@ -25,9 +25,14 @@ export const OPUS_DETAILS_LABELS = {
   addComposition: 'Додати'
 } as const;
 
+export const OPUS_NUMBER_KIND = {
+  OP: 'op',
+  SINE_OP: 'sineop'
+} as const;
+
 export const OPUS_NUMBER_KIND_OPTIONS = [
-  { value: 'op', label: 'Op.' },
-  { value: 'woo', label: 'B/o.' }
+  { value: OPUS_NUMBER_KIND.OP, label: 'Op.' },
+  { value: OPUS_NUMBER_KIND.SINE_OP, label: 'Sine op.' }
 ] as const;
 
 export const OPUS_FIELD_LIMITS = {

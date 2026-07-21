@@ -93,3 +93,10 @@ mutation UpdateOpus($id: ID!, $input: UpdateOpusInput!) {
 mutation DeleteOpus($id: ID!) {
   deleteOpus(id: $id)
 }
+
+mutation UpdateOpusStatus($id: ID!, $status: OpusStatus!) {
+  updateOpusStatus(id: $id, status: $status) {
+    id
+    status
+  }
+}

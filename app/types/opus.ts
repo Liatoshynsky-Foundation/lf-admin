@@ -1,6 +1,6 @@
 import { OpusStatus } from '~/types/enums/common.enums';
 
-export type OpusNumberKind = 'op' | 'sineop';
+export type OpusNumberKind = 'op' | 'sineop' | 'compositions';
 
 export interface OpusMediaFileData {
   id: string;
@@ -65,7 +65,6 @@ export interface FetchedOpusData {
   id: string;
   numberKind?: OpusNumberKind | null;
   number: number;
-  releaseYear?: number | null;
   name?: { uk?: string | null; en?: string | null } | null;
   additionalText?: string | null;
   creationYear?: string | null;
@@ -102,7 +101,6 @@ export interface FetchedOpusData {
     name?: { uk?: string | null; en?: string | null } | null;
     genre?: string | null;
     year?: number | null;
-    order?: number | null;
     audioAvailable?: boolean | null;
     sheetAvailable?: boolean | null;
     sheetMusic?: Array<{

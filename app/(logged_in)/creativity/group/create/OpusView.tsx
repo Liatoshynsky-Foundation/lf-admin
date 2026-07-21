@@ -39,7 +39,6 @@ export default function OpusView({ data, mode = 'create' }: Readonly<OpusViewPro
     isSaved,
     handleSave
   } = data;
-
   const router = useRouter();
 
   const onEdit = async (): Promise<void> => {

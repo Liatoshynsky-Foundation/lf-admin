@@ -11,7 +11,7 @@ import { CompositionInput } from '~/domain/repositories/compositionRepository';
 import { CreateOpusInput, UpdateOpusInput } from '~/domain/repositories/opusRepository';
 import { Composition } from '~/src/domain/entities/Composition';
 import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerator';
-import { OpusStatus } from '~/types/enums/common.enums';
+import { OpusStatus, UpdateOpusStatusPayload } from '~/types/graphql/generated/graphql';
 
 type GQLMediaFile = { name: string; fileUrl?: string | null; publishDate?: string | null };
 
@@ -124,8 +124,8 @@ const buildOpusUpdateData = (
 
 export const OpusMutation = {
   createOpus: async (_: unknown, { input }: CreateOpusArgs, context: GraphQLContext): Promise<OpusFull> => {
-    console.log('createOpus input get:', input);
-    console.log('createOpus compositions get:', input.compositions);
+    // console.log('createOpus input get:', input);
+    // console.log('createOpus compositions get:', input.compositions);
     assertAuthenticated(context);
     const repo = context.requestContainer.cradle.opusRepository;
     const compositionsRepo = context.requestContainer.cradle.compositionsRepository;
@@ -179,11 +179,6 @@ export const OpusMutation = {
 
     const opus = await repo.create(opusData);
 
-    console.log('saved:', opus);
-    console.log('saved compositions:', compositions);
-    console.log('saved compositions id:', compositionIds);
-
-
     if (input.coverImage?.crop) {
       await syncImagesCrops(opus.id, input.coverImage, { isCoverImage: true });
     }
@@ -195,12 +190,38 @@ export const OpusMutation = {
     return { ...opus, compositions };
   },
 
+  updateOpusStatus: async (_: unknown, { id, status }: { id: string; status: OpusStatus }, context: GraphQLContext): Promise<UpdateOpusStatusPayload> => {
+    console.log('updateOpusStatus input get:', status);
+    assertAuthenticated(context);
+    const repo = context.requestContainer.cradle.opusRepository;
+    
+    const existingOpus = await repo.findById(id);
+    if (!existingOpus) {
+      throw new GraphQLError(opusServiceErrors.OPUS_NOT_FOUND(id), {
+        extensions: { code: 'OPUS_NOT_FOUND' }
+      });
+    }
+
+    const updatedOpus = await repo.update(id, { status });
+
+    console.dir(updatedOpus, { depth: null });
+
+
+    if (!updatedOpus) {
+      throw new GraphQLError(opusServiceErrors.OPUS_NOT_FOUND(id), {
+        extensions: { code: 'OPUS_NOT_FOUND' }
+      });
+    }
+
+    return { id: updatedOpus.id, status: updatedOpus.status as OpusStatus };
+  },
+
   updateOpus: async (_: unknown, { id, input }: UpdateOpusArgs, context: GraphQLContext): Promise<OpusFull> => {
     assertAuthenticated(context);
 
     const repo = context.requestContainer.cradle.opusRepository;
     const compositionsRepo = context.requestContainer.cradle.compositionsRepository;
-
+    
     const existingOpus = await repo.findById(id);
 
     if (!existingOpus) {
@@ -234,20 +255,10 @@ export const OpusMutation = {
       compositions = orderCompositionsByIds(compositionIds, await compositionsRepo.findByIds(compositionIds));
     } else {
       compositions = await compositionsRepo.syncForOpus(input.compositions.map(mapComposition));
-      const keptIds = compositions.map((c) => c.id);
-
-      const removedIds = (existingOpus.compositions ?? []).filter((prevId) => !keptIds.includes(prevId));
-      if (removedIds.length > 0) {
-        await repo.moveCompositionsToLooseOpus(removedIds);
-      }
-
-      updateData.compositions = keptIds;
+      updateData.compositions = compositions.map((c) => c.id);
     }
 
-    console.log('updateOpus input:', updateData);
-    console.log('updateOpus input:', updateData.compositions);
     const opus = await repo.update(id, updateData);
-    console.log('updateOpus opus:', opus);
 
     if (!opus) {
       throw new GraphQLError(opusServiceErrors.OPUS_NOT_FOUND(id), {

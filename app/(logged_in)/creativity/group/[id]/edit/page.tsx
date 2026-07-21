@@ -12,6 +12,7 @@ export default function EditOpusGroupPage() {
   const id = params?.id as string;
 
   const opusData = useUpsertOpus({ id });
+  console.log('opusData:', opusData);
 
   return (
     <Box sx={styles.container}>

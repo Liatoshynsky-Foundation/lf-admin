@@ -1,7 +1,7 @@
 
 import { Composition } from './Composition';
 import { LocalizedBoolean, LocalizedImage, LocalizedString } from '~/domain/entities/BaseContent';
-import { OpusStatus } from '~/types/enums/common.enums';
+import { OpusStatus } from '~/types/graphql/generated/graphql';
 
 export type OpusNumberKind = 'op' | 'sineop' |  'compositions';
 
@@ -31,7 +31,7 @@ export type OpusPerformance = {
 
 export type Opus = {
   id: string;
-  number: number;
+  number?: number;
   numberKind?: OpusNumberKind;
   name?: LocalizedString | null;
   additionalText?: string | null;
@@ -40,7 +40,7 @@ export type Opus = {
   datesNote?: string | null;
   genre?: string | null;
   
-  title: LocalizedString;
+  title?: LocalizedString | null;
   adminTitle?: string | null;
   slug?: string;
   description?: OpusDescription | null;

@@ -7,7 +7,6 @@ query OpusById($id: ID!) {
       uk
       en
     }
-    releaseYear
     name {
       uk
       en

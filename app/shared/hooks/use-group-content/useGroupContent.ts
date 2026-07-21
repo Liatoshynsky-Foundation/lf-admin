@@ -41,7 +41,7 @@ const parseDescription = (desc: unknown): Record<string, unknown> => {
 const mapNumberKindToPrefix = (kind: string | null | undefined): string => {
   if (!kind) return 'Op.';
   const lowerKind = kind.toLowerCase();
-  if (lowerKind === 'woo') return 'Bo.';
+  if (lowerKind === 'sineop') return 'Bo.';
   return 'Op.';
 };
 
@@ -90,7 +90,7 @@ export const useGroupContent = (id: string) => {
       };
       setGroupData({
         titlePrefix: mapNumberKindToPrefix(fetchedOpus.numberKind),
-        groupNumber: fetchedOpus.number ? String(fetchedOpus.number).replace(/^(op|woo|wo|bo)[.\-\s]*/i, '') : '',
+        groupNumber: fetchedOpus.number ? String(fetchedOpus.number).replace(/^(op|woo|sineop|wo|bo)[.\-\s]*/i, '') : '',
         genre: fetchedOpus.genre ?? '',
         additionalText: fetchedOpus.additionalText ?? '',
         groupTitle: {
@@ -146,9 +146,8 @@ export const useGroupContent = (id: string) => {
             en: perf.title?.en ?? ''
           }
         })),
-        compositions: (fetchedOpus.compositions || []).map((composition, index) => ({
+        compositions: (fetchedOpus.compositions || []).map((composition) => ({
           id: composition.id,
-          order: composition.order ?? index + 1,
           name: composition.name?.uk ?? composition.name?.en ?? '',
           genre: composition.genre ?? '',
           year: composition.year == null ? '' : String(composition.year),
