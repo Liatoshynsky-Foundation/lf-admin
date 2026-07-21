@@ -4,21 +4,14 @@ export const styles: Record<string, SxProps<Theme>> = {
   dialog: {
     '& .MuiDialog-paper': {
       borderRadius: '20px',
-      p: '24px',
-      width: 713
+      p: '16px 24px',
+      width: 889
     },
     '& .MuiInputLabel-root': {
       transform: 'translate(14px, 13px) scale(1)'
     },
     '& .MuiInputLabel-shrink': {
       transform: 'translate(14px, -9px) scale(0.75)'
-    }
-  },
-  datePicker: {
-    width: '100%',
-    '& .MuiPickersInputBase-root': {
-      borderRadius: '8px',
-      height: 48
     }
   },
   dialogHeaderBox: {
@@ -49,7 +42,6 @@ export const styles: Record<string, SxProps<Theme>> = {
   sectionStack: {
     mt: 2
   },
-  fileItemWrapper: {},
   dialogActions: {
     width: '100%',
     p: '0px'
