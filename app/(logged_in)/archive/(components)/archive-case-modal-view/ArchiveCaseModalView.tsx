@@ -6,7 +6,6 @@ import React from 'react';
 
 import { styles } from './ArchiveCaseModalView.styles';
 import { ARCHIVE_CASE_MODAL_LABELS, PdfEntry } from '~/constants/archive';
-import ActionableSuggestItem from '~/shared/components/composition-modal/actionable-suggest-item/ActionableSuggestItem';
 import FileItem from '~/shared/components/composition-modal/file-item/FileItem';
 import LabelActionRow from '~/shared/components/composition-modal/label-action-row/LabelActionRow';
 import LabelRow from '~/shared/components/composition-modal/label-row/LabelRow';
@@ -31,8 +30,6 @@ export interface ArchiveCaseModalViewProps {
   setCaseDescriptions: (value: string) => void;
   handleOpenUploadFlow: () => void;
   handleDeletePdf: () => void;
-  handleSelectPdfSuggestion: (name: string | null) => void;
-  pdfFileSuggestions: string[];
   handleSave: () => void;
   handleCancel: () => void;
   isSubmitDisabled: boolean;
@@ -58,8 +55,6 @@ export const ArchiveCaseModalView = ({
   setCaseDescriptions,
   handleOpenUploadFlow,
   handleDeletePdf,
-  handleSelectPdfSuggestion,
-  pdfFileSuggestions,
   handleSave,
   handleCancel,
   isSubmitDisabled,
@@ -132,7 +127,7 @@ export const ArchiveCaseModalView = ({
 
               <Stack spacing={2} sx={styles.sectionStack}>
                 <Stack spacing="10px">
-                  {currentPdfFile.fileName ? (
+                  {currentPdfFile.fileName && (
                     <Box sx={styles.fileItemWrapper}>
                       <FileItem
                         fileName={currentPdfFile.fileName}
@@ -140,14 +135,6 @@ export const ArchiveCaseModalView = ({
                         onDelete={handleDeletePdf}
                       />
                     </Box>
-                  ) : (
-                    <ActionableSuggestItem
-                      mode="pdf"
-                      suggestions={pdfFileSuggestions}
-                      onSelect={handleSelectPdfSuggestion}
-                      onUpload={handleOpenUploadFlow}
-                      onDelete={handleDeletePdf}
-                    />
                   )}
                 </Stack>
               </Stack>

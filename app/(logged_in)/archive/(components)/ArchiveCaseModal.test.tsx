@@ -109,8 +109,6 @@ const defaultHookValues = {
   isAllowedPdfFile: jest.fn(() => true),
   handleApplyPdf: mockHandleApplyPdf,
   handleDeletePdf: jest.fn(),
-  handleSelectPdfSuggestion: jest.fn(),
-  pdfFileSuggestions: [],
   isSubmitDisabled: false,
   handleSubmit: jest.fn(),
   handleSave: mockHandleSave,

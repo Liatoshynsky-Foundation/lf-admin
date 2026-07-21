@@ -2,20 +2,10 @@ import { act, renderHook } from '@testing-library/react';
 
 import { useArchiveCaseModal, type UseArchiveCaseModalProps } from './useArchiveCaseModal';
 import { INITIAL_PDF_ENTRY } from '~/constants/archive';
-import { AssetType } from '~/types/graphql/generated/graphql';
-
-const useAllAssetsMock = jest.fn();
-
-jest.mock('../use-assets/useAssets', () => ({
-  useAllAssets: () => useAllAssetsMock()
-}));
 
 const createMockFile = (name: string, type: string): File => {
   return new File(['dummy content'], name, { type });
 };
-const mockAssets = [
-  { type: AssetType.Pdf, filename: 'sheet_music.pdf' },
-];
 const mockSetIsOpen = jest.fn();
 const defaultProps: UseArchiveCaseModalProps = {
   setIsOpen: mockSetIsOpen,
@@ -24,7 +14,6 @@ const defaultProps: UseArchiveCaseModalProps = {
 describe('useArchiveCaseModal', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    useAllAssetsMock.mockReturnValue({ data: { mockAssets }, loading: false });
   });
 
   describe('initial state', () => {
@@ -60,7 +49,6 @@ describe('useArchiveCaseModal', () => {
           handleSave: expect.any(Function),
           handleCancel: expect.any(Function),
           clearInputs: expect.any(Function),
-          handleSelectPdfSuggestion: expect.any(Function),
         })
       );
     });
@@ -147,21 +135,6 @@ describe('useArchiveCaseModal', () => {
       });
 
       expect(result.current.currentPdfFile).toStrictEqual(INITIAL_PDF_ENTRY);
-    });
-  });
-
-  describe('handleSelectPdfSuggestion', () => {
-    it.each([
-      { input: 'newNameEntry', expected: 'newNameEntry' },
-      { input: null, expected: null },
-    ])('should set currentPdfFile.name to $expected when called with $input', ({ input, expected }) => {
-      const { result } = renderHook(() => useArchiveCaseModal(defaultProps));
-
-      act(() => {
-        result.current.handleSelectPdfSuggestion(input);
-      });
-
-      expect(result.current.currentPdfFile.name).toStrictEqual(expected);
     });
   });
 

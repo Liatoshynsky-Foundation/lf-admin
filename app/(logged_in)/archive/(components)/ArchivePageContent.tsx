@@ -2,6 +2,7 @@
 import { Box } from '@mui/material';
 
 import { useArchiveFiltering } from '../(hooks)/useArchiveFiltering';
+import { ArchiveCaseModal } from './ArchiveCaseModal';
 import { ArchiveCreateAction } from './ArchiveCreateAction';
 import { styles } from './ArchivePageContent.styles';
 import { ARCHIVE_PAGE_TITLE, ARCHIVE_TABS, type ArchiveTabValue } from '~/constants/archive';
@@ -22,7 +23,7 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
         action={<ArchiveCreateAction />}
       />
       <SearchStatusToolbar dataTestId='archive-control-panel' searchProps={searchProps} statusFilterProps={statusFilterProps} />
-      {/* <ArchiveCaseModal isOpen setIsOpen={() => {}} /> */}
+      <ArchiveCaseModal isOpen setIsOpen={() => {}} />
     </Box >
   );
 };

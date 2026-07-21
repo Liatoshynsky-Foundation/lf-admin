@@ -5,31 +5,6 @@ import React from 'react';
 import { ArchiveCaseModalView, ArchiveCaseModalViewProps } from './ArchiveCaseModalView';
 import { ARCHIVE_CASE_MODAL_LABELS } from '~/constants/archive';
 
-jest.mock('~/shared/components/composition-modal/actionable-suggest-item/ActionableSuggestItem', () => ({
-  __esModule: true,
-  default: ({
-    mode,
-    suggestions,
-    onSelect,
-    onUpload,
-    onDelete,
-  }: {
-    mode?: string;
-    suggestions?: string[];
-    onSelect?: (val: string | null) => void;
-    onUpload?: () => void;
-    onDelete?: () => void;
-  }) => (
-    <div data-testid="actionable-suggest-item">
-      <span data-testid="suggest-mode">{mode}</span>
-      <span data-testid="suggest-items">{JSON.stringify(suggestions)}</span>
-      <button data-testid="suggest-select-btn" onClick={() => onSelect?.('test-suggestion')}>Select</button>
-      <button data-testid="suggest-upload-btn" onClick={onUpload}>Upload</button>
-      <button data-testid="suggest-delete-btn" onClick={onDelete}>Delete</button>
-    </div>
-  ),
-}));
-
 jest.mock('~/shared/components/composition-modal/file-item/FileItem', () => ({
   __esModule: true,
   default: ({
@@ -86,7 +61,6 @@ const mockSetCaseDescriptions = jest.fn();
 const mockSetDetailedCaseDescription = jest.fn();
 const mockHandleOpenUploadFlow = jest.fn();
 const mockHandleDeletePdf = jest.fn();
-const mockHandleSelectPdfSuggestion = jest.fn();
 const mockHandleSave = jest.fn();
 const mockHandleCancel = jest.fn();
 const mockOnClose = jest.fn();
@@ -111,8 +85,6 @@ const defaultProps: ArchiveCaseModalViewProps = {
   setCaseDescriptions: mockSetCaseDescriptions,
   handleOpenUploadFlow: mockHandleOpenUploadFlow,
   handleDeletePdf: mockHandleDeletePdf,
-  handleSelectPdfSuggestion: mockHandleSelectPdfSuggestion,
-  pdfFileSuggestions: ['suggestion-1.pdf'],
   handleSave: mockHandleSave,
   handleCancel: mockHandleCancel,
   isSubmitDisabled: true,
@@ -138,9 +110,6 @@ describe('ArchiveCaseModalView', () => {
     const labelActionBtn = screen.getByTestId('label-action-btn');
     expect(labelActionBtn).toHaveTextContent(ARCHIVE_CASE_MODAL_LABELS.addFile);
     expect(labelActionBtn).toBeEnabled();
-
-    expect(screen.getByTestId('suggest-mode')).toHaveTextContent('pdf');
-    expect(screen.getByTestId('suggest-items')).toHaveTextContent(JSON.stringify(['suggestion-1.pdf']));
 
     expect(screen.getByTestId('label-row')).toHaveTextContent(ARCHIVE_CASE_MODAL_LABELS.detailedDescription);
   });
@@ -201,20 +170,6 @@ describe('ArchiveCaseModalView', () => {
     const closeButton = screen.getByRole('button', { name: 'Закрити' });
     await user.click(closeButton);
     expect(mockOnClose).toHaveBeenCalledTimes(1);
-  });
-
-  it('should call handleSelectPdfSuggestion, handleOpenUploadFlow, and handleDeletePdf from ActionableSuggestItem buttons', async () => {
-    const user = userEvent.setup();
-    render(<ArchiveCaseModalView {...defaultProps} />);
-
-    await user.click(screen.getByTestId('suggest-select-btn'));
-    expect(mockHandleSelectPdfSuggestion).toHaveBeenCalledWith('test-suggestion');
-
-    await user.click(screen.getByTestId('suggest-upload-btn'));
-    expect(mockHandleOpenUploadFlow).toHaveBeenCalledTimes(1);
-
-    await user.click(screen.getByTestId('suggest-delete-btn'));
-    expect(mockHandleDeletePdf).toHaveBeenCalledTimes(1);
   });
 
   it('should call handleDeletePdf when FileItem delete button is clicked', async () => {

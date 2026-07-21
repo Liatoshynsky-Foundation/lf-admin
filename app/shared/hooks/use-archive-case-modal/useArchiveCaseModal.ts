@@ -1,20 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
-import { useAllAssets } from '../use-assets/useAssets';
 import {
   INITIAL_PDF_ENTRY,
   PDF_MIME_TYPE,
   PdfEntry,
 } from '~/constants/archive';
-import { AssetType } from '~/types/graphql/generated/graphql';
 
 export interface UseArchiveCaseModalProps {
   setIsOpen: (isOpen: boolean) => void;
 }
 
 export const useArchiveCaseModal = ({ setIsOpen }: UseArchiveCaseModalProps) => {
-  const { data } = useAllAssets({ type: AssetType.Pdf });
-
   const [descriptionNumber, setDescriptionNumber] = useState('');
   const [caseNumber, setCaseNumber] = useState('');
   const [sheetsNumber, setSheetsNumber] = useState('');
@@ -26,7 +22,7 @@ export const useArchiveCaseModal = ({ setIsOpen }: UseArchiveCaseModalProps) => 
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
-  const isDirty = Boolean(descriptionNumber.trim() || caseNumber.trim() || sheetsNumber.trim() || caseDate.trim() || currentPdfFile.fileName || currentPdfFile.name || detailedCaseDescription.trim() || caseName.trim() || caseDescriptions.trim());
+  const isDirty = Boolean(descriptionNumber.trim() || caseNumber.trim() || sheetsNumber.trim() || caseDate.trim() || currentPdfFile.fileName || detailedCaseDescription.trim() || caseName.trim() || caseDescriptions.trim());
 
   const clearInputs = () => {
     setDescriptionNumber('');
@@ -82,20 +78,6 @@ export const useArchiveCaseModal = ({ setIsOpen }: UseArchiveCaseModalProps) => 
     setCurrentPdfFile(INITIAL_PDF_ENTRY);
   };
 
-  const handleSelectPdfSuggestion = (val: string | null) => {
-    setCurrentPdfFile((prev) => ({ ...prev, name: val }));
-  };
-
-  const pdfFileSuggestions = useMemo(() => {
-    const pdfFiles = new Set<string>();
-
-    data?.allAssets?.forEach((asset) => {
-      pdfFiles.add(asset.filename);
-    });
-
-    return Array.from(pdfFiles);
-  }, [data?.allAssets]);
-
   return {
     descriptionNumber,
     setDescriptionNumber,
@@ -120,8 +102,6 @@ export const useArchiveCaseModal = ({ setIsOpen }: UseArchiveCaseModalProps) => 
     isAllowedPdfFile,
     handleApplyPdf,
     handleDeletePdf,
-    handleSelectPdfSuggestion,
-    pdfFileSuggestions,
     isSubmitDisabled: !isDirty,
     handleSubmit,
     handleSave,

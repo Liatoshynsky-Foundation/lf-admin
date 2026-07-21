@@ -38,8 +38,6 @@ export const ArchiveCaseModal = ({ isOpen, setIsOpen }: ArchiveCaseModalProps) =
     isAllowedPdfFile,
     handleApplyPdf,
     handleDeletePdf,
-    handleSelectPdfSuggestion,
-    pdfFileSuggestions,
     handleSave,
     handleCancel,
     isSubmitDisabled
@@ -88,8 +86,6 @@ export const ArchiveCaseModal = ({ isOpen, setIsOpen }: ArchiveCaseModalProps) =
         setCaseDescriptions={setCaseDescriptions}
         handleOpenUploadFlow={handleOpenUploadFlow}
         handleDeletePdf={handleDeletePdf}
-        handleSelectPdfSuggestion={handleSelectPdfSuggestion}
-        pdfFileSuggestions={pdfFileSuggestions}
         handleSave={handleSave}
         handleCancel={handleCancel}
         isSubmitDisabled={isSubmitDisabled}
