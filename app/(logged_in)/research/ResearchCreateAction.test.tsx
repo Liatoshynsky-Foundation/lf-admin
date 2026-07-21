@@ -18,7 +18,7 @@ describe('ResearchCreateAction', () => {
   it('renders the button label', () => {
     render(<ResearchCreateAction />);
 
-    expect(screen.getByText('+ Додати роботу')).toBeInTheDocument();
+    expect(screen.getByText('Додати роботу')).toBeInTheDocument();
   });
 
   it('links to the research create page', () => {

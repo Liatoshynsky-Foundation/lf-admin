@@ -1,5 +1,3 @@
-'use client';
-
 import type { ResearchWork } from './research.mock';
 import { ResearchTable } from './ResearchTable';
 import {
