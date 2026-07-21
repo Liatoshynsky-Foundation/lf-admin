@@ -89,12 +89,14 @@ const mockHandleDeletePdf = jest.fn();
 const mockHandleSelectPdfSuggestion = jest.fn();
 const mockHandleSave = jest.fn();
 const mockHandleCancel = jest.fn();
+const mockOnClose = jest.fn();
 
 const defaultProps: ArchiveCaseModalViewProps = {
   isOpen: true,
   descriptionNumber: '',
   setDescriptionNumber: mockSetDescriptionNumber,
   caseNumber: '',
+  onClose: mockOnClose,
   setCaseNumber: mockSetCaseNumber,
   sheetsNumber: '',
   setSheetsNumber: mockSetSheetsNumber,
@@ -191,6 +193,14 @@ describe('ArchiveCaseModalView', () => {
 
     await user.click(screen.getByTestId('label-action-btn'));
     expect(mockHandleOpenUploadFlow).toHaveBeenCalledTimes(1);
+  });
+
+  it('should call onClose if close button is clicked', async ()=>{
+    const user = userEvent.setup();
+    render(<ArchiveCaseModalView {...defaultProps} />);
+    const closeButton = screen.getByRole('button', { name: 'Закрити' });
+    await user.click(closeButton);
+    expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
 
   it('should call handleSelectPdfSuggestion, handleOpenUploadFlow, and handleDeletePdf from ActionableSuggestItem buttons', async () => {

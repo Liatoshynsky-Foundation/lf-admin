@@ -16,7 +16,7 @@ export const suggestItemConfigs = {
     showDatePicker: true
   },
   pdf: {
-    label: 'Назва PDF *',
+    label: 'Назва PDF',
     placeholder: 'Введіть назву PDF',
     showDatePicker: false
   }
