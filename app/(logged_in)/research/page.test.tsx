@@ -82,7 +82,7 @@ describe('Research page', () => {
     render(<ResearchPage />);
 
     expect(screen.getByText('Дослідження та наукові праці')).toBeInTheDocument();
-    expect(screen.getByText('+ Додати роботу')).toBeInTheDocument();
+    expect(screen.getByText('Додати роботу')).toBeInTheDocument();
   });
 
   it('renders the filtering toolbar and sort select', () => {

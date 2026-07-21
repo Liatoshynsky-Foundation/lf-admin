@@ -94,7 +94,7 @@ describe('ResearchPageContent', () => {
     render(<ResearchPageContent />);
 
     expect(screen.getByText('Дослідження та наукові праці')).toBeInTheDocument();
-    expect(screen.getByText('+ Додати роботу').closest('a')).toHaveAttribute('href', '/research/create');
+    expect(screen.getByText('Додати роботу').closest('a')).toHaveAttribute('href', '/research/create');
   });
 
   it('passes filtered works to ResearchContent when mock data matches filters', () => {

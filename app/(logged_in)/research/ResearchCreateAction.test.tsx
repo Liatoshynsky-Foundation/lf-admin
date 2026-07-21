@@ -24,7 +24,7 @@ describe('ResearchCreateAction', () => {
   it('links to the research create page', () => {
     render(<ResearchCreateAction />);
 
-    const link = screen.getByText('+ Додати роботу').closest('a');
+    const link = screen.getByText('Додати роботу').closest('a');
 
     expect(link).toHaveAttribute('href', '/research/create');
   });
