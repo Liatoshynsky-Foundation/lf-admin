@@ -7,8 +7,10 @@ import { ResearchContent } from './ResearchContent';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 jest.mock('./ResearchTable', () => ({
-  ResearchTable: ({ works }: { works: readonly ResearchWork[] }) => (
-    <div data-testid="mock-research-table">{works.length}</div>
+  ResearchTable: ({ works, onEditWork }: { works: readonly ResearchWork[]; onEditWork: () => void }) => (
+    <div data-testid="mock-research-table" data-has-edit-handler={String(typeof onEditWork === 'function')}>
+      {works.length}
+    </div>
   )
 }));
 
@@ -35,14 +37,14 @@ const sampleWork: ResearchWork = {
 
 describe('ResearchContent', () => {
   it('renders the research table when there are visible works', () => {
-    render(<ResearchContent visibleWorks={[sampleWork]} hasActiveCriteria={false} />);
+    render(<ResearchContent visibleWorks={[sampleWork]} hasActiveCriteria={false} onEditWork={jest.fn()} />);
 
     expect(screen.getByTestId('mock-research-table')).toHaveTextContent('1');
     expect(screen.queryByTestId('mock-empty-state')).not.toBeInTheDocument();
   });
 
   it('shows the default empty state when there are no works and no active criteria', () => {
-    render(<ResearchContent visibleWorks={[]} hasActiveCriteria={false} />);
+    render(<ResearchContent visibleWorks={[]} hasActiveCriteria={false} onEditWork={jest.fn()} />);
 
     expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
     expect(screen.getByText('Наукових робіт ще немає.')).toBeInTheDocument();
@@ -53,7 +55,7 @@ describe('ResearchContent', () => {
   });
 
   it('shows the no-results empty state when there are no works but search or filters are active', () => {
-    render(<ResearchContent visibleWorks={[]} hasActiveCriteria />);
+    render(<ResearchContent visibleWorks={[]} hasActiveCriteria onEditWork={jest.fn()} />);
 
     expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
     expect(screen.getByText('Нічого не знайдено')).toBeInTheDocument();

@@ -1,31 +1,22 @@
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { ResearchCreateAction } from './ResearchCreateAction';
 
-jest.mock('next/link', () => {
-  const MockLink = ({ children, href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
-    <a href={String(href)} {...props}>
-      {children}
-    </a>
-  );
-  MockLink.displayName = 'MockLink';
-  return MockLink;
-});
-
 describe('ResearchCreateAction', () => {
   it('renders the button label', () => {
-    render(<ResearchCreateAction />);
+    render(<ResearchCreateAction onClick={jest.fn()} />);
 
     expect(screen.getByText('Додати роботу')).toBeInTheDocument();
   });
 
   it('links to the research create page', () => {
-    render(<ResearchCreateAction />);
+    const onClick = jest.fn();
+    render(<ResearchCreateAction onClick={onClick} />);
 
-    const link = screen.getByText('Додати роботу').closest('a');
+    fireEvent.click(screen.getByText('Додати роботу'));
 
-    expect(link).toHaveAttribute('href', '/research/create');
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 });

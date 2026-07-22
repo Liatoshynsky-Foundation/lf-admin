@@ -11,9 +11,10 @@ import { EmptyState } from '~/shared/components/empty-state';
 type ResearchContentProps = Readonly<{
   visibleWorks: readonly ResearchWork[];
   hasActiveCriteria: boolean;
+  onEditWork: (work: ResearchWork) => void;
 }>;
 
-export function ResearchContent({ visibleWorks, hasActiveCriteria }: ResearchContentProps) {
+export function ResearchContent({ visibleWorks, hasActiveCriteria, onEditWork }: ResearchContentProps) {
   if (visibleWorks.length === 0) {
     return (
       <EmptyState
@@ -23,5 +24,5 @@ export function ResearchContent({ visibleWorks, hasActiveCriteria }: ResearchCon
     );
   }
 
-  return <ResearchTable works={visibleWorks} />;
+  return <ResearchTable works={visibleWorks} onEditWork={onEditWork} />;
 }

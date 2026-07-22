@@ -3,7 +3,29 @@ import { Pencil } from 'lucide-react';
 
 import { styles } from './EditAction.styles';
 
-export function EditAction({ href, label }: Readonly<{ href: string; label: string }>) {
+type EditActionProps = Readonly<{
+  label: string;
+  href?: string;
+  onClick?: () => void;
+}>;
+
+export function EditAction({ href, label, onClick }: EditActionProps) {
+  if (onClick) {
+    return (
+      <Box sx={styles.editActionWrapper}>
+        <IconButton
+          onClick={(e) => {
+            e.stopPropagation();
+            onClick();
+          }}
+          aria-label={label}
+          sx={styles.editActionButton}
+        >
+          <Pencil size={20} />
+        </IconButton>
+      </Box>
+    );
+  }
   return (
     <Box sx={styles.editActionWrapper}>
       <IconButton
