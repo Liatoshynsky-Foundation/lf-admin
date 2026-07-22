@@ -127,7 +127,10 @@ const mockBlock = {
   ourOrganisation: { uk: mockNodes.org },
   ourName: { uk: mockNodes.name },
   ourBelief: { uk: mockNodes.belief },
-  image: { src: 'image-src', caption: { uk: 'Image Caption' } }
+  image: {
+    src: 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/image-src.jpg',
+    caption: { uk: 'Image Caption' }
+  }
 };
 
 describe('LiatoshynskyFoundation', () => {
@@ -150,7 +153,10 @@ describe('LiatoshynskyFoundation', () => {
     expect(screen.getByTestId('main-text-json')).toHaveTextContent(JSON.stringify(mockNodes.org));
     expect(screen.getByTestId('paragraph-json-para-0')).toHaveTextContent(JSON.stringify(mockNodes.name));
     expect(screen.getByTestId('paragraph-json-para-1')).toHaveTextContent(JSON.stringify(mockNodes.belief));
-    expect(screen.getByTestId('image')).toHaveAttribute('src', '/api/blob-url?folderName=photos&blobName=image-src');
+    expect(screen.getByTestId('image')).toHaveAttribute(
+      'src',
+      'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/image-src.jpg'
+    );
     expect(screen.getByTestId('file-name')).toHaveTextContent('Image Caption');
   });
 

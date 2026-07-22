@@ -52,6 +52,21 @@ jest.mock('./composition-title-input/CompositionTitleInput', () => ({
   )
 }));
 
+jest.mock('./year-picker/YearPicker', () => ({
+  __esModule: true,
+  default: ({ label, value, onChange }: { label: string; value: string; onChange: (val: string) => void }) => (
+    <input aria-label={label} value={value || ''} onChange={(e) => onChange(e.target.value)} />
+  )
+}));
+
+jest.mock('~/shared/components/sortable-item-wrapper/SortableItemWrapper', () => ({
+  SortableItemWrapper: ({ children }: { children: ReactNode }) => <>{children}</>
+}));
+
+jest.mock('~/shared/components/sortable-list/SortableList', () => ({
+  SortableList: ({ children }: { children: ReactNode }) => <div>{children}</div>
+}));
+
 const makeComposition = (id: string, title: string): OpusCompositionData => ({
   id,
   title,
@@ -219,27 +234,6 @@ describe('OpusDetailsBlock', () => {
     await waitFor(() => expect(screen.queryByText('Редагування композиції')).not.toBeInTheDocument());
   });
 
-  it('reorders compositions via drag and drop', () => {
-    const initial: OpusDetailsValue = {
-      ...initialOpusDetails,
-      compositions: [makeComposition('c1', 'Перший'), makeComposition('c2', 'Другий')]
-    };
-    render(<Harness initial={initial} />);
-
-    fireEvent.dragEnter(screen.getAllByLabelText('Перемістити')[1]);
-    expect(screen.getAllByLabelText('composition-title')[0]).toHaveValue('Перший');
-
-    fireEvent.dragStart(screen.getAllByLabelText('Перемістити')[0]);
-    fireEvent.dragOver(screen.getAllByLabelText('Перемістити')[1]);
-    fireEvent.dragEnter(screen.getAllByLabelText('Перемістити')[0]);
-    fireEvent.dragEnter(screen.getAllByLabelText('Перемістити')[1]);
-    fireEvent.dragEnd(screen.getAllByLabelText('Перемістити')[0]);
-
-    const titles = screen.getAllByLabelText('composition-title');
-    expect(titles[0]).toHaveValue('Другий');
-    expect(titles[1]).toHaveValue('Перший');
-  });
-
   it('removes a composition after delete confirmation', () => {
     const initial: OpusDetailsValue = {
       ...initialOpusDetails,
@@ -287,47 +281,23 @@ describe('OpusDetailsBlock', () => {
     expect(screen.getByDisplayValue('Залишити')).toBeInTheDocument();
   });
 
-  it('updates dates and datesNote fields', () => {
+  it('updates the creation year, end year, dates note and genre fields', () => {
     render(<Harness />);
 
-    fireEvent.click(screen.getByLabelText('set-Рік створення *'));
-    expect(screen.getByLabelText('Рік створення *')).toHaveValue('1999');
+    const creationYearField = screen.getByLabelText(`${OPUS_DETAILS_LABELS.creationYear} *`);
+    fireEvent.change(creationYearField, { target: { value: '1900' } });
+    expect(creationYearField).toHaveValue('1900');
 
-    fireEvent.click(screen.getByLabelText('set-Рік закінчення'));
-    expect(screen.getByLabelText('Рік закінчення')).toHaveValue('1999');
+    const endYearField = screen.getByLabelText(OPUS_DETAILS_LABELS.endYear);
+    fireEvent.change(endYearField, { target: { value: '1905' } });
+    expect(endYearField).toHaveValue('1905');
 
     const datesNoteField = screen.getByLabelText(OPUS_DETAILS_LABELS.datesNote);
-    fireEvent.change(datesNoteField, { target: { value: 'приблизно' } });
-    expect(datesNoteField).toHaveValue('приблизно');
-  });
+    fireEvent.change(datesNoteField, { target: { value: 'фрагмент' } });
+    expect(datesNoteField).toHaveValue('фрагмент');
 
-  it('closes the composition modal without saving when cancel is clicked', async () => {
-    render(<Harness />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Додати' }));
-    fireEvent.click(screen.getAllByRole('button', { name: 'Редагувати' })[0]);
-    expect(screen.getByText('Редагування композиції')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Скасувати' }));
-    await waitFor(() => expect(screen.queryByText('Редагування композиції')).not.toBeInTheDocument());
-  });
-
-  it('aborts composition move if source index becomes invalid', () => {
-    const initial = {
-      ...initialOpusDetails,
-      compositions: [makeComposition('c1', 'C1'), makeComposition('c2', 'C2')]
-    };
-    render(<Harness initial={initial} />);
-
-    const dragHandles = screen.getAllByLabelText('Перемістити');
-
-    fireEvent.dragStart(dragHandles[1]);
-
-    fireEvent.click(screen.getAllByRole('button', { name: 'Видалити' })[1]);
-    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Видалити' }));
-    fireEvent.dragEnter(screen.getAllByLabelText('Перемістити')[0]);
-
-    expect(screen.getAllByLabelText('composition-title')).toHaveLength(1);
-    expect(screen.getAllByLabelText('composition-title')[0]).toHaveValue('C1');
+    const genreField = screen.getByLabelText(OPUS_DETAILS_LABELS.genre);
+    fireEvent.change(genreField, { target: { value: 'Соната' } });
+    expect(genreField).toHaveValue('Соната');
   });
 });

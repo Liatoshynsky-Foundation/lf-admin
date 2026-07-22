@@ -1,6 +1,10 @@
 import { Theme } from '@mui/material/styles';
 import { SxProps } from '@mui/system';
 
+const inputStyle = {
+  '& .MuiOutlinedInput-root': { borderRadius: '8px' }
+};
+
 export const styles: Record<string, SxProps<Theme>> = {
   container: {
     display: 'flex',
@@ -18,36 +22,36 @@ export const styles: Record<string, SxProps<Theme>> = {
   field: {
     flex: 1,
     minWidth: '160px',
-    '& .MuiOutlinedInput-root': { borderRadius: '8px' }
+    ...inputStyle
   },
 
   kindField: {
     width: { xs: '100%', md: '125px' },
     flexShrink: 0,
-    '& .MuiOutlinedInput-root': { borderRadius: '8px' }
+    ...inputStyle
   },
 
   numberField: {
     width: { xs: '100%', md: '120px' },
     flexShrink: 0,
-    '& .MuiOutlinedInput-root': { borderRadius: '8px' }
+    ...inputStyle
   },
 
   noteField: {
     width: { xs: '100%', md: '320px' },
     flexShrink: 0,
-    '& .MuiOutlinedInput-root': { borderRadius: '8px' }
+    ...inputStyle
   },
 
   nameField: {
     width: '100%',
-    '& .MuiOutlinedInput-root': { borderRadius: '8px' }
+    ...inputStyle
   },
 
   genreField: {
     flex: 2,
     minWidth: '160px',
-    '& .MuiOutlinedInput-root': { borderRadius: '8px' }
+    ...inputStyle
   },
 
   yearSeparator: {
@@ -55,60 +59,5 @@ export const styles: Record<string, SxProps<Theme>> = {
     alignItems: 'center',
     color: 'text.secondary',
     flexShrink: 0
-  },
-
-  compositionsHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '16px',
-    marginTop: '8px'
-  },
-
-  compositionsTitle: {
-    fontSize: '14px',
-    color: 'text.secondary',
-    flexShrink: 0,
-    whiteSpace: 'nowrap'
-  },
-
-  compositionsDivider: {
-    flex: 1,
-    height: '1px',
-    bgcolor: 'divider'
-  },
-
-  compositionsList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px'
-  },
-
-  compositionRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px'
-  },
-
-  compositionRowDragging: {
-    opacity: 0.5
-  },
-
-  dragHandle: {
-    display: 'flex',
-    alignItems: 'center',
-    cursor: 'grab',
-    flexShrink: 0,
-    color: '#9ca3af',
-    '&:active': { cursor: 'grabbing' }
-  },
-
-  compositionInput: {
-    flex: 1,
-    '& .MuiOutlinedInput-root': { borderRadius: '8px' }
-  },
-
-  rowIcon: {
-    color: 'text.primary',
-    flexShrink: 0
-  },
+  }
 };

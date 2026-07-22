@@ -79,7 +79,7 @@ type PublicationsTabStateMap<T> = {
 type NullableLocalizedString = Partial<Record<keyof LocalizedString, string | null>>;
 type MaybeLocalizedValue = string | NullableLocalizedString | null | undefined;
 
-const DEFAULT_COVER_IMAGE = '/images/image.png';
+const DEFAULT_COVER_IMAGE = 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/about-us-foundation-first.png';
 const DEFAULT_COVER_ALT = 'Обкладинка матеріалу';
 const SORT_FALLBACK_DATE = '1970-01-01T00:00:00.000Z';
 

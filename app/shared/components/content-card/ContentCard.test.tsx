@@ -5,6 +5,8 @@ import React from 'react';
 import CardLayout from '../card-layout/CardLayout';
 import ContentCard, { ContentType } from './ContentCard';
 
+const FALLBACK_IMAGE_SRC = 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/about-us-foundation-first.png';
+
 interface CardLayoutMockProps {
   coverImage: React.ReactNode;
   title: React.ReactNode;
@@ -173,7 +175,7 @@ describe('ContentCard', () => {
     const img = screen.getByTestId('card-image');
 
     fireEvent.error(img);
-    expect(img).toHaveAttribute('src', '/images/image.png');
+    expect(img).toHaveAttribute('src', FALLBACK_IMAGE_SRC);
   });
 
   it('should render edit button and trigger onClick when editHref is omitted', () => {

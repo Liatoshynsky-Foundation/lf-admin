@@ -2,6 +2,7 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
+  ListObjectsV2Command,
   PutObjectCommand,
   S3Client
 } from '@aws-sdk/client-s3';
@@ -22,6 +23,7 @@ const MockPutObjectCommand = PutObjectCommand as jest.MockedClass<typeof PutObje
 const MockGetObjectCommand = GetObjectCommand as jest.MockedClass<typeof GetObjectCommand>;
 const MockDeleteObjectCommand = DeleteObjectCommand as jest.MockedClass<typeof DeleteObjectCommand>;
 const MockHeadObjectCommand = HeadObjectCommand as jest.MockedClass<typeof HeadObjectCommand>;
+const MockListObjectsV2Command = ListObjectsV2Command as jest.MockedClass<typeof ListObjectsV2Command>;
 
 const createAwsOptions = (overrides?: Partial<CloudStorageOptions>): CloudStorageOptions => ({
   provider: 'aws',
@@ -80,6 +82,19 @@ describe('createCloudStorage', () => {
           }
         })
       );
+    });
+
+    it('should reuse the same S3 client between operations', async () => {
+      const options = createAwsOptions({ region: 'us-east-1' });
+      const storage = createCloudStorage(options);
+
+      mockSend.mockResolvedValue({});
+
+      await storage.exists('first.txt');
+      await storage.exists('second.txt');
+
+      expect(MockS3Client).toHaveBeenCalledTimes(1);
+      expect(mockSend).toHaveBeenCalledTimes(2);
     });
 
     it('should create Cloudflare R2 storage successfully', async () => {
@@ -208,6 +223,25 @@ describe('createCloudStorage', () => {
       });
     });
 
+    it('should store file in metadata directory when provided', async () => {
+      const options = createAwsOptions();
+      const storage = createCloudStorage(options);
+      const { buffer, filename, mimeType } = createTestFile();
+
+      mockSend.mockResolvedValue({});
+
+      const result = await storage.store(buffer, filename, mimeType, { directory: 'custom-folder' });
+
+      expect(result.metadata.path).toBe('custom-folder/test.txt');
+      expect(result.metadata.directory).toBe('custom-folder');
+      expect(MockPutObjectCommand).toHaveBeenCalledWith(
+        expect.objectContaining({
+          Bucket: 'test-bucket',
+          Key: 'custom-folder/test.txt'
+        })
+      );
+    });
+
     it('should include URL in metadata', async () => {
       const options = createAwsOptions({ region: 'us-west-2' });
       const storage = createCloudStorage(options);
@@ -291,8 +325,8 @@ describe('createCloudStorage', () => {
       consoleSpy.mockRestore();
     });
 
-    it('should throw error for unsupported providers', async () => {
-      const options = createAwsOptions({ provider: 'azure' as unknown as CloudStorageOptions['provider'] });
+    it('should return null for unsupported providers', async () => {
+      const options = createAwsOptions({ provider: 'unsupported' as unknown as CloudStorageOptions['provider'] });
       const storage = createCloudStorage(options);
       const consoleSpy = mockConsoleError();
 
@@ -450,7 +484,7 @@ describe('createCloudStorage', () => {
     });
 
     it('should return null for unsupported providers', async () => {
-      const options = createAwsOptions({ provider: 'azure' as unknown as CloudStorageOptions['provider'] });
+      const options = createAwsOptions({ provider: 'unsupported' as unknown as CloudStorageOptions['provider'] });
       const storage = createCloudStorage(options);
       const consoleSpy = mockConsoleError();
 
@@ -530,24 +564,133 @@ describe('createCloudStorage', () => {
       expect(url).toBe('https://cdn.gcp.example.com/test.txt');
     });
 
-    it('should generate correct URL for Azure', () => {
-      const options = createAwsOptions({ provider: 'azure' as unknown as CloudStorageOptions['provider'], credentials: {} });
-      const storage = createCloudStorage(options);
-      const url = storage.getUrl('test.txt');
-
-      expect(url).toBe('https://test-bucket.blob.core.windows.net/test.txt');
-    });
-
-    it('should generate correct URL for Azure with custom baseUrl', () => {
+    it('should generate correct URL for unsupported providers with custom baseUrl', () => {
       const options = createAwsOptions({
-        provider: 'azure' as unknown as CloudStorageOptions['provider'],
-        baseUrl: 'https://cdn.azure.example.com',
+        provider: 'unsupported' as unknown as CloudStorageOptions['provider'],
+        baseUrl: 'https://cdn.example.com',
         credentials: {}
       });
       const storage = createCloudStorage(options);
       const url = storage.getUrl('test.txt');
 
-      expect(url).toBe('https://cdn.azure.example.com/test.txt');
+      expect(url).toBe('https://cdn.example.com/test.txt');
+    });
+
+    it('should return null for unsupported providers without custom baseUrl', () => {
+      const options = createAwsOptions({
+        provider: 'unsupported' as unknown as CloudStorageOptions['provider'],
+        credentials: {}
+      });
+      const storage = createCloudStorage(options);
+      const url = storage.getUrl('test.txt');
+
+      expect(url).toBeNull();
+    });
+  });
+
+  describe('list', () => {
+    it('should list files from the root folder', async () => {
+      const options = createAwsOptions({ region: 'us-west-2' });
+      const storage = createCloudStorage(options);
+      const uploadedAt = new Date('2026-07-20');
+
+      mockSend.mockResolvedValue({
+        Contents: [
+          {
+            Key: 'uploads/test.txt',
+            Size: 42,
+            LastModified: uploadedAt
+          }
+        ]
+      });
+
+      const result = await storage.list();
+
+      expect(MockListObjectsV2Command).toHaveBeenCalledWith({
+        Bucket: 'test-bucket',
+        Prefix: ''
+      });
+      expect(result).toEqual([
+        {
+          filename: 'test.txt',
+          originalName: 'test.txt',
+          mimeType: 'application/octet-stream',
+          size: 42,
+          uploadedAt,
+          path: 'uploads/test.txt',
+          url: 'https://test-bucket.s3.us-west-2.amazonaws.com/uploads/test.txt',
+          directory: 'uploads'
+        }
+      ]);
+    });
+
+    it('should normalize folder prefix when listing files', async () => {
+      const options = createAwsOptions();
+      const storage = createCloudStorage(options);
+
+      mockSend.mockResolvedValue({ Contents: [] });
+
+      const result = await storage.list('photos');
+
+      expect(result).toEqual([]);
+      expect(MockListObjectsV2Command).toHaveBeenCalledWith({
+        Bucket: 'test-bucket',
+        Prefix: 'photos/'
+      });
+    });
+
+    it('should keep trailing slash in folder prefix when listing files', async () => {
+      const options = createAwsOptions();
+      const storage = createCloudStorage(options);
+
+      mockSend.mockResolvedValue({ Contents: [] });
+
+      await storage.list('photos/');
+
+      expect(MockListObjectsV2Command).toHaveBeenCalledWith({
+        Bucket: 'test-bucket',
+        Prefix: 'photos/'
+      });
+    });
+
+    it('should use default values when listed object metadata is missing', async () => {
+      const options = createAwsOptions();
+      const storage = createCloudStorage(options);
+
+      mockSend.mockResolvedValue({
+        Contents: [
+          {
+            Key: undefined,
+            Size: undefined,
+            LastModified: undefined
+          }
+        ]
+      });
+
+      const result = await storage.list();
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        filename: '',
+        originalName: '',
+        mimeType: 'application/octet-stream',
+        size: 0,
+        path: '',
+        url: 'https://test-bucket.s3.us-east-1.amazonaws.com/',
+        directory: ''
+      });
+      expect(result[0].uploadedAt).toBeInstanceOf(Date);
+    });
+
+    it('should return an empty array when list fails', async () => {
+      const options = createAwsOptions();
+      const storage = createCloudStorage(options);
+
+      mockSend.mockRejectedValue(new Error('List failed'));
+
+      const result = await storage.list();
+
+      expect(result).toEqual([]);
     });
   });
 });

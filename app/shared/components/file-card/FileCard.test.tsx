@@ -5,6 +5,7 @@ import FileCard, { FileCardData, FileType } from './FileCard';
 
 const mockUpdateAsset = jest.fn();
 let mockIsUpdatingStar = false;
+const mockToastError = jest.fn();
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
   ...jest.requireActual('~/types/graphql/generated/graphql'),
@@ -14,7 +15,7 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
 jest.mock('react-hot-toast', () => ({
   __esModule: true,
   default: {
-    error: jest.fn()
+    error: (message: string) => mockToastError(message)
   }
 }));
 
@@ -102,11 +103,6 @@ jest.mock('../card-layout/CardLayout', () => {
   MockCardLayout.displayName = 'MockCardLayout';
   return MockCardLayout;
 });
-
-const mockToastError = jest.fn();
-jest.mock('react-hot-toast', () => ({
-  error: (message: string) => mockToastError(message)
-}));
 
 globalThis.ResizeObserver = jest.fn().mockImplementation((callback: () => void) => ({
   observe: jest.fn(() => callback()),
