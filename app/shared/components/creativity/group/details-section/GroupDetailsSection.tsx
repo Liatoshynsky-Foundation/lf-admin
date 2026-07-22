@@ -1,15 +1,18 @@
 import { Box, Divider, MenuItem, Typography } from '@mui/material';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import dayjs, { Dayjs } from 'dayjs';
 import { useEffect, useState } from 'react';
 
 import { styles } from './GroupDetailsSection.styles';
 import { GroupDataField } from '~/constants/creativity';
-import { OPUS_FIELD_LIMITS } from '~/constants/opus';
+import {
+  OPUS_DETAILS_LABELS,
+  OPUS_FIELD_LIMITS,
+  OPUS_NUMBER_KIND_OPTIONS,
+  OPUS_VALIDATION_MESSAGES,
+  REQUIRED_FIELD_ERROR
+} from '~/constants/opus';
 import { EditorLanguage } from '~/constants/publications';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
+import YearPicker from '~/shared/components/forms/opus-details-block/year-picker/YearPicker';
 
 type MultilingualText = { uk: string; en: string };
 
@@ -52,8 +55,8 @@ export const GroupDetailsSection = ({ data, currentLanguage, errors, onChange }:
 
   const getGroupNumberErrorMessage = () => {
     if (errors.groupNumber) return errors.groupNumber;
-    if (isGroupNumberNegative) return 'Значення не може бути від\'ємним';
-    return 'Обов’язкове поле';
+    if (isGroupNumberNegative) return OPUS_VALIDATION_MESSAGES.numberInvalid;
+    return OPUS_VALIDATION_MESSAGES.numberRequired;
   };
 
   useEffect(() => {
@@ -84,14 +87,14 @@ export const GroupDetailsSection = ({ data, currentLanguage, errors, onChange }:
         <Box sx={{ flex: 3 }}>
           <CustomTextField
             select
-            label="Назва"
+            label={OPUS_DETAILS_LABELS.numberKind}
             value={data.titlePrefix || ''}
             onChange={(e) => onChange('titlePrefix', e.target.value)}
             onBlur={() => handleBlur('titlePrefix')}
             required
             fullWidth
             error={titlePrefixError}
-            helperText={titlePrefixError ? errors.titlePrefix || 'Обов’язкове поле' : ''}
+            helperText={titlePrefixError ? errors.titlePrefix || REQUIRED_FIELD_ERROR : ''}
             SelectProps={{
               open: isPrefixMenuOpen,
               onOpen: () => setIsPrefixMenuOpen(true),
@@ -101,14 +104,17 @@ export const GroupDetailsSection = ({ data, currentLanguage, errors, onChange }:
             }}
             sx={styles.selectField}
           >
-            <MenuItem value="Op.">Op.</MenuItem>
-            <MenuItem value="Bo.">B/o.</MenuItem>
+            {OPUS_NUMBER_KIND_OPTIONS.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
           </CustomTextField>
         </Box>
         <Box sx={{ flex: 3 }}>
           <CustomTextField
             type="number"
-            label="Номер"
+            label={OPUS_DETAILS_LABELS.number}
             value={data.groupNumber !== undefined && data.groupNumber !== null ? String(data.groupNumber) : ''}
             onChange={(e) => onChange('groupNumber', e.target.value)}
             required
@@ -121,86 +127,73 @@ export const GroupDetailsSection = ({ data, currentLanguage, errors, onChange }:
         </Box>
         <Box sx={{ flex: 4 }}>
           <CustomTextField
-            label="Примітка"
+            label={OPUS_DETAILS_LABELS.additionalText}
             value={data.additionalText}
             onChange={(e) => onChange('additionalText', e.target.value)}
+            onBlur={() => onChange('additionalText', data.additionalText.trim())}
             fullWidth
-            inputProps={{ 'data-testid': 'mock-input-additionalText-top', maxLength: 40 }}
+            inputProps={{ 'data-testid': 'mock-input-additionalText-top', maxLength: OPUS_FIELD_LIMITS.additionalText }}
           />
         </Box>
       </Box>
 
       <CustomTextField
-        label="Назва групи"
+        label={OPUS_DETAILS_LABELS.name}
         value={data.groupTitle[langKey]}
         onChange={(e) => onChange('groupTitle', e.target.value, true)}
         required
         fullWidth
         error={groupTitleError}
-        helperText={groupTitleError ? errors.groupTitle || 'Обов’язкове поле' : ''}
+        helperText={groupTitleError ? errors.groupTitle || OPUS_VALIDATION_MESSAGES.nameRequired : ''}
         onBlur={() => handleBlur('groupTitle')}
+        inputProps={{ maxLength: OPUS_FIELD_LIMITS.name.max }}
       />
 
       <Box sx={styles.bottomRow}>
         <Box sx={styles.datesContainer}>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Box sx={{ flex: 1 }}>
-              <DatePicker
-                label="Рік створення"
-                views={['year']}
-                value={data.creationYear ? dayjs(data.creationYear) : null}
-                onChange={(newValue: Dayjs | null) => {
-                  onChange('creationYear', newValue ? newValue.format('YYYY') : '');
-                }}
-                slotProps={{
-                  textField: {
-                    sx: styles.datePickerInput,
-                    required: true,
-                    error: creationYearError,
-                    helperText: creationYearError ? errors.creationYear || 'Обов’язкове поле' : '',
-                    onBlur: () => handleBlur('creationYear')
-                  }
-                }}
-              />
-            </Box>
+          <YearPicker
+            label={`${OPUS_DETAILS_LABELS.creationYear} *`}
+            value={data.creationYear}
+            onChange={(year: string) => {
+              onChange('creationYear', year);
+              handleBlur('creationYear');
+            }}
+            error={creationYearError}
+            helperText={creationYearError ? OPUS_VALIDATION_MESSAGES.creationYearRequired : ''}
+            sx={{ flex: 1 }}
+          />
 
-            <Box sx={styles.dashWrapper}>
-              <Typography>-</Typography>
-            </Box>
+          <Box sx={styles.dashWrapper}>
+            <Typography>-</Typography>
+          </Box>
 
-            <Box sx={{ flex: 1 }}>
-              <DatePicker
-                label="Рік закінчення"
-                views={['year']}
-                value={data.endYear ? dayjs(data.endYear) : null}
-                onChange={(newValue: Dayjs | null) => {
-                  onChange('endYear', newValue ? newValue.format('YYYY') : '');
-                }}
-                slotProps={{
-                  textField: {
-                    sx: styles.datePickerInput
-                  }
-                }}
-              />
-            </Box>
-          </LocalizationProvider>
+          <YearPicker
+            label={OPUS_DETAILS_LABELS.endYear}
+            value={data.endYear}
+            onChange={(year: string) => {
+              onChange('endYear', year);
+            }}
+            sx={{ flex: 1 }}
+          />
         </Box>
 
         <Box sx={{ flex: 2.5 }}>
           <CustomTextField
-            label="Уточнення"
+            label={OPUS_DETAILS_LABELS.datesNote}
             value={data.dateAdditionalText[langKey]}
             onChange={(e) => onChange('dateAdditionalText', e.target.value, true)}
+            onBlur={() => onChange('dateAdditionalText', data.dateAdditionalText[langKey].trim(), true)}
             fullWidth
-            inputProps={{ 'data-testid': 'mock-input-dateAdditionalText' }}
+            inputProps={{ 'data-testid': 'mock-input-dateAdditionalText', maxLength: OPUS_FIELD_LIMITS.datesNote }}
           />
         </Box>
 
         <Box sx={{ flex: 4 }}>
           <CustomTextField
-            label="Жанр"
+            label={OPUS_DETAILS_LABELS.genre}
             value={data.genre || ''}
             onChange={(e) => onChange('genre', e.target.value)}
+            onBlur={() => onChange('genre', data.genre?.trim() || '')}
             fullWidth
             inputProps={{
               maxLength: OPUS_FIELD_LIMITS.genre

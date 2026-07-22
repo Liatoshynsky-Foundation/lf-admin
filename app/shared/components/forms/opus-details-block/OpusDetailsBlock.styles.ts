@@ -22,7 +22,7 @@ export const styles: Record<string, SxProps<Theme>> = {
   },
 
   kindField: {
-    width: { xs: '100%', md: '120px' },
+    width: { xs: '100%', md: '125px' },
     flexShrink: 0,
     '& .MuiOutlinedInput-root': { borderRadius: '8px' }
   },
