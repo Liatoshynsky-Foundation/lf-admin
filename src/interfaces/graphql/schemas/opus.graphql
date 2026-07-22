@@ -21,6 +21,7 @@ enum WorksSortBy {
   createdAt
   updatedAt
   publishedAt
+  name
 }
 
 type OpusGalleryItem {
@@ -149,7 +150,6 @@ type UpdateOpusStatusPayload {
 
 extend type Query {
   opusById(id: ID!): Opus
-  opusByNumber(number: Float!): Opus
   searchCompositions(search: String!): [Composition!]!
   paginatedWorks(tab: WorksTab, filters: WorksFiltersInput): PaginatedWorks!
   opusesCount(status: OpusStatus): Int!

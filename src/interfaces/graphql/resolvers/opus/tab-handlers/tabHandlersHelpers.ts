@@ -3,7 +3,7 @@ import { mapFilters } from '../../helpers';
 import { WorksFilter } from '../opusQuery';
 import { Composition } from '~/domain/entities/Composition';
 import { Opus } from '~/src/domain/entities/Opus';
-import { ICompositionRepository } from '~/src/domain/repositories/compositionRepository';
+import { CompositionFilters, ICompositionRepository } from '~/src/domain/repositories/compositionRepository';
 import { IOpusRepository, OpusFilters } from '~/src/domain/repositories/opusRepository';
 import { OpusNumberKind, WorksTab } from '~/types/graphql/generated/graphql';
 
@@ -46,7 +46,7 @@ export const attachCompositionsToGroups = async (
 export const mappedGroups = async (
   repo: IOpusRepository,
   tab: WorksTab,
-  filters: WorksFilter | undefined
+  filters?: WorksFilter | undefined
 ) => {
   const numberKind = numberKindByTab[tab]!;
 
@@ -59,6 +59,42 @@ export const mappedGroups = async (
   const groups: Opus[] = await repo.findAll(mappedFilters);
 
   return { groups, total };
+};
+
+const getCompositionFilters = (filters?: WorksFilter): CompositionFilters => {
+  return mapFilters<CompositionFilters>(filters) ?? {};
+};
+
+export const mappedCompositions = async (
+  compositionRepo: ICompositionRepository,
+  compositionIds: string[],
+  page: number,
+  pageSize: number,
+  filters?: WorksFilter
+) => {
+  const compositionFilters = getCompositionFilters(filters);
+
+  return await compositionRepo.findByIdsPaginated(
+    compositionIds,
+    {
+      ...compositionFilters,
+      skip: (page - 1) * pageSize,
+      limit: pageSize,
+    }
+  );
+};
+
+export const totalCompositions = async (
+  compositionRepo: ICompositionRepository,
+  compositionIds: string[],
+  filters?: WorksFilter
+): Promise<number> => {
+  const compositionFilters = getCompositionFilters(filters);
+
+  return await compositionRepo.countByIds(
+    compositionIds,
+    compositionFilters
+  );
 };
 
 export const numberKindByTab: Partial<Record<WorksTab, OpusNumberKind>> = {

@@ -110,7 +110,7 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
     model: OpusModel,
     toEntity,
     buildQuery: (filters) => {
-      const query = buildBaseQuery({ ...filters, statuses: undefined }, ['genre', 'name.uk', 'name.en']) ?? {};
+      const query = buildBaseQuery({ ...filters, statuses: undefined }, ['genre', 'name.uk', 'name.en'], 'name') ?? {};
 
       return combineConditions<DbOpus>([
         query,
@@ -139,7 +139,6 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
     }
 
     const looseOpus = await OpusModel.findOne({ numberKind: 'compositions' }).lean<{ _id: string }>();
-    console.log(OpusModel.schema.path('numberKind').options.enum);
     if (!looseOpus) {
       await new OpusModel({
         numberKind: 'compositions',

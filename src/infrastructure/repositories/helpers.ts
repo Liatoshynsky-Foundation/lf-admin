@@ -12,25 +12,30 @@ const DEFAULT_SEARCH_FIELDS = [
 
 const escapeRegex = (value: string): string => value.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 
-const getLanguageCondition = <TDb>(language: string): FilterQuery<TDb> | null => {
+const DEFAULT_LANGUAGE_CONDITIONS = 'title' as const;
+
+const getLanguageCondition = <TDb>(
+  language: string,
+  fieldPrefix: string = 'title'
+): FilterQuery<TDb> | null => {
+  const primary = `${fieldPrefix}.uk`;
+  const secondary = `${fieldPrefix}.en`;
+
   if (language === 'uk') {
     return {
-      $and: [{ 'title.uk': NON_EMPTY_STRING_QUERY }, { 'title.en': EMPTY_STRING_QUERY }]
+      $and: [{ [primary]: NON_EMPTY_STRING_QUERY }, { [secondary]: EMPTY_STRING_QUERY }]
     } as FilterQuery<TDb>;
   }
-
   if (language === 'en') {
     return {
-      $and: [{ 'title.en': NON_EMPTY_STRING_QUERY }, { 'title.uk': EMPTY_STRING_QUERY }]
+      $and: [{ [secondary]: NON_EMPTY_STRING_QUERY }, { [primary]: EMPTY_STRING_QUERY }]
     } as FilterQuery<TDb>;
   }
-
   if (language === 'bilingual') {
     return {
-      $and: [{ 'title.uk': NON_EMPTY_STRING_QUERY }, { 'title.en': NON_EMPTY_STRING_QUERY }]
+      $and: [{ [primary]: NON_EMPTY_STRING_QUERY }, { [secondary]: NON_EMPTY_STRING_QUERY }]
     } as FilterQuery<TDb>;
   }
-
   return null;
 };
 
@@ -49,13 +54,24 @@ export const createToEntity = <
   }) as TEntity;
 
 export const buildBaseQuery = <TDb>(
-  filters?: FiltersInput & { statuses?: string[] },
-  searchFields: readonly string[] = DEFAULT_SEARCH_FIELDS
+  filters?: FiltersInput & { statuses?: string[]; ids?: string[] },
+  searchFields: readonly string[] = DEFAULT_SEARCH_FIELDS,
+  languageField: string = DEFAULT_LANGUAGE_CONDITIONS
 ): FilterQuery<TDb> => {
   const conditions: FilterQuery<TDb>[] = [];
 
+  if (filters?.ids?.length) {
+    conditions.push({
+      _id: { $in: filters.ids }
+    } as FilterQuery<TDb>);
+  }
+
   if (filters?.statuses?.length) {
     conditions.push({ status: { $in: filters.statuses } } as FilterQuery<TDb>);
+  }
+
+  if (filters?.ids?.length) {
+    conditions.push({ _id: { $in: filters.ids } } as FilterQuery<TDb>);
   }
 
   if (filters?.slug) {
@@ -74,7 +90,7 @@ export const buildBaseQuery = <TDb>(
 
   if (filters?.languages?.length) {
     const languageConditions = filters.languages
-      .map((language) => getLanguageCondition<TDb>(language))
+      .map((language) => getLanguageCondition<TDb>(language, languageField))
       .filter((condition): condition is FilterQuery<TDb> => Boolean(condition));
 
     if (languageConditions.length) {

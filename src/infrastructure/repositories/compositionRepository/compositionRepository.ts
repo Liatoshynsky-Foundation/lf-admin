@@ -1,7 +1,7 @@
-import mongoose, { Model } from 'mongoose';
+import mongoose, { FilterQuery, Model } from 'mongoose';
 
 import { createBaseRepository } from '../baseRepository/baseRepository';
-import { buildBaseQuery, combineConditions, fieldCondition, getBaseSort } from '../helpers';
+import { buildBaseQuery, combineConditions, fieldCondition } from '../helpers';
 import { Composition } from '~/domain/entities/Composition';
 import { CompositionFilters, CompositionInput, ICompositionRepository } from '~/domain/repositories/compositionRepository';
 import dbConnect from '~/infrastructure/db/connect';
@@ -24,6 +24,19 @@ type CompositionRepoDeps = Readonly<{
   CompositionModel: Model<DbComposition>;
 }>;
 
+const COMPOSITION_SORT_FIELD_MAP: Record<string, string> = {
+  number: 'name.uk',
+};
+
+const getCompositionSort = (filters?: CompositionFilters): Record<string, 1 | -1> => {
+  if (filters?.sort?.length) {
+    const { sortBy, sortOrder } = filters.sort[0];
+    const field = COMPOSITION_SORT_FIELD_MAP[sortBy] ?? sortBy;
+    return { [field]: sortOrder === 'asc' ? 1 : -1 };
+  }
+  return { createdAt: -1 };
+};
+
 const toEntity = (doc: DbComposition): Composition => ({
   id: doc._id.toString(),
   name: doc.name,
@@ -37,42 +50,34 @@ const toEntity = (doc: DbComposition): Composition => ({
   updatedAt: doc.updatedAt
 });
 
+const buildCompositionQuery = (
+  filters?: CompositionFilters,
+  extraConditions: FilterQuery<DbComposition>[] = []
+) =>
+  combineConditions([
+    buildBaseQuery(
+      { ...filters, statuses: undefined },
+      ['genre', 'name.uk', 'name.en'],
+      'name'
+    ),
+    fieldCondition(
+      'status',
+      filters?.statuses as OpusStatus[] | undefined,
+      OpusStatus.Draft
+    ),
+    ...extraConditions,
+  ]);
+
 export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps): ICompositionRepository => {
   const baseRepo = createBaseRepository<Composition, DbComposition, CompositionFilters>({
     model: CompositionModel,
     toEntity,
-    buildQuery: (filters) => {
-      const query = buildBaseQuery({ ...filters, statuses: undefined }, ['genre', 'name.uk', 'name.en']) ?? {};
-
-      return combineConditions<DbComposition>([
-        query,
-        fieldCondition<DbComposition>('status', filters?.statuses as unknown as string[], OpusStatus.Draft as string),
+    buildQuery: (filters) =>
+      buildCompositionQuery(filters, [
         { 'name.uk': { $exists: true, $ne: null } }
-      ]);
-    },
-    getDefaultSort: getBaseSort
+      ]),
+    getDefaultSort: getCompositionSort
   });
-
-  const findByOpusId = async (opusId: string): Promise<Composition[]> => {
-    await dbConnect();
-
-    if (!mongoose.Types.ObjectId.isValid(opusId)) {
-      return [];
-    }
-
-    const docs = await CompositionModel.find({ opusId }).sort({ order: 1, _id: 1 }).lean<DbComposition[]>();
-    return docs.map(toEntity);
-  };
-
-  const deleteByOpusId = async (opusId: string): Promise<void> => {
-    await dbConnect();
-
-    if (!mongoose.Types.ObjectId.isValid(opusId)) {
-      throw new Error(`Invalid opusId: ${opusId}`);
-    }
-
-    await CompositionModel.deleteMany({ opusId });
-  };
 
   const syncForOpus = async (inputs: CompositionInput[]): Promise<Composition[]> => {
     await dbConnect();
@@ -121,24 +126,6 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
     return docs.map(toEntity);
   };
 
-  const findByOpusIds = async (opusIds: string[]): Promise<Composition[]> => {
-    await dbConnect();
-
-    const validIds = opusIds
-      .filter((id) => mongoose.Types.ObjectId.isValid(id))
-      .map((id) => new mongoose.Types.ObjectId(id));
-
-    if (!validIds.length) {
-      return [];
-    }
-
-    const docs = await CompositionModel.find({ opusId: { $in: validIds } })
-      .sort({ order: 1, _id: 1 })
-      .lean<DbComposition[]>();
-
-    return docs.map(toEntity);
-  };
-
   const findByIds = async (ids: string[]): Promise<Composition[]> => {
     await dbConnect();
 
@@ -157,14 +144,58 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
     return docs.map(toEntity);
   };
 
+  const toValidObjectIds = (ids: string[]) =>
+    ids.filter((id) => mongoose.Types.ObjectId.isValid(id)).map((id) => new mongoose.Types.ObjectId(id));
+
+  const countByIds = async (ids: string[], filters?: CompositionFilters): Promise<number> => {
+    await dbConnect();
+
+    const validIds = toValidObjectIds(ids);
+    if (!validIds.length) {
+      return 0;
+    }
+
+    const query = buildCompositionQuery(filters, [
+      { _id: { $in: validIds } }
+    ]);
+    return CompositionModel.countDocuments(query);
+  };
+
+  const findByIdsPaginated = async (
+    ids: string[],
+    filters?: CompositionFilters
+  ): Promise<{ items: Composition[]; total: number }> => {
+    await dbConnect();
+
+    const validIds = toValidObjectIds(ids);
+    if (!validIds.length) {
+      return { items: [], total: 0 };
+    }
+
+    const query = buildCompositionQuery(filters, [
+      { _id: { $in: validIds } }
+    ]);
+    const total = await CompositionModel.countDocuments(query);
+
+    const sort = getCompositionSort(filters);
+
+    const queryBuilder = CompositionModel.find(query)
+      .sort(sort)
+      .collation({ locale: 'uk', numericOrdering: true });
+
+    if (filters?.skip) queryBuilder.skip(filters.skip);
+    if (filters?.limit) queryBuilder.limit(filters.limit);
+
+    const docs = await queryBuilder.lean<DbComposition[]>();
+    return { items: docs.map(toEntity), total };
+  };
+
   return {
     ...baseRepo,
-    findByOpusId,
     syncForOpus,
-    deleteByOpusId,
     searchByTitle,
-    findByOpusIds,
-    findByIds
+    findByIds,
+    findByIdsPaginated,
+    countByIds
   };
 };
-

@@ -10,10 +10,9 @@ export type CompositionFilters = FiltersInput & {
 export type CompositionInput = Omit<Composition, 'id' | 'createdAt' | 'updatedAt'> & { id?: string };
 
 export interface ICompositionRepository extends IBaseRepository<Composition, CompositionFilters> {
-  findByOpusId(opusId: string): Promise<Composition[]>;
   syncForOpus( inputs: CompositionInput[]): Promise<Composition[]>;
-  deleteByOpusId(opusId: string): Promise<void>;
   searchByTitle(search: string): Promise<Composition[]>;
-  findByOpusIds(opusIds: string[]): Promise<Composition[]>;
   findByIds(ids: string[]): Promise<Composition[]>;
+  findByIdsPaginated(ids: string[], filters?: CompositionFilters): Promise<{ items: Composition[]; total: number }>;
+  countByIds(ids: string[], filters?: CompositionFilters): Promise<number>;
 }

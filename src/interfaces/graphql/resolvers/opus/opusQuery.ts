@@ -14,9 +14,6 @@ import { WorksTab } from '~/types/graphql/generated/graphql';
 interface IdArgs {
   id: string;
 }
-interface NumberArgs {
-  number: number;
-}
 interface SearchArgs {
   search: string;
 }
@@ -69,10 +66,6 @@ export const OpusQuery = {
     return { ...opus, compositions };
   },
 
-  opusByNumber: endpointHandler<NumberArgs, Opus | null>(async ({ args: { number }, repo }) =>
-    repo.findByNumber(number)
-  ),
-
   searchCompositions: async (
     _: unknown,
     { search }: SearchArgs,
@@ -94,9 +87,7 @@ export const OpusQuery = {
       const result = await handleGroup(tab, repo, compositionsRepo, filters, page, pageSize);
       return result;
     } else if (tab === WorksTab.Compositions) {
-
       const result = await handleWork(tab, repo, compositionsRepo, filters, page, pageSize);
-      console.log('handleWork result:', result);
       return result;
     }
     return handleMixed(repo, compositionsRepo, filters, page, pageSize);

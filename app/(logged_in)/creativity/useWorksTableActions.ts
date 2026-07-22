@@ -25,7 +25,6 @@ export function useWorksTableActions() {
   };
 
   const handlePublishStatusChange = async (id: string, newStatus: OpusStatus) => {
-    console.log(`Changing publish status for opus ${id} to ${newStatus}`);
     try {
       await UpdateOpusStatus({
         variables: {

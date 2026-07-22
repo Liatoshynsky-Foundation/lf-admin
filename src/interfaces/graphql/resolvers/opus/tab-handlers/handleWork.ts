@@ -1,26 +1,33 @@
 import { PaginatedWorksResult, WorksFilter } from '../opusQuery';
-import { mappedGroups,totalPages } from './tabHandlersHelpers';
+import { mappedCompositions, mappedGroups, totalCompositions, totalPages } from './tabHandlersHelpers';
 import { ICompositionRepository } from '~/src/domain/repositories/compositionRepository';
 import { IOpusRepository } from '~/src/domain/repositories/opusRepository';
 import { WorksTab } from '~/types/graphql/generated/graphql';
 
-export async function handleWork (
+export async function handleWork(
   tab: WorksTab.Compositions,
   repo: IOpusRepository,
   compositionRepo: ICompositionRepository,
   filters: WorksFilter | undefined,
   page: number,
-  pageSize: number,
+  pageSize: number
 ): Promise<PaginatedWorksResult> {
-  const groupsResult = await mappedGroups(repo, tab, filters);
+  const groupsResult = await mappedGroups(repo, tab);
   const compositionIds = groupsResult.groups[0]?.compositions ?? [];
-  const compositions = await compositionRepo.findByIds(compositionIds);
+
+  const [total, { items }] = await Promise.all([
+    totalCompositions(compositionRepo, compositionIds, filters),
+    mappedCompositions(compositionRepo, compositionIds, page, pageSize, filters),
+  ]);
+  const tot = items.length;
+
+  console.log('handleWork', { total, items, tot });
 
   return {
     groups: [],
-    works: compositions,
-    total: groupsResult.total,
+    works: items,
+    total,
     page,
-    totalPages: totalPages(groupsResult.total, pageSize),
+    totalPages: totalPages(total, pageSize),
   };
 }

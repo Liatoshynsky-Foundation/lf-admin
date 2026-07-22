@@ -124,8 +124,6 @@ const buildOpusUpdateData = (
 
 export const OpusMutation = {
   createOpus: async (_: unknown, { input }: CreateOpusArgs, context: GraphQLContext): Promise<OpusFull> => {
-    // console.log('createOpus input get:', input);
-    // console.log('createOpus compositions get:', input.compositions);
     assertAuthenticated(context);
     const repo = context.requestContainer.cradle.opusRepository;
     const compositionsRepo = context.requestContainer.cradle.compositionsRepository;
@@ -191,7 +189,6 @@ export const OpusMutation = {
   },
 
   updateOpusStatus: async (_: unknown, { id, status }: { id: string; status: OpusStatus }, context: GraphQLContext): Promise<UpdateOpusStatusPayload> => {
-    console.log('updateOpusStatus input get:', status);
     assertAuthenticated(context);
     const repo = context.requestContainer.cradle.opusRepository;
     
@@ -203,9 +200,6 @@ export const OpusMutation = {
     }
 
     const updatedOpus = await repo.update(id, { status });
-
-    console.dir(updatedOpus, { depth: null });
-
 
     if (!updatedOpus) {
       throw new GraphQLError(opusServiceErrors.OPUS_NOT_FOUND(id), {
