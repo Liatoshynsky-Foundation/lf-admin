@@ -109,16 +109,21 @@ export const buildBaseQuery = <TDb>(
   return { $and: conditions } as FilterQuery<TDb>;
 };
 
-export const getBaseSort = (filters?: FiltersInput): Record<string, 1 | -1> => {
+export const getBaseSort = (
+  filters?: FiltersInput,
+  fieldMap: Record<string, string> = {}
+): Record<string, 1 | -1> => {
   if (filters?.sort?.length) {
     const { sortBy, sortOrder } = filters.sort[0];
+
     return {
-      [sortBy]: sortOrder === 'asc' ? 1 : -1
+      [fieldMap[sortBy] ?? sortBy]: sortOrder === 'asc' ? 1 : -1
     };
   }
 
   return { createdAt: -1 };
 };
+
 export const fieldCondition = <TDb>(
   field: string,
   value: string | string[] | undefined | null,
@@ -159,3 +164,5 @@ export const combineConditions = <TDb>(
   if (nonEmpty.length === 1) return nonEmpty[0];
   return { $and: nonEmpty } as FilterQuery<TDb>;
 };
+
+

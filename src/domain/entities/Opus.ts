@@ -24,7 +24,7 @@ export type OpusGalleryItem = {
 };
 
 export type OpusPerformance = {
-  id: string; ///
+  id: string;
   title?: LocalizedString | null;
   videoUrl?: string | null;
 };
@@ -55,11 +55,11 @@ export type Opus = {
   performancesTitle?: LocalizedString | null;
   performances?: OpusPerformance[];
 
-  status: OpusStatus; ///
+  status: OpusStatus;
   meta?: { views: number };
   publishedAt?: string | null;
 
-  compositions?: string[] | null; /// array of composition IDs
+  compositions?: string[] | null;
 
   createdAt: string;
   updatedAt: string;

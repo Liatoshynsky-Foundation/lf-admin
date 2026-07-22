@@ -15,17 +15,14 @@ export async function handleWork(
   const groupsResult = await mappedGroups(repo, tab);
   const compositionIds = groupsResult.groups[0]?.compositions ?? [];
 
-  const [total, { items }] = await Promise.all([
+  const [total, works] = await Promise.all([
     totalCompositions(compositionRepo, compositionIds, filters),
     mappedCompositions(compositionRepo, compositionIds, page, pageSize, filters),
   ]);
-  const tot = items.length;
-
-  console.log('handleWork', { total, items, tot });
 
   return {
     groups: [],
-    works: items,
+    works,
     total,
     page,
     totalPages: totalPages(total, pageSize),

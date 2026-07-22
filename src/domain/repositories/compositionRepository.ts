@@ -13,6 +13,6 @@ export interface ICompositionRepository extends IBaseRepository<Composition, Com
   syncForOpus( inputs: CompositionInput[]): Promise<Composition[]>;
   searchByTitle(search: string): Promise<Composition[]>;
   findByIds(ids: string[]): Promise<Composition[]>;
-  findByIdsPaginated(ids: string[], filters?: CompositionFilters): Promise<{ items: Composition[]; total: number }>;
+  findByIdsPaginated(ids: string[], filters?: CompositionFilters): Promise<Composition[]>;
   countByIds(ids: string[], filters?: CompositionFilters): Promise<number>;
 }

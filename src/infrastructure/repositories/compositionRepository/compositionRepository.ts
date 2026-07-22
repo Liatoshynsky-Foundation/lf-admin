@@ -1,7 +1,7 @@
 import mongoose, { FilterQuery, Model } from 'mongoose';
 
 import { createBaseRepository } from '../baseRepository/baseRepository';
-import { buildBaseQuery, combineConditions, fieldCondition } from '../helpers';
+import { buildBaseQuery, combineConditions, fieldCondition, getBaseSort } from '../helpers';
 import { Composition } from '~/domain/entities/Composition';
 import { CompositionFilters, CompositionInput, ICompositionRepository } from '~/domain/repositories/compositionRepository';
 import dbConnect from '~/infrastructure/db/connect';
@@ -26,15 +26,6 @@ type CompositionRepoDeps = Readonly<{
 
 const COMPOSITION_SORT_FIELD_MAP: Record<string, string> = {
   number: 'name.uk',
-};
-
-const getCompositionSort = (filters?: CompositionFilters): Record<string, 1 | -1> => {
-  if (filters?.sort?.length) {
-    const { sortBy, sortOrder } = filters.sort[0];
-    const field = COMPOSITION_SORT_FIELD_MAP[sortBy] ?? sortBy;
-    return { [field]: sortOrder === 'asc' ? 1 : -1 };
-  }
-  return { createdAt: -1 };
 };
 
 const toEntity = (doc: DbComposition): Composition => ({
@@ -76,7 +67,8 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
       buildCompositionQuery(filters, [
         { 'name.uk': { $exists: true, $ne: null } }
       ]),
-    getDefaultSort: getCompositionSort
+    getDefaultSort: (filters) =>
+      getBaseSort(filters, COMPOSITION_SORT_FIELD_MAP)
   });
 
   const syncForOpus = async (inputs: CompositionInput[]): Promise<Composition[]> => {
@@ -164,20 +156,19 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
   const findByIdsPaginated = async (
     ids: string[],
     filters?: CompositionFilters
-  ): Promise<{ items: Composition[]; total: number }> => {
+  ): Promise<Composition[]> => {
     await dbConnect();
 
     const validIds = toValidObjectIds(ids);
     if (!validIds.length) {
-      return { items: [], total: 0 };
+      return [];
     }
 
     const query = buildCompositionQuery(filters, [
       { _id: { $in: validIds } }
     ]);
-    const total = await CompositionModel.countDocuments(query);
 
-    const sort = getCompositionSort(filters);
+    const sort = getBaseSort(filters, COMPOSITION_SORT_FIELD_MAP);
 
     const queryBuilder = CompositionModel.find(query)
       .sort(sort)
@@ -187,7 +178,7 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
     if (filters?.limit) queryBuilder.limit(filters.limit);
 
     const docs = await queryBuilder.lean<DbComposition[]>();
-    return { items: docs.map(toEntity), total };
+    return docs.map(toEntity);
   };
 
   return {

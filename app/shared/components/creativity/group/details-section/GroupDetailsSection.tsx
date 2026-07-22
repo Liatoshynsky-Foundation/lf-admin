@@ -102,7 +102,7 @@ export const GroupDetailsSection = ({ data, currentLanguage, errors, onChange }:
             sx={styles.selectField}
           >
             <MenuItem value="Op.">Op.</MenuItem>
-            <MenuItem value="Bo.">B/o.</MenuItem>
+            <MenuItem value="Bo.">Sine op.</MenuItem>
           </CustomTextField>
         </Box>
         <Box sx={{ flex: 3 }}>

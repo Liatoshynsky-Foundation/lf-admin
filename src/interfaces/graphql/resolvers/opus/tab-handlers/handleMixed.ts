@@ -54,7 +54,7 @@ export async function handleMixed(
 
     const targetPage = Math.floor(worksOffset / take) + 1;
     
-    const { items } = await mappedCompositions(
+    const items = await mappedCompositions(
       compositionsRepo,
       allCompositionIds,
       targetPage,
