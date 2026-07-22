@@ -51,31 +51,17 @@ describe('YearPicker', () => {
     expect(screen.getByTestId('value-display')).toHaveTextContent('null');
   });
 
-  it('reports the picked year as a string', () => {
+  it.each([
+    ['reports the picked year as a string', 'pick', '', '1915'],
+    ['reports an empty string when the value is cleared', 'clear', '1915', ''],
+    ['reports an empty string when the picked year is invalid (valueToYear)', 'pick-invalid', '', '']
+  ])('%s', (_, buttonText, initialValue, expectedOutput) => {
     const onChange = jest.fn();
-    render(<YearPicker label="Рік" value="" onChange={onChange} />);
+    render(<YearPicker label=" " value={initialValue} onChange={onChange} />);
 
-    fireEvent.click(screen.getByText('pick'));
+    fireEvent.click(screen.getByText(buttonText));
 
-    expect(onChange).toHaveBeenCalledWith('1915');
-  });
-
-  it('reports an empty string when the value is cleared', () => {
-    const onChange = jest.fn();
-    render(<YearPicker label="Рік" value="1915" onChange={onChange} />);
-
-    fireEvent.click(screen.getByText('clear'));
-
-    expect(onChange).toHaveBeenCalledWith('');
-  });
-
-  it('reports an empty string when the picked year is invalid (valueToYear)', () => {
-    const onChange = jest.fn();
-    render(<YearPicker label="Рік" value="" onChange={onChange} />);
-
-    fireEvent.click(screen.getByText('pick-invalid'));
-
-    expect(onChange).toHaveBeenCalledWith('');
+    expect(onChange).toHaveBeenCalledWith(expectedOutput);
   });
 
   it('manages the open state correctly through onOpen and onClose', () => {
