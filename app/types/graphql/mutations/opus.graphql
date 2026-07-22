@@ -16,6 +16,7 @@ mutation UpdateOpus($id: ID!, $input: UpdateOpusInput!) {
     id
     number
     numberKind
+    blocksOrder
     title {
       uk
       en

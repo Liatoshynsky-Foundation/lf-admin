@@ -42,6 +42,7 @@ export type DbOpus = {
   gallery?: DbOpusGalleryItem[];
   performancesTitle: Opus['performancesTitle'];
   performances?: DbOpusPerformance[];
+  blocksOrder?: string[] | null;
   keywords: Opus['keywords'];
   allowIndexation: Opus['allowIndexation'];
   coverImage: Opus['coverImage'];
@@ -96,6 +97,7 @@ const toEntity = (doc: DbOpus): Opus =>
         title: perf.title,
         videoUrl: perf.videoUrl
       })) ?? [],
+    blocksOrder: doc.blocksOrder ?? undefined,
     keywords: doc.keywords ?? undefined,
     allowIndexation: doc.allowIndexation ?? undefined,
     coverImage: doc.coverImage ?? undefined,

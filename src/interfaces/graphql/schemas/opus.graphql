@@ -41,6 +41,7 @@ type OpusPerformance {
 type Opus {
   id: ID!
   number: Float!
+  blocksOrder: [String]
   numberKind: OpusNumberKind!
   title: LocalizedString!
   name: LocalizedString!
@@ -116,6 +117,7 @@ input CreateOpusInput {
   coverImage: JSON
   status: OpusStatus
   publishedAt: String
+  blocksOrder: [String]
 }
 
 input UpdateOpusInput {
@@ -141,6 +143,7 @@ input UpdateOpusInput {
   coverImage: JSON
   status: OpusStatus
   publishedAt: String
+  blocksOrder: [String]
 }
 
 type UpdateOpusStatusPayload {

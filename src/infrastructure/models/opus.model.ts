@@ -70,6 +70,10 @@ const opusSchema = new Schema(
         videoUrl: { type: String, default: '' },
       }
     ],
+    blocksOrder: {
+      type: [String],
+      default: ['details', 'intro', 'photos', 'works', 'performances']
+    },
     status: {
       type: String,
       enum: Array.from(Object.values(OpusStatus)),

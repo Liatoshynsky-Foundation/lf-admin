@@ -1044,4 +1044,74 @@ describe('useGroupContent Hook', () => {
       expect(mockNavigate).toHaveBeenCalledWith('/creativity');
     });
   });
+  describe('Saving', () => {
+    it('should forcefully trigger none handleSave', async () => {
+      const originalSplit = String.prototype.split;
+      jest.spyOn(String.prototype, 'split').mockImplementation(function (this: string, separator: any, limit?: any) {
+        if (this === 'trigger-empty-split') return [] as unknown as string[];
+        return originalSplit.call(this, separator, limit);
+      });
+
+      const edgeOpus = {
+        ...mockFetchedOpus,
+        number: '100',
+        name: { uk: 'Valid Name', en: '' },
+        creationYear: 2020,
+        numberKind: 'op',
+
+        gallery: [
+          {
+            id: 'photo-edge',
+            src: '',
+            description: { uk: '', en: '' },
+            altText: { uk: '', en: '' },
+            crop: undefined
+          }
+        ],
+        compositions: [
+          {
+            id: 'comp-edge',
+            title: { uk: 'T' },
+            audios: [{ name: null, url: 'trigger-empty-split' }],
+            sheetMusic: undefined
+          }
+        ]
+      };
+
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: { opusById: edgeOpus },
+        loading: false
+      });
+      mockUpdateOpus.mockResolvedValue({ data: { updateOpus: { id: 'test-id' } } });
+
+      const { result } = renderHook(() => useGroupContent('test-id'));
+      await waitFor(() => expect(result.current.groupData).not.toBeNull());
+
+      act(() => {
+        result.current.handleFieldChange('additionalText', '');
+        result.current.handleFieldChange('genre', '   ');
+        result.current.handleFieldChange('parts', { uk: '', en: undefined });
+        result.current.handleFieldChange('description', { uk: null, en: '' });
+
+        result.current.handleFieldChange('works', [
+          {
+            compositionId: 'c3',
+            title: 'T',
+            genre: '   ',
+            year: '   ',
+            audios: undefined,
+            notes: undefined
+          } as unknown as OpusCompositionData
+        ]);
+      });
+
+      await act(async () => {
+        await result.current.handlePublishClick();
+      });
+
+      expect(mockUpdateOpus).toHaveBeenCalled();
+
+      jest.restoreAllMocks();
+    });
+  });
 });

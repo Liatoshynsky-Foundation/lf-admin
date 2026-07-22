@@ -90,10 +90,12 @@ export const useGroupContent = (id: string) => {
       };
       setGroupData({
         titlePrefix: fetchedOpus.numberKind ?? 'op',
-        groupNumber: fetchedOpus.number ? String(fetchedOpus.number).replace(/^(op|woo|sineop|wo|bo)[.\-\s]*/i, '') : '',
-        genre: { 
-          uk: fetchedOpus.genre?.uk ?? '', 
-          en: fetchedOpus.genre?.en ?? '' 
+        groupNumber: fetchedOpus.number
+          ? String(fetchedOpus.number).replace(/^(op|woo|sineop|wo|bo)[.\-\s]*/i, '')
+          : '',
+        genre: {
+          uk: fetchedOpus.genre?.uk ?? '',
+          en: fetchedOpus.genre?.en ?? ''
         },
         additionalText: fetchedOpus.additionalText ?? '',
         groupTitle: {
@@ -115,20 +117,23 @@ export const useGroupContent = (id: string) => {
           uk: parseDescription(fetchedOpus.introDescription?.uk),
           en: parseDescription(fetchedOpus.introDescription?.en)
         },
+        blocksOrder: fetchedOpus.blocksOrder?.length
+          ? fetchedOpus.blocksOrder
+          : ['details', 'intro', 'photos', 'works', 'performances'],
         photos: (fetchedOpus.gallery || []).map((photo) => {
           const mappedCrop = photo.crop
             ? ({
-              x: photo.crop.x ?? 0,
-              y: photo.crop.y ?? 0,
-              width: photo.crop.width ?? 0,
-              height: photo.crop.height ?? 0,
-              rect: {
                 x: photo.crop.x ?? 0,
                 y: photo.crop.y ?? 0,
                 width: photo.crop.width ?? 0,
-                height: photo.crop.height ?? 0
-              }
-            } as unknown as GroupPhoto['crop'])
+                height: photo.crop.height ?? 0,
+                rect: {
+                  x: photo.crop.x ?? 0,
+                  y: photo.crop.y ?? 0,
+                  width: photo.crop.width ?? 0,
+                  height: photo.crop.height ?? 0
+                }
+              } as unknown as GroupPhoto['crop'])
             : null;
 
           return {
@@ -202,6 +207,7 @@ export const useGroupContent = (id: string) => {
           uk: groupData.description?.uk ? JSON.stringify(groupData.description.uk) : '""',
           en: groupData.description?.en ? JSON.stringify(groupData.description.en) : '""'
         },
+        blocksOrder: groupData.blocksOrder || ['details', 'intro', 'photos', 'works', 'performances'],
         compositions: (groupData.compositions || []).map((work, index) => ({
           id: work.id,
           name: work.name.trim(),
@@ -287,8 +293,7 @@ export const useGroupContent = (id: string) => {
     } else if (groupTitleUk.length < OPUS_FIELD_LIMITS.name.min) {
       newErrors.groupTitle = OPUS_VALIDATION_MESSAGES.nameTooShort;
       setCurrentLanguage('UA');
-    }
-    else if (!groupTitleEn) {
+    } else if (!groupTitleEn) {
       newErrors.groupTitle = OPUS_VALIDATION_MESSAGES.nameRequired;
       setCurrentLanguage('EN');
     } else if (groupTitleEn.length < OPUS_FIELD_LIMITS.name.min) {
@@ -307,7 +312,7 @@ export const useGroupContent = (id: string) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleFieldChange = (field: GroupDataField, value: unknown, isMultilingual = false) => {
+  const handleFieldChange = (field: GroupDataField | 'blocksOrder', value: unknown, isMultilingual = false) => {
     if (shouldExitAfterSave) return;
     if (errors[field as string]) {
       setErrors((prev) => {
