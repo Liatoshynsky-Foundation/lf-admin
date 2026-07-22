@@ -84,6 +84,7 @@ export function ResearchPageContent() {
 
       <ResearchContent visibleWorks={visibleWorks} hasActiveCriteria={hasActiveCriteria} onEditWork={handleOpenEdit} />
       <ResearchModal
+        key={selectedWork?.id ?? 'create'}
         isOpen={isModalOpen}
         mode={modalMode}
         onClose={handleCloseModal}
