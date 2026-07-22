@@ -15,8 +15,16 @@ jest.mock('@mui/x-date-pickers/LocalizationProvider', () => ({
   LocalizationProvider: ({ children }: { children: ReactNode }): ReactElement => <>{children}</>
 }));
 
-jest.mock('@mui/x-date-pickers/DatePicker', () => ({
-  DatePicker: ({ label }: { label: string }): ReactElement => <input aria-label={label} readOnly value="" />
+jest.mock('./year-picker/YearPicker', () => ({
+  __esModule: true,
+  default: ({ label, value, onChange }: { label: string; value: string; onChange: (year: string) => void }) => (
+    <div>
+      <input aria-label={label} readOnly value={value || ''} />
+      <button type="button" aria-label={`set-${label}`} onClick={() => onChange('1999')}>
+        Set
+      </button>
+    </div>
+  )
 }));
 
 jest.mock('./composition-title-input/CompositionTitleInput', () => ({
@@ -122,8 +130,8 @@ describe('OpusDetailsBlock', () => {
     expect(genreField).toHaveValue('Симфонія');
 
     fireEvent.mouseDown(screen.getByRole('combobox'));
-    fireEvent.click(screen.getByRole('option', { name: 'B/o.' }));
-    expect(screen.getByRole('combobox')).toHaveTextContent('B/o.');
+    fireEvent.click(screen.getByRole('option', { name: 'sine op.' }));
+    expect(screen.getByRole('combobox')).toHaveTextContent('sine op.');
   });
 
   it('adds an inline composition row when "Додати" is clicked', () => {
@@ -189,7 +197,7 @@ describe('OpusDetailsBlock', () => {
       genre: null,
       year: null,
       audios: [{ url: 'https://cdn/audio.mp3' }, { name: null, url: null }],
-      sheetMusic: [{ url: 'https://cdn/sheet.pdf' }]
+      sheetMusic: [{ url: 'https://cdn/sheet.pdf' }, { url: null as unknown as string }]
     };
     fireEvent.click(screen.getAllByRole('button', { name: 'select-suggestion' })[0]);
     expect(screen.getAllByLabelText('composition-title')[0]).toHaveValue('English title');

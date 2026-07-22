@@ -23,8 +23,15 @@ const DeleteCardModal = ({
   confirmButtonText = 'Видалити',
   cancelButtonText = 'Скасувати'
 }: DeleteCardModalProps) => {
+  const handleDialogClose = (_event: object, reason: 'backdropClick' | 'escapeKeyDown') => {
+    if (reason === 'backdropClick') {
+      return;
+    }
+    onClose();
+  };
+
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog open={open} onClose={handleDialogClose}>
       <Box sx={styles.closeIcon} onClick={onClose}>
         <X></X>
       </Box>

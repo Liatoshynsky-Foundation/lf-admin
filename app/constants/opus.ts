@@ -26,8 +26,8 @@ export const OPUS_DETAILS_LABELS = {
 } as const;
 
 export const OPUS_NUMBER_KIND_OPTIONS = [
-  { value: 'op', label: 'Op.' },
-  { value: 'woo', label: 'B/o.' }
+  { value: 'op', label: 'op.' },
+  { value: 'woo', label: 'sine op.' }
 ] as const;
 
 export const OPUS_FIELD_LIMITS = {
@@ -37,7 +37,7 @@ export const OPUS_FIELD_LIMITS = {
   genre: 150
 } as const;
 
-export const OPUS_YEAR_RANGE = { min: 1900, max: 3000 } as const;
+export const OPUS_YEAR_RANGE = { min: 1900, max: 2100 } as const;
 
 export const OPUS_VALIDATION_MESSAGES = {
   numberRequired: 'Вкажіть номер.',
@@ -90,9 +90,9 @@ export const OPUS_FILE_DELETE_MODAL = {
 export const REQUIRED_FIELD_ERROR = 'Обовʼязкове поле';
 
 export const OPUS_MUTATION_RESULTS = {
-  created: 'Опус створено успішно',
-  updated: 'Опус оновлено успішно',
-  deleted: 'Опус видалено успішно'
+  created: 'Групу створено',
+  updated: 'Групу оновлено',
+  deleted: 'Групу видалено'
 } as const;
 
 export const initialOpusDetails: OpusDetailsValue = {
