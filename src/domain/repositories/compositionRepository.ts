@@ -11,7 +11,7 @@ export type CompositionInput = Omit<Composition, 'id' | 'createdAt' | 'updatedAt
 
 export interface ICompositionRepository extends IBaseRepository<Composition, CompositionFilters> {
   syncForOpus( inputs: CompositionInput[]): Promise<Composition[]>;
-  searchByTitle(search: string): Promise<Composition[]>;
+  searchByTitle(search: string, ids?: string[]): Promise<Composition[]>;
   findByIds(ids: string[]): Promise<Composition[]>;
   findByIdsPaginated(ids: string[], filters?: CompositionFilters): Promise<Composition[]>;
   countByIds(ids: string[], filters?: CompositionFilters): Promise<number>;

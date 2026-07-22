@@ -73,7 +73,19 @@ export const OpusQuery = {
   ): Promise<Composition[]> => {
     assertAuthenticated(context);
 
-    return context.requestContainer.cradle.compositionsRepository.searchByTitle(search);
+    const compOpuses = await context.requestContainer.cradle.opusRepository.findAll({
+      numberKind: 'compositions',
+    });
+
+    const compositionIds = (compOpuses[0]?.compositions ?? []).map((id) => id.toString());
+
+    if (compositionIds.length === 0) {
+      return [];
+    }
+
+    const compositions = await context.requestContainer.cradle.compositionsRepository.searchByTitle(search, compositionIds);
+
+    return compositions;
   },
 
   paginatedWorks: endpointHandler<PaginatedWorksArgs, PaginatedWorksResult>(async ({ args, repo, requestContainer }) => {

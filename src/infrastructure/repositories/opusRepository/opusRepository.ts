@@ -133,7 +133,7 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
     return doc ? toEntity(doc) : null;
   };
 
-  const moveCompositionsToLooseOpus = async (compositionIds: string[]): Promise<void> => {
+  const moveCompositionsToCompositionsOpus = async (compositionIds: string[]): Promise<void> => {
     if (compositionIds.length === 0) {
       return;
     }
@@ -157,10 +157,26 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
     );
   };
 
+  const removeCompositionsFromCompositionsOpus = async (compositionIds: string[]): Promise<void> => {
+    if (compositionIds.length === 0) {
+      return;
+    }
+
+    const looseOpus = await OpusModel.findOne({ numberKind: 'compositions' }).lean<{ _id: string }>();
+    if (!looseOpus) {
+      return;
+    }
+
+    await OpusModel.updateOne(
+      { _id: looseOpus._id },
+      { $pull: { compositions: { $in: compositionIds } } }
+    );
+  };
+
   const unlink = async (opusId: string): Promise<void> => {
     await dbConnect();
     const opus = await OpusModel.findById(opusId).lean<{ compositions?: string[] }>();
-    await moveCompositionsToLooseOpus(opus?.compositions ?? []);
+    await moveCompositionsToCompositionsOpus(opus?.compositions ?? []);
   };
 
   return {
@@ -184,6 +200,7 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
       return toEntity(newOpus.toObject() as unknown as DbOpus);
     },
     unlink,
-    moveCompositionsToLooseOpus
+    moveCompositionsToCompositionsOpus,
+    removeCompositionsFromCompositionsOpus
   };
 };

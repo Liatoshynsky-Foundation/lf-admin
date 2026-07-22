@@ -1,11 +1,10 @@
 import mongoose, { FilterQuery, Model } from 'mongoose';
 
 import { createBaseRepository } from '../baseRepository/baseRepository';
-import { buildBaseQuery, combineConditions, fieldCondition, getBaseSort } from '../helpers';
+import { buildBaseQuery, combineConditions, getBaseSort } from '../helpers';
 import { Composition } from '~/domain/entities/Composition';
 import { CompositionFilters, CompositionInput, ICompositionRepository } from '~/domain/repositories/compositionRepository';
 import dbConnect from '~/infrastructure/db/connect';
-import { OpusStatus } from '~/types/graphql/generated/graphql';
 
 export type DbComposition = {
   _id: { toString(): string };
@@ -51,11 +50,6 @@ const buildCompositionQuery = (
       ['genre', 'name.uk', 'name.en'],
       'name'
     ),
-    fieldCondition(
-      'status',
-      filters?.statuses as OpusStatus[] | undefined,
-      OpusStatus.Draft
-    ),
     ...extraConditions,
   ]);
 
@@ -70,6 +64,11 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
     getDefaultSort: (filters) =>
       getBaseSort(filters, COMPOSITION_SORT_FIELD_MAP)
   });
+
+  // піднято вище, бо використовується в searchByTitle
+  const toValidObjectIds = (ids: string[]) =>
+    ids.filter((id) => mongoose.Types.ObjectId.isValid(id)).map((id) => new mongoose.Types.ObjectId(id));
+
 
   const syncForOpus = async (inputs: CompositionInput[]): Promise<Composition[]> => {
     await dbConnect();
@@ -98,25 +97,45 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
     return results;
   };
 
-  const searchByTitle = async (search: string): Promise<Composition[]> => {
+  const searchByTitle = async (search: string, ids?: string[]): Promise<Composition[]> => {
     await dbConnect();
 
     const trimmed = search.trim();
 
-    if (!trimmed) {
-      return [];
+    let validIds: mongoose.Types.ObjectId[] = [];
+
+    if (ids) {
+      validIds = toValidObjectIds(ids);
+
+      if (!validIds.length) {
+        return [];
+      }
     }
 
-    const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+    const extraConditions: FilterQuery<DbComposition>[] = [];
 
-    const docs = await CompositionModel.find({
-      $or: [{ 'name.uk': { $regex: escaped, $options: 'i' } }, { 'name.en': { $regex: escaped, $options: 'i' } }]
-    })
-      .limit(10)
+    if (ids) {
+      extraConditions.push({ _id: { $in: validIds } });
+    }
+
+    const query = buildCompositionQuery(
+      trimmed ? ({ search: trimmed } as CompositionFilters) : undefined,
+      extraConditions
+    );
+
+    const queryBuilder = CompositionModel.find(query)
+      .collation({ locale: 'uk', numericOrdering: true })
       .lean<DbComposition[]>();
+
+    if (trimmed) {
+      queryBuilder.limit(10);
+    }
+
+    const docs = await queryBuilder;
 
     return docs.map(toEntity);
   };
+
 
   const findByIds = async (ids: string[]): Promise<Composition[]> => {
     await dbConnect();
@@ -135,9 +154,6 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
 
     return docs.map(toEntity);
   };
-
-  const toValidObjectIds = (ids: string[]) =>
-    ids.filter((id) => mongoose.Types.ObjectId.isValid(id)).map((id) => new mongoose.Types.ObjectId(id));
 
   const countByIds = async (ids: string[], filters?: CompositionFilters): Promise<number> => {
     await dbConnect();

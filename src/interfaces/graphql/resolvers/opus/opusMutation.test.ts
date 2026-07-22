@@ -28,7 +28,10 @@ describe('OpusMutation Resolvers', () => {
     findById: jest.fn(),
     findBySlug: jest.fn(),
     findByNumber: jest.fn(),
-    count: jest.fn()
+    count: jest.fn(),
+    moveCompositionsToLooseOpus: jest.fn(),
+    removeCompositionsFromLooseOpus: jest.fn(),
+    unlink: jest.fn()
   };
 
   const mockCompositionsRepo: jest.Mocked<Partial<ICompositionRepository>> = {

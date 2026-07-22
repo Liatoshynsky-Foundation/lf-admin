@@ -19,5 +19,6 @@ export interface IOpusRepository extends IBaseRepository<Opus, OpusFilters> {
   create(input: CreateOpusInput): Promise<Opus>;
   findByNumber(number: number): Promise<Opus | null>;
   unlink(opusId: string): Promise<void>;
-  moveCompositionsToLooseOpus(compositionIds: string[]): Promise<void>;
+  moveCompositionsToCompositionsOpus(compositionIds: string[]): Promise<void>;
+  removeCompositionsFromCompositionsOpus(compositionIds: string[]): Promise<void>;
 }

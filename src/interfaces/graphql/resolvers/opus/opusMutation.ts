@@ -177,6 +177,8 @@ export const OpusMutation = {
 
     const opus = await repo.create(opusData);
 
+    await repo.removeCompositionsFromCompositionsOpus(compositionIds);
+
     if (input.coverImage?.crop) {
       await syncImagesCrops(opus.id, input.coverImage, { isCoverImage: true });
     }
@@ -250,6 +252,19 @@ export const OpusMutation = {
     } else {
       compositions = await compositionsRepo.syncForOpus(input.compositions.map(mapComposition));
       updateData.compositions = compositions.map((c) => c.id);
+
+      const oldCompositionIds = (existingOpus.compositions ?? []).map((cid) => cid.toString());
+      const newCompositionIds = compositions.map((c) => c.id);
+
+      const added = newCompositionIds.filter((cid) => !oldCompositionIds.includes(cid));
+      const removed = oldCompositionIds.filter((cid) => !newCompositionIds.includes(cid));
+
+      if (added.length > 0) {
+        await repo.removeCompositionsFromCompositionsOpus(added);
+      }
+      if (removed.length > 0) {
+        await repo.moveCompositionsToCompositionsOpus(removed);
+      }
     }
 
     const opus = await repo.update(id, updateData);

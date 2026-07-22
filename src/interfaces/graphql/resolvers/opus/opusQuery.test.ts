@@ -1,7 +1,7 @@
 import { OpusQuery } from './opusQuery';
 import { handleGroup } from './tab-handlers/handleGroup';
 import { handleMixed } from './tab-handlers/handleMixed';
-import { handleWorksTab } from './tab-handlers/handleWork';
+import { handleWork } from './tab-handlers/handleWork';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { Opus } from '~/domain/entities/Opus';
 import type { ICompositionRepository } from '~/domain/repositories/compositionRepository';
@@ -34,7 +34,7 @@ jest.mock('./tab-handlers/handleWork');
 
 const mockedHandleGroup = handleGroup as jest.MockedFunction<typeof handleGroup>;
 const mockedHandleMixed = handleMixed as jest.MockedFunction<typeof handleMixed>;
-const mockedHandleWorksTab = handleWorksTab as jest.MockedFunction<typeof handleWorksTab>;
+const mockedHandleWork = handleWork as jest.MockedFunction<typeof handleWork>;
 
 describe('OpusQuery Resolvers', () => {
   const buildContext = (isAdmin: boolean): GraphQLContext =>
@@ -76,7 +76,7 @@ describe('OpusQuery Resolvers', () => {
       totalPages: 1
     });
 
-    mockedHandleWorksTab.mockResolvedValue({
+    mockedHandleWork.mockResolvedValue({
       groups: [],
       works: [],
       total: 0,
@@ -120,12 +120,14 @@ describe('OpusQuery Resolvers', () => {
     expect(result).toEqual(mockEntity);
   });
 
-  it('searchCompositions should call compositionsRepository.searchByTitle', async () => {
+  it('searchCompositions should call compositionsRepository.searchByTitle with standalone ids', async () => {
+    (mockRepo.findAll as jest.Mock).mockResolvedValue([{ compositions: ['c1', 'c2'] }]);
     (mockCompositionsRepo.searchByTitle as jest.Mock).mockResolvedValue([]);
 
     const result = await OpusQuery.searchCompositions({}, { search: 'Після' }, adminContext);
 
-    expect(mockCompositionsRepo.searchByTitle).toHaveBeenCalledWith('Після');
+    expect(mockRepo.findAll).toHaveBeenCalledWith({ numberKind: 'compositions' });
+    expect(mockCompositionsRepo.searchByTitle).toHaveBeenCalledWith('Після', ['c1', 'c2']);
     expect(result).toEqual([]);
   });
 
@@ -181,11 +183,11 @@ describe('OpusQuery Resolvers', () => {
     );
   });
 
-  it('should call handleWorksTab', async () => {
+  it('should call handleWork', async () => {
     await OpusQuery.paginatedWorks(
       {},
       {
-        tab: WorksTab.Works,
+        tab: WorksTab.Compositions,
         filters: {
           limit: 25,
           skip: 50
@@ -194,7 +196,9 @@ describe('OpusQuery Resolvers', () => {
       adminContext
     );
 
-    expect(mockedHandleWorksTab).toHaveBeenCalledWith(
+    expect(mockedHandleWork).toHaveBeenCalledWith(
+      WorksTab.Compositions,
+      mockRepo,
       mockCompositionsRepo,
       {
         limit: 25,

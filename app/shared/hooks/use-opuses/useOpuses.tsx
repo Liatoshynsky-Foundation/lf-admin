@@ -73,8 +73,11 @@ export function usePaginatedWorks(tab?: WorksTab | null, filters?: WorksFiltersI
   };
 }
 
-export const useSearchCompositions = (search: string, options: QueryHookOptions = {}) =>
-  useSearchCompositionsQuery({ variables: { search }, fetchPolicy: 'network-only', skip: options.skip || !search });
+export const useSearchCompositions = (search: string) =>
+  useSearchCompositionsQuery({
+    variables: { search },
+    fetchPolicy: 'network-only'
+  });
 
 export const useCreateOpus = () => {
   const [mutate, meta] = useCreateOpusMutation();
