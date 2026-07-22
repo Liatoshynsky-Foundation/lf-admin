@@ -903,7 +903,7 @@ describe('useGroupContent Hook', () => {
         result.current.handleFieldChange('works', null);
         result.current.handleFieldChange('performances', null);
         result.current.handleFieldChange('performancesTitle', '');
-        result.current.handleFieldChange('groupTitle', { uk: 'Valid UK Title', en: '' });
+        result.current.handleFieldChange('groupTitle', { uk: 'Valid UK Title', en: 'Valid EN Title' });
       });
 
       await act(async () => {

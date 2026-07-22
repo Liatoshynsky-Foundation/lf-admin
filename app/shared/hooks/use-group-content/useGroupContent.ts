@@ -3,7 +3,12 @@ import { MouseEvent, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { GroupData, GroupDataField, GroupPhoto } from '~/constants/creativity';
-import { OPUS_FIELD_LIMITS, OPUS_MUTATION_RESULTS, OPUS_VALIDATION_MESSAGES, REQUIRED_FIELD_ERROR } from '~/constants/opus';
+import {
+  OPUS_FIELD_LIMITS,
+  OPUS_MUTATION_RESULTS,
+  OPUS_VALIDATION_MESSAGES,
+  REQUIRED_FIELD_ERROR
+} from '~/constants/opus';
 import { EditorLanguage } from '~/constants/publications';
 import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
 import { useOpusById } from '~/shared/hooks/use-opuses/useOpuses';
@@ -13,7 +18,8 @@ import {
   OpusNumberKind,
   OpusStatus,
   useDeleteOpusMutation,
-  useUpdateOpusMutation} from '~/types/graphql/generated/graphql';
+  useUpdateOpusMutation
+} from '~/types/graphql/generated/graphql';
 import { FetchedOpusData, OpusCompositionSuggestion } from '~/types/opus';
 
 type AnchorId = 'navigation' | 'publish';
@@ -279,10 +285,21 @@ export const useGroupContent = (id: string) => {
     }
 
     const groupTitleUk = String(groupData?.groupTitle?.uk || '').trim();
+    const groupTitleEn = String(groupData?.groupTitle?.en || '').trim();
+
     if (!groupTitleUk) {
       newErrors.groupTitle = OPUS_VALIDATION_MESSAGES.nameRequired;
+      setCurrentLanguage('UA');
     } else if (groupTitleUk.length < OPUS_FIELD_LIMITS.name.min) {
       newErrors.groupTitle = OPUS_VALIDATION_MESSAGES.nameTooShort;
+      setCurrentLanguage('UA');
+    }
+    else if (!groupTitleEn) {
+      newErrors.groupTitle = OPUS_VALIDATION_MESSAGES.nameRequired;
+      setCurrentLanguage('EN');
+    } else if (groupTitleEn.length < OPUS_FIELD_LIMITS.name.min) {
+      newErrors.groupTitle = OPUS_VALIDATION_MESSAGES.nameTooShort;
+      setCurrentLanguage('EN');
     }
 
     if (!groupData?.titlePrefix || String(groupData.titlePrefix).trim() === '') {
@@ -337,7 +354,7 @@ export const useGroupContent = (id: string) => {
       await deleteOpus({ variables: { id } });
       toast.success(OPUS_MUTATION_RESULTS.deleted);
       setIsDeleteModalOpen(false);
-      navigate('/creativity'); 
+      navigate('/creativity');
     } catch (error) {
       console.error('Помилка при видаленні:', error);
       toast.error('Не вдалося видалити групу. Спробуйте ще раз.');

@@ -37,7 +37,7 @@ export const OPUS_FIELD_LIMITS = {
   genre: 150
 } as const;
 
-export const OPUS_YEAR_RANGE = { min: 1900, max: 3000 } as const;
+export const OPUS_YEAR_RANGE = { min: 1900, max: 2100 } as const;
 
 export const OPUS_VALIDATION_MESSAGES = {
   numberRequired: 'Вкажіть номер.',
