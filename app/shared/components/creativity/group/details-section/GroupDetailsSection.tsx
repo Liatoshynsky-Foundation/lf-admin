@@ -22,7 +22,7 @@ type GroupDetailsSectionProps = {
     creationYear: string;
     endYear: string;
     dateAdditionalText: MultilingualText;
-    genre: string;
+    genre: MultilingualText;
   };
   currentLanguage: EditorLanguage;
   errors: Record<string, string>;
@@ -199,8 +199,8 @@ export const GroupDetailsSection = ({ data, currentLanguage, errors, onChange }:
         <Box sx={{ flex: 4 }}>
           <CustomTextField
             label="Жанр"
-            value={data.genre || ''}
-            onChange={(e) => onChange('genre', e.target.value)}
+            value={data.genre[langKey]}
+            onChange={(e) => onChange('genre', e.target.value, true)}
             fullWidth
             inputProps={{
               maxLength: OPUS_FIELD_LIMITS.genre

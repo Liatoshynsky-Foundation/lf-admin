@@ -91,7 +91,10 @@ export const useGroupContent = (id: string) => {
       setGroupData({
         titlePrefix: mapNumberKindToPrefix(fetchedOpus.numberKind),
         groupNumber: fetchedOpus.number ? String(fetchedOpus.number).replace(/^(op|woo|sineop|wo|bo)[.\-\s]*/i, '') : '',
-        genre: fetchedOpus.genre ?? '',
+        genre: { 
+          uk: fetchedOpus.genre?.uk ?? '', 
+          en: fetchedOpus.genre?.en ?? '' 
+        },
         additionalText: fetchedOpus.additionalText ?? '',
         groupTitle: {
           uk: fetchedOpus.name?.uk ?? '',
@@ -180,7 +183,10 @@ export const useGroupContent = (id: string) => {
       const input = {
         numberKind: groupData.titlePrefix === 'Bo.' ? OpusNumberKind.Sineop : OpusNumberKind.Op,
         number: Number(groupData.groupNumber.trim()),
-        genre: String(groupData.genre || ''),
+        genre: {
+          uk: String(groupData.genre?.uk || ''),
+          en: String(groupData.genre?.en || '')
+        },
         additionalText: String(groupData.additionalText || ''),
         ...(mappedStatus && { status: mappedStatus }),
         name: {

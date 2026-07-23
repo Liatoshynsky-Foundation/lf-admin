@@ -5,7 +5,8 @@ import {
   metaSchema,
   optionalTranslatedFieldSchema,
   translatedBooleanSchema,
-  translatedFieldSchema
+  translatedFieldSchema,
+  translatedFieldUnrequiredSchema
 } from './commonSchemas';
 import { Opus } from '~/domain/entities/Opus';
 import { OpusStatus } from '~/types/enums/common.enums';
@@ -29,7 +30,7 @@ const opusSchema = new Schema(
     creationYear: { type: String, default: null },
     endYear: { type: String, default: null },
     datesNote: { type: String, default: null },
-    genre: { type: String, default: null },
+    genre: { type: translatedFieldUnrequiredSchema, default: null },
 
     adminTitle: { type: String, default: null },
     slug: { type: String, default: null },

@@ -44,7 +44,7 @@ export function usePaginatedWorks(tab?: WorksTab | null, filters?: WorksFiltersI
     number: g.number,
     numberKind: g.numberKind === 'op' ? 'op' : 'sineop',
     name: g.name.uk,
-    genre: g.genre ?? '',
+    genre: g.genre?.uk ?? '',
     startDate: g.creationYear,
     status: g.status === OpusStatus.Published ? BaseContentStatuses.Published : BaseContentStatuses.Draft,
     updatedAt: g.updatedAt,

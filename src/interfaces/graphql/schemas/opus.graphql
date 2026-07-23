@@ -48,7 +48,7 @@ type Opus {
   creationYear: String!
   endYear: String
   datesNote: String
-  genre: String
+  genre: LocalizedString
   adminTitle: String
   slug: String
   description: LocalizedString
@@ -101,7 +101,7 @@ input CreateOpusInput {
   creationYear: String
   endYear: String
   datesNote: String
-  genre: String
+  genre: JSON
   compositions: JSON
   adminTitle: String
   title: JSON!
@@ -126,7 +126,7 @@ input UpdateOpusInput {
   creationYear: String
   endYear: String
   datesNote: String
-  genre: String
+  genre: JSON
   compositions: JSON
   adminTitle: String
   title: JSON

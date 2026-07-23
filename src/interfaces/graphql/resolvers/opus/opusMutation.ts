@@ -31,7 +31,7 @@ export type CreateOpusGQLInput = {
   creationYear?: string;
   endYear?: string;
   datesNote?: string;
-  genre?: string;
+  genre?: LocalizedString;
   compositions?: GQLComposition[];
   adminTitle?: string;
   title: LocalizedString;

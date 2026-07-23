@@ -137,7 +137,7 @@ export type NormalizedGroupPerformance = GroupPerformance & { id: string };
 export interface GroupData {
   titlePrefix: string;
   groupNumber: string;
-  genre: string;
+  genre: { uk: string; en: string };
   additionalText: string;
   groupTitle: { uk: string; en: string }; 
   creationYear: string;

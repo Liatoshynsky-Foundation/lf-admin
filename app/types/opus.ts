@@ -70,7 +70,7 @@ export interface FetchedOpusData {
   creationYear?: string | null;
   endYear?: string | null;
   datesNote?: string | null;
-  genre?: string | null;
+  genre?: { uk?: string | null; en?: string | null } | null;
   status?: OpusStatus | null;
   title?: { uk?: string | null; en?: string | null } | null;
   description?: { uk?: string | null; en?: string | null } | null;

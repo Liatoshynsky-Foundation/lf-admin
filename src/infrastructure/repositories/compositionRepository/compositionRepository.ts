@@ -1,10 +1,11 @@
 import mongoose, { FilterQuery, Model } from 'mongoose';
 
 import { createBaseRepository } from '../baseRepository/baseRepository';
-import { buildBaseQuery, combineConditions, getBaseSort } from '../helpers';
+import { buildBaseQuery, combineConditions, fieldCondition, getBaseSort } from '../helpers';
 import { Composition } from '~/domain/entities/Composition';
 import { CompositionFilters, CompositionInput, ICompositionRepository } from '~/domain/repositories/compositionRepository';
 import dbConnect from '~/infrastructure/db/connect';
+import { OpusStatus } from '~/types/graphql/generated/graphql';
 
 export type DbComposition = {
   _id: { toString(): string };
@@ -49,6 +50,11 @@ const buildCompositionQuery = (
       { ...filters, statuses: undefined },
       ['genre', 'name.uk', 'name.en'],
       'name'
+    ),
+    fieldCondition(
+      'status',
+      filters?.statuses as OpusStatus[] | undefined,
+      OpusStatus.Draft
     ),
     ...extraConditions,
   ]);

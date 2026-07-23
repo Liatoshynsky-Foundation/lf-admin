@@ -114,7 +114,7 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}) => {
       creationYear: fetched.creationYear ?? '',
       endYear: fetched.endYear ?? '',
       datesNote: fetched.datesNote ?? '',
-      genre: fetched.genre ?? '',
+      genre: fetched.genre?.uk ?? '',
       compositions: (fetched.compositions ?? []).map((composition) => ({
         id: composition.id,
         name: composition.name?.uk ?? '',
@@ -218,7 +218,10 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}) => {
       creationYear: currentDetails.creationYear.trim(),
       endYear: currentDetails.endYear.trim() || undefined,
       datesNote: currentDetails.datesNote.trim() || undefined,
-      genre: currentDetails.genre.trim() || undefined,
+      genre: {
+        uk: currentDetails.genre.trim() || undefined,
+        en: currentDetails.genre.trim() || undefined
+      },
       compositions: currentDetails.compositions.map(toCompositionInput),
       adminTitle: opusName,
       title: { uk: ukMeta.title.trim() || opusName, en: enMeta.title.trim() || opusName },

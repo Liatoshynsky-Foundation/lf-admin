@@ -15,7 +15,10 @@ query OpusById($id: ID!) {
     creationYear
     endYear
     datesNote
-    genre
+    genre {
+      uk
+      en
+    }
     adminTitle
     slug
     status
@@ -124,7 +127,10 @@ query PaginatedWorks($tab: WorksTab, $filters: WorksFiltersInput) {
         uk
         en
       }
-      genre
+      genre {
+        uk
+        en
+      }
       status
       creationYear
       endYear

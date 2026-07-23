@@ -33,7 +33,7 @@ export type DbOpus = {
   creationYear: string;
   endYear?: string | null;
   datesNote?: string | null;
-  genre?: string | null;
+  genre?: LocalizedString | null;
   adminTitle?: string | null;
   slug?: string | null;
   description: Opus['description'];
@@ -110,7 +110,7 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
     model: OpusModel,
     toEntity,
     buildQuery: (filters) => {
-      const query = buildBaseQuery({ ...filters, statuses: undefined }, ['genre', 'name.uk', 'name.en'], 'name') ?? {};
+      const query = buildBaseQuery({ ...filters, statuses: undefined }, ['genre.uk', 'genre.en', 'name.uk', 'name.en'], 'name') ?? {};
 
       return combineConditions<DbOpus>([
         query,
@@ -149,7 +149,7 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
       { upsert: true, new: true }
     ).lean<{ _id: string }>();
   };
-  
+
   const moveCompositionsToCompositionsOpus = async (
     compositionIds: string[],
   ): Promise<void> => {

@@ -10,6 +10,14 @@ export const translatedFieldSchema = new mongoose.Schema(
   { _id: false }
 );
 
+export const translatedFieldUnrequiredSchema = new mongoose.Schema(
+  {
+    uk: { type: String, required: false, default: '' },
+    en: { type: String, required: false, default: '' }
+  },
+  { _id: false }
+);
+
 export const metaSchema = new mongoose.Schema(
   {
     title: { type: String },

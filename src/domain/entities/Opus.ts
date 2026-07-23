@@ -38,7 +38,7 @@ export type Opus = {
   creationYear?: string | null;
   endYear?: string | null;
   datesNote?: string | null;
-  genre?: string | null;
+  genre?: LocalizedString | null;
   
   title?: LocalizedString | null;
   adminTitle?: string | null;
