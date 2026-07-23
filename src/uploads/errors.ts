@@ -9,6 +9,7 @@ export const UPLOAD_ERRORS = {
   // Service errors
   STORAGE_FAILED: 'Storage failed',
   UNKNOWN_ERROR: 'Unknown error',
+  FILE_ALREADY_EXISTS: (filename: string) => `Файл ${filename} вже існує`,
 
   // Validator errors
   DOCUMENT_VALIDATOR_NOT_IMPLEMENTED: 'Document validator not yet implemented',

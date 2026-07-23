@@ -37,6 +37,7 @@ describe('UploadService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockedCreateValidator.mockReturnValue(mockValidator);
+    mockStorage.exists.mockResolvedValue(false);
     service = createUploadService({
       storage: mockStorage,
       defaultFileType: 'image',
@@ -101,6 +102,19 @@ describe('UploadService', () => {
         'image/jpeg',
         expect.objectContaining({ originalName: ' Test_image_1.jpeg ' })
       );
+    });
+
+    it('should return conflict and skip storage when file already exists', async () => {
+      mockValidator.validate.mockResolvedValue({ valid: true, errors: [] });
+      mockStorage.exists.mockResolvedValue(true);
+
+      const result = await service.uploadFile(testFile, { directory: 'photos' });
+
+      expect(result.success).toBe(false);
+      expect(result.statusCode).toBe(409);
+      expect(result.errors).toContain(UPLOAD_ERRORS.FILE_ALREADY_EXISTS('test.jpg'));
+      expect(mockStorage.exists).toHaveBeenCalledWith('test.jpg', 'photos');
+      expect(mockStorage.store).not.toHaveBeenCalled();
     });
 
     it('should return error and not call storage if validation fails', async () => {

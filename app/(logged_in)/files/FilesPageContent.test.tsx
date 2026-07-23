@@ -9,7 +9,9 @@ import {
   FILES_FAVORITES_EMPTY_STATE_TITLE,
   FILES_LOADING_STATE_TITLE,
   FILES_UNKNOWN_SECTION_LABEL,
-  FILES_UPLOAD_BUTTON_LABEL} from '~/constants/files';
+  FILES_UPLOAD_BUTTON_LABEL,
+  FILES_UPLOAD_FAILED_ERROR
+} from '~/constants/files';
 import { downloadFile } from '~/lib/utils/downloadFile';
 import { useAllAssets } from '~/shared/hooks/use-assets/useAssets';
 import { useFilesFiltering } from '~/shared/hooks/use-files';
@@ -309,7 +311,7 @@ let mockMediaModalOnApply:
     }) => Promise<void>)
   | null = null;
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 let deleteModalOnConfirm: ((id: string) => Promise<unknown>) | null = null;
 
 jest.mock('~/shared/components/media-modal/MediaModal', () => ({
@@ -782,6 +784,19 @@ describe('FilesPageContent', () => {
     });
   });
 
+  it('shows file not found toast when delete target no longer exists', async () => {
+    setupHooks({ assets: [baseAsset] });
+    render(<FilesPageContent activeTab="all" />);
+
+    expect(deleteModalOnConfirm).toBeDefined();
+
+    await act(async () => {
+      await deleteModalOnConfirm?.('missing-file');
+    });
+
+    expect(toast.error).toHaveBeenCalledWith('Файл не знайдено');
+  });
+
   it('downloads a file when download action is triggered and url exists', async () => {
     setupHooks({ assets: [baseAsset] });
     render(<FilesPageContent activeTab="all" />);
@@ -790,6 +805,27 @@ describe('FilesPageContent', () => {
 
     await waitFor(() => {
       expect(downloadFile).toHaveBeenCalledWith(baseAsset.url, baseAsset.originalname);
+    });
+  });
+
+  it('downloads an R2 file through the same-origin uploads endpoint', async () => {
+    const r2Asset = {
+      ...baseAsset,
+      url: 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/Test_image_1.jpeg',
+      filename: 'Test_image_1.jpeg',
+      originalname: 'Test_image_1.jpeg'
+    };
+
+    setupHooks({ assets: [r2Asset] });
+    render(<FilesPageContent activeTab="all" />);
+
+    fireEvent.click(screen.getByText('download-1'));
+
+    await waitFor(() => {
+      expect(downloadFile).toHaveBeenCalledWith(
+        '/api/uploads/Test_image_1.jpeg?folder=photos',
+        'Test_image_1.jpeg'
+      );
     });
   });
 
@@ -807,6 +843,73 @@ describe('FilesPageContent', () => {
         }
       });
       expect(refetch).toHaveBeenCalled();
+    });
+  });
+
+  it('rejects file updates when the target file no longer exists', async () => {
+    setupHooks({ assets: [baseAsset] });
+    render(<FilesPageContent activeTab="all" />);
+
+    expect(await screen.findByTestId('files-cards-layout')).toBeInTheDocument();
+    expect(capturedCardsProps).toBeDefined();
+
+    await expect(
+      capturedCardsProps?.onItemToggleStar(
+        {
+          id: 'missing-file',
+          type: 'image',
+          name: 'missing.png',
+          dateAdded: '23.07.2026',
+          isStarred: false,
+          usageLinks: 0,
+          usage: []
+        },
+        true
+      )
+    ).rejects.toThrow('Файл не знайдено');
+  });
+
+  it('throws upload error when lazy orphan asset creation returns no asset', async () => {
+    mockR2Files = [orphanR2File];
+    const createAsset = jest.fn().mockResolvedValue({ data: null });
+
+    setupHooks({ assets: [], createAsset });
+    render(<FilesPageContent activeTab="all" />);
+
+    expect(await screen.findByTestId('files-cards-layout')).toBeInTheDocument();
+    const orphanItem = capturedCardsProps?.items[0];
+    expect(orphanItem).toBeDefined();
+
+    if (!orphanItem || !capturedCardsProps) return;
+
+    await expect(capturedCardsProps.onItemToggleStar(orphanItem, true)).rejects.toThrow(FILES_UPLOAD_FAILED_ERROR);
+  });
+
+  it('updates selected orphan file id after lazy asset creation', async () => {
+    mockR2Files = [orphanR2File];
+    const createAsset = jest.fn().mockResolvedValue({ data: { createAsset: { id: 'created-orphan-id' } } });
+    const updateAsset = jest.fn().mockResolvedValue({ data: { updateAsset: { id: 'created-orphan-id' } } });
+
+    setupHooks({ assets: [], createAsset, updateAsset });
+    render(<FilesPageContent activeTab="all" />);
+
+    expect(await screen.findByTestId('files-cards-layout')).toBeInTheDocument();
+    const orphanItem = capturedCardsProps?.items[0];
+    expect(orphanItem).toBeDefined();
+
+    if (!orphanItem || !capturedCardsProps) return;
+
+    fireEvent.click(screen.getByText(`select-${orphanItem.id}`));
+
+    await act(async () => {
+      await capturedCardsProps.onItemToggleStar(orphanItem, true);
+    });
+
+    expect(updateAsset).toHaveBeenCalledWith({
+      variables: {
+        id: 'created-orphan-id',
+        input: { isStarred: true }
+      }
     });
   });
 

@@ -16,6 +16,7 @@ export interface UploadResult {
   mimeType?: string;
   metadata?: Record<string, unknown>;
   errors?: string[];
+  statusCode?: number;
 }
 
 export interface UploadOptions {

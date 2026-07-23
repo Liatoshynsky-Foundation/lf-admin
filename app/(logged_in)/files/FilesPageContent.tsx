@@ -79,23 +79,40 @@ const isFilesSupportedFile = (file: File): boolean => {
   return Boolean(extension && supportedUploadExtensions.has(extension));
 };
 
-const getR2DeleteEndpoint = (fileUrl: string): string => {
+const getR2FileEndpoint = (fileUrl: string): string => {
   const parsedUrl = new URL(fileUrl, 'http://localhost');
   const pathParts = parsedUrl.pathname.split('/').filter(Boolean).map(decodeURIComponent);
   const filename = pathParts.pop();
 
   if (!filename) {
-    throw new Error('Не вдалося визначити файл для видалення.');
+    throw new Error('Не вдалося визначити файл.');
   }
 
   const folder = pathParts.join('/');
   const encodedFilename = encodeURIComponent(filename);
 
   if (!folder) {
-    return `/api/uploads/${encodedFilename}`;
+    return fileUrl;
   }
 
   return `/api/uploads/${encodedFilename}?folder=${encodeURIComponent(folder)}`;
+};
+
+const getR2DeleteEndpoint = (fileUrl: string): string => {
+  const endpoint = getR2FileEndpoint(fileUrl);
+
+  if (endpoint === fileUrl) {
+    const parsedUrl = new URL(fileUrl, 'http://localhost');
+    const filename = parsedUrl.pathname.split('/').filter(Boolean).pop();
+
+    if (!filename) {
+      throw new Error('Не вдалося визначити файл для видалення.');
+    }
+
+    return `/api/uploads/${encodeURIComponent(decodeURIComponent(filename))}`;
+  }
+
+  return endpoint;
 };
 
 const deleteR2FileByUrl = async (fileUrl: string): Promise<void> => {
@@ -267,7 +284,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
   };
 
   const handleDownload = async (fileUrl: string, filename: string) => {
-    await downloadFile(fileUrl, filename);
+    await downloadFile(getR2FileEndpoint(fileUrl), filename);
   };
 
   const handleItemAction = (action: 'rename' | 'delete' | 'download', item: FilesCardsLayoutItem) => {

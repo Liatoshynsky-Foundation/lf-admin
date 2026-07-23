@@ -38,6 +38,15 @@ export const createUploadService = (config: UploadServiceConfig) => {
       const generateFilename = options.generateFilename || preserveOriginalFilenameSafely;
       const filename = generateFilename(file.originalname, file.mimetype);
 
+      const fileAlreadyExists = await storage.exists(filename, options.directory);
+      if (fileAlreadyExists) {
+        return {
+          success: false,
+          errors: [UPLOAD_ERRORS.FILE_ALREADY_EXISTS(filename)],
+          statusCode: 409
+        };
+      }
+
       const storageMetadata: Record<string, unknown> = {
         originalName: file.originalname,
         ...(options.metadata as Record<string, unknown>)

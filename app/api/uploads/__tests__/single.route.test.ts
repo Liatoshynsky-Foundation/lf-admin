@@ -95,4 +95,71 @@ describe('POST /api/uploads/single', () => {
     expect(res.status).toBe(400);
     expect(data.error).toBe('No file uploaded');
   });
+
+  it('should return service status code when upload fails', async () => {
+    const formData = new FormData();
+    const content = Buffer.from('test content');
+    const blob = new Blob([content], { type: 'image/png' });
+
+    formData.append('file', blob, 'test.png');
+
+    mockUploadFile.mockResolvedValue({
+      success: false,
+      errors: ['Файл test.png вже існує'],
+      statusCode: 409
+    });
+
+    const req = new NextRequest('https://localhost/api/uploads/single', {
+      method: 'POST',
+      body: formData as unknown as ReadableStream
+    });
+
+    const res = await POST(req);
+    const data = (await res.json()) as { success: boolean; errors: string[] };
+
+    expect(res.status).toBe(409);
+    expect(data).toEqual({
+      success: false,
+      errors: ['Файл test.png вже існує']
+    });
+  });
+
+  it('should return 400 when upload fails without a service status code', async () => {
+    const formData = new FormData();
+    const content = Buffer.from('test content');
+    const blob = new Blob([content], { type: 'image/png' });
+
+    formData.append('file', blob, 'test.png');
+
+    mockUploadFile.mockResolvedValue({
+      success: false,
+      errors: ['Invalid image']
+    });
+
+    const req = new NextRequest('https://localhost/api/uploads/single', {
+      method: 'POST',
+      body: formData as unknown as ReadableStream
+    });
+
+    const res = await POST(req);
+    const data = (await res.json()) as { success: boolean; errors: string[] };
+
+    expect(res.status).toBe(400);
+    expect(data).toEqual({
+      success: false,
+      errors: ['Invalid image']
+    });
+  });
+
+  it('should return 500 when request parsing fails', async () => {
+    const req = {
+      formData: jest.fn().mockRejectedValue(new Error('form data failed'))
+    } as unknown as NextRequest;
+
+    const res = await POST(req);
+    const data = (await res.json()) as { success: boolean; error: string };
+
+    expect(res.status).toBe(500);
+    expect(data).toEqual({ success: false, error: 'Internal server error' });
+  });
 });
