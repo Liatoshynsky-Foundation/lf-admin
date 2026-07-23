@@ -43,22 +43,37 @@ export const attachCompositionsToGroups = async (
   });
 };
 
+const getOpusFilters = (
+  tab: WorksTab,
+  filters?: WorksFilter
+): OpusFilters => ({
+  ...mapFilters<OpusFilters>(filters),
+  numberKind: numberKindByTab[tab]!,
+});
+
 export const mappedGroups = async (
   repo: IOpusRepository,
   tab: WorksTab,
-  filters?: WorksFilter | undefined
-) => {
-  const numberKind = numberKindByTab[tab]!;
+  filters?: WorksFilter,
+  skip?: number,
+  limit?: number
+): Promise<Opus[]> => {
+  const opusFilters = getOpusFilters(tab, filters);
 
-  const mappedFilters: OpusFilters = {
-    ...mapFilters<OpusFilters>(filters),
-    numberKind
-  };
-  
-  const total = await repo.count(mappedFilters);
-  const groups: Opus[] = await repo.findAll(mappedFilters);
+  return await repo.findAll({
+    ...opusFilters,
+    skip,
+    limit,
+  });
+};
+export const totalGroups = async (
+  repo: IOpusRepository,
+  tab: WorksTab,
+  filters?: WorksFilter
+): Promise<number> => {
+  const opusFilters = getOpusFilters(tab, filters);
 
-  return { groups, total };
+  return await repo.count(opusFilters);
 };
 
 const getCompositionFilters = (filters?: WorksFilter): CompositionFilters => {

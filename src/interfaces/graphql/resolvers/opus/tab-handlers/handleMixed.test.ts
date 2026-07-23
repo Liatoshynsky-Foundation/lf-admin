@@ -5,6 +5,7 @@ import {
   mappedCompositions,
   mappedGroups,
   totalCompositions,
+  totalGroups,
   totalPages,
 } from './tabHandlersHelpers';
 import { ICompositionRepository } from '~/domain/repositories/compositionRepository';
@@ -12,6 +13,7 @@ import { IOpusRepository } from '~/src/domain/repositories/opusRepository';
 import { OpusNumberKind, WorksTab } from '~/types/graphql/generated/graphql';
 
 jest.mock('./tabHandlersHelpers', () => ({
+  totalGroups: jest.fn((_repo, tab) => (tab === WorksTab.Op ? 10 : 10)),
   mappedGroups: jest.fn(),
   attachCompositionsToGroups: jest.fn(),
   totalCompositions: jest.fn(),
@@ -32,6 +34,7 @@ describe('handleMixed', () => {
   const MOCK_COMPOSITION_IDS = ['comp-1', 'comp-2'];
   const MOCK_FILTERS: WorksFilter = { search: 'test' };
 
+  const mockTotalGroups = totalGroups as jest.MockedFunction<typeof totalGroups>;
   const mockMappedGroups = mappedGroups as jest.MockedFunction<typeof mappedGroups>;
   const mockAttachCompositionsToGroups = attachCompositionsToGroups as jest.MockedFunction<
     typeof attachCompositionsToGroups
@@ -53,21 +56,17 @@ describe('handleMixed', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
+    mockTotalGroups.mockImplementation((_repo, tab) => Promise.resolve(tab === WorksTab.Op ? 5 : 5));
+
     repoMock.findAll.mockResolvedValue([
       { compositions: MOCK_COMPOSITION_IDS },
     ] as Awaited<ReturnType<IOpusRepository['findAll']>>);
 
-    mockMappedGroups.mockImplementation((_repo, tab) => {
+    mockMappedGroups.mockImplementation((_repo, tab, _filters, _skip, _limit) => {
       if (tab === WorksTab.Op) {
-        return Promise.resolve({
-          groups: [MOCK_OP_GROUP],
-          total: 5,
-        } as unknown as MappedGroupsResult);
+        return Promise.resolve([MOCK_OP_GROUP] as unknown as MappedGroupsResult);
       }
-      return Promise.resolve({
-        groups: [MOCK_SINEOP_GROUP],
-        total: 5,
-      } as unknown as MappedGroupsResult);
+      return Promise.resolve([MOCK_SINEOP_GROUP] as unknown as MappedGroupsResult);
     });
 
     mockAttachCompositionsToGroups.mockImplementation((groups) => {
@@ -85,8 +84,7 @@ describe('handleMixed', () => {
     const result = await handleMixed(repoMock, compositionsRepoMock, MOCK_FILTERS, 1, 2);
 
     expect(repoMock.findAll).toHaveBeenCalledWith({ numberKind: OpusNumberKind.Compositions });
-    expect(mockMappedGroups).toHaveBeenCalledWith(repoMock, WorksTab.Op, MOCK_FILTERS);
-    expect(mockMappedGroups).toHaveBeenCalledWith(repoMock, WorksTab.Sineop, MOCK_FILTERS);
+    expect(mockMappedGroups).toHaveBeenCalledWith(repoMock, WorksTab.Op, MOCK_FILTERS, 0, 2);
     expect(mockTotalCompositions).toHaveBeenCalledWith(compositionsRepoMock, MOCK_COMPOSITION_IDS, MOCK_FILTERS);
 
     expect(mockAttachCompositionsToGroups).toHaveBeenCalledWith([MOCK_OP_GROUP], compositionsRepoMock);
@@ -106,46 +104,37 @@ describe('handleMixed', () => {
     const opGroup2 = { id: 'op-2', compositions: [] };
     const sineopGroup1 = { id: 'sineop-1', compositions: [] };
 
+    mockTotalGroups.mockImplementation((_repo, tab) => Promise.resolve(tab === WorksTab.Op ? 2 : 1));
+
     mockMappedGroups.mockImplementation((_repo, tab) => {
       if (tab === WorksTab.Op) {
-        return Promise.resolve({
-          groups: [opGroup1, opGroup2],
-          total: 2,
-        } as unknown as MappedGroupsResult);
+        return Promise.resolve([opGroup1, opGroup2] as unknown as MappedGroupsResult);
       }
-      return Promise.resolve({
-        groups: [sineopGroup1],
-        total: 1,
-      } as unknown as MappedGroupsResult);
+      return Promise.resolve([sineopGroup1] as unknown as MappedGroupsResult);
     });
 
     mockAttachCompositionsToGroups.mockResolvedValue([
       { id: 'attached' },
     ] as unknown as AttachResult);
 
-    // Page 1, size 4: Op(2) + Sineop(1) = 3 groups. Remaining = 1 for Works.
     const result = await handleMixed(repoMock, compositionsRepoMock, undefined, 1, 4);
 
     expect(mockAttachCompositionsToGroups).toHaveBeenCalledWith([opGroup1, opGroup2], compositionsRepoMock);
     expect(mockAttachCompositionsToGroups).toHaveBeenCalledWith([sineopGroup1], compositionsRepoMock);
     expect(mockMappedCompositions).toHaveBeenCalledWith(compositionsRepoMock, MOCK_COMPOSITION_IDS, 1, 1, undefined);
 
-    expect(result.groups).toHaveLength(2); // 2 calls pushed to groups array
+    expect(result.groups).toHaveLength(2);
     expect(result.works).toEqual([MOCK_WORK]);
   });
 
   it('should process page spanning into works when remaining > 0', async () => {
+    mockTotalGroups.mockImplementation((_repo, tab) => Promise.resolve(tab === WorksTab.Op ? 1 : 1));
+
     mockMappedGroups.mockImplementation((_repo, tab) => {
       if (tab === WorksTab.Op) {
-        return Promise.resolve({
-          groups: [MOCK_OP_GROUP],
-          total: 1,
-        } as unknown as MappedGroupsResult);
+        return Promise.resolve([MOCK_OP_GROUP] as unknown as MappedGroupsResult);
       }
-      return Promise.resolve({
-        groups: [MOCK_SINEOP_GROUP],
-        total: 1,
-      } as unknown as MappedGroupsResult);
+      return Promise.resolve([MOCK_SINEOP_GROUP] as unknown as MappedGroupsResult);
     });
 
     const result = await handleMixed(repoMock, compositionsRepoMock, undefined, 1, 5);
@@ -163,28 +152,19 @@ describe('handleMixed', () => {
   });
 
   it('should process page containing only works when offset exceeds total groups', async () => {
-    mockMappedGroups.mockImplementation((_repo, tab) => {
-      if (tab === WorksTab.Op) {
-        return Promise.resolve({
-          groups: [],
-          total: 2,
-        } as unknown as MappedGroupsResult);
-      }
-      return Promise.resolve({
-        groups: [],
-        total: 3,
-      } as unknown as MappedGroupsResult);
+    mockTotalGroups.mockImplementation((_repo, tab) => Promise.resolve(tab === WorksTab.Op ? 2 : 3));
+
+    mockMappedGroups.mockImplementation(() => {
+      return Promise.resolve([] as unknown as MappedGroupsResult);
     });
 
-    // Total groups = 5. Offset for page 4 with size 2 is 6. 
-    // Since offset (6) >= totalGroups (5), no groups will be attached.
     const result = await handleMixed(repoMock, compositionsRepoMock, undefined, 4, 2);
 
     expect(mockAttachCompositionsToGroups).not.toHaveBeenCalled();
     expect(mockMappedCompositions).toHaveBeenCalledWith(
       compositionsRepoMock,
       MOCK_COMPOSITION_IDS,
-      1,
+      2,
       2,
       undefined
     );
@@ -193,15 +173,13 @@ describe('handleMixed', () => {
     expect(result.works).toEqual([MOCK_WORK]);
   });
 
-  it('should handle looseOpuses being empty array', async () => {
+  it('should handle compositionsOpuses being empty array', async () => {
     repoMock.findAll.mockResolvedValue([]);
+    mockTotalGroups.mockImplementation(() => Promise.resolve(0));
     mockTotalCompositions.mockResolvedValue(0);
 
     mockMappedGroups.mockImplementation(() => {
-      return Promise.resolve({
-        groups: [],
-        total: 0,
-      } as unknown as MappedGroupsResult);
+      return Promise.resolve([] as unknown as MappedGroupsResult);
     });
 
     const result = await handleMixed(repoMock, compositionsRepoMock, undefined, 1, 10);
@@ -213,17 +191,13 @@ describe('handleMixed', () => {
   });
 
   it('should handle case when remaining is zero before evaluating works offset', async () => {
+    mockTotalGroups.mockImplementation(() => Promise.resolve(10));
+
     mockMappedGroups.mockImplementation((_repo, tab) => {
       if (tab === WorksTab.Op) {
-        return Promise.resolve({
-          groups: [MOCK_OP_GROUP],
-          total: 10,
-        } as unknown as MappedGroupsResult);
+        return Promise.resolve([MOCK_OP_GROUP] as unknown as MappedGroupsResult);
       }
-      return Promise.resolve({
-        groups: [MOCK_SINEOP_GROUP],
-        total: 10,
-      } as unknown as MappedGroupsResult);
+      return Promise.resolve([MOCK_SINEOP_GROUP] as unknown as MappedGroupsResult);
     });
 
     const result = await handleMixed(repoMock, compositionsRepoMock, undefined, 1, 1);

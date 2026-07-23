@@ -115,7 +115,7 @@ const defaultProps = {
     creationYear: '1922',
     endYear: '1924',
     dateAdditionalText: { uk: 'приблизно', en: 'approx.' },
-    genre: ''
+    genre: { uk: 'Соната', en: 'Sonata' }
   },
   derivedGenre: 'Соната',
   currentLanguage: 'UA' as EditorLanguage,
@@ -212,6 +212,7 @@ describe('GroupDetailsSection Component', () => {
     expect(screen.getByTestId('error-Назва')).toHaveTextContent('Спеціальна помилка префіксу');
     expect(screen.getByTestId('error-Рік створення')).toHaveTextContent('Заповніть рік');
   });
+
   it('should close prefix menu when window is scrolled', () => {
     render(<GroupDetailsSection {...defaultProps} />);
     const triggerBtn = screen.getByTestId('trigger-open-Назва');
@@ -239,6 +240,7 @@ describe('GroupDetailsSection Component', () => {
     fireEvent.blur(screen.getByTestId('mock-input-Назва групи'));
     expect(screen.getByTestId('error-Назва групи')).toHaveTextContent('Обов’язкове поле');
   });
+
   it('should call onChange with correct parameters for all text fields', () => {
     render(<GroupDetailsSection {...defaultProps} />);
 
@@ -277,8 +279,7 @@ describe('GroupDetailsSection Component', () => {
     expect(screen.getByTestId('error-Жанр')).toHaveTextContent('Невірний жанр');
     const genreInput = screen.getByTestId('mock-input-Жанр');
     fireEvent.change(genreInput, { target: { value: 'Новий жанр' } });
-
-    expect(mockOnChange).toHaveBeenCalledWith('genre', 'Новий жанр');
+    expect(mockOnChange).toHaveBeenCalledWith('genre', 'Новий жанр', true);
   });
 
   it('should cover all edge-case fallbacks and validation priorities (groupNumber prop error, prefix blur, empty dates/numbers)', () => {

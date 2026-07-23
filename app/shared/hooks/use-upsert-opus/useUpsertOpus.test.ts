@@ -29,7 +29,7 @@ const fullFetchedOpus: FetchedOpusData = {
   creationYear: '1921',
   endYear: '1923',
   datesNote: 'Уточнення',
-  genre: 'Симфонія',
+  genre: { uk: 'Симфонія', en: 'Symphony' },
   title: { uk: 'UK title', en: 'EN title' },
   description: { uk: 'UK desc', en: 'EN desc' },
   keywords: { uk: 'UK kw', en: 'EN kw' },
@@ -247,7 +247,7 @@ describe('useUpsertOpus', () => {
     expect(payload.additionalText).toBeUndefined();
     expect(payload.endYear).toBeUndefined();
     expect(payload.datesNote).toBeUndefined();
-    expect(payload.genre).toBeUndefined();
+    expect(payload.genre).toEqual({'en': undefined, 'uk': undefined});
 
     const composition = payload.compositions[0];
     expect(composition.genre).toBeUndefined();

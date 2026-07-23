@@ -42,10 +42,9 @@ describe('handleWork', () => {
   });
 
   it('should handle work and return paginated result successfully', async () => {
-    mockMappedGroups.mockResolvedValue({
-      groups: [{ compositions: MOCK_COMPOSITION_IDS }] as unknown as Opus[],
-      total: 1,
-    });
+    mockMappedGroups.mockResolvedValue([
+      { compositions: MOCK_COMPOSITION_IDS } as unknown as Opus,
+    ]);
     mockTotalCompositions.mockResolvedValue(MOCK_TOTAL);
     mockMappedCompositions.mockResolvedValue(MOCK_WORKS);
 
@@ -78,10 +77,7 @@ describe('handleWork', () => {
   });
 
   it('should handle empty compositions array when groups result is empty', async () => {
-    mockMappedGroups.mockResolvedValue({
-      groups: [],
-      total: 0,
-    });
+    mockMappedGroups.mockResolvedValue([]);
     mockTotalCompositions.mockResolvedValue(0);
     mockMappedCompositions.mockResolvedValue([]);
 

@@ -1,5 +1,5 @@
 import { mapFilters } from '../../helpers';
-import { attachCompositionsToGroups, mappedCompositions, mappedGroups, OpusWithCompositions,orderCompositionsByIds, totalCompositions, totalPages } from './tabHandlersHelpers';
+import { attachCompositionsToGroups, mappedCompositions, mappedGroups, OpusWithCompositions, orderCompositionsByIds, totalCompositions, totalPages } from './tabHandlersHelpers';
 import { Composition } from '~/domain/entities/Composition';
 import { Opus } from '~/src/domain/entities/Opus';
 import { ICompositionRepository } from '~/src/domain/repositories/compositionRepository';
@@ -73,34 +73,28 @@ describe('tabHandlersHelpers', () => {
   });
 
   describe('mappedGroups', () => {
-    it('should map groups and count them correctly for Opus tab with filters', async () => {
-      const totalCount = 5;
+    it('should map groups correctly for Opus tab with filters', async () => {
       const groupsList = [MOCK_OPUS_1];
-      opusRepoMock.count.mockResolvedValue(totalCount);
       opusRepoMock.findAll.mockResolvedValue(groupsList);
       (mapFilters as jest.Mock).mockReturnValueOnce({ search: 'test' });
 
       const result = await mappedGroups(opusRepoMock, WorksTab.Op, { search: 'test' });
 
       expect(mapFilters).toHaveBeenCalledWith({ search: 'test' });
-      expect(opusRepoMock.count).toHaveBeenCalledWith({ search: 'test', numberKind: OpusNumberKind.Op });
-      expect(opusRepoMock.findAll).toHaveBeenCalledWith({ search: 'test', numberKind: OpusNumberKind.Op });
-      expect(result).toEqual({ groups: groupsList, total: totalCount });
+      expect(opusRepoMock.findAll).toHaveBeenCalledWith({ search: 'test', numberKind: OpusNumberKind.Op, skip: undefined, limit: undefined });
+      expect(result).toEqual(groupsList);
     });
 
     it('should map groups correctly when filters are undefined', async () => {
-      const totalCount = 2;
       const groupsList = [MOCK_OPUS_1];
-      opusRepoMock.count.mockResolvedValue(totalCount);
       opusRepoMock.findAll.mockResolvedValue(groupsList);
       (mapFilters as jest.Mock).mockReturnValueOnce(undefined);
 
       const result = await mappedGroups(opusRepoMock, WorksTab.Sineop, undefined);
 
       expect(mapFilters).toHaveBeenCalledWith(undefined);
-      expect(opusRepoMock.count).toHaveBeenCalledWith({ numberKind: OpusNumberKind.Sineop });
-      expect(opusRepoMock.findAll).toHaveBeenCalledWith({ numberKind: OpusNumberKind.Sineop });
-      expect(result).toEqual({ groups: groupsList, total: totalCount });
+      expect(opusRepoMock.findAll).toHaveBeenCalledWith({ numberKind: OpusNumberKind.Sineop, skip: undefined, limit: undefined });
+      expect(result).toEqual(groupsList);
     });
   });
 
@@ -123,7 +117,7 @@ describe('tabHandlersHelpers', () => {
     it('should return paginated compositions without filters', async () => {
       const paginatedResult = [MOCK_COMPOSITION_1];
       compositionsRepoMock.findByIdsPaginated.mockResolvedValue(paginatedResult);
-      (mapFilters as jest.Mock).mockReturnValueOnce(undefined);
+      (mapFilters as jest.Mock).mockReturnValue(undefined);
 
       const result = await mappedCompositions(compositionsRepoMock, [MOCK_ID_1], 1, 5, undefined);
 
@@ -152,7 +146,7 @@ describe('tabHandlersHelpers', () => {
     it('should return total count of compositions by ids without filters', async () => {
       const totalCount = 3;
       compositionsRepoMock.countByIds.mockResolvedValue(totalCount);
-      (mapFilters as jest.Mock).mockReturnValueOnce(undefined);
+      (mapFilters as jest.Mock).mockReturnValue(undefined);
 
       const result = await totalCompositions(compositionsRepoMock, [MOCK_ID_1], undefined);
 

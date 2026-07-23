@@ -147,14 +147,14 @@ describe('useGroupContent Hook', () => {
         loading: false,
         error: undefined
       });
-
+     
       const { result } = renderHook(() => useGroupContent('test-id'));
 
       await waitFor(() => {
         expect(result.current.groupData).not.toBeNull();
         expect(result.current.groupData?.groupNumber).toBe('42');
         expect(result.current.groupData?.titlePrefix).toBe('Op.');
-        expect(result.current.groupData?.genre).toBe('Symphony');
+        expect(result.current.groupData?.genre).toEqual({ uk: '', en: '' });
         expect(result.current.publishedTitle.uk).toBe('Test Opus UK');
       });
     });
@@ -320,7 +320,8 @@ describe('useGroupContent Hook', () => {
       await waitFor(() => {
         expect(result.current.groupData).not.toBeNull();
         expect(result.current.groupData?.status).toBe('draft');
-        expect(result.current.groupData?.genre).toBe('');
+        expect(result.current.groupData?.genre.uk).toBe('');
+        expect(result.current.groupData?.genre.en).toBe('');
         expect(result.current.groupData?.additionalText).toBe('');
         expect(result.current.groupData?.groupTitle.uk).toBe('');
         expect(result.current.groupData?.groupTitle.en).toBe('');
@@ -788,7 +789,7 @@ describe('useGroupContent Hook', () => {
       });
       const calledInput = mockUpdateOpus.mock.calls[0][0].variables.input;
       expect(calledInput.numberKind).toBe('sineop');
-      expect(calledInput.genre).toBe('');
+      expect(calledInput.genre).toEqual({'en': '', 'uk': ''});
       expect(calledInput.additionalText).toBe('');
       expect(calledInput.gallery).toEqual([]);
       expect(calledInput.compositions[0].audios).toEqual([]);

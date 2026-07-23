@@ -102,6 +102,11 @@ export const OpusQuery = {
       const result = await handleWork(tab, repo, compositionsRepo, filters, page, pageSize);
       return result;
     }
-    return handleMixed(repo, compositionsRepo, filters, page, pageSize);
+    
+    const result = await handleMixed(repo, compositionsRepo, filters, page, pageSize);
+    console.log({
+      result
+    });
+    return result;
   }),
 };

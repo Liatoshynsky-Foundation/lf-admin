@@ -13,7 +13,7 @@ export async function handleWork(
   pageSize: number
 ): Promise<PaginatedWorksResult> {
   const groupsResult = await mappedGroups(repo, tab);
-  const compositionIds = groupsResult.groups[0]?.compositions ?? [];
+  const compositionIds = groupsResult[0]?.compositions ?? [];
 
   const [total, works] = await Promise.all([
     totalCompositions(compositionRepo, compositionIds, filters),
