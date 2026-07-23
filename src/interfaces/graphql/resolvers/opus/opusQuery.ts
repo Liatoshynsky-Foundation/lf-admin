@@ -103,10 +103,6 @@ export const OpusQuery = {
       return result;
     }
     
-    const result = await handleMixed(repo, compositionsRepo, filters, page, pageSize);
-    console.log({
-      result
-    });
-    return result;
+    return await handleMixed(repo, compositionsRepo, filters, page, pageSize);
   }),
 };

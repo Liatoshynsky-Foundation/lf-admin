@@ -37,9 +37,6 @@ interface CapturedUploadViewProps {
 const useAllAssetsMock = jest.fn();
 const createAssetMutationMock = jest.fn();
 
-// Shared across tests so the UploadView mock can hand back what it received
-// from DynamicUploadView, letting us assert on the *real* internal logic
-// instead of a hardcoded stub.
 let capturedUploadViewProps: CapturedUploadViewProps = {};
 
 jest.mock('~/shared/hooks/use-assets/useAssets', () => ({
@@ -98,9 +95,6 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
 
     if (!open) return null;
 
-    // Actually mount the renderer's output so DynamicUploadView (and, inside it,
-    // UploadView) really renders and its props/logic run for real, instead of
-    // just constructing a throwaway React element that's discarded.
     const simulateValidation = () => {
       const node = renderers?.upload?.({});
       setUploadNode(node ?? null);
@@ -291,7 +285,7 @@ describe('CompositionModal', () => {
     it('should configure accept, error text, aria label and no size limit for audio mode', () => {
       runSimulation();
       fireEvent.click(screen.getByTestId('action-trigger-upload-audio'));
-      fireEvent.click(screen.getByTestId('media-modal')); // triggers simulateValidation -> renders DynamicUploadView
+      fireEvent.click(screen.getByTestId('media-modal'));
 
       expect(capturedUploadViewProps.accept).toBe('audio/*');
       expect(capturedUploadViewProps.invalidFileError).toBe('Очікується аудіо файл');

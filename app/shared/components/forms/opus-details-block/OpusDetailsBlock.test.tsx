@@ -131,7 +131,7 @@ describe('OpusDetailsBlock', () => {
 
     fireEvent.mouseDown(screen.getByRole('combobox'));
     fireEvent.click(screen.getByRole('option', { name: /^sine op\.?$/i }));
-    expect(screen.getByRole('combobox')).toHaveTextContent('Sine op.');
+    expect(screen.getByRole('combobox')).toHaveTextContent('sine op.');
   });
 
   it('adds an inline composition row when "Додати" is clicked', () => {

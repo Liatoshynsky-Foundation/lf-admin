@@ -31,8 +31,8 @@ export const OPUS_NUMBER_KIND = {
 } as const;
 
 export const OPUS_NUMBER_KIND_OPTIONS = [
-  { value: OPUS_NUMBER_KIND.OP, label: 'Op.' },
-  { value: OPUS_NUMBER_KIND.SINE_OP, label: 'Sine op.' }
+  { value: OPUS_NUMBER_KIND.OP, label: 'op.' },
+  { value: OPUS_NUMBER_KIND.SINE_OP, label: 'sine op.' }
 ] as const;
 
 export const OPUS_FIELD_LIMITS = {

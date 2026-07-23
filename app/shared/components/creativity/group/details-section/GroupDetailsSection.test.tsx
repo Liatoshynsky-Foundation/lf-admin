@@ -52,8 +52,8 @@ jest.mock('~/constants/opus', () => ({
     nameTooShort: 'Назва занадто коротка'
   },
   OPUS_NUMBER_KIND_OPTIONS: [
-    { value: 'op', label: 'Op.' },
-    { value: 'woo', label: 'Sine op.' }
+    { value: 'op', label: 'op.' },
+    { value: 'woo', label: 'sine op.' }
   ],
   REQUIRED_FIELD_ERROR: 'Обов’язкове поле',
   OPUS_YEAR_RANGE: { min: 1000, max: 2100 }
@@ -139,7 +139,7 @@ const mockOnChange = jest.fn();
 
 const defaultProps = {
   data: {
-    titlePrefix: 'Op.',
+    titlePrefix: 'op.',
     groupNumber: '42',
     additionalText: 'bis',
     groupTitle: { uk: 'Квартет', en: 'Quartet' },
@@ -162,7 +162,7 @@ describe('GroupDetailsSection Component', () => {
   it('should render all fields with correct initial values', () => {
     render(<GroupDetailsSection {...defaultProps} />);
 
-    expect(screen.getByTestId('mock-input-Назва')).toHaveValue('Op.');
+    expect(screen.getByTestId('mock-input-Назва')).toHaveValue('op.');
     expect(screen.getByTestId('mock-input-Номер')).toHaveValue('42');
     expect(screen.getByTestId('mock-input-additionalText-top')).toHaveValue('bis');
     expect(screen.getByTestId('mock-input-Назва групи')).toHaveValue('Квартет');
