@@ -65,7 +65,42 @@ describe('UploadService', () => {
 
       expect(result.success).toBe(true);
       expect(result.filename).toBe('unique-test.jpg');
-      expect(mockStorage.store).toHaveBeenCalled();
+      expect(mockStorage.store).toHaveBeenCalledWith(
+        testFile.buffer,
+        'test.jpg',
+        'image/jpeg',
+        expect.objectContaining({ originalName: 'test.jpg' })
+      );
+    });
+
+    it('should preserve the uploaded file name and extension when storing the file', async () => {
+      const jpegFile: UploadedFile = {
+        ...testFile,
+        originalname: ' Test_image_1.jpeg ',
+        mimetype: 'image/jpeg'
+      };
+
+      mockValidator.validate.mockResolvedValue({ valid: true, errors: [] });
+      mockStorage.store.mockResolvedValue({
+        success: true,
+        metadata: {
+          filename: 'Test_image_1.jpeg',
+          size: 12,
+          mimeType: 'image/jpeg',
+          uploadedAt: new Date(),
+          originalName: ' Test_image_1.jpeg ',
+          url: 'https://example.com/photos/Test_image_1.jpeg'
+        } as StorageMetadata
+      });
+
+      await service.uploadFile(jpegFile);
+
+      expect(mockStorage.store).toHaveBeenCalledWith(
+        jpegFile.buffer,
+        'Test_image_1.jpeg',
+        'image/jpeg',
+        expect.objectContaining({ originalName: ' Test_image_1.jpeg ' })
+      );
     });
 
     it('should return error and not call storage if validation fails', async () => {
@@ -90,6 +125,19 @@ describe('UploadService', () => {
 
       expect(result.success).toBe(false);
       expect(result.errors).toContain('S3 Connection Error');
+    });
+
+    it('should return default storage error if storage fails without a message', async () => {
+      mockValidator.validate.mockResolvedValue({ valid: true, errors: [] });
+      mockStorage.store.mockResolvedValue({
+        success: false,
+        metadata: {} as StorageMetadata
+      });
+
+      const result = await service.uploadFile(testFile);
+
+      expect(result.success).toBe(false);
+      expect(result.errors).toContain(UPLOAD_ERRORS.STORAGE_FAILED);
     });
 
     it('should catch and wrap unexpected exceptions', async () => {
@@ -195,6 +243,59 @@ describe('UploadService', () => {
   });
 
   describe('UploadService Edge Cases', () => {
+    it('should use default image file type when config does not provide it', async () => {
+      service = createUploadService({ storage: mockStorage });
+      mockValidator.validate.mockResolvedValue({ valid: true, errors: [] });
+      mockStorage.store.mockResolvedValue({
+        success: true,
+        metadata: { filename: 'test.jpg' } as StorageMetadata
+      });
+
+      await service.uploadFile(testFile);
+
+      expect(mockedCreateValidator).toHaveBeenCalledWith({
+        fileType: 'image',
+        rules: {}
+      });
+    });
+
+    it('should prefer file type and validation rules from upload options', async () => {
+      mockValidator.validate.mockResolvedValue({ valid: true, errors: [] });
+      mockStorage.store.mockResolvedValue({
+        success: true,
+        metadata: { filename: 'audio.mp3' } as StorageMetadata
+      });
+
+      await service.uploadFile(
+        { ...testFile, originalname: 'audio.mp3', mimetype: 'audio/mpeg' },
+        { fileType: 'audio', validationRules: { maxSize: 1024 } }
+      );
+
+      expect(mockedCreateValidator).toHaveBeenCalledWith({
+        fileType: 'audio',
+        rules: { maxSize: 1024 }
+      });
+    });
+
+    it('should use a custom filename generator when provided', async () => {
+      mockValidator.validate.mockResolvedValue({ valid: true, errors: [] });
+      mockStorage.store.mockResolvedValue({
+        success: true,
+        metadata: { filename: 'custom-name.jpg' } as StorageMetadata
+      });
+
+      await service.uploadFile(testFile, {
+        generateFilename: () => 'custom-name.jpg'
+      });
+
+      expect(mockStorage.store).toHaveBeenCalledWith(
+        expect.any(Buffer),
+        'custom-name.jpg',
+        'image/jpeg',
+        expect.objectContaining({ originalName: 'test.jpg' })
+      );
+    });
+
     it('should apply custom directory from options to storage metadata', async () => {
       mockValidator.validate.mockResolvedValue({ valid: true, errors: [] });
       mockStorage.store.mockResolvedValue({
@@ -221,7 +322,7 @@ describe('UploadService', () => {
 
     it('should return UPLOAD_ERRORS.UNKNOWN_ERROR if a non-Error is thrown', async () => {
       mockValidator.validate.mockImplementation(() => {
-        throw new Error(UPLOAD_ERRORS.UNKNOWN_ERROR);
+        throw 'string-error';
       });
 
       const result = await service.uploadFile(testFile);
