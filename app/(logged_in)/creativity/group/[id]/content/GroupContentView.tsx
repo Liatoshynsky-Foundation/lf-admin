@@ -148,7 +148,7 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
         open={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onDelete={handleConfirmDelete}
-        description="Ви впевнені, що хочете видалити цю групу?"
+        description="Групу буде видалено. Пов'язані твори, зображення, файли та аудіо буде відв'язано від групи. Цю дію неможливо скасувати. Ви впевнені, що хочете продовжити?"
       />
     </Box>
   );

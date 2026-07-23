@@ -4,6 +4,12 @@ import toast from 'react-hot-toast';
 
 import { createCompositionId } from '../use-upsert-opus/useUpsertOpus';
 import { GroupData, GroupDataField, GroupPhoto } from '~/constants/creativity';
+import {
+  OPUS_FIELD_LIMITS,
+  OPUS_MUTATION_RESULTS,
+  OPUS_VALIDATION_MESSAGES,
+  REQUIRED_FIELD_ERROR
+} from '~/constants/opus';
 import { EditorLanguage } from '~/constants/publications';
 import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
 import { useOpusById } from '~/shared/hooks/use-opuses/useOpuses';
@@ -13,7 +19,8 @@ import {
   OpusNumberKind,
   OpusStatus,
   useDeleteOpusMutation,
-  useUpdateOpusMutation} from '~/types/graphql/generated/graphql';
+  useUpdateOpusMutation
+} from '~/types/graphql/generated/graphql';
 import { FetchedOpusData, OpusCompositionSuggestion } from '~/types/opus';
 
 type AnchorId = 'navigation' | 'publish';
@@ -36,13 +43,6 @@ const parseDescription = (desc: unknown): Record<string, unknown> => {
     }
   }
   return { type: 'doc', content: [] };
-};
-
-const mapNumberKindToPrefix = (kind: string | null | undefined): string => {
-  if (!kind) return 'Op.';
-  const lowerKind = kind.toLowerCase();
-  if (lowerKind === 'sineop') return 'Bo.';
-  return 'Op.';
 };
 
 const fileNameFromUrl = (url?: string | null): string => {
@@ -89,7 +89,7 @@ export const useGroupContent = (id: string) => {
         en: fetchedOpus.name?.en ?? ''
       };
       setGroupData({
-        titlePrefix: mapNumberKindToPrefix(fetchedOpus.numberKind),
+        titlePrefix: fetchedOpus.numberKind ?? 'op',
         groupNumber: fetchedOpus.number ? String(fetchedOpus.number).replace(/^(op|woo|sineop|wo|bo)[.\-\s]*/i, '') : '',
         genre: { 
           uk: fetchedOpus.genre?.uk ?? '', 
@@ -181,13 +181,13 @@ export const useGroupContent = (id: string) => {
 
     try {
       const input = {
-        numberKind: groupData.titlePrefix === 'Bo.' ? OpusNumberKind.Sineop : OpusNumberKind.Op,
         number: Number(groupData.groupNumber.trim()),
+        numberKind: groupData.titlePrefix as unknown as OpusNumberKind,
         genre: {
-          uk: String(groupData.genre?.uk || ''),
-          en: String(groupData.genre?.en || '')
+          uk: String(groupData.genre?.uk || '').trim(),
+          en: String(groupData.genre?.en || '').trim()
         },
-        additionalText: String(groupData.additionalText || ''),
+        additionalText: String(groupData.additionalText || '') .trim() || '',
         ...(mappedStatus && { status: mappedStatus }),
         name: {
           uk: String(groupData.groupTitle?.uk || ''),
@@ -195,7 +195,7 @@ export const useGroupContent = (id: string) => {
         },
         creationYear: groupData.creationYear ? String(groupData.creationYear) : null,
         endYear: groupData.endYear ? String(groupData.endYear) : null,
-        datesNote: groupData.dateAdditionalText?.uk ? String(groupData.dateAdditionalText.uk) : null,
+        datesNote: groupData.dateAdditionalText?.uk ? String(groupData.dateAdditionalText.uk).trim() : null,
         parts: {
           uk: String(groupData.parts?.uk || ''),
           en: String(groupData.parts?.en || '')
@@ -246,7 +246,7 @@ export const useGroupContent = (id: string) => {
       };
 
       await updateOpus({ variables: { id, input } });
-      toast.success('Контент успішно збережено!');
+      toast.success('Групу опубліковано');
       return true;
     } catch (error) {
       console.error('Помилка при збереженні контенту групи:', error);
@@ -276,19 +276,34 @@ export const useGroupContent = (id: string) => {
     const numberValue = String(groupData?.groupNumber || '').trim();
 
     if (!numberValue) {
-      newErrors.groupNumber = 'Обов’язкове поле';
+      newErrors.groupNumber = REQUIRED_FIELD_ERROR;
     } else if (!/^\d+$/.test(numberValue) || Number(numberValue) <= 0) {
-      newErrors.groupNumber = 'Номер має бути цілим позитивним числом.';
+      newErrors.groupNumber = OPUS_VALIDATION_MESSAGES.numberInvalid;
     }
 
-    if (!groupData?.groupTitle?.uk || String(groupData.groupTitle.uk).trim() === '') {
-      newErrors.groupTitle = 'Обов’язкове поле';
+    const groupTitleUk = String(groupData?.groupTitle?.uk || '').trim();
+    const groupTitleEn = String(groupData?.groupTitle?.en || '').trim();
+
+    if (!groupTitleUk) {
+      newErrors.groupTitle = OPUS_VALIDATION_MESSAGES.nameRequired;
+      setCurrentLanguage('UA');
+    } else if (groupTitleUk.length < OPUS_FIELD_LIMITS.name.min) {
+      newErrors.groupTitle = OPUS_VALIDATION_MESSAGES.nameTooShort;
+      setCurrentLanguage('UA');
     }
+    else if (!groupTitleEn) {
+      newErrors.groupTitle = OPUS_VALIDATION_MESSAGES.nameRequired;
+      setCurrentLanguage('EN');
+    } else if (groupTitleEn.length < OPUS_FIELD_LIMITS.name.min) {
+      newErrors.groupTitle = OPUS_VALIDATION_MESSAGES.nameTooShort;
+      setCurrentLanguage('EN');
+    }
+
     if (!groupData?.titlePrefix || String(groupData.titlePrefix).trim() === '') {
-      newErrors.titlePrefix = 'Обов’язкове поле';
+      newErrors.titlePrefix = REQUIRED_FIELD_ERROR;
     }
     if (!groupData?.creationYear || String(groupData.creationYear).trim() === '') {
-      newErrors.creationYear = 'Обов’язкове поле';
+      newErrors.creationYear = REQUIRED_FIELD_ERROR;
     }
 
     setErrors(newErrors);
@@ -334,12 +349,12 @@ export const useGroupContent = (id: string) => {
   const handleConfirmDelete = async () => {
     try {
       await deleteOpus({ variables: { id } });
-      toast.success('Групу успішно видалено');
+      toast.success(OPUS_MUTATION_RESULTS.deleted);
       setIsDeleteModalOpen(false);
-      navigate('/creativity'); 
+      navigate('/creativity');
     } catch (error) {
       console.error('Помилка при видаленні:', error);
-      toast.error('Помилка при видаленні групи.');
+      toast.error('Не вдалося видалити групу. Спробуйте ще раз.');
     }
   };
 

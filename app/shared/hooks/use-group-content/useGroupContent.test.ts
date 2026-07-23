@@ -43,13 +43,26 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
   OpusStatus: { Draft: 'draft', Published: 'published' }
 }));
 
+jest.mock('~/constants/opus', () => ({
+  OPUS_FIELD_LIMITS: { name: { min: 2, max: 250 } },
+  OPUS_VALIDATION_MESSAGES: {
+    nameRequired: 'nameRequired',
+    nameTooShort: 'nameTooShort',
+    numberInvalid: 'numberInvalid'
+  },
+  OPUS_MUTATION_RESULTS: {
+    deleted: 'deleted'
+  },
+  REQUIRED_FIELD_ERROR: 'REQUIRED_FIELD_ERROR'
+}));
+
 const mockFetchedOpus = {
   id: 'test-id',
   numberKind: 'op',
   number: '42',
   name: { uk: 'Test Opus UK', en: 'Test Opus EN' },
   additionalText: 'bis',
-  genre: 'Symphony',
+  genre: { uk: 'Symphony', en: 'Symphony EN' },
   creationYear: 1980,
   endYear: null,
   datesNote: null,
@@ -147,14 +160,13 @@ describe('useGroupContent Hook', () => {
         loading: false,
         error: undefined
       });
-     
+ 
       const { result } = renderHook(() => useGroupContent('test-id'));
-
       await waitFor(() => {
         expect(result.current.groupData).not.toBeNull();
         expect(result.current.groupData?.groupNumber).toBe('42');
-        expect(result.current.groupData?.titlePrefix).toBe('Op.');
-        expect(result.current.groupData?.genre).toEqual({ uk: '', en: '' });
+        expect(result.current.groupData?.titlePrefix).toBe('op');
+        expect(result.current.groupData?.genre).toEqual({ uk: 'Symphony', en: 'Symphony EN' });
         expect(result.current.publishedTitle.uk).toBe('Test Opus UK');
       });
     });
@@ -177,7 +189,7 @@ describe('useGroupContent Hook', () => {
       const { result } = renderHook(() => useGroupContent('test-id'));
 
       await waitFor(() => {
-        expect(result.current.groupData?.titlePrefix).toBe('Bo.');
+        expect(result.current.groupData?.titlePrefix).toBe('sineop');
         expect(result.current.groupData?.groupNumber).toBe('15');
         expect(result.current.groupData?.description.uk).toEqual({
           type: 'doc',
@@ -576,7 +588,7 @@ describe('useGroupContent Hook', () => {
       });
 
       expect(mockUpdateOpus).not.toHaveBeenCalled();
-      expect(result.current.errors.groupNumber).toBe('Номер має бути цілим позитивним числом.');
+      expect(result.current.errors.groupNumber).toBe('numberInvalid');
       expect(result.current.isDetailsExpanded).toBe(true);
     });
 
@@ -594,8 +606,8 @@ describe('useGroupContent Hook', () => {
         await result.current.handlePublishClick();
       });
 
-      expect(result.current.errors.groupTitle).toBe('Обов’язкове поле');
-      expect(result.current.errors.creationYear).toBe('Обов’язкове поле');
+      expect(result.current.errors.groupTitle).toBe('nameRequired');
+      expect(result.current.errors.creationYear).toBe('REQUIRED_FIELD_ERROR');
       expect(toast.error).toHaveBeenCalledWith('Заповніть усі обов’язкові поля перед публікацією.');
     });
 
@@ -610,7 +622,7 @@ describe('useGroupContent Hook', () => {
       });
 
       expect(mockUpdateOpus).toHaveBeenCalled();
-      expect(toast.success).toHaveBeenCalledWith('Контент успішно збережено!');
+      expect(toast.success).toHaveBeenCalledWith('Групу опубліковано');
       expect(result.current.isDirty).toBe(false);
     });
 
@@ -673,7 +685,7 @@ describe('useGroupContent Hook', () => {
         await result.current.handlePublishClick();
       });
 
-      expect(result.current.errors.titlePrefix).toBe('Обов’язкове поле');
+      expect(result.current.errors.titlePrefix).toBe('REQUIRED_FIELD_ERROR');
     });
 
     it('should expand details and return early when validation fails on publish', async () => {
@@ -768,7 +780,7 @@ describe('useGroupContent Hook', () => {
       });
 
       act(() => {
-        result.current.handleFieldChange('titlePrefix' as any, 'Bo.');
+        result.current.handleFieldChange('titlePrefix' as any, 'sineop');
 
         result.current.handleFieldChange('compositions', [
           {
@@ -819,7 +831,7 @@ describe('useGroupContent Hook', () => {
       });
 
       expect(mockDeleteOpus).toHaveBeenCalledWith({ variables: { id: 'test-id' } });
-      expect(toast.success).toHaveBeenCalledWith('Групу успішно видалено');
+      expect(toast.success).toHaveBeenCalledWith('deleted');
       expect(result.current.isDeleteModalOpen).toBe(false);
       expect(mockNavigate).toHaveBeenCalledWith('/creativity');
     });
@@ -838,7 +850,7 @@ describe('useGroupContent Hook', () => {
       });
 
       expect(mockDeleteOpus).toHaveBeenCalledWith({ variables: { id: 'test-id' } });
-      expect(toast.error).toHaveBeenCalledWith('Помилка при видаленні групи.');
+      expect(toast.error).toHaveBeenCalledWith('Не вдалося видалити групу. Спробуйте ще раз.');
       expect(result.current.isDeleteModalOpen).toBe(true);
       expect(mockNavigate).not.toHaveBeenCalled();
 
@@ -891,7 +903,7 @@ describe('useGroupContent Hook', () => {
         result.current.handleFieldChange('compositions', null);
         result.current.handleFieldChange('performances', null);
         result.current.handleFieldChange('performancesTitle', '');
-        result.current.handleFieldChange('groupTitle', { uk: 'Valid UK Title', en: '' });
+        result.current.handleFieldChange('groupTitle', { uk: 'Valid UK Title', en: 'Valid EN Title' });
       });
 
       await act(async () => {
@@ -913,9 +925,7 @@ describe('useGroupContent Hook', () => {
           opusById: {
             ...mockFetchedOpus,
             numberKind: null,
-            gallery: [
-              { id: 'photo-1', src: '', crop: null }
-            ]
+            gallery: [{ id: 'photo-1', src: '', crop: null }]
           }
         },
         loading: false
@@ -930,7 +940,7 @@ describe('useGroupContent Hook', () => {
         await result.current.handlePublishClick();
       });
 
-      expect(result.current.groupData?.titlePrefix).toBe('Op.');
+      expect(result.current.groupData?.titlePrefix).toBe('op');
       const calledInput = mockUpdateOpus.mock.calls[0][0].variables.input;
       expect(calledInput.gallery[0].src).toBe('');
     });
@@ -949,6 +959,61 @@ describe('useGroupContent Hook', () => {
       });
 
       expect((result.current.groupData?.genre as any).uk).toBe('Pop');
+    });
+
+    it('should trigger validation error when groupTitle is too short', async () => {
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: { opusById: mockFetchedOpus },
+        loading: false
+      });
+
+      const { result } = renderHook(() => useGroupContent('test-id'));
+
+      await waitFor(() => {
+        expect(result.current.groupData).not.toBeNull();
+      });
+
+      act(() => {
+        result.current.handleFieldChange('groupTitle', 'a', true);
+      });
+
+      await act(async () => {
+        await result.current.handlePublishClick();
+      });
+
+      expect(result.current.errors.groupTitle).toBe('nameTooShort');
+
+      expect(mockUpdateOpus).not.toHaveBeenCalled();
+    });
+
+    it('should trim whitespace from genre, additionalText, and datesNote on save', async () => {
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: { opusById: mockFetchedOpus },
+        loading: false
+      });
+      mockUpdateOpus.mockResolvedValue({ data: { updateOpus: { id: 'test-id' } } });
+
+      const { result } = renderHook(() => useGroupContent('test-id'));
+
+      await waitFor(() => {
+        expect(result.current.groupData).not.toBeNull();
+      });
+
+      act(() => {
+        result.current.handleFieldChange('genre', '   Pop   ', true);
+        result.current.handleFieldChange('additionalText', '   Some text   ');
+        result.current.handleFieldChange('dateAdditionalText', '  Note  ', true);
+      });
+
+      await act(async () => {
+        await result.current.handlePublishClick();
+      });
+
+      const calledInput = mockUpdateOpus.mock.calls[0][0].variables.input;
+
+      expect(calledInput.genre.uk).toBe('Pop');
+      expect(calledInput.additionalText).toBe('Some text');
+      expect(calledInput.datesNote).toBe('Note');
     });
   });
 

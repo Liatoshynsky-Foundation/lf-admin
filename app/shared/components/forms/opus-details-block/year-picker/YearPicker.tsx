@@ -61,7 +61,11 @@ export default function YearPicker({
             error,
             helperText,
             onClick: () => setOpen(true),
+            onKeyDown: (e) => e.preventDefault(),
             sx,
+            inputProps: {
+              readOnly: true, 
+            },
             InputProps: {
               startAdornment: (
                 <InputAdornment position="start">

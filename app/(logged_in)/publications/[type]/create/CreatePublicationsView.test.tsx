@@ -181,6 +181,8 @@ const createMockData = (
   isEditing: false,
   isLoading: false,
   isValidType: true,
+  canonicalUrlError: '',
+  setCanonicalUrlError: jest.fn(),
   publicationType: 'news' as PublicationsItemType,
   pageTitle: 'Створення Новини',
   adminTitle: '',

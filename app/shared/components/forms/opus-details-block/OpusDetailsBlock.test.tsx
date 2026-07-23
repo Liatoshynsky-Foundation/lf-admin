@@ -15,8 +15,16 @@ jest.mock('@mui/x-date-pickers/LocalizationProvider', () => ({
   LocalizationProvider: ({ children }: { children: ReactNode }): ReactElement => <>{children}</>
 }));
 
-jest.mock('@mui/x-date-pickers/DatePicker', () => ({
-  DatePicker: ({ label }: { label: string }): ReactElement => <input aria-label={label} readOnly value="" />
+jest.mock('./year-picker/YearPicker', () => ({
+  __esModule: true,
+  default: ({ label, value, onChange }: { label: string; value: string; onChange: (year: string) => void }) => (
+    <div>
+      <input aria-label={label} readOnly value={value || ''} />
+      <button type="button" aria-label={`set-${label}`} onClick={() => onChange('1999')}>
+        Set
+      </button>
+    </div>
+  )
 }));
 
 jest.mock('./composition-title-input/CompositionTitleInput', () => ({
@@ -121,13 +129,9 @@ describe('OpusDetailsBlock', () => {
     fireEvent.change(genreField, { target: { value: 'Симфонія' } });
     expect(genreField).toHaveValue('Симфонія');
 
-    const selectCombobox = screen.getByRole('combobox');
-    fireEvent.mouseDown(selectCombobox);
-
-    const option = await screen.findByRole('option', { name: /Sine op./i });
-    fireEvent.click(option);
-
-    expect(selectCombobox).toHaveTextContent(/Sine op./i);
+    fireEvent.mouseDown(screen.getByRole('combobox'));
+    fireEvent.click(screen.getByRole('option', { name: /^sine op\.?$/i }));
+    expect(screen.getByRole('combobox')).toHaveTextContent('Sine op.');
   });
 
   it('adds an inline composition row when "Додати" is clicked', () => {
@@ -193,7 +197,7 @@ describe('OpusDetailsBlock', () => {
       genre: null,
       year: null,
       audios: [{ url: 'https://cdn/audio.mp3' }, { name: null, url: null }],
-      sheetMusic: [{ url: 'https://cdn/sheet.pdf' }]
+      sheetMusic: [{ url: 'https://cdn/sheet.pdf' }, { url: null as unknown as string }]
     };
     fireEvent.click(screen.getAllByRole('button', { name: 'select-suggestion' })[0]);
     expect(screen.getAllByLabelText('composition-title')[0]).toHaveValue('English title');

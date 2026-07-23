@@ -20,6 +20,14 @@ jest.mock('~/shared/hooks/use-news/useNews', () => ({
   useDeleteNews: () => [mockDeleteNews]
 }));
 
+const mockToastError = jest.fn();
+jest.mock('react-hot-toast', () => ({
+  __esModule: true,
+  default: {
+    error: (msg: string) => mockToastError(msg)
+  }
+}));
+
 const mockCreateEvent = jest.fn();
 const mockUpdateEvent = jest.fn();
 const mockEventQuery = jest.fn();
@@ -66,6 +74,17 @@ const createValidSeoState = (type: PublicationsItemType): SeoBlockValue => ({
 });
 
 describe('useUpsertPublication Hook', () => {
+
+  let consoleErrorSpy: jest.SpyInstance;
+
+  beforeAll(() => {
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterAll(() => {
+    consoleErrorSpy.mockRestore();
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockNewsQuery.mockReturnValue({ data: undefined, loading: false });
@@ -437,6 +456,59 @@ describe('useUpsertPublication Hook', () => {
       );
 
       expect(returnedId).toBe('new-news-99');
+
+      expect(result.current.canonicalUrlError).toBe('');
+    });
+
+    it('should NOT create a News publication and set canonical URL error if the error contains url_1', async () => {
+      mockCreateNews.mockRejectedValue(new Error('E11000 url_1'));
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
+
+      act(() => {
+        result.current.setAdminTitle('Valid News Title');
+        result.current.setSeoValue(createValidSeoState('news'));
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(mockCreateNews).toHaveBeenCalledWith(
+        expect.objectContaining({
+          adminTitle: 'Valid News Title',
+          status: NewsStatus.Draft,
+          content: { uk: { content: { blocks: [] } }, en: { content: { blocks: [] } } }
+        })
+      );
+
+      expect(result.current.canonicalUrlError).toBe('Публікація з таким canonical URL вже існує.');
+      expect(mockToastError).not.toHaveBeenCalled();
+    });
+
+
+    it('should NOT create a News publication and show the error toast', async () => {
+      mockCreateNews.mockRejectedValue(new Error('Error E11000'));
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
+
+      act(() => {
+        result.current.setAdminTitle('Valid News Title');
+        result.current.setSeoValue(createValidSeoState('news'));
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(mockCreateNews).toHaveBeenCalledWith(
+        expect.objectContaining({
+          adminTitle: 'Valid News Title',
+          status: NewsStatus.Draft,
+          content: { uk: { content: { blocks: [] } }, en: { content: { blocks: [] } } }
+        })
+      );
+
+      expect(mockToastError).toHaveBeenCalledWith('Публікація з такими даними вже існує.');
+      expect(result.current.canonicalUrlError).toBe('');
     });
 
     it('should successfully create an Event and return ID', async () => {
@@ -463,6 +535,7 @@ describe('useUpsertPublication Hook', () => {
       );
 
       expect(returnedId).toBe('new-event-77');
+      expect(result.current.canonicalUrlError).toBe('');
     });
 
     it('should successfully create Media and return ID', async () => {
@@ -535,6 +608,7 @@ describe('useUpsertPublication Hook', () => {
       }));
 
       expect(returnedId).toBe('media-55');
+      expect(result.current.canonicalUrlError).toBe('');
     });
 
 

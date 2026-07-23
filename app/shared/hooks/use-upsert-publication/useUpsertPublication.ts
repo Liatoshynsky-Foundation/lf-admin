@@ -1,5 +1,6 @@
 import dayjs, { type Dayjs } from 'dayjs';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import {
   FetchedPublicationData,
@@ -22,6 +23,21 @@ import { useCreateNews, useNewsById, useUpdateNews } from '~/shared/hooks/use-ne
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { EventStatus, MediaStatus, NewsStatus } from '~/types/graphql/generated/graphql';
 
+const ERROR_CONFIG: Array<{
+  key: string;
+  handle: (ctx: { setCanonicalUrlError: (msg: string) => void }) => void;
+}> = [
+  {
+    key: 'url_1',
+    handle: ({ setCanonicalUrlError }) =>
+      setCanonicalUrlError('Публікація з таким canonical URL вже існує.')
+  },
+  {
+    key: 'E11000',
+    handle: () =>
+      toast.error('Публікація з такими даними вже існує.')
+  }
+];
 interface UseUpsertPublicationProps {
   type: PublicationsItemType;
   id?: string;
@@ -49,6 +65,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
 
   const [adminTitle, setAdminTitle] = useState('');
   const [adminTitleError, setAdminTitleError] = useState('');
+  const [canonicalUrlError, setCanonicalUrlError] = useState('');
   const [publishDate, setPublishDate] = useState<Dayjs | null>(null);
   const [seoValue, setSeoValue] = useState<SeoBlockValue>(initialSeoValue);
 
@@ -264,10 +281,22 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       };
 
       const result = await saveStrategies[publicationType]?.();
+      setCanonicalUrlError('');
 
       return { id: result?.id, slug: result.slug };
-    } catch {
-      // errors are handled by safeMutate
+    } catch (error: unknown) {
+      console.error('Error: ', error);
+      if (error instanceof Error) {
+        const errorMessage = error.message || '';
+        const matched = ERROR_CONFIG.find((item) => errorMessage.includes(item.key));
+        
+        if (!matched) {
+          toast.error('Щось пішло не так. Спробуйте ще раз.');
+          return;
+        }
+
+        matched.handle({ setCanonicalUrlError });
+      }
     }
   };
 
@@ -306,6 +335,8 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     setAdminTitle: changeAdminTitle,
     adminTitleError,
     setAdminTitleError,
+    canonicalUrlError,
+    setCanonicalUrlError,
     publishDate,
     setPublishDate: changePublishDate,
     seoValue,
