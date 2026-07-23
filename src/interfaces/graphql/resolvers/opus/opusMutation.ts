@@ -7,9 +7,8 @@ import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
 import { LocalizedBoolean, LocalizedImage, LocalizedString } from '~/domain/entities/BaseContent';
 import type { Opus, OpusDescription, OpusFull, OpusGalleryItem, OpusNumberKind, OpusPerformance } from '~/domain/entities/Opus';
-import { CompositionInput } from '~/domain/repositories/compositionRepository';
-import { CreateOpusInput, UpdateOpusInput } from '~/domain/repositories/opusRepository';
-import { Composition } from '~/src/domain/entities/Composition';
+import { CompositionInput, ICompositionRepository } from '~/domain/repositories/compositionRepository';
+import { CreateOpusInput, IOpusRepository, UpdateOpusInput } from '~/domain/repositories/opusRepository';
 import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerator';
 import { OpusStatus, UpdateOpusStatusPayload } from '~/types/graphql/generated/graphql';
 
@@ -37,13 +36,11 @@ export type CreateOpusGQLInput = {
   adminTitle?: string;
   title: LocalizedString;
   description?: OpusDescription;
-
   introDescription?: OpusDescription; 
   parts?: OpusDescription;
   gallery?: OpusGalleryItem[];
   performancesTitle?: LocalizedString;
-  performances?: OpusPerformance[]
-
+  performances?: OpusPerformance[];
   keywords?: LocalizedString;
   allowIndexation?: LocalizedBoolean;
   coverImage?: LocalizedImage;
@@ -65,8 +62,9 @@ const assertAuthenticated = (context: GraphQLContext): void => {
 };
 
 const parseYear = (value: string | undefined): number | null => {
-  const year = Number.parseInt((value ?? '').trim(), 10);
-
+  const trimmed = (value ?? '').trim();
+  if (!trimmed) return null;
+  const year = Number.parseInt(trimmed, 10);
   return Number.isFinite(year) ? year : null;
 };
 
@@ -87,17 +85,80 @@ const mapComposition = (composition: GQLComposition): CompositionInput => {
       publishDate: note.publishDate ?? null,
       isFree: true
     })),
-    audios: audios.map((audio) => ({ name: audio.name ?? null, url: audio.fileUrl ?? null }))
+    audios: audios.map((audio) => ({ name: audio.name ?? null, url: audio.fileUrl || null }))
   };
 };
+
+async function findExistingOpus(repo: IOpusRepository, id: string): Promise<Opus> {
+  const existingOpus = await repo.findById(id);
+  if (!existingOpus) {
+    throw new GraphQLError(opusServiceErrors.OPUS_NOT_FOUND(id), {
+      extensions: { code: 'OPUS_NOT_FOUND' }
+    });
+  }
+  return existingOpus;
+}
+
+async function ensureUniqueOpusNumber(repo: IOpusRepository, id: string, number: number | undefined): Promise<void> {
+  if (number === undefined || number === null) return;
+
+  const duplicate = await repo.findByNumber(number);
+  if (duplicate && duplicate.id !== id) {
+    throw new GraphQLError(opusServiceErrors.NUMBER_ALREADY_EXISTS(number), {
+      extensions: { code: 'DUPLICATE_OPUS_NUMBER' }
+    });
+  }
+}
+
+async function handleCompositionsSync(
+  compositionsRepo: ICompositionRepository, 
+  repo: IOpusRepository, 
+  existingOpus: Opus, 
+  inputCompositions: GQLComposition[] | undefined
+) {
+  if (inputCompositions === undefined) {
+    const compositionIds = existingOpus.compositions ?? [];
+    return orderCompositionsByIds(compositionIds, await compositionsRepo.findByIds(compositionIds));
+  }
+
+  const compositions = await compositionsRepo.syncForOpus(inputCompositions.map(mapComposition));
+  
+  const oldCompositionIds = (existingOpus.compositions ?? []).map((cid) => cid.toString());
+  const newCompositionIds = compositions.map((c) => c.id);
+
+  const oldSet = new Set(oldCompositionIds);
+  const newSet = new Set(newCompositionIds);
+  const added = newCompositionIds.filter((cid) => !oldSet.has(cid));
+  const removed = oldCompositionIds.filter((cid) => !newSet.has(cid));
+
+  if (added.length > 0) {
+    await repo.removeCompositionsFromCompositionsOpus(added);
+  }
+  if (removed.length > 0) {
+    await repo.moveCompositionsToCompositionsOpus(removed);
+  }
+
+  return compositions;
+}
+
+async function updateAndVerifyOpus(repo: IOpusRepository, id: string, updateData: UpdateOpusInput): Promise<Opus> {
+  const opus = await repo.update(id, updateData);
+  if (!opus) {
+    throw new GraphQLError(opusServiceErrors.OPUS_NOT_FOUND(id), {
+      extensions: { code: 'OPUS_NOT_FOUND' }
+    });
+  }
+  return opus;
+}
 
 const buildOpusUpdateData = (
   input: UpdateOpusGQLInput,
   existingOpus: Opus,
-  number: number | undefined
+  number: number | undefined,
+  compositionIds: string[]
 ): UpdateOpusInput => {
   const candidate: UpdateOpusInput = {
-    number: Number(number),
+    number: number !== undefined ? Number(number) : existingOpus.number,
     numberKind: input.numberKind ?? existingOpus.numberKind,
     title: input.title,
     name: input.name,
@@ -117,7 +178,8 @@ const buildOpusUpdateData = (
     parts: input.parts,
     gallery: input.gallery,
     performancesTitle: input.performancesTitle,
-    performances: input.performances
+    performances: input.performances,
+    compositions: compositionIds
   };
   return Object.fromEntries(Object.entries(candidate).filter(([, value]) => value !== undefined)) as UpdateOpusInput;
 };
@@ -136,7 +198,7 @@ export const OpusMutation = {
       });
     }
 
-    const nameForSlug = input.name?.uk?.trim() || input.title?.uk;
+    const nameForSlug = input.name?.uk?.trim() || input.title?.uk?.trim();
     if (!nameForSlug) {
       throw new GraphQLError(opusServiceErrors.NAME_REQUIRED_FOR_SLUG, {
         extensions: { code: 'BAD_USER_INPUT' }
@@ -215,72 +277,26 @@ export const OpusMutation = {
   updateOpus: async (_: unknown, { id, input }: UpdateOpusArgs, context: GraphQLContext): Promise<OpusFull> => {
     assertAuthenticated(context);
 
-    const repo = context.requestContainer.cradle.opusRepository;
-    const compositionsRepo = context.requestContainer.cradle.compositionsRepository;
+    const { opusRepository: repo, compositionsRepository: compositionsRepo, assetsRepository: assetsRepo } = 
+    context.requestContainer.cradle;
+    const existingOpus = await findExistingOpus(repo, id);
+    const number = input.number !== undefined ? Number(input.number) : existingOpus.number;
+
+    await ensureUniqueOpusNumber(repo, id, number);
+
+    const compositions = await handleCompositionsSync(compositionsRepo, repo, existingOpus, input.compositions);
     
-    const existingOpus = await repo.findById(id);
-
-    if (!existingOpus) {
-      throw new GraphQLError(opusServiceErrors.OPUS_NOT_FOUND(id), {
-        extensions: { code: 'OPUS_NOT_FOUND' }
-      });
-    }
-
-    const number = input.number;
-
-    if (number && number !== existingOpus.number) {
-      const duplicate = await repo.findByNumber(number);
-
-      if (duplicate && duplicate.id !== id) {
-        throw new GraphQLError(opusServiceErrors.NUMBER_ALREADY_EXISTS(number), {
-          extensions: { code: 'DUPLICATE_OPUS_NUMBER' }
-        });
-      }
-    }
-
-    const updateData = buildOpusUpdateData(input, existingOpus, number);
-
+    const updateData = buildOpusUpdateData(input, existingOpus, number, compositions.map((c) => c.id));
     if (input.name) {
       await processSlugUpdate(id, input.name, repo, updateData);
     }
-
-    let compositions: Composition[];
-
-    if (input.compositions === undefined) {
-      const compositionIds = existingOpus.compositions ?? [];
-      compositions = orderCompositionsByIds(compositionIds, await compositionsRepo.findByIds(compositionIds));
-    } else {
-      compositions = await compositionsRepo.syncForOpus(input.compositions.map(mapComposition));
-      updateData.compositions = compositions.map((c) => c.id);
-
-      const oldCompositionIds = (existingOpus.compositions ?? []).map((cid) => cid.toString());
-      const newCompositionIds = compositions.map((c) => c.id);
-
-      const added = newCompositionIds.filter((cid) => !oldCompositionIds.includes(cid));
-      const removed = oldCompositionIds.filter((cid) => !newCompositionIds.includes(cid));
-
-      if (added.length > 0) {
-        await repo.removeCompositionsFromCompositionsOpus(added);
-      }
-      if (removed.length > 0) {
-        await repo.moveCompositionsToCompositionsOpus(removed);
-      }
-    }
-
-    const opus = await repo.update(id, updateData);
-
-    if (!opus) {
-      throw new GraphQLError(opusServiceErrors.OPUS_NOT_FOUND(id), {
-        extensions: { code: 'OPUS_NOT_FOUND' }
-      });
-    }
+    const opus = await updateAndVerifyOpus(repo, id, updateData);
 
     if (input.coverImage?.crop) {
       await syncImagesCrops(opus.id, input.coverImage, { isCoverImage: true });
     }
 
     if (input.coverImage) {
-      const assetsRepo = context.requestContainer.cradle.assetsRepository;
       await markImagesAsUsed(assetsRepo, null, input.coverImage, 'opus', opus.id);
     }
 

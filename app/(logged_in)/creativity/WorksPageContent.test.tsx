@@ -202,9 +202,9 @@ describe('WorksPageContent', () => {
       } as unknown as ReturnType<typeof useWorksFiltering>);
 
       rerender(<WorksPageContent activeTab="all" />);
-      rerender(<WorksPageContent activeTab="opus" />);
-      rerender(<WorksPageContent activeTab="woo" />);
-      rerender(<WorksPageContent activeTab="works" />);
+      rerender(<WorksPageContent activeTab="op" />);
+      rerender(<WorksPageContent activeTab="sineop" />);
+      rerender(<WorksPageContent activeTab="compositions" />);
     });
 
     expect(screen.getByText('Створити')).toBeInTheDocument();
@@ -284,7 +284,7 @@ describe('WorksPageContent', () => {
         sortValue: sort
       } as unknown as ReturnType<typeof useWorksFiltering>);
 
-      render(<WorksPageContent activeTab="opus" />);
+      render(<WorksPageContent activeTab="op" />);
     });
 
     expect(screen.getAllByTestId('mock-works-table').length).toBeGreaterThan(0);
@@ -368,7 +368,7 @@ describe('WorksPageContent', () => {
       error: null
     } as unknown as ReturnType<typeof usePaginatedWorks>);
 
-    render(<WorksPageContent activeTab="opus" />);
+    render(<WorksPageContent activeTab="op" />);
 
     expect(screen.getByTestId('mock-works-table')).toBeInTheDocument();
   });

@@ -27,14 +27,14 @@ const TEST_IDS = {
 
 const mockSuggestion: OpusCompositionSuggestion = {
   id: 'sugg',
-  title: 'Suggested title',
+  name: 'Suggested title',
   genre: '',
   year: ''
 } as unknown as OpusCompositionSuggestion;
 
 const mockUpdatedComposition: OpusCompositionData = {
   id: 'updated',
-  title: 'Updated title',
+  name: 'Updated title',
   genre: '',
   year: '',
   audios: [],
@@ -140,8 +140,8 @@ jest.mock('~/shared/components/delete-composition-modal/DeleteCompositionModal',
 }));
 
 const defaultWorks: OpusCompositionData[] = [
-  { id: '1', title: 'Симфонія №1', genre: '', year: '', audios: [], notes: [] },
-  { id: '2', title: 'Соната', genre: '', year: '', audios: [], notes: [] }
+  { id: '1', name: 'Симфонія №1', genre: '', year: '', audios: [], notes: [] },
+  { id: '2', name: 'Соната', genre: '', year: '', audios: [], notes: [] }
 ];
 
 describe('GroupWorksSection Component', () => {

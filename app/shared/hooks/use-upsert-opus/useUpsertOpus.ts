@@ -35,7 +35,6 @@ const toCompositionInput = (composition: OpusCompositionData): OpusCompositionIn
     .map((note) => ({ name: note.name.trim(), fileUrl: note.fileUrl, publishDate: note.publishDate }))
 });
 
-
 const fileNameFromUrl = (url?: string | null): string => {
   if (!url) {
     return '';

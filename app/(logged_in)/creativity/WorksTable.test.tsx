@@ -52,7 +52,7 @@ jest.mock('./useWorksTableActions', () => ({
 
 const group: GroupRowData = {
   id: 'group-1',
-  number: '1',
+  number: 1,
   numberKind: 'op',
   name: 'Group title',
   genre: 'Symphony',
@@ -60,12 +60,12 @@ const group: GroupRowData = {
   endDate: '2022',
   status: BaseContentStatuses.Draft,
   updatedAt: '2024-01-01',
-  works: [{ id: 'work-1', title: 'Work 1' }]
+  compositions: [{ id: 'work-1', name: 'Work 1' }]
 };
 
 const individualWork: IndividualWork = {
   id: 'individual-1',
-  title: 'Individual work',
+  name: 'Individual work',
   year: '2023',
   genre: 'Opera',
   status: BaseContentStatuses.Published,
@@ -201,8 +201,8 @@ describe('WorksTable', () => {
 
     if (groupRow && groupRow.type === 'group') {
       expect(groupRow.groupData).toMatchObject({
-        numberLabel: '1',
-        title: 'Group title',
+        numberLabel: 1,
+        name: 'Group title',
         status: BaseContentStatuses.Draft
       });
     } else {
@@ -231,8 +231,8 @@ describe('WorksTable', () => {
     const yearsCol = originalColumns.find((c) => c.id === 'years');
     const sameYearData: GroupHeaderData = {
       ...group,
-      numberLabel: '1',
-      title: '',
+      numberLabel: 1,
+      name: '',
       genre: '',
       startDate: '2020',
       endDate: '2020',
@@ -246,8 +246,8 @@ describe('WorksTable', () => {
     const yearsCol = originalColumns.find((c) => c.id === 'years');
     const diffYearData: GroupHeaderData = {
       ...group,
-      numberLabel: '1',
-      title: '',
+      numberLabel: 1,
+      name: '',
       genre: '',
       startDate: '2020',
       endDate: '2022',
@@ -258,11 +258,11 @@ describe('WorksTable', () => {
   });
 
   it('should format numberLabel with "op" suffix when numberKind is "op"', () => {
-    const groupOp: GroupRowData = { ...group, number: '1', numberKind: 'op' };
+    const groupOp: GroupRowData = { ...group, number: 1, numberKind: 'op' };
     render(<WorksTable activeTab={WORKS_TABS_NAMES.OPUS} items={{ groups: [groupOp] }} />);
 
     const { data } = mockTableLayout.mock.calls[0][0] as { data: WorksTableRowData[] };
     const row = data[0];
-    expect(row.type === 'group' && row.groupData?.numberLabel).toBe('1');
+    expect(row.type === 'group' && row.groupData?.numberLabel).toBe(1);
   });
 });

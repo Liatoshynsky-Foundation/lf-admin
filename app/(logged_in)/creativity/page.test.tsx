@@ -55,7 +55,6 @@ jest.mock('~/shared/components/filtering-toolbar', () => ({
 
 jest.mock('./useWorksFiltering', () => ({
   useWorksFiltering: jest.fn(() => ({
-    requestFilters: {},
     sortValue: 'default',
     selectedFilters: { status: null, language: null },
     toolbarProps: { search: { search: '' }, activeFiltersCount: 0 },
@@ -148,9 +147,9 @@ describe('Creativity page', () => {
 
     expect(screen.getByText('Творчість')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Всі' })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByRole('tab', { name: 'Опуси' })).toHaveAttribute('href', '/creativity/opus');
-    expect(screen.getByRole('tab', { name: 'Безопусні' })).toHaveAttribute('href', '/creativity/woo');
-    expect(screen.getByRole('tab', { name: 'Твори' })).toHaveAttribute('href', '/creativity/works');
+    expect(screen.getByRole('tab', { name: 'Опуси' })).toHaveAttribute('href', '/creativity/op');
+    expect(screen.getByRole('tab', { name: 'Безопусні' })).toHaveAttribute('href', '/creativity/sineop');
+    expect(screen.getByRole('tab', { name: 'Твори' })).toHaveAttribute('href', '/creativity/compositions');
 
     fireEvent.click(screen.getByRole('button', { name: 'Створити' }));
 
@@ -165,7 +164,7 @@ describe('Creativity page', () => {
         groups: [
           {
             id: '1',
-            number: '1',
+            number: 1,
             numberKind: 'op',
             name: 'Перший струнний квартет',
             genre: 'Струнний квартет',
@@ -173,7 +172,7 @@ describe('Creativity page', () => {
             endDate: undefined,
             status: BaseContentStatuses.Published,
             updatedAt: '2024-01-01',
-            works: [{ id: '2', title: '№1 «Після бою»' }]
+            compositions: [{ id: '2', name: '№1 «Після бою»' }]
           }
         ],
         works: []
@@ -201,7 +200,7 @@ describe('Creativity page', () => {
 
     fireEvent.click(within(dropdownMenu).getByText('Поширити'));
 
-    const accordionToggle = screen.getByRole('button', { name: /^1/ });
+    const accordionToggle = screen.getByRole('button', { name: /op\. 1.*Перший струнний квартет/i });
     fireEvent.click(accordionToggle);
 
     const workButton = screen.getAllByRole('button', { name: new RegExp(MOCK_WORK_LABEL, 'i') })[0];

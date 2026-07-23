@@ -125,7 +125,7 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
   const findByNumber = async (number: number): Promise<Opus | null> => {
     await dbConnect();
 
-    if (!number) {
+    if (number === undefined || number === null) {
       return null;
     }
 
@@ -133,43 +133,50 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
     return doc ? toEntity(doc) : null;
   };
 
-  const moveCompositionsToCompositionsOpus = async (compositionIds: string[]): Promise<void> => {
+  const getOrCreateCompositionsOpus = async (): Promise<{ _id: string }> => {
+    return OpusModel.findOneAndUpdate(
+      { numberKind: 'compositions' },
+      {
+        $setOnInsert: {
+          numberKind: 'compositions',
+          number: 0,
+          name: { uk: 'Без номера', en: 'Without number' },
+          title: { uk: 'Без номера', en: 'Without number' },
+          adminTitle: 'Без номера',
+          compositions: []
+        }
+      },
+      { upsert: true, new: true }
+    ).lean<{ _id: string }>();
+  };
+  
+  const moveCompositionsToCompositionsOpus = async (
+    compositionIds: string[],
+  ): Promise<void> => {
     if (compositionIds.length === 0) {
       return;
     }
-
-    const looseOpus = await OpusModel.findOne({ numberKind: 'compositions' }).lean<{ _id: string }>();
-    if (!looseOpus) {
-      await new OpusModel({
-        numberKind: 'compositions',
-        number: 0,
-        name: { uk: 'Без номера', en: 'Without number' },
-        title: { uk: 'Без номера', en: 'Without number' },
-        adminTitle: 'Без номера',
-        compositions: compositionIds
-      }).save();
-      return;
-    }
-
+    const compOpus = await getOrCreateCompositionsOpus();
     await OpusModel.updateOne(
-      { _id: looseOpus._id },
-      { $addToSet: { compositions: { $each: compositionIds } } }
+      { _id: compOpus._id },
+      { $addToSet: { compositions: { $each: compositionIds } } },
     );
   };
 
-  const removeCompositionsFromCompositionsOpus = async (compositionIds: string[]): Promise<void> => {
+  const removeCompositionsFromCompositionsOpus = async (
+    compositionIds: string[],
+  ): Promise<void> => {
     if (compositionIds.length === 0) {
       return;
     }
-
-    const looseOpus = await OpusModel.findOne({ numberKind: 'compositions' }).lean<{ _id: string }>();
-    if (!looseOpus) {
+    const compOpus = await OpusModel.findOne({ numberKind: 'compositions' })
+      .lean<{ _id: string }>();
+    if (!compOpus) {
       return;
     }
-
     await OpusModel.updateOne(
-      { _id: looseOpus._id },
-      { $pull: { compositions: { $in: compositionIds } } }
+      { _id: compOpus._id },
+      { $pull: { compositions: { $in: compositionIds } } },
     );
   };
 

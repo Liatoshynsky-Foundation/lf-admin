@@ -39,7 +39,7 @@ jest.mock('~/shared/hooks/use-opuses/useOpuses', () => ({
 jest.mock('~/types/graphql/generated/graphql', () => ({
   useUpdateOpusMutation: jest.fn(),
   useDeleteOpusMutation: jest.fn(),
-  OpusNumberKind: { Op: 'op', Woo: 'woo' },
+  OpusNumberKind: { Op: 'op', Sineop: 'sineop' },
   OpusStatus: { Draft: 'draft', Published: 'published' }
 }));
 
@@ -127,8 +127,8 @@ describe('useGroupContent Hook', () => {
         });
         expect(result.current.groupData?.description.en).toEqual({ type: 'doc', content: [] });
 
-        expect(result.current.groupData?.works[0].audios[0].name).toBe('track.mp3');
-        expect(result.current.groupData?.works[0].notes[0].name).toBe('');
+        expect(result.current.groupData?.compositions[0].audios[0].name).toBe('track.mp3');
+        expect(result.current.groupData?.compositions[0].notes[0].name).toBe('');
       });
     });
     it('should initialize with loading state when data is being fetched', () => {
@@ -159,13 +159,13 @@ describe('useGroupContent Hook', () => {
       });
     });
 
-    it('should correctly parse invalid JSON description, map "woo" prefix, and strip "op." from number', async () => {
+    it('should correctly parse invalid JSON description, map "sineop" prefix, and strip "op." from number', async () => {
       (useOpusById as jest.Mock).mockReturnValue({
         data: {
           opusById: {
             ...mockFetchedOpus,
-            numberKind: 'woo',
-            number: 'op. 15',
+            numberKind: 'sineop',
+            number: 15,
             introDescription: { uk: 'Plain text description', en: null },
             gallery: null,
             compositions: null
@@ -185,7 +185,7 @@ describe('useGroupContent Hook', () => {
         });
         expect(result.current.groupData?.description.en).toEqual({ type: 'doc', content: [] });
         expect(result.current.groupData?.photos).toEqual([]);
-        expect(result.current.groupData?.works).toEqual([]);
+        expect(result.current.groupData?.compositions).toEqual([]);
       });
     });
 
@@ -273,8 +273,8 @@ describe('useGroupContent Hook', () => {
       const { result } = renderHook(() => useGroupContent('test-id'));
 
       await waitFor(() => {
-        expect(result.current.groupData?.works).toBeDefined();
-        expect(result.current.groupData?.works[0].compositionId).toBe('comp-1');
+        expect(result.current.groupData?.compositions).toBeDefined();
+        expect(result.current.groupData?.compositions[0].id).toBe('comp-1');
       });
     });
 
@@ -295,8 +295,8 @@ describe('useGroupContent Hook', () => {
       const { result } = renderHook(() => useGroupContent('test-id'));
 
       await waitFor(() => {
-        expect(result.current.groupData?.works).toBeDefined();
-        expect(result.current.groupData?.works[0].audios[0].fileUrl).toBeUndefined();
+        expect(result.current.groupData?.compositions).toBeDefined();
+        expect(result.current.groupData?.compositions[0].audios[0].fileUrl).toBeUndefined();
       });
     });
 
@@ -769,10 +769,10 @@ describe('useGroupContent Hook', () => {
       act(() => {
         result.current.handleFieldChange('titlePrefix' as any, 'Bo.');
 
-        result.current.handleFieldChange('works', [
+        result.current.handleFieldChange('compositions', [
           {
-            compositionId: 'c1',
-            title: 'Test',
+            id: 'c1',
+            name: 'Test',
             genre: '',
             year: '',
             audios: null,
@@ -787,7 +787,7 @@ describe('useGroupContent Hook', () => {
         await result.current.handlePublishClick();
       });
       const calledInput = mockUpdateOpus.mock.calls[0][0].variables.input;
-      expect(calledInput.numberKind).toBe('woo');
+      expect(calledInput.numberKind).toBe('sineop');
       expect(calledInput.genre).toBe('');
       expect(calledInput.additionalText).toBe('');
       expect(calledInput.gallery).toEqual([]);
@@ -887,7 +887,7 @@ describe('useGroupContent Hook', () => {
       act(() => {
         result.current.handleFieldChange('parts', { uk: '', en: '' });
         result.current.handleFieldChange('description', { uk: null, en: null });
-        result.current.handleFieldChange('works', null);
+        result.current.handleFieldChange('compositions', null);
         result.current.handleFieldChange('performances', null);
         result.current.handleFieldChange('performancesTitle', '');
         result.current.handleFieldChange('groupTitle', { uk: 'Valid UK Title', en: '' });

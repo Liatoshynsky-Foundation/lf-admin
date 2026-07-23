@@ -65,36 +65,26 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
       getBaseSort(filters, COMPOSITION_SORT_FIELD_MAP)
   });
 
-  // піднято вище, бо використовується в searchByTitle
   const toValidObjectIds = (ids: string[]) =>
     ids.filter((id) => mongoose.Types.ObjectId.isValid(id)).map((id) => new mongoose.Types.ObjectId(id));
 
 
   const syncForOpus = async (inputs: CompositionInput[]): Promise<Composition[]> => {
     await dbConnect();
-
-    const results: Composition[] = [];
-
-    for (let index = 0; index < inputs.length; index += 1) {
-      const { id, ...fields } = inputs[index];
-
-      if (id && mongoose.Types.ObjectId.isValid(id)) {
-        const updated = await CompositionModel.findByIdAndUpdate(
-          id,
-          { ...fields, order: index },
-          { new: true }
-        ).lean<DbComposition>();
-
-        if (updated) {
-          results.push(toEntity(updated));
+    const results = await Promise.all(
+      inputs.map(async (input, index) => {
+        const { id, ...fields } = input;
+        if (id && mongoose.Types.ObjectId.isValid(id)) {
+          const updated = await CompositionModel.findByIdAndUpdate(
+            id, { ...fields, order: index }, { new: true }
+          ).lean<DbComposition>();
+          return updated ? toEntity(updated) : null;
         }
-      } else {
         const created = await new CompositionModel({ ...fields, order: index }).save();
-        results.push(toEntity(created.toObject() as unknown as DbComposition));
-      }
-    }
-
-    return results;
+        return toEntity(created.toObject() as unknown as DbComposition);
+      })
+    );
+    return results.filter((r): r is Composition => r !== null);
   };
 
   const searchByTitle = async (search: string, ids?: string[]): Promise<Composition[]> => {

@@ -1,218 +1,159 @@
+import { WorksFilter } from '../opusQuery';
 import { handleGroup } from './handleGroup';
-import { Opus } from '~/domain/entities/Opus';
-import type { ICompositionRepository } from '~/domain/repositories/compositionRepository';
-import type { IOpusRepository } from '~/domain/repositories/opusRepository';
-import { Composition, OpusNumberKind, WorksTab } from '~/types/graphql/generated/graphql';
+import { attachCompositionsToGroups, mappedGroups, totalPages } from './tabHandlersHelpers';
+import { ICompositionRepository } from '~/src/domain/repositories/compositionRepository';
+import { IOpusRepository } from '~/src/domain/repositories/opusRepository';
+import { WorksTab } from '~/types/graphql/generated/graphql';
 
-interface MockCompositionRepository extends ICompositionRepository {
-  findByOpusIds: jest.Mock;
-}
+jest.mock('./tabHandlersHelpers', () => ({
+  mappedGroups: jest.fn(),
+  attachCompositionsToGroups: jest.fn(),
+  totalPages: jest.fn((total: number, pageSize: number) => Math.ceil(total / pageSize)),
+}));
 
-const mockRepo: jest.Mocked<Partial<IOpusRepository>> = {
-  findById: jest.fn(),
-  findByNumber: jest.fn(),
-  findAll: jest.fn(),
-  findPaginated: jest.fn(),
-  count: jest.fn()
-};
-
-const mockCompositionsRepo: jest.Mocked<Partial<MockCompositionRepository>> = {
-  findByOpusId: jest.fn(),
-  findByOpusIds: jest.fn(),
-  syncForOpus: jest.fn(),
-  deleteByOpusId: jest.fn(),
-  searchByTitle: jest.fn()
-};
+type MappedGroupsResult = Awaited<ReturnType<typeof mappedGroups>>;
+type AttachResult = Awaited<ReturnType<typeof attachCompositionsToGroups>>;
 
 describe('handleGroup', () => {
+  const MOCK_GROUPS = [{ id: '1', number: 'op.1' }, { id: '2', number: 'op.2' }];
+  const MOCK_ATTACHED_GROUPS = [
+    { id: '1', number: 'op.1', compositions: [{ id: 'c1' }] },
+    { id: '2', number: 'op.2', compositions: [] },
+  ];
+  const MOCK_FILTERS: WorksFilter = { search: 'test' };
+  const DEFAULT_PAGE = 1;
+  const DEFAULT_PAGE_SIZE = 10;
+  const TOTAL_ITEMS = 2;
+
+  const mockMappedGroups = mappedGroups as jest.MockedFunction<typeof mappedGroups>;
+  const mockAttachCompositionsToGroups = attachCompositionsToGroups as jest.MockedFunction<
+    typeof attachCompositionsToGroups
+  >;
+  const mockTotalPages = totalPages as jest.MockedFunction<typeof totalPages>;
+
+  const repoMock = {} as jest.Mocked<IOpusRepository>;
+  const compositionsRepoMock = {} as jest.Mocked<ICompositionRepository>;
+
   beforeEach(() => {
     jest.clearAllMocks();
+
+    mockMappedGroups.mockResolvedValue({
+      groups: MOCK_GROUPS,
+      total: TOTAL_ITEMS,
+    } as unknown as MappedGroupsResult);
+
+    mockAttachCompositionsToGroups.mockResolvedValue(
+      MOCK_ATTACHED_GROUPS as unknown as AttachResult
+    );
   });
 
   it('should return opus groups with compositions', async () => {
-    const groups = [
-      { id: '1', number: 'op.1' },
-      { id: '2', number: 'op.2' },
-    ] as Opus[];
-
-    const compositions = [
-      { id: 'c1', opusId: '1' },
-      { id: 'c2', opusId: '1' },
-      { id: 'c3', opusId: '2' },
-    ] as Composition[];
-
-    (mockRepo.count as jest.Mock).mockResolvedValue(2);
-    (mockRepo.findAll as jest.Mock).mockResolvedValue(groups);
-    (mockCompositionsRepo.findByOpusIds as jest.Mock).mockResolvedValue(compositions);
-
     const result = await handleGroup(
-      WorksTab.Opus,
-      mockRepo as IOpusRepository,
+      WorksTab.Op,
+      repoMock,
+      compositionsRepoMock,
       undefined,
-      1,
-      mockCompositionsRepo as unknown as ICompositionRepository,
-      10
+      DEFAULT_PAGE,
+      DEFAULT_PAGE_SIZE
     );
 
-    expect(mockRepo.count).toHaveBeenCalledWith({
-      numberKind: OpusNumberKind.Op,
-    });
-
-    expect(mockRepo.findAll).toHaveBeenCalledWith({
-      numberKind: OpusNumberKind.Op,
-    });
-
-    expect(mockCompositionsRepo.findByOpusIds).toHaveBeenCalledWith(['1', '2']);
+    expect(mockMappedGroups).toHaveBeenCalledWith(repoMock, WorksTab.Op, undefined);
+    expect(mockAttachCompositionsToGroups).toHaveBeenCalledWith(
+      MOCK_GROUPS,
+      compositionsRepoMock
+    );
+    expect(mockTotalPages).toHaveBeenCalledWith(TOTAL_ITEMS, DEFAULT_PAGE_SIZE);
 
     expect(result).toEqual({
-      groups: [
-        {
-          id: '1',
-          number: 'op.1',
-          compositions: [
-            { id: 'c1', opusId: '1' },
-            { id: 'c2', opusId: '1' },
-          ],
-        },
-        {
-          id: '2',
-          number: 'op.2',
-          compositions: [{ id: 'c3', opusId: '2' }],
-        },
-      ],
+      groups: MOCK_ATTACHED_GROUPS,
       works: [],
-      total: 2,
-      page: 1,
+      total: TOTAL_ITEMS,
+      page: DEFAULT_PAGE,
       totalPages: 1,
     });
   });
 
-  it('should use Woo number kind', async () => {
-    (mockRepo.count as jest.Mock).mockResolvedValue(0);
-    (mockRepo.findAll as jest.Mock).mockResolvedValue([]);
-    (mockCompositionsRepo.findByOpusIds as jest.Mock).mockResolvedValue([]);
-
-    await handleGroup(
-      WorksTab.Woo,
-      mockRepo as IOpusRepository,
-      undefined,
-      1,
-      mockCompositionsRepo as unknown as ICompositionRepository,
-      10
-    );
-
-    expect(mockRepo.count).toHaveBeenCalledWith({
-      numberKind: OpusNumberKind.Woo,
-    });
-  });
-
-  it('should return empty groups', async () => {
-    (mockRepo.count as jest.Mock).mockResolvedValue(0);
-    (mockRepo.findAll as jest.Mock).mockResolvedValue([]);
-    (mockCompositionsRepo.findByOpusIds as jest.Mock).mockResolvedValue([]);
+  it('should process Sineop tab correctly', async () => {
+    mockMappedGroups.mockResolvedValue({
+      groups: [],
+      total: 0,
+    } as unknown as MappedGroupsResult);
+    mockAttachCompositionsToGroups.mockResolvedValue([] as unknown as AttachResult);
 
     const result = await handleGroup(
-      WorksTab.Opus,
-      mockRepo as IOpusRepository,
+      WorksTab.Sineop,
+      repoMock,
+      compositionsRepoMock,
       undefined,
-      1,
-      mockCompositionsRepo as unknown as ICompositionRepository,
-      10
+      DEFAULT_PAGE,
+      DEFAULT_PAGE_SIZE
+    );
+
+    expect(mockMappedGroups).toHaveBeenCalledWith(repoMock, WorksTab.Sineop, undefined);
+    expect(result.groups).toEqual([]);
+    expect(result.total).toBe(0);
+  });
+
+  it('should return empty groups when mappedGroups returns no items', async () => {
+    mockMappedGroups.mockResolvedValue({
+      groups: [],
+      total: 0,
+    } as unknown as MappedGroupsResult);
+    mockAttachCompositionsToGroups.mockResolvedValue([] as unknown as AttachResult);
+
+    const result = await handleGroup(
+      WorksTab.Op,
+      repoMock,
+      compositionsRepoMock,
+      undefined,
+      DEFAULT_PAGE,
+      DEFAULT_PAGE_SIZE
     );
 
     expect(result).toEqual({
       groups: [],
       works: [],
       total: 0,
-      page: 1,
+      page: DEFAULT_PAGE,
       totalPages: 0,
     });
   });
 
-  it('should calculate totalPages', async () => {
-    (mockRepo.count as jest.Mock).mockResolvedValue(21);
-    (mockRepo.findAll as jest.Mock).mockResolvedValue([]);
-    (mockCompositionsRepo.findByOpusIds as jest.Mock).mockResolvedValue([]);
+  it('should calculate totalPages accurately for pagination', async () => {
+    const page = 3;
+    const pageSize = 10;
+    const total = 21;
+
+    mockMappedGroups.mockResolvedValue({
+      groups: [],
+      total,
+    } as unknown as MappedGroupsResult);
+    mockAttachCompositionsToGroups.mockResolvedValue([] as unknown as AttachResult);
 
     const result = await handleGroup(
-      WorksTab.Opus,
-      mockRepo as IOpusRepository,
+      WorksTab.Op,
+      repoMock,
+      compositionsRepoMock,
       undefined,
-      3,
-      mockCompositionsRepo as unknown as ICompositionRepository,
-      10
+      page,
+      pageSize
     );
 
-    expect(result.page).toBe(3);
+    expect(mockTotalPages).toHaveBeenCalledWith(total, pageSize);
+    expect(result.page).toBe(page);
     expect(result.totalPages).toBe(3);
   });
 
-  it('should pass filters to repositories', async () => {
-    (mockRepo.count as jest.Mock).mockResolvedValue(0);
-    (mockRepo.findAll as jest.Mock).mockResolvedValue([]);
-    (mockCompositionsRepo.findByOpusIds as jest.Mock).mockResolvedValue([]);
-
-    const filters = {
-      search: 'test',
-      statuses: ['draft'],
-    };
-
+  it('should pass filters to mappedGroups helper', async () => {
     await handleGroup(
-      WorksTab.Opus,
-      mockRepo as IOpusRepository,
-      filters,
-      1,
-      mockCompositionsRepo as unknown as ICompositionRepository,
-      10
+      WorksTab.Op,
+      repoMock,
+      compositionsRepoMock,
+      MOCK_FILTERS,
+      DEFAULT_PAGE,
+      DEFAULT_PAGE_SIZE
     );
 
-    expect(mockRepo.count).toHaveBeenCalledWith({
-      search: 'test',
-      statuses: ['draft'],
-      numberKind: OpusNumberKind.Op,
-    });
-
-    expect(mockRepo.findAll).toHaveBeenCalledWith({
-      search: 'test',
-      statuses: ['draft'],
-      numberKind: OpusNumberKind.Op,
-    });
-  });
-
-  it('should assign empty compositions array when group has no compositions', async () => {
-    const groups = [
-      { id: '1', number: 'op.1' },
-      { id: '2', number: 'op.2' },
-    ] as Opus[];
-
-    const compositions = [
-      { id: 'c1', opusId: '1' },
-    ] as Composition[];
-
-    (mockRepo.count as jest.Mock).mockResolvedValue(2);
-    (mockRepo.findAll as jest.Mock).mockResolvedValue(groups);
-    (mockCompositionsRepo.findByOpusIds as jest.Mock).mockResolvedValue(compositions);
-
-    const result = await handleGroup(
-      WorksTab.Opus,
-    mockRepo as IOpusRepository,
-    undefined,
-    1,
-    mockCompositionsRepo as unknown as ICompositionRepository,
-    10
-    );
-
-    expect(result.groups).toEqual([
-      {
-        id: '1',
-        number: 'op.1',
-        compositions: [{ id: 'c1', opusId: '1' }],
-      },
-      {
-        id: '2',
-        number: 'op.2',
-        compositions: [],
-      },
-    ]);
+    expect(mockMappedGroups).toHaveBeenCalledWith(repoMock, WorksTab.Op, MOCK_FILTERS);
   });
 });
