@@ -19,6 +19,7 @@ type GroupPerformancesSectionProps = {
   currentLanguage: EditorLanguage;
   sectionTitle: string;
   performances: GroupPerformance[];
+  errors?: Record<string, string>;
   onChangeSectionTitle: (title: string) => void;
   onChangePerformances: (performances: GroupPerformance[]) => void;
 };
@@ -61,10 +62,13 @@ const renderLinkPreview = (url: string) => {
   );
 };
 
+const MAX_PERFORMANCES = 5;
+
 export const GroupPerformancesSection = ({
   currentLanguage,
   sectionTitle,
   performances,
+  errors,
   onChangeSectionTitle,
   onChangePerformances
 }: GroupPerformancesSectionProps) => {
@@ -79,6 +83,8 @@ export const GroupPerformancesSection = ({
   }, [performances]);
 
   const handleAddPerformance = () => {
+    if (preparedPerformances.length >= MAX_PERFORMANCES) return;
+
     const newPerformance: NormalizedGroupPerformance = {
       id: generateUniqueId(),
       url: '',
@@ -100,18 +106,27 @@ export const GroupPerformancesSection = ({
 
   const handleUpdateCaption = (idToUpdate: string, value: string) => {
     onChangePerformances(
-      preparedPerformances.map((item) =>
-        item.id === idToUpdate
-          ? {
-            ...item,
-            caption: {
-              uk: item.caption?.uk || '',
-              en: item.caption?.en || '',
-              [langKey]: value
-            }
-          }
-          : item
-      )
+      preparedPerformances.map((item) => {
+        if (item.id !== idToUpdate) return item;
+
+        const currentUk = item.caption?.uk || '';
+        const currentEn = item.caption?.en || '';
+
+        const newCaption = {
+          uk: currentUk,
+          en: currentEn,
+          [langKey]: value
+        };
+
+        if (langKey === 'uk' && (!currentEn || currentEn === currentUk)) {
+          newCaption.en = value;
+        }
+
+        return {
+          ...item,
+          caption: newCaption
+        };
+      })
     );
   };
 
@@ -147,6 +162,8 @@ export const GroupPerformancesSection = ({
                   <PerformanceRow
                     item={item}
                     langKey={langKey}
+                    urlError={errors?.[`performances[${item.id}].url`]}
+                    captionError={errors?.[`performances[${item.id}].caption.${langKey}`]}
                     renderLinkPreview={renderLinkPreview}
                     onUpdateUrl={handleUpdateUrl}
                     onUpdateCaption={handleUpdateCaption}
@@ -165,6 +182,7 @@ export const GroupPerformancesSection = ({
             startIcon={<PlusIcon />}
             onClick={handleAddPerformance}
             sx={styles.addBtn}
+            disabled={preparedPerformances.length >= MAX_PERFORMANCES}
           >
             Додати пункт
           </Button>

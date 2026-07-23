@@ -102,6 +102,7 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
           <GroupPhotosSection
             currentLanguage={currentLanguage}
             photos={groupData.photos}
+            errors={errors}
             onChange={(newPhotos) => handleFieldChange('photos', newPhotos)}
           />
         </CollapsibleBlock>
@@ -115,6 +116,7 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
             currentLanguage={currentLanguage}
             sectionTitle={groupData.performancesTitle}
             performances={groupData.performances}
+            errors={errors}
             onChangeSectionTitle={(newTitle) => handleFieldChange('performancesTitle', newTitle)}
             onChangePerformances={(newPerformances) => handleFieldChange('performances', newPerformances)}
           />

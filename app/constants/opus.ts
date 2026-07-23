@@ -44,7 +44,11 @@ export const OPUS_VALIDATION_MESSAGES = {
   numberInvalid: 'Номер має бути цілим позитивним числом.',
   nameRequired: 'Введіть назву групи.',
   nameTooShort: 'Введіть щонайменше 2 символи.',
-  creationYearRequired: 'Вкажіть рік складання.'
+  creationYearRequired: 'Вкажіть рік складання.',
+  photoAltText: 'Введіть Alt текст зображення',
+  photoTextTooShort: 'Введіть щонайменше 2 символи.',
+  performanceUrl: 'Вкажіть URL.',
+  performanceSignature: 'Введіть підпис.'
 } as const;
 
 export const COMPOSITION_MODAL_LABELS = {

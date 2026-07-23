@@ -28,6 +28,9 @@ interface ImagePreviewBlockProps extends StackProps {
   stackSpacing?: string;
   typographySpacing?: string;
   showAlternativeText?: boolean;
+  altTextError?: string;
+  altTextErrorState?: boolean;
+  onBlurAltText?: () => void;
   disabled?: boolean;
   locale?: 'uk' | 'en';
   aspectRatio?: number;
@@ -47,6 +50,9 @@ export const ImagePreviewBlock = ({
   showAlternativeText = false,
   altText,
   onChangeAltText,
+  altTextError,
+  altTextErrorState,
+  onBlurAltText,
   disabled = false,
   locale = 'uk',
   aspectRatio
@@ -168,11 +174,15 @@ export const ImagePreviewBlock = ({
               label="Alt текст зображення"
               value={altText || ''}
               onChange={(e) => onChangeAltText?.(e.target.value)}
+              onBlur={onBlurAltText}
               fullWidth
               margin="none"
               multiline
               maxRows={4}
               disabled={!previewImage}
+              error={altTextErrorState}
+              helperText={altTextError}
+              inputProps={{ maxLength: 250 }}
             />
           )}
 
