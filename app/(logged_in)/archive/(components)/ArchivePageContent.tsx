@@ -22,7 +22,6 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
         action={<ArchiveCreateAction />}
       />
       <SearchStatusToolbar dataTestId='archive-control-panel' searchProps={searchProps} statusFilterProps={statusFilterProps} />
-      {/* <ArchiveCaseModal isOpen setIsOpen={() => {}} /> */}
     </Box >
   );
 };

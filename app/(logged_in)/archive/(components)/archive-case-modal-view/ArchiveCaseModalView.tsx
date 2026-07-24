@@ -1,6 +1,5 @@
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Stack, TextField, Typography } from '@mui/material';
 import { X } from 'lucide-react';
-import React from 'react';
 
 import { styles } from './ArchiveCaseModalView.styles';
 import { ARCHIVE_CASE_MODAL_LABELS, PdfEntry } from '~/constants/archive';
