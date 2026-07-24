@@ -27,7 +27,7 @@ export const styles: Record<string, SxProps<Theme>> = {
     p: 0
   },
   dialogContent: {
-    p: '24px 0 0 0',
+    p: '24px 0 84px 0',
     '&::-webkit-scrollbar': {
       display: 'none'
     },
@@ -36,7 +36,7 @@ export const styles: Record<string, SxProps<Theme>> = {
     scrollbarWidth: 'none'
   },
   contentContainer: {
-    p: '24px 0'
+    pt: '24px'
   },
   shortTextField: {
     width: '154px'
@@ -46,13 +46,11 @@ export const styles: Record<string, SxProps<Theme>> = {
   },
   dialogActions: {
     width: '100%',
-    p: '0px',
-    pb: '20px',
-    px: '20px',
+    p: '24px',
     position: 'absolute',
     bottom: 0,
     left: 0,
-    backgroundColor: 'rebeccapurple'
+    backgroundColor: 'white'
   },
   cancelButton: {
     textTransform: 'none',
@@ -64,6 +62,7 @@ export const styles: Record<string, SxProps<Theme>> = {
   },
   multilineTextField: {
     '& .MuiInputBase-root': {
+      height: 'auto',
       p: '12px 16px'
     }
   }

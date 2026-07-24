@@ -31,6 +31,7 @@ export interface ArchiveCaseModalViewProps {
   handleSave: () => void;
   handleCancel: () => void;
   isSubmitDisabled: boolean;
+  isCancelDisabled: boolean;
 }
 
 export const ArchiveCaseModalView = ({
@@ -56,6 +57,7 @@ export const ArchiveCaseModalView = ({
   handleSave,
   handleCancel,
   isSubmitDisabled,
+  isCancelDisabled
 }: ArchiveCaseModalViewProps) => {
   return (
     <Dialog disableScrollLock open={isOpen} sx={styles.dialog} onClose={onClose} fullWidth>
@@ -101,14 +103,14 @@ export const ArchiveCaseModalView = ({
             />
             <TextField
               sx={styles.shortTextField}
-              label={ARCHIVE_CASE_MODAL_LABELS.caseDates}
+              label={ARCHIVE_CASE_MODAL_LABELS.caseDate}
               value={caseDate}
               onChange={(e) => setCaseDate(e.target.value)}
               required
             />
           </Stack>
           <TextField
-            label={ARCHIVE_CASE_MODAL_LABELS.documentsComposition}
+            label={ARCHIVE_CASE_MODAL_LABELS.caseDescriptions}
             value={caseDescriptions}
             onChange={(e) => setCaseDescriptions(e.target.value)}
             required
@@ -136,11 +138,11 @@ export const ArchiveCaseModalView = ({
           </Box>
 
           <Stack spacing={3}>
-            <LabelRow title={ARCHIVE_CASE_MODAL_LABELS.detailedDescription} />
+            <LabelRow title={ARCHIVE_CASE_MODAL_LABELS.detailedCaseDescription} />
             <TextField
               multiline
-              label={ARCHIVE_CASE_MODAL_LABELS.documents}
-              rows={3}
+              label={ARCHIVE_CASE_MODAL_LABELS.caseDocuments}
+              rows={7}
               value={detailedCaseDescription}
               onChange={(e) => setDetailedCaseDescription(e.target.value)}
               fullWidth
@@ -151,7 +153,7 @@ export const ArchiveCaseModalView = ({
       </DialogContent>
 
       <DialogActions sx={styles.dialogActions}>
-        <Button variant="outlined" sx={styles.cancelButton} onClick={handleCancel} disabled={isSubmitDisabled}>
+        <Button variant="outlined" sx={styles.cancelButton} onClick={handleCancel} disabled={isCancelDisabled}>
           {ARCHIVE_CASE_MODAL_LABELS.cancel}
         </Button>
         <Button

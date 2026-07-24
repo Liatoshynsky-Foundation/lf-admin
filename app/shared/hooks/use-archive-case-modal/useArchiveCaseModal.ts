@@ -23,6 +23,8 @@ export const useArchiveCaseModal = ({ setIsOpen }: UseArchiveCaseModalProps) => 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
   const isDirty = Boolean(descriptionNumber.trim() || caseNumber.trim() || sheetsNumber.trim() || caseDate.trim() || currentPdfFile.fileName || detailedCaseDescription.trim() || caseName.trim() || caseDescriptions.trim());
+  
+  const isFormValid = Boolean(descriptionNumber.trim() && caseNumber.trim() && caseName.trim() && sheetsNumber.trim() && caseDate.trim() && caseDescriptions.trim());
 
   const clearInputs = () => {
     setDescriptionNumber('');
@@ -102,7 +104,8 @@ export const useArchiveCaseModal = ({ setIsOpen }: UseArchiveCaseModalProps) => 
     isAllowedPdfFile,
     handleApplyPdf,
     handleDeletePdf,
-    isSubmitDisabled: !isDirty,
+    isSubmitDisabled: !isFormValid,
+    isCancelDisabled: !isDirty,
     handleSubmit,
     handleSave,
     handleCancel,

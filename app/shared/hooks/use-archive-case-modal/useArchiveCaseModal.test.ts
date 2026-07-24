@@ -20,37 +20,40 @@ describe('useArchiveCaseModal', () => {
     it('should initialize all state values with their defaults', () => {
       const { result } = renderHook(() => useArchiveCaseModal(defaultProps));
 
-      expect(result.current).toEqual(
-        expect.objectContaining({
-          descriptionNumber: '',
-          setDescriptionNumber: expect.any(Function),
-          caseNumber: '',
-          setCaseNumber: expect.any(Function),
-          sheetsNumber: '',
-          setSheetsNumber: expect.any(Function),
-          caseDate: '',
-          setCaseDate: expect.any(Function),
-          currentPdfFile: INITIAL_PDF_ENTRY,
-          setCurrentPdfFile: expect.any(Function),
-          detailedCaseDescription: '',
-          setDetailedCaseDescription: expect.any(Function),
-          caseName: '',
-          setCaseName: expect.any(Function),
-          caseDescriptions: '',
-          setCaseDescriptions: expect.any(Function),
-          isUploadModalOpen: false,
-          setIsUploadModalOpen: expect.any(Function),
-          handleOpenUploadFlow: expect.any(Function),
-          handleCloseUploadFlow: expect.any(Function),
-          isAllowedPdfFile: expect.any(Function),
-          handleApplyPdf: expect.any(Function),
-          handleDeletePdf: expect.any(Function),
-          handleSubmit: expect.any(Function),
-          handleSave: expect.any(Function),
-          handleCancel: expect.any(Function),
-          clearInputs: expect.any(Function),
-        })
-      );
+      expect(result.current).toEqual({
+        caseDate: '',
+        caseDescriptions: '',
+        caseName: '',
+        caseNumber: '',
+        descriptionNumber: '',
+        detailedCaseDescription: '',
+        sheetsNumber: '',
+        isUploadModalOpen: false,
+        currentPdfFile: INITIAL_PDF_ENTRY,
+
+        isSubmitDisabled: true, 
+        isCancelDisabled: true, 
+
+        clearInputs: expect.any(Function),
+        handleApplyPdf: expect.any(Function),
+        handleCancel: expect.any(Function),
+        handleCloseUploadFlow: expect.any(Function),
+        handleDeletePdf: expect.any(Function),
+        handleOpenUploadFlow: expect.any(Function),
+        handleSave: expect.any(Function),
+        handleSubmit: expect.any(Function),
+        isAllowedPdfFile: expect.any(Function),
+
+        setCaseDate: expect.any(Function),
+        setCaseDescriptions: expect.any(Function),
+        setCaseName: expect.any(Function),
+        setCaseNumber: expect.any(Function),
+        setCurrentPdfFile: expect.any(Function),
+        setDescriptionNumber: expect.any(Function),
+        setDetailedCaseDescription: expect.any(Function),
+        setIsUploadModalOpen: expect.any(Function),
+        setSheetsNumber: expect.any(Function),
+      });
     });
   });
 
@@ -196,6 +199,49 @@ describe('useArchiveCaseModal', () => {
 
       expect(result.current.caseNumber).toBe('');
       expect(mockSetIsOpen).toHaveBeenCalledWith(false);
+    });
+  });
+
+  describe('disabled actions', () => {
+    it('should return isSubmitDisabled true if at least one required field is empty', () => {
+      const { result } = renderHook(() => useArchiveCaseModal(defaultProps));
+
+      act(() => {
+        result.current.setCaseNumber('123');
+      });
+
+      expect(result.current.isSubmitDisabled).toBe(true);
+    });
+
+    it('should return isSubmitDisabled false if all required fields have values', () => {
+      const { result } = renderHook(() => useArchiveCaseModal(defaultProps));
+
+      act(() => {
+        result.current.setDescriptionNumber('10');
+        result.current.setCaseNumber('123');
+        result.current.setCaseName('Case Title');
+        result.current.setSheetsNumber('5');
+        result.current.setCaseDate('2026-07-24');
+        result.current.setCaseDescriptions('Descriptions');
+      });
+
+      expect(result.current.isSubmitDisabled).toBe(false);
+    });
+
+    it('should return isCancelButtonDisabled true if no field has a value', () => {
+      const { result } = renderHook(() => useArchiveCaseModal(defaultProps));
+
+      expect(result.current.isCancelDisabled).toBe(true);
+    });
+
+    it('should return isCancelButtonDisabled false if at least one field has a value', () => {
+      const { result } = renderHook(() => useArchiveCaseModal(defaultProps));
+
+      act(() => {
+        result.current.setCaseNumber('123');
+      });
+
+      expect(result.current.isCancelDisabled).toBe(false);
     });
   });
 });

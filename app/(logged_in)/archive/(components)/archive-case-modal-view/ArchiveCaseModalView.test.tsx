@@ -88,6 +88,7 @@ const defaultProps: ArchiveCaseModalViewProps = {
   handleSave: mockHandleSave,
   handleCancel: mockHandleCancel,
   isSubmitDisabled: true,
+  isCancelDisabled: true
 };
 
 describe('ArchiveCaseModalView', () => {
@@ -103,15 +104,15 @@ describe('ArchiveCaseModalView', () => {
     expect(screen.getByRole('textbox', { name: ARCHIVE_CASE_MODAL_LABELS.caseNumber })).toHaveValue('');
     expect(screen.getByRole('textbox', { name: ARCHIVE_CASE_MODAL_LABELS.caseName })).toHaveValue('');
     expect(screen.getByRole('textbox', { name: ARCHIVE_CASE_MODAL_LABELS.sheets })).toHaveValue('');
-    expect(screen.getByRole('textbox', { name: ARCHIVE_CASE_MODAL_LABELS.caseDates })).toHaveValue('');
-    expect(screen.getByRole('textbox', { name: ARCHIVE_CASE_MODAL_LABELS.documentsComposition })).toHaveValue('');
+    expect(screen.getByRole('textbox', { name: ARCHIVE_CASE_MODAL_LABELS.caseDate })).toHaveValue('');
+    expect(screen.getByRole('textbox', { name: ARCHIVE_CASE_MODAL_LABELS.caseDescriptions })).toHaveValue('');
 
     expect(screen.getByTestId('label-action-title')).toHaveTextContent(ARCHIVE_CASE_MODAL_LABELS.file);
     const labelActionBtn = screen.getByTestId('label-action-btn');
     expect(labelActionBtn).toHaveTextContent(ARCHIVE_CASE_MODAL_LABELS.addFile);
     expect(labelActionBtn).toBeEnabled();
 
-    expect(screen.getByTestId('label-row')).toHaveTextContent(ARCHIVE_CASE_MODAL_LABELS.detailedDescription);
+    expect(screen.getByTestId('label-row')).toHaveTextContent(ARCHIVE_CASE_MODAL_LABELS.detailedCaseDescription);
   });
 
   it('should call dedicated handlers for values when typed', async () => {
@@ -122,9 +123,9 @@ describe('ArchiveCaseModalView', () => {
     const caseNumberInput = screen.getByRole('textbox', { name: ARCHIVE_CASE_MODAL_LABELS.caseNumber });
     const caseNameInput = screen.getByRole('textbox', { name: ARCHIVE_CASE_MODAL_LABELS.caseName });
     const sheetsInput = screen.getByRole('textbox', { name: ARCHIVE_CASE_MODAL_LABELS.sheets });
-    const caseDatesInput = screen.getByRole('textbox', { name: ARCHIVE_CASE_MODAL_LABELS.caseDates });
-    const documentsCompositionInput = screen.getByRole('textbox', { name: ARCHIVE_CASE_MODAL_LABELS.documentsComposition });
-    const detailedDescription = screen.getByRole('textbox', { name: ARCHIVE_CASE_MODAL_LABELS.documents });
+    const caseDatesInput = screen.getByRole('textbox', { name: ARCHIVE_CASE_MODAL_LABELS.caseDate });
+    const documentsCompositionInput = screen.getByRole('textbox', { name: ARCHIVE_CASE_MODAL_LABELS.caseDescriptions });
+    const detailedDescription = screen.getByRole('textbox', { name: ARCHIVE_CASE_MODAL_LABELS.caseDocuments });
 
     await user.type(descriptionInput, '1');
     await user.type(caseNumberInput, '2');
@@ -164,7 +165,7 @@ describe('ArchiveCaseModalView', () => {
     expect(mockHandleOpenUploadFlow).toHaveBeenCalledTimes(1);
   });
 
-  it('should call onClose if close button is clicked', async ()=>{
+  it('should call onClose if close button is clicked', async () => {
     const user = userEvent.setup();
     render(<ArchiveCaseModalView {...defaultProps} />);
     const closeButton = screen.getByRole('button', { name: 'Закрити' });
@@ -187,7 +188,7 @@ describe('ArchiveCaseModalView', () => {
 
   it('should call handleCancel 1 time when cancel button is clicked', async () => {
     const user = userEvent.setup();
-    render(<ArchiveCaseModalView {...defaultProps} isSubmitDisabled={false} />);
+    render(<ArchiveCaseModalView {...defaultProps} isSubmitDisabled={false} isCancelDisabled={false} />);
 
     const cancelButton = screen.getByRole('button', { name: ARCHIVE_CASE_MODAL_LABELS.cancel });
     await user.click(cancelButton);
@@ -197,7 +198,7 @@ describe('ArchiveCaseModalView', () => {
 
   it('should call handleSave 1 time when enabled and submit button is clicked', async () => {
     const user = userEvent.setup();
-    render(<ArchiveCaseModalView {...defaultProps} isSubmitDisabled={false} />);
+    render(<ArchiveCaseModalView {...defaultProps} isSubmitDisabled={false} isCancelDisabled={false} />);
 
     const saveButton = screen.getByRole('button', { name: ARCHIVE_CASE_MODAL_LABELS.save });
     await user.click(saveButton);
@@ -205,19 +206,52 @@ describe('ArchiveCaseModalView', () => {
     expect(mockHandleSave).toHaveBeenCalledTimes(1);
   });
 
-  it('should render the cancel and save buttons disabled if isSubmitDisabled is true', () => {
-    render(<ArchiveCaseModalView {...defaultProps} />);
+  it.each([
+    {
+      isSubmitDisabled: true,
+      isCancelButtonDisabled: false,
+      expectedSaveState: 'disabled',
+      expectedCancelState: 'enabled',
+    },
+    {
+      isSubmitDisabled: false,
+      isCancelButtonDisabled: false,
+      expectedSaveState: 'enabled',
+      expectedCancelState: 'enabled',
+    },
+    {
+      isSubmitDisabled: false,
+      isCancelButtonDisabled: true,
+      expectedSaveState: 'enabled',
+      expectedCancelState: 'disabled',
+    },
+  ])(
+    'should render the save button as $expectedSaveState and the cancel button as $expectedCancelState when isSubmitDisabled is $isSubmitDisabled and isCancelButtonDisabled is $isCancelButtonDisabled',
+    ({ isSubmitDisabled, isCancelButtonDisabled, expectedSaveState, expectedCancelState }) => {
+      render(
+        <ArchiveCaseModalView
+          {...defaultProps}
+          isSubmitDisabled={isSubmitDisabled}
+          isCancelDisabled={isCancelButtonDisabled}
+        />
+      );
 
-    expect(screen.getByRole('button', { name: ARCHIVE_CASE_MODAL_LABELS.save })).toBeDisabled();
-    expect(screen.getByRole('button', { name: ARCHIVE_CASE_MODAL_LABELS.cancel })).toBeDisabled();
-  });
+      const saveButton = screen.getByRole('button', { name: ARCHIVE_CASE_MODAL_LABELS.save });
+      const cancelButton = screen.getByRole('button', { name: ARCHIVE_CASE_MODAL_LABELS.cancel });
 
-  it('should render the cancel and save buttons enabled if isSubmitDisabled is false', () => {
-    render(<ArchiveCaseModalView {...defaultProps} isSubmitDisabled={false} />);
+      if (expectedSaveState === 'disabled') {
+        expect(saveButton).toBeDisabled();
+      } else {
+        expect(saveButton).toBeEnabled();
+      }
 
-    expect(screen.getByRole('button', { name: ARCHIVE_CASE_MODAL_LABELS.save })).toBeEnabled();
-    expect(screen.getByRole('button', { name: ARCHIVE_CASE_MODAL_LABELS.cancel })).toBeEnabled();
-  });
+      if (expectedCancelState === 'disabled') {
+        expect(cancelButton).toBeDisabled();
+      } else {
+        expect(cancelButton).toBeEnabled();
+      }
+    }
+  );
 
   it(`should render the pdf name and disable the "${ARCHIVE_CASE_MODAL_LABELS.addFile}" button if the pdf file is picked`, () => {
     render(
