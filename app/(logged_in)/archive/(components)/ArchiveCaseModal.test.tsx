@@ -139,6 +139,16 @@ describe('ArchiveCaseModal', () => {
     expect(screen.getByTestId('view-mode')).toHaveTextContent('edit');
   });
 
+  it('should pass initialData to useArchiveCaseModal hook when provided', () => {
+    const initialData = { caseNumber: 'CASE-123' };
+    render(<ArchiveCaseModal {...defaultProps} initialData={initialData} />);
+
+    expect(useArchiveCaseModal).toHaveBeenCalledWith({
+      setIsOpen: mockSetIsOpen,
+      initialData
+    });
+  });
+
   it('should not render MediaModal when isUploadModalOpen is false', () => {
     render(<ArchiveCaseModal {...defaultProps} />);
 

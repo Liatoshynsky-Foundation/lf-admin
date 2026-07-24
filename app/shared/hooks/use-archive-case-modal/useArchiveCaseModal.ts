@@ -6,19 +6,31 @@ import {
   PdfEntry,
 } from '~/constants/archive';
 
-export interface UseArchiveCaseModalProps {
-  setIsOpen: (isOpen: boolean) => void;
+export interface ArchiveCaseInitialData {
+  descriptionNumber?: string;
+  caseNumber?: string;
+  sheetsNumber?: string;
+  caseDate?: string;
+  currentPdfFile?: PdfEntry;
+  detailedCaseDescription?: string;
+  caseName?: string;
+  caseDescriptions?: string;
 }
 
-export const useArchiveCaseModal = ({ setIsOpen }: UseArchiveCaseModalProps) => {
-  const [descriptionNumber, setDescriptionNumber] = useState('');
-  const [caseNumber, setCaseNumber] = useState('');
-  const [sheetsNumber, setSheetsNumber] = useState('');
-  const [caseDate, setCaseDate] = useState('');
-  const [currentPdfFile, setCurrentPdfFile] = useState<PdfEntry>(INITIAL_PDF_ENTRY);
-  const [detailedCaseDescription, setDetailedCaseDescription] = useState<string>('');
-  const [caseName, setCaseName] = useState<string>('');
-  const [caseDescriptions, setCaseDescriptions] = useState<string>('');
+export interface UseArchiveCaseModalProps {
+  setIsOpen: (isOpen: boolean) => void;
+  initialData?: ArchiveCaseInitialData;
+}
+
+export const useArchiveCaseModal = ({ setIsOpen, initialData }: UseArchiveCaseModalProps) => {
+  const [descriptionNumber, setDescriptionNumber] = useState(initialData?.descriptionNumber ?? '');
+  const [caseNumber, setCaseNumber] = useState(initialData?.caseNumber ?? '');
+  const [sheetsNumber, setSheetsNumber] = useState(initialData?.sheetsNumber ?? '');
+  const [caseDate, setCaseDate] = useState(initialData?.caseDate ?? '');
+  const [currentPdfFile, setCurrentPdfFile] = useState<PdfEntry>(initialData?.currentPdfFile ?? INITIAL_PDF_ENTRY);
+  const [detailedCaseDescription, setDetailedCaseDescription] = useState<string>(initialData?.detailedCaseDescription ?? '');
+  const [caseName, setCaseName] = useState<string>(initialData?.caseName ?? '');
+  const [caseDescriptions, setCaseDescriptions] = useState<string>(initialData?.caseDescriptions ?? '');
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 

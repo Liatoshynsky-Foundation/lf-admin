@@ -55,6 +55,29 @@ describe('useArchiveCaseModal', () => {
         setSheetsNumber: expect.any(Function),
       });
     });
+
+    it('should initialize state values with passed initialData', () => {
+      const initialData = {
+        descriptionNumber: '1',
+        caseNumber: 'CASE-99',
+        sheetsNumber: '10',
+        caseDate: '2026',
+        currentPdfFile: { fileName: 'file.pdf', name: 'file.pdf' },
+        detailedCaseDescription: 'Detail',
+        caseName: 'Test Case',
+        caseDescriptions: 'Descriptions',
+      };
+      const { result } = renderHook(() => useArchiveCaseModal({ ...defaultProps, initialData }));
+
+      expect(result.current.descriptionNumber).toBe('1');
+      expect(result.current.caseNumber).toBe('CASE-99');
+      expect(result.current.sheetsNumber).toBe('10');
+      expect(result.current.caseDate).toBe('2026');
+      expect(result.current.currentPdfFile).toEqual({ fileName: 'file.pdf', name: 'file.pdf' });
+      expect(result.current.detailedCaseDescription).toBe('Detail');
+      expect(result.current.caseName).toBe('Test Case');
+      expect(result.current.caseDescriptions).toBe('Descriptions');
+    });
   });
 
   describe('handleOpenUploadFlow', () => {

@@ -1,5 +1,4 @@
 'use client';
-import React from 'react';
 
 import { ArchiveCaseModalView } from './archive-case-modal-view/ArchiveCaseModalView';
 import {
@@ -8,15 +7,16 @@ import {
 } from '~/constants/archive';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
 import UploadView from '~/shared/components/media-modal/views/upload-view/UploadView';
-import { useArchiveCaseModal } from '~/shared/hooks/use-archive-case-modal/useArchiveCaseModal';
+import { ArchiveCaseInitialData,useArchiveCaseModal } from '~/shared/hooks/use-archive-case-modal/useArchiveCaseModal';
 
 interface ArchiveCaseModalProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   mode?: 'create' | 'edit';
+  initialData?: ArchiveCaseInitialData;
 }
 
-export const ArchiveCaseModal = ({ isOpen, setIsOpen, mode = 'create' }: ArchiveCaseModalProps) => {
+export const ArchiveCaseModal = ({ isOpen, setIsOpen, mode = 'create', initialData }: ArchiveCaseModalProps) => {
   const {
     descriptionNumber,
     setDescriptionNumber,
@@ -43,7 +43,7 @@ export const ArchiveCaseModal = ({ isOpen, setIsOpen, mode = 'create' }: Archive
     handleCancel,
     isSubmitDisabled,
     isCancelDisabled
-  } = useArchiveCaseModal({ setIsOpen });
+  } = useArchiveCaseModal({ setIsOpen, initialData });
 
   return (
     <>
