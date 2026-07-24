@@ -36,7 +36,7 @@ export const newsServiceErrors = {
 };
 
 export const opusServiceErrors = {
-  NUMBER_ALREADY_EXISTS: (number: string) => `Opus with number "${number}" already exists`,
+  NUMBER_ALREADY_EXISTS: (number: number) => `Opus with number "${number}" already exists`,
   NUMBER_GENERATION_FAILED: 'Failed to generate a unique opus number',
   NAME_REQUIRED_FOR_SLUG: 'Opus name is required to generate a slug',
   OPUS_NOT_FOUND: (id: string) => `Opus with id "${id}" not found`,

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { createCompositionId } from '~/shared/hooks/use-group-content/useGroupContent';
+import { createCompositionId } from '../use-upsert-opus/useUpsertOpus';
 import type { OpusCompositionData, OpusCompositionSuggestion, OpusMediaFileData } from '~/types/opus';
 
 const fileNameFromUrl = (url?: string | null): string => {
@@ -33,8 +33,9 @@ export const useCompositionsForm = (works: OpusCompositionData[], onChange: (wor
 
   const addComposition = () => {
     const newComposition: OpusCompositionData = {
-      id: `composition-${Date.now()}`,
-      title: '',
+      id: createCompositionId(),
+      order: works.length > 0 ? Math.max(...works.map((w) => w.order ?? 0)) + 1 : 1,
+      name: '',
       genre: '',
       year: '',
       audios: [],
@@ -57,16 +58,16 @@ export const useCompositionsForm = (works: OpusCompositionData[], onChange: (wor
 
   const closeModal = () => setIsModalOpen(false);
 
-  const updateCompositionTitle = (id: string, title: string) => {
-    onChange(works.map((item) => (item.id === id ? { ...item, title } : item)));
+  const updateCompositionTitle = (id: string, name: string) => {
+    onChange(works.map((item) => (item.id === id ? { ...item, name } : item)));
   };
 
   const fillComposition = (index: number, suggestion: OpusCompositionSuggestion) => {
     const updatedWorks = [...works];
     updatedWorks[index] = {
       ...updatedWorks[index],
-      compositionId: suggestion.id,
-      title: suggestion.title?.uk ?? suggestion.title?.en ?? '',
+      id: suggestion.id ?? updatedWorks[index].id,
+      name: suggestion.name?.uk ?? suggestion.name?.en ?? '',
       genre: suggestion.genre ?? '',
       year: suggestion.year == null ? '' : String(suggestion.year),
       audios: (suggestion.audios ?? []).map(toSuggestionAudio),

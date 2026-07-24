@@ -108,7 +108,10 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
         </CollapsibleBlock>
 
         <CollapsibleBlock title="Твори" defaultExpanded>
-          <GroupWorksSection works={groupData.works} onChange={(newWorks) => handleFieldChange('works', newWorks)} />
+          <GroupWorksSection
+            works={groupData.compositions}
+            onChange={(newWorks) => handleFieldChange('compositions', newWorks)}
+          />
         </CollapsibleBlock>
 
         <CollapsibleBlock title="Всі версії виконання опису" defaultExpanded>

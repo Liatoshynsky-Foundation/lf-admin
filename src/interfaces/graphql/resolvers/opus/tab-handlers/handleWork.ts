@@ -1,26 +1,37 @@
-import { mapFilters } from '../../helpers';
 import { PaginatedWorksResult, WorksFilter } from '../opusQuery';
-import { mappedCompositions, totalPages } from './tabHandlersHelpers';
-import { QueryFilters } from '~/src/domain/repositories/baseRepository';
-import { CompositionFilters, ICompositionRepository } from '~/src/domain/repositories/compositionRepository';
+import { mappedCompositions, mappedGroups, totalCompositions, totalPages } from './tabHandlersHelpers';
+import { ICompositionRepository } from '~/src/domain/repositories/compositionRepository';
+import { IOpusRepository } from '~/src/domain/repositories/opusRepository';
+import { WorksTab } from '~/types/graphql/generated/graphql';
 
-export async function handleWorksTab(
-  compositionsRepo: ICompositionRepository,
+export async function handleWork(
+  tab: WorksTab.Compositions,
+  repo: IOpusRepository,
+  compositionRepo: ICompositionRepository,
   filters: WorksFilter | undefined,
   page: number,
-  pageSize: number,
+  pageSize: number
 ): Promise<PaginatedWorksResult> {
-  const mappedFilters: QueryFilters<CompositionFilters> = {
-    ...mapFilters(filters),
-    isStandalone: true
-  };
-  const worksResult = await mappedCompositions(compositionsRepo, mappedFilters);
-  
+  const groupsResult = await mappedGroups(repo, tab);
+  const compositionIds = groupsResult[0]?.compositions ?? [];
+  const skip = (page - 1) * pageSize;
+
+  const [total, works] = await Promise.all([
+    totalCompositions(compositionRepo, compositionIds, filters),
+    mappedCompositions(
+      compositionRepo,
+      compositionIds,
+      skip,
+      pageSize,
+      filters
+    ),
+  ]);
+
   return {
     groups: [],
-    works: worksResult.works,
-    total: worksResult.total,
+    works,
+    total,
     page,
-    totalPages: totalPages(worksResult.total, pageSize),
+    totalPages: totalPages(total, pageSize),
   };
 }

@@ -6,17 +6,19 @@ import { Dayjs } from 'dayjs';
 import { CloudUpload, Trash2 } from 'lucide-react';
 import React from 'react';
 
+import { suggestItemConfigs, SuggestItemMode } from './ActionableSuggestItem.config';
 import { styles } from './ActionableSuggestItem.style';
+
 
 interface ActionableSuggestItemProps {
   suggestions: string[];
   onUpload: () => void;
   onDelete: () => void;
   onSelect: (value: string | null) => void;
-  mode?: 'audio' | 'notes';
+  mode?: SuggestItemMode;
   value?: string | null;
-  date: Dayjs | null;
-  onDateChange: (newDate: Dayjs | null) => void;
+  date?: Dayjs | null;
+  onDateChange?: (newDate: Dayjs | null) => void;
 }
 
 const ActionableSuggestItem: React.FC<ActionableSuggestItemProps> = ({
@@ -29,8 +31,9 @@ const ActionableSuggestItem: React.FC<ActionableSuggestItemProps> = ({
   date = null,
   onDateChange
 }) => {
-  const label = mode === 'audio' ? 'Назва аудіо *' : 'Назва нот *';
-  const placeholder = mode === 'audio' ? 'Введіть назву аудіо' : 'Введіть назву нот';
+  const config = suggestItemConfigs[mode];
+  const label = config.label;
+  const placeholder = config.placeholder;
 
   return (
     <Stack direction="row" spacing={1} alignItems="center" sx={styles.container}>
@@ -44,13 +47,13 @@ const ActionableSuggestItem: React.FC<ActionableSuggestItemProps> = ({
         renderInput={(params) => <TextField {...params} label={label} placeholder={placeholder} variant="outlined" />}
       />
 
-      {mode === 'notes' && (
+      {config.showDatePicker && onDateChange && (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <DatePicker
             label="Дата видання"
             format="DD/MM/YYYY"
             value={date}
-            onChange={(newValue) => onDateChange?.(newValue)}
+            onChange={(newValue) => onDateChange(newValue)}
             sx={styles.datePicker}
           />
         </LocalizationProvider>

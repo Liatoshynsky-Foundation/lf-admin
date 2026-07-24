@@ -52,8 +52,8 @@ jest.mock('~/constants/opus', () => ({
     nameTooShort: 'Назва занадто коротка'
   },
   OPUS_NUMBER_KIND_OPTIONS: [
-    { value: 'op', label: 'Op.' },
-    { value: 'woo', label: 'Sine op.' }
+    { value: 'op', label: 'op.' },
+    { value: 'woo', label: 'sine op.' }
   ],
   REQUIRED_FIELD_ERROR: 'Обов’язкове поле',
   OPUS_YEAR_RANGE: { min: 1000, max: 2100 }
@@ -139,14 +139,14 @@ const mockOnChange = jest.fn();
 
 const defaultProps = {
   data: {
-    titlePrefix: 'Op.',
+    titlePrefix: 'op.',
     groupNumber: '42',
     additionalText: 'bis',
     groupTitle: { uk: 'Квартет', en: 'Quartet' },
     creationYear: '1922',
     endYear: '1924',
     dateAdditionalText: { uk: 'приблизно', en: 'approx.' },
-    genre: ''
+    genre: { uk: 'Соната', en: 'Sonata' }
   },
   derivedGenre: 'Соната',
   currentLanguage: 'UA' as EditorLanguage,
@@ -162,7 +162,7 @@ describe('GroupDetailsSection Component', () => {
   it('should render all fields with correct initial values', () => {
     render(<GroupDetailsSection {...defaultProps} />);
 
-    expect(screen.getByTestId('mock-input-Назва')).toHaveValue('Op.');
+    expect(screen.getByTestId('mock-input-Назва')).toHaveValue('op.');
     expect(screen.getByTestId('mock-input-Номер')).toHaveValue('42');
     expect(screen.getByTestId('mock-input-additionalText-top')).toHaveValue('bis');
     expect(screen.getByTestId('mock-input-Назва групи')).toHaveValue('Квартет');
@@ -240,7 +240,7 @@ describe('GroupDetailsSection Component', () => {
     expect(screen.getByTestId('error-Назва')).toHaveTextContent('Спеціальна помилка префіксу');
     expect(screen.getByTestId('error-Рік створення *')).toHaveTextContent('Обов’язкове поле');
   });
-  
+
   it('should close prefix menu when window is scrolled', () => {
     render(<GroupDetailsSection {...defaultProps} />);
     const triggerBtn = screen.getByTestId('trigger-open-Назва');
@@ -305,10 +305,10 @@ describe('GroupDetailsSection Component', () => {
   });
 
   it('should trim genre on blur', () => {
-    const props = { ...defaultProps, data: { ...defaultProps.data, genre: '  пробіли  ' } };
+    const props = { ...defaultProps, data: { ...defaultProps.data, genre: { uk: '  пробіли  ', en: '' } } };
     render(<GroupDetailsSection {...props} />);
     fireEvent.blur(screen.getByLabelText('Жанр'));
-    expect(mockOnChange).toHaveBeenCalledWith('genre', 'пробіли');
+    expect(mockOnChange).toHaveBeenCalledWith('genre', 'пробіли', true);
   });
 
   it('should handle SelectProps onClose for title prefix', () => {
@@ -331,8 +331,7 @@ describe('GroupDetailsSection Component', () => {
     expect(screen.getByTestId('error-Жанр')).toHaveTextContent('Невірний жанр');
     const genreInput = screen.getByTestId('mock-input-Жанр');
     fireEvent.change(genreInput, { target: { value: 'Новий жанр' } });
-
-    expect(mockOnChange).toHaveBeenCalledWith('genre', 'Новий жанр');
+    expect(mockOnChange).toHaveBeenCalledWith('genre', 'Новий жанр', true);
   });
 
   it('should cover all edge-case fallbacks and validation priorities (groupNumber prop error, prefix blur, empty dates/numbers)', () => {

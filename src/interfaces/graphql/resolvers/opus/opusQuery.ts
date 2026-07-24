@@ -3,7 +3,8 @@ import { GraphQLError } from 'graphql';
 import { endpointRepositoryHandler, mapFilters } from '../helpers';
 import { handleGroup } from './tab-handlers/handleGroup';
 import { handleMixed } from './tab-handlers/handleMixed';
-import { handleWorksTab } from './tab-handlers/handleWork';
+import { handleWork } from './tab-handlers/handleWork';
+import { orderCompositionsByIds } from './tab-handlers/tabHandlersHelpers';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
 import { Composition } from '~/domain/entities/Composition';
@@ -12,9 +13,6 @@ import { WorksTab } from '~/types/graphql/generated/graphql';
 
 interface IdArgs {
   id: string;
-}
-interface NumberArgs {
-  number: string;
 }
 interface SearchArgs {
   search: string;
@@ -27,12 +25,16 @@ export interface PaginatedWorksArgs {
 }
 
 export interface PaginatedWorksResult {
-  groups: Opus[];
+  groups: OpusWithCompositions[];
   works: Composition[];
   total: number;
   page: number;
   totalPages: number;
 }
+
+type OpusWithCompositions = Omit<Opus, 'compositions'> & {
+  compositions: Composition[];
+};
 
 const assertAuthenticated = (context: GraphQLContext): void => {
   if (!context.admin) {
@@ -45,23 +47,24 @@ const assertAuthenticated = (context: GraphQLContext): void => {
 const endpointHandler = endpointRepositoryHandler('opusRepository');
 
 export const OpusQuery = {
-  opusById: async (_: unknown, { id }: IdArgs, context: GraphQLContext): Promise<Opus | null> => {
+  opusById: async (_: unknown, { id }: IdArgs, context: GraphQLContext): Promise<OpusWithCompositions | null> => {
     assertAuthenticated(context);
-
+    
     const opus = await context.requestContainer.cradle.opusRepository.findById(id);
+    
 
     if (!opus) {
       return null;
     }
 
-    const compositions = await context.requestContainer.cradle.compositionsRepository.findByOpusId(id);
+    const compositionIds = (opus.compositions ?? []).map((comp): string => comp.toString());
+    const compositions = orderCompositionsByIds(
+      compositionIds,
+      await context.requestContainer.cradle.compositionsRepository.findByIds(compositionIds)
+    );
 
     return { ...opus, compositions };
   },
-
-  opusByNumber: endpointHandler<NumberArgs, Opus | null>(async ({ args: { number }, repo }) =>
-    repo.findByNumber(number)
-  ),
 
   searchCompositions: async (
     _: unknown,
@@ -70,21 +73,36 @@ export const OpusQuery = {
   ): Promise<Composition[]> => {
     assertAuthenticated(context);
 
-    return context.requestContainer.cradle.compositionsRepository.searchByTitle(search);
+    const compOpuses = await context.requestContainer.cradle.opusRepository.findAll({
+      numberKind: 'compositions',
+    });
+
+    const compositionIds = (compOpuses[0]?.compositions ?? []).map((id) => id.toString());
+
+    if (compositionIds.length === 0) {
+      return [];
+    }
+
+    const compositions = await context.requestContainer.cradle.compositionsRepository.searchByTitle(search, compositionIds);
+
+    return compositions;
   },
 
   paginatedWorks: endpointHandler<PaginatedWorksArgs, PaginatedWorksResult>(async ({ args, repo, requestContainer }) => {
     const { tab, filters } = args;
-    const compositionsRepo = requestContainer.cradle.compositionsRepository;
     const pageSize = filters?.limit ?? 10;
     const skip = filters?.skip ?? 0;
     const page = Math.floor(skip / pageSize) + 1;
+    const compositionsRepo = requestContainer.cradle.compositionsRepository;
 
-    if (tab === WorksTab.Opus || tab === WorksTab.Woo) {
-      return handleGroup(tab, repo, filters, page, compositionsRepo, pageSize);
-    } else if (tab === WorksTab.Works) {
-      return handleWorksTab(compositionsRepo, filters, page, pageSize);
+    if (tab === WorksTab.Op || tab === WorksTab.Sineop) {
+      const result = await handleGroup(tab, repo, compositionsRepo, filters, page, pageSize);
+      return result;
+    } else if (tab === WorksTab.Compositions) {
+      const result = await handleWork(tab, repo, compositionsRepo, filters, page, pageSize);
+      return result;
     }
-    return handleMixed(repo, compositionsRepo, filters, page, pageSize);
+    
+    return await handleMixed(repo, compositionsRepo, filters, page, pageSize);
   }),
 };

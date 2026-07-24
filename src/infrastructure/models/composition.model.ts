@@ -24,12 +24,9 @@ const compositionAudioSchema = new Schema(
 
 const compositionSchema = new Schema(
   {
-    opusId: { type: Schema.Types.ObjectId, ref: 'Opus', default: null, index: true },
-    order: { type: Number, default: 0 },
-    title: { type: translatedFieldSchema, required: true },
+    name: { type: translatedFieldSchema, required: true },
     year: { type: Number, default: null },
     genre: { type: String, default: null },
-    genres: { type: [Schema.Types.ObjectId], ref: 'Genre', default: [] },
     audioAvailable: { type: Boolean, default: false },
     sheetAvailable: { type: Boolean, default: false },
     sheetMusic: { type: [sheetMusicSchema], default: [] },

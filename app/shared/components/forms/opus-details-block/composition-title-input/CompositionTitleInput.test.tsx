@@ -52,7 +52,7 @@ describe('CompositionTitleInput', () => {
         searchCompositions: [
           {
             id: 'c1',
-            title: { uk: 'Після бою', en: 'After Battle' },
+            name: { uk: 'Після бою', en: 'After Battle' },
             genre: 'Романс',
             year: 1920,
             sheetMusic: [],
@@ -99,7 +99,7 @@ describe('CompositionTitleInput', () => {
         searchCompositions: [
           {
             id: 'c1',
-            title: { uk: null, en: 'After Battle' },
+            name: { uk: null, en: 'After Battle' },
             genre: 'Romance',
             year: 1920,
             sheetMusic: [],
@@ -124,7 +124,7 @@ describe('CompositionTitleInput', () => {
         searchCompositions: [
           {
             id: 'c1',
-            title: { uk: null, en: null },
+            name: { uk: null, en: null },
             genre: 'Romance',
             year: 1920,
             sheetMusic: [],

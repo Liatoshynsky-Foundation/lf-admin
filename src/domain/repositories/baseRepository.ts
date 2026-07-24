@@ -8,7 +8,7 @@ export type SortCriteria = {
 export type ContentLanguageFilter = 'uk' | 'en' | 'bilingual';
 
 export type FiltersInput = {
-    slug?: string;
+    slug?: string | null;
     search?: string;
     languages?: ContentLanguageFilter[];
     sort?: SortCriteria[];

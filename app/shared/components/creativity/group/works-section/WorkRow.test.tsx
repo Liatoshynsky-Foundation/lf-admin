@@ -12,7 +12,7 @@ const mockUseSortable = useSortable as jest.Mock;
 
 const mockComposition = {
   id: 'work-1',
-  title: 'Test Composition',
+  name: 'Test Composition',
   genre: 'Classical',
   year: '2026',
   audios: [],

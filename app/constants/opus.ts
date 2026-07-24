@@ -25,9 +25,14 @@ export const OPUS_DETAILS_LABELS = {
   addComposition: 'Додати'
 } as const;
 
+export const OPUS_NUMBER_KIND = {
+  OP: 'op',
+  SINE_OP: 'sineop'
+} as const;
+
 export const OPUS_NUMBER_KIND_OPTIONS = [
-  { value: 'op', label: 'op.' },
-  { value: 'woo', label: 'sine op.' }
+  { value: OPUS_NUMBER_KIND.OP, label: 'op.' },
+  { value: OPUS_NUMBER_KIND.SINE_OP, label: 'sine op.' }
 ] as const;
 
 export const OPUS_FIELD_LIMITS = {
@@ -54,7 +59,7 @@ export const OPUS_VALIDATION_MESSAGES = {
 export const COMPOSITION_MODAL_LABELS = {
   createTitle: 'Нова композиція',
   editTitle: 'Редагування композиції',
-  title: 'Назва твору',
+  name: 'Назва твору',
   genre: 'Жанр',
   year: 'Рік',
   audio: 'Аудіо',

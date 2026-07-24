@@ -11,7 +11,7 @@ jest.mock('mongoose', () => ({
   model: jest.fn(),
   Types: {
     ObjectId: {
-      isValid: (id: string) => /^[0-9a-fA-F]{24}$/.test(id)
+      isValid: (id: string): boolean => /^[0-9a-fA-F]{24}$/.test(id)
     }
   }
 }));
@@ -19,27 +19,41 @@ jest.mock('mongoose', () => ({
 jest.mock('~/src/infrastructure/db/connect', () => jest.fn());
 
 jest.mock('~/infrastructure/repositories/helpers', () => {
-  const originalModule = jest.requireActual('~/infrastructure/repositories/helpers');
+  const originalModule = jest.requireActual('~/infrastructure/repositories/helpers') as Record<string, unknown>;
   return {
     ...originalModule,
-    buildBaseQuery: jest.fn().mockImplementation((filters) => originalModule.buildBaseQuery(filters)),
+    buildBaseQuery: jest.fn().mockImplementation((filters: unknown) => (originalModule['buildBaseQuery'] as (f: unknown) => unknown)(filters)),
   };
 });
 
-const mockId = '65eddf5e2f1a2b3c4d5e6f7a';
+const MOCK_ID = '65eddf5e2f1a2b3c4d5e6f7a';
+const OPUS_NUMBER_1 = 1;
+const OPUS_NUMBER_2 = 2;
+const MOCK_TITLE_UK = 'Опус';
+const MOCK_TITLE_EN = 'Opus';
+const MOCK_NAME_UK = 'Перший струнний квартет';
+const MOCK_NAME_EN = 'First string quartet';
+const MOCK_CREATION_YEAR = '1922';
+const MOCK_GENRE = 'Струнний квартет';
+const MOCK_SLUG = 'opus-1';
+const MOCK_DATE = '2026-03-10T10:00:00.000Z';
+const MOCK_UPDATED_DATE = '2026-03-11T12:00:00.000Z';
+const MOCK_PUBLISHED_DATE = '2026-01-01T00:00:00.000Z';
+const MOCK_YOUTUBE_URL_1 = 'https://youtube.com/watch?v=1';
+const MOCK_YOUTUBE_URL_2 = 'https://youtube.com/watch?v=2';
+const LOOSE_OPUS_ID = 'loose-opus-id';
 
 const createMockOpusDoc = (overrides: Partial<DbOpus> = {}): DbOpus => ({
-  _id: { toString: () => mockId },
-  number: 'op.1',
-  title: { uk: 'Опус', en: 'Opus' },
-  releaseYear: 1922,
+  _id: { toString: (): string => MOCK_ID },
+  number: OPUS_NUMBER_1,
+  title: { uk: MOCK_TITLE_UK, en: MOCK_TITLE_EN },
   numberKind: 'op',
-  name: { uk: 'Перший струнний квартет', en: 'First string quartet' },
-  creationYear: '1922',
-  genre: 'Струнний квартет',
-  adminTitle: 'Перший струнний квартет',
-  slug: 'opus-1',
-  status: OpusStatus.Draft,
+  name: { uk: MOCK_NAME_UK, en: MOCK_NAME_EN },
+  creationYear: MOCK_CREATION_YEAR,
+  genre: { uk: MOCK_GENRE, en: MOCK_GENRE },
+  adminTitle: MOCK_NAME_UK,
+  slug: MOCK_SLUG,
+  status: OpusStatus.Draft as unknown as DbOpus['status'],
   coverImage: { src: 'img.jpg', alt: { uk: 'а', en: 'a' }, caption: { uk: '', en: '' } },
   description: { uk: 'Опис', en: 'Desc' },
   introDescription: { uk: '', en: '' },
@@ -49,8 +63,9 @@ const createMockOpusDoc = (overrides: Partial<DbOpus> = {}): DbOpus => ({
   allowIndexation: { uk: true, en: true },
   publishedAt: null,
   meta: { views: 0 },
-  createdAt: '2026-03-10T10:00:00.000Z',
-  updatedAt: '2026-03-11T12:00:00.000Z',
+  createdAt: MOCK_DATE,
+  updatedAt: MOCK_UPDATED_DATE,
+  compositions: [],
   ...overrides
 });
 
@@ -59,6 +74,9 @@ describe('OpusRepository', () => {
   const findMock = jest.fn();
   const countDocumentsMock = jest.fn();
   const saveMock = jest.fn();
+  const updateOneMock = jest.fn();
+  const findByIdMock = jest.fn();
+  const findOneAndUpdateMock = jest.fn();
 
   const MockModel = jest.fn().mockImplementation(() => ({
     save: saveMock
@@ -66,11 +84,17 @@ describe('OpusRepository', () => {
     findOne: jest.Mock;
     find: jest.Mock;
     countDocuments: jest.Mock;
+    updateOne: jest.Mock;
+    findById: jest.Mock;
+    findOneAndUpdate: jest.Mock;
   };
 
   MockModel.findOne = findOneMock;
   MockModel.find = findMock;
   MockModel.countDocuments = countDocumentsMock;
+  MockModel.updateOne = updateOneMock;
+  MockModel.findById = findByIdMock;
+  MockModel.findOneAndUpdate = findOneAndUpdateMock;
 
   let repository: IOpusRepository;
 
@@ -80,81 +104,85 @@ describe('OpusRepository', () => {
   });
 
   const createInput: CreateOpusInput = {
-    number: 'op.1',
-    title: { uk: 'Опус', en: 'Opus' },
-    releaseYear: 1922,
-    numberKind: 'op',
+    number: OPUS_NUMBER_1,
+    title: { uk: MOCK_TITLE_UK, en: MOCK_TITLE_EN },
+    numberKind: OpusNumberKind.Op,
     name: { uk: 'Новий опус', en: 'New Opus' },
-    creationYear: '1922',
-    genre: 'Струнний квартет',
+    creationYear: MOCK_CREATION_YEAR,
+    genre: { uk: MOCK_GENRE, en: MOCK_GENRE },
     adminTitle: 'Новий опус',
     description: { uk: 'Опис', en: 'Desc' },
     keywords: { uk: 'к', en: 'k' },
     allowIndexation: { uk: true, en: true },
-    slug: 'opus-1',
+    slug: MOCK_SLUG,
     coverImage: { src: 'img.jpg', alt: { uk: 'а', en: 'a' }, caption: { uk: '', en: '' } },
-    status: OpusStatus.Draft,
+    status: OpusStatus.Draft as unknown as CreateOpusInput['status'],
     meta: { views: 0 }
   };
 
   describe('findByNumber', () => {
     it('returns the opus when found', async () => {
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(createMockOpusDoc()) });
-
-      const result = await repository.findByNumber('op.1');
-
-      expect(findOneMock).toHaveBeenCalledWith({ number: 'op.1' });
-      expect(result?.number).toBe('op.1');
+      const result = await repository.findByNumber(OPUS_NUMBER_1);
+      expect(findOneMock).toHaveBeenCalledWith({ number: OPUS_NUMBER_1 });
+      expect(result?.number).toBe(OPUS_NUMBER_1);
     });
 
-    it('returns null when the number is empty', async () => {
-      const result = await repository.findByNumber('');
-
+    it('returns null when number is undefined', async () => {
+      const result = await repository.findByNumber(undefined as unknown as number);
       expect(result).toBeNull();
       expect(findOneMock).not.toHaveBeenCalled();
+    });
+
+    it('looks up number 0 instead of treating it as empty', async () => {
+      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(createMockOpusDoc({ number: 0 })) });
+      const result = await repository.findByNumber(0);
+      expect(findOneMock).toHaveBeenCalledWith({ number: 0 });
+      expect(result?.number).toBe(0);
     });
   });
 
   describe('create', () => {
     it('creates a new opus when the number is unique', async () => {
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(null) });
-      saveMock.mockResolvedValue({ toObject: () => createMockOpusDoc({ number: 'op.1' }) });
+      saveMock.mockResolvedValue({ toObject: (): DbOpus => createMockOpusDoc({ number: OPUS_NUMBER_1 }) });
 
       const result = await repository.create(createInput);
 
-      expect(result.number).toBe('op.1');
+      expect(result.number).toBe(OPUS_NUMBER_1);
       expect(saveMock).toHaveBeenCalled();
     });
 
     it('throws when the number already exists', async () => {
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(createMockOpusDoc()) });
 
-      await expect(repository.create(createInput)).rejects.toThrow('Opus with number "op.1" already exists');
+      await expect(repository.create(createInput)).rejects.toThrow(`Opus with number "${OPUS_NUMBER_1}" already exists`);
       expect(saveMock).not.toHaveBeenCalled();
     });
 
     it('defaults meta views to 0 when the input has no meta', async (): Promise<void> => {
       const inputWithoutMeta: CreateOpusInput = {
-        number: 'op.2',
-        title: { uk: 'Опус', en: 'Opus' }
+        number: OPUS_NUMBER_2,
+        title: { uk: MOCK_TITLE_UK, en: MOCK_TITLE_EN },
+        status: OpusStatus.Draft as unknown as CreateOpusInput['status'],
       };
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(null) });
-      saveMock.mockResolvedValue({ toObject: () => createMockOpusDoc({ number: 'op.2' }) });
+      saveMock.mockResolvedValue({ toObject: (): DbOpus => createMockOpusDoc({ number: OPUS_NUMBER_2 }) });
 
       const result = await repository.create(inputWithoutMeta);
 
       expect(MockModel).toHaveBeenCalledWith(expect.objectContaining({ meta: { views: 0 } }));
-      expect(result.number).toBe('op.2');
+      expect(result.number).toBe(OPUS_NUMBER_2);
     });
   });
 
   describe('toEntity mapping', () => {
     it('applies fallback defaults for nullish optional fields', async (): Promise<void> => {
       const doc = createMockOpusDoc({
-        releaseYear: null,
+        number: OPUS_NUMBER_1,
         numberKind: 'op',
         name: null,
-        creationYear: '1922',
+        creationYear: MOCK_CREATION_YEAR,
         endYear: '1925',
         genre: null,
         adminTitle: null,
@@ -167,17 +195,17 @@ describe('OpusRepository', () => {
         meta: undefined,
         additionalText: 'Додатковий текст',
         datesNote: 'Нотатка про дати',
-        publishedAt: '2026-01-01T00:00:00.000Z'
+        publishedAt: MOCK_PUBLISHED_DATE
       });
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
 
-      const result = await repository.findByNumber('op.1');
+      const result = await repository.findByNumber(OPUS_NUMBER_1);
 
-      expect(result?.releaseYear).toBeUndefined();
+      expect(result?.number).toBe(OPUS_NUMBER_1);
       expect(result?.numberKind).toBe('op');
       expect(result?.name).toEqual({ uk: '', en: '' });
       expect(result?.additionalText).toBe('Додатковий текст');
-      expect(result?.creationYear).toBe('1922');
+      expect(result?.creationYear).toBe(MOCK_CREATION_YEAR);
       expect(result?.endYear).toBe('1925');
       expect(result?.datesNote).toBe('Нотатка про дати');
       expect(result?.genre).toBeUndefined();
@@ -189,17 +217,17 @@ describe('OpusRepository', () => {
       expect(result?.coverImage).toBeUndefined();
       expect(result?.status).toBeUndefined();
       expect(result?.meta).toEqual({ views: 0 });
-      expect(result?.publishedAt).toBe('2026-01-01T00:00:00.000Z');
+      expect(result?.publishedAt).toBe(MOCK_PUBLISHED_DATE);
     });
 
     it('keeps provided optional values instead of applying fallbacks', async (): Promise<void> => {
-      const doc = createMockOpusDoc({ numberKind: 'woo', meta: { views: 42 } });
+      const doc = createMockOpusDoc({ numberKind: 'sineop', meta: { views: 42 } });
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
 
-      const result = await repository.findByNumber('op.1');
+      const result = await repository.findByNumber(OPUS_NUMBER_1);
 
-      expect(result?.numberKind).toBe('woo');
-      expect(result?.releaseYear).toBe(1922);
+      expect(result?.numberKind).toBe('sineop');
+      expect(result?.number).toBe(OPUS_NUMBER_1);
       expect(result?.meta).toEqual({ views: 42 });
     });
 
@@ -207,14 +235,14 @@ describe('OpusRepository', () => {
       const doc = createMockOpusDoc({
         gallery: [
           {
-            _id: { toString: () => 'gal1' },
+            _id: { toString: (): string => 'gal1' },
             src: 'image1.jpg',
             description: { uk: 'Опис 1', en: 'Desc 1' },
             altText: { uk: 'Альт 1', en: 'Alt 1' },
             crop: { x: 10, y: 20, width: 100, height: 200 }
           },
           {
-            _id: { toString: () => 'gal2' },
+            _id: { toString: (): string => 'gal2' },
             src: 'image2.jpg',
             crop: { width: 100, height: 100 }
           },
@@ -227,20 +255,20 @@ describe('OpusRepository', () => {
         ],
         performances: [
           {
-            _id: { toString: () => 'perf1' },
+            _id: { toString: (): string => 'perf1' },
             title: { uk: 'Виступ 1', en: 'Perf 1' },
-            videoUrl: 'https://youtube.com/watch?v=1'
+            videoUrl: MOCK_YOUTUBE_URL_1
           },
           {
             title: null,
-            videoUrl: 'https://youtube.com/watch?v=2'
+            videoUrl: MOCK_YOUTUBE_URL_2
           }
         ]
       });
 
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
 
-      const result = await repository.findByNumber('op.1');
+      const result = await repository.findByNumber(OPUS_NUMBER_1);
 
       expect(result?.gallery).toHaveLength(3);
       expect(result?.gallery?.[0]).toEqual({
@@ -257,7 +285,7 @@ describe('OpusRepository', () => {
       expect(result?.performances?.[0]).toEqual({
         id: 'perf1',
         title: { uk: 'Виступ 1', en: 'Perf 1' },
-        videoUrl: 'https://youtube.com/watch?v=1'
+        videoUrl: MOCK_YOUTUBE_URL_1
       });
       expect(result?.performances?.[1]?.id).toBe('');
     });
@@ -266,7 +294,7 @@ describe('OpusRepository', () => {
       const doc = createMockOpusDoc({
         gallery: [
           {
-            _id: { toString: () => 'gal-crop' },
+            _id: { toString: (): string => 'gal-crop' },
             src: 'crop.jpg',
             crop: {
               x: '5' as unknown as number,
@@ -279,7 +307,7 @@ describe('OpusRepository', () => {
       });
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
 
-      const result = await repository.findByNumber('op.1');
+      const result = await repository.findByNumber(OPUS_NUMBER_1);
 
       expect(result?.gallery?.[0]?.crop).toEqual({
         x: 5,
@@ -288,7 +316,6 @@ describe('OpusRepository', () => {
         height: 0
       });
     });
-
   });
 
   describe('findAll', () => {
@@ -323,38 +350,45 @@ describe('OpusRepository', () => {
 
       expect(findMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          $or: [
-            { numberKind: OpusNumberKind.Op },
-            { numberKind: { $exists: false } },
-            { numberKind: null }
-          ]
+          $and: expect.arrayContaining([
+            expect.objectContaining({
+              $or: [
+                { numberKind: OpusNumberKind.Op },
+                { numberKind: { $exists: false } },
+                { numberKind: null }
+              ]
+            })
+          ])
         })
       );
     });
-
     it('applies direct filtering for other numberKind values inside buildQuery', async () => {
       const chain = mockChain();
       findMock.mockReturnValue(chain);
 
       await repository.findAll({
-        numberKind: OpusNumberKind.Woo
+        numberKind: OpusNumberKind.Sineop
       });
 
       expect(findMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          numberKind: OpusNumberKind.Woo
+          $and: expect.arrayContaining([
+            expect.objectContaining({
+              numberKind: OpusNumberKind.Sineop
+            })
+          ])
         })
       );
     });
-
     it('applies fallback for missing creationYear', async () => {
-      const doc = createMockOpusDoc({ creationYear: undefined });
+      const doc = createMockOpusDoc({ creationYear: '' });
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
 
-      const result = await repository.findByNumber('op.1');
+      const result = await repository.findByNumber(OPUS_NUMBER_1);
 
       expect(result?.creationYear).toBe('');
     });
+
     it('uses fallback empty object when buildBaseQuery returns null', async () => {
       const chain = mockChain();
       findMock.mockReturnValue(chain);
@@ -362,19 +396,25 @@ describe('OpusRepository', () => {
       (buildBaseQuery as jest.Mock).mockReturnValueOnce(null);
 
       await repository.findAll({
-        numberKind: OpusNumberKind.Woo
+        numberKind: OpusNumberKind.Sineop
       });
 
-      expect(findMock).toHaveBeenCalledWith({
-        numberKind: OpusNumberKind.Woo
-      });
+      expect(findMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          $and: expect.arrayContaining([
+            expect.objectContaining({
+              numberKind: OpusNumberKind.Sineop
+            })
+          ])
+        })
+      );
     });
-
+    
     it('falls back numberKind to "op" when nullish', async (): Promise<void> => {
       const doc = createMockOpusDoc({ numberKind: undefined });
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
 
-      const result = await repository.findByNumber('op.1');
+      const result = await repository.findByNumber(OPUS_NUMBER_1);
 
       expect(result?.numberKind).toBe('op');
     });
@@ -385,7 +425,7 @@ describe('OpusRepository', () => {
       });
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
 
-      const result = await repository.findByNumber('op.1');
+      const result = await repository.findByNumber(OPUS_NUMBER_1);
 
       expect(result?.name).toEqual({
         uk: 'Просто рядкова назва',
@@ -400,7 +440,7 @@ describe('OpusRepository', () => {
       });
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
 
-      const result = await repository.findByNumber('op.1');
+      const result = await repository.findByNumber(OPUS_NUMBER_1);
 
       expect(result?.introDescription).toBeUndefined();
       expect(result?.parts).toBeUndefined();
@@ -413,10 +453,96 @@ describe('OpusRepository', () => {
       });
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
 
-      const result = await repository.findByNumber('op.1');
+      const result = await repository.findByNumber(OPUS_NUMBER_1);
 
       expect(result?.introDescription).toEqual({ uk: 'Вступ', en: 'Intro' });
       expect(result?.parts).toEqual({ uk: 'Частини', en: 'Parts' });
+    });
+  });
+
+  describe('compositions management methods', () => {
+    it('does nothing in moveCompositionsToCompositionsOpus when list is empty', async () => {
+      await repository.moveCompositionsToCompositionsOpus([]);
+      expect(findOneAndUpdateMock).not.toHaveBeenCalled();
+    });
+
+    it('upserts loose opus via findOneAndUpdate then adds compositions with $addToSet', async () => {
+      findOneAndUpdateMock.mockReturnValue({
+        lean: jest.fn().mockResolvedValue({ _id: LOOSE_OPUS_ID })
+      });
+      updateOneMock.mockResolvedValue({});
+
+      await repository.moveCompositionsToCompositionsOpus(['comp1', 'comp2']);
+
+      expect(findOneAndUpdateMock).toHaveBeenCalledWith(
+        { numberKind: 'compositions' },
+        {
+          $setOnInsert: expect.objectContaining({
+            numberKind: 'compositions',
+            number: 0,
+            compositions: []
+          })
+        },
+        { upsert: true, new: true }
+      );
+      expect(updateOneMock).toHaveBeenCalledWith(
+        { _id: LOOSE_OPUS_ID },
+        { $addToSet: { compositions: { $each: ['comp1', 'comp2'] } } }
+      );
+    });
+
+    it('updates loose opus using $addToSet if it already exists during moveCompositionsToCompositionsOpus', async () => {
+      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue({ _id: LOOSE_OPUS_ID }) });
+      updateOneMock.mockResolvedValue({});
+
+      await repository.moveCompositionsToCompositionsOpus(['comp1', 'comp2']);
+
+      expect(updateOneMock).toHaveBeenCalledWith(
+        { _id: LOOSE_OPUS_ID },
+        { $addToSet: { compositions: { $each: ['comp1', 'comp2'] } } }
+      );
+    });
+
+    it('does nothing in removeCompositionsFromCompositionsOpus when list is empty', async () => {
+      await repository.removeCompositionsFromCompositionsOpus([]);
+      expect(findOneMock).not.toHaveBeenCalled();
+    });
+
+    it('does nothing in removeCompositionsFromCompositionsOpus when loose opus does not exist', async () => {
+      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(null) });
+
+      await repository.removeCompositionsFromCompositionsOpus(['comp1']);
+
+      expect(updateOneMock).not.toHaveBeenCalled();
+    });
+
+    it('removes compositions from loose opus if it exists during removeCompositionsFromCompositionsOpus', async () => {
+      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue({ _id: LOOSE_OPUS_ID }) });
+      updateOneMock.mockResolvedValue({});
+
+      await repository.removeCompositionsFromCompositionsOpus(['comp1']);
+
+      expect(updateOneMock).toHaveBeenCalledWith(
+        { _id: LOOSE_OPUS_ID },
+        { $pull: { compositions: { $in: ['comp1'] } } }
+      );
+    });
+
+    it('unlinks opus by finding it and moving its compositions', async () => {
+      findByIdMock.mockReturnValue({ lean: jest.fn().mockResolvedValue({ compositions: ['comp-to-move'] }) });
+      findOneAndUpdateMock.mockReturnValue({
+        lean: jest.fn().mockResolvedValue({ _id: LOOSE_OPUS_ID })
+      });
+      updateOneMock.mockResolvedValue({});
+
+      await repository.unlink(MOCK_ID);
+
+      expect(findByIdMock).toHaveBeenCalledWith(MOCK_ID);
+      expect(findOneAndUpdateMock).toHaveBeenCalled();
+      expect(updateOneMock).toHaveBeenCalledWith(
+        { _id: LOOSE_OPUS_ID },
+        { $addToSet: { compositions: { $each: ['comp-to-move'] } } }
+      );
     });
   });
 });

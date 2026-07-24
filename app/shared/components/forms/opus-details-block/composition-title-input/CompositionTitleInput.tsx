@@ -2,7 +2,7 @@
 
 import { Autocomplete, Box, TextField, Typography } from '@mui/material';
 import { Plus } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { styles } from './CompositionTitleInput.styles';
 import { COMPOSITION_SEARCH_LABELS } from '~/constants/opus';
@@ -11,12 +11,13 @@ import { useSearchCompositions } from '~/shared/hooks/use-opuses/useOpuses';
 import type { OpusCompositionSuggestion } from '~/types/opus';
 
 const CREATE_OPTION_ID = '__create_new__';
-const MIN_SEARCH_LENGTH = 2;
+const NO_RESULTS_OPTION_ID = '__no_results__';
 
 interface CompositionOption {
   id: string;
   title: string;
   isCreate: boolean;
+  isNoResults?: boolean;
   suggestion?: OpusCompositionSuggestion;
 }
 
@@ -33,31 +34,49 @@ export default function CompositionTitleInput({
   onSelectSuggestion,
   onCreateNew
 }: Readonly<CompositionTitleInputProps>) {
-  const debouncedSearch = useDebounce(value.trim(), 300);
+  const [open, setOpen] = useState(false);
 
-  const { data } = useSearchCompositions(debouncedSearch, { skip: debouncedSearch.length < MIN_SEARCH_LENGTH });
+  const debouncedSearch = useDebounce(value.trim(), 300);
+  const { data } = useSearchCompositions(debouncedSearch);
+  const suggestions = useMemo(() => data?.searchCompositions ?? [], [data]);
 
   const options = useMemo<CompositionOption[]>(() => {
-    const suggestions = (data?.searchCompositions ?? []).map((suggestion, index) => ({
+    const suggestionOptions = suggestions.map((suggestion, index) => ({
       id: `suggestion-${index}-${suggestion.id}`,
-      title: suggestion.title?.uk ?? suggestion.title?.en ?? '',
+      title: suggestion.name?.uk ?? suggestion.name?.en ?? '',
       isCreate: false,
       suggestion
     }));
 
-    return [...suggestions, { id: CREATE_OPTION_ID, title: COMPOSITION_SEARCH_LABELS.createNew, isCreate: true }];
-  }, [data]);
+    const noResultsOption: CompositionOption[] =
+      debouncedSearch.length > 0 && suggestions.length === 0
+        ? [{ id: NO_RESULTS_OPTION_ID, title: COMPOSITION_SEARCH_LABELS.noOptions, isCreate: false, isNoResults: true }]
+        : [];
+
+    return [
+      ...noResultsOption,
+      ...suggestionOptions,
+      { id: CREATE_OPTION_ID, title: COMPOSITION_SEARCH_LABELS.createNew, isCreate: true }
+    ];
+  }, [suggestions, debouncedSearch]);
 
   return (
     <Autocomplete<CompositionOption, false, false, true>
       freeSolo
       fullWidth
+      open={open}
+      onOpen={() => setOpen(true)}
+      onClose={(_, reason) => {
+        if (reason !== 'selectOption') {
+          setOpen(false);
+        }
+      }}
       value={null}
       inputValue={value}
       options={options}
       filterOptions={(currentOptions) => currentOptions}
-      noOptionsText={COMPOSITION_SEARCH_LABELS.noOptions}
       getOptionLabel={(option) => (typeof option === 'string' ? option : option.title)}
+      getOptionDisabled={(option) => typeof option !== 'string' && !!option.isNoResults}
       onInputChange={(_, nextInput, reason) => {
         if (reason === 'input' || reason === 'clear') {
           onChangeText(nextInput);
@@ -68,18 +87,34 @@ export default function CompositionTitleInput({
           return;
         }
 
+        if (selected.isNoResults) {
+          return;
+        }
+
         if (selected.isCreate) {
+          setOpen(false);
           onCreateNew();
 
           return;
         }
 
         if (selected.suggestion) {
+          setOpen(false);
           onSelectSuggestion(selected.suggestion);
         }
       }}
       renderOption={(props, option) => {
         const { key: _key, ...rest } = props;
+
+        if (option.isNoResults) {
+          return (
+            <Box component="li" key={option.id} {...rest} sx={styles.option}>
+              <Typography sx={styles.optionText} color="text.secondary">
+                {option.title}
+              </Typography>
+            </Box>
+          );
+        }
 
         return (
           <Box component="li" key={option.id} {...rest} sx={option.isCreate ? styles.createOption : styles.option}>

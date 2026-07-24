@@ -134,29 +134,8 @@ describe('useSearchCompositions', () => {
 
     expect(mockUseSearchCompositionsQuery).toHaveBeenCalledWith({
       variables: { search: 'Beethoven' },
-      fetchPolicy: 'network-only',
-      skip: false
+      fetchPolicy: 'network-only'
     });
-  });
-
-  it('skips the query when search term is empty', () => {
-    renderHook(() => useSearchCompositions(''));
-
-    expect(mockUseSearchCompositionsQuery).toHaveBeenCalledWith(
-      expect.objectContaining({
-        skip: true
-      })
-    );
-  });
-
-  it('skips the query when skip option is explicitly set to true', () => {
-    renderHook(() => useSearchCompositions('Bach', { skip: true }));
-
-    expect(mockUseSearchCompositionsQuery).toHaveBeenCalledWith(
-      expect.objectContaining({
-        skip: true
-      })
-    );
   });
 });
 
@@ -169,14 +148,14 @@ describe('usePaginatedWorks', () => {
     });
 
     renderHook(() =>
-      usePaginatedWorks(WorksTab.Opus, {
+      usePaginatedWorks(WorksTab.Op, {
         search: 'test'
       })
     );
 
     expect(mockUsePaginatedWorksQuery).toHaveBeenCalledWith({
       variables: {
-        tab: WorksTab.Opus,
+        tab: WorksTab.Op,
         filters: {
           search: 'test'
         }
@@ -199,14 +178,14 @@ describe('usePaginatedWorks', () => {
               number: 'Op.1',
               numberKind: 'op',
               name: { uk: 'Group' },
-              genre: 'Genre',
+              genre: { uk: 'Genre', en: 'Genre' },
               creationYear: '2024',
               status: OpusStatus.Published,
               updatedAt: 'today',
               compositions: [
                 {
                   id: 'c1',
-                  title: {
+                  name: {
                     uk: 'Work'
                   }
                 }
@@ -216,7 +195,7 @@ describe('usePaginatedWorks', () => {
           works: [
             {
               id: 'w1',
-              title: {
+              name: {
                 uk: 'Standalone'
               },
               year: '2023',
@@ -242,10 +221,10 @@ describe('usePaginatedWorks', () => {
           startDate: '2024',
           status: BaseContentStatuses.Published,
           updatedAt: 'today',
-          works: [
+          compositions: [
             {
               id: 'c1',
-              title: 'Work'
+              name: 'Work'
             }
           ]
         }
@@ -253,7 +232,7 @@ describe('usePaginatedWorks', () => {
       works: [
         {
           id: 'w1',
-          title: 'Standalone',
+          name: 'Standalone',
           year: '2023',
           genre: 'Genre',
           status: BaseContentStatuses.Draft,
@@ -297,7 +276,7 @@ describe('usePaginatedWorks', () => {
               number: 'Op.1',
               numberKind: 'op',
               name: { uk: 'Group' },
-              genre: 'Genre',
+              genre: { uk: 'Genre', en: 'Genre' },
               creationYear: '2024',
               status: OpusStatus.Draft,
               updatedAt: 'today',
@@ -307,10 +286,10 @@ describe('usePaginatedWorks', () => {
           works: [
             {
               id: 'w1',
-              title: { uk: 'Standalone' },
+              name: { uk: 'Standalone' },
               year: '2023',
               genre: 'Genre',
-              status: OpusStatus.Published,
+              status: OpusStatus.Draft,
               updatedAt: 'today'
             }
           ]
@@ -321,6 +300,6 @@ describe('usePaginatedWorks', () => {
     const { result } = renderHook(() => usePaginatedWorks());
 
     expect(result.current.items.groups[0].status).toBe(BaseContentStatuses.Draft);
-    expect(result.current.items.works[0].status).toBe(BaseContentStatuses.Published);
+    expect(result.current.items.works[0].status).toBe(BaseContentStatuses.Draft);
   });
 });

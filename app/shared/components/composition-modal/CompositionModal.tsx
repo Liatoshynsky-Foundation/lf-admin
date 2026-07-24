@@ -222,7 +222,7 @@ const CompositionModal: React.FC<CompositionModalProps> = ({ isOpen, onClose, mo
         initial={uploadModalInitial}
         onClose={handleCloseUploadFlow}
         onApply={handleUploadApply}
-        renderers={dynamicRenderers} // <-- Now using the dynamic renderers!
+        renderers={dynamicRenderers}
         hideTabs={true}
       />
     </>

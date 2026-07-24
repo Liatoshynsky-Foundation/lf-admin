@@ -1,8 +1,9 @@
-import { LocalizedBoolean, LocalizedImage, LocalizedString } from '~/domain/entities/BaseContent';
-import { Composition } from '~/domain/entities/Composition';
-import { OpusStatus } from '~/types/enums/common.enums';
 
-export type OpusNumberKind = 'op' | 'woo';
+import { Composition } from './Composition';
+import { LocalizedBoolean, LocalizedImage, LocalizedString } from '~/domain/entities/BaseContent';
+import { OpusStatus } from '~/types/graphql/generated/graphql';
+
+export type OpusNumberKind = 'op' | 'sineop' |  'compositions';
 
 export type OpusDescription = {
   uk: string;
@@ -23,25 +24,23 @@ export type OpusGalleryItem = {
 };
 
 export type OpusPerformance = {
-  id?: string;
+  id: string;
   title?: LocalizedString | null;
   videoUrl?: string | null;
 };
 
 export type Opus = {
   id: string;
-  number: string;
-  title: LocalizedString;
-  releaseYear?: number | null;
-
+  number?: number;
   numberKind?: OpusNumberKind;
   name?: LocalizedString | null;
   additionalText?: string | null;
   creationYear?: string | null;
   endYear?: string | null;
   datesNote?: string | null;
-  genre?: string | null;
-
+  genre?: LocalizedString | null;
+  
+  title?: LocalizedString | null;
   adminTitle?: string | null;
   slug?: string;
   description?: OpusDescription | null;
@@ -56,12 +55,14 @@ export type Opus = {
   performancesTitle?: LocalizedString | null;
   performances?: OpusPerformance[];
 
-  status?: OpusStatus;
+  status: OpusStatus;
   meta?: { views: number };
   publishedAt?: string | null;
 
-  compositions?: Composition[];
+  compositions?: string[] | null;
 
   createdAt: string;
   updatedAt: string;
 };
+
+export type OpusFull = Omit<Opus, 'compositions'> & { compositions: Composition[]}

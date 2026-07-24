@@ -1,9 +1,15 @@
-import { mapFilters } from '../../helpers';
 import { PaginatedWorksResult, WorksFilter } from '../opusQuery';
-import { mappedCompositions, mappedGroups, totalPages } from './tabHandlersHelpers';
-import { CompositionFilters, ICompositionRepository } from '~/src/domain/repositories/compositionRepository';
-import { IOpusRepository, OpusFilters } from '~/src/domain/repositories/opusRepository';
-import { OpusNumberKind } from '~/types/graphql/generated/graphql';
+import {
+  attachCompositionsToGroups,
+  mappedCompositions,
+  mappedGroups,
+  totalCompositions,
+  totalGroups,
+  totalPages,
+} from './tabHandlersHelpers';
+import { ICompositionRepository } from '~/src/domain/repositories/compositionRepository';
+import { IOpusRepository } from '~/src/domain/repositories/opusRepository';
+import { OpusNumberKind, WorksTab } from '~/types/graphql/generated/graphql';
 
 export async function handleMixed(
   repo: IOpusRepository,
@@ -12,80 +18,84 @@ export async function handleMixed(
   page: number,
   pageSize: number
 ): Promise<PaginatedWorksResult> {
-  const opFilters: OpusFilters = {
-    ...mapFilters<OpusFilters>(filters),
-    numberKind: OpusNumberKind.Op
-  };
+  const opTotal = await totalGroups(repo, WorksTab.Op, filters);
+  const sineopTotal = await totalGroups(repo, WorksTab.Sineop, filters);
+  
+  const composOpuses = await repo.findAll({ numberKind: OpusNumberKind.Compositions });
+  const allCompositionIds = composOpuses[0]?.compositions ?? [];
+  const totalWorks = await totalCompositions(
+    compositionsRepo,
+    allCompositionIds,
+    filters
+  );
 
-  const wooFilters: OpusFilters = {
-    ...mapFilters<OpusFilters>(filters),
-    numberKind: OpusNumberKind.Woo
-  };
-
-  const compositionFilters: CompositionFilters = {
-    ...mapFilters<CompositionFilters>(filters),
-    isStandalone: true
-  };
-
-  const totalOp = await repo.count(opFilters);
-  const totalWoo = await repo.count(wooFilters);
-  const totalWorks = await compositionsRepo.count(compositionFilters);
-
-  const totalGroups = totalOp + totalWoo;
-  const totalItems = totalGroups + totalWorks;
-
+  const totalItems = opTotal + sineopTotal + totalWorks;
   const offset = (page - 1) * pageSize;
 
   const groups = [];
   const works = [];
-
   let remaining = pageSize;
+  let currentOffset = offset;
 
-  if (offset < totalOp && remaining > 0) {
-    const take = Math.min(remaining, totalOp - offset);
+  if (currentOffset < opTotal && remaining > 0) {
+    const take = Math.min(remaining, opTotal - currentOffset);
+  
+    const opGroups = await mappedGroups(repo, WorksTab.Op, filters, currentOffset, take);
 
-    const result = await mappedGroups(repo, compositionsRepo, {
-      ...opFilters,
-      skip: offset,
-      limit: take
-    });
+    const attached = await attachCompositionsToGroups(
+      opGroups,
+      compositionsRepo
+    );
 
-    groups.push(...result.groups);
+    groups.push(...attached);
     remaining -= take;
+    currentOffset = 0;
+  } else {
+    currentOffset -= opTotal;
   }
 
-  const wooOffset = Math.max(0, offset - totalOp);
+  if (currentOffset < sineopTotal && remaining > 0) {
+    const take = Math.min(remaining, sineopTotal - currentOffset);
+    
+    const sineopGroups = await mappedGroups(
+      repo,
+      WorksTab.Sineop,
+      filters,
+      currentOffset,
+      take
+    );
 
-  if (remaining > 0 && wooOffset < totalWoo) {
-    const take = Math.min(remaining, totalWoo - wooOffset);
+    const attached = await attachCompositionsToGroups(
+      sineopGroups,
+      compositionsRepo
+    );
 
-    const result = await mappedGroups(repo, compositionsRepo, {
-      ...wooFilters,
-      skip: wooOffset,
-      limit: take
-    });
-
-    groups.push(...result.groups);
+    groups.push(...attached);
     remaining -= take;
+    currentOffset = 0;
+  } else {
+    currentOffset -= sineopTotal;
   }
 
-  const worksOffset = Math.max(0, offset - totalGroups);
+  if (currentOffset < totalWorks && remaining > 0) {
+    const take = Math.min(remaining, totalWorks - currentOffset);
+    
+    const fetchedWorks = await mappedCompositions(
+      compositionsRepo,
+      allCompositionIds,
+      currentOffset,
+      take,
+      filters
+    );
 
-  if (remaining > 0) {
-    const result = await mappedCompositions(compositionsRepo, {
-      ...compositionFilters,
-      skip: worksOffset,
-      limit: remaining
-    });
-
-    works.push(...result.works);
+    works.push(...fetchedWorks);
   }
-
+  
   return {
     groups,
     works,
     total: totalItems,
     page,
-    totalPages: totalPages(totalItems, pageSize)
+    totalPages: totalPages(totalItems, pageSize),
   };
 }

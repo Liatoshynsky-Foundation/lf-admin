@@ -131,7 +131,7 @@ const mockUseGroupContent = {
   loading: false,
   error: undefined,
   groupData: {
-    titlePrefix: 'Op.',
+    titlePrefix: 'op.',
     groupNumber: '1',
     groupTitle: { uk: 'Тестова група', en: 'Test group' },
     genre: '',
@@ -145,7 +145,7 @@ const mockUseGroupContent = {
     photos: [],
     performancesTitle: '',
     performances: [],
-    works: []
+    compositions: []
   },
   isDirty: false,
   currentLanguage: 'UA',
@@ -302,7 +302,7 @@ describe('GroupContentView Component', () => {
       expect(mockUseGroupContent.handleFieldChange).toHaveBeenCalledWith('photos', []);
 
       fireEvent.click(screen.getByTestId('change-works'));
-      expect(mockUseGroupContent.handleFieldChange).toHaveBeenCalledWith('works', []);
+      expect(mockUseGroupContent.handleFieldChange).toHaveBeenCalledWith('compositions', []);
 
       fireEvent.click(screen.getByTestId('change-perf-title'));
       expect(mockUseGroupContent.handleFieldChange).toHaveBeenCalledWith('performancesTitle', 'New Title');

@@ -4,9 +4,11 @@ import { OpusStatus } from '~/types/enums/common.enums';
 
 export type CreateOpusInput = Omit<Opus, 'id' | 'createdAt' | 'updatedAt' | 'compositions' | 'meta'> & {
   meta?: Partial<Opus['meta']>;
+  compositions?: string[];
+  number: number;
 };
 
-export type UpdateOpusInput = Partial<Omit<Opus, 'id' | 'createdAt' | 'updatedAt' | 'compositions'>>;
+export type UpdateOpusInput = Partial<Omit<Opus, 'id' | 'createdAt' | 'updatedAt' >>;
 
 export type OpusFilters = FiltersInput & {
   statuses?: OpusStatus[];
@@ -15,5 +17,8 @@ export type OpusFilters = FiltersInput & {
 
 export interface IOpusRepository extends IBaseRepository<Opus, OpusFilters> {
   create(input: CreateOpusInput): Promise<Opus>;
-  findByNumber(number: string): Promise<Opus | null>;
+  findByNumber(number: number): Promise<Opus | null>;
+  unlink(opusId: string): Promise<void>;
+  moveCompositionsToCompositionsOpus(compositionIds: string[]): Promise<void>;
+  removeCompositionsFromCompositionsOpus(compositionIds: string[]): Promise<void>;
 }
