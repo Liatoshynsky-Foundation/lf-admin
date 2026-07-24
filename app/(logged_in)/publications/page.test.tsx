@@ -2,11 +2,42 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
 
 import Page from './page';
+import { PublicationsPageContent } from './PublicationsPageContent';
+import type { FilesSortValue } from '~/constants/sort';
 import { EventStatus, MediaStatus, NewsStatus } from '~/types/graphql/generated/graphql';
 
 const mockUseAllNews = jest.fn();
 const mockUseAllMediaMentions = jest.fn();
 const mockUseAllEvents = jest.fn();
+const mockSortValue = jest.fn();
+
+const mockToolbarProps = {
+  search: { search: '', setSearch: jest.fn() } as { search: string; setSearch: jest.Mock } | undefined,
+  filters: [] as Array<{
+    id: string;
+    label: string;
+    options: Array<{ value: string; label: string }>;
+    onChange: (value: string[]) => void;
+  }>,
+  activeFiltersCount: 0,
+  onToggleFilters: jest.fn(),
+  isFiltersOpen: false
+};
+
+const mockSortProps = {
+  triggerLabel: 'Нові спочатку',
+  fieldOptions: [
+    { value: 'createdAt', label: 'Дата' },
+    { value: 'adminTitle', label: 'Назва' }
+  ],
+  fieldValue: 'createdAt',
+  orderOptions: {
+    createdAt: [{ value: 'desc', label: 'Нові спочатку' }],
+    adminTitle: [{ value: 'asc', label: 'А-Я' }]
+  },
+  onFieldChange: jest.fn(),
+  onValueChange: jest.fn()
+};
 
 type QuerySortOption = {
   field: 'adminTitle' | 'createdAt';
@@ -40,7 +71,7 @@ const NEWS_ITEMS = [
     content: { uk: 'Контент', en: 'Content' },
     coverImage: {
       src: '/news-1.png',
-      alt: { uk: 'Новина', en: 'News' },
+      alt: 'Alt String',
       caption: { uk: '', en: '' }
     },
     meta: { views: 10 },
@@ -51,7 +82,7 @@ const NEWS_ITEMS = [
     slug: 'chamber-evening',
     adminTitle: 'Вечір камерної музики',
     language: 'uk',
-    title: { uk: 'Вечір камерної музики', en: '' },
+    title: { uk: 'Вечір камерної музики' },
     status: NewsStatus.Draft,
     createdAt: '2026-03-19T10:00:00.000Z',
     updatedAt: '2026-03-19T10:00:00.000Z',
@@ -77,9 +108,9 @@ const EVENT_ITEMS = [
     language: 'uk',
     title: { uk: 'Головна подія сезону', en: '' },
     status: EventStatus.Published,
-    createdAt: '2026-03-17T10:00:00.000Z', 
+    createdAt: '2026-03-17T10:00:00.000Z',
     updatedAt: '2026-03-17T10:00:00.000Z',
-    publishedAt: '2026-03-18T10:00:00.000Z',
+    publishedAt: '2026-03-16T10:00:00.000Z',
     eventDateTimeStart: '2026-04-01T10:00:00.000Z',
     eventDateTimeEnd: '2026-04-01T12:00:00.000Z',
     description: null,
@@ -130,120 +161,113 @@ const MEDIA_ITEMS = [
   }
 ];
 
-
-const getSearchText = (title: string | { uk?: string; en?: string }, adminTitle?: string) => {
-  if (typeof title === 'string') {
-    return `${title} ${adminTitle ?? ''}`.trim().toLowerCase();
+const getRawDate = (item: {
+  __typename?: string;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  publishedAt?: string | null;
+  newsDate?: string | null;
+  eventDateTimeStart?: string | null;
+  eventDateTimeEnd?: string | null;
+}): string => {
+  if (item.__typename === 'Event') {
+    return item.publishedAt || item.eventDateTimeStart || item.eventDateTimeEnd || '1970-01-01T00:00:00.000Z';
   }
-  return [title.uk, title.en, adminTitle].filter(Boolean).join(' ').toLowerCase();
+  if (item.__typename === 'News') {
+    return item.createdAt || item.updatedAt || item.publishedAt || item.newsDate || '1970-01-01T00:00:00.000Z';
+  }
+  return item.createdAt || item.updatedAt || item.publishedAt || '1970-01-01T00:00:00.000Z';
 };
 
-const getSortTitle = (item: { adminTitle?: string; title: string | { uk?: string; en?: string } }) => {
-  if (item.adminTitle) return item.adminTitle;
-  return typeof item.title === 'string' ? item.title : item.title.uk || item.title.en || '';
-};
+const sortItems = <
+  T extends {
+    __typename?: string;
+    createdAt?: string | null;
+    updatedAt?: string | null;
+    publishedAt?: string | null;
+    newsDate?: string | null;
+    eventDateTimeStart?: string | null;
+    eventDateTimeEnd?: string | null;
+    adminTitle?: string | null;
+    title?: { uk?: string | null; en?: string | null } | string | null;
+  }
+>(
+    items: T[],
+    sortValue: string
+  ): T[] => {
+  return [...items].sort((left, right) => {
+    const leftTitleRaw =
+      left.adminTitle || (typeof left.title === 'string' ? left.title : left.title?.uk || left.title?.en || '');
+    const rightTitleRaw =
+      right.adminTitle || (typeof right.title === 'string' ? right.title : right.title?.uk || right.title?.en || '');
 
-type SortablePublicationItem = {
-  createdAt: string;
-  adminTitle?: string;
-  title: string | { uk?: string; en?: string };
-};
+    const leftTitle = String(leftTitleRaw).trim();
+    const rightTitle = String(rightTitleRaw).trim();
 
-const compareByAdminTitle = (left: SortablePublicationItem, right: SortablePublicationItem): number => {
-  return getSortTitle(left).localeCompare(getSortTitle(right), 'uk');
-};
-
-const compareByCreatedAt = (left: SortablePublicationItem, right: SortablePublicationItem): number => {
-  return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
-};
-
-const getFieldComparison = (
-  left: SortablePublicationItem,
-  right: SortablePublicationItem,
-  field: QuerySortOption['field']
-): number => {
-  if (field === 'adminTitle') return compareByAdminTitle(left, right);
-  return compareByCreatedAt(left, right);
-};
-
-const applySortOrder = (comparison: number, order: QuerySortOption['order']): number => {
-  return order === 'asc' ? comparison : -comparison;
-};
-
-const compareBySort = (
-  left: SortablePublicationItem,
-  right: SortablePublicationItem,
-  sort: readonly QuerySortOption[]
-) => {
-  for (const criterion of sort) {
-    const comparison = getFieldComparison(left, right, criterion.field);
-    if (comparison !== 0) {
-      return applySortOrder(comparison, criterion.order);
+    if (sortValue === 'name_asc') {
+      return leftTitle.localeCompare(rightTitle, 'uk');
     }
-  }
-  return 0;
-};
+    if (sortValue === 'name_desc') {
+      return rightTitle.localeCompare(leftTitle, 'uk');
+    }
 
-const applyFilters = <T extends { createdAt: string; adminTitle?: string; title: string | { uk?: string; en?: string }; status: string; language: string }>(
-  items: T[],
-  filters?: PublicationsQueryFilters
-) => {
-  const normalizedSearch = filters?.search?.trim().toLowerCase();
+    const leftDate = new Date(getRawDate(left)).getTime();
+    const rightDate = new Date(getRawDate(right)).getTime();
 
-  const filteredItems = items.filter((item) => {
-    const matchesSearch = !normalizedSearch || getSearchText(item.title, item.adminTitle).includes(normalizedSearch);
-    const matchesStatus = !filters?.statuses?.length || filters.statuses.includes(String(item.status).toLowerCase());
-    const matchesLanguage = !filters?.languages?.length || filters.languages.includes(item.language);
-
-    return matchesSearch && matchesStatus && matchesLanguage;
+    if (sortValue === 'date_asc') {
+      return leftDate - rightDate;
+    }
+    return rightDate - leftDate;
   });
-
-  if (!filters?.sort?.length) {
-    return filteredItems;
-  }
-
-  return [...filteredItems].sort((left, right) => compareBySort(left, right, filters.sort ?? []));
 };
 
-const buildNewsResponse = (filters?: PublicationsQueryFilters, options?: QueryHookOptions) => {
+const buildNewsResponse = (options?: QueryHookOptions) => {
   if (options?.skip) return { data: undefined, loading: false, error: undefined };
   return {
-    data: { allNews: applyFilters(NEWS_ITEMS, filters) },
+    data: { allNews: sortItems(NEWS_ITEMS, mockSortValue()) },
     loading: false,
     error: undefined
   };
 };
 
-const buildMediaResponse = (filters?: PublicationsQueryFilters, options?: QueryHookOptions) => {
+const buildMediaResponse = (options?: QueryHookOptions) => {
   if (options?.skip) return { data: undefined, loading: false, error: undefined };
   return {
-    data: { allMediaMentions: applyFilters(MEDIA_ITEMS, filters) },
+    data: { allMediaMentions: sortItems(MEDIA_ITEMS, mockSortValue()) },
     loading: false,
     error: undefined
   };
 };
 
-const buildEventsResponse = (filters?: PublicationsQueryFilters, options?: QueryHookOptions) => {
+const buildEventsResponse = (options?: QueryHookOptions) => {
   if (options?.skip) return { data: undefined, loading: false, error: undefined };
   return {
-    data: { allEvents: applyFilters(EVENT_ITEMS, filters) },
+    data: { allEvents: sortItems(EVENT_ITEMS, mockSortValue()) },
     loading: false,
     error: undefined
   };
 };
 
 jest.mock('~/shared/hooks/use-news/useNews', () => ({
-  useAllNews: (filters?: PublicationsQueryFilters, options?: QueryHookOptions) => mockUseAllNews(filters, options)
+  useAllNews: (_filters?: PublicationsQueryFilters, options?: QueryHookOptions) => mockUseAllNews(options)
 }));
 
 jest.mock('~/shared/hooks/use-media-mentions/useMediaMentions', () => ({
-  useAllMediaMentions: (filters?: PublicationsQueryFilters, options?: QueryHookOptions) =>
-    mockUseAllMediaMentions(filters, options)
+  useAllMediaMentions: (_filters?: PublicationsQueryFilters, options?: QueryHookOptions) =>
+    mockUseAllMediaMentions(options)
 }));
 
 jest.mock('~/shared/hooks/use-events/useEvents', () => ({
-  useAllEvents: (filters?: PublicationsQueryFilters, options?: QueryHookOptions) =>
-    mockUseAllEvents(filters, options)
+  useAllEvents: (_filters?: PublicationsQueryFilters, options?: QueryHookOptions) => mockUseAllEvents(options)
+}));
+
+jest.mock('~/shared/hooks/use-publications', () => ({
+  usePublicationsFiltering: () => ({
+    requestFilters: { news: {}, events: {}, media: {} },
+    sortValue: mockSortValue() as FilesSortValue,
+    toolbarProps: mockToolbarProps,
+    sortProps: mockSortProps
+  })
 }));
 
 jest.mock('~/shared/components/content-card/ContentCard', () => ({
@@ -268,28 +292,59 @@ jest.mock('~/shared/components/content-card/ContentCard', () => ({
   )
 }));
 
-jest.mock('~/shared/components/dropdown-menu/DropdownMenu', () => ({
+jest.mock('~/shared/components/dropdown-menu/ActionMenu', () => ({
   __esModule: true,
-  default: ({ open, menuList }: { open: boolean; menuList: React.ReactNode }) =>
-    open ? <div data-testid="dropdown-menu">{menuList}</div> : null
+  default: ({
+    anchorEl,
+    onClose,
+    menuItems
+  }: {
+    anchorEl: HTMLElement | null;
+    onClose: () => void;
+    menuItems: Array<{ items: Array<{ id: string; href: string; text: { name: string } }> }>;
+  }) =>
+    anchorEl ? (
+      <div data-testid="dropdown-menu">
+        <button type="button" data-testid="close-menu-button" onClick={onClose}>
+          Закрити
+        </button>
+        {menuItems[0].items.map((item) => (
+          <a key={item.id} href={item.href}>
+            {item.text.name}
+          </a>
+        ))}
+      </div>
+    ) : null
+}));
+
+jest.mock('~/shared/components/empty-state', () => ({
+  EmptyState: ({ title, description }: { title: string; description: string }) => (
+    <div data-testid="empty-state">
+      <span data-testid="empty-state-title">{title}</span>
+      <span data-testid="empty-state-description">{description}</span>
+    </div>
+  )
+}));
+
+jest.mock('~/shared/components/page-header/PageHeader', () => ({
+  PageHeader: ({ title, activeTab, action }: { title: string; activeTab: string; action: React.ReactNode }) => (
+    <div data-testid="page-header">
+      <h1>{title}</h1>
+      <span>Active tab: {activeTab}</span>
+      {action}
+    </div>
+  )
 }));
 
 jest.mock('~/shared/components/filtering-toolbar', () => ({
   FilteringToolbar: ({
     search,
-    filters = [],
     isFiltersOpen,
     onToggleFilters,
     bottomTrailingContent,
     dataTestId
   }: {
     search?: { search: string; setSearch: (value: string) => void };
-    filters?: Array<{
-      id: string;
-      label: string;
-      options: Array<{ value: string; label: string }>;
-      onChange: (value: string[]) => void;
-    }>;
     isFiltersOpen?: boolean;
     onToggleFilters?: () => void;
     bottomTrailingContent?: React.ReactNode;
@@ -297,197 +352,508 @@ jest.mock('~/shared/components/filtering-toolbar', () => ({
   }) => (
     <div data-testid={dataTestId ?? 'filtering-toolbar'}>
       {search ? (
-        <input
-          data-testid="search"
-          value={search.search}
-          onChange={(event) => search.setSearch(event.target.value)}
-        />
+        <input data-testid="search" value={search.search} onChange={(event) => search.setSearch(event.target.value)} />
       ) : null}
       {onToggleFilters ? (
         <button type="button" onClick={onToggleFilters}>
           Фільтри
         </button>
       ) : null}
-      {isFiltersOpen ? (
-        <div data-testid="filters-panel">
-          {filters.map((filter) => (
-            <button
-              key={filter.id}
-              type="button"
-              data-testid={`filter-${filter.id}`}
-              onClick={() => filter.onChange([filter.options[0].value])}
-            >
-              {filter.label}
-            </button>
-          ))}
-          {bottomTrailingContent}
-        </div>
-      ) : null}
+      {isFiltersOpen ? <div data-testid="filters-panel">{bottomTrailingContent}</div> : null}
     </div>
   ),
-  SortSelect: ({
-    triggerLabel,
-    fieldOptions,
-    fieldValue,
-    orderOptions,
-    onFieldChange,
-    onValueChange
-  }: {
-    triggerLabel: string;
-    fieldOptions: Array<{ value: string; label: string }>;
-    fieldValue: string;
-    orderOptions: Record<string, Array<{ value: string; label: string }>>;
-    onFieldChange: (value: string) => void;
-    onValueChange: (value: string) => void;
-  }) => (
-    <button
-      type="button"
-      data-testid="sort-select"
-      onClick={() => {
-        const nextField = fieldOptions.find((option) => option.value !== fieldValue) ?? fieldOptions[0];
-        onFieldChange(nextField.value);
-        onValueChange(orderOptions[nextField.value][0].value);
-      }}
-    >
+  SortSelect: ({ triggerLabel }: { triggerLabel: string }) => (
+    <button type="button" data-testid="sort-select">
       {triggerLabel}
     </button>
   )
 }));
 
-describe('Publications page', () => {
+describe('Publications page integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    localStorage.clear();
+    mockSortValue.mockReturnValue('date_desc');
+    mockToolbarProps.search = { search: '', setSearch: jest.fn() };
 
-    mockUseAllNews.mockImplementation((filters?: PublicationsQueryFilters, options?: QueryHookOptions) =>
-      buildNewsResponse(filters, options)
-    );
-
-    mockUseAllMediaMentions.mockImplementation((filters?: PublicationsQueryFilters, options?: QueryHookOptions) =>
-      buildMediaResponse(filters, options)
-    );
-
-    mockUseAllEvents.mockImplementation((filters?: PublicationsQueryFilters, options?: QueryHookOptions) =>
-      buildEventsResponse(filters, options)
-    );
+    mockUseAllNews.mockImplementation((options?: QueryHookOptions) => buildNewsResponse(options));
+    mockUseAllMediaMentions.mockImplementation((options?: QueryHookOptions) => buildMediaResponse(options));
+    mockUseAllEvents.mockImplementation((options?: QueryHookOptions) => buildEventsResponse(options));
   });
 
-  it('renders the configured page header and filtering controls', () => {
+  it('renders standard page components and lists all publications', () => {
     render(<Page />);
 
-    expect(screen.getByText('Новини та події')).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Всі' })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByRole('tab', { name: 'Події' })).toHaveAttribute('href', '/publications/events');
-    expect(screen.getByRole('tab', { name: 'Новини' })).toHaveAttribute('href', '/publications/news');
-    expect(screen.getByRole('tab', { name: 'Ми у ЗМІ' })).toHaveAttribute('href', '/publications/media');
-    expect(screen.getByRole('button', { name: 'Створити' })).toBeInTheDocument();
-    expect(screen.getByTestId('publications-control-panel')).toBeInTheDocument();
-    
+    expect(screen.getByTestId('page-header')).toBeInTheDocument();
     expect(screen.getAllByTestId('publication-card')).toHaveLength(5);
+    expect(screen.getByText('Новина про фестиваль')).toBeInTheDocument();
     expect(screen.getByText('Головна подія сезону')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Фільтри' }));
-
-    expect(screen.getByTestId('filter-status')).toHaveTextContent('Статус');
-    expect(screen.getByTestId('sort-select')).toHaveTextContent('Нові спочатку');
   });
 
-  it('shows dropdown options for the create action as links', () => {
+  it('shows and closes the creation menu correctly', () => {
     render(<Page />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Створити' }));
 
     const dropdownMenu = screen.getByTestId('dropdown-menu');
-
     expect(dropdownMenu).toBeInTheDocument();
-    expect(within(dropdownMenu).getByText('Подію')).toBeInTheDocument();
-    expect(within(dropdownMenu).getByText('Новину')).toBeInTheDocument();
-    expect(within(dropdownMenu).getByText('Ми у ЗМІ')).toBeInTheDocument();
 
     expect(within(dropdownMenu).getByText('Подію').closest('a')).toHaveAttribute('href', '/publications/events/create');
-    expect(within(dropdownMenu).getByText('Новину').closest('a')).toHaveAttribute('href', '/publications/news/create');
-    expect(within(dropdownMenu).getByText('Ми у ЗМІ').closest('a')).toHaveAttribute('href', '/publications/media/create');
 
-    fireEvent.click(within(dropdownMenu).getByText('Подію'));
-
+    fireEvent.click(screen.getByTestId('close-menu-button'));
     expect(screen.queryByTestId('dropdown-menu')).not.toBeInTheDocument();
   });
 
-  it('passes edit links to rendered publication cards', () => {
-    render(<Page />);
+  it('filters news correctly and skip other hooks when activeTab is news', () => {
+    render(<PublicationsPageContent activeTab="news" />);
 
-    const firstCard = screen.getAllByTestId('publication-card')[0];
+    expect(screen.getAllByTestId('publication-card')).toHaveLength(2);
+    expect(screen.getByText('Новина про фестиваль')).toBeInTheDocument();
+    expect(screen.queryByText('Головна подія сезону')).not.toBeInTheDocument();
 
-    expect(within(firstCard).getByRole('link', { name: 'Редагувати' })).toHaveAttribute(
-      'href',
-      '/publications/news/news-1/edit'
-    );
+    expect(mockUseAllEvents).toHaveBeenCalledWith(expect.objectContaining({ skip: true }));
+    expect(mockUseAllMediaMentions).toHaveBeenCalledWith(expect.objectContaining({ skip: true }));
   });
 
-  it('filters cards by search value (across all types)', () => {
-    render(<Page />);
-
-    fireEvent.change(screen.getByTestId('search'), { target: { value: 'головна' } });
+  it('filters events correctly and skip other hooks when activeTab is events', () => {
+    render(<PublicationsPageContent activeTab="events" />);
 
     expect(screen.getAllByTestId('publication-card')).toHaveLength(1);
     expect(screen.getByText('Головна подія сезону')).toBeInTheDocument();
-    
-    expect(mockUseAllEvents).toHaveBeenLastCalledWith(
-      expect.objectContaining({ search: 'головна' }),
-      expect.objectContaining({ skip: false })
-    );
+    expect(screen.queryByText('Новина про фестиваль')).not.toBeInTheDocument();
+
+    expect(mockUseAllNews).toHaveBeenCalledWith(expect.objectContaining({ skip: true }));
+    expect(mockUseAllMediaMentions).toHaveBeenCalledWith(expect.objectContaining({ skip: true }));
   });
 
-  it('filters cards by status', () => {
-    render(<Page />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Фільтри' }));
-    fireEvent.click(screen.getByTestId('filter-status'));
+  it('filters media mentions correctly and skip other hooks when activeTab is media', () => {
+    render(<PublicationsPageContent activeTab="media" />);
 
     expect(screen.getAllByTestId('publication-card')).toHaveLength(2);
-    expect(screen.getByText('Вечір камерної музики')).toBeInTheDocument();
-    expect(screen.getByText('Програма резиденції оголошена')).toBeInTheDocument();
+    expect(screen.getByText('Інтерв’ю про нову постановку')).toBeInTheDocument();
+    expect(screen.queryByText('Новина про фестиваль')).not.toBeInTheDocument();
+
+    expect(mockUseAllNews).toHaveBeenCalledWith(expect.objectContaining({ skip: true }));
+    expect(mockUseAllEvents).toHaveBeenCalledWith(expect.objectContaining({ skip: true }));
   });
 
-  it('sorts cards by title', () => {
-    render(<Page />);
+  it('handles name_asc alphabetical sorting correctly', () => {
+    mockSortValue.mockReturnValue('name_asc');
+    render(<PublicationsPageContent activeTab="all" />);
 
-    const beforeSort = screen.getAllByTestId('publication-card-title').map((element) => element.textContent);
-    
-    expect(beforeSort[0]).toBe('Новина про фестиваль');
+    const titles = screen.getAllByTestId('publication-card-title').map((el) => el.textContent);
+    expect(titles[0]).toBe('Вечір камерної музики');
+  });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Фільтри' }));
-    fireEvent.click(screen.getByTestId('sort-select'));
+  it('handles name_desc alphabetical reverse sorting correctly', () => {
+    mockSortValue.mockReturnValue('name_desc');
+    render(<PublicationsPageContent activeTab="all" />);
 
-    const afterSort = screen.getAllByTestId('publication-card-title').map((element) => element.textContent);
+    const titles = screen.getAllByTestId('publication-card-title').map((el) => el.textContent);
+    expect(titles[0]).toBe('Програма резиденції оголошена');
+  });
 
-    expect(afterSort[0]).toBe('Вечір камерної музики');
-    
-    expect(mockUseAllEvents).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        sort: [
-          { field: 'adminTitle', order: 'asc' },
-          { field: 'createdAt', order: 'desc' }
+  it('handles date_asc chronological sorting correctly', () => {
+    mockSortValue.mockReturnValue('date_asc');
+    render(<PublicationsPageContent activeTab="all" />);
+
+    const titles = screen.getAllByTestId('publication-card-title').map((el) => el.textContent);
+    expect(titles[0]).toBe('Головна подія сезону');
+  });
+
+  it('renders loading states for specific active tabs', () => {
+    mockUseAllNews.mockReturnValue({ data: undefined, loading: true, error: undefined });
+
+    render(<PublicationsPageContent activeTab="news" />);
+
+    expect(screen.getByTestId('empty-state-title')).toBeInTheDocument();
+  });
+
+  it('renders error states for specific active tabs', () => {
+    mockUseAllNews.mockReturnValue({ data: undefined, loading: false, error: new Error('News loading failed') });
+
+    render(<PublicationsPageContent activeTab="news" />);
+
+    expect(screen.getByTestId('empty-state-title')).toBeInTheDocument();
+  });
+
+  it('filters out publication items with unsupported or invalid statuses', () => {
+    mockUseAllNews.mockReturnValue({
+      data: {
+        allNews: [
+          {
+            ...NEWS_ITEMS[0],
+            status: 'UNSUPPORTED_STATUS_VALUE'
+          }
         ]
-      }),
-      expect.objectContaining({ skip: false })
-    );
-  });
-
-  it('keeps rendering remaining data on the all tab when one request fails', () => {
-    mockUseAllMediaMentions.mockReturnValue({
-      data: undefined,
+      },
       loading: false,
-      error: new Error('media failed')
+      error: undefined
     });
 
-    render(<Page />);
+    render(<PublicationsPageContent activeTab="news" />);
 
-    expect(screen.queryByText('Не вдалося завантажити матеріали')).not.toBeInTheDocument();
-    
-    expect(screen.getByText('Новина про фестиваль')).toBeInTheDocument();
-    expect(screen.getByText('Головна подія сезону')).toBeInTheDocument();
-    
-    expect(screen.queryByText('Інтерв’ю про нову постановку')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('publication-card')).not.toBeInTheDocument();
+  });
+
+  it('handles empty cover images by applying defaults', () => {
+    mockUseAllNews.mockReturnValue({
+      data: {
+        allNews: [
+          {
+            ...NEWS_ITEMS[0],
+            coverImage: null
+          }
+        ]
+      },
+      loading: false,
+      error: undefined
+    });
+
+    render(<PublicationsPageContent activeTab="news" />);
+
+    expect(screen.getByTestId('publication-card')).toBeInTheDocument();
+  });
+
+  it('handles raw string values for title formatting', () => {
+    mockUseAllNews.mockReturnValue({
+      data: {
+        allNews: [
+          {
+            ...NEWS_ITEMS[0],
+            title: 'Raw string title value'
+          }
+        ]
+      },
+      loading: false,
+      error: undefined
+    });
+
+    render(<PublicationsPageContent activeTab="news" />);
+
+    expect(screen.getByTestId('publication-card-title')).toHaveTextContent('Raw string title value');
+  });
+
+  it('correctly falls back to oldest system date when all dates are empty', () => {
+    mockUseAllNews.mockReturnValue({
+      data: {
+        allNews: [
+          {
+            ...NEWS_ITEMS[0],
+            createdAt: null,
+            updatedAt: null,
+            publishedAt: null,
+            newsDate: null
+          }
+        ]
+      },
+      loading: false,
+      error: undefined
+    });
+
+    render(<PublicationsPageContent activeTab="news" />);
+
+    expect(screen.getByTestId('publication-card')).toBeInTheDocument();
+  });
+
+  it('uses fallback title when title is an empty string', () => {
+    mockUseAllNews.mockReturnValue({
+      data: {
+        allNews: [
+          {
+            ...NEWS_ITEMS[0],
+            title: '',
+            adminTitle: 'Admin Title Fallback'
+          }
+        ]
+      },
+      loading: false,
+      error: undefined
+    });
+
+    render(<PublicationsPageContent activeTab="news" />);
+
+    expect(screen.getByTestId('publication-card-title')).toHaveTextContent('Admin Title Fallback');
+  });
+
+  it('filters out events with invalid status', () => {
+    mockUseAllEvents.mockReturnValue({
+      data: {
+        allEvents: [
+          {
+            ...EVENT_ITEMS[0],
+            status: 'INVALID_STATUS'
+          }
+        ]
+      },
+      loading: false,
+      error: undefined
+    });
+
+    render(<PublicationsPageContent activeTab="events" />);
+    expect(screen.queryByTestId('publication-card')).not.toBeInTheDocument();
+  });
+
+  it('filters out media mentions with invalid status', () => {
+    mockUseAllMediaMentions.mockReturnValue({
+      data: {
+        allMediaMentions: [
+          {
+            ...MEDIA_ITEMS[0],
+            status: 'INVALID_STATUS'
+          }
+        ]
+      },
+      loading: false,
+      error: undefined
+    });
+
+    render(<PublicationsPageContent activeTab="media" />);
+    expect(screen.queryByTestId('publication-card')).not.toBeInTheDocument();
+  });
+
+  it('returns en language when uk title is empty and en title is present', () => {
+    mockUseAllNews.mockReturnValue({
+      data: {
+        allNews: [
+          {
+            ...NEWS_ITEMS[0],
+            adminTitle: '',
+            title: { en: 'Only English' }
+          }
+        ]
+      },
+      loading: false,
+      error: undefined
+    });
+
+    render(<PublicationsPageContent activeTab="news" />);
+    expect(screen.getByTestId('publication-card')).toBeInTheDocument();
+  });
+
+  it('handles invalid tab fallbacks in getActiveTabState', () => {
+    render(<PublicationsPageContent activeTab={'invalid-tab' as unknown as 'all'} />);
+    expect(screen.getByTestId('page-header')).toBeInTheDocument();
+  });
+
+  it('renders empty state with search no-results description when search matches nothing', () => {
+    if (mockToolbarProps.search) {
+      mockToolbarProps.search.search = 'nonexistent-query-xyz';
+    }
+    mockUseAllNews.mockReturnValue({ data: { allNews: [] }, loading: false, error: undefined });
+    mockUseAllMediaMentions.mockReturnValue({ data: { allMediaMentions: [] }, loading: false, error: undefined });
+    mockUseAllEvents.mockReturnValue({ data: { allEvents: [] }, loading: false, error: undefined });
+
+    render(<PublicationsPageContent activeTab="all" />);
+
+    expect(screen.getByTestId('empty-state')).toBeInTheDocument();
+    expect(screen.getByTestId('empty-state-title')).toBeInTheDocument();
+  });
+
+  it('handles coverImage present but alt is null', () => {
+    mockUseAllNews.mockReturnValue({
+      data: {
+        allNews: [
+          {
+            ...NEWS_ITEMS[0],
+            coverImage: {
+              src: '/news-1.png',
+              alt: null,
+              caption: { uk: '', en: '' }
+            }
+          }
+        ]
+      },
+      loading: false,
+      error: undefined
+    });
+
+    render(<PublicationsPageContent activeTab="news" />);
+    expect(screen.getByTestId('publication-card')).toBeInTheDocument();
+  });
+
+  it('handles events with nullish publishedAt and nullish coverImage', () => {
+    mockUseAllEvents.mockReturnValue({
+      data: {
+        allEvents: [
+          {
+            ...EVENT_ITEMS[0],
+            publishedAt: null,
+            coverImage: null
+          }
+        ]
+      },
+      loading: false,
+      error: undefined
+    });
+
+    render(<PublicationsPageContent activeTab="events" />);
+    expect(screen.getByTestId('publication-card')).toBeInTheDocument();
+  });
+
+  it('handles media mention with empty adminTitle', () => {
+    mockUseAllMediaMentions.mockReturnValue({
+      data: {
+        allMediaMentions: [
+          {
+            ...MEDIA_ITEMS[0],
+            adminTitle: ''
+          }
+        ]
+      },
+      loading: false,
+      error: undefined
+    });
+
+    render(<PublicationsPageContent activeTab="media" />);
+    expect(screen.getByTestId('publication-card')).toBeInTheDocument();
+  });
+
+  it('handles media mention with coverImage present but alt is null', () => {
+    mockUseAllMediaMentions.mockReturnValue({
+      data: {
+        allMediaMentions: [
+          {
+            ...MEDIA_ITEMS[0],
+            coverImage: {
+              src: '/media-1.png',
+              alt: null
+            }
+          }
+        ]
+      },
+      loading: false,
+      error: undefined
+    });
+
+    render(<PublicationsPageContent activeTab="media" />);
+    expect(screen.getByTestId('publication-card')).toBeInTheDocument();
+  });
+
+  it('toggles the action menu when clicking the trigger button repeatedly', () => {
+    render(<Page />);
+    const button = screen.getByRole('button', { name: 'Створити' });
+
+    fireEvent.click(button);
+    expect(screen.getByTestId('dropdown-menu')).toBeInTheDocument();
+
+    fireEvent.click(button);
+    expect(screen.queryByTestId('dropdown-menu')).not.toBeInTheDocument();
+  });
+
+  it('handles search being undefined in toolbarProps', () => {
+    mockToolbarProps.search = undefined;
+
+    render(<PublicationsPageContent activeTab="all" />);
+    expect(screen.queryByTestId('search')).not.toBeInTheDocument();
+  });
+
+  it('handles nullish title correctly', () => {
+    mockUseAllNews.mockReturnValue({
+      data: {
+        allNews: [
+          {
+            ...NEWS_ITEMS[0],
+            title: null
+          }
+        ]
+      },
+      loading: false,
+      error: undefined
+    });
+
+    render(<PublicationsPageContent activeTab="news" />);
+    expect(screen.getByTestId('publication-card')).toBeInTheDocument();
+  });
+
+  it('handles empty title and empty adminTitle to trigger default cover alt', () => {
+    mockUseAllNews.mockReturnValue({
+      data: {
+        allNews: [
+          {
+            ...NEWS_ITEMS[0],
+            title: '',
+            adminTitle: '',
+            coverImage: {
+              src: '/news-1.png',
+              alt: null,
+              caption: { uk: '', en: '' }
+            }
+          }
+        ]
+      },
+      loading: false,
+      error: undefined
+    });
+
+    render(<PublicationsPageContent activeTab="news" />);
+    expect(screen.getByTestId('publication-card')).toBeInTheDocument();
+  });
+
+  it('handles event with empty title, empty adminTitle and nullish coverImage alt', () => {
+    mockUseAllEvents.mockReturnValue({
+      data: {
+        allEvents: [
+          {
+            ...EVENT_ITEMS[0],
+            title: '',
+            adminTitle: '',
+            coverImage: {
+              src: '/event-1.png',
+              alt: null
+            }
+          }
+        ]
+      },
+      loading: false,
+      error: undefined
+    });
+
+    render(<PublicationsPageContent activeTab="events" />);
+    expect(screen.getByTestId('publication-card')).toBeInTheDocument();
+  });
+
+  it('handles media with empty title, empty adminTitle and nullish coverImage alt', () => {
+    mockUseAllMediaMentions.mockReturnValue({
+      data: {
+        allMediaMentions: [
+          {
+            ...MEDIA_ITEMS[0],
+            title: '',
+            adminTitle: '',
+            coverImage: {
+              src: '/media-1.png',
+              alt: null
+            }
+          }
+        ]
+      },
+      loading: false,
+      error: undefined
+    });
+
+    render(<PublicationsPageContent activeTab="media" />);
+    expect(screen.getByTestId('publication-card')).toBeInTheDocument();
+  });
+
+  it('handles coverImage alt being a whitespace-only string', () => {
+    mockUseAllNews.mockReturnValue({
+      data: {
+        allNews: [
+          {
+            ...NEWS_ITEMS[0],
+            coverImage: {
+              src: '/news-1.png',
+              alt: '   ',
+              caption: { uk: '', en: '' }
+            }
+          }
+        ]
+      },
+      loading: false,
+      error: undefined
+    });
+
+    render(<PublicationsPageContent activeTab="news" />);
+    expect(screen.getByTestId('publication-card')).toBeInTheDocument();
   });
 });

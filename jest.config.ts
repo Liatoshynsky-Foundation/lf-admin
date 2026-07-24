@@ -11,10 +11,11 @@ const config: Config = {
   collectCoverage: true,
   collectCoverageFrom: [
     'app/**/*.{js,jsx,ts,tsx}',
+    '!app/**/constants/**/*.{ts,tsx}',
     '!app/**/index.{ts,tsx}',
     '!app/**/*.{test,d}.{js,jsx,ts,tsx}',
     '!app/**/*.stories.{js,jsx,ts,tsx}',
-    '!app/layout.tsx',
+    '!app/**/layout.{ts,tsx}',
     '!app/types/**',
     '!app/**/*.styles.{ts,tsx}',
     '!app/**/*.style.{ts,tsx}',

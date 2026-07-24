@@ -143,7 +143,7 @@ const getPublicationSearchOptions = (items: PublicationCardItem[]) => {
   return Array.from(uniqueOptions.values());
 };
 
-const getPrimaryText = (value: MaybeLocalizedValue, fallback = ''): string => {
+const getPrimaryText = (value: MaybeLocalizedValue, fallback: string): string => {
   if (typeof value === 'string') {
     return value || fallback;
   }
@@ -151,7 +151,7 @@ const getPrimaryText = (value: MaybeLocalizedValue, fallback = ''): string => {
   return value?.uk || value?.en || fallback;
 };
 
-const toLocalizedCardValue = (value: MaybeLocalizedValue, fallback = ''): Partial<LocalizedString> => {
+const toLocalizedCardValue = (value: MaybeLocalizedValue, fallback: string): Partial<LocalizedString> => {
   if (typeof value === 'string') {
     return {
       uk: value || fallback,
@@ -165,7 +165,7 @@ const toLocalizedCardValue = (value: MaybeLocalizedValue, fallback = ''): Partia
   };
 };
 
-const toLocalizedString = (value: MaybeLocalizedValue, fallback = ''): LocalizedString => {
+const toLocalizedString = (value: MaybeLocalizedValue, fallback: string): LocalizedString => {
   if (typeof value === 'string') {
     const localizedValue = value.trim() || fallback;
 

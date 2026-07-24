@@ -12,4 +12,9 @@ describe('validateEmail', () => {
   it('returns null if email is valid', () => {
     expect(validateEmail('test@example.com')).toBeNull();
   });
+
+  it('returns error if email exceeds 254 characters', () => {
+    const longEmail = `${'a'.repeat(245)}@example.com`;
+    expect(validateEmail(longEmail)).toBe('Електронна пошта занадто довга');
+  });
 });
