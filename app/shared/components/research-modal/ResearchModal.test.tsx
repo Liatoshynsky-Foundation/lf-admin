@@ -51,35 +51,7 @@ describe('ResearchModal', () => {
     expect(screen.getByDisplayValue('Автор роботи')).toBeInTheDocument();
   });
 
-  it('shows a success toast and closes the modal on save', async () => {
-    render(<ResearchModal isOpen onClose={onClose} />);
-
-    fireEvent.change(screen.getByLabelText(/бібліографічний опис/i), { target: { value: 'Опис' } });
-    fireEvent.change(screen.getByLabelText(/автор/i), { target: { value: 'Автор' } });
-    fireEvent.change(screen.getByLabelText(/дати справи/i), { target: { value: '1970' } });
-    fireEvent.change(screen.getByLabelText(/ключові слова/i), { target: { value: 'слово' } });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
-
-    await screen.findByText('Нова робота'); // await a tick for the async handler
-
-    expect(toast.success).toHaveBeenCalledWith('Роботу успішно додано!');
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
-  it('calls onClose when Cancel is clicked', () => {
-    render(<ResearchModal isOpen onClose={onClose} />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Скасувати' }));
-
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
-  it('shows an error toast when saving fails', async () => {
-    (toast.success as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('Toast failed');
-    });
-
+  it('shows a "not implemented" message and keeps the modal open on save', async () => {
     render(<ResearchModal isOpen onClose={onClose} />);
 
     fireEvent.change(screen.getByLabelText(/бібліографічний опис/i), { target: { value: 'Опис' } });
@@ -90,12 +62,20 @@ describe('ResearchModal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
 
     await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Помилка при збереженні роботи'))
+      expect(toast.error).toHaveBeenCalledWith('Збереження ще не реалізовано. Дані не будуть збережені.')
     );
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  it('shows the update success toast when saving in edit mode', async () => {
+  it('calls onClose when Cancel is clicked', () => {
+    render(<ResearchModal isOpen onClose={onClose} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Скасувати' }));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the same "not implemented" message in edit mode', async () => {
     render(
       <ResearchModal
         isOpen
@@ -107,6 +87,8 @@ describe('ResearchModal', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
 
-    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Роботу успішно оновлено!'));
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith('Збереження ще не реалізовано. Дані не будуть збережені.')
+    );
   });
 });
