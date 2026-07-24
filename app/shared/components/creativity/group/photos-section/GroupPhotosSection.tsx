@@ -1,9 +1,9 @@
-import { Box, Divider,IconButton, Typography } from '@mui/material';
+import { Box, Divider, IconButton, Typography } from '@mui/material';
 
 import { styles } from './GroupPhotosSection.styles';
 import { useGroupPhotos } from './useGroupPhotos';
 import { GroupPhoto } from '~/constants/creativity';
-import { EditorLanguage } from '~/constants/publications';
+import { CROP_RATIOS,EditorLanguage  } from '~/constants/publications';
 import PlusIcon from '~/public/icons/plus.svg';
 import TrashIcon from '~/public/icons/trash.svg';
 import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
@@ -24,6 +24,8 @@ export const GroupPhotosSection = ({ photos, currentLanguage, errors, onChange }
     useGroupPhotos(photos, onChange);
 
   const langKey = currentLanguage === 'UA' ? 'uk' : 'en';
+
+  const isMaxPhotosReached = photos.length >= 20;
 
   return (
     <>
@@ -93,6 +95,7 @@ export const GroupPhotosSection = ({ photos, currentLanguage, errors, onChange }
                       });
                     }}
                     initialCrop={photo.crop}
+                    aspectRatio={CROP_RATIOS.GROUP_PHOTO}
                     onChangeImage={(url: string, crop?: MediaModalResult['crop']) => {
                       handleUpdatePhoto(photo.id || '', {
                         src: url,
@@ -142,7 +145,13 @@ export const GroupPhotosSection = ({ photos, currentLanguage, errors, onChange }
           })}
         </Box>
         <Box sx={styles.addBtnWrapper}>
-          <Button variant="outlined" color="primary" startIcon={<PlusIcon />} onClick={handleAddPhoto}>
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<PlusIcon />}
+            onClick={handleAddPhoto}
+            disabled={isMaxPhotosReached}
+          >
             Додати пункт
           </Button>
         </Box>

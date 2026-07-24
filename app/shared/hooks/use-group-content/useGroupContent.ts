@@ -104,10 +104,7 @@ export const useGroupContent = (id: string) => {
         },
         creationYear: fetchedOpus.creationYear ? String(fetchedOpus.creationYear) : '',
         endYear: fetchedOpus.endYear ? String(fetchedOpus.endYear) : '',
-        dateAdditionalText: {
-          uk: fetchedOpus.datesNote ?? '',
-          en: ''
-        },
+        dateAdditionalText: fetchedOpus.datesNote ?? '',
         status: fetchedOpus.status || 'draft',
         parts: {
           uk: fetchedOpus.parts?.uk ?? '',
@@ -198,7 +195,7 @@ export const useGroupContent = (id: string) => {
         },
         creationYear: groupData.creationYear ? String(groupData.creationYear) : null,
         endYear: groupData.endYear ? String(groupData.endYear) : null,
-        datesNote: groupData.dateAdditionalText?.uk ? String(groupData.dateAdditionalText.uk).trim() : null,
+        datesNote: groupData.dateAdditionalText ? String(groupData.dateAdditionalText).trim() : null,
         parts: {
           uk: String(groupData.parts?.uk || ''),
           en: String(groupData.parts?.en || '')
@@ -228,19 +225,38 @@ export const useGroupContent = (id: string) => {
               publishDate: note.publishDate
             }))
         })),
-        gallery: (groupData.photos || []).map((photo) => ({
-          id: photo.id?.startsWith('photo-') || photo.id?.includes('-') ? undefined : photo.id,
-          src: photo.src ? String(photo.src) : '',
-          description: {
-            uk: (photo.caption?.uk || '').trim(),
-            en: (photo.caption?.en || '').trim()
-          },
-          altText: {
-            uk: (photo.altText?.uk || '').trim(),
-            en: (photo.altText?.en || '').trim()
-          },
-          crop: photo.crop || null
-        })),
+        gallery: (groupData.photos || []).map((photo) => {
+          const cropData = photo.crop as {
+            rect?: { x: number; y: number; width: number; height: number };
+            x?: number;
+            y?: number;
+            width?: number;
+            height?: number;
+          } | null;
+
+          const mappedCrop = cropData
+            ? {
+              x: cropData.rect?.x ?? cropData.x ?? 0,
+              y: cropData.rect?.y ?? cropData.y ?? 0,
+              width: cropData.rect?.width ?? cropData.width ?? 0,
+              height: cropData.rect?.height ?? cropData.height ?? 0
+            }
+            : null;
+
+          return {
+            id: photo.id?.startsWith('photo-') || photo.id?.includes('-') ? undefined : photo.id,
+            src: photo.src ? String(photo.src) : '',
+            description: {
+              uk: (photo.caption?.uk || '').trim(),
+              en: (photo.caption?.en || '').trim()
+            },
+            altText: {
+              uk: (photo.altText?.uk || '').trim(),
+              en: (photo.altText?.en || '').trim()
+            },
+            crop: mappedCrop
+          };
+        }),
         performancesTitle: {
           uk: String(groupData.performancesTitle || ''),
           en: String(groupData.performancesTitle || '')
@@ -294,16 +310,16 @@ export const useGroupContent = (id: string) => {
     const groupTitleEn = String(groupData?.groupTitle?.en || '').trim();
 
     if (!groupTitleUk) {
-      newErrors.groupTitle = OPUS_VALIDATION_MESSAGES.nameRequired;
+      newErrors['groupTitle.uk'] = OPUS_VALIDATION_MESSAGES.nameRequired;
       setCurrentLanguage('UA');
     } else if (groupTitleUk.length < OPUS_FIELD_LIMITS.name.min) {
-      newErrors.groupTitle = OPUS_VALIDATION_MESSAGES.nameTooShort;
+      newErrors['groupTitle.uk'] = OPUS_VALIDATION_MESSAGES.nameTooShort;
       setCurrentLanguage('UA');
     } else if (!groupTitleEn) {
-      newErrors.groupTitle = OPUS_VALIDATION_MESSAGES.nameRequired;
+      newErrors['groupTitle.en'] = OPUS_VALIDATION_MESSAGES.nameRequired;
       setCurrentLanguage('EN');
     } else if (groupTitleEn.length < OPUS_FIELD_LIMITS.name.min) {
-      newErrors.groupTitle = OPUS_VALIDATION_MESSAGES.nameTooShort;
+      newErrors['groupTitle.en'] = OPUS_VALIDATION_MESSAGES.nameTooShort;
       setCurrentLanguage('EN');
     }
 

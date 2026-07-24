@@ -70,3 +70,10 @@ input SortOptions {
   field: String!
   order: SortOrder!
 }
+
+input CropRectInput {
+  x: Float!
+  y: Float!
+  width: Float!
+  height: Float!
+}
