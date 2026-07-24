@@ -8,12 +8,6 @@ export const styles: Record<string, SxProps<Theme>> = {
       borderRadius: '20px',
       p: '24px',
       width: 713
-    },
-    '& .MuiInputLabel-root': {
-      transform: 'translate(14px, 13px) scale(1)'
-    },
-    '& .MuiInputLabel-shrink': {
-      transform: 'translate(14px, -9px) scale(0.75)'
     }
   },
   dialogTitle: {
