@@ -17,6 +17,7 @@ import {
   type SortFieldValue
 } from '~/constants/sort';
 import type { FilteringToolbarProps, SortSelectProps } from '~/shared/components/filtering-toolbar';
+import { useDebounce } from '~/shared/hooks/use-debounce/useDebounce';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import {
   ContentLanguage,
@@ -91,9 +92,16 @@ export function useWorksFiltering(): Readonly<{
 }> {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [search, setSearch] = useState('');
+  
+  const debouncedSearch = useDebounce(search.trim(), 300);
+
   const [statusFilters, setStatusFilters] = useState<WorksStatusValue[]>([]);
   const [languageFilters, setLanguageFilters] = useState<WorksLanguageValue[]>([]);
-  const [sortValue, setSortValue] = useState<FilesSortValue>('date_desc');
+  const [sortValue, setSortValue] = useState<FilesSortValue>(() => {
+    if (typeof window === 'undefined') return 'date_desc';
+    const saved = localStorage.getItem(SORT_STORAGE_KEY);
+    return saved && isFilesSortValue(saved) ? saved : 'date_desc';
+  });
 
   useEffect(() => {
     const saved = localStorage.getItem(SORT_STORAGE_KEY);
@@ -186,12 +194,12 @@ export function useWorksFiltering(): Readonly<{
 
   const requestFilters = useMemo<Omit<WorksFiltersInput, 'limit' | 'skip'>>(
     () => ({
-      search: search.trim() || undefined,
+      search: debouncedSearch || undefined,
       languages: languageFilters.length ? languageFilters.map(mapWorksLanguage) : undefined,
       statuses: statusFilters.length ? statusFilters.map(mapWorksStatus) : undefined,
       sort: mapWorksSort(sortValue)
     }),
-    [languageFilters, search, statusFilters, sortValue]
+    [languageFilters, debouncedSearch, statusFilters, sortValue]
   );
 
   return {

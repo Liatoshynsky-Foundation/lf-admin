@@ -42,25 +42,25 @@ export function usePaginatedWorks(tab?: WorksTab | null, filters?: WorksFiltersI
   const groups: GroupRowData[] = (data?.paginatedWorks.groups ?? []).map((g) => ({
     id: g.id,
     number: g.number,
-    numberKind: g.numberKind === 'op' ? 'op' : 'bo',
+    numberKind: g.numberKind === 'op' ? 'op' : 'sineop',
     name: g.name.uk,
-    genre: g.genre ?? '',
+    genre: g.genre?.uk ?? '',
     startDate: g.creationYear,
     status: g.status === OpusStatus.Published ? BaseContentStatuses.Published : BaseContentStatuses.Draft,
     updatedAt: g.updatedAt,
-    works:
+    compositions:
       g.compositions?.map((c) => ({
         id: c.id,
-        title: c.title.uk
+        name: c.name.uk
       })) ?? []
   }));
 
   const works: IndividualWork[] = (data?.paginatedWorks.works ?? []).map((w) => ({
     id: w.id,
-    title: w.title.uk,
+    name: w.name.uk,
     year: w.year,
     genre: w.genre,
-    status: w.status === OpusStatus.Published ? BaseContentStatuses.Published : BaseContentStatuses.Draft,
+    status: BaseContentStatuses.Draft,
     updatedAt: w.updatedAt
   }));
 
@@ -73,8 +73,11 @@ export function usePaginatedWorks(tab?: WorksTab | null, filters?: WorksFiltersI
   };
 }
 
-export const useSearchCompositions = (search: string, options: QueryHookOptions = {}) =>
-  useSearchCompositionsQuery({ variables: { search }, fetchPolicy: 'network-only', skip: options.skip || !search });
+export const useSearchCompositions = (search: string) =>
+  useSearchCompositionsQuery({
+    variables: { search },
+    fetchPolicy: 'network-only'
+  });
 
 export const useCreateOpus = () => {
   const [mutate, meta] = useCreateOpusMutation();

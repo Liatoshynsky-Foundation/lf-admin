@@ -22,14 +22,14 @@ jest.mock('~/shared/hooks/use-opuses/useOpuses', () => ({
 
 const fullFetchedOpus: FetchedOpusData = {
   id: 'opus-1',
-  numberKind: 'woo',
-  number: 'Op. 42',
+  numberKind: 'sineop',
+  number: 42,
   name: { uk: 'Симфонія', en: 'Symphony' },
   additionalText: 'Примітка',
   creationYear: '1921',
   endYear: '1923',
   datesNote: 'Уточнення',
-  genre: 'Симфонія',
+  genre: { uk: 'Симфонія', en: 'Symphony' },
   title: { uk: 'UK title', en: 'EN title' },
   description: { uk: 'UK desc', en: 'EN desc' },
   keywords: { uk: 'UK kw', en: 'EN kw' },
@@ -42,7 +42,7 @@ const fullFetchedOpus: FetchedOpusData = {
   compositions: [
     {
       id: 'comp-1',
-      title: { uk: 'Твір 1' },
+      name: { uk: 'Твір 1' },
       genre: 'Аллегро',
       year: 1920,
       audios: [{ name: 'Аудіо 1', url: 'https://cdn/audio/a1.mp3' }],
@@ -53,7 +53,7 @@ const fullFetchedOpus: FetchedOpusData = {
 
 const nullyFetchedOpus: FetchedOpusData = {
   id: 'opus-2',
-  number: '',
+  number: 1,
   compositions: [
     {
       id: 'comp-2',
@@ -175,7 +175,7 @@ describe('useUpsertOpus', () => {
         creationYear: '1922',
         genre: 'Соната',
         compositions: [
-          { id: 'c1', title: 'Перший твір', genre: 'Соната', year: '1920', audios: [], notes: [] }
+          { id: 'c1', name: 'Перший твір', genre: 'Соната', year: '1920', audios: [], notes: [] }
         ]
       }));
     });
@@ -190,12 +190,17 @@ describe('useUpsertOpus', () => {
 
     const payload = mockCreateOpus.mock.calls[0][0];
     expect(payload).toEqual(
-      expect.objectContaining({ numberKind: 'op', number: '42', name: { uk: 'Соната', en: 'Соната' }, adminTitle: 'Соната' })
+      expect.objectContaining({
+        numberKind: 'op',
+        number: 42,
+        name: { uk: 'Соната', en: 'Соната' },
+        adminTitle: 'Соната'
+      })
     );
     expect(payload.publishedAt).toBeUndefined();
     expect(payload.coverImage.crop).toBeUndefined();
     expect(payload.compositions[0]).toEqual(
-      expect.objectContaining({ title: 'Перший твір', genre: 'Соната', year: '1920' })
+      expect.objectContaining({ name: 'Перший твір', genre: 'Соната', year: '1920' })
     );
     expect(result.current.isSaved).toBe(true);
   });
@@ -218,7 +223,7 @@ describe('useUpsertOpus', () => {
         compositions: [
           {
             id: 'c1',
-            title: 'Твір',
+            name: 'Твір',
             genre: '',
             year: '',
             audios: [
@@ -242,7 +247,7 @@ describe('useUpsertOpus', () => {
     expect(payload.additionalText).toBeUndefined();
     expect(payload.endYear).toBeUndefined();
     expect(payload.datesNote).toBeUndefined();
-    expect(payload.genre).toBeUndefined();
+    expect(payload.genre).toEqual({'en': undefined, 'uk': undefined});
 
     const composition = payload.compositions[0];
     expect(composition.genre).toBeUndefined();
@@ -295,7 +300,7 @@ describe('useUpsertOpus', () => {
     const { result } = renderHook(() => useUpsertOpus({ id: 'opus-1' }));
 
     expect(result.current.isEditing).toBe(true);
-    expect(result.current.details.numberKind).toBe('woo');
+    expect(result.current.details.numberKind).toBe('sineop');
     expect(result.current.details.number).toBe('42');
     expect(result.current.details.name).toBe('Симфонія');
     expect(result.current.details.additionalText).toBe('Примітка');
@@ -304,7 +309,7 @@ describe('useUpsertOpus', () => {
     expect(result.current.details.genre).toBe('Симфонія');
 
     const composition = result.current.details.compositions[0];
-    expect(composition.title).toBe('Твір 1');
+    expect(composition.name).toBe('Твір 1');
     expect(composition.genre).toBe('Аллегро');
     expect(composition.year).toBe('1920');
     expect(composition.audios[0]).toEqual(
@@ -379,7 +384,12 @@ describe('useUpsertOpus', () => {
 
     const args = mockUpdateOpus.mock.calls[0][0];
     expect(args.id).toBe('opus-1');
-    expect(args.input).toEqual(expect.objectContaining({ name: { uk: 'Симфонія', en: 'Симфонія' }, number: '42' }));
+    expect(args.input).toEqual(
+      expect.objectContaining({
+        name: { uk: 'Симфонія', en: 'Симфонія' },
+        number: 42
+      })
+    );
     expect(result.current.isSaved).toBe(true);
   });
 

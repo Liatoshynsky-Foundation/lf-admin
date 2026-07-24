@@ -28,8 +28,8 @@ export const WorkRow = ({
     <>
       <Box sx={styles.compositionInput}>
         <CompositionTitleInput
-          value={composition.title}
-          onChangeText={(title) => updateCompositionTitle(composition.id, title)}
+          value={composition.name}
+          onChangeText={(name) => updateCompositionTitle(composition.id, name)}
           onSelectSuggestion={(suggestion) => fillComposition(index, suggestion)}
           onCreateNew={() => openCreateModal(index)}
         />

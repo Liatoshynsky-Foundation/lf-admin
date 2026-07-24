@@ -57,7 +57,7 @@ describe('PlainRow', () => {
     const columns: ColumnDef<unknown, unknown, MockPlainData>[] = [
       {
         id: 'opus',
-        renderGroup: () => 'Op. 1'
+        renderGroup: () => 'op. 1'
       },
       {
         id: 'title',

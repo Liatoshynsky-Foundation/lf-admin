@@ -67,9 +67,9 @@ jest.mock('~/shared/components/sortable-list/SortableList', () => ({
   SortableList: ({ children }: { children: ReactNode }) => <div>{children}</div>
 }));
 
-const makeComposition = (id: string, title: string): OpusCompositionData => ({
+const makeComposition = (id: string, name: string): OpusCompositionData => ({
   id,
-  title,
+  name,
   genre: '',
   year: '',
   audios: [],
@@ -114,7 +114,7 @@ describe('OpusDetailsBlock', () => {
     expect(nameField).toHaveValue('Соната');
   });
 
-  it('updates the number, note and number-kind fields', () => {
+  it('updates the number, note and number-kind fields', async () => {
     render(<Harness />);
 
     const numberField = screen.getByLabelText('Номер *');
@@ -130,7 +130,7 @@ describe('OpusDetailsBlock', () => {
     expect(genreField).toHaveValue('Симфонія');
 
     fireEvent.mouseDown(screen.getByRole('combobox'));
-    fireEvent.click(screen.getByRole('option', { name: 'sine op.' }));
+    fireEvent.click(screen.getByRole('option', { name: /^sine op\.?$/i }));
     expect(screen.getByRole('combobox')).toHaveTextContent('sine op.');
   });
 
@@ -167,7 +167,7 @@ describe('OpusDetailsBlock', () => {
 
     mockSuggestion = {
       id: 'sugg-1',
-      title: { uk: 'Повна назва' },
+      name: { uk: 'Повна назва' },
       genre: 'Соната',
       year: 1921,
       audios: [{ name: 'Мій запис', url: 'https://cdn/a.mp3' }],
@@ -193,7 +193,7 @@ describe('OpusDetailsBlock', () => {
     render(<Harness initial={initial} />);
 
     mockSuggestion = {
-      title: { uk: null, en: 'English title' },
+      name: { uk: null, en: 'English title' },
       genre: null,
       year: null,
       audios: [{ url: 'https://cdn/audio.mp3' }, { name: null, url: null }],
@@ -202,7 +202,7 @@ describe('OpusDetailsBlock', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'select-suggestion' })[0]);
     expect(screen.getAllByLabelText('composition-title')[0]).toHaveValue('English title');
 
-    mockSuggestion = { title: null, audios: null, sheetMusic: null };
+    mockSuggestion = { name: null, audios: null, sheetMusic: null };
     fireEvent.click(screen.getAllByRole('button', { name: 'select-suggestion' })[1]);
     expect(screen.getAllByLabelText('composition-title')[1]).toHaveValue('');
   });
@@ -237,7 +237,7 @@ describe('OpusDetailsBlock', () => {
   it('removes a composition after delete confirmation', () => {
     const initial: OpusDetailsValue = {
       ...initialOpusDetails,
-      compositions: [{ id: 'c1', title: 'Твір для видалення', genre: '', year: '', audios: [], notes: [] }]
+      compositions: [{ id: 'c1', name: 'Твір для видалення', genre: '', year: '', audios: [], notes: [] }]
     };
     render(<Harness initial={initial} />);
 

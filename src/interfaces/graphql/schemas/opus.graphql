@@ -5,14 +5,15 @@ enum OpusStatus {
 
 enum OpusNumberKind {
   op
-  woo
+  sineop
+  compositions
 }
 
 enum WorksTab {
   all
-  opus
-  woo
-  works
+  op
+  sineop
+  compositions
 }
 
 enum WorksSortBy {
@@ -20,6 +21,7 @@ enum WorksSortBy {
   createdAt
   updatedAt
   publishedAt
+  name
 }
 
 type OpusGalleryItem {
@@ -38,16 +40,15 @@ type OpusPerformance {
 
 type Opus {
   id: ID!
-  number: String!
+  number: Float!
   numberKind: OpusNumberKind!
   title: LocalizedString!
-  releaseYear: Int
   name: LocalizedString!
   additionalText: String
   creationYear: String!
   endYear: String
   datesNote: String
-  genre: String
+  genre: LocalizedString
   adminTitle: String
   slug: String
   description: LocalizedString
@@ -93,18 +94,18 @@ input WorksFiltersInput {
 }
 
 input CreateOpusInput {
-  numberKind: OpusNumberKind
-  number: String
-  name: JSON
+  numberKind: OpusNumberKind!
+  number: Float!
+  name: JSON!
   additionalText: String
-  creationYear: String
+  creationYear: String!
   endYear: String
   datesNote: String
-  genre: String
+  genre: JSON
   compositions: JSON
   adminTitle: String
   title: JSON!
-  description: JSON
+  description: JSON!
   introDescription: JSON
   parts: JSON
   gallery: JSON
@@ -118,14 +119,14 @@ input CreateOpusInput {
 }
 
 input UpdateOpusInput {
-  numberKind: OpusNumberKind
-  number: String
-  name: JSON
+  numberKind: OpusNumberKind!
+  number: Float!
+  name: JSON!
   additionalText: String
-  creationYear: String
+  creationYear: String!
   endYear: String
   datesNote: String
-  genre: String
+  genre: JSON
   compositions: JSON
   adminTitle: String
   title: JSON
@@ -142,9 +143,13 @@ input UpdateOpusInput {
   publishedAt: String
 }
 
+type UpdateOpusStatusPayload {
+  id: ID!
+  status: OpusStatus!
+}
+
 extend type Query {
   opusById(id: ID!): Opus
-  opusByNumber(number: String!): Opus
   searchCompositions(search: String!): [Composition!]!
   paginatedWorks(tab: WorksTab, filters: WorksFiltersInput): PaginatedWorks!
   opusesCount(status: OpusStatus): Int!
@@ -153,5 +158,6 @@ extend type Query {
 extend type Mutation {
   createOpus(input: CreateOpusInput!): Opus!
   updateOpus(id: ID!, input: UpdateOpusInput!): Opus!
+  updateOpusStatus(id: ID!, status: OpusStatus!): UpdateOpusStatusPayload!
   deleteOpus(id: ID!): Boolean!
 }

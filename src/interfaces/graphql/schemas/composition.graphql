@@ -13,44 +13,13 @@ type CompositionAudio {
 
 type Composition {
   id: ID!
-  opusId: ID
-  order: Int
-  title: LocalizedString!
+  name: LocalizedString!
   year: Int
   genre: String
-  genres: [ID!]
-  status: OpusStatus
   audioAvailable: Boolean
   sheetAvailable: Boolean
   sheetMusic: [CompositionSheetMusic!]
   audios: [CompositionAudio!]
   createdAt: String!
   updatedAt: String!
-}
-
-enum CompositionSortBy {
-  releaseYear
-  createdAt
-  updatedAt
-  publishedAt
-}
-
-input CompositionSortOptions {
-  field: CompositionSortBy!
-  order: SortOrder!
-}
-
-input CompositionFiltersInput {
-  statuses: [OpusStatus!]
-  limit: Int
-  skip: Int
-  slug: String
-  search: String
-  languages: [ContentLanguage!]
-  sort: [CompositionSortOptions!]
-  isStandalone: Boolean
-}
-
-extend type Query {
-  allCompositions(filters: CompositionFiltersInput): [Composition!]!
 }

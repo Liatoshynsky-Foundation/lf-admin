@@ -25,7 +25,7 @@ type MediaTarget = { field: 'audios' | 'notes'; rowId?: string };
 
 const emptyComposition = (): OpusCompositionData => ({
   id: createCompositionId(),
-  title: '',
+  name: '',
   genre: '',
   year: '',
   audios: [],
@@ -64,7 +64,7 @@ export default function CompositionModal({
   const updateField = <Key extends keyof OpusCompositionData>(key: Key, value: OpusCompositionData[Key]): void => {
     setComposition((prev) => ({ ...prev, [key]: value }));
 
-    if (key === 'title' && typeof value === 'string' && value.trim()) {
+    if (key === 'name' && typeof value === 'string' && value.trim()) {
       setTitleError('');
     }
   };
@@ -115,13 +115,13 @@ export default function CompositionModal({
   };
 
   const handleSubmit = (): void => {
-    if (!composition.title.trim()) {
+    if (!composition.name.trim()) {
       setTitleError(REQUIRED_FIELD_ERROR);
 
       return;
     }
 
-    onSubmit({ ...composition, title: composition.title.trim() });
+    onSubmit({ ...composition, name: composition.name.trim() });
   };
 
   const hasFiles = composition.audios.length > 0 || composition.notes.some((note) => Boolean(note.fileUrl));
@@ -140,18 +140,18 @@ export default function CompositionModal({
 
       <Box sx={styles.body}>
         <TextField
-          label={`${COMPOSITION_MODAL_LABELS.title} *`}
-          value={composition.title}
-          onChange={(event) => updateField('title', event.target.value)}
+          label={`${COMPOSITION_MODAL_LABELS.name} *`}
+          value={composition.name}
+          onChange={(event) => updateField('name', event.target.value)}
           error={Boolean(titleError)}
           helperText={titleError}
           fullWidth
           size="small"
           sx={styles.field}
           InputProps={{
-            endAdornment: composition.title ? (
+            endAdornment: composition.name ? (
               <InputAdornment position="end">
-                <IconButton aria-label="Очистити" size="small" onClick={() => updateField('title', '')}>
+                <IconButton aria-label="Очистити" size="small" onClick={() => updateField('name', '')}>
                   <X size={18} strokeWidth={1.5} />
                 </IconButton>
               </InputAdornment>

@@ -25,16 +25,15 @@ export type DbOpusPerformance = {
 
 export type DbOpus = {
   _id: { toString(): string };
-  number: string;
-  title: Opus['title'];
-  releaseYear?: number | null;
-  numberKind: Opus['numberKind'];
+  number: number;
   name: Opus['name'];
+  numberKind: Opus['numberKind'];
+  title: Opus['title'];
   additionalText?: string | null;
   creationYear: string;
   endYear?: string | null;
   datesNote?: string | null;
-  genre?: string | null;
+  genre?: LocalizedString | null;
   adminTitle?: string | null;
   slug?: string | null;
   description: Opus['description'];
@@ -51,6 +50,7 @@ export type DbOpus = {
   publishedAt?: string | null;
   createdAt: string;
   updatedAt: string;
+  compositions: string[];
 };
 
 type OpusRepoDeps = Readonly<{
@@ -61,7 +61,6 @@ const toEntity = (doc: DbOpus): Opus =>
   createToEntity<Opus, DbOpus>(doc, {
     number: doc.number,
     title: doc.title,
-    releaseYear: doc.releaseYear ?? undefined,
     numberKind: doc.numberKind ?? 'op',
     name: typeof doc.name === 'string' ? { uk: doc.name, en: doc.name } : (doc.name ?? { uk: '', en: '' }),
     additionalText: doc.additionalText ?? undefined,
@@ -102,7 +101,8 @@ const toEntity = (doc: DbOpus): Opus =>
     coverImage: doc.coverImage ?? undefined,
     status: doc.status ?? undefined,
     meta: doc.meta ?? { views: 0 },
-    publishedAt: doc.publishedAt ?? undefined
+    publishedAt: doc.publishedAt ?? undefined,
+    compositions: doc.compositions ?? undefined,
   });
 
 export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => {
@@ -110,26 +110,80 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
     model: OpusModel,
     toEntity,
     buildQuery: (filters) => {
-      const query = buildBaseQuery({ ...filters, statuses: undefined }, ['genre', 'name.uk', 'name.en']) ?? {};
+      const query = buildBaseQuery({ ...filters, statuses: undefined }, ['genre.uk', 'genre.en', 'name.uk', 'name.en'], 'name') ?? {};
 
       return combineConditions<DbOpus>([
         query,
         fieldCondition<DbOpus>('status', filters?.statuses as unknown as string[], OpusStatus.Draft as string),
-        fieldCondition<DbOpus>('numberKind', filters?.numberKind as unknown as string, OpusNumberKind.Op as string)
+        fieldCondition<DbOpus>('numberKind', filters?.numberKind as unknown as string, OpusNumberKind.Op as string),
+        { number: { $type: 'number' } }
       ]);
     },
     getDefaultSort: getBaseSort
   });
 
-  const findByNumber = async (number: string): Promise<Opus | null> => {
+  const findByNumber = async (number: number): Promise<Opus | null> => {
     await dbConnect();
 
-    if (!number) {
+    if (number === undefined || number === null) {
       return null;
     }
 
     const doc = await OpusModel.findOne({ number }).lean<DbOpus>();
     return doc ? toEntity(doc) : null;
+  };
+
+  const getOrCreateCompositionsOpus = async (): Promise<{ _id: string }> => {
+    return OpusModel.findOneAndUpdate(
+      { numberKind: 'compositions' },
+      {
+        $setOnInsert: {
+          numberKind: 'compositions',
+          number: 0,
+          name: { uk: 'Без номера', en: 'Without number' },
+          title: { uk: 'Без номера', en: 'Without number' },
+          adminTitle: 'Без номера',
+          compositions: []
+        }
+      },
+      { upsert: true, new: true }
+    ).lean<{ _id: string }>();
+  };
+
+  const moveCompositionsToCompositionsOpus = async (
+    compositionIds: string[],
+  ): Promise<void> => {
+    if (compositionIds.length === 0) {
+      return;
+    }
+    const compOpus = await getOrCreateCompositionsOpus();
+    await OpusModel.updateOne(
+      { _id: compOpus._id },
+      { $addToSet: { compositions: { $each: compositionIds } } },
+    );
+  };
+
+  const removeCompositionsFromCompositionsOpus = async (
+    compositionIds: string[],
+  ): Promise<void> => {
+    if (compositionIds.length === 0) {
+      return;
+    }
+    const compOpus = await OpusModel.findOne({ numberKind: 'compositions' })
+      .lean<{ _id: string }>();
+    if (!compOpus) {
+      return;
+    }
+    await OpusModel.updateOne(
+      { _id: compOpus._id },
+      { $pull: { compositions: { $in: compositionIds } } },
+    );
+  };
+
+  const unlink = async (opusId: string): Promise<void> => {
+    await dbConnect();
+    const opus = await OpusModel.findById(opusId).lean<{ compositions?: string[] }>();
+    await moveCompositionsToCompositionsOpus(opus?.compositions ?? []);
   };
 
   return {
@@ -151,6 +205,9 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
 
       const newOpus = await new OpusModel(opusData).save();
       return toEntity(newOpus.toObject() as unknown as DbOpus);
-    }
+    },
+    unlink,
+    moveCompositionsToCompositionsOpus,
+    removeCompositionsFromCompositionsOpus
   };
 };

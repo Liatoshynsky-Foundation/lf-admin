@@ -2,6 +2,7 @@ import { useSearchParams } from 'next/navigation';
 import { MouseEvent, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { createCompositionId } from '../use-upsert-opus/useUpsertOpus';
 import { GroupData, GroupDataField, GroupPhoto } from '~/constants/creativity';
 import {
   OPUS_FIELD_LIMITS,
@@ -42,12 +43,6 @@ const parseDescription = (desc: unknown): Record<string, unknown> => {
     }
   }
   return { type: 'doc', content: [] };
-};
-
-let compositionIdCounter = 0;
-export const createCompositionId = (): string => {
-  compositionIdCounter += 1;
-  return `composition-${compositionIdCounter}`;
 };
 
 const fileNameFromUrl = (url?: string | null): string => {
@@ -95,8 +90,11 @@ export const useGroupContent = (id: string) => {
       };
       setGroupData({
         titlePrefix: fetchedOpus.numberKind ?? 'op',
-        groupNumber: fetchedOpus.number ? String(fetchedOpus.number).replace(/^(op|woo|wo|bo)[.\-\s]*/i, '') : '',
-        genre: fetchedOpus.genre ?? '',
+        groupNumber: fetchedOpus.number ? String(fetchedOpus.number).replace(/^(op|woo|sineop|wo|bo)[.\-\s]*/i, '') : '',
+        genre: { 
+          uk: fetchedOpus.genre?.uk ?? '', 
+          en: fetchedOpus.genre?.en ?? '' 
+        },
         additionalText: fetchedOpus.additionalText ?? '',
         groupTitle: {
           uk: fetchedOpus.name?.uk ?? '',
@@ -151,27 +149,23 @@ export const useGroupContent = (id: string) => {
             en: perf.title?.en ?? ''
           }
         })),
-        works: (fetchedOpus.compositions || [])
-          .slice()
-          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-          .map((composition) => ({
+        compositions: (fetchedOpus.compositions || []).map((composition) => ({
+          id: composition.id,
+          name: composition.name?.uk ?? composition.name?.en ?? '',
+          genre: composition.genre ?? '',
+          year: composition.year == null ? '' : String(composition.year),
+          audios: (composition.audios ?? []).map((audio: AudioItem) => ({
             id: createCompositionId(),
-            compositionId: composition.id,
-            title: composition.title?.uk ?? composition.title?.en ?? '',
-            genre: composition.genre ?? '',
-            year: composition.year == null ? '' : String(composition.year),
-            audios: (composition.audios ?? []).map((audio: AudioItem) => ({
-              id: createCompositionId(),
-              name: audio.name ?? fileNameFromUrl(audio.url),
-              fileUrl: audio.url ?? undefined
-            })),
-            notes: (composition.sheetMusic ?? []).map((sheet: SheetMusicItem) => ({
-              id: createCompositionId(),
-              name: sheet.name ?? fileNameFromUrl(sheet.url),
-              fileUrl: sheet.url ?? undefined,
-              publishDate: sheet.publishDate ?? ''
-            }))
+            name: audio.name ?? fileNameFromUrl(audio.url),
+            fileUrl: audio.url ?? undefined
+          })),
+          notes: (composition.sheetMusic ?? []).map((sheet: SheetMusicItem) => ({
+            id: createCompositionId(),
+            name: sheet.name ?? fileNameFromUrl(sheet.url),
+            fileUrl: sheet.url ?? undefined,
+            publishDate: sheet.publishDate ?? ''
           }))
+        }))
       });
       setPublishedTitle(titleObj);
     }
@@ -179,24 +173,25 @@ export const useGroupContent = (id: string) => {
 
   const handleSave = async (statusToSave?: BaseContentStatuses) => {
     if (!groupData) return;
-
     let mappedStatus: OpusStatus | undefined = undefined;
     if (statusToSave === BaseContentStatuses.Published) {
       mappedStatus = OpusStatus.Published;
     }
-
     try {
       const input = {
+        number: Number(groupData.groupNumber.trim()),
         numberKind: groupData.titlePrefix as unknown as OpusNumberKind,
-        number: String(groupData.groupNumber || ''),
-        genre: String(groupData.genre || '').trim(),
-        additionalText: String(groupData.additionalText || '').trim(),
+        genre: {
+          uk: String(groupData.genre?.uk || '').trim(),
+          en: String(groupData.genre?.en || '').trim()
+        },
+        additionalText: String(groupData.additionalText || '').trim() || '',
         ...(mappedStatus && { status: mappedStatus }),
         name: {
           uk: String(groupData.groupTitle?.uk || ''),
           en: String(groupData.groupTitle?.en || '')
         },
-        creationYear: groupData.creationYear ? String(groupData.creationYear) : null,
+        creationYear: String(groupData.creationYear || '').trim(),
         endYear: groupData.endYear ? String(groupData.endYear) : null,
         datesNote: groupData.dateAdditionalText?.uk ? String(groupData.dateAdditionalText.uk).trim() : null,
         parts: {
@@ -207,9 +202,9 @@ export const useGroupContent = (id: string) => {
           uk: groupData.description?.uk ? JSON.stringify(groupData.description.uk) : '""',
           en: groupData.description?.en ? JSON.stringify(groupData.description.en) : '""'
         },
-        compositions: (groupData.works || []).map((work, index) => ({
-          id: work.compositionId,
-          title: work.title.trim(),
+        compositions: (groupData.compositions || []).map((work, index) => ({
+          id: work.id,
+          name: work.name.trim(),
           genre: work.genre.trim() || undefined,
           year: work.year.trim() || undefined,
           order: index + 1,
@@ -247,7 +242,6 @@ export const useGroupContent = (id: string) => {
           }))
           .filter((perf) => perf.videoUrl || perf.title.uk || perf.title.en)
       };
-
       await updateOpus({ variables: { id, input } });
       toast.success('Групу опубліковано');
       return true;

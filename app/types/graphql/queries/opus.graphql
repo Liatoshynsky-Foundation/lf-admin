@@ -7,7 +7,6 @@ query OpusById($id: ID!) {
       uk
       en
     }
-    releaseYear
     name {
       uk
       en
@@ -16,7 +15,10 @@ query OpusById($id: ID!) {
     creationYear
     endYear
     datesNote
-    genre
+    genre {
+      uk
+      en
+    }
     adminTitle
     slug
     status
@@ -85,13 +87,11 @@ query OpusById($id: ID!) {
     }
     compositions {
       id
-      opusId
-      title {
+      name {
         uk
         en
       }
       year
-      order
       genre
       audioAvailable
       sheetAvailable
@@ -127,7 +127,10 @@ query PaginatedWorks($tab: WorksTab, $filters: WorksFiltersInput) {
         uk
         en
       }
-      genre
+      genre {
+        uk
+        en
+      }
       status
       creationYear
       endYear
@@ -135,7 +138,7 @@ query PaginatedWorks($tab: WorksTab, $filters: WorksFiltersInput) {
       createdAt
       compositions {
         id
-        title {
+        name {
           uk
           en
         }
@@ -144,12 +147,11 @@ query PaginatedWorks($tab: WorksTab, $filters: WorksFiltersInput) {
 
     works {
       id
-      title {
+      name {
         uk
         en
       }
       genre
-      status
       year
       updatedAt
       createdAt
@@ -160,8 +162,7 @@ query PaginatedWorks($tab: WorksTab, $filters: WorksFiltersInput) {
 query SearchCompositions($search: String!) {
   searchCompositions(search: $search) {
     id
-    opusId
-    title {
+    name {
       uk
       en
     }

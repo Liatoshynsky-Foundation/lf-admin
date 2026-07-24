@@ -106,7 +106,7 @@ describe('WorksPageContent', () => {
     items: [
       {
         id: '1',
-        number: 'Op. 1',
+        number: 'op. 1',
         name: { uk: 'Симфонія 1', en: 'Symphony 1' },
         genre: 'Симфонія',
         creationYear: '2020',
@@ -117,7 +117,7 @@ describe('WorksPageContent', () => {
       },
       {
         id: '2',
-        number: 'Op. 2',
+        number: 'op. 2',
         name: { uk: 'Симфонія 2', en: 'Symphony 2' },
         genre: 'Симфонія',
         creationYear: '2021',
@@ -202,9 +202,9 @@ describe('WorksPageContent', () => {
       } as unknown as ReturnType<typeof useWorksFiltering>);
 
       rerender(<WorksPageContent activeTab="all" />);
-      rerender(<WorksPageContent activeTab="opus" />);
-      rerender(<WorksPageContent activeTab="woo" />);
-      rerender(<WorksPageContent activeTab="works" />);
+      rerender(<WorksPageContent activeTab="op" />);
+      rerender(<WorksPageContent activeTab="sineop" />);
+      rerender(<WorksPageContent activeTab="compositions" />);
     });
 
     expect(screen.getByText('Створити')).toBeInTheDocument();
@@ -284,7 +284,7 @@ describe('WorksPageContent', () => {
         sortValue: sort
       } as unknown as ReturnType<typeof useWorksFiltering>);
 
-      render(<WorksPageContent activeTab="opus" />);
+      render(<WorksPageContent activeTab="op" />);
     });
 
     expect(screen.getAllByTestId('mock-works-table').length).toBeGreaterThan(0);
@@ -300,7 +300,7 @@ describe('WorksPageContent', () => {
       items: [
         {
           id: '1',
-          number: 'Op. 1',
+          number: 'op. 1',
           name: { uk: ' ', en: 'Only English Title' },
           genre: null,
           status: null,
@@ -356,7 +356,7 @@ describe('WorksPageContent', () => {
       items: [
         {
           id: 'mock-id',
-          number: 'Op. 99',
+          number: 'op. 99',
           name: { uk: 'Без композицій' },
           createdAt: '1700000000',
           compositions: undefined
@@ -368,7 +368,7 @@ describe('WorksPageContent', () => {
       error: null
     } as unknown as ReturnType<typeof usePaginatedWorks>);
 
-    render(<WorksPageContent activeTab="opus" />);
+    render(<WorksPageContent activeTab="op" />);
 
     expect(screen.getByTestId('mock-works-table')).toBeInTheDocument();
   });
@@ -409,7 +409,7 @@ describe('WorksPageContent', () => {
       items: [
         {
           id: '1',
-          number: 'Op. 1',
+          number: 'op. 1',
           name: { uk: 'Симфонія 1' },
           createdAt: '1700000000',
           compositions: []

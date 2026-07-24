@@ -18,7 +18,6 @@ export default function OpusDetailsBlock({ value, onChange, errors }: Readonly<O
   const updateField = <Key extends keyof OpusDetailsValue>(key: Key, fieldValue: OpusDetailsValue[Key]): void => {
     onChange((prev) => ({ ...prev, [key]: fieldValue }));
   };
-
   return (
     <Box sx={styles.container}>
       <Box sx={styles.fieldsRow}>
@@ -62,7 +61,7 @@ export default function OpusDetailsBlock({ value, onChange, errors }: Readonly<O
         onChange={(event) => updateField('name', event.target.value)}
         error={Boolean(errors.name)}
         helperText={errors.name}
-        sx={styles.nameField}
+        sx={styles.titleField}
         slotProps={{ htmlInput: { maxLength: OPUS_FIELD_LIMITS.name.max } }}
       />
 

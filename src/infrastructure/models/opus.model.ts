@@ -5,7 +5,8 @@ import {
   metaSchema,
   optionalTranslatedFieldSchema,
   translatedBooleanSchema,
-  translatedFieldSchema
+  translatedFieldSchema,
+  translatedFieldUnrequiredSchema
 } from './commonSchemas';
 import { Opus } from '~/domain/entities/Opus';
 import { OpusStatus } from '~/types/enums/common.enums';
@@ -21,17 +22,15 @@ const opusDescriptionSchema = new Schema(
 
 const opusSchema = new Schema(
   {
-    number: { type: String, required: true, unique: true, index: true },
+    number: { type: Number, required: true, unique: true, index: true, set: (v: unknown) => (v != null ? Number(v) : v) },
     title: { type: translatedFieldSchema, required: true },
-    releaseYear: { type: Number, default: null },
-
-    numberKind: { type: String, enum: ['op', 'woo'], default: 'op' },
+    numberKind: { type: String, enum: ['op', 'sineop', 'compositions'], default: 'op' },
     name: { type: translatedFieldSchema, default: { uk: '', en: '' } },
     additionalText: { type: String, default: null },
     creationYear: { type: String, default: null },
     endYear: { type: String, default: null },
     datesNote: { type: String, default: null },
-    genre: { type: String, default: null },
+    genre: { type: translatedFieldUnrequiredSchema, default: null },
 
     adminTitle: { type: String, default: null },
     slug: { type: String, default: null },
@@ -78,6 +77,10 @@ const opusSchema = new Schema(
     },
     meta: {
       views: { type: Number, default: 0 }
+    },
+    compositions: {
+      type: [{ type: Schema.Types.ObjectId, ref: 'Composition' }],
+      default: []
     }
   },
   { timestamps: true, collection: 'opus' }

@@ -1,205 +1,222 @@
-import { mapFilters } from '../../helpers';
+import { WorksFilter } from '../opusQuery';
 import { handleMixed } from './handleMixed';
-import { mappedCompositions, mappedGroups } from './tabHandlersHelpers';
-import type { ICompositionRepository } from '~/src/domain/repositories/compositionRepository';
-import type { IOpusRepository, OpusFilters } from '~/src/domain/repositories/opusRepository';
-import { OpusNumberKind } from '~/types/graphql/generated/graphql';
-
-jest.mock('../../helpers', () => ({
-  mapFilters: jest.fn(),
-}));
+import {
+  attachCompositionsToGroups,
+  mappedCompositions,
+  mappedGroups,
+  totalCompositions,
+  totalGroups,
+  totalPages,
+} from './tabHandlersHelpers';
+import { ICompositionRepository } from '~/domain/repositories/compositionRepository';
+import { IOpusRepository } from '~/src/domain/repositories/opusRepository';
+import { OpusNumberKind, WorksTab } from '~/types/graphql/generated/graphql';
 
 jest.mock('./tabHandlersHelpers', () => ({
+  totalGroups: jest.fn((_repo, tab) => (tab === WorksTab.Op ? 10 : 10)),
   mappedGroups: jest.fn(),
+  attachCompositionsToGroups: jest.fn(),
+  totalCompositions: jest.fn(),
   mappedCompositions: jest.fn(),
   totalPages: jest.fn((total: number, pageSize: number) => Math.ceil(total / pageSize)),
 }));
 
+type MappedGroupsResult = Awaited<ReturnType<typeof mappedGroups>>;
+type MappedCompositionsResult = Awaited<ReturnType<typeof mappedCompositions>>;
+type AttachResult = Awaited<ReturnType<typeof attachCompositionsToGroups>>;
+
 describe('handleMixed', () => {
-  const repo = {
-    count: jest.fn(),
-  } as unknown as jest.Mocked<Partial<IOpusRepository>>;
-  const compositionsRepo = {
-    count: jest.fn(),
-  } as unknown as jest.Mocked<Partial<ICompositionRepository>>;
+  const MOCK_OP_GROUP = { id: 'op-1', compositions: [] };
+  const MOCK_SINEOP_GROUP = { id: 'sineop-1', compositions: [] };
+  const MOCK_ATTACHED_OP_GROUP = { id: 'op-1', compositions: [{ id: 'c1' }] };
+  const MOCK_ATTACHED_SINEOP_GROUP = { id: 'sineop-1', compositions: [{ id: 'c2' }] };
+  const MOCK_WORK = { id: 'w1' };
+  const MOCK_COMPOSITION_IDS = ['comp-1', 'comp-2'];
+  const MOCK_FILTERS: WorksFilter = { search: 'test' };
+
+  const mockTotalGroups = totalGroups as jest.MockedFunction<typeof totalGroups>;
+  const mockMappedGroups = mappedGroups as jest.MockedFunction<typeof mappedGroups>;
+  const mockAttachCompositionsToGroups = attachCompositionsToGroups as jest.MockedFunction<
+    typeof attachCompositionsToGroups
+  >;
+  const mockTotalCompositions = totalCompositions as jest.MockedFunction<
+    typeof totalCompositions
+  >;
+  const mockMappedCompositions = mappedCompositions as jest.MockedFunction<
+    typeof mappedCompositions
+  >;
+  const mockTotalPages = totalPages as jest.MockedFunction<typeof totalPages>;
+
+  const repoMock = {
+    findAll: jest.fn(),
+  } as unknown as jest.Mocked<IOpusRepository>;
+
+  const compositionsRepoMock = {} as jest.Mocked<ICompositionRepository>;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (mapFilters as jest.Mock).mockImplementation((f) => f);
-    (mappedGroups as jest.Mock).mockResolvedValue({
-      groups: [{ id: 'g1' }],
-      total: 5,
+
+    mockTotalGroups.mockImplementation((_repo, tab) => Promise.resolve(tab === WorksTab.Op ? 5 : 5));
+
+    repoMock.findAll.mockResolvedValue([
+      { compositions: MOCK_COMPOSITION_IDS },
+    ] as Awaited<ReturnType<IOpusRepository['findAll']>>);
+
+    mockMappedGroups.mockImplementation((_repo, tab, _filters, _skip, _limit) => {
+      if (tab === WorksTab.Op) {
+        return Promise.resolve([MOCK_OP_GROUP] as unknown as MappedGroupsResult);
+      }
+      return Promise.resolve([MOCK_SINEOP_GROUP] as unknown as MappedGroupsResult);
     });
-    (mappedCompositions as jest.Mock).mockResolvedValue({
-      works: [{ id: 'w1' }],
-      total: 8,
+
+    mockAttachCompositionsToGroups.mockImplementation((groups) => {
+      if (groups.some((g) => (g as unknown as { id: string }).id === MOCK_OP_GROUP.id)) {
+        return Promise.resolve([MOCK_ATTACHED_OP_GROUP] as unknown as AttachResult);
+      }
+      return Promise.resolve([MOCK_ATTACHED_SINEOP_GROUP] as unknown as AttachResult);
     });
+
+    mockTotalCompositions.mockResolvedValue(10);
+    mockMappedCompositions.mockResolvedValue([MOCK_WORK] as unknown as MappedCompositionsResult);
   });
 
-  it('should return only groups when page contains only opuses', async () => {
-    (repo.count as jest.Mock).mockImplementation((filters: OpusFilters) =>
-      Promise.resolve(filters.numberKind === OpusNumberKind.Op ? 10 : 0)
-    );
-    (compositionsRepo.count as jest.Mock).mockResolvedValue(5);
+  it('should process first page containing only Op groups', async () => {
+    const result = await handleMixed(repoMock, compositionsRepoMock, MOCK_FILTERS, 1, 2);
 
-    const result = await handleMixed(
-      repo as IOpusRepository,
-      compositionsRepo as ICompositionRepository,
-      undefined,
-      1,
-      5
-    );
+    expect(repoMock.findAll).toHaveBeenCalledWith({ numberKind: OpusNumberKind.Compositions });
+    expect(mockMappedGroups).toHaveBeenCalledWith(repoMock, WorksTab.Op, MOCK_FILTERS, 0, 2);
+    expect(mockTotalCompositions).toHaveBeenCalledWith(compositionsRepoMock, MOCK_COMPOSITION_IDS, MOCK_FILTERS);
 
-    expect(repo.count).toHaveBeenCalledTimes(2);
-    expect(repo.count).toHaveBeenCalledWith({ numberKind: OpusNumberKind.Op });
-    expect(repo.count).toHaveBeenCalledWith({ numberKind: OpusNumberKind.Woo });
-
-    expect(mappedGroups).toHaveBeenCalledTimes(1);
-    expect(mappedGroups).toHaveBeenCalledWith(
-      repo,
-      compositionsRepo,
-      { numberKind: OpusNumberKind.Op, skip: 0, limit: 5 }
-    );
-    expect(mappedCompositions).not.toHaveBeenCalled();
+    expect(mockAttachCompositionsToGroups).toHaveBeenCalledWith([MOCK_OP_GROUP], compositionsRepoMock);
+    expect(mockMappedCompositions).not.toHaveBeenCalled();
 
     expect(result).toEqual({
-      groups: [{ id: 'g1' }],
+      groups: [MOCK_ATTACHED_OP_GROUP],
       works: [],
-      total: 15,
-      page: 1,
-      totalPages: 3,
-    });
-  });
-
-  it('should return mixed groups and works', async () => {
-    (repo.count as jest.Mock).mockImplementation((filters: OpusFilters) =>
-      Promise.resolve(filters.numberKind === OpusNumberKind.Op ? 8 : 0)
-    );
-    (compositionsRepo.count as jest.Mock).mockResolvedValue(12);
-
-    const result = await handleMixed(
-      repo as IOpusRepository,
-      compositionsRepo as ICompositionRepository,
-      undefined,
-      2,
-      5
-    );
-
-    expect(mappedGroups).toHaveBeenCalledTimes(1);
-    expect(mappedGroups).toHaveBeenCalledWith(
-      repo,
-      compositionsRepo,
-      { numberKind: OpusNumberKind.Op, skip: 5, limit: 3 }
-    );
-    expect(mappedCompositions).toHaveBeenCalledWith(
-      compositionsRepo,
-      { isStandalone: true, skip: 0, limit: 2 }
-    );
-
-    expect(result).toEqual({
-      groups: [{ id: 'g1' }],
-      works: [{ id: 'w1' }],
       total: 20,
-      page: 2,
-      totalPages: 4,
+      page: 1,
+      totalPages: 10,
     });
   });
 
-  it('should return only compositions when all groups are skipped', async () => {
-    (repo.count as jest.Mock).mockImplementation((filters: OpusFilters) =>
-      Promise.resolve(filters.numberKind === OpusNumberKind.Op ? 5 : 0)
-    );
-    (compositionsRepo.count as jest.Mock).mockResolvedValue(12);
+  it('should process page spanning from Op groups into Sineop groups', async () => {
+    const opGroup1 = { id: 'op-1', compositions: [] };
+    const opGroup2 = { id: 'op-2', compositions: [] };
+    const sineopGroup1 = { id: 'sineop-1', compositions: [] };
 
-    const result = await handleMixed(
-      repo as IOpusRepository,
-      compositionsRepo as ICompositionRepository,
-      undefined,
+    mockTotalGroups.mockImplementation((_repo, tab) => Promise.resolve(tab === WorksTab.Op ? 2 : 1));
+
+    mockMappedGroups.mockImplementation((_repo, tab, _filters, skip) => {
+      if (tab === WorksTab.Op) {
+        return Promise.resolve([opGroup1, opGroup2] as unknown as MappedGroupsResult);
+      }
+      if (skip === 0) {
+        return Promise.resolve([sineopGroup1] as unknown as MappedGroupsResult);
+      }
+      return Promise.resolve([] as unknown as MappedGroupsResult);
+    });
+
+    mockAttachCompositionsToGroups.mockResolvedValue([
+      { id: 'attached' },
+    ] as unknown as AttachResult);
+
+    const result = await handleMixed(repoMock, compositionsRepoMock, undefined, 1, 4);
+
+    expect(mockAttachCompositionsToGroups).toHaveBeenCalledWith([opGroup1, opGroup2], compositionsRepoMock);
+    expect(mockAttachCompositionsToGroups).toHaveBeenCalledWith([sineopGroup1], compositionsRepoMock);
+    expect(mockMappedCompositions).toHaveBeenCalledWith(compositionsRepoMock, MOCK_COMPOSITION_IDS, 0, 1, undefined);
+
+    expect(result.groups).toHaveLength(2);
+    expect(result.works).toEqual([MOCK_WORK]);
+  });
+
+  it('should process page spanning into works when remaining > 0', async () => {
+    mockTotalGroups.mockImplementation((_repo, tab) => Promise.resolve(tab === WorksTab.Op ? 1 : 1));
+
+    mockMappedGroups.mockImplementation((_repo, tab, _filters, skip) => {
+      if (tab === WorksTab.Op) {
+        return Promise.resolve([MOCK_OP_GROUP] as unknown as MappedGroupsResult);
+      }
+      if (skip === 0) {
+        return Promise.resolve([MOCK_SINEOP_GROUP] as unknown as MappedGroupsResult);
+      }
+      return Promise.resolve([] as unknown as MappedGroupsResult);
+    });
+
+    const result = await handleMixed(repoMock, compositionsRepoMock, undefined, 1, 5);
+
+    expect(mockMappedCompositions).toHaveBeenCalledWith(
+      compositionsRepoMock,
+      MOCK_COMPOSITION_IDS,
+      0,
       3,
-      5
+      undefined
     );
 
-    expect(mappedGroups).not.toHaveBeenCalled();
-    expect(mappedCompositions).toHaveBeenCalledWith(
-      compositionsRepo,
-      { isStandalone: true, skip: 5, limit: 5 }
-    );
-
-    expect(result).toEqual({
-      groups: [],
-      works: [{ id: 'w1' }],
-      total: 17,
-      page: 3,
-      totalPages: 4,
-    });
+    expect(result.works).toEqual([MOCK_WORK]);
+    expect(result.total).toBe(12);
   });
 
-  it('should include both op and woo groups when page spans both kinds', async () => {
-    (repo.count as jest.Mock).mockImplementation((filters: OpusFilters) =>
-      Promise.resolve(filters.numberKind === OpusNumberKind.Op ? 3 : 6)
-    );
-    (compositionsRepo.count as jest.Mock).mockResolvedValue(0);
+  it('should process page containing only works when offset exceeds total groups', async () => {
+    mockTotalGroups.mockImplementation((_repo, tab) => Promise.resolve(tab === WorksTab.Op ? 2 : 3));
 
-    await handleMixed(
-      repo as IOpusRepository,
-      compositionsRepo as ICompositionRepository,
-      undefined,
-      1,
-      5
-    );
+    mockMappedGroups.mockImplementation(() => {
+      return Promise.resolve([] as unknown as MappedGroupsResult);
+    });
 
-    expect(mappedGroups).toHaveBeenCalledTimes(2);
-    expect(mappedGroups).toHaveBeenNthCalledWith(
+    const result = await handleMixed(repoMock, compositionsRepoMock, undefined, 4, 2);
+
+    expect(mockAttachCompositionsToGroups).not.toHaveBeenCalled();
+    expect(mockMappedCompositions).toHaveBeenCalledWith(
+      compositionsRepoMock,
+      MOCK_COMPOSITION_IDS,
       1,
-      repo,
-      compositionsRepo,
-      { numberKind: OpusNumberKind.Op, skip: 0, limit: 3 }
-    );
-    expect(mappedGroups).toHaveBeenNthCalledWith(
       2,
-      repo,
-      compositionsRepo,
-      { numberKind: OpusNumberKind.Woo, skip: 0, limit: 2 }
+      undefined
     );
-    expect(mappedCompositions).not.toHaveBeenCalled();
+
+    expect(result.groups).toEqual([]);
+    expect(result.works).toEqual([MOCK_WORK]);
   });
 
-  it('should pass mapped filters to repositories', async () => {
-    (mapFilters as jest.Mock).mockReturnValue({
-      search: 'test',
-      statuses: ['draft'],
+  it('should handle compositionsOpuses being empty array', async () => {
+    repoMock.findAll.mockResolvedValue([]);
+    mockTotalGroups.mockImplementation(() => Promise.resolve(0));
+    mockTotalCompositions.mockResolvedValue(0);
+
+    mockMappedGroups.mockImplementation(() => {
+      return Promise.resolve([] as unknown as MappedGroupsResult);
     });
-    (repo.count as jest.Mock).mockResolvedValue(1);
-    (compositionsRepo.count as jest.Mock).mockResolvedValue(1);
 
-    await handleMixed(
-      repo as IOpusRepository,
-      compositionsRepo as ICompositionRepository,
-      { search: 'test', statuses: ['draft'] },
-      1,
-      10
-    );
+    const result = await handleMixed(repoMock, compositionsRepoMock, undefined, 1, 10);
 
-    expect(repo.count).toHaveBeenCalledWith(
-      expect.objectContaining({
-        search: 'test',
-        statuses: ['draft'],
-        numberKind: OpusNumberKind.Op,
-      })
-    );
-    expect(repo.count).toHaveBeenCalledWith(
-      expect.objectContaining({
-        search: 'test',
-        statuses: ['draft'],
-        numberKind: OpusNumberKind.Woo,
-      })
-    );
-    expect(compositionsRepo.count).toHaveBeenCalledWith(
-      expect.objectContaining({
-        search: 'test',
-        statuses: ['draft'],
-        isStandalone: true,
-      })
-    );
+    expect(mockTotalCompositions).toHaveBeenCalledWith(compositionsRepoMock, [], undefined);
+    expect(result.total).toBe(0);
+    expect(result.groups).toEqual([]);
+    expect(result.works).toEqual([]);
+  });
+
+  it('should handle case when remaining is zero before evaluating works offset', async () => {
+    mockTotalGroups.mockImplementation(() => Promise.resolve(10));
+
+    mockMappedGroups.mockImplementation((_repo, tab) => {
+      if (tab === WorksTab.Op) {
+        return Promise.resolve([MOCK_OP_GROUP] as unknown as MappedGroupsResult);
+      }
+      return Promise.resolve([MOCK_SINEOP_GROUP] as unknown as MappedGroupsResult);
+    });
+
+    const result = await handleMixed(repoMock, compositionsRepoMock, undefined, 1, 1);
+
+    expect(mockAttachCompositionsToGroups).toHaveBeenCalledTimes(1);
+    expect(mockMappedCompositions).not.toHaveBeenCalled();
+    expect(result.groups).toEqual([MOCK_ATTACHED_OP_GROUP]);
+    expect(result.works).toEqual([]);
+  });
+
+  it('should call totalPages and calculate pagination parameters correctly', async () => {
+    await handleMixed(repoMock, compositionsRepoMock, undefined, 2, 5);
+
+    expect(mockTotalPages).toHaveBeenCalledWith(20, 5);
   });
 });

@@ -1,6 +1,6 @@
 import { OpusStatus } from '~/types/enums/common.enums';
 
-export type OpusNumberKind = 'op' | 'woo';
+export type OpusNumberKind = 'op' | 'sineop' | 'compositions';
 
 export interface OpusMediaFileData {
   id: string;
@@ -11,8 +11,8 @@ export interface OpusMediaFileData {
 
 export interface OpusCompositionData {
   id: string;
-  compositionId?: string;
-  title: string;
+  order?: number;
+  name: string;
   genre: string;
   year: string;
   audios: OpusMediaFileData[];
@@ -39,7 +39,7 @@ export interface OpusDetailsErrors {
 
 export interface OpusCompositionInput {
   id?: string;
-  title: string;
+  name: string;
   genre?: string;
   year?: string;
   audios: Array<{ name: string; fileUrl?: string; publishDate?: string }>;
@@ -48,7 +48,7 @@ export interface OpusCompositionInput {
 
 export interface OpusCompositionSuggestion {
   id?: string;
-  title?: { uk?: string | null; en?: string | null } | null;
+  name?: { uk?: string | null; en?: string | null } | null;
   genre?: string | null;
   year?: number | null;
   sheetMusic?: Array<{
@@ -64,14 +64,13 @@ export interface OpusCompositionSuggestion {
 export interface FetchedOpusData {
   id: string;
   numberKind?: OpusNumberKind | null;
-  number: string;
-  releaseYear?: number | null;
+  number: number;
   name?: { uk?: string | null; en?: string | null } | null;
   additionalText?: string | null;
   creationYear?: string | null;
   endYear?: string | null;
   datesNote?: string | null;
-  genre?: string | null;
+  genre?: { uk?: string | null; en?: string | null } | null;
   status?: OpusStatus | null;
   title?: { uk?: string | null; en?: string | null } | null;
   description?: { uk?: string | null; en?: string | null } | null;
@@ -98,11 +97,10 @@ export interface FetchedOpusData {
     videoUrl?: string | null;
   }> | null;
   compositions?: Array<{
-    id?: string;
-    title?: { uk?: string | null; en?: string | null } | null;
+    id: string;
+    name?: { uk?: string | null; en?: string | null } | null;
     genre?: string | null;
     year?: number | null;
-    order?: number | null;
     audioAvailable?: boolean | null;
     sheetAvailable?: boolean | null;
     sheetMusic?: Array<{
