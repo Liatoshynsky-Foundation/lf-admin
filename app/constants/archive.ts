@@ -30,6 +30,7 @@ export const ARCHIVE_STATUS_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
 
 export const ARCHIVE_CASE_MODAL_LABELS = {
   title: 'Нова справа',
+  title_edit: 'Відредагувати справу',
   description: 'Опис',
   caseNumber: 'Справа',
   caseName: 'Назва справи',

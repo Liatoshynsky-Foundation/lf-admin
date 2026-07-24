@@ -11,6 +11,7 @@ import LabelRow from '~/shared/components/composition-modal/label-row/LabelRow';
 export interface ArchiveCaseModalViewProps {
   isOpen: boolean;
   onClose: () => void;
+  mode?: 'create' | 'edit';
   descriptionNumber: string;
   setDescriptionNumber: (value: string) => void;
   caseNumber: string;
@@ -37,6 +38,7 @@ export interface ArchiveCaseModalViewProps {
 export const ArchiveCaseModalView = ({
   isOpen,
   onClose,
+  mode = 'create',
   descriptionNumber,
   setDescriptionNumber,
   caseNumber,
@@ -62,7 +64,9 @@ export const ArchiveCaseModalView = ({
   return (
     <Dialog disableScrollLock open={isOpen} sx={styles.dialog} onClose={onClose} fullWidth>
       <DialogTitle sx={styles.dialogHeaderBox}>
-        <Typography sx={styles.dialogTitle}>{ARCHIVE_CASE_MODAL_LABELS.title}</Typography>
+        <Typography sx={styles.dialogTitle}>
+          {mode === 'edit' ? ARCHIVE_CASE_MODAL_LABELS.title_edit : ARCHIVE_CASE_MODAL_LABELS.title}
+        </Typography>
         <IconButton aria-label="Закрити" onClick={onClose} sx={styles.closeButton}>
           <X size={24} strokeWidth={1.5} />
         </IconButton>

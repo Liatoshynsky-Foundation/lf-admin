@@ -115,6 +115,12 @@ describe('ArchiveCaseModalView', () => {
     expect(screen.getByTestId('label-row')).toHaveTextContent(ARCHIVE_CASE_MODAL_LABELS.detailedCaseDescription);
   });
 
+  it('should render the edit title when mode is edit', () => {
+    render(<ArchiveCaseModalView {...defaultProps} mode="edit" />);
+
+    expect(screen.getByText(ARCHIVE_CASE_MODAL_LABELS.title_edit)).toBeInTheDocument();
+  });
+
   it('should call dedicated handlers for values when typed', async () => {
     const user = userEvent.setup();
     render(<ArchiveCaseModalView {...defaultProps} />);

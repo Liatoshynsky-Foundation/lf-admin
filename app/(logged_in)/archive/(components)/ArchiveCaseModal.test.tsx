@@ -11,6 +11,7 @@ jest.mock('./archive-case-modal-view/ArchiveCaseModalView', () => ({
     <div data-testid="archive-case-modal-view">
       <span data-testid="view-is-open">{String(props.isOpen)}</span>
       <span data-testid="view-case-number">{props.caseNumber}</span>
+      <span data-testid="view-mode">{props.mode}</span>
       <button data-testid="view-open-upload-btn" onClick={props.handleOpenUploadFlow}>
         Open Upload Flow
       </button>
@@ -129,6 +130,13 @@ describe('ArchiveCaseModal', () => {
     expect(screen.getByTestId('archive-case-modal-view')).toBeInTheDocument();
     expect(screen.getByTestId('view-is-open')).toHaveTextContent('true');
     expect(screen.getByTestId('view-case-number')).toHaveTextContent('CASE-99');
+    expect(screen.getByTestId('view-mode')).toHaveTextContent('create');
+  });
+
+  it('should pass mode="edit" to ArchiveCaseModalView when provided', () => {
+    render(<ArchiveCaseModal {...defaultProps} mode="edit" />);
+
+    expect(screen.getByTestId('view-mode')).toHaveTextContent('edit');
   });
 
   it('should not render MediaModal when isUploadModalOpen is false', () => {

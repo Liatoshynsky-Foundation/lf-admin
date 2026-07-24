@@ -13,9 +13,10 @@ import { useArchiveCaseModal } from '~/shared/hooks/use-archive-case-modal/useAr
 interface ArchiveCaseModalProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
+  mode?: 'create' | 'edit';
 }
 
-export const ArchiveCaseModal = ({ isOpen, setIsOpen }: ArchiveCaseModalProps) => {
+export const ArchiveCaseModal = ({ isOpen, setIsOpen, mode = 'create' }: ArchiveCaseModalProps) => {
   const {
     descriptionNumber,
     setDescriptionNumber,
@@ -40,7 +41,8 @@ export const ArchiveCaseModal = ({ isOpen, setIsOpen }: ArchiveCaseModalProps) =
     handleDeletePdf,
     handleSave,
     handleCancel,
-    isSubmitDisabled
+    isSubmitDisabled,
+    isCancelDisabled
   } = useArchiveCaseModal({ setIsOpen });
 
   return (
@@ -69,6 +71,7 @@ export const ArchiveCaseModal = ({ isOpen, setIsOpen }: ArchiveCaseModalProps) =
       <ArchiveCaseModalView
         isOpen={isOpen}
         onClose={handleCancel}
+        mode={mode}
         descriptionNumber={descriptionNumber}
         setDescriptionNumber={setDescriptionNumber}
         caseNumber={caseNumber}
@@ -89,6 +92,7 @@ export const ArchiveCaseModal = ({ isOpen, setIsOpen }: ArchiveCaseModalProps) =
         handleSave={handleSave}
         handleCancel={handleCancel}
         isSubmitDisabled={isSubmitDisabled}
+        isCancelDisabled={isCancelDisabled}
       />
     </>
   );
