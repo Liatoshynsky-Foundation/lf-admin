@@ -27,19 +27,37 @@ type MockCustomTextFieldProps = {
   inputProps?: Record<string, unknown>;
 };
 
-type MockDatePickerProps = {
-  onChange: (value: { format: (fmt: string) => string } | null) => void;
-  label?: string;
-  slotProps?: {
-    textField?: {
-      error?: boolean;
-      helperText?: ReactNode;
-      onBlur?: () => void;
-      required?: boolean;
-      sx?: object;
-    };
-  };
-};
+jest.mock('~/constants/opus', () => ({
+  OPUS_DETAILS_LABELS: {
+    numberKind: 'Назва',
+    number: 'Номер',
+    additionalText: 'additionalText',
+    name: 'Назва групи',
+    creationYear: 'Рік створення',
+    endYear: 'Рік закінчення',
+    datesNote: 'dateAdditionalText',
+    genre: 'Жанр'
+  },
+  OPUS_FIELD_LIMITS: {
+    name: { min: 2, max: 250 },
+    additionalText: 100,
+    datesNote: 100,
+    genre: 100
+  },
+  OPUS_VALIDATION_MESSAGES: {
+    nameRequired: 'Обов’язкове поле',
+    numberRequired: 'Обов’язкове поле',
+    numberInvalid: 'Значення не може бути від\'ємним',
+    creationYearRequired: 'Обов’язкове поле',
+    nameTooShort: 'Назва занадто коротка'
+  },
+  OPUS_NUMBER_KIND_OPTIONS: [
+    { value: 'op', label: 'Op.' },
+    { value: 'woo', label: 'Sine op.' }
+  ],
+  REQUIRED_FIELD_ERROR: 'Обов’язкове поле',
+  OPUS_YEAR_RANGE: { min: 1000, max: 2100 }
+}));
 
 jest.mock('~/shared/components/design-system/text-field/TextField', () => ({
   CustomTextField: ({
@@ -89,21 +107,34 @@ jest.mock('@mui/x-date-pickers/LocalizationProvider', () => ({
   LocalizationProvider: ({ children }: { children: ReactNode }) => <div>{children}</div>
 }));
 
-jest.mock('@mui/x-date-pickers/DatePicker', () => ({
-  DatePicker: ({ onChange, label, slotProps }: MockDatePickerProps) => {
-    const isError = slotProps?.textField?.error;
-    const helperText = slotProps?.textField?.helperText;
-    return (
-      <div data-testid={`mock-datepicker-${label}`}>
-        <button data-testid={`trigger-date-change-${label}`} onClick={() => onChange({ format: () => '1922' })} />
-        <button data-testid={`trigger-date-clear-${label}`} onClick={() => onChange(null)} />
-        <button data-testid={`trigger-date-blur-${label}`} onClick={() => slotProps?.textField?.onBlur?.()} />
-        {isError && <span data-testid={`error-${label}`}>{helperText}</span>}
-      </div>
-    );
-  }
+jest.mock('~/shared/components/forms/opus-details-block/year-picker/YearPicker', () => ({
+  __esModule: true,
+  default: ({
+    label,
+    value,
+    onChange,
+    error,
+    helperText
+  }: {
+    label: string;
+    value: string;
+    onChange: (year: string) => void;
+    error?: boolean;
+    helperText?: ReactNode;
+  }) => (
+    <div data-testid={`mock-year-picker-${label}`}>
+      <span>{label}</span>
+      <button data-testid={`trigger-year-change-${label}`} onClick={() => onChange('1922')}>
+        Set Year 1922
+      </button>
+      <button data-testid={`trigger-year-clear-${label}`} onClick={() => onChange('')}>
+        Clear Year
+      </button>
+      <span data-testid={`value-${label}`}>{value}</span>
+      {error && <span data-testid={`error-${label}`}>{helperText}</span>}
+    </div>
+  )
 }));
-
 const mockOnChange = jest.fn();
 
 const defaultProps = {
@@ -135,8 +166,8 @@ describe('GroupDetailsSection Component', () => {
     expect(screen.getByTestId('mock-input-Номер')).toHaveValue('42');
     expect(screen.getByTestId('mock-input-additionalText-top')).toHaveValue('bis');
     expect(screen.getByTestId('mock-input-Назва групи')).toHaveValue('Квартет');
-    expect(screen.getByTestId('mock-datepicker-Рік створення')).toBeInTheDocument();
-    expect(screen.getByTestId('mock-datepicker-Рік закінчення')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-year-picker-Рік створення *')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-year-picker-Рік закінчення')).toBeInTheDocument();
     expect(screen.getByTestId('mock-input-dateAdditionalText')).toHaveValue('приблизно');
   });
 
@@ -159,17 +190,17 @@ describe('GroupDetailsSection Component', () => {
   it('should format year and call onChange when dates are selected', () => {
     render(<GroupDetailsSection {...defaultProps} />);
 
-    fireEvent.click(screen.getByTestId('trigger-date-change-Рік створення'));
+    fireEvent.click(screen.getByTestId('trigger-year-change-Рік створення *'));
     expect(mockOnChange).toHaveBeenCalledWith('creationYear', '1922');
 
-    fireEvent.click(screen.getByTestId('trigger-date-change-Рік закінчення'));
+    fireEvent.click(screen.getByTestId('trigger-year-change-Рік закінчення'));
     expect(mockOnChange).toHaveBeenCalledWith('endYear', '1922');
   });
 
   it('should call onChange with empty string when date is cleared', () => {
     render(<GroupDetailsSection {...defaultProps} />);
 
-    fireEvent.click(screen.getByTestId('trigger-date-clear-Рік створення'));
+    fireEvent.click(screen.getByTestId('trigger-year-clear-Рік створення *'));
     expect(mockOnChange).toHaveBeenCalledWith('creationYear', '');
   });
 
@@ -183,7 +214,7 @@ describe('GroupDetailsSection Component', () => {
     expect(screen.getByTestId('error-Номер')).toHaveTextContent('Значення не може бути від\'ємним');
   });
 
-  it('should display validation error when required creation year is empty after blur', () => {
+  it('should display validation error when required creation year is empty', () => {
     const propsWithEmptyYear = {
       ...defaultProps,
       data: { ...defaultProps.data, creationYear: '' }
@@ -191,11 +222,8 @@ describe('GroupDetailsSection Component', () => {
 
     render(<GroupDetailsSection {...propsWithEmptyYear} />);
 
-    expect(screen.queryByTestId('error-Рік створення')).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByTestId('trigger-date-blur-Рік створення'));
-
-    expect(screen.getByTestId('error-Рік створення')).toHaveTextContent('Обов’язкове поле');
+    fireEvent.click(screen.getByTestId('trigger-year-clear-Рік створення *'));
+    expect(screen.getByTestId('error-Рік створення *')).toHaveTextContent('Обов’язкове поле');
   });
 
   it('should display external validation errors passed from props', () => {
@@ -210,8 +238,9 @@ describe('GroupDetailsSection Component', () => {
     render(<GroupDetailsSection {...propsWithErrors} />);
 
     expect(screen.getByTestId('error-Назва')).toHaveTextContent('Спеціальна помилка префіксу');
-    expect(screen.getByTestId('error-Рік створення')).toHaveTextContent('Заповніть рік');
+    expect(screen.getByTestId('error-Рік створення *')).toHaveTextContent('Обов’язкове поле');
   });
+  
   it('should close prefix menu when window is scrolled', () => {
     render(<GroupDetailsSection {...defaultProps} />);
     const triggerBtn = screen.getByTestId('trigger-open-Назва');
@@ -239,14 +268,15 @@ describe('GroupDetailsSection Component', () => {
     fireEvent.blur(screen.getByTestId('mock-input-Назва групи'));
     expect(screen.getByTestId('error-Назва групи')).toHaveTextContent('Обов’язкове поле');
   });
+
   it('should call onChange with correct parameters for all text fields', () => {
     render(<GroupDetailsSection {...defaultProps} />);
 
     fireEvent.change(screen.getByTestId('mock-input-Номер'), { target: { value: '99' } });
     expect(mockOnChange).toHaveBeenCalledWith('groupNumber', '99');
 
-    fireEvent.change(screen.getByTestId('mock-input-Назва'), { target: { value: 'Bo.' } });
-    expect(mockOnChange).toHaveBeenCalledWith('titlePrefix', 'Bo.');
+    fireEvent.change(screen.getByTestId('mock-input-Назва'), { target: { value: 'woo' } });
+    expect(mockOnChange).toHaveBeenCalledWith('titlePrefix', 'woo');
 
     fireEvent.change(screen.getByTestId('mock-input-additionalText-top'), {
       target: { value: 'новий додатковий текст' }
@@ -255,6 +285,30 @@ describe('GroupDetailsSection Component', () => {
 
     fireEvent.change(screen.getByTestId('mock-input-Назва групи'), { target: { value: 'Новий Квартет' } });
     expect(mockOnChange).toHaveBeenCalledWith('groupTitle', 'Новий Квартет', true);
+  });
+
+  it('should trim additionalText on blur', () => {
+    const props = { ...defaultProps, data: { ...defaultProps.data, additionalText: '  пробіли  ' } };
+    render(<GroupDetailsSection {...props} />);
+    fireEvent.blur(screen.getByTestId('mock-input-additionalText-top'));
+    expect(mockOnChange).toHaveBeenCalledWith('additionalText', 'пробіли');
+  });
+
+  it('should trim dateAdditionalText on blur', () => {
+    const props = {
+      ...defaultProps,
+      data: { ...defaultProps.data, dateAdditionalText: { uk: '  пробіли  ', en: '' } }
+    };
+    render(<GroupDetailsSection {...props} />);
+    fireEvent.blur(screen.getByTestId('mock-input-dateAdditionalText'));
+    expect(mockOnChange).toHaveBeenCalledWith('dateAdditionalText', 'пробіли', true);
+  });
+
+  it('should trim genre on blur', () => {
+    const props = { ...defaultProps, data: { ...defaultProps.data, genre: '  пробіли  ' } };
+    render(<GroupDetailsSection {...props} />);
+    fireEvent.blur(screen.getByLabelText('Жанр'));
+    expect(mockOnChange).toHaveBeenCalledWith('genre', 'пробіли');
   });
 
   it('should handle SelectProps onClose for title prefix', () => {
