@@ -58,6 +58,19 @@ const processContentFields = async (input: UpdateNewsGQLInput, updateData: Updat
   }
 };
 
+const TITLE_MAX_LENGTH = 150;
+
+const validateTitleMaxLength = (title: LocalizedString | undefined): void => {
+  if (!title) return;
+
+  (['uk', 'en'] as const).forEach((lang) => {
+    const value = title[lang];
+    if (typeof value === 'string' && value.trim().length > TITLE_MAX_LENGTH) {
+      throw new Error(newsServiceErrors.TITLE_TOO_LONG_FOR_SLUG);
+    }
+  });
+};
+
 const endpointHandler = endpointRepositoryHandler('newsRepository');
 
 export const NewsMutation = {
@@ -77,6 +90,8 @@ export const NewsMutation = {
     } else if (titleForSlug.trim().length < 2) {
       throw new Error(newsServiceErrors.TITLE_TOO_SHORT_FOR_SLUG);
     }
+
+    validateTitleMaxLength(input.title);
 
     const slug = await generateUniqueSlug(titleForSlug, {
       checkExists: async (slug: string) => {
@@ -142,6 +157,8 @@ export const NewsMutation = {
       } else if (titleForSlug.trim().length < 2) {
         throw new Error(newsServiceErrors.TITLE_TOO_SHORT_FOR_SLUG);
       }
+
+      validateTitleMaxLength(input.title);
 
       await processSlugUpdate(id, input.title, repo, updateData);
     }

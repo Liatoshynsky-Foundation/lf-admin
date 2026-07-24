@@ -101,6 +101,29 @@ describe('NewsMutation Resolvers', () => {
       );
     });
 
+    it('should throw TITLE_TOO_LONG_FOR_SLUG if title.uk exceeds 150 characters (lf-manual-tests#469)', async () => {
+      const invalidInput = { ...baseInput, title: { uk: 'а'.repeat(151), en: 'Valid title' } };
+      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toThrow(
+        newsServiceErrors.TITLE_TOO_LONG_FOR_SLUG
+      );
+    });
+
+    it('should throw TITLE_TOO_LONG_FOR_SLUG if title.en exceeds 150 characters (lf-manual-tests#469)', async () => {
+      const invalidInput = { ...baseInput, title: { uk: 'Валідний заголовок', en: 'a'.repeat(151) } };
+      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toThrow(
+        newsServiceErrors.TITLE_TOO_LONG_FOR_SLUG
+      );
+    });
+
+    it('should accept a title exactly 150 characters long', async () => {
+      mockAction('findBySlug', null);
+      mockAction('create', createMockNews({ id: 'new-id' }));
+      const validInput = { ...baseInput, title: { uk: 'а'.repeat(150), en: 'a'.repeat(150) } };
+
+      await expect(NewsMutation.createNews({}, { input: validInput }, adminContext)).resolves.toBeDefined();
+      expect(mockRepo.create).toHaveBeenCalled();
+    });
+
     it('should throw GraphQLError for createNews if user is unauthenticated', async () => {
       await expect(NewsMutation.createNews({}, { input: baseInput }, userContext)).rejects.toThrow();
     });
@@ -168,6 +191,16 @@ describe('NewsMutation Resolvers', () => {
       await expect(
         NewsMutation.updateNews({}, { id, input: { title: { uk: 'Т', en: 'T' } } }, adminContext)
       ).rejects.toThrow(newsServiceErrors.TITLE_TOO_SHORT_FOR_SLUG);
+
+      expect(mockRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('should throw TITLE_TOO_LONG_FOR_SLUG if updated title.uk exceeds 150 characters (lf-manual-tests#469)', async () => {
+      mockAction('findById', createMockNews({ id }));
+
+      await expect(
+        NewsMutation.updateNews({}, { id, input: { title: { uk: 'а'.repeat(151), en: 'Valid title' } } }, adminContext)
+      ).rejects.toThrow(newsServiceErrors.TITLE_TOO_LONG_FOR_SLUG);
 
       expect(mockRepo.update).not.toHaveBeenCalled();
     });
