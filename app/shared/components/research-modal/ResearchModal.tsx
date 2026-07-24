@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 import toast from 'react-hot-toast';
 
@@ -12,18 +10,12 @@ interface ResearchModalProps {
   initialData?: Partial<ResearchWorkFormData>;
 }
 
-const ResearchModal: React.FC<ResearchModalProps> = ({ isOpen, onClose, mode = 'create', initialData }) => {
+const ResearchModal = ({ isOpen, onClose, mode = 'create', initialData }: ResearchModalProps) => {
   const handleSave = async (data: ResearchWorkFormData) => {
-    try {
-      // eslint-disable-next-line no-console
-      console.log('Saving research work:', data);
+    // eslint-disable-next-line no-console
+    console.log('Research work data (persistence not implemented yet):', data);
 
-      toast.success(mode === 'create' ? 'Роботу успішно додано!' : 'Роботу успішно оновлено!');
-      onClose();
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      toast.error(`Помилка при збереженні роботи: ${errorMessage}`);
-    }
+    toast.error('Збереження ще не реалізовано. Дані не будуть збережені.');
   };
 
   return (

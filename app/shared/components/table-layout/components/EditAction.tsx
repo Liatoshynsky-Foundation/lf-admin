@@ -10,31 +10,18 @@ type EditActionProps = Readonly<{
 }>;
 
 export function EditAction({ href, label, onClick }: EditActionProps) {
-  if (onClick) {
-    return (
-      <Box sx={styles.editActionWrapper}>
-        <IconButton
-          onClick={(e) => {
-            e.stopPropagation();
-            onClick();
-          }}
-          aria-label={label}
-          sx={styles.editActionButton}
-        >
-          <Pencil size={20} />
-        </IconButton>
-      </Box>
-    );
-  }
+  const clickProps = onClick
+    ? {
+      onClick: (e: React.MouseEvent) => {
+        e.stopPropagation();
+        onClick();
+      }
+    }
+    : { component: Link, href, onClick: (e: React.MouseEvent) => e.stopPropagation() };
+
   return (
     <Box sx={styles.editActionWrapper}>
-      <IconButton
-        component={Link}
-        href={href}
-        onClick={(e) => e.stopPropagation()}
-        aria-label={label}
-        sx={styles.editActionButton}
-      >
+      <IconButton {...clickProps} aria-label={label} sx={styles.editActionButton}>
         <Pencil size={20} />
       </IconButton>
     </Box>

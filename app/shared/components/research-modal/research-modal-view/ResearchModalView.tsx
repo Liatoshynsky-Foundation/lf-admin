@@ -54,14 +54,14 @@ const DEFAULT_DATA: ResearchWorkFormData = {
   isVisibleOnSite: true
 };
 
-export const ResearchModalView: React.FC<ResearchModalViewProps> = ({
+export const ResearchModalView = ({
   dialogTitle = 'Нова робота',
   isOpen,
   initialData,
   onClose,
   onSave,
   sx
-}) => {
+}: ResearchModalViewProps) => {
   const [bibliographicDescription, setBibliographicDescription] = useState(
     initialData?.bibliographicDescription ?? DEFAULT_DATA.bibliographicDescription
   );
@@ -95,8 +95,12 @@ export const ResearchModalView: React.FC<ResearchModalViewProps> = ({
 
   const handleSave = async () => {
     setIsSaving(true);
-    await onSave({ bibliographicDescription, author, caseDates, keywords, file, fileName, url, isVisibleOnSite });
-    resetForm();
+    try {
+      await onSave({ bibliographicDescription, author, caseDates, keywords, file, fileName, url, isVisibleOnSite });
+      resetForm();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleFileButtonClick = () => fileInputRef.current?.click();
