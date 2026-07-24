@@ -20,9 +20,7 @@ jest.mock('~/src/shared/utils/slugGenerator/slugGenerator');
 const mockedSyncImagesCrops = syncImagesCrops as jest.MockedFunction<typeof syncImagesCrops>;
 const mockedMarkImagesAsUsed = markImagesAsUsed as jest.MockedFunction<typeof markImagesAsUsed>;
 const mockedProcessSlugUpdate = processSlugUpdate as jest.MockedFunction<typeof processSlugUpdate>;
-const mockedOrderCompositionsByIds = orderCompositionsByIds as jest.MockedFunction<
-  typeof orderCompositionsByIds
->;
+const mockedOrderCompositionsByIds = orderCompositionsByIds as jest.MockedFunction<typeof orderCompositionsByIds>;
 const mockedGenerateUniqueSlug = generateUniqueSlug as jest.MockedFunction<typeof generateUniqueSlug>;
 
 const OPUS_ID = 'opus-1';
@@ -33,6 +31,23 @@ const COMPOSITION_ID_3 = 'comp-3';
 const OPUS_NUMBER = 10;
 const DUP_OPUS_NUMBER = 20;
 const SLUG_VALUE = 'slug-test';
+const CREATION_YEAR = '2020';
+
+const BASE_CREATE_INPUT = {
+  numberKind: 'op' as const,
+  number: OPUS_NUMBER,
+  name: { uk: 'Назва', en: 'Name' },
+  creationYear: CREATION_YEAR,
+  title: { uk: 'Заголовок', en: 'Title' },
+  description: { uk: '{"type":"doc","content":[]}', en: '{"type":"doc","content":[]}' }
+};
+
+const BASE_UPDATE_INPUT = {
+  numberKind: 'op' as const,
+  number: OPUS_NUMBER,
+  name: { uk: 'Назва', en: 'Name' },
+  creationYear: CREATION_YEAR
+};
 
 const MOCK_OPUS_ENTITY: Opus = {
   id: OPUS_ID,
@@ -79,7 +94,7 @@ describe('OpusMutation Resolvers', () => {
       findByOpusId: jest.fn(),
       findByOpusIds: jest.fn(),
       findByIds: jest.fn(),
-      syncForOpus: jest.fn().mockResolvedValue([]), // Default to empty array to prevent undefined map crash
+      syncForOpus: jest.fn().mockResolvedValue([]),
       deleteByOpusId: jest.fn(),
       searchByTitle: jest.fn(),
     } as unknown as jest.Mocked<ICompositionRepository>;
@@ -113,11 +128,7 @@ describe('OpusMutation Resolvers', () => {
   describe('createOpus', () => {
     it('should throw UNAUTHENTICATED error when request is not authenticated', async () => {
       await expect(
-        OpusMutation.createOpus(
-          {},
-          { input: { numberKind: 'op', number: OPUS_NUMBER, title: { uk: 'T', en: 'T' } } },
-          userContext
-        )
+        OpusMutation.createOpus({}, { input: BASE_CREATE_INPUT }, userContext)
       ).rejects.toThrow(
         new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
           extensions: { code: graphqlErrors.UNAUTHENTICATED.code },
@@ -129,11 +140,7 @@ describe('OpusMutation Resolvers', () => {
       mockOpusRepo.findByNumber.mockResolvedValue(MOCK_OPUS_ENTITY);
 
       await expect(
-        OpusMutation.createOpus(
-          {},
-          { input: { numberKind: 'op', number: OPUS_NUMBER, title: { uk: 'T', en: 'T' } } },
-          adminContext
-        )
+        OpusMutation.createOpus({}, { input: BASE_CREATE_INPUT }, adminContext)
       ).rejects.toThrow(
         new GraphQLError(opusServiceErrors.NUMBER_ALREADY_EXISTS(OPUS_NUMBER), {
           extensions: { code: 'DUPLICATE_OPUS_NUMBER' },
@@ -149,7 +156,7 @@ describe('OpusMutation Resolvers', () => {
       await expect(
         OpusMutation.createOpus(
           {},
-          { input: { numberKind: 'op', number: OPUS_NUMBER, title: { uk: '', en: '' } } },
+          { input: { ...BASE_CREATE_INPUT, name: { uk: '', en: '' } } },
           adminContext
         )
       ).rejects.toThrow(
@@ -181,10 +188,7 @@ describe('OpusMutation Resolvers', () => {
         {},
         {
           input: {
-            numberKind: 'op',
-            number: OPUS_NUMBER,
-            title: { uk: 'Заголовок', en: 'Title' },
-            name: { uk: 'Назва', en: 'Name' },
+            ...BASE_CREATE_INPUT,
             coverImage,
             compositions: [
               {
@@ -232,16 +236,16 @@ describe('OpusMutation Resolvers', () => {
       expect(mockOpusRepo.create).toHaveBeenCalledWith({
         number: OPUS_NUMBER,
         numberKind: 'op',
-        title: { uk: 'Заголовок', en: 'Title' },
-        name: { uk: 'Назва', en: 'Name' },
+        title: BASE_CREATE_INPUT.title,
+        name: BASE_CREATE_INPUT.name,
+        description: BASE_CREATE_INPUT.description,
         additionalText: null,
-        creationYear: null,
+        creationYear: CREATION_YEAR,
         endYear: null,
         datesNote: null,
         genre: null,
         adminTitle: null,
         slug: SLUG_VALUE,
-        description: null,
         introDescription: null,
         parts: null,
         keywords: null,
@@ -268,7 +272,7 @@ describe('OpusMutation Resolvers', () => {
       expect(result).toEqual({ ...MOCK_OPUS_ENTITY, compositions: [MOCK_COMPOSITION_1] });
     });
 
-    it('should use title.uk for slug if name is missing and set status from input', async () => {
+    it('should trim name.uk when generating slug and set status from input', async () => {
       mockOpusRepo.findByNumber.mockResolvedValue(null);
       mockedGenerateUniqueSlug.mockResolvedValue(SLUG_VALUE);
       mockCompositionsRepo.syncForOpus.mockResolvedValue([]);
@@ -278,16 +282,15 @@ describe('OpusMutation Resolvers', () => {
         {},
         {
           input: {
-            numberKind: 'op',
-            number: OPUS_NUMBER,
-            title: { uk: '  Заголовок  ', en: 'Title' },
+            ...BASE_CREATE_INPUT,
+            name: { uk: '  Назва  ', en: 'Name' },
             status: OpusStatus.Published,
           },
         },
         adminContext
       );
 
-      expect(mockedGenerateUniqueSlug).toHaveBeenCalledWith('Заголовок', expect.any(Object));
+      expect(mockedGenerateUniqueSlug).toHaveBeenCalledWith('Назва', expect.any(Object));
       expect(mockOpusRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
           status: OpusStatus.Published,
@@ -352,7 +355,7 @@ describe('OpusMutation Resolvers', () => {
   describe('updateOpus', () => {
     it('should throw UNAUTHENTICATED error when request is not authenticated', async () => {
       await expect(
-        OpusMutation.updateOpus({}, { id: OPUS_ID, input: {} }, userContext)
+        OpusMutation.updateOpus({}, { id: OPUS_ID, input: BASE_UPDATE_INPUT }, userContext)
       ).rejects.toThrow(
         new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
           extensions: { code: graphqlErrors.UNAUTHENTICATED.code },
@@ -364,7 +367,7 @@ describe('OpusMutation Resolvers', () => {
       mockOpusRepo.findById.mockResolvedValue(null);
 
       await expect(
-        OpusMutation.updateOpus({}, { id: OPUS_ID, input: {} }, adminContext)
+        OpusMutation.updateOpus({}, { id: OPUS_ID, input: BASE_UPDATE_INPUT }, adminContext)
       ).rejects.toThrow(
         new GraphQLError(opusServiceErrors.OPUS_NOT_FOUND(OPUS_ID), {
           extensions: { code: 'OPUS_NOT_FOUND' },
@@ -377,7 +380,11 @@ describe('OpusMutation Resolvers', () => {
       mockOpusRepo.findByNumber.mockResolvedValue({ ...MOCK_OPUS_ENTITY, id: OTHER_OPUS_ID });
 
       await expect(
-        OpusMutation.updateOpus({}, { id: OPUS_ID, input: { number: DUP_OPUS_NUMBER } }, adminContext)
+        OpusMutation.updateOpus(
+          {},
+          { id: OPUS_ID, input: { ...BASE_UPDATE_INPUT, number: DUP_OPUS_NUMBER } },
+          adminContext
+        )
       ).rejects.toThrow(
         new GraphQLError(opusServiceErrors.NUMBER_ALREADY_EXISTS(DUP_OPUS_NUMBER), {
           extensions: { code: 'DUPLICATE_OPUS_NUMBER' },
@@ -393,7 +400,10 @@ describe('OpusMutation Resolvers', () => {
 
       const result = await OpusMutation.updateOpus(
         {},
-        { id: OPUS_ID, input: { title: { uk: 'Нев', en: 'New' } } },
+        {
+          id: OPUS_ID,
+          input: { ...BASE_UPDATE_INPUT, title: { uk: 'Нев', en: 'New' } },
+        },
         adminContext
       );
 
@@ -408,6 +418,8 @@ describe('OpusMutation Resolvers', () => {
       expect(mockOpusRepo.update).toHaveBeenCalledWith(OPUS_ID, {
         number: OPUS_NUMBER,
         numberKind: 'op',
+        name: BASE_UPDATE_INPUT.name,
+        creationYear: CREATION_YEAR,
         title: { uk: 'Нев', en: 'New' },
         compositions: [COMPOSITION_ID_1, COMPOSITION_ID_2],
       });
@@ -426,6 +438,7 @@ describe('OpusMutation Resolvers', () => {
         {
           id: OPUS_ID,
           input: {
+            ...BASE_UPDATE_INPUT,
             name: nameInput,
             compositions: [{ name: 'Comp 2' }, { name: 'Comp 3' }],
           },
@@ -454,7 +467,7 @@ describe('OpusMutation Resolvers', () => {
       mockOpusRepo.update.mockResolvedValue(null);
 
       await expect(
-        OpusMutation.updateOpus({}, { id: OPUS_ID, input: {} }, adminContext)
+        OpusMutation.updateOpus({}, { id: OPUS_ID, input: BASE_UPDATE_INPUT }, adminContext)
       ).rejects.toThrow(
         new GraphQLError(opusServiceErrors.OPUS_NOT_FOUND(OPUS_ID), {
           extensions: { code: 'OPUS_NOT_FOUND' },
@@ -476,7 +489,7 @@ describe('OpusMutation Resolvers', () => {
 
       await OpusMutation.updateOpus(
         {},
-        { id: OPUS_ID, input: { coverImage } },
+        { id: OPUS_ID, input: { ...BASE_UPDATE_INPUT, coverImage } },
         adminContext
       );
 

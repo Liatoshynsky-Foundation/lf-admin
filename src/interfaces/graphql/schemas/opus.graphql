@@ -94,18 +94,18 @@ input WorksFiltersInput {
 }
 
 input CreateOpusInput {
-  numberKind: OpusNumberKind
-  number: Float
-  name: JSON
+  numberKind: OpusNumberKind!
+  number: Float!
+  name: JSON!
   additionalText: String
-  creationYear: String
+  creationYear: String!
   endYear: String
   datesNote: String
   genre: JSON
   compositions: JSON
   adminTitle: String
   title: JSON!
-  description: JSON
+  description: JSON!
   introDescription: JSON
   parts: JSON
   gallery: JSON
@@ -119,11 +119,11 @@ input CreateOpusInput {
 }
 
 input UpdateOpusInput {
-  numberKind: OpusNumberKind
-  number: Float
-  name: JSON
+  numberKind: OpusNumberKind!
+  number: Float!
+  name: JSON!
   additionalText: String
-  creationYear: String
+  creationYear: String!
   endYear: String
   datesNote: String
   genre: JSON

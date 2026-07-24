@@ -26,17 +26,17 @@ type GQLComposition = {
 export type CreateOpusGQLInput = {
   numberKind: OpusNumberKind;
   number: number;
-  name?: LocalizedString;
+  name: LocalizedString;
   additionalText?: string;
-  creationYear?: string;
+  creationYear: string;
   endYear?: string;
   datesNote?: string;
   genre?: LocalizedString;
   compositions?: GQLComposition[];
   adminTitle?: string;
   title: LocalizedString;
-  description?: OpusDescription;
-  introDescription?: OpusDescription; 
+  description: OpusDescription;
+  introDescription?: OpusDescription;
   parts?: OpusDescription;
   gallery?: OpusGalleryItem[];
   performancesTitle?: LocalizedString;
@@ -48,7 +48,10 @@ export type CreateOpusGQLInput = {
   publishedAt?: string;
 };
 
-export type UpdateOpusGQLInput = Partial<CreateOpusGQLInput>;
+export type UpdateOpusGQLInput = Omit<CreateOpusGQLInput, 'title' | 'description'> & {
+  title?: LocalizedString;
+  description?: OpusDescription;
+};
 
 type CreateOpusArgs = { input: CreateOpusGQLInput };
 type UpdateOpusArgs = { id: string; input: UpdateOpusGQLInput };
@@ -99,9 +102,7 @@ async function findExistingOpus(repo: IOpusRepository, id: string): Promise<Opus
   return existingOpus;
 }
 
-async function ensureUniqueOpusNumber(repo: IOpusRepository, id: string, number: number | undefined): Promise<void> {
-  if (number === undefined || number === null) return;
-
+async function ensureUniqueOpusNumber(repo: IOpusRepository, id: string, number: number): Promise<void> {
   const duplicate = await repo.findByNumber(number);
   if (duplicate && duplicate.id !== id) {
     throw new GraphQLError(opusServiceErrors.NUMBER_ALREADY_EXISTS(number), {
@@ -111,9 +112,9 @@ async function ensureUniqueOpusNumber(repo: IOpusRepository, id: string, number:
 }
 
 async function handleCompositionsSync(
-  compositionsRepo: ICompositionRepository, 
-  repo: IOpusRepository, 
-  existingOpus: Opus, 
+  compositionsRepo: ICompositionRepository,
+  repo: IOpusRepository,
+  existingOpus: Opus,
   inputCompositions: GQLComposition[] | undefined
 ) {
   if (inputCompositions === undefined) {
@@ -122,7 +123,6 @@ async function handleCompositionsSync(
   }
 
   const compositions = await compositionsRepo.syncForOpus(inputCompositions.map(mapComposition));
-  
   const oldCompositionIds = (existingOpus.compositions ?? []).map((cid) => cid.toString());
   const newCompositionIds = compositions.map((c) => c.id);
 
@@ -153,22 +153,20 @@ async function updateAndVerifyOpus(repo: IOpusRepository, id: string, updateData
 
 const buildOpusUpdateData = (
   input: UpdateOpusGQLInput,
-  existingOpus: Opus,
-  number: number | undefined,
   compositionIds: string[]
 ): UpdateOpusInput => {
   const candidate: UpdateOpusInput = {
-    number: number !== undefined ? Number(number) : existingOpus.number,
-    numberKind: input.numberKind ?? existingOpus.numberKind,
-    title: input.title,
+    number: input.number,
+    numberKind: input.numberKind,
     name: input.name,
-    additionalText: input.additionalText,
     creationYear: input.creationYear,
+    title: input.title,
+    description: input.description,
+    additionalText: input.additionalText,
     endYear: input.endYear,
     datesNote: input.datesNote,
     genre: input.genre,
     adminTitle: input.adminTitle,
-    description: input.description,
     keywords: input.keywords,
     allowIndexation: input.allowIndexation,
     coverImage: input.coverImage,
@@ -198,7 +196,7 @@ export const OpusMutation = {
       });
     }
 
-    const nameForSlug = input.name?.uk?.trim() || input.title?.uk?.trim();
+    const nameForSlug = input.name.uk?.trim();
     if (!nameForSlug) {
       throw new GraphQLError(opusServiceErrors.NAME_REQUIRED_FOR_SLUG, {
         extensions: { code: 'BAD_USER_INPUT' }
@@ -214,18 +212,18 @@ export const OpusMutation = {
     const compositionIds = compositions.map((c) => c.id);
 
     const opusData: CreateOpusInput = {
-      number: Number(input.number),
-      numberKind: input.numberKind ?? 'op',
+      number: input.number,
+      numberKind: input.numberKind,
       title: input.title,
       name: input.name,
+      description: input.description,
       additionalText: input.additionalText ?? null,
-      creationYear: input.creationYear ?? null,
+      creationYear: input.creationYear,
       endYear: input.endYear ?? null,
       datesNote: input.datesNote ?? null,
       genre: input.genre ?? null,
       adminTitle: input.adminTitle ?? null,
       slug,
-      description: input.description ?? null,
       introDescription: input.introDescription ?? null,
       parts: input.parts ?? null,
       keywords: input.keywords ?? null,
@@ -238,7 +236,6 @@ export const OpusMutation = {
     };
 
     const opus = await repo.create(opusData);
-
     await repo.removeCompositionsFromCompositionsOpus(compositionIds);
 
     if (input.coverImage?.crop) {
@@ -252,10 +249,14 @@ export const OpusMutation = {
     return { ...opus, compositions };
   },
 
-  updateOpusStatus: async (_: unknown, { id, status }: { id: string; status: OpusStatus }, context: GraphQLContext): Promise<UpdateOpusStatusPayload> => {
+  updateOpusStatus: async (
+    _: unknown,
+    { id, status }: { id: string; status: OpusStatus },
+    context: GraphQLContext
+  ): Promise<UpdateOpusStatusPayload> => {
     assertAuthenticated(context);
     const repo = context.requestContainer.cradle.opusRepository;
-    
+
     const existingOpus = await repo.findById(id);
     if (!existingOpus) {
       throw new GraphQLError(opusServiceErrors.OPUS_NOT_FOUND(id), {
@@ -264,7 +265,6 @@ export const OpusMutation = {
     }
 
     const updatedOpus = await repo.update(id, { status });
-
     if (!updatedOpus) {
       throw new GraphQLError(opusServiceErrors.OPUS_NOT_FOUND(id), {
         extensions: { code: 'OPUS_NOT_FOUND' }
@@ -277,25 +277,24 @@ export const OpusMutation = {
   updateOpus: async (_: unknown, { id, input }: UpdateOpusArgs, context: GraphQLContext): Promise<OpusFull> => {
     assertAuthenticated(context);
 
-    const { opusRepository: repo, compositionsRepository: compositionsRepo, assetsRepository: assetsRepo } = 
-    context.requestContainer.cradle;
-    const existingOpus = await findExistingOpus(repo, id);
-    const number = input.number !== undefined ? Number(input.number) : existingOpus.number;
+    const { opusRepository: repo, compositionsRepository: compositionsRepo, assetsRepository: assetsRepo } =
+      context.requestContainer.cradle;
 
-    await ensureUniqueOpusNumber(repo, id, number);
+    const existingOpus = await findExistingOpus(repo, id);
+
+    await ensureUniqueOpusNumber(repo, id, input.number);
 
     const compositions = await handleCompositionsSync(compositionsRepo, repo, existingOpus, input.compositions);
-    
-    const updateData = buildOpusUpdateData(input, existingOpus, number, compositions.map((c) => c.id));
-    if (input.name) {
-      await processSlugUpdate(id, input.name, repo, updateData);
-    }
+
+    const updateData = buildOpusUpdateData(input, compositions.map((c) => c.id));
+
+    await processSlugUpdate(id, input.name, repo, updateData);
+
     const opus = await updateAndVerifyOpus(repo, id, updateData);
 
     if (input.coverImage?.crop) {
       await syncImagesCrops(opus.id, input.coverImage, { isCoverImage: true });
     }
-
     if (input.coverImage) {
       await markImagesAsUsed(assetsRepo, null, input.coverImage, 'opus', opus.id);
     }
@@ -305,10 +304,8 @@ export const OpusMutation = {
 
   deleteOpus: async (_: unknown, { id }: { id: string }, context: GraphQLContext): Promise<boolean> => {
     assertAuthenticated(context);
-
     const repo = context.requestContainer.cradle.opusRepository;
     await repo.unlink(id);
-
     return repo.delete(id);
   }
 };

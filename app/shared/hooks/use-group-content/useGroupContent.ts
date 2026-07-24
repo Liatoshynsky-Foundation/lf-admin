@@ -173,12 +173,10 @@ export const useGroupContent = (id: string) => {
 
   const handleSave = async (statusToSave?: BaseContentStatuses) => {
     if (!groupData) return;
-
     let mappedStatus: OpusStatus | undefined = undefined;
     if (statusToSave === BaseContentStatuses.Published) {
       mappedStatus = OpusStatus.Published;
     }
-
     try {
       const input = {
         number: Number(groupData.groupNumber.trim()),
@@ -187,13 +185,13 @@ export const useGroupContent = (id: string) => {
           uk: String(groupData.genre?.uk || '').trim(),
           en: String(groupData.genre?.en || '').trim()
         },
-        additionalText: String(groupData.additionalText || '') .trim() || '',
+        additionalText: String(groupData.additionalText || '').trim() || '',
         ...(mappedStatus && { status: mappedStatus }),
         name: {
           uk: String(groupData.groupTitle?.uk || ''),
           en: String(groupData.groupTitle?.en || '')
         },
-        creationYear: groupData.creationYear ? String(groupData.creationYear) : null,
+        creationYear: String(groupData.creationYear || '').trim(),
         endYear: groupData.endYear ? String(groupData.endYear) : null,
         datesNote: groupData.dateAdditionalText?.uk ? String(groupData.dateAdditionalText.uk).trim() : null,
         parts: {
@@ -244,7 +242,6 @@ export const useGroupContent = (id: string) => {
           }))
           .filter((perf) => perf.videoUrl || perf.title.uk || perf.title.en)
       };
-
       await updateOpus({ variables: { id, input } });
       toast.success('Групу опубліковано');
       return true;
