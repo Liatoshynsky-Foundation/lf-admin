@@ -54,7 +54,9 @@ jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
   __esModule: true,
   ImagePreviewBlock: ({ imageUrl, fileName, onChangeImage }: MockImagePreviewBlockProps) => (
     <div>
-      <img src={imageUrl} alt="Preview" data-testid="preview-img" />
+      <picture>
+        <img src={imageUrl} alt="Preview" data-testid="preview-img" />
+      </picture>
       <span data-testid="file-name">{fileName}</span>
       <button
         data-testid="image-upload-trigger"
@@ -65,6 +67,9 @@ jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
         }
       >
         Upload
+      </button>
+      <button data-testid="image-upload-no-crop-trigger" onClick={() => onChangeImage('new-image-url.png', null)}>
+        Upload No Crop
       </button>
     </div>
   )
@@ -143,7 +148,7 @@ describe('ContributorCard', () => {
 
   it('should render image preview with default placeholder image path when inputs are blank', () => {
     renderCard({
-      photo: { generatedSrc: '', src: '', alt: { uk: {}, en: {} }, caption: { uk: {}, en: {} } } 
+      photo: { generatedSrc: '', src: '', alt: { uk: {}, en: {} }, caption: { uk: {}, en: {} } }
     });
 
     const img = screen.getByTestId('preview-img') as HTMLImageElement;
@@ -168,15 +173,29 @@ describe('ContributorCard', () => {
   });
 
   it('should pass the raw target image URL path back as a localized value fallback string if the original alt object property field is empty', () => {
+    const emptyAlt = { en: {} } as unknown as typeof baseContributor.photo.alt;
+
     const { onChangePhoto } = renderCard({
-      photo: { generatedSrc: '', src: '', alt: { uk: {}, en: {} }, caption: { uk: {}, en: {} } } 
+      photo: { generatedSrc: '', src: '', alt: emptyAlt, caption: { uk: {}, en: {} } }
     });
 
     fireEvent.click(screen.getByTestId('image-upload-trigger'));
 
     expect(onChangePhoto).toHaveBeenCalledWith(
       expect.objectContaining({
-        alt: expect.objectContaining({ uk: {} })
+        alt: { en: {}, uk: 'new-image-url.png' }
+      })
+    );
+  });
+
+  it('should handle onChangePhoto correctly when crop parameter is omitted or null', () => {
+    const { onChangePhoto } = renderCard();
+
+    fireEvent.click(screen.getByTestId('image-upload-no-crop-trigger'));
+
+    expect(onChangePhoto).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        crop: expect.any(Object)
       })
     );
   });

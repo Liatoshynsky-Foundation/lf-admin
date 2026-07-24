@@ -93,4 +93,14 @@ describe('ForgotPasswordForm', () => {
 
     expect(toast.error).toHaveBeenCalledWith('Сталася помилка. Спробуйте ще раз.');
   });
+
+  it('renders loading state correctly when mutation is loading', () => {
+    (useRequestPasswordResetMutation as jest.Mock).mockReturnValue([mockMutate, { loading: true }]);
+
+    render(<ForgotPasswordForm />);
+
+    const submitButton = screen.getByRole('button', { name: /надсилання\.\.\./i });
+    expect(submitButton).toBeInTheDocument();
+    expect(submitButton).toBeDisabled();
+  });
 });
