@@ -5,7 +5,8 @@ export const styles: Record<string, SxProps<Theme>> = {
     '& .MuiDialog-paper': {
       borderRadius: '20px',
       p: '16px 24px',
-      width: 889
+      width: 889,
+      height: 715
     },
     '& .MuiInputLabel-root': {
       transform: 'translate(14px, 13px) scale(1)'
@@ -30,6 +31,7 @@ export const styles: Record<string, SxProps<Theme>> = {
     '&::-webkit-scrollbar': {
       display: 'none'
     },
+    overflowY: 'scroll',
     msOverflowStyle: 'none',
     scrollbarWidth: 'none'
   },
@@ -44,7 +46,13 @@ export const styles: Record<string, SxProps<Theme>> = {
   },
   dialogActions: {
     width: '100%',
-    p: '0px'
+    p: '0px',
+    pb: '20px',
+    px: '20px',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    backgroundColor: 'rebeccapurple'
   },
   cancelButton: {
     textTransform: 'none',
@@ -56,7 +64,6 @@ export const styles: Record<string, SxProps<Theme>> = {
   },
   multilineTextField: {
     '& .MuiInputBase-root': {
-      height: 'auto',
       p: '12px 16px'
     }
   }
