@@ -96,6 +96,14 @@ describe('ActionableSuggestItem', () => {
     expect(screen.queryByTestId('mock-date-picker')).not.toBeInTheDocument();
   });
 
+  it('should render pdf input mode labels and hide date picking interfaces when mode is pdf', () => {
+    renderComponent({ mode: 'pdf', value: 'Document' });
+
+    expect(screen.getByLabelText('Назва PDF')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Введіть назву PDF')).toBeInTheDocument();
+    expect(screen.queryByTestId('mock-date-picker')).not.toBeInTheDocument();
+  });
+
   it('should render notes alternative mode inputs and mount localization selectors when mode is notes', () => {
     const mockDate = dayjs('2026-05-20');
     renderComponent({ mode: 'notes', value: 'Nocturne Op. 9', date: mockDate });

@@ -1,26 +1,24 @@
-import { Box, Button, Stack, SxProps,Theme, Typography } from '@mui/material';
+import { Button, SxProps, Theme } from '@mui/material';
 import React from 'react';
 
+import LabelRow from '../label-row/LabelRow';
 import { styles } from './LabelActionRow.styles';
-import { sxToArray } from '~/lib/utils/sxToArray';
 
 interface Props {
   title?: string;
+  actionButtonText?: string;
   action: () => void;
   sx?: SxProps<Theme>;
+  disabled?: boolean;
 }
 
-const LabelActionRow = ({ title = 'Текст', action, sx }: Props) => {
+const LabelActionRow = ({ title = 'Текст', actionButtonText = 'Додати', action, sx, disabled }: Props) => {
   return (
-    <Stack direction="row" alignItems="center" spacing={2} sx={[styles.container, ...sxToArray(sx)]}>
-      <Typography title={title} variant="subtitle2" sx={styles.title}>
-        {title}
-      </Typography>
-      <Box sx={styles.horizontalDivider} />
-      <Button variant="contained" disableElevation onClick={action} sx={styles.button}>
-        {'Додати'}
+    <LabelRow title={title} sx={sx}>
+      <Button variant="contained" disableElevation onClick={action} sx={styles.button} disabled={disabled}>
+        {actionButtonText}
       </Button>
-    </Stack>
+    </LabelRow>
   );
 };
 

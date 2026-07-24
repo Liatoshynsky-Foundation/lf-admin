@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import dayjs, { Dayjs } from 'dayjs';
 import React from 'react';
 
+import { SuggestItemMode } from '../actionable-suggest-item/ActionableSuggestItem.config';
 import { CompositionModalView } from './CompositionModalView';
 
 interface MockDatePickerProps {
@@ -11,7 +12,7 @@ interface MockDatePickerProps {
 }
 
 interface MockActionableSuggestItemProps {
-  readonly mode: 'audio' | 'notes';
+  readonly mode: SuggestItemMode;
   readonly value: string | null;
   readonly date: Dayjs | null;
   readonly onSelect: (val: string | null) => void;

@@ -18,6 +18,7 @@ import React, { useState } from 'react';
 
 import Alert from '../../design-system/alert/Alert';
 import ActionableSuggestItem from '../actionable-suggest-item/ActionableSuggestItem';
+import { SuggestItemMode } from '../actionable-suggest-item/ActionableSuggestItem.config';
 import FileItem from '../file-item/FileItem';
 import LabelActionRow from '../label-action-row/LabelActionRow';
 import { styles } from './CompositionModalView.styles';
@@ -27,7 +28,7 @@ import { sxToArray } from '~/lib/utils/sxToArray';
 type Entry = AudioEntry | NoteEntry;
 
 export interface CompositionModeSection extends Pick<CompositionModalViewProps, 'onTriggerUpload'> {
-  mode: 'audio' | 'notes';
+  mode: Extract<SuggestItemMode, 'audio' | 'notes'>;
   title: string;
   entries: Entry[];
   suggestions: string[];
