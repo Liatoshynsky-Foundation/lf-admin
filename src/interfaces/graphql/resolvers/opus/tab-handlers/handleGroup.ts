@@ -12,7 +12,15 @@ export async function handleGroup(
   page: number,
   pageSize: number
 ): Promise<PaginatedWorksResult> {
-  const groupsResult = await mappedGroups(repo, tab, filters);
+  const skip = (page - 1) * pageSize;
+
+  const groupsResult = await mappedGroups(
+    repo,
+    tab,
+    filters,
+    skip,
+    pageSize
+  );
   const groupsTotal = await totalGroups(repo, tab, filters);
   
   const groups = await attachCompositionsToGroups(groupsResult, compositionsRepo);

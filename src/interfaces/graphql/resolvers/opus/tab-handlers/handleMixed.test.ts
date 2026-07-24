@@ -106,11 +106,14 @@ describe('handleMixed', () => {
 
     mockTotalGroups.mockImplementation((_repo, tab) => Promise.resolve(tab === WorksTab.Op ? 2 : 1));
 
-    mockMappedGroups.mockImplementation((_repo, tab) => {
+    mockMappedGroups.mockImplementation((_repo, tab, _filters, skip) => {
       if (tab === WorksTab.Op) {
         return Promise.resolve([opGroup1, opGroup2] as unknown as MappedGroupsResult);
       }
-      return Promise.resolve([sineopGroup1] as unknown as MappedGroupsResult);
+      if (skip === 0) {
+        return Promise.resolve([sineopGroup1] as unknown as MappedGroupsResult);
+      }
+      return Promise.resolve([] as unknown as MappedGroupsResult);
     });
 
     mockAttachCompositionsToGroups.mockResolvedValue([
@@ -121,7 +124,7 @@ describe('handleMixed', () => {
 
     expect(mockAttachCompositionsToGroups).toHaveBeenCalledWith([opGroup1, opGroup2], compositionsRepoMock);
     expect(mockAttachCompositionsToGroups).toHaveBeenCalledWith([sineopGroup1], compositionsRepoMock);
-    expect(mockMappedCompositions).toHaveBeenCalledWith(compositionsRepoMock, MOCK_COMPOSITION_IDS, 1, 1, undefined);
+    expect(mockMappedCompositions).toHaveBeenCalledWith(compositionsRepoMock, MOCK_COMPOSITION_IDS, 0, 1, undefined);
 
     expect(result.groups).toHaveLength(2);
     expect(result.works).toEqual([MOCK_WORK]);
@@ -130,11 +133,14 @@ describe('handleMixed', () => {
   it('should process page spanning into works when remaining > 0', async () => {
     mockTotalGroups.mockImplementation((_repo, tab) => Promise.resolve(tab === WorksTab.Op ? 1 : 1));
 
-    mockMappedGroups.mockImplementation((_repo, tab) => {
+    mockMappedGroups.mockImplementation((_repo, tab, _filters, skip) => {
       if (tab === WorksTab.Op) {
         return Promise.resolve([MOCK_OP_GROUP] as unknown as MappedGroupsResult);
       }
-      return Promise.resolve([MOCK_SINEOP_GROUP] as unknown as MappedGroupsResult);
+      if (skip === 0) {
+        return Promise.resolve([MOCK_SINEOP_GROUP] as unknown as MappedGroupsResult);
+      }
+      return Promise.resolve([] as unknown as MappedGroupsResult);
     });
 
     const result = await handleMixed(repoMock, compositionsRepoMock, undefined, 1, 5);
@@ -142,7 +148,7 @@ describe('handleMixed', () => {
     expect(mockMappedCompositions).toHaveBeenCalledWith(
       compositionsRepoMock,
       MOCK_COMPOSITION_IDS,
-      1,
+      0,
       3,
       undefined
     );
@@ -164,7 +170,7 @@ describe('handleMixed', () => {
     expect(mockMappedCompositions).toHaveBeenCalledWith(
       compositionsRepoMock,
       MOCK_COMPOSITION_IDS,
-      2,
+      1,
       2,
       undefined
     );

@@ -82,21 +82,18 @@ const getCompositionFilters = (filters?: WorksFilter): CompositionFilters => {
 
 export const mappedCompositions = async (
   compositionRepo: ICompositionRepository,
-  compositionIds: string[],
-  page: number,
-  pageSize: number,
+  ids: string[],
+  skip: number,
+  limit: number,
   filters?: WorksFilter
 ) => {
   const compositionFilters = getCompositionFilters(filters);
 
-  return await compositionRepo.findByIdsPaginated(
-    compositionIds,
-    {
-      ...compositionFilters,
-      skip: (page - 1) * pageSize,
-      limit: pageSize,
-    }
-  );
+  return compositionRepo.findByIdsPaginated(ids, {
+    ...compositionFilters,
+    skip,
+    limit,
+  });
 };
 
 export const totalCompositions = async (

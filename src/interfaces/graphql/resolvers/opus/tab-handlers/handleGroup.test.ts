@@ -25,6 +25,7 @@ describe('handleGroup', () => {
   const MOCK_FILTERS: WorksFilter = { search: 'test' };
   const DEFAULT_PAGE = 1;
   const DEFAULT_PAGE_SIZE = 10;
+  const EXPECTED_SKIP = 0;
   const TOTAL_ITEMS = 2;
 
   const mockMappedGroups = mappedGroups as jest.MockedFunction<typeof mappedGroups>;
@@ -57,7 +58,13 @@ describe('handleGroup', () => {
       DEFAULT_PAGE_SIZE
     );
 
-    expect(mockMappedGroups).toHaveBeenCalledWith(repoMock, WorksTab.Op, undefined);
+    expect(mockMappedGroups).toHaveBeenCalledWith(
+      repoMock,
+      WorksTab.Op,
+      undefined,
+      EXPECTED_SKIP,
+      DEFAULT_PAGE_SIZE
+    );
     expect(mockTotalGroups).toHaveBeenCalledWith(repoMock, WorksTab.Op, undefined);
     expect(mockAttachCompositionsToGroups).toHaveBeenCalledWith(
       MOCK_GROUPS,
@@ -88,7 +95,13 @@ describe('handleGroup', () => {
       DEFAULT_PAGE_SIZE
     );
 
-    expect(mockMappedGroups).toHaveBeenCalledWith(repoMock, WorksTab.Sineop, undefined);
+    expect(mockMappedGroups).toHaveBeenCalledWith(
+      repoMock,
+      WorksTab.Sineop,
+      undefined,
+      EXPECTED_SKIP,
+      DEFAULT_PAGE_SIZE
+    );
     expect(mockTotalGroups).toHaveBeenCalledWith(repoMock, WorksTab.Sineop, undefined);
     expect(result.groups).toEqual([]);
     expect(result.total).toBe(0);
@@ -121,6 +134,7 @@ describe('handleGroup', () => {
     const page = 3;
     const pageSize = 10;
     const total = 21;
+    const expectedSkip = 20;
 
     mockMappedGroups.mockResolvedValue([] as unknown as MappedGroupsResult);
     mockTotalGroups.mockResolvedValue(total as unknown as TotalGroupsResult);
@@ -135,6 +149,13 @@ describe('handleGroup', () => {
       pageSize
     );
 
+    expect(mockMappedGroups).toHaveBeenCalledWith(
+      repoMock,
+      WorksTab.Op,
+      undefined,
+      expectedSkip,
+      pageSize
+    );
     expect(mockTotalPages).toHaveBeenCalledWith(total, pageSize);
     expect(result.page).toBe(page);
     expect(result.totalPages).toBe(3);
@@ -150,7 +171,13 @@ describe('handleGroup', () => {
       DEFAULT_PAGE_SIZE
     );
 
-    expect(mockMappedGroups).toHaveBeenCalledWith(repoMock, WorksTab.Op, MOCK_FILTERS);
+    expect(mockMappedGroups).toHaveBeenCalledWith(
+      repoMock,
+      WorksTab.Op,
+      MOCK_FILTERS,
+      EXPECTED_SKIP,
+      DEFAULT_PAGE_SIZE
+    );
     expect(mockTotalGroups).toHaveBeenCalledWith(repoMock, WorksTab.Op, MOCK_FILTERS);
   });
 });

@@ -20,6 +20,7 @@ describe('handleWork', () => {
   const MOCK_TOTAL = 10;
   const MOCK_PAGE = 1;
   const MOCK_PAGE_SIZE = 5;
+  const EXPECTED_SKIP = 0;
   const MOCK_FILTERS = { search: 'test' };
 
   const opusRepoMock: jest.Mocked<IOpusRepository> = {
@@ -62,7 +63,7 @@ describe('handleWork', () => {
     expect(mockMappedCompositions).toHaveBeenCalledWith(
       compositionRepoMock,
       MOCK_COMPOSITION_IDS,
-      MOCK_PAGE,
+      EXPECTED_SKIP,
       MOCK_PAGE_SIZE,
       MOCK_FILTERS
     );
@@ -91,7 +92,7 @@ describe('handleWork', () => {
     );
 
     expect(mockTotalCompositions).toHaveBeenCalledWith(compositionRepoMock, [], undefined);
-    expect(mockMappedCompositions).toHaveBeenCalledWith(compositionRepoMock, [], MOCK_PAGE, MOCK_PAGE_SIZE, undefined);
+    expect(mockMappedCompositions).toHaveBeenCalledWith(compositionRepoMock, [], EXPECTED_SKIP, MOCK_PAGE_SIZE, undefined);
 
     expect(result).toEqual({
       groups: [],

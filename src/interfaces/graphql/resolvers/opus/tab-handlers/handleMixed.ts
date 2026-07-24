@@ -79,19 +79,18 @@ export async function handleMixed(
 
   if (currentOffset < totalWorks && remaining > 0) {
     const take = Math.min(remaining, totalWorks - currentOffset);
-    const targetPage = currentOffset + 1;
-
+    
     const fetchedWorks = await mappedCompositions(
       compositionsRepo,
       allCompositionIds,
-      targetPage,
+      currentOffset,
       take,
       filters
     );
 
     works.push(...fetchedWorks);
   }
-
+  
   return {
     groups,
     works,

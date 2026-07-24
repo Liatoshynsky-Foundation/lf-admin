@@ -14,10 +14,17 @@ export async function handleWork(
 ): Promise<PaginatedWorksResult> {
   const groupsResult = await mappedGroups(repo, tab);
   const compositionIds = groupsResult[0]?.compositions ?? [];
+  const skip = (page - 1) * pageSize;
 
   const [total, works] = await Promise.all([
     totalCompositions(compositionRepo, compositionIds, filters),
-    mappedCompositions(compositionRepo, compositionIds, page, pageSize, filters),
+    mappedCompositions(
+      compositionRepo,
+      compositionIds,
+      skip,
+      pageSize,
+      filters
+    ),
   ]);
 
   return {
