@@ -30,7 +30,7 @@ export function RenameFileModal({ open, onClose, fileId, currentFilename, onRena
 
   const [baseName, setBaseName] = useState(initialBaseName);
   const [updateAsset, { loading }] = useUpdateAssetMutation();
-  const hasInvalidChars = /[\\/:*?"<>|.]/.test(baseName);
+  const hasInvalidChars = /[\\/:*?"'`<>|.\0\u02bc\u2018\u2019\u201c\u201d]/.test(baseName);
 
   useEffect(() => {
     if (open) {

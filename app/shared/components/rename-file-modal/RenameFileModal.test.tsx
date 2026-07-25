@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import toast from 'react-hot-toast';
@@ -101,6 +101,24 @@ describe('RenameFileModal', () => {
 
     expect(screen.getByText('Введіть назву файлу без крапки та розширення')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /зберегти/i })).toHaveAttribute('aria-disabled', 'true');
+    expect(mockUpdateAsset).not.toHaveBeenCalled();
+  });
+
+  it('rejects every reserved filename character including null byte', () => {
+    const invalidCharacters = ['\\', '/', ':', '*', '?', '"', '\'', '`', '<', '>', '|', '\0', '\u02bc', '\u2018', '\u2019', '\u201c', '\u201d'];
+
+    for (const invalidCharacter of invalidCharacters) {
+      const { unmount } = render(<RenameFileModal {...defaultProps} />);
+      const input = screen.getByDisplayValue('old_name');
+
+      fireEvent.change(input, { target: { value: `bad${invalidCharacter}name` } });
+
+      expect(screen.getByText('Введіть назву файлу без крапки та розширення')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /зберегти/i })).toHaveAttribute('aria-disabled', 'true');
+
+      unmount();
+    }
+
     expect(mockUpdateAsset).not.toHaveBeenCalled();
   });
 

@@ -98,15 +98,19 @@ describe('Upload Utils', () => {
       expect(preserveOriginalFilenameSafely('kitten.png', 'image/png')).toBe('kitten.png');
     });
 
-    it('should replace path separators without lowercasing or changing extension', () => {
-      expect(preserveOriginalFilenameSafely('folder\\Nested/File Name.JPEG', 'image/jpeg')).toBe(
-        'folder_Nested_File Name.JPEG'
-      );
+    it('should reject reserved filename characters and null byte', () => {
+      const invalidCharacters = ['\\', '/', ':', '*', '?', '"', '\'', '`', '<', '>', '|', '\0', '\u02bc', '\u2018', '\u2019', '\u201c', '\u201d'];
+
+      for (const invalidCharacter of invalidCharacters) {
+        expect(() => preserveOriginalFilenameSafely(`bad${invalidCharacter}name.jpeg`, 'image/jpeg')).toThrow(
+          'Filename contains invalid characters'
+        );
+      }
     });
 
     it('should reject empty or separator-only names', () => {
       expect(() => preserveOriginalFilenameSafely('   ', 'image/png')).toThrow('Filename is required');
-      expect(() => preserveOriginalFilenameSafely('///', 'image/png')).toThrow('Filename is required');
+      expect(() => preserveOriginalFilenameSafely('___', 'image/png')).toThrow('Filename is required');
     });
   });
 
