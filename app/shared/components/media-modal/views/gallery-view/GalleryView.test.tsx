@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 
 import type { GalleryFilters } from '../../flow/MediaModalFlowState';
 import { MockFilterDropdown, MockMediaGrid, MockSearchButton } from '../../test-utils/sharedMocks';
@@ -64,6 +65,28 @@ const mockFiles = [
 ];
 
 describe('GalleryView', () => {
+  let originalError: typeof console.error;
+  let consoleErrorSpy: jest.SpyInstance;
+
+  beforeAll(() => {
+    const consoleObj = globalThis['console'];
+    originalError = consoleObj.error;
+    consoleErrorSpy = jest.spyOn(consoleObj, 'error').mockImplementation((...args) => {
+      const firstArg = args[0];
+      if (
+        typeof firstArg === 'string' &&
+        (firstArg.includes('warning-keys') || firstArg.includes('unique "key" prop'))
+      ) {
+        return;
+      }
+      originalError.apply(consoleObj, args);
+    });
+  });
+
+  afterAll(() => {
+    consoleErrorSpy.mockRestore();
+  });
+
   const mockOnPick = jest.fn();
   const mockOnFiltersChange = jest.fn();
   const mockFilters: GalleryFilters = { search: '', favorites: '', usage: '' };

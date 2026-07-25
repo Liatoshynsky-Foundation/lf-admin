@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act,fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import CollapsibleBlock from './CollapsibleBlock';
@@ -28,7 +28,9 @@ describe('CollapsibleBlock', () => {
   const titleText = 'Test Block';
 
   afterEach(() => {
-    useStore.setState({ isSaving: false });
+    act(() => {
+      useStore.setState({ isSaving: false });
+    });
   });
 
   it('should render the title', () => {
@@ -65,9 +67,9 @@ describe('CollapsibleBlock', () => {
     expect(cont).not.toHaveStyle('visibility: hidden');
   });
 
-  it('should render the draggable grip if grip is true', ()=> {
+  it('should render the draggable grip if grip is true', () => {
     render(
-      <CollapsibleBlock title={titleText} grip >
+      <CollapsibleBlock title={titleText} grip>
         <div>Child Content</div>
       </CollapsibleBlock>
     );
@@ -132,7 +134,9 @@ describe('CollapsibleBlock', () => {
   });
 
   it('should lock its own pointer events and dim itself when a save is in progress', () => {
-    useStore.setState({ isSaving: true });
+    act(() => {
+      useStore.setState({ isSaving: true });
+    });
 
     const { container } = render(
       <CollapsibleBlock title={titleText}>
@@ -146,7 +150,9 @@ describe('CollapsibleBlock', () => {
   });
 
   it('should keep pointer events enabled when not saving', () => {
-    useStore.setState({ isSaving: false });
+    act(() => {
+      useStore.setState({ isSaving: false });
+    });
 
     const { container } = render(
       <CollapsibleBlock title={titleText}>

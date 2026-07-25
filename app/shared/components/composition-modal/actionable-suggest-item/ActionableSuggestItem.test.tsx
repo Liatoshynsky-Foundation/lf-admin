@@ -11,13 +11,21 @@ jest.mock('@mui/x-date-pickers/LocalizationProvider', () => ({
 
 jest.mock('@mui/x-date-pickers/DatePicker', () => ({
   __esModule: true,
-  DatePicker: ({ label, value, onChange }: { readonly label: string; readonly value: unknown; readonly onChange: (val: unknown) => void }) => (
+  DatePicker: ({
+    label,
+    value,
+    onChange
+  }: {
+    readonly label: string;
+    readonly value: unknown;
+    readonly onChange: (val: unknown) => void;
+  }) => (
     <div data-testid="mock-date-picker">
       <label htmlFor="mock-date-input">{label}</label>
       <input
         id="mock-date-input"
         data-testid="date-picker-input"
-        value={value ? dayjs(value as any).format('DD/MM/YYYY') : ''}
+        value={value ? dayjs(value as string).format('DD/MM/YYYY') : ''}
         onChange={() => onChange(dayjs('2026-06-14'))}
       />
     </div>
@@ -137,11 +145,50 @@ describe('ActionableSuggestItem', () => {
     renderComponent();
 
     const iconButtons = screen.getAllByRole('button');
-    
+
     fireEvent.click(iconButtons[0]);
     expect(onUploadMock).toHaveBeenCalledTimes(1);
 
     fireEvent.click(iconButtons[1]);
     expect(onDeleteMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('should use default values for props when they are completely omitted', () => {
+    const propsWithoutOptionalAndDate = {
+      suggestions: mockSuggestions,
+      onUpload: onUploadMock,
+      onDelete: onDeleteMock,
+      onSelect: onSelectMock
+    };
+
+    render(
+      <ActionableSuggestItem
+        {...(propsWithoutOptionalAndDate as unknown as React.ComponentProps<typeof ActionableSuggestItem>)}
+      />
+    );
+
+    expect(screen.getByLabelText('Назва аудіо *')).toBeInTheDocument();
+  });
+
+  it('should safe guard date changes and not crash if onDateChange is missing', () => {
+    const propsWithoutDateCallback = {
+      suggestions: mockSuggestions,
+      onUpload: onUploadMock,
+      onDelete: onDeleteMock,
+      onSelect: onSelectMock,
+      mode: 'notes' as const,
+      date: dayjs('2026-05-20')
+    };
+
+    render(
+      <ActionableSuggestItem
+        {...(propsWithoutDateCallback as unknown as React.ComponentProps<typeof ActionableSuggestItem>)}
+      />
+    );
+
+    const dateInputElement = screen.getByTestId('date-picker-input');
+    fireEvent.change(dateInputElement, { target: { value: '14/06/2026' } });
+
+    expect(onDateChangeMock).not.toHaveBeenCalled();
   });
 });

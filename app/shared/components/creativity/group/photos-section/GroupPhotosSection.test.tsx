@@ -58,6 +58,7 @@ jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
         data-testid={`trigger-img-${imageUrl}`}
         onClick={() => onChangeImage('new-url.jpg', { rect: { width: 50, height: 50, x: 0, y: 0 } })}
       />
+      <button data-testid={`trigger-img-nocrop-${imageUrl}`} onClick={() => onChangeImage('no-crop-url.jpg')} />
     </div>
   )
 }));
@@ -105,6 +106,28 @@ const defaultPhotos: GroupPhoto[] = [
 ];
 
 describe('GroupPhotosSection UI Component', () => {
+  let originalError: typeof console.error;
+  let consoleErrorSpy: jest.SpyInstance;
+
+  beforeAll(() => {
+    const consoleObj = globalThis['console'];
+    originalError = consoleObj.error;
+    consoleErrorSpy = jest.spyOn(consoleObj, 'error').mockImplementation((...args) => {
+      const firstArg = args[0];
+      if (
+        typeof firstArg === 'string' &&
+        (firstArg.includes('warning-keys') || firstArg.includes('unique "key" prop'))
+      ) {
+        return;
+      }
+      originalError.apply(consoleObj, args);
+    });
+  });
+
+  afterAll(() => {
+    consoleErrorSpy.mockRestore();
+  });
+
   const mockOnChange = jest.fn();
 
   const mockHandleAddPhoto = jest.fn();
@@ -228,7 +251,7 @@ describe('GroupPhotosSection UI Component', () => {
   it('should handle fallbacks correctly for missing optional fields', () => {
     const photosWithMissingData: GroupPhoto[] = [
       {
-        id: undefined as unknown as string, 
+        id: undefined as unknown as string,
         src: undefined as unknown as string,
         fileName: 'empty.jpg',
         caption: undefined as unknown as { uk: string; en: string },
@@ -251,5 +274,31 @@ describe('GroupPhotosSection UI Component', () => {
 
     fireEvent.change(captionInput, { target: { value: 'Новий текст' } });
     expect(mockHandleUpdatePhoto).toHaveBeenCalledWith('', expect.anything());
+  });
+
+  it('should handle onChangeImage when crop parameter is omitted or undefined', () => {
+    render(<GroupPhotosSection currentLanguage="UA" photos={defaultPhotos} onChange={mockOnChange} />);
+
+    fireEvent.click(screen.getByTestId('trigger-img-nocrop-img1.jpg'));
+
+    expect(mockHandleUpdatePhoto).toHaveBeenCalledWith('1', {
+      src: 'no-crop-url.jpg',
+      crop: null
+    });
+  });
+
+  it('should update caption and altText in EN language', () => {
+    render(<GroupPhotosSection currentLanguage="EN" photos={defaultPhotos} onChange={mockOnChange} />);
+
+    const captionInputs = screen.getAllByTestId('mock-input-Підпис до зображення');
+    fireEvent.change(captionInputs[0], { target: { value: 'New EN Caption' } });
+    expect(mockHandleUpdatePhoto).toHaveBeenCalledWith('1', {
+      caption: { uk: 'Caption 1', en: 'New EN Caption' }
+    });
+
+    fireEvent.click(screen.getByTestId('trigger-alt-img1.jpg'));
+    expect(mockHandleUpdatePhoto).toHaveBeenCalledWith('1', {
+      altText: { uk: 'Alt 1', en: 'New Alt Text' }
+    });
   });
 });

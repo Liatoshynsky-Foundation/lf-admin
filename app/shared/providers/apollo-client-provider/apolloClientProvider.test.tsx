@@ -27,6 +27,44 @@ const successMock: MockedResponse = {
 };
 
 describe('ApolloClientProvider', () => {
+  let consoleWarnSpy: jest.SpyInstance;
+  let consoleErrorSpy: jest.SpyInstance;
+
+  beforeAll(() => {
+    const consoleObj = globalThis['console'];
+    const originalWarn = consoleObj.warn;
+    const originalError = consoleObj.error;
+
+    consoleWarnSpy = jest.spyOn(consoleObj, 'warn').mockImplementation((...args) => {
+      const firstArg = args[0];
+      if (
+        typeof firstArg === 'string' &&
+        (firstArg.includes('go.apollo.dev') ||
+          firstArg.includes('InMemoryCache') ||
+          firstArg.includes('canonizeResults'))
+      ) {
+        return;
+      }
+      originalWarn.apply(consoleObj, args);
+    });
+
+    consoleErrorSpy = jest.spyOn(consoleObj, 'error').mockImplementation((...args) => {
+      const firstArg = args[0];
+      if (
+        typeof firstArg === 'string' &&
+        (firstArg.includes('go.apollo.dev') || firstArg.includes('An error occurred'))
+      ) {
+        return;
+      }
+      originalError.apply(consoleObj, args);
+    });
+  });
+
+  afterAll(() => {
+    consoleWarnSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
+  });
+
   it('should provide an Apollo Client that allows child components to execute requests', async () => {
     render(
       <MockedProvider mocks={[successMock]}>

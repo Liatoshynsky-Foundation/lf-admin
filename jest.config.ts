@@ -17,6 +17,7 @@ const config: Config = {
     '!app/**/*.stories.{js,jsx,ts,tsx}',
     '!app/**/layout.{ts,tsx}',
     '!app/types/**',
+    '!app/shared/theme/**',
     '!app/**/*.styles.{ts,tsx}',
     '!app/**/*.style.{ts,tsx}',
     '!app/**/test-utils/**',

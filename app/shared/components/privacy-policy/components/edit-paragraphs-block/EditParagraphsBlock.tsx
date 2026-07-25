@@ -16,14 +16,15 @@ type BlockIdsWithDescription = {
   [K in keyof BlocksMap]: 'description' extends keyof BlocksMap[K] ? K : never;
 }[keyof BlocksMap];
 
-
 interface EditParagraphsBlockProps<T extends BlockIdsWithDescription> {
   blockId: T;
   title: string;
 }
 
-
-export const EditParagraphsBlock = <T extends BlockIdsWithDescription>({ blockId, title }: EditParagraphsBlockProps<T>) => {
+export const EditParagraphsBlock = <T extends BlockIdsWithDescription>({
+  blockId,
+  title
+}: EditParagraphsBlockProps<T>) => {
   const pageId = PAGE_IDS.PRIVACY_POLICY;
 
   const { block } = usePageBlock(pageId, blockId);
@@ -31,10 +32,11 @@ export const EditParagraphsBlock = <T extends BlockIdsWithDescription>({ blockId
   const setField = useStore((state) => state.setField);
   const toggleBlockVisibility = useStore((state) => state.toggleBlockVisibility);
 
-  const paragraphs = block?.description[currentLocale].content || [];
+  const paragraphs = block?.description?.[currentLocale]?.content || [];
   const stableIds = useRef<string[]>([]);
 
-  const blockTitle = block && 'title' in block ? (block as { title?: Record<'uk' | 'en', JSONContent> }).title : undefined;
+  const blockTitle =
+    block && 'title' in block ? (block as { title?: Record<'uk' | 'en', JSONContent> }).title : undefined;
   const titleValidation = useTitleValidation(`${pageId}:${blockId}:title`, blockTitle?.[currentLocale] as ProseDoc);
 
   if (stableIds.current.length === 0) {
@@ -46,7 +48,7 @@ export const EditParagraphsBlock = <T extends BlockIdsWithDescription>({ blockId
 
   const onParagraphChange = (index: number, val: JSONContent) => {
     const oldBlockDescription = block.description;
-    const currentContentArray = [...oldBlockDescription[currentLocale].content || []];
+    const currentContentArray = [...(oldBlockDescription[currentLocale].content || [])];
     currentContentArray[index] = val;
 
     const newDescription = {
@@ -86,12 +88,12 @@ export const EditParagraphsBlock = <T extends BlockIdsWithDescription>({ blockId
       hidden={(block as { hidden?: boolean }).hidden}
       onToggleVisibility={() => toggleBlockVisibility(pageId, blockId)}
     >
-      {blockTitle && (
+      {block && 'title' in block && (
         <CustomTextField
           fieldType="formatting"
           title="Заголовок секції"
           label="Текст заголовку"
-          value={blockTitle[currentLocale]}
+          value={blockTitle?.[currentLocale]}
           onChange={onTitleChange}
           onBlur={titleValidation.onBlur}
           error={titleValidation.error}
@@ -99,18 +101,16 @@ export const EditParagraphsBlock = <T extends BlockIdsWithDescription>({ blockId
         />
       )}
 
-      {paragraphs.map((paragraphNode, i) =>
-        (
-          <CustomTextField
-            fieldType="formatting"
-            key={stableIds.current[i]}
-            title={`Текст ${i + 1} абзацу`}
-            label="Текст"
-            value={paragraphNode}
-            onChange={(value) => onParagraphChange(i, value)}
-          />
-        )
-      )}
+      {paragraphs.map((paragraphNode, i) => (
+        <CustomTextField
+          fieldType="formatting"
+          key={stableIds.current[i]}
+          title={`Текст ${i + 1} абзацу`}
+          label="Текст"
+          value={paragraphNode}
+          onChange={(value) => onParagraphChange(i, value)}
+        />
+      ))}
     </CollapsibleBlock>
   );
 };

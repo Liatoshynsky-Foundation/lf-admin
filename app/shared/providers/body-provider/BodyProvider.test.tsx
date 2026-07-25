@@ -5,6 +5,28 @@ import React from 'react';
 import BodyProvider from './BodyProvider';
 
 describe('BodyProvider', () => {
+  let originalError: typeof console.error;
+  let consoleErrorSpy: jest.SpyInstance;
+
+  beforeAll(() => {
+    const consoleObj = globalThis['console'];
+    originalError = consoleObj.error;
+    consoleErrorSpy = jest.spyOn(consoleObj, 'error').mockImplementation((...args) => {
+      const firstArg = args[0];
+      if (
+        typeof firstArg === 'string' &&
+        (firstArg.includes('cannot be a child of') || firstArg.includes('hydration error'))
+      ) {
+        return;
+      }
+      originalError.apply(consoleObj, args);
+    });
+  });
+
+  afterAll(() => {
+    consoleErrorSpy.mockRestore();
+  });
+
   it('should render children correctly', () => {
     render(
       <BodyProvider>

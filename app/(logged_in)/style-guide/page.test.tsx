@@ -21,21 +21,6 @@ jest.mock('~/public/icons/favourite-star.svg', () => ({
   default: () => <svg data-testid="icon-favourite-star" />
 }));
 
-jest.mock('~/shared/components/filtering-toolbar', () => ({
-  SortSelect: ({ fieldValue, onFieldChange }: { fieldValue: string; onFieldChange: (val: string) => void }) => (
-    <div data-testid="mock-sort-select">
-      <span data-testid="current-field-value">{fieldValue}</span>
-      <button
-        type="button"
-        data-testid="trigger-invalid-field-btn"
-        onClick={() => onFieldChange('invalid_field_value_to_trigger_fallback')}
-      >
-        Trigger Fallback
-      </button>
-    </div>
-  )
-}));
-
 interface ChildrenProps {
   children?: ReactNode;
 }
@@ -83,47 +68,6 @@ jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
   default: ({ children }: ChildrenProps) => <div data-testid="collapsible-block">{children}</div>
 }));
 
-jest.mock('~/shared/components/filtering-toolbar', () => {
-  return {
-    __esModule: true,
-    FilteringToolbar: ({
-      children,
-      rightSlot,
-      bottomTrailingContent
-    }: {
-      children?: React.ReactNode;
-      rightSlot?: React.ReactNode;
-      bottomTrailingContent?: React.ReactNode;
-    }) => (
-      <div data-testid="mock-filtering-toolbar">
-        {rightSlot}
-        {children}
-        {bottomTrailingContent}
-      </div>
-    ),
-    SortSelect: ({
-      fieldValue,
-      onFieldChange
-    }: {
-      fieldValue: string;
-      onFieldChange: (val: 'date' | 'name') => void;
-    }) => (
-      <div data-testid="mock-sort-select">
-        <span data-testid="current-field-value">{fieldValue}</span>
-        <button
-          type="button"
-          data-testid="trigger-invalid-field-btn"
-          onClick={() => {
-            onFieldChange('invalid_field_value_to_trigger_fallback' as unknown as 'date' | 'name');
-          }}
-        >
-          Trigger Fallback
-        </button>
-      </div>
-    )
-  };
-});
-
 interface MockDiscardChangesModalProps {
   open: boolean;
   handleClose: () => void;
@@ -155,8 +99,17 @@ jest.mock('~/shared/components/design-system/password-field/PasswordField', () =
   default: () => <div data-testid="password-field" />
 }));
 
+interface MockImagePreviewBlockProps {
+  onChangeImage: () => void;
+}
+
 jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
-  ImagePreviewBlock: () => <div data-testid="image-preview-block" />
+  ImagePreviewBlock: function MockPhotoBlock({ onChangeImage }: MockImagePreviewBlockProps) {
+    React.useEffect(() => {
+      onChangeImage();
+    }, [onChangeImage]);
+    return <div data-testid="image-preview-block" />;
+  }
 }));
 
 interface MockCustomTabsProps {
@@ -195,26 +148,58 @@ jest.mock('~/shared/components/design-system/tooltip/Tooltip', () => ({
   )
 }));
 
+interface MockContentCardProps {
+  onClick: () => void;
+}
+
 jest.mock('~/shared/components/content-card/ContentCard', () => ({
   __esModule: true,
-  default: () => <div data-testid="content-card" />
+  default: function MockContentCard({ onClick }: MockContentCardProps) {
+    React.useEffect(() => {
+      onClick();
+    }, [onClick]);
+    return <div data-testid="content-card" />;
+  }
 }));
+
+interface MockCompositionModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
 
 jest.mock('~/shared/components/composition-modal/CompositionModal', () => ({
   __esModule: true,
-  default: () => <div data-testid="composition-modal" />
-}));
-
-jest.mock('~/shared/components/delete-card-modal/DeleteCardModal', () => ({
-  __esModule: true,
-  default: ({ open, onClose }: OpenCloseProps) =>
-    open ? (
-      <div data-testid="delete-card-modal">
+  default: ({ isOpen, onClose }: MockCompositionModalProps) =>
+    isOpen ? (
+      <div data-testid="composition-modal">
         <button type="button" onClick={onClose}>
           Close
         </button>
       </div>
     ) : null
+}));
+
+interface MockDeleteCardModalProps extends OpenCloseProps {
+  onDelete: () => void;
+}
+
+jest.mock('~/shared/components/delete-card-modal/DeleteCardModal', () => ({
+  __esModule: true,
+  default: function MockDeleteCardModal({ open, onClose, onDelete }: MockDeleteCardModalProps) {
+    React.useEffect(() => {
+      if (open) {
+        onDelete();
+      }
+    }, [open, onDelete]);
+
+    return open ? (
+      <div data-testid="delete-card-modal">
+        <button type="button" onClick={onClose}>
+          Close
+        </button>
+      </div>
+    ) : null;
+  }
 }));
 
 interface MockDeleteFileModalProps extends OpenCloseProps {
@@ -224,12 +209,19 @@ interface MockDeleteFileModalProps extends OpenCloseProps {
     filename: string;
     usageRefs?: Array<{ pageId: string; blockId: string }>;
   };
+  onConfirm: () => void;
 }
 
 jest.mock('~/shared/components/delete-file-modal/DeleteFileModal', () => ({
   __esModule: true,
-  default: ({ open, onClose, isDeleting, file }: MockDeleteFileModalProps) =>
-    open ? (
+  default: function MockDeleteFileModal({ open, onClose, isDeleting, file, onConfirm }: MockDeleteFileModalProps) {
+    React.useEffect(() => {
+      if (open) {
+        onConfirm();
+      }
+    }, [open, onConfirm]);
+
+    return open ? (
       <div data-testid="delete-file-modal">
         <span data-testid="delete-file-modal-is-deleting">{String(Boolean(isDeleting))}</span>
         <span data-testid="delete-file-modal-has-refs">{String(Boolean(file.usageRefs))}</span>
@@ -237,7 +229,8 @@ jest.mock('~/shared/components/delete-file-modal/DeleteFileModal', () => ({
           Close
         </button>
       </div>
-    ) : null
+    ) : null;
+  }
 }));
 
 jest.mock('~/shared/components/divided-header/DividedHeader', () => ({
@@ -255,12 +248,38 @@ jest.mock('~/shared/components/divided-header/progress-status/ProgressStatus', (
   default: () => <div data-testid="progress-status" />
 }));
 
+interface MockTitleDropdownProps {
+  title: string;
+  onMenuOpen: () => void;
+}
+
 jest.mock('~/shared/components/divided-header/title-dropdown/TitleDropdown', () => ({
-  TitleDropdown: ({ title }: { title: string }) => <div data-testid="title-dropdown">{title}</div>
+  TitleDropdown: function MockTitleDropdown({ title, onMenuOpen }: MockTitleDropdownProps) {
+    React.useEffect(() => {
+      onMenuOpen();
+    }, [onMenuOpen]);
+    return <div data-testid="title-dropdown">{title}</div>;
+  }
 }));
 
+interface MockEmptyStateProps {
+  title: string;
+  action?: {
+    label: string;
+    href: string;
+    onClick: () => void;
+  };
+}
+
 jest.mock('~/shared/components/empty-state', () => ({
-  EmptyState: ({ title }: { title: string }) => <div data-testid="empty-state">{title}</div>
+  EmptyState: function MockEmptyState({ title, action }: MockEmptyStateProps) {
+    React.useEffect(() => {
+      if (action?.onClick) {
+        action.onClick();
+      }
+    }, [action]);
+    return <div data-testid="empty-state">{title}</div>;
+  }
 }));
 
 jest.mock('~/shared/components/file-card', () => ({
@@ -367,13 +386,33 @@ jest.mock('~/shared/components/forms/seo-collapsible-block/SeoCollapsibleBlock',
   default: ({ children }: ChildrenProps) => <div data-testid="seo-collapsible-block">{children}</div>
 }));
 
+interface MockSeoBaseFieldsProps {
+  onFieldChange: () => void;
+  onBlur: () => void;
+}
+
 jest.mock('~/shared/components/forms/seo-metadata-form/seo-base-fields/SeoBaseFields', () => ({
-  SeoBaseFields: () => <div data-testid="seo-base-fields" />
+  SeoBaseFields: function MockSeoBaseFields({ onFieldChange, onBlur }: MockSeoBaseFieldsProps) {
+    React.useEffect(() => {
+      onFieldChange();
+      onBlur();
+    }, [onFieldChange, onBlur]);
+    return <div data-testid="seo-base-fields" />;
+  }
 }));
+
+interface MockDateTimePickerProps {
+  onChange: () => void;
+}
 
 jest.mock('~/shared/components/forms/seo-metadata-form/seo-date-time-picker/DateTimePicker', () => ({
   __esModule: true,
-  default: () => <div data-testid="date-time-picker" />
+  default: function MockDateTimePicker({ onChange }: MockDateTimePickerProps) {
+    React.useEffect(() => {
+      onChange();
+    }, [onChange]);
+    return <div data-testid="date-time-picker" />;
+  }
 }));
 
 jest.mock('~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock', () => ({
@@ -381,18 +420,55 @@ jest.mock('~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMet
   default: () => <div data-testid="seo-metadata-block" />
 }));
 
+interface MockSeoMetadataFormProps {
+  onChange: () => void;
+  onImageChange: () => void;
+  onIndexingChange: () => void;
+}
+
 jest.mock('~/shared/components/forms/seo-metadata-form/SeoMetadataForm', () => ({
   __esModule: true,
-  default: () => <div data-testid="seo-metadata-form" />
+  default: function MockSeoMetadataForm({ onChange, onImageChange, onIndexingChange }: MockSeoMetadataFormProps) {
+    React.useEffect(() => {
+      onChange();
+      onImageChange();
+      onIndexingChange();
+    }, [onChange, onImageChange, onIndexingChange]);
+    return <div data-testid="seo-metadata-form" />;
+  }
 }));
 
+interface MockHeaderProps {
+  onPreview: () => void;
+  onSave: () => void;
+  onCancel: () => void;
+  onLanguageChange: () => void;
+}
+
 jest.mock('~/shared/components/header/Header', () => ({
-  Header: () => <div data-testid="header" />
+  Header: function MockHeader({ onPreview, onSave, onCancel, onLanguageChange }: MockHeaderProps) {
+    React.useEffect(() => {
+      onPreview();
+      onSave();
+      onCancel();
+      onLanguageChange();
+    }, [onPreview, onSave, onCancel, onLanguageChange]);
+    return <div data-testid="header" />;
+  }
 }));
+
+interface MockLoginModalProps {
+  onSubmit: () => void;
+}
 
 jest.mock('~/shared/components/login-modal/LoginModal', () => ({
   __esModule: true,
-  default: () => <div data-testid="login-modal" />
+  default: function MockLoginModal({ onSubmit }: MockLoginModalProps) {
+    React.useEffect(() => {
+      onSubmit();
+    }, [onSubmit]);
+    return <div data-testid="login-modal" />;
+  }
 }));
 
 interface MockMediaModalContainerProps extends OpenCloseProps, ChildrenProps {}
@@ -409,44 +485,109 @@ jest.mock('~/shared/components/media-modal/components/container/MediaModalContai
     ) : null
 }));
 
+interface MockFilterDropdownProps {
+  onChange: () => void;
+}
+
 jest.mock('~/shared/components/media-modal/components/filter-dropdown/FilterDropdown', () => ({
-  FilterDropdown: () => <div data-testid="filter-dropdown" />
+  FilterDropdown: function MockFilterDropdown({ onChange }: MockFilterDropdownProps) {
+    React.useEffect(() => {
+      onChange();
+    }, [onChange]);
+    return <div data-testid="filter-dropdown" />;
+  }
 }));
+
+interface MockGalleryCardProps {
+  onClick: () => void;
+}
 
 jest.mock('~/shared/components/media-modal/components/gallery-card/GalleryCard', () => ({
-  GalleryCard: () => <div data-testid="gallery-card" />
+  GalleryCard: function MockGalleryCard({ onClick }: MockGalleryCardProps) {
+    React.useEffect(() => {
+      onClick();
+    }, [onClick]);
+    return <div data-testid="gallery-card" />;
+  }
 }));
+
+interface MockSearchButtonProps {
+  onSearch: () => void;
+}
 
 jest.mock('~/shared/components/media-modal/components/search-button/SearchButton', () => ({
-  SearchButton: () => <div data-testid="search-button" />
+  SearchButton: function MockSearchButton({ onSearch }: MockSearchButtonProps) {
+    React.useEffect(() => {
+      onSearch();
+    }, [onSearch]);
+    return <div data-testid="search-button" />;
+  }
 }));
+
+interface MockMediaModalSwitcherProps {
+  onChange: () => void;
+}
 
 jest.mock('~/shared/components/media-modal/components/switcher/MediaModalSwitcher', () => ({
-  MediaModalSwitcher: () => <div data-testid="media-modal-switcher" />
+  MediaModalSwitcher: function MockMediaModalSwitcher({ onChange }: MockMediaModalSwitcherProps) {
+    React.useEffect(() => {
+      onChange();
+    }, [onChange]);
+    return <div data-testid="media-modal-switcher" />;
+  }
 }));
+
+interface MockUsedCardProps {
+  onClick: () => void;
+}
 
 jest.mock('~/shared/components/media-modal/components/used-card/UsedCard', () => ({
-  UsedCard: () => <div data-testid="used-card" />
+  UsedCard: function MockUsedCard({ onClick }: MockUsedCardProps) {
+    React.useEffect(() => {
+      onClick();
+    }, [onClick]);
+    return <div data-testid="used-card" />;
+  }
 }));
 
+interface MockMediaModalProps extends OpenCloseProps {
+  onApply: () => void;
+}
+
 jest.mock('~/shared/components/media-modal/MediaModal', () => ({
-  MediaModal: ({ open, onClose }: OpenCloseProps) =>
-    open ? (
+  MediaModal: function MockMediaModal({ open, onClose, onApply }: MockMediaModalProps) {
+    React.useEffect(() => {
+      if (open) {
+        onApply();
+      }
+    }, [open, onApply]);
+
+    return open ? (
       <div data-testid="media-modal">
         <button type="button" onClick={onClose}>
           Close
         </button>
       </div>
-    ) : null
+    ) : null;
+  }
 }));
 
 jest.mock('~/shared/components/media-modal/views/file-view/FileView', () => ({
   FileView: () => <div data-testid="file-view" />
 }));
 
+interface MockUploadViewProps {
+  onPick: () => void;
+}
+
 jest.mock('~/shared/components/media-modal/views/upload-view/UploadView', () => ({
   __esModule: true,
-  default: () => <div data-testid="upload-view" />
+  default: function MockUploadView({ onPick }: MockUploadViewProps) {
+    React.useEffect(() => {
+      onPick();
+    }, [onPick]);
+    return <div data-testid="upload-view" />;
+  }
 }));
 
 jest.mock('~/shared/components/minimized-file-card/MinimizedFileCard', () => ({
@@ -801,6 +942,19 @@ describe('StyleGuide Page', () => {
 
       fireEvent.click(within(section).getByText('Показати Error-сповіщення'));
       expect(toast.error).toHaveBeenCalledWith('Тост-помилка');
+    });
+  });
+
+  describe('CompositionModal section', () => {
+    it('opens and closes via the trigger and close button', () => {
+      render(<StyleGuide />);
+      const section = getSection('CompositionModal');
+
+      fireEvent.click(within(section).getByText('Open modal'));
+      expect(within(section).getByTestId('composition-modal')).toBeInTheDocument();
+
+      fireEvent.click(within(section).getByText('Close'));
+      expect(within(section).queryByTestId('composition-modal')).not.toBeInTheDocument();
     });
   });
 });
