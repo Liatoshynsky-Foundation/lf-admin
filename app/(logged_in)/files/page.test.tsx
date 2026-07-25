@@ -260,7 +260,7 @@ describe('Files page', () => {
     await renderPageAndWaitForFiles();
 
     expect(screen.getByText('Файли')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Завантажити файл/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Додати файл/i })).toBeInTheDocument();
   });
 
   it('renders main files controls', async () => {
@@ -313,7 +313,7 @@ describe('Files page', () => {
   it('opens media modal when upload button is clicked', async () => {
     await renderPageAndWaitForFiles();
 
-    fireEvent.click(screen.getByRole('button', { name: /Завантажити файл/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Додати файл/i }));
 
     expect(screen.getByTestId('media-modal')).toBeInTheDocument();
   });
