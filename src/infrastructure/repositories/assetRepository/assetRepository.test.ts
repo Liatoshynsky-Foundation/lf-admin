@@ -158,6 +158,7 @@ describe('AssetRepository', () => {
       findById: jest.fn(),
       findByIdAndDelete: jest.fn(),
       findByIdAndUpdate: jest.fn(),
+      find: jest.fn(),
       findOneAndUpdate: jest.fn(),
       create: jest.fn()
     };
@@ -183,6 +184,7 @@ describe('AssetRepository', () => {
       mockStorageExists.mockResolvedValue(false);
       mockStorageMove.mockResolvedValue({ success: true });
       mockStorageGetUrl.mockImplementation((filename: string) => `https://example.com/${filename}`);
+      mockAssetModel.find.mockResolvedValue([]);
     });
 
     describe('deleteAsset', () => {
@@ -483,6 +485,69 @@ describe('AssetRepository', () => {
         );
         expect(result.id).toBe('new-asset-id');
         expect(result.isStarred).toBe(false);
+      });
+
+      it('should reject assets that duplicate a legacy original name in the same folder', async () => {
+        mockAssetModel.find.mockResolvedValueOnce([
+          {
+            filename: '1784204080559-15cd928d217815eb.png',
+            originalname: 'kitten.png',
+            type: 'image',
+            url: 'https://example.com/photos/1784204080559-15cd928d217815eb.png'
+          }
+        ]);
+
+        await expect(
+          repository.createAsset({
+            filename: 'kitten.png',
+            originalname: 'kitten.png',
+            mimeType: 'image/png',
+            sizeBytes: 1024,
+            url: 'https://example.com/photos/kitten.png',
+            type: 'image'
+          })
+        ).rejects.toThrow('Файл kitten.png вже існує');
+
+        expect(mockAssetModel.create).not.toHaveBeenCalled();
+      });
+
+      it('should allow the same original name in a different folder', async () => {
+        const newDoc = {
+          _id: { toString: () => 'new-doc-id' },
+          type: 'pdf' as const,
+          tags: [],
+          usageRefs: [],
+          filename: 'kitten.png',
+          originalname: 'kitten.png',
+          mimeType: 'application/pdf',
+          sizeBytes: 1024,
+          url: 'https://example.com/documents/kitten.png',
+          isStarred: false,
+          createdAt: new Date('2026-01-01T00:00:00.000Z'),
+          updatedAt: new Date('2026-01-01T00:00:00.000Z')
+        };
+
+        mockAssetModel.find.mockResolvedValueOnce([
+          {
+            filename: '1784204080559-15cd928d217815eb.png',
+            originalname: 'kitten.png',
+            type: 'image',
+            url: 'https://example.com/photos/1784204080559-15cd928d217815eb.png'
+          }
+        ]);
+        mockAssetModel.create.mockResolvedValueOnce(newDoc);
+
+        const result = await repository.createAsset({
+          filename: 'kitten.png',
+          originalname: 'kitten.png',
+          mimeType: 'application/pdf',
+          sizeBytes: 1024,
+          url: 'https://example.com/documents/kitten.png',
+          type: 'pdf'
+        });
+
+        expect(result.id).toBe('new-doc-id');
+        expect(mockAssetModel.create).toHaveBeenCalled();
       });
     });
 

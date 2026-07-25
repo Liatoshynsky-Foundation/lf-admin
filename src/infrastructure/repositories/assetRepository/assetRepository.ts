@@ -183,6 +183,10 @@ const validateRenameFilename = (nextFilename: string, currentFilename: string): 
   }
 };
 
+const getUniqueNames = (...names: Array<string | undefined>): string[] => {
+  return Array.from(new Set(names.filter((name): name is string => Boolean(name?.trim()))));
+};
+
 export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
   const baseRepo = createBaseRepository<AssetEntity, DbAsset, AssetFilters>({
     model: AssetModel,
@@ -237,6 +241,21 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
   };
 
   const createAsset = async (data: CreateAssetData): Promise<AssetEntity> => {
+    const checkedNames = getUniqueNames(data.filename, data.originalname);
+    const targetFolder = getCloudStoragePath({
+      filename: data.filename,
+      url: data.url,
+      type: data.type
+    } as DbAsset).folder;
+    const existingAssets = await AssetModel.find({
+      $or: [{ filename: { $in: checkedNames } }, { originalname: { $in: checkedNames } }]
+    });
+    const duplicateAsset = existingAssets.find((asset) => getCloudStoragePath(asset).folder === targetFolder);
+
+    if (duplicateAsset) {
+      throw new Error(UPLOAD_ERRORS.FILE_ALREADY_EXISTS(data.originalname ?? data.filename));
+    }
+
     const newDoc = await AssetModel.create({
       ...data,
       isStarred: false,
