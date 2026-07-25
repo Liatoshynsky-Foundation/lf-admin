@@ -99,7 +99,7 @@ describe('RenameFileModal', () => {
     await user.clear(input);
     await user.type(input, 'bad/name');
 
-    expect(screen.getByText(String.raw`Ім'я файлу містить заборонені символи: \ / : * ? " < > |`)).toBeInTheDocument();
+    expect(screen.getByText('Введіть назву файлу без крапки та розширення')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /зберегти/i })).toHaveAttribute('aria-disabled', 'true');
     expect(mockUpdateAsset).not.toHaveBeenCalled();
   });
@@ -114,7 +114,7 @@ describe('RenameFileModal', () => {
 
     await user.click(screen.getByRole('button', { name: /зберегти/i }));
 
-    expect(toast.error).toHaveBeenCalledWith('Ім\'я файлу містить заборонені символи');
+    expect(toast.error).toHaveBeenCalledWith('Введіть назву файлу без крапки та розширення');
     expect(mockUpdateAsset).not.toHaveBeenCalled();
     expect(mockOnClose).not.toHaveBeenCalled();
   });
@@ -155,6 +155,40 @@ describe('RenameFileModal', () => {
     });
   });
 
+  it('rejects typing a different file extension during rename', async () => {
+    const user = userEvent.setup();
+
+    render(<RenameFileModal {...defaultProps} currentFilename="old_name.jpeg" />);
+
+    const input = screen.getByDisplayValue('old_name');
+    await user.clear(input);
+    await user.type(input, 'new_name.png');
+
+    const saveButton = screen.getByRole('button', { name: /зберегти/i });
+    await user.click(saveButton);
+
+    expect(toast.error).toHaveBeenCalledWith('Введіть назву файлу без крапки та розширення');
+    expect(mockUpdateAsset).not.toHaveBeenCalled();
+    expect(mockOnClose).not.toHaveBeenCalled();
+  });
+
+  it('rejects unknown typed extensions instead of appending the current extension', async () => {
+    const user = userEvent.setup();
+
+    render(<RenameFileModal {...defaultProps} currentFilename="old_name.jpeg" />);
+
+    const input = screen.getByDisplayValue('old_name');
+    await user.clear(input);
+    await user.type(input, 'new_name.ppdf');
+
+    const saveButton = screen.getByRole('button', { name: /зберегти/i });
+    await user.click(saveButton);
+
+    expect(toast.error).toHaveBeenCalledWith('Введіть назву файлу без крапки та розширення');
+    expect(mockUpdateAsset).not.toHaveBeenCalled();
+    expect(mockOnClose).not.toHaveBeenCalled();
+  });
+
   it('calls onRename when custom rename handler is provided', async () => {
     const user = userEvent.setup();
     const onRename = jest.fn().mockResolvedValue(undefined);
@@ -179,7 +213,7 @@ describe('RenameFileModal', () => {
 
   it('shows error toast when custom rename handler fails', async () => {
     const user = userEvent.setup();
-    const onRename = jest.fn().mockRejectedValue(new Error('Rename failed'));
+    const onRename = jest.fn().mockRejectedValue(new Error('Файл custom_name.jpg вже існує'));
 
     render(<RenameFileModal {...defaultProps} onRename={onRename} />);
 
@@ -192,7 +226,7 @@ describe('RenameFileModal', () => {
 
     await waitFor(() => {
       expect(onRename).toHaveBeenCalledWith('file-123', 'custom_name.jpg');
-      expect(toast.error).toHaveBeenCalledWith('Помилка при перейменуванні файлу');
+      expect(toast.error).toHaveBeenCalledWith('Файл custom_name.jpg вже існує');
       expect(mockOnClose).not.toHaveBeenCalled();
     });
   });
@@ -232,7 +266,7 @@ describe('RenameFileModal', () => {
     await user.click(saveButton);
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Помилка при перейменуванні файлу');
+      expect(toast.error).toHaveBeenCalledWith('API Error');
       expect(mockOnClose).not.toHaveBeenCalled();
     });
   });

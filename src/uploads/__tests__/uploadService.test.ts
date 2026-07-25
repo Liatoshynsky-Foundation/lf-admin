@@ -13,6 +13,7 @@ describe('UploadService', () => {
     store: jest.fn(),
     retrieve: jest.fn(),
     delete: jest.fn(),
+    move: jest.fn(),
     exists: jest.fn(),
     getMetadata: jest.fn(),
     getUrl: jest.fn(),

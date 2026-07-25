@@ -1,5 +1,5 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 
 import { useDebounce } from './useDebounce';
 
@@ -28,7 +28,9 @@ describe('useDebounce', () => {
     rerender({ value: 'updated', delay: 300 });
     expect(result.current).toBe('initial');
 
-    jest.advanceTimersByTime(300);
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
 
     await waitFor(() => {
       expect(result.current).toBe('updated');
@@ -41,13 +43,19 @@ describe('useDebounce', () => {
     });
 
     rerender({ value: 'first' });
-    jest.advanceTimersByTime(100);
+    act(() => {
+      jest.advanceTimersByTime(100);
+    });
 
     rerender({ value: 'second' });
-    jest.advanceTimersByTime(100);
+    act(() => {
+      jest.advanceTimersByTime(100);
+    });
 
     rerender({ value: 'final' });
-    jest.advanceTimersByTime(300);
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
 
     await waitFor(() => {
       expect(result.current).toBe('final');
@@ -60,7 +68,9 @@ describe('useDebounce', () => {
     });
 
     rerender({ value: 'updated', delay: 500 });
-    jest.advanceTimersByTime(500);
+    act(() => {
+      jest.advanceTimersByTime(500);
+    });
 
     await waitFor(() => {
       expect(result.current).toBe('updated');
@@ -73,7 +83,9 @@ describe('useDebounce', () => {
     expect(result.current).toBe(0);
 
     rerender({ value: 42 });
-    jest.advanceTimersByTime(300);
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
 
     await waitFor(() => {
       expect(result.current).toBe(42);
@@ -84,7 +96,9 @@ describe('useDebounce', () => {
     const { result, rerender } = renderHook(({ value }) => useDebounce(value), { initialProps: { value: 'initial' } });
 
     rerender({ value: 'updated' });
-    jest.advanceTimersByTime(200);
+    act(() => {
+      jest.advanceTimersByTime(200);
+    });
 
     await waitFor(() => {
       expect(result.current).toBe('updated');

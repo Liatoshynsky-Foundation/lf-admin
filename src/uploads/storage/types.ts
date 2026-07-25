@@ -30,6 +30,8 @@ export interface StorageAdapter {
 
   delete: (filename: string, folder?: string) => Promise<DeleteResult>;
 
+  move: (sourceFilename: string, targetFilename: string, folder?: string) => Promise<DeleteResult>;
+
   exists: (filename: string, folder?: string) => Promise<boolean>;
 
   getMetadata: (filename: string, folder?: string) => Promise<StorageMetadata | null>;

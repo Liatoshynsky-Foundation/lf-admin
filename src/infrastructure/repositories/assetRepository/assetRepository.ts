@@ -1,8 +1,9 @@
 import { FilterQuery, Model, Types } from 'mongoose';
-import * as path from 'node:path';
 
 import { config } from '../../../config';
+import { UPLOAD_ERRORS } from '../../../uploads/errors';
 import { createStorageAdapter } from '../../../uploads/storage';
+import { preserveOriginalFilenameSafely } from '../../../uploads/utils';
 import { createBaseRepository } from '../baseRepository/baseRepository';
 import logger from '~/src/middleware/logger/logger';
 
@@ -91,6 +92,14 @@ const toEntity = (doc: DbAsset): AssetEntity => ({
   updatedAt: dateToIso(doc.updatedAt)
 });
 
+const decodeUrlPathSegment = (segment: string): string => {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+};
+
 const buildAssetQuery = (
   filters?: Omit<AssetFilters, 'limit' | 'skip' | 'sortBy' | 'sortOrder'>
 ): FilterQuery<DbAsset> => {
@@ -144,6 +153,36 @@ export type CreateAssetData = {
   description?: string;
 };
 
+type AssetUpdateFields = Partial<
+  Pick<AssetEntity, 'isStarred' | 'filename' | 'description' | 'url'>
+>;
+
+const INVALID_RENAME_FILENAME_MESSAGE = 'Введіть назву файлу без крапки та розширення';
+
+const joinStoragePath = (folder: string, filename: string): string => {
+  return folder ? `${folder}/${filename}` : filename;
+};
+
+const getFilenameExtension = (filename: string): string => {
+  const lastDotIndex = filename.lastIndexOf('.');
+
+  return lastDotIndex > 0 ? filename.substring(lastDotIndex) : '';
+};
+
+const validateRenameFilename = (nextFilename: string, currentFilename: string): void => {
+  const currentExtension = getFilenameExtension(currentFilename);
+  const nextExtension = getFilenameExtension(nextFilename);
+  const nextBaseName = nextExtension ? nextFilename.slice(0, -nextExtension.length) : nextFilename;
+
+  if (nextBaseName.includes('.') || nextFilename.startsWith('.') || nextFilename.endsWith('.')) {
+    throw new Error(INVALID_RENAME_FILENAME_MESSAGE);
+  }
+
+  if (nextExtension !== currentExtension) {
+    throw new Error(`Розширення файлу має залишатися ${currentExtension || 'порожнім'}`);
+  }
+};
+
 export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
   const baseRepo = createBaseRepository<AssetEntity, DbAsset, AssetFilters>({
     model: AssetModel,
@@ -153,19 +192,46 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
   });
 
   const updateAsset = async (id: string, data: UpdateAssetData): Promise<AssetEntity | null> => {
-    if (data.filename) {
+    let updateData: AssetUpdateFields = { ...data };
+
+    if (typeof data.filename === 'string') {
       const existingDoc = await AssetModel.findById(id);
 
-      if (existingDoc) {
-        const originalExt = path.extname(existingDoc.filename);
-
-        const safeBaseName = path.parse(data.filename).name;
-
-        data.filename = `${safeBaseName}${originalExt}`;
+      if (!existingDoc) {
+        return null;
       }
+
+      if (existingDoc.usageRefs && existingDoc.usageRefs.length > 0) {
+        throw new Error('Cannot rename: file is in use on the site.');
+      }
+
+      const nextFilename = preserveOriginalFilenameSafely(data.filename, existingDoc.mimeType);
+      const { filename: currentStorageFilename, folder } = getCloudStoragePath(existingDoc);
+      validateRenameFilename(nextFilename, currentStorageFilename);
+
+      if (nextFilename !== currentStorageFilename) {
+        const fileAlreadyExists = await storage.exists(nextFilename, folder);
+
+        if (fileAlreadyExists) {
+          throw new Error(UPLOAD_ERRORS.FILE_ALREADY_EXISTS(nextFilename));
+        }
+
+        const storageResult = await storage.move(currentStorageFilename, nextFilename, folder);
+
+        if (!storageResult.success) {
+          logger.warn(`Failed to rename file in Cloudflare: ${storageResult.error}`);
+          throw new Error('The file was not renamed in cloud storage. Please try again later.');
+        }
+      }
+
+      updateData = {
+        ...updateData,
+        filename: nextFilename,
+        url: storage.getUrl(joinStoragePath(folder, nextFilename)) ?? existingDoc.url
+      };
     }
 
-    const updatedDoc = await AssetModel.findByIdAndUpdate(id, { $set: data }, { new: true });
+    const updatedDoc = await AssetModel.findByIdAndUpdate(id, { $set: updateData }, { new: true });
 
     return updatedDoc ? toEntity(updatedDoc) : null;
   };
@@ -193,8 +259,8 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
         const pathParts = urlObj.pathname.split('/').filter(Boolean);
 
         if (pathParts.length > 0) {
-          filename = pathParts.pop() || asset.filename;
-          folder = pathParts.length > 0 ? pathParts.join('/') : '';
+          filename = decodeUrlPathSegment(pathParts.pop() || asset.filename);
+          folder = pathParts.length > 0 ? pathParts.map(decodeUrlPathSegment).join('/') : '';
         }
       }
     } catch {
