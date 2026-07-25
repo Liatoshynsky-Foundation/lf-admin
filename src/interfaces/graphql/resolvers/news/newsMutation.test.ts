@@ -138,6 +138,17 @@ describe('NewsMutation Resolvers', () => {
       expect(mockRepo.create).toHaveBeenCalled();
     });
 
+    it('should accept and trim a title with 150 meaningful characters plus a trailing space (review feedback)', async () => {
+      mockAction('findBySlug', null);
+      mockAction('create', createMockNews({ id: 'new-id' }));
+      const validInput = { ...baseInput, title: { uk: `${'a'.repeat(150)} `, en: 'Valid title' } };
+
+      await expect(NewsMutation.createNews({}, { input: validInput }, adminContext)).resolves.toBeDefined();
+
+      const createCallArg = (mockRepo.create as jest.Mock).mock.calls[0][0];
+      expect(createCallArg.title.uk).toBe('a'.repeat(150));
+    });
+
     it('should throw GraphQLError for createNews if user is unauthenticated', async () => {
       await expect(NewsMutation.createNews({}, { input: baseInput }, userContext)).rejects.toThrow();
     });
@@ -226,6 +237,20 @@ describe('NewsMutation Resolvers', () => {
       }
 
       expect(mockRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('should accept and trim an updated title with 150 meaningful characters plus a trailing space (review feedback)', async () => {
+      mockAction('findById', createMockNews({ id }));
+      mockAction('update', createMockNews({ id }));
+
+      await NewsMutation.updateNews(
+        {},
+        { id, input: { title: { uk: `${'a'.repeat(150)} `, en: 'Valid title' } } },
+        adminContext
+      );
+
+      const updateCallArg = (mockRepo.update as jest.Mock).mock.calls[0][1];
+      expect(updateCallArg.title.uk).toBe('a'.repeat(150));
     });
 
     it('should fall back to empty content object structure during processContentFields execution if content property is missing', async () => {

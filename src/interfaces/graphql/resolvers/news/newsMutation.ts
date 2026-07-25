@@ -73,6 +73,24 @@ const validateTitleMaxLength = (title: LocalizedString | undefined): void => {
   });
 };
 
+// Trims uk/en title values so the persisted title always matches what was validated
+// (validation checks trimmed length; without this, a title with trailing/leading
+// whitespace could be stored with a raw length different from its validated length).
+const trimLocalizedTitle = (title: LocalizedString | undefined): LocalizedString | undefined => {
+  if (!title) return title;
+
+  const trimmed: LocalizedString = { ...title };
+
+  (['uk', 'en'] as const).forEach((lang) => {
+    const value = title[lang];
+    if (typeof value === 'string') {
+      trimmed[lang] = value.trim();
+    }
+  });
+
+  return trimmed;
+};
+
 const endpointHandler = endpointRepositoryHandler('newsRepository');
 
 export const NewsMutation = {
@@ -106,6 +124,7 @@ export const NewsMutation = {
 
     const newsData: CreateNewsInput = {
       ...processedInput,
+      title: trimLocalizedTitle(input.title) ?? input.title,
       slug,
       newsDate: input.newsDate,
       status: input.status || NewsStatus.Draft,
@@ -163,6 +182,7 @@ export const NewsMutation = {
       validateTitleMaxLength(input.title);
 
       await processSlugUpdate(id, input.title, repo, updateData);
+      updateData.title = trimLocalizedTitle(input.title) ?? input.title;
     }
 
     const res = await repo.update(id, updateData);
