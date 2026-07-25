@@ -12,7 +12,7 @@ describe('useAutosavedDescription', () => {
     jest.useFakeTimers();
   });
   afterEach(() => {
-    jest.runOnlyPendingTimers();
+    jest.clearAllTimers();
     jest.useRealTimers();
   });
 
@@ -92,6 +92,7 @@ describe('useAutosavedDescription', () => {
 
     await act(async () => {
       jest.advanceTimersByTime(2);
+      await Promise.resolve();
       await Promise.resolve();
     });
 
