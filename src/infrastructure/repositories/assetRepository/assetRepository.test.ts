@@ -323,6 +323,7 @@ describe('AssetRepository', () => {
           {
             $set: {
               filename: 'new-name.jpeg',
+              originalname: 'new-name.jpeg',
               url: 'https://example.com/photos/new-name.jpeg'
             }
           },

@@ -79,8 +79,17 @@ const isFilesSupportedFile = (file: File): boolean => {
   return Boolean(extension && supportedUploadExtensions.has(extension));
 };
 
+const isR2Url = (url: URL): boolean => {
+  return url.hostname.endsWith('.r2.dev') || url.hostname.startsWith('r2.');
+};
+
 const getR2FileEndpoint = (fileUrl: string): string => {
   const parsedUrl = new URL(fileUrl, 'http://localhost');
+
+  if (!isR2Url(parsedUrl)) {
+    return fileUrl;
+  }
+
   const pathParts = parsedUrl.pathname.split('/').filter(Boolean).map(decodeURIComponent);
   const filename = pathParts.pop();
 
@@ -92,7 +101,7 @@ const getR2FileEndpoint = (fileUrl: string): string => {
   const encodedFilename = encodeURIComponent(filename);
 
   if (!folder) {
-    return fileUrl;
+    return `/api/uploads/${encodedFilename}`;
   }
 
   return `/api/uploads/${encodedFilename}?folder=${encodeURIComponent(folder)}`;
@@ -103,7 +112,7 @@ const getR2DeleteEndpoint = (fileUrl: string): string => {
 
   if (endpoint === fileUrl) {
     const parsedUrl = new URL(fileUrl, 'http://localhost');
-    const filename = parsedUrl.pathname.split('/').filter(Boolean).pop();
+    const filename = parsedUrl.pathname.split('/').findLast(Boolean);
 
     if (!filename) {
       throw new Error('Не вдалося визначити файл для видалення.');

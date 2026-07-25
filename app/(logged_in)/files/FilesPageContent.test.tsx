@@ -885,7 +885,7 @@ describe('FilesPageContent', () => {
     });
   });
 
-  it('downloads a root R2 file directly when no folder is present', async () => {
+  it('downloads a root R2 file through the same-origin uploads endpoint', async () => {
     const rootR2Asset = {
       ...baseAsset,
       url: 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/root-file.pdf',
@@ -899,7 +899,7 @@ describe('FilesPageContent', () => {
     fireEvent.click(screen.getByText('download-1'));
 
     await waitFor(() => {
-      expect(downloadFile).toHaveBeenCalledWith(rootR2Asset.url, 'root-file.pdf');
+      expect(downloadFile).toHaveBeenCalledWith('/api/uploads/root-file.pdf', 'root-file.pdf');
     });
   });
 

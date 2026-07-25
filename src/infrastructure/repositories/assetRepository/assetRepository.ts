@@ -154,7 +154,7 @@ export type CreateAssetData = {
 };
 
 type AssetUpdateFields = Partial<
-  Pick<AssetEntity, 'isStarred' | 'filename' | 'description' | 'url'>
+  Pick<AssetEntity, 'isStarred' | 'filename' | 'originalname' | 'description' | 'url'>
 >;
 
 const INVALID_RENAME_FILENAME_MESSAGE = 'Введіть назву файлу без крапки та розширення';
@@ -231,6 +231,7 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
       updateData = {
         ...updateData,
         filename: nextFilename,
+        originalname: nextFilename,
         url: storage.getUrl(joinStoragePath(folder, nextFilename)) ?? existingDoc.url
       };
     }
@@ -250,9 +251,9 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
     const existingAssets = await AssetModel.find({
       $or: [{ filename: { $in: checkedNames } }, { originalname: { $in: checkedNames } }]
     });
-    const duplicateAsset = existingAssets.find((asset) => getCloudStoragePath(asset).folder === targetFolder);
+    const hasDuplicateAsset = existingAssets.some((asset) => getCloudStoragePath(asset).folder === targetFolder);
 
-    if (duplicateAsset) {
+    if (hasDuplicateAsset) {
       throw new Error(UPLOAD_ERRORS.FILE_ALREADY_EXISTS(data.originalname ?? data.filename));
     }
 
