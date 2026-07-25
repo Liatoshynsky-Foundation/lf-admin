@@ -122,12 +122,12 @@ describe('usePublicationsFiltering', () => {
   it('clears active status filters', () => {
     const { result } = renderHook(() => usePublicationsFiltering());
 
-    act(() => {
-      const onChange = result.current.toolbarProps.filters?.[0]?.onChange;
-      if (onChange) {
+    const onChange = result.current.toolbarProps.filters?.[0]?.onChange;
+    if (onChange) {
+      act(() => {
         onChange(['editing', 'published']);
-      }
-    });
+      });
+    }
     expect(result.current.toolbarProps.activeFiltersCount).toBe(2);
 
     act(() => {

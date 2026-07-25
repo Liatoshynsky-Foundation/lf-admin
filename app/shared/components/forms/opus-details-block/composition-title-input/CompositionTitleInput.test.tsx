@@ -83,7 +83,7 @@ describe('CompositionTitleInput', () => {
         searchCompositions: [
           {
             id: 'c2',
-            title: { en: 'Only English Title' },
+            name: { en: 'Only English Title' },
             genre: 'Романс',
             year: 1920,
             sheetMusic: [],
@@ -91,7 +91,7 @@ describe('CompositionTitleInput', () => {
           },
           {
             id: 'c3',
-            title: {},
+            name: {},
             genre: 'Романс',
             year: 1920,
             sheetMusic: [],
@@ -137,7 +137,7 @@ describe('CompositionTitleInput', () => {
         searchCompositions: [
           {
             id: 'missing-suggestion',
-            title: { uk: 'Без Саджешна' },
+            name: { uk: 'Без Саджешна' },
             genre: 'Романс',
             year: 1920,
             sheetMusic: [],
@@ -192,7 +192,7 @@ describe('CompositionTitleInput', () => {
         searchCompositions: [
           {
             id: 'c1',
-            name: { uk: null, en: 'After Battle' },
+            name: { en: 'After Battle' },
             genre: 'Romance',
             year: 1920,
             sheetMusic: [],
@@ -217,7 +217,7 @@ describe('CompositionTitleInput', () => {
         searchCompositions: [
           {
             id: 'c1',
-            name: { uk: null, en: null },
+            name: {},
             genre: 'Romance',
             year: 1920,
             sheetMusic: [],

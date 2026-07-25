@@ -436,30 +436,18 @@ describe('Publications page integration', () => {
     expect(mockUseAllEvents).toHaveBeenCalledWith(expect.objectContaining({ skip: true }));
   });
 
-  it('handles name_asc alphabetical sorting correctly', () => {
-    mockSortValue.mockReturnValue('name_asc');
+  it.each([
+    { sortValue: 'name_asc', expectedTitle: 'Вечір камерної музики', description: 'name_asc alphabetical sorting' },
+    { sortValue: 'name_desc', expectedTitle: 'Програма резиденції оголошена', description: 'name_desc alphabetical reverse sorting' },
+    { sortValue: 'date_asc', expectedTitle: 'Головна подія сезону', description: 'date_asc sorting' } 
+  ])('handles $description correctly', ({ sortValue, expectedTitle }) => {
+    mockSortValue.mockReturnValue(sortValue);
     render(<PublicationsPageContent activeTab="all" />);
 
     const titles = screen.getAllByTestId('publication-card-title').map((el) => el.textContent);
-    expect(titles[0]).toBe('Вечір камерної музики');
+    expect(titles[0]).toBe(expectedTitle);
   });
-
-  it('handles name_desc alphabetical reverse sorting correctly', () => {
-    mockSortValue.mockReturnValue('name_desc');
-    render(<PublicationsPageContent activeTab="all" />);
-
-    const titles = screen.getAllByTestId('publication-card-title').map((el) => el.textContent);
-    expect(titles[0]).toBe('Програма резиденції оголошена');
-  });
-
-  it('handles date_asc chronological sorting correctly', () => {
-    mockSortValue.mockReturnValue('date_asc');
-    render(<PublicationsPageContent activeTab="all" />);
-
-    const titles = screen.getAllByTestId('publication-card-title').map((el) => el.textContent);
-    expect(titles[0]).toBe('Головна подія сезону');
-  });
-
+  
   it('renders loading states for specific active tabs', () => {
     mockUseAllNews.mockReturnValue({ data: undefined, loading: true, error: undefined });
 

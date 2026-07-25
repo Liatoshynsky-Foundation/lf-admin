@@ -307,7 +307,7 @@ describe('SeoMetadataBlock', () => {
       }
     });
     const inputs = screen.getAllByLabelText(/ticket url/i);
-    expect(inputs.length).toBe(2);
+    expect(inputs).toHaveLength(2);
   });
 
   it('handles re-validation on ticketUrl change when field is already touched', () => {

@@ -63,28 +63,13 @@ describe('parserUtils', () => {
       expect((v as Record<string, unknown>).name).toBe('ArrayItem');
     });
 
-    it('should return null if JSON-LD is an empty array', () => {
-      const html = '<script type="application/ld+json">[]</script>';
-      expect(parseJsonLd(html)).toBeNull();
-    });
-
-    it('should return null if JSON-LD array contains a non-object first element', () => {
-      const html = '<script type="application/ld+json">["simple-string"]</script>';
-      expect(parseJsonLd(html)).toBeNull();
-    });
-
-    it('should return null if parsed JSON-LD is not an object or array', () => {
-      const html = '<script type="application/ld+json">123</script>';
-      expect(parseJsonLd(html)).toBeNull();
-    });
-
-    it('should return null if no valid JSON-LD present', () => {
-      const html = '<div>No jsonld</div>';
-      expect(parseJsonLd(html)).toBeNull();
-    });
-
-    it('should return null if script block contains invalid JSON', () => {
-      const html = '<script type="application/ld+json">{"missing-quotes: value}</script>';
+    it.each([
+      { html: '<script type="application/ld+json">[]</script>', description: 'JSON-LD is an empty array' },
+      { html: '<script type="application/ld+json">["simple-string"]</script>', description: 'JSON-LD array contains a non-object first element' },
+      { html: '<script type="application/ld+json">123</script>', description: 'parsed JSON-LD is not an object or array' },
+      { html: '<div>No jsonld</div>', description: 'no valid JSON-LD present' },
+      { html: '<script type="application/ld+json">{"missing-quotes: value}</script>', description: 'script block contains invalid JSON' }
+    ])('should return null if $description', ({ html }) => {
       expect(parseJsonLd(html)).toBeNull();
     });
   });

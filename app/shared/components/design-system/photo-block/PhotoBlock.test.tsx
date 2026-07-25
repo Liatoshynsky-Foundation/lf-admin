@@ -306,7 +306,8 @@ describe('ImagePreviewBlock', () => {
     await user.type(input, 'a');
   });
 
-  it('updates savedCrop when initialCrop prop changes dynamically', () => {
+  it('updates savedCrop when initialCrop prop changes dynamically', async () => {
+    const user = userEvent.setup();
     const { rerender } = renderComponent({
       initialCrop: { rect: { x: 0, y: 0, width: 10, height: 10 } }
     });
@@ -318,5 +319,8 @@ describe('ImagePreviewBlock', () => {
         initialCrop={{ rect: { x: 5, y: 5, width: 20, height: 20 } }}
       />
     );
+
+    await user.click(screen.getByRole('button', { name: /редагувати/i }));
+    expect(screen.getByTestId('media-modal')).toBeInTheDocument();
   });
 });

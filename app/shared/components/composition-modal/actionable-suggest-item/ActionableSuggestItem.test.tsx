@@ -186,9 +186,7 @@ describe('ActionableSuggestItem', () => {
       />
     );
 
-    const dateInputElement = screen.getByTestId('date-picker-input');
-    fireEvent.change(dateInputElement, { target: { value: '14/06/2026' } });
-
+    expect(screen.queryByTestId('mock-date-picker')).not.toBeInTheDocument();
     expect(onDateChangeMock).not.toHaveBeenCalled();
   });
 });

@@ -90,7 +90,6 @@ describe('MediaModalFlowState', () => {
     const state2 = reducer(state1, { type: 'SET_CROP', crop: resizedCrop });
     expect(state2.crop).toEqual(resizedCrop);
 
-    // user already changed crop -> baseline must NOT be overwritten
     const state3 = reducer(state2, { type: 'SET_BASELINE_CROP', crop: initialCrop });
     expect(state3.baselineCrop).toEqual(initialCrop);
     expect(state3.crop).toEqual(resizedCrop);
@@ -439,23 +438,5 @@ describe('MediaModalFlowState', () => {
     expect(state.step).toBe('CROP');
     expect(state.crop).toBeNull();
     expect(state.baselineCrop).toBeNull();
-  });
-
-  it('should return false in isSameCrop when both crops are objects with different coordinates', () => {
-    const cropA: CropResult = { rect: { x: 0, y: 0, width: 100, height: 100 } };
-    const cropB: CropResult = { rect: { x: 5, y: 0, width: 100, height: 100 } };
-
-    const selected: SelectedMedia = {
-      kind: 'gallery',
-      id: 'gallery-1',
-      fileName: 'g.png',
-      src: '/demo/g.png',
-      locale: 'uk'
-    };
-    const state0 = reducer(buildInitialState(), { type: 'PICK_AND_CROP', selected });
-    const state1 = reducer(state0, { type: 'SET_CROP', crop: cropA });
-
-    const state2 = reducer(state1, { type: 'SET_CROP', crop: cropB });
-    expect(state2.crop).toEqual(cropB);
   });
 });

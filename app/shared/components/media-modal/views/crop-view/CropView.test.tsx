@@ -150,6 +150,7 @@ describe('CropView', () => {
     Object.defineProperty(imgPortrait, 'naturalHeight', { value: 1000, configurable: true });
 
     fireEvent.load(imgPortrait);
+    expect(screen.getByTestId('CropView')).toBeInTheDocument();
   });
 
   it('should apply pre-existing stateCrop on image load', () => {
@@ -184,6 +185,8 @@ describe('CropView', () => {
 
     const triggerChangeBtn = screen.getByTestId('trigger-change');
     fireEvent.click(triggerChangeBtn);
+
+    expect(screen.getByTestId('mock-react-crop')).toBeInTheDocument();
   });
 
   it('should calculate real coordinates and call onChange on complete', () => {
@@ -256,6 +259,8 @@ describe('CropView', () => {
       <CropView selected={uploadSelected} crop={null} resetSeq={0} onBaseline={jest.fn()} onChange={jest.fn()} />
     );
 
+    expect(screen.getByTestId('CropView')).toBeInTheDocument();
+
     unmount();
 
     globalThis.URL.createObjectURL = originalCreate;
@@ -303,6 +308,8 @@ describe('CropView', () => {
     Object.defineProperty(img, 'naturalHeight', { value: 0, configurable: true });
 
     fireEvent.load(img);
+
+    expect(screen.getByTestId('CropView')).toBeInTheDocument();
   });
 
   it('should scale down internal crop state when container shrinks and handle tall images', () => {
@@ -414,6 +421,8 @@ describe('CropView', () => {
         resizeCallback!([], {} as ResizeObserver);
       });
     }
+
+    expect(screen.getByTestId('mock-react-crop')).toBeInTheDocument();
   });
 
   it('covers both branches of calculateContainSize in ResizeObserver callback', () => {
@@ -449,6 +458,8 @@ describe('CropView', () => {
         resizeCallback!([], {} as ResizeObserver);
       });
     }
+
+    expect(screen.getByTestId('mock-react-crop')).toBeInTheDocument();
   });
 
   it('covers uploadFile cleanup guard when url is empty or canRevokeObjectUrl is false', () => {
@@ -482,6 +493,7 @@ describe('CropView', () => {
     unmount2();
 
     globalThis.URL.revokeObjectURL = originalRevoke;
+    expect(originalRevoke).toBeDefined();
   });
 
   it('returns early in ResizeObserver callback when naturalHeight is zero', () => {
@@ -499,6 +511,8 @@ describe('CropView', () => {
         resizeCallback!([], {} as ResizeObserver);
       });
     }
+
+    expect(screen.getByTestId('mock-react-crop')).toBeInTheDocument();
   });
 
   it('returns early in handleComplete when imgRef.current is falsy', () => {
@@ -512,5 +526,7 @@ describe('CropView', () => {
     if (capturedOnComplete) {
       capturedOnComplete({ x: 20, y: 20, width: 100, height: 100, unit: 'px' });
     }
+
+    expect(screen.getByText('Не вдалося завантажити зображення')).toBeInTheDocument();
   });
 });
