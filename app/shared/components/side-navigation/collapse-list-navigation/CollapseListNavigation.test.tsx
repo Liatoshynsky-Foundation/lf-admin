@@ -10,8 +10,12 @@ jest.mock('@mui/material', () => {
     ...original,
     Collapse: ({ children, in: isOpen }: { children: React.ReactNode; in?: boolean }) =>
       isOpen ? <div data-testid="collapse-content">{children}</div> : null,
-    Popper: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
-      open ? <div data-testid="popper-content">{children}</div> : null
+    Popper: ({ children, open, anchorEl }: { children: React.ReactNode; open: boolean; anchorEl: unknown }) =>
+      open ? (
+        <div data-testid="popper-content" data-has-anchor={String(Boolean(anchorEl))}>
+          {children}
+        </div>
+      ) : null
   };
 });
 
@@ -122,7 +126,7 @@ describe('CollapseListNavigation', () => {
     });
   });
 
-  it('should trigger onExpansionChange when clicked in collapsed navbar state', () => {
+  it('should trigger onExpansionChange and set anchorEl when clicked in collapsed navbar state without mouseEnter', () => {
     render(
       <CollapseListNavigation
         openNavbar={false}
@@ -135,6 +139,9 @@ describe('CollapseListNavigation', () => {
     fireEvent.click(parent);
 
     expect(mockOnExpansionChange).toHaveBeenCalledWith(true);
+    const popper = screen.getByTestId('popper-content');
+    expect(popper).toBeInTheDocument();
+    expect(popper).toHaveAttribute('data-has-anchor', 'true');
   });
 
   it('should correctly display icons based on submenu open state', () => {

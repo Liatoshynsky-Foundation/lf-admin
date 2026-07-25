@@ -29,13 +29,11 @@ const ERROR_CONFIG: Array<{
 }> = [
   {
     key: 'url_1',
-    handle: ({ setCanonicalUrlError }) =>
-      setCanonicalUrlError('Публікація з таким canonical URL вже існує.')
+    handle: ({ setCanonicalUrlError }) => setCanonicalUrlError('Публікація з таким canonical URL вже існує.')
   },
   {
     key: 'E11000',
-    handle: () =>
-      toast.error('Публікація з такими даними вже існує.')
+    handle: () => toast.error('Публікація з такими даними вже існує.')
   }
 ];
 interface UseUpsertPublicationProps {
@@ -206,7 +204,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     const commonInput = {
       adminTitle,
       title: { uk: ukMeta.title || adminTitle, en: enMeta.title || adminTitle },
-      description: { uk: ukMeta.description, en: enMeta.description },
+      description: { uk: ukMeta.description || '', en: enMeta.description || '' },
       keywords: { uk: ukMeta.keywords || '', en: enMeta.keywords || '' },
       allowIndexation: { uk: seoValue.allowIndexing.uk, en: seoValue.allowIndexing.en },
       publishedAt: publishDate?.toISOString(),
@@ -289,7 +287,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       if (error instanceof Error) {
         const errorMessage = error.message || '';
         const matched = ERROR_CONFIG.find((item) => errorMessage.includes(item.key));
-        
+
         if (!matched) {
           toast.error('Щось пішло не так. Спробуйте ще раз.');
           return;

@@ -75,22 +75,14 @@ describe('parserUtils', () => {
   });
 
   describe('parseDateFlexible', () => {
-    it('should parse ISO date string', () => {
-      const d = parseDateFlexible('2020-01-02T03:04:05Z');
+    it.each([
+      { input: '2020-01-02T03:04:05Z', expectedIso: '2020-01-02T03:04:05.000Z', description: 'ISO date string' },
+      { input: '15.01.2020 05:06', expectedIso: '2020-01-15T05:06:00.000Z', description: 'dd.MM.yyyy HH:mm as UTC' },
+      { input: '15.01.2020', expectedIso: '2020-01-15T00:00:00.000Z', description: 'dd.MM.yyyy and fallback hours and minutes to 0 as UTC' }
+    ])('should parse $description', ({ input, expectedIso }) => {
+      const d = parseDateFlexible(input);
       expect(d).toBeInstanceOf(Date);
-      expect(d!.toISOString()).toBe('2020-01-02T03:04:05.000Z');
-    });
-
-    it('should parse dd.MM.yyyy HH:mm as UTC', () => {
-      const d = parseDateFlexible('15.01.2020 05:06');
-      expect(d).toBeInstanceOf(Date);
-      expect(d!.toISOString()).toBe('2020-01-15T05:06:00.000Z');
-    });
-
-    it('should parse dd.MM.yyyy and fallback hours and minutes to 0 as UTC', () => {
-      const d = parseDateFlexible('15.01.2020');
-      expect(d).toBeInstanceOf(Date);
-      expect(d!.toISOString()).toBe('2020-01-15T00:00:00.000Z');
+      expect(d!.toISOString()).toBe(expectedIso);
     });
 
     it('should return null for invalid input', () => {
