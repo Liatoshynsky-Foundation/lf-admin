@@ -1,3 +1,5 @@
+import { GraphQLError } from 'graphql';
+
 import { CreateNewsGQLInput, NewsMutation, UpdateNewsGQLInput } from './newsMutation';
 import type { News } from '~/domain/entities/News';
 import { createMockContext } from '~/interfaces/graphql/resolvers/testUtils';
@@ -101,18 +103,30 @@ describe('NewsMutation Resolvers', () => {
       );
     });
 
-    it('should throw TITLE_TOO_LONG_FOR_SLUG if title.uk exceeds 150 characters (lf-manual-tests#469)', async () => {
+    it('should throw GraphQLError with BAD_USER_INPUT if title.uk exceeds 150 characters (lf-manual-tests#469)', async () => {
+      expect.assertions(3);
       const invalidInput = { ...baseInput, title: { uk: 'а'.repeat(151), en: 'Valid title' } };
-      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toThrow(
-        newsServiceErrors.TITLE_TOO_LONG_FOR_SLUG
-      );
+
+      try {
+        await NewsMutation.createNews({}, { input: invalidInput }, adminContext);
+      } catch (error) {
+        expect(error).toBeInstanceOf(GraphQLError);
+        expect((error as GraphQLError).message).toBe(newsServiceErrors.TITLE_TOO_LONG_FOR_SLUG);
+        expect((error as GraphQLError).extensions.code).toBe('BAD_USER_INPUT');
+      }
     });
 
-    it('should throw TITLE_TOO_LONG_FOR_SLUG if title.en exceeds 150 characters (lf-manual-tests#469)', async () => {
+    it('should throw GraphQLError with BAD_USER_INPUT if title.en exceeds 150 characters (lf-manual-tests#469)', async () => {
+      expect.assertions(3);
       const invalidInput = { ...baseInput, title: { uk: 'Валідний заголовок', en: 'a'.repeat(151) } };
-      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toThrow(
-        newsServiceErrors.TITLE_TOO_LONG_FOR_SLUG
-      );
+
+      try {
+        await NewsMutation.createNews({}, { input: invalidInput }, adminContext);
+      } catch (error) {
+        expect(error).toBeInstanceOf(GraphQLError);
+        expect((error as GraphQLError).message).toBe(newsServiceErrors.TITLE_TOO_LONG_FOR_SLUG);
+        expect((error as GraphQLError).extensions.code).toBe('BAD_USER_INPUT');
+      }
     });
 
     it('should accept a title exactly 150 characters long', async () => {
@@ -195,12 +209,21 @@ describe('NewsMutation Resolvers', () => {
       expect(mockRepo.update).not.toHaveBeenCalled();
     });
 
-    it('should throw TITLE_TOO_LONG_FOR_SLUG if updated title.uk exceeds 150 characters (lf-manual-tests#469)', async () => {
+    it('should throw GraphQLError with BAD_USER_INPUT if updated title.uk exceeds 150 characters (lf-manual-tests#469)', async () => {
+      expect.assertions(4);
       mockAction('findById', createMockNews({ id }));
 
-      await expect(
-        NewsMutation.updateNews({}, { id, input: { title: { uk: 'а'.repeat(151), en: 'Valid title' } } }, adminContext)
-      ).rejects.toThrow(newsServiceErrors.TITLE_TOO_LONG_FOR_SLUG);
+      try {
+        await NewsMutation.updateNews(
+          {},
+          { id, input: { title: { uk: 'а'.repeat(151), en: 'Valid title' } } },
+          adminContext
+        );
+      } catch (error) {
+        expect(error).toBeInstanceOf(GraphQLError);
+        expect((error as GraphQLError).message).toBe(newsServiceErrors.TITLE_TOO_LONG_FOR_SLUG);
+        expect((error as GraphQLError).extensions.code).toBe('BAD_USER_INPUT');
+      }
 
       expect(mockRepo.update).not.toHaveBeenCalled();
     });

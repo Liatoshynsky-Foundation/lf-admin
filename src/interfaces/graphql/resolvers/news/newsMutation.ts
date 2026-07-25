@@ -66,7 +66,9 @@ const validateTitleMaxLength = (title: LocalizedString | undefined): void => {
   (['uk', 'en'] as const).forEach((lang) => {
     const value = title[lang];
     if (typeof value === 'string' && value.trim().length > TITLE_MAX_LENGTH) {
-      throw new Error(newsServiceErrors.TITLE_TOO_LONG_FOR_SLUG);
+      throw new GraphQLError(newsServiceErrors.TITLE_TOO_LONG_FOR_SLUG, {
+        extensions: { code: 'BAD_USER_INPUT' }
+      });
     }
   });
 };
