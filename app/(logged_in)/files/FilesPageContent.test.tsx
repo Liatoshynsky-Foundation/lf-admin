@@ -311,8 +311,8 @@ let mockMediaModalOnApply:
     }) => Promise<void>)
   | null = null;
 
- 
 let deleteModalOnConfirm: ((id: string) => Promise<unknown>) | null = null;
+let capturedDeleteModalFile: DeleteFileModalProps['file'] | null = null;
 
 jest.mock('~/shared/components/media-modal/MediaModal', () => ({
   MediaModal: ({ open, onApply, onClose, renderers }: MediaModalProps) => {
@@ -361,10 +361,12 @@ jest.mock('~/shared/components/delete-file-modal/DeleteFileModal', () => ({
   __esModule: true,
   default: ({ open, onConfirm, file, onClose }: DeleteFileModalProps) => {
     deleteModalOnConfirm = onConfirm;
+    capturedDeleteModalFile = file;
     if (!open) return null;
     return (
       <div data-testid="delete-modal">
         <span>{file?.filename}</span>
+        <span data-testid="delete-modal-usage-count">{file?.usageRefs.length ?? 0}</span>
         <button onClick={() => onConfirm(file?.id ?? '')}>confirm-delete</button>
         <button onClick={onClose}>close-delete</button>
       </div>
@@ -418,6 +420,7 @@ beforeEach(() => {
   capturedCardsProps = null;
   mockMediaModalOnApply = null;
   deleteModalOnConfirm = null;
+  capturedDeleteModalFile = null;
   capturedUploadViewProps = null;
   mockFetch.mockResolvedValue({
     ok: true,
@@ -483,11 +486,33 @@ describe('FilesPageContent', () => {
     render(<FilesPageContent activeTab="all" />);
 
     fireEvent.click(screen.getByText('delete-1'));
-    fireEvent.click(screen.getByText('confirm-delete'));
+    fireEvent.click(await screen.findByText('confirm-delete'));
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Network error');
     });
+  });
+
+  it('refreshes asset usage before opening delete modal', async () => {
+    const staleAsset = { ...baseAsset, usageRefs: [] };
+    const refreshedAsset = {
+      ...baseAsset,
+      usageRefs: [{ __typename: 'AssetUsageRef' as const, pageId: 'about-us', blockId: 'hero', locale: 'uk' }]
+    };
+    const refetch = jest.fn().mockResolvedValue({ data: { allAssets: [refreshedAsset] } });
+
+    setupHooks({ assets: [staleAsset], refetch });
+    render(<FilesPageContent activeTab="all" />);
+
+    fireEvent.click(screen.getByText('delete-1'));
+
+    await waitFor(() => {
+      expect(refetch).toHaveBeenCalled();
+      expect(screen.getByTestId('delete-modal')).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId('delete-modal-usage-count')).toHaveTextContent('1');
+    expect(capturedDeleteModalFile?.usageRefs).toEqual([{ pageId: 'about-us', blockId: 'hero' }]);
   });
 
   it('renders correct empty state scenarios (coverage for 447-476)', () => {
