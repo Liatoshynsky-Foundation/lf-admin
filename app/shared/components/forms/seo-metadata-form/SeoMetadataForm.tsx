@@ -95,8 +95,12 @@ export default function SeoMetadataForm({
 
   const validateField = (field: keyof LocalizedMeta, val: string) => {
     switch (field) {
-    case 'title':
-      return val.trim().length < 2 ? translationErrors.minLength : '';
+    case 'title': {
+      const length = val.trim().length;
+      if (length < 2) return translationErrors.minLength;
+      if (length > 150) return translationErrors.maxLength;
+      return '';
+    }
     case 'description':
       return val.trim() ? '' : translationErrors.required;
     case 'canonicalUrl':

@@ -117,12 +117,14 @@ export const MediaMentionsErrors = {
 export const seoFormErrors = {
   uk: {
     minLength: 'Мінімум 2 символа',
+    maxLength: 'Максимум 150 символів',
     required: 'Обовʼязкове поле',
     invalidUrl: 'Некоректний URL',
     keywords: 'Ключові слова мають бути через кому, без порожніх значень'
   },
   en: {
     minLength: 'Minimum 2 characters',
+    maxLength: 'Maximum 150 characters',
     required: 'Required field',
     invalidUrl: 'Invalid URL',
     keywords: 'Keywords must be comma-separated, without empty values'

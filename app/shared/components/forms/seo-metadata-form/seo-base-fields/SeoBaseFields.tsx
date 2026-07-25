@@ -2,6 +2,7 @@ import { Stack, TextField } from '@mui/material';
 
 import type { LocalizedMeta } from '../SeoMetadataForm';
 import { styles } from '../SeoMetadataForm.styles';
+import { META_TITLE_MAX_LENGTH } from '~/constants/publications';
 
 interface SeoBaseFieldsProps {
   readonly value: LocalizedMeta;
@@ -19,7 +20,7 @@ interface SeoBaseFieldsProps {
 
 export function SeoBaseFields({ value, errors, touched, onFieldChange, onBlur, showKeywords = true, labels = {} }: SeoBaseFieldsProps) {
   const fields = [
-    { key: 'title' as const, label: labels.metaTitle || 'Meta title', required: true },
+    { key: 'title' as const, label: labels.metaTitle || 'Meta title', required: true, maxLength: META_TITLE_MAX_LENGTH },
     {
       key: 'description' as const,
       label: labels.metaDescription || 'Meta description',
@@ -33,7 +34,7 @@ export function SeoBaseFields({ value, errors, touched, onFieldChange, onBlur, s
 
   return (
     <Stack direction="column" spacing={2.5} sx={styles.formFieldsContainer}>
-      {fields.map(({ key, label, required, multiline, minRows, maxRows }) => (
+      {fields.map(({ key, label, required, multiline, minRows, maxRows, maxLength }) => (
         <TextField
           key={key}
           label={label}
@@ -48,6 +49,7 @@ export function SeoBaseFields({ value, errors, touched, onFieldChange, onBlur, s
           multiline={multiline}
           minRows={minRows}
           maxRows={maxRows}
+          slotProps={maxLength ? { htmlInput: { maxLength } } : undefined}
         />
       ))}
     </Stack>

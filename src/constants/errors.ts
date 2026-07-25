@@ -32,7 +32,8 @@ export const newsServiceErrors = {
   FAILED_TO_HIDE: (id: string) => `Failed to hide news with id "${id}"`,
   FAILED_TO_DELETE: (id: string) => `News with id "${id}" not found or could not be deleted`,
   TITLE_REQUIRED_FOR_SLUG: 'Title is required to generate a slug',
-  TITLE_TOO_SHORT_FOR_SLUG: 'Title must be at least 2 characters long to generate a slug'
+  TITLE_TOO_SHORT_FOR_SLUG: 'Title must be at least 2 characters long to generate a slug',
+  TITLE_TOO_LONG_FOR_SLUG: 'Title must not exceed 150 characters'
 };
 
 export const opusServiceErrors = {
