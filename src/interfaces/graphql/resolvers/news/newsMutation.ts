@@ -73,9 +73,6 @@ const validateTitleMaxLength = (title: LocalizedString | undefined): void => {
   });
 };
 
-// Trims uk/en title values so the persisted title always matches what was validated
-// (validation checks trimmed length; without this, a title with trailing/leading
-// whitespace could be stored with a raw length different from its validated length).
 const trimLocalizedTitle = (title: LocalizedString | undefined): LocalizedString | undefined => {
   if (!title) return title;
 
