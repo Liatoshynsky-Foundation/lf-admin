@@ -81,24 +81,16 @@ describe('parserUtils', () => {
       expect(d!.toISOString()).toBe('2020-01-02T03:04:05.000Z');
     });
 
-    it('should parse dd.MM.yyyy HH:mm', () => {
+    it('should parse dd.MM.yyyy HH:mm as UTC', () => {
       const d = parseDateFlexible('15.01.2020 05:06');
       expect(d).toBeInstanceOf(Date);
-      expect(d!.getDate()).toBe(15);
-      expect(d!.getMonth()).toBe(0);
-      expect(d!.getFullYear()).toBe(2020);
-      expect(d!.getHours()).toBe(5);
-      expect(d!.getMinutes()).toBe(6);
+      expect(d!.toISOString()).toBe('2020-01-15T05:06:00.000Z');
     });
 
-    it('should parse dd.MM.yyyy and fallback hours and minutes to 0', () => {
+    it('should parse dd.MM.yyyy and fallback hours and minutes to 0 as UTC', () => {
       const d = parseDateFlexible('15.01.2020');
       expect(d).toBeInstanceOf(Date);
-      expect(d!.getDate()).toBe(15);
-      expect(d!.getMonth()).toBe(0);
-      expect(d!.getFullYear()).toBe(2020);
-      expect(d!.getHours()).toBe(0);
-      expect(d!.getMinutes()).toBe(0);
+      expect(d!.toISOString()).toBe('2020-01-15T00:00:00.000Z');
     });
 
     it('should return null for invalid input', () => {

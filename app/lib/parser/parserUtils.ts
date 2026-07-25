@@ -72,7 +72,7 @@ export function parseDateFlexible(input: string | null): Date | null {
     const year = Number.parseInt(m[3], 10);
     const hour = m[4] ? Number.parseInt(m[4], 10) : 0;
     const min = m[5] ? Number.parseInt(m[5], 10) : 0;
-    const dt = new Date(year, month, day, hour, min);
+    const dt = new Date(Date.UTC(year, month, day, hour, min, 0));
     return dt;
   }
 

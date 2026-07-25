@@ -18,7 +18,10 @@ export const CollapseListNavigation: React.FC<CollapseListNavigationProps> = ({
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const prevOpenNavbarRef = useRef(openNavbar);
 
-  const handleClick = () => {
+  const handleClick = (event?: React.MouseEvent<HTMLElement>) => {
+    if (!openNavbar && !anchorEl && event?.currentTarget) {
+      setAnchorEl(event.currentTarget);
+    }
     const newState = !isSubmenuOpen;
     setIsSubmenuOpen(newState);
     if (!openNavbar) {
