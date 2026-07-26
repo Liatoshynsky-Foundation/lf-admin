@@ -134,7 +134,9 @@ export const ResearchModalView = ({
             required
             fullWidth
             multiline
-            minRows={2}
+            minRows={1}
+            maxRows={2}
+            sx={styles.multilineField}
           />
 
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
@@ -156,7 +158,9 @@ export const ResearchModalView = ({
               required
               fullWidth
               multiline
-              minRows={2}
+              minRows={1}
+              maxRows={2}
+              sx={styles.multilineField}
             />
             <Typography variant="caption" sx={styles.charCounter}>
               {keywords.length}/{KEYWORDS_MAX_LENGTH}

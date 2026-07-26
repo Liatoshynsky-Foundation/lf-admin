@@ -73,5 +73,23 @@ export const styles: Record<string, SxProps<Theme>> = {
     flex: '1 1 auto',
     minWidth: '20px',
     borderBottom: `1px solid ${mainHexPalette.blue[200]}`
+  },
+  multilineField: {
+    '& .MuiInputBase-root': {
+      '&::-webkit-scrollbar': {
+        width: '0px',
+        display: 'none'
+      },
+      scrollbarWidth: 'none',
+      msOverflowStyle: 'none'
+    },
+    '& textarea': {
+      '&::-webkit-scrollbar': {
+        width: '0px',
+        display: 'none'
+      },
+      scrollbarWidth: 'none',
+      msOverflowStyle: 'none'
+    }
   }
 };
