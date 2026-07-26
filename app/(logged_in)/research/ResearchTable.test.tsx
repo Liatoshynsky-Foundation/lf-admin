@@ -52,7 +52,7 @@ describe('ResearchTable', () => {
   });
 
   it('maps each work into an individual row with correct id and plainData', () => {
-    render(<ResearchTable works={[work]} />);
+    render(<ResearchTable works={[work]} onEditWork={jest.fn()} />);
 
     const { data } = mockTableLayout.mock.calls[0][0];
 
@@ -70,32 +70,37 @@ describe('ResearchTable', () => {
   });
 
   it('builds correct edit and menu actions for each work', () => {
-    render(<ResearchTable works={[work]} />);
+    const onEditWork = jest.fn();
+    const onDeleteWork = jest.fn();
+
+    render(<ResearchTable works={[work]} onEditWork={onEditWork} onDeleteWork={onDeleteWork} />);
 
     const { data } = mockTableLayout.mock.calls[0][0];
     const { plainData } = data[0];
 
-    expect(plainData.editAction).toEqual({
-      editHref: '/research/work-1/edit',
-      editLabel: 'Редагувати роботу Архимович Лідія'
-    });
+    expect(plainData.editAction.editLabel).toBe('Редагувати роботу Архимович Лідія');
+    expect(typeof plainData.editAction.onEditClick).toBe('function');
+
+    plainData.editAction.onEditClick();
+    expect(onEditWork).toHaveBeenCalledWith(work);
 
     expect(plainData.menuActions.menuTriggerLabel).toBe('Дії для роботи Архимович Лідія');
-    expect(plainData.menuActions.menuItems).toEqual([
-      {
-        items: [
-          { id: 'edit', text: { name: 'Редагувати' }, href: '/research/work-1/edit' },
-          { id: 'share', text: { name: 'Поширити' } }
-        ]
-      },
-      {
-        items: [{ id: 'delete', text: { name: 'Видалити' } }]
-      }
-    ]);
+
+    const [editGroup, deleteGroup] = plainData.menuActions.menuItems;
+
+    expect(editGroup.items[0]).toMatchObject({ id: 'edit', text: { name: 'Редагувати' } });
+    expect(editGroup.items[1]).toMatchObject({ id: 'share', text: { name: 'Поширити' } });
+    expect(deleteGroup.items[0]).toMatchObject({ id: 'delete', text: { name: 'Видалити' } });
+
+    editGroup.items[0].onClick();
+    expect(onEditWork).toHaveBeenCalledWith(work);
+
+    deleteGroup.items[0].onClick();
+    expect(onDeleteWork).toHaveBeenCalledWith(work);
   });
 
   it('renders one row per work, preserving order', () => {
-    render(<ResearchTable works={[work, secondWork]} />);
+    render(<ResearchTable works={[work, secondWork]} onEditWork={jest.fn()} />);
 
     const { data } = mockTableLayout.mock.calls[0][0];
 
@@ -104,7 +109,7 @@ describe('ResearchTable', () => {
   });
 
   it('renders an empty table when no works are provided', () => {
-    render(<ResearchTable works={[]} />);
+    render(<ResearchTable works={[]} onEditWork={jest.fn()} />);
 
     const { data } = mockTableLayout.mock.calls[0][0];
 
@@ -112,7 +117,7 @@ describe('ResearchTable', () => {
   });
 
   it('passes the correct columns to TableLayout', () => {
-    render(<ResearchTable works={[]} />);
+    render(<ResearchTable works={[]} onEditWork={jest.fn()} />);
 
     expect(mockTableLayout).toHaveBeenCalledTimes(1);
 
@@ -132,7 +137,7 @@ describe('ResearchTable', () => {
   });
 
   it('renders status column with left and right dividers', () => {
-    render(<ResearchTable works={[]} />);
+    render(<ResearchTable works={[]} onEditWork={jest.fn()} />);
 
     const { columns } = mockTableLayout.mock.calls[0][0];
     const statusColumn = columns.find((col: { id: string }) => col.id === 'status');

@@ -20,6 +20,7 @@ export const styles = {
     alignItems: 'center',
     gap: '8px',
     textDecoration: 'none',
+    cursor: 'pointer',
     '&:hover': {
       bgcolor: 'rgb(52, 42, 33)',
       boxShadow: 'none'

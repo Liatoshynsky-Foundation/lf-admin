@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent,render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { RESEARCH_WORKS_MOCK_DATA, type ResearchWork } from './research.mock';
@@ -31,15 +31,26 @@ jest.mock('~/shared/components/page-header/PageHeader', () => ({
 jest.mock('./ResearchContent', () => ({
   ResearchContent: ({
     visibleWorks,
-    hasActiveCriteria
+    hasActiveCriteria,
+    onEditWork
   }: {
-    visibleWorks: readonly { id: string }[];
+    visibleWorks: readonly { id: string; author: string }[];
     hasActiveCriteria: boolean;
+    onEditWork: (work: unknown) => void;
   }) => (
     <div data-testid="mock-research-content" data-has-active-criteria={String(hasActiveCriteria)}>
       {visibleWorks.length}
+      <button type="button" onClick={() => onEditWork(visibleWorks[0])}>
+        edit-first
+      </button>
     </div>
   )
+}));
+
+jest.mock('~/shared/components/research-modal/ResearchModal', () => ({
+  __esModule: true,
+  default: ({ isOpen, mode }: { isOpen: boolean; mode: string }) =>
+    isOpen ? <div data-testid="mock-research-modal">{mode}</div> : null
 }));
 
 const mockedUseResearchWorksFiltering = jest.mocked(useResearchWorksFiltering);
@@ -94,7 +105,7 @@ describe('ResearchPageContent', () => {
     render(<ResearchPageContent />);
 
     expect(screen.getByText('Дослідження та наукові праці')).toBeInTheDocument();
-    expect(screen.getByText('Додати роботу').closest('a')).toHaveAttribute('href', '/research/create');
+    expect(screen.getByText('Додати роботу')).toBeInTheDocument();
   });
 
   it('passes filtered works to ResearchContent when mock data matches filters', () => {
@@ -199,5 +210,28 @@ describe('ResearchPageContent', () => {
     render(<ResearchPageContent />);
 
     expect(screen.getByTestId('mock-research-content')).toHaveAttribute('data-has-active-criteria', 'true');
+  });
+  it('opens the modal in create mode when the create action is triggered', () => {
+    mockedUseResearchWorksFiltering.mockReturnValue(
+      defaultFilteringMock as unknown as ReturnType<typeof useResearchWorksFiltering>
+    );
+
+    render(<ResearchPageContent />);
+
+    fireEvent.click(screen.getByText('Додати роботу'));
+
+    expect(screen.getByTestId('mock-research-modal')).toHaveTextContent('create');
+  });
+
+  it('opens the modal in edit mode with selected work data', () => {
+    mockedUseResearchWorksFiltering.mockReturnValue(
+      defaultFilteringMock as unknown as ReturnType<typeof useResearchWorksFiltering>
+    );
+
+    render(<ResearchPageContent />);
+
+    fireEvent.click(screen.getByText('edit-first'));
+
+    expect(screen.getByTestId('mock-research-modal')).toHaveTextContent('edit');
   });
 });

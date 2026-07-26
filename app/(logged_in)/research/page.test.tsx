@@ -77,6 +77,16 @@ jest.mock('./useResearchWorksFiltering', () => ({
   })
 }));
 
+jest.mock('~/shared/components/research-modal/ResearchModal', () => ({
+  __esModule: true,
+  default: ({ isOpen, mode, initialData }: { isOpen: boolean; mode: string; initialData?: { author?: string } }) =>
+    isOpen ? (
+      <div data-testid="mock-research-modal" data-mode={mode}>
+        {initialData?.author}
+      </div>
+    ) : null
+}));
+
 describe('Research page', () => {
   it('renders the page title and the create action', () => {
     render(<ResearchPage />);
@@ -112,11 +122,14 @@ describe('Research page', () => {
     expect(within(dropdownMenu).getByText('Видалити')).toBeInTheDocument();
   });
 
-  it('links the edit action to the correct research work edit page', () => {
+  it('opens the edit modal pre-filled with row data when clicking the edit icon', () => {
     render(<ResearchPage />);
 
-    const editLinks = screen.getAllByRole('link', { name: /редагувати роботу/i });
+    const editButtons = screen.getAllByRole('button', { name: /редагувати роботу/i });
+    fireEvent.click(editButtons[0]);
 
-    expect(editLinks[0]).toHaveAttribute('href', expect.stringContaining('/research/'));
+    const modal = screen.getByTestId('mock-research-modal');
+    expect(modal).toHaveAttribute('data-mode', 'edit');
+    expect(modal).toHaveTextContent(MOCK_AUTHOR);
   });
 });
