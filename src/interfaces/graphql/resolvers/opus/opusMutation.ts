@@ -53,6 +53,7 @@ export type CreateOpusGQLInput = {
   coverImage?: LocalizedImage;
   status?: OpusStatus;
   publishedAt?: string;
+  blocksOrder?: string[] | null;
 };
 
 export type UpdateOpusGQLInput = Omit<CreateOpusGQLInput, 'title' | 'description'> & {
@@ -314,7 +315,8 @@ const buildOpusUpdateData = (input: UpdateOpusGQLInput, compositionIds: string[]
     gallery: input.gallery,
     performancesTitle: input.performancesTitle,
     performances: input.performances,
-    compositions: compositionIds
+    compositions: compositionIds,
+    blocksOrder: input.blocksOrder
   };
   return Object.fromEntries(Object.entries(candidate).filter(([, value]) => value !== undefined)) as UpdateOpusInput;
 };
@@ -371,7 +373,8 @@ export const OpusMutation = {
       compositions: compositionIds,
       gallery: input.gallery,
       performancesTitle: input.performancesTitle,
-      performances: input.performances
+      performances: input.performances,
+      blocksOrder: input.blocksOrder ?? null
     };
 
     const opus = await repo.create(opusData);

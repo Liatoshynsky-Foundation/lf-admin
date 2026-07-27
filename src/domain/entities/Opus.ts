@@ -63,6 +63,8 @@ export type Opus = {
 
   createdAt: string;
   updatedAt: string;
+
+  blocksOrder?: string[] | null;
 };
 
 export type OpusFull = Omit<Opus, 'compositions'> & { compositions: Composition[]}

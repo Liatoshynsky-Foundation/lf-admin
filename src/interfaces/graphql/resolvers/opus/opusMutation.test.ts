@@ -247,7 +247,8 @@ describe('OpusMutation Resolvers', () => {
         status: OpusStatus.Draft,
         publishedAt: null,
         meta: { views: 0 },
-        compositions: [COMPOSITION_ID_1]
+        compositions: [COMPOSITION_ID_1],
+        blocksOrder: null
       });
       expect(mockOpusRepo.removeCompositionsFromCompositionsOpus).toHaveBeenCalledWith([COMPOSITION_ID_1]);
       expect(mockedSyncImagesCrops).toHaveBeenCalledWith(OPUS_ID, coverImage, {

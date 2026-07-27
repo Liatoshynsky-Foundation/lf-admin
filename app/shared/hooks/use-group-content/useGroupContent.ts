@@ -215,6 +215,9 @@ export const useGroupContent = (id: string) => {
           uk: parseDescription(fetchedOpus.introDescription?.uk),
           en: parseDescription(fetchedOpus.introDescription?.en)
         },
+        blocksOrder: fetchedOpus.blocksOrder?.length
+          ? fetchedOpus.blocksOrder
+          : ['details', 'intro', 'photos', 'works', 'performances'],
         photos: (fetchedOpus.gallery || []).map((photo) => {
           const mappedCrop = photo.crop
             ? ({
@@ -302,6 +305,7 @@ export const useGroupContent = (id: string) => {
           uk: groupData.description?.uk ? JSON.stringify(groupData.description.uk) : '""',
           en: groupData.description?.en ? JSON.stringify(groupData.description.en) : '""'
         },
+        blocksOrder: groupData.blocksOrder || ['details', 'intro', 'photos', 'works', 'performances'],
         compositions: (groupData.compositions || []).map((work, index) => ({
           id: work.id,
           name: work.name.trim(),
@@ -434,7 +438,7 @@ export const useGroupContent = (id: string) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleFieldChange = (field: GroupDataField, value: unknown, isMultilingual = false) => {
+  const handleFieldChange = (field: GroupDataField | 'blocksOrder', value: unknown, isMultilingual = false) => {
     if (shouldExitAfterSave) return;
     if (errors[field as string]) {
       setErrors((prev) => {

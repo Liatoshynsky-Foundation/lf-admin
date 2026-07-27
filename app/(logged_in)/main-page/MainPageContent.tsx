@@ -22,7 +22,7 @@ const MAIN_PAGE_TABS: readonly PageHeaderTab[] = [
   { value: PageCategory.Other, label: 'Інші', href: '/main-page/other' },
 ];
 
-const ALLOWED_SLUGS = new Set(['about-us', 'privacy-policy']);
+const ALLOWED_SLUGS = new Set(['about-us', 'privacy-policy', 'artistry']);
 
 export function MainPagesContent({ activeTab }: MainPagesContentProps) {
   const { data, loading } = useGetPagesQuery({

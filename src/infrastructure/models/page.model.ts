@@ -53,4 +53,10 @@ const aboutUsDetailsSchema = new Schema({
 export const AboutUsPageModel =
   mongoose.models.AboutUsPage || PageModel.discriminator('AboutUsPage', aboutUsDetailsSchema);
 
+const artistryDetailsSchema = new Schema({
+  blocks: { type: Schema.Types.Mixed, required: true }
+});
+
+export const ArtistryPageModel =
+  mongoose.models.ArtistryPage || PageModel.discriminator('ArtistryPage', artistryDetailsSchema);
 export default PageModel;
