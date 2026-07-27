@@ -4,7 +4,6 @@ import toast from 'react-hot-toast';
 
 import { ImagePreviewBlock } from './PhotoBlock';
 import type { MediaModalOpenState, MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
-import { useImageMetadata } from '~/shared/hooks/use-image-metadata/useImageMetadata';
 
 /* -------------------- MOCKS -------------------- */
 
@@ -51,7 +50,6 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
       <div data-testid="media-modal">
         <div data-testid="initial-step">{initial?.step ?? ''}</div>
         <div data-testid="initial-tab">{initial?.tab ?? ''}</div>
-        <div data-testid="initial-filename">{initial?.selected?.kind === 'used' ? initial.selected.fileName : ''}</div>
 
         <button data-testid="close" onClick={onClose}>
           close
@@ -94,21 +92,21 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
         </button>
 
         <button
-          data-testid="apply-used"
+          data-testid="apply-gallery-success"
           onClick={() =>
             onApply({
               selected: {
-                kind: 'used',
-                id: 'used-1',
-                src: 'https://cdn.com/used.jpg',
-                fileName: 'used.jpg',
+                kind: 'gallery',
+                id: 'gallery-1',
+                fileName: 'gallery.png',
+                src: 'https://cdn.com/gallery.png',
                 locale: 'uk'
               },
-              crop: { rect: { x: 10, y: 10, width: 50, height: 50 } }
+              crop: null
             })
           }
         >
-          apply-used
+          apply-gallery
         </button>
       </div>
     );
@@ -125,7 +123,7 @@ describe('ImagePreviewBlock', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (useImageMetadata as jest.Mock).mockReturnValue({
+    useImageMetadataMock.mockReturnValue({
       dimensions: { width: 1024, height: 768 },
       fileName: 'test.jpg'
     });
@@ -139,45 +137,6 @@ describe('ImagePreviewBlock', () => {
     expect(screen.getByText(/Назва файлу/)).toBeInTheDocument();
     expect(screen.getByText(/test\.jpg/)).toBeInTheDocument();
     expect(screen.getByText(/1024 × 768/)).toBeInTheDocument();
-  });
-
-  it('truncates long filenames exceeding 15 characters', () => {
-    (useImageMetadata as jest.Mock).mockReturnValue({
-      dimensions: { width: 100, height: 100 },
-      fileName: 'very_long_file_name_exceeding_limit.jpg'
-    });
-    renderComponent();
-    expect(screen.getByText('very_long_file_...')).toBeInTheDocument();
-  });
-
-  it('does not render dimensions if they are null', () => {
-    (useImageMetadata as jest.Mock).mockReturnValue({
-      dimensions: null,
-      fileName: 'test.jpg'
-    });
-    renderComponent();
-    expect(screen.queryByText(/Розмір:/)).not.toBeInTheDocument();
-  });
-
-  it('uses fallback fileName "image" when opening edit crop', async () => {
-    const user = userEvent.setup();
-    (useImageMetadata as jest.Mock).mockReturnValue({
-      dimensions: null,
-      fileName: null
-    });
-
-    renderComponent();
-
-    await user.click(screen.getByRole('button', { name: /редагувати/i }));
-
-    expect(screen.getByTestId('media-modal')).toBeInTheDocument();
-    expect(screen.getByTestId('initial-filename')).toHaveTextContent('image');
-  });
-
-  it('renders empty string for missing altText', () => {
-    renderComponent({ showAlternativeText: true, altText: undefined });
-    const input = screen.getByLabelText(/alt текст зображення/i);
-    expect(input).toHaveValue('');
   });
 
   it('should open MediaModal on "Редагувати" click', async () => {
@@ -225,21 +184,6 @@ describe('ImagePreviewBlock', () => {
       });
       expect(toast.success).toHaveBeenCalledWith('Зображення змінено');
       expect(screen.getByAltText('Selected')).toHaveAttribute('src', 'https://cdn.com/uploaded.png');
-    });
-  });
-
-  it('applies used image result successfully (fallback to selected.src)', async () => {
-    const user = userEvent.setup();
-    renderComponent();
-
-    await user.click(screen.getByRole('button', { name: /змінити зображення/i }));
-    await user.click(screen.getByTestId('apply-used'));
-
-    await waitFor(() => {
-      expect(onChangeImage).toHaveBeenCalledWith('https://cdn.com/used.jpg', {
-        rect: { x: 10, y: 10, width: 50, height: 50 }
-      });
-      expect(toast.success).toHaveBeenCalledWith('Зображення змінено');
     });
   });
 

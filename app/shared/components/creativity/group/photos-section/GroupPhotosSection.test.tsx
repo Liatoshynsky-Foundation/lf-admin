@@ -382,10 +382,10 @@ describe('GroupPhotosSection UI Component', () => {
   it('should handle onChangeImage when crop parameter is omitted or undefined', () => {
     render(<GroupPhotosSection currentLanguage="UA" photos={defaultPhotos} onChange={mockOnChange} />);
 
-    fireEvent.click(screen.getByTestId('trigger-img-nocrop-img1.jpg'));
+    fireEvent.click(screen.getByTestId('trigger-img-no-crop-img1.jpg'));
 
     expect(mockHandleUpdatePhoto).toHaveBeenCalledWith('1', {
-      src: 'no-crop-url.jpg',
+      src: 'new-url-no-crop.jpg',
       crop: null
     });
   });
