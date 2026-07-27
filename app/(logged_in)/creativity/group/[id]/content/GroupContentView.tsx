@@ -72,39 +72,39 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
 
   const renderBlock = (blockId: string) => {
     switch (blockId) {
-      case 'details':
-        return (
-          <CollapsibleBlock
-            title="Деталі"
-            expanded={isDetailsExpanded}
-            onChange={(_, isExpanded) => setIsDetailsExpanded(isExpanded)}
-            grip
-          >
-            <GroupDetailsSection
-              currentLanguage={currentLanguage}
-              data={groupData}
-              errors={errors}
-              onChange={handleFieldChange}
-            />
-          </CollapsibleBlock>
-        );
-      case 'intro':
-        return (
-          <CollapsibleBlock title="Вступна секція" defaultExpanded grip>
-            <GroupIntroSection currentLanguage={currentLanguage} data={groupData} onChange={handleFieldChange} />
-          </CollapsibleBlock>
-        );
-      case 'photos':
-        return (
-          <CollapsibleBlock title="Фото" defaultExpanded grip>
-            <GroupPhotosSection
-              currentLanguage={currentLanguage}
-              photos={groupData.photos}
-              onChange={(newPhotos) => handleFieldChange('photos', newPhotos)}
-            />
-          </CollapsibleBlock>
-        );
-      case 'works':
+    case 'details':
+      return (
+        <CollapsibleBlock
+          title="Деталі"
+          expanded={isDetailsExpanded}
+          onChange={(_, isExpanded) => setIsDetailsExpanded(isExpanded)}
+          grip
+        >
+          <GroupDetailsSection
+            currentLanguage={currentLanguage}
+            data={groupData}
+            errors={errors}
+            onChange={handleFieldChange}
+          />
+        </CollapsibleBlock>
+      );
+    case 'intro':
+      return (
+        <CollapsibleBlock title="Вступна секція" defaultExpanded grip>
+          <GroupIntroSection currentLanguage={currentLanguage} data={groupData} onChange={handleFieldChange} />
+        </CollapsibleBlock>
+      );
+    case 'photos':
+      return (
+        <CollapsibleBlock title="Фото" defaultExpanded grip>
+          <GroupPhotosSection
+            currentLanguage={currentLanguage}
+            photos={groupData.photos}
+            onChange={(newPhotos) => handleFieldChange('photos', newPhotos)}
+          />
+        </CollapsibleBlock>
+      );
+    case 'works':
       return (
         <CollapsibleBlock title="Твори" defaultExpanded grip>
           <GroupWorksSection 
@@ -113,20 +113,20 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
           />
         </CollapsibleBlock>
       );
-      case 'performances':
-        return (
-          <CollapsibleBlock title="Всі версії виконання опису" defaultExpanded grip>
-            <GroupPerformancesSection
-              currentLanguage={currentLanguage}
-              sectionTitle={groupData.performancesTitle}
-              performances={groupData.performances}
-              onChangeSectionTitle={(newTitle) => handleFieldChange('performancesTitle', newTitle)}
-              onChangePerformances={(newPerformances) => handleFieldChange('performances', newPerformances)}
-            />
-          </CollapsibleBlock>
-        );
-      default:
-        return null;
+    case 'performances':
+      return (
+        <CollapsibleBlock title="Всі версії виконання опису" defaultExpanded grip>
+          <GroupPerformancesSection
+            currentLanguage={currentLanguage}
+            sectionTitle={groupData.performancesTitle}
+            performances={groupData.performances}
+            onChangeSectionTitle={(newTitle) => handleFieldChange('performancesTitle', newTitle)}
+            onChangePerformances={(newPerformances) => handleFieldChange('performances', newPerformances)}
+          />
+        </CollapsibleBlock>
+      );
+    default:
+      return null;
     }
   };
 

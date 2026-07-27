@@ -123,17 +123,17 @@ export const useGroupContent = (id: string) => {
         photos: (fetchedOpus.gallery || []).map((photo) => {
           const mappedCrop = photo.crop
             ? ({
+              x: photo.crop.x ?? 0,
+              y: photo.crop.y ?? 0,
+              width: photo.crop.width ?? 0,
+              height: photo.crop.height ?? 0,
+              rect: {
                 x: photo.crop.x ?? 0,
                 y: photo.crop.y ?? 0,
                 width: photo.crop.width ?? 0,
-                height: photo.crop.height ?? 0,
-                rect: {
-                  x: photo.crop.x ?? 0,
-                  y: photo.crop.y ?? 0,
-                  width: photo.crop.width ?? 0,
-                  height: photo.crop.height ?? 0
-                }
-              } as unknown as GroupPhoto['crop'])
+                height: photo.crop.height ?? 0
+              }
+            } as unknown as GroupPhoto['crop'])
             : null;
 
           return {
