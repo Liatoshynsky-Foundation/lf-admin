@@ -105,7 +105,7 @@ describe('ArchiveFondsTable', () => {
   });
 
   it.each([
-    { column: 'fondId', value: ARCHIVE_FONDS_TABLE_HEADERS.fond },
+    { column: 'fondNumber', value: ARCHIVE_FONDS_TABLE_HEADERS.fond },
     { column: 'name', value: ARCHIVE_FONDS_TABLE_HEADERS.name },
     { column: 'descriptionsCount', value: ARCHIVE_FONDS_TABLE_HEADERS.descr },
     { column: 'casesCount', value: ARCHIVE_FONDS_TABLE_HEADERS.cases },
@@ -116,7 +116,7 @@ describe('ArchiveFondsTable', () => {
   });
 
   it.each([
-    { cell: 'fondId', value: fond.id },
+    { cell: 'fondNumber', value: String(fond.fondNumber) },
     { cell: 'name', value: fond.name },
     { cell: 'descriptionsCount', value: String(fond.descriptions) },
     { cell: 'casesCount', value: String(fond.cases) },

@@ -26,8 +26,6 @@ export interface FondsTableProps {
   hasActiveCriteria: boolean;
 }
 
-
-
 export const FondsTable = ({ fonds, hasActiveCriteria }: FondsTableProps) => {
   const rows = fonds.map((fond) => ({
     type: 'individual' as const,
@@ -57,12 +55,12 @@ export const FondsTable = ({ fonds, hasActiveCriteria }: FondsTableProps) => {
 
   const columns: readonly ColumnDef<never, never, FondRow>[] = [
     {
-      id: 'fondId',
+      id: 'fondNumber',
       headerLabel: ARCHIVE_FONDS_TABLE_HEADERS.fond,
       align: 'center',
       width: '46px',
       hasRightDivider: true,
-      renderPlain: (fond) => fond.id,
+      renderPlain: (fond) => fond.fondNumber,
     },
     {
       id: 'name',
