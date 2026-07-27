@@ -44,7 +44,6 @@ type BlockImplementation = {
   parse: (el: HTMLElement) => Partial<MockBlockProps> | undefined;
 };
 
-
 jest.mock('@blocknote/react', () => ({
   createReactBlockSpec: jest.fn(() => jest.fn())
 }));
@@ -136,6 +135,14 @@ describe('CroppedImageBlock', () => {
       const captionInput = screen.getByPlaceholderText('Додати підпис...');
       expect(captionInput).toBeInTheDocument();
       expect(captionInput).toHaveValue('Initial Caption');
+    });
+
+    it('should align caption input text to the left when textAlignment is left', () => {
+      defaultProps.block.props.textAlignment = 'left';
+      renderBlock(defaultProps);
+
+      const captionInput = screen.getByPlaceholderText('Додати підпис...');
+      expect(captionInput).toBeInTheDocument();
     });
   });
 
@@ -264,6 +271,34 @@ describe('CroppedImageBlock', () => {
       const parsedProps = blockImplementation.parse(element);
 
       expect(parsedProps).toBeUndefined();
+    });
+
+    it('should correctly reconstruct default fallback values in parse when dataset properties are missing', () => {
+      const element = document.createElement('img');
+      element.dataset.customCropped = 'true';
+
+      const parsedProps = blockImplementation.parse(element);
+
+      expect(parsedProps).toEqual({
+        url: '',
+        fileName: 'image',
+        cropData: '{}',
+        width: 512,
+        showPreview: false,
+        caption: ''
+      });
+    });
+
+    it('should find and parse the img child if the parsed element is not an img tag itself', () => {
+      const wrapper = document.createElement('div');
+      const img = document.createElement('img');
+      img.dataset.src = 'http://test.com/parsed.jpg';
+      img.dataset.customCropped = 'true';
+      img.dataset.width = '400';
+      wrapper.appendChild(img);
+
+      const parsedProps = blockImplementation.parse(wrapper);
+      expect(parsedProps?.url).toBe('http://test.com/parsed.jpg');
     });
   });
 });

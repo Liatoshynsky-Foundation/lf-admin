@@ -23,8 +23,10 @@ jest.mock('~/public/icons/pencil.svg', () => ({
   default: () => <span data-testid="pencil-icon" />
 }));
 
+const useImageMetadataMock = jest.fn();
+
 jest.mock('~/shared/hooks/use-image-metadata/useImageMetadata', () => ({
-  useImageMetadata: jest.fn()
+  useImageMetadata: (...args: unknown[]) => useImageMetadataMock(...args)
 }));
 
 jest.mock('~/hooks/use-cropped-image/use-cropped-image', () => ({
@@ -304,5 +306,77 @@ describe('ImagePreviewBlock', () => {
     renderComponent({ oval: true });
     const img = screen.getByAltText('Selected');
     expect(img).toBeInTheDocument();
+  });
+
+  it('applies gallery selection using selected.src when uploadResult is undefined', async () => {
+    const user = userEvent.setup();
+    renderComponent();
+
+    await user.click(screen.getByRole('button', { name: /змінити зображення/i }));
+    await user.click(screen.getByTestId('apply-gallery-success'));
+
+    await waitFor(() => {
+      expect(onChangeImage).toHaveBeenCalledWith('https://cdn.com/gallery.png', null);
+      expect(screen.getByAltText('Selected')).toHaveAttribute('src', 'https://cdn.com/gallery.png');
+    });
+  });
+
+  it('truncates long filename when filename exceeds 15 characters', () => {
+    useImageMetadataMock.mockReturnValueOnce({
+      dimensions: { width: 1024, height: 768 },
+      fileName: 'very_long_image_filename.png'
+    });
+
+    renderComponent();
+    expect(screen.getByText('very_long_image...')).toBeInTheDocument();
+  });
+
+  it('uses prop fileName or default image string in openEditCrop when metadata fileName is undefined', async () => {
+    const user = userEvent.setup();
+
+    useImageMetadataMock.mockReturnValue({
+      dimensions: null,
+      fileName: undefined
+    });
+
+    renderComponent({ fileName: 'prop_file.jpg' });
+    await user.click(screen.getByRole('button', { name: /редагувати/i }));
+    expect(screen.getByTestId('media-modal')).toBeInTheDocument();
+
+    const { unmount } = renderComponent({ fileName: undefined });
+    await user.click(screen.getAllByRole('button', { name: /редагувати/i })[1]);
+    unmount();
+  });
+
+  it('disables alt text input when there is no previewImage', () => {
+    renderComponent({ imageUrl: '', showAlternativeText: true });
+    const input = screen.getByLabelText(/alt текст зображення/i);
+    expect(input).toBeDisabled();
+  });
+
+  it('renders alt text field with empty default when altText and onChangeAltText are omitted', async () => {
+    const user = userEvent.setup();
+    renderComponent({ showAlternativeText: true });
+    const input = screen.getByLabelText(/alt текст зображення/i);
+    expect(input).toHaveValue('');
+    await user.type(input, 'a');
+  });
+
+  it('updates savedCrop when initialCrop prop changes dynamically', async () => {
+    const user = userEvent.setup();
+    const { rerender } = renderComponent({
+      initialCrop: { rect: { x: 0, y: 0, width: 10, height: 10 } }
+    });
+
+    rerender(
+      <ImagePreviewBlock
+        imageUrl="test.jpg"
+        onChangeImage={onChangeImage}
+        initialCrop={{ rect: { x: 5, y: 5, width: 20, height: 20 } }}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: /редагувати/i }));
+    expect(screen.getByTestId('media-modal')).toBeInTheDocument();
   });
 });

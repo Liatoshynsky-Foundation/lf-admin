@@ -1,15 +1,30 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import React, { ReactNode } from 'react';
 
 import TitleWithTooltip from './TitleWithTooltip';
 
-globalThis.ResizeObserver = jest.fn().mockImplementation((callback) => ({
-  observe: jest.fn(() => callback()),
-  unobserve: jest.fn(),
-  disconnect: jest.fn()
-}));
+let triggerResize: () => void = () => {};
+
+globalThis.ResizeObserver = jest.fn().mockImplementation((callback) => {
+  triggerResize = callback;
+  return {
+    observe: jest.fn((element) => {
+      if (element) {
+        callback();
+      }
+    }),
+    unobserve: jest.fn(),
+    disconnect: jest.fn()
+  };
+});
+
+interface MockTooltipProps {
+  title: string;
+  children: ReactNode;
+}
 
 jest.mock('~/ds-components/tooltip/Tooltip', () => {
-  return function MockTooltip({ title, children }: any) {
+  return function MockTooltip({ title, children }: MockTooltipProps) {
     return (
       <div data-testid="tooltip" data-title={title}>
         {children}
@@ -66,5 +81,34 @@ describe('TitleWithTooltip', () => {
       const tooltip = screen.getByTestId('tooltip');
       expect(tooltip).toHaveAttribute('data-title', '');
     });
+  });
+
+  it('covers state optimization path when prev state equals hasOverflow', async () => {
+    mockOffset(100, 50);
+    render(<TitleWithTooltip text={longText} />);
+
+    await act(async () => {
+      triggerResize();
+    });
+
+    await waitFor(() => {
+      const tooltip = screen.getByTestId('tooltip');
+      expect(tooltip).toHaveAttribute('data-title', longText);
+    });
+  });
+
+  it('handles early return in useEffect when element reference is missing', async () => {
+    const refObject = { current: document.createElement('h3') };
+    jest.spyOn(React, 'useRef').mockReturnValue(refObject);
+
+    const { rerender } = render(<TitleWithTooltip text={shortText} />);
+
+    refObject.current = null as unknown as HTMLHeadingElement;
+
+    await act(async () => {
+      rerender(<TitleWithTooltip text="Trigger Effect Reset" />);
+    });
+
+    expect(screen.getByTestId('tooltip')).toBeInTheDocument();
   });
 });

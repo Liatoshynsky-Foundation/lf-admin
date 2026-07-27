@@ -49,4 +49,12 @@ describe('MediaCard', () => {
 
     expect(screen.getByTestId('custom-card')).toBeInTheDocument();
   });
+
+  it('should render icon instead of standard image when iconSrc is provided', () => {
+    render(<MediaCard src="/test.jpg" alt="Icon alt text" iconSrc="/icon.svg" />);
+
+    const img = screen.getByRole('img');
+    expect(img).toHaveAttribute('src', '/icon.svg');
+    expect(img).toHaveAttribute('alt', 'Icon alt text');
+  });
 });

@@ -80,4 +80,22 @@ describe('ColoredSvg component', () => {
     const wrapper = screen.getByTestId('img');
     expect(wrapper).toHaveStyle('background-color: yellow');
   });
+
+  it('should validate and accept correct rgb and rgba colors', () => {
+    render(<Svg Component={MockSvg} alt={testAlt} color="rgb(255, 99, 71)" />);
+    render(<Svg Component={MockSvg} alt={testAlt} fill="rgba(0, 0, 0, 0.5)" />);
+
+    expect(screen.getAllByTestId('img')).toHaveLength(2);
+  });
+
+  it('should validate and accept none as a color', () => {
+    render(<Svg Component={MockSvg} alt={testAlt} color="none" />);
+    expect(screen.getByTestId('img')).toBeInTheDocument();
+  });
+
+  it('should throw error if rgb values are out of 0-255 range', () => {
+    expect(() => render(<Svg Component={MockSvg} alt={testAlt} color="rgb(300, 0, 0)" />)).toThrow(
+      'Invalid color value for color: rgb(300, 0, 0)'
+    );
+  });
 });

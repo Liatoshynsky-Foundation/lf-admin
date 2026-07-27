@@ -54,6 +54,7 @@ import { useAllAssets } from '~/shared/hooks/use-assets/useAssets';
 import { useFilesFiltering } from '~/shared/hooks/use-files';
 import { toCreateAssetInput, useHybridFiles, useR2Files } from '~/shared/hooks/use-files/useHybridFiles';
 import {
+  type AllAssetsQuery,
   AssetType,
   useCreateAssetMutation,
   useDeleteAssetMutation,
@@ -79,13 +80,22 @@ const isFilesSupportedFile = (file: File): boolean => {
   return Boolean(extension && supportedUploadExtensions.has(extension));
 };
 
-const getR2DeleteEndpoint = (fileUrl: string): string => {
+const isR2Url = (url: URL): boolean => {
+  return url.hostname.endsWith('.r2.dev') || url.hostname.startsWith('r2.');
+};
+
+const getR2FileEndpoint = (fileUrl: string): string => {
   const parsedUrl = new URL(fileUrl, 'http://localhost');
+
+  if (!isR2Url(parsedUrl)) {
+    return fileUrl;
+  }
+
   const pathParts = parsedUrl.pathname.split('/').filter(Boolean).map(decodeURIComponent);
   const filename = pathParts.pop();
 
   if (!filename) {
-    throw new Error('Не вдалося визначити файл для видалення.');
+    throw new Error('Не вдалося визначити файл.');
   }
 
   const folder = pathParts.join('/');
@@ -96,6 +106,23 @@ const getR2DeleteEndpoint = (fileUrl: string): string => {
   }
 
   return `/api/uploads/${encodedFilename}?folder=${encodeURIComponent(folder)}`;
+};
+
+const getR2DeleteEndpoint = (fileUrl: string): string => {
+  const endpoint = getR2FileEndpoint(fileUrl);
+
+  if (endpoint === fileUrl) {
+    const parsedUrl = new URL(fileUrl, 'http://localhost');
+    const filename = parsedUrl.pathname.split('/').findLast(Boolean);
+
+    if (!filename) {
+      throw new Error('Не вдалося визначити файл для видалення.');
+    }
+
+    return `/api/uploads/${encodeURIComponent(decodeURIComponent(filename))}`;
+  }
+
+  return endpoint;
 };
 
 const deleteR2FileByUrl = async (fileUrl: string): Promise<void> => {
@@ -127,6 +154,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
     open: false,
     fileId: null
   });
+  const [latestAssetsForDelete, setLatestAssetsForDelete] = useState<AllAssetsQuery['allAssets'] | null>(null);
   const [uploadModalInitial, setUploadModalInitial] = useState<MediaModalOpenState | undefined>(undefined);
   const [renameModalState, setRenameModalState] = useState<{ open: boolean; fileId: string; currentFilename: string }>({
     open: false,
@@ -267,13 +295,31 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
   };
 
   const handleDownload = async (fileUrl: string, filename: string) => {
-    await downloadFile(fileUrl, filename);
+    await downloadFile(getR2FileEndpoint(fileUrl), filename);
   };
 
-  const handleItemAction = (action: 'rename' | 'delete' | 'download', item: FilesCardsLayoutItem) => {
+  const handleCloseDeleteModal = () => {
+    setDeleteModalState({ open: false, fileId: null });
+    setLatestAssetsForDelete(null);
+  };
+
+  const handleItemAction = async (action: 'rename' | 'delete' | 'download', item: FilesCardsLayoutItem) => {
     if (action === 'rename') {
       setRenameModalState({ open: true, fileId: item.id, currentFilename: item.name });
     } else if (action === 'delete') {
+      const file = allFiles.find((f) => f.id === item.id);
+
+      if (file && !file.isOrphan) {
+        try {
+          const latestAssets = await refetch();
+          setLatestAssetsForDelete(latestAssets?.data?.allAssets ?? data?.allAssets ?? null);
+        } catch {
+          setLatestAssetsForDelete(data?.allAssets ?? null);
+        }
+      } else {
+        setLatestAssetsForDelete(null);
+      }
+
       setDeleteModalState({ open: true, fileId: item.id });
     } else if (action === 'download') {
       const file = allFiles.find((f) => f.id === item.id);
@@ -298,7 +344,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
       if (fileToDelete.isOrphan) {
         await deleteR2FileByUrl(fileUrlToDelete);
         toast.success('Файл успішно видалено');
-        setDeleteModalState({ open: false, fileId: null });
+        handleCloseDeleteModal();
         if (selectedFileId === id) setSelectedFileId(null);
         removeR2FileByUrl(fileUrlToDelete);
         return;
@@ -314,7 +360,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
         }
       });
       toast.success('Файл успішно видалено');
-      setDeleteModalState({ open: false, fileId: null });
+      handleCloseDeleteModal();
       if (selectedFileId === id || selectedFileId === persistedId) setSelectedFileId(null);
       removeR2FileByUrl(fileUrlToDelete);
       await refetch();
@@ -328,12 +374,20 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
     if (!deleteModalState.fileId) return null;
     const file = allFiles.find((f) => f.id === deleteModalState.fileId);
     if (!file) return null;
+    const latestAsset =
+      latestAssetsForDelete?.find((asset) => asset.id === file.id) ?? data?.allAssets?.find((asset) => asset.id === file.id);
+    const usageRefs =
+      latestAsset?.usageRefs.map((usageRef) => ({
+        pageId: usageRef.pageId ?? undefined,
+        blockId: usageRef.blockId ?? undefined
+      })) ?? file.usage.map((u) => ({ pageId: u.label, blockId: '' }));
+
     return {
       id: file.id,
       filename: file.name,
-      usageRefs: file.usage.map((u) => ({ pageId: u.label, blockId: '' }))
+      usageRefs
     };
-  }, [deleteModalState.fileId, allFiles]);
+  }, [deleteModalState.fileId, allFiles, latestAssetsForDelete, data?.allAssets]);
 
   const { filteredFiles, toolbarProps, sortProps } = useFilesFiltering(allFiles, activeTab);
 
@@ -509,7 +563,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
       <DeleteFileModal
         disableScrollLock
         open={deleteModalState.open}
-        onClose={() => setDeleteModalState({ open: false, fileId: null })}
+        onClose={handleCloseDeleteModal}
         onConfirm={handleDeleteConfirm}
         file={fileForDeleteModal}
         isDeleting={isDeleting}

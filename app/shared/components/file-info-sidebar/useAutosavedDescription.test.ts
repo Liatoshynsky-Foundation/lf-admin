@@ -12,7 +12,7 @@ describe('useAutosavedDescription', () => {
     jest.useFakeTimers();
   });
   afterEach(() => {
-    jest.runOnlyPendingTimers();
+    jest.clearAllTimers();
     jest.useRealTimers();
   });
 
@@ -93,6 +93,7 @@ describe('useAutosavedDescription', () => {
     await act(async () => {
       jest.advanceTimersByTime(2);
       await Promise.resolve();
+      await Promise.resolve();
     });
 
     expect(onSave).toHaveBeenCalledWith('f1', 'new');
@@ -172,6 +173,126 @@ describe('useAutosavedDescription', () => {
     });
 
     expect(onSave).toHaveBeenCalledWith('f1', 'b');
+    expect(result.current.lastCommitted).toBe('a');
+  });
+
+  it('calls onError callback when provided and onSave throws an error', async () => {
+    const onSave = jest.fn().mockRejectedValue(new Error('fail'));
+    const onError = jest.fn();
+
+    const { result } = renderHook(() =>
+      useAutosavedDescription({
+        fileId: 'f1',
+        initialValue: 'a',
+        debounceMs: 1800,
+        onSave,
+        onError
+      })
+    );
+
+    await act(async () => {
+      await result.current.commit('b');
+    });
+
+    expect(onError).toHaveBeenCalledWith(expect.any(Error));
+    expect(result.current.lastCommitted).toBe('a');
+  });
+
+  it('uses default empty string when initialValue is undefined', () => {
+    const { result } = renderHook(() =>
+      useAutosavedDescription({
+        fileId: 'f1',
+        debounceMs: 1800,
+        onSave: jest.fn()
+      })
+    );
+
+    expect(result.current.draft).toBe('');
+    expect(result.current.lastCommitted).toBe('');
+  });
+
+  it('clears previous debounce timer when draft changes again before it fires', async () => {
+    const onSave = jest.fn().mockResolvedValue(undefined);
+
+    const { result } = renderHook(() =>
+      useAutosavedDescription({
+        fileId: 'f1',
+        initialValue: 'old',
+        debounceMs: 1800,
+        onSave
+      })
+    );
+
+    act(() => result.current.setDraft('first'));
+    act(() => jest.advanceTimersByTime(1000));
+
+    act(() => result.current.setDraft('second'));
+    act(() => jest.advanceTimersByTime(1000));
+    expect(onSave).not.toHaveBeenCalled();
+
+    await act(async () => {
+      jest.advanceTimersByTime(800);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(onSave).toHaveBeenCalledTimes(1);
+    expect(onSave).toHaveBeenCalledWith('f1', 'second');
+  });
+
+  it('clears pending debounce timer on unmount', () => {
+    const onSave = jest.fn().mockResolvedValue(undefined);
+
+    const { result, unmount } = renderHook(() =>
+      useAutosavedDescription({
+        fileId: 'f1',
+        initialValue: 'old',
+        debounceMs: 1800,
+        onSave
+      })
+    );
+
+    act(() => result.current.setDraft('new'));
+    unmount();
+    act(() => jest.advanceTimersByTime(2000));
+
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('commit returns early when fileId is missing', async () => {
+    const onSave = jest.fn();
+
+    const { result } = renderHook(() =>
+      useAutosavedDescription({
+        fileId: undefined,
+        initialValue: 'a',
+        debounceMs: 1800,
+        onSave
+      })
+    );
+
+    await act(async () => {
+      await result.current.commit('b');
+    });
+
+    expect(onSave).not.toHaveBeenCalled();
+    expect(result.current.lastCommitted).toBe('a');
+  });
+
+  it('commit returns early when onSave is missing', async () => {
+    const { result } = renderHook(() =>
+      useAutosavedDescription({
+        fileId: 'f1',
+        initialValue: 'a',
+        debounceMs: 1800,
+        onSave: undefined
+      })
+    );
+
+    await act(async () => {
+      await result.current.commit('b');
+    });
+
     expect(result.current.lastCommitted).toBe('a');
   });
 });

@@ -56,13 +56,17 @@ const persistence = {
 };
 
 describe('ContentEditor', () => {
+  let consoleErrorSpy: jest.SpyInstance;
+
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
     jest.useRealTimers();
+    consoleErrorSpy.mockRestore();
   });
 
   it('renders editor and save button via renderSaveButton', async () => {

@@ -98,14 +98,16 @@ describe('ResearchModalView', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
 
-    expect(onSave).toHaveBeenCalledWith(
-      expect.objectContaining({
-        bibliographicDescription: 'Опис',
-        author: 'Автор',
-        caseDates: '1970',
-        keywords: 'слово'
-      })
-    );
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          bibliographicDescription: 'Опис',
+          author: 'Автор',
+          caseDates: '1970',
+          keywords: 'слово'
+        })
+      );
+    });
   });
 
   it('enforces the keywords character limit', () => {
@@ -192,6 +194,7 @@ describe('ResearchModalView', () => {
 
     await waitFor(() => expect(onSave).toHaveBeenCalled());
   });
+
   it('triggers the hidden file input when "Add file" is clicked', () => {
     render(<ResearchModalView isOpen onClose={onClose} onSave={onSave} />);
 

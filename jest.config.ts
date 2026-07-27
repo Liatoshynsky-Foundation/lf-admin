@@ -11,11 +11,18 @@ const config: Config = {
   collectCoverage: true,
   collectCoverageFrom: [
     'app/**/*.{js,jsx,ts,tsx}',
+    '!app/**/constants/**/*.{ts,tsx}',
+    '!app/**/index.{ts,tsx}',
     '!app/**/*.{test,d}.{js,jsx,ts,tsx}',
     '!app/**/*.stories.{js,jsx,ts,tsx}',
-    '!app/layout.tsx',
+    '!app/**/layout.{ts,tsx}',
     '!app/types/**',
+    '!app/shared/theme/**',
+    '!app/**/*.styles.{ts,tsx}',
+    '!app/**/*.style.{ts,tsx}',
+    '!app/**/test-utils/**',
     'src/**/*.{js,ts}',
+    '!src/**/*.styles.{ts,tsx}',
     '!src/**/*.{test,d}.{js,ts}',
     '!src/interfaces/graphql/schemas/*.{graphql}',
     '!src/interfaces/graphql/**/index.ts',
@@ -36,7 +43,7 @@ const config: Config = {
       statements: 80
     }
   },
-  coverageReporters: isCI ? ['text', 'lcov'] : ['text'],
+  coverageReporters: ['text', 'lcov', 'clover'],
   moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx'],
   preset: 'ts-jest',
   testEnvironment: 'jest-environment-jsdom',

@@ -46,4 +46,13 @@ describe('MediaGrid', () => {
     expect(screen.getByTestId('EmptyGrid')).toBeInTheDocument();
     expect(screen.queryByTestId('EmptyGrid-item-0')).not.toBeInTheDocument();
   });
+
+  it('should handle items with _id or without identifier for fallback key logic', () => {
+    const mixedItems = [{ _id: 'id-from-underscore', name: 'Item Underscore' }, { name: 'Item No ID' }];
+
+    render(<MediaGrid items={mixedItems} renderCard={(item) => <div>{item.name}</div>} testIdPrefix="FallbackGrid" />);
+
+    expect(screen.getByTestId('FallbackGrid-item-0')).toBeInTheDocument();
+    expect(screen.getByTestId('FallbackGrid-item-1')).toBeInTheDocument();
+  });
 });

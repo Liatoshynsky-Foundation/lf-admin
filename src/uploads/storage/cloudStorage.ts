@@ -1,4 +1,5 @@
 import {
+  CopyObjectCommand,
   DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
@@ -61,8 +62,13 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
 
 
   const getTargetKey = (filename: string, folder?: string, metadataDir?: unknown): string => {
-    const targetFolder = folder || (typeof metadataDir === 'string' ? metadataDir : folderPrefix);
-    return `${targetFolder}/${filename}`;
+    const targetFolder = folder ?? (typeof metadataDir === 'string' ? metadataDir : folderPrefix);
+    return targetFolder ? `${targetFolder}/${filename}` : filename;
+  };
+
+  const getCopySource = (key: string): string => {
+    const encodedKey = key.split('/').map(encodeURIComponent).join('/');
+    return `${bucket}/${encodedKey}`;
   };
 
   const store = async (
@@ -165,6 +171,60 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
     }
   };
 
+  const move = async (sourceFilename: string, targetFilename: string, folder?: string): Promise<DeleteResult> => {
+    try {
+      if (provider !== 'aws' && provider !== 'cloudflare') {
+        throw new Error(UPLOAD_ERRORS.CLOUD_STORAGE_NOT_IMPLEMENTED(provider));
+      }
+
+      const client = getS3Client();
+      const sourceKey = getTargetKey(sourceFilename, folder);
+      const targetKey = getTargetKey(targetFilename, folder);
+
+      await client.send(
+        new CopyObjectCommand({
+          Bucket: bucket,
+          CopySource: getCopySource(sourceKey),
+          Key: targetKey
+        })
+      );
+      await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: sourceKey }));
+
+      return { success: true };
+    } catch (copyError) {
+      try {
+        const sourceMetadata = await getMetadata(sourceFilename, folder);
+        const sourceBuffer = await retrieve(sourceFilename, folder);
+
+        if (!sourceBuffer) {
+          throw copyError;
+        }
+
+        const storeResult = await store(sourceBuffer, targetFilename, sourceMetadata?.mimeType ?? 'application/octet-stream', {
+          directory: folder ?? folderPrefix,
+          originalName: targetFilename
+        });
+
+        if (!storeResult.success) {
+          throw new Error(storeResult.error ?? UPLOAD_ERRORS.STORAGE_FAILED);
+        }
+
+        const deleteResult = await deleteFile(sourceFilename, folder);
+
+        if (!deleteResult.success) {
+          throw new Error(deleteResult.error ?? UPLOAD_ERRORS.FILE_NOT_FOUND_OR_DELETE_FAILED);
+        }
+
+        return { success: true };
+      } catch (fallbackError) {
+        return {
+          success: false,
+          error: fallbackError instanceof Error ? fallbackError.message : UPLOAD_ERRORS.UNKNOWN_ERROR_OCCURRED
+        };
+      }
+    }
+  };
+
   const exists = async (filename: string, folder?: string): Promise<boolean> => {
     try {
       if (provider !== 'aws' && provider !== 'cloudflare') return false;
@@ -255,5 +315,5 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
     }
   };
 
-  return { store, retrieve, delete: deleteFile, exists, getMetadata, getUrl, list };
+  return { store, retrieve, delete: deleteFile, move, exists, getMetadata, getUrl, list };
 };

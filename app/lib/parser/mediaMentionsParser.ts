@@ -42,7 +42,7 @@ export default async function parseMediaMention(
     allowIndexation: { uk: true, en: true },
     coverImage: {
       src: parsed.image.src,
-      alt: toLocalized(parsed.image.alt || parsed.title)
+      alt: toLocalized(!parsed.image.alt || parsed.image.alt === 'unknown' ? parsed.title : parsed.image.alt)
     },
     publishedAt: parsed.published_time ? new Date(parsed.published_time).toISOString() : now,
     createdAt: now,
@@ -112,9 +112,9 @@ export function Parser(html_content: string): ParsedData {
   const metaMap = new Map<string, string>();
   for (const t of metaTags) {
     const key = t.attrValue.toLowerCase().trim();
-    if (!key) continue;
-    if (!metaMap.has(key) || (metaMap.get(key) || '').trim() === '') {
-      metaMap.set(key, (t.content || '').trim());
+    const existing = metaMap.get(key);
+    if (!existing || existing.trim() === '') {
+      metaMap.set(key, t.content.trim());
     }
   }
 

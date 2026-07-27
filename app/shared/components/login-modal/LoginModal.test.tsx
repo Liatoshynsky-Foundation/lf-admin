@@ -4,8 +4,16 @@ import LoginModal from './LoginModal';
 import { loginErrors } from '~/constants/errors';
 
 jest.mock('next/link', () => {
-  const MockedLink = ({ children, href, ...props }: { children: React.ReactNode; [key: string]: any }) => (
-    <a href={href || '/'} {...props}>
+  const MockedLink = ({
+    children,
+    href,
+    ...props
+  }: {
+    children: React.ReactNode;
+    href?: string;
+    [key: string]: unknown;
+  }) => (
+    <a href={href ?? '/'} {...props}>
       {children}
     </a>
   );
@@ -50,6 +58,19 @@ describe('LoginModal', () => {
     expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 
+  it('shows validation error when email format is invalid', () => {
+    render(<LoginModal onSubmit={mockOnSubmit} submitError={null} loading={false} />);
+
+    const emailInput = screen.getByPlaceholderText('Введіть електронну пошту');
+    const submitButton = screen.getByRole('button', { name: /увійти/i });
+
+    fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
+    fireEvent.click(submitButton);
+
+    expect(screen.getByText(loginErrors.INVALID_EMAIL)).toBeInTheDocument();
+    expect(mockOnSubmit).not.toHaveBeenCalled();
+  });
+
   it('calls onSubmit with correct data when form is valid', () => {
     render(<LoginModal onSubmit={mockOnSubmit} submitError={null} loading={false} />);
 
@@ -75,8 +96,30 @@ describe('LoginModal', () => {
 
     expect(passwordInput).toHaveValue('password123');
 
-    rerender(<LoginModal onSubmit={mockOnSubmit} submitError={Date.now().toString()} />);
+    rerender(<LoginModal onSubmit={mockOnSubmit} submitError="some-error" loading={false} />);
 
     expect(passwordInput).toHaveValue('');
+  });
+
+  it('does not clear password field when submitError is "0"', () => {
+    const { rerender } = render(<LoginModal onSubmit={mockOnSubmit} submitError={null} loading={false} />);
+
+    const passwordInput = screen.getByPlaceholderText('Введіть пароль');
+    fireEvent.change(passwordInput, { target: { value: 'password123' } });
+
+    expect(passwordInput).toHaveValue('password123');
+
+    rerender(<LoginModal onSubmit={mockOnSubmit} submitError="0" loading={false} />);
+
+    expect(passwordInput).toHaveValue('password123');
+  });
+
+  it('renders loading state correctly', () => {
+    render(<LoginModal onSubmit={mockOnSubmit} submitError={null} loading={true} />);
+
+    const submitButton = screen.getByRole('button', { name: /вхід\.\.\./i });
+
+    expect(submitButton).toBeInTheDocument();
+    expect(submitButton).toBeDisabled();
   });
 });
