@@ -81,44 +81,55 @@ const renderComponent = (overrides?: Partial<FondsTableProps>) => {
   return render(<FondsTable {...defaultProps} {...overrides} />);
 };
 
+const fond = defaultProps.fonds[0];
+const rowWithActions = {
+  type: 'individual', id: fond.id, plainData: {
+    ...defaultProps.fonds[0], editAction: {
+      editHref: `/archive/fond/${fond.id}/edit`, editLabel: `Редагувати фонд Фонд ${fond.id}`
+    },
+
+    menuActions: {
+      menuItems: [{ items: [{ id: 'edit', text: { name: 'Редагувати' }, href: `/archive/fond/${fond.id}/edit` }, { id: 'share', text: { name: 'Поширити' }, href: `/archive/fond/${fond.id}/share` }] }, { items: [{ id: 'delete', text: { name: 'Видалити' } }] }], menuTriggerLabel: `Дії для фонду Фонд ${fond.id}`
+    }
+  },
+};
+
 describe('ArchiveFondsTable', () => {
   it('should render all columns and rows with fonds data', () => {
     renderComponent();
-    const fond = defaultProps.fonds[0];
-    const rowWithActions = {
-      type: 'individual', id: fond.id, plainData: {
-        ...defaultProps.fonds[0], editAction: {
-          editHref: `/archive/fond/${fond.id}/edit`, editLabel: `Редагувати фонд Фонд ${fond.id}`
-        },
-
-        menuActions: {
-          menuItems: [{ items: [{ id: 'edit', text: { name: 'Редагувати' }, href: `/archive/fond/${fond.id}/edit` }, { id: 'share', text: { name: 'Поширити' }, href: `/archive/fond/${fond.id}/share` }] }, { items: [{ id: 'delete', text: { name: 'Видалити' } }] }], menuTriggerLabel: `Дії для фонду Фонд ${fond.id}`
-        }
-      },
-    };
-
 
     expect(screen.getByTestId('mock-table-layout')).toBeInTheDocument();
-
     expect(screen.getByTestId('mock-table-layout-columns')).toBeInTheDocument();
-    expect(screen.getByTestId('mock-table-layout-column-fondId')).toHaveTextContent(ARCHIVE_FONDS_TABLE_HEADERS.fond);
-    expect(screen.getByTestId('mock-table-layout-column-name')).toHaveTextContent(ARCHIVE_FONDS_TABLE_HEADERS.name);
-    expect(screen.getByTestId('mock-table-layout-column-descriptionsCount')).toHaveTextContent(ARCHIVE_FONDS_TABLE_HEADERS.descr);
-    expect(screen.getByTestId('mock-table-layout-column-casesCount')).toHaveTextContent(ARCHIVE_FONDS_TABLE_HEADERS.cases);
-    expect(screen.getByTestId('mock-table-layout-column-dates')).toHaveTextContent(ARCHIVE_FONDS_TABLE_HEADERS.dates);
-    expect(screen.getByTestId('mock-table-layout-column-status')).toBeInTheDocument();
-    expect(screen.getByTestId('mock-table-layout-column-actions')).toBeInTheDocument();
-
     expect(screen.getByTestId('mock-table-layout-data')).toBeInTheDocument();
     expect(screen.getByTestId('mock-table-layout-row-1')).toHaveTextContent(JSON.stringify(rowWithActions));
+  });
 
-    expect(screen.getByTestId('mock-cell-fondId')).toHaveTextContent(fond.id);
-    expect(screen.getByTestId('mock-cell-name')).toHaveTextContent(fond.name);
-    expect(screen.getByTestId('mock-cell-descriptionsCount')).toHaveTextContent(String(fond.descriptions));
-    expect(screen.getByTestId('mock-cell-casesCount')).toHaveTextContent(String(fond.cases));
-    expect(screen.getByTestId('mock-cell-dates')).toHaveTextContent(fond.dates);
-    expect(screen.getByTestId('mock-cell-status')).toBeInTheDocument();
-    expect(screen.getByTestId('mock-cell-actions')).toBeInTheDocument();
+  it.each([
+    { column: 'fondId', value: ARCHIVE_FONDS_TABLE_HEADERS.fond },
+    { column: 'name', value: ARCHIVE_FONDS_TABLE_HEADERS.name },
+    { column: 'descriptionsCount', value: ARCHIVE_FONDS_TABLE_HEADERS.descr },
+    { column: 'casesCount', value: ARCHIVE_FONDS_TABLE_HEADERS.cases },
+    { column: 'dates', value: ARCHIVE_FONDS_TABLE_HEADERS.dates },
+  ])('should render the $column column with value $value', ({ column, value }) => {
+    renderComponent();
+    expect(screen.getByTestId(`mock-table-layout-column-${column}`)).toHaveTextContent(value);
+  });
+
+  it.each([
+    { cell: 'fondId', value: fond.id },
+    { cell: 'name', value: fond.name },
+    { cell: 'descriptionsCount', value: String(fond.descriptions) },
+    { cell: 'casesCount', value: String(fond.cases) },
+    { cell: 'dates', value: fond.dates },
+    { cell: 'status', value: undefined },
+    { cell: 'actions', value: undefined },
+  ])('should render the $cell cell with value $value', ({ cell, value }) => {
+    renderComponent();
+    if (value) {
+      expect(screen.getByTestId(`mock-cell-${cell}`)).toHaveTextContent(value);
+    } else {
+      expect(screen.getByTestId(`mock-cell-${cell}`)).toBeInTheDocument();
+    }
   });
   describe('should render state UIs', () => {
     it('should render the no search results fallback if rows.length is 0 and hasActiveCriteria is true', () => {
