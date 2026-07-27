@@ -3,16 +3,25 @@ import { Pencil } from 'lucide-react';
 
 import { styles } from './EditAction.styles';
 
-export function EditAction({ href, label }: Readonly<{ href: string; label: string }>) {
+type EditActionProps = Readonly<{
+  label: string;
+  href?: string;
+  onClick?: () => void;
+}>;
+
+export function EditAction({ href, label, onClick }: EditActionProps) {
+  const clickProps = onClick
+    ? {
+      onClick: (e: React.MouseEvent) => {
+        e.stopPropagation();
+        onClick();
+      }
+    }
+    : { component: Link, href, onClick: (e: React.MouseEvent) => e.stopPropagation() };
+
   return (
     <Box sx={styles.editActionWrapper}>
-      <IconButton
-        component={Link}
-        href={href}
-        onClick={(e) => e.stopPropagation()}
-        aria-label={label}
-        sx={styles.editActionButton}
-      >
+      <IconButton {...clickProps} aria-label={label} sx={styles.editActionButton}>
         <Pencil size={20} />
       </IconButton>
     </Box>

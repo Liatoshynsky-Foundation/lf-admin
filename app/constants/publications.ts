@@ -273,6 +273,8 @@ export const ADMIN_TITLE_LABELS: Record<PublicationsItemType, string> = {
   media: 'Назва публікації в адмінці'
 } as const;
 
+export const META_TITLE_MAX_LENGTH = 150;
+
 export const CROP_RATIOS = {
   HERO_BANNER: 816 / 300,
   FUNDATION_PROFILE_SMALL: 336 / 400,

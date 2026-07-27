@@ -4,6 +4,7 @@ import React from 'react';
 
 import { SeoCanonicalUrlField } from './seo-canonicalurl-field/SeoCanonicalUrlField';
 import SeoMetadataForm, { SeoMetadataFormProps } from './SeoMetadataForm';
+import { META_TITLE_MAX_LENGTH } from '~/constants/publications';
 
 jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
   ImagePreviewBlock: ({
@@ -88,6 +89,26 @@ describe('SeoMetadataForm', () => {
     await user.click(input);
     await user.tab();
     expect(await screen.findByText(/мінімум 2 символа/i)).toBeInTheDocument();
+  });
+
+  it('rejects title longer than the maximum length on blur, respects input maxLength attribute', async () => {
+    renderWithState();
+    const input = screen.getByLabelText(/meta title/i) as HTMLInputElement;
+
+    expect(input).toHaveAttribute('maxlength', String(META_TITLE_MAX_LENGTH));
+
+    fireEvent.change(input, { target: { value: 'a'.repeat(META_TITLE_MAX_LENGTH + 1) } });
+    fireEvent.blur(input);
+    expect(await screen.findByText(/максимум 150 символів/i)).toBeInTheDocument();
+  });
+
+  it('accepts title within the allowed length range', async () => {
+    renderWithState();
+    const input = screen.getByLabelText(/meta title/i);
+
+    await user.type(input, 'Валідний заголовок');
+    fireEvent.blur(input);
+    expect(screen.queryByText(/мінімум|максимум/i)).not.toBeInTheDocument();
   });
 
   it('calls onIndexingChange', async () => {

@@ -4,7 +4,6 @@ import { Box, Typography } from '@mui/material';
 
 import type { ResearchWork } from './research.mock';
 import { styles } from './ResearchTable.styles';
-import { RESEARCH_BASE_PATH } from '~/constants/research';
 import type { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import { RowActions } from '~/shared/components/table-layout/components/RowActions';
 import { StatusBadge } from '~/shared/components/table-layout/components/StatusBadge';
@@ -13,7 +12,7 @@ import { TableLayout } from '~/shared/components/table-layout/TableLayout';
 import { twoLineEllipsis } from '~/shared/components/table-layout/TableLayout.styles';
 
 type PlainWork = ResearchWork & {
-  editAction?: { editHref: string; editLabel: string };
+  editAction?: { editLabel: string; onEditClick?: () => void };
   menuActions?: {
     menuItems: ActionMenuGroups;
     menuTriggerLabel: string;
@@ -69,26 +68,34 @@ const columns: readonly ColumnDef<unknown, unknown, PlainWork>[] = [
   }
 ];
 
-export function ResearchTable({ works }: Readonly<{ works: readonly ResearchWork[] }>) {
+export function ResearchTable({
+  works,
+  onEditWork,
+  onDeleteWork
+}: Readonly<{
+  works: readonly ResearchWork[];
+  onEditWork: (work: ResearchWork) => void;
+  onDeleteWork?: (work: ResearchWork) => void;
+}>) {
   const rows: BaseRowData<unknown, unknown, PlainWork>[] = works.map((work) => ({
     type: 'individual',
     id: work.id,
     plainData: {
       ...work,
       editAction: {
-        editHref: `${RESEARCH_BASE_PATH}/${work.id}/edit`,
-        editLabel: `Редагувати роботу ${work.author}`
+        editLabel: `Редагувати роботу ${work.author}`,
+        onEditClick: () => onEditWork(work)
       },
       menuActions: {
         menuItems: [
           {
             items: [
-              { id: 'edit', text: { name: 'Редагувати' }, href: `${RESEARCH_BASE_PATH}/${work.id}/edit` },
+              { id: 'edit', text: { name: 'Редагувати' }, onClick: () => onEditWork(work) },
               { id: 'share', text: { name: 'Поширити' } }
             ]
           },
           {
-            items: [{ id: 'delete', text: { name: 'Видалити' } }]
+            items: [{ id: 'delete', text: { name: 'Видалити' }, onClick: () => onDeleteWork?.(work) }]
           }
         ],
         menuTriggerLabel: `Дії для роботи ${work.author}`
