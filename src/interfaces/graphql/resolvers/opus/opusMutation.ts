@@ -417,6 +417,8 @@ export const OpusMutation = {
     assertAuthenticated(context);
 
     validateOpusFields(input);
+    validateOpusName(input.name);
+
     if (input.gallery !== undefined) {
       validateGallery(input.gallery);
     }
