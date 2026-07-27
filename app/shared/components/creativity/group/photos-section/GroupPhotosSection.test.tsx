@@ -15,12 +15,18 @@ type MockCustomTextFieldProps = {
   label: string;
   value?: string;
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: () => void;
+  error?: boolean;
+  helperText?: string;
 };
 
 type MockImagePreviewBlockProps = {
   imageUrl: string;
   onChangeAltText: (newAlt: string) => void;
+  onBlurAltText?: () => void;
   onChangeImage: (url: string, crop?: MediaModalResult['crop']) => void;
+  altTextErrorState?: boolean;
+  altTextError?: string;
 };
 
 type MockDeleteModalProps = {
@@ -51,20 +57,42 @@ jest.mock('~/shared/components/design-system/button/Button', () => ({
 }));
 
 jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
-  ImagePreviewBlock: ({ imageUrl, onChangeAltText, onChangeImage }: MockImagePreviewBlockProps) => (
+  ImagePreviewBlock: ({
+    imageUrl,
+    onChangeAltText,
+    onBlurAltText,
+    onChangeImage,
+    altTextErrorState,
+    altTextError
+  }: MockImagePreviewBlockProps) => (
     <div data-testid={`mock-image-preview-${imageUrl}`}>
+      {altTextErrorState && <span data-testid={`alt-error-${imageUrl}`}>{altTextError}</span>}
       <button data-testid={`trigger-alt-${imageUrl}`} onClick={() => onChangeAltText('New Alt Text')} />
+      <button data-testid={`trigger-blur-alt-${imageUrl}`} onClick={() => onBlurAltText?.()} />
       <button
         data-testid={`trigger-img-${imageUrl}`}
         onClick={() => onChangeImage('new-url.jpg', { rect: { width: 50, height: 50, x: 0, y: 0 } })}
+      />
+      <button
+        data-testid={`trigger-img-no-crop-${imageUrl}`}
+        onClick={() => onChangeImage('new-url-no-crop.jpg', undefined)}
       />
     </div>
   )
 }));
 
 jest.mock('~/shared/components/design-system/text-field/TextField', () => ({
-  CustomTextField: ({ label, value, onChange }: MockCustomTextFieldProps) => (
-    <input data-testid={`mock-input-${label}`} value={value || ''} onChange={onChange} aria-label={label} />
+  CustomTextField: ({ label, value, onChange, onBlur, error, helperText }: MockCustomTextFieldProps) => (
+    <div>
+      <input
+        data-testid={`mock-input-${label}`}
+        value={value || ''}
+        onChange={onChange}
+        onBlur={onBlur}
+        aria-label={label}
+      />
+      {error && <span data-testid={`caption-error-${label}`}>{helperText}</span>}
+    </div>
   )
 }));
 
@@ -202,6 +230,7 @@ describe('GroupPhotosSection UI Component', () => {
 
     expect(mockHandleConfirmDelete).toHaveBeenCalledTimes(1);
   });
+
   it('should call setPhotoIdToDelete when delete modal is closed', () => {
     mockedUseGroupPhotos.mockReturnValue({
       photoIdToDelete: '1',
@@ -218,6 +247,7 @@ describe('GroupPhotosSection UI Component', () => {
     fireEvent.click(screen.getByTestId('modal-cancel'));
     expect(mockSetPhotoIdToDelete).toHaveBeenCalledWith(null);
   });
+
   it('should render correctly when currentLanguage is EN', () => {
     render(<GroupPhotosSection currentLanguage="EN" photos={defaultPhotos} onChange={mockOnChange} />);
 
@@ -228,7 +258,7 @@ describe('GroupPhotosSection UI Component', () => {
   it('should handle fallbacks correctly for missing optional fields', () => {
     const photosWithMissingData: GroupPhoto[] = [
       {
-        id: undefined as unknown as string, 
+        id: undefined as unknown as string,
         src: undefined as unknown as string,
         fileName: 'empty.jpg',
         caption: undefined as unknown as { uk: string; en: string },
@@ -251,5 +281,79 @@ describe('GroupPhotosSection UI Component', () => {
 
     fireEvent.change(captionInput, { target: { value: 'Новий текст' } });
     expect(mockHandleUpdatePhoto).toHaveBeenCalledWith('', expect.anything());
+
+    fireEvent.blur(captionInput);
+    expect(mockHandleUpdatePhoto).toHaveBeenCalledWith('', { caption: { uk: '', en: '' } });
+
+    fireEvent.click(screen.getByTestId('trigger-blur-alt-'));
+    expect(mockHandleUpdatePhoto).toHaveBeenCalledWith('', { altText: { uk: '', en: '' } });
+
+    fireEvent.click(screen.getByTestId('trigger-img-no-crop-'));
+    expect(mockHandleUpdatePhoto).toHaveBeenCalledWith('', { src: 'new-url-no-crop.jpg', crop: null });
+  });
+
+  it('should call handleUpdatePhoto and trim spaces on blur of caption input', () => {
+    render(<GroupPhotosSection currentLanguage="UA" photos={defaultPhotos} onChange={mockOnChange} />);
+    const captionInputs = screen.getAllByTestId(/mock-input-Підпис/);
+
+    fireEvent.blur(captionInputs[0]);
+
+    expect(mockHandleUpdatePhoto).toHaveBeenCalledWith('1', {
+      caption: {
+        uk: 'Caption 1',
+        en: 'Cap 1 EN'
+      }
+    });
+  });
+
+  it('should call handleUpdatePhoto and trim spaces on blur of alt text in ImagePreviewBlock', () => {
+    render(<GroupPhotosSection currentLanguage="UA" photos={defaultPhotos} onChange={mockOnChange} />);
+
+    fireEvent.click(screen.getByTestId('trigger-blur-alt-img1.jpg'));
+
+    expect(mockHandleUpdatePhoto).toHaveBeenCalledWith('1', {
+      altText: {
+        uk: 'Alt 1',
+        en: 'Alt 1 EN'
+      }
+    });
+  });
+
+  it('should show error states for altText and caption if validation conditions are met', () => {
+    const photosWithError: GroupPhoto[] = [
+      {
+        id: 'err1',
+        src: 'img.jpg',
+        fileName: 'file.jpg',
+        caption: { uk: 'A', en: '' },
+        altText: { uk: 'B', en: '' },
+        crop: null
+      },
+      {
+        id: 'err2',
+        src: 'img2.jpg',
+        fileName: 'file2.jpg',
+        caption: { uk: 'Valid Caption', en: '' },
+        altText: { uk: 'Valid Alt', en: '' },
+        crop: null
+      }
+    ];
+
+    const errors = {
+      'photos[err1].altText.uk': 'Alt text error',
+      'photos[err1].caption.uk': 'Caption error',
+      'photos[err2].altText.uk': 'Hidden alt error',
+      'photos[err2].caption.uk': 'Hidden caption error'
+    };
+
+    render(
+      <GroupPhotosSection currentLanguage="UA" photos={photosWithError} errors={errors} onChange={mockOnChange} />
+    );
+
+    expect(screen.getByTestId('alt-error-img.jpg')).toHaveTextContent('Alt text error');
+    expect(screen.getByText('Caption error')).toBeInTheDocument();
+
+    expect(screen.queryByTestId('alt-error-img2.jpg')).not.toBeInTheDocument();
+    expect(screen.queryByText('Hidden caption error')).not.toBeInTheDocument();
   });
 });
