@@ -1,6 +1,7 @@
 import * as crypto from 'node:crypto';
 import * as path from 'node:path';
 
+import { UPLOAD_ERRORS } from './errors';
 import { UploadResult } from '~/uploads/types';
 
 export const getExtensionFromFilename = (filename: string): string => {
@@ -42,6 +43,21 @@ export const sanitizeFilename = (filename: string): string => {
     .replaceAll(/[^a-zA-Z0-9._-]/g, '_')
     .replaceAll(/_{2,}/g, '_')
     .toLowerCase();
+};
+
+export const preserveOriginalFilenameSafely = (originalName: string, _mimeType?: string): string => {
+  const filename = originalName.trim();
+  const meaningfulName = filename.replaceAll(/[._-]/g, '').trim();
+
+  if (!meaningfulName) {
+    throw new Error(UPLOAD_ERRORS.FILENAME_REQUIRED);
+  }
+
+  if (/[\\/:*?"'`<>|\0\u02bc\u2018\u2019\u201c\u201d]/.test(filename)) {
+    throw new Error(UPLOAD_ERRORS.FILENAME_CONTAINS_INVALID_CHARACTERS);
+  }
+
+  return filename;
 };
 
 export const generateUniqueFilename = (originalName: string, mimeType: string): string => {

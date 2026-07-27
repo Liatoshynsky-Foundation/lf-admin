@@ -72,6 +72,32 @@ describe('UploadController', () => {
       }));
     });
 
+    it('should return service status code when upload fails with a conflict', async () => {
+      const req = {
+        file: {
+          originalname: 'test.jpg',
+          buffer: Buffer.from('abc'),
+          mimetype: 'image/jpeg',
+          size: 3
+        },
+        body: {}
+      } as unknown as Request;
+
+      mockService.uploadFile.mockResolvedValue({
+        success: false,
+        errors: [UPLOAD_ERRORS.FILE_ALREADY_EXISTS('test.jpg')],
+        statusCode: 409
+      });
+
+      await controller.uploadSingleFile(req, getMockRes(), next);
+
+      expect(mockRes.status).toHaveBeenCalledWith(409);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        success: false,
+        errors: [UPLOAD_ERRORS.FILE_ALREADY_EXISTS('test.jpg')]
+      });
+    });
+
     it('should propagate errors to next() middleware', async () => {
       const req = { file: { originalname: 'test.jpg' }, body: {} } as unknown as Request;
       const error = new Error('Database down');

@@ -1,7 +1,7 @@
 import { UPLOAD_ERRORS } from './errors';
 import { StorageAdapter } from './storage';
 import { UploadedFile, UploadOptions, UploadResult } from './types';
-import { generateUniqueFilename } from './utils';
+import { preserveOriginalFilenameSafely } from './utils';
 import { createValidator, FileValidator } from './validators';
 
 export interface UploadServiceConfig {
@@ -35,8 +35,17 @@ export const createUploadService = (config: UploadServiceConfig) => {
         };
       }
 
-      const generateFilename = options.generateFilename || generateUniqueFilename;
+      const generateFilename = options.generateFilename || preserveOriginalFilenameSafely;
       const filename = generateFilename(file.originalname, file.mimetype);
+
+      const fileAlreadyExists = await storage.exists(filename, options.directory);
+      if (fileAlreadyExists) {
+        return {
+          success: false,
+          errors: [UPLOAD_ERRORS.FILE_ALREADY_EXISTS(filename)],
+          statusCode: 409
+        };
+      }
 
       const storageMetadata: Record<string, unknown> = {
         originalName: file.originalname,

@@ -59,7 +59,7 @@ export const FILES_UPLOAD_ACCEPT = [
   ...FILES_UPLOAD_ALLOWED_EXTENSIONS.map((ext) => `.${ext}`)
 ].join(',');
 export const FILES_PAGE_TITLE = 'Файли';
-export const FILES_UPLOAD_BUTTON_LABEL = 'Завантажити файл';
+export const FILES_UPLOAD_BUTTON_LABEL = 'Додати файл';
 export const FILES_UPLOAD_ERROR = 'Підтримуються зображення, PDF, аудіо, документи (Docx, Xlsx) та архіви (Zip, Rar)';
 export const FILES_UPLOAD_READ_ERROR = 'Не вдалося прочитати файл для завантаження.';
 export const FILES_UPLOAD_FAILED_ERROR = 'Не вдалося завантажити файл. Спробуйте ще раз.';
@@ -88,4 +88,3 @@ export const USAGE_FILTER_OPTIONS: ReadonlyArray<{ value: string; label: string 
   { value: 'research', label: 'Наукові праці' },
   { value: 'unused', label: 'Не використані' }
 ];
-

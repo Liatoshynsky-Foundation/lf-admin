@@ -30,7 +30,7 @@ export const createUploadController = (config: UploadControllerConfig) => {
       const result = await uploadService.uploadFile(uploadedFile, options);
 
       if (!result.success) {
-        res.status(400).json({ success: false, errors: result.errors });
+        res.status(result.statusCode ?? 400).json({ success: false, errors: result.errors });
         return;
       }
 

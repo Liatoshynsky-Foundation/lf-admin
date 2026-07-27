@@ -3,12 +3,14 @@ export const UPLOAD_ERRORS = {
   NO_FILE_UPLOADED: 'No file uploaded',
   NO_FILES_UPLOADED: 'No files uploaded',
   FILENAME_REQUIRED: 'Filename is required',
+  FILENAME_CONTAINS_INVALID_CHARACTERS: 'Filename contains invalid characters',
   FILE_NOT_FOUND: 'File not found',
   FILE_NOT_FOUND_OR_DELETE_FAILED: 'File not found or could not be deleted',
 
   // Service errors
   STORAGE_FAILED: 'Storage failed',
   UNKNOWN_ERROR: 'Unknown error',
+  FILE_ALREADY_EXISTS: (filename: string) => `Файл ${filename} вже існує`,
 
   // Validator errors
   DOCUMENT_VALIDATOR_NOT_IMPLEMENTED: 'Document validator not yet implemented',
