@@ -1,9 +1,10 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Suspense, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { LoginInactivityToast } from './LoginInactivityToast';
 import { loginErrors } from '~/constants/errors';
 import LoginModal from '~/shared/components/login-modal/LoginModal';
 import { type LoginSubmitData } from '~/types/adminLogin';
@@ -11,14 +12,7 @@ import { useLoginMutation } from '~/types/graphql/generated/graphql';
 
 export default function LoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [triggerErrorClear, setTriggerErrorClear] = useState<number>(0);
-
-  useEffect(() => {
-    if (searchParams.get('reason') === 'inactivity') {
-      toast.error('Сесію завершено через бездіяльність. Будь ласка, увійдіть знову.');
-    }
-  }, [searchParams]);
 
   const [loginMutation, { loading }] = useLoginMutation({
     onCompleted: (data) => {
@@ -58,5 +52,13 @@ export default function LoginPage() {
     });
   };
 
-  return <LoginModal onSubmit={handleLoginSubmit} submitError={triggerErrorClear.toString()} loading={loading} />;
+  return (
+    <>
+      <Suspense fallback={null}>
+        <LoginInactivityToast />
+      </Suspense>
+
+      <LoginModal onSubmit={handleLoginSubmit} submitError={triggerErrorClear.toString()} loading={loading} />
+    </>
+  );
 }
