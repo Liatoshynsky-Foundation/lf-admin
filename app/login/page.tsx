@@ -1,7 +1,7 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { loginErrors } from '~/constants/errors';
@@ -11,7 +11,14 @@ import { useLoginMutation } from '~/types/graphql/generated/graphql';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [triggerErrorClear, setTriggerErrorClear] = useState<number>(0);
+
+  useEffect(() => {
+    if (searchParams.get('reason') === 'inactivity') {
+      toast.error('Сесію завершено через бездіяльність. Будь ласка, увійдіть знову.');
+    }
+  }, [searchParams]);
 
   const [loginMutation, { loading }] = useLoginMutation({
     onCompleted: (data) => {
