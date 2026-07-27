@@ -19,19 +19,19 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
   const searchValue = searchProps.search;
   const normalizedSearch = normalizeSearch(searchValue);
 
-  const visibleFounds = ARCHIVE_FONDS_MOCK_DATA.filter((found) => {
-    const isStatusSame = statusFilterProps.value?.includes('all') ? true : statusFilterProps.value?.includes(found.status);
+  const visibleFonds = ARCHIVE_FONDS_MOCK_DATA.filter((fond) => {
+    const isStatusSame = statusFilterProps.value?.includes('all') ? true : statusFilterProps.value?.includes(fond.status);
 
-    const normalizedFondName = normalizeSearch(found.name);
+    const normalizedFondName = normalizeSearch(fond.name);
     const isNameSame = normalizedFondName.includes(normalizedSearch);
 
     if (isStatusSame && isNameSame) {
-      return found;
+      return fond;
     }
     return false;
   });
 
-  const ascSortedVisibleFounds = visibleFounds.toSorted((a, b) => Number(a.id) - Number(b.id));
+  const ascSortedVisibleFonds = visibleFonds.toSorted((a, b) => Number(a.id) - Number(b.id));
 
   const hasActiveCriteria = Boolean(searchProps.search) || Boolean(statusFilterProps.value);
 
@@ -45,7 +45,7 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
       />
       <SearchStatusToolbar dataTestId='archive-control-panel' searchProps={searchProps} statusFilterProps={statusFilterProps} />
 
-      <FondsTable founds={ascSortedVisibleFounds} hasActiveCriteria={hasActiveCriteria} />
+      <FondsTable fonds={ascSortedVisibleFonds} hasActiveCriteria={hasActiveCriteria} />
     </Box >
   );
 };

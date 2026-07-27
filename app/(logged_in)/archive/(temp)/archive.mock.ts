@@ -1,30 +1,30 @@
 import seedData from './archive.mock.data.json';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
-export type FoundStatus = BaseContentStatuses;
+export type FondStatus = BaseContentStatuses;
 
-export type Found = {
+export type Fond = {
   id: string;
   fondNumber: number;
   name: string;
   descriptions: number;
   cases: number;
   dates: string;
-  status: FoundStatus;
+  status: FondStatus;
   updatedAt: string;
 };
 
-const isFoundStatus = (value: string): value is FoundStatus =>
+const isFondStatus = (value: string): value is FondStatus =>
   Object.values(BaseContentStatuses).includes(value as BaseContentStatuses);
 
-const normalizeStatus = (value: string): FoundStatus =>
-  isFoundStatus(value) ? value : BaseContentStatuses.Draft;
+const normalizeStatus = (value: string): FondStatus =>
+  isFondStatus(value) ? value : BaseContentStatuses.Draft;
 
-type FoundSeed = Omit<Found, 'status'> & { status: string };
+type FondSeed = Omit<Fond, 'status'> & { status: string };
 
-const SEEDS = seedData as FoundSeed[];
+const SEEDS = seedData as FondSeed[];
 
-export const ARCHIVE_FONDS_MOCK_DATA: Found[] = SEEDS.map((item) => ({
+export const ARCHIVE_FONDS_MOCK_DATA: Fond[] = SEEDS.map((item) => ({
   ...item,
   status: normalizeStatus(item.status)
 }));

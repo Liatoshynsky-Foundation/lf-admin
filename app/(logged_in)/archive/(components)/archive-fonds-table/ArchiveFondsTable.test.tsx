@@ -56,7 +56,7 @@ jest.mock('~/shared/components/table-layout/TableLayout', () => ({
 }));
 
 const defaultProps: FondsTableProps = {
-  founds: [
+  fonds: [
     {
       id: '1',
       fondNumber: 1,
@@ -76,17 +76,17 @@ const renderComponent = (overrides?: Partial<FondsTableProps>) => {
 };
 
 describe('ArchiveFondsTable', () => {
-  it('should render all columns and rows with founds data', () => {
+  it('should render all columns and rows with fonds data', () => {
     renderComponent();
-    const found = defaultProps.founds[0];
+    const fond = defaultProps.fonds[0];
     const rowWithActions = {
-      type: 'individual', id: found.id, plainData: {
-        ...defaultProps.founds[0], editAction: {
-          editHref: `/archive/found/${found.id}/edit`, editLabel: `Редагувати фонд Фонд ${found.id}`
+      type: 'individual', id: fond.id, plainData: {
+        ...defaultProps.fonds[0], editAction: {
+          editHref: `/archive/fond/${fond.id}/edit`, editLabel: `Редагувати фонд Фонд ${fond.id}`
         },
 
         menuActions: {
-          menuItems: [{ items: [{ id: 'edit', text: { name: 'Редагувати' }, href: `/archive/found/${found.id}/edit` }, { id: 'share', text: { name: 'Поширити' }, href: `/archive/found/${found.id}/share` }] }, { items: [{ id: 'delete', text: { name: 'Видалити' } }] }], menuTriggerLabel: `Дії для фонду Фонд ${found.id}`
+          menuItems: [{ items: [{ id: 'edit', text: { name: 'Редагувати' }, href: `/archive/fond/${fond.id}/edit` }, { id: 'share', text: { name: 'Поширити' }, href: `/archive/fond/${fond.id}/share` }] }, { items: [{ id: 'delete', text: { name: 'Видалити' } }] }], menuTriggerLabel: `Дії для фонду Фонд ${fond.id}`
         }
       },
     };
@@ -106,24 +106,24 @@ describe('ArchiveFondsTable', () => {
     expect(screen.getByTestId('mock-table-layout-data')).toBeInTheDocument();
     expect(screen.getByTestId('mock-table-layout-row-1')).toHaveTextContent(JSON.stringify(rowWithActions));
 
-    expect(screen.getByTestId('mock-cell-fondId')).toHaveTextContent(found.id);
-    expect(screen.getByTestId('mock-cell-name')).toHaveTextContent(found.name);
-    expect(screen.getByTestId('mock-cell-descriptionsCount')).toHaveTextContent(String(found.descriptions));
-    expect(screen.getByTestId('mock-cell-casesCount')).toHaveTextContent(String(found.cases));
-    expect(screen.getByTestId('mock-cell-dates')).toHaveTextContent(found.dates);
+    expect(screen.getByTestId('mock-cell-fondId')).toHaveTextContent(fond.id);
+    expect(screen.getByTestId('mock-cell-name')).toHaveTextContent(fond.name);
+    expect(screen.getByTestId('mock-cell-descriptionsCount')).toHaveTextContent(String(fond.descriptions));
+    expect(screen.getByTestId('mock-cell-casesCount')).toHaveTextContent(String(fond.cases));
+    expect(screen.getByTestId('mock-cell-dates')).toHaveTextContent(fond.dates);
     expect(screen.getByTestId('mock-cell-status')).toBeInTheDocument();
     expect(screen.getByTestId('mock-cell-actions')).toBeInTheDocument();
   });
   describe('should render state UIs', () => {
     it('should render the no search results fallback if rows.length is 0 and hasActiveCriteria is true', () => {
-      renderComponent({ hasActiveCriteria: true, founds: [] });
+      renderComponent({ hasActiveCriteria: true, fonds: [] });
 
       expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
       expect(screen.getByTestId('mock-empty-state-title')).toHaveTextContent(ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE);
       expect(screen.getByTestId('mock-empty-state-description')).toHaveTextContent(ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION);
     });
-    it('should render the not found fallback if rows.length is 0 and hasActiveCriteria is false', () => {
-      renderComponent({ founds: [] });
+    it('should render the not fond fallback if rows.length is 0 and hasActiveCriteria is false', () => {
+      renderComponent({ fonds: [] });
 
       expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
       expect(screen.getByTestId('mock-empty-state-title')).toHaveTextContent(ARCHIVE_EMPTY_STATE_TITLE);

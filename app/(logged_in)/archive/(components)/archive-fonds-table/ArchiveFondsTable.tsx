@@ -10,7 +10,7 @@ import { ColumnDef } from '~/shared/components/table-layout/row-variants/Row.typ
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
-export type Found = {
+export type Fond = {
   id: string;
   fondNumber: number;
   name: string;
@@ -21,32 +21,32 @@ export type Found = {
   updatedAt: string;
 }
 
-export type FoundRow = Found & {
+export type FondRow = Fond & {
   editAction: { editHref: string; editLabel: string };
   menuActions: { menuItems: ActionMenuGroups; menuTriggerLabel: string };
 };
 
 export interface FondsTableProps {
-  founds: Found[];
+  fonds: Fond[];
   hasActiveCriteria: boolean;
 }
 
-export const FondsTable = ({ founds, hasActiveCriteria }: FondsTableProps) => {
-  const rows = founds.map((fond) => ({
+export const FondsTable = ({ fonds, hasActiveCriteria }: FondsTableProps) => {
+  const rows = fonds.map((fond) => ({
     type: 'individual' as const,
     id: fond.id,
     plainData: {
       ...fond,
       editAction: {
-        editHref: `${ARCHIVE_BASE_PATH}/found/${fond.id}/edit`,
+        editHref: `${ARCHIVE_BASE_PATH}/fond/${fond.id}/edit`,
         editLabel: `Редагувати фонд ${fond.name}`
       },
       menuActions: {
         menuItems: [
           {
             items: [
-              { id: 'edit', text: { name: 'Редагувати' }, href: `${ARCHIVE_BASE_PATH}/found/${fond.id}/edit` },
-              { id: 'share', text: { name: 'Поширити' }, href: `${ARCHIVE_BASE_PATH}/found/${fond.id}/share` }
+              { id: 'edit', text: { name: 'Редагувати' }, href: `${ARCHIVE_BASE_PATH}/fond/${fond.id}/edit` },
+              { id: 'share', text: { name: 'Поширити' }, href: `${ARCHIVE_BASE_PATH}/fond/${fond.id}/share` }
             ]
           },
           {
@@ -58,7 +58,7 @@ export const FondsTable = ({ founds, hasActiveCriteria }: FondsTableProps) => {
     },
   }));
 
-  const columns = useMemo<readonly ColumnDef<never, never, FoundRow>[]>(() => {
+  const columns = useMemo<readonly ColumnDef<never, never, FondRow>[]>(() => {
     return [
       {
         id: 'fondId',
