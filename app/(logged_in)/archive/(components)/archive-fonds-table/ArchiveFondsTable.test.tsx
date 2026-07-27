@@ -116,7 +116,7 @@ describe('ArchiveFondsTable', () => {
   });
 
   it.each([
-    { cell: 'fondId', value: fond.id },
+    { cell: 'fondNumber', value: String(fond.fondNumber) },
     { cell: 'name', value: fond.name },
     { cell: 'descriptionsCount', value: String(fond.descriptions) },
     { cell: 'casesCount', value: String(fond.cases) },
