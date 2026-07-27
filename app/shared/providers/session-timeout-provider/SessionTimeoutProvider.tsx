@@ -24,12 +24,10 @@ export function SessionTimeoutProvider({ children }: Wrapper) {
   const handleInactivity = useCallback(async () => {
     try {
       await logoutAction();
-    } catch (error) {
-      console.error('Помилка при завершенні сесії через бездіяльність', error);
+    } finally {
+      logout();
+      router.push('/login?reason=inactivity');
     }
-    logout();
-    router.push('/login?reason=inactivity');
-    router.refresh();
   }, [logout, router]);
 
   const resetTimer = useCallback(() => {
