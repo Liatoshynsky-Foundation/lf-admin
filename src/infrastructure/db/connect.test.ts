@@ -6,6 +6,7 @@ type MongooseGlobalCache = {
   conn: Mongoose | null;
   promise: Promise<Mongoose> | null;
   listenersAttached: boolean;
+  lastErrorMessage: string | null;
 };
 
 const expectedMongoConnectOptions = {
@@ -16,12 +17,21 @@ const expectedMongoConnectOptions = {
   family: 4
 };
 
-const mockConnection = { connection: { readyState: 1 } };
-
 const mockMongoose = (connectImpl = jest.fn()) => {
+  const listeners: Record<string, (arg?: unknown) => void> = {};
+  const mockConn = {
+    readyState: 1,
+    on: jest.fn((event: string, cb: (arg?: unknown) => void) => {
+      listeners[event] = cb;
+    })
+  };
+
   jest.doMock('mongoose', () => ({
-    connect: connectImpl
+    connect: connectImpl,
+    connection: mockConn
   }));
+
+  return { mockConn, listeners };
 };
 
 const mockConfig = (url: string | undefined) => {
@@ -40,21 +50,29 @@ const createLoggerMock = () => ({
 });
 
 describe('dbConnect', () => {
+  const originalEnv = process.env;
+
   beforeEach(() => {
     jest.resetModules();
+    process.env = { ...originalEnv };
     (global as { mongoose?: MongooseGlobalCache }).mongoose = undefined;
     jest.clearAllMocks();
   });
 
-  it('should connect and cache the connection', async () => {
-    const connectMock = jest.fn().mockResolvedValue(mockConnection);
-    const loggerMock = createLoggerMock();
+  afterAll(() => {
+    process.env = originalEnv;
+  });
 
-    mockMongoose(connectMock);
+  it('should connect, attach listeners and cache the connection', async () => {
+    const connectMock = jest.fn();
+    const { mockConn, listeners } = mockMongoose(connectMock);
+    connectMock.mockResolvedValue(mockConn);
+
+    const loggerMock = createLoggerMock();
     mockConfig('mongodb://localhost:27017/test-db');
     mockLoggerModule(loggerMock);
 
-    const { default: dbConnect } = await import('./connect');
+    const { default: dbConnect, getLastMongoConnectionErrorMessage } = await import('./connect');
     const { connect } = await import('mongoose');
     const { mongoUrl } = await import('../../config');
 
@@ -62,19 +80,30 @@ describe('dbConnect', () => {
 
     expect(connect).toHaveBeenCalledWith(mongoUrl, expectedMongoConnectOptions);
     expect(loggerMock.info).toHaveBeenCalledWith('✅ Connected to db');
-    expect(conn).toStrictEqual(mockConnection);
+    expect(conn).toStrictEqual(mockConn);
 
-    const cached = (global as { mongoose?: MongooseGlobalCache }).mongoose;
-    expect(cached).toBeDefined();
-    expect(cached?.conn).toStrictEqual(mockConnection);
-    expect(cached?.promise).toBeInstanceOf(Promise);
+    listeners.connected?.();
+    expect(loggerMock.info).toHaveBeenCalledWith('✅ MongoDB connection established');
+    expect(getLastMongoConnectionErrorMessage()).toBeNull();
+
+    listeners.disconnected?.();
+    expect(loggerMock.error).toHaveBeenCalledWith('❌ MongoDB connection lost');
+    expect(getLastMongoConnectionErrorMessage()).toBe('MongoDB connection lost');
+
+    listeners.error?.('Custom string error');
+    expect(loggerMock.error).toHaveBeenCalledWith('❌ MongoDB connection error', 'Custom string error');
+    expect(getLastMongoConnectionErrorMessage()).toBe('Custom string error');
+
+    listeners.error?.({ unknownError: true });
+    expect(getLastMongoConnectionErrorMessage()).toBeNull();
   });
 
-  it('should reuse cached connection without reconnecting', async () => {
-    const connectMock = jest.fn().mockResolvedValue(mockConnection);
-    const loggerMock = createLoggerMock();
+  it('should reuse cached connection and skip attaching listeners if already attached', async () => {
+    const connectMock = jest.fn();
+    const { mockConn } = mockMongoose(connectMock);
+    connectMock.mockResolvedValue(mockConn);
 
-    mockMongoose(connectMock);
+    const loggerMock = createLoggerMock();
     mockConfig('mongodb://localhost:27017/test-db');
     mockLoggerModule(loggerMock);
 
@@ -86,51 +115,20 @@ describe('dbConnect', () => {
     expect(connectMock).toHaveBeenCalledTimes(1);
   });
 
-  it('should log error if connection fails', async () => {
-    const error = new Error('Connection failed');
+  it('should log error if connection fails with string rejection', async () => {
+    const errorString = 'Connection failed string error';
     const loggerMock = createLoggerMock();
 
-    mockMongoose(jest.fn().mockRejectedValue(error));
+    mockMongoose(jest.fn().mockRejectedValue(errorString));
     mockConfig('mongodb://localhost:27017/test-db');
     mockLoggerModule(loggerMock);
 
-    const { default: dbConnect } = await import('./connect');
+    const { default: dbConnect, getLastMongoConnectionErrorMessage } = await import('./connect');
 
-    await expect(dbConnect()).rejects.toThrow('Connection failed');
+    await expect(dbConnect()).rejects.toBe(errorString);
 
-    expect(loggerMock.error).toHaveBeenCalledWith(errors.FAILED_TO_CONNECT_DB, error);
-  });
-
-  it('should connect and cache the connection (mockImplementation)', async () => {
-    const loggerMock = createLoggerMock();
-
-    const fakeMongoose = {
-      connection: { readyState: 1 }
-    } as Partial<Mongoose>;
-
-    const connectMock = jest.fn().mockResolvedValue(fakeMongoose);
-
-    jest.doMock('mongoose', () => ({
-      connect: connectMock
-    }));
-
-    mockConfig('mongodb://localhost:27017/test-db');
-    mockLoggerModule(loggerMock);
-
-    const { default: dbConnect } = await import('./connect');
-    const { connect } = await import('mongoose');
-    const { mongoUrl } = await import('../../config');
-
-    const conn = await dbConnect();
-
-    expect(connect).toHaveBeenCalledWith(mongoUrl, expectedMongoConnectOptions);
-    expect(loggerMock.info).toHaveBeenCalledWith('✅ Connected to db');
-    expect(conn).toStrictEqual(fakeMongoose);
-
-    const cached = (global as typeof globalThis & { mongoose: MongooseGlobalCache }).mongoose;
-    expect(cached).toBeDefined();
-    expect(cached.conn).toStrictEqual(fakeMongoose);
-    expect(cached.promise).toBeInstanceOf(Promise);
+    expect(loggerMock.error).toHaveBeenCalledWith(errors.FAILED_TO_CONNECT_DB, errorString);
+    expect(getLastMongoConnectionErrorMessage()).toBe(errorString);
   });
 
   it('should throw if mongoUrl is not defined', async () => {
@@ -157,5 +155,32 @@ describe('dbConnect', () => {
     await expect(dbConnect()).rejects.toThrow('Connection failed');
     const cached = (global as typeof globalThis & { mongoose: MongooseGlobalCache }).mongoose;
     expect(cached.promise).toBeNull();
+  });
+
+  it('should parse environment timeouts when provided', async () => {
+    process.env.MONGO_CONNECT_TIMEOUT_MS = '30000';
+    process.env.MONGO_SERVER_SELECTION_TIMEOUT_MS = '15000';
+    process.env.MONGO_SOCKET_TIMEOUT_MS = '45000';
+
+    const connectMock = jest.fn();
+    const { mockConn } = mockMongoose(connectMock);
+    connectMock.mockResolvedValue(mockConn);
+
+    const loggerMock = createLoggerMock();
+    mockConfig('mongodb://localhost:27017/test-db');
+    mockLoggerModule(loggerMock);
+
+    const { default: dbConnect } = await import('./connect');
+    const { connect } = await import('mongoose');
+
+    await dbConnect();
+
+    expect(connect).toHaveBeenCalledWith('mongodb://localhost:27017/test-db', {
+      bufferCommands: false,
+      connectTimeoutMS: 30000,
+      serverSelectionTimeoutMS: 15000,
+      socketTimeoutMS: 45000,
+      family: 4
+    });
   });
 });

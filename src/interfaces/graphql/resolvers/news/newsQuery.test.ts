@@ -5,30 +5,30 @@ import type { NewsFiltersInput } from '~/types/graphql/generated/graphql';
 
 jest.mock('mongoose', () => {
   const mockSchema = jest.fn().mockImplementation(() => ({
-    index: jest.fn(),
+    index: jest.fn()
   }));
 
   (mockSchema as unknown as Record<string, unknown>).Types = {
-    ObjectId: String,
+    ObjectId: String
   };
 
   return {
     Schema: mockSchema,
     Types: {
-      ObjectId: jest.fn().mockImplementation(() => 'mocked-id'),
+      ObjectId: jest.fn().mockImplementation(() => 'mocked-id')
     },
     model: jest.fn().mockReturnValue({
-      index: jest.fn(),
+      index: jest.fn()
     }),
-    models: {},
+    models: {}
   };
 });
 
 jest.mock('~/infrastructure/models/imageCrop.model', () => ({
   ImageCropModel: {
     findOneAndUpdate: jest.fn(),
-    index: jest.fn(),
-  },
+    index: jest.fn()
+  }
 }));
 
 import { NewsQuery } from './newsQuery';
@@ -80,10 +80,12 @@ describe('NewsQuery Resolvers', () => {
 
       await NewsQuery.publishedNews({}, args, context);
 
-      expect(mockRepo.findAll).toHaveBeenCalledWith(expect.objectContaining({
-        slug: 'test-slug',
-        statuses: [NewsStatus.Published]
-      }));
+      expect(mockRepo.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          slug: 'test-slug',
+          statuses: [NewsStatus.Published]
+        })
+      );
     });
   });
 
@@ -97,18 +99,13 @@ describe('NewsQuery Resolvers', () => {
 
       await NewsQuery.paginatedNews({}, args, context);
 
-      expect(mockRepo.findPaginated).toHaveBeenCalledWith(
-        2,
-        5,
-        expect.objectContaining({ slug: 'search' })
-      );
+      expect(mockRepo.findPaginated).toHaveBeenCalledWith(2, 5, expect.objectContaining({ slug: 'search' }));
     });
   });
 
   it('should throw when admin missing', async () => {
     const invalidContext = createMockContext(false, 'newsRepository', mockRepo);
-    await expect(NewsQuery.allNews({}, { filters: {} as NewsFiltersInput }, invalidContext))
-      .rejects.toThrow();
+    await expect(NewsQuery.allNews({}, { filters: {} as NewsFiltersInput }, invalidContext)).rejects.toThrow();
   });
 
   describe('newsCount', () => {
@@ -122,6 +119,41 @@ describe('NewsQuery Resolvers', () => {
       await NewsQuery.newsCount({}, { status: NewsStatus.Archived }, context);
 
       expect(mockRepo.count).toHaveBeenCalledWith({ statuses: [NewsStatus.Archived] });
+    });
+  });
+
+  describe('newsById & newsBySlug', () => {
+    it('should fetch news by id', async () => {
+      const id = 'test-id';
+      await NewsQuery.newsById({}, { id }, context);
+
+      expect(mockRepo.findById).toHaveBeenCalledWith(id);
+    });
+
+    it('should fetch news by slug', async () => {
+      const slug = 'test-slug';
+      await NewsQuery.newsBySlug({}, { slug }, context);
+
+      expect(mockRepo.findBySlug).toHaveBeenCalledWith(slug);
+    });
+  });
+
+  describe('draftNews', () => {
+    it('should force draft status when fetching draft news', async () => {
+      const args = {
+        filters: {
+          slug: 'test-slug'
+        } as unknown as NewsFiltersInput
+      };
+
+      await NewsQuery.draftNews({}, args, context);
+
+      expect(mockRepo.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          slug: 'test-slug',
+          statuses: [NewsStatus.Draft]
+        })
+      );
     });
   });
 });

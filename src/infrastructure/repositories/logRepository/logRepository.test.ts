@@ -1,3 +1,5 @@
+import type { LogLevel } from '~/back-shared/types/logs';
+
 const mockDbConnect = jest.fn();
 const toArrayMock = jest.fn();
 const limitMock = jest.fn(() => ({ toArray: toArrayMock }));
@@ -146,5 +148,80 @@ describe('logRepository', () => {
         }
       }
     ]);
+  });
+
+  it('handles Date instances, invalid date strings, and non-string messages in log documents', async () => {
+    const { getLogs } = await import('./logRepository');
+    const dateObj = new Date('2026-05-12T10:00:00.000Z');
+
+    countDocumentsMock.mockResolvedValue(1);
+    toArrayMock.mockResolvedValue([
+      {
+        _id: '1',
+        level: 'invalid-level',
+        message: { error: 'object-message' },
+        timestamp: dateObj
+      },
+      {
+        _id: '2',
+        level: 'info',
+        message: 'str',
+        timestamp: 'invalid-date-string'
+      },
+      {
+        _id: '3',
+        level: 'info',
+        message: 'str'
+      }
+    ]);
+
+    const result = await getLogs({ level: 'all', to: '2026-05-12T23:59:59.000Z' });
+
+    expect(result.items[0].timestamp).toBe('2026-05-12T10:00:00.000Z');
+    expect(result.items[0].level).toBe('info');
+    expect(result.items[0].message).toBe('{"error":"object-message"}');
+
+    expect(result.items[1].timestamp).toBe('invalid-date-string');
+    expect(result.items[2].timestamp).toBe('1970-01-01T00:00:00.000Z');
+  });
+
+  it('filters logs by to date and handles invalid date filters', async () => {
+    const { getLogs } = await import('./logRepository');
+
+    countDocumentsMock.mockResolvedValue(0);
+    toArrayMock.mockResolvedValue([]);
+
+    await getLogs({ from: 'invalid-date', to: '2026-05-12T23:59:59.000Z' });
+
+    expect(findMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        timestamp: { $lte: new Date('2026-05-12T23:59:59.000Z') }
+      })
+    );
+  });
+
+  it('throws an error if database connection is not available in deleteLogs and getLogs', async () => {
+    const mongoose = (await import('mongoose')).default;
+    const originalDb = mongoose.connection.db;
+
+    Object.defineProperty(mongoose.connection, 'db', { value: undefined, writable: true });
+
+    const { deleteLogs, getLogs } = await import('./logRepository');
+
+    await expect(deleteLogs()).rejects.toThrow('Database connection is not available');
+    await expect(getLogs()).rejects.toThrow('Database connection is not available');
+
+    Object.defineProperty(mongoose.connection, 'db', { value: originalDb, writable: true });
+  });
+
+  it('returns 0 deleted count if deleteMany result deletedCount is undefined', async () => {
+    const { deleteLogs } = await import('./logRepository');
+
+    deleteManyMock.mockResolvedValue({});
+
+    const result = await deleteLogs('invalid-level' as LogLevel);
+
+    expect(deleteManyMock).toHaveBeenCalledWith({});
+    expect(result).toBe(0);
   });
 });

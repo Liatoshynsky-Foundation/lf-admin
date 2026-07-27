@@ -8,8 +8,8 @@ import { removeTmpFlagsRecursively } from '~/src/application/use-cases/removeTmp
 import { JsonObject } from '~/src/shared/types/pages/types';
 import type { Page, Scalars } from '~/types/graphql/generated/graphql';
 
-type UpsertPageDraftArgs = { input: { slug: string; blocks: Scalars['JSON']['input'], blocksOrder: string[] } };
-type PublishPageArgs = { input: { slug: string; blocks?: Scalars['JSON']['input'], blocksOrder: string[] } };
+type UpsertPageDraftArgs = { input: { slug: string; blocks: Scalars['JSON']['input']; blocksOrder: string[] } };
+type PublishPageArgs = { input: { slug: string; blocks?: Scalars['JSON']['input']; blocksOrder: string[] } };
 
 export const PageMutation = {
   async upsertPageDraft(
@@ -49,7 +49,7 @@ export const PageMutation = {
         (cleanedBlocks as JsonObject) || {} // NOSONAR
       );
       const hasOrderChanged = JSON.stringify(existingDraft.blocksOrder) !== JSON.stringify(blocksOrder);
-     
+
       if (!Object.keys(changes.$set ?? {}).length && !Object.keys(changes.$unset ?? {}).length && !hasOrderChanged) {
         resultPage = existingDraft;
       } else {
@@ -99,7 +99,6 @@ export const PageMutation = {
     }
 
     const changes = createDotNotationPatch(
-
       (publishedPage?.blocks as unknown as JsonObject) || {}, // NOSONAR
       (cleanedBlocks as JsonObject) || {} // NOSONAR
     );
