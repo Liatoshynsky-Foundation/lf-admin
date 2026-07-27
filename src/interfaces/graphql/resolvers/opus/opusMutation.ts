@@ -17,7 +17,7 @@ import type {
 import { CompositionInput, ICompositionRepository } from '~/domain/repositories/compositionRepository';
 import { CreateOpusInput, IOpusRepository, UpdateOpusInput } from '~/domain/repositories/opusRepository';
 import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerator';
-import { OpusGalleryItemInput,OpusStatus, UpdateOpusStatusPayload } from '~/types/graphql/generated/graphql';
+import { OpusGalleryItemInput, OpusStatus, UpdateOpusStatusPayload } from '~/types/graphql/generated/graphql';
 
 type GQLMediaFile = { name: string; fileUrl?: string | null; publishDate?: string | null };
 
@@ -97,6 +97,65 @@ const mapComposition = (composition: GQLComposition): CompositionInput => {
     })),
     audios: audios.map((audio) => ({ name: audio.name ?? null, url: audio.fileUrl || null }))
   };
+};
+
+const validateOpusName = (name?: LocalizedString): void => {
+  const nameUk = name?.uk?.trim();
+  const nameEn = name?.en?.trim();
+
+  if (!nameUk || nameUk.length < 2 || nameUk.length > 250 || !nameEn || nameEn.length < 2 || nameEn.length > 250) {
+    throw new GraphQLError(opusServiceErrors.NAME_LENGTH_INVALID, {
+      extensions: { code: 'BAD_USER_INPUT' }
+    });
+  }
+};
+
+const validateCreationYear = (year?: string): void => {
+  if (year === undefined) return;
+
+  const yearStr = year.trim();
+  if (!yearStr) {
+    throw new GraphQLError(opusServiceErrors.CREATION_YEAR_REQUIRED, {
+      extensions: { code: 'BAD_USER_INPUT' }
+    });
+  }
+
+  const yearNum = Number(yearStr);
+  if (!Number.isInteger(yearNum) || yearNum < 1900 || yearNum > 2100) {
+    throw new GraphQLError(opusServiceErrors.CREATION_YEAR_INVALID, {
+      extensions: { code: 'BAD_USER_INPUT' }
+    });
+  }
+};
+
+const validateOpusFields = (input: Partial<CreateOpusGQLInput> | UpdateOpusGQLInput): void => {
+  if (input.number !== undefined && input.number < 0) {
+    throw new GraphQLError(opusServiceErrors.NUMBER_NOT_NEGATIVE, {
+      extensions: { code: 'BAD_USER_INPUT' }
+    });
+  }
+
+  if (input.additionalText && input.additionalText.length > 40) {
+    throw new GraphQLError(opusServiceErrors.ADDITIONAL_TEXT_TOO_LONG, {
+      extensions: { code: 'BAD_USER_INPUT' }
+    });
+  }
+
+  if (input.datesNote && input.datesNote.length > 40) {
+    throw new GraphQLError(opusServiceErrors.DATES_NOTE_TOO_LONG, {
+      extensions: { code: 'BAD_USER_INPUT' }
+    });
+  }
+
+  const genreUk = input.genre?.uk?.trim();
+  const genreEn = input.genre?.en?.trim();
+  if ((genreUk && genreUk.length > 250) || (genreEn && genreEn.length > 250)) {
+    throw new GraphQLError(opusServiceErrors.GENRE_TOO_LONG, {
+      extensions: { code: 'BAD_USER_INPUT' }
+    });
+  }
+
+  validateCreationYear(input.creationYear);
 };
 
 const validateGallery = (gallery?: OpusGalleryItemInput[] | null): void => {
@@ -263,61 +322,9 @@ const buildOpusUpdateData = (input: UpdateOpusGQLInput, compositionIds: string[]
 export const OpusMutation = {
   createOpus: async (_: unknown, { input }: CreateOpusArgs, context: GraphQLContext): Promise<OpusFull> => {
     assertAuthenticated(context);
-    if (input.number < 0) {
-      throw new GraphQLError(opusServiceErrors.NUMBER_NOT_NEGATIVE, {
-        extensions: { code: 'BAD_USER_INPUT' }
-      });
-    }
 
-    if (input.additionalText && input.additionalText.length > 40) {
-      throw new GraphQLError(opusServiceErrors.ADDITIONAL_TEXT_TOO_LONG, {
-        extensions: { code: 'BAD_USER_INPUT' }
-      });
-    }
-
-    if (
-      !input.name ||
-      !input.name.uk ||
-      input.name.uk.trim().length < 2 ||
-      input.name.uk.trim().length > 250 ||
-      !input.name.en ||
-      input.name.en.trim().length < 2 ||
-      input.name.en.trim().length > 250
-    ) {
-      throw new GraphQLError(opusServiceErrors.NAME_LENGTH_INVALID, {
-        extensions: { code: 'BAD_USER_INPUT' }
-      });
-    }
-
-    if (!input.creationYear || input.creationYear.trim() === '') {
-      throw new GraphQLError(opusServiceErrors.CREATION_YEAR_REQUIRED, {
-        extensions: { code: 'BAD_USER_INPUT' }
-      });
-    }
-    const yearNum = Number(input.creationYear.trim());
-    if (!Number.isInteger(yearNum) || yearNum < 1900 || yearNum > 2100) {
-      throw new GraphQLError(opusServiceErrors.CREATION_YEAR_INVALID, {
-        extensions: { code: 'BAD_USER_INPUT' }
-      });
-    }
-
-    if (input.datesNote && input.datesNote.length > 40) {
-      throw new GraphQLError(opusServiceErrors.DATES_NOTE_TOO_LONG, {
-        extensions: { code: 'BAD_USER_INPUT' }
-      });
-    }
-
-    if (input.genre) {
-      if (
-        (input.genre.uk && input.genre.uk.trim().length > 250) ||
-        (input.genre.en && input.genre.en.trim().length > 250)
-      ) {
-        throw new GraphQLError(opusServiceErrors.GENRE_TOO_LONG, {
-          extensions: { code: 'BAD_USER_INPUT' }
-        });
-      }
-    }
-
+    validateOpusFields(input);
+    validateOpusName(input.name);
     validateGallery(input.gallery);
     validatePerformances(input.performances);
 
@@ -409,55 +416,12 @@ export const OpusMutation = {
   updateOpus: async (_: unknown, { id, input }: UpdateOpusArgs, context: GraphQLContext): Promise<OpusFull> => {
     assertAuthenticated(context);
 
-    if (input.number !== undefined && input.number < 0) {
-      throw new GraphQLError(opusServiceErrors.NUMBER_NOT_NEGATIVE, {
-        extensions: { code: 'BAD_USER_INPUT' }
-      });
-    }
-
-    if (input.additionalText !== undefined && input.additionalText !== null) {
-      if (input.additionalText.length > 40) {
-        throw new GraphQLError(opusServiceErrors.ADDITIONAL_TEXT_TOO_LONG, {
-          extensions: { code: 'BAD_USER_INPUT' }
-        });
-      }
-    }
-
-    if (input.creationYear !== undefined) {
-      if (!input.creationYear || input.creationYear.trim() === '') {
-        throw new GraphQLError(opusServiceErrors.CREATION_YEAR_REQUIRED, {
-          extensions: { code: 'BAD_USER_INPUT' }
-        });
-      }
-      const yearNum = Number(input.creationYear.trim());
-      if (!Number.isInteger(yearNum) || yearNum < 1900 || yearNum > 2100) {
-        throw new GraphQLError(opusServiceErrors.CREATION_YEAR_INVALID, {
-          extensions: { code: 'BAD_USER_INPUT' }
-        });
-      }
-    }
-
-    if (input.datesNote !== undefined && input.datesNote !== null) {
-      if (input.datesNote.length > 40) {
-        throw new GraphQLError(opusServiceErrors.DATES_NOTE_TOO_LONG, {
-          extensions: { code: 'BAD_USER_INPUT' }
-        });
-      }
-    }
-
-    if (input.genre !== undefined && input.genre !== null) {
-      if (
-        (input.genre.uk && input.genre.uk.trim().length > 250) ||
-        (input.genre.en && input.genre.en.trim().length > 250)
-      ) {
-        throw new GraphQLError(opusServiceErrors.GENRE_TOO_LONG, {
-          extensions: { code: 'BAD_USER_INPUT' }
-        });
-      }
-    }
-
+    validateOpusFields(input);
     if (input.gallery !== undefined) {
       validateGallery(input.gallery);
+    }
+    if (input.performances !== undefined) {
+      validatePerformances(input.performances);
     }
 
     const {
@@ -476,10 +440,6 @@ export const OpusMutation = {
       input,
       compositions.map((c) => c.id)
     );
-
-    if (input.performances !== undefined) {
-      validatePerformances(input.performances);
-    }
 
     await processSlugUpdate(id, input.name, repo, updateData);
 
