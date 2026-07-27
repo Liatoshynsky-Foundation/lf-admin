@@ -24,8 +24,8 @@ export function SessionTimeoutProvider({ children }: Wrapper) {
   const handleInactivity = useCallback(async () => {
     try {
       await logoutAction();
-    } catch {
-      // Ignore logout action errors and continue client-side logout.
+    } catch (error){
+      console.error('Failed to clear session on inactivity logout:', error);
     }
 
     logout();
