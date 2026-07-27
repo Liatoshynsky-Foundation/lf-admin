@@ -2,6 +2,7 @@ query OpusById($id: ID!) {
   opusById(id: $id) {
     id
     number
+    blocksOrder
     numberKind
     title {
       uk

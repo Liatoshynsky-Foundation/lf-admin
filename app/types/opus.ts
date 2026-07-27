@@ -72,6 +72,7 @@ export interface FetchedOpusData {
   datesNote?: string | null;
   genre?: { uk?: string | null; en?: string | null } | null;
   status?: OpusStatus | null;
+  blocksOrder?: string[] | null;
   title?: { uk?: string | null; en?: string | null } | null;
   description?: { uk?: string | null; en?: string | null } | null;
   introDescription?: { uk?: string | null; en?: string | null } | null;

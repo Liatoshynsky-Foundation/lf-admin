@@ -6,7 +6,14 @@ import { opusServiceErrors } from '~/back-constants/errors';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
 import { LocalizedBoolean, LocalizedImage, LocalizedString } from '~/domain/entities/BaseContent';
-import type { Opus, OpusDescription, OpusFull, OpusGalleryItem, OpusNumberKind, OpusPerformance } from '~/domain/entities/Opus';
+import type {
+  Opus,
+  OpusDescription,
+  OpusFull,
+  OpusGalleryItem,
+  OpusNumberKind,
+  OpusPerformance
+} from '~/domain/entities/Opus';
 import { CompositionInput, ICompositionRepository } from '~/domain/repositories/compositionRepository';
 import { CreateOpusInput, IOpusRepository, UpdateOpusInput } from '~/domain/repositories/opusRepository';
 import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerator';
@@ -46,6 +53,7 @@ export type CreateOpusGQLInput = {
   coverImage?: LocalizedImage;
   status?: OpusStatus;
   publishedAt?: string;
+  blocksOrder?: string[] | null;
 };
 
 export type UpdateOpusGQLInput = Omit<CreateOpusGQLInput, 'title' | 'description'> & {
@@ -151,10 +159,7 @@ async function updateAndVerifyOpus(repo: IOpusRepository, id: string, updateData
   return opus;
 }
 
-const buildOpusUpdateData = (
-  input: UpdateOpusGQLInput,
-  compositionIds: string[]
-): UpdateOpusInput => {
+const buildOpusUpdateData = (input: UpdateOpusGQLInput, compositionIds: string[]): UpdateOpusInput => {
   const candidate: UpdateOpusInput = {
     number: input.number,
     numberKind: input.numberKind,
@@ -177,7 +182,8 @@ const buildOpusUpdateData = (
     gallery: input.gallery,
     performancesTitle: input.performancesTitle,
     performances: input.performances,
-    compositions: compositionIds
+    compositions: compositionIds,
+    blocksOrder: input.blocksOrder
   };
   return Object.fromEntries(Object.entries(candidate).filter(([, value]) => value !== undefined)) as UpdateOpusInput;
 };
@@ -206,9 +212,7 @@ export const OpusMutation = {
       checkExists: async (candidate: string) => (await repo.findBySlug(candidate)) !== null
     });
 
-    const compositions = await compositionsRepo.syncForOpus(
-      (input.compositions ?? []).map(mapComposition)
-    );
+    const compositions = await compositionsRepo.syncForOpus((input.compositions ?? []).map(mapComposition));
     const compositionIds = compositions.map((c) => c.id);
 
     const opusData: CreateOpusInput = {
@@ -232,7 +236,8 @@ export const OpusMutation = {
       status: input.status || OpusStatus.Draft,
       publishedAt: input.publishedAt ?? null,
       meta: { views: 0 },
-      compositions: compositionIds
+      compositions: compositionIds,
+      blocksOrder: input.blocksOrder ?? null
     };
 
     const opus = await repo.create(opusData);
@@ -277,8 +282,11 @@ export const OpusMutation = {
   updateOpus: async (_: unknown, { id, input }: UpdateOpusArgs, context: GraphQLContext): Promise<OpusFull> => {
     assertAuthenticated(context);
 
-    const { opusRepository: repo, compositionsRepository: compositionsRepo, assetsRepository: assetsRepo } =
-      context.requestContainer.cradle;
+    const {
+      opusRepository: repo,
+      compositionsRepository: compositionsRepo,
+      assetsRepository: assetsRepo
+    } = context.requestContainer.cradle;
 
     const existingOpus = await findExistingOpus(repo, id);
 
@@ -286,7 +294,10 @@ export const OpusMutation = {
 
     const compositions = await handleCompositionsSync(compositionsRepo, repo, existingOpus, input.compositions);
 
-    const updateData = buildOpusUpdateData(input, compositions.map((c) => c.id));
+    const updateData = buildOpusUpdateData(
+      input,
+      compositions.map((c) => c.id)
+    );
 
     await processSlugUpdate(id, input.name, repo, updateData);
 

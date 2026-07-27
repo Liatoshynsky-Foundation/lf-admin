@@ -160,7 +160,7 @@ describe('useGroupContent Hook', () => {
         loading: false,
         error: undefined
       });
- 
+
       const { result } = renderHook(() => useGroupContent('test-id'));
       await waitFor(() => {
         expect(result.current.groupData).not.toBeNull();
@@ -801,7 +801,7 @@ describe('useGroupContent Hook', () => {
       });
       const calledInput = mockUpdateOpus.mock.calls[0][0].variables.input;
       expect(calledInput.numberKind).toBe('sineop');
-      expect(calledInput.genre).toEqual({'en': '', 'uk': ''});
+      expect(calledInput.genre).toEqual({ en: '', uk: '' });
       expect(calledInput.additionalText).toBe('');
       expect(calledInput.gallery).toEqual([]);
       expect(calledInput.compositions[0].audios).toEqual([]);
@@ -1042,6 +1042,80 @@ describe('useGroupContent Hook', () => {
       });
 
       expect(mockNavigate).toHaveBeenCalledWith('/creativity');
+    });
+  });
+  describe('Saving', () => {
+    it('should forcefully trigger none handleSave', async () => {
+      const originalSplit = String.prototype.split;
+      jest.spyOn(String.prototype, 'split').mockImplementation(function (this: string, separator: any, limit?: any) {
+        if (this === 'trigger-empty-split') return [] as unknown as string[];
+        return originalSplit.call(this, separator, limit);
+      });
+
+      const edgeOpus = {
+        ...mockFetchedOpus,
+        number: '100',
+        name: { uk: 'Valid Name', en: '' },
+        creationYear: 2020,
+        numberKind: 'op',
+
+        gallery: [
+          {
+            id: 'photo-edge',
+            src: '',
+            description: { uk: '', en: '' },
+            altText: { uk: '', en: '' },
+            crop: undefined
+          }
+        ],
+        compositions: [
+          {
+            id: 'comp-edge',
+            title: { uk: 'T' },
+            audios: [{ name: null, url: 'trigger-empty-split' }],
+            sheetMusic: undefined
+          }
+        ]
+      };
+
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: { opusById: edgeOpus },
+        loading: false
+      });
+      mockUpdateOpus.mockResolvedValue({ data: { updateOpus: { id: 'test-id' } } });
+
+      const { result } = renderHook(() => useGroupContent('test-id'));
+      await waitFor(() => expect(result.current.groupData).not.toBeNull());
+
+      act(() => {
+        result.current.handleFieldChange('groupNumber', '100');
+        result.current.handleFieldChange('titlePrefix', 'op');
+        result.current.handleFieldChange('creationYear', '2020');
+        result.current.handleFieldChange('groupTitle', { uk: 'Valid Name Ukr', en: 'Valid Name Eng' });
+        result.current.handleFieldChange('additionalText', '');
+        result.current.handleFieldChange('genre', { uk: '   ', en: '   ' });
+        result.current.handleFieldChange('parts', { uk: '', en: undefined });
+        result.current.handleFieldChange('description', { uk: null, en: '' });
+        result.current.handleFieldChange('compositions', [
+          {
+            id: 'c3',
+            name: 'T',
+            genre: '   ',
+            year: '   ',
+            audios: undefined,
+            notes: undefined
+          } as unknown as OpusCompositionData
+        ]);
+      });
+
+      await act(async () => {
+        await result.current.handlePublishClick();
+      });
+
+      expect(toast.error).not.toHaveBeenCalled();
+      expect(mockUpdateOpus).toHaveBeenCalled();
+
+      jest.restoreAllMocks();
     });
   });
 });

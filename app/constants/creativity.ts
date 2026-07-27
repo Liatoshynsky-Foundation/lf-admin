@@ -150,6 +150,7 @@ export interface GroupData {
   performancesTitle: string;
   performances: GroupPerformance[];
   status: string;
+  blocksOrder?: string[];
 }
 
 export type GroupDataField = keyof GroupData;
