@@ -1,25 +1,20 @@
 'use client';
-import { useMemo } from 'react';
 
-import { ARCHIVE_BASE_PATH, ARCHIVE_EMPTY_STATE_DESCRIPTION, ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION, ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE, ARCHIVE_EMPTY_STATE_TITLE } from '~/constants/archive';
+import {
+  ARCHIVE_BASE_PATH,
+  ARCHIVE_EMPTY_STATE_DESCRIPTION,
+  ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION,
+  ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE,
+  ARCHIVE_EMPTY_STATE_TITLE,
+  ARCHIVE_FONDS_TABLE_HEADERS,
+} from '~/constants/archive';
+import { Fond } from '~/constants/fond';
 import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import { EmptyState } from '~/shared/components/empty-state';
 import { RowActions } from '~/shared/components/table-layout/components/RowActions';
 import { StatusBadge } from '~/shared/components/table-layout/components/StatusBadge';
 import { ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
-import { BaseContentStatuses } from '~/types/enums/common.enums';
-
-export type Fond = {
-  id: string;
-  fondNumber: number;
-  name: string;
-  descriptions: number;
-  cases: number;
-  dates: string;
-  status: BaseContentStatuses;
-  updatedAt: string;
-}
 
 export type FondRow = Fond & {
   editAction: { editHref: string; editLabel: string };
@@ -30,6 +25,8 @@ export interface FondsTableProps {
   fonds: Fond[];
   hasActiveCriteria: boolean;
 }
+
+
 
 export const FondsTable = ({ fonds, hasActiveCriteria }: FondsTableProps) => {
   const rows = fonds.map((fond) => ({
@@ -58,61 +55,59 @@ export const FondsTable = ({ fonds, hasActiveCriteria }: FondsTableProps) => {
     },
   }));
 
-  const columns = useMemo<readonly ColumnDef<never, never, FondRow>[]>(() => {
-    return [
-      {
-        id: 'fondId',
-        headerLabel: 'Фонд',
-        align: 'center',
-        width: '46px',
-        hasRightDivider: true,
-        renderPlain: (fond) => fond.id,
-      },
-      {
-        id: 'name',
-        headerLabel: 'Назва фонду',
-        width: 'minmax(300px, 1fr)',
-        renderPlain: (fond) => fond.name,
-      },
-      {
-        id: 'descriptionsCount',
-        headerLabel: 'Описи',
-        width: '96px',
-        renderPlain: (fond) => String(fond.descriptions),
-      },
-      {
-        id: 'casesCount',
-        headerLabel: 'Справи',
-        width: '96px',
-        renderPlain: (fond) => String(fond.cases),
-      },
-      {
-        id: 'dates',
-        headerLabel: 'Дати утворення',
-        width: '160px',
-        renderPlain: (fond) => fond.dates,
-      },
-      {
-        id: 'status',
-        headerLabel: 'Статус',
-        width: '60px',
-        align: 'center',
-        hasLeftDivider: true,
-        hasRightDivider: true,
-        renderPlain: (fond) => <StatusBadge status={fond.status} updatedAt={fond.updatedAt} />,
-      },
-      {
-        id: 'actions',
-        width: '96px',
-        align: 'right',
-        renderPlain: (fond) => <RowActions editAction={{
-          editLabel: fond.editAction.editLabel,
-          editHref: fond.editAction.editHref
-        }} menuActions={fond.menuActions} />
-      }
-    ];
-  }, []);
-
+  const columns: readonly ColumnDef<never, never, FondRow>[] = [
+    {
+      id: 'fondId',
+      headerLabel: ARCHIVE_FONDS_TABLE_HEADERS.fond,
+      align: 'center',
+      width: '46px',
+      hasRightDivider: true,
+      renderPlain: (fond) => fond.id,
+    },
+    {
+      id: 'name',
+      headerLabel: ARCHIVE_FONDS_TABLE_HEADERS.name,
+      width: 'minmax(300px, 1fr)',
+      renderPlain: (fond) => fond.name,
+    },
+    {
+      id: 'descriptionsCount',
+      headerLabel: ARCHIVE_FONDS_TABLE_HEADERS.descr,
+      width: '96px',
+      renderPlain: (fond) => String(fond.descriptions),
+    },
+    {
+      id: 'casesCount',
+      headerLabel: ARCHIVE_FONDS_TABLE_HEADERS.cases,
+      width: '96px',
+      renderPlain: (fond) => String(fond.cases),
+    },
+    {
+      id: 'dates',
+      headerLabel: ARCHIVE_FONDS_TABLE_HEADERS.dates,
+      width: '160px',
+      renderPlain: (fond) => fond.dates,
+    },
+    {
+      id: 'status',
+      headerLabel: ARCHIVE_FONDS_TABLE_HEADERS.status,
+      width: '60px',
+      align: 'center',
+      hasLeftDivider: true,
+      hasRightDivider: true,
+      renderPlain: (fond) => <StatusBadge status={fond.status} updatedAt={fond.updatedAt} />,
+    },
+    {
+      id: 'actions',
+      width: '96px',
+      align: 'right',
+      renderPlain: (fond) => <RowActions editAction={{
+        editLabel: fond.editAction.editLabel,
+        editHref: fond.editAction.editHref
+      }} menuActions={fond.menuActions} />
+    }
+  ];
+ 
   if (rows.length === 0) {
     return (
       <EmptyState

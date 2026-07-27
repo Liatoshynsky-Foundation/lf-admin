@@ -1,18 +1,6 @@
 import seedData from './archive.mock.data.json';
+import { Fond, FondStatus } from '~/constants/fond';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
-
-export type FondStatus = BaseContentStatuses;
-
-export type Fond = {
-  id: string;
-  fondNumber: number;
-  name: string;
-  descriptions: number;
-  cases: number;
-  dates: string;
-  status: FondStatus;
-  updatedAt: string;
-};
 
 const isFondStatus = (value: string): value is FondStatus =>
   Object.values(BaseContentStatuses).includes(value as BaseContentStatuses);

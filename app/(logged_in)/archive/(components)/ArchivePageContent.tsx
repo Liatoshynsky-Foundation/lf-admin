@@ -20,15 +20,13 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
   const normalizedSearch = normalizeSearch(searchValue);
 
   const visibleFonds = ARCHIVE_FONDS_MOCK_DATA.filter((fond) => {
-    const isStatusSame = statusFilterProps.value?.includes('all') ? true : statusFilterProps.value?.includes(fond.status);
+    const filterValues = statusFilterProps.value || [];
+    const matchesStatus = filterValues.includes('all') ? true : filterValues.includes(fond.status);
 
     const normalizedFondName = normalizeSearch(fond.name);
-    const isNameSame = normalizedFondName.includes(normalizedSearch);
+    const matchesName = normalizedFondName.includes(normalizedSearch);
 
-    if (isStatusSame && isNameSame) {
-      return fond;
-    }
-    return false;
+    return matchesStatus && matchesName;
   });
 
   const ascSortedVisibleFonds = visibleFonds.toSorted((a, b) => Number(a.id) - Number(b.id));

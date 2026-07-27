@@ -1,7 +1,13 @@
 import { render, screen } from '@testing-library/react';
 
 import { FondsTable, FondsTableProps } from './ArchiveFondsTable';
-import { ARCHIVE_EMPTY_STATE_DESCRIPTION, ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION, ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE, ARCHIVE_EMPTY_STATE_TITLE } from '~/constants/archive';
+import {
+  ARCHIVE_EMPTY_STATE_DESCRIPTION,
+  ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION,
+  ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE,
+  ARCHIVE_EMPTY_STATE_TITLE,
+  ARCHIVE_FONDS_TABLE_HEADERS,
+} from '~/constants/archive';
 import { BaseRowData, ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
@@ -95,11 +101,11 @@ describe('ArchiveFondsTable', () => {
     expect(screen.getByTestId('mock-table-layout')).toBeInTheDocument();
 
     expect(screen.getByTestId('mock-table-layout-columns')).toBeInTheDocument();
-    expect(screen.getByTestId('mock-table-layout-column-fondId')).toHaveTextContent('Фонд');
-    expect(screen.getByTestId('mock-table-layout-column-name')).toHaveTextContent('Назва фонду');
-    expect(screen.getByTestId('mock-table-layout-column-descriptionsCount')).toHaveTextContent('Описи');
-    expect(screen.getByTestId('mock-table-layout-column-casesCount')).toHaveTextContent('Справи');
-    expect(screen.getByTestId('mock-table-layout-column-dates')).toHaveTextContent('Дати утворення');
+    expect(screen.getByTestId('mock-table-layout-column-fondId')).toHaveTextContent(ARCHIVE_FONDS_TABLE_HEADERS.fond);
+    expect(screen.getByTestId('mock-table-layout-column-name')).toHaveTextContent(ARCHIVE_FONDS_TABLE_HEADERS.name);
+    expect(screen.getByTestId('mock-table-layout-column-descriptionsCount')).toHaveTextContent(ARCHIVE_FONDS_TABLE_HEADERS.descr);
+    expect(screen.getByTestId('mock-table-layout-column-casesCount')).toHaveTextContent(ARCHIVE_FONDS_TABLE_HEADERS.cases);
+    expect(screen.getByTestId('mock-table-layout-column-dates')).toHaveTextContent(ARCHIVE_FONDS_TABLE_HEADERS.dates);
     expect(screen.getByTestId('mock-table-layout-column-status')).toBeInTheDocument();
     expect(screen.getByTestId('mock-table-layout-column-actions')).toBeInTheDocument();
 

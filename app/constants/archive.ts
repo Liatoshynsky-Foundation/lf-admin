@@ -63,3 +63,12 @@ export const ARCHIVE_EMPTY_STATE_DESCRIPTION =
   'Натисніть «Додати фонд», щоб створити перший.';
 export const ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE = 'Нічого не знайдено';
 export const ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION = 'Спробуйте змінити параметри пошуку або фільтрів.';
+
+export const ARCHIVE_FONDS_TABLE_HEADERS = {
+  fond: 'Фонд',
+  name: 'Назва фонду',
+  descr: 'Описи',
+  cases: 'Справи',
+  dates: 'Дати утворення',
+  status: 'Статус',
+} as const;
