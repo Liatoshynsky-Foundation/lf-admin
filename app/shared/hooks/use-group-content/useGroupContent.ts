@@ -51,6 +51,107 @@ const fileNameFromUrl = (url?: string | null): string => {
   return decodeURIComponent(segment.split('?')[0]);
 };
 
+const validatePerformance = (
+  perf: NonNullable<GroupData['performances']>[number],
+  newErrors: Record<string, string>,
+  setCurrentLanguage: (lang: EditorLanguage) => void
+) => {
+  const url = (perf.url || '').trim();
+  const capUk = (perf.caption?.uk || '').trim();
+  const capEn = (perf.caption?.en || '').trim();
+
+  const isRowEmpty = !url && !capUk && !capEn;
+  if (isRowEmpty) return;
+
+  if (!url) {
+    newErrors[`performances[${perf.id}].url`] = OPUS_VALIDATION_MESSAGES.performanceUrl;
+  }
+
+  if (!capUk || capUk.length < OPUS_FIELD_LIMITS.caption.min || capUk.length > OPUS_FIELD_LIMITS.caption.max) {
+    if (!capUk) {
+      newErrors[`performances[${perf.id}].caption.uk`] = OPUS_VALIDATION_MESSAGES.performanceSignature;
+    } else if (capUk.length > OPUS_FIELD_LIMITS.caption.max) {
+      newErrors[`performances[${perf.id}].caption.uk`] = OPUS_VALIDATION_MESSAGES.captionTooLong;
+    } else {
+      newErrors[`performances[${perf.id}].caption.uk`] = OPUS_VALIDATION_MESSAGES.nameTooShort;
+    }
+    setCurrentLanguage('UA');
+  } else if (!capEn || capEn.length < OPUS_FIELD_LIMITS.caption.min || capEn.length > OPUS_FIELD_LIMITS.caption.max) {
+    if (!capEn) {
+      newErrors[`performances[${perf.id}].caption.en`] = OPUS_VALIDATION_MESSAGES.performanceSignature;
+    } else if (capEn.length > OPUS_FIELD_LIMITS.caption.max) {
+      newErrors[`performances[${perf.id}].caption.en`] = OPUS_VALIDATION_MESSAGES.captionTooLong;
+    } else {
+      newErrors[`performances[${perf.id}].caption.en`] = OPUS_VALIDATION_MESSAGES.nameTooShort;
+    }
+    setCurrentLanguage('EN');
+  }
+};
+
+const validatePhotoAltText = (
+  photo: GroupPhoto,
+  newErrors: Record<string, string>,
+  setCurrentLanguage: (lang: EditorLanguage) => void
+) => {
+  const altUk = (photo.altText?.uk || '').trim();
+  const altEn = (photo.altText?.en || '').trim();
+
+  if (!altUk) {
+    newErrors[`photos[${photo.id}].altText.uk`] = OPUS_VALIDATION_MESSAGES.photoAltText;
+    setCurrentLanguage('UA');
+  } else if (altUk.length > OPUS_FIELD_LIMITS.altText.max) {
+    newErrors[`photos[${photo.id}].altText.uk`] = OPUS_VALIDATION_MESSAGES.captionTooLong;
+    setCurrentLanguage('UA');
+  } else if (altUk.length < OPUS_FIELD_LIMITS.altText.min) {
+    newErrors[`photos[${photo.id}].altText.uk`] = OPUS_VALIDATION_MESSAGES.photoTextTooShort;
+    setCurrentLanguage('UA');
+  } else if (!altEn) {
+    newErrors[`photos[${photo.id}].altText.en`] = OPUS_VALIDATION_MESSAGES.photoAltText;
+    setCurrentLanguage('EN');
+  } else if (altEn.length > OPUS_FIELD_LIMITS.altText.max) {
+    newErrors[`photos[${photo.id}].altText.en`] = OPUS_VALIDATION_MESSAGES.captionTooLong;
+    setCurrentLanguage('EN');
+  } else if (altEn.length < OPUS_FIELD_LIMITS.altText.min) {
+    newErrors[`photos[${photo.id}].altText.en`] = OPUS_VALIDATION_MESSAGES.photoTextTooShort;
+    setCurrentLanguage('EN');
+  }
+};
+
+const validatePhotoCaption = (
+  photo: GroupPhoto,
+  newErrors: Record<string, string>,
+  setCurrentLanguage: (lang: EditorLanguage) => void
+) => {
+  const capUk = (photo.caption?.uk || '').trim();
+  const capEn = (photo.caption?.en || '').trim();
+
+  if (capUk.length > OPUS_FIELD_LIMITS.caption.max) {
+    newErrors[`photos[${photo.id}].caption.uk`] = OPUS_VALIDATION_MESSAGES.captionTooLong;
+    setCurrentLanguage('UA');
+  } else if (capUk.length > 0 && capUk.length < OPUS_FIELD_LIMITS.caption.min) {
+    newErrors[`photos[${photo.id}].caption.uk`] = OPUS_VALIDATION_MESSAGES.photoTextTooShort;
+    setCurrentLanguage('UA');
+  } else if (capEn.length > OPUS_FIELD_LIMITS.caption.max) {
+    newErrors[`photos[${photo.id}].caption.en`] = OPUS_VALIDATION_MESSAGES.captionTooLong;
+    setCurrentLanguage('EN');
+  } else if (capEn.length > 0 && capEn.length < OPUS_FIELD_LIMITS.caption.min) {
+    newErrors[`photos[${photo.id}].caption.en`] = OPUS_VALIDATION_MESSAGES.photoTextTooShort;
+    setCurrentLanguage('EN');
+  }
+};
+
+const validatePhoto = (
+  photo: GroupPhoto,
+  newErrors: Record<string, string>,
+  setCurrentLanguage: (lang: EditorLanguage) => void
+) => {
+  const src = (photo.src || '').trim();
+  if (!src) return;
+
+  validatePhotoAltText(photo, newErrors, setCurrentLanguage);
+  validatePhotoCaption(photo, newErrors, setCurrentLanguage);
+};
+
 export const useGroupContent = (id: string) => {
   const { data, loading, error } = useOpusById(id);
   const { navigate } = useNavigationGuard();
@@ -90,10 +191,12 @@ export const useGroupContent = (id: string) => {
       };
       setGroupData({
         titlePrefix: fetchedOpus.numberKind ?? 'op',
-        groupNumber: fetchedOpus.number ? String(fetchedOpus.number).replace(/^(op|woo|sineop|wo|bo)[.\-\s]*/i, '') : '',
-        genre: { 
-          uk: fetchedOpus.genre?.uk ?? '', 
-          en: fetchedOpus.genre?.en ?? '' 
+        groupNumber: fetchedOpus.number
+          ? String(fetchedOpus.number).replace(/^(op|woo|sineop|wo|bo)[.\-\s]*/i, '')
+          : '',
+        genre: {
+          uk: fetchedOpus.genre?.uk ?? '',
+          en: fetchedOpus.genre?.en ?? ''
         },
         additionalText: fetchedOpus.additionalText ?? '',
         groupTitle: {
@@ -317,62 +420,8 @@ export const useGroupContent = (id: string) => {
       setCurrentLanguage('EN');
     }
 
-    groupData?.performances?.forEach((perf) => {
-      const url = (perf.url || '').trim();
-      const capUk = (perf.caption?.uk || '').trim();
-      const capEn = (perf.caption?.en || '').trim();
-
-      const isRowEmpty = !url && !capUk && !capEn;
-      if (isRowEmpty) return;
-
-      if (!url) {
-        newErrors[`performances[${perf.id}].url`] = OPUS_VALIDATION_MESSAGES.performanceUrl;
-      }
-
-      if (!capUk || capUk.length < 2 || capUk.length > 250) {
-        newErrors[`performances[${perf.id}].caption.uk`] = !capUk
-          ? OPUS_VALIDATION_MESSAGES.performanceSignature
-          : OPUS_VALIDATION_MESSAGES.nameTooShort;
-        setCurrentLanguage('UA');
-      } else if (!capEn || capEn.length < 2 || capEn.length > 250) {
-        newErrors[`performances[${perf.id}].caption.en`] = !capEn
-          ? OPUS_VALIDATION_MESSAGES.performanceSignature
-          : OPUS_VALIDATION_MESSAGES.nameTooShort;
-        setCurrentLanguage('EN');
-      }
-    });
-
-    groupData?.photos?.forEach((photo) => {
-      const src = (photo.src || '').trim();
-
-      if (!src) return;
-
-      const altUk = (photo.altText?.uk || '').trim();
-      const altEn = (photo.altText?.en || '').trim();
-
-      if (!altUk || altUk.length < 2 || altUk.length > 250) {
-        newErrors[`photos[${photo.id}].altText.uk`] = !altUk
-          ? OPUS_VALIDATION_MESSAGES.photoAltText
-          : OPUS_VALIDATION_MESSAGES.photoTextTooShort;
-        setCurrentLanguage('UA');
-      } else if (!altEn || altEn.length < 2 || altEn.length > 250) {
-        newErrors[`photos[${photo.id}].altText.en`] = !altEn
-          ? OPUS_VALIDATION_MESSAGES.photoAltText
-          : OPUS_VALIDATION_MESSAGES.photoTextTooShort;
-        setCurrentLanguage('EN');
-      }
-
-      const capUk = (photo.caption?.uk || '').trim();
-      const capEn = (photo.caption?.en || '').trim();
-
-      if (capUk.length > 0 && capUk.length < 2) {
-        newErrors[`photos[${photo.id}].caption.uk`] = OPUS_VALIDATION_MESSAGES.photoTextTooShort;
-        setCurrentLanguage('UA');
-      } else if (capEn.length > 0 && capEn.length < 2) {
-        newErrors[`photos[${photo.id}].caption.en`] = OPUS_VALIDATION_MESSAGES.photoTextTooShort;
-        setCurrentLanguage('EN');
-      }
-    });
+    groupData?.performances?.forEach((perf) => validatePerformance(perf, newErrors, setCurrentLanguage));
+    groupData?.photos?.forEach((photo) => validatePhoto(photo, newErrors, setCurrentLanguage));
 
     if (!groupData?.titlePrefix || String(groupData.titlePrefix).trim() === '') {
       newErrors.titlePrefix = REQUIRED_FIELD_ERROR;

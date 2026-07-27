@@ -3,6 +3,7 @@ import { Box, Divider, IconButton, Typography } from '@mui/material';
 import { styles } from './GroupPhotosSection.styles';
 import { useGroupPhotos } from './useGroupPhotos';
 import { GroupPhoto } from '~/constants/creativity';
+import { OPUS_FIELD_LIMITS } from '~/constants/opus';
 import { CROP_RATIOS,EditorLanguage  } from '~/constants/publications';
 import PlusIcon from '~/public/icons/plus.svg';
 import TrashIcon from '~/public/icons/trash.svg';
@@ -25,7 +26,7 @@ export const GroupPhotosSection = ({ photos, currentLanguage, errors, onChange }
 
   const langKey = currentLanguage === 'UA' ? 'uk' : 'en';
 
-  const isMaxPhotosReached = photos.length >= 20;
+  const isMaxPhotosReached = photos.length >= OPUS_FIELD_LIMITS.maxPhotos;
 
   return (
     <>
@@ -35,13 +36,11 @@ export const GroupPhotosSection = ({ photos, currentLanguage, errors, onChange }
             const altTextValue = photo.altText?.[langKey] || '';
             const srcValue = photo.src || '';
             const altTextError = errors?.[`photos[${photo.id}].altText.${langKey}`];
-            const showAltTextError = Boolean(altTextError && srcValue && altTextValue.trim().length < 2);
+            const showAltTextError = Boolean(altTextError && srcValue);
 
             const captionValue = photo.caption?.[langKey] || '';
             const captionError = errors?.[`photos[${photo.id}].caption.${langKey}`];
-            const showCaptionError = Boolean(
-              captionError && captionValue.trim().length > 0 && captionValue.trim().length < 2
-            );
+            const showCaptionError = Boolean(captionError);
             return (
               <Box key={photo.id} sx={styles.photoItem}>
                 <Box sx={styles.photoHeader}>

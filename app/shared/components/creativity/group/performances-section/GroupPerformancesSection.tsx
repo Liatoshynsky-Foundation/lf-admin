@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { styles } from './GroupPerformancesSection.styles';
 import { PerformanceRow } from './PerformanceRow';
 import { GroupPerformance, NormalizedGroupPerformance } from '~/constants/creativity';
+import { OPUS_FIELD_LIMITS } from '~/constants/opus';
 import { EditorLanguage } from '~/constants/publications';
 import { generateUniqueId } from '~/lib/utils/generateUniqueId';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
@@ -62,7 +63,7 @@ const renderLinkPreview = (url: string) => {
   );
 };
 
-const MAX_PERFORMANCES = 5;
+const MAX_PERFORMANCES = OPUS_FIELD_LIMITS.maxPerformances;
 
 export const GroupPerformancesSection = ({
   currentLanguage,

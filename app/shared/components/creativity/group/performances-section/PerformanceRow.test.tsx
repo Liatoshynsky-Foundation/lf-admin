@@ -211,9 +211,7 @@ describe('PerformanceRow Component', () => {
           id: MOCK_IDS.base,
           url: 'https://youtube.com',
           caption: { uk: 'Valid Caption', en: '' }
-        },
-        urlError: 'URL is required',
-        captionError: 'Caption is too short'
+        }
       });
 
       expect(screen.queryByTestId(`error-text-${LABELS.canonicalUrl}`)).not.toBeInTheDocument();

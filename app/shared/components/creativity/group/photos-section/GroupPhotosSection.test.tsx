@@ -375,8 +375,8 @@ describe('GroupPhotosSection UI Component', () => {
     expect(screen.getByTestId('alt-error-img.jpg')).toHaveTextContent('Alt text error');
     expect(screen.getByText('Caption error')).toBeInTheDocument();
 
-    expect(screen.queryByTestId('alt-error-img2.jpg')).not.toBeInTheDocument();
-    expect(screen.queryByText('Hidden caption error')).not.toBeInTheDocument();
+    expect(screen.getByTestId('alt-error-img2.jpg')).toHaveTextContent('Hidden alt error');
+    expect(screen.getByText('Hidden caption error')).toBeInTheDocument();
   });
 
   it('should handle onChangeImage when crop parameter is omitted or undefined', () => {

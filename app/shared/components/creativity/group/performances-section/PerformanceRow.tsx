@@ -3,6 +3,7 @@ import { Trash2 } from 'lucide-react';
 
 import { styles } from './GroupPerformancesSection.styles';
 import { NormalizedGroupPerformance } from '~/constants/creativity';
+import {OPUS_FIELD_LIMITS} from '~/constants/opus';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 
 export type PerformanceRowProps = {
@@ -26,11 +27,13 @@ export const PerformanceRow = ({
   onUpdateCaption,
   onDeleteRequest
 }: PerformanceRowProps) => {
-  const captionValue = item.caption?.[langKey] || '';
   const urlValue = item.url || '';
 
-  const isRowEmpty = !urlValue.trim() && !captionValue.trim();
-  const showCaptionError = Boolean(captionError && !isRowEmpty && captionValue.trim().length < 2);
+  const captionUk = item.caption?.uk || '';
+  const captionEn = item.caption?.en || '';
+
+  const isRowEmpty = !urlValue.trim() && !captionUk.trim() && !captionEn.trim();
+  const showCaptionError = Boolean(captionError && !isRowEmpty);
   const showUrlError = Boolean(urlError && !isRowEmpty && !urlValue.trim());
 
   return (
@@ -61,7 +64,7 @@ export const PerformanceRow = ({
           fullWidth
           error={showCaptionError}
           helperText={showCaptionError ? captionError : ''}
-          inputProps={{ maxLength: 250 }}
+          inputProps={{ maxLength: OPUS_FIELD_LIMITS.caption.max }}
         />
       </Box>
 

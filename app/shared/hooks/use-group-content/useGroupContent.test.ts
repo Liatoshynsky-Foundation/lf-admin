@@ -44,7 +44,12 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
 }));
 
 jest.mock('~/constants/opus', () => ({
-  OPUS_FIELD_LIMITS: { name: { min: 2, max: 250 } },
+  OPUS_FIELD_LIMITS: {
+    name: { min: 2, max: 250 },
+    caption: { min: 2, max: 250 },
+    altText: { min: 2, max: 250 },
+    maxPhotos: 20
+  },
   OPUS_VALIDATION_MESSAGES: {
     nameRequired: 'nameRequired',
     nameTooShort: 'nameTooShort',
@@ -52,7 +57,8 @@ jest.mock('~/constants/opus', () => ({
     performanceUrl: 'performanceUrl',
     performanceSignature: 'performanceSignature',
     photoAltText: 'photoAltText',
-    photoTextTooShort: 'photoTextTooShort'
+    photoTextTooShort: 'photoTextTooShort',
+    captionTooLong: 'captionTooLong'
   },
   OPUS_MUTATION_RESULTS: {
     deleted: 'deleted'
@@ -1043,7 +1049,9 @@ describe('useGroupContent Hook', () => {
           { id: 'perf-1', videoUrl: 'url1', title: { uk: longText, en: 'Valid EN' } },
           { id: 'perf-2', videoUrl: 'url2', title: { uk: 'Valid UK', en: '' } },
           { id: 'perf-3', videoUrl: 'url3', title: { uk: 'Valid UK', en: 'a' } },
-          { id: 'perf-4', videoUrl: 'url4', title: { uk: 'Valid UK', en: longText } }
+          { id: 'perf-4', videoUrl: 'url4', title: { uk: 'Valid UK', en: longText } },
+          { id: 'perf-5', videoUrl: 'url5', title: { uk: '', en: 'Valid EN' } },
+          { id: 'perf-6', videoUrl: 'url6', title: { uk: 'a', en: 'Valid EN' } }
         ]
       };
 
@@ -1059,10 +1067,12 @@ describe('useGroupContent Hook', () => {
         await result.current.handlePublishClick();
       });
 
-      expect(result.current.errors['performances[perf-1].caption.uk']).toBe('nameTooShort');
+      expect(result.current.errors['performances[perf-1].caption.uk']).toBe('captionTooLong');
       expect(result.current.errors['performances[perf-2].caption.en']).toBe('performanceSignature');
       expect(result.current.errors['performances[perf-3].caption.en']).toBe('nameTooShort');
-      expect(result.current.errors['performances[perf-4].caption.en']).toBe('nameTooShort');
+      expect(result.current.errors['performances[perf-4].caption.en']).toBe('captionTooLong');
+      expect(result.current.errors['performances[perf-5].caption.uk']).toBe('performanceSignature');
+      expect(result.current.errors['performances[perf-6].caption.uk']).toBe('nameTooShort');
     });
 
     it('should trigger validation errors for photos altText and caption length', async () => {
@@ -1098,6 +1108,20 @@ describe('useGroupContent Hook', () => {
             altText: { uk: 'Valid', en: longText },
             description: { uk: 'Valid', en: 'a' },
             crop: null
+          },
+          {
+            id: 'photo-5',
+            src: 'img5.jpg',
+            altText: { uk: '', en: 'Valid' },
+            description: { uk: '', en: '' },
+            crop: null
+          },
+          {
+            id: 'photo-6',
+            src: 'img6.jpg',
+            altText: { uk: 'a', en: 'Valid' },
+            description: { uk: '', en: '' },
+            crop: null
           }
         ]
       };
@@ -1114,10 +1138,12 @@ describe('useGroupContent Hook', () => {
         await result.current.handlePublishClick();
       });
 
-      expect(result.current.errors['photos[photo-1].altText.uk']).toBe('photoTextTooShort');
+      expect(result.current.errors['photos[photo-1].altText.uk']).toBe('captionTooLong');
       expect(result.current.errors['photos[photo-2].altText.en']).toBe('photoAltText');
       expect(result.current.errors['photos[photo-3].altText.en']).toBe('photoTextTooShort');
-      expect(result.current.errors['photos[photo-4].altText.en']).toBe('photoTextTooShort');
+      expect(result.current.errors['photos[photo-4].altText.en']).toBe('captionTooLong');
+      expect(result.current.errors['photos[photo-5].altText.uk']).toBe('photoAltText');
+      expect(result.current.errors['photos[photo-6].altText.uk']).toBe('photoTextTooShort');
 
       expect(result.current.errors['photos[photo-3].caption.uk']).toBe('photoTextTooShort');
       expect(result.current.errors['photos[photo-4].caption.en']).toBe('photoTextTooShort');
