@@ -20,6 +20,7 @@ jest.mock('~/store', () => ({
 }));
 
 const mockPush = jest.fn();
+const mockRefresh = jest.fn();
 const mockLogout = jest.fn();
 
 describe('SessionTimeoutProvider', () => {
@@ -28,7 +29,8 @@ describe('SessionTimeoutProvider', () => {
     jest.useFakeTimers();
 
     (useRouter as jest.Mock).mockReturnValue({
-      push: mockPush
+      push: mockPush,
+      refresh: mockRefresh
     });
 
     (useStore as unknown as jest.Mock).mockImplementation((selector) => selector({ logout: mockLogout }));
@@ -128,7 +130,7 @@ describe('SessionTimeoutProvider', () => {
     await waitFor(() => expect(logoutAction).toHaveBeenCalledTimes(1));
   });
 
-  it('resets the timer on keypress activity', () => {
+  it('resets the timer on keydown activity', () => {
     render(
       <SessionTimeoutProvider>
         <div>Protected content</div>
@@ -137,10 +139,9 @@ describe('SessionTimeoutProvider', () => {
 
     jest.advanceTimersByTime(59 * 60 * 1000);
 
-    fireEvent.keyPress(window, {
+    fireEvent.keyDown(window, {
       key: 'a',
-      code: 'KeyA',
-      charCode: 97
+      code: 'KeyA'
     });
 
     jest.advanceTimersByTime(59 * 60 * 1000);
@@ -181,6 +182,22 @@ describe('SessionTimeoutProvider', () => {
     });
   });
 
+  it('resets the timer on pointerdown activity', () => {
+    render(
+      <SessionTimeoutProvider>
+        <div>Protected content</div>
+      </SessionTimeoutProvider>
+    );
+
+    jest.advanceTimersByTime(59 * 60 * 1000);
+
+    fireEvent.pointerDown(window);
+
+    jest.advanceTimersByTime(59 * 60 * 1000);
+
+    expect(logoutAction).not.toHaveBeenCalled();
+  });
+
   it('removes event listeners on unmount', () => {
     const removeEventListenerSpy = jest.spyOn(window, 'removeEventListener');
 
@@ -193,8 +210,9 @@ describe('SessionTimeoutProvider', () => {
     unmount();
 
     expect(removeEventListenerSpy).toHaveBeenCalledWith('mousemove', expect.any(Function));
-    expect(removeEventListenerSpy).toHaveBeenCalledWith('keypress', expect.any(Function));
+    expect(removeEventListenerSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
     expect(removeEventListenerSpy).toHaveBeenCalledWith('click', expect.any(Function));
+    expect(removeEventListenerSpy).toHaveBeenCalledWith('pointerdown', expect.any(Function));
 
     removeEventListenerSpy.mockRestore();
   });
