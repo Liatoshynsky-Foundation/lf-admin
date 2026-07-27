@@ -26,7 +26,7 @@ export type FoundRow = Found & {
   menuActions: { menuItems: ActionMenuGroups; menuTriggerLabel: string };
 };
 
-interface FondsTableProps {
+export interface FondsTableProps {
   founds: Found[];
   hasActiveCriteria: boolean;
 }
@@ -50,7 +50,7 @@ export const FondsTable = ({ founds, hasActiveCriteria }: FondsTableProps) => {
             ]
           },
           {
-            items: [{ id: 'delete', text: { name: 'Видалити' }, onClick: () => { } }]
+            items: [{ id: 'delete', text: { name: 'Видалити' } }]
           }
         ],
         menuTriggerLabel: `Дії для фонду ${fond.name}`
