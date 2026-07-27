@@ -87,4 +87,50 @@ describe('DeleteFileModal', () => {
     fireEvent.click(closeIcon!);
     expect(defaultProps.onClose).toHaveBeenCalled();
   });
+
+  it('should not render when file is undefined', () => {
+    const { open, onClose, onConfirm } = defaultProps;
+    render(<DeleteFileModal open={open} onClose={onClose} onConfirm={onConfirm} file={undefined as unknown as null} />);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('should display fallback text and keys when pageId or blockId are missing', () => {
+    const fileWithPartialRefs = {
+      id: '3',
+      filename: 'Partial.jpg',
+      usageRefs: [{ pageId: 'only-page' }, { blockId: 'only-block' }, {}]
+    };
+
+    render(<DeleteFileModal {...defaultProps} file={fileWithPartialRefs} />);
+
+    expect(screen.getByText('only-page')).toBeInTheDocument();
+    expect(screen.getByText('only-block')).toBeInTheDocument();
+    expect(screen.getByText('Невідомий блок')).toBeInTheDocument();
+  });
+
+  it('should use singular word variant when file is used in exactly one place', () => {
+    const fileUsedOnce = {
+      id: '5',
+      filename: 'Single_use.png',
+      usageRefs: [{ pageId: 'home', blockId: 'banner' }]
+    };
+
+    render(<DeleteFileModal {...defaultProps} file={fileUsedOnce} />);
+    expect(screen.getByText(/використовується на сайті і привʼязаний у 1 місці/i)).toBeInTheDocument();
+  });
+
+  it('should handle undefined file and missing usageRefs field', () => {
+    const { open, onClose, onConfirm } = defaultProps;
+
+    render(<DeleteFileModal open={open} onClose={onClose} onConfirm={onConfirm} file={undefined as unknown as null} />);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    const fileWithoutUsageRefs = {
+      id: '6',
+      filename: 'No_refs_field.png'
+    };
+
+    render(<DeleteFileModal {...defaultProps} file={fileWithoutUsageRefs} />);
+    expect(screen.getByText('No_refs_field.png')).toBeInTheDocument();
+  });
 });

@@ -51,4 +51,31 @@ describe('SearchButton', () => {
 
     expect(screen.getByDisplayValue('current value')).toBeInTheDocument();
   });
+
+  it('should remove placeholder when blurred', async () => {
+    const user = userEvent.setup();
+    render(<SearchButton value="" onSearch={() => {}} placeholder="Пошук..." />);
+
+    const input = screen.getByRole('textbox');
+
+    await user.click(input);
+    expect(input).toHaveAttribute('placeholder', 'Пошук...');
+
+    await user.click(document.body);
+    expect(input).toHaveAttribute('placeholder', '');
+  });
+
+  it('should focus input when search icon wrapper is clicked', async () => {
+    const user = userEvent.setup();
+    render(<SearchButton value="" onSearch={() => {}} />);
+
+    const input = screen.getByRole('textbox');
+    const iconWrapper = screen.getByTestId('search-icon').parentElement!;
+
+    expect(input).not.toHaveFocus();
+
+    await user.click(iconWrapper);
+
+    expect(input).toHaveFocus();
+  });
 });

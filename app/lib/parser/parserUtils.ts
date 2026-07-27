@@ -15,20 +15,15 @@ export function parseMaybeInt(v: string | null): number | null {
   return Number.isNaN(n) ? null : n;
 }
 
-// Unescape HTML entities and \uXXXX escapes and double-escaped forms like u0026#x430;
 export function unescapeEntities(s: string): string {
-  s = s.replaceAll('\u0026', '&');
   s = s.replaceAll('\u0026', '&');
 
   s = s.replaceAll(/\\u([0-9a-fA-F]{4})/g, (_, hex) => {
     const code = Number.parseInt(hex, 16);
-    if (!Number.isNaN(code)) return String.fromCodePoint(code);
-    return _;
+    return String.fromCodePoint(code);
   });
 
-  s = s.replaceAll(/&#x([0-9a-fA-F]+);?/g, (_, hex) =>
-    String.fromCodePoint(Number.parseInt(hex, 16))
-  );
+  s = s.replaceAll(/&#x([0-9a-fA-F]+);?/g, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16)));
   s = s.replaceAll(/&#(\d+);?/g, (_, dec) => String.fromCodePoint(Number.parseInt(dec, 10)));
 
   const named: Record<string, string> = {
@@ -55,22 +50,21 @@ export function parseJsonLd(html: string): Record<string, unknown> | null {
 
   try {
     const v = JSON.parse(raw);
-    if (Array.isArray(v)) return v.length > 0 && typeof v[0] === 'object' ? v[0] : null;
-    if (typeof v === 'object' && v !== null) return v;
+    if (Array.isArray(v)) return v.length > 0 && typeof v[0] === 'object' ? (v[0] as Record<string, unknown>) : null;
+    if (typeof v === 'object' && v !== null) return v as Record<string, unknown>;
   } catch {
     return null;
   }
   return null;
 }
 
-export function parseDateFlexible(input: string): Date | null {
+export function parseDateFlexible(input: string | null): Date | null {
   if (!input) return null;
-  input = input.trim();
-  const d1 = new Date(input);
+  const trimmed = input.trim();
+  const d1 = new Date(trimmed);
   if (!Number.isNaN(d1.getTime())) return d1;
 
-  // try dd.MM.yyyy HH:mm or dd.MM.yyyy
-  const m = /^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:[ T](\d{1,2}):(\d{2}))?/.exec(input);
+  const m = /^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:[ T](\d{1,2}):(\d{2}))?/.exec(trimmed);
 
   if (m) {
     const day = Number.parseInt(m[1], 10);

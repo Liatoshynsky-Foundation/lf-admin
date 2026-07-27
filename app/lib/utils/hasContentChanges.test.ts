@@ -1,25 +1,28 @@
 import { hasContentChanges } from './hasContentChanges';
 import { LocalizedEditorState } from '~/constants/publications';
+import { isContentEmpty } from '~/shared/components/content-editor';
 
 jest.mock('~/shared/components/content-editor', () => ({
   isContentEmpty: jest.fn()
 }));
 
-import { isContentEmpty } from '~/shared/components/content-editor';
-
 const mockedIsContentEmpty = jest.mocked(isContentEmpty);
 
-const createState = (blocks: any[] = []): LocalizedEditorState => ({
+interface SimpleBlock {
+  id: string;
+}
+
+const createState = (blocks: SimpleBlock[] = []): LocalizedEditorState => ({
   uk: {
     content: {
-      blocks,
+      blocks: blocks as unknown as import('@blocknote/core').Block[],
       version: '1',
       lastModified: '2025-01-01'
     }
   },
   en: {
     content: {
-      blocks,
+      blocks: blocks as unknown as import('@blocknote/core').Block[],
       version: '1',
       lastModified: '2025-01-01'
     }
@@ -55,5 +58,18 @@ describe('hasContentChanges', () => {
     const initial = createState([]);
 
     expect(hasContentChanges(current, initial)).toBe(false);
+  });
+
+  it('handles completely undefined or missing blocks in locales gracefully', () => {
+    mockedIsContentEmpty.mockReturnValue(false);
+
+    const partialState: LocalizedEditorState = {
+      uk: undefined,
+      en: undefined
+    };
+
+    const emptyState = createState([]);
+
+    expect(hasContentChanges(partialState, emptyState)).toBe(false);
   });
 });

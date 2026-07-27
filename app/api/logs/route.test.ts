@@ -9,7 +9,7 @@ const verifyAccessTokenMock = jest.fn();
 jest.mock('next/server', () => ({
   __esModule: true,
   NextResponse: {
-    json: (body: any, init?: ResponseInit) => new Response(JSON.stringify(body), init)
+    json: (body: unknown, init?: ResponseInit) => new Response(JSON.stringify(body), init)
   }
 }));
 
@@ -83,6 +83,44 @@ describe('GET /api/logs', () => {
       to: undefined
     });
   });
+
+  it('handles level=all filter correctly', async () => {
+    (getLogs as jest.Mock).mockResolvedValue({
+      items: [],
+      pagination: { page: 1, limit: 20, total: 0 }
+    });
+
+    const request = buildRequest('http://localhost/api/logs?level=all');
+    await GET(request);
+
+    expect(getLogs).toHaveBeenCalledWith({
+      level: 'all',
+      page: 1,
+      limit: 20,
+      from: undefined,
+      to: undefined
+    });
+  });
+
+  it('returns 500 when getLogs throws an Error instance', async () => {
+    (getLogs as jest.Mock).mockRejectedValue(new Error('Database error'));
+
+    const request = buildRequest('http://localhost/api/logs');
+    const response = await GET(request);
+
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({ message: 'Database error' });
+  });
+
+  it('returns 500 with default message when getLogs throws a non-Error object', async () => {
+    (getLogs as jest.Mock).mockRejectedValue('String error');
+
+    const request = buildRequest('http://localhost/api/logs');
+    const response = await GET(request);
+
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({ message: 'Failed to load logs' });
+  });
 });
 
 describe('DELETE /api/logs', () => {
@@ -142,5 +180,27 @@ describe('DELETE /api/logs', () => {
     await DELETE(request);
 
     expect(deleteLogs).toHaveBeenCalledWith(undefined);
+  });
+
+  it('returns 500 when deleteLogs throws an Error instance', async () => {
+    verifyAccessTokenMock.mockReturnValue({ id: 'admin-1', type: 'admin' });
+    (deleteLogs as jest.Mock).mockRejectedValue(new Error('Delete error'));
+
+    const request = buildRequest('http://localhost/api/logs', { accessToken: 'valid-token' });
+    const response = await DELETE(request);
+
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({ message: 'Delete error' });
+  });
+
+  it('returns 500 with default message when deleteLogs throws a non-Error object', async () => {
+    verifyAccessTokenMock.mockReturnValue({ id: 'admin-1', type: 'admin' });
+    (deleteLogs as jest.Mock).mockRejectedValue('String delete error');
+
+    const request = buildRequest('http://localhost/api/logs', { accessToken: 'valid-token' });
+    const response = await DELETE(request);
+
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({ message: 'Failed to clear logs' });
   });
 });

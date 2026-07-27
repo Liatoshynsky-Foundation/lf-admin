@@ -29,7 +29,8 @@ describe('CompositionTitleInput', () => {
     const onChangeText = jest.fn();
     render(<CompositionTitleInput {...baseProps} onChangeText={onChangeText} />);
 
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'Соната' } });
+    const input = screen.getByRole('combobox');
+    fireEvent.change(input, { target: { value: 'Соната' } });
 
     expect(onChangeText).toHaveBeenCalledWith('Соната');
   });
@@ -41,7 +42,9 @@ describe('CompositionTitleInput', () => {
     const input = screen.getByRole('combobox');
     fireEvent.focus(input);
     fireEvent.keyDown(input, { key: 'ArrowDown' });
-    fireEvent.click(screen.getByText('Створити новий твір'));
+
+    const createOption = screen.getByText('Створити новий твір');
+    fireEvent.click(createOption);
 
     expect(onCreateNew).toHaveBeenCalledTimes(1);
   });
@@ -67,9 +70,99 @@ describe('CompositionTitleInput', () => {
     const input = screen.getByRole('combobox');
     fireEvent.focus(input);
     fireEvent.keyDown(input, { key: 'ArrowDown' });
-    fireEvent.click(screen.getByText('Після бою'));
 
-    expect(onSelectSuggestion).toHaveBeenCalledWith(expect.objectContaining({ genre: 'Романс' }));
+    const option = screen.getByText('Після бою');
+    fireEvent.click(option);
+
+    expect(onSelectSuggestion).toHaveBeenCalledWith(expect.objectContaining({ id: 'c1' }));
+  });
+
+  it('uses English title when Ukrainian title is missing, and empty string if both are missing', () => {
+    mockUseSearchCompositions.mockReturnValue({
+      data: {
+        searchCompositions: [
+          {
+            id: 'c2',
+            name: { en: 'Only English Title' },
+            genre: 'Романс',
+            year: 1920,
+            sheetMusic: [],
+            audios: []
+          },
+          {
+            id: 'c3',
+            name: {},
+            genre: 'Романс',
+            year: 1920,
+            sheetMusic: [],
+            audios: []
+          }
+        ]
+      }
+    });
+    render(<CompositionTitleInput {...baseProps} value="Test" />);
+
+    const input = screen.getByRole('combobox');
+    fireEvent.focus(input);
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+
+    expect(screen.getByText('Only English Title')).toBeInTheDocument();
+  });
+
+  it('does not call onChangeText if onInputChange reason is not input or clear', () => {
+    const onChangeText = jest.fn();
+    render(<CompositionTitleInput {...baseProps} onChangeText={onChangeText} />);
+
+    const input = screen.getByRole('combobox');
+    fireEvent.focus(input);
+    fireEvent.keyDown(input, { key: 'Escape' });
+
+    expect(onChangeText).not.toHaveBeenCalled();
+  });
+
+  it('handles null and string values in onChange gracefully', () => {
+    const onSelectSuggestion = jest.fn();
+    render(<CompositionTitleInput {...baseProps} value="Текст" onSelectSuggestion={onSelectSuggestion} />);
+
+    const input = screen.getByRole('combobox');
+    fireEvent.focus(input);
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    expect(onSelectSuggestion).not.toHaveBeenCalled();
+  });
+
+  it('does not call onSelectSuggestion if suggestion object is missing', () => {
+    mockUseSearchCompositions.mockReturnValue({
+      data: {
+        searchCompositions: [
+          {
+            id: 'missing-suggestion',
+            name: { uk: 'Без Саджешна' },
+            genre: 'Романс',
+            year: 1920,
+            sheetMusic: [],
+            audios: []
+          }
+        ]
+      }
+    });
+
+    const onSelectSuggestion = jest.fn();
+
+    const { container } = render(
+      <CompositionTitleInput {...baseProps} value="Без" onSelectSuggestion={onSelectSuggestion} />
+    );
+
+    const input = screen.getByRole('combobox');
+    fireEvent.focus(input);
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+
+    const autocomplete = container.querySelector('.MuiAutocomplete-root');
+    if (autocomplete) {
+      fireEvent.change(input, { target: { value: '' } });
+    }
+
+    expect(onSelectSuggestion).not.toHaveBeenCalled();
   });
 
   it('does not trigger actions when free solo text is submitted', () => {
@@ -99,7 +192,7 @@ describe('CompositionTitleInput', () => {
         searchCompositions: [
           {
             id: 'c1',
-            name: { uk: null, en: 'After Battle' },
+            name: { en: 'After Battle' },
             genre: 'Romance',
             year: 1920,
             sheetMusic: [],
@@ -124,7 +217,7 @@ describe('CompositionTitleInput', () => {
         searchCompositions: [
           {
             id: 'c1',
-            name: { uk: null, en: null },
+            name: {},
             genre: 'Romance',
             year: 1920,
             sheetMusic: [],

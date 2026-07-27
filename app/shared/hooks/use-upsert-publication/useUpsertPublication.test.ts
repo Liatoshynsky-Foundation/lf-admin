@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 
 import { useUpsertPublication } from './useUpsertPublication';
 import { FetchedPublicationData, initialSeoValue, PublicationsItemType } from '~/constants/publications';
+import { checkIsSeoInvalid } from '~/lib/utils/checkIsSeoInvalid';
 import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { EventStatus, MediaStatus, NewsStatus } from '~/types/graphql/generated/graphql';
@@ -34,7 +35,7 @@ const mockEventQuery = jest.fn();
 jest.mock('~/shared/hooks/use-events/useEvents', () => ({
   useEventById: (id: string, options?: QueryOptions) => mockEventQuery(id, options),
   useCreateEvent: () => [mockCreateEvent],
-  useUpdateEvent: () => [mockUpdateEvent],
+  useUpdateEvent: () => [mockUpdateEvent]
 }));
 
 const mockCreateMedia = jest.fn();
@@ -43,7 +44,11 @@ const mockMediaQuery = jest.fn();
 jest.mock('~/shared/hooks/use-media-mentions/useMediaMentions', () => ({
   useMediaMentionById: (id: string, options?: QueryOptions) => mockMediaQuery(id, options),
   useCreateMediaMention: () => [mockCreateMedia],
-  useUpdateMediaMention: () => [mockUpdateMedia],
+  useUpdateMediaMention: () => [mockUpdateMedia]
+}));
+
+jest.mock('~/lib/utils/checkIsSeoInvalid', () => ({
+  checkIsSeoInvalid: jest.fn(jest.requireActual('~/lib/utils/checkIsSeoInvalid').checkIsSeoInvalid)
 }));
 
 const createValidSeoState = (type: PublicationsItemType): SeoBlockValue => ({
@@ -74,7 +79,6 @@ const createValidSeoState = (type: PublicationsItemType): SeoBlockValue => ({
 });
 
 describe('useUpsertPublication Hook', () => {
-
   let consoleErrorSpy: jest.SpyInstance;
 
   beforeAll(() => {
@@ -314,9 +318,26 @@ describe('useUpsertPublication Hook', () => {
           expect(en.endDateTime).toBe('2024-05-01T12:00:00.000Z');
         });
       });
+
+      it('should parse numeric timestamp string dates via safeParseDate', async () => {
+        const fetchedNewsData: FetchedPublicationData = {
+          adminTitle: 'Timestamp News',
+          newsDate: '1704110400000',
+          title: { uk: 'UK T', en: 'EN T' },
+          description: { uk: 'UK D', en: 'EN D' },
+          allowIndexation: { uk: true, en: true },
+          coverImage: { src: 'img.png', crop: null, alt: { uk: '', en: '' } }
+        };
+
+        mockNewsQuery.mockReturnValue({ data: { newsById: fetchedNewsData }, loading: false });
+
+        const { result } = renderHook(() => useUpsertPublication({ type: 'news', id: '123' }));
+
+        await waitFor(() => {
+          expect(result.current.publishDate?.toISOString()).toBe(new Date(1704110400000).toISOString());
+        });
+      });
     });
-
-
   });
 
   describe('initialState branch coverage', () => {
@@ -485,7 +506,6 @@ describe('useUpsertPublication Hook', () => {
       expect(mockToastError).not.toHaveBeenCalled();
     });
 
-
     it('should NOT create a News publication and show the error toast', async () => {
       mockCreateNews.mockRejectedValue(new Error('Error E11000'));
       const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
@@ -509,6 +529,22 @@ describe('useUpsertPublication Hook', () => {
 
       expect(mockToastError).toHaveBeenCalledWith('Публікація з такими даними вже існує.');
       expect(result.current.canonicalUrlError).toBe('');
+    });
+
+    it('should show generic error toast when error message is empty', async () => {
+      mockCreateNews.mockRejectedValue(new Error(''));
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
+
+      act(() => {
+        result.current.setAdminTitle('Valid News Title');
+        result.current.setSeoValue(createValidSeoState('news'));
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(mockToastError).toHaveBeenCalledWith('Щось пішло не так. Спробуйте ще раз.');
     });
 
     it('should successfully create an Event and return ID', async () => {
@@ -564,6 +600,57 @@ describe('useUpsertPublication Hook', () => {
 
       expect(returnedId).toBe('new-media-77');
     });
+
+    it('should fallback title to adminTitle and description to empty string when seo fields are empty', async () => {
+      (checkIsSeoInvalid as jest.Mock).mockReturnValueOnce(false);
+      mockCreateNews.mockResolvedValue({ data: { createNews: { id: 'fallback-news' } } });
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
+
+      act(() => {
+        result.current.setAdminTitle('Fallback Admin Title');
+        const seoState = createValidSeoState('news');
+        seoState.meta.uk.title = '';
+        seoState.meta.en.title = '';
+        seoState.meta.uk.description = '';
+        seoState.meta.en.description = '';
+        result.current.setSeoValue(seoState);
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(mockCreateNews).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: { uk: 'Fallback Admin Title', en: 'Fallback Admin Title' },
+          description: { uk: '', en: '' }
+        })
+      );
+    });
+
+    it('should fallback media url to adminTitle when canonicalUrl is missing in both locales', async () => {
+      (checkIsSeoInvalid as jest.Mock).mockReturnValueOnce(false);
+      mockCreateMedia.mockResolvedValue({ data: { createMediaMention: { id: 'media-fallback' } } });
+      const { result } = renderHook(() => useUpsertPublication({ type: 'media' }));
+
+      act(() => {
+        result.current.setAdminTitle('Media Fallback Title');
+        const seoState = createValidSeoState('media');
+        seoState.meta.uk.canonicalUrl = '';
+        seoState.meta.en.canonicalUrl = '';
+        result.current.setSeoValue(seoState);
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(mockCreateMedia).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: 'Media Fallback Title'
+        })
+      );
+    });
   });
 
   it('should hit catch block in handleSave when mutation fails', async () => {
@@ -601,16 +688,18 @@ describe('useUpsertPublication Hook', () => {
         returnedId = resultData?.id;
       });
 
-      expect(mockUpdateMedia).toHaveBeenCalledWith('media-55', expect.objectContaining({
-        adminTitle: 'Updated Media Title',
-        status: MediaStatus.Editing,
-        url: 'https://example.com'
-      }));
+      expect(mockUpdateMedia).toHaveBeenCalledWith(
+        'media-55',
+        expect.objectContaining({
+          adminTitle: 'Updated Media Title',
+          status: MediaStatus.Editing,
+          url: 'https://example.com'
+        })
+      );
 
       expect(returnedId).toBe('media-55');
       expect(result.current.canonicalUrlError).toBe('');
     });
-
 
     it('should successfully update Events and return its ID', async () => {
       mockUpdateEvent.mockResolvedValue({ data: { updateEvent: { id: 'events-55', slug: 'event-slug' } } });

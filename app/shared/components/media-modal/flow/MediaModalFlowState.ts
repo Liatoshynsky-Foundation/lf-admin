@@ -1,9 +1,4 @@
-import type {
-  MediaModalOpenState,
-  MediaModalStep,
-  MediaModalTab,
-  SelectedMedia
-} from '../MediaModal.types';
+import type { MediaModalOpenState, MediaModalStep, MediaModalTab, SelectedMedia } from '../MediaModal.types';
 import { isImageUploadFile } from '../MediaModal.utils';
 import type { CropResult } from '~/types/common';
 

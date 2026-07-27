@@ -27,12 +27,7 @@ interface CloseButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const CloseButton = ({ label, onClick, variant = 'filled' }: CloseButtonProps) => {
   return (
-    <Box
-      component="button"
-      aria-label="Close alert"
-      onClick={onClick}
-      sx={styles.closeButton(variant)}
-    >
+    <Box component="button" aria-label="Close alert" onClick={onClick} sx={styles.closeButton(variant)}>
       {label && <Box component="span">{label}</Box>}
       <CloseRounded />
     </Box>
@@ -57,7 +52,7 @@ export interface AlertProps extends Omit<MuiAlertProps, 'severity'> {
 }
 
 const Alert = forwardRef<HTMLDivElement, AlertProps>(
-  ({ title, label, description, icon, onClose, severity = 'info', variant = 'filled', ...props }, ref) => {
+  ({ title, label, description, icon, onClose, severity = 'info', variant, ...props }, ref) => {
     const handleClose = useCallback(
       (event: SyntheticEvent) => {
         onClose?.(event);
@@ -77,7 +72,7 @@ const Alert = forwardRef<HTMLDivElement, AlertProps>(
         onClose={handleClose}
         ref={ref}
         severity={severity}
-        variant={variant}
+        variant={variant ?? 'filled'}
         slots={{
           closeButton: CustomCloseButton
         }}

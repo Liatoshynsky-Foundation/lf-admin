@@ -17,10 +17,11 @@ describe('useUpload', () => {
     fetchSpy.mockRestore();
   });
 
-  const mockFetchResponse = (data: unknown, ok = true) => ({
-    json: jest.fn().mockResolvedValue(data),
-    ok,
-  } as unknown as Response);
+  const mockFetchResponse = (data: unknown, ok = true) =>
+    ({
+      json: jest.fn().mockResolvedValue(data),
+      ok
+    }) as unknown as Response;
 
   it('should successfully upload a file without additional options', async () => {
     const mockResponse = {
@@ -44,10 +45,13 @@ describe('useUpload', () => {
     });
 
     expect(uploadResult).toEqual(mockResponse.data);
-    expect(fetchSpy).toHaveBeenCalledWith('/api/uploads/single', expect.objectContaining({
-      method: 'POST',
-      body: expect.any(FormData)
-    }));
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/uploads/single',
+      expect.objectContaining({
+        method: 'POST',
+        body: expect.any(FormData)
+      })
+    );
 
     const formData = fetchSpy.mock.calls[0][1].body as FormData;
     expect(formData.get('file')).toBe(mockFile);
@@ -66,11 +70,39 @@ describe('useUpload', () => {
     expect(formData.get('directory')).toBe('uploads/avatars');
   });
 
+  it('should include the fileType in FormData when provided in options', async () => {
+    fetchSpy.mockResolvedValueOnce(mockFetchResponse({ success: true, data: {} }));
+
+    const { result } = renderHook(() => useUpload());
+
+    await act(async () => {
+      await result.current.uploadFile(mockFile, { fileType: 'image' });
+    });
+
+    const formData = fetchSpy.mock.calls[0][1].body as FormData;
+    expect(formData.get('fileType')).toBe('image');
+  });
+
+  it('should include the validationRules in FormData when provided in options', async () => {
+    fetchSpy.mockResolvedValueOnce(mockFetchResponse({ success: true, data: {} }));
+
+    const { result } = renderHook(() => useUpload());
+
+    await act(async () => {
+      await result.current.uploadFile(mockFile, { validationRules: 'maxSize:5MB' });
+    });
+
+    const formData = fetchSpy.mock.calls[0][1].body as FormData;
+    expect(formData.get('validationRules')).toBe('maxSize:5MB');
+  });
+
   it('should throw an error joining message strings from data.errors array', async () => {
-    fetchSpy.mockResolvedValueOnce(mockFetchResponse({
-      success: false,
-      errors: ['File too large', 'Invalid format']
-    }));
+    fetchSpy.mockResolvedValueOnce(
+      mockFetchResponse({
+        success: false,
+        errors: ['File too large', 'Invalid format']
+      })
+    );
 
     const { result } = renderHook(() => useUpload());
 
@@ -80,10 +112,12 @@ describe('useUpload', () => {
   });
 
   it('should throw an error from data.error field if errors array is missing', async () => {
-    fetchSpy.mockResolvedValueOnce(mockFetchResponse({
-      success: false,
-      error: 'Single error message'
-    }));
+    fetchSpy.mockResolvedValueOnce(
+      mockFetchResponse({
+        success: false,
+        error: 'Single error message'
+      })
+    );
 
     const { result } = renderHook(() => useUpload());
 
