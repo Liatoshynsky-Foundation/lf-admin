@@ -160,7 +160,7 @@ describe('useGroupContent Hook', () => {
         loading: false,
         error: undefined
       });
- 
+
       const { result } = renderHook(() => useGroupContent('test-id'));
       await waitFor(() => {
         expect(result.current.groupData).not.toBeNull();
@@ -801,7 +801,7 @@ describe('useGroupContent Hook', () => {
       });
       const calledInput = mockUpdateOpus.mock.calls[0][0].variables.input;
       expect(calledInput.numberKind).toBe('sineop');
-      expect(calledInput.genre).toEqual({'en': '', 'uk': ''});
+      expect(calledInput.genre).toEqual({ en: '', uk: '' });
       expect(calledInput.additionalText).toBe('');
       expect(calledInput.gallery).toEqual([]);
       expect(calledInput.compositions[0].audios).toEqual([]);
@@ -1088,15 +1088,18 @@ describe('useGroupContent Hook', () => {
       await waitFor(() => expect(result.current.groupData).not.toBeNull());
 
       act(() => {
+        result.current.handleFieldChange('groupNumber', '100');
+        result.current.handleFieldChange('titlePrefix', 'op');
+        result.current.handleFieldChange('creationYear', '2020');
+        result.current.handleFieldChange('groupTitle', { uk: 'Valid Name Ukr', en: 'Valid Name Eng' });
         result.current.handleFieldChange('additionalText', '');
-        result.current.handleFieldChange('genre', '   ');
+        result.current.handleFieldChange('genre', { uk: '   ', en: '   ' });
         result.current.handleFieldChange('parts', { uk: '', en: undefined });
         result.current.handleFieldChange('description', { uk: null, en: '' });
-
-        result.current.handleFieldChange('works', [
+        result.current.handleFieldChange('compositions', [
           {
-            compositionId: 'c3',
-            title: 'T',
+            id: 'c3',
+            name: 'T',
             genre: '   ',
             year: '   ',
             audios: undefined,
@@ -1109,6 +1112,7 @@ describe('useGroupContent Hook', () => {
         await result.current.handlePublishClick();
       });
 
+      expect(toast.error).not.toHaveBeenCalled();
       expect(mockUpdateOpus).toHaveBeenCalled();
 
       jest.restoreAllMocks();

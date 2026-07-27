@@ -255,6 +255,7 @@ describe('OpusMutation Resolvers', () => {
         publishedAt: null,
         meta: { views: 0 },
         compositions: [COMPOSITION_ID_1],
+        blocksOrder: null,
       });
       expect(mockOpusRepo.removeCompositionsFromCompositionsOpus).toHaveBeenCalledWith([
         COMPOSITION_ID_1,
