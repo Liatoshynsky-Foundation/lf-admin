@@ -24,10 +24,12 @@ export function SessionTimeoutProvider({ children }: Wrapper) {
   const handleInactivity = useCallback(async () => {
     try {
       await logoutAction();
-    } finally {
-      logout();
-      router.push('/login?reason=inactivity');
+    } catch {
+      // Ignore logout action errors and continue client-side logout.
     }
+
+    logout();
+    router.push('/login?reason=inactivity');
   }, [logout, router]);
 
   const resetTimer = useCallback(() => {

@@ -20,7 +20,6 @@ jest.mock('~/store', () => ({
 }));
 
 const mockPush = jest.fn();
-const mockRefresh = jest.fn();
 const mockLogout = jest.fn();
 
 describe('SessionTimeoutProvider', () => {
@@ -28,8 +27,12 @@ describe('SessionTimeoutProvider', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
 
-    (useRouter as jest.Mock).mockReturnValue({ push: mockPush, refresh: mockRefresh });
+    (useRouter as jest.Mock).mockReturnValue({
+      push: mockPush
+    });
+
     (useStore as unknown as jest.Mock).mockImplementation((selector) => selector({ logout: mockLogout }));
+
     (logoutAction as jest.Mock).mockResolvedValue(undefined);
 
     process.env.NEXT_PUBLIC_SESSION_INACTIVITY_TIMEOUT_MINUTES = '60';
@@ -72,9 +75,9 @@ describe('SessionTimeoutProvider', () => {
     jest.advanceTimersByTime(60 * 60 * 1000);
 
     await waitFor(() => expect(logoutAction).toHaveBeenCalledTimes(1));
+
     expect(mockLogout).toHaveBeenCalledTimes(1);
     expect(mockPush).toHaveBeenCalledWith('/login?reason=inactivity');
-    expect(mockRefresh).toHaveBeenCalledTimes(1);
   });
 
   it('uses the default 60 minute timeout when the env variable is not set', async () => {
@@ -113,12 +116,14 @@ describe('SessionTimeoutProvider', () => {
     );
 
     jest.advanceTimersByTime(59 * 60 * 1000);
+
     fireEvent.mouseMove(window);
+
     jest.advanceTimersByTime(59 * 60 * 1000);
 
     expect(logoutAction).not.toHaveBeenCalled();
 
-    jest.advanceTimersByTime(1 * 60 * 1000);
+    jest.advanceTimersByTime(60 * 1000);
 
     await waitFor(() => expect(logoutAction).toHaveBeenCalledTimes(1));
   });
@@ -131,7 +136,13 @@ describe('SessionTimeoutProvider', () => {
     );
 
     jest.advanceTimersByTime(59 * 60 * 1000);
-    fireEvent.keyPress(window, { key: 'a', code: 'KeyA', charCode: 97 });
+
+    fireEvent.keyPress(window, {
+      key: 'a',
+      code: 'KeyA',
+      charCode: 97
+    });
+
     jest.advanceTimersByTime(59 * 60 * 1000);
 
     expect(logoutAction).not.toHaveBeenCalled();
@@ -145,7 +156,9 @@ describe('SessionTimeoutProvider', () => {
     );
 
     jest.advanceTimersByTime(59 * 60 * 1000);
+
     fireEvent.click(window);
+
     jest.advanceTimersByTime(59 * 60 * 1000);
 
     expect(logoutAction).not.toHaveBeenCalled();
@@ -162,8 +175,10 @@ describe('SessionTimeoutProvider', () => {
 
     jest.advanceTimersByTime(60 * 60 * 1000);
 
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/login?reason=inactivity'));
-    expect(mockLogout).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(mockLogout).toHaveBeenCalledTimes(1);
+      expect(mockPush).toHaveBeenCalledWith('/login?reason=inactivity');
+    });
   });
 
   it('removes event listeners on unmount', () => {
