@@ -8,7 +8,7 @@ import { FilterSelectProps } from '~/shared/components/selector/FilterSelect';
 export const useArchiveFiltering = (): {
   activeStatusFilters: string[],
   searchProps: SearchProps,
-  statusFilterProps: FilterSelectProps
+  statusFilterProps: Omit<FilterSelectProps, 'value'> & { value: string[] }
 } => {
   const [search, setSearch] = useState<string>('');
   const [statusFilters, setStatusFilters] = useState<string[]>([ARCHIVE_STATUS_FILTER_OPTIONS[0].value]);

@@ -18,7 +18,7 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
 
   const searchValue = searchProps.search;
   const normalizedSearch = normalizeSearch(searchValue);
-  const filterValues = statusFilterProps.value || [];
+  const filterValues = statusFilterProps.value;
 
   const visibleFonds = ARCHIVE_FONDS_MOCK_DATA.filter((fond) => {
     const matchesStatus = filterValues.includes(ARCHIVE_STATUS_FILTER_OPTIONS[0].value) ? true : filterValues.includes(fond.status);
