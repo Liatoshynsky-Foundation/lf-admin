@@ -35,7 +35,8 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
     push: routerMockPush
-  })
+  }),
+  useSearchParams: () => new URLSearchParams()
 }));
 
 jest.mock('react-hot-toast', () => ({
