@@ -253,7 +253,7 @@ describe('GroupPerformancesSection Component', () => {
     fireEvent.click(screen.getByTestId('mock-update-caption-3'));
 
     expect(mockOnChangePerformances).toHaveBeenCalledWith([
-      { id: '3', url: MOCK_URLS.youtube, caption: { uk: MOCK_TEXTS.updatedCaption, en: '' } }
+      { id: '3', url: MOCK_URLS.youtube, caption: { uk: MOCK_TEXTS.updatedCaption, en: MOCK_TEXTS.updatedCaption } }
     ]);
   });
 
@@ -281,6 +281,19 @@ describe('GroupPerformancesSection Component', () => {
     render(<GroupPerformancesSection {...propsWithMissingIds} />);
 
     expect(screen.getByTestId(`mock-performance-row-${MOCK_UUID}`)).toBeInTheDocument();
+  });
+
+  it('should not add a new performance if MAX_PERFORMANCES limit is reached', () => {
+    const maxPerformances = Array.from({ length: 5 }, (_, i) => ({
+      id: String(i + 1),
+      url: `https://youtube.com/watch?v=${i}`,
+      caption: { uk: `Виступ ${i}`, en: `Performance ${i}` }
+    }));
+
+    render(<GroupPerformancesSection {...defaultProps} performances={maxPerformances} />);
+
+    fireEvent.click(screen.getByTestId('mock-button-add'));
+    expect(mockOnChangePerformances).not.toHaveBeenCalled();
   });
 
   describe('renderLinkPreview', () => {

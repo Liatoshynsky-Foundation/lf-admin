@@ -24,7 +24,7 @@ type GroupDetailsSectionProps = {
     groupTitle: MultilingualText;
     creationYear: string;
     endYear: string;
-    dateAdditionalText: MultilingualText;
+    dateAdditionalText: string;
     genre: MultilingualText;
   };
   currentLanguage: EditorLanguage;
@@ -50,7 +50,7 @@ export const GroupDetailsSection = ({ data, currentLanguage, errors, onChange }:
     (touched.groupNumber && (isGroupNumberEmpty || isGroupNumberNegative)) || Boolean(errors.groupNumber);
   const groupTitleError =
     (touched.groupTitle && (!data.groupTitle[langKey] || data.groupTitle[langKey].trim() === '')) ||
-    Boolean(errors.groupTitle);
+    Boolean(errors[`groupTitle.${langKey}`]);
   const creationYearError = (touched.creationYear && !data.creationYear) || Boolean(errors.creationYear);
 
   const getGroupNumberErrorMessage = () => {
@@ -144,7 +144,7 @@ export const GroupDetailsSection = ({ data, currentLanguage, errors, onChange }:
         required
         fullWidth
         error={groupTitleError}
-        helperText={groupTitleError ? errors.groupTitle || OPUS_VALIDATION_MESSAGES.nameRequired : ''}
+        helperText={groupTitleError ? errors[`groupTitle.${langKey}`] || OPUS_VALIDATION_MESSAGES.nameRequired : ''}
         onBlur={() => handleBlur('groupTitle')}
         inputProps={{ maxLength: OPUS_FIELD_LIMITS.name.max }}
       />
@@ -180,9 +180,9 @@ export const GroupDetailsSection = ({ data, currentLanguage, errors, onChange }:
         <Box sx={{ flex: 2.5 }}>
           <CustomTextField
             label={OPUS_DETAILS_LABELS.datesNote}
-            value={data.dateAdditionalText[langKey]}
-            onChange={(e) => onChange('dateAdditionalText', e.target.value, true)}
-            onBlur={() => onChange('dateAdditionalText', data.dateAdditionalText[langKey].trim(), true)}
+            value={data.dateAdditionalText}
+            onChange={(e) => onChange('dateAdditionalText', e.target.value)}
+            onBlur={() => onChange('dateAdditionalText', (data.dateAdditionalText || '').trim())}
             fullWidth
             inputProps={{ 'data-testid': 'mock-input-dateAdditionalText', maxLength: OPUS_FIELD_LIMITS.datesNote }}
           />

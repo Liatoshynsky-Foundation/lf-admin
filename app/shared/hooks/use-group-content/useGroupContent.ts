@@ -51,6 +51,107 @@ const fileNameFromUrl = (url?: string | null): string => {
   return decodeURIComponent(segment.split('?')[0]);
 };
 
+const validatePerformance = (
+  perf: NonNullable<GroupData['performances']>[number],
+  newErrors: Record<string, string>,
+  setCurrentLanguage: (lang: EditorLanguage) => void
+) => {
+  const url = (perf.url || '').trim();
+  const capUk = (perf.caption?.uk || '').trim();
+  const capEn = (perf.caption?.en || '').trim();
+
+  const isRowEmpty = !url && !capUk && !capEn;
+  if (isRowEmpty) return;
+
+  if (!url) {
+    newErrors[`performances[${perf.id}].url`] = OPUS_VALIDATION_MESSAGES.performanceUrl;
+  }
+
+  if (!capUk || capUk.length < OPUS_FIELD_LIMITS.caption.min || capUk.length > OPUS_FIELD_LIMITS.caption.max) {
+    if (!capUk) {
+      newErrors[`performances[${perf.id}].caption.uk`] = OPUS_VALIDATION_MESSAGES.performanceSignature;
+    } else if (capUk.length > OPUS_FIELD_LIMITS.caption.max) {
+      newErrors[`performances[${perf.id}].caption.uk`] = OPUS_VALIDATION_MESSAGES.captionTooLong;
+    } else {
+      newErrors[`performances[${perf.id}].caption.uk`] = OPUS_VALIDATION_MESSAGES.nameTooShort;
+    }
+    setCurrentLanguage('UA');
+  } else if (!capEn || capEn.length < OPUS_FIELD_LIMITS.caption.min || capEn.length > OPUS_FIELD_LIMITS.caption.max) {
+    if (!capEn) {
+      newErrors[`performances[${perf.id}].caption.en`] = OPUS_VALIDATION_MESSAGES.performanceSignature;
+    } else if (capEn.length > OPUS_FIELD_LIMITS.caption.max) {
+      newErrors[`performances[${perf.id}].caption.en`] = OPUS_VALIDATION_MESSAGES.captionTooLong;
+    } else {
+      newErrors[`performances[${perf.id}].caption.en`] = OPUS_VALIDATION_MESSAGES.nameTooShort;
+    }
+    setCurrentLanguage('EN');
+  }
+};
+
+const validatePhotoAltText = (
+  photo: GroupPhoto,
+  newErrors: Record<string, string>,
+  setCurrentLanguage: (lang: EditorLanguage) => void
+) => {
+  const altUk = (photo.altText?.uk || '').trim();
+  const altEn = (photo.altText?.en || '').trim();
+
+  if (!altUk) {
+    newErrors[`photos[${photo.id}].altText.uk`] = OPUS_VALIDATION_MESSAGES.photoAltText;
+    setCurrentLanguage('UA');
+  } else if (altUk.length > OPUS_FIELD_LIMITS.altText.max) {
+    newErrors[`photos[${photo.id}].altText.uk`] = OPUS_VALIDATION_MESSAGES.captionTooLong;
+    setCurrentLanguage('UA');
+  } else if (altUk.length < OPUS_FIELD_LIMITS.altText.min) {
+    newErrors[`photos[${photo.id}].altText.uk`] = OPUS_VALIDATION_MESSAGES.photoTextTooShort;
+    setCurrentLanguage('UA');
+  } else if (!altEn) {
+    newErrors[`photos[${photo.id}].altText.en`] = OPUS_VALIDATION_MESSAGES.photoAltText;
+    setCurrentLanguage('EN');
+  } else if (altEn.length > OPUS_FIELD_LIMITS.altText.max) {
+    newErrors[`photos[${photo.id}].altText.en`] = OPUS_VALIDATION_MESSAGES.captionTooLong;
+    setCurrentLanguage('EN');
+  } else if (altEn.length < OPUS_FIELD_LIMITS.altText.min) {
+    newErrors[`photos[${photo.id}].altText.en`] = OPUS_VALIDATION_MESSAGES.photoTextTooShort;
+    setCurrentLanguage('EN');
+  }
+};
+
+const validatePhotoCaption = (
+  photo: GroupPhoto,
+  newErrors: Record<string, string>,
+  setCurrentLanguage: (lang: EditorLanguage) => void
+) => {
+  const capUk = (photo.caption?.uk || '').trim();
+  const capEn = (photo.caption?.en || '').trim();
+
+  if (capUk.length > OPUS_FIELD_LIMITS.caption.max) {
+    newErrors[`photos[${photo.id}].caption.uk`] = OPUS_VALIDATION_MESSAGES.captionTooLong;
+    setCurrentLanguage('UA');
+  } else if (capUk.length > 0 && capUk.length < OPUS_FIELD_LIMITS.caption.min) {
+    newErrors[`photos[${photo.id}].caption.uk`] = OPUS_VALIDATION_MESSAGES.photoTextTooShort;
+    setCurrentLanguage('UA');
+  } else if (capEn.length > OPUS_FIELD_LIMITS.caption.max) {
+    newErrors[`photos[${photo.id}].caption.en`] = OPUS_VALIDATION_MESSAGES.captionTooLong;
+    setCurrentLanguage('EN');
+  } else if (capEn.length > 0 && capEn.length < OPUS_FIELD_LIMITS.caption.min) {
+    newErrors[`photos[${photo.id}].caption.en`] = OPUS_VALIDATION_MESSAGES.photoTextTooShort;
+    setCurrentLanguage('EN');
+  }
+};
+
+const validatePhoto = (
+  photo: GroupPhoto,
+  newErrors: Record<string, string>,
+  setCurrentLanguage: (lang: EditorLanguage) => void
+) => {
+  const src = (photo.src || '').trim();
+  if (!src) return;
+
+  validatePhotoAltText(photo, newErrors, setCurrentLanguage);
+  validatePhotoCaption(photo, newErrors, setCurrentLanguage);
+};
+
 export const useGroupContent = (id: string) => {
   const { data, loading, error } = useOpusById(id);
   const { navigate } = useNavigationGuard();
@@ -104,10 +205,7 @@ export const useGroupContent = (id: string) => {
         },
         creationYear: fetchedOpus.creationYear ? String(fetchedOpus.creationYear) : '',
         endYear: fetchedOpus.endYear ? String(fetchedOpus.endYear) : '',
-        dateAdditionalText: {
-          uk: fetchedOpus.datesNote ?? '',
-          en: ''
-        },
+        dateAdditionalText: fetchedOpus.datesNote ?? '',
         status: fetchedOpus.status || 'draft',
         parts: {
           uk: fetchedOpus.parts?.uk ?? '',
@@ -198,7 +296,7 @@ export const useGroupContent = (id: string) => {
         },
         creationYear: String(groupData.creationYear || '').trim(),
         endYear: groupData.endYear ? String(groupData.endYear) : null,
-        datesNote: groupData.dateAdditionalText?.uk ? String(groupData.dateAdditionalText.uk).trim() : null,
+        datesNote: groupData.dateAdditionalText ? String(groupData.dateAdditionalText).trim() : null,
         parts: {
           uk: String(groupData.parts?.uk || ''),
           en: String(groupData.parts?.en || '')
@@ -229,13 +327,38 @@ export const useGroupContent = (id: string) => {
               publishDate: note.publishDate
             }))
         })),
-        gallery: (groupData.photos || []).map((photo) => ({
-          id: photo.id?.startsWith('photo-') || photo.id?.includes('-') ? undefined : photo.id,
-          src: photo.src ? String(photo.src) : '',
-          description: { uk: photo.caption?.uk || '', en: photo.caption?.en || '' },
-          altText: { uk: photo.altText?.uk || '', en: photo.altText?.en || '' },
-          crop: photo.crop || null
-        })),
+        gallery: (groupData.photos || []).map((photo) => {
+          const cropData = photo.crop as {
+            rect?: { x: number; y: number; width: number; height: number };
+            x?: number;
+            y?: number;
+            width?: number;
+            height?: number;
+          } | null;
+
+          const mappedCrop = cropData
+            ? {
+              x: cropData.rect?.x ?? cropData.x ?? 0,
+              y: cropData.rect?.y ?? cropData.y ?? 0,
+              width: cropData.rect?.width ?? cropData.width ?? 0,
+              height: cropData.rect?.height ?? cropData.height ?? 0
+            }
+            : null;
+
+          return {
+            id: photo.id?.startsWith('photo-') || photo.id?.includes('-') ? undefined : photo.id,
+            src: photo.src ? String(photo.src) : '',
+            description: {
+              uk: (photo.caption?.uk || '').trim(),
+              en: (photo.caption?.en || '').trim()
+            },
+            altText: {
+              uk: (photo.altText?.uk || '').trim(),
+              en: (photo.altText?.en || '').trim()
+            },
+            crop: mappedCrop
+          };
+        }),
         performancesTitle: {
           uk: String(groupData.performancesTitle || ''),
           en: String(groupData.performancesTitle || '')
@@ -288,18 +411,21 @@ export const useGroupContent = (id: string) => {
     const groupTitleEn = String(groupData?.groupTitle?.en || '').trim();
 
     if (!groupTitleUk) {
-      newErrors.groupTitle = OPUS_VALIDATION_MESSAGES.nameRequired;
+      newErrors['groupTitle.uk'] = OPUS_VALIDATION_MESSAGES.nameRequired;
       setCurrentLanguage('UA');
     } else if (groupTitleUk.length < OPUS_FIELD_LIMITS.name.min) {
-      newErrors.groupTitle = OPUS_VALIDATION_MESSAGES.nameTooShort;
+      newErrors['groupTitle.uk'] = OPUS_VALIDATION_MESSAGES.nameTooShort;
       setCurrentLanguage('UA');
     } else if (!groupTitleEn) {
-      newErrors.groupTitle = OPUS_VALIDATION_MESSAGES.nameRequired;
+      newErrors['groupTitle.en'] = OPUS_VALIDATION_MESSAGES.nameRequired;
       setCurrentLanguage('EN');
     } else if (groupTitleEn.length < OPUS_FIELD_LIMITS.name.min) {
-      newErrors.groupTitle = OPUS_VALIDATION_MESSAGES.nameTooShort;
+      newErrors['groupTitle.en'] = OPUS_VALIDATION_MESSAGES.nameTooShort;
       setCurrentLanguage('EN');
     }
+
+    groupData?.performances?.forEach((perf) => validatePerformance(perf, newErrors, setCurrentLanguage));
+    groupData?.photos?.forEach((photo) => validatePhoto(photo, newErrors, setCurrentLanguage));
 
     if (!groupData?.titlePrefix || String(groupData.titlePrefix).trim() === '') {
       newErrors.titlePrefix = REQUIRED_FIELD_ERROR;
