@@ -25,4 +25,24 @@ describe('TooltipCustom Component', () => {
     const tooltipElement = await screen.findByText(/My Tooltip/i);
     expect(tooltipElement).toBeVisible();
   });
+
+  test('renders controlled tooltip when isOpen prop is provided', () => {
+    render(<TooltipCustom title="Controlled Tooltip" isOpen={true} />);
+    expect(screen.getAllByText('Controlled Tooltip')[0]).toBeInTheDocument();
+    expect(screen.getByRole('tooltip')).toBeInTheDocument();
+  });
+
+  test('fallbacks to empty string title when title and text are omitted', () => {
+    const { container } = render(<TooltipCustom />);
+    expect(container).toBeInTheDocument();
+  });
+
+  test('renders with custom title, children, and arrow prop', () => {
+    render(
+      <TooltipCustom title="Custom Title" arrow={true}>
+        <span>Custom Child</span>
+      </TooltipCustom>
+    );
+    expect(screen.getByText('Custom Child')).toBeInTheDocument();
+  });
 });

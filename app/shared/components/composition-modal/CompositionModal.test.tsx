@@ -1,5 +1,5 @@
 import { ApolloCache } from '@apollo/client';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import dayjs from 'dayjs';
 import React from 'react';
 import toast from 'react-hot-toast';
@@ -55,42 +55,37 @@ jest.mock('react-hot-toast', () => ({
 
 jest.mock('./composition-modal-view/CompositionModalView', () => ({
   __esModule: true,
-  CompositionModalView: ({
-    isOpen,
-    isLoadingData,
-    suggestions,
-    onClose,
-    onTriggerUpload,
-    onSave
-  }: MockCompositionModalViewProps) => {
-    if (!isOpen || isLoadingData) return <div data-testid="composition-view-hidden" />;
-    return (
-      <div data-testid="composition-modal-view">
-        <span data-testid="audio-suggestions">{JSON.stringify(suggestions.audio)}</span>
-        <span data-testid="notes-suggestions">{JSON.stringify(suggestions.notes)}</span>
-        <button data-testid="action-close" onClick={onClose}>
-          Close View
-        </button>
-        <button data-testid="action-trigger-upload-audio" onClick={() => onTriggerUpload('audio', (_fileName) => {})}>
-          Upload Audio Trigger
-        </button>
-        <button data-testid="action-trigger-upload-notes" onClick={() => onTriggerUpload('notes', (_fileName) => {})}>
-          Upload Notes Trigger
-        </button>
-        <button
-          data-testid="action-submit-composition"
-          onClick={() => onSave('Test Symphony', 'Classical', dayjs('2026-01-01'), [], [])}
-        >
-          Save Composition
-        </button>
-      </div>
-    );
-  }
+  CompositionModalView: jest.fn(
+    ({ isOpen, isLoadingData, suggestions, onClose, onTriggerUpload, onSave }: MockCompositionModalViewProps) => {
+      if (!isOpen || isLoadingData) return <div data-testid="composition-view-hidden" />;
+      return (
+        <div data-testid="composition-modal-view">
+          <span data-testid="audio-suggestions">{JSON.stringify(suggestions.audio)}</span>
+          <span data-testid="notes-suggestions">{JSON.stringify(suggestions.notes)}</span>
+          <button data-testid="action-close" onClick={onClose}>
+            Close View
+          </button>
+          <button data-testid="action-trigger-upload-audio" onClick={() => onTriggerUpload('audio', (_fileName) => {})}>
+            Upload Audio Trigger
+          </button>
+          <button data-testid="action-trigger-upload-notes" onClick={() => onTriggerUpload('notes', (_fileName) => {})}>
+            Upload Notes Trigger
+          </button>
+          <button
+            data-testid="action-submit-composition"
+            onClick={() => onSave('Test Symphony', 'Classical', dayjs('2026-01-01'), [], [])}
+          >
+            Save Composition
+          </button>
+        </div>
+      );
+    }
+  )
 }));
 
 jest.mock('~/shared/components/media-modal/MediaModal', () => ({
   __esModule: true,
-  MediaModal: ({ open, renderers, onClose, onApply }: MockMediaModalProps) => {
+  MediaModal: jest.fn(({ open, renderers, onClose, onApply }: MockMediaModalProps) => {
     const [uploadNode, setUploadNode] = React.useState<React.ReactNode>(null);
 
     if (!open) return null;
@@ -154,7 +149,7 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
         </button>
       </div>
     );
-  }
+  })
 }));
 
 jest.mock('~/shared/components/media-modal/views/upload-view/UploadView', () => ({
@@ -202,6 +197,12 @@ describe('CompositionModal', () => {
     });
   });
 
+  it('should default mode prop to create when omitted', () => {
+    useAllAssetsMock.mockReturnValue({ data: { allAssets: [] }, loading: false });
+    render(<CompositionModal isOpen={true} onClose={jest.fn()} />);
+    expect(screen.getByTestId('composition-modal-view')).toBeInTheDocument();
+  });
+
   it('should render nothing or skeleton baselines transparently when query logs are in loading states', () => {
     runSimulation(true, true);
     expect(screen.queryByTestId('composition-view-hidden')).toBeInTheDocument();
@@ -227,7 +228,11 @@ describe('CompositionModal', () => {
     runSimulation();
     fireEvent.click(screen.getByTestId('action-trigger-upload-audio'));
     fireEvent.click(screen.getByTestId('media-modal'));
-    fireEvent.click(screen.getByTestId('media-modal-apply-audio'));
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('media-modal-apply-audio'));
+    });
+
     let cacheUpdateFn: ((cache: ApolloCache<unknown>, result: unknown) => void) | undefined;
     await waitFor(() => {
       expect(createAssetMutationMock).toHaveBeenCalledWith(
@@ -238,10 +243,11 @@ describe('CompositionModal', () => {
       );
       cacheUpdateFn = createAssetMutationMock.mock.calls[0][0].update;
     });
+
     if (cacheUpdateFn) {
       const mockIdentify = jest.fn().mockReturnValue('Asset:new-id');
       const mockModify = jest.fn().mockImplementation(({ fields }) => {
-        fields.allAssets([]);
+        fields.allAssets(undefined);
         fields.allAssets([{ __ref: 'Asset:new-id' }]);
       });
       const mockCache = { identify: mockIdentify, modify: mockModify } as unknown as ApolloCache<unknown>;
@@ -252,10 +258,115 @@ describe('CompositionModal', () => {
     expect(toast.success).toHaveBeenCalledWith('Файл успішно завантажено');
   });
 
+  it('should return existing asset refs when cache.identify returns null in updateAllAssetsCache', async () => {
+    runSimulation();
+    fireEvent.click(screen.getByTestId('action-trigger-upload-audio'));
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('media-modal-apply-audio'));
+    });
+
+    await waitFor(() => {
+      expect(createAssetMutationMock).toHaveBeenCalled();
+    });
+
+    const cacheUpdateFn = createAssetMutationMock.mock.calls[0][0].update;
+    const mockIdentify = jest.fn().mockReturnValue(null);
+    const mockModify = jest.fn().mockImplementation(({ fields }) => {
+      const res = fields.allAssets([{ __ref: 'Asset:1' }]);
+      expect(res).toEqual([{ __ref: 'Asset:1' }]);
+    });
+    const mockCache = { identify: mockIdentify, modify: mockModify } as unknown as ApolloCache<unknown>;
+
+    cacheUpdateFn(mockCache, { data: { createAsset: { id: 'new-id' } } });
+    expect(mockModify).toHaveBeenCalled();
+  });
+
+  it('should return early if selected kind is not upload or uploadResult is missing', async () => {
+    runSimulation();
+    fireEvent.click(screen.getByTestId('action-trigger-upload-audio'));
+
+    const mediaModalMock = jest.requireMock('~/shared/components/media-modal/MediaModal').MediaModal;
+
+    const nonUploadResult = {
+      selected: { kind: 'existing', id: 'existing-id' },
+      crop: null
+    };
+
+    await act(async () => {
+      await mediaModalMock.mock.calls[0][0].onApply(nonUploadResult);
+    });
+
+    expect(createAssetMutationMock).not.toHaveBeenCalled();
+  });
+
+  it('should detect pdf asset type when type ends with /pdf or handle fallback for other mime types', async () => {
+    runSimulation();
+    fireEvent.click(screen.getByTestId('action-trigger-upload-notes'));
+
+    const customPdfUploadResult = {
+      selected: {
+        kind: 'upload',
+        id: 'pdf-id',
+        fileName: 'sheet.pdf',
+        file: new File([''], 'sheet.pdf', { type: 'x-custom/pdf' })
+      },
+      crop: null,
+      uploadResult: {
+        url: 'https://storage/sheet.pdf',
+        filename: 'sheet.pdf',
+        mimeType: 'x-custom/pdf',
+        size: 1024
+      }
+    };
+
+    const otherFileTypeResult = {
+      selected: {
+        kind: 'upload',
+        id: 'other-id',
+        fileName: 'image.png',
+        file: new File([''], 'image.png', { type: 'image/png' })
+      },
+      crop: null,
+      uploadResult: {
+        url: 'https://storage/image.png',
+        filename: 'image.png',
+        mimeType: 'image/png',
+        size: 1024
+      }
+    };
+
+    const mediaModalMock = jest.requireMock('~/shared/components/media-modal/MediaModal').MediaModal;
+
+    await act(async () => {
+      await mediaModalMock.mock.calls[0][0].onApply(customPdfUploadResult);
+      await mediaModalMock.mock.calls[0][0].onApply(otherFileTypeResult);
+    });
+
+    expect(createAssetMutationMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variables: {
+          input: expect.objectContaining({ type: 'pdf' })
+        }
+      })
+    );
+    expect(createAssetMutationMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variables: {
+          input: expect.objectContaining({ type: '' })
+        }
+      })
+    );
+  });
+
   it('should process pdf asset type mutation uploads successfully', async () => {
     runSimulation();
     fireEvent.click(screen.getByTestId('action-trigger-upload-notes'));
-    fireEvent.click(screen.getByTestId('media-modal-apply-pdf'));
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('media-modal-apply-pdf'));
+    });
+
     await waitFor(() => {
       expect(createAssetMutationMock).toHaveBeenCalled();
     });
@@ -265,7 +376,11 @@ describe('CompositionModal', () => {
     createAssetMutationMock.mockRejectedValue(new Error('Network drop error'));
     runSimulation();
     fireEvent.click(screen.getByTestId('action-trigger-upload-audio'));
-    fireEvent.click(screen.getByTestId('media-modal-apply-audio'));
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('media-modal-apply-audio'));
+    });
+
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Network drop error');
     });
@@ -275,7 +390,11 @@ describe('CompositionModal', () => {
     createAssetMutationMock.mockResolvedValue({ data: { createAsset: null } });
     runSimulation();
     fireEvent.click(screen.getByTestId('action-trigger-upload-audio'));
-    fireEvent.click(screen.getByTestId('media-modal-apply-audio'));
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('media-modal-apply-audio'));
+    });
+
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalled();
     });
@@ -319,6 +438,16 @@ describe('CompositionModal', () => {
       expect(isAllowedFile(new File([''], 'song.txt', { type: 'text/plain' }))).toBe(false);
     });
 
+    it('should handle files with empty names or without extensions in dynamicIsAllowedFile', () => {
+      runSimulation();
+      fireEvent.click(screen.getByTestId('action-trigger-upload-audio'));
+      fireEvent.click(screen.getByTestId('media-modal'));
+      const isAllowedFile = capturedUploadViewProps.isAllowedFile!;
+
+      expect(isAllowedFile(new File([''], 'noextension', { type: 'application/octet-stream' }))).toBe(false);
+      expect(isAllowedFile(new File([''], '', { type: 'application/octet-stream' }))).toBe(false);
+    });
+
     it('should validate pdf files by mime type or by .pdf extension when mime type is generic', () => {
       runSimulation();
       fireEvent.click(screen.getByTestId('action-trigger-upload-notes'));
@@ -333,14 +462,34 @@ describe('CompositionModal', () => {
   });
 
   describe('handleSaveComposition', () => {
-    it('should notify success and close the modal when composition save resolves', async () => {
+    it('should notify success and close the modal when composition save resolves with valid year', async () => {
       const { onClose } = runSimulation();
-      fireEvent.click(screen.getByTestId('action-submit-composition'));
+      const viewMock = jest.requireMock('./composition-modal-view/CompositionModalView').CompositionModalView;
+      const onSaveFn = viewMock.mock.calls[0][0].onSave;
 
-      await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith('Композиція успішно створена!');
+      await act(async () => {
+        await onSaveFn('Title', 'Genre', dayjs('2026-01-01'), [], []);
       });
+
+      expect(toast.success).toHaveBeenCalledWith('Композиція успішно створена!');
       expect(onClose).toHaveBeenCalled();
+    });
+
+    it('should handle null year and non-Error objects in handleSaveComposition error catch', async () => {
+      (toast.success as jest.Mock).mockImplementationOnce(() => {
+        throw 'String error during save';
+      });
+
+      runSimulation();
+
+      const viewMock = jest.requireMock('./composition-modal-view/CompositionModalView').CompositionModalView;
+      const onSaveFn = viewMock.mock.calls[0][0].onSave;
+
+      await act(async () => {
+        await onSaveFn('Title', 'Genre', null, [], []);
+      });
+
+      expect(toast.error).toHaveBeenCalledWith('Помилка при створенні композиції: String error during save');
     });
 
     it('should surface a formatted error toast when saving the composition throws', async () => {
@@ -348,12 +497,29 @@ describe('CompositionModal', () => {
         throw new Error('Toast delivery failed');
       });
       const { onClose } = runSimulation();
-      fireEvent.click(screen.getByTestId('action-submit-composition'));
+
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('action-submit-composition'));
+      });
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith('Помилка при створенні композиції: Toast delivery failed');
       });
       expect(onClose).not.toHaveBeenCalled();
+    });
+  });
+
+  it('should show default error toast when asset creation throws non-Error object', async () => {
+    createAssetMutationMock.mockRejectedValue('String error rejection');
+    runSimulation();
+    fireEvent.click(screen.getByTestId('action-trigger-upload-audio'));
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('media-modal-apply-audio'));
+    });
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Не вдалося завантажити файл.');
     });
   });
 });

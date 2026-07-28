@@ -1,9 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import type { GalleryFilters } from '../../flow/MediaModalFlowState';
-import { MockFilterDropdown, MockMediaGrid, MockSearchButton } from '../../test-utils/sharedMocks';
+import { MockMediaGrid, MockSearchButton } from '../../test-utils/sharedMocks';
 import { GalleryView } from './GalleryView';
 import { useGalleryFiles } from '~/shared/hooks/use-galllery-photo/useGallery';
 import { useAllAssetsQuery } from '~/types/graphql/generated/graphql';
@@ -13,7 +13,13 @@ jest.mock('../../components/search-button/SearchButton', () => ({
 }));
 
 jest.mock('../../components/filter-dropdown/FilterDropdown', () => ({
-  FilterDropdown: MockFilterDropdown
+  FilterDropdown: ({ onChange, testId }: { onChange: (val: string) => void; testId: string }) => (
+    <select data-testid={testId} onChange={(e) => onChange(e.target.value)}>
+      <option value="">All</option>
+      <option value="starred">Starred</option>
+      <option value="news">News</option>
+    </select>
+  )
 }));
 
 jest.mock('../../components/media-grid/MediaGrid', () => ({
@@ -359,5 +365,44 @@ describe('GalleryView', () => {
     renderGalleryView();
 
     expect(screen.getByText('piano-studio.jpg')).toBeInTheDocument();
+  });
+
+  it('should call onFiltersChange when favorites or usage dropdown value changes', () => {
+    renderGalleryView();
+
+    const favoritesFilter = screen.getByTestId('GalleryView-favoritesFilter');
+    const usageFilter = screen.getByTestId('GalleryView-usageFilter');
+
+    fireEvent.change(favoritesFilter, { target: { value: 'starred' } });
+    expect(mockOnFiltersChange).toHaveBeenCalledWith({ favorites: 'starred' });
+
+    fireEvent.change(usageFilter, { target: { value: 'news' } });
+    expect(mockOnFiltersChange).toHaveBeenCalledWith({ usage: 'news' });
+  });
+
+  it('should handle files with undefined mimeType and filename when matching audio mediaKind', () => {
+    (useGalleryFiles as jest.Mock).mockReturnValue({
+      files: [
+        {
+          url: 'https://example.com/file-without-type.mp3',
+          createdAt: '2024-01-01T00:00:00.000Z',
+          path: 'file-without-type.mp3'
+        }
+      ],
+      isLoading: false,
+      error: null
+    });
+
+    render(
+      <GalleryView
+        selected={null}
+        onPick={mockOnPick}
+        filters={mockFilters}
+        onFiltersChange={mockOnFiltersChange}
+        mediaKind="audio"
+      />
+    );
+
+    expect(screen.getByText('Усі аудіо')).toBeInTheDocument();
   });
 });

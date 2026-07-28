@@ -170,4 +170,83 @@ describe('LoginPage', () => {
       expect(toast.error).toHaveBeenCalledWith(loginErrors.UNEXPECTED_ERROR);
     });
   });
+
+  it('should handle unexpected payload typename in onCompleted', async () => {
+    const mockUnexpectedMutationResponse = {
+      login: {
+        __typename: 'UnknownPayload'
+      }
+    } as unknown as LoginMutation;
+
+    mockedUseLoginMutation.mockImplementation(({ onCompleted }) => {
+      const mockLoginFn = jest.fn().mockImplementation(() => {
+        act(() => onCompleted(mockUnexpectedMutationResponse));
+      });
+      return [mockLoginFn, { loading: false }];
+    });
+
+    submitFormHelper('password123');
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(loginErrors.UNEXPECTED_ERROR);
+    });
+  });
+
+  it('should handle unexpected payload typename in onCompleted', async () => {
+    const mockUnexpectedMutationResponse = {
+      login: {
+        __typename: 'UnknownPayload'
+      }
+    } as unknown as LoginMutation;
+
+    mockedUseLoginMutation.mockImplementation(({ onCompleted }) => {
+      const mockLoginFn = jest.fn().mockImplementation(() => {
+        act(() => onCompleted(mockUnexpectedMutationResponse));
+      });
+      return [mockLoginFn, { loading: false }];
+    });
+
+    submitFormHelper('password123');
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(loginErrors.UNEXPECTED_ERROR);
+    });
+  });
+
+  it('should fallback to result.message when loginErrors.INVALID_CREDENTIALS is falsy', async () => {
+    const originalValue = loginErrors.INVALID_CREDENTIALS;
+    Object.defineProperty(loginErrors, 'INVALID_CREDENTIALS', {
+      value: '',
+      configurable: true,
+      writable: true
+    });
+
+    const mockCustomErrorResponse: LoginMutation = {
+      login: {
+        __typename: 'ErrorPayload',
+        success: false,
+        message: 'Server error message',
+        statusCode: 400
+      }
+    };
+
+    mockedUseLoginMutation.mockImplementation(({ onCompleted }) => {
+      const mockLoginFn = jest.fn().mockImplementation(() => {
+        act(() => onCompleted(mockCustomErrorResponse));
+      });
+      return [mockLoginFn, { loading: false }];
+    });
+
+    submitFormHelper('password123');
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Server error message');
+    });
+
+    Object.defineProperty(loginErrors, 'INVALID_CREDENTIALS', {
+      value: originalValue,
+      configurable: true,
+      writable: true
+    });
+  });
 });
