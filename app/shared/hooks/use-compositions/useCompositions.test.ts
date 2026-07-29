@@ -91,7 +91,7 @@ describe('useCompositions Hook', () => {
       name: { en: 'English Title' },
       genre: undefined,
       year: null as unknown as number,
-      audios: [{ name: 'CustomAudio.mp3', url: undefined }],
+      audios: [{ name: 'CustomAudio.mp3', url: 'test.com' }],
       sheetMusic: [{ name: 'CustomNote.pdf', url: 'test.com', publishDate: '2023-01-01' }]
     };
 

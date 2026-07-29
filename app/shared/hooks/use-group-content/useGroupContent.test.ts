@@ -300,13 +300,13 @@ describe('useGroupContent Hook', () => {
       });
     });
 
-    it('should handle compositions sort with null orders and map null audio urls to undefined', async () => {
+    it('should handle compositions sort with null orders and map null audio names to file name from url', async () => {
       (useOpusById as jest.Mock).mockReturnValue({
         data: {
           opusById: {
             ...mockFetchedOpus,
             compositions: [
-              { id: 'comp-1', order: null, audios: [{ name: 'Track', url: null }] },
+              { id: 'comp-1', order: null, audios: [{ name: null, url: 'https://files/audio.mp3' }] },
               { id: 'comp-2', order: undefined, audios: [] }
             ]
           }
@@ -318,7 +318,7 @@ describe('useGroupContent Hook', () => {
 
       await waitFor(() => {
         expect(result.current.groupData?.compositions).toBeDefined();
-        expect(result.current.groupData?.compositions[0].audios[0].fileUrl).toBeUndefined();
+        expect(result.current.groupData?.compositions[0].audios[0].name).toBe('audio.mp3');
       });
     });
 
@@ -746,7 +746,7 @@ describe('useGroupContent Hook', () => {
             id: 'c1',
             title: { uk: 'Test Title' },
             sheetMusic: [
-              { name: '', url: 'test.pdf' },
+              { name: '', url: null },
               { name: 'Valid', url: 'test2.pdf' }
             ]
           }

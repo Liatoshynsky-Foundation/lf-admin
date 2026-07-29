@@ -93,6 +93,15 @@ export const OpusErrors = {
   FAILED_TO_DELETE: 'Failed to delete opus'
 };
 
+export const CompositionErrors = {
+  NETWORK_ERROR_CREATE: 'Network error while creating composition',
+  FAILED_TO_CREATE: 'Failed to create composition',
+  NETWORK_ERROR_UPDATE: 'Network error while updating composition',
+  FAILED_TO_UPDATE: 'Failed to update composition',
+  NETWORK_ERROR_DELETE: 'Network error while deleting composition',
+  FAILED_TO_DELETE: 'Failed to delete composition'
+};
+
 export const galleryErrors = {
   FAILED_TO_FETCH: 'Upload files failed'
 };

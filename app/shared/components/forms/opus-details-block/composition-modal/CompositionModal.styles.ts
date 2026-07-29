@@ -68,7 +68,7 @@ export const styles: Record<string, SxProps<Theme>> = {
 
   mediaRow: {
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: '12px'
   },
 
@@ -86,10 +86,16 @@ export const styles: Record<string, SxProps<Theme>> = {
     color: 'text.primary'
   },
 
+  mediaIconBtn: {
+    color: 'text.primary',
+    marginTop: '4px'
+  },
+
   noteGroup: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '8px'
+    gap: '8px',
+    alignContent: 'flex-start'
   },
 
   fileChip: {

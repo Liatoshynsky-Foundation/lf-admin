@@ -4,18 +4,24 @@ export type OpusNumberKind = 'op' | 'sineop' | 'compositions';
 
 export interface OpusMediaFileData {
   id: string;
-  name: string;
+  name?: string;
   fileUrl?: string;
   publishDate?: string;
+  isFree?: boolean;
+}
+
+export interface OpusAudioFileData {
+  id: string;
+  name: string;
+  fileUrl: string;
 }
 
 export interface OpusCompositionData {
   id: string;
-  order?: number;
   name: string;
   genre: string;
   year: string;
-  audios: OpusMediaFileData[];
+  audios: OpusAudioFileData[];
   notes: OpusMediaFileData[];
 }
 
@@ -52,13 +58,13 @@ export interface OpusCompositionSuggestion {
   genre?: string | null;
   year?: number | null;
   sheetMusic?: Array<{
-    url: string;
+    url?: string | null;
     name?: string | null;
     publishDate?: string | null;
     isFree?: boolean | null;
     dateUploaded?: string | null;
   }> | null;
-  audios?: Array<{ name?: string | null; url?: string | null }> | null;
+  audios?: Array<{ name?: string | null; url: string }> | null;
 }
 
 export interface FetchedOpusData {

@@ -72,6 +72,30 @@ jest.mock('./useWorksTableActions', () => ({
   }))
 }));
 
+jest.mock('~/shared/components/dropdown-menu/ActionMenu', () => ({
+  __esModule: true,
+  default: ({ anchorEl, menuItems }: { anchorEl: HTMLElement | null; menuItems: any[] }) => {
+    if (!anchorEl) return null;
+    return (
+      <div data-testid="dropdown-menu">
+        {menuItems.flatMap((section) =>
+          section.items.map((item: any) =>
+            item.href ? (
+              <a key={item.id} role="menuitem" href={item.href}>
+                {item.text.name}
+              </a>
+            ) : (
+              <div key={item.id} role="menuitem" onClick={item.onClick}>
+                {item.text.name}
+              </div>
+            )
+          )
+        )}
+      </div>
+    );
+  }
+}));
+
 interface TabItem {
   value: string;
   label: string;
@@ -125,6 +149,18 @@ jest.mock('./useWorksFiltering', () => ({
   }))
 }));
 
+jest.mock('./(composition)/useCreateWorkAction', () => ({
+  useCreateWorkAction: jest.fn(() => ({
+    handleCreateWork: jest.fn(),
+    handleCreateGroup: jest.fn(),
+    loading: false,
+    isModalOpen: false,
+    openModal: jest.fn(),
+    closeModal: jest.fn(),
+    handleSubmit: jest.fn()
+  }))
+}));
+
 import { usePaginatedWorks } from '~/shared/hooks/use-opuses/useOpuses';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
@@ -154,8 +190,11 @@ describe('Creativity page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Створити' }));
 
     const dropdownMenu = screen.getByTestId('dropdown-menu');
-    expect(within(dropdownMenu).getByText('Твір').closest('a')).toHaveAttribute('href', '/creativity/work/create');
-    expect(within(dropdownMenu).getByText('Група').closest('a')).toHaveAttribute('href', '/creativity/group/create');
+    expect(within(dropdownMenu).getByRole('menuitem', { name: 'Твір' })).toBeInTheDocument();
+    expect(within(dropdownMenu).getByRole('menuitem', { name: 'Група' })).toHaveAttribute(
+      'href',
+      '/creativity/group/create'
+    );
   });
 
   it('shows different context actions for a group and a work', () => {
@@ -188,7 +227,8 @@ describe('Creativity page', () => {
     const groupButton = screen.getAllByRole('button', { name: new RegExp(MOCK_GROUP_LABEL, 'i') })[0];
     fireEvent.click(groupButton);
 
-    let dropdownMenu = screen.getByTestId('dropdown-menu');
+    const dropdownMenus = screen.getAllByTestId('dropdown-menu');
+    let dropdownMenu = dropdownMenus[dropdownMenus.length - 1];
     expect(within(dropdownMenu).getByText('Редагувати групу (SEO)')).toBeInTheDocument();
     expect(within(dropdownMenu).getByText('Редагувати контент')).toBeInTheDocument();
     expect(within(dropdownMenu).getByText('Поширити')).toBeInTheDocument();
@@ -206,7 +246,8 @@ describe('Creativity page', () => {
     const workButton = screen.getAllByRole('button', { name: new RegExp(MOCK_WORK_LABEL, 'i') })[0];
     fireEvent.click(workButton);
 
-    dropdownMenu = screen.getByTestId('dropdown-menu');
+    const updatedDropdownMenus = screen.getAllByTestId('dropdown-menu');
+    dropdownMenu = updatedDropdownMenus[updatedDropdownMenus.length - 1];
     expect(within(dropdownMenu).getByText('Редагувати композицію')).toBeInTheDocument();
     expect(within(dropdownMenu).getByText('Поширити')).toBeInTheDocument();
     expect(within(dropdownMenu).getByText('Видалити')).toBeInTheDocument();

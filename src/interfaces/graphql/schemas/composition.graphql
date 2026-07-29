@@ -1,5 +1,5 @@
 type CompositionSheetMusic {
-  url: String!
+  url: String
   name: String
   publishDate: String
   isFree: Boolean
@@ -7,8 +7,8 @@ type CompositionSheetMusic {
 }
 
 type CompositionAudio {
-  name: String
-  url: String
+  name: String!
+  url: String!
 }
 
 type Composition {
@@ -22,4 +22,31 @@ type Composition {
   audios: [CompositionAudio!]
   createdAt: String!
   updatedAt: String!
+}
+
+input CompositionSheetMusicInput {
+  url: String
+  name: String
+  publishDate: String
+  isFree: Boolean
+  dateUploaded: String
+}
+
+input CompositionAudioInput {
+  name: String!
+  url: String!
+}
+
+input CreateCompositionInput {
+  name: JSON
+  year: Int
+  genre: String
+  audioAvailable: Boolean
+  sheetAvailable: Boolean
+  sheetMusic: [CompositionSheetMusicInput!]
+  audios: [CompositionAudioInput!]
+}
+
+type Mutation {
+  createComposition(input: CreateCompositionInput!): Composition!
 }

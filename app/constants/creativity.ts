@@ -58,11 +58,6 @@ export const WORKS_TABS: ReadonlyArray<WorksTabConfig> = [
   { value: WORKS_TABS_NAMES.WORKS, label: 'Твори', href: `${WORKS_BASE_PATH}/compositions` }
 ];
 
-export const WORKS_CREATE_OPTIONS: ReadonlyArray<WorksCreateOption> = [
-  { id: 'work', label: 'Твір', href: `${WORKS_BASE_PATH}/work/create` },
-  { id: 'group', label: 'Група', href: `${WORKS_BASE_PATH}/group/create` },
-];
-
 const WORKS_LANGUAGE_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
   { value: 'uk', label: 'Українська' },
   { value: 'en', label: 'Англійська' },

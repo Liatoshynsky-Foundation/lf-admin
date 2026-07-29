@@ -1,16 +1,16 @@
 import { LocalizedString } from '~/domain/entities/BaseContent';
 
 export type CompositionSheetMusic = {
-  url: string;
+  url?: string | null;
   name?: string | null;
   publishDate?: string | null;
-  isFree?: boolean;
+  isFree?: boolean | null;
   dateUploaded?: string | null;
 };
 
 export type CompositionAudio = {
-  name?: string | null;
-  url?: string | null;
+  name: string | null;
+  url: string | null;
 };
 
 export type Composition = {

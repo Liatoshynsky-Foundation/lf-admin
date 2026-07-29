@@ -22,17 +22,24 @@ import type {
 
 export const createCompositionId = (): string => generateUniqueId();
 
-const toCompositionInput = (composition: OpusCompositionData): OpusCompositionInput => ({
+export const toCompositionInput = (composition: OpusCompositionData): OpusCompositionInput => ({
   id: composition.id,
   name: composition.name.trim(),
   genre: composition.genre.trim() || undefined,
   year: composition.year.trim() || undefined,
   audios: composition.audios
-    .filter((audio) => audio.name.trim())
-    .map((audio) => ({ name: audio.name.trim(), fileUrl: audio.fileUrl, publishDate: audio.publishDate })),
+    .filter((audio) => audio.name?.trim() || audio.fileUrl)
+    .map((audio) => ({
+      name: audio.name?.trim() || fileNameFromUrl(audio.fileUrl),
+      fileUrl: audio.fileUrl
+    })),
   notes: composition.notes
-    .filter((note) => note.name.trim())
-    .map((note) => ({ name: note.name.trim(), fileUrl: note.fileUrl, publishDate: note.publishDate }))
+    .filter((note) => note.name?.trim() || note.fileUrl || note.publishDate?.trim())
+    .map((note) => ({
+      name: note.name?.trim() || fileNameFromUrl(note.fileUrl),
+      fileUrl: note.fileUrl,
+      publishDate: note.publishDate
+    }))
 });
 
 const fileNameFromUrl = (url?: string | null): string => {
@@ -123,12 +130,12 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}) => {
         audios: (composition.audios ?? []).map((audio) => ({
           id: createCompositionId(),
           name: audio.name ?? fileNameFromUrl(audio.url),
-          fileUrl: audio.url ?? undefined
+          fileUrl: audio.url ?? ''
         })),
         notes: (composition.sheetMusic ?? []).map((sheet) => ({
           id: createCompositionId(),
           name: sheet.name ?? fileNameFromUrl(sheet.url),
-          fileUrl: sheet.url ?? undefined,
+          fileUrl: sheet.url ?? '',
           publishDate: sheet.publishDate ?? ''
         }))
       }))

@@ -1,6 +1,7 @@
 import { authMutation as AdminMutation } from './admin/AuthMutation';
 import { authQuery as AuthQuery } from './admin/AuthQuery';
 import { AssetsMutation, AssetsQuery } from './assets/Query';
+import { CompositionsMutation } from './compositions/compositionsMutation';
 import { EventsMutation } from './events/eventsMutation';
 import { EventsQuery } from './events/eventsQuery';
 import { MediaMentionsMutation } from './media-mentions/mediaMentionMutation';
@@ -20,7 +21,8 @@ export const resolvers = {
     ...MediaMentionsMutation,
     ...EventsMutation,
     ...OpusMutation,
-    ...AssetsMutation
+    ...AssetsMutation,
+    ...CompositionsMutation
   },
   Query: {
     ...AdminQuery,

@@ -19,14 +19,16 @@ import { CreateOpusInput, IOpusRepository, UpdateOpusInput } from '~/domain/repo
 import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerator';
 import { OpusGalleryItemInput, OpusStatus, UpdateOpusStatusPayload } from '~/types/graphql/generated/graphql';
 
-type GQLMediaFile = { name: string; fileUrl?: string | null; publishDate?: string | null };
+type GQLMediaFile = { name?: string | null; fileUrl?: string | null; publishDate?: string | null };
+
+type GQLAudioMediaFile = { name: string; fileUrl: string };
 
 type GQLComposition = {
   id?: string;
   name: string;
   genre?: string | null;
   year?: string | null;
-  audios?: GQLMediaFile[];
+  audios?: GQLAudioMediaFile[];
   notes?: GQLMediaFile[];
 };
 

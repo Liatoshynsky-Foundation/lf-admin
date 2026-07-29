@@ -1,0 +1,26 @@
+mutation CreateComposition($input: CreateCompositionInput!) {
+  createComposition(input: $input) {
+    id
+    name {
+      uk
+      en
+    }
+    genre
+    year
+    audioAvailable
+    sheetAvailable
+    audios {
+      name
+      url
+    }
+    sheetMusic {
+      name
+      url
+      publishDate
+      isFree
+      dateUploaded
+    }
+    createdAt
+    updatedAt
+  }
+}

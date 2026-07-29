@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 
 import { styles } from './CompositionModal.styles';
 import Button from '~/components/design-system/button/Button';
-import { COMPOSITION_MODAL_LABELS, REQUIRED_FIELD_ERROR } from '~/constants/opus';
+import { COMPOSITION_MODAL_LABELS, COMPOSITION_MODAL_TEXTS, REQUIRED_FIELD_ERROR } from '~/constants/opus';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import { isAudioUploadFile, isPdfUploadFile } from '~/shared/components/media-modal/MediaModal.utils';
@@ -22,6 +22,7 @@ interface CompositionModalProps {
 }
 
 type MediaTarget = { field: 'audios' | 'notes'; rowId?: string };
+type NoteErrors = { [rowId: string]: { name?: string; publishDate?: string } };
 
 const emptyComposition = (): OpusCompositionData => ({
   id: createCompositionId(),
@@ -51,12 +52,14 @@ export default function CompositionModal({
 }: Readonly<CompositionModalProps>) {
   const [composition, setComposition] = useState<OpusCompositionData>(emptyComposition);
   const [titleError, setTitleError] = useState('');
+  const [noteErrors, setNoteErrors] = useState<NoteErrors>({});
   const [mediaTarget, setMediaTarget] = useState<MediaTarget | null>(null);
 
   useEffect(() => {
     if (open) {
       setComposition(initialValue ? { ...initialValue } : emptyComposition());
       setTitleError('');
+      setNoteErrors({});
       setMediaTarget(null);
     }
   }, [open, initialValue]);
@@ -79,10 +82,27 @@ export default function CompositionModal({
       ...prev,
       notes: prev.notes.map((row) => (row.id === id ? { ...row, ...patch } : row))
     }));
+
+    setNoteErrors((prev) => {
+      const updated = { ...prev };
+      if (updated[id]) {
+        if ('name' in patch) delete updated[id].name;
+        if ('publishDate' in patch) delete updated[id].publishDate;
+        if (Object.keys(updated[id]).length === 0) delete updated[id];
+      }
+      return updated;
+    });
   };
 
   const removeMediaRow = (field: 'audios' | 'notes', id: string): void => {
     setComposition((prev) => ({ ...prev, [field]: prev[field].filter((row) => row.id !== id) }));
+    if (field === 'notes') {
+      setNoteErrors((prev) => {
+        const updated = { ...prev };
+        delete updated[id];
+        return updated;
+      });
+    }
   };
 
   const clearNoteFile = (id: string): void => {
@@ -115,13 +135,44 @@ export default function CompositionModal({
   };
 
   const handleSubmit = (): void => {
-    if (!composition.name.trim()) {
-      setTitleError(REQUIRED_FIELD_ERROR);
+    let isValid = true;
+    let newTitleError = '';
+    const newNoteErrors: NoteErrors = {};
 
+    if (!composition.name.trim()) {
+      newTitleError = REQUIRED_FIELD_ERROR;
+      isValid = false;
+    }
+
+    composition.notes.forEach((note) => {
+      const errs: { name?: string; publishDate?: string } = {};
+      const noteName = note.name ?? '';
+      const hasName = Boolean(noteName.trim());
+      const hasDate = Boolean(note.publishDate && String(note.publishDate).trim());
+      const hasFile = Boolean(note.fileUrl);
+
+      if (hasDate && !hasName && !hasFile) {
+        errs.publishDate = COMPOSITION_MODAL_TEXTS.emptyNoteDateError;
+        isValid = false;
+      }
+
+      if (Object.keys(errs).length > 0) {
+        newNoteErrors[note.id] = errs;
+      }
+    });
+
+    setTitleError(newTitleError);
+    setNoteErrors(newNoteErrors);
+
+    if (!isValid) {
       return;
     }
 
-    onSubmit({ ...composition, name: composition.name.trim() });
+    const filteredNotes = composition.notes.filter(
+      (note) => (note.name ?? '').trim() || (note.publishDate && String(note.publishDate).trim()) || note.fileUrl
+    );
+
+    onSubmit({ ...composition, name: composition.name.trim(), notes: filteredNotes });
   };
 
   const hasFiles = composition.audios.length > 0 || composition.notes.some((note) => Boolean(note.fileUrl));
@@ -133,7 +184,7 @@ export default function CompositionModal({
         <Typography sx={styles.heading}>
           {mode === 'edit' ? COMPOSITION_MODAL_LABELS.editTitle : COMPOSITION_MODAL_LABELS.createTitle}
         </Typography>
-        <IconButton aria-label="Закрити" onClick={onClose} sx={styles.closeButton}>
+        <IconButton aria-label={COMPOSITION_MODAL_TEXTS.closeAriaLabel} onClick={onClose} sx={styles.closeButton}>
           <X size={24} strokeWidth={1.5} />
         </IconButton>
       </Box>
@@ -151,7 +202,7 @@ export default function CompositionModal({
           InputProps={{
             endAdornment: composition.name ? (
               <InputAdornment position="end">
-                <IconButton aria-label="Очистити" size="small" onClick={() => updateField('name', '')}>
+                <IconButton size="small" onClick={() => updateField('name', '')}>
                   <X size={18} strokeWidth={1.5} />
                 </IconButton>
               </InputAdornment>
@@ -189,11 +240,7 @@ export default function CompositionModal({
             <Box key={audio.id} sx={styles.fileChip}>
               <Music size={20} strokeWidth={1.5} />
               <Typography sx={styles.fileChipName}>{audio.name || fileNameFromUrl(audio.fileUrl)}</Typography>
-              <IconButton
-                aria-label="Видалити"
-                onClick={() => removeMediaRow('audios', audio.id)}
-                sx={styles.mediaIcon}
-              >
+              <IconButton onClick={() => removeMediaRow('audios', audio.id)} sx={styles.mediaIcon}>
                 <Trash2 size={20} strokeWidth={1.5} />
               </IconButton>
             </Box>
@@ -209,51 +256,59 @@ export default function CompositionModal({
             </Button>
           </Box>
 
-          {composition.notes.map((note) => (
-            <Box key={note.id} sx={styles.noteGroup}>
-              <Box sx={styles.mediaRow}>
-                <TextField
-                  label={`${COMPOSITION_MODAL_LABELS.notesName} *`}
-                  placeholder={COMPOSITION_MODAL_LABELS.notesNamePlaceholder}
-                  value={note.name}
-                  onChange={(event) => updateNoteRow(note.id, { name: event.target.value })}
-                  size="small"
-                  sx={styles.mediaNameField}
-                />
-                <TextField
-                  label={`${COMPOSITION_MODAL_LABELS.publishDate} *`}
-                  value={note.publishDate ?? ''}
-                  onChange={(event) => updateNoteRow(note.id, { publishDate: event.target.value })}
-                  size="small"
-                  sx={styles.mediaDateField}
-                />
-                <IconButton
-                  aria-label="Завантажити файл"
-                  onClick={() => setMediaTarget({ field: 'notes', rowId: note.id })}
-                  sx={styles.mediaIcon}
-                >
-                  <CloudUpload size={20} strokeWidth={1.5} />
-                </IconButton>
-                <IconButton
-                  aria-label="Видалити"
-                  onClick={() => removeMediaRow('notes', note.id)}
-                  sx={styles.mediaIcon}
-                >
-                  <Trash2 size={20} strokeWidth={1.5} />
-                </IconButton>
-              </Box>
+          {composition.notes.map((note) => {
+            const errs = noteErrors[note.id] || {};
 
-              {note.fileUrl && (
-                <Box sx={styles.fileChip}>
-                  <FileText size={20} strokeWidth={1.5} />
-                  <Typography sx={styles.fileChipName}>{fileNameFromUrl(note.fileUrl)}</Typography>
-                  <IconButton aria-label="Видалити файл" onClick={() => clearNoteFile(note.id)} sx={styles.mediaIcon}>
+            return (
+              <Box key={note.id} sx={styles.noteGroup}>
+                <Box sx={styles.mediaRow}>
+                  <TextField
+                    label={COMPOSITION_MODAL_LABELS.notesName}
+                    placeholder={COMPOSITION_MODAL_LABELS.notesNamePlaceholder}
+                    value={note.name ?? ''}
+                    onChange={(event) => updateNoteRow(note.id, { name: event.target.value })}
+                    error={Boolean(errs.name)}
+                    helperText={errs.name}
+                    size="small"
+                    sx={styles.mediaNameField}
+                  />
+                  <TextField
+                    label={COMPOSITION_MODAL_LABELS.publishDate}
+                    value={note.publishDate ?? ''}
+                    onChange={(event) => {
+                      const val = event.target.value;
+                      if (/^\d*$/.test(val)) {
+                        updateNoteRow(note.id, { publishDate: val });
+                      }
+                    }}
+                    error={Boolean(errs.publishDate)}
+                    helperText={errs.publishDate}
+                    size="small"
+                    sx={styles.mediaDateField}
+                  />
+                  <IconButton
+                    onClick={() => setMediaTarget({ field: 'notes', rowId: note.id })}
+                    sx={styles.mediaIconBtn}
+                  >
+                    <CloudUpload size={20} strokeWidth={1.5} />
+                  </IconButton>
+                  <IconButton onClick={() => removeMediaRow('notes', note.id)} sx={styles.mediaIconBtn}>
                     <Trash2 size={20} strokeWidth={1.5} />
                   </IconButton>
                 </Box>
-              )}
-            </Box>
-          ))}
+
+                {note.fileUrl && (
+                  <Box sx={styles.fileChip}>
+                    <FileText size={20} strokeWidth={1.5} />
+                    <Typography sx={styles.fileChipName}>{fileNameFromUrl(note.fileUrl)}</Typography>
+                    <IconButton onClick={() => clearNoteFile(note.id)} sx={styles.mediaIcon}>
+                      <Trash2 size={20} strokeWidth={1.5} />
+                    </IconButton>
+                  </Box>
+                )}
+              </Box>
+            );
+          })}
         </Box>
 
         {!hasFiles && (
@@ -284,8 +339,12 @@ export default function CompositionModal({
         mediaKind={isAudioTarget ? 'audio' : 'pdf'}
         accept={isAudioTarget ? 'audio/*' : 'application/pdf'}
         isAllowedFile={isAudioTarget ? isAudioUploadFile : isPdfUploadFile}
-        invalidFileError={isAudioTarget ? 'Підтримуються лише аудіофайли' : 'Підтримуються лише PDF-файли'}
-        uploadAriaLabel={isAudioTarget ? 'Завантажити аудіофайл' : 'Завантажити PDF-файл'}
+        invalidFileError={
+          isAudioTarget ? COMPOSITION_MODAL_TEXTS.audioUploadError : COMPOSITION_MODAL_TEXTS.pdfUploadError
+        }
+        uploadAriaLabel={
+          isAudioTarget ? COMPOSITION_MODAL_TEXTS.uploadAudioAria : COMPOSITION_MODAL_TEXTS.uploadPdfAria
+        }
       />
     </Dialog>
   );

@@ -196,7 +196,7 @@ describe('OpusDetailsBlock', () => {
       name: { uk: null, en: 'English title' },
       genre: null,
       year: null,
-      audios: [{ url: 'https://cdn/audio.mp3' }, { name: null, url: null }],
+      audios: [{ url: 'https://cdn/audio.mp3' }, { name: null, url: null as unknown as string }],
       sheetMusic: [{ url: 'https://cdn/sheet.pdf' }, { url: null as unknown as string }]
     };
     fireEvent.click(screen.getAllByRole('button', { name: 'select-suggestion' })[0]);

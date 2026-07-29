@@ -82,6 +82,19 @@ export const COMPOSITION_MODAL_LABELS = {
   save: 'Зберегти'
 } as const;
 
+export const COMPOSITION_MODAL_TEXTS = {
+  closeAriaLabel: 'Закрити',
+  clearAriaLabel: 'Очистити',
+  deleteAriaLabel: 'Видалити',
+  deleteFileAriaLabel: 'Видалити файл',
+  uploadFileAriaLabel: 'Завантажити файл',
+  emptyNoteDateError: 'Вкажіть назву нот або прикріпіть файл',
+  audioUploadError: 'Підтримуються лише аудіофайли',
+  pdfUploadError: 'Підтримуються лише PDF-файли',
+  uploadAudioAria: 'Завантажити аудіофайл',
+  uploadPdfAria: 'Завантажити PDF-файл'
+} as const;
+
 export const COMPOSITION_SEARCH_LABELS = {
   createNew: 'Створити новий твір',
   noOptions: 'Нічого не знайдено'
@@ -107,6 +120,13 @@ export const OPUS_MUTATION_RESULTS = {
   created: 'Групу створено',
   updated: 'Групу оновлено',
   deleted: 'Групу видалено'
+} as const;
+
+export const COMPOSITION_MUTATION_RESULTS = {
+  created: 'Твір створено',
+  updated: 'Твір оновлено',
+  deleted: 'Твір видалено',
+  failed: 'Не вдалося створити твір'
 } as const;
 
 export const initialOpusDetails: OpusDetailsValue = {
