@@ -1,0 +1,62 @@
+enum FondStatus {
+  draft
+  published
+  hidden
+  archived
+  editing
+}
+
+input CreateFondInput {
+    fondNumber: Int!
+    name: String!
+    documentCreationDate: String!
+    chronologicalBoundaries: String
+    organizationForm: String 
+    description: String 
+    status: FondStatus!
+}
+
+type Fond {
+    id: ID!
+    fondNumber: Int!
+    name: String!
+    documentCreationDate: String!
+    chronologicalBoundaries: String
+    organizationForm: String 
+    description: String 
+    status: FondStatus!
+    updatedAt: String! 
+    createdAt: String!
+}
+
+type PaginatedFonds {
+    items: [Fond!]!
+    total: Int!
+    page: Int!
+    totalPages: Int!
+}
+
+input FondFiltersInput {
+    limit: Int
+    skip: Int
+    slug: String
+    search: String
+    languages: [ContentLanguage!]
+    sort: [SortOptions!]
+}
+
+extend type Query {
+    findById(id: ID!): Fond
+    findBySlug(slug: String!): Fond
+    findAll(filters: FondFiltersInput): [Fond!]
+    findPaginated(
+        page: Int!,
+        limit: Int!,
+        filters: FondFiltersInput
+    ): PaginatedFonds
+}
+
+extend type Mutation {
+    create(input: CreateFondInput!): Fond!
+}
+    
