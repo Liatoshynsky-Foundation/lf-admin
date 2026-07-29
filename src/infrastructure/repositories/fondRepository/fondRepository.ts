@@ -38,7 +38,7 @@ export const FondRepository = ({ FondModel }: FondRepoDeps): IFondRepository => 
   const baseRepo = createBaseRepository<Fond, DbFond, FondFilters>({
     model: FondModel,
     toEntity,
-    buildQuery: (filters) => buildBaseQuery(filters),
+    buildQuery: (filters) => buildBaseQuery(filters, ['name.uk', 'name.en']),
     getDefaultSort: getBaseSort
   });
 
