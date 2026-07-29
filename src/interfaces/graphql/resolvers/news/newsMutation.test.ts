@@ -365,7 +365,7 @@ describe('NewsMutation Resolvers', () => {
       expect(mockRepo.update).toHaveBeenCalled();
     });
 
-    it('should cover nullish coalescing right-hand branch on line 182', async () => {
+    it('should evaluate fallback title on line 182 when title getter returns undefined during trim step', async () => {
       (helpers.extractTitleForSlug as jest.Mock).mockReturnValueOnce('Valid Title');
       mockAction('findById', createMockNews({ id }));
       mockAction('update', createMockNews({ id }));

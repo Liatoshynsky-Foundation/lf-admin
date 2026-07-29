@@ -160,7 +160,7 @@ describe('LoginPage', () => {
     });
   });
 
-  it('should handle unexpected errors gracefully', async () => {
+  it('should handle network error in onError callback', async () => {
     mockedUseLoginMutation.mockImplementation(({ onError }) => mockLoginWithNetworkError(onError));
     const test = uuidv4();
 
@@ -171,7 +171,7 @@ describe('LoginPage', () => {
     });
   });
 
-  it('should handle unexpected payload typename in onCompleted', async () => {
+  it('should handle unknown payload typename in onCompleted', async () => {
     const mockUnexpectedMutationResponse = {
       login: {
         __typename: 'UnknownPayload'
@@ -192,28 +192,7 @@ describe('LoginPage', () => {
     });
   });
 
-  it('should handle unexpected payload typename in onCompleted', async () => {
-    const mockUnexpectedMutationResponse = {
-      login: {
-        __typename: 'UnknownPayload'
-      }
-    } as unknown as LoginMutation;
-
-    mockedUseLoginMutation.mockImplementation(({ onCompleted }) => {
-      const mockLoginFn = jest.fn().mockImplementation(() => {
-        act(() => onCompleted(mockUnexpectedMutationResponse));
-      });
-      return [mockLoginFn, { loading: false }];
-    });
-
-    submitFormHelper('password123');
-
-    await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(loginErrors.UNEXPECTED_ERROR);
-    });
-  });
-
-  it('should fallback to result.message when loginErrors.INVALID_CREDENTIALS is falsy', async () => {
+  it('should fallback to server message when INVALID_CREDENTIALS string is empty', async () => {
     const originalValue = loginErrors.INVALID_CREDENTIALS;
     Object.defineProperty(loginErrors, 'INVALID_CREDENTIALS', {
       value: '',

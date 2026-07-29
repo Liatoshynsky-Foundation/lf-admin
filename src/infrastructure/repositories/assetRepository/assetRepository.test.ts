@@ -232,78 +232,22 @@ describe('AssetRepository', () => {
         expect(mockAssetModel.findByIdAndDelete).toHaveBeenCalledWith('fake-id');
       });
 
-      it('should extract filename and folder from a valid absolute URL', async () => {
-        mockAssetModel.findById.mockResolvedValueOnce({
-          _id: 'fake-id',
-          filename: 'piano.jpg',
-          type: 'image',
-          url: 'https://example.com/photos/piano.jpg',
-          usageRefs: []
-        });
-        mockAssetModel.findByIdAndDelete.mockResolvedValueOnce({});
-
-        await repository.deleteAsset('fake-id');
-
-        expect(mockStorageDelete).toHaveBeenCalledWith('piano.jpg', 'photos');
-      });
-
-      it('should handle malformed URI segments during path decoding and return raw segment', async () => {
-        mockAssetModel.findById.mockResolvedValueOnce({
-          _id: 'fake-id',
-          filename: '%E0%A4%A.jpg',
-          type: 'image',
-          url: 'https://example.com/photos/%E0%A4%A.jpg',
-          usageRefs: []
-        });
-        mockAssetModel.findByIdAndDelete.mockResolvedValueOnce({});
-
-        await repository.deleteAsset('fake-id');
-
-        expect(mockStorageDelete).toHaveBeenCalledWith('%E0%A4%A.jpg', 'photos');
-      });
-
-      it('should fallback to asset.filename in getCloudStoragePath if url path segment is empty', async () => {
-        mockAssetModel.findById.mockResolvedValueOnce({
-          _id: 'fake-id',
-          filename: 'fallback.jpg',
-          type: 'image',
-          url: 'https://example.com/photos/fallback.jpg',
-          usageRefs: []
-        });
-        mockAssetModel.findByIdAndDelete.mockResolvedValueOnce({});
-
-        await repository.deleteAsset('fake-id');
-
-        expect(mockStorageDelete).toHaveBeenCalledWith('fallback.jpg', 'photos');
-      });
-
-      it('should use empty folder when filename is at the root of a valid URL', async () => {
-        mockAssetModel.findById.mockResolvedValueOnce({
-          _id: 'fake-id',
-          filename: 'piano.jpg',
-          type: 'image',
-          url: 'https://example.com/piano.jpg',
-          usageRefs: []
-        });
-        mockAssetModel.findByIdAndDelete.mockResolvedValueOnce({});
-
-        await repository.deleteAsset('fake-id');
-
-        expect(mockStorageDelete).toHaveBeenCalledWith('piano.jpg', '');
-      });
-
       it.each([
-        ['image', 'photo.jpg', 'photos'],
-        ['audio', 'song.mp3', 'compositions'],
-        ['pdf', 'doc.pdf', 'uploads']
+        ['https://example.com/photos/piano.jpg', 'piano.jpg', 'photos', 'image'],
+        ['https://example.com/photos/%E0%A4%A.jpg', '%E0%A4%A.jpg', 'photos', 'image'],
+        ['https://example.com/photos/fallback.jpg', 'fallback.jpg', 'photos', 'image'],
+        ['https://example.com/piano.jpg', 'piano.jpg', '', 'image'],
+        ['/relative/invalid-url', 'photo.jpg', 'photos', 'image'],
+        ['/relative/invalid-url', 'song.mp3', 'compositions', 'audio'],
+        ['/relative/invalid-url', 'doc.pdf', 'uploads', 'pdf']
       ])(
-        'should use type-based folder for invalid URL (type=%s → folder=%s)',
-        async (type, filename, expectedFolder) => {
+        'should resolve correct filename and storage folder for deleteAsset (url=%s -> filename=%s, folder=%s)',
+        async (url, filename, expectedFolder, type) => {
           mockAssetModel.findById.mockResolvedValueOnce({
             _id: 'fake-id',
             filename,
             type,
-            url: '/relative/invalid-url',
+            url,
             usageRefs: []
           });
           mockAssetModel.findByIdAndDelete.mockResolvedValueOnce({});
@@ -389,45 +333,32 @@ describe('AssetRepository', () => {
         );
       });
 
-      it('should validate filenames without extension and handle empty current extension', async () => {
-        mockAssetModel.findById.mockResolvedValueOnce({
-          filename: 'noextension',
-          mimeType: 'application/octet-stream',
-          type: 'document',
-          url: 'https://example.com/noextension',
-          usageRefs: []
-        });
+      it.each([
+        ['noextension', 'noextension.png', 'Розширення файлу має залишатися порожнім'],
+        ['file.txt', '.file.txt', 'Введіть назву файлу без крапки та розширення'],
+        ['file.txt', 'file.txt.', 'Введіть назву файлу без крапки та розширення'],
+        ['original.jpeg', 'new-name.ppdf.jpeg', 'Введіть назву файлу без крапки та розширення'],
+        ['original.jpeg', 'new-name.png', 'Розширення файлу має залишатися .jpeg']
+      ])(
+        'should reject invalid rename filenames (current=%s, next=%s)',
+        async (currentFilename, nextFilename, expectedErrorMessage) => {
+          mockAssetModel.findById.mockResolvedValueOnce({
+            filename: currentFilename,
+            mimeType: 'application/octet-stream',
+            type: 'document',
+            url: `https://example.com/${currentFilename}`,
+            usageRefs: []
+          });
 
-        await expect(repository.updateAsset('asset-id', { filename: 'noextension.png' })).rejects.toThrow(
-          'Розширення файлу має залишатися порожнім'
-        );
-      });
+          await expect(repository.updateAsset('asset-id', { filename: nextFilename })).rejects.toThrow(
+            expectedErrorMessage
+          );
 
-      it('should reject filename starting or ending with dot', async () => {
-        mockAssetModel.findById.mockResolvedValueOnce({
-          filename: 'file.txt',
-          mimeType: 'text/plain',
-          type: 'document',
-          url: 'https://example.com/file.txt',
-          usageRefs: []
-        });
-
-        await expect(repository.updateAsset('asset-id', { filename: '.file.txt' })).rejects.toThrow(
-          'Введіть назву файлу без крапки та розширення'
-        );
-
-        mockAssetModel.findById.mockResolvedValueOnce({
-          filename: 'file.txt',
-          mimeType: 'text/plain',
-          type: 'document',
-          url: 'https://example.com/file.txt',
-          usageRefs: []
-        });
-
-        await expect(repository.updateAsset('asset-id', { filename: 'file.txt.' })).rejects.toThrow(
-          'Введіть назву файлу без крапки та розширення'
-        );
-      });
+          expect(mockStorageExists).not.toHaveBeenCalled();
+          expect(mockStorageMove).not.toHaveBeenCalled();
+          expect(mockAssetModel.findByIdAndUpdate).not.toHaveBeenCalled();
+        }
+      );
 
       it('should fallback to existingDoc.url if storage.getUrl returns null', async () => {
         mockAssetModel.findById.mockResolvedValueOnce({
@@ -447,42 +378,6 @@ describe('AssetRepository', () => {
           expect.objectContaining({ $set: expect.objectContaining({ url: 'https://example.com/photos/old.jpg' }) }),
           { new: true }
         );
-      });
-
-      it('should reject rename filenames with extra dots before checking R2', async () => {
-        mockAssetModel.findById.mockResolvedValueOnce({
-          filename: 'original.jpeg',
-          mimeType: 'image/jpeg',
-          type: 'image',
-          url: 'https://example.com/photos/original.jpeg',
-          usageRefs: []
-        });
-
-        await expect(repository.updateAsset('asset-id', { filename: 'new-name.ppdf.jpeg' })).rejects.toThrow(
-          'Введіть назву файлу без крапки та розширення'
-        );
-
-        expect(mockStorageExists).not.toHaveBeenCalled();
-        expect(mockStorageMove).not.toHaveBeenCalled();
-        expect(mockAssetModel.findByIdAndUpdate).not.toHaveBeenCalled();
-      });
-
-      it('should reject changing the current filename extension before checking R2', async () => {
-        mockAssetModel.findById.mockResolvedValueOnce({
-          filename: 'original.jpeg',
-          mimeType: 'image/jpeg',
-          type: 'image',
-          url: 'https://example.com/photos/original.jpeg',
-          usageRefs: []
-        });
-
-        await expect(repository.updateAsset('asset-id', { filename: 'new-name.png' })).rejects.toThrow(
-          'Розширення файлу має залишатися .jpeg'
-        );
-
-        expect(mockStorageExists).not.toHaveBeenCalled();
-        expect(mockStorageMove).not.toHaveBeenCalled();
-        expect(mockAssetModel.findByIdAndUpdate).not.toHaveBeenCalled();
       });
 
       it('should return null when renaming a missing document', async () => {
