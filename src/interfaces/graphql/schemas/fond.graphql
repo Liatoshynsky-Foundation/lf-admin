@@ -45,6 +45,20 @@ input FondFiltersInput {
     sort: [SortOptions!]
 }
 
+input UpdateFondInput {
+    fondNumber: Int!
+    name: JSON!
+    documentCreationDate: JSON!
+    chronologicalBoundaries: JSON
+    organizationForm: JSON 
+    description: JSON 
+    status: FondStatus!
+}
+
+input DeleteFondInput {
+    fondNumber: Int!
+}
+
 extend type Query {
     fondById(id: ID!): Fond
     fondBySlug(slug: String!): Fond
@@ -58,5 +72,7 @@ extend type Query {
 
 extend type Mutation {
     createFond(input: CreateFondInput!): Fond!
+    updateFond(id: ID!, input: UpdateFondInput!): Fond!
+    deleleFond(id: ID!): Fond!
 }
     
