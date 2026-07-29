@@ -1,13 +1,23 @@
 import { GraphQLError } from 'graphql';
 
-import { FondErrorCodes, FondErrors } from '~/constants/errors';
+import { FondErrorCodes, FondErrors, graphqlErrors } from '~/constants/errors';
 import { Fond } from '~/src/domain/entities/Fond';
 import { CreateFondInput, UpdateFondInput } from '~/src/domain/repositories/fondRepository';
 import { GraphQLContext } from '~/src/shared/types/container/types';
 import { zFondSchema } from '~/src/validators/fond.schema';
 
+const assertAuthenticated = (context: GraphQLContext) => {
+  if (!context.admin) {
+    throw new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
+      extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
+    });
+  }
+};
+
+
 export const FondMutation = {
   createFond: async (_: unknown, { input }: { input: CreateFondInput }, context: GraphQLContext): Promise<Fond> => {
+    assertAuthenticated(context);
     const repo = context.requestContainer.cradle.fondRepository;
     const validatedInput = zFondSchema.parse(input);
 
@@ -26,6 +36,7 @@ export const FondMutation = {
   },
 
   updateFond: async (_: unknown, { id, input }: { id: string, input: UpdateFondInput }, context: GraphQLContext): Promise<Fond> => {
+    assertAuthenticated(context);
     const repo = context.requestContainer.cradle.fondRepository;
 
     const validateInput = zFondSchema.parse(input);
@@ -43,6 +54,7 @@ export const FondMutation = {
   },
 
   deleteFond: async (_: unknown, { id }: { id: string }, context: GraphQLContext): Promise<boolean> => {
+    assertAuthenticated(context);
     const repo = context.requestContainer.cradle.fondRepository;
 
     return await repo.delete(id);
