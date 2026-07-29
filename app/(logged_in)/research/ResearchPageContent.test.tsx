@@ -1,4 +1,4 @@
-import { fireEvent,render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { RESEARCH_WORKS_MOCK_DATA, type ResearchWork } from './research.mock';
@@ -51,6 +51,24 @@ jest.mock('~/shared/components/research-modal/ResearchModal', () => ({
   __esModule: true,
   default: ({ isOpen, mode }: { isOpen: boolean; mode: string }) =>
     isOpen ? <div data-testid="mock-research-modal">{mode}</div> : null
+}));
+
+jest.mock('~/shared/components/pagination/Pagination', () => ({
+  Pagination: ({
+    totalPages,
+    currentPage,
+    onPageChange
+  }: {
+    totalPages: number;
+    currentPage: number;
+    onPageChange: (event: unknown, page: number) => void;
+  }) => (
+    <div data-testid="mock-pagination" data-total-pages={totalPages} data-current-page={currentPage}>
+      <button type="button" onClick={() => onPageChange(null, currentPage + 1)}>
+        next-page
+      </button>
+    </div>
+  )
 }));
 
 const mockedUseResearchWorksFiltering = jest.mocked(useResearchWorksFiltering);
@@ -233,5 +251,88 @@ describe('ResearchPageContent', () => {
     fireEvent.click(screen.getByText('edit-first'));
 
     expect(screen.getByTestId('mock-research-modal')).toHaveTextContent('edit');
+  });
+
+  it('does not render pagination when there is only one page', () => {
+    mockedUseResearchWorksFiltering.mockReturnValue(
+      defaultFilteringMock as unknown as ReturnType<typeof useResearchWorksFiltering>
+    );
+
+    render(<ResearchPageContent />);
+
+    expect(screen.queryByTestId('mock-pagination')).not.toBeInTheDocument();
+  });
+
+  it('renders pagination when there is more than one page', () => {
+    RESEARCH_WORKS_MOCK_DATA.length = 0;
+    for (let i = 0; i < 10; i += 1) {
+      RESEARCH_WORKS_MOCK_DATA.push({ ...sampleWork, id: String(i), author: `Автор ${i}` });
+    }
+
+    mockedUseResearchWorksFiltering.mockReturnValue(
+      defaultFilteringMock as unknown as ReturnType<typeof useResearchWorksFiltering>
+    );
+
+    render(<ResearchPageContent />);
+
+    expect(screen.getByTestId('mock-pagination')).toBeInTheDocument();
+  });
+
+  it('shows only RESEARCH_ITEMS_PER_PAGE works on the current page', () => {
+    RESEARCH_WORKS_MOCK_DATA.length = 0;
+    for (let i = 0; i < 10; i += 1) {
+      RESEARCH_WORKS_MOCK_DATA.push({ ...sampleWork, id: String(i), author: `Автор ${i}` });
+    }
+
+    mockedUseResearchWorksFiltering.mockReturnValue(
+      defaultFilteringMock as unknown as ReturnType<typeof useResearchWorksFiltering>
+    );
+
+    render(<ResearchPageContent />);
+
+    expect(screen.getByTestId('mock-research-content')).toHaveTextContent('8');
+  });
+
+  it('navigates to the next page when pagination changes', () => {
+    RESEARCH_WORKS_MOCK_DATA.length = 0;
+    for (let i = 0; i < 10; i += 1) {
+      RESEARCH_WORKS_MOCK_DATA.push({ ...sampleWork, id: String(i), author: `Автор ${i}` });
+    }
+
+    mockedUseResearchWorksFiltering.mockReturnValue(
+      defaultFilteringMock as unknown as ReturnType<typeof useResearchWorksFiltering>
+    );
+
+    render(<ResearchPageContent />);
+
+    expect(screen.getByTestId('mock-pagination')).toHaveAttribute('data-current-page', '1');
+
+    fireEvent.click(screen.getByText('next-page'));
+
+    expect(screen.getByTestId('mock-pagination')).toHaveAttribute('data-current-page', '2');
+  });
+
+  it('resets to page 1 when the search value changes', () => {
+    RESEARCH_WORKS_MOCK_DATA.length = 0;
+    for (let i = 0; i < 10; i += 1) {
+      RESEARCH_WORKS_MOCK_DATA.push({ ...sampleWork, id: String(i), author: `Автор ${i}` });
+    }
+
+    mockedUseResearchWorksFiltering.mockReturnValue(
+      defaultFilteringMock as unknown as ReturnType<typeof useResearchWorksFiltering>
+    );
+
+    const { rerender } = render(<ResearchPageContent />);
+
+    fireEvent.click(screen.getByText('next-page'));
+    expect(screen.getByTestId('mock-pagination')).toHaveAttribute('data-current-page', '2');
+
+    mockedUseResearchWorksFiltering.mockReturnValue({
+      ...defaultFilteringMock,
+      toolbarProps: { search: { search: 'автор' } }
+    } as unknown as ReturnType<typeof useResearchWorksFiltering>);
+    rerender(<ResearchPageContent />);
+
+    expect(screen.getByTestId('mock-pagination')).toHaveAttribute('data-current-page', '1');
   });
 });

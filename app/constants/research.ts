@@ -16,3 +16,5 @@ export const RESEARCH_STATUS_OPTIONS = [
   { value: BaseContentStatuses.Published, label: 'Опубліковано' },
   { value: BaseContentStatuses.Hidden, label: 'Приховано' }
 ] as const;
+
+export const RESEARCH_ITEMS_PER_PAGE = 8;
