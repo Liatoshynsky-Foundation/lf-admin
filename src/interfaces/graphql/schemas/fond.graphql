@@ -46,10 +46,10 @@ input FondFiltersInput {
 }
 
 extend type Query {
-    findById(id: ID!): Fond
-    findBySlug(slug: String!): Fond
-    findAll(filters: FondFiltersInput): [Fond!]
-    findPaginated(
+    fondById(id: ID!): Fond
+    fondBySlug(slug: String!): Fond
+    findAllFonds(filters: FondFiltersInput): [Fond!]
+    findFondsPaginated(
         page: Int!,
         limit: Int!,
         filters: FondFiltersInput
@@ -57,6 +57,6 @@ extend type Query {
 }
 
 extend type Mutation {
-    create(input: CreateFondInput!): Fond!
+    createFond(input: CreateFondInput!): Fond!
 }
     

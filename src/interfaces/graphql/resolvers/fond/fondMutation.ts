@@ -7,10 +7,10 @@ import { GraphQLContext } from '~/src/shared/types/container/types';
 import { zFondSchema } from '~/src/validators/fond.schema';
 
 export const FondMutation = {
-  create: async (_: unknown, { input }: { input: CreateFondInput }, context: GraphQLContext): Promise<Fond> => {
+  createFond: async (_: unknown, { input }: { input: CreateFondInput }, context: GraphQLContext): Promise<Fond> => {
     const repo = context.requestContainer.cradle.fondRepository;
     const validatedInput = zFondSchema.parse(input);
-    
+
     const { fondNumber } = input;
 
     const existing = await repo.findByFondNumber(fondNumber);

@@ -14,8 +14,8 @@ interface PaginatedReponse {
 const endpointHandler = endpointRepositoryHandler('fondRepository');
 
 export const FondQuery = {
-  findById: endpointHandler<FindByIdArgs, Fond | null>(async ({ args: { id }, repo }) => repo.findById(id)),
-  findBySlug: endpointHandler<FindBySlugArgs, Fond | null>(async ({ args: { slug }, repo }) => repo.findBySlug(slug)),
-  findAll: endpointHandler<FiltersArgs, Fond[]>(async ({ repo }) => repo.findAll()),
-  findPaginated: endpointHandler<PaginatedArgs, PaginatedReponse>(async ({ args: { page, limit, filters }, repo }) => repo.findPaginated(page, limit, filters))
+  fondById: endpointHandler<FindByIdArgs, Fond | null>(async ({ args: { id }, repo }) => repo.findById(id)),
+  fondBySlug: endpointHandler<FindBySlugArgs, Fond | null>(async ({ args: { slug }, repo }) => repo.findBySlug(slug)),
+  findAllFonds: endpointHandler<FiltersArgs, Fond[]>(async ({ repo }) => repo.findAll()),
+  findFondsPaginated: endpointHandler<PaginatedArgs, PaginatedReponse>(async ({ args: { page, limit, filters }, repo }) => repo.findPaginated(page, limit, filters))
 };
