@@ -37,7 +37,7 @@ export const YermolenkoLinks = () => {
 
   const handleDescriptionChange = (val: JSONContent) => {
     setField(pageId, blockId, 'description', {
-      ...(block.description || {}),
+      ...(block.description),
       [currentLocale]: val
     });
   };

@@ -35,7 +35,7 @@ export const WarInfo = () => {
 
   const handleDescriptionChange = (val: JSONContent) => {
     setField(pageId, blockId, 'description', {
-      ...(block.description || {}),
+      ...(block.description),
       [currentLocale]: val
     });
   };

@@ -41,7 +41,7 @@ export const PrincipleOfHope = () => {
 
   const handleDescriptionChange = (val: JSONContent) => {
     setField(pageId, blockId, 'description', {
-      ...(block.description || {}),
+      ...(block.description),
       [currentLocale]: val
     });
   };
@@ -79,8 +79,7 @@ export const PrincipleOfHope = () => {
           onChange={(e) => handleTextChange('buttonLink', e)}
           fullWidth
         />
-
-        {/* --- ВИКОРИСТОВУЄМО СПІЛЬНИЙ КОМПОНЕНТ --- */}
+        
         <ConfigurableButtonList
           buttons={block.buttons || []}
           currentLocale={currentLocale}
