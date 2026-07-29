@@ -1,3 +1,5 @@
+import { GraphQLError } from 'graphql';
+
 import { createMockContext } from '../testUtils';
 import { FondQuery } from './fondQuery';
 import { IFondRepository } from '~/src/domain/repositories/fondRepository';
@@ -7,37 +9,59 @@ describe('FondQuery Resolvers', () => {
     findById: jest.fn(),
     findAll: jest.fn(),
     findPaginated: jest.fn(),
-    findByFondNumber: jest.fn(),
   };
 
-  const context = createMockContext(true, 'fondRepository', mockRepo);
+  const authorizedContext = createMockContext(true, 'fondRepository', mockRepo);
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
+  const unauthorizedContext = createMockContext(false, 'fondRepository', mockRepo);
 
-  it('fondById should call findById of repo with correct id', async () => {
+  describe('findFondById', () => {
     const mockId = 'some-id';
-    await FondQuery.fondById({}, { id: mockId }, context);
+    it('should throw GraphQLError when admin is falsy', async () => {
+      const mockId = 'some-id';
+      await expect(FondQuery.findFondById({}, { id: mockId }, unauthorizedContext)).rejects.toThrow(GraphQLError);
+    });
 
-    expect(mockRepo.findById).toHaveBeenCalledWith(mockId);
+    it('should call findById of repo with correct id', async () => {
+      await FondQuery.findFondById({}, { id: mockId }, authorizedContext);
+
+      expect(mockRepo.findById).toHaveBeenCalledWith(mockId);
+    });
   });
 
-  it('findAllFonds should call findAll', async () => {
-    await FondQuery.findAllFonds({}, {}, context);
+  describe('findAllFonds', () => {
+    it('should throw GraphQLError when admin is falsy', async () => {
+      await expect(FondQuery.findAllFonds({}, {}, unauthorizedContext)).rejects.toThrow(GraphQLError);
+    });
 
-    expect(mockRepo.findAll).toHaveBeenCalledTimes(1);
+    it('should call findAll', async () => {
+      await FondQuery.findAllFonds({}, {}, authorizedContext);
+
+      expect(mockRepo.findAll).toHaveBeenCalledTimes(1);
+    });
   });
 
-  it('findFondsPaginated should call findPaginated of repo with args', async () => {
+  describe('findFondsPaginated', () => {
     const paginationParams = {
-      limit: 10, page: 1, filters: {
+      limit: 10,
+      page: 1,
+      filters: {
         search: 'search'
       }
     };
-    await FondQuery.findFondsPaginated({}, paginationParams, context);
+    it('should throw GraphQLError when admin is falsy', async () => {
+      await expect(FondQuery.findFondsPaginated({}, paginationParams, unauthorizedContext)).rejects.toThrow(GraphQLError);
+    });
 
-    expect(mockRepo.findPaginated).toHaveBeenCalledTimes(1);
-    expect(mockRepo.findPaginated).toHaveBeenCalledWith(paginationParams.page, paginationParams.limit, paginationParams.filters);
+    it('should call findPaginated of repo with args', async () => {
+     
+      await FondQuery.findFondsPaginated({}, paginationParams, authorizedContext);
+
+      expect(mockRepo.findPaginated).toHaveBeenCalledTimes(1);
+      expect(mockRepo.findPaginated).toHaveBeenCalledWith(paginationParams.page, paginationParams.limit, paginationParams.filters);
+    });
   });
 });
