@@ -1,4 +1,4 @@
-import { fireEvent,render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import { TitleDropdown } from './TitleDropdown';
 
@@ -22,10 +22,17 @@ describe('TitleDropdown Component', () => {
 
     render(<TitleDropdown title="Про Фундацію" type="multilingual" language="EN" onMenuOpen={mockOnMenuOpen} />);
 
-    const triggerElement = screen.getByRole('button', {name: 'Відкрити меню'});
+    const triggerElement = screen.getByRole('button', { name: 'Відкрити меню' });
 
     fireEvent.click(triggerElement);
 
     expect(mockOnMenuOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it('should fallback to UA language when language prop is omitted for multilingual type', () => {
+    render(<TitleDropdown title="Головна" type="multilingual" />);
+
+    expect(screen.getByText('Головна')).toBeInTheDocument();
+    expect(screen.getByText('UA')).toBeInTheDocument();
   });
 });

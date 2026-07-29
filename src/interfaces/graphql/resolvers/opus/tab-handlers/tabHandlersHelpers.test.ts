@@ -7,7 +7,7 @@ import {
   orderCompositionsByIds,
   totalCompositions,
   totalGroups,
-  totalPages,
+  totalPages
 } from './tabHandlersHelpers';
 import { Composition } from '~/domain/entities/Composition';
 import { Opus } from '~/src/domain/entities/Opus';
@@ -16,7 +16,7 @@ import { IOpusRepository } from '~/src/domain/repositories/opusRepository';
 import { OpusNumberKind, WorksTab } from '~/types/graphql/generated/graphql';
 
 jest.mock('../../helpers', () => ({
-  mapFilters: jest.fn((filters) => filters),
+  mapFilters: jest.fn((filters) => filters)
 }));
 
 describe('tabHandlersHelpers', () => {
@@ -41,12 +41,12 @@ describe('tabHandlersHelpers', () => {
   const compositionsRepoMock = {
     findByIds: jest.fn(),
     findByIdsPaginated: jest.fn(),
-    countByIds: jest.fn(),
+    countByIds: jest.fn()
   } as unknown as jest.Mocked<ICompositionRepository>;
 
   const opusRepoMock = {
     count: jest.fn(),
-    findAll: jest.fn(),
+    findAll: jest.fn()
   } as unknown as jest.Mocked<IOpusRepository>;
 
   beforeEach(() => {
@@ -80,12 +80,27 @@ describe('tabHandlersHelpers', () => {
     });
 
     it('should return groups with empty compositions if uniqueIds length is zero', async () => {
-      const result = await attachCompositionsToGroups([MOCK_OPUS_WITHOUT_COMPS, MOCK_OPUS_NULL_COMPS], compositionsRepoMock);
+      const result = await attachCompositionsToGroups(
+        [MOCK_OPUS_WITHOUT_COMPS, MOCK_OPUS_NULL_COMPS],
+        compositionsRepoMock
+      );
 
       expect(compositionsRepoMock.findByIds).not.toHaveBeenCalled();
       expect(result).toEqual([
         { ...MOCK_OPUS_WITHOUT_COMPS, compositions: [] },
-        { ...MOCK_OPUS_NULL_COMPS, compositions: [] },
+        { ...MOCK_OPUS_NULL_COMPS, compositions: [] }
+      ]);
+    });
+
+    it('should handle groups with null or undefined compositions when uniqueIds is non-empty', async () => {
+      const mockOpusWithNull: Opus = { id: 'opus-null', compositions: null } as unknown as Opus;
+      compositionsRepoMock.findByIds.mockResolvedValue([MOCK_COMPOSITION_1]);
+
+      const result = await attachCompositionsToGroups([MOCK_OPUS_1, mockOpusWithNull], compositionsRepoMock);
+
+      expect(result).toEqual([
+        { ...MOCK_OPUS_1, compositions: [MOCK_COMPOSITION_1] },
+        { ...mockOpusWithNull, compositions: [] }
       ]);
     });
   });
@@ -100,7 +115,12 @@ describe('tabHandlersHelpers', () => {
       const result = await mappedGroups(opusRepoMock, WorksTab.Op, MOCK_FILTER_SEARCH);
 
       expect(mapFilters).toHaveBeenCalledWith(MOCK_FILTER_SEARCH);
-      expect(opusRepoMock.findAll).toHaveBeenCalledWith({ ...MOCK_FILTER_SEARCH, numberKind: OpusNumberKind.Op, skip: undefined, limit: undefined });
+      expect(opusRepoMock.findAll).toHaveBeenCalledWith({
+        ...MOCK_FILTER_SEARCH,
+        numberKind: OpusNumberKind.Op,
+        skip: undefined,
+        limit: undefined
+      });
       expect(result).toEqual(MOCK_GROUPS_LIST);
     });
 
@@ -111,7 +131,11 @@ describe('tabHandlersHelpers', () => {
       const result = await mappedGroups(opusRepoMock, WorksTab.Sineop, undefined);
 
       expect(mapFilters).toHaveBeenCalledWith(undefined);
-      expect(opusRepoMock.findAll).toHaveBeenCalledWith({ numberKind: OpusNumberKind.Sineop, skip: undefined, limit: undefined });
+      expect(opusRepoMock.findAll).toHaveBeenCalledWith({
+        numberKind: OpusNumberKind.Sineop,
+        skip: undefined,
+        limit: undefined
+      });
       expect(result).toEqual(MOCK_GROUPS_LIST);
     });
   });
@@ -124,7 +148,10 @@ describe('tabHandlersHelpers', () => {
       const result = await totalGroups(opusRepoMock, WorksTab.Compositions, MOCK_FILTER_SEARCH);
 
       expect(mapFilters).toHaveBeenCalledWith(MOCK_FILTER_SEARCH);
-      expect(opusRepoMock.count).toHaveBeenCalledWith({ ...MOCK_FILTER_SEARCH, numberKind: OpusNumberKind.Compositions });
+      expect(opusRepoMock.count).toHaveBeenCalledWith({
+        ...MOCK_FILTER_SEARCH,
+        numberKind: OpusNumberKind.Compositions
+      });
       expect(result).toBe(MOCK_TOTAL_COUNT);
     });
   });
@@ -136,13 +163,20 @@ describe('tabHandlersHelpers', () => {
       compositionsRepoMock.findByIdsPaginated.mockResolvedValue(MOCK_PAGINATED_RESULT);
       (mapFilters as jest.Mock).mockReturnValueOnce(MOCK_FILTER_SEARCH);
 
-      const result = await mappedCompositions(compositionsRepoMock, [MOCK_ID_1], MOCK_SKIP, MOCK_LIMIT, MOCK_FILTER_SEARCH);
+      const result = await mappedCompositions(
+        compositionsRepoMock,
+        [MOCK_ID_1],
+        MOCK_SKIP,
+        MOCK_LIMIT,
+        MOCK_FILTER_SEARCH
+      );
 
       expect(mapFilters).toHaveBeenCalledWith(MOCK_FILTER_SEARCH);
-      expect(compositionsRepoMock.findByIdsPaginated).toHaveBeenCalledWith(
-        [MOCK_ID_1],
-        { ...MOCK_FILTER_SEARCH, skip: MOCK_SKIP, limit: MOCK_LIMIT }
-      );
+      expect(compositionsRepoMock.findByIdsPaginated).toHaveBeenCalledWith([MOCK_ID_1], {
+        ...MOCK_FILTER_SEARCH,
+        skip: MOCK_SKIP,
+        limit: MOCK_LIMIT
+      });
       expect(result).toEqual(MOCK_PAGINATED_RESULT);
     });
 
@@ -153,10 +187,10 @@ describe('tabHandlersHelpers', () => {
       const result = await mappedCompositions(compositionsRepoMock, [MOCK_ID_1], MOCK_SKIP, MOCK_LIMIT, undefined);
 
       expect(mapFilters).toHaveBeenCalledWith(undefined);
-      expect(compositionsRepoMock.findByIdsPaginated).toHaveBeenCalledWith(
-        [MOCK_ID_1],
-        { skip: MOCK_SKIP, limit: MOCK_LIMIT }
-      );
+      expect(compositionsRepoMock.findByIdsPaginated).toHaveBeenCalledWith([MOCK_ID_1], {
+        skip: MOCK_SKIP,
+        limit: MOCK_LIMIT
+      });
       expect(result).toEqual(MOCK_PAGINATED_RESULT);
     });
   });
