@@ -3,14 +3,14 @@
 import { Divider,Stack } from '@mui/material';
 import React from 'react';
 
-import { PrincipleHopeButtonData } from '../PrincipleOfHope/PrincipleOfHope';
+import { ClickableButtonData } from '../ConfigurableButtonList/ConfigurableButtonList';
 import { styles } from './PrincipleHopeButtonCard.styles';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 
 type ButtonItemProps = {
-  button: PrincipleHopeButtonData;
+  button: ClickableButtonData;
   currentLocale: 'uk' | 'en';
-  onChangeButton: (updatedButton: PrincipleHopeButtonData) => void;
+  onChangeButton: (updatedButton: ClickableButtonData) => void;
 };
 
 export const PrincipleHopeButtonCard = ({ button, currentLocale, onChangeButton }: ButtonItemProps) => {

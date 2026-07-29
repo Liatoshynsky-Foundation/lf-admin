@@ -2,12 +2,10 @@
 
 import { Box, Typography } from '@mui/material';
 import { JSONContent } from '@tiptap/react';
-import React, { useMemo } from 'react';
+import React from 'react';
 
-import { PrincipleHopeButtonCard } from '../PrincipleHopeButtonCard/PrincipleHopeButtonCard';
-import { PrincipleHopeButtonData } from '../PrincipleOfHope/PrincipleOfHope';
+import { ConfigurableButtonList } from '../ConfigurableButtonList/ConfigurableButtonList';
 import { styles } from './YermolenkoLinks.styles';
-import ConfigurableList from '~/components/configurable-list/ConfigurableList';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
@@ -24,17 +22,6 @@ export const YermolenkoLinks = () => {
   const currentLocale = useStore((state) => state.locale) as 'uk' | 'en';
   const setField = useStore((state) => state.setField);
   const toggleBlockVisibility = useStore((state) => state.toggleBlockVisibility);
-
-  const buttonsList = useMemo(() => {
-    const rawButtons: Partial<PrincipleHopeButtonData>[] = block?.buttons || [];
-    return rawButtons.map((btn, index) => ({
-      ...btn,
-      shortText: btn.shortText || { uk: '', en: '' },
-      fullText: btn.fullText || { uk: '', en: '' },
-      link: btn.link || '',
-      id: btn.id || `btn-${index}-${crypto.randomUUID()}`
-    })) as PrincipleHopeButtonData[];
-  }, [block?.buttons]);
 
   if (!block) return <EditBlockSkeleton />;
 
@@ -53,29 +40,6 @@ export const YermolenkoLinks = () => {
       ...(block.description || {}),
       [currentLocale]: val
     });
-  };
-
-  const updateButtonsList = (newList: PrincipleHopeButtonData[]) => {
-    setField(pageId, blockId, 'buttons', newList);
-  };
-
-  const handleAddButton = () => {
-    const newButton: PrincipleHopeButtonData = {
-      id: crypto.randomUUID(),
-      shortText: { uk: '', en: '' },
-      fullText: { uk: '', en: '' },
-      link: ''
-    };
-    updateButtonsList([...buttonsList, newButton]);
-    return newButton;
-  };
-
-  const handleRemoveButton = (idToRemove: string | number) => {
-    updateButtonsList(buttonsList.filter((btn) => btn.id !== idToRemove));
-  };
-
-  const handleUpdateSingleButton = (updatedButton: PrincipleHopeButtonData) => {
-    updateButtonsList(buttonsList.map((btn) => (btn.id === updatedButton.id ? updatedButton : btn)));
   };
 
   return (
@@ -104,26 +68,13 @@ export const YermolenkoLinks = () => {
           fullWidth
         />
 
-        <Box sx={{ mt: 2 }}>
-          <Typography sx={{ mb: 2, fontWeight: 'bold' }}>Кнопки посилань ({buttonsList.length}):</Typography>
-
-          <ConfigurableList
-            items={buttonsList}
-            addBtnLabel="Додати посилання"
-            editable
-            onCreate={handleAddButton}
-            onChange={handleUpdateSingleButton}
-            onDelete={handleRemoveButton}
-            renderItem={({ item }) => (
-              <PrincipleHopeButtonCard
-                key={item.id}
-                button={item}
-                currentLocale={currentLocale}
-                onChangeButton={handleUpdateSingleButton}
-              />
-            )}
-          />
-        </Box>
+        <ConfigurableButtonList
+          buttons={block.buttons || []}
+          currentLocale={currentLocale}
+          title="Кнопки посилань"
+          addBtnLabel="Додати посилання"
+          onChange={(newList) => setField(pageId, blockId, 'buttons', newList)}
+        />
       </Box>
     </CollapsibleBlock>
   );
