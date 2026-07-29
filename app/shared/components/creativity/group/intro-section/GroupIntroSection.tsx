@@ -33,6 +33,7 @@ export const GroupIntroSection = ({ data, currentLanguage, onChange }: GroupIntr
       />
 
       <CustomTextField
+        key={`desc-${langKey}`}
         fieldType="formatting"
         label="Опис"
         value={data.description[langKey] ?? undefined}

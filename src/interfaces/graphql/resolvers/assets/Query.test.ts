@@ -1,5 +1,5 @@
 import { createMockContext } from '../testUtils';
-import { AllAssetsArgs, AssetsQuery } from './Query';
+import { AllAssetsArgs, AssetsMutation, AssetsQuery } from './Query';
 import { SortOrder } from '~/types/enums/common.enums';
 import { AssetType } from '~/types/graphql/generated/graphql';
 
@@ -43,7 +43,59 @@ describe('AssetsQuery', () => {
       filters: {}
     } as unknown as { filters: AllAssetsArgs['filters'] };
 
-    await expect(AssetsQuery.allAssets({}, args as never, invalidCtx))
-      .rejects.toThrow();
+    await expect(AssetsQuery.allAssets({}, args as never, invalidCtx)).rejects.toThrow();
+  });
+
+  describe('AssetsMutation', () => {
+    const mockRepo = {
+      findAll: jest.fn(),
+      updateAsset: jest.fn(),
+      createAsset: jest.fn(),
+      deleteAsset: jest.fn()
+    };
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('updateAsset: should update asset', async () => {
+      const expected = { id: '1', isStarred: true };
+      mockRepo.updateAsset.mockResolvedValue(expected);
+      const ctx = createMockContext(true, 'assetsRepository', mockRepo);
+
+      const input = { isStarred: true };
+      const res = await AssetsMutation.updateAsset({}, { id: '1', input }, ctx);
+
+      expect(res).toEqual(expected);
+      expect(mockRepo.updateAsset).toHaveBeenCalledWith('1', input);
+    });
+
+    it('createAsset: should create asset', async () => {
+      const expected = { id: '2', filename: 'file.jpg' };
+      mockRepo.createAsset.mockResolvedValue(expected);
+      const ctx = createMockContext(true, 'assetsRepository', mockRepo);
+
+      const input = {
+        filename: 'file.jpg',
+        mimeType: 'image/jpeg',
+        sizeBytes: 1024,
+        url: 'https://example.com/file.jpg',
+        type: AssetType.Image
+      };
+      const res = await AssetsMutation.createAsset({}, { input }, ctx);
+
+      expect(res).toEqual(expected);
+      expect(mockRepo.createAsset).toHaveBeenCalledWith(input);
+    });
+
+    it('deleteAsset: should delete asset', async () => {
+      mockRepo.deleteAsset.mockResolvedValue(true);
+      const ctx = createMockContext(true, 'assetsRepository', mockRepo);
+
+      const res = await AssetsMutation.deleteAsset({}, { id: '1' }, ctx);
+
+      expect(res).toBe(true);
+      expect(mockRepo.deleteAsset).toHaveBeenCalledWith('1');
+    });
   });
 });

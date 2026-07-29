@@ -275,4 +275,32 @@ describe('CompositionRepository', () => {
     expect(queryChain.limit).not.toHaveBeenCalled();
     expect(result).toHaveLength(1);
   });
+
+  it('syncForOpus returns empty array when given an empty inputs array', async (): Promise<void> => {
+    const result = await repository.syncForOpus([]);
+    expect(result).toEqual([]);
+  });
+
+  it('should execute baseRepo buildQuery and getDefaultSort when findAll is called', async (): Promise<void> => {
+    const queryChain = createChainableQueryMock([createMockDoc()]);
+    findMock.mockReturnValue(queryChain);
+
+    const result = await repository.findAll({ search: 'тест' });
+
+    expect(findMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        $and: expect.arrayContaining([{ 'name.uk': { $exists: true, $ne: null } }])
+      })
+    );
+    expect(result).toHaveLength(1);
+  });
+
+  it('should trigger default extraConditions parameter in buildCompositionQuery', async (): Promise<void> => {
+    const queryChain = createChainableQueryMock([createMockDoc()]);
+    findMock.mockReturnValue(queryChain);
+
+    await repository.findAll({});
+
+    expect(findMock).toHaveBeenCalled();
+  });
 });

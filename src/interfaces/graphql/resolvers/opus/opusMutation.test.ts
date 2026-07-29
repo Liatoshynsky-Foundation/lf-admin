@@ -57,7 +57,7 @@ const MOCK_OPUS_ENTITY: Opus = {
   name: { uk: 'Назва', en: 'Name' },
   status: OpusStatus.Draft,
   meta: { views: 0 },
-  compositions: [COMPOSITION_ID_1, COMPOSITION_ID_2],
+  compositions: [COMPOSITION_ID_1, COMPOSITION_ID_2]
 } as unknown as Opus;
 
 const MOCK_COMPOSITION_1 = { id: COMPOSITION_ID_1 } as Composition;
@@ -70,7 +70,9 @@ describe('OpusMutation Resolvers', () => {
   let adminContext: GraphQLContext;
   let userContext: GraphQLContext;
 
-  const createMockContext = (isAdmin: boolean): {
+  const createMockContext = (
+    isAdmin: boolean
+  ): {
     context: GraphQLContext;
     opusRepo: jest.Mocked<IOpusRepository>;
     compositionsRepo: jest.Mocked<ICompositionRepository>;
@@ -87,7 +89,7 @@ describe('OpusMutation Resolvers', () => {
       delete: jest.fn(),
       unlink: jest.fn(),
       removeCompositionsFromCompositionsOpus: jest.fn(),
-      moveCompositionsToCompositionsOpus: jest.fn(),
+      moveCompositionsToCompositionsOpus: jest.fn()
     } as unknown as jest.Mocked<IOpusRepository>;
 
     const compositionsRepo = {
@@ -96,7 +98,7 @@ describe('OpusMutation Resolvers', () => {
       findByIds: jest.fn(),
       syncForOpus: jest.fn().mockResolvedValue([]),
       deleteByOpusId: jest.fn(),
-      searchByTitle: jest.fn(),
+      searchByTitle: jest.fn()
     } as unknown as jest.Mocked<ICompositionRepository>;
 
     const context = {
@@ -105,9 +107,9 @@ describe('OpusMutation Resolvers', () => {
         cradle: {
           opusRepository: opusRepo,
           compositionsRepository: compositionsRepo,
-          assetsRepository: {},
-        },
-      },
+          assetsRepository: {}
+        }
+      }
     } as unknown as GraphQLContext;
 
     return { context, opusRepo, compositionsRepo };
@@ -127,11 +129,9 @@ describe('OpusMutation Resolvers', () => {
 
   describe('createOpus', () => {
     it('should throw UNAUTHENTICATED error when request is not authenticated', async () => {
-      await expect(
-        OpusMutation.createOpus({}, { input: BASE_CREATE_INPUT }, userContext)
-      ).rejects.toThrow(
+      await expect(OpusMutation.createOpus({}, { input: BASE_CREATE_INPUT }, userContext)).rejects.toThrow(
         new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
-          extensions: { code: graphqlErrors.UNAUTHENTICATED.code },
+          extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
         })
       );
     });
@@ -139,29 +139,22 @@ describe('OpusMutation Resolvers', () => {
     it('should throw error if opus with given number already exists', async () => {
       mockOpusRepo.findByNumber.mockResolvedValue(MOCK_OPUS_ENTITY);
 
-      await expect(
-        OpusMutation.createOpus({}, { input: BASE_CREATE_INPUT }, adminContext)
-      ).rejects.toThrow(
+      await expect(OpusMutation.createOpus({}, { input: BASE_CREATE_INPUT }, adminContext)).rejects.toThrow(
         new GraphQLError(opusServiceErrors.NUMBER_ALREADY_EXISTS(OPUS_NUMBER), {
-          extensions: { code: 'DUPLICATE_OPUS_NUMBER' },
+          extensions: { code: 'DUPLICATE_OPUS_NUMBER' }
         })
       );
 
       expect(mockOpusRepo.findByNumber).toHaveBeenCalledWith(OPUS_NUMBER);
     });
 
-    it('should throw error if nameForSlug is missing', async () => {
+    it('should throw error if name is missing or invalid length', async () => {
       mockOpusRepo.findByNumber.mockResolvedValue(null);
-
       await expect(
-        OpusMutation.createOpus(
-          {},
-          { input: { ...BASE_CREATE_INPUT, name: { uk: '', en: '' } } },
-          adminContext
-        )
+        OpusMutation.createOpus({}, { input: { ...BASE_CREATE_INPUT, name: { uk: '', en: '' } } }, adminContext)
       ).rejects.toThrow(
-        new GraphQLError(opusServiceErrors.NAME_REQUIRED_FOR_SLUG, {
-          extensions: { code: 'BAD_USER_INPUT' },
+        new GraphQLError(opusServiceErrors.NAME_LENGTH_INVALID, {
+          extensions: { code: 'BAD_USER_INPUT' }
         })
       );
     });
@@ -181,7 +174,7 @@ describe('OpusMutation Resolvers', () => {
       const coverImage = {
         src: 'img.png',
         alt: { uk: 'a', en: 'a' },
-        crop: { x: 0, y: 0, width: 10, height: 10 },
+        crop: { x: 0, y: 0, width: 10, height: 10 }
       };
 
       const result = await OpusMutation.createOpus(
@@ -197,15 +190,15 @@ describe('OpusMutation Resolvers', () => {
                 genre: 'Genre',
                 notes: [
                   { name: 'Note 1', fileUrl: 'http://file.pdf', publishDate: '2020-01-01' },
-                  { name: 'Note 2', fileUrl: '' },
+                  { name: 'Note 2', fileUrl: '' }
                 ],
                 audios: [
                   { name: 'Audio 1', fileUrl: 'http://audio.mp3' },
-                  { name: 'Audio 2', fileUrl: '' },
-                ],
-              },
-            ],
-          },
+                  { name: 'Audio 2', fileUrl: '' }
+                ]
+              }
+            ]
+          }
         },
         adminContext
       );
@@ -224,14 +217,14 @@ describe('OpusMutation Resolvers', () => {
               url: 'http://file.pdf',
               name: 'Note 1',
               publishDate: '2020-01-01',
-              isFree: true,
-            },
+              isFree: true
+            }
           ],
           audios: [
             { name: 'Audio 1', url: 'http://audio.mp3' },
-            { name: 'Audio 2', url: null },
-          ],
-        },
+            { name: 'Audio 2', url: null }
+          ]
+        }
       ]);
       expect(mockOpusRepo.create).toHaveBeenCalledWith({
         number: OPUS_NUMBER,
@@ -257,11 +250,9 @@ describe('OpusMutation Resolvers', () => {
         compositions: [COMPOSITION_ID_1],
         blocksOrder: null
       });
-      expect(mockOpusRepo.removeCompositionsFromCompositionsOpus).toHaveBeenCalledWith([
-        COMPOSITION_ID_1,
-      ]);
+      expect(mockOpusRepo.removeCompositionsFromCompositionsOpus).toHaveBeenCalledWith([COMPOSITION_ID_1]);
       expect(mockedSyncImagesCrops).toHaveBeenCalledWith(OPUS_ID, coverImage, {
-        isCoverImage: true,
+        isCoverImage: true
       });
       expect(mockedMarkImagesAsUsed).toHaveBeenCalledWith(
         adminContext.requestContainer.cradle.assetsRepository,
@@ -285,8 +276,8 @@ describe('OpusMutation Resolvers', () => {
           input: {
             ...BASE_CREATE_INPUT,
             name: { uk: '  Назва  ', en: 'Name' },
-            status: OpusStatus.Published,
-          },
+            status: OpusStatus.Published
+          }
         },
         adminContext
       );
@@ -294,11 +285,170 @@ describe('OpusMutation Resolvers', () => {
       expect(mockedGenerateUniqueSlug).toHaveBeenCalledWith('Назва', expect.any(Object));
       expect(mockOpusRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          status: OpusStatus.Published,
+          status: OpusStatus.Published
         })
       );
       expect(mockedSyncImagesCrops).not.toHaveBeenCalled();
       expect(mockedMarkImagesAsUsed).not.toHaveBeenCalled();
+    });
+
+    describe('Field Validations (createOpus)', () => {
+      it('should throw error if number is negative', async () => {
+        await expect(
+          OpusMutation.createOpus({}, { input: { ...BASE_CREATE_INPUT, number: -1 } }, adminContext)
+        ).rejects.toThrow(opusServiceErrors.NUMBER_NOT_NEGATIVE);
+      });
+
+      it('should throw error if additionalText is too long', async () => {
+        const longText = 'a'.repeat(41);
+        await expect(
+          OpusMutation.createOpus({}, { input: { ...BASE_CREATE_INPUT, additionalText: longText } }, adminContext)
+        ).rejects.toThrow(opusServiceErrors.ADDITIONAL_TEXT_TOO_LONG);
+      });
+
+      it('should throw error if creationYear is missing or empty', async () => {
+        await expect(
+          OpusMutation.createOpus({}, { input: { ...BASE_CREATE_INPUT, creationYear: '   ' } }, adminContext)
+        ).rejects.toThrow(opusServiceErrors.CREATION_YEAR_REQUIRED);
+      });
+
+      it('should throw error if creationYear is invalid or out of bounds', async () => {
+        await expect(
+          OpusMutation.createOpus({}, { input: { ...BASE_CREATE_INPUT, creationYear: '1899' } }, adminContext)
+        ).rejects.toThrow(opusServiceErrors.CREATION_YEAR_INVALID);
+
+        await expect(
+          OpusMutation.createOpus({}, { input: { ...BASE_CREATE_INPUT, creationYear: 'abc' } }, adminContext)
+        ).rejects.toThrow(opusServiceErrors.CREATION_YEAR_INVALID);
+      });
+
+      it('should throw error if datesNote is too long', async () => {
+        const longText = 'a'.repeat(41);
+        await expect(
+          OpusMutation.createOpus({}, { input: { ...BASE_CREATE_INPUT, datesNote: longText } }, adminContext)
+        ).rejects.toThrow(opusServiceErrors.DATES_NOTE_TOO_LONG);
+      });
+
+      it('should throw error if genre is too long', async () => {
+        const longGenre = 'a'.repeat(251);
+        await expect(
+          OpusMutation.createOpus(
+            {},
+            { input: { ...BASE_CREATE_INPUT, genre: { uk: longGenre, en: '' } } },
+            adminContext
+          )
+        ).rejects.toThrow(opusServiceErrors.GENRE_TOO_LONG);
+      });
+
+      it('should throw error if genre.en is too long (with valid or empty uk)', async () => {
+        const longGenre = 'a'.repeat(251);
+        await expect(
+          OpusMutation.createOpus(
+            {},
+            { input: { ...BASE_CREATE_INPUT, genre: { uk: 'valid', en: longGenre } } },
+            adminContext
+          )
+        ).rejects.toThrow(opusServiceErrors.GENRE_TOO_LONG);
+
+        await expect(
+          OpusMutation.createOpus(
+            {},
+            { input: { ...BASE_CREATE_INPUT, genre: { uk: '', en: longGenre } } },
+            adminContext
+          )
+        ).rejects.toThrow(opusServiceErrors.GENRE_TOO_LONG);
+      });
+    });
+
+    describe('Gallery and Performances Validation', () => {
+      it('should throw error if gallery exceeds 20 items', async () => {
+        const gallery = Array.from({ length: 21 }, (_, i) => ({
+          src: `img${i}.jpg`,
+          altText: { uk: 'alt', en: 'alt' }
+        }));
+
+        await expect(
+          OpusMutation.createOpus({}, { input: { ...BASE_CREATE_INPUT, gallery } as any }, adminContext)
+        ).rejects.toThrow(opusServiceErrors.GALLERY_TOO_MANY_PHOTOS);
+      });
+
+      it('should throw error if gallery altText is missing or too short', async () => {
+        const gallery = [{ src: 'img.jpg', altText: { uk: '1', en: 'valid alt' } }];
+
+        await expect(
+          OpusMutation.createOpus({}, { input: { ...BASE_CREATE_INPUT, gallery } as any }, adminContext)
+        ).rejects.toThrow(opusServiceErrors.GALLERY_ALT_TEXT_REQUIRED);
+      });
+
+      it('should throw error if gallery description is provided but too short', async () => {
+        const gallery = [
+          {
+            src: 'img.jpg',
+            altText: { uk: 'valid alt', en: 'valid alt' },
+            description: { uk: 'X', en: '' }
+          }
+        ];
+
+        await expect(
+          OpusMutation.createOpus({}, { input: { ...BASE_CREATE_INPUT, gallery } as any }, adminContext)
+        ).rejects.toThrow(opusServiceErrors.GALLERY_DESCRIPTION_INVALID);
+      });
+
+      it('should throw error if performances exceed 5 items', async () => {
+        const performances = Array.from({ length: 6 }, () => ({
+          videoUrl: 'https://youtube.com',
+          title: { uk: 'ua title', en: 'en title' }
+        }));
+
+        await expect(
+          OpusMutation.createOpus({}, { input: { ...BASE_CREATE_INPUT, performances } as any }, adminContext)
+        ).rejects.toThrow(opusServiceErrors.PERFORMANCES_TOO_MANY);
+      });
+
+      it('should throw error if performance videoUrl is missing', async () => {
+        const performances = [{ videoUrl: '', title: { uk: 'ua title', en: 'en title' } }];
+
+        await expect(
+          OpusMutation.createOpus({}, { input: { ...BASE_CREATE_INPUT, performances } as any }, adminContext)
+        ).rejects.toThrow(opusServiceErrors.PERFORMANCES_URL_REQUIRED);
+      });
+
+      it('should throw error if performance title is too short', async () => {
+        const performances = [{ videoUrl: 'https://youtube.com', title: { uk: 'a', en: 'valid title' } }];
+
+        await expect(
+          OpusMutation.createOpus({}, { input: { ...BASE_CREATE_INPUT, performances } as any }, adminContext)
+        ).rejects.toThrow(opusServiceErrors.PERFORMANCES_TITLE_INVALID);
+      });
+
+      it('should throw error if gallery description uk is too long', async () => {
+        const gallery = [
+          {
+            src: 'img.jpg',
+            altText: { uk: 'valid alt', en: 'valid alt' },
+            description: { uk: 'a'.repeat(251), en: '' }
+          }
+        ];
+        await expect(
+          OpusMutation.createOpus({}, { input: { ...BASE_CREATE_INPUT, gallery } as any }, adminContext)
+        ).rejects.toThrow(opusServiceErrors.GALLERY_DESCRIPTION_INVALID);
+      });
+
+      it('should throw error if gallery description en is too short or too long', async () => {
+        const galleryShort = [
+          { src: 'img.jpg', altText: { uk: 'valid', en: 'valid' }, description: { uk: '', en: 'a' } }
+        ];
+        await expect(
+          OpusMutation.createOpus({}, { input: { ...BASE_CREATE_INPUT, gallery: galleryShort } as any }, adminContext)
+        ).rejects.toThrow(opusServiceErrors.GALLERY_DESCRIPTION_INVALID);
+
+        const galleryLong = [
+          { src: 'img.jpg', altText: { uk: 'valid', en: 'valid' }, description: { uk: 'valid', en: 'a'.repeat(251) } }
+        ];
+        await expect(
+          OpusMutation.createOpus({}, { input: { ...BASE_CREATE_INPUT, gallery: galleryLong } as any }, adminContext)
+        ).rejects.toThrow(opusServiceErrors.GALLERY_DESCRIPTION_INVALID);
+      });
     });
   });
 
@@ -308,7 +458,7 @@ describe('OpusMutation Resolvers', () => {
         OpusMutation.updateOpusStatus({}, { id: OPUS_ID, status: OpusStatus.Published }, userContext)
       ).rejects.toThrow(
         new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
-          extensions: { code: graphqlErrors.UNAUTHENTICATED.code },
+          extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
         })
       );
     });
@@ -320,7 +470,7 @@ describe('OpusMutation Resolvers', () => {
         OpusMutation.updateOpusStatus({}, { id: OPUS_ID, status: OpusStatus.Published }, adminContext)
       ).rejects.toThrow(
         new GraphQLError(opusServiceErrors.OPUS_NOT_FOUND(OPUS_ID), {
-          extensions: { code: 'OPUS_NOT_FOUND' },
+          extensions: { code: 'OPUS_NOT_FOUND' }
         })
       );
     });
@@ -333,7 +483,7 @@ describe('OpusMutation Resolvers', () => {
         OpusMutation.updateOpusStatus({}, { id: OPUS_ID, status: OpusStatus.Published }, adminContext)
       ).rejects.toThrow(
         new GraphQLError(opusServiceErrors.OPUS_NOT_FOUND(OPUS_ID), {
-          extensions: { code: 'OPUS_NOT_FOUND' },
+          extensions: { code: 'OPUS_NOT_FOUND' }
         })
       );
     });
@@ -355,11 +505,9 @@ describe('OpusMutation Resolvers', () => {
 
   describe('updateOpus', () => {
     it('should throw UNAUTHENTICATED error when request is not authenticated', async () => {
-      await expect(
-        OpusMutation.updateOpus({}, { id: OPUS_ID, input: BASE_UPDATE_INPUT }, userContext)
-      ).rejects.toThrow(
+      await expect(OpusMutation.updateOpus({}, { id: OPUS_ID, input: BASE_UPDATE_INPUT }, userContext)).rejects.toThrow(
         new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
-          extensions: { code: graphqlErrors.UNAUTHENTICATED.code },
+          extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
         })
       );
     });
@@ -371,7 +519,7 @@ describe('OpusMutation Resolvers', () => {
         OpusMutation.updateOpus({}, { id: OPUS_ID, input: BASE_UPDATE_INPUT }, adminContext)
       ).rejects.toThrow(
         new GraphQLError(opusServiceErrors.OPUS_NOT_FOUND(OPUS_ID), {
-          extensions: { code: 'OPUS_NOT_FOUND' },
+          extensions: { code: 'OPUS_NOT_FOUND' }
         })
       );
     });
@@ -388,7 +536,7 @@ describe('OpusMutation Resolvers', () => {
         )
       ).rejects.toThrow(
         new GraphQLError(opusServiceErrors.NUMBER_ALREADY_EXISTS(DUP_OPUS_NUMBER), {
-          extensions: { code: 'DUPLICATE_OPUS_NUMBER' },
+          extensions: { code: 'DUPLICATE_OPUS_NUMBER' }
         })
       );
     });
@@ -403,15 +551,12 @@ describe('OpusMutation Resolvers', () => {
         {},
         {
           id: OPUS_ID,
-          input: { ...BASE_UPDATE_INPUT, title: { uk: 'Нев', en: 'New' } },
+          input: { ...BASE_UPDATE_INPUT, title: { uk: 'Нев', en: 'New' } }
         },
         adminContext
       );
 
-      expect(mockCompositionsRepo.findByIds).toHaveBeenCalledWith([
-        COMPOSITION_ID_1,
-        COMPOSITION_ID_2,
-      ]);
+      expect(mockCompositionsRepo.findByIds).toHaveBeenCalledWith([COMPOSITION_ID_1, COMPOSITION_ID_2]);
       expect(mockedOrderCompositionsByIds).toHaveBeenCalledWith(
         [COMPOSITION_ID_1, COMPOSITION_ID_2],
         [MOCK_COMPOSITION_1, MOCK_COMPOSITION_2]
@@ -422,7 +567,7 @@ describe('OpusMutation Resolvers', () => {
         name: BASE_UPDATE_INPUT.name,
         creationYear: CREATION_YEAR,
         title: { uk: 'Нев', en: 'New' },
-        compositions: [COMPOSITION_ID_1, COMPOSITION_ID_2],
+        compositions: [COMPOSITION_ID_1, COMPOSITION_ID_2]
       });
       expect(result).toEqual({ ...MOCK_OPUS_ENTITY, compositions: [MOCK_COMPOSITION_1, MOCK_COMPOSITION_2] });
     });
@@ -441,24 +586,15 @@ describe('OpusMutation Resolvers', () => {
           input: {
             ...BASE_UPDATE_INPUT,
             name: nameInput,
-            compositions: [{ name: 'Comp 2' }, { name: 'Comp 3' }],
-          },
+            compositions: [{ name: 'Comp 2' }, { name: 'Comp 3' }]
+          }
         },
         adminContext
       );
 
-      expect(mockedProcessSlugUpdate).toHaveBeenCalledWith(
-        OPUS_ID,
-        nameInput,
-        mockOpusRepo,
-        expect.any(Object)
-      );
-      expect(mockOpusRepo.removeCompositionsFromCompositionsOpus).toHaveBeenCalledWith([
-        COMPOSITION_ID_3,
-      ]);
-      expect(mockOpusRepo.moveCompositionsToCompositionsOpus).toHaveBeenCalledWith([
-        COMPOSITION_ID_1,
-      ]);
+      expect(mockedProcessSlugUpdate).toHaveBeenCalledWith(OPUS_ID, nameInput, mockOpusRepo, expect.any(Object));
+      expect(mockOpusRepo.removeCompositionsFromCompositionsOpus).toHaveBeenCalledWith([COMPOSITION_ID_3]);
+      expect(mockOpusRepo.moveCompositionsToCompositionsOpus).toHaveBeenCalledWith([COMPOSITION_ID_1]);
     });
 
     it('should throw OPUS_NOT_FOUND when update returns null', async () => {
@@ -471,7 +607,7 @@ describe('OpusMutation Resolvers', () => {
         OpusMutation.updateOpus({}, { id: OPUS_ID, input: BASE_UPDATE_INPUT }, adminContext)
       ).rejects.toThrow(
         new GraphQLError(opusServiceErrors.OPUS_NOT_FOUND(OPUS_ID), {
-          extensions: { code: 'OPUS_NOT_FOUND' },
+          extensions: { code: 'OPUS_NOT_FOUND' }
         })
       );
     });
@@ -485,17 +621,13 @@ describe('OpusMutation Resolvers', () => {
       const coverImage = {
         src: 'img.jpg',
         alt: { uk: 'a', en: 'a' },
-        crop: { x: 0, y: 0, width: 5, height: 5 },
+        crop: { x: 0, y: 0, width: 5, height: 5 }
       };
 
-      await OpusMutation.updateOpus(
-        {},
-        { id: OPUS_ID, input: { ...BASE_UPDATE_INPUT, coverImage } },
-        adminContext
-      );
+      await OpusMutation.updateOpus({}, { id: OPUS_ID, input: { ...BASE_UPDATE_INPUT, coverImage } }, adminContext);
 
       expect(mockedSyncImagesCrops).toHaveBeenCalledWith(OPUS_ID, coverImage, {
-        isCoverImage: true,
+        isCoverImage: true
       });
       expect(mockedMarkImagesAsUsed).toHaveBeenCalledWith(
         adminContext.requestContainer.cradle.assetsRepository,
@@ -505,13 +637,171 @@ describe('OpusMutation Resolvers', () => {
         OPUS_ID
       );
     });
+
+    it('should explicitly validate and update performances', async () => {
+      mockOpusRepo.findById.mockResolvedValue(MOCK_OPUS_ENTITY);
+      mockOpusRepo.update.mockResolvedValue(MOCK_OPUS_ENTITY);
+      mockCompositionsRepo.syncForOpus.mockResolvedValue([]);
+
+      const performances = [{ videoUrl: 'https://youtube.com/watch?v=123', title: { uk: 'Valid UA', en: 'Valid EN' } }];
+
+      await OpusMutation.updateOpus(
+        {},
+        { id: OPUS_ID, input: { ...BASE_UPDATE_INPUT, performances } as any },
+        adminContext
+      );
+
+      expect(mockOpusRepo.update).toHaveBeenCalledWith(OPUS_ID, expect.objectContaining({ performances }));
+    });
+
+    describe('Field Validations (updateOpus)', () => {
+      it('should throw error if number is negative', async () => {
+        await expect(
+          OpusMutation.updateOpus({}, { id: OPUS_ID, input: { ...BASE_UPDATE_INPUT, number: -1 } }, adminContext)
+        ).rejects.toThrow(opusServiceErrors.NUMBER_NOT_NEGATIVE);
+      });
+
+      it('should throw error if additionalText is too long', async () => {
+        const longText = 'a'.repeat(41);
+        await expect(
+          OpusMutation.updateOpus(
+            {},
+            { id: OPUS_ID, input: { ...BASE_UPDATE_INPUT, additionalText: longText } },
+            adminContext
+          )
+        ).rejects.toThrow(opusServiceErrors.ADDITIONAL_TEXT_TOO_LONG);
+      });
+
+      it('should throw error if creationYear is missing or empty', async () => {
+        await expect(
+          OpusMutation.updateOpus(
+            {},
+            { id: OPUS_ID, input: { ...BASE_UPDATE_INPUT, creationYear: '   ' } },
+            adminContext
+          )
+        ).rejects.toThrow(opusServiceErrors.CREATION_YEAR_REQUIRED);
+      });
+
+      it('should throw error if creationYear is invalid or out of bounds', async () => {
+        await expect(
+          OpusMutation.updateOpus(
+            {},
+            { id: OPUS_ID, input: { ...BASE_UPDATE_INPUT, creationYear: '2101' } },
+            adminContext
+          )
+        ).rejects.toThrow(opusServiceErrors.CREATION_YEAR_INVALID);
+      });
+
+      it('should throw error if datesNote is too long', async () => {
+        const longText = 'a'.repeat(41);
+        await expect(
+          OpusMutation.updateOpus(
+            {},
+            { id: OPUS_ID, input: { ...BASE_UPDATE_INPUT, datesNote: longText } },
+            adminContext
+          )
+        ).rejects.toThrow(opusServiceErrors.DATES_NOTE_TOO_LONG);
+      });
+
+      it('should throw error if genre is too long', async () => {
+        const longGenre = 'a'.repeat(251);
+        await expect(
+          OpusMutation.updateOpus(
+            {},
+            { id: OPUS_ID, input: { ...BASE_UPDATE_INPUT, genre: { uk: '', en: longGenre } } },
+            adminContext
+          )
+        ).rejects.toThrow(opusServiceErrors.GENRE_TOO_LONG);
+      });
+
+      it('should throw error if genre.uk is too long', async () => {
+        const longGenre = 'a'.repeat(251);
+        await expect(
+          OpusMutation.updateOpus(
+            {},
+            { id: OPUS_ID, input: { ...BASE_UPDATE_INPUT, genre: { uk: longGenre, en: '' } } },
+            adminContext
+          )
+        ).rejects.toThrow(opusServiceErrors.GENRE_TOO_LONG);
+      });
+
+      it('should throw error if genre.en is too long (with valid or empty uk)', async () => {
+        const longGenre = 'a'.repeat(251);
+        await expect(
+          OpusMutation.updateOpus(
+            {},
+            { id: OPUS_ID, input: { ...BASE_UPDATE_INPUT, genre: { uk: 'valid', en: longGenre } } },
+            adminContext
+          )
+        ).rejects.toThrow(opusServiceErrors.GENRE_TOO_LONG);
+
+        await expect(
+          OpusMutation.updateOpus(
+            {},
+            { id: OPUS_ID, input: { ...BASE_UPDATE_INPUT, genre: { uk: '', en: longGenre } } },
+            adminContext
+          )
+        ).rejects.toThrow(opusServiceErrors.GENRE_TOO_LONG);
+      });
+    });
+
+    describe('Edge Cases (Parsers & Helpers)', () => {
+      it('should map compositions gracefully ignoring invalid years and filtering empty files', async () => {
+        mockOpusRepo.findById.mockResolvedValue(MOCK_OPUS_ENTITY);
+        mockOpusRepo.update.mockResolvedValue(MOCK_OPUS_ENTITY);
+        mockCompositionsRepo.syncForOpus.mockResolvedValue([]);
+
+        await OpusMutation.updateOpus(
+          {},
+          {
+            id: OPUS_ID,
+            input: {
+              ...BASE_UPDATE_INPUT,
+              compositions: [
+                {
+                  name: 'Test',
+                  year: 'invalid-year',
+                  genre: null,
+                  notes: [{ name: 'Empty note', fileUrl: '' }],
+                  audios: [{ name: '', fileUrl: '' }]
+                }
+              ]
+            }
+          },
+          adminContext
+        );
+
+        expect(mockCompositionsRepo.syncForOpus).toHaveBeenCalledWith([
+          expect.objectContaining({
+            year: null,
+            sheetMusic: [],
+            audios: []
+          })
+        ]);
+      });
+
+      it('should skip gallery item validation if src is empty', async () => {
+        mockOpusRepo.findById.mockResolvedValue(MOCK_OPUS_ENTITY);
+        mockOpusRepo.update.mockResolvedValue(MOCK_OPUS_ENTITY);
+        mockCompositionsRepo.syncForOpus.mockResolvedValue([]);
+
+        const gallery = [{ src: '   ', altText: { uk: 'a', en: 'a' } }];
+
+        const result = await OpusMutation.updateOpus(
+          {},
+          { id: OPUS_ID, input: { ...BASE_UPDATE_INPUT, gallery } as any },
+          adminContext
+        );
+        expect(result).toBeDefined();
+      });
+    });
   });
 
   describe('deleteOpus', () => {
     it('should throw UNAUTHENTICATED error when request is not authenticated', async () => {
       await expect(OpusMutation.deleteOpus({}, { id: OPUS_ID }, userContext)).rejects.toThrow(
         new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
-          extensions: { code: graphqlErrors.UNAUTHENTICATED.code },
+          extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
         })
       );
     });

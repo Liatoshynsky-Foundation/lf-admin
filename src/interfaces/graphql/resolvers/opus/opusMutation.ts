@@ -17,7 +17,7 @@ import type {
 import { CompositionInput, ICompositionRepository } from '~/domain/repositories/compositionRepository';
 import { CreateOpusInput, IOpusRepository, UpdateOpusInput } from '~/domain/repositories/opusRepository';
 import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerator';
-import { OpusStatus, UpdateOpusStatusPayload } from '~/types/graphql/generated/graphql';
+import { OpusGalleryItemInput, OpusStatus, UpdateOpusStatusPayload } from '~/types/graphql/generated/graphql';
 
 type GQLMediaFile = { name: string; fileUrl?: string | null; publishDate?: string | null };
 
@@ -98,6 +98,139 @@ const mapComposition = (composition: GQLComposition): CompositionInput => {
     })),
     audios: audios.map((audio) => ({ name: audio.name ?? null, url: audio.fileUrl || null }))
   };
+};
+
+const validateOpusName = (name?: LocalizedString): void => {
+  const nameUk = name?.uk?.trim();
+  const nameEn = name?.en?.trim();
+
+  if (!nameUk || nameUk.length < 2 || nameUk.length > 250 || !nameEn || nameEn.length < 2 || nameEn.length > 250) {
+    throw new GraphQLError(opusServiceErrors.NAME_LENGTH_INVALID, {
+      extensions: { code: 'BAD_USER_INPUT' }
+    });
+  }
+};
+
+const validateCreationYear = (year?: string): void => {
+  if (year === undefined) return;
+
+  const yearStr = year.trim();
+  if (!yearStr) {
+    throw new GraphQLError(opusServiceErrors.CREATION_YEAR_REQUIRED, {
+      extensions: { code: 'BAD_USER_INPUT' }
+    });
+  }
+
+  const yearNum = Number(yearStr);
+  if (!Number.isInteger(yearNum) || yearNum < 1900 || yearNum > 2100) {
+    throw new GraphQLError(opusServiceErrors.CREATION_YEAR_INVALID, {
+      extensions: { code: 'BAD_USER_INPUT' }
+    });
+  }
+};
+
+const validateOpusFields = (input: Partial<CreateOpusGQLInput> | UpdateOpusGQLInput): void => {
+  if (input.number !== undefined && input.number < 0) {
+    throw new GraphQLError(opusServiceErrors.NUMBER_NOT_NEGATIVE, {
+      extensions: { code: 'BAD_USER_INPUT' }
+    });
+  }
+
+  if (input.additionalText && input.additionalText.length > 40) {
+    throw new GraphQLError(opusServiceErrors.ADDITIONAL_TEXT_TOO_LONG, {
+      extensions: { code: 'BAD_USER_INPUT' }
+    });
+  }
+
+  if (input.datesNote && input.datesNote.length > 40) {
+    throw new GraphQLError(opusServiceErrors.DATES_NOTE_TOO_LONG, {
+      extensions: { code: 'BAD_USER_INPUT' }
+    });
+  }
+
+  const genreUk = input.genre?.uk?.trim();
+  const genreEn = input.genre?.en?.trim();
+  if ((genreUk && genreUk.length > 250) || (genreEn && genreEn.length > 250)) {
+    throw new GraphQLError(opusServiceErrors.GENRE_TOO_LONG, {
+      extensions: { code: 'BAD_USER_INPUT' }
+    });
+  }
+
+  validateCreationYear(input.creationYear);
+};
+
+const validateGallery = (gallery?: OpusGalleryItemInput[] | null): void => {
+  if (!gallery || gallery.length === 0) return;
+
+  if (gallery.length > 20) {
+    throw new GraphQLError(opusServiceErrors.GALLERY_TOO_MANY_PHOTOS, {
+      extensions: { code: 'BAD_USER_INPUT' }
+    });
+  }
+
+  for (const item of gallery) {
+    const src = item.src?.trim();
+    if (!src) continue;
+
+    const altText = item.altText as { uk?: string; en?: string } | undefined;
+    const altUk = altText?.uk?.trim();
+    const altEn = altText?.en?.trim();
+
+    if (!altUk || altUk.length < 2 || altUk.length > 250 || !altEn || altEn.length < 2 || altEn.length > 250) {
+      throw new GraphQLError(opusServiceErrors.GALLERY_ALT_TEXT_REQUIRED, {
+        extensions: { code: 'BAD_USER_INPUT' }
+      });
+    }
+
+    const description = item.description as { uk?: string; en?: string } | undefined;
+    const descUk = description?.uk?.trim();
+    const descEn = description?.en?.trim();
+
+    if (
+      (descUk && (descUk.length < 2 || descUk.length > 250)) ||
+      (descEn && (descEn.length < 2 || descEn.length > 250))
+    ) {
+      throw new GraphQLError(opusServiceErrors.GALLERY_DESCRIPTION_INVALID, {
+        extensions: { code: 'BAD_USER_INPUT' }
+      });
+    }
+  }
+};
+
+const validatePerformances = (performances?: OpusPerformance[] | null): void => {
+  if (!performances || performances.length === 0) return;
+
+  if (performances.length > 5) {
+    throw new GraphQLError(opusServiceErrors.PERFORMANCES_TOO_MANY, {
+      extensions: { code: 'BAD_USER_INPUT' }
+    });
+  }
+
+  for (const perf of performances) {
+    const videoUrl = perf.videoUrl?.trim();
+    const title = perf.title as { uk?: string; en?: string } | undefined;
+    const titleUk = title?.uk?.trim();
+    const titleEn = title?.en?.trim();
+
+    if (!videoUrl) {
+      throw new GraphQLError(opusServiceErrors.PERFORMANCES_URL_REQUIRED, {
+        extensions: { code: 'BAD_USER_INPUT' }
+      });
+    }
+
+    if (
+      !titleUk ||
+      titleUk.length < 2 ||
+      titleUk.length > 250 ||
+      !titleEn ||
+      titleEn.length < 2 ||
+      titleEn.length > 250
+    ) {
+      throw new GraphQLError(opusServiceErrors.PERFORMANCES_TITLE_INVALID, {
+        extensions: { code: 'BAD_USER_INPUT' }
+      });
+    }
+  }
 };
 
 async function findExistingOpus(repo: IOpusRepository, id: string): Promise<Opus> {
@@ -191,6 +324,12 @@ const buildOpusUpdateData = (input: UpdateOpusGQLInput, compositionIds: string[]
 export const OpusMutation = {
   createOpus: async (_: unknown, { input }: CreateOpusArgs, context: GraphQLContext): Promise<OpusFull> => {
     assertAuthenticated(context);
+
+    validateOpusFields(input);
+    validateOpusName(input.name);
+    validateGallery(input.gallery);
+    validatePerformances(input.performances);
+
     const repo = context.requestContainer.cradle.opusRepository;
     const compositionsRepo = context.requestContainer.cradle.compositionsRepository;
 
@@ -203,11 +342,6 @@ export const OpusMutation = {
     }
 
     const nameForSlug = input.name.uk?.trim();
-    if (!nameForSlug) {
-      throw new GraphQLError(opusServiceErrors.NAME_REQUIRED_FOR_SLUG, {
-        extensions: { code: 'BAD_USER_INPUT' }
-      });
-    }
     const slug = await generateUniqueSlug(nameForSlug, {
       checkExists: async (candidate: string) => (await repo.findBySlug(candidate)) !== null
     });
@@ -237,6 +371,9 @@ export const OpusMutation = {
       publishedAt: input.publishedAt ?? null,
       meta: { views: 0 },
       compositions: compositionIds,
+      gallery: input.gallery,
+      performancesTitle: input.performancesTitle,
+      performances: input.performances,
       blocksOrder: input.blocksOrder ?? null
     };
 
@@ -281,6 +418,16 @@ export const OpusMutation = {
 
   updateOpus: async (_: unknown, { id, input }: UpdateOpusArgs, context: GraphQLContext): Promise<OpusFull> => {
     assertAuthenticated(context);
+
+    validateOpusFields(input);
+    validateOpusName(input.name);
+
+    if (input.gallery !== undefined) {
+      validateGallery(input.gallery);
+    }
+    if (input.performances !== undefined) {
+      validatePerformances(input.performances);
+    }
 
     const {
       opusRepository: repo,

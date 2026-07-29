@@ -1,8 +1,8 @@
 import { Model } from 'mongoose';
 
-import {DbNews, NewsRepository} from './newsRepository';
+import { DbNews, NewsRepository } from './newsRepository';
 import { News } from '~/domain/entities/News';
-import {CreateNewsInput, INewsRepository} from '~/domain/repositories/newsRepository';
+import { CreateNewsInput, INewsRepository } from '~/domain/repositories/newsRepository';
 import { NewsStatus, SortByDate, SortOrder } from '~/types/enums/common.enums';
 
 jest.mock('mongoose', () => ({
@@ -30,9 +30,27 @@ interface MockQuery {
 
 describe('NewsRepository - Advanced Filtering Logic', () => {
   const mockDbNewsExtended: DbNews[] = [
-    { _id: { toString: () => '1' }, adminTitle: 'C News', status: NewsStatus.Published, slug: 'news-c', createdAt: '2024-01-01' },
-    { _id: { toString: () => '2' }, adminTitle: 'A News', status: NewsStatus.Draft, slug: 'news-a', createdAt: '2024-01-05' },
-    { _id: { toString: () => '3' }, adminTitle: 'B News', status: NewsStatus.Published, slug: 'news-b', createdAt: '2024-01-03' },
+    {
+      _id: { toString: () => '1' },
+      adminTitle: 'C News',
+      status: NewsStatus.Published,
+      slug: 'news-c',
+      createdAt: '2024-01-01'
+    },
+    {
+      _id: { toString: () => '2' },
+      adminTitle: 'A News',
+      status: NewsStatus.Draft,
+      slug: 'news-a',
+      createdAt: '2024-01-05'
+    },
+    {
+      _id: { toString: () => '3' },
+      adminTitle: 'B News',
+      status: NewsStatus.Published,
+      slug: 'news-b',
+      createdAt: '2024-01-03'
+    }
   ] as unknown as DbNews[];
 
   const findMock = jest.fn();
@@ -42,13 +60,13 @@ describe('NewsRepository - Advanced Filtering Logic', () => {
   const setupAdvancedMock = (data: DbNews[]) => {
     const queryBuilder = {
       state: { data: [...data], sort: {} as Record<string, number> },
-      sort: jest.fn().mockImplementation(function(this: typeof queryBuilder, sortObj: Record<string, number>) {
+      sort: jest.fn().mockImplementation(function (this: typeof queryBuilder, sortObj: Record<string, number>) {
         this.state.sort = sortObj;
         return this;
       }),
       skip: jest.fn().mockReturnThis(),
       limit: jest.fn().mockReturnThis(),
-      lean: jest.fn().mockImplementation(async function(this: typeof queryBuilder) {
+      lean: jest.fn().mockImplementation(async function (this: typeof queryBuilder) {
         const result = [...this.state.data];
         if (Object.keys(this.state.sort).length > 0) {
           result.sort((a, b) => {
@@ -72,7 +90,7 @@ describe('NewsRepository - Advanced Filtering Logic', () => {
   };
 
   it('should filter by status and maintain default sorting (createdAt DESC)', async () => {
-    setupAdvancedMock(mockDbNewsExtended.filter(n => n.status === NewsStatus.Published));
+    setupAdvancedMock(mockDbNewsExtended.filter((n) => n.status === NewsStatus.Published));
 
     const result = await repository.findAll({ statuses: [NewsStatus.Published] });
 
@@ -92,10 +110,7 @@ describe('NewsRepository - Advanced Filtering Logic', () => {
 
     expect(result).toHaveLength(0);
     expect(findMock).toHaveBeenCalledWith({
-      $and: [
-        { status: { $in: [NewsStatus.Published] } },
-        { slug: 'news-a' }
-      ]
+      $and: [{ status: { $in: [NewsStatus.Published] } }, { slug: 'news-a' }]
     });
   });
 
@@ -197,6 +212,27 @@ describe('NewsRepository Comprehensive Tests', () => {
       expect(saveMock).toHaveBeenCalled();
     });
 
+    it('should create news with custom meta views when provided', async () => {
+      const inputWithViews: CreateNewsInput = {
+        adminTitle: 'News With Views',
+        title: { uk: 'Укр', en: 'En' },
+        slug: 'news-with-views',
+        content: { uk: { blocks: [] }, en: { blocks: [] } } as News['content'],
+        status: NewsStatus.Published,
+        coverImage: { src: 'i.jpg', alt: { uk: 'а', en: 'a' }, caption: { uk: '', en: '' } },
+        description: { uk: 'Опис', en: 'Desc' },
+        allowIndexation: { uk: true, en: true },
+        meta: { views: 50 }
+      };
+
+      saveMock.mockResolvedValue({
+        toObject: () => createMockNewsDoc({ adminTitle: 'News With Views', meta: { views: 50 } })
+      });
+
+      const result = await repository.create(inputWithViews);
+      expect(result.meta.views).toBe(50);
+    });
+
     it('should increment views successfully', async () => {
       findByIdAndUpdateMock.mockReturnValue({
         lean: jest.fn().mockResolvedValue(createMockNewsDoc({ meta: { views: 11 } }))
@@ -204,17 +240,22 @@ describe('NewsRepository Comprehensive Tests', () => {
 
       const result = await repository.incrementViews(mockId);
       expect(result?.meta.views).toBe(11);
-      expect(findByIdAndUpdateMock).toHaveBeenCalledWith(
-        mockId,
-        { $inc: { 'meta.views': 1 } },
-        { new: true }
-      );
+      expect(findByIdAndUpdateMock).toHaveBeenCalledWith(mockId, { $inc: { 'meta.views': 1 } }, { new: true });
     });
 
     it('should return null for incrementViews with invalid ID format', async () => {
       const result = await repository.incrementViews('invalid-id');
       expect(result).toBeNull();
       expect(findByIdAndUpdateMock).not.toHaveBeenCalled();
+    });
+
+    it('should return null when incrementViews is called with valid ID that does not exist in DB', async () => {
+      findByIdAndUpdateMock.mockReturnValue({
+        lean: jest.fn().mockResolvedValue(null)
+      });
+
+      const result = await repository.incrementViews(mockId);
+      expect(result).toBeNull();
     });
   });
 
@@ -239,10 +280,7 @@ describe('NewsRepository Comprehensive Tests', () => {
       });
 
       expect(findMock).toHaveBeenCalledWith({
-        $and: [
-          { status: { $in: [NewsStatus.Published] } },
-          { slug: 'test-news' }
-        ]
+        $and: [{ status: { $in: [NewsStatus.Published] } }, { slug: 'test-news' }]
       });
     });
 
