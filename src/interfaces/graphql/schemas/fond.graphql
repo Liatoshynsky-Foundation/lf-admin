@@ -8,22 +8,22 @@ enum FondStatus {
 
 input CreateFondInput {
     fondNumber: Int!
-    name: String!
-    documentCreationDate: String!
-    chronologicalBoundaries: String
-    organizationForm: String 
-    description: String 
+    name: JSON!
+    documentCreationDate: JSON!
+    chronologicalBoundaries: JSON
+    organizationForm: JSON 
+    description: JSON 
     status: FondStatus!
 }
 
 type Fond {
     id: ID!
     fondNumber: Int!
-    name: String!
-    documentCreationDate: String!
-    chronologicalBoundaries: String
-    organizationForm: String 
-    description: String 
+    name: LocalizedString!
+    documentCreationDate: LocalizedString!
+    chronologicalBoundaries: LocalizedString
+    organizationForm: LocalizedString 
+    description: LocalizedString 
     status: FondStatus!
     updatedAt: String! 
     createdAt: String!

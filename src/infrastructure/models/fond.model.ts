@@ -6,11 +6,23 @@ import { BaseContentStatuses } from '~/types/enums/common.enums';
 const fondSchema = new Schema<Fond>(
   {
     fondNumber: { type: Number, required: true, unique: true },
-    name: { type: String, required: true, index: true },
-    documentCreationDate: { type: String, required: true },
-    chronologicalBoundaries: { type: String, required: false },
-    organizationForm: { type: String, required: false },
-    description: { type: String, required: false },
+    name: {
+      uk: { type: String, required: true, unique: true },
+      en: { type: String, required: true, unique: true}
+    },
+    documentCreationDate: {
+      uk: { type: String, required: true },
+      en: { type: String, required: true }
+    },
+    chronologicalBoundaries: {
+      uk: { type: String, required: false },
+      en: { type: String, required: false }
+    },
+    organizationForm: {
+      uk: { type: String, required: false },
+      en: { type: String, required: false }
+    },
+    description: { type: Schema.Types.Mixed, required: false },
     status: {
       type: String,
       required: true,
