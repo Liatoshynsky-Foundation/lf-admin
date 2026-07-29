@@ -44,6 +44,7 @@ export const FondRepository = ({ FondModel }: FondRepoDeps): IFondRepository => 
 
   return {
     ...baseRepo,
+    
     create: async (input: CreateFondInput): Promise<Fond> => {
       await dbConnect();
 
@@ -53,6 +54,19 @@ export const FondRepository = ({ FondModel }: FondRepoDeps): IFondRepository => 
 
       const newFond = await new FondModel(fondData).save();
       return toEntity(newFond.toObject() as unknown as DbFond);
+    },
+
+    findByFondNumber: async (fondNumber: Fond['fondNumber']): Promise<Fond | null> => {
+      await dbConnect();
+
+      const existing = await FondModel.findOne({
+        $match: { fondNumber }
+      });
+
+      if (!existing) {
+        return null;
+      }
+      return toEntity(existing.toObject() as unknown as DbFond);
     }
   };
 };
