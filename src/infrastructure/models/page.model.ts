@@ -59,4 +59,12 @@ const artistryDetailsSchema = new Schema({
 
 export const ArtistryPageModel =
   mongoose.models.ArtistryPage || PageModel.discriminator('ArtistryPage', artistryDetailsSchema);
+
+const warInUkraineDetailsSchema = new Schema({
+  blocks: { type: Schema.Types.Mixed, required: true }
+});
+
+export const WarInUkrainePageModel =
+  mongoose.models.WarInUkrainePage || PageModel.discriminator('WarInUkrainePage', warInUkraineDetailsSchema);
+
 export default PageModel;
