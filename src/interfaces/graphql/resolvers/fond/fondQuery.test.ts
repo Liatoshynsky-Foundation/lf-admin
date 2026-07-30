@@ -1,7 +1,7 @@
 import { GraphQLError } from 'graphql';
 
 import { createMockContext } from '../testUtils';
-import { FondQuery } from './fondQuery';
+import { FiltersGQLInput, FondQuery } from './fondQuery';
 import { IFondRepository } from '~/src/domain/repositories/fondRepository';
 
 describe('FondQuery Resolvers', () => {
@@ -34,13 +34,31 @@ describe('FondQuery Resolvers', () => {
 
   describe('findAllFonds', () => {
     it('should throw GraphQLError when admin is falsy', async () => {
-      await expect(FondQuery.findAllFonds({}, {}, unauthorizedContext)).rejects.toThrow(GraphQLError);
+      await expect(FondQuery.findAllFonds({}, { filters: {} }, unauthorizedContext)).rejects.toThrow(GraphQLError);
     });
 
     it('should call findAll', async () => {
-      await FondQuery.findAllFonds({}, {}, authorizedContext);
+      await FondQuery.findAllFonds({}, { filters: {} }, authorizedContext);
 
       expect(mockRepo.findAll).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call findAll with all filters', async () => {
+      const filters: FiltersGQLInput = {
+        search: 'search',
+        sort: [{ field: 'fondNumber', order: 'asc' }]
+      };
+      await FondQuery.findAllFonds({}, { filters: filters }, authorizedContext);
+
+      expect(mockRepo.findAll).toHaveBeenCalledWith({
+        search: 'search',
+        sort: [{ sortBy: 'fondNumber', sortOrder: 'asc' }],
+        languages: undefined,
+        limit: undefined,
+        skip: undefined,
+        statuses: undefined,
+        slug: undefined
+      });
     });
   });
 
@@ -57,7 +75,7 @@ describe('FondQuery Resolvers', () => {
     });
 
     it('should call findPaginated of repo with args', async () => {
-     
+
       await FondQuery.findFondsPaginated({}, paginationParams, authorizedContext);
 
       expect(mockRepo.findPaginated).toHaveBeenCalledTimes(1);

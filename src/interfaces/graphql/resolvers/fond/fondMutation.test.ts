@@ -175,6 +175,21 @@ describe('FondMutation', () => {
       );
     });
 
+    it('should throw custom error msg if updating to a fondNumber that already exists on a different fond', async () => {
+      const update = createMockUpdateFondInput({ fondNumber: 2 });
+      const existingFond = { id: 'different-id', fondNumber: 2 };
+
+      mockFindByFondNumber.mockResolvedValue(existingFond);
+
+      await expect(FondMutation.updateFond({}, { id: 'current-id', input: update }, adminContext)).rejects.toEqual(
+        new GraphQLError(FondErrors.NUMBER_ALREADY_EXISTS(2), {
+          extensions: { code: FondErrorCodes.NUMBER_ALREADY_EXISTS }
+        })
+      );
+
+      expect(mockUpdate).not.toHaveBeenCalled();
+    });
+
     it('should successfully partially update the fond & call repo update method & return updated fond', async () => {
       const update = createMockUpdateFondInput();
       const existedUpdated = createMockCreateFondInput({ name: update.name });

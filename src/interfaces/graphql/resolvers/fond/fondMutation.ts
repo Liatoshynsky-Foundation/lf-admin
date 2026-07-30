@@ -55,6 +55,18 @@ export const FondMutation = {
     const repo = context.requestContainer.cradle.fondRepository;
 
     const validateInput = zFondUpdateSchema.parse(input);
+
+    if (validateInput.fondNumber !== undefined) {
+      const existing = await repo.findByFondNumber(validateInput.fondNumber);
+      if (existing && existing.id !== id) {
+        throw new GraphQLError(FondErrors.NUMBER_ALREADY_EXISTS(validateInput.fondNumber), {
+          extensions: {
+            code: FondErrorCodes.NUMBER_ALREADY_EXISTS
+          }
+        });
+      }
+    }
+
     const updatedFond = await repo.update(id, validateInput);
 
     if (!updatedFond) {
