@@ -3,7 +3,7 @@ import { ZodError } from 'zod';
 
 import { createMockContext } from '../testUtils';
 import { FondMutation } from './fondMutation';
-import { FondErrorCodes,FondErrors, graphqlErrors } from '~/constants/errors';
+import { FondErrorCodes, FondErrors, graphqlErrors } from '~/constants/errors';
 import { CreateFondInput, IFondRepository, UpdateFondInput } from '~/src/domain/repositories/fondRepository';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
@@ -38,13 +38,59 @@ const mockRepo: Partial<IFondRepository> = {
   findByFondNumber: mockFindByFondNumber,
   findAll: mockFindAll
 };
+
+const adminContext = createMockContext(true, 'fondRepository', mockRepo);
+const userContext = createMockContext(false, 'fondRepository', mockRepo);
+
+
+const runValidationTests = (action: 'create' | 'update') => {
+  const isCreate = action === 'create';
+  it.each([
+    ['non-positive fondNumber', { fondNumber: -5 }],
+    ['float fondNumber', { fondNumber: 12.34 }],
+
+    ['name missing uk', { name: { en: 'Archive' } as unknown as CreateFondInput['name'] }],
+    ['name missing en', { name: { uk: 'Архів' } as unknown as CreateFondInput['name'] }],
+    ['name uk is whitespace', { name: { uk: '   ', en: 'Archive' } }],
+    ['name en is whitespace', { name: { uk: 'Архів', en: '   ' } }],
+    ['name uk exceeding 40 characters', { name: { uk: 'a'.repeat(41), en: 'Archive' } }],
+    ['name en exceeding 40 characters', { name: { uk: 'Архів', en: 'a'.repeat(41) } }],
+
+    ['documentCreationDate uk is empty', { documentCreationDate: { uk: '', en: '1917' } }],
+    ['documentCreationDate en is empty', { documentCreationDate: { uk: '1917', en: '' } }],
+    ['documentCreationDate uk exceeding 150 characters', { documentCreationDate: { uk: 'a'.repeat(151), en: '1917' } }],
+    ['documentCreationDate en exceeding 150 characters', { documentCreationDate: { uk: '1917', en: 'a'.repeat(151) } }],
+
+    ['chronologicalBoundaries uk exceeding 150 characters', { chronologicalBoundaries: { uk: 'a'.repeat(151), en: '1917' } }],
+    ['chronologicalBoundaries en exceeding 150 characters', { chronologicalBoundaries: { uk: '1917–1991', en: 'a'.repeat(151) } }],
+
+    ['organizationForm uk exceeding 150 characters', { organizationForm: { uk: 'a'.repeat(151), en: 'State' } }],
+    ['organizationForm en exceeding 150 characters', { organizationForm: { uk: 'Державна установа', en: 'a'.repeat(151) } }],
+
+    ['description uk exceeding 1000 characters', { description: { uk: 'a'.repeat(1001), en: 'Valid' } }],
+    ['description en exceeding 1000 characters', { description: { uk: 'Опис', en: 'a'.repeat(1001) } }],
+
+    ['invalid status value', { status: 'INVALID_STATUS' as unknown as CreateFondInput['status'] }]
+  ])('should reject %s', async (_label, overrides) => {
+    if (isCreate) {
+      const input = createMockCreateFondInput(overrides);
+      await expect(FondMutation.createFond({}, { input }, adminContext)).rejects.toThrow(ZodError);
+
+      expect(mockFindByFondNumber).not.toHaveBeenCalled();
+      expect(mockCreate).not.toHaveBeenCalled();
+    } else {
+      const input = createMockUpdateFondInput(overrides);
+      await expect(FondMutation.updateFond({}, { id: 'id', input }, adminContext)).rejects.toThrow(ZodError);
+
+      expect(mockUpdate).not.toHaveBeenCalled();
+    }
+  });
+};
+
 describe('FondMutation', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
-
-  const adminContext = createMockContext(true, 'fondRepository', mockRepo);
-  const userContext = createMockContext(false, 'fondRepository', mockRepo);
 
   describe('createFond', () => {
     it('should throw GraphQLError if user is not an admin', async () => {
@@ -59,14 +105,6 @@ describe('FondMutation', () => {
       expect(mockCreate).not.toHaveBeenCalled();
     });
 
-    it('should throw ZodError if input fails validation', async () => {
-      const invalidInput = createMockCreateFondInput({ fondNumber: -1 });
-
-      await expect(FondMutation.createFond({}, { input: invalidInput }, adminContext)).rejects.toThrow(ZodError);
-
-      expect(mockFindByFondNumber).not.toHaveBeenCalled();
-      expect(mockCreate).not.toHaveBeenCalled();
-    });
 
     it('should throw custom error msg if fond with this fondNumber already exists', async () => {
       const input = createMockCreateFondInput();
@@ -124,13 +162,6 @@ describe('FondMutation', () => {
       expect(mockUpdate).not.toHaveBeenCalled();
     });
 
-    it('should throw ZodError if input fails validation', async () => {
-      const invalidUpdateInput = createMockUpdateFondInput({ fondNumber: -1 });
-
-      await expect(FondMutation.updateFond({}, { id: 'some-id', input: invalidUpdateInput }, adminContext)).rejects.toThrow(ZodError);
-
-      expect(mockUpdate).not.toHaveBeenCalled();
-    });
 
     it('should throw custom error msg if fond with this fondNumber is not found', async () => {
       const update = createMockUpdateFondInput();
@@ -184,6 +215,16 @@ describe('FondMutation', () => {
 
       const isDeleted = await FondMutation.deleteFond({}, { id: deleteId }, adminContext);
       expect(isDeleted).toBe(true);
+    });
+  });
+
+  describe('validation', () => {
+    describe('createFond', () => {
+      runValidationTests('create');
+    });
+
+    describe('updateFond', () => {
+      runValidationTests('update');
     });
   });
 });
