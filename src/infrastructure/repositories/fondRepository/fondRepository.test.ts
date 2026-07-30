@@ -1,9 +1,9 @@
 import { Model } from 'mongoose';
 
 import { DbFond, FondRepository } from './fondRepository';
+import { LocalizedString } from '~/src/domain/entities/BaseContent';
 import { Fond } from '~/src/domain/entities/Fond';
 import { CreateFondInput } from '~/src/domain/repositories/fondRepository';
-import { LocalizedJSON } from '~/types/common';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 const mockId = '65eddf5e2f1a2b3c4d5e6f7a';
@@ -14,10 +14,13 @@ const createMockFondDoc = (overrides: Partial<DbFond> = {}): DbFond => ({
   name: { uk: 'Архів', en: 'Archive' },
   documentCreationDate: { uk: '1917', en: '1917' },
   status: BaseContentStatuses.Draft,
+  chronologicalBoundaries: { uk: '1918', en: '1918' },
+  description: { uk: 'опис', en: 'desc' },
+  organizationForm: { uk: 'оргФорм', en: 'orgForm' },
   createdAt: '2026-07-29T10:00:00.000Z',
   updatedAt: '2026-07-29T10:00:00.000Z',
   ...overrides
-} as unknown as DbFond);
+});
 
 jest.mock('../../db/connect', () => jest.fn());
 
@@ -47,7 +50,7 @@ describe('fondRepository', () => {
       name: { uk: 'Архів 2', en: 'Archive 2' },
       documentCreationDate: { uk: '1918', en: '1918' },
       chronologicalBoundaries: { uk: '1918', en: '1918' },
-      description: { uk: 'опис', en: 'desc' } as unknown as LocalizedJSON,
+      description: { uk: 'опис', en: 'desc' } as unknown as LocalizedString,
       organizationForm: { uk: 'оргФорм', en: 'orgForm' },
       status: BaseContentStatuses.Draft
     };

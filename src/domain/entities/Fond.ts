@@ -1,5 +1,4 @@
 import { LocalizedString } from './BaseContent';
-import { LocalizedJSON } from '~/types/common';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 export interface Fond {
@@ -9,7 +8,7 @@ export interface Fond {
     documentCreationDate: LocalizedString;
     chronologicalBoundaries?: LocalizedString;
     organizationForm?: LocalizedString;
-    description?: LocalizedJSON;
+    description?: LocalizedString;
     status: BaseContentStatuses;
     createdAt: string;
     updatedAt: string;

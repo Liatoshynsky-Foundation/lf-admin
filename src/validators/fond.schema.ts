@@ -71,8 +71,8 @@ export const zFondSchema = z.object({
 
   description: z
     .object({
-      uk: z.record(z.any(), z.any()),
-      en: z.record(z.any(), z.any())
+      uk: z.string().trim().max(1000, { message: 'Опис не може перевищувати 1000 символів.' }),
+      en: z.string().trim().max(1000, { message: 'Опис не може перевищувати 1000 символів.' })
     })
     .optional(),
 

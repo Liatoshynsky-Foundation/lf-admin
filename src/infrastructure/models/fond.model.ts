@@ -22,7 +22,10 @@ const fondSchema = new Schema<Fond>(
       uk: { type: String, required: false },
       en: { type: String, required: false }
     },
-    description: { type: Schema.Types.Mixed, required: false },
+    description: {
+      uk: { type: String, required: false },
+      en: { type: String, required: false }
+    },
     status: {
       type: String,
       required: true,
