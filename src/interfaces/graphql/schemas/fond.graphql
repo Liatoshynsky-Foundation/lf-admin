@@ -13,7 +13,7 @@ input CreateFondInput {
     chronologicalBoundaries: JSON
     organizationForm: JSON 
     description: JSON 
-    status: FondStatus!
+    status: FondStatus
 }
 
 type Fond {
@@ -74,4 +74,3 @@ extend type Mutation {
     updateFond(id: ID!, input: UpdateFondInput!): Fond!
     deleteFond(id: ID!): Boolean!
 }
-    

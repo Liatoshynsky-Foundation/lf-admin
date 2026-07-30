@@ -26,7 +26,8 @@ const fondSchema = new Schema<Fond>(
     status: {
       type: String,
       required: true,
-      enum: Array.from(Object.values(BaseContentStatuses))
+      enum: Array.from(Object.values(BaseContentStatuses)),
+      default: BaseContentStatuses.Hidden
     },
   },
   {
