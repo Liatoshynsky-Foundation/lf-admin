@@ -12,7 +12,7 @@ input CreateFondInput {
     documentCreationDate: JSON!
     chronologicalBoundaries: JSON
     organizationForm: JSON 
-    description: LocalizedString 
+    description: JSON 
     status: FondStatus
 }
 
@@ -51,7 +51,7 @@ input UpdateFondInput {
     documentCreationDate: JSON
     chronologicalBoundaries: JSON
     organizationForm: JSON 
-    description: LocalizedString 
+    description: JSON 
     status: FondStatus
 }
 
