@@ -173,7 +173,7 @@ describe('useCreateWorkAction', () => {
       result.current.openModal();
     });
 
-    act(() => {
+    await act(async () => {
       void result.current.handleSubmit(MOCK_WORK);
     });
 
