@@ -21,7 +21,7 @@ export const FondMutation = {
     const repo = context.requestContainer.cradle.fondRepository;
     const validatedInput = zFondSchema.parse(input);
 
-    const { fondNumber } = input;
+    const { fondNumber } = validatedInput;
 
     const existing = await repo.findByFondNumber(fondNumber);
     if (existing) {
