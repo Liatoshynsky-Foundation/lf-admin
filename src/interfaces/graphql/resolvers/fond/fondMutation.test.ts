@@ -18,13 +18,7 @@ const createMockCreateFondInput = (overrides: Partial<CreateFondInput> = {}): Cr
 });
 
 const createMockUpdateFondInput = (overrides: Partial<UpdateFondInput> = {}): UpdateFondInput => ({
-  fondNumber: 1,
   name: { uk: 'Оновлений Архів', en: 'Updated Archive' },
-  documentCreationDate: { uk: '1918', en: '1918' },
-  chronologicalBoundaries: { uk: '1918–1991', en: '1918–1991' },
-  organizationForm: { uk: 'Приватна установа', en: 'Private Institution' },
-  description: undefined,
-  status: BaseContentStatuses.Published,
   ...overrides
 });
 
@@ -61,7 +55,7 @@ describe('FondMutation', () => {
     });
 
     it('should throw ZodError if input fails validation', async () => {
-      const invalidInput = createMockCreateFondInput({ fondNumber: -1 }); 
+      const invalidInput = createMockCreateFondInput({ fondNumber: -1 });
 
       await expect(FondMutation.createFond({}, { input: invalidInput }, adminContext)).rejects.toThrow(ZodError);
 
@@ -98,7 +92,7 @@ describe('FondMutation', () => {
     });
 
     it('should throw ZodError if input fails validation', async () => {
-      const invalidUpdateInput = createMockUpdateFondInput({ fondNumber: -1 }); 
+      const invalidUpdateInput = createMockUpdateFondInput({ fondNumber: -1 });
 
       await expect(FondMutation.updateFond({}, { id: 'some-id', input: invalidUpdateInput }, adminContext)).rejects.toThrow(ZodError);
 
@@ -113,16 +107,22 @@ describe('FondMutation', () => {
       await expect(FondMutation.updateFond({}, { id: 'non-existed-id', input: update }, adminContext)).rejects.toThrow(GraphQLError);
     });
 
-    it('should successfully call repo update method and return updated fond', async () => {
+    it('should successfully partially update the fond & call repo update method & return updated fond', async () => {
       const update = createMockUpdateFondInput();
+      const existedUpdated = createMockCreateFondInput({ name: update.name });
       const id = '121';
 
-      mockUpdate.mockResolvedValue(update);
+      mockUpdate.mockResolvedValue(existedUpdated);
 
-      await FondMutation.updateFond({}, { id, input: update }, adminContext);
+      const result = await FondMutation.updateFond({}, { id, input: update }, adminContext);
 
       expect(mockUpdate).toHaveBeenCalledTimes(1);
       expect(mockUpdate).toHaveBeenCalledWith(id, update);
+
+      expect(result.name).toStrictEqual(update.name);
+      
+      expect(result.fondNumber).toBe(existedUpdated.fondNumber);
+      expect(result.status).toBe(existedUpdated.status);
     });
   });
 

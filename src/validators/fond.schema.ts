@@ -78,3 +78,8 @@ export const zFondSchema = z.object({
 
   status: z.enum(BaseContentStatuses).default(BaseContentStatuses.Hidden)
 });
+
+
+export const zFondUpdateSchema = zFondSchema.partial().extend({
+  status: z.enum(BaseContentStatuses).optional()
+});

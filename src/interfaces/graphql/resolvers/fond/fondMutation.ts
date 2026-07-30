@@ -4,7 +4,7 @@ import { FondErrorCodes, FondErrors, graphqlErrors } from '~/constants/errors';
 import { Fond } from '~/src/domain/entities/Fond';
 import { CreateFondInput, UpdateFondInput } from '~/src/domain/repositories/fondRepository';
 import { GraphQLContext } from '~/src/shared/types/container/types';
-import { zFondSchema } from '~/src/validators/fond.schema';
+import { zFondSchema, zFondUpdateSchema } from '~/src/validators/fond.schema';
 
 const assertAuthenticated = (context: GraphQLContext) => {
   if (!context.admin) {
@@ -39,7 +39,7 @@ export const FondMutation = {
     assertAuthenticated(context);
     const repo = context.requestContainer.cradle.fondRepository;
 
-    const validateInput = zFondSchema.parse(input);
+    const validateInput = zFondUpdateSchema.parse(input);
     const updatedFond = await repo.update(id, validateInput);
 
     if (!updatedFond) {
