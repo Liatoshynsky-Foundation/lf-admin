@@ -1,7 +1,7 @@
 import { Fond } from '../entities/Fond';
 import { FiltersInput, IBaseRepository } from './baseRepository';
 
-export type FondFilters = FiltersInput
+export type FondFilters = Omit<FiltersInput, 'slug'>
 
 export type CreateFondInput = Omit<Fond, 'id' | 'createdAt' | 'updatedAt'>
 

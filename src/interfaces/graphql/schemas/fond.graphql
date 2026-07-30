@@ -39,7 +39,6 @@ type PaginatedFonds {
 input FondFiltersInput {
     limit: Int
     skip: Int
-    slug: String
     search: String
     languages: [ContentLanguage!]
     sort: [SortOptions!]

@@ -1,5 +1,6 @@
 import z from 'zod';
 
+import { FOND_VALIDATION_MESSAGES } from '~/constants/fond';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 export const zFondSchema = z.object({
@@ -8,39 +9,39 @@ export const zFondSchema = z.object({
       error: (issue) => {
         if (issue.code === 'invalid_type') {
           if (issue.input === undefined || issue.input === null) {
-            return { message: 'Номер фонду є обов’язковим.' };
+            return { message: FOND_VALIDATION_MESSAGES.numberRequired };
           }
-          return { message: 'Номер фонду має бути цілим позитивним числом.' };
+          return { message: FOND_VALIDATION_MESSAGES.numberInvalid };
         }
         return undefined;
       }
     })
-    .positive({ message: 'Номер фонду має бути цілим позитивним числом.' }),
+    .positive({ message: FOND_VALIDATION_MESSAGES.numberInvalid }),
 
   name: z.object({
     uk: z
       .string()
       .trim()
-      .min(1, { message: 'Назва фонду є обов’язковою. Назва фонду повинна мати мінімум одну літеру' })
-      .max(40, { message: 'Назва не може перевищувати 40 символів.' }),
+      .min(1, { message: FOND_VALIDATION_MESSAGES.nameRequired })
+      .max(40, { message: FOND_VALIDATION_MESSAGES.nameMaxLength }),
     en: z
       .string()
       .trim()
-      .min(1, { message: 'Назва фонду є обов’язковою. Назва фонду повинна мати мінімум одну літеру' })
-      .max(40, { message: 'Назва не може перевищувати 40 символів.' })
+      .min(1, { message: FOND_VALIDATION_MESSAGES.nameRequired })
+      .max(40, { message: FOND_VALIDATION_MESSAGES.nameMaxLength })
   }),
 
   documentCreationDate: z.object({
     uk: z
       .string()
       .trim()
-      .min(1, { message: 'Дати утворення документів є обов’язковими. Дати утворення документів повинні мати мінімум одну літеру' })
-      .max(150, { message: 'Значення не може перевищувати 150 символів.' }),
+      .min(1, { message: FOND_VALIDATION_MESSAGES.documentCreationDateRequired })
+      .max(150, { message: FOND_VALIDATION_MESSAGES.documentCreationDateMaxLength }),
     en: z
       .string()
       .trim()
-      .min(1, { message: 'Дати утворення документів є обов’язковими. Дати утворення документів повинні мати мінімум одну літеру' })
-      .max(150, { message: 'Значення не може перевищувати 150 символів.' })
+      .min(1, { message: FOND_VALIDATION_MESSAGES.documentCreationDateRequired })
+      .max(150, { message: FOND_VALIDATION_MESSAGES.documentCreationDateMaxLength })
   }),
 
   chronologicalBoundaries: z
@@ -48,11 +49,11 @@ export const zFondSchema = z.object({
       uk: z
         .string()
         .trim()
-        .max(150, { message: 'Значення не може перевищувати 150 символів.' }),
+        .max(150, { message: FOND_VALIDATION_MESSAGES.chronologicalBoundariesMaxLength }),
       en: z
         .string()
         .trim()
-        .max(150, { message: 'Значення не може перевищувати 150 символів.' })
+        .max(150, { message: FOND_VALIDATION_MESSAGES.chronologicalBoundariesMaxLength })
     })
     .optional(),
 
@@ -61,18 +62,18 @@ export const zFondSchema = z.object({
       uk: z
         .string()
         .trim()
-        .max(150, { message: 'Значення не може перевищувати 150 символів.' }),
+        .max(150, { message: FOND_VALIDATION_MESSAGES.organizationFormMaxLength }),
       en: z
         .string()
         .trim()
-        .max(150, { message: 'Значення не може перевищувати 150 символів.' })
+        .max(150, { message: FOND_VALIDATION_MESSAGES.organizationFormMaxLength })
     })
     .optional(),
 
   description: z
     .object({
-      uk: z.string().trim().max(1000, { message: 'Опис не може перевищувати 1000 символів.' }),
-      en: z.string().trim().max(1000, { message: 'Опис не може перевищувати 1000 символів.' })
+      uk: z.string().trim().max(1000, { message: FOND_VALIDATION_MESSAGES.descriptionMaxLength }),
+      en: z.string().trim().max(1000, { message: FOND_VALIDATION_MESSAGES.descriptionMaxLength })
     })
     .optional(),
 
