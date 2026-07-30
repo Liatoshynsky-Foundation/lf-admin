@@ -173,7 +173,7 @@ describe('useCreateWorkAction', () => {
       result.current.openModal();
     });
 
-    await act(async () => {
+    act(() => {
       void result.current.handleSubmit(MOCK_WORK);
     });
 
@@ -185,7 +185,7 @@ describe('useCreateWorkAction', () => {
 
     expect(result.current.isModalOpen).toBe(true);
   });
-
+  
   it('should handle successful work creation', async () => {
     jest.mocked(safeMutate).mockResolvedValueOnce({ data: {} } as Awaited<ReturnType<typeof safeMutate>>);
     const { result } = renderHook(() => useCreateWorkAction());

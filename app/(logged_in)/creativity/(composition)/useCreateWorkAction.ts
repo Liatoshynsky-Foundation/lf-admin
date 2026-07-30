@@ -39,24 +39,29 @@ const useCreateComposition = () => {
   return [createComposition, meta] as const;
 };
 
-const mapToCreateInput = (work: OpusCompositionData): CreateCompositionInput => ({
-  name: { uk: work.name, en: work.name },
-  year: work.year ? Number(work.year) : undefined,
-  genre: work.genre || undefined,
-  audioAvailable: work.audios.length > 0,
-  sheetAvailable: work.notes.some((n) => Boolean(n.fileUrl)),
-  audios: work.audios.map((a) => ({
-    name: resolveMediaName(a),
-    url: a.fileUrl
-  })),
-  sheetMusic: work.notes.map((n) => ({
-    name: resolveMediaName(n),
-    publishDate: n.publishDate || '',
-    url: n.fileUrl || null,
-    isFree: n.isFree ?? false,
-    dateUploaded: new Date().toISOString()
-  }))
-});
+const mapToCreateInput = (work: OpusCompositionData): CreateCompositionInput => {
+  const parsedYear = work.year ? Number(work.year) : undefined;
+  const isValidYear = parsedYear !== undefined && !Number.isNaN(parsedYear);
+  
+  return {
+    name: { uk: work.name, en: work.name },
+    year: isValidYear ? parsedYear : undefined,
+    genre: work.genre || undefined,
+    audioAvailable: work.audios.length > 0,
+    sheetAvailable: work.notes.some((n) => Boolean(n.fileUrl)),
+    audios: work.audios.map((a) => ({
+      name: resolveMediaName(a),
+      url: a.fileUrl
+    })),
+    sheetMusic: work.notes.map((n) => ({
+      name: resolveMediaName(n),
+      publishDate: n.publishDate || '',
+      url: n.fileUrl || null,
+      isFree: n.isFree ?? false,
+      dateUploaded: new Date().toISOString()
+    }))
+  };
+};
 
 export function useCreateWorkAction(): UseCreateWorkActionResult {
   const [isModalOpen, setIsModalOpen] = useState(false);

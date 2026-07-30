@@ -202,7 +202,11 @@ export default function CompositionModal({
           InputProps={{
             endAdornment: composition.name ? (
               <InputAdornment position="end">
-                <IconButton size="small" onClick={() => updateField('name', '')}>
+                <IconButton
+                  aria-label={COMPOSITION_MODAL_TEXTS.clearAriaLabel}
+                  size="small"
+                  onClick={() => updateField('name', '')}
+                >
                   <X size={18} strokeWidth={1.5} />
                 </IconButton>
               </InputAdornment>
@@ -240,7 +244,11 @@ export default function CompositionModal({
             <Box key={audio.id} sx={styles.fileChip}>
               <Music size={20} strokeWidth={1.5} />
               <Typography sx={styles.fileChipName}>{audio.name || fileNameFromUrl(audio.fileUrl)}</Typography>
-              <IconButton onClick={() => removeMediaRow('audios', audio.id)} sx={styles.mediaIcon}>
+              <IconButton
+                aria-label={COMPOSITION_MODAL_TEXTS.deleteAriaLabel}
+                onClick={() => removeMediaRow('audios', audio.id)}
+                sx={styles.mediaIcon}
+              >
                 <Trash2 size={20} strokeWidth={1.5} />
               </IconButton>
             </Box>
@@ -287,12 +295,17 @@ export default function CompositionModal({
                     sx={styles.mediaDateField}
                   />
                   <IconButton
+                    aria-label={COMPOSITION_MODAL_TEXTS.uploadFileAriaLabel}
                     onClick={() => setMediaTarget({ field: 'notes', rowId: note.id })}
                     sx={styles.mediaIconBtn}
                   >
                     <CloudUpload size={20} strokeWidth={1.5} />
                   </IconButton>
-                  <IconButton onClick={() => removeMediaRow('notes', note.id)} sx={styles.mediaIconBtn}>
+                  <IconButton
+                    aria-label={COMPOSITION_MODAL_TEXTS.deleteAriaLabel}
+                    onClick={() => removeMediaRow('notes', note.id)}
+                    sx={styles.mediaIconBtn}
+                  >
                     <Trash2 size={20} strokeWidth={1.5} />
                   </IconButton>
                 </Box>
@@ -301,7 +314,11 @@ export default function CompositionModal({
                   <Box sx={styles.fileChip}>
                     <FileText size={20} strokeWidth={1.5} />
                     <Typography sx={styles.fileChipName}>{fileNameFromUrl(note.fileUrl)}</Typography>
-                    <IconButton onClick={() => clearNoteFile(note.id)} sx={styles.mediaIcon}>
+                    <IconButton
+                      aria-label={COMPOSITION_MODAL_TEXTS.deleteFileAriaLabel}
+                      onClick={() => clearNoteFile(note.id)}
+                      sx={styles.mediaIcon}
+                    >
                       <Trash2 size={20} strokeWidth={1.5} />
                     </IconButton>
                   </Box>
