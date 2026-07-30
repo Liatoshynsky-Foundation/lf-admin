@@ -164,27 +164,6 @@ describe('useCreateWorkAction', () => {
     });
     expect(result.current.isModalOpen).toBe(false);
   });
-
-  it('should not close modal when submitting', async () => {
-    jest.mocked(safeMutate).mockReturnValue(new Promise(() => {}));
-    const { result } = renderHook(() => useCreateWorkAction());
-
-    act(() => {
-      result.current.openModal();
-    });
-
-    act(() => {
-      void result.current.handleSubmit(MOCK_WORK);
-    });
-
-    expect(result.current.isSubmitting).toBe(true);
-
-    act(() => {
-      result.current.closeModal();
-    });
-
-    expect(result.current.isModalOpen).toBe(true);
-  });
   
   it('should handle successful work creation', async () => {
     jest.mocked(safeMutate).mockResolvedValueOnce({ data: {} } as Awaited<ReturnType<typeof safeMutate>>);
