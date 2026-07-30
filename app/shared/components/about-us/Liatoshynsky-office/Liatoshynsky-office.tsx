@@ -6,9 +6,12 @@ import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
 import { QuoteBlock } from './quote-block/QuoteBlock';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
+import { CustomTextField } from '~/ds-components/text-field/TextField';
+import { proseToHeaderText } from '~/lib/utils/prose';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
+import { useTitleValidation } from '~/shared/hooks/use-title-validation/useTitleValidation';
 import { useStore } from '~/store';
-import { LocalizedString } from '~/types/common';
+import { LocalizedString, ProseDoc } from '~/types/common';
 
 export const LiatoshynskyOffice = () => {
   const pageId = PAGE_IDS.ABOUT_US;
@@ -16,10 +19,22 @@ export const LiatoshynskyOffice = () => {
 
   const { block } = usePageBlock(pageId, blockId);
   const setField = useStore((state) => state.setField);
+  const toggleBlockVisibility = useStore((state) => state.toggleBlockVisibility);
 
   const currentLocale: keyof LocalizedString = useStore((state) => state.locale);
 
+  const titleValidation = useTitleValidation(`${pageId}:${blockId}:title`, block?.title?.[currentLocale] as ProseDoc);
+
   if (!block) return <EditBlockSkeleton />;
+
+  const handleSectionTitleChange = (val: JSONContent) => {
+    const fallbackTitle: Record<'uk' | 'en', JSONContent> = { uk: {} as JSONContent, en: {} as JSONContent };
+
+    setField(pageId, blockId, 'title', {
+      ...(block.title ?? fallbackTitle),
+      [currentLocale]: val
+    });
+  };
 
   const handleTitleChange = (val: JSONContent) => {
     setField(pageId, blockId, 'quote', {
@@ -41,8 +56,25 @@ export const LiatoshynskyOffice = () => {
     });
   };
 
+  const headerTitle = proseToHeaderText(block.title?.[currentLocale] as ProseDoc, 'Кабінет Лятошинського');
+
   return (
-    <CollapsibleBlock title="Кабінет Лятошинського" grip>
+    <CollapsibleBlock
+      title={headerTitle}
+      grip
+      hidden={block.hidden}
+      onToggleVisibility={() => toggleBlockVisibility(pageId, blockId)}
+    >
+      <CustomTextField
+        fieldType="formatting"
+        title="Заголовок секції"
+        label="Текст заголовку"
+        value={block.title?.[currentLocale]}
+        onChange={handleSectionTitleChange}
+        onBlur={titleValidation.onBlur}
+        error={titleValidation.error}
+        helperText={titleValidation.helperText}
+      />
       <QuoteBlock
         title={block.quote.source[currentLocale]}
         description={block.quote.text[currentLocale]}

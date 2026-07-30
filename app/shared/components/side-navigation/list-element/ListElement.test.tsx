@@ -83,4 +83,12 @@ describe('List Element', () => {
     render(<ListElement element={element} open />);
     await user.click(screen.getByRole('button'));
   });
+
+  it('should apply disabled styles and accept sxItem as an array', () => {
+    const disabledElement = { ...element, disabled: true };
+    render(<ListElement element={disabledElement} open sxItem={[{ margin: '10px' }]} />);
+
+    const button = screen.getByRole('button');
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+  });
 });

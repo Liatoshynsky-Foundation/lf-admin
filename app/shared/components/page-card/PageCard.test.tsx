@@ -4,6 +4,8 @@ import React from 'react';
 
 import PageCard from './PageCard';
 
+const FALLBACK_IMAGE_SRC = 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/about-us-foundation-first.png';
+
 jest.mock('~/utils/formatDate', () => ({
   formatDate: (date: string) => `formatted-${date}`
 }));
@@ -96,7 +98,7 @@ describe('PageCard Component', () => {
     const imageElement = screen.getByAltText('Broken blueprint');
     fireEvent.error(imageElement);
 
-    expect(imageElement).toHaveAttribute('src', '/images/image.png');
+    expect(imageElement).toHaveAttribute('src', FALLBACK_IMAGE_SRC);
   });
 
   it('falls back to english title and english alt when ukrainian versions are missing', () => {

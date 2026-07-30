@@ -55,6 +55,22 @@ describe('UploadController', () => {
       expect(res.json).toHaveBeenCalledWith({ success: false, errors: ['Invalid image'] });
     });
 
+    it('returns conflict status when service rejects duplicate filenames', async () => {
+      req.file = { originalname: 'test.jpg', buffer: Buffer.from('') } as unknown as never;
+      mockUploadService.uploadFile.mockResolvedValueOnce({
+        success: false,
+        errors: [UPLOAD_ERRORS.FILE_ALREADY_EXISTS('test.jpg')],
+        statusCode: 409
+      });
+
+      await controller.uploadSingleFile(req as Request, res as Response, next);
+      expect(res.status).toHaveBeenCalledWith(409);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        errors: [UPLOAD_ERRORS.FILE_ALREADY_EXISTS('test.jpg')]
+      });
+    });
+
     it('returns 201 on successful upload format mapping', async () => {
       req.file = { originalname: 'test.jpg', buffer: Buffer.from('') } as unknown as never;
       mockUploadService.uploadFile.mockResolvedValueOnce({ success: true, url: 'http://test.url' });

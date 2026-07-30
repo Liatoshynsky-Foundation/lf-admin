@@ -79,7 +79,7 @@ type PublicationsTabStateMap<T> = {
 type NullableLocalizedString = Partial<Record<keyof LocalizedString, string | null>>;
 type MaybeLocalizedValue = string | NullableLocalizedString | null | undefined;
 
-const DEFAULT_COVER_IMAGE = '/images/image.png';
+const DEFAULT_COVER_IMAGE = 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/about-us-foundation-first.png';
 const DEFAULT_COVER_ALT = 'Обкладинка матеріалу';
 const SORT_FALLBACK_DATE = '1970-01-01T00:00:00.000Z';
 
@@ -143,7 +143,7 @@ const getPublicationSearchOptions = (items: PublicationCardItem[]) => {
   return Array.from(uniqueOptions.values());
 };
 
-const getPrimaryText = (value: MaybeLocalizedValue, fallback = ''): string => {
+const getPrimaryText = (value: MaybeLocalizedValue, fallback: string): string => {
   if (typeof value === 'string') {
     return value || fallback;
   }
@@ -151,7 +151,7 @@ const getPrimaryText = (value: MaybeLocalizedValue, fallback = ''): string => {
   return value?.uk || value?.en || fallback;
 };
 
-const toLocalizedCardValue = (value: MaybeLocalizedValue, fallback = ''): Partial<LocalizedString> => {
+const toLocalizedCardValue = (value: MaybeLocalizedValue, fallback: string): Partial<LocalizedString> => {
   if (typeof value === 'string') {
     return {
       uk: value || fallback,
@@ -165,7 +165,7 @@ const toLocalizedCardValue = (value: MaybeLocalizedValue, fallback = ''): Partia
   };
 };
 
-const toLocalizedString = (value: MaybeLocalizedValue, fallback = ''): LocalizedString => {
+const toLocalizedString = (value: MaybeLocalizedValue, fallback: string): LocalizedString => {
   if (typeof value === 'string') {
     const localizedValue = value.trim() || fallback;
 

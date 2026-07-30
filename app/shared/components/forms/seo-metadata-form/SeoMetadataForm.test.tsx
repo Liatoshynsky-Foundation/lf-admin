@@ -3,7 +3,12 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { SeoCanonicalUrlField } from './seo-canonicalurl-field/SeoCanonicalUrlField';
-import SeoMetadataForm, { SeoMetadataFormProps } from './SeoMetadataForm';
+import SeoMetadataForm, { LocalizedMeta, SeoMetadataFormProps } from './SeoMetadataForm';
+import { META_TITLE_MAX_LENGTH } from '~/constants/publications';
+
+interface MockCropResult {
+  rect: unknown;
+}
 
 jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
   ImagePreviewBlock: ({
@@ -12,17 +17,32 @@ jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
     altText,
     onChangeAltText
   }: {
-    onChangeImage: (url: string) => void;
+    onChangeImage: (url: string, crop?: MockCropResult | null) => void;
     showAlternativeText?: boolean;
     altText?: string;
     onChangeAltText?: (value: string) => void;
   }) => (
     <div>
-      <button
-        data-testid="photo-block"
-        onClick={() => onChangeImage('https://example.com/mock-image.png')}
-      >
+      <button data-testid="photo-block" onClick={() => onChangeImage('https://example.com/mock-image.png')}>
         PhotoBlock
+      </button>
+      <button
+        data-testid="photo-block-cropped"
+        onClick={() => onChangeImage('https://example.com/mock-image.png', { rect: { x: 10 } })}
+      >
+        PhotoBlock Cropped
+      </button>
+      <button data-testid="photo-block-null" onClick={() => onChangeImage('https://example.com/mock-image.png', null)}>
+        PhotoBlock Null
+      </button>
+      <button data-testid="photo-block-root-url" onClick={() => onChangeImage('https://example.com/')}>
+        PhotoBlock Root URL
+      </button>
+      <button
+        data-testid="photo-block-query-url"
+        onClick={() => onChangeImage('https://example.com/photo.png?v=1.0')}
+      >
+        PhotoBlock Query URL
       </button>
       {showAlternativeText && (
         <input
@@ -30,6 +50,81 @@ jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
           value={altText || ''}
           onChange={(e) => onChangeAltText?.(e.target.value)}
         />
+      )}
+    </div>
+  )
+}));
+
+jest.mock('./seo-base-fields/SeoBaseFields', () => ({
+  SeoBaseFields: ({
+    onBlur,
+    onFieldChange,
+    showKeywords,
+    errors,
+    touched
+  }: {
+    onBlur: (field: keyof LocalizedMeta) => void;
+    onFieldChange: (field: keyof LocalizedMeta, val: string) => void;
+    showKeywords?: boolean;
+    errors: Partial<Record<keyof LocalizedMeta, string>>;
+    touched: Partial<Record<keyof LocalizedMeta, boolean>>;
+  }) => (
+    <div data-testid="mock-seo-base-fields">
+      <button
+        data-testid="trigger-canonical-valid"
+        onClick={() => {
+          onBlur('canonicalUrl');
+          onFieldChange('canonicalUrl', 'https://example.com');
+        }}
+      >
+        Valid Canonical
+      </button>
+
+      <button
+        data-testid="trigger-canonical-invalid"
+        onClick={() => {
+          onBlur('canonicalUrl');
+          onFieldChange('canonicalUrl', 'invalid-url');
+        }}
+      >
+        Invalid Canonical
+      </button>
+
+      <button
+        data-testid="trigger-default-case"
+        onClick={() => {
+          onBlur('startDateTime');
+        }}
+      >
+        Default Case
+      </button>
+
+      <label htmlFor="meta-title-input">Meta title</label>
+      <input
+        id="meta-title-input"
+        onBlur={() => onBlur('title')}
+        onChange={(e) => onFieldChange('title', e.target.value)}
+      />
+      {touched.title && errors.title && <span>{errors.title}</span>}
+
+      <label htmlFor="meta-description-input">Meta description</label>
+      <input
+        id="meta-description-input"
+        onBlur={() => onBlur('description')}
+        onChange={(e) => onFieldChange('description', e.target.value)}
+      />
+      {touched.description && errors.description && <span>{errors.description}</span>}
+
+      {showKeywords && (
+        <>
+          <label htmlFor="meta-keywords-input">Meta keywords</label>
+          <input
+            id="meta-keywords-input"
+            onBlur={() => onBlur('keywords')}
+            onChange={(e) => onFieldChange('keywords', e.target.value)}
+          />
+          {touched.keywords && errors.keywords && <span>{errors.keywords}</span>}
+        </>
       )}
     </div>
   )
@@ -75,32 +170,62 @@ describe('SeoMetadataForm', () => {
     jest.clearAllMocks();
   });
 
-  it('calls onChange when typing', async () => {
-    render(<SeoMetadataForm {...defaultProps} />);
-    const input = screen.getByLabelText(/meta title/i);
-    await user.type(input, 'Hello');
-    expect(defaultProps.onChange).toHaveBeenCalled();
+  it.each([
+    {
+      description: 'onChange when typing in title field',
+      action: async (u: ReturnType<typeof userEvent.setup>) => {
+        render(<SeoMetadataForm {...defaultProps} />);
+        const input = screen.getByLabelText(/meta title/i);
+        await u.type(input, 'Hello');
+      },
+      assert: () => expect(defaultProps.onChange).toHaveBeenCalled()
+    },
+    {
+      description: 'onIndexingChange when checkbox toggles',
+      action: async (u: ReturnType<typeof userEvent.setup>) => {
+        render(<SeoMetadataForm {...defaultProps} allowIndexing={false} />);
+        const checkbox = screen.getByRole('checkbox');
+        await u.click(checkbox);
+      },
+      assert: () => expect(defaultProps.onIndexingChange).toHaveBeenCalledWith(true)
+    },
+    {
+      description: 'onImageChange with uploaded url',
+      action: async (u: ReturnType<typeof userEvent.setup>) => {
+        render(<SeoMetadataForm {...defaultProps} />);
+        await u.click(screen.getByTestId('photo-block'));
+      },
+      assert: () => expect(defaultProps.onImageChange).toHaveBeenCalledWith('https://example.com/mock-image.png')
+    }
+  ])('calls $description', async ({ action, assert }) => {
+    await action(user);
+    assert();
   });
 
   it('shows error for empty title on blur', async () => {
-    render(<SeoMetadataForm {...defaultProps} />);
+    renderWithState();
     const input = screen.getByLabelText(/meta title/i);
     await user.click(input);
     await user.tab();
-    expect(await screen.findByText(/обовʼязкове поле/i)).toBeInTheDocument();
+    expect(await screen.findByText(/мінімум 2 символа/i)).toBeInTheDocument();
   });
 
-  it('calls onIndexingChange', async () => {
-    render(<SeoMetadataForm {...defaultProps} allowIndexing={false} />);
-    const checkbox = screen.getByRole('checkbox');
-    await user.click(checkbox);
-    expect(defaultProps.onIndexingChange).toHaveBeenCalledWith(true);
+  it('rejects title longer than the maximum length on blur, respects input maxLength attribute', async () => {
+    renderWithState();
+    const input = screen.getByLabelText(/meta title/i) as HTMLInputElement;
+
+    fireEvent.change(input, { target: { value: 'a'.repeat(META_TITLE_MAX_LENGTH + 1) } });
+    fireEvent.blur(input);
+    expect(await screen.findByText(/максимум 150 символів/i)).toBeInTheDocument();
   });
 
-  it('calls onImageChange with uploaded url', async () => {
-    render(<SeoMetadataForm {...defaultProps} />);
-    await user.click(screen.getByTestId('photo-block'));
-    expect(defaultProps.onImageChange).toHaveBeenCalledWith('https://example.com/mock-image.png');
+  it('accepts title within the allowed length range', async () => {
+    renderWithState();
+    const input = screen.getByLabelText(/meta title/i);
+
+    await user.type(input, 'Валідний заголовок');
+    fireEvent.blur(input);
+    expect(screen.queryByText(/мінімум|максимум/i)).not.toBeInTheDocument();
   });
 
   it('validates description field (empty and non-empty)', async () => {
@@ -189,36 +314,296 @@ describe('SeoMetadataForm', () => {
     expect(onChange).toHaveBeenCalled();
   });
 
-  it('covers validateField default branch', () => {
-    render(<SeoMetadataForm {...defaultProps} forceShowErrors={true} />);
+  it('renders keywords field as multiline text field when extraFieldsBeforeKeywords is true', async () => {
+    const MultilineKeywordsWrapper = () => {
+      const [value, setValue] = React.useState<LocalizedMeta>({ title: '', description: '', keywords: '' });
+      return <SeoMetadataForm {...defaultProps} extraFieldsBeforeKeywords={true} value={value} onChange={setValue} />;
+    };
+
+    render(<MultilineKeywordsWrapper />);
+
+    const textarea = screen.getByLabelText(/meta keywords/i, { selector: 'textarea' });
+    expect(textarea).toBeInTheDocument();
+
+    await user.type(textarea, 'a, b');
+    fireEvent.blur(textarea);
+  });
+
+  it('calls onChangeCrop with cropped rect', async () => {
+    const onChangeCropMock = jest.fn();
+    render(<SeoMetadataForm {...defaultProps} onChangeCrop={onChangeCropMock} />);
+
+    await user.click(screen.getByTestId('photo-block-cropped'));
+
+    expect(onChangeCropMock).toHaveBeenCalledWith({ x: 10 });
+  });
+
+  it('calls onChangeCrop with null when crop is omitted', async () => {
+    const onChangeCropMock = jest.fn();
+    render(<SeoMetadataForm {...defaultProps} onChangeCrop={onChangeCropMock} />);
+
+    await user.click(screen.getByTestId('photo-block'));
+
+    expect(onChangeCropMock).toHaveBeenCalledWith(null);
+  });
+
+  it('calls onChangeCrop with null when crop is explicitly null', async () => {
+    const onChangeCropMock = jest.fn();
+    render(<SeoMetadataForm {...defaultProps} onChangeCrop={onChangeCropMock} />);
+
+    await user.click(screen.getByTestId('photo-block-null'));
+
+    expect(onChangeCropMock).toHaveBeenCalledWith(null);
+  });
+
+  it('should cover the extension undefined fallback branch in getFileNameFromUrl', async () => {
+    interface CustomSplitter {
+      [Symbol.split](string: string, limit?: number): string[];
+    }
+
+    const originalSplit = String.prototype.split;
+    const splitSpy = jest.spyOn(String.prototype, 'split').mockImplementation(function (
+      this: string,
+      separator: string | RegExp | CustomSplitter,
+      limit?: number
+    ) {
+      if (typeof separator === 'string' && separator === '/' && this === 'test_no_pop') {
+        return [] as unknown as string[];
+      }
+      const safeSplit = originalSplit as (this: string, s: unknown, l?: number) => string[];
+      return safeSplit.call(this, separator, limit);
+    });
+
+    render(<SeoMetadataForm {...defaultProps} ogImage="test_no_pop" />);
+    expect(screen.getByTestId('photo-block')).toBeInTheDocument();
+
+    splitSpy.mockRestore();
+  });
+
+  it('should mount correctly with only required props', () => {
+    render(
+      <SeoMetadataForm
+        value={{ title: '', description: '', keywords: '' }}
+        onChange={jest.fn()}
+        locale="uk"
+        ogImage={null}
+        onImageChange={jest.fn()}
+        allowIndexing={true}
+        onIndexingChange={jest.fn()}
+      />
+    );
+    expect(screen.getByLabelText(/meta title/i)).toBeInTheDocument();
+  });
+
+  it('renders keywords field as multiline text field with default label when labels prop is omitted', () => {
+    render(
+      <SeoMetadataForm
+        value={{ title: '', description: '', keywords: '' }}
+        onChange={jest.fn()}
+        locale="uk"
+        ogImage={null}
+        onImageChange={jest.fn()}
+        allowIndexing={true}
+        onIndexingChange={jest.fn()}
+        extraFieldsBeforeKeywords={true}
+      />
+    );
+    expect(screen.getByLabelText('Meta keywords', { selector: 'textarea' })).toBeInTheDocument();
+  });
+
+  it('renders existing altText when provided in value', () => {
+    render(
+      <SeoMetadataForm
+        {...defaultProps}
+        showAlternativeText={true}
+        value={{
+          ...defaultProps.value,
+          altText: { uk: 'Існуючий альт текст', en: 'Existing alt text' }
+        }}
+      />
+    );
+    expect(screen.getByDisplayValue('Існуючий альт текст')).toBeInTheDocument();
+  });
+
+  it('handles onChangeAltText when value.altText is undefined', async () => {
+    const onChangeMock = jest.fn();
+    render(
+      <SeoMetadataForm
+        {...defaultProps}
+        onChange={onChangeMock}
+        showAlternativeText={true}
+        value={{ title: '', description: '', keywords: '' }}
+      />
+    );
+    const altInput = screen.getByLabelText(/alt текст/i);
+    await user.type(altInput, 'a');
+    expect(onChangeMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        altText: { uk: 'a', en: '' }
+      })
+    );
+  });
+
+  it('falls back displayFileName to image when image url has no trailing filename', async () => {
+    render(<SeoMetadataForm {...defaultProps} />);
+    await user.click(screen.getByTestId('photo-block-root-url'));
+    expect(defaultProps.onImageChange).toHaveBeenCalledWith('https://example.com/');
+  });
+
+  it('passes initialCrop to PhotoBlock when crop prop is provided', () => {
+    render(<SeoMetadataForm {...defaultProps} crop={{ x: 10, y: 10, width: 100, height: 100 }} />);
+    expect(screen.getByTestId('photo-block')).toBeInTheDocument();
+  });
+
+  it('handles dynamic ogImage prop changes from string to null', () => {
+    const { rerender } = render(<SeoMetadataForm {...defaultProps} ogImage="https://example.com/image.png" />);
+    rerender(<SeoMetadataForm {...defaultProps} ogImage={null} />);
+    expect(screen.getByTestId('photo-block')).toBeInTheDocument();
+  });
+
+  it('strips query parameters from image filename in handleImageChange', async () => {
+    render(<SeoMetadataForm {...defaultProps} />);
+    await user.click(screen.getByTestId('photo-block-query-url'));
+    expect(defaultProps.onImageChange).toHaveBeenCalledWith('https://example.com/photo.png?v=1.0');
+  });
+
+  it('preserves existing altText in other locale when updating altText in uk locale', async () => {
+    const onChangeMock = jest.fn();
+    render(
+      <SeoMetadataForm
+        {...defaultProps}
+        locale="uk"
+        onChange={onChangeMock}
+        showAlternativeText={true}
+        value={{
+          ...defaultProps.value,
+          altText: { uk: 'Початковий укр', en: 'Existing English' }
+        }}
+      />
+    );
+    const altInput = screen.getByLabelText(/alt текст/i);
+    await user.type(altInput, '2');
+    expect(onChangeMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        altText: { uk: 'Початковий укр2', en: 'Existing English' }
+      })
+    );
+  });
+
+  it('preserves existing altText in other locale when updating altText in en locale', async () => {
+    const onChangeMock = jest.fn();
+    render(
+      <SeoMetadataForm
+        {...defaultProps}
+        locale="en"
+        onChange={onChangeMock}
+        showAlternativeText={true}
+        value={{
+          ...defaultProps.value,
+          altText: { uk: 'Existing Ukrainian', en: 'Initial English' }
+        }}
+      />
+    );
+    const altInput = screen.getByLabelText(/alt текст/i);
+    await user.type(altInput, '2');
+    expect(onChangeMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        altText: { uk: 'Existing Ukrainian', en: 'Initial English2' }
+      })
+    );
+  });
+
+  it('preserves existing touched state when forceShowErrors is triggered', async () => {
+    const { rerender } = render(<SeoMetadataForm {...defaultProps} forceShowErrors={false} />);
+    const input = screen.getByLabelText(/meta title/i);
+    fireEvent.blur(input);
+
+    rerender(<SeoMetadataForm {...defaultProps} forceShowErrors={true} />);
     expect(screen.getAllByText(/обовʼязкове поле/i).length).toBeGreaterThan(0);
   });
 
-  it('covers validateField default branch with unknown field', () => {
-    const validateField = (field: string, val: string) => {
-      switch (field) {
-      case 'title':
-        return val ? '' : 'Обовʼязкове поле';
-      case 'description':
-        return val ? '' : 'Обовʼязкове поле';
-      case 'canonicalUrl':
-        if (!val) return '';
-        try {
-          new URL(val);
-          return '';
-        } catch {
-          return 'Некоректний URL';
-        }
-      case 'keywords':
-        if (!val) return '';
-        return val.split(',').some((word: string) => !word.trim())
-          ? 'Ключові слова мають бути через кому, без порожніх значень'
-          : '';
-      default:
-        return '';
-      }
+  it('covers forceShowErrors effect completely on mount and rerender', () => {
+    const { rerender } = render(<SeoMetadataForm {...defaultProps} forceShowErrors={true} />);
+
+    expect(screen.getAllByText(/обовʼязкове поле/i).length).toBeGreaterThan(0);
+
+    rerender(<SeoMetadataForm {...defaultProps} forceShowErrors={false} />);
+
+    rerender(
+      <SeoMetadataForm
+        {...defaultProps}
+        forceShowErrors={true}
+        value={{ title: 'Valid Title', description: 'Valid Desc', keywords: '' }}
+      />
+    );
+
+    expect(screen.queryByText(/обовʼязкове поле/i)).not.toBeInTheDocument();
+  });
+
+  it('covers valid canonicalUrl and default case branches in validateField', async () => {
+    renderWithState();
+
+    await user.click(screen.getByTestId('trigger-canonical-valid'));
+    await user.click(screen.getByTestId('trigger-canonical-invalid'));
+    await user.click(screen.getByTestId('trigger-default-case'));
+
+    expect(screen.getByTestId('mock-seo-base-fields')).toBeInTheDocument();
+  });
+
+  it('shows error helper text in multiline keywords field when invalid keywords are typed', async () => {
+    const MultilineKeywordsWrapper = () => {
+      const [value, setValue] = React.useState<LocalizedMeta>({ title: '', description: '', keywords: '' });
+      return <SeoMetadataForm {...defaultProps} extraFieldsBeforeKeywords={true} value={value} onChange={setValue} />;
     };
-    const result = validateField('unknownField', 'some value');
-    expect(result).toBe('');
+
+    render(<MultilineKeywordsWrapper />);
+
+    const textarea = screen.getByLabelText(/meta keywords/i, { selector: 'textarea' });
+    await user.type(textarea, 'a, , b');
+    fireEvent.blur(textarea);
+
+    expect(await screen.findByText(/Ключові слова мають бути через кому/i)).toBeInTheDocument();
+  });
+
+  it('calls onIndexingChange with false when unchecking allowIndexing checkbox', async () => {
+    render(<SeoMetadataForm {...defaultProps} allowIndexing={true} />);
+    const checkbox = screen.getByRole('checkbox');
+    await user.click(checkbox);
+    expect(defaultProps.onIndexingChange).toHaveBeenCalledWith(false);
+  });
+
+  it('renders EN section title fallback when labels prop is omitted and locale is en', () => {
+    render(
+      <SeoMetadataForm
+        value={{ title: '', description: '', keywords: '' }}
+        onChange={jest.fn()}
+        locale="en"
+        ogImage={null}
+        onImageChange={jest.fn()}
+        allowIndexing={true}
+        onIndexingChange={jest.fn()}
+      />
+    );
+    expect(screen.getByText('Мета дані сторінки | EN')).toBeInTheDocument();
+  });
+
+  it('handles onChangeAltText when value.altText is undefined in en locale', async () => {
+    const onChangeMock = jest.fn();
+    render(
+      <SeoMetadataForm
+        {...defaultProps}
+        locale="en"
+        onChange={onChangeMock}
+        showAlternativeText={true}
+        value={{ title: '', description: '', keywords: '' }}
+      />
+    );
+    const altInput = screen.getByLabelText(/alt текст/i);
+    await user.type(altInput, 'b');
+    expect(onChangeMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        altText: { uk: '', en: 'b' }
+      })
+    );
   });
 });

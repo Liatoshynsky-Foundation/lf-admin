@@ -12,6 +12,8 @@ export const useGroupPhotos = (photos: GroupPhoto[], onChange: (photos: GroupPho
   };
 
   const handleAddPhoto = () => {
+    if (photos.length >= 20) return;
+
     const newPhoto: GroupPhoto = {
       id: generateUniqueId(),
       src: '',

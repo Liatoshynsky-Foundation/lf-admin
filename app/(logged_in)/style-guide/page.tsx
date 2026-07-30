@@ -5,6 +5,7 @@ import { Upload } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { ArchiveCaseModal } from '../archive/(components)/ArchiveCaseModal';
 import { styles } from './page.styles';
 import Alert from '~/ds-components/alert/Alert';
 import Button from '~/ds-components/button/Button';
@@ -141,6 +142,7 @@ export default function StyleGuide() {
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [isRenameFileModalOpen, setIsRenameFileModalOpen] = useState(false);
   const [isCompositionModalOpen, setIsCompositionModalOpen] = useState(false);
+  const [isArchiveCaseModalOpen, setIsArchiveCaseModalOpen] = useState(false);
 
   const [currentField, setCurrentField] = useState<SortField>('date');
   const [currentOrder, setCurrentOrder] = useState<SortOrder>('newest');
@@ -461,7 +463,7 @@ export default function StyleGuide() {
             dateAdded: '01.01.2001',
             isStarred: true,
             usageLinks: 2,
-            imageSrc: '/images/image.png'
+            imageSrc: 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/about-us-foundation-first.png'
           }}
         />
       </SandboxSection>
@@ -802,6 +804,12 @@ export default function StyleGuide() {
           Open modal
         </Button>
         <CompositionModal isOpen={isCompositionModalOpen} onClose={() => setIsCompositionModalOpen(false)} />
+      </SandboxSection>
+      <SandboxSection title="ArchiveCaseModal">
+        <Button color="tertiary" variant="filled" sx={{ mt: 2 }} onClick={() => setIsArchiveCaseModalOpen(true)}>
+          Open modal
+        </Button>
+        <ArchiveCaseModal isOpen={isArchiveCaseModalOpen} setIsOpen={() => setIsArchiveCaseModalOpen(false)} />
       </SandboxSection>
     </Box>
   );

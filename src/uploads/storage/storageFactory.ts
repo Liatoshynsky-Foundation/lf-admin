@@ -1,19 +1,10 @@
 import { UPLOAD_ERRORS } from '../errors';
-import { createAzureBlobStorage } from './azureBlobStorage';
 import { createCloudStorage } from './cloudStorage';
 import { StorageAdapter, StorageConfig, StorageType } from './types';
 
 export const createStorageAdapter = (config: StorageConfig): StorageAdapter => {
   /* prettier-ignore */
   switch (config.type) {
-  case 'azure-blob': {
-    return createAzureBlobStorage({
-      containerName: config.azureContainerName,
-      baseUrl: config.baseUrl,
-      folderPrefix: config.azureFolderPrefix ?? 'uploads'
-    });
-  }
-
   case 'cloud': {
     if (!config.cloudProvider || !config.cloudConfig) {
       throw new Error(UPLOAD_ERRORS.CLOUD_STORAGE_REQUIRES_CONFIG);
@@ -51,12 +42,6 @@ export const createStorageFromEnv = (): StorageAdapter => {
 
   /* prettier-ignore */
   switch (storageType) {
-  case 'azure-blob': {
-    config.azureContainerName = process.env.AZURE_CONTAINER_NAME;
-    config.azureFolderPrefix = process.env.AZURE_FOLDER_PREFIX ?? 'uploads';
-    break;
-  }
-
   case 'cloud':
     config.cloudProvider = (process.env.CLOUD_PROVIDER || 'aws') as StorageConfig['cloudProvider'];
     config.cloudConfig = {

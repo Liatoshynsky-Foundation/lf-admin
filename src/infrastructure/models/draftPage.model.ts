@@ -19,7 +19,12 @@ const draftPageSchema = new Schema<BasePage>(
       default: PageStatus.Draft
     },
     blocks: { type: Schema.Types.Mixed, required: true },
-    pageType: { type: String, required: true }
+    pageType: { type: String, required: true },
+    blocksOrder: {
+      type: [String],
+      required: true,
+      default: [] 
+    }
   },
   {
     timestamps: true,

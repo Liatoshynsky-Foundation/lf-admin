@@ -184,4 +184,13 @@ describe('HeaderRightActions Component', () => {
       });
     });
   });
+  describe('Unhandled mode', () => {
+    it('should throw an error when an invalid mode is provided', () => {
+      const invalidProps = {
+        mode: 'invalid-mode'
+      } as unknown as import('./HeaderRightActions').HeaderRightActionsProps;
+
+      expect(() => render(<HeaderRightActions {...invalidProps} />)).toThrow('Unhandled mode: invalid-mode');
+    });
+  });
 });

@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 
 import { SeoBaseFields } from './seo-base-fields/SeoBaseFields';
 import { styles } from './SeoMetadataForm.styles';
+import { seoFormErrors } from '~/constants/errors';
 import { CROP_RATIOS } from '~/constants/publications';
 import { ImagePreviewBlock as PhotoBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
 import TooltipCustom from '~/shared/components/design-system/tooltip/Tooltip';
@@ -72,6 +73,8 @@ export default function SeoMetadataForm({
   const [touched, setTouched] = useState<Partial<Record<keyof LocalizedMeta, boolean>>>({});
   const [errors, setErrors] = useState<Partial<Record<keyof LocalizedMeta, string>>>({});
 
+  const translationErrors = seoFormErrors[locale];
+
   useEffect(() => {
     if (typeof ogImage === 'string') {
       setOgImagePreview(ogImage);
@@ -92,22 +95,25 @@ export default function SeoMetadataForm({
 
   const validateField = (field: keyof LocalizedMeta, val: string) => {
     switch (field) {
-    case 'title':
+    case 'title': {
+      const length = val.trim().length;
+      if (length < 2) return translationErrors.minLength;
+      if (length > 150) return translationErrors.maxLength;
+      return '';
+    }
     case 'description':
-      return val.trim() ? '' : 'Обовʼязкове поле';
+      return val.trim() ? '' : translationErrors.required;
     case 'canonicalUrl':
       if (!val) return '';
       try {
         new URL(val);
         return '';
       } catch {
-        return 'Некоректний URL';
+        return translationErrors.invalidUrl;
       }
     case 'keywords':
       if (!val) return '';
-      return val.split(',').some((word) => !word.trim())
-        ? 'Ключові слова мають бути через кому, без порожніх значень'
-        : '';
+      return val.split(',').some((word) => !word.trim()) ? translationErrors.keywords : '';
     default:
       return '';
     }
@@ -214,12 +220,7 @@ export default function SeoMetadataForm({
       <Box sx={styles.indexingCheckboxContainer}>
         <FormControlLabel
           label={'Дозволити індексацію сторінки пошуковими системами'}
-          control={
-            <Checkbox
-              checked={allowIndexing}
-              onChange={(e) => onIndexingChange(e.target.checked)}
-            />
-          }
+          control={<Checkbox checked={allowIndexing} onChange={(e) => onIndexingChange(e.target.checked)} />}
           sx={styles.indexingCheckbox}
         />
         <TooltipCustom title={'Дозволити індексацію сторінки пошуковими системами'}>

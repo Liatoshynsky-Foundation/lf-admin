@@ -4,9 +4,7 @@ import { syncImagesCrops } from '../helpers';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
 import { createDotNotationPatch } from '~/src/application/use-cases/dotNotationPatch/dotNotationPatch';
-import { extractImageSrcs } from '~/src/application/use-cases/extractImageSrc/extractImageSrc';
 import { removeTmpFlagsRecursively } from '~/src/application/use-cases/removeTmpFlags/removeTmpFlags';
-import { blobStorageService } from '~/src/application/use-cases/uploadService/upload';
 import { JsonObject } from '~/src/shared/types/pages/types';
 import type { Page, Scalars, UpdatePageSeoInput } from '~/types/graphql/generated/graphql';
 
@@ -34,11 +32,6 @@ export const PageMutation = {
     const repo = requestContainer.cradle.pageRepository;
 
     const { slug, blocks, blocksOrder } = input;
-
-    const imageSrcs = extractImageSrcs(blocks);
-    if (imageSrcs.length) {
-      await blobStorageService().copyBlobsToNewFolder('tmp', 'photos', imageSrcs);
-    }
 
     const cleanedBlocks = removeTmpFlagsRecursively(blocks);
 
@@ -93,11 +86,6 @@ export const PageMutation = {
         throw new Error(`Cannot publish: Draft not found by slug="${slug}" and no blocks provided.`);
       }
       blocksToPublish = draft.blocks;
-    }
-
-    const imageSrcs = extractImageSrcs(blocksToPublish);
-    if (imageSrcs.length) {
-      await blobStorageService().copyBlobsToNewFolder('tmp', 'photos', imageSrcs);
     }
 
     const cleanedBlocks = removeTmpFlagsRecursively(blocksToPublish);

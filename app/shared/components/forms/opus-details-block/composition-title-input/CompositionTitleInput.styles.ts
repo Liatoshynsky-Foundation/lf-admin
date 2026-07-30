@@ -3,7 +3,8 @@ import { SxProps } from '@mui/system';
 
 export const styles: Record<string, SxProps<Theme>> = {
   input: {
-    '& .MuiOutlinedInput-root': { borderRadius: '8px' }
+    '& .MuiOutlinedInput-root': { borderRadius: '8px' },
+    '& .MuiAutocomplete-endAdornment': { display: 'none' }
   },
 
   option: {

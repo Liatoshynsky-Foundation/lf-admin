@@ -156,7 +156,34 @@ describe('PublicatiosSeoPage Container', () => {
         expect(mockPush).toHaveBeenCalledWith(PUBLICATIONS_BASE_PATH);
       });
     });
+    it.each([
+      {
+        condition: 'with redirect on publish and exit',
+        triggerAction: () => {
+          fireEvent.click(screen.getByTestId('btn-open-publish-menu'));
+          fireEvent.click(screen.getByText('Опублікувати і вийти'));
+        },
+      },
+      {
+        condition: 'when publish is triggered',
+        triggerAction: () => {
+          fireEvent.click(screen.getByTestId('btn-publish'));
+        },
+      },
+    ])(
+      'should NOT show publicationPublished toast $condition if handleSave doesn\'t return id',
+      async ({ triggerAction }) => {
+        mockHandleSave.mockResolvedValue({ slug: 'some-slug' });
+    
+        triggerAction();
 
+        await waitFor(() => {
+          expect(mockHandleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
+          expect(toast.success).not.toHaveBeenCalled();
+          expect(mockPush).not.toHaveBeenCalled();
+        });
+      }
+    );
     it('should handle unpublish action from publication menu', async () => {
       fireEvent.click(screen.getByTestId('btn-open-publish-menu'));
       fireEvent.click(screen.getByText('Скасувати публікацію'));
@@ -186,8 +213,8 @@ describe('PublicatiosSeoPage Container', () => {
 
       expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     });
-
   });
+
   describe('when handleSave returns undefined', () => {
     it.each([
       {
@@ -229,7 +256,7 @@ describe('PublicatiosSeoPage Container', () => {
       }
     );
   });
-   
+
   describe('when publicationData is missing (null/undefined)', () => {
     it('should not throw and should not redirect when data is missing', () => {
       (useUpsertPublication as jest.Mock).mockReturnValue(undefined);

@@ -1,5 +1,4 @@
 import { LocalizedString } from '~/domain/entities/BaseContent';
-import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 export type CompositionSheetMusic = {
   url: string;
@@ -16,17 +15,13 @@ export type CompositionAudio = {
 
 export type Composition = {
   id: string;
-  opusId?: string | null;
-  order?: number;
-  title: LocalizedString;
+  name: LocalizedString;
   year?: number | null;
   genre?: string | null;
-  genres?: string[];
   audioAvailable?: boolean;
   sheetAvailable?: boolean;
   sheetMusic?: CompositionSheetMusic[];
   audios?: CompositionAudio[];
-  status?: BaseContentStatuses;
   createdAt: string;
   updatedAt: string;
 };

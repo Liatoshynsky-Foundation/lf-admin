@@ -15,11 +15,26 @@ jest.mock('@mui/material', () => {
   type DialogProps = {
     open: boolean;
     children: ReactNode;
+    onClose?: (event: unknown, reason: 'backdropClick' | 'escapeKeyDown') => void;
+    dataTestId?: string;
   };
 
   return {
     ...actual,
-    Dialog: ({ open, children }: DialogProps) => (open ? <div data-testid="Dialog">{children}</div> : null)
+    Dialog: ({ open, children, onClose, dataTestId }: DialogProps) => {
+      if (!open) return null;
+      return (
+        <div data-testid="Dialog" data-custom-id={dataTestId}>
+          <button data-testid="mock-backdrop" onClick={(e) => onClose?.(e, 'backdropClick')}>
+            Click Backdrop
+          </button>
+          <button data-testid="mock-escape" onClick={(e) => onClose?.(e, 'escapeKeyDown')}>
+            Press Escape
+          </button>
+          {children}
+        </div>
+      );
+    }
   };
 });
 
@@ -46,6 +61,16 @@ describe('MediaModalContainer', () => {
     expect(screen.getByTestId('MediaModal-closeButton')).toBeInTheDocument();
   });
 
+  it('should use default dataTestId when not provided', () => {
+    render(
+      <MediaModalContainer open onClose={() => {}}>
+        <div />
+      </MediaModalContainer>
+    );
+
+    expect(screen.getByTestId('MediaModalContainer-header')).toBeInTheDocument();
+  });
+
   it('should not render footer when footer slots are missing', () => {
     render(
       <MediaModalContainer open onClose={() => {}} dataTestId="MediaModal">
@@ -56,14 +81,23 @@ describe('MediaModalContainer', () => {
     expect(screen.queryByTestId('MediaModal-footer')).not.toBeInTheDocument();
   });
 
-  it('should render footer when any footer slot is provided', () => {
+  it('should render full footer including top, left and right slots', () => {
     render(
-      <MediaModalContainer open onClose={() => {}} dataTestId="MediaModal" footerRight={<div data-testid="fr" />}>
+      <MediaModalContainer
+        open
+        onClose={() => {}}
+        dataTestId="MediaModal"
+        footerTop={<div data-testid="ft" />}
+        footerLeft={<div data-testid="fl" />}
+        footerRight={<div data-testid="fr" />}
+      >
         <div />
       </MediaModalContainer>
     );
 
     expect(screen.getByTestId('MediaModal-footer')).toBeInTheDocument();
+    expect(screen.getByTestId('MediaModal-footerTop')).toContainElement(screen.getByTestId('ft'));
+    expect(screen.getByTestId('MediaModal-footerLeft')).toContainElement(screen.getByTestId('fl'));
     expect(screen.getByTestId('MediaModal-footerRight')).toContainElement(screen.getByTestId('fr'));
   });
 
@@ -79,5 +113,69 @@ describe('MediaModalContainer', () => {
 
     await user.click(screen.getByTestId('MediaModal-closeButton'));
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('should ignore onClose event if the reason is backdropClick', async () => {
+    const user = userEvent.setup();
+    const onClose = jest.fn();
+
+    render(
+      <MediaModalContainer open onClose={onClose} dataTestId="MediaModal">
+        <div />
+      </MediaModalContainer>
+    );
+
+    await user.click(screen.getByTestId('mock-backdrop'));
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('should call onClose event if the reason is escapeKeyDown', async () => {
+    const user = userEvent.setup();
+    const onClose = jest.fn();
+
+    render(
+      <MediaModalContainer open onClose={onClose} dataTestId="MediaModal">
+        <div />
+      </MediaModalContainer>
+    );
+
+    await user.click(screen.getByTestId('mock-escape'));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('should render only footerTop when provided alone', () => {
+    render(
+      <MediaModalContainer open onClose={() => {}} dataTestId="MediaModal" footerTop={<div data-testid="ft" />}>
+        <div />
+      </MediaModalContainer>
+    );
+
+    expect(screen.getByTestId('MediaModal-footerTop')).toBeInTheDocument();
+    expect(screen.getByTestId('MediaModal-footerLeft')).toBeInTheDocument();
+    expect(screen.queryByTestId('MediaModal-footerRight')).toBeEmptyDOMElement();
+  });
+
+  it('should render only footerLeft when provided alone', () => {
+    render(
+      <MediaModalContainer open onClose={() => {}} dataTestId="MediaModal" footerLeft={<div data-testid="fl" />}>
+        <div />
+      </MediaModalContainer>
+    );
+
+    expect(screen.queryByTestId('MediaModal-footerTop')).not.toBeInTheDocument();
+    expect(screen.getByTestId('MediaModal-footerLeft')).toContainElement(screen.getByTestId('fl'));
+    expect(screen.queryByTestId('MediaModal-footerRight')).toBeEmptyDOMElement();
+  });
+
+  it('should render only footerRight when provided alone', () => {
+    render(
+      <MediaModalContainer open onClose={() => {}} dataTestId="MediaModal" footerRight={<div data-testid="fr" />}>
+        <div />
+      </MediaModalContainer>
+    );
+
+    expect(screen.queryByTestId('MediaModal-footerTop')).not.toBeInTheDocument();
+    expect(screen.getByTestId('MediaModal-footerLeft')).toBeInTheDocument();
+    expect(screen.getByTestId('MediaModal-footerRight')).toContainElement(screen.getByTestId('fr'));
   });
 });

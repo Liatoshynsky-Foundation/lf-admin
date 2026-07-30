@@ -4,6 +4,7 @@ import React from 'react';
 
 import { LiatoshynskyFoundation } from './LiatoshynskyFoundation';
 import { createDocNode } from '~/__mocks__/utils';
+import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { CropRect } from '~/types/graphql/generated/graphql';
 
 interface MockParagraph {
@@ -22,16 +23,20 @@ interface MockFoundationBlockProps {
 }
 
 const setFieldMock = jest.fn();
+const toggleBlockVisibilityMock = jest.fn();
+const setFieldValidityMock = jest.fn();
 const usePageBlockMock = jest.fn();
 
 jest.mock('~/store', () => ({
-  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock }) => unknown) =>
-    selector({ locale: 'uk', setField: setFieldMock })
+  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock; readonly toggleBlockVisibility: typeof toggleBlockVisibilityMock; readonly setFieldValidity: typeof setFieldValidityMock }) => unknown) =>
+    selector({ locale: 'uk', setField: setFieldMock, toggleBlockVisibility: toggleBlockVisibilityMock, setFieldValidity: setFieldValidityMock })
 }));
 
 jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: (pageId: string, blockId: string) => usePageBlockMock(pageId, blockId)
 }));
+
+jest.mock('~/ds-components/text-field/TextField');
 
 jest.mock('../../edit-block-skeleton/EditBlockSkeleton', () => ({
   EditBlockSkeleton: () => <div data-testid="edit-block-skeleton" />
@@ -92,10 +97,25 @@ jest.mock('./foundation-block/FoundationBlock', () => ({
 
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
-  default: ({ children }: { children: React.ReactNode }) => <div data-testid="collapsible-block">{children}</div>
+  default: ({
+    children,
+    onToggleVisibility
+  }: {
+    children: React.ReactNode;
+    onToggleVisibility?: () => void;
+  }) => (
+    <div data-testid="collapsible-block">
+      {onToggleVisibility && (
+        <button data-testid="collapsible-block-toggle-visibility" onClick={onToggleVisibility}>
+          Toggle visibility
+        </button>
+      )}
+      {children}
+    </div>
+  )
 }));
 
-jest.mock('~/lib/utils/prose', () => ({ proseToText: String }));
+jest.mock('~/lib/utils/prose', () => ({ proseToText: String, proseToHeaderText: (doc: unknown, fallback: string) => (doc ? String(doc) : fallback) }));
 
 const mockNodes = {
   org: createDocNode('Organisation Text'),
@@ -107,7 +127,10 @@ const mockBlock = {
   ourOrganisation: { uk: mockNodes.org },
   ourName: { uk: mockNodes.name },
   ourBelief: { uk: mockNodes.belief },
-  image: { src: 'image-src', caption: { uk: 'Image Caption' } }
+  image: {
+    src: 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/image-src.jpg',
+    caption: { uk: 'Image Caption' }
+  }
 };
 
 describe('LiatoshynskyFoundation', () => {
@@ -130,8 +153,41 @@ describe('LiatoshynskyFoundation', () => {
     expect(screen.getByTestId('main-text-json')).toHaveTextContent(JSON.stringify(mockNodes.org));
     expect(screen.getByTestId('paragraph-json-para-0')).toHaveTextContent(JSON.stringify(mockNodes.name));
     expect(screen.getByTestId('paragraph-json-para-1')).toHaveTextContent(JSON.stringify(mockNodes.belief));
-    expect(screen.getByTestId('image')).toHaveAttribute('src', '/api/blob-url?folderName=photos&blobName=image-src');
+    expect(screen.getByTestId('image')).toHaveAttribute(
+      'src',
+      'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/image-src.jpg'
+    );
     expect(screen.getByTestId('file-name')).toHaveTextContent('Image Caption');
+  });
+
+  it('should call toggleBlockVisibility with pageId and blockId when the visibility toggle is clicked', () => {
+    usePageBlockMock.mockReturnValue({ block: mockBlock, blockId: 'FoundationInfo' });
+    render(<LiatoshynskyFoundation />);
+
+    fireEvent.click(screen.getByTestId('collapsible-block-toggle-visibility'));
+
+    expect(toggleBlockVisibilityMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.LIATOSHYNSKY_FOUNDATION);
+  });
+
+  it('should mark the title as invalid after blur when it is empty, and clear the flag on unmount', () => {
+    usePageBlockMock.mockReturnValue({ block: { ...mockBlock, title: { uk: '' } }, blockId: 'FoundationInfo' });
+
+    const { unmount } = render(<LiatoshynskyFoundation />);
+
+    fireEvent.click(screen.getByTestId('trigger-blur-Заголовок секції'));
+
+    expect(screen.getByTestId('textfield-error-Заголовок секції')).toBeInTheDocument();
+    expect(setFieldValidityMock).toHaveBeenCalledWith(
+      `${PAGE_IDS.ABOUT_US}:${BLOCK_IDS.LIATOSHYNSKY_FOUNDATION}:title`,
+      true
+    );
+
+    unmount();
+
+    expect(setFieldValidityMock).toHaveBeenLastCalledWith(
+      `${PAGE_IDS.ABOUT_US}:${BLOCK_IDS.LIATOSHYNSKY_FOUNDATION}:title`,
+      false
+    );
   });
 
   it.each([

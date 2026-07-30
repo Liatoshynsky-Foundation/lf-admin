@@ -6,7 +6,8 @@ import { useEffect, useState } from 'react';
 import type { LocalizedMeta } from '../SeoMetadataForm';
 import SeoMetadataForm from '../SeoMetadataForm';
 import { styles } from '../SeoMetadataForm.styles';
-import {LocalizedCropRect } from '~/types/common';
+import { seoFormErrors } from '~/constants/errors';
+import { LocalizedCropRect } from '~/types/common';
 
 export interface SeoBlockValue {
   meta: { uk: LocalizedMeta; en: LocalizedMeta };
@@ -60,31 +61,32 @@ export default function SeoMetadataBlock({
     if (forceShowErrors && showTicketUrl) {
       setTicketUrlTouched({ uk: true, en: true });
       setTicketUrlError({
-        uk: validateTicketUrl(value?.ticketUrl?.uk ?? ''),
-        en: validateTicketUrl(value?.ticketUrl?.en ?? '')
+        uk: validateTicketUrl(value?.ticketUrl?.uk ?? '', 'uk'),
+        en: validateTicketUrl(value?.ticketUrl?.en ?? '', 'en')
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forceShowErrors]);
 
-  const validateTicketUrl = (val: string) => {
-    if (!val.trim()) return 'Обовʼязкове поле';
+  const validateTicketUrl = (val: string, locale: 'uk' | 'en') => {
+    const translationForErrors = seoFormErrors[locale];
+    if (!val.trim()) return translationForErrors.required;
     try {
       new URL(val);
       return '';
     } catch {
-      return 'Некоректний URL';
+      return translationForErrors.invalidUrl;
     }
   };
 
   const handleTicketUrlChange = (locale: 'uk' | 'en', val: string) => {
     handleChange({ ...value, ticketUrl: { ...(value.ticketUrl ?? { uk: '', en: '' }), [locale]: val } });
-    if (ticketUrlTouched[locale]) setTicketUrlError((prev) => ({ ...prev, [locale]: validateTicketUrl(val) }));
+    if (ticketUrlTouched[locale]) setTicketUrlError((prev) => ({ ...prev, [locale]: validateTicketUrl(val, locale) }));
   };
 
   const handleTicketUrlBlur = (locale: 'uk' | 'en') => {
     setTicketUrlTouched((prev) => ({ ...prev, [locale]: true }));
-    setTicketUrlError((prev) => ({ ...prev, [locale]: validateTicketUrl(value.ticketUrl?.[locale] ?? '') }));
+    setTicketUrlError((prev) => ({ ...prev, [locale]: validateTicketUrl(value.ticketUrl?.[locale] ?? '', locale) }));
   };
 
   const isControlled = externalValue !== undefined && externalOnChange !== undefined;
@@ -138,9 +140,7 @@ export default function SeoMetadataBlock({
         extraFieldsBeforeKeywords={extraFieldsBeforeKeywords}
         forceShowErrors={forceShowErrors}
         crop={crop?.uk ?? null}
-        onChangeCrop={(newUkCrop) => 
-          onChangeCrop?.({ uk: newUkCrop, en: crop?.en ?? null })
-        }
+        onChangeCrop={(newUkCrop) => onChangeCrop?.({ uk: newUkCrop, en: crop?.en ?? null })}
         extraFields={
           showTicketUrl || extraFields
             ? (localeMeta, onLocaleMeta) => buildExtraFields('uk', localeMeta, onLocaleMeta)
@@ -159,9 +159,7 @@ export default function SeoMetadataBlock({
         extraFieldsBeforeKeywords={extraFieldsBeforeKeywords}
         forceShowErrors={forceShowErrors}
         crop={crop?.en ?? null}
-        onChangeCrop={(newEnCrop) => 
-          onChangeCrop?.({ uk: crop?.uk ?? null, en: newEnCrop })
-        }
+        onChangeCrop={(newEnCrop) => onChangeCrop?.({ uk: crop?.uk ?? null, en: newEnCrop })}
         extraFields={
           showTicketUrl || extraFields
             ? (localeMeta, onLocaleMeta) => buildExtraFields('en', localeMeta, onLocaleMeta)

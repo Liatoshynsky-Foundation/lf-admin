@@ -81,18 +81,7 @@ STORAGE_ENV=development
 UPLOAD_MAX_FILE_SIZE=10485760 # 10MB in bytes
 UPLOAD_MAX_FILES=10
 
-# Storage Configuration
-# Storage type options: 'cloud' | 'azure-blob'
-# Default: 'cloud' for all environments
-STORAGE_TYPE=cloud
-
-# Azure Blob Storage (for STORAGE_TYPE=azure-blob)
-AZURE_SAS_URL=
-AZURE_CONTAINER_NAME=
-AZURE_FOLDER_PREFIX=uploads
-# STORAGE_BASE_URL=http://localhost:3000/api/blob-url
-
-# Cloud Storage (for STORAGE_TYPE=cloud - AWS/GCP/Cloudflare R2)
+# Cloud Storage (AWS/GCP/Cloudflare R2)
 # CLOUD_PROVIDER=aws # or gcp, cloudflare
 # CLOUD_BUCKET=your-bucket
 # CLOUD_REGION=us-east-1
@@ -247,21 +236,10 @@ const result = await response.json();
 
 #### Configuration Examples
 
-**Azure Blob Storage (Development)**
-
-```env
-STORAGE_ENV=development
-STORAGE_TYPE=azure-blob
-AZURE_SAS_URL=https://youraccount.blob.core.windows.net/container?sas-token
-AZURE_CONTAINER_NAME=your-container
-AZURE_FOLDER_PREFIX=uploads
-```
-
 **Cloudflare R2 (Production)**
 
 ```env
 STORAGE_ENV=production
-STORAGE_TYPE=cloud
 CLOUD_PROVIDER=cloudflare
 CLOUD_BUCKET=your-bucket
 CLOUD_ENDPOINT=https://account-id.r2.cloudflarestorage.com
@@ -399,7 +377,6 @@ src/ (backend part)
 │ ├── storageFactory.ts
 │ ├── localStorage.ts # Local filesystem storage
 │ ├── dockerStorage.ts # Docker volume storage
-│ ├── azureBlobStorage.ts # Azure Blob Storage integration
 │ └── cloudStorage.ts # AWS S3, GCP, Cloudflare R2
 ├── validators/
 │ ├── index.ts

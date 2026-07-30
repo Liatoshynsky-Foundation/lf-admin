@@ -3,12 +3,14 @@ export const UPLOAD_ERRORS = {
   NO_FILE_UPLOADED: 'No file uploaded',
   NO_FILES_UPLOADED: 'No files uploaded',
   FILENAME_REQUIRED: 'Filename is required',
+  FILENAME_CONTAINS_INVALID_CHARACTERS: 'Filename contains invalid characters',
   FILE_NOT_FOUND: 'File not found',
   FILE_NOT_FOUND_OR_DELETE_FAILED: 'File not found or could not be deleted',
 
   // Service errors
   STORAGE_FAILED: 'Storage failed',
   UNKNOWN_ERROR: 'Unknown error',
+  FILE_ALREADY_EXISTS: (filename: string) => `Файл ${filename} вже існує`,
 
   // Validator errors
   DOCUMENT_VALIDATOR_NOT_IMPLEMENTED: 'Document validator not yet implemented',
@@ -16,12 +18,6 @@ export const UPLOAD_ERRORS = {
   AUDIO_VALIDATOR_NOT_IMPLEMENTED: 'Audio validator not yet implemented',
   GENERIC_VALIDATOR_NOT_IMPLEMENTED: 'Generic validator not yet implemented',
   UNKNOWN_FILE_TYPE: 'Unknown file type',
-
-  // Storage errors - Azure
-  AZURE_URL_NOT_DEFINED: 'Azure SAS URL is not defined',
-  FAILED_TO_UPLOAD_BLOB: 'Failed to upload blob to Azure',
-  FAILED_TO_DELETE_BLOB: 'Failed to delete blob from Azure',
-  BLOB_DOES_NOT_EXIST: 'Blob does not exist',
 
   // Storage errors - Cloud (AWS/GCP/Cloudflare)
   S3_CLIENT_NOT_INITIALIZED: 'S3 client not initialized',

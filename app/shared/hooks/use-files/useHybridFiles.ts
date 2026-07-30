@@ -106,7 +106,7 @@ const getAssetTypeFromFile = (mimeType: string, filename: string): AssetType => 
 const toFileItemFromAsset = (asset: AssetItem): FilesPageFileItem => ({
   id: asset.id,
   type: assetCardTypeMap[asset.type],
-  name: asset.originalname || asset.filename,
+  name: asset.filename,
   dateAdded: formatDateAdded(asset.createdAt),
   createdAtRaw: asset.createdAt,
   isStarred: asset.isStarred,

@@ -20,11 +20,24 @@ const buildDefaultMediaResult = (): MediaModalResult => ({
 let mockMediaResult: MediaModalResult = buildDefaultMediaResult();
 
 jest.mock('~/shared/components/media-modal/MediaModal', () => ({
-  MediaModal: ({ open, onApply }: { open: boolean; onApply: (result: MediaModalResult) => void }): ReactElement | null =>
+  MediaModal: ({
+    open,
+    onClose,
+    onApply
+  }: {
+    open: boolean;
+    onClose: () => void;
+    onApply: (result: MediaModalResult) => void;
+  }): ReactElement | null =>
     open ? (
-      <button type="button" data-testid="media-apply" onClick={() => onApply(mockMediaResult)}>
-        apply
-      </button>
+      <div>
+        <button type="button" data-testid="media-apply" onClick={() => onApply(mockMediaResult)}>
+          apply
+        </button>
+        <button type="button" data-testid="media-close" onClick={onClose}>
+          close media
+        </button>
+      </div>
     ) : null
 }));
 
@@ -50,7 +63,7 @@ describe('CompositionModal', () => {
   it('renders the edit heading and prefilled title', () => {
     const initialValue: OpusCompositionData = {
       id: 'c1',
-      title: 'Існуючий твір',
+      name: 'Існуючий твір',
       genre: 'Соната',
       year: '1920',
       audios: [],
@@ -69,14 +82,37 @@ describe('CompositionModal', () => {
     expect(screen.queryByText('Нова композиція')).not.toBeInTheDocument();
   });
 
+  it('triggers onClose when close button or cancel button is clicked', () => {
+    const onClose = jest.fn();
+    render(<CompositionModal {...baseProps} mode="create" onClose={onClose} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Закрити' }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Скасувати' }));
+    expect(onClose).toHaveBeenCalledTimes(2);
+  });
+
   it('blocks submit and shows an error when the title is empty', () => {
     const onSubmit = jest.fn();
     render(<CompositionModal {...baseProps} mode="create" onSubmit={onSubmit} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /Створити/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Створити' }));
 
     expect(onSubmit).not.toHaveBeenCalled();
     expect(screen.getByText('Обовʼязкове поле')).toBeInTheDocument();
+  });
+
+  it('clears error message when user starts typing in title field', () => {
+    render(<CompositionModal {...baseProps} mode="create" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Створити' }));
+    expect(screen.getByText('Обовʼязкове поле')).toBeInTheDocument();
+
+    const titleInput = screen.getByLabelText('Назва твору *');
+    fireEvent.change(titleInput, { target: { value: 'Нова назва' } });
+
+    expect(screen.queryByText('Обовʼязкове поле')).not.toBeInTheDocument();
   });
 
   it('shows the empty-files notice when no files are attached', () => {
@@ -100,7 +136,7 @@ describe('CompositionModal', () => {
   it('clears the title with the adornment button', () => {
     const initialValue: OpusCompositionData = {
       id: 'c1',
-      title: 'Твір',
+      name: 'Твір',
       genre: '',
       year: '',
       audios: [],
@@ -108,12 +144,12 @@ describe('CompositionModal', () => {
     };
     render(<CompositionModal {...baseProps} mode="edit" initialValue={initialValue} />);
 
-    const titleField = screen.getByLabelText('Назва твору *');
-    expect(titleField).toHaveValue('Твір');
+    const nameField = screen.getByLabelText('Назва твору *');
+    expect(nameField).toHaveValue('Твір');
 
     fireEvent.click(screen.getByRole('button', { name: 'Очистити' }));
 
-    expect(titleField).toHaveValue('');
+    expect(nameField).toHaveValue('');
   });
 
   it('adds a notes row with name and date fields', () => {
@@ -128,12 +164,12 @@ describe('CompositionModal', () => {
   it('renders prefilled audios and notes and hides the empty notice', () => {
     const initialValue: OpusCompositionData = {
       id: 'c1',
-      title: 'Твір',
+      name: 'Твір',
       genre: 'Соната',
       year: '1900',
       audios: [
         { id: 'a1', name: 'Запис', fileUrl: 'https://files/rec.mp3' },
-        { id: 'a2', name: '', fileUrl: 'https://files/second.mp3' }
+        { id: 'a2', name: '', fileUrl: 'https://files/second.mp3?token=123' }
       ],
       notes: [
         { id: 'n1', name: 'Ноти 1', fileUrl: 'https://files/sheet.pdf', publishDate: '2020' },
@@ -153,7 +189,7 @@ describe('CompositionModal', () => {
   it('edits, clears and removes prefilled media', () => {
     const initialValue: OpusCompositionData = {
       id: 'c1',
-      title: 'Твір',
+      name: 'Твір',
       genre: '',
       year: '',
       audios: [
@@ -225,15 +261,33 @@ describe('CompositionModal', () => {
     expect(screen.getByText('audio.mp3')).toBeInTheDocument();
   });
 
-  it('submits the composition with a trimmed title', () => {
-    const onSubmit = jest.fn();
-    render(<CompositionModal {...baseProps} mode="create" onSubmit={onSubmit} />);
+  it('closes media modal on close action without changes', () => {
+    render(<CompositionModal {...baseProps} mode="create" />);
 
-    fireEvent.change(screen.getByLabelText('Назва твору *'), { target: { value: '  Новий твір  ' } });
-    fireEvent.click(screen.getByRole('button', { name: /Створити/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Додати аудіо' }));
+    expect(screen.getByTestId('media-close')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('media-close'));
+    expect(screen.queryByTestId('media-close')).not.toBeInTheDocument();
+  });
+
+  it('submits the composition with a trimmed title in edit mode', () => {
+    const onSubmit = jest.fn();
+    const initialValue: OpusCompositionData = {
+      id: 'c1',
+      name: 'Початковий твір',
+      genre: 'Соната',
+      year: '1920',
+      audios: [],
+      notes: []
+    };
+    render(<CompositionModal {...baseProps} mode="edit" initialValue={initialValue} onSubmit={onSubmit} />);
+
+    fireEvent.change(screen.getByLabelText('Назва твору *'), { target: { value: '  Редагований твір  ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
 
     expect(onSubmit).toHaveBeenCalledTimes(1);
     const submitted = onSubmit.mock.calls[0][0] as OpusCompositionData;
-    expect(submitted.title).toBe('Новий твір');
+    expect(submitted.name).toBe('Редагований твір');
   });
 });

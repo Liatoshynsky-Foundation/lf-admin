@@ -4,8 +4,10 @@ import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 interface GroupMenuProps {
   id: string;
   isPublished: boolean;
-  setHideModalOpen: (open: boolean) => void;
-  setPublicationModalOpen: (open: boolean) => void;
+  onPublish: (id: string) => void;
+  onUnpublish: (id: string) => void;
+  onUngroup: (id: string) => void;
+  onShare: (id: string) => void;
 }
 
 interface WorkMenuProps {
@@ -17,22 +19,24 @@ interface WorkMenuProps {
 export const GroupMenuItems = ({
   id,
   isPublished,
-  setHideModalOpen,
-  setPublicationModalOpen,
+  onPublish,
+  onUnpublish,
+  onUngroup,
+  onShare,
 }: GroupMenuProps): ActionMenuGroups => [
   {
     items: [
-      { id: 'edit-seo', text: { name: 'Редагувати групу (SEO)' }, href: `${WORKS_BASE_PATH}/group/${id}/seo` },
+      { id: 'edit-seo', text: { name: 'Редагувати групу (SEO)' }, href: `${WORKS_BASE_PATH}/group/${id}/edit` },
       { id: 'edit-content', text: { name: 'Редагувати контент' }, href: `${WORKS_BASE_PATH}/group/${id}/content` },
-      { id: 'share', text: { name: 'Поширити' }, href: `${WORKS_BASE_PATH}/group/${id}/share` },
-      { id: 'ungroup', text: { name: 'Розгрупувати' }, href: `${WORKS_BASE_PATH}/group/${id}/ungroup` },
+      { id: 'share', text: { name: 'Поширити' }, onClick: () => onShare(id) },
+      { id: 'ungroup', text: { name: 'Розгрупувати' }, onClick: () => onUngroup(id) },
     ],
   },
   {
     items: [
       isPublished
-        ? { id: 'unpublish', text: { name: 'Зняти з публікації' }, onClick: () => setHideModalOpen(true) }
-        : { id: 'publish', text: { name: 'Опублікувати' }, onClick: () => setPublicationModalOpen(true) },
+        ? { id: 'unpublish', text: { name: 'Зняти з публікації' }, onClick: () => onUnpublish(id) }
+        : { id: 'publish', text: { name: 'Опублікувати' }, onClick: () => onPublish(id) },
     ],
   },
 ];

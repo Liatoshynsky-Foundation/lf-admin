@@ -1,4 +1,4 @@
-import { fireEvent,render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import DeleteCardModal from './DeleteCardModal';
 
@@ -52,5 +52,32 @@ describe('DeleteCardModal', () => {
     fireEvent.click(closeIcon!);
 
     expect(defaultProps.onClose).toHaveBeenCalled();
+  });
+
+  describe('handleDialogClose logic', () => {
+    it('should not call onClose when backdrop is clicked (backdropClick)', () => {
+      render(<DeleteCardModal {...defaultProps} />);
+
+      const backdrop = document.querySelector('.MuiBackdrop-root');
+
+      if (backdrop) {
+        fireEvent.click(backdrop);
+      }
+
+      expect(defaultProps.onClose).not.toHaveBeenCalled();
+    });
+
+    it('should call onClose when escapeKeyDown reason occurs', () => {
+      render(<DeleteCardModal {...defaultProps} />);
+
+      fireEvent.keyDown(document.activeElement || document.body, {
+        key: 'Escape',
+        code: 'Escape',
+        keyCode: 27,
+        charCode: 27
+      });
+
+      expect(defaultProps.onClose).toHaveBeenCalled();
+    });
   });
 });

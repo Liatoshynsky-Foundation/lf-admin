@@ -25,32 +25,46 @@ export const OPUS_DETAILS_LABELS = {
   addComposition: 'Додати'
 } as const;
 
+export const OPUS_NUMBER_KIND = {
+  OP: 'op',
+  SINE_OP: 'sineop'
+} as const;
+
 export const OPUS_NUMBER_KIND_OPTIONS = [
-  { value: 'op', label: 'Op.' },
-  { value: 'woo', label: 'B/o.' }
+  { value: OPUS_NUMBER_KIND.OP, label: 'op.' },
+  { value: OPUS_NUMBER_KIND.SINE_OP, label: 'sine op.' }
 ] as const;
 
 export const OPUS_FIELD_LIMITS = {
   name: { min: 2, max: 250 },
   additionalText: 40,
   datesNote: 40,
-  genre: 150
+  genre: 150,
+  caption: { min: 2, max: 250 },
+  altText: { min: 2, max: 250 },
+  maxPhotos: 20,
+  maxPerformances: 5
 } as const;
 
-export const OPUS_YEAR_RANGE = { min: 1900, max: 3000 } as const;
+export const OPUS_YEAR_RANGE = { min: 1900, max: 2100 } as const;
 
 export const OPUS_VALIDATION_MESSAGES = {
   numberRequired: 'Вкажіть номер.',
   numberInvalid: 'Номер має бути цілим позитивним числом.',
   nameRequired: 'Введіть назву групи.',
   nameTooShort: 'Введіть щонайменше 2 символи.',
-  creationYearRequired: 'Вкажіть рік складання.'
+  creationYearRequired: 'Вкажіть рік складання.',
+  photoAltText: 'Введіть Alt текст зображення',
+  photoTextTooShort: 'Введіть щонайменше 2 символи.',
+  performanceUrl: 'Вкажіть URL.',
+  performanceSignature: 'Введіть підпис.',
+  captionTooLong: 'Текст має містити менше 250 символів.'
 } as const;
 
 export const COMPOSITION_MODAL_LABELS = {
   createTitle: 'Нова композиція',
   editTitle: 'Редагування композиції',
-  title: 'Назва твору',
+  name: 'Назва твору',
   genre: 'Жанр',
   year: 'Рік',
   audio: 'Аудіо',
@@ -90,9 +104,9 @@ export const OPUS_FILE_DELETE_MODAL = {
 export const REQUIRED_FIELD_ERROR = 'Обовʼязкове поле';
 
 export const OPUS_MUTATION_RESULTS = {
-  created: 'Опус створено успішно',
-  updated: 'Опус оновлено успішно',
-  deleted: 'Опус видалено успішно'
+  created: 'Групу створено',
+  updated: 'Групу оновлено',
+  deleted: 'Групу видалено'
 } as const;
 
 export const initialOpusDetails: OpusDetailsValue = {

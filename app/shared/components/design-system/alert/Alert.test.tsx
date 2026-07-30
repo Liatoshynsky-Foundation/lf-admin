@@ -28,7 +28,7 @@ describe('Alert Component', () => {
   });
 
   it('should display custom close label', () => {
-    render(<Alert label="Dismiss" />);
+    render(<Alert label="Dismiss" onClose={jest.fn()} />);
     expect(screen.getByText('Dismiss')).toBeInTheDocument();
   });
 
@@ -38,5 +38,29 @@ describe('Alert Component', () => {
 
     rerender(<Alert severity="warning" />);
     expect(screen.getByTestId('WarningAmberRoundedIcon')).toBeInTheDocument();
+  });
+
+  it('should render close button with different variants and fallbacks', () => {
+    const { rerender } = render(<Alert onClose={jest.fn()} variant="outlined" label="Close" />);
+    expect(screen.getByText('Close')).toBeInTheDocument();
+
+    rerender(
+      <Alert
+        onClose={jest.fn()}
+        label="Close"
+        slotProps={{
+          closeButton: { variant: undefined } as React.ComponentProps<typeof Alert>
+        }}
+      />
+    );
+    expect(screen.getByText('Close')).toBeInTheDocument();
+  });
+
+  it('should render close button with different variants', () => {
+    const { rerender } = render(<Alert onClose={jest.fn()} variant="filled" label="Close" />);
+    expect(screen.getByText('Close')).toBeInTheDocument();
+
+    rerender(<Alert onClose={jest.fn()} variant="outlined" label="Close" />);
+    expect(screen.getByText('Close')).toBeInTheDocument();
   });
 });

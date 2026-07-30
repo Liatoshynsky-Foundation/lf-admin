@@ -9,6 +9,7 @@ interface SeoCanonicalUrlFieldProps {
   readonly onChange: (val: string) => void;
   readonly onBlur?: () => void;
   readonly label?: string;
+  readonly externalError?: string;
   readonly forceShowErrors?: boolean;
 }
 
@@ -22,7 +23,7 @@ const validateCanonicalUrl = (val: string): string => {
   }
 };
 
-export function SeoCanonicalUrlField({ value, onChange, onBlur, label, forceShowErrors = false }: SeoCanonicalUrlFieldProps) {
+export function SeoCanonicalUrlField({ value, externalError, onChange, onBlur, label, forceShowErrors = false }: SeoCanonicalUrlFieldProps) {
   const [touched, setTouched] = useState(false);
 
   useEffect(() => {
@@ -47,8 +48,8 @@ export function SeoCanonicalUrlField({ value, onChange, onBlur, label, forceShow
       value={value}
       onChange={(e) => handleChange(e.target.value)}
       onBlur={handleBlur}
-      error={Boolean(error)}
-      helperText={error}
+      error={Boolean(error) || Boolean(externalError)}
+      helperText={error || externalError}
       fullWidth
       required
       sx={styles.textField}

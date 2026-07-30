@@ -4,8 +4,7 @@ export const errors = {
   MISSING_MONGO_URL: '❌ mongoUrl is not defined or is empty',
   FAILED_TO_CONNECT_DB: '❌ Failed to connect to the database',
   RESPONSE_NOT_OK: '❌ HTTP error! Response is not 200 OK',
-  FAILED_TO_REFRESH: 'Failed to refresh token',
-  AZURE_URL_NOT_DEFINED: 'AZURE_SAS_URL environment variable is not defined'
+  FAILED_TO_REFRESH: 'Failed to refresh token'
 };
 
 export const loginErrors = {
@@ -94,6 +93,16 @@ export const OpusErrors = {
   FAILED_TO_DELETE: 'Failed to delete opus'
 };
 
+export const FondErrors = {
+  NUMBER_ALREADY_EXISTS: (number: number) => `Fond with number "${number}" already exists`,
+  FOND_NOT_FOUND: (id: string) => `Fond with id "${id}" not found`,
+};
+
+export const FondErrorCodes: Record<keyof typeof FondErrors, string> = {
+  NUMBER_ALREADY_EXISTS: 'DUPLICATE_FOND_NUMBER',
+  FOND_NOT_FOUND: 'FOND_NOT_FOUND'
+};
+
 export const galleryErrors = {
   FAILED_TO_FETCH: 'Upload files failed'
 };
@@ -113,4 +122,21 @@ export const MediaMentionsErrors = {
   FAILED_TO_HIDE: 'Failed to hide media mention',
   NETWORK_ERROR_DELETE: 'Network error while deleting media mention',
   FAILED_TO_DELETE: 'Failed to delete media mention'
+};
+
+export const seoFormErrors = {
+  uk: {
+    minLength: 'Мінімум 2 символа',
+    maxLength: 'Максимум 150 символів',
+    required: 'Обовʼязкове поле',
+    invalidUrl: 'Некоректний URL',
+    keywords: 'Ключові слова мають бути через кому, без порожніх значень'
+  },
+  en: {
+    minLength: 'Minimum 2 characters',
+    maxLength: 'Maximum 150 characters',
+    required: 'Required field',
+    invalidUrl: 'Invalid URL',
+    keywords: 'Keywords must be comma-separated, without empty values'
+  }
 };

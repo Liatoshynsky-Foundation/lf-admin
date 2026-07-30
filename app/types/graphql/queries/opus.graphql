@@ -2,12 +2,12 @@ query OpusById($id: ID!) {
   opusById(id: $id) {
     id
     number
+    blocksOrder
     numberKind
     title {
       uk
       en
     }
-    releaseYear
     name {
       uk
       en
@@ -16,7 +16,10 @@ query OpusById($id: ID!) {
     creationYear
     endYear
     datesNote
-    genre
+    genre {
+      uk
+      en
+    }
     adminTitle
     slug
     status
@@ -85,13 +88,11 @@ query OpusById($id: ID!) {
     }
     compositions {
       id
-      opusId
-      title {
+      name {
         uk
         en
       }
       year
-      order
       genre
       audioAvailable
       sheetAvailable
@@ -113,31 +114,48 @@ query OpusById($id: ID!) {
   }
 }
 
-query AllOpuses($filters: OpusFiltersInput) {
-  allOpuses(filters: $filters) {
-    id
-    number
-    numberKind
-    title {
-      uk
-      en
-    }
-    name {
-      uk
-      en
-    }
-    genre
-    status
-    creationYear
-    endYear
-    updatedAt
-    createdAt
-    compositions {
+query PaginatedWorks($tab: WorksTab, $filters: WorksFiltersInput) {
+  paginatedWorks(tab: $tab, filters: $filters) {
+    total
+    page
+    totalPages
+
+    groups {
       id
-      title {
+      number
+      numberKind
+      name {
         uk
         en
       }
+      genre {
+        uk
+        en
+      }
+      status
+      creationYear
+      endYear
+      updatedAt
+      createdAt
+      compositions {
+        id
+        name {
+          uk
+          en
+        }
+      }
+    }
+
+    works {
+      id
+      name {
+        uk
+        en
+      }
+      genre
+      year
+      updatedAt
+      createdAt
     }
   }
 }
@@ -145,8 +163,7 @@ query AllOpuses($filters: OpusFiltersInput) {
 query SearchCompositions($search: String!) {
   searchCompositions(search: $search) {
     id
-    opusId
-    title {
+    name {
       uk
       en
     }

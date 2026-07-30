@@ -1,21 +1,19 @@
+/* eslint-disable no-console */
+
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import toast from 'react-hot-toast';
-jest.mock('react-hot-toast', () => ({
-  error: jest.fn()
-}));
 
 import { BlockNoteEditor } from './BlockNoteEditor';
 import { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 
+jest.mock('react-hot-toast', () => ({
+  error: jest.fn()
+}));
+
 type SlashMenuItem = {
   title: string;
   onItemClick?: () => Promise<void>;
-};
-
-type ToolbarItem = {
-  key: string;
-  type?: string;
 };
 
 type MockBlock = {
@@ -24,11 +22,17 @@ type MockBlock = {
   props?: Record<string, unknown>;
 };
 
-type CreateOptions = {
+interface MockTiptap {
+  state?: { doc?: { textContent?: string } };
+  editorState?: { doc?: { textContent?: string } };
+  commands: { undo: jest.Mock };
+}
+
+interface CreateOptions {
   uploadFile: (file: File) => Promise<string>;
   onChange?: () => void;
-  pasteHandler: ({ event, editor, defaultPasteHandler }: any) => void;
-};
+  pasteHandler: (params: { event: unknown; defaultPasteHandler: () => void }) => void;
+}
 
 const mockUpdateBlock = jest.fn();
 const mockDefaultPasteHandler = jest.fn();
@@ -37,6 +41,7 @@ let mockDocumentState: MockBlock[] = [];
 let capturedCreateOptions: CreateOptions | null = null;
 let captureSlashMenuOpenMediaModal: (() => Promise<MediaModalResult | null>) | null = null;
 const mockCursorBlock = jest.fn();
+
 const mockEditor = {
   document: mockDocumentState,
   updateBlock: mockUpdateBlock,
@@ -45,7 +50,18 @@ const mockEditor = {
   tryParseHTMLToBlocks: jest.fn(),
   getTextCursorPosition: () => ({
     block: mockCursorBlock
-  })
+  }),
+  undo: jest.fn(),
+  _tiptapEditor: {
+    state: {
+      doc: {
+        textContent: 'some text'
+      }
+    },
+    commands: {
+      undo: jest.fn()
+    }
+  } as MockTiptap
 };
 
 jest.mock('@blocknote/core', () => ({
@@ -90,21 +106,6 @@ jest.mock('@blocknote/react', () => ({
       >
         Open Slash Menu
       </button>
-    </div>
-  ),
-  getFormattingToolbarItems: (): ToolbarItem[] => [{ key: 'boldButton' }, { key: 'replaceFileButton' }],
-  FormattingToolbar: ({ children }: { children: (React.ReactElement | ToolbarItem)[] }) => (
-    <div data-testid="formatting-toolbar">
-      {Array.isArray(children)
-        ? children.map((child, idx) => {
-          // If it's our CustomReplaceButton React element
-          if (React.isValidElement(child)) {
-            return React.cloneElement(child, { key: child.key || String(idx) } as React.Attributes);
-          }
-          const item = child as ToolbarItem;
-          return <span key={item.key || String(idx)}>{item.key}</span>;
-        })
-        : null}
     </div>
   ),
   FormattingToolbarController: ({ formattingToolbar }: { formattingToolbar: () => React.ReactNode }) => (
@@ -176,14 +177,41 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
   }
 }));
 
-
 describe('BlockNoteEditor', () => {
+  let originalError: typeof console.error;
+  let consoleErrorSpy: jest.SpyInstance;
+
+  beforeAll(() => {
+    originalError = console.error;
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args) => {
+      const firstArg = args[0];
+      if (typeof firstArg === 'string' && firstArg.includes('was not wrapped in act')) {
+        return;
+      }
+      originalError.apply(console, args);
+    });
+  });
+
+  afterAll(() => {
+    consoleErrorSpy.mockRestore();
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     capturedCreateOptions = null;
     captureSlashMenuOpenMediaModal = null;
     mockDocumentState = [];
     mockEditor.document = mockDocumentState;
+    mockEditor._tiptapEditor = {
+      state: {
+        doc: {
+          textContent: 'some text'
+        }
+      },
+      commands: {
+        undo: jest.fn()
+      }
+    };
   });
 
   describe('1. Mounting & Rendering', () => {
@@ -209,7 +237,10 @@ describe('BlockNoteEditor', () => {
       const fakeFile = new File(['dummy content'], 'test.png', { type: 'image/png' });
       Object.defineProperty(fakeFile, 'size', { value: 1024 });
 
-      const resultUrl = await capturedCreateOptions!.uploadFile(fakeFile);
+      let resultUrl = '';
+      await act(async () => {
+        resultUrl = await capturedCreateOptions!.uploadFile(fakeFile);
+      });
 
       expect(mockHandler).toHaveBeenCalledWith(fakeFile);
       expect(resultUrl).toBe('https://example.com/silent-upload.png');
@@ -225,10 +256,45 @@ describe('BlockNoteEditor', () => {
       const fakeFile = new File(['dummy content'], 'test.png', { type: 'image/png' });
       Object.defineProperty(fakeFile, 'size', { value: 5000 });
 
-      await expect(capturedCreateOptions!.uploadFile(fakeFile)).rejects.toThrow(
-        'File size exceeds maximum allowed size'
-      );
+      await act(async () => {
+        await expect(capturedCreateOptions!.uploadFile(fakeFile)).rejects.toThrow(
+          'File size exceeds maximum allowed size'
+        );
+      });
       expect(mockHandler).not.toHaveBeenCalled();
+    });
+
+    it('should fall back to defaultFileUploadHandler when fileUpload is missing', async () => {
+      const { unmount } = render(<BlockNoteEditor />);
+      await waitFor(() => expect(capturedCreateOptions).not.toBeNull());
+
+      const fakeFile = new File(['dummy content'], 'test.png', { type: 'image/png' });
+      let resultUrl = '';
+      await act(async () => {
+        resultUrl = await capturedCreateOptions!.uploadFile(fakeFile);
+      });
+      expect(resultUrl).toContain('data:image/png;base64,');
+      unmount();
+    });
+
+    it('should reject when defaultFileUploadHandler fails via FileReader onerror', async () => {
+      const originalReadAsDataURL = FileReader.prototype.readAsDataURL;
+      FileReader.prototype.readAsDataURL = function (this: FileReader) {
+        if (this.onerror) {
+          this.onerror({} as ProgressEvent<FileReader>);
+        }
+      };
+
+      const { unmount } = render(<BlockNoteEditor />);
+      await waitFor(() => expect(capturedCreateOptions).not.toBeNull());
+
+      const fakeFile = new File(['dummy content'], 'test.png', { type: 'image/png' });
+      await act(async () => {
+        await expect(capturedCreateOptions!.uploadFile(fakeFile)).rejects.toThrow('Failed to read file');
+      });
+
+      FileReader.prototype.readAsDataURL = originalReadAsDataURL;
+      unmount();
     });
   });
 
@@ -246,6 +312,47 @@ describe('BlockNoteEditor', () => {
       expect(onChangeMock).toHaveBeenCalledWith(mockDocumentState);
 
       expect(mockUpdateBlock).not.toHaveBeenCalled();
+    });
+
+    it('should handle editorState branch inside getDocTextContent', async () => {
+      const onChangeMock = jest.fn();
+      mockEditor._tiptapEditor = {
+        editorState: {
+          doc: {
+            textContent: 'editorStateContent'
+          }
+        },
+        commands: {
+          undo: jest.fn()
+        }
+      };
+
+      render(<BlockNoteEditor onChange={onChangeMock} />);
+      await screen.findByTestId('blocknote-editor');
+      fireEvent.click(screen.getByTestId('trigger-editor-change'));
+
+      expect(onChangeMock).toHaveBeenCalled();
+    });
+
+    it('should show error toast and trigger undo if character limit is exceeded', async () => {
+      render(<BlockNoteEditor />);
+      await screen.findByTestId('blocknote-editor');
+
+      mockEditor._tiptapEditor = {
+        state: {
+          doc: {
+            textContent: 'a'.repeat(5001)
+          }
+        },
+        commands: {
+          undo: jest.fn()
+        }
+      };
+
+      fireEvent.click(screen.getByTestId('trigger-editor-change'));
+
+      expect(toast.error).toHaveBeenCalledWith('Вміст не повинен перевищувати 5000 символів.');
+      expect(mockEditor.undo).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -309,19 +416,25 @@ describe('BlockNoteEditor', () => {
   });
 
   describe('5. Paste Behaviour', () => {
-    let originalDataTransfer: any;
+    let originalDataTransferDescriptor: PropertyDescriptor | undefined;
 
     beforeEach(() => {
       jest.clearAllMocks();
     });
 
     beforeAll(() => {
-      originalDataTransfer = globalThis.DataTransfer;
+      originalDataTransferDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'DataTransfer');
       if (typeof DataTransfer === 'undefined') {
         class MockDataTransfer {
           data: Record<string, string>;
+          items: {
+            add: jest.Mock;
+          };
           constructor() {
             this.data = {};
+            this.items = {
+              add: jest.fn()
+            };
           }
           getData(format: string): string {
             return this.data[format] || '';
@@ -333,19 +446,22 @@ describe('BlockNoteEditor', () => {
         }
 
         Object.defineProperty(globalThis, 'DataTransfer', {
-          value: MockDataTransfer 
+          configurable: true,
+          writable: true,
+          value: MockDataTransfer
         });
       }
     });
 
     afterAll(() => {
-      if (originalDataTransfer) {
-        Object.defineProperty(globalThis, 'DataTransfer', {
-          value: originalDataTransfer,
-          configurable: true,
-        });
+      if (originalDataTransferDescriptor) {
+        Object.defineProperty(globalThis, 'DataTransfer', originalDataTransferDescriptor);
       } else {
-        delete (globalThis as any).DataTransfer;
+        Object.defineProperty(globalThis, 'DataTransfer', {
+          configurable: true,
+          writable: true,
+          value: undefined
+        });
       }
     });
 
@@ -356,6 +472,7 @@ describe('BlockNoteEditor', () => {
       capturedCreateOptions?.pasteHandler({ event, defaultPasteHandler: mockDefaultPasteHandler });
       expect(mockDefaultPasteHandler).toHaveBeenCalledTimes(1);
     });
+
     it('should return default handler if both html and text are empty', () => {
       render(<BlockNoteEditor />);
       const event = {
@@ -370,8 +487,10 @@ describe('BlockNoteEditor', () => {
       expect(event.clipboardData.getData).toHaveBeenCalledWith('text/html');
       expect(event.clipboardData.getData).toHaveBeenCalledWith('text/plain');
     });
+
     it('should allow to paste valid plain text', () => {
       render(<BlockNoteEditor />);
+
       const correctPlainText = 'dfsdfsd';
       const event = {
         clipboardData: {
@@ -390,6 +509,7 @@ describe('BlockNoteEditor', () => {
 
     it('should allow to paste valid html', () => {
       render(<BlockNoteEditor />);
+
       const correctHTML = '<p>dfsdfsd</p>';
       const event = {
         clipboardData: {
@@ -406,9 +526,9 @@ describe('BlockNoteEditor', () => {
       expect(mockDefaultPasteHandler).toHaveBeenCalled();
     });
 
-
-    it('should remove emojiis and special symbols like (😀 🎉 ★ ♞ ♣) from pasted text and show error toast', () => {
+    it('should remove emojiis and special symbols from pasted text and show error toast', () => {
       render(<BlockNoteEditor />);
+
       const invalidPlainText = 'Test 😀 🎉 ★ ♞ ♣';
       const event = {
         clipboardData: {
@@ -427,10 +547,10 @@ describe('BlockNoteEditor', () => {
       expect(toast.error).toHaveBeenCalledWith('Використання емодзі та спецсимволів не дозволено');
     });
 
-
-    it('should remove any styles & emojiis or special symblos from pasted HTML and show error toast', () => {
+    it('should remove any styles & emojiis from pasted HTML and show error toast', () => {
       render(<BlockNoteEditor />);
-      const formattedHTML = '<p style={} class={}>test 😀 🎉 ★ ♞ ♣</p>';
+
+      const formattedHTML = '<p style="color: red" class="test-class">test 😀 🎉 ★ ♞ ♣</p>';
       const event = {
         clipboardData: {
           getData: (type: 'text/html' | 'text/plain') => {
@@ -444,6 +564,44 @@ describe('BlockNoteEditor', () => {
       expect(event.clipboardData.getData('text/html')).toBe('<p>test </p>');
       expect(event.clipboardData.getData('text/plain')).toBe('');
       expect(toast.error).toHaveBeenCalledWith('Використання емодзі та спецсимволів не дозволено');
+    });
+
+    it('should show error toast if Object.defineProperty throws during paste handler', () => {
+      render(<BlockNoteEditor />);
+      const event = {
+        clipboardData: {
+          getData: (type: string) => {
+            if (type === 'text/plain') return 'test';
+            return '';
+          }
+        }
+      };
+
+      Object.freeze(event);
+
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      capturedCreateOptions?.pasteHandler({ event, defaultPasteHandler: mockDefaultPasteHandler });
+
+      expect(toast.error).toHaveBeenCalledWith('Помилка обробки вставленого тексту');
+      expect(consoleErrorSpy).toHaveBeenCalled();
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('should append files to DataTransfer if present in clipboardData', () => {
+      render(<BlockNoteEditor />);
+      const fakeFile = new File([''], 'test.png', { type: 'image/png' });
+      const event = {
+        clipboardData: {
+          getData: (type: string) => (type === 'text/plain' ? 'text' : ''),
+          files: [fakeFile]
+        }
+      };
+
+      capturedCreateOptions?.pasteHandler({ event, defaultPasteHandler: mockDefaultPasteHandler });
+
+      expect(mockDefaultPasteHandler).toHaveBeenCalled();
     });
   });
 });

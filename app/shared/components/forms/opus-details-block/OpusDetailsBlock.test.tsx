@@ -2,13 +2,8 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { ReactElement, ReactNode, useState } from 'react';
 
 import OpusDetailsBlock from './OpusDetailsBlock';
-import { initialOpusDetails } from '~/constants/opus';
-import type {
-  OpusCompositionData,
-  OpusCompositionSuggestion,
-  OpusDetailsErrors,
-  OpusDetailsValue
-} from '~/types/opus';
+import { initialOpusDetails, OPUS_DETAILS_LABELS } from '~/constants/opus';
+import type { OpusCompositionData, OpusCompositionSuggestion, OpusDetailsErrors, OpusDetailsValue } from '~/types/opus';
 
 let mockSuggestion: OpusCompositionSuggestion = {};
 
@@ -20,8 +15,16 @@ jest.mock('@mui/x-date-pickers/LocalizationProvider', () => ({
   LocalizationProvider: ({ children }: { children: ReactNode }): ReactElement => <>{children}</>
 }));
 
-jest.mock('@mui/x-date-pickers/DatePicker', () => ({
-  DatePicker: ({ label }: { label: string }): ReactElement => <input aria-label={label} readOnly value="" />
+jest.mock('./year-picker/YearPicker', () => ({
+  __esModule: true,
+  default: ({ label, value, onChange }: { label: string; value: string; onChange: (year: string) => void }) => (
+    <div>
+      <input aria-label={label} readOnly value={value || ''} />
+      <button type="button" aria-label={`set-${label}`} onClick={() => onChange('1999')}>
+        Set
+      </button>
+    </div>
+  )
 }));
 
 jest.mock('./composition-title-input/CompositionTitleInput', () => ({
@@ -49,9 +52,24 @@ jest.mock('./composition-title-input/CompositionTitleInput', () => ({
   )
 }));
 
-const makeComposition = (id: string, title: string): OpusCompositionData => ({
+jest.mock('./year-picker/YearPicker', () => ({
+  __esModule: true,
+  default: ({ label, value, onChange }: { label: string; value: string; onChange: (val: string) => void }) => (
+    <input aria-label={label} value={value || ''} onChange={(e) => onChange(e.target.value)} />
+  )
+}));
+
+jest.mock('~/shared/components/sortable-item-wrapper/SortableItemWrapper', () => ({
+  SortableItemWrapper: ({ children }: { children: ReactNode }) => <>{children}</>
+}));
+
+jest.mock('~/shared/components/sortable-list/SortableList', () => ({
+  SortableList: ({ children }: { children: ReactNode }) => <div>{children}</div>
+}));
+
+const makeComposition = (id: string, name: string): OpusCompositionData => ({
   id,
-  title,
+  name,
   genre: '',
   year: '',
   audios: [],
@@ -96,7 +114,7 @@ describe('OpusDetailsBlock', () => {
     expect(nameField).toHaveValue('Соната');
   });
 
-  it('updates the number, note and number-kind fields', () => {
+  it('updates the number, note and number-kind fields', async () => {
     render(<Harness />);
 
     const numberField = screen.getByLabelText('Номер *');
@@ -112,8 +130,8 @@ describe('OpusDetailsBlock', () => {
     expect(genreField).toHaveValue('Симфонія');
 
     fireEvent.mouseDown(screen.getByRole('combobox'));
-    fireEvent.click(screen.getByRole('option', { name: 'B/o.' }));
-    expect(screen.getByRole('combobox')).toHaveTextContent('B/o.');
+    fireEvent.click(screen.getByRole('option', { name: /^sine op\.?$/i }));
+    expect(screen.getByRole('combobox')).toHaveTextContent('sine op.');
   });
 
   it('adds an inline composition row when "Додати" is clicked', () => {
@@ -149,7 +167,7 @@ describe('OpusDetailsBlock', () => {
 
     mockSuggestion = {
       id: 'sugg-1',
-      title: { uk: 'Повна назва' },
+      name: { uk: 'Повна назва' },
       genre: 'Соната',
       year: 1921,
       audios: [{ name: 'Мій запис', url: 'https://cdn/a.mp3' }],
@@ -175,16 +193,16 @@ describe('OpusDetailsBlock', () => {
     render(<Harness initial={initial} />);
 
     mockSuggestion = {
-      title: { uk: null, en: 'English title' },
+      name: { uk: null, en: 'English title' },
       genre: null,
       year: null,
       audios: [{ url: 'https://cdn/audio.mp3' }, { name: null, url: null }],
-      sheetMusic: [{ url: 'https://cdn/sheet.pdf' }]
+      sheetMusic: [{ url: 'https://cdn/sheet.pdf' }, { url: null as unknown as string }]
     };
     fireEvent.click(screen.getAllByRole('button', { name: 'select-suggestion' })[0]);
     expect(screen.getAllByLabelText('composition-title')[0]).toHaveValue('English title');
 
-    mockSuggestion = { title: null, audios: null, sheetMusic: null };
+    mockSuggestion = { name: null, audios: null, sheetMusic: null };
     fireEvent.click(screen.getAllByRole('button', { name: 'select-suggestion' })[1]);
     expect(screen.getAllByLabelText('composition-title')[1]).toHaveValue('');
   });
@@ -216,31 +234,10 @@ describe('OpusDetailsBlock', () => {
     await waitFor(() => expect(screen.queryByText('Редагування композиції')).not.toBeInTheDocument());
   });
 
-  it('reorders compositions via drag and drop', () => {
-    const initial: OpusDetailsValue = {
-      ...initialOpusDetails,
-      compositions: [makeComposition('c1', 'Перший'), makeComposition('c2', 'Другий')]
-    };
-    render(<Harness initial={initial} />);
-
-    fireEvent.dragEnter(screen.getAllByLabelText('Перемістити')[1]);
-    expect(screen.getAllByLabelText('composition-title')[0]).toHaveValue('Перший');
-
-    fireEvent.dragStart(screen.getAllByLabelText('Перемістити')[0]);
-    fireEvent.dragOver(screen.getAllByLabelText('Перемістити')[1]);
-    fireEvent.dragEnter(screen.getAllByLabelText('Перемістити')[0]);
-    fireEvent.dragEnter(screen.getAllByLabelText('Перемістити')[1]);
-    fireEvent.dragEnd(screen.getAllByLabelText('Перемістити')[0]);
-
-    const titles = screen.getAllByLabelText('composition-title');
-    expect(titles[0]).toHaveValue('Другий');
-    expect(titles[1]).toHaveValue('Перший');
-  });
-
   it('removes a composition after delete confirmation', () => {
     const initial: OpusDetailsValue = {
       ...initialOpusDetails,
-      compositions: [{ id: 'c1', title: 'Твір для видалення', genre: '', year: '', audios: [], notes: [] }]
+      compositions: [{ id: 'c1', name: 'Твір для видалення', genre: '', year: '', audios: [], notes: [] }]
     };
     render(<Harness initial={initial} />);
 
@@ -282,5 +279,25 @@ describe('OpusDetailsBlock', () => {
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(screen.getByDisplayValue('Залишити')).toBeInTheDocument();
+  });
+
+  it('updates the creation year, end year, dates note and genre fields', () => {
+    render(<Harness />);
+
+    const creationYearField = screen.getByLabelText(`${OPUS_DETAILS_LABELS.creationYear} *`);
+    fireEvent.change(creationYearField, { target: { value: '1900' } });
+    expect(creationYearField).toHaveValue('1900');
+
+    const endYearField = screen.getByLabelText(OPUS_DETAILS_LABELS.endYear);
+    fireEvent.change(endYearField, { target: { value: '1905' } });
+    expect(endYearField).toHaveValue('1905');
+
+    const datesNoteField = screen.getByLabelText(OPUS_DETAILS_LABELS.datesNote);
+    fireEvent.change(datesNoteField, { target: { value: 'фрагмент' } });
+    expect(datesNoteField).toHaveValue('фрагмент');
+
+    const genreField = screen.getByLabelText(OPUS_DETAILS_LABELS.genre);
+    fireEvent.change(genreField, { target: { value: 'Соната' } });
+    expect(genreField).toHaveValue('Соната');
   });
 });

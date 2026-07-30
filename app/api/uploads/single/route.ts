@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     const result = await getUploadModule().uploadService.uploadFile(uploadedFile, options);
 
     if (!result.success) {
-      return NextResponse.json({ success: false, errors: result.errors }, { status: 400 });
+      return NextResponse.json({ success: false, errors: result.errors }, { status: result.statusCode ?? 400 });
     }
 
     return NextResponse.json({

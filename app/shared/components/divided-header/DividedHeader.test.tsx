@@ -1,4 +1,4 @@
-import { fireEvent,render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { useRouter } from 'next/navigation';
 
 import DividedHeader from './DividedHeader';
@@ -83,5 +83,21 @@ describe('DividedHeader Component', () => {
 
     const backButton = screen.getByRole('button');
     expect(backButton).toBeInTheDocument();
+  });
+
+  it('should call onBackClick when provided instead of routing', () => {
+    const mockOnBackClick = jest.fn();
+
+    render(
+      <DividedHeader onBackClick={mockOnBackClick}>
+        <h1>Title</h1>
+      </DividedHeader>
+    );
+
+    const backButton = screen.getByRole('button');
+    fireEvent.click(backButton);
+
+    expect(mockOnBackClick).toHaveBeenCalledTimes(1);
+    expect(mockPush).not.toHaveBeenCalled();
   });
 });

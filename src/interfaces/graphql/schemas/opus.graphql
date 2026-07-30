@@ -5,7 +5,23 @@ enum OpusStatus {
 
 enum OpusNumberKind {
   op
-  woo
+  sineop
+  compositions
+}
+
+enum WorksTab {
+  all
+  op
+  sineop
+  compositions
+}
+
+enum WorksSortBy {
+  number
+  createdAt
+  updatedAt
+  publishedAt
+  name
 }
 
 type OpusGalleryItem {
@@ -24,16 +40,16 @@ type OpusPerformance {
 
 type Opus {
   id: ID!
-  number: String!
-  numberKind: OpusNumberKind
+  number: Float!
+  blocksOrder: [String]
+  numberKind: OpusNumberKind!
   title: LocalizedString!
-  releaseYear: Int
-  name: LocalizedString
+  name: LocalizedString!
   additionalText: String
   creationYear: String!
   endYear: String
   datesNote: String
-  genre: String
+  genre: LocalizedString
   adminTitle: String
   slug: String
   description: LocalizedString
@@ -55,53 +71,53 @@ type Opus {
   meta: ContentMeta
 }
 
-type PaginatedOpuses {
-  items: [Opus!]!
+type PaginatedWorks {
+  groups: [Opus!]!
+  works: [Composition!]!
+
   total: Int!
   page: Int!
   totalPages: Int!
 }
 
-enum OpusSortBy {
-  number
-  releaseYear
-  createdAt
-  updatedAt
-  publishedAt
-}
-
-input OpusSortOptions {
-  field: OpusSortBy!
+input WorksSortOptions {
+  field: WorksSortBy!
   order: SortOrder!
 }
 
-input OpusFiltersInput {
-  statuses: [OpusStatus!]
+input WorksFiltersInput {
+  statuses: [OpusStatus]
+  languages: [ContentLanguage]
+  search: String
   limit: Int
   skip: Int
-  slug: String
-  search: String
-  languages: [ContentLanguage!]
-  sort: [OpusSortOptions!]
-  numberKind: OpusNumberKind
+  sort: [WorksSortOptions!]
+}
+
+input OpusGalleryItemInput {
+  id: ID
+  src: String!
+  description: JSON
+  altText: JSON
+  crop: CropRectInput
 }
 
 input CreateOpusInput {
-  numberKind: OpusNumberKind
-  number: String
-  name: JSON
+  numberKind: OpusNumberKind!
+  number: Float!
+  name: JSON!
   additionalText: String
-  creationYear: String
+  creationYear: String!
   endYear: String
   datesNote: String
-  genre: String
+  genre: JSON
   compositions: JSON
   adminTitle: String
   title: JSON!
-  description: JSON
+  description: JSON!
   introDescription: JSON
   parts: JSON
-  gallery: JSON
+  gallery: [OpusGalleryItemInput!]
   performancesTitle: JSON
   performances: JSON
   keywords: JSON
@@ -109,24 +125,25 @@ input CreateOpusInput {
   coverImage: JSON
   status: OpusStatus
   publishedAt: String
+  blocksOrder: [String]
 }
 
 input UpdateOpusInput {
-  numberKind: OpusNumberKind
-  number: String
-  name: JSON
+  numberKind: OpusNumberKind!
+  number: Float!
+  name: JSON!
   additionalText: String
-  creationYear: String
+  creationYear: String!
   endYear: String
   datesNote: String
-  genre: String
+  genre: JSON
   compositions: JSON
   adminTitle: String
   title: JSON
   description: JSON
   introDescription: JSON
   parts: JSON
-  gallery: JSON
+  gallery: [OpusGalleryItemInput!]
   performancesTitle: JSON
   performances: JSON
   keywords: JSON
@@ -134,19 +151,24 @@ input UpdateOpusInput {
   coverImage: JSON
   status: OpusStatus
   publishedAt: String
+  blocksOrder: [String]
+}
+
+type UpdateOpusStatusPayload {
+  id: ID!
+  status: OpusStatus!
 }
 
 extend type Query {
   opusById(id: ID!): Opus
-  opusByNumber(number: String!): Opus
   searchCompositions(search: String!): [Composition!]!
-  allOpuses(filters: OpusFiltersInput): [Opus!]!
-  paginatedOpuses(page: Int!, limit: Int!, filters: OpusFiltersInput): PaginatedOpuses!
+  paginatedWorks(tab: WorksTab, filters: WorksFiltersInput): PaginatedWorks!
   opusesCount(status: OpusStatus): Int!
 }
 
 extend type Mutation {
   createOpus(input: CreateOpusInput!): Opus!
   updateOpus(id: ID!, input: UpdateOpusInput!): Opus!
+  updateOpusStatus(id: ID!, status: OpusStatus!): UpdateOpusStatusPayload!
   deleteOpus(id: ID!): Boolean!
 }

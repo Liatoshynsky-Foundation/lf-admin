@@ -58,4 +58,18 @@ describe('GET /api/uploads', () => {
     expect(json.data).toHaveLength(2);
     expect(mockListFiles).toHaveBeenCalledWith('images');
   });
+
+  it('should return 500 when listFiles throws an error', async () => {
+    mockListFiles.mockRejectedValue(new Error('List files failed'));
+
+    const req = new NextRequest('https://localhost/api/uploads');
+    const res = await GET(req);
+
+    expect(res.status).toBe(500);
+
+    const json = (await res.json()) as { success: boolean; error: string };
+
+    expect(json.success).toBe(false);
+    expect(json.error).toBe('Failed to list files');
+  });
 });

@@ -30,6 +30,8 @@ export interface StorageAdapter {
 
   delete: (filename: string, folder?: string) => Promise<DeleteResult>;
 
+  move: (sourceFilename: string, targetFilename: string, folder?: string) => Promise<DeleteResult>;
+
   exists: (filename: string, folder?: string) => Promise<boolean>;
 
   getMetadata: (filename: string, folder?: string) => Promise<StorageMetadata | null>;
@@ -39,11 +41,11 @@ export interface StorageAdapter {
   list: (folder?: string) => Promise<StorageMetadata[]>;
 }
 
-export type StorageType = 'cloud' | 'azure-blob';
+export type StorageType = 'cloud';
 
 export interface StorageConfig {
   type: StorageType;
-  cloudProvider?: 'aws' | 'gcp' | 'azure' | 'cloudflare';
+  cloudProvider?: 'aws' | 'gcp' | 'cloudflare';
   cloudConfig?: {
     bucket?: string;
     region?: string;
@@ -55,7 +57,5 @@ export interface StorageConfig {
       projectId?: string;
     };
   };
-  azureContainerName?: string;
-  azureFolderPrefix?: string;
   baseUrl?: string;
 }

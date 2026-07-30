@@ -2,15 +2,6 @@ import { fireEvent, render, screen } from '@testing-library/react';
 
 import { Header } from './Header';
 
-type HeaderProps = {
-  title: string;
-  onPreview: () => void;
-  onSave: () => void;
-  isSaving: boolean;
-  onLanguageChange: (lang: 'uk' | 'en') => void;
-  children?: React.ReactNode;
-};
-
 jest.mock('../language-switcher/LanguageSwitcher', () => ({
   __esModule: true,
   default: ({ languageSwitcher }: { languageSwitcher: (lang: 'uk' | 'en') => void }) => (
@@ -20,9 +11,21 @@ jest.mock('../language-switcher/LanguageSwitcher', () => ({
   )
 }));
 
+interface MockButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  children?: React.ReactNode;
+  startIcon?: React.ReactNode;
+  endIcon?: React.ReactNode;
+}
+
 jest.mock('../design-system/button/Button', () => ({
   __esModule: true,
-  default: ({ children, ...props }: HeaderProps) => <button {...props}>{children}</button>
+  default: ({ children, startIcon, endIcon, ...props }: MockButtonProps) => (
+    <button {...props}>
+      {startIcon}
+      {children}
+      {endIcon}
+    </button>
+  )
 }));
 
 jest.mock('~/public/icons/externalLink.svg', () => ({
@@ -38,7 +41,7 @@ describe('Header', () => {
     onCancel: jest.fn(),
     isSaving: false,
     onLanguageChange: jest.fn(),
-    isActionsDisabled: true,
+    isActionsDisabled: true
   };
 
   beforeEach(() => {
@@ -55,7 +58,6 @@ describe('Header', () => {
     });
   });
   describe('actions logic', () => {
-
     it.each([
       {
         verb: 'call',
@@ -96,7 +98,7 @@ describe('Header', () => {
         props: { isActionsDisabled: false },
         expectedCall: true,
         condition: 'if isActionsDisabled is false'
-      },
+      }
     ])(
       'should $verb $propsAction when "$buttonName" button is clicked $condition',
       ({ buttonName, propsAction, props, expectedCall }) => {
@@ -137,6 +139,26 @@ describe('Header', () => {
 
       expect(cancelButton).toBeDisabled();
       expect(saveButton).toBeDisabled();
+    });
+
+    it('should disable only the "Зберегти" button when isSaveDisabled is true, leaving "Скасувати зміни" enabled', () => {
+      render(<Header {...defaultProps} isActionsDisabled={false} isSaveDisabled={true} />);
+
+      const cancelButton = screen.getByRole('button', { name: /Скасувати зміни/i });
+      const saveButton = screen.getByRole('button', { name: /Зберегти/i });
+
+      expect(cancelButton).not.toBeDisabled();
+      expect(saveButton).toBeDisabled();
+      expect(saveButton).toHaveAttribute('title', 'Виправте порожні заголовки розділів перед збереженням');
+    });
+
+    it('should keep the "Зберегти" button enabled when isSaveDisabled is false', () => {
+      render(<Header {...defaultProps} isActionsDisabled={false} isSaveDisabled={false} />);
+
+      const saveButton = screen.getByRole('button', { name: /Зберегти/i });
+
+      expect(saveButton).not.toBeDisabled();
+      expect(saveButton).not.toHaveAttribute('title');
     });
   });
 });

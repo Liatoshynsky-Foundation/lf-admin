@@ -39,8 +39,31 @@ jest.mock('~/shared/hooks/use-opuses/useOpuses', () => ({
 jest.mock('~/types/graphql/generated/graphql', () => ({
   useUpdateOpusMutation: jest.fn(),
   useDeleteOpusMutation: jest.fn(),
-  OpusNumberKind: { Op: 'op', Woo: 'woo' },
+  OpusNumberKind: { Op: 'op', Sineop: 'sineop' },
   OpusStatus: { Draft: 'draft', Published: 'published' }
+}));
+
+jest.mock('~/constants/opus', () => ({
+  OPUS_FIELD_LIMITS: {
+    name: { min: 2, max: 250 },
+    caption: { min: 2, max: 250 },
+    altText: { min: 2, max: 250 },
+    maxPhotos: 20
+  },
+  OPUS_VALIDATION_MESSAGES: {
+    nameRequired: 'nameRequired',
+    nameTooShort: 'nameTooShort',
+    numberInvalid: 'numberInvalid',
+    performanceUrl: 'performanceUrl',
+    performanceSignature: 'performanceSignature',
+    photoAltText: 'photoAltText',
+    photoTextTooShort: 'photoTextTooShort',
+    captionTooLong: 'captionTooLong'
+  },
+  OPUS_MUTATION_RESULTS: {
+    deleted: 'deleted'
+  },
+  REQUIRED_FIELD_ERROR: 'REQUIRED_FIELD_ERROR'
 }));
 
 const mockFetchedOpus = {
@@ -49,7 +72,7 @@ const mockFetchedOpus = {
   number: '42',
   name: { uk: 'Test Opus UK', en: 'Test Opus EN' },
   additionalText: 'bis',
-  genre: 'Symphony',
+  genre: { uk: 'Symphony', en: 'Symphony EN' },
   creationYear: 1980,
   endYear: null,
   datesNote: null,
@@ -127,8 +150,8 @@ describe('useGroupContent Hook', () => {
         });
         expect(result.current.groupData?.description.en).toEqual({ type: 'doc', content: [] });
 
-        expect(result.current.groupData?.works[0].audios[0].name).toBe('track.mp3');
-        expect(result.current.groupData?.works[0].notes[0].name).toBe('');
+        expect(result.current.groupData?.compositions[0].audios[0].name).toBe('track.mp3');
+        expect(result.current.groupData?.compositions[0].notes[0].name).toBe('');
       });
     });
     it('should initialize with loading state when data is being fetched', () => {
@@ -149,23 +172,22 @@ describe('useGroupContent Hook', () => {
       });
 
       const { result } = renderHook(() => useGroupContent('test-id'));
-
       await waitFor(() => {
         expect(result.current.groupData).not.toBeNull();
         expect(result.current.groupData?.groupNumber).toBe('42');
-        expect(result.current.groupData?.titlePrefix).toBe('Op.');
-        expect(result.current.groupData?.genre).toBe('Symphony');
+        expect(result.current.groupData?.titlePrefix).toBe('op');
+        expect(result.current.groupData?.genre).toEqual({ uk: 'Symphony', en: 'Symphony EN' });
         expect(result.current.publishedTitle.uk).toBe('Test Opus UK');
       });
     });
 
-    it('should correctly parse invalid JSON description, map "woo" prefix, and strip "op." from number', async () => {
+    it('should correctly parse invalid JSON description, map "sineop" prefix, and strip "op." from number', async () => {
       (useOpusById as jest.Mock).mockReturnValue({
         data: {
           opusById: {
             ...mockFetchedOpus,
-            numberKind: 'woo',
-            number: 'op. 15',
+            numberKind: 'sineop',
+            number: 15,
             introDescription: { uk: 'Plain text description', en: null },
             gallery: null,
             compositions: null
@@ -177,7 +199,7 @@ describe('useGroupContent Hook', () => {
       const { result } = renderHook(() => useGroupContent('test-id'));
 
       await waitFor(() => {
-        expect(result.current.groupData?.titlePrefix).toBe('Bo.');
+        expect(result.current.groupData?.titlePrefix).toBe('sineop');
         expect(result.current.groupData?.groupNumber).toBe('15');
         expect(result.current.groupData?.description.uk).toEqual({
           type: 'doc',
@@ -185,7 +207,7 @@ describe('useGroupContent Hook', () => {
         });
         expect(result.current.groupData?.description.en).toEqual({ type: 'doc', content: [] });
         expect(result.current.groupData?.photos).toEqual([]);
-        expect(result.current.groupData?.works).toEqual([]);
+        expect(result.current.groupData?.compositions).toEqual([]);
       });
     });
 
@@ -273,8 +295,8 @@ describe('useGroupContent Hook', () => {
       const { result } = renderHook(() => useGroupContent('test-id'));
 
       await waitFor(() => {
-        expect(result.current.groupData?.works).toBeDefined();
-        expect(result.current.groupData?.works[0].compositionId).toBe('comp-1');
+        expect(result.current.groupData?.compositions).toBeDefined();
+        expect(result.current.groupData?.compositions[0].id).toBe('comp-1');
       });
     });
 
@@ -295,8 +317,8 @@ describe('useGroupContent Hook', () => {
       const { result } = renderHook(() => useGroupContent('test-id'));
 
       await waitFor(() => {
-        expect(result.current.groupData?.works).toBeDefined();
-        expect(result.current.groupData?.works[0].audios[0].fileUrl).toBeUndefined();
+        expect(result.current.groupData?.compositions).toBeDefined();
+        expect(result.current.groupData?.compositions[0].audios[0].fileUrl).toBeUndefined();
       });
     });
 
@@ -320,7 +342,8 @@ describe('useGroupContent Hook', () => {
       await waitFor(() => {
         expect(result.current.groupData).not.toBeNull();
         expect(result.current.groupData?.status).toBe('draft');
-        expect(result.current.groupData?.genre).toBe('');
+        expect(result.current.groupData?.genre.uk).toBe('');
+        expect(result.current.groupData?.genre.en).toBe('');
         expect(result.current.groupData?.additionalText).toBe('');
         expect(result.current.groupData?.groupTitle.uk).toBe('');
         expect(result.current.groupData?.groupTitle.en).toBe('');
@@ -464,11 +487,23 @@ describe('useGroupContent Hook', () => {
 
       act(() => {
         result.current.handleFieldChange('photos', [
-          { id: 'photo-12345', src: 'img1.jpg', caption: { uk: '', en: '' }, altText: { uk: '', en: '' }, crop: null },
-          { id: '60d5ec49f1', src: 'img2.jpg', caption: { uk: '', en: '' }, altText: { uk: '', en: '' }, crop: null }
+          {
+            id: 'photo-12345',
+            src: 'img1.jpg',
+            caption: { uk: '', en: '' },
+            altText: { uk: 'Alt Text', en: 'Alt Text' },
+            crop: null
+          },
+          {
+            id: '60d5ec49f1',
+            src: 'img2.jpg',
+            caption: { uk: '', en: '' },
+            altText: { uk: 'Alt Text', en: 'Alt Text' },
+            crop: null
+          }
         ]);
         result.current.handleFieldChange('performances', [
-          { id: 'temp-perf-123', url: 'url1', caption: { uk: '1', en: '1' } }
+          { id: 'temp-perf-123', url: 'url1', caption: { uk: 'Valid', en: 'Valid' } }
         ]);
       });
 
@@ -487,7 +522,9 @@ describe('useGroupContent Hook', () => {
         data: {
           opusById: {
             ...mockFetchedOpus,
-            gallery: [{ id: 'photo-1', src: 'img.jpg', crop: null, altText: null, description: null }],
+            gallery: [
+              { id: 'photo-1', src: 'img.jpg', crop: null, altText: { uk: 'Alt', en: 'Alt' }, description: null }
+            ],
             performances: [{ id: 'perf-1', title: null, videoUrl: null }]
           }
         },
@@ -510,12 +547,12 @@ describe('useGroupContent Hook', () => {
       const customOpus = {
         ...mockFetchedOpus,
         gallery: [
-          { id: 'photo-123', src: 'img.jpg', crop: null },
-          { id: '60d5ec49f1', src: 'img2.jpg', crop: null }
+          { id: 'photo-123', src: 'img.jpg', crop: null, altText: { uk: 'Alt Text', en: 'Alt Text' } },
+          { id: '60d5ec49f1', src: 'img2.jpg', crop: null, altText: { uk: 'Alt Text', en: 'Alt Text' } }
         ],
         performances: [
-          { id: 'perf-456', videoUrl: 'url1' },
-          { id: '60d5ec49f2', videoUrl: 'url2' }
+          { id: 'perf-456', videoUrl: 'url1', title: { uk: 'Valid', en: 'Valid' } },
+          { id: '60d5ec49f2', videoUrl: 'url2', title: { uk: 'Valid', en: 'Valid' } }
         ]
       };
       (useOpusById as jest.Mock).mockReturnValue({ data: { opusById: customOpus }, loading: false });
@@ -575,7 +612,7 @@ describe('useGroupContent Hook', () => {
       });
 
       expect(mockUpdateOpus).not.toHaveBeenCalled();
-      expect(result.current.errors.groupNumber).toBe('Номер має бути цілим позитивним числом.');
+      expect(result.current.errors.groupNumber).toBe('numberInvalid');
       expect(result.current.isDetailsExpanded).toBe(true);
     });
 
@@ -593,8 +630,8 @@ describe('useGroupContent Hook', () => {
         await result.current.handlePublishClick();
       });
 
-      expect(result.current.errors.groupTitle).toBe('Обов’язкове поле');
-      expect(result.current.errors.creationYear).toBe('Обов’язкове поле');
+      expect(result.current.errors['groupTitle.uk']).toBe('nameRequired');
+      expect(result.current.errors.creationYear).toBe('REQUIRED_FIELD_ERROR');
       expect(toast.error).toHaveBeenCalledWith('Заповніть усі обов’язкові поля перед публікацією.');
     });
 
@@ -609,7 +646,7 @@ describe('useGroupContent Hook', () => {
       });
 
       expect(mockUpdateOpus).toHaveBeenCalled();
-      expect(toast.success).toHaveBeenCalledWith('Контент успішно збережено!');
+      expect(toast.success).toHaveBeenCalledWith('Групу опубліковано');
       expect(result.current.isDirty).toBe(false);
     });
 
@@ -672,7 +709,7 @@ describe('useGroupContent Hook', () => {
         await result.current.handlePublishClick();
       });
 
-      expect(result.current.errors.titlePrefix).toBe('Обов’язкове поле');
+      expect(result.current.errors.titlePrefix).toBe('REQUIRED_FIELD_ERROR');
     });
 
     it('should expand details and return early when validation fails on publish', async () => {
@@ -767,12 +804,12 @@ describe('useGroupContent Hook', () => {
       });
 
       act(() => {
-        result.current.handleFieldChange('titlePrefix' as any, 'Bo.');
+        result.current.handleFieldChange('titlePrefix' as any, 'sineop');
 
-        result.current.handleFieldChange('works', [
+        result.current.handleFieldChange('compositions', [
           {
-            compositionId: 'c1',
-            title: 'Test',
+            id: 'c1',
+            name: 'Test',
             genre: '',
             year: '',
             audios: null,
@@ -787,8 +824,8 @@ describe('useGroupContent Hook', () => {
         await result.current.handlePublishClick();
       });
       const calledInput = mockUpdateOpus.mock.calls[0][0].variables.input;
-      expect(calledInput.numberKind).toBe('woo');
-      expect(calledInput.genre).toBe('');
+      expect(calledInput.numberKind).toBe('sineop');
+      expect(calledInput.genre).toEqual({ en: '', uk: '' });
       expect(calledInput.additionalText).toBe('');
       expect(calledInput.gallery).toEqual([]);
       expect(calledInput.compositions[0].audios).toEqual([]);
@@ -818,7 +855,7 @@ describe('useGroupContent Hook', () => {
       });
 
       expect(mockDeleteOpus).toHaveBeenCalledWith({ variables: { id: 'test-id' } });
-      expect(toast.success).toHaveBeenCalledWith('Групу успішно видалено');
+      expect(toast.success).toHaveBeenCalledWith('deleted');
       expect(result.current.isDeleteModalOpen).toBe(false);
       expect(mockNavigate).toHaveBeenCalledWith('/creativity');
     });
@@ -837,7 +874,7 @@ describe('useGroupContent Hook', () => {
       });
 
       expect(mockDeleteOpus).toHaveBeenCalledWith({ variables: { id: 'test-id' } });
-      expect(toast.error).toHaveBeenCalledWith('Помилка при видаленні групи.');
+      expect(toast.error).toHaveBeenCalledWith('Не вдалося видалити групу. Спробуйте ще раз.');
       expect(result.current.isDeleteModalOpen).toBe(true);
       expect(mockNavigate).not.toHaveBeenCalled();
 
@@ -887,10 +924,10 @@ describe('useGroupContent Hook', () => {
       act(() => {
         result.current.handleFieldChange('parts', { uk: '', en: '' });
         result.current.handleFieldChange('description', { uk: null, en: null });
-        result.current.handleFieldChange('works', null);
+        result.current.handleFieldChange('compositions', null);
         result.current.handleFieldChange('performances', null);
         result.current.handleFieldChange('performancesTitle', '');
-        result.current.handleFieldChange('groupTitle', { uk: 'Valid UK Title', en: '' });
+        result.current.handleFieldChange('groupTitle', { uk: 'Valid UK Title', en: 'Valid EN Title' });
       });
 
       await act(async () => {
@@ -912,9 +949,7 @@ describe('useGroupContent Hook', () => {
           opusById: {
             ...mockFetchedOpus,
             numberKind: null,
-            gallery: [
-              { id: 'photo-1', src: '', crop: null }
-            ]
+            gallery: [{ id: 'photo-1', src: '', crop: null }]
           }
         },
         loading: false
@@ -929,7 +964,7 @@ describe('useGroupContent Hook', () => {
         await result.current.handlePublishClick();
       });
 
-      expect(result.current.groupData?.titlePrefix).toBe('Op.');
+      expect(result.current.groupData?.titlePrefix).toBe('op');
       const calledInput = mockUpdateOpus.mock.calls[0][0].variables.input;
       expect(calledInput.gallery[0].src).toBe('');
     });
@@ -948,6 +983,238 @@ describe('useGroupContent Hook', () => {
       });
 
       expect((result.current.groupData?.genre as any).uk).toBe('Pop');
+    });
+
+    it('should trigger validation error when groupTitle is too short', async () => {
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: { opusById: mockFetchedOpus },
+        loading: false
+      });
+
+      const { result } = renderHook(() => useGroupContent('test-id'));
+
+      await waitFor(() => {
+        expect(result.current.groupData).not.toBeNull();
+      });
+
+      act(() => {
+        result.current.handleFieldChange('groupTitle', 'a', true);
+      });
+
+      await act(async () => {
+        await result.current.handlePublishClick();
+      });
+
+      expect(result.current.errors['groupTitle.uk']).toBe('nameTooShort');
+
+      expect(mockUpdateOpus).not.toHaveBeenCalled();
+    });
+
+    it('should trim whitespace from genre, additionalText, and datesNote on save', async () => {
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: { opusById: mockFetchedOpus },
+        loading: false
+      });
+      mockUpdateOpus.mockResolvedValue({ data: { updateOpus: { id: 'test-id' } } });
+
+      const { result } = renderHook(() => useGroupContent('test-id'));
+
+      await waitFor(() => {
+        expect(result.current.groupData).not.toBeNull();
+      });
+
+      act(() => {
+        result.current.handleFieldChange('genre', '   Pop   ', true);
+        result.current.handleFieldChange('additionalText', '   Some text   ');
+        result.current.handleFieldChange('dateAdditionalText', '  Note  ');
+      });
+
+      await act(async () => {
+        await result.current.handlePublishClick();
+      });
+
+      const calledInput = mockUpdateOpus.mock.calls[0][0].variables.input;
+
+      expect(calledInput.genre.uk).toBe('Pop');
+      expect(calledInput.additionalText).toBe('Some text');
+      expect(calledInput.datesNote).toBe('Note');
+    });
+
+    it('should trigger validation errors when performance caption is too long or EN is invalid', async () => {
+      const longText = 'a'.repeat(251);
+
+      const customOpus = {
+        ...mockFetchedOpus,
+        performances: [
+          { id: 'perf-1', videoUrl: 'url1', title: { uk: longText, en: 'Valid EN' } },
+          { id: 'perf-2', videoUrl: 'url2', title: { uk: 'Valid UK', en: '' } },
+          { id: 'perf-3', videoUrl: 'url3', title: { uk: 'Valid UK', en: 'a' } },
+          { id: 'perf-4', videoUrl: 'url4', title: { uk: 'Valid UK', en: longText } },
+          { id: 'perf-5', videoUrl: 'url5', title: { uk: '', en: 'Valid EN' } },
+          { id: 'perf-6', videoUrl: 'url6', title: { uk: 'a', en: 'Valid EN' } }
+        ]
+      };
+
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: { opusById: customOpus },
+        loading: false
+      });
+
+      const { result } = renderHook(() => useGroupContent('test-id'));
+
+      await waitFor(() => expect(result.current.groupData).not.toBeNull());
+      await act(async () => {
+        await result.current.handlePublishClick();
+      });
+
+      expect(result.current.errors['performances[perf-1].caption.uk']).toBe('captionTooLong');
+      expect(result.current.errors['performances[perf-2].caption.en']).toBe('performanceSignature');
+      expect(result.current.errors['performances[perf-3].caption.en']).toBe('nameTooShort');
+      expect(result.current.errors['performances[perf-4].caption.en']).toBe('captionTooLong');
+      expect(result.current.errors['performances[perf-5].caption.uk']).toBe('performanceSignature');
+      expect(result.current.errors['performances[perf-6].caption.uk']).toBe('nameTooShort');
+    });
+
+    it('should trigger validation errors for photos altText and caption length', async () => {
+      const longText = 'a'.repeat(251);
+
+      const customOpus = {
+        ...mockFetchedOpus,
+        gallery: [
+          {
+            id: 'photo-1',
+            src: 'img1.jpg',
+            altText: { uk: longText, en: 'Valid' },
+            description: { uk: '', en: '' },
+            crop: null
+          },
+          {
+            id: 'photo-2',
+            src: 'img2.jpg',
+            altText: { uk: 'Valid', en: '' },
+            description: { uk: '', en: '' },
+            crop: null
+          },
+          {
+            id: 'photo-3',
+            src: 'img3.jpg',
+            altText: { uk: 'Valid', en: 'a' },
+            description: { uk: 'a', en: '' },
+            crop: null
+          },
+          {
+            id: 'photo-4',
+            src: 'img4.jpg',
+            altText: { uk: 'Valid', en: longText },
+            description: { uk: 'Valid', en: 'a' },
+            crop: null
+          },
+          {
+            id: 'photo-5',
+            src: 'img5.jpg',
+            altText: { uk: '', en: 'Valid' },
+            description: { uk: '', en: '' },
+            crop: null
+          },
+          {
+            id: 'photo-6',
+            src: 'img6.jpg',
+            altText: { uk: 'a', en: 'Valid' },
+            description: { uk: '', en: '' },
+            crop: null
+          }
+        ]
+      };
+
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: { opusById: customOpus },
+        loading: false
+      });
+
+      const { result } = renderHook(() => useGroupContent('test-id'));
+
+      await waitFor(() => expect(result.current.groupData).not.toBeNull());
+      await act(async () => {
+        await result.current.handlePublishClick();
+      });
+
+      expect(result.current.errors['photos[photo-1].altText.uk']).toBe('captionTooLong');
+      expect(result.current.errors['photos[photo-2].altText.en']).toBe('photoAltText');
+      expect(result.current.errors['photos[photo-3].altText.en']).toBe('photoTextTooShort');
+      expect(result.current.errors['photos[photo-4].altText.en']).toBe('captionTooLong');
+      expect(result.current.errors['photos[photo-5].altText.uk']).toBe('photoAltText');
+      expect(result.current.errors['photos[photo-6].altText.uk']).toBe('photoTextTooShort');
+
+      expect(result.current.errors['photos[photo-3].caption.uk']).toBe('photoTextTooShort');
+      expect(result.current.errors['photos[photo-4].caption.en']).toBe('photoTextTooShort');
+    });
+
+    it('should trigger validation errors when groupTitle.en is missing or too short', async () => {
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: {
+          opusById: {
+            ...mockFetchedOpus,
+            name: { uk: 'Валідна назва', en: '' }
+          }
+        },
+        loading: false
+      });
+
+      const { result: resultMissing } = renderHook(() => useGroupContent('test-id-missing'));
+      await waitFor(() => expect(resultMissing.current.groupData).not.toBeNull());
+      await act(async () => {
+        await resultMissing.current.handlePublishClick();
+      });
+
+      expect(resultMissing.current.errors['groupTitle.en']).toBe('nameRequired');
+      expect(resultMissing.current.currentLanguage).toBe('EN');
+
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: {
+          opusById: {
+            ...mockFetchedOpus,
+            name: { uk: 'Валідна назва', en: 'A' }
+          }
+        },
+        loading: false
+      });
+
+      const { result: resultShort } = renderHook(() => useGroupContent('test-id-short'));
+      await waitFor(() => expect(resultShort.current.groupData).not.toBeNull());
+      await act(async () => {
+        await resultShort.current.handlePublishClick();
+      });
+
+      expect(resultShort.current.errors['groupTitle.en']).toBe('nameTooShort');
+      expect(resultShort.current.currentLanguage).toBe('EN');
+    });
+
+    it('should trigger validation error when performance URL is missing but row is not empty', async () => {
+      const customOpus = {
+        ...mockFetchedOpus,
+        performances: [
+          {
+            id: 'perf-no-url',
+            videoUrl: '',
+            title: { uk: 'Valid caption', en: 'Valid caption' }
+          }
+        ]
+      };
+
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: { opusById: customOpus },
+        loading: false
+      });
+
+      const { result } = renderHook(() => useGroupContent('test-id'));
+
+      await waitFor(() => expect(result.current.groupData).not.toBeNull());
+
+      await act(async () => {
+        await result.current.handlePublishClick();
+      });
+
+      expect(result.current.errors['performances[perf-no-url].url']).toBe('performanceUrl');
     });
   });
 
@@ -976,6 +1243,80 @@ describe('useGroupContent Hook', () => {
       });
 
       expect(mockNavigate).toHaveBeenCalledWith('/creativity');
+    });
+  });
+  describe('Saving', () => {
+    it('should forcefully trigger none handleSave', async () => {
+      const originalSplit = String.prototype.split;
+      jest.spyOn(String.prototype, 'split').mockImplementation(function (this: string, separator: any, limit?: any) {
+        if (this === 'trigger-empty-split') return [] as unknown as string[];
+        return originalSplit.call(this, separator, limit);
+      });
+
+      const edgeOpus = {
+        ...mockFetchedOpus,
+        number: '100',
+        name: { uk: 'Valid Name', en: '' },
+        creationYear: 2020,
+        numberKind: 'op',
+
+        gallery: [
+          {
+            id: 'photo-edge',
+            src: '',
+            description: { uk: '', en: '' },
+            altText: { uk: '', en: '' },
+            crop: undefined
+          }
+        ],
+        compositions: [
+          {
+            id: 'comp-edge',
+            title: { uk: 'T' },
+            audios: [{ name: null, url: 'trigger-empty-split' }],
+            sheetMusic: undefined
+          }
+        ]
+      };
+
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: { opusById: edgeOpus },
+        loading: false
+      });
+      mockUpdateOpus.mockResolvedValue({ data: { updateOpus: { id: 'test-id' } } });
+
+      const { result } = renderHook(() => useGroupContent('test-id'));
+      await waitFor(() => expect(result.current.groupData).not.toBeNull());
+
+      act(() => {
+        result.current.handleFieldChange('groupNumber', '100');
+        result.current.handleFieldChange('titlePrefix', 'op');
+        result.current.handleFieldChange('creationYear', '2020');
+        result.current.handleFieldChange('groupTitle', { uk: 'Valid Name Ukr', en: 'Valid Name Eng' });
+        result.current.handleFieldChange('additionalText', '');
+        result.current.handleFieldChange('genre', { uk: '   ', en: '   ' });
+        result.current.handleFieldChange('parts', { uk: '', en: undefined });
+        result.current.handleFieldChange('description', { uk: null, en: '' });
+        result.current.handleFieldChange('compositions', [
+          {
+            id: 'c3',
+            name: 'T',
+            genre: '   ',
+            year: '   ',
+            audios: undefined,
+            notes: undefined
+          } as unknown as OpusCompositionData
+        ]);
+      });
+
+      await act(async () => {
+        await result.current.handlePublishClick();
+      });
+
+      expect(toast.error).not.toHaveBeenCalled();
+      expect(mockUpdateOpus).toHaveBeenCalled();
+
+      jest.restoreAllMocks();
     });
   });
 });

@@ -1,50 +1,12 @@
 'use client';
 
-import { Box, IconButton, MenuItem, TextField, Typography } from '@mui/material';
-import { GripVertical, Pencil, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { Box, MenuItem, TextField } from '@mui/material';
 
-import CompositionModal from './composition-modal/CompositionModal';
-import CompositionTitleInput from './composition-title-input/CompositionTitleInput';
+import { GroupWorksSection } from '../../creativity/group/works-section/GroupWorksSection';
 import { styles } from './OpusDetailsBlock.styles';
 import YearPicker from './year-picker/YearPicker';
-import Button from '~/components/design-system/button/Button';
 import { OPUS_DETAILS_LABELS, OPUS_FIELD_LIMITS, OPUS_NUMBER_KIND_OPTIONS } from '~/constants/opus';
-import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
-import { createCompositionId } from '~/shared/hooks/use-upsert-opus/useUpsertOpus';
-import type {
-  OpusCompositionData,
-  OpusCompositionSuggestion,
-  OpusDetailsErrors,
-  OpusDetailsValue,
-  OpusMediaFileData
-} from '~/types/opus';
-
-const fileNameFromUrl = (url?: string | null): string => {
-  if (!url) {
-    return '';
-  }
-
-  const segment = url.split('/').pop() ?? url;
-
-  return decodeURIComponent(segment.split('?')[0]);
-};
-
-type SuggestionAudio = NonNullable<OpusCompositionSuggestion['audios']>[number];
-type SuggestionSheet = NonNullable<OpusCompositionSuggestion['sheetMusic']>[number];
-
-const toSuggestionAudio = (audio: SuggestionAudio): OpusMediaFileData => ({
-  id: createCompositionId(),
-  name: audio.name ?? fileNameFromUrl(audio.url),
-  fileUrl: audio.url ?? undefined
-});
-
-const toSuggestionNote = (sheet: SuggestionSheet): OpusMediaFileData => ({
-  id: createCompositionId(),
-  name: sheet.name ?? fileNameFromUrl(sheet.url),
-  fileUrl: sheet.url ?? undefined,
-  publishDate: sheet.publishDate ?? ''
-});
+import type { OpusDetailsErrors, OpusDetailsValue } from '~/types/opus';
 
 interface OpusDetailsBlockProps {
   value: OpusDetailsValue;
@@ -53,110 +15,9 @@ interface OpusDetailsBlockProps {
 }
 
 export default function OpusDetailsBlock({ value, onChange, errors }: Readonly<OpusDetailsBlockProps>) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
-  const [editingComposition, setEditingComposition] = useState<OpusCompositionData | null>(null);
-  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
-  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
-
   const updateField = <Key extends keyof OpusDetailsValue>(key: Key, fieldValue: OpusDetailsValue[Key]): void => {
     onChange((prev) => ({ ...prev, [key]: fieldValue }));
   };
-
-  const addComposition = (): void => {
-    onChange((prev) => ({
-      ...prev,
-      compositions: [
-        ...prev.compositions,
-        { id: createCompositionId(), title: '', genre: '', year: '', audios: [], notes: [] }
-      ]
-    }));
-  };
-
-  const updateCompositionTitle = (id: string, title: string): void => {
-    onChange((prev) => ({
-      ...prev,
-      compositions: prev.compositions.map((item) => (item.id === id ? { ...item, title } : item))
-    }));
-  };
-
-  const fillComposition = (id: string, suggestion: OpusCompositionSuggestion): void => {
-    onChange((prev) => ({
-      ...prev,
-      compositions: prev.compositions.map((item) =>
-        item.id === id
-          ? {
-            ...item,
-            compositionId: suggestion.id,
-            title: suggestion.title?.uk ?? suggestion.title?.en ?? '',
-            genre: suggestion.genre ?? '',
-            year: suggestion.year == null ? '' : String(suggestion.year),
-            audios: (suggestion.audios ?? []).map(toSuggestionAudio),
-            notes: (suggestion.sheetMusic ?? []).map(toSuggestionNote)
-          }
-          : item
-      )
-    }));
-  };
-
-  const openEditModal = (composition: OpusCompositionData): void => {
-    setModalMode('edit');
-    setEditingComposition(composition);
-    setIsModalOpen(true);
-  };
-
-  const openCreateModal = (composition: OpusCompositionData): void => {
-    setModalMode('create');
-    setEditingComposition(composition);
-    setIsModalOpen(true);
-  };
-
-  const handleModalSubmit = (composition: OpusCompositionData): void => {
-    onChange((prev) => ({
-      ...prev,
-      compositions: prev.compositions.map((item) => (item.id === composition.id ? composition : item))
-    }));
-    setIsModalOpen(false);
-  };
-
-  const handleDeleteConfirm = (): void => {
-    if (deleteTargetId) {
-      onChange((prev) => ({
-        ...prev,
-        compositions: prev.compositions.filter((item) => item.id !== deleteTargetId)
-      }));
-    }
-
-    setDeleteTargetId(null);
-  };
-
-  const moveComposition = (from: number, to: number): void => {
-    onChange((prev) => {
-      if (from === to || from < 0 || to < 0 || from >= prev.compositions.length || to >= prev.compositions.length) {
-        return prev;
-      }
-
-      const compositions = [...prev.compositions];
-      const [moved] = compositions.splice(from, 1);
-      compositions.splice(to, 0, moved);
-
-      return { ...prev, compositions };
-    });
-  };
-
-  const handleDragEnter = (index: number): void => {
-    if (draggingIndex === null || draggingIndex === index) {
-      return;
-    }
-
-    moveComposition(draggingIndex, index);
-    setDraggingIndex(index);
-  };
-
-  const handleDragEnd = (): void => {
-    setDraggingIndex(null);
-  };
-
   return (
     <Box sx={styles.container}>
       <Box sx={styles.fieldsRow}>
@@ -200,7 +61,7 @@ export default function OpusDetailsBlock({ value, onChange, errors }: Readonly<O
         onChange={(event) => updateField('name', event.target.value)}
         error={Boolean(errors.name)}
         helperText={errors.name}
-        sx={styles.nameField}
+        sx={styles.titleField}
         slotProps={{ htmlInput: { maxLength: OPUS_FIELD_LIMITS.name.max } }}
       />
 
@@ -236,64 +97,9 @@ export default function OpusDetailsBlock({ value, onChange, errors }: Readonly<O
         />
       </Box>
 
-      <Box sx={styles.compositionsHeader}>
-        <Typography sx={styles.compositionsTitle}>{OPUS_DETAILS_LABELS.compositions}</Typography>
-        <Box sx={styles.compositionsDivider} />
-        <Button variant="filled" size="small" color="primary" onClick={addComposition}>
-          {OPUS_DETAILS_LABELS.addComposition}
-        </Button>
-      </Box>
-
-      <Box sx={styles.compositionsList}>
-        {value.compositions.map((composition, index) => (
-          <Box
-            key={composition.id}
-            sx={{
-              ...(styles.compositionRow as object),
-              ...(draggingIndex === index ? (styles.compositionRowDragging as object) : {})
-            }}
-            onDragEnter={() => handleDragEnter(index)}
-            onDragOver={(event) => event.preventDefault()}
-          >
-            <Box
-              draggable
-              onDragStart={() => setDraggingIndex(index)}
-              onDragEnd={handleDragEnd}
-              sx={styles.dragHandle}
-              aria-label="Перемістити"
-            >
-              <GripVertical size={20} strokeWidth={1.5} />
-            </Box>
-            <Box sx={styles.compositionInput}>
-              <CompositionTitleInput
-                value={composition.title}
-                onChangeText={(title) => updateCompositionTitle(composition.id, title)}
-                onSelectSuggestion={(suggestion) => fillComposition(composition.id, suggestion)}
-                onCreateNew={() => openCreateModal(composition)}
-              />
-            </Box>
-            <IconButton aria-label="Редагувати" onClick={() => openEditModal(composition)} sx={styles.rowIcon}>
-              <Pencil size={18} strokeWidth={1.5} />
-            </IconButton>
-            <IconButton aria-label="Видалити" onClick={() => setDeleteTargetId(composition.id)} sx={styles.rowIcon}>
-              <Trash2 size={18} strokeWidth={1.5} />
-            </IconButton>
-          </Box>
-        ))}
-      </Box>
-
-      <CompositionModal
-        open={isModalOpen}
-        mode={modalMode}
-        initialValue={editingComposition}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleModalSubmit}
-      />
-
-      <DeleteCompositionModal
-        open={Boolean(deleteTargetId)}
-        onClose={() => setDeleteTargetId(null)}
-        onConfirm={handleDeleteConfirm}
+      <GroupWorksSection
+        works={value.compositions}
+        onChange={(compositions) => updateField('compositions', compositions)}
       />
     </Box>
   );

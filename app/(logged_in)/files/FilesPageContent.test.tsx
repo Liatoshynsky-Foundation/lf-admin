@@ -9,7 +9,9 @@ import {
   FILES_FAVORITES_EMPTY_STATE_TITLE,
   FILES_LOADING_STATE_TITLE,
   FILES_UNKNOWN_SECTION_LABEL,
-  FILES_UPLOAD_BUTTON_LABEL} from '~/constants/files';
+  FILES_UPLOAD_BUTTON_LABEL,
+  FILES_UPLOAD_FAILED_ERROR
+} from '~/constants/files';
 import { downloadFile } from '~/lib/utils/downloadFile';
 import { useAllAssets } from '~/shared/hooks/use-assets/useAssets';
 import { useFilesFiltering } from '~/shared/hooks/use-files';
@@ -309,8 +311,8 @@ let mockMediaModalOnApply:
     }) => Promise<void>)
   | null = null;
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let deleteModalOnConfirm: ((id: string) => Promise<unknown>) | null = null;
+let capturedDeleteModalFile: DeleteFileModalProps['file'] | null = null;
 
 jest.mock('~/shared/components/media-modal/MediaModal', () => ({
   MediaModal: ({ open, onApply, onClose, renderers }: MediaModalProps) => {
@@ -359,10 +361,12 @@ jest.mock('~/shared/components/delete-file-modal/DeleteFileModal', () => ({
   __esModule: true,
   default: ({ open, onConfirm, file, onClose }: DeleteFileModalProps) => {
     deleteModalOnConfirm = onConfirm;
+    capturedDeleteModalFile = file;
     if (!open) return null;
     return (
       <div data-testid="delete-modal">
         <span>{file?.filename}</span>
+        <span data-testid="delete-modal-usage-count">{file?.usageRefs.length ?? 0}</span>
         <button onClick={() => onConfirm(file?.id ?? '')}>confirm-delete</button>
         <button onClick={onClose}>close-delete</button>
       </div>
@@ -416,6 +420,7 @@ beforeEach(() => {
   capturedCardsProps = null;
   mockMediaModalOnApply = null;
   deleteModalOnConfirm = null;
+  capturedDeleteModalFile = null;
   capturedUploadViewProps = null;
   mockFetch.mockResolvedValue({
     ok: true,
@@ -481,11 +486,33 @@ describe('FilesPageContent', () => {
     render(<FilesPageContent activeTab="all" />);
 
     fireEvent.click(screen.getByText('delete-1'));
-    fireEvent.click(screen.getByText('confirm-delete'));
+    fireEvent.click(await screen.findByText('confirm-delete'));
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Network error');
     });
+  });
+
+  it('refreshes asset usage before opening delete modal', async () => {
+    const staleAsset = { ...baseAsset, usageRefs: [] };
+    const refreshedAsset = {
+      ...baseAsset,
+      usageRefs: [{ __typename: 'AssetUsageRef' as const, pageId: 'about-us', blockId: 'hero', locale: 'uk' }]
+    };
+    const refetch = jest.fn().mockResolvedValue({ data: { allAssets: [refreshedAsset] } });
+
+    setupHooks({ assets: [staleAsset], refetch });
+    render(<FilesPageContent activeTab="all" />);
+
+    fireEvent.click(screen.getByText('delete-1'));
+
+    await waitFor(() => {
+      expect(refetch).toHaveBeenCalled();
+      expect(screen.getByTestId('delete-modal')).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId('delete-modal-usage-count')).toHaveTextContent('1');
+    expect(capturedDeleteModalFile?.usageRefs).toEqual([{ pageId: 'about-us', blockId: 'hero' }]);
   });
 
   it('renders correct empty state scenarios (coverage for 447-476)', () => {
@@ -727,6 +754,62 @@ describe('FilesPageContent', () => {
     });
   });
 
+  it('deletes an orphan root R2 file through the root uploads endpoint', async () => {
+    const rootR2File = {
+      ...orphanR2File,
+      filename: 'root-file.pdf',
+      originalName: 'root-file.pdf',
+      mimeType: 'application/pdf',
+      url: 'https://r2.example.com/root-file.pdf'
+    };
+    mockR2Files = [rootR2File];
+    const createAsset = jest.fn();
+    const deleteAsset = jest.fn();
+
+    setupHooks({ assets: [], createAsset, deleteAsset });
+    render(<FilesPageContent activeTab="all" />);
+
+    expect(await screen.findByTestId('files-cards-layout')).toBeInTheDocument();
+    const orphanItem = capturedCardsProps?.items[0];
+    expect(orphanItem).toBeDefined();
+
+    if (!orphanItem) return;
+
+    fireEvent.click(screen.getByText(`delete-${orphanItem.id}`));
+    fireEvent.click(await screen.findByText('confirm-delete'));
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith('/api/uploads/root-file.pdf', { method: 'DELETE' });
+      expect(createAsset).not.toHaveBeenCalled();
+      expect(deleteAsset).not.toHaveBeenCalled();
+    });
+  });
+
+  it('shows an error toast when orphan R2 delete cannot resolve a filename', async () => {
+    const rootUrlWithoutFilename = {
+      ...orphanR2File,
+      url: 'https://r2.example.com'
+    };
+    mockR2Files = [rootUrlWithoutFilename];
+
+    setupHooks({ assets: [] });
+    render(<FilesPageContent activeTab="all" />);
+
+    expect(await screen.findByTestId('files-cards-layout')).toBeInTheDocument();
+    const orphanItem = capturedCardsProps?.items[0];
+    expect(orphanItem).toBeDefined();
+
+    if (!orphanItem) return;
+
+    fireEvent.click(screen.getByText(`delete-${orphanItem.id}`));
+    fireEvent.click(await screen.findByText('confirm-delete'));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Не вдалося визначити файл.');
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+  });
+
   it('keeps an orphan R2 file visible when cloud delete fails', async () => {
     mockR2Files = [orphanR2File];
     mockFetch.mockResolvedValue({
@@ -782,6 +865,19 @@ describe('FilesPageContent', () => {
     });
   });
 
+  it('shows file not found toast when delete target no longer exists', async () => {
+    setupHooks({ assets: [baseAsset] });
+    render(<FilesPageContent activeTab="all" />);
+
+    expect(deleteModalOnConfirm).toBeDefined();
+
+    await act(async () => {
+      await deleteModalOnConfirm?.('missing-file');
+    });
+
+    expect(toast.error).toHaveBeenCalledWith('Файл не знайдено');
+  });
+
   it('downloads a file when download action is triggered and url exists', async () => {
     setupHooks({ assets: [baseAsset] });
     render(<FilesPageContent activeTab="all" />);
@@ -789,7 +885,46 @@ describe('FilesPageContent', () => {
     fireEvent.click(screen.getByText('download-1'));
 
     await waitFor(() => {
-      expect(downloadFile).toHaveBeenCalledWith(baseAsset.url, baseAsset.originalname);
+      expect(downloadFile).toHaveBeenCalledWith(baseAsset.url, baseAsset.filename);
+    });
+  });
+
+  it('downloads an R2 file through the same-origin uploads endpoint', async () => {
+    const r2Asset = {
+      ...baseAsset,
+      url: 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/Test_image_1.jpeg',
+      filename: 'Test_image_1.jpeg',
+      originalname: 'Test_image_1.jpeg'
+    };
+
+    setupHooks({ assets: [r2Asset] });
+    render(<FilesPageContent activeTab="all" />);
+
+    fireEvent.click(screen.getByText('download-1'));
+
+    await waitFor(() => {
+      expect(downloadFile).toHaveBeenCalledWith(
+        '/api/uploads/Test_image_1.jpeg?folder=photos',
+        'Test_image_1.jpeg'
+      );
+    });
+  });
+
+  it('downloads a root R2 file through the same-origin uploads endpoint', async () => {
+    const rootR2Asset = {
+      ...baseAsset,
+      url: 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/root-file.pdf',
+      filename: 'root-file.pdf',
+      originalname: 'root-file.pdf'
+    };
+
+    setupHooks({ assets: [rootR2Asset] });
+    render(<FilesPageContent activeTab="all" />);
+
+    fireEvent.click(screen.getByText('download-1'));
+
+    await waitFor(() => {
+      expect(downloadFile).toHaveBeenCalledWith('/api/uploads/root-file.pdf', 'root-file.pdf');
     });
   });
 
@@ -807,6 +942,75 @@ describe('FilesPageContent', () => {
         }
       });
       expect(refetch).toHaveBeenCalled();
+    });
+  });
+
+  it('rejects file updates when the target file no longer exists', async () => {
+    setupHooks({ assets: [baseAsset] });
+    render(<FilesPageContent activeTab="all" />);
+
+    expect(await screen.findByTestId('files-cards-layout')).toBeInTheDocument();
+    expect(capturedCardsProps).toBeDefined();
+
+    await expect(
+      capturedCardsProps?.onItemToggleStar(
+        {
+          id: 'missing-file',
+          type: 'image',
+          name: 'missing.png',
+          dateAdded: '23.07.2026',
+          isStarred: false,
+          usageLinks: 0,
+          usage: []
+        },
+        true
+      )
+    ).rejects.toThrow('Файл не знайдено');
+  });
+
+  it('throws upload error when lazy orphan asset creation returns no asset', async () => {
+    mockR2Files = [orphanR2File];
+    const createAsset = jest.fn().mockResolvedValue({ data: null });
+
+    setupHooks({ assets: [], createAsset });
+    render(<FilesPageContent activeTab="all" />);
+
+    expect(await screen.findByTestId('files-cards-layout')).toBeInTheDocument();
+    const orphanItem = capturedCardsProps?.items[0];
+    expect(orphanItem).toBeDefined();
+
+    if (!orphanItem || !capturedCardsProps) return;
+
+    await expect(capturedCardsProps.onItemToggleStar(orphanItem, true)).rejects.toThrow(FILES_UPLOAD_FAILED_ERROR);
+  });
+
+  it('updates selected orphan file id after lazy asset creation', async () => {
+    mockR2Files = [orphanR2File];
+    const createAsset = jest.fn().mockResolvedValue({ data: { createAsset: { id: 'created-orphan-id' } } });
+    const updateAsset = jest.fn().mockResolvedValue({ data: { updateAsset: { id: 'created-orphan-id' } } });
+
+    setupHooks({ assets: [], createAsset, updateAsset });
+    render(<FilesPageContent activeTab="all" />);
+
+    expect(await screen.findByTestId('files-cards-layout')).toBeInTheDocument();
+    const orphanItem = capturedCardsProps?.items[0];
+    expect(orphanItem).toBeDefined();
+
+    const cardsProps = capturedCardsProps;
+
+    if (!orphanItem || !cardsProps) return;
+
+    fireEvent.click(screen.getByText(`select-${orphanItem.id}`));
+
+    await act(async () => {
+      await cardsProps.onItemToggleStar(orphanItem, true);
+    });
+
+    expect(updateAsset).toHaveBeenCalledWith({
+      variables: {
+        id: 'created-orphan-id',
+        input: { isStarred: true }
+      }
     });
   });
 

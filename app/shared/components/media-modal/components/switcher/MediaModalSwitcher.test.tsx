@@ -48,6 +48,8 @@ describe('MediaModalSwitcher', () => {
 
     await user.click(screen.getByTestId('MediaModalSwitcher-usedTab'));
     expect(onChange).toHaveBeenCalledWith('USED');
+    await user.click(screen.getByTestId('MediaModalSwitcher-galleryTab'));
+    expect(onChange).toHaveBeenCalledWith('GALLERY');
   });
 
   it('should set correct tabIndex for active/inactive tabs', () => {
@@ -58,5 +60,15 @@ describe('MediaModalSwitcher', () => {
     expect(screen.getByTestId('MediaModalSwitcher-usedTab')).toHaveAttribute('tabindex', '0');
     expect(screen.getByTestId('MediaModalSwitcher-galleryTab')).toHaveAttribute('tabindex', '-1');
     expect(screen.getByTestId('MediaModalSwitcher-uploadTab')).toHaveAttribute('tabindex', '-1');
+  });
+
+  it('should set correct active attributes when value is UPLOAD', () => {
+    const onChange = jest.fn<void, [MediaModalTab]>();
+
+    render(<MediaModalSwitcher value="UPLOAD" onChange={onChange} />);
+
+    expect(screen.getByTestId('MediaModalSwitcher-uploadTab')).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByTestId('MediaModalSwitcher-uploadTab')).toHaveAttribute('tabindex', '0');
+    expect(screen.getByTestId('MediaModalSwitcher-galleryTab')).toHaveAttribute('aria-selected', 'false');
   });
 });

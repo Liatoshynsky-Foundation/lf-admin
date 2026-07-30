@@ -19,7 +19,7 @@ interface PageCardProps {
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
-const FALLBACK_IMAGE_SRC = '/images/image.png';
+const FALLBACK_IMAGE_SRC = 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/about-us-foundation-first.png';
 
 const PageCard = ({ coverImage, title, updatedAt, editHref, editSeoHref, onClick }: PageCardProps) => {
   const titleText = title.uk || title.en || '';

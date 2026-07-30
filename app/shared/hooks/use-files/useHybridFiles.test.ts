@@ -50,7 +50,8 @@ describe('useHybridFiles', () => {
     expect(result.current).toHaveLength(1);
     expect(result.current[0]).toMatchObject({
       id: 'asset-1',
-      name: 'original-photo.jpg',
+      name: 'generated-photo.jpg',
+      originalname: 'original-photo.jpg',
       description: 'Mongo description',
       isStarred: true,
       usageLinks: 1,

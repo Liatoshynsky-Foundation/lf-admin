@@ -9,9 +9,12 @@ import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
 import { DataWeCollectSection } from './DataWeCollectSection';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { ensureIds } from '~/lib/utils/ensureIds';
+import { proseToHeaderText } from '~/lib/utils/prose';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useSectionList } from '~/shared/hooks/use-section-list/useSectionList';
+import { useTitleValidation } from '~/shared/hooks/use-title-validation/useTitleValidation';
 import { useStore } from '~/store';
+import { ProseDoc } from '~/types/common';
 import { DataWeCollectItemWithId } from '~/types/store/pages/privacy-policy';
 
 export const DataWeCollect = () => {
@@ -21,13 +24,23 @@ export const DataWeCollect = () => {
   const { block } = usePageBlock(pageId, blockId);
   const currentLocale = useStore((state) => state.locale);
   const setField = useStore((state) => state.setField);
+  const toggleBlockVisibility = useStore((state) => state.toggleBlockVisibility);
 
   const rawSections = block?.sections || [];
   const sectionsList: DataWeCollectItemWithId[] = ensureIds(rawSections);
 
   const { sections, addListPoint, removeListPoint, updateListPoint, updateSectionSubtitle, updateSectionList } = useSectionList({ blockId, pageId, sectionsList, currentLocale, setField });
 
+  const titleValidation = useTitleValidation(`${pageId}:${blockId}:title`, block?.title?.[currentLocale] as ProseDoc);
+
   if (!block) return <EditBlockSkeleton />;
+
+  const handleChangeTitle = (value: JSONContent) => {
+    setField(pageId, blockId, 'title', {
+      ...block.title,
+      [currentLocale]: value
+    });
+  };
 
   const handleChangeDescription = (value: JSONContent) => {
     setField(pageId, blockId, 'description', {
@@ -43,8 +56,26 @@ export const DataWeCollect = () => {
     });
   };
 
+  const headerTitle = proseToHeaderText(block.title?.[currentLocale] as ProseDoc, 'Які дані ми збираємо та чому');
+
   return (
-    <CollapsibleBlock title="Які дані ми збираємо та чому" grip>
+    <CollapsibleBlock
+      title={headerTitle}
+      grip
+      hidden={block.hidden}
+      onToggleVisibility={() => toggleBlockVisibility(pageId, blockId)}
+    >
+      <CustomTextField
+        fieldType="formatting"
+        title="Заголовок секції"
+        label="Текст заголовку"
+        value={block.title?.[currentLocale]}
+        onChange={handleChangeTitle}
+        onBlur={titleValidation.onBlur}
+        error={titleValidation.error}
+        helperText={titleValidation.helperText}
+      />
+
       <CustomTextField
         fieldType="formatting"
         title="Вступний текст секції"

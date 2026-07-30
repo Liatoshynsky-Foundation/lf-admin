@@ -39,6 +39,7 @@ export type EditPublicationsViewProps = {
   onDeleteConfirm: () => void;
   onSeoClick: () => void;
   onBackClick: () => void;
+  onPreview?: () => void;
 };
 
 export function EditPublicationsView({
@@ -53,7 +54,8 @@ export function EditPublicationsView({
   onAction,
   onDeleteConfirm,
   onBackClick,
-  onSeoClick
+  onSeoClick,
+  onPreview
 }: Readonly<EditPublicationsViewProps>) {
   const [anchors, setAnchors] = useState<MenuAnchor>({
     navigation: null,
@@ -86,6 +88,7 @@ export function EditPublicationsView({
         rightActionsComponent={
           <HeaderRightActions
             mode={type === 'media' ? 'seo' : 'edit'}
+            onPreview={onPreview}
             onMenuOpen={(e) => handleOpen(e, 'publish')}
             onPublish={() => handlePublishActionClick(MenuActionId.PUBLISH)}
           />

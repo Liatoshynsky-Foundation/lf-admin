@@ -96,11 +96,7 @@ export default function PublicatiosSeoPage() {
       <DividedHeader
         originUrl={PUBLICATIONS_BASE_PATH}
         rightActionsComponent={
-          <HeaderRightActions
-            mode="seo"
-            onPublish={handlePublish}
-            onMenuOpen={handleOpenPublish}
-          />
+          <HeaderRightActions mode="seo" onPublish={handlePublish} onMenuOpen={handleOpenPublish} />
         }
       >
         <TitleDropdown

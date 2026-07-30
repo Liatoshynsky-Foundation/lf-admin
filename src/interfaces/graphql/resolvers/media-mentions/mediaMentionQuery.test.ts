@@ -2,7 +2,7 @@ import { MediaMentionsQuery } from './mediaMentionQuery';
 import type { IMediaMentionsRepository } from '~/domain/repositories/mediaMentionsRepository';
 import { createMockContext } from '~/interfaces/graphql/resolvers/testUtils';
 import { MediaStatus, SortOrder } from '~/types/enums/common.enums';
-import { type MediaMentionsFiltersInput,MediaMentionsSortBy } from '~/types/graphql/generated/graphql';
+import { type MediaMentionsFiltersInput, MediaMentionsSortBy } from '~/types/graphql/generated/graphql';
 
 jest.mock('mongoose');
 jest.mock('~/infrastructure/models/imageCrop.model');
@@ -31,9 +31,11 @@ describe('MediaMentionsQuery Resolvers', () => {
 
     await MediaMentionsQuery.allMediaMentions({}, args, context);
 
-    expect(mockRepo.findAll).toHaveBeenCalledWith(expect.objectContaining({
-      sort: [{ sortBy: 'adminTitle', sortOrder: SortOrder.Desc }]
-    }));
+    expect(mockRepo.findAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sort: [{ sortBy: 'adminTitle', sortOrder: SortOrder.Desc }]
+      })
+    );
   });
 
   it('paginatedMediaMentions: should pass correct page and limit', async () => {
@@ -63,8 +65,30 @@ describe('MediaMentionsQuery Resolvers', () => {
 
     await MediaMentionsQuery.publishedMediaMentions({}, args, context);
 
-    expect(mockRepo.findAll).toHaveBeenCalledWith(expect.objectContaining({
-      statuses: [MediaStatus.Published]
-    }));
+    expect(mockRepo.findAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statuses: [MediaStatus.Published]
+      })
+    );
+  });
+
+  it('mediaMentionById: should find media mention by id', async () => {
+    const id = 'test-id';
+    await MediaMentionsQuery.mediaMentionById({}, { id }, context);
+
+    expect(mockRepo.findById).toHaveBeenCalledWith(id);
+  });
+
+  it('mediaMentionBySlug: should find media mention by slug', async () => {
+    const slug = 'test-slug';
+    await MediaMentionsQuery.mediaMentionBySlug({}, { slug }, context);
+
+    expect(mockRepo.findBySlug).toHaveBeenCalledWith(slug);
+  });
+
+  it('mediaMentionsCount: should handle undefined status', async () => {
+    await MediaMentionsQuery.mediaMentionsCount({}, {}, context);
+
+    expect(mockRepo.count).toHaveBeenCalledWith(undefined);
   });
 });

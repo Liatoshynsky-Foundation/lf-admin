@@ -1,3 +1,5 @@
+/* istanbul ignore file */
+
 export * from './errors';
 export type { StorageAdapter, StorageConfig, StorageType } from './storage';
 export * from './storage';

@@ -7,7 +7,7 @@ import { EditAction } from './EditAction';
 import { styles } from './RowActions.styles';
 
 type RowActionsProps = Readonly<{
-  editAction?: { editHref: string; editLabel: string };
+  editAction?: { editHref?: string; editLabel: string; onEditClick?: () => void };
   menuActions?: { menuItems: ActionMenuGroups; menuTriggerLabel: string };
 }>;
 
@@ -16,7 +16,9 @@ export function RowActions({ editAction, menuActions }: RowActionsProps) {
 
   return (
     <Box sx={styles.rowActionsCell}>
-      {editAction && <EditAction href={editAction.editHref} label={editAction.editLabel} />}
+      {editAction && (
+        <EditAction href={editAction.editHref} label={editAction.editLabel} onClick={editAction.onEditClick} />
+      )}
       {menuActions && <ContextMenu items={menuActions.menuItems} triggerLabel={menuActions.menuTriggerLabel} />}
     </Box>
   );

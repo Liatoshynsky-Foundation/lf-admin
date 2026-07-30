@@ -1,0 +1,183 @@
+import { WorksFilter } from '../opusQuery';
+import { handleGroup } from './handleGroup';
+import { attachCompositionsToGroups, mappedGroups, totalGroups, totalPages } from './tabHandlersHelpers';
+import { ICompositionRepository } from '~/src/domain/repositories/compositionRepository';
+import { IOpusRepository } from '~/src/domain/repositories/opusRepository';
+import { WorksTab } from '~/types/graphql/generated/graphql';
+
+jest.mock('./tabHandlersHelpers', () => ({
+  mappedGroups: jest.fn(),
+  totalGroups: jest.fn(),
+  attachCompositionsToGroups: jest.fn(),
+  totalPages: jest.fn((total: number, pageSize: number) => Math.ceil(total / pageSize)),
+}));
+
+type MappedGroupsResult = Awaited<ReturnType<typeof mappedGroups>>;
+type TotalGroupsResult = Awaited<ReturnType<typeof totalGroups>>;
+type AttachResult = Awaited<ReturnType<typeof attachCompositionsToGroups>>;
+
+describe('handleGroup', () => {
+  const MOCK_GROUPS = [{ id: '1', number: 'op.1' }, { id: '2', number: 'op.2' }];
+  const MOCK_ATTACHED_GROUPS = [
+    { id: '1', number: 'op.1', compositions: [{ id: 'c1' }] },
+    { id: '2', number: 'op.2', compositions: [] },
+  ];
+  const MOCK_FILTERS: WorksFilter = { search: 'test' };
+  const DEFAULT_PAGE = 1;
+  const DEFAULT_PAGE_SIZE = 10;
+  const EXPECTED_SKIP = 0;
+  const TOTAL_ITEMS = 2;
+
+  const mockMappedGroups = mappedGroups as jest.MockedFunction<typeof mappedGroups>;
+  const mockTotalGroups = totalGroups as jest.MockedFunction<typeof totalGroups>;
+  const mockAttachCompositionsToGroups = attachCompositionsToGroups as jest.MockedFunction<
+    typeof attachCompositionsToGroups
+  >;
+  const mockTotalPages = totalPages as jest.MockedFunction<typeof totalPages>;
+
+  const repoMock = {} as jest.Mocked<IOpusRepository>;
+  const compositionsRepoMock = {} as jest.Mocked<ICompositionRepository>;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    mockMappedGroups.mockResolvedValue(MOCK_GROUPS as unknown as MappedGroupsResult);
+    mockTotalGroups.mockResolvedValue(TOTAL_ITEMS as unknown as TotalGroupsResult);
+    mockAttachCompositionsToGroups.mockResolvedValue(
+      MOCK_ATTACHED_GROUPS as unknown as AttachResult
+    );
+  });
+
+  it('should return opus groups with compositions', async () => {
+    const result = await handleGroup(
+      WorksTab.Op,
+      repoMock,
+      compositionsRepoMock,
+      undefined,
+      DEFAULT_PAGE,
+      DEFAULT_PAGE_SIZE
+    );
+
+    expect(mockMappedGroups).toHaveBeenCalledWith(
+      repoMock,
+      WorksTab.Op,
+      undefined,
+      EXPECTED_SKIP,
+      DEFAULT_PAGE_SIZE
+    );
+    expect(mockTotalGroups).toHaveBeenCalledWith(repoMock, WorksTab.Op, undefined);
+    expect(mockAttachCompositionsToGroups).toHaveBeenCalledWith(
+      MOCK_GROUPS,
+      compositionsRepoMock
+    );
+    expect(mockTotalPages).toHaveBeenCalledWith(TOTAL_ITEMS, DEFAULT_PAGE_SIZE);
+
+    expect(result).toEqual({
+      groups: MOCK_ATTACHED_GROUPS,
+      works: [],
+      total: TOTAL_ITEMS,
+      page: DEFAULT_PAGE,
+      totalPages: 1,
+    });
+  });
+
+  it('should process Sineop tab correctly', async () => {
+    mockMappedGroups.mockResolvedValue([] as unknown as MappedGroupsResult);
+    mockTotalGroups.mockResolvedValue(0 as unknown as TotalGroupsResult);
+    mockAttachCompositionsToGroups.mockResolvedValue([] as unknown as AttachResult);
+
+    const result = await handleGroup(
+      WorksTab.Sineop,
+      repoMock,
+      compositionsRepoMock,
+      undefined,
+      DEFAULT_PAGE,
+      DEFAULT_PAGE_SIZE
+    );
+
+    expect(mockMappedGroups).toHaveBeenCalledWith(
+      repoMock,
+      WorksTab.Sineop,
+      undefined,
+      EXPECTED_SKIP,
+      DEFAULT_PAGE_SIZE
+    );
+    expect(mockTotalGroups).toHaveBeenCalledWith(repoMock, WorksTab.Sineop, undefined);
+    expect(result.groups).toEqual([]);
+    expect(result.total).toBe(0);
+  });
+
+  it('should return empty groups when mappedGroups returns no items', async () => {
+    mockMappedGroups.mockResolvedValue([] as unknown as MappedGroupsResult);
+    mockTotalGroups.mockResolvedValue(0 as unknown as TotalGroupsResult);
+    mockAttachCompositionsToGroups.mockResolvedValue([] as unknown as AttachResult);
+
+    const result = await handleGroup(
+      WorksTab.Op,
+      repoMock,
+      compositionsRepoMock,
+      undefined,
+      DEFAULT_PAGE,
+      DEFAULT_PAGE_SIZE
+    );
+
+    expect(result).toEqual({
+      groups: [],
+      works: [],
+      total: 0,
+      page: DEFAULT_PAGE,
+      totalPages: 0,
+    });
+  });
+
+  it('should calculate totalPages accurately for pagination', async () => {
+    const page = 3;
+    const pageSize = 10;
+    const total = 21;
+    const expectedSkip = 20;
+
+    mockMappedGroups.mockResolvedValue([] as unknown as MappedGroupsResult);
+    mockTotalGroups.mockResolvedValue(total as unknown as TotalGroupsResult);
+    mockAttachCompositionsToGroups.mockResolvedValue([] as unknown as AttachResult);
+
+    const result = await handleGroup(
+      WorksTab.Op,
+      repoMock,
+      compositionsRepoMock,
+      undefined,
+      page,
+      pageSize
+    );
+
+    expect(mockMappedGroups).toHaveBeenCalledWith(
+      repoMock,
+      WorksTab.Op,
+      undefined,
+      expectedSkip,
+      pageSize
+    );
+    expect(mockTotalPages).toHaveBeenCalledWith(total, pageSize);
+    expect(result.page).toBe(page);
+    expect(result.totalPages).toBe(3);
+  });
+
+  it('should pass filters to mappedGroups and totalGroups helpers', async () => {
+    await handleGroup(
+      WorksTab.Op,
+      repoMock,
+      compositionsRepoMock,
+      MOCK_FILTERS,
+      DEFAULT_PAGE,
+      DEFAULT_PAGE_SIZE
+    );
+
+    expect(mockMappedGroups).toHaveBeenCalledWith(
+      repoMock,
+      WorksTab.Op,
+      MOCK_FILTERS,
+      EXPECTED_SKIP,
+      DEFAULT_PAGE_SIZE
+    );
+    expect(mockTotalGroups).toHaveBeenCalledWith(repoMock, WorksTab.Op, MOCK_FILTERS);
+  });
+});

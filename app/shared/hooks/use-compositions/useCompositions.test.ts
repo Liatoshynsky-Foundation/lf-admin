@@ -1,18 +1,11 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { toSuggestionAudio, toSuggestionNote, useAllCompositions, useCompositionsForm } from './useCompositions';
-import { CompositionFiltersInput, useAllCompositionsQuery } from '~/types/graphql/generated/graphql';
+import { toSuggestionAudio, toSuggestionNote, useCompositionsForm } from './useCompositions';
 import { OpusCompositionData, OpusCompositionSuggestion } from '~/types/opus';
 
-jest.mock('~/shared/hooks/use-group-content/useGroupContent', () => ({
+jest.mock('../use-upsert-opus/useUpsertOpus', () => ({
   createCompositionId: jest.fn(() => 'mocked-id')
 }));
-
-jest.mock('~/types/graphql/generated/graphql', () => ({
-  useAllCompositionsQuery: jest.fn()
-}));
-
-const mockedUseAllCompositionsQuery = jest.mocked(useAllCompositionsQuery);
 
 describe('useCompositions helpers', () => {
   it('toSuggestionAudio formats audio correctly', () => {
@@ -35,7 +28,7 @@ describe('useCompositions helpers', () => {
   });
 
   it('toSuggestionAudio handles missing url and missing name', () => {
-    const audio = { name: undefined, url: undefined } as any;
+    const audio = { name: undefined, url: undefined } as never;
     expect(toSuggestionAudio(audio)).toEqual({
       id: 'mocked-id',
       name: '',
@@ -44,7 +37,7 @@ describe('useCompositions helpers', () => {
   });
 
   it('toSuggestionNote handles missing publishDate and url', () => {
-    const note = { name: 'Note without date', url: undefined, publishDate: undefined } as any;
+    const note = { name: 'Note without date', url: undefined, publishDate: undefined } as never;
     expect(toSuggestionNote(note)).toEqual({
       id: 'mocked-id',
       name: 'Note without date',
@@ -57,17 +50,12 @@ describe('useCompositions helpers', () => {
 describe('useCompositions Hook', () => {
   const mockOnChange = jest.fn();
   const defaultWorks: OpusCompositionData[] = [
-    { id: '1', title: 'Симфонія №1', genre: '', year: '', audios: [], notes: [] },
-    { id: '2', title: 'Соната', genre: '', year: '', audios: [], notes: [] }
+    { id: '1', name: 'Симфонія №1', genre: '', year: '', audios: [], notes: [] },
+    { id: '2', name: 'Соната', genre: '', year: '', audios: [], notes: [] }
   ];
 
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.spyOn(Date, 'now').mockImplementation(() => 1234567890);
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
   });
 
   it('adds a new empty composition', () => {
@@ -80,8 +68,8 @@ describe('useCompositions Hook', () => {
     expect(mockOnChange).toHaveBeenCalledTimes(1);
     const updatedWorks = mockOnChange.mock.calls[0][0];
     expect(updatedWorks).toHaveLength(3);
-    expect(updatedWorks[2].id).toBe('composition-1234567890');
-    expect(updatedWorks[2].title).toBe('');
+    expect(updatedWorks[2].id).toBe('mocked-id');
+    expect(updatedWorks[2].name).toBe('');
   });
 
   it('updates composition title', () => {
@@ -92,7 +80,7 @@ describe('useCompositions Hook', () => {
     });
 
     const updatedWorks = mockOnChange.mock.calls[0][0];
-    expect(updatedWorks[0].title).toBe('Нова Симфонія');
+    expect(updatedWorks[0].name).toBe('Нова Симфонія');
   });
 
   it('fills composition data from partial suggestion', () => {
@@ -100,7 +88,7 @@ describe('useCompositions Hook', () => {
 
     const suggestion: OpusCompositionSuggestion = {
       id: 'suggestion-partial',
-      title: { en: 'English Title' },
+      name: { en: 'English Title' },
       genre: undefined,
       year: null as unknown as number,
       audios: [{ name: 'CustomAudio.mp3', url: undefined }],
@@ -112,7 +100,7 @@ describe('useCompositions Hook', () => {
     });
 
     const updatedWorks = mockOnChange.mock.calls[0][0];
-    expect(updatedWorks[0].title).toBe('English Title');
+    expect(updatedWorks[0].name).toBe('English Title');
     expect(updatedWorks[0].genre).toBe('');
     expect(updatedWorks[0].audios[0].name).toBe('CustomAudio.mp3');
   });
@@ -125,7 +113,7 @@ describe('useCompositions Hook', () => {
     });
 
     const updatedWorks = mockOnChange.mock.calls[0][0];
-    expect(updatedWorks[0].title).toBe('');
+    expect(updatedWorks[0].name).toBe('');
     expect(updatedWorks[0].audios).toEqual([]);
   });
 
@@ -159,11 +147,11 @@ describe('useCompositions Hook', () => {
     });
 
     act(() => {
-      result.current.handleModalSubmit({ ...defaultWorks[1], title: 'Оновлено' });
+      result.current.handleModalSubmit({ ...defaultWorks[1], name: 'Оновлено' });
     });
 
     const updatedWorks = mockOnChange.mock.calls[0][0];
-    expect(updatedWorks[1].title).toBe('Оновлено');
+    expect(updatedWorks[1].name).toBe('Оновлено');
     expect(result.current.isModalOpen).toBe(false);
   });
 
@@ -189,9 +177,9 @@ describe('useCompositions Hook', () => {
 
     const suggestion: OpusCompositionSuggestion = {
       id: 'sugg-full',
-      title: { uk: 'Українська назва', en: 'English' },
+      name: { uk: 'Українська назва', en: 'English' },
       genre: 'Симфонія',
-      year: 2024 
+      year: 2024
     };
 
     act(() => {
@@ -199,7 +187,7 @@ describe('useCompositions Hook', () => {
     });
 
     const updatedWorks = mockOnChange.mock.calls[0][0];
-    expect(updatedWorks[0].title).toBe('Українська назва');
+    expect(updatedWorks[0].name).toBe('Українська назва');
     expect(updatedWorks[0].genre).toBe('Симфонія');
     expect(updatedWorks[0].year).toBe('2024');
   });
@@ -208,7 +196,7 @@ describe('useCompositions Hook', () => {
     const { result } = renderHook(() => useCompositionsForm(defaultWorks, mockOnChange));
 
     act(() => {
-      result.current.handleModalSubmit({ id: 'new-id', title: 'test', genre: '', year: '', audios: [], notes: [] });
+      result.current.handleModalSubmit({ id: 'new-id', name: 'test', genre: '', year: '', audios: [], notes: [] });
     });
 
     const updatedWorks = mockOnChange.mock.calls[0][0];
@@ -225,78 +213,5 @@ describe('useCompositions Hook', () => {
 
     expect(mockOnChange).not.toHaveBeenCalled();
     expect(result.current.deleteTargetId).toBeNull();
-  });
-});
-
-describe('useAllCompositions', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockedUseAllCompositionsQuery.mockReturnValue({ data: undefined } as ReturnType<typeof useAllCompositionsQuery>);
-  });
-
-  it('calls query with standalone filter', () => {
-    renderHook(() => useAllCompositions());
-
-    expect(mockedUseAllCompositionsQuery).toHaveBeenCalledWith({
-      variables: {
-        filters: {
-          isStandalone: true
-        }
-      },
-      fetchPolicy: 'network-only',
-      skip: undefined
-    });
-  });
-
-  it('merges provided filters', () => {
-    const filters: CompositionFiltersInput = {
-      search: 'Symphony'
-    };
-
-    renderHook(() => useAllCompositions(filters));
-
-    expect(mockedUseAllCompositionsQuery).toHaveBeenCalledWith({
-      variables: {
-        filters: {
-          ...filters,
-          isStandalone: true
-        }
-      },
-      fetchPolicy: 'network-only',
-      skip: undefined
-    });
-  });
-
-  it('passes skip option', () => {
-    renderHook(() => useAllCompositions(undefined, { skip: true }));
-
-    expect(mockedUseAllCompositionsQuery).toHaveBeenCalledWith({
-      variables: {
-        filters: {
-          isStandalone: true
-        }
-      },
-      fetchPolicy: 'network-only',
-      skip: true
-    });
-  });
-
-  it('overrides isStandalone to true even if false is passed', () => {
-    const filters: CompositionFiltersInput = {
-      isStandalone: false
-    };
-
-    renderHook(() => useAllCompositions(filters));
-
-    expect(mockedUseAllCompositionsQuery).toHaveBeenCalledWith({
-      variables: {
-        filters: {
-          ...filters,
-          isStandalone: true
-        }
-      },
-      fetchPolicy: 'network-only',
-      skip: undefined
-    });
   });
 });

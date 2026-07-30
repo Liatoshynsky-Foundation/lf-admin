@@ -20,7 +20,9 @@ import { OpusRepository } from '~/infrastructure/repositories/opusRepository/opu
 import { PageRepository } from '~/infrastructure/repositories/pageRepository/pageRepository';
 import { RateLimitRepository } from '~/infrastructure/repositories/rateLimitRepository/rateLimitRepository';
 import { RefreshTokenRepository } from '~/infrastructure/repositories/refreshTokenRepository/refreshTokenRepository';
+import FondModel from '~/src/infrastructure/models/fond.model';
 import { MediaMentionModel } from '~/src/infrastructure/models/mediaMention.model';
+import { FondRepository } from '~/src/infrastructure/repositories/fondRepository/fondRepository';
 
 export type RepositoriesModule = {
   assetsRepository: ReturnType<typeof AssetRepository>;
@@ -33,6 +35,7 @@ export type RepositoriesModule = {
   rateLimitRepository: ReturnType<typeof RateLimitRepository>;
   opusRepository: ReturnType<typeof OpusRepository>;
   compositionsRepository: ReturnType<typeof CompositionRepository>;
+  fondRepository: ReturnType<typeof FondRepository>;
 };
 
 export const registerRepositories = (container: AwilixContainer) => {
@@ -47,6 +50,7 @@ export const registerRepositories = (container: AwilixContainer) => {
     CompositionModel: asValue(CompositionModel),
     GenreModel: asValue(GenreModel),
     CategoryModel: asValue(CategoryModel),
+    FondModel: asValue(FondModel),
 
     RateLimitModel: asValue(RateLimit),
 
@@ -60,6 +64,7 @@ export const registerRepositories = (container: AwilixContainer) => {
     opusRepository: asFunction(OpusRepository).scoped(),
     compositionsRepository: asFunction(CompositionRepository).scoped(),
     assetsRepository: asFunction(AssetRepository).scoped(),
-    rateLimitRepository: asFunction(RateLimitRepository).scoped()
+    rateLimitRepository: asFunction(RateLimitRepository).scoped(),
+    fondRepository: asFunction(FondRepository).scoped()
   });
 };

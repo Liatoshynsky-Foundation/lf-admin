@@ -3,15 +3,26 @@
 import { Box } from '@mui/material';
 import React from 'react';
 
+import { useWorksTableActions } from './useWorksTableActions';
 import { styles } from './WorksTable.styles';
 import { GroupMenuItems, WorkMenuItems } from './WorksTableMenuItems';
-import { WORKS_BASE_PATH, WorksStatusValue } from '~/constants/creativity';
+import {
+  AllTab,
+  OpusTab,
+  SineopTab,
+  WORKS_BASE_PATH,
+  WORKS_TABS_NAMES,
+  WorksStatusValue,
+  WorksTab
+} from '~/constants/creativity';
+import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
 import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import { RowActions } from '~/shared/components/table-layout/components/RowActions';
 import { StatusBadge } from '~/shared/components/table-layout/components/StatusBadge';
 import { BaseRowData, ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
+import { OpusStatus } from '~/types/graphql/generated/graphql';
 
 type ActionFields = {
   editAction?: { editHref: string; editLabel: string };
@@ -20,19 +31,21 @@ type ActionFields = {
 
 export type GroupRowData = Readonly<{
   id: string;
-  numberLabel: string;
-  title: string;
+  number: number;
+  numberKind: 'op' | 'sineop';
+  name: string;
   genre: string;
   startDate: string;
   endDate?: string;
   status: WorksStatusValue;
   updatedAt: string;
-  works: ReadonlyArray<{ id: string; title: string }>;
+  compositions: ReadonlyArray<{ id: string; name: string }>;
 }>;
 
 export type GroupHeaderData = Readonly<{
-  numberLabel: string;
-  title: string;
+  numberLabel: number;
+  numberKind: 'op' | 'sineop';
+  name: string;
   genre: string;
   startDate: string;
   endDate?: string;
@@ -43,15 +56,15 @@ export type GroupHeaderData = Readonly<{
 
 export type OpusWork = Readonly<{
   id: string;
-  title: string;
+  name: string;
 }> &
   ActionFields;
 
 export type IndividualWork = Readonly<{
   id: string;
-  title: string;
-  year: string;
-  genre: string;
+  name: string;
+  year: string | number | null | undefined;
+  genre: string | null | undefined;
   status: WorksStatusValue;
   updatedAt: string;
 }> &
@@ -63,17 +76,17 @@ export const columns: readonly ColumnDef<GroupHeaderData, OpusWork, IndividualWo
   {
     id: 'opus',
     headerLabel: 'Опуси',
-    width: '88px',
+    width: '128px',
     hasRightDivider: true,
-    renderGroup: (group) => group.numberLabel
+    renderGroup: (group) => `${group.numberKind === 'op' ? 'op.' : 'sine op.'} ${group.numberLabel}`
   },
   {
     id: 'title',
     headerLabel: 'Назва',
     width: 'minmax(220px, 1fr)',
-    renderGroup: (group) => group.title,
-    renderSub: (work) => work.title,
-    renderPlain: (work) => work.title
+    renderGroup: (group) => group.name,
+    renderSub: (work) => work.name,
+    renderPlain: (work) => work.name
   },
   {
     id: 'genre',
@@ -111,23 +124,38 @@ export const columns: readonly ColumnDef<GroupHeaderData, OpusWork, IndividualWo
   }
 ];
 
-type WorksTableProps = Readonly<{
-  visibleOpusGroups: readonly GroupRowData[];
-  visibleUngroupedGroups: readonly GroupRowData[];
-  visibleUngroupedWorks: readonly IndividualWork[];
-  showOpus: boolean;
-  showUngrouped: boolean;
-  showIndividualWorks: boolean;
+type GroupItems = Readonly<{
+  groups: GroupRowData[];
 }>;
 
-export function WorksTable({
-  visibleOpusGroups,
-  visibleUngroupedGroups,
-  visibleUngroupedWorks,
-  showOpus,
-  showUngrouped,
-  showIndividualWorks
-}: WorksTableProps) {
+type WorksItems = Readonly<{
+  works: IndividualWork[];
+}>;
+
+type AllItems = GroupItems & WorksItems;
+
+type WorksTableProps =
+  | {
+      activeTab: AllTab;
+      items: AllItems;
+    }
+  | {
+      activeTab: OpusTab;
+      items: GroupItems;
+    }
+  | {
+      activeTab: SineopTab;
+      items: GroupItems;
+    }
+  | {
+      activeTab: WorksTab;
+      items: WorksItems;
+    };
+
+export function WorksTable({ items, activeTab }: WorksTableProps) {
+  const { groupToUngroup, setGroupToUngroup, handlePublishStatusChange, handleConfirmUngroup, handleShareGroup } =
+    useWorksTableActions();
+
   function groupsRow(group: GroupRowData): BaseRowData<GroupHeaderData, OpusWork, IndividualWork> {
     const isPublished = group.status === BaseContentStatuses.Published;
 
@@ -135,8 +163,9 @@ export function WorksTable({
       type: 'group',
       id: group.id,
       groupData: {
-        numberLabel: group.numberLabel,
-        title: group.title,
+        numberLabel: group.number,
+        numberKind: group.numberKind,
+        name: group.name,
         genre: group.genre,
         startDate: group.startDate,
         endDate: group.endDate,
@@ -144,28 +173,30 @@ export function WorksTable({
         updatedAt: group.updatedAt,
         editAction: {
           editHref: `${WORKS_BASE_PATH}/group/${group.id}/edit`,
-          editLabel: `Редагувати групу ${group.title}`
+          editLabel: `Редагувати групу ${group.name}`
         },
         menuActions: {
           menuItems: GroupMenuItems({
             id: group.id,
             isPublished,
-            setHideModalOpen: modalMock,
-            setPublicationModalOpen: modalMock
+            onPublish: (id) => handlePublishStatusChange(id, OpusStatus.Published),
+            onUnpublish: (id) => handlePublishStatusChange(id, OpusStatus.Draft),
+            onUngroup: (id) => setGroupToUngroup(id),
+            onShare: (id) => handleShareGroup(id)
           }),
-          menuTriggerLabel: `Дії групи ${group.title}`
+          menuTriggerLabel: `Дії групи ${group.name}`
         }
       },
-      subRows: group.works.map((work) => ({
+      subRows: group.compositions.map((work) => ({
         id: work.id,
-        title: work.title,
+        name: work.name,
         menuActions: {
           menuItems: WorkMenuItems({
             id: work.id,
             isPublished,
             setDeleteModalOpen: modalMock
           }),
-          menuTriggerLabel: `Дії твору ${work.title}`
+          menuTriggerLabel: `Дії твору ${work.name}`
         }
       }))
     };
@@ -179,14 +210,14 @@ export function WorksTable({
       id: work.id,
       plainData: {
         id: work.id,
-        title: work.title,
+        name: work.name,
         genre: work.genre,
         year: work.year,
         status: work.status,
         updatedAt: work.updatedAt,
         editAction: {
           editHref: `${WORKS_BASE_PATH}/work/${work.id}/edit`,
-          editLabel: `Редагувати твір ${work.title}`
+          editLabel: `Редагувати твір ${work.name}`
         },
         menuActions: {
           menuItems: WorkMenuItems({
@@ -194,7 +225,7 @@ export function WorksTable({
             isPublished,
             setDeleteModalOpen: modalMock
           }),
-          menuTriggerLabel: `Дії твору ${work.title}`
+          menuTriggerLabel: `Дії твору ${work.name}`
         }
       }
     };
@@ -208,18 +239,33 @@ export function WorksTable({
     });
   };
 
-  if (showOpus) pushGroupRows(visibleOpusGroups);
-  if (showUngrouped) pushGroupRows(visibleUngroupedGroups);
+  switch (activeTab) {
+  case WORKS_TABS_NAMES.ALL:
+    pushGroupRows(items.groups);
+    items.works.forEach((work) => rows.push(individualWorkRow(work)));
+    break;
 
-  if (showIndividualWorks) {
-    visibleUngroupedWorks.forEach((work) => {
-      rows.push(individualWorkRow(work));
-    });
+  case WORKS_TABS_NAMES.OPUS:
+  case WORKS_TABS_NAMES.SINEOP:
+    pushGroupRows(items.groups);
+    break;
+
+  case WORKS_TABS_NAMES.WORKS:
+    items.works.forEach((work) => rows.push(individualWorkRow(work)));
+    break;
   }
 
   return (
     <Box sx={styles.worksListContainer}>
       <TableLayout data={rows} columns={columns} />
+      <DeleteCardModal
+        open={!!groupToUngroup}
+        onClose={() => setGroupToUngroup(null)}
+        onDelete={handleConfirmUngroup}
+        title="Підтвердити розгрупування"
+        confirmButtonText="Розгрупувати"
+        description="Ви впевнені, що хочете розгрупувати групу? Опис сторінки буде видалено, але композиції залишаться в системі."
+      />
     </Box>
   );
 }

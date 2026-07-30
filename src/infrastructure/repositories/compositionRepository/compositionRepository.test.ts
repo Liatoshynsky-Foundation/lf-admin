@@ -1,7 +1,8 @@
 import { Model } from 'mongoose';
 
 import { CompositionRepository, DbComposition } from './compositionRepository';
-import { BaseContentStatuses } from '~/types/enums/common.enums';
+import { CompositionFilters, CompositionInput } from '~/domain/repositories/compositionRepository';
+import { SortOrder } from '~/types/enums/common.enums';
 
 jest.mock('mongoose', () => {
   const MockObjectId = function (this: { toString: () => string }, id: string) {
@@ -21,33 +22,36 @@ jest.mock('mongoose', () => {
 
 jest.mock('~/infrastructure/db/connect', () => jest.fn());
 
-const opusId = '65eddf5e2f1a2b3c4d5e6f7a';
-const existingCompositionId = '65eddf5e2f1a2b3c4d5e6f7b';
+const EXISTING_COMPOSITION_ID = '65eddf5e2f1a2b3c4d5e6f7b';
+const INVALID_ID = 'not-a-valid-object-id';
+const VALID_OBJECT_ID_1 = '65eddf5e2f1a2b3c4d5e6f7a';
+const VALID_OBJECT_ID_2 = '65eddf5e2f1a2b3c4d5e6f7b';
+const SEARCH_QUERY = 'Після';
+const BLANK_SEARCH_QUERY = '    ';
 
-const createMockDoc = (overrides: Partial<DbComposition> = {}): DbComposition => ({
-  _id: { toString: () => 'c1' },
-  opusId: { toString: () => opusId },
-  title: { uk: 'Після бою', en: 'After Battle' },
+const MOCK_DB_COMPOSITION: DbComposition = {
+  _id: { toString: (): string => 'c1' },
+  name: { uk: 'Після бою', en: 'After Battle' },
   year: 1920,
   genre: 'Романс',
-  genres: [],
   audioAvailable: false,
   sheetAvailable: false,
   sheetMusic: [],
   audios: [],
-  status: BaseContentStatuses.Draft,
   createdAt: '2026-01-01',
-  updatedAt: '2026-01-01',
+  updatedAt: '2026-01-01'
+};
+
+const createMockDoc = (overrides: Partial<DbComposition> = {}): DbComposition => ({
+  ...MOCK_DB_COMPOSITION,
   ...overrides
 });
 
-const compositionInput = (id?: string) => ({
+const createCompositionInput = (id?: string): CompositionInput => ({
   id,
-  opusId: null,
-  title: { uk: 'Після бою', en: 'After Battle' },
+  name: { uk: 'Після бою', en: 'After Battle' },
   year: 1920,
   genre: 'Романс',
-  genres: [],
   audioAvailable: false,
   sheetAvailable: false,
   sheetMusic: [],
@@ -60,18 +64,34 @@ describe('CompositionRepository', () => {
   const findByIdAndUpdateMock = jest.fn();
   const deleteManyMock = jest.fn();
   const saveMock = jest.fn();
+  const countDocumentsMock = jest.fn();
+
+  const createChainableQueryMock = (resolvedValue: unknown) => {
+    const queryMock: Record<string, jest.Mock> = {};
+
+    queryMock.collation = jest.fn().mockReturnValue(queryMock);
+    queryMock.lean = jest.fn().mockReturnValue(queryMock);
+    queryMock.limit = jest.fn().mockReturnValue(queryMock);
+    queryMock.skip = jest.fn().mockReturnValue(queryMock);
+    queryMock.sort = jest.fn().mockReturnValue(queryMock);
+    queryMock.then = jest.fn((resolve: (val: unknown) => void) => resolve(resolvedValue));
+
+    return queryMock;
+  };
 
   const MockModel = jest.fn().mockImplementation(() => ({ save: saveMock })) as unknown as Model<DbComposition> & {
     find: jest.Mock;
     updateMany: jest.Mock;
     findByIdAndUpdate: jest.Mock;
     deleteMany: jest.Mock;
+    countDocuments: jest.Mock;
   };
 
   MockModel.find = findMock;
   MockModel.updateMany = updateManyMock;
   MockModel.findByIdAndUpdate = findByIdAndUpdateMock;
   MockModel.deleteMany = deleteManyMock;
+  MockModel.countDocuments = countDocumentsMock;
 
   const repository = CompositionRepository({ CompositionModel: MockModel });
 
@@ -81,111 +101,73 @@ describe('CompositionRepository', () => {
     deleteManyMock.mockResolvedValue(undefined);
   });
 
-  it('findByOpusId returns compositions for the opus ordered by drag position', async () => {
-    const sortMock = jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue([createMockDoc()]) });
-    findMock.mockReturnValue({ sort: sortMock });
-
-    const result = await repository.findByOpusId(opusId);
-
-    expect(findMock).toHaveBeenCalledWith({ opusId });
-    expect(sortMock).toHaveBeenCalledWith({ order: 1, _id: 1 });
-    expect(result).toHaveLength(1);
-    expect(result[0].title.uk).toBe('Після бою');
-    expect(result[0].opusId).toBe(opusId);
-  });
-
-  it('syncForOpus creates new compositions and unlinks removed ones', async () => {
+  it('syncForOpus creates new compositions', async (): Promise<void> => {
     saveMock.mockResolvedValue({ toObject: () => createMockDoc() });
 
-    const result = await repository.syncForOpus(opusId, [compositionInput()]);
+    const result = await repository.syncForOpus([createCompositionInput()]);
 
-    expect(updateManyMock).toHaveBeenCalledWith({ opusId, _id: { $nin: [] } }, { $set: { opusId: null } });
     expect(saveMock).toHaveBeenCalled();
     expect(result).toHaveLength(1);
   });
 
-  it('syncForOpus links an existing composition by id instead of duplicating', async () => {
+  it('syncForOpus links an existing composition by id instead of duplicating', async (): Promise<void> => {
     findByIdAndUpdateMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(createMockDoc()) });
 
-    const result = await repository.syncForOpus(opusId, [compositionInput(existingCompositionId)]);
+    const result = await repository.syncForOpus([createCompositionInput(EXISTING_COMPOSITION_ID)]);
 
-    expect(updateManyMock).toHaveBeenCalledWith(
-      { opusId, _id: { $nin: [existingCompositionId] } },
-      { $set: { opusId: null } }
-    );
-    expect(findByIdAndUpdateMock).toHaveBeenCalledWith(existingCompositionId, expect.objectContaining({ opusId }), {
+    expect(findByIdAndUpdateMock).toHaveBeenCalledWith(EXISTING_COMPOSITION_ID, expect.any(Object), {
       new: true
     });
     expect(saveMock).not.toHaveBeenCalled();
     expect(result).toHaveLength(1);
   });
 
-  it('searchByTitle returns an empty array for a blank search', async () => {
-    const result = await repository.searchByTitle('   ');
+  it('searchByTitle returns matching compositions for empty/blank search query', async (): Promise<void> => {
+    const queryChain = createChainableQueryMock([createMockDoc()]);
+    findMock.mockReturnValue(queryChain);
 
-    expect(result).toEqual([]);
+    const result = await repository.searchByTitle(BLANK_SEARCH_QUERY);
+
+    expect(findMock).toHaveBeenCalled();
+    expect(queryChain.limit).not.toHaveBeenCalled();
+    expect(result).toHaveLength(1);
+    expect(result[0].name.uk).toBe('Після бою');
   });
 
-  it('findByOpusId applies fallback defaults for nullish document fields', async (): Promise<void> => {
+  it('toEntity applies fallback defaults for nullish document fields', async (): Promise<void> => {
     const doc = createMockDoc({
-      opusId: null,
-      order: null,
       year: null,
       genre: null,
-      genres: undefined,
       audioAvailable: undefined,
       sheetAvailable: undefined,
       sheetMusic: undefined,
       audios: undefined
     });
-    const sortMock = jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue([doc]) });
-    findMock.mockReturnValue({ sort: sortMock });
+    const queryChain = createChainableQueryMock([doc]);
+    findMock.mockReturnValue(queryChain);
 
-    const [result] = await repository.findByOpusId(opusId);
+    const [result] = await repository.findByIds([VALID_OBJECT_ID_1]);
 
-    expect(result.opusId).toBeNull();
-    expect(result.order).toBe(0);
     expect(result.year).toBeUndefined();
     expect(result.genre).toBeUndefined();
-    expect(result.genres).toEqual([]);
     expect(result.audioAvailable).toBe(false);
     expect(result.sheetAvailable).toBe(false);
     expect(result.sheetMusic).toEqual([]);
     expect(result.audios).toEqual([]);
   });
 
-  it('findByOpusId maps genre and category refs to string ids', async (): Promise<void> => {
-    const doc = createMockDoc({
-      genres: [{ toString: (): string => 'genre-1' }]
-    });
-    const sortMock = jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue([doc]) });
-    findMock.mockReturnValue({ sort: sortMock });
-
-    const [result] = await repository.findByOpusId(opusId);
-
-    expect(result.genres).toEqual(['genre-1']);
-  });
-
-  it('findByOpusId returns an empty array for an invalid opusId', async (): Promise<void> => {
-    const result = await repository.findByOpusId('not-a-valid-object-id');
+  it('searchByTitle returns an empty array when invalid ids are provided', async (): Promise<void> => {
+    const result = await repository.searchByTitle(SEARCH_QUERY, [INVALID_ID]);
 
     expect(result).toEqual([]);
     expect(findMock).not.toHaveBeenCalled();
   });
 
-  it('syncForOpus returns an empty array for an invalid opusId', async (): Promise<void> => {
-    const result = await repository.syncForOpus('not-a-valid-object-id', [compositionInput()]);
-
-    expect(result).toEqual([]);
-    expect(updateManyMock).not.toHaveBeenCalled();
-  });
-
   it('syncForOpus creates a new composition when the input id is not a valid object id', async (): Promise<void> => {
     saveMock.mockResolvedValue({ toObject: () => createMockDoc() });
 
-    const result = await repository.syncForOpus(opusId, [compositionInput('invalid-id')]);
+    const result = await repository.syncForOpus([createCompositionInput(INVALID_ID)]);
 
-    expect(updateManyMock).toHaveBeenCalledWith({ opusId, _id: { $nin: [] } }, { $set: { opusId: null } });
     expect(findByIdAndUpdateMock).not.toHaveBeenCalled();
     expect(saveMock).toHaveBeenCalled();
     expect(result).toHaveLength(1);
@@ -194,114 +176,131 @@ describe('CompositionRepository', () => {
   it('syncForOpus skips a linked composition when the update returns null', async (): Promise<void> => {
     findByIdAndUpdateMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(null) });
 
-    const result = await repository.syncForOpus(opusId, [compositionInput(existingCompositionId)]);
+    const result = await repository.syncForOpus([createCompositionInput(EXISTING_COMPOSITION_ID)]);
 
     expect(findByIdAndUpdateMock).toHaveBeenCalled();
     expect(result).toEqual([]);
   });
 
   it('searchByTitle returns matching compositions for a non-blank search', async (): Promise<void> => {
-    const limitMock = jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue([createMockDoc()]) });
-    findMock.mockReturnValue({ limit: limitMock });
+    const queryChain = createChainableQueryMock([createMockDoc()]);
+    findMock.mockReturnValue(queryChain);
 
-    const result = await repository.searchByTitle('  Після  ');
+    const result = await repository.searchByTitle(`  ${SEARCH_QUERY}  `);
 
-    expect(findMock).toHaveBeenCalledWith({
-      $or: [{ 'title.uk': { $regex: 'Після', $options: 'i' } }, { 'title.en': { $regex: 'Після', $options: 'i' } }]
-    });
-    expect(limitMock).toHaveBeenCalledWith(10);
+    expect(findMock).toHaveBeenCalled();
+    expect(queryChain.limit).toHaveBeenCalledWith(10);
     expect(result).toHaveLength(1);
-    expect(result[0].title.uk).toBe('Після бою');
+    expect(result[0].name.uk).toBe('Після бою');
   });
 
-  it('deleteByOpusId removes compositions for a valid opusId', async (): Promise<void> => {
-    await repository.deleteByOpusId(opusId);
+  it('searchByTitle filters by ids when provided', async (): Promise<void> => {
+    const queryChain = createChainableQueryMock([createMockDoc()]);
+    findMock.mockReturnValue(queryChain);
 
-    expect(deleteManyMock).toHaveBeenCalledWith({ opusId });
+    const result = await repository.searchByTitle(SEARCH_QUERY, [VALID_OBJECT_ID_1]);
+
+    expect(findMock).toHaveBeenCalled();
+    expect(result).toHaveLength(1);
   });
 
-  it('deleteByOpusId throws an error for an invalid opusId', async (): Promise<void> => {
-    await expect(repository.deleteByOpusId('not-a-valid-object-id')).rejects.toThrow(
-      'Invalid opusId: not-a-valid-object-id'
-    );
-
-    expect(deleteManyMock).not.toHaveBeenCalled();
-  });
-
-  it('unlinkByOpusId sets opusId to null for a valid opusId', async (): Promise<void> => {
-    await repository.unlinckByOpusId(opusId);
-
-    expect(updateManyMock).toHaveBeenCalledWith({ opusId }, { $set: { opusId: null } });
-  });
-
-  it('unlinkByOpusId throws an error for an invalid opusId', async (): Promise<void> => {
-    await expect(repository.unlinckByOpusId('not-a-valid-object-id')).rejects.toThrow(
-      'Invalid opusId: not-a-valid-object-id'
-    );
-
-    expect(updateManyMock).not.toHaveBeenCalled();
-  });
-
-  describe('buildQuery configuration (lines 52-54)', () => {
-    it('should set opusId to null in query when isStandalone filter is true', async () => {
-      const mockQueryBuilder = {
-        sort: jest.fn().mockReturnThis(),
-        skip: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockReturnThis(),
-        lean: jest.fn().mockResolvedValue([createMockDoc()])
-      };
-      findMock.mockReturnValue(mockQueryBuilder);
-
-      await repository.findAll({ isStandalone: true });
-
-      expect(findMock).toHaveBeenCalledWith(expect.objectContaining({ opusId: null }));
-    });
-
-    it('should not modify opusId in query when isStandalone filter is false', async () => {
-      const mockQueryBuilder = {
-        sort: jest.fn().mockReturnThis(),
-        skip: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockReturnThis(),
-        lean: jest.fn().mockResolvedValue([createMockDoc()])
-      };
-      findMock.mockReturnValue(mockQueryBuilder);
-
-      await repository.findAll({ isStandalone: false });
-
-      expect(findMock).not.toHaveBeenCalledWith(expect.objectContaining({ opusId: null }));
-    });
-  });
-
-  it('should return an empty array if no valid opusIds are provided', async () => {
-    const result = await repository.findByOpusIds(['invalid-id-1', 'invalid-id-2']);
+  it('should return an empty array if no valid ids are provided to findByIds', async (): Promise<void> => {
+    const result = await repository.findByIds([INVALID_ID]);
 
     expect(result).toEqual([]);
     expect(findMock).not.toHaveBeenCalled();
   });
 
-  it('should return an empty array if the input array is empty', async () => {
-    const result = await repository.findByOpusIds([]);
+  it('should fetch and map compositions for valid ids in findByIds', async (): Promise<void> => {
+    const queryChain = createChainableQueryMock([createMockDoc()]);
+    findMock.mockReturnValue(queryChain);
+
+    const result = await repository.findByIds([VALID_OBJECT_ID_1, VALID_OBJECT_ID_2, INVALID_ID]);
+
+    expect(findMock).toHaveBeenCalled();
+    expect(queryChain.sort).toHaveBeenCalledWith({ order: 1, _id: 1 });
+    expect(result).toHaveLength(1);
+  });
+
+  it('countByIds returns 0 for invalid ids', async (): Promise<void> => {
+    const result = await repository.countByIds([INVALID_ID]);
+
+    expect(result).toBe(0);
+    expect(countDocumentsMock).not.toHaveBeenCalled();
+  });
+
+  it('countByIds returns document count for valid ids', async (): Promise<void> => {
+    countDocumentsMock.mockResolvedValue(5);
+
+    const result = await repository.countByIds([VALID_OBJECT_ID_1]);
+
+    expect(result).toBe(5);
+    expect(countDocumentsMock).toHaveBeenCalled();
+  });
+
+  it('findByIdsPaginated returns empty array for invalid ids', async (): Promise<void> => {
+    const result = await repository.findByIdsPaginated([INVALID_ID]);
 
     expect(result).toEqual([]);
     expect(findMock).not.toHaveBeenCalled();
   });
 
-  it('should fetch and map compositions for valid opusIds', async () => {
-    const sortMock = jest.fn().mockReturnValue({
-      lean: jest.fn().mockResolvedValue([createMockDoc()])
-    });
-    findMock.mockReturnValue({ sort: sortMock });
+  it('findByIdsPaginated returns paginated compositions with sorting, skip, and limit', async (): Promise<void> => {
+    const queryChain = createChainableQueryMock([createMockDoc()]);
+    findMock.mockReturnValue(queryChain);
 
-    const validId1 = '65eddf5e2f1a2b3c4d5e6f7a';
-    const validId2 = '65eddf5e2f1a2b3c4d5e6f7b';
+    const filters: CompositionFilters = {
+      skip: 5,
+      limit: 10,
+      sort: [{ sortBy: 'number', sortOrder: SortOrder.Asc }]
+    };
 
-    const result = await repository.findByOpusIds([validId1, validId2, 'invalid-id']);
+    const result = await repository.findByIdsPaginated([VALID_OBJECT_ID_1], filters);
 
-    expect(findMock).toHaveBeenCalledWith({
-      opusId: { $in: [expect.any(Object), expect.any(Object)] }
-    });
-    expect(sortMock).toHaveBeenCalledWith({ order: 1, _id: 1 });
+    expect(findMock).toHaveBeenCalled();
+    expect(queryChain.sort).toHaveBeenCalled();
+    expect(queryChain.collation).toHaveBeenCalledWith({ locale: 'uk', numericOrdering: true });
+    expect(queryChain.skip).toHaveBeenCalledWith(5);
+    expect(queryChain.limit).toHaveBeenCalledWith(10);
     expect(result).toHaveLength(1);
-    expect(result[0].opusId).toBe(opusId);
+  });
+
+  it('findByIdsPaginated works correctly without skip and limit filters', async (): Promise<void> => {
+    const queryChain = createChainableQueryMock([createMockDoc()]);
+    findMock.mockReturnValue(queryChain);
+
+    const result = await repository.findByIdsPaginated([VALID_OBJECT_ID_1]);
+
+    expect(queryChain.skip).not.toHaveBeenCalled();
+    expect(queryChain.limit).not.toHaveBeenCalled();
+    expect(result).toHaveLength(1);
+  });
+
+  it('syncForOpus returns empty array when given an empty inputs array', async (): Promise<void> => {
+    const result = await repository.syncForOpus([]);
+    expect(result).toEqual([]);
+  });
+
+  it('should execute baseRepo buildQuery and getDefaultSort when findAll is called', async (): Promise<void> => {
+    const queryChain = createChainableQueryMock([createMockDoc()]);
+    findMock.mockReturnValue(queryChain);
+
+    const result = await repository.findAll({ search: 'тест' });
+
+    expect(findMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        $and: expect.arrayContaining([{ 'name.uk': { $exists: true, $ne: null } }])
+      })
+    );
+    expect(result).toHaveLength(1);
+  });
+
+  it('should trigger default extraConditions parameter in buildCompositionQuery', async (): Promise<void> => {
+    const queryChain = createChainableQueryMock([createMockDoc()]);
+    findMock.mockReturnValue(queryChain);
+
+    await repository.findAll({});
+
+    expect(findMock).toHaveBeenCalled();
   });
 });

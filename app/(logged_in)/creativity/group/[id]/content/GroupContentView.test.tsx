@@ -127,11 +127,31 @@ jest.mock('~/shared/components/delete-card-modal/DeleteCardModal', () => ({
   )
 }));
 
+jest.mock('~/lib/utils/sortableDragEndHelper', () => ({
+  handleSortableDragEnd: jest.fn((event, items, callback) => {
+    callback(['photos', 'details', 'intro', 'works', 'performances']);
+  })
+}));
+
+jest.mock('~/shared/components/sortable-list/SortableList', () => ({
+  SortableList: ({ onDragEnd, children }: any) => (
+    <div data-testid="mock-sortable-list">
+      <button
+        data-testid="simulate-drag-end"
+        onClick={() => onDragEnd({ active: { id: 'intro' }, over: { id: 'photos' } })}
+      >
+        Drop
+      </button>
+      {children}
+    </div>
+  )
+}));
+
 const mockUseGroupContent = {
   loading: false,
   error: undefined,
   groupData: {
-    titlePrefix: 'Op.',
+    titlePrefix: 'op.',
     groupNumber: '1',
     groupTitle: { uk: 'Тестова група', en: 'Test group' },
     genre: '',
@@ -145,7 +165,7 @@ const mockUseGroupContent = {
     photos: [],
     performancesTitle: '',
     performances: [],
-    works: []
+    compositions: []
   },
   isDirty: false,
   currentLanguage: 'UA',
@@ -302,7 +322,7 @@ describe('GroupContentView Component', () => {
       expect(mockUseGroupContent.handleFieldChange).toHaveBeenCalledWith('photos', []);
 
       fireEvent.click(screen.getByTestId('change-works'));
-      expect(mockUseGroupContent.handleFieldChange).toHaveBeenCalledWith('works', []);
+      expect(mockUseGroupContent.handleFieldChange).toHaveBeenCalledWith('compositions', []);
 
       fireEvent.click(screen.getByTestId('change-perf-title'));
       expect(mockUseGroupContent.handleFieldChange).toHaveBeenCalledWith('performancesTitle', 'New Title');
@@ -336,6 +356,51 @@ describe('GroupContentView Component', () => {
       fireEvent.keyDown(menu, { key: 'Escape', code: 'Escape' });
 
       expect(mockUseGroupContent.handleClose).toHaveBeenCalledWith('publish');
+    });
+
+    it('should render GroupContentViewError when error is returned from useGroupContent', () => {
+      (useGroupContent as jest.Mock).mockReturnValue({
+        ...mockUseGroupContent,
+        loading: false,
+        error: new Error('Failed to load group data'),
+        groupData: null
+      });
+
+      render(<GroupContentView id="123" />);
+
+      expect(screen.getByText('Failed to load group data')).toBeInTheDocument();
+    });
+
+    it('should ignore unknown block types in blocksOrder without crashing', () => {
+      (useGroupContent as jest.Mock).mockReturnValue({
+        ...mockUseGroupContent,
+        groupData: {
+          ...mockUseGroupContent.groupData,
+          blocksOrder: ['details', 'intro', 'unknown_block_id_from_future', 'photos']
+        }
+      });
+
+      render(<GroupContentView id="123" />);
+
+      expect(screen.getByTestId('collapsible-block-Вступна секція')).toBeInTheDocument();
+      expect(screen.getByTestId('collapsible-block-Фото')).toBeInTheDocument();
+    });
+
+    it('should handle drag end and update blocksOrder', () => {
+      (useGroupContent as jest.Mock).mockReturnValue(mockUseGroupContent);
+
+      render(<GroupContentView id="123" />);
+
+      const dragButton = screen.getByTestId('simulate-drag-end');
+      fireEvent.click(dragButton);
+
+      expect(mockUseGroupContent.handleFieldChange).toHaveBeenCalledWith('blocksOrder', [
+        'photos',
+        'details',
+        'intro',
+        'works',
+        'performances'
+      ]);
     });
   });
 });

@@ -15,6 +15,8 @@ export type RenameFileModalProps = {
   onRename?: (fileId: string, filename: string) => Promise<void> | void;
 };
 
+const INVALID_FILENAME_MESSAGE = 'Введіть назву файлу без крапки та розширення';
+
 export function RenameFileModal({ open, onClose, fileId, currentFilename, onRename }: Readonly<RenameFileModalProps>) {
   const { initialBaseName, extension } = useMemo(() => {
     const lastDotIndex = currentFilename.lastIndexOf('.');
@@ -28,7 +30,7 @@ export function RenameFileModal({ open, onClose, fileId, currentFilename, onRena
 
   const [baseName, setBaseName] = useState(initialBaseName);
   const [updateAsset, { loading }] = useUpdateAssetMutation();
-  const hasInvalidChars = /[\\/:*?"<>|]/.test(baseName);
+  const hasInvalidChars = /[\\/:*?"'`<>|.\0\u02bc\u2018\u2019\u201c\u201d]/.test(baseName);
 
   useEffect(() => {
     if (open) {
@@ -38,7 +40,7 @@ export function RenameFileModal({ open, onClose, fileId, currentFilename, onRena
 
   const handleSave = async () => {
     if (hasInvalidChars) {
-      toast.error('Ім\'я файлу містить заборонені символи');
+      toast.error(INVALID_FILENAME_MESSAGE);
       return;
     }
 
@@ -66,8 +68,8 @@ export function RenameFileModal({ open, onClose, fileId, currentFilename, onRena
       });
       onClose();
       toast.success('Файл успішно перейменовано');
-    } catch {
-      toast.error('Помилка при перейменуванні файлу');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Помилка при перейменуванні файлу');
     }
   };
 
@@ -101,7 +103,7 @@ export function RenameFileModal({ open, onClose, fileId, currentFilename, onRena
           onChange={(e) => setBaseName(e.target.value)}
           disabled={loading}
           error={hasInvalidChars}
-          helperText={hasInvalidChars ? String.raw`Ім'я файлу містить заборонені символи: \ / : * ? " < > |` : ''}
+          helperText={hasInvalidChars ? INVALID_FILENAME_MESSAGE : ''}
         />
       </Box>
 

@@ -2,7 +2,14 @@ import { useSearchParams } from 'next/navigation';
 import { MouseEvent, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { createCompositionId } from '../use-upsert-opus/useUpsertOpus';
 import { GroupData, GroupDataField, GroupPhoto } from '~/constants/creativity';
+import {
+  OPUS_FIELD_LIMITS,
+  OPUS_MUTATION_RESULTS,
+  OPUS_VALIDATION_MESSAGES,
+  REQUIRED_FIELD_ERROR
+} from '~/constants/opus';
 import { EditorLanguage } from '~/constants/publications';
 import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
 import { useOpusById } from '~/shared/hooks/use-opuses/useOpuses';
@@ -12,7 +19,8 @@ import {
   OpusNumberKind,
   OpusStatus,
   useDeleteOpusMutation,
-  useUpdateOpusMutation} from '~/types/graphql/generated/graphql';
+  useUpdateOpusMutation
+} from '~/types/graphql/generated/graphql';
 import { FetchedOpusData, OpusCompositionSuggestion } from '~/types/opus';
 
 type AnchorId = 'navigation' | 'publish';
@@ -37,23 +45,111 @@ const parseDescription = (desc: unknown): Record<string, unknown> => {
   return { type: 'doc', content: [] };
 };
 
-const mapNumberKindToPrefix = (kind: string | null | undefined): string => {
-  if (!kind) return 'Op.';
-  const lowerKind = kind.toLowerCase();
-  if (lowerKind === 'woo') return 'Bo.';
-  return 'Op.';
-};
-
-let compositionIdCounter = 0;
-export const createCompositionId = (): string => {
-  compositionIdCounter += 1;
-  return `composition-${compositionIdCounter}`;
-};
-
 const fileNameFromUrl = (url?: string | null): string => {
   if (!url) return '';
   const segment = url.split('/').pop() ?? url;
   return decodeURIComponent(segment.split('?')[0]);
+};
+
+const validatePerformance = (
+  perf: NonNullable<GroupData['performances']>[number],
+  newErrors: Record<string, string>,
+  setCurrentLanguage: (lang: EditorLanguage) => void
+) => {
+  const url = (perf.url || '').trim();
+  const capUk = (perf.caption?.uk || '').trim();
+  const capEn = (perf.caption?.en || '').trim();
+
+  const isRowEmpty = !url && !capUk && !capEn;
+  if (isRowEmpty) return;
+
+  if (!url) {
+    newErrors[`performances[${perf.id}].url`] = OPUS_VALIDATION_MESSAGES.performanceUrl;
+  }
+
+  if (!capUk || capUk.length < OPUS_FIELD_LIMITS.caption.min || capUk.length > OPUS_FIELD_LIMITS.caption.max) {
+    if (!capUk) {
+      newErrors[`performances[${perf.id}].caption.uk`] = OPUS_VALIDATION_MESSAGES.performanceSignature;
+    } else if (capUk.length > OPUS_FIELD_LIMITS.caption.max) {
+      newErrors[`performances[${perf.id}].caption.uk`] = OPUS_VALIDATION_MESSAGES.captionTooLong;
+    } else {
+      newErrors[`performances[${perf.id}].caption.uk`] = OPUS_VALIDATION_MESSAGES.nameTooShort;
+    }
+    setCurrentLanguage('UA');
+  } else if (!capEn || capEn.length < OPUS_FIELD_LIMITS.caption.min || capEn.length > OPUS_FIELD_LIMITS.caption.max) {
+    if (!capEn) {
+      newErrors[`performances[${perf.id}].caption.en`] = OPUS_VALIDATION_MESSAGES.performanceSignature;
+    } else if (capEn.length > OPUS_FIELD_LIMITS.caption.max) {
+      newErrors[`performances[${perf.id}].caption.en`] = OPUS_VALIDATION_MESSAGES.captionTooLong;
+    } else {
+      newErrors[`performances[${perf.id}].caption.en`] = OPUS_VALIDATION_MESSAGES.nameTooShort;
+    }
+    setCurrentLanguage('EN');
+  }
+};
+
+const validatePhotoAltText = (
+  photo: GroupPhoto,
+  newErrors: Record<string, string>,
+  setCurrentLanguage: (lang: EditorLanguage) => void
+) => {
+  const altUk = (photo.altText?.uk || '').trim();
+  const altEn = (photo.altText?.en || '').trim();
+
+  if (!altUk) {
+    newErrors[`photos[${photo.id}].altText.uk`] = OPUS_VALIDATION_MESSAGES.photoAltText;
+    setCurrentLanguage('UA');
+  } else if (altUk.length > OPUS_FIELD_LIMITS.altText.max) {
+    newErrors[`photos[${photo.id}].altText.uk`] = OPUS_VALIDATION_MESSAGES.captionTooLong;
+    setCurrentLanguage('UA');
+  } else if (altUk.length < OPUS_FIELD_LIMITS.altText.min) {
+    newErrors[`photos[${photo.id}].altText.uk`] = OPUS_VALIDATION_MESSAGES.photoTextTooShort;
+    setCurrentLanguage('UA');
+  } else if (!altEn) {
+    newErrors[`photos[${photo.id}].altText.en`] = OPUS_VALIDATION_MESSAGES.photoAltText;
+    setCurrentLanguage('EN');
+  } else if (altEn.length > OPUS_FIELD_LIMITS.altText.max) {
+    newErrors[`photos[${photo.id}].altText.en`] = OPUS_VALIDATION_MESSAGES.captionTooLong;
+    setCurrentLanguage('EN');
+  } else if (altEn.length < OPUS_FIELD_LIMITS.altText.min) {
+    newErrors[`photos[${photo.id}].altText.en`] = OPUS_VALIDATION_MESSAGES.photoTextTooShort;
+    setCurrentLanguage('EN');
+  }
+};
+
+const validatePhotoCaption = (
+  photo: GroupPhoto,
+  newErrors: Record<string, string>,
+  setCurrentLanguage: (lang: EditorLanguage) => void
+) => {
+  const capUk = (photo.caption?.uk || '').trim();
+  const capEn = (photo.caption?.en || '').trim();
+
+  if (capUk.length > OPUS_FIELD_LIMITS.caption.max) {
+    newErrors[`photos[${photo.id}].caption.uk`] = OPUS_VALIDATION_MESSAGES.captionTooLong;
+    setCurrentLanguage('UA');
+  } else if (capUk.length > 0 && capUk.length < OPUS_FIELD_LIMITS.caption.min) {
+    newErrors[`photos[${photo.id}].caption.uk`] = OPUS_VALIDATION_MESSAGES.photoTextTooShort;
+    setCurrentLanguage('UA');
+  } else if (capEn.length > OPUS_FIELD_LIMITS.caption.max) {
+    newErrors[`photos[${photo.id}].caption.en`] = OPUS_VALIDATION_MESSAGES.captionTooLong;
+    setCurrentLanguage('EN');
+  } else if (capEn.length > 0 && capEn.length < OPUS_FIELD_LIMITS.caption.min) {
+    newErrors[`photos[${photo.id}].caption.en`] = OPUS_VALIDATION_MESSAGES.photoTextTooShort;
+    setCurrentLanguage('EN');
+  }
+};
+
+const validatePhoto = (
+  photo: GroupPhoto,
+  newErrors: Record<string, string>,
+  setCurrentLanguage: (lang: EditorLanguage) => void
+) => {
+  const src = (photo.src || '').trim();
+  if (!src) return;
+
+  validatePhotoAltText(photo, newErrors, setCurrentLanguage);
+  validatePhotoCaption(photo, newErrors, setCurrentLanguage);
 };
 
 export const useGroupContent = (id: string) => {
@@ -94,9 +190,14 @@ export const useGroupContent = (id: string) => {
         en: fetchedOpus.name?.en ?? ''
       };
       setGroupData({
-        titlePrefix: mapNumberKindToPrefix(fetchedOpus.numberKind),
-        groupNumber: fetchedOpus.number ? String(fetchedOpus.number).replace(/^(op|woo|wo|bo)[.\-\s]*/i, '') : '',
-        genre: fetchedOpus.genre ?? '',
+        titlePrefix: fetchedOpus.numberKind ?? 'op',
+        groupNumber: fetchedOpus.number
+          ? String(fetchedOpus.number).replace(/^(op|woo|sineop|wo|bo)[.\-\s]*/i, '')
+          : '',
+        genre: {
+          uk: fetchedOpus.genre?.uk ?? '',
+          en: fetchedOpus.genre?.en ?? ''
+        },
         additionalText: fetchedOpus.additionalText ?? '',
         groupTitle: {
           uk: fetchedOpus.name?.uk ?? '',
@@ -104,10 +205,7 @@ export const useGroupContent = (id: string) => {
         },
         creationYear: fetchedOpus.creationYear ? String(fetchedOpus.creationYear) : '',
         endYear: fetchedOpus.endYear ? String(fetchedOpus.endYear) : '',
-        dateAdditionalText: {
-          uk: fetchedOpus.datesNote ?? '',
-          en: ''
-        },
+        dateAdditionalText: fetchedOpus.datesNote ?? '',
         status: fetchedOpus.status || 'draft',
         parts: {
           uk: fetchedOpus.parts?.uk ?? '',
@@ -117,6 +215,9 @@ export const useGroupContent = (id: string) => {
           uk: parseDescription(fetchedOpus.introDescription?.uk),
           en: parseDescription(fetchedOpus.introDescription?.en)
         },
+        blocksOrder: fetchedOpus.blocksOrder?.length
+          ? fetchedOpus.blocksOrder
+          : ['details', 'intro', 'photos', 'works', 'performances'],
         photos: (fetchedOpus.gallery || []).map((photo) => {
           const mappedCrop = photo.crop
             ? ({
@@ -151,27 +252,23 @@ export const useGroupContent = (id: string) => {
             en: perf.title?.en ?? ''
           }
         })),
-        works: (fetchedOpus.compositions || [])
-          .slice()
-          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-          .map((composition) => ({
+        compositions: (fetchedOpus.compositions || []).map((composition) => ({
+          id: composition.id,
+          name: composition.name?.uk ?? composition.name?.en ?? '',
+          genre: composition.genre ?? '',
+          year: composition.year == null ? '' : String(composition.year),
+          audios: (composition.audios ?? []).map((audio: AudioItem) => ({
             id: createCompositionId(),
-            compositionId: composition.id,
-            title: composition.title?.uk ?? composition.title?.en ?? '',
-            genre: composition.genre ?? '',
-            year: composition.year == null ? '' : String(composition.year),
-            audios: (composition.audios ?? []).map((audio: AudioItem) => ({
-              id: createCompositionId(),
-              name: audio.name ?? fileNameFromUrl(audio.url),
-              fileUrl: audio.url ?? undefined
-            })),
-            notes: (composition.sheetMusic ?? []).map((sheet: SheetMusicItem) => ({
-              id: createCompositionId(),
-              name: sheet.name ?? fileNameFromUrl(sheet.url),
-              fileUrl: sheet.url ?? undefined,
-              publishDate: sheet.publishDate ?? ''
-            }))
+            name: audio.name ?? fileNameFromUrl(audio.url),
+            fileUrl: audio.url ?? undefined
+          })),
+          notes: (composition.sheetMusic ?? []).map((sheet: SheetMusicItem) => ({
+            id: createCompositionId(),
+            name: sheet.name ?? fileNameFromUrl(sheet.url),
+            fileUrl: sheet.url ?? undefined,
+            publishDate: sheet.publishDate ?? ''
           }))
+        }))
       });
       setPublishedTitle(titleObj);
     }
@@ -179,26 +276,27 @@ export const useGroupContent = (id: string) => {
 
   const handleSave = async (statusToSave?: BaseContentStatuses) => {
     if (!groupData) return;
-
     let mappedStatus: OpusStatus | undefined = undefined;
     if (statusToSave === BaseContentStatuses.Published) {
       mappedStatus = OpusStatus.Published;
     }
-
     try {
       const input = {
-        numberKind: groupData.titlePrefix === 'Bo.' ? OpusNumberKind.Woo : OpusNumberKind.Op,
-        number: String(groupData.groupNumber || ''),
-        genre: String(groupData.genre || ''),
-        additionalText: String(groupData.additionalText || ''),
+        number: Number(groupData.groupNumber.trim()),
+        numberKind: groupData.titlePrefix as unknown as OpusNumberKind,
+        genre: {
+          uk: String(groupData.genre?.uk || '').trim(),
+          en: String(groupData.genre?.en || '').trim()
+        },
+        additionalText: String(groupData.additionalText || '').trim() || '',
         ...(mappedStatus && { status: mappedStatus }),
         name: {
           uk: String(groupData.groupTitle?.uk || ''),
           en: String(groupData.groupTitle?.en || '')
         },
-        creationYear: groupData.creationYear ? String(groupData.creationYear) : null,
+        creationYear: String(groupData.creationYear || '').trim(),
         endYear: groupData.endYear ? String(groupData.endYear) : null,
-        datesNote: groupData.dateAdditionalText?.uk ? String(groupData.dateAdditionalText.uk) : null,
+        datesNote: groupData.dateAdditionalText ? String(groupData.dateAdditionalText).trim() : null,
         parts: {
           uk: String(groupData.parts?.uk || ''),
           en: String(groupData.parts?.en || '')
@@ -207,9 +305,10 @@ export const useGroupContent = (id: string) => {
           uk: groupData.description?.uk ? JSON.stringify(groupData.description.uk) : '""',
           en: groupData.description?.en ? JSON.stringify(groupData.description.en) : '""'
         },
-        compositions: (groupData.works || []).map((work, index) => ({
-          id: work.compositionId,
-          title: work.title.trim(),
+        blocksOrder: groupData.blocksOrder || ['details', 'intro', 'photos', 'works', 'performances'],
+        compositions: (groupData.compositions || []).map((work, index) => ({
+          id: work.id,
+          name: work.name.trim(),
           genre: work.genre.trim() || undefined,
           year: work.year.trim() || undefined,
           order: index + 1,
@@ -228,13 +327,38 @@ export const useGroupContent = (id: string) => {
               publishDate: note.publishDate
             }))
         })),
-        gallery: (groupData.photos || []).map((photo) => ({
-          id: photo.id?.startsWith('photo-') || photo.id?.includes('-') ? undefined : photo.id,
-          src: photo.src ? String(photo.src) : '',
-          description: { uk: photo.caption?.uk || '', en: photo.caption?.en || '' },
-          altText: { uk: photo.altText?.uk || '', en: photo.altText?.en || '' },
-          crop: photo.crop || null
-        })),
+        gallery: (groupData.photos || []).map((photo) => {
+          const cropData = photo.crop as {
+            rect?: { x: number; y: number; width: number; height: number };
+            x?: number;
+            y?: number;
+            width?: number;
+            height?: number;
+          } | null;
+
+          const mappedCrop = cropData
+            ? {
+              x: cropData.rect?.x ?? cropData.x ?? 0,
+              y: cropData.rect?.y ?? cropData.y ?? 0,
+              width: cropData.rect?.width ?? cropData.width ?? 0,
+              height: cropData.rect?.height ?? cropData.height ?? 0
+            }
+            : null;
+
+          return {
+            id: photo.id?.startsWith('photo-') || photo.id?.includes('-') ? undefined : photo.id,
+            src: photo.src ? String(photo.src) : '',
+            description: {
+              uk: (photo.caption?.uk || '').trim(),
+              en: (photo.caption?.en || '').trim()
+            },
+            altText: {
+              uk: (photo.altText?.uk || '').trim(),
+              en: (photo.altText?.en || '').trim()
+            },
+            crop: mappedCrop
+          };
+        }),
         performancesTitle: {
           uk: String(groupData.performancesTitle || ''),
           en: String(groupData.performancesTitle || '')
@@ -247,9 +371,8 @@ export const useGroupContent = (id: string) => {
           }))
           .filter((perf) => perf.videoUrl || perf.title.uk || perf.title.en)
       };
-
       await updateOpus({ variables: { id, input } });
-      toast.success('Контент успішно збережено!');
+      toast.success('Групу опубліковано');
       return true;
     } catch (error) {
       console.error('Помилка при збереженні контенту групи:', error);
@@ -279,26 +402,43 @@ export const useGroupContent = (id: string) => {
     const numberValue = String(groupData?.groupNumber || '').trim();
 
     if (!numberValue) {
-      newErrors.groupNumber = 'Обов’язкове поле';
+      newErrors.groupNumber = REQUIRED_FIELD_ERROR;
     } else if (!/^\d+$/.test(numberValue) || Number(numberValue) <= 0) {
-      newErrors.groupNumber = 'Номер має бути цілим позитивним числом.';
+      newErrors.groupNumber = OPUS_VALIDATION_MESSAGES.numberInvalid;
     }
 
-    if (!groupData?.groupTitle?.uk || String(groupData.groupTitle.uk).trim() === '') {
-      newErrors.groupTitle = 'Обов’язкове поле';
+    const groupTitleUk = String(groupData?.groupTitle?.uk || '').trim();
+    const groupTitleEn = String(groupData?.groupTitle?.en || '').trim();
+
+    if (!groupTitleUk) {
+      newErrors['groupTitle.uk'] = OPUS_VALIDATION_MESSAGES.nameRequired;
+      setCurrentLanguage('UA');
+    } else if (groupTitleUk.length < OPUS_FIELD_LIMITS.name.min) {
+      newErrors['groupTitle.uk'] = OPUS_VALIDATION_MESSAGES.nameTooShort;
+      setCurrentLanguage('UA');
+    } else if (!groupTitleEn) {
+      newErrors['groupTitle.en'] = OPUS_VALIDATION_MESSAGES.nameRequired;
+      setCurrentLanguage('EN');
+    } else if (groupTitleEn.length < OPUS_FIELD_LIMITS.name.min) {
+      newErrors['groupTitle.en'] = OPUS_VALIDATION_MESSAGES.nameTooShort;
+      setCurrentLanguage('EN');
     }
+
+    groupData?.performances?.forEach((perf) => validatePerformance(perf, newErrors, setCurrentLanguage));
+    groupData?.photos?.forEach((photo) => validatePhoto(photo, newErrors, setCurrentLanguage));
+
     if (!groupData?.titlePrefix || String(groupData.titlePrefix).trim() === '') {
-      newErrors.titlePrefix = 'Обов’язкове поле';
+      newErrors.titlePrefix = REQUIRED_FIELD_ERROR;
     }
     if (!groupData?.creationYear || String(groupData.creationYear).trim() === '') {
-      newErrors.creationYear = 'Обов’язкове поле';
+      newErrors.creationYear = REQUIRED_FIELD_ERROR;
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleFieldChange = (field: GroupDataField, value: unknown, isMultilingual = false) => {
+  const handleFieldChange = (field: GroupDataField | 'blocksOrder', value: unknown, isMultilingual = false) => {
     if (shouldExitAfterSave) return;
     if (errors[field as string]) {
       setErrors((prev) => {
@@ -337,12 +477,12 @@ export const useGroupContent = (id: string) => {
   const handleConfirmDelete = async () => {
     try {
       await deleteOpus({ variables: { id } });
-      toast.success('Групу успішно видалено');
+      toast.success(OPUS_MUTATION_RESULTS.deleted);
       setIsDeleteModalOpen(false);
-      navigate('/creativity'); 
+      navigate('/creativity');
     } catch (error) {
       console.error('Помилка при видаленні:', error);
-      toast.error('Помилка при видаленні групи.');
+      toast.error('Не вдалося видалити групу. Спробуйте ще раз.');
     }
   };
 

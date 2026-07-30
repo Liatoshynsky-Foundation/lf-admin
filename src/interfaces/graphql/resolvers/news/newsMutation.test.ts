@@ -1,4 +1,7 @@
+import { GraphQLError } from 'graphql';
+
 import { CreateNewsGQLInput, NewsMutation, UpdateNewsGQLInput } from './newsMutation';
+import type { LocalizedString } from '~/domain/entities/BaseContent';
 import type { News } from '~/domain/entities/News';
 import { createMockContext } from '~/interfaces/graphql/resolvers/testUtils';
 import { newsServiceErrors } from '~/src/constants/errors';
@@ -14,7 +17,13 @@ jest.mock('./processNewsContent/processNewsContent', () => ({
 }));
 
 jest.mock('~/src/shared/utils/slugGenerator/slugGenerator', () => ({
-  generateUniqueSlug: jest.fn((title: string) => Promise.resolve(`slug-${title.toLowerCase()}`))
+  generateUniqueSlug: jest.fn(async (title: string, options?: { checkExists?: (slug: string) => Promise<boolean> }) => {
+    const slug = `slug-${title.toLowerCase()}`;
+    if (options?.checkExists) {
+      await options.checkExists(slug);
+    }
+    return slug;
+  })
 }));
 
 jest.mock('../helpers', () => ({
@@ -80,14 +89,71 @@ describe('NewsMutation Resolvers', () => {
   beforeEach(() => jest.clearAllMocks());
 
   describe('Security & Validation', () => {
-    it('should throw error if title is empty (required for slug)', async () => {
+    it('should throw TITLE_REQUIRED_FOR_SLUG if title is empty', async () => {
       const invalidInput = { ...baseInput, title: { uk: '', en: '' } };
-      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toThrow();
+      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toThrow(
+        newsServiceErrors.TITLE_REQUIRED_FOR_SLUG
+      );
     });
 
-    it('should throw error if title uk is missing (via partial object)', async () => {
+    it('should throw TITLE_REQUIRED_FOR_SLUG if title uk is missing (via partial object)', async () => {
       const invalidInput = { ...baseInput, title: { uk: '' } } as unknown as CreateNewsGQLInput;
-      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toThrow();
+      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toThrow(
+        newsServiceErrors.TITLE_REQUIRED_FOR_SLUG
+      );
+    });
+
+    it('should throw TITLE_TOO_SHORT_FOR_SLUG if title has fewer than 2 characters', async () => {
+      const invalidInput = { ...baseInput, title: { uk: 'Т', en: 'T' } };
+      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toThrow(
+        newsServiceErrors.TITLE_TOO_SHORT_FOR_SLUG
+      );
+    });
+
+    it('should throw GraphQLError with BAD_USER_INPUT if title.uk exceeds 150 characters (lf-manual-tests#469)', async () => {
+      expect.assertions(3);
+      const invalidInput = { ...baseInput, title: { uk: 'а'.repeat(151), en: 'Valid title' } };
+
+      try {
+        await NewsMutation.createNews({}, { input: invalidInput }, adminContext);
+      } catch (error) {
+        expect(error).toBeInstanceOf(GraphQLError);
+        expect((error as GraphQLError).message).toBe(newsServiceErrors.TITLE_TOO_LONG_FOR_SLUG);
+        expect((error as GraphQLError).extensions.code).toBe('BAD_USER_INPUT');
+      }
+    });
+
+    it('should throw GraphQLError with BAD_USER_INPUT if title.en exceeds 150 characters (lf-manual-tests#469)', async () => {
+      expect.assertions(3);
+      const invalidInput = { ...baseInput, title: { uk: 'Валідний заголовок', en: 'a'.repeat(151) } };
+
+      try {
+        await NewsMutation.createNews({}, { input: invalidInput }, adminContext);
+      } catch (error) {
+        expect(error).toBeInstanceOf(GraphQLError);
+        expect((error as GraphQLError).message).toBe(newsServiceErrors.TITLE_TOO_LONG_FOR_SLUG);
+        expect((error as GraphQLError).extensions.code).toBe('BAD_USER_INPUT');
+      }
+    });
+
+    it('should accept a title exactly 150 characters long', async () => {
+      mockAction('findBySlug', null);
+      mockAction('create', createMockNews({ id: 'new-id' }));
+      const validInput = { ...baseInput, title: { uk: 'а'.repeat(150), en: 'a'.repeat(150) } };
+
+      await expect(NewsMutation.createNews({}, { input: validInput }, adminContext)).resolves.toBeDefined();
+      expect(mockRepo.create).toHaveBeenCalled();
+    });
+
+    it('should accept and trim a title with 150 meaningful characters plus a trailing space (review feedback)', async () => {
+      mockAction('findBySlug', null);
+      mockAction('create', createMockNews({ id: 'new-id' }));
+      const validInput = { ...baseInput, title: { uk: `${'a'.repeat(150)} `, en: 'Valid title' } };
+
+      await expect(NewsMutation.createNews({}, { input: validInput }, adminContext)).resolves.toBeDefined();
+
+      const createCallArg = (mockRepo.create as jest.Mock).mock.calls[0][0];
+      expect(createCallArg.title.uk).toBe('a'.repeat(150));
     });
 
     it('should throw GraphQLError for createNews if user is unauthenticated', async () => {
@@ -121,6 +187,25 @@ describe('NewsMutation Resolvers', () => {
 
       expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({ status: NewsStatus.Draft }));
     });
+
+    it('should handle undefined title gracefully using fallback branches when extractTitleForSlug provides a valid slug title', async () => {
+      (helpers.extractTitleForSlug as jest.Mock).mockReturnValueOnce('Valid Slug Title');
+      mockAction('findBySlug', null);
+      mockAction('create', createMockNews({ id: 'fallback-id' }));
+
+      const inputWithUndefinedTitle = {
+        ...baseInput,
+        title: undefined as unknown as LocalizedString
+      };
+
+      await NewsMutation.createNews({}, { input: inputWithUndefinedTitle }, adminContext);
+
+      expect(mockRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          slug: 'slug-valid slug title'
+        })
+      );
+    });
   });
 
   describe('updateNews', () => {
@@ -139,6 +224,82 @@ describe('NewsMutation Resolvers', () => {
       expect(result.slug).toBe('slug-оновлено');
       expect(helpers.syncImagesCrops).toHaveBeenCalledWith(id, updateInput.coverImage, { isCoverImage: true });
       expect(helpers.syncImagesCrops).toHaveBeenCalledWith(id, updateInput.content);
+    });
+
+    it('should cover nullish coalescing right-hand branch on line 182', async () => {
+      (helpers.extractTitleForSlug as jest.Mock).mockReturnValueOnce('Valid Title');
+      mockAction('findById', createMockNews({ id }));
+      mockAction('update', createMockNews({ id }));
+
+      let returnUndefined = false;
+      (helpers.processSlugUpdate as jest.Mock).mockImplementationOnce((_id, _title, _repo, updateData) => {
+        updateData.slug = 'slug-оновлено';
+        returnUndefined = true;
+        return Promise.resolve();
+      });
+
+      const dynamicInput = {
+        get title(): LocalizedString | undefined {
+          return returnUndefined ? undefined : ({ uk: 'Valid Title', en: 'Valid Title' } as LocalizedString);
+        }
+      };
+
+      await NewsMutation.updateNews({}, { id, input: dynamicInput as UpdateNewsGQLInput }, adminContext);
+
+      expect(mockRepo.update).toHaveBeenCalled();
+    });
+
+    it('should throw TITLE_REQUIRED_FOR_SLUG if updated title is empty', async () => {
+      mockAction('findById', createMockNews({ id }));
+
+      await expect(
+        NewsMutation.updateNews({}, { id, input: { title: { uk: '', en: '' } } }, adminContext)
+      ).rejects.toThrow(newsServiceErrors.TITLE_REQUIRED_FOR_SLUG);
+
+      expect(mockRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('should throw TITLE_TOO_SHORT_FOR_SLUG if updated title has fewer than 2 characters', async () => {
+      mockAction('findById', createMockNews({ id }));
+
+      await expect(
+        NewsMutation.updateNews({}, { id, input: { title: { uk: 'Т', en: 'T' } } }, adminContext)
+      ).rejects.toThrow(newsServiceErrors.TITLE_TOO_SHORT_FOR_SLUG);
+
+      expect(mockRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('should throw GraphQLError with BAD_USER_INPUT if updated title.uk exceeds 150 characters (lf-manual-tests#469)', async () => {
+      expect.assertions(4);
+      mockAction('findById', createMockNews({ id }));
+
+      try {
+        await NewsMutation.updateNews(
+          {},
+          { id, input: { title: { uk: 'а'.repeat(151), en: 'Valid title' } } },
+          adminContext
+        );
+      } catch (error) {
+        expect(error).toBeInstanceOf(GraphQLError);
+        expect((error as GraphQLError).message).toBe(newsServiceErrors.TITLE_TOO_LONG_FOR_SLUG);
+        expect((error as GraphQLError).extensions.code).toBe('BAD_USER_INPUT');
+      }
+
+      expect(mockRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('should accept and trim an updated title with 150 meaningful characters plus a trailing space (review feedback)', async () => {
+      mockAction('findById', createMockNews({ id }));
+      mockAction('update', createMockNews({ id }));
+
+      await NewsMutation.updateNews(
+        {},
+        { id, input: { title: { uk: `${'a'.repeat(150)} `, en: 'Valid title' } } },
+        adminContext
+      );
+
+      const updateCallArg = (mockRepo.update as jest.Mock).mock.calls[0][1];
+      expect(updateCallArg.title.uk).toBe('a'.repeat(150));
     });
 
     it('should fall back to empty content object structure during processContentFields execution if content property is missing', async () => {
@@ -201,6 +362,24 @@ describe('NewsMutation Resolvers', () => {
       expect(mockRepo.findById).toHaveBeenCalledTimes(1);
       expect(mockRepo.findById).toHaveBeenCalledWith(id);
       expect(mockRepo.findBySlug).not.toHaveBeenCalled();
+      expect(mockRepo.update).toHaveBeenCalled();
+    });
+
+    it('should evaluate fallback title on line 182 when title getter returns undefined during trim step', async () => {
+      (helpers.extractTitleForSlug as jest.Mock).mockReturnValueOnce('Valid Title');
+      mockAction('findById', createMockNews({ id }));
+      mockAction('update', createMockNews({ id }));
+
+      let accesses = 0;
+      const input = {
+        get title(): LocalizedString | undefined {
+          accesses++;
+          return accesses === 5 ? undefined : ({ uk: 'Title', en: 'Title' } as LocalizedString);
+        }
+      };
+
+      await NewsMutation.updateNews({}, { id, input: input as UpdateNewsGQLInput }, adminContext);
+
       expect(mockRepo.update).toHaveBeenCalled();
     });
   });

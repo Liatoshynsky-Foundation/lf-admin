@@ -9,24 +9,42 @@ interface DeleteCardModalProps {
   onClose: () => void;
   onDelete: () => void;
   description?: string;
+  title?: string;
+  confirmButtonText?: string;
+  cancelButtonText?: string;
 }
 
-const DeleteCardModal = ({ open, onClose, onDelete, description }: DeleteCardModalProps) => {
+const DeleteCardModal = ({
+  open,
+  onClose,
+  onDelete,
+  description,
+  title = 'Підтвердити видалення',
+  confirmButtonText = 'Видалити',
+  cancelButtonText = 'Скасувати'
+}: DeleteCardModalProps) => {
+  const handleDialogClose = (_event: object, reason: 'backdropClick' | 'escapeKeyDown') => {
+    if (reason === 'backdropClick') {
+      return;
+    }
+    onClose();
+  };
+
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog open={open} onClose={handleDialogClose}>
       <Box sx={styles.closeIcon} onClick={onClose}>
         <X></X>
       </Box>
-      <DialogTitle>Підтвердити видалення</DialogTitle>
+      <DialogTitle>{title}</DialogTitle>
       <DialogContent>
         <Typography>{description || 'Ви впевнені, що хочете видалити цю картку?'} </Typography>
       </DialogContent>
       <DialogActions sx={styles.actions}>
         <Button variant="filled" size="medium" sx={styles.deleteBtn} onClick={onDelete}>
-          Видалити
+          {confirmButtonText}
         </Button>
         <Button variant="outlined" size="medium" color="primary" onClick={onClose}>
-          Скасувати
+          {cancelButtonText}
         </Button>
       </DialogActions>
     </Dialog>

@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import dayjs, { Dayjs } from 'dayjs';
 import React from 'react';
 
+import { SuggestItemMode } from '../actionable-suggest-item/ActionableSuggestItem.config';
 import { CompositionModalView } from './CompositionModalView';
 
 interface MockDatePickerProps {
@@ -11,7 +12,7 @@ interface MockDatePickerProps {
 }
 
 interface MockActionableSuggestItemProps {
-  readonly mode: 'audio' | 'notes';
+  readonly mode: SuggestItemMode;
   readonly value: string | null;
   readonly date: Dayjs | null;
   readonly onSelect: (val: string | null) => void;
@@ -68,9 +69,7 @@ jest.mock('../actionable-suggest-item/ActionableSuggestItem', () => ({
   default: ({ mode, value, date, onSelect, onDateChange, onUpload, onDelete }: MockActionableSuggestItemProps) => (
     <div data-testid={`suggest-item-${mode}`}>
       <span data-testid="suggest-value">{value || 'empty'}</span>
-      <span data-testid="suggest-date">
-        {date?.isValid() ? date.format('YYYY-MM-DD') : 'empty-date'}
-      </span>
+      <span data-testid="suggest-date">{date?.isValid() ? date.format('YYYY-MM-DD') : 'empty-date'}</span>
       <button data-testid="action-select-item" onClick={() => onSelect('Selected Item')}>
         Select Track
       </button>
@@ -122,11 +121,15 @@ describe('CompositionModalView', () => {
   let onSaveMock: jest.Mock;
 
   beforeAll(() => {
+    let uuidCounter = 0;
     if (!globalThis.crypto) {
       // @ts-expect-error Mocking partial crypto object for test environment compatibility
       globalThis.crypto = {};
     }
-    globalThis.crypto.randomUUID = jest.fn(() => 'mocked-stable-uuid') as typeof crypto.randomUUID;
+    globalThis.crypto.randomUUID = jest.fn(() => {
+      uuidCounter++;
+      return `mocked-uuid-${uuidCounter}`;
+    }) as typeof crypto.randomUUID;
   });
 
   beforeEach(() => {
@@ -260,5 +263,76 @@ describe('CompositionModalView', () => {
 
     expect(screen.getByLabelText(/Назва твору/)).toHaveValue('');
     expect(onCloseMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('should update audio entry when modified', () => {
+    renderComponent();
+
+    fireEvent.click(screen.getByTestId('btn-add-Аудіо'));
+
+    const audioContainer = screen.getByTestId('suggest-item-audio');
+    fireEvent.click(within(audioContainer).getByTestId('action-select-item'));
+
+    expect(within(audioContainer).getByTestId('suggest-value')).toHaveTextContent('Selected Item');
+  });
+
+  it('should clear fileName when FileItem onDelete is clicked', () => {
+    onTriggerUploadMock.mockImplementation((_mode: string, callback: (name: string) => void) => {
+      callback('track.mp3');
+    });
+
+    renderComponent();
+    fireEvent.click(screen.getByTestId('btn-add-Аудіо'));
+
+    const itemWrapper = screen.getByTestId('suggest-item-audio');
+    fireEvent.click(within(itemWrapper).getByTestId('action-upload-item'));
+
+    expect(screen.getByTestId('file-item-audio')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('action-remove-file'));
+
+    expect(screen.queryByTestId('file-item-audio')).not.toBeInTheDocument();
+  });
+
+  it('should remove note entries when delete action is triggered on notes row', () => {
+    renderComponent();
+
+    fireEvent.click(screen.getByTestId('btn-add-Ноти'));
+    expect(screen.getByTestId('suggest-item-notes')).toBeInTheDocument();
+
+    const notesContainer = screen.getByTestId('suggest-item-notes');
+    fireEvent.click(within(notesContainer).getByTestId('action-delete-item'));
+
+    expect(screen.queryByTestId('suggest-item-notes')).not.toBeInTheDocument();
+  });
+
+  it('should hide alert when onClose is triggered on Alert component', () => {
+    renderComponent();
+
+    expect(screen.getByTestId('info-alert')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('action-close-alert'));
+
+    expect(screen.queryByTestId('info-alert')).not.toBeInTheDocument();
+  });
+
+  it('should cover fallback branch when updating entries in array with multiple items', () => {
+    renderComponent();
+
+    fireEvent.click(screen.getByTestId('btn-add-Аудіо'));
+    fireEvent.click(screen.getByTestId('btn-add-Аудіо'));
+
+    const audioContainers = screen.getAllByTestId('suggest-item-audio');
+    expect(audioContainers).toHaveLength(2);
+
+    fireEvent.click(within(audioContainers[0]).getByTestId('action-select-item'));
+
+    fireEvent.click(screen.getByTestId('btn-add-Ноти'));
+    fireEvent.click(screen.getByTestId('btn-add-Ноти'));
+
+    const noteContainers = screen.getAllByTestId('suggest-item-notes');
+    expect(noteContainers).toHaveLength(2);
+
+    fireEvent.click(within(noteContainers[0]).getByTestId('action-select-item'));
   });
 });

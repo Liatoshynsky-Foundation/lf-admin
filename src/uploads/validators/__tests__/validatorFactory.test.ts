@@ -34,6 +34,26 @@ describe('createValidator', () => {
   });
 
   describe('size limits and extra validations', () => {
+    it('should validate document size limit (10MB)', async () => {
+      const validator = createValidator({ fileType: 'document' });
+      const bigBuffer = Buffer.alloc(11 * 1024 * 1024);
+      const result = await validator.validate(bigBuffer, 'doc.txt', 'text/plain');
+      expect(result.valid).toBe(false);
+      expect(result.errors[0]).toBe('Розмір документа не може перевищувати 10MB');
+    });
+
+    it('should cap effective max size at default limit even if rules.maxSize is larger', async () => {
+      const validator = createValidator({
+        fileType: 'document',
+        rules: { maxSize: 20 * 1024 * 1024 }
+      });
+      const buffer = Buffer.alloc(11 * 1024 * 1024);
+      const result = await validator.validate(buffer, 'doc.txt', 'text/plain');
+
+      expect(result.valid).toBe(false);
+      expect(result.errors[0]).toBe('Розмір документа не може перевищувати 10MB');
+    });
+
     it('should validate archive size limit (50MB)', async () => {
       const validator = createValidator({ fileType: 'archive' });
       const bigBuffer = Buffer.alloc(51 * 1024 * 1024);
@@ -79,6 +99,13 @@ describe('createValidator', () => {
       expect(result.valid).toBe(true);
     });
 
+    it('should validate PDF header when filename ends with .pdf even if mimeType is octet-stream', async () => {
+      const validator = createValidator({ fileType: 'document' });
+      const pdfBuffer = Buffer.from('%PDF-1.4');
+      const result = await validator.validate(pdfBuffer, 'file.pdf', 'application/octet-stream');
+      expect(result.valid).toBe(true);
+    });
+
     it('should fail invalid PDF', async () => {
       const validator = createValidator({ fileType: 'document' });
       const badBuffer = Buffer.from('NOT_A_PDF');
@@ -102,5 +129,13 @@ describe('createValidator', () => {
       const v2 = createValidator(config);
       expect(v1).not.toBe(v2);
     });
+  });
+  it('should pass valid audio file when within size limit', async () => {
+    const validator = createValidator({ fileType: 'audio' });
+    const buffer = Buffer.alloc(1024);
+    const result = await validator.validate(buffer, 'audio.mp3', 'audio/mpeg');
+
+    expect(result.valid).toBe(true);
+    expect(result.errors).toEqual([]);
   });
 });

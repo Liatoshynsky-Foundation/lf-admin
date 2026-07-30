@@ -1,7 +1,9 @@
 import {
+  CopyObjectCommand,
   DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
+  ListObjectsV2Command,
   PutObjectCommand,
   S3Client
 } from '@aws-sdk/client-s3';
@@ -18,10 +20,12 @@ jest.mock('~/src/middleware/logger/logger', () => ({
 }));
 
 const MockS3Client = S3Client as jest.MockedClass<typeof S3Client>;
+const MockCopyObjectCommand = CopyObjectCommand as jest.MockedClass<typeof CopyObjectCommand>;
 const MockPutObjectCommand = PutObjectCommand as jest.MockedClass<typeof PutObjectCommand>;
 const MockGetObjectCommand = GetObjectCommand as jest.MockedClass<typeof GetObjectCommand>;
 const MockDeleteObjectCommand = DeleteObjectCommand as jest.MockedClass<typeof DeleteObjectCommand>;
 const MockHeadObjectCommand = HeadObjectCommand as jest.MockedClass<typeof HeadObjectCommand>;
+const MockListObjectsV2Command = ListObjectsV2Command as jest.MockedClass<typeof ListObjectsV2Command>;
 
 const createAwsOptions = (overrides?: Partial<CloudStorageOptions>): CloudStorageOptions => ({
   provider: 'aws',
@@ -80,6 +84,19 @@ describe('createCloudStorage', () => {
           }
         })
       );
+    });
+
+    it('should reuse the same S3 client between operations', async () => {
+      const options = createAwsOptions({ region: 'us-east-1' });
+      const storage = createCloudStorage(options);
+
+      mockSend.mockResolvedValue({});
+
+      await storage.exists('first.txt');
+      await storage.exists('second.txt');
+
+      expect(MockS3Client).toHaveBeenCalledTimes(1);
+      expect(mockSend).toHaveBeenCalledTimes(2);
     });
 
     it('should create Cloudflare R2 storage successfully', async () => {
@@ -208,6 +225,25 @@ describe('createCloudStorage', () => {
       });
     });
 
+    it('should store file in metadata directory when provided', async () => {
+      const options = createAwsOptions();
+      const storage = createCloudStorage(options);
+      const { buffer, filename, mimeType } = createTestFile();
+
+      mockSend.mockResolvedValue({});
+
+      const result = await storage.store(buffer, filename, mimeType, { directory: 'custom-folder' });
+
+      expect(result.metadata.path).toBe('custom-folder/test.txt');
+      expect(result.metadata.directory).toBe('custom-folder');
+      expect(MockPutObjectCommand).toHaveBeenCalledWith(
+        expect.objectContaining({
+          Bucket: 'test-bucket',
+          Key: 'custom-folder/test.txt'
+        })
+      );
+    });
+
     it('should include URL in metadata', async () => {
       const options = createAwsOptions({ region: 'us-west-2' });
       const storage = createCloudStorage(options);
@@ -291,8 +327,8 @@ describe('createCloudStorage', () => {
       consoleSpy.mockRestore();
     });
 
-    it('should throw error for unsupported providers', async () => {
-      const options = createAwsOptions({ provider: 'azure' as unknown as CloudStorageOptions['provider'] });
+    it('should return null for unsupported providers', async () => {
+      const options = createAwsOptions({ provider: 'unsupported' as unknown as CloudStorageOptions['provider'] });
       const storage = createCloudStorage(options);
       const consoleSpy = mockConsoleError();
 
@@ -320,6 +356,21 @@ describe('createCloudStorage', () => {
       });
     });
 
+    it('should delete files from the root when folder is an empty string', async () => {
+      const options = createAwsOptions();
+      const storage = createCloudStorage(options);
+
+      mockSend.mockResolvedValue({});
+
+      const result = await storage.delete('root-file.txt', '');
+
+      expect(result.success).toBe(true);
+      expect(MockDeleteObjectCommand).toHaveBeenCalledWith({
+        Bucket: 'test-bucket',
+        Key: 'root-file.txt'
+      });
+    });
+
     it('should handle delete errors', async () => {
       const options = createAwsOptions();
       const storage = createCloudStorage(options);
@@ -330,6 +381,18 @@ describe('createCloudStorage', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Access denied');
+    });
+
+    it('should use the fallback error message when delete fails with a non-Error value', async () => {
+      const options = createAwsOptions();
+      const storage = createCloudStorage(options);
+
+      mockSend.mockRejectedValue('Access denied');
+
+      const result = await storage.delete('test.txt');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Unknown error occurred');
     });
 
     it('should throw error for unsupported providers', async () => {
@@ -345,6 +408,160 @@ describe('createCloudStorage', () => {
       const storage = createCloudStorage(options);
 
       const result = await storage.delete('test.txt');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Cloud storage for gcp not yet implemented');
+    });
+  });
+
+  describe('move', () => {
+    it('should copy the source object to the target key and delete the source object', async () => {
+      const options = createCloudflareOptions();
+      const storage = createCloudStorage(options);
+
+      mockSend.mockResolvedValue({});
+
+      const result = await storage.move('old name.jpeg', 'new-name.jpeg', 'photos');
+
+      expect(result.success).toBe(true);
+      expect(MockCopyObjectCommand).toHaveBeenCalledWith({
+        Bucket: 'test-bucket',
+        CopySource: 'test-bucket/photos/old%20name.jpeg',
+        Key: 'photos/new-name.jpeg'
+      });
+      expect(MockDeleteObjectCommand).toHaveBeenCalledWith({
+        Bucket: 'test-bucket',
+        Key: 'photos/old name.jpeg'
+      });
+    });
+
+    it('should move files at the storage root when folder is an empty string', async () => {
+      const options = createAwsOptions();
+      const storage = createCloudStorage(options);
+
+      mockSend.mockResolvedValue({});
+
+      const result = await storage.move('old.txt', 'new.txt', '');
+
+      expect(result.success).toBe(true);
+      expect(MockCopyObjectCommand).toHaveBeenCalledWith({
+        Bucket: 'test-bucket',
+        CopySource: 'test-bucket/old.txt',
+        Key: 'new.txt'
+      });
+      expect(MockDeleteObjectCommand).toHaveBeenCalledWith({
+        Bucket: 'test-bucket',
+        Key: 'old.txt'
+      });
+    });
+
+    it('should return an error when moving fails', async () => {
+      const options = createAwsOptions();
+      const storage = createCloudStorage(options);
+
+      mockSend.mockRejectedValue(new Error('Copy failed'));
+
+      const result = await storage.move('old.txt', 'new.txt');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Copy failed');
+    });
+
+    it('should fallback to retrieve, store and delete when object copy fails', async () => {
+      const options = createCloudflareOptions();
+      const storage = createCloudStorage(options);
+      const fileBuffer = Buffer.from('file content');
+
+      mockSend
+        .mockRejectedValueOnce(new Error('Copy failed'))
+        .mockResolvedValueOnce({
+          ContentType: 'image/jpeg',
+          ContentLength: fileBuffer.length,
+          LastModified: new Date('2026-07-24T00:00:00.000Z'),
+          Metadata: { originalName: 'old.jpeg' }
+        })
+        .mockResolvedValueOnce({ Body: Readable.from([fileBuffer]) })
+        .mockResolvedValueOnce({})
+        .mockResolvedValueOnce({});
+
+      const result = await storage.move('old.jpeg', 'new.jpeg', 'photos');
+
+      expect(result.success).toBe(true);
+      expect(MockCopyObjectCommand).toHaveBeenCalledWith({
+        Bucket: 'test-bucket',
+        CopySource: 'test-bucket/photos/old.jpeg',
+        Key: 'photos/new.jpeg'
+      });
+      expect(MockGetObjectCommand).toHaveBeenCalledWith({
+        Bucket: 'test-bucket',
+        Key: 'photos/old.jpeg'
+      });
+      expect(MockPutObjectCommand).toHaveBeenCalledWith(
+        expect.objectContaining({
+          Bucket: 'test-bucket',
+          Key: 'photos/new.jpeg',
+          Body: fileBuffer,
+          ContentType: 'image/jpeg'
+        })
+      );
+      expect(MockDeleteObjectCommand).toHaveBeenCalledWith({
+        Bucket: 'test-bucket',
+        Key: 'photos/old.jpeg'
+      });
+    });
+
+    it('should return fallback store error when copy fallback cannot store the target object', async () => {
+      const options = createCloudflareOptions();
+      const storage = createCloudStorage(options);
+      const fileBuffer = Buffer.from('file content');
+
+      mockSend
+        .mockRejectedValueOnce(new Error('Copy failed'))
+        .mockResolvedValueOnce({ ContentType: 'application/pdf' })
+        .mockResolvedValueOnce({ Body: Readable.from([fileBuffer]) })
+        .mockRejectedValueOnce(new Error('Store failed'));
+
+      const result = await storage.move('old.pdf', 'new.pdf', 'uploads');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Store failed');
+    });
+
+    it('should return fallback delete error when copy fallback cannot delete the source object', async () => {
+      const options = createCloudflareOptions();
+      const storage = createCloudStorage(options);
+      const fileBuffer = Buffer.from('file content');
+
+      mockSend
+        .mockRejectedValueOnce(new Error('Copy failed'))
+        .mockResolvedValueOnce({ ContentType: 'application/pdf' })
+        .mockResolvedValueOnce({ Body: Readable.from([fileBuffer]) })
+        .mockResolvedValueOnce({})
+        .mockRejectedValueOnce(new Error('Delete failed'));
+
+      const result = await storage.move('old.pdf', 'new.pdf', 'uploads');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Delete failed');
+    });
+
+    it('should use the fallback error message when moving fails with a non-Error value', async () => {
+      const options = createAwsOptions();
+      const storage = createCloudStorage(options);
+
+      mockSend.mockRejectedValue('Copy failed');
+
+      const result = await storage.move('old.txt', 'new.txt');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Unknown error occurred');
+    });
+
+    it('should return an error for unsupported providers', async () => {
+      const options = createAwsOptions({ provider: 'gcp' as unknown as CloudStorageOptions['provider'] });
+      const storage = createCloudStorage(options);
+
+      const result = await storage.move('old.txt', 'new.txt');
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Cloud storage for gcp not yet implemented');
@@ -450,7 +667,7 @@ describe('createCloudStorage', () => {
     });
 
     it('should return null for unsupported providers', async () => {
-      const options = createAwsOptions({ provider: 'azure' as unknown as CloudStorageOptions['provider'] });
+      const options = createAwsOptions({ provider: 'unsupported' as unknown as CloudStorageOptions['provider'] });
       const storage = createCloudStorage(options);
       const consoleSpy = mockConsoleError();
 
@@ -468,6 +685,14 @@ describe('createCloudStorage', () => {
       const url = storage.getUrl('test.txt');
 
       expect(url).toBe('https://cdn.example.com/test.txt');
+    });
+
+    it('should remove a leading slash before generating a URL', () => {
+      const options = createAwsOptions({ baseUrl: 'https://cdn.example.com' });
+      const storage = createCloudStorage(options);
+      const url = storage.getUrl('/photos/test.txt');
+
+      expect(url).toBe('https://cdn.example.com/photos/test.txt');
     });
 
     it('should generate default AWS S3 URL', () => {
@@ -530,24 +755,133 @@ describe('createCloudStorage', () => {
       expect(url).toBe('https://cdn.gcp.example.com/test.txt');
     });
 
-    it('should generate correct URL for Azure', () => {
-      const options = createAwsOptions({ provider: 'azure' as unknown as CloudStorageOptions['provider'], credentials: {} });
-      const storage = createCloudStorage(options);
-      const url = storage.getUrl('test.txt');
-
-      expect(url).toBe('https://test-bucket.blob.core.windows.net/test.txt');
-    });
-
-    it('should generate correct URL for Azure with custom baseUrl', () => {
+    it('should generate correct URL for unsupported providers with custom baseUrl', () => {
       const options = createAwsOptions({
-        provider: 'azure' as unknown as CloudStorageOptions['provider'],
-        baseUrl: 'https://cdn.azure.example.com',
+        provider: 'unsupported' as unknown as CloudStorageOptions['provider'],
+        baseUrl: 'https://cdn.example.com',
         credentials: {}
       });
       const storage = createCloudStorage(options);
       const url = storage.getUrl('test.txt');
 
-      expect(url).toBe('https://cdn.azure.example.com/test.txt');
+      expect(url).toBe('https://cdn.example.com/test.txt');
+    });
+
+    it('should return null for unsupported providers without custom baseUrl', () => {
+      const options = createAwsOptions({
+        provider: 'unsupported' as unknown as CloudStorageOptions['provider'],
+        credentials: {}
+      });
+      const storage = createCloudStorage(options);
+      const url = storage.getUrl('test.txt');
+
+      expect(url).toBeNull();
+    });
+  });
+
+  describe('list', () => {
+    it('should list files from the root folder', async () => {
+      const options = createAwsOptions({ region: 'us-west-2' });
+      const storage = createCloudStorage(options);
+      const uploadedAt = new Date('2026-07-20');
+
+      mockSend.mockResolvedValue({
+        Contents: [
+          {
+            Key: 'uploads/test.txt',
+            Size: 42,
+            LastModified: uploadedAt
+          }
+        ]
+      });
+
+      const result = await storage.list();
+
+      expect(MockListObjectsV2Command).toHaveBeenCalledWith({
+        Bucket: 'test-bucket',
+        Prefix: ''
+      });
+      expect(result).toEqual([
+        {
+          filename: 'test.txt',
+          originalName: 'test.txt',
+          mimeType: 'application/octet-stream',
+          size: 42,
+          uploadedAt,
+          path: 'uploads/test.txt',
+          url: 'https://test-bucket.s3.us-west-2.amazonaws.com/uploads/test.txt',
+          directory: 'uploads'
+        }
+      ]);
+    });
+
+    it('should normalize folder prefix when listing files', async () => {
+      const options = createAwsOptions();
+      const storage = createCloudStorage(options);
+
+      mockSend.mockResolvedValue({ Contents: [] });
+
+      const result = await storage.list('photos');
+
+      expect(result).toEqual([]);
+      expect(MockListObjectsV2Command).toHaveBeenCalledWith({
+        Bucket: 'test-bucket',
+        Prefix: 'photos/'
+      });
+    });
+
+    it('should keep trailing slash in folder prefix when listing files', async () => {
+      const options = createAwsOptions();
+      const storage = createCloudStorage(options);
+
+      mockSend.mockResolvedValue({ Contents: [] });
+
+      await storage.list('photos/');
+
+      expect(MockListObjectsV2Command).toHaveBeenCalledWith({
+        Bucket: 'test-bucket',
+        Prefix: 'photos/'
+      });
+    });
+
+    it('should use default values when listed object metadata is missing', async () => {
+      const options = createAwsOptions();
+      const storage = createCloudStorage(options);
+
+      mockSend.mockResolvedValue({
+        Contents: [
+          {
+            Key: undefined,
+            Size: undefined,
+            LastModified: undefined
+          }
+        ]
+      });
+
+      const result = await storage.list();
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        filename: '',
+        originalName: '',
+        mimeType: 'application/octet-stream',
+        size: 0,
+        path: '',
+        url: 'https://test-bucket.s3.us-east-1.amazonaws.com/',
+        directory: ''
+      });
+      expect(result[0].uploadedAt).toBeInstanceOf(Date);
+    });
+
+    it('should return an empty array when list fails', async () => {
+      const options = createAwsOptions();
+      const storage = createCloudStorage(options);
+
+      mockSend.mockRejectedValue(new Error('List failed'));
+
+      const result = await storage.list();
+
+      expect(result).toEqual([]);
     });
   });
 });

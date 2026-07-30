@@ -1,0 +1,1 @@
+export type MusicTableSectionBlock = Record<string, never>;

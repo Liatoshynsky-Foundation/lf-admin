@@ -150,7 +150,6 @@ export type ACTIONS_TYPE = {
   id: MenuActionId;
   label: string;
 };
-
 export type MUTATION_RESULT = Record<string, string>;
 
 
@@ -274,11 +273,14 @@ export const ADMIN_TITLE_LABELS: Record<PublicationsItemType, string> = {
   media: 'Назва публікації в адмінці'
 } as const;
 
+export const META_TITLE_MAX_LENGTH = 150;
+
 export const CROP_RATIOS = {
   HERO_BANNER: 816 / 300,
   FUNDATION_PROFILE_SMALL: 336 / 400,
   FUNDATION_PROFILE_BIG: 816 / 498,
   TEAM_AVATAR: 200 / 180,
-  SOCIAL_MEDIA_PREVIEW: 295 / 225
+  SOCIAL_MEDIA_PREVIEW: 295 / 225,
+  GROUP_PHOTO: 16 / 9,
 } as const;
 

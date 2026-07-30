@@ -26,6 +26,8 @@ export const EditablePageLayout = ({
   const setLocale = useStore((s) => s.setLocale);
   const isChanged = useStore((s) => s.isChanged);
   const discardChanges = useStore((s) => s.discardChanges);
+  const hasInvalidFields = useStore((s) => Object.values(s.invalidFields).some(Boolean));
+  const setIsSaving = useStore((s) => s.setIsSaving);
 
   const { data, loading: queryLoading } = useGetPageQuery({
     variables: { slug: pageSlug }
@@ -42,10 +44,15 @@ export const EditablePageLayout = ({
 
   const { preview, loading: editorLoading } = usePageEditor(pageSlug);
   const { save, loading: saveLoading } = useSavePageBlocks(pageSlug);
+  const isSaving = editorLoading || saveLoading;
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  useEffect(() => {
+    setIsSaving(isSaving);
+  }, [isSaving, setIsSaving]);
 
   if (!isMounted || queryLoading) {
     return null;
@@ -58,8 +65,9 @@ export const EditablePageLayout = ({
         onPreview={preview}
         onSave={save}
         isActionsDisabled={!isChanged}
+        isSaveDisabled={hasInvalidFields}
         onCancel={() => discardChanges(pageSlug)}
-        isSaving={editorLoading || saveLoading}
+        isSaving={isSaving}
         onLanguageChange={(lang: 'uk' | 'en') => setLocale(lang)}
       />
       {children}

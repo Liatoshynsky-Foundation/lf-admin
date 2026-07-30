@@ -29,13 +29,13 @@ describe('WorksTabPage', () => {
     jest.clearAllMocks();
   });
 
-  it('renders the works page content for a supported tab', async () => {
-    const result = await WorksTabPage({ params: Promise.resolve({ tab: 'works' }) });
+  it('renders the compositions page content for a supported tab', async () => {
+    const result = await WorksTabPage({ params: Promise.resolve({ tab: 'compositions' }) });
 
     render(result as React.ReactElement);
 
     expect(mockNotFound).not.toHaveBeenCalled();
-    expect(screen.getByTestId('works-page-content')).toHaveTextContent('works');
+    expect(screen.getByTestId('works-page-content')).toHaveTextContent('compositions');
   });
 
   it('calls notFound for an unsupported tab', async () => {
