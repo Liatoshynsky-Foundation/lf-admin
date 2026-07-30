@@ -55,10 +55,6 @@ input UpdateFondInput {
     status: FondStatus
 }
 
-input DeleteFondInput {
-    fondNumber: Int!
-}
-
 extend type Query {
     findFondById(id: ID!): Fond
     findAllFonds(filters: FondFiltersInput): [Fond!]

@@ -201,7 +201,7 @@ describe('FondMutation', () => {
 
       expect(mockDelete).not.toHaveBeenCalled();
     });
-    it('should successfully call repo delete method and return false - unsuccessfull delete', async () => {
+    it('should successfully call repo delete method and return false - unsuccessful delete', async () => {
       const deleteId = 'non-exitested-id';
       mockDelete.mockResolvedValue(false);
 
@@ -220,6 +220,23 @@ describe('FondMutation', () => {
 
   describe('validation', () => {
     describe('createFond', () => {
+      it('should reject missing fondNumber', async () => {
+        const input = {
+          name: { uk: 'Архів', en: 'Archive' },
+          documentCreationDate: { uk: '1917', en: '1917' },
+          chronologicalBoundaries: { uk: '1917–1991', en: '1917–1991' },
+          organizationForm: { uk: 'Державна установа', en: 'State Institution' },
+          description: undefined,
+          status: BaseContentStatuses.Draft,
+        } as CreateFondInput;
+        
+        await expect(FondMutation.createFond({}, { input }, adminContext)).rejects.toThrow(ZodError);
+        
+        
+        expect(mockFindByFondNumber).not.toHaveBeenCalled();
+        expect(mockCreate).not.toHaveBeenCalled();
+      });
+      
       runValidationTests('create');
     });
 

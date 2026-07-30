@@ -7,8 +7,8 @@ const fondSchema = new Schema<Fond>(
   {
     fondNumber: { type: Number, required: true, unique: true },
     name: {
-      uk: { type: String, required: true, unique: true },
-      en: { type: String, required: true, unique: true}
+      uk: { type: String, required: true, index: true },
+      en: { type: String, required: true, index: true }
     },
     documentCreationDate: {
       uk: { type: String, required: true },

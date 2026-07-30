@@ -59,9 +59,7 @@ export const FondRepository = ({ FondModel }: FondRepoDeps): IFondRepository => 
     findByFondNumber: async (fondNumber: Fond['fondNumber']): Promise<Fond | null> => {
       await dbConnect();
 
-      const existing = await FondModel.findOne({
-        $match: { fondNumber }
-      });
+      const existing = await FondModel.findOne({ fondNumber });
 
       if (!existing) {
         return null;

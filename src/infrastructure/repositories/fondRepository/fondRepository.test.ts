@@ -75,7 +75,7 @@ describe('fondRepository', () => {
     await expect(repository.create(duplicateFond)).rejects.toThrow();
   });
 
-  it('should find a fond by fondNumber and retun the mapped entity', async () => {
+  it('should find a fond by fondNumber and return the mapped entity', async () => {
     const existedFond = createMockFondDoc();
     findOneMock.mockResolvedValue({ toObject: () => existedFond });
     const result = await repository.findByFondNumber(existedFond.fondNumber);
