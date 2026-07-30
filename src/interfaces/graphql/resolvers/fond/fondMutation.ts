@@ -5,7 +5,6 @@ import { Fond } from '~/src/domain/entities/Fond';
 import { CreateFondInput, UpdateFondInput } from '~/src/domain/repositories/fondRepository';
 import { GraphQLContext } from '~/src/shared/types/container/types';
 import { zFondSchema, zFondUpdateSchema } from '~/src/validators/fond.schema';
-import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 export type CreateFondGQLInput = Omit<CreateFondInput, 'status'> & { status?: Fond['status'] };
 export type UpdateFondGQLInput = UpdateFondInput;
@@ -40,12 +39,7 @@ export const FondMutation = {
       });
     }
 
-    const createInput: CreateFondInput = {
-      ...validatedInput,
-      status: validatedInput.status ?? BaseContentStatuses.Hidden
-    };
-    
-    const res = await repo.create(createInput);
+    const res = await repo.create(validatedInput);
 
     return res;
   },
