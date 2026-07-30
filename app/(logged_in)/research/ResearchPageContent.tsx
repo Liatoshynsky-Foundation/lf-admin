@@ -83,6 +83,12 @@ export function ResearchPageContent() {
     setPage(1);
   }, [searchValue, selectedFilters.status, sortValue]);
 
+  useEffect(() => {
+    if (page > totalPages && totalPages > 0) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
   return (
     <Box sx={styles.pageContainer}>
       <PageHeader title={RESEARCH_PAGE_TITLE} action={<ResearchCreateAction onClick={handleOpenCreate} />} />
