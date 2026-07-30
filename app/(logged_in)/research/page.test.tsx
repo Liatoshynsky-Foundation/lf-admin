@@ -87,6 +87,10 @@ jest.mock('~/shared/components/research-modal/ResearchModal', () => ({
     ) : null
 }));
 
+jest.mock('~/shared/components/pagination/Pagination', () => ({
+  Pagination: () => <div data-testid="mock-pagination" />
+}));
+
 describe('Research page', () => {
   it('renders the page title and the create action', () => {
     render(<ResearchPage />);
