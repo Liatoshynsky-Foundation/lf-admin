@@ -102,6 +102,16 @@ export const CompositionErrors = {
   FAILED_TO_DELETE: 'Failed to delete composition'
 };
 
+export const FondErrors = {
+  NUMBER_ALREADY_EXISTS: (number: number) => `Fond with number "${number}" already exists`,
+  FOND_NOT_FOUND: (id: string) => `Fond with id "${id}" not found`,
+};
+
+export const FondErrorCodes: Record<keyof typeof FondErrors, string> = {
+  NUMBER_ALREADY_EXISTS: 'DUPLICATE_FOND_NUMBER',
+  FOND_NOT_FOUND: 'FOND_NOT_FOUND'
+};
+
 export const galleryErrors = {
   FAILED_TO_FETCH: 'Upload files failed'
 };
