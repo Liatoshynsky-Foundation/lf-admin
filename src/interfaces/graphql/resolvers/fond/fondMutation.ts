@@ -5,6 +5,14 @@ import { Fond } from '~/src/domain/entities/Fond';
 import { CreateFondInput, UpdateFondInput } from '~/src/domain/repositories/fondRepository';
 import { GraphQLContext } from '~/src/shared/types/container/types';
 import { zFondSchema, zFondUpdateSchema } from '~/src/validators/fond.schema';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
+
+export type CreateFondGQLInput = Omit<CreateFondInput, 'status'> & { status?: Fond['status'] };
+export type UpdateFondGQLInput = UpdateFondInput;
+
+type CreateFondArgs = { input: CreateFondGQLInput };
+type UpdateFondArgs = { id: string; input: UpdateFondGQLInput };
+type DeleteFondArgs = { id: string; };
 
 const assertAuthenticated = (context: GraphQLContext) => {
   if (!context.admin) {
@@ -16,7 +24,7 @@ const assertAuthenticated = (context: GraphQLContext) => {
 
 
 export const FondMutation = {
-  createFond: async (_: unknown, { input }: { input: CreateFondInput }, context: GraphQLContext): Promise<Fond> => {
+  createFond: async (_: unknown, { input }: CreateFondArgs, context: GraphQLContext): Promise<Fond> => {
     assertAuthenticated(context);
     const repo = context.requestContainer.cradle.fondRepository;
     const validatedInput = zFondSchema.parse(input);
@@ -32,10 +40,17 @@ export const FondMutation = {
       });
     }
 
-    return repo.create(validatedInput);
+    const createInput: CreateFondInput = {
+      ...validatedInput,
+      status: validatedInput.status ?? BaseContentStatuses.Hidden
+    };
+    
+    const res = await repo.create(createInput);
+
+    return res;
   },
 
-  updateFond: async (_: unknown, { id, input }: { id: string, input: UpdateFondInput }, context: GraphQLContext): Promise<Fond> => {
+  updateFond: async (_: unknown, { id, input }: UpdateFondArgs, context: GraphQLContext): Promise<Fond> => {
     assertAuthenticated(context);
     const repo = context.requestContainer.cradle.fondRepository;
 
@@ -53,7 +68,7 @@ export const FondMutation = {
     return updatedFond;
   },
 
-  deleteFond: async (_: unknown, { id }: { id: string }, context: GraphQLContext): Promise<boolean> => {
+  deleteFond: async (_: unknown, { id }: DeleteFondArgs, context: GraphQLContext): Promise<boolean> => {
     assertAuthenticated(context);
     const repo = context.requestContainer.cradle.fondRepository;
 
