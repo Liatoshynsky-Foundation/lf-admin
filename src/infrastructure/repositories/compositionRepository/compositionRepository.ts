@@ -193,12 +193,20 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
     return docs.map(toEntity);
   };
 
+  const create = async (input: CompositionInput): Promise<Composition> => {
+    await dbConnect();
+    
+    const newComposition = await new CompositionModel(input).save();
+    return toEntity(newComposition.toObject() as unknown as DbComposition);
+  };
+
   return {
     ...baseRepo,
     syncForOpus,
     searchByTitle,
     findByIds,
     findByIdsPaginated,
-    countByIds
+    countByIds,
+    create
   };
 };

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { createCompositionId } from '../use-upsert-opus/useUpsertOpus';
-import type { OpusCompositionData, OpusCompositionSuggestion, OpusMediaFileData } from '~/types/opus';
+import type { OpusAudioFileData, OpusCompositionData, OpusCompositionSuggestion, OpusMediaFileData } from '~/types/opus';
 
 const fileNameFromUrl = (url?: string | null): string => {
   if (!url) return '';
@@ -12,10 +12,10 @@ const fileNameFromUrl = (url?: string | null): string => {
 type AudioItem = NonNullable<OpusCompositionSuggestion['audios']>[number];
 type SheetMusicItem = NonNullable<OpusCompositionSuggestion['sheetMusic']>[number];
 
-export const toSuggestionAudio = (audio: AudioItem): OpusMediaFileData => ({
+export const toSuggestionAudio = (audio: AudioItem): OpusAudioFileData => ({
   id: createCompositionId(),
   name: audio.name || fileNameFromUrl(audio.url),
-  fileUrl: audio.url ?? undefined
+  fileUrl: audio.url,
 });
 
 export const toSuggestionNote = (sheet: SheetMusicItem): OpusMediaFileData => ({
@@ -34,7 +34,6 @@ export const useCompositionsForm = (works: OpusCompositionData[], onChange: (wor
   const addComposition = () => {
     const newComposition: OpusCompositionData = {
       id: createCompositionId(),
-      order: works.length > 0 ? Math.max(...works.map((w) => w.order ?? 0)) + 1 : 1,
       name: '',
       genre: '',
       year: '',

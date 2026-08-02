@@ -14,4 +14,5 @@ export interface ICompositionRepository extends IBaseRepository<Composition, Com
   findByIds(ids: string[]): Promise<Composition[]>;
   findByIdsPaginated(ids: string[], filters?: CompositionFilters): Promise<Composition[]>;
   countByIds(ids: string[], filters?: CompositionFilters): Promise<number>;
+  create(input: CompositionInput): Promise<Composition>;
 }

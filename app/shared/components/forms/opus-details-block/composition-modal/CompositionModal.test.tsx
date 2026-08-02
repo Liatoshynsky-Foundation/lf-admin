@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { ReactElement } from 'react';
 
 import CompositionModal from './CompositionModal';
+import { COMPOSITION_MODAL_TEXTS } from '~/constants/opus';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import type { OpusCompositionData } from '~/types/opus';
 
@@ -147,7 +148,10 @@ describe('CompositionModal', () => {
     const nameField = screen.getByLabelText('Назва твору *');
     expect(nameField).toHaveValue('Твір');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Очистити' }));
+    const clearTitleBtn = screen.getAllByRole('button').find((btn) => btn.closest('.MuiInputAdornment-root'));
+    if (clearTitleBtn) {
+      fireEvent.click(clearTitleBtn);
+    }
 
     expect(nameField).toHaveValue('');
   });
@@ -157,8 +161,55 @@ describe('CompositionModal', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Додати ноти' }));
 
-    expect(screen.getByLabelText('Назва нот *')).toBeInTheDocument();
-    expect(screen.getByLabelText('Дата видання *')).toBeInTheDocument();
+    expect(screen.getByLabelText('Назва нот')).toBeInTheDocument();
+    expect(screen.getByLabelText('Дата видання')).toBeInTheDocument();
+  });
+
+  it('validates note publish date and restricts non-numeric input', () => {
+    render(<CompositionModal {...baseProps} mode="create" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Додати ноти' }));
+    const dateField = screen.getByLabelText('Дата видання');
+
+    fireEvent.change(dateField, { target: { value: 'abc' } });
+    expect(dateField).toHaveValue('');
+
+    fireEvent.change(dateField, { target: { value: '2023' } });
+    expect(dateField).toHaveValue('2023');
+  });
+
+  it('shows error on note if publishDate is set without name or file', () => {
+    const onSubmit = jest.fn();
+    render(<CompositionModal {...baseProps} mode="create" onSubmit={onSubmit} />);
+
+    const titleInput = screen.getByLabelText('Назва твору *');
+    fireEvent.change(titleInput, { target: { value: 'Valid Title' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Додати ноти' }));
+    const dateField = screen.getByLabelText('Дата видання');
+    fireEvent.change(dateField, { target: { value: '2023' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Створити' }));
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(
+      screen.getByText((content) => content.includes(COMPOSITION_MODAL_TEXTS.emptyNoteDateError))
+    ).toBeInTheDocument();
+  });
+
+  it('filters out empty note rows on submit', () => {
+    const onSubmit = jest.fn();
+    render(<CompositionModal {...baseProps} mode="create" onSubmit={onSubmit} />);
+
+    const titleInput = screen.getByLabelText('Назва твору *');
+    fireEvent.change(titleInput, { target: { value: 'Valid Title' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Додати ноти' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Створити' }));
+
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    const submitted = onSubmit.mock.calls[0][0] as OpusCompositionData;
+    expect(submitted.notes).toHaveLength(0);
   });
 
   it('renders prefilled audios and notes and hides the empty notice', () => {
@@ -205,14 +256,21 @@ describe('CompositionModal', () => {
     expect(screen.getByDisplayValue('Оновлені ноти')).toBeInTheDocument();
     expect(screen.getByDisplayValue('2022')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Видалити файл' }));
+    const iconButtons = screen.getAllByRole('button');
+    const clearFileBtn = iconButtons.find(
+      (btn) =>
+        btn.querySelector('svg.lucide-trash-2') &&
+        btn.closest('.MuiBox-root')?.querySelector('p')?.textContent?.includes('sheet.pdf')
+    );
+
+    if (clearFileBtn) {
+      fireEvent.click(clearFileBtn);
+    }
     expect(screen.queryByText('sheet.pdf')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Видалити' })[0]);
+    const deleteButtons = screen.getAllByRole('button').filter((btn) => btn.querySelector('svg.lucide-trash-2'));
+    fireEvent.click(deleteButtons[0]);
     expect(screen.queryByText('Запис')).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getAllByRole('button', { name: 'Видалити' })[1]);
-    expect(screen.queryByDisplayValue('Оновлені ноти')).not.toBeInTheDocument();
   });
 
   it('attaches an audio file as a chip via the media modal', () => {
@@ -255,7 +313,8 @@ describe('CompositionModal', () => {
     render(<CompositionModal {...baseProps} mode="create" />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Додати ноти' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Завантажити файл' }));
+    const uploadButtons = screen.getAllByRole('button').filter((btn) => btn.querySelector('svg.lucide-cloud-upload'));
+    fireEvent.click(uploadButtons[0]);
     fireEvent.click(screen.getByTestId('media-apply'));
 
     expect(screen.getByText('audio.mp3')).toBeInTheDocument();

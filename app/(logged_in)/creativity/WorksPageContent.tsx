@@ -4,12 +4,13 @@ import { Box, Button } from '@mui/material';
 import { ChevronDown } from 'lucide-react';
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 
+import { useCreateWorkAction } from './(composition)/useCreateWorkAction';
 import { useWorksFiltering } from './useWorksFiltering';
 import { styles } from './WorksPageContent.styles';
 import { WorksTable } from './WorksTable';
 import {
   ITEMS_PER_PAGE,
-  WORKS_CREATE_OPTIONS,
+  WORKS_BASE_PATH,
   WORKS_EMPTY_STATE_DESCRIPTION,
   WORKS_EMPTY_STATE_NO_RESULTS_DESCRIPTION,
   WORKS_EMPTY_STATE_NO_RESULTS_TITLE,
@@ -25,6 +26,7 @@ import {
 import ActionMenu from '~/shared/components/dropdown-menu/ActionMenu';
 import { EmptyState } from '~/shared/components/empty-state';
 import { FilteringToolbar, SortSelect } from '~/shared/components/filtering-toolbar';
+import CompositionModal from '~/shared/components/forms/opus-details-block/composition-modal/CompositionModal';
 import { PageHeader } from '~/shared/components/page-header/PageHeader';
 import { Pagination } from '~/shared/components/pagination/Pagination';
 import { usePaginatedWorks } from '~/shared/hooks/use-opuses/useOpuses';
@@ -52,16 +54,14 @@ function useDropdownState() {
 
 function WorksCreateAction() {
   const { anchorEl, triggerRef, handleClose, handleToggle } = useDropdownState();
-
-  const handleToggleMenu = handleToggle;
-  const handleCloseMenu = handleClose;
+  const { isModalOpen, openModal, closeModal, handleSubmit } = useCreateWorkAction();
 
   return (
     <>
       <Button
         ref={triggerRef}
         variant="contained"
-        onClick={handleToggleMenu}
+        onClick={handleToggle}
         endIcon={<ChevronDown size={18} aria-hidden="true" />}
         aria-haspopup="menu"
         aria-expanded={Boolean(anchorEl)}
@@ -72,21 +72,22 @@ function WorksCreateAction() {
 
       <ActionMenu
         anchorEl={anchorEl}
-        onClose={handleCloseMenu}
+        onClose={handleClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         transformOrigin={{ vertical: 'top', horizontal: 'center' }}
         menuItems={[
           {
-            items: WORKS_CREATE_OPTIONS.map((option) => ({
-              id: option.id,
-              href: option.href,
-              text: {
-                name: option.label
-              }
-            }))
+            items: [
+              { id: 'work', text: { name: 'Твір' }, onClick: openModal },
+              { id: 'group', text: { name: 'Група' }, href: `${WORKS_BASE_PATH}/group/create` }
+            ]
           }
         ]}
       />
+
+      {isModalOpen && (
+        <CompositionModal open={isModalOpen} mode="create" onClose={closeModal} onSubmit={handleSubmit} />
+      )}
     </>
   );
 }

@@ -5,7 +5,7 @@ import { Composition } from '~/domain/entities/Composition';
 
 const sheetMusicSchema = new Schema(
   {
-    url: { type: String, required: true },
+    url: { type: String, default: null },
     name: { type: String, default: null },
     publishDate: { type: String, default: null },
     isFree: { type: Boolean, default: false },
@@ -16,8 +16,8 @@ const sheetMusicSchema = new Schema(
 
 const compositionAudioSchema = new Schema(
   {
-    name: { type: String, default: null },
-    url: { type: String, default: null }
+    name: { type: String, required: true },
+    url: { type: String, required: true }
   },
   { _id: false }
 );

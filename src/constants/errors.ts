@@ -60,6 +60,12 @@ export const opusServiceErrors = {
   FAILED_TO_DELETE: (id: string) => `Opus with id "${id}" not found or could not be deleted`
 };
 
+export const compositionsServiceErrors = {
+  COMPOSITION_NOT_FOUND: (id: string) => `Composition with id "${id}" not found`,
+  FAILED_TO_DELETE: (id: string) => `Composition with id "${id}" not found or could not be deleted`,
+  COMPOSITION_NOT_CREATED: 'Repository failed to create composition record.',
+};
+
 export const MediaMentionsServiceErrors = {
   INVALID_URL: newError('The provided URL is invalid'),
   NOT_FOUND: newError('Media mention not found'),

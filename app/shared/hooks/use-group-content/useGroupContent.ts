@@ -3,6 +3,7 @@ import { MouseEvent, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { createCompositionId } from '../use-upsert-opus/useUpsertOpus';
+import { isMediaItemFilled, mapMediaItemFromApi, resolveMediaName } from './compositionMedia';
 import { GroupData, GroupDataField, GroupPhoto } from '~/constants/creativity';
 import {
   OPUS_FIELD_LIMITS,
@@ -21,13 +22,10 @@ import {
   useDeleteOpusMutation,
   useUpdateOpusMutation
 } from '~/types/graphql/generated/graphql';
-import { FetchedOpusData, OpusCompositionSuggestion } from '~/types/opus';
+import { FetchedOpusData } from '~/types/opus';
 
 type AnchorId = 'navigation' | 'publish';
 type MenuAnchor = Record<AnchorId, HTMLButtonElement | null>;
-
-type AudioItem = NonNullable<OpusCompositionSuggestion['audios']>[number];
-type SheetMusicItem = NonNullable<OpusCompositionSuggestion['sheetMusic']>[number];
 
 const parseDescription = (desc: unknown): Record<string, unknown> => {
   if (!desc) return { type: 'doc', content: [] };
@@ -43,12 +41,6 @@ const parseDescription = (desc: unknown): Record<string, unknown> => {
     }
   }
   return { type: 'doc', content: [] };
-};
-
-const fileNameFromUrl = (url?: string | null): string => {
-  if (!url) return '';
-  const segment = url.split('/').pop() ?? url;
-  return decodeURIComponent(segment.split('?')[0]);
 };
 
 const validatePerformance = (
@@ -257,17 +249,15 @@ export const useGroupContent = (id: string) => {
           name: composition.name?.uk ?? composition.name?.en ?? '',
           genre: composition.genre ?? '',
           year: composition.year == null ? '' : String(composition.year),
-          audios: (composition.audios ?? []).map((audio: AudioItem) => ({
-            id: createCompositionId(),
-            name: audio.name ?? fileNameFromUrl(audio.url),
-            fileUrl: audio.url ?? undefined
-          })),
-          notes: (composition.sheetMusic ?? []).map((sheet: SheetMusicItem) => ({
-            id: createCompositionId(),
-            name: sheet.name ?? fileNameFromUrl(sheet.url),
-            fileUrl: sheet.url ?? undefined,
-            publishDate: sheet.publishDate ?? ''
-          }))
+          audios: (composition.audios ?? []).map((audio) =>
+            mapMediaItemFromApi(audio as { name?: string | null; url?: string | null }, createCompositionId)
+          ),
+          notes: (composition.sheetMusic ?? []).map((sheet) =>
+            mapMediaItemFromApi(
+                sheet as { name?: string | null; url?: string | null; publishDate?: string | null },
+                createCompositionId
+            )
+          )
         }))
       });
       setPublishedTitle(titleObj);
@@ -313,18 +303,18 @@ export const useGroupContent = (id: string) => {
           year: work.year.trim() || undefined,
           order: index + 1,
           audios: (work.audios || [])
-            .filter((audio) => audio.name.trim())
+            .filter(isMediaItemFilled)
             .map((audio) => ({
-              name: audio.name.trim(),
+              name: resolveMediaName(audio),
               fileUrl: audio.fileUrl,
-              publishDate: audio.publishDate
+              publishDate: ''
             })),
           notes: (work.notes || [])
-            .filter((note) => note.name.trim())
+            .filter(isMediaItemFilled)
             .map((note) => ({
-              name: note.name.trim(),
-              fileUrl: note.fileUrl,
-              publishDate: note.publishDate
+              name: resolveMediaName(note),
+              fileUrl: note.fileUrl ? note.fileUrl : null,
+              publishDate: note.publishDate || ''
             }))
         })),
         gallery: (groupData.photos || []).map((photo) => {

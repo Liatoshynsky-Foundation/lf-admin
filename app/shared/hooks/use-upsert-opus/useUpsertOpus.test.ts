@@ -1,9 +1,9 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { useUpsertOpus } from './useUpsertOpus';
+import { createCompositionId, toCompositionInput,useUpsertOpus } from './useUpsertOpus';
 import { OPUS_VALIDATION_MESSAGES } from '~/constants/opus';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
-import type { FetchedOpusData } from '~/types/opus';
+import type { FetchedOpusData, OpusCompositionData } from '~/types/opus';
 
 interface OpusByIdResult {
   data?: { opusById: FetchedOpusData | null } | null;
@@ -82,6 +82,51 @@ describe('useUpsertOpus', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockOpusByIdResult = { data: undefined, loading: false };
+  });
+
+  it('generates a unique composition id', () => {
+    const id1 = createCompositionId();
+    const id2 = createCompositionId();
+
+    expect(typeof id1).toBe('string');
+    expect(id1.length).toBeGreaterThan(0);
+    expect(id1).not.toBe(id2);
+  });
+
+  it('maps composition input correctly and handles missing urls or names', () => {
+    const compositionData: OpusCompositionData = {
+      id: 'comp-1',
+      name: '  Твір  ',
+      genre: '  Жанр  ',
+      year: '  1990  ',
+      audios: [
+        { id: 'a1', name: ' Аудіо ', fileUrl: 'https://example.com/audio.mp3' },
+        { id: 'a2', name: '', fileUrl: 'https://example.com/audio2.mp3?query=1' },
+        { id: 'a3', name: '', fileUrl: '' }
+      ],
+      notes: [
+        { id: 'n1', name: ' Ноти ', fileUrl: 'https://example.com/notes.pdf', publishDate: '2020-01-01' },
+        { id: 'n2', name: '', fileUrl: 'https://example.com/notes2.pdf?test=true', publishDate: '' },
+        { id: 'n3', name: '', fileUrl: '', publishDate: '' }
+      ]
+    };
+
+    const input = toCompositionInput(compositionData);
+
+    expect(input).toEqual({
+      id: 'comp-1',
+      name: 'Твір',
+      genre: 'Жанр',
+      year: '1990',
+      audios: [
+        { name: 'Аудіо', fileUrl: 'https://example.com/audio.mp3' },
+        { name: 'audio2.mp3', fileUrl: 'https://example.com/audio2.mp3?query=1' }
+      ],
+      notes: [
+        { name: 'Ноти', fileUrl: 'https://example.com/notes.pdf', publishDate: '2020-01-01' },
+        { name: 'notes2.pdf', fileUrl: 'https://example.com/notes2.pdf?test=true', publishDate: '' }
+      ]
+    });
   });
 
   it('initialises with empty details and no errors', () => {
@@ -227,12 +272,12 @@ describe('useUpsertOpus', () => {
             genre: '',
             year: '',
             audios: [
-              { id: 'a1', name: '  ' },
-              { id: 'a2', name: 'Аудіо', fileUrl: 'audio-url', publishDate: '2021' }
+              { id: 'a1', name: '    ', fileUrl: '', publishDate: '' },
+              { id: 'a2', name: 'Аудіо', fileUrl: 'audio-url' }
             ],
             notes: [
-              { id: 'n1', name: '' },
-              { id: 'n2', name: 'Ноти', fileUrl: 'notes-url' }
+              { id: 'n1', name: '', fileUrl: '', publishDate: '' },
+              { id: 'n2', name: 'Ноти', fileUrl: 'notes-url', publishDate: '' }
             ]
           }
         ]
@@ -247,13 +292,13 @@ describe('useUpsertOpus', () => {
     expect(payload.additionalText).toBeUndefined();
     expect(payload.endYear).toBeUndefined();
     expect(payload.datesNote).toBeUndefined();
-    expect(payload.genre).toEqual({'en': undefined, 'uk': undefined});
+    expect(payload.genre).toEqual({ en: undefined, uk: undefined });
 
     const composition = payload.compositions[0];
     expect(composition.genre).toBeUndefined();
     expect(composition.year).toBeUndefined();
-    expect(composition.audios).toEqual([{ name: 'Аудіо', fileUrl: 'audio-url', publishDate: '2021' }]);
-    expect(composition.notes).toEqual([{ name: 'Ноти', fileUrl: 'notes-url', publishDate: undefined }]);
+    expect(composition.audios).toEqual([{ name: 'Аудіо', fileUrl: 'audio-url' }]);
+    expect(composition.notes).toEqual([{ name: 'Ноти', fileUrl: 'notes-url', publishDate: '' }]);
   });
 
   it('sets publishedAt and maps SEO fallbacks when publishing', async () => {
@@ -442,8 +487,8 @@ describe('useUpsertOpus', () => {
     act(() => {
       result.current.setSeoValue({
         meta: {
-          uk: { title: 'set', description: '', keywords: '' },
-          en: { title: '', description: '', keywords: '' }
+          uk: { title: 'set', description: '', keywords: '', altText: { uk: '', en: '' } },
+          en: { title: '', description: '', keywords: '', altText: { uk: '', en: '' } }
         },
         ogImage: 'og',
         allowIndexing: { uk: true, en: true }
