@@ -24,3 +24,34 @@ mutation CreateComposition($input: CreateCompositionInput!) {
     updatedAt
   }
 }
+
+mutation UpdateComposition($id: ID!, $input: UpdateCompositionInput!) {
+  updateComposition(id: $id, input: $input) {
+    id
+    name {
+      uk
+      en
+    }
+    genre
+    year
+    audioAvailable
+    sheetAvailable
+    audios {
+      name
+      url
+    }
+    sheetMusic {
+      name
+      url
+      publishDate
+      isFree
+      dateUploaded
+    }
+    createdAt
+    updatedAt
+  }
+}
+
+mutation DeleteComposition($id: ID!) {
+  deleteComposition(id: $id)
+}

@@ -3,11 +3,15 @@
 import { Box } from '@mui/material';
 import React from 'react';
 
+import { useDeleteWorkAction } from './(composition)/useDeleteWorkAction';
+import { useUpdateWorkAction } from './(composition)/useUpdateWorkAction';
+import { useWorkUrlState } from './(composition)/useWorkUrlState';
 import { useWorksTableActions } from './useWorksTableActions';
 import { styles } from './WorksTable.styles';
 import { GroupMenuItems, WorkMenuItems } from './WorksTableMenuItems';
 import {
   AllTab,
+  COMPOSITION_MODAL_PARAM,
   OpusTab,
   SineopTab,
   WORKS_BASE_PATH,
@@ -17,15 +21,18 @@ import {
 } from '~/constants/creativity';
 import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
 import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
+import CompositionModal from '~/shared/components/forms/opus-details-block/composition-modal/CompositionModal';
 import { RowActions } from '~/shared/components/table-layout/components/RowActions';
 import { StatusBadge } from '~/shared/components/table-layout/components/StatusBadge';
 import { BaseRowData, ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
+import { useShare } from '~/shared/hooks/use-share/useShare';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { OpusStatus } from '~/types/graphql/generated/graphql';
+import { OpusCompositionData } from '~/types/opus';
 
 type ActionFields = {
-  editAction?: { editHref: string; editLabel: string };
+  editAction?: { editHref?: string; onEditClick?: () => void; editLabel: string };
   menuActions?: { menuItems: ActionMenuGroups; menuTriggerLabel: string };
 };
 
@@ -155,6 +162,21 @@ type WorksTableProps =
 export function WorksTable({ items, activeTab }: WorksTableProps) {
   const { groupToUngroup, setGroupToUngroup, handlePublishStatusChange, handleConfirmUngroup, handleShareGroup } =
     useWorksTableActions();
+  const { compositionId, compositionToEdit, isEditOpen, openEditComposition, closeEditComposition } = useWorkUrlState();
+  const { deleteComposition, setDeleteComposition, handleConfirmCompositionDelete } = useDeleteWorkAction();
+  const { handleUpdateComposition } = useUpdateWorkAction();
+  const { handleShare } = useShare();
+
+  const handleSubmitComposition = async (compositionData: OpusCompositionData) => {
+    if (!compositionId) return;
+    await handleUpdateComposition(compositionId, compositionData);
+    closeEditComposition();
+  };
+
+  const handleShareComposition = (id: string) => {
+    const url = `${window.location.origin}${WORKS_BASE_PATH}?${COMPOSITION_MODAL_PARAM}=${id}`;
+    handleShare(url);
+  };
 
   function groupsRow(group: GroupRowData): BaseRowData<GroupHeaderData, OpusWork, IndividualWork> {
     const isPublished = group.status === BaseContentStatuses.Published;
@@ -194,7 +216,9 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
           menuItems: WorkMenuItems({
             id: work.id,
             isPublished,
-            setDeleteModalOpen: modalMock
+            onDelete: () => modalMock(),
+            onShare: () => modalMock(),
+            onEdit: () => modalMock()
           }),
           menuTriggerLabel: `Дії твору ${work.name}`
         }
@@ -216,14 +240,16 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
         status: work.status,
         updatedAt: work.updatedAt,
         editAction: {
-          editHref: `${WORKS_BASE_PATH}/work/${work.id}/edit`,
+          onEditClick: () => openEditComposition(work.id),
           editLabel: `Редагувати твір ${work.name}`
         },
         menuActions: {
           menuItems: WorkMenuItems({
             id: work.id,
             isPublished,
-            setDeleteModalOpen: modalMock
+            onDelete: (id) => setDeleteComposition(id),
+            onShare: (id) => handleShareComposition(id),
+            onEdit: (id) => openEditComposition(id)
           }),
           menuTriggerLabel: `Дії твору ${work.name}`
         }
@@ -258,6 +284,7 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
   return (
     <Box sx={styles.worksListContainer}>
       <TableLayout data={rows} columns={columns} />
+
       <DeleteCardModal
         open={!!groupToUngroup}
         onClose={() => setGroupToUngroup(null)}
@@ -265,6 +292,23 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
         title="Підтвердити розгрупування"
         confirmButtonText="Розгрупувати"
         description="Ви впевнені, що хочете розгрупувати групу? Опис сторінки буде видалено, але композиції залишаться в системі."
+      />
+
+      <DeleteCardModal
+        open={Boolean(deleteComposition)}
+        onClose={() => setDeleteComposition(null)}
+        onDelete={handleConfirmCompositionDelete}
+        title="Підтвердити видалення композиції"
+        confirmButtonText="Видалити"
+        description="Ви впевнені, що хочете видалити цю композицію? Це дію можна скасувати лише шляхом повторного додавання композиції."
+      />
+
+      <CompositionModal
+        open={isEditOpen}
+        mode="edit"
+        initialValue={compositionToEdit}
+        onClose={closeEditComposition}
+        onSubmit={handleSubmitComposition}
       />
     </Box>
   );

@@ -2,6 +2,9 @@ import { Box } from '@mui/material';
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { useDeleteWorkAction } from './(composition)/useDeleteWorkAction';
+import { useUpdateWorkAction } from './(composition)/useUpdateWorkAction';
+import { useWorkUrlState } from './(composition)/useWorkUrlState';
 import { useWorksTableActions } from './useWorksTableActions';
 import {
   columns as originalColumns,
@@ -14,8 +17,10 @@ import {
 import { WORKS_TABS_NAMES } from '~/constants/creativity';
 import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import { BaseRowData, ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
+import { useShare } from '~/shared/hooks/use-share/useShare';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { OpusStatus } from '~/types/graphql/generated/graphql';
+import { OpusCompositionData } from '~/types/opus';
 
 type WorksTableRowData = BaseRowData<GroupHeaderData, OpusWork, IndividualWork>;
 
@@ -33,14 +38,60 @@ jest.mock('~/shared/components/table-layout/TableLayout', () => ({
 
 jest.mock('~/shared/components/delete-card-modal/DeleteCardModal', () => ({
   __esModule: true,
-  default: ({ open, onClose, onDelete }: { open: boolean; onClose: () => void; onDelete: () => void }) =>
+  default: ({
+    open,
+    onClose,
+    onDelete,
+    title
+  }: {
+    open: boolean;
+    onClose: () => void;
+    onDelete: () => void;
+    title: string;
+  }) =>
     open ? (
-      <div data-testid="delete-card-modal">
-        <button data-testid="modal-close" onClick={onClose}>
+      <div data-testid={`delete-card-modal-${title.includes('розгрупування') ? 'ungroup' : 'composition'}`}>
+        <button
+          data-testid={`modal-close-${title.includes('розгрупування') ? 'ungroup' : 'composition'}`}
+          onClick={onClose}
+        >
           Close
         </button>
-        <button data-testid="modal-delete" onClick={onDelete}>
+        <button
+          data-testid={`modal-delete-${title.includes('розгрупування') ? 'ungroup' : 'composition'}`}
+          onClick={onDelete}
+        >
           Delete
+        </button>
+      </div>
+    ) : null
+}));
+
+jest.mock('~/shared/components/forms/opus-details-block/composition-modal/CompositionModal', () => ({
+  __esModule: true,
+  default: ({
+    open,
+    onClose,
+    onSubmit,
+    initialValue
+  }: {
+    open: boolean;
+    mode: string;
+    initialValue: unknown;
+    onClose: () => void;
+    onSubmit: (data: OpusCompositionData) => Promise<void>;
+  }) =>
+    open ? (
+      <div data-testid="composition-modal">
+        <span data-testid="initial-value">{JSON.stringify(initialValue)}</span>
+        <button data-testid="composition-modal-close" onClick={onClose}>
+          Close Composition
+        </button>
+        <button
+          data-testid="composition-modal-submit"
+          onClick={() => onSubmit({ title: 'New Composition Title' } as unknown as OpusCompositionData)}
+        >
+          Submit Composition
         </button>
       </div>
     ) : null
@@ -48,6 +99,22 @@ jest.mock('~/shared/components/delete-card-modal/DeleteCardModal', () => ({
 
 jest.mock('./useWorksTableActions', () => ({
   useWorksTableActions: jest.fn()
+}));
+
+jest.mock('./(composition)/useWorkUrlState', () => ({
+  useWorkUrlState: jest.fn()
+}));
+
+jest.mock('./(composition)/useDeleteWorkAction', () => ({
+  useDeleteWorkAction: jest.fn()
+}));
+
+jest.mock('./(composition)/useUpdateWorkAction', () => ({
+  useUpdateWorkAction: jest.fn()
+}));
+
+jest.mock('~/shared/hooks/use-share/useShare', () => ({
+  useShare: jest.fn()
 }));
 
 const group: GroupRowData = {
@@ -78,6 +145,13 @@ describe('WorksTable', () => {
   const mockHandleConfirmUngroup = jest.fn();
   const mockHandleShareGroup = jest.fn();
 
+  const mockOpenEditComposition = jest.fn();
+  const mockCloseEditComposition = jest.fn();
+  const mockSetDeleteComposition = jest.fn();
+  const mockHandleConfirmCompositionDelete = jest.fn();
+  const mockHandleUpdateComposition = jest.fn();
+  const mockHandleShare = jest.fn();
+
   beforeEach(() => {
     jest.clearAllMocks();
     (useWorksTableActions as jest.Mock).mockReturnValue({
@@ -87,10 +161,40 @@ describe('WorksTable', () => {
       handleConfirmUngroup: mockHandleConfirmUngroup,
       handleShareGroup: mockHandleShareGroup
     });
+
+    (useWorkUrlState as jest.Mock).mockReturnValue({
+      compositionId: null,
+      compositionToEdit: null,
+      isEditOpen: false,
+      openEditComposition: mockOpenEditComposition,
+      closeEditComposition: mockCloseEditComposition
+    });
+
+    (useDeleteWorkAction as jest.Mock).mockReturnValue({
+      deleteComposition: null,
+      setDeleteComposition: mockSetDeleteComposition,
+      handleConfirmCompositionDelete: mockHandleConfirmCompositionDelete
+    });
+
+    (useUpdateWorkAction as jest.Mock).mockReturnValue({
+      handleUpdateComposition: mockHandleUpdateComposition
+    });
+
+    (useShare as jest.Mock).mockReturnValue({
+      handleShare: mockHandleShare
+    });
   });
 
   it('should render opus groups when activeTab is Opus', () => {
     render(<WorksTable activeTab={WORKS_TABS_NAMES.OPUS} items={{ groups: [group] }} />);
+
+    const { data } = mockTableLayout.mock.calls[0][0] as { data: WorksTableRowData[] };
+    expect(data).toHaveLength(1);
+    expect(data[0]).toMatchObject({ type: 'group', id: 'group-1' });
+  });
+
+  it('should render sineop groups when activeTab is Sineop', () => {
+    render(<WorksTable activeTab={WORKS_TABS_NAMES.SINEOP} items={{ groups: [group] }} />);
 
     const { data } = mockTableLayout.mock.calls[0][0] as { data: WorksTableRowData[] };
     expect(data).toHaveLength(1);
@@ -129,11 +233,40 @@ describe('WorksTable', () => {
       if (individualRow && col.renderPlain) col.renderPlain(individualRow.plainData as IndividualWork);
     });
 
+    const opusColumn = originalColumns.find((c) => c.id === 'opus');
+    expect(opusColumn?.renderGroup?.(groupRow?.groupData as GroupHeaderData)).toBe('op. 1');
+
+    const sineopGroup: GroupHeaderData = { ...(groupRow?.groupData as GroupHeaderData), numberKind: 'sineop' };
+    expect(opusColumn?.renderGroup?.(sineopGroup)).toBe('sine op. 1');
+
+    const titleColumn = originalColumns.find((c) => c.id === 'title');
+    expect(titleColumn?.renderGroup?.(groupRow?.groupData as GroupHeaderData)).toBe('Group title');
+    expect(titleColumn?.renderSub?.(groupRow?.subRows?.[0] as OpusWork, groupRow?.groupData as GroupHeaderData)).toBe(
+      'Work 1'
+    );
+    expect(titleColumn?.renderPlain?.(individualRow?.plainData as IndividualWork)).toBe('Individual work');
+
+    const genreColumn = originalColumns.find((c) => c.id === 'genre');
+    expect(genreColumn?.renderGroup?.(groupRow?.groupData as GroupHeaderData)).toBe('Symphony');
+    expect(genreColumn?.renderPlain?.(individualRow?.plainData as IndividualWork)).toBe('Opera');
+
     const yearsColumn = originalColumns.find((c) => c.id === 'years');
     expect(yearsColumn?.renderGroup?.(groupRow?.groupData as GroupHeaderData)).toBe('2020 - 2022');
+    expect(yearsColumn?.renderPlain?.(individualRow?.plainData as IndividualWork)).toBe('2023');
+
+    const statusColumn = originalColumns.find((c) => c.id === 'status');
+    expect(statusColumn?.renderGroup?.(groupRow?.groupData as GroupHeaderData)).toBeDefined();
+    expect(statusColumn?.renderPlain?.(individualRow?.plainData as IndividualWork)).toBeDefined();
+
+    const actionsColumn = originalColumns.find((c) => c.id === 'actions');
+    expect(actionsColumn?.renderGroup?.(groupRow?.groupData as GroupHeaderData)).toBeDefined();
+    expect(
+      actionsColumn?.renderSub?.(groupRow?.subRows?.[0] as OpusWork, groupRow?.groupData as GroupHeaderData)
+    ).toBeDefined();
+    expect(actionsColumn?.renderPlain?.(individualRow?.plainData as IndividualWork)).toBeDefined();
   });
 
-  it('should trigger menu actions successfully', () => {
+  it('should trigger menu actions and edit click handlers successfully', () => {
     const groupDraft: GroupRowData = { ...group, id: 'group-draft', status: BaseContentStatuses.Draft };
     const groupPublished: GroupRowData = { ...group, id: 'group-published', status: BaseContentStatuses.Published };
 
@@ -157,13 +290,16 @@ describe('WorksTable', () => {
     };
 
     rowsData.forEach((row) => {
-      const actions = row.type === 'group' ? row.groupData?.menuActions : row.plainData?.menuActions;
-      triggerMenuClicks(actions?.menuItems);
-
-      if (row.type === 'group' && row.subRows) {
-        row.subRows.forEach((subRow) => {
-          triggerMenuClicks(subRow.menuActions?.menuItems);
-        });
+      if (row.type === 'group') {
+        triggerMenuClicks(row.groupData?.menuActions?.menuItems);
+        if (row.subRows) {
+          row.subRows.forEach((subRow) => {
+            triggerMenuClicks(subRow.menuActions?.menuItems);
+          });
+        }
+      } else {
+        triggerMenuClicks(row.plainData?.menuActions?.menuItems);
+        row.plainData?.editAction?.onEditClick?.();
       }
     });
 
@@ -171,6 +307,10 @@ describe('WorksTable', () => {
     expect(mockSetGroupToUngroup).toHaveBeenCalled();
     expect(mockHandlePublishStatusChange).toHaveBeenCalledWith('group-draft', OpusStatus.Published);
     expect(mockHandlePublishStatusChange).toHaveBeenCalledWith('group-published', OpusStatus.Draft);
+
+    expect(mockSetDeleteComposition).toHaveBeenCalledWith('individual-1');
+    expect(mockOpenEditComposition).toHaveBeenCalledWith('individual-1');
+    expect(mockHandleShare).toHaveBeenCalled();
   });
 
   it('renders DeleteCardModal and handles modal actions when groupToUngroup is set', () => {
@@ -184,13 +324,67 @@ describe('WorksTable', () => {
 
     render(<WorksTable activeTab={WORKS_TABS_NAMES.OPUS} items={{ groups: [group] }} />);
 
-    expect(screen.getByTestId('delete-card-modal')).toBeInTheDocument();
+    expect(screen.getByTestId('delete-card-modal-ungroup')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId('modal-close'));
+    fireEvent.click(screen.getByTestId('modal-close-ungroup'));
     expect(mockSetGroupToUngroup).toHaveBeenCalledWith(null);
 
-    fireEvent.click(screen.getByTestId('modal-delete'));
+    fireEvent.click(screen.getByTestId('modal-delete-ungroup'));
     expect(mockHandleConfirmUngroup).toHaveBeenCalled();
+  });
+
+  it('renders DeleteCardModal for composition deletion and handles modal actions', () => {
+    (useDeleteWorkAction as jest.Mock).mockReturnValue({
+      deleteComposition: 'work-1',
+      setDeleteComposition: mockSetDeleteComposition,
+      handleConfirmCompositionDelete: mockHandleConfirmCompositionDelete
+    });
+
+    render(<WorksTable activeTab={WORKS_TABS_NAMES.WORKS} items={{ works: [individualWork] }} />);
+
+    expect(screen.getByTestId('delete-card-modal-composition')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('modal-close-composition'));
+    expect(mockSetDeleteComposition).toHaveBeenCalledWith(null);
+
+    fireEvent.click(screen.getByTestId('modal-delete-composition'));
+    expect(mockHandleConfirmCompositionDelete).toHaveBeenCalled();
+  });
+
+  it('renders CompositionModal and handles submit and close actions', async () => {
+    (useWorkUrlState as jest.Mock).mockReturnValue({
+      compositionId: 'comp-123',
+      compositionToEdit: { id: 'comp-123', name: 'Composition' },
+      isEditOpen: true,
+      openEditComposition: mockOpenEditComposition,
+      closeEditComposition: mockCloseEditComposition
+    });
+
+    render(<WorksTable activeTab={WORKS_TABS_NAMES.WORKS} items={{ works: [individualWork] }} />);
+
+    expect(screen.getByTestId('composition-modal')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('composition-modal-close'));
+    expect(mockCloseEditComposition).toHaveBeenCalled();
+
+    fireEvent.click(screen.getByTestId('composition-modal-submit'));
+    expect(mockHandleUpdateComposition).toHaveBeenCalledWith('comp-123', { title: 'New Composition Title' });
+  });
+
+  it('does not call handleUpdateComposition on submit when compositionId is null', async () => {
+    (useWorkUrlState as jest.Mock).mockReturnValue({
+      compositionId: null,
+      compositionToEdit: null,
+      isEditOpen: true,
+      openEditComposition: mockOpenEditComposition,
+      closeEditComposition: mockCloseEditComposition
+    });
+
+    render(<WorksTable activeTab={WORKS_TABS_NAMES.WORKS} items={{ works: [individualWork] }} />);
+
+    fireEvent.click(screen.getByTestId('composition-modal-submit'));
+    expect(mockHandleUpdateComposition).not.toHaveBeenCalled();
+    expect(mockCloseEditComposition).not.toHaveBeenCalled();
   });
 
   it('should correctly map GroupRowData to groupData internal format', () => {
@@ -208,23 +402,6 @@ describe('WorksTable', () => {
     } else {
       throw new Error('Group row not found');
     }
-  });
-
-  it('should successfully execute all defined render functions (renderGroup, renderSub, renderPlain)', () => {
-    render(<WorksTable activeTab={WORKS_TABS_NAMES.ALL} items={{ groups: [group], works: [individualWork] }} />);
-
-    const { data: rowsData } = mockTableLayout.mock.calls[0][0] as { data: WorksTableRowData[] };
-    const groupRow = rowsData.find((r) => r.type === 'group')!;
-    const individualRow = rowsData.find((r) => r.type === 'individual')!;
-
-    originalColumns.forEach((col) => {
-      if (col.renderGroup) col.renderGroup(groupRow.groupData as GroupHeaderData);
-      if (col.renderSub && groupRow.subRows)
-        col.renderSub(groupRow.subRows[0] as OpusWork, groupRow.groupData as GroupHeaderData);
-      if (col.renderPlain) col.renderPlain(individualRow.plainData as IndividualWork);
-    });
-
-    expect(mockTableLayout).toHaveBeenCalled();
   });
 
   it('should format years correctly when endDate is equal to startDate', () => {
@@ -255,14 +432,5 @@ describe('WorksTable', () => {
       updatedAt: ''
     };
     expect(yearsCol?.renderGroup?.(diffYearData)).toBe('2020 - 2022');
-  });
-
-  it('should format numberLabel with "op" suffix when numberKind is "op"', () => {
-    const groupOp: GroupRowData = { ...group, number: 1, numberKind: 'op' };
-    render(<WorksTable activeTab={WORKS_TABS_NAMES.OPUS} items={{ groups: [groupOp] }} />);
-
-    const { data } = mockTableLayout.mock.calls[0][0] as { data: WorksTableRowData[] };
-    const row = data[0];
-    expect(row.type === 'group' && row.groupData?.numberLabel).toBe(1);
   });
 });
