@@ -1,7 +1,6 @@
-import { LocalizedString } from './BaseContent';
+import { LocalizedBoolean, LocalizedString } from './BaseContent';
 import { BlockData } from '~/store/types';
 import { PageCategories, PageStatus } from '~/types/enums/common.enums';
-
 
 export type LocalizedTitle = {
   uk: string;
@@ -23,6 +22,10 @@ export type BasePage = {
   coverImage: PageCoverImage;
   blocks: Record<string, BlockData>;
   blocksOrder: string[];
+  keywords: LocalizedString;
+  canonicalUrl?: LocalizedString | null;
+  description: LocalizedString;
+  allowIndexation: LocalizedBoolean;
   createdAt: string;
   updatedAt: string;
 };

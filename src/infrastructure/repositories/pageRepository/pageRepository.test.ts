@@ -10,6 +10,13 @@ export const DEFAULT_COVER_IMAGE = {
   alt: { uk: 'Зображення', en: 'Image' },
 };
 
+const DEFAULT_MAPPED_SEO = {
+  description: { uk: '', en: '' },
+  keywords: undefined,
+  canonicalUrl: undefined,
+  allowIndexation: undefined
+};
+
 jest.mock('../../db/connect', () => ({
   __esModule: true,
   default: jest.fn().mockResolvedValue(undefined)
@@ -37,6 +44,7 @@ jest.mock('../../models/draftPage.model', () => {
     default: Object.assign(MockModel, {
       findOne: jest.fn(),
       findOneAndUpdate: jest.fn(),
+      updateOne: jest.fn(),
       save: mockSave
     })
   };
@@ -50,6 +58,7 @@ const mockedPagesFind = (PageModel as unknown as { find: jest.Mock }).find;
 const DraftPageModelMock = jest.requireMock('../../models/draftPage.model').default;
 const mockedDraftFindOne = DraftPageModelMock.findOne;
 const mockedDraftFindOneAndUpdate = DraftPageModelMock.findOneAndUpdate;
+const mockedDraftUpdateOne = DraftPageModelMock.updateOne;
 
 type LeanRet<T> = { lean: jest.Mock<Promise<T>, []>; toObject?: jest.Mock<T, []> };
 const leanResolved = <T>(val: T): LeanRet<T> => ({
@@ -136,6 +145,8 @@ describe('PageRepository', () => {
         category: 'foundation',
         coverImage: DEFAULT_COVER_IMAGE,
         blocks: publishedDoc.blocks,
+        blocksOrder: undefined,
+        ...DEFAULT_MAPPED_SEO,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-02-01T00:00:00.000Z'
       });
@@ -168,6 +179,7 @@ describe('PageRepository', () => {
         pageType: 'AboutUsPage',
         blocks: draftDoc.blocks,
         blocksOrder: draftDoc.blocksOrder,
+        ...DEFAULT_MAPPED_SEO,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-02-01T00:00:00.000Z'
       });
@@ -226,6 +238,7 @@ describe('PageRepository', () => {
         coverImage: DEFAULT_COVER_IMAGE,
         pageType: 'AboutUsPage',
         blocks: updatedDraft.blocks,
+        ...DEFAULT_MAPPED_SEO,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-03-01T00:00:00.000Z'
       });
@@ -291,6 +304,7 @@ describe('PageRepository', () => {
         category: 'foundation',
         coverImage: DEFAULT_COVER_IMAGE,
         blocks: updatedPublished.blocks,
+        ...DEFAULT_MAPPED_SEO,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-05-01T00:00:00.000Z'
       });
@@ -455,6 +469,8 @@ describe('PageRepository', () => {
         coverImage: DEFAULT_COVER_IMAGE,
         pageType: 'AboutUsPage',
         blocks: publishedDoc.blocks,
+        blocksOrder: undefined,
+        ...DEFAULT_MAPPED_SEO,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-02-01T00:00:00.000Z'
       }]);
@@ -470,6 +486,99 @@ describe('PageRepository', () => {
       expect(mockedPagesFind).toHaveBeenCalledWith({
         category
       });
+    });
+  });
+
+  describe('updatePageSeo', () => {
+    const seoInput = {
+      slug: 'about-us',
+      title: { uk: 'SEO Заголовок', en: 'SEO Title' },
+      description: { uk: 'SEO Опис', en: 'SEO Description' },
+      keywords: { uk: 'ключові слова', en: 'keywords' },
+      canonicalUrl: { uk: 'https://example.com/uk', en: 'https://example.com/en' },
+      allowIndexation: { uk: false, en: true }
+    };
+
+    const seoDoc = {
+      ...publishedDoc,
+      title: seoInput.title,
+      description: seoInput.description,
+      keywords: seoInput.keywords,
+      canonicalUrl: seoInput.canonicalUrl,
+      allowIndexation: seoInput.allowIndexation
+    };
+
+    it('should update published page and sync draft with SEO fields', async () => {
+      mockedPageFindOneAndUpdate.mockReturnValueOnce(leanResolved(seoDoc));
+      mockedDraftUpdateOne.mockResolvedValueOnce({ acknowledged: true });
+
+      const res = await repo.updatePageSeo('about-us', seoInput);
+
+      expect(mockedConnect).toHaveBeenCalled();
+      expect(mockedPageFindOneAndUpdate).toHaveBeenCalledWith(
+        { slug: 'about-us' },
+        {
+          $set: {
+            title: seoInput.title,
+            description: seoInput.description,
+            keywords: seoInput.keywords,
+            canonicalUrl: seoInput.canonicalUrl,
+            allowIndexation: seoInput.allowIndexation
+          }
+        },
+        { new: true, runValidators: true }
+      );
+      expect(mockedDraftUpdateOne).toHaveBeenCalledWith(
+        { slug: 'about-us' },
+        {
+          $set: {
+            title: seoInput.title,
+            description: seoInput.description,
+            keywords: seoInput.keywords,
+            canonicalUrl: seoInput.canonicalUrl,
+            allowIndexation: seoInput.allowIndexation
+          }
+        }
+      );
+      expect(res).toEqual({
+        id: _id,
+        slug: 'about-us',
+        title: seoInput.title,
+        status: PageStatus.Published,
+        pageType: 'AboutUsPage',
+        category: 'foundation',
+        coverImage: DEFAULT_COVER_IMAGE,
+        blocks: publishedDoc.blocks,
+        description: seoInput.description,
+        keywords: seoInput.keywords,
+        canonicalUrl: seoInput.canonicalUrl,
+        allowIndexation: seoInput.allowIndexation,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-02-01T00:00:00.000Z'
+      });
+    });
+
+    it('should return existing page without update when input has no fields', async () => {
+      mockedPageFindOne.mockReturnValueOnce(leanResolved(publishedDoc));
+
+      const res = await repo.updatePageSeo('about-us', { slug: 'about-us' });
+
+      expect(mockedPageFindOne).toHaveBeenCalledWith({ slug: 'about-us' });
+      expect(mockedPageFindOneAndUpdate).not.toHaveBeenCalled();
+      expect(mockedDraftUpdateOne).not.toHaveBeenCalled();
+      expect(res.slug).toBe('about-us');
+    });
+
+    it('should throw when page not found', async () => {
+      mockedPageFindOneAndUpdate.mockReturnValueOnce(leanResolved(null));
+
+      await expect(repo.updatePageSeo('missing', seoInput)).rejects.toThrow('Page not found: slug="missing"');
+    });
+
+    it('should throw when page not found on empty input', async () => {
+      mockedPageFindOne.mockReturnValueOnce(leanResolved(null));
+
+      await expect(repo.updatePageSeo('missing', { slug: 'missing' })).rejects.toThrow('Page not found: slug="missing"');
     });
   });
 });

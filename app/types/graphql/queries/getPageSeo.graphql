@@ -1,6 +1,5 @@
-query GetPages($category: PageCategories) {
-  pages(category: $category) {
-    id
+query GetPageSeo($slug: String!) {
+  pageBlocks(slug: $slug) {
     slug
     title {
       uk
@@ -18,14 +17,16 @@ query GetPages($category: PageCategories) {
       uk
       en
     }
-    status
-    category
     coverImage {
       src
       alt {
         uk
         en
       }
+    }
+    allowIndexation {
+      uk
+      en
     }
     updatedAt
   }
