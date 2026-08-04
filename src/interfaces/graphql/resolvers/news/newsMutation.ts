@@ -60,6 +60,31 @@ const processContentFields = async (input: UpdateNewsGQLInput, updateData: Updat
 
 const TITLE_MAX_LENGTH = 150;
 
+const DESCRIPTION_MIN_LENGTH = 2;
+const DESCRIPTION_MAX_LENGTH = 250;
+
+const validateDescriptionLength = (description: LocalizedString | undefined): void => {
+  if (!description) return;
+
+  const invalidFields = (['uk', 'en'] as const)
+    .filter((lang) => {
+      const value = description[lang];
+      const length = typeof value === 'string' ? value.trim().length : 0;
+
+      return length < DESCRIPTION_MIN_LENGTH || length > DESCRIPTION_MAX_LENGTH;
+    })
+    .map((lang) => `description.${lang}`);
+
+  if (invalidFields.length > 0) {
+    throw new GraphQLError(newsServiceErrors.DESCRIPTION_LENGTH_INVALID, {
+      extensions: {
+        code: 'BAD_USER_INPUT',
+        fields: invalidFields
+      }
+    });
+  }
+};
+
 const validateTitleMaxLength = (title: LocalizedString | undefined): void => {
   if (!title) return;
 
@@ -109,6 +134,7 @@ export const NewsMutation = {
     }
 
     validateTitleMaxLength(input.title);
+    validateDescriptionLength(input.description);
 
     const slug = await generateUniqueSlug(titleForSlug, {
       checkExists: async (slug: string) => {
@@ -163,6 +189,8 @@ export const NewsMutation = {
     const updateData: UpdateNewsInput = {
       ...input
     };
+    
+    validateDescriptionLength(input.description);
 
     if (input.content || input.description || input.coverImage) {
       await processContentFields(input, updateData);

@@ -163,6 +163,25 @@ describe('NewsMutation Resolvers', () => {
     it('should throw GraphQLError for updateNews if user is unauthenticated', async () => {
       await expect(NewsMutation.updateNews({}, { id: '1', input: {} }, userContext)).rejects.toThrow();
     });
+
+    it('should throw GraphQLError with BAD_USER_INPUT if description has fewer than 2 characters (bug #501)', async () => {
+      expect.assertions(5);
+
+      const invalidInput = {
+        ...baseInput,
+        description: { uk: 'T', en: 'T' }
+      };
+
+      try {
+        await NewsMutation.createNews({}, { input: invalidInput }, adminContext);
+      } catch (error) {
+        expect(error).toBeInstanceOf(GraphQLError);
+        expect((error as GraphQLError).message).toBe(newsServiceErrors.DESCRIPTION_LENGTH_INVALID);
+        expect((error as GraphQLError).extensions.code).toBe('BAD_USER_INPUT');
+        expect((error as GraphQLError).extensions.fields).toEqual(['description.uk', 'description.en']);
+        expect(mockRepo.create).not.toHaveBeenCalled();
+      }
+    });
   });
 
   describe('createNews', () => {
