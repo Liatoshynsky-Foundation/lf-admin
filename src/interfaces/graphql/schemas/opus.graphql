@@ -94,6 +94,14 @@ input WorksFiltersInput {
   sort: [WorksSortOptions!]
 }
 
+input OpusGalleryItemInput {
+  id: ID
+  src: String!
+  description: JSON
+  altText: JSON
+  crop: CropRectInput
+}
+
 input CreateOpusInput {
   numberKind: OpusNumberKind!
   number: Float!
@@ -109,7 +117,7 @@ input CreateOpusInput {
   description: JSON!
   introDescription: JSON
   parts: JSON
-  gallery: JSON
+  gallery: [OpusGalleryItemInput!]
   performancesTitle: JSON
   performances: JSON
   keywords: JSON
@@ -135,7 +143,7 @@ input UpdateOpusInput {
   description: JSON
   introDescription: JSON
   parts: JSON
-  gallery: JSON
+  gallery: [OpusGalleryItemInput!]
   performancesTitle: JSON
   performances: JSON
   keywords: JSON

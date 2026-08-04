@@ -39,7 +39,11 @@ export const OPUS_FIELD_LIMITS = {
   name: { min: 2, max: 250 },
   additionalText: 40,
   datesNote: 40,
-  genre: 150
+  genre: 150,
+  caption: { min: 2, max: 250 },
+  altText: { min: 2, max: 250 },
+  maxPhotos: 20,
+  maxPerformances: 5
 } as const;
 
 export const OPUS_YEAR_RANGE = { min: 1900, max: 2100 } as const;
@@ -49,7 +53,12 @@ export const OPUS_VALIDATION_MESSAGES = {
   numberInvalid: 'Номер має бути цілим позитивним числом.',
   nameRequired: 'Введіть назву групи.',
   nameTooShort: 'Введіть щонайменше 2 символи.',
-  creationYearRequired: 'Вкажіть рік складання.'
+  creationYearRequired: 'Вкажіть рік складання.',
+  photoAltText: 'Введіть Alt текст зображення',
+  photoTextTooShort: 'Введіть щонайменше 2 символи.',
+  performanceUrl: 'Вкажіть URL.',
+  performanceSignature: 'Введіть підпис.',
+  captionTooLong: 'Текст має містити менше 250 символів.'
 } as const;
 
 export const COMPOSITION_MODAL_LABELS = {

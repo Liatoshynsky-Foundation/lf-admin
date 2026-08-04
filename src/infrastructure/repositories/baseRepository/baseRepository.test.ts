@@ -1,8 +1,8 @@
 import type { Model } from 'mongoose';
 
-import {createBaseRepository } from './baseRepository';
-import {BaseEntity, FiltersInput, QueryFilters} from '~/domain/repositories/baseRepository';
-import {SortOrder} from '~/types/enums/common.enums';
+import { createBaseRepository } from './baseRepository';
+import { BaseEntity, FiltersInput, QueryFilters } from '~/domain/repositories/baseRepository';
+import { SortOrder } from '~/types/enums/common.enums';
 
 jest.mock('../../db/connect', () => ({
   __esModule: true,
@@ -74,7 +74,67 @@ describe('createBaseRepository', () => {
     });
   });
 
+  describe('findById', () => {
+    it('should return null for invalid ObjectId', async () => {
+      const repository = createBaseRepository<TestEntity, TestDbDoc, TestFilters>({ model: mockModel, toEntity });
+      const result = await repository.findById('invalid-id');
+
+      expect(result).toBeNull();
+      expect(mockModel.findById).not.toHaveBeenCalled();
+    });
+
+    it('should return entity if doc found, or null if doc missing', async () => {
+      const validId = '507f1f77bcf86cd799439011';
+      const doc = createMockDoc();
+
+      const mockQueryBuilder = createMockQueryBuilder(doc);
+      (mockModel.findById as jest.Mock).mockReturnValue(mockQueryBuilder);
+
+      const repository = createBaseRepository<TestEntity, TestDbDoc, TestFilters>({ model: mockModel, toEntity });
+      const result = await repository.findById(validId);
+
+      expect(result?.id).toBe(validId);
+
+      (mockModel.findById as jest.Mock).mockReturnValue(createMockQueryBuilder(null));
+      const nullResult = await repository.findById(validId);
+      expect(nullResult).toBeNull();
+    });
+  });
+
+  describe('findBySlug', () => {
+    it('should return null for empty slug', async () => {
+      const repository = createBaseRepository<TestEntity, TestDbDoc, TestFilters>({ model: mockModel, toEntity });
+      const result = await repository.findBySlug('');
+
+      expect(result).toBeNull();
+      expect(mockModel.findOne).not.toHaveBeenCalled();
+    });
+
+    it('should find entity by slug, or return null if not found', async () => {
+      const doc = createMockDoc();
+      const mockQueryBuilder = createMockQueryBuilder(doc);
+      (mockModel.findOne as jest.Mock).mockReturnValue(mockQueryBuilder);
+
+      const repository = createBaseRepository<TestEntity, TestDbDoc, TestFilters>({ model: mockModel, toEntity });
+      const result = await repository.findBySlug('valid-slug');
+
+      expect(result?.name).toBe('John Doe');
+
+      (mockModel.findOne as jest.Mock).mockReturnValue(createMockQueryBuilder(null));
+      const nullResult = await repository.findBySlug('non-existent-slug');
+      expect(nullResult).toBeNull();
+    });
+  });
+
   describe('update', () => {
+    it('should return null for invalid ObjectId in update', async () => {
+      const repository = createBaseRepository<TestEntity, TestDbDoc, TestFilters>({ model: mockModel, toEntity });
+      const result = await repository.update('invalid-id', { name: 'New Name' });
+
+      expect(result).toBeNull();
+      expect(mockModel.findByIdAndUpdate).not.toHaveBeenCalled();
+    });
+
     it('should automatically add updatedAt timestamp as ISO string', async () => {
       const mockId = '507f1f77bcf86cd799439011';
       const input = { name: 'Updated Name' };
@@ -95,33 +155,75 @@ describe('createBaseRepository', () => {
         { new: true, runValidators: true }
       );
     });
-  });
 
-  describe('findPaginated', () => {
-    it('should calculate skip correctly and return paginated result', async () => {
-      const mockItems = [createMockDoc({ name: 'User 1' }), createMockDoc({ name: 'User 2' })];
+    it('should return null if update returns no document', async () => {
+      const mockId = '507f1f77bcf86cd799439011';
+      const leanMock = jest.fn().mockResolvedValue(null);
+      (mockModel.findByIdAndUpdate as jest.Mock).mockReturnValue({ lean: leanMock });
 
       const repository = createBaseRepository<TestEntity, TestDbDoc, TestFilters>({ model: mockModel, toEntity });
+      const result = await repository.update(mockId, { name: 'New' });
 
-      const mockQueryBuilder = createMockQueryBuilder(mockItems);
-      (mockModel.find as jest.Mock).mockReturnValue(mockQueryBuilder);
-      (mockModel.countDocuments as jest.Mock).mockResolvedValue(20);
-
-      const result = await repository.findPaginated(2, 5, { name: 'John' });
-
-      expect(mockQueryBuilder.skip).toHaveBeenCalledWith(5);
-      expect(mockQueryBuilder.limit).toHaveBeenCalledWith(5);
-
-      expect(result).toEqual({
-        items: expect.any(Array),
-        total: 20,
-        page: 2,
-        totalPages: 4
-      });
+      expect(result).toBeNull();
     });
   });
 
-  describe('findAll with complex sorting', () => {
+  describe('delete', () => {
+    it('should return false for invalid ObjectId in delete', async () => {
+      const repository = createBaseRepository<TestEntity, TestDbDoc, TestFilters>({ model: mockModel, toEntity });
+      const result = await repository.delete('invalid-id');
+
+      expect(result).toBe(false);
+      expect(mockModel.findByIdAndDelete).not.toHaveBeenCalled();
+    });
+
+    it('should return true when document deleted, false when not found', async () => {
+      const mockId = '507f1f77bcf86cd799439011';
+      (mockModel.findByIdAndDelete as jest.Mock).mockResolvedValue(createMockDoc());
+
+      const repository = createBaseRepository<TestEntity, TestDbDoc, TestFilters>({ model: mockModel, toEntity });
+      const result = await repository.delete(mockId);
+      expect(result).toBe(true);
+
+      (mockModel.findByIdAndDelete as jest.Mock).mockResolvedValue(null);
+      const falseResult = await repository.delete(mockId);
+      expect(falseResult).toBe(false);
+    });
+  });
+
+  describe('findAll with custom sort and defaultSort fallback', () => {
+    it('should handle undefined filters gracefully', async () => {
+      const mockQueryBuilder = createMockQueryBuilder([]);
+      (mockModel.find as jest.Mock).mockReturnValue(mockQueryBuilder);
+
+      const repository = createBaseRepository<TestEntity, TestDbDoc, TestFilters>({
+        model: mockModel,
+        toEntity
+      });
+
+      const res = await repository.findAll();
+
+      expect(res).toEqual([]);
+      expect(mockModel.find).toHaveBeenCalledWith({});
+    });
+
+    it('should fallback to getDefaultSort if provided and filters.sort is missing', async () => {
+      const mockQueryBuilder = createMockQueryBuilder([]);
+      (mockModel.find as jest.Mock).mockReturnValue(mockQueryBuilder);
+
+      const getDefaultSort = jest.fn().mockReturnValue({ name: 1 });
+      const repository = createBaseRepository<TestEntity, TestDbDoc, TestFilters>({
+        model: mockModel,
+        toEntity,
+        getDefaultSort
+      });
+
+      await repository.findAll({});
+
+      expect(getDefaultSort).toHaveBeenCalled();
+      expect(mockQueryBuilder.sort).toHaveBeenCalledWith({ name: 1 });
+    });
+
     it('should apply custom sorting from the sort array filters', async () => {
       const mockQueryBuilder = createMockQueryBuilder([]);
       (mockModel.find as jest.Mock).mockReturnValue(mockQueryBuilder);
@@ -161,11 +263,80 @@ describe('createBaseRepository', () => {
     });
   });
 
+  describe('findPaginated', () => {
+    it('should calculate skip correctly and return paginated result when called without arguments', async () => {
+      const mockItems = [createMockDoc({ name: 'User 1' }), createMockDoc({ name: 'User 2' })];
+
+      const repository = createBaseRepository<TestEntity, TestDbDoc, TestFilters>({ model: mockModel, toEntity });
+
+      const mockQueryBuilder = createMockQueryBuilder(mockItems);
+      (mockModel.find as jest.Mock).mockReturnValue(mockQueryBuilder);
+      (mockModel.countDocuments as jest.Mock).mockResolvedValue(20);
+
+      const untypedFindPaginated = repository.findPaginated as unknown as () => Promise<unknown>;
+      const result = await untypedFindPaginated();
+
+      expect(mockQueryBuilder.limit).toHaveBeenCalledWith(10);
+
+      expect(result).toEqual({
+        items: expect.any(Array),
+        total: 20,
+        page: 1,
+        totalPages: 2
+      });
+    });
+
+    it('should call skip when page is greater than 1', async () => {
+      const mockItems = [createMockDoc({ name: 'User 1' })];
+
+      const repository = createBaseRepository<TestEntity, TestDbDoc, TestFilters>({ model: mockModel, toEntity });
+
+      const mockQueryBuilder = createMockQueryBuilder(mockItems);
+      (mockModel.find as jest.Mock).mockReturnValue(mockQueryBuilder);
+      (mockModel.countDocuments as jest.Mock).mockResolvedValue(20);
+
+      const result = await repository.findPaginated(2, 5, { name: 'John' });
+
+      expect(mockQueryBuilder.skip).toHaveBeenCalledWith(5);
+      expect(mockQueryBuilder.limit).toHaveBeenCalledWith(5);
+      expect(result.page).toBe(2);
+    });
+  });
+
   describe('count', () => {
+    it('should call countDocuments with empty query if buildQuery is omitted', async () => {
+      (mockModel.countDocuments as jest.Mock).mockResolvedValue(5);
+
+      const repository = createBaseRepository<TestEntity, TestDbDoc, TestFilters>({
+        model: mockModel,
+        toEntity
+      });
+
+      const result = await repository.count();
+
+      expect(mockModel.countDocuments).toHaveBeenCalledWith({});
+      expect(result).toBe(5);
+    });
+
+    it('should fallback to empty object query if buildQuery is null', async () => {
+      (mockModel.countDocuments as jest.Mock).mockResolvedValue(3);
+
+      const repository = createBaseRepository<TestEntity, TestDbDoc, TestFilters>({
+        model: mockModel,
+        toEntity,
+        buildQuery: null as unknown as undefined
+      });
+
+      const result = await repository.count();
+
+      expect(mockModel.countDocuments).toHaveBeenCalledWith({});
+      expect(result).toBe(3);
+    });
+
     it('should call countDocuments with filters through buildQuery', async () => {
       (mockModel.countDocuments as jest.Mock).mockResolvedValue(10);
 
-      const buildQuery = (f?: QueryFilters<TestFilters>) => f?.name ? { name: f.name } : {};
+      const buildQuery = (f?: QueryFilters<TestFilters>) => (f?.name ? { name: f.name } : {});
       const repository = createBaseRepository<TestEntity, TestDbDoc, TestFilters>({
         model: mockModel,
         toEntity,

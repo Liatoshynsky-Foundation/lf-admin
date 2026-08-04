@@ -1,11 +1,17 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import ButtonGroup from './ButtonGroup';
 import { buttonGroupColors } from '~/shared/theme/colors';
 
+type ResizeCallback = () => void;
+let globalResizeCallback: ResizeCallback | null = null;
+
 class MockResizeObserver {
+  constructor(callback: ResizeCallback) {
+    globalResizeCallback = callback;
+  }
   observe() {
     return;
   }
@@ -68,7 +74,7 @@ let tempResizeObserver: typeof global.ResizeObserver;
 describe('Button Group', () => {
   beforeAll(() => {
     tempResizeObserver = global.ResizeObserver;
-    global.ResizeObserver = MockResizeObserver;
+    global.ResizeObserver = MockResizeObserver as unknown as typeof global.ResizeObserver;
   });
 
   afterAll(() => {
@@ -76,6 +82,7 @@ describe('Button Group', () => {
   });
 
   beforeEach(() => {
+    globalResizeCallback = null;
     jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(mockGetBoundingClientRect);
   });
 
@@ -154,6 +161,22 @@ describe('Button Group', () => {
 
       expect(computedLeft).toBe(0);
       expect(computedWidth).toBe(0);
+    });
+
+    it('should update indicator when ResizeObserver callback is triggered', () => {
+      render(<ButtonGroup buttons={mockButtons} defaultActiveButton={0} />);
+
+      act(() => {
+        globalResizeCallback?.();
+      });
+
+      const indicator = screen.getByLabelText('indicator');
+      expect(indicator).toBeInTheDocument();
+    });
+
+    it('should handle nullish button entries in buttons array', () => {
+      render(<ButtonGroup buttons={[null, undefined]} />);
+      expect(screen.getByLabelText('Button Group')).toBeInTheDocument();
     });
   });
 });

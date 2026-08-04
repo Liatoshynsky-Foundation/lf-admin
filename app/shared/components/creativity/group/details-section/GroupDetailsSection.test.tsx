@@ -19,6 +19,7 @@ type MockCustomTextFieldProps = {
     onOpen?: () => void;
     onClose?: () => void;
     open?: boolean;
+    IconComponent?: React.FC;
   };
   select?: boolean;
   type?: string;
@@ -70,37 +71,42 @@ jest.mock('~/shared/components/design-system/text-field/TextField', () => ({
     InputProps,
     inputProps,
     SelectProps
-  }: MockCustomTextFieldProps) => (
-    <div data-testid={`mock-field-wrapper-${label}`}>
-      <label htmlFor={`input-${label}`}>{label}</label>
+  }: MockCustomTextFieldProps) => {
+    const Icon = SelectProps?.IconComponent;
 
-      {SelectProps?.onOpen && (
-        <>
-          <button
-            data-testid={`trigger-open-${label}`}
-            onClick={SelectProps.onOpen}
-            data-is-open={String(SelectProps.open)}
-          >
-            Open Select
-          </button>
-          <button data-testid={`trigger-close-${label}`} onClick={SelectProps.onClose}>
-            Close Select
-          </button>
-        </>
-      )}
+    return (
+      <div data-testid={`mock-field-wrapper-${label}`}>
+        <label htmlFor={`input-${label}`}>{label}</label>
 
-      <input
-        id={`input-${label}`}
-        data-testid={`mock-input-${label}`}
-        value={(value as string) || ''}
-        onChange={onChange}
-        onBlur={onBlur}
-        readOnly={InputProps?.readOnly}
-        {...inputProps}
-      />
-      {error && <span data-testid={`error-${label}`}>{helperText}</span>}
-    </div>
-  )
+        {SelectProps?.onOpen && (
+          <>
+            <button
+              data-testid={`trigger-open-${label}`}
+              onClick={SelectProps.onOpen}
+              data-is-open={String(SelectProps.open)}
+            >
+              Open Select
+            </button>
+            <button data-testid={`trigger-close-${label}`} onClick={SelectProps.onClose}>
+              Close Select
+            </button>
+            {Icon && <Icon />}
+          </>
+        )}
+
+        <input
+          id={`input-${label}`}
+          data-testid={inputProps?.['data-testid'] || `mock-input-${label}`}
+          value={(value as string) || ''}
+          onChange={onChange}
+          onBlur={onBlur}
+          readOnly={InputProps?.readOnly}
+          {...inputProps}
+        />
+        {error && <span data-testid={`error-${label}`}>{helperText}</span>}
+      </div>
+    );
+  }
 }));
 
 jest.mock('@mui/x-date-pickers/LocalizationProvider', () => ({
@@ -135,6 +141,7 @@ jest.mock('~/shared/components/forms/opus-details-block/year-picker/YearPicker',
     </div>
   )
 }));
+
 const mockOnChange = jest.fn();
 
 const defaultProps = {
@@ -145,10 +152,9 @@ const defaultProps = {
     groupTitle: { uk: 'Квартет', en: 'Quartet' },
     creationYear: '1922',
     endYear: '1924',
-    dateAdditionalText: { uk: 'приблизно', en: 'approx.' },
+    dateAdditionalText: 'приблизно',
     genre: { uk: 'Соната', en: 'Sonata' }
   },
-  derivedGenre: 'Соната',
   currentLanguage: 'UA' as EditorLanguage,
   errors: {} as Record<string, string>,
   onChange: mockOnChange
@@ -184,7 +190,7 @@ describe('GroupDetailsSection Component', () => {
     const langInput = screen.getByTestId('mock-input-dateAdditionalText');
     fireEvent.change(langInput, { target: { value: 'новий текст' } });
 
-    expect(mockOnChange).toHaveBeenCalledWith('dateAdditionalText', 'новий текст', true);
+    expect(mockOnChange).toHaveBeenCalledWith('dateAdditionalText', 'новий текст');
   });
 
   it('should format year and call onChange when dates are selected', () => {
@@ -297,17 +303,17 @@ describe('GroupDetailsSection Component', () => {
   it('should trim dateAdditionalText on blur', () => {
     const props = {
       ...defaultProps,
-      data: { ...defaultProps.data, dateAdditionalText: { uk: '  пробіли  ', en: '' } }
+      data: { ...defaultProps.data, dateAdditionalText: '  пробіли  ' }
     };
     render(<GroupDetailsSection {...props} />);
     fireEvent.blur(screen.getByTestId('mock-input-dateAdditionalText'));
-    expect(mockOnChange).toHaveBeenCalledWith('dateAdditionalText', 'пробіли', true);
+    expect(mockOnChange).toHaveBeenCalledWith('dateAdditionalText', 'пробіли');
   });
 
   it('should trim genre on blur', () => {
     const props = { ...defaultProps, data: { ...defaultProps.data, genre: { uk: '  пробіли  ', en: '' } } };
     render(<GroupDetailsSection {...props} />);
-    fireEvent.blur(screen.getByLabelText('Жанр'));
+    fireEvent.blur(screen.getByTestId('mock-input-Жанр'));
     expect(mockOnChange).toHaveBeenCalledWith('genre', 'пробіли', true);
   });
 
@@ -356,5 +362,36 @@ describe('GroupDetailsSection Component', () => {
     const prefixInput = screen.getByTestId('mock-input-Назва');
     fireEvent.blur(prefixInput);
     expect(screen.getByTestId('error-Назва')).toHaveTextContent('Обов’язкове поле');
+  });
+
+  it('should fallback to empty string on blur when dateAdditionalText is missing (undefined)', () => {
+    const propsWithMissingDateNote = {
+      ...defaultProps,
+      data: { ...defaultProps.data, dateAdditionalText: undefined as unknown as string }
+    };
+
+    render(<GroupDetailsSection {...propsWithMissingDateNote} />);
+
+    const dateNoteInput = screen.getByTestId('mock-input-dateAdditionalText');
+    fireEvent.blur(dateNoteInput);
+
+    expect(mockOnChange).toHaveBeenCalledWith('dateAdditionalText', '');
+  });
+
+  it('should fallback to empty string for value and on blur when genre is missing (undefined)', () => {
+    const propsWithMissingGenre = {
+      ...defaultProps,
+      data: { ...defaultProps.data, genre: { uk: undefined as unknown as string, en: '' } }
+    };
+
+    render(<GroupDetailsSection {...propsWithMissingGenre} />);
+
+    const genreInput = screen.getByTestId('mock-input-Жанр');
+
+    expect(genreInput).toHaveValue('');
+
+    fireEvent.blur(genreInput);
+
+    expect(mockOnChange).toHaveBeenCalledWith('genre', '', true);
   });
 });

@@ -130,6 +130,30 @@ describe('GraphQL Mutations', () => {
       mockLoginAdmin.execute.mockRejectedValue(genericError);
       await expect(authMutation.login(null, mockArgs, baseMockContext as GraphQLContext)).rejects.toThrow(genericError);
     });
+
+    it('should fall back to unknown-ip if req is not provided', async () => {
+      mockLoginAdmin.execute.mockResolvedValue(mockAdmin);
+      mockTokenService.generateTokens.mockReturnValue(mockTokens);
+      const contextWithoutReq = { ...baseMockContext, req: undefined };
+
+      await authMutation.login(null, mockArgs, contextWithoutReq as unknown as GraphQLContext);
+
+      expect(mockLoginAdmin.execute).toHaveBeenCalledWith(mockArgs.email, mockArgs.password, 'unknown-ip');
+    });
+
+    it('should return default error message if ZodError issues array is empty', async () => {
+      const zodError = new ZodError([]);
+      mockLoginAdmin.execute.mockRejectedValue(zodError);
+
+      const result = await authMutation.login(null, mockArgs, baseMockContext as GraphQLContext);
+
+      expect(result).toEqual({
+        __typename: 'ErrorPayload',
+        success: false,
+        message: 'Invalid email format',
+        statusCode: 400
+      });
+    });
   });
 
   describe('logout', () => {
@@ -265,6 +289,31 @@ describe('GraphQL Mutations', () => {
       expect(logger.error).toHaveBeenCalledWith(
         'Failed to send password reset email',
         expect.objectContaining({ email: mockArgs.email })
+      );
+    });
+
+    it('should fall back to unknown-ip if req is not provided in context', async () => {
+      mockRequestPasswordResetUseCase.execute.mockResolvedValue(null);
+      const contextWithoutReq = { ...baseMockContext, req: undefined };
+
+      await authMutation.requestPasswordReset(null, mockArgs, contextWithoutReq as unknown as GraphQLContext);
+
+      expect(mockRequestPasswordResetUseCase.execute).toHaveBeenCalledWith(mockArgs.email, 'unknown-ip');
+    });
+
+    it('should handle non-Error throwables when email sending fails', async () => {
+      mockRequestPasswordResetUseCase.execute.mockResolvedValue({
+        email: mockArgs.email,
+        token: 'reset-token-123'
+      });
+      (sendPasswordResetEmail as jest.Mock).mockRejectedValue('String error');
+
+      const result = await authMutation.requestPasswordReset(null, mockArgs, baseMockContext as GraphQLContext);
+
+      expect(result.success).toBe(true);
+      expect(logger.error).toHaveBeenCalledWith(
+        'Failed to send password reset email',
+        expect.objectContaining({ error: 'String error', email: mockArgs.email })
       );
     });
   });

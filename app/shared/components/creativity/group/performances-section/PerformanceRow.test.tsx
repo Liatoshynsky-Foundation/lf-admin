@@ -42,10 +42,12 @@ type MockCustomTextFieldProps = {
   label: string;
   value?: unknown;
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
+  error?: boolean;
+  helperText?: string;
 };
 
 jest.mock('~/shared/components/design-system/text-field/TextField', () => ({
-  CustomTextField: ({ label, value, onChange }: MockCustomTextFieldProps) => (
+  CustomTextField: ({ label, value, onChange, error, helperText }: MockCustomTextFieldProps) => (
     <div data-testid={`mock-field-wrapper-${label}`}>
       <label htmlFor={`input-${label}`}>{label}</label>
       <input
@@ -54,6 +56,7 @@ jest.mock('~/shared/components/design-system/text-field/TextField', () => ({
         value={(value as string) || ''}
         onChange={onChange}
       />
+      {error && <span data-testid={`error-text-${label}`}>{helperText}</span>}
     </div>
   )
 }));
@@ -169,5 +172,50 @@ describe('PerformanceRow Component', () => {
     expect(mockOnUpdateUrl).toHaveBeenCalledWith(undefined, MOCK_URLS.testUndefinedNew);
     expect(mockOnUpdateCaption).toHaveBeenCalledWith(undefined, MOCK_CAPTIONS.testUndefinedNew);
     expect(mockOnDeleteRequest).toHaveBeenCalledWith(undefined);
+  });
+
+  describe('Validation and Error States', () => {
+    it('should show urlError and captionError when conditions are met (row is not empty but data is invalid)', () => {
+      renderRow({
+        item: {
+          id: MOCK_IDS.base,
+          url: '   ',
+          caption: { uk: 'A', en: '' }
+        },
+        urlError: 'URL is required',
+        captionError: 'Caption is too short'
+      });
+
+      expect(screen.getByTestId(`error-text-${LABELS.canonicalUrl}`)).toHaveTextContent('URL is required');
+      expect(screen.getByTestId(`error-text-${LABELS.caption}`)).toHaveTextContent('Caption is too short');
+    });
+
+    it('should NOT show errors when the row is completely empty (!isRowEmpty condition)', () => {
+      renderRow({
+        item: {
+          id: MOCK_IDS.base,
+          url: '',
+          caption: { uk: '', en: '' }
+        },
+        urlError: 'URL is required',
+        captionError: 'Caption is too short'
+      });
+
+      expect(screen.queryByTestId(`error-text-${LABELS.canonicalUrl}`)).not.toBeInTheDocument();
+      expect(screen.queryByTestId(`error-text-${LABELS.caption}`)).not.toBeInTheDocument();
+    });
+
+    it('should NOT show errors when the data is fully valid (length >= 2 and URL is present)', () => {
+      renderRow({
+        item: {
+          id: MOCK_IDS.base,
+          url: 'https://youtube.com',
+          caption: { uk: 'Valid Caption', en: '' }
+        }
+      });
+
+      expect(screen.queryByTestId(`error-text-${LABELS.canonicalUrl}`)).not.toBeInTheDocument();
+      expect(screen.queryByTestId(`error-text-${LABELS.caption}`)).not.toBeInTheDocument();
+    });
   });
 });

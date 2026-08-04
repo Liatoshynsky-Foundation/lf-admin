@@ -1,9 +1,10 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { LoginInactivityToast } from './LoginInactivityToast';
 import { loginErrors } from '~/constants/errors';
 import LoginModal from '~/shared/components/login-modal/LoginModal';
 import { type LoginSubmitData } from '~/types/adminLogin';
@@ -51,5 +52,13 @@ export default function LoginPage() {
     });
   };
 
-  return <LoginModal onSubmit={handleLoginSubmit} submitError={triggerErrorClear.toString()} loading={loading} />;
+  return (
+    <>
+      <Suspense fallback={null}>
+        <LoginInactivityToast />
+      </Suspense>
+
+      <LoginModal onSubmit={handleLoginSubmit} submitError={triggerErrorClear.toString()} loading={loading} />
+    </>
+  );
 }
