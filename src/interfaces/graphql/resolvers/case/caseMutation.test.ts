@@ -143,6 +143,27 @@ describe('CaseMutation', () => {
         expect.objectContaining({ status: BaseContentStatuses.Hidden })
       );
     });
+
+    it('should convert a MongoDB duplicate key error (race condition) from repo.create into the friendly duplicate error', async () => {
+      const input = createMockCreateCaseInput();
+      mockFindByFondAndNumbers.mockResolvedValue(null);
+      mockCreate.mockRejectedValue(Object.assign(new Error('E11000 duplicate key error'), { code: 11000 }));
+
+      await expect(CaseMutation.createCase({}, { input }, adminContext)).rejects.toEqual(
+        new GraphQLError(CaseErrors.DUPLICATE_NUMBERS(), {
+          extensions: { code: CaseErrorCodes.DUPLICATE_NUMBERS }
+        })
+      );
+    });
+
+    it('should rethrow unrelated errors from repo.create as-is', async () => {
+      const input = createMockCreateCaseInput();
+      mockFindByFondAndNumbers.mockResolvedValue(null);
+      const unrelatedError = new Error('Database connection lost');
+      mockCreate.mockRejectedValue(unrelatedError);
+
+      await expect(CaseMutation.createCase({}, { input }, adminContext)).rejects.toThrow(unrelatedError);
+    });
   });
 
   describe('updateCase', () => {
@@ -254,6 +275,27 @@ describe('CaseMutation', () => {
 
       expect(mockUpdate).toHaveBeenCalledWith(id, input);
       expect(result).toStrictEqual(updatedCase);
+    });
+
+    it('should convert a MongoDB duplicate key error (race condition) from repo.update into the friendly duplicate error', async () => {
+      mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
+      mockUpdate.mockRejectedValue(Object.assign(new Error('E11000 duplicate key error'), { code: 11000 }));
+      const input = createMockUpdateCaseInput();
+
+      await expect(CaseMutation.updateCase({}, { id, input }, adminContext)).rejects.toEqual(
+        new GraphQLError(CaseErrors.DUPLICATE_NUMBERS(), {
+          extensions: { code: CaseErrorCodes.DUPLICATE_NUMBERS }
+        })
+      );
+    });
+
+    it('should rethrow unrelated errors from repo.update as-is', async () => {
+      mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
+      const unrelatedError = new Error('Database connection lost');
+      mockUpdate.mockRejectedValue(unrelatedError);
+      const input = createMockUpdateCaseInput();
+
+      await expect(CaseMutation.updateCase({}, { id, input }, adminContext)).rejects.toThrow(unrelatedError);
     });
   });
 

@@ -36,6 +36,14 @@ const caseNotFoundError = (id: string): GraphQLError =>
     extensions: { code: CaseErrorCodes.CASE_NOT_FOUND }
   });
 
+const MONGO_DUPLICATE_KEY_ERROR_CODE = 11000;
+
+const isDuplicateKeyError = (error: unknown): boolean =>
+  typeof error === 'object' &&
+  error !== null &&
+  'code' in error &&
+  (error as { code: unknown }).code === MONGO_DUPLICATE_KEY_ERROR_CODE;
+
 export const CaseMutation = {
   createCase: async (_: unknown, { input }: CreateCaseArgs, context: GraphQLContext): Promise<Case> => {
     assertAuthenticated(context);
@@ -55,7 +63,14 @@ export const CaseMutation = {
       throw duplicateNumbersError();
     }
 
-    return repo.create(validatedInput);
+    try {
+      return await repo.create(validatedInput);
+    } catch (error) {
+      if (isDuplicateKeyError(error)) {
+        throw duplicateNumbersError();
+      }
+      throw error;
+    }
   },
 
   updateCase: async (_: unknown, { id, input }: UpdateCaseArgs, context: GraphQLContext): Promise<Case> => {
@@ -92,7 +107,15 @@ export const CaseMutation = {
       }
     }
 
-    const updatedCase = await repo.update(id, validatedInput);
+    let updatedCase: Case | null;
+    try {
+      updatedCase = await repo.update(id, validatedInput);
+    } catch (error) {
+      if (isDuplicateKeyError(error)) {
+        throw duplicateNumbersError();
+      }
+      throw error;
+    }
 
     if (!updatedCase) {
       throw caseNotFoundError(id);
