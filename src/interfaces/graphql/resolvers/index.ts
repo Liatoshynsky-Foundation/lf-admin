@@ -1,6 +1,8 @@
 import { authMutation as AdminMutation } from './admin/AuthMutation';
 import { authQuery as AuthQuery } from './admin/AuthQuery';
 import { AssetsMutation, AssetsQuery } from './assets/Query';
+import { CaseMutation } from './case/caseMutation';
+import { CaseQuery } from './case/caseQuery';
 import { CompositionsMutation } from './compositions/compositionsMutation';
 import { EventsMutation } from './events/eventsMutation';
 import { EventsQuery } from './events/eventsQuery';
@@ -22,7 +24,8 @@ export const resolvers = {
     ...EventsMutation,
     ...OpusMutation,
     ...AssetsMutation,
-    ...CompositionsMutation
+    ...CompositionsMutation,
+    ...CaseMutation
   },
   Query: {
     ...AdminQuery,
@@ -31,6 +34,7 @@ export const resolvers = {
     ...MediaMentionsQuery,
     ...EventsQuery,
     ...OpusQuery,
-    ...AssetsQuery
+    ...AssetsQuery,
+    ...CaseQuery
   }
 };

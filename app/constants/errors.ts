@@ -112,6 +112,21 @@ export const FondErrorCodes: Record<keyof typeof FondErrors, string> = {
   FOND_NOT_FOUND: 'FOND_NOT_FOUND'
 };
 
+export const CaseErrors = {
+  DUPLICATE_NUMBERS: () =>
+    'Справа з таким номером опису та номером справи вже існує в цьому фонді. Змініть один із номерів.',
+  CASE_NOT_FOUND: (id: string) => `Case with id "${id}" not found`,
+  FOND_NOT_FOUND: (fondId: string) => `Fond with id "${fondId}" not found`,
+  INVALID_PDF_FILE: () => 'Можна прикріпити лише PDF-файл.'
+};
+
+export const CaseErrorCodes: Record<keyof typeof CaseErrors, string> = {
+  DUPLICATE_NUMBERS: 'DUPLICATE_CASE_NUMBERS',
+  CASE_NOT_FOUND: 'CASE_NOT_FOUND',
+  FOND_NOT_FOUND: 'FOND_NOT_FOUND',
+  INVALID_PDF_FILE: 'INVALID_PDF_FILE'
+};
+
 export const galleryErrors = {
   FAILED_TO_FETCH: 'Upload files failed'
 };
