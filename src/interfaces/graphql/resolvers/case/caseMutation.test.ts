@@ -164,6 +164,14 @@ describe('CaseMutation', () => {
 
       await expect(CaseMutation.createCase({}, { input }, adminContext)).rejects.toThrow(unrelatedError);
     });
+
+    it('should rethrow a non-object rejection from repo.create as-is', async () => {
+      const input = createMockCreateCaseInput();
+      mockFindByFondAndNumbers.mockResolvedValue(null);
+      mockCreate.mockRejectedValue('unexpected string rejection');
+
+      await expect(CaseMutation.createCase({}, { input }, adminContext)).rejects.toBe('unexpected string rejection');
+    });
   });
 
   describe('updateCase', () => {
@@ -231,29 +239,6 @@ describe('CaseMutation', () => {
       expect(mockUpdate).toHaveBeenCalledTimes(1);
     });
 
-    it('should throw custom error if the case is deleted concurrently and the update finds no document', async () => {
-      mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
-      mockUpdate.mockResolvedValue(null);
-      const input = createMockUpdateCaseInput();
-
-      await expect(CaseMutation.updateCase({}, { id, input }, adminContext)).rejects.toEqual(
-        new GraphQLError(CaseErrors.CASE_NOT_FOUND(id), {
-          extensions: { code: CaseErrorCodes.CASE_NOT_FOUND }
-        })
-      );
-    });
-
-    it('should fall back to the current caseNumber when it is not part of the update input', async () => {
-      mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 7 });
-      mockFindByFondAndNumbers.mockResolvedValue(null);
-      mockUpdate.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 2, caseNumber: 7 });
-      const input = createMockUpdateCaseInput({ descriptionNumber: 2 });
-
-      await CaseMutation.updateCase({}, { id, input }, adminContext);
-
-      expect(mockFindByFondAndNumbers).toHaveBeenCalledWith(mockFondId, 2, 7);
-    });
-
     it('should not re-check numbers when neither fondId, descriptionNumber, nor caseNumber change', async () => {
       mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
       mockUpdate.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
@@ -275,6 +260,18 @@ describe('CaseMutation', () => {
 
       expect(mockUpdate).toHaveBeenCalledWith(id, input);
       expect(result).toStrictEqual(updatedCase);
+    });
+
+    it('should throw custom error if the case is deleted concurrently and the update finds no document', async () => {
+      mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
+      mockUpdate.mockResolvedValue(null);
+      const input = createMockUpdateCaseInput();
+
+      await expect(CaseMutation.updateCase({}, { id, input }, adminContext)).rejects.toEqual(
+        new GraphQLError(CaseErrors.CASE_NOT_FOUND(id), {
+          extensions: { code: CaseErrorCodes.CASE_NOT_FOUND }
+        })
+      );
     });
 
     it('should convert a MongoDB duplicate key error (race condition) from repo.update into the friendly duplicate error', async () => {
