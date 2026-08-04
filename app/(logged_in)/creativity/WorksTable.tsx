@@ -1,7 +1,8 @@
 'use client';
 
 import { Box } from '@mui/material';
-import React from 'react';
+import React, { useEffect } from 'react';
+import toast from 'react-hot-toast';
 
 import { useDeleteWorkAction } from './(composition)/useDeleteWorkAction';
 import { useUpdateWorkAction } from './(composition)/useUpdateWorkAction';
@@ -162,7 +163,14 @@ type WorksTableProps =
 export function WorksTable({ items, activeTab }: WorksTableProps) {
   const { groupToUngroup, setGroupToUngroup, handlePublishStatusChange, handleConfirmUngroup, handleShareGroup } =
     useWorksTableActions();
-  const { compositionId, compositionToEdit, isEditOpen, openEditComposition, closeEditComposition } = useWorkUrlState();
+  const {
+    compositionId,
+    compositionToEdit,
+    isCompositionLoading,
+    isEditOpen,
+    openEditComposition,
+    closeEditComposition
+  } = useWorkUrlState();
   const { deleteComposition, setDeleteComposition, handleConfirmCompositionDelete } = useDeleteWorkAction();
   const { handleUpdateComposition } = useUpdateWorkAction();
   const { handleShare } = useShare();
@@ -177,6 +185,17 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
     const url = `${window.location.origin}${WORKS_BASE_PATH}?${COMPOSITION_MODAL_PARAM}=${id}`;
     handleShare(url);
   };
+
+  useEffect(() => {
+    if (!compositionId || isCompositionLoading) {
+      return;
+    }
+
+    if (!compositionToEdit) {
+      toast.error('Композицію не знайдено');
+      closeEditComposition();
+    }
+  }, [compositionId, compositionToEdit, isCompositionLoading, closeEditComposition]);
 
   function groupsRow(group: GroupRowData): BaseRowData<GroupHeaderData, OpusWork, IndividualWork> {
     const isPublished = group.status === BaseContentStatuses.Published;

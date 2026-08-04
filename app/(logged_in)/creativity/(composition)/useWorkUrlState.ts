@@ -75,7 +75,7 @@ export function useWorkUrlState() {
     compositionId,
     compositionToEdit,
     isCompositionLoading,
-    isEditOpen: Boolean(compositionId),
+    isEditOpen: Boolean(compositionId && compositionToEdit),
     openEditComposition: (id: string) => updateUrlParam(id),
     closeEditComposition: () => updateUrlParam(null)
   };

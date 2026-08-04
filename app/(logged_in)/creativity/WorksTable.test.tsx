@@ -1,6 +1,7 @@
 import { Box } from '@mui/material';
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
+import toast from 'react-hot-toast';
 
 import { useDeleteWorkAction } from './(composition)/useDeleteWorkAction';
 import { useUpdateWorkAction } from './(composition)/useUpdateWorkAction';
@@ -115,6 +116,14 @@ jest.mock('./(composition)/useUpdateWorkAction', () => ({
 
 jest.mock('~/shared/hooks/use-share/useShare', () => ({
   useShare: jest.fn()
+}));
+
+jest.mock('react-hot-toast', () => ({
+  __esModule: true,
+  default: {
+    error: jest.fn(),
+    success: jest.fn()
+  }
 }));
 
 const group: GroupRowData = {
@@ -432,5 +441,55 @@ describe('WorksTable', () => {
       updatedAt: ''
     };
     expect(yearsCol?.renderGroup?.(diffYearData)).toBe('2020 - 2022');
+  });
+
+  describe('useEffect composition validation', () => {
+    it('should not call toast or closeEditComposition if compositionId is missing or loading', () => {
+      (useWorkUrlState as jest.Mock).mockReturnValue({
+        compositionId: null,
+        compositionToEdit: null,
+        isCompositionLoading: true,
+        isEditOpen: false,
+        openEditComposition: mockOpenEditComposition,
+        closeEditComposition: mockCloseEditComposition
+      });
+
+      render(<WorksTable activeTab={WORKS_TABS_NAMES.WORKS} items={{ works: [individualWork] }} />);
+
+      expect(toast.error).not.toHaveBeenCalled();
+      expect(mockCloseEditComposition).not.toHaveBeenCalled();
+    });
+
+    it('should show error toast and close edit modal if compositionId exists and is not loading, but compositionToEdit is missing', () => {
+      (useWorkUrlState as jest.Mock).mockReturnValue({
+        compositionId: 'non-existent-id',
+        compositionToEdit: null,
+        isCompositionLoading: false,
+        isEditOpen: true,
+        openEditComposition: mockOpenEditComposition,
+        closeEditComposition: mockCloseEditComposition
+      });
+
+      render(<WorksTable activeTab={WORKS_TABS_NAMES.WORKS} items={{ works: [individualWork] }} />);
+
+      expect(toast.error).toHaveBeenCalledWith('Композицію не знайдено');
+      expect(mockCloseEditComposition).toHaveBeenCalled();
+    });
+
+    it('should not trigger error toast if compositionToEdit is present', () => {
+      (useWorkUrlState as jest.Mock).mockReturnValue({
+        compositionId: 'existing-id',
+        compositionToEdit: { id: 'existing-id', name: 'Test' },
+        isCompositionLoading: false,
+        isEditOpen: true,
+        openEditComposition: mockOpenEditComposition,
+        closeEditComposition: mockCloseEditComposition
+      });
+
+      render(<WorksTable activeTab={WORKS_TABS_NAMES.WORKS} items={{ works: [individualWork] }} />);
+
+      expect(toast.error).not.toHaveBeenCalled();
+      expect(mockCloseEditComposition).not.toHaveBeenCalled();
+    });
   });
 });
