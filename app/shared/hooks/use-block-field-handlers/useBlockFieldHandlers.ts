@@ -37,7 +37,7 @@ export const useBlockFieldHandlers = (
     const descData = data?.description as Record<'uk' | 'en', JSONContent> | undefined;
 
     (setField as SetFieldFn)(pageId, blockId, 'description', {
-      ...(descData || {}),
+      ...(descData),
       [currentLocale]: val
     });
   };
