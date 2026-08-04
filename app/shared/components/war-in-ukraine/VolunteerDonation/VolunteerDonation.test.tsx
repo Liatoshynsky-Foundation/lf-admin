@@ -199,7 +199,7 @@ describe('VolunteerDonation', () => {
     expect(screen.getByTestId('configurable-list')).toHaveAttribute('data-count', '2');
     expect(screen.getByTestId('method-label-1')).toHaveTextContent(JSON.stringify({ uk: '', en: '' }));
     expect(screen.getByTestId('method-value-1')).toHaveTextContent('');
-    expect(screen.getByTestId('method-id-1')).toHaveTextContent('method-1-mocked-uuid-9999');
+    expect(screen.getByTestId('method-id-1')).toHaveTextContent('method-1');
   });
 
   it('toggles block visibility correctly via store action', () => {

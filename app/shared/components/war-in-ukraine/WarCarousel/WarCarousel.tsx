@@ -1,7 +1,7 @@
 'use client';
 
 import { Typography } from '@mui/material';
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import { CarouselImageCard, type CarouselImageData } from '../CarouselImageCard/CarouselImageCard';
 import ConfigurableList from '~/components/configurable-list/ConfigurableList';
@@ -20,17 +20,15 @@ export const WarCarousel = () => {
   const setField = useStore((state) => state.setField);
   const toggleBlockVisibility = useStore((state) => state.toggleBlockVisibility);
 
-  const imagesList = useMemo(() => {
-    const rawImages: Partial<CarouselImageData>[] = block?.images || [];
+  const rawImages: Partial<CarouselImageData>[] = block?.images || [];
 
-    return rawImages.map((img, index) => ({
-      ...img,
-      src: img.src || '',
-      alt: img.alt || { uk: '', en: '' },
-      caption: img.caption || { uk: '', en: '' },
-      id: img.id || `img-${index}-${crypto.randomUUID()}`
-    })) as CarouselImageData[];
-  }, [block?.images]);
+  const imagesList = rawImages.map((img, index) => ({
+    ...img,
+    src: img.src || '',
+    alt: img.alt || { uk: '', en: '' },
+    caption: img.caption || { uk: '', en: '' },
+    id: img.id || `img-${index}`
+  })) as CarouselImageData[];
 
   if (!block) return <EditBlockSkeleton />;
 

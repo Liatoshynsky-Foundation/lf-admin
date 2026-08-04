@@ -4,6 +4,7 @@ import { Divider,Stack } from '@mui/material';
 import React from 'react';
 
 import { CustomTextField } from '~/ds-components/text-field/TextField';
+import { getEventValue } from '~/src/shared/utils/formHelpers';
 
 export type VolunteerPaymentMethodData = {
   id: string | number;
@@ -19,7 +20,7 @@ type VolunteerMethodCardProps = {
 
 export const VolunteerDonationMethodCard = ({ method, currentLocale, onChangeMethod }: VolunteerMethodCardProps) => {
   const handleLabelChange = (e: string | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const textValue = typeof e === 'string' ? e : e?.target?.value || '';
+    const textValue = getEventValue(e);
 
     onChangeMethod({
       ...method,
@@ -32,7 +33,7 @@ export const VolunteerDonationMethodCard = ({ method, currentLocale, onChangeMet
   };
 
   const handleValueChange = (e: string | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const textValue = typeof e === 'string' ? e : e?.target?.value || '';
+    const textValue = getEventValue(e);
     onChangeMethod({ ...method, value: textValue });
   };
 

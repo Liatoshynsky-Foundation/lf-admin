@@ -6,6 +6,7 @@ import React from 'react';
 import { ClickableButtonData } from '../ConfigurableButtonList/ConfigurableButtonList';
 import { styles } from './PrincipleHopeButtonCard.styles';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
+import { getEventValue } from '~/src/shared/utils/formHelpers';
 
 type ButtonItemProps = {
   button: ClickableButtonData;
@@ -18,7 +19,7 @@ export const PrincipleHopeButtonCard = ({ button, currentLocale, onChangeButton 
     field: 'shortText' | 'fullText',
     e: string | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    const textValue = typeof e === 'string' ? e : e?.target?.value || '';
+    const textValue = getEventValue(e);
 
     onChangeButton({
       ...button,
@@ -31,7 +32,7 @@ export const PrincipleHopeButtonCard = ({ button, currentLocale, onChangeButton 
   };
 
   const handleLinkChange = (e: string | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const linkValue = typeof e === 'string' ? e : e?.target?.value || '';
+    const linkValue = getEventValue(e);
     onChangeButton({ ...button, link: linkValue });
   };
 

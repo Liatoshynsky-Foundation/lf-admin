@@ -6,13 +6,25 @@ import { BLOCK_IDS } from '~/constants/pageBlocks';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 
+let originalCrypto: Crypto;
+
 beforeAll(() => {
-  if (!global.crypto) global.crypto = {} as Crypto;
-  if (!global.crypto.randomUUID) {
-    Object.defineProperty(global.crypto, 'randomUUID', {
-      value: jest.fn().mockReturnValue('mocked-uuid-carousel')
-    });
-  }
+  originalCrypto = global.crypto;
+
+  Object.defineProperty(global, 'crypto', {
+    configurable: true,
+    value: {
+      ...originalCrypto,
+      randomUUID: jest.fn().mockReturnValue('mocked-uuid-carousel')
+    }
+  });
+});
+
+afterAll(() => {
+  Object.defineProperty(global, 'crypto', {
+    configurable: true,
+    value: originalCrypto
+  });
 });
 
 jest.mock('~/shared/hooks/use-page-block/usePageBlock');

@@ -1,7 +1,6 @@
 'use client';
 
 import { Box, Typography } from '@mui/material';
-import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
 import { ConfigurableButtonList } from '../ConfigurableButtonList/ConfigurableButtonList';
@@ -10,7 +9,9 @@ import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
 import { EditBlockSkeleton } from '~/shared/components/edit-block-skeleton/EditBlockSkeleton';
+import { useBlockFieldHandlers } from '~/shared/hooks/use-block-field-handlers/useBlockFieldHandlers';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
+import { getEventValue } from '~/src/shared/utils/formHelpers';
 import { useStore } from '~/store';
 
 export const PrincipleOfHope = () => {
@@ -22,28 +23,17 @@ export const PrincipleOfHope = () => {
   const currentLocale = useStore((state) => state.locale) as 'uk' | 'en';
   const setField = useStore((state) => state.setField);
 
+  const { handleLocalizedTextChange, handleDescriptionChange } = useBlockFieldHandlers(
+    pageId,
+    blockId,
+    currentLocale,
+    block
+  );
+
   if (!block) return <EditBlockSkeleton />;
 
-  const handleTextChange = (field: 'buttonText' | 'buttonLink', e: string | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const textValue = typeof e === 'string' ? e : e?.target?.value || '';
-    
-    if (field === 'buttonLink') {
-      setField(pageId, blockId, field, textValue);
-      return;
-    }
-
-    setField(pageId, blockId, field, {
-      uk: block[field]?.uk || '',
-      en: block[field]?.en || '',
-      [currentLocale]: textValue
-    });
-  };
-
-  const handleDescriptionChange = (val: JSONContent) => {
-    setField(pageId, blockId, 'description', {
-      ...(block.description),
-      [currentLocale]: val
-    });
+  const handleLinkChange = (e: string | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setField(pageId, blockId, 'buttonLink', getEventValue(e));
   };
 
   return (
@@ -68,7 +58,7 @@ export const PrincipleOfHope = () => {
           title="Текст головної кнопки"
           label="Текст"
           value={block.buttonText?.[currentLocale] || ''}
-          onChange={(e) => handleTextChange('buttonText', e)}
+          onChange={handleLocalizedTextChange('buttonText')}
           fullWidth
         />
 
@@ -76,7 +66,7 @@ export const PrincipleOfHope = () => {
           title="Посилання головної кнопки (URL)"
           label="Посилання"
           value={block.buttonLink || ''}
-          onChange={(e) => handleTextChange('buttonLink', e)}
+          onChange={handleLinkChange}
           fullWidth
         />
         

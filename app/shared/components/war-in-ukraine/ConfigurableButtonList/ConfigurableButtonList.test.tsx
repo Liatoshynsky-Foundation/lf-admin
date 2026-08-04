@@ -117,7 +117,7 @@ describe('ConfigurableButtonList', () => {
 
     fireEvent.click(screen.getByTestId('update-btn-0'));
     const updatedList = mockOnChange.mock.calls[0][0];
-    expect(updatedList[0].id).toMatch(/^btn-0-/);
+    expect(updatedList[0].id).toMatch('btn-0');
     expect(updatedList[0].link).toBe('https://updated-link.com');
   });
 

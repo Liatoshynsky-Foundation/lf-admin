@@ -6,6 +6,7 @@ import React from 'react';
 import { CROP_RATIOS } from '~/constants/publications';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { ImagePreviewBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
+import { getEventValue } from '~/src/shared/utils/formHelpers';
 import { CropResult } from '~/types/common';
 
 export type CarouselImageData = {
@@ -27,7 +28,7 @@ export const CarouselImageCard = ({ image, currentLocale, onChangeImage }: Carou
     field: 'alt' | 'caption',
     e: string | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    const textValue = typeof e === 'string' ? e : e?.target?.value || '';
+    const textValue = getEventValue(e);
 
     onChangeImage({
       ...image,

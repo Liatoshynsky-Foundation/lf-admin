@@ -1,9 +1,10 @@
 'use client';
 
 import { Box, Typography } from '@mui/material';
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import { PrincipleHopeButtonCard } from '../PrincipleHopeButtonCard/PrincipleHopeButtonCard';
+import { styles } from './ConfigurableButtonList.styles';
 import ConfigurableList from '~/components/configurable-list/ConfigurableList';
 
 export type ClickableButtonData = {
@@ -28,16 +29,13 @@ export const ConfigurableButtonList = ({
   addBtnLabel,
   onChange
 }: ConfigurableButtonListProps) => {
-  
-  const buttonsList = useMemo(() => {
-    return buttons.map((btn, index) => ({
-      ...btn,
-      shortText: btn.shortText || { uk: '', en: '' },
-      fullText: btn.fullText || { uk: '', en: '' },
-      link: btn.link || '',
-      id: btn.id || `btn-${index}-${crypto.randomUUID()}`
-    })) as ClickableButtonData[];
-  }, [buttons]);
+  const buttonsList = buttons.map((btn, index) => ({
+    ...btn,
+    shortText: btn.shortText || { uk: '', en: '' },
+    fullText: btn.fullText || { uk: '', en: '' },
+    link: btn.link || '',
+    id: btn.id || `btn-${index}`
+  })) as ClickableButtonData[];
 
   const handleAddButton = () => {
     const newButton: ClickableButtonData = {
@@ -59,8 +57,8 @@ export const ConfigurableButtonList = ({
   };
 
   return (
-    <Box sx={{ mt: 2 }}>
-      <Typography sx={{ mb: 2, fontWeight: 'bold' }}>
+    <Box sx={styles.container}>
+      <Typography sx={styles.title}>
         {title} ({buttonsList.length}):
       </Typography>
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Typography } from '@mui/material';
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import {
   VolunteerDonationMethodCard,
@@ -15,6 +15,7 @@ import { CustomTextField } from '~/ds-components/text-field/TextField';
 import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
 import { ImagePreviewBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
 import { EditBlockSkeleton } from '~/shared/components/edit-block-skeleton/EditBlockSkeleton';
+import { useBlockFieldHandlers } from '~/shared/hooks/use-block-field-handlers/useBlockFieldHandlers';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
 
@@ -27,29 +28,22 @@ export const VolunteerDonation = () => {
   const setField = useStore((state) => state.setField);
   const toggleBlockVisibility = useStore((state) => state.toggleBlockVisibility);
 
-  const methodsList = useMemo(() => {
-    const rawMethods: Partial<VolunteerPaymentMethodData>[] = block?.paymentMethods || [];
-    return rawMethods.map((method, index) => ({
-      ...method,
-      label: method.label || { uk: '', en: '' },
-      value: method.value || '',
-      id: method.id || `method-${index}-${crypto.randomUUID()}`
-    })) as VolunteerPaymentMethodData[];
-  }, [block?.paymentMethods]);
+  const { handleLocalizedTextChange } = useBlockFieldHandlers(
+    pageId,
+    blockId,
+    currentLocale,
+    block
+  );
 
   if (!block) return <EditBlockSkeleton />;
 
-  const handleTextChange = (
-    field: 'title' | 'caption',
-    e: string | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const textValue = typeof e === 'string' ? e : e?.target?.value || '';
-    setField(pageId, blockId, field, {
-      uk: block[field]?.uk || '',
-      en: block[field]?.en || '',
-      [currentLocale]: textValue
-    });
-  };
+  const rawMethods: Partial<VolunteerPaymentMethodData>[] = block?.paymentMethods || [];
+  const methodsList = rawMethods.map((method, index) => ({
+    ...method,
+    label: method.label || { uk: '', en: '' },
+    value: method.value || '',
+    id: method.id || `method-${index}`
+  })) as VolunteerPaymentMethodData[];
 
   const handleChangeImage = (url: string) => {
     setField(pageId, blockId, 'imageSrc', url);
@@ -91,7 +85,7 @@ export const VolunteerDonation = () => {
           title="Заголовок"
           label="Наприклад: НА АВТІВКИ ДЛЯ ЗСУ:"
           value={block.title?.[currentLocale] || ''}
-          onChange={(e) => handleTextChange('title', e)}
+          onChange={handleLocalizedTextChange('title')}
           fullWidth
         />
 
@@ -99,7 +93,7 @@ export const VolunteerDonation = () => {
           title="Підпис під фотографією"
           label="Текст"
           value={block.caption?.[currentLocale] || ''}
-          onChange={(e) => handleTextChange('caption', e)}
+          onChange={handleLocalizedTextChange('caption')}
           fullWidth
         />
 
