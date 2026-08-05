@@ -6,6 +6,8 @@ import { CaseQuery } from './case/caseQuery';
 import { CompositionsMutation } from './compositions/compositionsMutation';
 import { EventsMutation } from './events/eventsMutation';
 import { EventsQuery } from './events/eventsQuery';
+import { FondMutation } from './fond/fondMutation';
+import { FondQuery } from './fond/fondQuery';
 import { MediaMentionsMutation } from './media-mentions/mediaMentionMutation';
 import { MediaMentionsQuery } from './media-mentions/mediaMentionQuery';
 import { NewsMutation } from './news/newsMutation';
@@ -25,7 +27,8 @@ export const resolvers = {
     ...OpusMutation,
     ...AssetsMutation,
     ...CompositionsMutation,
-    ...CaseMutation
+    ...CaseMutation,
+    ...FondMutation
   },
   Query: {
     ...AdminQuery,
@@ -35,6 +38,7 @@ export const resolvers = {
     ...EventsQuery,
     ...OpusQuery,
     ...AssetsQuery,
-    ...CaseQuery
+    ...CaseQuery,
+    ...FondQuery
   }
 };

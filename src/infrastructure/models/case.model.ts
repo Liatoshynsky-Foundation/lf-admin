@@ -16,11 +16,11 @@ const casePdfFileSchema = new Schema(
 const caseSchema = new Schema(
   {
     fondId: { type: Schema.Types.ObjectId, ref: 'Fond', required: true, index: true },
-    descriptionNumber: { type: Number, required: true, set: (v: unknown) => (v != null ? Number(v) : v) },
-    caseNumber: { type: Number, required: true, set: (v: unknown) => (v != null ? Number(v) : v) },
+    descriptionNumber: { type: Number, required: true, set: (v: unknown) => (v !== null && v !== undefined ? Number(v) : v) },
+    caseNumber: { type: Number, required: true, set: (v: unknown) => (v !== null && v !== undefined ? Number(v) : v) },
     caseName: { type: translatedFieldSchema, required: true },
     caseDate: { type: translatedFieldSchema, required: true },
-    sheetsNumber: { type: Number, required: true, set: (v: unknown) => (v != null ? Number(v) : v) },
+    sheetsNumber: { type: Number, required: true, set: (v: unknown) => (v !== null && v !== undefined ? Number(v) : v) },
     caseDescriptions: { type: translatedFieldSchema, required: true },
     detailedCaseDescription: { type: optionalTranslatedFieldSchema, default: null },
     pdfFile: { type: casePdfFileSchema, default: null },
