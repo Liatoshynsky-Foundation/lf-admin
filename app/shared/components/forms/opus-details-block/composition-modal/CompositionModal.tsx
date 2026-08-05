@@ -225,7 +225,12 @@ export default function CompositionModal({
           <TextField
             label={COMPOSITION_MODAL_LABELS.year}
             value={composition.year}
-            onChange={(event) => updateField('year', event.target.value)}
+            onChange={(event) => {
+              const val = event.target.value;
+              if (/^\d*$/.test(val)) {
+                updateField('year', val);
+              }
+            }}
             size="small"
             sx={styles.field}
           />
