@@ -12,18 +12,20 @@ interface MockCropResult {
 
 jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
   ImagePreviewBlock: ({
+    imageUrl,
     onChangeImage,
     showAlternativeText,
     altText,
     onChangeAltText
   }: {
+    imageUrl?: string;
     onChangeImage: (url: string, crop?: MockCropResult | null) => void;
     showAlternativeText?: boolean;
     altText?: string;
     onChangeAltText?: (value: string) => void;
   }) => (
-    <div>
-      <button data-testid="photo-block" onClick={() => onChangeImage('https://example.com/mock-image.png')}>
+    <div data-testid="photo-block" data-imageurl={imageUrl}>
+      <button data-testid="photo-block-trigger" onClick={() => onChangeImage('https://example.com/mock-image.png')}>
         PhotoBlock
       </button>
       <button
@@ -38,10 +40,7 @@ jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
       <button data-testid="photo-block-root-url" onClick={() => onChangeImage('https://example.com/')}>
         PhotoBlock Root URL
       </button>
-      <button
-        data-testid="photo-block-query-url"
-        onClick={() => onChangeImage('https://example.com/photo.png?v=1.0')}
-      >
+      <button data-testid="photo-block-query-url" onClick={() => onChangeImage('https://example.com/photo.png?v=1.0')}>
         PhotoBlock Query URL
       </button>
       {showAlternativeText && (
@@ -193,7 +192,7 @@ describe('SeoMetadataForm', () => {
       description: 'onImageChange with uploaded url',
       action: async (u: ReturnType<typeof userEvent.setup>) => {
         render(<SeoMetadataForm {...defaultProps} />);
-        await u.click(screen.getByTestId('photo-block'));
+        await u.click(screen.getByTestId('photo-block-trigger'));
       },
       assert: () => expect(defaultProps.onImageChange).toHaveBeenCalledWith('https://example.com/mock-image.png')
     }
@@ -342,7 +341,7 @@ describe('SeoMetadataForm', () => {
     const onChangeCropMock = jest.fn();
     render(<SeoMetadataForm {...defaultProps} onChangeCrop={onChangeCropMock} />);
 
-    await user.click(screen.getByTestId('photo-block'));
+    await user.click(screen.getByTestId('photo-block-trigger'));
 
     expect(onChangeCropMock).toHaveBeenCalledWith(null);
   });
@@ -605,5 +604,19 @@ describe('SeoMetadataForm', () => {
         altText: { uk: '', en: 'b' }
       })
     );
+  });
+
+  it('resets ogImagePreview to null when an invalid or non-URL string is passed', () => {
+    render(<SeoMetadataForm {...defaultProps} ogImage="invalid-image-name.png" />);
+
+    const photoBlock = screen.getByTestId('photo-block');
+    expect(photoBlock).toHaveAttribute('data-imageurl', '');
+  });
+
+  it('keeps ogImagePreview when a valid URL is passed', () => {
+    render(<SeoMetadataForm {...defaultProps} ogImage="https://example.com/valid.png" />);
+
+    const photoBlock = screen.getByTestId('photo-block');
+    expect(photoBlock).toHaveAttribute('data-imageurl', 'https://example.com/valid.png');
   });
 });
