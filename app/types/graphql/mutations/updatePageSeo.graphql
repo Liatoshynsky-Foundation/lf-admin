@@ -1,0 +1,22 @@
+mutation UpdatePageSeo($input: UpdatePageSeoInput!) {
+  updatePageSeo(input: $input) {
+    id
+    slug
+    title {
+      uk
+      en
+    }
+    description {
+      uk
+      en
+    }
+    keywords {
+      uk
+      en
+    }
+    canonicalUrl {
+      uk
+      en
+    }
+  }
+}

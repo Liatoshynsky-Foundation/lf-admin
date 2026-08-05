@@ -1,0 +1,360 @@
+import { GraphQLError } from 'graphql';
+import { ZodError } from 'zod';
+
+import { createMockContext } from '../testUtils';
+import { CaseMutation } from './caseMutation';
+import { CaseErrorCodes, CaseErrors, graphqlErrors } from '~/constants/errors';
+import { CreateCaseInput, ICaseRepository, UpdateCaseInput } from '~/src/domain/repositories/caseRepository';
+import { IFondRepository } from '~/src/domain/repositories/fondRepository';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
+
+const mockFondId = '65eddf5e2f1a2b3c4d5e6f7b';
+
+const createMockCreateCaseInput = (overrides: Partial<CreateCaseInput> = {}): CreateCaseInput => ({
+  fondId: mockFondId,
+  descriptionNumber: 1,
+  caseNumber: 1,
+  caseName: { uk: 'Справа', en: 'Case' },
+  caseDate: { uk: '1917-1918', en: '1917-1918' },
+  sheetsNumber: 10,
+  caseDescriptions: { uk: 'Опис', en: 'Description' },
+  detailedCaseDescription: undefined,
+  pdfFile: undefined,
+  status: BaseContentStatuses.Hidden,
+  ...overrides
+});
+
+const createMockUpdateCaseInput = (overrides: Partial<UpdateCaseInput> = {}): UpdateCaseInput => ({
+  caseName: { uk: 'Оновлена справа', en: 'Updated case' },
+  ...overrides
+});
+
+const mockCreate = jest.fn();
+const mockUpdate = jest.fn();
+const mockDelete = jest.fn();
+const mockFindById = jest.fn();
+const mockFindByFondAndNumbers = jest.fn();
+
+const mockCaseRepo: Partial<ICaseRepository> = {
+  create: mockCreate,
+  update: mockUpdate,
+  delete: mockDelete,
+  findById: mockFindById,
+  findByFondAndNumbers: mockFindByFondAndNumbers
+};
+
+const mockFondFindById = jest.fn();
+
+const mockFondRepo: Partial<IFondRepository> = {
+  findById: mockFondFindById
+};
+
+const createContext = (isAdmin: boolean) => ({
+  admin: isAdmin,
+  requestContainer: {
+    cradle: {
+      caseRepository: mockCaseRepo,
+      fondRepository: mockFondRepo
+    }
+  }
+} as unknown as ReturnType<typeof createMockContext>);
+
+const adminContext = createContext(true);
+const userContext = createContext(false);
+
+describe('CaseMutation', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockFondFindById.mockResolvedValue({ id: mockFondId });
+  });
+
+  describe('createCase', () => {
+    it('should throw GraphQLError if user is not an admin', async () => {
+      const input = createMockCreateCaseInput();
+      await expect(CaseMutation.createCase({}, { input }, userContext)).rejects.toEqual(
+        new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
+          extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
+        })
+      );
+
+      expect(mockCreate).not.toHaveBeenCalled();
+    });
+
+    it('should throw ZodError for invalid input', async () => {
+      const input = createMockCreateCaseInput({ descriptionNumber: -1 });
+
+      await expect(CaseMutation.createCase({}, { input }, adminContext)).rejects.toThrow(ZodError);
+      expect(mockFondFindById).not.toHaveBeenCalled();
+      expect(mockCreate).not.toHaveBeenCalled();
+    });
+
+    it('should throw custom error if fondId does not reference an existing Fond', async () => {
+      const input = createMockCreateCaseInput();
+      mockFondFindById.mockResolvedValue(null);
+
+      await expect(CaseMutation.createCase({}, { input }, adminContext)).rejects.toEqual(
+        new GraphQLError(CaseErrors.FOND_NOT_FOUND(mockFondId), {
+          extensions: { code: CaseErrorCodes.FOND_NOT_FOUND }
+        })
+      );
+
+      expect(mockCreate).not.toHaveBeenCalled();
+    });
+
+    it('should throw custom error if descriptionNumber+caseNumber combination already exists within the Fond', async () => {
+      const input = createMockCreateCaseInput();
+      mockFindByFondAndNumbers.mockResolvedValue({ id: 'existing-case' });
+
+      await expect(CaseMutation.createCase({}, { input }, adminContext)).rejects.toEqual(
+        new GraphQLError(CaseErrors.DUPLICATE_NUMBERS(), {
+          extensions: { code: CaseErrorCodes.DUPLICATE_NUMBERS }
+        })
+      );
+
+      expect(mockCreate).not.toHaveBeenCalled();
+    });
+
+    it('should reject a pdfFile that is not a PDF', async () => {
+      const input = createMockCreateCaseInput({
+        pdfFile: { filename: 'scan.png', url: 'https://cdn/scan.png', mimeType: 'image/png' }
+      });
+
+      await expect(CaseMutation.createCase({}, { input }, adminContext)).rejects.toThrow(ZodError);
+      expect(mockCreate).not.toHaveBeenCalled();
+    });
+
+    it('should successfully call repo create method and return the new case', async () => {
+      const input = createMockCreateCaseInput();
+      mockFindByFondAndNumbers.mockResolvedValue(null);
+
+      await CaseMutation.createCase({}, { input }, adminContext);
+
+      expect(mockCreate).toHaveBeenCalledTimes(1);
+      expect(mockCreate).toHaveBeenCalledWith(input);
+    });
+
+    it('should provide a fallback hidden status when missing', async () => {
+      const { status: _status, ...inputWithoutStatus } = createMockCreateCaseInput();
+      mockFindByFondAndNumbers.mockResolvedValue(null);
+
+      await CaseMutation.createCase({}, { input: inputWithoutStatus }, adminContext);
+
+      expect(mockCreate).toHaveBeenCalledWith(
+        expect.objectContaining({ status: BaseContentStatuses.Hidden })
+      );
+    });
+
+    it('should convert a MongoDB duplicate key error (race condition) from repo.create into the friendly duplicate error', async () => {
+      const input = createMockCreateCaseInput();
+      mockFindByFondAndNumbers.mockResolvedValue(null);
+      mockCreate.mockRejectedValue(Object.assign(new Error('E11000 duplicate key error'), { code: 11000 }));
+
+      await expect(CaseMutation.createCase({}, { input }, adminContext)).rejects.toEqual(
+        new GraphQLError(CaseErrors.DUPLICATE_NUMBERS(), {
+          extensions: { code: CaseErrorCodes.DUPLICATE_NUMBERS }
+        })
+      );
+    });
+
+    it('should rethrow unrelated errors from repo.create as-is', async () => {
+      const input = createMockCreateCaseInput();
+      mockFindByFondAndNumbers.mockResolvedValue(null);
+      const unrelatedError = new Error('Database connection lost');
+      mockCreate.mockRejectedValue(unrelatedError);
+
+      await expect(CaseMutation.createCase({}, { input }, adminContext)).rejects.toThrow(unrelatedError);
+    });
+
+    it('should rethrow a non-object rejection from repo.create as-is', async () => {
+      const input = createMockCreateCaseInput();
+      mockFindByFondAndNumbers.mockResolvedValue(null);
+      mockCreate.mockRejectedValue('unexpected string rejection');
+
+      await expect(CaseMutation.createCase({}, { input }, adminContext)).rejects.toBe('unexpected string rejection');
+    });
+  });
+
+  describe('updateCase', () => {
+    const id = 'case-id';
+
+    it('should throw GraphQLError if user is not an admin', async () => {
+      const input = createMockUpdateCaseInput();
+      await expect(CaseMutation.updateCase({}, { id, input }, userContext)).rejects.toEqual(
+        new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
+          extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
+        })
+      );
+
+      expect(mockUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should throw custom error if the case does not exist', async () => {
+      mockFindById.mockResolvedValue(null);
+      const input = createMockUpdateCaseInput();
+
+      await expect(CaseMutation.updateCase({}, { id, input }, adminContext)).rejects.toEqual(
+        new GraphQLError(CaseErrors.CASE_NOT_FOUND(id), {
+          extensions: { code: CaseErrorCodes.CASE_NOT_FOUND }
+        })
+      );
+
+      expect(mockUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should throw custom error if new fondId does not reference an existing Fond', async () => {
+      mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
+      mockFondFindById.mockResolvedValue(null);
+      const input = createMockUpdateCaseInput({ fondId: 'other-fond-id' });
+
+      await expect(CaseMutation.updateCase({}, { id, input }, adminContext)).rejects.toEqual(
+        new GraphQLError(CaseErrors.FOND_NOT_FOUND('other-fond-id'), {
+          extensions: { code: CaseErrorCodes.FOND_NOT_FOUND }
+        })
+      );
+
+      expect(mockUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should throw custom error when the updated descriptionNumber+caseNumber duplicates another case in the same Fond', async () => {
+      mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
+      mockFindByFondAndNumbers.mockResolvedValue({ id: 'another-case-id' });
+      const input = createMockUpdateCaseInput({ caseNumber: 2 });
+
+      await expect(CaseMutation.updateCase({}, { id, input }, adminContext)).rejects.toEqual(
+        new GraphQLError(CaseErrors.DUPLICATE_NUMBERS(), {
+          extensions: { code: CaseErrorCodes.DUPLICATE_NUMBERS }
+        })
+      );
+
+      expect(mockUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should NOT treat the case itself as a duplicate when numbers are unchanged', async () => {
+      mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
+      mockFindByFondAndNumbers.mockResolvedValue({ id });
+      mockUpdate.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
+      const input = createMockUpdateCaseInput({ caseNumber: 1 });
+
+      await expect(CaseMutation.updateCase({}, { id, input }, adminContext)).resolves.toBeDefined();
+      expect(mockUpdate).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not re-check numbers when neither fondId, descriptionNumber, nor caseNumber change', async () => {
+      mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
+      mockUpdate.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
+      const input = createMockUpdateCaseInput();
+
+      await CaseMutation.updateCase({}, { id, input }, adminContext);
+
+      expect(mockFindByFondAndNumbers).not.toHaveBeenCalled();
+      expect(mockUpdate).toHaveBeenCalledWith(id, input);
+    });
+
+    it('should successfully call repo update method and return the updated case', async () => {
+      mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
+      const updatedCase = { id, caseName: { uk: 'Оновлена справа', en: 'Updated case' } };
+      mockUpdate.mockResolvedValue(updatedCase);
+      const input = createMockUpdateCaseInput();
+
+      const result = await CaseMutation.updateCase({}, { id, input }, adminContext);
+
+      expect(mockUpdate).toHaveBeenCalledWith(id, input);
+      expect(result).toStrictEqual(updatedCase);
+    });
+
+    it('should throw custom error if the case is deleted concurrently and the update finds no document', async () => {
+      mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
+      mockUpdate.mockResolvedValue(null);
+      const input = createMockUpdateCaseInput();
+
+      await expect(CaseMutation.updateCase({}, { id, input }, adminContext)).rejects.toEqual(
+        new GraphQLError(CaseErrors.CASE_NOT_FOUND(id), {
+          extensions: { code: CaseErrorCodes.CASE_NOT_FOUND }
+        })
+      );
+    });
+
+    it('should convert a MongoDB duplicate key error (race condition) from repo.update into the friendly duplicate error', async () => {
+      mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
+      mockUpdate.mockRejectedValue(Object.assign(new Error('E11000 duplicate key error'), { code: 11000 }));
+      const input = createMockUpdateCaseInput();
+
+      await expect(CaseMutation.updateCase({}, { id, input }, adminContext)).rejects.toEqual(
+        new GraphQLError(CaseErrors.DUPLICATE_NUMBERS(), {
+          extensions: { code: CaseErrorCodes.DUPLICATE_NUMBERS }
+        })
+      );
+    });
+
+    it('should rethrow unrelated errors from repo.update as-is', async () => {
+      mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
+      const unrelatedError = new Error('Database connection lost');
+      mockUpdate.mockRejectedValue(unrelatedError);
+      const input = createMockUpdateCaseInput();
+
+      await expect(CaseMutation.updateCase({}, { id, input }, adminContext)).rejects.toThrow(unrelatedError);
+    });
+  });
+
+  describe('validation', () => {
+    beforeEach(() => {
+      mockFindByFondAndNumbers.mockResolvedValue(null);
+    });
+
+    it.each([
+      ['missing fondId', { fondId: '' }],
+
+      ['non-positive descriptionNumber', { descriptionNumber: -1 }],
+      ['float descriptionNumber', { descriptionNumber: 1.5 }],
+      ['missing descriptionNumber', { descriptionNumber: undefined as unknown as number }],
+
+      ['non-positive caseNumber', { caseNumber: -1 }],
+      ['float caseNumber', { caseNumber: 1.5 }],
+      ['missing caseNumber', { caseNumber: undefined as unknown as number }],
+
+      ['caseName uk empty', { caseName: { uk: '', en: 'Case' } }],
+      ['caseName en empty', { caseName: { uk: 'Справа', en: '' } }],
+      ['caseName uk exceeding 150 characters', { caseName: { uk: 'a'.repeat(151), en: 'Case' } }],
+
+      ['caseDate uk empty', { caseDate: { uk: '', en: '1917' } }],
+      ['caseDate uk exceeding 150 characters', { caseDate: { uk: 'a'.repeat(151), en: '1917' } }],
+
+      ['non-positive sheetsNumber', { sheetsNumber: -1 }],
+      ['float sheetsNumber', { sheetsNumber: 1.5 }],
+
+      ['caseDescriptions uk empty', { caseDescriptions: { uk: '', en: 'Description' } }],
+      ['caseDescriptions uk exceeding 300 characters', { caseDescriptions: { uk: 'a'.repeat(301), en: 'Description' } }],
+
+      ['detailedCaseDescription uk exceeding 1000 characters', { detailedCaseDescription: { uk: 'a'.repeat(1001), en: 'Valid' } }],
+
+      ['pdfFile with a non-pdf extension', { pdfFile: { filename: 'scan.jpg', url: 'https://cdn/scan.jpg', mimeType: 'application/pdf' } }],
+      ['pdfFile with a non-pdf mimetype', { pdfFile: { filename: 'scan.pdf', url: 'https://cdn/scan.pdf', mimeType: 'image/jpeg' } }],
+
+      ['invalid status value', { status: 'INVALID_STATUS' as unknown as CreateCaseInput['status'] }]
+    ])('should reject %s on create', async (_label, overrides) => {
+      const input = createMockCreateCaseInput(overrides);
+
+      await expect(CaseMutation.createCase({}, { input }, adminContext)).rejects.toThrow(ZodError);
+      expect(mockCreate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteCase', () => {
+    it('should throw GraphQLError if user is not an admin', async () => {
+      await expect(CaseMutation.deleteCase({}, { id: 'some-id' }, userContext)).rejects.toThrow(GraphQLError);
+      expect(mockDelete).not.toHaveBeenCalled();
+    });
+
+    it('should return false when the case could not be deleted', async () => {
+      mockDelete.mockResolvedValue(false);
+      const result = await CaseMutation.deleteCase({}, { id: 'non-existent' }, adminContext);
+      expect(result).toBe(false);
+    });
+
+    it('should return true on successful delete', async () => {
+      mockDelete.mockResolvedValue(true);
+      const result = await CaseMutation.deleteCase({}, { id: 'some-id' }, adminContext);
+      expect(result).toBe(true);
+    });
+  });
+});

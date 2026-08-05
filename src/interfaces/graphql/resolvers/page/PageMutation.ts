@@ -6,10 +6,11 @@ import { graphqlErrors } from '~/constants/errors';
 import { createDotNotationPatch } from '~/src/application/use-cases/dotNotationPatch/dotNotationPatch';
 import { removeTmpFlagsRecursively } from '~/src/application/use-cases/removeTmpFlags/removeTmpFlags';
 import { JsonObject } from '~/src/shared/types/pages/types';
-import type { Page, Scalars } from '~/types/graphql/generated/graphql';
+import type { Page, Scalars, UpdatePageSeoInput } from '~/types/graphql/generated/graphql';
 
 type UpsertPageDraftArgs = { input: { slug: string; blocks: Scalars['JSON']['input']; blocksOrder: string[] } };
 type PublishPageArgs = { input: { slug: string; blocks?: Scalars['JSON']['input']; blocksOrder: string[] } };
+type UpdatePageSeoArgs = { input: UpdatePageSeoInput };
 
 export const PageMutation = {
   async upsertPageDraft(
@@ -108,5 +109,22 @@ export const PageMutation = {
     await syncImagesCrops(resultPage.id, blocksToPublish);
 
     return resultPage;
+  },
+
+  async updatePageSeo(
+    _: unknown,
+    { input }: UpdatePageSeoArgs,
+    { requestContainer, admin }: GraphQLContext
+  ): Promise<Page> {
+    if (!admin) {
+      throw new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
+        extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
+      });
+    }
+
+    const repo = requestContainer.cradle.pageRepository;
+    const resultPage = await repo.updatePageSeo(input.slug, input);
+
+    return resultPage as Page;
   }
 };

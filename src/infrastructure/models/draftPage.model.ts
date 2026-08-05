@@ -1,5 +1,6 @@
 import mongoose, { Model, Schema } from 'mongoose';
 
+import { pageSeoSchemaFields } from './commonSchemas';
 import { BasePage } from '~/domain/entities/Page';
 import { PageStatus } from '~/types/enums/common.enums';
 
@@ -10,6 +11,7 @@ const draftPageSchema = new Schema<BasePage>(
       uk: { type: String, required: true },
       en: { type: String, required: true }
     },
+    ...pageSeoSchemaFields,
     status: {
       type: String,
       enum: [PageStatus.Draft],

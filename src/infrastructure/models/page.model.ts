@@ -1,7 +1,8 @@
 import mongoose, { Model, Schema } from 'mongoose';
 
+import { pageSeoSchemaFields } from './commonSchemas';
 import { BasePage } from '~/domain/entities/Page';
-import { PageCategory,PageStatus } from '~/types/enums/common.enums';
+import { PageCategory, PageStatus } from '~/types/enums/common.enums';
 
 const pageBaseSchema = new Schema<BasePage>(
   {
@@ -13,12 +14,13 @@ const pageBaseSchema = new Schema<BasePage>(
     category: {
       type: String,
       enum: PageCategory,
-      required: true,
+      required: true
     },
+    ...pageSeoSchemaFields,
     coverImage: {
       src: {
         type: String,
-        required: true,
+        required: true
       },
       alt: {
         type: String,
@@ -34,7 +36,7 @@ const pageBaseSchema = new Schema<BasePage>(
     blocksOrder: {
       type: [String],
       required: true,
-      default: [] 
+      default: []
     }
   },
   {
