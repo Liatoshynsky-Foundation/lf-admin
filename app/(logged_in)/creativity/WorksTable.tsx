@@ -330,7 +330,7 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
       <DeleteCardModal
         open={Boolean(unlinkComposition)}
         onClose={() => setUnlinkComposition(null)}
-        onDelete={() => handleConfirmUnlinkComposition}
+        onDelete={handleConfirmUnlinkComposition}
         title="Підтвердити видалення композиції з групи"
         confirmButtonText="Видалити"
         description="Ви впевнені, що хочете видалити цю композицію з групи? Цю дію можна скасувати лише шляхом повторного додавання композиції у цю групу."
