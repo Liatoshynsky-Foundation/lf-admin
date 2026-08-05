@@ -49,6 +49,20 @@ export interface SeoMetadataFormProps {
   };
 }
 
+const getFileNameFromUrl = (url: string | null): string | undefined =>
+  url ? url.split('/').pop()?.split('?')[0] : undefined;
+
+const isValidHttpUrl = (url: string | null): boolean => {
+  if (!url) return false;
+
+  try {
+    const { protocol } = new URL(url);
+    return protocol === 'http:' || protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
+
 export default function SeoMetadataForm({
   value,
   onChange,
@@ -65,18 +79,6 @@ export default function SeoMetadataForm({
   extraFields,
   labels = {}
 }: SeoMetadataFormProps) {
-  const getFileNameFromUrl = (url: string | null) => (url ? url.split('/').pop()?.split('?')[0] : undefined);
-
-  const isValidHttpUrl = (url: string | null): boolean => {
-    if (!url) return false;
-    try {
-      const parsedUrl = new URL(url);
-      return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
-    } catch {
-      return false;
-    }
-  };
-
   const [ogImagePreview, setOgImagePreview] = useState<string | null>(isValidHttpUrl(ogImage) ? ogImage : null);
   const [displayFileName, setDisplayFileName] = useState<string | undefined>(
     isValidHttpUrl(ogImage) ? getFileNameFromUrl(ogImage) : undefined
