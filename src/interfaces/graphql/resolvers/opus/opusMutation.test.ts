@@ -134,6 +134,7 @@ describe('OpusMutation Resolvers', () => {
           extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
         })
       );
+      expect(mockOpusRepo.create).not.toHaveBeenCalled();
     });
 
     it('should throw error if opus with given number already exists', async () => {
@@ -145,7 +146,7 @@ describe('OpusMutation Resolvers', () => {
         })
       );
 
-      expect(mockOpusRepo.findByComplexKey).toHaveBeenCalledWith(OPUS_NUMBER, 'op', undefined);
+      expect(mockOpusRepo.findByComplexKey).toHaveBeenCalledWith(OPUS_NUMBER, 'op', null);
     });
 
     it('should throw error if name is missing or invalid length', async () => {
@@ -275,7 +276,7 @@ describe('OpusMutation Resolvers', () => {
         {
           input: {
             ...BASE_CREATE_INPUT,
-            name: { uk: '  Назва  ', en: 'Name' },
+            name: { uk: '   Назва   ', en: 'Name' },
             status: OpusStatus.Published
           }
         },
@@ -461,6 +462,7 @@ describe('OpusMutation Resolvers', () => {
           extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
         })
       );
+      expect(mockOpusRepo.update).not.toHaveBeenCalled();
     });
 
     it('should throw OPUS_NOT_FOUND if opus does not exist in repo', async () => {
@@ -473,6 +475,8 @@ describe('OpusMutation Resolvers', () => {
           extensions: { code: 'OPUS_NOT_FOUND' }
         })
       );
+      expect(mockOpusRepo.findById).toHaveBeenCalledWith(OPUS_ID);
+      expect(mockOpusRepo.update).not.toHaveBeenCalled();
     });
 
     it('should throw OPUS_NOT_FOUND if update operation returns null', async () => {
@@ -486,6 +490,8 @@ describe('OpusMutation Resolvers', () => {
           extensions: { code: 'OPUS_NOT_FOUND' }
         })
       );
+      expect(mockOpusRepo.findById).toHaveBeenCalledWith(OPUS_ID);
+      expect(mockOpusRepo.update).toHaveBeenCalledWith(OPUS_ID, { status: OpusStatus.Published });
     });
 
     it('should successfully update status', async () => {
@@ -498,6 +504,7 @@ describe('OpusMutation Resolvers', () => {
         adminContext
       );
 
+      expect(mockOpusRepo.findById).toHaveBeenCalledWith(OPUS_ID);
       expect(mockOpusRepo.update).toHaveBeenCalledWith(OPUS_ID, { status: OpusStatus.Published });
       expect(result).toEqual({ id: OPUS_ID, status: OpusStatus.Published });
     });
@@ -510,6 +517,7 @@ describe('OpusMutation Resolvers', () => {
           extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
         })
       );
+      expect(mockOpusRepo.update).not.toHaveBeenCalled();
     });
 
     it('should throw OPUS_NOT_FOUND if existing opus is missing', async () => {
@@ -522,6 +530,8 @@ describe('OpusMutation Resolvers', () => {
           extensions: { code: 'OPUS_NOT_FOUND' }
         })
       );
+      expect(mockOpusRepo.findById).toHaveBeenCalledWith(OPUS_ID);
+      expect(mockOpusRepo.update).not.toHaveBeenCalled();
     });
 
     it('should throw duplicate error if number is changed and belongs to another opus', async () => {
@@ -539,6 +549,8 @@ describe('OpusMutation Resolvers', () => {
           extensions: { code: 'DUPLICATE_OPUS_NUMBER' }
         })
       );
+      expect(mockOpusRepo.findByComplexKey).toHaveBeenCalledWith(DUP_OPUS_NUMBER, 'op', null);
+      expect(mockOpusRepo.update).not.toHaveBeenCalled();
     });
 
     it('should keep compositions if input.compositions is undefined', async () => {
@@ -565,6 +577,7 @@ describe('OpusMutation Resolvers', () => {
         number: OPUS_NUMBER,
         numberKind: 'op',
         name: BASE_UPDATE_INPUT.name,
+        additionalText: null,
         creationYear: CREATION_YEAR,
         title: { uk: 'Нев', en: 'New' },
         compositions: [COMPOSITION_ID_1, COMPOSITION_ID_2]
@@ -610,6 +623,7 @@ describe('OpusMutation Resolvers', () => {
           extensions: { code: 'OPUS_NOT_FOUND' }
         })
       );
+      expect(mockOpusRepo.update).toHaveBeenCalled();
     });
 
     it('should sync crops and mark images as used when coverImage is updated', async () => {
@@ -804,6 +818,8 @@ describe('OpusMutation Resolvers', () => {
           extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
         })
       );
+      expect(mockOpusRepo.unlink).not.toHaveBeenCalled();
+      expect(mockOpusRepo.delete).not.toHaveBeenCalled();
     });
 
     it('should unlink opus and delete it from repository', async () => {
@@ -814,6 +830,8 @@ describe('OpusMutation Resolvers', () => {
 
       expect(mockOpusRepo.unlink).toHaveBeenCalledWith(OPUS_ID);
       expect(mockOpusRepo.delete).toHaveBeenCalledWith(OPUS_ID);
+      expect(mockOpusRepo.unlink).toHaveBeenNthCalledWith(1, OPUS_ID);
+      expect(mockOpusRepo.delete).toHaveBeenNthCalledWith(1, OPUS_ID);
       expect(result).toBe(true);
     });
   });

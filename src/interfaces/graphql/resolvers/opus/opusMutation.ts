@@ -81,6 +81,9 @@ const parseYear = (value: string | undefined): number | null => {
   return Number.isFinite(year) ? year : null;
 };
 
+const formattedAdditionalText = (additionalText?: string) =>   
+  additionalText?.trim() || null;
+
 const mapComposition = (composition: GQLComposition): CompositionInput => {
   const notesWithFiles = (composition.notes ?? []).filter((note) => note.fileUrl);
   const audios = (composition.audios ?? []).filter((audio) => audio.fileUrl || audio.name);
@@ -302,7 +305,7 @@ const buildOpusUpdateData = (input: UpdateOpusGQLInput, compositionIds: string[]
     creationYear: input.creationYear,
     title: input.title,
     description: input.description,
-    additionalText: input.additionalText,
+    additionalText: formattedAdditionalText(input.additionalText),
     endYear: input.endYear,
     datesNote: input.datesNote,
     genre: input.genre,
@@ -335,7 +338,7 @@ export const OpusMutation = {
     const repo = context.requestContainer.cradle.opusRepository;
     const compositionsRepo = context.requestContainer.cradle.compositionsRepository;
 
-    await ensureUniqueOpus(repo, input.number, input.additionalText, input.numberKind);
+    await ensureUniqueOpus(repo, input.number, formattedAdditionalText(input.additionalText), input.numberKind);
 
     const nameForSlug = input.name.uk?.trim();
     const slug = await generateUniqueSlug(nameForSlug, {
@@ -351,7 +354,7 @@ export const OpusMutation = {
       title: input.title,
       name: input.name,
       description: input.description,
-      additionalText: input.additionalText ?? null,
+      additionalText: formattedAdditionalText(input.additionalText),
       creationYear: input.creationYear,
       endYear: input.endYear ?? null,
       datesNote: input.datesNote ?? null,
@@ -433,7 +436,7 @@ export const OpusMutation = {
 
     const existingOpus = await findExistingOpus(repo, id);
 
-    await ensureUniqueOpus(repo, input.number, input.additionalText, input.numberKind, id);
+    await ensureUniqueOpus(repo, input.number, formattedAdditionalText(input.additionalText), input.numberKind, id);
 
     const compositions = await handleCompositionsSync(compositionsRepo, repo, existingOpus, input.compositions);
 

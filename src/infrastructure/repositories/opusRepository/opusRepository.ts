@@ -107,6 +107,9 @@ const toEntity = (doc: DbOpus): Opus =>
     compositions: doc.compositions ?? undefined,
   });
 
+const escapeRegExp = (value: string): string =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+
 export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => {
   const baseRepo = createBaseRepository<Opus, DbOpus, OpusFilters>({
     model: OpusModel,
@@ -129,23 +132,22 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
     }
   });
 
-  const findByComplexKey =  async (
+  const findByComplexKey = async (
     number: number,
     numberKind: string,
     additionalText?: string | null
   ): Promise<Opus | null> => {
     await dbConnect();
+    if (number === undefined || number === null) return null;
 
-    if (number === undefined || number === null) {
-      return null;
-    }
-
-    const formattedAdditionalText = additionalText && additionalText.trim() !== '' ? additionalText.trim() : null;
+    const trimmed = additionalText?.trim();
 
     const doc = await OpusModel.findOne({
       number,
       numberKind,
-      additionalText: formattedAdditionalText
+      additionalText: trimmed
+        ? { $regex: `^${escapeRegExp(trimmed)}$`, $options: 'i' }
+        : null
     }).lean<DbOpus>();
 
     return doc ? toEntity(doc) : null;

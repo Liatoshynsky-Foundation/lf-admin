@@ -138,7 +138,33 @@ describe('OpusRepository', () => {
     it('trims additionalText if provided and non-empty', async () => {
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(createMockOpusDoc({ additionalText: 'extra' })) });
       const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', '  extra  ');
-      expect(findOneMock).toHaveBeenCalledWith({ number: OPUS_NUMBER_1, numberKind: 'op', additionalText: 'extra' });
+      expect(findOneMock).toHaveBeenCalledWith({
+        number: OPUS_NUMBER_1,
+        numberKind: 'op',
+        additionalText: { $regex: '^extra$', $options: 'i' }
+      });
+      expect(result?.number).toBe(OPUS_NUMBER_1);
+    });
+
+    it('performs a case-insensitive match on additionalText', async () => {
+      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(createMockOpusDoc({ additionalText: 'BT' })) });
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', 'bt');
+      expect(findOneMock).toHaveBeenCalledWith({
+        number: OPUS_NUMBER_1,
+        numberKind: 'op',
+        additionalText: { $regex: '^bt$', $options: 'i' }
+      });
+      expect(result?.number).toBe(OPUS_NUMBER_1);
+    });
+
+    it('escapes regex special characters in additionalText', async () => {
+      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(createMockOpusDoc({ additionalText: 'a.b*c' })) });
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', 'a.b*c');
+      expect(findOneMock).toHaveBeenCalledWith({
+        number: OPUS_NUMBER_1,
+        numberKind: 'op',
+        additionalText: { $regex: String.raw`^a\.b\*c$`, $options: 'i' }
+      });
       expect(result?.number).toBe(OPUS_NUMBER_1);
     });
 
