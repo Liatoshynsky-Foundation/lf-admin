@@ -164,40 +164,32 @@ describe('NewsMutation Resolvers', () => {
       await expect(NewsMutation.updateNews({}, { id: '1', input: {} }, userContext)).rejects.toThrow();
     });
 
-    it('should throw GraphQLError with BAD_USER_INPUT if description has fewer than 2 characters', async () => {
-
+    it.each([
+      {
+        caseName: 'has fewer than 2 characters',
+        description: { uk: 'T', en: 'T' },
+        fields: ['description.uk', 'description.en']
+      },
+      {
+        caseName: 'exceeds 250 characters',
+        description: { uk: 'a'.repeat(251), en: 'Valid description' },
+        fields: ['description.uk']
+      }
+    ])('should throw GraphQLError with BAD_USER_INPUT if description $caseName', async ({ description, fields }) => {
       const invalidInput = {
         ...baseInput,
-        description: { uk: 'T', en: 'T' }
+        description
       };
 
-      try {
-        await NewsMutation.createNews({}, { input: invalidInput }, adminContext);
-        throw new Error('Expected createNews to throw');
-      } catch (error) {
-        expect(error).toBeInstanceOf(GraphQLError);
-        expect((error as GraphQLError).message).toBe(newsServiceErrors.DESCRIPTION_LENGTH_INVALID);
-        expect((error as GraphQLError).extensions.code).toBe('BAD_USER_INPUT');
-        expect((error as GraphQLError).extensions.fields).toEqual(['description.uk', 'description.en']);
-        expect(mockRepo.create).not.toHaveBeenCalled();
-      }
-    });
-    it('should throw GraphQLError with BAD_USER_INPUT if description exceeds 250 characters', async () => {
-      const invalidInput = {
-        ...baseInput,
-        description: { uk: 'a'.repeat(251), en: 'Valid description' }
-      };
+      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toMatchObject({
+        message: newsServiceErrors.DESCRIPTION_LENGTH_INVALID,
+        extensions: {
+          code: 'BAD_USER_INPUT',
+          fields
+        }
+      });
 
-      try {
-        await NewsMutation.createNews({}, { input: invalidInput }, adminContext);
-        throw new Error('Expected createNews to throw');
-      } catch (error) {
-        expect(error).toBeInstanceOf(GraphQLError);
-        expect((error as GraphQLError).message).toBe(newsServiceErrors.DESCRIPTION_LENGTH_INVALID);
-        expect((error as GraphQLError).extensions.code).toBe('BAD_USER_INPUT');
-        expect((error as GraphQLError).extensions.fields).toEqual(['description.uk']);
-        expect(mockRepo.create).not.toHaveBeenCalled();
-      }
+      expect(mockRepo.create).not.toHaveBeenCalled();
     });
 
     it('should allow updateNews when description has only one valid locale', async () => {

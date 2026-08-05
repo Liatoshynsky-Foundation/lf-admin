@@ -75,7 +75,7 @@ const getInvalidLocalizedLengthFields = (
 ): string[] => {
   if (!value) return [];
 
-  return (['uk', 'en'] as const)
+  const invalidFields = (['uk', 'en'] as const)
     .filter((lang) => {
       const localizedValue = value[lang];
 
@@ -85,12 +85,11 @@ const getInvalidLocalizedLengthFields = (
 
       const length = localizedValue.trim().length;
 
-      return (
-        (minLength !== undefined && length < minLength) ||
-        (maxLength !== undefined && length > maxLength)
-      );
+      return (minLength !== undefined && length < minLength) || (maxLength !== undefined && length > maxLength);
     })
     .map((lang) => `${fieldName}.${lang}`);
+
+  return invalidFields;
 };
 
 const throwBadUserInput = (message: string, fields: string[]): void => {
@@ -138,8 +137,6 @@ const trimLocalizedString = (value: LocalizedString | undefined): LocalizedStrin
 
   return trimmed;
 };
-
-
 
 const endpointHandler = endpointRepositoryHandler('newsRepository');
 
