@@ -240,4 +240,14 @@ describe('CarouselImageCard', () => {
       crop: null
     });
   });
+
+  it('renders correctly with existing crop data', () => {
+    const croppedImage: CarouselImageData = {
+      ...mockImage,
+      crop: { rect: { x: 10, y: 10, width: 50, height: 50 } }
+    };
+    render(<CarouselImageCard image={croppedImage} currentLocale="uk" onChangeImage={mockOnChangeImage} />);
+
+    expect(screen.getByTestId('crop-status')).toHaveTextContent('cropped');
+  });
 });

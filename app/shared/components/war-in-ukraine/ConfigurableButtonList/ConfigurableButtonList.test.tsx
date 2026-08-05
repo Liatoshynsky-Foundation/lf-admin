@@ -147,9 +147,14 @@ describe('ConfigurableButtonList', () => {
   });
 
   it('calls onChange with updated button when item change is triggered', () => {
+    const twoButtons = [
+      ...sampleButtons,
+      { id: '2', shortText: { uk: 'Т2', en: 'T2' }, fullText: { uk: 'ПТ2', en: 'FT2' }, link: 'https://test2.com' }
+    ];
+
     render(
       <ConfigurableButtonList
-        buttons={sampleButtons}
+        buttons={twoButtons}
         currentLocale="uk"
         title="Додаткові кнопки"
         addBtnLabel="Додати кнопку"
@@ -162,14 +167,20 @@ describe('ConfigurableButtonList', () => {
     expect(mockOnChange).toHaveBeenCalledTimes(1);
     const updatedList = mockOnChange.mock.calls[0][0];
 
-    expect(updatedList).toHaveLength(1);
+    expect(updatedList).toHaveLength(2);
     expect(updatedList[0].link).toBe('https://updated-link.com');
+    expect(updatedList[1].id).toBe('2');
   });
 
   it('calls onChange with filtered list when delete action is triggered', () => {
+    const twoButtons = [
+      ...sampleButtons,
+      { id: '2', shortText: { uk: 'Т2', en: 'T2' }, fullText: { uk: 'ПТ2', en: 'FT2' }, link: 'https://test2.com' }
+    ];
+
     render(
       <ConfigurableButtonList
-        buttons={sampleButtons}
+        buttons={twoButtons}
         currentLocale="uk"
         title="Додаткові кнопки"
         addBtnLabel="Додати кнопку"
@@ -182,7 +193,8 @@ describe('ConfigurableButtonList', () => {
     expect(mockOnChange).toHaveBeenCalledTimes(1);
     const updatedList = mockOnChange.mock.calls[0][0];
 
-    expect(updatedList).toHaveLength(0);
+    expect(updatedList).toHaveLength(1);
+    expect(updatedList[0].id).toBe('2');
   });
 
   it('renders an empty list correctly with a zero counter', () => {

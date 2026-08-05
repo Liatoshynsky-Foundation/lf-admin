@@ -113,7 +113,6 @@ describe('PrincipleOfHope', () => {
     const incompleteBlock = {
       hidden: true,
       description: {},
-      buttons: [{ id: '1' }]
     };
 
     (usePageBlock as jest.Mock).mockReturnValue({ block: incompleteBlock });
@@ -123,7 +122,7 @@ describe('PrincipleOfHope', () => {
 
     expect(screen.getByTestId('collapsible-block')).toHaveAttribute('data-hidden', 'true');
     expect(screen.getByLabelText('Текст головної кнопки') as HTMLInputElement).toHaveValue('');
-    expect(screen.getByTestId('configurable-button-list')).toHaveAttribute('data-count', '1');
+    expect(screen.getByTestId('configurable-button-list')).toHaveAttribute('data-count', '0');
   });
 
   it('toggles block visibility correctly via CollapsibleBlock', () => {

@@ -80,13 +80,16 @@ jest.mock('~/ds-components/text-field/TextField', () => ({
 
 jest.mock('~/components/configurable-list/ConfigurableList', () => ({
   __esModule: true,
-  default: ({ items, addBtnLabel, onCreate, onChange, onDelete }: any) => (
+  default: ({ items, addBtnLabel, onCreate, onChange, onDelete, renderItem }: any) => (
     <div data-testid="configurable-list" data-count={items.length}>
       <button type="button" data-testid="create-method-btn" onClick={() => onCreate()}>
         {addBtnLabel}
       </button>
       {items.map((item: any, index: number) => (
         <div key={item.id || index} data-testid={`method-row-${index}`}>
+
+          {renderItem && renderItem({ item, index })}
+
           <span data-testid={`method-id-${index}`}>{item.id}</span>
           <span data-testid={`method-label-${index}`}>{JSON.stringify(item.label)}</span>
           <span data-testid={`method-value-${index}`}>{item.value}</span>
@@ -402,7 +405,15 @@ describe('VolunteerDonation', () => {
   });
 
   it('updates a single payment method when ConfigurableList triggers onChange', () => {
-    (usePageBlock as jest.Mock).mockReturnValue({ block: mockBlockData });
+    const blockWithTwoMethods = {
+      ...mockBlockData,
+      paymentMethods: [
+        { id: '1', label: { uk: 'Карта', en: 'Card' }, value: 'UA1111' },
+        { id: '2', label: { uk: 'PayPal', en: 'PayPal' }, value: 'test@test.com' }
+      ]
+    };
+
+    (usePageBlock as jest.Mock).mockReturnValue({ block: blockWithTwoMethods });
     (useStore as unknown as jest.Mock).mockImplementation((selector) => {
       const state = { locale: 'uk', setField: mockSetField };
       return selector(state);
@@ -417,13 +428,22 @@ describe('VolunteerDonation', () => {
       expectedBlockId,
       'paymentMethods',
       [
-        { id: '1', label: { uk: 'Карта', en: 'Card' }, value: 'UPDATED_VALUE' }
+        { id: '1', label: { uk: 'Карта', en: 'Card' }, value: 'UPDATED_VALUE' },
+        { id: '2', label: { uk: 'PayPal', en: 'PayPal' }, value: 'test@test.com' }
       ]
     );
   });
 
   it('removes a payment method when ConfigurableList triggers onDelete', () => {
-    (usePageBlock as jest.Mock).mockReturnValue({ block: mockBlockData });
+    const blockWithTwoMethods = {
+      ...mockBlockData,
+      paymentMethods: [
+        { id: '1', label: { uk: 'Карта', en: 'Card' }, value: 'UA1111' },
+        { id: '2', label: { uk: 'PayPal', en: 'PayPal' }, value: 'test@test.com' }
+      ]
+    };
+
+    (usePageBlock as jest.Mock).mockReturnValue({ block: blockWithTwoMethods });
     (useStore as unknown as jest.Mock).mockImplementation((selector) => {
       const state = { locale: 'uk', setField: mockSetField };
       return selector(state);
@@ -437,7 +457,9 @@ describe('VolunteerDonation', () => {
       'war-in-ukraine',
       expectedBlockId,
       'paymentMethods',
-      []
+      [
+        { id: '2', label: { uk: 'PayPal', en: 'PayPal' }, value: 'test@test.com' }
+      ]
     );
   });
 });

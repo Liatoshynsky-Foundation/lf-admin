@@ -48,11 +48,7 @@ jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock'
 }));
 
 jest.mock('../CarouselImageCard/CarouselImageCard', () => ({
-  CarouselImageCard: ({ image }: any) => (
-    <div data-testid={`carousel-card-${image.id}`}>
-      {image.src}
-    </div>
-  )
+  CarouselImageCard: ({ image }: any) => <div data-testid={`carousel-card-${image.id}`}>{image.src}</div>
 }));
 
 jest.mock('~/components/configurable-list/ConfigurableList', () => ({
@@ -65,7 +61,11 @@ jest.mock('~/components/configurable-list/ConfigurableList', () => ({
       {items.map((item: any, index: number) => (
         <div key={item.id || index} data-testid={`image-row-${index}`}>
           {renderItem({ item, index })}
-          <button type="button" data-testid={`update-image-btn-${index}`} onClick={() => onChange({ ...item, src: 'https://images.com/updated.jpg' })}>
+          <button
+            type="button"
+            data-testid={`update-image-btn-${index}`}
+            onClick={() => onChange({ ...item, src: 'https://images.com/updated.jpg' })}
+          >
             Update Image
           </button>
           <button type="button" data-testid={`delete-image-btn-${index}`} onClick={() => onDelete(item.id)}>
@@ -85,7 +85,18 @@ describe('WarCarousel', () => {
   const mockBlockData = {
     hidden: false,
     images: [
-      { id: 'img-1', src: '/images/1.jpg', alt: { uk: 'Фото 1', en: 'Photo 1' } }
+      {
+        id: 'img-1',
+        src: '/images/1.jpg',
+        alt: { uk: 'Фото 1', en: 'Photo 1' },
+        caption: { uk: 'Підпис 1', en: 'Caption 1' }
+      },
+      {
+        id: 'img-2',
+        src: '/images/2.jpg',
+        alt: { uk: 'Фото 2', en: 'Photo 2' },
+        caption: { uk: 'Підпис 2', en: 'Caption 2' }
+      }
     ]
   };
 
@@ -103,23 +114,37 @@ describe('WarCarousel', () => {
 
   it('renders form correctly when block data is available', () => {
     (usePageBlock as jest.Mock).mockReturnValue({ block: mockBlockData });
-    (useStore as unknown as jest.Mock).mockImplementation((selector) => selector({ locale: 'uk', toggleBlockVisibility: mockToggleVisibility }));
+    (useStore as unknown as jest.Mock).mockImplementation((selector) =>
+      selector({ locale: 'uk', toggleBlockVisibility: mockToggleVisibility })
+    );
 
     render(<WarCarousel />);
     expect(screen.getByTestId('carousel-card-img-1')).toHaveTextContent('/images/1.jpg');
   });
 
-  it('applies default fallbacks for missing images', () => {
-    (usePageBlock as jest.Mock).mockReturnValue({ block: { hidden: true, images: [{ id: 2 }] } });
-    (useStore as unknown as jest.Mock).mockImplementation((selector) => selector({ locale: 'en', toggleBlockVisibility: mockToggleVisibility }));
+  it('applies default fallbacks for missing image fields', () => {
+    (usePageBlock as jest.Mock).mockReturnValue({ block: { hidden: true, images: [{}] } });
+    (useStore as unknown as jest.Mock).mockImplementation((selector) =>
+      selector({ locale: 'en', toggleBlockVisibility: mockToggleVisibility })
+    );
 
     render(<WarCarousel />);
-    expect(screen.getByTestId('carousel-card-2')).toBeInTheDocument();
+    expect(screen.getByTestId('carousel-card-img-0')).toBeInTheDocument();
+  });
+
+  it('handles block with missing images array', () => {
+    (usePageBlock as jest.Mock).mockReturnValue({ block: { hidden: false } });
+    (useStore as unknown as jest.Mock).mockImplementation((selector) => selector({ locale: 'uk' }));
+
+    render(<WarCarousel />);
+    expect(screen.getByTestId('configurable-list')).toHaveAttribute('data-count', '0');
   });
 
   it('toggles block visibility correctly', () => {
     (usePageBlock as jest.Mock).mockReturnValue({ block: mockBlockData });
-    (useStore as unknown as jest.Mock).mockImplementation((selector) => selector({ locale: 'uk', toggleBlockVisibility: mockToggleVisibility }));
+    (useStore as unknown as jest.Mock).mockImplementation((selector) =>
+      selector({ locale: 'uk', toggleBlockVisibility: mockToggleVisibility })
+    );
 
     render(<WarCarousel />);
     fireEvent.click(screen.getByTestId('toggle-visibility-btn'));
@@ -128,36 +153,49 @@ describe('WarCarousel', () => {
 
   it('adds a new image when ConfigurableList triggers onCreate', () => {
     (usePageBlock as jest.Mock).mockReturnValue({ block: mockBlockData });
-    (useStore as unknown as jest.Mock).mockImplementation((selector) => selector({ locale: 'uk', setField: mockSetField }));
+    (useStore as unknown as jest.Mock).mockImplementation((selector) =>
+      selector({ locale: 'uk', setField: mockSetField })
+    );
 
     render(<WarCarousel />);
     fireEvent.click(screen.getByTestId('create-image-btn'));
 
     expect(mockSetField).toHaveBeenCalledWith('war-in-ukraine', expectedBlockId, 'images', [
-      { id: 'img-1', src: '/images/1.jpg', alt: { uk: 'Фото 1', en: 'Photo 1' }, caption: { uk: '', en: '' } },
+      mockBlockData.images[0],
+      mockBlockData.images[1],
       { id: 'mocked-uuid-carousel', src: '', alt: { uk: '', en: '' }, caption: { uk: '', en: '' } }
     ]);
   });
 
   it('updates a single image', () => {
     (usePageBlock as jest.Mock).mockReturnValue({ block: mockBlockData });
-    (useStore as unknown as jest.Mock).mockImplementation((selector) => selector({ locale: 'uk', setField: mockSetField }));
+    (useStore as unknown as jest.Mock).mockImplementation((selector) =>
+      selector({ locale: 'uk', setField: mockSetField })
+    );
 
     render(<WarCarousel />);
     fireEvent.click(screen.getByTestId('update-image-btn-0'));
 
     expect(mockSetField).toHaveBeenCalledWith('war-in-ukraine', expectedBlockId, 'images', [
-      { id: 'img-1', src: 'https://images.com/updated.jpg', alt: { uk: 'Фото 1', en: 'Photo 1' }, caption: { uk: '', en: '' } }
+      {
+        id: 'img-1',
+        src: 'https://images.com/updated.jpg',
+        alt: { uk: 'Фото 1', en: 'Photo 1' },
+        caption: { uk: 'Підпис 1', en: 'Caption 1' }
+      },
+      mockBlockData.images[1]
     ]);
   });
 
   it('removes an image', () => {
     (usePageBlock as jest.Mock).mockReturnValue({ block: mockBlockData });
-    (useStore as unknown as jest.Mock).mockImplementation((selector) => selector({ locale: 'uk', setField: mockSetField }));
+    (useStore as unknown as jest.Mock).mockImplementation((selector) =>
+      selector({ locale: 'uk', setField: mockSetField })
+    );
 
     render(<WarCarousel />);
     fireEvent.click(screen.getByTestId('delete-image-btn-0'));
 
-    expect(mockSetField).toHaveBeenCalledWith('war-in-ukraine', expectedBlockId, 'images', []);
+    expect(mockSetField).toHaveBeenCalledWith('war-in-ukraine', expectedBlockId, 'images', [mockBlockData.images[1]]);
   });
 });
