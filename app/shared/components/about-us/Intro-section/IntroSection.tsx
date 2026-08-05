@@ -29,6 +29,15 @@ export const IntroSection = () => {
 
   const headerTitle = proseToHeaderText(block.title[currentLocale] as ProseDoc, 'Вступна секція');
 
+  
+  const handleImageAltChange = (val: string) => {
+    setField(pageId, blockId, 'image', {
+      ...block.image,
+      alt: { ...block.image?.alt, [currentLocale]: val }
+    } as typeof block.image);
+  };
+
+
   return (
     <CollapsibleBlock title={headerTitle}>
       <CustomTextField
@@ -58,6 +67,9 @@ export const IntroSection = () => {
               crop: crop ?? null
             });
           }}
+          showAlternativeText
+          altText={block.image?.alt?.[currentLocale] as string}
+          onChangeAltText={(value) => handleImageAltChange(value)}
         />
       </Box>
 

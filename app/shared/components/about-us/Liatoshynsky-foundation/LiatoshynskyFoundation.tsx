@@ -45,6 +45,13 @@ export const LiatoshynskyFoundation = () => {
     });
   };
 
+  const handleImageAltChange = (val: string) => {
+    setField(pageId, blockId, 'image', {
+      ...block.image,
+      alt: { ...block.image?.alt, [currentLocale]: val }
+    } as typeof block.image);
+  };
+
   type LocalizedProse = Record<'uk' | 'en', JSONContent>;
 
   const paragraphKeys: ('ourName' | 'ourBelief')[] = ['ourName', 'ourBelief'];
@@ -89,6 +96,7 @@ export const LiatoshynskyFoundation = () => {
         imageUrl={getImageUrl(block.image)}
         fileName={proseToText(block.image?.caption?.[currentLocale] as ProseDoc)}
         initialCrop={block.image?.crop}
+        imageAlt={block.image?.alt?.[currentLocale] as string}
         onMainTextChange={handleMainTextChange}
         onParagraphChange={handleParagraphChange}
         onImageChange={(url: string, crop?: MediaModalResult['crop']) => {
@@ -99,6 +107,7 @@ export const LiatoshynskyFoundation = () => {
             crop: crop ?? null
           } as typeof block.image);
         }}
+        onAltChange={handleImageAltChange}
       />
     </CollapsibleBlock>
   );

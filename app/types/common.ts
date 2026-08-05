@@ -12,6 +12,11 @@ export interface LocalizedJSON {
   en: JSONContent;
 }
 
+export interface LocalizedAltText {
+  uk: JSONContent | string;
+  en: JSONContent | string;
+}
+
 export interface CropRect {
   x: number;
   y: number;
@@ -30,7 +35,7 @@ export interface CropResult {
 
 export interface ImageBlock {
   src: string;
-  alt: LocalizedJSON;
+  alt: LocalizedAltText;
   caption: LocalizedJSON;
   isTmp?: boolean;
   crop?: CropResult | null;
@@ -38,7 +43,7 @@ export interface ImageBlock {
 
 export type ImageType = {
   src: string;
-  alt: LocalizedJSON;
+  alt: LocalizedAltText;
   caption: LocalizedJSON;
   generatedSrc: string;
   crop?: CropResult | null;
