@@ -69,7 +69,12 @@ const validateDescriptionLength = (description: LocalizedString | undefined): vo
   const invalidFields = (['uk', 'en'] as const)
     .filter((lang) => {
       const value = description[lang];
-      const length = typeof value === 'string' ? value.trim().length : 0;
+
+      if (typeof value !== 'string') {
+        return false;
+      }
+
+      const length = value.trim().length;
 
       return length < DESCRIPTION_MIN_LENGTH || length > DESCRIPTION_MAX_LENGTH;
     })
@@ -189,7 +194,7 @@ export const NewsMutation = {
     const updateData: UpdateNewsInput = {
       ...input
     };
-    
+
     validateDescriptionLength(input.description);
 
     if (input.content || input.description || input.coverImage) {

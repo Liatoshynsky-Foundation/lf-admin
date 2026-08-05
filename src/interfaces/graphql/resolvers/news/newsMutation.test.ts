@@ -164,8 +164,7 @@ describe('NewsMutation Resolvers', () => {
       await expect(NewsMutation.updateNews({}, { id: '1', input: {} }, userContext)).rejects.toThrow();
     });
 
-    it('should throw GraphQLError with BAD_USER_INPUT if description has fewer than 2 characters (bug #501)', async () => {
-      expect.assertions(5);
+    it('should throw GraphQLError with BAD_USER_INPUT if description has fewer than 2 characters', async () => {
 
       const invalidInput = {
         ...baseInput,
@@ -174,6 +173,7 @@ describe('NewsMutation Resolvers', () => {
 
       try {
         await NewsMutation.createNews({}, { input: invalidInput }, adminContext);
+        throw new Error('Expected createNews to throw');
       } catch (error) {
         expect(error).toBeInstanceOf(GraphQLError);
         expect((error as GraphQLError).message).toBe(newsServiceErrors.DESCRIPTION_LENGTH_INVALID);
@@ -181,6 +181,37 @@ describe('NewsMutation Resolvers', () => {
         expect((error as GraphQLError).extensions.fields).toEqual(['description.uk', 'description.en']);
         expect(mockRepo.create).not.toHaveBeenCalled();
       }
+    });
+    it('should throw GraphQLError with BAD_USER_INPUT if description exceeds 250 characters', async () => {
+      const invalidInput = {
+        ...baseInput,
+        description: { uk: 'a'.repeat(251), en: 'Valid description' }
+      };
+
+      try {
+        await NewsMutation.createNews({}, { input: invalidInput }, adminContext);
+        throw new Error('Expected createNews to throw');
+      } catch (error) {
+        expect(error).toBeInstanceOf(GraphQLError);
+        expect((error as GraphQLError).message).toBe(newsServiceErrors.DESCRIPTION_LENGTH_INVALID);
+        expect((error as GraphQLError).extensions.code).toBe('BAD_USER_INPUT');
+        expect((error as GraphQLError).extensions.fields).toEqual(['description.uk']);
+        expect(mockRepo.create).not.toHaveBeenCalled();
+      }
+    });
+
+    it('should allow updateNews when description has only one valid locale', async () => {
+      mockAction('findById', createMockNews({ id }));
+      mockAction('update', createMockNews({ id }));
+
+      const updateInput = {
+        description: { uk: 'Valid description' }
+      } as unknown as UpdateNewsGQLInput;
+
+      const result = await NewsMutation.updateNews({}, { id, input: updateInput }, adminContext);
+
+      expect(result.id).toBe(id);
+      expect(mockRepo.update).toHaveBeenCalled();
     });
   });
 
