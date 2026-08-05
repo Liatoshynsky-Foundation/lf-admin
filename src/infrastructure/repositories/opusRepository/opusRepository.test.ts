@@ -3,6 +3,7 @@ import { Model } from 'mongoose';
 import { buildBaseQuery } from '../helpers';
 import { DbOpus, OpusRepository } from './opusRepository';
 import { CreateOpusInput, IOpusRepository } from '~/domain/repositories/opusRepository';
+import { opusServiceErrors } from '~/src/constants/errors';
 import { OpusStatus, SortOrder } from '~/types/enums/common.enums';
 import { OpusNumberKind } from '~/types/graphql/generated/graphql';
 
@@ -120,30 +121,36 @@ describe('OpusRepository', () => {
     meta: { views: 0 }
   };
 
-  describe('findByNumber', () => {
-    it('returns the opus when found', async () => {
+  describe('findByComplexKey', () => {
+    it('returns the opus when found with valid parameters', async () => {
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(createMockOpusDoc()) });
-      const result = await repository.findByNumber(OPUS_NUMBER_1);
-      expect(findOneMock).toHaveBeenCalledWith({ number: OPUS_NUMBER_1 });
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', '  ');
+      expect(findOneMock).toHaveBeenCalledWith({ number: OPUS_NUMBER_1, numberKind: 'op', additionalText: null });
       expect(result?.number).toBe(OPUS_NUMBER_1);
     });
 
     it('returns null when number is undefined', async () => {
-      const result = await repository.findByNumber(undefined as unknown as number);
+      const result = await repository.findByComplexKey(undefined as unknown as number, 'op', null);
       expect(result).toBeNull();
       expect(findOneMock).not.toHaveBeenCalled();
     });
 
-    it('looks up number 0 instead of treating it as empty', async () => {
-      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(createMockOpusDoc({ number: 0 })) });
-      const result = await repository.findByNumber(0);
-      expect(findOneMock).toHaveBeenCalledWith({ number: 0 });
-      expect(result?.number).toBe(0);
+    it('trims additionalText if provided and non-empty', async () => {
+      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(createMockOpusDoc({ additionalText: 'extra' })) });
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', '  extra  ');
+      expect(findOneMock).toHaveBeenCalledWith({ number: OPUS_NUMBER_1, numberKind: 'op', additionalText: 'extra' });
+      expect(result?.number).toBe(OPUS_NUMBER_1);
+    });
+
+    it('returns null when document is not found', async () => {
+      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(null) });
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
+      expect(result).toBeNull();
     });
   });
 
   describe('create', () => {
-    it('creates a new opus when the number is unique', async () => {
+    it('creates a new opus when the composite key is unique', async () => {
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(null) });
       saveMock.mockResolvedValue({ toObject: (): DbOpus => createMockOpusDoc({ number: OPUS_NUMBER_1 }) });
 
@@ -153,10 +160,10 @@ describe('OpusRepository', () => {
       expect(saveMock).toHaveBeenCalled();
     });
 
-    it('throws when the number already exists', async () => {
+    it('throws when the composite key already exists', async () => {
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(createMockOpusDoc()) });
 
-      await expect(repository.create(createInput)).rejects.toThrow(`Opus with number "${OPUS_NUMBER_1}" already exists`);
+      await expect(repository.create(createInput)).rejects.toThrow(opusServiceErrors.OPUS_ALREADY_EXISTS);
       expect(saveMock).not.toHaveBeenCalled();
     });
 
@@ -164,6 +171,7 @@ describe('OpusRepository', () => {
       const inputWithoutMeta: CreateOpusInput = {
         number: OPUS_NUMBER_2,
         title: { uk: MOCK_TITLE_UK, en: MOCK_TITLE_EN },
+        numberKind: OpusNumberKind.Op,
         status: OpusStatus.Draft as unknown as CreateOpusInput['status'],
       };
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(null) });
@@ -199,7 +207,7 @@ describe('OpusRepository', () => {
       });
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
 
-      const result = await repository.findByNumber(OPUS_NUMBER_1);
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
 
       expect(result?.number).toBe(OPUS_NUMBER_1);
       expect(result?.numberKind).toBe('op');
@@ -224,7 +232,7 @@ describe('OpusRepository', () => {
       const doc = createMockOpusDoc({ numberKind: 'sineop', meta: { views: 42 } });
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
 
-      const result = await repository.findByNumber(OPUS_NUMBER_1);
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'sineop', null);
 
       expect(result?.numberKind).toBe('sineop');
       expect(result?.number).toBe(OPUS_NUMBER_1);
@@ -268,7 +276,7 @@ describe('OpusRepository', () => {
 
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
 
-      const result = await repository.findByNumber(OPUS_NUMBER_1);
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
 
       expect(result?.gallery).toHaveLength(3);
       expect(result?.gallery?.[0]).toEqual({
@@ -307,7 +315,7 @@ describe('OpusRepository', () => {
       });
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
 
-      const result = await repository.findByNumber(OPUS_NUMBER_1);
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
 
       expect(result?.gallery?.[0]?.crop).toEqual({
         x: 5,
@@ -384,7 +392,7 @@ describe('OpusRepository', () => {
       const doc = createMockOpusDoc({ creationYear: '' });
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
 
-      const result = await repository.findByNumber(OPUS_NUMBER_1);
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
 
       expect(result?.creationYear).toBe('');
     });
@@ -414,7 +422,7 @@ describe('OpusRepository', () => {
       const doc = createMockOpusDoc({ numberKind: undefined });
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
 
-      const result = await repository.findByNumber(OPUS_NUMBER_1);
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
 
       expect(result?.numberKind).toBe('op');
     });
@@ -425,7 +433,7 @@ describe('OpusRepository', () => {
       });
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
 
-      const result = await repository.findByNumber(OPUS_NUMBER_1);
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
 
       expect(result?.name).toEqual({
         uk: 'Просто рядкова назва',
@@ -440,7 +448,7 @@ describe('OpusRepository', () => {
       });
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
 
-      const result = await repository.findByNumber(OPUS_NUMBER_1);
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
 
       expect(result?.introDescription).toBeUndefined();
       expect(result?.parts).toBeUndefined();
@@ -453,7 +461,7 @@ describe('OpusRepository', () => {
       });
       findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
 
-      const result = await repository.findByNumber(OPUS_NUMBER_1);
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
 
       expect(result?.introDescription).toEqual({ uk: 'Вступ', en: 'Intro' });
       expect(result?.parts).toEqual({ uk: 'Частини', en: 'Parts' });
@@ -492,7 +500,7 @@ describe('OpusRepository', () => {
     });
 
     it('updates loose opus using $addToSet if it already exists during moveCompositionsToCompositionsOpus', async () => {
-      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue({ _id: LOOSE_OPUS_ID }) });
+      findOneAndUpdateMock.mockReturnValue({ lean: jest.fn().mockResolvedValue({ _id: LOOSE_OPUS_ID }) });
       updateOneMock.mockResolvedValue({});
 
       await repository.moveCompositionsToCompositionsOpus(['comp1', 'comp2']);

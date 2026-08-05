@@ -88,8 +88,11 @@ export const columns: readonly ColumnDef<GroupHeaderData, OpusWork, IndividualWo
     headerLabel: 'Опуси',
     width: '128px',
     hasRightDivider: true,
-    renderGroup: (group) =>
-      `${group.numberKind === 'op' ? 'op.' : 'sine op.'} ${group.numberLabel} ${group.additionalText ?? ''}`
+    renderGroup: (group) => {
+      const prefix = group.numberKind === 'op' ? 'op.' : 'sine op.';
+      const base = `${prefix} ${group.numberLabel}`;
+      return group.additionalText ? `${base} ${group.additionalText}` : `${base}`;
+    }
   },
   {
     id: 'title',

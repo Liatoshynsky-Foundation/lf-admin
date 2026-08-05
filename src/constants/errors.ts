@@ -37,7 +37,7 @@ export const newsServiceErrors = {
 };
 
 export const opusServiceErrors = {
-  OPUS_ALREADY_EXISTS: 'Опус із таким номером вже існує',
+  OPUS_ALREADY_EXISTS: 'Опус із таким номером та приміткою вже існує',
   NUMBER_GENERATION_FAILED: 'Failed to generate a unique opus number',
   NUMBER_NOT_NEGATIVE: 'Opus number cannot be negative',
   NAME_REQUIRED_FOR_SLUG: 'Opus name is required to generate a slug',

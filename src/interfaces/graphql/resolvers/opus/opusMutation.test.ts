@@ -79,7 +79,7 @@ describe('OpusMutation Resolvers', () => {
   } => {
     const opusRepo = {
       findById: jest.fn(),
-      findByNumber: jest.fn(),
+      findByComplexKey: jest.fn(),
       findBySlug: jest.fn(),
       findAll: jest.fn(),
       findPaginated: jest.fn(),
@@ -137,19 +137,19 @@ describe('OpusMutation Resolvers', () => {
     });
 
     it('should throw error if opus with given number already exists', async () => {
-      mockOpusRepo.findByNumber.mockResolvedValue(MOCK_OPUS_ENTITY);
+      mockOpusRepo.findByComplexKey.mockResolvedValue(MOCK_OPUS_ENTITY);
 
       await expect(OpusMutation.createOpus({}, { input: BASE_CREATE_INPUT }, adminContext)).rejects.toThrow(
-        new GraphQLError(opusServiceErrors.NUMBER_ALREADY_EXISTS(OPUS_NUMBER), {
+        new GraphQLError(opusServiceErrors.OPUS_ALREADY_EXISTS, {
           extensions: { code: 'DUPLICATE_OPUS_NUMBER' }
         })
       );
 
-      expect(mockOpusRepo.findByNumber).toHaveBeenCalledWith(OPUS_NUMBER);
+      expect(mockOpusRepo.findByComplexKey).toHaveBeenCalledWith(OPUS_NUMBER, 'op', undefined);
     });
 
     it('should throw error if name is missing or invalid length', async () => {
-      mockOpusRepo.findByNumber.mockResolvedValue(null);
+      mockOpusRepo.findByComplexKey.mockResolvedValue(null);
       await expect(
         OpusMutation.createOpus({}, { input: { ...BASE_CREATE_INPUT, name: { uk: '', en: '' } } }, adminContext)
       ).rejects.toThrow(
@@ -160,7 +160,7 @@ describe('OpusMutation Resolvers', () => {
     });
 
     it('should create opus with default parameters and sync compositions/images', async () => {
-      mockOpusRepo.findByNumber.mockResolvedValue(null);
+      mockOpusRepo.findByComplexKey.mockResolvedValue(null);
       mockedGenerateUniqueSlug.mockImplementation(async (_, options) => {
         if (options?.checkExists) {
           mockOpusRepo.findBySlug.mockResolvedValue(null);
@@ -265,7 +265,7 @@ describe('OpusMutation Resolvers', () => {
     });
 
     it('should trim name.uk when generating slug and set status from input', async () => {
-      mockOpusRepo.findByNumber.mockResolvedValue(null);
+      mockOpusRepo.findByComplexKey.mockResolvedValue(null);
       mockedGenerateUniqueSlug.mockResolvedValue(SLUG_VALUE);
       mockCompositionsRepo.syncForOpus.mockResolvedValue([]);
       mockOpusRepo.create.mockResolvedValue(MOCK_OPUS_ENTITY);
@@ -526,7 +526,7 @@ describe('OpusMutation Resolvers', () => {
 
     it('should throw duplicate error if number is changed and belongs to another opus', async () => {
       mockOpusRepo.findById.mockResolvedValue(MOCK_OPUS_ENTITY);
-      mockOpusRepo.findByNumber.mockResolvedValue({ ...MOCK_OPUS_ENTITY, id: OTHER_OPUS_ID });
+      mockOpusRepo.findByComplexKey.mockResolvedValue({ ...MOCK_OPUS_ENTITY, id: OTHER_OPUS_ID });
 
       await expect(
         OpusMutation.updateOpus(
@@ -535,7 +535,7 @@ describe('OpusMutation Resolvers', () => {
           adminContext
         )
       ).rejects.toThrow(
-        new GraphQLError(opusServiceErrors.NUMBER_ALREADY_EXISTS(DUP_OPUS_NUMBER), {
+        new GraphQLError(opusServiceErrors.OPUS_ALREADY_EXISTS, {
           extensions: { code: 'DUPLICATE_OPUS_NUMBER' }
         })
       );
