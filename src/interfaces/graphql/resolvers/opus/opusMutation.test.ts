@@ -817,4 +817,76 @@ describe('OpusMutation Resolvers', () => {
       expect(result).toBe(true);
     });
   });
+
+  describe('unlinkComposition', () => {
+    it('should throw UNAUTHENTICATED error when request is not authenticated', async () => {
+      await expect(
+        OpusMutation.unlinkComposition({}, { opusId: OPUS_ID, compositionId: COMPOSITION_ID_1 }, userContext)
+      ).rejects.toThrow(
+        new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
+          extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
+        })
+      );
+    });
+
+    it('should throw OPUS_NOT_FOUND if opus does not exist', async () => {
+      mockOpusRepo.findById.mockResolvedValue(null);
+
+      await expect(
+        OpusMutation.unlinkComposition({}, { opusId: OPUS_ID, compositionId: COMPOSITION_ID_1 }, adminContext)
+      ).rejects.toThrow(
+        new GraphQLError(opusServiceErrors.OPUS_NOT_FOUND(OPUS_ID), {
+          extensions: { code: 'OPUS_NOT_FOUND' }
+        })
+      );
+    });
+
+    it('should throw COMPOSITION_NOT_FOUND_IN_OPUS error if composition is not linked to the opus', async () => {
+      const opusWithoutComp = {
+        ...MOCK_OPUS_ENTITY,
+        compositions: [COMPOSITION_ID_2]
+      };
+      mockOpusRepo.findById.mockResolvedValue(opusWithoutComp as unknown as Opus);
+
+      await expect(
+        OpusMutation.unlinkComposition({}, { opusId: OPUS_ID, compositionId: COMPOSITION_ID_1 }, adminContext)
+      ).rejects.toThrow(
+        new GraphQLError(opusServiceErrors.COMPOSITION_NOT_FOUND_IN_OPUS ?? 'Composition not found in this opus', {
+          extensions: { code: 'BAD_USER_INPUT' }
+        })
+      );
+    });
+
+    it('should successfully unlink composition, update opus, move composition, and return ordered compositions', async () => {
+      const initialOpus = {
+        ...MOCK_OPUS_ENTITY,
+        compositions: [COMPOSITION_ID_1, COMPOSITION_ID_2]
+      };
+      const updatedOpusEntity = {
+        ...MOCK_OPUS_ENTITY,
+        compositions: [COMPOSITION_ID_2]
+      };
+
+      mockOpusRepo.findById.mockResolvedValue(initialOpus as unknown as Opus);
+      mockOpusRepo.update.mockResolvedValue(updatedOpusEntity as unknown as Opus);
+      mockOpusRepo.moveCompositionsToCompositionsOpus.mockResolvedValue(undefined as never);
+      mockCompositionsRepo.findByIds.mockResolvedValue([MOCK_COMPOSITION_2]);
+      mockedOrderCompositionsByIds.mockReturnValue([MOCK_COMPOSITION_2]);
+
+      const result = await OpusMutation.unlinkComposition(
+        {},
+        { opusId: OPUS_ID, compositionId: COMPOSITION_ID_1 },
+        adminContext
+      );
+
+      expect(mockOpusRepo.findById).toHaveBeenCalledWith(OPUS_ID);
+      expect(mockOpusRepo.update).toHaveBeenCalledWith(OPUS_ID, {
+        compositions: [COMPOSITION_ID_2]
+      });
+      expect(mockOpusRepo.moveCompositionsToCompositionsOpus).toHaveBeenCalledWith([COMPOSITION_ID_1]);
+      expect(mockCompositionsRepo.findByIds).toHaveBeenCalledWith([COMPOSITION_ID_2]);
+      expect(mockedOrderCompositionsByIds).toHaveBeenCalledWith([COMPOSITION_ID_2], [MOCK_COMPOSITION_2]);
+      expect(result).toEqual({ ...updatedOpusEntity, compositions: [MOCK_COMPOSITION_2] });
+    });
+  });
 });

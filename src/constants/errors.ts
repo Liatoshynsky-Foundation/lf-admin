@@ -57,7 +57,8 @@ export const opusServiceErrors = {
   PERFORMANCES_TITLE_INVALID: 'The video caption is required and must contain between 2 and 250 characters.',
 
   OPUS_NOT_FOUND: (id: string) => `Opus with id "${id}" not found`,
-  FAILED_TO_DELETE: (id: string) => `Opus with id "${id}" not found or could not be deleted`
+  FAILED_TO_DELETE: (id: string) => `Opus with id "${id}" not found or could not be deleted`,
+  COMPOSITION_NOT_FOUND_IN_OPUS: 'Composition not found in this opus'
 };
 
 export const compositionsServiceErrors = {

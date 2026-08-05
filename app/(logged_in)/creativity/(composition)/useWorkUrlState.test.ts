@@ -57,7 +57,7 @@ const createMockQueryResult = (
   }) as QueryResultType;
 
 describe('useWorkUrlState', () => {
-  const mockReplace = jest.fn<void, [string]>();
+  const mockReplace = jest.fn<void, [string, { scroll?: boolean }?]>();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -238,7 +238,8 @@ describe('useWorkUrlState', () => {
     });
 
     expect(mockReplace).toHaveBeenCalledWith(
-      `/works?filter=all&${COMPOSITION_MODAL_PARAM}=comp-789`
+      `/works?filter=all&${COMPOSITION_MODAL_PARAM}=comp-789`,
+      { scroll: false }
     );
   });
 
@@ -253,7 +254,7 @@ describe('useWorkUrlState', () => {
       result.current.closeEditComposition();
     });
 
-    expect(mockReplace).toHaveBeenCalledWith('/works?filter=all');
+    expect(mockReplace).toHaveBeenCalledWith('/works?filter=all', { scroll: false });
   });
 
   it('should format URL without query string when closing edit and no other params remain', () => {
@@ -267,7 +268,7 @@ describe('useWorkUrlState', () => {
       result.current.closeEditComposition();
     });
 
-    expect(mockReplace).toHaveBeenCalledWith('/works');
+    expect(mockReplace).toHaveBeenCalledWith('/works', { scroll: false });
   });
 
   it('should reflect loading state from query hook', () => {
