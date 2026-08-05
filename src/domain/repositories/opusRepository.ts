@@ -6,6 +6,8 @@ export type CreateOpusInput = Omit<Opus, 'id' | 'createdAt' | 'updatedAt' | 'com
   meta?: Partial<Opus['meta']>;
   compositions?: string[];
   number: number;
+  numberKind: OpusNumberKind;
+  additionalText?: string | null;
 };
 
 export type UpdateOpusInput = Partial<Omit<Opus, 'id' | 'createdAt' | 'updatedAt' >>;
@@ -17,7 +19,7 @@ export type OpusFilters = FiltersInput & {
 
 export interface IOpusRepository extends IBaseRepository<Opus, OpusFilters> {
   create(input: CreateOpusInput): Promise<Opus>;
-  findByNumber(number: number): Promise<Opus | null>;
+  findByComplexKey(number: number, numberKind: string, additionalText?: string | null): Promise<Opus | null>;
   unlink(opusId: string): Promise<void>;
   moveCompositionsToCompositionsOpus(compositionIds: string[]): Promise<void>;
   removeCompositionsFromCompositionsOpus(compositionIds: string[]): Promise<void>;

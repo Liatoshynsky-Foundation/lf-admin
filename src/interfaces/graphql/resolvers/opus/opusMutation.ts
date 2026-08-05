@@ -245,10 +245,10 @@ async function findExistingOpus(repo: IOpusRepository, id: string): Promise<Opus
   return existingOpus;
 }
 
-async function ensureUniqueOpusNumber(repo: IOpusRepository, id: string, number: number): Promise<void> {
-  const duplicate = await repo.findByNumber(number);
-  if (duplicate && duplicate.id !== id) {
-    throw new GraphQLError(opusServiceErrors.NUMBER_ALREADY_EXISTS(number), {
+async function ensureUniqueOpus(repo: IOpusRepository, number: number, additionalText?: string | null, numberKind: string = 'op', excludeId?: string): Promise<void> {
+  const duplicate = await repo.findByComplexKey(number, numberKind, additionalText);
+  if (duplicate && duplicate.id !== excludeId) {
+    throw new GraphQLError(opusServiceErrors.OPUS_ALREADY_EXISTS, {
       extensions: { code: 'DUPLICATE_OPUS_NUMBER' }
     });
   }
@@ -335,13 +335,7 @@ export const OpusMutation = {
     const repo = context.requestContainer.cradle.opusRepository;
     const compositionsRepo = context.requestContainer.cradle.compositionsRepository;
 
-    const number = input.number;
-    const existingByNumber = await repo.findByNumber(number);
-    if (existingByNumber) {
-      throw new GraphQLError(opusServiceErrors.NUMBER_ALREADY_EXISTS(number), {
-        extensions: { code: 'DUPLICATE_OPUS_NUMBER' }
-      });
-    }
+    await ensureUniqueOpus(repo, input.number, input.additionalText, input.numberKind);
 
     const nameForSlug = input.name.uk?.trim();
     const slug = await generateUniqueSlug(nameForSlug, {
@@ -439,7 +433,7 @@ export const OpusMutation = {
 
     const existingOpus = await findExistingOpus(repo, id);
 
-    await ensureUniqueOpusNumber(repo, id, input.number);
+    await ensureUniqueOpus(repo, input.number, input.additionalText, input.numberKind, id);
 
     const compositions = await handleCompositionsSync(compositionsRepo, repo, existingOpus, input.compositions);
 

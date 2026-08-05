@@ -121,17 +121,33 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
         { number: { $type: 'number' } }
       ]);
     },
-    getDefaultSort: getBaseSort
+    getDefaultSort: (filters) => {
+      if (filters?.sort?.length) {
+        return getBaseSort(filters);
+      }
+      return { number: 1, additionalText: 1 };
+    }
   });
 
-  const findByNumber = async (number: number): Promise<Opus | null> => {
+  const findByComplexKey =  async (
+    number: number,
+    numberKind: string,
+    additionalText?: string | null
+  ): Promise<Opus | null> => {
     await dbConnect();
 
     if (number === undefined || number === null) {
       return null;
     }
 
-    const doc = await OpusModel.findOne({ number }).lean<DbOpus>();
+    const formattedAdditionalText = additionalText && additionalText.trim() !== '' ? additionalText.trim() : null;
+
+    const doc = await OpusModel.findOne({
+      number,
+      numberKind,
+      additionalText: formattedAdditionalText
+    }).lean<DbOpus>();
+
     return doc ? toEntity(doc) : null;
   };
 
@@ -190,14 +206,14 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
 
   return {
     ...baseRepo,
-    findByNumber,
+    findByComplexKey,
     create: async (input: CreateOpusInput): Promise<Opus> => {
       await dbConnect();
 
-      const existing = await findByNumber(input.number);
+      const existing = await findByComplexKey(input.number, input.numberKind, input.additionalText);
 
       if (existing) {
-        throw new Error(opusServiceErrors.NUMBER_ALREADY_EXISTS(input.number));
+        throw new Error(opusServiceErrors.OPUS_ALREADY_EXISTS);
       }
 
       const opusData = {
