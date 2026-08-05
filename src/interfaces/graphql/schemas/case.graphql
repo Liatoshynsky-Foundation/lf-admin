@@ -1,0 +1,93 @@
+enum CaseStatus {
+    draft
+    published
+    hidden
+    archived
+    editing
+}
+
+type CasePdfFile {
+    filename: String!
+    url: String!
+    mimeType: String!
+}
+
+input CasePdfFileInput {
+    filename: String!
+    url: String!
+    mimeType: String!
+}
+
+type Case {
+    id: ID!
+    fondId: ID!
+    descriptionNumber: Int!
+    caseNumber: Int!
+    caseName: LocalizedString!
+    caseDate: LocalizedString!
+    sheetsNumber: Int!
+    caseDescriptions: LocalizedString!
+    detailedCaseDescription: LocalizedString
+    pdfFile: CasePdfFile
+    status: CaseStatus!
+    updatedAt: String!
+    createdAt: String!
+}
+
+input CreateCaseInput {
+    fondId: ID!
+    descriptionNumber: Int!
+    caseNumber: Int!
+    caseName: JSON!
+    caseDate: JSON!
+    sheetsNumber: Int!
+    caseDescriptions: JSON!
+    detailedCaseDescription: JSON
+    pdfFile: CasePdfFileInput
+    status: CaseStatus
+}
+
+input UpdateCaseInput {
+    fondId: ID
+    descriptionNumber: Int
+    caseNumber: Int
+    caseName: JSON
+    caseDate: JSON
+    sheetsNumber: Int
+    caseDescriptions: JSON
+    detailedCaseDescription: JSON
+    pdfFile: CasePdfFileInput
+    status: CaseStatus
+}
+
+type PaginatedCases {
+    items: [Case!]!
+    total: Int!
+    page: Int!
+    totalPages: Int!
+}
+
+input CaseFiltersInput {
+    fondId: ID
+    limit: Int
+    skip: Int
+    search: String
+    languages: [ContentLanguage!]
+    sort: [SortOptions!]
+}
+
+extend type Query {
+    caseById(id: ID!): Case
+    allCases(filters: CaseFiltersInput): [Case!]
+    paginatedCases(
+        page: Int!,
+        limit: Int!,
+        filters: CaseFiltersInput
+    ): PaginatedCases
+}
+
+extend type Mutation {
+    createCase(input: CreateCaseInput!): Case!
+    updateCase(id: ID!, input: UpdateCaseInput!): Case!
+    deleteCase(id: ID!): Boolean!
+}
