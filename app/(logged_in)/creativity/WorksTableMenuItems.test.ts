@@ -1,9 +1,15 @@
 import { GroupMenuItems, WorkMenuItems } from './WorksTableMenuItems';
 import { WORKS_BASE_PATH } from '~/constants/creativity';
-import { MenuItemConfig } from '~/shared/components/dropdown-menu/ActionMenu';
+
+type MenuItem = {
+  id: string;
+  text: { name: string };
+  href?: string;
+  onClick?: () => void;
+};
 
 describe('WorksTableMenusItems', () => {
-  const triggerItemClicks = (menuItems: readonly MenuItemConfig[]) => {
+  const triggerItemClicks = (menuItems: readonly MenuItem[]) => {
     menuItems.forEach((item) => {
       if (typeof item.onClick === 'function') {
         item.onClick();
@@ -11,10 +17,12 @@ describe('WorksTableMenusItems', () => {
     });
   };
 
-  const mockOnPublish = jest.fn();
-  const mockOnUnpublish = jest.fn();
-  const mockOnUngroup = jest.fn();
-  const mockOnShare = jest.fn();
+  const mockOnPublish = jest.fn<(id: string) => void, [string]>();
+  const mockOnUnpublish = jest.fn<(id: string) => void, [string]>();
+  const mockOnUngroup = jest.fn<(id: string) => void, [string]>();
+  const mockOnShare = jest.fn<(id: string) => void, [string]>();
+  const mockOnEdit = jest.fn<(id: string) => void, [string]>();
+  const mockOnDelete = jest.fn<(id: string) => void, [string]>();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -27,18 +35,16 @@ describe('WorksTableMenusItems', () => {
       onPublish: mockOnPublish,
       onUnpublish: mockOnUnpublish,
       onUngroup: mockOnUngroup,
-      onShare: mockOnShare
+      onShare: mockOnShare,
     });
 
-    const firstGroupItems = groups[0].items;
-    expect(firstGroupItems).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: 'edit-seo', href: `${WORKS_BASE_PATH}/group/group-1/edit` }),
-        expect.objectContaining({ id: 'edit-content', href: `${WORKS_BASE_PATH}/group/group-1/content` }),
-        expect.objectContaining({ id: 'share' }),
-        expect.objectContaining({ id: 'ungroup' })
-      ])
-    );
+    const firstGroupItems = groups[0].items as MenuItem[];
+    expect(firstGroupItems).toEqual([
+      { id: 'edit-seo', text: { name: 'Редагувати групу (SEO)' }, href: `${WORKS_BASE_PATH}/group/group-1/edit` },
+      { id: 'edit-content', text: { name: 'Редагувати контент' }, href: `${WORKS_BASE_PATH}/group/group-1/content` },
+      { id: 'share', text: { name: 'Поширити' }, onClick: expect.any(Function) },
+      { id: 'ungroup', text: { name: 'Розгрупувати' }, onClick: expect.any(Function) },
+    ]);
 
     triggerItemClicks(firstGroupItems);
     expect(mockOnShare).toHaveBeenCalledWith('group-1');
@@ -52,12 +58,13 @@ describe('WorksTableMenusItems', () => {
       onPublish: mockOnPublish,
       onUnpublish: mockOnUnpublish,
       onUngroup: mockOnUngroup,
-      onShare: mockOnShare
+      onShare: mockOnShare,
     });
 
-    expect(groups[1].items[0].id).toBe('unpublish');
+    const secondGroupItems = groups[1].items as MenuItem[];
+    expect(secondGroupItems[0].id).toBe('unpublish');
 
-    triggerItemClicks(groups[1].items);
+    triggerItemClicks(secondGroupItems);
     expect(mockOnUnpublish).toHaveBeenCalledWith('group-1');
     expect(mockOnPublish).not.toHaveBeenCalled();
   });
@@ -69,38 +76,47 @@ describe('WorksTableMenusItems', () => {
       onPublish: mockOnPublish,
       onUnpublish: mockOnUnpublish,
       onUngroup: mockOnUngroup,
-      onShare: mockOnShare
+      onShare: mockOnShare,
     });
 
-    expect(groups[1].items[0].id).toBe('publish');
+    const secondGroupItems = groups[1].items as MenuItem[];
+    expect(secondGroupItems[0].id).toBe('publish');
 
-    triggerItemClicks(groups[1].items);
+    triggerItemClicks(secondGroupItems);
     expect(mockOnPublish).toHaveBeenCalledWith('group-2');
     expect(mockOnUnpublish).not.toHaveBeenCalled();
   });
 
-  it('should build WorkMenuItems with edit, share and delete actions', () => {
-    const setDeleteModalOpen = jest.fn();
-
+  it('should build WorkMenuItems with edit, share and delete actions and trigger callbacks correctly', () => {
     const groups = WorkMenuItems({
       id: 'work-1',
       isPublished: true,
-      setDeleteModalOpen
+      onEdit: mockOnEdit,
+      onShare: mockOnShare,
+      onDelete: mockOnDelete,
     });
 
     expect(groups).toHaveLength(2);
 
-    expect(groups[0].items).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: 'edit', href: `${WORKS_BASE_PATH}/work-1/edit` }),
-        expect.objectContaining({ id: 'share', href: `${WORKS_BASE_PATH}/work-1/share` })
-      ])
-    );
+    const firstGroupItems = groups[0].items as MenuItem[];
+    const secondGroupItems = groups[1].items as MenuItem[];
 
-    expect(groups[1].items[0].id).toBe('delete');
+    expect(firstGroupItems).toEqual([
+      { id: 'edit', text: { name: 'Редагувати композицію' }, onClick: expect.any(Function) },
+      { id: 'share', text: { name: 'Поширити' }, onClick: expect.any(Function) },
+    ]);
 
-    groups.forEach((group) => triggerItemClicks(group.items));
+    expect(secondGroupItems[0]).toEqual({
+      id: 'delete',
+      text: { name: 'Видалити' },
+      onClick: expect.any(Function),
+    });
 
-    expect(setDeleteModalOpen).toHaveBeenCalledWith(true);
+    triggerItemClicks(firstGroupItems);
+    triggerItemClicks(secondGroupItems);
+
+    expect(mockOnEdit).toHaveBeenCalledWith('work-1');
+    expect(mockOnShare).toHaveBeenCalledWith('work-1');
+    expect(mockOnDelete).toHaveBeenCalledWith('work-1');
   });
 });

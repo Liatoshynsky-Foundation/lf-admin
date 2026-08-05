@@ -3,9 +3,39 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
 
 import CreativityPage from './page';
+import { usePaginatedWorks } from '~/shared/hooks/use-opuses/useOpuses';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 const MOCK_GROUP_LABEL = 'Дії групи Перший струнний квартет';
 const MOCK_WORK_LABEL = 'Дії твору №1 «Після бою»';
+
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    prefetch: jest.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+    refresh: jest.fn()
+  }),
+  usePathname: () => '/creativity',
+  useSearchParams: () => new URLSearchParams()
+}));
+
+jest.mock('@apollo/client', () => {
+  const originalApollo = jest.requireActual('@apollo/client');
+  return {
+    ...originalApollo,
+    useQuery: jest.fn(() => ({
+      data: undefined,
+      loading: false,
+      error: undefined,
+      refetch: jest.fn()
+    })),
+    useLazyQuery: jest.fn(() => [jest.fn(), { data: undefined, loading: false, error: undefined }]),
+    useMutation: jest.fn(() => [jest.fn(), { loading: false, data: undefined }])
+  };
+});
 
 jest.mock('~/shared/hooks/use-opuses/useOpuses', () => ({
   usePaginatedWorks: jest.fn(),
@@ -55,10 +85,26 @@ jest.mock('~/shared/components/filtering-toolbar', () => ({
 
 jest.mock('./useWorksFiltering', () => ({
   useWorksFiltering: jest.fn(() => ({
-    sortValue: 'default',
-    selectedFilters: { status: null, language: null },
-    toolbarProps: { search: { search: '' }, activeFiltersCount: 0 },
-    sortProps: {}
+    sortValue: 'date_desc',
+    selectedFilters: { status: [], language: [], genre: [] },
+    requestFilters: {},
+    toolbarProps: {
+      search: { search: '', setSearch: jest.fn(), options: [], placeholder: 'Пошук' },
+      filters: [],
+      isFiltersOpen: true,
+      onToggleFilters: jest.fn(),
+      activeFiltersCount: 0,
+      onClearFilters: jest.fn()
+    },
+    sortProps: {
+      fieldOptions: [],
+      orderOptions: {},
+      fieldValue: 'date',
+      value: 'date_desc',
+      triggerLabel: 'Нові спочатку',
+      onFieldChange: jest.fn(),
+      onValueChange: jest.fn()
+    }
   }))
 }));
 
@@ -125,30 +171,6 @@ jest.mock('~/shared/components/page-header/PageHeader', () => ({
   )
 }));
 
-jest.mock('./useWorksFiltering', () => ({
-  useWorksFiltering: jest.fn(() => ({
-    sortValue: 'date_desc',
-    selectedFilters: { status: [], language: [], genre: [] },
-    toolbarProps: {
-      search: { search: '', setSearch: jest.fn(), options: [], placeholder: 'Пошук' },
-      filters: [],
-      isFiltersOpen: true,
-      onToggleFilters: jest.fn(),
-      activeFiltersCount: 0,
-      onClearFilters: jest.fn()
-    },
-    sortProps: {
-      fieldOptions: [],
-      orderOptions: {},
-      fieldValue: 'date',
-      value: 'date_desc',
-      triggerLabel: 'Нові спочатку',
-      onFieldChange: jest.fn(),
-      onValueChange: jest.fn()
-    }
-  }))
-}));
-
 jest.mock('./(composition)/useCreateWorkAction', () => ({
   useCreateWorkAction: jest.fn(() => ({
     handleCreateWork: jest.fn(),
@@ -161,14 +183,16 @@ jest.mock('./(composition)/useCreateWorkAction', () => ({
   }))
 }));
 
-import { usePaginatedWorks } from '~/shared/hooks/use-opuses/useOpuses';
-import { BaseContentStatuses } from '~/types/enums/common.enums';
+jest.mock('~/shared/components/forms/opus-details-block/composition-modal/CompositionModal', () => ({
+  __esModule: true,
+  default: ({ open }: { open: boolean }) => (open ? <div data-testid="composition-modal" /> : null)
+}));
 
 const mockUsePaginatedWorks = usePaginatedWorks as jest.Mock;
 
 describe('Creativity page', () => {
   beforeEach(() => {
-    mockUsePaginatedWorks.mockReset();
+    jest.clearAllMocks();
     mockUsePaginatedWorks.mockReturnValue({
       items: [],
       totalPages: 0,

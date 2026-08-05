@@ -4,6 +4,7 @@ import { AssetsMutation, AssetsQuery } from './assets/Query';
 import { CaseMutation } from './case/caseMutation';
 import { CaseQuery } from './case/caseQuery';
 import { CompositionsMutation } from './compositions/compositionsMutation';
+import { CompositionsQuery } from './compositions/compositionsQuery';
 import { EventsMutation } from './events/eventsMutation';
 import { EventsQuery } from './events/eventsQuery';
 import { FondMutation } from './fond/fondMutation';
@@ -38,6 +39,7 @@ export const resolvers = {
     ...EventsQuery,
     ...OpusQuery,
     ...AssetsQuery,
+    ...CompositionsQuery,
     ...CaseQuery,
     ...FondQuery
   }

@@ -24,6 +24,10 @@ type Composition {
   updatedAt: String!
 }
 
+extend type Query {
+  compositionById(id: ID!): Composition
+}
+
 input CompositionSheetMusicInput {
   url: String
   name: String
@@ -47,6 +51,18 @@ input CreateCompositionInput {
   audios: [CompositionAudioInput!]
 }
 
-type Mutation {
+input UpdateCompositionInput {
+  name: JSON
+  year: Int
+  genre: String
+  audioAvailable: Boolean
+  sheetAvailable: Boolean
+  sheetMusic: [CompositionSheetMusicInput!]
+  audios: [CompositionAudioInput!]
+}
+
+extend type Mutation {
   createComposition(input: CreateCompositionInput!): Composition!
+  updateComposition(id: ID!, input: UpdateCompositionInput!): Composition!
+  deleteComposition(id: ID!): Boolean!
 }

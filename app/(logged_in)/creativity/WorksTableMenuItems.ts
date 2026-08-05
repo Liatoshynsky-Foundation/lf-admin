@@ -13,7 +13,9 @@ interface GroupMenuProps {
 interface WorkMenuProps {
   id: string;
   isPublished: boolean;
-  setDeleteModalOpen: (open: boolean) => void;
+  onDelete: (id: string) => void;
+  onShare: (id: string) => void;
+  onEdit: (id: string) => void;
 }
 
 export const GroupMenuItems = ({
@@ -43,17 +45,19 @@ export const GroupMenuItems = ({
 
 export const WorkMenuItems = ({
   id,
-  setDeleteModalOpen,
+  onDelete,
+  onShare,
+  onEdit
 }: WorkMenuProps): ActionMenuGroups => [
   {
     items: [
-      { id: 'edit', text: { name: 'Редагувати композицію' }, href: `${WORKS_BASE_PATH}/${id}/edit` },
-      { id: 'share', text: { name: 'Поширити' }, href: `${WORKS_BASE_PATH}/${id}/share` },
+      { id: 'edit', text: { name: 'Редагувати композицію' }, onClick: () => onEdit(id) },
+      { id: 'share', text: { name: 'Поширити' }, onClick: () => onShare(id) },
     ],
   },
   {
     items: [
-      { id: 'delete', text: { name: 'Видалити' }, onClick: () => setDeleteModalOpen(true) },
+      { id: 'delete', text: { name: 'Видалити' }, onClick: () => onDelete(id) },
     ],
   },
 ];
