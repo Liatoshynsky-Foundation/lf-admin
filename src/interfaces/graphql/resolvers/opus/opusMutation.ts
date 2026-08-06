@@ -65,6 +65,7 @@ export type UpdateOpusGQLInput = Omit<CreateOpusGQLInput, 'title' | 'description
 
 type CreateOpusArgs = { input: CreateOpusGQLInput };
 type UpdateOpusArgs = { id: string; input: UpdateOpusGQLInput };
+type UnlinkCompositionArgs = { opusId: string; compositionId: string };
 
 const assertAuthenticated = (context: GraphQLContext): void => {
   if (!context.admin) {
@@ -467,5 +468,39 @@ export const OpusMutation = {
     const repo = context.requestContainer.cradle.opusRepository;
     await repo.unlink(id);
     return repo.delete(id);
-  }
+  },
+
+  unlinkComposition: async (_: unknown, { opusId, compositionId }: UnlinkCompositionArgs, context: GraphQLContext): Promise<OpusFull> => {
+    assertAuthenticated(context);
+
+    const {
+      opusRepository: repo,
+      compositionsRepository: compositionsRepo
+    } = context.requestContainer.cradle;
+
+    const existingOpus = await findExistingOpus(repo, opusId);
+
+    const currentCompositions = (existingOpus.compositions ?? [])
+      .filter((id): id is NonNullable<typeof id> => id != null)
+      .map((id) => id.toString());
+    
+    if (!currentCompositions.includes(compositionId)) {
+      throw new GraphQLError(opusServiceErrors.COMPOSITION_NOT_FOUND_IN_OPUS, {
+        extensions: { code: 'BAD_USER_INPUT' }
+      });
+    }
+
+    const updatedCompositionIds = currentCompositions.filter((id) => id !== compositionId);
+
+    const updatedOpus = await updateAndVerifyOpus(repo, opusId, {
+      compositions: updatedCompositionIds
+    });
+
+    await repo.moveCompositionsToCompositionsOpus([compositionId]);
+
+    const compositions = await compositionsRepo.findByIds(updatedCompositionIds);
+    const orderedCompositions = orderCompositionsByIds(updatedCompositionIds, compositions);
+
+    return { ...updatedOpus, compositions: orderedCompositions };
+  },
 };

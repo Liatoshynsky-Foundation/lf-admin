@@ -197,6 +197,46 @@ describe('CompositionModal', () => {
     ).toBeInTheDocument();
   });
 
+  it('clears note errors when editing note name and date after a validation error', () => {
+    const onSubmit = jest.fn();
+    render(<CompositionModal {...baseProps} mode="create" onSubmit={onSubmit} />);
+
+    fireEvent.change(screen.getByLabelText('Назва твору *'), { target: { value: 'Valid Title' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Додати ноти' }));
+
+    const dateField = screen.getByLabelText('Дата видання');
+    fireEvent.change(dateField, { target: { value: '2023' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Створити' }));
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(
+      screen.getByText((content) => content.includes(COMPOSITION_MODAL_TEXTS.emptyNoteDateError))
+    ).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Назва нот'), { target: { value: 'Ноти' } });
+    expect(
+      screen.getByText((content) => content.includes(COMPOSITION_MODAL_TEXTS.emptyNoteDateError))
+    ).toBeInTheDocument();
+
+    fireEvent.change(dateField, { target: { value: '2024' } });
+    expect(
+      screen.queryByText((content) => content.includes(COMPOSITION_MODAL_TEXTS.emptyNoteDateError))
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Створити' }));
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it('removes a note row using its delete button', () => {
+    render(<CompositionModal {...baseProps} mode="create" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Додати ноти' }));
+    expect(screen.getByLabelText('Назва нот')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: COMPOSITION_MODAL_TEXTS.deleteAriaLabel }));
+    expect(screen.queryByLabelText('Назва нот')).not.toBeInTheDocument();
+  });
+
   it('filters out empty note rows on submit', () => {
     const onSubmit = jest.fn();
     render(<CompositionModal {...baseProps} mode="create" onSubmit={onSubmit} />);
@@ -348,5 +388,20 @@ describe('CompositionModal', () => {
     expect(onSubmit).toHaveBeenCalledTimes(1);
     const submitted = onSubmit.mock.calls[0][0] as OpusCompositionData;
     expect(submitted.name).toBe('Редагований твір');
+  });
+
+  it('restricts non-numeric input for the year field', () => {
+    render(<CompositionModal {...baseProps} mode="create" />);
+
+    const yearField = screen.getByLabelText('Рік');
+
+    fireEvent.change(yearField, { target: { value: 'abc' } });
+    expect(yearField).toHaveValue('');
+
+    fireEvent.change(yearField, { target: { value: '19a20' } });
+    expect(yearField).toHaveValue('');
+
+    fireEvent.change(yearField, { target: { value: '1920' } });
+    expect(yearField).toHaveValue('1920');
   });
 });

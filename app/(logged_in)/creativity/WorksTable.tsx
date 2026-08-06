@@ -78,8 +78,6 @@ export type IndividualWork = Readonly<{
 }> &
   ActionFields;
 
-const modalMock = () => {};
-
 export const columns: readonly ColumnDef<GroupHeaderData, OpusWork, IndividualWork>[] = [
   {
     id: 'opus',
@@ -171,7 +169,14 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
     openEditComposition,
     closeEditComposition
   } = useWorkUrlState();
-  const { deleteComposition, setDeleteComposition, handleConfirmCompositionDelete } = useDeleteWorkAction();
+  const {
+    deleteComposition,
+    setDeleteComposition,
+    handleConfirmCompositionDelete,
+    handleConfirmUnlinkComposition,
+    unlinkComposition,
+    setUnlinkComposition
+  } = useDeleteWorkAction();
   const { handleUpdateComposition } = useUpdateWorkAction();
   const { handleShare } = useShare();
 
@@ -235,9 +240,9 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
           menuItems: WorkMenuItems({
             id: work.id,
             isPublished,
-            onDelete: () => modalMock(),
-            onShare: () => modalMock(),
-            onEdit: () => modalMock()
+            onDelete: (id) => setUnlinkComposition({ opusId: group.id, compositionId: id }),
+            onShare: (id) => handleShareComposition(id),
+            onEdit: (id) => openEditComposition(id)
           }),
           menuTriggerLabel: `Дії твору ${work.name}`
         }
@@ -320,6 +325,15 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
         title="Підтвердити видалення композиції"
         confirmButtonText="Видалити"
         description="Ви впевнені, що хочете видалити цю композицію? Це дію можна скасувати лише шляхом повторного додавання композиції."
+      />
+
+      <DeleteCardModal
+        open={Boolean(unlinkComposition)}
+        onClose={() => setUnlinkComposition(null)}
+        onDelete={handleConfirmUnlinkComposition}
+        title="Підтвердити видалення композиції з групи"
+        confirmButtonText="Видалити"
+        description="Ви впевнені, що хочете видалити цю композицію з групи? Цю дію можна скасувати лише шляхом повторного додавання композиції у цю групу."
       />
 
       <CompositionModal
