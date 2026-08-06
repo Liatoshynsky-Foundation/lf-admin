@@ -22,7 +22,9 @@ import { useUpsertOpus } from '~/shared/hooks/use-upsert-opus/useUpsertOpus';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 interface OpusViewProps {
-  data: ReturnType<typeof useUpsertOpus>;
+  data: Omit<ReturnType<typeof useUpsertOpus>, 'duplicateCompositionNames'> & {
+    duplicateCompositionNames?: string[];
+  };
   mode?: 'create' | 'edit';
 }
 
@@ -31,6 +33,7 @@ export default function OpusView({ data, mode = 'create' }: Readonly<OpusViewPro
     details,
     setDetails,
     detailsErrors,
+    duplicateCompositionNames,
     seoValue,
     setSeoValue,
     crop,
@@ -78,7 +81,12 @@ export default function OpusView({ data, mode = 'create' }: Readonly<OpusViewPro
             </Typography>
           </AccordionSummary>
           <AccordionDetails sx={styles.detailsContent}>
-            <OpusDetailsBlock value={details} onChange={setDetails} errors={detailsErrors} />
+            <OpusDetailsBlock
+              value={details}
+              onChange={setDetails}
+              errors={detailsErrors}
+              duplicateCompositionNames={duplicateCompositionNames}
+            />
           </AccordionDetails>
         </Accordion>
 

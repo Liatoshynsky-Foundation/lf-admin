@@ -17,6 +17,7 @@ interface UseCreateWorkActionResult {
   error: string | null;
   openModal: () => void;
   closeModal: () => void;
+  clearError: () => void;
   handleSubmit: (work: OpusCompositionData) => Promise<void>;
 }
 
@@ -82,6 +83,8 @@ export function useCreateWorkAction(): UseCreateWorkActionResult {
     setError(null);
   }, [isSubmitting]);
 
+  const clearError = useCallback(() => setError(null), []);
+
   const handleSubmit = useCallback(
     async (work: OpusCompositionData) => {
       setIsSubmitting(true);
@@ -94,7 +97,7 @@ export function useCreateWorkAction(): UseCreateWorkActionResult {
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Не вдалося створити твір. Спробуйте ще раз.';
         setError(message);
-        toast.error(`Помилка: ${message}`);
+        toast.error(message);
       } finally {
         setIsSubmitting(false);
       }
@@ -102,5 +105,5 @@ export function useCreateWorkAction(): UseCreateWorkActionResult {
     [createComposition, router]
   );
 
-  return { isModalOpen, isSubmitting, error, openModal, closeModal, handleSubmit };
+  return { isModalOpen, isSubmitting, error, openModal, closeModal, clearError, handleSubmit };
 }

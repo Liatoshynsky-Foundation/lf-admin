@@ -42,6 +42,15 @@ export const toCompositionInput = (composition: OpusCompositionData): OpusCompos
     }))
 });
 
+const normalizeCompositionName = (name: string): string => name.trim().toLocaleLowerCase('uk-UA');
+
+const getDuplicateCompositionName = (error: unknown): string | null => {
+  const message = error instanceof Error ? error.message : String(error);
+  if (!message.startsWith('Композиція "')) return null;
+  const match = new RegExp(/"([^"]+)"/).exec(message);
+  return match?.[1] ? normalizeCompositionName(match[1]) : null;
+};
+
 const fileNameFromUrl = (url?: string | null): string => {
   if (!url) {
     return '';
@@ -69,6 +78,7 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}) => {
     name: '',
     creationYear: ''
   });
+  const [duplicateCompositionNames, setDuplicateCompositionNames] = useState<string[]>([]);
   const [seoValue, setSeoValue] = useState<SeoBlockValue>(initialOpusSeoValue);
   const [crop, setCrop] = useState<CropRect | null>(null);
   const [forceShowErrors, setForceShowErrors] = useState(false);
@@ -82,6 +92,9 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}) => {
     latestDataRef.current.details = next;
     setDetails(next);
     setIsSaved(false);
+    setDuplicateCompositionNames((previous) =>
+      previous.filter((name) => next.compositions.some((composition) => normalizeCompositionName(composition.name) === name))
+    );
 
     setDetailsErrors((prev) => ({
       number: next.number.trim() ? '' : prev.number,
@@ -212,6 +225,8 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}) => {
       return undefined;
     }
 
+    setDuplicateCompositionNames([]);
+
     const { uk: ukMeta, en: enMeta } = currentSeo.meta;
     const opusName = currentDetails.name.trim();
     const input = {
@@ -246,25 +261,33 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}) => {
     };
 
 
-    if (isEditing && id) {
-      const response = await updateOpus({ id, input });
-      const updatedId = response.data?.updateOpus?.id;
+    try {
+      if (isEditing && id) {
+        const response = await updateOpus({ id, input });
+        const updatedId = response.data?.updateOpus?.id;
 
-      if (updatedId) {
+        if (updatedId) {
+          setIsSaved(true);
+        }
+
+        return updatedId;
+      }
+
+      const response = await createOpus(input);
+      const createdId = response.data?.createOpus?.id;
+
+      if (createdId) {
         setIsSaved(true);
       }
 
-      return updatedId;
+      return createdId;
+    } catch (error) {
+      const duplicateName = getDuplicateCompositionName(error);
+      if (duplicateName) {
+        setDuplicateCompositionNames([duplicateName]);
+      }
+      throw error;
     }
-
-    const response = await createOpus(input);
-    const createdId = response.data?.createOpus?.id;
-
-    if (createdId) {
-      setIsSaved(true);
-    }
-
-    return createdId;
   };
 
   return {
@@ -273,6 +296,7 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}) => {
     details,
     setDetails: changeDetails,
     detailsErrors,
+    duplicateCompositionNames,
     seoValue,
     setSeoValue: changeSeoValue,
     crop,

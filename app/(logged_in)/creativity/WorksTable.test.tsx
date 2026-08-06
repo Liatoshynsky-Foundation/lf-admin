@@ -191,7 +191,9 @@ describe('WorksTable', () => {
     });
 
     (useUpdateWorkAction as jest.Mock).mockReturnValue({
-      handleUpdateComposition: mockHandleUpdateComposition
+      handleUpdateComposition: mockHandleUpdateComposition,
+      error: null,
+      clearError: jest.fn()
     });
 
     (useShare as jest.Mock).mockReturnValue({

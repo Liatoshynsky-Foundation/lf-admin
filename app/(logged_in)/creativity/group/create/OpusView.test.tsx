@@ -65,6 +65,7 @@ const createMockData = (
   details: initialOpusDetails,
   setDetails: jest.fn(),
   detailsErrors: { number: '', name: '', creationYear: '' },
+  duplicateCompositionNames: [],
   seoValue: initialOpusSeoValue,
   setSeoValue: jest.fn(),
   crop: null,

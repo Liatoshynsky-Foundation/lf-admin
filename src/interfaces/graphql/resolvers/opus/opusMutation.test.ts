@@ -95,7 +95,9 @@ describe('OpusMutation Resolvers', () => {
     const compositionsRepo = {
       findByOpusId: jest.fn(),
       findByOpusIds: jest.fn(),
+      findByNumber: jest.fn(),
       findByIds: jest.fn(),
+      findByName: jest.fn(),
       syncForOpus: jest.fn().mockResolvedValue([]),
       deleteByOpusId: jest.fn(),
       searchByTitle: jest.fn()

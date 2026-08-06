@@ -16,9 +16,34 @@ import type { OpusCompositionData } from '~/types/opus';
 type GroupWorksSectionProps = {
   works: OpusCompositionData[];
   onChange: (works: OpusCompositionData[]) => void;
+  duplicateCompositionNames?: string[];
 };
 
-export const GroupWorksSection = ({ works, onChange }: GroupWorksSectionProps) => {
+export const GroupWorksSection = ({ works, onChange, duplicateCompositionNames = [] }: GroupWorksSectionProps) => {
+  const normalizeName = (name: string) => name.trim().toLocaleLowerCase('uk-UA');
+
+  const compositionIdsByName = new Map<string, string[]>();
+
+  works.forEach((work) => {
+    const normalizedName = normalizeName(work.name);
+
+    if (!normalizedName) return;
+
+    const ids = compositionIdsByName.get(normalizedName) ?? [];
+    ids.push(work.id);
+    compositionIdsByName.set(normalizedName, ids);
+  });
+
+  const externalDuplicateNames = new Set(duplicateCompositionNames.map(normalizeName));
+
+  const duplicateCompositionIds = new Set<string>();
+
+  compositionIdsByName.forEach((ids, name) => {
+    if (ids.length > 1 || externalDuplicateNames.has(name)) {
+      ids.forEach((id) => duplicateCompositionIds.add(id));
+    }
+  });
+  
   const {
     isModalOpen,
     modalMode,
@@ -56,6 +81,7 @@ export const GroupWorksSection = ({ works, onChange }: GroupWorksSectionProps) =
               <WorkRow
                 composition={composition}
                 index={index}
+                hasDuplicateName={duplicateCompositionIds.has(composition.id)}
                 updateCompositionTitle={updateCompositionTitle}
                 fillComposition={fillComposition}
                 openCreateModal={openCreateModal}

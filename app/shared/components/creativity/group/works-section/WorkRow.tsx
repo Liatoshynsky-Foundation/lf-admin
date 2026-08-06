@@ -8,6 +8,7 @@ import type { OpusCompositionData, OpusCompositionSuggestion } from '~/types/opu
 export type WorkRowProps = {
   composition: OpusCompositionData;
   index: number;
+  hasDuplicateName?: boolean;
   updateCompositionTitle: (id: string, title: string) => void;
   fillComposition: (index: number, suggestion: OpusCompositionSuggestion) => void;
   openCreateModal: (index: number) => void;
@@ -18,6 +19,7 @@ export type WorkRowProps = {
 export const WorkRow = ({
   composition,
   index,
+  hasDuplicateName = false,
   updateCompositionTitle,
   fillComposition,
   openCreateModal,
@@ -29,6 +31,7 @@ export const WorkRow = ({
       <Box sx={styles.compositionInput}>
         <CompositionTitleInput
           value={composition.name}
+          error={hasDuplicateName}
           onChangeText={(name) => updateCompositionTitle(composition.id, name)}
           onSelectSuggestion={(suggestion) => fillComposition(index, suggestion)}
           onCreateNew={() => openCreateModal(index)}

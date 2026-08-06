@@ -80,7 +80,9 @@ export const CompositionsMutation = {
     const repo = context.requestContainer.cradle.compositionsRepository;
 
     await findExistingComposition(repo, id);
-    await assertNameNotTaken(repo, input.name.uk, id);
+    if (input.name != null) {
+      await assertNameNotTaken(repo, input.name.uk, id);
+    }
 
     const updateData: CompositionInput = {
       ...(input.name && { name: input.name }),

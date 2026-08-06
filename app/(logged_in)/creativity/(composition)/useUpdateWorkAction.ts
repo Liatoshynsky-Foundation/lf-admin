@@ -5,6 +5,7 @@ import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import {
+  PaginatedWorksDocument,
   UpdateCompositionInput,
   useUpdateCompositionMutation
 } from '~/types/graphql/generated/graphql';
@@ -13,7 +14,8 @@ import type { OpusCompositionData } from '~/types/opus';
 interface UseUpdateWorkActionResult {
   isUpdating: boolean;
   error: string | null;
-  handleUpdateComposition: (id: string, composition: OpusCompositionData) => Promise<void>;
+  clearError: () => void;
+  handleUpdateComposition: (id: string, composition: OpusCompositionData) => Promise<boolean>;
 }
 
 const TOAST_MESSAGES = {
@@ -44,24 +46,31 @@ export function useUpdateWorkAction(): UseUpdateWorkActionResult {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [updateCompositionMut, { loading: isUpdating }] = useUpdateCompositionMutation();
+  const clearError = useCallback(() => setError(null), []);
 
   const handleUpdateComposition = useCallback(
     async (id: string, composition: OpusCompositionData) => {
       setError(null);
+
       try {
         await updateCompositionMut({
           variables: {
             id,
             input: mapCompositionToUpdateInput(composition)
-          }
+          },
+          refetchQueries: [PaginatedWorksDocument],
+          awaitRefetchQueries: true
         });
+
         toast.success(TOAST_MESSAGES.UPDATE_SUCCESS);
         router.refresh();
+        return true;
       } catch (err) {
         const message = err instanceof Error ? err.message : TOAST_MESSAGES.UPDATE_ERROR;
         setError(message);
-        toast.error(`Помилка: ${message}`);
-        throw err;
+        
+        toast.error(message);
+        return false;
       }
     },
     [updateCompositionMut, router]
@@ -70,6 +79,7 @@ export function useUpdateWorkAction(): UseUpdateWorkActionResult {
   return {
     handleUpdateComposition,
     isUpdating,
-    error
+    error,
+    clearError
   };
 }

@@ -23,6 +23,7 @@ interface CompositionOption {
 
 export interface CompositionTitleInputProps {
   value: string;
+  error?: boolean;
   onChangeText: (title: string) => void;
   onSelectSuggestion: (suggestion: OpusCompositionSuggestion) => void;
   onCreateNew: () => void;
@@ -30,6 +31,7 @@ export interface CompositionTitleInputProps {
 
 export default function CompositionTitleInput({
   value,
+  error = false,
   onChangeText,
   onSelectSuggestion,
   onCreateNew
@@ -123,7 +125,7 @@ export default function CompositionTitleInput({
           </Box>
         );
       }}
-      renderInput={(params) => <TextField {...params} size="small" sx={styles.input} />}
+      renderInput={(params) => <TextField {...params} size="small" error={error} sx={styles.input} />}
     />
   );
 }
