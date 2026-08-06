@@ -10,7 +10,9 @@ import { MissionListItemWithId } from '~/types/store/pages/about-us/blocks/missi
 interface MockImagePreviewBlockProps {
   readonly title: string;
   readonly imageUrl: string;
+  readonly altText?: string;
   readonly onChangeImage: (url: string, crop?: unknown) => void;
+  readonly onChangeAltText?: (value: string) => void;
 }
 
 const setFieldMock = jest.fn();
@@ -31,9 +33,10 @@ jest.mock('../../sortable-list/SortableList');
 
 jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
   __esModule: true,
-  ImagePreviewBlock: ({ title, imageUrl, onChangeImage }: MockImagePreviewBlockProps) => (
+  ImagePreviewBlock: ({ title, imageUrl, altText, onChangeImage, onChangeAltText }: MockImagePreviewBlockProps) => (
     <div data-testid={`image-block-${title}`}>
       <span data-testid={`image-url-${title}`}>{imageUrl}</span>
+      <span data-testid={`alt-text-${title}`}>{altText}</span>
       <button data-testid={`upload-${title}`} onClick={() => onChangeImage('new-image-path.jpg')}>
         Upload
       </button>
@@ -42,6 +45,9 @@ jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
         onClick={() => onChangeImage('new-image-path.jpg', { rect: { x: 0, y: 0, width: 10, height: 10 } })}
       >
         Upload With Crop
+      </button>
+      <button data-testid={`alt-change-${title}`} onClick={() => onChangeAltText?.('Updated alt text')}>
+        Change Alt Text
       </button>
     </div>
   )
@@ -67,6 +73,7 @@ beforeAll(() => {
 const mockTitleJson = createDocNode('Initial title');
 const mockItemJson = createDocNode('Initial point');
 const mockCaptionJson = createDocNode('caption');
+const mockAltJson = createDocNode('legacy alt text');
 
 const mockBlock = {
   title: { uk: mockTitleJson },
@@ -75,13 +82,13 @@ const mockBlock = {
     src: 'small.jpg',
     generatedSrc: '',
     caption: { uk: mockCaptionJson, en: {} },
-    alt: { uk: {}, en: {} }
+    alt: { uk: mockAltJson, en: {} }
   },
   bigImage: {
     src: 'big.jpg',
     generatedSrc: '',
     caption: { uk: mockCaptionJson, en: {} },
-    alt: { uk: {}, en: {} }
+    alt: { uk: mockAltJson, en: {} }
   }
 };
 
@@ -104,6 +111,9 @@ describe('OurMission', () => {
     expect(screen.getByTestId('collapsible-block')).toBeInTheDocument();
     expect(screen.getByTestId(`textfield-json-${keys.title}`)).toHaveTextContent(JSON.stringify(mockTitleJson));
     expect(screen.getByTestId(`textfield-json-${keys.item}`)).toHaveTextContent(JSON.stringify(mockItemJson));
+    expect(screen.getByTestId(`alt-text-${keys.upload}`)).not.toHaveTextContent('[object Object]');
+    expect(screen.getByTestId(`alt-text-${keys.upload}`)).toHaveTextContent('legacy alt text');
+    expect(screen.getByTestId(`alt-text-${keys.bigUpload}`)).toHaveTextContent('legacy alt text');
   });
 
   it('should render skeleton when no block exists', () => {
@@ -184,6 +194,18 @@ describe('OurMission', () => {
       `upload-${keys.bigUpload}`,
       'bigImage',
       expect.objectContaining({ src: 'new-image-path.jpg', isTmp: false, crop: null })
+    ],
+    [
+      'editing alt text for the first image',
+      `alt-change-${keys.upload}`,
+      'smallImage',
+      expect.objectContaining({ alt: expect.objectContaining({ uk: 'Updated alt text' }) })
+    ],
+    [
+      'editing alt text for the second image',
+      `alt-change-${keys.bigUpload}`,
+      'bigImage',
+      expect.objectContaining({ alt: expect.objectContaining({ uk: 'Updated alt text' }) })
     ]
   ])(
     'should correctly invoke setField upon %s',

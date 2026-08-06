@@ -32,15 +32,20 @@ jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
   ImagePreviewBlock: ({
     imageUrl,
     fileName,
-    onChangeImage
+    altText,
+    onChangeImage,
+    onChangeAltText
   }: {
     readonly imageUrl: string;
     readonly fileName: string;
+    readonly altText?: string;
     readonly onChangeImage: (url: string, crop?: { x: number; y: number; width: number; height: number }) => void;
+    readonly onChangeAltText?: (value: string) => void;
   }) => (
     <div data-testid="image-preview">
       <span data-testid="image-url">{imageUrl}</span>
       <span data-testid="file-name">{fileName}</span>
+      <span data-testid="alt-text">{altText}</span>
       <button
         data-testid="trigger-image-change-with-crop"
         onClick={() => onChangeImage('https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/updated.jpg', {
@@ -57,6 +62,9 @@ jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
         onClick={() => onChangeImage('https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/updated.jpg')}
       >
         Change Image Without Crop
+      </button>
+      <button data-testid="trigger-alt-change" onClick={() => onChangeAltText?.('Updated alt text')}>
+        Change Alt Text
       </button>
     </div>
   )
@@ -227,6 +235,37 @@ describe('IntroSection', () => {
       src: 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/updated.jpg',
       isTmp: false,
       crop: null
+    });
+  });
+
+  it('should convert legacy JSONContent alt text to a plain string instead of leaking the raw object', () => {
+    
+    runSimulation();
+
+    const altText = within(screen.getByTestId('image-preview')).getByTestId('alt-text');
+    expect(altText).not.toHaveTextContent('[object Object]');
+    expect(altText).toHaveTextContent('Initial Caption');
+  });
+
+  it('should pass an empty alt text string when no alt data exists yet', () => {
+    usePageBlockMock.mockReturnValue({
+      block: {
+        ...mockBlockData,
+        image: { ...mockBlockData.image, alt: undefined }
+      }
+    });
+
+    runSimulation();
+
+    expect(within(screen.getByTestId('image-preview')).getByTestId('alt-text')).toHaveTextContent('');
+  });
+
+  it('should call setField with merged alt text when the alt text field changes', () => {
+    runSimulation('trigger-alt-change');
+
+    expect(setFieldMock).toHaveBeenCalledWith('about-us', 'IntroSection', 'image', {
+      ...mockBlockData.image,
+      alt: { ...mockBlockData.image.alt, uk: 'Updated alt text' }
     });
   });
 });
