@@ -389,4 +389,19 @@ describe('CompositionModal', () => {
     const submitted = onSubmit.mock.calls[0][0] as OpusCompositionData;
     expect(submitted.name).toBe('Редагований твір');
   });
+
+  it('restricts non-numeric input for the year field', () => {
+    render(<CompositionModal {...baseProps} mode="create" />);
+
+    const yearField = screen.getByLabelText('Рік');
+
+    fireEvent.change(yearField, { target: { value: 'abc' } });
+    expect(yearField).toHaveValue('');
+
+    fireEvent.change(yearField, { target: { value: '19a20' } });
+    expect(yearField).toHaveValue('');
+
+    fireEvent.change(yearField, { target: { value: '1920' } });
+    expect(yearField).toHaveValue('1920');
+  });
 });

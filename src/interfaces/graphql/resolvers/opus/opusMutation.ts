@@ -480,10 +480,12 @@ export const OpusMutation = {
 
     const existingOpus = await findExistingOpus(repo, opusId);
 
-    const currentCompositions = (existingOpus.compositions ?? []).map((id) => id.toString());
+    const currentCompositions = (existingOpus.compositions ?? [])
+      .filter((id): id is NonNullable<typeof id> => id != null)
+      .map((id) => id.toString());
     
     if (!currentCompositions.includes(compositionId)) {
-      throw new GraphQLError(opusServiceErrors.COMPOSITION_NOT_FOUND_IN_OPUS ?? 'Composition not found in this opus', {
+      throw new GraphQLError(opusServiceErrors.COMPOSITION_NOT_FOUND_IN_OPUS, {
         extensions: { code: 'BAD_USER_INPUT' }
       });
     }

@@ -851,7 +851,7 @@ describe('OpusMutation Resolvers', () => {
       await expect(
         OpusMutation.unlinkComposition({}, { opusId: OPUS_ID, compositionId: COMPOSITION_ID_1 }, adminContext)
       ).rejects.toThrow(
-        new GraphQLError(opusServiceErrors.COMPOSITION_NOT_FOUND_IN_OPUS ?? 'Composition not found in this opus', {
+        new GraphQLError(opusServiceErrors.COMPOSITION_NOT_FOUND_IN_OPUS, {
           extensions: { code: 'BAD_USER_INPUT' }
         })
       );
@@ -888,5 +888,29 @@ describe('OpusMutation Resolvers', () => {
       expect(mockedOrderCompositionsByIds).toHaveBeenCalledWith([COMPOSITION_ID_2], [MOCK_COMPOSITION_2]);
       expect(result).toEqual({ ...updatedOpusEntity, compositions: [MOCK_COMPOSITION_2] });
     });
+
+    it.each([undefined, null])(
+      'should handle %s opus.compositions gracefully and throw error when composition is not found',
+      async (compositionsValue) => {
+        const opusWithoutCompositions = {
+          ...MOCK_OPUS_ENTITY,
+          compositions: compositionsValue as unknown as string[]
+        };
+
+        mockOpusRepo.findById.mockResolvedValue(opusWithoutCompositions as unknown as Opus);
+
+        await expect(
+          OpusMutation.unlinkComposition(
+            {},
+            { opusId: OPUS_ID, compositionId: COMPOSITION_ID_1 },
+            adminContext
+          )
+        ).rejects.toThrow(
+          new GraphQLError(opusServiceErrors.COMPOSITION_NOT_FOUND_IN_OPUS, {
+            extensions: { code: 'BAD_USER_INPUT' }
+          })
+        );
+      }
+    );
   });
 });
