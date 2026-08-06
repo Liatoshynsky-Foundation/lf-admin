@@ -213,6 +213,12 @@ describe('LiatoshynskyFoundation', () => {
 
   it.each([
     [
+      'section title updates',
+      'trigger-change-Заголовок секції',
+      'title',
+      expect.objectContaining({ uk: createDocNode('Updated Заголовок секції') })
+    ],
+    [
       'main organization text sections',
       'trigger-main-text-change',
       'ourOrganisation',

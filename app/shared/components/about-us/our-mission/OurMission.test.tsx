@@ -326,4 +326,36 @@ describe('OurMission', () => {
     expect(screen.queryByTestId(`image-block-${keys.upload}`)).not.toBeInTheDocument();
     expect(screen.queryByTestId(`image-block-${keys.bigUpload}`)).not.toBeInTheDocument();
   });
+
+  it('should handle early returns in image and caption handlers when image object becomes falsy', () => {
+    let imageExists = true;
+    const blockWithToggle = {
+      ...mockBlock,
+      get smallImage() {
+        return imageExists ? mockBlock.smallImage : undefined;
+      }
+    };
+
+    usePageBlockMock.mockReturnValue({ block: blockWithToggle });
+    render(<OurMission />);
+
+    imageExists = false;
+    jest.clearAllMocks();
+
+    fireEvent.click(screen.getByTestId(`upload-${keys.upload}`));
+    fireEvent.click(screen.getByTestId(`alt-change-${keys.upload}`));
+    fireEvent.click(screen.getByTestId(`trigger-change-${keys.caption}`));
+
+    expect(setFieldMock).not.toHaveBeenCalled();
+  });
+
+  it('should use fallback title when block title is empty or undefined', () => {
+    usePageBlockMock.mockReturnValue({
+      block: { ...mockBlock, title: undefined }
+    });
+    
+    render(<OurMission />);
+    
+    expect(screen.getByTestId('collapsible-block')).toBeInTheDocument();
+  });
 });
