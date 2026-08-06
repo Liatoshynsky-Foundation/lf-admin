@@ -177,13 +177,18 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
     unlinkComposition,
     setUnlinkComposition
   } = useDeleteWorkAction();
+  
   const { handleUpdateComposition } = useUpdateWorkAction();
   const { handleShare } = useShare();
 
   const handleSubmitComposition = async (compositionData: OpusCompositionData) => {
     if (!compositionId) return;
-    await handleUpdateComposition(compositionId, compositionData);
-    closeEditComposition();
+    try {
+      await handleUpdateComposition(compositionId, compositionData);
+      closeEditComposition();
+    } catch {
+      // Помилка вже оброблена всередині handleUpdateComposition (setError та toast.error)
+    }
   };
 
   const handleShareComposition = (id: string) => {

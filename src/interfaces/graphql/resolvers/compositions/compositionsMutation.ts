@@ -18,6 +18,19 @@ const assertAuthenticated = (context: GraphQLContext): void => {
   }
 };
 
+export const assertNameNotTaken = async (
+  repo: ICompositionRepository,
+  ukName: string,
+  excludeId?: string
+): Promise<void> => {
+  const existing = await repo.findByName(ukName.trim());
+  if (existing && existing.id !== excludeId) {
+    throw new GraphQLError(compositionsServiceErrors.COMPOSITION_NAME_TAKEN(ukName), {
+      extensions: { code: 'COMPOSITION_NAME_TAKEN' }
+    });
+  }
+};
+
 async function findExistingComposition(repo: ICompositionRepository, id: string): Promise<Composition> {
   const existing = await repo.findById(id);
   if (!existing) {
@@ -46,10 +59,9 @@ export const CompositionsMutation = {
   ): Promise<Composition> => {
     assertAuthenticated(context);
 
-    const { 
-      compositionsRepository: repo, 
-      opusRepository: opusRepo 
-    } = context.requestContainer.cradle;
+    const { compositionsRepository: repo, opusRepository: opusRepo } = context.requestContainer.cradle;
+
+    await assertNameNotTaken(repo, input.name.uk);
 
     const compositionData = mapCompositionInput(input);
 
@@ -68,6 +80,7 @@ export const CompositionsMutation = {
     const repo = context.requestContainer.cradle.compositionsRepository;
 
     await findExistingComposition(repo, id);
+    await assertNameNotTaken(repo, input.name.uk, id);
 
     const updateData: CompositionInput = {
       ...(input.name && { name: input.name }),

@@ -1,5 +1,6 @@
 import { GraphQLError } from 'graphql';
 
+import { assertNameNotTaken } from '../compositions/compositionsMutation';
 import { markImagesAsUsed, processSlugUpdate, syncImagesCrops } from '../helpers';
 import { orderCompositionsByIds } from './tab-handlers/tabHandlersHelpers';
 import { opusServiceErrors } from '~/back-constants/errors';
@@ -81,6 +82,17 @@ const parseYear = (value: string | undefined): number | null => {
   const year = Number.parseInt(trimmed, 10);
   return Number.isFinite(year) ? year : null;
 };
+
+async function assertCompositionsNamesNotTaken(
+  compositionsRepo: ICompositionRepository,
+  compositions: GQLComposition[]
+): Promise<void> {
+  for (const composition of compositions) {
+    const name = composition.name?.trim();
+    if (!name) continue;
+    await assertNameNotTaken(compositionsRepo, name, composition.id);
+  }
+}
 
 const mapComposition = (composition: GQLComposition): CompositionInput => {
   const notesWithFiles = (composition.notes ?? []).filter((note) => note.fileUrl);
@@ -335,7 +347,6 @@ export const OpusMutation = {
 
     const repo = context.requestContainer.cradle.opusRepository;
     const compositionsRepo = context.requestContainer.cradle.compositionsRepository;
-
     const number = input.number;
     const existingByNumber = await repo.findByNumber(number);
     if (existingByNumber) {
@@ -343,11 +354,12 @@ export const OpusMutation = {
         extensions: { code: 'DUPLICATE_OPUS_NUMBER' }
       });
     }
-
     const nameForSlug = input.name.uk?.trim();
     const slug = await generateUniqueSlug(nameForSlug, {
-      checkExists: async (candidate: string) => (await repo.findBySlug(candidate)) !== null
+      checkExists: async (candidate) => (await repo.findBySlug(candidate)) !== null
     });
+
+    await assertCompositionsNamesNotTaken(compositionsRepo, input.compositions ?? []);
 
     const compositions = await compositionsRepo.syncForOpus((input.compositions ?? []).map(mapComposition));
     const compositionIds = compositions.map((c) => c.id);
@@ -441,6 +453,10 @@ export const OpusMutation = {
     const existingOpus = await findExistingOpus(repo, id);
 
     await ensureUniqueOpusNumber(repo, id, input.number);
+
+    if (input.compositions !== undefined) {
+      await assertCompositionsNamesNotTaken(compositionsRepo, input.compositions);
+    }
 
     const compositions = await handleCompositionsSync(compositionsRepo, repo, existingOpus, input.compositions);
 

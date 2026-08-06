@@ -193,6 +193,14 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
     return docs.map(toEntity);
   };
 
+  const findByName = async (name: string): Promise<Composition | null> => {
+    await dbConnect();
+    const doc = await CompositionModel.findOne({ 'name.uk': name.trim() })
+      .collation({ locale: 'uk', strength: 2 })
+      .lean<DbComposition>();
+    return doc ? toEntity(doc) : null;
+  };
+
   const create = async (input: CompositionInput): Promise<Composition> => {
     await dbConnect();
     
@@ -207,6 +215,7 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
     findByIds,
     findByIdsPaginated,
     countByIds,
+    findByName,
     create
   };
 };

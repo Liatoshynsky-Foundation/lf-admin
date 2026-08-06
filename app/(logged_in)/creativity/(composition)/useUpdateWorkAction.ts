@@ -1,14 +1,20 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import {
-  PaginatedWorksDocument,
   UpdateCompositionInput,
   useUpdateCompositionMutation
 } from '~/types/graphql/generated/graphql';
 import type { OpusCompositionData } from '~/types/opus';
+
+interface UseUpdateWorkActionResult {
+  isUpdating: boolean;
+  error: string | null;
+  handleUpdateComposition: (id: string, composition: OpusCompositionData) => Promise<void>;
+}
 
 const TOAST_MESSAGES = {
   UPDATE_SUCCESS: 'Твір успішно оновлено',
@@ -34,31 +40,36 @@ const mapCompositionToUpdateInput = (composition: OpusCompositionData): UpdateCo
   }))
 });
 
-export function useUpdateWorkAction() {
+export function useUpdateWorkAction(): UseUpdateWorkActionResult {
   const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
   const [updateCompositionMut, { loading: isUpdating }] = useUpdateCompositionMutation();
 
-  const handleUpdateComposition = async (id: string, composition: OpusCompositionData) => {
-    try {
-      await updateCompositionMut({
-        variables: {
-          id,
-          input: mapCompositionToUpdateInput(composition)
-        },
-        refetchQueries: [PaginatedWorksDocument],
-        awaitRefetchQueries: true
-      });
-
-      toast.success(TOAST_MESSAGES.UPDATE_SUCCESS);
-      router.refresh();
-    } catch (error) {
-      toast.error(TOAST_MESSAGES.UPDATE_ERROR);
-      throw error;
-    }
-  };
+  const handleUpdateComposition = useCallback(
+    async (id: string, composition: OpusCompositionData) => {
+      setError(null);
+      try {
+        await updateCompositionMut({
+          variables: {
+            id,
+            input: mapCompositionToUpdateInput(composition)
+          }
+        });
+        toast.success(TOAST_MESSAGES.UPDATE_SUCCESS);
+        router.refresh();
+      } catch (err) {
+        const message = err instanceof Error ? err.message : TOAST_MESSAGES.UPDATE_ERROR;
+        setError(message);
+        toast.error(`Помилка: ${message}`);
+        throw err;
+      }
+    },
+    [updateCompositionMut, router]
+  );
 
   return {
     handleUpdateComposition,
-    isUpdating
+    isUpdating,
+    error
   };
 }

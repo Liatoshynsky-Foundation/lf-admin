@@ -66,6 +66,7 @@ export const compositionsServiceErrors = {
   COMPOSITION_NOT_FOUND: (id: string) => `Composition with id "${id}" not found`,
   FAILED_TO_DELETE: (id: string) => `Composition with id "${id}" not found or could not be deleted`,
   COMPOSITION_NOT_CREATED: 'Repository failed to create composition record.',
+  COMPOSITION_NAME_TAKEN: (name: string) => `Композиція "${name}" вже існує`,
 };
 
 export const MediaMentionsServiceErrors = {

@@ -63,13 +63,13 @@ const mapToCreateInput = (work: OpusCompositionData): CreateCompositionInput => 
   };
 };
 
+
 export function useCreateWorkAction(): UseCreateWorkActionResult {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
   const [createComposition] = useCreateComposition();
-  const router = useRouter(); 
+  const router = useRouter();
 
   const openModal = useCallback(() => {
     setError(null);
@@ -86,20 +86,18 @@ export function useCreateWorkAction(): UseCreateWorkActionResult {
     async (work: OpusCompositionData) => {
       setIsSubmitting(true);
       setError(null);
-        
-      const result = await createComposition(mapToCreateInput(work));
-        
-      if (!result) {
-        setError('Не вдалося створити твір. Спробуйте ще раз.');
+      try {
+        await createComposition(mapToCreateInput(work));
+        setIsModalOpen(false);
+        toast.success(COMPOSITION_MUTATION_RESULTS.created);
+        router.refresh();
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Не вдалося створити твір. Спробуйте ще раз.';
+        setError(message);
+        toast.error(`Помилка: ${message}`);
+      } finally {
         setIsSubmitting(false);
-        toast.error(COMPOSITION_MUTATION_RESULTS.failed);
-        return;
       }
-
-      setIsModalOpen(false);
-      setIsSubmitting(false);
-      router.refresh();
-      toast.success(COMPOSITION_MUTATION_RESULTS.created);
     },
     [createComposition, router]
   );
