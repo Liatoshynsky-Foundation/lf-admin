@@ -60,28 +60,78 @@ const processContentFields = async (input: UpdateNewsGQLInput, updateData: Updat
 
 const TITLE_MAX_LENGTH = 150;
 
-const validateTitleMaxLength = (title: LocalizedString | undefined): void => {
-  if (!title) return;
+const DESCRIPTION_MIN_LENGTH = 2;
+const DESCRIPTION_MAX_LENGTH = 250;
 
-  (['uk', 'en'] as const).forEach((lang) => {
-    const value = title[lang];
-    if (typeof value === 'string' && value.trim().length > TITLE_MAX_LENGTH) {
-      throw new GraphQLError(newsServiceErrors.TITLE_TOO_LONG_FOR_SLUG, {
-        extensions: { code: 'BAD_USER_INPUT' }
-      });
+type LocalizedLengthValidationOptions = {
+  fieldName: 'title' | 'description';
+  minLength?: number;
+  maxLength?: number;
+};
+
+const getInvalidLocalizedLengthFields = (
+  value: LocalizedString | undefined,
+  { fieldName, minLength, maxLength }: LocalizedLengthValidationOptions
+): string[] => {
+  if (!value) return [];
+
+  const invalidFields = (['uk', 'en'] as const)
+    .filter((lang) => {
+      const localizedValue = value[lang];
+
+      if (typeof localizedValue !== 'string') {
+        return false;
+      }
+
+      const length = localizedValue.trim().length;
+
+      return (minLength !== undefined && length < minLength) || (maxLength !== undefined && length > maxLength);
+    })
+    .map((lang) => `${fieldName}.${lang}`);
+
+  return invalidFields;
+};
+
+const throwBadUserInput = (message: string, fields: string[]): void => {
+  if (fields.length === 0) return;
+
+  throw new GraphQLError(message, {
+    extensions: {
+      code: 'BAD_USER_INPUT',
+      fields
     }
   });
 };
 
-const trimLocalizedTitle = (title: LocalizedString | undefined): LocalizedString | undefined => {
-  if (!title) return title;
+const validateDescriptionLength = (description: LocalizedString | undefined): void => {
+  const invalidFields = getInvalidLocalizedLengthFields(description, {
+    fieldName: 'description',
+    minLength: DESCRIPTION_MIN_LENGTH,
+    maxLength: DESCRIPTION_MAX_LENGTH
+  });
 
-  const trimmed: LocalizedString = { ...title };
+  throwBadUserInput(newsServiceErrors.DESCRIPTION_LENGTH_INVALID, invalidFields);
+};
+
+const validateTitleMaxLength = (title: LocalizedString | undefined): void => {
+  const invalidFields = getInvalidLocalizedLengthFields(title, {
+    fieldName: 'title',
+    maxLength: TITLE_MAX_LENGTH
+  });
+
+  throwBadUserInput(newsServiceErrors.TITLE_TOO_LONG_FOR_SLUG, invalidFields);
+};
+
+const trimLocalizedString = (value: LocalizedString | undefined): LocalizedString | undefined => {
+  if (!value) return value;
+
+  const trimmed: LocalizedString = { ...value };
 
   (['uk', 'en'] as const).forEach((lang) => {
-    const value = title[lang];
-    if (typeof value === 'string') {
-      trimmed[lang] = value.trim();
+    const localizedValue = value[lang];
+
+    if (typeof localizedValue === 'string') {
+      trimmed[lang] = localizedValue.trim();
     }
   });
 
@@ -100,7 +150,13 @@ export const NewsMutation = {
 
     const repo = context.requestContainer.cradle.newsRepository;
 
-    const titleForSlug = extractTitleForSlug(input.title);
+    const trimmedInput = {
+      ...input,
+      title: trimLocalizedString(input.title) ?? input.title,
+      description: trimLocalizedString(input.description) ?? input.description
+    };
+
+    const titleForSlug = extractTitleForSlug(trimmedInput.title);
 
     if (!titleForSlug) {
       throw new Error(newsServiceErrors.TITLE_REQUIRED_FOR_SLUG);
@@ -108,7 +164,8 @@ export const NewsMutation = {
       throw new Error(newsServiceErrors.TITLE_TOO_SHORT_FOR_SLUG);
     }
 
-    validateTitleMaxLength(input.title);
+    validateTitleMaxLength(trimmedInput.title);
+    validateDescriptionLength(trimmedInput.description);
 
     const slug = await generateUniqueSlug(titleForSlug, {
       checkExists: async (slug: string) => {
@@ -117,11 +174,12 @@ export const NewsMutation = {
       }
     });
 
-    const processedInput = await processNewsContent(input);
+    const processedInput = await processNewsContent(trimmedInput);
 
     const newsData: CreateNewsInput = {
       ...processedInput,
-      title: trimLocalizedTitle(input.title) ?? input.title,
+      title: trimmedInput.title,
+      description: processedInput.description,
       slug,
       newsDate: input.newsDate,
       status: input.status || NewsStatus.Draft,
@@ -164,22 +222,30 @@ export const NewsMutation = {
       ...input
     };
 
+    const trimmedInput = {
+      ...input,
+      title: trimLocalizedString(input.title) ?? input.title,
+      description: trimLocalizedString(input.description) ?? input.description
+    };
+
+    validateDescriptionLength(trimmedInput.description);
+
     if (input.content || input.description || input.coverImage) {
-      await processContentFields(input, updateData);
+      await processContentFields(trimmedInput, updateData);
     }
 
-    if (input.title) {
-      const titleForSlug = extractTitleForSlug(input.title);
+    if (trimmedInput.title) {
+      const titleForSlug = extractTitleForSlug(trimmedInput.title);
       if (!titleForSlug) {
         throw new Error(newsServiceErrors.TITLE_REQUIRED_FOR_SLUG);
       } else if (titleForSlug.trim().length < 2) {
         throw new Error(newsServiceErrors.TITLE_TOO_SHORT_FOR_SLUG);
       }
 
-      validateTitleMaxLength(input.title);
+      validateTitleMaxLength(trimmedInput.title);
 
-      await processSlugUpdate(id, input.title, repo, updateData);
-      updateData.title = trimLocalizedTitle(input.title) ?? input.title;
+      await processSlugUpdate(id, trimmedInput.title, repo, updateData);
+      updateData.title = trimmedInput.title;
     }
 
     const res = await repo.update(id, updateData);
