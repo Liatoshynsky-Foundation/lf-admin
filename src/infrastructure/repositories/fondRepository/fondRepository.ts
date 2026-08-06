@@ -15,6 +15,8 @@ export type DbFond = {
   organizationForm: Fond['organizationForm'];
   description: Fond['description'];
   status: Fond['status']
+  casesCount: Fond['casesCount'];
+  descriptionsCount: Fond['descriptionsCount'];
   createdAt: string;
   updatedAt: string;
 }
@@ -32,6 +34,8 @@ const toEntity = (doc: DbFond): Fond =>
     organizationForm: doc.organizationForm,
     description: doc.description,
     status: doc.status,
+    casesCount: doc.casesCount ?? 0,
+    descriptionsCount: doc.descriptionsCount ?? 0,
   });
 
 export const FondRepository = ({ FondModel }: FondRepoDeps): IFondRepository => {

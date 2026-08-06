@@ -3,6 +3,7 @@ import { authQuery as AuthQuery } from './admin/AuthQuery';
 import { AssetsMutation, AssetsQuery } from './assets/Query';
 import { CaseMutation } from './case/caseMutation';
 import { CaseQuery } from './case/caseQuery';
+import { CaseType } from './case/caseType';
 import { CompositionsMutation } from './compositions/compositionsMutation';
 import { CompositionsQuery } from './compositions/compositionsQuery';
 import { EventsMutation } from './events/eventsMutation';
@@ -42,5 +43,8 @@ export const resolvers = {
     ...CompositionsQuery,
     ...CaseQuery,
     ...FondQuery
+  },
+  Case: {
+    ...CaseType
   }
 };

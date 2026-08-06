@@ -30,6 +30,7 @@ jest.mock('../../db/connect', () => jest.fn());
 const saveMock = jest.fn();
 const findOneMock = jest.fn();
 const findAllMock = jest.fn();
+const distinctMock = jest.fn();
 
 describe('caseRepository', () => {
   const MockCaseModel = jest.fn().mockImplementation(() => ({
@@ -38,7 +39,8 @@ describe('caseRepository', () => {
 
   Object.assign(MockCaseModel, {
     findOne: findOneMock,
-    find: findAllMock
+    find: findAllMock,
+    distinct: distinctMock
   });
 
   beforeEach(() => {
@@ -126,6 +128,25 @@ describe('caseRepository', () => {
     expect(result?.fondId).toBeUndefined();
     expect(result?.detailedCaseDescription).toBeUndefined();
     expect(result?.pdfFile).toStrictEqual(doc.pdfFile);
+  });
+
+  describe('countDistinctDescriptionNumbers', () => {
+    it('should return the number of distinct descriptionNumber values for a fond', async () => {
+      distinctMock.mockResolvedValue([1, 2, 3]);
+
+      const result = await repository.countDistinctDescriptionNumbers(mockFondId);
+
+      expect(distinctMock).toHaveBeenCalledWith('descriptionNumber', { fondId: mockFondId });
+      expect(result).toBe(3);
+    });
+
+    it('should return 0 when the fond has no cases', async () => {
+      distinctMock.mockResolvedValue([]);
+
+      const result = await repository.countDistinctDescriptionNumbers(mockFondId);
+
+      expect(result).toBe(0);
+    });
   });
 
   describe('findAll (buildCaseQuery)', () => {

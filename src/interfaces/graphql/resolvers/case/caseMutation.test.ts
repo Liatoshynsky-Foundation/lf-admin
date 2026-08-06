@@ -34,19 +34,25 @@ const mockUpdate = jest.fn();
 const mockDelete = jest.fn();
 const mockFindById = jest.fn();
 const mockFindByFondAndNumbers = jest.fn();
+const mockCount = jest.fn();
+const mockCountDistinctDescriptionNumbers = jest.fn();
 
 const mockCaseRepo: Partial<ICaseRepository> = {
   create: mockCreate,
   update: mockUpdate,
   delete: mockDelete,
   findById: mockFindById,
-  findByFondAndNumbers: mockFindByFondAndNumbers
+  findByFondAndNumbers: mockFindByFondAndNumbers,
+  count: mockCount,
+  countDistinctDescriptionNumbers: mockCountDistinctDescriptionNumbers
 };
 
 const mockFondFindById = jest.fn();
+const mockFondUpdate = jest.fn();
 
 const mockFondRepo: Partial<IFondRepository> = {
-  findById: mockFondFindById
+  findById: mockFondFindById,
+  update: mockFondUpdate
 };
 
 const createContext = (isAdmin: boolean) => ({
@@ -66,6 +72,9 @@ describe('CaseMutation', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockFondFindById.mockResolvedValue({ id: mockFondId });
+    mockCount.mockResolvedValue(0);
+    mockCountDistinctDescriptionNumbers.mockResolvedValue(0);
+    mockFondUpdate.mockResolvedValue({ id: mockFondId });
   });
 
   describe('createCase', () => {
@@ -131,6 +140,22 @@ describe('CaseMutation', () => {
 
       expect(mockCreate).toHaveBeenCalledTimes(1);
       expect(mockCreate).toHaveBeenCalledWith(input);
+    });
+
+    it('should recalculate and persist the parent Fond stats after a successful create', async () => {
+      const input = createMockCreateCaseInput();
+      mockFindByFondAndNumbers.mockResolvedValue(null);
+      mockCount.mockResolvedValue(3);
+      mockCountDistinctDescriptionNumbers.mockResolvedValue(2);
+
+      await CaseMutation.createCase({}, { input }, adminContext);
+
+      expect(mockCount).toHaveBeenCalledWith({ fondId: mockFondId });
+      expect(mockCountDistinctDescriptionNumbers).toHaveBeenCalledWith(mockFondId);
+      expect(mockFondUpdate).toHaveBeenCalledWith(mockFondId, {
+        casesCount: 3,
+        descriptionsCount: 2
+      });
     });
 
     it('should provide a fallback hidden status when missing', async () => {
@@ -294,6 +319,45 @@ describe('CaseMutation', () => {
 
       await expect(CaseMutation.updateCase({}, { id, input }, adminContext)).rejects.toThrow(unrelatedError);
     });
+
+    describe('Fond stats recalculation', () => {
+      const otherFondId = 'other-fond-id';
+
+      it('should recalculate stats for both the old and new Fond when the case is reassigned', async () => {
+        mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
+        mockFindByFondAndNumbers.mockResolvedValue(null);
+        mockUpdate.mockResolvedValue({ id, fondId: otherFondId, descriptionNumber: 1, caseNumber: 1 });
+        const input = createMockUpdateCaseInput({ fondId: otherFondId });
+
+        await CaseMutation.updateCase({}, { id, input }, adminContext);
+
+        expect(mockFondUpdate).toHaveBeenCalledWith(mockFondId, expect.any(Object));
+        expect(mockFondUpdate).toHaveBeenCalledWith(otherFondId, expect.any(Object));
+        expect(mockFondUpdate).toHaveBeenCalledTimes(2);
+      });
+
+      it('should recalculate stats once for the same Fond when only descriptionNumber changes', async () => {
+        mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
+        mockFindByFondAndNumbers.mockResolvedValue(null);
+        mockUpdate.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 2, caseNumber: 1 });
+        const input = createMockUpdateCaseInput({ descriptionNumber: 2 });
+
+        await CaseMutation.updateCase({}, { id, input }, adminContext);
+
+        expect(mockFondUpdate).toHaveBeenCalledTimes(1);
+        expect(mockFondUpdate).toHaveBeenCalledWith(mockFondId, expect.any(Object));
+      });
+
+      it('should NOT recalculate stats when neither fondId nor descriptionNumber changed', async () => {
+        mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
+        mockUpdate.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
+        const input = createMockUpdateCaseInput();
+
+        await CaseMutation.updateCase({}, { id, input }, adminContext);
+
+        expect(mockFondUpdate).not.toHaveBeenCalled();
+      });
+    });
   });
 
   describe('validation', () => {
@@ -346,15 +410,36 @@ describe('CaseMutation', () => {
     });
 
     it('should return false when the case could not be deleted', async () => {
+      mockFindById.mockResolvedValue({ id: 'non-existent', fondId: mockFondId });
       mockDelete.mockResolvedValue(false);
       const result = await CaseMutation.deleteCase({}, { id: 'non-existent' }, adminContext);
       expect(result).toBe(false);
+      expect(mockFondUpdate).not.toHaveBeenCalled();
     });
 
-    it('should return true on successful delete', async () => {
+    it('should return true on successful delete and recalculate the parent Fond stats', async () => {
+      mockFindById.mockResolvedValue({ id: 'some-id', fondId: mockFondId });
       mockDelete.mockResolvedValue(true);
+      mockCount.mockResolvedValue(1);
+      mockCountDistinctDescriptionNumbers.mockResolvedValue(1);
+
       const result = await CaseMutation.deleteCase({}, { id: 'some-id' }, adminContext);
+
       expect(result).toBe(true);
+      expect(mockFondUpdate).toHaveBeenCalledWith(mockFondId, {
+        casesCount: 1,
+        descriptionsCount: 1
+      });
+    });
+
+    it('should NOT recalculate Fond stats when the case to delete cannot be found', async () => {
+      mockFindById.mockResolvedValue(null);
+      mockDelete.mockResolvedValue(false);
+
+      const result = await CaseMutation.deleteCase({}, { id: 'non-existent' }, adminContext);
+
+      expect(result).toBe(false);
+      expect(mockFondUpdate).not.toHaveBeenCalled();
     });
   });
 });

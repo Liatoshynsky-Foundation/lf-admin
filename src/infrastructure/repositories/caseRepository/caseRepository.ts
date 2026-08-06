@@ -77,6 +77,13 @@ export const CaseRepository = ({ CaseModel }: CaseRepoDeps): ICaseRepository => 
         return null;
       }
       return toEntity(existing.toObject() as unknown as DbCase);
+    },
+
+    countDistinctDescriptionNumbers: async (fondId: Case['fondId']): Promise<number> => {
+      await dbConnect();
+
+      const distinctDescriptionNumbers = await CaseModel.distinct('descriptionNumber', { fondId });
+      return distinctDescriptionNumbers.length;
     }
   };
 };

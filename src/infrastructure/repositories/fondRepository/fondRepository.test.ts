@@ -17,6 +17,8 @@ const createMockFondDoc = (overrides: Partial<DbFond> = {}): DbFond => ({
   chronologicalBoundaries: { uk: '1918', en: '1918' },
   description: { uk: 'опис', en: 'desc' },
   organizationForm: { uk: 'оргФорм', en: 'orgForm' },
+  casesCount: 0,
+  descriptionsCount: 0,
   createdAt: '2026-07-29T10:00:00.000Z',
   updatedAt: '2026-07-29T10:00:00.000Z',
   ...overrides
@@ -93,5 +95,28 @@ describe('fondRepository', () => {
     const result = await repository.findByFondNumber(999);
 
     expect(result).toBeNull();
+  });
+
+  it('should default casesCount and descriptionsCount to 0 when missing on the document', async () => {
+    const doc = createMockFondDoc({
+      casesCount: undefined as unknown as number,
+      descriptionsCount: undefined as unknown as number
+    });
+    findOneMock.mockResolvedValue({ toObject: () => doc });
+
+    const result = await repository.findByFondNumber(doc.fondNumber);
+
+    expect((result as Fond).casesCount).toBe(0);
+    expect((result as Fond).descriptionsCount).toBe(0);
+  });
+
+  it('should map casesCount and descriptionsCount when present on the document', async () => {
+    const doc = createMockFondDoc({ casesCount: 5, descriptionsCount: 2 });
+    findOneMock.mockResolvedValue({ toObject: () => doc });
+
+    const result = await repository.findByFondNumber(doc.fondNumber);
+
+    expect((result as Fond).casesCount).toBe(5);
+    expect((result as Fond).descriptionsCount).toBe(2);
   });
 });
