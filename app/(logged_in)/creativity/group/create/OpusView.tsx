@@ -3,13 +3,11 @@
 import { Accordion, AccordionDetails, AccordionSummary, Box, Typography } from '@mui/material';
 import { ChevronDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import toast from 'react-hot-toast';
 
 import { styles } from './page.styles';
 import {
   OPUS_DETAILS_LABELS,
   OPUS_GROUP_PATH,
-  OPUS_MUTATION_RESULTS,
   OPUS_PAGE_TITLES,
   OPUSES_BASE_PATH
 } from '~/constants/opus';
@@ -22,8 +20,12 @@ import { useUpsertOpus } from '~/shared/hooks/use-upsert-opus/useUpsertOpus';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 interface OpusViewProps {
-  data: Omit<ReturnType<typeof useUpsertOpus>, 'duplicateCompositionNames' | 'invalidCompositionIds'> & {
+  data: Omit<
+    ReturnType<typeof useUpsertOpus>,
+    'duplicateCompositionNames' | 'duplicateCompositionErrors' | 'invalidCompositionIds'
+  > & {
     duplicateCompositionNames?: string[];
+    duplicateCompositionErrors?: Record<string, string>;
     invalidCompositionIds?: string[];
   };
   mode?: 'create' | 'edit';
@@ -35,6 +37,7 @@ export default function OpusView({ data, mode = 'create' }: Readonly<OpusViewPro
     setDetails,
     detailsErrors,
     duplicateCompositionNames,
+    duplicateCompositionErrors,
     invalidCompositionIds,
     seoValue,
     setSeoValue,
@@ -51,18 +54,13 @@ export default function OpusView({ data, mode = 'create' }: Readonly<OpusViewPro
       document.activeElement.blur();
     }
 
-    try {
-      const id = await handleSave(BaseContentStatuses.Draft);
+    const id = await handleSave(BaseContentStatuses.Draft);
 
-      if (!id) {
-        return;
-      }
-
-      toast.success(mode === 'create' ? OPUS_MUTATION_RESULTS.created : OPUS_MUTATION_RESULTS.updated);
-      router.push(`${OPUS_GROUP_PATH}/${id}/content?from=${mode}`);
-    } catch (error) {
-      toast.error(`Помилка: ${error instanceof Error ? error.message : String(error)}`);
+    if (!id) {
+      return;
     }
+
+    router.push(`${OPUS_GROUP_PATH}/${id}/content?from=${mode}`);
   };
 
   return (
@@ -88,6 +86,7 @@ export default function OpusView({ data, mode = 'create' }: Readonly<OpusViewPro
               onChange={setDetails}
               errors={detailsErrors}
               duplicateCompositionNames={duplicateCompositionNames}
+              duplicateCompositionErrors={duplicateCompositionErrors}
               invalidCompositionIds={invalidCompositionIds}
             />
           </AccordionDetails>

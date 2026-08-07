@@ -6,12 +6,19 @@ import { createCompositionId } from '../use-upsert-opus/useUpsertOpus';
 import { isMediaItemFilled, mapMediaItemFromApi, resolveMediaName } from './compositionMedia';
 import { GroupData, GroupDataField, GroupPhoto } from '~/constants/creativity';
 import {
+  COMPOSITION_NAME_REQUIRED_ERROR,
   OPUS_FIELD_LIMITS,
   OPUS_MUTATION_RESULTS,
   OPUS_VALIDATION_MESSAGES,
   REQUIRED_FIELD_ERROR
 } from '~/constants/opus';
 import { EditorLanguage } from '~/constants/publications';
+import {
+  getDuplicateCompositionError,
+  getInvalidCompositionIds,
+  isCompositionNameRequiredError,
+  normalizeCompositionName
+} from '~/lib/utils/compositionErrors';
 import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
 import { useOpusById } from '~/shared/hooks/use-opuses/useOpuses';
 import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
@@ -153,6 +160,7 @@ export const useGroupContent = (id: string) => {
   const [isDirty, setIsDirty] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState<EditorLanguage>('UA');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [invalidCompositionIds, setInvalidCompositionIds] = useState<string[]>([]);
   const [anchors, setAnchors] = useState<MenuAnchor>({
     navigation: null,
     publish: null
@@ -365,8 +373,21 @@ export const useGroupContent = (id: string) => {
       toast.success('Групу опубліковано');
       return true;
     } catch (error) {
-      console.error('Помилка при збереженні контенту групи:', error);
-      toast.error('Помилка при збереженні. Перевірте консоль.');
+      const duplicateError = getDuplicateCompositionError(error);
+      if (duplicateError) {
+        const duplicateErrors = Object.fromEntries(
+          (groupData.compositions || [])
+            .filter((composition) => normalizeCompositionName(composition.name) === duplicateError.name)
+            .map((composition) => [`compositions.${composition.id}.name`, duplicateError.message])
+        );
+        setErrors((previous) => ({ ...previous, ...duplicateErrors }));
+      }
+      if (isCompositionNameRequiredError(error)) {
+        setInvalidCompositionIds(getInvalidCompositionIds(groupData.compositions || []));
+        toast.error(COMPOSITION_NAME_REQUIRED_ERROR);
+        return false;
+      }
+      toast.error(error instanceof Error ? error.message : String(error));
       return false;
     }
   };
@@ -424,6 +445,9 @@ export const useGroupContent = (id: string) => {
       newErrors.creationYear = REQUIRED_FIELD_ERROR;
     }
 
+    const emptyCompositionIds = getInvalidCompositionIds(groupData?.compositions || []);
+    setInvalidCompositionIds(emptyCompositionIds);
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -436,6 +460,16 @@ export const useGroupContent = (id: string) => {
         delete newErrors[field as string];
         return newErrors;
       });
+    }
+
+    if (field === 'compositions') {
+      setErrors((previous) =>
+        Object.fromEntries(Object.entries(previous).filter(([key]) => !key.startsWith('compositions.')))
+      );
+      if (Array.isArray(value)) {
+        const compositions = value as GroupData['compositions'];
+        setInvalidCompositionIds(getInvalidCompositionIds(compositions));
+      }
     }
 
     setGroupData((prev) => {
@@ -453,6 +487,11 @@ export const useGroupContent = (id: string) => {
   const handlePublishClick = async () => {
     if (isSaving) return;
     if (!validate()) {
+      if (groupData?.compositions.some((composition) => !composition.name.trim())) {
+        toast.error(COMPOSITION_NAME_REQUIRED_ERROR);
+        setIsDetailsExpanded(true);
+        return;
+      }
       toast.error('Заповніть усі обов’язкові поля перед публікацією.');
       setIsDetailsExpanded(true);
       return;
@@ -471,8 +510,7 @@ export const useGroupContent = (id: string) => {
       setIsDeleteModalOpen(false);
       navigate('/creativity');
     } catch (error) {
-      console.error('Помилка при видаленні:', error);
-      toast.error('Не вдалося видалити групу. Спробуйте ще раз.');
+      toast.error(error instanceof Error ? error.message : String(error));
     }
   };
 
@@ -484,18 +522,25 @@ export const useGroupContent = (id: string) => {
     }
 
     if (!validate()) {
+      if (groupData?.compositions.some((composition) => !composition.name.trim())) {
+        toast.error(COMPOSITION_NAME_REQUIRED_ERROR);
+        setIsDetailsExpanded(true);
+        return;
+      }
       toast.error('Заповніть усі обов’язкові поля перед публікацією.');
       setIsDetailsExpanded(true);
       return;
     }
 
     if (optionId === 'PUBLISH') {
-      await handleSave(BaseContentStatuses.Published);
-      setIsDirty(false);
+      const isSuccess = await handleSave(BaseContentStatuses.Published);
+      if (isSuccess) setIsDirty(false);
     } else if (optionId === 'PUBLISH_AND_EXIT') {
-      await handleSave(BaseContentStatuses.Published);
-      setIsDirty(false);
-      setTimeout(() => setShouldExitAfterSave(true), 50);
+      const isSuccess = await handleSave(BaseContentStatuses.Published);
+      if (isSuccess) {
+        setIsDirty(false);
+        setTimeout(() => setShouldExitAfterSave(true), 50);
+      }
     }
   };
 
@@ -506,6 +551,7 @@ export const useGroupContent = (id: string) => {
     isDirty,
     currentLanguage,
     errors,
+    invalidCompositionIds,
     anchors,
     publishedTitle,
     isDetailsExpanded,

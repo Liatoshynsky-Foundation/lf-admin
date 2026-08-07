@@ -4,7 +4,7 @@ import { Box, Typography } from '@mui/material';
 import { styles } from './GroupWorksSection.styles';
 import { WorkRow } from './WorkRow';
 import Button from '~/components/design-system/button/Button';
-import { OPUS_DETAILS_LABELS } from '~/constants/opus';
+import { COMPOSITION_NAME_REQUIRED_ERROR, OPUS_DETAILS_LABELS } from '~/constants/opus';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
 import CompositionModal from '~/shared/components/forms/opus-details-block/composition-modal/CompositionModal';
@@ -17,6 +17,8 @@ type GroupWorksSectionProps = {
   works: OpusCompositionData[];
   onChange: (works: OpusCompositionData[]) => void;
   duplicateCompositionNames?: string[];
+  duplicateCompositionErrors?: Record<string, string>;
+  compositionErrors?: Record<string, string>;
   invalidCompositionIds?: string[];
 };
 
@@ -24,6 +26,8 @@ export const GroupWorksSection = ({
   works,
   onChange,
   duplicateCompositionNames = [],
+  duplicateCompositionErrors = {},
+  compositionErrors = {},
   invalidCompositionIds = []
 }: GroupWorksSectionProps) => {
   const normalizeName = (name: string) => name.trim().toLocaleLowerCase('uk-UA');
@@ -49,7 +53,27 @@ export const GroupWorksSection = ({
       ids.forEach((id) => duplicateCompositionIds.add(id));
     }
   });
-  
+
+  const getCompositionError = (composition: OpusCompositionData) => {
+    const normalizedName = normalizeName(composition.name);
+
+    const compositionError = compositionErrors[`compositions.${composition.id}.name`];
+
+    if (compositionError) {
+      return compositionError;
+    }
+
+    if (duplicateCompositionIds.has(composition.id)) {
+      return duplicateCompositionErrors[normalizedName];
+    }
+
+    if (invalidCompositionIds.includes(composition.id)) {
+      return COMPOSITION_NAME_REQUIRED_ERROR;
+    }
+
+    return undefined;
+  };
+
   const {
     isModalOpen,
     modalMode,
@@ -87,8 +111,7 @@ export const GroupWorksSection = ({
               <WorkRow
                 composition={composition}
                 index={index}
-                hasDuplicateName={duplicateCompositionIds.has(composition.id)}
-                hasNameError={invalidCompositionIds.includes(composition.id)}
+                error={getCompositionError(composition)}
                 excludedSuggestionIds={getExcludedSuggestionIds(works, index)}
                 updateCompositionTitle={updateCompositionTitle}
                 fillComposition={fillComposition}

@@ -89,7 +89,11 @@ async function assertCompositionsNamesNotTaken(
 ): Promise<void> {
   for (const composition of compositions) {
     const name = composition.name?.trim();
-    if (!name) continue;
+    if (!name) {
+      throw new GraphQLError(opusServiceErrors.COMPOSITION_NAME_REQUIRED, {
+        extensions: { code: 'BAD_USER_INPUT' }
+      });
+    }
     await assertNameNotTaken(compositionsRepo, name, composition.id);
   }
 }
@@ -100,7 +104,7 @@ const mapComposition = (composition: GQLComposition): CompositionInput => {
 
   return {
     id: composition.id,
-    name: { uk: composition.name, en: composition.name },
+    name: { uk: composition.name.trim(), en: composition.name.trim() },
     year: parseYear(composition.year ?? undefined),
     genre: composition.genre ?? null,
     audioAvailable: audios.length > 0,

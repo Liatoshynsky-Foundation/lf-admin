@@ -1,0 +1,59 @@
+import { COMPOSITION_NAME_REQUIRED_ERROR } from '~/constants/opus';
+
+export const normalizeCompositionName = (name: string): string =>
+  name.trim().toLocaleLowerCase('uk-UA');
+
+export const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (typeof error === 'string') {
+    return error;
+  }
+
+  return 'Unknown error';
+};
+
+export const getDuplicateCompositionError = (
+  error: unknown
+): { name: string; message: string } | null => {
+  const message = getErrorMessage(error);
+  const match = /"([^"]+)"/.exec(message);
+
+  if (!match?.[1]) {
+    return null;
+  }
+
+  return {
+    name: normalizeCompositionName(match[1]),
+    message
+  };
+};
+
+export const getInvalidCompositionIds = <
+  T extends { id: string; name: string }
+>(
+    compositions: T[]
+  ): string[] =>
+    compositions
+      .filter((composition) => !composition.name.trim())
+      .map((composition) => composition.id);
+
+export const isCompositionNameRequiredError = (
+  error: unknown
+): boolean =>
+  getErrorMessage(error) === 'Composition name is required';
+
+export const getCompositionNameRequiredMessage = (): string =>
+  COMPOSITION_NAME_REQUIRED_ERROR;
+
+export const getDuplicateCompositionName = (error: unknown): string | null => {
+  if (!(error instanceof Error)) {
+    return null;
+  }
+
+  const match = /"([^"]+)"/.exec(error.message);
+
+  return match?.[1] ? normalizeCompositionName(match[1]) : null;
+};

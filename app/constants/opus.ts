@@ -119,8 +119,12 @@ export const REQUIRED_FIELD_ERROR = 'Обовʼязкове поле';
 export const OPUS_MUTATION_RESULTS = {
   created: 'Групу створено',
   updated: 'Групу оновлено',
-  deleted: 'Групу видалено'
+  deleted: 'Групу видалено',
+  createFailed: 'Не вдалося створити групу',
+  updateFailed: 'Не вдалося оновити групу'
 } as const;
+
+export const COMPOSITION_NAME_REQUIRED_ERROR = 'Заповніть поле назви твору або оберіть твір зі списку';
 
 export const COMPOSITION_MUTATION_RESULTS = {
   created: 'Твір створено',

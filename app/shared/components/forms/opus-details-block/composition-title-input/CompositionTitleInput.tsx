@@ -24,6 +24,7 @@ interface CompositionOption {
 export interface CompositionTitleInputProps {
   value: string;
   error?: boolean;
+  helperMessage?: string;
   excludedSuggestionIds?: string[];
   onChangeText: (title: string) => void;
   onSelectSuggestion: (suggestion: OpusCompositionSuggestion) => void;
@@ -33,6 +34,7 @@ export interface CompositionTitleInputProps {
 export default function CompositionTitleInput({
   value,
   error = false,
+  helperMessage,
   excludedSuggestionIds = [],
   onChangeText,
   onSelectSuggestion,
@@ -45,9 +47,7 @@ export default function CompositionTitleInput({
   const suggestions = useMemo(() => {
     const excludedIds = new Set(excludedSuggestionIds);
 
-    return (data?.searchCompositions ?? []).filter(
-      (suggestion) => !suggestion.id || !excludedIds.has(suggestion.id)
-    );
+    return (data?.searchCompositions ?? []).filter((suggestion) => !suggestion.id || !excludedIds.has(suggestion.id));
   }, [data, excludedSuggestionIds]);
 
   const options = useMemo<CompositionOption[]>(() => {
@@ -133,7 +133,9 @@ export default function CompositionTitleInput({
           </Box>
         );
       }}
-      renderInput={(params) => <TextField {...params} size="small" error={error} sx={styles.input} />}
+      renderInput={(params) => (
+        <TextField {...params} size="small" error={error} helperText={helperMessage} sx={styles.input} />
+      )}
     />
   );
 }
