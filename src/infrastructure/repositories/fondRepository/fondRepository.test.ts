@@ -26,6 +26,22 @@ const createMockFondDoc = (overrides: Partial<DbFond> = {}): DbFond => ({
 
 jest.mock('../../db/connect', () => jest.fn());
 
+jest.mock('mongoose', () => {
+  const MockObjectId = function (this: { toString: () => string }, id: string) {
+    this.toString = () => id;
+  };
+
+  type ObjectIdMock = typeof MockObjectId & { isValid: (id: string) => boolean };
+
+  (MockObjectId as unknown as ObjectIdMock).isValid = (id: string) => /^[0-9a-fA-F]{24}$/.test(id);
+
+  return {
+    Types: {
+      ObjectId: MockObjectId
+    }
+  };
+});
+
 const saveMock = jest.fn();
 const findOneMock = jest.fn();
 const findAllMock = jest.fn();
