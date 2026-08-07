@@ -24,3 +24,10 @@ export const headerSectionListConfig: BlockConfig = {
     { type: CONTENT_TYPE.SECTION_LIST, required: true }
   ]
 };
+
+export const headerQuoteConfig: BlockConfig = {
+  allowed: [
+    { type: CONTENT_TYPE.HEADER, required: true },
+    { type: CONTENT_TYPE.QUOTE, required: true }
+  ]
+};

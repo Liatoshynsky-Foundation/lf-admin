@@ -52,6 +52,8 @@ const createEmptyContentItem = (type: ContentTypeId): ContentItem => {
         }
       ]
     };
+  case CONTENT_TYPE.QUOTE:
+    return { id, type, source: emptyLocalizedJSON(), text: emptyLocalizedJSON() };
   }
 };
 

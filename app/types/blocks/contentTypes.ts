@@ -4,7 +4,8 @@ export const CONTENT_TYPE = {
   HEADER: 'header',
   PARAGRAPH: 'paragraph',
   LIST: 'list',
-  SECTION_LIST: 'section-list'
+  SECTION_LIST: 'section-list',
+  QUOTE: 'quote'
 } as const;
 
 export type ContentTypeId = (typeof CONTENT_TYPE)[keyof typeof CONTENT_TYPE];
@@ -43,8 +44,15 @@ export interface SectionListContentItem extends BaseContentItem {
   label?: string;
 }
 
+export interface QuoteContentItem extends BaseContentItem {
+  type: 'quote';
+  source: LocalizedJSON;
+  text: LocalizedJSON;
+}
+
 export type ContentItem =
   | HeaderContentItem
   | ParagraphContentItem
   | ListContentItem
-  | SectionListContentItem;
+  | SectionListContentItem
+  | QuoteContentItem;

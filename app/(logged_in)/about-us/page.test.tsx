@@ -23,10 +23,6 @@ jest.mock('~/shared/components/block/Block', () => ({
   Block: ({ blockId }: { blockId: string }) => <div data-testid={blockId}>{blockId}</div>
 }));
 
-jest.mock('~/shared/components/about-us/Liatoshynsky-office/Liatoshynsky-office', () => ({
-  LiatoshynskyOffice: () => <div data-testid="office">LiatoshynskyOffice</div>
-}));
-
 jest.mock('~/shared/components/about-us/foundation-founders/FoundationFounders', () => ({
   FoundationFounders: () => <div data-testid="founders">FoundationFounders</div>
 }));
@@ -43,7 +39,7 @@ describe('About Page', () => {
       'foundation',
       'mission',
       'OurGoals',
-      'office',
+      'LiatoshynskyOffice',
       'WhatWeDo',
       'founders'
     ],
