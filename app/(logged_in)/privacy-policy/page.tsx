@@ -1,36 +1,82 @@
 'use client';
 import { DragEndEvent } from '@dnd-kit/core';
 
-import { PAGE_IDS } from '~/constants/pageBlocks';
+import { descriptionListNoteConfig } from '~/constants/blockSchemas';
+import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
+import { Block } from '~/shared/components/block/Block';
 import { EditablePageLayout } from '~/shared/components/editable-page-layout/EditablePageLayout';
+import {
+  descriptionListNoteAdapter,
+  DescriptionListNoteBlock
+} from '~/shared/components/privacy-policy/components/edit-description-list-note-block/descriptionListNote.adapter';
 import { ContactUs } from '~/shared/components/privacy-policy/contact-us/ContactUs';
-import { Cookies } from '~/shared/components/privacy-policy/cookies/Cookies';
 import { DataRetention } from '~/shared/components/privacy-policy/data-retention/DataRetention';
-import { DataUsage } from '~/shared/components/privacy-policy/data-usage/DataUsage';
+import { dataUsageAdapter } from '~/shared/components/privacy-policy/data-usage/data-usage.adapter';
 import { DataWeCollect } from '~/shared/components/privacy-policy/data-we-collect/DataWeCollect';
-import { GoogleAuth } from '~/shared/components/privacy-policy/google-auth/GoogleAuth';
 import { IntroSection } from '~/shared/components/privacy-policy/intro-section/IntroSection';
 import { NewsletterSubscription } from '~/shared/components/privacy-policy/newsletter-subscription/NewsletterSubscription';
 import { SocialNetworks } from '~/shared/components/privacy-policy/social-networks/SocialNetworks';
 import { TargetedAds } from '~/shared/components/privacy-policy/targeted-ads/TargetedAds';
-import { UserRights } from '~/shared/components/privacy-policy/user-rights/UserRights';
 import { SortableItemWrapper } from '~/shared/components/sortable-item-wrapper/SortableItemWrapper';
 import { SortableList } from '~/shared/components/sortable-list/SortableList';
+import { BlockContentAdapter } from '~/shared/hooks/use-block-content/useBlockContent';
 import { useStore } from '~/store';
+import { DataUsageBlock } from '~/types/store/pages/privacy-policy';
 
+const DataUsageBlockView = () => (
+  <Block
+    pageId={PAGE_IDS.PRIVACY_POLICY}
+    blockId={BLOCK_IDS.DATA_USAGE}
+    config={descriptionListNoteConfig}
+    adapter={dataUsageAdapter as BlockContentAdapter<DataUsageBlock>}
+    title="Як ми використовуємо ваші дані"
+  />
+);
+
+const CookiesBlockView = () => (
+  <Block<DescriptionListNoteBlock>
+    pageId={PAGE_IDS.PRIVACY_POLICY}
+    blockId={BLOCK_IDS.COOKIES}
+    config={descriptionListNoteConfig}
+    adapter={descriptionListNoteAdapter}
+    title="Які cookie ми використовуємо"
+  />
+);
+
+const GoogleAuthBlockView = () => (
+  <Block<DescriptionListNoteBlock>
+    pageId={PAGE_IDS.PRIVACY_POLICY}
+    blockId={BLOCK_IDS.GOOGLE_AUTH}
+    config={descriptionListNoteConfig}
+    adapter={descriptionListNoteAdapter}
+    title="Авторизація через Google-акаунт"
+  />
+);
+
+const UserRightsBlockView = () => (
+  <Block<DescriptionListNoteBlock>
+    pageId={PAGE_IDS.PRIVACY_POLICY}
+    blockId={BLOCK_IDS.USER_RIGHTS}
+    config={descriptionListNoteConfig}
+    adapter={descriptionListNoteAdapter}
+    title="Ваші права"
+  />
+);
 
 const BLOCKS_CONFIG: Record<string, () => React.JSX.Element> = {
-  'DataWeCollect': DataWeCollect,
-  'DataUsage': DataUsage,
-  'Cookies': Cookies,
-  'GoogleAuth': GoogleAuth,
-  'SocialNetworks': SocialNetworks,
-  'TargetedAds': TargetedAds,
-  'NewsletterSubscription': NewsletterSubscription,
-  'DataRetention': DataRetention,
-  'UserRights': UserRights,
-  'ContactUs': ContactUs
+  DataWeCollect: DataWeCollect,
+  SocialNetworks: SocialNetworks,
+  TargetedAds: TargetedAds,
+  NewsletterSubscription: NewsletterSubscription,
+  DataRetention: DataRetention,
+  ContactUs: ContactUs,
+
+  //new
+  UserRights: UserRightsBlockView,
+  GoogleAuth: GoogleAuthBlockView,
+  DataUsage: DataUsageBlockView,
+  Cookies: CookiesBlockView
 };
 
 export default function Page() {
@@ -64,6 +110,5 @@ export default function Page() {
         </SortableList>
       )}
     </EditablePageLayout>
-
   );
 }

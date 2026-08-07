@@ -1,9 +1,11 @@
 import { act, renderHook } from '@testing-library/react';
+import { JSONContent } from '@tiptap/react';
 
-import { emptyDoc } from '../use-points-list/usePointsList';
 import { useSectionList } from './useSectionList';
 import { ensureIds } from '~/lib/utils/ensureIds';
 import { mockSetField } from '~/shared/components/privacy-policy/__mocks__/setup-mocks';
+
+const emptyDoc: JSONContent = { type: 'doc', content: [] };
 
 beforeAll(() => {
   Object.defineProperty(global, 'crypto', {
