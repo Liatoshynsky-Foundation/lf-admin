@@ -1,10 +1,6 @@
 import { Case } from '~/src/domain/entities/Case';
 import { GraphQLContext } from '~/src/shared/types/container/types';
 
-/**
- * Formats the archival reference (Шифр справи) for a Case.
- * Strict format: `Ф. {fondNumber}, оп. {descriptionNumber}, спр. {caseNumber}`.
- */
 export const formatCipher = (fondNumber: number, descriptionNumber: number, caseNumber: number): string =>
   `Ф. ${fondNumber}, оп. ${descriptionNumber}, спр. ${caseNumber}`;
 
