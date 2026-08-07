@@ -68,7 +68,13 @@ export function Block<TBlock = Record<string, unknown>>({
             return (
               <SortableItemWrapper id={item.id} key={item.id} gripHandle>
                 <Box sx={styles.itemWrapper}>
-                  <Renderer item={item} locale={locale} onChange={(next) => updateItem(item.id, next)} />
+                  <Renderer
+                    item={item}
+                    locale={locale}
+                    pageId={pageId}
+                    blockId={blockId}
+                    onChange={(next) => updateItem(item.id, next)}
+                  />
                   {isRemovable(item) && (
                     <Button variant="text" color="secondary" onClick={() => removeItem(item.id)}>
                       Видалити

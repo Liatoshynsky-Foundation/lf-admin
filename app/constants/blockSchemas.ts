@@ -17,3 +17,10 @@ export const descriptionListNoteConfig: BlockConfig = {
     { type: CONTENT_TYPE.PARAGRAPH, required: true }
   ]
 };
+
+export const headerSectionListConfig: BlockConfig = {
+  allowed: [
+    { type: CONTENT_TYPE.HEADER, required: true },
+    { type: CONTENT_TYPE.SECTION_LIST, required: true }
+  ]
+};

@@ -19,18 +19,12 @@ jest.mock('~/shared/components/about-us/our-mission/OurMission', () => ({
   default: () => <div data-testid="mission">OurMission</div>
 }));
 
-jest.mock('~/shared/components/about-us/our-goals/OurGoals', () => ({
-  __esModule: true,
-  default: () => <div data-testid="goals">OurGoals</div>
+jest.mock('~/shared/components/block/Block', () => ({
+  Block: ({ blockId }: { blockId: string }) => <div data-testid={blockId}>{blockId}</div>
 }));
 
 jest.mock('~/shared/components/about-us/Liatoshynsky-office/Liatoshynsky-office', () => ({
   LiatoshynskyOffice: () => <div data-testid="office">LiatoshynskyOffice</div>
-}));
-
-jest.mock('~/shared/components/about-us/what-we-do/WhatWeDo', () => ({
-  __esModule: true,
-  default: () => <div data-testid="what-we-do">WhatWeDo</div>
 }));
 
 jest.mock('~/shared/components/about-us/foundation-founders/FoundationFounders', () => ({
@@ -48,9 +42,9 @@ describe('About Page', () => {
       'intro',
       'foundation',
       'mission',
-      'goals',
+      'OurGoals',
       'office',
-      'what-we-do',
+      'WhatWeDo',
       'founders'
     ],
     expectedReorderedBlocks: ['intro', 'mission', 'goals']

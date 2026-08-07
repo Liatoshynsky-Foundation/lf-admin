@@ -40,6 +40,18 @@ const createEmptyContentItem = (type: ContentTypeId): ContentItem => {
     return { id, type, value: emptyLocalizedJSON() };
   case CONTENT_TYPE.LIST:
     return { id, type, items: [{ id: crypto.randomUUID(), ...emptyLocalizedJSON() }] };
+  case CONTENT_TYPE.SECTION_LIST:
+    return {
+      id,
+      type,
+      items: [
+        {
+          id: crypto.randomUUID(),
+          title: emptyLocalizedJSON(),
+          description: emptyLocalizedJSON()
+        }
+      ]
+    };
   }
 };
 
