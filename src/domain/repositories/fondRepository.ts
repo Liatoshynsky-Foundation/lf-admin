@@ -3,8 +3,6 @@ import { FiltersInput, IBaseRepository } from './baseRepository';
 
 export type FondFilters = Omit<FiltersInput, 'slug'>
 
-// casesCount/descriptionsCount are derived automatically from Cases and are not
-// user-settable via the create/update GraphQL mutations.
 export type CreateFondInput = Omit<Fond, 'id' | 'createdAt' | 'updatedAt' | 'casesCount' | 'descriptionsCount'>
 
 export type UpdateFondInput = Partial<Omit<Fond, 'id' | 'createdAt' | 'updatedAt' | 'casesCount' | 'descriptionsCount'>>
