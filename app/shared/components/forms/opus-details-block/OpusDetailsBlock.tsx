@@ -13,9 +13,16 @@ interface OpusDetailsBlockProps {
   onChange: (updater: (prev: OpusDetailsValue) => OpusDetailsValue) => void;
   errors: OpusDetailsErrors;
   duplicateCompositionNames?: string[];
+  invalidCompositionIds?: string[];
 }
 
-export default function OpusDetailsBlock({ value, onChange, errors, duplicateCompositionNames }: Readonly<OpusDetailsBlockProps>) {
+export default function OpusDetailsBlock({
+  value,
+  onChange,
+  errors,
+  duplicateCompositionNames,
+  invalidCompositionIds
+}: Readonly<OpusDetailsBlockProps>) {
   const updateField = <Key extends keyof OpusDetailsValue>(key: Key, fieldValue: OpusDetailsValue[Key]): void => {
     onChange((prev) => ({ ...prev, [key]: fieldValue }));
   };
@@ -102,6 +109,7 @@ export default function OpusDetailsBlock({ value, onChange, errors, duplicateCom
         works={value.compositions}
         onChange={(compositions) => updateField('compositions', compositions)}
         duplicateCompositionNames={duplicateCompositionNames}
+        invalidCompositionIds={invalidCompositionIds}
       />
     </Box>
   );

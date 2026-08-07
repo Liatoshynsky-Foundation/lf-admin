@@ -24,6 +24,7 @@ interface CompositionOption {
 export interface CompositionTitleInputProps {
   value: string;
   error?: boolean;
+  excludedSuggestionIds?: string[];
   onChangeText: (title: string) => void;
   onSelectSuggestion: (suggestion: OpusCompositionSuggestion) => void;
   onCreateNew: () => void;
@@ -32,6 +33,7 @@ export interface CompositionTitleInputProps {
 export default function CompositionTitleInput({
   value,
   error = false,
+  excludedSuggestionIds = [],
   onChangeText,
   onSelectSuggestion,
   onCreateNew
@@ -40,7 +42,13 @@ export default function CompositionTitleInput({
 
   const debouncedSearch = useDebounce(value.trim(), 300);
   const { data } = useSearchCompositions(debouncedSearch);
-  const suggestions = useMemo(() => data?.searchCompositions ?? [], [data]);
+  const suggestions = useMemo(() => {
+    const excludedIds = new Set(excludedSuggestionIds);
+
+    return (data?.searchCompositions ?? []).filter(
+      (suggestion) => !suggestion.id || !excludedIds.has(suggestion.id)
+    );
+  }, [data, excludedSuggestionIds]);
 
   const options = useMemo<CompositionOption[]>(() => {
     const suggestionOptions = suggestions.map((suggestion, index) => ({

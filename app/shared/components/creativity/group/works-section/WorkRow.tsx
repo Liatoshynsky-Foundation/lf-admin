@@ -9,6 +9,8 @@ export type WorkRowProps = {
   composition: OpusCompositionData;
   index: number;
   hasDuplicateName?: boolean;
+  hasNameError?: boolean;
+  excludedSuggestionIds?: string[];
   updateCompositionTitle: (id: string, title: string) => void;
   fillComposition: (index: number, suggestion: OpusCompositionSuggestion) => void;
   openCreateModal: (index: number) => void;
@@ -20,6 +22,8 @@ export const WorkRow = ({
   composition,
   index,
   hasDuplicateName = false,
+  hasNameError = false,
+  excludedSuggestionIds = [],
   updateCompositionTitle,
   fillComposition,
   openCreateModal,
@@ -31,7 +35,8 @@ export const WorkRow = ({
       <Box sx={styles.compositionInput}>
         <CompositionTitleInput
           value={composition.name}
-          error={hasDuplicateName}
+          error={hasDuplicateName || hasNameError}
+          excludedSuggestionIds={excludedSuggestionIds}
           onChangeText={(name) => updateCompositionTitle(composition.id, name)}
           onSelectSuggestion={(suggestion) => fillComposition(index, suggestion)}
           onCreateNew={() => openCreateModal(index)}

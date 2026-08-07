@@ -10,16 +10,22 @@ import { DeleteCompositionModal } from '~/shared/components/delete-composition-m
 import CompositionModal from '~/shared/components/forms/opus-details-block/composition-modal/CompositionModal';
 import { SortableItemWrapper } from '~/shared/components/sortable-item-wrapper/SortableItemWrapper';
 import { SortableList } from '~/shared/components/sortable-list/SortableList';
-import { useCompositionsForm } from '~/shared/hooks/use-compositions/useCompositions';
+import { getExcludedSuggestionIds, useCompositionsForm } from '~/shared/hooks/use-compositions/useCompositions';
 import type { OpusCompositionData } from '~/types/opus';
 
 type GroupWorksSectionProps = {
   works: OpusCompositionData[];
   onChange: (works: OpusCompositionData[]) => void;
   duplicateCompositionNames?: string[];
+  invalidCompositionIds?: string[];
 };
 
-export const GroupWorksSection = ({ works, onChange, duplicateCompositionNames = [] }: GroupWorksSectionProps) => {
+export const GroupWorksSection = ({
+  works,
+  onChange,
+  duplicateCompositionNames = [],
+  invalidCompositionIds = []
+}: GroupWorksSectionProps) => {
   const normalizeName = (name: string) => name.trim().toLocaleLowerCase('uk-UA');
 
   const compositionIdsByName = new Map<string, string[]>();
@@ -82,6 +88,8 @@ export const GroupWorksSection = ({ works, onChange, duplicateCompositionNames =
                 composition={composition}
                 index={index}
                 hasDuplicateName={duplicateCompositionIds.has(composition.id)}
+                hasNameError={invalidCompositionIds.includes(composition.id)}
+                excludedSuggestionIds={getExcludedSuggestionIds(works, index)}
                 updateCompositionTitle={updateCompositionTitle}
                 fillComposition={fillComposition}
                 openCreateModal={openCreateModal}

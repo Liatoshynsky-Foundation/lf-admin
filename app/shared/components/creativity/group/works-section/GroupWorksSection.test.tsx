@@ -289,6 +289,18 @@ describe('GroupWorksSection Component', () => {
     expect(screen.queryByTestId(TEST_IDS.deleteModal)).not.toBeInTheDocument();
   });
 
+  it('marks compositions reported as duplicate by the backend', () => {
+    render(
+      <GroupWorksSection
+        works={defaultWorks}
+        onChange={jest.fn()}
+        duplicateCompositionNames={[`  ${defaultWorks[0].name}  `]}
+      />
+    );
+
+    expect(screen.getByTestId(TEST_IDS.row('1'))).toBeInTheDocument();
+  });
+
   it('resets deleteTargetId to null when delete modal is closed', () => {
     mockUseCompositions.mockReturnValue({ ...mockHookReturns, deleteTargetId: '1' });
     render(<GroupWorksSection works={defaultWorks} onChange={jest.fn()} />);
