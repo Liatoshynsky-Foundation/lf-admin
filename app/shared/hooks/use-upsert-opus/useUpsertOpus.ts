@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import {
+  COMPOSITION_DUPLICATE_ERROR,
   COMPOSITION_NAME_REQUIRED_ERROR,
   initialOpusDetails,
   initialOpusSeoValue,
@@ -9,7 +10,7 @@ import {
   OPUS_MUTATION_RESULTS,
   OPUS_VALIDATION_MESSAGES
 } from '~/constants/opus';
-import  {getDuplicateCompositionError, getErrorMessage, getInvalidCompositionIds, isCompositionNameRequiredError } from '~/lib/utils/compositionErrors';
+import  {getDuplicateCompositionError, getDuplicateCompositionIds, getErrorMessage, getInvalidCompositionIds, isCompositionNameRequiredError } from '~/lib/utils/compositionErrors';
 import { generateUniqueId } from '~/lib/utils/generateUniqueId';
 import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import { useCreateOpus, useOpusById, useUpdateOpus } from '~/shared/hooks/use-opuses/useOpuses';
@@ -293,6 +294,11 @@ export const useUpsertOpus = (
     const invalidIds = getInvalidCompositionIds(value.compositions);
     setInvalidCompositionIds(invalidIds);
 
+    const duplicateIds = getDuplicateCompositionIds(value.compositions);
+    if (duplicateIds.length > 0) {
+      toast.error(COMPOSITION_DUPLICATE_ERROR);
+    }
+
     if (invalidIds.length > 0) {
       toast.error( COMPOSITION_NAME_REQUIRED_ERROR);
     }
@@ -301,7 +307,8 @@ export const useUpsertOpus = (
       !numberError &&
       !nameError &&
       !creationYearError &&
-      invalidIds.length === 0
+      invalidIds.length === 0 &&
+      duplicateIds.length === 0
     );
   };
 

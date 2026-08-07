@@ -125,6 +125,8 @@ export const OPUS_MUTATION_RESULTS = {
 } as const;
 
 export const COMPOSITION_NAME_REQUIRED_ERROR = 'Заповніть поле назви твору або оберіть твір зі списку';
+export const COMPOSITION_DUPLICATE_ERROR = 'Назви творів мають бути унікальними';
+export const COMPOSITION_REQUIRED_FIELDS_ERROR = 'Заповніть усі обов’язкові поля перед публікацією';
 
 export const COMPOSITION_MUTATION_RESULTS = {
   created: 'Твір створено',

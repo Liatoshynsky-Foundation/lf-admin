@@ -3,6 +3,25 @@ import { COMPOSITION_NAME_REQUIRED_ERROR } from '~/constants/opus';
 export const normalizeCompositionName = (name: string): string =>
   name.trim().toLocaleLowerCase('uk-UA');
 
+export const getDuplicateCompositionIds = <T extends { id: string; name: string }>(
+  compositions: T[]
+): string[] => {
+  const idsByName = new Map<string, string[]>();
+
+  compositions.forEach((composition) => {
+    const name = normalizeCompositionName(composition.name);
+    if (!name) return;
+
+    const ids = idsByName.get(name) ?? [];
+    ids.push(composition.id);
+    idsByName.set(name, ids);
+  });
+
+  return Array.from(idsByName.values())
+    .filter((ids) => ids.length > 1)
+    .flat();
+};
+
 export const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
     return error.message;

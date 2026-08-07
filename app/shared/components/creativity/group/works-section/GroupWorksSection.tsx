@@ -4,13 +4,14 @@ import { Box, Typography } from '@mui/material';
 import { styles } from './GroupWorksSection.styles';
 import { WorkRow } from './WorkRow';
 import Button from '~/components/design-system/button/Button';
-import { COMPOSITION_NAME_REQUIRED_ERROR, OPUS_DETAILS_LABELS } from '~/constants/opus';
+import { COMPOSITION_DUPLICATE_ERROR, COMPOSITION_NAME_REQUIRED_ERROR, OPUS_DETAILS_LABELS } from '~/constants/opus';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
 import CompositionModal from '~/shared/components/forms/opus-details-block/composition-modal/CompositionModal';
 import { SortableItemWrapper } from '~/shared/components/sortable-item-wrapper/SortableItemWrapper';
 import { SortableList } from '~/shared/components/sortable-list/SortableList';
 import { getExcludedSuggestionIds, useCompositionsForm } from '~/shared/hooks/use-compositions/useCompositions';
+import { useDebounce } from '~/shared/hooks/use-debounce/useDebounce';
 import type { OpusCompositionData } from '~/types/opus';
 
 type GroupWorksSectionProps = {
@@ -31,10 +32,11 @@ export const GroupWorksSection = ({
   invalidCompositionIds = []
 }: GroupWorksSectionProps) => {
   const normalizeName = (name: string) => name.trim().toLocaleLowerCase('uk-UA');
+  const debouncedWorks = useDebounce(works);
 
   const compositionIdsByName = new Map<string, string[]>();
 
-  works.forEach((work) => {
+  debouncedWorks.forEach((work) => {
     const normalizedName = normalizeName(work.name);
 
     if (!normalizedName) return;
@@ -64,7 +66,7 @@ export const GroupWorksSection = ({
     }
 
     if (duplicateCompositionIds.has(composition.id)) {
-      return duplicateCompositionErrors[normalizedName];
+      return duplicateCompositionErrors[normalizedName] ?? COMPOSITION_DUPLICATE_ERROR;
     }
 
     if (invalidCompositionIds.includes(composition.id)) {

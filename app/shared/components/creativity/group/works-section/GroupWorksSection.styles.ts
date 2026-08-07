@@ -48,5 +48,6 @@ export const styles: Record<string, SxProps<Theme>> = {
   rowIcon: {
     color: 'text.primary',
     flexShrink: 0
+    
   },
 };

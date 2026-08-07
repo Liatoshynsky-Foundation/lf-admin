@@ -6,7 +6,9 @@ import { createCompositionId } from '../use-upsert-opus/useUpsertOpus';
 import { isMediaItemFilled, mapMediaItemFromApi, resolveMediaName } from './compositionMedia';
 import { GroupData, GroupDataField, GroupPhoto } from '~/constants/creativity';
 import {
+  COMPOSITION_DUPLICATE_ERROR,
   COMPOSITION_NAME_REQUIRED_ERROR,
+  COMPOSITION_REQUIRED_FIELDS_ERROR,
   OPUS_FIELD_LIMITS,
   OPUS_MUTATION_RESULTS,
   OPUS_VALIDATION_MESSAGES,
@@ -15,6 +17,7 @@ import {
 import { EditorLanguage } from '~/constants/publications';
 import {
   getDuplicateCompositionError,
+  getDuplicateCompositionIds,
   getInvalidCompositionIds,
   isCompositionNameRequiredError,
   normalizeCompositionName
@@ -378,9 +381,11 @@ export const useGroupContent = (id: string) => {
         const duplicateErrors = Object.fromEntries(
           (groupData.compositions || [])
             .filter((composition) => normalizeCompositionName(composition.name) === duplicateError.name)
-            .map((composition) => [`compositions.${composition.id}.name`, duplicateError.message])
+            .map((composition) => [`compositions.${composition.id}.name`, COMPOSITION_DUPLICATE_ERROR])
         );
         setErrors((previous) => ({ ...previous, ...duplicateErrors }));
+        toast.error(COMPOSITION_DUPLICATE_ERROR);
+        return false;
       }
       if (isCompositionNameRequiredError(error)) {
         setInvalidCompositionIds(getInvalidCompositionIds(groupData.compositions || []));
@@ -448,6 +453,15 @@ export const useGroupContent = (id: string) => {
     const emptyCompositionIds = getInvalidCompositionIds(groupData?.compositions || []);
     setInvalidCompositionIds(emptyCompositionIds);
 
+    const duplicateCompositionIds = getDuplicateCompositionIds(groupData?.compositions || []);
+    if (duplicateCompositionIds.length > 0) {
+      (groupData?.compositions || [])
+        .filter((composition) => duplicateCompositionIds.includes(composition.id))
+        .forEach((composition) => {
+          newErrors[`compositions.${composition.id}.name`] = COMPOSITION_DUPLICATE_ERROR;
+        });
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -487,12 +501,17 @@ export const useGroupContent = (id: string) => {
   const handlePublishClick = async () => {
     if (isSaving) return;
     if (!validate()) {
+      if (getDuplicateCompositionIds(groupData?.compositions || []).length > 0) {
+        toast.error(COMPOSITION_DUPLICATE_ERROR);
+        setIsDetailsExpanded(true);
+        return;
+      }
       if (groupData?.compositions.some((composition) => !composition.name.trim())) {
         toast.error(COMPOSITION_NAME_REQUIRED_ERROR);
         setIsDetailsExpanded(true);
         return;
       }
-      toast.error('Заповніть усі обов’язкові поля перед публікацією.');
+      toast.error(COMPOSITION_REQUIRED_FIELDS_ERROR);
       setIsDetailsExpanded(true);
       return;
     }
@@ -522,12 +541,17 @@ export const useGroupContent = (id: string) => {
     }
 
     if (!validate()) {
+      if (getDuplicateCompositionIds(groupData?.compositions || []).length > 0) {
+        toast.error(COMPOSITION_DUPLICATE_ERROR);
+        setIsDetailsExpanded(true);
+        return;
+      }
       if (groupData?.compositions.some((composition) => !composition.name.trim())) {
         toast.error(COMPOSITION_NAME_REQUIRED_ERROR);
         setIsDetailsExpanded(true);
         return;
       }
-      toast.error('Заповніть усі обов’язкові поля перед публікацією.');
+      toast.error(COMPOSITION_REQUIRED_FIELDS_ERROR);
       setIsDetailsExpanded(true);
       return;
     }
