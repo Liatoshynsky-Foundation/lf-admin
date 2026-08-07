@@ -1,22 +1,15 @@
+import { createMockContext } from '../testUtils';
 import { CaseType, formatCipher } from './caseType';
 import { Case } from '~/src/domain/entities/Case';
-import { IFondRepository } from '~/src/domain/repositories/fondRepository';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
-const mockFondFindById = jest.fn();
+const mockFondLoaderLoad = jest.fn();
 
-const mockFondRepo: Partial<IFondRepository> = {
-  findById: mockFondFindById
+const mockFondLoader = {
+  load: mockFondLoaderLoad
 };
 
-const createContext = () =>
-  ({
-    requestContainer: {
-      cradle: {
-        fondRepository: mockFondRepo
-      }
-    }
-  }) as never;
+const createContext = () => createMockContext(true, 'fondLoader', mockFondLoader);
 
 const mockCase: Case = {
   id: 'case-id',
@@ -43,17 +36,17 @@ describe('CaseType.cipher', () => {
     jest.clearAllMocks();
   });
 
-  it('should resolve the cipher using the parent Case and its Fond number', async () => {
-    mockFondFindById.mockResolvedValue({ id: 'fond-id', fondNumber: 1 });
+  it('should resolve the cipher using the parent Case and its Fond number via the batching fondLoader', async () => {
+    mockFondLoaderLoad.mockResolvedValue({ id: 'fond-id', fondNumber: 1 });
 
     const result = await CaseType.cipher(mockCase, {}, createContext());
 
-    expect(mockFondFindById).toHaveBeenCalledWith('fond-id');
+    expect(mockFondLoaderLoad).toHaveBeenCalledWith('fond-id');
     expect(result).toBe('Ф. 1, оп. 1, спр. 3');
   });
 
   it('should fall back to 0 for fondNumber when the referenced Fond cannot be found', async () => {
-    mockFondFindById.mockResolvedValue(null);
+    mockFondLoaderLoad.mockResolvedValue(null);
 
     const result = await CaseType.cipher(mockCase, {}, createContext());
 

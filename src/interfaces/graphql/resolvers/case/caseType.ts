@@ -6,8 +6,8 @@ export const formatCipher = (fondNumber: number, descriptionNumber: number, case
 
 export const CaseType = {
   cipher: async (parent: Case, _args: unknown, context: GraphQLContext): Promise<string> => {
-    const { fondRepository } = context.requestContainer.cradle;
-    const fond = await fondRepository.findById(parent.fondId);
+    const { fondLoader } = context.requestContainer.cradle;
+    const fond = await fondLoader.load(parent.fondId);
 
     return formatCipher(fond?.fondNumber ?? 0, parent.descriptionNumber, parent.caseNumber);
   }

@@ -119,4 +119,37 @@ describe('fondRepository', () => {
     expect((result as Fond).casesCount).toBe(5);
     expect((result as Fond).descriptionsCount).toBe(2);
   });
+
+  describe('findByIds', () => {
+    const otherId = '65eddf5e2f1a2b3c4d5e6f7b';
+
+    it('should query only by the valid ObjectIds and return the mapped entities', async () => {
+      const docs = [createMockFondDoc(), createMockFondDoc({ _id: { toString: () => otherId }, fondNumber: 2 })];
+      const leanMock = jest.fn().mockResolvedValue(docs);
+      findAllMock.mockReturnValue({ lean: leanMock });
+
+      const result = await repository.findByIds([mockId, otherId]);
+
+      expect(findAllMock).toHaveBeenCalledWith({ _id: { $in: [mockId, otherId] } });
+      expect(result).toHaveLength(2);
+      expect(result[0].fondNumber).toBe(1);
+      expect(result[1].fondNumber).toBe(2);
+    });
+
+    it('should filter out invalid ObjectIds before querying', async () => {
+      const leanMock = jest.fn().mockResolvedValue([createMockFondDoc()]);
+      findAllMock.mockReturnValue({ lean: leanMock });
+
+      await repository.findByIds([mockId, 'not-a-valid-object-id']);
+
+      expect(findAllMock).toHaveBeenCalledWith({ _id: { $in: [mockId] } });
+    });
+
+    it('should return an empty array without querying when no valid ids are provided', async () => {
+      const result = await repository.findByIds(['not-a-valid-object-id']);
+
+      expect(findAllMock).not.toHaveBeenCalled();
+      expect(result).toEqual([]);
+    });
+  });
 });
