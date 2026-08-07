@@ -10,15 +10,6 @@ jest.mock('~/shared/components/about-us/Intro-section/IntroSection', () => ({
   IntroSection: () => <div data-testid="intro">IntroSection</div>
 }));
 
-jest.mock('~/shared/components/about-us/Liatoshynsky-foundation/LiatoshynskyFoundation', () => ({
-  LiatoshynskyFoundation: () => <div data-testid="foundation">LiatoshynskyFoundation</div>
-}));
-
-jest.mock('~/shared/components/about-us/our-mission/OurMission', () => ({
-  __esModule: true,
-  default: () => <div data-testid="mission">OurMission</div>
-}));
-
 jest.mock('~/shared/components/block/Block', () => ({
   Block: ({ blockId }: { blockId: string }) => <div data-testid={blockId}>{blockId}</div>
 }));
@@ -36,8 +27,8 @@ describe('About Page', () => {
     pageId: PAGE_IDS.ABOUT_US,
     childTestIds: [
       'intro',
-      'foundation',
-      'mission',
+      'FoundationInfo',
+      'OurMission',
       'OurGoals',
       'LiatoshynskyOffice',
       'WhatWeDo',

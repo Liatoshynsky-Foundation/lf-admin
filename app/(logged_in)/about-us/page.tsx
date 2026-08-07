@@ -1,24 +1,51 @@
 'use client';
 import { DragEndEvent } from '@dnd-kit/core';
 
-import { headerQuoteConfig, headerSectionListConfig } from '~/constants/blockSchemas';
+import {
+  foundationBlockConfig,
+  headerQuoteConfig,
+  headerSectionListConfig,
+  missionBlockConfig
+} from '~/constants/blockSchemas';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { FoundationFounders } from '~/shared/components/about-us/foundation-founders/FoundationFounders';
 import { IntroSection } from '~/shared/components/about-us/Intro-section/IntroSection';
-import { LiatoshynskyFoundation } from '~/shared/components/about-us/Liatoshynsky-foundation/LiatoshynskyFoundation';
+import { foundationAdapter } from '~/shared/components/about-us/Liatoshynsky-foundation/foundation.adapter';
 import { officeAdapter } from '~/shared/components/about-us/Liatoshynsky-office/office.adapter';
 import { ourGoalsAdapter } from '~/shared/components/about-us/our-goals/our-goals.adapter';
-import OurMission from '~/shared/components/about-us/our-mission/OurMission';
+import { missionAdapter } from '~/shared/components/about-us/our-mission/mission.adapter';
 import { whatWeDoAdapter } from '~/shared/components/about-us/what-we-do/what-we-do.adapter';
 import { Block } from '~/shared/components/block/Block';
 import { EditablePageLayout } from '~/shared/components/editable-page-layout/EditablePageLayout';
 import { SortableItemWrapper } from '~/shared/components/sortable-item-wrapper/SortableItemWrapper';
 import { SortableList } from '~/shared/components/sortable-list/SortableList';
 import { useStore } from '~/store';
+import type { FoundationInfo } from '~/types/store/pages/about-us/blocks/liatoshynskyFoundationBlock';
 import type { LiatoshynskyOfficeBlock } from '~/types/store/pages/about-us/blocks/liatoshynskyOfficeBlock';
+import type { OurMissionBlock } from '~/types/store/pages/about-us/blocks/missionBlock';
 import type { OurGoalsBlock } from '~/types/store/pages/about-us/blocks/ourGoalsBlock';
 import type { WhatWeDoBlock } from '~/types/store/pages/about-us/blocks/whatWeDoBlock';
+
+const OurMissionBlockView = () => (
+  <Block<OurMissionBlock>
+    pageId={PAGE_IDS.ABOUT_US}
+    blockId={BLOCK_IDS.OUR_MISSION}
+    config={missionBlockConfig}
+    adapter={missionAdapter}
+    title="Наша місія"
+  />
+);
+
+const LiatoshynskyFoundationBlockView = () => (
+  <Block<FoundationInfo>
+    pageId={PAGE_IDS.ABOUT_US}
+    blockId={BLOCK_IDS.LIATOSHYNSKY_FOUNDATION}
+    config={foundationBlockConfig}
+    adapter={foundationAdapter}
+    title="Фундація Лятошинського"
+  />
+);
 
 const OurGoalsBlockView = () => (
   <Block<OurGoalsBlock>
@@ -51,8 +78,8 @@ const LiatoshynskyOfficeBlockView = () => (
 );
 
 const BLOCKS_CONFIG: Record<string, () => React.JSX.Element> = {
-  foundation: LiatoshynskyFoundation,
-  mission: OurMission,
+  foundation: LiatoshynskyFoundationBlockView,
+  mission: OurMissionBlockView,
   goals: OurGoalsBlockView,
   office: LiatoshynskyOfficeBlockView,
   'what-we-do': WhatWeDoBlockView,

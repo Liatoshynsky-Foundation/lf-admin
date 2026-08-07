@@ -1,11 +1,12 @@
-import type { LocalizedJSON } from '~/types/common';
+import type { ImageType, LocalizedJSON } from '~/types/common';
 
 export const CONTENT_TYPE = {
   HEADER: 'header',
   PARAGRAPH: 'paragraph',
   LIST: 'list',
   SECTION_LIST: 'section-list',
-  QUOTE: 'quote'
+  QUOTE: 'quote',
+  IMAGE: 'image'
 } as const;
 
 export type ContentTypeId = (typeof CONTENT_TYPE)[keyof typeof CONTENT_TYPE];
@@ -30,6 +31,7 @@ export interface ParagraphContentItem extends BaseContentItem {
 export interface ListContentItem extends BaseContentItem {
   type: 'list';
   items: Array<{ id: string } & LocalizedJSON>;
+  label?: string;
 }
 
 export interface SectionListEntry {
@@ -50,9 +52,18 @@ export interface QuoteContentItem extends BaseContentItem {
   text: LocalizedJSON;
 }
 
+export interface ImageContentItem extends BaseContentItem {
+  type: 'image';
+  value: ImageType;
+  label?: string;
+  aspectRatio?: number;
+  showCaption?: boolean;
+}
+
 export type ContentItem =
   | HeaderContentItem
   | ParagraphContentItem
   | ListContentItem
   | SectionListContentItem
-  | QuoteContentItem;
+  | QuoteContentItem
+  | ImageContentItem;

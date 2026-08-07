@@ -31,3 +31,22 @@ export const headerQuoteConfig: BlockConfig = {
     { type: CONTENT_TYPE.QUOTE, required: true }
   ]
 };
+
+export const missionBlockConfig: BlockConfig = {
+  allowed: [
+    { type: CONTENT_TYPE.HEADER, required: true },
+    { type: CONTENT_TYPE.LIST, required: true },
+    { type: CONTENT_TYPE.IMAGE, required: true },
+    { type: CONTENT_TYPE.IMAGE, required: true }
+  ]
+};
+
+export const foundationBlockConfig: BlockConfig = {
+  allowed: [
+    { type: CONTENT_TYPE.HEADER, required: true },
+    { type: CONTENT_TYPE.PARAGRAPH, required: true },
+    { type: CONTENT_TYPE.PARAGRAPH, required: true },
+    { type: CONTENT_TYPE.PARAGRAPH, required: true },
+    { type: CONTENT_TYPE.IMAGE, required: true }
+  ]
+};
