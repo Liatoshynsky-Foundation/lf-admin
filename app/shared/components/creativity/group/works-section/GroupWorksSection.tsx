@@ -4,7 +4,7 @@ import { Box, Typography } from '@mui/material';
 import { styles } from './GroupWorksSection.styles';
 import { WorkRow } from './WorkRow';
 import Button from '~/components/design-system/button/Button';
-import { COMPOSITION_DUPLICATE_ERROR, OPUS_DETAILS_LABELS } from '~/constants/opus';
+import { COMPOSITION_DUPLICATE_INPUT_ERROR, OPUS_DETAILS_LABELS } from '~/constants/opus';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
 import CompositionModal from '~/shared/components/forms/opus-details-block/composition-modal/CompositionModal';
@@ -27,7 +27,6 @@ export const GroupWorksSection = ({
   works,
   onChange,
   duplicateCompositionNames = [],
-  duplicateCompositionErrors = {},
   compositionErrors = {},
   invalidCompositionIds = []
 }: GroupWorksSectionProps) => {
@@ -49,24 +48,24 @@ export const GroupWorksSection = ({
   const externalDuplicateNames = new Set(duplicateCompositionNames.map(normalizeName));
 
   const duplicateCompositionIds = new Set<string>();
+  const duplicateMessageCompositionIds = new Set<string>();
 
   compositionIdsByName.forEach((ids, name) => {
     if (ids.length > 1 || externalDuplicateNames.has(name)) {
       ids.forEach((id) => duplicateCompositionIds.add(id));
+      ids.slice(1).forEach((id) => duplicateMessageCompositionIds.add(id));
     }
   });
 
   const getCompositionError = (composition: OpusCompositionData) => {
-    const normalizedName = normalizeName(composition.name);
+    if (duplicateMessageCompositionIds.has(composition.id)) {
+      return COMPOSITION_DUPLICATE_INPUT_ERROR;
+    }
 
     const compositionError = compositionErrors[`compositions.${composition.id}.name`];
 
-    if (compositionError) {
+    if (compositionError && compositionError !== COMPOSITION_DUPLICATE_INPUT_ERROR) {
       return compositionError;
-    }
-
-    if (duplicateCompositionIds.has(composition.id)) {
-      return duplicateCompositionErrors[normalizedName] ?? COMPOSITION_DUPLICATE_ERROR;
     }
 
     return undefined;
@@ -110,7 +109,11 @@ export const GroupWorksSection = ({
                 composition={composition}
                 index={index}
                 error={getCompositionError(composition)}
-                hasError={invalidCompositionIds.includes(composition.id)}
+                hasError={
+                  invalidCompositionIds.includes(composition.id) ||
+                  duplicateCompositionIds.has(composition.id) ||
+                  Boolean(compositionErrors[`compositions.${composition.id}.name`])
+                }
                 excludedSuggestionIds={getExcludedSuggestionIds(works, index)}
                 updateCompositionTitle={updateCompositionTitle}
                 fillComposition={fillComposition}

@@ -7,6 +7,7 @@ import { isMediaItemFilled, mapMediaItemFromApi, resolveMediaName } from './comp
 import { GroupData, GroupDataField, GroupPhoto } from '~/constants/creativity';
 import {
   COMPOSITION_DUPLICATE_ERROR,
+  COMPOSITION_DUPLICATE_INPUT_ERROR,
   COMPOSITION_NAME_REQUIRED_ERROR,
   COMPOSITION_REQUIRED_FIELDS_ERROR,
   OPUS_FIELD_LIMITS,
@@ -381,7 +382,7 @@ export const useGroupContent = (id: string) => {
         const duplicateErrors = Object.fromEntries(
           (groupData.compositions || [])
             .filter((composition) => normalizeCompositionName(composition.name) === duplicateError.name)
-            .map((composition) => [`compositions.${composition.id}.name`, COMPOSITION_DUPLICATE_ERROR])
+            .map((composition) => [`compositions.${composition.id}.name`, COMPOSITION_DUPLICATE_INPUT_ERROR])
         );
         setErrors((previous) => ({ ...previous, ...duplicateErrors }));
         toast.error(COMPOSITION_DUPLICATE_ERROR);
@@ -458,7 +459,7 @@ export const useGroupContent = (id: string) => {
       (groupData?.compositions || [])
         .filter((composition) => duplicateCompositionIds.includes(composition.id))
         .forEach((composition) => {
-          newErrors[`compositions.${composition.id}.name`] = COMPOSITION_DUPLICATE_ERROR;
+          newErrors[`compositions.${composition.id}.name`] = COMPOSITION_DUPLICATE_INPUT_ERROR;
         });
     }
 
