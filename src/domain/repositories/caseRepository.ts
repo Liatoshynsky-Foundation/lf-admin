@@ -16,4 +16,5 @@ export type ICaseRepository = IBaseRepository<Case, CaseFilters> & {
     descriptionNumber: Case['descriptionNumber'],
     caseNumber: Case['caseNumber']
   ): Promise<Case | null>;
+  countDistinctDescriptionNumbers(fondId: Case['fondId']): Promise<number>;
 };

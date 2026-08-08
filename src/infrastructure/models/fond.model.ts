@@ -32,6 +32,8 @@ const fondSchema = new Schema<Fond>(
       enum: Array.from(Object.values(BaseContentStatuses)),
       default: BaseContentStatuses.Hidden
     },
+    casesCount: { type: Number, required: true, default: 0 },
+    descriptionsCount: { type: Number, required: true, default: 0 },
   },
   {
     timestamps: true,
