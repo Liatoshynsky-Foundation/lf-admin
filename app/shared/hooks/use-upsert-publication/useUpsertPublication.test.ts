@@ -653,6 +653,135 @@ describe('useUpsertPublication Hook', () => {
     });
   });
 
+  describe('coverImage payload', () => {
+    it('should set coverImage src to null when ogImage is not provided', async () => {
+      (checkIsSeoInvalid as jest.Mock).mockReturnValueOnce(false);
+      mockCreateNews.mockResolvedValue({ data: { createNews: { id: 'no-image-news' } } });
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
+
+      act(() => {
+        result.current.setAdminTitle('Internal Draft News');
+        const seoState = createValidSeoState('news');
+        seoState.ogImage = null;
+        result.current.setSeoValue(seoState);
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(mockCreateNews).toHaveBeenCalledWith(
+        expect.objectContaining({
+          coverImage: expect.objectContaining({
+            src: null
+          })
+        })
+      );
+    });
+
+    it('should set coverImage src to ogImage URL when provided', async () => {
+      (checkIsSeoInvalid as jest.Mock).mockReturnValueOnce(false);
+      mockCreateNews.mockResolvedValue({ data: { createNews: { id: 'img-news' } } });
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
+
+      act(() => {
+        result.current.setAdminTitle('News With Image');
+        const seoState = createValidSeoState('news');
+        seoState.ogImage = 'https://cdn.example.com/cover.jpg';
+        result.current.setSeoValue(seoState);
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(mockCreateNews).toHaveBeenCalledWith(
+        expect.objectContaining({
+          coverImage: expect.objectContaining({
+            src: 'https://cdn.example.com/cover.jpg'
+          })
+        })
+      );
+    });
+
+    it('should not leak adminTitle into coverImage alt fields', async () => {
+      (checkIsSeoInvalid as jest.Mock).mockReturnValueOnce(false);
+      mockCreateNews.mockResolvedValue({ data: { createNews: { id: 'no-leak-news' } } });
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
+
+      act(() => {
+        result.current.setAdminTitle('SECRET INTERNAL TITLE');
+        const seoState = createValidSeoState('news');
+        seoState.ogImage = null;
+        result.current.setSeoValue(seoState);
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(mockCreateNews).toHaveBeenCalledWith(
+        expect.objectContaining({
+          coverImage: expect.objectContaining({
+            alt: { uk: '', en: '' },
+            caption: { uk: '', en: '' },
+            src: null
+          })
+        })
+      );
+    });
+
+    it('should set alt text from seoValue altText when provided', async () => {
+      (checkIsSeoInvalid as jest.Mock).mockReturnValueOnce(false);
+      mockCreateNews.mockResolvedValue({ data: { createNews: { id: 'alt-news' } } });
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
+
+      act(() => {
+        result.current.setAdminTitle('News With Alt');
+        const seoState = createValidSeoState('news');
+        seoState.meta.uk.altText = { uk: 'Alt UK text', en: 'Alt EN text' };
+        seoState.meta.en.altText = { uk: 'Alt UK text', en: 'Alt EN text' };
+        seoState.ogImage = 'https://cdn.example.com/cover.jpg';
+        result.current.setSeoValue(seoState);
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(mockCreateNews).toHaveBeenCalledWith(
+        expect.objectContaining({
+          coverImage: expect.objectContaining({
+            alt: { uk: 'Alt UK text', en: 'Alt EN text' }
+          })
+        })
+      );
+    });
+
+    it('should set caption to empty strings regardless of adminTitle', async () => {
+      (checkIsSeoInvalid as jest.Mock).mockReturnValueOnce(false);
+      mockCreateEvent.mockResolvedValue({ data: { createEvent: { id: 'evt-caption' } } });
+      const { result } = renderHook(() => useUpsertPublication({ type: 'events' }));
+
+      act(() => {
+        result.current.setAdminTitle('Event With Caption');
+        result.current.setSeoValue(createValidSeoState('events'));
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(mockCreateEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          coverImage: expect.objectContaining({
+            caption: { uk: '', en: '' }
+          })
+        })
+      );
+    });
+  });
+
   it('should hit catch block in handleSave when mutation fails', async () => {
     mockCreateNews.mockRejectedValue(new Error('Server Crash'));
 

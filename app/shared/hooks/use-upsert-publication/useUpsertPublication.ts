@@ -209,9 +209,9 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       allowIndexation: { uk: seoValue.allowIndexing.uk, en: seoValue.allowIndexing.en },
       publishedAt: publishDate?.toISOString(),
       coverImage: {
-        src: seoValue.ogImage || adminTitle,
-        alt: { uk: ukMeta.altText?.uk || adminTitle, en: enMeta.altText?.en || adminTitle },
-        caption: { uk: adminTitle, en: adminTitle },
+        src: seoValue.ogImage || null,
+        alt: { uk: ukMeta.altText?.uk || '', en: enMeta.altText?.en || '' },
+        caption: { uk: '', en: '' },
         ...buildCoverImageCropPayload(crop)
       }
     };
