@@ -4,7 +4,7 @@ import { Box, Typography } from '@mui/material';
 import { styles } from './GroupWorksSection.styles';
 import { WorkRow } from './WorkRow';
 import Button from '~/components/design-system/button/Button';
-import { COMPOSITION_DUPLICATE_ERROR, COMPOSITION_NAME_REQUIRED_ERROR, OPUS_DETAILS_LABELS } from '~/constants/opus';
+import { COMPOSITION_DUPLICATE_ERROR, OPUS_DETAILS_LABELS } from '~/constants/opus';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
 import CompositionModal from '~/shared/components/forms/opus-details-block/composition-modal/CompositionModal';
@@ -69,10 +69,6 @@ export const GroupWorksSection = ({
       return duplicateCompositionErrors[normalizedName] ?? COMPOSITION_DUPLICATE_ERROR;
     }
 
-    if (invalidCompositionIds.includes(composition.id)) {
-      return COMPOSITION_NAME_REQUIRED_ERROR;
-    }
-
     return undefined;
   };
 
@@ -114,6 +110,7 @@ export const GroupWorksSection = ({
                 composition={composition}
                 index={index}
                 error={getCompositionError(composition)}
+                hasError={invalidCompositionIds.includes(composition.id)}
                 excludedSuggestionIds={getExcludedSuggestionIds(works, index)}
                 updateCompositionTitle={updateCompositionTitle}
                 fillComposition={fillComposition}

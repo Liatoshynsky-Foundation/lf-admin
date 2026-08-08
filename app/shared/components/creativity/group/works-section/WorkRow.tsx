@@ -9,6 +9,7 @@ export type WorkRowProps = {
   composition: OpusCompositionData;
   index: number;
   error?: string;
+  hasError?: boolean;
   excludedSuggestionIds?: string[];
   updateCompositionTitle: (id: string, title: string) => void;
   fillComposition: (index: number, suggestion: OpusCompositionSuggestion) => void;
@@ -21,6 +22,7 @@ export const WorkRow = ({
   composition,
   index,
   error,
+  hasError = false,
   excludedSuggestionIds = [],
   updateCompositionTitle,
   fillComposition,
@@ -32,7 +34,7 @@ export const WorkRow = ({
     <>
       <CompositionTitleInput
         value={composition.name}
-        error={Boolean(error)}
+        error={hasError || Boolean(error)}
         helperMessage={error}
         excludedSuggestionIds={excludedSuggestionIds}
         onChangeText={(name) => updateCompositionTitle(composition.id, name)}

@@ -166,10 +166,12 @@ export const useUpsertOpus = (
     if (next.compositions !== previousDetails.compositions) {
       clearCompositionServerErrors();
 
-      setInvalidCompositionIds(
-        next.compositions
-          .filter((composition) => !composition.name.trim())
-          .map((composition) => composition.id)
+      setInvalidCompositionIds((previousInvalidIds) =>
+        previousInvalidIds.filter((invalidId) =>
+          next.compositions.some(
+            (composition) => composition.id === invalidId && !composition.name.trim()
+          )
+        )
       );
     }
 

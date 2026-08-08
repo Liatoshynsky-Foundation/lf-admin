@@ -124,7 +124,7 @@ export const OPUS_MUTATION_RESULTS = {
   updateFailed: 'Не вдалося оновити групу'
 } as const;
 
-export const COMPOSITION_NAME_REQUIRED_ERROR = 'Заповніть поле назви твору або оберіть твір зі списку';
+export const COMPOSITION_NAME_REQUIRED_ERROR = 'Заповніть всі назви творів перед публікацією';
 export const COMPOSITION_DUPLICATE_ERROR = 'Назви творів мають бути унікальними';
 export const COMPOSITION_REQUIRED_FIELDS_ERROR = 'Заповніть усі обов’язкові поля перед публікацією';
 

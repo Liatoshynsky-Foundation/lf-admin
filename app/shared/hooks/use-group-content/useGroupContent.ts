@@ -482,7 +482,13 @@ export const useGroupContent = (id: string) => {
       );
       if (Array.isArray(value)) {
         const compositions = value as GroupData['compositions'];
-        setInvalidCompositionIds(getInvalidCompositionIds(compositions));
+        setInvalidCompositionIds((previousInvalidIds) =>
+          previousInvalidIds.filter((invalidId) =>
+            compositions.some(
+              (composition) => composition.id === invalidId && !composition.name.trim()
+            )
+          )
+        );
       }
     }
 
