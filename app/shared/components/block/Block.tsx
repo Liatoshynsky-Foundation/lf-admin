@@ -33,7 +33,7 @@ export function Block<TBlock = Record<string, unknown>>({
   config,
   title,
   adapter
-}: BlockProps<TBlock>) {
+}: Readonly<BlockProps<TBlock>>) {
   const locale = useStore((state) => state.locale);
 
   const { isLoaded, content, hidden, updateItem, addItem, removeItem, reorderItems, toggleVisibility } =
