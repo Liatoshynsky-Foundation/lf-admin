@@ -11,31 +11,20 @@ import CompositionModal from '~/shared/components/forms/opus-details-block/compo
 import { SortableItemWrapper } from '~/shared/components/sortable-item-wrapper/SortableItemWrapper';
 import { SortableList } from '~/shared/components/sortable-list/SortableList';
 import { getExcludedSuggestionIds, useCompositionsForm } from '~/shared/hooks/use-compositions/useCompositions';
-import { useDebounce } from '~/shared/hooks/use-debounce/useDebounce';
 import type { OpusCompositionData } from '~/types/opus';
 
 type GroupWorksSectionProps = {
   works: OpusCompositionData[];
   onChange: (works: OpusCompositionData[]) => void;
-  duplicateCompositionNames?: string[];
-  duplicateCompositionErrors?: Record<string, string>;
   compositionErrors?: Record<string, string>;
-  invalidCompositionIds?: string[];
 };
 
-export const GroupWorksSection = ({
-  works,
-  onChange,
-  duplicateCompositionNames = [],
-  compositionErrors = {},
-  invalidCompositionIds = []
-}: GroupWorksSectionProps) => {
+export const GroupWorksSection = ({ works, onChange, compositionErrors = {} }: GroupWorksSectionProps) => {
   const normalizeName = (name: string) => name.trim().toLocaleLowerCase('uk-UA');
-  const debouncedWorks = useDebounce(works);
-
   const compositionIdsByName = new Map<string, string[]>();
+  const compositionFieldErrors = { ...compositionErrors };
 
-  debouncedWorks.forEach((work) => {
+  works.forEach((work) => {
     const normalizedName = normalizeName(work.name);
 
     if (!normalizedName) return;
@@ -45,31 +34,14 @@ export const GroupWorksSection = ({
     compositionIdsByName.set(normalizedName, ids);
   });
 
-  const externalDuplicateNames = new Set(duplicateCompositionNames.map(normalizeName));
+  compositionIdsByName.forEach((ids) => {
+    if (ids.length < 2) return;
 
-  const duplicateCompositionIds = new Set<string>();
-  const duplicateMessageCompositionIds = new Set<string>();
-
-  compositionIdsByName.forEach((ids, name) => {
-    if (ids.length > 1 || externalDuplicateNames.has(name)) {
-      ids.forEach((id) => duplicateCompositionIds.add(id));
-      ids.slice(1).forEach((id) => duplicateMessageCompositionIds.add(id));
-    }
+    ids.forEach((id, index) => {
+      const fieldPath = `compositions.${id}.name`;
+      compositionFieldErrors[fieldPath] ??= index === 0 ? '' : COMPOSITION_DUPLICATE_INPUT_ERROR;
+    });
   });
-
-  const getCompositionError = (composition: OpusCompositionData) => {
-    if (duplicateMessageCompositionIds.has(composition.id)) {
-      return COMPOSITION_DUPLICATE_INPUT_ERROR;
-    }
-
-    const compositionError = compositionErrors[`compositions.${composition.id}.name`];
-
-    if (compositionError && compositionError !== COMPOSITION_DUPLICATE_INPUT_ERROR) {
-      return compositionError;
-    }
-
-    return undefined;
-  };
 
   const {
     isModalOpen,
@@ -103,26 +75,26 @@ export const GroupWorksSection = ({
 
       <Box sx={styles.compositionsList}>
         <SortableList id="group-works-list" items={works.map((work) => work.id)} onDragEnd={handleDragEnd}>
-          {works.map((composition, index) => (
-            <SortableItemWrapper key={composition.id} id={composition.id} gripHandle={true}>
-              <WorkRow
-                composition={composition}
-                index={index}
-                error={getCompositionError(composition)}
-                hasError={
-                  invalidCompositionIds.includes(composition.id) ||
-                  duplicateCompositionIds.has(composition.id) ||
-                  Boolean(compositionErrors[`compositions.${composition.id}.name`])
-                }
-                excludedSuggestionIds={getExcludedSuggestionIds(works, index)}
-                updateCompositionTitle={updateCompositionTitle}
-                fillComposition={fillComposition}
-                openCreateModal={openCreateModal}
-                openEditModal={openEditModal}
-                setDeleteTargetId={setDeleteTargetId}
-              />
-            </SortableItemWrapper>
-          ))}
+          {works.map((composition, index) => {
+            const fieldError = compositionFieldErrors[`compositions.${composition.id}.name`];
+
+            return (
+              <SortableItemWrapper key={composition.id} id={composition.id} gripHandle={true}>
+                <WorkRow
+                  composition={composition}
+                  index={index}
+                  error={fieldError || undefined}
+                  hasError={fieldError !== undefined}
+                  excludedSuggestionIds={getExcludedSuggestionIds(works, index)}
+                  updateCompositionTitle={updateCompositionTitle}
+                  fillComposition={fillComposition}
+                  openCreateModal={openCreateModal}
+                  openEditModal={openEditModal}
+                  setDeleteTargetId={setDeleteTargetId}
+                />
+              </SortableItemWrapper>
+            );
+          })}
         </SortableList>
       </Box>
 

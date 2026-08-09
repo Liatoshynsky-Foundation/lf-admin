@@ -37,7 +37,6 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
     isDirty,
     currentLanguage,
     errors,
-    invalidCompositionIds,
     anchors,
     publishedTitle,
     isDetailsExpanded,
@@ -113,7 +112,6 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
             works={groupData.compositions}
             onChange={(newWorks) => handleFieldChange('compositions', newWorks)}
             compositionErrors={errors}
-            invalidCompositionIds={invalidCompositionIds}
           />
         </CollapsibleBlock>
       );

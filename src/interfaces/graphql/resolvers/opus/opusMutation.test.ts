@@ -266,6 +266,51 @@ describe('OpusMutation Resolvers', () => {
       expect(result).toEqual({ ...MOCK_OPUS_ENTITY, compositions: [MOCK_COMPOSITION_1] });
     });
 
+    it('should reject an empty composition name before syncing', async () => {
+      mockOpusRepo.findByNumber.mockResolvedValue(null);
+
+      await expect(
+        OpusMutation.createOpus(
+          {},
+          { input: { ...BASE_CREATE_INPUT, compositions: [{ name: '   ' }] } },
+          adminContext
+        )
+      ).rejects.toMatchObject({
+        message: 'Composition name is required',
+        extensions: { code: 'BAD_USER_INPUT' }
+      });
+      expect(mockCompositionsRepo.syncForOpus).not.toHaveBeenCalled();
+    });
+
+    it('should reject duplicate names submitted in one opus', async () => {
+      mockOpusRepo.findByNumber.mockResolvedValue(null);
+
+      await expect(
+        OpusMutation.createOpus(
+          {},
+          { input: { ...BASE_CREATE_INPUT, compositions: [{ name: 'Sonata' }, { name: ' sonata ' }] } },
+          adminContext
+        )
+      ).rejects.toMatchObject({ extensions: { code: 'COMPOSITION_NAME_TAKEN' } });
+    });
+
+    it('should translate a duplicate-key error from composition synchronization', async () => {
+      mockOpusRepo.findByNumber.mockResolvedValue(null);
+      mockedGenerateUniqueSlug.mockResolvedValue(SLUG_VALUE);
+      mockCompositionsRepo.syncForOpus.mockRejectedValue({ code: 11000, keyValue: { 'name.uk': 'Sonata' } });
+
+      await expect(
+        OpusMutation.createOpus(
+          {},
+          { input: { ...BASE_CREATE_INPUT, compositions: [{ name: 'Sonata' }] } },
+          adminContext
+        )
+      ).rejects.toMatchObject({
+        message: 'Композиція "Sonata" вже існує',
+        extensions: { code: 'COMPOSITION_NAME_TAKEN' }
+      });
+    });
+
     it('should trim name.uk when generating slug and set status from input', async () => {
       mockOpusRepo.findByNumber.mockResolvedValue(null);
       mockedGenerateUniqueSlug.mockResolvedValue(SLUG_VALUE);
@@ -597,6 +642,20 @@ describe('OpusMutation Resolvers', () => {
       expect(mockedProcessSlugUpdate).toHaveBeenCalledWith(OPUS_ID, nameInput, mockOpusRepo, expect.any(Object));
       expect(mockOpusRepo.removeCompositionsFromCompositionsOpus).toHaveBeenCalledWith([COMPOSITION_ID_3]);
       expect(mockOpusRepo.moveCompositionsToCompositionsOpus).toHaveBeenCalledWith([COMPOSITION_ID_1]);
+    });
+
+    it('should reject a composition name already used by another composition on update', async () => {
+      mockOpusRepo.findById.mockResolvedValue(MOCK_OPUS_ENTITY);
+      mockCompositionsRepo.findByName.mockResolvedValue({ ...MOCK_COMPOSITION_1, id: OTHER_OPUS_ID });
+
+      await expect(
+        OpusMutation.updateOpus(
+          {},
+          { id: OPUS_ID, input: { ...BASE_UPDATE_INPUT, compositions: [{ name: 'Taken' }] } },
+          adminContext
+        )
+      ).rejects.toMatchObject({ extensions: { code: 'COMPOSITION_NAME_TAKEN' } });
+      expect(mockCompositionsRepo.syncForOpus).not.toHaveBeenCalled();
     });
 
     it('should throw OPUS_NOT_FOUND when update returns null', async () => {

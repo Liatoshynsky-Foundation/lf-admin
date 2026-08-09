@@ -7,7 +7,6 @@ import { isMediaItemFilled, mapMediaItemFromApi, resolveMediaName } from './comp
 import { GroupData, GroupDataField, GroupPhoto } from '~/constants/creativity';
 import {
   COMPOSITION_DUPLICATE_ERROR,
-  COMPOSITION_DUPLICATE_INPUT_ERROR,
   COMPOSITION_NAME_REQUIRED_ERROR,
   COMPOSITION_REQUIRED_FIELDS_ERROR,
   OPUS_FIELD_LIMITS,
@@ -24,14 +23,12 @@ import {
   normalizeCompositionName
 } from '~/lib/utils/compositionErrors';
 import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
-import { useOpusById } from '~/shared/hooks/use-opuses/useOpuses';
+import { useDeleteOpus, useOpusById, useUpdateOpus } from '~/shared/hooks/use-opuses/useOpuses';
 import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import {
   OpusNumberKind,
-  OpusStatus,
-  useDeleteOpusMutation,
-  useUpdateOpusMutation
+  OpusStatus
 } from '~/types/graphql/generated/graphql';
 import { FetchedOpusData } from '~/types/opus';
 
@@ -164,7 +161,6 @@ export const useGroupContent = (id: string) => {
   const [isDirty, setIsDirty] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState<EditorLanguage>('UA');
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [invalidCompositionIds, setInvalidCompositionIds] = useState<string[]>([]);
   const [anchors, setAnchors] = useState<MenuAnchor>({
     navigation: null,
     publish: null
@@ -172,9 +168,9 @@ export const useGroupContent = (id: string) => {
   const [publishedTitle, setPublishedTitle] = useState({ uk: '', en: '' });
   const [isDetailsExpanded, setIsDetailsExpanded] = useState(true);
   const [shouldExitAfterSave, setShouldExitAfterSave] = useState(false);
-  const [updateOpus, { loading: isSaving }] = useUpdateOpusMutation();
+  const [updateOpus, { loading: isSaving }] = useUpdateOpus();
 
-  const [deleteOpus, { loading: isDeleting }] = useDeleteOpusMutation();
+  const [deleteOpus, { loading: isDeleting }] = useDeleteOpus();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useUnsavedChanges(isDirty && !shouldExitAfterSave);
@@ -373,7 +369,7 @@ export const useGroupContent = (id: string) => {
           }))
           .filter((perf) => perf.videoUrl || perf.title.uk || perf.title.en)
       };
-      await updateOpus({ variables: { id, input } });
+      await updateOpus({ id, input });
       toast.success('Групу опубліковано');
       return true;
     } catch (error) {
@@ -382,14 +378,17 @@ export const useGroupContent = (id: string) => {
         const duplicateErrors = Object.fromEntries(
           (groupData.compositions || [])
             .filter((composition) => normalizeCompositionName(composition.name) === duplicateError.name)
-            .map((composition) => [`compositions.${composition.id}.name`, COMPOSITION_DUPLICATE_INPUT_ERROR])
+            .map((composition) => [`compositions.${composition.id}.name`, duplicateError.message])
         );
         setErrors((previous) => ({ ...previous, ...duplicateErrors }));
-        toast.error(COMPOSITION_DUPLICATE_ERROR);
+        toast.error(duplicateError.message);
         return false;
       }
       if (isCompositionNameRequiredError(error)) {
-        setInvalidCompositionIds(getInvalidCompositionIds(groupData.compositions || []));
+        const requiredNameErrors = Object.fromEntries(
+          getInvalidCompositionIds(groupData.compositions || []).map((id) => [`compositions.${id}.name`, ''])
+        );
+        setErrors((previous) => ({ ...previous, ...requiredNameErrors }));
         toast.error(COMPOSITION_NAME_REQUIRED_ERROR);
         return false;
       }
@@ -452,19 +451,14 @@ export const useGroupContent = (id: string) => {
     }
 
     const emptyCompositionIds = getInvalidCompositionIds(groupData?.compositions || []);
-    setInvalidCompositionIds(emptyCompositionIds);
+    emptyCompositionIds.forEach((id) => {
+      newErrors[`compositions.${id}.name`] = '';
+    });
 
-    const duplicateCompositionIds = getDuplicateCompositionIds(groupData?.compositions || []);
-    if (duplicateCompositionIds.length > 0) {
-      (groupData?.compositions || [])
-        .filter((composition) => duplicateCompositionIds.includes(composition.id))
-        .forEach((composition) => {
-          newErrors[`compositions.${composition.id}.name`] = COMPOSITION_DUPLICATE_INPUT_ERROR;
-        });
-    }
+    const hasDuplicateCompositionNames = getDuplicateCompositionIds(groupData?.compositions || []).length > 0;
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return Object.keys(newErrors).length === 0 && !hasDuplicateCompositionNames;
   };
 
   const handleFieldChange = (field: GroupDataField | 'blocksOrder', value: unknown, isMultilingual = false) => {
@@ -481,16 +475,6 @@ export const useGroupContent = (id: string) => {
       setErrors((previous) =>
         Object.fromEntries(Object.entries(previous).filter(([key]) => !key.startsWith('compositions.')))
       );
-      if (Array.isArray(value)) {
-        const compositions = value as GroupData['compositions'];
-        setInvalidCompositionIds((previousInvalidIds) =>
-          previousInvalidIds.filter((invalidId) =>
-            compositions.some(
-              (composition) => composition.id === invalidId && !composition.name.trim()
-            )
-          )
-        );
-      }
     }
 
     setGroupData((prev) => {
@@ -531,7 +515,7 @@ export const useGroupContent = (id: string) => {
 
   const handleConfirmDelete = async () => {
     try {
-      await deleteOpus({ variables: { id } });
+      await deleteOpus({ id });
       toast.success(OPUS_MUTATION_RESULTS.deleted);
       setIsDeleteModalOpen(false);
       navigate('/creativity');
@@ -582,7 +566,6 @@ export const useGroupContent = (id: string) => {
     isDirty,
     currentLanguage,
     errors,
-    invalidCompositionIds,
     anchors,
     publishedTitle,
     isDetailsExpanded,

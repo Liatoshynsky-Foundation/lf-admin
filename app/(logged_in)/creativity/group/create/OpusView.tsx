@@ -22,11 +22,9 @@ import { BaseContentStatuses } from '~/types/enums/common.enums';
 interface OpusViewProps {
   data: Omit<
     ReturnType<typeof useUpsertOpus>,
-    'duplicateCompositionNames' | 'duplicateCompositionErrors' | 'invalidCompositionIds'
+    'compositionErrors'
   > & {
-    duplicateCompositionNames?: string[];
-    duplicateCompositionErrors?: Record<string, string>;
-    invalidCompositionIds?: string[];
+    compositionErrors?: Record<string, string>;
   };
   mode?: 'create' | 'edit';
 }
@@ -36,9 +34,7 @@ export default function OpusView({ data, mode = 'create' }: Readonly<OpusViewPro
     details,
     setDetails,
     detailsErrors,
-    duplicateCompositionNames,
-    duplicateCompositionErrors,
-    invalidCompositionIds,
+    compositionErrors,
     seoValue,
     setSeoValue,
     crop,
@@ -85,9 +81,7 @@ export default function OpusView({ data, mode = 'create' }: Readonly<OpusViewPro
               value={details}
               onChange={setDetails}
               errors={detailsErrors}
-              duplicateCompositionNames={duplicateCompositionNames}
-              duplicateCompositionErrors={duplicateCompositionErrors}
-              invalidCompositionIds={invalidCompositionIds}
+              compositionErrors={compositionErrors}
             />
           </AccordionDetails>
         </Accordion>

@@ -37,8 +37,10 @@ export const getErrorMessage = (error: unknown): string => {
 export const getDuplicateCompositionError = (
   error: unknown
 ): { name: string; message: string } | null => {
-  const message = getErrorMessage(error);
-  const match = /"([^"]+)"/.exec(message);
+  if (!(error instanceof Error)) {
+    return null;
+  }
+  const match = /^Композиція "([^"]+)" вже існує$/.exec(error.message);
 
   if (!match?.[1]) {
     return null;
@@ -46,7 +48,7 @@ export const getDuplicateCompositionError = (
 
   return {
     name: normalizeCompositionName(match[1]),
-    message
+    message: error.message
   };
 };
 

@@ -1,6 +1,10 @@
 import { GraphQLError } from 'graphql';
 
-import { assertNameNotTaken } from '../compositions/compositionsMutation';
+import {
+  assertCompositionNameNotTaken,
+  compositionNameTakenError,
+  throwIfCompositionNameDuplicateKey
+} from '../compositions/compositionNameValidation';
 import { markImagesAsUsed, processSlugUpdate, syncImagesCrops } from '../helpers';
 import { orderCompositionsByIds } from './tab-handlers/tabHandlersHelpers';
 import { opusServiceErrors } from '~/back-constants/errors';
@@ -87,6 +91,8 @@ async function assertCompositionsNamesNotTaken(
   compositionsRepo: ICompositionRepository,
   compositions: GQLComposition[]
 ): Promise<void> {
+  const submittedNames = new Set<string>();
+
   for (const composition of compositions) {
     const name = composition.name?.trim();
     if (!name) {
@@ -94,7 +100,14 @@ async function assertCompositionsNamesNotTaken(
         extensions: { code: 'BAD_USER_INPUT' }
       });
     }
-    await assertNameNotTaken(compositionsRepo, name, composition.id);
+
+    const normalizedName = name.toLocaleLowerCase('uk');
+    if (submittedNames.has(normalizedName)) {
+      throw compositionNameTakenError(name);
+    }
+    submittedNames.add(normalizedName);
+
+    await assertCompositionNameNotTaken(compositionsRepo, name, composition.id);
   }
 }
 
@@ -282,7 +295,13 @@ async function handleCompositionsSync(
     return orderCompositionsByIds(compositionIds, await compositionsRepo.findByIds(compositionIds));
   }
 
-  const compositions = await compositionsRepo.syncForOpus(inputCompositions.map(mapComposition));
+  let compositions;
+  try {
+    compositions = await compositionsRepo.syncForOpus(inputCompositions.map(mapComposition));
+  } catch (error) {
+    throwIfCompositionNameDuplicateKey(error, inputCompositions[0]?.name ?? '');
+    throw error;
+  }
   const oldCompositionIds = (existingOpus.compositions ?? []).map((cid) => cid.toString());
   const newCompositionIds = compositions.map((c) => c.id);
 
@@ -365,7 +384,13 @@ export const OpusMutation = {
 
     await assertCompositionsNamesNotTaken(compositionsRepo, input.compositions ?? []);
 
-    const compositions = await compositionsRepo.syncForOpus((input.compositions ?? []).map(mapComposition));
+    let compositions;
+    try {
+      compositions = await compositionsRepo.syncForOpus((input.compositions ?? []).map(mapComposition));
+    } catch (error) {
+      throwIfCompositionNameDuplicateKey(error, input.compositions?.[0]?.name ?? '');
+      throw error;
+    }
     const compositionIds = compositions.map((c) => c.id);
 
     const opusData: CreateOpusInput = {

@@ -10,13 +10,23 @@ import {
   OPUS_MUTATION_RESULTS,
   OPUS_VALIDATION_MESSAGES
 } from '~/constants/opus';
-import  {getDuplicateCompositionError, getDuplicateCompositionIds, getErrorMessage, getInvalidCompositionIds, isCompositionNameRequiredError } from '~/lib/utils/compositionErrors';
+import {
+  getDuplicateCompositionError,
+  getDuplicateCompositionIds,
+  getErrorMessage,
+  getInvalidCompositionIds,
+  isCompositionNameRequiredError,
+  normalizeCompositionName
+} from '~/lib/utils/compositionErrors';
 import { generateUniqueId } from '~/lib/utils/generateUniqueId';
 import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import { useCreateOpus, useOpusById, useUpdateOpus } from '~/shared/hooks/use-opuses/useOpuses';
 import { CropRect } from '~/types/common';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
-import { OpusNumberKind, OpusStatus } from '~/types/graphql/generated/graphql';
+import {
+  OpusNumberKind,
+  OpusStatus
+} from '~/types/graphql/generated/graphql';
 import type {
   FetchedOpusData,
   OpusCompositionData,
@@ -78,9 +88,7 @@ export type UseUpsertOpusResult = {
 
   detailsErrors: OpusDetailsErrors;
 
-  duplicateCompositionNames: string[];
-  duplicateCompositionErrors?: Record<string, string>;
-  invalidCompositionIds: string[];
+  compositionErrors: Record<string, string>;
 
   seoValue: SeoBlockValue;
   setSeoValue: (
@@ -116,20 +124,7 @@ export const useUpsertOpus = (
     creationYear: ''
   });
 
-  const [
-    duplicateCompositionNames,
-    setDuplicateCompositionNames
-  ] = useState<string[]>([]);
-
-  const [
-    duplicateCompositionErrors,
-    setDuplicateCompositionErrors
-  ] = useState<Record<string, string>>({});
-
-  const [
-    invalidCompositionIds,
-    setInvalidCompositionIds
-  ] = useState<string[]>([]);
+  const [compositionErrors, setCompositionErrors] = useState<Record<string, string>>({});
 
   const [seoValue, setSeoValue] =
     useState<SeoBlockValue>(initialOpusSeoValue);
@@ -141,10 +136,7 @@ export const useUpsertOpus = (
   const latestDataRef = useRef({ details, seoValue, crop });
   const isInitializedRef = useRef(false);
 
-  const clearCompositionServerErrors = useCallback(() => {
-    setDuplicateCompositionNames([]);
-    setDuplicateCompositionErrors({});
-  }, []);
+  const clearCompositionErrors = useCallback(() => setCompositionErrors({}), []);
 
   const changeDetails = useCallback((
     value:
@@ -164,15 +156,7 @@ export const useUpsertOpus = (
     setIsSaved(false);
 
     if (next.compositions !== previousDetails.compositions) {
-      clearCompositionServerErrors();
-
-      setInvalidCompositionIds((previousInvalidIds) =>
-        previousInvalidIds.filter((invalidId) =>
-          next.compositions.some(
-            (composition) => composition.id === invalidId && !composition.name.trim()
-          )
-        )
-      );
+      clearCompositionErrors();
     }
 
 
@@ -181,7 +165,7 @@ export const useUpsertOpus = (
       name: next.name.trim() ? '' : prev.name,
       creationYear: next.creationYear.trim() ? '' : prev.creationYear
     }));
-  }, [clearCompositionServerErrors]);
+  }, [clearCompositionErrors]);
 
   const changeSeoValue = useCallback((value: SeoBlockValue | ((prev: SeoBlockValue) => SeoBlockValue)) => {
     const next = typeof value === 'function' ? value(latestDataRef.current.seoValue) : value;
@@ -294,7 +278,9 @@ export const useUpsertOpus = (
     setDetailsErrors(errors);
 
     const invalidIds = getInvalidCompositionIds(value.compositions);
-    setInvalidCompositionIds(invalidIds);
+    setCompositionErrors(
+      Object.fromEntries(invalidIds.map((id) => [`compositions.${id}.name`, '']))
+    );
 
     const duplicateIds = getDuplicateCompositionIds(value.compositions);
     if (duplicateIds.length > 0) {
@@ -322,10 +308,12 @@ export const useUpsertOpus = (
     const duplicateError = getDuplicateCompositionError(error);
 
     if (duplicateError) {
-      setDuplicateCompositionNames([ duplicateError.name ]);
-      setDuplicateCompositionErrors({
-        [duplicateError.name]: duplicateError.message
-      });
+      const duplicateErrors = Object.fromEntries(
+        latestDataRef.current.details.compositions
+          .filter((composition) => normalizeCompositionName(composition.name) === duplicateError.name)
+          .map((composition) => [`compositions.${composition.id}.name`, duplicateError.message])
+      );
+      setCompositionErrors((previous) => ({ ...previous, ...duplicateErrors }));
 
       toast.error(duplicateError.message);
       return;
@@ -333,7 +321,9 @@ export const useUpsertOpus = (
 
     if (isCompositionNameRequiredError(error)) {
       const invalidIds = getInvalidCompositionIds(latestDataRef.current.details.compositions);
-      setInvalidCompositionIds(invalidIds);
+      setCompositionErrors(
+        Object.fromEntries(invalidIds.map((id) => [`compositions.${id}.name`, '']))
+      );
 
       toast.error(COMPOSITION_NAME_REQUIRED_ERROR);
       return;
@@ -351,8 +341,7 @@ export const useUpsertOpus = (
       return undefined;
     }
 
-    clearCompositionServerErrors();
-    setInvalidCompositionIds([]);
+    clearCompositionErrors();
 
     const { uk: ukMeta, en: enMeta } = currentSeo.meta;
     const opusName = currentDetails.name.trim();
@@ -428,9 +417,7 @@ export const useUpsertOpus = (
     details,
     setDetails: changeDetails,
     detailsErrors,
-    duplicateCompositionNames,
-    duplicateCompositionErrors,
-    invalidCompositionIds,
+    compositionErrors,
     seoValue,
     setSeoValue: changeSeoValue,
     crop,

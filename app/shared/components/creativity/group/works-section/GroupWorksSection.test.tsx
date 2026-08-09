@@ -4,7 +4,7 @@ import React, { ReactNode } from 'react';
 
 import { GroupWorksSection } from './GroupWorksSection';
 import { WorkRowProps } from './WorkRow';
-import { OPUS_DELETE_MODAL, OPUS_DETAILS_LABELS } from '~/constants/opus';
+import { COMPOSITION_DUPLICATE_INPUT_ERROR, OPUS_DELETE_MODAL, OPUS_DETAILS_LABELS } from '~/constants/opus';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { useCompositionsForm } from '~/shared/hooks/use-compositions/useCompositions';
 import type { OpusCompositionData, OpusCompositionSuggestion } from '~/types/opus';
@@ -49,9 +49,16 @@ jest.mock('./WorkRow', () => ({
     fillComposition,
     openCreateModal,
     openEditModal,
-    setDeleteTargetId
+    setDeleteTargetId,
+    error,
+    hasError
   }: WorkRowProps) => (
-    <div data-testid={TEST_IDS.row(composition.id)} data-index={TEST_IDS.rowIndex(String(index))}>
+    <div
+      data-testid={TEST_IDS.row(composition.id)}
+      data-index={TEST_IDS.rowIndex(String(index))}
+      data-error={error}
+      data-has-error={String(Boolean(hasError))}
+    >
       <button
         data-testid={TEST_IDS.titleInput(composition.id)}
         onClick={() => updateCompositionTitle(composition.id, 'New')}
@@ -294,11 +301,24 @@ describe('GroupWorksSection Component', () => {
       <GroupWorksSection
         works={defaultWorks}
         onChange={jest.fn()}
-        duplicateCompositionNames={[`  ${defaultWorks[0].name}  `]}
+        compositionErrors={{ 'compositions.1.name': COMPOSITION_DUPLICATE_INPUT_ERROR }}
       />
     );
 
-    expect(screen.getByTestId(TEST_IDS.row('1'))).toBeInTheDocument();
+    expect(screen.getByTestId(TEST_IDS.row('1'))).toHaveAttribute('data-has-error', 'true');
+    expect(screen.getByTestId(TEST_IDS.row('1'))).toHaveAttribute('data-error', COMPOSITION_DUPLICATE_INPUT_ERROR);
+  });
+
+  it('marks the later occurrence of an in-form duplicate name', () => {
+    render(
+      <GroupWorksSection
+        works={[defaultWorks[0], { ...defaultWorks[1], name: ` ${defaultWorks[0].name.toUpperCase()} ` }]}
+        onChange={jest.fn()}
+      />
+    );
+
+    expect(screen.getByTestId(TEST_IDS.row('1'))).toHaveAttribute('data-has-error', 'true');
+    expect(screen.getByTestId(TEST_IDS.row('2'))).toHaveAttribute('data-error', COMPOSITION_DUPLICATE_INPUT_ERROR);
   });
 
   it('resets deleteTargetId to null when delete modal is closed', () => {
