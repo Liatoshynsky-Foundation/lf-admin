@@ -39,6 +39,7 @@ describe('createBaseRepository', () => {
   let toEntity: (doc: TestDbDoc) => TestEntity;
 
   const createMockQueryBuilder = (resolvedValue: TestDbDoc[] | TestDbDoc | null) => ({
+    session: jest.fn().mockReturnThis(),
     sort: jest.fn().mockReturnThis(),
     skip: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
@@ -99,6 +100,17 @@ describe('createBaseRepository', () => {
       const nullResult = await repository.findById(validId);
       expect(nullResult).toBeNull();
     });
+
+    it('should apply the provided session to the query', async () => {
+      const session = {} as never;
+      const mockQueryBuilder = createMockQueryBuilder(createMockDoc());
+      (mockModel.findById as jest.Mock).mockReturnValue(mockQueryBuilder);
+
+      const repository = createBaseRepository<TestEntity, TestDbDoc, TestFilters>({ model: mockModel, toEntity });
+      await repository.findById('507f1f77bcf86cd799439011', session);
+
+      expect(mockQueryBuilder.session).toHaveBeenCalledWith(session);
+    });
   });
 
   describe('findBySlug', () => {
@@ -123,6 +135,17 @@ describe('createBaseRepository', () => {
       (mockModel.findOne as jest.Mock).mockReturnValue(createMockQueryBuilder(null));
       const nullResult = await repository.findBySlug('non-existent-slug');
       expect(nullResult).toBeNull();
+    });
+
+    it('should apply the provided session to the query', async () => {
+      const session = {} as never;
+      const mockQueryBuilder = createMockQueryBuilder(createMockDoc());
+      (mockModel.findOne as jest.Mock).mockReturnValue(mockQueryBuilder);
+
+      const repository = createBaseRepository<TestEntity, TestDbDoc, TestFilters>({ model: mockModel, toEntity });
+      await repository.findBySlug('valid-slug', session);
+
+      expect(mockQueryBuilder.session).toHaveBeenCalledWith(session);
     });
   });
 
@@ -166,6 +189,21 @@ describe('createBaseRepository', () => {
 
       expect(result).toBeNull();
     });
+
+    it('should pass the provided session to the update operation', async () => {
+      const session = {} as never;
+      const leanMock = jest.fn().mockResolvedValue(createMockDoc());
+      (mockModel.findByIdAndUpdate as jest.Mock).mockReturnValue({ lean: leanMock });
+
+      const repository = createBaseRepository<TestEntity, TestDbDoc, TestFilters>({ model: mockModel, toEntity });
+      await repository.update('507f1f77bcf86cd799439011', { name: 'Updated' }, session);
+
+      expect(mockModel.findByIdAndUpdate).toHaveBeenCalledWith(
+        '507f1f77bcf86cd799439011',
+        expect.any(Object),
+        expect.objectContaining({ new: true, runValidators: true, session })
+      );
+    });
   });
 
   describe('delete', () => {
@@ -188,6 +226,16 @@ describe('createBaseRepository', () => {
       (mockModel.findByIdAndDelete as jest.Mock).mockResolvedValue(null);
       const falseResult = await repository.delete(mockId);
       expect(falseResult).toBe(false);
+    });
+
+    it('should pass the provided session to the delete operation', async () => {
+      const session = {} as never;
+      (mockModel.findByIdAndDelete as jest.Mock).mockResolvedValue(createMockDoc());
+
+      const repository = createBaseRepository<TestEntity, TestDbDoc, TestFilters>({ model: mockModel, toEntity });
+      await repository.delete('507f1f77bcf86cd799439011', session);
+
+      expect(mockModel.findByIdAndDelete).toHaveBeenCalledWith('507f1f77bcf86cd799439011', { session });
     });
   });
 
@@ -260,6 +308,19 @@ describe('createBaseRepository', () => {
         name: 1,
         createdAt: -1
       });
+    });
+
+    it('should apply the provided session and pagination options', async () => {
+      const session = {} as never;
+      const mockQueryBuilder = createMockQueryBuilder([]);
+      (mockModel.find as jest.Mock).mockReturnValue(mockQueryBuilder);
+
+      const repository = createBaseRepository<TestEntity, TestDbDoc, TestFilters>({ model: mockModel, toEntity });
+      await repository.findAll({ skip: 2, limit: 5 }, session);
+
+      expect(mockQueryBuilder.session).toHaveBeenCalledWith(session);
+      expect(mockQueryBuilder.skip).toHaveBeenCalledWith(2);
+      expect(mockQueryBuilder.limit).toHaveBeenCalledWith(5);
     });
   });
 
@@ -347,6 +408,17 @@ describe('createBaseRepository', () => {
 
       expect(mockModel.countDocuments).toHaveBeenCalledWith({ name: 'John' });
       expect(result).toBe(10);
+    });
+
+    it('should pass the provided session to countDocuments', async () => {
+      const session = {} as never;
+      (mockModel.countDocuments as jest.Mock).mockResolvedValue(7);
+
+      const repository = createBaseRepository<TestEntity, TestDbDoc, TestFilters>({ model: mockModel, toEntity });
+      const result = await repository.count({ name: 'John' }, session);
+
+      expect(mockModel.countDocuments).toHaveBeenCalledWith({}, { session });
+      expect(result).toBe(7);
     });
   });
 });

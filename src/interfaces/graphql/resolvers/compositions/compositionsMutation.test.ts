@@ -13,6 +13,10 @@ import type {
   UpdateCompositionInput
 } from '~/types/graphql/generated/graphql';
 
+jest.mock('~/src/infrastructure/repositories/helpers', () => ({
+  withTransaction: jest.fn(async (callback: (session: object) => Promise<unknown>) => callback({}))
+}));
+
 type AdminContextType = NonNullable<GraphQLContext['admin']>;
 
 type MockCompositionsRepository = {
@@ -177,8 +181,8 @@ describe('CompositionsMutation', () => {
 
       const result = await CompositionsMutation.createComposition(null, { input: MOCK_INPUT }, context);
 
-      expect(createMock).toHaveBeenCalledWith(MOCK_MAPPED_INPUT);
-      expect(moveMock).toHaveBeenCalledWith([MOCK_COMPOSITION_ID]);
+      expect(createMock).toHaveBeenCalledWith(MOCK_MAPPED_INPUT, expect.anything());
+      expect(moveMock).toHaveBeenCalledWith([MOCK_COMPOSITION_ID], expect.anything());
       expect(result).toEqual(MOCK_COMPOSITION);
     });
 
@@ -193,7 +197,7 @@ describe('CompositionsMutation', () => {
 
       await CompositionsMutation.createComposition(null, { input: MOCK_INPUT_PARTIAL }, context);
 
-      expect(createMock).toHaveBeenCalledWith(MOCK_MAPPED_INPUT_PARTIAL);
+      expect(createMock).toHaveBeenCalledWith(MOCK_MAPPED_INPUT_PARTIAL, expect.anything());
     });
   });
 
@@ -365,8 +369,8 @@ describe('CompositionsMutation', () => {
         context
       );
 
-      expect(removeMock).toHaveBeenCalledWith([MOCK_COMPOSITION_ID]);
-      expect(deleteMock).toHaveBeenCalledWith(MOCK_COMPOSITION_ID);
+      expect(removeMock).toHaveBeenCalledWith([MOCK_COMPOSITION_ID], expect.anything());
+      expect(deleteMock).toHaveBeenCalledWith(MOCK_COMPOSITION_ID, expect.anything());
       expect(result).toBe(true);
     });
   });

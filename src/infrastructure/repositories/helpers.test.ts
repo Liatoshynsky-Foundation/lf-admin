@@ -1,8 +1,42 @@
-import { buildBaseQuery, combineConditions, createToEntity, fieldCondition, getBaseSort } from './helpers';
+import { buildBaseQuery, combineConditions, createToEntity, fieldCondition, getBaseSort, withTransaction } from './helpers';
 import { BaseEntity } from '~/domain/repositories/baseRepository';
 import { SortByDate, SortOrder } from '~/types/enums/common.enums';
 
+jest.mock('~/infrastructure/db/connect', () => jest.fn().mockResolvedValue(undefined));
+jest.mock('mongoose', () => ({ startSession: jest.fn() }));
+
+import { startSession } from 'mongoose';
+
+const mockedStartSession = startSession as jest.MockedFunction<typeof startSession>;
+
 describe('Repository Helpers', () => {
+
+  describe('withTransaction', () => {
+    beforeEach(() => jest.clearAllMocks());
+
+    it('runs the callback in a session and ends the session after success', async () => {
+      const session = {
+        withTransaction: jest.fn(async (callback: (session: unknown) => Promise<void>) => callback(session)),
+        endSession: jest.fn().mockResolvedValue(undefined)
+      } as unknown as Awaited<ReturnType<typeof startSession>>;
+      mockedStartSession.mockResolvedValue(session);
+
+      await expect(withTransaction(async (activeSession) => activeSession)).resolves.toBe(session);
+      expect(session.withTransaction).toHaveBeenCalledTimes(1);
+      expect(session.endSession).toHaveBeenCalledTimes(1);
+    });
+
+    it('ends the session and propagates callback failures', async () => {
+      const session = {
+        withTransaction: jest.fn().mockRejectedValue(new Error('transaction failed')),
+        endSession: jest.fn().mockResolvedValue(undefined)
+      } as unknown as Awaited<ReturnType<typeof startSession>>;
+      mockedStartSession.mockResolvedValue(session);
+
+      await expect(withTransaction(async () => 'result')).rejects.toThrow('transaction failed');
+      expect(session.endSession).toHaveBeenCalledTimes(1);
+    });
+  });
 
   describe('createToEntity', () => {
         interface TestEntity extends BaseEntity {
@@ -60,6 +94,18 @@ describe('Repository Helpers', () => {
           expect(result).toEqual({ status: { $in: ['published'] } });
         });
 
+        it('should include ids in the query when provided', () => {
+          const filters = { ids: ['id-1', 'id-2'] };
+          const result = buildBaseQuery<MockDbModel>(filters);
+
+          expect(result).toEqual({
+            $and: [
+              { _id: { $in: ['id-1', 'id-2'] } },
+              { _id: { $in: ['id-1', 'id-2'] } }
+            ]
+          });
+        });
+
         it('should include slug in query if provided', () => {
           const filters = { slug: 'some-slug' };
           const result = buildBaseQuery<MockDbModel>(filters);
@@ -95,6 +141,10 @@ describe('Repository Helpers', () => {
             ]
           });
         });
+
+        it('should skip search when no search fields are configured', () => {
+          expect(buildBaseQuery<MockDbModel>({ search: 'festival' }, [])).toEqual({});
+        });
   });
 
   describe('getBaseSort', () => {
@@ -118,6 +168,15 @@ describe('Repository Helpers', () => {
       };
       const result = getBaseSort(filters);
       expect(result).toEqual({ adminTitle: -1 });
+    });
+
+    it('should use a mapped sort field when provided', () => {
+      const result = getBaseSort(
+        { sort: [{ sortBy: SortByDate.CreatedAt, sortOrder: SortOrder.Asc }] },
+        { [SortByDate.CreatedAt]: 'publishedAt' }
+      );
+
+      expect(result).toEqual({ publishedAt: 1 });
     });
 
     it('should only use the first sort criteria if multiple are provided', () => {
@@ -164,6 +223,8 @@ describe('getLanguageCondition and language filtering', () => {
   it('should ignore unknown languages (returning null) and empty language arrays', () => {
     const result = buildBaseQuery({ languages: [] });
     expect(result).toEqual({});
+
+    expect(buildBaseQuery({ languages: ['unknown' as never] })).toEqual({});
   });
 
   it('should combine multiple valid languages with $or', () => {

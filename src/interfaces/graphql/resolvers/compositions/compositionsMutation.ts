@@ -5,6 +5,7 @@ import { graphqlErrors } from '~/constants/errors';
 import type { Composition } from '~/domain/entities/Composition';
 import { compositionsServiceErrors } from '~/src/constants/errors';
 import { CompositionInput, ICompositionRepository } from '~/src/domain/repositories/compositionRepository';
+import { withTransaction } from '~/src/infrastructure/repositories/helpers';
 import { CreateCompositionInput, UpdateCompositionInput } from '~/types/graphql/generated/graphql';
 
 type CreateCompositionArgs = { input: CreateCompositionInput };
@@ -53,14 +54,16 @@ export const CompositionsMutation = {
 
     const compositionData = mapCompositionInput(input);
 
-    const composition = await repo.create(compositionData);
-    if (!composition) {
-      throw new Error(compositionsServiceErrors.COMPOSITION_NOT_CREATED);
-    }
+    return withTransaction(async (session) => {
+      const composition = await repo.create(compositionData, session );
+      if (!composition) {
+        throw new Error(compositionsServiceErrors.COMPOSITION_NOT_CREATED);
+      }
 
-    await opusRepo.moveCompositionsToCompositionsOpus([composition.id]);
+      await opusRepo.moveCompositionsToCompositionsOpus([composition.id], session);
 
-    return composition;
+      return composition;
+    });
   },
 
   updateComposition: async (_: unknown, { id, input }: UpdateCompositionArgs, context: GraphQLContext): Promise<Composition> => {
@@ -94,10 +97,12 @@ export const CompositionsMutation = {
     assertAuthenticated(context);
     const repo = context.requestContainer.cradle.compositionsRepository;
     await findExistingComposition(repo, id);
-	
-    const opusRepo = context.requestContainer.cradle.opusRepository;
-    await opusRepo.removeCompositionsFromCompositionsOpus([id]);
 
-    return repo.delete(id);
+    const opusRepo = context.requestContainer.cradle.opusRepository;
+
+    return withTransaction(async (session) => {
+      await opusRepo.removeCompositionsFromCompositionsOpus([id], session);
+      return repo.delete(id, session);
+    });
   }
 };

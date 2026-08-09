@@ -1,5 +1,6 @@
-import { FilterQuery } from 'mongoose';
+import { ClientSession, FilterQuery, startSession } from 'mongoose';
 
+import dbConnect from '../db/connect';
 import { BaseEntity, FiltersInput } from '~/domain/repositories/baseRepository';
 
 const NON_EMPTY_STRING_QUERY = { $nin: ['', null] } as const;
@@ -165,4 +166,22 @@ export const combineConditions = <TDb>(
   return { $and: nonEmpty } as FilterQuery<TDb>;
 };
 
+export async function withTransaction<T>(
+  callback: (session: ClientSession) => Promise<T>,
+): Promise<T> {
+  await dbConnect();
 
+  const session = await startSession();
+
+  try {
+    let result!: T;
+
+    await session.withTransaction(async () => {
+      result = await callback(session);
+    });
+
+    return result;
+  } finally {
+    await session.endSession();
+  }
+}

@@ -1,4 +1,4 @@
-import mongoose, { FilterQuery, Model } from 'mongoose';
+import mongoose, { ClientSession, FilterQuery, Model } from 'mongoose';
 
 import { createBaseRepository } from '../baseRepository/baseRepository';
 import { buildBaseQuery, combineConditions, fieldCondition, getBaseSort } from '../helpers';
@@ -75,21 +75,21 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
     ids.filter((id) => mongoose.Types.ObjectId.isValid(id)).map((id) => new mongoose.Types.ObjectId(id));
 
 
-  const syncForOpus = async (inputs: CompositionInput[]): Promise<Composition[]> => {
+  const syncForOpus = async (inputs: CompositionInput[], session?: ClientSession): Promise<Composition[]> => {
     await dbConnect();
-    const results = await Promise.all(
-      inputs.map(async (input, index) => {
-        const { id, ...fields } = input;
-        if (id && mongoose.Types.ObjectId.isValid(id)) {
-          const updated = await CompositionModel.findByIdAndUpdate(
-            id, { ...fields, order: index }, { new: true }
-          ).lean<DbComposition>();
-          return updated ? toEntity(updated) : null;
-        }
-        const created = await new CompositionModel({ ...fields, order: index }).save();
-        return toEntity(created.toObject() as unknown as DbComposition);
-      })
-    );
+    const results: Array<Composition | null> = [];
+    for (const [index, input] of inputs.entries()) {
+      const { id, ...fields } = input;
+      if (id && mongoose.Types.ObjectId.isValid(id)) {
+        const updated = await CompositionModel.findByIdAndUpdate(
+          id, { ...fields, order: index }, { new: true, session }
+        ).lean<DbComposition>();
+        results.push(updated ? toEntity(updated) : null);
+      } else {
+        const created = await new CompositionModel({ ...fields, order: index }).save({ session });
+        results.push(toEntity(created.toObject() as unknown as DbComposition));
+      }
+    }
     return results.filter((r): r is Composition => r !== null);
   };
 
@@ -133,7 +133,7 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
   };
 
 
-  const findByIds = async (ids: string[]): Promise<Composition[]> => {
+  const findByIds = async (ids: string[], session?: ClientSession): Promise<Composition[]> => {
     await dbConnect();
 
     const validIds = ids
@@ -146,12 +146,13 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
 
     const docs = await CompositionModel.find({ _id: { $in: validIds } })
       .sort({ order: 1, _id: 1 })
+      .session(session ?? null)
       .lean<DbComposition[]>();
 
     return docs.map(toEntity);
   };
 
-  const countByIds = async (ids: string[], filters?: CompositionFilters): Promise<number> => {
+  const countByIds = async (ids: string[], filters?: CompositionFilters, session?: ClientSession): Promise<number> => {
     await dbConnect();
 
     const validIds = toValidObjectIds(ids);
@@ -162,12 +163,13 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
     const query = buildCompositionQuery(filters, [
       { _id: { $in: validIds } }
     ]);
-    return CompositionModel.countDocuments(query);
+    return CompositionModel.countDocuments(query, { session });
   };
 
   const findByIdsPaginated = async (
     ids: string[],
-    filters?: CompositionFilters
+    filters?: CompositionFilters,
+    session?: ClientSession
   ): Promise<Composition[]> => {
     await dbConnect();
 
@@ -184,6 +186,7 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
 
     const queryBuilder = CompositionModel.find(query)
       .sort(sort)
+      .session(session ?? null)
       .collation({ locale: 'uk', numericOrdering: true });
 
     if (filters?.skip) queryBuilder.skip(filters.skip);
@@ -193,10 +196,10 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
     return docs.map(toEntity);
   };
 
-  const create = async (input: CompositionInput): Promise<Composition> => {
+  const create = async (input: CompositionInput, session?: ClientSession): Promise<Composition> => {
     await dbConnect();
     
-    const newComposition = await new CompositionModel(input).save();
+    const newComposition = await new CompositionModel(input).save({ session });
     return toEntity(newComposition.toObject() as unknown as DbComposition);
   };
 

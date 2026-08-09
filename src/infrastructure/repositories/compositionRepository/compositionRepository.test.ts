@@ -74,6 +74,7 @@ describe('CompositionRepository', () => {
     queryMock.limit = jest.fn().mockReturnValue(queryMock);
     queryMock.skip = jest.fn().mockReturnValue(queryMock);
     queryMock.sort = jest.fn().mockReturnValue(queryMock);
+    queryMock.session = jest.fn().mockReturnValue(queryMock);
     queryMock.then = jest.fn((resolve: (val: unknown) => void) => resolve(resolvedValue));
 
     return queryMock;
@@ -110,13 +111,24 @@ describe('CompositionRepository', () => {
     expect(result).toHaveLength(1);
   });
 
+  it('create saves a composition with the provided session', async (): Promise<void> => {
+    const session = {} as never;
+    saveMock.mockResolvedValue({ toObject: () => createMockDoc() });
+
+    const result = await repository.create(createCompositionInput(), session);
+
+    expect(saveMock).toHaveBeenCalledWith({ session });
+    expect(result.id).toBe('c1');
+  });
+
   it('syncForOpus links an existing composition by id instead of duplicating', async (): Promise<void> => {
     findByIdAndUpdateMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(createMockDoc()) });
 
     const result = await repository.syncForOpus([createCompositionInput(EXISTING_COMPOSITION_ID)]);
 
     expect(findByIdAndUpdateMock).toHaveBeenCalledWith(EXISTING_COMPOSITION_ID, expect.any(Object), {
-      new: true
+      new: true,
+      session: undefined
     });
     expect(saveMock).not.toHaveBeenCalled();
     expect(result).toHaveLength(1);
