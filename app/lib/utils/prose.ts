@@ -1,15 +1,21 @@
 import { JSONContent } from '@tiptap/react';
 
-import { ProseDoc, ProseNode, ProseTextNode } from '~/types/common';
+import { HeadingNode, ParagraphNode, ProseDoc, ProseNode, ProseTextNode } from '~/types/common';
 
-export const proseToText = (doc?: ProseDoc): string => {
-  if (!doc?.content) return '';
+export const proseToText = (doc?: unknown): string => {
+  if (!doc) return '';
+  if (typeof doc === 'string') {
+    return doc.replace(/<[^>]*>?/gm, '');
+  }
 
-  return doc.content
+  const typedDoc = doc as Partial<ProseDoc>;
+  if (!typedDoc.content || !Array.isArray(typedDoc.content)) return '';
+
+  return typedDoc.content
     .map((node: ProseNode) => {
-      if (node.type === 'paragraph') {
-        const paragraph = node as { type: 'paragraph'; content: ProseTextNode[] };
-        return paragraph.content?.map((child) => child.text).join('') || '';
+      if (node.type === 'paragraph' || node.type === 'heading') {
+        const textNode = node as ParagraphNode | HeadingNode;
+        return textNode.content?.map((child: ProseTextNode) => child.text || '').join('') || '';
       }
       return '';
     })

@@ -1,10 +1,14 @@
 'use client';
+import { useApolloClient } from '@apollo/client';
 import toast from 'react-hot-toast';
 
 import { TOAST_MESSAGES } from '~/constants';
 import { safeMutate } from '~/lib/utils/safeMutate';
 import { useStore } from '~/store';
 import {
+  GetPageDocument,
+  type GetPageQuery,
+  type GetPageQueryVariables,
   type PublishPageMutation,
   type PublishPageMutationVariables,
   type UpsertPageDraftMutation,
@@ -13,8 +17,9 @@ import {
   useUpsertPageDraftMutation
 } from '~/types/graphql/generated/graphql';
 
-export const useSavePageBlocks = (slug: string) => {
+export const useSavePageBlocks = (slug: string, blockIdToPublish?: string) => {
   const markSaved = useStore((s) => s.saveAsDraft);
+  const client = useApolloClient();
 
   const [upsertDraft, upsertState] = useUpsertPageDraftMutation();
   const [publishMutate, publishState] = usePublishPageMutation();
@@ -23,7 +28,6 @@ export const useSavePageBlocks = (slug: string) => {
     const state = useStore.getState();
 
     const current = state.blocks[slug];
-
     const currentBlocksOrder = state.blocksOrder[slug];
 
     if (current == null) throw new Error('No page blocks found');
@@ -34,9 +38,43 @@ export const useSavePageBlocks = (slug: string) => {
       'Failed to save draft'
     );
 
+    let blocksToPublish = current;
+    let blocksOrderToPublish = currentBlocksOrder;
+
+    if (blocksOrderToPublish.includes('founders') && blocksOrderToPublish.includes('FoundationFounders')) {
+      blocksOrderToPublish = blocksOrderToPublish.filter((id: string) => id !== 'FoundationFounders');
+    }
+
+    if (blockIdToPublish) {
+      const { data } = await client.query<GetPageQuery, GetPageQueryVariables>({
+        query: GetPageDocument,
+        variables: { slug },
+        fetchPolicy: 'network-only'
+      });
+
+      const publishedBlocks = data.pageBlocks?.blocks || {};
+      let publishedBlocksOrder = data.pageBlocks?.blocksOrder || currentBlocksOrder;
+
+      if (publishedBlocksOrder.includes('founders') && publishedBlocksOrder.includes('FoundationFounders')) {
+        publishedBlocksOrder = publishedBlocksOrder.filter((id: string) => id !== 'FoundationFounders');
+      }
+
+      blocksToPublish = {
+        ...publishedBlocks,
+        [blockIdToPublish]: (current as Record<string, any>)[blockIdToPublish]
+      };
+
+      blocksOrderToPublish = publishedBlocksOrder;
+      const isDuplicateFounders = blockIdToPublish === 'FoundationFounders' && blocksOrderToPublish.includes('founders');
+      
+      if (!blocksOrderToPublish.includes(blockIdToPublish) && !isDuplicateFounders) {
+        blocksOrderToPublish = [...blocksOrderToPublish, blockIdToPublish];
+      }
+    }
+
     const response = await safeMutate<PublishPageMutation, PublishPageMutationVariables>(
       publishMutate,
-      { input: { slug, blocks: current, blocksOrder: currentBlocksOrder } },
+      { input: { slug, blocks: blocksToPublish, blocksOrder: blocksOrderToPublish } },
       'Network error while publishing',
       'Failed to publish page'
     );

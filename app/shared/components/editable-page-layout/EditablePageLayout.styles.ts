@@ -1,3 +1,5 @@
+import { SxProps, Theme } from '@mui/material';
+
 export const styles = {
   pageContainer: {
     display: 'flex',
@@ -8,4 +10,4 @@ export const styles = {
     overflow: 'hidden',
     gap: '32px'
   }
-};
+} satisfies Record<string, SxProps<Theme>>;

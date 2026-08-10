@@ -2,7 +2,7 @@
 
 import { Box, Stack, type StackProps, TextField, Typography } from '@mui/material';
 import { CloudUpload } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import Button from '../button/Button';
@@ -12,6 +12,7 @@ import ImageIcon from '~/public/icons/image.svg';
 import PencilIcon from '~/public/icons/pencil.svg';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
 import type { MediaModalOpenState, MediaModalResult, MediaModalTab } from '~/shared/components/media-modal/MediaModal.types';
+import { useDebounce } from '~/shared/hooks/use-debounce/useDebounce';
 import { useImageMetadata } from '~/shared/hooks/use-image-metadata/useImageMetadata';
 
 interface ImagePreviewBlockProps extends StackProps {
@@ -20,7 +21,8 @@ interface ImagePreviewBlockProps extends StackProps {
   title?: string;
   altText?: string;
   onChangeAltText?: (value: string) => void;
-  oval?: boolean;
+  elipse?: boolean;
+  imageFit?: React.CSSProperties['objectFit'];
   onChangeImage: (url: string, crop?: MediaModalResult['crop']) => void;
   initialCrop?: MediaModalResult['crop'];
   direction?: 'row' | 'row-reverse' | 'column' | 'column-reverse';
@@ -43,7 +45,8 @@ export const ImagePreviewBlock = ({
   imageUrl,
   fileName,
   title,
-  oval = false,
+  elipse = false,
+  imageFit = 'cover',
   onChangeImage,
   initialCrop,
   direction = 'row',
@@ -69,6 +72,32 @@ export const ImagePreviewBlock = ({
   const [mediaInitial, setMediaInitial] = useState<MediaModalOpenState | undefined>(undefined);
   const [savedCrop, setSavedCrop] = useState<MediaModalResult['crop']>(initialCrop ?? null);
   const [lastChangeImageTab, setLastChangeImageTab] = useState<MediaModalTab>('UPLOAD');
+
+  const [localAltText, setLocalAltText] = useState(altText || '');
+  const debouncedAltText = useDebounce(localAltText, 500);
+
+  const altTextRef = useRef(altText);
+  altTextRef.current = altText;
+
+  useEffect(() => {
+    setLocalAltText(altText || '');
+  }, [altText]);
+
+  const lastSentRef = useRef(altText);
+
+  const onChangeAltTextRef = useRef(onChangeAltText);
+  onChangeAltTextRef.current = onChangeAltText;
+
+  useEffect(() => {
+    if (
+      debouncedAltText === localAltText &&
+      debouncedAltText !== altTextRef.current &&
+      debouncedAltText !== lastSentRef.current
+    ) {
+      lastSentRef.current = debouncedAltText;
+      onChangeAltTextRef.current?.(debouncedAltText);
+    }
+  }, [debouncedAltText, localAltText]);
 
   useEffect(() => {
     setPreviewImage(imageUrl);
@@ -158,8 +187,15 @@ export const ImagePreviewBlock = ({
       );
     }
 
-    if (oval) {
-      return <Box component="img" src={previewImage} alt={title || 'Selected'} sx={styles.imageOvalPreview} />;
+    if (elipse) {
+      return (
+        <Box 
+          component="img" 
+          src={previewImage} 
+          alt={title || 'Selected'} 
+          sx={[styles.imageElipsePreview, { objectFit: imageFit }]} 
+        />
+      );
     }
 
     return (
@@ -167,7 +203,7 @@ export const ImagePreviewBlock = ({
         <Box component="img" src={previewImage} alt={title || 'Selected'} onLoad={onImgLoad} sx={cropStyles.image} />
       </Box>
     );
-  }, [previewImage, oval, title, cropStyles, onImgLoad, previewStyles]);
+  }, [previewImage, elipse, imageFit, title, cropStyles, onImgLoad, previewStyles]);
 
   const renderTextContent = (
     <>
@@ -191,9 +227,15 @@ export const ImagePreviewBlock = ({
       {showAlternativeText && (
         <TextField
           label="Alt текст зображення"
-          value={altText || ''}
-          onChange={(e) => onChangeAltText?.(e.target.value)}
-          onBlur={onBlurAltText}
+          value={localAltText}
+          onChange={(e) => setLocalAltText(e.target.value)}
+          onBlur={() => {
+            if (localAltText !== altTextRef.current && localAltText !== lastSentRef.current) {
+              lastSentRef.current = localAltText;
+              onChangeAltText?.(localAltText);
+            }
+            onBlurAltText?.();
+          }}
           fullWidth
           margin="none"
           multiline

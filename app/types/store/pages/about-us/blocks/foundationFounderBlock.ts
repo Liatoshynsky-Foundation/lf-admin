@@ -1,7 +1,7 @@
 import { ImageType, LocalizedJSON, WithHidden } from '~/types/common';
 
 export type TeamMember = {
-  photo: ImageType;
+  photo: Omit<ImageType, 'caption'>;
   name: LocalizedJSON;
   description: LocalizedJSON;
 };

@@ -7,6 +7,7 @@ import { StyledButtonGroup, StyledButtonItem, StyledIndicator } from './ButtonGr
 interface ButtonGroupProps extends Omit<BoxProps, 'color' | 'size'> {
   buttons: React.ReactNode[];
   defaultActiveButton?: number;
+  activeButton?: number;
   size?: 'small' | 'big';
   palette?: 'primary' | 'secondary' | 'tertiary';
 }
@@ -14,12 +15,14 @@ interface ButtonGroupProps extends Omit<BoxProps, 'color' | 'size'> {
 const ButtonGroup = ({
   buttons,
   defaultActiveButton,
+  activeButton: controlledActiveButton,
   size = 'small',
   palette = 'primary',
   sx,
   ...props
 }: ButtonGroupProps) => {
-  const [activeButton, setActiveButton] = useState<number | null>(defaultActiveButton ?? null);
+  const [localActiveButton, setLocalActiveButton] = useState<number | null>(defaultActiveButton ?? null);
+  const activeButton = controlledActiveButton ?? localActiveButton;
   const [indicatorStyle, setIndicatorStyle] = useState<{ left: number; width: number }>({
     left: 0,
     width: 0
@@ -81,7 +84,11 @@ const ButtonGroup = ({
           ref={(el: HTMLDivElement | null) => {
             buttonRefs.current[idx] = el;
           }}
-          onClick={() => setActiveButton(idx)}
+          onClick={() => {
+            if (controlledActiveButton === undefined) {
+              setLocalActiveButton(idx);
+            }
+          }}
           palette={palette}
           size={size}
           active={idx === activeButton}
