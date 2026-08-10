@@ -1,7 +1,7 @@
 'use client';
 
 import { Box } from '@mui/material';
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import toast from 'react-hot-toast';
 
 import { useDeleteWorkAction } from './(composition)/useDeleteWorkAction';
@@ -177,13 +177,20 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
     unlinkComposition,
     setUnlinkComposition
   } = useDeleteWorkAction();
-  const { handleUpdateComposition } = useUpdateWorkAction();
+
+  const { handleUpdateComposition, error, clearError } = useUpdateWorkAction();
   const { handleShare } = useShare();
+
+  const handleCloseComposition = useCallback(() => {
+    clearError();
+    closeEditComposition();
+  }, [clearError, closeEditComposition]);
 
   const handleSubmitComposition = async (compositionData: OpusCompositionData) => {
     if (!compositionId) return;
-    await handleUpdateComposition(compositionId, compositionData);
-    closeEditComposition();
+    if (await handleUpdateComposition(compositionId, compositionData)) {
+      handleCloseComposition();
+    }
   };
 
   const handleShareComposition = (id: string) => {
@@ -198,9 +205,9 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
 
     if (!compositionToEdit) {
       toast.error('Композицію не знайдено');
-      closeEditComposition();
+      handleCloseComposition();
     }
-  }, [compositionId, compositionToEdit, isCompositionLoading, closeEditComposition]);
+  }, [compositionId, compositionToEdit, isCompositionLoading, handleCloseComposition]);
 
   function groupsRow(group: GroupRowData): BaseRowData<GroupHeaderData, OpusWork, IndividualWork> {
     const isPublished = group.status === BaseContentStatuses.Published;
@@ -340,8 +347,10 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
         open={isEditOpen}
         mode="edit"
         initialValue={compositionToEdit}
-        onClose={closeEditComposition}
+        onClose={handleCloseComposition}
         onSubmit={handleSubmitComposition}
+        error={error}
+        onClearError={clearError}
       />
     </Box>
   );

@@ -77,6 +77,58 @@ describe('CompositionTitleInput', () => {
     expect(onSelectSuggestion).toHaveBeenCalledWith(expect.objectContaining({ id: 'c1' }));
   });
 
+  it('does not render suggestions already selected in another row', () => {
+    mockUseSearchCompositions.mockReturnValue({
+      data: {
+        searchCompositions: [
+          { id: 'selected', name: { uk: 'Already selected' } },
+          { id: 'available', name: { uk: 'Available suggestion' } }
+        ]
+      }
+    });
+
+    render(<CompositionTitleInput {...baseProps} value="" excludedSuggestionIds={['selected']} />);
+
+    const input = screen.getByRole('combobox');
+    fireEvent.focus(input);
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+
+    expect(screen.queryByText('Already selected')).not.toBeInTheDocument();
+    expect(screen.getByText('Available suggestion')).toBeInTheDocument();
+  });
+
+  it('closes the suggestions popup when the input loses focus', () => {
+    mockUseSearchCompositions.mockReturnValue({
+      data: { searchCompositions: [{ id: 'c1', name: { uk: 'Suggestion' } }] }
+    });
+
+    render(<CompositionTitleInput {...baseProps} value="Suggestion" />);
+
+    const input = screen.getByRole('combobox');
+    fireEvent.focus(input);
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    expect(screen.getByText('Suggestion')).toBeInTheDocument();
+
+    fireEvent.blur(input);
+    expect(screen.queryByText('Suggestion')).not.toBeInTheDocument();
+  });
+
+  it('ignores selection of the no-results option', () => {
+    mockUseSearchCompositions.mockReturnValue({ data: { searchCompositions: [] } });
+    const onSelectSuggestion = jest.fn();
+
+    render(<CompositionTitleInput {...baseProps} value="Missing" onSelectSuggestion={onSelectSuggestion} />);
+
+    const input = screen.getByRole('combobox');
+    fireEvent.focus(input);
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+
+    const noResultsOption = screen.getByText('Нічого не знайдено');
+    fireEvent.click(noResultsOption);
+
+    expect(onSelectSuggestion).not.toHaveBeenCalled();
+  });
+
   it('uses English title when Ukrainian title is missing, and empty string if both are missing', () => {
     mockUseSearchCompositions.mockReturnValue({
       data: {

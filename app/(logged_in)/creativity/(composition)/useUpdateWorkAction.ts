@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import {
@@ -9,6 +10,13 @@ import {
   useUpdateCompositionMutation
 } from '~/types/graphql/generated/graphql';
 import type { OpusCompositionData } from '~/types/opus';
+
+interface UseUpdateWorkActionResult {
+  isUpdating: boolean;
+  error: string | null;
+  clearError: () => void;
+  handleUpdateComposition: (id: string, composition: OpusCompositionData) => Promise<boolean>;
+}
 
 const TOAST_MESSAGES = {
   UPDATE_SUCCESS: 'Твір успішно оновлено',
@@ -34,31 +42,44 @@ const mapCompositionToUpdateInput = (composition: OpusCompositionData): UpdateCo
   }))
 });
 
-export function useUpdateWorkAction() {
+export function useUpdateWorkAction(): UseUpdateWorkActionResult {
   const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
   const [updateCompositionMut, { loading: isUpdating }] = useUpdateCompositionMutation();
+  const clearError = useCallback(() => setError(null), []);
 
-  const handleUpdateComposition = async (id: string, composition: OpusCompositionData) => {
-    try {
-      await updateCompositionMut({
-        variables: {
-          id,
-          input: mapCompositionToUpdateInput(composition)
-        },
-        refetchQueries: [PaginatedWorksDocument],
-        awaitRefetchQueries: true
-      });
+  const handleUpdateComposition = useCallback(
+    async (id: string, composition: OpusCompositionData) => {
+      setError(null);
 
-      toast.success(TOAST_MESSAGES.UPDATE_SUCCESS);
-      router.refresh();
-    } catch (error) {
-      toast.error(TOAST_MESSAGES.UPDATE_ERROR);
-      throw error;
-    }
-  };
+      try {
+        await updateCompositionMut({
+          variables: {
+            id,
+            input: mapCompositionToUpdateInput(composition)
+          },
+          refetchQueries: [PaginatedWorksDocument],
+          awaitRefetchQueries: true
+        });
+
+        toast.success(TOAST_MESSAGES.UPDATE_SUCCESS);
+        router.refresh();
+        return true;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : TOAST_MESSAGES.UPDATE_ERROR;
+        setError(message);
+        
+        toast.error(message);
+        return false;
+      }
+    },
+    [updateCompositionMut, router]
+  );
 
   return {
     handleUpdateComposition,
-    isUpdating
+    isUpdating,
+    error,
+    clearError
   };
 }

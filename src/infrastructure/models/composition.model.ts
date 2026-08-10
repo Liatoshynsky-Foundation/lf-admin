@@ -35,6 +35,11 @@ const compositionSchema = new Schema(
   { timestamps: true, collection: 'compositions' }
 );
 
+compositionSchema.index(
+  { 'name.uk': 1 },
+  { unique: true, collation: { locale: 'uk', strength: 2 } }
+);
+
 const CompositionModel: Model<Composition> =
   mongoose.models.Composition || mongoose.model<Composition>('Composition', compositionSchema);
 

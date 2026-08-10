@@ -1,5 +1,10 @@
 import { GraphQLError } from 'graphql';
 
+import {
+  assertCompositionNameNotTaken,
+  normalizeCompositionName,
+  throwIfCompositionNameDuplicateKey
+} from './compositionNameValidation';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
 import type { Composition } from '~/domain/entities/Composition';
@@ -28,8 +33,13 @@ async function findExistingComposition(repo: ICompositionRepository, id: string)
   return existing;
 }
 
+const mapCompositionName = (name: CreateCompositionInput['name']): CompositionInput['name'] => ({
+  uk: normalizeCompositionName(name.uk),
+  en: normalizeCompositionName(name.en)
+});
+
 const mapCompositionInput = (input: CreateCompositionInput): CompositionInput => ({
-  name: input.name,
+  name: mapCompositionName(input.name),
   year: input.year ?? null,
   genre: input.genre ?? null,
   audioAvailable: input.audioAvailable ?? false,
@@ -46,14 +56,20 @@ export const CompositionsMutation = {
   ): Promise<Composition> => {
     assertAuthenticated(context);
 
-    const { 
-      compositionsRepository: repo, 
-      opusRepository: opusRepo 
-    } = context.requestContainer.cradle;
+    const { compositionsRepository: repo, opusRepository: opusRepo } = context.requestContainer.cradle;
+
+    await assertCompositionNameNotTaken(repo, input.name.uk);
 
     const compositionData = mapCompositionInput(input);
 
-    const composition = await repo.create(compositionData);
+    let composition: Composition;
+    try {
+      composition = await repo.create(compositionData);
+    } catch (error) {
+      console.error('Error creating composition:', error);
+      throwIfCompositionNameDuplicateKey(error, compositionData.name.uk);
+      throw error;
+    }
     if (!composition) {
       throw new Error(compositionsServiceErrors.COMPOSITION_NOT_CREATED);
     }
@@ -68,9 +84,12 @@ export const CompositionsMutation = {
     const repo = context.requestContainer.cradle.compositionsRepository;
 
     await findExistingComposition(repo, id);
+    if (input.name != null) {
+      await assertCompositionNameNotTaken(repo, input.name.uk, id);
+    }
 
     const updateData: CompositionInput = {
-      ...(input.name && { name: input.name }),
+      ...(input.name && { name: mapCompositionName(input.name) }),
       ...(input.year !== undefined && { year: input.year ?? null }),
       ...(input.genre !== undefined && { genre: input.genre }),
       ...(input.audioAvailable !== undefined && { audioAvailable: input.audioAvailable }),
@@ -79,7 +98,13 @@ export const CompositionsMutation = {
       ...(input.audios !== undefined && { audios: input.audios })
     };
 
-    const updatedComposition = await repo.update(id, updateData);
+    let updatedComposition: Composition | null;
+    try {
+      updatedComposition = await repo.update(id, updateData);
+    } catch (error) {
+      throwIfCompositionNameDuplicateKey(error, input.name?.uk ?? '');
+      throw error;
+    }
 
     if (!updatedComposition) {
       throw new GraphQLError(`Failed to update composition with id ${id}`, {

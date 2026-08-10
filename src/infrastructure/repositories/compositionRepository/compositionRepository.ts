@@ -41,6 +41,14 @@ const toEntity = (doc: DbComposition): Composition => ({
   updatedAt: doc.updatedAt
 });
 
+const normalizeInput = (input: CompositionInput): CompositionInput => ({
+  ...input,
+  name: {
+    uk: input.name.uk.trim(),
+    en: input.name.en.trim()
+  }
+});
+
 const buildCompositionQuery = (
   filters?: CompositionFilters,
   extraConditions: FilterQuery<DbComposition>[] = []
@@ -79,7 +87,7 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
     await dbConnect();
     const results = await Promise.all(
       inputs.map(async (input, index) => {
-        const { id, ...fields } = input;
+        const { id, ...fields } = normalizeInput(input);
         if (id && mongoose.Types.ObjectId.isValid(id)) {
           const updated = await CompositionModel.findByIdAndUpdate(
             id, { ...fields, order: index }, { new: true }
@@ -193,10 +201,18 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
     return docs.map(toEntity);
   };
 
+  const findByName = async (name: string): Promise<Composition | null> => {
+    await dbConnect();
+    const doc = await CompositionModel.findOne({ 'name.uk': name.trim() })
+      .collation({ locale: 'uk', strength: 2 })
+      .lean<DbComposition>();
+    return doc ? toEntity(doc) : null;
+  };
+
   const create = async (input: CompositionInput): Promise<Composition> => {
     await dbConnect();
-    
-    const newComposition = await new CompositionModel(input).save();
+
+    const newComposition = await new CompositionModel(normalizeInput(input)).save();
     return toEntity(newComposition.toObject() as unknown as DbComposition);
   };
 
@@ -207,6 +223,7 @@ export const CompositionRepository = ({ CompositionModel }: CompositionRepoDeps)
     findByIds,
     findByIdsPaginated,
     countByIds,
+    findByName,
     create
   };
 };

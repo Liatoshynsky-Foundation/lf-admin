@@ -1,5 +1,10 @@
 import { GraphQLError } from 'graphql';
 
+import {
+  assertCompositionNameNotTaken,
+  compositionNameTakenError,
+  throwIfCompositionNameDuplicateKey
+} from '../compositions/compositionNameValidation';
 import { markImagesAsUsed, processSlugUpdate, syncImagesCrops } from '../helpers';
 import { orderCompositionsByIds } from './tab-handlers/tabHandlersHelpers';
 import { opusServiceErrors } from '~/back-constants/errors';
@@ -82,13 +87,37 @@ const parseYear = (value: string | undefined): number | null => {
   return Number.isFinite(year) ? year : null;
 };
 
+async function assertCompositionsNamesNotTaken(
+  compositionsRepo: ICompositionRepository,
+  compositions: GQLComposition[]
+): Promise<void> {
+  const submittedNames = new Set<string>();
+
+  for (const composition of compositions) {
+    const name = composition.name?.trim();
+    if (!name) {
+      throw new GraphQLError(opusServiceErrors.COMPOSITION_NAME_REQUIRED, {
+        extensions: { code: 'BAD_USER_INPUT' }
+      });
+    }
+
+    const normalizedName = name.toLocaleLowerCase('uk');
+    if (submittedNames.has(normalizedName)) {
+      throw compositionNameTakenError(name);
+    }
+    submittedNames.add(normalizedName);
+
+    await assertCompositionNameNotTaken(compositionsRepo, name, composition.id);
+  }
+}
+
 const mapComposition = (composition: GQLComposition): CompositionInput => {
   const notesWithFiles = (composition.notes ?? []).filter((note) => note.fileUrl);
   const audios = (composition.audios ?? []).filter((audio) => audio.fileUrl || audio.name);
 
   return {
     id: composition.id,
-    name: { uk: composition.name, en: composition.name },
+    name: { uk: composition.name.trim(), en: composition.name.trim() },
     year: parseYear(composition.year ?? undefined),
     genre: composition.genre ?? null,
     audioAvailable: audios.length > 0,
@@ -266,7 +295,13 @@ async function handleCompositionsSync(
     return orderCompositionsByIds(compositionIds, await compositionsRepo.findByIds(compositionIds));
   }
 
-  const compositions = await compositionsRepo.syncForOpus(inputCompositions.map(mapComposition));
+  let compositions;
+  try {
+    compositions = await compositionsRepo.syncForOpus(inputCompositions.map(mapComposition));
+  } catch (error) {
+    throwIfCompositionNameDuplicateKey(error, inputCompositions[0]?.name ?? '');
+    throw error;
+  }
   const oldCompositionIds = (existingOpus.compositions ?? []).map((cid) => cid.toString());
   const newCompositionIds = compositions.map((c) => c.id);
 
@@ -335,7 +370,6 @@ export const OpusMutation = {
 
     const repo = context.requestContainer.cradle.opusRepository;
     const compositionsRepo = context.requestContainer.cradle.compositionsRepository;
-
     const number = input.number;
     const existingByNumber = await repo.findByNumber(number);
     if (existingByNumber) {
@@ -343,13 +377,20 @@ export const OpusMutation = {
         extensions: { code: 'DUPLICATE_OPUS_NUMBER' }
       });
     }
-
     const nameForSlug = input.name.uk?.trim();
     const slug = await generateUniqueSlug(nameForSlug, {
-      checkExists: async (candidate: string) => (await repo.findBySlug(candidate)) !== null
+      checkExists: async (candidate) => (await repo.findBySlug(candidate)) !== null
     });
 
-    const compositions = await compositionsRepo.syncForOpus((input.compositions ?? []).map(mapComposition));
+    await assertCompositionsNamesNotTaken(compositionsRepo, input.compositions ?? []);
+
+    let compositions;
+    try {
+      compositions = await compositionsRepo.syncForOpus((input.compositions ?? []).map(mapComposition));
+    } catch (error) {
+      throwIfCompositionNameDuplicateKey(error, input.compositions?.[0]?.name ?? '');
+      throw error;
+    }
     const compositionIds = compositions.map((c) => c.id);
 
     const opusData: CreateOpusInput = {
@@ -441,6 +482,10 @@ export const OpusMutation = {
     const existingOpus = await findExistingOpus(repo, id);
 
     await ensureUniqueOpusNumber(repo, id, input.number);
+
+    if (input.compositions !== undefined) {
+      await assertCompositionsNamesNotTaken(compositionsRepo, input.compositions);
+    }
 
     const compositions = await handleCompositionsSync(compositionsRepo, repo, existingOpus, input.compositions);
 

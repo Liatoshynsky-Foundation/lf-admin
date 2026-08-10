@@ -182,6 +182,41 @@ describe('CompositionsMutation', () => {
       expect(result).toEqual(MOCK_COMPOSITION);
     });
 
+    it('should reject an existing name before creating', async () => {
+      const context = createMockContext(MOCK_ADMIN, {
+        findByName: jest.fn().mockResolvedValue(MOCK_COMPOSITION)
+      });
+
+      await expect(
+        CompositionsMutation.createComposition(null, { input: MOCK_INPUT }, context)
+      ).rejects.toMatchObject({
+        message: `Композиція "${MOCK_INPUT.name.uk}" вже існує`,
+        extensions: { code: 'COMPOSITION_NAME_TAKEN' }
+      });
+      expect(context.requestContainer.cradle.compositionsRepository.create).not.toHaveBeenCalled();
+    });
+
+    it('should trim localized names and translate a duplicate-key create error', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+      const createMock = jest.fn().mockRejectedValue({ code: 11000, keyValue: { 'name.uk': 'Trimmed' } });
+      const context = createMockContext(MOCK_ADMIN, {
+        findByName: jest.fn().mockResolvedValue(null),
+        create: createMock
+      });
+
+      await expect(
+        CompositionsMutation.createComposition(null, {
+          input: { ...MOCK_INPUT, name: { uk: '  Trimmed  ', en: '  English  ' } }
+        }, context)
+      ).rejects.toMatchObject({
+        message: 'Композиція "Trimmed" вже існує',
+        extensions: { code: 'COMPOSITION_NAME_TAKEN' }
+      });
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Error creating composition:', expect.anything());
+      expect(createMock).toHaveBeenCalledWith(expect.objectContaining({ name: { uk: 'Trimmed', en: 'English' } }));
+      consoleErrorSpy.mockRestore();
+    });
+
     it('should correctly fallback optional fields when input values are missing', async () => {
       const createMock = jest.fn().mockResolvedValue(MOCK_COMPOSITION);
       const moveMock = jest.fn().mockResolvedValue(undefined);
@@ -290,6 +325,44 @@ describe('CompositionsMutation', () => {
       expect(result).toEqual({
         ...MOCK_COMPOSITION,
         ...updateInputFull,
+      });
+    });
+
+    it('should allow updating a composition without changing ownership of its name', async () => {
+      const updateMock = jest.fn().mockResolvedValue(MOCK_COMPOSITION);
+      const context = createMockContext(MOCK_ADMIN, {
+        findById: jest.fn().mockResolvedValue(MOCK_COMPOSITION),
+        findByName: jest.fn().mockResolvedValue(MOCK_COMPOSITION),
+        update: updateMock
+      });
+
+      await CompositionsMutation.updateComposition(
+        null,
+        { id: MOCK_COMPOSITION_ID, input: { name: { uk: '  Соната  ', en: '  Sonata  ' } } },
+        context
+      );
+
+      expect(updateMock).toHaveBeenCalledWith(MOCK_COMPOSITION_ID, {
+        name: { uk: 'Соната', en: 'Sonata' }
+      });
+    });
+
+    it('should translate a duplicate-key update error', async () => {
+      const context = createMockContext(MOCK_ADMIN, {
+        findById: jest.fn().mockResolvedValue(MOCK_COMPOSITION),
+        findByName: jest.fn().mockResolvedValue(null),
+        update: jest.fn().mockRejectedValue({ code: 11000, keyValue: { 'name.uk': 'Taken' } })
+      });
+
+      await expect(
+        CompositionsMutation.updateComposition(
+          null,
+          { id: MOCK_COMPOSITION_ID, input: { name: { uk: 'Taken', en: 'Taken' } } },
+          context
+        )
+      ).rejects.toMatchObject({
+        message: 'Композиція "Taken" вже існує',
+        extensions: { code: 'COMPOSITION_NAME_TAKEN' }
       });
     });
 
