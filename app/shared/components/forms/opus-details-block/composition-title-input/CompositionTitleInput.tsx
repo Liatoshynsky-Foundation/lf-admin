@@ -23,6 +23,9 @@ interface CompositionOption {
 
 export interface CompositionTitleInputProps {
   value: string;
+  error?: boolean;
+  helperMessage?: string;
+  excludedSuggestionIds?: string[];
   onChangeText: (title: string) => void;
   onSelectSuggestion: (suggestion: OpusCompositionSuggestion) => void;
   onCreateNew: () => void;
@@ -30,6 +33,9 @@ export interface CompositionTitleInputProps {
 
 export default function CompositionTitleInput({
   value,
+  error = false,
+  helperMessage,
+  excludedSuggestionIds = [],
   onChangeText,
   onSelectSuggestion,
   onCreateNew
@@ -38,7 +44,11 @@ export default function CompositionTitleInput({
 
   const debouncedSearch = useDebounce(value.trim(), 300);
   const { data } = useSearchCompositions(debouncedSearch);
-  const suggestions = useMemo(() => data?.searchCompositions ?? [], [data]);
+  const suggestions = useMemo(() => {
+    const excludedIds = new Set(excludedSuggestionIds);
+
+    return (data?.searchCompositions ?? []).filter((suggestion) => !suggestion.id || !excludedIds.has(suggestion.id));
+  }, [data, excludedSuggestionIds]);
 
   const options = useMemo<CompositionOption[]>(() => {
     const suggestionOptions = suggestions.map((suggestion, index) => ({
@@ -123,7 +133,9 @@ export default function CompositionTitleInput({
           </Box>
         );
       }}
-      renderInput={(params) => <TextField {...params} size="small" sx={styles.input} />}
+      renderInput={(params) => (
+        <TextField {...params} size="small" error={error} helperText={helperMessage} sx={styles.input} />
+      )}
     />
   );
 }

@@ -31,9 +31,9 @@ const mockProps: WorkRowProps = {
 
 jest.mock('~/shared/components/forms/opus-details-block/composition-title-input/CompositionTitleInput', () => ({
   __esModule: true,
-  default: ({ onChangeText, onSelectSuggestion, onCreateNew }: CompositionTitleInputProps) => (
+  default: ({ onChangeText, onSelectSuggestion, onCreateNew, error, helperMessage }: CompositionTitleInputProps) => (
     <div>
-      <input data-testid="title-input" onChange={(e) => onChangeText(e.target.value)} />
+      <input data-testid="title-input" data-error={String(Boolean(error))} data-helper={helperMessage} onChange={(e) => onChangeText(e.target.value)} />
       <button
         data-testid="suggest-btn"
         onClick={() => onSelectSuggestion({ id: 'test' } as OpusCompositionSuggestion)}
@@ -94,5 +94,12 @@ describe('WorkRow', () => {
       fireEvent.click(screen.getByTestId('create-btn'));
       expect(mockProps.openCreateModal).toHaveBeenCalledWith(0);
     });
+  });
+
+  it('passes composition validation errors to the title input', () => {
+    render(<WorkRow {...mockProps} error="Duplicate" hasError />);
+
+    expect(screen.getByTestId('title-input')).toHaveAttribute('data-error', 'true');
+    expect(screen.getByTestId('title-input')).toHaveAttribute('data-helper', 'Duplicate');
   });
 });

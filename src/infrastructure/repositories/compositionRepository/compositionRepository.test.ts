@@ -65,6 +65,7 @@ describe('CompositionRepository', () => {
   const deleteManyMock = jest.fn();
   const saveMock = jest.fn();
   const countDocumentsMock = jest.fn();
+  const findOneMock = jest.fn();
 
   const createChainableQueryMock = (resolvedValue: unknown) => {
     const queryMock: Record<string, jest.Mock> = {};
@@ -86,6 +87,7 @@ describe('CompositionRepository', () => {
     findByIdAndUpdate: jest.Mock;
     deleteMany: jest.Mock;
     countDocuments: jest.Mock;
+    findOne: jest.Mock;
   };
 
   MockModel.find = findMock;
@@ -93,6 +95,7 @@ describe('CompositionRepository', () => {
   MockModel.findByIdAndUpdate = findByIdAndUpdateMock;
   MockModel.deleteMany = deleteManyMock;
   MockModel.countDocuments = countDocumentsMock;
+  MockModel.findOne = findOneMock;
 
   const repository = CompositionRepository({ CompositionModel: MockModel });
 
@@ -119,6 +122,34 @@ describe('CompositionRepository', () => {
 
     expect(saveMock).toHaveBeenCalledWith({ session });
     expect(result.id).toBe('c1');
+  });
+
+  it('trims localized names before creating and syncing a composition', async (): Promise<void> => {
+    saveMock.mockResolvedValue({ toObject: () => createMockDoc({ name: { uk: ' Соната ', en: ' Sonata ' } }) });
+
+    await repository.create(createCompositionInput());
+    expect(MockModel).toHaveBeenCalledWith(expect.objectContaining({ name: { uk: 'Після бою', en: 'After Battle' } }));
+
+    await repository.syncForOpus([{ ...createCompositionInput(), name: { uk: '  Соната  ', en: '  Sonata  ' } }]);
+    expect(saveMock).toHaveBeenLastCalledWith({ session: undefined });
+    expect(MockModel).toHaveBeenLastCalledWith(expect.objectContaining({ name: { uk: 'Соната', en: 'Sonata' } }));
+  });
+
+  it('findByName trims the search name and maps the matching document', async (): Promise<void> => {
+    const queryChain = createChainableQueryMock(createMockDoc());
+    findOneMock.mockReturnValue(queryChain);
+
+    const result = await repository.findByName('  Соната  ');
+
+    expect(findOneMock).toHaveBeenCalledWith({ 'name.uk': 'Соната' });
+    expect(queryChain.collation).toHaveBeenCalledWith({ locale: 'uk', strength: 2 });
+    expect(result?.id).toBe('c1');
+  });
+
+  it('findByName returns null when no document matches', async (): Promise<void> => {
+    findOneMock.mockReturnValue(createChainableQueryMock(null));
+
+    await expect(repository.findByName('Missing')).resolves.toBeNull();
   });
 
   it('syncForOpus links an existing composition by id instead of duplicating', async (): Promise<void> => {
