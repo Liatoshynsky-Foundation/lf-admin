@@ -17,9 +17,10 @@ export const createBaseRepository = <
   model: Model<TDbDoc>;
   toEntity: (doc: TDbDoc) => TEntity;
   buildQuery?: (filters?: QueryFilters<TFilters>) => FilterQuery<TDbDoc>;
+  getSort?: (filters?: TFilters) => Record<string, 1 | -1>;
   getDefaultSort?: (filters?: TFilters) => Record<string, 1 | -1>;
 }): IBaseRepository<TEntity, TFilters> => {
-  const { model, toEntity, buildQuery = () => ({}), getDefaultSort } = options;
+  const { model, toEntity, buildQuery = () => ({}), getSort, getDefaultSort } = options;
 
   const extractQueryFilters = (filters?: TFilters): QueryFilters<TFilters> | undefined => {
     if (!filters) return undefined;
@@ -60,7 +61,9 @@ export const createBaseRepository = <
 
       let sort: Record<string, 1 | -1> = { createdAt: -1 };
 
-      if (filters?.sort && filters.sort.length > 0) {
+      if (getSort) {
+        sort = getSort(filters);
+      } else if (filters?.sort && filters.sort.length > 0) {
         const customSort: Record<string, 1 | -1> = {};
         filters.sort.forEach((item: SortCriteria) => {
           customSort[item.sortBy] = item.sortOrder === 'asc' ? 1 : -1;

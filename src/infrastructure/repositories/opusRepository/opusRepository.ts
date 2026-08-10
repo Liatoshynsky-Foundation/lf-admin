@@ -4,7 +4,7 @@ import { createBaseRepository } from '../baseRepository/baseRepository';
 import { opusServiceErrors } from '~/back-constants/errors';
 import { LocalizedString } from '~/domain/entities/BaseContent';
 import { Opus } from '~/domain/entities/Opus';
-import { CreateOpusInput, IOpusRepository, OpusFilters } from '~/domain/repositories/opusRepository';
+import { CreateOpusInput, IOpusRepository, OpusFilters, UpdateOpusInput } from '~/domain/repositories/opusRepository';
 import dbConnect from '~/infrastructure/db/connect';
 import { buildBaseQuery, combineConditions, createToEntity, fieldCondition, getBaseSort } from '~/infrastructure/repositories/helpers';
 import { OpusNumberKind, OpusStatus } from '~/types/graphql/generated/graphql';
@@ -110,6 +110,26 @@ const toEntity = (doc: DbOpus): Opus =>
 const escapeRegExp = (value: string): string =>
   value.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 
+const isDuplicateKeyError = (error: unknown): boolean =>
+  typeof error === 'object' && error !== null && 'code' in error && error.code === 11000;
+
+const getSort = (filters?: OpusFilters): Record<string, 1 | -1> => {
+  if (filters?.sort?.length) {
+    const { sortBy, sortOrder } = filters.sort[0];
+    const direction = sortOrder === 'asc' ? 1 : -1;
+
+    if (sortBy === 'number') {
+      return { number: direction, additionalText: direction };
+    }
+
+    return getBaseSort(filters);
+  }
+
+  return { number: 1, additionalText: 1 };
+};
+
+const getDefaultSort = (): Record<string, 1 | -1> => ({ number: 1, additionalText: 1 });
+
 export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => {
   const baseRepo = createBaseRepository<Opus, DbOpus, OpusFilters>({
     model: OpusModel,
@@ -124,12 +144,8 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
         { number: { $type: 'number' } }
       ]);
     },
-    getDefaultSort: (filters) => {
-      if (filters?.sort?.length) {
-        return getBaseSort(filters);
-      }
-      return { number: 1, additionalText: 1 };
-    }
+    getSort,
+    getDefaultSort
   });
 
   const findByComplexKey = async (
@@ -223,8 +239,25 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
         meta: { views: input.meta?.views ?? 0 }
       };
 
-      const newOpus = await new OpusModel(opusData).save();
-      return toEntity(newOpus.toObject() as unknown as DbOpus);
+      try {
+        const newOpus = await new OpusModel(opusData).save();
+        return toEntity(newOpus.toObject() as unknown as DbOpus);
+      } catch (error) {
+        if (isDuplicateKeyError(error)) {
+          throw new Error(opusServiceErrors.OPUS_ALREADY_EXISTS);
+        }
+        throw error;
+      }
+    },
+    update: async (id: string, input: UpdateOpusInput): Promise<Opus | null> => {
+      try {
+        return await baseRepo.update(id, input);
+      } catch (error) {
+        if (isDuplicateKeyError(error)) {
+          throw new Error(opusServiceErrors.OPUS_ALREADY_EXISTS);
+        }
+        throw error;
+      }
     },
     unlink,
     moveCompositionsToCompositionsOpus,

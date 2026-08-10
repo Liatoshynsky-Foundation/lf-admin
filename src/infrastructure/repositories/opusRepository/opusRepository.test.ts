@@ -77,6 +77,7 @@ describe('OpusRepository', () => {
   const saveMock = jest.fn();
   const updateOneMock = jest.fn();
   const findByIdMock = jest.fn();
+  const findByIdAndUpdateMock = jest.fn();
   const findOneAndUpdateMock = jest.fn();
 
   const MockModel = jest.fn().mockImplementation(() => ({
@@ -87,6 +88,7 @@ describe('OpusRepository', () => {
     countDocuments: jest.Mock;
     updateOne: jest.Mock;
     findById: jest.Mock;
+    findByIdAndUpdate: jest.Mock;
     findOneAndUpdate: jest.Mock;
   };
 
@@ -95,6 +97,7 @@ describe('OpusRepository', () => {
   MockModel.countDocuments = countDocumentsMock;
   MockModel.updateOne = updateOneMock;
   MockModel.findById = findByIdMock;
+  MockModel.findByIdAndUpdate = findByIdAndUpdateMock;
   MockModel.findOneAndUpdate = findOneAndUpdateMock;
 
   let repository: IOpusRepository;
@@ -207,6 +210,25 @@ describe('OpusRepository', () => {
 
       expect(MockModel).toHaveBeenCalledWith(expect.objectContaining({ meta: { views: 0 } }));
       expect(result.number).toBe(OPUS_NUMBER_2);
+    });
+
+    it('converts a database duplicate-key race into the domain duplicate error', async () => {
+      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(null) });
+      saveMock.mockRejectedValue({ code: 11000 });
+
+      await expect(repository.create(createInput)).rejects.toThrow(opusServiceErrors.OPUS_ALREADY_EXISTS);
+    });
+  });
+
+  describe('update', () => {
+    it('converts a database duplicate-key race into the domain duplicate error', async () => {
+      findByIdAndUpdateMock.mockReturnValue({
+        lean: jest.fn().mockRejectedValue({ code: 11000 })
+      });
+
+      await expect(repository.update(MOCK_ID, { number: OPUS_NUMBER_2 })).rejects.toThrow(
+        opusServiceErrors.OPUS_ALREADY_EXISTS
+      );
     });
   });
 
@@ -371,7 +393,18 @@ describe('OpusRepository', () => {
       });
 
       expect(result).toHaveLength(1);
-      expect(chain.sort).toHaveBeenCalledWith({ number: 1 });
+      expect(chain.sort).toHaveBeenCalledWith({ number: 1, additionalText: 1 });
+    });
+
+    it('sorts additional text in reverse order when sorting descending by number', async () => {
+      const chain = mockChain();
+      findMock.mockReturnValue(chain);
+
+      await repository.findAll({
+        sort: [{ sortBy: 'number', sortOrder: SortOrder.Desc }]
+      });
+
+      expect(chain.sort).toHaveBeenCalledWith({ number: -1, additionalText: -1 });
     });
 
     it('applies fallback logic for numberKind === Op inside buildQuery', async () => {

@@ -224,6 +224,23 @@ describe('createBaseRepository', () => {
       expect(mockQueryBuilder.sort).toHaveBeenCalledWith({ name: 1 });
     });
 
+    it('should use getSort when provided with sort filters', async () => {
+      const mockQueryBuilder = createMockQueryBuilder([]);
+      (mockModel.find as jest.Mock).mockReturnValue(mockQueryBuilder);
+
+      const getSort = jest.fn().mockReturnValue({ name: 1, additionalText: 1 });
+      const repository = createBaseRepository<TestEntity, TestDbDoc, TestFilters>({
+        model: mockModel,
+        toEntity,
+        getSort
+      });
+
+      await repository.findAll({ sort: [{ sortBy: 'name', sortOrder: SortOrder.Asc }] });
+
+      expect(getSort).toHaveBeenCalled();
+      expect(mockQueryBuilder.sort).toHaveBeenCalledWith({ name: 1, additionalText: 1 });
+    });
+
     it('should apply custom sorting from the sort array filters', async () => {
       const mockQueryBuilder = createMockQueryBuilder([]);
       (mockModel.find as jest.Mock).mockReturnValue(mockQueryBuilder);

@@ -81,8 +81,13 @@ const parseYear = (value: string | undefined): number | null => {
   return Number.isFinite(year) ? year : null;
 };
 
-const formattedAdditionalText = (additionalText?: string) =>   
-  additionalText?.trim() || null;
+const formattedAdditionalText = (additionalText?: string | null): string | null | undefined => {
+  if (additionalText === undefined) {
+    return undefined;
+  }
+
+  return additionalText?.trim() || null;
+};
 
 const mapComposition = (composition: GQLComposition): CompositionInput => {
   const notesWithFiles = (composition.notes ?? []).filter((note) => note.fileUrl);
@@ -257,6 +262,14 @@ async function ensureUniqueOpus(repo: IOpusRepository, number: number, additiona
   }
 }
 
+const isOpusAlreadyExistsError = (error: unknown): boolean =>
+  error instanceof Error && error.message === opusServiceErrors.OPUS_ALREADY_EXISTS;
+
+const duplicateOpusError = (): GraphQLError =>
+  new GraphQLError(opusServiceErrors.OPUS_ALREADY_EXISTS, {
+    extensions: { code: 'DUPLICATE_OPUS_NUMBER' }
+  });
+
 async function handleCompositionsSync(
   compositionsRepo: ICompositionRepository,
   repo: IOpusRepository,
@@ -288,7 +301,16 @@ async function handleCompositionsSync(
 }
 
 async function updateAndVerifyOpus(repo: IOpusRepository, id: string, updateData: UpdateOpusInput): Promise<Opus> {
-  const opus = await repo.update(id, updateData);
+  let opus: Opus | null;
+  try {
+    opus = await repo.update(id, updateData);
+  } catch (error) {
+    if (isOpusAlreadyExistsError(error)) {
+      throw duplicateOpusError();
+    }
+    throw error;
+  }
+
   if (!opus) {
     throw new GraphQLError(opusServiceErrors.OPUS_NOT_FOUND(id), {
       extensions: { code: 'OPUS_NOT_FOUND' }
@@ -338,7 +360,7 @@ export const OpusMutation = {
     const repo = context.requestContainer.cradle.opusRepository;
     const compositionsRepo = context.requestContainer.cradle.compositionsRepository;
 
-    await ensureUniqueOpus(repo, input.number, formattedAdditionalText(input.additionalText), input.numberKind);
+    await ensureUniqueOpus(repo, input.number, formattedAdditionalText(input.additionalText) ?? null, input.numberKind);
 
     const nameForSlug = input.name.uk?.trim();
     const slug = await generateUniqueSlug(nameForSlug, {
@@ -354,7 +376,7 @@ export const OpusMutation = {
       title: input.title,
       name: input.name,
       description: input.description,
-      additionalText: formattedAdditionalText(input.additionalText),
+      additionalText: formattedAdditionalText(input.additionalText) ?? null,
       creationYear: input.creationYear,
       endYear: input.endYear ?? null,
       datesNote: input.datesNote ?? null,
@@ -376,7 +398,15 @@ export const OpusMutation = {
       blocksOrder: input.blocksOrder ?? null
     };
 
-    const opus = await repo.create(opusData);
+    let opus: Opus;
+    try {
+      opus = await repo.create(opusData);
+    } catch (error) {
+      if (isOpusAlreadyExistsError(error)) {
+        throw duplicateOpusError();
+      }
+      throw error;
+    }
     await repo.removeCompositionsFromCompositionsOpus(compositionIds);
 
     if (input.coverImage?.crop) {
@@ -436,7 +466,10 @@ export const OpusMutation = {
 
     const existingOpus = await findExistingOpus(repo, id);
 
-    await ensureUniqueOpus(repo, input.number, formattedAdditionalText(input.additionalText), input.numberKind, id);
+    const additionalText =
+      input.additionalText === undefined ? existingOpus.additionalText ?? null : formattedAdditionalText(input.additionalText);
+
+    await ensureUniqueOpus(repo, input.number, additionalText, input.numberKind, id);
 
     const compositions = await handleCompositionsSync(compositionsRepo, repo, existingOpus, input.compositions);
 

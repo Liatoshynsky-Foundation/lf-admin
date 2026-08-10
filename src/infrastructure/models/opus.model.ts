@@ -32,7 +32,7 @@ const opusSchema = new Schema(
     additionalText: { 
       type: String, 
       default: null, 
-      set: (v: string | null) => (v && v.trim() !== '' ? v : null) 
+      set: (v: unknown) => (typeof v === 'string' ? v.trim() || null : v)
     },
     creationYear: { type: String, default: null },
     endYear: { type: String, default: null },
@@ -97,7 +97,10 @@ const opusSchema = new Schema(
   { timestamps: true, collection: 'opus' }
 );
 
-opusSchema.index({ number: 1, numberKind: 1, additionalText: 1 }, { unique: true });
+opusSchema.index(
+  { number: 1, numberKind: 1, additionalText: 1 },
+  { unique: true, collation: { locale: 'uk', strength: 2 } }
+);
 
 const OpusModel: Model<Opus> = mongoose.models.Opus || mongoose.model<Opus>('Opus', opusSchema);
 
