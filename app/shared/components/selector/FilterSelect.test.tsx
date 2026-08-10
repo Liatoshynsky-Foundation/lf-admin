@@ -306,5 +306,7 @@ describe('FilterSelect', () => {
     ];
     render(<FilterSelect label="Badgeable Select" options={badgeableOptions} />);
     fireEvent.click(screen.getByRole('button', { name: 'Badgeable Select' }));
+    expect(screen.getByTestId('item-Published')).toBeInTheDocument();
+    expect(screen.getByTestId('item-Hidden')).toBeInTheDocument();
   });
 });
