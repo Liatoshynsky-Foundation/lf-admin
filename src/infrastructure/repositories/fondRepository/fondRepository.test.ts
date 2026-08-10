@@ -17,12 +17,30 @@ const createMockFondDoc = (overrides: Partial<DbFond> = {}): DbFond => ({
   chronologicalBoundaries: { uk: '1918', en: '1918' },
   description: { uk: 'опис', en: 'desc' },
   organizationForm: { uk: 'оргФорм', en: 'orgForm' },
+  casesCount: 0,
+  descriptionsCount: 0,
   createdAt: '2026-07-29T10:00:00.000Z',
   updatedAt: '2026-07-29T10:00:00.000Z',
   ...overrides
 });
 
 jest.mock('../../db/connect', () => jest.fn());
+
+jest.mock('mongoose', () => {
+  const MockObjectId = function (this: { toString: () => string }, id: string) {
+    this.toString = () => id;
+  };
+
+  type ObjectIdMock = typeof MockObjectId & { isValid: (id: string) => boolean };
+
+  (MockObjectId as unknown as ObjectIdMock).isValid = (id: string) => /^[0-9a-fA-F]{24}$/.test(id);
+
+  return {
+    Types: {
+      ObjectId: MockObjectId
+    }
+  };
+});
 
 const saveMock = jest.fn();
 const findOneMock = jest.fn();
@@ -93,5 +111,61 @@ describe('fondRepository', () => {
     const result = await repository.findByFondNumber(999);
 
     expect(result).toBeNull();
+  });
+
+  it('should default casesCount and descriptionsCount to 0 when missing on the document', async () => {
+    const doc = createMockFondDoc({
+      casesCount: undefined as unknown as number,
+      descriptionsCount: undefined as unknown as number
+    });
+    findOneMock.mockResolvedValue({ toObject: () => doc });
+
+    const result = await repository.findByFondNumber(doc.fondNumber);
+
+    expect((result as Fond).casesCount).toBe(0);
+    expect((result as Fond).descriptionsCount).toBe(0);
+  });
+
+  it('should map casesCount and descriptionsCount when present on the document', async () => {
+    const doc = createMockFondDoc({ casesCount: 5, descriptionsCount: 2 });
+    findOneMock.mockResolvedValue({ toObject: () => doc });
+
+    const result = await repository.findByFondNumber(doc.fondNumber);
+
+    expect((result as Fond).casesCount).toBe(5);
+    expect((result as Fond).descriptionsCount).toBe(2);
+  });
+
+  describe('findByIds', () => {
+    const otherId = '65eddf5e2f1a2b3c4d5e6f7b';
+
+    it('should query only by the valid ObjectIds and return the mapped entities', async () => {
+      const docs = [createMockFondDoc(), createMockFondDoc({ _id: { toString: () => otherId }, fondNumber: 2 })];
+      const leanMock = jest.fn().mockResolvedValue(docs);
+      findAllMock.mockReturnValue({ lean: leanMock });
+
+      const result = await repository.findByIds([mockId, otherId]);
+
+      expect(findAllMock).toHaveBeenCalledWith({ _id: { $in: [mockId, otherId] } });
+      expect(result).toHaveLength(2);
+      expect(result[0].fondNumber).toBe(1);
+      expect(result[1].fondNumber).toBe(2);
+    });
+
+    it('should filter out invalid ObjectIds before querying', async () => {
+      const leanMock = jest.fn().mockResolvedValue([createMockFondDoc()]);
+      findAllMock.mockReturnValue({ lean: leanMock });
+
+      await repository.findByIds([mockId, 'not-a-valid-object-id']);
+
+      expect(findAllMock).toHaveBeenCalledWith({ _id: { $in: [mockId] } });
+    });
+
+    it('should return an empty array without querying when no valid ids are provided', async () => {
+      const result = await repository.findByIds(['not-a-valid-object-id']);
+
+      expect(findAllMock).not.toHaveBeenCalled();
+      expect(result).toEqual([]);
+    });
   });
 });

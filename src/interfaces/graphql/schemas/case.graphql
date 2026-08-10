@@ -30,6 +30,7 @@ type Case {
     detailedCaseDescription: LocalizedString
     pdfFile: CasePdfFile
     status: CaseStatus!
+    cipher: String!
     updatedAt: String!
     createdAt: String!
 }

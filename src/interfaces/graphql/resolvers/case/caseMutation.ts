@@ -1,5 +1,6 @@
 import { GraphQLError } from 'graphql';
 
+import { recalculateFondStats } from './recalculateFondStats';
 import { CaseErrorCodes, CaseErrors, graphqlErrors } from '~/constants/errors';
 import { Case } from '~/src/domain/entities/Case';
 import { CreateCaseInput, UpdateCaseInput } from '~/src/domain/repositories/caseRepository';
@@ -64,7 +65,9 @@ export const CaseMutation = {
     }
 
     try {
-      return await repo.create(validatedInput);
+      const createdCase = await repo.create(validatedInput);
+      await recalculateFondStats(fondId, { caseRepository: repo, fondRepository });
+      return createdCase;
     } catch (error) {
       if (isDuplicateKeyError(error)) {
         throw duplicateNumbersError();
@@ -121,13 +124,33 @@ export const CaseMutation = {
       throw caseNotFoundError(id);
     }
 
+    const statsAffectingChange =
+      validatedInput.fondId !== undefined || validatedInput.descriptionNumber !== undefined;
+
+    if (statsAffectingChange) {
+      const affectedFondIds = new Set([current.fondId, updatedCase.fondId]);
+
+      await Promise.all(
+        Array.from(affectedFondIds).map((affectedFondId) =>
+          recalculateFondStats(affectedFondId, { caseRepository: repo, fondRepository })
+        )
+      );
+    }
+
     return updatedCase;
   },
 
   deleteCase: async (_: unknown, { id }: DeleteCaseArgs, context: GraphQLContext): Promise<boolean> => {
     assertAuthenticated(context);
-    const repo = context.requestContainer.cradle.caseRepository;
+    const { caseRepository: repo, fondRepository } = context.requestContainer.cradle;
 
-    return repo.delete(id);
+    const existingCase = await repo.findById(id);
+    const deleted = await repo.delete(id);
+
+    if (deleted && existingCase) {
+      await recalculateFondStats(existingCase.fondId, { caseRepository: repo, fondRepository });
+    }
+
+    return deleted;
   }
 };

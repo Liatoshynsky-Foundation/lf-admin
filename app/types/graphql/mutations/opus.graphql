@@ -104,3 +104,31 @@ mutation UpdateOpusStatus($id: ID!, $status: OpusStatus!) {
     status
   }
 }
+
+mutation UnlinkComposition($opusId: ID!, $compositionId: ID!) {
+  unlinkComposition(opusId: $opusId, compositionId: $compositionId) {
+    id
+    number
+    numberKind
+    name {
+      uk
+      en
+    }
+    genre {
+      uk
+      en
+    }
+    status
+    creationYear
+    endYear
+    updatedAt
+    createdAt
+    compositions {
+      id
+      name {
+        uk
+        en
+      }
+    }
+  }
+}

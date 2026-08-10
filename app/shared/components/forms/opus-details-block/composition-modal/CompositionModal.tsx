@@ -19,6 +19,8 @@ interface CompositionModalProps {
   initialValue?: OpusCompositionData | null;
   onClose: () => void;
   onSubmit: (composition: OpusCompositionData) => void;
+  error?: string | null;
+  onClearError?: () => void;
 }
 
 type MediaTarget = { field: 'audios' | 'notes'; rowId?: string };
@@ -48,7 +50,9 @@ export default function CompositionModal({
   mode,
   initialValue,
   onClose,
-  onSubmit
+  onSubmit,
+  error,
+  onClearError
 }: Readonly<CompositionModalProps>) {
   const [composition, setComposition] = useState<OpusCompositionData>(emptyComposition);
   const [titleError, setTitleError] = useState('');
@@ -69,6 +73,7 @@ export default function CompositionModal({
 
     if (key === 'name' && typeof value === 'string' && value.trim()) {
       setTitleError('');
+      onClearError?.();
     }
   };
 
@@ -194,8 +199,8 @@ export default function CompositionModal({
           label={`${COMPOSITION_MODAL_LABELS.name} *`}
           value={composition.name}
           onChange={(event) => updateField('name', event.target.value)}
-          error={Boolean(titleError)}
-          helperText={titleError}
+          error={Boolean(titleError || error)}
+          helperText={titleError || error}
           fullWidth
           size="small"
           sx={styles.field}
@@ -225,7 +230,12 @@ export default function CompositionModal({
           <TextField
             label={COMPOSITION_MODAL_LABELS.year}
             value={composition.year}
-            onChange={(event) => updateField('year', event.target.value)}
+            onChange={(event) => {
+              const val = event.target.value;
+              if (/^\d*$/.test(val)) {
+                updateField('year', val);
+              }
+            }}
             size="small"
             sx={styles.field}
           />

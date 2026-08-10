@@ -163,6 +163,48 @@ describe('NewsMutation Resolvers', () => {
     it('should throw GraphQLError for updateNews if user is unauthenticated', async () => {
       await expect(NewsMutation.updateNews({}, { id: '1', input: {} }, userContext)).rejects.toThrow();
     });
+
+    it.each([
+      {
+        caseName: 'has fewer than 2 characters',
+        description: { uk: 'T', en: 'T' },
+        fields: ['description.uk', 'description.en']
+      },
+      {
+        caseName: 'exceeds 250 characters',
+        description: { uk: 'a'.repeat(251), en: 'Valid description' },
+        fields: ['description.uk']
+      }
+    ])('should throw GraphQLError with BAD_USER_INPUT if description $caseName', async ({ description, fields }) => {
+      const invalidInput = {
+        ...baseInput,
+        description
+      };
+
+      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toMatchObject({
+        message: newsServiceErrors.DESCRIPTION_LENGTH_INVALID,
+        extensions: {
+          code: 'BAD_USER_INPUT',
+          fields
+        }
+      });
+
+      expect(mockRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('should allow updateNews when description has only one valid locale', async () => {
+      mockAction('findById', createMockNews({ id }));
+      mockAction('update', createMockNews({ id }));
+
+      const updateInput = {
+        description: { uk: 'Valid description' }
+      } as unknown as UpdateNewsGQLInput;
+
+      const result = await NewsMutation.updateNews({}, { id, input: updateInput }, adminContext);
+
+      expect(result.id).toBe(id);
+      expect(mockRepo.update).toHaveBeenCalled();
+    });
   });
 
   describe('createNews', () => {

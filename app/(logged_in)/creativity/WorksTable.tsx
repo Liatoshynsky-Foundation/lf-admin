@@ -1,7 +1,7 @@
 'use client';
 
 import { Box } from '@mui/material';
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import toast from 'react-hot-toast';
 
 import { useDeleteWorkAction } from './(composition)/useDeleteWorkAction';
@@ -79,8 +79,6 @@ export type IndividualWork = Readonly<{
   updatedAt: string;
 }> &
   ActionFields;
-
-const modalMock = () => {};
 
 export const columns: readonly ColumnDef<GroupHeaderData, OpusWork, IndividualWork>[] = [
   {
@@ -177,14 +175,28 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
     openEditComposition,
     closeEditComposition
   } = useWorkUrlState();
-  const { deleteComposition, setDeleteComposition, handleConfirmCompositionDelete } = useDeleteWorkAction();
-  const { handleUpdateComposition } = useUpdateWorkAction();
+  const {
+    deleteComposition,
+    setDeleteComposition,
+    handleConfirmCompositionDelete,
+    handleConfirmUnlinkComposition,
+    unlinkComposition,
+    setUnlinkComposition
+  } = useDeleteWorkAction();
+
+  const { handleUpdateComposition, error, clearError } = useUpdateWorkAction();
   const { handleShare } = useShare();
+
+  const handleCloseComposition = useCallback(() => {
+    clearError();
+    closeEditComposition();
+  }, [clearError, closeEditComposition]);
 
   const handleSubmitComposition = async (compositionData: OpusCompositionData) => {
     if (!compositionId) return;
-    await handleUpdateComposition(compositionId, compositionData);
-    closeEditComposition();
+    if (await handleUpdateComposition(compositionId, compositionData)) {
+      handleCloseComposition();
+    }
   };
 
   const handleShareComposition = (id: string) => {
@@ -199,9 +211,9 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
 
     if (!compositionToEdit) {
       toast.error('Композицію не знайдено');
-      closeEditComposition();
+      handleCloseComposition();
     }
-  }, [compositionId, compositionToEdit, isCompositionLoading, closeEditComposition]);
+  }, [compositionId, compositionToEdit, isCompositionLoading, handleCloseComposition]);
 
   function groupsRow(group: GroupRowData): BaseRowData<GroupHeaderData, OpusWork, IndividualWork> {
     const isPublished = group.status === BaseContentStatuses.Published;
@@ -242,9 +254,9 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
           menuItems: WorkMenuItems({
             id: work.id,
             isPublished,
-            onDelete: () => modalMock(),
-            onShare: () => modalMock(),
-            onEdit: () => modalMock()
+            onDelete: (id) => setUnlinkComposition({ opusId: group.id, compositionId: id }),
+            onShare: (id) => handleShareComposition(id),
+            onEdit: (id) => openEditComposition(id)
           }),
           menuTriggerLabel: `Дії твору ${work.name}`
         }
@@ -329,12 +341,23 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
         description="Ви впевнені, що хочете видалити цю композицію? Це дію можна скасувати лише шляхом повторного додавання композиції."
       />
 
+      <DeleteCardModal
+        open={Boolean(unlinkComposition)}
+        onClose={() => setUnlinkComposition(null)}
+        onDelete={handleConfirmUnlinkComposition}
+        title="Підтвердити видалення композиції з групи"
+        confirmButtonText="Видалити"
+        description="Ви впевнені, що хочете видалити цю композицію з групи? Цю дію можна скасувати лише шляхом повторного додавання композиції у цю групу."
+      />
+
       <CompositionModal
         open={isEditOpen}
         mode="edit"
         initialValue={compositionToEdit}
-        onClose={closeEditComposition}
+        onClose={handleCloseComposition}
         onSubmit={handleSubmitComposition}
+        error={error}
+        onClearError={clearError}
       />
     </Box>
   );

@@ -6,21 +6,29 @@ import { createCompositionId } from '../use-upsert-opus/useUpsertOpus';
 import { isMediaItemFilled, mapMediaItemFromApi, resolveMediaName } from './compositionMedia';
 import { GroupData, GroupDataField, GroupPhoto } from '~/constants/creativity';
 import {
+  COMPOSITION_DUPLICATE_ERROR,
+  COMPOSITION_NAME_REQUIRED_ERROR,
+  COMPOSITION_REQUIRED_FIELDS_ERROR,
   OPUS_FIELD_LIMITS,
   OPUS_MUTATION_RESULTS,
   OPUS_VALIDATION_MESSAGES,
   REQUIRED_FIELD_ERROR
 } from '~/constants/opus';
 import { EditorLanguage } from '~/constants/publications';
+import {
+  getDuplicateCompositionError,
+  getDuplicateCompositionIds,
+  getInvalidCompositionIds,
+  isCompositionNameRequiredError,
+  normalizeCompositionName
+} from '~/lib/utils/compositionErrors';
 import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
-import { useOpusById } from '~/shared/hooks/use-opuses/useOpuses';
+import { useDeleteOpus, useOpusById, useUpdateOpus } from '~/shared/hooks/use-opuses/useOpuses';
 import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import {
   OpusNumberKind,
-  OpusStatus,
-  useDeleteOpusMutation,
-  useUpdateOpusMutation
+  OpusStatus
 } from '~/types/graphql/generated/graphql';
 import { FetchedOpusData } from '~/types/opus';
 
@@ -160,9 +168,9 @@ export const useGroupContent = (id: string) => {
   const [publishedTitle, setPublishedTitle] = useState({ uk: '', en: '' });
   const [isDetailsExpanded, setIsDetailsExpanded] = useState(true);
   const [shouldExitAfterSave, setShouldExitAfterSave] = useState(false);
-  const [updateOpus, { loading: isSaving }] = useUpdateOpusMutation();
+  const [updateOpus, { loading: isSaving }] = useUpdateOpus();
 
-  const [deleteOpus, { loading: isDeleting }] = useDeleteOpusMutation();
+  const [deleteOpus, { loading: isDeleting }] = useDeleteOpus();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useUnsavedChanges(isDirty && !shouldExitAfterSave);
@@ -361,12 +369,30 @@ export const useGroupContent = (id: string) => {
           }))
           .filter((perf) => perf.videoUrl || perf.title.uk || perf.title.en)
       };
-      await updateOpus({ variables: { id, input } });
+      await updateOpus({ id, input });
       toast.success('Групу опубліковано');
       return true;
     } catch (error) {
-      console.error('Помилка при збереженні контенту групи:', error);
-      toast.error('Помилка при збереженні. Перевірте консоль.');
+      const duplicateError = getDuplicateCompositionError(error);
+      if (duplicateError) {
+        const duplicateErrors = Object.fromEntries(
+          (groupData.compositions || [])
+            .filter((composition) => normalizeCompositionName(composition.name) === duplicateError.name)
+            .map((composition) => [`compositions.${composition.id}.name`, duplicateError.message])
+        );
+        setErrors((previous) => ({ ...previous, ...duplicateErrors }));
+        toast.error(duplicateError.message);
+        return false;
+      }
+      if (isCompositionNameRequiredError(error)) {
+        const requiredNameErrors = Object.fromEntries(
+          getInvalidCompositionIds(groupData.compositions || []).map((id) => [`compositions.${id}.name`, ''])
+        );
+        setErrors((previous) => ({ ...previous, ...requiredNameErrors }));
+        toast.error(COMPOSITION_NAME_REQUIRED_ERROR);
+        return false;
+      }
+      toast.error(error instanceof Error ? error.message : String(error));
       return false;
     }
   };
@@ -424,8 +450,15 @@ export const useGroupContent = (id: string) => {
       newErrors.creationYear = REQUIRED_FIELD_ERROR;
     }
 
+    const emptyCompositionIds = getInvalidCompositionIds(groupData?.compositions || []);
+    emptyCompositionIds.forEach((id) => {
+      newErrors[`compositions.${id}.name`] = '';
+    });
+
+    const hasDuplicateCompositionNames = getDuplicateCompositionIds(groupData?.compositions || []).length > 0;
+
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return Object.keys(newErrors).length === 0 && !hasDuplicateCompositionNames;
   };
 
   const handleFieldChange = (field: GroupDataField | 'blocksOrder', value: unknown, isMultilingual = false) => {
@@ -436,6 +469,12 @@ export const useGroupContent = (id: string) => {
         delete newErrors[field as string];
         return newErrors;
       });
+    }
+
+    if (field === 'compositions') {
+      setErrors((previous) =>
+        Object.fromEntries(Object.entries(previous).filter(([key]) => !key.startsWith('compositions.')))
+      );
     }
 
     setGroupData((prev) => {
@@ -453,7 +492,17 @@ export const useGroupContent = (id: string) => {
   const handlePublishClick = async () => {
     if (isSaving) return;
     if (!validate()) {
-      toast.error('Заповніть усі обов’язкові поля перед публікацією.');
+      if (getDuplicateCompositionIds(groupData?.compositions || []).length > 0) {
+        toast.error(COMPOSITION_DUPLICATE_ERROR);
+        setIsDetailsExpanded(true);
+        return;
+      }
+      if (groupData?.compositions.some((composition) => !composition.name.trim())) {
+        toast.error(COMPOSITION_NAME_REQUIRED_ERROR);
+        setIsDetailsExpanded(true);
+        return;
+      }
+      toast.error(COMPOSITION_REQUIRED_FIELDS_ERROR);
       setIsDetailsExpanded(true);
       return;
     }
@@ -466,13 +515,12 @@ export const useGroupContent = (id: string) => {
 
   const handleConfirmDelete = async () => {
     try {
-      await deleteOpus({ variables: { id } });
+      await deleteOpus({ id });
       toast.success(OPUS_MUTATION_RESULTS.deleted);
       setIsDeleteModalOpen(false);
       navigate('/creativity');
     } catch (error) {
-      console.error('Помилка при видаленні:', error);
-      toast.error('Не вдалося видалити групу. Спробуйте ще раз.');
+      toast.error(error instanceof Error ? error.message : String(error));
     }
   };
 
@@ -484,18 +532,30 @@ export const useGroupContent = (id: string) => {
     }
 
     if (!validate()) {
-      toast.error('Заповніть усі обов’язкові поля перед публікацією.');
+      if (getDuplicateCompositionIds(groupData?.compositions || []).length > 0) {
+        toast.error(COMPOSITION_DUPLICATE_ERROR);
+        setIsDetailsExpanded(true);
+        return;
+      }
+      if (groupData?.compositions.some((composition) => !composition.name.trim())) {
+        toast.error(COMPOSITION_NAME_REQUIRED_ERROR);
+        setIsDetailsExpanded(true);
+        return;
+      }
+      toast.error(COMPOSITION_REQUIRED_FIELDS_ERROR);
       setIsDetailsExpanded(true);
       return;
     }
 
     if (optionId === 'PUBLISH') {
-      await handleSave(BaseContentStatuses.Published);
-      setIsDirty(false);
+      const isSuccess = await handleSave(BaseContentStatuses.Published);
+      if (isSuccess) setIsDirty(false);
     } else if (optionId === 'PUBLISH_AND_EXIT') {
-      await handleSave(BaseContentStatuses.Published);
-      setIsDirty(false);
-      setTimeout(() => setShouldExitAfterSave(true), 50);
+      const isSuccess = await handleSave(BaseContentStatuses.Published);
+      if (isSuccess) {
+        setIsDirty(false);
+        setTimeout(() => setShouldExitAfterSave(true), 50);
+      }
     }
   };
 

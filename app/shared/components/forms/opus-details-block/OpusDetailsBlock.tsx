@@ -12,9 +12,15 @@ interface OpusDetailsBlockProps {
   value: OpusDetailsValue;
   onChange: (updater: (prev: OpusDetailsValue) => OpusDetailsValue) => void;
   errors: OpusDetailsErrors;
+  compositionErrors?: Record<string, string>;
 }
 
-export default function OpusDetailsBlock({ value, onChange, errors }: Readonly<OpusDetailsBlockProps>) {
+export default function OpusDetailsBlock({
+  value,
+  onChange,
+  errors,
+  compositionErrors
+}: Readonly<OpusDetailsBlockProps>) {
   const updateField = <Key extends keyof OpusDetailsValue>(key: Key, fieldValue: OpusDetailsValue[Key]): void => {
     onChange((prev) => ({ ...prev, [key]: fieldValue }));
   };
@@ -100,6 +106,7 @@ export default function OpusDetailsBlock({ value, onChange, errors }: Readonly<O
       <GroupWorksSection
         works={value.compositions}
         onChange={(compositions) => updateField('compositions', compositions)}
+        compositionErrors={compositionErrors}
       />
     </Box>
   );

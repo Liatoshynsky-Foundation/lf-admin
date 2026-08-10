@@ -5,11 +5,13 @@ import toast from 'react-hot-toast';
 
 import {
   PaginatedWorksDocument,
-  useDeleteCompositionMutation
+  useDeleteCompositionMutation,
+  useUnlinkCompositionMutation
 } from '~/types/graphql/generated/graphql';
 
 const TOAST_MESSAGES = {
   DELETE_SUCCESS: 'Твір успішно видалено',
+  UNLINK_SUCCESS: 'Твір успішно видалено з групи',
   DELETE_ERROR: 'Помилка при видаленні твору'
 };
 
@@ -20,6 +22,8 @@ interface UseDeleteWorkActionProps {
 export function useDeleteWorkAction({ onSuccess }: UseDeleteWorkActionProps = {}) {
   const [deleteCompositionMut, { loading: isDeleting }] = useDeleteCompositionMutation();
   const [deleteComposition, setDeleteComposition] = useState<string | null>(null);
+  const [unlinkCompositionMut, { loading: isUnlinking }] = useUnlinkCompositionMutation();
+  const [unlinkComposition, setUnlinkComposition] = useState<{ opusId: string; compositionId: string } | null>(null);
 
   const handleConfirmCompositionDelete = async () => {
     if (!deleteComposition) return;
@@ -39,10 +43,35 @@ export function useDeleteWorkAction({ onSuccess }: UseDeleteWorkActionProps = {}
     }
   };
 
+  const handleConfirmUnlinkComposition = async () => {
+    if (!unlinkComposition) return;
+    
+    try {
+      await unlinkCompositionMut({
+        variables: {
+          opusId: unlinkComposition.opusId,
+          compositionId: unlinkComposition.compositionId
+        },
+        refetchQueries: [PaginatedWorksDocument],
+        awaitRefetchQueries: true
+      });
+
+      toast.success(TOAST_MESSAGES.UNLINK_SUCCESS);
+      onSuccess?.(unlinkComposition.compositionId);
+      setUnlinkComposition(null);
+    } catch {
+      toast.error(TOAST_MESSAGES.DELETE_ERROR);
+    }
+  };
+
   return {
     deleteComposition,
     setDeleteComposition,
+    unlinkComposition,
+    setUnlinkComposition,
     handleConfirmCompositionDelete,
-    isDeleting
+    handleConfirmUnlinkComposition,
+    isDeleting,
+    isUnlinking
   };
 }

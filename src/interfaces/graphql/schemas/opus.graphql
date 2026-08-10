@@ -171,4 +171,5 @@ extend type Mutation {
   updateOpus(id: ID!, input: UpdateOpusInput!): Opus!
   updateOpusStatus(id: ID!, status: OpusStatus!): UpdateOpusStatusPayload!
   deleteOpus(id: ID!): Boolean!
+  unlinkComposition(opusId: ID!, compositionId: ID!): Opus!
 }

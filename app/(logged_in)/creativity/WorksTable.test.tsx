@@ -158,6 +158,8 @@ describe('WorksTable', () => {
   const mockCloseEditComposition = jest.fn();
   const mockSetDeleteComposition = jest.fn();
   const mockHandleConfirmCompositionDelete = jest.fn();
+  const mockSetUnlinkComposition = jest.fn();
+  const mockHandleConfirmUnlinkComposition = jest.fn();
   const mockHandleUpdateComposition = jest.fn();
   const mockHandleShare = jest.fn();
 
@@ -182,11 +184,16 @@ describe('WorksTable', () => {
     (useDeleteWorkAction as jest.Mock).mockReturnValue({
       deleteComposition: null,
       setDeleteComposition: mockSetDeleteComposition,
-      handleConfirmCompositionDelete: mockHandleConfirmCompositionDelete
+      handleConfirmCompositionDelete: mockHandleConfirmCompositionDelete,
+      unlinkComposition: null,
+      setUnlinkComposition: mockSetUnlinkComposition,
+      handleConfirmUnlinkComposition: mockHandleConfirmUnlinkComposition
     });
 
     (useUpdateWorkAction as jest.Mock).mockReturnValue({
-      handleUpdateComposition: mockHandleUpdateComposition
+      handleUpdateComposition: mockHandleUpdateComposition,
+      error: null,
+      clearError: jest.fn()
     });
 
     (useShare as jest.Mock).mockReturnValue({
@@ -317,6 +324,7 @@ describe('WorksTable', () => {
     expect(mockHandlePublishStatusChange).toHaveBeenCalledWith('group-draft', OpusStatus.Published);
     expect(mockHandlePublishStatusChange).toHaveBeenCalledWith('group-published', OpusStatus.Draft);
 
+    expect(mockSetUnlinkComposition).toHaveBeenCalledWith({ opusId: 'group-draft', compositionId: 'work-1' });
     expect(mockSetDeleteComposition).toHaveBeenCalledWith('individual-1');
     expect(mockOpenEditComposition).toHaveBeenCalledWith('individual-1');
     expect(mockHandleShare).toHaveBeenCalled();
@@ -346,7 +354,10 @@ describe('WorksTable', () => {
     (useDeleteWorkAction as jest.Mock).mockReturnValue({
       deleteComposition: 'work-1',
       setDeleteComposition: mockSetDeleteComposition,
-      handleConfirmCompositionDelete: mockHandleConfirmCompositionDelete
+      handleConfirmCompositionDelete: mockHandleConfirmCompositionDelete,
+      unlinkComposition: null,
+      setUnlinkComposition: mockSetUnlinkComposition,
+      handleConfirmUnlinkComposition: mockHandleConfirmUnlinkComposition
     });
 
     render(<WorksTable activeTab={WORKS_TABS_NAMES.WORKS} items={{ works: [individualWork] }} />);
@@ -358,6 +369,26 @@ describe('WorksTable', () => {
 
     fireEvent.click(screen.getByTestId('modal-delete-composition'));
     expect(mockHandleConfirmCompositionDelete).toHaveBeenCalled();
+  });
+
+  it('renders DeleteCardModal for unlink composition and handles modal actions', () => {
+    (useDeleteWorkAction as jest.Mock).mockReturnValue({
+      deleteComposition: null,
+      setDeleteComposition: mockSetDeleteComposition,
+      handleConfirmCompositionDelete: mockHandleConfirmCompositionDelete,
+      unlinkComposition: { opusId: 'group-1', compositionId: 'work-1' },
+      setUnlinkComposition: mockSetUnlinkComposition,
+      handleConfirmUnlinkComposition: mockHandleConfirmUnlinkComposition
+    });
+
+    render(<WorksTable activeTab={WORKS_TABS_NAMES.OPUS} items={{ groups: [group] }} />);
+
+    expect(screen.getByTestId('delete-card-modal-composition')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('modal-close-composition'));
+    expect(mockSetUnlinkComposition).toHaveBeenCalledWith(null);
+
+    fireEvent.click(screen.getByTestId('modal-delete-composition'));
   });
 
   it('renders CompositionModal and handles submit and close actions', async () => {

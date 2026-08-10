@@ -22,10 +22,12 @@ type Fond {
     name: LocalizedString!
     documentCreationDate: LocalizedString!
     chronologicalBoundaries: LocalizedString
-    organizationForm: LocalizedString 
-    description: LocalizedString 
+    organizationForm: LocalizedString
+    description: LocalizedString
     status: FondStatus!
-    updatedAt: String! 
+    casesCount: Int!
+    descriptionsCount: Int!
+    updatedAt: String!
     createdAt: String!
 }
 

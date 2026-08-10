@@ -1,4 +1,5 @@
 import { GraphQLError } from 'graphql';
+import type { ClientSession } from 'mongoose';
 
 import {extractImagesWithMetadata} from '~/application/use-cases/extractImageSrc/extractImageSrc';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
@@ -82,19 +83,20 @@ export const extractTitleForSlug = (title: unknown): string => {
 };
 
 export const processSlugUpdate = async <
-    TRepo extends { findBySlug: (slug: string) => Promise<BaseEntity | null> }
+    TRepo extends { findBySlug: (slug: string, session?: ClientSession) => Promise<BaseEntity | null> }
 >(
   id: string | null,
   title: unknown,
   repo: TRepo,
-  updateData: { slug?: string }
+  updateData: { slug?: string },
+  session?: ClientSession
 ): Promise<void> => {
   const titleForSlug = extractTitleForSlug(title);
 
   if (titleForSlug) {
     updateData.slug = await generateUniqueSlug(titleForSlug, {
       checkExists: async (slug: string) => {
-        const existing = await repo.findBySlug(slug);
+        const existing = await repo.findBySlug(slug, session);
         return existing !== null && (id ? existing.id !== id : true);
       }
     });

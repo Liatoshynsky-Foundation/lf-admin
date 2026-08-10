@@ -44,6 +44,11 @@ const MOCK_YOUTUBE_URL_1 = 'https://youtube.com/watch?v=1';
 const MOCK_YOUTUBE_URL_2 = 'https://youtube.com/watch?v=2';
 const LOOSE_OPUS_ID = 'loose-opus-id';
 
+const createQueryMock = (value: unknown) => ({
+  session: jest.fn().mockReturnThis(),
+  lean: jest.fn().mockResolvedValue(value)
+});
+
 const createMockOpusDoc = (overrides: Partial<DbOpus> = {}): DbOpus => ({
   _id: { toString: (): string => MOCK_ID },
   number: OPUS_NUMBER_1,
@@ -75,6 +80,7 @@ describe('OpusRepository', () => {
   const findMock = jest.fn();
   const countDocumentsMock = jest.fn();
   const saveMock = jest.fn();
+  const createMock = jest.fn();
   const updateOneMock = jest.fn();
   const findByIdMock = jest.fn();
   const findByIdAndUpdateMock = jest.fn();
@@ -90,6 +96,7 @@ describe('OpusRepository', () => {
     findById: jest.Mock;
     findByIdAndUpdate: jest.Mock;
     findOneAndUpdate: jest.Mock;
+    create: jest.Mock;
   };
 
   MockModel.findOne = findOneMock;
@@ -99,6 +106,7 @@ describe('OpusRepository', () => {
   MockModel.findById = findByIdMock;
   MockModel.findByIdAndUpdate = findByIdAndUpdateMock;
   MockModel.findOneAndUpdate = findOneAndUpdateMock;
+  MockModel.create = createMock;
 
   let repository: IOpusRepository;
 
@@ -126,7 +134,7 @@ describe('OpusRepository', () => {
 
   describe('findByComplexKey', () => {
     it('returns the opus when found with valid parameters', async () => {
-      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(createMockOpusDoc()) });
+      findOneMock.mockReturnValue(createQueryMock(createMockOpusDoc()));
       const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', '  ');
       expect(findOneMock).toHaveBeenCalledWith({ number: OPUS_NUMBER_1, numberKind: 'op', additionalText: null });
       expect(result?.number).toBe(OPUS_NUMBER_1);
@@ -139,7 +147,7 @@ describe('OpusRepository', () => {
     });
 
     it('trims additionalText if provided and non-empty', async () => {
-      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(createMockOpusDoc({ additionalText: 'extra' })) });
+      findOneMock.mockReturnValue(createQueryMock(createMockOpusDoc({ additionalText: 'extra' })));
       const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', '  extra  ');
       expect(findOneMock).toHaveBeenCalledWith({
         number: OPUS_NUMBER_1,
@@ -150,7 +158,7 @@ describe('OpusRepository', () => {
     });
 
     it('performs a case-insensitive match on additionalText', async () => {
-      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(createMockOpusDoc({ additionalText: 'BT' })) });
+      findOneMock.mockReturnValue(createQueryMock(createMockOpusDoc({ additionalText: 'BT' })));
       const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', 'bt');
       expect(findOneMock).toHaveBeenCalledWith({
         number: OPUS_NUMBER_1,
@@ -161,7 +169,7 @@ describe('OpusRepository', () => {
     });
 
     it('escapes regex special characters in additionalText', async () => {
-      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(createMockOpusDoc({ additionalText: 'a.b*c' })) });
+      findOneMock.mockReturnValue(createQueryMock(createMockOpusDoc({ additionalText: 'a.b*c' })));
       const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', 'a.b*c');
       expect(findOneMock).toHaveBeenCalledWith({
         number: OPUS_NUMBER_1,
@@ -172,28 +180,35 @@ describe('OpusRepository', () => {
     });
 
     it('returns null when document is not found', async () => {
-      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(null) });
+      findOneMock.mockReturnValue(createQueryMock(null));
       const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
       expect(result).toBeNull();
+    });
+
+    it('looks up number 0 instead of treating it as empty', async () => {
+      findOneMock.mockReturnValue(createQueryMock(createMockOpusDoc({ number: 0 })));
+      const result = await repository.findByComplexKey(0, 'op', null);
+      expect(findOneMock).toHaveBeenCalledWith({ number: 0, numberKind: 'op', additionalText: null });
+      expect(result?.number).toBe(0);
     });
   });
 
   describe('create', () => {
     it('creates a new opus when the composite key is unique', async () => {
-      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(null) });
-      saveMock.mockResolvedValue({ toObject: (): DbOpus => createMockOpusDoc({ number: OPUS_NUMBER_1 }) });
+      findOneMock.mockReturnValue(createQueryMock(null));
+      createMock.mockResolvedValue([{ toObject: (): DbOpus => createMockOpusDoc({ number: OPUS_NUMBER_1 }) }]);
 
       const result = await repository.create(createInput);
 
       expect(result.number).toBe(OPUS_NUMBER_1);
-      expect(saveMock).toHaveBeenCalled();
+      expect(createMock).toHaveBeenCalledWith([expect.objectContaining({ number: OPUS_NUMBER_1 })], { session: undefined });
     });
 
     it('throws when the composite key already exists', async () => {
-      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(createMockOpusDoc()) });
+      findOneMock.mockReturnValue(createQueryMock(createMockOpusDoc()));
 
       await expect(repository.create(createInput)).rejects.toThrow(opusServiceErrors.OPUS_ALREADY_EXISTS);
-      expect(saveMock).not.toHaveBeenCalled();
+      expect(createMock).not.toHaveBeenCalled();
     });
 
     it('defaults meta views to 0 when the input has no meta', async (): Promise<void> => {
@@ -203,18 +218,21 @@ describe('OpusRepository', () => {
         numberKind: OpusNumberKind.Op,
         status: OpusStatus.Draft as unknown as CreateOpusInput['status'],
       };
-      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(null) });
-      saveMock.mockResolvedValue({ toObject: (): DbOpus => createMockOpusDoc({ number: OPUS_NUMBER_2 }) });
+      findOneMock.mockReturnValue(createQueryMock(null));
+      createMock.mockResolvedValue([{ toObject: (): DbOpus => createMockOpusDoc({ number: OPUS_NUMBER_2 }) }]);
 
       const result = await repository.create(inputWithoutMeta);
 
-      expect(MockModel).toHaveBeenCalledWith(expect.objectContaining({ meta: { views: 0 } }));
+      expect(createMock).toHaveBeenCalledWith(
+        [expect.objectContaining({ meta: { views: 0 } })],
+        { session: undefined }
+      );
       expect(result.number).toBe(OPUS_NUMBER_2);
     });
 
     it('converts a database duplicate-key race into the domain duplicate error', async () => {
-      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(null) });
-      saveMock.mockRejectedValue({ code: 11000 });
+      findOneMock.mockReturnValue(createQueryMock(null));
+      createMock.mockRejectedValue({ code: 11000 });
 
       await expect(repository.create(createInput)).rejects.toThrow(opusServiceErrors.OPUS_ALREADY_EXISTS);
     });
@@ -253,7 +271,7 @@ describe('OpusRepository', () => {
         datesNote: 'Нотатка про дати',
         publishedAt: MOCK_PUBLISHED_DATE
       });
-      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
+      findOneMock.mockReturnValue(createQueryMock(doc));
 
       const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
 
@@ -278,7 +296,7 @@ describe('OpusRepository', () => {
 
     it('keeps provided optional values instead of applying fallbacks', async (): Promise<void> => {
       const doc = createMockOpusDoc({ numberKind: 'sineop', meta: { views: 42 } });
-      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
+      findOneMock.mockReturnValue(createQueryMock(doc));
 
       const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'sineop', null);
 
@@ -322,7 +340,7 @@ describe('OpusRepository', () => {
         ]
       });
 
-      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
+      findOneMock.mockReturnValue(createQueryMock(doc));
 
       const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
 
@@ -361,7 +379,7 @@ describe('OpusRepository', () => {
           }
         ]
       });
-      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
+      findOneMock.mockReturnValue(createQueryMock(doc));
 
       const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
 
@@ -377,6 +395,7 @@ describe('OpusRepository', () => {
   describe('findAll', () => {
     const mockChain = () => ({
       sort: jest.fn().mockReturnThis(),
+      session: jest.fn().mockReturnThis(),
       skip: jest.fn().mockReturnThis(),
       limit: jest.fn().mockReturnThis(),
       lean: jest.fn().mockResolvedValue([createMockOpusDoc()])
@@ -449,7 +468,7 @@ describe('OpusRepository', () => {
     });
     it('applies fallback for missing creationYear', async () => {
       const doc = createMockOpusDoc({ creationYear: '' });
-      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
+      findOneMock.mockReturnValue(createQueryMock(doc));
 
       const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
 
@@ -479,7 +498,7 @@ describe('OpusRepository', () => {
     
     it('falls back numberKind to "op" when nullish', async (): Promise<void> => {
       const doc = createMockOpusDoc({ numberKind: undefined });
-      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
+      findOneMock.mockReturnValue(createQueryMock(doc));
 
       const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
 
@@ -490,7 +509,7 @@ describe('OpusRepository', () => {
       const doc = createMockOpusDoc({
         name: 'Просто рядкова назва' as unknown as DbOpus['name']
       });
-      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
+      findOneMock.mockReturnValue(createQueryMock(doc));
 
       const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
 
@@ -505,7 +524,7 @@ describe('OpusRepository', () => {
         introDescription: null,
         parts: undefined
       });
-      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
+      findOneMock.mockReturnValue(createQueryMock(doc));
 
       const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
 
@@ -518,7 +537,7 @@ describe('OpusRepository', () => {
         introDescription: { uk: 'Вступ', en: 'Intro' },
         parts: { uk: 'Частини', en: 'Parts' }
       });
-      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
+      findOneMock.mockReturnValue(createQueryMock(doc));
 
       const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
 
@@ -550,23 +569,25 @@ describe('OpusRepository', () => {
             compositions: []
           })
         },
-        { upsert: true, new: true }
+        { upsert: true, new: true, session: undefined }
       );
       expect(updateOneMock).toHaveBeenCalledWith(
         { _id: LOOSE_OPUS_ID },
-        { $addToSet: { compositions: { $each: ['comp1', 'comp2'] } } }
+        { $addToSet: { compositions: { $each: ['comp1', 'comp2'] } } },
+        { session: undefined }
       );
     });
 
     it('updates loose opus using $addToSet if it already exists during moveCompositionsToCompositionsOpus', async () => {
-      findOneAndUpdateMock.mockReturnValue({ lean: jest.fn().mockResolvedValue({ _id: LOOSE_OPUS_ID }) });
+      findOneMock.mockReturnValue(createQueryMock({ _id: LOOSE_OPUS_ID }));
       updateOneMock.mockResolvedValue({});
 
       await repository.moveCompositionsToCompositionsOpus(['comp1', 'comp2']);
 
       expect(updateOneMock).toHaveBeenCalledWith(
         { _id: LOOSE_OPUS_ID },
-        { $addToSet: { compositions: { $each: ['comp1', 'comp2'] } } }
+        { $addToSet: { compositions: { $each: ['comp1', 'comp2'] } } },
+        { session: undefined }
       );
     });
 
@@ -576,7 +597,7 @@ describe('OpusRepository', () => {
     });
 
     it('does nothing in removeCompositionsFromCompositionsOpus when loose opus does not exist', async () => {
-      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue(null) });
+      findOneMock.mockReturnValue(createQueryMock(null));
 
       await repository.removeCompositionsFromCompositionsOpus(['comp1']);
 
@@ -584,19 +605,20 @@ describe('OpusRepository', () => {
     });
 
     it('removes compositions from loose opus if it exists during removeCompositionsFromCompositionsOpus', async () => {
-      findOneMock.mockReturnValue({ lean: jest.fn().mockResolvedValue({ _id: LOOSE_OPUS_ID }) });
+      findOneMock.mockReturnValue(createQueryMock({ _id: LOOSE_OPUS_ID }));
       updateOneMock.mockResolvedValue({});
 
       await repository.removeCompositionsFromCompositionsOpus(['comp1']);
 
       expect(updateOneMock).toHaveBeenCalledWith(
         { _id: LOOSE_OPUS_ID },
-        { $pull: { compositions: { $in: ['comp1'] } } }
+        { $pull: { compositions: { $in: ['comp1'] } } },
+        { session: undefined }
       );
     });
 
     it('unlinks opus by finding it and moving its compositions', async () => {
-      findByIdMock.mockReturnValue({ lean: jest.fn().mockResolvedValue({ compositions: ['comp-to-move'] }) });
+      findByIdMock.mockReturnValue(createQueryMock({ compositions: ['comp-to-move'] }));
       findOneAndUpdateMock.mockReturnValue({
         lean: jest.fn().mockResolvedValue({ _id: LOOSE_OPUS_ID })
       });
@@ -608,7 +630,8 @@ describe('OpusRepository', () => {
       expect(findOneAndUpdateMock).toHaveBeenCalled();
       expect(updateOneMock).toHaveBeenCalledWith(
         { _id: LOOSE_OPUS_ID },
-        { $addToSet: { compositions: { $each: ['comp-to-move'] } } }
+        { $addToSet: { compositions: { $each: ['comp-to-move'] } } },
+        { session: undefined }
       );
     });
   });

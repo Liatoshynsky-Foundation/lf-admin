@@ -119,6 +119,7 @@ describe('OpusQuery Resolvers', () => {
       count: jest.fn(),
       findByIdsPaginated: jest.fn(),
       countByIds: jest.fn(),
+      findByName: jest.fn(),
       findBySlug: jest.fn(),
       findPaginated: jest.fn(),
     } as jest.Mocked<ICompositionRepository>;
