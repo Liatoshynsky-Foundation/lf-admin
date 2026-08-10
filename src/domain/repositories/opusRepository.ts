@@ -1,3 +1,5 @@
+import { ClientSession } from 'mongoose';
+
 import { Opus, OpusNumberKind } from '~/domain/entities/Opus';
 import { FiltersInput, IBaseRepository } from '~/domain/repositories/baseRepository';
 import { OpusStatus } from '~/types/enums/common.enums';
@@ -16,9 +18,9 @@ export type OpusFilters = FiltersInput & {
 };
 
 export interface IOpusRepository extends IBaseRepository<Opus, OpusFilters> {
-  create(input: CreateOpusInput): Promise<Opus>;
-  findByNumber(number: number): Promise<Opus | null>;
-  unlink(opusId: string): Promise<void>;
-  moveCompositionsToCompositionsOpus(compositionIds: string[]): Promise<void>;
-  removeCompositionsFromCompositionsOpus(compositionIds: string[]): Promise<void>;
+  create(input: CreateOpusInput, session?: ClientSession): Promise<Opus>;
+  findByNumber(number: number, session?: ClientSession): Promise<Opus | null>;
+  unlink(opusId: string, session?: ClientSession): Promise<void>;
+  moveCompositionsToCompositionsOpus(compositionIds: string[], session?: ClientSession ): Promise<void>;
+  removeCompositionsFromCompositionsOpus(compositionIds: string[], session?: ClientSession ): Promise<void>;
 }

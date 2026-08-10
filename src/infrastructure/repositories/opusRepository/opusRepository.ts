@@ -1,4 +1,4 @@
-import { Model } from 'mongoose';
+import { ClientSession, Model } from 'mongoose';
 
 import { createBaseRepository } from '../baseRepository/baseRepository';
 import { opusServiceErrors } from '~/back-constants/errors';
@@ -124,18 +124,23 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
     getDefaultSort: getBaseSort
   });
 
-  const findByNumber = async (number: number): Promise<Opus | null> => {
+  const findByNumber = async (number: number, session?: ClientSession): Promise<Opus | null> => {
     await dbConnect();
 
     if (number === undefined || number === null) {
       return null;
     }
 
-    const doc = await OpusModel.findOne({ number }).lean<DbOpus>();
+    const doc = await OpusModel.findOne({ number })
+      .session(session ?? null)
+      .lean<DbOpus>();
+
     return doc ? toEntity(doc) : null;
   };
 
-  const getOrCreateCompositionsOpus = async (): Promise<{ _id: string }> => {
+  const getOrCreateCompositionsOpus = async (
+    session?: ClientSession 
+  ): Promise<{ _id: string }> => {
     return OpusModel.findOneAndUpdate(
       { numberKind: 'compositions' },
       {
@@ -148,53 +153,70 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
           compositions: []
         }
       },
-      { upsert: true, new: true }
+      { 
+        upsert: true, 
+        new: true, 
+        session: session
+      }
     ).lean<{ _id: string }>();
   };
 
   const moveCompositionsToCompositionsOpus = async (
     compositionIds: string[],
+    session?: ClientSession
   ): Promise<void> => {
     if (compositionIds.length === 0) {
       return;
     }
-    const compOpus = await getOrCreateCompositionsOpus();
+
+    const compOpus = await getOrCreateCompositionsOpus(session);
+
     await OpusModel.updateOne(
       { _id: compOpus._id },
       { $addToSet: { compositions: { $each: compositionIds } } },
+      { session }
     );
   };
 
   const removeCompositionsFromCompositionsOpus = async (
     compositionIds: string[],
+    session?: ClientSession
   ): Promise<void> => {
     if (compositionIds.length === 0) {
       return;
     }
+
     const compOpus = await OpusModel.findOne({ numberKind: 'compositions' })
+      .session(session ?? null)
       .lean<{ _id: string }>();
+
     if (!compOpus) {
       return;
     }
+
     await OpusModel.updateOne(
       { _id: compOpus._id },
       { $pull: { compositions: { $in: compositionIds } } },
+      { session } 
     );
   };
 
-  const unlink = async (opusId: string): Promise<void> => {
+  const unlink = async (opusId: string, session?: ClientSession): Promise<void> => {
     await dbConnect();
-    const opus = await OpusModel.findById(opusId).lean<{ compositions?: string[] }>();
-    await moveCompositionsToCompositionsOpus(opus?.compositions ?? []);
+    const opus = await OpusModel.findById(opusId)
+      .session(session ?? null)
+      .lean<{ compositions?: string[] }>();
+
+    await moveCompositionsToCompositionsOpus(opus?.compositions ?? [], session);
   };
 
   return {
     ...baseRepo,
     findByNumber,
-    create: async (input: CreateOpusInput): Promise<Opus> => {
+    create: async (input: CreateOpusInput, session?: ClientSession): Promise<Opus> => {
       await dbConnect();
 
-      const existing = await findByNumber(input.number);
+      const existing = await findByNumber(input.number, session);
 
       if (existing) {
         throw new Error(opusServiceErrors.NUMBER_ALREADY_EXISTS(input.number));
@@ -205,7 +227,7 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
         meta: { views: input.meta?.views ?? 0 }
       };
 
-      const newOpus = await new OpusModel(opusData).save();
+      const [newOpus] = await OpusModel.create([opusData], { session });
       return toEntity(newOpus.toObject() as unknown as DbOpus);
     },
     unlink,

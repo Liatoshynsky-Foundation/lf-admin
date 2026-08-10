@@ -22,6 +22,7 @@ interface DbNewsMock extends Omit<News, 'id'> {
 }
 
 interface MockQuery {
+  session: jest.Mock;
   sort: jest.Mock;
   skip: jest.Mock;
   limit: jest.Mock;
@@ -60,6 +61,7 @@ describe('NewsRepository - Advanced Filtering Logic', () => {
   const setupAdvancedMock = (data: DbNews[]) => {
     const queryBuilder = {
       state: { data: [...data], sort: {} as Record<string, number> },
+      session: jest.fn().mockReturnThis(),
       sort: jest.fn().mockImplementation(function (this: typeof queryBuilder, sortObj: Record<string, number>) {
         this.state.sort = sortObj;
         return this;
@@ -262,6 +264,7 @@ describe('NewsRepository Comprehensive Tests', () => {
   describe('Filtering and Sorting', () => {
     const setupChainMock = (data: DbNewsMock[]): MockQuery => {
       const query: MockQuery = {
+        session: jest.fn().mockReturnThis(),
         sort: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),
@@ -326,6 +329,7 @@ describe('NewsRepository Comprehensive Tests', () => {
 
       const items = [createMockNewsDoc({ slug: 'n1' }), createMockNewsDoc({ slug: 'n2' })];
       findMock.mockReturnValue({
+        session: jest.fn().mockReturnThis(),
         sort: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),
@@ -345,6 +349,7 @@ describe('NewsRepository Comprehensive Tests', () => {
   describe('Base Operations', () => {
     it('should find news by slug', async () => {
       findOneMock.mockReturnValue({
+        session: jest.fn().mockReturnThis(),
         lean: jest.fn().mockResolvedValue(createMockNewsDoc({ slug: 'unique-slug' }))
       });
 
@@ -377,6 +382,7 @@ describe('NewsRepository Comprehensive Tests', () => {
 
     it('should return null if findById finds nothing', async () => {
       findByIdMock.mockReturnValue({
+        session: jest.fn().mockReturnThis(),
         lean: jest.fn().mockResolvedValue(null)
       });
 

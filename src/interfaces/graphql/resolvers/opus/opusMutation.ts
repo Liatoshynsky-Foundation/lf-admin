@@ -1,4 +1,5 @@
 import { GraphQLError } from 'graphql';
+import { ClientSession } from 'mongoose';
 
 import {
   assertCompositionNameNotTaken,
@@ -21,6 +22,7 @@ import type {
 } from '~/domain/entities/Opus';
 import { CompositionInput, ICompositionRepository } from '~/domain/repositories/compositionRepository';
 import { CreateOpusInput, IOpusRepository, UpdateOpusInput } from '~/domain/repositories/opusRepository';
+import { withTransaction } from '~/src/infrastructure/repositories/helpers';
 import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerator';
 import { OpusGalleryItemInput, OpusStatus, UpdateOpusStatusPayload } from '~/types/graphql/generated/graphql';
 
@@ -288,16 +290,17 @@ async function handleCompositionsSync(
   compositionsRepo: ICompositionRepository,
   repo: IOpusRepository,
   existingOpus: Opus,
-  inputCompositions: GQLComposition[] | undefined
+  inputCompositions: GQLComposition[] | undefined,
+  session?: ClientSession
 ) {
   if (inputCompositions === undefined) {
     const compositionIds = existingOpus.compositions ?? [];
-    return orderCompositionsByIds(compositionIds, await compositionsRepo.findByIds(compositionIds));
+    return orderCompositionsByIds(compositionIds, await compositionsRepo.findByIds(compositionIds, session));
   }
 
   let compositions;
   try {
-    compositions = await compositionsRepo.syncForOpus(inputCompositions.map(mapComposition));
+    compositions = await compositionsRepo.syncForOpus(inputCompositions.map(mapComposition), session);
   } catch (error) {
     throwIfCompositionNameDuplicateKey(error, inputCompositions[0]?.name ?? '');
     throw error;
@@ -311,17 +314,17 @@ async function handleCompositionsSync(
   const removed = oldCompositionIds.filter((cid) => !newSet.has(cid));
 
   if (added.length > 0) {
-    await repo.removeCompositionsFromCompositionsOpus(added);
+    await repo.removeCompositionsFromCompositionsOpus(added, session);
   }
   if (removed.length > 0) {
-    await repo.moveCompositionsToCompositionsOpus(removed);
+    await repo.moveCompositionsToCompositionsOpus(removed, session);
   }
 
   return compositions;
 }
 
-async function updateAndVerifyOpus(repo: IOpusRepository, id: string, updateData: UpdateOpusInput): Promise<Opus> {
-  const opus = await repo.update(id, updateData);
+async function updateAndVerifyOpus(repo: IOpusRepository, id: string, updateData: UpdateOpusInput, session?: ClientSession ): Promise<Opus> {
+  const opus = await repo.update(id, updateData, session);
   if (!opus) {
     throw new GraphQLError(opusServiceErrors.OPUS_NOT_FOUND(id), {
       extensions: { code: 'OPUS_NOT_FOUND' }
@@ -370,6 +373,7 @@ export const OpusMutation = {
 
     const repo = context.requestContainer.cradle.opusRepository;
     const compositionsRepo = context.requestContainer.cradle.compositionsRepository;
+    const assetsRepo = context.requestContainer.cradle.assetsRepository;
     const number = input.number;
     const existingByNumber = await repo.findByNumber(number);
     if (existingByNumber) {
@@ -384,51 +388,57 @@ export const OpusMutation = {
 
     await assertCompositionsNamesNotTaken(compositionsRepo, input.compositions ?? []);
 
-    let compositions;
-    try {
-      compositions = await compositionsRepo.syncForOpus((input.compositions ?? []).map(mapComposition));
-    } catch (error) {
-      throwIfCompositionNameDuplicateKey(error, input.compositions?.[0]?.name ?? '');
-      throw error;
-    }
-    const compositionIds = compositions.map((c) => c.id);
+    const { opus, compositions } = await withTransaction(async (session) => {
+      let syncedCompositions;
+      try {
+        syncedCompositions = await compositionsRepo.syncForOpus(
+          (input.compositions ?? []).map(mapComposition),
+          session
+        );
+      } catch (error) {
+        throwIfCompositionNameDuplicateKey(error, input.compositions?.[0]?.name ?? '');
+        throw error;
+      }
+      const compositionIds = syncedCompositions.map((c) => c.id);
 
-    const opusData: CreateOpusInput = {
-      number: input.number,
-      numberKind: input.numberKind,
-      title: input.title,
-      name: input.name,
-      description: input.description,
-      additionalText: input.additionalText ?? null,
-      creationYear: input.creationYear,
-      endYear: input.endYear ?? null,
-      datesNote: input.datesNote ?? null,
-      genre: input.genre ?? null,
-      adminTitle: input.adminTitle ?? null,
-      slug,
-      introDescription: input.introDescription ?? null,
-      parts: input.parts ?? null,
-      keywords: input.keywords ?? null,
-      allowIndexation: input.allowIndexation ?? null,
-      coverImage: input.coverImage ?? null,
-      status: input.status || OpusStatus.Draft,
-      publishedAt: input.publishedAt ?? null,
-      meta: { views: 0 },
-      compositions: compositionIds,
-      gallery: input.gallery,
-      performancesTitle: input.performancesTitle,
-      performances: input.performances,
-      blocksOrder: input.blocksOrder ?? null
-    };
+      const opusData: CreateOpusInput = {
+        number: input.number,
+        numberKind: input.numberKind,
+        title: input.title,
+        name: input.name,
+        description: input.description,
+        additionalText: input.additionalText ?? null,
+        creationYear: input.creationYear,
+        endYear: input.endYear ?? null,
+        datesNote: input.datesNote ?? null,
+        genre: input.genre ?? null,
+        adminTitle: input.adminTitle ?? null,
+        slug,
+        introDescription: input.introDescription ?? null,
+        parts: input.parts ?? null,
+        keywords: input.keywords ?? null,
+        allowIndexation: input.allowIndexation ?? null,
+        coverImage: input.coverImage ?? null,
+        status: input.status || OpusStatus.Draft,
+        publishedAt: input.publishedAt ?? null,
+        meta: { views: 0 },
+        compositions: compositionIds,
+        gallery: input.gallery,
+        performancesTitle: input.performancesTitle,
+        performances: input.performances,
+        blocksOrder: input.blocksOrder ?? null
+      };
 
-    const opus = await repo.create(opusData);
-    await repo.removeCompositionsFromCompositionsOpus(compositionIds);
+      const newOpus = await repo.create(opusData, session);
+      await repo.removeCompositionsFromCompositionsOpus(compositionIds, session);
+
+      return { opus: newOpus, compositions: syncedCompositions };
+    });
 
     if (input.coverImage?.crop) {
       await syncImagesCrops(opus.id, input.coverImage, { isCoverImage: true });
     }
     if (input.coverImage) {
-      const assetsRepo = context.requestContainer.cradle.assetsRepository;
       await markImagesAsUsed(assetsRepo, null, input.coverImage, 'opus', opus.id);
     }
 
@@ -487,16 +497,27 @@ export const OpusMutation = {
       await assertCompositionsNamesNotTaken(compositionsRepo, input.compositions);
     }
 
-    const compositions = await handleCompositionsSync(compositionsRepo, repo, existingOpus, input.compositions);
+    const { opus, compositions } = await withTransaction(async (session) => {
+      const syncedCompositions = await handleCompositionsSync(
+        compositionsRepo,
+        repo,
+        existingOpus,
+        input.compositions,
+        session
+      );
 
-    const updateData = buildOpusUpdateData(
-      input,
-      compositions.map((c) => c.id)
-    );
+      const updateData = buildOpusUpdateData(
+        input,
+        syncedCompositions.map((c) => c.id)
+      );
 
-    await processSlugUpdate(id, input.name, repo, updateData);
+      await processSlugUpdate(id, input.name, repo, updateData, session);
 
-    const opus = await updateAndVerifyOpus(repo, id, updateData);
+      const opus = await updateAndVerifyOpus(repo, id, updateData, session);
+
+
+      return { opus, compositions: syncedCompositions };
+    });
 
     if (input.coverImage?.crop) {
       await syncImagesCrops(opus.id, input.coverImage, { isCoverImage: true });
@@ -511,8 +532,10 @@ export const OpusMutation = {
   deleteOpus: async (_: unknown, { id }: { id: string }, context: GraphQLContext): Promise<boolean> => {
     assertAuthenticated(context);
     const repo = context.requestContainer.cradle.opusRepository;
-    await repo.unlink(id);
-    return repo.delete(id);
+    return withTransaction(async (session) => {
+      await repo.unlink(id, session);
+      return repo.delete(id, session);
+    });
   },
 
   unlinkComposition: async (_: unknown, { opusId, compositionId }: UnlinkCompositionArgs, context: GraphQLContext): Promise<OpusFull> => {
@@ -537,15 +560,17 @@ export const OpusMutation = {
 
     const updatedCompositionIds = currentCompositions.filter((id) => id !== compositionId);
 
-    const updatedOpus = await updateAndVerifyOpus(repo, opusId, {
-      compositions: updatedCompositionIds
+    return withTransaction(async (session) => {
+      const updatedOpus = await updateAndVerifyOpus(repo, opusId, {
+        compositions: updatedCompositionIds
+      }, session);
+
+      await repo.moveCompositionsToCompositionsOpus([compositionId], session);
+
+      const compositions = await compositionsRepo.findByIds(updatedCompositionIds, session);
+      const orderedCompositions = orderCompositionsByIds(updatedCompositionIds, compositions);
+
+      return { ...updatedOpus, compositions: orderedCompositions };
     });
-
-    await repo.moveCompositionsToCompositionsOpus([compositionId]);
-
-    const compositions = await compositionsRepo.findByIds(updatedCompositionIds);
-    const orderedCompositions = orderCompositionsByIds(updatedCompositionIds, compositions);
-
-    return { ...updatedOpus, compositions: orderedCompositions };
   },
 };

@@ -1,3 +1,5 @@
+import { ClientSession } from 'mongoose';
+
 import {SortByDate, SortOrder} from '~/types/enums/common.enums';
 
 export type SortCriteria = {
@@ -27,15 +29,16 @@ export type BaseEntity = {
 };
 
 export interface IBaseRepository<TEntity extends BaseEntity, TFilters extends FiltersInput = FiltersInput> {
-    findById(id: string): Promise<TEntity | null>;
-    findBySlug(slug: string): Promise<TEntity | null>;
-    findAll(filters?: TFilters): Promise<TEntity[]>;
-    update(id: string, input: Partial<Omit<TEntity, keyof BaseEntity>>): Promise<TEntity | null>;
-    delete(id: string): Promise<boolean>;
-    count(filters?: QueryFilters<TFilters>): Promise<number>;
+    findById(id: string, session?: ClientSession): Promise<TEntity | null>;
+    findBySlug(slug: string, session?: ClientSession): Promise<TEntity | null>;
+    findAll(filters?: TFilters, session?: ClientSession): Promise<TEntity[]>;
+    update(id: string, input: Partial<Omit<TEntity, keyof BaseEntity>>, session?: ClientSession): Promise<TEntity | null>;
+    delete(id: string, session?: ClientSession): Promise<boolean>;
+    count(filters?: QueryFilters<TFilters>, session?: ClientSession): Promise<number>;
     findPaginated(
         page: number,
         limit: number,
-        filters?: Omit<TFilters, keyof PaginationFilters>
+        filters?: Omit<TFilters, keyof PaginationFilters>,
+        session?: ClientSession
     ): Promise<{ items: TEntity[]; total: number; page: number; totalPages: number }>;
 }

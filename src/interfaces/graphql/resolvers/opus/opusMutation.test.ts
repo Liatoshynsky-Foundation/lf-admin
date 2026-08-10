@@ -16,6 +16,9 @@ import { OpusStatus } from '~/types/graphql/generated/graphql';
 jest.mock('../helpers');
 jest.mock('./tab-handlers/tabHandlersHelpers');
 jest.mock('~/src/shared/utils/slugGenerator/slugGenerator');
+jest.mock('~/src/infrastructure/repositories/helpers', () => ({
+  withTransaction: jest.fn(async (callback: (session: object) => Promise<unknown>) => callback({}))
+}));
 
 const mockedSyncImagesCrops = syncImagesCrops as jest.MockedFunction<typeof syncImagesCrops>;
 const mockedMarkImagesAsUsed = markImagesAsUsed as jest.MockedFunction<typeof markImagesAsUsed>;
@@ -227,7 +230,7 @@ describe('OpusMutation Resolvers', () => {
             { name: 'Audio 2', url: null }
           ]
         }
-      ]);
+      ], expect.anything());
       expect(mockOpusRepo.create).toHaveBeenCalledWith({
         number: OPUS_NUMBER,
         numberKind: 'op',
@@ -251,8 +254,8 @@ describe('OpusMutation Resolvers', () => {
         meta: { views: 0 },
         compositions: [COMPOSITION_ID_1],
         blocksOrder: null
-      });
-      expect(mockOpusRepo.removeCompositionsFromCompositionsOpus).toHaveBeenCalledWith([COMPOSITION_ID_1]);
+      }, expect.anything());
+      expect(mockOpusRepo.removeCompositionsFromCompositionsOpus).toHaveBeenCalledWith([COMPOSITION_ID_1], expect.anything());
       expect(mockedSyncImagesCrops).toHaveBeenCalledWith(OPUS_ID, coverImage, {
         isCoverImage: true
       });
@@ -333,7 +336,8 @@ describe('OpusMutation Resolvers', () => {
       expect(mockOpusRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
           status: OpusStatus.Published
-        })
+        }),
+        expect.anything()
       );
       expect(mockedSyncImagesCrops).not.toHaveBeenCalled();
       expect(mockedMarkImagesAsUsed).not.toHaveBeenCalled();
@@ -603,7 +607,7 @@ describe('OpusMutation Resolvers', () => {
         adminContext
       );
 
-      expect(mockCompositionsRepo.findByIds).toHaveBeenCalledWith([COMPOSITION_ID_1, COMPOSITION_ID_2]);
+      expect(mockCompositionsRepo.findByIds).toHaveBeenCalledWith([COMPOSITION_ID_1, COMPOSITION_ID_2], expect.anything());
       expect(mockedOrderCompositionsByIds).toHaveBeenCalledWith(
         [COMPOSITION_ID_1, COMPOSITION_ID_2],
         [MOCK_COMPOSITION_1, MOCK_COMPOSITION_2]
@@ -615,7 +619,7 @@ describe('OpusMutation Resolvers', () => {
         creationYear: CREATION_YEAR,
         title: { uk: 'Нев', en: 'New' },
         compositions: [COMPOSITION_ID_1, COMPOSITION_ID_2]
-      });
+      }, expect.anything());
       expect(result).toEqual({ ...MOCK_OPUS_ENTITY, compositions: [MOCK_COMPOSITION_1, MOCK_COMPOSITION_2] });
     });
 
@@ -639,9 +643,9 @@ describe('OpusMutation Resolvers', () => {
         adminContext
       );
 
-      expect(mockedProcessSlugUpdate).toHaveBeenCalledWith(OPUS_ID, nameInput, mockOpusRepo, expect.any(Object));
-      expect(mockOpusRepo.removeCompositionsFromCompositionsOpus).toHaveBeenCalledWith([COMPOSITION_ID_3]);
-      expect(mockOpusRepo.moveCompositionsToCompositionsOpus).toHaveBeenCalledWith([COMPOSITION_ID_1]);
+      expect(mockedProcessSlugUpdate).toHaveBeenCalledWith(OPUS_ID, nameInput, mockOpusRepo, expect.any(Object), expect.anything());
+      expect(mockOpusRepo.removeCompositionsFromCompositionsOpus).toHaveBeenCalledWith([COMPOSITION_ID_3], expect.anything());
+      expect(mockOpusRepo.moveCompositionsToCompositionsOpus).toHaveBeenCalledWith([COMPOSITION_ID_1], expect.anything());
     });
 
     it('should reject a composition name already used by another composition on update', async () => {
@@ -712,7 +716,7 @@ describe('OpusMutation Resolvers', () => {
         adminContext
       );
 
-      expect(mockOpusRepo.update).toHaveBeenCalledWith(OPUS_ID, expect.objectContaining({ performances }));
+      expect(mockOpusRepo.update).toHaveBeenCalledWith(OPUS_ID, expect.objectContaining({ performances }), expect.anything());
     });
 
     describe('Field Validations (updateOpus)', () => {
@@ -838,7 +842,7 @@ describe('OpusMutation Resolvers', () => {
             sheetMusic: [],
             audios: []
           })
-        ]);
+        ], expect.anything());
       });
 
       it('should skip gallery item validation if src is empty', async () => {
@@ -873,8 +877,8 @@ describe('OpusMutation Resolvers', () => {
 
       const result = await OpusMutation.deleteOpus({}, { id: OPUS_ID }, adminContext);
 
-      expect(mockOpusRepo.unlink).toHaveBeenCalledWith(OPUS_ID);
-      expect(mockOpusRepo.delete).toHaveBeenCalledWith(OPUS_ID);
+      expect(mockOpusRepo.unlink).toHaveBeenCalledWith(OPUS_ID, expect.anything());
+      expect(mockOpusRepo.delete).toHaveBeenCalledWith(OPUS_ID, expect.anything());
       expect(result).toBe(true);
     });
   });
@@ -943,9 +947,9 @@ describe('OpusMutation Resolvers', () => {
       expect(mockOpusRepo.findById).toHaveBeenCalledWith(OPUS_ID);
       expect(mockOpusRepo.update).toHaveBeenCalledWith(OPUS_ID, {
         compositions: [COMPOSITION_ID_2]
-      });
-      expect(mockOpusRepo.moveCompositionsToCompositionsOpus).toHaveBeenCalledWith([COMPOSITION_ID_1]);
-      expect(mockCompositionsRepo.findByIds).toHaveBeenCalledWith([COMPOSITION_ID_2]);
+      }, expect.anything());
+      expect(mockOpusRepo.moveCompositionsToCompositionsOpus).toHaveBeenCalledWith([COMPOSITION_ID_1], expect.anything());
+      expect(mockCompositionsRepo.findByIds).toHaveBeenCalledWith([COMPOSITION_ID_2], expect.anything());
       expect(mockedOrderCompositionsByIds).toHaveBeenCalledWith([COMPOSITION_ID_2], [MOCK_COMPOSITION_2]);
       expect(result).toEqual({ ...updatedOpusEntity, compositions: [MOCK_COMPOSITION_2] });
     });

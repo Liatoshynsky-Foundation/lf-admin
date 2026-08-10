@@ -13,6 +13,10 @@ import type {
   UpdateCompositionInput
 } from '~/types/graphql/generated/graphql';
 
+jest.mock('~/src/infrastructure/repositories/helpers', () => ({
+  withTransaction: jest.fn(async (callback: (session: object) => Promise<unknown>) => callback({}))
+}));
+
 type AdminContextType = NonNullable<GraphQLContext['admin']>;
 
 type MockCompositionsRepository = {
@@ -177,8 +181,8 @@ describe('CompositionsMutation', () => {
 
       const result = await CompositionsMutation.createComposition(null, { input: MOCK_INPUT }, context);
 
-      expect(createMock).toHaveBeenCalledWith(MOCK_MAPPED_INPUT);
-      expect(moveMock).toHaveBeenCalledWith([MOCK_COMPOSITION_ID]);
+      expect(createMock).toHaveBeenCalledWith(MOCK_MAPPED_INPUT, expect.anything());
+      expect(moveMock).toHaveBeenCalledWith([MOCK_COMPOSITION_ID], expect.anything());
       expect(result).toEqual(MOCK_COMPOSITION);
     });
 
@@ -197,7 +201,6 @@ describe('CompositionsMutation', () => {
     });
 
     it('should trim localized names and translate a duplicate-key create error', async () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
       const createMock = jest.fn().mockRejectedValue({ code: 11000, keyValue: { 'name.uk': 'Trimmed' } });
       const context = createMockContext(MOCK_ADMIN, {
         findByName: jest.fn().mockResolvedValue(null),
@@ -212,9 +215,10 @@ describe('CompositionsMutation', () => {
         message: 'Композиція "Trimmed" вже існує',
         extensions: { code: 'COMPOSITION_NAME_TAKEN' }
       });
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Error creating composition:', expect.anything());
-      expect(createMock).toHaveBeenCalledWith(expect.objectContaining({ name: { uk: 'Trimmed', en: 'English' } }));
-      consoleErrorSpy.mockRestore();
+      expect(createMock).toHaveBeenCalledWith(
+        expect.objectContaining({ name: { uk: 'Trimmed', en: 'English' } }),
+        expect.anything()
+      );
     });
 
     it('should correctly fallback optional fields when input values are missing', async () => {
@@ -228,7 +232,7 @@ describe('CompositionsMutation', () => {
 
       await CompositionsMutation.createComposition(null, { input: MOCK_INPUT_PARTIAL }, context);
 
-      expect(createMock).toHaveBeenCalledWith(MOCK_MAPPED_INPUT_PARTIAL);
+      expect(createMock).toHaveBeenCalledWith(MOCK_MAPPED_INPUT_PARTIAL, expect.anything());
     });
   });
 
@@ -438,8 +442,8 @@ describe('CompositionsMutation', () => {
         context
       );
 
-      expect(removeMock).toHaveBeenCalledWith([MOCK_COMPOSITION_ID]);
-      expect(deleteMock).toHaveBeenCalledWith(MOCK_COMPOSITION_ID);
+      expect(removeMock).toHaveBeenCalledWith([MOCK_COMPOSITION_ID], expect.anything());
+      expect(deleteMock).toHaveBeenCalledWith(MOCK_COMPOSITION_ID, expect.anything());
       expect(result).toBe(true);
     });
   });

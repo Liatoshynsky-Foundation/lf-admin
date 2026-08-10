@@ -75,6 +75,7 @@ describe('CompositionRepository', () => {
     queryMock.limit = jest.fn().mockReturnValue(queryMock);
     queryMock.skip = jest.fn().mockReturnValue(queryMock);
     queryMock.sort = jest.fn().mockReturnValue(queryMock);
+    queryMock.session = jest.fn().mockReturnValue(queryMock);
     queryMock.then = jest.fn((resolve: (val: unknown) => void) => resolve(resolvedValue));
 
     return queryMock;
@@ -113,6 +114,16 @@ describe('CompositionRepository', () => {
     expect(result).toHaveLength(1);
   });
 
+  it('create saves a composition with the provided session', async (): Promise<void> => {
+    const session = {} as never;
+    saveMock.mockResolvedValue({ toObject: () => createMockDoc() });
+
+    const result = await repository.create(createCompositionInput(), session);
+
+    expect(saveMock).toHaveBeenCalledWith({ session });
+    expect(result.id).toBe('c1');
+  });
+
   it('trims localized names before creating and syncing a composition', async (): Promise<void> => {
     saveMock.mockResolvedValue({ toObject: () => createMockDoc({ name: { uk: ' Соната ', en: ' Sonata ' } }) });
 
@@ -120,7 +131,7 @@ describe('CompositionRepository', () => {
     expect(MockModel).toHaveBeenCalledWith(expect.objectContaining({ name: { uk: 'Після бою', en: 'After Battle' } }));
 
     await repository.syncForOpus([{ ...createCompositionInput(), name: { uk: '  Соната  ', en: '  Sonata  ' } }]);
-    expect(saveMock).toHaveBeenCalledWith();
+    expect(saveMock).toHaveBeenLastCalledWith({ session: undefined });
     expect(MockModel).toHaveBeenLastCalledWith(expect.objectContaining({ name: { uk: 'Соната', en: 'Sonata' } }));
   });
 
@@ -147,7 +158,8 @@ describe('CompositionRepository', () => {
     const result = await repository.syncForOpus([createCompositionInput(EXISTING_COMPOSITION_ID)]);
 
     expect(findByIdAndUpdateMock).toHaveBeenCalledWith(EXISTING_COMPOSITION_ID, expect.any(Object), {
-      new: true
+      new: true,
+      session: undefined
     });
     expect(saveMock).not.toHaveBeenCalled();
     expect(result).toHaveLength(1);
