@@ -11,7 +11,7 @@ import { normalizeSearch } from '~/lib/utils/normalizeSearch';
 import { PageHeader } from '~/shared/components/page-header/PageHeader';
 import { SearchStatusToolbar } from '~/shared/components/search-status-toolbar/SearchStatusToolbar';
 
-interface ArchivePageContentProps { activeTab: ArchiveTabValue }
+interface ArchivePageContentProps { activeTab: ArchiveTabValue}
 
 export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
   const { searchProps, statusFilterProps } = useArchiveFiltering();
@@ -20,8 +20,10 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
   const normalizedSearch = normalizeSearch(searchValue);
   const filterValues = statusFilterProps.value;
 
+  const isAllStatus = filterValues.includes(ARCHIVE_STATUS_FILTER_OPTIONS[0].value);
+
   const visibleFonds = ARCHIVE_FONDS_MOCK_DATA.filter((fond) => {
-    const matchesStatus = filterValues.includes(ARCHIVE_STATUS_FILTER_OPTIONS[0].value) ? true : filterValues.includes(fond.status);
+    const matchesStatus = isAllStatus ? true : filterValues.includes(fond.status);
 
     const normalizedFondName = normalizeSearch(fond.name);
     const matchesName = normalizedFondName.includes(normalizedSearch);
@@ -31,7 +33,8 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
 
   const ascSortedVisibleFonds = visibleFonds.toSorted((a, b) => Number(a.fondNumber) - Number(b.fondNumber));
 
-  const hasActiveCriteria = Boolean(searchProps.search) || !filterValues.includes(ARCHIVE_STATUS_FILTER_OPTIONS[0].value);
+  const hasActiveSearch = Boolean(searchValue);
+  const hasActiveStatusFilter = !isAllStatus;
 
   return (
     <Box sx={styles.pageContainer}>
@@ -43,7 +46,7 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
       />
       <SearchStatusToolbar dataTestId='archive-control-panel' searchProps={searchProps} statusFilterProps={statusFilterProps} />
 
-      <FondsTable fonds={ascSortedVisibleFonds} hasActiveCriteria={hasActiveCriteria} />
+      <FondsTable fonds={ascSortedVisibleFonds} hasActiveSearch={hasActiveSearch} hasActiveStatusFilter={hasActiveStatusFilter}  />
     </Box >
   );
 };

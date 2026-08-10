@@ -3,6 +3,7 @@ import React from 'react';
 
 import { FilterSelect } from './FilterSelect';
 import { filterSelectStyles } from './FilterSelect.styles';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 const mockOptions = [
   { label: 'First', value: 'first' },
@@ -296,5 +297,14 @@ describe('FilterSelect', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'No Transition' }));
     expect(mockUseMenuScrollClose).toHaveBeenCalled();
+  });
+
+  it('should render Badge icon for badgeable statuses', () => {
+    const badgeableOptions = [
+      { label: 'Published', value: BaseContentStatuses.Published },
+      { label: 'Hidden', value: BaseContentStatuses.Hidden }
+    ];
+    render(<FilterSelect label="Badgeable Select" options={badgeableOptions} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Badgeable Select' }));
   });
 });

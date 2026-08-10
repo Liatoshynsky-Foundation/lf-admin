@@ -28,9 +28,11 @@ export const useArchiveFiltering = (): {
       label: 'Статус',
       options: ARCHIVE_STATUS_FILTER_OPTIONS,
       value: statusFilters,
-      onChange: (value) => setStatusFilters(value),
+      onChange: (value) => setStatusFilters(value.length === 0 ? [ARCHIVE_STATUS_FILTER_OPTIONS[0].value] : value),
       maxSelections: 1,
       hideClearAction: true,
+      menuAlign: 'right',
+      persistLabel: true
     }
   };
 };

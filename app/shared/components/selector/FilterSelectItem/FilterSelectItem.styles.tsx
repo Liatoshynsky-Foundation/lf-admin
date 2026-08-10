@@ -21,5 +21,13 @@ export const styles = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center'
-  }
+  },
+
+  startIcon: {
+    width: 20,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  
 };

@@ -22,6 +22,8 @@ describe('useArchiveFiltering', () => {
         value: [ARCHIVE_STATUS_FILTER_OPTIONS[0].value],
         maxSelections: 1,
         hideClearAction: true,
+        menuAlign: 'right',
+        persistLabel: true,
         onChange: expect.any(Function)
       },
     });
@@ -47,5 +49,21 @@ describe('useArchiveFiltering', () => {
 
     expect(result.current.statusFilterProps.value).toStrictEqual(expectedNewValue);
     expect(result.current.activeStatusFilters).toEqual(expectedNewValue);
+  });
+
+  it('should reset to "all" when onChange is called with an empty array', () => {
+    const { result } = renderHook(() => useArchiveFiltering());
+
+    act(() => {
+      result.current.statusFilterProps.onChange!(['published']);
+    });
+    expect(result.current.statusFilterProps.value).toStrictEqual(['published']);
+
+    act(() => {
+      result.current.statusFilterProps.onChange!([]);
+    });
+
+    expect(result.current.statusFilterProps.value).toStrictEqual([ARCHIVE_STATUS_FILTER_OPTIONS[0].value]);
+    expect(result.current.activeStatusFilters).toEqual([ARCHIVE_STATUS_FILTER_OPTIONS[0].value]);
   });
 });

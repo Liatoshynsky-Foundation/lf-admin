@@ -6,12 +6,14 @@ import { styles } from './FilterSelectItem.styles';
 
 export interface FilterSelectItemProps extends MenuItemProps {
   label: string;
+  icon?: React.ReactNode;
 }
 
-const FilterSelectItem = ({ label, sx, selected, ...props }: FilterSelectItemProps) => {
+const FilterSelectItem = ({ label, icon, sx, selected, ...props }: FilterSelectItemProps) => {
   return (
     <MenuItem selected={selected} sx={[styles.menuItem, ...(Array.isArray(sx) ? sx : [sx])]} {...props}>
       <Box sx={styles.content}>
+        {icon && <Box sx={styles.startIcon}>{icon}</Box>}
         <Typography variant="textMd" sx={styles.label}>
           {label}
         </Typography>
