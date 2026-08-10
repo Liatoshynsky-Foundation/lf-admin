@@ -4,7 +4,7 @@ import { createBaseRepository } from '../baseRepository/baseRepository';
 import { opusServiceErrors } from '~/back-constants/errors';
 import { LocalizedString } from '~/domain/entities/BaseContent';
 import { Opus } from '~/domain/entities/Opus';
-import { CreateOpusInput, IOpusRepository, OpusFilters } from '~/domain/repositories/opusRepository';
+import { CreateOpusInput, IOpusRepository, OpusFilters, UpdateOpusInput } from '~/domain/repositories/opusRepository';
 import dbConnect from '~/infrastructure/db/connect';
 import { buildBaseQuery, combineConditions, createToEntity, fieldCondition, getBaseSort } from '~/infrastructure/repositories/helpers';
 import { OpusNumberKind, OpusStatus } from '~/types/graphql/generated/graphql';
@@ -107,6 +107,29 @@ const toEntity = (doc: DbOpus): Opus =>
     compositions: doc.compositions ?? undefined,
   });
 
+const escapeRegExp = (value: string): string =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+
+const isDuplicateKeyError = (error: unknown): boolean =>
+  typeof error === 'object' && error !== null && 'code' in error && error.code === 11000;
+
+const getSort = (filters?: OpusFilters): Record<string, 1 | -1> => {
+  if (filters?.sort?.length) {
+    const { sortBy, sortOrder } = filters.sort[0];
+    const direction = sortOrder === 'asc' ? 1 : -1;
+
+    if (sortBy === 'number') {
+      return { number: direction, additionalText: direction };
+    }
+
+    return getBaseSort(filters);
+  }
+
+  return { number: 1, additionalText: 1 };
+};
+
+const getDefaultSort = (): Record<string, 1 | -1> => ({ number: 1, additionalText: 1 });
+
 export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => {
   const baseRepo = createBaseRepository<Opus, DbOpus, OpusFilters>({
     model: OpusModel,
@@ -121,17 +144,28 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
         { number: { $type: 'number' } }
       ]);
     },
-    getDefaultSort: getBaseSort
+    getSort,
+    getDefaultSort
   });
 
-  const findByNumber = async (number: number, session?: ClientSession): Promise<Opus | null> => {
+  const findByComplexKey = async (
+    number: number,
+    numberKind: string,
+    additionalText?: string | null,
+    session?: ClientSession
+  ): Promise<Opus | null> => {
     await dbConnect();
+    if (number === undefined || number === null) return null;
 
-    if (number === undefined || number === null) {
-      return null;
-    }
+    const trimmed = additionalText?.trim();
 
-    const doc = await OpusModel.findOne({ number })
+    const doc = await OpusModel.findOne({
+      number,
+      numberKind,
+      additionalText: trimmed
+        ? { $regex: `^${escapeRegExp(trimmed)}$`, $options: 'i' }
+        : null
+    })
       .session(session ?? null)
       .lean<DbOpus>();
 
@@ -154,8 +188,8 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
         }
       },
       { 
-        upsert: true, 
-        new: true, 
+        upsert: true,
+        new: true,
         session: session
       }
     ).lean<{ _id: string }>();
@@ -212,14 +246,13 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
 
   return {
     ...baseRepo,
-    findByNumber,
+    findByComplexKey,
     create: async (input: CreateOpusInput, session?: ClientSession): Promise<Opus> => {
       await dbConnect();
 
-      const existing = await findByNumber(input.number, session);
-
+      const existing = await findByComplexKey(input.number, input.numberKind, input.additionalText, session);
       if (existing) {
-        throw new Error(opusServiceErrors.NUMBER_ALREADY_EXISTS(input.number));
+        throw new Error(opusServiceErrors.OPUS_ALREADY_EXISTS);
       }
 
       const opusData = {
@@ -227,8 +260,26 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
         meta: { views: input.meta?.views ?? 0 }
       };
 
-      const [newOpus] = await OpusModel.create([opusData], { session });
-      return toEntity(newOpus.toObject() as unknown as DbOpus);
+      try {
+        const [newOpus] = await OpusModel.create([opusData], { session });
+        return toEntity(newOpus.toObject() as unknown as DbOpus);
+      } catch (error) {
+        if (isDuplicateKeyError(error)) {
+          throw new Error(opusServiceErrors.OPUS_ALREADY_EXISTS);
+        }
+        throw error;
+      }
+    },
+    update: async (id: string, input: UpdateOpusInput, session?: ClientSession): Promise<Opus | null> => {
+      try {
+        return await baseRepo.update(id, input, session);
+      } catch (error) {
+        if (isDuplicateKeyError(error)) {
+          throw new Error(opusServiceErrors.OPUS_ALREADY_EXISTS);
+        }
+        throw error;
+      }
+
     },
     unlink,
     moveCompositionsToCompositionsOpus,

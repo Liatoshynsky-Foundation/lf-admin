@@ -21,6 +21,7 @@ export interface OpusCompositionData {
   name: string;
   genre: string;
   year: string;
+  additionalText?: string;
   audios: OpusAudioFileData[];
   notes: OpusMediaFileData[];
 }

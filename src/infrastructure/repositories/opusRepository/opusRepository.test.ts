@@ -3,6 +3,7 @@ import { Model } from 'mongoose';
 import { buildBaseQuery } from '../helpers';
 import { DbOpus, OpusRepository } from './opusRepository';
 import { CreateOpusInput, IOpusRepository } from '~/domain/repositories/opusRepository';
+import { opusServiceErrors } from '~/src/constants/errors';
 import { OpusStatus, SortOrder } from '~/types/enums/common.enums';
 import { OpusNumberKind } from '~/types/graphql/generated/graphql';
 
@@ -82,6 +83,7 @@ describe('OpusRepository', () => {
   const createMock = jest.fn();
   const updateOneMock = jest.fn();
   const findByIdMock = jest.fn();
+  const findByIdAndUpdateMock = jest.fn();
   const findOneAndUpdateMock = jest.fn();
 
   const MockModel = jest.fn().mockImplementation(() => ({
@@ -92,6 +94,7 @@ describe('OpusRepository', () => {
     countDocuments: jest.Mock;
     updateOne: jest.Mock;
     findById: jest.Mock;
+    findByIdAndUpdate: jest.Mock;
     findOneAndUpdate: jest.Mock;
     create: jest.Mock;
   };
@@ -101,6 +104,7 @@ describe('OpusRepository', () => {
   MockModel.countDocuments = countDocumentsMock;
   MockModel.updateOne = updateOneMock;
   MockModel.findById = findByIdMock;
+  MockModel.findByIdAndUpdate = findByIdAndUpdateMock;
   MockModel.findOneAndUpdate = findOneAndUpdateMock;
   MockModel.create = createMock;
 
@@ -128,30 +132,69 @@ describe('OpusRepository', () => {
     meta: { views: 0 }
   };
 
-  describe('findByNumber', () => {
-    it('returns the opus when found', async () => {
+  describe('findByComplexKey', () => {
+    it('returns the opus when found with valid parameters', async () => {
       findOneMock.mockReturnValue(createQueryMock(createMockOpusDoc()));
-      const result = await repository.findByNumber(OPUS_NUMBER_1);
-      expect(findOneMock).toHaveBeenCalledWith({ number: OPUS_NUMBER_1 });
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', '  ');
+      expect(findOneMock).toHaveBeenCalledWith({ number: OPUS_NUMBER_1, numberKind: 'op', additionalText: null });
       expect(result?.number).toBe(OPUS_NUMBER_1);
     });
 
     it('returns null when number is undefined', async () => {
-      const result = await repository.findByNumber(undefined as unknown as number);
+      const result = await repository.findByComplexKey(undefined as unknown as number, 'op', null);
       expect(result).toBeNull();
       expect(findOneMock).not.toHaveBeenCalled();
     });
 
+    it('trims additionalText if provided and non-empty', async () => {
+      findOneMock.mockReturnValue(createQueryMock(createMockOpusDoc({ additionalText: 'extra' })));
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', '  extra  ');
+      expect(findOneMock).toHaveBeenCalledWith({
+        number: OPUS_NUMBER_1,
+        numberKind: 'op',
+        additionalText: { $regex: '^extra$', $options: 'i' }
+      });
+      expect(result?.number).toBe(OPUS_NUMBER_1);
+    });
+
+    it('performs a case-insensitive match on additionalText', async () => {
+      findOneMock.mockReturnValue(createQueryMock(createMockOpusDoc({ additionalText: 'BT' })));
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', 'bt');
+      expect(findOneMock).toHaveBeenCalledWith({
+        number: OPUS_NUMBER_1,
+        numberKind: 'op',
+        additionalText: { $regex: '^bt$', $options: 'i' }
+      });
+      expect(result?.number).toBe(OPUS_NUMBER_1);
+    });
+
+    it('escapes regex special characters in additionalText', async () => {
+      findOneMock.mockReturnValue(createQueryMock(createMockOpusDoc({ additionalText: 'a.b*c' })));
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', 'a.b*c');
+      expect(findOneMock).toHaveBeenCalledWith({
+        number: OPUS_NUMBER_1,
+        numberKind: 'op',
+        additionalText: { $regex: String.raw`^a\.b\*c$`, $options: 'i' }
+      });
+      expect(result?.number).toBe(OPUS_NUMBER_1);
+    });
+
+    it('returns null when document is not found', async () => {
+      findOneMock.mockReturnValue(createQueryMock(null));
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
+      expect(result).toBeNull();
+    });
+
     it('looks up number 0 instead of treating it as empty', async () => {
       findOneMock.mockReturnValue(createQueryMock(createMockOpusDoc({ number: 0 })));
-      const result = await repository.findByNumber(0);
-      expect(findOneMock).toHaveBeenCalledWith({ number: 0 });
+      const result = await repository.findByComplexKey(0, 'op', null);
+      expect(findOneMock).toHaveBeenCalledWith({ number: 0, numberKind: 'op', additionalText: null });
       expect(result?.number).toBe(0);
     });
   });
 
   describe('create', () => {
-    it('creates a new opus when the number is unique', async () => {
+    it('creates a new opus when the composite key is unique', async () => {
       findOneMock.mockReturnValue(createQueryMock(null));
       createMock.mockResolvedValue([{ toObject: (): DbOpus => createMockOpusDoc({ number: OPUS_NUMBER_1 }) }]);
 
@@ -161,17 +204,18 @@ describe('OpusRepository', () => {
       expect(createMock).toHaveBeenCalledWith([expect.objectContaining({ number: OPUS_NUMBER_1 })], { session: undefined });
     });
 
-    it('throws when the number already exists', async () => {
+    it('throws when the composite key already exists', async () => {
       findOneMock.mockReturnValue(createQueryMock(createMockOpusDoc()));
 
-      await expect(repository.create(createInput)).rejects.toThrow(`Opus with number "${OPUS_NUMBER_1}" already exists`);
-      expect(saveMock).not.toHaveBeenCalled();
+      await expect(repository.create(createInput)).rejects.toThrow(opusServiceErrors.OPUS_ALREADY_EXISTS);
+      expect(createMock).not.toHaveBeenCalled();
     });
 
     it('defaults meta views to 0 when the input has no meta', async (): Promise<void> => {
       const inputWithoutMeta: CreateOpusInput = {
         number: OPUS_NUMBER_2,
         title: { uk: MOCK_TITLE_UK, en: MOCK_TITLE_EN },
+        numberKind: OpusNumberKind.Op,
         status: OpusStatus.Draft as unknown as CreateOpusInput['status'],
       };
       findOneMock.mockReturnValue(createQueryMock(null));
@@ -184,6 +228,25 @@ describe('OpusRepository', () => {
         { session: undefined }
       );
       expect(result.number).toBe(OPUS_NUMBER_2);
+    });
+
+    it('converts a database duplicate-key race into the domain duplicate error', async () => {
+      findOneMock.mockReturnValue(createQueryMock(null));
+      createMock.mockRejectedValue({ code: 11000 });
+
+      await expect(repository.create(createInput)).rejects.toThrow(opusServiceErrors.OPUS_ALREADY_EXISTS);
+    });
+  });
+
+  describe('update', () => {
+    it('converts a database duplicate-key race into the domain duplicate error', async () => {
+      findByIdAndUpdateMock.mockReturnValue({
+        lean: jest.fn().mockRejectedValue({ code: 11000 })
+      });
+
+      await expect(repository.update(MOCK_ID, { number: OPUS_NUMBER_2 })).rejects.toThrow(
+        opusServiceErrors.OPUS_ALREADY_EXISTS
+      );
     });
   });
 
@@ -210,7 +273,7 @@ describe('OpusRepository', () => {
       });
       findOneMock.mockReturnValue(createQueryMock(doc));
 
-      const result = await repository.findByNumber(OPUS_NUMBER_1);
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
 
       expect(result?.number).toBe(OPUS_NUMBER_1);
       expect(result?.numberKind).toBe('op');
@@ -235,7 +298,7 @@ describe('OpusRepository', () => {
       const doc = createMockOpusDoc({ numberKind: 'sineop', meta: { views: 42 } });
       findOneMock.mockReturnValue(createQueryMock(doc));
 
-      const result = await repository.findByNumber(OPUS_NUMBER_1);
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'sineop', null);
 
       expect(result?.numberKind).toBe('sineop');
       expect(result?.number).toBe(OPUS_NUMBER_1);
@@ -279,7 +342,7 @@ describe('OpusRepository', () => {
 
       findOneMock.mockReturnValue(createQueryMock(doc));
 
-      const result = await repository.findByNumber(OPUS_NUMBER_1);
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
 
       expect(result?.gallery).toHaveLength(3);
       expect(result?.gallery?.[0]).toEqual({
@@ -318,7 +381,7 @@ describe('OpusRepository', () => {
       });
       findOneMock.mockReturnValue(createQueryMock(doc));
 
-      const result = await repository.findByNumber(OPUS_NUMBER_1);
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
 
       expect(result?.gallery?.[0]?.crop).toEqual({
         x: 5,
@@ -349,7 +412,18 @@ describe('OpusRepository', () => {
       });
 
       expect(result).toHaveLength(1);
-      expect(chain.sort).toHaveBeenCalledWith({ number: 1 });
+      expect(chain.sort).toHaveBeenCalledWith({ number: 1, additionalText: 1 });
+    });
+
+    it('sorts additional text in reverse order when sorting descending by number', async () => {
+      const chain = mockChain();
+      findMock.mockReturnValue(chain);
+
+      await repository.findAll({
+        sort: [{ sortBy: 'number', sortOrder: SortOrder.Desc }]
+      });
+
+      expect(chain.sort).toHaveBeenCalledWith({ number: -1, additionalText: -1 });
     });
 
     it('applies fallback logic for numberKind === Op inside buildQuery', async () => {
@@ -396,7 +470,7 @@ describe('OpusRepository', () => {
       const doc = createMockOpusDoc({ creationYear: '' });
       findOneMock.mockReturnValue(createQueryMock(doc));
 
-      const result = await repository.findByNumber(OPUS_NUMBER_1);
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
 
       expect(result?.creationYear).toBe('');
     });
@@ -426,7 +500,7 @@ describe('OpusRepository', () => {
       const doc = createMockOpusDoc({ numberKind: undefined });
       findOneMock.mockReturnValue(createQueryMock(doc));
 
-      const result = await repository.findByNumber(OPUS_NUMBER_1);
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
 
       expect(result?.numberKind).toBe('op');
     });
@@ -437,7 +511,7 @@ describe('OpusRepository', () => {
       });
       findOneMock.mockReturnValue(createQueryMock(doc));
 
-      const result = await repository.findByNumber(OPUS_NUMBER_1);
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
 
       expect(result?.name).toEqual({
         uk: 'Просто рядкова назва',
@@ -452,7 +526,7 @@ describe('OpusRepository', () => {
       });
       findOneMock.mockReturnValue(createQueryMock(doc));
 
-      const result = await repository.findByNumber(OPUS_NUMBER_1);
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
 
       expect(result?.introDescription).toBeUndefined();
       expect(result?.parts).toBeUndefined();
@@ -465,7 +539,7 @@ describe('OpusRepository', () => {
       });
       findOneMock.mockReturnValue(createQueryMock(doc));
 
-      const result = await repository.findByNumber(OPUS_NUMBER_1);
+      const result = await repository.findByComplexKey(OPUS_NUMBER_1, 'op', null);
 
       expect(result?.introDescription).toEqual({ uk: 'Вступ', en: 'Intro' });
       expect(result?.parts).toEqual({ uk: 'Частини', en: 'Parts' });

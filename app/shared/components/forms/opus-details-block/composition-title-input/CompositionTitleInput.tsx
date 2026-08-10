@@ -43,7 +43,7 @@ export default function CompositionTitleInput({
   const [open, setOpen] = useState(false);
 
   const debouncedSearch = useDebounce(value.trim(), 300);
-  const { data } = useSearchCompositions(debouncedSearch);
+  const { data, loading } = useSearchCompositions(debouncedSearch);
   const suggestions = useMemo(() => {
     const excludedIds = new Set(excludedSuggestionIds);
 
@@ -59,7 +59,7 @@ export default function CompositionTitleInput({
     }));
 
     const noResultsOption: CompositionOption[] =
-      debouncedSearch.length > 0 && suggestions.length === 0
+      !loading && suggestions.length === 0
         ? [{ id: NO_RESULTS_OPTION_ID, title: COMPOSITION_SEARCH_LABELS.noOptions, isCreate: false, isNoResults: true }]
         : [];
 
@@ -68,7 +68,7 @@ export default function CompositionTitleInput({
       ...suggestionOptions,
       { id: CREATE_OPTION_ID, title: COMPOSITION_SEARCH_LABELS.createNew, isCreate: true }
     ];
-  }, [suggestions, debouncedSearch]);
+  }, [suggestions, loading]);
 
   return (
     <Autocomplete<CompositionOption, false, false, true>

@@ -177,6 +177,7 @@ describe('usePaginatedWorks', () => {
               id: 'g1',
               number: 'Op.1',
               numberKind: 'op',
+              additionalText: 'bis',
               name: { uk: 'Group' },
               genre: { uk: 'Genre', en: 'Genre' },
               creationYear: '2024',
@@ -216,6 +217,7 @@ describe('usePaginatedWorks', () => {
           id: 'g1',
           number: 'Op.1',
           numberKind: 'op',
+          additionalText: 'bis',
           name: 'Group',
           genre: 'Genre',
           startDate: '2024',
@@ -274,9 +276,10 @@ describe('usePaginatedWorks', () => {
             {
               id: 'g1',
               number: 'Op.1',
-              numberKind: 'op',
+              numberKind: 'sineop',
+              additionalText: null,
               name: { uk: 'Group' },
-              genre: { uk: 'Genre', en: 'Genre' },
+              genre: null,
               creationYear: '2024',
               status: OpusStatus.Draft,
               updatedAt: 'today',
@@ -300,6 +303,8 @@ describe('usePaginatedWorks', () => {
     const { result } = renderHook(() => usePaginatedWorks());
 
     expect(result.current.items.groups[0].status).toBe(BaseContentStatuses.Draft);
+    expect(result.current.items.groups[0].numberKind).toBe('sineop');
+    expect(result.current.items.groups[0].genre).toBe('');
     expect(result.current.items.works[0].status).toBe(BaseContentStatuses.Draft);
   });
 });

@@ -91,7 +91,7 @@ describe('OpusQuery Resolvers', () => {
 
     mockOpusRepo = {
       findById: jest.fn(),
-      findByNumber: jest.fn(),
+      findByComplexKey: jest.fn(),
       findAll: jest.fn(),
       findPaginated: jest.fn(),
       count: jest.fn(),

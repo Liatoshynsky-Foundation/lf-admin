@@ -82,7 +82,7 @@ describe('OpusMutation Resolvers', () => {
   } => {
     const opusRepo = {
       findById: jest.fn(),
-      findByNumber: jest.fn(),
+      findByComplexKey: jest.fn(),
       findBySlug: jest.fn(),
       findAll: jest.fn(),
       findPaginated: jest.fn(),
@@ -139,22 +139,35 @@ describe('OpusMutation Resolvers', () => {
           extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
         })
       );
+      expect(mockOpusRepo.create).not.toHaveBeenCalled();
     });
 
     it('should throw error if opus with given number already exists', async () => {
-      mockOpusRepo.findByNumber.mockResolvedValue(MOCK_OPUS_ENTITY);
+      mockOpusRepo.findByComplexKey.mockResolvedValue(MOCK_OPUS_ENTITY);
 
       await expect(OpusMutation.createOpus({}, { input: BASE_CREATE_INPUT }, adminContext)).rejects.toThrow(
-        new GraphQLError(opusServiceErrors.NUMBER_ALREADY_EXISTS(OPUS_NUMBER), {
+        new GraphQLError(opusServiceErrors.OPUS_ALREADY_EXISTS, {
           extensions: { code: 'DUPLICATE_OPUS_NUMBER' }
         })
       );
 
-      expect(mockOpusRepo.findByNumber).toHaveBeenCalledWith(OPUS_NUMBER);
+      expect(mockOpusRepo.findByComplexKey).toHaveBeenCalledWith(OPUS_NUMBER, 'op', null);
+    });
+
+    it('should translate a duplicate-key race from the repository', async () => {
+      mockOpusRepo.findByComplexKey.mockResolvedValue(null);
+      mockedGenerateUniqueSlug.mockResolvedValue(SLUG_VALUE);
+      mockOpusRepo.create.mockRejectedValue(new Error(opusServiceErrors.OPUS_ALREADY_EXISTS));
+
+      await expect(OpusMutation.createOpus({}, { input: BASE_CREATE_INPUT }, adminContext)).rejects.toThrow(
+        new GraphQLError(opusServiceErrors.OPUS_ALREADY_EXISTS, {
+          extensions: { code: 'DUPLICATE_OPUS_NUMBER' }
+        })
+      );
     });
 
     it('should throw error if name is missing or invalid length', async () => {
-      mockOpusRepo.findByNumber.mockResolvedValue(null);
+      mockOpusRepo.findByComplexKey.mockResolvedValue(null);
       await expect(
         OpusMutation.createOpus({}, { input: { ...BASE_CREATE_INPUT, name: { uk: '', en: '' } } }, adminContext)
       ).rejects.toThrow(
@@ -165,7 +178,7 @@ describe('OpusMutation Resolvers', () => {
     });
 
     it('should create opus with default parameters and sync compositions/images', async () => {
-      mockOpusRepo.findByNumber.mockResolvedValue(null);
+      mockOpusRepo.findByComplexKey.mockResolvedValue(null);
       mockedGenerateUniqueSlug.mockImplementation(async (_, options) => {
         if (options?.checkExists) {
           mockOpusRepo.findBySlug.mockResolvedValue(null);
@@ -270,7 +283,7 @@ describe('OpusMutation Resolvers', () => {
     });
 
     it('should reject an empty composition name before syncing', async () => {
-      mockOpusRepo.findByNumber.mockResolvedValue(null);
+      mockOpusRepo.findByComplexKey.mockResolvedValue(null);
 
       await expect(
         OpusMutation.createOpus(
@@ -286,7 +299,7 @@ describe('OpusMutation Resolvers', () => {
     });
 
     it('should reject duplicate names submitted in one opus', async () => {
-      mockOpusRepo.findByNumber.mockResolvedValue(null);
+      mockOpusRepo.findByComplexKey.mockResolvedValue(null);
 
       await expect(
         OpusMutation.createOpus(
@@ -298,7 +311,7 @@ describe('OpusMutation Resolvers', () => {
     });
 
     it('should translate a duplicate-key error from composition synchronization', async () => {
-      mockOpusRepo.findByNumber.mockResolvedValue(null);
+      mockOpusRepo.findByComplexKey.mockResolvedValue(null);
       mockedGenerateUniqueSlug.mockResolvedValue(SLUG_VALUE);
       mockCompositionsRepo.syncForOpus.mockRejectedValue({ code: 11000, keyValue: { 'name.uk': 'Sonata' } });
 
@@ -315,7 +328,7 @@ describe('OpusMutation Resolvers', () => {
     });
 
     it('should trim name.uk when generating slug and set status from input', async () => {
-      mockOpusRepo.findByNumber.mockResolvedValue(null);
+      mockOpusRepo.findByComplexKey.mockResolvedValue(null);
       mockedGenerateUniqueSlug.mockResolvedValue(SLUG_VALUE);
       mockCompositionsRepo.syncForOpus.mockResolvedValue([]);
       mockOpusRepo.create.mockResolvedValue(MOCK_OPUS_ENTITY);
@@ -325,7 +338,7 @@ describe('OpusMutation Resolvers', () => {
         {
           input: {
             ...BASE_CREATE_INPUT,
-            name: { uk: '  Назва  ', en: 'Name' },
+            name: { uk: '   Назва   ', en: 'Name' },
             status: OpusStatus.Published
           }
         },
@@ -512,6 +525,7 @@ describe('OpusMutation Resolvers', () => {
           extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
         })
       );
+      expect(mockOpusRepo.update).not.toHaveBeenCalled();
     });
 
     it('should throw OPUS_NOT_FOUND if opus does not exist in repo', async () => {
@@ -524,6 +538,8 @@ describe('OpusMutation Resolvers', () => {
           extensions: { code: 'OPUS_NOT_FOUND' }
         })
       );
+      expect(mockOpusRepo.findById).toHaveBeenCalledWith(OPUS_ID);
+      expect(mockOpusRepo.update).not.toHaveBeenCalled();
     });
 
     it('should throw OPUS_NOT_FOUND if update operation returns null', async () => {
@@ -537,6 +553,8 @@ describe('OpusMutation Resolvers', () => {
           extensions: { code: 'OPUS_NOT_FOUND' }
         })
       );
+      expect(mockOpusRepo.findById).toHaveBeenCalledWith(OPUS_ID);
+      expect(mockOpusRepo.update).toHaveBeenCalledWith(OPUS_ID, { status: OpusStatus.Published });
     });
 
     it('should successfully update status', async () => {
@@ -549,6 +567,7 @@ describe('OpusMutation Resolvers', () => {
         adminContext
       );
 
+      expect(mockOpusRepo.findById).toHaveBeenCalledWith(OPUS_ID);
       expect(mockOpusRepo.update).toHaveBeenCalledWith(OPUS_ID, { status: OpusStatus.Published });
       expect(result).toEqual({ id: OPUS_ID, status: OpusStatus.Published });
     });
@@ -561,6 +580,7 @@ describe('OpusMutation Resolvers', () => {
           extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
         })
       );
+      expect(mockOpusRepo.update).not.toHaveBeenCalled();
     });
 
     it('should throw OPUS_NOT_FOUND if existing opus is missing', async () => {
@@ -573,11 +593,13 @@ describe('OpusMutation Resolvers', () => {
           extensions: { code: 'OPUS_NOT_FOUND' }
         })
       );
+      expect(mockOpusRepo.findById).toHaveBeenCalledWith(OPUS_ID);
+      expect(mockOpusRepo.update).not.toHaveBeenCalled();
     });
 
     it('should throw duplicate error if number is changed and belongs to another opus', async () => {
       mockOpusRepo.findById.mockResolvedValue(MOCK_OPUS_ENTITY);
-      mockOpusRepo.findByNumber.mockResolvedValue({ ...MOCK_OPUS_ENTITY, id: OTHER_OPUS_ID });
+      mockOpusRepo.findByComplexKey.mockResolvedValue({ ...MOCK_OPUS_ENTITY, id: OTHER_OPUS_ID });
 
       await expect(
         OpusMutation.updateOpus(
@@ -586,14 +608,17 @@ describe('OpusMutation Resolvers', () => {
           adminContext
         )
       ).rejects.toThrow(
-        new GraphQLError(opusServiceErrors.NUMBER_ALREADY_EXISTS(DUP_OPUS_NUMBER), {
+        new GraphQLError(opusServiceErrors.OPUS_ALREADY_EXISTS, {
           extensions: { code: 'DUPLICATE_OPUS_NUMBER' }
         })
       );
+      expect(mockOpusRepo.findByComplexKey).toHaveBeenCalledWith(DUP_OPUS_NUMBER, 'op', null);
+      expect(mockOpusRepo.update).not.toHaveBeenCalled();
     });
 
     it('should keep compositions if input.compositions is undefined', async () => {
-      mockOpusRepo.findById.mockResolvedValue(MOCK_OPUS_ENTITY);
+      const existingOpus = { ...MOCK_OPUS_ENTITY, additionalText: 'bis' };
+      mockOpusRepo.findById.mockResolvedValue(existingOpus);
       mockCompositionsRepo.findByIds.mockResolvedValue([MOCK_COMPOSITION_1, MOCK_COMPOSITION_2]);
       mockedOrderCompositionsByIds.mockReturnValue([MOCK_COMPOSITION_1, MOCK_COMPOSITION_2]);
       mockOpusRepo.update.mockResolvedValue(MOCK_OPUS_ENTITY);
@@ -621,6 +646,22 @@ describe('OpusMutation Resolvers', () => {
         compositions: [COMPOSITION_ID_1, COMPOSITION_ID_2]
       }, expect.anything());
       expect(result).toEqual({ ...MOCK_OPUS_ENTITY, compositions: [MOCK_COMPOSITION_1, MOCK_COMPOSITION_2] });
+    });
+
+    it('should translate a duplicate-key race from the repository', async () => {
+      mockOpusRepo.findById.mockResolvedValue(MOCK_OPUS_ENTITY);
+      mockOpusRepo.findByComplexKey.mockResolvedValue(null);
+      mockCompositionsRepo.findByIds.mockResolvedValue([]);
+      mockedOrderCompositionsByIds.mockReturnValue([]);
+      mockOpusRepo.update.mockRejectedValue(new Error(opusServiceErrors.OPUS_ALREADY_EXISTS));
+
+      await expect(
+        OpusMutation.updateOpus({}, { id: OPUS_ID, input: BASE_UPDATE_INPUT }, adminContext)
+      ).rejects.toThrow(
+        new GraphQLError(opusServiceErrors.OPUS_ALREADY_EXISTS, {
+          extensions: { code: 'DUPLICATE_OPUS_NUMBER' }
+        })
+      );
     });
 
     it('should process compositions changes (added and removed) correctly', async () => {
@@ -675,6 +716,7 @@ describe('OpusMutation Resolvers', () => {
           extensions: { code: 'OPUS_NOT_FOUND' }
         })
       );
+      expect(mockOpusRepo.update).toHaveBeenCalled();
     });
 
     it('should sync crops and mark images as used when coverImage is updated', async () => {
@@ -869,6 +911,8 @@ describe('OpusMutation Resolvers', () => {
           extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
         })
       );
+      expect(mockOpusRepo.unlink).not.toHaveBeenCalled();
+      expect(mockOpusRepo.delete).not.toHaveBeenCalled();
     });
 
     it('should unlink opus and delete it from repository', async () => {

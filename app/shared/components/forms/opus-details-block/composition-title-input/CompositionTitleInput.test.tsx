@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import CompositionTitleInput from './CompositionTitleInput';
+import { COMPOSITION_SEARCH_LABELS } from '~/constants/opus';
 
 const mockUseSearchCompositions = jest.fn();
 
@@ -95,6 +96,23 @@ describe('CompositionTitleInput', () => {
 
     expect(screen.queryByText('Already selected')).not.toBeInTheDocument();
     expect(screen.getByText('Available suggestion')).toBeInTheDocument();
+  });
+
+  it('renders the no-results label when all suggestions are excluded', () => {
+    mockUseSearchCompositions.mockReturnValue({
+      data: {
+        searchCompositions: [{ id: 'selected', name: { uk: 'Already selected' } }]
+      },
+      loading: false
+    });
+
+    render(<CompositionTitleInput {...baseProps} excludedSuggestionIds={['selected']} />);
+
+    const input = screen.getByRole('combobox');
+    fireEvent.focus(input);
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+
+    expect(screen.getByText(COMPOSITION_SEARCH_LABELS.noOptions)).toBeInTheDocument();
   });
 
   it('closes the suggestions popup when the input loses focus', () => {

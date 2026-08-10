@@ -41,6 +41,7 @@ export type GroupRowData = Readonly<{
   id: string;
   number: number;
   numberKind: 'op' | 'sineop';
+  additionalText?: string | null;
   name: string;
   genre: string;
   startDate: string;
@@ -53,6 +54,7 @@ export type GroupRowData = Readonly<{
 export type GroupHeaderData = Readonly<{
   numberLabel: number;
   numberKind: 'op' | 'sineop';
+  additionalText?: string | null;
   name: string;
   genre: string;
   startDate: string;
@@ -84,7 +86,11 @@ export const columns: readonly ColumnDef<GroupHeaderData, OpusWork, IndividualWo
     headerLabel: 'Опуси',
     width: '128px',
     hasRightDivider: true,
-    renderGroup: (group) => `${group.numberKind === 'op' ? 'op.' : 'sine op.'} ${group.numberLabel}`
+    renderGroup: (group) => {
+      const prefix = group.numberKind === 'op' ? 'op.' : 'sine op.';
+      const base = `${prefix} ${group.numberLabel}`;
+      return group.additionalText ? `${base} ${group.additionalText}` : `${base}`;
+    }
   },
   {
     id: 'title',
@@ -218,6 +224,7 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
       groupData: {
         numberLabel: group.number,
         numberKind: group.numberKind,
+        additionalText: group.additionalText,
         name: group.name,
         genre: group.genre,
         startDate: group.startDate,
