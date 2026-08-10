@@ -442,4 +442,96 @@ describe('NewsMutation Resolvers', () => {
       expect(result!.meta.views).toBe(5);
     });
   });
+  it('should allow createNews when coverImage.alt is empty (alt text is optional)', async () => {
+    mockAction('findBySlug', null);
+    mockAction('create', createMockNews({ id: 'new-id' }));
+ 
+    await expect(NewsMutation.createNews({}, { input: baseInput }, adminContext)).resolves.toBeDefined();
+    expect(mockRepo.create).toHaveBeenCalled();
+  });
+ 
+  it.each([
+    { lang: 'uk' as const, otherLang: 'en' as const },
+    { lang: 'en' as const, otherLang: 'uk' as const }
+  ])(
+    'should throw GraphQLError with BAD_USER_INPUT if coverImage.alt.$lang has fewer than 2 characters',
+    async ({ lang, otherLang }) => {
+      expect.assertions(5);
+      const invalidInput = {
+        ...baseInput,
+        coverImage: {
+          ...baseInput.coverImage,
+          alt: { [lang]: 'T', [otherLang]: '' } as LocalizedString
+        }
+      };
+ 
+      try {
+        await NewsMutation.createNews({}, { input: invalidInput }, adminContext);
+      } catch (error) {
+        expect(error).toBeInstanceOf(GraphQLError);
+        expect((error as GraphQLError).message).toBe(newsServiceErrors.ALT_TEXT_TOO_SHORT);
+        expect((error as GraphQLError).extensions.code).toBe('BAD_USER_INPUT');
+        expect((error as GraphQLError).extensions.fields).toEqual([`altText.${lang}`]);
+      }
+ 
+      expect(mockRepo.create).not.toHaveBeenCalled();
+    }
+  );
+ 
+  it('should accept coverImage.alt with exactly 2 characters', async () => {
+    mockAction('findBySlug', null);
+    mockAction('create', createMockNews({ id: 'new-id' }));
+ 
+    const validInput = {
+      ...baseInput,
+      coverImage: { ...baseInput.coverImage, alt: { uk: 'Ко', en: 'Al' } }
+    };
+ 
+    await expect(NewsMutation.createNews({}, { input: validInput }, adminContext)).resolves.toBeDefined();
+    expect(mockRepo.create).toHaveBeenCalled();
+  });
+ 
+  it('should trim coverImage.alt before persisting', async () => {
+    mockAction('findBySlug', null);
+    mockAction('create', createMockNews({ id: 'new-id' }));
+ 
+    const validInput = {
+      ...baseInput,
+      coverImage: { ...baseInput.coverImage, alt: { uk: '  Валідний альт  ', en: 'Valid alt' } }
+    };
+ 
+    await NewsMutation.createNews({}, { input: validInput }, adminContext);
+ 
+    const createCallArg = (mockRepo.create as jest.Mock).mock.calls[0][0];
+    expect(createCallArg.coverImage.alt.uk).toBe('Валідний альт');
+  });
+ 
+  it('should throw GraphQLError with BAD_USER_INPUT if updated coverImage.alt has fewer than 2 characters', async () => {
+    expect.assertions(5);
+    mockAction('findById', createMockNews({ id }));
+ 
+    try {
+      await NewsMutation.updateNews(
+        {},
+        { id, input: { coverImage: { ...baseInput.coverImage, alt: { uk: 'T', en: '' } } } },
+        adminContext
+      );
+    } catch (error) {
+      expect(error).toBeInstanceOf(GraphQLError);
+      expect((error as GraphQLError).message).toBe(newsServiceErrors.ALT_TEXT_TOO_SHORT);
+      expect((error as GraphQLError).extensions.code).toBe('BAD_USER_INPUT');
+      expect((error as GraphQLError).extensions.fields).toEqual(['altText.uk']);
+    }
+ 
+    expect(mockRepo.update).not.toHaveBeenCalled();
+  });
+ 
+  it('should allow updateNews when coverImage is omitted entirely (no alt validation triggered)', async () => {
+    mockAction('findById', createMockNews({ id }));
+    mockAction('update', createMockNews({ id }));
+ 
+    await NewsMutation.updateNews({}, { id, input: { description: { uk: 'New', en: 'New' } } }, adminContext);
+ 
+    expect(mockRepo.update).toHaveBeenCalled();
+  });
 });
