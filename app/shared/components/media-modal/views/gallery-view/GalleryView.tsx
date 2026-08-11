@@ -190,6 +190,41 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
   const loading = r2Loading || assetsLoading;
   const shouldShowEmptyState = !loading && filteredAndSortedItems.length === 0;
 
+  const renderGalleryContent = () => {
+    if (loading) {
+      return <Box sx={sharedViewStyles.gridContainer}>Завантаження...</Box>;
+    }
+
+    if (shouldShowEmptyState) {
+      return (
+        <Box sx={sharedViewStyles.emptyState} data-testid="GalleryView-emptyState">
+          <Typography variant="body1" sx={sharedViewStyles.emptyStateText}>
+            {config.emptyStateText[currentLocale]}
+          </Typography>
+        </Box>
+      );
+    }
+
+    return (
+      <MediaGrid
+        items={filteredAndSortedItems}
+        sx={sharedViewStyles.gridContainer}
+        renderCard={(item) => (
+          <GalleryCard
+            src={item.url}
+            iconSrc={config.iconSrc}
+            fileName={item.originalname || item.filename}
+            isStarred={item.isStarred}
+            usageLocations={getPageNames(item.usageRefs)}
+            onClick={() => handleCardClick(item)}
+            testId={`GalleryCard-${item.id}`}
+          />
+        )}
+        testIdPrefix="GalleryView"
+      />
+    );
+  };
+
   return (
     <Box data-testid="GalleryView" sx={sharedViewStyles.container}>
       <Box sx={sharedViewStyles.header}>
@@ -221,32 +256,7 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
         </Box>
       </Box>
 
-      {loading ? (
-        <Box sx={sharedViewStyles.gridContainer}>Завантаження...</Box>
-      ) : shouldShowEmptyState ? (
-        <Box sx={sharedViewStyles.emptyState} data-testid="GalleryView-emptyState">
-          <Typography variant="body1" sx={sharedViewStyles.emptyStateText}>
-            {config.emptyStateText[currentLocale]}
-          </Typography>
-        </Box>
-      ) : (
-        <MediaGrid
-          items={filteredAndSortedItems}
-          sx={sharedViewStyles.gridContainer}
-          renderCard={(item) => (
-            <GalleryCard
-              src={item.url}
-              iconSrc={config.iconSrc}
-              fileName={item.originalname || item.filename}
-              isStarred={item.isStarred}
-              usageLocations={getPageNames(item.usageRefs)}
-              onClick={() => handleCardClick(item)}
-              testId={`GalleryCard-${item.id}`}
-            />
-          )}
-          testIdPrefix="GalleryView"
-        />
-      )}
+      {renderGalleryContent()}
     </Box>
   );
 }
