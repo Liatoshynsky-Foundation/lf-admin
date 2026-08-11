@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 
 import type { FondsTableProps } from './archive-fonds-table/ArchiveFondsTable';
 import { ArchivePageContent } from './ArchivePageContent';
-import { ARCHIVE_STATUS_FILTER_OPTIONS, ARCHIVE_TABS } from '~/constants/archive';
+import { ARCHIVE_TABS } from '~/constants/archive';
 
 jest.mock('../(temp)/archive.mock', () => ({
   __esModule: true,
@@ -42,9 +42,10 @@ jest.mock('../(temp)/archive.mock', () => ({
 
 jest.mock('./archive-fonds-table/ArchiveFondsTable', () => ({
   __esModule: true,
-  FondsTable: ({ fonds, hasActiveCriteria }: FondsTableProps) => (
+  FondsTable: ({ fonds, hasActiveSearch, hasActiveStatusFilter }: FondsTableProps) => (
     <div data-testid="fonds-table">
-      <div data-testid="fonds-table-has-active-criteria">{JSON.stringify(hasActiveCriteria)}</div>
+      <div data-testid="fonds-table-has-active-search">{JSON.stringify(hasActiveSearch)}</div>
+      <div data-testid="fonds-table-has-active-status-filter">{JSON.stringify(hasActiveStatusFilter)}</div>
       <div data-testid="fonds-table-fonds">
         {fonds.map((fond) => (
           <div key={fond.id} data-testid={`fonds-table-item-${fond.id}`}>
@@ -83,7 +84,7 @@ const mockStatusFilterProps = {
   label: 'Status Label',
   options: [],
   onChange: jest.fn(),
-  value: ['all'],
+  value: [],
 };
 
 const defaultMockReturnValue = {
@@ -152,7 +153,7 @@ describe('ArchivePageContent', () => {
     expect(screen.getByTestId('fonds-table')).toBeInTheDocument();
   });
 
-  describe('hasActiveCriteria prop', () => {
+  describe('hasActiveSearch prop', () => {
     it('should be false when search is an empty string', () => {
       mockUseArchiveFiltering.mockReturnValue({
         ...defaultMockReturnValue,
@@ -164,33 +165,32 @@ describe('ArchivePageContent', () => {
 
       render(<ArchivePageContent activeTab="all" />);
 
-      expect(screen.getByTestId('fonds-table-has-active-criteria')).toHaveTextContent('false');
+      expect(screen.getByTestId('fonds-table-has-active-search')).toHaveTextContent('false');
     });
 
-    it('should be true when search has a value & filterValues too', () => {
-      mockUseArchiveFiltering.mockReturnValue({
-        ...defaultMockReturnValue,
-        statusFilterProps: {
-          ...defaultMockReturnValue.statusFilterProps,
-          value: ['other value from all'],
-        },
-      });
+    it('should be true when search has a value', () => {
       render(<ArchivePageContent activeTab="all" />);
 
-      expect(screen.getByTestId('fonds-table-has-active-criteria')).toHaveTextContent('true');
+      expect(screen.getByTestId('fonds-table-has-active-search')).toHaveTextContent('true');
     });
-    it(`should be false when filterValues are ['${ARCHIVE_STATUS_FILTER_OPTIONS[0].value}'] and search is an empty string`, () => {
+  });
+
+  describe('hasActiveStatusFilter prop', () => {
+    it('should be false when filterValues are empty (all values)', () => {
+      render(<ArchivePageContent activeTab="all" />);
+
+      expect(screen.getByTestId('fonds-table-has-active-status-filter')).toHaveTextContent('false');
+    });
+
+    it('should be true when a specific status is selected', () => {
       mockUseArchiveFiltering.mockReturnValue({
         ...defaultMockReturnValue,
-        searchProps: {
-          ...defaultMockReturnValue.searchProps,
-          search: '',
-        },
+        statusFilterProps: { ...defaultMockReturnValue.statusFilterProps, value: ['published'] }
       });
 
       render(<ArchivePageContent activeTab="all" />);
 
-      expect(screen.getByTestId('fonds-table-has-active-criteria')).toHaveTextContent('false');
+      expect(screen.getByTestId('fonds-table-has-active-status-filter')).toHaveTextContent('true');
     });
   });
 
@@ -231,6 +231,7 @@ describe('ArchivePageContent', () => {
     it('should pass empty array when filter status does not match any variant', () => {
       mockUseArchiveFiltering.mockReturnValue({
         ...defaultMockReturnValue,
+        searchProps: { ...defaultMockReturnValue.searchProps, search: '' },
         statusFilterProps: {
           ...defaultMockReturnValue.statusFilterProps,
           value: ['other'],
@@ -241,6 +242,20 @@ describe('ArchivePageContent', () => {
 
       const fondsContainer = screen.getByTestId('fonds-table-fonds');
       expect(fondsContainer.children).toHaveLength(0);
+    });
+
+    it('should combine search and status filter conditions with AND', () => {
+      mockUseArchiveFiltering.mockReturnValue({
+        ...defaultMockReturnValue,
+        searchProps: { ...defaultMockReturnValue.searchProps, search: 'same part' },
+        statusFilterProps: { ...defaultMockReturnValue.statusFilterProps, value: ['hidden'] }
+      });
+
+      render(<ArchivePageContent activeTab="all" />);
+
+      const items = screen.getAllByTestId(/^fonds-table-item-/);
+      expect(items).toHaveLength(1);
+      expect(items[0]).toHaveTextContent('A Fond same part');
     });
 
     it('should pass an array with matched values when search query matches any variants', () => {
