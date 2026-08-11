@@ -6,6 +6,7 @@ import type { GalleryFilters } from '../../flow/MediaModalFlowState';
 import { MockMediaGrid, MockSearchButton } from '../../test-utils/sharedMocks';
 import { GalleryView } from './GalleryView';
 import { useGalleryFiles } from '~/shared/hooks/use-galllery-photo/useGallery';
+import { useStore } from '~/store';
 import { useAllAssetsQuery } from '~/types/graphql/generated/graphql';
 
 jest.mock('../../components/search-button/SearchButton', () => ({
@@ -112,6 +113,7 @@ describe('GalleryView', () => {
     mockOnFiltersChange.mockClear();
     (useGalleryFiles as jest.Mock).mockReturnValue({ files: mockFiles, isLoading: false, error: null });
     (useAllAssetsQuery as jest.Mock).mockReturnValue({ data: undefined, loading: false });
+    useStore.getState().setLocale('uk');
   });
 
   it('should render gallery view with title', () => {
@@ -201,6 +203,48 @@ describe('GalleryView', () => {
     renderGalleryView();
 
     expect(screen.getByText('Завантаження...')).toBeInTheDocument();
+  });
+
+  it('should render empty state when image array is empty after loading', () => {
+    (useGalleryFiles as jest.Mock).mockReturnValue({ files: [], isLoading: false, error: null });
+
+    renderGalleryView();
+
+    expect(screen.getByTestId('GalleryView-emptyState')).toBeInTheDocument();
+    expect(screen.getByText('Зображень не знайдено. Спробуйте додати зображення до медіатеки.')).toBeInTheDocument();
+    expect(screen.queryByTestId('mocked-media-grid')).not.toBeInTheDocument();
+  });
+
+  it('should render empty state when search returns no gallery items', () => {
+    renderGalleryView({ search: 'missing-image' });
+
+    expect(screen.getByTestId('GalleryView-emptyState')).toBeInTheDocument();
+    expect(screen.queryByTestId('mocked-media-grid')).not.toBeInTheDocument();
+  });
+
+  it('should render empty state text in English when locale is en', () => {
+    useStore.getState().setLocale('en');
+    (useGalleryFiles as jest.Mock).mockReturnValue({ files: [], isLoading: false, error: null });
+
+    renderGalleryView();
+
+    expect(screen.getByText('No images found. Try adding images to the media library.')).toBeInTheDocument();
+  });
+
+  it('should render media-kind specific empty state for audio gallery', () => {
+    (useGalleryFiles as jest.Mock).mockReturnValue({ files: [], isLoading: false, error: null });
+
+    render(
+      <GalleryView
+        selected={null}
+        onPick={mockOnPick}
+        filters={mockFilters}
+        onFiltersChange={mockOnFiltersChange}
+        mediaKind="audio"
+      />
+    );
+
+    expect(screen.getByText('Аудіофайлів не знайдено. Спробуйте додати аудіофайли до медіатеки.')).toBeInTheDocument();
   });
 
   it('should filter out non-starred items when favorites filter is starred', () => {

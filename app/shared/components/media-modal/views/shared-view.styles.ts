@@ -56,5 +56,19 @@ export const sharedViewStyles = {
     },
     scrollbarWidth: 'none',
     msOverflowStyle: 'none'
+  } as SxProps<Theme>,
+  emptyState: {
+    flex: 1,
+    minHeight: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    textAlign: 'center',
+    px: '24px'
+  } as SxProps<Theme>,
+
+  emptyStateText: {
+    color: 'white',
+    maxWidth: '420px'
   } as SxProps<Theme>
 };
