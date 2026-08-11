@@ -177,6 +177,21 @@ describe('OpusMutation Resolvers', () => {
       );
     });
 
+    it('creates an opus when optional SEO title and description are omitted', async () => {
+      mockOpusRepo.findByComplexKey.mockResolvedValue(null);
+      mockedGenerateUniqueSlug.mockResolvedValue(SLUG_VALUE);
+      mockOpusRepo.create.mockResolvedValue(MOCK_OPUS_ENTITY);
+
+      const { title: _title, description: _description, ...inputWithoutSeo } = BASE_CREATE_INPUT;
+
+      await OpusMutation.createOpus({}, { input: inputWithoutSeo }, adminContext);
+
+      expect(mockOpusRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ title: undefined, description: undefined }),
+        expect.anything()
+      );
+    });
+
     it('should create opus with default parameters and sync compositions/images', async () => {
       mockOpusRepo.findByComplexKey.mockResolvedValue(null);
       mockedGenerateUniqueSlug.mockImplementation(async (_, options) => {

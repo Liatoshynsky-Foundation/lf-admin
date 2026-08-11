@@ -43,7 +43,7 @@ type Opus {
   number: Float!
   blocksOrder: [String]
   numberKind: OpusNumberKind!
-  title: LocalizedString!
+  title: LocalizedString
   name: LocalizedString!
   additionalText: String
   creationYear: String!
@@ -113,8 +113,8 @@ input CreateOpusInput {
   genre: JSON
   compositions: JSON
   adminTitle: String
-  title: JSON!
-  description: JSON!
+  title: JSON
+  description: JSON
   introDescription: JSON
   parts: JSON
   gallery: [OpusGalleryItemInput!]

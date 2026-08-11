@@ -136,7 +136,7 @@ describe('ImagePreviewBlock', () => {
     expect(screen.getByAltText('Основне зображення')).toHaveAttribute('src', 'test.jpg');
     expect(screen.getByText(/Назва файлу/)).toBeInTheDocument();
     expect(screen.getByText(/test\.jpg/)).toBeInTheDocument();
-    expect(screen.getByText(/1024 × 768/)).toBeInTheDocument();
+    expect(screen.getByText(/1024×768/)).toBeInTheDocument();
   });
 
   it('should open MediaModal on "Редагувати" click', async () => {
@@ -237,6 +237,26 @@ describe('ImagePreviewBlock', () => {
 
     await user.type(input, '!');
     expect(onChangeAltText).toHaveBeenCalled();
+  });
+
+  it('reports alt text blur and displays its validation error', async () => {
+    const user = userEvent.setup();
+    const onBlurAltText = jest.fn();
+
+    renderComponent({
+      showAlternativeText: true,
+      altText: 'alt text',
+      onBlurAltText,
+      altTextErrorState: true,
+      altTextError: 'Alt text is required'
+    });
+
+    const input = screen.getByRole('textbox', { name: /^Alt/i });
+    await user.click(input);
+    await user.tab();
+
+    expect(onBlurAltText).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Alt text is required')).toBeInTheDocument();
   });
 
   it('disables buttons when disabled prop is true', () => {

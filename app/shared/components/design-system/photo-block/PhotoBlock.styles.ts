@@ -1,6 +1,6 @@
 
-export const PREVIEW_W = 196;
-export const PREVIEW_H = 120;
+export const PREVIEW_W = 177;
+export const PREVIEW_H = 135;
 
 export const styles = {
   container: {

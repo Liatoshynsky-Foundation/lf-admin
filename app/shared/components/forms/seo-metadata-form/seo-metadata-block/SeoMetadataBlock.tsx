@@ -30,6 +30,7 @@ export interface SeoMetadataBlockProps {
   readonly showAlternativeText?: boolean;
   readonly showTicketUrl?: boolean;
   readonly extraFieldsBeforeKeywords?: boolean;
+  readonly required?: boolean;
   readonly forceShowErrors?: boolean;
   readonly value?: SeoBlockValue;
   readonly crop?: LocalizedCropRect | null;
@@ -46,6 +47,7 @@ export default function SeoMetadataBlock({
   showAlternativeText = false,
   showTicketUrl = false,
   extraFieldsBeforeKeywords = false,
+  required = true,
   forceShowErrors = false,
   value: externalValue,
   crop,
@@ -138,6 +140,7 @@ export default function SeoMetadataBlock({
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, uk: val } })}
         showAlternativeText={showAlternativeText}
         extraFieldsBeforeKeywords={extraFieldsBeforeKeywords}
+        required={required}
         forceShowErrors={forceShowErrors}
         crop={crop?.uk ?? null}
         onChangeCrop={(newUkCrop) => onChangeCrop?.({ uk: newUkCrop, en: crop?.en ?? null })}
@@ -157,6 +160,7 @@ export default function SeoMetadataBlock({
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, en: val } })}
         showAlternativeText={showAlternativeText}
         extraFieldsBeforeKeywords={extraFieldsBeforeKeywords}
+        required={required}
         forceShowErrors={forceShowErrors}
         crop={crop?.en ?? null}
         onChangeCrop={(newEnCrop) => onChangeCrop?.({ uk: crop?.uk ?? null, en: newEnCrop })}

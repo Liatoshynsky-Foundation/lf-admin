@@ -20,6 +20,7 @@ import {
 } from '~/lib/utils/compositionErrors';
 import { generateUniqueId } from '~/lib/utils/generateUniqueId';
 import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
+import { validateSeoField } from '~/shared/components/forms/seo-metadata-form/validateSeoField';
 import { useCreateOpus, useOpusById, useUpdateOpus } from '~/shared/hooks/use-opuses/useOpuses';
 import { CropRect } from '~/types/common';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
@@ -45,6 +46,29 @@ const fileNameFromUrl = (url?: string | null): string => {
   const segment = url.split('/').pop() ?? url;
 
   return decodeURIComponent(segment.split('?')[0]);
+};
+
+const isSeoMetaInvalid = (
+  meta: SeoBlockValue['meta']['uk'],
+  altLocale: 'uk' | 'en',
+  hasPreviewImage: boolean
+): boolean => {
+  return (
+    Boolean(validateSeoField('title', meta.title)) ||
+    Boolean(validateSeoField('description', meta.description)) ||
+    Boolean(validateSeoField('keywords', meta.keywords)) ||
+    (hasPreviewImage && Boolean(validateSeoField('altText', meta.altText?.[altLocale] ?? '', { required: true })))
+  );
+};
+
+const getAltText = (
+  altText: string | undefined,
+  hasOgImage: boolean,
+  fallback: string
+): string => {
+  const trimmedAlt = altText?.trim();
+
+  return hasOgImage ? (trimmedAlt ?? '') : (trimmedAlt || fallback);
 };
 
 export const toCompositionInput = (
@@ -345,6 +369,16 @@ export const useUpsertOpus = (
 
     const { uk: ukMeta, en: enMeta } = currentSeo.meta;
     const opusName = currentDetails.name.trim();
+    const hasOgImage = Boolean(currentSeo.ogImage);
+
+    if (
+      isSeoMetaInvalid(ukMeta, 'uk', Boolean(currentSeo.ogImage)) ||
+      isSeoMetaInvalid(enMeta, 'en', Boolean(currentSeo.ogImage))
+    ) {
+      setForceShowErrors(true);
+      return undefined;
+    }
+
     const input = {
       numberKind: currentDetails.numberKind as unknown as OpusNumberKind,
       number: Number(currentDetails.number.trim()),
@@ -362,13 +396,16 @@ export const useUpsertOpus = (
       },
       compositions: currentDetails.compositions.map(toCompositionInput),
       adminTitle: opusName,
-      title: { uk: ukMeta.title.trim() || opusName, en: enMeta.title.trim() || opusName },
+      title: { uk: ukMeta.title.trim(), en: enMeta.title.trim() },
       description: { uk: ukMeta.description.trim(), en: enMeta.description.trim() },
       keywords: { uk: ukMeta.keywords.trim(), en: enMeta.keywords.trim() },
       allowIndexation: { uk: currentSeo.allowIndexing.uk, en: currentSeo.allowIndexing.en },
       coverImage: {
         src: currentSeo.ogImage || opusName,
-        alt: { uk: ukMeta.altText?.uk || opusName, en: enMeta.altText?.en || opusName },
+        alt: {
+          uk: getAltText(ukMeta.altText?.uk, hasOgImage, opusName),
+          en: getAltText(enMeta.altText?.en, hasOgImage, opusName),
+        },
         caption: { uk: opusName, en: opusName },
         ...(currentCrop && { crop: currentCrop })
       },

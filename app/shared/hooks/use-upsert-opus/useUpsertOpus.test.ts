@@ -7,6 +7,12 @@ import {
   COMPOSITION_NAME_REQUIRED_ERROR,
   OPUS_VALIDATION_MESSAGES
 } from '~/constants/opus';
+import {
+  META_ALT_TEXT_LENGTH,
+  META_DESCRIPTION_LENGTH,
+  META_KEYWORDS_LENGTH,
+  META_TITLE_LENGTH
+} from '~/constants/publications';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import type { FetchedOpusData, OpusCompositionData } from '~/types/opus';
 
@@ -268,6 +274,30 @@ describe('useUpsertOpus', () => {
     expect(result.current.isSaved).toBe(false);
   });
 
+  it('marks invalid compositions when the mutation reports a required name error', async () => {
+    mockCreateOpus.mockRejectedValue(new Error('Composition name is required'));
+    const { result } = renderHook(() => useUpsertOpus());
+    act(() => {
+      result.current.setDetails((prev) => ({
+        ...prev,
+        number: '5',
+        name: 'Р“СЂСѓРїР°',
+        creationYear: '1922',
+        compositions: [
+          { id: 'valid', name: 'РўРІС–СЂ', genre: '', year: '', audios: [], notes: [] }
+        ]
+      }));
+    });
+
+    await act(async () => {
+      await result.current.handleSave(BaseContentStatuses.Draft);
+    });
+
+    expect(result.current.compositionErrors).toEqual({});
+    expect(toast.error).toHaveBeenCalledWith(COMPOSITION_NAME_REQUIRED_ERROR);
+    expect(result.current.isSaved).toBe(false);
+  });
+
   it('reports non-composition mutation errors without throwing', async () => {
     mockCreateOpus.mockRejectedValue(new Error('Network failed'));
     const { result } = renderHook(() => useUpsertOpus());
@@ -375,7 +405,7 @@ describe('useUpsertOpus', () => {
     expect(composition.notes).toEqual([{ name: 'Ноти', fileUrl: 'notes-url', publishDate: '' }]);
   });
 
-  it('sets publishedAt and maps SEO fallbacks when publishing', async () => {
+  it('sets publishedAt and maps cover-image fallbacks when publishing', async () => {
     mockCreateOpus.mockResolvedValue({ data: { createOpus: { id: 'opus-101' } } });
 
     const { result } = renderHook(() => useUpsertOpus());
@@ -391,10 +421,116 @@ describe('useUpsertOpus', () => {
 
     const payload = mockCreateOpus.mock.calls[0][0];
     expect(typeof payload.publishedAt).toBe('string');
-    expect(payload.title).toEqual({ uk: 'Соната', en: 'Соната' });
+    expect(payload.title).toEqual({ uk: '', en: '' });
     expect(payload.coverImage.src).toBe('Соната');
     expect(payload.coverImage.alt).toEqual({ uk: 'Соната', en: 'Соната' });
     expect(payload.coverImage.crop).toEqual({ x: 10, y: 20, width: 30, height: 40 });
+  });
+
+  test.each([
+    ['title', 'a'],
+    ['title', 'a'.repeat(META_TITLE_LENGTH.max + 1)],
+    ['description', 'a'],
+    ['description', 'a'.repeat(META_DESCRIPTION_LENGTH.max + 1)],
+    ['keywords', 'a'],
+    ['keywords', 'a'.repeat(META_KEYWORDS_LENGTH.max + 1)],
+    ['keywords', 'one, ,two']
+  ] as const)('rejects invalid optional SEO %s values before mutation', async (field, fieldValue) => {
+    const { result } = renderHook(() => useUpsertOpus());
+    fillValidDetails(result);
+
+    act(() => {
+      result.current.setSeoValue((prev) => ({
+        ...prev,
+        meta: {
+          ...prev.meta,
+          uk: { ...prev.meta.uk, [field]: fieldValue }
+        }
+      }));
+    });
+
+    await act(async () => {
+      await result.current.handleSave(BaseContentStatuses.Draft);
+    });
+
+    expect(mockCreateOpus).not.toHaveBeenCalled();
+    expect(result.current.forceShowErrors).toBe(true);
+  });
+
+  it('validates SEO metadata independently for the English locale', async () => {
+    const { result } = renderHook(() => useUpsertOpus());
+    fillValidDetails(result);
+
+    act(() => {
+      result.current.setSeoValue((prev) => ({
+        ...prev,
+        meta: {
+          ...prev.meta,
+          en: { ...prev.meta.en, description: 'a' }
+        }
+      }));
+    });
+
+    await act(async () => {
+      await result.current.handleSave(BaseContentStatuses.Draft);
+    });
+
+    expect(mockCreateOpus).not.toHaveBeenCalled();
+    expect(result.current.forceShowErrors).toBe(true);
+  });
+
+  it('requires alt text in both locales only when a preview image is selected', async () => {
+    const { result } = renderHook(() => useUpsertOpus());
+    fillValidDetails(result);
+
+    act(() => {
+      result.current.setSeoValue((prev) => ({
+        ...prev,
+        ogImage: 'https://example.com/image.png'
+      }));
+    });
+
+    await act(async () => {
+      await result.current.handleSave(BaseContentStatuses.Draft);
+    });
+
+    expect(mockCreateOpus).not.toHaveBeenCalled();
+    expect(result.current.forceShowErrors).toBe(true);
+  });
+
+  it('accepts valid SEO values at the configured maximum lengths', async () => {
+    mockCreateOpus.mockResolvedValue({ data: { createOpus: { id: 'opus-seo-valid' } } });
+    const { result } = renderHook(() => useUpsertOpus());
+    fillValidDetails(result);
+
+    act(() => {
+      result.current.setSeoValue((prev) => ({
+        ...prev,
+        ogImage: 'https://example.com/image.png',
+        meta: {
+          uk: {
+            ...prev.meta.uk,
+            title: 'a'.repeat(META_TITLE_LENGTH.max),
+            description: 'a'.repeat(META_DESCRIPTION_LENGTH.max),
+            keywords: 'a'.repeat(META_KEYWORDS_LENGTH.max),
+            altText: { uk: 'a'.repeat(META_ALT_TEXT_LENGTH.max), en: prev.meta.uk.altText?.en ?? '' }
+          },
+          en: {
+            ...prev.meta.en,
+            title: 'a'.repeat(META_TITLE_LENGTH.max),
+            description: 'a'.repeat(META_DESCRIPTION_LENGTH.max),
+            keywords: 'a'.repeat(META_KEYWORDS_LENGTH.max),
+            altText: { uk: prev.meta.en.altText?.uk ?? '', en: 'a'.repeat(META_ALT_TEXT_LENGTH.max) }
+          }
+        }
+      }));
+    });
+
+    await act(async () => {
+      await result.current.handleSave(BaseContentStatuses.Draft);
+    });
+
+    expect(mockCreateOpus).toHaveBeenCalledTimes(1);
   });
 
   it('keeps isSaved false when create returns no id', async () => {

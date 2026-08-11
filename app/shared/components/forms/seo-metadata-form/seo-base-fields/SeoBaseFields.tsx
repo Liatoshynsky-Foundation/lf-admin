@@ -2,7 +2,7 @@ import { Stack, TextField } from '@mui/material';
 
 import type { LocalizedMeta } from '../SeoMetadataForm';
 import { styles } from '../SeoMetadataForm.styles';
-import { META_TITLE_MAX_LENGTH } from '~/constants/publications';
+import { META_DESCRIPTION_LENGTH, META_KEYWORDS_LENGTH, META_TITLE_LENGTH } from '~/constants/publications';
 
 interface SeoBaseFieldsProps {
   readonly value: LocalizedMeta;
@@ -11,6 +11,7 @@ interface SeoBaseFieldsProps {
   readonly onFieldChange: (field: keyof LocalizedMeta, val: string) => void;
   readonly onBlur: (field: keyof LocalizedMeta) => void;
   readonly showKeywords?: boolean;
+  readonly required?: boolean;
   readonly labels?: {
     readonly metaTitle?: string;
     readonly metaDescription?: string;
@@ -18,23 +19,49 @@ interface SeoBaseFieldsProps {
   };
 }
 
-export function SeoBaseFields({ value, errors, touched, onFieldChange, onBlur, showKeywords = true, labels = {} }: SeoBaseFieldsProps) {
+export function SeoBaseFields({
+  value,
+  errors,
+  touched,
+  onFieldChange,
+  onBlur,
+  showKeywords = true,
+  required = true,
+  labels = {}
+}: SeoBaseFieldsProps) {
   const fields = [
-    { key: 'title' as const, label: labels.metaTitle || 'Meta title', required: true, maxLength: META_TITLE_MAX_LENGTH },
+    {
+      key: 'title' as const,
+      label: labels.metaTitle || 'Meta title',
+      required,
+      maxLength: META_TITLE_LENGTH.max
+    },
     {
       key: 'description' as const,
       label: labels.metaDescription || 'Meta description',
-      required: true,
+      required,
+      maxLength: META_DESCRIPTION_LENGTH.max,
       multiline: true,
       minRows: 3,
       maxRows: 3
     },
-    ...(showKeywords ? [{ key: 'keywords' as const, label: labels.metaKeywords || 'Meta keywords', multiline: true, minRows: 2, maxRows: 2 }] : [])
+    ...(showKeywords
+      ? [
+        {
+          key: 'keywords' as const,
+          label: labels.metaKeywords || 'Meta keywords',
+          multiline: true,
+          minRows: 2,
+          maxRows: 2,
+          maxLength: META_KEYWORDS_LENGTH.max
+        }
+      ]
+      : [])
   ];
 
   return (
     <Stack direction="column" spacing={2.5} sx={styles.formFieldsContainer}>
-      {fields.map(({ key, label, required, multiline, minRows, maxRows, maxLength }) => (
+      {fields.map(({ key, label, required: fieldRequired, multiline, minRows, maxRows, maxLength }) => (
         <TextField
           key={key}
           label={label}
@@ -45,7 +72,7 @@ export function SeoBaseFields({ value, errors, touched, onFieldChange, onBlur, s
           helperText={errors[key] && touched[key] ? errors[key] : ''}
           fullWidth
           sx={styles.textField}
-          required={required}
+          required={fieldRequired}
           multiline={multiline}
           minRows={minRows}
           maxRows={maxRows}

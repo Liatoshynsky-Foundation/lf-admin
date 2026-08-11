@@ -89,6 +89,7 @@ export default function OpusView({ data, mode = 'create' }: Readonly<OpusViewPro
         <Box sx={styles.seoWrapper}>
           <SeoMetadataBlock
             showAlternativeText
+            required={false}
             forceShowErrors={forceShowErrors}
             value={seoValue}
             onChange={setSeoValue}

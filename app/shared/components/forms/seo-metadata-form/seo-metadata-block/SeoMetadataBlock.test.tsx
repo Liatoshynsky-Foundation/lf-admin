@@ -16,7 +16,8 @@ jest.mock('../SeoMetadataForm', () => ({
     onImageChange,
     onIndexingChange,
     onChangeCrop,
-    extraFields
+    extraFields,
+    required
   }: {
     locale: string;
     value: { title: string; description: string; keywords: string };
@@ -27,12 +28,14 @@ jest.mock('../SeoMetadataForm', () => ({
     onIndexingChange: (val: boolean) => void;
     onChangeCrop?: (crop: object | null) => void;
     extraFields?: (value: object, onChange: (val: object) => void) => React.ReactNode;
+    required?: boolean;
   }) => (
     <div>
       <span data-testid={`locale-${locale}`}>{locale}</span>
       <span data-testid={`title-${locale}`}>{value?.title}</span>
       <span data-testid={`og-image-${locale}`}>{ogImage ? 'has-image' : 'no-image'}</span>
       <span data-testid={`indexing-${locale}`}>{String(allowIndexing)}</span>
+      <span data-testid={`required-${locale}`}>{String(required ?? true)}</span>
       <button onClick={() => onChange({ title: 'test', description: 'desc', keywords: 'kw' })}>change-{locale}</button>
       <button onClick={() => onImageChange('https://example.com/test.png')}>image-{locale}</button>
       <button onClick={() => onIndexingChange(false)}>indexing-{locale}</button>
@@ -61,6 +64,14 @@ describe('SeoMetadataBlock', () => {
     renderBlock();
     locales.forEach((locale) => {
       expect(screen.getByTestId(`locale-${locale}`)).toBeInTheDocument();
+    });
+  });
+
+  it('passes optional validation mode to both locale forms', () => {
+    renderBlock({ required: false });
+
+    locales.forEach((locale) => {
+      expect(screen.getByTestId(`required-${locale}`)).toHaveTextContent('false');
     });
   });
 

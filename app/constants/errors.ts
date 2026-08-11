@@ -150,6 +150,9 @@ export const MediaMentionsErrors = {
 
 export const seoFormErrors = {
   uk: {
+    descriptionMaxLength: 'Максимум 250 символів',
+    keywordsMaxLength: 'Максимум 250 символів',
+    altTextMaxLength: 'Максимум 250 символів',
     minLength: 'Мінімум 2 символа',
     maxLength: 'Максимум 150 символів',
     required: 'Обовʼязкове поле',
@@ -157,6 +160,9 @@ export const seoFormErrors = {
     keywords: 'Ключові слова мають бути через кому, без порожніх значень'
   },
   en: {
+    descriptionMaxLength: 'Maximum 250 characters',
+    keywordsMaxLength: 'Maximum 250 characters',
+    altTextMaxLength: 'Maximum 250 characters',
     minLength: 'Minimum 2 characters',
     maxLength: 'Maximum 150 characters',
     required: 'Required field',

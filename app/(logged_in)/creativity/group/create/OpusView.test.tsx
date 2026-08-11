@@ -11,6 +11,7 @@ interface MockSeoMetadataBlockProps {
       uk: { x: number; y: number; width: number; height: number } | null;
     } | null
   ) => void;
+  required?: boolean;
 }
 
 const mockPush = jest.fn();
@@ -18,21 +19,26 @@ jest.mock('next/navigation', () => ({
   useRouter: jest.fn(() => ({ push: mockPush }))
 }));
 
+const mockSeoMetadataRequired = jest.fn();
+
 jest.mock('~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock', () => ({
   __esModule: true,
-  default: ({ onChangeCrop }: MockSeoMetadataBlockProps) => (
-    <div data-testid="mock-seo-metadata-block">
-      <button
-        data-testid="mock-change-crop-btn"
-        onClick={() => onChangeCrop({ uk: { x: 0, y: 0, width: 100, height: 100 } })}
-      >
+  default: ({ onChangeCrop, required }: MockSeoMetadataBlockProps) => {
+    mockSeoMetadataRequired(required);
+    return (
+      <div data-testid="mock-seo-metadata-block">
+        <button
+          data-testid="mock-change-crop-btn"
+          onClick={() => onChangeCrop({ uk: { x: 0, y: 0, width: 100, height: 100 } })}
+        >
         Change Crop
-      </button>
-      <button data-testid="mock-change-crop-null-btn" onClick={() => onChangeCrop(null)}>
+        </button>
+        <button data-testid="mock-change-crop-null-btn" onClick={() => onChangeCrop(null)}>
         Change Crop Null
-      </button>
-    </div>
-  )
+        </button>
+      </div>
+    );
+  }
 }));
 
 jest.mock('~/shared/components/media-modal/MediaModal', () => ({
@@ -77,6 +83,12 @@ describe('OpusView Component', () => {
     expect(screen.getByText('Створення опусу')).toBeInTheDocument();
     expect(screen.getByText('Деталі')).toBeInTheDocument();
     expect(screen.getByLabelText('Назва опусу *')).toBeInTheDocument();
+  });
+
+  it('makes SEO metadata optional for opus create and edit forms', () => {
+    render(<OpusView data={createMockData()} mode="create" />);
+
+    expect(mockSeoMetadataRequired).toHaveBeenCalledWith(false);
   });
 
   it('renders the edit title in edit mode', () => {
