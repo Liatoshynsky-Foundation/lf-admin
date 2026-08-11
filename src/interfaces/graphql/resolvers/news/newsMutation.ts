@@ -58,6 +58,7 @@ const processContentFields = async (input: UpdateNewsGQLInput, updateData: Updat
   }
 };
 
+const TITLE_MIN_LENGTH = 2;
 const TITLE_MAX_LENGTH = 150;
 
 const DESCRIPTION_MIN_LENGTH = 2;
@@ -113,13 +114,14 @@ const validateDescriptionLength = (description: LocalizedString | undefined): vo
   throwBadUserInput(newsServiceErrors.DESCRIPTION_LENGTH_INVALID, invalidFields);
 };
 
-const validateTitleMaxLength = (title: LocalizedString | undefined): void => {
+const validateTitleLength = (title: LocalizedString | undefined): void => {
   const invalidFields = getInvalidLocalizedLengthFields(title, {
     fieldName: 'title',
-    maxLength: TITLE_MAX_LENGTH
+    maxLength: TITLE_MAX_LENGTH,
+    minLength: TITLE_MIN_LENGTH
   });
 
-  throwBadUserInput(newsServiceErrors.TITLE_TOO_LONG_FOR_SLUG, invalidFields);
+  throwBadUserInput(newsServiceErrors.TITLE_LENGTH_INVALID, invalidFields);
 };
 
 const trimLocalizedString = (value: LocalizedString | undefined): LocalizedString | undefined => {
@@ -160,11 +162,9 @@ export const NewsMutation = {
 
     if (!titleForSlug) {
       throw new Error(newsServiceErrors.TITLE_REQUIRED_FOR_SLUG);
-    } else if (titleForSlug.trim().length < 2) {
-      throw new Error(newsServiceErrors.TITLE_TOO_SHORT_FOR_SLUG);
     }
 
-    validateTitleMaxLength(trimmedInput.title);
+    validateTitleLength(trimmedInput.title);
     validateDescriptionLength(trimmedInput.description);
 
     const slug = await generateUniqueSlug(titleForSlug, {
@@ -238,11 +238,9 @@ export const NewsMutation = {
       const titleForSlug = extractTitleForSlug(trimmedInput.title);
       if (!titleForSlug) {
         throw new Error(newsServiceErrors.TITLE_REQUIRED_FOR_SLUG);
-      } else if (titleForSlug.trim().length < 2) {
-        throw new Error(newsServiceErrors.TITLE_TOO_SHORT_FOR_SLUG);
       }
 
-      validateTitleMaxLength(trimmedInput.title);
+      validateTitleLength(trimmedInput.title);
 
       await processSlugUpdate(id, trimmedInput.title, repo, updateData);
       updateData.title = trimmedInput.title;

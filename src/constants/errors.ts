@@ -34,7 +34,8 @@ export const newsServiceErrors = {
   TITLE_REQUIRED_FOR_SLUG: 'Title is required to generate a slug',
   TITLE_TOO_SHORT_FOR_SLUG: 'Title must be at least 2 characters long to generate a slug',
   TITLE_TOO_LONG_FOR_SLUG: 'Title must not exceed 150 characters',
-  DESCRIPTION_LENGTH_INVALID: 'Description must contain from 2 to 250 characters'
+  DESCRIPTION_LENGTH_INVALID: 'Description must contain from 2 to 250 characters',
+  TITLE_LENGTH_INVALID: 'Title must contain from 2 to 150 characters'
 };
 
 export const opusServiceErrors = {
@@ -67,7 +68,7 @@ export const compositionsServiceErrors = {
   COMPOSITION_NOT_FOUND: (id: string) => `Composition with id "${id}" not found`,
   FAILED_TO_DELETE: (id: string) => `Composition with id "${id}" not found or could not be deleted`,
   COMPOSITION_NOT_CREATED: 'Repository failed to create composition record.',
-  COMPOSITION_NAME_TAKEN: (name: string) => `Композиція "${name}" вже існує`,
+  COMPOSITION_NAME_TAKEN: (name: string) => `Композиція "${name}" вже існує`
 };
 
 export const MediaMentionsServiceErrors = {
