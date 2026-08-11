@@ -456,7 +456,6 @@ describe('NewsMutation Resolvers', () => {
   ])(
     'should throw GraphQLError with BAD_USER_INPUT if coverImage.alt.$lang has fewer than 2 characters',
     async ({ lang, otherLang }) => {
-      expect.assertions(5);
       const invalidInput = {
         ...baseInput,
         coverImage: {
@@ -464,16 +463,15 @@ describe('NewsMutation Resolvers', () => {
           alt: { [lang]: 'T', [otherLang]: '' } as LocalizedString
         }
       };
- 
-      try {
-        await NewsMutation.createNews({}, { input: invalidInput }, adminContext);
-      } catch (error) {
-        expect(error).toBeInstanceOf(GraphQLError);
-        expect((error as GraphQLError).message).toBe(newsServiceErrors.ALT_TEXT_TOO_SHORT);
-        expect((error as GraphQLError).extensions.code).toBe('BAD_USER_INPUT');
-        expect((error as GraphQLError).extensions.fields).toEqual([`altText.${lang}`]);
-      }
- 
+
+      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toMatchObject({
+        message: newsServiceErrors.ALT_TEXT_TOO_SHORT,
+        extensions: {
+          code: 'BAD_USER_INPUT',
+          fields: [`altText.${lang}`]
+        }
+      });
+
       expect(mockRepo.create).not.toHaveBeenCalled();
     }
   );
@@ -507,21 +505,21 @@ describe('NewsMutation Resolvers', () => {
   });
  
   it('should throw GraphQLError with BAD_USER_INPUT if updated coverImage.alt has fewer than 2 characters', async () => {
-    expect.assertions(5);
     mockAction('findById', createMockNews({ id }));
- 
-    try {
-      await NewsMutation.updateNews(
+
+    await expect(
+      NewsMutation.updateNews(
         {},
         { id, input: { coverImage: { ...baseInput.coverImage, alt: { uk: 'T', en: '' } } } },
         adminContext
-      );
-    } catch (error) {
-      expect(error).toBeInstanceOf(GraphQLError);
-      expect((error as GraphQLError).message).toBe(newsServiceErrors.ALT_TEXT_TOO_SHORT);
-      expect((error as GraphQLError).extensions.code).toBe('BAD_USER_INPUT');
-      expect((error as GraphQLError).extensions.fields).toEqual(['altText.uk']);
-    }
+      )
+    ).rejects.toMatchObject({
+      message: newsServiceErrors.ALT_TEXT_TOO_SHORT,
+      extensions: {
+        code: 'BAD_USER_INPUT',
+        fields: ['altText.uk']
+      }
+    });
  
     expect(mockRepo.update).not.toHaveBeenCalled();
   });
