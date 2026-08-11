@@ -8,7 +8,7 @@ describe('useArchiveFiltering', () => {
     const { result } = renderHook(() => useArchiveFiltering());
 
     expect(result.current).toStrictEqual({
-      activeStatusFilters: [ARCHIVE_STATUS_FILTER_OPTIONS[0].value],
+      activeStatusFilters: [],
       searchProps: {
         search: '',
         options: [],
@@ -19,7 +19,7 @@ describe('useArchiveFiltering', () => {
       statusFilterProps: {
         label: 'Статус',
         options: ARCHIVE_STATUS_FILTER_OPTIONS,
-        value: [ARCHIVE_STATUS_FILTER_OPTIONS[0].value],
+        value: [],
         maxSelections: 1,
         hideClearAction: true,
         menuAlign: 'right',
@@ -51,7 +51,7 @@ describe('useArchiveFiltering', () => {
     expect(result.current.activeStatusFilters).toEqual(expectedNewValue);
   });
 
-  it('should reset to "all" when onChange is called with an empty array', () => {
+  it('should set filters to an empty array when onChange is called with an empty array', () => {
     const { result } = renderHook(() => useArchiveFiltering());
 
     act(() => {
@@ -63,7 +63,7 @@ describe('useArchiveFiltering', () => {
       result.current.statusFilterProps.onChange!([]);
     });
 
-    expect(result.current.statusFilterProps.value).toStrictEqual([ARCHIVE_STATUS_FILTER_OPTIONS[0].value]);
-    expect(result.current.activeStatusFilters).toEqual([ARCHIVE_STATUS_FILTER_OPTIONS[0].value]);
+    expect(result.current.statusFilterProps.value).toStrictEqual([]);
+    expect(result.current.activeStatusFilters).toEqual([]);
   });
 });

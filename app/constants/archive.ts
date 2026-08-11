@@ -23,7 +23,6 @@ export const ARCHIVE_STATUSES = [
 ] as const;
 
 export const ARCHIVE_STATUS_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
-  { value: 'all', label: 'Усі' },
   { value: BaseContentStatuses.Hidden, label: 'Приховано' },
   { value: BaseContentStatuses.Published, label: 'Опубліковано' },
 ];

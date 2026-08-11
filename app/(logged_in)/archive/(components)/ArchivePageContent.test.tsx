@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 
 import type { FondsTableProps } from './archive-fonds-table/ArchiveFondsTable';
 import { ArchivePageContent } from './ArchivePageContent';
-import { ARCHIVE_STATUS_FILTER_OPTIONS, ARCHIVE_TABS } from '~/constants/archive';
+import { ARCHIVE_TABS } from '~/constants/archive';
 
 jest.mock('../(temp)/archive.mock', () => ({
   __esModule: true,
@@ -84,7 +84,7 @@ const mockStatusFilterProps = {
   label: 'Status Label',
   options: [],
   onChange: jest.fn(),
-  value: ['all'],
+  value: [],
 };
 
 const defaultMockReturnValue = {
@@ -176,7 +176,7 @@ describe('ArchivePageContent', () => {
   });
 
   describe('hasActiveStatusFilter prop', () => {
-    it(`should be false when filterValues are ['${ARCHIVE_STATUS_FILTER_OPTIONS[0].value}']`, () => {
+    it('should be false when filterValues are empty (all values)', () => {
       render(<ArchivePageContent activeTab="all" />);
 
       expect(screen.getByTestId('fonds-table-has-active-status-filter')).toHaveTextContent('false');
