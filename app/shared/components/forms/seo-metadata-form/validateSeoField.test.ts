@@ -21,6 +21,8 @@ describe('validateSeoField', () => {
   it('allows empty optional fields but reports required fields', () => {
     expect(validateSeoField('title', '', { required: false })).toBe('');
     expect(validateSeoField('description', '', { required: false })).toBe('');
+    expect(validateSeoField('altText', '   ', { required: false })).toBe('');
+    expect(validateSeoField('keywords', '', { required: true })).toBe('');
     expect(validateSeoField('title', '', { required: true })).toBe('minLength');
     expect(validateSeoField('description', '', { required: true })).toBe('required');
     expect(validateSeoField('altText', '', { required: true })).toBe('required');
@@ -29,6 +31,7 @@ describe('validateSeoField', () => {
   it('validates keyword formatting after length validation', () => {
     expect(validateSeoField('keywords', 'one, ,two')).toBe('keywords');
     expect(validateSeoField('keywords', 'one, two')).toBe('');
+    expect(validateSeoField('keywords', 'one,two,')).toBe('keywords');
   });
 
   it('validates canonical URLs and allows an empty value', () => {
