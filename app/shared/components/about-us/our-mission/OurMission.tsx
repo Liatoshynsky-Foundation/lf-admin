@@ -17,7 +17,8 @@ import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock
 import { ImagePreviewBlock } from '~/ds-components/photo-block/PhotoBlock';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { ensureIds } from '~/lib/utils/ensureIds';
-import { proseToHeaderText } from '~/lib/utils/prose';
+import { mergeLocalizedValue } from '~/lib/utils/mergeLocalizedValue';
+import { proseToHeaderText, resolveLocalizedText } from '~/lib/utils/prose';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useTitleValidation } from '~/shared/hooks/use-title-validation/useTitleValidation';
@@ -33,7 +34,7 @@ export type MissionImage = {
   src: string;
   generatedSrc: string;
   caption: LocalizedJSON;
-  alt: LocalizedJSON;
+  alt: Record<'uk' | 'en', string | JSONContent>;
   crop?: CropResult | null;
 };
 
@@ -42,11 +43,13 @@ type MissionImageBlockProps = {
   locale: 'uk' | 'en';
   title: string;
   aspectRatio?: number;
+  imageAlt?: string;
   onChangeCaption: (value: JSONContent) => void;
   onChangeImage: (url: string, crop?: CropResult | null) => void;
+  onAltChange?: (val: string) => void;
 };
 
-const MissionImageBlock = ({ image, locale, title, aspectRatio, onChangeCaption, onChangeImage }: MissionImageBlockProps) => (
+const MissionImageBlock = ({ image, locale, title, aspectRatio, imageAlt, onChangeCaption, onChangeImage, onAltChange}: MissionImageBlockProps) => (
   <Box sx={styles.imageBlockWrapper}>
     <ImagePreviewBlock
       imageUrl={getImageUrl(image)}
@@ -55,6 +58,9 @@ const MissionImageBlock = ({ image, locale, title, aspectRatio, onChangeCaption,
       initialCrop={image.crop}
       aspectRatio = {aspectRatio}
       onChangeImage={onChangeImage}
+      showAlternativeText
+      altText={imageAlt}
+      onChangeAltText={(value) => onAltChange?.(value)}
     />
     <CustomTextField
       fieldType="formatting"
@@ -116,15 +122,18 @@ const OurMission = () => {
   };
 
   const handleCaptionChange = (key: 'smallImage' | 'bigImage', value: JSONContent) => {
-    const image = block[key]!;
+    const image = block[key];
+    if (!image) return;
+
     setField(pageId, blockId, key, {
       ...image,
-      caption: { ...image.caption, [currentLocale]: value }
+      caption: mergeLocalizedValue(image.caption, currentLocale, value)
     });
   };
 
   const handleImageChange = (key: 'smallImage' | 'bigImage', url: string, crop?: CropResult | null) => {
-    const image = block[key]!;
+    const image = block[key];
+    if (!image) return;
 
     setField(pageId, blockId, key, {
       ...image,
@@ -134,6 +143,15 @@ const OurMission = () => {
     } as typeof image);
   };
 
+  const handleAltChange = (key: 'smallImage' | 'bigImage', val: string) => {
+    const image = block[key];
+    if (!image) return;
+
+    setField(pageId, blockId, key, {
+      ...image,
+      alt: mergeLocalizedValue(image.alt, currentLocale, val)
+    });
+  };
 
   const headerTitle = proseToHeaderText(block.title?.[currentLocale] as ProseDoc, 'Наша місія');
 
@@ -200,6 +218,8 @@ const OurMission = () => {
           aspectRatio={CROP_RATIOS.FUNDATION_PROFILE_SMALL}
           onChangeCaption={(value) => handleCaptionChange('smallImage', value)}
           onChangeImage={(url, crop) => handleImageChange('smallImage', url, crop)}
+          imageAlt={resolveLocalizedText(block.smallImage.alt?.[currentLocale])}
+          onAltChange={(val) => handleAltChange('smallImage', val)}
         />
       )}
 
@@ -211,6 +231,8 @@ const OurMission = () => {
           aspectRatio={CROP_RATIOS.FUNDATION_PROFILE_BIG}
           onChangeCaption={(value) => handleCaptionChange('bigImage', value)}
           onChangeImage={(url, crop) => handleImageChange('bigImage', url, crop)}
+          imageAlt={resolveLocalizedText(block.bigImage.alt?.[currentLocale])}
+          onAltChange={(val) => handleAltChange('bigImage', val)}
         />
       )}
     </CollapsibleBlock>

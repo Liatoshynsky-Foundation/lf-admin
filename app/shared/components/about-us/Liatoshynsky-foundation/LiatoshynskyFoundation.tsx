@@ -8,7 +8,8 @@ import { FoundationBlock } from './foundation-block/FoundationBlock';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
-import { proseToHeaderText, proseToText } from '~/lib/utils/prose';
+import { mergeLocalizedValue } from '~/lib/utils/mergeLocalizedValue';
+import { proseToHeaderText, proseToText, resolveLocalizedText } from '~/lib/utils/prose';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useTitleValidation } from '~/shared/hooks/use-title-validation/useTitleValidation';
@@ -44,6 +45,15 @@ export const LiatoshynskyFoundation = () => {
       [currentLocale]: val
     });
   };
+
+  const handleImageAltChange = (val: string) => {
+    setField(pageId, blockId, 'image', {
+      ...block.image,
+      alt: mergeLocalizedValue(block.image?.alt, currentLocale, val)
+    });
+  };
+
+  const imageAltText = resolveLocalizedText(block.image?.alt?.[currentLocale]);
 
   type LocalizedProse = Record<'uk' | 'en', JSONContent>;
 
@@ -89,6 +99,7 @@ export const LiatoshynskyFoundation = () => {
         imageUrl={getImageUrl(block.image)}
         fileName={proseToText(block.image?.caption?.[currentLocale] as ProseDoc)}
         initialCrop={block.image?.crop}
+        imageAlt={imageAltText}
         onMainTextChange={handleMainTextChange}
         onParagraphChange={handleParagraphChange}
         onImageChange={(url: string, crop?: MediaModalResult['crop']) => {
@@ -99,6 +110,7 @@ export const LiatoshynskyFoundation = () => {
             crop: crop ?? null
           } as typeof block.image);
         }}
+        onAltChange={handleImageAltChange}
       />
     </CollapsibleBlock>
   );

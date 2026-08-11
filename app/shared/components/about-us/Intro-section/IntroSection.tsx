@@ -9,7 +9,8 @@ import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { CROP_RATIOS } from '~/constants/publications';
 import { ImagePreviewBlock } from '~/ds-components/photo-block/PhotoBlock';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
-import { proseToHeaderText } from '~/lib/utils/prose';
+import { mergeLocalizedValue } from '~/lib/utils/mergeLocalizedValue';
+import { proseToHeaderText, resolveLocalizedText } from '~/lib/utils/prose';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
@@ -28,6 +29,16 @@ export const IntroSection = () => {
   if (!block) return <EditBlockSkeleton />;
 
   const headerTitle = proseToHeaderText(block.title[currentLocale] as ProseDoc, 'Вступна секція');
+
+  const imageAltText = resolveLocalizedText(block.image?.alt?.[currentLocale]);
+
+  const handleImageAltChange = (val: string) => {
+    setField(pageId, blockId, 'image', {
+      ...block.image,
+      alt: mergeLocalizedValue(block.image?.alt, currentLocale, val)
+    });
+  };
+
 
   return (
     <CollapsibleBlock title={headerTitle}>
@@ -58,6 +69,9 @@ export const IntroSection = () => {
               crop: crop ?? null
             });
           }}
+          showAlternativeText
+          altText={imageAltText}
+          onChangeAltText={(value) => handleImageAltChange(value)}
         />
       </Box>
 
