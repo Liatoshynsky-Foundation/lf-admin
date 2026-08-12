@@ -8,20 +8,19 @@ import { GalleryCard } from '../../components/gallery-card/GalleryCard';
 import { MediaGrid } from '../../components/media-grid/MediaGrid';
 import { SearchButton } from '../../components/search-button/SearchButton';
 import type { GalleryFilters } from '../../flow/MediaModalFlowState';
-import type { GalleryMedia, Locale, MediaKind } from '../../MediaModal.types';
+import type { GalleryMedia, MediaKind } from '../../MediaModal.types';
 import { matchesAudio, matchesPdf } from '../../MediaModal.utils';
 import { sharedViewStyles } from '../shared-view.styles';
 import { useDebounce } from '~/hooks/use-debounce/useDebounce';
 import { matchesSearch, sortByDateAndName } from '~/lib/utils/filterHelpers';
 import { type GalleryFile, useGalleryFiles } from '~/shared/hooks/use-galllery-photo/useGallery';
-import { useStore } from '~/store';
 import { AssetType, useAllAssetsQuery } from '~/types/graphql/generated/graphql';
 
 type MediaKindConfig = {
   folder: string;
   assetType: AssetType;
   title: string;
-  emptyStateText: Record<Locale, string>;
+  emptyStateText: string;
   iconSrc?: string;
   matchesFile?: (mimeType: string, filename: string) => boolean;
 };
@@ -31,19 +30,13 @@ const MEDIA_KIND_CONFIG: Record<MediaKind, MediaKindConfig> = {
     folder: 'photos',
     assetType: AssetType.Image,
     title: 'Усі зображення',
-    emptyStateText: {
-      uk: 'Зображень не знайдено. Спробуйте додати зображення до медіатеки.',
-      en: 'No images found. Try adding images to the media library.'
-    }
+    emptyStateText: 'Зображень не знайдено. Спробуйте додати зображення до медіатеки.'
   },
   audio: {
     folder: 'compositions',
     assetType: AssetType.Audio,
     title: 'Усі аудіо',
-    emptyStateText: {
-      uk: 'Аудіофайлів не знайдено. Спробуйте додати аудіофайли до медіатеки.',
-      en: 'No audio files found. Try adding audio files to the media library.'
-    },
+    emptyStateText: 'Аудіофайлів не знайдено. Спробуйте додати аудіофайли до медіатеки.',
     iconSrc: '/icons/audio.svg',
     matchesFile: matchesAudio
   },
@@ -51,10 +44,7 @@ const MEDIA_KIND_CONFIG: Record<MediaKind, MediaKindConfig> = {
     folder: 'uploads',
     assetType: AssetType.Pdf,
     title: 'Усі файли',
-    emptyStateText: {
-      uk: 'Файлів не знайдено. Спробуйте додати файли до медіатеки.',
-      en: 'No files found. Try adding files to the media library.'
-    },
+    emptyStateText: 'Файлів не знайдено. Спробуйте додати файли до медіатеки.',
     iconSrc: '/icons/pdf.svg',
     matchesFile: matchesPdf
   }
@@ -118,7 +108,6 @@ const matchesUsageFilter = (item: GalleryItem, filter: string): boolean => {
 
 export function GalleryView({ selected: _selected, onPick, filters, onFiltersChange, mediaKind = 'image' }: Props) {
   const config = MEDIA_KIND_CONFIG[mediaKind];
-  const currentLocale = useStore((state) => state.locale);
   const { files: r2Files, isLoading: r2Loading } = useGalleryFiles(config.folder);
 
   const { data: assetsData, loading: assetsLoading } = useAllAssetsQuery({
@@ -199,7 +188,7 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
       return (
         <Box sx={sharedViewStyles.emptyState} data-testid="GalleryView-emptyState">
           <Typography variant="body1" sx={sharedViewStyles.emptyStateText}>
-            {config.emptyStateText[currentLocale]}
+            {config.emptyStateText}
           </Typography>
         </Box>
       );

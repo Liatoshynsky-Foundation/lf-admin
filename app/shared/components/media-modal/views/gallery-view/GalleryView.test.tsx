@@ -6,7 +6,6 @@ import type { GalleryFilters } from '../../flow/MediaModalFlowState';
 import { MockMediaGrid, MockSearchButton } from '../../test-utils/sharedMocks';
 import { GalleryView } from './GalleryView';
 import { useGalleryFiles } from '~/shared/hooks/use-galllery-photo/useGallery';
-import { useStore } from '~/store';
 import { useAllAssetsQuery } from '~/types/graphql/generated/graphql';
 
 jest.mock('../../components/search-button/SearchButton', () => ({
@@ -113,7 +112,6 @@ describe('GalleryView', () => {
     mockOnFiltersChange.mockClear();
     (useGalleryFiles as jest.Mock).mockReturnValue({ files: mockFiles, isLoading: false, error: null });
     (useAllAssetsQuery as jest.Mock).mockReturnValue({ data: undefined, loading: false });
-    useStore.getState().setLocale('uk');
   });
 
   it('should render gallery view with title', () => {
@@ -222,13 +220,20 @@ describe('GalleryView', () => {
     expect(screen.queryByTestId('mocked-media-grid')).not.toBeInTheDocument();
   });
 
-  it('should render empty state text in English when locale is en', () => {
-    useStore.getState().setLocale('en');
+  it('should render media-kind specific empty state for pdf gallery', () => {
     (useGalleryFiles as jest.Mock).mockReturnValue({ files: [], isLoading: false, error: null });
 
-    renderGalleryView();
+    render(
+      <GalleryView
+        selected={null}
+        onPick={mockOnPick}
+        filters={mockFilters}
+        onFiltersChange={mockOnFiltersChange}
+        mediaKind="pdf"
+      />
+    );
 
-    expect(screen.getByText('No images found. Try adding images to the media library.')).toBeInTheDocument();
+    expect(screen.getByText('Файлів не знайдено. Спробуйте додати файли до медіатеки.')).toBeInTheDocument();
   });
 
   it('should render media-kind specific empty state for audio gallery', () => {
