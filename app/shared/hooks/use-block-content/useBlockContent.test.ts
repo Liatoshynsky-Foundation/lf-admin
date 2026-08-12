@@ -73,11 +73,29 @@ const mockAdapter: BlockContentAdapter<MockBlock> = {
   })
 };
 
+let originalCrypto: Crypto | undefined;
+
 beforeAll(() => {
+  originalCrypto = globalThis.crypto;
+
   Object.defineProperty(globalThis, 'crypto', {
-    value: { randomUUID: jest.fn().mockReturnValue('generated-id') },
+    value: {
+      ...originalCrypto,
+      randomUUID: jest.fn().mockReturnValue('generated-id')
+    },
     configurable: true
   });
+});
+
+afterAll(() => {
+  if (originalCrypto) {
+    Object.defineProperty(globalThis, 'crypto', {
+      value: originalCrypto,
+      configurable: true
+    });
+  } else {
+    delete (globalThis as { crypto?: Crypto }).crypto;
+  }
 });
 
 describe('useBlockContent', () => {

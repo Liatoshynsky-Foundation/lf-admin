@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
 import { ensureIds } from '~/lib/utils/ensureIds';
+import { generateUniqueId } from '~/lib/utils/generateUniqueId';
 import { useStore } from '~/store';
 import { CONTENT_TYPE, type ContentItem, type ContentTypeId } from '~/types/blocks/contentTypes';
 import type { LocalizedJSON, WithHidden } from '~/types/common';
@@ -31,7 +32,7 @@ const emptyLocalizedJSON = (): LocalizedJSON => ({
 });
 
 const createEmptyContentItem = (type: ContentTypeId): ContentItem => {
-  const id = crypto.randomUUID();
+  const id = generateUniqueId();
 
   switch (type) {
   case CONTENT_TYPE.HEADER:
@@ -39,14 +40,14 @@ const createEmptyContentItem = (type: ContentTypeId): ContentItem => {
   case CONTENT_TYPE.PARAGRAPH:
     return { id, type, value: emptyLocalizedJSON() };
   case CONTENT_TYPE.LIST:
-    return { id, type, items: [{ id: crypto.randomUUID(), ...emptyLocalizedJSON() }] };
+    return { id, type, items: [{ id: generateUniqueId(), ...emptyLocalizedJSON() }] };
   case CONTENT_TYPE.SECTION_LIST:
     return {
       id,
       type,
       items: [
         {
-          id: crypto.randomUUID(),
+          id: generateUniqueId(),
           title: emptyLocalizedJSON(),
           description: emptyLocalizedJSON()
         }

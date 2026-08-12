@@ -2,6 +2,7 @@ import { DragEndEvent } from '@dnd-kit/core';
 import { Typography } from '@mui/material';
 
 import type { ContentTypeProps } from '../ContentType.types';
+import { generateUniqueId } from '~/lib/utils/generateUniqueId';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import ConfigurableList from '~/shared/components/configurable-list/ConfigurableList';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
@@ -9,7 +10,7 @@ import { SortableItemWrapper } from '~/shared/components/sortable-item-wrapper/S
 import { SortableList } from '~/shared/components/sortable-list/SortableList';
 import type { ListContentItem } from '~/types/blocks/contentTypes';
 
-type ListEntry = ListContentItem['items'][number]; // { id: string } & LocalizedJSON
+type ListEntry = ListContentItem['items'][number];
 
 export const ListContent = ({ item, locale, onChange }: ContentTypeProps<ListContentItem>) => {
   const setItems = (items: ListEntry[]) => onChange({ ...item, items });
@@ -17,7 +18,7 @@ export const ListContent = ({ item, locale, onChange }: ContentTypeProps<ListCon
   const handleAdd = () =>
     setItems([
       ...item.items,
-      { id: crypto.randomUUID(), uk: { type: 'doc', content: [] }, en: { type: 'doc', content: [] } }
+      { id: generateUniqueId(), uk: { type: 'doc', content: [] }, en: { type: 'doc', content: [] } }
     ]);
 
   const handleChange = (next: ListEntry) => setItems(item.items.map((entry) => (entry.id === next.id ? next : entry)));
