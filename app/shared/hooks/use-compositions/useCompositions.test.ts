@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { toSuggestionAudio, toSuggestionNote, useCompositionsForm } from './useCompositions';
+import { getExcludedSuggestionIds, toSuggestionAudio, toSuggestionNote, useCompositionsForm } from './useCompositions';
 import { OpusCompositionData, OpusCompositionSuggestion } from '~/types/opus';
 
 jest.mock('../use-upsert-opus/useUpsertOpus', () => ({
@@ -56,6 +56,11 @@ describe('useCompositions Hook', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('returns ids of compositions selected in other rows', () => {
+    expect(getExcludedSuggestionIds(defaultWorks, 0)).toEqual(['2']);
+    expect(getExcludedSuggestionIds(defaultWorks, 1)).toEqual(['1']);
   });
 
   it('adds a new empty composition', () => {

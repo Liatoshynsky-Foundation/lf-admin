@@ -18,16 +18,6 @@ jest.mock('next/navigation', () => ({
   useRouter: jest.fn(() => ({ push: mockPush }))
 }));
 
-const mockToastSuccess = jest.fn();
-const mockToastError = jest.fn();
-jest.mock('react-hot-toast', () => ({
-  __esModule: true,
-  default: {
-    success: (msg: string) => mockToastSuccess(msg),
-    error: (msg: string) => mockToastError(msg)
-  }
-}));
-
 jest.mock('~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock', () => ({
   __esModule: true,
   default: ({ onChangeCrop }: MockSeoMetadataBlockProps) => (
@@ -65,6 +55,7 @@ const createMockData = (
   details: initialOpusDetails,
   setDetails: jest.fn(),
   detailsErrors: { number: '', name: '', creationYear: '' },
+  compositionErrors: {},
   seoValue: initialOpusSeoValue,
   setSeoValue: jest.fn(),
   crop: null,
@@ -102,7 +93,6 @@ describe('OpusView Component', () => {
 
     await waitFor(() => {
       expect(handleSave).toHaveBeenCalled();
-      expect(mockToastSuccess).toHaveBeenCalled();
       expect(mockPush).toHaveBeenCalledWith('/creativity/group/new-opus-id/content?from=create');
     });
   });
@@ -115,7 +105,6 @@ describe('OpusView Component', () => {
 
     await waitFor(() => {
       expect(handleSave).toHaveBeenCalled();
-      expect(mockToastSuccess).toHaveBeenCalled();
       expect(mockPush).toHaveBeenCalledWith('/creativity/group/existing-opus-id/content?from=edit');
     });
   });
@@ -132,29 +121,28 @@ describe('OpusView Component', () => {
     expect(mockPush).not.toHaveBeenCalled();
   });
 
-  it('shows error toast when save fails with an Error instance', async () => {
-    const handleSave = jest.fn().mockRejectedValue(new Error('Network error'));
+  it('does not redirect when save returns no id after an error', async () => {
+    const handleSave = jest.fn().mockResolvedValue(undefined);
     render(<OpusView data={createMockData({ handleSave })} mode="create" />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Перейти до редагування' }));
 
     await waitFor(() => {
       expect(handleSave).toHaveBeenCalled();
-      expect(mockToastError).toHaveBeenCalledWith('Помилка: Network error');
     });
     expect(mockPush).not.toHaveBeenCalled();
   });
 
-  it('shows error toast when save fails with a string error', async () => {
-    const handleSave = jest.fn().mockRejectedValue('Something went wrong');
+  it('does not redirect when save returns no id after validation failure', async () => {
+    const handleSave = jest.fn().mockResolvedValue(undefined);
     render(<OpusView data={createMockData({ handleSave })} mode="create" />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Перейти до редагування' }));
 
     await waitFor(() => {
       expect(handleSave).toHaveBeenCalled();
-      expect(mockToastError).toHaveBeenCalledWith('Помилка: Something went wrong');
     });
+    expect(mockPush).not.toHaveBeenCalled();
   });
 
   it('calls setCrop with new crop data when onChangeCrop is triggered', () => {

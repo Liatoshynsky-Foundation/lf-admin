@@ -1,13 +1,18 @@
 'use client';
 
 import { Box } from '@mui/material';
-import React from 'react';
+import React, { useCallback, useEffect } from 'react';
+import toast from 'react-hot-toast';
 
+import { useDeleteWorkAction } from './(composition)/useDeleteWorkAction';
+import { useUpdateWorkAction } from './(composition)/useUpdateWorkAction';
+import { useWorkUrlState } from './(composition)/useWorkUrlState';
 import { useWorksTableActions } from './useWorksTableActions';
 import { styles } from './WorksTable.styles';
 import { GroupMenuItems, WorkMenuItems } from './WorksTableMenuItems';
 import {
   AllTab,
+  COMPOSITION_MODAL_PARAM,
   OpusTab,
   SineopTab,
   WORKS_BASE_PATH,
@@ -17,15 +22,18 @@ import {
 } from '~/constants/creativity';
 import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
 import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
+import CompositionModal from '~/shared/components/forms/opus-details-block/composition-modal/CompositionModal';
 import { RowActions } from '~/shared/components/table-layout/components/RowActions';
 import { StatusBadge } from '~/shared/components/table-layout/components/StatusBadge';
 import { BaseRowData, ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
+import { useShare } from '~/shared/hooks/use-share/useShare';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { OpusStatus } from '~/types/graphql/generated/graphql';
+import { OpusCompositionData } from '~/types/opus';
 
 type ActionFields = {
-  editAction?: { editHref: string; editLabel: string };
+  editAction?: { editHref?: string; onEditClick?: () => void; editLabel: string };
   menuActions?: { menuItems: ActionMenuGroups; menuTriggerLabel: string };
 };
 
@@ -33,6 +41,7 @@ export type GroupRowData = Readonly<{
   id: string;
   number: number;
   numberKind: 'op' | 'sineop';
+  additionalText?: string | null;
   name: string;
   genre: string;
   startDate: string;
@@ -45,6 +54,7 @@ export type GroupRowData = Readonly<{
 export type GroupHeaderData = Readonly<{
   numberLabel: number;
   numberKind: 'op' | 'sineop';
+  additionalText?: string | null;
   name: string;
   genre: string;
   startDate: string;
@@ -70,15 +80,17 @@ export type IndividualWork = Readonly<{
 }> &
   ActionFields;
 
-const modalMock = () => {};
-
 export const columns: readonly ColumnDef<GroupHeaderData, OpusWork, IndividualWork>[] = [
   {
     id: 'opus',
     headerLabel: 'Опуси',
     width: '128px',
     hasRightDivider: true,
-    renderGroup: (group) => `${group.numberKind === 'op' ? 'op.' : 'sine op.'} ${group.numberLabel}`
+    renderGroup: (group) => {
+      const prefix = group.numberKind === 'op' ? 'op.' : 'sine op.';
+      const base = `${prefix} ${group.numberLabel}`;
+      return group.additionalText ? `${base} ${group.additionalText}` : `${base}`;
+    }
   },
   {
     id: 'title',
@@ -155,6 +167,53 @@ type WorksTableProps =
 export function WorksTable({ items, activeTab }: WorksTableProps) {
   const { groupToUngroup, setGroupToUngroup, handlePublishStatusChange, handleConfirmUngroup, handleShareGroup } =
     useWorksTableActions();
+  const {
+    compositionId,
+    compositionToEdit,
+    isCompositionLoading,
+    isEditOpen,
+    openEditComposition,
+    closeEditComposition
+  } = useWorkUrlState();
+  const {
+    deleteComposition,
+    setDeleteComposition,
+    handleConfirmCompositionDelete,
+    handleConfirmUnlinkComposition,
+    unlinkComposition,
+    setUnlinkComposition
+  } = useDeleteWorkAction();
+
+  const { handleUpdateComposition, error, clearError } = useUpdateWorkAction();
+  const { handleShare } = useShare();
+
+  const handleCloseComposition = useCallback(() => {
+    clearError();
+    closeEditComposition();
+  }, [clearError, closeEditComposition]);
+
+  const handleSubmitComposition = async (compositionData: OpusCompositionData) => {
+    if (!compositionId) return;
+    if (await handleUpdateComposition(compositionId, compositionData)) {
+      handleCloseComposition();
+    }
+  };
+
+  const handleShareComposition = (id: string) => {
+    const url = `${window.location.origin}${WORKS_BASE_PATH}?${COMPOSITION_MODAL_PARAM}=${id}`;
+    handleShare(url);
+  };
+
+  useEffect(() => {
+    if (!compositionId || isCompositionLoading) {
+      return;
+    }
+
+    if (!compositionToEdit) {
+      toast.error('Композицію не знайдено');
+      handleCloseComposition();
+    }
+  }, [compositionId, compositionToEdit, isCompositionLoading, handleCloseComposition]);
 
   function groupsRow(group: GroupRowData): BaseRowData<GroupHeaderData, OpusWork, IndividualWork> {
     const isPublished = group.status === BaseContentStatuses.Published;
@@ -165,6 +224,7 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
       groupData: {
         numberLabel: group.number,
         numberKind: group.numberKind,
+        additionalText: group.additionalText,
         name: group.name,
         genre: group.genre,
         startDate: group.startDate,
@@ -194,7 +254,9 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
           menuItems: WorkMenuItems({
             id: work.id,
             isPublished,
-            setDeleteModalOpen: modalMock
+            onDelete: (id) => setUnlinkComposition({ opusId: group.id, compositionId: id }),
+            onShare: (id) => handleShareComposition(id),
+            onEdit: (id) => openEditComposition(id)
           }),
           menuTriggerLabel: `Дії твору ${work.name}`
         }
@@ -216,14 +278,16 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
         status: work.status,
         updatedAt: work.updatedAt,
         editAction: {
-          editHref: `${WORKS_BASE_PATH}/work/${work.id}/edit`,
+          onEditClick: () => openEditComposition(work.id),
           editLabel: `Редагувати твір ${work.name}`
         },
         menuActions: {
           menuItems: WorkMenuItems({
             id: work.id,
             isPublished,
-            setDeleteModalOpen: modalMock
+            onDelete: (id) => setDeleteComposition(id),
+            onShare: (id) => handleShareComposition(id),
+            onEdit: (id) => openEditComposition(id)
           }),
           menuTriggerLabel: `Дії твору ${work.name}`
         }
@@ -258,6 +322,7 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
   return (
     <Box sx={styles.worksListContainer}>
       <TableLayout data={rows} columns={columns} />
+
       <DeleteCardModal
         open={!!groupToUngroup}
         onClose={() => setGroupToUngroup(null)}
@@ -265,6 +330,34 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
         title="Підтвердити розгрупування"
         confirmButtonText="Розгрупувати"
         description="Ви впевнені, що хочете розгрупувати групу? Опис сторінки буде видалено, але композиції залишаться в системі."
+      />
+
+      <DeleteCardModal
+        open={Boolean(deleteComposition)}
+        onClose={() => setDeleteComposition(null)}
+        onDelete={handleConfirmCompositionDelete}
+        title="Підтвердити видалення композиції"
+        confirmButtonText="Видалити"
+        description="Ви впевнені, що хочете видалити цю композицію? Це дію можна скасувати лише шляхом повторного додавання композиції."
+      />
+
+      <DeleteCardModal
+        open={Boolean(unlinkComposition)}
+        onClose={() => setUnlinkComposition(null)}
+        onDelete={handleConfirmUnlinkComposition}
+        title="Підтвердити видалення композиції з групи"
+        confirmButtonText="Видалити"
+        description="Ви впевнені, що хочете видалити цю композицію з групи? Цю дію можна скасувати лише шляхом повторного додавання композиції у цю групу."
+      />
+
+      <CompositionModal
+        open={isEditOpen}
+        mode="edit"
+        initialValue={compositionToEdit}
+        onClose={handleCloseComposition}
+        onSubmit={handleSubmitComposition}
+        error={error}
+        onClearError={clearError}
       />
     </Box>
   );

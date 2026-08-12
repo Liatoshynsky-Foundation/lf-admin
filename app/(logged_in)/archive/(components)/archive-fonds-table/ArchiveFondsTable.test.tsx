@@ -5,6 +5,7 @@ import {
   ARCHIVE_EMPTY_STATE_DESCRIPTION,
   ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION,
   ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE,
+  ARCHIVE_EMPTY_STATE_NO_STATUS_MATCH_TITLE,
   ARCHIVE_EMPTY_STATE_TITLE,
   ARCHIVE_FONDS_TABLE_HEADERS,
 } from '~/constants/archive';
@@ -13,7 +14,7 @@ import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 type EmptyStateProps = {
   title: string;
-  description: string;
+  description?: string;
 };
 
 type TableLayoutProps<TGroup, TSub, TPlain> = {
@@ -74,7 +75,8 @@ const defaultProps: FondsTableProps = {
       updatedAt: '2023-01-01',
     },
   ],
-  hasActiveCriteria: false,
+  hasActiveSearch: false,
+  hasActiveStatusFilter: false,
 };
 
 const renderComponent = (overrides?: Partial<FondsTableProps>) => {
@@ -131,20 +133,37 @@ describe('ArchiveFondsTable', () => {
       expect(screen.getByTestId(`mock-cell-${cell}`)).toBeInTheDocument();
     }
   });
+
   describe('should render state UIs', () => {
-    it('should render the no search results fallback if rows.length is 0 and hasActiveCriteria is true', () => {
-      renderComponent({ hasActiveCriteria: true, fonds: [] });
+    it('should render the "not created yet" fallback when there are no fonds and no active criteria', () => {
+      renderComponent({ fonds: [], hasActiveSearch: false, hasActiveStatusFilter: false });
+
+      expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
+      expect(screen.getByTestId('mock-empty-state-title')).toHaveTextContent(ARCHIVE_EMPTY_STATE_TITLE);
+      expect(screen.getByTestId('mock-empty-state-description')).toHaveTextContent(ARCHIVE_EMPTY_STATE_DESCRIPTION);
+    });
+
+    it('should render the no search results fallback when search is active (with or without status filter)', () => {
+      renderComponent({ fonds: [], hasActiveSearch: true, hasActiveStatusFilter: false });
 
       expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
       expect(screen.getByTestId('mock-empty-state-title')).toHaveTextContent(ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE);
       expect(screen.getByTestId('mock-empty-state-description')).toHaveTextContent(ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION);
     });
-    it('should render the not fond fallback if rows.length is 0 and hasActiveCriteria is false', () => {
-      renderComponent({ fonds: [] });
+
+    it('should render the no search results fallback when both search and status filter are active', () => {
+      renderComponent({ fonds: [], hasActiveSearch: true, hasActiveStatusFilter: true });
 
       expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
-      expect(screen.getByTestId('mock-empty-state-title')).toHaveTextContent(ARCHIVE_EMPTY_STATE_TITLE);
-      expect(screen.getByTestId('mock-empty-state-description')).toHaveTextContent(ARCHIVE_EMPTY_STATE_DESCRIPTION);
+      expect(screen.getByTestId('mock-empty-state-title')).toHaveTextContent(ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE);
+      expect(screen.getByTestId('mock-empty-state-description')).toHaveTextContent(ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION);
+    });
+
+    it('should render the status-only fallback when only the status filter is active', () => {
+      renderComponent({ fonds: [], hasActiveSearch: false, hasActiveStatusFilter: true });
+
+      expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
+      expect(screen.getByTestId('mock-empty-state-title')).toHaveTextContent(ARCHIVE_EMPTY_STATE_NO_STATUS_MATCH_TITLE);
     });
   });
 });

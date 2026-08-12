@@ -5,6 +5,7 @@ import {
   ARCHIVE_EMPTY_STATE_DESCRIPTION,
   ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION,
   ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE,
+  ARCHIVE_EMPTY_STATE_NO_STATUS_MATCH_TITLE,
   ARCHIVE_EMPTY_STATE_TITLE,
   ARCHIVE_FONDS_TABLE_HEADERS,
 } from '~/constants/archive';
@@ -23,10 +24,11 @@ export type FondRow = Fond & {
 
 export interface FondsTableProps {
   fonds: Fond[];
-  hasActiveCriteria: boolean;
+  hasActiveSearch: boolean;
+  hasActiveStatusFilter: boolean;
 }
 
-export const FondsTable = ({ fonds, hasActiveCriteria }: FondsTableProps) => {
+export const FondsTable = ({ fonds, hasActiveSearch, hasActiveStatusFilter }: FondsTableProps) => {
   const rows = fonds.map((fond) => ({
     type: 'individual' as const,
     id: fond.id,
@@ -107,10 +109,30 @@ export const FondsTable = ({ fonds, hasActiveCriteria }: FondsTableProps) => {
   ];
  
   if (rows.length === 0) {
+    const hasActiveCriteria = hasActiveSearch || hasActiveStatusFilter;
+
+    if (!hasActiveCriteria) {
+      return (
+        <EmptyState
+          title={ARCHIVE_EMPTY_STATE_TITLE}
+          description={ARCHIVE_EMPTY_STATE_DESCRIPTION}
+        />
+      );
+    }
+
+    if (hasActiveStatusFilter && !hasActiveSearch) {
+      return (
+        <EmptyState
+          title={ARCHIVE_EMPTY_STATE_NO_STATUS_MATCH_TITLE}
+          description=""
+        />
+      );
+    }
+
     return (
       <EmptyState
-        title={hasActiveCriteria ? ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE : ARCHIVE_EMPTY_STATE_TITLE}
-        description={hasActiveCriteria ? ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION : ARCHIVE_EMPTY_STATE_DESCRIPTION}
+        title={ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE}
+        description={ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION}
       />
     );
   }

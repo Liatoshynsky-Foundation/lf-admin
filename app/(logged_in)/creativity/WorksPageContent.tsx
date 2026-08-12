@@ -54,7 +54,7 @@ function useDropdownState() {
 
 function WorksCreateAction() {
   const { anchorEl, triggerRef, handleClose, handleToggle } = useDropdownState();
-  const { isModalOpen, openModal, closeModal, handleSubmit } = useCreateWorkAction();
+  const { isModalOpen, openModal, closeModal, clearError, error, handleSubmit } = useCreateWorkAction();
 
   return (
     <>
@@ -86,7 +86,14 @@ function WorksCreateAction() {
       />
 
       {isModalOpen && (
-        <CompositionModal open={isModalOpen} mode="create" onClose={closeModal} onSubmit={handleSubmit} />
+        <CompositionModal
+          open={isModalOpen}
+          mode="create"
+          onClose={closeModal}
+          onSubmit={handleSubmit}
+          error={error}
+          onClearError={clearError}
+        />
       )}
     </>
   );

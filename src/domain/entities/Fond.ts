@@ -10,6 +10,8 @@ export interface Fond {
     organizationForm?: LocalizedString;
     description?: LocalizedString;
     status: BaseContentStatuses;
+    casesCount: number;
+    descriptionsCount: number;
     createdAt: string;
     updatedAt: string;
 }

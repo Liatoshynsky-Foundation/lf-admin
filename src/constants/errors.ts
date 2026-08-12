@@ -33,11 +33,12 @@ export const newsServiceErrors = {
   FAILED_TO_DELETE: (id: string) => `News with id "${id}" not found or could not be deleted`,
   TITLE_REQUIRED_FOR_SLUG: 'Title is required to generate a slug',
   TITLE_TOO_SHORT_FOR_SLUG: 'Title must be at least 2 characters long to generate a slug',
-  TITLE_TOO_LONG_FOR_SLUG: 'Title must not exceed 150 characters'
+  TITLE_TOO_LONG_FOR_SLUG: 'Title must not exceed 150 characters',
+  DESCRIPTION_LENGTH_INVALID: 'Description must contain from 2 to 250 characters'
 };
 
 export const opusServiceErrors = {
-  NUMBER_ALREADY_EXISTS: (number: number) => `Opus with number "${number}" already exists`,
+  OPUS_ALREADY_EXISTS: 'Опус із таким номером та приміткою вже існує',
   NUMBER_GENERATION_FAILED: 'Failed to generate a unique opus number',
   NUMBER_NOT_NEGATIVE: 'Opus number cannot be negative',
   NAME_REQUIRED_FOR_SLUG: 'Opus name is required to generate a slug',
@@ -57,13 +58,16 @@ export const opusServiceErrors = {
   PERFORMANCES_TITLE_INVALID: 'The video caption is required and must contain between 2 and 250 characters.',
 
   OPUS_NOT_FOUND: (id: string) => `Opus with id "${id}" not found`,
-  FAILED_TO_DELETE: (id: string) => `Opus with id "${id}" not found or could not be deleted`
+  FAILED_TO_DELETE: (id: string) => `Opus with id "${id}" not found or could not be deleted`,
+  COMPOSITION_NOT_FOUND_IN_OPUS: 'Composition not found in this opus',
+  COMPOSITION_NAME_REQUIRED: 'Composition name is required'
 };
 
 export const compositionsServiceErrors = {
   COMPOSITION_NOT_FOUND: (id: string) => `Composition with id "${id}" not found`,
   FAILED_TO_DELETE: (id: string) => `Composition with id "${id}" not found or could not be deleted`,
   COMPOSITION_NOT_CREATED: 'Repository failed to create composition record.',
+  COMPOSITION_NAME_TAKEN: (name: string) => `Композиція "${name}" вже існує`,
 };
 
 export const MediaMentionsServiceErrors = {

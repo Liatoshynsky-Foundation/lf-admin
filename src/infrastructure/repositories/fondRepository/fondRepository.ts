@@ -1,4 +1,4 @@
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import dbConnect from '../../db/connect';
 import { createBaseRepository } from '../baseRepository/baseRepository';
@@ -15,6 +15,8 @@ export type DbFond = {
   organizationForm: Fond['organizationForm'];
   description: Fond['description'];
   status: Fond['status']
+  casesCount: Fond['casesCount'];
+  descriptionsCount: Fond['descriptionsCount'];
   createdAt: string;
   updatedAt: string;
 }
@@ -32,6 +34,8 @@ const toEntity = (doc: DbFond): Fond =>
     organizationForm: doc.organizationForm,
     description: doc.description,
     status: doc.status,
+    casesCount: doc.casesCount ?? 0,
+    descriptionsCount: doc.descriptionsCount ?? 0,
   });
 
 export const FondRepository = ({ FondModel }: FondRepoDeps): IFondRepository => {
@@ -65,6 +69,18 @@ export const FondRepository = ({ FondModel }: FondRepoDeps): IFondRepository => 
         return null;
       }
       return toEntity(existing.toObject() as unknown as DbFond);
+    },
+
+    findByIds: async (ids: readonly string[]): Promise<Fond[]> => {
+      await dbConnect();
+
+      const validIds = ids.filter((id) => Types.ObjectId.isValid(id));
+      if (!validIds.length) {
+        return [];
+      }
+
+      const docs = await FondModel.find({ _id: { $in: validIds } }).lean<DbFond[]>();
+      return docs.map(toEntity);
     }
   };
 };

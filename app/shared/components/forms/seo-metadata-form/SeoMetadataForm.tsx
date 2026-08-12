@@ -49,6 +49,20 @@ export interface SeoMetadataFormProps {
   };
 }
 
+const getFileNameFromUrl = (url: string | null): string | undefined =>
+  url ? url.split('/').pop()?.split('?')[0] : undefined;
+
+const isValidHttpUrl = (url: string | null): boolean => {
+  if (!url) return false;
+
+  try {
+    const { protocol } = new URL(url);
+    return protocol === 'http:' || protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
+
 export default function SeoMetadataForm({
   value,
   onChange,
@@ -65,10 +79,10 @@ export default function SeoMetadataForm({
   extraFields,
   labels = {}
 }: SeoMetadataFormProps) {
-  const getFileNameFromUrl = (url: string | null) => (url ? url.split('/').pop()?.split('?')[0] : undefined);
-
-  const [ogImagePreview, setOgImagePreview] = useState<string | null>(typeof ogImage === 'string' ? ogImage : null);
-  const [displayFileName, setDisplayFileName] = useState<string | undefined>(getFileNameFromUrl(ogImage));
+  const [ogImagePreview, setOgImagePreview] = useState<string | null>(isValidHttpUrl(ogImage) ? ogImage : null);
+  const [displayFileName, setDisplayFileName] = useState<string | undefined>(
+    isValidHttpUrl(ogImage) ? getFileNameFromUrl(ogImage) : undefined
+  );
   const [isUploading, setIsUploading] = useState(false);
   const [touched, setTouched] = useState<Partial<Record<keyof LocalizedMeta, boolean>>>({});
   const [errors, setErrors] = useState<Partial<Record<keyof LocalizedMeta, string>>>({});
@@ -76,9 +90,12 @@ export default function SeoMetadataForm({
   const translationErrors = seoFormErrors[locale];
 
   useEffect(() => {
-    if (typeof ogImage === 'string') {
+    if (isValidHttpUrl(ogImage)) {
       setOgImagePreview(ogImage);
       setDisplayFileName(getFileNameFromUrl(ogImage));
+    } else {
+      setOgImagePreview(null);
+      setDisplayFileName(undefined);
     }
   }, [ogImage]);
 

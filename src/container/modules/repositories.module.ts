@@ -20,9 +20,12 @@ import { OpusRepository } from '~/infrastructure/repositories/opusRepository/opu
 import { PageRepository } from '~/infrastructure/repositories/pageRepository/pageRepository';
 import { RateLimitRepository } from '~/infrastructure/repositories/rateLimitRepository/rateLimitRepository';
 import { RefreshTokenRepository } from '~/infrastructure/repositories/refreshTokenRepository/refreshTokenRepository';
+import CaseModel from '~/src/infrastructure/models/case.model';
 import FondModel from '~/src/infrastructure/models/fond.model';
 import { MediaMentionModel } from '~/src/infrastructure/models/mediaMention.model';
+import { CaseRepository } from '~/src/infrastructure/repositories/caseRepository/caseRepository';
 import { FondRepository } from '~/src/infrastructure/repositories/fondRepository/fondRepository';
+import { createFondLoader } from '~/src/interfaces/graphql/resolvers/case/fondLoader';
 
 export type RepositoriesModule = {
   assetsRepository: ReturnType<typeof AssetRepository>;
@@ -36,6 +39,8 @@ export type RepositoriesModule = {
   opusRepository: ReturnType<typeof OpusRepository>;
   compositionsRepository: ReturnType<typeof CompositionRepository>;
   fondRepository: ReturnType<typeof FondRepository>;
+  caseRepository: ReturnType<typeof CaseRepository>;
+  fondLoader: ReturnType<typeof createFondLoader>;
 };
 
 export const registerRepositories = (container: AwilixContainer) => {
@@ -51,6 +56,7 @@ export const registerRepositories = (container: AwilixContainer) => {
     GenreModel: asValue(GenreModel),
     CategoryModel: asValue(CategoryModel),
     FondModel: asValue(FondModel),
+    CaseModel: asValue(CaseModel),
 
     RateLimitModel: asValue(RateLimit),
 
@@ -65,6 +71,8 @@ export const registerRepositories = (container: AwilixContainer) => {
     compositionsRepository: asFunction(CompositionRepository).scoped(),
     assetsRepository: asFunction(AssetRepository).scoped(),
     rateLimitRepository: asFunction(RateLimitRepository).scoped(),
-    fondRepository: asFunction(FondRepository).scoped()
+    fondRepository: asFunction(FondRepository).scoped(),
+    caseRepository: asFunction(CaseRepository).scoped(),
+    fondLoader: asFunction(createFondLoader).scoped()
   });
 };

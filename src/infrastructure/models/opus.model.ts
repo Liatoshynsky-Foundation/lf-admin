@@ -22,11 +22,18 @@ const opusDescriptionSchema = new Schema(
 
 const opusSchema = new Schema(
   {
-    number: { type: Number, required: true, unique: true, index: true, set: (v: unknown) => (v != null ? Number(v) : v) },
+    number: { 
+      type: Number, required: true, 
+      set: (v: unknown) => (v != null ? Number(v) : v) 
+    },
     title: { type: translatedFieldSchema, required: true },
     numberKind: { type: String, enum: ['op', 'sineop', 'compositions'], default: 'op' },
     name: { type: translatedFieldSchema, default: { uk: '', en: '' } },
-    additionalText: { type: String, default: null },
+    additionalText: { 
+      type: String, 
+      default: null, 
+      set: (v: unknown) => (typeof v === 'string' ? v.trim() || null : v)
+    },
     creationYear: { type: String, default: null },
     endYear: { type: String, default: null },
     datesNote: { type: String, default: null },
@@ -88,6 +95,11 @@ const opusSchema = new Schema(
     }
   },
   { timestamps: true, collection: 'opus' }
+);
+
+opusSchema.index(
+  { number: 1, numberKind: 1, additionalText: 1 },
+  { unique: true, collation: { locale: 'uk', strength: 2 } }
 );
 
 const OpusModel: Model<Opus> = mongoose.models.Opus || mongoose.model<Opus>('Opus', opusSchema);

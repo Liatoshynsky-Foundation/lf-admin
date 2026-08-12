@@ -187,7 +187,7 @@ describe('useCreateWorkAction', () => {
   });
 
   it('should handle failed work creation', async () => {
-    jest.mocked(safeMutate).mockResolvedValueOnce(undefined as unknown as Awaited<ReturnType<typeof safeMutate>>);
+    jest.mocked(safeMutate).mockRejectedValueOnce(new Error(MOCK_ERROR_MESSAGE));
     const { result } = renderHook(() => useCreateWorkAction());
 
     await act(async () => {
@@ -200,10 +200,12 @@ describe('useCreateWorkAction', () => {
       expect.any(String),
       expect.any(String)
     );
+
     expect(result.current.isSubmitting).toBe(false);
     expect(result.current.error).toBe(MOCK_ERROR_MESSAGE);
     expect(MOCK_REFRESH).not.toHaveBeenCalled();
-    expect(toast.error).toHaveBeenCalledWith(COMPOSITION_MUTATION_RESULTS.failed);
+    expect(toast.error).toHaveBeenCalledWith(MOCK_ERROR_MESSAGE);
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   it('should correctly fallback optional fields in audios and sheetMusic mapping', async () => {

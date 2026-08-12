@@ -119,8 +119,15 @@ export const REQUIRED_FIELD_ERROR = 'Обовʼязкове поле';
 export const OPUS_MUTATION_RESULTS = {
   created: 'Групу створено',
   updated: 'Групу оновлено',
-  deleted: 'Групу видалено'
+  deleted: 'Групу видалено',
+  createFailed: 'Не вдалося створити групу',
+  updateFailed: 'Не вдалося оновити групу'
 } as const;
+
+export const COMPOSITION_NAME_REQUIRED_ERROR = 'Заповніть всі назви творів перед публікацією';
+export const COMPOSITION_DUPLICATE_ERROR = 'Група містить твори з однаковими назвами';
+export const COMPOSITION_DUPLICATE_INPUT_ERROR = 'Цю композицію вже додано до групи';
+export const COMPOSITION_REQUIRED_FIELDS_ERROR = 'Заповніть усі обов’язкові поля перед публікацією';
 
 export const COMPOSITION_MUTATION_RESULTS = {
   created: 'Твір створено',

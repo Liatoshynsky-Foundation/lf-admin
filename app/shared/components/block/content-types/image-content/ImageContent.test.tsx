@@ -11,7 +11,13 @@ jest.mock('~/utils/getImageUrl', () => ({
 }));
 
 jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
-  ImagePreviewBlock: ({ onChangeImage }: { onChangeImage: (url: string, crop?: CropResult | null) => void }) => (
+  ImagePreviewBlock: ({
+    onChangeImage,
+    onChangeAltText
+  }: {
+    onChangeImage: (url: string, crop?: CropResult | null) => void;
+    onChangeAltText?: (value: string) => void;
+  }) => (
     <>
       <button
         data-testid="trigger-image-change"
@@ -21,6 +27,9 @@ jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
       </button>
       <button data-testid="trigger-image-change-no-crop" onClick={() => onChangeImage('/updated-no-crop.jpg')}>
         Change image without crop
+      </button>
+      <button data-testid="trigger-alt-change" onClick={() => onChangeAltText?.('Updated alt text')}>
+        Change alt text
       </button>
     </>
   )
@@ -103,6 +112,25 @@ describe('ImageContent', () => {
         src: '/updated-no-crop.jpg',
         crop: null,
         isTmp: false
+      }
+    });
+  });
+
+  it('should update localized alt text on change', () => {
+    const onChange = jest.fn();
+
+    render(<ImageContent item={baseItem} locale="uk" onChange={onChange} pageId="about-us" blockId="mission" />);
+
+    fireEvent.click(screen.getByTestId('trigger-alt-change'));
+
+    expect(onChange).toHaveBeenCalledWith({
+      ...baseItem,
+      value: {
+        ...baseItem.value,
+        alt: {
+          ...baseItem.value.alt,
+          uk: 'Updated alt text'
+        }
       }
     });
   });

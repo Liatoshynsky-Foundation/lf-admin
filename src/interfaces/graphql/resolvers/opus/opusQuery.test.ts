@@ -91,7 +91,7 @@ describe('OpusQuery Resolvers', () => {
 
     mockOpusRepo = {
       findById: jest.fn(),
-      findByNumber: jest.fn(),
+      findByComplexKey: jest.fn(),
       findAll: jest.fn(),
       findPaginated: jest.fn(),
       count: jest.fn(),
@@ -119,6 +119,7 @@ describe('OpusQuery Resolvers', () => {
       count: jest.fn(),
       findByIdsPaginated: jest.fn(),
       countByIds: jest.fn(),
+      findByName: jest.fn(),
       findBySlug: jest.fn(),
       findPaginated: jest.fn(),
     } as jest.Mocked<ICompositionRepository>;

@@ -114,6 +114,31 @@ query OpusById($id: ID!) {
   }
 }
 
+query CompositionById($id: ID!) {
+  compositionById(id: $id) {
+    id
+    name {
+      uk
+      en
+    }
+    year
+    genre
+    audioAvailable
+    sheetAvailable
+    sheetMusic {
+      url
+      name
+      publishDate
+      isFree
+      dateUploaded
+    }
+    audios {
+      name
+      url
+    }
+  }
+}
+
 query PaginatedWorks($tab: WorksTab, $filters: WorksFiltersInput) {
   paginatedWorks(tab: $tab, filters: $filters) {
     total
@@ -124,6 +149,7 @@ query PaginatedWorks($tab: WorksTab, $filters: WorksFiltersInput) {
       id
       number
       numberKind
+      additionalText
       name {
         uk
         en
