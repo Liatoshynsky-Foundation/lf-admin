@@ -1,12 +1,22 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, render, renderHook } from '@testing-library/react';
+import { createElement, Fragment } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { usePageSeo } from './usePageSeo';
 import { initialSeoValue } from '~/constants/publications';
 import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
+import type { LocalizedMeta } from '~/shared/components/forms/seo-metadata-form/SeoMetadataForm';
 
 const mockUpdatePageSeo = jest.fn();
 const mockUseGetPageSeoQuery = jest.fn();
+
+type CanonicalUrlFieldProps = {
+  value: string;
+  onChange: (val: string) => void;
+  onBlur?: () => void;
+};
+
+let canonicalUrlFieldProps: CanonicalUrlFieldProps | null = null;
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
   useGetPageSeoQuery: (...args: unknown[]) => mockUseGetPageSeoQuery(...args),
@@ -21,7 +31,10 @@ jest.mock('react-hot-toast', () => ({
 }));
 
 jest.mock('~/shared/components/forms/seo-metadata-form/seo-canonicalurl-field/SeoCanonicalUrlField', () => ({
-  SeoCanonicalUrlField: () => null
+  SeoCanonicalUrlField: (props: CanonicalUrlFieldProps) => {
+    canonicalUrlFieldProps = props;
+    return null;
+  }
 }));
 
 const pageSeoData = {
@@ -38,6 +51,7 @@ const pageSeoData = {
 describe('usePageSeo', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    canonicalUrlFieldProps = null;
     mockUseGetPageSeoQuery.mockReturnValue({ data: undefined, loading: false });
     mockUpdatePageSeo.mockResolvedValue({ data: { updatePageSeo: { id: '1' } } });
   });
@@ -134,5 +148,57 @@ describe('usePageSeo', () => {
     expect(toast.success).not.toHaveBeenCalled();
 
     consoleErrorSpy.mockRestore();
+  });
+
+  it('should render pageExtraFields with canonical url value', () => {
+    const { result } = renderHook(() => usePageSeo('about-us'));
+    const onChange = jest.fn();
+    const value: LocalizedMeta = {
+      title: 'Title',
+      description: 'Description',
+      keywords: 'keywords',
+      canonicalUrl: 'https://example.com/page'
+    };
+
+    render(createElement(Fragment, null, result.current.pageExtraFields('uk', value, onChange)));
+
+    expect(canonicalUrlFieldProps?.value).toBe('https://example.com/page');
+  });
+
+  it('should default canonical url to empty string when it is missing', () => {
+    const { result } = renderHook(() => usePageSeo('about-us'));
+    const onChange = jest.fn();
+    const value: LocalizedMeta = {
+      title: 'Title',
+      description: 'Description',
+      keywords: 'keywords'
+    };
+
+    render(createElement(Fragment, null, result.current.pageExtraFields('en', value, onChange)));
+
+    expect(canonicalUrlFieldProps?.value).toBe('');
+  });
+
+  it('should update localized meta when canonical url changes', () => {
+    const { result } = renderHook(() => usePageSeo('about-us'));
+    const onChange = jest.fn();
+    const value: LocalizedMeta = {
+      title: 'Title',
+      description: 'Description',
+      keywords: 'keywords',
+      canonicalUrl: 'https://example.com/page'
+    };
+
+    render(createElement(Fragment, null, result.current.pageExtraFields('uk', value, onChange)));
+
+    act(() => {
+      canonicalUrlFieldProps?.onChange('https://example.com/updated');
+      canonicalUrlFieldProps?.onBlur?.();
+    });
+
+    expect(onChange).toHaveBeenCalledWith({
+      ...value,
+      canonicalUrl: 'https://example.com/updated'
+    });
   });
 });
