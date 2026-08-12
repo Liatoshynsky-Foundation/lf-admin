@@ -71,8 +71,6 @@ const BLOCKS_CONFIG: Record<string, () => React.JSX.Element> = {
   NewsletterSubscription: NewsletterSubscription,
   DataRetention: DataRetention,
   ContactUs: ContactUs,
-
-  //new
   UserRights: UserRightsBlockView,
   GoogleAuth: GoogleAuthBlockView,
   DataUsage: DataUsageBlockView,

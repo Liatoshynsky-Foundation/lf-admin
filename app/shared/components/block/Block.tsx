@@ -48,10 +48,8 @@ export function Block<TBlock = Record<string, unknown>>({
   const headerItem = content.find((item): item is HeaderContentItem => item.type === CONTENT_TYPE.HEADER);
   const headerTitle = proseToHeaderText(headerItem?.title?.[locale] as ProseDoc, title);
 
-  // Какие типы можно добавлять: слоты, помеченные repeatable
   const addableSlots = config.allowed.filter((slot) => slot.repeatable);
 
-  // Итем можно удалить, если его слот не required
   const isRemovable = (item: ContentItem) => {
     const slot = config.allowed.find((s) => s.type === item.type);
     return !slot?.required;
