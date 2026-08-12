@@ -44,6 +44,7 @@ input FondFiltersInput {
     search: String
     languages: [ContentLanguage!]
     sort: [SortOptions!]
+    statuses: [FondStatus!]
 }
 
 input UpdateFondInput {

@@ -1,0 +1,22 @@
+query AllFonds($filters: FondFiltersInput) {
+  findAllFonds(filters: $filters) {
+    id
+    fondNumber
+    name {
+      uk
+      en
+    }
+    documentCreationDate {
+      uk
+      en
+    }
+    chronologicalBoundaries {
+      uk
+      en
+    }
+    casesCount
+    descriptionsCount
+    status
+    updatedAt
+  }
+}

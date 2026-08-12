@@ -24,3 +24,13 @@ export const FOND_VALIDATION_MESSAGES = {
   organizationFormMaxLength: 'Значення не може перевищувати 150 символів.',
   descriptionMaxLength: 'Опис не може перевищувати 1000 символів.'
 } as const;
+
+export const FONDS_LOADING_STATE_TITLE = 'Завантаження фондів';
+export const FONDS_LOADING_STATE_DESCRIPTION = 'Зачекайте, поки завершиться запит.';
+export const FONDS_ERROR_STATE_TITLE = 'Не вдалося завантажити фонди';
+export const FONDS_ERROR_STATE_DESCRIPTION = 'Спробуйте оновити сторінку або повторити пізніше.';
+export const FONDS_EMPTY_STATE_NO_RESULTS_TITLE = 'Результатів немає';
+export const FONDS_EMPTY_STATE_NO_RESULTS_DESCRIPTION =
+  'За цими критеріями нічого не знайдено.\nСпробуйте змінити параметри фільтрів або пошуку.';
+export const FONDS_EMPTY_STATE_TITLE = 'Фонди відсутні';
+export const FONDS_EMPTY_STATE_DESCRIPTION = 'Матеріали для цієї вкладки поки відсутні.';
