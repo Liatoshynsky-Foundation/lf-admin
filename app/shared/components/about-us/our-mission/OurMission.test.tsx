@@ -6,10 +6,12 @@ import { createDocNode } from '~/__mocks__/utils';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { MissionListItemWithId } from '~/types/store/pages/about-us/blocks/missionBlock';
 
-
 interface MockImagePreviewBlockProps {
   readonly title: string;
   readonly imageUrl: string;
+  readonly previewWidth?: number;
+  readonly previewHeight?: number;
+  readonly alignActionsToPreviewBottom?: boolean;
   readonly altText?: string;
   readonly onChangeImage: (url: string, crop?: unknown) => void;
   readonly onChangeAltText?: (value: string) => void;
@@ -20,8 +22,20 @@ const toggleBlockVisibilityMock = jest.fn();
 const setFieldValidityMock = jest.fn();
 const usePageBlockMock = jest.fn();
 jest.mock('~/store', () => ({
-  useStore: (selector: (state: { readonly locale: 'uk'; readonly setField: typeof setFieldMock; readonly toggleBlockVisibility: typeof toggleBlockVisibilityMock; readonly setFieldValidity: typeof setFieldValidityMock }) => unknown) =>
-    selector({ locale: 'uk', setField: setFieldMock, toggleBlockVisibility: toggleBlockVisibilityMock, setFieldValidity: setFieldValidityMock })
+  useStore: (
+    selector: (state: {
+      readonly locale: 'uk';
+      readonly setField: typeof setFieldMock;
+      readonly toggleBlockVisibility: typeof toggleBlockVisibilityMock;
+      readonly setFieldValidity: typeof setFieldValidityMock;
+    }) => unknown
+  ) =>
+    selector({
+      locale: 'uk',
+      setField: setFieldMock,
+      toggleBlockVisibility: toggleBlockVisibilityMock,
+      setFieldValidity: setFieldValidityMock
+    })
 }));
 jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
   usePageBlock: () => usePageBlockMock()
@@ -33,9 +47,20 @@ jest.mock('../../sortable-list/SortableList');
 
 jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
   __esModule: true,
-  ImagePreviewBlock: ({ title, imageUrl, altText, onChangeImage, onChangeAltText }: MockImagePreviewBlockProps) => (
+  ImagePreviewBlock: ({
+    title,
+    imageUrl,
+    previewWidth,
+    previewHeight,
+    alignActionsToPreviewBottom,
+    altText,
+    onChangeImage,
+    onChangeAltText
+  }: MockImagePreviewBlockProps) => (
     <div data-testid={`image-block-${title}`}>
       <span data-testid={`image-url-${title}`}>{imageUrl}</span>
+      <span data-testid={`preview-size-${title}`}>{`${previewWidth}x${previewHeight}`}</span>
+      <span data-testid={`align-bottom-${title}`}>{String(alignActionsToPreviewBottom)}</span>
       <span data-testid={`alt-text-${title}`}>{altText}</span>
       <button data-testid={`upload-${title}`} onClick={() => onChangeImage('new-image-path.jpg')}>
         Upload
@@ -116,6 +141,15 @@ describe('OurMission', () => {
     expect(screen.getByTestId(`alt-text-${keys.bigUpload}`)).toHaveTextContent('legacy alt text');
   });
 
+  it('should pass mission image preview layout settings', () => {
+    runSimulation();
+
+    expect(screen.getByTestId(`preview-size-${keys.upload}`)).toHaveTextContent('188x224');
+    expect(screen.getByTestId(`preview-size-${keys.bigUpload}`)).toHaveTextContent('395x224');
+    expect(screen.getByTestId(`align-bottom-${keys.upload}`)).toHaveTextContent('true');
+    expect(screen.getByTestId(`align-bottom-${keys.bigUpload}`)).toHaveTextContent('true');
+  });
+
   it('should render skeleton when no block exists', () => {
     usePageBlockMock.mockReturnValue({ block: null });
 
@@ -153,19 +187,12 @@ describe('OurMission', () => {
         expect.objectContaining({ id: 'uuid-1', uk: { type: 'doc', content: [] }, en: { type: 'doc', content: [] } })
       ])
     ],
-    [
-      'triggering item drop action rows',
-      `delete-${TARGET_ID}`,
-      'list',
-      []
-    ],
+    ['triggering item drop action rows', `delete-${TARGET_ID}`, 'list', []],
     [
       'updating standard list point rich-text trees',
       `trigger-change-${keys.item}`,
       'list',
-      expect.arrayContaining([
-        expect.objectContaining({ id: TARGET_ID, uk: createDocNode(`Updated ${keys.item}`) })
-      ])
+      expect.arrayContaining([expect.objectContaining({ id: TARGET_ID, uk: createDocNode(`Updated ${keys.item}`) })])
     ],
     [
       'editing layout image configuration captions',
@@ -207,19 +234,11 @@ describe('OurMission', () => {
       'bigImage',
       expect.objectContaining({ alt: expect.objectContaining({ uk: 'Updated alt text' }) })
     ]
-  ])(
-    'should correctly invoke setField upon %s',
-    (_scenario, triggerId, storeKey, expectedPayload) => {
-      runSimulation(triggerId);
+  ])('should correctly invoke setField upon %s', (_scenario, triggerId, storeKey, expectedPayload) => {
+    runSimulation(triggerId);
 
-      expect(setFieldMock).toHaveBeenCalledWith(
-        PAGE_IDS.ABOUT_US,
-        BLOCK_IDS.OUR_MISSION,
-        storeKey,
-        expectedPayload
-      );
-    }
-  );
+    expect(setFieldMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_MISSION, storeKey, expectedPayload);
+  });
 
   it('should call toggleBlockVisibility with pageId and blockId when the visibility toggle is clicked', () => {
     runSimulation('collapsible-block-toggle-visibility');
@@ -262,12 +281,10 @@ describe('OurMission', () => {
 
     fireEvent.click(screen.getByTestId('mock-sortable-list'));
 
-    expect(setFieldMock).toHaveBeenCalledWith(
-      PAGE_IDS.ABOUT_US,
-      BLOCK_IDS.OUR_MISSION,
-      'list',
-      [doubleMockBlock.list[1], doubleMockBlock.list[0]]
-    );
+    expect(setFieldMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_MISSION, 'list', [
+      doubleMockBlock.list[1],
+      doubleMockBlock.list[0]
+    ]);
   });
 
   it('should leave unrelated mission points untouched when updating a single point in a multi-point list', () => {
@@ -285,15 +302,10 @@ describe('OurMission', () => {
     render(<OurMission />);
     fireEvent.click(screen.getAllByTestId(`trigger-change-${keys.item}`)[0]);
 
-    expect(setFieldMock).toHaveBeenCalledWith(
-      PAGE_IDS.ABOUT_US,
-      BLOCK_IDS.OUR_MISSION,
-      'list',
-      [
-        expect.objectContaining({ id: '1', uk: createDocNode(`Updated ${keys.item}`) }),
-        doubleMockBlock.list[1]
-      ]
-    );
+    expect(setFieldMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.OUR_MISSION, 'list', [
+      expect.objectContaining({ id: '1', uk: createDocNode(`Updated ${keys.item}`) }),
+      doubleMockBlock.list[1]
+    ]);
   });
 
   it('should propagate a provided crop through onChangeImage instead of falling back to null', () => {
@@ -303,7 +315,11 @@ describe('OurMission', () => {
       PAGE_IDS.ABOUT_US,
       BLOCK_IDS.OUR_MISSION,
       'smallImage',
-      expect.objectContaining({ src: 'new-image-path.jpg', isTmp: false, crop: { rect: { x: 0, y: 0, width: 10, height: 10 } } })
+      expect.objectContaining({
+        src: 'new-image-path.jpg',
+        isTmp: false,
+        crop: { rect: { x: 0, y: 0, width: 10, height: 10 } }
+      })
     );
   });
 
@@ -353,9 +369,9 @@ describe('OurMission', () => {
     usePageBlockMock.mockReturnValue({
       block: { ...mockBlock, title: undefined }
     });
-    
+
     render(<OurMission />);
-    
+
     expect(screen.getByTestId('collapsible-block')).toBeInTheDocument();
   });
 });
