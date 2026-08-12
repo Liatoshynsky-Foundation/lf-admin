@@ -118,6 +118,42 @@ jest.mock('./useWorksTableActions', () => ({
   }))
 }));
 
+jest.mock('./(composition)/useWorkUrlState', () => ({
+  useWorkUrlState: jest.fn(() => ({
+    compositionId: null,
+    compositionToEdit: null,
+    isCompositionLoading: false,
+    isEditOpen: false,
+    openEditComposition: jest.fn(),
+    closeEditComposition: jest.fn()
+  }))
+}));
+
+jest.mock('./(composition)/useDeleteWorkAction', () => ({
+  useDeleteWorkAction: jest.fn(() => ({
+    deleteComposition: null,
+    setDeleteComposition: jest.fn(),
+    handleConfirmCompositionDelete: jest.fn(),
+    unlinkComposition: null,
+    setUnlinkComposition: jest.fn(),
+    handleConfirmUnlinkComposition: jest.fn()
+  }))
+}));
+
+jest.mock('./(composition)/useUpdateWorkAction', () => ({
+  useUpdateWorkAction: jest.fn(() => ({
+    handleUpdateComposition: jest.fn(),
+    error: null,
+    clearError: jest.fn()
+  }))
+}));
+
+jest.mock('~/shared/hooks/use-share/useShare', () => ({
+  useShare: jest.fn(() => ({
+    handleShare: jest.fn()
+  }))
+}));
+
 jest.mock('~/shared/components/dropdown-menu/ActionMenu', () => ({
   __esModule: true,
   default: ({ anchorEl, menuItems }: { anchorEl: HTMLElement | null; menuItems: any[] }) => {
