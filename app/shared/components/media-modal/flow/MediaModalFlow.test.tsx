@@ -387,6 +387,21 @@ describe('MediaModalFlow', () => {
     expect(screen.queryByTestId('MediaModal')).not.toBeInTheDocument();
   });
 
+  it('should not render media content while the modal is closed', () => {
+    const gallery = jest.fn(() => <div data-testid="GalleryView" />);
+
+    render(
+      <MediaModalFlow
+        open={false}
+        onClose={jest.fn()}
+        onApply={jest.fn()}
+        renderers={{ ...createRenderers(), gallery }}
+      />
+    );
+
+    expect(gallery).not.toHaveBeenCalled();
+  });
+
   it('should apply non-image upload without crop step', async () => {
     const onClose = jest.fn();
     const onApply = jest.fn().mockResolvedValue(undefined);

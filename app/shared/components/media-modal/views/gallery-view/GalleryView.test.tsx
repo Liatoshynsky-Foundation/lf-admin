@@ -298,6 +298,103 @@ describe('GalleryView', () => {
     expect(screen.queryByText('cover.jpg')).not.toBeInTheDocument();
   });
 
+  it.each([
+    ['audio', 'recording.mp3', 'audio/mpeg', 'AUDIO'],
+    ['pdf', 'score.pdf', 'application/pdf', 'PDF']
+  ] as const)('should use Asset MIME metadata for generic R2 listings in the %s gallery', (mediaKind, filename, mimeType, assetType) => {
+    const url = `https://example.com/${filename}`;
+
+    (useGalleryFiles as jest.Mock).mockReturnValue({
+      files: [
+        {
+          filename,
+          originalName: filename,
+          mimeType: 'application/octet-stream',
+          size: 1,
+          createdAt: '2024-01-01T00:00:00.000Z',
+          url
+        }
+      ],
+      isLoading: false,
+      error: null
+    });
+    (useAllAssetsQuery as jest.Mock).mockReturnValue({
+      data: {
+        allAssets: [{
+          id: `asset-${mediaKind}`,
+          type: assetType,
+          mimeType,
+          url,
+          filename,
+          originalname: filename,
+          isStarred: false,
+          tags: [],
+          usageRefs: []
+        }]
+      },
+      loading: false
+    });
+
+    render(
+      <GalleryView
+        selected={null}
+        onPick={mockOnPick}
+        filters={mockFilters}
+        onFiltersChange={mockOnFiltersChange}
+        mediaKind={mediaKind}
+      />
+    );
+
+    expect(screen.getByText(filename)).toBeInTheDocument();
+  });
+
+  it.each([
+    ['audio', 'recording.mp3', 'image/jpeg'],
+    ['pdf', 'score.pdf', 'audio/mpeg']
+  ] as const)('should reject a %s file when Asset MIME metadata conflicts', (mediaKind, filename, mimeType) => {
+    const url = `https://example.com/${filename}`;
+
+    (useGalleryFiles as jest.Mock).mockReturnValue({
+      files: [{
+        filename,
+        originalName: filename,
+        mimeType: 'application/octet-stream',
+        size: 1,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        url
+      }],
+      isLoading: false,
+      error: null
+    });
+    (useAllAssetsQuery as jest.Mock).mockReturnValue({
+      data: {
+        allAssets: [{
+          id: `asset-${mediaKind}-conflict`,
+          type: 'IMAGE',
+          mimeType,
+          url,
+          filename,
+          isStarred: false,
+          tags: [],
+          usageRefs: []
+        }]
+      },
+      loading: false
+    });
+
+    render(
+      <GalleryView
+        selected={null}
+        onPick={mockOnPick}
+        filters={mockFilters}
+        onFiltersChange={mockOnFiltersChange}
+        mediaKind={mediaKind}
+      />
+    );
+
+    expect(screen.queryByText(filename)).not.toBeInTheDocument();
+  });
+
   it('should match items by usage page from asset usageRefs', () => {
     (useAllAssetsQuery as jest.Mock).mockReturnValue({
       data: {

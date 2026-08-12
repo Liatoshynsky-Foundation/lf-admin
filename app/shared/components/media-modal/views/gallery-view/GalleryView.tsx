@@ -111,6 +111,7 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
 
   type AssetMeta = {
     id: string;
+    mimeType: string;
     filename: string;
     originalname?: string;
     isStarred: boolean;
@@ -129,10 +130,15 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
   const galleryItems = useMemo((): GalleryItem[] => {
     return r2Files
       .filter((file): file is GalleryFile & { url: string } => Boolean(file.url))
-      .filter((file) => !config.matchesFile || config.matchesFile(file.mimeType ?? '', file.filename ?? ''))
-      .map((file) => {
+      .flatMap((file): GalleryItem[] => {
         const asset = assetByUrl[file.url];
-        return {
+        const mimeType = asset?.mimeType || file.mimeType || '';
+
+        if (config.matchesFile && !config.matchesFile(mimeType, file.filename ?? '')) {
+          return [];
+        }
+
+        return [{
           id: asset?.id ?? file.path ?? file.filename,
           filename: asset?.filename ?? file.filename,
           originalname: asset?.originalname ?? undefined,
@@ -141,7 +147,7 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
           tags: asset?.tags ?? [],
           usageRefs: asset?.usageRefs ?? [],
           createdAt: file.createdAt
-        };
+        }];
       });
   }, [r2Files, assetByUrl, config]);
 
