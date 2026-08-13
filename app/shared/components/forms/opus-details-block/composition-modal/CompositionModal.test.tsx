@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { ReactElement } from 'react';
 
 import CompositionModal from './CompositionModal';
-import { COMPOSITION_MODAL_TEXTS } from '~/constants/opus';
+import { COMPOSITION_MODAL_LABELS, COMPOSITION_MODAL_TEXTS } from '~/constants/opus';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import type { OpusCompositionData } from '~/types/opus';
 
@@ -48,6 +48,18 @@ const baseProps = {
   onSubmit: jest.fn()
 };
 
+const INITIAL_COMPOSITION_VALUE: OpusCompositionData = {
+  id: 'c1',
+  name: 'Твір',
+  genre: '',
+  year: '',
+  audios: [{ id: 'a1', name: 'Запис', fileUrl: 'https://files/rec.mp3' }],
+  notes: [
+    { id: 'n1', name: 'Ноти 1', fileUrl: 'https://files/sheet.pdf', publishDate: '2020' },
+    { id: 'n2', name: 'Ноти 2' }
+  ]
+};
+
 describe('CompositionModal', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -63,7 +75,7 @@ describe('CompositionModal', () => {
 
   it('renders the edit heading and prefilled title', () => {
     const initialValue: OpusCompositionData = {
-      id: 'c1',
+      ...INITIAL_COMPOSITION_VALUE,
       name: 'Існуючий твір',
       genre: 'Соната',
       year: '1920',
@@ -136,7 +148,7 @@ describe('CompositionModal', () => {
 
   it('clears the title with the adornment button', () => {
     const initialValue: OpusCompositionData = {
-      id: 'c1',
+      ...INITIAL_COMPOSITION_VALUE,
       name: 'Твір',
       genre: '',
       year: '',
@@ -254,18 +266,10 @@ describe('CompositionModal', () => {
 
   it('renders prefilled audios and notes and hides the empty notice', () => {
     const initialValue: OpusCompositionData = {
-      id: 'c1',
-      name: 'Твір',
+      ...INITIAL_COMPOSITION_VALUE,
       genre: 'Соната',
       year: '1900',
-      audios: [
-        { id: 'a1', name: 'Запис', fileUrl: 'https://files/rec.mp3' },
-        { id: 'a2', name: '', fileUrl: 'https://files/second.mp3?token=123' }
-      ],
-      notes: [
-        { id: 'n1', name: 'Ноти 1', fileUrl: 'https://files/sheet.pdf', publishDate: '2020' },
-        { id: 'n2', name: 'Ноти 2' }
-      ]
+      audios: [...INITIAL_COMPOSITION_VALUE.audios, { id: 'a2', name: '', fileUrl: 'https://files/second.mp3?token=123' }]
     };
     render(<CompositionModal {...baseProps} mode="edit" initialValue={initialValue} />);
 
@@ -275,20 +279,11 @@ describe('CompositionModal', () => {
     expect(screen.getByDisplayValue('Ноти 1')).toBeInTheDocument();
     expect(screen.getByDisplayValue('2020')).toBeInTheDocument();
     expect(screen.queryByText(/Додайте файли/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: COMPOSITION_MODAL_LABELS.addAudio })).toBeDisabled();
   });
 
   it('edits, clears and removes prefilled media', () => {
-    const initialValue: OpusCompositionData = {
-      id: 'c1',
-      name: 'Твір',
-      genre: '',
-      year: '',
-      audios: [
-        { id: 'a1', name: 'Запис', fileUrl: 'https://files/rec.mp3' },
-        { id: 'a2', name: 'Другий запис', fileUrl: 'https://files/second.mp3' }
-      ],
-      notes: [{ id: 'n1', name: 'Ноти 1', fileUrl: 'https://files/sheet.pdf', publishDate: '2020' }]
-    };
+    const initialValue: OpusCompositionData = { ...INITIAL_COMPOSITION_VALUE };
     render(<CompositionModal {...baseProps} mode="edit" initialValue={initialValue} />);
 
     fireEvent.change(screen.getByDisplayValue('Ноти 1'), { target: { value: 'Оновлені ноти' } });
@@ -373,7 +368,7 @@ describe('CompositionModal', () => {
   it('submits the composition with a trimmed title in edit mode', () => {
     const onSubmit = jest.fn();
     const initialValue: OpusCompositionData = {
-      id: 'c1',
+      ...INITIAL_COMPOSITION_VALUE,
       name: 'Початковий твір',
       genre: 'Соната',
       year: '1920',
