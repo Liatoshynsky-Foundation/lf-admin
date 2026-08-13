@@ -58,11 +58,6 @@ export const WORKS_TABS: ReadonlyArray<WorksTabConfig> = [
   { value: WORKS_TABS_NAMES.WORKS, label: 'Твори', href: `${WORKS_BASE_PATH}/compositions` }
 ];
 
-const WORKS_LANGUAGE_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
-  { value: 'uk', label: 'Українська' },
-  { value: 'en', label: 'Англійська' },
-  { value: 'bilingual', label: 'Двомовна' }
-];
 
 const WORKS_STATUS_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
   {
@@ -81,12 +76,6 @@ export const WORKS_FILTERS: ReadonlyArray<WorksFilterConfig> = [
     label: 'Статус',
     options: WORKS_STATUS_FILTER_OPTIONS,
     menuMinWidth: 150
-  },
-  {
-    id: 'language',
-    label: 'Мова',
-    options: WORKS_LANGUAGE_FILTER_OPTIONS,
-    menuMinWidth: 205
   }
 ];
 

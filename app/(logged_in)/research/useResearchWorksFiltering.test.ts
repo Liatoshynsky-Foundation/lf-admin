@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 
 import { useResearchWorksFiltering } from './useResearchWorksFiltering';
+import { RESEARCH_STATUS_OPTIONS, SORT_STORAGE_KEY } from '~/constants/research';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 jest.mock('~/constants/sort', () => ({
@@ -19,8 +20,6 @@ jest.mock('~/constants/sort', () => ({
     { value: 'name_desc', label: 'Назва (Я-А)' }
   ]
 }));
-
-const SORT_STORAGE_KEY = 'research_works_sort';
 
 describe('useResearchWorksFiltering', () => {
   beforeEach(() => {
@@ -44,10 +43,7 @@ describe('useResearchWorksFiltering', () => {
       expect(result.current.statusFilterProps.label).toBe('Статус');
       expect(result.current.statusFilterProps.value).toEqual([]);
       expect(result.current.statusFilterProps.hideClearAction).toBe(true);
-      expect(result.current.statusFilterProps.options).toEqual([
-        { value: BaseContentStatuses.Published, label: 'Опубліковано' },
-        { value: BaseContentStatuses.Hidden, label: 'Приховано' }
-      ]);
+      expect(result.current.statusFilterProps.options).toEqual(RESEARCH_STATUS_OPTIONS);
     });
 
     it('sets sortProps triggerLabel to the label of the default sort option', () => {
