@@ -245,7 +245,13 @@ export default function CompositionModal({
           <Box sx={styles.mediaHeader}>
             <Typography sx={styles.mediaTitle}>{COMPOSITION_MODAL_LABELS.audio}</Typography>
             <Box sx={styles.mediaDivider} />
-            <Button variant="filled" size="small" color="primary" onClick={() => setMediaTarget({ field: 'audios' })}>
+            <Button
+              variant="filled"
+              size="small"
+              color="primary"
+              disabled={composition.audios.length > 0}
+              onClick={() => setMediaTarget({ field: 'audios' })}
+            >
               {COMPOSITION_MODAL_LABELS.addAudio}
             </Button>
           </Box>

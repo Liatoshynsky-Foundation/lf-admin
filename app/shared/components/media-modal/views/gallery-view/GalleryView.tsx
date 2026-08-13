@@ -106,7 +106,7 @@ const matchesUsageFilter = (item: GalleryItem, filter: string): boolean => {
   return item.usageRefs.some((ref) => ref.pageId === filter);
 };
 
-export function GalleryView({ selected: _selected, onPick, filters, onFiltersChange, mediaKind = 'image' }: Props) {
+export function GalleryView({ selected, onPick, filters, onFiltersChange, mediaKind = 'image' }: Props) {
   const config = MEDIA_KIND_CONFIG[mediaKind];
   const { files: r2Files, isLoading: r2Loading } = useGalleryFiles(config.folder);
 
@@ -146,16 +146,18 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
           return [];
         }
 
-        return [{
-          id: asset?.id ?? file.path ?? file.filename,
-          filename: asset?.filename ?? file.filename,
-          originalname: asset?.originalname ?? undefined,
-          url: file.url,
-          isStarred: asset?.isStarred ?? false,
-          tags: asset?.tags ?? [],
-          usageRefs: asset?.usageRefs ?? [],
-          createdAt: file.createdAt
-        }];
+        return [
+          {
+            id: asset?.id ?? file.path ?? file.filename,
+            filename: asset?.filename ?? file.filename,
+            originalname: asset?.originalname ?? undefined,
+            url: file.url,
+            isStarred: asset?.isStarred ?? false,
+            tags: asset?.tags ?? [],
+            usageRefs: asset?.usageRefs ?? [],
+            createdAt: file.createdAt
+          }
+        ];
       });
   }, [r2Files, assetByUrl, config]);
 
@@ -213,6 +215,7 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
             usageLocations={getPageNames(item.usageRefs)}
             onClick={() => handleCardClick(item)}
             testId={`GalleryCard-${item.id}`}
+            isSelected={selected?.id === item.id}
           />
         )}
         testIdPrefix="GalleryView"

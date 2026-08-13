@@ -28,6 +28,10 @@ export const mediaCardStyles = {
     }
   } as SxProps<Theme>,
 
+  selectedImageContainer: {
+    opacity: 0.65
+  } as SxProps<Theme>,
+
   image: {
     width: '100%',
     height: '100%',
