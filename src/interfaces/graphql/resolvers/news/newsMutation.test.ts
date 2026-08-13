@@ -89,24 +89,24 @@ describe('NewsMutation Resolvers', () => {
   beforeEach(() => jest.clearAllMocks());
 
   describe('Security & Validation', () => {
-    it('should throw TITLE_REQUIRED_FOR_SLUG if title is empty', async () => {
+    it('should throw TITLE_LENGTH_INVALID if title is empty', async () => {
       const invalidInput = { ...baseInput, title: { uk: '', en: '' } };
       await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toThrow(
-        newsServiceErrors.TITLE_REQUIRED_FOR_SLUG
+        newsServiceErrors.TITLE_LENGTH_INVALID
       );
     });
 
-    it('should throw TITLE_REQUIRED_FOR_SLUG if title uk is missing (via partial object)', async () => {
+    it('should throw TITLE_LENGTH_INVALID if title uk is missing (via partial object)', async () => {
       const invalidInput = { ...baseInput, title: { uk: '' } } as unknown as CreateNewsGQLInput;
       await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toThrow(
-        newsServiceErrors.TITLE_REQUIRED_FOR_SLUG
+        newsServiceErrors.TITLE_LENGTH_INVALID
       );
     });
 
-    it('should throw TITLE_TOO_SHORT_FOR_SLUG if title has fewer than 2 characters', async () => {
+    it('should throw TITLE_LENGTH_INVALID if title has fewer than 2 characters', async () => {
       const invalidInput = { ...baseInput, title: { uk: 'Т', en: 'T' } };
       await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toThrow(
-        newsServiceErrors.TITLE_TOO_SHORT_FOR_SLUG
+        newsServiceErrors.TITLE_LENGTH_INVALID
       );
     });
 
@@ -118,7 +118,7 @@ describe('NewsMutation Resolvers', () => {
         await NewsMutation.createNews({}, { input: invalidInput }, adminContext);
       } catch (error) {
         expect(error).toBeInstanceOf(GraphQLError);
-        expect((error as GraphQLError).message).toBe(newsServiceErrors.TITLE_TOO_LONG_FOR_SLUG);
+        expect((error as GraphQLError).message).toBe(newsServiceErrors.TITLE_LENGTH_INVALID);
         expect((error as GraphQLError).extensions.code).toBe('BAD_USER_INPUT');
       }
     });
@@ -131,7 +131,7 @@ describe('NewsMutation Resolvers', () => {
         await NewsMutation.createNews({}, { input: invalidInput }, adminContext);
       } catch (error) {
         expect(error).toBeInstanceOf(GraphQLError);
-        expect((error as GraphQLError).message).toBe(newsServiceErrors.TITLE_TOO_LONG_FOR_SLUG);
+        expect((error as GraphQLError).message).toBe(newsServiceErrors.TITLE_LENGTH_INVALID);
         expect((error as GraphQLError).extensions.code).toBe('BAD_USER_INPUT');
       }
     });
@@ -291,22 +291,22 @@ describe('NewsMutation Resolvers', () => {
       expect(mockRepo.update).toHaveBeenCalled();
     });
 
-    it('should throw TITLE_REQUIRED_FOR_SLUG if updated title is empty', async () => {
+    it('should throw TITLE_LENGTH_INVALID if updated title is empty', async () => {
       mockAction('findById', createMockNews({ id }));
 
       await expect(
         NewsMutation.updateNews({}, { id, input: { title: { uk: '', en: '' } } }, adminContext)
-      ).rejects.toThrow(newsServiceErrors.TITLE_REQUIRED_FOR_SLUG);
+      ).rejects.toThrow(newsServiceErrors.TITLE_LENGTH_INVALID);
 
       expect(mockRepo.update).not.toHaveBeenCalled();
     });
 
-    it('should throw TITLE_TOO_SHORT_FOR_SLUG if updated title has fewer than 2 characters', async () => {
+    it('should throw TITLE_LENGTH_INVALID if updated title has fewer than 2 characters', async () => {
       mockAction('findById', createMockNews({ id }));
 
       await expect(
         NewsMutation.updateNews({}, { id, input: { title: { uk: 'Т', en: 'T' } } }, adminContext)
-      ).rejects.toThrow(newsServiceErrors.TITLE_TOO_SHORT_FOR_SLUG);
+      ).rejects.toThrow(newsServiceErrors.TITLE_LENGTH_INVALID);
 
       expect(mockRepo.update).not.toHaveBeenCalled();
     });
@@ -323,7 +323,7 @@ describe('NewsMutation Resolvers', () => {
         );
       } catch (error) {
         expect(error).toBeInstanceOf(GraphQLError);
-        expect((error as GraphQLError).message).toBe(newsServiceErrors.TITLE_TOO_LONG_FOR_SLUG);
+        expect((error as GraphQLError).message).toBe(newsServiceErrors.TITLE_LENGTH_INVALID);
         expect((error as GraphQLError).extensions.code).toBe('BAD_USER_INPUT');
       }
 
