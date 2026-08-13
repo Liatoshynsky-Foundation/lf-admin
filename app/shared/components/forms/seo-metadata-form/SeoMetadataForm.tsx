@@ -206,7 +206,7 @@ export default function SeoMetadataForm({
         imageUrl={ogImagePreview || ''}
         fileName={displayFileName}
         onChangeImage={handleImageChange}
-        aspectRatio={CROP_RATIOS.SOCIAL_MEDIA_PREVIEW}
+        aspectRatio={CROP_RATIOS.GROUP_PHOTO}
         disabled={isUploading}
         buttonSpacing="8px"
         stackSpacing="0"
