@@ -34,6 +34,9 @@ interface ImagePreviewBlockProps extends StackProps {
   disabled?: boolean;
   locale?: 'uk' | 'en';
   aspectRatio?: number;
+  previewWidth?: number;
+  previewHeight?: number;
+  alignActionsToPreviewBottom?: boolean;
 }
 
 export const ImagePreviewBlock = ({
@@ -55,7 +58,10 @@ export const ImagePreviewBlock = ({
   onBlurAltText,
   disabled = false,
   locale = 'uk',
-  aspectRatio
+  aspectRatio,
+  previewWidth = PREVIEW_W,
+  previewHeight = PREVIEW_H,
+  alignActionsToPreviewBottom = false
 }: ImagePreviewBlockProps) => {
   const [previewImage, setPreviewImage] = useState<string>(imageUrl);
 
@@ -75,7 +81,29 @@ export const ImagePreviewBlock = ({
   const displayedFileName =
     finalFileName && finalFileName.length > 15 ? `${finalFileName.slice(0, 15)}...` : finalFileName;
 
-  const { styles: cropStyles, onLoad: onImgLoad } = useCroppedImage(savedCrop, PREVIEW_W, PREVIEW_H);
+  const { styles: cropStyles, onLoad: onImgLoad } = useCroppedImage(savedCrop, previewWidth, previewHeight);
+
+  const previewStyles = useMemo(
+    () => ({
+      ...styles.imagePreview,
+      width: `${previewWidth}px`,
+      height: `${previewHeight}px`
+    }),
+    [previewWidth, previewHeight]
+  );
+
+  const rightBlockStyles = useMemo(() => {
+    if (!alignActionsToPreviewBottom) return styles.rightBlock;
+
+    return {
+      ...styles.rightBlock,
+      gap: 0,
+      minHeight: `${previewHeight}px`,
+      justifyContent: 'space-between'
+    };
+  }, [alignActionsToPreviewBottom, previewHeight]);
+
+  const rightBlockSpacing = alignActionsToPreviewBottom ? 0 : stackSpacing;
 
   const openEditCrop = () => {
     setMediaInitial({
@@ -123,7 +151,7 @@ export const ImagePreviewBlock = ({
   const renderPreviewContent = useMemo(() => {
     if (!previewImage) {
       return (
-        <Box sx={styles.imagePreview}>
+        <Box sx={previewStyles}>
           <CloudUpload data-testid="cloud-upload-icon" size={76} strokeWidth={1.5} />
         </Box>
       );
@@ -138,7 +166,73 @@ export const ImagePreviewBlock = ({
         <Box component="img" src={previewImage} alt={title || 'Selected'} onLoad={onImgLoad} sx={cropStyles.image} />
       </Box>
     );
-  }, [previewImage, oval, title, cropStyles, onImgLoad]);
+  }, [previewImage, oval, title, cropStyles, onImgLoad, previewStyles]);
+
+  const renderTextContent = (
+    <>
+      <Stack spacing={typographySpacing} sx={styles.textStack}>
+        <Box sx={styles.fileNameContainer}>
+          <Typography variant="body1" sx={{ ...styles.fileNameText, flexShrink: 0 }}>
+            Назва файлу
+          </Typography>
+          <Typography variant="body1" sx={styles.fileNameText}>
+            {displayedFileName}
+          </Typography>
+        </Box>
+
+        {dimensions ? (
+          <Typography variant="body2" color="text.secondary" sx={styles.imageSizeText}>
+            Розмір: {dimensions.width} × {dimensions.height}
+          </Typography>
+        ) : null}
+      </Stack>
+
+      {showAlternativeText && (
+        <TextField
+          label="Alt текст зображення"
+          value={altText || ''}
+          onChange={(e) => onChangeAltText?.(e.target.value)}
+          onBlur={onBlurAltText}
+          fullWidth
+          margin="none"
+          multiline
+          maxRows={4}
+          disabled={!previewImage}
+          error={altTextErrorState}
+          helperText={altTextError}
+          slotProps={{ htmlInput: { maxLength: 250 } }}
+        />
+      )}
+    </>
+  );
+
+  const renderActionButtons = (
+    <Stack direction={direction} spacing={buttonSpacing}>
+      <Button
+        startIcon={<PencilIcon />}
+        variant="outlined"
+        color="primary"
+        size="small"
+        onClick={openEditCrop}
+        sx={[styles.imageActionButton, styles.editButton]}
+        disabled={disabled || !previewImage}
+      >
+        Редагувати
+      </Button>
+
+      <Button
+        startIcon={<ImageIcon />}
+        variant="outlined"
+        color="primary"
+        size="small"
+        onClick={openChangeImage}
+        sx={[styles.imageActionButton, styles.changeButton]}
+        disabled={disabled}
+      >
+        Змінити зображення
+      </Button>
+    </Stack>
+  );
 
   return (
     <Box sx={styles.container}>
@@ -151,66 +245,9 @@ export const ImagePreviewBlock = ({
       <Box sx={styles.imageBlock}>
         {renderPreviewContent}
 
-        <Stack spacing={stackSpacing} sx={styles.rightBlock}>
-          <Stack spacing={typographySpacing} sx={styles.textStack}>
-            <Box sx={styles.fileNameContainer}>
-              <Typography variant="body1" sx={{ ...styles.fileNameText, flexShrink: 0 }}>
-                Назва файлу
-              </Typography>
-              <Typography variant="body1" sx={styles.fileNameText}>
-                {displayedFileName}
-              </Typography>
-            </Box>
-
-            {dimensions ? (
-              <Typography variant="body2" color="text.secondary" sx={styles.imageSizeText}>
-                Розмір: {dimensions.width}×{dimensions.height} px.
-              </Typography>
-            ) : null}
-          </Stack>
-
-          {showAlternativeText && (
-            <TextField
-              label="Alt текст зображення"
-              value={altText || ''}
-              onChange={(e) => onChangeAltText?.(e.target.value)}
-              onBlur={onBlurAltText}
-              fullWidth
-              margin="none"
-              multiline
-              maxRows={2}
-              disabled={!previewImage}
-              error={altTextErrorState}
-              helperText={altTextError}
-              inputProps={{ maxLength: 250 }}
-            />
-          )}
-
-          <Stack direction={direction} spacing={buttonSpacing}>
-            <Button
-              startIcon={<PencilIcon />}
-              variant="outlined"
-              color="primary"
-              size="small"
-              onClick={openEditCrop}
-              sx={[styles.imageActionButton, styles.editButton]}
-              disabled={disabled || !previewImage}
-            >
-              Редагувати
-            </Button>
-
-            <Button
-              startIcon={<ImageIcon />}
-              variant="outlined"
-              color="primary"
-              size="small"
-              onClick={openChangeImage}
-              sx={[styles.imageActionButton, styles.changeButton]}
-              disabled={disabled}
-            >
-              Змінити зображення
-            </Button>
-          </Stack>
+        <Stack spacing={rightBlockSpacing} sx={rightBlockStyles}>
+          {alignActionsToPreviewBottom ? <Stack spacing={stackSpacing}>{renderTextContent}</Stack> : renderTextContent}
+          {renderActionButtons}
         </Stack>
       </Box>
 

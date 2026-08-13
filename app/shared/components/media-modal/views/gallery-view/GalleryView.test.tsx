@@ -203,6 +203,55 @@ describe('GalleryView', () => {
     expect(screen.getByText('Завантаження...')).toBeInTheDocument();
   });
 
+  it('should render empty state when image array is empty after loading', () => {
+    (useGalleryFiles as jest.Mock).mockReturnValue({ files: [], isLoading: false, error: null });
+
+    renderGalleryView();
+
+    expect(screen.getByTestId('GalleryView-emptyState')).toBeInTheDocument();
+    expect(screen.getByText('Зображень не знайдено. Спробуйте додати зображення до медіатеки.')).toBeInTheDocument();
+    expect(screen.queryByTestId('mocked-media-grid')).not.toBeInTheDocument();
+  });
+
+  it('should render empty state when search returns no gallery items', () => {
+    renderGalleryView({ search: 'missing-image' });
+
+    expect(screen.getByTestId('GalleryView-emptyState')).toBeInTheDocument();
+    expect(screen.queryByTestId('mocked-media-grid')).not.toBeInTheDocument();
+  });
+
+  it('should render media-kind specific empty state for pdf gallery', () => {
+    (useGalleryFiles as jest.Mock).mockReturnValue({ files: [], isLoading: false, error: null });
+
+    render(
+      <GalleryView
+        selected={null}
+        onPick={mockOnPick}
+        filters={mockFilters}
+        onFiltersChange={mockOnFiltersChange}
+        mediaKind="pdf"
+      />
+    );
+
+    expect(screen.getByText('Файлів не знайдено. Спробуйте додати файли до медіатеки.')).toBeInTheDocument();
+  });
+
+  it('should render media-kind specific empty state for audio gallery', () => {
+    (useGalleryFiles as jest.Mock).mockReturnValue({ files: [], isLoading: false, error: null });
+
+    render(
+      <GalleryView
+        selected={null}
+        onPick={mockOnPick}
+        filters={mockFilters}
+        onFiltersChange={mockOnFiltersChange}
+        mediaKind="audio"
+      />
+    );
+
+    expect(screen.getByText('Аудіофайлів не знайдено. Спробуйте додати аудіофайли до медіатеки.')).toBeInTheDocument();
+  });
+
   it('should filter out non-starred items when favorites filter is starred', () => {
     renderGalleryView({ favorites: 'starred' });
     expect(screen.queryByText('piano-studio.jpg')).not.toBeInTheDocument();

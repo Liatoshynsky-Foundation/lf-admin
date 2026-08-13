@@ -17,7 +17,8 @@ import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock
 import { ImagePreviewBlock } from '~/ds-components/photo-block/PhotoBlock';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { ensureIds } from '~/lib/utils/ensureIds';
-import { proseToHeaderText } from '~/lib/utils/prose';
+import { mergeLocalizedValue } from '~/lib/utils/mergeLocalizedValue';
+import { proseToHeaderText, resolveLocalizedText } from '~/lib/utils/prose';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useTitleValidation } from '~/shared/hooks/use-title-validation/useTitleValidation';
@@ -33,8 +34,18 @@ export type MissionImage = {
   src: string;
   generatedSrc: string;
   caption: LocalizedJSON;
-  alt: LocalizedJSON;
+  alt: Record<'uk' | 'en', string | JSONContent>;
   crop?: CropResult | null;
+};
+
+const MISSION_SMALL_IMAGE_PREVIEW_SIZE = {
+  width: 188,
+  height: 224
+};
+
+const MISSION_BIG_IMAGE_PREVIEW_SIZE = {
+  width: 395,
+  height: 224
 };
 
 type MissionImageBlockProps = {
@@ -42,19 +53,40 @@ type MissionImageBlockProps = {
   locale: 'uk' | 'en';
   title: string;
   aspectRatio?: number;
+  previewWidth: number;
+  previewHeight: number;
+  imageAlt?: string;
   onChangeCaption: (value: JSONContent) => void;
   onChangeImage: (url: string, crop?: CropResult | null) => void;
+  onAltChange?: (val: string) => void;
 };
 
-const MissionImageBlock = ({ image, locale, title, aspectRatio, onChangeCaption, onChangeImage }: MissionImageBlockProps) => (
+const MissionImageBlock = ({
+  image,
+  locale,
+  title,
+  aspectRatio,
+  previewWidth,
+  previewHeight,
+  imageAlt,
+  onChangeCaption,
+  onChangeImage,
+  onAltChange
+}: MissionImageBlockProps) => (
   <Box sx={styles.imageBlockWrapper}>
     <ImagePreviewBlock
       imageUrl={getImageUrl(image)}
       title={title}
       fileName={image.src || ''}
       initialCrop={image.crop}
-      aspectRatio = {aspectRatio}
+      aspectRatio={aspectRatio}
+      previewWidth={previewWidth}
+      previewHeight={previewHeight}
+      alignActionsToPreviewBottom
       onChangeImage={onChangeImage}
+      showAlternativeText
+      altText={imageAlt}
+      onChangeAltText={(value) => onAltChange?.(value)}
     />
     <CustomTextField
       fieldType="formatting"
@@ -86,7 +118,6 @@ const OurMission = () => {
 
   if (!block) return <EditBlockSkeleton />;
 
-
   const missionPoints: MissionPoint[] = missionList.map((item) => ({
     id: item.id,
     value: item[currentLocale]
@@ -116,15 +147,18 @@ const OurMission = () => {
   };
 
   const handleCaptionChange = (key: 'smallImage' | 'bigImage', value: JSONContent) => {
-    const image = block[key]!;
+    const image = block[key];
+    if (!image) return;
+
     setField(pageId, blockId, key, {
       ...image,
-      caption: { ...image.caption, [currentLocale]: value }
+      caption: mergeLocalizedValue(image.caption, currentLocale, value)
     });
   };
 
   const handleImageChange = (key: 'smallImage' | 'bigImage', url: string, crop?: CropResult | null) => {
-    const image = block[key]!;
+    const image = block[key];
+    if (!image) return;
 
     setField(pageId, blockId, key, {
       ...image,
@@ -134,6 +168,15 @@ const OurMission = () => {
     } as typeof image);
   };
 
+  const handleAltChange = (key: 'smallImage' | 'bigImage', val: string) => {
+    const image = block[key];
+    if (!image) return;
+
+    setField(pageId, blockId, key, {
+      ...image,
+      alt: mergeLocalizedValue(image.alt, currentLocale, val)
+    });
+  };
 
   const headerTitle = proseToHeaderText(block.title?.[currentLocale] as ProseDoc, 'Наша місія');
 
@@ -162,11 +205,7 @@ const OurMission = () => {
           <Typography variant="subtitle1" component="h4" sx={styles.pointHeader}>
             Текст секції:
           </Typography>
-          <SortableList
-            id="mission points"
-            items={missionPoints.map((p) => p.id as string)}
-            onDragEnd={handleDragEnd}
-          >
+          <SortableList id="mission points" items={missionPoints.map((p) => p.id as string)} onDragEnd={handleDragEnd}>
             <ConfigurableList<MissionPoint>
               items={missionPoints}
               addBtnLabel="Додати пункт"
@@ -198,8 +237,12 @@ const OurMission = () => {
           locale={currentLocale}
           title="Перше зображення секції"
           aspectRatio={CROP_RATIOS.FUNDATION_PROFILE_SMALL}
+          previewWidth={MISSION_SMALL_IMAGE_PREVIEW_SIZE.width}
+          previewHeight={MISSION_SMALL_IMAGE_PREVIEW_SIZE.height}
           onChangeCaption={(value) => handleCaptionChange('smallImage', value)}
           onChangeImage={(url, crop) => handleImageChange('smallImage', url, crop)}
+          imageAlt={resolveLocalizedText(block.smallImage.alt?.[currentLocale])}
+          onAltChange={(val) => handleAltChange('smallImage', val)}
         />
       )}
 
@@ -209,8 +252,12 @@ const OurMission = () => {
           locale={currentLocale}
           title="Друге зображення секції"
           aspectRatio={CROP_RATIOS.FUNDATION_PROFILE_BIG}
+          previewWidth={MISSION_BIG_IMAGE_PREVIEW_SIZE.width}
+          previewHeight={MISSION_BIG_IMAGE_PREVIEW_SIZE.height}
           onChangeCaption={(value) => handleCaptionChange('bigImage', value)}
           onChangeImage={(url, crop) => handleImageChange('bigImage', url, crop)}
+          imageAlt={resolveLocalizedText(block.bigImage.alt?.[currentLocale])}
+          onAltChange={(val) => handleAltChange('bigImage', val)}
         />
       )}
     </CollapsibleBlock>

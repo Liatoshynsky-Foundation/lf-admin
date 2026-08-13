@@ -17,9 +17,11 @@ interface MockFoundationBlockProps {
   readonly paragraphs: readonly MockParagraph[];
   readonly imageUrl: string;
   readonly fileName: string;
+  readonly imageAlt?: string;
   readonly onMainTextChange: (value: JSONContent) => void;
   readonly onParagraphChange: (idx: number, value: JSONContent) => void;
   readonly onImageChange: (url: string, crop?: CropRect) => void;
+  readonly onAltChange?: (value: string) => void;
 }
 
 const setFieldMock = jest.fn();
@@ -48,9 +50,11 @@ jest.mock('./foundation-block/FoundationBlock', () => ({
     paragraphs,
     imageUrl,
     fileName,
+    imageAlt,
     onMainTextChange,
     onParagraphChange,
-    onImageChange
+    onImageChange,
+    onAltChange
   }: MockFoundationBlockProps) => (
     <div>
       <div data-testid="main-text-json">{JSON.stringify(mainText)}</div>
@@ -82,6 +86,7 @@ jest.mock('./foundation-block/FoundationBlock', () => ({
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={imageUrl} alt="Foundation" data-testid="image" />
       <span data-testid="file-name">{fileName}</span>
+      <span data-testid="image-alt-text">{imageAlt}</span>
       <button
         data-testid="trigger-image-change"
         onClick={() => onImageChange('new-image-url.jpg', { x: 0, y: 0, width: 100, height: 100 })}
@@ -90,6 +95,9 @@ jest.mock('./foundation-block/FoundationBlock', () => ({
       </button>
       <button data-testid="trigger-image-change-no-crop" onClick={() => onImageChange('new-image-url.jpg')}>
         Change Image No Crop
+      </button>
+      <button data-testid="trigger-alt-change" onClick={() => onAltChange?.('New alt text')}>
+        Change Alt Text
       </button>
     </div>
   )
@@ -115,7 +123,17 @@ jest.mock('~/ds-components/collapsible-block/CollapsibleBlock', () => ({
   )
 }));
 
-jest.mock('~/lib/utils/prose', () => ({ proseToText: String, proseToHeaderText: (doc: unknown, fallback: string) => (doc ? String(doc) : fallback) }));
+jest.mock('~/lib/utils/prose', () => ({
+  proseToText: (doc: unknown) => {
+    if (!doc) return '';
+    return typeof doc === 'string' ? doc : 'converted-legacy-alt';
+  },
+  proseToHeaderText: (doc: unknown, fallback: string) => (doc ? String(doc) : fallback),
+  resolveLocalizedText: (doc: unknown) => {
+    if (!doc) return '';
+    return typeof doc === 'string' ? doc : 'converted-legacy-alt';
+  }
+}));
 
 const mockNodes = {
   org: createDocNode('Organisation Text'),
@@ -129,7 +147,8 @@ const mockBlock = {
   ourBelief: { uk: mockNodes.belief },
   image: {
     src: 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/image-src.jpg',
-    caption: { uk: 'Image Caption' }
+    caption: { uk: 'Image Caption' },
+    alt: { uk: mockNodes.org }
   }
 };
 
@@ -158,6 +177,8 @@ describe('LiatoshynskyFoundation', () => {
       'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/image-src.jpg'
     );
     expect(screen.getByTestId('file-name')).toHaveTextContent('Image Caption');
+    expect(screen.getByTestId('image-alt-text')).not.toHaveTextContent('[object Object]');
+    expect(screen.getByTestId('image-alt-text')).toHaveTextContent('converted-legacy-alt');
   });
 
   it('should call toggleBlockVisibility with pageId and blockId when the visibility toggle is clicked', () => {
@@ -192,6 +213,12 @@ describe('LiatoshynskyFoundation', () => {
 
   it.each([
     [
+      'section title updates',
+      'trigger-change-Заголовок секції',
+      'title',
+      expect.objectContaining({ uk: createDocNode('Updated Заголовок секції') })
+    ],
+    [
       'main organization text sections',
       'trigger-main-text-change',
       'ourOrganisation',
@@ -214,6 +241,12 @@ describe('LiatoshynskyFoundation', () => {
       'trigger-image-change',
       'image',
       expect.objectContaining({ src: 'new-image-url.jpg', isTmp: false, crop: { x: 0, y: 0, width: 100, height: 100 } })
+    ],
+    [
+      'image alt text updates',
+      'trigger-alt-change',
+      'image',
+      expect.objectContaining({ alt: expect.objectContaining({ uk: 'New alt text' }) })
     ]
   ])(
     'should correctly dispatch setField parameters when modifying %s',

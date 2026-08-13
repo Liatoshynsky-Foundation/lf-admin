@@ -1,3 +1,5 @@
+import { JSONContent } from '@tiptap/react';
+
 import { ProseDoc, ProseNode, ProseTextNode } from '~/types/common';
 
 export const proseToText = (doc?: ProseDoc): string => {
@@ -22,4 +24,13 @@ export const textToProse = (text: string): ProseDoc => ({
 export const proseToHeaderText = (doc?: ProseDoc, fallback = ''): string => {
   const text = proseToText(doc).replace(/\s+/g, ' ').trim();
   return text || fallback;
+};
+
+export const isProseDoc = (value: unknown): value is ProseDoc =>
+  typeof value === 'object' && value !== null && (value as { type?: unknown }).type === 'doc';
+
+export const resolveLocalizedText = (value?: JSONContent | string | null): string => {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  return isProseDoc(value) ? proseToText(value) : '';
 };
