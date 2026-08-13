@@ -16,6 +16,7 @@ export const styles = {
 
   imageBlockWrapper: {
     display: 'flex',
-    flexDirection: 'column'
+    flexDirection: 'column',
+    gap: '16px'
   }
 };

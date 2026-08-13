@@ -1,4 +1,3 @@
-
 export const PREVIEW_W = 196;
 export const PREVIEW_H = 120;
 
@@ -67,11 +66,11 @@ export const styles = {
   },
 
   editButton: {
-    width: '127px',
+    width: '127px'
   },
 
   changeButton: {
-    width: '190px',
+    width: '190px'
   },
 
   fileNameText: {

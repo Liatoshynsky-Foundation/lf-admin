@@ -38,25 +38,51 @@ export type MissionImage = {
   crop?: CropResult | null;
 };
 
+const MISSION_SMALL_IMAGE_PREVIEW_SIZE = {
+  width: 188,
+  height: 224
+};
+
+const MISSION_BIG_IMAGE_PREVIEW_SIZE = {
+  width: 395,
+  height: 224
+};
+
 type MissionImageBlockProps = {
   image: MissionImage;
   locale: 'uk' | 'en';
   title: string;
   aspectRatio?: number;
+  previewWidth: number;
+  previewHeight: number;
   imageAlt?: string;
   onChangeCaption: (value: JSONContent) => void;
   onChangeImage: (url: string, crop?: CropResult | null) => void;
   onAltChange?: (val: string) => void;
 };
 
-const MissionImageBlock = ({ image, locale, title, aspectRatio, imageAlt, onChangeCaption, onChangeImage, onAltChange}: MissionImageBlockProps) => (
+const MissionImageBlock = ({
+  image,
+  locale,
+  title,
+  aspectRatio,
+  previewWidth,
+  previewHeight,
+  imageAlt,
+  onChangeCaption,
+  onChangeImage,
+  onAltChange
+}: MissionImageBlockProps) => (
   <Box sx={styles.imageBlockWrapper}>
     <ImagePreviewBlock
       imageUrl={getImageUrl(image)}
       title={title}
       fileName={image.src || ''}
       initialCrop={image.crop}
-      aspectRatio = {aspectRatio}
+      aspectRatio={aspectRatio}
+      previewWidth={previewWidth}
+      previewHeight={previewHeight}
+      alignActionsToPreviewBottom
       onChangeImage={onChangeImage}
       showAlternativeText
       altText={imageAlt}
@@ -91,7 +117,6 @@ const OurMission = () => {
   };
 
   if (!block) return <EditBlockSkeleton />;
-
 
   const missionPoints: MissionPoint[] = missionList.map((item) => ({
     id: item.id,
@@ -180,11 +205,7 @@ const OurMission = () => {
           <Typography variant="subtitle1" component="h4" sx={styles.pointHeader}>
             Текст секції:
           </Typography>
-          <SortableList
-            id="mission points"
-            items={missionPoints.map((p) => p.id as string)}
-            onDragEnd={handleDragEnd}
-          >
+          <SortableList id="mission points" items={missionPoints.map((p) => p.id as string)} onDragEnd={handleDragEnd}>
             <ConfigurableList<MissionPoint>
               items={missionPoints}
               addBtnLabel="Додати пункт"
@@ -216,6 +237,8 @@ const OurMission = () => {
           locale={currentLocale}
           title="Перше зображення секції"
           aspectRatio={CROP_RATIOS.FUNDATION_PROFILE_SMALL}
+          previewWidth={MISSION_SMALL_IMAGE_PREVIEW_SIZE.width}
+          previewHeight={MISSION_SMALL_IMAGE_PREVIEW_SIZE.height}
           onChangeCaption={(value) => handleCaptionChange('smallImage', value)}
           onChangeImage={(url, crop) => handleImageChange('smallImage', url, crop)}
           imageAlt={resolveLocalizedText(block.smallImage.alt?.[currentLocale])}
@@ -229,6 +252,8 @@ const OurMission = () => {
           locale={currentLocale}
           title="Друге зображення секції"
           aspectRatio={CROP_RATIOS.FUNDATION_PROFILE_BIG}
+          previewWidth={MISSION_BIG_IMAGE_PREVIEW_SIZE.width}
+          previewHeight={MISSION_BIG_IMAGE_PREVIEW_SIZE.height}
           onChangeCaption={(value) => handleCaptionChange('bigImage', value)}
           onChangeImage={(url, crop) => handleImageChange('bigImage', url, crop)}
           imageAlt={resolveLocalizedText(block.bigImage.alt?.[currentLocale])}
