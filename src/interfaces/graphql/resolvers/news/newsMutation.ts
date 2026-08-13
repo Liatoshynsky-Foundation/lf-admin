@@ -160,10 +160,6 @@ export const NewsMutation = {
 
     const titleForSlug = extractTitleForSlug(trimmedInput.title);
 
-    if (!titleForSlug) {
-      throw new Error(newsServiceErrors.TITLE_REQUIRED_FOR_SLUG);
-    }
-
     validateTitleLength(trimmedInput.title);
     validateDescriptionLength(trimmedInput.description);
 
@@ -235,11 +231,6 @@ export const NewsMutation = {
     }
 
     if (trimmedInput.title) {
-      const titleForSlug = extractTitleForSlug(trimmedInput.title);
-      if (!titleForSlug) {
-        throw new Error(newsServiceErrors.TITLE_REQUIRED_FOR_SLUG);
-      }
-
       validateTitleLength(trimmedInput.title);
 
       await processSlugUpdate(id, trimmedInput.title, repo, updateData);
