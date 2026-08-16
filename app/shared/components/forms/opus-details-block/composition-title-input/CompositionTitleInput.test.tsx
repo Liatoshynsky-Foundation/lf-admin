@@ -36,6 +36,15 @@ describe('CompositionTitleInput', () => {
     expect(onChangeText).toHaveBeenCalledWith('Соната');
   });
 
+  it('limits typed titles to 250 characters', () => {
+    const onChangeText = jest.fn();
+    render(<CompositionTitleInput {...baseProps} onChangeText={onChangeText} />);
+
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'a'.repeat(251) } });
+
+    expect(onChangeText).toHaveBeenCalledWith('a'.repeat(250));
+  });
+
   it('calls onCreateNew when the create option is chosen', () => {
     const onCreateNew = jest.fn();
     render(<CompositionTitleInput {...baseProps} value="Нова" onCreateNew={onCreateNew} />);

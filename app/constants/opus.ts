@@ -65,6 +65,15 @@ export const OPUS_VALIDATION_MESSAGES = {
   captionTooLong: 'Текст має містити менше 250 символів.'
 } as const;
 
+export const COMPOSITION_VALIDATION_MESSAGES = {
+  titleRequired: 'Введіть назву твору.',
+  titleTooShort: 'Введіть щонайменше 2 символи.',
+  titleTooLong: 'Назва не може перевищувати 250 символів.',
+  genreTooShort: 'Введіть щонайменше 2 символи.',
+  genreTooLong: 'Жанр не може перевищувати 150 символів.',
+  yearInvalid: 'Введіть коректну дату.'
+} as const;
+
 export const COMPOSITION_MODAL_LABELS = {
   createTitle: 'Нова композиція',
   editTitle: 'Редагування композиції',

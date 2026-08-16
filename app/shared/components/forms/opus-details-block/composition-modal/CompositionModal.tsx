@@ -15,6 +15,7 @@ import {
   COMPOSITION_MODAL_LABELS,
   COMPOSITION_MODAL_TEXTS,
   COMPOSITION_TITLE_LIMITS,
+  COMPOSITION_VALIDATION_MESSAGES,
   COMPOSITION_YEAR_LIMITS
 } from '~/constants/opus';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
@@ -202,7 +203,7 @@ export default function CompositionModal({
       const hasFile = Boolean(note.fileUrl);
 
       if (hasDate && !publishDateToDayjs(note.publishDate)) {
-        errs.publishDate = 'Введіть коректну дату.';
+        errs.publishDate = COMPOSITION_VALIDATION_MESSAGES.yearInvalid;
         isValid = false;
       }
 

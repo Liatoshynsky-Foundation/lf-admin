@@ -200,6 +200,20 @@ describe('CompositionsMutation', () => {
       expect(context.requestContainer.cradle.compositionsRepository.create).not.toHaveBeenCalled();
     });
 
+    it.each([
+      ['genre', { genre: 'a' }],
+      ['year', { year: 202 }]
+    ])('should reject an invalid composition %s before creating', async (_field, input) => {
+      const createMock = jest.fn();
+      const context = createMockContext(MOCK_ADMIN, { create: createMock });
+
+      await expect(
+        CompositionsMutation.createComposition(null, { input: { ...MOCK_INPUT, ...input } }, context)
+      ).rejects.toMatchObject({ extensions: { code: 'BAD_USER_INPUT' } });
+
+      expect(createMock).not.toHaveBeenCalled();
+    });
+
     it('should trim localized names and translate a duplicate-key create error', async () => {
       const createMock = jest.fn().mockRejectedValue({ code: 11000, keyValue: { 'name.uk': 'Trimmed' } });
       const context = createMockContext(MOCK_ADMIN, {
@@ -368,6 +382,27 @@ describe('CompositionsMutation', () => {
         message: 'Композиція "Taken" вже існує',
         extensions: { code: 'COMPOSITION_NAME_TAKEN' }
       });
+    });
+
+    it.each([
+      ['genre', { genre: 'a' }],
+      ['year', { year: 202 }]
+    ])('should reject an invalid composition %s before updating', async (_field, input) => {
+      const updateMock = jest.fn();
+      const context = createMockContext(MOCK_ADMIN, {
+        findById: jest.fn().mockResolvedValue(MOCK_COMPOSITION),
+        update: updateMock
+      });
+
+      await expect(
+        CompositionsMutation.updateComposition(
+          null,
+          { id: MOCK_COMPOSITION_ID, input: input as UpdateCompositionInput },
+          context
+        )
+      ).rejects.toMatchObject({ extensions: { code: 'BAD_USER_INPUT' } });
+
+      expect(updateMock).not.toHaveBeenCalled();
     });
 
     it('should process undefined and null values in update input correctly', async () => {

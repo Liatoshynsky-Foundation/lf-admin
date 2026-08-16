@@ -1,19 +1,21 @@
 import { z } from 'zod';
 
+import { COMPOSITION_VALIDATION_MESSAGES } from '~/constants/opus';
+
 export const compositionTitleSchema = z
   .string()
   .trim()
-  .min(1, 'Введіть назву композиції.')
-  .min(2, 'Введіть щонайменше 2 символи.')
-  .max(250, 'Назва не може перевищувати 250 символів.');
+  .min(1, COMPOSITION_VALIDATION_MESSAGES.titleRequired)
+  .min(2, COMPOSITION_VALIDATION_MESSAGES.titleTooShort)
+  .max(250, COMPOSITION_VALIDATION_MESSAGES.titleTooLong);
 
 export const compositionGenreSchema = z
   .string()
   .trim()
-  .refine((genre) => !genre || genre.length >= 2, 'Введіть щонайменше 2 символи.')
-  .max(150, 'Жанр не може перевищувати 150 символів.');
+  .refine((genre) => !genre || genre.length >= 2, COMPOSITION_VALIDATION_MESSAGES.genreTooShort)
+  .max(150, COMPOSITION_VALIDATION_MESSAGES.genreTooLong);
 
 export const compositionYearSchema = z
   .string()
   .trim()
-  .refine((year) => !year || /^\d{4}$/.test(year), 'Введіть коректну дату.');
+  .refine((year) => !year || /^\d{4}$/.test(year), COMPOSITION_VALIDATION_MESSAGES.yearInvalid);

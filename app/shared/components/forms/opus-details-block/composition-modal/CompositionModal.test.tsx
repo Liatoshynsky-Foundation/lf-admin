@@ -1,8 +1,9 @@
+import 'dayjs/locale/uk';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { ReactElement } from 'react';
 
 import CompositionModal from './CompositionModal';
-import { COMPOSITION_MODAL_LABELS, COMPOSITION_MODAL_TEXTS } from '~/constants/opus';
+import { COMPOSITION_MODAL_LABELS, COMPOSITION_MODAL_TEXTS, COMPOSITION_VALIDATION_MESSAGES } from '~/constants/opus';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import type { OpusCompositionData } from '~/types/opus';
 
@@ -48,6 +49,23 @@ const baseProps = {
   onSubmit: jest.fn()
 };
 
+const INPUTS = {
+  title: 'Назва твору *',
+  genre: 'Жанр',
+  year: 'Рік',
+  noteName: 'Назва нот',
+  noteDate: 'Дата видання',
+  audioName: 'Назва аудіо',
+  createButton: 'Створити',
+  addNotesButton: 'Додати ноти',
+  addAudioButton: 'Додати аудіо',
+  saveButton: 'Зберегти'
+} as const;
+
+const MOCK_NOTE_DATE = '01/01/2020';
+const MOCK_UPDATED_NOTE_DATE = '01/01/2022';
+const MOCK_UPDATED_NOTE_NAME = 'Оновлені ноти';
+
 const INITIAL_COMPOSITION_VALUE: OpusCompositionData = {
   id: 'c1',
   name: 'Твір',
@@ -70,7 +88,7 @@ describe('CompositionModal', () => {
     render(<CompositionModal {...baseProps} mode="create" />);
 
     expect(screen.getByText('Нова композиція')).toBeInTheDocument();
-    expect(screen.getByLabelText('Назва твору *')).toHaveValue('');
+    expect(screen.getByLabelText(INPUTS.title)).toHaveValue('');
   });
 
   it('renders the edit heading and prefilled title', () => {
@@ -85,7 +103,7 @@ describe('CompositionModal', () => {
     render(<CompositionModal {...baseProps} mode="edit" initialValue={initialValue} />);
 
     expect(screen.getByText('Редагування композиції')).toBeInTheDocument();
-    expect(screen.getByLabelText('Назва твору *')).toHaveValue('Існуючий твір');
+    expect(screen.getByLabelText(INPUTS.title)).toHaveValue('Існуючий твір');
   });
 
   it('renders nothing while closed', () => {
@@ -110,19 +128,19 @@ describe('CompositionModal', () => {
     const onSubmit = jest.fn();
     render(<CompositionModal {...baseProps} mode="create" onSubmit={onSubmit} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Створити' }));
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.createButton }));
 
     expect(onSubmit).not.toHaveBeenCalled();
-    expect(screen.getByText('Обовʼязкове поле')).toBeInTheDocument();
+    expect(screen.getByText(COMPOSITION_VALIDATION_MESSAGES.titleRequired)).toBeInTheDocument();
   });
 
   it('clears error message when user starts typing in title field', () => {
     render(<CompositionModal {...baseProps} mode="create" />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Створити' }));
-    expect(screen.getByText('Обовʼязкове поле')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.createButton }));
+    expect(screen.getByText(COMPOSITION_VALIDATION_MESSAGES.titleRequired)).toBeInTheDocument();
 
-    const titleInput = screen.getByLabelText('Назва твору *');
+    const titleInput = screen.getByLabelText(INPUTS.title);
     fireEvent.change(titleInput, { target: { value: 'Нова назва' } });
 
     expect(screen.queryByText('Обовʼязкове поле')).not.toBeInTheDocument();
@@ -137,11 +155,11 @@ describe('CompositionModal', () => {
   it('updates the genre and year fields', () => {
     render(<CompositionModal {...baseProps} mode="create" />);
 
-    const genreField = screen.getByLabelText('Жанр');
+    const genreField = screen.getByLabelText(INPUTS.genre);
     fireEvent.change(genreField, { target: { value: 'Ноктюрн' } });
     expect(genreField).toHaveValue('Ноктюрн');
 
-    const yearField = screen.getByLabelText('Рік');
+    const yearField = screen.getByLabelText(INPUTS.year);
     fireEvent.change(yearField, { target: { value: '1888' } });
     expect(yearField).toHaveValue('1888');
   });
@@ -157,7 +175,7 @@ describe('CompositionModal', () => {
     };
     render(<CompositionModal {...baseProps} mode="edit" initialValue={initialValue} />);
 
-    const nameField = screen.getByLabelText('Назва твору *');
+    const nameField = screen.getByLabelText(INPUTS.title);
     expect(nameField).toHaveValue('Твір');
 
     const clearTitleBtn = screen.getAllByRole('button').find((btn) => btn.closest('.MuiInputAdornment-root'));
@@ -171,37 +189,43 @@ describe('CompositionModal', () => {
   it('adds a notes row with name and date fields', () => {
     render(<CompositionModal {...baseProps} mode="create" />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Додати ноти' }));
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.addNotesButton }));
 
-    expect(screen.getByLabelText('Назва нот')).toBeInTheDocument();
-    expect(screen.getByLabelText('Дата видання')).toBeInTheDocument();
+    expect(screen.getByLabelText(INPUTS.noteName)).toBeInTheDocument();
+    expect(screen.getByLabelText(INPUTS.noteDate)).toBeInTheDocument();
   });
 
-  it('validates note publish date and restricts non-numeric input', () => {
+  it('accepts a valid note publication date', () => {
     render(<CompositionModal {...baseProps} mode="create" />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Додати ноти' }));
-    const dateField = screen.getByLabelText('Дата видання');
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.addNotesButton }));
+    const dateField = screen.getByLabelText(INPUTS.noteDate);
 
-    fireEvent.change(dateField, { target: { value: 'abc' } });
-    expect(dateField).toHaveValue('');
+    fireEvent.change(dateField, { target: { value: '01/01/2023' } });
+    expect(dateField).toHaveValue('01/01/2023');
+  });
 
-    fireEvent.change(dateField, { target: { value: '2023' } });
-    expect(dateField).toHaveValue('2023');
+  it('clears a prefilled note publication date with the picker clear action', () => {
+    render(<CompositionModal {...baseProps} mode="edit" initialValue={INITIAL_COMPOSITION_VALUE} />);
+
+    expect(screen.getByDisplayValue(MOCK_NOTE_DATE)).toBeInTheDocument();
+    fireEvent.click(screen.getByTitle('Clear'));
+
+    expect(screen.queryByDisplayValue(MOCK_NOTE_DATE)).not.toBeInTheDocument();
   });
 
   it('shows error on note if publishDate is set without name or file', () => {
     const onSubmit = jest.fn();
     render(<CompositionModal {...baseProps} mode="create" onSubmit={onSubmit} />);
 
-    const titleInput = screen.getByLabelText('Назва твору *');
+    const titleInput = screen.getByLabelText(INPUTS.title);
     fireEvent.change(titleInput, { target: { value: 'Valid Title' } });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Додати ноти' }));
-    const dateField = screen.getByLabelText('Дата видання');
-    fireEvent.change(dateField, { target: { value: '2023' } });
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.addNotesButton }));
+    const dateField = screen.getByLabelText(INPUTS.noteDate);
+    fireEvent.change(dateField, { target: { value: '01/01/2023' } });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Створити' }));
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.createButton }));
 
     expect(onSubmit).not.toHaveBeenCalled();
     expect(
@@ -213,51 +237,51 @@ describe('CompositionModal', () => {
     const onSubmit = jest.fn();
     render(<CompositionModal {...baseProps} mode="create" onSubmit={onSubmit} />);
 
-    fireEvent.change(screen.getByLabelText('Назва твору *'), { target: { value: 'Valid Title' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Додати ноти' }));
+    fireEvent.change(screen.getByLabelText(INPUTS.title), { target: { value: 'Valid Title' } });
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.addNotesButton }));
 
-    const dateField = screen.getByLabelText('Дата видання');
-    fireEvent.change(dateField, { target: { value: '2023' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Створити' }));
+    const dateField = screen.getByLabelText(INPUTS.noteDate);
+    fireEvent.change(dateField, { target: { value: '01/01/2023' } });
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.createButton }));
 
     expect(onSubmit).not.toHaveBeenCalled();
     expect(
       screen.getByText((content) => content.includes(COMPOSITION_MODAL_TEXTS.emptyNoteDateError))
     ).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('Назва нот'), { target: { value: 'Ноти' } });
+    fireEvent.change(screen.getByLabelText(INPUTS.noteName), { target: { value: 'Ноти' } });
     expect(
       screen.getByText((content) => content.includes(COMPOSITION_MODAL_TEXTS.emptyNoteDateError))
     ).toBeInTheDocument();
 
-    fireEvent.change(dateField, { target: { value: '2024' } });
+    fireEvent.change(dateField, { target: { value: '01/01/2024' } });
     expect(
       screen.queryByText((content) => content.includes(COMPOSITION_MODAL_TEXTS.emptyNoteDateError))
     ).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Створити' }));
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.createButton }));
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 
   it('removes a note row using its delete button', () => {
     render(<CompositionModal {...baseProps} mode="create" />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Додати ноти' }));
-    expect(screen.getByLabelText('Назва нот')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.addNotesButton }));
+    expect(screen.getByLabelText(INPUTS.noteName)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: COMPOSITION_MODAL_TEXTS.deleteAriaLabel }));
-    expect(screen.queryByLabelText('Назва нот')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(INPUTS.noteName)).not.toBeInTheDocument();
   });
 
   it('filters out empty note rows on submit', () => {
     const onSubmit = jest.fn();
     render(<CompositionModal {...baseProps} mode="create" onSubmit={onSubmit} />);
 
-    const titleInput = screen.getByLabelText('Назва твору *');
+    const titleInput = screen.getByLabelText(INPUTS.title);
     fireEvent.change(titleInput, { target: { value: 'Valid Title' } });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Додати ноти' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Створити' }));
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.addNotesButton }));
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.createButton }));
 
     expect(onSubmit).toHaveBeenCalledTimes(1);
     const submitted = onSubmit.mock.calls[0][0] as OpusCompositionData;
@@ -269,7 +293,10 @@ describe('CompositionModal', () => {
       ...INITIAL_COMPOSITION_VALUE,
       genre: 'Соната',
       year: '1900',
-      audios: [...INITIAL_COMPOSITION_VALUE.audios, { id: 'a2', name: '', fileUrl: 'https://files/second.mp3?token=123' }]
+      audios: [
+        ...INITIAL_COMPOSITION_VALUE.audios,
+        { id: 'a2', name: '', fileUrl: 'https://files/second.mp3?token=123' }
+      ]
     };
     render(<CompositionModal {...baseProps} mode="edit" initialValue={initialValue} />);
 
@@ -277,19 +304,31 @@ describe('CompositionModal', () => {
     expect(screen.getByText('second.mp3')).toBeInTheDocument();
     expect(screen.getByText('sheet.pdf')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Ноти 1')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('2020')).toBeInTheDocument();
+    expect(screen.getByDisplayValue(MOCK_NOTE_DATE)).toBeInTheDocument();
     expect(screen.queryByText(/Додайте файли/)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: COMPOSITION_MODAL_LABELS.addAudio })).toBeDisabled();
+  });
+
+  it('renders an audio row with an empty file URL without crashing', () => {
+    const initialValue: OpusCompositionData = {
+      ...INITIAL_COMPOSITION_VALUE,
+      audios: [{ id: 'empty-url', name: '', fileUrl: '' }],
+      notes: []
+    };
+
+    render(<CompositionModal {...baseProps} mode="edit" initialValue={initialValue} />);
+
+    expect(screen.getByRole('button', { name: COMPOSITION_MODAL_TEXTS.deleteAriaLabel })).toBeInTheDocument();
   });
 
   it('edits, clears and removes prefilled media', () => {
     const initialValue: OpusCompositionData = { ...INITIAL_COMPOSITION_VALUE };
     render(<CompositionModal {...baseProps} mode="edit" initialValue={initialValue} />);
 
-    fireEvent.change(screen.getByDisplayValue('Ноти 1'), { target: { value: 'Оновлені ноти' } });
-    fireEvent.change(screen.getByDisplayValue('2020'), { target: { value: '2022' } });
-    expect(screen.getByDisplayValue('Оновлені ноти')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('2022')).toBeInTheDocument();
+    fireEvent.change(screen.getByDisplayValue('Ноти 1'), { target: { value: MOCK_UPDATED_NOTE_NAME } });
+    fireEvent.change(screen.getByDisplayValue(MOCK_NOTE_DATE), { target: { value: MOCK_UPDATED_NOTE_DATE } });
+    expect(screen.getByDisplayValue(MOCK_UPDATED_NOTE_NAME)).toBeInTheDocument();
+    expect(screen.getByDisplayValue(MOCK_UPDATED_NOTE_DATE)).toBeInTheDocument();
 
     const iconButtons = screen.getAllByRole('button');
     const clearFileBtn = iconButtons.find(
@@ -311,7 +350,7 @@ describe('CompositionModal', () => {
   it('attaches an audio file as a chip via the media modal', () => {
     render(<CompositionModal {...baseProps} mode="create" />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Додати аудіо' }));
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.addAudioButton }));
     fireEvent.click(screen.getByTestId('media-apply'));
 
     expect(screen.getByText('audio.mp3')).toBeInTheDocument();
@@ -324,7 +363,7 @@ describe('CompositionModal', () => {
     };
     render(<CompositionModal {...baseProps} mode="create" />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Додати аудіо' }));
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.addAudioButton }));
     fireEvent.click(screen.getByTestId('media-apply'));
 
     expect(screen.getByText('gallery.mp3')).toBeInTheDocument();
@@ -337,7 +376,7 @@ describe('CompositionModal', () => {
     };
     render(<CompositionModal {...baseProps} mode="create" />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Додати аудіо' }));
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.addAudioButton }));
     fireEvent.click(screen.getByTestId('media-apply'));
 
     expect(screen.getByText(/Додайте файли/)).toBeInTheDocument();
@@ -347,7 +386,7 @@ describe('CompositionModal', () => {
   it('attaches a file to a notes row via the media modal', () => {
     render(<CompositionModal {...baseProps} mode="create" />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Додати ноти' }));
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.addNotesButton }));
     const uploadButtons = screen.getAllByRole('button').filter((btn) => btn.querySelector('svg.lucide-cloud-upload'));
     fireEvent.click(uploadButtons[0]);
     fireEvent.click(screen.getByTestId('media-apply'));
@@ -358,7 +397,7 @@ describe('CompositionModal', () => {
   it('closes media modal on close action without changes', () => {
     render(<CompositionModal {...baseProps} mode="create" />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Додати аудіо' }));
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.addAudioButton }));
     expect(screen.getByTestId('media-close')).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('media-close'));
@@ -377,18 +416,126 @@ describe('CompositionModal', () => {
     };
     render(<CompositionModal {...baseProps} mode="edit" initialValue={initialValue} onSubmit={onSubmit} />);
 
-    fireEvent.change(screen.getByLabelText('Назва твору *'), { target: { value: '  Редагований твір  ' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
+    fireEvent.change(screen.getByLabelText(INPUTS.title), { target: { value: '  Редагований твір  ' } });
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.saveButton }));
 
     expect(onSubmit).toHaveBeenCalledTimes(1);
     const submitted = onSubmit.mock.calls[0][0] as OpusCompositionData;
     expect(submitted.name).toBe('Редагований твір');
   });
 
+  it('rejects a one-character title', () => {
+    const onSubmit = jest.fn();
+    render(<CompositionModal {...baseProps} mode="create" onSubmit={onSubmit} />);
+    fireEvent.change(screen.getByLabelText(INPUTS.title), { target: { value: 'A' } });
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.createButton }));
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByText(COMPOSITION_VALIDATION_MESSAGES.titleTooShort)).toBeInTheDocument();
+  });
+
+  it('accepts exactly 250 title characters and enforces the UI limit', () => {
+    const onSubmit = jest.fn();
+    render(<CompositionModal {...baseProps} mode="create" onSubmit={onSubmit} />);
+    const titleField = screen.getByLabelText(INPUTS.title);
+    const title = 'A'.repeat(250);
+    fireEvent.change(titleField, { target: { value: `${title}B` } });
+    expect(titleField).toHaveValue(title);
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.createButton }));
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects a 251-character title supplied in the initial value', () => {
+    const onSubmit = jest.fn();
+    render(
+      <CompositionModal
+        {...baseProps}
+        mode="edit"
+        initialValue={{ ...INITIAL_COMPOSITION_VALUE, name: 'A'.repeat(251) }}
+        onSubmit={onSubmit}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.saveButton }));
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByText(COMPOSITION_VALIDATION_MESSAGES.titleTooLong)).toBeInTheDocument();
+  });
+
+  it('accepts genre boundary values of 2 and 150 characters', () => {
+    for (const genre of ['AB', 'A'.repeat(150)]) {
+      const onSubmit = jest.fn();
+      const { unmount } = render(<CompositionModal {...baseProps} mode="create" onSubmit={onSubmit} />);
+      fireEvent.change(screen.getByLabelText(INPUTS.title), { target: { value: 'Valid Title' } });
+      fireEvent.change(screen.getByLabelText(INPUTS.genre), { target: { value: genre } });
+      fireEvent.click(screen.getByRole('button', { name: INPUTS.createButton }));
+      expect(onSubmit).toHaveBeenCalledTimes(1);
+      unmount();
+    }
+  });
+
+  it.each(['0000', '9999'])('accepts valid boundary year %s', (year) => {
+    const onSubmit = jest.fn();
+    render(<CompositionModal {...baseProps} mode="create" onSubmit={onSubmit} />);
+    fireEvent.change(screen.getByLabelText(INPUTS.title), { target: { value: 'Valid Title' } });
+    fireEvent.change(screen.getByLabelText(INPUTS.year), { target: { value: year } });
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.createButton }));
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it('accepts a whitespace-padded year after normalization', () => {
+    const onSubmit = jest.fn();
+    render(
+      <CompositionModal
+        {...baseProps}
+        mode="edit"
+        initialValue={{ ...INITIAL_COMPOSITION_VALUE, year: ' 2020 ' }}
+        onSubmit={onSubmit}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.saveButton }));
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it('blocks submit and shows an error for an invalid composition year', () => {
+    const onSubmit = jest.fn();
+    render(<CompositionModal {...baseProps} mode="create" onSubmit={onSubmit} />);
+
+    fireEvent.change(screen.getByLabelText(INPUTS.title), { target: { value: 'Valid Title' } });
+    fireEvent.change(screen.getByLabelText(INPUTS.year), { target: { value: '20' } });
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.createButton }));
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByText('Введіть коректну дату.')).toBeInTheDocument();
+  });
+
+  it('blocks submit and shows an error for an invalid composition genre', () => {
+    const onSubmit = jest.fn();
+    render(<CompositionModal {...baseProps} mode="create" onSubmit={onSubmit} />);
+
+    fireEvent.change(screen.getByLabelText(INPUTS.title), { target: { value: 'Valid Title' } });
+    fireEvent.change(screen.getByLabelText(INPUTS.genre), { target: { value: 'A' } });
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.createButton }));
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByText(COMPOSITION_VALIDATION_MESSAGES.genreTooShort)).toBeInTheDocument();
+  });
+
+  it('blocks submit and shows an error for an invalid note publication date', () => {
+    const onSubmit = jest.fn();
+    const initialValue: OpusCompositionData = {
+      ...INITIAL_COMPOSITION_VALUE,
+      notes: [{ id: 'invalid-date', name: 'Ноти', publishDate: 'not-a-date' }]
+    };
+    render(<CompositionModal {...baseProps} mode="edit" initialValue={initialValue} onSubmit={onSubmit} />);
+
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.saveButton }));
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByText('Введіть коректну дату.')).toBeInTheDocument();
+  });
+
   it('restricts non-numeric input for the year field', () => {
     render(<CompositionModal {...baseProps} mode="create" />);
 
-    const yearField = screen.getByLabelText('Рік');
+    const yearField = screen.getByLabelText(INPUTS.year);
 
     fireEvent.change(yearField, { target: { value: 'abc' } });
     expect(yearField).toHaveValue('');

@@ -3,6 +3,14 @@ import * as nextNavigation from 'next/navigation';
 import toast from 'react-hot-toast';
 
 import { useGroupContent } from './useGroupContent';
+import {
+  COMPOSITION_DUPLICATE_ERROR,
+  COMPOSITION_NAME_REQUIRED_ERROR,
+  COMPOSITION_REQUIRED_FIELDS_ERROR,
+  OPUS_MUTATION_RESULTS,
+  OPUS_VALIDATION_MESSAGES,
+  REQUIRED_FIELD_ERROR
+} from '~/constants/opus';
 import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
 import { useDeleteOpus, useOpusById, useUpdateOpus } from '~/shared/hooks/use-opuses/useOpuses';
 import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
@@ -40,33 +48,6 @@ jest.mock('~/shared/hooks/use-opuses/useOpuses', () => ({
   useDeleteOpus: jest.fn()
 }));
 
-jest.mock('~/constants/opus', () => ({
-  OPUS_FIELD_LIMITS: {
-    name: { min: 2, max: 250 },
-    caption: { min: 2, max: 250 },
-    altText: { min: 2, max: 250 },
-    maxPhotos: 20
-  },
-  OPUS_VALIDATION_MESSAGES: {
-    nameRequired: 'nameRequired',
-    nameTooShort: 'nameTooShort',
-    numberInvalid: 'numberInvalid',
-    performanceUrl: 'performanceUrl',
-    performanceSignature: 'performanceSignature',
-    photoAltText: 'photoAltText',
-    photoTextTooShort: 'photoTextTooShort',
-    captionTooLong: 'captionTooLong'
-  },
-  OPUS_MUTATION_RESULTS: {
-    deleted: 'deleted',
-    createFailed: 'createFailed',
-    updateFailed: 'updateFailed'
-  },
-  COMPOSITION_DUPLICATE_ERROR: 'duplicate compositions',
-  COMPOSITION_NAME_REQUIRED_ERROR: 'required composition name',
-  COMPOSITION_REQUIRED_FIELDS_ERROR: 'Заповніть усі обов’язкові поля перед публікацією.',
-  REQUIRED_FIELD_ERROR: 'REQUIRED_FIELD_ERROR'
-}));
 
 const mockFetchedOpus = {
   id: 'test-id',
@@ -276,7 +257,7 @@ describe('useGroupContent Hook', () => {
       await act(async () => {
         await result.current.handleMenuOptionClick('PUBLISH');
       });
-      expect(toast.error).toHaveBeenCalledWith('Заповніть усі обов’язкові поля перед публікацією.');
+      expect(toast.error).toHaveBeenCalledWith(COMPOSITION_REQUIRED_FIELDS_ERROR);
       expect(result.current.isDetailsExpanded).toBe(true);
       expect(mockUpdateOpus).not.toHaveBeenCalled();
     });
@@ -509,7 +490,7 @@ describe('useGroupContent Hook', () => {
         await result.current.handlePublishClick();
       });
 
-      expect(toast.error).toHaveBeenCalledWith('required composition name');
+      expect(toast.error).toHaveBeenCalledWith(COMPOSITION_NAME_REQUIRED_ERROR);
       expect(result.current.errors['compositions.comp-1.name']).toBe('');
       expect(result.current.isDirty).toBe(false);
     });
@@ -646,7 +627,7 @@ describe('useGroupContent Hook', () => {
       });
 
       expect(mockUpdateOpus).not.toHaveBeenCalled();
-      expect(result.current.errors.groupNumber).toBe('numberInvalid');
+      expect(result.current.errors.groupNumber).toBe(OPUS_VALIDATION_MESSAGES.numberInvalid);
       expect(result.current.isDetailsExpanded).toBe(true);
     });
 
@@ -664,9 +645,9 @@ describe('useGroupContent Hook', () => {
         await result.current.handlePublishClick();
       });
 
-      expect(result.current.errors['groupTitle.uk']).toBe('nameRequired');
-      expect(result.current.errors.creationYear).toBe('REQUIRED_FIELD_ERROR');
-      expect(toast.error).toHaveBeenCalledWith('Заповніть усі обов’язкові поля перед публікацією.');
+      expect(result.current.errors['groupTitle.uk']).toBe(OPUS_VALIDATION_MESSAGES.nameRequired);
+      expect(result.current.errors.creationYear).toBe(REQUIRED_FIELD_ERROR);
+      expect(toast.error).toHaveBeenCalledWith(COMPOSITION_REQUIRED_FIELDS_ERROR);
     });
 
     it('should successfully save data and show success toast on handlePublishClick', async () => {
@@ -743,7 +724,7 @@ describe('useGroupContent Hook', () => {
         await result.current.handlePublishClick();
       });
 
-      expect(result.current.errors.titlePrefix).toBe('REQUIRED_FIELD_ERROR');
+      expect(result.current.errors.titlePrefix).toBe(REQUIRED_FIELD_ERROR);
     });
 
     it('should expand details and return early when validation fails on publish', async () => {
@@ -768,7 +749,7 @@ describe('useGroupContent Hook', () => {
       await act(async () => {
         await result.current.handlePublishClick();
       });
-      expect(toast.error).toHaveBeenCalledWith('Заповніть усі обов’язкові поля перед публікацією.');
+      expect(toast.error).toHaveBeenCalledWith(COMPOSITION_REQUIRED_FIELDS_ERROR);
       expect(result.current.isDetailsExpanded).toBe(true);
     });
 
@@ -890,7 +871,7 @@ describe('useGroupContent Hook', () => {
       });
 
       expect(mockDeleteOpus).toHaveBeenCalledWith({ variables: { id: 'test-id' } });
-      expect(toast.success).toHaveBeenCalledWith('deleted');
+      expect(toast.success).toHaveBeenCalledWith(OPUS_MUTATION_RESULTS.deleted);
       expect(result.current.isDeleteModalOpen).toBe(false);
       expect(mockNavigate).toHaveBeenCalledWith('/creativity');
     });
@@ -925,7 +906,7 @@ describe('useGroupContent Hook', () => {
 
       expect(mockUpdateOpus).not.toHaveBeenCalled();
 
-      expect(toast.error).toHaveBeenCalledWith('Заповніть усі обов’язкові поля перед публікацією.');
+      expect(toast.error).toHaveBeenCalledWith(COMPOSITION_REQUIRED_FIELDS_ERROR);
     });
 
     it('should return early from handleSave if groupData is null', async () => {
@@ -1040,7 +1021,7 @@ describe('useGroupContent Hook', () => {
         await result.current.handlePublishClick();
       });
 
-      expect(result.current.errors['groupTitle.uk']).toBe('nameTooShort');
+      expect(result.current.errors['groupTitle.uk']).toBe(OPUS_VALIDATION_MESSAGES.nameTooShort);
 
       expect(mockUpdateOpus).not.toHaveBeenCalled();
     });
@@ -1102,12 +1083,12 @@ describe('useGroupContent Hook', () => {
         await result.current.handlePublishClick();
       });
 
-      expect(result.current.errors['performances[perf-1].caption.uk']).toBe('captionTooLong');
-      expect(result.current.errors['performances[perf-2].caption.en']).toBe('performanceSignature');
-      expect(result.current.errors['performances[perf-3].caption.en']).toBe('nameTooShort');
-      expect(result.current.errors['performances[perf-4].caption.en']).toBe('captionTooLong');
-      expect(result.current.errors['performances[perf-5].caption.uk']).toBe('performanceSignature');
-      expect(result.current.errors['performances[perf-6].caption.uk']).toBe('nameTooShort');
+      expect(result.current.errors['performances[perf-1].caption.uk']).toBe(OPUS_VALIDATION_MESSAGES.captionTooLong);
+      expect(result.current.errors['performances[perf-2].caption.en']).toBe(OPUS_VALIDATION_MESSAGES.performanceSignature);
+      expect(result.current.errors['performances[perf-3].caption.en']).toBe(OPUS_VALIDATION_MESSAGES.nameTooShort);
+      expect(result.current.errors['performances[perf-4].caption.en']).toBe(OPUS_VALIDATION_MESSAGES.captionTooLong);
+      expect(result.current.errors['performances[perf-5].caption.uk']).toBe(OPUS_VALIDATION_MESSAGES.performanceSignature);
+      expect(result.current.errors['performances[perf-6].caption.uk']).toBe(OPUS_VALIDATION_MESSAGES.nameTooShort);
     });
 
     it('should trigger validation errors for photos altText and caption length', async () => {
@@ -1173,15 +1154,15 @@ describe('useGroupContent Hook', () => {
         await result.current.handlePublishClick();
       });
 
-      expect(result.current.errors['photos[photo-1].altText.uk']).toBe('captionTooLong');
-      expect(result.current.errors['photos[photo-2].altText.en']).toBe('photoAltText');
-      expect(result.current.errors['photos[photo-3].altText.en']).toBe('photoTextTooShort');
-      expect(result.current.errors['photos[photo-4].altText.en']).toBe('captionTooLong');
-      expect(result.current.errors['photos[photo-5].altText.uk']).toBe('photoAltText');
-      expect(result.current.errors['photos[photo-6].altText.uk']).toBe('photoTextTooShort');
+      expect(result.current.errors['photos[photo-1].altText.uk']).toBe(OPUS_VALIDATION_MESSAGES.captionTooLong);
+      expect(result.current.errors['photos[photo-2].altText.en']).toBe(OPUS_VALIDATION_MESSAGES.photoAltText);
+      expect(result.current.errors['photos[photo-3].altText.en']).toBe(OPUS_VALIDATION_MESSAGES.photoTextTooShort);
+      expect(result.current.errors['photos[photo-4].altText.en']).toBe(OPUS_VALIDATION_MESSAGES.captionTooLong);
+      expect(result.current.errors['photos[photo-5].altText.uk']).toBe(OPUS_VALIDATION_MESSAGES.photoAltText);
+      expect(result.current.errors['photos[photo-6].altText.uk']).toBe(OPUS_VALIDATION_MESSAGES.photoTextTooShort);
 
-      expect(result.current.errors['photos[photo-3].caption.uk']).toBe('photoTextTooShort');
-      expect(result.current.errors['photos[photo-4].caption.en']).toBe('photoTextTooShort');
+      expect(result.current.errors['photos[photo-3].caption.uk']).toBe(OPUS_VALIDATION_MESSAGES.photoTextTooShort);
+      expect(result.current.errors['photos[photo-4].caption.en']).toBe(OPUS_VALIDATION_MESSAGES.photoTextTooShort);
     });
 
     it('should trigger validation errors when groupTitle.en is missing or too short', async () => {
@@ -1201,7 +1182,7 @@ describe('useGroupContent Hook', () => {
         await resultMissing.current.handlePublishClick();
       });
 
-      expect(resultMissing.current.errors['groupTitle.en']).toBe('nameRequired');
+      expect(resultMissing.current.errors['groupTitle.en']).toBe(OPUS_VALIDATION_MESSAGES.nameRequired);
       expect(resultMissing.current.currentLanguage).toBe('EN');
 
       (useOpusById as jest.Mock).mockReturnValue({
@@ -1220,7 +1201,7 @@ describe('useGroupContent Hook', () => {
         await resultShort.current.handlePublishClick();
       });
 
-      expect(resultShort.current.errors['groupTitle.en']).toBe('nameTooShort');
+      expect(resultShort.current.errors['groupTitle.en']).toBe(OPUS_VALIDATION_MESSAGES.nameTooShort);
       expect(resultShort.current.currentLanguage).toBe('EN');
     });
 
@@ -1256,8 +1237,8 @@ describe('useGroupContent Hook', () => {
         await result.current.handlePublishClick();
       });
 
-      expect(result.current.errors['photos[photo-uk-caption].caption.uk']).toBe('captionTooLong');
-      expect(result.current.errors['photos[photo-en-caption].caption.en']).toBe('captionTooLong');
+      expect(result.current.errors['photos[photo-uk-caption].caption.uk']).toBe(OPUS_VALIDATION_MESSAGES.captionTooLong);
+      expect(result.current.errors['photos[photo-en-caption].caption.en']).toBe(OPUS_VALIDATION_MESSAGES.captionTooLong);
       expect(result.current.currentLanguage).toBe('EN');
     });
 
@@ -1279,7 +1260,7 @@ describe('useGroupContent Hook', () => {
       await act(async () => {
         await duplicateResult.result.current.handlePublishClick();
       });
-      expect(toast.error).toHaveBeenCalledWith('duplicate compositions');
+      expect(toast.error).toHaveBeenCalledWith(COMPOSITION_DUPLICATE_ERROR);
 
       (useOpusById as jest.Mock).mockReturnValue({
         data: {
@@ -1295,7 +1276,7 @@ describe('useGroupContent Hook', () => {
       await act(async () => {
         await emptyResult.result.current.handlePublishClick();
       });
-      expect(toast.error).toHaveBeenCalledWith('required composition name');
+      expect(toast.error).toHaveBeenCalledWith(COMPOSITION_NAME_REQUIRED_ERROR);
       expect(emptyResult.result.current.errors['compositions.empty.name']).toBe('');
     });
 
@@ -1324,7 +1305,7 @@ describe('useGroupContent Hook', () => {
         await result.current.handlePublishClick();
       });
 
-      expect(result.current.errors['performances[perf-no-url].url']).toBe('performanceUrl');
+      expect(result.current.errors['performances[perf-no-url].url']).toBe(OPUS_VALIDATION_MESSAGES.performanceUrl);
     });
 
     it('should preserve explicit block order and clear composition errors when compositions change', async () => {
@@ -1415,7 +1396,7 @@ describe('useGroupContent Hook', () => {
         await result.current.handleMenuOptionClick('PUBLISH');
       });
 
-      expect(toast.error).toHaveBeenCalledWith('duplicate compositions');
+      expect(toast.error).toHaveBeenCalledWith(COMPOSITION_DUPLICATE_ERROR);
     });
 
     it('should show required-name feedback when publishing an empty composition from the menu', async () => {
@@ -1434,7 +1415,7 @@ describe('useGroupContent Hook', () => {
         await result.current.handleMenuOptionClick('PUBLISH');
       });
 
-      expect(toast.error).toHaveBeenCalledWith('required composition name');
+      expect(toast.error).toHaveBeenCalledWith(COMPOSITION_NAME_REQUIRED_ERROR);
     });
   });
 
