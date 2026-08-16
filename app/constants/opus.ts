@@ -74,6 +74,12 @@ export const COMPOSITION_VALIDATION_MESSAGES = {
   yearInvalid: 'Введіть коректну дату.'
 } as const;
 
+export const COMPOSITION_ACTIONS_MESSAGES = {
+  DELETE_SUCCESS: 'Композицію успішно видалено',
+  UNLINK_SUCCESS: 'Композицію успішно видалено з групи',
+  DELETE_ERROR: 'Не вдалося видалити композицію. Спробуйте ще раз.'
+};
+
 export const COMPOSITION_MODAL_LABELS = {
   createTitle: 'Нова композиція',
   editTitle: 'Редагування композиції',
