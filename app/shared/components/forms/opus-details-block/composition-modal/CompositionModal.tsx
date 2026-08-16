@@ -1,6 +1,10 @@
 'use client';
 
 import { Box, Dialog, IconButton, InputAdornment, TextField, Typography } from '@mui/material';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import dayjs, { Dayjs } from 'dayjs';
 import { CloudUpload, FileText, Info, Music, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -52,6 +56,13 @@ const fileNameFromUrl = (url?: string): string => {
   return decodeURIComponent(segment.split('?')[0]);
 };
 
+const publishDateToDayjs = (value?: string): Dayjs | null => {
+  if (!value) return null;
+
+  const parsed = dayjs(value);
+  return parsed.isValid() ? parsed : null;
+};
+
 export default function CompositionModal({
   open,
   mode,
@@ -94,7 +105,6 @@ export default function CompositionModal({
     if (key === 'year' && typeof value === 'string') {
       setYearError('');
     }
-
   };
 
   const addNoteRow = (): void => {
@@ -191,6 +201,11 @@ export default function CompositionModal({
       const hasDate = Boolean(note.publishDate && String(note.publishDate).trim());
       const hasFile = Boolean(note.fileUrl);
 
+      if (hasDate && !publishDateToDayjs(note.publishDate)) {
+        errs.publishDate = 'Введіть коректну дату.';
+        isValid = false;
+      }
+
       if (hasDate && !hasName && !hasFile) {
         errs.publishDate = COMPOSITION_MODAL_TEXTS.emptyNoteDateError;
         isValid = false;
@@ -210,9 +225,14 @@ export default function CompositionModal({
       return;
     }
 
-    const filteredNotes = composition.notes.filter(
-      (note) => (note.name ?? '').trim() || (note.publishDate && String(note.publishDate).trim()) || note.fileUrl
-    );
+    const filteredNotes = composition.notes
+      .filter(
+        (note) => (note.name ?? '').trim() || (note.publishDate && String(note.publishDate).trim()) || note.fileUrl
+      )
+      .map((note) => ({
+        ...note,
+        publishDate: note.publishDate ? dayjs(note.publishDate).format('YYYY-MM-DD') : ''
+      }));
 
     onSubmit({ ...composition, name: composition.name.trim(), notes: filteredNotes });
   };
@@ -340,20 +360,32 @@ export default function CompositionModal({
                     size="small"
                     sx={styles.mediaNameField}
                   />
-                  <TextField
-                    label={COMPOSITION_MODAL_LABELS.publishDate}
-                    value={note.publishDate ?? ''}
-                    onChange={(event) => {
-                      const val = event.target.value;
-                      if (/^\d*$/.test(val)) {
-                        updateNoteRow(note.id, { publishDate: val });
-                      }
-                    }}
-                    error={Boolean(errs.publishDate)}
-                    helperText={errs.publishDate}
-                    size="small"
-                    sx={styles.mediaDateField}
-                  />
+                  <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="uk">
+                    <DatePicker
+                      label={COMPOSITION_MODAL_LABELS.publishDate}
+                      format="DD/MM/YYYY"
+                      sx={styles.mediaDateField}
+                      enableAccessibleFieldDOMStructure={false}
+                      value={publishDateToDayjs(note.publishDate)}
+                      onChange={(date) => {
+                        if (date?.isValid()) {
+                          updateNoteRow(note.id, { publishDate: date.format('YYYY-MM-DD') });
+                        } else if (date === null) {
+                          updateNoteRow(note.id, { publishDate: '' });
+                        }
+                      }}
+                      slotProps={{
+                        field: {
+                          clearable: true,
+                          onClear: () => updateNoteRow(note.id, { publishDate: '' })
+                        },
+                        textField: {
+                          error: Boolean(errs.publishDate),
+                          helperText: errs.publishDate
+                        }
+                      }}
+                    />
+                  </LocalizationProvider>
                   <IconButton
                     aria-label={COMPOSITION_MODAL_TEXTS.uploadFileAriaLabel}
                     onClick={() => setMediaTarget({ field: 'notes', rowId: note.id })}
