@@ -1,6 +1,7 @@
 import { GraphQLError } from 'graphql';
 
 import {
+  assertCompositionGenreValid,
   assertCompositionNameNotTaken,
   normalizeCompositionName,
   throwIfCompositionNameDuplicateKey
@@ -60,6 +61,7 @@ export const CompositionsMutation = {
     const { compositionsRepository: repo, opusRepository: opusRepo } = context.requestContainer.cradle;
 
     await assertCompositionNameNotTaken(repo, input.name.uk);
+    assertCompositionGenreValid(input.genre);
 
     const compositionData = mapCompositionInput(input);
 
@@ -90,6 +92,7 @@ export const CompositionsMutation = {
     if (input.name != null) {
       await assertCompositionNameNotTaken(repo, input.name.uk, id);
     }
+    assertCompositionGenreValid(input.genre);
 
     const updateData: CompositionInput = {
       ...(input.name && { name: mapCompositionName(input.name) }),

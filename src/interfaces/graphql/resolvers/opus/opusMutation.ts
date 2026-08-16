@@ -2,6 +2,7 @@ import { GraphQLError } from 'graphql';
 import { ClientSession } from 'mongoose';
 
 import {
+  assertCompositionGenreValid,
   assertCompositionNameNotTaken,
   compositionNameTakenError,
   throwIfCompositionNameDuplicateKey
@@ -118,6 +119,7 @@ async function assertCompositionsNamesNotTaken(
     submittedNames.add(normalizedName);
 
     await assertCompositionNameNotTaken(compositionsRepo, name, composition.id);
+    assertCompositionGenreValid(composition.genre);
   }
 }
 

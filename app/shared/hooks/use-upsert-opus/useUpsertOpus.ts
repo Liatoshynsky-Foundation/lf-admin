@@ -34,7 +34,7 @@ import type {
   OpusDetailsErrors,
   OpusDetailsValue
 } from '~/types/opus';
-import { compositionTitleSchema } from '~/validators/composition.schema';
+import { compositionGenreSchema, compositionTitleSchema } from '~/validators/composition.schema';
 
 export const createCompositionId = (): string => generateUniqueId();
 
@@ -286,6 +286,11 @@ export const useUpsertOpus = (
 
       if (!titleResult.success) {
         titleErrors[fieldPath] = titleResult.error.issues[0]?.message ?? '';
+      }
+
+      const genreResult = compositionGenreSchema.safeParse(composition.genre);
+      if (!genreResult.success) {
+        titleErrors[`compositions.${composition.id}.genre`] = genreResult.error.issues[0]?.message ?? '';
       }
     });
     setCompositionErrors(titleErrors);

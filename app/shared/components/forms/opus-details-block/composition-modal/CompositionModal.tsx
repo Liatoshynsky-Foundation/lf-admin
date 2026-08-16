@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { styles } from './CompositionModal.styles';
 import Button from '~/components/design-system/button/Button';
 import {
+  COMPOSITION_GENRE_LIMITS,
   COMPOSITION_MODAL_LABELS,
   COMPOSITION_MODAL_TEXTS,
   COMPOSITION_TITLE_LIMITS
@@ -16,7 +17,7 @@ import type { MediaModalResult } from '~/shared/components/media-modal/MediaModa
 import { isAudioUploadFile, isPdfUploadFile } from '~/shared/components/media-modal/MediaModal.utils';
 import { createCompositionId } from '~/shared/hooks/use-upsert-opus/useUpsertOpus';
 import type { OpusCompositionData, OpusMediaFileData } from '~/types/opus';
-import { compositionTitleSchema } from '~/validators/composition.schema';
+import { compositionGenreSchema, compositionTitleSchema } from '~/validators/composition.schema';
 
 interface CompositionModalProps {
   open: boolean;
@@ -61,6 +62,7 @@ export default function CompositionModal({
 }: Readonly<CompositionModalProps>) {
   const [composition, setComposition] = useState<OpusCompositionData>(emptyComposition);
   const [titleError, setTitleError] = useState('');
+  const [genreError, setGenreError] = useState('');
   const [noteErrors, setNoteErrors] = useState<NoteErrors>({});
   const [mediaTarget, setMediaTarget] = useState<MediaTarget | null>(null);
 
@@ -68,6 +70,7 @@ export default function CompositionModal({
     if (open) {
       setComposition(initialValue ? { ...initialValue } : emptyComposition());
       setTitleError('');
+      setGenreError('');
       setNoteErrors({});
       setMediaTarget(null);
     }
@@ -79,6 +82,10 @@ export default function CompositionModal({
     if (key === 'name' && typeof value === 'string' && value.trim()) {
       setTitleError('');
       onClearError?.();
+    }
+
+    if (key === 'genre' && typeof value === 'string') {
+      setGenreError('');
     }
   };
 
@@ -147,11 +154,18 @@ export default function CompositionModal({
   const handleSubmit = (): void => {
     let isValid = true;
     let newTitleError = '';
+    let newGenreError = '';
     const newNoteErrors: NoteErrors = {};
 
     const titleResult = compositionTitleSchema.safeParse(composition.name);
     if (!titleResult.success) {
       newTitleError = titleResult.error.issues[0]?.message ?? '';
+      isValid = false;
+    }
+
+    const genreResult = compositionGenreSchema.safeParse(composition.genre);
+    if (!genreResult.success) {
+      newGenreError = genreResult.error.issues[0]?.message ?? '';
       isValid = false;
     }
 
@@ -173,6 +187,7 @@ export default function CompositionModal({
     });
 
     setTitleError(newTitleError);
+    setGenreError(newGenreError);
     setNoteErrors(newNoteErrors);
 
     if (!isValid) {
@@ -230,9 +245,12 @@ export default function CompositionModal({
           <TextField
             label={COMPOSITION_MODAL_LABELS.genre}
             value={composition.genre}
-            onChange={(event) => updateField('genre', event.target.value)}
+            onChange={(event) => updateField('genre', event.target.value.slice(0, COMPOSITION_GENRE_LIMITS.max))}
+            error={Boolean(genreError)}
+            helperText={genreError}
             size="small"
             sx={styles.field}
+            slotProps={{ htmlInput: { maxLength: COMPOSITION_GENRE_LIMITS.max } }}
           />
           <TextField
             label={COMPOSITION_MODAL_LABELS.year}

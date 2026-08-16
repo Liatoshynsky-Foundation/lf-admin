@@ -2,7 +2,7 @@ import { GraphQLError } from 'graphql';
 
 import { compositionsServiceErrors } from '~/back-constants/errors';
 import { ICompositionRepository } from '~/domain/repositories/compositionRepository';
-import { compositionTitleSchema } from '~/validators/composition.schema';
+import { compositionGenreSchema, compositionTitleSchema } from '~/validators/composition.schema';
 
 type DuplicateKeyError = {
   code?: unknown;
@@ -37,6 +37,17 @@ export const assertCompositionNameNotTaken = async (
 
   if (existing && existing.id !== excludeId) {
     throw compositionNameTakenError(name);
+  }
+};
+
+export const assertCompositionGenreValid = (genre?: string | null): void => {
+  if (genre === undefined || genre === null) return;
+
+  const result = compositionGenreSchema.safeParse(genre);
+  if (!result.success) {
+    throw new GraphQLError(result.error.issues[0]?.message ?? 'Некоректний жанр.', {
+      extensions: { code: 'BAD_USER_INPUT' }
+    });
   }
 };
 
