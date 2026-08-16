@@ -4,6 +4,7 @@ import { ClientSession } from 'mongoose';
 import {
   assertCompositionGenreValid,
   assertCompositionNameNotTaken,
+  assertCompositionYearValid,
   compositionNameTakenError,
   throwIfCompositionNameDuplicateKey
 } from '../compositions/compositionNameValidation';
@@ -120,6 +121,9 @@ async function assertCompositionsNamesNotTaken(
 
     await assertCompositionNameNotTaken(compositionsRepo, name, composition.id);
     assertCompositionGenreValid(composition.genre);
+    assertCompositionYearValid(
+      !composition.year?.trim() ? null : Number(composition.year)
+    );
   }
 }
 

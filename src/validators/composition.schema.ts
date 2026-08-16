@@ -12,3 +12,8 @@ export const compositionGenreSchema = z
   .trim()
   .refine((genre) => !genre || genre.length >= 2, 'Введіть щонайменше 2 символи.')
   .max(150, 'Жанр не може перевищувати 150 символів.');
+
+export const compositionYearSchema = z
+  .string()
+  .trim()
+  .refine((year) => !year || /^\d{4}$/.test(year), 'Введіть коректну дату.');

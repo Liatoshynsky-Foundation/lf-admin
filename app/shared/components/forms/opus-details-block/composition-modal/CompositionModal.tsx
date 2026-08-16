@@ -10,14 +10,15 @@ import {
   COMPOSITION_GENRE_LIMITS,
   COMPOSITION_MODAL_LABELS,
   COMPOSITION_MODAL_TEXTS,
-  COMPOSITION_TITLE_LIMITS
+  COMPOSITION_TITLE_LIMITS,
+  COMPOSITION_YEAR_LIMITS
 } from '~/constants/opus';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import { isAudioUploadFile, isPdfUploadFile } from '~/shared/components/media-modal/MediaModal.utils';
 import { createCompositionId } from '~/shared/hooks/use-upsert-opus/useUpsertOpus';
 import type { OpusCompositionData, OpusMediaFileData } from '~/types/opus';
-import { compositionGenreSchema, compositionTitleSchema } from '~/validators/composition.schema';
+import { compositionGenreSchema, compositionTitleSchema, compositionYearSchema } from '~/validators/composition.schema';
 
 interface CompositionModalProps {
   open: boolean;
@@ -63,6 +64,7 @@ export default function CompositionModal({
   const [composition, setComposition] = useState<OpusCompositionData>(emptyComposition);
   const [titleError, setTitleError] = useState('');
   const [genreError, setGenreError] = useState('');
+  const [yearError, setYearError] = useState('');
   const [noteErrors, setNoteErrors] = useState<NoteErrors>({});
   const [mediaTarget, setMediaTarget] = useState<MediaTarget | null>(null);
 
@@ -71,6 +73,7 @@ export default function CompositionModal({
       setComposition(initialValue ? { ...initialValue } : emptyComposition());
       setTitleError('');
       setGenreError('');
+      setYearError('');
       setNoteErrors({});
       setMediaTarget(null);
     }
@@ -87,6 +90,11 @@ export default function CompositionModal({
     if (key === 'genre' && typeof value === 'string') {
       setGenreError('');
     }
+
+    if (key === 'year' && typeof value === 'string') {
+      setYearError('');
+    }
+
   };
 
   const addNoteRow = (): void => {
@@ -155,6 +163,7 @@ export default function CompositionModal({
     let isValid = true;
     let newTitleError = '';
     let newGenreError = '';
+    let newYearError = '';
     const newNoteErrors: NoteErrors = {};
 
     const titleResult = compositionTitleSchema.safeParse(composition.name);
@@ -166,6 +175,12 @@ export default function CompositionModal({
     const genreResult = compositionGenreSchema.safeParse(composition.genre);
     if (!genreResult.success) {
       newGenreError = genreResult.error.issues[0]?.message ?? '';
+      isValid = false;
+    }
+
+    const yearResult = compositionYearSchema.safeParse(composition.year);
+    if (!yearResult.success) {
+      newYearError = yearResult.error.issues[0]?.message ?? '';
       isValid = false;
     }
 
@@ -188,6 +203,7 @@ export default function CompositionModal({
 
     setTitleError(newTitleError);
     setGenreError(newGenreError);
+    setYearError(newYearError);
     setNoteErrors(newNoteErrors);
 
     if (!isValid) {
@@ -258,11 +274,14 @@ export default function CompositionModal({
             onChange={(event) => {
               const val = event.target.value;
               if (/^\d*$/.test(val)) {
-                updateField('year', val);
+                updateField('year', val.slice(0, COMPOSITION_YEAR_LIMITS.max));
               }
             }}
             size="small"
             sx={styles.field}
+            error={Boolean(yearError)}
+            helperText={yearError}
+            slotProps={{ htmlInput: { maxLength: COMPOSITION_YEAR_LIMITS.max, inputMode: 'numeric' } }}
           />
         </Box>
 
