@@ -34,6 +34,7 @@ import type {
   OpusDetailsErrors,
   OpusDetailsValue
 } from '~/types/opus';
+import { compositionTitleSchema } from '~/validators/composition.schema';
 
 export const createCompositionId = (): string => generateUniqueId();
 
@@ -278,9 +279,16 @@ export const useUpsertOpus = (
     setDetailsErrors(errors);
 
     const invalidIds = getInvalidCompositionIds(value.compositions);
-    setCompositionErrors(
-      Object.fromEntries(invalidIds.map((id) => [`compositions.${id}.name`, '']))
-    );
+    const titleErrors: Record<string, string> = {};
+    value.compositions.forEach((composition) => {
+      const fieldPath = `compositions.${composition.id}.name`;
+      const titleResult = compositionTitleSchema.safeParse(composition.name);
+
+      if (!titleResult.success) {
+        titleErrors[fieldPath] = titleResult.error.issues[0]?.message ?? '';
+      }
+    });
+    setCompositionErrors(titleErrors);
 
     const duplicateIds = getDuplicateCompositionIds(value.compositions);
     if (duplicateIds.length > 0) {
@@ -296,6 +304,7 @@ export const useUpsertOpus = (
       !nameError &&
       !creationYearError &&
       invalidIds.length === 0 &&
+      Object.keys(titleErrors).length === 0 &&
       duplicateIds.length === 0
     );
   };

@@ -6,12 +6,17 @@ import { useEffect, useState } from 'react';
 
 import { styles } from './CompositionModal.styles';
 import Button from '~/components/design-system/button/Button';
-import { COMPOSITION_MODAL_LABELS, COMPOSITION_MODAL_TEXTS, REQUIRED_FIELD_ERROR } from '~/constants/opus';
+import {
+  COMPOSITION_MODAL_LABELS,
+  COMPOSITION_MODAL_TEXTS,
+  COMPOSITION_TITLE_LIMITS
+} from '~/constants/opus';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import { isAudioUploadFile, isPdfUploadFile } from '~/shared/components/media-modal/MediaModal.utils';
 import { createCompositionId } from '~/shared/hooks/use-upsert-opus/useUpsertOpus';
 import type { OpusCompositionData, OpusMediaFileData } from '~/types/opus';
+import { compositionTitleSchema } from '~/validators/composition.schema';
 
 interface CompositionModalProps {
   open: boolean;
@@ -144,8 +149,9 @@ export default function CompositionModal({
     let newTitleError = '';
     const newNoteErrors: NoteErrors = {};
 
-    if (!composition.name.trim()) {
-      newTitleError = REQUIRED_FIELD_ERROR;
+    const titleResult = compositionTitleSchema.safeParse(composition.name);
+    if (!titleResult.success) {
+      newTitleError = titleResult.error.issues[0]?.message ?? '';
       isValid = false;
     }
 
@@ -198,12 +204,13 @@ export default function CompositionModal({
         <TextField
           label={`${COMPOSITION_MODAL_LABELS.name} *`}
           value={composition.name}
-          onChange={(event) => updateField('name', event.target.value)}
+          onChange={(event) => updateField('name', event.target.value.slice(0, COMPOSITION_TITLE_LIMITS.max))}
           error={Boolean(titleError || error)}
           helperText={titleError || error}
           fullWidth
           size="small"
           sx={styles.field}
+          slotProps={{ htmlInput: { maxLength: COMPOSITION_TITLE_LIMITS.max } }}
           InputProps={{
             endAdornment: composition.name ? (
               <InputAdornment position="end">

@@ -1,7 +1,8 @@
 import { GraphQLError } from 'graphql';
 
-import { compositionsServiceErrors, opusServiceErrors } from '~/back-constants/errors';
+import { compositionsServiceErrors } from '~/back-constants/errors';
 import { ICompositionRepository } from '~/domain/repositories/compositionRepository';
+import { compositionTitleSchema } from '~/validators/composition.schema';
 
 type DuplicateKeyError = {
   code?: unknown;
@@ -23,12 +24,14 @@ export const assertCompositionNameNotTaken = async (
   ukName: string,
   excludeId?: string
 ): Promise<void> => {
-  const name = normalizeCompositionName(ukName);
-  if (!name) {
-    throw new GraphQLError(opusServiceErrors.COMPOSITION_NAME_REQUIRED, {
+  const titleResult = compositionTitleSchema.safeParse(ukName);
+  if (!titleResult.success) {
+    throw new GraphQLError(titleResult.error.issues[0]?.message ?? 'Введіть назву композиції.', {
       extensions: { code: 'BAD_USER_INPUT' }
     });
   }
+
+  const name = titleResult.data;
 
   const existing = await repo.findByName(name);
 
