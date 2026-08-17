@@ -7,6 +7,7 @@ import {
   COMPOSITION_DUPLICATE_ERROR,
   COMPOSITION_NAME_REQUIRED_ERROR,
   COMPOSITION_REQUIRED_FIELDS_ERROR,
+  COMPOSITION_VALIDATION_MESSAGES,
   OPUS_MUTATION_RESULTS,
   OPUS_VALIDATION_MESSAGES,
   REQUIRED_FIELD_ERROR
@@ -446,6 +447,30 @@ describe('useGroupContent Hook', () => {
   });
 
   describe('Validation & Saving', () => {
+    it('shows a field error when a composition name is shorter than two characters', async () => {
+      (useOpusById as jest.Mock).mockReturnValue({ data: { opusById: mockFetchedOpus }, loading: false });
+
+      const { result } = renderHook(() => useGroupContent('test-id'));
+
+      await waitFor(() => {
+        expect(result.current.groupData).not.toBeNull();
+      });
+
+      act(() => {
+        result.current.handleFieldChange('compositions', [
+          { ...result.current.groupData!.compositions[0], name: 'A' },
+          ...result.current.groupData!.compositions.slice(1)
+        ]);
+      });
+
+      await act(async () => {
+        await result.current.handlePublishClick();
+      });
+
+      expect(result.current.errors['compositions.comp-1.name']).toBe(COMPOSITION_VALIDATION_MESSAGES.titleTooShort);
+      expect(mockUpdateOpus).not.toHaveBeenCalled();
+    });
+
     it('should catch server errors during save and display error toast', async () => {
       (useOpusById as jest.Mock).mockReturnValue({ data: { opusById: mockFetchedOpus }, loading: false });
 
@@ -1277,7 +1302,7 @@ describe('useGroupContent Hook', () => {
         await emptyResult.result.current.handlePublishClick();
       });
       expect(toast.error).toHaveBeenCalledWith(COMPOSITION_NAME_REQUIRED_ERROR);
-      expect(emptyResult.result.current.errors['compositions.empty.name']).toBe('');
+      expect(emptyResult.result.current.errors['compositions.empty.name']).toBe(COMPOSITION_VALIDATION_MESSAGES.titleRequired);
     });
 
     it('should trigger validation error when performance URL is missing but row is not empty', async () => {
@@ -1501,7 +1526,7 @@ describe('useGroupContent Hook', () => {
         result.current.handleFieldChange('compositions', [
           {
             id: 'c3',
-            name: 'T',
+            name: 'Test',
             genre: '   ',
             year: '   ',
             audios: undefined,

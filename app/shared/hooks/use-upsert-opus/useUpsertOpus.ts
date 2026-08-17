@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import {
   COMPOSITION_DUPLICATE_ERROR,
   COMPOSITION_NAME_REQUIRED_ERROR,
+  COMPOSITION_REQUIRED_FIELDS_ERROR,
   initialOpusDetails,
   initialOpusSeoValue,
   OPUS_FIELD_LIMITS,
@@ -11,6 +12,7 @@ import {
   OPUS_VALIDATION_MESSAGES
 } from '~/constants/opus';
 import {
+  getCompositionFieldErrors,
   getDuplicateCompositionError,
   getDuplicateCompositionIds,
   getErrorMessage,
@@ -34,7 +36,6 @@ import type {
   OpusDetailsErrors,
   OpusDetailsValue
 } from '~/types/opus';
-import { compositionGenreSchema, compositionTitleSchema } from '~/validators/composition.schema';
 
 export const createCompositionId = (): string => generateUniqueId();
 
@@ -279,20 +280,7 @@ export const useUpsertOpus = (
     setDetailsErrors(errors);
 
     const invalidIds = getInvalidCompositionIds(value.compositions);
-    const titleErrors: Record<string, string> = {};
-    value.compositions.forEach((composition) => {
-      const fieldPath = `compositions.${composition.id}.name`;
-      const titleResult = compositionTitleSchema.safeParse(composition.name);
-
-      if (!titleResult.success) {
-        titleErrors[fieldPath] = titleResult.error.issues[0]?.message ?? '';
-      }
-
-      const genreResult = compositionGenreSchema.safeParse(composition.genre);
-      if (!genreResult.success) {
-        titleErrors[`compositions.${composition.id}.genre`] = genreResult.error.issues[0]?.message ?? '';
-      }
-    });
+    const titleErrors = getCompositionFieldErrors(value.compositions);
     setCompositionErrors(titleErrors);
 
     const duplicateIds = getDuplicateCompositionIds(value.compositions);
@@ -302,6 +290,14 @@ export const useUpsertOpus = (
 
     if (invalidIds.length > 0) {
       toast.error( COMPOSITION_NAME_REQUIRED_ERROR);
+    }
+
+    const hasTopLevelValidationErrors = Boolean(numberError || nameError || creationYearError);
+    const hasCompositionValidationErrors =
+      Object.keys(titleErrors).length > 0 && invalidIds.length === 0 && duplicateIds.length === 0;
+
+    if (hasTopLevelValidationErrors || hasCompositionValidationErrors) {
+      toast.error(COMPOSITION_REQUIRED_FIELDS_ERROR);
     }
 
     return (
