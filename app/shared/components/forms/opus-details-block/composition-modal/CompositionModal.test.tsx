@@ -205,11 +205,48 @@ describe('CompositionModal', () => {
     expect(dateField).toHaveValue('01/01/2023');
   });
 
-  it('clears a prefilled note publication date with the picker clear action', () => {
+  it('formats a typed publication date and submits it as an ISO date', () => {
+    const onSubmit = jest.fn();
+    render(<CompositionModal {...baseProps} mode="create" onSubmit={onSubmit} />);
+
+    fireEvent.change(screen.getByLabelText(INPUTS.title), { target: { value: 'Valid Title' } });
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.addNotesButton }));
+    fireEvent.change(screen.getByLabelText(INPUTS.noteName), { target: { value: 'Ноти' } });
+    const dateField = screen.getByLabelText(INPUTS.noteDate);
+    fireEvent.change(dateField, { target: { value: '01122020' } });
+
+    expect(dateField).toHaveValue('01/12/2020');
+
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.createButton }));
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ notes: [expect.objectContaining({ publishDate: '2020-12-01' })] })
+    );
+  });
+
+  it('keeps a partial note publication date visible and reports it as invalid', () => {
+    const onSubmit = jest.fn();
+    render(<CompositionModal {...baseProps} mode="create" onSubmit={onSubmit} />);
+
+    fireEvent.change(screen.getByLabelText(INPUTS.title), { target: { value: 'Valid Title' } });
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.addNotesButton }));
+    fireEvent.change(screen.getByLabelText(INPUTS.noteName), { target: { value: 'Ноти' } });
+    const dateField = screen.getByLabelText(INPUTS.noteDate);
+    fireEvent.change(dateField, { target: { value: '0112' } });
+
+    expect(dateField).toHaveValue('01/12');
+
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.createButton }));
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByText(COMPOSITION_VALIDATION_MESSAGES.yearInvalid)).toBeInTheDocument();
+  });
+
+  it('clears a prefilled note publication date', () => {
     render(<CompositionModal {...baseProps} mode="edit" initialValue={INITIAL_COMPOSITION_VALUE} />);
 
-    expect(screen.getByDisplayValue(MOCK_NOTE_DATE)).toBeInTheDocument();
-    fireEvent.click(screen.getByTitle('Clear'));
+    const dateField = screen.getByDisplayValue(MOCK_NOTE_DATE);
+    fireEvent.change(dateField, { target: { value: '' } });
 
     expect(screen.queryByDisplayValue(MOCK_NOTE_DATE)).not.toBeInTheDocument();
   });
