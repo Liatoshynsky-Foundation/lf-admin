@@ -4,20 +4,23 @@ import dbConnect from '../../db/connect';
 import { createBaseRepository } from '../baseRepository/baseRepository';
 import { buildBaseQuery, createToEntity, getBaseSort } from '../helpers';
 import { Fond } from '~/src/domain/entities/Fond';
-import { CreateFondInput, FondFilters, IFondRepository } from '~/src/domain/repositories/fondRepository';
+import { CreateFondInput, FondFilters, IFondRepository, UpdateFondInput } from '~/src/domain/repositories/fondRepository';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 export type DbFond = {
   _id: { toString(): string };
   id: number;
   title: { uk: string; en: string };
+  numberOfDescriptions: number;
+  numberOfCases: number;
+  organizationForm?: { uk: string; en: string }; 
   documentCreationDate: string;
   chronologicalBoundaries?: string;
-  organizationForm?: string;
-  characterAndContent?: string;
+  characterAndContent?: { 
+    uk: Record<string, unknown>; 
+    en: Record<string, unknown>; 
+  };
   status?: string;
-  numberOfCases?: number;
-  numberOfDescriptions?: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -35,6 +38,21 @@ const resolveStatus = (dbStatus?: string): BaseContentStatuses => {
   return BaseContentStatuses.Hidden;
 };
 
+const parseJsonContent = (content?: string | null): Record<string, unknown> => {
+  if (!content) return {};
+  if (typeof content === 'string') {
+    try {
+      const parsed = JSON.parse(content) as unknown;
+      if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      return {};
+    }
+  }
+  return {};
+};
+
 const toEntity = (doc: DbFond): Fond => {
   const safeDoc = {
     ...doc,
@@ -49,12 +67,8 @@ const toEntity = (doc: DbFond): Fond => {
     chronologicalBoundaries: safeDoc.chronologicalBoundaries
       ? { uk: safeDoc.chronologicalBoundaries, en: safeDoc.chronologicalBoundaries }
       : undefined,
-    organizationForm: safeDoc.organizationForm
-      ? { uk: safeDoc.organizationForm, en: safeDoc.organizationForm }
-      : undefined,
-    description: safeDoc.characterAndContent
-      ? { uk: safeDoc.characterAndContent, en: safeDoc.characterAndContent }
-      : undefined,
+    organizationForm: safeDoc.organizationForm,
+    description: safeDoc.characterAndContent as unknown as Fond['description'],
     status: resolveStatus(safeDoc.status),
     casesCount: safeDoc.numberOfCases ?? 0,
     descriptionsCount: safeDoc.numberOfDescriptions ?? 0
@@ -66,7 +80,7 @@ export const FondRepository = ({ FondModel }: FondRepoDeps): IFondRepository => 
     model: FondModel,
     toEntity,
     buildQuery: (filters) => {
-      const query = buildBaseQuery(filters, ['title.uk', 'title.en', 'characterAndContent']);
+      const query = buildBaseQuery(filters, ['title.uk', 'title.en']);
       if (filters?.statuses && filters.statuses.length > 0) {
         query.status = { $in: filters.statuses };
       }
@@ -85,8 +99,11 @@ export const FondRepository = ({ FondModel }: FondRepoDeps): IFondRepository => 
         title: input.name,
         documentCreationDate: input.documentCreationDate.uk,
         chronologicalBoundaries: input.chronologicalBoundaries?.uk,
-        organizationForm: input.organizationForm?.uk,
-        characterAndContent: input.description?.uk,
+        organizationForm: input.organizationForm,
+        characterAndContent: input.description ? {
+          uk: parseJsonContent(input.description.uk),
+          en: parseJsonContent(input.description.en)
+        } : undefined,
         status: input.status || BaseContentStatuses.Hidden,
         numberOfCases: 0,
         numberOfDescriptions: 0
@@ -94,6 +111,65 @@ export const FondRepository = ({ FondModel }: FondRepoDeps): IFondRepository => 
 
       const newFond = await new FondModel(dbData).save();
       return toEntity(newFond.toObject() as unknown as DbFond);
+    },
+
+    update: async (id: string, input: UpdateFondInput): Promise<Fond | null> => {
+      await dbConnect();
+
+      if (!Types.ObjectId.isValid(id)) {
+        return null;
+      }
+
+      const updateInput = input as UpdateFondInput & {
+        casesCount?: number;
+        descriptionsCount?: number;
+      };
+
+      const updateData: Record<string, unknown> = {
+        updatedAt: new Date().toISOString()
+      };
+
+      if (input.name) {
+        updateData.title = input.name;
+      }
+
+      if (input.documentCreationDate) {
+        updateData.documentCreationDate = input.documentCreationDate.uk;
+      }
+
+      if (input.chronologicalBoundaries !== undefined) {
+        updateData.chronologicalBoundaries = input.chronologicalBoundaries?.uk;
+      }
+
+      if (input.organizationForm !== undefined) {
+        updateData.organizationForm = input.organizationForm;
+      }
+
+      if (input.description !== undefined) {
+        updateData.characterAndContent = {
+          uk: parseJsonContent(input.description.uk),
+          en: parseJsonContent(input.description.en)
+        };
+      }
+
+      if (input.status !== undefined) {
+        updateData.status = input.status;
+      }
+
+      if (updateInput.casesCount !== undefined) {
+        updateData.numberOfCases = updateInput.casesCount;
+      }
+
+      if (updateInput.descriptionsCount !== undefined) {
+        updateData.numberOfDescriptions = updateInput.descriptionsCount;
+      }
+
+      const updated = await FondModel.findByIdAndUpdate(id, updateData, {
+        new: true,
+        runValidators: true
+      }).lean<DbFond>();
+
+      return updated ? toEntity(updated) : null;
     },
 
     findByFondNumber: async (fondNumber: Fond['fondNumber']): Promise<Fond | null> => {

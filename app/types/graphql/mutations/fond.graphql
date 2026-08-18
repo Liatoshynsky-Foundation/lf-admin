@@ -1,28 +1,19 @@
-query AllFonds($filters: FondFiltersInput) {
-  findAllFonds(filters: $filters) {
+mutation CreateFond($input: CreateFondInput!) {
+  createFond(input: $input) {
     id
     fondNumber
     name {
       uk
       en
     }
-    documentCreationDate {
-      uk
-      en
-    }
-    chronologicalBoundaries {
-      uk
-      en
-    }
-    casesCount
-    descriptionsCount
     status
+    createdAt
     updatedAt
   }
 }
 
-query FondById($id: ID!) {
-  findFondById(id: $id) {
+mutation UpdateFond($id: ID!, $input: UpdateFondInput!) {
+  updateFond(id: $id, input: $input) {
     id
     fondNumber
     name {
@@ -45,10 +36,11 @@ query FondById($id: ID!) {
       uk
       en
     }
-    casesCount
-    descriptionsCount
     status
-    createdAt
     updatedAt
   }
+}
+
+mutation DeleteFond($id: ID!) {
+  deleteFond(id: $id)
 }
