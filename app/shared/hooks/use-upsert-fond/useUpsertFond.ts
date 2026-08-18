@@ -43,6 +43,34 @@ const INITIAL_DETAILS: FondDetailsValue = {
   descriptionsCount: 0
 };
 
+const ZOD_ERROR_REGEX = /\[\s*\{[\s\S]*\}\s*\]/;
+
+const extractValidationErrors = (message: string): Partial<Record<keyof FondDetailsValue, string>> | null => {
+  const match = ZOD_ERROR_REGEX.exec(message);
+  if (!match) return null;
+
+  try {
+    const parsedErrors = JSON.parse(match[0]);
+    if (!Array.isArray(parsedErrors)) return null;
+
+    const newErrors: Partial<Record<keyof FondDetailsValue, string>> = {};
+    let hasErrors = false;
+
+    parsedErrors.forEach((err) => {
+      const fieldName = err.path?.[0] as keyof FondDetailsValue;
+      if (fieldName) {
+        newErrors[fieldName] = err.message;
+        hasErrors = true;
+      }
+    });
+
+    return hasErrors ? newErrors : null;
+  } catch (parseError) {
+    console.error('Error parsing backend error response:', parseError);
+    return null;
+  }
+};
+
 export const useUpsertFond = () => {
   const params = useParams<{ id?: string }>();
   const id = params.id;
@@ -149,9 +177,11 @@ export const useUpsertFond = () => {
 
       const payload = {
         fondNumber: Number(details.fondNumber),
-        name: details.name, 
+        name: details.name,
         documentCreationDate: { uk: details.documentCreationDate, en: details.documentCreationDate },
-        chronologicalBoundaries: details.chronologicalBoundaries ? { uk: details.chronologicalBoundaries, en: details.chronologicalBoundaries } : undefined,
+        chronologicalBoundaries: details.chronologicalBoundaries
+          ? { uk: details.chronologicalBoundaries, en: details.chronologicalBoundaries }
+          : undefined,
         organizationForm: details.organizationForm?.uk ? details.organizationForm : undefined,
         description: {
           uk: JSON.stringify(details.description.uk),
@@ -160,26 +190,25 @@ export const useUpsertFond = () => {
         status: status as unknown as CreateFondInput['status']
       };
 
-      const successMessage = status === BaseContentStatuses.Published 
-        ? 'Фонд опубліковано.' 
+      const successMessage = status === BaseContentStatuses.Published
+        ? 'Фонд опубліковано.'
         : 'Фонд збережено.';
 
       try {
+        let savedId: string | undefined = undefined;
+
         if (mode === 'create') {
           const result = await createFond(payload);
-          const newId = result?.data?.createFond?.id;
-          if (newId) {
-            setIsSaved(true);
-            toast.success(successMessage);
-            return newId;
-          }
+          savedId = result?.data?.createFond?.id;
         } else if (mode === 'edit' && id) {
           const result = await updateFond({ id, input: payload });
-          if (result?.data?.updateFond?.id) {
-            setIsSaved(true);
-            toast.success(successMessage);
-            return id;
-          }
+          savedId = result?.data?.updateFond?.id;
+        }
+
+        if (savedId) {
+          setIsSaved(true);
+          toast.success(successMessage);
+          return savedId;
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -192,31 +221,12 @@ export const useUpsertFond = () => {
           return null;
         }
 
-        try {
-          const jsonMatch = message.match(/\[\s*\{[\s\S]*\}\s*\]/);
-          if (jsonMatch) {
-            const parsedErrors = JSON.parse(jsonMatch[0]);
-            
-            if (Array.isArray(parsedErrors)) {
-              const newBackendErrors: Partial<Record<keyof FondDetailsValue, string>> = {};
-              
-              parsedErrors.forEach((err) => {
-                const fieldName = err.path?.[0] as keyof FondDetailsValue;
-                if (fieldName) {
-                  newBackendErrors[fieldName] = err.message;
-                }
-              });
-
-              if (Object.keys(newBackendErrors).length > 0) {
-                setErrors((prev) => ({ ...prev, ...newBackendErrors }));
-                setForceShowErrors(true);
-                toast.error(FondErrors.FAILED_TO_CREATE);
-                return null;
-              }
-            }
-          }
-        } catch (parseError) {
-          console.error('Error parsing backend error response:', parseError);
+        const backendErrors = extractValidationErrors(message);
+        if (backendErrors) {
+          setErrors((prev) => ({ ...prev, ...backendErrors }));
+          setForceShowErrors(true);
+          toast.error(FondErrors.FAILED_TO_CREATE);
+          return null;
         }
 
         setForceShowErrors(true);
