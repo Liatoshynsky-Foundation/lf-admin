@@ -210,7 +210,7 @@ export const useUpsertFond = () => {
               if (Object.keys(newBackendErrors).length > 0) {
                 setErrors((prev) => ({ ...prev, ...newBackendErrors }));
                 setForceShowErrors(true);
-                toast.error('Перевірте правильність заповнення полів.');
+                toast.error(FondErrors.FAILED_TO_CREATE);
                 return null;
               }
             }
