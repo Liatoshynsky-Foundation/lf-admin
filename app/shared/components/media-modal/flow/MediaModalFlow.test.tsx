@@ -323,13 +323,17 @@ describe('MediaModalFlow', () => {
   });
 
   it('should switch tabs in select step', async () => {
-    renderOpen({ tab: 'GALLERY' });
+    const onTabChange = jest.fn();
+
+    renderOpen({ tab: 'GALLERY' }, { onTabChange });
 
     await user.click(screen.getByTestId('MediaModalSwitcher-usedTab'));
     expect(screen.getByTestId('UsedView')).toBeInTheDocument();
+    expect(onTabChange).toHaveBeenLastCalledWith('USED');
 
     await user.click(screen.getByTestId('MediaModalSwitcher-uploadTab'));
     expect(screen.getByTestId('UploadView')).toBeInTheDocument();
+    expect(onTabChange).toHaveBeenLastCalledWith('UPLOAD');
   });
 
   it('should hide tabs and render upload header when hideTabs is enabled', () => {

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import toast from 'react-hot-toast';
 
 import { ImagePreviewBlock } from './PhotoBlock';
-import type { MediaModalOpenState, MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
+import type { MediaModalOpenState, MediaModalResult, MediaModalTab } from '~/shared/components/media-modal/MediaModal.types';
 
 /* -------------------- MOCKS -------------------- */
 
@@ -38,10 +38,11 @@ type MediaModalProps = {
   initial?: MediaModalOpenState;
   onClose: () => void;
   onApply: (result: MediaModalResult) => void;
+  onTabChange?: (tab: MediaModalTab) => void;
 };
 
 jest.mock('~/shared/components/media-modal/MediaModal', () => ({
-  MediaModal: ({ open, initial, onApply, onClose }: MediaModalProps) => {
+  MediaModal: ({ open, initial, onApply, onClose, onTabChange }: MediaModalProps) => {
     if (!open) return null;
 
     return (
@@ -51,6 +52,14 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
 
         <button data-testid="close" onClick={onClose}>
           close
+        </button>
+
+        <button data-testid="select-gallery-tab" onClick={() => onTabChange?.('GALLERY')}>
+          gallery
+        </button>
+
+        <button data-testid="select-used-tab" onClick={() => onTabChange?.('USED')}>
+          used
         </button>
 
         <button
@@ -160,6 +169,25 @@ describe('ImagePreviewBlock', () => {
 
     expect(screen.getByTestId('media-modal')).toBeInTheDocument();
     expect(screen.getByTestId('initial-tab')).toHaveTextContent('UPLOAD');
+  });
+
+  it('should restore the last selected MediaModal tab when changing image again', async () => {
+    const user = userEvent.setup();
+
+    renderComponent();
+
+    await user.click(screen.getByRole('button', { name: /змінити зображення/i }));
+    expect(screen.getByTestId('initial-tab')).toHaveTextContent('UPLOAD');
+
+    await user.click(screen.getByTestId('select-gallery-tab'));
+    await user.click(screen.getByTestId('close'));
+    await user.click(screen.getByRole('button', { name: /змінити зображення/i }));
+    expect(screen.getByTestId('initial-tab')).toHaveTextContent('GALLERY');
+
+    await user.click(screen.getByTestId('select-used-tab'));
+    await user.click(screen.getByTestId('close'));
+    await user.click(screen.getByRole('button', { name: /змінити зображення/i }));
+    expect(screen.getByTestId('initial-tab')).toHaveTextContent('USED');
   });
 
   it('closes media modal on close click', async () => {
