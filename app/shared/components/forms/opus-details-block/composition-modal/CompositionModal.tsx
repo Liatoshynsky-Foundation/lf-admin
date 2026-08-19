@@ -1,8 +1,6 @@
 'use client';
 
 import { Box, Dialog, IconButton, InputAdornment, TextField, Typography } from '@mui/material';
-import dayjs, { Dayjs } from 'dayjs';
-import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { CloudUpload, FileText, Info, Music, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -16,14 +14,13 @@ import {
   COMPOSITION_VALIDATION_MESSAGES,
   COMPOSITION_YEAR_LIMITS
 } from '~/constants/opus';
+import { formatPublishDate, formatPublishDateForSave, formatPublishDateInput, publishDateToDayjs } from '~/lib/utils/date';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import { isAudioUploadFile, isPdfUploadFile } from '~/shared/components/media-modal/MediaModal.utils';
 import { createCompositionId } from '~/shared/hooks/use-upsert-opus/useUpsertOpus';
 import type { OpusCompositionData, OpusMediaFileData } from '~/types/opus';
 import { compositionGenreSchema, compositionTitleSchema, compositionYearSchema } from '~/validators/composition.schema';
-
-dayjs.extend(customParseFormat);
 
 interface CompositionModalProps {
   open: boolean;
@@ -52,27 +49,9 @@ const fileNameFromUrl = (url?: string): string => {
     return '';
   }
 
-  const segment = url.split('/').pop() ?? url;
+  const segment = url.split('/').pop() as string;
 
   return decodeURIComponent(segment.split('?')[0]);
-};
-
-const publishDateToDayjs = (value?: string): Dayjs | null => {
-  if (!value) return null;
-
-  const parsed = dayjs(value, ['YYYY-MM-DD', 'DD/MM/YYYY', 'YYYY'], true);
-  return parsed.isValid() ? parsed : null;
-};
-
-const formatPublishDate = (value?: string): string => publishDateToDayjs(value)?.format('DD/MM/YYYY') ?? value ?? '';
-
-const formatPublishDateInput = (value: string): string => {
-  const digits = value.replace(/\D/g, '').slice(0, 8);
-
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
 };
 
 export default function CompositionModal({
@@ -161,7 +140,7 @@ export default function CompositionModal({
 
   const handleMediaApply = (result: MediaModalResult): void => {
     const url = result.uploadResult?.url ?? (result.selected.kind === 'upload' ? undefined : result.selected.src);
-    const fileName = result.uploadResult?.originalName ?? result.selected.fileName ?? '';
+    const fileName = result.uploadResult?.originalName ?? result.selected.fileName;
 
     if (!url || !mediaTarget) {
       setMediaTarget(null);
@@ -190,19 +169,19 @@ export default function CompositionModal({
 
     const titleResult = compositionTitleSchema.safeParse(composition.name);
     if (!titleResult.success) {
-      newTitleError = titleResult.error.issues[0]?.message ?? '';
+      newTitleError = titleResult.error.issues[0].message;
       isValid = false;
     }
 
     const genreResult = compositionGenreSchema.safeParse(composition.genre);
     if (!genreResult.success) {
-      newGenreError = genreResult.error.issues[0]?.message ?? '';
+      newGenreError = genreResult.error.issues[0].message;
       isValid = false;
     }
 
     const yearResult = compositionYearSchema.safeParse(composition.year);
     if (!yearResult.success) {
-      newYearError = yearResult.error.issues[0]?.message ?? '';
+      newYearError = yearResult.error.issues[0].message;
       isValid = false;
     }
 
@@ -244,7 +223,7 @@ export default function CompositionModal({
       )
       .map((note) => ({
         ...note,
-        publishDate: publishDateToDayjs(note.publishDate)?.format('YYYY-MM-DD') ?? ''
+        publishDate: formatPublishDateForSave(note.publishDate) ?? ''
       }));
 
     onSubmit({ ...composition, name: composition.name.trim(), notes: filteredNotes });

@@ -73,7 +73,7 @@ const INITIAL_COMPOSITION_VALUE: OpusCompositionData = {
   year: '',
   audios: [{ id: 'a1', name: 'Запис', fileUrl: 'https://files/rec.mp3' }],
   notes: [
-    { id: 'n1', name: 'Ноти 1', fileUrl: 'https://files/sheet.pdf', publishDate: '2020' },
+    { id: 'n1', name: 'Ноти 1', fileUrl: 'https://files/sheet.pdf', publishDate: '01/01/2020' },
     { id: 'n2', name: 'Ноти 2' }
   ]
 };
@@ -459,6 +459,30 @@ describe('CompositionModal', () => {
     expect(onSubmit).toHaveBeenCalledTimes(1);
     const submitted = onSubmit.mock.calls[0][0] as OpusCompositionData;
     expect(submitted.name).toBe('Редагований твір');
+  });
+
+  it('renders and submits a note with an omitted name', () => {
+    const onSubmit = jest.fn();
+    render(
+      <CompositionModal
+        {...baseProps}
+        mode="edit"
+        initialValue={{
+          ...INITIAL_COMPOSITION_VALUE,
+          name: 'Valid Title',
+          audios: [],
+          notes: [{ id: 'unnamed-note', fileUrl: 'https://files/sheet.pdf', publishDate: '01/01/2020' }]
+        }}
+        onSubmit={onSubmit}
+      />
+    );
+
+    expect(screen.getByLabelText(INPUTS.noteName)).toHaveValue('');
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.saveButton }));
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ notes: [expect.objectContaining({ id: 'unnamed-note' })] })
+    );
   });
 
   it('rejects a one-character title', () => {

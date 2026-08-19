@@ -71,7 +71,8 @@ export const COMPOSITION_VALIDATION_MESSAGES = {
   titleTooLong: 'Назва не може перевищувати 250 символів.',
   genreTooShort: 'Введіть щонайменше 2 символи.',
   genreTooLong: 'Жанр не може перевищувати 150 символів.',
-  yearInvalid: 'Введіть коректну дату.'
+  yearInvalid: 'Введіть коректну дату.',
+  publishDateInvalid: 'Введіть коректну дату видання.'
 } as const;
 
 export const COMPOSITION_ACTIONS_MESSAGES = {
