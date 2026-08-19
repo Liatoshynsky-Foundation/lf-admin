@@ -49,6 +49,8 @@ export interface SeoMetadataFormProps {
   };
 }
 
+const ALT_TEXT_MIN_LENGTH = 2;
+
 const getFileNameFromUrl = (url: string | null): string | undefined =>
   url ? url.split('/').pop()?.split('?')[0] : undefined;
 
@@ -87,6 +89,9 @@ export default function SeoMetadataForm({
   const [touched, setTouched] = useState<Partial<Record<keyof LocalizedMeta, boolean>>>({});
   const [errors, setErrors] = useState<Partial<Record<keyof LocalizedMeta, string>>>({});
 
+  const [altTextTouched, setAltTextTouched] = useState(false);
+  const [altTextError, setAltTextError] = useState('');
+
   const translationErrors = seoFormErrors[locale];
 
   useEffect(() => {
@@ -107,6 +112,11 @@ export default function SeoMetadataForm({
       title: validateField('title', value.title),
       description: validateField('description', value.description)
     }));
+
+    if (showAlternativeText) {
+      setAltTextTouched(true);
+      setAltTextError(validateAltText(value.altText?.[locale] ?? ''));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forceShowErrors]);
 
@@ -136,6 +146,12 @@ export default function SeoMetadataForm({
     }
   };
 
+  const validateAltText = (val: string) => {
+    const length = val.trim().length;
+    if (length > 0 && length < ALT_TEXT_MIN_LENGTH) return translationErrors.minLength;
+    return '';
+  };
+
   const handleBlur = (field: keyof LocalizedMeta) => {
     setTouched((prev) => ({ ...prev, [field]: true }));
     const fieldValue = typeof value[field] === 'string' ? value[field] : '';
@@ -145,6 +161,22 @@ export default function SeoMetadataForm({
   const handleFieldChange = (field: keyof LocalizedMeta, val: string) => {
     onChange({ ...value, [field]: val });
     if (touched[field]) setErrors((prev) => ({ ...prev, [field]: validateField(field, val) }));
+  };
+
+  const handleAltTextBlur = () => {
+    setAltTextTouched(true);
+    setAltTextError(validateAltText(value.altText?.[locale] ?? ''));
+  };
+
+  const handleAltTextChange = (alt: string) => {
+    onChange({
+      ...value,
+      altText: {
+        uk: locale === 'uk' ? alt : (value.altText?.uk ?? ''),
+        en: locale === 'en' ? alt : (value.altText?.en ?? '')
+      }
+    });
+    if (altTextTouched) setAltTextError(validateAltText(alt));
   };
 
   const handleImageChange = async (url: string, crop: CropResult | null | undefined) => {
@@ -183,15 +215,10 @@ export default function SeoMetadataForm({
         initialCrop={crop ? { rect: crop } : null}
         showAlternativeText={showAlternativeText}
         altText={value.altText?.[locale] ?? ''}
-        onChangeAltText={(alt) =>
-          onChange({
-            ...value,
-            altText: {
-              uk: locale === 'uk' ? alt : (value.altText?.uk ?? ''),
-              en: locale === 'en' ? alt : (value.altText?.en ?? '')
-            }
-          })
-        }
+        onChangeAltText={handleAltTextChange}
+        onBlurAltText={handleAltTextBlur}
+        altTextError={altTextError}
+        altTextErrorState={Boolean(altTextError) && altTextTouched}
         locale={locale}
       />
       <Typography variant="textMd" sx={styles.ogImageHint}>
