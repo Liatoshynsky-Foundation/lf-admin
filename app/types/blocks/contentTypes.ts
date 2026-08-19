@@ -58,6 +58,9 @@ export interface ImageContentItem extends BaseContentItem {
   label?: string;
   aspectRatio?: number;
   showCaption?: boolean;
+  previewWidth?: number;
+  previewHeight?: number;
+  alignActionsToPreviewBottom?: boolean;
 }
 
 export type ContentItem =

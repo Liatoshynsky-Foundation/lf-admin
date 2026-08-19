@@ -13,12 +13,24 @@ jest.mock('~/utils/getImageUrl', () => ({
 jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
   ImagePreviewBlock: ({
     onChangeImage,
-    onChangeAltText
+    onChangeAltText,
+    title,
+    previewWidth,
+    previewHeight,
+    alignActionsToPreviewBottom
   }: {
     onChangeImage: (url: string, crop?: CropResult | null) => void;
     onChangeAltText?: (value: string) => void;
+    title?: string;
+    previewWidth?: number;
+    previewHeight?: number;
+    alignActionsToPreviewBottom?: boolean;
   }) => (
     <>
+      {title && <span data-testid={`preview-size-${title}`}>{`${previewWidth}x${previewHeight}`}</span>}
+      {title && (
+        <span data-testid={`align-bottom-${title}`}>{String(alignActionsToPreviewBottom ?? false)}</span>
+      )}
       <button
         data-testid="trigger-image-change"
         onClick={() => onChangeImage('/updated.jpg', { rect: { x: 0, y: 0, width: 100, height: 100 } })}
@@ -147,5 +159,26 @@ describe('ImageContent', () => {
     );
 
     expect(screen.queryByTestId('textfield-wrapper-Підпис до зображення (Зображення)')).not.toBeInTheDocument();
+  });
+
+  it('should pass preview size and bottom-aligned actions to ImagePreviewBlock', () => {
+    render(
+      <ImageContent
+        item={{
+          ...baseItem,
+          label: 'Перше зображення секції',
+          previewWidth: 188,
+          previewHeight: 224,
+          alignActionsToPreviewBottom: true
+        }}
+        locale="uk"
+        onChange={jest.fn()}
+        pageId="about-us"
+        blockId="mission"
+      />
+    );
+
+    expect(screen.getByTestId('preview-size-Перше зображення секції')).toHaveTextContent('188x224');
+    expect(screen.getByTestId('align-bottom-Перше зображення секції')).toHaveTextContent('true');
   });
 });

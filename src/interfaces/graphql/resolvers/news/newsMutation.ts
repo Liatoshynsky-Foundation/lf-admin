@@ -58,13 +58,16 @@ const processContentFields = async (input: UpdateNewsGQLInput, updateData: Updat
   }
 };
 
+const TITLE_MIN_LENGTH = 2;
 const TITLE_MAX_LENGTH = 150;
 
 const DESCRIPTION_MIN_LENGTH = 2;
 const DESCRIPTION_MAX_LENGTH = 250;
 
+const ALT_TEXT_MIN_LENGTH = 2;
+
 type LocalizedLengthValidationOptions = {
-  fieldName: 'title' | 'description';
+  fieldName: 'title' | 'description' | 'altText';
   minLength?: number;
   maxLength?: number;
 };
@@ -113,13 +116,32 @@ const validateDescriptionLength = (description: LocalizedString | undefined): vo
   throwBadUserInput(newsServiceErrors.DESCRIPTION_LENGTH_INVALID, invalidFields);
 };
 
-const validateTitleMaxLength = (title: LocalizedString | undefined): void => {
+const validateTitleLength = (title: LocalizedString | undefined): void => {
   const invalidFields = getInvalidLocalizedLengthFields(title, {
     fieldName: 'title',
-    maxLength: TITLE_MAX_LENGTH
+    maxLength: TITLE_MAX_LENGTH,
+    minLength: TITLE_MIN_LENGTH
   });
 
-  throwBadUserInput(newsServiceErrors.TITLE_TOO_LONG_FOR_SLUG, invalidFields);
+  throwBadUserInput(newsServiceErrors.TITLE_LENGTH_INVALID, invalidFields);
+};
+
+const validateAltTextMinLength = (coverImage: LocalizedImage | undefined): void => {
+  if (!coverImage?.alt) return;
+
+  const { alt } = coverImage;
+
+  const invalidFields = (['uk', 'en'] as const)
+    .filter((lang) => {
+      const localizedValue = alt[lang];
+      if (typeof localizedValue !== 'string') return false;
+
+      const length = localizedValue.trim().length;
+      return length > 0 && length < ALT_TEXT_MIN_LENGTH;
+    })
+    .map((lang) => `altText.${lang}`);
+
+  throwBadUserInput(newsServiceErrors.ALT_TEXT_TOO_SHORT, invalidFields);
 };
 
 const trimLocalizedString = (value: LocalizedString | undefined): LocalizedString | undefined => {
@@ -138,6 +160,15 @@ const trimLocalizedString = (value: LocalizedString | undefined): LocalizedStrin
   return trimmed;
 };
 
+const trimLocalizedImageAlt = (coverImage: LocalizedImage | undefined): LocalizedImage | undefined => {
+  if (!coverImage?.alt) return coverImage;
+
+  return {
+    ...coverImage,
+    alt: trimLocalizedString(coverImage.alt) ?? coverImage.alt
+  };
+};
+
 const endpointHandler = endpointRepositoryHandler('newsRepository');
 
 export const NewsMutation = {
@@ -153,19 +184,15 @@ export const NewsMutation = {
     const trimmedInput = {
       ...input,
       title: trimLocalizedString(input.title) ?? input.title,
-      description: trimLocalizedString(input.description) ?? input.description
+      description: trimLocalizedString(input.description) ?? input.description,
+      coverImage: trimLocalizedImageAlt(input.coverImage) ?? input.coverImage
     };
 
     const titleForSlug = extractTitleForSlug(trimmedInput.title);
 
-    if (!titleForSlug) {
-      throw new Error(newsServiceErrors.TITLE_REQUIRED_FOR_SLUG);
-    } else if (titleForSlug.trim().length < 2) {
-      throw new Error(newsServiceErrors.TITLE_TOO_SHORT_FOR_SLUG);
-    }
-
-    validateTitleMaxLength(trimmedInput.title);
+    validateTitleLength(trimmedInput.title);
     validateDescriptionLength(trimmedInput.description);
+    validateAltTextMinLength(trimmedInput.coverImage);
 
     const slug = await generateUniqueSlug(titleForSlug, {
       checkExists: async (slug: string) => {
@@ -225,24 +252,21 @@ export const NewsMutation = {
     const trimmedInput = {
       ...input,
       title: trimLocalizedString(input.title) ?? input.title,
-      description: trimLocalizedString(input.description) ?? input.description
+      description: trimLocalizedString(input.description) ?? input.description,
+      coverImage: trimLocalizedImageAlt(input.coverImage) ?? input.coverImage
     };
 
     validateDescriptionLength(trimmedInput.description);
+    if (input.coverImage) {
+      validateAltTextMinLength(trimmedInput.coverImage);
+    }
 
     if (input.content || input.description || input.coverImage) {
       await processContentFields(trimmedInput, updateData);
     }
 
     if (trimmedInput.title) {
-      const titleForSlug = extractTitleForSlug(trimmedInput.title);
-      if (!titleForSlug) {
-        throw new Error(newsServiceErrors.TITLE_REQUIRED_FOR_SLUG);
-      } else if (titleForSlug.trim().length < 2) {
-        throw new Error(newsServiceErrors.TITLE_TOO_SHORT_FOR_SLUG);
-      }
-
-      validateTitleMaxLength(trimmedInput.title);
+      validateTitleLength(trimmedInput.title);
 
       await processSlugUpdate(id, trimmedInput.title, repo, updateData);
       updateData.title = trimmedInput.title;

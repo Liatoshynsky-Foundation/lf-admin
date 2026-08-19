@@ -55,6 +55,9 @@ export const ImageContent = ({ item, locale, onChange }: ContentTypeProps<ImageC
         fileName={item.value.src || ''}
         initialCrop={item.value.crop}
         aspectRatio={item.aspectRatio}
+        previewWidth={item.previewWidth}
+        previewHeight={item.previewHeight}
+        alignActionsToPreviewBottom={item.alignActionsToPreviewBottom}
         onChangeImage={handleImageChange}
         showAlternativeText
         altText={imageAltText}

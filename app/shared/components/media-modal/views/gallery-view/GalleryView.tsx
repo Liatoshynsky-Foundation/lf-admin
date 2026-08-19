@@ -20,16 +20,23 @@ type MediaKindConfig = {
   folder: string;
   assetType: AssetType;
   title: string;
+  emptyStateText: string;
   iconSrc?: string;
   matchesFile?: (mimeType: string, filename: string) => boolean;
 };
 
 const MEDIA_KIND_CONFIG: Record<MediaKind, MediaKindConfig> = {
-  image: { folder: 'photos', assetType: AssetType.Image, title: 'Усі зображення' },
+  image: {
+    folder: 'photos',
+    assetType: AssetType.Image,
+    title: 'Усі зображення',
+    emptyStateText: 'Зображень не знайдено. Спробуйте додати зображення до медіатеки.'
+  },
   audio: {
     folder: 'compositions',
     assetType: AssetType.Audio,
     title: 'Усі аудіо',
+    emptyStateText: 'Аудіофайлів не знайдено. Спробуйте додати аудіофайли до медіатеки.',
     iconSrc: '/icons/audio.svg',
     matchesFile: matchesAudio
   },
@@ -37,6 +44,7 @@ const MEDIA_KIND_CONFIG: Record<MediaKind, MediaKindConfig> = {
     folder: 'uploads',
     assetType: AssetType.Pdf,
     title: 'Усі файли',
+    emptyStateText: 'Файлів не знайдено. Спробуйте додати файли до медіатеки.',
     iconSrc: '/icons/pdf.svg',
     matchesFile: matchesPdf
   }
@@ -98,7 +106,7 @@ const matchesUsageFilter = (item: GalleryItem, filter: string): boolean => {
   return item.usageRefs.some((ref) => ref.pageId === filter);
 };
 
-export function GalleryView({ selected: _selected, onPick, filters, onFiltersChange, mediaKind = 'image' }: Props) {
+export function GalleryView({ selected, onPick, filters, onFiltersChange, mediaKind = 'image' }: Props) {
   const config = MEDIA_KIND_CONFIG[mediaKind];
   const { files: r2Files, isLoading: r2Loading } = useGalleryFiles(config.folder);
 
@@ -111,6 +119,7 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
 
   type AssetMeta = {
     id: string;
+    mimeType: string;
     filename: string;
     originalname?: string;
     isStarred: boolean;
@@ -129,19 +138,26 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
   const galleryItems = useMemo((): GalleryItem[] => {
     return r2Files
       .filter((file): file is GalleryFile & { url: string } => Boolean(file.url))
-      .filter((file) => !config.matchesFile || config.matchesFile(file.mimeType ?? '', file.filename ?? ''))
-      .map((file) => {
+      .flatMap((file): GalleryItem[] => {
         const asset = assetByUrl[file.url];
-        return {
-          id: asset?.id ?? file.path ?? file.filename,
-          filename: asset?.filename ?? file.filename,
-          originalname: asset?.originalname ?? undefined,
-          url: file.url,
-          isStarred: asset?.isStarred ?? false,
-          tags: asset?.tags ?? [],
-          usageRefs: asset?.usageRefs ?? [],
-          createdAt: file.createdAt
-        };
+        const mimeType = asset?.mimeType || file.mimeType || '';
+
+        if (config.matchesFile && !config.matchesFile(mimeType, file.filename ?? '')) {
+          return [];
+        }
+
+        return [
+          {
+            id: asset?.id ?? file.path ?? file.filename,
+            filename: asset?.filename ?? file.filename,
+            originalname: asset?.originalname ?? undefined,
+            url: file.url,
+            isStarred: asset?.isStarred ?? false,
+            tags: asset?.tags ?? [],
+            usageRefs: asset?.usageRefs ?? [],
+            createdAt: file.createdAt
+          }
+        ];
       });
   }, [r2Files, assetByUrl, config]);
 
@@ -169,6 +185,43 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
   };
 
   const loading = r2Loading || assetsLoading;
+  const shouldShowEmptyState = !loading && filteredAndSortedItems.length === 0;
+
+  const renderGalleryContent = () => {
+    if (loading) {
+      return <Box sx={sharedViewStyles.gridContainer}>Завантаження...</Box>;
+    }
+
+    if (shouldShowEmptyState) {
+      return (
+        <Box sx={sharedViewStyles.emptyState} data-testid="GalleryView-emptyState">
+          <Typography variant="body1" sx={sharedViewStyles.emptyStateText}>
+            {config.emptyStateText}
+          </Typography>
+        </Box>
+      );
+    }
+
+    return (
+      <MediaGrid
+        items={filteredAndSortedItems}
+        sx={sharedViewStyles.gridContainer}
+        renderCard={(item) => (
+          <GalleryCard
+            src={item.url}
+            iconSrc={config.iconSrc}
+            fileName={item.originalname || item.filename}
+            isStarred={item.isStarred}
+            usageLocations={getPageNames(item.usageRefs)}
+            onClick={() => handleCardClick(item)}
+            testId={`GalleryCard-${item.id}`}
+            isSelected={selected?.id === item.id}
+          />
+        )}
+        testIdPrefix="GalleryView"
+      />
+    );
+  };
 
   return (
     <Box data-testid="GalleryView" sx={sharedViewStyles.container}>
@@ -201,26 +254,7 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
         </Box>
       </Box>
 
-      {loading ? (
-        <Box sx={sharedViewStyles.gridContainer}>Завантаження...</Box>
-      ) : (
-        <MediaGrid
-          items={filteredAndSortedItems}
-          sx={sharedViewStyles.gridContainer}
-          renderCard={(item) => (
-            <GalleryCard
-              src={item.url}
-              iconSrc={config.iconSrc}
-              fileName={item.originalname || item.filename}
-              isStarred={item.isStarred}
-              usageLocations={getPageNames(item.usageRefs)}
-              onClick={() => handleCardClick(item)}
-              testId={`GalleryCard-${item.id}`}
-            />
-          )}
-          testIdPrefix="GalleryView"
-        />
-      )}
+      {renderGalleryContent()}
     </Box>
   );
 }

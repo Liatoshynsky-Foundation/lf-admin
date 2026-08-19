@@ -1,4 +1,5 @@
 import { Box } from '@mui/material';
+import { JSONContent } from '@tiptap/react';
 
 import { styles } from './GroupIntroSection.styles';
 import { GroupDataField } from '~/constants/creativity';
@@ -7,7 +8,7 @@ import { CustomTextField } from '~/shared/components/design-system/text-field/Te
 
 type MultilingualText = { uk: string; en: string };
 
-type MultilingualRichText = { uk: Record<string, unknown> | null; en: Record<string, unknown> | null };
+type MultilingualRichText = { uk: JSONContent | null; en: JSONContent | null };
 
 type GroupIntroSectionProps = {
   data: {

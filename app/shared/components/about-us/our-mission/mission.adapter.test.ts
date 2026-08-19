@@ -62,14 +62,20 @@ describe('missionAdapter', () => {
           type: CONTENT_TYPE.IMAGE,
           value: block.smallImage,
           label: 'Перше зображення секції',
-          aspectRatio: CROP_RATIOS.FUNDATION_PROFILE_SMALL
+          aspectRatio: CROP_RATIOS.FUNDATION_PROFILE_SMALL,
+          previewWidth: 188,
+          previewHeight: 224,
+          alignActionsToPreviewBottom: true
         },
         {
           id: 'bigImage',
           type: CONTENT_TYPE.IMAGE,
           value: block.bigImage,
           label: 'Друге зображення секції',
-          aspectRatio: CROP_RATIOS.FUNDATION_PROFILE_BIG
+          aspectRatio: CROP_RATIOS.FUNDATION_PROFILE_BIG,
+          previewWidth: 395,
+          previewHeight: 224,
+          alignActionsToPreviewBottom: true
         }
       ]);
     });

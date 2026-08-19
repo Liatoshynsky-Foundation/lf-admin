@@ -6,6 +6,7 @@ import { CustomFormattingField } from './CustomFormattingField';
 
 type EditorConfig = {
   content: JSONContent;
+  extensions: Array<{ name?: string; config?: { content?: string } }>;
   onUpdate: (props: { editor: Editor }) => void;
   onFocus: () => void;
   onBlur: () => void;
@@ -65,6 +66,14 @@ describe('CustomFormattingField', () => {
     jest.clearAllMocks();
     Object.defineProperty(mockEditor, 'isEmpty', { value: true, configurable: true });
     mockGetJSON.mockReturnValue(defaultJSON);
+  });
+
+  it('allows multiple paragraphs in the document schema', () => {
+    render(<CustomFormattingField value={defaultJSON} onChange={mockOnChange} />);
+
+    const documentExtension = mockEditorConfig.extensions.find((extension) => extension.name === 'doc');
+
+    expect(documentExtension?.config?.content).toMatch(/\+$/);
   });
 
   describe('1. Mounting & Rendering', () => {

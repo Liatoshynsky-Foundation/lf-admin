@@ -316,7 +316,7 @@ export function MediaModalFlow({
       footerLeft={footerLeft}
       footerRight={footerRight}
     >
-      {renderBody()}
+      {open ? renderBody() : null}
     </MediaModalContainer>
   );
 }
