@@ -34,6 +34,11 @@ export const styles = {
       m: 0,
       lineHeight: '24px'
     },
+
+    '& .ProseMirror p + p': {
+      mt: '12px'
+    },
+
     '& .ProseMirror p.is-editor-empty:first-of-type::before': {
       color: 'text.disabled',
       content: 'attr(data-placeholder)',

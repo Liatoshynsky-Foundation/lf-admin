@@ -4,6 +4,7 @@ import { Box } from '@mui/material';
 import { ReactNode } from 'react';
 
 import { mediaCardStyles } from './MediaCard.styles';
+import { sxToArray } from '~/lib/utils/sxToArray';
 
 type MediaCardProps = Readonly<{
   src: string;
@@ -13,6 +14,7 @@ type MediaCardProps = Readonly<{
   topLeftContent?: ReactNode;
   topRightContent?: ReactNode;
   bottomContent?: ReactNode;
+  isSelected?: boolean;
   testId?: string;
 }>;
 
@@ -24,11 +26,15 @@ export function MediaCard({
   topLeftContent,
   topRightContent,
   bottomContent,
+  isSelected = false,
   testId
 }: MediaCardProps) {
   return (
     <Box sx={mediaCardStyles.wrapper} data-testid={testId}>
-      <Box sx={mediaCardStyles.imageContainer} onClick={onClick}>
+      <Box
+        sx={[mediaCardStyles.imageContainer, ...sxToArray(isSelected ? mediaCardStyles.selectedImageContainer : undefined)]}
+        onClick={onClick}
+      >
         {iconSrc ? (
           <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Box component="img" src={iconSrc} alt={alt} sx={{ width: 56, height: 56 }} />

@@ -36,6 +36,11 @@ const DUP_OPUS_NUMBER = 20;
 const SLUG_VALUE = 'slug-test';
 const CREATION_YEAR = '2020';
 
+const MAPPED_SHEETS = [
+  { url: 'http://file.pdf', name: 'Note 1', publishDate: '2020-01-01', isFree: true },
+  { url: null, name: 'Note 2', publishDate: null, isFree: true }
+];
+
 const BASE_CREATE_INPUT = {
   numberKind: 'op' as const,
   number: OPUS_NUMBER,
@@ -246,12 +251,7 @@ describe('OpusMutation Resolvers', () => {
           audioAvailable: true,
           sheetAvailable: true,
           sheetMusic: [
-            {
-              url: 'http://file.pdf',
-              name: 'Note 1',
-              publishDate: '2020-01-01',
-              isFree: true
-            }
+            ...MAPPED_SHEETS
           ],
           audios: [
             { name: 'Audio 1', url: 'http://audio.mp3' },
@@ -868,7 +868,7 @@ describe('OpusMutation Resolvers', () => {
     });
 
     describe('Edge Cases (Parsers & Helpers)', () => {
-      it('should map compositions gracefully ignoring invalid years and filtering empty files', async () => {
+      it('should map compositions gracefully with invalid years and empty sheet URLs', async () => {
         mockOpusRepo.findById.mockResolvedValue(MOCK_OPUS_ENTITY);
         mockOpusRepo.update.mockResolvedValue(MOCK_OPUS_ENTITY);
         mockCompositionsRepo.syncForOpus.mockResolvedValue([]);
@@ -884,7 +884,7 @@ describe('OpusMutation Resolvers', () => {
                   name: 'Test',
                   year: 'invalid-year',
                   genre: null,
-                  notes: [{ name: 'Empty note', fileUrl: '' }],
+                  notes: [{ name: MAPPED_SHEETS[1].name, fileUrl: MAPPED_SHEETS[1].url }],
                   audios: [{ name: '', fileUrl: '' }]
                 }
               ]
@@ -896,7 +896,10 @@ describe('OpusMutation Resolvers', () => {
         expect(mockCompositionsRepo.syncForOpus).toHaveBeenCalledWith([
           expect.objectContaining({
             year: null,
-            sheetMusic: [],
+            sheetAvailable: true,
+            sheetMusic: [
+              MAPPED_SHEETS[1]
+            ],
             audios: []
           })
         ], expect.anything());

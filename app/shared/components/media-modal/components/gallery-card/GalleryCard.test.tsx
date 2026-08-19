@@ -16,52 +16,61 @@ jest.mock('~/public/icons/star.svg', () => ({
 describe('GalleryCard', () => {
   const mockOnClick = jest.fn();
 
+  const DEFAULT_GALLERY_CARD_PROPS = {
+    src: '/test.jpg',
+    fileName: 'test.jpg',
+    isStarred: false,
+    onClick: mockOnClick
+  };
+  const GALLERY_CARD_VALUES = {
+    selectedTestId: 'selected-gallery-card',
+    customTestId: 'custom-gallery-card'
+  };
+  const SELECTED_GALLERY_CARD_PROPS = {
+    ...DEFAULT_GALLERY_CARD_PROPS,
+    isSelected: true,
+    testId: GALLERY_CARD_VALUES.selectedTestId
+  };
+  const SELECTED_GALLERY_CARD_OPACITY = '0.65';
+
   beforeEach(() => {
     mockOnClick.mockClear();
   });
 
-  it('should render image with correct src and fileName', () => {
-    render(<GalleryCard src="/test.jpg" fileName="test-image.jpg" isStarred={false} onClick={mockOnClick} />);
+  it('should render media with correct src and fileName', () => {
+    render(<GalleryCard {...DEFAULT_GALLERY_CARD_PROPS} />);
 
-    expect(screen.getByAltText('test-image.jpg')).toHaveAttribute('src', '/test.jpg');
-    expect(screen.getByText('test-image.jpg')).toBeInTheDocument();
+    expect(screen.getByAltText(DEFAULT_GALLERY_CARD_PROPS.fileName)).toHaveAttribute(
+      'src',
+      DEFAULT_GALLERY_CARD_PROPS.src
+    );
+    expect(screen.getByText(DEFAULT_GALLERY_CARD_PROPS.fileName)).toBeInTheDocument();
   });
 
   it('should call onClick when clicked', async () => {
     const user = userEvent.setup();
-    render(
-      <GalleryCard src="/test.jpg" fileName="test.jpg" isStarred={false} onClick={mockOnClick} testId="gallery-card" />
-    );
+    render(<GalleryCard {...DEFAULT_GALLERY_CARD_PROPS} testId="gallery-card" />);
 
-    const image = screen.getByAltText('test.jpg');
-    await user.click(image);
+    await user.click(screen.getByAltText(DEFAULT_GALLERY_CARD_PROPS.fileName));
     expect(mockOnClick).toHaveBeenCalledTimes(1);
   });
 
   it('should render with custom testId', () => {
-    render(
-      <GalleryCard
-        src="/test.jpg"
-        fileName="test.jpg"
-        isStarred={false}
-        onClick={mockOnClick}
-        testId="custom-gallery-card"
-      />
-    );
+    render(<GalleryCard {...DEFAULT_GALLERY_CARD_PROPS} testId={GALLERY_CARD_VALUES.customTestId} />);
 
-    expect(screen.getByTestId('custom-gallery-card')).toBeInTheDocument();
+    expect(screen.getByTestId(GALLERY_CARD_VALUES.customTestId)).toBeInTheDocument();
   });
 
   it('should render without icons when not starred and no usage locations', () => {
-    render(<GalleryCard src="/test.jpg" fileName="test.jpg" isStarred={false} onClick={mockOnClick} />);
+    render(<GalleryCard {...DEFAULT_GALLERY_CARD_PROPS} />);
 
-    expect(screen.getByText('test.jpg')).toBeInTheDocument();
+    expect(screen.getByText(DEFAULT_GALLERY_CARD_PROPS.fileName)).toBeInTheDocument();
   });
 
   it('should render with starred state', () => {
-    render(<GalleryCard src="/test.jpg" fileName="test.jpg" isStarred={true} onClick={mockOnClick} />);
+    render(<GalleryCard {...DEFAULT_GALLERY_CARD_PROPS} isStarred />);
 
-    expect(screen.getByText('test.jpg')).toBeInTheDocument();
+    expect(screen.getByText(DEFAULT_GALLERY_CARD_PROPS.fileName)).toBeInTheDocument();
   });
 
   it('should render with usage locations', () => {
@@ -75,6 +84,14 @@ describe('GalleryCard', () => {
       />
     );
 
-    expect(screen.getByText('test.jpg')).toBeInTheDocument();
+    expect(screen.getByText(DEFAULT_GALLERY_CARD_PROPS.fileName)).toBeInTheDocument();
+  });
+
+  it('should apply selected styling to the media container', () => {
+    render(<GalleryCard {...SELECTED_GALLERY_CARD_PROPS} />);
+
+    expect(screen.getByTestId(SELECTED_GALLERY_CARD_PROPS.testId).firstElementChild).toHaveStyle({
+      opacity: SELECTED_GALLERY_CARD_OPACITY
+    });
   });
 });

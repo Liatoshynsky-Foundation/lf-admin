@@ -106,7 +106,7 @@ const matchesUsageFilter = (item: GalleryItem, filter: string): boolean => {
   return item.usageRefs.some((ref) => ref.pageId === filter);
 };
 
-export function GalleryView({ selected: _selected, onPick, filters, onFiltersChange, mediaKind = 'image' }: Props) {
+export function GalleryView({ selected, onPick, filters, onFiltersChange, mediaKind = 'image' }: Props) {
   const config = MEDIA_KIND_CONFIG[mediaKind];
   const { files: r2Files, isLoading: r2Loading } = useGalleryFiles(config.folder);
 
@@ -119,6 +119,7 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
 
   type AssetMeta = {
     id: string;
+    mimeType: string;
     filename: string;
     originalname?: string;
     isStarred: boolean;
@@ -137,19 +138,26 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
   const galleryItems = useMemo((): GalleryItem[] => {
     return r2Files
       .filter((file): file is GalleryFile & { url: string } => Boolean(file.url))
-      .filter((file) => !config.matchesFile || config.matchesFile(file.mimeType ?? '', file.filename ?? ''))
-      .map((file) => {
+      .flatMap((file): GalleryItem[] => {
         const asset = assetByUrl[file.url];
-        return {
-          id: asset?.id ?? file.path ?? file.filename,
-          filename: asset?.filename ?? file.filename,
-          originalname: asset?.originalname ?? undefined,
-          url: file.url,
-          isStarred: asset?.isStarred ?? false,
-          tags: asset?.tags ?? [],
-          usageRefs: asset?.usageRefs ?? [],
-          createdAt: file.createdAt
-        };
+        const mimeType = asset?.mimeType || file.mimeType || '';
+
+        if (config.matchesFile && !config.matchesFile(mimeType, file.filename ?? '')) {
+          return [];
+        }
+
+        return [
+          {
+            id: asset?.id ?? file.path ?? file.filename,
+            filename: asset?.filename ?? file.filename,
+            originalname: asset?.originalname ?? undefined,
+            url: file.url,
+            isStarred: asset?.isStarred ?? false,
+            tags: asset?.tags ?? [],
+            usageRefs: asset?.usageRefs ?? [],
+            createdAt: file.createdAt
+          }
+        ];
       });
   }, [r2Files, assetByUrl, config]);
 
@@ -207,6 +215,7 @@ export function GalleryView({ selected: _selected, onPick, filters, onFiltersCha
             usageLocations={getPageNames(item.usageRefs)}
             onClick={() => handleCardClick(item)}
             testId={`GalleryCard-${item.id}`}
+            isSelected={selected?.id === item.id}
           />
         )}
         testIdPrefix="GalleryView"

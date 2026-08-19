@@ -27,7 +27,8 @@ jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
     altText,
     onChangeAltText,
     onBlurAltText,
-    altTextError
+    altTextError,
+    altTextErrorState
   }: {
     imageUrl?: string;
     onChangeImage: (url: string, crop?: MockCropResult | null) => void;
@@ -36,6 +37,7 @@ jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
     onChangeAltText?: (value: string) => void;
     onBlurAltText?: () => void;
     altTextError?: string;
+    altTextErrorState?: boolean;
   }) => (
     <div data-testid="photo-block" data-imageurl={imageUrl}>
       <button data-testid="photo-block-trigger" onClick={() => onChangeImage(ACTUAL_IMAGE_URL)}>
@@ -57,14 +59,16 @@ jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
         PhotoBlock Query URL
       </button>
       {showAlternativeText && (
-        <input
-          aria-label="Alt текст зображення"
-          value={altText || ''}
-          onChange={(e) => onChangeAltText?.(e.target.value)}
-          onBlur={onBlurAltText}
-        />
+        <>
+          <input
+            aria-label="Alt текст зображення"
+            value={altText || ''}
+            onChange={(e) => onChangeAltText?.(e.target.value)}
+            onBlur={onBlurAltText}
+          />
+          {altTextErrorState && altTextError && <span data-testid="alt-text-error">{altTextError}</span>}
+        </>
       )}
-      {altTextError && <span>{altTextError}</span>}
     </div>
   )
 }));
@@ -738,5 +742,61 @@ describe('SeoMetadataForm', () => {
 
     const photoBlock = screen.getByTestId('photo-block');
     expect(photoBlock).toHaveAttribute('data-imageurl', ACTUAL_IMAGE_URL);
+  });
+
+  const renderWithStateAndAltText = () => {
+    const Wrapper = () => {
+      const [value, setValue] = React.useState<SeoMetadataFormProps['value']>(defaultProps.value);
+      return (
+        <SeoMetadataForm {...defaultProps} value={value} onChange={setValue} showAlternativeText={true} />
+      );
+    };
+
+    return render(<Wrapper />);
+  };
+
+  it('shows no alt text error when the field is left empty (alt text is optional)', async () => {
+    renderWithStateAndAltText();
+    const altInput = screen.getByLabelText(/alt текст/i);
+ 
+    await user.click(altInput);
+    await user.tab();
+ 
+    expect(screen.queryByTestId('alt-text-error')).not.toBeInTheDocument();
+  });
+ 
+  it('shows minLength error when alt text has 1 character on blur', async () => {
+    renderWithStateAndAltText();
+    const altInput = screen.getByLabelText(/alt текст/i);
+ 
+    await user.type(altInput, 'T');
+    await user.tab();
+ 
+    expect(await screen.findByTestId('alt-text-error')).toHaveTextContent(/мінімум 2 символа/i);
+  });
+ 
+  it('clears alt text error once 2+ characters are entered', async () => {
+    renderWithStateAndAltText();
+    const altInput = screen.getByLabelText(/alt текст/i);
+ 
+    await user.type(altInput, 'T');
+    await user.tab();
+    expect(await screen.findByTestId('alt-text-error')).toBeInTheDocument();
+ 
+    await user.type(altInput, 'e');
+    expect(screen.queryByTestId('alt-text-error')).not.toBeInTheDocument();
+  });
+ 
+  it('shows alt text error via forceShowErrors when showAlternativeText is enabled', () => {
+    render(
+      <SeoMetadataForm
+        {...defaultProps}
+        showAlternativeText={true}
+        forceShowErrors={true}
+        value={{ ...defaultProps.value, altText: { uk: 'T', en: 'T' } }}
+      />
+    );
+ 
+    expect(screen.getByTestId('alt-text-error')).toBeInTheDocument();
   });
 });

@@ -122,7 +122,9 @@ async function assertCompositionsNamesNotTaken(
 }
 
 const mapComposition = (composition: GQLComposition): CompositionInput => {
-  const notesWithFiles = (composition.notes ?? []).filter((note) => note.fileUrl);
+  const notes = (composition.notes ?? []).filter(
+    (note) => note.name?.trim() || note.fileUrl || note.publishDate?.trim()
+  );
   const audios = (composition.audios ?? []).filter((audio) => audio.fileUrl || audio.name);
 
   return {
@@ -131,9 +133,9 @@ const mapComposition = (composition: GQLComposition): CompositionInput => {
     year: parseYear(composition.year ?? undefined),
     genre: composition.genre ?? null,
     audioAvailable: audios.length > 0,
-    sheetAvailable: notesWithFiles.length > 0,
-    sheetMusic: notesWithFiles.map((note) => ({
-      url: note.fileUrl as string,
+    sheetAvailable: notes.length > 0,
+    sheetMusic: notes.map((note) => ({
+      url: note.fileUrl?.trim() || null,
       name: note.name ?? null,
       publishDate: note.publishDate ?? null,
       isFree: true
