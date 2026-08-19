@@ -107,9 +107,8 @@ export const PUBLICATIONS_CREATE_OPTIONS: ReadonlyArray<PublicationsCreateOption
 
 const PUBLICATIONS_STATUS_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
   { value: BaseContentStatuses.Draft, label: 'Чернетка (прихована)' },
-  { value: BaseContentStatuses.Published, label: 'Опублікована' },
+  { value: BaseContentStatuses.Published, label: 'Опублікована' }
 ];
-
 
 export const PUBLICATIONS_FILTERS: ReadonlyArray<PublicationsFilterConfig> = [
   {
@@ -117,7 +116,7 @@ export const PUBLICATIONS_FILTERS: ReadonlyArray<PublicationsFilterConfig> = [
     label: 'Статус',
     options: PUBLICATIONS_STATUS_FILTER_OPTIONS,
     menuMinWidth: 170
-  },
+  }
 ];
 
 export type PublicationLanguageOption = Readonly<{
@@ -142,9 +141,7 @@ export enum MenuActionId {
   PUBLICATE_AND_EXIT = 'PUBLICATE_AND_EXIT',
   CANCEL_PUBLICATION = 'CANCEL_PUBLICATION',
   DELETE = 'DELETE'
-} 
-
-
+}
 
 export type ACTIONS_TYPE = {
   id: MenuActionId;
@@ -152,13 +149,13 @@ export type ACTIONS_TYPE = {
 };
 export type MUTATION_RESULT = Record<string, string>;
 
-
 export const CONTENT_MUTATION_RESULTS: MUTATION_RESULT = {
   publicationDeleted: 'Публікацію видалено',
   publicationUnpublished: 'Публікацію скасовано',
   publicationPublished: 'Публікацію опубліковано успішно',
   publicationPublishError: 'Виникла помилка при публікації. Спробуйте ще раз.',
-  publicationUnpublishError: 'Виникла помилка при скасуванні публікації. Спробуйте ще раз.'
+  publicationUnpublishError: 'Виникла помилка при скасуванні публікації. Спробуйте ще раз.',
+  publicationDeleteError: 'Виникла помилка при видаленні публікації. Спробуйте ще раз.'
 } as const;
 
 export type MenuActionConfig = {
@@ -167,10 +164,7 @@ export type MenuActionConfig = {
   toastErrorMessage: string;
 };
 
-export const MENU_ACTION_CONFIGS: Record<
-  Exclude<MenuActionId, MenuActionId.DELETE>,
-  MenuActionConfig
-> = {
+export const MENU_ACTION_CONFIGS: Record<Exclude<MenuActionId, MenuActionId.DELETE>, MenuActionConfig> = {
   [MenuActionId.PUBLISH]: {
     status: BaseContentStatuses.Published,
     toastMessage: CONTENT_MUTATION_RESULTS.publicationPublished,
@@ -185,9 +179,8 @@ export const MENU_ACTION_CONFIGS: Record<
     status: BaseContentStatuses.Draft,
     toastMessage: CONTENT_MUTATION_RESULTS.publicationUnpublished,
     toastErrorMessage: CONTENT_MUTATION_RESULTS.publicationUnpublishError
-  },
+  }
 } as const;
-
 
 export const DEFAULT_EMPTY_DOCUMENT: SerializedContent = {
   blocks: [],
@@ -283,6 +276,5 @@ export const CROP_RATIOS = {
   SOCIAL_MEDIA_PREVIEW: 295 / 225,
   CAROUSEL_BIG: 1080 / 742,
   FUNDATION_MAIN_FOUNDER: 744 / 454,
-  GROUP_PHOTO: 16 / 9,
+  GROUP_PHOTO: 16 / 9
 } as const;
-

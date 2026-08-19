@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import type { ContentType } from './ContentCardMenuItems';
-import { MENU_ACTION_CONFIGS } from '~/constants/publications';
+import { CONTENT_MUTATION_RESULTS, MENU_ACTION_CONFIGS } from '~/constants/publications';
 import { useDeleteEvent, useUpdateEventStatus } from '~/shared/hooks/use-events/useEvents';
 import { useDeleteMediaMention, useUpdateMediaMentionStatus } from '~/shared/hooks/use-media-mentions/useMediaMentions';
 import { useDeleteNews, useUpdateNewsStatus } from '~/shared/hooks/use-news/useNews';
@@ -109,6 +109,7 @@ export function useContentCardActions({ id, type, status }: UseContentCardAction
       }
     } catch (error) {
       logger.error('Error deleting:', error);
+      toast.error(CONTENT_MUTATION_RESULTS.publicationDeleteError);
     }
   }, [id, type, deleteNews, deleteEvent, deleteMediaMention, router]);
 
