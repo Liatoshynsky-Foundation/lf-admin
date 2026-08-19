@@ -4,7 +4,13 @@ import dbConnect from '../../db/connect';
 import { createBaseRepository } from '../baseRepository/baseRepository';
 import { buildBaseQuery, createToEntity, getBaseSort } from '../helpers';
 import { Fond } from '~/src/domain/entities/Fond';
-import { CreateFondInput, FondFilters, IFondRepository, UpdateFondInput } from '~/src/domain/repositories/fondRepository';
+import {
+  CreateFondInput,
+  FondFilters,
+  IFondRepository,
+  UpdateFondInput
+} from '~/src/domain/repositories/fondRepository';
+import logger from '~/src/middleware/logger/logger';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 export type DbFond = {
@@ -13,12 +19,12 @@ export type DbFond = {
   title: { uk: string; en: string };
   numberOfDescriptions: number;
   numberOfCases: number;
-  organizationForm?: { uk: string; en: string }; 
+  organizationForm?: { uk: string; en: string };
   documentCreationDate: string;
   chronologicalBoundaries?: string;
-  characterAndContent?: { 
-    uk: Record<string, unknown>; 
-    en: Record<string, unknown>; 
+  characterAndContent?: {
+    uk: Record<string, unknown>;
+    en: Record<string, unknown>;
   };
   status?: string;
   createdAt: string;
@@ -40,17 +46,15 @@ const resolveStatus = (dbStatus?: string): BaseContentStatuses => {
 
 const parseJsonContent = (content?: string | null): Record<string, unknown> => {
   if (!content) return {};
-  if (typeof content === 'string') {
-    try {
-      const parsed = JSON.parse(content) as unknown;
-      if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-        return parsed as Record<string, unknown>;
-      }
-    } catch {
-      return {};
-    }
+
+  try {
+    const parsed = JSON.parse(content) as unknown;
+    const isPlainObject = typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed);
+    return isPlainObject ? (parsed as Record<string, unknown>) : {};
+  } catch (error) {
+    logger.warn('Error parsing JSON content:', error);
+    return {};
   }
-  return {};
 };
 
 const toEntity = (doc: DbFond): Fond => {
@@ -91,7 +95,7 @@ export const FondRepository = ({ FondModel }: FondRepoDeps): IFondRepository => 
 
   return {
     ...baseRepo,
-    
+
     create: async (input: CreateFondInput): Promise<Fond> => {
       await dbConnect();
       const dbData = {
@@ -100,10 +104,12 @@ export const FondRepository = ({ FondModel }: FondRepoDeps): IFondRepository => 
         documentCreationDate: input.documentCreationDate.uk,
         chronologicalBoundaries: input.chronologicalBoundaries?.uk,
         organizationForm: input.organizationForm,
-        characterAndContent: input.description ? {
-          uk: parseJsonContent(input.description.uk),
-          en: parseJsonContent(input.description.en)
-        } : undefined,
+        characterAndContent: input.description
+          ? {
+            uk: parseJsonContent(input.description.uk),
+            en: parseJsonContent(input.description.en)
+          }
+          : undefined,
         status: input.status || BaseContentStatuses.Hidden,
         numberOfCases: 0,
         numberOfDescriptions: 0

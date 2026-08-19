@@ -46,6 +46,16 @@ jest.mock('../baseRepository/baseRepository', () => ({
   createBaseRepository: jest.fn().mockReturnValue({})
 }));
 
+jest.mock('~/src/middleware/logger/logger', () => ({
+  __esModule: true,
+  default: {
+    warn: jest.fn(),
+    error: jest.fn(),
+    info: jest.fn(),
+    debug: jest.fn()
+  }
+}));
+
 const saveMock = jest.fn();
 const findOneMock = jest.fn();
 const findAllMock = jest.fn();

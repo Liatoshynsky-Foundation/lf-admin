@@ -77,7 +77,6 @@ jest.mock('~/shared/components/dropdown-menu/ActionMenu', () => ({
   default: ({ anchorEl, menuItems, onClose }: { anchorEl: unknown; menuItems: MenuGroup[]; onClose: () => void }) =>
     anchorEl ? (
       <div data-testid="action-menu">
-        {/* Додано кнопку закриття для стовідсоткового покриття onClose */}
         <button onClick={onClose}>close action menu</button>
         {menuItems.flatMap((group) =>
           group.items.map((item) => (

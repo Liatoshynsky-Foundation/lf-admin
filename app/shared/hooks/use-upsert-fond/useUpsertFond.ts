@@ -65,8 +65,7 @@ const extractValidationErrors = (message: string): Partial<Record<keyof FondDeta
     });
 
     return hasErrors ? newErrors : null;
-  } catch (parseError) {
-    console.error('Error parsing backend error response:', parseError);
+  } catch {
     return null;
   }
 };

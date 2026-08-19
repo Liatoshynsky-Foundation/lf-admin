@@ -415,7 +415,7 @@ describe('useUpsertFond', () => {
         await result.current.handleSave(BaseContentStatuses.Draft);
       });
 
-      expect(consoleSpy).toHaveBeenCalledWith('Error parsing backend error response:', expect.any(Error));
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to save fond:', expect.any(Error));
       expect(toast.error).toHaveBeenCalledWith(FondErrors.FAILED_TO_CREATE);
       
       consoleSpy.mockRestore();
