@@ -1,4 +1,4 @@
-import type { ContentTypeRenderer } from './ContentType.types';
+import type { ContentTypeRenderer } from './content-type.types';
 import { HeaderContent } from './header-content/HeaderContent';
 import { ImageContent } from './image-content/ImageContent';
 import { ListContent } from './list-content/ListContent';

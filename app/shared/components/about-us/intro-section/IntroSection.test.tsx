@@ -70,7 +70,7 @@ jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
   )
 }));
 
-jest.mock('../Liatoshynsky-office/quote-block/QuoteBlock', () => ({
+jest.mock('../liatoshynsky-office/quote-block/QuoteBlock', () => ({
   __esModule: true,
   QuoteBlock: ({ title, description, onTitleChange, onDescriptionChange }: MockQuoteBlockProps) => (
     <div data-testid="quote-block">

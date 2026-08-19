@@ -4,7 +4,7 @@ import { Box } from '@mui/material';
 import { styles } from './TitleWithQuote.styles';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
-import { QuoteBlock } from '~/shared/components/about-us/Liatoshynsky-office/quote-block/QuoteBlock';
+import { QuoteBlock } from '~/shared/components/about-us/liatoshynsky-office/quote-block/QuoteBlock';
 import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
 import { EditBlockSkeleton } from '~/shared/components/edit-block-skeleton/EditBlockSkeleton';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';

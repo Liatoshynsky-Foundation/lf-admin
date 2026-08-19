@@ -9,7 +9,7 @@ import { EditablePageLayout } from '~/shared/components/editable-page-layout/Edi
 import {
   descriptionListNoteAdapter,
   DescriptionListNoteBlock
-} from '~/shared/components/privacy-policy/components/edit-description-list-note-block/descriptionListNote.adapter';
+} from '~/shared/components/privacy-policy/components/edit-description-list-note-block/description-list-note.adapter';
 import { ContactUs } from '~/shared/components/privacy-policy/contact-us/ContactUs';
 import { DataRetention } from '~/shared/components/privacy-policy/data-retention/DataRetention';
 import { dataUsageAdapter } from '~/shared/components/privacy-policy/data-usage/data-usage.adapter';

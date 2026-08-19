@@ -1,4 +1,4 @@
-import type { ContentTypeProps } from '../ContentType.types';
+import type { ContentTypeProps } from '../content-type.types';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 import type { ParagraphContentItem } from '~/types/blocks/contentTypes';
 

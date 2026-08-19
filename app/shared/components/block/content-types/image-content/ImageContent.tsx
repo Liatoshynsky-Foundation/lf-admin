@@ -1,7 +1,7 @@
 import { Box } from '@mui/material';
 import { JSONContent } from '@tiptap/react';
 
-import type { ContentTypeProps } from '../ContentType.types';
+import type { ContentTypeProps } from '../content-type.types';
 import { ImagePreviewBlock } from '~/ds-components/photo-block/PhotoBlock';
 import { mergeLocalizedValue } from '~/lib/utils/mergeLocalizedValue';
 import { resolveLocalizedText } from '~/lib/utils/prose';

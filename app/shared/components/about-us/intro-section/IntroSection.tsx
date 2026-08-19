@@ -3,7 +3,7 @@ import { Box } from '@mui/material';
 
 import CollapsibleBlock from '../../design-system/collapsible-block/CollapsibleBlock';
 import { EditBlockSkeleton } from '../../edit-block-skeleton/EditBlockSkeleton';
-import { QuoteBlock } from '../Liatoshynsky-office/quote-block/QuoteBlock';
+import { QuoteBlock } from '../liatoshynsky-office/quote-block/QuoteBlock';
 import { styles } from './IntroSection.styles';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { CROP_RATIOS } from '~/constants/publications';
@@ -38,7 +38,6 @@ export const IntroSection = () => {
       alt: mergeLocalizedValue(block.image?.alt, currentLocale, val)
     });
   };
-
 
   return (
     <CollapsibleBlock title={headerTitle}>

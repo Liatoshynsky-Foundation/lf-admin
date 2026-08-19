@@ -1,7 +1,7 @@
 import { DragEndEvent } from '@dnd-kit/core';
 import { Typography } from '@mui/material';
 
-import type { ContentTypeProps } from '../ContentType.types';
+import type { ContentTypeProps } from '../content-type.types';
 import { generateUniqueId } from '~/lib/utils/generateUniqueId';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import ConfigurableList from '~/shared/components/configurable-list/ConfigurableList';

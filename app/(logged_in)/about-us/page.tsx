@@ -10,9 +10,9 @@ import {
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { FoundationFounders } from '~/shared/components/about-us/foundation-founders/FoundationFounders';
-import { IntroSection } from '~/shared/components/about-us/Intro-section/IntroSection';
-import { foundationAdapter } from '~/shared/components/about-us/Liatoshynsky-foundation/foundation.adapter';
-import { officeAdapter } from '~/shared/components/about-us/Liatoshynsky-office/office.adapter';
+import { IntroSection } from '~/shared/components/about-us/intro-section/IntroSection';
+import { foundationAdapter } from '~/shared/components/about-us/liatoshynsky-foundation/foundation.adapter';
+import { officeAdapter } from '~/shared/components/about-us/liatoshynsky-office/office.adapter';
 import { ourGoalsAdapter } from '~/shared/components/about-us/our-goals/our-goals.adapter';
 import { missionAdapter } from '~/shared/components/about-us/our-mission/mission.adapter';
 import { whatWeDoAdapter } from '~/shared/components/about-us/what-we-do/what-we-do.adapter';

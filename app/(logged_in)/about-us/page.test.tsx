@@ -6,7 +6,7 @@ import Page from './page';
 import { PAGE_IDS } from '~/constants/pageBlocks';
 
 
-jest.mock('~/shared/components/about-us/Intro-section/IntroSection', () => ({
+jest.mock('~/shared/components/about-us/intro-section/IntroSection', () => ({
   IntroSection: () => <div data-testid="intro">IntroSection</div>
 }));
 

@@ -1,7 +1,4 @@
-import {
-  descriptionListNoteAdapter,
-  type DescriptionListNoteBlock
-} from './descriptionListNote.adapter';
+import { descriptionListNoteAdapter, type DescriptionListNoteBlock } from './description-list-note.adapter';
 import { createDocNode } from '~/__mocks__/utils';
 import { CONTENT_TYPE } from '~/types/blocks/contentTypes';
 

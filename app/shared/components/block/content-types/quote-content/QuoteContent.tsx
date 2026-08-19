@@ -1,5 +1,5 @@
-import type { ContentTypeProps } from '../ContentType.types';
-import { QuoteBlock } from '~/shared/components/about-us/Liatoshynsky-office/quote-block/QuoteBlock';
+import type { ContentTypeProps } from '../content-type.types';
+import { QuoteBlock } from '~/shared/components/about-us/liatoshynsky-office/quote-block/QuoteBlock';
 import type { QuoteContentItem } from '~/types/blocks/contentTypes';
 
 export const QuoteContent = ({ item, locale, onChange }: ContentTypeProps<QuoteContentItem>) => (

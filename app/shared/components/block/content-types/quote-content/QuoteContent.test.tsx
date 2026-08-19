@@ -10,7 +10,7 @@ const updatedJson: JSONContent = {
   content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated' }] }]
 };
 
-jest.mock('~/shared/components/about-us/Liatoshynsky-office/quote-block/QuoteBlock', () => ({
+jest.mock('~/shared/components/about-us/liatoshynsky-office/quote-block/QuoteBlock', () => ({
   QuoteBlock: ({
     onTitleChange,
     onDescriptionChange
