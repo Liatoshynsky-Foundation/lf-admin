@@ -1,4 +1,4 @@
-export type ContentType = 'news' | 'events' | 'media';
+import type { ContentType } from '~/shared/hooks/use-content-card-actions/useContentCardActions';
 
 interface ContentCardMenuProps {
   id: string;

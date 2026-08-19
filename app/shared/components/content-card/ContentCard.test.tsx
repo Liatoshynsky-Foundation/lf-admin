@@ -4,7 +4,7 @@ import React from 'react';
 
 import CardLayout from '../card-layout/CardLayout';
 import ContentCard, { ContentType } from './ContentCard';
-import { useContentCardActions } from './useContentCardActions';
+import { useContentCardActions } from '~/shared/hooks/use-content-card-actions/useContentCardActions';
 
 const FALLBACK_IMAGE_SRC = 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/about-us-foundation-first.png';
 
@@ -29,7 +29,7 @@ interface ImageWithFallbackMockProps {
   alt: string;
 }
 
-jest.mock('./useContentCardActions', () => ({
+jest.mock('~/shared/hooks/use-content-card-actions/useContentCardActions', () => ({
   useContentCardActions: jest.fn()
 }));
 

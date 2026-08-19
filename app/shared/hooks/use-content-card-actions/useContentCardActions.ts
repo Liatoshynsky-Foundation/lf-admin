@@ -1,8 +1,9 @@
+'use client';
+
 import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 
-import type { ContentType } from './ContentCardMenuItems';
 import { CONTENT_MUTATION_RESULTS, MENU_ACTION_CONFIGS } from '~/constants/publications';
 import { useDeleteEvent, useUpdateEventStatus } from '~/shared/hooks/use-events/useEvents';
 import { useDeleteMediaMention, useUpdateMediaMentionStatus } from '~/shared/hooks/use-media-mentions/useMediaMentions';
@@ -10,6 +11,8 @@ import { useDeleteNews, useUpdateNewsStatus } from '~/shared/hooks/use-news/useN
 import { EVENTS, NEWS } from '~/src/constants';
 import logger from '~/src/middleware/logger/logger';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
+
+export type ContentType = 'news' | 'events' | 'media';
 
 interface UseContentCardActionsParams {
   id: string;

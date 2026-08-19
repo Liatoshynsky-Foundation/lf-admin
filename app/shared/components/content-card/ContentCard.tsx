@@ -10,11 +10,11 @@ import DeleteCardModal from '../delete-card-modal/DeleteCardModal';
 import Button from '../design-system/button/Button';
 import ContentCardBadge from './ContentCardBadge';
 import ContentCardMenuItems from './ContentCardMenuItems';
-import { useContentCardActions } from './useContentCardActions';
 import { getStatus } from '~/lib/utils/getStatus';
+import { type ContentType,useContentCardActions } from '~/shared/hooks/use-content-card-actions/useContentCardActions';
 import type { LocalizedString } from '~/types/common';
 
-export type ContentType = 'news' | 'events' | 'media';
+export type { ContentType };
 
 interface ContentCardImage {
   src: string;

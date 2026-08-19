@@ -72,33 +72,25 @@ describe('useContentCardActions', () => {
 
   describe('initial state', () => {
     it('should initialize deleteModalOpen as false', () => {
-      const { result } = renderHook(() =>
-        useContentCardActions({ id: MOCK_ID, type: 'news', status: 'draft' })
-      );
+      const { result } = renderHook(() => useContentCardActions({ id: MOCK_ID, type: 'news', status: 'draft' }));
 
       expect(result.current.deleteModalOpen).toBe(false);
     });
 
     it('should set isPublished to true when status is published', () => {
-      const { result } = renderHook(() =>
-        useContentCardActions({ id: MOCK_ID, type: 'news', status: 'published' })
-      );
+      const { result } = renderHook(() => useContentCardActions({ id: MOCK_ID, type: 'news', status: 'published' }));
 
       expect(result.current.isPublished).toBe(true);
     });
 
     it('should set isPublished to false when status is draft', () => {
-      const { result } = renderHook(() =>
-        useContentCardActions({ id: MOCK_ID, type: 'news', status: 'draft' })
-      );
+      const { result } = renderHook(() => useContentCardActions({ id: MOCK_ID, type: 'news', status: 'draft' }));
 
       expect(result.current.isPublished).toBe(false);
     });
 
     it('should update deleteModalOpen when setDeleteModalOpen is called', () => {
-      const { result } = renderHook(() =>
-        useContentCardActions({ id: MOCK_ID, type: 'news', status: 'draft' })
-      );
+      const { result } = renderHook(() => useContentCardActions({ id: MOCK_ID, type: 'news', status: 'draft' }));
 
       act(() => {
         result.current.setDeleteModalOpen(true);
@@ -110,9 +102,7 @@ describe('useContentCardActions', () => {
 
   describe('handleDelete', () => {
     it('should delete news, close modal, and refresh', async () => {
-      const { result } = renderHook(() =>
-        useContentCardActions({ id: MOCK_ID, type: 'news', status: 'draft' })
-      );
+      const { result } = renderHook(() => useContentCardActions({ id: MOCK_ID, type: 'news', status: 'draft' }));
 
       act(() => {
         result.current.setDeleteModalOpen(true);
@@ -128,9 +118,7 @@ describe('useContentCardActions', () => {
     });
 
     it('should delete events content type', async () => {
-      const { result } = renderHook(() =>
-        useContentCardActions({ id: MOCK_ID, type: 'events', status: 'draft' })
-      );
+      const { result } = renderHook(() => useContentCardActions({ id: MOCK_ID, type: 'events', status: 'draft' }));
 
       await act(async () => {
         await result.current.handleDelete();
@@ -141,9 +129,7 @@ describe('useContentCardActions', () => {
     });
 
     it('should delete media content type', async () => {
-      const { result } = renderHook(() =>
-        useContentCardActions({ id: MOCK_ID, type: 'media', status: 'draft' })
-      );
+      const { result } = renderHook(() => useContentCardActions({ id: MOCK_ID, type: 'media', status: 'draft' }));
 
       await act(async () => {
         await result.current.handleDelete();
@@ -155,9 +141,7 @@ describe('useContentCardActions', () => {
 
     it('should log error and show toast when delete fails', async () => {
       mockDeleteNewsFn.mockRejectedValueOnce(MOCK_ERROR);
-      const { result } = renderHook(() =>
-        useContentCardActions({ id: MOCK_ID, type: 'news', status: 'draft' })
-      );
+      const { result } = renderHook(() => useContentCardActions({ id: MOCK_ID, type: 'news', status: 'draft' }));
 
       act(() => {
         result.current.setDeleteModalOpen(true);
@@ -175,9 +159,7 @@ describe('useContentCardActions', () => {
 
   describe('handlePublish', () => {
     it('should publish news content and refresh list', async () => {
-      const { result } = renderHook(() =>
-        useContentCardActions({ id: MOCK_ID, type: 'news', status: 'draft' })
-      );
+      const { result } = renderHook(() => useContentCardActions({ id: MOCK_ID, type: 'news', status: 'draft' }));
 
       await act(async () => {
         await result.current.handlePublish();
@@ -203,9 +185,7 @@ describe('useContentCardActions', () => {
     });
 
     it('should publish media content and refresh list', async () => {
-      const { result } = renderHook(() =>
-        useContentCardActions({ id: MOCK_ID, type: 'media', status: 'draft' })
-      );
+      const { result } = renderHook(() => useContentCardActions({ id: MOCK_ID, type: 'media', status: 'draft' }));
 
       await act(async () => {
         await result.current.handlePublish();
@@ -232,9 +212,7 @@ describe('useContentCardActions', () => {
 
     it('should log error and show toast when publish throws', async () => {
       mockPublishNewsFn.mockRejectedValueOnce(MOCK_ERROR);
-      const { result } = renderHook(() =>
-        useContentCardActions({ id: MOCK_ID, type: 'news', status: 'draft' })
-      );
+      const { result } = renderHook(() => useContentCardActions({ id: MOCK_ID, type: 'news', status: 'draft' }));
 
       await act(async () => {
         await result.current.handlePublish();
@@ -247,9 +225,7 @@ describe('useContentCardActions', () => {
 
   describe('handleUnpublish', () => {
     it('should unpublish news content and refresh list', async () => {
-      const { result } = renderHook(() =>
-        useContentCardActions({ id: MOCK_ID, type: 'news', status: 'published' })
-      );
+      const { result } = renderHook(() => useContentCardActions({ id: MOCK_ID, type: 'news', status: 'published' }));
 
       await act(async () => {
         await result.current.handleUnpublish();
@@ -275,9 +251,7 @@ describe('useContentCardActions', () => {
     });
 
     it('should draft media content and refresh list', async () => {
-      const { result } = renderHook(() =>
-        useContentCardActions({ id: MOCK_ID, type: 'media', status: 'published' })
-      );
+      const { result } = renderHook(() => useContentCardActions({ id: MOCK_ID, type: 'media', status: 'published' }));
 
       await act(async () => {
         await result.current.handleUnpublish();
@@ -304,9 +278,7 @@ describe('useContentCardActions', () => {
 
     it('should log error and show toast when unpublish throws', async () => {
       mockUnpublishNewsFn.mockRejectedValueOnce(MOCK_ERROR);
-      const { result } = renderHook(() =>
-        useContentCardActions({ id: MOCK_ID, type: 'news', status: 'published' })
-      );
+      const { result } = renderHook(() => useContentCardActions({ id: MOCK_ID, type: 'news', status: 'published' }));
 
       await act(async () => {
         await result.current.handleUnpublish();
