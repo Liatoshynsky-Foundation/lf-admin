@@ -8,6 +8,7 @@ import { useDeleteEvent, useUpdateEventStatus } from '~/shared/hooks/use-events/
 import { useDeleteMediaMention, useUpdateMediaMentionStatus } from '~/shared/hooks/use-media-mentions/useMediaMentions';
 import { useDeleteNews, useUpdateNewsStatus } from '~/shared/hooks/use-news/useNews';
 import { EVENTS, NEWS } from '~/src/constants';
+import logger from '~/src/middleware/logger/logger';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 interface UseContentCardActionsParams {
@@ -47,7 +48,7 @@ export function useContentCardActions({ id, type, status }: UseContentCardAction
           toast.error(toastErrorMessage);
         }
       } catch (error) {
-        console.error(errorLogMessage, error);
+        logger.error(errorLogMessage, error);
         toast.error(toastErrorMessage);
       }
     },
@@ -107,7 +108,7 @@ export function useContentCardActions({ id, type, status }: UseContentCardAction
         router.refresh();
       }
     } catch (error) {
-      console.error('Error deleting:', error);
+      logger.error('Error deleting:', error);
     }
   }, [id, type, deleteNews, deleteEvent, deleteMediaMention, router]);
 
