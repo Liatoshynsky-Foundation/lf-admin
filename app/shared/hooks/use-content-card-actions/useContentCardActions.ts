@@ -9,7 +9,6 @@ import { useDeleteEvent, useUpdateEventStatus } from '~/shared/hooks/use-events/
 import { useDeleteMediaMention, useUpdateMediaMentionStatus } from '~/shared/hooks/use-media-mentions/useMediaMentions';
 import { useDeleteNews, useUpdateNewsStatus } from '~/shared/hooks/use-news/useNews';
 import { EVENTS, NEWS } from '~/src/constants';
-import logger from '~/src/middleware/logger/logger';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 export type ContentType = 'news' | 'events' | 'media';
@@ -36,8 +35,7 @@ export function useContentCardActions({ id, type, status }: UseContentCardAction
   const runStatusMutation = useCallback(
     async (
       mutate: () => Promise<MutationResult>,
-      config: (typeof MENU_ACTION_CONFIGS)[keyof typeof MENU_ACTION_CONFIGS],
-      errorLogMessage: string
+      config: (typeof MENU_ACTION_CONFIGS)[keyof typeof MENU_ACTION_CONFIGS]
     ) => {
       const { toastMessage, toastErrorMessage } = config;
 
@@ -50,8 +48,7 @@ export function useContentCardActions({ id, type, status }: UseContentCardAction
         } else {
           toast.error(toastErrorMessage);
         }
-      } catch (error) {
-        logger.error(errorLogMessage, error);
+      } catch {
         toast.error(toastErrorMessage);
       }
     },
@@ -59,39 +56,31 @@ export function useContentCardActions({ id, type, status }: UseContentCardAction
   );
 
   const handleUnpublish = useCallback(async () => {
-    await runStatusMutation(
-      async () => {
-        if (type === NEWS) {
-          return unpublishNews(id);
-        }
+    await runStatusMutation(async () => {
+      if (type === NEWS) {
+        return unpublishNews(id);
+      }
 
-        if (type === EVENTS) {
-          return unpublishEvent(id);
-        }
+      if (type === EVENTS) {
+        return unpublishEvent(id);
+      }
 
-        return draftMediaMention(id);
-      },
-      MENU_ACTION_CONFIGS.CANCEL_PUBLICATION,
-      'Error unpublishing:'
-    );
+      return draftMediaMention(id);
+    }, MENU_ACTION_CONFIGS.CANCEL_PUBLICATION);
   }, [id, type, unpublishNews, unpublishEvent, draftMediaMention, runStatusMutation]);
 
   const handlePublish = useCallback(async () => {
-    await runStatusMutation(
-      async () => {
-        if (type === NEWS) {
-          return publishNews(id);
-        }
+    await runStatusMutation(async () => {
+      if (type === NEWS) {
+        return publishNews(id);
+      }
 
-        if (type === EVENTS) {
-          return publishEvent(id);
-        }
+      if (type === EVENTS) {
+        return publishEvent(id);
+      }
 
-        return publishMediaMention(id);
-      },
-      MENU_ACTION_CONFIGS.PUBLISH,
-      'Error publishing:'
-    );
+      return publishMediaMention(id);
+    }, MENU_ACTION_CONFIGS.PUBLISH);
   }, [id, type, publishNews, publishEvent, publishMediaMention, runStatusMutation]);
 
   const handleDelete = useCallback(async () => {
@@ -110,8 +99,7 @@ export function useContentCardActions({ id, type, status }: UseContentCardAction
         setDeleteModalOpen(false);
         router.refresh();
       }
-    } catch (error) {
-      logger.error('Error deleting:', error);
+    } catch {
       toast.error(CONTENT_MUTATION_RESULTS.publicationDeleteError);
     }
   }, [id, type, deleteNews, deleteEvent, deleteMediaMention, router]);

@@ -3,7 +3,6 @@ import toast from 'react-hot-toast';
 
 import { useContentCardActions } from './useContentCardActions';
 import { CONTENT_MUTATION_RESULTS } from '~/constants/publications';
-import logger from '~/src/middleware/logger/logger';
 
 const MOCK_ID = '123';
 const MOCK_EVENT_ID = 'card-42';
@@ -24,13 +23,6 @@ jest.mock('react-hot-toast', () => ({
   __esModule: true,
   default: {
     success: jest.fn(),
-    error: jest.fn()
-  }
-}));
-
-jest.mock('~/src/middleware/logger/logger', () => ({
-  __esModule: true,
-  default: {
     error: jest.fn()
   }
 }));
@@ -139,7 +131,7 @@ describe('useContentCardActions', () => {
       expect(mockRefresh).toHaveBeenCalledTimes(1);
     });
 
-    it('should log error and show toast when delete fails', async () => {
+    it('should show toast when delete fails', async () => {
       mockDeleteNewsFn.mockRejectedValueOnce(MOCK_ERROR);
       const { result } = renderHook(() => useContentCardActions({ id: MOCK_ID, type: 'news', status: 'draft' }));
 
@@ -151,7 +143,6 @@ describe('useContentCardActions', () => {
         await result.current.handleDelete();
       });
 
-      expect(logger.error).toHaveBeenCalledWith('Error deleting:', MOCK_ERROR);
       expect(toast.error).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationDeleteError);
       expect(result.current.deleteModalOpen).toBe(true);
     });
@@ -210,7 +201,7 @@ describe('useContentCardActions', () => {
       expect(mockRefresh).not.toHaveBeenCalled();
     });
 
-    it('should log error and show toast when publish throws', async () => {
+    it('should show toast when publish throws', async () => {
       mockPublishNewsFn.mockRejectedValueOnce(MOCK_ERROR);
       const { result } = renderHook(() => useContentCardActions({ id: MOCK_ID, type: 'news', status: 'draft' }));
 
@@ -218,7 +209,6 @@ describe('useContentCardActions', () => {
         await result.current.handlePublish();
       });
 
-      expect(logger.error).toHaveBeenCalledWith('Error publishing:', MOCK_ERROR);
       expect(toast.error).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublishError);
     });
   });
@@ -276,7 +266,7 @@ describe('useContentCardActions', () => {
       expect(mockRefresh).not.toHaveBeenCalled();
     });
 
-    it('should log error and show toast when unpublish throws', async () => {
+    it('should show toast when unpublish throws', async () => {
       mockUnpublishNewsFn.mockRejectedValueOnce(MOCK_ERROR);
       const { result } = renderHook(() => useContentCardActions({ id: MOCK_ID, type: 'news', status: 'published' }));
 
@@ -284,7 +274,6 @@ describe('useContentCardActions', () => {
         await result.current.handleUnpublish();
       });
 
-      expect(logger.error).toHaveBeenCalledWith('Error unpublishing:', MOCK_ERROR);
       expect(toast.error).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationUnpublishError);
     });
   });
