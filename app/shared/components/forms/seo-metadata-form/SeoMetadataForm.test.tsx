@@ -16,6 +16,9 @@ interface MockCropResult {
   rect: unknown;
 }
 
+const ACTUAL_IMAGE_URL =
+  'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/about-us-foundation-first.png';
+
 jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
   ImagePreviewBlock: ({
     imageUrl,
@@ -35,16 +38,16 @@ jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
     altTextError?: string;
   }) => (
     <div data-testid="photo-block" data-imageurl={imageUrl}>
-      <button data-testid="photo-block-trigger" onClick={() => onChangeImage('https://example.com/mock-image.png')}>
+      <button data-testid="photo-block-trigger" onClick={() => onChangeImage(ACTUAL_IMAGE_URL)}>
         PhotoBlock
       </button>
       <button
         data-testid="photo-block-cropped"
-        onClick={() => onChangeImage('https://example.com/mock-image.png', { rect: { x: 10 } })}
+        onClick={() => onChangeImage(ACTUAL_IMAGE_URL, { rect: { x: 10 } })}
       >
         PhotoBlock Cropped
       </button>
-      <button data-testid="photo-block-null" onClick={() => onChangeImage('https://example.com/mock-image.png', null)}>
+      <button data-testid="photo-block-null" onClick={() => onChangeImage(ACTUAL_IMAGE_URL, null)}>
         PhotoBlock Null
       </button>
       <button data-testid="photo-block-root-url" onClick={() => onChangeImage('https://example.com/')}>
@@ -211,7 +214,7 @@ describe('SeoMetadataForm', () => {
         render(<SeoMetadataForm {...defaultProps} />);
         await u.click(screen.getByTestId('photo-block-trigger'));
       },
-      assert: () => expect(defaultProps.onImageChange).toHaveBeenCalledWith('https://example.com/mock-image.png')
+      assert: () => expect(defaultProps.onImageChange).toHaveBeenCalledWith(ACTUAL_IMAGE_URL)
     }
   ])('calls $description', async ({ action, assert }) => {
     await action(user);
@@ -344,7 +347,7 @@ describe('SeoMetadataForm', () => {
   });
 
   it('renders ogImage as url and shows fileName', () => {
-    render(<SeoMetadataForm {...defaultProps} ogImage="https://example.com/file-image.png" />);
+    render(<SeoMetadataForm {...defaultProps} ogImage={ACTUAL_IMAGE_URL} />);
     expect(screen.getByTestId('photo-block')).toBeInTheDocument();
   });
 
@@ -368,7 +371,7 @@ describe('SeoMetadataForm', () => {
     render(
       <SeoMetadataForm
         {...defaultProps}
-        ogImage="https://example.com/image.png"
+        ogImage={ACTUAL_IMAGE_URL}
         showAlternativeText={true}
         value={{ ...defaultProps.value, altText: { uk: '', en: '' } }}
       />
@@ -385,7 +388,7 @@ describe('SeoMetadataForm', () => {
       <SeoMetadataForm
         {...defaultProps}
         onChange={onChange}
-        ogImage="https://example.com/image.png"
+        ogImage={ACTUAL_IMAGE_URL}
         showAlternativeText={true}
         value={{ ...defaultProps.value, altText: { uk: '', en: '' } }}
       />
@@ -405,7 +408,7 @@ describe('SeoMetadataForm', () => {
     render(
       <SeoMetadataForm
         {...defaultProps}
-        ogImage="https://example.com/image.png"
+        ogImage={ACTUAL_IMAGE_URL}
         showAlternativeText={true}
         value={{ ...defaultProps.value }}
       />
@@ -421,7 +424,7 @@ describe('SeoMetadataForm', () => {
       <SeoMetadataForm
         {...defaultProps}
         forceShowErrors={true}
-        ogImage="https://example.com/image.png"
+        ogImage={ACTUAL_IMAGE_URL}
         showAlternativeText={true}
         value={{ ...defaultProps.value, altText: { uk: 'a'.repeat(META_ALT_TEXT_LENGTH.max + 1), en: '' } }}
       />
@@ -572,7 +575,7 @@ describe('SeoMetadataForm', () => {
   });
 
   it('handles dynamic ogImage prop changes from string to null', () => {
-    const { rerender } = render(<SeoMetadataForm {...defaultProps} ogImage="https://example.com/image.png" />);
+    const { rerender } = render(<SeoMetadataForm {...defaultProps} ogImage={ACTUAL_IMAGE_URL} />);
     rerender(<SeoMetadataForm {...defaultProps} ogImage={null} />);
     expect(screen.getByTestId('photo-block')).toBeInTheDocument();
   });
@@ -580,7 +583,7 @@ describe('SeoMetadataForm', () => {
   it('strips query parameters from image filename in handleImageChange', async () => {
     render(<SeoMetadataForm {...defaultProps} />);
     await user.click(screen.getByTestId('photo-block-query-url'));
-    expect(defaultProps.onImageChange).toHaveBeenCalledWith('https://example.com/photo.png?v=1.0');
+    expect(defaultProps.onImageChange).toHaveBeenCalledWith(`${ACTUAL_IMAGE_URL}?v=1.0`);
   });
 
   it('preserves existing altText in other locale when updating altText in uk locale', async () => {
@@ -731,9 +734,9 @@ describe('SeoMetadataForm', () => {
   });
 
   it('keeps ogImagePreview when a valid URL is passed', () => {
-    render(<SeoMetadataForm {...defaultProps} ogImage="https://example.com/valid.png" />);
+    render(<SeoMetadataForm {...defaultProps} ogImage={ACTUAL_IMAGE_URL} />);
 
     const photoBlock = screen.getByTestId('photo-block');
-    expect(photoBlock).toHaveAttribute('data-imageurl', 'https://example.com/valid.png');
+    expect(photoBlock).toHaveAttribute('data-imageurl', ACTUAL_IMAGE_URL);
   });
 });

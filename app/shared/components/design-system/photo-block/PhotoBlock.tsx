@@ -196,7 +196,7 @@ export const ImagePreviewBlock = ({
           fullWidth
           margin="none"
           multiline
-          maxRows={4}
+          maxRows={2}
           disabled={!previewImage}
           error={altTextErrorState}
           helperText={altTextError}
