@@ -1,11 +1,10 @@
 import { Box, Button } from '@mui/material';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
-import toast from 'react-hot-toast';
 
 import CardLayout from '../card-layout/CardLayout';
 import ContentCard, { ContentType } from './ContentCard';
-import { CONTENT_MUTATION_RESULTS } from '~/constants/publications';
+import { useContentCardActions } from './useContentCardActions';
 
 const FALLBACK_IMAGE_SRC = 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/about-us-foundation-first.png';
 
@@ -29,6 +28,10 @@ interface ImageWithFallbackMockProps {
   fallbackSrc: string;
   alt: string;
 }
+
+jest.mock('./useContentCardActions', () => ({
+  useContentCardActions: jest.fn()
+}));
 
 jest.mock('../card-layout/CardLayout', () => {
   return jest
@@ -91,47 +94,11 @@ jest.mock('~/lib/utils/getStatus', () => ({
   getStatus: (status: string) => `status-${status}`
 }));
 
-const mockDeleteNewsFn = jest.fn();
-const mockDeleteEventFn = jest.fn();
-const mockDeleteMediaFn = jest.fn();
-const mockUnpublishNewsFn = jest.fn();
-const mockUnpublishEventFn = jest.fn();
-const mockDraftMediaFn = jest.fn();
-const mockPublishNewsFn = jest.fn();
-const mockPublishEventFn = jest.fn();
-const mockPublishMediaFn = jest.fn();
+const mockHandleDelete = jest.fn();
+const mockHandlePublish = jest.fn();
+const mockHandleUnpublish = jest.fn();
 
-jest.mock('react-hot-toast', () => ({
-  __esModule: true,
-  default: {
-    success: jest.fn(),
-    error: jest.fn()
-  }
-}));
-
-jest.mock('~/shared/hooks/use-news/useNews', () => ({
-  useDeleteNews: () => [mockDeleteNewsFn],
-  useUpdateNewsStatus: () => [{ unpublish: mockUnpublishNewsFn, publish: mockPublishNewsFn }]
-}));
-
-jest.mock('~/shared/hooks/use-events/useEvents', () => ({
-  useDeleteEvent: () => [mockDeleteEventFn],
-  useUpdateEventStatus: () => [{ unpublish: mockUnpublishEventFn, publish: mockPublishEventFn }]
-}));
-
-jest.mock('~/shared/hooks/use-media-mentions/useMediaMentions', () => ({
-  useDeleteMediaMention: () => [mockDeleteMediaFn],
-  useUpdateMediaMentionStatus: () => [{ draft: mockDraftMediaFn, publish: mockPublishMediaFn }]
-}));
-
-const mockRefresh = jest.fn();
-jest.mock('next/navigation', () => ({
-  useRouter: () => ({
-    refresh: mockRefresh
-  })
-}));
-
-const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+const mockUseContentCardActions = useContentCardActions as jest.MockedFunction<typeof useContentCardActions>;
 
 describe('ContentCard', () => {
   const defaultProps = {
@@ -153,19 +120,20 @@ describe('ContentCard', () => {
   };
 
   beforeEach(() => {
-    mockDeleteNewsFn.mockResolvedValue({ data: true });
-    mockDeleteEventFn.mockResolvedValue({ data: true });
-    mockDeleteMediaFn.mockResolvedValue({ data: true });
-    mockUnpublishNewsFn.mockResolvedValue({ data: { updateNews: { id: '123' } } });
-    mockUnpublishEventFn.mockResolvedValue({ data: { updateEvent: { id: '123' } } });
-    mockDraftMediaFn.mockResolvedValue({ data: { updateMediaMention: { id: '123' } } });
-    mockPublishNewsFn.mockResolvedValue({ data: { updateNews: { id: '123' } } });
-    mockPublishEventFn.mockResolvedValue({ data: { updateEvent: { id: '123' } } });
-    mockPublishMediaFn.mockResolvedValue({ data: { updateMediaMention: { id: '123' } } });
-  });
-
-  afterEach(() => {
     jest.clearAllMocks();
+
+    mockUseContentCardActions.mockImplementation(({ status }) => {
+      const [deleteModalOpen, setDeleteModalOpen] = React.useState(false);
+
+      return {
+        deleteModalOpen,
+        setDeleteModalOpen,
+        handleDelete: mockHandleDelete,
+        handlePublish: mockHandlePublish,
+        handleUnpublish: mockHandleUnpublish,
+        isPublished: status === 'published'
+      };
+    });
   });
 
   it('should render correct title and call getStatus utility', () => {
@@ -234,56 +202,13 @@ describe('ContentCard', () => {
     expect(screen.getByTestId('title-text')).toHaveTextContent('');
   });
 
-  describe('Deletion handling across content types', () => {
-    it('should successfully delete news content type', async () => {
-      render(<ContentCard {...defaultProps} type="news" />);
+  it('should call handleDelete when confirming deletion in modal', () => {
+    render(<ContentCard {...defaultProps} />);
 
-      fireEvent.click(screen.getByTestId('menu-btn-delete'));
-      fireEvent.click(screen.getByTestId('confirm-delete-btn'));
+    fireEvent.click(screen.getByTestId('menu-btn-delete'));
+    fireEvent.click(screen.getByTestId('confirm-delete-btn'));
 
-      await waitFor(() => {
-        expect(mockDeleteNewsFn).toHaveBeenCalledWith({ id: '123' });
-        expect(mockRefresh).toHaveBeenCalledTimes(1);
-        expect(screen.queryByTestId('delete-modal')).not.toBeInTheDocument();
-      });
-    });
-
-    it('should successfully delete events content type', async () => {
-      render(<ContentCard {...defaultProps} type="events" />);
-
-      fireEvent.click(screen.getByTestId('menu-btn-delete'));
-      fireEvent.click(screen.getByTestId('confirm-delete-btn'));
-
-      await waitFor(() => {
-        expect(mockDeleteEventFn).toHaveBeenCalledWith({ id: '123' });
-        expect(mockRefresh).toHaveBeenCalledTimes(1);
-      });
-    });
-
-    it('should successfully delete media content type', async () => {
-      render(<ContentCard {...defaultProps} type="media" />);
-
-      fireEvent.click(screen.getByTestId('menu-btn-delete'));
-      fireEvent.click(screen.getByTestId('confirm-delete-btn'));
-
-      await waitFor(() => {
-        expect(mockDeleteMediaFn).toHaveBeenCalledWith('123');
-        expect(mockRefresh).toHaveBeenCalledTimes(1);
-      });
-    });
-
-    it('should gracefully catch and log errors during failed deletion execution', async () => {
-      mockDeleteNewsFn.mockRejectedValueOnce(new Error('Network Failure'));
-      render(<ContentCard {...defaultProps} type="news" />);
-
-      fireEvent.click(screen.getByTestId('menu-btn-delete'));
-      fireEvent.click(screen.getByTestId('confirm-delete-btn'));
-
-      await waitFor(() => {
-        expect(consoleErrorSpy).toHaveBeenCalledWith('Error deleting:', expect.any(Error));
-        expect(screen.getByTestId('delete-modal')).toBeInTheDocument();
-      });
-    });
+    expect(mockHandleDelete).toHaveBeenCalledTimes(1);
   });
 
   describe('ContentCard menu items (ContentCardMenuItems integration)', () => {
@@ -345,102 +270,23 @@ describe('ContentCard', () => {
 
       expect(hideItem?.text).toEqual({ name: 'Зняти з публікації' });
       expect(typeof hideItem?.onClick).toBe('function');
+      expect(actionsGroup?.items.find((item) => item.id === 'publish')).toBeUndefined();
     });
 
-    it('should unpublish published events content and refresh list', async () => {
-      render(<ContentCard {...menuProps} status="published" />);
-
-      fireEvent.click(screen.getByTestId('menu-btn-hide'));
-
-      await waitFor(() => {
-        expect(mockUnpublishEventFn).toHaveBeenCalledWith('card-42');
-        expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationUnpublished);
-        expect(mockRefresh).toHaveBeenCalledTimes(1);
-      });
-    });
-
-    it('should unpublish published news content', async () => {
-      render(<ContentCard {...defaultProps} type="news" status="published" />);
-
-      fireEvent.click(screen.getByTestId('menu-btn-hide'));
-
-      await waitFor(() => {
-        expect(mockUnpublishNewsFn).toHaveBeenCalledWith('123');
-        expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationUnpublished);
-        expect(mockRefresh).toHaveBeenCalledTimes(1);
-      });
-    });
-
-    it('should draft published media content', async () => {
-      render(<ContentCard {...defaultProps} type="media" status="published" />);
-
-      fireEvent.click(screen.getByTestId('menu-btn-hide'));
-
-      await waitFor(() => {
-        expect(mockDraftMediaFn).toHaveBeenCalledWith('123');
-        expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationUnpublished);
-        expect(mockRefresh).toHaveBeenCalledTimes(1);
-      });
-    });
-
-    it('should show error toast when unpublish returns no data', async () => {
-      mockUnpublishEventFn.mockResolvedValueOnce({ data: null });
-      render(<ContentCard {...menuProps} status="published" />);
-
-      fireEvent.click(screen.getByTestId('menu-btn-hide'));
-
-      await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationUnpublishError);
-        expect(mockRefresh).not.toHaveBeenCalled();
-      });
-    });
-
-    it('should publish draft events content and refresh list', async () => {
+    it('should wire publish menu action to handlePublish', () => {
       render(<ContentCard {...menuProps} />);
 
       fireEvent.click(screen.getByTestId('menu-btn-publish'));
 
-      await waitFor(() => {
-        expect(mockPublishEventFn).toHaveBeenCalledWith('card-42');
-        expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublished);
-        expect(mockRefresh).toHaveBeenCalledTimes(1);
-      });
+      expect(mockHandlePublish).toHaveBeenCalledTimes(1);
     });
 
-    it('should publish draft news content', async () => {
-      render(<ContentCard {...defaultProps} type="news" />);
+    it('should wire unpublish menu action to handleUnpublish', () => {
+      render(<ContentCard {...menuProps} status="published" />);
 
-      fireEvent.click(screen.getByTestId('menu-btn-publish'));
+      fireEvent.click(screen.getByTestId('menu-btn-hide'));
 
-      await waitFor(() => {
-        expect(mockPublishNewsFn).toHaveBeenCalledWith('123');
-        expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublished);
-        expect(mockRefresh).toHaveBeenCalledTimes(1);
-      });
-    });
-
-    it('should publish draft media content', async () => {
-      render(<ContentCard {...defaultProps} type="media" />);
-
-      fireEvent.click(screen.getByTestId('menu-btn-publish'));
-
-      await waitFor(() => {
-        expect(mockPublishMediaFn).toHaveBeenCalledWith('123');
-        expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublished);
-        expect(mockRefresh).toHaveBeenCalledTimes(1);
-      });
-    });
-
-    it('should show error toast when publish returns no data', async () => {
-      mockPublishEventFn.mockResolvedValueOnce({ data: null });
-      render(<ContentCard {...menuProps} />);
-
-      fireEvent.click(screen.getByTestId('menu-btn-publish'));
-
-      await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublishError);
-        expect(mockRefresh).not.toHaveBeenCalled();
-      });
+      expect(mockHandleUnpublish).toHaveBeenCalledTimes(1);
     });
 
     it('should generate correct hrefs for different content types', () => {
