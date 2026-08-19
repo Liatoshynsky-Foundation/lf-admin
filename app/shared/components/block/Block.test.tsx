@@ -29,7 +29,14 @@ jest.mock('~/public/icons/plus.svg', () => ({
 jest.mock('./content-types/registry', () => ({
   CONTENT_TYPE_REGISTRY: {
     header: ({ item }: { item: ContentItem }) => <div data-testid={`renderer-${item.type}`}>{item.id}</div>,
-    paragraph: ({ item }: { item: ContentItem }) => <div data-testid={`renderer-${item.type}`}>{item.id}</div>,
+    paragraph: ({ item, onChange }: { item: ContentItem; onChange?: (next: ContentItem) => void }) => (
+      <div data-testid={`renderer-${item.type}`}>
+        {item.id}
+        <button type="button" data-testid={`change-${item.id}`} onClick={() => onChange?.(item)}>
+          Change
+        </button>
+      </div>
+    ),
     list: ({ item }: { item: ContentItem }) => <div data-testid={`renderer-${item.type}`}>{item.id}</div>
   }
 }));
@@ -194,5 +201,67 @@ describe('Block', () => {
     renderBlock();
 
     expect(screen.queryByTestId('mock-sortable-list')).not.toBeInTheDocument();
+  });
+
+  it('should call updateItem when renderer onChange is invoked', () => {
+    setupHook({ content: [paragraphItem] });
+
+    renderBlock();
+
+    fireEvent.click(screen.getByTestId('change-paragraph-1'));
+
+    expect(mockUpdateItem).toHaveBeenCalledWith('paragraph-1', paragraphItem);
+  });
+
+  it('should call reorderItems when drag ends on sortable list', () => {
+    setupHook({ content: [headerItem, paragraphItem] });
+
+    renderBlock();
+
+    fireEvent.click(screen.getByTestId('mock-sortable-list'));
+
+    expect(mockReorderItems).toHaveBeenCalledWith([paragraphItem, headerItem]);
+  });
+
+  it('should skip rendering content items without a registry renderer', () => {
+    const quoteItem: ContentItem = {
+      id: 'quote-1',
+      type: CONTENT_TYPE.QUOTE,
+      source: { uk: createDocNode('Source'), en: createDocNode('Source EN') },
+      text: { uk: createDocNode('Quote'), en: createDocNode('Quote EN') }
+    };
+
+    setupHook({ content: [quoteItem, paragraphItem] });
+
+    renderBlock();
+
+    expect(screen.queryByTestId('renderer-quote')).not.toBeInTheDocument();
+    expect(screen.getByTestId('renderer-paragraph')).toBeInTheDocument();
+  });
+
+  it('should use fallback label for repeatable slots without label', () => {
+    const configWithoutLabels: BlockConfig = {
+      allowed: [
+        { type: CONTENT_TYPE.HEADER, required: true },
+        { type: CONTENT_TYPE.PARAGRAPH, repeatable: true }
+      ]
+    };
+
+    renderBlock(configWithoutLabels);
+
+    expect(screen.getByRole('button', { name: 'Додати paragraph' })).toBeInTheDocument();
+  });
+
+  it('should not render add bar when no repeatable slots are configured', () => {
+    const configWithoutRepeatable: BlockConfig = {
+      allowed: [
+        { type: CONTENT_TYPE.HEADER, required: true },
+        { type: CONTENT_TYPE.PARAGRAPH, required: true }
+      ]
+    };
+
+    renderBlock(configWithoutRepeatable);
+
+    expect(screen.queryByTestId('plus-icon')).not.toBeInTheDocument();
   });
 });

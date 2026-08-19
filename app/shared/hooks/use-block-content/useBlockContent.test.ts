@@ -6,6 +6,7 @@ import { useStore } from '~/store';
 import {
   CONTENT_TYPE,
   type ContentItem,
+  type ContentTypeId,
   type ParagraphContentItem,
   type SectionListEntry
 } from '~/types/blocks/contentTypes';
@@ -159,21 +160,76 @@ describe('useBlockContent', () => {
       expect(mockSetFields).not.toHaveBeenCalled();
     });
 
-    it('should call setField when addItem is invoked', () => {
-      const { result } = renderHook(() => useBlockContent(PAGE_ID, BLOCK_ID));
-
-      act(() => {
-        result.current.addItem(CONTENT_TYPE.PARAGRAPH);
-      });
-
-      expect(mockSetField).toHaveBeenCalledWith(PAGE_ID, BLOCK_ID, 'content', [
-        paragraphItem,
+    it.each<[ContentTypeId, ContentItem]>([
+      [
+        CONTENT_TYPE.HEADER,
+        {
+          id: 'generated-id',
+          type: CONTENT_TYPE.HEADER,
+          title: emptyLocalizedJSON,
+          helper: emptyLocalizedJSON
+        }
+      ],
+      [
+        CONTENT_TYPE.PARAGRAPH,
         {
           id: 'generated-id',
           type: CONTENT_TYPE.PARAGRAPH,
           value: emptyLocalizedJSON
         }
-      ]);
+      ],
+      [
+        CONTENT_TYPE.LIST,
+        {
+          id: 'generated-id',
+          type: CONTENT_TYPE.LIST,
+          items: [{ id: 'generated-id', ...emptyLocalizedJSON }]
+        }
+      ],
+      [
+        CONTENT_TYPE.SECTION_LIST,
+        {
+          id: 'generated-id',
+          type: CONTENT_TYPE.SECTION_LIST,
+          items: [
+            {
+              id: 'generated-id',
+              title: emptyLocalizedJSON,
+              description: emptyLocalizedJSON
+            }
+          ]
+        }
+      ],
+      [
+        CONTENT_TYPE.QUOTE,
+        {
+          id: 'generated-id',
+          type: CONTENT_TYPE.QUOTE,
+          source: emptyLocalizedJSON,
+          text: emptyLocalizedJSON
+        }
+      ],
+      [
+        CONTENT_TYPE.IMAGE,
+        {
+          id: 'generated-id',
+          type: CONTENT_TYPE.IMAGE,
+          value: {
+            src: '',
+            alt: emptyLocalizedJSON,
+            caption: emptyLocalizedJSON,
+            generatedSrc: ''
+          }
+        }
+      ]
+    ])('should call setField when addItem is invoked with type %s', (type, expectedItem) => {
+      const { result } = renderHook(() => useBlockContent(PAGE_ID, BLOCK_ID));
+
+      act(() => {
+        result.current.addItem(type);
+      });
+
+      expect(mockSetField).toHaveBeenCalledWith(PAGE_ID, BLOCK_ID, 'content', [paragraphItem, expectedItem]);
     });
 
     it('should call setField when removeItem is invoked', () => {
@@ -327,6 +383,28 @@ describe('useBlockContent', () => {
           .title,
         goals: undefined
       });
+    });
+
+    it('should call setFields when reorderItems is invoked', () => {
+      const block = {
+        title: { uk: createDocNode('Goals'), en: createDocNode('Goals EN') },
+        goals: [
+          {
+            id: 'goal-1',
+            title: { uk: createDocNode('Goal'), en: createDocNode('Goal EN') },
+            description: { uk: emptyLocalizedJSON.uk, en: emptyLocalizedJSON.en }
+          }
+        ]
+      };
+
+      const { result } = renderHook(() => useBlockContent(PAGE_ID, BLOCK_ID, mockAdapter));
+      const reordered = [...result.current.content].reverse();
+
+      act(() => {
+        result.current.reorderItems(reordered);
+      });
+
+      expect(mockSetFields).toHaveBeenCalledWith(PAGE_ID, BLOCK_ID, mockAdapter.fromContent(reordered, block));
     });
   });
 });
