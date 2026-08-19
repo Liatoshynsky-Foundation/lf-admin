@@ -1,8 +1,6 @@
 'use client';
 import { Typography } from '@mui/material';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
 
 import CardLayout from '../card-layout/CardLayout';
 import { infoText } from '../card-layout/CardLayout.styles';
@@ -12,10 +10,8 @@ import DeleteCardModal from '../delete-card-modal/DeleteCardModal';
 import Button from '../design-system/button/Button';
 import ContentCardBadge from './ContentCardBadge';
 import ContentCardMenuItems from './ContentCardMenuItems';
+import { useContentCardActions } from './useContentCardActions';
 import { getStatus } from '~/lib/utils/getStatus';
-import { useDeleteEvent } from '~/shared/hooks/use-events/useEvents';
-import { useDeleteMediaMention } from '~/shared/hooks/use-media-mentions/useMediaMentions';
-import { useDeleteNews } from '~/shared/hooks/use-news/useNews';
 import type { LocalizedString } from '~/types/common';
 
 export type ContentType = 'news' | 'events' | 'media';
@@ -59,36 +55,10 @@ const ContentCard = ({
   const titleText = title.uk || title.en || '';
   const altText = coverImage.alt.uk || coverImage.alt.en || titleText;
 
-  const router = useRouter();
-
-  const [deleteNews] = useDeleteNews();
-  const [deleteEvent] = useDeleteEvent();
-  const [deleteMediaMention] = useDeleteMediaMention();
-
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const { deleteModalOpen, setDeleteModalOpen, handleDelete, handlePublish, handleUnpublish, isPublished } =
+    useContentCardActions({ id, type, status });
 
   const FALLBACK_IMAGE_SRC = 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/about-us-foundation-first.png';
-
-  async function handleDelete() {
-    try {
-      let result;
-
-      if (type === 'news') {
-        result = await deleteNews({ id });
-      } else if (type === 'events') {
-        result = await deleteEvent({ id });
-      } else if (type === 'media') {
-        result = await deleteMediaMention(id);
-      }
-
-      if (result?.data) {
-        setDeleteModalOpen(false);
-        router.refresh();
-      }
-    } catch (error) {
-      console.error('Error deleting:', error);
-    }
-  }
 
   const coverImageNode = (
     <ImageWithFallback key={coverImage.src} src={coverImage.src} fallbackSrc={FALLBACK_IMAGE_SRC} alt={altText} />
@@ -116,7 +86,14 @@ const ContentCard = ({
     </Button>
   );
 
-  const itemsNode = ContentCardMenuItems({ id, type, setDeleteModalOpen });
+  const itemsNode = ContentCardMenuItems({
+    id,
+    type,
+    isPublished,
+    setDeleteModalOpen,
+    onUnpublish: handleUnpublish,
+    onPublish: handlePublish
+  });
 
   return (
     <>
