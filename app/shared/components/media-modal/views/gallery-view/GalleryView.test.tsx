@@ -203,6 +203,55 @@ describe('GalleryView', () => {
     expect(screen.getByText('Завантаження...')).toBeInTheDocument();
   });
 
+  it('should render empty state when image array is empty after loading', () => {
+    (useGalleryFiles as jest.Mock).mockReturnValue({ files: [], isLoading: false, error: null });
+
+    renderGalleryView();
+
+    expect(screen.getByTestId('GalleryView-emptyState')).toBeInTheDocument();
+    expect(screen.getByText('Зображень не знайдено. Спробуйте додати зображення до медіатеки.')).toBeInTheDocument();
+    expect(screen.queryByTestId('mocked-media-grid')).not.toBeInTheDocument();
+  });
+
+  it('should render empty state when search returns no gallery items', () => {
+    renderGalleryView({ search: 'missing-image' });
+
+    expect(screen.getByTestId('GalleryView-emptyState')).toBeInTheDocument();
+    expect(screen.queryByTestId('mocked-media-grid')).not.toBeInTheDocument();
+  });
+
+  it('should render media-kind specific empty state for pdf gallery', () => {
+    (useGalleryFiles as jest.Mock).mockReturnValue({ files: [], isLoading: false, error: null });
+
+    render(
+      <GalleryView
+        selected={null}
+        onPick={mockOnPick}
+        filters={mockFilters}
+        onFiltersChange={mockOnFiltersChange}
+        mediaKind="pdf"
+      />
+    );
+
+    expect(screen.getByText('Файлів не знайдено. Спробуйте додати файли до медіатеки.')).toBeInTheDocument();
+  });
+
+  it('should render media-kind specific empty state for audio gallery', () => {
+    (useGalleryFiles as jest.Mock).mockReturnValue({ files: [], isLoading: false, error: null });
+
+    render(
+      <GalleryView
+        selected={null}
+        onPick={mockOnPick}
+        filters={mockFilters}
+        onFiltersChange={mockOnFiltersChange}
+        mediaKind="audio"
+      />
+    );
+
+    expect(screen.getByText('Аудіофайлів не знайдено. Спробуйте додати аудіофайли до медіатеки.')).toBeInTheDocument();
+  });
+
   it('should filter out non-starred items when favorites filter is starred', () => {
     renderGalleryView({ favorites: 'starred' });
     expect(screen.queryByText('piano-studio.jpg')).not.toBeInTheDocument();
@@ -296,6 +345,103 @@ describe('GalleryView', () => {
     expect(useGalleryFiles).toHaveBeenCalledWith('compositions');
     expect(screen.getByText('song.mp3')).toBeInTheDocument();
     expect(screen.queryByText('cover.jpg')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['audio', 'recording.mp3', 'audio/mpeg', 'AUDIO'],
+    ['pdf', 'score.pdf', 'application/pdf', 'PDF']
+  ] as const)('should use Asset MIME metadata for generic R2 listings in the %s gallery', (mediaKind, filename, mimeType, assetType) => {
+    const url = `https://example.com/${filename}`;
+
+    (useGalleryFiles as jest.Mock).mockReturnValue({
+      files: [
+        {
+          filename,
+          originalName: filename,
+          mimeType: 'application/octet-stream',
+          size: 1,
+          createdAt: '2024-01-01T00:00:00.000Z',
+          url
+        }
+      ],
+      isLoading: false,
+      error: null
+    });
+    (useAllAssetsQuery as jest.Mock).mockReturnValue({
+      data: {
+        allAssets: [{
+          id: `asset-${mediaKind}`,
+          type: assetType,
+          mimeType,
+          url,
+          filename,
+          originalname: filename,
+          isStarred: false,
+          tags: [],
+          usageRefs: []
+        }]
+      },
+      loading: false
+    });
+
+    render(
+      <GalleryView
+        selected={null}
+        onPick={mockOnPick}
+        filters={mockFilters}
+        onFiltersChange={mockOnFiltersChange}
+        mediaKind={mediaKind}
+      />
+    );
+
+    expect(screen.getByText(filename)).toBeInTheDocument();
+  });
+
+  it.each([
+    ['audio', 'recording.mp3', 'image/jpeg'],
+    ['pdf', 'score.pdf', 'audio/mpeg']
+  ] as const)('should reject a %s file when Asset MIME metadata conflicts', (mediaKind, filename, mimeType) => {
+    const url = `https://example.com/${filename}`;
+
+    (useGalleryFiles as jest.Mock).mockReturnValue({
+      files: [{
+        filename,
+        originalName: filename,
+        mimeType: 'application/octet-stream',
+        size: 1,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        url
+      }],
+      isLoading: false,
+      error: null
+    });
+    (useAllAssetsQuery as jest.Mock).mockReturnValue({
+      data: {
+        allAssets: [{
+          id: `asset-${mediaKind}-conflict`,
+          type: 'IMAGE',
+          mimeType,
+          url,
+          filename,
+          isStarred: false,
+          tags: [],
+          usageRefs: []
+        }]
+      },
+      loading: false
+    });
+
+    render(
+      <GalleryView
+        selected={null}
+        onPick={mockOnPick}
+        filters={mockFilters}
+        onFiltersChange={mockOnFiltersChange}
+        mediaKind={mediaKind}
+      />
+    );
+
+    expect(screen.queryByText(filename)).not.toBeInTheDocument();
   });
 
   it('should match items by usage page from asset usageRefs', () => {

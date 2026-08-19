@@ -1,4 +1,4 @@
-import { FilterQuery, Model, Types } from 'mongoose';
+import { ClientSession, FilterQuery, Model, Types } from 'mongoose';
 
 import { config } from '../../../config';
 import { UPLOAD_ERRORS } from '../../../uploads/errors';
@@ -316,8 +316,8 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
     return true;
   };
 
-  const addUsageRef = async (url: string, ref: AssetUsageRef): Promise<void> => {
-    await AssetModel.findOneAndUpdate({ url }, { $addToSet: { usageRefs: ref } });
+  const addUsageRef = async (url: string, ref: AssetUsageRef, session?: ClientSession): Promise<void> => {
+    await AssetModel.findOneAndUpdate({ url }, { $addToSet: { usageRefs: ref } }, { session });
   };
 
   return {

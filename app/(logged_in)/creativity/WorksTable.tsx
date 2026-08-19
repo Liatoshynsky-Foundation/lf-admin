@@ -1,7 +1,7 @@
 'use client';
 
 import { Box } from '@mui/material';
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import toast from 'react-hot-toast';
 
 import { useDeleteWorkAction } from './(composition)/useDeleteWorkAction';
@@ -41,6 +41,7 @@ export type GroupRowData = Readonly<{
   id: string;
   number: number;
   numberKind: 'op' | 'sineop';
+  additionalText?: string | null;
   name: string;
   genre: string;
   startDate: string;
@@ -53,6 +54,7 @@ export type GroupRowData = Readonly<{
 export type GroupHeaderData = Readonly<{
   numberLabel: number;
   numberKind: 'op' | 'sineop';
+  additionalText?: string | null;
   name: string;
   genre: string;
   startDate: string;
@@ -84,7 +86,11 @@ export const columns: readonly ColumnDef<GroupHeaderData, OpusWork, IndividualWo
     headerLabel: 'Опуси',
     width: '128px',
     hasRightDivider: true,
-    renderGroup: (group) => `${group.numberKind === 'op' ? 'op.' : 'sine op.'} ${group.numberLabel}`
+    renderGroup: (group) => {
+      const prefix = group.numberKind === 'op' ? 'op.' : 'sine op.';
+      const base = `${prefix} ${group.numberLabel}`;
+      return group.additionalText ? `${base} ${group.additionalText}` : `${base}`;
+    }
   },
   {
     id: 'title',
@@ -177,13 +183,20 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
     unlinkComposition,
     setUnlinkComposition
   } = useDeleteWorkAction();
-  const { handleUpdateComposition } = useUpdateWorkAction();
+
+  const { handleUpdateComposition, error, clearError } = useUpdateWorkAction();
   const { handleShare } = useShare();
+
+  const handleCloseComposition = useCallback(() => {
+    clearError();
+    closeEditComposition();
+  }, [clearError, closeEditComposition]);
 
   const handleSubmitComposition = async (compositionData: OpusCompositionData) => {
     if (!compositionId) return;
-    await handleUpdateComposition(compositionId, compositionData);
-    closeEditComposition();
+    if (await handleUpdateComposition(compositionId, compositionData)) {
+      handleCloseComposition();
+    }
   };
 
   const handleShareComposition = (id: string) => {
@@ -198,9 +211,9 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
 
     if (!compositionToEdit) {
       toast.error('Композицію не знайдено');
-      closeEditComposition();
+      handleCloseComposition();
     }
-  }, [compositionId, compositionToEdit, isCompositionLoading, closeEditComposition]);
+  }, [compositionId, compositionToEdit, isCompositionLoading, handleCloseComposition]);
 
   function groupsRow(group: GroupRowData): BaseRowData<GroupHeaderData, OpusWork, IndividualWork> {
     const isPublished = group.status === BaseContentStatuses.Published;
@@ -211,6 +224,7 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
       groupData: {
         numberLabel: group.number,
         numberKind: group.numberKind,
+        additionalText: group.additionalText,
         name: group.name,
         genre: group.genre,
         startDate: group.startDate,
@@ -340,8 +354,10 @@ export function WorksTable({ items, activeTab }: WorksTableProps) {
         open={isEditOpen}
         mode="edit"
         initialValue={compositionToEdit}
-        onClose={closeEditComposition}
+        onClose={handleCloseComposition}
         onSubmit={handleSubmitComposition}
+        error={error}
+        onClearError={clearError}
       />
     </Box>
   );

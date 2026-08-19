@@ -191,7 +191,9 @@ describe('WorksTable', () => {
     });
 
     (useUpdateWorkAction as jest.Mock).mockReturnValue({
-      handleUpdateComposition: mockHandleUpdateComposition
+      handleUpdateComposition: mockHandleUpdateComposition,
+      error: null,
+      clearError: jest.fn()
     });
 
     (useShare as jest.Mock).mockReturnValue({
@@ -519,6 +521,26 @@ describe('WorksTable', () => {
 
       expect(toast.error).not.toHaveBeenCalled();
       expect(mockCloseEditComposition).not.toHaveBeenCalled();
+    });
+
+    it('should format opus column correctly for different numberKind and additionalText combinations', () => {
+      const opusCol = originalColumns.find((c) => c.id === 'opus');
+
+      const dataOpWithoutAdditional: GroupHeaderData = {
+        ...group,
+        numberKind: 'op',
+        numberLabel: 5,
+        additionalText: null
+      };
+      expect(opusCol?.renderGroup?.(dataOpWithoutAdditional)).toBe('op. 5');
+
+      const dataSineOpWithAdditional: GroupHeaderData = {
+        ...group,
+        numberKind: 'sineop',
+        numberLabel: 10,
+        additionalText: 'bis'
+      };
+      expect(opusCol?.renderGroup?.(dataSineOpWithAdditional)).toBe('sine op. 10 bis');
     });
   });
 });

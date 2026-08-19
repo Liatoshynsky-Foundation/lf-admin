@@ -20,7 +20,6 @@ import type { FilteringToolbarProps, SortSelectProps } from '~/shared/components
 import { useDebounce } from '~/shared/hooks/use-debounce/useDebounce';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import {
-  ContentLanguage,
   OpusStatus,
   SortOrder,
   type WorksFiltersInput,
@@ -55,16 +54,6 @@ const mapWorksStatus = (status: WorksStatusValue): OpusStatus => {
     return OpusStatus.Published;
   }
   return OpusStatus.Draft;
-};
-
-const mapWorksLanguage = (language: WorksLanguageValue): ContentLanguage => {
-  if (language === 'bilingual') {
-    return ContentLanguage.Bilingual;
-  }
-  if (language === 'en') {
-    return ContentLanguage.En;
-  }
-  return ContentLanguage.Uk;
 };
 
 const mapWorksSort = (sortValue: FilesSortValue): WorksSortOptions[] => {
@@ -195,11 +184,10 @@ export function useWorksFiltering(): Readonly<{
   const requestFilters = useMemo<Omit<WorksFiltersInput, 'limit' | 'skip'>>(
     () => ({
       search: debouncedSearch || undefined,
-      languages: languageFilters.length ? languageFilters.map(mapWorksLanguage) : undefined,
       statuses: statusFilters.length ? statusFilters.map(mapWorksStatus) : undefined,
       sort: mapWorksSort(sortValue)
     }),
-    [languageFilters, debouncedSearch, statusFilters, sortValue]
+    [debouncedSearch, statusFilters, sortValue]
   );
 
   return {

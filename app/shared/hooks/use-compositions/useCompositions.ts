@@ -25,6 +25,9 @@ export const toSuggestionNote = (sheet: SheetMusicItem): OpusMediaFileData => ({
   publishDate: sheet.publishDate ?? ''
 });
 
+export const getExcludedSuggestionIds = (works: OpusCompositionData[], currentIndex: number): string[] =>
+  works.filter((_, index) => index !== currentIndex).map((work) => work.id);
+
 export const useCompositionsForm = (works: OpusCompositionData[], onChange: (works: OpusCompositionData[]) => void) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');

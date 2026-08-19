@@ -23,7 +23,6 @@ export const ARCHIVE_STATUSES = [
 ] as const;
 
 export const ARCHIVE_STATUS_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
-  { value: 'all', label: 'Усі' },
   { value: BaseContentStatuses.Hidden, label: 'Приховано' },
   { value: BaseContentStatuses.Published, label: 'Опубліковано' },
 ];
@@ -63,6 +62,7 @@ export const ARCHIVE_EMPTY_STATE_DESCRIPTION =
   'Натисніть «Додати фонд», щоб створити перший.';
 export const ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE = 'Нічого не знайдено';
 export const ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION = 'Спробуйте змінити параметри пошуку або фільтрів.';
+export const ARCHIVE_EMPTY_STATE_NO_STATUS_MATCH_TITLE = 'Немає фондів із вибраним статусом';
 
 export const ARCHIVE_FONDS_TABLE_HEADERS = {
   fond: 'Фонд',

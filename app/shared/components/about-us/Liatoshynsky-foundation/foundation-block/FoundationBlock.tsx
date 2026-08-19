@@ -15,9 +15,11 @@ interface FoundationBlockProps {
   imageUrl: string;
   fileName?: string;
   initialCrop?: MediaModalResult['crop'];
+  imageAlt?: string;
   onMainTextChange: (val: JSONContent) => void;
   onParagraphChange: (index: number, val: JSONContent) => void;
   onImageChange: (url: string, crop?: MediaModalResult['crop']) => void;
+  onAltChange?: (val: string) => void;
 }
 
 export const FoundationBlock = ({
@@ -26,9 +28,11 @@ export const FoundationBlock = ({
   imageUrl,
   fileName,
   initialCrop,
+  imageAlt,
   onMainTextChange,
   onParagraphChange,
-  onImageChange
+  onImageChange,
+  onAltChange
 }: FoundationBlockProps) => {
   return (
     <Box display="flex" flexDirection="column" gap="16px">
@@ -58,6 +62,9 @@ export const FoundationBlock = ({
         onChangeImage={onImageChange}
         title="Основне зображення"
         aspectRatio={CROP_RATIOS.FUNDATION_PROFILE_SMALL}
+        showAlternativeText
+        altText={imageAlt}
+        onChangeAltText={(value) => onAltChange?.(value)}
       />
     </Box>
   );

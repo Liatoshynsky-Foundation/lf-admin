@@ -8,7 +8,9 @@ import { createDocNode } from '~/__mocks__/utils';
 interface MockImagePreviewBlockProps {
   readonly imageUrl: string;
   readonly fileName?: string;
+  readonly altText?: string;
   readonly onChangeImage: (url: string) => void;
+  readonly onChangeAltText?: (value: string) => void;
   readonly title?: string;
 }
 
@@ -16,12 +18,16 @@ jest.mock('~/ds-components/text-field/TextField');
 
 jest.mock('~/ds-components/photo-block/PhotoBlock', () => ({
   __esModule: true,
-  ImagePreviewBlock: ({ imageUrl, fileName, onChangeImage, title }: MockImagePreviewBlockProps) => (
+  ImagePreviewBlock: ({ imageUrl, fileName, altText, onChangeImage, onChangeAltText, title }: MockImagePreviewBlockProps) => (
     <div data-testid="image-preview-block" data-title={title}>
       <span data-testid="preview-url">{imageUrl}</span>
       <span data-testid="preview-filename">{fileName}</span>
+      <span data-testid="preview-alt-text">{altText}</span>
       <button data-testid="trigger-image-upload" onClick={() => onChangeImage('uploaded-image-path.png')}>
         Upload Image
+      </button>
+      <button data-testid="trigger-alt-upload" onClick={() => onChangeAltText?.('Updated alt text')}>
+        Change Alt Text
       </button>
     </div>
   )
@@ -37,9 +43,11 @@ const mockProps = {
   paragraphs: mockParagraphsJson,
   imageUrl: '/images/test.png',
   fileName: 'test.png',
+  imageAlt: 'Existing alt text',
   onMainTextChange: jest.fn(),
   onParagraphChange: jest.fn(),
-  onImageChange: jest.fn()
+  onImageChange: jest.fn(),
+  onAltChange: jest.fn()
 };
 
 const getParagraphLabel = (index: number) => `Текст ${index + 1} абзацу`;
@@ -63,6 +71,7 @@ describe('FoundationBlock', () => {
     expect(screen.getByTestId('image-preview-block')).toBeInTheDocument();
     expect(screen.getByTestId('preview-url')).toHaveTextContent(mockProps.imageUrl);
     expect(screen.getByTestId('preview-filename')).toHaveTextContent(mockProps.fileName);
+    expect(screen.getByTestId('preview-alt-text')).toHaveTextContent(mockProps.imageAlt);
   });
 
   it.each([
@@ -93,6 +102,14 @@ describe('FoundationBlock', () => {
       () => {
         expect(mockProps.onImageChange).toHaveBeenCalledTimes(1);
         expect(mockProps.onImageChange).toHaveBeenCalledWith('uploaded-image-path.png');
+      }
+    ],
+    [
+      'alt text field changes',
+      'trigger-alt-upload',
+      () => {
+        expect(mockProps.onAltChange).toHaveBeenCalledTimes(1);
+        expect(mockProps.onAltChange).toHaveBeenCalledWith('Updated alt text');
       }
     ]
   ])('should dispatch matching callbacks upon executing %s', (_scenario, triggerId, assertionCallback) => {

@@ -17,6 +17,7 @@ interface UseCreateWorkActionResult {
   error: string | null;
   openModal: () => void;
   closeModal: () => void;
+  clearError: () => void;
   handleSubmit: (work: OpusCompositionData) => Promise<void>;
 }
 
@@ -63,13 +64,13 @@ const mapToCreateInput = (work: OpusCompositionData): CreateCompositionInput => 
   };
 };
 
+
 export function useCreateWorkAction(): UseCreateWorkActionResult {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
   const [createComposition] = useCreateComposition();
-  const router = useRouter(); 
+  const router = useRouter();
 
   const openModal = useCallback(() => {
     setError(null);
@@ -82,27 +83,27 @@ export function useCreateWorkAction(): UseCreateWorkActionResult {
     setError(null);
   }, [isSubmitting]);
 
+  const clearError = useCallback(() => setError(null), []);
+
   const handleSubmit = useCallback(
     async (work: OpusCompositionData) => {
       setIsSubmitting(true);
       setError(null);
-        
-      const result = await createComposition(mapToCreateInput(work));
-        
-      if (!result) {
-        setError('Не вдалося створити твір. Спробуйте ще раз.');
+      try {
+        await createComposition(mapToCreateInput(work));
+        setIsModalOpen(false);
+        toast.success(COMPOSITION_MUTATION_RESULTS.created);
+        router.refresh();
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Не вдалося створити твір. Спробуйте ще раз.';
+        setError(message);
+        toast.error(message);
+      } finally {
         setIsSubmitting(false);
-        toast.error(COMPOSITION_MUTATION_RESULTS.failed);
-        return;
       }
-
-      setIsModalOpen(false);
-      setIsSubmitting(false);
-      router.refresh();
-      toast.success(COMPOSITION_MUTATION_RESULTS.created);
     },
     [createComposition, router]
   );
 
-  return { isModalOpen, isSubmitting, error, openModal, closeModal, handleSubmit };
+  return { isModalOpen, isSubmitting, error, openModal, closeModal, clearError, handleSubmit };
 }

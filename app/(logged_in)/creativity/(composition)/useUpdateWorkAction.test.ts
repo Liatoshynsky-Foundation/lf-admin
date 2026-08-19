@@ -83,7 +83,8 @@ describe('useUpdateWorkAction', () => {
     const { result } = renderHook(() => useUpdateWorkAction());
 
     await act(async () => {
-      await result.current.handleUpdateComposition('comp-123', mockComposition);
+      const updated = await result.current.handleUpdateComposition('comp-123', mockComposition);
+      expect(updated).toBe(true);
     });
 
     expect(mockUpdateCompositionMut).toHaveBeenCalledWith({
@@ -142,7 +143,8 @@ describe('useUpdateWorkAction', () => {
     const { result } = renderHook(() => useUpdateWorkAction());
 
     await act(async () => {
-      await result.current.handleUpdateComposition('comp-456', minimalComposition);
+      const updated = await result.current.handleUpdateComposition('comp-456', minimalComposition);
+      expect(updated).toBe(true);
     });
 
     expect(mockUpdateCompositionMut).toHaveBeenCalledWith({
@@ -172,15 +174,14 @@ describe('useUpdateWorkAction', () => {
   });
 
   it('should handle composition update error and throw', async () => {
-    const mockError = new Error('Update failed');
+    const mockError = new Error('Помилка при оновленні твору');
     mockUpdateCompositionMut.mockRejectedValueOnce(mockError);
 
     const { result } = renderHook(() => useUpdateWorkAction());
 
     await act(async () => {
-      await expect(
-        result.current.handleUpdateComposition('comp-123', mockComposition)
-      ).rejects.toThrow('Update failed');
+      const updated = await result.current.handleUpdateComposition('comp-123', mockComposition);
+      expect(updated).toBe(false);
     });
 
     expect(toast.error).toHaveBeenCalledWith('Помилка при оновленні твору');

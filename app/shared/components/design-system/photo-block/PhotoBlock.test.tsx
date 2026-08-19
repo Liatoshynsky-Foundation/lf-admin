@@ -23,16 +23,14 @@ jest.mock('~/public/icons/pencil.svg', () => ({
 }));
 
 const useImageMetadataMock = jest.fn();
+const useCroppedImageMock = jest.fn();
 
 jest.mock('~/shared/hooks/use-image-metadata/useImageMetadata', () => ({
   useImageMetadata: (...args: unknown[]) => useImageMetadataMock(...args)
 }));
 
 jest.mock('~/hooks/use-cropped-image/use-cropped-image', () => ({
-  useCroppedImage: () => ({
-    styles: { container: {}, image: {} },
-    onLoad: jest.fn()
-  })
+  useCroppedImage: (...args: unknown[]) => useCroppedImageMock(...args)
 }));
 
 type MediaModalProps = {
@@ -127,6 +125,10 @@ describe('ImagePreviewBlock', () => {
       dimensions: { width: 1024, height: 768 },
       fileName: 'test.jpg'
     });
+    useCroppedImageMock.mockReturnValue({
+      styles: { container: {}, image: {} },
+      onLoad: jest.fn()
+    });
   });
 
   it('should render correctly with initial image', () => {
@@ -205,6 +207,12 @@ describe('ImagePreviewBlock', () => {
 
     expect(screen.getByTestId('cloud-upload-icon')).toBeInTheDocument();
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
+  });
+
+  it('passes custom preview size to cropped image hook', () => {
+    renderComponent({ previewWidth: 188, previewHeight: 224 });
+
+    expect(useCroppedImageMock).toHaveBeenCalledWith(null, 188, 224);
   });
 
   it('disables "Редагувати" but keeps "Змінити зображення" enabled when there is no image', () => {

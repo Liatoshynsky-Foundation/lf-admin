@@ -1,7 +1,12 @@
 import { act, renderHook } from '@testing-library/react';
+import toast from 'react-hot-toast';
 
 import { createCompositionId, toCompositionInput,useUpsertOpus } from './useUpsertOpus';
-import { OPUS_VALIDATION_MESSAGES } from '~/constants/opus';
+import {
+  COMPOSITION_DUPLICATE_ERROR,
+  COMPOSITION_NAME_REQUIRED_ERROR,
+  OPUS_VALIDATION_MESSAGES
+} from '~/constants/opus';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import type { FetchedOpusData, OpusCompositionData } from '~/types/opus';
 
@@ -13,6 +18,11 @@ interface OpusByIdResult {
 const mockCreateOpus = jest.fn();
 const mockUpdateOpus = jest.fn();
 let mockOpusByIdResult: OpusByIdResult;
+
+jest.mock('react-hot-toast', () => ({
+  success: jest.fn(),
+  error: jest.fn()
+}));
 
 jest.mock('~/shared/hooks/use-opuses/useOpuses', () => ({
   useCreateOpus: () => [mockCreateOpus],
@@ -205,6 +215,70 @@ describe('useUpsertOpus', () => {
     });
 
     expect(result.current.detailsErrors.name).toBe(OPUS_VALIDATION_MESSAGES.nameTooShort);
+  });
+
+  it('rejects empty and duplicate composition names before mutation', async () => {
+    const { result } = renderHook(() => useUpsertOpus());
+
+    act(() => {
+      result.current.setDetails((prev) => ({
+        ...prev,
+        number: '5',
+        name: 'Соната',
+        creationYear: '1922',
+        compositions: [
+          { id: 'empty', name: '  ', genre: '', year: '', audios: [], notes: [] },
+          { id: 'first', name: ' Соната ', genre: '', year: '', audios: [], notes: [] },
+          { id: 'second', name: 'Соната', genre: '', year: '', audios: [], notes: [] }
+        ]
+      }));
+    });
+
+    await act(async () => {
+      await result.current.handleSave(BaseContentStatuses.Draft);
+    });
+
+    expect(mockCreateOpus).not.toHaveBeenCalled();
+    expect(result.current.compositionErrors).toEqual({ 'compositions.empty.name': '' });
+    expect(toast.error).toHaveBeenCalledWith(COMPOSITION_DUPLICATE_ERROR);
+    expect(toast.error).toHaveBeenCalledWith(COMPOSITION_NAME_REQUIRED_ERROR);
+  });
+
+  it('maps duplicate mutation errors to matching composition fields', async () => {
+    mockCreateOpus.mockRejectedValue(new Error('Композиція " Соната " вже існує'));
+    const { result } = renderHook(() => useUpsertOpus());
+    act(() => {
+      result.current.setDetails((prev) => ({
+        ...prev,
+        number: '5',
+        name: 'Група',
+        creationYear: '1922',
+        compositions: [
+          { id: 'first', name: ' Соната ', genre: '', year: '', audios: [], notes: [] },
+          { id: 'second', name: 'Концерт', genre: '', year: '', audios: [], notes: [] }
+        ]
+      }));
+    });
+
+    await act(async () => {
+      await result.current.handleSave(BaseContentStatuses.Draft);
+    });
+
+    expect(result.current.compositionErrors).toEqual({ 'compositions.first.name': expect.any(String) });
+    expect(result.current.isSaved).toBe(false);
+  });
+
+  it('reports non-composition mutation errors without throwing', async () => {
+    mockCreateOpus.mockRejectedValue(new Error('Network failed'));
+    const { result } = renderHook(() => useUpsertOpus());
+    fillValidDetails(result);
+
+    await act(async () => {
+      await result.current.handleSave(BaseContentStatuses.Draft);
+    });
+
+    expect(toast.error).toHaveBeenCalledWith('Network failed');
+    expect(result.current.isSaved).toBe(false);
   });
 
   it('creates an opus with mapped input when valid', async () => {

@@ -2,18 +2,21 @@
 
 import { Box, Chip, Divider, Typography } from '@mui/material';
 import { ChevronDown } from 'lucide-react';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 
 import Button from '../design-system/button/Button';
 import DropdownMenu from '../dropdown-menu/DropdownMenu';
 import { filterSelectStyles } from './FilterSelect.styles';
 import FilterSelectItem from './FilterSelectItem/FilterSelectItem';
 import CloseIcon from '~/public/icons/close.svg';
+import Badge from '~/shared/components/badge/Badge';
 import { useMenuScrollClose } from '~/shared/hooks/use-menu-scroll-close/useMenuScrollClose';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 export interface FilterOption {
   value: string;
   label: string;
+  icon?: ReactNode;
 }
 
 export interface FilterSelectProps {
@@ -29,6 +32,8 @@ export interface FilterSelectProps {
   hideClearAction?: boolean;
   menuMinWidth?: number;
   clearLabel?: string;
+  persistLabel?: boolean;
+  menuAlign?: 'left' | 'right';
   onChange?: (allSelected: string[]) => void;
   onAdd?: (value: string, label: string, allSelected: string[]) => void;
   onRemove?: (value: string, label: string, allSelected: string[]) => void;
@@ -47,6 +52,8 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
   hideClearAction = false,
   menuMinWidth,
   clearLabel = 'Очистити',
+  persistLabel = false,
+  menuAlign = 'left',
   onChange,
   onAdd,
   onRemove
@@ -117,13 +124,18 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
     });
   };
 
-  const isMaxReached = maxSelections ? selectedValues.length >= maxSelections : false;
+  const isMaxReached = maxSelections && maxSelections > 1 ? selectedValues.length >= maxSelections : false;
   const selectedOptionsCount = selectedValues.length;
   const selectedOptionsLabel = useMemo(() => {
     return selectedValues.map((val) => options.find((opt) => opt.value === val)?.label ?? val).join(', ');
   }, [options, selectedValues]);
 
   const triggerAriaLabel = selectedOptionsCount > 0 && !hideCounterChip ? `${label}: ${selectedOptionsLabel}` : label;
+
+  const isBadgeableStatus = (
+    value: string
+  ): value is typeof BaseContentStatuses.Published | typeof BaseContentStatuses.Hidden =>
+    value === BaseContentStatuses.Published || value === BaseContentStatuses.Hidden;
 
   return (
     <Box>
@@ -137,7 +149,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
         aria-expanded={Boolean(anchorEl)}
         aria-label={triggerAriaLabel}
       >
-        {(selectedOptionsCount === 0 || hideCounterChip) && (
+        {(selectedOptionsCount === 0 || hideCounterChip || persistLabel) && (
           <Typography variant="textMd" sx={filterSelectStyles.label(disabled)}>
             {label}
           </Typography>
@@ -166,8 +178,8 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
         open={Boolean(anchorEl)}
         onClose={handleClose}
         sx={filterSelectStyles.dropdownMenu(menuMinWidth)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: menuAlign }}
+        transformOrigin={{ vertical: 'top', horizontal: menuAlign }}
         maxHeight={300}
         transitionDuration={disableTransition ? 0 : undefined}
         menuList={
@@ -181,6 +193,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
                   <FilterSelectItem
                     key={option.value}
                     label={option.label}
+                    icon={isBadgeableStatus(option.value) ? <Badge variant={option.value} /> : undefined}
                     onClick={() => handleOptionClick(option)}
                     selected={isSelected}
                     disabled={optionDisabled}

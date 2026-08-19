@@ -623,7 +623,8 @@ describe('AssetRepository', () => {
 
         expect(mockAssetModel.findOneAndUpdate).toHaveBeenCalledWith(
           { url: 'https://example.com/photo.jpg' },
-          { $addToSet: { usageRefs: { pageId: 'about', blockId: 'hero' } } }
+          { $addToSet: { usageRefs: { pageId: 'about', blockId: 'hero' } } },
+          { session: undefined }
         );
       });
     });

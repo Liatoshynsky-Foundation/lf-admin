@@ -43,6 +43,7 @@ export function usePaginatedWorks(tab?: WorksTab | null, filters?: WorksFiltersI
     id: g.id,
     number: g.number,
     numberKind: g.numberKind === 'op' ? 'op' : 'sineop',
+    additionalText: g.additionalText,
     name: g.name.uk,
     genre: g.genre?.uk ?? '',
     startDate: g.creationYear,
