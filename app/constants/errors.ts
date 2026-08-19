@@ -150,23 +150,23 @@ export const MediaMentionsErrors = {
 
 export const seoFormErrors = {
   uk: {
-    descriptionMaxLength: 'Максимум 250 символів',
-    keywordsMaxLength: 'Максимум 250 символів',
-    altTextMaxLength: 'Максимум 250 символів',
-    minLength: 'Мінімум 2 символа',
-    maxLength: 'Максимум 150 символів',
-    required: 'Обовʼязкове поле',
-    invalidUrl: 'Некоректний URL',
-    keywords: 'Ключові слова мають бути через кому, без порожніх значень'
+    descriptionMaxLength: 'Значення не може перевищувати 250 символів.',
+    keywordsMaxLength: 'Значення не може перевищувати 250 символів.',
+    altTextMaxLength: 'Значення не може перевищувати 250 символів.',
+    minLength: 'Введіть щонайменше 2 символа.',
+    maxLength: 'Значення не може перевищувати 150 символів.',
+    required: 'Обовʼязкове поле.',
+    invalidUrl: 'Некоректний URL.',
+    keywords: 'Ключові слова мають бути через кому, без порожніх значень.'
   },
   en: {
-    descriptionMaxLength: 'Maximum 250 characters',
-    keywordsMaxLength: 'Maximum 250 characters',
-    altTextMaxLength: 'Maximum 250 characters',
-    minLength: 'Minimum 2 characters',
-    maxLength: 'Maximum 150 characters',
-    required: 'Required field',
-    invalidUrl: 'Invalid URL',
-    keywords: 'Keywords must be comma-separated, without empty values'
+    descriptionMaxLength: 'Value must not exceed 250 characters.',
+    keywordsMaxLength: 'Value must not exceed 250 characters.',
+    altTextMaxLength: 'Value must not exceed 250 characters.',
+    minLength: 'Value must be at least 2 characters.',
+    maxLength: 'Value must not exceed 150 characters.',
+    required: 'Required field.',
+    invalidUrl: 'Invalid URL.',
+    keywords: 'Keywords must be comma-separated, without empty values.'
   }
 };
