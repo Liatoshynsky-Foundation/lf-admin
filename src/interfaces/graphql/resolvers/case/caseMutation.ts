@@ -1,6 +1,6 @@
 import { GraphQLError } from 'graphql';
 
-import { recalculateFondStats } from './recalculateFondStats';
+import { recalculateFundStats } from './recalculateFundStats';
 import { CaseErrorCodes, CaseErrors, graphqlErrors } from '~/constants/errors';
 import { Case } from '~/src/domain/entities/Case';
 import { CreateCaseInput, UpdateCaseInput } from '~/src/domain/repositories/caseRepository';
@@ -22,9 +22,9 @@ const assertAuthenticated = (context: GraphQLContext) => {
   }
 };
 
-const fondNotFoundError = (fondId: string): GraphQLError =>
-  new GraphQLError(CaseErrors.FOND_NOT_FOUND(fondId), {
-    extensions: { code: CaseErrorCodes.FOND_NOT_FOUND }
+const fundNotFoundError = (fundId: string): GraphQLError =>
+  new GraphQLError(CaseErrors.FUND_NOT_FOUND(fundId), {
+    extensions: { code: CaseErrorCodes.FUND_NOT_FOUND }
   });
 
 const duplicateNumbersError = (): GraphQLError =>
@@ -49,24 +49,24 @@ export const CaseMutation = {
   createCase: async (_: unknown, { input }: CreateCaseArgs, context: GraphQLContext): Promise<Case> => {
     assertAuthenticated(context);
 
-    const { caseRepository: repo, fondRepository } = context.requestContainer.cradle;
+    const { caseRepository: repo, fundRepository } = context.requestContainer.cradle;
     const validatedInput = zCaseSchema.parse(input);
 
-    const { fondId, descriptionNumber, caseNumber } = validatedInput;
+    const { fundId, descriptionNumber, caseNumber } = validatedInput;
 
-    const fond = await fondRepository.findById(fondId);
-    if (!fond) {
-      throw fondNotFoundError(fondId);
+    const fund = await fundRepository.findById(fundId);
+    if (!fund) {
+      throw fundNotFoundError(fundId);
     }
 
-    const existing = await repo.findByFondAndNumbers(fondId, descriptionNumber, caseNumber);
+    const existing = await repo.findByFundAndNumbers(fundId, descriptionNumber, caseNumber);
     if (existing) {
       throw duplicateNumbersError();
     }
 
     try {
       const createdCase = await repo.create(validatedInput);
-      await recalculateFondStats(fondId, { caseRepository: repo, fondRepository });
+      await recalculateFundStats(fundId, { caseRepository: repo, fundRepository });
       return createdCase;
     } catch (error) {
       if (isDuplicateKeyError(error)) {
@@ -79,7 +79,7 @@ export const CaseMutation = {
   updateCase: async (_: unknown, { id, input }: UpdateCaseArgs, context: GraphQLContext): Promise<Case> => {
     assertAuthenticated(context);
 
-    const { caseRepository: repo, fondRepository } = context.requestContainer.cradle;
+    const { caseRepository: repo, fundRepository } = context.requestContainer.cradle;
     const validatedInput = zCaseUpdateSchema.parse(input);
 
     const current = await repo.findById(id);
@@ -87,24 +87,24 @@ export const CaseMutation = {
       throw caseNotFoundError(id);
     }
 
-    if (validatedInput.fondId !== undefined) {
-      const fond = await fondRepository.findById(validatedInput.fondId);
-      if (!fond) {
-        throw fondNotFoundError(validatedInput.fondId);
+    if (validatedInput.fundId !== undefined) {
+      const fund = await fundRepository.findById(validatedInput.fundId);
+      if (!fund) {
+        throw fundNotFoundError(validatedInput.fundId);
       }
     }
 
     const numbersChanged =
-      validatedInput.fondId !== undefined ||
+      validatedInput.fundId !== undefined ||
       validatedInput.descriptionNumber !== undefined ||
       validatedInput.caseNumber !== undefined;
 
     if (numbersChanged) {
-      const effectiveFondId = validatedInput.fondId ?? current.fondId;
+      const effectiveFundId = validatedInput.fundId ?? current.fundId;
       const effectiveDescriptionNumber = validatedInput.descriptionNumber ?? current.descriptionNumber;
       const effectiveCaseNumber = validatedInput.caseNumber ?? current.caseNumber;
 
-      const existing = await repo.findByFondAndNumbers(effectiveFondId, effectiveDescriptionNumber, effectiveCaseNumber);
+      const existing = await repo.findByFundAndNumbers(effectiveFundId, effectiveDescriptionNumber, effectiveCaseNumber);
       if (existing && existing.id !== id) {
         throw duplicateNumbersError();
       }
@@ -125,14 +125,14 @@ export const CaseMutation = {
     }
 
     const statsAffectingChange =
-      validatedInput.fondId !== undefined || validatedInput.descriptionNumber !== undefined;
+      validatedInput.fundId !== undefined || validatedInput.descriptionNumber !== undefined;
 
     if (statsAffectingChange) {
-      const affectedFondIds = new Set([current.fondId, updatedCase.fondId]);
+      const affectedFundIds = new Set([current.fundId, updatedCase.fundId]);
 
       await Promise.all(
-        Array.from(affectedFondIds).map((affectedFondId) =>
-          recalculateFondStats(affectedFondId, { caseRepository: repo, fondRepository })
+        Array.from(affectedFundIds).map((affectedFundId) =>
+          recalculateFundStats(affectedFundId, { caseRepository: repo, fundRepository })
         )
       );
     }
@@ -142,13 +142,13 @@ export const CaseMutation = {
 
   deleteCase: async (_: unknown, { id }: DeleteCaseArgs, context: GraphQLContext): Promise<boolean> => {
     assertAuthenticated(context);
-    const { caseRepository: repo, fondRepository } = context.requestContainer.cradle;
+    const { caseRepository: repo, fundRepository } = context.requestContainer.cradle;
 
     const existingCase = await repo.findById(id);
     const deleted = await repo.delete(id);
 
     if (deleted && existingCase) {
-      await recalculateFondStats(existingCase.fondId, { caseRepository: repo, fondRepository });
+      await recalculateFundStats(existingCase.fundId, { caseRepository: repo, fundRepository });
     }
 
     return deleted;

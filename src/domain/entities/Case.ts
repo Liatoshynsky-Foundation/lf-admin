@@ -9,7 +9,7 @@ export type CasePdfFile = {
 
 export interface Case {
   id: string;
-  fondId: string;
+  fundId: string;
   descriptionNumber: number;
   caseNumber: number;
   caseName: LocalizedString;

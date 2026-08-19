@@ -21,11 +21,11 @@ import { PageRepository } from '~/infrastructure/repositories/pageRepository/pag
 import { RateLimitRepository } from '~/infrastructure/repositories/rateLimitRepository/rateLimitRepository';
 import { RefreshTokenRepository } from '~/infrastructure/repositories/refreshTokenRepository/refreshTokenRepository';
 import CaseModel from '~/src/infrastructure/models/case.model';
-import FondModel from '~/src/infrastructure/models/fond.model';
+import FundModel from '~/src/infrastructure/models/fund.model';
 import { MediaMentionModel } from '~/src/infrastructure/models/mediaMention.model';
 import { CaseRepository } from '~/src/infrastructure/repositories/caseRepository/caseRepository';
-import { FondRepository } from '~/src/infrastructure/repositories/fondRepository/fondRepository';
-import { createFondLoader } from '~/src/interfaces/graphql/resolvers/case/fondLoader';
+import { FundRepository } from '~/src/infrastructure/repositories/fundRepository/fundRepository';
+import { createFundLoader } from '~/src/interfaces/graphql/resolvers/case/fundLoader';
 
 export type RepositoriesModule = {
   assetsRepository: ReturnType<typeof AssetRepository>;
@@ -38,9 +38,9 @@ export type RepositoriesModule = {
   rateLimitRepository: ReturnType<typeof RateLimitRepository>;
   opusRepository: ReturnType<typeof OpusRepository>;
   compositionsRepository: ReturnType<typeof CompositionRepository>;
-  fondRepository: ReturnType<typeof FondRepository>;
+  fundRepository: ReturnType<typeof FundRepository>;
   caseRepository: ReturnType<typeof CaseRepository>;
-  fondLoader: ReturnType<typeof createFondLoader>;
+  fundLoader: ReturnType<typeof createFundLoader>;
 };
 
 export const registerRepositories = (container: AwilixContainer) => {
@@ -55,7 +55,7 @@ export const registerRepositories = (container: AwilixContainer) => {
     CompositionModel: asValue(CompositionModel),
     GenreModel: asValue(GenreModel),
     CategoryModel: asValue(CategoryModel),
-    FondModel: asValue(FondModel),
+    FundModel: asValue(FundModel),
     CaseModel: asValue(CaseModel),
 
     RateLimitModel: asValue(RateLimit),
@@ -71,8 +71,8 @@ export const registerRepositories = (container: AwilixContainer) => {
     compositionsRepository: asFunction(CompositionRepository).scoped(),
     assetsRepository: asFunction(AssetRepository).scoped(),
     rateLimitRepository: asFunction(RateLimitRepository).scoped(),
-    fondRepository: asFunction(FondRepository).scoped(),
+    fundRepository: asFunction(FundRepository).scoped(),
     caseRepository: asFunction(CaseRepository).scoped(),
-    fondLoader: asFunction(createFondLoader).scoped()
+    fundLoader: asFunction(createFundLoader).scoped()
   });
 };

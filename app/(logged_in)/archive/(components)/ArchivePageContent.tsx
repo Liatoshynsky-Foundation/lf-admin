@@ -2,7 +2,7 @@
 import { Box } from '@mui/material';
 
 import { useArchiveFiltering } from '../(hooks)/useArchiveFiltering';
-import { FondsTable } from './archive-fonds-table/ArchiveFondsTable';
+import { FundsTable } from './archive-funds-table/ArchiveFundsTable';
 import { ArchiveCreateAction } from './ArchiveCreateAction';
 import { styles } from './ArchivePageContent.styles';
 import {
@@ -10,12 +10,12 @@ import {
   ARCHIVE_TABS,
   type ArchiveTabValue
 } from '~/constants/archive';
-import { FONDS_EMPTY_STATE_DESCRIPTION, FONDS_EMPTY_STATE_NO_RESULTS_DESCRIPTION, FONDS_EMPTY_STATE_NO_RESULTS_TITLE, FONDS_EMPTY_STATE_TITLE, FONDS_ERROR_STATE_DESCRIPTION, FONDS_ERROR_STATE_TITLE, FONDS_LOADING_STATE_DESCRIPTION, FONDS_LOADING_STATE_TITLE } from '~/constants/fond';
+import { FUNDS_EMPTY_STATE_DESCRIPTION, FUNDS_EMPTY_STATE_NO_RESULTS_DESCRIPTION, FUNDS_EMPTY_STATE_NO_RESULTS_TITLE, FUNDS_EMPTY_STATE_TITLE, FUNDS_ERROR_STATE_DESCRIPTION, FUNDS_ERROR_STATE_TITLE, FUNDS_LOADING_STATE_DESCRIPTION, FUNDS_LOADING_STATE_TITLE } from '~/constants/fund';
 import { EmptyState } from '~/shared/components/empty-state';
 import { PageHeader } from '~/shared/components/page-header/PageHeader';
 import { SearchStatusToolbar } from '~/shared/components/search-status-toolbar/SearchStatusToolbar';
-import { useAllFonds } from '~/shared/hooks/use-fonds/useFonds';
-import { FondStatus } from '~/types/graphql/generated/graphql';
+import { useAllFunds } from '~/shared/hooks/use-funds/useFunds';
+import { FundStatus } from '~/types/graphql/generated/graphql';
 
 interface ArchivePageContentProps {
   activeTab: ArchiveTabValue;
@@ -28,12 +28,12 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
   const filterValues = statusFilterProps.value;
   const isAllStatus = filterValues.length === 0;
 
-  const { fonds, loading, error } = useAllFonds({
+  const { funds, loading, error } = useAllFunds({
     search: searchValue || undefined,
-    statuses: isAllStatus ? undefined : (filterValues as FondStatus[])
+    statuses: isAllStatus ? undefined : (filterValues as FundStatus[])
   });
 
-  const ascSortedVisibleFonds = [...fonds].sort((a, b) => Number(a.fondNumber) - Number(b.fondNumber));
+  const ascSortedVisibleFunds = [...funds].sort((a, b) => Number(a.fundNumber) - Number(b.fundNumber));
 
   const hasActiveSearch = Boolean(searchValue);
   const hasActiveStatusFilter = !isAllStatus;
@@ -43,8 +43,8 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
     if (loading) {
       return (
         <EmptyState 
-          title={FONDS_LOADING_STATE_TITLE}
-          description={FONDS_LOADING_STATE_DESCRIPTION} 
+          title={FUNDS_LOADING_STATE_TITLE}
+          description={FUNDS_LOADING_STATE_DESCRIPTION} 
         />
       );
     }
@@ -52,16 +52,16 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
     if (error) {
       return (
         <EmptyState 
-          title={FONDS_ERROR_STATE_TITLE}
-          description={FONDS_ERROR_STATE_DESCRIPTION} 
+          title={FUNDS_ERROR_STATE_TITLE}
+          description={FUNDS_ERROR_STATE_DESCRIPTION} 
         />
       );
     }
 
-    if (ascSortedVisibleFonds.length > 0) {
+    if (ascSortedVisibleFunds.length > 0) {
       return (
-        <FondsTable
-          fonds={ascSortedVisibleFonds}
+        <FundsTable
+          funds={ascSortedVisibleFunds}
           hasActiveSearch={hasActiveSearch}
           hasActiveStatusFilter={hasActiveStatusFilter}
         />
@@ -71,16 +71,16 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
     if (hasActiveCriteria) {
       return (
         <EmptyState 
-          title={FONDS_EMPTY_STATE_NO_RESULTS_TITLE}
-          description={FONDS_EMPTY_STATE_NO_RESULTS_DESCRIPTION} 
+          title={FUNDS_EMPTY_STATE_NO_RESULTS_TITLE}
+          description={FUNDS_EMPTY_STATE_NO_RESULTS_DESCRIPTION} 
         />
       );
     }
 
     return (
       <EmptyState 
-        title={FONDS_EMPTY_STATE_TITLE}
-        description={FONDS_EMPTY_STATE_DESCRIPTION} 
+        title={FUNDS_EMPTY_STATE_TITLE}
+        description={FUNDS_EMPTY_STATE_DESCRIPTION} 
       />
     );
   })();

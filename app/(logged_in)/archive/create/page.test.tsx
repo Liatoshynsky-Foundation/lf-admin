@@ -1,22 +1,22 @@
 import { render, screen } from '@testing-library/react';
 
-import CreateFondPage from './page';
+import CreateFundPage from './page';
 
-const mockUseUpsertFond = jest.fn();
-jest.mock('~/shared/hooks/use-upsert-fond/useUpsertFond', () => ({
+const mockUseUpsertFund = jest.fn();
+jest.mock('~/shared/hooks/use-upsert-fund/useUpsertFund', () => ({
   __esModule: true,
-  useUpsertFond: () => mockUseUpsertFond()
+  useUpsertFund: () => mockUseUpsertFund()
 }));
 
-jest.mock('./FondView', () => ({
+jest.mock('./FundView', () => ({
   __esModule: true,
-  default: ({ mode }: { mode: string }) => <div data-testid="fond-view">{mode}</div>
+  default: ({ mode }: { mode: string }) => <div data-testid="fund-view">{mode}</div>
 }));
 
-describe('CreateFondPage', () => {
+describe('CreateFundPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseUpsertFond.mockReturnValue({
+    mockUseUpsertFund.mockReturnValue({
       details: {},
       setDetails: jest.fn(),
       errors: {},
@@ -26,10 +26,10 @@ describe('CreateFondPage', () => {
     });
   });
 
-  it('renders FondView in create mode with the data from useUpsertFond', () => {
-    render(<CreateFondPage />);
+  it('renders FundView in create mode with the data from useUpsertFund', () => {
+    render(<CreateFundPage />);
 
-    expect(mockUseUpsertFond).toHaveBeenCalled();
-    expect(screen.getByTestId('fond-view')).toHaveTextContent('create');
+    expect(mockUseUpsertFund).toHaveBeenCalled();
+    expect(screen.getByTestId('fund-view')).toHaveTextContent('create');
   });
 });

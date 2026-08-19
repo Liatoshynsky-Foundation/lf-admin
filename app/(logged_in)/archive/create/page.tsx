@@ -2,16 +2,16 @@
 
 import { Box } from '@mui/material';
 
-import FondView from './FondView';
+import FundView from './FundView';
 import { styles } from './page.styles';
-import { useUpsertFond } from '~/shared/hooks/use-upsert-fond/useUpsertFond';
+import { useUpsertFund } from '~/shared/hooks/use-upsert-fund/useUpsertFund';
 
-export default function CreateFondPage() {
-  const fondData = useUpsertFond();
+export default function CreateFundPage() {
+  const fundData = useUpsertFund();
 
   return (
     <Box sx={styles.container}>
-      <FondView data={fondData} mode="create" />
+      <FundView data={fundData} mode="create" />
     </Box>
   );
 }

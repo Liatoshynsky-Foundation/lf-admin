@@ -6,14 +6,14 @@ export interface PdfEntry {
   fileName: string | null;
 }
 
-export type ArchiveTabValue = 'all' | 'fonds' | 'cases';
+export type ArchiveTabValue = 'all' | 'funds' | 'cases';
 
 export const ARCHIVE_PAGE_TITLE = 'Архів';
 export const ARCHIVE_BASE_PATH = '/archive';
 
 export const ARCHIVE_TABS = [
   { value: 'all', label: 'Всі', href: ARCHIVE_BASE_PATH },
-  { value: 'fonds', label: 'Фонди', href: `${ARCHIVE_BASE_PATH}/fonds` },
+  { value: 'funds', label: 'Фонди', href: `${ARCHIVE_BASE_PATH}/funds` },
   { value: 'cases', label: 'Справи', href: `${ARCHIVE_BASE_PATH}/cases` },
 ];
 
@@ -64,8 +64,8 @@ export const ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE = 'Нічого не знай�
 export const ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION = 'Спробуйте змінити параметри пошуку або фільтрів.';
 export const ARCHIVE_EMPTY_STATE_NO_STATUS_MATCH_TITLE = 'Немає фондів із вибраним статусом';
 
-export const ARCHIVE_FONDS_TABLE_HEADERS = {
-  fond: 'Фонд',
+export const ARCHIVE_FUNDS_TABLE_HEADERS = {
+  fund: 'Фонд',
   name: 'Назва фонду',
   descr: 'Описи',
   cases: 'Справи',

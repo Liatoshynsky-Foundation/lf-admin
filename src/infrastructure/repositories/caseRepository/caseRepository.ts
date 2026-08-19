@@ -8,7 +8,7 @@ import { CaseFilters, CreateCaseInput, ICaseRepository } from '~/src/domain/repo
 
 export type DbCase = {
   _id: { toString(): string };
-  fondId: Case['fondId'];
+  fundId: Case['fundId'];
   descriptionNumber: Case['descriptionNumber'];
   caseNumber: Case['caseNumber'];
   caseName: Case['caseName'];
@@ -28,7 +28,7 @@ type CaseRepoDeps = Readonly<{
 
 const toEntity = (doc: DbCase): Case =>
   createToEntity<Case, DbCase>(doc, {
-    fondId: doc.fondId?.toString ? doc.fondId.toString() : doc.fondId,
+    fundId: doc.fundId?.toString ? doc.fundId.toString() : doc.fundId,
     descriptionNumber: doc.descriptionNumber,
     caseNumber: doc.caseNumber,
     caseName: doc.caseName,
@@ -43,7 +43,7 @@ const toEntity = (doc: DbCase): Case =>
 const buildCaseQuery = (filters?: CaseFilters): FilterQuery<DbCase> =>
   combineConditions<DbCase>([
     buildBaseQuery<DbCase>(filters, ['caseName.uk', 'caseName.en'], 'caseName'),
-    filters?.fondId ? ({ fondId: filters.fondId } as FilterQuery<DbCase>) : null
+    filters?.fundId ? ({ fundId: filters.fundId } as FilterQuery<DbCase>) : null
   ]);
 
 export const CaseRepository = ({ CaseModel }: CaseRepoDeps): ICaseRepository => {
@@ -64,14 +64,14 @@ export const CaseRepository = ({ CaseModel }: CaseRepoDeps): ICaseRepository => 
       return toEntity(newCase.toObject() as unknown as DbCase);
     },
 
-    findByFondAndNumbers: async (
-      fondId: Case['fondId'],
+    findByFundAndNumbers: async (
+      fundId: Case['fundId'],
       descriptionNumber: Case['descriptionNumber'],
       caseNumber: Case['caseNumber']
     ): Promise<Case | null> => {
       await dbConnect();
 
-      const existing = await CaseModel.findOne({ fondId, descriptionNumber, caseNumber });
+      const existing = await CaseModel.findOne({ fundId, descriptionNumber, caseNumber });
 
       if (!existing) {
         return null;
@@ -79,10 +79,10 @@ export const CaseRepository = ({ CaseModel }: CaseRepoDeps): ICaseRepository => 
       return toEntity(existing.toObject() as unknown as DbCase);
     },
 
-    countDistinctDescriptionNumbers: async (fondId: Case['fondId']): Promise<number> => {
+    countDistinctDescriptionNumbers: async (fundId: Case['fundId']): Promise<number> => {
       await dbConnect();
 
-      const distinctDescriptionNumbers = await CaseModel.distinct('descriptionNumber', { fondId });
+      const distinctDescriptionNumbers = await CaseModel.distinct('descriptionNumber', { fundId });
       return distinctDescriptionNumbers.length;
     }
   };
