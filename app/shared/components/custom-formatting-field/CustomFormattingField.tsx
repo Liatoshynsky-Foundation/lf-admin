@@ -28,7 +28,7 @@ const FormattingDoc = Document.extend({
   content: 'paragraph+'
 });
 
-export const CustomFormattingField = ({ value, onChange, label = 'Текст', sx, error = false, helperText, onBlur }: Props) => {
+export const CustomFormattingField = ({ value, onChange, label = 'Текст', sx, error = false, helperText, onBlur}: Props) => {
   const [isFocused, setIsFocused] = useState(false);
 
   const editor = useEditor({

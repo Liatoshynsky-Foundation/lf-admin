@@ -1,9 +1,9 @@
 import { LocalizedString } from './BaseContent';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
-export interface Fond {
+export interface Fund {
     id: string;
-    fondNumber: number;
+    fundNumber: number;
     name: LocalizedString;
     documentCreationDate: LocalizedString;
     chronologicalBoundaries?: LocalizedString;

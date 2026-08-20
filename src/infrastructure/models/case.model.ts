@@ -15,7 +15,7 @@ const casePdfFileSchema = new Schema(
 
 const caseSchema = new Schema(
   {
-    fondId: { type: Schema.Types.ObjectId, ref: 'Fond', required: true, index: true },
+    fundId: { type: Schema.Types.ObjectId, ref: 'Fund', required: true, index: true },
     descriptionNumber: { type: Number, required: true, set: (v: unknown) => (v !== null && v !== undefined ? Number(v) : v) },
     caseNumber: { type: Number, required: true, set: (v: unknown) => (v !== null && v !== undefined ? Number(v) : v) },
     caseName: { type: translatedFieldSchema, required: true },
@@ -37,7 +37,7 @@ const caseSchema = new Schema(
   }
 );
 
-caseSchema.index({ fondId: 1, descriptionNumber: 1, caseNumber: 1 }, { unique: true });
+caseSchema.index({ fundId: 1, descriptionNumber: 1, caseNumber: 1 }, { unique: true });
 
 const CaseModel: Model<Case> = mongoose.models.Case || mongoose.model<Case>('Case', caseSchema);
 

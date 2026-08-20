@@ -1,70 +1,81 @@
 import { render, screen, within } from '@testing-library/react';
 
-import type { FondsTableProps } from './archive-fonds-table/ArchiveFondsTable';
+import type { FundsTableProps } from './archive-funds-table/ArchiveFundsTable';
 import { ArchivePageContent } from './ArchivePageContent';
 import { ARCHIVE_TABS } from '~/constants/archive';
+import {
+  FUNDS_EMPTY_STATE_DESCRIPTION,
+  FUNDS_EMPTY_STATE_NO_RESULTS_DESCRIPTION,
+  FUNDS_EMPTY_STATE_NO_RESULTS_TITLE,
+  FUNDS_EMPTY_STATE_TITLE,
+  FUNDS_ERROR_STATE_DESCRIPTION,
+  FUNDS_ERROR_STATE_TITLE,
+  FUNDS_LOADING_STATE_DESCRIPTION,
+  FUNDS_LOADING_STATE_TITLE
+} from '~/constants/fund';
 
-jest.mock('../(temp)/archive.mock', () => ({
-  __esModule: true,
-  ARCHIVE_FONDS_MOCK_DATA: [
-    {
-      id: '3',
-      fondNumber: 3,
-      name: 'C Fond same part',
-      descriptions: 1,
-      cases: 1,
-      dates: '1900-2000',
-      status: 'published',
-      updatedAt: '2023-01-01',
-    },
-    {
-      id: '1',
-      fondNumber: 1,
-      name: 'A Fond same part',
-      descriptions: 1,
-      cases: 1,
-      dates: '1900-2000',
-      status: 'hidden',
-      updatedAt: '2023-01-01',
-    },
-    {
-      id: '2',
-      fondNumber: 2,
-      name: 'B Fond same part',
-      descriptions: 1,
-      cases: 1,
-      dates: '1900-2000',
-      status: 'published',
-      updatedAt: '2023-01-01',
-    },
-  ],
-}));
+type MappedFund = ReturnType<typeof mockFund>;
 
-jest.mock('./archive-fonds-table/ArchiveFondsTable', () => ({
+function mockFund(
+  overrides: Partial<{
+    id: string;
+    fundNumber: number;
+    name: string;
+    descriptions: number;
+    cases: number;
+    dates: string;
+    status: string;
+    updatedAt: string;
+  }> = {}
+) {
+  return {
+    id: '1',
+    fundNumber: 1,
+    name: 'Fund',
+    descriptions: 1,
+    cases: 1,
+    dates: '1900-2000',
+    status: 'published',
+    updatedAt: '2023-01-01',
+    ...overrides
+  };
+}
+
+jest.mock('./archive-funds-table/ArchiveFundsTable', () => ({
   __esModule: true,
-  FondsTable: ({ fonds, hasActiveSearch, hasActiveStatusFilter }: FondsTableProps) => (
-    <div data-testid="fonds-table">
-      <div data-testid="fonds-table-has-active-search">{JSON.stringify(hasActiveSearch)}</div>
-      <div data-testid="fonds-table-has-active-status-filter">{JSON.stringify(hasActiveStatusFilter)}</div>
-      <div data-testid="fonds-table-fonds">
-        {fonds.map((fond) => (
-          <div key={fond.id} data-testid={`fonds-table-item-${fond.id}`}>
-            {fond.name}
+  FundsTable: ({ funds, hasActiveSearch, hasActiveStatusFilter }: FundsTableProps) => (
+    <div data-testid="funds-table">
+      <div data-testid="funds-table-has-active-search">{JSON.stringify(hasActiveSearch)}</div>
+      <div data-testid="funds-table-has-active-status-filter">{JSON.stringify(hasActiveStatusFilter)}</div>
+      <div data-testid="funds-table-funds">
+        {funds.map((fund) => (
+          <div key={fund.id} data-testid={`funds-table-item-${fund.id}`}>
+            {fund.name} - {fund.fundNumber}
           </div>
         ))}
       </div>
     </div>
-  ),
+  )
 }));
 
 jest.mock('~/shared/components/page-header/PageHeader', () => ({
   __esModule: true,
-  PageHeader: ({ title, activeTab, tabs, action }: any) => (
+  PageHeader: ({
+    title,
+    activeTab,
+    tabs,
+    action
+  }: {
+    title: string;
+    activeTab: string;
+    tabs: { value: string; label: string; href: string }[];
+    action: React.ReactNode;
+  }) => (
     <div data-testid="page-header">
       <h1>{title}</h1>
       <div>{action}</div>
       <div data-testid="tabs">
-        {tabs.map((tab: any) => (
+        {tabs.map((tab) => (
           <a key={tab.value} role="tab" aria-selected={tab.value === activeTab} href={tab.href}>
             {tab.label}
           </a>
@@ -74,22 +85,39 @@ jest.mock('~/shared/components/page-header/PageHeader', () => ({
   )
 }));
 
+jest.mock('~/shared/components/empty-state', () => ({
+  __esModule: true,
+  EmptyState: ({ title, description }: { title: string; description: string }) => (
+    <div data-testid="empty-state">
+      <div data-testid="empty-state-title">{title}</div>
+      <div data-testid="empty-state-description">{description}</div>
+    </div>
+  )
+}));
+
+const mockUseAllFunds = jest.fn();
+
+jest.mock('~/shared/hooks/use-funds/useFunds', () => ({
+  __esModule: true,
+  useAllFunds: (...args: unknown[]) => mockUseAllFunds(...args)
+}));
+
 const mockSearchProps = {
-  search: 'C Fond',
+  search: '',
   setSearch: jest.fn(),
-  options: [],
+  options: []
 };
 
 const mockStatusFilterProps = {
   label: 'Status Label',
   options: [],
   onChange: jest.fn(),
-  value: [],
+  value: [] as string[]
 };
 
 const defaultMockReturnValue = {
   searchProps: mockSearchProps,
-  statusFilterProps: mockStatusFilterProps,
+  statusFilterProps: mockStatusFilterProps
 };
 
 const mockUseArchiveFiltering = jest.fn();
@@ -106,9 +134,17 @@ jest.mock('./ArchiveCreateAction', () => ({
 
 jest.mock('~/shared/components/search-status-toolbar/SearchStatusToolbar', () => ({
   __esModule: true,
-  SearchStatusToolbar: ({ dataTestId, searchProps, statusFilterProps }: any) => (
+  SearchStatusToolbar: ({
+    dataTestId,
+    searchProps,
+    statusFilterProps
+  }: {
+    dataTestId: string;
+    searchProps: { search: string };
+    statusFilterProps: { label: string };
+  }) => (
     <div data-testid={dataTestId}>
-      <input data-testid="search" defaultValue={searchProps.search} />
+      <input data-testid="search" defaultValue={searchProps.search} readOnly />
       <span data-testid="status-dropdown">{statusFilterProps.label}</span>
     </div>
   )
@@ -118,9 +154,14 @@ describe('ArchivePageContent', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseArchiveFiltering.mockReturnValue(defaultMockReturnValue);
+    mockUseAllFunds.mockReturnValue({ funds: [] as MappedFund[], loading: false, error: undefined });
   });
 
   it('should render the header, tabs & the search & the status dropdown correctly', () => {
+    mockUseArchiveFiltering.mockReturnValue({
+      ...defaultMockReturnValue,
+      searchProps: { ...mockSearchProps, search: 'C Fund' }
+    });
     render(<ArchivePageContent activeTab="all" />);
 
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Архів');
@@ -128,143 +169,151 @@ describe('ArchivePageContent', () => {
 
     const tabsContainer = screen.getByTestId('tabs');
     const tabs = within(tabsContainer).getAllByRole('tab');
-    expect(tabs).toHaveLength(3);
+    expect(tabs).toHaveLength(ARCHIVE_TABS.length);
 
     ARCHIVE_TABS.forEach((tab) => {
       expect(within(tabsContainer).getByText(tab.label)).toBeInTheDocument();
       expect(within(tabsContainer).getByText(tab.label)).toHaveAttribute('href', tab.href);
     });
 
-    const activeTab = within(tabsContainer).getByRole('tab', { selected: true });
-    expect(activeTab).toHaveTextContent('Всі');
-    expect(activeTab).toHaveAttribute('href', '/archive');
-
     const toolbar = screen.getByTestId('archive-control-panel');
     expect(toolbar).toBeInTheDocument();
 
     const searchInput = within(toolbar).getByTestId('search');
-    expect(searchInput).toBeInTheDocument();
-    expect(searchInput).toHaveValue('C Fond');
+    expect(searchInput).toHaveValue('C Fund');
 
     const statusDropdown = within(toolbar).getByTestId('status-dropdown');
-    expect(statusDropdown).toBeInTheDocument();
     expect(statusDropdown).toHaveTextContent('Status Label');
-
-    expect(screen.getByTestId('fonds-table')).toBeInTheDocument();
   });
 
-  describe('hasActiveSearch prop', () => {
-    it('should be false when search is an empty string', () => {
+  it('should call useAllFunds with undefined search/statuses when no filters are active', () => {
+    render(<ArchivePageContent activeTab="all" />);
+
+    expect(mockUseAllFunds).toHaveBeenCalledWith({ search: undefined, statuses: undefined });
+  });
+
+  it('should call useAllFunds with the trimmed search and selected statuses when filters are active', () => {
+    mockUseArchiveFiltering.mockReturnValue({
+      searchProps: { ...mockSearchProps, search: 'archive' },
+      statusFilterProps: { ...mockStatusFilterProps, value: ['published'] }
+    });
+
+    render(<ArchivePageContent activeTab="all" />);
+
+    expect(mockUseAllFunds).toHaveBeenCalledWith({ search: 'archive', statuses: ['published'] });
+  });
+
+  describe('content states', () => {
+    it('should show the loading empty state while loading', () => {
+      mockUseAllFunds.mockReturnValue({ funds: [], loading: true, error: undefined });
+
+      render(<ArchivePageContent activeTab="all" />);
+
+      expect(screen.getByTestId('empty-state-title')).toHaveTextContent(FUNDS_LOADING_STATE_TITLE);
+      expect(screen.getByTestId('empty-state-description')).toHaveTextContent(FUNDS_LOADING_STATE_DESCRIPTION);
+      expect(screen.queryByTestId('funds-table')).not.toBeInTheDocument();
+    });
+
+    it('should show the error empty state on error, even if funds were returned', () => {
+      mockUseAllFunds.mockReturnValue({ funds: [mockFund()], loading: false, error: new Error('boom') });
+
+      render(<ArchivePageContent activeTab="all" />);
+
+      expect(screen.getByTestId('empty-state-title')).toHaveTextContent(FUNDS_ERROR_STATE_TITLE);
+      expect(screen.getByTestId('empty-state-description')).toHaveTextContent(FUNDS_ERROR_STATE_DESCRIPTION);
+      expect(screen.queryByTestId('funds-table')).not.toBeInTheDocument();
+    });
+
+    it('should show the base empty state when there are no funds and no active search/filter', () => {
+      mockUseAllFunds.mockReturnValue({ funds: [], loading: false, error: undefined });
+
+      render(<ArchivePageContent activeTab="all" />);
+
+      expect(screen.getByTestId('empty-state-title')).toHaveTextContent(FUNDS_EMPTY_STATE_TITLE);
+      expect(screen.getByTestId('empty-state-description')).toHaveTextContent(FUNDS_EMPTY_STATE_DESCRIPTION);
+    });
+
+    it('should show the no-results empty state when there are no funds but a search is active', () => {
       mockUseArchiveFiltering.mockReturnValue({
-        ...defaultMockReturnValue,
-        searchProps: {
-          ...defaultMockReturnValue.searchProps,
-          search: '',
-        },
+        searchProps: { ...mockSearchProps, search: 'nothing matches' },
+        statusFilterProps: mockStatusFilterProps
+      });
+      mockUseAllFunds.mockReturnValue({ funds: [], loading: false, error: undefined });
+
+      render(<ArchivePageContent activeTab="all" />);
+
+      expect(screen.getByTestId('empty-state-title')).toHaveTextContent(FUNDS_EMPTY_STATE_NO_RESULTS_TITLE);
+      expect(screen.getByTestId('empty-state-description')).toHaveTextContent(
+        FUNDS_EMPTY_STATE_NO_RESULTS_DESCRIPTION.replace(/\s+/g, ' ')
+      );
+    });
+
+    it('should show the no-results empty state when there are no funds but a status filter is active', () => {
+      mockUseArchiveFiltering.mockReturnValue({
+        searchProps: mockSearchProps,
+        statusFilterProps: { ...mockStatusFilterProps, value: ['hidden'] }
+      });
+      mockUseAllFunds.mockReturnValue({ funds: [], loading: false, error: undefined });
+
+      render(<ArchivePageContent activeTab="all" />);
+
+      expect(screen.getByTestId('empty-state-title')).toHaveTextContent(FUNDS_EMPTY_STATE_NO_RESULTS_TITLE);
+    });
+
+    it('should render the funds table, sorted ascending by fundNumber, when funds are present', () => {
+      mockUseAllFunds.mockReturnValue({
+        funds: [
+          mockFund({ id: '3', fundNumber: 3, name: 'C Fund' }),
+          mockFund({ id: '1', fundNumber: 1, name: 'A Fund' }),
+          mockFund({ id: '2', fundNumber: 2, name: 'B Fund' })
+        ],
+        loading: false,
+        error: undefined
       });
 
       render(<ArchivePageContent activeTab="all" />);
 
-      expect(screen.getByTestId('fonds-table-has-active-search')).toHaveTextContent('false');
-    });
-
-    it('should be true when search has a value', () => {
-      render(<ArchivePageContent activeTab="all" />);
-
-      expect(screen.getByTestId('fonds-table-has-active-search')).toHaveTextContent('true');
+      expect(screen.getByTestId('funds-table')).toBeInTheDocument();
+      const items = screen.getAllByTestId(/^funds-table-item-/);
+      expect(items).toHaveLength(3);
+      expect(items[0]).toHaveTextContent('A Fund');
+      expect(items[1]).toHaveTextContent('B Fund');
+      expect(items[2]).toHaveTextContent('C Fund');
     });
   });
 
-  describe('hasActiveStatusFilter prop', () => {
-    it('should be false when filterValues are empty (all values)', () => {
+  describe('hasActiveSearch / hasActiveStatusFilter props passed to FundsTable', () => {
+    beforeEach(() => {
+      mockUseAllFunds.mockReturnValue({ funds: [mockFund()], loading: false, error: undefined });
+    });
+
+    it('should be false/false with no filters active', () => {
       render(<ArchivePageContent activeTab="all" />);
 
-      expect(screen.getByTestId('fonds-table-has-active-status-filter')).toHaveTextContent('false');
+      expect(screen.getByTestId('funds-table-has-active-search')).toHaveTextContent('false');
+      expect(screen.getByTestId('funds-table-has-active-status-filter')).toHaveTextContent('false');
+    });
+
+    it('should be true when search has a value', () => {
+      mockUseArchiveFiltering.mockReturnValue({
+        searchProps: { ...mockSearchProps, search: 'C Fund' },
+        statusFilterProps: mockStatusFilterProps
+      });
+
+      render(<ArchivePageContent activeTab="all" />);
+
+      expect(screen.getByTestId('funds-table-has-active-search')).toHaveTextContent('true');
     });
 
     it('should be true when a specific status is selected', () => {
       mockUseArchiveFiltering.mockReturnValue({
-        ...defaultMockReturnValue,
-        statusFilterProps: { ...defaultMockReturnValue.statusFilterProps, value: ['published'] }
+        searchProps: mockSearchProps,
+        statusFilterProps: { ...mockStatusFilterProps, value: ['published'] }
       });
 
       render(<ArchivePageContent activeTab="all" />);
 
-      expect(screen.getByTestId('fonds-table-has-active-status-filter')).toHaveTextContent('true');
-    });
-  });
-
-  describe('fonds prop', () => {
-    it('should pass full asc sorted array when search query matches all and filter is all', () => {
-      mockUseArchiveFiltering.mockReturnValue({
-        ...defaultMockReturnValue,
-        searchProps: {
-          ...defaultMockReturnValue.searchProps,
-          search: 'same part',
-        },
-      });
-      render(<ArchivePageContent activeTab="all" />);
-
-      const items = screen.getAllByTestId(/^fonds-table-item-/);
-      expect(items).toHaveLength(3);
-
-      expect(items[0]).toHaveTextContent('A Fond');
-      expect(items[1]).toHaveTextContent('B Fond');
-      expect(items[2]).toHaveTextContent('C Fond');
-    });
-
-    it('should pass empty array when search query does not match any variants', () => {
-      mockUseArchiveFiltering.mockReturnValue({
-        ...defaultMockReturnValue,
-        searchProps: {
-          ...defaultMockReturnValue.searchProps,
-          search: 'Non-matching-query',
-        },
-      });
-
-      render(<ArchivePageContent activeTab="all" />);
-
-      const fondsContainer = screen.getByTestId('fonds-table-fonds');
-      expect(fondsContainer.children).toHaveLength(0);
-    });
-
-    it('should pass empty array when filter status does not match any variant', () => {
-      mockUseArchiveFiltering.mockReturnValue({
-        ...defaultMockReturnValue,
-        searchProps: { ...defaultMockReturnValue.searchProps, search: '' },
-        statusFilterProps: {
-          ...defaultMockReturnValue.statusFilterProps,
-          value: ['other'],
-        },
-      });
-
-      render(<ArchivePageContent activeTab="all" />);
-
-      const fondsContainer = screen.getByTestId('fonds-table-fonds');
-      expect(fondsContainer.children).toHaveLength(0);
-    });
-
-    it('should combine search and status filter conditions with AND', () => {
-      mockUseArchiveFiltering.mockReturnValue({
-        ...defaultMockReturnValue,
-        searchProps: { ...defaultMockReturnValue.searchProps, search: 'same part' },
-        statusFilterProps: { ...defaultMockReturnValue.statusFilterProps, value: ['hidden'] }
-      });
-
-      render(<ArchivePageContent activeTab="all" />);
-
-      const items = screen.getAllByTestId(/^fonds-table-item-/);
-      expect(items).toHaveLength(1);
-      expect(items[0]).toHaveTextContent('A Fond same part');
-    });
-
-    it('should pass an array with matched values when search query matches any variants', () => {
-      render(<ArchivePageContent activeTab="all" />);
-
-      const items = screen.getAllByTestId(/^fonds-table-item-/);
-      expect(items).toHaveLength(1);
-
-      expect(items[0]).toHaveTextContent('C Fond same part');
+      expect(screen.getByTestId('funds-table-has-active-status-filter')).toHaveTextContent('true');
     });
   });
 });

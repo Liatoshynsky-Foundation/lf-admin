@@ -1,4 +1,4 @@
-enum FondStatus {
+enum FundStatus {
   draft
   published
   hidden
@@ -6,68 +6,69 @@ enum FondStatus {
   editing
 }
 
-input CreateFondInput {
-    fondNumber: Int!
+input CreateFundInput {
+    fundNumber: Int!
     name: JSON!
     documentCreationDate: JSON!
     chronologicalBoundaries: JSON
     organizationForm: JSON 
     description: JSON 
-    status: FondStatus
+    status: FundStatus
 }
 
-type Fond {
+type Fund {
     id: ID!
-    fondNumber: Int!
+    fundNumber: Int!
     name: LocalizedString!
     documentCreationDate: LocalizedString!
     chronologicalBoundaries: LocalizedString
     organizationForm: LocalizedString
     description: LocalizedString
-    status: FondStatus!
+    status: FundStatus!
     casesCount: Int!
     descriptionsCount: Int!
     updatedAt: String!
     createdAt: String!
 }
 
-type PaginatedFonds {
-    items: [Fond!]!
+type PaginatedFunds {
+    items: [Fund!]!
     total: Int!
     page: Int!
     totalPages: Int!
 }
 
-input FondFiltersInput {
+input FundFiltersInput {
     limit: Int
     skip: Int
     search: String
     languages: [ContentLanguage!]
     sort: [SortOptions!]
+    statuses: [FundStatus!]
 }
 
-input UpdateFondInput {
-    fondNumber: Int
+input UpdateFundInput {
+    fundNumber: Int
     name: JSON
     documentCreationDate: JSON
     chronologicalBoundaries: JSON
     organizationForm: JSON 
     description: JSON 
-    status: FondStatus
+    status: FundStatus
 }
 
 extend type Query {
-    findFondById(id: ID!): Fond
-    findAllFonds(filters: FondFiltersInput): [Fond!]
-    findFondsPaginated(
+    findFundById(id: ID!): Fund
+    findAllFunds(filters: FundFiltersInput): [Fund!]
+    findFundsPaginated(
         page: Int!,
         limit: Int!,
-        filters: FondFiltersInput
-    ): PaginatedFonds
+        filters: FundFiltersInput
+    ): PaginatedFunds
 }
 
 extend type Mutation {
-    createFond(input: CreateFondInput!): Fond!
-    updateFond(id: ID!, input: UpdateFondInput!): Fond!
-    deleteFond(id: ID!): Boolean!
+    createFund(input: CreateFundInput!): Fund!
+    updateFund(id: ID!, input: UpdateFundInput!): Fund!
+    deleteFund(id: ID!): Boolean!
 }

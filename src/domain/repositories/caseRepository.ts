@@ -2,7 +2,7 @@ import { Case } from '../entities/Case';
 import { FiltersInput, IBaseRepository } from './baseRepository';
 
 export type CaseFilters = Omit<FiltersInput, 'slug'> & {
-  fondId?: string;
+  fundId?: string;
 };
 
 export type CreateCaseInput = Omit<Case, 'id' | 'createdAt' | 'updatedAt'>;
@@ -11,10 +11,10 @@ export type UpdateCaseInput = Partial<Omit<Case, 'id' | 'createdAt' | 'updatedAt
 
 export type ICaseRepository = IBaseRepository<Case, CaseFilters> & {
   create(input: CreateCaseInput): Promise<Case>;
-  findByFondAndNumbers(
-    fondId: Case['fondId'],
+  findByFundAndNumbers(
+    fundId: Case['fundId'],
     descriptionNumber: Case['descriptionNumber'],
     caseNumber: Case['caseNumber']
   ): Promise<Case | null>;
-  countDistinctDescriptionNumbers(fondId: Case['fondId']): Promise<number>;
+  countDistinctDescriptionNumbers(fundId: Case['fundId']): Promise<number>;
 };

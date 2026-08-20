@@ -1,0 +1,46 @@
+mutation CreateFund($input: CreateFundInput!) {
+  createFund(input: $input) {
+    id
+    fundNumber
+    name {
+      uk
+      en
+    }
+    status
+    createdAt
+    updatedAt
+  }
+}
+
+mutation UpdateFund($id: ID!, $input: UpdateFundInput!) {
+  updateFund(id: $id, input: $input) {
+    id
+    fundNumber
+    name {
+      uk
+      en
+    }
+    documentCreationDate {
+      uk
+      en
+    }
+    chronologicalBoundaries {
+      uk
+      en
+    }
+    organizationForm {
+      uk
+      en
+    }
+    description {
+      uk
+      en
+    }
+    status
+    updatedAt
+  }
+}
+
+mutation DeleteFund($id: ID!) {
+  deleteFund(id: $id)
+}

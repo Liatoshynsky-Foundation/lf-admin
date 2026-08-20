@@ -1,44 +1,44 @@
 import { GraphQLError } from 'graphql';
 
 import { createMockContext } from '../testUtils';
-import { FiltersGQLInput, FondQuery } from './fondQuery';
-import { IFondRepository } from '~/src/domain/repositories/fondRepository';
+import { FiltersGQLInput, FundQuery } from './fundQuery';
+import { IFundRepository } from '~/src/domain/repositories/fundRepository';
 
-describe('FondQuery Resolvers', () => {
-  const mockRepo: jest.Mocked<Partial<IFondRepository>> = {
+describe('FundQuery Resolvers', () => {
+  const mockRepo: jest.Mocked<Partial<IFundRepository>> = {
     findById: jest.fn(),
     findAll: jest.fn(),
     findPaginated: jest.fn(),
   };
 
-  const authorizedContext = createMockContext(true, 'fondRepository', mockRepo);
+  const authorizedContext = createMockContext(true, 'fundRepository', mockRepo);
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
-  const unauthorizedContext = createMockContext(false, 'fondRepository', mockRepo);
+  const unauthorizedContext = createMockContext(false, 'fundRepository', mockRepo);
 
-  describe('findFondById', () => {
+  describe('findFundById', () => {
     const mockId = 'some-id';
     it('should throw GraphQLError when admin is falsy', async () => {
       const mockId = 'some-id';
-      await expect(FondQuery.findFondById({}, { id: mockId }, unauthorizedContext)).rejects.toThrow(GraphQLError);
+      await expect(FundQuery.findFundById({}, { id: mockId }, unauthorizedContext)).rejects.toThrow(GraphQLError);
     });
 
     it('should call findById of repo with correct id', async () => {
-      await FondQuery.findFondById({}, { id: mockId }, authorizedContext);
+      await FundQuery.findFundById({}, { id: mockId }, authorizedContext);
 
       expect(mockRepo.findById).toHaveBeenCalledWith(mockId);
     });
   });
 
-  describe('findAllFonds', () => {
+  describe('findAllFunds', () => {
     it('should throw GraphQLError when admin is falsy', async () => {
-      await expect(FondQuery.findAllFonds({}, { filters: {} }, unauthorizedContext)).rejects.toThrow(GraphQLError);
+      await expect(FundQuery.findAllFunds({}, { filters: {} }, unauthorizedContext)).rejects.toThrow(GraphQLError);
     });
 
     it('should call findAll', async () => {
-      await FondQuery.findAllFonds({}, { filters: {} }, authorizedContext);
+      await FundQuery.findAllFunds({}, { filters: {} }, authorizedContext);
 
       expect(mockRepo.findAll).toHaveBeenCalledTimes(1);
     });
@@ -46,13 +46,13 @@ describe('FondQuery Resolvers', () => {
     it('should call findAll with all filters', async () => {
       const filters: FiltersGQLInput = {
         search: 'search',
-        sort: [{ field: 'fondNumber', order: 'asc' }]
+        sort: [{ field: 'fundNumber', order: 'asc' }]
       };
-      await FondQuery.findAllFonds({}, { filters: filters }, authorizedContext);
+      await FundQuery.findAllFunds({}, { filters: filters }, authorizedContext);
 
       expect(mockRepo.findAll).toHaveBeenCalledWith({
         search: 'search',
-        sort: [{ sortBy: 'fondNumber', sortOrder: 'asc' }],
+        sort: [{ sortBy: 'fundNumber', sortOrder: 'asc' }],
         languages: undefined,
         limit: undefined,
         skip: undefined,
@@ -62,7 +62,7 @@ describe('FondQuery Resolvers', () => {
     });
   });
 
-  describe('findFondsPaginated', () => {
+  describe('findFundsPaginated', () => {
     const paginationParams = {
       limit: 10,
       page: 1,
@@ -71,12 +71,12 @@ describe('FondQuery Resolvers', () => {
       }
     };
     it('should throw GraphQLError when admin is falsy', async () => {
-      await expect(FondQuery.findFondsPaginated({}, paginationParams, unauthorizedContext)).rejects.toThrow(GraphQLError);
+      await expect(FundQuery.findFundsPaginated({}, paginationParams, unauthorizedContext)).rejects.toThrow(GraphQLError);
     });
 
     it('should call findPaginated of repo with args', async () => {
 
-      await FondQuery.findFondsPaginated({}, paginationParams, authorizedContext);
+      await FundQuery.findFundsPaginated({}, paginationParams, authorizedContext);
 
       expect(mockRepo.findPaginated).toHaveBeenCalledTimes(1);
       expect(mockRepo.findPaginated).toHaveBeenCalledWith(paginationParams.page, paginationParams.limit, paginationParams.filters);

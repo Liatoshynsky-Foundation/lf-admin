@@ -8,8 +8,8 @@ import { CompositionsMutation } from './compositions/compositionsMutation';
 import { CompositionsQuery } from './compositions/compositionsQuery';
 import { EventsMutation } from './events/eventsMutation';
 import { EventsQuery } from './events/eventsQuery';
-import { FondMutation } from './fond/fondMutation';
-import { FondQuery } from './fond/fondQuery';
+import { FundMutation } from './fund/fundMutation';
+import { FundQuery } from './fund/fundQuery';
 import { MediaMentionsMutation } from './media-mentions/mediaMentionMutation';
 import { MediaMentionsQuery } from './media-mentions/mediaMentionQuery';
 import { NewsMutation } from './news/newsMutation';
@@ -30,7 +30,7 @@ export const resolvers = {
     ...AssetsMutation,
     ...CompositionsMutation,
     ...CaseMutation,
-    ...FondMutation
+    ...FundMutation
   },
   Query: {
     ...AdminQuery,
@@ -42,7 +42,7 @@ export const resolvers = {
     ...AssetsQuery,
     ...CompositionsQuery,
     ...CaseQuery,
-    ...FondQuery
+    ...FundQuery
   },
   Case: {
     ...CaseType

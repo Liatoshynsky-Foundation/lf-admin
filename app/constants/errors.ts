@@ -102,28 +102,40 @@ export const CompositionErrors = {
   FAILED_TO_DELETE: 'Failed to delete composition'
 };
 
-export const FondErrors = {
-  NUMBER_ALREADY_EXISTS: (number: number) => `Fond with number "${number}" already exists`,
-  FOND_NOT_FOUND: (id: string) => `Fond with id "${id}" not found`,
+export const FundErrors = {
+  NUMBER_ALREADY_EXISTS: (number: number) => `Фонд із номером "${number}" уже існує. Вкажіть інший номер.`,
+  FAILED_TO_CREATE: 'Не вдалося зберегти фонд. Перевірте форму та спробуйте ще раз.',
+  FAILED_TO_UPDATE: 'Не вдалося зберегти фонд. Перевірте форму та спробуйте ще раз.',
+  FUND_NOT_FOUND: (id: string) => `Фонд з id "${id}" не знайдено`,
+  NETWORK_ERROR_CREATE: 'Помилка мережі під час створення фонду',
+  NETWORK_ERROR_UPDATE: 'Помилка мережі під час оновлення фонду',
+  NETWORK_ERROR_DELETE: 'Помилка мережі під час видалення фонду',
+  FAILED_TO_DELETE: 'Не вдалося видалити фонд'
 };
 
-export const FondErrorCodes: Record<keyof typeof FondErrors, string> = {
-  NUMBER_ALREADY_EXISTS: 'DUPLICATE_FOND_NUMBER',
-  FOND_NOT_FOUND: 'FOND_NOT_FOUND'
+export const FundErrorCodes: Record<keyof typeof FundErrors, string> = {
+  NUMBER_ALREADY_EXISTS: 'DUPLICATE_FUND_NUMBER',
+  FUND_NOT_FOUND: 'FUND_NOT_FOUND',
+  NETWORK_ERROR_CREATE: 'NETWORK_ERROR_CREATE',
+  FAILED_TO_CREATE: 'FAILED_TO_CREATE',
+  NETWORK_ERROR_UPDATE: 'NETWORK_ERROR_UPDATE',
+  FAILED_TO_UPDATE: 'FAILED_TO_UPDATE',
+  NETWORK_ERROR_DELETE: 'NETWORK_ERROR_DELETE',
+  FAILED_TO_DELETE: 'FAILED_TO_DELETE'
 };
 
 export const CaseErrors = {
   DUPLICATE_NUMBERS: () =>
     'Справа з таким номером опису та номером справи вже існує в цьому фонді. Змініть один із номерів.',
   CASE_NOT_FOUND: (id: string) => `Case with id "${id}" not found`,
-  FOND_NOT_FOUND: (fondId: string) => `Fond with id "${fondId}" not found`,
+  FUND_NOT_FOUND: (fundId: string) => `Fund with id "${fundId}" not found`,
   INVALID_PDF_FILE: () => 'Можна прикріпити лише PDF-файл.'
 };
 
 export const CaseErrorCodes: Record<keyof typeof CaseErrors, string> = {
   DUPLICATE_NUMBERS: 'DUPLICATE_CASE_NUMBERS',
   CASE_NOT_FOUND: 'CASE_NOT_FOUND',
-  FOND_NOT_FOUND: 'FOND_NOT_FOUND',
+  FUND_NOT_FOUND: 'FUND_NOT_FOUND',
   INVALID_PDF_FILE: 'INVALID_PDF_FILE'
 };
 

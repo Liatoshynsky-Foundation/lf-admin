@@ -2,8 +2,7 @@
 import { Box } from '@mui/material';
 
 import { useArchiveFiltering } from '../(hooks)/useArchiveFiltering';
-import { ARCHIVE_FONDS_MOCK_DATA } from '../(temp)/archive.mock';
-import { FondsTable } from './archive-fonds-table/ArchiveFondsTable';
+import { FundsTable } from './archive-funds-table/ArchiveFundsTable';
 import { ArchiveCreateAction } from './ArchiveCreateAction';
 import { styles } from './ArchivePageContent.styles';
 import {
@@ -11,9 +10,12 @@ import {
   ARCHIVE_TABS,
   type ArchiveTabValue
 } from '~/constants/archive';
-import { normalizeSearch } from '~/lib/utils/normalizeSearch';
+import { FUNDS_EMPTY_STATE_DESCRIPTION, FUNDS_EMPTY_STATE_NO_RESULTS_DESCRIPTION, FUNDS_EMPTY_STATE_NO_RESULTS_TITLE, FUNDS_EMPTY_STATE_TITLE, FUNDS_ERROR_STATE_DESCRIPTION, FUNDS_ERROR_STATE_TITLE, FUNDS_LOADING_STATE_DESCRIPTION, FUNDS_LOADING_STATE_TITLE } from '~/constants/fund';
+import { EmptyState } from '~/shared/components/empty-state';
 import { PageHeader } from '~/shared/components/page-header/PageHeader';
 import { SearchStatusToolbar } from '~/shared/components/search-status-toolbar/SearchStatusToolbar';
+import { useAllFunds } from '~/shared/hooks/use-funds/useFunds';
+import { FundStatus } from '~/types/graphql/generated/graphql';
 
 interface ArchivePageContentProps {
   activeTab: ArchiveTabValue;
@@ -23,24 +25,65 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
   const { searchProps, statusFilterProps } = useArchiveFiltering();
 
   const searchValue = searchProps.search;
-  const normalizedSearch = normalizeSearch(searchValue);
   const filterValues = statusFilterProps.value;
-
   const isAllStatus = filterValues.length === 0;
 
-  const visibleFonds = ARCHIVE_FONDS_MOCK_DATA.filter((fond) => {
-    const matchesStatus = isAllStatus ? true : filterValues.includes(fond.status);
-
-    const normalizedFondName = normalizeSearch(fond.name);
-    const matchesName = normalizedFondName.includes(normalizedSearch);
-
-    return matchesStatus && matchesName;
+  const { funds, loading, error } = useAllFunds({
+    search: searchValue || undefined,
+    statuses: isAllStatus ? undefined : (filterValues as FundStatus[])
   });
 
-  const ascSortedVisibleFonds = visibleFonds.toSorted((a, b) => Number(a.fondNumber) - Number(b.fondNumber));
+  const ascSortedVisibleFunds = [...funds].sort((a, b) => Number(a.fundNumber) - Number(b.fundNumber));
 
   const hasActiveSearch = Boolean(searchValue);
   const hasActiveStatusFilter = !isAllStatus;
+  const hasActiveCriteria = hasActiveSearch || hasActiveStatusFilter;
+
+  const content = (() => {
+    if (loading) {
+      return (
+        <EmptyState 
+          title={FUNDS_LOADING_STATE_TITLE}
+          description={FUNDS_LOADING_STATE_DESCRIPTION} 
+        />
+      );
+    }
+
+    if (error) {
+      return (
+        <EmptyState 
+          title={FUNDS_ERROR_STATE_TITLE}
+          description={FUNDS_ERROR_STATE_DESCRIPTION} 
+        />
+      );
+    }
+
+    if (ascSortedVisibleFunds.length > 0) {
+      return (
+        <FundsTable
+          funds={ascSortedVisibleFunds}
+          hasActiveSearch={hasActiveSearch}
+          hasActiveStatusFilter={hasActiveStatusFilter}
+        />
+      );
+    }
+
+    if (hasActiveCriteria) {
+      return (
+        <EmptyState 
+          title={FUNDS_EMPTY_STATE_NO_RESULTS_TITLE}
+          description={FUNDS_EMPTY_STATE_NO_RESULTS_DESCRIPTION} 
+        />
+      );
+    }
+
+    return (
+      <EmptyState 
+        title={FUNDS_EMPTY_STATE_TITLE}
+        description={FUNDS_EMPTY_STATE_DESCRIPTION} 
+      />
+    );
+  })();
 
   return (
     <Box sx={styles.pageContainer}>
@@ -56,11 +99,7 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
         statusFilterProps={statusFilterProps}
       />
 
-      <FondsTable
-        fonds={ascSortedVisibleFonds}
-        hasActiveSearch={hasActiveSearch}
-        hasActiveStatusFilter={hasActiveStatusFilter}
-      />
+      {content}
     </Box>
   );
 };

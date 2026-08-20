@@ -7,9 +7,9 @@ import {
   ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE,
   ARCHIVE_EMPTY_STATE_NO_STATUS_MATCH_TITLE,
   ARCHIVE_EMPTY_STATE_TITLE,
-  ARCHIVE_FONDS_TABLE_HEADERS,
+  ARCHIVE_FUNDS_TABLE_HEADERS,
 } from '~/constants/archive';
-import { Fond } from '~/constants/fond';
+import { Fund } from '~/constants/fund';
 import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import { EmptyState } from '~/shared/components/empty-state';
 import { RowActions } from '~/shared/components/table-layout/components/RowActions';
@@ -17,94 +17,94 @@ import { StatusBadge } from '~/shared/components/table-layout/components/StatusB
 import { ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
 
-export type FondRow = Fond & {
+export type FundRow = Fund & {
   editAction: { editHref: string; editLabel: string };
   menuActions: { menuItems: ActionMenuGroups; menuTriggerLabel: string };
 };
 
-export interface FondsTableProps {
-  fonds: Fond[];
+export interface FundsTableProps {
+  funds: Fund[];
   hasActiveSearch: boolean;
   hasActiveStatusFilter: boolean;
 }
 
-export const FondsTable = ({ fonds, hasActiveSearch, hasActiveStatusFilter }: FondsTableProps) => {
-  const rows = fonds.map((fond) => ({
+export const FundsTable = ({ funds, hasActiveSearch, hasActiveStatusFilter }: FundsTableProps) => {
+  const rows = funds.map((fund) => ({
     type: 'individual' as const,
-    id: fond.id,
+    id: fund.id,
     plainData: {
-      ...fond,
+      ...fund,
       editAction: {
-        editHref: `${ARCHIVE_BASE_PATH}/fond/${fond.id}/edit`,
-        editLabel: `Редагувати фонд ${fond.name}`
+        editHref: `${ARCHIVE_BASE_PATH}/fund/${fund.id}/edit`,
+        editLabel: `Редагувати фонд ${fund.name}`
       },
       menuActions: {
         menuItems: [
           {
             items: [
-              { id: 'edit', text: { name: 'Редагувати' }, href: `${ARCHIVE_BASE_PATH}/fond/${fond.id}/edit` },
-              { id: 'share', text: { name: 'Поширити' }, href: `${ARCHIVE_BASE_PATH}/fond/${fond.id}/share` }
+              { id: 'edit', text: { name: 'Редагувати' }, href: `${ARCHIVE_BASE_PATH}/fund/${fund.id}/edit` },
+              { id: 'share', text: { name: 'Поширити' }, href: `${ARCHIVE_BASE_PATH}/fund/${fund.id}/share` }
             ]
           },
           {
             items: [{ id: 'delete', text: { name: 'Видалити' } }]
           }
         ],
-        menuTriggerLabel: `Дії для фонду ${fond.name}`
+        menuTriggerLabel: `Дії для фонду ${fund.name}`
       }
     },
   }));
 
-  const columns: readonly ColumnDef<never, never, FondRow>[] = [
+  const columns: readonly ColumnDef<never, never, FundRow>[] = [
     {
-      id: 'fondNumber',
-      headerLabel: ARCHIVE_FONDS_TABLE_HEADERS.fond,
+      id: 'fundNumber',
+      headerLabel: ARCHIVE_FUNDS_TABLE_HEADERS.fund,
       align: 'center',
       width: '46px',
       hasRightDivider: true,
-      renderPlain: (fond) => fond.fondNumber,
+      renderPlain: (fund) => fund.fundNumber,
     },
     {
       id: 'name',
-      headerLabel: ARCHIVE_FONDS_TABLE_HEADERS.name,
+      headerLabel: ARCHIVE_FUNDS_TABLE_HEADERS.name,
       width: 'minmax(300px, 1fr)',
-      renderPlain: (fond) => fond.name,
+      renderPlain: (fund) => fund.name,
     },
     {
       id: 'descriptionsCount',
-      headerLabel: ARCHIVE_FONDS_TABLE_HEADERS.descr,
+      headerLabel: ARCHIVE_FUNDS_TABLE_HEADERS.descr,
       width: '96px',
-      renderPlain: (fond) => String(fond.descriptions),
+      renderPlain: (fund) => String(fund.descriptions),
     },
     {
       id: 'casesCount',
-      headerLabel: ARCHIVE_FONDS_TABLE_HEADERS.cases,
+      headerLabel: ARCHIVE_FUNDS_TABLE_HEADERS.cases,
       width: '96px',
-      renderPlain: (fond) => String(fond.cases),
+      renderPlain: (fund) => String(fund.cases),
     },
     {
       id: 'dates',
-      headerLabel: ARCHIVE_FONDS_TABLE_HEADERS.dates,
+      headerLabel: ARCHIVE_FUNDS_TABLE_HEADERS.dates,
       width: '160px',
-      renderPlain: (fond) => fond.dates,
+      renderPlain: (fund) => fund.dates,
     },
     {
       id: 'status',
-      headerLabel: ARCHIVE_FONDS_TABLE_HEADERS.status,
+      headerLabel: ARCHIVE_FUNDS_TABLE_HEADERS.status,
       width: '60px',
       align: 'center',
       hasLeftDivider: true,
       hasRightDivider: true,
-      renderPlain: (fond) => <StatusBadge status={fond.status} updatedAt={fond.updatedAt} />,
+      renderPlain: (fund) => <StatusBadge status={fund.status} updatedAt={fund.updatedAt} />,
     },
     {
       id: 'actions',
       width: '96px',
       align: 'right',
-      renderPlain: (fond) => <RowActions editAction={{
-        editLabel: fond.editAction.editLabel,
-        editHref: fond.editAction.editHref
-      }} menuActions={fond.menuActions} />
+      renderPlain: (fund) => <RowActions editAction={{
+        editLabel: fund.editAction.editLabel,
+        editHref: fund.editAction.editHref
+      }} menuActions={fund.menuActions} />
     }
   ];
  
