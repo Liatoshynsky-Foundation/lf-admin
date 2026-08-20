@@ -53,7 +53,7 @@ const extractValidationErrors = (error: unknown): FundDetailsErrors | null => {
   const startIndex = message.indexOf('[');
   const endIndex = message.lastIndexOf(']');
 
-  if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
+  if (startIndex === -1 || endIndex < startIndex) {
     return null;
   }
 
@@ -65,13 +65,13 @@ const extractValidationErrors = (error: unknown): FundDetailsErrors | null => {
     let hasErrors = false;
 
     for (const issue of parsed) {
-      if (issue && typeof issue === 'object') {
-        const fieldName = Array.isArray(issue.path) ? issue.path[0] : undefined;
+      const safeIssue = issue as { path?: unknown; message?: unknown } | null;
 
-        if (typeof fieldName === 'string' && typeof issue.message === 'string') {
-          errors[fieldName as keyof FundDetailsValue] = issue.message;
-          hasErrors = true;
-        }
+      const fieldName = Array.isArray(safeIssue?.path) ? safeIssue.path[0] : undefined;
+
+      if (typeof fieldName === 'string' && typeof safeIssue?.message === 'string') {
+        errors[fieldName as keyof FundDetailsValue] = safeIssue.message;
+        hasErrors = true;
       }
     }
 
