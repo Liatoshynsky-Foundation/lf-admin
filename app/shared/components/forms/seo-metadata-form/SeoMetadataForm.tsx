@@ -4,11 +4,11 @@ import 'dayjs/locale/uk';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { Box, Checkbox, Divider, FormControlLabel, Stack, TextField, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { SeoBaseFields } from './seo-base-fields/SeoBaseFields';
 import { styles } from './SeoMetadataForm.styles';
-import { SeoField, SeoFieldValidationError, validateSeoField } from './validateSeoField';
+import { type SeoField, validateSeoField } from './validateSeoField';
 import { seoFormErrors } from '~/constants/errors';
 import { CROP_RATIOS } from '~/constants/publications';
 import { ImagePreviewBlock as PhotoBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
@@ -65,6 +65,23 @@ const isValidHttpUrl = (url: string | null): boolean => {
   }
 };
 
+const seoFields = new Set<SeoField>(['title', 'description', 'keywords', 'canonicalUrl', 'altText']);
+
+const getSeoFieldError = (
+  field: keyof LocalizedMeta,
+  value: string,
+  locale: 'uk' | 'en',
+  formRequired: boolean,
+  hasOgImage: boolean
+): string => {
+  if (!seoFields.has(field as SeoField)) return '';
+
+  const required = field === 'altText' ? hasOgImage : formRequired || Boolean(value.trim());
+  const validationError = validateSeoField(field as SeoField, value, { required });
+
+  return validationError ? seoFormErrors[locale][validationError] : '';
+};
+
 export default function SeoMetadataForm({
   value,
   onChange,
@@ -90,16 +107,6 @@ export default function SeoMetadataForm({
   const [touched, setTouched] = useState<Partial<Record<keyof LocalizedMeta, boolean>>>({});
   const [errors, setErrors] = useState<Partial<Record<keyof LocalizedMeta, string>>>({});
 
-  const translationErrors = seoFormErrors[locale];
-
-  const isFieldRequired = useCallback(
-    (field: keyof LocalizedMeta, fieldValue = value): boolean => {
-      if (field === 'altText') return Boolean(ogImage);
-      return required || Boolean(typeof fieldValue[field] === 'string' && fieldValue[field].trim());
-    },
-    [ogImage, required, value]
-  );
-
   useEffect(() => {
     if (isValidHttpUrl(ogImage)) {
       setOgImagePreview(ogImage);
@@ -110,39 +117,17 @@ export default function SeoMetadataForm({
     }
   }, [ogImage]);
 
-  const validateField = useCallback(
-    (field: keyof LocalizedMeta, val: string, fieldRequired = isFieldRequired(field)) => {
-      if (!['title', 'description', 'keywords', 'canonicalUrl', 'altText'].includes(field)) return '';
-
-      const validationError = validateSeoField(field as SeoField, val, { required: fieldRequired });
-      const errorMessages: Record<SeoFieldValidationError, string> = {
-        '': '',
-        required: translationErrors.required,
-        minLength: translationErrors.minLength,
-        maxLength: translationErrors.maxLength,
-        descriptionMaxLength: translationErrors.descriptionMaxLength,
-        keywordsMaxLength: translationErrors.keywordsMaxLength,
-        altTextMaxLength: translationErrors.altTextMaxLength,
-        invalidUrl: translationErrors.invalidUrl,
-        keywords: translationErrors.keywords
-      };
-
-      return errorMessages[validationError];
-    },
-    [isFieldRequired, translationErrors]
-  );
-
   useEffect(() => {
     if (!forceShowErrors) return;
     setTouched((prev) => ({ ...prev, title: true, description: true, keywords: true, altText: true }));
     setErrors((prev) => ({
       ...prev,
-      title: validateField('title', value.title),
-      description: validateField('description', value.description),
-      keywords: validateField('keywords', value.keywords),
-      altText: validateField('altText', value.altText?.[locale] ?? '')
+      title: getSeoFieldError('title', value.title, locale, required, Boolean(ogImage)),
+      description: getSeoFieldError('description', value.description, locale, required, Boolean(ogImage)),
+      keywords: getSeoFieldError('keywords', value.keywords, locale, required, Boolean(ogImage)),
+      altText: getSeoFieldError('altText', value.altText?.[locale] ?? '', locale, required, Boolean(ogImage))
     }));
-  }, [forceShowErrors, locale, validateField, value.altText, value.description, value.keywords, value.title]);
+  }, [forceShowErrors, locale, ogImage, required, value.altText, value.description, value.keywords, value.title]);
 
   const handleBlur = (field: keyof LocalizedMeta) => {
     setTouched((prev) => ({ ...prev, [field]: true }));
@@ -157,16 +142,18 @@ export default function SeoMetadataForm({
 
     setErrors((prev) => ({
       ...prev,
-      [field]: validateField(field, fieldValue)
+      [field]: getSeoFieldError(field, fieldValue, locale, required, Boolean(ogImage))
     }));
   };
 
   const handleFieldChange = (field: keyof LocalizedMeta, val: string) => {
-    const nextValue = { ...value, [field]: val };
-    const nextFieldRequired = isFieldRequired(field, nextValue);
-
-    onChange(nextValue);
-    if (touched[field]) setErrors((prev) => ({ ...prev, [field]: validateField(field, val, nextFieldRequired) }));
+    onChange({ ...value, [field]: val });
+    if (touched[field]) {
+      setErrors((prev) => ({
+        ...prev,
+        [field]: getSeoFieldError(field, val, locale, required, Boolean(ogImage))
+      }));
+    }
   };
 
   const handleAltTextChange = (val: string) => {
@@ -179,7 +166,12 @@ export default function SeoMetadataForm({
     };
 
     onChange(nextValue);
-    if (touched.altText) setErrors((prev) => ({ ...prev, altText: validateField('altText', val) }));
+    if (touched.altText) {
+      setErrors((prev) => ({
+        ...prev,
+        altText: getSeoFieldError('altText', val, locale, required, Boolean(ogImage))
+      }));
+    }
   };
 
   const handleImageChange = async (url: string, crop: CropResult | null | undefined) => {

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import SeoMetadataBlock, { SeoBlockValue } from './SeoMetadataBlock';
+import { seoFormErrors } from '~/constants/errors';
 
 jest.mock('../SeoMetadataForm', () => ({
   __esModule: true,
@@ -142,7 +143,7 @@ describe('SeoMetadataBlock', () => {
     const inputs = screen.getAllByLabelText(/ticket url/i);
     await user.click(inputs[0]);
     await user.tab();
-    expect(await screen.findByText(/обовʼязкове поле/i)).toBeInTheDocument();
+    expect(await screen.findByText(seoFormErrors.uk.required)).toBeInTheDocument();
   });
 
   it('shows url format error for invalid ticket url', async () => {
@@ -151,7 +152,7 @@ describe('SeoMetadataBlock', () => {
     const inputs = screen.getAllByLabelText(/ticket url/i);
     await user.type(inputs[0], 'bad-url');
     await user.tab();
-    expect(await screen.findByText(/некоректний url/i)).toBeInTheDocument();
+    expect(await screen.findByText(seoFormErrors.uk.invalidUrl)).toBeInTheDocument();
   });
 
   it('shows no error for valid ticket url', async () => {
@@ -160,14 +161,14 @@ describe('SeoMetadataBlock', () => {
     const inputs = screen.getAllByLabelText(/ticket url/i);
     await user.type(inputs[0], 'https://tickets.example.com');
     await user.tab();
-    expect(screen.queryByText(/некоректний url/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/обовʼязкове поле/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(seoFormErrors.uk.invalidUrl)).not.toBeInTheDocument();
+    expect(screen.queryByText(seoFormErrors.uk.required)).not.toBeInTheDocument();
   });
 
   it('triggers forceShowErrors effect for ticketUrl in both locales', () => {
     renderBlock({ showTicketUrl: true, forceShowErrors: true });
-    expect(screen.getByText('Обовʼязкове поле')).toBeInTheDocument();
-    expect(screen.getByText('Required field')).toBeInTheDocument();
+    expect(screen.getByText(seoFormErrors.uk.required)).toBeInTheDocument();
+    expect(screen.getByText(seoFormErrors.en.required)).toBeInTheDocument();
   });
 
   it('triggers forceShowErrors effect when ticketUrl has pre-existing valid/invalid values', () => {
@@ -180,7 +181,7 @@ describe('SeoMetadataBlock', () => {
         ticketUrl: { uk: 'https://valid.com', en: 'invalid-url' }
       }
     });
-    expect(screen.getByText('Invalid URL')).toBeInTheDocument();
+    expect(screen.getByText(seoFormErrors.en.invalidUrl)).toBeInTheDocument();
   });
 
   it('handles onChangeCrop when only one locale crop is provided in prop', () => {
@@ -248,7 +249,7 @@ describe('SeoMetadataBlock', () => {
     fireEvent.blur(inputs[0]);
     await user.type(inputs[0], 'https://test.com');
 
-    expect(screen.queryByText(/обовʼязкове поле/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(seoFormErrors.uk.required)).not.toBeInTheDocument();
   });
 
   it('uses externalOnChange in controlled mode when uk image changes', () => {
@@ -293,7 +294,7 @@ describe('SeoMetadataBlock', () => {
         ticketUrl: { uk: 'https://valid-uk.com', en: '' }
       }
     });
-    expect(screen.getByText('Required field')).toBeInTheDocument();
+    expect(screen.getByText(seoFormErrors.en.required)).toBeInTheDocument();
 
     renderBlock({
       showTicketUrl: true,
@@ -304,7 +305,7 @@ describe('SeoMetadataBlock', () => {
         ticketUrl: { uk: '', en: 'https://valid-en.com' }
       }
     });
-    expect(screen.getByText('Обовʼязкове поле')).toBeInTheDocument();
+    expect(screen.getByText(seoFormErrors.uk.required)).toBeInTheDocument();
   });
 
   it('renders ticketUrl fields cleanly when value.ticketUrl is undefined', () => {
@@ -379,8 +380,8 @@ describe('SeoMetadataBlock', () => {
         ticketUrl: { uk: 'https://valid-uk.com', en: 'https://valid-en.com' }
       }
     });
-    expect(screen.queryByText('Обовʼязкове поле')).not.toBeInTheDocument();
-    expect(screen.queryByText('Required field')).not.toBeInTheDocument();
+    expect(screen.queryByText(seoFormErrors.uk.required)).not.toBeInTheDocument();
+    expect(screen.queryByText(seoFormErrors.en.required)).not.toBeInTheDocument();
   });
 
   it('handles forceShowErrors when uk ticketUrl is invalid and en ticketUrl is valid', () => {
@@ -393,8 +394,8 @@ describe('SeoMetadataBlock', () => {
         ticketUrl: { uk: 'invalid-url', en: 'https://valid-en.com' }
       }
     });
-    expect(screen.getByText('Некоректний URL')).toBeInTheDocument();
-    expect(screen.queryByText('Invalid URL')).not.toBeInTheDocument();
+    expect(screen.getByText(seoFormErrors.uk.invalidUrl)).toBeInTheDocument();
+    expect(screen.queryByText(seoFormErrors.en.invalidUrl)).not.toBeInTheDocument();
   });
 
   it('handles forceShowErrors when one locale ticketUrl is undefined in ticketUrl object', () => {
@@ -409,7 +410,7 @@ describe('SeoMetadataBlock', () => {
         ticketUrl: { uk: 'https://valid-uk.com' } as { uk: string; en: string }
       }
     });
-    expect(screen.getByText('Required field')).toBeInTheDocument();
+    expect(screen.getByText(seoFormErrors.en.required)).toBeInTheDocument();
 
     renderBlock({
       showTicketUrl: true,
@@ -422,6 +423,6 @@ describe('SeoMetadataBlock', () => {
         ticketUrl: { en: 'https://valid-en.com' } as { uk: string; en: string }
       }
     });
-    expect(screen.getByText('Обовʼязкове поле')).toBeInTheDocument();
+    expect(screen.getByText(seoFormErrors.uk.required)).toBeInTheDocument();
   });
 });
