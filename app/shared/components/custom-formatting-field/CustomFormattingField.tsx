@@ -25,16 +25,16 @@ export interface Props {
   onBlur?: () => void;
   multiline?: boolean;
 }
-const OneLineDoc = Document.extend({
-  content: 'paragraph'
+const FormattingDoc = Document.extend({
+  content: 'paragraph+'
 });
 
-export const CustomFormattingField = ({ value, onChange, label = 'Текст', sx, error = false, helperText, onBlur, multiline = false}: Props) => {
+export const CustomFormattingField = ({ value, onChange, label = 'Текст', sx, error = false, helperText, onBlur}: Props) => {
   const [isFocused, setIsFocused] = useState(false);
 
   const editor = useEditor({
     extensions: [
-      multiline ? Document : OneLineDoc,
+      FormattingDoc,
       Paragraph,
       Text,
       Italic,
