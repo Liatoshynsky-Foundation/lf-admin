@@ -28,7 +28,7 @@ jest.mock('~/ds-components/text-field/TextField', () => ({
   )
 }));
 
-jest.mock('~/shared/components/about-us/Liatoshynsky-office/quote-block/QuoteBlock', () => ({
+jest.mock('~/shared/components/about-us/liatoshynsky-office/quote-block/QuoteBlock', () => ({
   QuoteBlock: ({ title, description, onTitleChange, onDescriptionChange }: any) => (
     <div data-testid="quote-block">
       <input data-testid="source-input" value={title || ''} onChange={(e) => onTitleChange(e.target.value)} />

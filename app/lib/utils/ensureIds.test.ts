@@ -1,23 +1,17 @@
 import { ensureIds } from './ensureIds';
 
-describe('ensureIds utility', () => {
-  const mockUUID = 'mock-uuid';
-  beforeAll(() => {
-    Object.defineProperty(global, 'crypto', {
-      value: {
-        randomUUID: jest.fn(() => mockUUID)
-      },
-      writable: true
-    });
-  });
+jest.mock('./generateUniqueId', () => ({
+  generateUniqueId: jest.fn().mockReturnValue('mock-uuid')
+}));
 
+describe('ensureIds utility', () => {
   it('should assign a new id if item has no id', () => {
     const list = [{ name: 'Alice' }, { name: 'Bob' }];
     const result = ensureIds(list);
 
     expect(result).toHaveLength(2);
-    expect(result[0].id).toBe(mockUUID);
-    expect(result[1].id).toBe(mockUUID);
+    expect(result[0].id).toBe('mock-uuid');
+    expect(result[1].id).toBe('mock-uuid');
     expect(result[0].name).toBe('Alice');
     expect(result[1].name).toBe('Bob');
   });
@@ -38,7 +32,7 @@ describe('ensureIds utility', () => {
     const result = ensureIds(list);
 
     expect(result[0].id).toBe('123');
-    expect(result[1].id).toBe(mockUUID);
+    expect(result[1].id).toBe('mock-uuid');
     expect(result[1].name).toBe('Bob');
   });
 

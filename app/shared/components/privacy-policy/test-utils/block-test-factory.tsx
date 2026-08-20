@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import { mockAddPoint, mockRemovePoint, mockToggleBlockVisibility, mockUpdatePoint, usePageBlockMock } from '../__mocks__/setup-mocks';
+import { mockToggleBlockVisibility, usePageBlockMock } from '../__mocks__/setup-mocks';
 import { createDocNode } from '~/__mocks__/utils';
 import { PAGE_IDS } from '~/constants/pageBlocks';
 import { LocalizedJSON } from '~/types/common';
@@ -55,7 +55,6 @@ interface CommonTestProps {
   checkGrip?: boolean;
   checkToggleVisibility?: boolean;
   blockId?: string;
-  usePointsListMock?: jest.Mock;
   useSectionListMock?: jest.Mock;
 }
 
@@ -70,20 +69,11 @@ export const runCommonBlockTests = ({
   checkGrip,
   checkToggleVisibility,
   blockId,
-  usePointsListMock,
   useSectionListMock
 }: CommonTestProps) => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    if (usePointsListMock) {
-      usePointsListMock.mockReturnValue({
-        addPoint: mockAddPoint,
-        removePoint: mockRemovePoint,
-        updatePoint: mockUpdatePoint,
-        points: [{ id: '1', text: 'Текст пункту' }]
-      });
-    }
     if (useSectionListMock) {
       useSectionListMock.mockReturnValue({
         addListPoint: jest.fn(),
@@ -168,15 +158,6 @@ export const runCommonBlockTests = ({
     it('should render note text field with deep initial JSON content', () => {
       runSimulation();
       expect(screen.getByTestId(`textfield-json-${LABELS.note}`)).toHaveTextContent(JSON.stringify(mockNoteJson));
-    });
-  }
-
-  if (checkList && usePointsListMock) {
-    it('should render list of points with deep initial JSON content', () => {
-      runSimulation();
-
-      const elements = screen.getAllByTestId(`textfield-json-${LABELS.list}`);
-      expect(elements.length).toBeGreaterThan(0);
     });
   }
 
