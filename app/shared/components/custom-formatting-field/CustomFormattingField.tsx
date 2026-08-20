@@ -23,7 +23,6 @@ export interface Props {
   error?: boolean;
   helperText?: string;
   onBlur?: () => void;
-  multiline?: boolean;
 }
 const FormattingDoc = Document.extend({
   content: 'paragraph+'
