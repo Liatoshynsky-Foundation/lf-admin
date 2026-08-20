@@ -5,12 +5,7 @@ import { ChevronDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { styles } from './page.styles';
-import {
-  OPUS_DETAILS_LABELS,
-  OPUS_GROUP_PATH,
-  OPUS_PAGE_TITLES,
-  OPUSES_BASE_PATH
-} from '~/constants/opus';
+import { OPUS_DETAILS_LABELS, OPUS_GROUP_PATH, OPUS_PAGE_TITLES, OPUSES_BASE_PATH } from '~/constants/opus';
 import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
 import ProgressStatus from '~/shared/components/divided-header/progress-status/ProgressStatus';
@@ -20,10 +15,7 @@ import { useUpsertOpus } from '~/shared/hooks/use-upsert-opus/useUpsertOpus';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 interface OpusViewProps {
-  data: Omit<
-    ReturnType<typeof useUpsertOpus>,
-    'compositionErrors'
-  > & {
+  data: Omit<ReturnType<typeof useUpsertOpus>, 'compositionErrors'> & {
     compositionErrors?: Record<string, string>;
   };
   mode?: 'create' | 'edit';
@@ -37,9 +29,9 @@ export default function OpusView({ data, mode = 'create' }: Readonly<OpusViewPro
     compositionErrors,
     seoValue,
     setSeoValue,
+    seoErrors,
     crop,
     setCrop,
-    forceShowErrors,
     isSaved,
     handleSave
   } = data;
@@ -90,7 +82,7 @@ export default function OpusView({ data, mode = 'create' }: Readonly<OpusViewPro
           <SeoMetadataBlock
             showAlternativeText
             required={false}
-            forceShowErrors={forceShowErrors}
+            errors={seoErrors}
             value={seoValue}
             onChange={setSeoValue}
             crop={{ uk: crop, en: crop }}

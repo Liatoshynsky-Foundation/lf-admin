@@ -124,13 +124,6 @@ describe('SeoBaseFields', () => {
     expect(screen.getByLabelText('Meta title')).not.toHaveAttribute('data-multiline');
   });
 
-  it('allows title and description to be optional when required is false', () => {
-    render(<SeoBaseFields {...baseProps} required={false} />);
-
-    expect(screen.getByLabelText('Meta title')).not.toHaveAttribute('aria-required', 'true');
-    expect(screen.getByLabelText('Meta description')).not.toHaveAttribute('aria-required', 'true');
-  });
-
   it('makes title and description optional when required is false', () => {
     render(<SeoBaseFields {...baseProps} required={false} />);
 

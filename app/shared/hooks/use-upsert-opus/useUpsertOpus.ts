@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { seoFormErrors } from '~/constants/errors';
 import {
   COMPOSITION_DUPLICATE_ERROR,
   COMPOSITION_NAME_REQUIRED_ERROR,
@@ -21,8 +22,9 @@ import {
   normalizeCompositionName
 } from '~/lib/utils/compositionErrors';
 import { generateUniqueId } from '~/lib/utils/generateUniqueId';
-import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
-import { validateSeoField } from '~/shared/components/forms/seo-metadata-form/validateSeoField';
+import type { SeoBlockErrors, SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
+import type { LocalizedMeta } from '~/shared/components/forms/seo-metadata-form/SeoMetadataForm';
+import { type SeoField, validateSeoField } from '~/shared/components/forms/seo-metadata-form/validateSeoField';
 import { useCreateOpus, useOpusById, useUpdateOpus } from '~/shared/hooks/use-opuses/useOpuses';
 import { CropRect } from '~/types/common';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
@@ -50,17 +52,22 @@ const fileNameFromUrl = (url?: string | null): string => {
   return decodeURIComponent(segment.split('?')[0]);
 };
 
-const isSeoMetaInvalid = (
+const getSeoMetaErrors = (
   meta: SeoBlockValue['meta']['uk'],
   altLocale: 'uk' | 'en',
   hasPreviewImage: boolean
-): boolean => {
-  return (
-    Boolean(validateSeoField('title', meta.title)) ||
-    Boolean(validateSeoField('description', meta.description)) ||
-    Boolean(validateSeoField('keywords', meta.keywords)) ||
-    (hasPreviewImage && Boolean(validateSeoField('altText', meta.altText?.[altLocale] ?? '', { required: true })))
-  );
+): Partial<Record<keyof LocalizedMeta, string>> => {
+  const getError = (field: SeoField, value: string, required = false): string => {
+    const error = validateSeoField(field, value, { required });
+    return error ? seoFormErrors[altLocale][error] : '';
+  };
+
+  return {
+    title: getError('title', meta.title),
+    description: getError('description', meta.description),
+    keywords: getError('keywords', meta.keywords),
+    altText: hasPreviewImage ? getError('altText', meta.altText?.[altLocale] ?? '', true) : ''
+  };
 };
 
 const getAltText = (
@@ -123,10 +130,11 @@ export type UseUpsertOpusResult = {
       | ((prev: SeoBlockValue) => SeoBlockValue)
   ) => void;
 
+  seoErrors?: SeoBlockErrors;
+
   crop: CropRect | null;
   setCrop: (value: CropRect | null) => void;
 
-  forceShowErrors: boolean;
   isSaved: boolean;
 
   handleSave: (
@@ -154,9 +162,9 @@ export const useUpsertOpus = (
 
   const [seoValue, setSeoValue] =
     useState<SeoBlockValue>(initialOpusSeoValue);
+  const [seoErrors, setSeoErrors] = useState<SeoBlockErrors>({ meta: { uk: {}, en: {} } });
     
   const [crop, setCrop] = useState<CropRect | null>(null);
-  const [forceShowErrors, setForceShowErrors] = useState(false);
   const [isSaved, setIsSaved] = useState(isEditing);
 
   const latestDataRef = useRef({ details, seoValue, crop });
@@ -272,7 +280,7 @@ export const useUpsertOpus = (
     setIsSaved(true);
   }, [changeDetails, changeSeoValue, changeCrop, isEditing, opusQuery.data]);
 
-  const validate = (value: OpusDetailsValue): boolean => {
+  const validateDetails = (value: OpusDetailsValue): boolean => {
     const number = value.number.trim();
     const name = value.name.trim();
     const creationYear = value.creationYear.trim();
@@ -368,24 +376,28 @@ export const useUpsertOpus = (
 
   const handleSave = async (status: BaseContentStatuses): Promise<string | undefined> => {
     const { details: currentDetails, seoValue: currentSeo, crop: currentCrop } = latestDataRef.current;
+    const { uk: ukMeta, en: enMeta } = currentSeo.meta;
+    const nextSeoErrors = {
+      meta: {
+        uk: getSeoMetaErrors(ukMeta, 'uk', Boolean(currentSeo.ogImage)),
+        en: getSeoMetaErrors(enMeta, 'en', Boolean(currentSeo.ogImage))
+      }
+    };
+    const hasSeoErrors = Object.values(nextSeoErrors.meta).some((errors) => Object.values(errors).some(Boolean));
 
-    if (!validate(currentDetails)) {
-      setForceShowErrors(true);
+    setSeoErrors(nextSeoErrors);
 
+    if (!validateDetails(currentDetails)) {
       return undefined;
     }
 
     clearCompositionErrors();
 
-    const { uk: ukMeta, en: enMeta } = currentSeo.meta;
     const opusName = currentDetails.name.trim();
     const hasOgImage = Boolean(currentSeo.ogImage);
 
-    if (
-      isSeoMetaInvalid(ukMeta, 'uk', Boolean(currentSeo.ogImage)) ||
-      isSeoMetaInvalid(enMeta, 'en', Boolean(currentSeo.ogImage))
-    ) {
-      setForceShowErrors(true);
+    if (hasSeoErrors) {
+      toast.error(COMPOSITION_REQUIRED_FIELDS_ERROR);
       return undefined;
     }
 
@@ -467,9 +479,9 @@ export const useUpsertOpus = (
     compositionErrors,
     seoValue,
     setSeoValue: changeSeoValue,
+    seoErrors,
     crop,
     setCrop: changeCrop,
-    forceShowErrors,
     isSaved,
     handleSave
   };

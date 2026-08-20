@@ -182,7 +182,7 @@ export const ImagePreviewBlock = ({
 
         {dimensions ? (
           <Typography variant="body2" color="text.secondary" sx={styles.imageSizeText}>
-            Розмір: {dimensions.width} × {dimensions.height}
+            Розмір: {dimensions.width}×{dimensions.height}
           </Typography>
         ) : null}
       </Stack>

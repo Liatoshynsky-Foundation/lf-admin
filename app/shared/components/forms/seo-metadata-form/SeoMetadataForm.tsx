@@ -37,6 +37,7 @@ export interface SeoMetadataFormProps {
   readonly extraFieldsBeforeKeywords?: boolean;
   readonly required?: boolean;
   readonly forceShowErrors?: boolean;
+  readonly errors?: Partial<Record<keyof LocalizedMeta, string>>;
   readonly extraFields?: (value: LocalizedMeta, onChange: (val: LocalizedMeta) => void) => ReactNode;
   readonly crop?: CropRect | null;
   readonly onChangeCrop?: (crop: CropRect | null) => void;
@@ -71,15 +72,14 @@ const getSeoFieldError = (
   field: keyof LocalizedMeta,
   value: string,
   locale: 'uk' | 'en',
-  formRequired: boolean,
+  required: boolean,
   hasOgImage: boolean
 ): string => {
   if (!seoFields.has(field as SeoField)) return '';
-
-  const required = field === 'altText' ? hasOgImage : formRequired || Boolean(value.trim());
-  const validationError = validateSeoField(field as SeoField, value, { required });
-
-  return validationError ? seoFormErrors[locale][validationError] : '';
+  const error = validateSeoField(field as SeoField, value, {
+    required: field === 'altText' ? hasOgImage : required || Boolean(value.trim())
+  });
+  return error ? seoFormErrors[locale][error] : '';
 };
 
 export default function SeoMetadataForm({
@@ -94,6 +94,7 @@ export default function SeoMetadataForm({
   extraFieldsBeforeKeywords = false,
   required = true,
   forceShowErrors = false,
+  errors: externalErrors,
   crop,
   onChangeCrop,
   extraFields,
@@ -105,7 +106,10 @@ export default function SeoMetadataForm({
   );
   const [isUploading, setIsUploading] = useState(false);
   const [touched, setTouched] = useState<Partial<Record<keyof LocalizedMeta, boolean>>>({});
-  const [errors, setErrors] = useState<Partial<Record<keyof LocalizedMeta, string>>>({});
+  const [localErrors, setLocalErrors] = useState<Partial<Record<keyof LocalizedMeta, string>>>({});
+  const isExternalValidation = externalErrors !== undefined;
+  const [displayErrors, setDisplayErrors] = useState(externalErrors);
+  const errors = isExternalValidation ? (displayErrors ?? {}) : localErrors;
 
   useEffect(() => {
     if (isValidHttpUrl(ogImage)) {
@@ -118,29 +122,40 @@ export default function SeoMetadataForm({
   }, [ogImage]);
 
   useEffect(() => {
-    if (!forceShowErrors) return;
-    setTouched((prev) => ({ ...prev, title: true, description: true, keywords: true, altText: true }));
-    setErrors((prev) => ({
-      ...prev,
+    setDisplayErrors(externalErrors);
+  }, [externalErrors]);
+
+  useEffect(() => {
+    if (!forceShowErrors || isExternalValidation) return;
+    setTouched({ title: true, description: true, keywords: true, altText: true });
+    setLocalErrors({
       title: getSeoFieldError('title', value.title, locale, required, Boolean(ogImage)),
       description: getSeoFieldError('description', value.description, locale, required, Boolean(ogImage)),
       keywords: getSeoFieldError('keywords', value.keywords, locale, required, Boolean(ogImage)),
       altText: getSeoFieldError('altText', value.altText?.[locale] ?? '', locale, required, Boolean(ogImage))
-    }));
-  }, [forceShowErrors, locale, ogImage, required, value.altText, value.description, value.keywords, value.title]);
+    });
+  }, [
+    forceShowErrors,
+    isExternalValidation,
+    locale,
+    ogImage,
+    required,
+    value.altText,
+    value.description,
+    value.keywords,
+    value.title
+  ]);
 
   const handleBlur = (field: keyof LocalizedMeta) => {
+    if (isExternalValidation) return;
     setTouched((prev) => ({ ...prev, [field]: true }));
-
     let fieldValue = '';
-
     if (field === 'altText') {
       fieldValue = value.altText?.[locale] ?? '';
     } else if (typeof value[field] === 'string') {
       fieldValue = value[field];
     }
-
-    setErrors((prev) => ({
+    setLocalErrors((prev) => ({
       ...prev,
       [field]: getSeoFieldError(field, fieldValue, locale, required, Boolean(ogImage))
     }));
@@ -148,8 +163,10 @@ export default function SeoMetadataForm({
 
   const handleFieldChange = (field: keyof LocalizedMeta, val: string) => {
     onChange({ ...value, [field]: val });
-    if (touched[field]) {
-      setErrors((prev) => ({
+    if (isExternalValidation) {
+      setDisplayErrors((previous) => ({ ...previous, [field]: '' }));
+    } else if (touched[field]) {
+      setLocalErrors((prev) => ({
         ...prev,
         [field]: getSeoFieldError(field, val, locale, required, Boolean(ogImage))
       }));
@@ -166,8 +183,10 @@ export default function SeoMetadataForm({
     };
 
     onChange(nextValue);
-    if (touched.altText) {
-      setErrors((prev) => ({
+    if (isExternalValidation) {
+      setDisplayErrors((previous) => ({ ...previous, altText: '' }));
+    } else if (touched.altText) {
+      setLocalErrors((prev) => ({
         ...prev,
         altText: getSeoFieldError('altText', val, locale, required, Boolean(ogImage))
       }));
@@ -209,8 +228,8 @@ export default function SeoMetadataForm({
         altText={value.altText?.[locale] ?? ''}
         onChangeAltText={handleAltTextChange}
         onBlurAltText={() => handleBlur('altText')}
-        altTextErrorState={Boolean(errors.altText && touched.altText)}
-        altTextError={errors.altText && touched.altText ? errors.altText : ''}
+        altTextErrorState={Boolean(errors.altText && (isExternalValidation || touched.altText))}
+        altTextError={errors.altText && (isExternalValidation || touched.altText) ? errors.altText : ''}
         locale={locale}
       />
       <Typography variant="textMd" sx={styles.ogImageHint}>
@@ -228,7 +247,7 @@ export default function SeoMetadataForm({
         <SeoBaseFields
           value={value}
           errors={errors}
-          touched={touched}
+          touched={isExternalValidation ? undefined : touched}
           onFieldChange={handleFieldChange}
           onBlur={handleBlur}
           showKeywords={!extraFieldsBeforeKeywords}
@@ -242,8 +261,8 @@ export default function SeoMetadataForm({
             value={value.keywords || ''}
             onChange={(e) => handleFieldChange('keywords', e.target.value)}
             onBlur={() => handleBlur('keywords')}
-            error={Boolean(errors.keywords && touched.keywords)}
-            helperText={errors.keywords && touched.keywords ? errors.keywords : ''}
+            error={Boolean(errors.keywords && (isExternalValidation || touched.keywords))}
+            helperText={errors.keywords && (isExternalValidation || touched.keywords) ? errors.keywords : ''}
             fullWidth
             sx={styles.textField}
             multiline

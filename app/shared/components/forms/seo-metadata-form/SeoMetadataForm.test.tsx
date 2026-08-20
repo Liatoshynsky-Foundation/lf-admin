@@ -76,14 +76,14 @@ jest.mock('./seo-base-fields/SeoBaseFields', () => ({
     showKeywords,
     value,
     errors,
-    touched
+    touched = {}
   }: {
     onBlur: (field: keyof LocalizedMeta) => void;
     onFieldChange: (field: keyof LocalizedMeta, val: string) => void;
     showKeywords?: boolean;
     value: LocalizedMeta;
     errors: Partial<Record<keyof LocalizedMeta, string>>;
-    touched: Partial<Record<keyof LocalizedMeta, boolean>>;
+    touched?: Partial<Record<keyof LocalizedMeta, boolean>>;
   }) => (
     <div data-testid="mock-seo-base-fields">
       <button
@@ -122,7 +122,7 @@ jest.mock('./seo-base-fields/SeoBaseFields', () => ({
         onBlur={() => onBlur('title')}
         onChange={(e) => onFieldChange('title', e.target.value)}
       />
-      {touched.title && errors.title && <span>{errors.title}</span>}
+      {errors.title && <span>{errors.title}</span>}
 
       <label htmlFor="meta-description-input">Meta description</label>
       <input
@@ -131,7 +131,7 @@ jest.mock('./seo-base-fields/SeoBaseFields', () => ({
         onBlur={() => onBlur('description')}
         onChange={(e) => onFieldChange('description', e.target.value)}
       />
-      {touched.description && errors.description && <span>{errors.description}</span>}
+      {errors.description && <span>{errors.description}</span>}
 
       {showKeywords && (
         <>
@@ -226,7 +226,19 @@ describe('SeoMetadataForm', () => {
     const input = screen.getByLabelText(/meta title/i);
     await user.click(input);
     await user.tab();
-    expect(await screen.findByText(/мінімум 2 символа/i)).toBeInTheDocument();
+    expect(await screen.findByText(seoFormErrors.uk.minLength)).toBeInTheDocument();
+  });
+
+  it('clears a save validation error while editing without recalculating it', () => {
+    render(<SeoMetadataForm {...defaultProps} errors={{ title: seoFormErrors.uk.minLength }} />);
+
+    const input = screen.getByLabelText(/meta title/i);
+    expect(screen.getByText(seoFormErrors.uk.minLength)).toBeInTheDocument();
+
+    fireEvent.change(input, { target: { value: 'a' } });
+
+    expect(screen.queryByText(seoFormErrors.uk.minLength)).not.toBeInTheDocument();
+    expect(screen.queryByText(seoFormErrors.uk.required)).not.toBeInTheDocument();
   });
 
   it('rejects title longer than the maximum length on blur, respects input maxLength attribute', async () => {
@@ -764,7 +776,7 @@ describe('SeoMetadataForm', () => {
     await user.type(altInput, 'T');
     await user.tab();
 
-    expect(await screen.findByTestId('alt-text-error')).toHaveTextContent(/мінімум 2 символа/i);
+    expect(await screen.findByTestId('alt-text-error')).toHaveTextContent(seoFormErrors.uk.minLength);
   });
 
   it('clears alt text error once 2+ characters are entered', async () => {

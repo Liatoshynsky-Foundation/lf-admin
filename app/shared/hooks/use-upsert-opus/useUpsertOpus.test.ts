@@ -1,7 +1,8 @@
 import { act, renderHook } from '@testing-library/react';
 import toast from 'react-hot-toast';
 
-import { createCompositionId, toCompositionInput,useUpsertOpus } from './useUpsertOpus';
+import { createCompositionId, toCompositionInput, useUpsertOpus } from './useUpsertOpus';
+import { seoFormErrors } from '~/constants/errors';
 import {
   COMPOSITION_DUPLICATE_ERROR,
   COMPOSITION_NAME_REQUIRED_ERROR,
@@ -84,6 +85,33 @@ const nullyFetchedOpus: FetchedOpusData = {
     }
   ]
 };
+
+const SEO_FIELD = {
+  title: 'title',
+  description: 'description',
+  keywords: 'keywords',
+  altText: 'altText'
+} as const;
+
+const SEO_VALUE = {
+  short: 'a',
+  invalidKeywords: 'one, ,two',
+  validImage: 'https://example.com/image.png',
+  maxTitle: 'a'.repeat(META_TITLE_LENGTH.max),
+  maxDescription: 'a'.repeat(META_DESCRIPTION_LENGTH.max),
+  maxKeywords: 'a'.repeat(META_KEYWORDS_LENGTH.max),
+  maxAltText: 'a'.repeat(META_ALT_TEXT_LENGTH.max)
+} as const;
+
+const INVALID_SEO_VALUES = [
+  [SEO_FIELD.title, SEO_VALUE.short],
+  [SEO_FIELD.title, `${SEO_VALUE.maxTitle}a`],
+  [SEO_FIELD.description, SEO_VALUE.short],
+  [SEO_FIELD.description, `${SEO_VALUE.maxDescription}a`],
+  [SEO_FIELD.keywords, SEO_VALUE.short],
+  [SEO_FIELD.keywords, `${SEO_VALUE.maxKeywords}a`],
+  [SEO_FIELD.keywords, SEO_VALUE.invalidKeywords]
+] as const;
 
 const fillValidDetails = (result: { current: ReturnType<typeof useUpsertOpus> }): void => {
   act(() => {
@@ -179,7 +207,27 @@ describe('useUpsertOpus', () => {
     expect(result.current.detailsErrors.number).toBe(OPUS_VALIDATION_MESSAGES.numberRequired);
     expect(result.current.detailsErrors.name).toBe(OPUS_VALIDATION_MESSAGES.nameRequired);
     expect(result.current.detailsErrors.creationYear).toBe(OPUS_VALIDATION_MESSAGES.creationYearRequired);
-    expect(result.current.forceShowErrors).toBe(true);
+    expect(Object.values(result.current.seoErrors?.meta.uk ?? {}).some(Boolean)).toBe(false);
+    expect(Object.values(result.current.seoErrors?.meta.en ?? {}).some(Boolean)).toBe(false);
+  });
+
+  it('validates SEO when Opus required fields are invalid', async () => {
+    const { result } = renderHook(() => useUpsertOpus());
+
+    act(() => {
+      result.current.setSeoValue((prev) => ({
+        ...prev,
+        meta: { ...prev.meta, uk: { ...prev.meta.uk, [SEO_FIELD.title]: SEO_VALUE.short } }
+      }));
+    });
+
+    await act(async () => {
+      await result.current.handleSave(BaseContentStatuses.Draft);
+    });
+
+    expect(result.current.detailsErrors.number).toBe(OPUS_VALIDATION_MESSAGES.numberRequired);
+    expect(result.current.seoErrors?.meta.uk[SEO_FIELD.title]).toBe(seoFormErrors.uk.minLength);
+    expect(mockCreateOpus).not.toHaveBeenCalled();
   });
 
   it('rejects a non-numeric number', async () => {
@@ -478,15 +526,7 @@ describe('useUpsertOpus', () => {
     expect(payload.coverImage.crop).toEqual({ x: 10, y: 20, width: 30, height: 40 });
   });
 
-  test.each([
-    ['title', 'a'],
-    ['title', 'a'.repeat(META_TITLE_LENGTH.max + 1)],
-    ['description', 'a'],
-    ['description', 'a'.repeat(META_DESCRIPTION_LENGTH.max + 1)],
-    ['keywords', 'a'],
-    ['keywords', 'a'.repeat(META_KEYWORDS_LENGTH.max + 1)],
-    ['keywords', 'one, ,two']
-  ] as const)('rejects invalid optional SEO %s values before mutation', async (field, fieldValue) => {
+  test.each(INVALID_SEO_VALUES)('rejects invalid optional SEO %s values before mutation', async (field, fieldValue) => {
     const { result } = renderHook(() => useUpsertOpus());
     fillValidDetails(result);
 
@@ -505,7 +545,7 @@ describe('useUpsertOpus', () => {
     });
 
     expect(mockCreateOpus).not.toHaveBeenCalled();
-    expect(result.current.forceShowErrors).toBe(true);
+    expect(Object.values(result.current.seoErrors?.meta.uk ?? {}).some(Boolean)).toBe(true);
   });
 
   it('validates SEO metadata independently for the English locale', async () => {
@@ -517,7 +557,7 @@ describe('useUpsertOpus', () => {
         ...prev,
         meta: {
           ...prev.meta,
-          en: { ...prev.meta.en, description: 'a' }
+          en: { ...prev.meta.en, [SEO_FIELD.description]: SEO_VALUE.short }
         }
       }));
     });
@@ -527,7 +567,7 @@ describe('useUpsertOpus', () => {
     });
 
     expect(mockCreateOpus).not.toHaveBeenCalled();
-    expect(result.current.forceShowErrors).toBe(true);
+    expect(result.current.seoErrors?.meta.en[SEO_FIELD.description]).toBe(seoFormErrors.en.minLength);
   });
 
   it('requires alt text in both locales only when a preview image is selected', async () => {
@@ -537,7 +577,7 @@ describe('useUpsertOpus', () => {
     act(() => {
       result.current.setSeoValue((prev) => ({
         ...prev,
-        ogImage: 'https://example.com/image.png'
+        ogImage: SEO_VALUE.validImage
       }));
     });
 
@@ -546,7 +586,8 @@ describe('useUpsertOpus', () => {
     });
 
     expect(mockCreateOpus).not.toHaveBeenCalled();
-    expect(result.current.forceShowErrors).toBe(true);
+    expect(result.current.seoErrors?.meta.uk[SEO_FIELD.altText]).toBe(seoFormErrors.uk.required);
+    expect(result.current.seoErrors?.meta.en[SEO_FIELD.altText]).toBe(seoFormErrors.en.required);
   });
 
   it('accepts valid SEO values at the configured maximum lengths', async () => {
@@ -557,21 +598,21 @@ describe('useUpsertOpus', () => {
     act(() => {
       result.current.setSeoValue((prev) => ({
         ...prev,
-        ogImage: 'https://example.com/image.png',
+        ogImage: SEO_VALUE.validImage,
         meta: {
           uk: {
             ...prev.meta.uk,
-            title: 'a'.repeat(META_TITLE_LENGTH.max),
-            description: 'a'.repeat(META_DESCRIPTION_LENGTH.max),
-            keywords: 'a'.repeat(META_KEYWORDS_LENGTH.max),
-            altText: { uk: 'a'.repeat(META_ALT_TEXT_LENGTH.max), en: prev.meta.uk.altText?.en ?? '' }
+            [SEO_FIELD.title]: SEO_VALUE.maxTitle,
+            [SEO_FIELD.description]: SEO_VALUE.maxDescription,
+            [SEO_FIELD.keywords]: SEO_VALUE.maxKeywords,
+            [SEO_FIELD.altText]: { uk: SEO_VALUE.maxAltText, en: prev.meta.uk.altText?.en ?? '' }
           },
           en: {
             ...prev.meta.en,
-            title: 'a'.repeat(META_TITLE_LENGTH.max),
-            description: 'a'.repeat(META_DESCRIPTION_LENGTH.max),
-            keywords: 'a'.repeat(META_KEYWORDS_LENGTH.max),
-            altText: { uk: prev.meta.en.altText?.uk ?? '', en: 'a'.repeat(META_ALT_TEXT_LENGTH.max) }
+            [SEO_FIELD.title]: SEO_VALUE.maxTitle,
+            [SEO_FIELD.description]: SEO_VALUE.maxDescription,
+            [SEO_FIELD.keywords]: SEO_VALUE.maxKeywords,
+            [SEO_FIELD.altText]: { uk: prev.meta.en.altText?.uk ?? '', en: SEO_VALUE.maxAltText }
           }
         }
       }));

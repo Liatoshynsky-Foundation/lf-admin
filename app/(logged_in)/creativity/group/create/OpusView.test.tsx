@@ -66,7 +66,6 @@ const createMockData = (
   setSeoValue: jest.fn(),
   crop: null,
   setCrop: jest.fn(),
-  forceShowErrors: false,
   isSaved: false,
   handleSave: jest.fn(),
   ...overrides

@@ -7,9 +7,9 @@ import { META_DESCRIPTION_LENGTH, META_KEYWORDS_LENGTH, META_TITLE_LENGTH } from
 interface SeoBaseFieldsProps {
   readonly value: LocalizedMeta;
   readonly errors: Partial<Record<keyof LocalizedMeta, string>>;
-  readonly touched: Partial<Record<keyof LocalizedMeta, boolean>>;
+  readonly touched?: Partial<Record<keyof LocalizedMeta, boolean>>;
   readonly onFieldChange: (field: keyof LocalizedMeta, val: string) => void;
-  readonly onBlur: (field: keyof LocalizedMeta) => void;
+  readonly onBlur?: (field: keyof LocalizedMeta) => void;
   readonly showKeywords?: boolean;
   readonly required?: boolean;
   readonly labels?: {
@@ -67,9 +67,9 @@ export function SeoBaseFields({
           label={label}
           value={value[key] || ''}
           onChange={(e) => onFieldChange(key, e.target.value)}
-          onBlur={() => onBlur(key)}
+          onBlur={() => onBlur?.(key)}
           error={Boolean(errors[key])}
-          helperText={errors[key] && touched[key] ? errors[key] : ''}
+          helperText={errors[key] && (!touched || touched[key]) ? errors[key] : ''}
           fullWidth
           sx={styles.textField}
           required={fieldRequired}
