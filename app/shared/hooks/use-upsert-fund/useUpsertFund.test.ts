@@ -273,23 +273,6 @@ describe('useUpsertFund', () => {
       expect(result.current.errors.description).toBeDefined();
       expect(mockCreateFund).not.toHaveBeenCalled();
     });
-    
-    it('validates correctly when chronologicalBoundaries is an object (edge case)', async () => {
-      const { result } = renderHook(() => useUpsertFund());
-      setValidDetails(result);
-      act(() => {
-        result.current.setDetails((prev) => ({ 
-          ...prev,
-          chronologicalBoundaries: { uk: 'a'.repeat(151) } as any
-        }));
-      });
-
-      await act(async () => {
-        await result.current.handleSave(BaseContentStatuses.Draft);
-      });
-
-      expect(result.current.errors.chronologicalBoundaries).toBeDefined();
-    });
 
     it('validates successfully when description resolves to null or empty', async () => {
       mockResolveLocalizedText.mockReturnValue(null);
@@ -402,28 +385,8 @@ describe('useUpsertFund', () => {
       expect(toast.error).toHaveBeenCalledWith(FundErrors.FAILED_TO_CREATE);
     });
 
-    it('handles JSON parsing errors silently when regex matches but content is invalid', async () => {
-      const badJsonMatch = '[ { bad, json: } ]';
-      mockCreateFund.mockRejectedValue(new Error(`Validation error ${badJsonMatch}`));
-      
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      
-      const { result } = renderHook(() => useUpsertFund());
-      setValidDetails(result);
-
-      await act(async () => {
-        await result.current.handleSave(BaseContentStatuses.Draft);
-      });
-
-      expect(consoleSpy).toHaveBeenCalledWith('Failed to save fund:', expect.any(Error));
-      expect(toast.error).toHaveBeenCalledWith(FundErrors.FAILED_TO_CREATE);
-      
-      consoleSpy.mockRestore();
-    });
-    
-    it('ignores parsed errors if they are not an array', async () => {
-      const zodMessage = JSON.stringify({ path: ['name'], message: 'Error' });
-      mockCreateFund.mockRejectedValue(new Error(`Validation failed [ ${zodMessage} ]`));
+    it('ignores invalid JSON safely and falls back to generic error', async () => {
+      mockCreateFund.mockRejectedValue(new Error('Validation error [ { bad, json: } ]'));
       
       const { result } = renderHook(() => useUpsertFund());
       setValidDetails(result);

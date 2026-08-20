@@ -112,6 +112,7 @@ export default function FundDetailsBlock({
         key={currentLocale}
         label="Опис фонду"
         value={descriptionValue}
+        multiline
         onChange={(description) =>
           updateField('description', {
             ...value.description,

@@ -19,16 +19,20 @@ const createInitialDescription = (): FundDetailsValue['description'] => ({
   en: createEmptyDoc()
 });
 
+const isDocContent = (value: unknown): value is JSONContent => {
+  return typeof value === 'object' && value !== null && 'type' in value && value.type === 'doc';
+};
+
 const parseDescriptionValue = (value?: string | null): JSONContent => {
   if (!value) return createEmptyDoc();
+
   try {
-    const parsed = JSON.parse(value) as unknown;
-    if (typeof parsed === 'object' && parsed !== null && (parsed as { type?: unknown }).type === 'doc') {
-      return parsed as JSONContent;
+    const parsed = JSON.parse(value);
+    if (isDocContent(parsed)) {
+      return parsed;
     }
-  } catch {
-    return textToProse(value);
-  }
+  } catch {}
+
   return textToProse(value);
 };
 
@@ -43,28 +47,35 @@ const INITIAL_DETAILS: FundDetailsValue = {
   descriptionsCount: 0
 };
 
-const ZOD_ERROR_REGEX = /\[\s*\{[\s\S]*\}\s*\]/;
+const extractValidationErrors = (error: unknown): FundDetailsErrors | null => {
+  const message = error instanceof Error ? error.message : String(error);
 
-const extractValidationErrors = (message: string): Partial<Record<keyof FundDetailsValue, string>> | null => {
-  const match = ZOD_ERROR_REGEX.exec(message);
-  if (!match) return null;
+  const startIndex = message.indexOf('[');
+  const endIndex = message.lastIndexOf(']');
+
+  if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
+    return null;
+  }
 
   try {
-    const parsedErrors = JSON.parse(match[0]);
-    if (!Array.isArray(parsedErrors)) return null;
+    const parsed = JSON.parse(message.slice(startIndex, endIndex + 1));
+    if (!Array.isArray(parsed)) return null;
 
-    const newErrors: Partial<Record<keyof FundDetailsValue, string>> = {};
+    const errors: FundDetailsErrors = {};
     let hasErrors = false;
 
-    parsedErrors.forEach((err) => {
-      const fieldName = err.path?.[0] as keyof FundDetailsValue;
-      if (fieldName) {
-        newErrors[fieldName] = err.message;
-        hasErrors = true;
-      }
-    });
+    for (const issue of parsed) {
+      if (issue && typeof issue === 'object') {
+        const fieldName = Array.isArray(issue.path) ? issue.path[0] : undefined;
 
-    return hasErrors ? newErrors : null;
+        if (typeof fieldName === 'string' && typeof issue.message === 'string') {
+          errors[fieldName as keyof FundDetailsValue] = issue.message;
+          hasErrors = true;
+        }
+      }
+    }
+
+    return hasErrors ? errors : null;
   } catch {
     return null;
   }
@@ -120,7 +131,7 @@ export const useUpsertFund = () => {
     }
 
     const nameUk = details.name?.uk || '';
-    
+
     if (!nameUk.trim()) {
       newErrors.name = 'Назва фонду є обов’язковою.';
       isValid = false;
@@ -129,9 +140,7 @@ export const useUpsertFund = () => {
       isValid = false;
     }
 
-    const docDate = typeof details.documentCreationDate === 'object' 
-      ? (details.documentCreationDate as any)?.uk || '' 
-      : details.documentCreationDate || '';
+    const docDate = details.documentCreationDate || '';
 
     if (!docDate.trim()) {
       newErrors.documentCreationDate = 'Дати утворення документів є обов’язковими.';
@@ -141,9 +150,7 @@ export const useUpsertFund = () => {
       isValid = false;
     }
 
-    const chrono = typeof details.chronologicalBoundaries === 'object'
-      ? (details.chronologicalBoundaries as any)?.uk || ''
-      : details.chronologicalBoundaries || '';
+    const chrono = details.chronologicalBoundaries || '';
 
     if (chrono.trim() && chrono.length > 150) {
       newErrors.chronologicalBoundaries = 'Значення не може перевищувати 150 символів.';
@@ -151,7 +158,7 @@ export const useUpsertFund = () => {
     }
 
     const orgFormUk = details.organizationForm?.uk || '';
-    
+
     if (orgFormUk.trim() && orgFormUk.length > 150) {
       newErrors.organizationForm = 'Значення не може перевищувати 150 символів.';
       isValid = false;
@@ -189,9 +196,7 @@ export const useUpsertFund = () => {
         status: status as unknown as CreateFundInput['status']
       };
 
-      const successMessage = status === BaseContentStatuses.Published
-        ? 'Фонд опубліковано.'
-        : 'Фонд збережено.';
+      const successMessage = status === BaseContentStatuses.Published ? 'Фонд опубліковано.' : 'Фонд збережено.';
 
       try {
         let savedId: string | undefined = undefined;
@@ -220,7 +225,7 @@ export const useUpsertFund = () => {
           return null;
         }
 
-        const backendErrors = extractValidationErrors(message);
+        const backendErrors = extractValidationErrors(error);
         if (backendErrors) {
           setErrors((prev) => ({ ...prev, ...backendErrors }));
           setForceShowErrors(true);
@@ -230,7 +235,6 @@ export const useUpsertFund = () => {
 
         setForceShowErrors(true);
         toast.error(FundErrors.FAILED_TO_CREATE);
-        console.error('Failed to save fund:', error);
       }
 
       return null;

@@ -69,7 +69,7 @@ describe('FundCasesBlock', () => {
     render(<FundCasesBlock />);
     await user.click(screen.getByRole('button', { name: /Додати справу/ }));
 
-    expect(consoleSpy).toHaveBeenCalledWith('Додати справу клік');
+    expect(consoleSpy).toHaveBeenCalledWith('Тимчасово: додати справу'); //TODO create actual case functionality and remove this console.log
     consoleSpy.mockRestore();
   });
 

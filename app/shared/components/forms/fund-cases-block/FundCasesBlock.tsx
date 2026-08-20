@@ -132,7 +132,7 @@ export default function FundCasesBlock() {
           variant="contained"
           startIcon={<Plus size={18} />}
           sx={styles.addButton}
-          onClick={() => console.log('Додати справу клік')}
+          onClick={() => console.log('Тимчасово: додати справу')}  //TODO create actual case functionality and remove this console.log
         >
           Додати справу
         </Button>
