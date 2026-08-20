@@ -1,11 +1,14 @@
 import { GraphQLError } from 'graphql';
 
 import {
+  assertCompositionGenreValid,
   assertCompositionNameNotTaken,
+  assertCompositionYearValid,
   compositionNameTakenError,
   normalizeCompositionName,
   throwIfCompositionNameDuplicateKey
 } from './compositionNameValidation';
+import { COMPOSITION_VALIDATION_MESSAGES } from '~/constants/opus';
 import type { Composition } from '~/domain/entities/Composition';
 import type { ICompositionRepository } from '~/domain/repositories/compositionRepository';
 
@@ -39,7 +42,7 @@ describe('composition name validation', () => {
     const findByName = jest.fn();
 
     await expect(assertCompositionNameNotTaken(repository(findByName), '   ')).rejects.toMatchObject({
-      message: 'Composition name is required',
+      message: COMPOSITION_VALIDATION_MESSAGES.titleRequired,
       extensions: { code: 'BAD_USER_INPUT' }
     });
     expect(findByName).not.toHaveBeenCalled();
@@ -59,6 +62,21 @@ describe('composition name validation', () => {
       message: 'Композиція "Sonata" вже існує',
       extensions: { code: 'COMPOSITION_NAME_TAKEN' }
     });
+  });
+
+  it('validates optional genre', () => {
+    expect(() => assertCompositionGenreValid(undefined)).not.toThrow();
+    expect(() => assertCompositionGenreValid(null)).not.toThrow();
+    expect(() => assertCompositionGenreValid('Classical')).not.toThrow();
+    expect(() => assertCompositionGenreValid('a')).toThrow(COMPOSITION_VALIDATION_MESSAGES.genreTooShort);
+    expect(() => assertCompositionGenreValid('a'.repeat(151))).toThrow(COMPOSITION_VALIDATION_MESSAGES.genreTooLong);
+  });
+
+  it('validates optional year values', () => {
+    expect(() => assertCompositionYearValid(undefined)).not.toThrow();
+    expect(() => assertCompositionYearValid(null)).not.toThrow();
+    expect(() => assertCompositionYearValid(2026)).not.toThrow();
+    expect(() => assertCompositionYearValid(202)).toThrow(COMPOSITION_VALIDATION_MESSAGES.yearInvalid);
   });
 
   it('translates Mongo duplicate-key errors and ignores other errors', () => {

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import type { Dayjs } from 'dayjs';
 import { ReactElement, ReactNode, useState } from 'react';
 
 import OpusDetailsBlock from './OpusDetailsBlock';
@@ -13,6 +14,12 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
 
 jest.mock('@mui/x-date-pickers/LocalizationProvider', () => ({
   LocalizationProvider: ({ children }: { children: ReactNode }): ReactElement => <>{children}</>
+}));
+
+jest.mock('@mui/x-date-pickers/DatePicker', () => ({
+  DatePicker: ({ label, value }: { label: string; value: Dayjs | null }): ReactElement => (
+    <input aria-label={label} readOnly value={value?.format('DD/MM/YYYY') || ''} />
+  )
 }));
 
 jest.mock('./year-picker/YearPicker', () => ({

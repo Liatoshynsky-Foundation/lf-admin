@@ -5,6 +5,8 @@ import { createCompositionId, toCompositionInput,useUpsertOpus } from './useUpse
 import {
   COMPOSITION_DUPLICATE_ERROR,
   COMPOSITION_NAME_REQUIRED_ERROR,
+  COMPOSITION_REQUIRED_FIELDS_ERROR,
+  COMPOSITION_VALIDATION_MESSAGES,
   OPUS_VALIDATION_MESSAGES
 } from '~/constants/opus';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
@@ -239,9 +241,58 @@ describe('useUpsertOpus', () => {
     });
 
     expect(mockCreateOpus).not.toHaveBeenCalled();
-    expect(result.current.compositionErrors).toEqual({ 'compositions.empty.name': '' });
+    expect(result.current.compositionErrors).toEqual({
+      'compositions.empty.name': COMPOSITION_VALIDATION_MESSAGES.titleRequired,
+    });
     expect(toast.error).toHaveBeenCalledWith(COMPOSITION_DUPLICATE_ERROR);
     expect(toast.error).toHaveBeenCalledWith(COMPOSITION_NAME_REQUIRED_ERROR);
+  });
+
+  it('rejects a composition with a one-character genre before mutation', async () => {
+    const { result } = renderHook(() => useUpsertOpus());
+
+    act(() => {
+      result.current.setDetails((prev) => ({
+        ...prev,
+        number: '5',
+        name: 'Соната',
+        creationYear: '1922',
+        compositions: [{ id: 'composition', name: 'Соната', genre: 'a', year: '', audios: [], notes: [] }]
+      }));
+    });
+
+    await act(async () => {
+      await result.current.handleSave(BaseContentStatuses.Draft);
+    });
+
+    expect(mockCreateOpus).not.toHaveBeenCalled();
+    expect(result.current.compositionErrors['compositions.composition.genre']).toBe(
+      COMPOSITION_VALIDATION_MESSAGES.genreTooShort
+    );
+  });
+
+  it('shows a toast and field error for a one-character composition name', async () => {
+    const { result } = renderHook(() => useUpsertOpus());
+
+    act(() => {
+      result.current.setDetails((prev) => ({
+        ...prev,
+        number: '5',
+        name: 'Група',
+        creationYear: '1922',
+        compositions: [{ id: 'composition', name: 'A', genre: '', year: '', audios: [], notes: [] }]
+      }));
+    });
+
+    await act(async () => {
+      await result.current.handleSave(BaseContentStatuses.Draft);
+    });
+
+    expect(result.current.compositionErrors['compositions.composition.name']).toBe(
+      COMPOSITION_VALIDATION_MESSAGES.titleTooShort
+    );
+    expect(toast.error).toHaveBeenCalledWith(COMPOSITION_REQUIRED_FIELDS_ERROR);
+    expect(mockCreateOpus).not.toHaveBeenCalled();
   });
 
   it('maps duplicate mutation errors to matching composition fields', async () => {

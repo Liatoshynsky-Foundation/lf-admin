@@ -2,6 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 import toast from 'react-hot-toast';
 
 import { useDeleteWorkAction } from './useDeleteWorkAction';
+import { COMPOSITION_ACTIONS_MESSAGES } from '~/constants/opus';
 import {
   PaginatedWorksDocument,
   useDeleteCompositionMutation,
@@ -109,7 +110,7 @@ describe('useDeleteWorkAction', () => {
       refetchQueries: [PaginatedWorksDocument],
       awaitRefetchQueries: true
     });
-    expect(toast.success).toHaveBeenCalledWith('Твір успішно видалено');
+    expect(toast.success).toHaveBeenCalledWith(COMPOSITION_ACTIONS_MESSAGES.DELETE_SUCCESS);
     expect(onSuccessMock).toHaveBeenCalledWith('work-123');
     expect(result.current.deleteComposition).toBeNull();
   });
@@ -135,7 +136,7 @@ describe('useDeleteWorkAction', () => {
       refetchQueries: [PaginatedWorksDocument],
       awaitRefetchQueries: true
     });
-    expect(toast.success).toHaveBeenCalledWith('Твір успішно видалено з групи');
+    expect(toast.success).toHaveBeenCalledWith(COMPOSITION_ACTIONS_MESSAGES.UNLINK_SUCCESS);
     expect(onSuccessMock).toHaveBeenCalledWith('work-123');
     expect(result.current.unlinkComposition).toBeNull();
   });
@@ -153,7 +154,7 @@ describe('useDeleteWorkAction', () => {
       await result.current.handleConfirmCompositionDelete();
     });
 
-    expect(toast.error).toHaveBeenCalledWith('Помилка при видаленні твору');
+    expect(toast.error).toHaveBeenCalledWith(COMPOSITION_ACTIONS_MESSAGES.DELETE_ERROR);
   });
 
   it('should handle unlink failure and show error toast', async () => {
@@ -169,7 +170,7 @@ describe('useDeleteWorkAction', () => {
       await result.current.handleConfirmUnlinkComposition();
     });
 
-    expect(toast.error).toHaveBeenCalledWith('Помилка при видаленні твору');
+    expect(toast.error).toHaveBeenCalledWith(COMPOSITION_ACTIONS_MESSAGES.DELETE_ERROR);
   });
 
   it('should correctly pass loading state from mutation hooks', () => {

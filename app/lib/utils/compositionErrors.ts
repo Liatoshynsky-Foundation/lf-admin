@@ -1,4 +1,37 @@
 import { COMPOSITION_NAME_REQUIRED_ERROR } from '~/constants/opus';
+import { compositionGenreSchema, compositionTitleSchema, compositionYearSchema } from '~/validators/composition.schema';
+
+type CompositionValidationInput = {
+  id: string;
+  name: string;
+  genre?: unknown;
+  year?: unknown;
+};
+
+export const getCompositionFieldErrors = (
+  compositions: CompositionValidationInput[]
+): Record<string, string> => {
+  const errors: Record<string, string> = {};
+
+  compositions.forEach((composition) => {
+    const basePath = `compositions.${composition.id}`;
+    const titleResult = compositionTitleSchema.safeParse(composition.name);
+    const genreResult = compositionGenreSchema.safeParse(composition.genre ?? '');
+    const yearResult = compositionYearSchema.safeParse(composition.year ?? '');
+
+    if (!titleResult.success) {
+      errors[`${basePath}.name`] = titleResult.error.issues[0].message;
+    }
+    if (!genreResult.success) {
+      errors[`${basePath}.genre`] = genreResult.error.issues[0].message;
+    }
+    if (!yearResult.success) {
+      errors[`${basePath}.year`] = yearResult.error.issues[0].message;
+    }
+  });
+
+  return errors;
+};
 
 export const normalizeCompositionName = (name: string): string =>
   name.trim().toLocaleLowerCase('uk-UA');

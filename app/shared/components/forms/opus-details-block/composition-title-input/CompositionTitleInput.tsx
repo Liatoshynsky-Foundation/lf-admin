@@ -5,7 +5,7 @@ import { Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { styles } from './CompositionTitleInput.styles';
-import { COMPOSITION_SEARCH_LABELS } from '~/constants/opus';
+import { COMPOSITION_SEARCH_LABELS, COMPOSITION_TITLE_LIMITS } from '~/constants/opus';
 import { useDebounce } from '~/shared/hooks/use-debounce/useDebounce';
 import { useSearchCompositions } from '~/shared/hooks/use-opuses/useOpuses';
 import type { OpusCompositionSuggestion } from '~/types/opus';
@@ -89,7 +89,7 @@ export default function CompositionTitleInput({
       getOptionDisabled={(option) => typeof option !== 'string' && !!option.isNoResults}
       onInputChange={(_, nextInput, reason) => {
         if (reason === 'input' || reason === 'clear') {
-          onChangeText(nextInput);
+          onChangeText(nextInput.slice(0, COMPOSITION_TITLE_LIMITS.max));
         }
       }}
       onChange={(_, selected) => {
@@ -134,7 +134,19 @@ export default function CompositionTitleInput({
         );
       }}
       renderInput={(params) => (
-        <TextField {...params} size="small" error={error} helperText={helperMessage} sx={styles.input} />
+        <TextField
+          {...params}
+          size="small"
+          error={error}
+          helperText={helperMessage}
+          sx={styles.input}
+          slotProps={{
+            htmlInput: {
+              ...params.inputProps,
+              maxLength: COMPOSITION_TITLE_LIMITS.max
+            }
+          }}
+        />
       )}
     />
   );
