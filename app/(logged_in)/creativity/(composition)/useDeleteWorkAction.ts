@@ -3,17 +3,12 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { COMPOSITION_ACTIONS_MESSAGES } from '~/constants/opus';
 import {
   PaginatedWorksDocument,
   useDeleteCompositionMutation,
   useUnlinkCompositionMutation
 } from '~/types/graphql/generated/graphql';
-
-const TOAST_MESSAGES = {
-  DELETE_SUCCESS: 'Твір успішно видалено',
-  UNLINK_SUCCESS: 'Твір успішно видалено з групи',
-  DELETE_ERROR: 'Помилка при видаленні твору'
-};
 
 interface UseDeleteWorkActionProps {
   onSuccess?: (deletedId: string) => void;
@@ -35,11 +30,11 @@ export function useDeleteWorkAction({ onSuccess }: UseDeleteWorkActionProps = {}
         awaitRefetchQueries: true
       });
 
-      toast.success(TOAST_MESSAGES.DELETE_SUCCESS);
+      toast.success(COMPOSITION_ACTIONS_MESSAGES.DELETE_SUCCESS);
       onSuccess?.(deleteComposition);
       setDeleteComposition(null);
     } catch {
-      toast.error(TOAST_MESSAGES.DELETE_ERROR);
+      toast.error(COMPOSITION_ACTIONS_MESSAGES.DELETE_ERROR);
     }
   };
 
@@ -56,11 +51,11 @@ export function useDeleteWorkAction({ onSuccess }: UseDeleteWorkActionProps = {}
         awaitRefetchQueries: true
       });
 
-      toast.success(TOAST_MESSAGES.UNLINK_SUCCESS);
+      toast.success(COMPOSITION_ACTIONS_MESSAGES.UNLINK_SUCCESS);
       onSuccess?.(unlinkComposition.compositionId);
       setUnlinkComposition(null);
     } catch {
-      toast.error(TOAST_MESSAGES.DELETE_ERROR);
+      toast.error(COMPOSITION_ACTIONS_MESSAGES.DELETE_ERROR);
     }
   };
 

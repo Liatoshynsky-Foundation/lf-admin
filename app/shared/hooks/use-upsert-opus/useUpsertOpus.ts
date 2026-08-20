@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import {
   COMPOSITION_DUPLICATE_ERROR,
   COMPOSITION_NAME_REQUIRED_ERROR,
+  COMPOSITION_REQUIRED_FIELDS_ERROR,
   initialOpusDetails,
   initialOpusSeoValue,
   OPUS_FIELD_LIMITS,
@@ -11,6 +12,7 @@ import {
   OPUS_VALIDATION_MESSAGES
 } from '~/constants/opus';
 import {
+  getCompositionFieldErrors,
   getDuplicateCompositionError,
   getDuplicateCompositionIds,
   getErrorMessage,
@@ -302,9 +304,8 @@ export const useUpsertOpus = (
     setDetailsErrors(errors);
 
     const invalidIds = getInvalidCompositionIds(value.compositions);
-    setCompositionErrors(
-      Object.fromEntries(invalidIds.map((id) => [`compositions.${id}.name`, '']))
-    );
+    const titleErrors = getCompositionFieldErrors(value.compositions);
+    setCompositionErrors(titleErrors);
 
     const duplicateIds = getDuplicateCompositionIds(value.compositions);
     if (duplicateIds.length > 0) {
@@ -315,11 +316,20 @@ export const useUpsertOpus = (
       toast.error( COMPOSITION_NAME_REQUIRED_ERROR);
     }
 
+    const hasTopLevelValidationErrors = Boolean(numberError || nameError || creationYearError);
+    const hasCompositionValidationErrors =
+      Object.keys(titleErrors).length > 0 && invalidIds.length === 0 && duplicateIds.length === 0;
+
+    if (hasTopLevelValidationErrors || hasCompositionValidationErrors) {
+      toast.error(COMPOSITION_REQUIRED_FIELDS_ERROR);
+    }
+
     return (
       !numberError &&
       !nameError &&
       !creationYearError &&
       invalidIds.length === 0 &&
+      Object.keys(titleErrors).length === 0 &&
       duplicateIds.length === 0
     );
   };

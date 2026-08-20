@@ -1,4 +1,5 @@
 import {
+  getCompositionFieldErrors,
   getCompositionNameRequiredMessage,
   getDuplicateCompositionError,
   getDuplicateCompositionIds,
@@ -8,6 +9,7 @@ import {
   isCompositionNameRequiredError,
   normalizeCompositionName
 } from './compositionErrors';
+import { COMPOSITION_VALIDATION_MESSAGES } from '~/constants/opus';
 
 describe('composition error utilities', () => {
   it('normalizes names using trimming and Ukrainian case folding', () => {
@@ -27,6 +29,32 @@ describe('composition error utilities', () => {
 
   it('finds empty composition names', () => {
     expect(getInvalidCompositionIds([{ id: 'one', name: ' ' }, { id: 'two', name: 'Valid' }])).toEqual(['one']);
+  });
+
+  it('returns consistent name, genre, and year errors for composition fields', () => {
+    expect(
+      getCompositionFieldErrors([
+        { id: 'invalid', name: 'A', genre: 'G', year: '20' },
+        { id: 'valid', name: 'Valid', genre: '', year: '' }
+      ])
+    ).toEqual({
+      'compositions.invalid.name': COMPOSITION_VALIDATION_MESSAGES.titleTooShort,
+      'compositions.invalid.genre': COMPOSITION_VALIDATION_MESSAGES.genreTooShort,
+      'compositions.invalid.year': COMPOSITION_VALIDATION_MESSAGES.yearInvalid
+    });
+  });
+
+  it('handles missing optional composition fields while reporting invalid values', () => {
+    expect(
+      getCompositionFieldErrors([
+        { id: 'missing', name: 'Valid' },
+        { id: 'invalid', name: '', genre: 'A', year: 'bad' }
+      ])
+    ).toEqual({
+      'compositions.invalid.name': COMPOSITION_VALIDATION_MESSAGES.titleRequired,
+      'compositions.invalid.genre': COMPOSITION_VALIDATION_MESSAGES.genreTooShort,
+      'compositions.invalid.year': COMPOSITION_VALIDATION_MESSAGES.yearInvalid
+    });
   });
 
   it('extracts error messages from Error, string, and unknown values', () => {
