@@ -183,7 +183,7 @@ export const ImagePreviewBlock = ({
 
         {dimensions ? (
           <Typography variant="body2" color="text.secondary" sx={styles.imageSizeText}>
-            Розмір: {dimensions.width} × {dimensions.height}
+            Розмір: {dimensions.width}×{dimensions.height}
           </Typography>
         ) : null}
       </Stack>
@@ -197,7 +197,7 @@ export const ImagePreviewBlock = ({
           fullWidth
           margin="none"
           multiline
-          maxRows={4}
+          maxRows={2}
           disabled={!previewImage}
           error={altTextErrorState}
           helperText={altTextError}

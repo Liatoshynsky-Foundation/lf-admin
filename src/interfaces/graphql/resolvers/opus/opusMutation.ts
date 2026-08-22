@@ -52,8 +52,8 @@ export type CreateOpusGQLInput = {
   genre?: LocalizedString;
   compositions?: GQLComposition[];
   adminTitle?: string;
-  title: LocalizedString;
-  description: OpusDescription;
+  title?: LocalizedString;
+  description?: OpusDescription;
   introDescription?: OpusDescription;
   parts?: OpusDescription;
   gallery?: OpusGalleryItem[];

@@ -16,6 +16,14 @@ export interface SeoBlockValue {
   ticketUrl?: { uk: string; en: string };
 }
 
+export type SeoBlockErrors = {
+  meta: {
+    uk: Partial<Record<keyof LocalizedMeta, string>>;
+    en: Partial<Record<keyof LocalizedMeta, string>>;
+  };
+  ticketUrl?: Partial<{ uk: string; en: string }>;
+};
+
 const defaultValue: SeoBlockValue = {
   meta: {
     uk: { title: '', description: '', keywords: '', canonicalUrl: undefined },
@@ -30,7 +38,9 @@ export interface SeoMetadataBlockProps {
   readonly showAlternativeText?: boolean;
   readonly showTicketUrl?: boolean;
   readonly extraFieldsBeforeKeywords?: boolean;
+  readonly required?: boolean;
   readonly forceShowErrors?: boolean;
+  readonly errors?: SeoBlockErrors;
   readonly value?: SeoBlockValue;
   readonly crop?: LocalizedCropRect | null;
   readonly onChangeCrop?: (newCrop: LocalizedCropRect | null) => void;
@@ -46,7 +56,9 @@ export default function SeoMetadataBlock({
   showAlternativeText = false,
   showTicketUrl = false,
   extraFieldsBeforeKeywords = false,
+  required = true,
   forceShowErrors = false,
+  errors,
   value: externalValue,
   crop,
   onChangeCrop,
@@ -56,39 +68,8 @@ export default function SeoMetadataBlock({
   const [internalValue, setInternalValue] = useState<SeoBlockValue>(defaultValue);
   const [ticketUrlTouched, setTicketUrlTouched] = useState<{ uk: boolean; en: boolean }>({ uk: false, en: false });
   const [ticketUrlError, setTicketUrlError] = useState<{ uk: string; en: string }>({ uk: '', en: '' });
-
-  useEffect(() => {
-    if (forceShowErrors && showTicketUrl) {
-      setTicketUrlTouched({ uk: true, en: true });
-      setTicketUrlError({
-        uk: validateTicketUrl(value?.ticketUrl?.uk ?? '', 'uk'),
-        en: validateTicketUrl(value?.ticketUrl?.en ?? '', 'en')
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [forceShowErrors]);
-
-  const validateTicketUrl = (val: string, locale: 'uk' | 'en') => {
-    const translationForErrors = seoFormErrors[locale];
-    if (!val.trim()) return translationForErrors.required;
-    try {
-      new URL(val);
-      return '';
-    } catch {
-      return translationForErrors.invalidUrl;
-    }
-  };
-
-  const handleTicketUrlChange = (locale: 'uk' | 'en', val: string) => {
-    handleChange({ ...value, ticketUrl: { ...(value.ticketUrl ?? { uk: '', en: '' }), [locale]: val } });
-    if (ticketUrlTouched[locale]) setTicketUrlError((prev) => ({ ...prev, [locale]: validateTicketUrl(val, locale) }));
-  };
-
-  const handleTicketUrlBlur = (locale: 'uk' | 'en') => {
-    setTicketUrlTouched((prev) => ({ ...prev, [locale]: true }));
-    setTicketUrlError((prev) => ({ ...prev, [locale]: validateTicketUrl(value.ticketUrl?.[locale] ?? '', locale) }));
-  };
-
+  const isExternalValidation = errors !== undefined;
+  const [displayTicketErrors, setDisplayTicketErrors] = useState(errors?.ticketUrl);
   const isControlled = externalValue !== undefined && externalOnChange !== undefined;
   const value = isControlled ? externalValue : internalValue;
 
@@ -100,6 +81,44 @@ export default function SeoMetadataBlock({
     }
   };
 
+  useEffect(() => {
+    setDisplayTicketErrors(errors?.ticketUrl);
+  }, [errors?.ticketUrl]);
+
+  useEffect(() => {
+    if (!forceShowErrors || isExternalValidation || !showTicketUrl) return;
+    setTicketUrlTouched({ uk: true, en: true });
+    setTicketUrlError({
+      uk: validateTicketUrl(value.ticketUrl?.uk ?? '', 'uk'),
+      en: validateTicketUrl(value.ticketUrl?.en ?? '', 'en')
+    });
+  }, [forceShowErrors, isExternalValidation, showTicketUrl, value.ticketUrl?.en, value.ticketUrl?.uk]);
+
+  const validateTicketUrl = (val: string, locale: 'uk' | 'en') => {
+    if (!val.trim()) return seoFormErrors[locale].required;
+    try {
+      new URL(val);
+      return '';
+    } catch {
+      return seoFormErrors[locale].invalidUrl;
+    }
+  };
+
+  const handleTicketUrlChange = (locale: 'uk' | 'en', val: string) => {
+    handleChange({ ...value, ticketUrl: { ...(value.ticketUrl ?? { uk: '', en: '' }), [locale]: val } });
+    if (isExternalValidation) {
+      setDisplayTicketErrors((previous) => ({ ...previous, [locale]: '' }));
+    } else if (ticketUrlTouched[locale]) {
+      setTicketUrlError((prev) => ({ ...prev, [locale]: validateTicketUrl(val, locale) }));
+    }
+  };
+
+  const handleTicketUrlBlur = (locale: 'uk' | 'en') => {
+    if (isExternalValidation) return;
+    setTicketUrlTouched((prev) => ({ ...prev, [locale]: true }));
+    setTicketUrlError((prev) => ({ ...prev, [locale]: validateTicketUrl(value.ticketUrl?.[locale] ?? '', locale) }));
+  };
+
   const buildExtraFields = (
     locale: 'uk' | 'en',
     localeMeta: LocalizedMeta,
@@ -107,6 +126,13 @@ export default function SeoMetadataBlock({
   ) => {
     const externalExtra = extraFields?.(locale, localeMeta, onLocaleMeta);
     if (!showTicketUrl) return externalExtra;
+    let ticketUrlHelperText = '';
+    if (isExternalValidation) {
+      ticketUrlHelperText = displayTicketErrors?.[locale] ?? '';
+    } else if (ticketUrlTouched[locale]) {
+      ticketUrlHelperText = ticketUrlError[locale];
+    }
+
     return (
       <>
         <TextField
@@ -114,8 +140,12 @@ export default function SeoMetadataBlock({
           value={value.ticketUrl?.[locale] ?? ''}
           onChange={(e) => handleTicketUrlChange(locale, e.target.value)}
           onBlur={() => handleTicketUrlBlur(locale)}
-          error={ticketUrlTouched[locale] && Boolean(ticketUrlError[locale])}
-          helperText={ticketUrlTouched[locale] && ticketUrlError[locale] ? ticketUrlError[locale] : ''}
+          error={
+            isExternalValidation
+              ? Boolean(displayTicketErrors?.[locale])
+              : ticketUrlTouched[locale] && Boolean(ticketUrlError[locale])
+          }
+          helperText={ticketUrlHelperText}
           fullWidth
           size="small"
           sx={styles.textField}
@@ -138,7 +168,9 @@ export default function SeoMetadataBlock({
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, uk: val } })}
         showAlternativeText={showAlternativeText}
         extraFieldsBeforeKeywords={extraFieldsBeforeKeywords}
+        required={required}
         forceShowErrors={forceShowErrors}
+        errors={errors?.meta.uk}
         crop={crop?.uk ?? null}
         onChangeCrop={(newUkCrop) => onChangeCrop?.({ uk: newUkCrop, en: crop?.en ?? null })}
         extraFields={
@@ -157,7 +189,9 @@ export default function SeoMetadataBlock({
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, en: val } })}
         showAlternativeText={showAlternativeText}
         extraFieldsBeforeKeywords={extraFieldsBeforeKeywords}
+        required={required}
         forceShowErrors={forceShowErrors}
+        errors={errors?.meta.en}
         crop={crop?.en ?? null}
         onChangeCrop={(newEnCrop) => onChangeCrop?.({ uk: crop?.uk ?? null, en: newEnCrop })}
         extraFields={

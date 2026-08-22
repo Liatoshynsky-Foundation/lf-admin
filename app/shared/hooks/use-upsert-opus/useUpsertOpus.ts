@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { seoFormErrors } from '~/constants/errors';
 import {
   COMPOSITION_DUPLICATE_ERROR,
   COMPOSITION_NAME_REQUIRED_ERROR,
@@ -21,7 +22,9 @@ import {
   normalizeCompositionName
 } from '~/lib/utils/compositionErrors';
 import { generateUniqueId } from '~/lib/utils/generateUniqueId';
-import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
+import type { SeoBlockErrors, SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
+import type { LocalizedMeta } from '~/shared/components/forms/seo-metadata-form/SeoMetadataForm';
+import { type SeoField, validateSeoField } from '~/shared/components/forms/seo-metadata-form/validateSeoField';
 import { useCreateOpus, useOpusById, useUpdateOpus } from '~/shared/hooks/use-opuses/useOpuses';
 import { CropRect } from '~/types/common';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
@@ -47,6 +50,34 @@ const fileNameFromUrl = (url?: string | null): string => {
   const segment = url.split('/').pop() ?? url;
 
   return decodeURIComponent(segment.split('?')[0]);
+};
+
+const getSeoMetaErrors = (
+  meta: SeoBlockValue['meta']['uk'],
+  altLocale: 'uk' | 'en',
+  hasPreviewImage: boolean
+): Partial<Record<keyof LocalizedMeta, string>> => {
+  const getError = (field: SeoField, value: string, required = false): string => {
+    const error = validateSeoField(field, value, { required });
+    return error ? seoFormErrors[altLocale][error] : '';
+  };
+
+  return {
+    title: getError('title', meta.title),
+    description: getError('description', meta.description),
+    keywords: getError('keywords', meta.keywords),
+    altText: hasPreviewImage ? getError('altText', meta.altText?.[altLocale] ?? '', true) : ''
+  };
+};
+
+const getAltText = (
+  altText: string | undefined,
+  hasOgImage: boolean,
+  fallback: string
+): string => {
+  const trimmedAlt = altText?.trim();
+
+  return hasOgImage ? (trimmedAlt ?? '') : (trimmedAlt || fallback);
 };
 
 export const toCompositionInput = (
@@ -99,10 +130,11 @@ export type UseUpsertOpusResult = {
       | ((prev: SeoBlockValue) => SeoBlockValue)
   ) => void;
 
+  seoErrors?: SeoBlockErrors;
+
   crop: CropRect | null;
   setCrop: (value: CropRect | null) => void;
 
-  forceShowErrors: boolean;
   isSaved: boolean;
 
   handleSave: (
@@ -130,9 +162,9 @@ export const useUpsertOpus = (
 
   const [seoValue, setSeoValue] =
     useState<SeoBlockValue>(initialOpusSeoValue);
+  const [seoErrors, setSeoErrors] = useState<SeoBlockErrors>({ meta: { uk: {}, en: {} } });
     
   const [crop, setCrop] = useState<CropRect | null>(null);
-  const [forceShowErrors, setForceShowErrors] = useState(false);
   const [isSaved, setIsSaved] = useState(isEditing);
 
   const latestDataRef = useRef({ details, seoValue, crop });
@@ -248,7 +280,7 @@ export const useUpsertOpus = (
     setIsSaved(true);
   }, [changeDetails, changeSeoValue, changeCrop, isEditing, opusQuery.data]);
 
-  const validate = (value: OpusDetailsValue): boolean => {
+  const validateDetails = (value: OpusDetailsValue): boolean => {
     const number = value.number.trim();
     const name = value.name.trim();
     const creationYear = value.creationYear.trim();
@@ -344,17 +376,31 @@ export const useUpsertOpus = (
 
   const handleSave = async (status: BaseContentStatuses): Promise<string | undefined> => {
     const { details: currentDetails, seoValue: currentSeo, crop: currentCrop } = latestDataRef.current;
+    const { uk: ukMeta, en: enMeta } = currentSeo.meta;
+    const nextSeoErrors = {
+      meta: {
+        uk: getSeoMetaErrors(ukMeta, 'uk', Boolean(currentSeo.ogImage)),
+        en: getSeoMetaErrors(enMeta, 'en', Boolean(currentSeo.ogImage))
+      }
+    };
+    const hasSeoErrors = Object.values(nextSeoErrors.meta).some((errors) => Object.values(errors).some(Boolean));
 
-    if (!validate(currentDetails)) {
-      setForceShowErrors(true);
+    setSeoErrors(nextSeoErrors);
 
+    if (!validateDetails(currentDetails)) {
       return undefined;
     }
 
     clearCompositionErrors();
 
-    const { uk: ukMeta, en: enMeta } = currentSeo.meta;
     const opusName = currentDetails.name.trim();
+    const hasOgImage = Boolean(currentSeo.ogImage);
+
+    if (hasSeoErrors) {
+      toast.error(COMPOSITION_REQUIRED_FIELDS_ERROR);
+      return undefined;
+    }
+
     const input = {
       numberKind: currentDetails.numberKind as unknown as OpusNumberKind,
       number: Number(currentDetails.number.trim()),
@@ -372,13 +418,16 @@ export const useUpsertOpus = (
       },
       compositions: currentDetails.compositions.map(toCompositionInput),
       adminTitle: opusName,
-      title: { uk: ukMeta.title.trim() || opusName, en: enMeta.title.trim() || opusName },
+      title: { uk: ukMeta.title.trim(), en: enMeta.title.trim() },
       description: { uk: ukMeta.description.trim(), en: enMeta.description.trim() },
       keywords: { uk: ukMeta.keywords.trim(), en: enMeta.keywords.trim() },
       allowIndexation: { uk: currentSeo.allowIndexing.uk, en: currentSeo.allowIndexing.en },
       coverImage: {
         src: currentSeo.ogImage || opusName,
-        alt: { uk: ukMeta.altText?.uk || opusName, en: enMeta.altText?.en || opusName },
+        alt: {
+          uk: getAltText(ukMeta.altText?.uk, hasOgImage, opusName),
+          en: getAltText(enMeta.altText?.en, hasOgImage, opusName),
+        },
         caption: { uk: opusName, en: opusName },
         ...(currentCrop && { crop: currentCrop })
       },
@@ -430,9 +479,9 @@ export const useUpsertOpus = (
     compositionErrors,
     seoValue,
     setSeoValue: changeSeoValue,
+    seoErrors,
     crop,
     setCrop: changeCrop,
-    forceShowErrors,
     isSaved,
     handleSave
   };
