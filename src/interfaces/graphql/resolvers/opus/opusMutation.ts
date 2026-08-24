@@ -8,6 +8,7 @@ import {
   compositionNameTakenError,
   throwIfCompositionNameDuplicateKey
 } from '../compositions/compositionNameValidation';
+import { ensureSheetMusicAssets, syncCompositionMediaUsageRefs } from '../compositions/sheetMusicAssets';
 import { markImagesAsUsed, processSlugUpdate, syncImagesCrops } from '../helpers';
 import { orderCompositionsByIds } from './tab-handlers/tabHandlersHelpers';
 import { opusServiceErrors } from '~/back-constants/errors';
@@ -486,6 +487,13 @@ export const OpusMutation = {
     if (input.coverImage) {
       await markImagesAsUsed(assetsRepo, null, input.coverImage, 'opus', opus.id);
     }
+    await ensureSheetMusicAssets(
+      (input.compositions ?? []).flatMap((composition) => composition.notes?.map((note) => note.fileUrl)),
+      assetsRepo
+    );
+    await Promise.all(
+      compositions.map((composition) => syncCompositionMediaUsageRefs(composition.id, null, composition, assetsRepo))
+    );
 
     return { ...opus, compositions };
   },
@@ -545,6 +553,10 @@ export const OpusMutation = {
       await assertCompositionsNamesNotTaken(compositionsRepo, input.compositions);
     }
 
+    const previousCompositions = input.compositions === undefined
+      ? []
+      : await compositionsRepo.findByIds((existingOpus.compositions ?? []).map((compositionId) => compositionId.toString()));
+
     const { opus, compositions } = await withTransaction(async (session) => {
       const syncedCompositions = await handleCompositionsSync(
         compositionsRepo,
@@ -572,6 +584,28 @@ export const OpusMutation = {
     }
     if (input.coverImage) {
       await markImagesAsUsed(assetsRepo, null, input.coverImage, 'opus', opus.id);
+    }
+    if (input.compositions !== undefined) {
+      await ensureSheetMusicAssets(
+        input.compositions.flatMap((composition) => composition.notes?.map((note) => note.fileUrl)),
+        assetsRepo
+      );
+      const previousCompositionById = new Map(previousCompositions.map((composition) => [composition.id, composition]));
+      const updatedCompositionIds = new Set(compositions.map((composition) => composition.id));
+
+      await Promise.all([
+        ...compositions.map((composition) =>
+          syncCompositionMediaUsageRefs(
+            composition.id,
+            previousCompositionById.get(composition.id),
+            composition,
+            assetsRepo
+          )
+        ),
+        ...previousCompositions
+          .filter((composition) => !updatedCompositionIds.has(composition.id))
+          .map((composition) => syncCompositionMediaUsageRefs(composition.id, composition, null, assetsRepo))
+      ]);
     }
 
     return { ...opus, compositions };

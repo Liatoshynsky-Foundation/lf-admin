@@ -7,6 +7,7 @@ import {
   normalizeCompositionName,
   throwIfCompositionNameDuplicateKey
 } from './compositionNameValidation';
+import { ensureSheetMusicAssets, syncCompositionMediaUsageRefs } from './sheetMusicAssets';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
 import type { Composition } from '~/domain/entities/Composition';
@@ -59,7 +60,7 @@ export const CompositionsMutation = {
   ): Promise<Composition> => {
     assertAuthenticated(context);
 
-    const { compositionsRepository: repo, opusRepository: opusRepo } = context.requestContainer.cradle;
+    const { compositionsRepository: repo, opusRepository: opusRepo, assetsRepository } = context.requestContainer.cradle;
 
     await assertCompositionNameNotTaken(repo, input.name.uk);
     assertCompositionGenreValid(input.genre);
@@ -67,7 +68,7 @@ export const CompositionsMutation = {
 
     const compositionData = mapCompositionInput(input);
 
-    return withTransaction(async (session) => {
+    const composition = await withTransaction(async (session) => {
       let composition: Composition;
       try {
         composition = await repo.create(compositionData, session);
@@ -84,13 +85,21 @@ export const CompositionsMutation = {
 
       return composition;
     });
+
+    await ensureSheetMusicAssets(
+      compositionData.sheetMusic?.map((sheet) => sheet.url) ?? [],
+      assetsRepository
+    );
+    await syncCompositionMediaUsageRefs(composition.id, null, composition, assetsRepository);
+
+    return composition;
   },
 
   updateComposition: async (_: unknown, { id, input }: UpdateCompositionArgs, context: GraphQLContext): Promise<Composition> => {
     assertAuthenticated(context);
-    const repo = context.requestContainer.cradle.compositionsRepository;
+    const { compositionsRepository: repo, assetsRepository } = context.requestContainer.cradle;
 
-    await findExistingComposition(repo, id);
+    const existingComposition = await findExistingComposition(repo, id);
     if (input.name != null) {
       await assertCompositionNameNotTaken(repo, input.name.uk, id);
     }
@@ -120,6 +129,20 @@ export const CompositionsMutation = {
         extensions: { code: 'COMPOSITION_UPDATE_FAILED' }
       });
     }
+
+    if (input.sheetMusic != null) {
+      await ensureSheetMusicAssets(
+        input.sheetMusic.map((sheet) => sheet.url),
+        assetsRepository
+      );
+    }
+
+    await syncCompositionMediaUsageRefs(
+      updatedComposition.id,
+      existingComposition,
+      updatedComposition,
+      assetsRepository
+    );
 
     return updatedComposition;
   },

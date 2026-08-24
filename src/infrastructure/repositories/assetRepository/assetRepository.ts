@@ -11,6 +11,7 @@ type AssetType = 'image' | 'pdf' | 'audio' | 'document' | 'spreadsheet' | 'video
 
 type AssetUsageRef = {
   pageId?: string;
+  compositionId?: string;
   blockId?: string;
   locale?: string;
 };
@@ -326,12 +327,17 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
     await AssetModel.findOneAndUpdate({ url }, { $addToSet: { usageRefs: ref } }, { session });
   };
 
+  const removeUsageRef = async (url: string, ref: AssetUsageRef, session?: ClientSession): Promise<void> => {
+    await AssetModel.findOneAndUpdate({ url }, { $pull: { usageRefs: ref } }, { session });
+  };
+
   return {
     ...baseRepo,
     updateAsset,
     createAsset,
     findByUrls,
     deleteAsset,
-    addUsageRef
+    addUsageRef,
+    removeUsageRef
   };
 };

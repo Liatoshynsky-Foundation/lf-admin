@@ -3,6 +3,7 @@ import { type InferSchemaType, type Model, model, models, Schema, Types } from '
 const usageRefSchema = new Schema(
   {
     pageId: { type: String, required: false, index: true },
+    compositionId: { type: String, required: false },
     blockId: { type: String, required: false, trim: true }
   },
   { _id: false }
