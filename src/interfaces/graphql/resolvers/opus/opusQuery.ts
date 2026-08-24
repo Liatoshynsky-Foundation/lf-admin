@@ -1,5 +1,6 @@
 import { GraphQLError } from 'graphql';
 
+import { withCompositionMediaDisplayNames } from '../compositions/sheetMusicDisplayName';
 import { endpointRepositoryHandler, mapFilters } from '../helpers';
 import { handleGroup } from './tab-handlers/handleGroup';
 import { handleMixed } from './tab-handlers/handleMixed';
@@ -63,7 +64,12 @@ export const OpusQuery = {
       await context.requestContainer.cradle.compositionsRepository.findByIds(compositionIds)
     );
 
-    return { ...opus, compositions };
+    const compositionsWithDisplayNames = await withCompositionMediaDisplayNames(
+      compositions,
+      context.requestContainer.cradle.assetsRepository
+    );
+
+    return { ...opus, compositions: compositionsWithDisplayNames };
   },
 
   searchCompositions: async (

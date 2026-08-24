@@ -54,6 +54,9 @@ const fileNameFromUrl = (url?: string): string => {
   return decodeURIComponent(segment.split('?')[0]);
 };
 
+const getFileDisplayName = (file: { fileDisplayName?: string; name?: string; fileUrl?: string }): string =>
+  file.fileDisplayName || file.name || fileNameFromUrl(file.fileUrl);
+
 export default function CompositionModal({
   open,
   mode,
@@ -134,7 +137,9 @@ export default function CompositionModal({
   const clearNoteFile = (id: string): void => {
     setComposition((prev) => ({
       ...prev,
-      notes: prev.notes.map((row) => (row.id === id ? { ...row, fileUrl: undefined } : row))
+      notes: prev.notes.map((row) =>
+        row.id === id ? { ...row, fileUrl: undefined, fileDisplayName: undefined } : row
+      )
     }));
   };
 
@@ -154,7 +159,7 @@ export default function CompositionModal({
         audios: [...prev.audios, { id: createCompositionId(), name: fileName, fileUrl: url }]
       }));
     } else if (mediaTarget.rowId) {
-      updateNoteRow(mediaTarget.rowId, { fileUrl: url });
+      updateNoteRow(mediaTarget.rowId, { fileUrl: url, fileDisplayName: fileName });
     }
 
     setMediaTarget(null);
@@ -315,7 +320,7 @@ export default function CompositionModal({
           {composition.audios.map((audio) => (
             <Box key={audio.id} sx={styles.fileChip}>
               <Music size={20} strokeWidth={1.5} />
-              <Typography sx={styles.fileChipName}>{audio.name || fileNameFromUrl(audio.fileUrl)}</Typography>
+              <Typography sx={styles.fileChipName}>{getFileDisplayName(audio)}</Typography>
               <IconButton
                 aria-label={COMPOSITION_MODAL_TEXTS.deleteAriaLabel}
                 onClick={() => removeMediaRow('audios', audio.id)}
@@ -383,7 +388,7 @@ export default function CompositionModal({
                 {note.fileUrl && (
                   <Box sx={styles.fileChip}>
                     <FileText size={20} strokeWidth={1.5} />
-                    <Typography sx={styles.fileChipName}>{fileNameFromUrl(note.fileUrl)}</Typography>
+                    <Typography sx={styles.fileChipName}>{getFileDisplayName(note)}</Typography>
                     <IconButton
                       aria-label={COMPOSITION_MODAL_TEXTS.deleteFileAriaLabel}
                       onClick={() => clearNoteFile(note.id)}

@@ -269,6 +269,12 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
     return toEntity(newDoc);
   };
 
+  const findByUrls = async (urls: string[]): Promise<AssetEntity[]> => {
+    const assets = await AssetModel.find({ url: { $in: urls } });
+
+    return assets.map(toEntity);
+  };
+
   const getCloudStoragePath = (asset: DbAsset) => {
     let folder = 'uploads';
     let filename = asset.filename;
@@ -324,6 +330,7 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
     ...baseRepo,
     updateAsset,
     createAsset,
+    findByUrls,
     deleteAsset,
     addUsageRef
   };

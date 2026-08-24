@@ -263,7 +263,12 @@ export const useGroupContent = (id: string) => {
           ),
           notes: (composition.sheetMusic ?? []).map((sheet) =>
             mapMediaItemFromApi(
-                sheet as { name?: string | null; url?: string | null; publishDate?: string | null },
+                sheet as {
+                  name?: string | null;
+                  url?: string | null;
+                  displayName?: string | null;
+                  publishDate?: string | null;
+                },
                 createCompositionId
             )
           )

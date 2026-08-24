@@ -178,7 +178,7 @@ export function GalleryView({ selected, onPick, filters, onFiltersChange, mediaK
     onPick({
       kind: 'gallery',
       id: item.id,
-      fileName: item.filename,
+      fileName: item.originalname || item.filename,
       src: item.url,
       locale: 'uk'
     });

@@ -7,6 +7,7 @@ export const fileNameFromUrl = (url?: string | null): string => {
 interface ApiMediaItem {
   name?: string | null;
   url?: string | null;
+  displayName?: string | null;
   publishDate?: string | null;
 }
 
@@ -14,6 +15,7 @@ export interface LocalMediaItem {
   id: string;
   name: string;
   fileUrl: string;
+  fileDisplayName?: string;
   publishDate?: string;
 }
 
@@ -26,6 +28,7 @@ export const mapMediaItemFromApi = (
     id: createId(),
     name: item.name ?? fileNameFromUrl(urlVal),
     fileUrl: urlVal,
+    fileDisplayName: item.displayName ?? undefined,
     publishDate: item.publishDate ?? ''
   };
 };

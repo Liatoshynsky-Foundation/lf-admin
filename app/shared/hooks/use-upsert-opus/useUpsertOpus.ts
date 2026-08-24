@@ -241,12 +241,14 @@ export const useUpsertOpus = (
         audios: (composition.audios ?? []).map((audio) => ({
           id: createCompositionId(),
           name: audio.name ?? fileNameFromUrl(audio.url),
+          fileDisplayName: audio.displayName ?? undefined,
           fileUrl: audio.url ?? ''
         })),
         notes: (composition.sheetMusic ?? []).map((sheet) => ({
           id: createCompositionId(),
           name: sheet.name ?? fileNameFromUrl(sheet.url),
           fileUrl: sheet.url ?? '',
+          fileDisplayName: sheet.displayName ?? undefined,
           publishDate: sheet.publishDate ?? ''
         }))
       }))

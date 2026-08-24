@@ -1,5 +1,6 @@
 import { GraphQLError } from 'graphql';
 
+import { withCompositionMediaDisplayNames } from './sheetMusicDisplayName';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
 import type { Composition } from '~/domain/entities/Composition';
@@ -31,6 +32,11 @@ export const CompositionsQuery = {
       return null;
     }
 
-    return composition;
+    const [compositionWithDisplayNames] = await withCompositionMediaDisplayNames(
+      [composition],
+      context.requestContainer.cradle.assetsRepository
+    );
+
+    return compositionWithDisplayNames;
   }
 };

@@ -6,6 +6,7 @@ export interface OpusMediaFileData {
   id: string;
   name?: string;
   fileUrl?: string;
+  fileDisplayName?: string;
   publishDate?: string;
   isFree?: boolean;
 }
@@ -14,6 +15,7 @@ export interface OpusAudioFileData {
   id: string;
   name: string;
   fileUrl: string;
+  fileDisplayName?: string;
 }
 
 export interface OpusCompositionData {
@@ -114,10 +116,15 @@ export interface FetchedOpusData {
     sheetMusic?: Array<{
       url: string;
       name?: string | null;
+      displayName?: string | null;
       publishDate?: string | null;
       isFree?: boolean | null;
       dateUploaded?: string | null;
     }> | null;
-    audios?: Array<{ name?: string | null; url?: string | null }> | null;
+    audios?: Array<{ 
+      name?: string | null; 
+      displayName?: string | null; 
+      url?: string | null; 
+    }> | null;
   }> | null;
 }

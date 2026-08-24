@@ -1,6 +1,7 @@
 type CompositionSheetMusic {
   url: String
   name: String
+  displayName: String
   publishDate: String
   isFree: Boolean
   dateUploaded: String
@@ -9,6 +10,7 @@ type CompositionSheetMusic {
 type CompositionAudio {
   name: String!
   url: String!
+  displayName: String
 }
 
 type Composition {
