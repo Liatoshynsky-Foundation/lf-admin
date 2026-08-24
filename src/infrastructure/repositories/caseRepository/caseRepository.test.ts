@@ -175,6 +175,14 @@ describe('caseRepository', () => {
       expect(findAllMock).toHaveBeenCalledWith({ fundId: mockFundId });
     });
 
+    it('should add a status condition to the query when the statuses filter is provided', async () => {
+      findAllMock.mockReturnValue(createMockQueryBuilder([]));
+
+      await repository.findAll({ statuses: [BaseContentStatuses.Published] });
+
+      expect(findAllMock).toHaveBeenCalledWith({ status: { $in: [BaseContentStatuses.Published] } });
+    });
+
     it('should combine the fundId condition with other filters using $and', async () => {
       findAllMock.mockReturnValue(createMockQueryBuilder([]));
 

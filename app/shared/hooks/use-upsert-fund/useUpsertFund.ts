@@ -2,10 +2,12 @@
 
 import { JSONContent } from '@tiptap/react';
 import { useParams } from 'next/navigation';
+import type { Dispatch, SetStateAction } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { FundErrors } from '~/constants/errors';
+import { FUND_PUBLISH_SUCCESS_MESSAGE } from '~/constants/fund';
 import { resolveLocalizedText, textToProse } from '~/lib/utils/prose';
 import { FundDetailsErrors, FundDetailsValue } from '~/shared/components/forms/fund-details-block/FundDetailsBlock';
 import { useCreateFund, useFundById, useUpdateFund } from '~/shared/hooks/use-funds/useFunds';
@@ -45,6 +47,68 @@ const INITIAL_DETAILS: FundDetailsValue = {
   description: createInitialDescription(),
   casesCount: 0,
   descriptionsCount: 0
+};
+
+const resolveFundStatus = (status?: string | null): BaseContentStatuses => {
+  const statuses = Object.values(BaseContentStatuses);
+  return statuses.includes(status as BaseContentStatuses)
+    ? (status as BaseContentStatuses)
+    : BaseContentStatuses.Hidden;
+};
+
+const buildFundPayload = (details: FundDetailsValue, status: BaseContentStatuses): CreateFundInput => ({
+  fundNumber: Number(details.fundNumber),
+  name: details.name,
+  documentCreationDate: { uk: details.documentCreationDate, en: details.documentCreationDate },
+  chronologicalBoundaries: details.chronologicalBoundaries
+    ? { uk: details.chronologicalBoundaries, en: details.chronologicalBoundaries }
+    : undefined,
+  organizationForm: details.organizationForm?.uk ? details.organizationForm : undefined,
+  description: {
+    uk: JSON.stringify(details.description.uk),
+    en: JSON.stringify(details.description.en)
+  },
+  status: status as unknown as CreateFundInput['status']
+});
+
+const getFundSaveMessages = (status: BaseContentStatuses) => {
+  const isPublishing = status === BaseContentStatuses.Published;
+
+  return {
+    successMessage: isPublishing ? FUND_PUBLISH_SUCCESS_MESSAGE : 'Фонд збережено.',
+    errorMessage: isPublishing ? FundErrors.FAILED_TO_PUBLISH : FundErrors.FAILED_TO_CREATE
+  };
+};
+
+type SaveErrorHandlers = {
+  errorMessage: string;
+  fundNumber: string;
+  setErrors: Dispatch<SetStateAction<FundDetailsErrors>>;
+  setForceShowErrors: Dispatch<SetStateAction<boolean>>;
+};
+
+const handleFundSaveError = (
+  error: unknown,
+  { errorMessage, fundNumber, setErrors, setForceShowErrors }: SaveErrorHandlers
+): null => {
+  const message = error instanceof Error ? error.message : String(error);
+
+  if (message.includes('уже існує')) {
+    const duplicateErrorMsg = FundErrors.NUMBER_ALREADY_EXISTS(Number(fundNumber));
+    setErrors((prev) => ({ ...prev, fundNumber: duplicateErrorMsg }));
+    setForceShowErrors(true);
+    toast.error(duplicateErrorMsg);
+    return null;
+  }
+
+  const backendErrors = extractValidationErrors(error);
+  if (backendErrors) {
+    setErrors((prev) => ({ ...prev, ...backendErrors }));
+  }
+
+  setForceShowErrors(true);
+  toast.error(errorMessage);
+  return null;
 };
 
 const extractValidationErrors = (error: unknown): FundDetailsErrors | null => {
@@ -90,6 +154,9 @@ export const useUpsertFund = () => {
   const [errors, setErrors] = useState<FundDetailsErrors>({});
   const [forceShowErrors, setForceShowErrors] = useState(false);
   const [isSaved, setIsSaved] = useState(true);
+  const [currentStatus, setCurrentStatus] = useState<BaseContentStatuses | undefined>(
+    mode === 'create' ? BaseContentStatuses.Hidden : undefined
+  );
 
   const { data: queryData } = useFundById(id || '', { skip: !id });
   const [createFund] = useCreateFund();
@@ -111,6 +178,7 @@ export const useUpsertFund = () => {
         casesCount: fund.casesCount ?? 0,
         descriptionsCount: fund.descriptionsCount ?? 0
       });
+      setCurrentStatus(resolveFundStatus(fund.status));
     }
   }, [queryData]);
 
@@ -174,6 +242,23 @@ export const useUpsertFund = () => {
     return isValid;
   }, [details]);
 
+  const saveFund = useCallback(
+    async (payload: CreateFundInput): Promise<string | undefined> => {
+      if (mode === 'create') {
+        const result = await createFund(payload);
+        return result?.data?.createFund?.id;
+      }
+
+      if (mode === 'edit' && id) {
+        const result = await updateFund({ id, input: payload });
+        return result?.data?.updateFund?.id;
+      }
+
+      return undefined;
+    },
+    [mode, id, createFund, updateFund]
+  );
+
   const handleSave = useCallback(
     async (status: BaseContentStatuses): Promise<string | null> => {
       setForceShowErrors(true);
@@ -181,65 +266,30 @@ export const useUpsertFund = () => {
         return null;
       }
 
-      const payload = {
-        fundNumber: Number(details.fundNumber),
-        name: details.name,
-        documentCreationDate: { uk: details.documentCreationDate, en: details.documentCreationDate },
-        chronologicalBoundaries: details.chronologicalBoundaries
-          ? { uk: details.chronologicalBoundaries, en: details.chronologicalBoundaries }
-          : undefined,
-        organizationForm: details.organizationForm?.uk ? details.organizationForm : undefined,
-        description: {
-          uk: JSON.stringify(details.description.uk),
-          en: JSON.stringify(details.description.en)
-        },
-        status: status as unknown as CreateFundInput['status']
-      };
-
-      const successMessage = status === BaseContentStatuses.Published ? 'Фонд опубліковано.' : 'Фонд збережено.';
+      const payload = buildFundPayload(details, status);
+      const { successMessage, errorMessage } = getFundSaveMessages(status);
 
       try {
-        let savedId: string | undefined = undefined;
-
-        if (mode === 'create') {
-          const result = await createFund(payload);
-          savedId = result?.data?.createFund?.id;
-        } else if (mode === 'edit' && id) {
-          const result = await updateFund({ id, input: payload });
-          savedId = result?.data?.updateFund?.id;
-        }
+        const savedId = await saveFund(payload);
 
         if (savedId) {
           setIsSaved(true);
+          setCurrentStatus(status);
           toast.success(successMessage);
           return savedId;
         }
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-
-        if (message.includes('уже існує')) {
-          const duplicateErrorMsg = FundErrors.NUMBER_ALREADY_EXISTS(Number(details.fundNumber));
-          setErrors((prev) => ({ ...prev, fundNumber: duplicateErrorMsg }));
-          setForceShowErrors(true);
-          toast.error(duplicateErrorMsg);
-          return null;
-        }
-
-        const backendErrors = extractValidationErrors(error);
-        if (backendErrors) {
-          setErrors((prev) => ({ ...prev, ...backendErrors }));
-          setForceShowErrors(true);
-          toast.error(FundErrors.FAILED_TO_CREATE);
-          return null;
-        }
-
-        setForceShowErrors(true);
-        toast.error(FundErrors.FAILED_TO_CREATE);
+        return handleFundSaveError(error, {
+          errorMessage,
+          fundNumber: details.fundNumber,
+          setErrors,
+          setForceShowErrors
+        });
       }
 
       return null;
     },
-    [validate, details, mode, id, createFund, updateFund]
+    [validate, details, saveFund]
   );
 
   return {
@@ -248,6 +298,8 @@ export const useUpsertFund = () => {
     errors,
     forceShowErrors,
     isSaved,
+    currentStatus,
+    fundId: id,
     handleSave
   };
 };

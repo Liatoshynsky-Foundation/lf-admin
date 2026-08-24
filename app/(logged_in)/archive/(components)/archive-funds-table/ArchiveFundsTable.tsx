@@ -16,6 +16,7 @@ import { RowActions } from '~/shared/components/table-layout/components/RowActio
 import { StatusBadge } from '~/shared/components/table-layout/components/StatusBadge';
 import { ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 export type FundRow = Fund & {
   editAction: { editHref: string; editLabel: string };
@@ -26,34 +27,43 @@ export interface FundsTableProps {
   funds: Fund[];
   hasActiveSearch: boolean;
   hasActiveStatusFilter: boolean;
+  onPublish?: (fund: Fund) => void;
 }
 
-export const FundsTable = ({ funds, hasActiveSearch, hasActiveStatusFilter }: FundsTableProps) => {
-  const rows = funds.map((fund) => ({
-    type: 'individual' as const,
-    id: fund.id,
-    plainData: {
-      ...fund,
-      editAction: {
-        editHref: `${ARCHIVE_BASE_PATH}/fund/${fund.id}/edit`,
-        editLabel: `Редагувати фонд ${fund.name}`
+export const FundsTable = ({ funds, hasActiveSearch, hasActiveStatusFilter, onPublish }: FundsTableProps) => {
+  const rows = funds.map((fund) => {
+    const canPublish = fund.status === BaseContentStatuses.Hidden && Boolean(onPublish);
+    const statusActions = [
+      ...(canPublish ? [{ id: 'publish', text: { name: 'Опублікувати' }, onClick: () => onPublish?.(fund) }] : []),
+      { id: 'delete', text: { name: 'Видалити' } }
+    ];
+
+    return {
+      type: 'individual' as const,
+      id: fund.id,
+      plainData: {
+        ...fund,
+        editAction: {
+          editHref: `${ARCHIVE_BASE_PATH}/fund/${fund.id}/edit`,
+          editLabel: `Редагувати фонд ${fund.name}`
+        },
+        menuActions: {
+          menuItems: [
+            {
+              items: [
+                { id: 'edit', text: { name: 'Редагувати' }, href: `${ARCHIVE_BASE_PATH}/fund/${fund.id}/edit` },
+                { id: 'share', text: { name: 'Поширити' }, href: `${ARCHIVE_BASE_PATH}/fund/${fund.id}/share` }
+              ]
+            },
+            {
+              items: statusActions
+            }
+          ],
+          menuTriggerLabel: `Дії для фонду ${fund.name}`
+        }
       },
-      menuActions: {
-        menuItems: [
-          {
-            items: [
-              { id: 'edit', text: { name: 'Редагувати' }, href: `${ARCHIVE_BASE_PATH}/fund/${fund.id}/edit` },
-              { id: 'share', text: { name: 'Поширити' }, href: `${ARCHIVE_BASE_PATH}/fund/${fund.id}/share` }
-            ]
-          },
-          {
-            items: [{ id: 'delete', text: { name: 'Видалити' } }]
-          }
-        ],
-        menuTriggerLabel: `Дії для фонду ${fund.name}`
-      }
-    },
-  }));
+    };
+  });
 
   const columns: readonly ColumnDef<never, never, FundRow>[] = [
     {

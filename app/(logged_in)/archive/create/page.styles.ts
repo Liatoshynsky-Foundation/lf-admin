@@ -15,7 +15,9 @@ export const styles: Record<string, SxProps<Theme>> = {
     mx: '32px',
     mt: '16px',
     mb: '32px',
-    width: 'calc(100% - 64px)'
+    alignSelf: 'stretch',
+    boxSizing: 'border-box',
+    minWidth: 0
   },
 
   detailsAccordion: {

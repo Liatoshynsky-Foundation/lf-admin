@@ -22,6 +22,7 @@ type EditModeProps = BaseProps & {
   onPublish?: () => void;
   onMenuOpen?: (event: MouseEvent<HTMLButtonElement>) => void;
   onPreview?: () => void;
+  showPublish?: boolean;
 };
 
 type SeoModeProps = BaseProps & {
@@ -52,7 +53,9 @@ export default function HeaderRightActions(props: HeaderRightActionsProps) {
         </>
       );
 
-    case 'edit':
+    case 'edit': {
+      const showPublish = props.showPublish ?? true;
+
       return (
         <>
           <IconButton onClick={props.onPreview} sx={styles.icon} aria-label="Передогляд">
@@ -60,16 +63,18 @@ export default function HeaderRightActions(props: HeaderRightActionsProps) {
           </IconButton>
 
           <Box sx={styles.group} role="group" aria-label="Дії публікації">
-            <Button
-              disabled={disabled}
-              onClick={props.onPublish}
-              variant="contained"
-              color="tertiary"
-              disableElevation
-              sx={styles.groupLeft}
-            >
-                Опублікувати
-            </Button>
+            {showPublish && (
+              <Button
+                disabled={disabled}
+                onClick={props.onPublish}
+                variant="contained"
+                color="tertiary"
+                disableElevation
+                sx={styles.groupLeft}
+              >
+                  Опублікувати
+              </Button>
+            )}
             <Button
               disabled={disabled}
               aria-label="Відкрити меню параметрів"
@@ -77,13 +82,14 @@ export default function HeaderRightActions(props: HeaderRightActionsProps) {
               variant="contained"
               color="tertiary"
               disableElevation
-              sx={styles.groupRight}
+              sx={showPublish ? styles.groupRight : styles.groupSingle}
             >
               <ChevronDown size={20} />
             </Button>
           </Box>
         </>
       );
+    }
 
     case 'seo':
       return (

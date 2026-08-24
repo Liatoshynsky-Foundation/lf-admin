@@ -28,7 +28,25 @@ const FormattingDoc = Document.extend({
   content: 'paragraph+'
 });
 
-export const CustomFormattingField = ({ value, onChange, label = 'Текст', sx, error = false, helperText, onBlur}: Props) => {
+const hasFormattingContent = (content?: JSONContent): boolean => {
+  if (!content) return false;
+
+  if (typeof content.text === 'string' && content.text.trim().length > 0) {
+    return true;
+  }
+
+  return Array.isArray(content.content) && content.content.some(hasFormattingContent);
+};
+
+export const CustomFormattingField = ({
+  value,
+  onChange,
+  label = 'Текст',
+  sx,
+  error = false,
+  helperText,
+  onBlur
+}: Props) => {
   const [isFocused, setIsFocused] = useState(false);
 
   const editor = useEditor({
@@ -66,11 +84,11 @@ export const CustomFormattingField = ({ value, onChange, label = 'Текст', s
     const newContent = value;
 
     const isNotEqual = JSON.stringify(currentContent) !== JSON.stringify(newContent);
-    
-    if (isNotEqual)  editor.commands.setContent(value, { emitUpdate: false });
+
+    if (isNotEqual) editor.commands.setContent(value, { emitUpdate: false });
   }, [value, editor]);
 
-  const isActive = Boolean(isFocused || (editor && !editor.isEmpty));
+  const isActive = Boolean(isFocused || (editor && !editor.isEmpty) || hasFormattingContent(value));
 
   return (
     <Box sx={[styles.container, ...sxToArray(sx)]}>
