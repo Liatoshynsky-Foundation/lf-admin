@@ -3,7 +3,7 @@ import { MouseEvent, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { createCompositionId } from '../use-upsert-opus/useUpsertOpus';
-import { isMediaItemFilled, mapMediaItemFromApi, resolveMediaName } from './compositionMedia';
+import { isMediaItemFilled, mapMediaItemFromApi } from './compositionMedia';
 import { GroupData, GroupDataField, GroupPhoto } from '~/constants/creativity';
 import {
   COMPOSITION_DUPLICATE_ERROR,
@@ -266,7 +266,7 @@ export const useGroupContent = (id: string) => {
                 sheet as {
                   name?: string | null;
                   url?: string | null;
-                  displayName?: string | null;
+                  fileName?: string | null;
                   publishDate?: string | null;
                 },
                 createCompositionId
@@ -319,14 +319,15 @@ export const useGroupContent = (id: string) => {
           audios: (work.audios || [])
             .filter(isMediaItemFilled)
             .map((audio) => ({
-              name: resolveMediaName(audio),
+              name: audio.name,
               fileUrl: audio.fileUrl,
               publishDate: ''
             })),
           notes: (work.notes || [])
             .filter(isMediaItemFilled)
             .map((note) => ({
-              name: resolveMediaName(note),
+              name: note.name?.trim() || '',
+              fileName: note.fileName,
               fileUrl: note.fileUrl ? note.fileUrl : null,
               publishDate: note.publishDate || ''
             }))

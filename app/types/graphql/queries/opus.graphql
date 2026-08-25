@@ -99,7 +99,7 @@ query OpusById($id: ID!) {
       sheetMusic {
         url
         name
-        displayName
+        fileName
         publishDate
         isFree
         dateUploaded
@@ -107,7 +107,6 @@ query OpusById($id: ID!) {
       audios {
         name
         url
-        displayName
       }
     }
     publishedAt
@@ -130,7 +129,7 @@ query CompositionById($id: ID!) {
     sheetMusic {
       url
       name
-      displayName
+      fileName
       publishDate
       isFree
       dateUploaded
@@ -138,7 +137,6 @@ query CompositionById($id: ID!) {
     audios {
       name
       url
-      displayName
     }
   }
 }
@@ -204,6 +202,7 @@ query SearchCompositions($search: String!) {
     sheetMusic {
       url
       name
+      fileName
       publishDate
       isFree
       dateUploaded

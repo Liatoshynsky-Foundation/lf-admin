@@ -8,7 +8,7 @@ import {
   compositionNameTakenError,
   throwIfCompositionNameDuplicateKey
 } from '../compositions/compositionNameValidation';
-import { ensureSheetMusicAssets, syncCompositionMediaUsageRefs } from '../compositions/sheetMusicAssets';
+import { resolveSheetMusicFileNames, syncCompositionMediaUsageRefs } from '../compositions/sheetMusicAssets';
 import { markImagesAsUsed, processSlugUpdate, syncImagesCrops } from '../helpers';
 import { orderCompositionsByIds } from './tab-handlers/tabHandlersHelpers';
 import { opusServiceErrors } from '~/back-constants/errors';
@@ -26,10 +26,16 @@ import type {
 import { CompositionInput, ICompositionRepository } from '~/domain/repositories/compositionRepository';
 import { CreateOpusInput, IOpusRepository, UpdateOpusInput } from '~/domain/repositories/opusRepository';
 import { withTransaction } from '~/src/infrastructure/repositories/helpers';
+import { fileNameFromUrl } from '~/src/shared/utils/fileNameFromUrl';
 import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerator';
 import { OpusGalleryItemInput, OpusStatus, UpdateOpusStatusPayload } from '~/types/graphql/generated/graphql';
 
-type GQLMediaFile = { name?: string | null; fileUrl?: string | null; publishDate?: string | null };
+type GQLMediaFile = {
+  name?: string | null;
+  fileName?: string | null;
+  fileUrl?: string | null;
+  publishDate?: string | null;
+};
 
 type GQLAudioMediaFile = { name: string; fileUrl: string };
 
@@ -138,12 +144,13 @@ const mapComposition = (composition: GQLComposition): CompositionInput => {
     id: composition.id,
     name: { uk: composition.name.trim(), en: composition.name.trim() },
     year: parseYear(composition.year ?? undefined),
-    genre: composition.genre ?? null,
-    audioAvailable: audios.length > 0,
-    sheetAvailable: notes.length > 0,
+    genre: composition.genre || null,
+    audioAvailable: audios.some((audio) => Boolean(audio.fileUrl?.trim())),
+    sheetAvailable: notes.some((note) => Boolean(note.fileUrl?.trim())),
     sheetMusic: notes.map((note) => ({
       url: note.fileUrl?.trim() || null,
-      name: note.name ?? null,
+      name: note.name?.trim() || null,
+      fileName: note.fileUrl ? fileNameFromUrl(note.fileUrl.trim()) : null,
       publishDate: note.publishDate ?? null,
       isFree: true
     })),
@@ -487,7 +494,7 @@ export const OpusMutation = {
     if (input.coverImage) {
       await markImagesAsUsed(assetsRepo, null, input.coverImage, 'opus', opus.id);
     }
-    await ensureSheetMusicAssets(
+    await resolveSheetMusicFileNames(
       (input.compositions ?? []).flatMap((composition) => composition.notes?.map((note) => note.fileUrl)),
       assetsRepo
     );
@@ -586,7 +593,7 @@ export const OpusMutation = {
       await markImagesAsUsed(assetsRepo, null, input.coverImage, 'opus', opus.id);
     }
     if (input.compositions !== undefined) {
-      await ensureSheetMusicAssets(
+      await resolveSheetMusicFileNames(
         input.compositions.flatMap((composition) => composition.notes?.map((note) => note.fileUrl)),
         assetsRepo
       );

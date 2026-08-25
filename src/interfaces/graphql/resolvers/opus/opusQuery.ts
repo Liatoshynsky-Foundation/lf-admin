@@ -1,6 +1,6 @@
 import { GraphQLError } from 'graphql';
 
-import { withCompositionMediaDisplayNames } from '../compositions/sheetMusicDisplayName';
+import { withCompositionMediaDisplayNames } from '../compositions/compositionMediaDisplayNames';
 import { endpointRepositoryHandler, mapFilters } from '../helpers';
 import { handleGroup } from './tab-handlers/handleGroup';
 import { handleMixed } from './tab-handlers/handleMixed';

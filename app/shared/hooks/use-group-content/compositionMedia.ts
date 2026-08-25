@@ -1,13 +1,11 @@
-export const fileNameFromUrl = (url?: string | null): string => {
-  if (!url) return '';
-  const segment = url.split('/').pop() ?? url;
-  return decodeURIComponent(segment.split('?')[0]);
-};
+import { fileNameFromUrl } from '~/src/shared/utils/fileNameFromUrl';
+
+export { fileNameFromUrl };
 
 interface ApiMediaItem {
   name?: string | null;
+  fileName?: string | null;
   url?: string | null;
-  displayName?: string | null;
   publishDate?: string | null;
 }
 
@@ -15,7 +13,7 @@ export interface LocalMediaItem {
   id: string;
   name: string;
   fileUrl: string;
-  fileDisplayName?: string;
+  fileName: string;
   publishDate?: string;
 }
 
@@ -26,15 +24,12 @@ export const mapMediaItemFromApi = (
   const urlVal = item.url ?? '';
   return {
     id: createId(),
-    name: item.name ?? fileNameFromUrl(urlVal),
+    name: item.name ?? '',
     fileUrl: urlVal,
-    fileDisplayName: item.displayName ?? undefined,
+    fileName: item.fileName ?? fileNameFromUrl(urlVal),
     publishDate: item.publishDate ?? ''
   };
 };
-
-export const resolveMediaName = (item: { name?: string | null; fileUrl?: string | null }): string =>
-  (item.name ?? '').trim() || fileNameFromUrl(item.fileUrl);
 
 export const isMediaItemFilled = (item: {
   name?: string | null;

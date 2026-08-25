@@ -28,14 +28,13 @@ const mapFetchedCompositionToForm = (
     audios: (composition.audios ?? []).map((audio) => ({
 	  id: createCompositionId(),
 	  name: audio.name,
-	  fileDisplayName: audio.displayName ?? undefined,
 	  fileUrl: audio.url
     })),
     notes: (composition.sheetMusic ?? []).map((sheet) => ({
 	  id: createCompositionId(),
 	  name: sheet.name ?? '',
 	  fileUrl: sheet.url ?? undefined,
-	  fileDisplayName: sheet.displayName ?? undefined,
+	  fileName: sheet.fileName ?? undefined,
 	  publishDate: sheet.publishDate ?? ''
     }))
   };

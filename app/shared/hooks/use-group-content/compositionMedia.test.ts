@@ -1,22 +1,6 @@
-import { fileNameFromUrl, isMediaItemFilled, mapMediaItemFromApi, resolveMediaName } from './compositionMedia';
+import { fileNameFromUrl, isMediaItemFilled, mapMediaItemFromApi } from './compositionMedia';
 
 describe('Media utility functions', () => {
-  describe('resolveMediaName', () => {
-    it('should return trimmed name if name is provided', () => {
-      expect(resolveMediaName({ name: '  My Song.mp3  ', fileUrl: 'https://example.com/file.mp3' })).toBe('My Song.mp3');
-    });
-
-    it('should fallback to file name from URL if name is empty or missing', () => {
-      expect(resolveMediaName({ name: '   ', fileUrl: 'https://example.com/path/audio-track.mp3?query=1' })).toBe('audio-track.mp3');
-      expect(resolveMediaName({ name: null, fileUrl: 'https://example.com/doc.pdf' })).toBe('doc.pdf');
-    });
-
-    it('should return empty string if both name and fileUrl are missing/empty', () => {
-      expect(resolveMediaName({ name: '', fileUrl: '' })).toBe('');
-      expect(resolveMediaName({ name: null, fileUrl: null })).toBe('');
-    });
-  });
-
   describe('isMediaItemFilled', () => {
     it('should return true if name is filled', () => {
       expect(isMediaItemFilled({ name: 'Audio', fileUrl: '', publishDate: '' })).toBe(true);

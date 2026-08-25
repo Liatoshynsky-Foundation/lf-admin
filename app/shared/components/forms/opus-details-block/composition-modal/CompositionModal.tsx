@@ -14,11 +14,17 @@ import {
   COMPOSITION_VALIDATION_MESSAGES,
   COMPOSITION_YEAR_LIMITS
 } from '~/constants/opus';
-import { formatPublishDate, formatPublishDateForSave, formatPublishDateInput, publishDateToDayjs } from '~/lib/utils/date';
+import {
+  formatPublishDate,
+  formatPublishDateForSave,
+  formatPublishDateInput,
+  publishDateToDayjs
+} from '~/lib/utils/date';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import { isAudioUploadFile, isPdfUploadFile } from '~/shared/components/media-modal/MediaModal.utils';
 import { createCompositionId } from '~/shared/hooks/use-upsert-opus/useUpsertOpus';
+import { displayNameFromFile } from '~/src/shared/utils/fileNameFromUrl';
 import type { OpusCompositionData, OpusMediaFileData } from '~/types/opus';
 import { compositionGenreSchema, compositionTitleSchema, compositionYearSchema } from '~/validators/composition.schema';
 
@@ -43,19 +49,6 @@ const emptyComposition = (): OpusCompositionData => ({
   audios: [],
   notes: []
 });
-
-const fileNameFromUrl = (url?: string): string => {
-  if (!url) {
-    return '';
-  }
-
-  const segment = url.split('/').pop() as string;
-
-  return decodeURIComponent(segment.split('?')[0]);
-};
-
-const getFileDisplayName = (file: { fileDisplayName?: string; name?: string; fileUrl?: string }): string =>
-  file.fileDisplayName || file.name || fileNameFromUrl(file.fileUrl);
 
 export default function CompositionModal({
   open,
@@ -137,15 +130,13 @@ export default function CompositionModal({
   const clearNoteFile = (id: string): void => {
     setComposition((prev) => ({
       ...prev,
-      notes: prev.notes.map((row) =>
-        row.id === id ? { ...row, fileUrl: undefined, fileDisplayName: undefined } : row
-      )
+      notes: prev.notes.map((row) => (row.id === id ? { ...row, fileUrl: undefined, fileName: undefined } : row))
     }));
   };
 
   const handleMediaApply = (result: MediaModalResult): void => {
     const url = result.uploadResult?.url ?? (result.selected.kind === 'upload' ? undefined : result.selected.src);
-    const fileName = result.uploadResult?.originalName ?? result.selected.fileName;
+    const fileName = result.uploadResult?.originalName ?? displayNameFromFile(result.selected.fileName, url);
 
     if (!url || !mediaTarget) {
       setMediaTarget(null);
@@ -159,7 +150,7 @@ export default function CompositionModal({
         audios: [...prev.audios, { id: createCompositionId(), name: fileName, fileUrl: url }]
       }));
     } else if (mediaTarget.rowId) {
-      updateNoteRow(mediaTarget.rowId, { fileUrl: url, fileDisplayName: fileName });
+      updateNoteRow(mediaTarget.rowId, { fileUrl: url, fileName });
     }
 
     setMediaTarget(null);
@@ -320,7 +311,7 @@ export default function CompositionModal({
           {composition.audios.map((audio) => (
             <Box key={audio.id} sx={styles.fileChip}>
               <Music size={20} strokeWidth={1.5} />
-              <Typography sx={styles.fileChipName}>{getFileDisplayName(audio)}</Typography>
+              <Typography sx={styles.fileChipName}>{displayNameFromFile(audio.name, audio.fileUrl)}</Typography>
               <IconButton
                 aria-label={COMPOSITION_MODAL_TEXTS.deleteAriaLabel}
                 onClick={() => removeMediaRow('audios', audio.id)}
@@ -388,7 +379,7 @@ export default function CompositionModal({
                 {note.fileUrl && (
                   <Box sx={styles.fileChip}>
                     <FileText size={20} strokeWidth={1.5} />
-                    <Typography sx={styles.fileChipName}>{getFileDisplayName(note)}</Typography>
+                    <Typography sx={styles.fileChipName}>{displayNameFromFile(note.name, note.fileUrl)}</Typography>
                     <IconButton
                       aria-label={COMPOSITION_MODAL_TEXTS.deleteFileAriaLabel}
                       onClick={() => clearNoteFile(note.id)}

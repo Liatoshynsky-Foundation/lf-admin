@@ -1,4 +1,5 @@
 import type { Composition } from '~/domain/entities/Composition';
+import { fileNameFromUrl } from '~/src/shared/utils/fileNameFromUrl';
 
 type Asset = {
   url: string;
@@ -8,16 +9,6 @@ type Asset = {
 
 type AssetsRepository = {
   findByUrls(urls: string[]): Promise<Asset[]>;
-};
-
-const fileNameFromUrl = (url?: string | null): string => {
-  if (!url) {
-    return '';
-  }
-
-  const segment = url.split('/').pop() ?? url;
-
-  return decodeURIComponent(segment.split('?')[0]);
 };
 
 export const withCompositionMediaDisplayNames = async (
@@ -44,11 +35,11 @@ export const withCompositionMediaDisplayNames = async (
     ...composition,
     sheetMusic: composition.sheetMusic?.map((sheet) => ({
       ...sheet,
-      displayName: displayNameByUrl.get(sheet.url ?? '') || fileNameFromUrl(sheet.url)
+      fileName: sheet.fileName || displayNameByUrl.get(sheet.url ?? '') || fileNameFromUrl(sheet.url)
     })),
     audios: composition.audios?.map((audio) => ({
       ...audio,
-      displayName: displayNameByUrl.get(audio.url ?? '') || audio.name || fileNameFromUrl(audio.url)
+      name: audio.name || displayNameByUrl.get(audio.url ?? '') || fileNameFromUrl(audio.url)
     }))
   }));
 };

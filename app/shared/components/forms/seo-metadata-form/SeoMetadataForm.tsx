@@ -13,6 +13,7 @@ import { seoFormErrors } from '~/constants/errors';
 import { CROP_RATIOS } from '~/constants/publications';
 import { ImagePreviewBlock as PhotoBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
 import TooltipCustom from '~/shared/components/design-system/tooltip/Tooltip';
+import { fileNameFromUrl } from '~/src/shared/utils/fileNameFromUrl';
 import { CropRect, CropResult } from '~/types/common';
 
 export interface LocalizedMeta {
@@ -196,8 +197,7 @@ export default function SeoMetadataForm({
   const handleImageChange = async (url: string, crop: CropResult | null | undefined) => {
     setIsUploading(true);
     setOgImagePreview(url);
-    const fileNameFromUrl = url.split('/').pop()?.split('?')[0];
-    setDisplayFileName(fileNameFromUrl || 'image');
+    setDisplayFileName(fileNameFromUrl(url) || 'image');
 
     onImageChange(url);
     onChangeCrop?.(crop?.rect ?? null);

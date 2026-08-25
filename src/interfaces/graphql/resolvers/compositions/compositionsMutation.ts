@@ -7,7 +7,7 @@ import {
   normalizeCompositionName,
   throwIfCompositionNameDuplicateKey
 } from './compositionNameValidation';
-import { ensureSheetMusicAssets, syncCompositionMediaUsageRefs } from './sheetMusicAssets';
+import { resolveSheetMusicFileNames, syncCompositionMediaUsageRefs } from './sheetMusicAssets';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
 import type { Composition } from '~/domain/entities/Composition';
@@ -46,8 +46,8 @@ const mapCompositionInput = (input: CreateCompositionInput): CompositionInput =>
   name: mapCompositionName(input.name),
   year: input.year ?? null,
   genre: input.genre ?? null,
-  audioAvailable: input.audioAvailable ?? false,
-  sheetAvailable: input.sheetAvailable ?? false,
+  audioAvailable: (input.audios ?? []).some((audio) => Boolean(audio.url?.trim())),
+  sheetAvailable: (input.sheetMusic ?? []).some((sheet) => Boolean(sheet.url?.trim())),
   sheetMusic: input.sheetMusic ?? [],
   audios: input.audios ?? [],
 });
@@ -67,6 +67,14 @@ export const CompositionsMutation = {
     assertCompositionYearValid(input.year);
 
     const compositionData = mapCompositionInput(input);
+    const fileNames = await resolveSheetMusicFileNames(
+      compositionData.sheetMusic?.map((sheet) => sheet.url) ?? [],
+      assetsRepository
+    );
+    compositionData.sheetMusic = compositionData.sheetMusic?.map((sheet) => ({
+      ...sheet,
+      fileName: sheet.url ? fileNames.get(sheet.url) : undefined
+    }));
 
     const composition = await withTransaction(async (session) => {
       let composition: Composition;
@@ -86,10 +94,6 @@ export const CompositionsMutation = {
       return composition;
     });
 
-    await ensureSheetMusicAssets(
-      compositionData.sheetMusic?.map((sheet) => sheet.url) ?? [],
-      assetsRepository
-    );
     await syncCompositionMediaUsageRefs(composition.id, null, composition, assetsRepository);
 
     return composition;
@@ -110,11 +114,27 @@ export const CompositionsMutation = {
       ...(input.name && { name: mapCompositionName(input.name) }),
       ...(input.year !== undefined && { year: input.year ?? null }),
       ...(input.genre !== undefined && { genre: input.genre }),
-      ...(input.audioAvailable !== undefined && { audioAvailable: input.audioAvailable }),
-      ...(input.sheetAvailable !== undefined && { sheetAvailable: input.sheetAvailable }),
+      ...(input.audios !== undefined && {
+        audioAvailable: (input.audios ?? []).some((audio) => Boolean(audio.url?.trim()))
+      }),
+      ...(input.sheetMusic !== undefined && {
+        sheetAvailable: input.sheetMusic?.some((sheet) => Boolean(sheet.url?.trim())) ?? false
+      }),
       ...(input.sheetMusic !== undefined && { sheetMusic: input.sheetMusic }),
       ...(input.audios !== undefined && { audios: input.audios })
     };
+
+    if (updateData.sheetMusic !== undefined) {
+      const fileNames = await resolveSheetMusicFileNames(
+        updateData.sheetMusic.map((sheet) => sheet.url),
+        assetsRepository
+      );
+      updateData.sheetMusic = updateData.sheetMusic.map((sheet) => ({
+        ...sheet,
+        name: sheet.name?.trim() || null,
+        fileName: sheet.url ? fileNames.get(sheet.url) : undefined
+      }));
+    }
 
     let updatedComposition: Composition | null;
     try {
@@ -130,19 +150,14 @@ export const CompositionsMutation = {
       });
     }
 
-    if (input.sheetMusic != null) {
-      await ensureSheetMusicAssets(
-        input.sheetMusic.map((sheet) => sheet.url),
+    if (input.sheetMusic !== undefined || input.audios !== undefined) {
+      await syncCompositionMediaUsageRefs(
+        updatedComposition.id,
+        existingComposition,
+        updatedComposition,
         assetsRepository
       );
     }
-
-    await syncCompositionMediaUsageRefs(
-      updatedComposition.id,
-      existingComposition,
-      updatedComposition,
-      assetsRepository
-    );
 
     return updatedComposition;
   },
