@@ -36,7 +36,7 @@ const pdfFileSchema = z
   );
 
 export const zCaseSchema = z.object({
-  fondId: z.string().trim().min(1, { message: CASE_VALIDATION_MESSAGES.fondIdRequired }),
+  fundId: z.string().trim().min(1, { message: CASE_VALIDATION_MESSAGES.fundIdRequired }),
 
   descriptionNumber: positiveIntSchema(
     CASE_VALIDATION_MESSAGES.descriptionNumberRequired,

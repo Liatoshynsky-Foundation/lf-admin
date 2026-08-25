@@ -3,17 +3,17 @@ import { CaseType, formatCipher } from './caseType';
 import { Case } from '~/src/domain/entities/Case';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
-const mockFondLoaderLoad = jest.fn();
+const mockFundLoaderLoad = jest.fn();
 
-const mockFondLoader = {
-  load: mockFondLoaderLoad
+const mockFundLoader = {
+  load: mockFundLoaderLoad
 };
 
-const createContext = () => createMockContext(true, 'fondLoader', mockFondLoader);
+const createContext = () => createMockContext(true, 'fundLoader', mockFundLoader);
 
 const mockCase: Case = {
   id: 'case-id',
-  fondId: 'fond-id',
+  fundId: 'fund-id',
   descriptionNumber: 1,
   caseNumber: 3,
   caseName: { uk: 'Справа', en: 'Case' },
@@ -26,7 +26,7 @@ const mockCase: Case = {
 };
 
 describe('formatCipher', () => {
-  it('should format the cipher according to the strict "Ф. {fondNumber}, оп. {descriptionNumber}, спр. {caseNumber}" pattern', () => {
+  it('should format the cipher according to the strict "Ф. {fundNumber}, оп. {descriptionNumber}, спр. {caseNumber}" pattern', () => {
     expect(formatCipher(1, 1, 3)).toBe('Ф. 1, оп. 1, спр. 3');
   });
 });
@@ -36,17 +36,17 @@ describe('CaseType.cipher', () => {
     jest.clearAllMocks();
   });
 
-  it('should resolve the cipher using the parent Case and its Fond number via the batching fondLoader', async () => {
-    mockFondLoaderLoad.mockResolvedValue({ id: 'fond-id', fondNumber: 1 });
+  it('should resolve the cipher using the parent Case and its Fund number via the batching fundLoader', async () => {
+    mockFundLoaderLoad.mockResolvedValue({ id: 'fund-id', fundNumber: 1 });
 
     const result = await CaseType.cipher(mockCase, {}, createContext());
 
-    expect(mockFondLoaderLoad).toHaveBeenCalledWith('fond-id');
+    expect(mockFundLoaderLoad).toHaveBeenCalledWith('fund-id');
     expect(result).toBe('Ф. 1, оп. 1, спр. 3');
   });
 
-  it('should fall back to 0 for fondNumber when the referenced Fond cannot be found', async () => {
-    mockFondLoaderLoad.mockResolvedValue(null);
+  it('should fall back to 0 for fundNumber when the referenced Fund cannot be found', async () => {
+    mockFundLoaderLoad.mockResolvedValue(null);
 
     const result = await CaseType.cipher(mockCase, {}, createContext());
 

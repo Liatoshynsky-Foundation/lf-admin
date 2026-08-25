@@ -78,7 +78,7 @@ export const styles: Record<string, SxProps<Theme>> = {
   },
 
   mediaDateField: {
-    width: '160px',
+    width: '200px',
     '& .MuiOutlinedInput-root': { borderRadius: '8px' }
   },
 

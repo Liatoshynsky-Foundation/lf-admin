@@ -123,4 +123,17 @@ describe('SeoBaseFields', () => {
     expect(screen.getByLabelText('Meta keywords')).toHaveAttribute('data-multiline', 'true');
     expect(screen.getByLabelText('Meta title')).not.toHaveAttribute('data-multiline');
   });
+
+  it('makes title and description optional when required is false', () => {
+    render(<SeoBaseFields {...baseProps} required={false} />);
+
+    expect(screen.getByLabelText('Meta title')).not.toHaveAttribute('aria-required', 'true');
+    expect(screen.getByLabelText('Meta description')).not.toHaveAttribute('aria-required', 'true');
+  });
+
+  it('omits keywords when configured to hide them', () => {
+    render(<SeoBaseFields {...baseProps} showKeywords={false} />);
+
+    expect(screen.queryByLabelText('Meta keywords')).not.toBeInTheDocument();
+  });
 });

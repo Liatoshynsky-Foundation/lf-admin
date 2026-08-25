@@ -2,7 +2,9 @@ import { GraphQLError } from 'graphql';
 import { ClientSession } from 'mongoose';
 
 import {
+  assertCompositionGenreValid,
   assertCompositionNameNotTaken,
+  assertCompositionYearValid,
   compositionNameTakenError,
   throwIfCompositionNameDuplicateKey
 } from '../compositions/compositionNameValidation';
@@ -50,8 +52,8 @@ export type CreateOpusGQLInput = {
   genre?: LocalizedString;
   compositions?: GQLComposition[];
   adminTitle?: string;
-  title: LocalizedString;
-  description: OpusDescription;
+  title?: LocalizedString;
+  description?: OpusDescription;
   introDescription?: OpusDescription;
   parts?: OpusDescription;
   gallery?: OpusGalleryItem[];
@@ -118,6 +120,10 @@ async function assertCompositionsNamesNotTaken(
     submittedNames.add(normalizedName);
 
     await assertCompositionNameNotTaken(compositionsRepo, name, composition.id);
+    assertCompositionGenreValid(composition.genre);
+    assertCompositionYearValid(
+      !composition.year?.trim() ? null : Number(composition.year)
+    );
   }
 }
 

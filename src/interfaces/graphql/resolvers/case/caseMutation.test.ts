@@ -5,13 +5,13 @@ import { createMockContext } from '../testUtils';
 import { CaseMutation } from './caseMutation';
 import { CaseErrorCodes, CaseErrors, graphqlErrors } from '~/constants/errors';
 import { CreateCaseInput, ICaseRepository, UpdateCaseInput } from '~/src/domain/repositories/caseRepository';
-import { IFondRepository } from '~/src/domain/repositories/fondRepository';
+import { IFundRepository } from '~/src/domain/repositories/fundRepository';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
-const mockFondId = '65eddf5e2f1a2b3c4d5e6f7b';
+const mockFundId = '65eddf5e2f1a2b3c4d5e6f7b';
 
 const createMockCreateCaseInput = (overrides: Partial<CreateCaseInput> = {}): CreateCaseInput => ({
-  fondId: mockFondId,
+  fundId: mockFundId,
   descriptionNumber: 1,
   caseNumber: 1,
   caseName: { uk: 'Справа', en: 'Case' },
@@ -33,7 +33,7 @@ const mockCreate = jest.fn();
 const mockUpdate = jest.fn();
 const mockDelete = jest.fn();
 const mockFindById = jest.fn();
-const mockFindByFondAndNumbers = jest.fn();
+const mockFindByFundAndNumbers = jest.fn();
 const mockCount = jest.fn();
 const mockCountDistinctDescriptionNumbers = jest.fn();
 
@@ -42,17 +42,17 @@ const mockCaseRepo: Partial<ICaseRepository> = {
   update: mockUpdate,
   delete: mockDelete,
   findById: mockFindById,
-  findByFondAndNumbers: mockFindByFondAndNumbers,
+  findByFundAndNumbers: mockFindByFundAndNumbers,
   count: mockCount,
   countDistinctDescriptionNumbers: mockCountDistinctDescriptionNumbers
 };
 
-const mockFondFindById = jest.fn();
-const mockFondUpdate = jest.fn();
+const mockFundFindById = jest.fn();
+const mockFundUpdate = jest.fn();
 
-const mockFondRepo: Partial<IFondRepository> = {
-  findById: mockFondFindById,
-  update: mockFondUpdate
+const mockFundRepo: Partial<IFundRepository> = {
+  findById: mockFundFindById,
+  update: mockFundUpdate
 };
 
 const createContext = (isAdmin: boolean) => ({
@@ -60,7 +60,7 @@ const createContext = (isAdmin: boolean) => ({
   requestContainer: {
     cradle: {
       caseRepository: mockCaseRepo,
-      fondRepository: mockFondRepo
+      fundRepository: mockFundRepo
     }
   }
 } as unknown as ReturnType<typeof createMockContext>);
@@ -71,10 +71,10 @@ const userContext = createContext(false);
 describe('CaseMutation', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockFondFindById.mockResolvedValue({ id: mockFondId });
+    mockFundFindById.mockResolvedValue({ id: mockFundId });
     mockCount.mockResolvedValue(0);
     mockCountDistinctDescriptionNumbers.mockResolvedValue(0);
-    mockFondUpdate.mockResolvedValue({ id: mockFondId });
+    mockFundUpdate.mockResolvedValue({ id: mockFundId });
   });
 
   describe('createCase', () => {
@@ -93,26 +93,26 @@ describe('CaseMutation', () => {
       const input = createMockCreateCaseInput({ descriptionNumber: -1 });
 
       await expect(CaseMutation.createCase({}, { input }, adminContext)).rejects.toThrow(ZodError);
-      expect(mockFondFindById).not.toHaveBeenCalled();
+      expect(mockFundFindById).not.toHaveBeenCalled();
       expect(mockCreate).not.toHaveBeenCalled();
     });
 
-    it('should throw custom error if fondId does not reference an existing Fond', async () => {
+    it('should throw custom error if fundId does not reference an existing Fund', async () => {
       const input = createMockCreateCaseInput();
-      mockFondFindById.mockResolvedValue(null);
+      mockFundFindById.mockResolvedValue(null);
 
       await expect(CaseMutation.createCase({}, { input }, adminContext)).rejects.toEqual(
-        new GraphQLError(CaseErrors.FOND_NOT_FOUND(mockFondId), {
-          extensions: { code: CaseErrorCodes.FOND_NOT_FOUND }
+        new GraphQLError(CaseErrors.FUND_NOT_FOUND(mockFundId), {
+          extensions: { code: CaseErrorCodes.FUND_NOT_FOUND }
         })
       );
 
       expect(mockCreate).not.toHaveBeenCalled();
     });
 
-    it('should throw custom error if descriptionNumber+caseNumber combination already exists within the Fond', async () => {
+    it('should throw custom error if descriptionNumber+caseNumber combination already exists within the Fund', async () => {
       const input = createMockCreateCaseInput();
-      mockFindByFondAndNumbers.mockResolvedValue({ id: 'existing-case' });
+      mockFindByFundAndNumbers.mockResolvedValue({ id: 'existing-case' });
 
       await expect(CaseMutation.createCase({}, { input }, adminContext)).rejects.toEqual(
         new GraphQLError(CaseErrors.DUPLICATE_NUMBERS(), {
@@ -134,7 +134,7 @@ describe('CaseMutation', () => {
 
     it('should successfully call repo create method and return the new case', async () => {
       const input = createMockCreateCaseInput();
-      mockFindByFondAndNumbers.mockResolvedValue(null);
+      mockFindByFundAndNumbers.mockResolvedValue(null);
 
       await CaseMutation.createCase({}, { input }, adminContext);
 
@@ -142,17 +142,17 @@ describe('CaseMutation', () => {
       expect(mockCreate).toHaveBeenCalledWith(input);
     });
 
-    it('should recalculate and persist the parent Fond stats after a successful create', async () => {
+    it('should recalculate and persist the parent Fund stats after a successful create', async () => {
       const input = createMockCreateCaseInput();
-      mockFindByFondAndNumbers.mockResolvedValue(null);
+      mockFindByFundAndNumbers.mockResolvedValue(null);
       mockCount.mockResolvedValue(3);
       mockCountDistinctDescriptionNumbers.mockResolvedValue(2);
 
       await CaseMutation.createCase({}, { input }, adminContext);
 
-      expect(mockCount).toHaveBeenCalledWith({ fondId: mockFondId });
-      expect(mockCountDistinctDescriptionNumbers).toHaveBeenCalledWith(mockFondId);
-      expect(mockFondUpdate).toHaveBeenCalledWith(mockFondId, {
+      expect(mockCount).toHaveBeenCalledWith({ fundId: mockFundId });
+      expect(mockCountDistinctDescriptionNumbers).toHaveBeenCalledWith(mockFundId);
+      expect(mockFundUpdate).toHaveBeenCalledWith(mockFundId, {
         casesCount: 3,
         descriptionsCount: 2
       });
@@ -160,7 +160,7 @@ describe('CaseMutation', () => {
 
     it('should provide a fallback hidden status when missing', async () => {
       const { status: _status, ...inputWithoutStatus } = createMockCreateCaseInput();
-      mockFindByFondAndNumbers.mockResolvedValue(null);
+      mockFindByFundAndNumbers.mockResolvedValue(null);
 
       await CaseMutation.createCase({}, { input: inputWithoutStatus }, adminContext);
 
@@ -171,7 +171,7 @@ describe('CaseMutation', () => {
 
     it('should convert a MongoDB duplicate key error (race condition) from repo.create into the friendly duplicate error', async () => {
       const input = createMockCreateCaseInput();
-      mockFindByFondAndNumbers.mockResolvedValue(null);
+      mockFindByFundAndNumbers.mockResolvedValue(null);
       mockCreate.mockRejectedValue(Object.assign(new Error('E11000 duplicate key error'), { code: 11000 }));
 
       await expect(CaseMutation.createCase({}, { input }, adminContext)).rejects.toEqual(
@@ -183,7 +183,7 @@ describe('CaseMutation', () => {
 
     it('should rethrow unrelated errors from repo.create as-is', async () => {
       const input = createMockCreateCaseInput();
-      mockFindByFondAndNumbers.mockResolvedValue(null);
+      mockFindByFundAndNumbers.mockResolvedValue(null);
       const unrelatedError = new Error('Database connection lost');
       mockCreate.mockRejectedValue(unrelatedError);
 
@@ -192,7 +192,7 @@ describe('CaseMutation', () => {
 
     it('should rethrow a non-object rejection from repo.create as-is', async () => {
       const input = createMockCreateCaseInput();
-      mockFindByFondAndNumbers.mockResolvedValue(null);
+      mockFindByFundAndNumbers.mockResolvedValue(null);
       mockCreate.mockRejectedValue('unexpected string rejection');
 
       await expect(CaseMutation.createCase({}, { input }, adminContext)).rejects.toBe('unexpected string rejection');
@@ -226,23 +226,23 @@ describe('CaseMutation', () => {
       expect(mockUpdate).not.toHaveBeenCalled();
     });
 
-    it('should throw custom error if new fondId does not reference an existing Fond', async () => {
-      mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
-      mockFondFindById.mockResolvedValue(null);
-      const input = createMockUpdateCaseInput({ fondId: 'other-fond-id' });
+    it('should throw custom error if new fundId does not reference an existing Fund', async () => {
+      mockFindById.mockResolvedValue({ id, fundId: mockFundId, descriptionNumber: 1, caseNumber: 1 });
+      mockFundFindById.mockResolvedValue(null);
+      const input = createMockUpdateCaseInput({ fundId: 'other-fund-id' });
 
       await expect(CaseMutation.updateCase({}, { id, input }, adminContext)).rejects.toEqual(
-        new GraphQLError(CaseErrors.FOND_NOT_FOUND('other-fond-id'), {
-          extensions: { code: CaseErrorCodes.FOND_NOT_FOUND }
+        new GraphQLError(CaseErrors.FUND_NOT_FOUND('other-fund-id'), {
+          extensions: { code: CaseErrorCodes.FUND_NOT_FOUND }
         })
       );
 
       expect(mockUpdate).not.toHaveBeenCalled();
     });
 
-    it('should throw custom error when the updated descriptionNumber+caseNumber duplicates another case in the same Fond', async () => {
-      mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
-      mockFindByFondAndNumbers.mockResolvedValue({ id: 'another-case-id' });
+    it('should throw custom error when the updated descriptionNumber+caseNumber duplicates another case in the same Fund', async () => {
+      mockFindById.mockResolvedValue({ id, fundId: mockFundId, descriptionNumber: 1, caseNumber: 1 });
+      mockFindByFundAndNumbers.mockResolvedValue({ id: 'another-case-id' });
       const input = createMockUpdateCaseInput({ caseNumber: 2 });
 
       await expect(CaseMutation.updateCase({}, { id, input }, adminContext)).rejects.toEqual(
@@ -255,28 +255,28 @@ describe('CaseMutation', () => {
     });
 
     it('should NOT treat the case itself as a duplicate when numbers are unchanged', async () => {
-      mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
-      mockFindByFondAndNumbers.mockResolvedValue({ id });
-      mockUpdate.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
+      mockFindById.mockResolvedValue({ id, fundId: mockFundId, descriptionNumber: 1, caseNumber: 1 });
+      mockFindByFundAndNumbers.mockResolvedValue({ id });
+      mockUpdate.mockResolvedValue({ id, fundId: mockFundId, descriptionNumber: 1, caseNumber: 1 });
       const input = createMockUpdateCaseInput({ caseNumber: 1 });
 
       await expect(CaseMutation.updateCase({}, { id, input }, adminContext)).resolves.toBeDefined();
       expect(mockUpdate).toHaveBeenCalledTimes(1);
     });
 
-    it('should not re-check numbers when neither fondId, descriptionNumber, nor caseNumber change', async () => {
-      mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
-      mockUpdate.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
+    it('should not re-check numbers when neither fundId, descriptionNumber, nor caseNumber change', async () => {
+      mockFindById.mockResolvedValue({ id, fundId: mockFundId, descriptionNumber: 1, caseNumber: 1 });
+      mockUpdate.mockResolvedValue({ id, fundId: mockFundId, descriptionNumber: 1, caseNumber: 1 });
       const input = createMockUpdateCaseInput();
 
       await CaseMutation.updateCase({}, { id, input }, adminContext);
 
-      expect(mockFindByFondAndNumbers).not.toHaveBeenCalled();
+      expect(mockFindByFundAndNumbers).not.toHaveBeenCalled();
       expect(mockUpdate).toHaveBeenCalledWith(id, input);
     });
 
     it('should successfully call repo update method and return the updated case', async () => {
-      mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
+      mockFindById.mockResolvedValue({ id, fundId: mockFundId, descriptionNumber: 1, caseNumber: 1 });
       const updatedCase = { id, caseName: { uk: 'Оновлена справа', en: 'Updated case' } };
       mockUpdate.mockResolvedValue(updatedCase);
       const input = createMockUpdateCaseInput();
@@ -288,7 +288,7 @@ describe('CaseMutation', () => {
     });
 
     it('should throw custom error if the case is deleted concurrently and the update finds no document', async () => {
-      mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
+      mockFindById.mockResolvedValue({ id, fundId: mockFundId, descriptionNumber: 1, caseNumber: 1 });
       mockUpdate.mockResolvedValue(null);
       const input = createMockUpdateCaseInput();
 
@@ -300,7 +300,7 @@ describe('CaseMutation', () => {
     });
 
     it('should convert a MongoDB duplicate key error (race condition) from repo.update into the friendly duplicate error', async () => {
-      mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
+      mockFindById.mockResolvedValue({ id, fundId: mockFundId, descriptionNumber: 1, caseNumber: 1 });
       mockUpdate.mockRejectedValue(Object.assign(new Error('E11000 duplicate key error'), { code: 11000 }));
       const input = createMockUpdateCaseInput();
 
@@ -312,7 +312,7 @@ describe('CaseMutation', () => {
     });
 
     it('should rethrow unrelated errors from repo.update as-is', async () => {
-      mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
+      mockFindById.mockResolvedValue({ id, fundId: mockFundId, descriptionNumber: 1, caseNumber: 1 });
       const unrelatedError = new Error('Database connection lost');
       mockUpdate.mockRejectedValue(unrelatedError);
       const input = createMockUpdateCaseInput();
@@ -320,53 +320,53 @@ describe('CaseMutation', () => {
       await expect(CaseMutation.updateCase({}, { id, input }, adminContext)).rejects.toThrow(unrelatedError);
     });
 
-    describe('Fond stats recalculation', () => {
-      const otherFondId = 'other-fond-id';
+    describe('Fund stats recalculation', () => {
+      const otherFundId = 'other-fund-id';
 
-      it('should recalculate stats for both the old and new Fond when the case is reassigned', async () => {
-        mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
-        mockFindByFondAndNumbers.mockResolvedValue(null);
-        mockUpdate.mockResolvedValue({ id, fondId: otherFondId, descriptionNumber: 1, caseNumber: 1 });
-        const input = createMockUpdateCaseInput({ fondId: otherFondId });
+      it('should recalculate stats for both the old and new Fund when the case is reassigned', async () => {
+        mockFindById.mockResolvedValue({ id, fundId: mockFundId, descriptionNumber: 1, caseNumber: 1 });
+        mockFindByFundAndNumbers.mockResolvedValue(null);
+        mockUpdate.mockResolvedValue({ id, fundId: otherFundId, descriptionNumber: 1, caseNumber: 1 });
+        const input = createMockUpdateCaseInput({ fundId: otherFundId });
 
         await CaseMutation.updateCase({}, { id, input }, adminContext);
 
-        expect(mockFondUpdate).toHaveBeenCalledWith(mockFondId, expect.any(Object));
-        expect(mockFondUpdate).toHaveBeenCalledWith(otherFondId, expect.any(Object));
-        expect(mockFondUpdate).toHaveBeenCalledTimes(2);
+        expect(mockFundUpdate).toHaveBeenCalledWith(mockFundId, expect.any(Object));
+        expect(mockFundUpdate).toHaveBeenCalledWith(otherFundId, expect.any(Object));
+        expect(mockFundUpdate).toHaveBeenCalledTimes(2);
       });
 
-      it('should recalculate stats once for the same Fond when only descriptionNumber changes', async () => {
-        mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
-        mockFindByFondAndNumbers.mockResolvedValue(null);
-        mockUpdate.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 2, caseNumber: 1 });
+      it('should recalculate stats once for the same Fund when only descriptionNumber changes', async () => {
+        mockFindById.mockResolvedValue({ id, fundId: mockFundId, descriptionNumber: 1, caseNumber: 1 });
+        mockFindByFundAndNumbers.mockResolvedValue(null);
+        mockUpdate.mockResolvedValue({ id, fundId: mockFundId, descriptionNumber: 2, caseNumber: 1 });
         const input = createMockUpdateCaseInput({ descriptionNumber: 2 });
 
         await CaseMutation.updateCase({}, { id, input }, adminContext);
 
-        expect(mockFondUpdate).toHaveBeenCalledTimes(1);
-        expect(mockFondUpdate).toHaveBeenCalledWith(mockFondId, expect.any(Object));
+        expect(mockFundUpdate).toHaveBeenCalledTimes(1);
+        expect(mockFundUpdate).toHaveBeenCalledWith(mockFundId, expect.any(Object));
       });
 
-      it('should NOT recalculate stats when neither fondId nor descriptionNumber changed', async () => {
-        mockFindById.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
-        mockUpdate.mockResolvedValue({ id, fondId: mockFondId, descriptionNumber: 1, caseNumber: 1 });
+      it('should NOT recalculate stats when neither fundId nor descriptionNumber changed', async () => {
+        mockFindById.mockResolvedValue({ id, fundId: mockFundId, descriptionNumber: 1, caseNumber: 1 });
+        mockUpdate.mockResolvedValue({ id, fundId: mockFundId, descriptionNumber: 1, caseNumber: 1 });
         const input = createMockUpdateCaseInput();
 
         await CaseMutation.updateCase({}, { id, input }, adminContext);
 
-        expect(mockFondUpdate).not.toHaveBeenCalled();
+        expect(mockFundUpdate).not.toHaveBeenCalled();
       });
     });
   });
 
   describe('validation', () => {
     beforeEach(() => {
-      mockFindByFondAndNumbers.mockResolvedValue(null);
+      mockFindByFundAndNumbers.mockResolvedValue(null);
     });
 
     it.each([
-      ['missing fondId', { fondId: '' }],
+      ['missing fundId', { fundId: '' }],
 
       ['non-positive descriptionNumber', { descriptionNumber: -1 }],
       ['float descriptionNumber', { descriptionNumber: 1.5 }],
@@ -410,15 +410,15 @@ describe('CaseMutation', () => {
     });
 
     it('should return false when the case could not be deleted', async () => {
-      mockFindById.mockResolvedValue({ id: 'non-existent', fondId: mockFondId });
+      mockFindById.mockResolvedValue({ id: 'non-existent', fundId: mockFundId });
       mockDelete.mockResolvedValue(false);
       const result = await CaseMutation.deleteCase({}, { id: 'non-existent' }, adminContext);
       expect(result).toBe(false);
-      expect(mockFondUpdate).not.toHaveBeenCalled();
+      expect(mockFundUpdate).not.toHaveBeenCalled();
     });
 
-    it('should return true on successful delete and recalculate the parent Fond stats', async () => {
-      mockFindById.mockResolvedValue({ id: 'some-id', fondId: mockFondId });
+    it('should return true on successful delete and recalculate the parent Fund stats', async () => {
+      mockFindById.mockResolvedValue({ id: 'some-id', fundId: mockFundId });
       mockDelete.mockResolvedValue(true);
       mockCount.mockResolvedValue(1);
       mockCountDistinctDescriptionNumbers.mockResolvedValue(1);
@@ -426,20 +426,20 @@ describe('CaseMutation', () => {
       const result = await CaseMutation.deleteCase({}, { id: 'some-id' }, adminContext);
 
       expect(result).toBe(true);
-      expect(mockFondUpdate).toHaveBeenCalledWith(mockFondId, {
+      expect(mockFundUpdate).toHaveBeenCalledWith(mockFundId, {
         casesCount: 1,
         descriptionsCount: 1
       });
     });
 
-    it('should NOT recalculate Fond stats when the case to delete cannot be found', async () => {
+    it('should NOT recalculate Fund stats when the case to delete cannot be found', async () => {
       mockFindById.mockResolvedValue(null);
       mockDelete.mockResolvedValue(false);
 
       const result = await CaseMutation.deleteCase({}, { id: 'non-existent' }, adminContext);
 
       expect(result).toBe(false);
-      expect(mockFondUpdate).not.toHaveBeenCalled();
+      expect(mockFundUpdate).not.toHaveBeenCalled();
     });
   });
 });

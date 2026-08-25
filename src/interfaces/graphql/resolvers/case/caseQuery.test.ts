@@ -49,10 +49,10 @@ describe('CaseQuery Resolvers', () => {
       expect(mockRepo.findAll).toHaveBeenCalledWith(undefined);
     });
 
-    it('should call findAll with all filters including fondId', async () => {
+    it('should call findAll with all filters including fundId', async () => {
       const filters: FiltersGQLInput = {
         search: 'search',
-        fondId: 'fond-id',
+        fundId: 'fund-id',
         sort: [{ field: 'caseNumber', order: 'asc' }]
       };
       await CaseQuery.allCases({}, { filters }, authorizedContext);
@@ -65,7 +65,7 @@ describe('CaseQuery Resolvers', () => {
         skip: undefined,
         statuses: undefined,
         slug: undefined,
-        fondId: 'fond-id'
+        fundId: 'fund-id'
       });
     });
   });

@@ -1,14 +1,8 @@
-
 export const usePageBlockMock = jest.fn();
 export const useSectionListMock = jest.fn();
-export const usePointsListMock = jest.fn();
 export const mockSetField = jest.fn();
 export const mockToggleBlockVisibility = jest.fn();
 export const mockSetFieldValidity = jest.fn();
-
-export const mockAddPoint = jest.fn();
-export const mockRemovePoint = jest.fn();
-export const mockUpdatePoint = jest.fn();
 
 export const mockStoreState = {
   locale: 'uk',
@@ -26,13 +20,11 @@ jest.mock('~/shared/hooks/use-page-block/usePageBlock', () => ({
 }));
 
 jest.mock('~/store', () => ({
-  useStore: (selector: (state: typeof mockStoreState) => unknown) => 
-    selector(mockStoreState)
+  useStore: (selector: (state: typeof mockStoreState) => unknown) => selector(mockStoreState)
 }));
 
 jest.mock('~/ds-components/collapsible-block/CollapsibleBlock');
 jest.mock('~/ds-components/text-field/TextField');
-jest.mock('~/shared/components/privacy-policy/components/points-list/PointsList');
 jest.mock('~/shared/components/sortable-list/SortableList');
 jest.mock('~/components/grip/Grip');
 
@@ -45,9 +37,9 @@ beforeAll(() => {
   Object.defineProperty(globalThis, 'crypto', {
     value: {
       ...originalCrypto,
-      randomUUID: jest.fn().mockReturnValue(MOCK_UUID), 
+      randomUUID: jest.fn().mockReturnValue(MOCK_UUID)
     },
-    configurable: true, 
+    configurable: true
   });
 });
 
@@ -55,7 +47,7 @@ afterAll(() => {
   if (originalCrypto) {
     Object.defineProperty(globalThis, 'crypto', {
       value: originalCrypto,
-      configurable: true,
+      configurable: true
     });
   } else {
     delete (globalThis as any).crypto;

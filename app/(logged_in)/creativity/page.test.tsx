@@ -122,6 +122,7 @@ jest.mock('./(composition)/useWorkUrlState', () => ({
   useWorkUrlState: jest.fn(() => ({
     compositionId: null,
     compositionToEdit: null,
+    isCompositionLoading: false,
     isEditOpen: false,
     openEditComposition: jest.fn(),
     closeEditComposition: jest.fn()

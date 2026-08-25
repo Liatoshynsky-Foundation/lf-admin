@@ -1,0 +1,54 @@
+query AllFunds($filters: FundFiltersInput) {
+  findAllFunds(filters: $filters) {
+    id
+    fundNumber
+    name {
+      uk
+      en
+    }
+    documentCreationDate {
+      uk
+      en
+    }
+    chronologicalBoundaries {
+      uk
+      en
+    }
+    casesCount
+    descriptionsCount
+    status
+    updatedAt
+  }
+}
+
+query FundById($id: ID!) {
+  findFundById(id: $id) {
+    id
+    fundNumber
+    name {
+      uk
+      en
+    }
+    documentCreationDate {
+      uk
+      en
+    }
+    chronologicalBoundaries {
+      uk
+      en
+    }
+    organizationForm {
+      uk
+      en
+    }
+    description {
+      uk
+      en
+    }
+    casesCount
+    descriptionsCount
+    status
+    createdAt
+    updatedAt
+  }
+}

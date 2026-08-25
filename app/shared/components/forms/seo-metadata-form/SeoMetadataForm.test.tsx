@@ -1,14 +1,22 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { SeoCanonicalUrlField } from './seo-canonicalurl-field/SeoCanonicalUrlField';
 import SeoMetadataForm, { LocalizedMeta, SeoMetadataFormProps } from './SeoMetadataForm';
-import { META_TITLE_MAX_LENGTH } from '~/constants/publications';
+import { seoFormErrors } from '~/constants/errors';
+import {
+  META_ALT_TEXT_LENGTH,
+  META_DESCRIPTION_LENGTH,
+  META_KEYWORDS_LENGTH,
+  META_TITLE_LENGTH
+} from '~/constants/publications';
 
 interface MockCropResult {
   rect: unknown;
 }
+
+const IMAGE_URL = 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev/photos/about-us-foundation-first.png';
 
 jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
   ImagePreviewBlock: ({
@@ -16,39 +24,46 @@ jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
     onChangeImage,
     showAlternativeText,
     altText,
-    onChangeAltText
+    onChangeAltText,
+    onBlurAltText,
+    altTextError,
+    altTextErrorState
   }: {
     imageUrl?: string;
     onChangeImage: (url: string, crop?: MockCropResult | null) => void;
     showAlternativeText?: boolean;
     altText?: string;
     onChangeAltText?: (value: string) => void;
+    onBlurAltText?: () => void;
+    altTextError?: string;
+    altTextErrorState?: boolean;
   }) => (
     <div data-testid="photo-block" data-imageurl={imageUrl}>
-      <button data-testid="photo-block-trigger" onClick={() => onChangeImage('https://example.com/mock-image.png')}>
+      <button data-testid="photo-block-trigger" onClick={() => onChangeImage(IMAGE_URL)}>
         PhotoBlock
       </button>
-      <button
-        data-testid="photo-block-cropped"
-        onClick={() => onChangeImage('https://example.com/mock-image.png', { rect: { x: 10 } })}
-      >
+      <button data-testid="photo-block-cropped" onClick={() => onChangeImage(IMAGE_URL, { rect: { x: 10 } })}>
         PhotoBlock Cropped
       </button>
-      <button data-testid="photo-block-null" onClick={() => onChangeImage('https://example.com/mock-image.png', null)}>
+      <button data-testid="photo-block-null" onClick={() => onChangeImage(IMAGE_URL, null)}>
         PhotoBlock Null
       </button>
       <button data-testid="photo-block-root-url" onClick={() => onChangeImage('https://example.com/')}>
         PhotoBlock Root URL
       </button>
-      <button data-testid="photo-block-query-url" onClick={() => onChangeImage('https://example.com/photo.png?v=1.0')}>
+      <button data-testid="photo-block-query-url" onClick={() => onChangeImage(`${IMAGE_URL}?v=1.0`)}>
         PhotoBlock Query URL
       </button>
       {showAlternativeText && (
-        <input
-          aria-label="Alt текст зображення"
-          value={altText || ''}
-          onChange={(e) => onChangeAltText?.(e.target.value)}
-        />
+        <>
+          <input
+            aria-label="Alt текст зображення"
+            value={altText || ''}
+            onChange={(e) => onChangeAltText?.(e.target.value)}
+            onBlur={onBlurAltText}
+          />
+          {altTextErrorState && altTextError && <span data-testid="alt-text-error">{altTextError}</span>}
+        </>
       )}
     </div>
   )
@@ -59,14 +74,16 @@ jest.mock('./seo-base-fields/SeoBaseFields', () => ({
     onBlur,
     onFieldChange,
     showKeywords,
+    value,
     errors,
-    touched
+    touched = {}
   }: {
     onBlur: (field: keyof LocalizedMeta) => void;
     onFieldChange: (field: keyof LocalizedMeta, val: string) => void;
     showKeywords?: boolean;
+    value: LocalizedMeta;
     errors: Partial<Record<keyof LocalizedMeta, string>>;
-    touched: Partial<Record<keyof LocalizedMeta, boolean>>;
+    touched?: Partial<Record<keyof LocalizedMeta, boolean>>;
   }) => (
     <div data-testid="mock-seo-base-fields">
       <button
@@ -101,24 +118,27 @@ jest.mock('./seo-base-fields/SeoBaseFields', () => ({
       <label htmlFor="meta-title-input">Meta title</label>
       <input
         id="meta-title-input"
+        value={value.title}
         onBlur={() => onBlur('title')}
         onChange={(e) => onFieldChange('title', e.target.value)}
       />
-      {touched.title && errors.title && <span>{errors.title}</span>}
+      {errors.title && <span>{errors.title}</span>}
 
       <label htmlFor="meta-description-input">Meta description</label>
       <input
         id="meta-description-input"
+        value={value.description}
         onBlur={() => onBlur('description')}
         onChange={(e) => onFieldChange('description', e.target.value)}
       />
-      {touched.description && errors.description && <span>{errors.description}</span>}
+      {errors.description && <span>{errors.description}</span>}
 
       {showKeywords && (
         <>
           <label htmlFor="meta-keywords-input">Meta keywords</label>
           <input
             id="meta-keywords-input"
+            value={value.keywords}
             onBlur={() => onBlur('keywords')}
             onChange={(e) => onFieldChange('keywords', e.target.value)}
           />
@@ -194,7 +214,7 @@ describe('SeoMetadataForm', () => {
         render(<SeoMetadataForm {...defaultProps} />);
         await u.click(screen.getByTestId('photo-block-trigger'));
       },
-      assert: () => expect(defaultProps.onImageChange).toHaveBeenCalledWith('https://example.com/mock-image.png')
+      assert: () => expect(defaultProps.onImageChange).toHaveBeenCalledWith(IMAGE_URL)
     }
   ])('calls $description', async ({ action, assert }) => {
     await action(user);
@@ -206,16 +226,30 @@ describe('SeoMetadataForm', () => {
     const input = screen.getByLabelText(/meta title/i);
     await user.click(input);
     await user.tab();
-    expect(await screen.findByText(/мінімум 2 символа/i)).toBeInTheDocument();
+    expect(await screen.findByText(seoFormErrors.uk.minLength)).toBeInTheDocument();
+  });
+
+  it('clears a save validation error while editing without recalculating it', () => {
+    render(<SeoMetadataForm {...defaultProps} errors={{ title: seoFormErrors.uk.minLength }} />);
+
+    const input = screen.getByLabelText(/meta title/i);
+    expect(screen.getByText(seoFormErrors.uk.minLength)).toBeInTheDocument();
+
+    fireEvent.change(input, { target: { value: 'a' } });
+
+    expect(screen.queryByText(seoFormErrors.uk.minLength)).not.toBeInTheDocument();
+    expect(screen.queryByText(seoFormErrors.uk.required)).not.toBeInTheDocument();
   });
 
   it('rejects title longer than the maximum length on blur, respects input maxLength attribute', async () => {
-    renderWithState();
-    const input = screen.getByLabelText(/meta title/i) as HTMLInputElement;
-
-    fireEvent.change(input, { target: { value: 'a'.repeat(META_TITLE_MAX_LENGTH + 1) } });
-    fireEvent.blur(input);
-    expect(await screen.findByText(/максимум 150 символів/i)).toBeInTheDocument();
+    render(
+      <SeoMetadataForm
+        {...defaultProps}
+        forceShowErrors={true}
+        value={{ ...defaultProps.value, title: 'a'.repeat(META_TITLE_LENGTH.max + 1) }}
+      />
+    );
+    expect(await screen.findByText(seoFormErrors.uk.maxLength)).toBeInTheDocument();
   });
 
   it('accepts title within the allowed length range', async () => {
@@ -237,7 +271,7 @@ describe('SeoMetadataForm', () => {
 
     await user.type(input, 'Some description');
     fireEvent.blur(input);
-    expect(screen.queryByText(/обовʼязкове поле/i)).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText(/обовʼязкове поле/i)).not.toBeInTheDocument());
   });
 
   it('validates canonicalUrl: empty, valid, invalid', async () => {
@@ -266,6 +300,17 @@ describe('SeoMetadataForm', () => {
     expect(await screen.findByText(/некоректний url/i)).toBeInTheDocument();
   });
 
+  it('validates description minimum and maximum lengths', async () => {
+    render(
+      <SeoMetadataForm
+        {...defaultProps}
+        forceShowErrors={true}
+        value={{ ...defaultProps.value, description: 'a'.repeat(META_DESCRIPTION_LENGTH.max + 1) }}
+      />
+    );
+    expect(await screen.findByText(seoFormErrors.uk.descriptionMaxLength)).toBeInTheDocument();
+  });
+
   it('validates keywords: empty, valid, invalid', async () => {
     renderWithState();
     const input = screen.getByLabelText(/meta keywords/i);
@@ -278,6 +323,27 @@ describe('SeoMetadataForm', () => {
     await user.type(input, 'one, ,two');
     fireEvent.blur(input);
     expect(await screen.findByText(/Ключові слова мають бути через кому/i)).toBeInTheDocument();
+  });
+
+  it('validates keywords minimum and maximum lengths', async () => {
+    render(
+      <SeoMetadataForm
+        {...defaultProps}
+        forceShowErrors={true}
+        value={{ ...defaultProps.value, keywords: 'a'.repeat(META_KEYWORDS_LENGTH.max + 1) }}
+      />
+    );
+    expect(await screen.findByText(seoFormErrors.uk.keywordsMaxLength)).toBeInTheDocument();
+  });
+
+  it('does not require title or description when the form is optional', async () => {
+    render(<SeoMetadataForm {...defaultProps} required={false} />);
+
+    fireEvent.blur(screen.getByLabelText(/meta title/i));
+    fireEvent.blur(screen.getByLabelText(/meta description/i));
+
+    expect(screen.queryByText(seoFormErrors.uk.minLength)).not.toBeInTheDocument();
+    expect(screen.queryByText(seoFormErrors.uk.required)).not.toBeInTheDocument();
   });
 
   it('does not render canonicalUrl without extraFields', () => {
@@ -293,7 +359,7 @@ describe('SeoMetadataForm', () => {
   });
 
   it('renders ogImage as url and shows fileName', () => {
-    render(<SeoMetadataForm {...defaultProps} ogImage="https://example.com/file-image.png" />);
+    render(<SeoMetadataForm {...defaultProps} ogImage={IMAGE_URL} />);
     expect(screen.getByTestId('photo-block')).toBeInTheDocument();
   });
 
@@ -311,6 +377,70 @@ describe('SeoMetadataForm', () => {
     const altInput = screen.getByLabelText(/alt текст/i);
     await user.type(altInput, 'alt text');
     expect(onChange).toHaveBeenCalled();
+  });
+
+  it('requires alt text when an OG image is present', async () => {
+    render(
+      <SeoMetadataForm
+        {...defaultProps}
+        ogImage={IMAGE_URL}
+        showAlternativeText={true}
+        value={{ ...defaultProps.value, altText: { uk: '', en: '' } }}
+      />
+    );
+
+    fireEvent.blur(screen.getByRole('textbox', { name: /^Alt/i }));
+
+    expect(await screen.findByText(seoFormErrors.uk.required)).toBeInTheDocument();
+  });
+
+  it('validates alt text changes after the field has been touched', async () => {
+    const onChange = jest.fn();
+    render(
+      <SeoMetadataForm
+        {...defaultProps}
+        onChange={onChange}
+        ogImage={IMAGE_URL}
+        showAlternativeText={true}
+        value={{ ...defaultProps.value, altText: { uk: '', en: '' } }}
+      />
+    );
+
+    const altInput = screen.getByRole('textbox', { name: /^Alt/i });
+    fireEvent.blur(altInput);
+    fireEvent.change(altInput, { target: { value: 'valid alt text' } });
+
+    expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ altText: { uk: 'valid alt text', en: '' } }));
+    await waitFor(() => expect(screen.queryByText(seoFormErrors.uk.required)).not.toBeInTheDocument());
+  });
+
+  it('uses an empty value when blurring an undefined alt text field', async () => {
+    render(
+      <SeoMetadataForm
+        {...defaultProps}
+        ogImage={IMAGE_URL}
+        showAlternativeText={true}
+        value={{ ...defaultProps.value }}
+      />
+    );
+
+    fireEvent.blur(screen.getByRole('textbox', { name: /^Alt/i }));
+
+    expect(await screen.findByText(seoFormErrors.uk.required)).toBeInTheDocument();
+  });
+
+  it('validates alt text maximum length', async () => {
+    render(
+      <SeoMetadataForm
+        {...defaultProps}
+        forceShowErrors={true}
+        ogImage={IMAGE_URL}
+        showAlternativeText={true}
+        value={{ ...defaultProps.value, altText: { uk: 'a'.repeat(META_ALT_TEXT_LENGTH.max + 1), en: '' } }}
+      />
+    );
+
+    expect(await screen.findByText(seoFormErrors.uk.altTextMaxLength)).toBeInTheDocument();
   });
 
   it('renders keywords field as multiline text field when extraFieldsBeforeKeywords is true', async () => {
@@ -455,7 +585,7 @@ describe('SeoMetadataForm', () => {
   });
 
   it('handles dynamic ogImage prop changes from string to null', () => {
-    const { rerender } = render(<SeoMetadataForm {...defaultProps} ogImage="https://example.com/image.png" />);
+    const { rerender } = render(<SeoMetadataForm {...defaultProps} ogImage={IMAGE_URL} />);
     rerender(<SeoMetadataForm {...defaultProps} ogImage={null} />);
     expect(screen.getByTestId('photo-block')).toBeInTheDocument();
   });
@@ -463,7 +593,7 @@ describe('SeoMetadataForm', () => {
   it('strips query parameters from image filename in handleImageChange', async () => {
     render(<SeoMetadataForm {...defaultProps} />);
     await user.click(screen.getByTestId('photo-block-query-url'));
-    expect(defaultProps.onImageChange).toHaveBeenCalledWith('https://example.com/photo.png?v=1.0');
+    expect(defaultProps.onImageChange).toHaveBeenCalledWith(`${IMAGE_URL}?v=1.0`);
   });
 
   it('preserves existing altText in other locale when updating altText in uk locale', async () => {
@@ -521,7 +651,7 @@ describe('SeoMetadataForm', () => {
     expect(screen.getAllByText(/обовʼязкове поле/i).length).toBeGreaterThan(0);
   });
 
-  it('covers forceShowErrors effect completely on mount and rerender', () => {
+  it('covers forceShowErrors effect completely on mount and rerender', async () => {
     const { rerender } = render(<SeoMetadataForm {...defaultProps} forceShowErrors={true} />);
 
     expect(screen.getAllByText(/обовʼязкове поле/i).length).toBeGreaterThan(0);
@@ -536,7 +666,7 @@ describe('SeoMetadataForm', () => {
       />
     );
 
-    expect(screen.queryByText(/обовʼязкове поле/i)).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText(/обовʼязкове поле/i)).not.toBeInTheDocument());
   });
 
   it('covers valid canonicalUrl and default case branches in validateField', async () => {
@@ -614,9 +744,63 @@ describe('SeoMetadataForm', () => {
   });
 
   it('keeps ogImagePreview when a valid URL is passed', () => {
-    render(<SeoMetadataForm {...defaultProps} ogImage="https://example.com/valid.png" />);
+    render(<SeoMetadataForm {...defaultProps} ogImage={IMAGE_URL} />);
 
     const photoBlock = screen.getByTestId('photo-block');
-    expect(photoBlock).toHaveAttribute('data-imageurl', 'https://example.com/valid.png');
+    expect(photoBlock).toHaveAttribute('data-imageurl', IMAGE_URL);
+  });
+
+  const renderWithStateAndAltText = () => {
+    const Wrapper = () => {
+      const [value, setValue] = React.useState<SeoMetadataFormProps['value']>(defaultProps.value);
+      return <SeoMetadataForm {...defaultProps} value={value} onChange={setValue} showAlternativeText={true} />;
+    };
+
+    return render(<Wrapper />);
+  };
+
+  it('shows no alt text error when the field is left empty (alt text is optional)', async () => {
+    renderWithStateAndAltText();
+    const altInput = screen.getByLabelText(/alt текст/i);
+
+    await user.click(altInput);
+    await user.tab();
+
+    expect(screen.queryByTestId('alt-text-error')).not.toBeInTheDocument();
+  });
+
+  it('shows minLength error when alt text has 1 character on blur', async () => {
+    renderWithStateAndAltText();
+    const altInput = screen.getByLabelText(/alt текст/i);
+
+    await user.type(altInput, 'T');
+    await user.tab();
+
+    expect(await screen.findByTestId('alt-text-error')).toHaveTextContent(seoFormErrors.uk.minLength);
+  });
+
+  it('clears alt text error once 2+ characters are entered', async () => {
+    renderWithStateAndAltText();
+    const altInput = screen.getByLabelText(/alt текст/i);
+
+    await user.type(altInput, 'T');
+    await user.tab();
+    expect(await screen.findByTestId('alt-text-error')).toBeInTheDocument();
+
+    await user.type(altInput, 'e');
+    expect(screen.queryByTestId('alt-text-error')).not.toBeInTheDocument();
+  });
+
+  it('shows alt text error via forceShowErrors when showAlternativeText is enabled', () => {
+    render(
+      <SeoMetadataForm
+        {...defaultProps}
+        showAlternativeText={true}
+        forceShowErrors={true}
+        value={{ ...defaultProps.value, altText: { uk: 'T', en: 'T' } }}
+      />
+    );
+
+    expect(screen.getByTestId('alt-text-error')).toBeInTheDocument();
   });
 });

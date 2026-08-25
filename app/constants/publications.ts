@@ -266,14 +266,23 @@ export const ADMIN_TITLE_LABELS: Record<PublicationsItemType, string> = {
   media: 'Назва публікації в адмінці'
 } as const;
 
-export const META_TITLE_MAX_LENGTH = 150;
+const META_TEXT_LENGTH = {
+  min: 2,
+  max: 250
+};
+export const META_TITLE_LENGTH = {
+  ...META_TEXT_LENGTH,
+  max: 150
+};
+export const META_DESCRIPTION_LENGTH = META_TEXT_LENGTH;
+export const META_KEYWORDS_LENGTH = META_TEXT_LENGTH;
+export const META_ALT_TEXT_LENGTH = META_TEXT_LENGTH;
 
 export const CROP_RATIOS = {
   HERO_BANNER: 816 / 300,
   FUNDATION_PROFILE_SMALL: 336 / 400,
   FUNDATION_PROFILE_BIG: 816 / 498,
   TEAM_AVATAR: 200 / 180,
-  SOCIAL_MEDIA_PREVIEW: 295 / 225,
   CAROUSEL_BIG: 1080 / 742,
   FUNDATION_MAIN_FOUNDER: 744 / 454,
   GROUP_PHOTO: 16 / 9

@@ -6,12 +6,21 @@ import { useEffect, useState } from 'react';
 
 import { styles } from './CompositionModal.styles';
 import Button from '~/components/design-system/button/Button';
-import { COMPOSITION_MODAL_LABELS, COMPOSITION_MODAL_TEXTS, REQUIRED_FIELD_ERROR } from '~/constants/opus';
+import {
+  COMPOSITION_GENRE_LIMITS,
+  COMPOSITION_MODAL_LABELS,
+  COMPOSITION_MODAL_TEXTS,
+  COMPOSITION_TITLE_LIMITS,
+  COMPOSITION_VALIDATION_MESSAGES,
+  COMPOSITION_YEAR_LIMITS
+} from '~/constants/opus';
+import { formatPublishDate, formatPublishDateForSave, formatPublishDateInput, publishDateToDayjs } from '~/lib/utils/date';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import { isAudioUploadFile, isPdfUploadFile } from '~/shared/components/media-modal/MediaModal.utils';
 import { createCompositionId } from '~/shared/hooks/use-upsert-opus/useUpsertOpus';
 import type { OpusCompositionData, OpusMediaFileData } from '~/types/opus';
+import { compositionGenreSchema, compositionTitleSchema, compositionYearSchema } from '~/validators/composition.schema';
 
 interface CompositionModalProps {
   open: boolean;
@@ -40,7 +49,7 @@ const fileNameFromUrl = (url?: string): string => {
     return '';
   }
 
-  const segment = url.split('/').pop() ?? url;
+  const segment = url.split('/').pop() as string;
 
   return decodeURIComponent(segment.split('?')[0]);
 };
@@ -56,6 +65,8 @@ export default function CompositionModal({
 }: Readonly<CompositionModalProps>) {
   const [composition, setComposition] = useState<OpusCompositionData>(emptyComposition);
   const [titleError, setTitleError] = useState('');
+  const [genreError, setGenreError] = useState('');
+  const [yearError, setYearError] = useState('');
   const [noteErrors, setNoteErrors] = useState<NoteErrors>({});
   const [mediaTarget, setMediaTarget] = useState<MediaTarget | null>(null);
 
@@ -63,6 +74,8 @@ export default function CompositionModal({
     if (open) {
       setComposition(initialValue ? { ...initialValue } : emptyComposition());
       setTitleError('');
+      setGenreError('');
+      setYearError('');
       setNoteErrors({});
       setMediaTarget(null);
     }
@@ -74,6 +87,14 @@ export default function CompositionModal({
     if (key === 'name' && typeof value === 'string' && value.trim()) {
       setTitleError('');
       onClearError?.();
+    }
+
+    if (key === 'genre' && typeof value === 'string') {
+      setGenreError('');
+    }
+
+    if (key === 'year' && typeof value === 'string') {
+      setYearError('');
     }
   };
 
@@ -119,7 +140,7 @@ export default function CompositionModal({
 
   const handleMediaApply = (result: MediaModalResult): void => {
     const url = result.uploadResult?.url ?? (result.selected.kind === 'upload' ? undefined : result.selected.src);
-    const fileName = result.uploadResult?.originalName ?? result.selected.fileName ?? '';
+    const fileName = result.uploadResult?.originalName ?? result.selected.fileName;
 
     if (!url || !mediaTarget) {
       setMediaTarget(null);
@@ -142,10 +163,25 @@ export default function CompositionModal({
   const handleSubmit = (): void => {
     let isValid = true;
     let newTitleError = '';
+    let newGenreError = '';
+    let newYearError = '';
     const newNoteErrors: NoteErrors = {};
 
-    if (!composition.name.trim()) {
-      newTitleError = REQUIRED_FIELD_ERROR;
+    const titleResult = compositionTitleSchema.safeParse(composition.name);
+    if (!titleResult.success) {
+      newTitleError = titleResult.error.issues[0].message;
+      isValid = false;
+    }
+
+    const genreResult = compositionGenreSchema.safeParse(composition.genre);
+    if (!genreResult.success) {
+      newGenreError = genreResult.error.issues[0].message;
+      isValid = false;
+    }
+
+    const yearResult = compositionYearSchema.safeParse(composition.year);
+    if (!yearResult.success) {
+      newYearError = yearResult.error.issues[0].message;
       isValid = false;
     }
 
@@ -153,8 +189,14 @@ export default function CompositionModal({
       const errs: { name?: string; publishDate?: string } = {};
       const noteName = note.name ?? '';
       const hasName = Boolean(noteName.trim());
-      const hasDate = Boolean(note.publishDate && String(note.publishDate).trim());
+      const dateValue = note.publishDate ?? '';
+      const hasDate = Boolean(dateValue.trim());
       const hasFile = Boolean(note.fileUrl);
+
+      if (hasDate && !publishDateToDayjs(dateValue)) {
+        errs.publishDate = COMPOSITION_VALIDATION_MESSAGES.yearInvalid;
+        isValid = false;
+      }
 
       if (hasDate && !hasName && !hasFile) {
         errs.publishDate = COMPOSITION_MODAL_TEXTS.emptyNoteDateError;
@@ -167,15 +209,22 @@ export default function CompositionModal({
     });
 
     setTitleError(newTitleError);
+    setGenreError(newGenreError);
+    setYearError(newYearError);
     setNoteErrors(newNoteErrors);
 
     if (!isValid) {
       return;
     }
 
-    const filteredNotes = composition.notes.filter(
-      (note) => (note.name ?? '').trim() || (note.publishDate && String(note.publishDate).trim()) || note.fileUrl
-    );
+    const filteredNotes = composition.notes
+      .filter(
+        (note) => (note.name ?? '').trim() || (note.publishDate && String(note.publishDate).trim()) || note.fileUrl
+      )
+      .map((note) => ({
+        ...note,
+        publishDate: formatPublishDateForSave(note.publishDate) ?? ''
+      }));
 
     onSubmit({ ...composition, name: composition.name.trim(), notes: filteredNotes });
   };
@@ -198,12 +247,13 @@ export default function CompositionModal({
         <TextField
           label={`${COMPOSITION_MODAL_LABELS.name} *`}
           value={composition.name}
-          onChange={(event) => updateField('name', event.target.value)}
+          onChange={(event) => updateField('name', event.target.value.slice(0, COMPOSITION_TITLE_LIMITS.max))}
           error={Boolean(titleError || error)}
           helperText={titleError || error}
           fullWidth
           size="small"
           sx={styles.field}
+          slotProps={{ htmlInput: { maxLength: COMPOSITION_TITLE_LIMITS.max } }}
           InputProps={{
             endAdornment: composition.name ? (
               <InputAdornment position="end">
@@ -223,9 +273,12 @@ export default function CompositionModal({
           <TextField
             label={COMPOSITION_MODAL_LABELS.genre}
             value={composition.genre}
-            onChange={(event) => updateField('genre', event.target.value)}
+            onChange={(event) => updateField('genre', event.target.value.slice(0, COMPOSITION_GENRE_LIMITS.max))}
+            error={Boolean(genreError)}
+            helperText={genreError}
             size="small"
             sx={styles.field}
+            slotProps={{ htmlInput: { maxLength: COMPOSITION_GENRE_LIMITS.max } }}
           />
           <TextField
             label={COMPOSITION_MODAL_LABELS.year}
@@ -233,11 +286,14 @@ export default function CompositionModal({
             onChange={(event) => {
               const val = event.target.value;
               if (/^\d*$/.test(val)) {
-                updateField('year', val);
+                updateField('year', val.slice(0, COMPOSITION_YEAR_LIMITS.max));
               }
             }}
             size="small"
             sx={styles.field}
+            error={Boolean(yearError)}
+            helperText={yearError}
+            slotProps={{ htmlInput: { maxLength: COMPOSITION_YEAR_LIMITS.max, inputMode: 'numeric' } }}
           />
         </Box>
 
@@ -298,17 +354,15 @@ export default function CompositionModal({
                   />
                   <TextField
                     label={COMPOSITION_MODAL_LABELS.publishDate}
-                    value={note.publishDate ?? ''}
-                    onChange={(event) => {
-                      const val = event.target.value;
-                      if (/^\d*$/.test(val)) {
-                        updateNoteRow(note.id, { publishDate: val });
-                      }
-                    }}
+                    sx={styles.mediaDateField}
+                    value={formatPublishDate(note.publishDate)}
+                    placeholder="ДД/ММ/РРРР"
+                    onChange={(event) =>
+                      updateNoteRow(note.id, { publishDate: formatPublishDateInput(event.target.value) })
+                    }
                     error={Boolean(errs.publishDate)}
                     helperText={errs.publishDate}
                     size="small"
-                    sx={styles.mediaDateField}
                   />
                   <IconButton
                     aria-label={COMPOSITION_MODAL_TEXTS.uploadFileAriaLabel}

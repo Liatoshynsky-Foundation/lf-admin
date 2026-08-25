@@ -16,6 +16,7 @@ import {
 } from '~/constants/opus';
 import { EditorLanguage } from '~/constants/publications';
 import {
+  getCompositionFieldErrors,
   getDuplicateCompositionError,
   getDuplicateCompositionIds,
   getInvalidCompositionIds,
@@ -450,10 +451,7 @@ export const useGroupContent = (id: string) => {
       newErrors.creationYear = REQUIRED_FIELD_ERROR;
     }
 
-    const emptyCompositionIds = getInvalidCompositionIds(groupData?.compositions || []);
-    emptyCompositionIds.forEach((id) => {
-      newErrors[`compositions.${id}.name`] = '';
-    });
+    Object.assign(newErrors, getCompositionFieldErrors(groupData?.compositions || []));
 
     const hasDuplicateCompositionNames = getDuplicateCompositionIds(groupData?.compositions || []).length > 0;
 

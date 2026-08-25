@@ -4,7 +4,7 @@ export type CaseStatus = BaseContentStatuses;
 
 export type CaseListItem = {
   id: string;
-  fondId: string;
+  fundId: string;
   descriptionNumber: number;
   caseNumber: number;
   caseName: string;
@@ -13,8 +13,8 @@ export type CaseListItem = {
 };
 
 export const CASE_VALIDATION_MESSAGES = {
-  fondIdRequired: 'Фонд є обов’язковим.',
-  fondIdNotFound: 'Вказаний фонд не знайдено.',
+  fundIdRequired: 'Фонд є обов’язковим.',
+  fundIdNotFound: 'Вказаний фонд не знайдено.',
 
   descriptionNumberRequired: 'Номер опису є обов’язковим.',
   descriptionNumberInvalid: 'Номер опису має бути цілим позитивним числом.',

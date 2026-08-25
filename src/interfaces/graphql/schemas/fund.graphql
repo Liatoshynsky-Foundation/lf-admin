@@ -1,0 +1,74 @@
+enum FundStatus {
+  draft
+  published
+  hidden
+  archived
+  editing
+}
+
+input CreateFundInput {
+    fundNumber: Int!
+    name: JSON!
+    documentCreationDate: JSON!
+    chronologicalBoundaries: JSON
+    organizationForm: JSON 
+    description: JSON 
+    status: FundStatus
+}
+
+type Fund {
+    id: ID!
+    fundNumber: Int!
+    name: LocalizedString!
+    documentCreationDate: LocalizedString!
+    chronologicalBoundaries: LocalizedString
+    organizationForm: LocalizedString
+    description: LocalizedString
+    status: FundStatus!
+    casesCount: Int!
+    descriptionsCount: Int!
+    updatedAt: String!
+    createdAt: String!
+}
+
+type PaginatedFunds {
+    items: [Fund!]!
+    total: Int!
+    page: Int!
+    totalPages: Int!
+}
+
+input FundFiltersInput {
+    limit: Int
+    skip: Int
+    search: String
+    languages: [ContentLanguage!]
+    sort: [SortOptions!]
+    statuses: [FundStatus!]
+}
+
+input UpdateFundInput {
+    fundNumber: Int
+    name: JSON
+    documentCreationDate: JSON
+    chronologicalBoundaries: JSON
+    organizationForm: JSON 
+    description: JSON 
+    status: FundStatus
+}
+
+extend type Query {
+    findFundById(id: ID!): Fund
+    findAllFunds(filters: FundFiltersInput): [Fund!]
+    findFundsPaginated(
+        page: Int!,
+        limit: Int!,
+        filters: FundFiltersInput
+    ): PaginatedFunds
+}
+
+extend type Mutation {
+    createFund(input: CreateFundInput!): Fund!
+    updateFund(id: ID!, input: UpdateFundInput!): Fund!
+    deleteFund(id: ID!): Boolean!
+}

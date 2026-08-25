@@ -182,6 +182,21 @@ describe('OpusMutation Resolvers', () => {
       );
     });
 
+    it('creates an opus when optional SEO title and description are omitted', async () => {
+      mockOpusRepo.findByComplexKey.mockResolvedValue(null);
+      mockedGenerateUniqueSlug.mockResolvedValue(SLUG_VALUE);
+      mockOpusRepo.create.mockResolvedValue(MOCK_OPUS_ENTITY);
+
+      const { title: _title, description: _description, ...inputWithoutSeo } = BASE_CREATE_INPUT;
+
+      await OpusMutation.createOpus({}, { input: inputWithoutSeo }, adminContext);
+
+      expect(mockOpusRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ title: undefined, description: undefined }),
+        expect.anything()
+      );
+    });
+
     it('should create opus with default parameters and sync compositions/images', async () => {
       mockOpusRepo.findByComplexKey.mockResolvedValue(null);
       mockedGenerateUniqueSlug.mockImplementation(async (_, options) => {
@@ -853,7 +868,7 @@ describe('OpusMutation Resolvers', () => {
     });
 
     describe('Edge Cases (Parsers & Helpers)', () => {
-      it('should map compositions gracefully with invalid years and empty sheet URLs', async () => {
+      it('should map compositions gracefully with empty years and empty sheet URLs', async () => {
         mockOpusRepo.findById.mockResolvedValue(MOCK_OPUS_ENTITY);
         mockOpusRepo.update.mockResolvedValue(MOCK_OPUS_ENTITY);
         mockCompositionsRepo.syncForOpus.mockResolvedValue([]);
@@ -867,7 +882,7 @@ describe('OpusMutation Resolvers', () => {
               compositions: [
                 {
                   name: 'Test',
-                  year: 'invalid-year',
+                  year: '',
                   genre: null,
                   notes: [{ name: MAPPED_SHEETS[1].name, fileUrl: MAPPED_SHEETS[1].url }],
                   audios: [{ name: '', fileUrl: '' }]
@@ -888,6 +903,28 @@ describe('OpusMutation Resolvers', () => {
             audios: []
           })
         ], expect.anything());
+      });
+
+      it('should reject compositions with invalid years before syncing', async () => {
+        mockOpusRepo.findById.mockResolvedValue(MOCK_OPUS_ENTITY);
+        mockOpusRepo.update.mockResolvedValue(MOCK_OPUS_ENTITY);
+        mockCompositionsRepo.syncForOpus.mockResolvedValue([]);
+
+        await expect(
+          OpusMutation.updateOpus(
+            {},
+            {
+              id: OPUS_ID,
+              input: {
+                ...BASE_UPDATE_INPUT,
+                compositions: [{ name: 'Test', year: 'invalid-year', genre: null }]
+              }
+            },
+            adminContext
+          )
+        ).rejects.toMatchObject({ extensions: { code: 'BAD_USER_INPUT' } });
+
+        expect(mockCompositionsRepo.syncForOpus).not.toHaveBeenCalled();
       });
 
       it('should skip gallery item validation if src is empty', async () => {

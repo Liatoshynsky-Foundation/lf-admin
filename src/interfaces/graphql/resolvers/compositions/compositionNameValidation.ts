@@ -1,7 +1,8 @@
 import { GraphQLError } from 'graphql';
 
-import { compositionsServiceErrors, opusServiceErrors } from '~/back-constants/errors';
+import { compositionsServiceErrors } from '~/back-constants/errors';
 import { ICompositionRepository } from '~/domain/repositories/compositionRepository';
+import { compositionGenreSchema, compositionTitleSchema, compositionYearSchema } from '~/validators/composition.schema';
 
 type DuplicateKeyError = {
   code?: unknown;
@@ -23,17 +24,41 @@ export const assertCompositionNameNotTaken = async (
   ukName: string,
   excludeId?: string
 ): Promise<void> => {
-  const name = normalizeCompositionName(ukName);
-  if (!name) {
-    throw new GraphQLError(opusServiceErrors.COMPOSITION_NAME_REQUIRED, {
+  const titleResult = compositionTitleSchema.safeParse(ukName);
+  if (!titleResult.success) {
+    throw new GraphQLError(titleResult.error.issues[0]?.message ?? 'Введіть назву композиції.', {
       extensions: { code: 'BAD_USER_INPUT' }
     });
   }
+
+  const name = titleResult.data;
 
   const existing = await repo.findByName(name);
 
   if (existing && existing.id !== excludeId) {
     throw compositionNameTakenError(name);
+  }
+};
+
+export const assertCompositionGenreValid = (genre?: string | null): void => {
+  if (genre === undefined || genre === null) return;
+
+  const result = compositionGenreSchema.safeParse(genre);
+  if (!result.success) {
+    throw new GraphQLError(result.error.issues[0]?.message ?? 'Некоректний жанр.', {
+      extensions: { code: 'BAD_USER_INPUT' }
+    });
+  }
+};
+
+export const assertCompositionYearValid = (year?: number | null): void => {
+  if (year === undefined || year === null) return;
+
+  const result = compositionYearSchema.safeParse(String(year));
+  if (!result.success) {
+    throw new GraphQLError(result.error.issues[0]?.message ?? 'Введіть коректну дату.', {
+      extensions: { code: 'BAD_USER_INPUT' }
+    });
   }
 };
 

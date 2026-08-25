@@ -3,7 +3,7 @@ import { Case } from '~/src/domain/entities/Case';
 import { CaseFilters } from '~/src/domain/repositories/caseRepository';
 
 interface FindByIdArgs { id: string }
-export type FiltersGQLInput = Parameters<typeof mapFilters>[0] & { fondId?: string | null };
+export type FiltersGQLInput = Parameters<typeof mapFilters>[0] & { fundId?: string | null };
 interface FilterArgs {
   filters: FiltersGQLInput;
 }
@@ -20,7 +20,7 @@ const mapCaseFilters = (filters?: FiltersGQLInput): CaseFilters | undefined => {
 
   return {
     ...mapped,
-    fondId: filters.fondId ?? undefined
+    fundId: filters.fundId ?? undefined
   } as CaseFilters;
 };
 

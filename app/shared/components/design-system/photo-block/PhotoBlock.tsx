@@ -11,7 +11,7 @@ import { useCroppedImage } from '~/hooks/use-cropped-image/use-cropped-image';
 import ImageIcon from '~/public/icons/image.svg';
 import PencilIcon from '~/public/icons/pencil.svg';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
-import type { MediaModalOpenState, MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
+import type { MediaModalOpenState, MediaModalResult, MediaModalTab } from '~/shared/components/media-modal/MediaModal.types';
 import { useImageMetadata } from '~/shared/hooks/use-image-metadata/useImageMetadata';
 
 interface ImagePreviewBlockProps extends StackProps {
@@ -68,6 +68,7 @@ export const ImagePreviewBlock = ({
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [mediaInitial, setMediaInitial] = useState<MediaModalOpenState | undefined>(undefined);
   const [savedCrop, setSavedCrop] = useState<MediaModalResult['crop']>(initialCrop ?? null);
+  const [lastChangeImageTab, setLastChangeImageTab] = useState<MediaModalTab>('UPLOAD');
 
   useEffect(() => {
     setPreviewImage(imageUrl);
@@ -122,7 +123,7 @@ export const ImagePreviewBlock = ({
   };
 
   const openChangeImage = () => {
-    setMediaInitial({ tab: 'UPLOAD' });
+    setMediaInitial({ tab: lastChangeImageTab });
     setIsMediaModalOpen(true);
   };
 
@@ -182,7 +183,7 @@ export const ImagePreviewBlock = ({
 
         {dimensions ? (
           <Typography variant="body2" color="text.secondary" sx={styles.imageSizeText}>
-            Розмір: {dimensions.width} × {dimensions.height}
+            Розмір: {dimensions.width}×{dimensions.height}
           </Typography>
         ) : null}
       </Stack>
@@ -196,7 +197,7 @@ export const ImagePreviewBlock = ({
           fullWidth
           margin="none"
           multiline
-          maxRows={4}
+          maxRows={2}
           disabled={!previewImage}
           error={altTextErrorState}
           helperText={altTextError}
@@ -256,6 +257,7 @@ export const ImagePreviewBlock = ({
         initial={mediaInitial}
         onClose={closeMediaModal}
         onApply={handleApplyMediaModal}
+        onTabChange={setLastChangeImageTab}
         directory="photos"
         aspectRatio={aspectRatio}
       />

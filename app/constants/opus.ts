@@ -48,6 +48,10 @@ export const OPUS_FIELD_LIMITS = {
 
 export const OPUS_YEAR_RANGE = { min: 1900, max: 2100 } as const;
 
+export const COMPOSITION_TITLE_LIMITS = { min: 2, max: 250 } as const;
+export const COMPOSITION_GENRE_LIMITS = { min: 2, max: 150 } as const;
+export const COMPOSITION_YEAR_LIMITS = { min: 4, max: 4 } as const;
+
 export const OPUS_VALIDATION_MESSAGES = {
   numberRequired: 'Вкажіть номер.',
   numberInvalid: 'Номер має бути цілим позитивним числом.',
@@ -60,6 +64,22 @@ export const OPUS_VALIDATION_MESSAGES = {
   performanceSignature: 'Введіть підпис.',
   captionTooLong: 'Текст має містити менше 250 символів.'
 } as const;
+
+export const COMPOSITION_VALIDATION_MESSAGES = {
+  titleRequired: 'Введіть назву твору.',
+  titleTooShort: 'Введіть щонайменше 2 символи.',
+  titleTooLong: 'Назва не може перевищувати 250 символів.',
+  genreTooShort: 'Введіть щонайменше 2 символи.',
+  genreTooLong: 'Жанр не може перевищувати 150 символів.',
+  yearInvalid: 'Введіть коректну дату.',
+  publishDateInvalid: 'Введіть коректну дату видання.'
+} as const;
+
+export const COMPOSITION_ACTIONS_MESSAGES = {
+  DELETE_SUCCESS: 'Композицію успішно видалено',
+  UNLINK_SUCCESS: 'Композицію успішно видалено з групи',
+  DELETE_ERROR: 'Не вдалося видалити композицію. Спробуйте ще раз.'
+};
 
 export const COMPOSITION_MODAL_LABELS = {
   createTitle: 'Нова композиція',

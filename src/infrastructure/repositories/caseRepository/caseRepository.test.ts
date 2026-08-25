@@ -6,11 +6,11 @@ import { CreateCaseInput } from '~/src/domain/repositories/caseRepository';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 const mockId = '65eddf5e2f1a2b3c4d5e6f7a';
-const mockFondId = '65eddf5e2f1a2b3c4d5e6f7b';
+const mockFundId = '65eddf5e2f1a2b3c4d5e6f7b';
 
 const createMockCaseDoc = (overrides: Partial<DbCase> = {}): DbCase => ({
   _id: { toString: () => mockId },
-  fondId: mockFondId,
+  fundId: mockFundId,
   descriptionNumber: 1,
   caseNumber: 1,
   caseName: { uk: 'Справа', en: 'Case' },
@@ -51,7 +51,7 @@ describe('caseRepository', () => {
 
   it('should create a case and return the mapped entity', async () => {
     const newCase: CreateCaseInput = {
-      fondId: mockFondId,
+      fundId: mockFundId,
       descriptionNumber: 2,
       caseNumber: 3,
       caseName: { uk: 'Справа 2', en: 'Case 2' },
@@ -76,25 +76,25 @@ describe('caseRepository', () => {
     expect(result.createdAt).toBeDefined();
   });
 
-  it('should NOT create a case if the fondId+descriptionNumber+caseNumber combination already exists', async () => {
+  it('should NOT create a case if the fundId+descriptionNumber+caseNumber combination already exists', async () => {
     const duplicateCase = createMockCaseDoc();
     saveMock.mockRejectedValue(new Error('E11000 duplicate key error'));
 
     await expect(repository.create(duplicateCase)).rejects.toThrow();
   });
 
-  it('should find a case by fondId, descriptionNumber and caseNumber and return the mapped entity', async () => {
+  it('should find a case by fundId, descriptionNumber and caseNumber and return the mapped entity', async () => {
     const existedCase = createMockCaseDoc();
     findOneMock.mockResolvedValue({ toObject: () => existedCase });
 
-    const result = await repository.findByFondAndNumbers(
-      existedCase.fondId,
+    const result = await repository.findByFundAndNumbers(
+      existedCase.fundId,
       existedCase.descriptionNumber,
       existedCase.caseNumber
     );
 
     expect(findOneMock).toHaveBeenCalledWith({
-      fondId: existedCase.fondId,
+      fundId: existedCase.fundId,
       descriptionNumber: existedCase.descriptionNumber,
       caseNumber: existedCase.caseNumber
     });
@@ -108,42 +108,42 @@ describe('caseRepository', () => {
     expect((result as Case).createdAt).toBeDefined();
   });
 
-  it('should return null if no case found by fondId, descriptionNumber and caseNumber', async () => {
+  it('should return null if no case found by fundId, descriptionNumber and caseNumber', async () => {
     findOneMock.mockResolvedValue(null);
-    const result = await repository.findByFondAndNumbers(mockFondId, 999, 999);
+    const result = await repository.findByFundAndNumbers(mockFundId, 999, 999);
 
     expect(result).toBeNull();
   });
 
-  it('should map fondId, detailedCaseDescription and pdfFile fallbacks correctly', async () => {
+  it('should map fundId, detailedCaseDescription and pdfFile fallbacks correctly', async () => {
     const doc = createMockCaseDoc({
-      fondId: undefined as unknown as string,
+      fundId: undefined as unknown as string,
       detailedCaseDescription: undefined,
       pdfFile: { filename: 'archive.pdf', url: 'https://cdn/archive.pdf', mimeType: 'application/pdf' }
     });
     findOneMock.mockResolvedValue({ toObject: () => doc });
 
-    const result = await repository.findByFondAndNumbers(mockFondId, 1, 1);
+    const result = await repository.findByFundAndNumbers(mockFundId, 1, 1);
 
-    expect(result?.fondId).toBeUndefined();
+    expect(result?.fundId).toBeUndefined();
     expect(result?.detailedCaseDescription).toBeUndefined();
     expect(result?.pdfFile).toStrictEqual(doc.pdfFile);
   });
 
   describe('countDistinctDescriptionNumbers', () => {
-    it('should return the number of distinct descriptionNumber values for a fond', async () => {
+    it('should return the number of distinct descriptionNumber values for a fund', async () => {
       distinctMock.mockResolvedValue([1, 2, 3]);
 
-      const result = await repository.countDistinctDescriptionNumbers(mockFondId);
+      const result = await repository.countDistinctDescriptionNumbers(mockFundId);
 
-      expect(distinctMock).toHaveBeenCalledWith('descriptionNumber', { fondId: mockFondId });
+      expect(distinctMock).toHaveBeenCalledWith('descriptionNumber', { fundId: mockFundId });
       expect(result).toBe(3);
     });
 
-    it('should return 0 when the fond has no cases', async () => {
+    it('should return 0 when the fund has no cases', async () => {
       distinctMock.mockResolvedValue([]);
 
-      const result = await repository.countDistinctDescriptionNumbers(mockFondId);
+      const result = await repository.countDistinctDescriptionNumbers(mockFundId);
 
       expect(result).toBe(0);
     });
@@ -157,7 +157,7 @@ describe('caseRepository', () => {
       lean: jest.fn().mockResolvedValue(resolvedValue)
     });
 
-    it('should query without a fondId condition when the fondId filter is not provided', async () => {
+    it('should query without a fundId condition when the fundId filter is not provided', async () => {
       findAllMock.mockReturnValue(createMockQueryBuilder([]));
 
       await repository.findAll({ search: 'Справа' });
@@ -167,23 +167,23 @@ describe('caseRepository', () => {
       });
     });
 
-    it('should add a fondId condition to the query when the fondId filter is provided', async () => {
+    it('should add a fundId condition to the query when the fundId filter is provided', async () => {
       findAllMock.mockReturnValue(createMockQueryBuilder([]));
 
-      await repository.findAll({ fondId: mockFondId });
+      await repository.findAll({ fundId: mockFundId });
 
-      expect(findAllMock).toHaveBeenCalledWith({ fondId: mockFondId });
+      expect(findAllMock).toHaveBeenCalledWith({ fundId: mockFundId });
     });
 
-    it('should combine the fondId condition with other filters using $and', async () => {
+    it('should combine the fundId condition with other filters using $and', async () => {
       findAllMock.mockReturnValue(createMockQueryBuilder([]));
 
-      await repository.findAll({ fondId: mockFondId, search: 'Справа' });
+      await repository.findAll({ fundId: mockFundId, search: 'Справа' });
 
       expect(findAllMock).toHaveBeenCalledWith({
         $and: [
           { $or: [{ 'caseName.uk': expect.any(RegExp) }, { 'caseName.en': expect.any(RegExp) }] },
-          { fondId: mockFondId }
+          { fundId: mockFundId }
         ]
       });
     });

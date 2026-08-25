@@ -32,6 +32,7 @@ export type MediaModalFlowProps = {
   mediaKind?: MediaKind;
   aspectRatio?: number;
   persistUploadAsAsset?: boolean;
+  onTabChange?: (tab: MediaModalTab) => void;
 };
 
 const GALLERY_LABELS: Record<MediaKind, string> = { image: 'Галерея', audio: 'Аудіо', pdf: 'Файли' };
@@ -58,7 +59,8 @@ export function MediaModalFlow({
   uploadAriaLabel,
   mediaKind = 'image',
   aspectRatio,
-  persistUploadAsAsset
+  persistUploadAsAsset,
+  onTabChange
 }: Readonly<MediaModalFlowProps>) {
   const [state, dispatch] = useReducer(reducer, initial, buildInitialState);
 
@@ -97,9 +99,10 @@ export function MediaModalFlow({
     (tab: MediaModalTab) => {
       if (isApplying) return;
       clearApplyError();
+      onTabChange?.(tab);
       dispatch({ type: 'SET_TAB', tab });
     },
-    [clearApplyError, isApplying]
+    [clearApplyError, isApplying, onTabChange]
   );
 
   const pickAndCrop = useCallback(
