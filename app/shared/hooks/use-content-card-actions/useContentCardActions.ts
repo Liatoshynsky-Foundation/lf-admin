@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { CONTENT_MUTATION_RESULTS, MENU_ACTION_CONFIGS } from '~/constants/publications';
@@ -32,30 +32,27 @@ export function useContentCardActions({ id, type, status }: UseContentCardAction
   const [{ unpublish: unpublishEvent, publish: publishEvent }] = useUpdateEventStatus();
   const [{ draft: draftMediaMention, publish: publishMediaMention }] = useUpdateMediaMentionStatus();
 
-  const runStatusMutation = useCallback(
-    async (
-      mutate: () => Promise<MutationResult>,
-      config: (typeof MENU_ACTION_CONFIGS)[keyof typeof MENU_ACTION_CONFIGS]
-    ) => {
-      const { toastMessage, toastErrorMessage } = config;
+  const runStatusMutation = async (
+    mutate: () => Promise<MutationResult>,
+    config: (typeof MENU_ACTION_CONFIGS)[keyof typeof MENU_ACTION_CONFIGS]
+  ) => {
+    const { toastMessage, toastErrorMessage } = config;
 
-      try {
-        const result = await mutate();
+    try {
+      const result = await mutate();
 
-        if (result?.data) {
-          toast.success(toastMessage);
-          router.refresh();
-        } else {
-          toast.error(toastErrorMessage);
-        }
-      } catch {
+      if (result?.data) {
+        toast.success(toastMessage);
+        router.refresh();
+      } else {
         toast.error(toastErrorMessage);
       }
-    },
-    [router]
-  );
+    } catch {
+      toast.error(toastErrorMessage);
+    }
+  };
 
-  const handleUnpublish = useCallback(async () => {
+  const handleUnpublish = async () => {
     await runStatusMutation(async () => {
       if (type === NEWS) {
         return unpublishNews(id);
@@ -67,9 +64,9 @@ export function useContentCardActions({ id, type, status }: UseContentCardAction
 
       return draftMediaMention(id);
     }, MENU_ACTION_CONFIGS.CANCEL_PUBLICATION);
-  }, [id, type, unpublishNews, unpublishEvent, draftMediaMention, runStatusMutation]);
+  };
 
-  const handlePublish = useCallback(async () => {
+  const handlePublish = async () => {
     await runStatusMutation(async () => {
       if (type === NEWS) {
         return publishNews(id);
@@ -81,9 +78,9 @@ export function useContentCardActions({ id, type, status }: UseContentCardAction
 
       return publishMediaMention(id);
     }, MENU_ACTION_CONFIGS.PUBLISH);
-  }, [id, type, publishNews, publishEvent, publishMediaMention, runStatusMutation]);
+  };
 
-  const handleDelete = useCallback(async () => {
+  const handleDelete = async () => {
     try {
       let result: MutationResult | undefined;
 
@@ -102,7 +99,7 @@ export function useContentCardActions({ id, type, status }: UseContentCardAction
     } catch {
       toast.error(CONTENT_MUTATION_RESULTS.publicationDeleteError);
     }
-  }, [id, type, deleteNews, deleteEvent, deleteMediaMention, router]);
+  };
 
   return {
     deleteModalOpen,
