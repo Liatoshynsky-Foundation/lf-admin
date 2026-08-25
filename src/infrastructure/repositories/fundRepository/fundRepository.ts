@@ -57,6 +57,8 @@ const parseJsonContent = (content?: string | null): Record<string, unknown> => {
   }
 };
 
+const stringifyJsonContent = (content?: Record<string, unknown>): string => JSON.stringify(content ?? {});
+
 const toEntity = (doc: DbFund): Fund => {
   const safeDoc = {
     ...doc,
@@ -72,7 +74,12 @@ const toEntity = (doc: DbFund): Fund => {
       ? { uk: safeDoc.chronologicalBoundaries, en: safeDoc.chronologicalBoundaries }
       : undefined,
     organizationForm: safeDoc.organizationForm,
-    description: safeDoc.characterAndContent as unknown as Fund['description'],
+    description: safeDoc.characterAndContent
+      ? {
+        uk: stringifyJsonContent(safeDoc.characterAndContent.uk),
+        en: stringifyJsonContent(safeDoc.characterAndContent.en)
+      }
+      : undefined,
     status: resolveStatus(safeDoc.status),
     casesCount: safeDoc.numberOfCases ?? 0,
     descriptionsCount: safeDoc.numberOfDescriptions ?? 0
@@ -134,6 +141,10 @@ export const FundRepository = ({ FundModel }: FundRepoDeps): IFundRepository => 
       const updateData: Record<string, unknown> = {
         updatedAt: new Date().toISOString()
       };
+
+      if (input.fundNumber !== undefined) {
+        updateData.id = input.fundNumber;
+      }
 
       if (input.name) {
         updateData.title = input.name;

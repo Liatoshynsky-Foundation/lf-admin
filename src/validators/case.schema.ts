@@ -77,12 +77,23 @@ export const zCaseSchema = z.object({
       en: z.string().trim().max(1000, { message: CASE_VALIDATION_MESSAGES.detailedCaseDescriptionMaxLength })
     })
     .optional(),
-
   pdfFile: pdfFileSchema.nullable().optional(),
+  order: z.int().nonnegative().default(0),
 
   status: z.enum(BaseContentStatuses).default(BaseContentStatuses.Hidden)
 });
 
-export const zCaseUpdateSchema = zCaseSchema.partial().extend({
-  status: z.enum(BaseContentStatuses).optional()
-});
+export const zCaseUpdateSchema = zCaseSchema
+  .omit({ detailedCaseDescription: true, order: true, status: true })
+  .partial()
+  .extend({
+    detailedCaseDescription: z
+      .object({
+        uk: z.string().trim().max(1000, { message: CASE_VALIDATION_MESSAGES.detailedCaseDescriptionMaxLength }),
+        en: z.string().trim().max(1000, { message: CASE_VALIDATION_MESSAGES.detailedCaseDescriptionMaxLength })
+      })
+      .optional(),
+    pdfFile: pdfFileSchema.nullable().optional(),
+    order: z.int().nonnegative().optional(),
+    status: z.enum(BaseContentStatuses).optional()
+  });

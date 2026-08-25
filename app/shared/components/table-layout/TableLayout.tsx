@@ -9,9 +9,10 @@ import { BaseRowData, ColumnDef } from './row-variants/Row.types';
 type TableLayoutProps<TGroup, TSub, TPlain> = Readonly<{
   data: readonly BaseRowData<TGroup, TSub, TPlain>[];
   columns: readonly ColumnDef<TGroup, TSub, TPlain>[];
+  rowWrapper?: (id: string, children: React.ReactNode) => React.ReactNode;
 }>;
 
-export function TableLayout<TGroup, TSub, TPlain>({ data, columns }: TableLayoutProps<TGroup, TSub, TPlain>) {
+export function TableLayout<TGroup, TSub, TPlain>({ data, columns, rowWrapper }: TableLayoutProps<TGroup, TSub, TPlain>) {
   const gridTemplate = columns.map((c) => c.width).join(' ');
 
   return (
@@ -33,7 +34,15 @@ export function TableLayout<TGroup, TSub, TPlain>({ data, columns }: TableLayout
         }
 
         if (item.type === 'individual') {
-          return <PlainRow key={item.id} plainData={item.plainData} columns={columns} gridTemplate={gridTemplate} />;
+          return (
+            <PlainRow
+              key={item.id}
+              plainData={item.plainData}
+              columns={columns}
+              gridTemplate={gridTemplate}
+              rowWrapper={rowWrapper ? (children) => rowWrapper(item.id, children) : undefined}
+            />
+          );
         }
 
         return null;

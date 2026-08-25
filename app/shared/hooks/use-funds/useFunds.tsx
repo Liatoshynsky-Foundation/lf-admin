@@ -6,19 +6,30 @@ import { FundErrors } from '~/constants/errors';
 import { safeMutate } from '~/lib/utils/safeMutate';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import {
+  type Case,
+  type CreateCaseInput,
+  type CreateCaseMutation,
+  type CreateCaseMutationVariables,
   type CreateFundInput,
   type CreateFundMutation,
   type CreateFundMutationVariables,
+  type DeleteCaseMutationVariables,
   type DeleteFundMutationVariables,
   type FundFiltersInput,
+  SortOrder,
+  type UpdateCaseMutation,
+  type UpdateCaseMutationVariables,
   type UpdateFundMutation,
   type UpdateFundMutationVariables,
+  useAllCasesQuery,
   useAllFundsQuery,
+  useCreateCaseMutation,
   useCreateFundMutation,
+  useDeleteCaseMutation,
   useDeleteFundMutation,
   useFundByIdQuery,
-  useUpdateFundMutation
-} from '~/types/graphql/generated/graphql';
+  useUpdateCaseMutation,
+  useUpdateFundMutation} from '~/types/graphql/generated/graphql';
 
 type QueryHookOptions = Readonly<{
   skip?: boolean;
@@ -35,8 +46,23 @@ const statusMap: Record<string, BaseContentStatuses> = {
 export const useFundById = (id: string, options: QueryHookOptions = {}) =>
   useFundByIdQuery({ variables: { id }, fetchPolicy: 'network-only', skip: options.skip || !id });
 
+export const useCasesByFundId = (fundId?: string) => {
+  const { data, loading, error, refetch } = useAllCasesQuery({
+    variables: { filters: fundId ? { fundId, sort: [{ field: 'order', order: SortOrder.Asc }] } : undefined },
+    fetchPolicy: 'network-only',
+    skip: !fundId
+  });
+
+  return {
+    cases: (data?.allCases ?? []) as Case[],
+    loading,
+    error,
+    refetch
+  };
+};
+
 export function useAllFunds(filters?: FundFiltersInput | null) {
-  const { data, loading, error } = useAllFundsQuery({
+  const { data, loading, error, refetch } = useAllFundsQuery({
     variables: { filters },
     fetchPolicy: 'network-only'
   });
@@ -57,7 +83,7 @@ export function useAllFunds(filters?: FundFiltersInput | null) {
     };
   });
 
-  return { funds, loading, error };
+  return { funds, loading, error, refetch };
 }
 
 export const useCreateFund = () => {
@@ -109,4 +135,44 @@ export const useDeleteFund = () => {
   );
   
   return [deleteFund, meta] as const;
+};
+
+export const useCreateCase = () => {
+  const [mutate, meta] = useCreateCaseMutation();
+  const createCase = useCallback(
+    async (input: CreateCaseInput) =>
+      safeMutate<CreateCaseMutation, CreateCaseMutationVariables>(
+        mutate,
+        { input },
+        'Помилка мережі при створенні справи',
+        'Не вдалося створити справу'
+      ),
+    [mutate]
+  );
+  return [createCase, meta] as const;
+};
+
+export const useUpdateCase = () => {
+  const [mutate, meta] = useUpdateCaseMutation();
+  const updateCase = useCallback(
+    async (variables: UpdateCaseMutationVariables) =>
+      safeMutate<UpdateCaseMutation, UpdateCaseMutationVariables>(
+        mutate,
+        variables,
+        'Помилка мережі при оновленні справи',
+        'Не вдалося оновити справу'
+      ),
+    [mutate]
+  );
+  return [updateCase, meta] as const;
+};
+
+export const useDeleteCase = () => {
+  const [mutate, meta] = useDeleteCaseMutation();
+  const deleteCase = useCallback(
+    async (variables: DeleteCaseMutationVariables) =>
+      safeMutate(mutate, variables, 'Помилка мережі при видаленні справи', 'Не вдалося видалити справу'),
+    [mutate]
+  );
+  return [deleteCase, meta] as const;
 };

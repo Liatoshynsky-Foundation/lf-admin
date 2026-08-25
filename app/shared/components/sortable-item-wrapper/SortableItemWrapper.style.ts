@@ -8,11 +8,14 @@ export const styles = {
     isDragging: boolean,
     transition: string | undefined,
     gripHandle: boolean,
-    gripPosition: GripPosition = 'center'
+    gripPosition: GripPosition = 'center',
+    tableRow = false
   ) => ({
-    display: gripHandle ? 'flex' : 'block',
-    alignItems: gripPosition === 'top' ? 'flex-start' : 'center',
-    gap: gripHandle ? '12px' : '0px',
+    display: tableRow ? 'block' : gripHandle ? 'flex' : 'block',
+    ...(tableRow ? { position: 'relative', width: '100%' } : {
+      alignItems: gripPosition === 'top' ? 'flex-start' : 'center',
+      gap: gripHandle ? '12px' : '0px'
+    }),
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.4 : 1,

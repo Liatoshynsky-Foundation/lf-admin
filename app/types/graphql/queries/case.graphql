@@ -1,0 +1,63 @@
+query AllCases($filters: CaseFiltersInput) {
+  allCases(filters: $filters) {
+    id
+    fundId
+    descriptionNumber
+    caseNumber
+    caseName { uk en }
+    caseDate { uk en }
+    sheetsNumber
+    caseDescriptions { uk en }
+    detailedCaseDescription { uk en }
+    pdfFile { filename url mimeType }
+    status
+    order
+    cipher
+    updatedAt
+    createdAt
+  }
+}
+
+mutation CreateCase($input: CreateCaseInput!) {
+  createCase(input: $input) {
+    id
+    fundId
+    descriptionNumber
+    caseNumber
+    caseName { uk en }
+    caseDate { uk en }
+    sheetsNumber
+    caseDescriptions { uk en }
+    detailedCaseDescription { uk en }
+    pdfFile { filename url mimeType }
+    status
+    order
+    cipher
+    updatedAt
+    createdAt
+  }
+}
+
+mutation UpdateCase($id: ID!, $input: UpdateCaseInput!) {
+  updateCase(id: $id, input: $input) {
+    id
+    fundId
+    descriptionNumber
+    caseNumber
+    caseName { uk en }
+    caseDate { uk en }
+    sheetsNumber
+    caseDescriptions { uk en }
+    detailedCaseDescription { uk en }
+    pdfFile { filename url mimeType }
+    status
+    order
+    cipher
+    updatedAt
+    createdAt
+  }
+}
+
+mutation DeleteCase($id: ID!) {
+  deleteCase(id: $id)
+}

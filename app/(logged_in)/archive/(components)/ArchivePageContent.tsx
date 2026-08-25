@@ -28,7 +28,7 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
   const filterValues = statusFilterProps.value;
   const isAllStatus = filterValues.length === 0;
 
-  const { funds, loading, error } = useAllFunds({
+  const { funds, loading, error, refetch } = useAllFunds({
     search: searchValue || undefined,
     statuses: isAllStatus ? undefined : (filterValues as FundStatus[])
   });
@@ -64,6 +64,7 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
           funds={ascSortedVisibleFunds}
           hasActiveSearch={hasActiveSearch}
           hasActiveStatusFilter={hasActiveStatusFilter}
+          onDeleted={refetch}
         />
       );
     }

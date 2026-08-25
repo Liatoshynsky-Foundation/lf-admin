@@ -108,8 +108,8 @@ describe('fundRepository', () => {
       expect(result.fundNumber).toEqual(newFund.fundNumber);
       expect(result.name).toStrictEqual(newFund.name);
 
-      expect(result.description?.uk).toEqual({ type: 'doc' });
-      expect(result.description?.en).toEqual({});
+      expect(result.description?.uk).toBe('{"type":"doc"}');
+      expect(result.description?.en).toBe('{}');
 
       expect(result.id).toBeDefined();
     });
@@ -151,8 +151,8 @@ describe('fundRepository', () => {
       });
 
       const result = await repository.create(newFund);
-      expect(result.description?.uk).toEqual({});
-      expect(result.description?.en).toEqual({});
+      expect(result.description?.uk).toBe('{}');
+      expect(result.description?.en).toBe('{}');
     });
 
     it('should default status to Hidden when input.status is not provided', async () => {
@@ -189,6 +189,7 @@ describe('fundRepository', () => {
   describe('update', () => {
     it('should update a fund successfully mapping all fields', async () => {
       const updateInput = {
+        fundNumber: 12,
         name: { uk: 'Оновлено', en: 'Updated' },
         documentCreationDate: { uk: '1920', en: '1920' },
         chronologicalBoundaries: { uk: '1921', en: '1921' },
@@ -216,6 +217,7 @@ describe('fundRepository', () => {
       expect(findByIdAndUpdateMock).toHaveBeenCalledWith(
         mockId,
         expect.objectContaining({
+          id: updateInput.fundNumber,
           title: updateInput.name,
           numberOfCases: 10,
           numberOfDescriptions: 5,
@@ -226,7 +228,7 @@ describe('fundRepository', () => {
 
       expect(result?.name).toEqual(updateInput.name);
       expect(result?.casesCount).toBe(10);
-      expect(result?.description?.uk).toEqual({ valid: 'json' });
+      expect(result?.description?.uk).toBe('{"valid":"json"}');
     });
 
     it('should update only the fields explicitly present on the input (partial update)', async () => {

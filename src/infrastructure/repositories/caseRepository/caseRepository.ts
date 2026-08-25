@@ -5,6 +5,7 @@ import { createBaseRepository } from '../baseRepository/baseRepository';
 import { buildBaseQuery, combineConditions, createToEntity, getBaseSort } from '../helpers';
 import { Case } from '~/src/domain/entities/Case';
 import { CaseFilters, CreateCaseInput, ICaseRepository } from '~/src/domain/repositories/caseRepository';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 export type DbCase = {
   _id: { toString(): string };
@@ -17,6 +18,7 @@ export type DbCase = {
   caseDescriptions: Case['caseDescriptions'];
   detailedCaseDescription: Case['detailedCaseDescription'];
   pdfFile: Case['pdfFile'];
+  order: Case['order'];
   status: Case['status'];
   createdAt: string;
   updatedAt: string;
@@ -26,19 +28,37 @@ type CaseRepoDeps = Readonly<{
   CaseModel: Model<DbCase>;
 }>;
 
-const toEntity = (doc: DbCase): Case =>
-  createToEntity<Case, DbCase>(doc, {
-    fundId: doc.fundId?.toString ? doc.fundId.toString() : doc.fundId,
-    descriptionNumber: doc.descriptionNumber,
-    caseNumber: doc.caseNumber,
-    caseName: doc.caseName,
-    caseDate: doc.caseDate,
-    sheetsNumber: doc.sheetsNumber,
-    caseDescriptions: doc.caseDescriptions,
-    detailedCaseDescription: doc.detailedCaseDescription ?? undefined,
-    pdfFile: doc.pdfFile ?? undefined,
-    status: doc.status
+const getNumberFromCipher = (cipher: string | undefined, pattern: RegExp): number | undefined => {
+  const match = cipher?.match(pattern);
+  return match ? Number(match[1]) : undefined;
+};
+
+const toEntity = (doc: DbCase): Case => {
+  const now = new Date().toISOString();
+  const safeDoc = {
+    ...doc,
+    createdAt: doc.createdAt || now,
+    updatedAt: doc.updatedAt || now
+  };
+  const legacyCipher = (doc as DbCase & { cipher?: string }).cipher;
+  const descriptionNumber =
+    doc.descriptionNumber ?? getNumberFromCipher(legacyCipher, /оп\.\s*(\d+)/i) ?? 1;
+  const caseNumber = doc.caseNumber ?? getNumberFromCipher(legacyCipher, /спр\.\s*(\d+)/i) ?? 1;
+
+  return createToEntity<Case, DbCase>(safeDoc, {
+    fundId: safeDoc.fundId?.toString ? safeDoc.fundId.toString() : safeDoc.fundId,
+    descriptionNumber,
+    caseNumber,
+    caseName: safeDoc.caseName,
+    caseDate: safeDoc.caseDate,
+    sheetsNumber: safeDoc.sheetsNumber,
+    caseDescriptions: safeDoc.caseDescriptions,
+    detailedCaseDescription: safeDoc.detailedCaseDescription,
+    pdfFile: safeDoc.pdfFile,
+    status: safeDoc.status ?? BaseContentStatuses.Hidden,
+    order: safeDoc.order ?? 0
   });
+};
 
 const buildCaseQuery = (filters?: CaseFilters): FilterQuery<DbCase> =>
   combineConditions<DbCase>([
@@ -60,7 +80,9 @@ export const CaseRepository = ({ CaseModel }: CaseRepoDeps): ICaseRepository => 
     create: async (input: CreateCaseInput): Promise<Case> => {
       await dbConnect();
 
-      const newCase = await new CaseModel(input as unknown as DbCase).save();
+      const lastCase = await CaseModel.findOne({ fundId: input.fundId }).sort({ order: -1 }).lean();
+      const nextOrder = input.order > 0 ? input.order : (lastCase?.order ?? 0) + 1;
+      const newCase = await new CaseModel({ ...input, order: nextOrder } as unknown as DbCase).save();
       return toEntity(newCase.toObject() as unknown as DbCase);
     },
 
