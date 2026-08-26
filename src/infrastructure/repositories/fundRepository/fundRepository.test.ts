@@ -419,5 +419,55 @@ describe('fundRepository', () => {
 
       expect(query).not.toHaveProperty('status');
     });
+
+    it('should also match funds with a missing/invalid status when Hidden is requested', () => {
+      FundRepository({ FundModel: MockFundModel });
+      const buildQuery = latestBuildQuery();
+
+      const query = buildQuery({ statuses: [BaseContentStatuses.Hidden] } as FundFilters);
+
+      expect(query).toEqual({
+        $and: [
+          {},
+          {
+            $or: [
+              { status: { $in: [BaseContentStatuses.Hidden] } },
+              { status: { $nin: Object.values(BaseContentStatuses) } }
+            ]
+          }
+        ]
+      });
+    });
+
+    it('should NOT add the missing-status fallback when Hidden is not among the requested statuses', () => {
+      FundRepository({ FundModel: MockFundModel });
+      const buildQuery = latestBuildQuery();
+
+      const query = buildQuery({ statuses: [BaseContentStatuses.Published] } as FundFilters);
+
+      expect(query).toEqual({ status: { $in: [BaseContentStatuses.Published] } });
+    });
+
+    it('should combine the missing-status fallback with other filters, like search, using $and', () => {
+      FundRepository({ FundModel: MockFundModel });
+      const buildQuery = latestBuildQuery();
+
+      const query = buildQuery({
+        statuses: [BaseContentStatuses.Hidden],
+        search: 'архів'
+      } as FundFilters);
+
+      expect(query).toEqual({
+        $and: [
+          { $or: [{ 'title.uk': /архів/i }, { 'title.en': /архів/i }] },
+          {
+            $or: [
+              { status: { $in: [BaseContentStatuses.Hidden] } },
+              { status: { $nin: Object.values(BaseContentStatuses) } }
+            ]
+          }
+        ]
+      });
+    });
   });
 });
