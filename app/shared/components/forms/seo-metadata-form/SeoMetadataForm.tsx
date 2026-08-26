@@ -13,7 +13,7 @@ import { seoFormErrors } from '~/constants/errors';
 import { CROP_RATIOS } from '~/constants/publications';
 import { ImagePreviewBlock as PhotoBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
 import TooltipCustom from '~/shared/components/design-system/tooltip/Tooltip';
-import { fileNameFromUrl } from '~/src/shared/utils/fileNameFromUrl';
+import { fileNameFromUrl } from '~/src/shared/utils/assets/assetFilename';
 import { CropRect, CropResult } from '~/types/common';
 
 export interface LocalizedMeta {

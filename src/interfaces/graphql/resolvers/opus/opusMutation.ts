@@ -8,9 +8,12 @@ import {
   compositionNameTakenError,
   throwIfCompositionNameDuplicateKey
 } from '../compositions/compositionNameValidation';
-import { resolveSheetMusicFileNames, syncCompositionMediaUsageRefs } from '../compositions/sheetMusicAssets';
 import { markImagesAsUsed, processSlugUpdate, syncImagesCrops } from '../helpers';
 import { orderCompositionsByIds } from './tab-handlers/tabHandlersHelpers';
+import {
+  prepareCompositionMedia,
+  syncCompositionMediaUsage
+} from '~/application/use-cases/compositionMedia/compositionMedia';
 import { opusServiceErrors } from '~/back-constants/errors';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
@@ -23,10 +26,11 @@ import type {
   OpusNumberKind,
   OpusPerformance
 } from '~/domain/entities/Opus';
+import type { IAssetRepository } from '~/domain/repositories/assetRepository';
 import { CompositionInput, ICompositionRepository } from '~/domain/repositories/compositionRepository';
 import { CreateOpusInput, IOpusRepository, UpdateOpusInput } from '~/domain/repositories/opusRepository';
 import { withTransaction } from '~/src/infrastructure/repositories/helpers';
-import { fileNameFromUrl } from '~/src/shared/utils/fileNameFromUrl';
+import { fileNameFromUrl } from '~/src/shared/utils/assets/assetFilename';
 import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerator';
 import { OpusGalleryItemInput, OpusStatus, UpdateOpusStatusPayload } from '~/types/graphql/generated/graphql';
 
@@ -321,6 +325,7 @@ const duplicateOpusError = (): GraphQLError =>
 async function handleCompositionsSync(
   compositionsRepo: ICompositionRepository,
   repo: IOpusRepository,
+  assetsRepository: IAssetRepository,
   existingOpus: Opus,
   inputCompositions: GQLComposition[] | undefined,
   session?: ClientSession
@@ -332,7 +337,12 @@ async function handleCompositionsSync(
 
   let compositions;
   try {
-    compositions = await compositionsRepo.syncForOpus(inputCompositions.map(mapComposition), session);
+    const preparedCompositions = await Promise.all(
+      inputCompositions.map((composition) =>
+        prepareCompositionMedia(mapComposition(composition), assetsRepository, session)
+      )
+    );
+    compositions = await compositionsRepo.syncForOpus(preparedCompositions, session);
   } catch (error) {
     throwIfCompositionNameDuplicateKey(error, inputCompositions[0]?.name ?? '');
     throw error;
@@ -434,10 +444,15 @@ export const OpusMutation = {
     await assertCompositionsNamesNotTaken(compositionsRepo, input.compositions ?? []);
 
     const { opus, compositions } = await withTransaction(async (session) => {
+      const preparedCompositions = await Promise.all(
+        (input.compositions ?? []).map((composition) =>
+          prepareCompositionMedia(mapComposition(composition), assetsRepo, session)
+        )
+      );
       let syncedCompositions;
       try {
         syncedCompositions = await compositionsRepo.syncForOpus(
-          (input.compositions ?? []).map(mapComposition),
+          preparedCompositions,
           session
         );
       } catch (error) {
@@ -484,6 +499,11 @@ export const OpusMutation = {
         throw error;
       }
       await repo.removeCompositionsFromCompositionsOpus(compositionIds, session);
+      await Promise.all(
+        syncedCompositions.map((composition) =>
+          syncCompositionMediaUsage(composition.id, null, composition, assetsRepo, session)
+        )
+      );
 
       return { opus: newOpus, compositions: syncedCompositions };
     });
@@ -494,14 +514,6 @@ export const OpusMutation = {
     if (input.coverImage) {
       await markImagesAsUsed(assetsRepo, null, input.coverImage, 'opus', opus.id);
     }
-    await resolveSheetMusicFileNames(
-      (input.compositions ?? []).flatMap((composition) => composition.notes?.map((note) => note.fileUrl)),
-      assetsRepo
-    );
-    await Promise.all(
-      compositions.map((composition) => syncCompositionMediaUsageRefs(composition.id, null, composition, assetsRepo))
-    );
-
     return { ...opus, compositions };
   },
 
@@ -568,6 +580,7 @@ export const OpusMutation = {
       const syncedCompositions = await handleCompositionsSync(
         compositionsRepo,
         repo,
+        assetsRepo,
         existingOpus,
         input.compositions,
         session
@@ -582,6 +595,25 @@ export const OpusMutation = {
 
       const opus = await updateAndVerifyOpus(repo, id, updateData, session);
 
+      if (input.compositions !== undefined) {
+        const previousCompositionById = new Map(previousCompositions.map((composition) => [composition.id, composition]));
+        const updatedCompositionIds = new Set(syncedCompositions.map((composition) => composition.id));
+        await Promise.all([
+          ...syncedCompositions.map((composition) =>
+            syncCompositionMediaUsage(
+              composition.id,
+              previousCompositionById.get(composition.id),
+              composition,
+              assetsRepo,
+              session
+            )
+          ),
+          ...previousCompositions
+            .filter((composition) => !updatedCompositionIds.has(composition.id))
+            .map((composition) => syncCompositionMediaUsage(composition.id, composition, null, assetsRepo, session))
+        ]);
+      }
+
 
       return { opus, compositions: syncedCompositions };
     });
@@ -592,29 +624,6 @@ export const OpusMutation = {
     if (input.coverImage) {
       await markImagesAsUsed(assetsRepo, null, input.coverImage, 'opus', opus.id);
     }
-    if (input.compositions !== undefined) {
-      await resolveSheetMusicFileNames(
-        input.compositions.flatMap((composition) => composition.notes?.map((note) => note.fileUrl)),
-        assetsRepo
-      );
-      const previousCompositionById = new Map(previousCompositions.map((composition) => [composition.id, composition]));
-      const updatedCompositionIds = new Set(compositions.map((composition) => composition.id));
-
-      await Promise.all([
-        ...compositions.map((composition) =>
-          syncCompositionMediaUsageRefs(
-            composition.id,
-            previousCompositionById.get(composition.id),
-            composition,
-            assetsRepo
-          )
-        ),
-        ...previousCompositions
-          .filter((composition) => !updatedCompositionIds.has(composition.id))
-          .map((composition) => syncCompositionMediaUsageRefs(composition.id, composition, null, assetsRepo))
-      ]);
-    }
-
     return { ...opus, compositions };
   },
 

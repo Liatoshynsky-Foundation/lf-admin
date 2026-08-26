@@ -24,7 +24,7 @@ import { MediaModal } from '~/shared/components/media-modal/MediaModal';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import { isAudioUploadFile, isPdfUploadFile } from '~/shared/components/media-modal/MediaModal.utils';
 import { createCompositionId } from '~/shared/hooks/use-upsert-opus/useUpsertOpus';
-import { displayNameFromFile } from '~/src/shared/utils/fileNameFromUrl';
+import { displayNameFromFile } from '~/src/shared/utils/assets/assetFilename';
 import type { OpusCompositionData, OpusMediaFileData } from '~/types/opus';
 import { compositionGenreSchema, compositionTitleSchema, compositionYearSchema } from '~/validators/composition.schema';
 
@@ -65,6 +65,7 @@ export default function CompositionModal({
   const [yearError, setYearError] = useState('');
   const [noteErrors, setNoteErrors] = useState<NoteErrors>({});
   const [mediaTarget, setMediaTarget] = useState<MediaTarget | null>(null);
+  const [assetErrorTarget, setAssetErrorTarget] = useState<MediaTarget | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -74,6 +75,7 @@ export default function CompositionModal({
       setYearError('');
       setNoteErrors({});
       setMediaTarget(null);
+      setAssetErrorTarget(null);
     }
   }, [open, initialValue]);
 
@@ -114,6 +116,8 @@ export default function CompositionModal({
       }
       return updated;
     });
+
+    onClearError?.();
   };
 
   const removeMediaRow = (field: 'audios' | 'notes', id: string): void => {
@@ -143,6 +147,9 @@ export default function CompositionModal({
 
       return;
     }
+
+    onClearError?.();
+    setAssetErrorTarget(mediaTarget);
 
     if (mediaTarget.field === 'audios') {
       setComposition((prev) => ({
@@ -244,8 +251,8 @@ export default function CompositionModal({
           label={`${COMPOSITION_MODAL_LABELS.name} *`}
           value={composition.name}
           onChange={(event) => updateField('name', event.target.value.slice(0, COMPOSITION_TITLE_LIMITS.max))}
-          error={Boolean(titleError || error)}
-          helperText={titleError || error}
+          error={Boolean(titleError)}
+          helperText={titleError}
           fullWidth
           size="small"
           sx={styles.field}
@@ -309,16 +316,19 @@ export default function CompositionModal({
           </Box>
 
           {composition.audios.map((audio) => (
-            <Box key={audio.id} sx={styles.fileChip}>
-              <Music size={20} strokeWidth={1.5} />
-              <Typography sx={styles.fileChipName}>{displayNameFromFile(audio.name, audio.fileUrl)}</Typography>
-              <IconButton
-                aria-label={COMPOSITION_MODAL_TEXTS.deleteAriaLabel}
-                onClick={() => removeMediaRow('audios', audio.id)}
-                sx={styles.mediaIcon}
-              >
-                <Trash2 size={20} strokeWidth={1.5} />
-              </IconButton>
+            <Box key={audio.id}>
+              <Box sx={styles.fileChip}>
+                <Music size={20} strokeWidth={1.5} />
+                <Typography sx={styles.fileChipName}>{displayNameFromFile(audio.name, audio.fileUrl)}</Typography>
+                <IconButton
+                  aria-label={COMPOSITION_MODAL_TEXTS.deleteAriaLabel}
+                  onClick={() => removeMediaRow('audios', audio.id)}
+                  sx={styles.mediaIcon}
+                >
+                  <Trash2 size={20} strokeWidth={1.5} />
+                </IconButton>
+              </Box>
+              {error && assetErrorTarget?.field === 'audios' && <Typography sx={styles.fileError}>{error}</Typography>}
             </Box>
           ))}
         </Box>
@@ -377,16 +387,23 @@ export default function CompositionModal({
                 </Box>
 
                 {note.fileUrl && (
-                  <Box sx={styles.fileChip}>
-                    <FileText size={20} strokeWidth={1.5} />
-                    <Typography sx={styles.fileChipName}>{displayNameFromFile(note.name, note.fileUrl)}</Typography>
-                    <IconButton
-                      aria-label={COMPOSITION_MODAL_TEXTS.deleteFileAriaLabel}
-                      onClick={() => clearNoteFile(note.id)}
-                      sx={styles.mediaIcon}
-                    >
-                      <Trash2 size={20} strokeWidth={1.5} />
-                    </IconButton>
+                  <Box>
+                    <Box sx={styles.fileChip}>
+                      <FileText size={20} strokeWidth={1.5} />
+                      <Typography sx={styles.fileChipName}>
+                        {displayNameFromFile(note.fileName, note.fileUrl)}
+                      </Typography>
+                      <IconButton
+                        aria-label={COMPOSITION_MODAL_TEXTS.deleteFileAriaLabel}
+                        onClick={() => clearNoteFile(note.id)}
+                        sx={styles.mediaIcon}
+                      >
+                        <Trash2 size={20} strokeWidth={1.5} />
+                      </IconButton>
+                    </Box>
+                    {error && assetErrorTarget?.field === 'notes' && assetErrorTarget.rowId === note.id && (
+                      <Typography sx={styles.fileError}>{error}</Typography>
+                    )}
                   </Box>
                 )}
               </Box>

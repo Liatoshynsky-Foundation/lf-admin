@@ -7,7 +7,10 @@ import {
   normalizeCompositionName,
   throwIfCompositionNameDuplicateKey
 } from './compositionNameValidation';
-import { resolveSheetMusicFileNames, syncCompositionMediaUsageRefs } from './sheetMusicAssets';
+import {
+  prepareCompositionMedia,
+  syncCompositionMediaUsage
+} from '~/application/use-cases/compositionMedia/compositionMedia';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
 import type { Composition } from '~/domain/entities/Composition';
@@ -67,21 +70,14 @@ export const CompositionsMutation = {
     assertCompositionYearValid(input.year);
 
     const compositionData = mapCompositionInput(input);
-    const fileNames = await resolveSheetMusicFileNames(
-      compositionData.sheetMusic?.map((sheet) => sheet.url) ?? [],
-      assetsRepository
-    );
-    compositionData.sheetMusic = compositionData.sheetMusic?.map((sheet) => ({
-      ...sheet,
-      fileName: sheet.url ? fileNames.get(sheet.url) : undefined
-    }));
 
     const composition = await withTransaction(async (session) => {
+      const preparedCompositionData = await prepareCompositionMedia(compositionData, assetsRepository, session);
       let composition: Composition;
       try {
-        composition = await repo.create(compositionData, session);
+        composition = await repo.create(preparedCompositionData, session);
       } catch (error) {
-        throwIfCompositionNameDuplicateKey(error, compositionData.name.uk);
+        throwIfCompositionNameDuplicateKey(error, preparedCompositionData.name.uk);
         throw error;
       }
       if (!composition) {
@@ -90,11 +86,10 @@ export const CompositionsMutation = {
 
 
       await opusRepo.moveCompositionsToCompositionsOpus([composition.id], session);
+      await syncCompositionMediaUsage(composition.id, null, composition, assetsRepository, session);
 
       return composition;
     });
-
-    await syncCompositionMediaUsageRefs(composition.id, null, composition, assetsRepository);
 
     return composition;
   },
@@ -123,40 +118,27 @@ export const CompositionsMutation = {
       ...(input.sheetMusic !== undefined && { sheetMusic: input.sheetMusic }),
       ...(input.audios !== undefined && { audios: input.audios })
     };
-
-    if (updateData.sheetMusic !== undefined) {
-      const fileNames = await resolveSheetMusicFileNames(
-        updateData.sheetMusic.map((sheet) => sheet.url),
-        assetsRepository
-      );
-      updateData.sheetMusic = updateData.sheetMusic.map((sheet) => ({
-        ...sheet,
-        name: sheet.name?.trim() || null,
-        fileName: sheet.url ? fileNames.get(sheet.url) : undefined
-      }));
-    }
-
-    let updatedComposition: Composition | null;
-    try {
-      updatedComposition = await repo.update(id, updateData);
-    } catch (error) {
-      throwIfCompositionNameDuplicateKey(error, input.name?.uk ?? '');
-      throw error;
-    }
+    const updatedComposition = await withTransaction(async (session) => {
+      const preparedUpdateData = updateData.sheetMusic !== undefined || updateData.audios !== undefined
+        ? await prepareCompositionMedia(updateData, assetsRepository, session)
+        : updateData;
+      let updated: Composition | null;
+      try {
+        updated = await repo.update(id, preparedUpdateData, session);
+      } catch (error) {
+        throwIfCompositionNameDuplicateKey(error, input.name?.uk ?? '');
+        throw error;
+      }
+      if (updated && (input.sheetMusic !== undefined || input.audios !== undefined)) {
+        await syncCompositionMediaUsage(updated.id, existingComposition, updated, assetsRepository, session);
+      }
+      return updated;
+    });
 
     if (!updatedComposition) {
       throw new GraphQLError(`Failed to update composition with id ${id}`, {
         extensions: { code: 'COMPOSITION_UPDATE_FAILED' }
       });
-    }
-
-    if (input.sheetMusic !== undefined || input.audios !== undefined) {
-      await syncCompositionMediaUsageRefs(
-        updatedComposition.id,
-        existingComposition,
-        updatedComposition,
-        assetsRepository
-      );
     }
 
     return updatedComposition;

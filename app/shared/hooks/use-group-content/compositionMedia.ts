@@ -1,4 +1,4 @@
-import { fileNameFromUrl } from '~/src/shared/utils/fileNameFromUrl';
+import { fileNameFromUrl } from '~/src/shared/utils/assets/assetFilename';
 
 export { fileNameFromUrl };
 

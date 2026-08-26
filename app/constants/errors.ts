@@ -182,3 +182,8 @@ export const seoFormErrors = {
     keywords: 'Keywords must be comma-separated, without empty values.'
   }
 };
+
+export const compositionMediaErrors = {
+  ASSET_NAME_CONFLICT: (filename: string): string =>
+    `Неможливо обрати файл «${filename}». Змініть назву або виберіть інший файл.`
+};

@@ -89,6 +89,14 @@ const usageToLink = (pageId?: string | null) => {
   return pageId.startsWith('/') ? pageId : `/${pageId}`;
 };
 
+const usageRefToLink = (usageRef: AssetItem['usageRefs'][number]): string | undefined => {
+  if (usageRef.compositionId) {
+    return `/creativity?composition-id=${encodeURIComponent(usageRef.compositionId)}`;
+  }
+
+  return usageToLink(usageRef.pageId);
+};
+
 const getAssetTypeFromFile = (mimeType: string, filename: string): AssetType => {
   const type = mimeType.toLowerCase();
   const name = filename.toLowerCase();
@@ -123,8 +131,8 @@ const toFileItemFromAsset = (asset: AssetItem): FilesPageFileItem => ({
   addedBy: asset.createdBy ? { name: asset.createdBy } : undefined,
   usage: asset.usageRefs.map((usageRef, index) => ({
     id: `${asset.id}-${index}`,
-    label: usageRef.pageId ?? FILES_UNKNOWN_SECTION_LABEL,
-    href: usageToLink(usageRef.pageId)
+    label: usageRef.compositionName ?? usageRef.pageId ?? usageRef.compositionId ?? FILES_UNKNOWN_SECTION_LABEL,
+    href: usageRefToLink(usageRef)
   })),
   description: asset.description ?? undefined,
   assetType: asset.type,

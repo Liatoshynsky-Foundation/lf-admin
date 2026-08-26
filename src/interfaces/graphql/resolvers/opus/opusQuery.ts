@@ -1,11 +1,11 @@
 import { GraphQLError } from 'graphql';
 
-import { withCompositionMediaDisplayNames } from '../compositions/compositionMediaDisplayNames';
 import { endpointRepositoryHandler, mapFilters } from '../helpers';
 import { handleGroup } from './tab-handlers/handleGroup';
 import { handleMixed } from './tab-handlers/handleMixed';
 import { handleWork } from './tab-handlers/handleWork';
 import { orderCompositionsByIds } from './tab-handlers/tabHandlersHelpers';
+import { withCompositionMediaDisplayNames } from '~/application/use-cases/compositionMedia/compositionMedia';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
 import { Composition } from '~/domain/entities/Composition';

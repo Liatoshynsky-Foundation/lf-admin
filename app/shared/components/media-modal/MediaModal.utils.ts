@@ -18,7 +18,7 @@ export const matchesAudio = (mimeType: string, filename: string): boolean =>
   matchesStorageFile(mimeType, filename, AUDIO_EXTENSION, (value) => value.startsWith('audio/'));
 
 export const matchesPdf = (mimeType: string, filename: string): boolean =>
-  matchesStorageFile(mimeType, filename, PDF_EXTENSION, (value) => value.startsWith('uploads/'));
+  matchesStorageFile(mimeType, filename, PDF_EXTENSION, (value) => value === 'application/pdf');
 
 export const isImageUploadFile = (file: File): boolean => matchesImage(file.type, file.name);
 

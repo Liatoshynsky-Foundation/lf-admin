@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { createCompositionId } from '../use-upsert-opus/useUpsertOpus';
-import { fileNameFromUrl } from '~/src/shared/utils/fileNameFromUrl';
+import { fileNameFromUrl } from '~/src/shared/utils/assets/assetFilename';
 import type { OpusAudioFileData, OpusCompositionData, OpusCompositionSuggestion, OpusMediaFileData } from '~/types/opus';
 
 type AudioItem = NonNullable<OpusCompositionSuggestion['audios']>[number];

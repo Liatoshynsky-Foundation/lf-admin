@@ -26,7 +26,7 @@ import type { SeoBlockErrors, SeoBlockValue } from '~/shared/components/forms/se
 import type { LocalizedMeta } from '~/shared/components/forms/seo-metadata-form/SeoMetadataForm';
 import { type SeoField, validateSeoField } from '~/shared/components/forms/seo-metadata-form/validateSeoField';
 import { useCreateOpus, useOpusById, useUpdateOpus } from '~/shared/hooks/use-opuses/useOpuses';
-import { fileNameFromUrl } from '~/src/shared/utils/fileNameFromUrl';
+import { fileNameFromUrl } from '~/src/shared/utils/assets/assetFilename';
 import { CropRect } from '~/types/common';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import {

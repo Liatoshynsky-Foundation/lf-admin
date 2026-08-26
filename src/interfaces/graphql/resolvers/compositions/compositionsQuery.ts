@@ -1,6 +1,6 @@
 import { GraphQLError } from 'graphql';
 
-import { withCompositionMediaDisplayNames } from './compositionMediaDisplayNames';
+import { withCompositionMediaDisplayNames } from '~/application/use-cases/compositionMedia/compositionMedia';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
 import type { Composition } from '~/domain/entities/Composition';
