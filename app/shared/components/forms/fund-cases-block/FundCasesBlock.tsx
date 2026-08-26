@@ -4,6 +4,7 @@ import { closestCenter, DndContext,type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Box, Button, Typography } from '@mui/material';
 import { Plus } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -96,6 +97,12 @@ const columns: readonly ColumnDef<never, never, CaseRow>[] = [
     renderPlain: (row) => <RowActions editAction={row.editAction} menuActions={row.menuActions} />
   }
 ];
+
+const renderCaseRowWrapper = (id: string, children: ReactNode) => (
+  <SortableItemWrapper id={id} gripHandle tableRow>
+    {children}
+  </SortableItemWrapper>
+);
 
 export default function FundCasesBlock({
   fundId,
@@ -238,11 +245,7 @@ export default function FundCasesBlock({
             <TableLayout
               data={rows}
               columns={columns}
-              rowWrapper={(id, children) => (
-                <SortableItemWrapper id={id} gripHandle tableRow>
-                  {children}
-                </SortableItemWrapper>
-              )}
+              rowWrapper={renderCaseRowWrapper}
             />
           </SortableContext>
         </DndContext>

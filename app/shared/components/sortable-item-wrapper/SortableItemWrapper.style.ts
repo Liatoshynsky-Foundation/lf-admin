@@ -10,15 +10,19 @@ export const styles = {
     gripHandle: boolean,
     gripPosition: GripPosition = 'center',
     tableRow = false
-  ) => ({
-    display: tableRow ? 'block' : gripHandle ? 'flex' : 'block',
-    ...(tableRow ? { position: 'relative', width: '100%' } : {
-      alignItems: gripPosition === 'top' ? 'flex-start' : 'center',
-      gap: gripHandle ? '12px' : '0px'
-    }),
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.4 : 1,
-    zIndex: isDragging ? 10 : 1
-  })
+  ) => {
+    const display = gripHandle && !tableRow ? 'flex' : 'block';
+
+    return {
+      display,
+      ...(tableRow ? { position: 'relative', width: '100%' } : {
+        alignItems: gripPosition === 'top' ? 'flex-start' : 'center',
+        gap: gripHandle ? '12px' : '0px'
+      }),
+      transform: CSS.Transform.toString(transform),
+      transition,
+      opacity: isDragging ? 0.4 : 1,
+      zIndex: isDragging ? 10 : 1
+    };
+  }
 };
