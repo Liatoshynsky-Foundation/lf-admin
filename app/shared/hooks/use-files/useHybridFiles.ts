@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { COMPOSITION_MODAL_PARAM, WORKS_BASE_PATH } from '~/constants/creativity';
 import { FILES_UNKNOWN_SECTION_LABEL } from '~/constants/files';
 import type { FileUsageLink } from '~/shared/components/file-info-sidebar/FileInfoSidebar';
 import type { FilesCardsLayoutItem } from '~/shared/components/files-cards-layout';
@@ -91,7 +92,7 @@ const usageToLink = (pageId?: string | null) => {
 
 const usageRefToLink = (usageRef: AssetItem['usageRefs'][number]): string | undefined => {
   if (usageRef.compositionId) {
-    return `/creativity?composition-id=${encodeURIComponent(usageRef.compositionId)}`;
+    return `${WORKS_BASE_PATH}?${COMPOSITION_MODAL_PARAM}=${encodeURIComponent(usageRef.compositionId)}`;
   }
 
   return usageToLink(usageRef.pageId);

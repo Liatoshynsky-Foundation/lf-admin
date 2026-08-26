@@ -26,7 +26,7 @@ export const assertCompositionNameNotTaken = async (
 ): Promise<void> => {
   const titleResult = compositionTitleSchema.safeParse(ukName);
   if (!titleResult.success) {
-    throw new GraphQLError(titleResult.error.issues[0]?.message ?? 'Введіть назву композиції.', {
+    throw new GraphQLError(titleResult.error.issues[0].message, {
       extensions: { code: 'BAD_USER_INPUT' }
     });
   }
@@ -45,7 +45,7 @@ export const assertCompositionGenreValid = (genre?: string | null): void => {
 
   const result = compositionGenreSchema.safeParse(genre);
   if (!result.success) {
-    throw new GraphQLError(result.error.issues[0]?.message ?? 'Некоректний жанр.', {
+    throw new GraphQLError(result.error.issues[0].message, {
       extensions: { code: 'BAD_USER_INPUT' }
     });
   }
@@ -56,7 +56,7 @@ export const assertCompositionYearValid = (year?: number | null): void => {
 
   const result = compositionYearSchema.safeParse(String(year));
   if (!result.success) {
-    throw new GraphQLError(result.error.issues[0]?.message ?? 'Введіть коректну дату.', {
+    throw new GraphQLError(result.error.issues[0].message, {
       extensions: { code: 'BAD_USER_INPUT' }
     });
   }

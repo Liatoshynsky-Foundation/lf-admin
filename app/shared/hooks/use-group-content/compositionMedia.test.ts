@@ -32,7 +32,8 @@ describe('Media utility functions', () => {
 
       expect(result).toEqual({
         id: 'test-id-1',
-        name: 'track.mp3',
+        name: '',
+        fileName: 'track.mp3',
         fileUrl: 'https://example.com/track.mp3?v=1',
         publishDate: '2025'
       });
