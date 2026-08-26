@@ -14,6 +14,7 @@ const createMockCreateCaseInput = (overrides: Partial<CreateCaseInput> = {}): Cr
   fundId: mockFundId,
   descriptionNumber: 1,
   caseNumber: 1,
+  order: 0,
   caseName: { uk: 'Справа', en: 'Case' },
   caseDate: { uk: '1917-1918', en: '1917-1918' },
   sheetsNumber: 10,
@@ -139,7 +140,7 @@ describe('CaseMutation', () => {
       await CaseMutation.createCase({}, { input }, adminContext);
 
       expect(mockCreate).toHaveBeenCalledTimes(1);
-      expect(mockCreate).toHaveBeenCalledWith(input);
+      expect(mockCreate).toHaveBeenCalledWith({ ...input, order: 0 });
     });
 
     it('should recalculate and persist the parent Fund stats after a successful create', async () => {

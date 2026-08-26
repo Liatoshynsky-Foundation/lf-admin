@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { FundsTable, FundsTableProps } from './ArchiveFundsTable';
 import {
@@ -22,6 +23,11 @@ type TableLayoutProps<TGroup, TSub, TPlain> = {
   columns: readonly ColumnDef<TGroup, TSub, TPlain>[];
 };
 
+const mockDeleteFund = jest.fn();
+jest.mock('~/shared/hooks/use-funds/useFunds', () => ({
+  useDeleteFund: () => [mockDeleteFund],
+}));
+
 jest.mock('~/shared/components/empty-state', () => ({
   EmptyState: ({ title, description }: EmptyStateProps) => (
     <div data-testid="mock-empty-state">
@@ -31,7 +37,28 @@ jest.mock('~/shared/components/empty-state', () => ({
   ),
 }));
 
-jest.mock('~/shared/components/table-layout/components/RowActions');
+jest.mock('~/shared/components/delete-composition-modal/DeleteCompositionModal', () => ({
+  DeleteCompositionModal: (props: { open: boolean; onClose: () => void; onConfirm: () => void; description: string }) => (
+    <div data-testid="mock-delete-modal" data-open={props.open}>
+      <span>{props.description}</span>
+      <button onClick={props.onClose} data-testid="mock-delete-close">Close</button>
+      <button onClick={props.onConfirm} data-testid="mock-delete-confirm">Confirm</button>
+    </div>
+  )
+}));
+
+jest.mock('~/shared/components/table-layout/components/RowActions', () => ({
+  RowActions: ({ menuActions }: { menuActions: { menuItems: { items: { id: string; onClick?: () => void }[] }[] } }) => (
+    <div data-testid="row-actions">
+      {menuActions.menuItems.flatMap(group => group.items).map(item => (
+        <button key={item.id} data-testid={`action-${item.id}`} onClick={item.onClick}>
+          {item.id}
+        </button>
+      ))}
+    </div>
+  )
+}));
+
 jest.mock('~/shared/components/table-layout/components/StatusBadge');
 
 jest.mock('~/shared/components/table-layout/TableLayout', () => ({
@@ -49,7 +76,7 @@ jest.mock('~/shared/components/table-layout/TableLayout', () => ({
           .filter((item) => item.type === 'individual')
           .map((item) => (
             <div key={item.id} data-testid={`mock-table-layout-row-${item.id}`}>
-              {JSON.stringify(item)}
+              <span data-testid="row-json">{JSON.stringify(item)}</span>
               {columns.map((col) => (
                 <span key={col.id} data-testid={`mock-cell-${col.id}`}>
                   {col.renderPlain ? col.renderPlain(item.plainData) : null}
@@ -87,16 +114,20 @@ const fund = defaultProps.funds[0];
 const rowWithActions = {
   type: 'individual', id: fund.id, plainData: {
     ...defaultProps.funds[0], editAction: {
-      editHref: `/archive/fund/${fund.id}/edit`, editLabel: `Редагувати фонд Фонд ${fund.id}`
+      editHref: `/archive/fund/${fund.id}/edit`, editLabel: 'Редагувати фонд Фонд 1'
     },
 
     menuActions: {
-      menuItems: [{ items: [{ id: 'edit', text: { name: 'Редагувати' }, href: `/archive/fund/${fund.id}/edit` }, { id: 'share', text: { name: 'Поширити' }, href: `/archive/fund/${fund.id}/share` }] }, { items: [{ id: 'delete', text: { name: 'Видалити' } }] }], menuTriggerLabel: `Дії для фонду Фонд ${fund.id}`
+      menuItems: [{ items: [{ id: 'edit', text: { name: 'Редагувати' }, href: `/archive/fund/${fund.id}/edit` }, { id: 'share', text: { name: 'Поширити' }, href: `/archive/fund/${fund.id}/share` }] }, { items: [{ id: 'delete', text: { name: 'Видалити' } }] }], menuTriggerLabel: 'Дії для фонду Фонд 1'
     }
   },
 };
 
 describe('ArchiveFundsTable', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('should render all columns and rows with funds data', () => {
     renderComponent();
 
@@ -132,6 +163,40 @@ describe('ArchiveFundsTable', () => {
     } else {
       expect(screen.getByTestId(`mock-cell-${cell}`)).toBeInTheDocument();
     }
+  });
+
+  describe('Delete Fund Flow', () => {
+    it('should handle opening the delete modal, closing it, and confirming deletion', async () => {
+      const user = userEvent.setup();
+      const onDeletedMock = jest.fn();
+      renderComponent({ onDeleted: onDeletedMock });
+
+      await user.click(screen.getByTestId('mock-delete-confirm'));
+      expect(mockDeleteFund).not.toHaveBeenCalled();
+
+      await user.click(screen.getByTestId('action-delete'));
+      expect(screen.getByTestId('mock-delete-modal')).toHaveAttribute('data-open', 'true');
+      expect(screen.getByText(/Ви впевнені, що хочете видалити фонд «Фонд 1»\?/)).toBeInTheDocument();
+
+      await user.click(screen.getByTestId('mock-delete-close'));
+      expect(screen.getByTestId('mock-delete-modal')).toHaveAttribute('data-open', 'false');
+
+      await user.click(screen.getByTestId('action-delete'));
+      await user.click(screen.getByTestId('mock-delete-confirm'));
+      expect(mockDeleteFund).toHaveBeenCalledWith({ id: '1' });
+      expect(onDeletedMock).toHaveBeenCalled();
+      expect(screen.getByTestId('mock-delete-modal')).toHaveAttribute('data-open', 'false');
+    });
+
+    it('should not call onDeleted if it is not provided', async () => {
+      const user = userEvent.setup();
+      renderComponent({ onDeleted: undefined });
+
+      await user.click(screen.getByTestId('action-delete'));
+      await user.click(screen.getByTestId('mock-delete-confirm'));
+      expect(mockDeleteFund).toHaveBeenCalledWith({ id: '1' });
+      expect(screen.getByTestId('mock-delete-modal')).toHaveAttribute('data-open', 'false');
+    });
   });
 
   describe('should render state UIs', () => {

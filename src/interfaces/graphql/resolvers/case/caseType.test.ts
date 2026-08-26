@@ -22,7 +22,8 @@ const mockCase: Case = {
   caseDescriptions: { uk: 'Опис', en: 'Description' },
   status: BaseContentStatuses.Published,
   createdAt: '2026-07-29T10:00:00.000Z',
-  updatedAt: '2026-07-29T10:00:00.000Z'
+  updatedAt: '2026-07-29T10:00:00.000Z',
+  order: 0
 };
 
 describe('formatCipher', () => {

@@ -3,20 +3,30 @@ import { renderHook } from '@testing-library/react';
 import { FundErrors } from '~/constants/errors';
 import { safeMutate } from '~/lib/utils/safeMutate';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
+import { SortOrder } from '~/types/graphql/generated/graphql';
 
 const mockUseFundByIdQuery = jest.fn();
 const mockUseAllFundsQuery = jest.fn();
 const mockUseCreateFundMutation = jest.fn();
 const mockUseUpdateFundMutation = jest.fn();
 const mockUseDeleteFundMutation = jest.fn();
+const mockUseAllCasesQuery = jest.fn();
+const mockUseCreateCaseMutation = jest.fn();
+const mockUseUpdateCaseMutation = jest.fn();
+const mockUseDeleteCaseMutation = jest.fn();
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
   __esModule: true,
+  SortOrder: { Asc: 'ASC', Desc: 'DESC' },
   useFundByIdQuery: (...args: unknown[]) => mockUseFundByIdQuery(...args),
   useAllFundsQuery: (...args: unknown[]) => mockUseAllFundsQuery(...args),
   useCreateFundMutation: (...args: unknown[]) => mockUseCreateFundMutation(...args),
   useUpdateFundMutation: (...args: unknown[]) => mockUseUpdateFundMutation(...args),
-  useDeleteFundMutation: (...args: unknown[]) => mockUseDeleteFundMutation(...args)
+  useDeleteFundMutation: (...args: unknown[]) => mockUseDeleteFundMutation(...args),
+  useAllCasesQuery: (...args: unknown[]) => mockUseAllCasesQuery(...args),
+  useCreateCaseMutation: (...args: unknown[]) => mockUseCreateCaseMutation(...args),
+  useUpdateCaseMutation: (...args: unknown[]) => mockUseUpdateCaseMutation(...args),
+  useDeleteCaseMutation: (...args: unknown[]) => mockUseDeleteCaseMutation(...args),
 }));
 
 jest.mock('~/lib/utils/safeMutate', () => ({
@@ -24,7 +34,16 @@ jest.mock('~/lib/utils/safeMutate', () => ({
   safeMutate: jest.fn()
 }));
 
-import { useAllFunds, useCreateFund, useDeleteFund, useFundById, useUpdateFund } from './useFunds';
+import { 
+  useAllFunds, 
+  useCasesByFundId,
+  useCreateCase,
+  useCreateFund, 
+  useDeleteCase,
+  useDeleteFund, 
+  useFundById, 
+  useUpdateCase,
+  useUpdateFund} from './useFunds';
 
 const mockedSafeMutate = safeMutate as jest.MockedFunction<typeof safeMutate>;
 
@@ -68,6 +87,47 @@ describe('useFunds', () => {
         fetchPolicy: 'network-only',
         skip: true
       });
+    });
+  });
+
+  describe('useCasesByFundId', () => {
+    it('should query all cases with fundId filter and sort order when fundId is provided', () => {
+      const mockRefetch = jest.fn();
+      mockUseAllCasesQuery.mockReturnValue({
+        data: { allCases: [{ id: 'case-1' }] },
+        loading: false,
+        error: undefined,
+        refetch: mockRefetch
+      });
+
+      const { result } = renderHook(() => useCasesByFundId('fund-1'));
+
+      expect(mockUseAllCasesQuery).toHaveBeenCalledWith({
+        variables: { filters: { fundId: 'fund-1', sort: [{ field: 'order', order: SortOrder.Asc }] } },
+        fetchPolicy: 'network-only',
+        skip: false
+      });
+      expect(result.current.cases).toEqual([{ id: 'case-1' }]);
+      expect(result.current.loading).toBe(false);
+    });
+
+    it('should skip query and return an empty array if fundId is undefined', () => {
+      mockUseAllCasesQuery.mockReturnValue({
+        data: undefined,
+        loading: true,
+        error: undefined,
+        refetch: jest.fn()
+      });
+
+      const { result } = renderHook(() => useCasesByFundId(undefined));
+
+      expect(mockUseAllCasesQuery).toHaveBeenCalledWith({
+        variables: { filters: undefined },
+        fetchPolicy: 'network-only',
+        skip: true
+      });
+      expect(result.current.cases).toEqual([]);
+      expect(result.current.loading).toBe(true);
     });
   });
 
@@ -301,31 +361,95 @@ describe('useFunds', () => {
         FundErrors.FAILED_TO_DELETE
       );
     });
+    
+    it('should use fallback error messages when FundErrors are missing', async () => {
+      const originalNetwork = FundErrors.NETWORK_ERROR_DELETE;
+      const originalFailed = FundErrors.FAILED_TO_DELETE;
+  
+      Object.defineProperty(FundErrors, 'NETWORK_ERROR_DELETE', { value: undefined, configurable: true });
+      Object.defineProperty(FundErrors, 'FAILED_TO_DELETE', { value: undefined, configurable: true });
+  
+      const mutateMock = jest.fn();
+      mockUseDeleteFundMutation.mockReturnValue([mutateMock, { loading: false }]);
+      mockedSafeMutate.mockResolvedValue({ data: {} } as never);
+  
+      const { result } = renderHook(() => useDeleteFund());
+      const [deleteFund] = result.current;
+  
+      await deleteFund({ id: '1' });
+  
+      expect(mockedSafeMutate).toHaveBeenCalledWith(
+        mutateMock,
+        { id: '1' },
+        'Помилка мережі при видаленні',
+        'Не вдалося видалити фонд'
+      );
+  
+      Object.defineProperty(FundErrors, 'NETWORK_ERROR_DELETE', { value: originalNetwork, configurable: true });
+      Object.defineProperty(FundErrors, 'FAILED_TO_DELETE', { value: originalFailed, configurable: true });
+    });
   });
-  it('should use fallback error messages when FundErrors are missing', async () => {
-    const originalNetwork = FundErrors.NETWORK_ERROR_DELETE;
-    const originalFailed = FundErrors.FAILED_TO_DELETE;
 
-    Object.defineProperty(FundErrors, 'NETWORK_ERROR_DELETE', { value: undefined, configurable: true });
-    Object.defineProperty(FundErrors, 'FAILED_TO_DELETE', { value: undefined, configurable: true });
+  describe('useCreateCase', () => {
+    it('should wrap the mutation with safeMutate and case create error messages', async () => {
+      const mutateMock = jest.fn();
+      mockUseCreateCaseMutation.mockReturnValue([mutateMock, { loading: false }]);
+      mockedSafeMutate.mockResolvedValue({ data: { createCase: { id: 'case-1' } } } as never);
 
-    const mutateMock = jest.fn();
-    mockUseDeleteFundMutation.mockReturnValue([mutateMock, { loading: false }]);
-    mockedSafeMutate.mockResolvedValue({ data: {} } as never);
+      const { result } = renderHook(() => useCreateCase());
+      const [createCase] = result.current;
 
-    const { result } = renderHook(() => useDeleteFund());
-    const [deleteFund] = result.current;
+      const input = { title: { uk: 'Нова справа' }, fundId: 'fund-1' } as any;
+      await createCase(input);
 
-    await deleteFund({ id: '1' });
+      expect(mockedSafeMutate).toHaveBeenCalledWith(
+        mutateMock,
+        { input },
+        'Помилка мережі при створенні справи',
+        'Не вдалося створити справу'
+      );
+    });
+  });
 
-    expect(mockedSafeMutate).toHaveBeenCalledWith(
-      mutateMock,
-      { id: '1' },
-      'Помилка мережі при видаленні',
-      'Не вдалося видалити фонд'
-    );
+  describe('useUpdateCase', () => {
+    it('should wrap the mutation with safeMutate and case update error messages', async () => {
+      const mutateMock = jest.fn();
+      mockUseUpdateCaseMutation.mockReturnValue([mutateMock, { loading: false }]);
+      mockedSafeMutate.mockResolvedValue({ data: { updateCase: { id: 'case-1' } } } as never);
 
-    Object.defineProperty(FundErrors, 'NETWORK_ERROR_DELETE', { value: originalNetwork, configurable: true });
-    Object.defineProperty(FundErrors, 'FAILED_TO_DELETE', { value: originalFailed, configurable: true });
+      const { result } = renderHook(() => useUpdateCase());
+      const [updateCase] = result.current;
+
+      const variables = { id: 'case-1', input: { title: { uk: 'Оновлена справа' } } } as any;
+      await updateCase(variables);
+
+      expect(mockedSafeMutate).toHaveBeenCalledWith(
+        mutateMock,
+        variables,
+        'Помилка мережі при оновленні справи',
+        'Не вдалося оновити справу'
+      );
+    });
+  });
+
+  describe('useDeleteCase', () => {
+    it('should wrap the mutation with safeMutate and case delete error messages', async () => {
+      const mutateMock = jest.fn();
+      mockUseDeleteCaseMutation.mockReturnValue([mutateMock, { loading: false }]);
+      mockedSafeMutate.mockResolvedValue({ data: { deleteCase: { success: true } } } as never);
+
+      const { result } = renderHook(() => useDeleteCase());
+      const [deleteCase] = result.current;
+
+      const variables = { id: 'case-1' } as any;
+      await deleteCase(variables);
+
+      expect(mockedSafeMutate).toHaveBeenCalledWith(
+        mutateMock,
+        variables,
+        'Помилка мережі при видаленні справи',
+        'Не вдалося видалити справу'
+      );
+    });
   });
 });

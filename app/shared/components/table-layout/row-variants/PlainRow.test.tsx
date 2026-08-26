@@ -70,4 +70,30 @@ describe('PlainRow', () => {
 
     expect(screen.getByText(mockData.title)).toBeInTheDocument();
   });
+
+  it('should apply rowWrapper when provided', () => {
+    const columns: ColumnDef<unknown, unknown, MockPlainData>[] = [
+      {
+        id: 'title',
+        renderPlain: (d) => d.title
+      }
+    ];
+
+    const rowWrapperMock = jest.fn((children: React.ReactNode) => (
+      <div data-testid="custom-wrapper">{children}</div>
+    ));
+
+    render(
+      <PlainRow 
+        plainData={mockData} 
+        columns={columns} 
+        gridTemplate={mockGridTemplate} 
+        rowWrapper={rowWrapperMock}
+      />
+    );
+
+    expect(rowWrapperMock).toHaveBeenCalled();
+    expect(screen.getByTestId('custom-wrapper')).toBeInTheDocument();
+    expect(screen.getByText(mockData.title)).toBeInTheDocument();
+  });
 });

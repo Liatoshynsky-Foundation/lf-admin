@@ -159,7 +159,7 @@ export default function FundCasesBlock({
       caseDate: caseItem.caseDate.uk,
       caseDescription: caseItem.caseDescriptions.uk,
       updatedAt: caseItem.updatedAt,
-      status: String(caseItem.status).toLowerCase() === CaseStatus.Published
+      status: caseItem.status === CaseStatus.Published
         ? BaseContentStatuses.Published
         : BaseContentStatuses.Hidden,
       editAction: {

@@ -20,6 +20,24 @@ jest.mock('~/store', () => ({
     mockUseStore(selector)
 }));
 
+const mockNavigateBack = jest.fn();
+jest.mock('~/shared/hooks/use-navigation-guard/useNavigationGuard', () => ({
+  __esModule: true,
+  useNavigationGuard: () => ({ navigateBack: mockNavigateBack })
+}));
+
+const mockUseUnsavedChanges = jest.fn();
+jest.mock('~/shared/hooks/use-unsaved-changes/useUnsavedChanges', () => ({
+  __esModule: true,
+  useUnsavedChanges: (value: boolean) => mockUseUnsavedChanges(value)
+}));
+
+const mockUpdateCase = jest.fn();
+jest.mock('~/shared/hooks/use-funds/useFunds', () => ({
+  __esModule: true,
+  useUpdateCase: () => [mockUpdateCase]
+}));
+
 jest.mock('~/shared/components/divided-header/DividedHeader', () => ({
   __esModule: true,
   default: ({ children, rightActionsComponent }: { children: ReactNode; rightActionsComponent: ReactNode }) => (
@@ -91,7 +109,7 @@ jest.mock('~/shared/components/dropdown-menu/ActionMenu', () => ({
 
 jest.mock('~/shared/components/forms/fund-cases-block/FundCasesBlock', () => ({
   __esModule: true,
-  default: () => <div data-testid="fund-cases-block" />
+  default: ({ fundId }: { fundId?: string }) => <div data-testid="fund-cases-block" data-fund-id={fundId} />
 }));
 
 jest.mock('~/shared/components/forms/fund-details-block/FundDetailsBlock', () => ({
@@ -129,24 +147,37 @@ describe('FundView', () => {
     );
   });
 
-  it('renders the create title, details block, and cases block by default', () => {
+  it('renders the create title and details block by default, without the cases block', () => {
     render(<FundView data={buildData()} />);
 
     expect(screen.getByText('Створення фонду')).toBeInTheDocument();
     expect(screen.getByTestId('fund-details-block')).toBeInTheDocument();
-    expect(screen.getByTestId('fund-cases-block')).toBeInTheDocument();
+    expect(screen.queryByTestId('fund-cases-block')).not.toBeInTheDocument();
   });
 
-  it('renders the edit title when mode is edit', () => {
-    render(<FundView data={buildData()} mode="edit" />);
+  it('renders the edit title and cases block when mode is edit', () => {
+    render(<FundView data={buildData()} mode="edit" fundId="fund-1" />);
 
     expect(screen.getByText('Редагування фонду')).toBeInTheDocument();
+    expect(screen.getByTestId('fund-cases-block')).toHaveAttribute('data-fund-id', 'fund-1');
   });
 
-  it('calls handleSave with Draft when SAVE is clicked from the publish menu', async () => {
+  it('navigates to the edit page after SAVE succeeds in create mode', async () => {
     const user = userEvent.setup();
     const handleSave = jest.fn().mockResolvedValue('id-1');
     render(<FundView data={buildData({ handleSave })} />);
+
+    await user.click(screen.getByText('open publish menu'));
+    await user.click(screen.getByText('Зберегти зміни'));
+
+    expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
+    expect(mockPush).toHaveBeenCalledWith(`${ARCHIVE_BASE_PATH}/fund/id-1/edit`);
+  });
+
+  it('does not navigate after SAVE succeeds in edit mode', async () => {
+    const user = userEvent.setup();
+    const handleSave = jest.fn().mockResolvedValue('id-1');
+    render(<FundView data={buildData({ handleSave })} mode="edit" fundId="fund-1" />);
 
     await user.click(screen.getByText('open publish menu'));
     await user.click(screen.getByText('Зберегти зміни'));

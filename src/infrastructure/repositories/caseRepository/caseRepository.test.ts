@@ -13,13 +13,14 @@ const createMockCaseDoc = (overrides: Partial<DbCase> = {}): DbCase => ({
   fundId: mockFundId,
   descriptionNumber: 1,
   caseNumber: 1,
+  order: 1,
   caseName: { uk: 'Справа', en: 'Case' },
   caseDate: { uk: '1917-1918', en: '1917-1918' },
   sheetsNumber: 10,
   caseDescriptions: { uk: 'Опис', en: 'Description' },
   detailedCaseDescription: { uk: 'Детальний опис', en: 'Detailed description' },
   pdfFile: null,
-  status: BaseContentStatuses.Hidden,
+  status: BaseContentStatuses.Draft,
   createdAt: '2026-07-29T10:00:00.000Z',
   updatedAt: '2026-07-29T10:00:00.000Z',
   ...overrides
@@ -59,12 +60,18 @@ describe('caseRepository', () => {
       sheetsNumber: 20,
       caseDescriptions: { uk: 'Опис 2', en: 'Description 2' },
       detailedCaseDescription: { uk: 'Деталі', en: 'Details' },
-      status: BaseContentStatuses.Hidden
+      status: BaseContentStatuses.Hidden,
+      order: 0
     };
 
+    findOneMock.mockReturnValue({
+      sort: jest.fn().mockReturnThis(),
+      lean: jest.fn().mockResolvedValue(null)
+    });
     saveMock.mockResolvedValue({ toObject: () => createMockCaseDoc({ ...newCase }) });
     const result = await repository.create(newCase);
 
+    expect(findOneMock).toHaveBeenCalledWith({ fundId: newCase.fundId });
     expect(saveMock).toHaveBeenCalled();
 
     expect(result.descriptionNumber).toEqual(newCase.descriptionNumber);
@@ -78,9 +85,115 @@ describe('caseRepository', () => {
 
   it('should NOT create a case if the fundId+descriptionNumber+caseNumber combination already exists', async () => {
     const duplicateCase = createMockCaseDoc();
+    findOneMock.mockReturnValue({
+      sort: jest.fn().mockReturnThis(),
+      lean: jest.fn().mockResolvedValue(null)
+    });
     saveMock.mockRejectedValue(new Error('E11000 duplicate key error'));
 
     await expect(repository.create(duplicateCase)).rejects.toThrow();
+  });
+
+  describe('create - order assignment (nextOrder branch)', () => {
+    it('uses input.order when it is greater than 0, ignoring the last case order', async () => {
+      const newCase: CreateCaseInput = {
+        fundId: mockFundId,
+        descriptionNumber: 2,
+        caseNumber: 3,
+        caseName: { uk: 'Справа 2', en: 'Case 2' },
+        caseDate: { uk: '1918', en: '1918' },
+        sheetsNumber: 20,
+        caseDescriptions: { uk: 'Опис 2', en: 'Description 2' },
+        detailedCaseDescription: { uk: 'Деталі', en: 'Details' },
+        status: BaseContentStatuses.Hidden,
+        order: 5
+      };
+
+      findOneMock.mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        lean: jest.fn().mockResolvedValue({ order: 99 })
+      });
+      saveMock.mockResolvedValue({ toObject: () => createMockCaseDoc({ order: 5 }) });
+
+      await repository.create(newCase);
+
+      expect(MockCaseModel).toHaveBeenCalledWith(expect.objectContaining({ order: 5 }));
+    });
+
+    it('falls back to lastCase.order + 1 when input.order is 0', async () => {
+      const newCase: CreateCaseInput = {
+        fundId: mockFundId,
+        descriptionNumber: 2,
+        caseNumber: 3,
+        caseName: { uk: 'Справа 2', en: 'Case 2' },
+        caseDate: { uk: '1918', en: '1918' },
+        sheetsNumber: 20,
+        caseDescriptions: { uk: 'Опис 2', en: 'Description 2' },
+        detailedCaseDescription: { uk: 'Деталі', en: 'Details' },
+        status: BaseContentStatuses.Hidden,
+        order: 0
+      };
+
+      findOneMock.mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        lean: jest.fn().mockResolvedValue({ order: 7 })
+      });
+      saveMock.mockResolvedValue({ toObject: () => createMockCaseDoc({ order: 8 }) });
+
+      await repository.create(newCase);
+
+      expect(MockCaseModel).toHaveBeenCalledWith(expect.objectContaining({ order: 8 }));
+    });
+
+    it('falls back to 1 when input.order is 0 and there is no last case for the fund', async () => {
+      const newCase: CreateCaseInput = {
+        fundId: mockFundId,
+        descriptionNumber: 2,
+        caseNumber: 3,
+        caseName: { uk: 'Справа 2', en: 'Case 2' },
+        caseDate: { uk: '1918', en: '1918' },
+        sheetsNumber: 20,
+        caseDescriptions: { uk: 'Опис 2', en: 'Description 2' },
+        detailedCaseDescription: { uk: 'Деталі', en: 'Details' },
+        status: BaseContentStatuses.Hidden,
+        order: 0
+      };
+
+      findOneMock.mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        lean: jest.fn().mockResolvedValue(null)
+      });
+      saveMock.mockResolvedValue({ toObject: () => createMockCaseDoc({ order: 1 }) });
+
+      await repository.create(newCase);
+
+      expect(MockCaseModel).toHaveBeenCalledWith(expect.objectContaining({ order: 1 }));
+    });
+
+    it('falls back to lastCase.order + 1 when input.order is negative', async () => {
+      const newCase: CreateCaseInput = {
+        fundId: mockFundId,
+        descriptionNumber: 2,
+        caseNumber: 3,
+        caseName: { uk: 'Справа 2', en: 'Case 2' },
+        caseDate: { uk: '1918', en: '1918' },
+        sheetsNumber: 20,
+        caseDescriptions: { uk: 'Опис 2', en: 'Description 2' },
+        detailedCaseDescription: { uk: 'Деталі', en: 'Details' },
+        status: BaseContentStatuses.Hidden,
+        order: -3
+      };
+
+      findOneMock.mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        lean: jest.fn().mockResolvedValue({ order: 4 })
+      });
+      saveMock.mockResolvedValue({ toObject: () => createMockCaseDoc({ order: 5 }) });
+
+      await repository.create(newCase);
+
+      expect(MockCaseModel).toHaveBeenCalledWith(expect.objectContaining({ order: 5 }));
+    });
   });
 
   it('should find a case by fundId, descriptionNumber and caseNumber and return the mapped entity', async () => {
@@ -128,6 +241,173 @@ describe('caseRepository', () => {
     expect(result?.fundId).toBeUndefined();
     expect(result?.detailedCaseDescription).toBeUndefined();
     expect(result?.pdfFile).toStrictEqual(doc.pdfFile);
+  });
+
+  describe('toEntity defaults (status/order fallbacks)', () => {
+    it('defaults status to Hidden when the document has no status', async () => {
+      const doc = createMockCaseDoc({ status: undefined as unknown as BaseContentStatuses });
+      findOneMock.mockResolvedValue({ toObject: () => doc });
+
+      const result = await repository.findByFundAndNumbers(mockFundId, 1, 1);
+
+      expect(result?.status).toBe(BaseContentStatuses.Hidden);
+    });
+
+    it('keeps the document status when it is present', async () => {
+      const doc = createMockCaseDoc({ status: BaseContentStatuses.Draft });
+      findOneMock.mockResolvedValue({ toObject: () => doc });
+
+      const result = await repository.findByFundAndNumbers(mockFundId, 1, 1);
+
+      expect(result?.status).toBe(BaseContentStatuses.Draft);
+    });
+
+    it('defaults order to 0 when the document has no order', async () => {
+      const doc = createMockCaseDoc({ order: undefined as unknown as number });
+      findOneMock.mockResolvedValue({ toObject: () => doc });
+
+      const result = await repository.findByFundAndNumbers(mockFundId, 1, 1);
+
+      expect(result?.order).toBe(0);
+    });
+
+    it('keeps the document order when it is present (including 0)', async () => {
+      const doc = createMockCaseDoc({ order: 0 });
+      findOneMock.mockResolvedValue({ toObject: () => doc });
+
+      const result = await repository.findByFundAndNumbers(mockFundId, 1, 1);
+
+      expect(result?.order).toBe(0);
+    });
+
+    it('defaults createdAt/updatedAt to the current time when missing', async () => {
+      const doc = createMockCaseDoc({
+        createdAt: undefined as unknown as string,
+        updatedAt: undefined as unknown as string
+      });
+      findOneMock.mockResolvedValue({ toObject: () => doc });
+
+      const before = Date.now();
+      const result = await repository.findByFundAndNumbers(mockFundId, 1, 1);
+      const after = Date.now();
+
+      expect(result?.createdAt).toBeDefined();
+      expect(result?.updatedAt).toBeDefined();
+      const createdAtMs = new Date(result!.createdAt as unknown as string).getTime();
+      const updatedAtMs = new Date(result!.updatedAt as unknown as string).getTime();
+      expect(createdAtMs).toBeGreaterThanOrEqual(before);
+      expect(createdAtMs).toBeLessThanOrEqual(after);
+      expect(updatedAtMs).toBeGreaterThanOrEqual(before);
+      expect(updatedAtMs).toBeLessThanOrEqual(after);
+    });
+  });
+
+  describe('toEntity legacy cipher fallback (getNumberFromCipher)', () => {
+    it('uses descriptionNumber/caseNumber from the document when both are present, ignoring any cipher', async () => {
+      const doc = {
+        ...createMockCaseDoc({ descriptionNumber: 4, caseNumber: 9 }),
+        cipher: 'ф.1, оп. 2, спр. 3'
+      };
+      findOneMock.mockResolvedValue({ toObject: () => doc });
+
+      const result = await repository.findByFundAndNumbers(mockFundId, 4, 9);
+
+      expect(result?.descriptionNumber).toBe(4);
+      expect(result?.caseNumber).toBe(9);
+    });
+
+    it('derives descriptionNumber and caseNumber from a legacy cipher when both are missing on the document', async () => {
+      const doc = {
+        ...createMockCaseDoc({
+          descriptionNumber: undefined as unknown as number,
+          caseNumber: undefined as unknown as number
+        }),
+        cipher: 'ф. 12, оп. 34, спр. 56'
+      };
+      findOneMock.mockResolvedValue({ toObject: () => doc });
+
+      const result = await repository.findByFundAndNumbers(mockFundId, 34, 56);
+
+      expect(result?.descriptionNumber).toBe(34);
+      expect(result?.caseNumber).toBe(56);
+    });
+
+    it('derives only descriptionNumber from cipher when caseNumber is present on the document', async () => {
+      const doc = {
+        ...createMockCaseDoc({
+          descriptionNumber: undefined as unknown as number,
+          caseNumber: 7
+        }),
+        cipher: 'оп. 21'
+      };
+      findOneMock.mockResolvedValue({ toObject: () => doc });
+
+      const result = await repository.findByFundAndNumbers(mockFundId, 21, 7);
+
+      expect(result?.descriptionNumber).toBe(21);
+      expect(result?.caseNumber).toBe(7);
+    });
+
+    it('derives only caseNumber from cipher when descriptionNumber is present on the document', async () => {
+      const doc = {
+        ...createMockCaseDoc({
+          descriptionNumber: 5,
+          caseNumber: undefined as unknown as number
+        }),
+        cipher: 'спр. 42'
+      };
+      findOneMock.mockResolvedValue({ toObject: () => doc });
+
+      const result = await repository.findByFundAndNumbers(mockFundId, 5, 42);
+
+      expect(result?.descriptionNumber).toBe(5);
+      expect(result?.caseNumber).toBe(42);
+    });
+
+    it('falls back to 1 for both numbers when descriptionNumber/caseNumber are missing and there is no cipher at all', async () => {
+      const doc = createMockCaseDoc({
+        descriptionNumber: undefined as unknown as number,
+        caseNumber: undefined as unknown as number
+      });
+      findOneMock.mockResolvedValue({ toObject: () => doc });
+
+      const result = await repository.findByFundAndNumbers(mockFundId, 1, 1);
+
+      expect(result?.descriptionNumber).toBe(1);
+      expect(result?.caseNumber).toBe(1);
+    });
+
+    it('falls back to 1 for both numbers when the cipher does not match the expected pattern', async () => {
+      const doc = {
+        ...createMockCaseDoc({
+          descriptionNumber: undefined as unknown as number,
+          caseNumber: undefined as unknown as number
+        }),
+        cipher: 'this cipher has no recognizable pattern'
+      };
+      findOneMock.mockResolvedValue({ toObject: () => doc });
+
+      const result = await repository.findByFundAndNumbers(mockFundId, 1, 1);
+
+      expect(result?.descriptionNumber).toBe(1);
+      expect(result?.caseNumber).toBe(1);
+    });
+
+    it('matches the cipher pattern case-insensitively', async () => {
+      const doc = {
+        ...createMockCaseDoc({
+          descriptionNumber: undefined as unknown as number,
+          caseNumber: undefined as unknown as number
+        }),
+        cipher: 'ОП. 11, СПР. 22'
+      };
+      findOneMock.mockResolvedValue({ toObject: () => doc });
+
+      const result = await repository.findByFundAndNumbers(mockFundId, 11, 22);
+
+      expect(result?.descriptionNumber).toBe(11);
+      expect(result?.caseNumber).toBe(22);
+    });
   });
 
   describe('countDistinctDescriptionNumbers', () => {
@@ -186,6 +466,14 @@ describe('caseRepository', () => {
           { fundId: mockFundId }
         ]
       });
+    });
+
+    it('should query with no conditions at all when no filters are provided', async () => {
+      findAllMock.mockReturnValue(createMockQueryBuilder([]));
+
+      await repository.findAll();
+
+      expect(findAllMock).toHaveBeenCalledWith({});
     });
   });
 });
