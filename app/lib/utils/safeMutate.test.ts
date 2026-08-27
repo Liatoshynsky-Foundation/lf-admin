@@ -1,4 +1,4 @@
-import { ApolloError } from '@apollo/client';
+import { ApolloError, gql } from '@apollo/client';
 
 import {safeMutate } from './safeMutate';
 
@@ -24,7 +24,7 @@ describe('safeMutate and apolloMessage', () => {
   it('should pass optional mutation options to mutate', async () => {
     const mockResult = { data: { success: true } };
     mockMutate.mockResolvedValueOnce(mockResult);
-    const refetchQueries = [{ kind: 'Document' }];
+    const refetchQueries = [gql`query RefetchTest { __typename }`];
 
     await safeMutate(mockMutate, { id: 1 }, networkMsg, fallbackMsg, {
       refetchQueries,
