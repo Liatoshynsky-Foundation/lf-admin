@@ -6,6 +6,7 @@ import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 const mockUseFundByIdQuery = jest.fn();
 const mockUseAllFundsQuery = jest.fn();
+const mockUsePaginatedFundsQuery = jest.fn();
 const mockUseCreateFundMutation = jest.fn();
 const mockUseUpdateFundMutation = jest.fn();
 const mockUseDeleteFundMutation = jest.fn();
@@ -21,6 +22,7 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
   __esModule: true,
   useFundByIdQuery: (...args: unknown[]) => mockUseFundByIdQuery(...args),
   useAllFundsQuery: (...args: unknown[]) => mockUseAllFundsQuery(...args),
+  usePaginatedFundsQuery: (...args: unknown[]) => mockUsePaginatedFundsQuery(...args),
   useCreateFundMutation: (...args: unknown[]) => mockUseCreateFundMutation(...args),
   useUpdateFundMutation: (...args: unknown[]) => mockUseUpdateFundMutation(...args),
   useDeleteFundMutation: (...args: unknown[]) => mockUseDeleteFundMutation(...args)
@@ -37,6 +39,7 @@ import {
   useDeleteFund,
   useFundById,
   useHasPublishedCasesInFund,
+  usePaginatedFunds,
   useUpdateFund
 } from './useFunds';
 
@@ -193,6 +196,77 @@ describe('useFunds', () => {
 
       expect(mockUseAllFundsQuery).toHaveBeenCalledWith({
         variables: { filters },
+        fetchPolicy: 'network-only'
+      });
+    });
+  });
+
+  describe('usePaginatedFunds', () => {
+    it('should map findFundsPaginated items the same way as useAllFunds', () => {
+      mockUsePaginatedFundsQuery.mockReturnValue({
+        data: {
+          findFundsPaginated: {
+            items: [
+              {
+                id: '1',
+                fundNumber: 1,
+                name: { uk: 'Архів', en: 'Archive' },
+                descriptionsCount: 2,
+                casesCount: 3,
+                chronologicalBoundaries: { uk: '1900-1920' },
+                documentCreationDate: { uk: '1901' },
+                status: 'published',
+                updatedAt: '2023-01-01'
+              }
+            ],
+            total: 9,
+            page: 1,
+            totalPages: 2
+          }
+        },
+        loading: false,
+        error: undefined
+      });
+
+      const { result } = renderHook(() => usePaginatedFunds(1, 8));
+
+      expect(result.current.funds).toEqual([
+        {
+          id: '1',
+          fundNumber: 1,
+          name: 'Архів',
+          descriptions: 2,
+          cases: 3,
+          dates: '1900-1920',
+          status: BaseContentStatuses.Published,
+          updatedAt: '2023-01-01'
+        }
+      ]);
+      expect(result.current.total).toBe(9);
+      expect(result.current.totalPages).toBe(2);
+      expect(result.current.loading).toBe(false);
+      expect(result.current.error).toBeUndefined();
+    });
+
+    it('should return empty funds, zero total and zero totalPages when findFundsPaginated is missing', () => {
+      mockUsePaginatedFundsQuery.mockReturnValue({ data: undefined, loading: true, error: undefined });
+
+      const { result } = renderHook(() => usePaginatedFunds(1, 8));
+
+      expect(result.current.funds).toEqual([]);
+      expect(result.current.total).toBe(0);
+      expect(result.current.totalPages).toBe(0);
+      expect(result.current.loading).toBe(true);
+    });
+
+    it('should pass page, limit and filters through as query variables', () => {
+      mockUsePaginatedFundsQuery.mockReturnValue({ data: undefined, loading: false, error: undefined });
+      const filters = { search: 'foo', statuses: null };
+
+      renderHook(() => usePaginatedFunds(2, 8, filters));
+
+      expect(mockUsePaginatedFundsQuery).toHaveBeenCalledWith({
+        variables: { page: 2, limit: 8, filters },
         fetchPolicy: 'network-only'
       });
     });

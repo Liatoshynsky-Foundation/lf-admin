@@ -6,6 +6,7 @@ import { MouseEvent, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { PublishEmptyFundDialog } from '../(components)/publish-empty-fund-dialog/PublishEmptyFundDialog';
+import { useFundPublishWarning } from '../(hooks)/useFundPublishWarning';
 import { styles } from './page.styles';
 import { ARCHIVE_BASE_PATH } from '~/constants/archive';
 import { FundErrors } from '~/constants/errors';
@@ -16,7 +17,6 @@ import { TitleDropdown } from '~/shared/components/divided-header/title-dropdown
 import ActionMenu, { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import FundCasesBlock from '~/shared/components/forms/fund-cases-block/FundCasesBlock';
 import FundDetailsBlock from '~/shared/components/forms/fund-details-block/FundDetailsBlock';
-import { useHasPublishedCasesInFund } from '~/shared/hooks/use-funds/useFunds';
 import { useUpsertFund } from '~/shared/hooks/use-upsert-fund/useUpsertFund';
 import { useStore } from '~/store';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
@@ -45,7 +45,7 @@ export default function FundView({ data, mode = 'create' }: Readonly<FundViewPro
   const { details, setDetails, errors, forceShowErrors, isSaved, currentStatus, fundId, handleSave } = data;
 
   const router = useRouter();
-  const hasPublishedCasesInFund = useHasPublishedCasesInFund();
+  const checkFundPublishWarning = useFundPublishWarning();
   const currentLocale = useStore((state) => state.locale as 'uk' | 'en');
   const setLocale = useStore((state) => state.setLocale as (locale: 'uk' | 'en') => void);
 
@@ -80,23 +80,23 @@ export default function FundView({ data, mode = 'create' }: Readonly<FundViewPro
   const handlePublishClick = async (): Promise<void> => {
     setPublishMenuAnchor(null);
 
-    if (details.casesCount === 0) {
-      setIsPublishWarningOpen(true);
+    if (!canPublish) {
       return;
     }
 
-    if (fundId) {
-      try {
-        const hasPublishedCases = await hasPublishedCasesInFund(fundId);
+    const warningResult = await checkFundPublishWarning({
+      fundId,
+      casesCount: details.casesCount
+    });
 
-        if (!hasPublishedCases) {
-          setIsPublishWarningOpen(true);
-          return;
-        }
-      } catch {
-        toast.error(FundErrors.FAILED_TO_PUBLISH);
-        return;
-      }
+    if (warningResult === 'error') {
+      toast.error(FundErrors.FAILED_TO_PUBLISH);
+      return;
+    }
+
+    if (warningResult === 'show-warning') {
+      setIsPublishWarningOpen(true);
+      return;
     }
 
     await handleActionClick('PUBLISH');

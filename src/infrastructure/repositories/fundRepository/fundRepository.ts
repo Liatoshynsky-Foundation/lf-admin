@@ -1,4 +1,4 @@
-import { Model, Types } from 'mongoose';
+import { FilterQuery, Model, Types } from 'mongoose';
 
 import dbConnect from '../../db/connect';
 import { createBaseRepository } from '../baseRepository/baseRepository';
@@ -123,10 +123,21 @@ export const FundRepository = ({ FundModel }: FundRepoDeps): IFundRepository => 
     model: FundModel,
     toEntity,
     buildQuery: (filters) => {
-      const query = buildBaseQuery(filters, ['title.uk', 'title.en']);
+      const query = buildBaseQuery({ ...filters, statuses: undefined }, ['title.uk', 'title.en']);
+
       if (filters?.statuses && filters.statuses.length > 0) {
-        query.status = { $in: filters.statuses };
+        const { statuses } = filters;
+        const matchesRequestedStatus = { status: { $in: statuses } };
+
+        if (statuses.includes(BaseContentStatuses.Hidden)) {
+          return {
+            $and: [query, { $or: [matchesRequestedStatus, { status: { $nin: VALID_STATUS_VALUES } } ] }]
+          } as FilterQuery<DbFund>;
+        }
+
+        query.status = matchesRequestedStatus.status;
       }
+
       return query;
     },
     getDefaultSort: getBaseSort

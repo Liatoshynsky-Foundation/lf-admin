@@ -18,6 +18,7 @@ import {
   useCreateFundMutation,
   useDeleteFundMutation,
   useFundByIdQuery,
+  usePaginatedFundsQuery,
   useUpdateFundMutation
 } from '~/types/graphql/generated/graphql';
 
@@ -55,29 +56,60 @@ const statusMap: Record<string, BaseContentStatuses> = {
 export const useFundById = (id: string, options: QueryHookOptions = {}) =>
   useFundByIdQuery({ variables: { id }, fetchPolicy: 'network-only', skip: options.skip || !id });
 
+type FundListItem = {
+  id: string;
+  fundNumber: number;
+  name: { uk: string };
+  documentCreationDate: { uk: string };
+  chronologicalBoundaries?: { uk?: string | null } | null;
+  casesCount: number;
+  descriptionsCount: number;
+  status: string;
+  updatedAt: string;
+};
+
+const mapFundListItem = (f: FundListItem) => {
+  const dates = f.chronologicalBoundaries?.uk ?? f.documentCreationDate.uk;
+  const status = statusMap[f.status] ?? BaseContentStatuses.Hidden;
+
+  return {
+    id: f.id,
+    fundNumber: f.fundNumber,
+    name: f.name.uk,
+    descriptions: f.descriptionsCount,
+    cases: f.casesCount,
+    dates,
+    status,
+    updatedAt: f.updatedAt
+  };
+};
+
 export function useAllFunds(filters?: FundFiltersInput | null) {
   const { data, loading, error } = useAllFundsQuery({
     variables: { filters },
     fetchPolicy: 'network-only'
   });
 
-  const funds = (data?.findAllFunds ?? []).map((f) => {
-    const dates = f.chronologicalBoundaries?.uk ?? f.documentCreationDate.uk;
-    const status = statusMap[f.status] ?? BaseContentStatuses.Hidden;
-
-    return {
-      id: f.id,
-      fundNumber: f.fundNumber,
-      name: f.name.uk,
-      descriptions: f.descriptionsCount,
-      cases: f.casesCount,
-      dates,
-      status,
-      updatedAt: f.updatedAt
-    };
-  });
+  const funds = (data?.findAllFunds ?? []).map(mapFundListItem);
 
   return { funds, loading, error };
+}
+
+export function usePaginatedFunds(page: number, limit: number, filters?: FundFiltersInput | null) {
+  const { data, loading, error } = usePaginatedFundsQuery({
+    variables: { page, limit, filters },
+    fetchPolicy: 'network-only'
+  });
+
+  const funds = (data?.findFundsPaginated?.items ?? []).map(mapFundListItem);
+
+  return {
+    funds,
+    total: data?.findFundsPaginated?.total ?? 0,
+    totalPages: data?.findFundsPaginated?.totalPages ?? 0,
+    loading,
+    error
+  };
 }
 
 export const useCreateFund = () => {

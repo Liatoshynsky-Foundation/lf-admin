@@ -1,9 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
+import toast from 'react-hot-toast';
 
 import FundView from './FundView';
 import { ARCHIVE_BASE_PATH } from '~/constants/archive';
+import { FundErrors } from '~/constants/errors';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 const mockPush = jest.fn();
@@ -100,10 +102,15 @@ jest.mock('~/shared/components/forms/fund-details-block/FundDetailsBlock', () =>
   default: () => <div data-testid="fund-details-block" />
 }));
 
-const mockHasPublishedCasesInFund = jest.fn();
-jest.mock('~/shared/hooks/use-funds/useFunds', () => ({
+const mockCheckFundPublishWarning = jest.fn();
+jest.mock('../(hooks)/useFundPublishWarning', () => ({
   __esModule: true,
-  useHasPublishedCasesInFund: () => mockHasPublishedCasesInFund
+  useFundPublishWarning: () => mockCheckFundPublishWarning
+}));
+
+jest.mock('react-hot-toast', () => ({
+  __esModule: true,
+  default: { error: jest.fn() }
 }));
 
 jest.mock('../(components)/publish-empty-fund-dialog/PublishEmptyFundDialog', () => ({
@@ -170,7 +177,7 @@ describe('FundView', () => {
       (selector: (state: { locale: string; setLocale: (l: string) => void }) => unknown) =>
         selector({ locale: 'uk', setLocale: mockSetLocale })
     );
-    mockHasPublishedCasesInFund.mockResolvedValue(true);
+    mockCheckFundPublishWarning.mockResolvedValue('publish');
   });
 
   it('renders the create title, details block, and cases block by default', () => {
@@ -229,13 +236,14 @@ describe('FundView', () => {
 
     await user.click(screen.getByText('publish'));
 
-    expect(mockHasPublishedCasesInFund).toHaveBeenCalledWith('fund-1');
+    expect(mockCheckFundPublishWarning).toHaveBeenCalledWith({ fundId: 'fund-1', casesCount: 1 });
     expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
   });
 
   it('opens the warning dialog before publishing a fund with no cases', async () => {
     const user = userEvent.setup();
     const handleSave = jest.fn().mockResolvedValue('id-1');
+    mockCheckFundPublishWarning.mockResolvedValue('show-warning');
     render(<FundView data={buildData({ handleSave })} />);
 
     await user.click(screen.getByText('publish'));
@@ -251,13 +259,26 @@ describe('FundView', () => {
   it('opens the warning dialog when a fund has cases but none are published', async () => {
     const user = userEvent.setup();
     const handleSave = jest.fn().mockResolvedValue('id-1');
-    mockHasPublishedCasesInFund.mockResolvedValue(false);
+    mockCheckFundPublishWarning.mockResolvedValue('show-warning');
 
     render(<FundView data={buildData({ handleSave, fundId: 'fund-1', details: { casesCount: 2 } })} />);
 
     await user.click(screen.getByText('publish'));
 
     expect(screen.getByTestId('publish-empty-fund-dialog')).toBeInTheDocument();
+    expect(handleSave).not.toHaveBeenCalled();
+  });
+
+  it('shows an error toast and does not publish when the publish warning check fails', async () => {
+    const user = userEvent.setup();
+    const handleSave = jest.fn().mockResolvedValue('id-1');
+    mockCheckFundPublishWarning.mockResolvedValue('error');
+
+    render(<FundView data={buildData({ handleSave, fundId: 'fund-1', details: { casesCount: 2 } })} />);
+
+    await user.click(screen.getByText('publish'));
+
+    expect(toast.error).toHaveBeenCalledWith(FundErrors.FAILED_TO_PUBLISH);
     expect(handleSave).not.toHaveBeenCalled();
   });
 

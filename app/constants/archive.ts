@@ -6,14 +6,14 @@ export interface PdfEntry {
   fileName: string | null;
 }
 
-export type ArchiveTabValue = 'all' | 'funds' | 'cases';
+export type ArchiveTabValue = 'all' | 'fonds' | 'cases';
 
 export const ARCHIVE_PAGE_TITLE = 'Архів';
 export const ARCHIVE_BASE_PATH = '/archive';
 
 export const ARCHIVE_TABS = [
   { value: 'all', label: 'Всі', href: ARCHIVE_BASE_PATH },
-  { value: 'funds', label: 'Фонди', href: `${ARCHIVE_BASE_PATH}/funds` },
+  { value: 'fonds', label: 'Фонди', href: `${ARCHIVE_BASE_PATH}/fonds` },
   { value: 'cases', label: 'Справи', href: `${ARCHIVE_BASE_PATH}/cases` },
 ];
 
@@ -55,7 +55,11 @@ export const INITIAL_PDF_ENTRY: PdfEntry = {
   fileName: null,
 };
 
-export const ARCHIVE_CREATE_PATH = `${ARCHIVE_BASE_PATH}/create`;
+export const ARCHIVE_FOND_CREATE_PATH = `${ARCHIVE_BASE_PATH}/fond/create`;
+export const ARCHIVE_CASE_CREATE_PATH = `${ARCHIVE_BASE_PATH}/case/create`;
+
+export const ARCHIVE_ADD_FOND_LABEL = 'Додати фонд';
+export const ARCHIVE_ADD_CASE_LABEL = 'Додати справу';
 
 export const ARCHIVE_EMPTY_STATE_TITLE = 'Фондів ще немає.';
 export const ARCHIVE_EMPTY_STATE_DESCRIPTION =
@@ -63,6 +67,9 @@ export const ARCHIVE_EMPTY_STATE_DESCRIPTION =
 export const ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE = 'Нічого не знайдено';
 export const ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION = 'Спробуйте змінити параметри пошуку або фільтрів.';
 export const ARCHIVE_EMPTY_STATE_NO_STATUS_MATCH_TITLE = 'Немає фондів із вибраним статусом';
+
+export const ARCHIVE_CASES_EMPTY_STATE_TITLE = 'Справ ще немає.';
+export const ARCHIVE_CASES_EMPTY_STATE_DESCRIPTION = 'Натисніть «Додати справу», щоб створити першу.';
 
 export const ARCHIVE_FUNDS_TABLE_HEADERS = {
   fund: 'Фонд',
@@ -72,3 +79,10 @@ export const ARCHIVE_FUNDS_TABLE_HEADERS = {
   dates: 'Дати утворення',
   status: 'Статус',
 } as const;
+
+export const ARCHIVE_ITEMS_PER_PAGE = 8;
+
+export const ARCHIVE_LOADING_STATE_TITLE = 'Завантаження фондів';
+export const ARCHIVE_LOADING_STATE_DESCRIPTION = 'Зачекайте, поки завершиться запит.';
+export const ARCHIVE_ERROR_STATE_TITLE = 'Не вдалося завантажити фонди';
+export const ARCHIVE_ERROR_STATE_DESCRIPTION = 'Спробуйте оновити сторінку або повторити пізніше.';
