@@ -3,7 +3,6 @@
 import { Box, Typography } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { MouseEvent, useState } from 'react';
-import toast from 'react-hot-toast';
 
 import { styles } from './page.styles';
 import { ARCHIVE_BASE_PATH } from '~/constants/archive';
@@ -14,7 +13,6 @@ import { TitleDropdown } from '~/shared/components/divided-header/title-dropdown
 import ActionMenu, { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import FundCasesBlock from '~/shared/components/forms/fund-cases-block/FundCasesBlock';
 import FundDetailsBlock from '~/shared/components/forms/fund-details-block/FundDetailsBlock';
-import { useUpdateCase } from '~/shared/hooks/use-funds/useFunds';
 import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
 import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
 import { useUpsertFund } from '~/shared/hooks/use-upsert-fund/useUpsertFund';
@@ -50,11 +48,8 @@ export default function FundView({ data, fundId, mode = 'create' }: Readonly<Fun
   const currentLocale = useStore((state) => state.locale as 'uk' | 'en');
   const setLocale = useStore((state) => state.setLocale as (locale: 'uk' | 'en') => void);
   const { navigateBack } = useNavigationGuard();
-  const [updateCase] = useUpdateCase();
-  const [pendingCaseOrder, setPendingCaseOrder] = useState<string[] | null>(null);
-  const [orderSaveVersion, setOrderSaveVersion] = useState(0);
 
-  useUnsavedChanges(mode === 'edit' ? Boolean(hasUnsavedChanges || pendingCaseOrder) : false);
+  useUnsavedChanges(mode === 'edit' ? Boolean(hasUnsavedChanges) : false);
 
   const [languageMenuAnchor, setLanguageMenuAnchor] = useState<HTMLButtonElement | null>(null);
   const [publishMenuAnchor, setPublishMenuAnchor] = useState<HTMLButtonElement | null>(null);
@@ -70,38 +65,18 @@ export default function FundView({ data, fundId, mode = 'create' }: Readonly<Fun
       document.activeElement.blur();
     }
 
-    const saveFundAndCases = async (status: BaseContentStatuses) => {
-      try {
-        const id = await handleSave(status);
-        if (!id) return null;
-
-        if (pendingCaseOrder) {
-          for (const [index, caseId] of pendingCaseOrder.entries()) {
-            await updateCase({ id: caseId, input: { order: index + 1 } });
-          }
-          setPendingCaseOrder(null);
-          setOrderSaveVersion((version) => version + 1);
-        }
-
-        return id;
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Не вдалося зберегти порядок справ.');
-        return null;
-      }
-    };
-
     if (action === 'SAVE') {
-      const id = await saveFundAndCases(BaseContentStatuses.Draft);
+      const id = await handleSave(BaseContentStatuses.Draft);
       if (mode === 'create' && id) {
         router.push(`${ARCHIVE_BASE_PATH}/fund/${id}/edit`);
       }
     } else if (action === 'SAVE_AND_EXIT') {
-      const id = await saveFundAndCases(BaseContentStatuses.Draft);
+      const id = await handleSave(BaseContentStatuses.Draft);
       if (id) {
         router.push(ARCHIVE_BASE_PATH);
       }
     } else if (action === 'PUBLISH') {
-      const id = await saveFundAndCases(BaseContentStatuses.Published);
+      const id = await handleSave(BaseContentStatuses.Published);
       if (mode === 'create' && id) {
         router.push(`${ARCHIVE_BASE_PATH}/fund/${id}/edit`);
       }
@@ -152,9 +127,7 @@ export default function FundView({ data, fundId, mode = 'create' }: Readonly<Fun
           </Box>
         </Box>
 
-        {mode === 'edit' ? (
-          <FundCasesBlock fundId={fundId} onOrderChange={setPendingCaseOrder} orderSaveVersion={orderSaveVersion} />
-        ) : null}
+        {mode === 'edit' ? <FundCasesBlock fundId={fundId} /> : null}
       </Box>
 
       <ActionMenu

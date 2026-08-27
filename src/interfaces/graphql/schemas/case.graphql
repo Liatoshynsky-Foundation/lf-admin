@@ -30,7 +30,6 @@ type Case {
     detailedCaseDescription: LocalizedString
     pdfFile: CasePdfFile
     status: CaseStatus!
-    order: Int!
     cipher: String!
     updatedAt: String!
     createdAt: String!
@@ -46,7 +45,6 @@ input CreateCaseInput {
     caseDescriptions: JSON!
     detailedCaseDescription: JSON
     pdfFile: CasePdfFileInput
-    order: Int
     status: CaseStatus
 }
 
@@ -60,7 +58,6 @@ input UpdateCaseInput {
     caseDescriptions: JSON
     detailedCaseDescription: JSON
     pdfFile: CasePdfFileInput
-    order: Int
     status: CaseStatus
 }
 

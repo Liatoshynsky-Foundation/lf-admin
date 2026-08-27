@@ -8,18 +8,16 @@ type PlainRowProps<TGroup, TSub, TPlain> = Readonly<{
   plainData: TPlain;
   columns: readonly ColumnDef<TGroup, TSub, TPlain>[];
   gridTemplate: string;
-  rowWrapper?: (children: React.ReactNode) => React.ReactNode;
 }>;
 
 export function PlainRow<TGroup, TSub, TPlain>({
   plainData,
   columns,
-  gridTemplate,
-  rowWrapper
+  gridTemplate
 }: PlainRowProps<TGroup, TSub, TPlain>) {
   const withGroups = columns.some((col) => col.renderGroup || col.renderSub);
 
-  const row = (
+  return (
     <Box sx={styles.individualWorkRow(gridTemplate)}>
       {columns.map((col) => {
         if (!col.renderPlain) return null;
@@ -47,6 +45,4 @@ export function PlainRow<TGroup, TSub, TPlain>({
       })}
     </Box>
   );
-
-  return rowWrapper ? rowWrapper(row) : row;
 }

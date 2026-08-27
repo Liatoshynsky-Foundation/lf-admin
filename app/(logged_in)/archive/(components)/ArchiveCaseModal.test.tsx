@@ -481,8 +481,7 @@ describe('ArchiveCaseModal', () => {
         sheetsNumber: '5',
         nameDescription: 'short desc',
         contentDescription: 'long desc',
-        pdfUrl: 'https://example.com/files/document-123.pdf',
-        order: 3
+        pdfUrl: 'https://example.com/files/document-123.pdf'
       };
 
       await callArgs.onSave(input);
@@ -501,7 +500,6 @@ describe('ArchiveCaseModal', () => {
           url: 'https://example.com/files/document-123.pdf',
           mimeType: 'application/pdf'
         },
-        order: 3,
         status: CaseStatus.Draft
       });
       expect(mockUpdateCase).not.toHaveBeenCalled();
@@ -523,8 +521,7 @@ describe('ArchiveCaseModal', () => {
         sheetsNumber: '7',
         nameDescription: 'updated short desc',
         contentDescription: '',
-        pdfUrl: undefined,
-        order: undefined
+        pdfUrl: undefined
       };
 
       await callArgs.onSave(input);
@@ -614,45 +611,6 @@ describe('ArchiveCaseModal', () => {
 
       const mutationInput = mockCreateCase.mock.calls[0][0];
       expect(mutationInput).not.toHaveProperty('pdfFile');
-    });
-
-    it('omits order from mutation input when order is undefined', async () => {
-      render(<ArchiveCaseModal {...defaultProps} fundId="FUND-1" />);
-
-      const callArgs = (useArchiveCaseModal as jest.Mock).mock.calls[0][0];
-
-      await callArgs.onSave({
-        descriptionNumber: '1',
-        caseNumber: 'CASE-1',
-        name: 'My Case',
-        dates: '2026',
-        sheetsNumber: '5',
-        nameDescription: 'short desc',
-        contentDescription: 'desc'
-      });
-
-      const mutationInput = mockCreateCase.mock.calls[0][0];
-      expect(mutationInput).not.toHaveProperty('order');
-    });
-
-    it('includes order: 0 in mutation input (falsy-but-defined edge case)', async () => {
-      render(<ArchiveCaseModal {...defaultProps} fundId="FUND-1" />);
-
-      const callArgs = (useArchiveCaseModal as jest.Mock).mock.calls[0][0];
-
-      await callArgs.onSave({
-        descriptionNumber: '1',
-        caseNumber: 'CASE-1',
-        name: 'My Case',
-        dates: '2026',
-        sheetsNumber: '5',
-        nameDescription: 'short desc',
-        contentDescription: 'desc',
-        order: 0
-      });
-
-      const mutationInput = mockCreateCase.mock.calls[0][0];
-      expect(mutationInput).toHaveProperty('order', 0);
     });
 
     it('passes both initialData and onSave to the hook when fundId/caseId and initialData are provided together', () => {

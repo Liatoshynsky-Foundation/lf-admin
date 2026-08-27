@@ -86,8 +86,7 @@ export const ArchiveCaseModal = ({ isOpen, setIsOpen, mode = 'create', initialDa
               mimeType: 'application/pdf'
             }
           }
-          : {}),
-        ...(input.order !== undefined ? { order: input.order } : {})
+          : {})
       };
 
       if (caseId) {

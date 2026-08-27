@@ -29,8 +29,7 @@ const caseSchema = new Schema(
       required: true,
       enum: Array.from(Object.values(BaseContentStatuses)),
       default: BaseContentStatuses.Hidden
-    },
-    order: { type: Number, required: true, default: 0, index: true }
+    }
   },
   {
     timestamps: true,

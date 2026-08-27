@@ -18,10 +18,7 @@ jest.mock('./row-variants/GroupedRow', () => ({
 }));
 
 jest.mock('./row-variants/PlainRow', () => ({
-  PlainRow: ({ plainData, rowWrapper }: { plainData: { title: string }; rowWrapper?: (children: React.ReactNode) => React.ReactNode }) => {
-    const content = <div data-testid="plain-row">{plainData.title}</div>;
-    return rowWrapper ? rowWrapper(content) : content;
-  }
+  PlainRow: ({ plainData }: { plainData: { title: string } }) => <div data-testid="plain-row">{plainData.title}</div>
 }));
 
 describe('TableLayout Component', () => {
@@ -87,24 +84,6 @@ describe('TableLayout Component', () => {
     expect(screen.getByText('Individual Item')).toBeInTheDocument();
     expect(screen.getByTestId('grouped-row')).toBeInTheDocument();
     expect(screen.getByText('Group 1')).toBeInTheDocument();
-  });
-
-  it('should use rowWrapper for individual items when provided', () => {
-    const rowWrapperMock = jest.fn((id, children) => (
-      <div data-testid={`wrapper-${id}`}>{children}</div>
-    ));
-
-    render(
-      <TableLayout
-        data={dataWithIndividual}
-        columns={mockColumns}
-        rowWrapper={rowWrapperMock}
-      />
-    );
-
-    expect(rowWrapperMock).toHaveBeenCalledWith('2', expect.anything());
-    expect(screen.getByTestId('wrapper-2')).toBeInTheDocument();
-    expect(screen.getByTestId('plain-row')).toBeInTheDocument();
   });
 
   it('should return null for unknown item types', () => {

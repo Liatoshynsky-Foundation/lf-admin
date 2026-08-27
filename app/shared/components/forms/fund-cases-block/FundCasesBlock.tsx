@@ -1,25 +1,21 @@
 'use client';
 
-import { closestCenter, DndContext,type DragEndEvent } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Box, Button, Typography } from '@mui/material';
 import { Plus } from 'lucide-react';
-import type { ReactNode } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { ArchiveCaseModal } from '../../../../(logged_in)/archive/(components)/ArchiveCaseModal';
 import { styles } from './FundCasesBlock.styles';
 import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
 import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
-import { SortableItemWrapper } from '~/shared/components/sortable-item-wrapper/SortableItemWrapper';
 import { RowActions } from '~/shared/components/table-layout/components/RowActions';
 import { StatusBadge } from '~/shared/components/table-layout/components/StatusBadge';
 import { ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
 import { twoLineEllipsis } from '~/shared/components/table-layout/TableLayout.styles';
 import type { ArchiveCaseInitialData } from '~/shared/hooks/use-archive-case-modal/useArchiveCaseModal';
-import { useCasesByFundId, useDeleteCase , useUpdateCase } from '~/shared/hooks/use-funds/useFunds';
+import { useCasesByFundId, useDeleteCase, useUpdateCase } from '~/shared/hooks/use-funds/useFunds';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { CaseStatus } from '~/types/graphql/generated/graphql';
 
@@ -98,22 +94,10 @@ const columns: readonly ColumnDef<never, never, CaseRow>[] = [
   }
 ];
 
-const renderCaseRowWrapper = (id: string, children: ReactNode) => (
-  <SortableItemWrapper id={id} gripHandle tableRow>
-    {children}
-  </SortableItemWrapper>
-);
-
-export default function FundCasesBlock({
-  fundId,
-  onOrderChange,
-  orderSaveVersion = 0
-}: Readonly<{ fundId?: string; onOrderChange?: (caseIds: string[]) => void; orderSaveVersion?: number }>) {
+export default function FundCasesBlock({ fundId }: Readonly<{ fundId?: string }>) {
   const { cases, error, refetch } = useCasesByFundId(fundId);
   const [deleteCase] = useDeleteCase();
   const [updateCase] = useUpdateCase();
-  const [orderedCases, setOrderedCases] = useState(cases);
-  const hasPendingOrder = useRef(false);
   const [modalState, setModalState] = useState<{
     open: boolean;
     caseId?: string;
@@ -122,33 +106,14 @@ export default function FundCasesBlock({
   const [deleteModalState, setDeleteModalState] = useState<{ open: boolean; caseId?: string; caseName?: string }>({
     open: false
   });
-  useEffect(() => {
-    if (!hasPendingOrder.current) {
-      setOrderedCases(cases);
-    }
-  }, [cases]);
 
-  useEffect(() => {
-    if (orderSaveVersion > 0) {
-      hasPendingOrder.current = false;
-      setOrderedCases([...cases].sort((first, second) => first.order - second.order));
-    }
-  }, [orderSaveVersion]);
+  const sortedCases = [...cases].sort((a, b) =>
+    a.descriptionNumber !== b.descriptionNumber
+      ? a.descriptionNumber - b.descriptionNumber
+      : a.caseNumber - b.caseNumber
+  );
 
-  const handleDragEnd = ({ active, over }: DragEndEvent) => {
-    if (!over || active.id === over.id) return;
-    const oldIndex = orderedCases.findIndex((item) => item.id === active.id);
-    const newIndex = orderedCases.findIndex((item) => item.id === over.id);
-    if (oldIndex < 0 || newIndex < 0) return;
-    const next = [...orderedCases];
-    const [moved] = next.splice(oldIndex, 1);
-    next.splice(newIndex, 0, moved);
-    setOrderedCases(next);
-    hasPendingOrder.current = true;
-    onOrderChange?.(next.map((item) => item.id));
-  };
-
-  const rows = orderedCases.map((caseItem) => ({
+  const rows = sortedCases.map((caseItem) => ({
     type: 'individual' as const,
     id: caseItem.id,
     plainData: {
@@ -170,7 +135,6 @@ export default function FundCasesBlock({
           initialData: {
             descriptionNumber: String(caseItem.descriptionNumber),
             caseNumber: String(caseItem.caseNumber),
-            order: caseItem.order,
             sheetsNumber: String(caseItem.sheetsNumber),
             caseDate: caseItem.caseDate.uk,
             caseName: caseItem.caseName.uk,
@@ -240,15 +204,7 @@ export default function FundCasesBlock({
       </Box>
 
       <Box sx={styles.content}>
-        <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={orderedCases.map((item) => item.id)} strategy={verticalListSortingStrategy}>
-            <TableLayout
-              data={rows}
-              columns={columns}
-              rowWrapper={renderCaseRowWrapper}
-            />
-          </SortableContext>
-        </DndContext>
+        <TableLayout data={rows} columns={columns} />
       </Box>
 
       {fundId && (

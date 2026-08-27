@@ -19,7 +19,6 @@ export interface ArchiveCaseInitialData {
   caseDescriptions?: string;
   pdfUrl?: string;
   pdfMimeType?: string;
-  order?: number;
 }
 
 export interface ArchiveCaseSaveData {
@@ -31,7 +30,6 @@ export interface ArchiveCaseSaveData {
   contentDescription: string;
   nameDescription: string;
   pdfUrl?: string;
-  order?: number;
 }
 
 export interface UseArchiveCaseModalProps {
@@ -121,7 +119,6 @@ export const useArchiveCaseModal = ({ setIsOpen, initialData, onSave }: UseArchi
         name: caseName,
         nameDescription: caseDescriptions,
         contentDescription: detailedCaseDescription,
-        ...(initialData?.order !== undefined ? { order: initialData.order } : {}),
         ...(currentPdfFile.url ? { pdfUrl: currentPdfFile.url } : {})
       });
     } catch (error) {

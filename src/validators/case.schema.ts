@@ -78,13 +78,12 @@ export const zCaseSchema = z.object({
     })
     .optional(),
   pdfFile: pdfFileSchema.nullable().optional(),
-  order: z.int().nonnegative().default(0),
 
   status: z.enum(BaseContentStatuses).default(BaseContentStatuses.Hidden)
 });
 
 export const zCaseUpdateSchema = zCaseSchema
-  .omit({ detailedCaseDescription: true, order: true, status: true })
+  .omit({ detailedCaseDescription: true })
   .partial()
   .extend({
     detailedCaseDescription: z
@@ -94,6 +93,5 @@ export const zCaseUpdateSchema = zCaseSchema
       })
       .optional(),
     pdfFile: pdfFileSchema.nullable().optional(),
-    order: z.int().nonnegative().optional(),
     status: z.enum(BaseContentStatuses).optional()
   });

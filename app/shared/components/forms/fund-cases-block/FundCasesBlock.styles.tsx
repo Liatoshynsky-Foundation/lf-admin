@@ -30,7 +30,7 @@ export const styles: Record<string, SxProps<Theme>> = {
   },
 
   content: {
-    padding: '0 24px 24px 48px'
+    padding: '0 24px 24px'
   },
 
   cipherText: {

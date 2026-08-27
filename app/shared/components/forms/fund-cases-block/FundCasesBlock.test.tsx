@@ -16,7 +16,6 @@ interface ColumnDefLike {
 const capturedTableLayoutProps: {
   columns?: ColumnDefLike[];
   data?: { plainData: Record<string, unknown> }[];
-  rowWrapper?: (id: string, children: ReactNode) => ReactNode;
 } = {};
 
 jest.mock('~/shared/components/table-layout/TableLayout', () => ({
@@ -24,11 +23,9 @@ jest.mock('~/shared/components/table-layout/TableLayout', () => ({
   TableLayout: (props: {
     columns: ColumnDefLike[];
     data: { plainData: Record<string, unknown> }[];
-    rowWrapper?: (id: string, children: ReactNode) => ReactNode;
   }) => {
     capturedTableLayoutProps.columns = props.columns;
     capturedTableLayoutProps.data = props.data;
-    capturedTableLayoutProps.rowWrapper = props.rowWrapper;
     return (
       <div data-testid="table-layout">
         {props.data.map((row) => (
@@ -72,13 +69,6 @@ jest.mock('~/shared/components/table-layout/components/RowActions', () => ({
   )
 }));
 
-jest.mock('~/shared/components/sortable-item-wrapper/SortableItemWrapper', () => ({
-  __esModule: true,
-  SortableItemWrapper: ({ children, id }: { children: ReactNode; id: string }) => (
-    <div data-testid={`sortable-wrapper-${id}`}>{children}</div>
-  )
-}));
-
 let capturedModalProps: Record<string, unknown> | null = null;
 jest.mock('../../../../(logged_in)/archive/(components)/ArchiveCaseModal', () => ({
   __esModule: true,
@@ -106,32 +96,6 @@ jest.mock('~/shared/components/delete-composition-modal/DeleteCompositionModal',
       </div>
     ) : null;
   }
-}));
-
-jest.mock('@dnd-kit/core', () => ({
-  __esModule: true,
-  DndContext: ({ children, onDragEnd }: { children: ReactNode; onDragEnd: (event: unknown) => void }) => {
-    return (
-      <div data-testid="dnd-context">
-        <button onClick={() => onDragEnd({ active: { id: 'case-2' }, over: { id: 'case-1' } })}>trigger drag</button>
-        <button onClick={() => onDragEnd({ active: { id: 'case-1' }, over: { id: 'case-1' } })}>
-          trigger same drag
-        </button>
-        <button onClick={() => onDragEnd({ active: { id: 'case-1' }, over: null })}>trigger null drag</button>
-        <button onClick={() => onDragEnd({ active: { id: 'unknown' }, over: { id: 'case-1' } })}>
-          trigger unknown drag
-        </button>
-        {children}
-      </div>
-    );
-  },
-  closestCenter: jest.fn()
-}));
-
-jest.mock('@dnd-kit/sortable', () => ({
-  __esModule: true,
-  SortableContext: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  verticalListSortingStrategy: jest.fn()
 }));
 
 const mockRefetch = jest.fn();
@@ -163,14 +127,15 @@ const buildCase = (
     caseDate: string;
     caseDescriptions: string;
     status: CaseStatus;
-    order: number;
+    descriptionNumber: number;
+    caseNumber: number;
     pdfFile: { filename: string; url: string; mimeType: string } | null;
   }> = {}
 ) => ({
   id: overrides.id ?? 'case-1',
   fundId: 'fund-1',
-  descriptionNumber: 1,
-  caseNumber: 1,
+  descriptionNumber: overrides.descriptionNumber ?? 1,
+  caseNumber: overrides.caseNumber ?? 1,
   cipher: overrides.cipher ?? 'Ф. 2, оп. 1, спр. 1',
   caseName: localized(overrides.caseName ?? 'Тестова справа'),
   caseDate: localized(overrides.caseDate ?? '1930'),
@@ -179,7 +144,6 @@ const buildCase = (
   detailedCaseDescription: localized('Детальний опис'),
   pdfFile: overrides.pdfFile !== undefined ? overrides.pdfFile : null,
   status: overrides.status ?? CaseStatus.Published,
-  order: overrides.order ?? 1,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z'
 });
@@ -189,7 +153,6 @@ describe('FundCasesBlock', () => {
     jest.clearAllMocks();
     capturedTableLayoutProps.columns = undefined;
     capturedTableLayoutProps.data = undefined;
-    capturedTableLayoutProps.rowWrapper = undefined;
     capturedModalProps = null;
     capturedDeleteModalProps = null;
     mockCases = [buildCase()];
@@ -373,64 +336,20 @@ describe('FundCasesBlock', () => {
     expect(screen.queryByTestId('archive-case-modal')).not.toBeInTheDocument();
   });
 
-  it('reorders cases when orderSaveVersion changes', () => {
-    const case1 = buildCase({ id: 'case-1', order: 2 });
-    const case2 = buildCase({ id: 'case-2', order: 1 });
-    mockCases = [case1, case2];
+  it('sorts rows by descriptionNumber, then by caseNumber within the same description', () => {
+    const caseA = buildCase({ id: 'case-a', descriptionNumber: 2, caseNumber: 1 });
+    const caseB = buildCase({ id: 'case-b', descriptionNumber: 1, caseNumber: 2 });
+    const caseC = buildCase({ id: 'case-c', descriptionNumber: 1, caseNumber: 1 });
+    mockCases = [caseA, caseB, caseC];
 
-    const { rerender } = render(<FundCasesBlock fundId="fund-1" orderSaveVersion={0} />);
-
-    expect(screen.getByTestId('row-case-1')).toBeInTheDocument();
-
-    rerender(<FundCasesBlock fundId="fund-1" orderSaveVersion={1} />);
-
-    const renderedRows = screen.getAllByTestId(/row-case-/);
-    expect(renderedRows[0]).toHaveAttribute('data-testid', 'row-case-2');
-    expect(renderedRows[1]).toHaveAttribute('data-testid', 'row-case-1');
-  });
-
-  it('updates order on drag and drop and calls onOrderChange', async () => {
-    const user = userEvent.setup();
-    const mockOnOrderChange = jest.fn();
-    const case1 = buildCase({ id: 'case-1' });
-    const case2 = buildCase({ id: 'case-2' });
-    mockCases = [case1, case2];
-
-    render(<FundCasesBlock fundId="fund-1" onOrderChange={mockOnOrderChange} />);
-
-    await user.click(screen.getByText('trigger drag'));
-
-    expect(mockOnOrderChange).toHaveBeenCalledWith(['case-2', 'case-1']);
-  });
-
-  it('ignores drag and drop if active or over is missing or same', async () => {
-    const user = userEvent.setup();
-    const mockOnOrderChange = jest.fn();
-    mockCases = [buildCase({ id: 'case-1' })];
-
-    render(<FundCasesBlock fundId="fund-1" onOrderChange={mockOnOrderChange} />);
-
-    await user.click(screen.getByText('trigger same drag'));
-    expect(mockOnOrderChange).not.toHaveBeenCalled();
-
-    await user.click(screen.getByText('trigger null drag'));
-    expect(mockOnOrderChange).not.toHaveBeenCalled();
-
-    await user.click(screen.getByText('trigger unknown drag'));
-    expect(mockOnOrderChange).not.toHaveBeenCalled();
-  });
-
-  it('renders SortableItemWrapper when rowWrapper is called', () => {
     render(<FundCasesBlock fundId="fund-1" />);
 
-    const wrapper = capturedTableLayoutProps.rowWrapper;
-    expect(wrapper).toBeDefined();
-
-    if (wrapper) {
-      render(wrapper('test-id', <div data-testid="child-content">Child</div>) as React.ReactElement);
-      expect(screen.getByTestId('sortable-wrapper-test-id')).toBeInTheDocument();
-      expect(screen.getByTestId('child-content')).toBeInTheDocument();
-    }
+    const renderedRows = screen.getAllByTestId(/row-case-/);
+    expect(renderedRows.map((row) => row.getAttribute('data-testid'))).toEqual([
+      'row-case-c',
+      'row-case-b',
+      'row-case-a'
+    ]);
   });
 
   it('renders correctly all columns in plain mode', () => {
