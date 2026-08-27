@@ -41,6 +41,24 @@ interface UseUpsertPublicationProps {
   id?: string;
 }
 
+const isValidDate = (date: Dayjs | null | undefined): date is Dayjs => Boolean(date?.isValid());
+
+const parseDate = (dateVal: Dayjs | string | null | undefined) => {
+  if (!dateVal) return null;
+
+  if (typeof dateVal !== 'string') return isValidDate(dateVal) ? dateVal : null;
+
+  const trimmedDateVal = dateVal.trim();
+  if (!trimmedDateVal) return null;
+
+  const timestamp = Number(trimmedDateVal);
+  const parsedDate = dayjs(Number.isNaN(timestamp) ? trimmedDateVal : timestamp);
+
+  return isValidDate(parsedDate) ? parsedDate : null;
+};
+
+const getDateIsoString = (date: Dayjs | null | undefined) => (isValidDate(date) ? date.toISOString() : undefined);
+
 export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) => {
   const isEditing = Boolean(id);
 
@@ -121,20 +139,14 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     if (fetchedData) {
       changeAdminTitle(fetchedData.adminTitle || '');
 
-      const safeParseDate = (dateVal: Dayjs | string | null | undefined) => {
-        if (!dateVal) return null;
-        const num = Number(dateVal);
-        return dayjs(Number.isNaN(num) ? dateVal : num);
-      };
-
       const mainDate = type === 'news' ? fetchedData.newsDate : fetchedData.publishedAt;
-      changePublishDate(safeParseDate(mainDate));
+      changePublishDate(parseDate(mainDate));
 
       changeCrop(fetchedData.coverImage?.crop ?? null);
 
       const getLangMeta = (lang: 'uk' | 'en') => {
-        const start = safeParseDate(fetchedData?.eventDateTimeStart);
-        const end = safeParseDate(fetchedData?.eventDateTimeEnd);
+        const start = parseDate(fetchedData?.eventDateTimeStart);
+        const end = parseDate(fetchedData?.eventDateTimeEnd);
 
         return {
           title: fetchedData?.title?.[lang] || '',
@@ -146,8 +158,8 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
             uk: fetchedData?.coverImage?.alt?.uk || '',
             en: fetchedData?.coverImage?.alt?.en || ''
           },
-          startDateTime: start ? start.toISOString() : undefined,
-          endDateTime: end ? end.toISOString() : undefined
+          startDateTime: getDateIsoString(start),
+          endDateTime: getDateIsoString(end)
         };
       };
 
@@ -166,7 +178,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
 
       setInitialState({
         adminTitle: fetchedData.adminTitle || '',
-        publishDate: safeParseDate(mainDate)?.toISOString() ?? null,
+        publishDate: getDateIsoString(parseDate(mainDate)) ?? null,
         seoValue: {
           meta: { uk: getLangMeta('uk'), en: getLangMeta('en') },
           ogImage: fetchedData.coverImage?.src || null,
@@ -194,8 +206,9 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
 
     const isTitleInvalid = !adminTitle.trim();
     const isSeoInvalid = checkIsSeoInvalid(ukMeta, enMeta, publicationType, seoValue.ticketUrl);
+    const isPublishDateInvalid = Boolean(publishDate && !publishDate.isValid());
 
-    if (isTitleInvalid || isSeoInvalid) {
+    if (isTitleInvalid || isSeoInvalid || isPublishDateInvalid) {
       if (isTitleInvalid) setAdminTitleError('Обов\'язкове поле');
       if (isSeoInvalid) setForceShowErrors(true);
       return;
@@ -207,7 +220,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       description: { uk: ukMeta.description || '', en: enMeta.description || '' },
       keywords: { uk: ukMeta.keywords || '', en: enMeta.keywords || '' },
       allowIndexation: { uk: seoValue.allowIndexing.uk, en: seoValue.allowIndexing.en },
-      publishedAt: publishDate?.toISOString(),
+      publishedAt: getDateIsoString(publishDate),
       coverImage: {
         src: seoValue.ogImage || adminTitle,
         alt: { uk: ukMeta.altText?.uk || adminTitle, en: enMeta.altText?.en || adminTitle },
@@ -312,7 +325,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     initialState !== null &&
     JSON.stringify({
       adminTitle,
-      publishDate: publishDate?.toISOString() ?? null,
+      publishDate: getDateIsoString(publishDate) ?? null,
       seoValue,
       crop
     }) !==
