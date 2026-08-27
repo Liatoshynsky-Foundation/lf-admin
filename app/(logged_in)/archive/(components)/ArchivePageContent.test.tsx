@@ -1,8 +1,8 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 
 import type { FundsTableProps } from './archive-funds-table/ArchiveFundsTable';
 import { ArchivePageContent } from './ArchivePageContent';
-import { ARCHIVE_TABS } from '~/constants/archive';
+import { ARCHIVE_ITEMS_PER_PAGE, ARCHIVE_TABS } from '~/constants/archive';
 import {
   FUNDS_EMPTY_STATE_DESCRIPTION,
   FUNDS_EMPTY_STATE_NO_RESULTS_DESCRIPTION,
@@ -95,11 +95,35 @@ jest.mock('~/shared/components/empty-state', () => ({
   )
 }));
 
-const mockUseAllFunds = jest.fn();
+jest.mock('~/shared/components/pagination/Pagination', () => ({
+  __esModule: true,
+  Pagination: ({
+    currentPage,
+    totalPages,
+    onPageChange
+  }: {
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (event: React.ChangeEvent<unknown>, page: number) => void;
+  }) => (
+    <div data-testid="mock-pagination">
+      <span data-testid="pagination-current-page">{currentPage}</span>
+      <span data-testid="pagination-total-pages">{totalPages}</span>
+      <button
+        type="button"
+        onClick={(event) => onPageChange(event as unknown as React.ChangeEvent<unknown>, currentPage + 1)}
+      >
+        next-page
+      </button>
+    </div>
+  )
+}));
+
+const mockUsePaginatedFunds = jest.fn();
 
 jest.mock('~/shared/hooks/use-funds/useFunds', () => ({
   __esModule: true,
-  useAllFunds: (...args: unknown[]) => mockUseAllFunds(...args)
+  usePaginatedFunds: (...args: unknown[]) => mockUsePaginatedFunds(...args)
 }));
 
 const mockSearchProps = {
@@ -154,7 +178,12 @@ describe('ArchivePageContent', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseArchiveFiltering.mockReturnValue(defaultMockReturnValue);
-    mockUseAllFunds.mockReturnValue({ funds: [] as MappedFund[], loading: false, error: undefined });
+    mockUsePaginatedFunds.mockReturnValue({
+      funds: [] as MappedFund[],
+      totalPages: 0,
+      loading: false,
+      error: undefined
+    });
   });
 
   it('should render the header, tabs & the search & the status dropdown correctly', () => {
@@ -186,13 +215,16 @@ describe('ArchivePageContent', () => {
     expect(statusDropdown).toHaveTextContent('Status Label');
   });
 
-  it('should call useAllFunds with undefined search/statuses when no filters are active', () => {
+  it('should call usePaginatedFunds with page 1, the page size and undefined search/statuses when no filters are active', () => {
     render(<ArchivePageContent activeTab="all" />);
 
-    expect(mockUseAllFunds).toHaveBeenCalledWith({ search: undefined, statuses: undefined });
+    expect(mockUsePaginatedFunds).toHaveBeenCalledWith(1, ARCHIVE_ITEMS_PER_PAGE, {
+      search: undefined,
+      statuses: undefined
+    });
   });
 
-  it('should call useAllFunds with the trimmed search and selected statuses when filters are active', () => {
+  it('should call usePaginatedFunds with the trimmed search and selected statuses when filters are active', () => {
     mockUseArchiveFiltering.mockReturnValue({
       searchProps: { ...mockSearchProps, search: 'archive' },
       statusFilterProps: { ...mockStatusFilterProps, value: ['published'] }
@@ -200,12 +232,15 @@ describe('ArchivePageContent', () => {
 
     render(<ArchivePageContent activeTab="all" />);
 
-    expect(mockUseAllFunds).toHaveBeenCalledWith({ search: 'archive', statuses: ['published'] });
+    expect(mockUsePaginatedFunds).toHaveBeenCalledWith(1, ARCHIVE_ITEMS_PER_PAGE, {
+      search: 'archive',
+      statuses: ['published']
+    });
   });
 
   describe('content states', () => {
     it('should show the loading empty state while loading', () => {
-      mockUseAllFunds.mockReturnValue({ funds: [], loading: true, error: undefined });
+      mockUsePaginatedFunds.mockReturnValue({ funds: [], totalPages: 0, loading: true, error: undefined });
 
       render(<ArchivePageContent activeTab="all" />);
 
@@ -215,7 +250,12 @@ describe('ArchivePageContent', () => {
     });
 
     it('should show the error empty state on error, even if funds were returned', () => {
-      mockUseAllFunds.mockReturnValue({ funds: [mockFund()], loading: false, error: new Error('boom') });
+      mockUsePaginatedFunds.mockReturnValue({
+        funds: [mockFund()],
+        totalPages: 1,
+        loading: false,
+        error: new Error('boom')
+      });
 
       render(<ArchivePageContent activeTab="all" />);
 
@@ -225,7 +265,7 @@ describe('ArchivePageContent', () => {
     });
 
     it('should show the base empty state when there are no funds and no active search/filter', () => {
-      mockUseAllFunds.mockReturnValue({ funds: [], loading: false, error: undefined });
+      mockUsePaginatedFunds.mockReturnValue({ funds: [], totalPages: 0, loading: false, error: undefined });
 
       render(<ArchivePageContent activeTab="all" />);
 
@@ -238,7 +278,7 @@ describe('ArchivePageContent', () => {
         searchProps: { ...mockSearchProps, search: 'nothing matches' },
         statusFilterProps: mockStatusFilterProps
       });
-      mockUseAllFunds.mockReturnValue({ funds: [], loading: false, error: undefined });
+      mockUsePaginatedFunds.mockReturnValue({ funds: [], totalPages: 0, loading: false, error: undefined });
 
       render(<ArchivePageContent activeTab="all" />);
 
@@ -253,7 +293,7 @@ describe('ArchivePageContent', () => {
         searchProps: mockSearchProps,
         statusFilterProps: { ...mockStatusFilterProps, value: ['hidden'] }
       });
-      mockUseAllFunds.mockReturnValue({ funds: [], loading: false, error: undefined });
+      mockUsePaginatedFunds.mockReturnValue({ funds: [], totalPages: 0, loading: false, error: undefined });
 
       render(<ArchivePageContent activeTab="all" />);
 
@@ -261,12 +301,13 @@ describe('ArchivePageContent', () => {
     });
 
     it('should render the funds table, sorted ascending by fundNumber, when funds are present', () => {
-      mockUseAllFunds.mockReturnValue({
+      mockUsePaginatedFunds.mockReturnValue({
         funds: [
           mockFund({ id: '3', fundNumber: 3, name: 'C Fund' }),
           mockFund({ id: '1', fundNumber: 1, name: 'A Fund' }),
           mockFund({ id: '2', fundNumber: 2, name: 'B Fund' })
         ],
+        totalPages: 1,
         loading: false,
         error: undefined
       });
@@ -284,7 +325,12 @@ describe('ArchivePageContent', () => {
 
   describe('hasActiveSearch / hasActiveStatusFilter props passed to FundsTable', () => {
     beforeEach(() => {
-      mockUseAllFunds.mockReturnValue({ funds: [mockFund()], loading: false, error: undefined });
+      mockUsePaginatedFunds.mockReturnValue({
+        funds: [mockFund()],
+        totalPages: 1,
+        loading: false,
+        error: undefined
+      });
     });
 
     it('should be false/false with no filters active', () => {
@@ -314,6 +360,105 @@ describe('ArchivePageContent', () => {
       render(<ArchivePageContent activeTab="all" />);
 
       expect(screen.getByTestId('funds-table-has-active-status-filter')).toHaveTextContent('true');
+    });
+  });
+
+  describe('pagination', () => {
+    it('should not render pagination when there is one page or fewer', () => {
+      mockUsePaginatedFunds.mockReturnValue({
+        funds: [mockFund()],
+        totalPages: 1,
+        loading: false,
+        error: undefined
+      });
+
+      render(<ArchivePageContent activeTab="all" />);
+
+      expect(screen.queryByTestId('mock-pagination')).not.toBeInTheDocument();
+    });
+
+    it('should render pagination with the current page and total pages when there is more than one page', () => {
+      mockUsePaginatedFunds.mockReturnValue({
+        funds: [mockFund()],
+        totalPages: 3,
+        loading: false,
+        error: undefined
+      });
+
+      render(<ArchivePageContent activeTab="all" />);
+
+      expect(screen.getByTestId('pagination-current-page')).toHaveTextContent('1');
+      expect(screen.getByTestId('pagination-total-pages')).toHaveTextContent('3');
+    });
+
+    it('should request the next page from usePaginatedFunds when pagination triggers a page change', () => {
+      mockUsePaginatedFunds.mockReturnValue({
+        funds: [mockFund()],
+        totalPages: 3,
+        loading: false,
+        error: undefined
+      });
+
+      render(<ArchivePageContent activeTab="all" />);
+
+      fireEvent.click(screen.getByText('next-page'));
+
+      expect(screen.getByTestId('pagination-current-page')).toHaveTextContent('2');
+      expect(mockUsePaginatedFunds).toHaveBeenLastCalledWith(2, ARCHIVE_ITEMS_PER_PAGE, {
+        search: undefined,
+        statuses: undefined
+      });
+    });
+
+    it('should reset to page 1 when the search value changes', () => {
+      mockUsePaginatedFunds.mockReturnValue({
+        funds: [mockFund()],
+        totalPages: 3,
+        loading: false,
+        error: undefined
+      });
+
+      const { rerender } = render(<ArchivePageContent activeTab="all" />);
+
+      fireEvent.click(screen.getByText('next-page'));
+      expect(screen.getByTestId('pagination-current-page')).toHaveTextContent('2');
+
+      mockUseArchiveFiltering.mockReturnValue({
+        searchProps: { ...mockSearchProps, search: 'archive' },
+        statusFilterProps: mockStatusFilterProps
+      });
+      rerender(<ArchivePageContent activeTab="all" />);
+
+      expect(screen.getByTestId('pagination-current-page')).toHaveTextContent('1');
+    });
+
+    it('should clamp the current page down to the last valid page when it becomes out of range', () => {
+      mockUsePaginatedFunds.mockReturnValue({
+        funds: [mockFund()],
+        totalPages: 3,
+        loading: false,
+        error: undefined
+      });
+
+      const { rerender } = render(<ArchivePageContent activeTab="all" />);
+
+      fireEvent.click(screen.getByText('next-page'));
+      fireEvent.click(screen.getByText('next-page'));
+      expect(screen.getByTestId('pagination-current-page')).toHaveTextContent('3');
+
+      mockUsePaginatedFunds.mockReturnValue({
+        funds: [mockFund()],
+        totalPages: 1,
+        loading: false,
+        error: undefined
+      });
+      rerender(<ArchivePageContent activeTab="all" />);
+
+      expect(screen.queryByTestId('mock-pagination')).not.toBeInTheDocument();
+      expect(mockUsePaginatedFunds).toHaveBeenLastCalledWith(1, ARCHIVE_ITEMS_PER_PAGE, {
+        search: undefined,
+        statuses: undefined
+      });
     });
   });
 });

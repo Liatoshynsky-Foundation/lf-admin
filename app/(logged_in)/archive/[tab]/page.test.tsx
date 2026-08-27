@@ -29,7 +29,7 @@ describe('ArchiveTabPage', () => {
     expect(container).toBeInTheDocument();
 
     const tabSpan = screen.getByTestId('active-tab-mock');
-    expect(tabSpan).toHaveTextContent('funds');
+    expect(tabSpan).toHaveTextContent(ARCHIVE_TABS[1].value);
   });
 
   it('should return notFound page if activeTab is invalid', async () => {
