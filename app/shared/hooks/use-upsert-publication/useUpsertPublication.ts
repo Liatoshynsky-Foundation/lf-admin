@@ -193,25 +193,13 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     const { uk: ukMeta, en: enMeta } = seoValue.meta;
 
     const isTitleInvalid = !adminTitle.trim();
-    const isSeoInvalid = checkIsSeoInvalid(
-      ukMeta,
-      enMeta,
-      publicationType,
-      seoValue.ticketUrl,
-      seoValue.ogImage
-    );
+    const isSeoInvalid = checkIsSeoInvalid(ukMeta, enMeta, publicationType, seoValue.ticketUrl, seoValue.ogImage);
 
     if (isTitleInvalid || isSeoInvalid) {
       if (isTitleInvalid) setAdminTitleError('Обов\'язкове поле');
       if (isSeoInvalid) setForceShowErrors(true);
       return;
     }
-
-    const hasOgImage = Boolean(seoValue.ogImage);
-    const getAltText = (altText: string | undefined): string => {
-      const trimmedAlt = altText?.trim();
-      return hasOgImage ? (trimmedAlt ?? '') : (trimmedAlt || adminTitle);
-    };
 
     const commonInput = {
       adminTitle,
@@ -222,7 +210,10 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       publishedAt: publishDate?.toISOString(),
       coverImage: {
         src: seoValue.ogImage || adminTitle,
-        alt: { uk: getAltText(ukMeta.altText?.uk), en: getAltText(enMeta.altText?.en) },
+        alt: {
+          uk: ukMeta.altText?.uk?.trim() || adminTitle,
+          en: enMeta.altText?.en?.trim() || adminTitle
+        },
         caption: { uk: adminTitle, en: adminTitle },
         ...buildCoverImageCropPayload(crop)
       }
