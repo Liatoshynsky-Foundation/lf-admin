@@ -450,6 +450,26 @@ describe('useUpsertPublication Hook', () => {
       expect(result.current.forceShowErrors).toBe(true);
       expect(mockCreateEvent).not.toHaveBeenCalled();
     });
+
+    it('should block save when preview image is uploaded without alt text', async () => {
+      const { result } = renderHook(() => useUpsertPublication({ type: 'events' }));
+
+      act(() => {
+        result.current.setAdminTitle('Event Title');
+        const seoState = createValidSeoState('events');
+        seoState.ogImage = 'https://example.com/image.jpg';
+        seoState.meta.uk.altText = { uk: '', en: '' };
+        seoState.meta.en.altText = { uk: '', en: '' };
+        result.current.setSeoValue(seoState);
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Published);
+      });
+
+      expect(result.current.forceShowErrors).toBe(true);
+      expect(mockCreateEvent).not.toHaveBeenCalled();
+    });
   });
 
   describe('Creation Flows (Save)', () => {

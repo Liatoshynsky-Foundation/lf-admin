@@ -68,6 +68,21 @@ describe('checkIsSeoInvalid', () => {
       const result = checkIsSeoInvalid(validUkMeta, validEnMeta, 'events', undefined);
       expect(result).toBe(true);
     });
+
+    it.each([
+      ['uk', 'en'],
+      ['en', 'uk'],
+    ] as const)('if preview image is uploaded and %s alt text is missing', (emptyLocale) => {
+      const altText = { uk: 'Alt UK', en: 'Alt EN' };
+      const result = checkIsSeoInvalid(
+        { ...validUkMeta, altText: { ...altText, [emptyLocale]: '' } },
+        { ...validEnMeta, altText: { ...altText, [emptyLocale]: '' } },
+        'events',
+        validTicketUrl,
+        'https://example.com/image.jpg'
+      );
+      expect(result).toBe(true);
+    });
   });
 
   describe('it successes (return false)', () => {
@@ -77,6 +92,28 @@ describe('checkIsSeoInvalid', () => {
       ['type "events"', 'events'],
     ])('if %s and both uk & en urls are correct & valid', (_, type) => {
       const result = checkIsSeoInvalid(validUkMeta, validEnMeta, type as PublicationsItemType, validTicketUrl);
+      expect(result).toBe(false);
+    });
+
+    it('if preview image is uploaded and both locale alt texts are provided', () => {
+      const result = checkIsSeoInvalid(
+        { ...validUkMeta, altText: { uk: 'Alt UK', en: 'Alt EN' } },
+        { ...validEnMeta, altText: { uk: 'Alt UK', en: 'Alt EN' } },
+        'events',
+        validTicketUrl,
+        'https://example.com/image.jpg'
+      );
+      expect(result).toBe(false);
+    });
+
+    it('if preview image is missing, alt text is not required', () => {
+      const result = checkIsSeoInvalid(
+        { ...validUkMeta, altText: { uk: '', en: '' } },
+        { ...validEnMeta, altText: { uk: '', en: '' } },
+        'events',
+        validTicketUrl,
+        null
+      );
       expect(result).toBe(false);
     });
   });
