@@ -94,13 +94,13 @@ export const useUpdateEventStatus = () => {
 };
 
 export const useDeleteEvent = () => {
-  const [mutate, meta] = useDeleteEventMutation();
+  const [mutate, meta] = useDeleteEventMutation({
+    refetchQueries: [AllEventsDocument],
+    awaitRefetchQueries: true
+  });
   const deleteEvent = useCallback(
     async (variables: DeleteEventMutationVariables) =>
-      safeMutate(mutate, variables, EventsErrors.NETWORK_ERROR_DELETE, EventsErrors.FAILED_TO_DELETE, {
-        refetchQueries: [AllEventsDocument],
-        awaitRefetchQueries: true
-      }),
+      safeMutate(mutate, variables, EventsErrors.NETWORK_ERROR_DELETE, EventsErrors.FAILED_TO_DELETE),
     [mutate]
   );
   return [deleteEvent, meta] as const;

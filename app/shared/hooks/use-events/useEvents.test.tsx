@@ -246,7 +246,7 @@ describe('useEvents hooks', () => {
   });
 
   describe('useDeleteEvent', () => {
-    it('calls safeMutate with correct parameters', async () => {
+    it('configures delete mutation with refetchQueries and wraps with safeMutate', async () => {
       const mockMutate = jest.fn();
       (graphqlHooks.useDeleteEventMutation as jest.Mock).mockReturnValue([mockMutate, { loading: false }]);
 
@@ -258,15 +258,15 @@ describe('useEvents hooks', () => {
         await deleteEvent(variables);
       });
 
+      expect(graphqlHooks.useDeleteEventMutation).toHaveBeenCalledWith({
+        refetchQueries: [{ kind: 'Document', definitions: [] }],
+        awaitRefetchQueries: true
+      });
       expect(safeMutate).toHaveBeenCalledWith(
         mockMutate,
         variables,
         EventsErrors.NETWORK_ERROR_DELETE,
-        EventsErrors.FAILED_TO_DELETE,
-        {
-          refetchQueries: [{ kind: 'Document', definitions: [] }],
-          awaitRefetchQueries: true
-        }
+        EventsErrors.FAILED_TO_DELETE
       );
     });
   });

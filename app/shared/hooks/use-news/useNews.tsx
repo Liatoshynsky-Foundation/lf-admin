@@ -94,13 +94,13 @@ export const useUpdateNewsStatus = () => {
 };
 
 export const useDeleteNews = () => {
-  const [mutate, meta] = useDeleteNewsMutation();
+  const [mutate, meta] = useDeleteNewsMutation({
+    refetchQueries: [AllNewsDocument],
+    awaitRefetchQueries: true
+  });
   const deleteNews = useCallback(
     async (variables: DeleteNewsMutationVariables) =>
-      safeMutate(mutate, variables, newsErrors.NETWORK_ERROR_DELETE, newsErrors.FAILED_TO_DELETE, {
-        refetchQueries: [AllNewsDocument],
-        awaitRefetchQueries: true
-      }),
+      safeMutate(mutate, variables, newsErrors.NETWORK_ERROR_DELETE, newsErrors.FAILED_TO_DELETE),
     [mutate]
   );
   return [deleteNews, meta] as const;
