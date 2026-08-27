@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
+  AllMediaMentionsDocument: { kind: 'Document', definitions: [] },
   MediaStatus: {
     Published: 'PUBLISHED',
     Draft: 'DRAFT',
@@ -144,7 +145,11 @@ describe('useMediaMentions hooks', () => {
       await del('id-2');
     });
 
-    expect(mutate).toHaveBeenCalledWith({ variables: { id: 'id-2' } });
+    expect(mutate).toHaveBeenCalledWith({
+      variables: { id: 'id-2' },
+      refetchQueries: [{ kind: 'Document', definitions: [] }],
+      awaitRefetchQueries: true
+    });
   });
 
   it('exposes status updaters and uses update mutation', async () => {

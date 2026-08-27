@@ -6,6 +6,7 @@ import { buildStatusUpdater } from '../buildStatusUpdater';
 import { newsErrors } from '~/constants/errors';
 import { safeMutate } from '~/lib/utils/safeMutate';
 import {
+  AllNewsDocument,
   type CreateNewsInput,
   type CreateNewsMutation,
   type CreateNewsMutationVariables,
@@ -96,7 +97,10 @@ export const useDeleteNews = () => {
   const [mutate, meta] = useDeleteNewsMutation();
   const deleteNews = useCallback(
     async (variables: DeleteNewsMutationVariables) =>
-      safeMutate(mutate, variables, newsErrors.NETWORK_ERROR_DELETE, newsErrors.FAILED_TO_DELETE),
+      safeMutate(mutate, variables, newsErrors.NETWORK_ERROR_DELETE, newsErrors.FAILED_TO_DELETE, {
+        refetchQueries: [AllNewsDocument],
+        awaitRefetchQueries: true
+      }),
     [mutate]
   );
   return [deleteNews, meta] as const;

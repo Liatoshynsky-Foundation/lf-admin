@@ -21,6 +21,23 @@ describe('safeMutate and apolloMessage', () => {
     expect(mockMutate).toHaveBeenCalledWith({ variables: { id: 1 } });
   });
 
+  it('should pass optional mutation options to mutate', async () => {
+    const mockResult = { data: { success: true } };
+    mockMutate.mockResolvedValueOnce(mockResult);
+    const refetchQueries = [{ kind: 'Document' }];
+
+    await safeMutate(mockMutate, { id: 1 }, networkMsg, fallbackMsg, {
+      refetchQueries,
+      awaitRefetchQueries: true
+    });
+
+    expect(mockMutate).toHaveBeenCalledWith({
+      variables: { id: 1 },
+      refetchQueries,
+      awaitRefetchQueries: true
+    });
+  });
+
   it('should throw GraphQL error message if graphQLErrors are present', async () => {
     const graphQLError = new ApolloError({
       graphQLErrors: [{ message: 'GraphQL specific error' }]

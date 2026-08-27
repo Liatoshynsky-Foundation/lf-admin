@@ -7,10 +7,11 @@ export async function safeMutate<TData, TVariables>(
   mutate: (options?: MutationFunctionOptions<TData, TVariables>) => Promise<FetchResult<TData>>,
   variables: TVariables,
   networkMsg: string,
-  fallbackMsg: string
+  fallbackMsg: string,
+  options?: Omit<MutationFunctionOptions<TData, TVariables>, 'variables'>
 ): Promise<FetchResult<TData>> {
   try {
-    return await mutate({ variables });
+    return await mutate({ variables, ...options });
   } catch (e) {
     if (e instanceof ApolloError) {
       throw new Error(apolloMessage(e, networkMsg));

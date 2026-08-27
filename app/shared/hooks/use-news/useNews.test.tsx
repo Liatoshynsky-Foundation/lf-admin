@@ -3,6 +3,7 @@ import { act, renderHook } from '@testing-library/react';
 import { newsErrors } from '~/constants/errors';
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
+  AllNewsDocument: { kind: 'Document', definitions: [] },
   NewsStatus: {
     Published: 'PUBLISHED',
     Draft: 'DRAFT',
@@ -197,7 +198,11 @@ describe('useNews hooks', () => {
       mutate,
       { id: 'news-1' },
       newsErrors.NETWORK_ERROR_DELETE,
-      newsErrors.FAILED_TO_DELETE
+      newsErrors.FAILED_TO_DELETE,
+      {
+        refetchQueries: [{ kind: 'Document', definitions: [] }],
+        awaitRefetchQueries: true
+      }
     );
   });
 

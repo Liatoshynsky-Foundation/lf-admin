@@ -22,6 +22,7 @@ import type {
 import * as graphqlHooks from '~/types/graphql/generated/graphql';
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
+  AllEventsDocument: { kind: 'Document', definitions: [] },
   EventStatus: {
     Published: 'Published',
     Draft: 'Draft',
@@ -261,7 +262,11 @@ describe('useEvents hooks', () => {
         mockMutate,
         variables,
         EventsErrors.NETWORK_ERROR_DELETE,
-        EventsErrors.FAILED_TO_DELETE
+        EventsErrors.FAILED_TO_DELETE,
+        {
+          refetchQueries: [{ kind: 'Document', definitions: [] }],
+          awaitRefetchQueries: true
+        }
       );
     });
   });
