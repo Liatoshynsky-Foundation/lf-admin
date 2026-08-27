@@ -53,6 +53,7 @@ describe('CaseQuery Resolvers', () => {
       const filters: FiltersGQLInput = {
         search: 'search',
         fundId: 'fund-id',
+        statuses: ['published'],
         sort: [{ field: 'caseNumber', order: 'asc' }]
       };
       await CaseQuery.allCases({}, { filters }, authorizedContext);
@@ -63,10 +64,20 @@ describe('CaseQuery Resolvers', () => {
         languages: undefined,
         limit: undefined,
         skip: undefined,
-        statuses: undefined,
+        statuses: ['published'],
         slug: undefined,
         fundId: 'fund-id'
       });
+    });
+
+    it('should map legacy fondId filter to fundId', async () => {
+      const filters: FiltersGQLInput = {
+        fondId: 'fond-id'
+      };
+
+      await CaseQuery.allCases({}, { filters }, authorizedContext);
+
+      expect(mockRepo.findAll).toHaveBeenCalledWith(expect.objectContaining({ fundId: 'fond-id' }));
     });
   });
 

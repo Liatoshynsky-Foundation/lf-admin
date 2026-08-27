@@ -70,6 +70,7 @@ type PaginatedCases {
 
 input CaseFiltersInput {
     fondId: ID
+    statuses: [CaseStatus!]
     limit: Int
     skip: Int
     search: String

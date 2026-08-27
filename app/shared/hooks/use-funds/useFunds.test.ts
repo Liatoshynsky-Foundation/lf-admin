@@ -10,6 +10,13 @@ const mockUsePaginatedFundsQuery = jest.fn();
 const mockUseCreateFundMutation = jest.fn();
 const mockUseUpdateFundMutation = jest.fn();
 const mockUseDeleteFundMutation = jest.fn();
+const mockApolloQuery = jest.fn();
+
+jest.mock('@apollo/client', () => ({
+  __esModule: true,
+  gql: (strings: TemplateStringsArray) => strings.join(''),
+  useApolloClient: () => ({ query: mockApolloQuery })
+}));
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
   __esModule: true,
@@ -31,6 +38,7 @@ import {
   useCreateFund,
   useDeleteFund,
   useFundById,
+  useHasPublishedCasesInFund,
   usePaginatedFunds,
   useUpdateFund
 } from './useFunds';
@@ -382,6 +390,36 @@ describe('useFunds', () => {
       );
     });
   });
+
+  describe('useHasPublishedCasesInFund', () => {
+    it('should query published cases by fund id and return true when any exist', async () => {
+      mockApolloQuery.mockResolvedValue({ data: { allCases: [{ id: 'case-1' }] } });
+
+      const { result } = renderHook(() => useHasPublishedCasesInFund());
+
+      await expect(result.current('fund-1')).resolves.toBe(true);
+      expect(mockApolloQuery).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variables: {
+            filters: {
+              fondId: 'fund-1',
+              statuses: [BaseContentStatuses.Published]
+            }
+          },
+          fetchPolicy: 'network-only'
+        })
+      );
+    });
+
+    it('should return false when there are no published cases', async () => {
+      mockApolloQuery.mockResolvedValue({ data: { allCases: [] } });
+
+      const { result } = renderHook(() => useHasPublishedCasesInFund());
+
+      await expect(result.current('fund-1')).resolves.toBe(false);
+    });
+  });
+
   it('should use fallback error messages when FundErrors are missing', async () => {
     const originalNetwork = FundErrors.NETWORK_ERROR_DELETE;
     const originalFailed = FundErrors.FAILED_TO_DELETE;

@@ -108,8 +108,8 @@ describe('fundRepository', () => {
       expect(result.fundNumber).toEqual(newFund.fundNumber);
       expect(result.name).toStrictEqual(newFund.name);
 
-      expect(result.description?.uk).toEqual({ type: 'doc' });
-      expect(result.description?.en).toEqual({});
+      expect(result.description?.uk).toEqual('{"type":"doc"}');
+      expect(result.description?.en).toEqual('{}');
 
       expect(result.id).toBeDefined();
     });
@@ -151,8 +151,8 @@ describe('fundRepository', () => {
       });
 
       const result = await repository.create(newFund);
-      expect(result.description?.uk).toEqual({});
-      expect(result.description?.en).toEqual({});
+      expect(result.description?.uk).toEqual('{}');
+      expect(result.description?.en).toEqual('{}');
     });
 
     it('should default status to Hidden when input.status is not provided', async () => {
@@ -226,7 +226,7 @@ describe('fundRepository', () => {
 
       expect(result?.name).toEqual(updateInput.name);
       expect(result?.casesCount).toBe(10);
-      expect(result?.description?.uk).toEqual({ valid: 'json' });
+      expect(result?.description?.uk).toEqual('{"valid":"json"}');
     });
 
     it('should update only the fields explicitly present on the input (partial update)', async () => {
@@ -310,6 +310,25 @@ describe('fundRepository', () => {
 
       expect(result?.casesCount).toBe(5);
       expect(result?.descriptionsCount).toBe(2);
+    });
+
+    it('should map legacy string fields to localized values', async () => {
+      const doc = createMockFundDoc({
+        organizationForm: 'тематико-хронологічна',
+        characterAndContent: 'Опис фонду'
+      });
+      findOneMock.mockResolvedValue({ toObject: () => doc });
+
+      const result = await repository.findByFundNumber(doc.id);
+
+      expect(result?.organizationForm).toEqual({
+        uk: 'тематико-хронологічна',
+        en: 'тематико-хронологічна'
+      });
+      expect(result?.description).toEqual({
+        uk: 'Опис фонду',
+        en: 'Опис фонду'
+      });
     });
 
     it('should resolve invalid or missing status to Hidden', async () => {

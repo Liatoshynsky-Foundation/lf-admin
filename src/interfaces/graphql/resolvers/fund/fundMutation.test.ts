@@ -4,6 +4,7 @@ import { ZodError } from 'zod';
 import { createMockContext } from '../testUtils';
 import { FundMutation } from './fundMutation';
 import { FundErrorCodes, FundErrors, graphqlErrors } from '~/constants/errors';
+import { Fund } from '~/src/domain/entities/Fund';
 import { CreateFundInput, IFundRepository, UpdateFundInput } from '~/src/domain/repositories/fundRepository';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
@@ -22,6 +23,30 @@ const createMockUpdateFundInput = (overrides: Partial<UpdateFundInput> = {}): Up
   name: { uk: 'Оновлений Архів', en: 'Updated Archive' },
   ...overrides
 });
+
+const createMockFund = (overrides: Partial<Fund> = {}): Fund => ({
+  id: 'fund-id',
+  casesCount: 0,
+  descriptionsCount: 0,
+  createdAt: '2026-08-24T00:00:00.000Z',
+  updatedAt: '2026-08-24T00:00:00.000Z',
+  ...createMockCreateFundInput(),
+  ...overrides
+});
+
+const createStringifiedTipTapDoc = (text: string): string =>
+  JSON.stringify({
+    type: 'doc',
+    content: [
+      {
+        type: 'paragraph',
+        attrs: {
+          metadata: 'x'.repeat(1200)
+        },
+        content: [{ type: 'text', text }]
+      }
+    ]
+  });
 
 const mockCreate = jest.fn();
 const mockUpdate = jest.fn();
@@ -206,6 +231,96 @@ describe('FundMutation', () => {
 
       expect(result.fundNumber).toBe(existedUpdated.fundNumber);
       expect(result.status).toBe(existedUpdated.status);
+    });
+
+    it('should validate the current fund before publishing with a status-only update', async () => {
+      const id = 'current-id';
+      const currentFund = createMockFund({ id, status: BaseContentStatuses.Hidden });
+      const update: UpdateFundInput = { status: BaseContentStatuses.Published };
+
+      mockFindById.mockResolvedValue(currentFund);
+      mockUpdate.mockResolvedValue({ ...currentFund, status: BaseContentStatuses.Published });
+
+      const result = await FundMutation.updateFund({}, { id, input: update }, adminContext);
+
+      expect(mockFindById).toHaveBeenCalledWith(id);
+      expect(mockUpdate).toHaveBeenCalledWith(id, update);
+      expect(result.status).toBe(BaseContentStatuses.Published);
+    });
+
+    it('should validate the visible description text instead of raw TipTap JSON before status-only publishing', async () => {
+      const id = 'current-id';
+      const tipTapDescription = createStringifiedTipTapDoc('Valid description');
+      const currentFund = createMockFund({
+        id,
+        status: BaseContentStatuses.Hidden,
+        description: {
+          uk: tipTapDescription,
+          en: tipTapDescription
+        }
+      });
+      const update: UpdateFundInput = { status: BaseContentStatuses.Published };
+
+      mockFindById.mockResolvedValue(currentFund);
+      mockUpdate.mockResolvedValue({ ...currentFund, status: BaseContentStatuses.Published });
+
+      const result = await FundMutation.updateFund({}, { id, input: update }, adminContext);
+
+      expect(tipTapDescription.length).toBeGreaterThan(1000);
+      expect(mockFindById).toHaveBeenCalledWith(id);
+      expect(mockUpdate).toHaveBeenCalledWith(id, update);
+      expect(result.status).toBe(BaseContentStatuses.Published);
+    });
+
+    it('should keep the original TipTap description payload when publishing from the edit page', async () => {
+      const id = 'current-id';
+      const tipTapDescription = createStringifiedTipTapDoc('Updated valid description');
+      const currentFund = createMockFund({ id, status: BaseContentStatuses.Hidden });
+      const update: UpdateFundInput = {
+        status: BaseContentStatuses.Published,
+        description: {
+          uk: tipTapDescription,
+          en: tipTapDescription
+        }
+      };
+
+      mockFindById.mockResolvedValue(currentFund);
+      mockUpdate.mockResolvedValue({
+        ...currentFund,
+        ...update
+      });
+
+      await FundMutation.updateFund({}, { id, input: update }, adminContext);
+
+      expect(tipTapDescription.length).toBeGreaterThan(1000);
+      expect(mockFindById).toHaveBeenCalledWith(id);
+      expect(mockUpdate).toHaveBeenCalledWith(id, update);
+    });
+
+    it('should reject publishing when the current fund data is invalid', async () => {
+      const id = 'invalid-fund-id';
+      const update: UpdateFundInput = { status: BaseContentStatuses.Published };
+      mockFindById.mockResolvedValue(createMockFund({ id, name: { uk: 'Архів', en: '' } }));
+
+      await expect(FundMutation.updateFund({}, { id, input: update }, adminContext)).rejects.toThrow(ZodError);
+
+      expect(mockFindById).toHaveBeenCalledWith(id);
+      expect(mockUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should throw not found before publishing when the current fund does not exist', async () => {
+      const id = 'missing-fund-id';
+      const update: UpdateFundInput = { status: BaseContentStatuses.Published };
+      mockFindById.mockResolvedValue(null);
+
+      await expect(FundMutation.updateFund({}, { id, input: update }, adminContext)).rejects.toEqual(
+        new GraphQLError(FundErrors.FUND_NOT_FOUND(id), {
+          extensions: { code: FundErrorCodes.FUND_NOT_FOUND }
+        })
+      );
+
+      expect(mockFindById).toHaveBeenCalledWith(id);
+      expect(mockUpdate).not.toHaveBeenCalled();
     });
   });
 

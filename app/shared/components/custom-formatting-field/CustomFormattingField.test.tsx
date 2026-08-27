@@ -1,8 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { Editor,JSONContent } from '@tiptap/react';
+import { Editor, JSONContent } from '@tiptap/react';
 import React from 'react';
 
 import { CustomFormattingField } from './CustomFormattingField';
+import { styles } from './CustomFormattingField.style';
 
 type EditorConfig = {
   content: JSONContent;
@@ -74,6 +75,19 @@ describe('CustomFormattingField', () => {
     const documentExtension = mockEditorConfig.extensions.find((extension) => extension.name === 'doc');
 
     expect(documentExtension?.config?.content).toMatch(/\+$/);
+  });
+
+  it('keeps the label active when the value already contains loaded text', () => {
+    const labelSpy = jest.spyOn(styles, 'label');
+    const loadedJSON: JSONContent = {
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Опис фонду' }] }]
+    };
+
+    render(<CustomFormattingField value={loadedJSON} onChange={mockOnChange} label="Опис фонду" />);
+
+    expect(labelSpy).toHaveBeenCalledWith(true, false);
+    labelSpy.mockRestore();
   });
 
   describe('1. Mounting & Rendering', () => {

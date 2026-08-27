@@ -53,9 +53,13 @@ export const styles = {
     left: '14px',
     top: isActive ? '-6px' : '14px',
     fontSize: isActive ? '12px' : '16px',
+    lineHeight: isActive ? '12px' : '24px',
+    px: isActive ? '4px' : 0,
+    backgroundColor: isActive ? 'background.paper' : 'transparent',
     color: hasError ? 'error.main' : 'text.secondary',
     pointerEvents: isActive ? 'none' : 'auto',
     cursor: 'text',
+    zIndex: 1,
     transition: 'all 0.2s ease-out'
   }),
 
@@ -89,9 +93,9 @@ export const styles = {
 
   contentWrapper: {
     position: 'relative',
-    padding: '12px',
-    minHeight: '48px',
+    padding: '16px 12px 12px',
+    minHeight: '56px',
     display: 'flex',
-    alignItems: 'center'
+    alignItems: 'flex-start'
   }
 };

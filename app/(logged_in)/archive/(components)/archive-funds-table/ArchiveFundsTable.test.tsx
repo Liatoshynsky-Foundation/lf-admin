@@ -134,6 +134,23 @@ describe('ArchiveFundsTable', () => {
     }
   });
 
+  it('should add the publish action for hidden funds when publish handler is provided', () => {
+    renderComponent({
+      funds: [{ ...fund, status: BaseContentStatuses.Hidden }],
+      onPublish: jest.fn()
+    });
+
+    expect(screen.getByTestId('mock-table-layout-row-1')).toHaveTextContent('Опублікувати');
+    expect(screen.getByTestId('mock-table-layout-row-1')).toHaveTextContent('"id":"publish"');
+  });
+
+  it('should not add the publish action for non-hidden funds', () => {
+    renderComponent({ onPublish: jest.fn() });
+
+    expect(screen.getByTestId('mock-table-layout-row-1')).not.toHaveTextContent('Опублікувати');
+    expect(screen.getByTestId('mock-table-layout-row-1')).not.toHaveTextContent('"id":"publish"');
+  });
+
   describe('should render state UIs', () => {
     it('should render the "not created yet" fallback when there are no funds and no active criteria', () => {
       renderComponent({ funds: [], hasActiveSearch: false, hasActiveStatusFilter: false });

@@ -1,5 +1,6 @@
 'use client';
 
+import { gql, useApolloClient } from '@apollo/client';
 import { useCallback } from 'react';
 
 import { FundErrors } from '~/constants/errors';
@@ -24,6 +25,25 @@ import {
 type QueryHookOptions = Readonly<{
   skip?: boolean;
 }>;
+
+type PublishedCasesByFundQuery = {
+  allCases?: Array<{ id: string }> | null;
+};
+
+type PublishedCasesByFundVariables = {
+  filters: {
+    fondId: string;
+    statuses: BaseContentStatuses[];
+  };
+};
+
+const PUBLISHED_CASES_BY_FUND_QUERY = gql`
+  query PublishedCasesByFund($filters: CaseFiltersInput) {
+    allCases(filters: $filters) {
+      id
+    }
+  }
+`;
 
 const statusMap: Record<string, BaseContentStatuses> = {
   draft: BaseContentStatuses.Draft,
@@ -124,6 +144,28 @@ export const useUpdateFund = () => {
   );
   
   return [updateFund, meta] as const;
+};
+
+export const useHasPublishedCasesInFund = () => {
+  const client = useApolloClient();
+
+  return useCallback(
+    async (fundId: string): Promise<boolean> => {
+      const { data } = await client.query<PublishedCasesByFundQuery, PublishedCasesByFundVariables>({
+        query: PUBLISHED_CASES_BY_FUND_QUERY,
+        variables: {
+          filters: {
+            fondId: fundId,
+            statuses: [BaseContentStatuses.Published]
+          }
+        },
+        fetchPolicy: 'network-only'
+      });
+
+      return Boolean(data.allCases?.length);
+    },
+    [client]
+  );
 };
 
 export const useDeleteFund = () => {
