@@ -22,6 +22,7 @@ interface ConfigurableListProps<T extends ConfigurableListItem> {
   onChange: (newValue: T) => void;
   onDelete: (id: T['id']) => void;
   separator?: boolean;
+  allowFirstItemDeletion?: boolean;
 }
 
 const ConfigurableList = <T extends ConfigurableListItem>({
@@ -32,14 +33,15 @@ const ConfigurableList = <T extends ConfigurableListItem>({
   renderItem,
   items,
   addBtnLabel,
-  editable
+  editable,
+  allowFirstItemDeletion = false
 }: ConfigurableListProps<T>) => {
   const withSeparator = (index: number) => Boolean(separator && index < items.length - 1);
 
   const list = items.map((item, index) => (
     <ItemWrapper
       key={item.id}
-      editable={index !== 0 && editable}
+      editable={editable && (allowFirstItemDeletion || index !== 0)}
       withSeparator={withSeparator(index)}
       onDelete={() => onDelete(item.id)}
     >
