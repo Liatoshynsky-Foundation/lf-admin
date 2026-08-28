@@ -1,9 +1,0 @@
-{
-  "packages": {
-    ".": {
-      "release-type": "simple",
-      "bump-minor-pre-major": true,
-      "version-file": "version.txt"
-    }
-  }
-}
