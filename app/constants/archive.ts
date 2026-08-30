@@ -6,7 +6,7 @@ export interface PdfEntry {
   fileName: string | null;
 }
 
-export type ArchiveTabValue = 'all' | 'fonds' | 'cases';
+export type ArchiveTabValue = 'all' | 'funds' | 'cases';
 
 export const ARCHIVE_PAGE_TITLE = 'Архів';
 export const ARCHIVE_SEARCH_PLACEHOLDER =
@@ -15,7 +15,7 @@ export const ARCHIVE_BASE_PATH = '/archive';
 
 export const ARCHIVE_TABS = [
   { value: 'all', label: 'Всі', href: ARCHIVE_BASE_PATH },
-  { value: 'fonds', label: 'Фонди', href: `${ARCHIVE_BASE_PATH}/fonds` },
+  { value: 'funds', label: 'Фонди', href: `${ARCHIVE_BASE_PATH}/funds` },
   { value: 'cases', label: 'Справи', href: `${ARCHIVE_BASE_PATH}/cases` },
 ];
 
@@ -57,10 +57,10 @@ export const INITIAL_PDF_ENTRY: PdfEntry = {
   fileName: null,
 };
 
-export const ARCHIVE_FOND_CREATE_PATH = `${ARCHIVE_BASE_PATH}/fond/create`;
+export const ARCHIVE_FUND_CREATE_PATH = `${ARCHIVE_BASE_PATH}/create`;
 export const ARCHIVE_CASE_CREATE_PATH = `${ARCHIVE_BASE_PATH}/case/create`;
 
-export const ARCHIVE_ADD_FOND_LABEL = 'Додати фонд';
+export const ARCHIVE_ADD_FUND_LABEL = 'Додати фонд';
 export const ARCHIVE_ADD_CASE_LABEL = 'Додати справу';
 
 export const ARCHIVE_LOADING_STATE_TITLE = 'Завантаження архіву';

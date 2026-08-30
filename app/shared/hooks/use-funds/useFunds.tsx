@@ -32,7 +32,7 @@ type PublishedCasesByFundQuery = {
 
 type PublishedCasesByFundVariables = {
   filters: {
-    fondId: string;
+    fundId: string;
     statuses: BaseContentStatuses[];
   };
 };
@@ -162,7 +162,7 @@ export const useHasPublishedCasesInFund = () => {
         query: PUBLISHED_CASES_BY_FUND_QUERY,
         variables: {
           filters: {
-            fondId: fundId,
+            fundId,
             statuses: [BaseContentStatuses.Published]
           }
         },

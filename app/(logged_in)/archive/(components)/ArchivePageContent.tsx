@@ -69,7 +69,7 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
   const filterValues = statusFilterProps.value;
   const isAllStatus = filterValues.length === 0;
 
-  const showFunds = activeTab === 'all' || activeTab === 'fonds';
+  const showFunds = activeTab === 'all' || activeTab === 'funds';
   const showCases = activeTab === 'all' || activeTab === 'cases';
   const isAllTab = activeTab === 'all';
 

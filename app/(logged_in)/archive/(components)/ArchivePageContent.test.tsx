@@ -323,7 +323,7 @@ describe('ArchivePageContent', () => {
   });
 
   it('should skip the cases query on the funds tab and the funds query on the cases tab', () => {
-    render(<ArchivePageContent activeTab="fonds" />);
+    render(<ArchivePageContent activeTab="funds" />);
     expect(mockUsePaginatedFunds).toHaveBeenCalledWith(
       1,
       ARCHIVE_ITEMS_PER_PAGE,
@@ -355,7 +355,7 @@ describe('ArchivePageContent', () => {
     it('should show the loading empty state while loading', () => {
       mockUsePaginatedFunds.mockReturnValue({ funds: [], totalPages: 0, loading: true, error: undefined });
 
-      render(<ArchivePageContent activeTab="fonds" />);
+      render(<ArchivePageContent activeTab="funds" />);
 
       expect(screen.getByTestId('empty-state-title')).toHaveTextContent(FUNDS_LOADING_STATE_TITLE);
       expect(screen.getByTestId('empty-state-description')).toHaveTextContent(FUNDS_LOADING_STATE_DESCRIPTION);
@@ -370,7 +370,7 @@ describe('ArchivePageContent', () => {
         error: new Error('boom')
       });
 
-      render(<ArchivePageContent activeTab="fonds" />);
+      render(<ArchivePageContent activeTab="funds" />);
 
       expect(screen.getByTestId('empty-state-title')).toHaveTextContent(FUNDS_ERROR_STATE_TITLE);
       expect(screen.getByTestId('empty-state-description')).toHaveTextContent(FUNDS_ERROR_STATE_DESCRIPTION);
@@ -380,7 +380,7 @@ describe('ArchivePageContent', () => {
     it('should show the base empty state when there are no funds and no active search/filter', () => {
       mockUsePaginatedFunds.mockReturnValue({ funds: [], totalPages: 0, loading: false, error: undefined });
 
-      render(<ArchivePageContent activeTab="fonds" />);
+      render(<ArchivePageContent activeTab="funds" />);
 
       expect(screen.getByTestId('empty-state-title')).toHaveTextContent(FUNDS_EMPTY_STATE_TITLE);
       expect(screen.getByTestId('empty-state-description')).toHaveTextContent(FUNDS_EMPTY_STATE_DESCRIPTION);
@@ -394,7 +394,7 @@ describe('ArchivePageContent', () => {
       });
       mockUsePaginatedFunds.mockReturnValue({ funds: [], totalPages: 0, loading: false, error: undefined });
 
-      render(<ArchivePageContent activeTab="fonds" />);
+      render(<ArchivePageContent activeTab="funds" />);
 
       expect(screen.getByTestId('empty-state-title')).toHaveTextContent(FUNDS_EMPTY_STATE_NO_RESULTS_TITLE);
       expect(screen.getByTestId('empty-state-description')).toHaveTextContent(
@@ -410,7 +410,7 @@ describe('ArchivePageContent', () => {
       });
       mockUsePaginatedFunds.mockReturnValue({ funds: [], totalPages: 0, loading: false, error: undefined });
 
-      render(<ArchivePageContent activeTab="fonds" />);
+      render(<ArchivePageContent activeTab="funds" />);
 
       expect(screen.getByTestId('empty-state-title')).toHaveTextContent(FUNDS_EMPTY_STATE_NO_RESULTS_TITLE);
     });
@@ -427,7 +427,7 @@ describe('ArchivePageContent', () => {
         error: undefined
       });
 
-      render(<ArchivePageContent activeTab="fonds" />);
+      render(<ArchivePageContent activeTab="funds" />);
 
       expect(screen.getByTestId('funds-table')).toBeInTheDocument();
       const items = screen.getAllByTestId(/^funds-table-item-/);
@@ -663,7 +663,7 @@ describe('ArchivePageContent', () => {
     });
 
     it('should be false/false with no filters active', () => {
-      render(<ArchivePageContent activeTab="fonds" />);
+      render(<ArchivePageContent activeTab="funds" />);
 
       expect(screen.getByTestId('funds-table-has-active-search')).toHaveTextContent('false');
       expect(screen.getByTestId('funds-table-has-active-status-filter')).toHaveTextContent('false');
@@ -676,7 +676,7 @@ describe('ArchivePageContent', () => {
         statusFilterProps: mockStatusFilterProps
       });
 
-      render(<ArchivePageContent activeTab="fonds" />);
+      render(<ArchivePageContent activeTab="funds" />);
 
       expect(screen.getByTestId('funds-table-has-active-search')).toHaveTextContent('true');
     });
@@ -688,7 +688,7 @@ describe('ArchivePageContent', () => {
         statusFilterProps: { ...mockStatusFilterProps, value: ['published'] }
       });
 
-      render(<ArchivePageContent activeTab="fonds" />);
+      render(<ArchivePageContent activeTab="funds" />);
 
       expect(screen.getByTestId('funds-table-has-active-status-filter')).toHaveTextContent('true');
     });

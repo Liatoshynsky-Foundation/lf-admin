@@ -415,7 +415,7 @@ describe('useFunds', () => {
         expect.objectContaining({
           variables: {
             filters: {
-              fondId: 'fund-1',
+              fundId: 'fund-1',
               statuses: [BaseContentStatuses.Published]
             }
           },
