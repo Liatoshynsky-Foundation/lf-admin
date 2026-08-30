@@ -13,9 +13,10 @@ describe('Search', () => {
     opts?: SearchOption[];
     initialSearch?: string;
     onSetSearch?: (value: string) => void;
+    onEnter?: () => void;
   }>;
 
-  function SearchHarness({ opts = options, initialSearch = '', onSetSearch }: SearchHarnessProps) {
+  function SearchHarness({ opts = options, initialSearch = '', onSetSearch, onEnter }: SearchHarnessProps) {
     const [value, setValue] = useState(initialSearch);
 
     const handleSetSearch = (nextValue: string) => {
@@ -23,7 +24,7 @@ describe('Search', () => {
       onSetSearch?.(nextValue);
     };
 
-    return <Search search={value} setSearch={handleSetSearch} options={opts} />;
+    return <Search search={value} setSearch={handleSetSearch} options={opts} onEnter={onEnter} />;
   }
 
   const renderSearch = (opts = options, initialSearch = '', onSetSearch = jest.fn()) => {
@@ -79,6 +80,24 @@ describe('Search', () => {
     await waitFor(() => {
       expect(onSetSearch).toHaveBeenCalledWith('Test Song');
     });
+  });
+
+  it('should call onEnter when the Enter key is pressed', () => {
+    const onEnter = jest.fn();
+    render(<SearchHarness onEnter={onEnter} />);
+
+    fireEvent.keyDown(screen.getByRole('combobox'), { key: 'Enter' });
+
+    expect(onEnter).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not call onEnter for other keys', () => {
+    const onEnter = jest.fn();
+    render(<SearchHarness onEnter={onEnter} />);
+
+    fireEvent.keyDown(screen.getByRole('combobox'), { key: 'a' });
+
+    expect(onEnter).not.toHaveBeenCalled();
   });
 
   it('should call setSearch with string value when freeSolo input is submitted', async () => {

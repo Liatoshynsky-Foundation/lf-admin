@@ -9,6 +9,8 @@ export interface PdfEntry {
 export type ArchiveTabValue = 'all' | 'fonds' | 'cases';
 
 export const ARCHIVE_PAGE_TITLE = 'Архів';
+export const ARCHIVE_SEARCH_PLACEHOLDER =
+  'Пошук за назвою фонду, назвою справи або змістом документів';
 export const ARCHIVE_BASE_PATH = '/archive';
 
 export const ARCHIVE_TABS = [
@@ -61,6 +63,11 @@ export const ARCHIVE_CASE_CREATE_PATH = `${ARCHIVE_BASE_PATH}/case/create`;
 export const ARCHIVE_ADD_FOND_LABEL = 'Додати фонд';
 export const ARCHIVE_ADD_CASE_LABEL = 'Додати справу';
 
+export const ARCHIVE_LOADING_STATE_TITLE = 'Завантаження архіву';
+export const ARCHIVE_LOADING_STATE_DESCRIPTION = 'Зачекайте, поки завершиться запит.';
+export const ARCHIVE_ERROR_STATE_TITLE = 'Не вдалося завантажити архів';
+export const ARCHIVE_ERROR_STATE_DESCRIPTION = 'Спробуйте оновити сторінку або повторити пізніше.';
+
 export const ARCHIVE_EMPTY_STATE_TITLE = 'Фондів ще немає.';
 export const ARCHIVE_EMPTY_STATE_DESCRIPTION =
   'Натисніть «Додати фонд», щоб створити перший.';
@@ -81,8 +88,3 @@ export const ARCHIVE_FUNDS_TABLE_HEADERS = {
 } as const;
 
 export const ARCHIVE_ITEMS_PER_PAGE = 8;
-
-export const ARCHIVE_LOADING_STATE_TITLE = 'Завантаження фондів';
-export const ARCHIVE_LOADING_STATE_DESCRIPTION = 'Зачекайте, поки завершиться запит.';
-export const ARCHIVE_ERROR_STATE_TITLE = 'Не вдалося завантажити фонди';
-export const ARCHIVE_ERROR_STATE_DESCRIPTION = 'Спробуйте оновити сторінку або повторити пізніше.';

@@ -1,5 +1,6 @@
 'use client';
-import { Box } from '@mui/material';
+
+import { Box, Typography } from '@mui/material';
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -10,11 +11,27 @@ import { ArchiveCreateAction } from './ArchiveCreateAction';
 import { styles } from './ArchivePageContent.styles';
 import { PublishEmptyFundDialog } from './publish-empty-fund-dialog/PublishEmptyFundDialog';
 import {
+  ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION,
+  ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE,
+  ARCHIVE_ERROR_STATE_DESCRIPTION,
+  ARCHIVE_ERROR_STATE_TITLE,
   ARCHIVE_ITEMS_PER_PAGE,
+  ARCHIVE_LOADING_STATE_DESCRIPTION,
+  ARCHIVE_LOADING_STATE_TITLE,
   ARCHIVE_PAGE_TITLE,
   ARCHIVE_TABS,
   type ArchiveTabValue
 } from '~/constants/archive';
+import {
+  CASES_EMPTY_STATE_DESCRIPTION,
+  CASES_EMPTY_STATE_NO_RESULTS_DESCRIPTION,
+  CASES_EMPTY_STATE_NO_RESULTS_TITLE,
+  CASES_EMPTY_STATE_TITLE,
+  CASES_ERROR_STATE_DESCRIPTION,
+  CASES_ERROR_STATE_TITLE,
+  CASES_LOADING_STATE_DESCRIPTION,
+  CASES_LOADING_STATE_TITLE
+} from '~/constants/case';
 import { FundErrors } from '~/constants/errors';
 import {
   type Fund,
@@ -32,34 +49,48 @@ import { EmptyState } from '~/shared/components/empty-state';
 import { PageHeader } from '~/shared/components/page-header/PageHeader';
 import { Pagination } from '~/shared/components/pagination/Pagination';
 import { SearchStatusToolbar } from '~/shared/components/search-status-toolbar/SearchStatusToolbar';
+import { useAllCases } from '~/shared/hooks/use-cases/useCases';
 import { usePaginatedFunds, useUpdateFund } from '~/shared/hooks/use-funds/useFunds';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
-import { FundStatus } from '~/types/graphql/generated/graphql';
+import { CaseStatus, FundStatus } from '~/types/graphql/generated/graphql';
 
 interface ArchivePageContentProps {
   activeTab: ArchiveTabValue;
 }
 
 export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
-  const { searchProps, statusFilterProps } = useArchiveFiltering();
+  const { searchProps, statusFilterProps, appliedSearch } = useArchiveFiltering();
   const [page, setPage] = useState(1);
   const [publishCandidate, setPublishCandidate] = useState<Fund | null>(null);
   const [publishedOverrides, setPublishedOverrides] = useState<Record<string, string>>({});
   const [updateFund] = useUpdateFund();
   const checkFundPublishWarning = useFundPublishWarning();
 
-  const searchValue = searchProps.search;
   const filterValues = statusFilterProps.value;
   const isAllStatus = filterValues.length === 0;
 
-  const { funds, totalPages, loading, error } = usePaginatedFunds(page, ARCHIVE_ITEMS_PER_PAGE, {
-    search: searchValue || undefined,
-    statuses: isAllStatus ? undefined : (filterValues as FundStatus[])
-  });
+  const showFunds = activeTab === 'all' || activeTab === 'fonds';
+  const showCases = activeTab === 'all' || activeTab === 'cases';
+  const isAllTab = activeTab === 'all';
+
+  const search = appliedSearch || undefined;
+  const statuses = isAllStatus ? undefined : filterValues;
+
+  const { funds, totalPages, loading: fundsLoading, error: fundsError } = usePaginatedFunds(
+    page,
+    ARCHIVE_ITEMS_PER_PAGE,
+    { search, statuses: statuses as FundStatus[] | undefined },
+    { skip: !showFunds }
+  );
+
+  const { cases, loading: casesLoading, error: casesError } = useAllCases(
+    { search, statuses: statuses as CaseStatus[] | undefined },
+    { skip: !showCases }
+  );
 
   useEffect(() => {
     setPage(1);
-  }, [searchValue, filterValues]);
+  }, [appliedSearch, filterValues]);
 
   useEffect(() => {
     if (page > totalPages && totalPages > 0) {
@@ -80,11 +111,16 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
     [funds, publishedOverrides]
   );
 
-  const ascSortedVisibleFunds = [...fundsWithOverrides].sort((a, b) => Number(a.fundNumber) - Number(b.fundNumber));
+  const sortedFunds = [...fundsWithOverrides].sort((a, b) => Number(a.fundNumber) - Number(b.fundNumber));
+  const sortedCases = [...cases].sort((a, b) => Number(a.caseNumber) - Number(b.caseNumber));
 
-  const hasActiveSearch = Boolean(searchValue);
+  const hasActiveSearch = Boolean(appliedSearch);
   const hasActiveStatusFilter = !isAllStatus;
   const hasActiveCriteria = hasActiveSearch || hasActiveStatusFilter;
+  const hasFunds = sortedFunds.length > 0;
+  const hasCases = sortedCases.length > 0;
+  const isAllTabLoading = isAllTab && (fundsLoading || casesLoading);
+  const isAllTabError = isAllTab && Boolean(fundsError || casesError);
 
   const publishFund = async (fund: Fund) => {
     try {
@@ -133,19 +169,28 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
     setPublishCandidate(null);
   };
 
-  const content = (() => {
-    if (loading) {
-      return <EmptyState title={FUNDS_LOADING_STATE_TITLE} description={FUNDS_LOADING_STATE_DESCRIPTION} />;
+  const fundsNoResultsTitle = isAllTab ? ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE : FUNDS_EMPTY_STATE_NO_RESULTS_TITLE;
+  const fundsNoResultsDescription = isAllTab
+    ? ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION
+    : FUNDS_EMPTY_STATE_NO_RESULTS_DESCRIPTION;
+
+  const renderFundsSection = () => {
+    if (fundsLoading) {
+      return (
+        <EmptyState title={FUNDS_LOADING_STATE_TITLE} description={FUNDS_LOADING_STATE_DESCRIPTION} />
+      );
     }
 
-    if (error) {
-      return <EmptyState title={FUNDS_ERROR_STATE_TITLE} description={FUNDS_ERROR_STATE_DESCRIPTION} />;
+    if (fundsError) {
+      return (
+        <EmptyState title={FUNDS_ERROR_STATE_TITLE} description={FUNDS_ERROR_STATE_DESCRIPTION} />
+      );
     }
 
-    if (ascSortedVisibleFunds.length > 0) {
+    if (hasFunds) {
       return (
         <FundsTable
-          funds={ascSortedVisibleFunds}
+          funds={sortedFunds}
           hasActiveSearch={hasActiveSearch}
           hasActiveStatusFilter={hasActiveStatusFilter}
           onPublish={handlePublishRequest}
@@ -153,14 +198,80 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
       );
     }
 
+    if (isAllTab && hasCases) {
+      return null;
+    }
+
     if (hasActiveCriteria) {
-      return (
-        <EmptyState title={FUNDS_EMPTY_STATE_NO_RESULTS_TITLE} description={FUNDS_EMPTY_STATE_NO_RESULTS_DESCRIPTION} />
-      );
+      return <EmptyState title={fundsNoResultsTitle} description={fundsNoResultsDescription} />;
     }
 
     return <EmptyState title={FUNDS_EMPTY_STATE_TITLE} description={FUNDS_EMPTY_STATE_DESCRIPTION} />;
-  })();
+  };
+
+  const renderCasesSection = () => {
+    if (casesLoading) {
+      return (
+        <EmptyState title={CASES_LOADING_STATE_TITLE} description={CASES_LOADING_STATE_DESCRIPTION} />
+      );
+    }
+
+    if (casesError) {
+      return (
+        <EmptyState title={CASES_ERROR_STATE_TITLE} description={CASES_ERROR_STATE_DESCRIPTION} />
+      );
+    }
+
+    if (hasCases) {
+      return (
+        <Box component="ul" data-testid="cases-list" sx={styles.casesList}>
+          {sortedCases.map((archiveCase) => (
+            <Box component="li" key={archiveCase.id} sx={styles.caseItem}>
+              <Typography variant="textMd">
+                {archiveCase.caseNumber} — {archiveCase.name}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+      );
+    }
+
+    if (isAllTab) {
+      return null;
+    }
+
+    if (hasActiveCriteria) {
+      return (
+        <EmptyState
+          title={CASES_EMPTY_STATE_NO_RESULTS_TITLE}
+          description={CASES_EMPTY_STATE_NO_RESULTS_DESCRIPTION}
+        />
+      );
+    }
+
+    return <EmptyState title={CASES_EMPTY_STATE_TITLE} description={CASES_EMPTY_STATE_DESCRIPTION} />;
+  };
+
+  const renderSections = () => {
+    if (isAllTabLoading) {
+      return (
+        <EmptyState title={ARCHIVE_LOADING_STATE_TITLE} description={ARCHIVE_LOADING_STATE_DESCRIPTION} />
+      );
+    }
+
+    if (isAllTabError) {
+      return (
+        <EmptyState title={ARCHIVE_ERROR_STATE_TITLE} description={ARCHIVE_ERROR_STATE_DESCRIPTION} />
+      );
+    }
+
+    return (
+      <>
+        {showFunds && renderFundsSection()}
+        {showCases && renderCasesSection()}
+      </>
+    );
+  };
 
   return (
     <Box sx={styles.pageContainer}>
@@ -176,9 +287,11 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
         statusFilterProps={statusFilterProps}
       />
 
-      {content}
+      <Box sx={styles.sections}>{renderSections()}</Box>
 
-      {totalPages > 1 && <Pagination totalPages={totalPages} currentPage={page} onPageChange={handlePageChange} />}
+      {showFunds && totalPages > 1 && (
+        <Pagination totalPages={totalPages} currentPage={page} onPageChange={handlePageChange} />
+      )}
 
       <PublishEmptyFundDialog
         open={Boolean(publishCandidate)}

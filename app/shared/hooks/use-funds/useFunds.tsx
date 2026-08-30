@@ -84,10 +84,11 @@ const mapFundListItem = (f: FundListItem) => {
   };
 };
 
-export function useAllFunds(filters?: FundFiltersInput | null) {
+export function useAllFunds(filters?: FundFiltersInput | null, options: QueryHookOptions = {}) {
   const { data, loading, error } = useAllFundsQuery({
     variables: { filters },
-    fetchPolicy: 'network-only'
+    fetchPolicy: 'network-only',
+    skip: options.skip
   });
 
   const funds = (data?.findAllFunds ?? []).map(mapFundListItem);
@@ -95,10 +96,16 @@ export function useAllFunds(filters?: FundFiltersInput | null) {
   return { funds, loading, error };
 }
 
-export function usePaginatedFunds(page: number, limit: number, filters?: FundFiltersInput | null) {
+export function usePaginatedFunds(
+  page: number,
+  limit: number,
+  filters?: FundFiltersInput | null,
+  options: QueryHookOptions = {}
+) {
   const { data, loading, error } = usePaginatedFundsQuery({
     variables: { page, limit, filters },
-    fetchPolicy: 'network-only'
+    fetchPolicy: 'network-only',
+    skip: options.skip
   });
 
   const funds = (data?.findFundsPaginated?.items ?? []).map(mapFundListItem);
