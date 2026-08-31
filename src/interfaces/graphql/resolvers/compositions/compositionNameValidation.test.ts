@@ -76,34 +76,84 @@ describe('composition name validation', () => {
   });
 
   describe('assertCompositionGenreValid', () => {
-    it('validates optional genre', () => {
+    it('allows undefined genre', () => {
       expect(() => assertCompositionGenreValid(undefined)).not.toThrow();
+    });
+
+    it('allows null genre', () => {
       expect(() => assertCompositionGenreValid(null)).not.toThrow();
+    });
+
+    it('allows valid genre', () => {
       expect(() => assertCompositionGenreValid(COMPOSITION_NAME)).not.toThrow();
-      expect(() => assertCompositionGenreValid('a')).toThrow(COMPOSITION_VALIDATION_MESSAGES.genreTooShort);
-      expect(() => assertCompositionGenreValid('a'.repeat(151))).toThrow(COMPOSITION_VALIDATION_MESSAGES.genreTooLong);
+    });
+
+    it('throws when genre is too short', () => {
+      expect(() => assertCompositionGenreValid('a')).toThrow(
+        COMPOSITION_VALIDATION_MESSAGES.genreTooShort
+      );
+    });
+
+    it('throws when genre is too long', () => {
+      expect(() => assertCompositionGenreValid('a'.repeat(151))).toThrow(
+        COMPOSITION_VALIDATION_MESSAGES.genreTooLong
+      );
     });
   });
 
   describe('assertCompositionYearValid', () => {
-    it('validates optional year values', () => {
+    it('allows undefined year', () => {
       expect(() => assertCompositionYearValid(undefined)).not.toThrow();
+    });
+
+    it('allows null year', () => {
       expect(() => assertCompositionYearValid(null)).not.toThrow();
+    });
+
+    it('allows valid year', () => {
       expect(() => assertCompositionYearValid(2026)).not.toThrow();
-      expect(() => assertCompositionYearValid(202)).toThrow(COMPOSITION_VALIDATION_MESSAGES.yearInvalid);
+    });
+
+    it('throws when year is invalid', () => {
+      expect(() => assertCompositionYearValid(202)).toThrow(
+        COMPOSITION_VALIDATION_MESSAGES.yearInvalid
+      );
     });
   });
 
   describe('throwIfCompositionNameDuplicateKey', () => {
-    it('translates Mongo duplicate-key errors and ignores other errors', () => {
+    it('throws composition name taken error for Mongo duplicate-key error', () => {
       expect(() =>
-        throwIfCompositionNameDuplicateKey({ code: 11000, keyValue: { 'name.uk': COMPOSITION_NAME } }, 'fallback')
-      ).toThrow(compositionsServiceErrors.COMPOSITION_NAME_TAKEN(COMPOSITION_NAME));
-      expect(() => throwIfCompositionNameDuplicateKey({ code: 11000 }, ' fallback ')).toThrow(
+        throwIfCompositionNameDuplicateKey(
+          {
+            code: 11000,
+            keyValue: { 'name.uk': COMPOSITION_NAME },
+          },
+          'fallback'
+        )
+      ).toThrow(
+        compositionsServiceErrors.COMPOSITION_NAME_TAKEN(COMPOSITION_NAME)
+      );
+    });
+
+    it('uses the trimmed fallback name when no name is present', () => {
+      expect(() =>
+        throwIfCompositionNameDuplicateKey({ code: 11000 }, ' fallback ')
+      ).toThrow(
         compositionsServiceErrors.COMPOSITION_NAME_TAKEN('fallback')
       );
-      expect(() => throwIfCompositionNameDuplicateKey({ code: 1 }, 'fallback')).not.toThrow();
-      expect(() => throwIfCompositionNameDuplicateKey(null, 'fallback')).not.toThrow();
+    });
+
+    it('does not throw for non-duplicate-key errors', () => {
+      expect(() =>
+        throwIfCompositionNameDuplicateKey({ code: 1 }, 'fallback')
+      ).not.toThrow();
+    });
+
+    it('does not throw for null error', () => {
+      expect(() =>
+        throwIfCompositionNameDuplicateKey(null, 'fallback')
+      ).not.toThrow();
     });
   });
 });
