@@ -20,6 +20,7 @@ const mockCase: Case = {
   caseDate: { uk: '1917', en: '1917' },
   sheetsNumber: 10,
   caseDescriptions: { uk: 'Опис', en: 'Description' },
+  order: 1,
   status: BaseContentStatuses.Published,
   createdAt: '2026-07-29T10:00:00.000Z',
   updatedAt: '2026-07-29T10:00:00.000Z'

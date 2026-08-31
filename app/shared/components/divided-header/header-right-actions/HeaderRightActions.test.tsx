@@ -8,7 +8,8 @@ jest.mock('./HeaderRightActions.style', () => ({
     pill: jest.fn(() => ({})),
     group: {},
     groupLeft: {},
-    groupRight: {}
+    groupRight: {},
+    groupSingle: {}
   }
 }));
 
@@ -94,6 +95,13 @@ describe('HeaderRightActions Component', () => {
 
       expect(screen.getByRole('button', { name: 'Опублікувати' })).toBeDisabled();
       expect(screen.getByRole('button', { name: 'Відкрити меню параметрів' })).toBeDisabled();
+    });
+
+    it('should hide only the publish button when showPublish is false', () => {
+      render(<HeaderRightActions mode="edit" showPublish={false} onMenuOpen={mockOnMenuOpen} />);
+
+      expect(screen.queryByRole('button', { name: 'Опублікувати' })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Відкрити меню параметрів' })).toBeInTheDocument();
     });
   });
 

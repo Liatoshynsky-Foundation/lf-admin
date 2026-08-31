@@ -81,7 +81,7 @@ export const CaseRepository = ({ CaseModel }: CaseRepoDeps): ICaseRepository => 
       await dbConnect();
 
       const lastCase = await CaseModel.findOne({ fundId: input.fundId }).sort({ order: -1 }).lean();
-      const nextOrder = input.order > 0 ? input.order : (lastCase?.order ?? 0) + 1;
+      const nextOrder = input.order && input.order > 0 ? input.order : (lastCase?.order ?? 0) + 1;
       const newCase = await new CaseModel({ ...input, order: nextOrder } as unknown as DbCase).save();
       return toEntity(newCase.toObject() as unknown as DbCase);
     },

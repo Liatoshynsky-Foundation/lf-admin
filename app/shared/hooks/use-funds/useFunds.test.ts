@@ -7,6 +7,7 @@ import { SortOrder } from '~/types/graphql/generated/graphql';
 
 const mockUseFundByIdQuery = jest.fn();
 const mockUseAllFundsQuery = jest.fn();
+const mockUsePaginatedFundsQuery = jest.fn();
 const mockUseCreateFundMutation = jest.fn();
 const mockUseUpdateFundMutation = jest.fn();
 const mockUseDeleteFundMutation = jest.fn();
@@ -14,12 +15,20 @@ const mockUseAllCasesQuery = jest.fn();
 const mockUseCreateCaseMutation = jest.fn();
 const mockUseUpdateCaseMutation = jest.fn();
 const mockUseDeleteCaseMutation = jest.fn();
+const mockApolloQuery = jest.fn();
+
+jest.mock('@apollo/client', () => ({
+  __esModule: true,
+  gql: (strings: TemplateStringsArray) => strings.join(''),
+  useApolloClient: () => ({ query: mockApolloQuery })
+}));
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
   __esModule: true,
   SortOrder: { Asc: 'ASC', Desc: 'DESC' },
   useFundByIdQuery: (...args: unknown[]) => mockUseFundByIdQuery(...args),
   useAllFundsQuery: (...args: unknown[]) => mockUseAllFundsQuery(...args),
+  usePaginatedFundsQuery: (...args: unknown[]) => mockUsePaginatedFundsQuery(...args),
   useCreateFundMutation: (...args: unknown[]) => mockUseCreateFundMutation(...args),
   useUpdateFundMutation: (...args: unknown[]) => mockUseUpdateFundMutation(...args),
   useDeleteFundMutation: (...args: unknown[]) => mockUseDeleteFundMutation(...args),
@@ -34,16 +43,19 @@ jest.mock('~/lib/utils/safeMutate', () => ({
   safeMutate: jest.fn()
 }));
 
-import { 
-  useAllFunds, 
+import {
+  useAllFunds,
   useCasesByFundId,
   useCreateCase,
-  useCreateFund, 
+  useCreateFund,
   useDeleteCase,
-  useDeleteFund, 
-  useFundById, 
+  useDeleteFund,
+  useFundById,
+  useHasPublishedCasesInFund,
+  usePaginatedFunds,
   useUpdateCase,
-  useUpdateFund} from './useFunds';
+  useUpdateFund
+} from './useFunds';
 
 const mockedSafeMutate = safeMutate as jest.MockedFunction<typeof safeMutate>;
 
@@ -244,6 +256,84 @@ describe('useFunds', () => {
     });
   });
 
+  describe('usePaginatedFunds', () => {
+    it('should map findFundsPaginated items the same way as useAllFunds', () => {
+      mockUsePaginatedFundsQuery.mockReturnValue({
+        data: {
+          findFundsPaginated: {
+            items: [
+              {
+                id: '1',
+                fundNumber: 1,
+                name: { uk: 'Архів', en: 'Archive' },
+                descriptionsCount: 2,
+                casesCount: 3,
+                chronologicalBoundaries: { uk: '1900-1920' },
+                documentCreationDate: { uk: '1901' },
+                status: 'published',
+                updatedAt: '2023-01-01'
+              }
+            ],
+            total: 9,
+            page: 1,
+            totalPages: 2
+          }
+        },
+        loading: false,
+        error: undefined
+      });
+
+      const { result } = renderHook(() => usePaginatedFunds(1, 8));
+
+      expect(result.current.funds).toEqual([
+        {
+          id: '1',
+          fundNumber: 1,
+          name: 'Архів',
+          descriptions: 2,
+          cases: 3,
+          dates: '1900-1920',
+          status: BaseContentStatuses.Published,
+          updatedAt: '2023-01-01'
+        }
+      ]);
+      expect(result.current.total).toBe(9);
+      expect(result.current.totalPages).toBe(2);
+      expect(result.current.loading).toBe(false);
+      expect(result.current.error).toBeUndefined();
+    });
+
+    it('should return empty funds, zero total and zero totalPages when findFundsPaginated is missing', () => {
+      mockUsePaginatedFundsQuery.mockReturnValue({ data: undefined, loading: true, error: undefined });
+
+      const { result } = renderHook(() => usePaginatedFunds(1, 8));
+
+      expect(result.current.funds).toEqual([]);
+      expect(result.current.total).toBe(0);
+      expect(result.current.totalPages).toBe(0);
+      expect(result.current.loading).toBe(true);
+    });
+
+    it('should pass page, limit and filters through as query variables with default fund-number sort', () => {
+      mockUsePaginatedFundsQuery.mockReturnValue({ data: undefined, loading: false, error: undefined });
+      const filters = { search: 'foo', statuses: null };
+
+      renderHook(() => usePaginatedFunds(2, 8, filters));
+
+      expect(mockUsePaginatedFundsQuery).toHaveBeenCalledWith({
+        variables: {
+          page: 2,
+          limit: 8,
+          filters: {
+            ...filters,
+            sort: [{ field: 'fundNumber', order: SortOrder.Asc }]
+          }
+        },
+        fetchPolicy: 'network-only'
+      });
+    });
+  });
+
   describe('useCreateFund', () => {
     it('should wrap the mutation with safeMutate and the create error messages', async () => {
       const mutateMock = jest.fn();
@@ -387,6 +477,35 @@ describe('useFunds', () => {
   
       Object.defineProperty(FundErrors, 'NETWORK_ERROR_DELETE', { value: originalNetwork, configurable: true });
       Object.defineProperty(FundErrors, 'FAILED_TO_DELETE', { value: originalFailed, configurable: true });
+    });
+  });
+
+  describe('useHasPublishedCasesInFund', () => {
+    it('should query published cases by fund id and return true when any exist', async () => {
+      mockApolloQuery.mockResolvedValue({ data: { allCases: [{ id: 'case-1' }] } });
+
+      const { result } = renderHook(() => useHasPublishedCasesInFund());
+
+      await expect(result.current('fund-1')).resolves.toBe(true);
+      expect(mockApolloQuery).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variables: {
+            filters: {
+              fundId: 'fund-1',
+              statuses: [BaseContentStatuses.Published]
+            }
+          },
+          fetchPolicy: 'network-only'
+        })
+      );
+    });
+
+    it('should return false when there are no published cases', async () => {
+      mockApolloQuery.mockResolvedValue({ data: { allCases: [] } });
+
+      const { result } = renderHook(() => useHasPublishedCasesInFund());
+
+      await expect(result.current('fund-1')).resolves.toBe(false);
     });
   });
 

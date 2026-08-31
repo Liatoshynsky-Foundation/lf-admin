@@ -52,3 +52,31 @@ query FundById($id: ID!) {
     updatedAt
   }
 }
+
+query PaginatedFunds($page: Int!, $limit: Int!, $filters: FundFiltersInput) {
+  findFundsPaginated(page: $page, limit: $limit, filters: $filters) {
+    items {
+      id
+      fundNumber
+      name {
+        uk
+        en
+      }
+      documentCreationDate {
+        uk
+        en
+      }
+      chronologicalBoundaries {
+        uk
+        en
+      }
+      casesCount
+      descriptionsCount
+      status
+      updatedAt
+    }
+    total
+    page
+    totalPages
+  }
+}

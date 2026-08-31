@@ -20,6 +20,7 @@ import { StatusBadge } from '~/shared/components/table-layout/components/StatusB
 import { ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
 import { useDeleteFund } from '~/shared/hooks/use-funds/useFunds';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 export type FundRow = Fund & {
   editAction: { editHref: string; editLabel: string };
@@ -31,36 +32,46 @@ export interface FundsTableProps {
   hasActiveSearch: boolean;
   hasActiveStatusFilter: boolean;
   onDeleted?: () => Promise<unknown>;
+  onPublish?: (fund: Fund) => void;
 }
 
-export const FundsTable = ({ funds, hasActiveSearch, hasActiveStatusFilter, onDeleted }: FundsTableProps) => {
+export const FundsTable = ({ funds, hasActiveSearch, hasActiveStatusFilter, onDeleted, onPublish }: FundsTableProps) => {
   const [deleteFund] = useDeleteFund();
   const [deleteState, setDeleteState] = useState<{ open: boolean; id?: string; name?: string }>({ open: false });
-  const rows = funds.map((fund) => ({
-    type: 'individual' as const,
-    id: fund.id,
-    plainData: {
-      ...fund,
-      editAction: {
-        editHref: `${ARCHIVE_BASE_PATH}/fund/${fund.id}/edit`,
-        editLabel: `Редагувати фонд ${fund.name}`
+
+  const rows = funds.map((fund) => {
+    const canPublish = fund.status === BaseContentStatuses.Hidden && Boolean(onPublish);
+    const statusActions = [
+      ...(canPublish ? [{ id: 'publish', text: { name: 'Опублікувати' }, onClick: () => onPublish?.(fund) }] : []),
+      { id: 'delete', text: { name: 'Видалити' }, onClick: () => setDeleteState({ open: true, id: fund.id, name: fund.name }) }
+    ];
+
+    return {
+      type: 'individual' as const,
+      id: fund.id,
+      plainData: {
+        ...fund,
+        editAction: {
+          editHref: `${ARCHIVE_BASE_PATH}/fund/${fund.id}/edit`,
+          editLabel: `Редагувати фонд ${fund.name}`
+        },
+        menuActions: {
+          menuItems: [
+            {
+              items: [
+                { id: 'edit', text: { name: 'Редагувати' }, href: `${ARCHIVE_BASE_PATH}/fund/${fund.id}/edit` },
+                { id: 'share', text: { name: 'Поширити' }, href: `${ARCHIVE_BASE_PATH}/fund/${fund.id}/share` }
+              ]
+            },
+            {
+              items: statusActions
+            }
+          ],
+          menuTriggerLabel: `Дії для фонду ${fund.name}`
+        }
       },
-      menuActions: {
-        menuItems: [
-          {
-            items: [
-              { id: 'edit', text: { name: 'Редагувати' }, href: `${ARCHIVE_BASE_PATH}/fund/${fund.id}/edit` },
-              { id: 'share', text: { name: 'Поширити' }, href: `${ARCHIVE_BASE_PATH}/fund/${fund.id}/share` }
-            ]
-          },
-          {
-            items: [{ id: 'delete', text: { name: 'Видалити' }, onClick: () => setDeleteState({ open: true, id: fund.id, name: fund.name }) }]
-          }
-        ],
-        menuTriggerLabel: `Дії для фонду ${fund.name}`
-      }
-    },
-  }));
+    };
+  });
 
   const columns: readonly ColumnDef<never, never, FundRow>[] = [
     {
@@ -114,7 +125,7 @@ export const FundsTable = ({ funds, hasActiveSearch, hasActiveStatusFilter, onDe
       }} menuActions={fund.menuActions} />
     }
   ];
- 
+
   if (rows.length === 0) {
     const hasActiveCriteria = hasActiveSearch || hasActiveStatusFilter;
 

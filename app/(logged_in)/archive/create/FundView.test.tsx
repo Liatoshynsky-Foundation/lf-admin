@@ -1,9 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
+import toast from 'react-hot-toast';
 
 import FundView from './FundView';
 import { ARCHIVE_BASE_PATH } from '~/constants/archive';
+import { FundErrors } from '~/constants/errors';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 const mockPush = jest.fn();
@@ -52,15 +54,16 @@ let capturedOnPublish: (() => void) | undefined;
 let capturedOnMenuOpen: ((e: { currentTarget: HTMLButtonElement }) => void) | undefined;
 jest.mock('~/shared/components/divided-header/header-right-actions/HeaderRightActions', () => ({
   __esModule: true,
-  default: ({ onPublish, onMenuOpen }: {
+  default: ({ onPublish, onMenuOpen, showPublish = true }: {
     onPublish: () => void;
     onMenuOpen: (e: { currentTarget: HTMLButtonElement }) => void;
+    showPublish?: boolean;
   }) => {
     capturedOnPublish = onPublish;
     capturedOnMenuOpen = onMenuOpen;
     return (
       <div>
-        <button onClick={onPublish}>publish</button>
+        {showPublish && <button onClick={onPublish}>publish</button>}
         <button onClick={(e) => onMenuOpen(e as unknown as { currentTarget: HTMLButtonElement })}>
           open publish menu
         </button>
@@ -117,9 +120,54 @@ jest.mock('~/shared/components/forms/fund-details-block/FundDetailsBlock', () =>
   default: () => <div data-testid="fund-details-block" />
 }));
 
+const mockCheckFundPublishWarning = jest.fn();
+jest.mock('../(hooks)/useFundPublishWarning', () => ({
+  __esModule: true,
+  useFundPublishWarning: () => mockCheckFundPublishWarning
+}));
+
+jest.mock('react-hot-toast', () => ({
+  __esModule: true,
+  default: { error: jest.fn() }
+}));
+
+jest.mock('../(components)/publish-empty-fund-dialog/PublishEmptyFundDialog', () => ({
+  __esModule: true,
+  PublishEmptyFundDialog: ({
+    open,
+    onCancel,
+    onConfirm
+  }: {
+    open: boolean;
+    onCancel: () => void;
+    onConfirm: () => void;
+  }) =>
+    open ? (
+      <div data-testid="publish-empty-fund-dialog">
+        <button onClick={onCancel}>cancel publish</button>
+        <button onClick={onConfirm}>confirm publish</button>
+      </div>
+    ) : null
+}));
+
+type MockFundDetails = {
+  fundNumber: string;
+  name: { uk: string; en: string };
+  documentCreationDate: string;
+  chronologicalBoundaries: string;
+  organizationForm: { uk: string; en: string };
+  description: { uk: { type: string; content: never[] }; en: { type: string; content: never[] } };
+  casesCount: number;
+  descriptionsCount: number;
+};
+
 const buildData = (overrides: Partial<{
   isSaved: boolean;
+  hasUnsavedChanges: boolean;
   handleSave: jest.Mock;
+  currentStatus: BaseContentStatuses | undefined;
+  fundId?: string;
+  details: Partial<MockFundDetails>;
 }> = {}) => ({
   details: {
     fundNumber: '1',
@@ -129,12 +177,16 @@ const buildData = (overrides: Partial<{
     organizationForm: { uk: '', en: '' },
     description: { uk: { type: 'doc', content: [] }, en: { type: 'doc', content: [] } },
     casesCount: 0,
-    descriptionsCount: 0
+    descriptionsCount: 0,
+    ...overrides.details
   },
   setDetails: jest.fn(),
   errors: {},
   forceShowErrors: false,
   isSaved: overrides.isSaved ?? true,
+  hasUnsavedChanges: overrides.hasUnsavedChanges ?? false,
+  currentStatus: 'currentStatus' in overrides ? overrides.currentStatus : BaseContentStatuses.Hidden,
+  fundId: overrides.fundId,
   handleSave: overrides.handleSave ?? jest.fn().mockResolvedValue('new-id')
 });
 
@@ -145,6 +197,7 @@ describe('FundView', () => {
       (selector: (state: { locale: string; setLocale: (l: string) => void }) => unknown) =>
         selector({ locale: 'uk', setLocale: mockSetLocale })
     );
+    mockCheckFundPublishWarning.mockResolvedValue('publish');
   });
 
   it('renders the create title and details block by default, without the cases block', () => {
@@ -156,7 +209,7 @@ describe('FundView', () => {
   });
 
   it('renders the edit title and cases block when mode is edit', () => {
-    render(<FundView data={buildData()} mode="edit" fundId="fund-1" />);
+    render(<FundView data={buildData({ fundId: 'fund-1' })} mode="edit" />);
 
     expect(screen.getByText('Редагування фонду')).toBeInTheDocument();
     expect(screen.getByTestId('fund-cases-block')).toHaveAttribute('data-fund-id', 'fund-1');
@@ -170,19 +223,19 @@ describe('FundView', () => {
     await user.click(screen.getByText('open publish menu'));
     await user.click(screen.getByText('Зберегти зміни'));
 
-    expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
+    expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Hidden);
     expect(mockPush).toHaveBeenCalledWith(`${ARCHIVE_BASE_PATH}/fund/id-1/edit`);
   });
 
   it('does not navigate after SAVE succeeds in edit mode', async () => {
     const user = userEvent.setup();
     const handleSave = jest.fn().mockResolvedValue('id-1');
-    render(<FundView data={buildData({ handleSave })} mode="edit" fundId="fund-1" />);
+    render(<FundView data={buildData({ handleSave, fundId: 'fund-1' })} mode="edit" />);
 
     await user.click(screen.getByText('open publish menu'));
     await user.click(screen.getByText('Зберегти зміни'));
 
-    expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
+    expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Hidden);
     expect(mockPush).not.toHaveBeenCalled();
   });
 
@@ -194,7 +247,7 @@ describe('FundView', () => {
     await user.click(screen.getByText('open publish menu'));
     await user.click(screen.getByText('Зберегти зміни і вийти'));
 
-    expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
+    expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Hidden);
     expect(mockPush).toHaveBeenCalledWith(ARCHIVE_BASE_PATH);
   });
 
@@ -212,11 +265,88 @@ describe('FundView', () => {
   it('calls handleSave with Published when the publish button is clicked', async () => {
     const user = userEvent.setup();
     const handleSave = jest.fn().mockResolvedValue('id-1');
-    render(<FundView data={buildData({ handleSave })} />);
+    render(
+      <FundView
+        data={buildData({ handleSave, fundId: 'fund-1', currentStatus: BaseContentStatuses.Hidden, details: { casesCount: 1 } })}
+        mode="edit"
+      />
+    );
 
     await user.click(screen.getByText('publish'));
 
+    expect(mockCheckFundPublishWarning).toHaveBeenCalledWith({ fundId: 'fund-1', casesCount: 1 });
     expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
+  });
+
+  it('opens the warning dialog before publishing a fund with no cases', async () => {
+    const user = userEvent.setup();
+    const handleSave = jest.fn().mockResolvedValue('id-1');
+    mockCheckFundPublishWarning.mockResolvedValue('show-warning');
+    render(
+      <FundView
+        data={buildData({ handleSave, fundId: 'fund-1', currentStatus: BaseContentStatuses.Hidden })}
+        mode="edit"
+      />
+    );
+
+    await user.click(screen.getByText('publish'));
+
+    expect(screen.getByTestId('publish-empty-fund-dialog')).toBeInTheDocument();
+    expect(handleSave).not.toHaveBeenCalled();
+
+    await user.click(screen.getByText('confirm publish'));
+
+    expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
+  });
+
+  it('opens the warning dialog when a fund has cases but none are published', async () => {
+    const user = userEvent.setup();
+    const handleSave = jest.fn().mockResolvedValue('id-1');
+    mockCheckFundPublishWarning.mockResolvedValue('show-warning');
+
+    render(
+      <FundView
+        data={buildData({ handleSave, fundId: 'fund-1', currentStatus: BaseContentStatuses.Hidden, details: { casesCount: 2 } })}
+        mode="edit"
+      />
+    );
+
+    await user.click(screen.getByText('publish'));
+
+    expect(screen.getByTestId('publish-empty-fund-dialog')).toBeInTheDocument();
+    expect(handleSave).not.toHaveBeenCalled();
+  });
+
+  it('shows an error toast and does not publish when the publish warning check fails', async () => {
+    const user = userEvent.setup();
+    const handleSave = jest.fn().mockResolvedValue('id-1');
+    mockCheckFundPublishWarning.mockResolvedValue('error');
+
+    render(
+      <FundView
+        data={buildData({ handleSave, fundId: 'fund-1', currentStatus: BaseContentStatuses.Hidden, details: { casesCount: 2 } })}
+        mode="edit"
+      />
+    );
+
+    await user.click(screen.getByText('publish'));
+
+    expect(toast.error).toHaveBeenCalledWith(FundErrors.FAILED_TO_PUBLISH);
+    expect(handleSave).not.toHaveBeenCalled();
+  });
+
+  it('hides the publish button when the fund is not hidden', () => {
+    render(<FundView data={buildData({ currentStatus: BaseContentStatuses.Published })} mode="edit" />);
+
+    expect(screen.queryByText('publish')).not.toBeInTheDocument();
+    expect(screen.getByText('open publish menu')).toBeInTheDocument();
+  });
+
+  it('hides the publish button while edit fund status is not loaded yet', () => {
+    render(<FundView data={buildData({ currentStatus: undefined })} mode="edit" />);
+
+    expect(screen.queryByText('publish')).not.toBeInTheDocument();
+    expect(screen.getByText('open publish menu')).toBeInTheDocument();
   });
 
   it('closes the publish menu when onClose is triggered', async () => {

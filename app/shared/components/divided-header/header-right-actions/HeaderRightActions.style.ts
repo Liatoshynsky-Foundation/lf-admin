@@ -21,6 +21,10 @@ export const styles = {
     borderRadius: '0 28px 28px 0',
     p: '8px 24px 8px 14px'
   },
+  groupSingle: {
+    borderRadius: '28px',
+    p: '8px 24px'
+  },
 
   createContentIcon: {
     color: 'text.primary'

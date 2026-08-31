@@ -69,6 +69,16 @@ describe('useUpsertFund', () => {
       mockUseParams.mockReturnValue({});
       const { result } = renderHook(() => useUpsertFund());
       expect(result.current.details).toEqual(expect.objectContaining({ fundNumber: '' }));
+      expect(result.current.currentStatus).toBe(BaseContentStatuses.Hidden);
+    });
+
+    it('keeps currentStatus empty in edit mode until fund data is loaded', () => {
+      mockUseParams.mockReturnValue({ id: 'abc123' });
+      mockUseFundById.mockReturnValue({ data: undefined });
+
+      const { result } = renderHook(() => useUpsertFund());
+
+      expect(result.current.currentStatus).toBeUndefined();
     });
 
     it('populates details from the fetched fund when an id param is present', () => {
@@ -83,7 +93,8 @@ describe('useUpsertFund', () => {
             organizationForm: { uk: 'Форма', en: 'Form' },
             description: { uk: null, en: null },
             casesCount: 2,
-            descriptionsCount: 4
+            descriptionsCount: 4,
+            status: BaseContentStatuses.Hidden
           }
         }
       });
@@ -96,6 +107,22 @@ describe('useUpsertFund', () => {
       expect(result.current.details.chronologicalBoundaries).toBe('1905-1910');
       expect(result.current.details.casesCount).toBe(2);
       expect(result.current.details.descriptionsCount).toBe(4);
+      expect(result.current.currentStatus).toBe(BaseContentStatuses.Hidden);
+    });
+
+    it('defaults currentStatus to Hidden when fetched status is missing or invalid', () => {
+      mockUseParams.mockReturnValue({ id: 'invalid-status' });
+      mockUseFundById.mockReturnValue({
+        data: {
+          findFundById: {
+            status: 'unknown'
+          }
+        }
+      });
+
+      const { result } = renderHook(() => useUpsertFund());
+
+      expect(result.current.currentStatus).toBe(BaseContentStatuses.Hidden);
     });
     it('parses description correctly when it is a valid JSON doc string', () => {
       mockUseParams.mockReturnValue({ id: 'valid-json' });
@@ -318,6 +345,7 @@ describe('useUpsertFund', () => {
       });
 
       expect(toast.success).toHaveBeenCalledWith('Фонд опубліковано.');
+      expect(result.current.currentStatus).toBe(BaseContentStatuses.Published);
     });
 
     it('returns null when the create mutation does not return an id', async () => {
@@ -370,6 +398,18 @@ describe('useUpsertFund', () => {
       });
 
       expect(toast.error).toHaveBeenCalledWith(FundErrors.FAILED_TO_CREATE);
+    });
+
+    it('uses the publish error toast when publishing fails', async () => {
+      mockCreateFund.mockRejectedValue(new Error('network exploded'));
+      const { result } = renderHook(() => useUpsertFund());
+      setValidDetails(result);
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Published);
+      });
+
+      expect(toast.error).toHaveBeenCalledWith(FundErrors.FAILED_TO_PUBLISH);
     });
     it('ignores backend errors that do not have a path array and falls back to generic error', async () => {
       const zodMessage = JSON.stringify([{ message: 'Some global validation error without path' }]);
