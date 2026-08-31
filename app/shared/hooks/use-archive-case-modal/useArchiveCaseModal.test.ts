@@ -25,6 +25,17 @@ describe('useArchiveCaseModal', () => {
     jest.clearAllMocks();
   });
 
+  const fillValidForm = (result: { current: ReturnType<typeof useArchiveCaseModal> }) => {
+    act(() => {
+      result.current.setDescriptionNumber('10');
+      result.current.setCaseNumber('123');
+      result.current.setCaseName('Case Title');
+      result.current.setSheetsNumber('5');
+      result.current.setCaseDate('2026-07-24');
+      result.current.setCaseDescriptions('Descriptions');
+    });
+  };
+
   describe('initial state', () => {
     it('should initialize all state values with their defaults', () => {
       const { result } = renderHook(() => useArchiveCaseModal(defaultProps));
@@ -217,14 +228,7 @@ describe('useArchiveCaseModal', () => {
     it('should clear inputs and call setIsOpen with false on success', async () => {
       const { result } = renderHook(() => useArchiveCaseModal(defaultProps));
 
-      act(() => {
-        result.current.setDescriptionNumber('10');
-        result.current.setCaseNumber('123');
-        result.current.setCaseName('Case Title');
-        result.current.setSheetsNumber('5');
-        result.current.setCaseDate('2026-07-24');
-        result.current.setCaseDescriptions('Descriptions');
-      });
+      fillValidForm(result);
 
       await act(async () => {
         await result.current.handleSave();
@@ -238,14 +242,7 @@ describe('useArchiveCaseModal', () => {
       const onSaveMock = jest.fn().mockRejectedValue(new Error('Some generic error'));
       const { result } = renderHook(() => useArchiveCaseModal({ ...defaultProps, onSave: onSaveMock }));
 
-      act(() => {
-        result.current.setDescriptionNumber('10');
-        result.current.setCaseNumber('123');
-        result.current.setCaseName('Case Title');
-        result.current.setSheetsNumber('5');
-        result.current.setCaseDate('2026-07-24');
-        result.current.setCaseDescriptions('Descriptions');
-      });
+      fillValidForm(result);
 
       await act(async () => {
         await result.current.handleSave();
@@ -259,14 +256,7 @@ describe('useArchiveCaseModal', () => {
       const onSaveMock = jest.fn().mockRejectedValue(new Error('DUPLICATE_CASE_NUMBERS'));
       const { result } = renderHook(() => useArchiveCaseModal({ ...defaultProps, onSave: onSaveMock }));
 
-      act(() => {
-        result.current.setDescriptionNumber('10');
-        result.current.setCaseNumber('123');
-        result.current.setCaseName('Case Title');
-        result.current.setSheetsNumber('5');
-        result.current.setCaseDate('2026-07-24');
-        result.current.setCaseDescriptions('Descriptions');
-      });
+      fillValidForm(result);
 
       await act(async () => {
         await result.current.handleSave();
@@ -282,14 +272,7 @@ describe('useArchiveCaseModal', () => {
       const onSaveMock = jest.fn().mockRejectedValue('Справа з таким номером вже існує');
       const { result } = renderHook(() => useArchiveCaseModal({ ...defaultProps, onSave: onSaveMock }));
 
-      act(() => {
-        result.current.setDescriptionNumber('10');
-        result.current.setCaseNumber('123');
-        result.current.setCaseName('Case Title');
-        result.current.setSheetsNumber('5');
-        result.current.setCaseDate('2026-07-24');
-        result.current.setCaseDescriptions('Descriptions');
-      });
+      fillValidForm(result);
 
       await act(async () => {
         await result.current.handleSave();
@@ -333,14 +316,7 @@ describe('useArchiveCaseModal', () => {
     it('should return isSubmitDisabled false if all required fields have values', () => {
       const { result } = renderHook(() => useArchiveCaseModal(defaultProps));
 
-      act(() => {
-        result.current.setDescriptionNumber('10');
-        result.current.setCaseNumber('123');
-        result.current.setCaseName('Case Title');
-        result.current.setSheetsNumber('5');
-        result.current.setCaseDate('2026-07-24');
-        result.current.setCaseDescriptions('Descriptions');
-      });
+      fillValidForm(result);
 
       expect(result.current.isSubmitDisabled).toBe(false);
     });

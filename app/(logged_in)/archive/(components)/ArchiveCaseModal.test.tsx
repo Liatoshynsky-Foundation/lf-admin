@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { ArchiveCaseModal } from './ArchiveCaseModal';
 import { useArchiveCaseModal } from '~/shared/hooks/use-archive-case-modal/useArchiveCaseModal';
 import { useCreateCase, useUpdateCase } from '~/shared/hooks/use-funds/useFunds';
-import { CaseStatus,useCreateAssetMutation } from '~/types/graphql/generated/graphql';
+import { CaseStatus, useCreateAssetMutation } from '~/types/graphql/generated/graphql';
 
 jest.mock('react-hot-toast', () => ({
   __esModule: true,
@@ -54,21 +54,7 @@ jest.mock('./archive-case-modal-view/ArchiveCaseModalView', () => ({
 
 jest.mock('~/shared/components/media-modal/MediaModal', () => ({
   __esModule: true,
-  MediaModal: ({
-    open,
-    initial,
-    mediaKind,
-    onClose,
-    onApply,
-    renderers
-  }: {
-    open?: boolean;
-    initial?: { tab: string };
-    mediaKind?: string;
-    onClose?: () => void;
-    onApply?: (res: any) => void;
-    renderers?: { upload?: (props: any) => React.ReactNode };
-  }) =>
+  MediaModal: ({ open, initial, mediaKind, onClose, onApply, renderers }: any) =>
     open ? (
       <div data-testid="media-modal">
         <span data-testid="media-initial">{JSON.stringify(initial)}</span>
@@ -112,12 +98,7 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
         </button>
         <button
           data-testid="media-apply-upload-no-result-btn"
-          onClick={() =>
-            onApply?.({
-              selected: { kind: 'upload' },
-              uploadResult: undefined
-            })
-          }
+          onClick={() => onApply?.({ selected: { kind: 'upload' }, uploadResult: undefined })}
         >
           Apply Upload No Result
         </button>
@@ -125,11 +106,7 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
           data-testid="media-apply-gallery-btn"
           onClick={() =>
             onApply?.({
-              selected: {
-                kind: 'gallery',
-                fileName: 'gallery-file.pdf',
-                src: 'https://example.com/gallery-file.pdf'
-              }
+              selected: { kind: 'gallery', fileName: 'gallery-file.pdf', src: 'https://example.com/gallery-file.pdf' }
             })
           }
         >
@@ -139,29 +116,16 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
           data-testid="media-apply-used-btn"
           onClick={() =>
             onApply?.({
-              selected: {
-                kind: 'used',
-                fileName: 'used-file.pdf',
-                src: 'https://example.com/used-file.pdf'
-              }
+              selected: { kind: 'used', fileName: 'used-file.pdf', src: 'https://example.com/used-file.pdf' }
             })
           }
         >
           Apply Used
         </button>
-        <button
-          data-testid="media-apply-unknown-btn"
-          onClick={() =>
-            onApply?.({
-              selected: { kind: 'unknown' }
-            })
-          }
-        >
+        <button data-testid="media-apply-unknown-btn" onClick={() => onApply?.({ selected: { kind: 'unknown' } })}>
           Apply Unknown
         </button>
-        <div data-testid="media-renderer-upload">
-          {renderers?.upload?.({ selected: null, onPick: jest.fn() })}
-        </div>
+        <div data-testid="media-renderer-upload">{renderers?.upload?.({ selected: null, onPick: jest.fn() })}</div>
       </div>
     ) : null
 }));
@@ -179,10 +143,7 @@ jest.mock('~/shared/components/media-modal/views/upload-view/UploadView', () => 
 
 jest.mock('~/shared/hooks/use-archive-case-modal/useArchiveCaseModal');
 const mockSetIsOpen = jest.fn();
-const defaultProps = {
-  isOpen: true,
-  setIsOpen: mockSetIsOpen
-};
+const defaultProps = { isOpen: true, setIsOpen: mockSetIsOpen };
 
 const mockHandleSave = jest.fn();
 const mockHandleCancel = jest.fn();
@@ -224,6 +185,15 @@ const defaultHookValues = {
 };
 
 describe('ArchiveCaseModal', () => {
+  // Хелперы для устранения дублирования в тестах
+  const renderModal = (props = {}) => render(<ArchiveCaseModal {...defaultProps} {...props} />);
+
+  const clickApply = async (testId: string) => {
+    const user = userEvent.setup();
+    renderModal();
+    await user.click(screen.getByTestId(testId));
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
     (useArchiveCaseModal as jest.Mock).mockReturnValue(defaultHookValues);
@@ -234,8 +204,7 @@ describe('ArchiveCaseModal', () => {
 
   describe('rendering / basic props', () => {
     it('initializes useArchiveCaseModal hook and passes props to ArchiveCaseModalView', () => {
-      render(<ArchiveCaseModal {...defaultProps} />);
-
+      renderModal();
       expect(useArchiveCaseModal).toHaveBeenCalledWith({ setIsOpen: mockSetIsOpen });
       expect(screen.getByTestId('archive-case-modal-view')).toBeInTheDocument();
       expect(screen.getByTestId('view-is-open')).toHaveTextContent('true');
@@ -244,35 +213,25 @@ describe('ArchiveCaseModal', () => {
     });
 
     it('passes mode="edit" to ArchiveCaseModalView when provided', () => {
-      render(<ArchiveCaseModal {...defaultProps} mode="edit" />);
-
+      renderModal({ mode: 'edit' });
       expect(screen.getByTestId('view-mode')).toHaveTextContent('edit');
     });
 
     it('passes initialData to useArchiveCaseModal hook when provided (no fundId/caseId)', () => {
       const initialData = { caseNumber: 'CASE-123' };
-      render(<ArchiveCaseModal {...defaultProps} initialData={initialData} />);
-
-      expect(useArchiveCaseModal).toHaveBeenCalledWith({
-        setIsOpen: mockSetIsOpen,
-        initialData
-      });
+      renderModal({ initialData });
+      expect(useArchiveCaseModal).toHaveBeenCalledWith({ setIsOpen: mockSetIsOpen, initialData });
     });
 
     it('does not render MediaModal when isUploadModalOpen is false', () => {
-      render(<ArchiveCaseModal {...defaultProps} />);
-
+      renderModal();
       expect(screen.queryByTestId('media-modal')).not.toBeInTheDocument();
     });
 
     it('renders MediaModal and handles close when isUploadModalOpen is true', async () => {
       const user = userEvent.setup();
-      (useArchiveCaseModal as jest.Mock).mockReturnValue({
-        ...defaultHookValues,
-        isUploadModalOpen: true
-      });
-
-      render(<ArchiveCaseModal {...defaultProps} />);
+      (useArchiveCaseModal as jest.Mock).mockReturnValue({ ...defaultHookValues, isUploadModalOpen: true });
+      renderModal();
 
       expect(screen.getByTestId('media-modal')).toBeInTheDocument();
       expect(screen.getByTestId('media-kind')).toHaveTextContent('pdf');
@@ -282,27 +241,18 @@ describe('ArchiveCaseModal', () => {
     });
 
     it('passes accept/error props down to UploadView via renderers.upload', () => {
-      (useArchiveCaseModal as jest.Mock).mockReturnValue({
-        ...defaultHookValues,
-        isUploadModalOpen: true
-      });
-
-      render(<ArchiveCaseModal {...defaultProps} />);
-
+      (useArchiveCaseModal as jest.Mock).mockReturnValue({ ...defaultHookValues, isUploadModalOpen: true });
+      renderModal();
       expect(screen.getByTestId('upload-view')).toBeInTheDocument();
     });
   });
 
   describe('handleApplyPdf - upload branch', () => {
     beforeEach(() => {
-      (useArchiveCaseModal as jest.Mock).mockReturnValue({
-        ...defaultHookValues,
-        isUploadModalOpen: true
-      });
+      (useArchiveCaseModal as jest.Mock).mockReturnValue({ ...defaultHookValues, isUploadModalOpen: true });
     });
 
     it('creates asset, applies pdf to form, shows success toast and closes flow on success', async () => {
-      const user = userEvent.setup();
       const createdAsset = {
         filename: 'stored-file.pdf',
         url: 'https://example.com/file.pdf',
@@ -310,9 +260,7 @@ describe('ArchiveCaseModal', () => {
       };
       mockCreateAsset.mockResolvedValue({ data: { createAsset: createdAsset } });
 
-      render(<ArchiveCaseModal {...defaultProps} />);
-
-      await user.click(screen.getByTestId('media-apply-upload-btn'));
+      await clickApply('media-apply-upload-btn');
 
       expect(mockCreateAsset).toHaveBeenCalledWith({
         variables: {
@@ -331,7 +279,6 @@ describe('ArchiveCaseModal', () => {
     });
 
     it('falls back to filename when originalName is not provided', async () => {
-      const user = userEvent.setup();
       const createdAsset = {
         filename: 'stored-file2.pdf',
         url: 'https://example.com/file2.pdf',
@@ -339,64 +286,31 @@ describe('ArchiveCaseModal', () => {
       };
       mockCreateAsset.mockResolvedValue({ data: { createAsset: createdAsset } });
 
-      render(<ArchiveCaseModal {...defaultProps} />);
-
-      await user.click(screen.getByTestId('media-apply-upload-no-original-btn'));
+      await clickApply('media-apply-upload-no-original-btn');
 
       expect(mockCreateAsset).toHaveBeenCalledWith({
-        variables: {
-          input: expect.objectContaining({
-            filename: 'stored-file2.pdf'
-          })
-        }
+        variables: { input: expect.objectContaining({ filename: 'stored-file2.pdf' }) }
       });
       expect(mockHandleApplyPdf).toHaveBeenCalledWith({ uploadResult: createdAsset });
     });
 
-    it('shows error toast and does not apply pdf when createAsset returns no asset', async () => {
-      const user = userEvent.setup();
-      mockCreateAsset.mockResolvedValue({ data: { createAsset: null } });
+    it.each([
+      ['returns no asset', { data: { createAsset: null } }, 'Не вдалося завантажити PDF файл', false],
+      ['rejects with an Error', new Error('Network failure'), 'Network failure', true],
+      ['rejects with a non-Error value', 'some string failure', 'Не вдалося завантажити файл.', true]
+    ])('shows error toast when createAsset %s', async (_, mockValue, expectedToast, isReject) => {
+      if (isReject) mockCreateAsset.mockRejectedValue(mockValue);
+      else mockCreateAsset.mockResolvedValue(mockValue);
 
-      render(<ArchiveCaseModal {...defaultProps} />);
-
-      await user.click(screen.getByTestId('media-apply-upload-btn'));
+      await clickApply('media-apply-upload-btn');
 
       expect(mockHandleApplyPdf).not.toHaveBeenCalled();
-      expect(toast.error).toHaveBeenCalledWith('Не вдалося завантажити PDF файл');
+      expect(toast.error).toHaveBeenCalledWith(expectedToast);
       expect(mockHandleCloseUploadFlow).not.toHaveBeenCalled();
     });
 
-    it('shows error toast with error message when createAsset mutation rejects with an Error', async () => {
-      const user = userEvent.setup();
-      mockCreateAsset.mockRejectedValue(new Error('Network failure'));
-
-      render(<ArchiveCaseModal {...defaultProps} />);
-
-      await user.click(screen.getByTestId('media-apply-upload-btn'));
-
-      expect(mockHandleApplyPdf).not.toHaveBeenCalled();
-      expect(toast.error).toHaveBeenCalledWith('Network failure');
-    });
-
-    it('shows generic error toast when createAsset mutation rejects with a non-Error value', async () => {
-      const user = userEvent.setup();
-      mockCreateAsset.mockRejectedValue('some string failure');
-
-      render(<ArchiveCaseModal {...defaultProps} />);
-
-      await user.click(screen.getByTestId('media-apply-upload-btn'));
-
-      expect(mockHandleApplyPdf).not.toHaveBeenCalled();
-      expect(toast.error).toHaveBeenCalledWith('Не вдалося завантажити файл.');
-    });
-
     it('does nothing (no createAsset call) when uploadResult is missing', async () => {
-      const user = userEvent.setup();
-
-      render(<ArchiveCaseModal {...defaultProps} />);
-
-      await user.click(screen.getByTestId('media-apply-upload-no-result-btn'));
-
+      await clickApply('media-apply-upload-no-result-btn');
       expect(mockCreateAsset).not.toHaveBeenCalled();
       expect(mockHandleApplyPdf).not.toHaveBeenCalled();
     });
@@ -404,53 +318,30 @@ describe('ArchiveCaseModal', () => {
 
   describe('handleApplyPdf - gallery/used branch', () => {
     beforeEach(() => {
-      (useArchiveCaseModal as jest.Mock).mockReturnValue({
-        ...defaultHookValues,
-        isUploadModalOpen: true
-      });
+      (useArchiveCaseModal as jest.Mock).mockReturnValue({ ...defaultHookValues, isUploadModalOpen: true });
     });
 
-    it('applies pdf directly from gallery selection and closes flow', async () => {
-      const user = userEvent.setup();
-
-      render(<ArchiveCaseModal {...defaultProps} />);
-
-      await user.click(screen.getByTestId('media-apply-gallery-btn'));
+    it.each([
+      [
+        'gallery',
+        'media-apply-gallery-btn',
+        { filename: 'gallery-file.pdf', url: 'https://example.com/gallery-file.pdf', mimeType: 'application/pdf' }
+      ],
+      [
+        'used',
+        'media-apply-used-btn',
+        { filename: 'used-file.pdf', url: 'https://example.com/used-file.pdf', mimeType: 'application/pdf' }
+      ]
+    ])('applies pdf directly from %s selection and closes flow', async (_, btnId, expectedResult) => {
+      await clickApply(btnId);
 
       expect(mockCreateAsset).not.toHaveBeenCalled();
-      expect(mockHandleApplyPdf).toHaveBeenCalledWith({
-        uploadResult: {
-          filename: 'gallery-file.pdf',
-          url: 'https://example.com/gallery-file.pdf',
-          mimeType: 'application/pdf'
-        }
-      });
-      expect(mockHandleCloseUploadFlow).toHaveBeenCalledTimes(1);
-    });
-
-    it('applies pdf directly from "used" selection and closes flow', async () => {
-      const user = userEvent.setup();
-
-      render(<ArchiveCaseModal {...defaultProps} />);
-
-      await user.click(screen.getByTestId('media-apply-used-btn'));
-
-      expect(mockHandleApplyPdf).toHaveBeenCalledWith({
-        uploadResult: {
-          filename: 'used-file.pdf',
-          url: 'https://example.com/used-file.pdf',
-          mimeType: 'application/pdf'
-        }
-      });
+      expect(mockHandleApplyPdf).toHaveBeenCalledWith({ uploadResult: expectedResult });
       expect(mockHandleCloseUploadFlow).toHaveBeenCalledTimes(1);
     });
 
     it('does nothing for an unrecognized selection kind', async () => {
-      const user = userEvent.setup();
-
-      render(<ArchiveCaseModal {...defaultProps} />);
-
-      await user.click(screen.getByTestId('media-apply-unknown-btn'));
+      await clickApply('media-apply-unknown-btn');
 
       expect(mockCreateAsset).not.toHaveBeenCalled();
       expect(mockHandleApplyPdf).not.toHaveBeenCalled();
@@ -458,33 +349,38 @@ describe('ArchiveCaseModal', () => {
     });
   });
 
-  describe('onSave callback passed into useArchiveCaseModal (fundId/caseId provided)', () => {
-    it('does not include onSave in hook args when neither fundId nor caseId is provided', () => {
-      render(<ArchiveCaseModal {...defaultProps} />);
-
+  describe('onSave callback passed into useArchiveCaseModal', () => {
+    // Хелпер для симуляции сохранения (убирает 50 строк дублирующегося объекта)
+    const execSave = async (props: any, inputOverrides: any = {}) => {
+      const onSaved = jest.fn();
+      renderModal({ ...props, onSaved });
       const callArgs = (useArchiveCaseModal as jest.Mock).mock.calls[0][0];
-      expect(callArgs.onSave).toBeUndefined();
+
+      if (callArgs.onSave) {
+        await callArgs.onSave({
+          descriptionNumber: '1',
+          caseNumber: 'CASE-1',
+          name: 'My Case',
+          dates: '2026',
+          sheetsNumber: '5',
+          nameDescription: 'short desc',
+          contentDescription: 'long desc',
+          ...inputOverrides
+        });
+      }
+      return { onSaved, callArgs };
+    };
+
+    it('does not include onSave in hook args when neither fundId nor caseId is provided', () => {
+      renderModal();
+      expect((useArchiveCaseModal as jest.Mock).mock.calls[0][0].onSave).toBeUndefined();
     });
 
-    it('builds create-case mutation input, calls createCase, shows success toast and calls onSaved (fundId only)', async () => {
-      const onSaved = jest.fn();
-      render(<ArchiveCaseModal {...defaultProps} fundId="FUND-1" onSaved={onSaved} />);
-
-      const callArgs = (useArchiveCaseModal as jest.Mock).mock.calls[0][0];
-      expect(typeof callArgs.onSave).toBe('function');
-
-      const input = {
-        descriptionNumber: '1',
-        caseNumber: 'CASE-1',
-        name: 'My Case',
-        dates: '2026',
-        sheetsNumber: '5',
-        nameDescription: 'short desc',
-        contentDescription: 'long desc',
-        pdfUrl: 'https://example.com/files/document-123.pdf'
-      };
-
-      await callArgs.onSave(input);
+    it('builds create-case mutation input, calls createCase, shows success toast and calls onSaved', async () => {
+      const { onSaved } = await execSave(
+        { fundId: 'FUND-1' },
+        { pdfUrl: 'https://example.com/files/document-123.pdf' }
+      );
 
       expect(mockCreateCase).toHaveBeenCalledWith({
         fundId: 'FUND-1',
@@ -507,24 +403,20 @@ describe('ArchiveCaseModal', () => {
       expect(onSaved).toHaveBeenCalledTimes(1);
     });
 
-    it('builds update-case mutation input (without fundId in payload), calls updateCase, shows success toast and calls onSaved (caseId provided)', async () => {
-      const onSaved = jest.fn();
-      render(<ArchiveCaseModal {...defaultProps} fundId="FUND-1" caseId="CASE-ID-1" onSaved={onSaved} />);
-
-      const callArgs = (useArchiveCaseModal as jest.Mock).mock.calls[0][0];
-
-      const input = {
-        descriptionNumber: '2',
-        caseNumber: 'CASE-2',
-        name: 'Updated Case',
-        dates: '2027',
-        sheetsNumber: '7',
-        nameDescription: 'updated short desc',
-        contentDescription: '',
-        pdfUrl: undefined
-      };
-
-      await callArgs.onSave(input);
+    it('builds update-case mutation input, calls updateCase, shows success toast and calls onSaved', async () => {
+      const { onSaved } = await execSave(
+        { fundId: 'FUND-1', caseId: 'CASE-ID-1' },
+        {
+          descriptionNumber: '2',
+          caseNumber: 'CASE-2',
+          name: 'Updated Case',
+          dates: '2027',
+          sheetsNumber: '7',
+          nameDescription: 'updated short desc',
+          contentDescription: '',
+          pdfUrl: undefined
+        }
+      );
 
       expect(mockUpdateCase).toHaveBeenCalledWith({
         id: 'CASE-ID-1',
@@ -544,85 +436,28 @@ describe('ArchiveCaseModal', () => {
       expect(onSaved).toHaveBeenCalledTimes(1);
     });
 
-    it('derives an empty filename when pdfUrl ends with a trailing slash (split().pop() yields "")', async () => {
-      // Note: `url.split('/').pop() ?? 'document.pdf'` only falls back on null/undefined.
-      // split() on a non-empty string always returns at least one element, and when the
-      // url ends in '/', pop() returns '' (empty string) rather than undefined, so the
-      // 'document.pdf' fallback is never actually reached in practice.
-      render(<ArchiveCaseModal {...defaultProps} fundId="FUND-1" />);
-
-      const callArgs = (useArchiveCaseModal as jest.Mock).mock.calls[0][0];
-
-      await callArgs.onSave({
-        descriptionNumber: '1',
-        caseNumber: 'CASE-1',
-        name: 'My Case',
-        dates: '2026',
-        sheetsNumber: '5',
-        nameDescription: 'short desc',
-        contentDescription: 'desc',
-        pdfUrl: 'https://example.com/files/'
-      });
-
+    it('derives an empty filename when pdfUrl ends with a trailing slash', async () => {
+      await execSave({ fundId: 'FUND-1' }, { pdfUrl: 'https://example.com/files/' });
       expect(mockCreateCase).toHaveBeenCalledWith(
-        expect.objectContaining({
-          pdfFile: expect.objectContaining({ filename: '' })
-        })
+        expect.objectContaining({ pdfFile: expect.objectContaining({ filename: '' }) })
       );
     });
 
     it('derives the filename from the last path segment for a normal pdfUrl', async () => {
-      render(<ArchiveCaseModal {...defaultProps} fundId="FUND-1" />);
-
-      const callArgs = (useArchiveCaseModal as jest.Mock).mock.calls[0][0];
-
-      await callArgs.onSave({
-        descriptionNumber: '1',
-        caseNumber: 'CASE-1',
-        name: 'My Case',
-        dates: '2026',
-        sheetsNumber: '5',
-        nameDescription: 'short desc',
-        contentDescription: 'desc',
-        pdfUrl: 'https://example.com/files/report.pdf'
-      });
-
+      await execSave({ fundId: 'FUND-1' }, { pdfUrl: 'https://example.com/files/report.pdf' });
       expect(mockCreateCase).toHaveBeenCalledWith(
-        expect.objectContaining({
-          pdfFile: expect.objectContaining({ filename: 'report.pdf' })
-        })
+        expect.objectContaining({ pdfFile: expect.objectContaining({ filename: 'report.pdf' }) })
       );
     });
 
     it('omits pdfFile from mutation input when pdfUrl is not provided', async () => {
-      render(<ArchiveCaseModal {...defaultProps} fundId="FUND-1" />);
-
-      const callArgs = (useArchiveCaseModal as jest.Mock).mock.calls[0][0];
-
-      await callArgs.onSave({
-        descriptionNumber: '1',
-        caseNumber: 'CASE-1',
-        name: 'My Case',
-        dates: '2026',
-        sheetsNumber: '5',
-        nameDescription: 'short desc',
-        contentDescription: 'desc'
-      });
-
-      const mutationInput = mockCreateCase.mock.calls[0][0];
-      expect(mutationInput).not.toHaveProperty('pdfFile');
+      await execSave({ fundId: 'FUND-1' }, { pdfUrl: undefined });
+      expect(mockCreateCase.mock.calls[0][0]).not.toHaveProperty('pdfFile');
     });
 
     it('passes both initialData and onSave to the hook when fundId/caseId and initialData are provided together', () => {
       const initialData = { caseNumber: 'CASE-123' };
-      render(
-        <ArchiveCaseModal
-          {...defaultProps}
-          fundId="FUND-1"
-          caseId="CASE-ID-1"
-          initialData={initialData}
-        />
-      );
+      renderModal({ fundId: 'FUND-1', caseId: 'CASE-ID-1', initialData });
 
       const callArgs = (useArchiveCaseModal as jest.Mock).mock.calls[0][0];
       expect(callArgs.setIsOpen).toBe(mockSetIsOpen);
