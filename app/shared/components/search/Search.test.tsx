@@ -82,22 +82,28 @@ describe('Search', () => {
     });
   });
 
-  it('should call onEnter when the Enter key is pressed', () => {
+  describe('onEnter', () => {
     const onEnter = jest.fn();
-    render(<SearchHarness onEnter={onEnter} />);
 
-    fireEvent.keyDown(screen.getByRole('combobox'), { key: 'Enter' });
+    beforeEach(() => {
+      onEnter.mockClear();
+    });
 
-    expect(onEnter).toHaveBeenCalledTimes(1);
-  });
+    it('should call onEnter when the Enter key is pressed', () => {
+      render(<SearchHarness onEnter={onEnter} />);
 
-  it('should not call onEnter for other keys', () => {
-    const onEnter = jest.fn();
-    render(<SearchHarness onEnter={onEnter} />);
+      fireEvent.keyDown(screen.getByRole('combobox'), { key: 'Enter' });
 
-    fireEvent.keyDown(screen.getByRole('combobox'), { key: 'a' });
+      expect(onEnter).toHaveBeenCalledTimes(1);
+    });
 
-    expect(onEnter).not.toHaveBeenCalled();
+    it('should not call onEnter for other keys', () => {
+      render(<SearchHarness onEnter={onEnter} />);
+
+      fireEvent.keyDown(screen.getByRole('combobox'), { key: 'a' });
+
+      expect(onEnter).not.toHaveBeenCalled();
+    });
   });
 
   it('should call setSearch with string value when freeSolo input is submitted', async () => {
