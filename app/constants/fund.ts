@@ -34,3 +34,6 @@ export const FUNDS_EMPTY_STATE_NO_RESULTS_DESCRIPTION =
   'За цими критеріями нічого не знайдено.\nСпробуйте змінити параметри фільтрів або пошуку.';
 export const FUNDS_EMPTY_STATE_TITLE = 'Фонди відсутні';
 export const FUNDS_EMPTY_STATE_DESCRIPTION = 'Матеріали для цієї вкладки поки відсутні.';
+export const FUND_PUBLISH_SUCCESS_MESSAGE = 'Фонд опубліковано.';
+export const FUND_PUBLISH_EMPTY_WARNING_MESSAGE =
+  'Фонд не містить опублікованих справ. Ви можете опублікувати фонд зараз і додати справи пізніше.';

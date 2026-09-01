@@ -1,8 +1,10 @@
 import { Case } from '../entities/Case';
 import { FiltersInput, IBaseRepository } from './baseRepository';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 export type CaseFilters = Omit<FiltersInput, 'slug'> & {
   fundId?: string;
+  statuses?: BaseContentStatuses[];
 };
 
 export type CreateCaseInput = Omit<Case, 'id' | 'createdAt' | 'updatedAt'>;

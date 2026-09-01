@@ -1,8 +1,9 @@
-import { Model, Types } from 'mongoose';
+import { FilterQuery, Model, Types } from 'mongoose';
 
 import dbConnect from '../../db/connect';
 import { createBaseRepository } from '../baseRepository/baseRepository';
 import { buildBaseQuery, createToEntity, getBaseSort } from '../helpers';
+import { LocalizedString } from '~/src/domain/entities/BaseContent';
 import { Fund } from '~/src/domain/entities/Fund';
 import {
   CreateFundInput,
@@ -19,12 +20,12 @@ export type DbFund = {
   title: { uk: string; en: string };
   numberOfDescriptions: number;
   numberOfCases: number;
-  organizationForm?: { uk: string; en: string };
+  organizationForm?: string | { uk: string; en: string };
   documentCreationDate: string;
   chronologicalBoundaries?: string;
-  characterAndContent?: {
-    uk: Record<string, unknown>;
-    en: Record<string, unknown>;
+  characterAndContent?: string | {
+    uk: Record<string, unknown> | string;
+    en: Record<string, unknown> | string;
   };
   status?: string;
   createdAt: string;
@@ -57,6 +58,44 @@ const parseJsonContent = (content?: string | null): Record<string, unknown> => {
   }
 };
 
+const stringifyJsonContent = (content: unknown): string => {
+  if (typeof content === 'string') return content;
+  if (content === undefined || content === null) return '';
+
+  try {
+    return JSON.stringify(content);
+  } catch (error) {
+    logger.warn('Error stringifying JSON content:', error);
+    return '';
+  }
+};
+
+const toLocalizedString = (value?: string | LocalizedString): LocalizedString | undefined => {
+  if (!value) return undefined;
+
+  if (typeof value === 'string') {
+    return { uk: value, en: value };
+  }
+
+  return {
+    uk: value.uk ?? '',
+    en: value.en ?? ''
+  };
+};
+
+const toDescription = (value?: DbFund['characterAndContent']): Fund['description'] => {
+  if (!value) return undefined;
+
+  if (typeof value === 'string') {
+    return { uk: value, en: value };
+  }
+
+  return {
+    uk: stringifyJsonContent(value.uk),
+    en: stringifyJsonContent(value.en)
+  };
+};
+
 const toEntity = (doc: DbFund): Fund => {
   const safeDoc = {
     ...doc,
@@ -71,8 +110,8 @@ const toEntity = (doc: DbFund): Fund => {
     chronologicalBoundaries: safeDoc.chronologicalBoundaries
       ? { uk: safeDoc.chronologicalBoundaries, en: safeDoc.chronologicalBoundaries }
       : undefined,
-    organizationForm: safeDoc.organizationForm,
-    description: safeDoc.characterAndContent as unknown as Fund['description'],
+    organizationForm: toLocalizedString(safeDoc.organizationForm),
+    description: toDescription(safeDoc.characterAndContent),
     status: resolveStatus(safeDoc.status),
     casesCount: safeDoc.numberOfCases ?? 0,
     descriptionsCount: safeDoc.numberOfDescriptions ?? 0
@@ -84,10 +123,21 @@ export const FundRepository = ({ FundModel }: FundRepoDeps): IFundRepository => 
     model: FundModel,
     toEntity,
     buildQuery: (filters) => {
-      const query = buildBaseQuery(filters, ['title.uk', 'title.en']);
+      const query = buildBaseQuery({ ...filters, statuses: undefined }, ['title.uk', 'title.en']);
+
       if (filters?.statuses && filters.statuses.length > 0) {
-        query.status = { $in: filters.statuses };
+        const { statuses } = filters;
+        const matchesRequestedStatus = { status: { $in: statuses } };
+
+        if (statuses.includes(BaseContentStatuses.Hidden)) {
+          return {
+            $and: [query, { $or: [matchesRequestedStatus, { status: { $nin: VALID_STATUS_VALUES } } ] }]
+          } as FilterQuery<DbFund>;
+        }
+
+        query.status = matchesRequestedStatus.status;
       }
+
       return query;
     },
     getDefaultSort: getBaseSort

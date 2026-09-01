@@ -22,6 +22,7 @@ import type {
 import * as graphqlHooks from '~/types/graphql/generated/graphql';
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
+  AllEventsDocument: { kind: 'Document', definitions: [] },
   EventStatus: {
     Published: 'Published',
     Draft: 'Draft',
@@ -245,7 +246,7 @@ describe('useEvents hooks', () => {
   });
 
   describe('useDeleteEvent', () => {
-    it('calls safeMutate with correct parameters', async () => {
+    it('configures delete mutation with refetchQueries and wraps with safeMutate', async () => {
       const mockMutate = jest.fn();
       (graphqlHooks.useDeleteEventMutation as jest.Mock).mockReturnValue([mockMutate, { loading: false }]);
 
@@ -257,6 +258,10 @@ describe('useEvents hooks', () => {
         await deleteEvent(variables);
       });
 
+      expect(graphqlHooks.useDeleteEventMutation).toHaveBeenCalledWith({
+        refetchQueries: [{ kind: 'Document', definitions: [] }],
+        awaitRefetchQueries: true
+      });
       expect(safeMutate).toHaveBeenCalledWith(
         mockMutate,
         variables,

@@ -3,6 +3,7 @@ import { act, renderHook } from '@testing-library/react';
 import { newsErrors } from '~/constants/errors';
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
+  AllNewsDocument: { kind: 'Document', definitions: [] },
   NewsStatus: {
     Published: 'PUBLISHED',
     Draft: 'DRAFT',
@@ -182,7 +183,7 @@ describe('useNews hooks', () => {
     expect(mutate).toHaveBeenCalledWith({ variables: { id: 'news-4', input: { status: 'HIDDEN' } } });
   });
 
-  it('wraps delete-news mutation with safeMutate', async () => {
+  it('configures delete-news mutation with refetchQueries and wraps with safeMutate', async () => {
     const mutate = jest.fn();
     mockUseDeleteNewsMutation.mockReturnValue([mutate, { loading: false }]);
 
@@ -193,6 +194,10 @@ describe('useNews hooks', () => {
       await deleteNews({ id: 'news-1' } as never);
     });
 
+    expect(mockUseDeleteNewsMutation).toHaveBeenCalledWith({
+      refetchQueries: [{ kind: 'Document', definitions: [] }],
+      awaitRefetchQueries: true
+    });
     expect(mockSafeMutate).toHaveBeenCalledWith(
       mutate,
       { id: 'news-1' },

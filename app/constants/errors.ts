@@ -106,6 +106,8 @@ export const FundErrors = {
   NUMBER_ALREADY_EXISTS: (number: number) => `Фонд із номером "${number}" уже існує. Вкажіть інший номер.`,
   FAILED_TO_CREATE: 'Не вдалося зберегти фонд. Перевірте форму та спробуйте ще раз.',
   FAILED_TO_UPDATE: 'Не вдалося зберегти фонд. Перевірте форму та спробуйте ще раз.',
+  NETWORK_ERROR_PUBLISH: 'Помилка мережі під час публікації фонду',
+  FAILED_TO_PUBLISH: 'Не вдалося опублікувати фонд. Спробуйте ще раз.',
   FUND_NOT_FOUND: (id: string) => `Фонд з id "${id}" не знайдено`,
   NETWORK_ERROR_CREATE: 'Помилка мережі під час створення фонду',
   NETWORK_ERROR_UPDATE: 'Помилка мережі під час оновлення фонду',
@@ -120,6 +122,8 @@ export const FundErrorCodes: Record<keyof typeof FundErrors, string> = {
   FAILED_TO_CREATE: 'FAILED_TO_CREATE',
   NETWORK_ERROR_UPDATE: 'NETWORK_ERROR_UPDATE',
   FAILED_TO_UPDATE: 'FAILED_TO_UPDATE',
+  NETWORK_ERROR_PUBLISH: 'NETWORK_ERROR_PUBLISH',
+  FAILED_TO_PUBLISH: 'FAILED_TO_PUBLISH',
   NETWORK_ERROR_DELETE: 'NETWORK_ERROR_DELETE',
   FAILED_TO_DELETE: 'FAILED_TO_DELETE'
 };
