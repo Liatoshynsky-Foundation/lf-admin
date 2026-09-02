@@ -1,5 +1,6 @@
 import { Box } from '@mui/material';
 
+import { styles } from './ContactsHeaderActions.styles';
 import LanguageSwitcher from '~/components/language-switcher/LanguageSwitcher';
 import { ContactsLocale } from '~/constants/contacts';
 import Button from '~/ds-components/button/Button';
@@ -14,7 +15,7 @@ export const ContactsHeaderActions = ({
   onSave
 }: ContactsHeaderActionsProps) => {
   return (
-    <Box display="flex" alignItems="center" gap={1}>
+    <Box sx={styles.container}>
       <LanguageSwitcher languageSwitcher={onLanguageChange} />
       <Button variant="filled" color="tertiary" size="medium" onClick={onSave}>
         Зберегти

@@ -1,10 +1,11 @@
 import { Box, Menu } from '@mui/material';
 import { ReactNode } from 'react';
 
-import { CircleIconButton } from './CircleIconButton';
+import { CircleIconButton } from '../circle-icon-button/CircleIconButton';
+import { styles } from './IconPickerMenu.styles';
 import { useMenuScrollClose } from '~/shared/hooks/use-menu-scroll-close/useMenuScrollClose';
 
-type IconPickerMenuProps<T> = Readonly<{
+export type IconPickerMenuProps<T> = Readonly<{
   anchorEl: HTMLElement | null;
   options: readonly T[];
   getOptionKey: (option: T) => string;
@@ -37,7 +38,7 @@ export function IconPickerMenu<T>({
       disableScrollLock
       transitionDuration={disableTransition ? 0 : undefined}
     >
-      <Box display="grid" gridTemplateColumns="repeat(3, 40px)" gap={1} p={'10px 16px'}>
+      <Box sx={styles.options}>
         {options.map((option) => (
           <CircleIconButton
             key={getOptionKey(option)}

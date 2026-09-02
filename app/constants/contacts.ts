@@ -1,12 +1,17 @@
-import { Facebook, Instagram, YouTube } from '@mui/icons-material';
-import LinkIcon from '@mui/icons-material/Link';
 import type { ElementType } from 'react';
+
+import FacebookIcon from '~/public/icons/facebook.svg';
+import InstagramIcon from '~/public/icons/instagram.svg';
+import Link from '~/public/icons/link-2.svg';
+import LinkedInIcon from '~/public/icons/linkedin.svg';
+import TikTokIcon from '~/public/icons/tiktok.svg';
+import YouTubeIcon from '~/public/icons/youtube.svg';
 
 export type ContactsLocale = 'uk' | 'en';
 
 export type LocalizedText = Record<ContactsLocale, string>;
 
-export type SocialNetworkPlatform = 'instagram' | 'facebook' | 'youtube' | 'other';
+export type SocialNetworkPlatform = 'instagram' | 'facebook' | 'linkedin' | 'tiktok' | 'youtube' | 'other';
 
 export type SocialNetworkOption = {
   value: SocialNetworkPlatform;
@@ -15,10 +20,12 @@ export type SocialNetworkOption = {
 };
 
 export const SOCIAL_NETWORK_OPTIONS: readonly SocialNetworkOption[] = [
-  { value: 'facebook', label: 'Facebook', icon: Facebook },
-  { value: 'instagram', label: 'Instagram', icon: Instagram },
-  { value: 'youtube', label: 'YouTube', icon: YouTube },
-  { value: 'other', label: 'Інше', icon: LinkIcon }
+  { value: 'facebook', label: 'Facebook', icon: FacebookIcon },
+  { value: 'instagram', label: 'Instagram', icon: InstagramIcon },
+  { value: 'linkedin', label: 'LinkedIn', icon: LinkedInIcon },
+  { value: 'tiktok', label: 'TikTok', icon: TikTokIcon },
+  { value: 'youtube', label: 'YouTube', icon: YouTubeIcon },
+  { value: 'other', label: 'Інше', icon:  Link }
 ];
 
 export type SocialNetworkInput = {
@@ -33,8 +40,8 @@ export type SocialNetworkFormItem = SocialNetworkInput & {
 export type ContactInformation = {
   name: LocalizedText;
   location: LocalizedText;
-  phone: LocalizedText;
-  email: LocalizedText;
+  phone: string;
+  email: string;
 };
 
 export type ContactsData = {

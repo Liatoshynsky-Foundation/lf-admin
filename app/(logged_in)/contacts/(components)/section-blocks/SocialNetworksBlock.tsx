@@ -9,9 +9,10 @@ import {
   SocialNetworkOption,
   SocialNetworkPlatform
 } from '../../../../constants/contacts';
-import { HeaderRow } from '../../(shared)/HeaderRow';
-import { IconPickerMenu } from '../../(shared)/IconPickerMenu';
-import { IconTextField } from '../../(shared)/IconTextField';
+import { ContentSectionHeader } from '../../../../shared/components/content-section-header/ContentSectionHeader';
+import { IconPickerMenu } from '../../../../shared/components/icon-picker-menu/IconPickerMenu';
+import { IconTextField } from '../../../../shared/components/icon-text-field/IconTextField';
+import { styles } from './SocialNetworksBlock.styles';
 import ConfigurableList from '~/components/configurable-list/ConfigurableList';
 
 type SocialNetworkFieldProps = Readonly<{
@@ -26,7 +27,13 @@ const SocialNetworkField = ({ item, onPlatformMenuOpen, onItemChange }: SocialNe
 
   return (
     <IconTextField
-      icon={Icon ? <Icon fontSize="small" /> : undefined}
+      icon={
+        Icon ? (
+          <Box sx={styles.icon}>
+            <Icon fontSize="small" />
+          </Box>
+        ) : undefined
+      }
       onIconClick={(event) => onPlatformMenuOpen(item.id, event.currentTarget)}
       label="URL"
       value={item.link}
@@ -39,7 +46,11 @@ const SocialNetworkField = ({ item, onPlatformMenuOpen, onItemChange }: SocialNe
 const renderSocialNetworkOptionIcon = (option: SocialNetworkOption) => {
   const Icon = option.icon;
 
-  return <Icon fontSize="small" />;
+  return (
+    <Box sx={styles.icon}>
+      <Icon fontSize="small" />
+    </Box>
+  );
 };
 
 type SocialNetworksBlockProps = Readonly<{
@@ -76,7 +87,7 @@ export const SocialNetworksBlock = ({ items, onChange }: SocialNetworksBlockProp
   };
 
   const selectPlatform = (platform: SocialNetworkPlatform) => {
-    if (!activeItemId) return;
+    if (activeItemId === null) return;
 
     onChange(items.map((item) => (item.id === activeItemId ? { ...item, platform } : item)));
 
@@ -84,8 +95,8 @@ export const SocialNetworksBlock = ({ items, onChange }: SocialNetworksBlockProp
   };
 
   return (
-    <Box display="flex" flexDirection="column" gap={2}>
-      <HeaderRow title="Ми в соцмережах" />
+    <Box sx={styles.container}>
+      <ContentSectionHeader title="Ми в соцмережах" />
 
       <ConfigurableList<SocialNetworkFormItem>
         items={items}

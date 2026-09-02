@@ -21,7 +21,7 @@ const items: ConfigurableListItem[] = [
   { id: '3', value: 'Item 3' }
 ];
 
-const renderItem = ({ item, onChange }: any) => (
+const renderItem = ({ item, onChange }: { item: ConfigurableListItem; onChange: (item: ConfigurableListItem) => void }) => (
   <input
     data-testid={`input-${item.id}`}
     value={item.value}
@@ -132,7 +132,26 @@ describe('ConfigurableList', () => {
       />
     );
     const deleteButtons = screen.getAllByRole('button');
-    expect(deleteButtons.length).toBe(3);
+    expect(deleteButtons).toHaveLength(3);
+  });
+
+  it('should allow deletion of the first item when configured', () => {
+    const onDelete = jest.fn();
+    render(
+      <ConfigurableList
+        items={items}
+        renderItem={renderItem}
+        addBtnLabel="Add"
+        editable={true}
+        allowFirstItemDeletion={true}
+        onCreate={jest.fn()}
+        onChange={jest.fn()}
+        onDelete={onDelete}
+      />
+    );
+    const deleteButtons = screen.getAllByRole('button');
+    fireEvent.click(deleteButtons[0]);
+    expect(onDelete).toHaveBeenCalledWith('1');
   });
 
   it('should pass withSeparator=true only for items except last (if separator=true)', () => {

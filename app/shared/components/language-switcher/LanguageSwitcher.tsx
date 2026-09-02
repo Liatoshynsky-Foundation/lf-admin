@@ -3,7 +3,11 @@ import React from 'react';
 import Button from '../design-system/button/Button';
 import ButtonGroup from '../design-system/button-group/ButtonGroup';
 
-const LanguageSwitcher = ({ languageSwitcher }: { languageSwitcher: (language: 'uk' | 'en') => void }) => {
+export type LanguageSwitcherProps = Readonly<{
+  languageSwitcher: (language: 'uk' | 'en') => void;
+}>;
+
+const LanguageSwitcher = ({ languageSwitcher }: LanguageSwitcherProps) => {
   const languages = [
     <Button key={'uk'} onClick={() => languageSwitcher('uk')}>
       Українська

@@ -1,4 +1,4 @@
-import { ContactsData } from '../../constants/contacts';
+import { ContactsData } from '~/constants/contacts';
 
 export const CONTACTS_MOCK = {
   contactInformation: {
@@ -10,14 +10,8 @@ export const CONTACTS_MOCK = {
       uk: 'м. Київ',
       en: 'Kyiv, Ukraine'
     },
-    phone: {
-      uk: '+380 000 000 001',
-      en: '+380 000 000 002'
-    },
-    email: {
-      uk: 'liatoshynsky1@gmail.com',
-      en: 'liatoshynsky2@gmail.com'
-    }
+    phone: '+380 000 000 001',
+    email: 'liatoshynsky2@gmail.com',
   },
   socialNetworks: [
     {

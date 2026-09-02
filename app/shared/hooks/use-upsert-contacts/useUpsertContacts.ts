@@ -7,7 +7,7 @@ type UpdateContactsInput = {
   socialNetworks: SocialNetworkFormItem[];
 };
 
-export const useUpdateContacts = () => {
+export const useUpsertContacts = () => {
   const updateContacts = useCallback(({ contactInformation, socialNetworks }: UpdateContactsInput) => {
     const payload: ContactsPayload = {
       ...contactInformation,

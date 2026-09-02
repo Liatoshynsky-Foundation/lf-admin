@@ -8,12 +8,12 @@ import Button from '~/ds-components/button/Button';
 import PlusIcon from '~/public/icons/plus.svg';
 import { ConfigurableListItem } from '~/types/accordionBlocks';
 
-interface RenderItemParams<T> {
+export interface RenderItemParams<T> {
   item: T;
   onChange: (newValue: T) => void;
 }
 
-interface ConfigurableListProps<T extends ConfigurableListItem> {
+export interface ConfigurableListProps<T extends ConfigurableListItem> {
   items: T[];
   renderItem: (params: RenderItemParams<T>) => React.ReactNode;
   addBtnLabel: string;
