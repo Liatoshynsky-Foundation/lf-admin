@@ -134,8 +134,13 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
 
   const isBadgeableStatus = (
     value: string
-  ): value is typeof BaseContentStatuses.Published | typeof BaseContentStatuses.Hidden =>
-    value === BaseContentStatuses.Published || value === BaseContentStatuses.Hidden;
+  ): value is
+    | typeof BaseContentStatuses.Published
+    | typeof BaseContentStatuses.Hidden
+    | typeof BaseContentStatuses.Draft =>
+    value === BaseContentStatuses.Published ||
+    value === BaseContentStatuses.Hidden ||
+    value === BaseContentStatuses.Draft;
 
   return (
     <Box>
@@ -193,7 +198,15 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
                   <FilterSelectItem
                     key={option.value}
                     label={option.label}
-                    icon={isBadgeableStatus(option.value) ? <Badge variant={option.value} /> : undefined}
+                    icon={
+                      isBadgeableStatus(option.value) ? (
+                        <Badge
+                          variant={
+                            option.value === BaseContentStatuses.Draft ? BaseContentStatuses.Hidden : option.value
+                          }
+                        />
+                      ) : undefined
+                    }
                     onClick={() => handleOptionClick(option)}
                     selected={isSelected}
                     disabled={optionDisabled}

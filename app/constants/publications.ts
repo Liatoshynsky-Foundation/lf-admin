@@ -106,8 +106,8 @@ export const PUBLICATIONS_CREATE_OPTIONS: ReadonlyArray<PublicationsCreateOption
 );
 
 const PUBLICATIONS_STATUS_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
-  { value: BaseContentStatuses.Draft, label: 'Чернетка (прихована)' },
-  { value: BaseContentStatuses.Published, label: 'Опублікована' }
+  { value: BaseContentStatuses.Draft, label: 'Приховано' },
+  { value: BaseContentStatuses.Published, label: 'Опубліковано' }
 ];
 
 export const PUBLICATIONS_FILTERS: ReadonlyArray<PublicationsFilterConfig> = [
