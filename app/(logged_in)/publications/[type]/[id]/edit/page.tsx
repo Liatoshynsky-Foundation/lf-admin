@@ -78,7 +78,7 @@ export default function EditPublicationsPage() {
     }
 
     try {
-      const currentStatus = BaseContentStatuses.Draft;
+      const currentStatus = (manager.currentData?.status ?? BaseContentStatuses.Draft) as BaseContentStatuses;
 
       const result = await publicationData.handleSave(currentStatus);
 
