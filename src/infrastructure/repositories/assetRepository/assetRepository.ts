@@ -5,15 +5,14 @@ import { UPLOAD_ERRORS } from '../../../uploads/errors';
 import { createStorageAdapter } from '../../../uploads/storage';
 import { preserveOriginalFilenameSafely } from '../../../uploads/utils';
 import { createBaseRepository } from '../baseRepository/baseRepository';
+import {
+  AssetAlreadyExistsError,
+  type AssetType,
+  type AssetUsageRef,
+  type CreateAssetData
+} from '~/domain/repositories/assetRepository';
 import logger from '~/src/middleware/logger/logger';
 
-type AssetType = 'image' | 'pdf' | 'audio' | 'document' | 'spreadsheet' | 'video' | 'archive';
-
-type AssetUsageRef = {
-  pageId?: string;
-  blockId?: string;
-  locale?: string;
-};
 
 export type AssetEntity = {
   id: string;
@@ -143,15 +142,6 @@ const getAssetSort = (filters?: AssetFilters): Record<string, 1 | -1> => {
 
 export type UpdateAssetData = Partial<Pick<AssetEntity, 'isStarred' | 'filename' | 'description'>>;
 
-export type CreateAssetData = {
-  filename: string;
-  originalname?: string;
-  mimeType: string;
-  sizeBytes: number;
-  url: string;
-  type: AssetType;
-  description?: string;
-};
 
 type AssetUpdateFields = Partial<
   Pick<AssetEntity, 'isStarred' | 'filename' | 'originalname' | 'description' | 'url'>
@@ -241,32 +231,46 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
     return updatedDoc ? toEntity(updatedDoc) : null;
   };
 
-  const createAsset = async (data: CreateAssetData): Promise<AssetEntity> => {
+  const createAsset = async (data: CreateAssetData, session?: ClientSession): Promise<AssetEntity> => {
     const checkedNames = getUniqueNames(data.filename, data.originalname);
-    const targetFolder = getCloudStoragePath({
+    const storagePath = getCloudStoragePath({
       filename: data.filename,
       url: data.url,
       type: data.type
-    } as DbAsset).folder;
+    } as DbAsset);
+    const targetFolder = storagePath.folder;
     const existingAssets = await AssetModel.find({
       $or: [{ filename: { $in: checkedNames } }, { originalname: { $in: checkedNames } }]
     });
     const hasDuplicateAsset = existingAssets.some((asset) => getCloudStoragePath(asset).folder === targetFolder);
 
     if (hasDuplicateAsset) {
-      throw new Error(UPLOAD_ERRORS.FILE_ALREADY_EXISTS(data.originalname ?? data.filename));
+      const filename = data.originalname ?? data.filename;
+      throw new AssetAlreadyExistsError(filename, UPLOAD_ERRORS.FILE_ALREADY_EXISTS(filename));
     }
 
-    const newDoc = await AssetModel.create({
+    const storageMetadata = await storage.getMetadata?.(storagePath.filename, storagePath.folder);
+    const createdAt = storageMetadata?.uploadedAt ?? new Date();
+
+    const assetData = {
       ...data,
       isStarred: false,
       tags: [],
       usageRefs: [],
-      createdAt: new Date(),
+      createdAt,
       updatedAt: new Date()
-    });
+    };
+    const newDoc = session
+      ? (await AssetModel.create([assetData], { session }))[0]
+      : await AssetModel.create(assetData);
 
     return toEntity(newDoc);
+  };
+
+  const findByUrls = async (urls: string[]): Promise<AssetEntity[]> => {
+    const assets = await AssetModel.find({ url: { $in: urls } });
+
+    return assets.map(toEntity);
   };
 
   const getCloudStoragePath = (asset: DbAsset) => {
@@ -320,11 +324,17 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
     await AssetModel.findOneAndUpdate({ url }, { $addToSet: { usageRefs: ref } }, { session });
   };
 
+  const removeUsageRef = async (url: string, ref: AssetUsageRef, session?: ClientSession): Promise<void> => {
+    await AssetModel.findOneAndUpdate({ url }, { $pull: { usageRefs: ref } }, { session });
+  };
+
   return {
     ...baseRepo,
     updateAsset,
     createAsset,
+    findByUrls,
     deleteAsset,
-    addUsageRef
+    addUsageRef,
+    removeUsageRef
   };
 };

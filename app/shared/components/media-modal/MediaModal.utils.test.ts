@@ -73,6 +73,14 @@ describe('isPdfUploadFile', () => {
   });
 });
 
+describe('storage filename fallback', () => {
+  it('accepts recognized extensions when storage MIME metadata is conflicting', () => {
+    expect(isImageUploadFile(createFile('photo.jpg', 'application/pdf'))).toBe(true);
+    expect(isAudioUploadFile(createFile('recording.mp3', 'image/jpeg'))).toBe(true);
+    expect(isPdfUploadFile(createFile('score.pdf', 'audio/mpeg'))).toBe(true);
+  });
+});
+
 describe('isAnyAllowedFile', () => {
   it('accepts a RAR archive when the extension is allowed', () => {
     expect(isAnyAllowedFile(createFile('archive.rar', 'application/x-rar-compressed'))).toBe(true);

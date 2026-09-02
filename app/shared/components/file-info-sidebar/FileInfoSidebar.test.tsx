@@ -313,6 +313,16 @@ describe('FileInfoSidebar', () => {
     expect(mockDeleteAsset).not.toHaveBeenCalled();
   });
 
+  it('should open the local delete modal when usage links are omitted', () => {
+    const fileWithoutUsageLinks: FileDetailsSidebarFile = { ...baseFile, usageLinks: undefined };
+
+    render(<FileInfoSidebar file={fileWithoutUsageLinks} onClose={jest.fn()} />);
+
+    fireEvent.click(screen.getAllByRole('button')[2]);
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
   it('should show error toast when local delete fails', async () => {
     const onClose = jest.fn();
     const deletableFile: FileDetailsSidebarFile = { ...baseFile, usageLinks: [] };
@@ -421,7 +431,7 @@ describe('FileInfoSidebar', () => {
 
     render(<FileInfoSidebar file={pdfFile} onClose={jest.fn()} />);
 
-    fireEvent.keyDown(screen.getByText('cat.png').closest('.MuiBox-root') as HTMLElement, { key: 'Enter' });
+    fireEvent.keyDown(screen.getByRole('img', { name: 'cat.png' }).parentElement as HTMLElement, { key: 'Enter' });
 
     expect(screen.queryByTestId('ImagePreviewModal')).not.toBeInTheDocument();
   });
