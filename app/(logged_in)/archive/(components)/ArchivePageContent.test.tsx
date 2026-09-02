@@ -260,7 +260,8 @@ describe('ArchivePageContent', () => {
 
     expect(mockUsePaginatedFunds).toHaveBeenCalledWith(1, ARCHIVE_ITEMS_PER_PAGE, {
       search: undefined,
-      statuses: undefined
+      statuses: undefined,
+      sort: [{ field: 'fundNumber', order: 'asc' }]
     });
   });
 
@@ -274,7 +275,8 @@ describe('ArchivePageContent', () => {
 
     expect(mockUsePaginatedFunds).toHaveBeenCalledWith(1, ARCHIVE_ITEMS_PER_PAGE, {
       search: 'archive',
-      statuses: ['published']
+      statuses: ['published'],
+      sort: [{ field: 'fundNumber', order: 'asc' }]
     });
   });
 
@@ -343,9 +345,9 @@ describe('ArchivePageContent', () => {
     it('should render the funds table, sorted ascending by fundNumber, when funds are present', () => {
       mockUsePaginatedFunds.mockReturnValue({
         funds: [
-          mockFund({ id: '3', fundNumber: 3, name: 'C Fund' }),
           mockFund({ id: '1', fundNumber: 1, name: 'A Fund' }),
-          mockFund({ id: '2', fundNumber: 2, name: 'B Fund' })
+          mockFund({ id: '2', fundNumber: 2, name: 'B Fund' }),
+          mockFund({ id: '3', fundNumber: 3, name: 'C Fund' })
         ],
         totalPages: 1,
         loading: false,
@@ -520,7 +522,8 @@ describe('ArchivePageContent', () => {
       expect(screen.getByTestId('pagination-current-page')).toHaveTextContent('2');
       expect(mockUsePaginatedFunds).toHaveBeenLastCalledWith(2, ARCHIVE_ITEMS_PER_PAGE, {
         search: undefined,
-        statuses: undefined
+        statuses: undefined,
+        sort: [{ field: 'fundNumber', order: 'asc' }]
       });
     });
 
@@ -572,7 +575,8 @@ describe('ArchivePageContent', () => {
         expect(screen.queryByTestId('mock-pagination')).not.toBeInTheDocument();
         expect(mockUsePaginatedFunds).toHaveBeenLastCalledWith(1, ARCHIVE_ITEMS_PER_PAGE, {
           search: undefined,
-          statuses: undefined
+          statuses: undefined,
+          sort: [{ field: 'fundNumber', order: 'asc' }]
         });
       });
     });

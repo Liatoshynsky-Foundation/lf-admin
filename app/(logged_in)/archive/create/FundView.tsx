@@ -17,6 +17,8 @@ import { TitleDropdown } from '~/shared/components/divided-header/title-dropdown
 import ActionMenu, { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import FundCasesBlock from '~/shared/components/forms/fund-cases-block/FundCasesBlock';
 import FundDetailsBlock from '~/shared/components/forms/fund-details-block/FundDetailsBlock';
+import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
+import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
 import { useUpsertFund } from '~/shared/hooks/use-upsert-fund/useUpsertFund';
 import { useStore } from '~/store';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
@@ -42,12 +44,15 @@ export const FundActionMenuItems = ({ onAction }: { onAction: (action: string) =
 ];
 
 export default function FundView({ data, mode = 'create' }: Readonly<FundViewProps>) {
-  const { details, setDetails, errors, forceShowErrors, isSaved, currentStatus, fundId, handleSave } = data;
+  const { details, setDetails, errors, forceShowErrors, isSaved, currentStatus, hasUnsavedChanges, fundId, handleSave } = data;
 
   const router = useRouter();
   const checkFundPublishWarning = useFundPublishWarning();
   const currentLocale = useStore((state) => state.locale as 'uk' | 'en');
   const setLocale = useStore((state) => state.setLocale as (locale: 'uk' | 'en') => void);
+  const { navigateBack } = useNavigationGuard();
+
+  useUnsavedChanges(mode === 'edit' ? Boolean(hasUnsavedChanges) : false);
 
   const [languageMenuAnchor, setLanguageMenuAnchor] = useState<HTMLButtonElement | null>(null);
   const [publishMenuAnchor, setPublishMenuAnchor] = useState<HTMLButtonElement | null>(null);
@@ -65,20 +70,33 @@ export default function FundView({ data, mode = 'create' }: Readonly<FundViewPro
       document.activeElement.blur();
     }
 
+    const statusToSave = currentStatus ?? BaseContentStatuses.Hidden;
+
     if (action === 'SAVE') {
-      await handleSave(BaseContentStatuses.Draft);
+      const id = await handleSave(statusToSave);
+      if (mode === 'create' && id) {
+        router.push(`${ARCHIVE_BASE_PATH}/fund/${id}/edit`);
+      }
     } else if (action === 'SAVE_AND_EXIT') {
-      const id = await handleSave(BaseContentStatuses.Draft);
+      const id = await handleSave(statusToSave);
       if (id) {
         router.push(ARCHIVE_BASE_PATH);
       }
     } else if (action === 'PUBLISH') {
-      await handleSave(BaseContentStatuses.Published);
+      const id = await handleSave(BaseContentStatuses.Published);
+      if (mode === 'create' && id) {
+        router.push(`${ARCHIVE_BASE_PATH}/fund/${id}/edit`);
+      }
     }
   };
 
   const handlePublishClick = async (): Promise<void> => {
     setPublishMenuAnchor(null);
+
+    if (mode === 'create') {
+      await handleActionClick('PUBLISH');
+      return;
+    }
 
     if (!canPublish) {
       return;
@@ -111,6 +129,7 @@ export default function FundView({ data, mode = 'create' }: Readonly<FundViewPro
     <>
       <DividedHeader
         originUrl={ARCHIVE_BASE_PATH}
+        onBackClick={navigateBack}
         rightActionsComponent={
           <HeaderRightActions
             mode="edit"
@@ -126,7 +145,11 @@ export default function FundView({ data, mode = 'create' }: Readonly<FundViewPro
           title={mode === 'edit' ? FUND_PAGE_TITLES.edit : FUND_PAGE_TITLES.create}
           onMenuOpen={handleLanguageMenuOpen}
         />
-        <ProgressStatus isSaved={isSaved} />
+        {mode === 'edit' && currentStatus === BaseContentStatuses.Published ? (
+          <Typography variant="subtitle2">Опубліковано</Typography>
+        ) : (
+          <ProgressStatus isSaved={isSaved} />
+        )}
       </DividedHeader>
 
       <Box sx={styles.contentWrapper}>
@@ -147,7 +170,7 @@ export default function FundView({ data, mode = 'create' }: Readonly<FundViewPro
           </Box>
         </Box>
 
-        <FundCasesBlock />
+        {mode === 'edit' ? <FundCasesBlock fundId={fundId} /> : null}
       </Box>
 
       <ActionMenu

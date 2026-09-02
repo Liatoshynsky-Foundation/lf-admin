@@ -44,6 +44,14 @@ describe('TableLayout Component', () => {
     }
   ];
 
+  const dataWithUnknown = [
+    {
+      type: 'unknown',
+      id: '3',
+      plainData: undefined
+    }
+  ];
+
   it('should correctly build gridTemplate from column widths and pass it to the header', () => {
     render(<TableLayout data={[]} columns={mockColumns} />);
 
@@ -76,5 +84,12 @@ describe('TableLayout Component', () => {
     expect(screen.getByText('Individual Item')).toBeInTheDocument();
     expect(screen.getByTestId('grouped-row')).toBeInTheDocument();
     expect(screen.getByText('Group 1')).toBeInTheDocument();
+  });
+
+  it('should return null for unknown item types', () => {
+    render(<TableLayout data={dataWithUnknown as any} columns={mockColumns} />);
+    
+    expect(screen.queryByTestId('grouped-row')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('plain-row')).not.toBeInTheDocument();
   });
 });

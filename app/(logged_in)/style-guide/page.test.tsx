@@ -167,6 +167,23 @@ interface MockCompositionModalProps {
   onClose: () => void;
 }
 
+interface MockArchiveCaseModalProps {
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
+}
+
+jest.mock('../archive/(components)/ArchiveCaseModal', () => ({
+  __esModule: true,
+  ArchiveCaseModal: ({ isOpen, setIsOpen }: MockArchiveCaseModalProps) =>
+    isOpen ? (
+      <div data-testid="archive-case-modal">
+        <button type="button" onClick={() => setIsOpen(false)}>
+          Close
+        </button>
+      </div>
+    ) : null
+}));
+
 jest.mock('~/shared/components/composition-modal/CompositionModal', () => ({
   __esModule: true,
   default: ({ isOpen, onClose }: MockCompositionModalProps) =>

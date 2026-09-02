@@ -18,9 +18,13 @@ export const CASE_VALIDATION_MESSAGES = {
 
   descriptionNumberRequired: 'Номер опису є обов’язковим.',
   descriptionNumberInvalid: 'Номер опису має бути цілим позитивним числом.',
+  descriptionNumberNegative: 'Введіть ціле позитивне число.',
+  descriptionNumberNotNumber: 'Значення має бути числом.',
 
   caseNumberRequired: 'Номер справи є обов’язковим.',
   caseNumberInvalid: 'Номер справи має бути цілим позитивним числом.',
+  caseNumberNegative: 'Введіть ціле позитивне число.',
+  caseNumberNotNumber: 'Значення має бути числом.',
 
   caseNameRequired: 'Назва справи є обов’язковою.',
   caseNameMaxLength: 'Назва справи не може перевищувати 150 символів.',
@@ -30,6 +34,8 @@ export const CASE_VALIDATION_MESSAGES = {
 
   sheetsNumberRequired: 'Кількість аркушів є обов’язковою.',
   sheetsNumberInvalid: 'Кількість аркушів має бути цілим позитивним числом.',
+  sheetsNumberNegative: 'Введіть ціле позитивне число.',
+  sheetsNumberNotNumber: 'Значення має бути числом.',
 
   caseDescriptionsRequired: 'Поле «Склад і зміст документів справи» є обов’язковим.',
   caseDescriptionsMaxLength: 'Значення не може перевищувати 300 символів.',

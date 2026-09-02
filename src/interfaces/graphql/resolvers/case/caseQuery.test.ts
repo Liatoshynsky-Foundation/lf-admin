@@ -70,9 +70,9 @@ describe('CaseQuery Resolvers', () => {
       });
     });
 
-    it('should map legacy fondId filter to fundId', async () => {
+    it('should map legacy fundId filter to fundId', async () => {
       const filters: FiltersGQLInput = {
-        fondId: 'fond-id'
+        fundId: 'fond-id'
       };
 
       await CaseQuery.allCases({}, { filters }, authorizedContext);

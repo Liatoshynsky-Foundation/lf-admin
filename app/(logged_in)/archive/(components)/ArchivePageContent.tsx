@@ -34,7 +34,7 @@ import { Pagination } from '~/shared/components/pagination/Pagination';
 import { SearchStatusToolbar } from '~/shared/components/search-status-toolbar/SearchStatusToolbar';
 import { usePaginatedFunds, useUpdateFund } from '~/shared/hooks/use-funds/useFunds';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
-import { FundStatus } from '~/types/graphql/generated/graphql';
+import { FundStatus, SortOrder } from '~/types/graphql/generated/graphql';
 
 interface ArchivePageContentProps {
   activeTab: ArchiveTabValue;
@@ -52,9 +52,10 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
   const filterValues = statusFilterProps.value;
   const isAllStatus = filterValues.length === 0;
 
-  const { funds, totalPages, loading, error } = usePaginatedFunds(page, ARCHIVE_ITEMS_PER_PAGE, {
+  const { funds, totalPages, loading, error, refetch } = usePaginatedFunds(page, ARCHIVE_ITEMS_PER_PAGE, {
     search: searchValue || undefined,
-    statuses: isAllStatus ? undefined : (filterValues as FundStatus[])
+    statuses: isAllStatus ? undefined : (filterValues as FundStatus[]),
+    sort: [{ field: 'fundNumber', order: SortOrder.Asc }]
   });
 
   useEffect(() => {
@@ -79,8 +80,6 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
       }),
     [funds, publishedOverrides]
   );
-
-  const ascSortedVisibleFunds = [...fundsWithOverrides].sort((a, b) => Number(a.fundNumber) - Number(b.fundNumber));
 
   const hasActiveSearch = Boolean(searchValue);
   const hasActiveStatusFilter = !isAllStatus;
@@ -142,12 +141,13 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
       return <EmptyState title={FUNDS_ERROR_STATE_TITLE} description={FUNDS_ERROR_STATE_DESCRIPTION} />;
     }
 
-    if (ascSortedVisibleFunds.length > 0) {
+    if (fundsWithOverrides.length > 0) {
       return (
         <FundsTable
-          funds={ascSortedVisibleFunds}
+          funds={fundsWithOverrides}
           hasActiveSearch={hasActiveSearch}
           hasActiveStatusFilter={hasActiveStatusFilter}
+          onDeleted={refetch}
           onPublish={handlePublishRequest}
         />
       );

@@ -26,7 +26,15 @@ export function PlainRow<TGroup, TSub, TPlain>({
         const hasSpan = withGroups && col.id === 'title';
 
         return (
-          <Box key={col.id} sx={styles.plainCell(col.hasRightDivider, col.hasLeftDivider, col.align, hasSpan)}>
+          <Box
+            key={col.id}
+            sx={styles.plainCell(
+              col.hasRightDivider,
+              col.hasLeftDivider,
+              col.align,
+              hasSpan
+            )}
+          >
             {typeof content === 'string' ? (
               <Typography sx={styles.plainCellText(col.align)}>{content}</Typography>
             ) : (

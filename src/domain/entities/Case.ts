@@ -18,6 +18,7 @@ export interface Case {
   caseDescriptions: LocalizedString;
   detailedCaseDescription?: LocalizedString;
   pdfFile?: CasePdfFile | null;
+  order: number;
   status: BaseContentStatuses;
   createdAt: string;
   updatedAt: string;
