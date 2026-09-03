@@ -1,0 +1,20 @@
+query AllCases($filters: CaseFiltersInput) {
+  allCases(filters: $filters) {
+    id
+    fundId
+    descriptionNumber
+    caseNumber
+    caseName {
+      uk
+      en
+    }
+    caseDate {
+      uk
+      en
+    }
+    sheetsNumber
+    status
+    updatedAt
+    createdAt
+  }
+}
