@@ -1,0 +1,12 @@
+{
+  "contactInformation": {
+    "name": { "uk": "Фундація", "en": "FOUNDATION" },
+    "location": { "uk": "Київ, Україна", "en": "Kyiv, Ukraine" },
+    "phone": "+380 000 000 001",
+    "email": "foundation@gmail.com"
+  },
+  "socialNetworks": [
+    { "platform": "facebook", "link": "https://facebook.com/" },
+    { "platform": "instagram", "link": "https://instagram.com/" }
+  ]
+}

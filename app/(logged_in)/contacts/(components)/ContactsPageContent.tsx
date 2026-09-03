@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Typography } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useContacts } from '../../../shared/hooks/use-contacts/useContacts';
 import { useUpsertContacts } from '../../../shared/hooks/use-upsert-contacts/useUpsertContacts';
@@ -15,6 +15,7 @@ import {
   CONTACTS_LOADING,
   type ContactsLocale,
   INIT_LOCALE,
+  INITIAL_CONTACT_INFORMATION,
   type SocialNetworkFormItem
 } from '~/constants/contacts';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
@@ -26,13 +27,18 @@ const ContactsPageContent = () => {
   const { updateContacts } = useUpsertContacts();
 
   const [locale, setLocale] = useState<ContactsLocale>(INIT_LOCALE);
-  const [contactInformation, setContactInformation] = useState<ContactInformation | null>(data?.contactInformation ?? null);
-  const [socialNetworks, setSocialNetworks] = useState<SocialNetworkFormItem[]>(() =>
-    data?.socialNetworks.map((socialNetwork, id) => ({ ...socialNetwork, id })) ?? []
-  );
+  const [contactInformation, setContactInformation] = useState<ContactInformation>(INITIAL_CONTACT_INFORMATION);
+  const [socialNetworks, setSocialNetworks] = useState<SocialNetworkFormItem[]>([]);
+
+  useEffect(() => {
+    if (!data) return;
+
+    setContactInformation(data.contactInformation);
+    setSocialNetworks(data.socialNetworks.map((socialNetwork, id) => ({ ...socialNetwork, id })));
+  }, [data]);
 
   const handleSave = () => {
-    if (contactInformation) updateContacts({ contactInformation, socialNetworks });
+    updateContacts({ contactInformation, socialNetworks });
   };
 
   if (loading) {
@@ -51,9 +57,7 @@ const ContactsPageContent = () => {
     >
       <CollapsibleBlock title="Контакти" defaultExpanded>
         <Box sx={styles.content}>
-          {contactInformation && (
-            <ContactInformationBlock data={contactInformation} locale={locale} onChange={setContactInformation} />
-          )}
+          <ContactInformationBlock data={contactInformation} locale={locale} onChange={setContactInformation} />
           <SocialNetworksBlock items={socialNetworks} onChange={setSocialNetworks} />
         </Box>
       </CollapsibleBlock>

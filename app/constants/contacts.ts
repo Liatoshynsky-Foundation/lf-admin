@@ -44,6 +44,13 @@ export type ContactInformation = {
   email: string;
 };
 
+export const INITIAL_CONTACT_INFORMATION: ContactInformation = {
+  name: { uk: '', en: '' },
+  location: { uk: '', en: '' },
+  phone: '',
+  email: ''
+};
+
 export type ContactsData = {
   contactInformation: ContactInformation;
   socialNetworks: SocialNetworkInput[];

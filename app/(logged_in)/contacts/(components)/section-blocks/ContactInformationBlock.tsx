@@ -53,6 +53,7 @@ export const ContactInformationBlock = ({ data, locale, onChange }: ContactInfor
           label="Електронна адреса"
           value={data.email}
           onChange={(event) => updateField('email', event.target.value)}
+          required
           fullWidth
         />
       </Box>
