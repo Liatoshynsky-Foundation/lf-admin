@@ -40,3 +40,13 @@ export const CASE_VALIDATION_MESSAGES = {
 
   duplicateNumbers: 'Справа з таким номером опису та номером справи вже існує в цьому фонді. Змініть один із номерів.'
 } as const;
+
+export const CASES_LOADING_STATE_TITLE = 'Завантаження справ';
+export const CASES_LOADING_STATE_DESCRIPTION = 'Зачекайте, поки завершиться запит.';
+export const CASES_ERROR_STATE_TITLE = 'Не вдалося завантажити справи';
+export const CASES_ERROR_STATE_DESCRIPTION = 'Спробуйте оновити сторінку або повторити пізніше.';
+export const CASES_EMPTY_STATE_NO_RESULTS_TITLE = 'Результатів немає';
+export const CASES_EMPTY_STATE_NO_RESULTS_DESCRIPTION =
+  'За цими критеріями нічого не знайдено.\nСпробуйте змінити параметри фільтрів або пошуку.';
+export const CASES_EMPTY_STATE_TITLE = 'Справи відсутні';
+export const CASES_EMPTY_STATE_DESCRIPTION = 'Матеріали для цієї вкладки поки відсутні.';

@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 
 import { useArchiveFiltering } from './useArchiveFiltering';
-import { ARCHIVE_STATUS_FILTER_OPTIONS } from '~/constants/archive';
+import { ARCHIVE_SEARCH_PLACEHOLDER, ARCHIVE_STATUS_FILTER_OPTIONS } from '~/constants/archive';
 
 describe('useArchiveFiltering', () => {
   it('should return initial values correctly', () => {
@@ -9,12 +9,14 @@ describe('useArchiveFiltering', () => {
 
     expect(result.current).toStrictEqual({
       activeStatusFilters: [],
+      appliedSearch: '',
       searchProps: {
         search: '',
         options: [],
-        placeholder: 'Пошук за назвою фонду, назвою справи або змістом документів',
+        placeholder: ARCHIVE_SEARCH_PLACEHOLDER,
         maxWidth: '580px',
-        setSearch: expect.any(Function)
+        setSearch: expect.any(Function),
+        onEnter: expect.any(Function)
       },
       statusFilterProps: {
         label: 'Статус',
@@ -65,5 +67,57 @@ describe('useArchiveFiltering', () => {
 
     expect(result.current.statusFilterProps.value).toStrictEqual([]);
     expect(result.current.activeStatusFilters).toEqual([]);
+  });
+
+  describe('appliedSearch', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should not apply the typed search before the debounce delay has passed', () => {
+      const { result } = renderHook(() => useArchiveFiltering());
+
+      act(() => {
+        result.current.searchProps.setSearch('архів');
+      });
+
+      act(() => {
+        jest.advanceTimersByTime(299);
+      });
+
+      expect(result.current.appliedSearch).toBe('');
+    });
+
+    it('should apply the trimmed search once the debounce delay has passed', () => {
+      const { result } = renderHook(() => useArchiveFiltering());
+
+      act(() => {
+        result.current.searchProps.setSearch('  архів  ');
+      });
+
+      act(() => {
+        jest.advanceTimersByTime(300);
+      });
+
+      expect(result.current.appliedSearch).toBe('архів');
+    });
+
+    it('should apply the trimmed search immediately when onEnter is called', () => {
+      const { result } = renderHook(() => useArchiveFiltering());
+
+      act(() => {
+        result.current.searchProps.setSearch('  архів  ');
+      });
+
+      act(() => {
+        result.current.searchProps.onEnter!();
+      });
+
+      expect(result.current.appliedSearch).toBe('архів');
+    });
   });
 });

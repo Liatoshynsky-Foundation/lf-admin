@@ -135,7 +135,7 @@ describe('useGroupContent Hook', () => {
         });
         expect(result.current.groupData?.description.en).toEqual({ type: 'doc', content: [] });
 
-        expect(result.current.groupData?.compositions[0].audios[0].name).toBe('track.mp3');
+        expect(result.current.groupData?.compositions[0].audios[0].name).toBe('');
         expect(result.current.groupData?.compositions[0].notes[0].name).toBe('');
       });
     });
@@ -285,7 +285,7 @@ describe('useGroupContent Hook', () => {
       });
     });
 
-    it('should handle compositions sort with null orders and map null audio names to file name from url', async () => {
+    it('should handle compositions sort with null orders and retain empty audio names', async () => {
       (useOpusById as jest.Mock).mockReturnValue({
         data: {
           opusById: {
@@ -303,7 +303,7 @@ describe('useGroupContent Hook', () => {
 
       await waitFor(() => {
         expect(result.current.groupData?.compositions).toBeDefined();
-        expect(result.current.groupData?.compositions[0].audios[0].name).toBe('audio.mp3');
+        expect(result.current.groupData?.compositions[0].audios[0].name).toBe('');
       });
     });
 

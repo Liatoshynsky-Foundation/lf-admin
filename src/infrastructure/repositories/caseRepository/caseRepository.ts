@@ -40,9 +40,18 @@ const toEntity = (doc: DbCase): Case =>
     status: doc.status
   });
 
+const CASE_SEARCH_FIELDS = [
+  'caseName.uk',
+  'caseName.en',
+  'caseDescriptions.uk',
+  'caseDescriptions.en',
+  'detailedCaseDescription.uk',
+  'detailedCaseDescription.en'
+] as const;
+
 const buildCaseQuery = (filters?: CaseFilters): FilterQuery<DbCase> =>
   combineConditions<DbCase>([
-    buildBaseQuery<DbCase>(filters, ['caseName.uk', 'caseName.en'], 'caseName'),
+    buildBaseQuery<DbCase>(filters, CASE_SEARCH_FIELDS, 'caseName'),
     filters?.fundId ? ({ fundId: filters.fundId } as FilterQuery<DbCase>) : null
   ]);
 

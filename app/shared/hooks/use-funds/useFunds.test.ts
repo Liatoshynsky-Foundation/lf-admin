@@ -196,7 +196,20 @@ describe('useFunds', () => {
 
       expect(mockUseAllFundsQuery).toHaveBeenCalledWith({
         variables: { filters },
-        fetchPolicy: 'network-only'
+        fetchPolicy: 'network-only',
+        skip: undefined
+      });
+    });
+
+    it('should pass skip through to the query when provided', () => {
+      mockUseAllFundsQuery.mockReturnValue({ data: undefined, loading: false, error: undefined });
+
+      renderHook(() => useAllFunds(null, { skip: true }));
+
+      expect(mockUseAllFundsQuery).toHaveBeenCalledWith({
+        variables: { filters: null },
+        fetchPolicy: 'network-only',
+        skip: true
       });
     });
   });
@@ -402,7 +415,7 @@ describe('useFunds', () => {
         expect.objectContaining({
           variables: {
             filters: {
-              fondId: 'fund-1',
+              fundId: 'fund-1',
               statuses: [BaseContentStatuses.Published]
             }
           },

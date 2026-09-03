@@ -34,6 +34,7 @@ const mapFetchedCompositionToForm = (
 	  id: createCompositionId(),
 	  name: sheet.name ?? '',
 	  fileUrl: sheet.url ?? undefined,
+	  fileName: sheet.fileName ?? undefined,
 	  publishDate: sheet.publishDate ?? ''
     }))
   };

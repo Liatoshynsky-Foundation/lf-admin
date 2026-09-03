@@ -205,7 +205,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     const { uk: ukMeta, en: enMeta } = seoValue.meta;
 
     const isTitleInvalid = !adminTitle.trim();
-    const isSeoInvalid = checkIsSeoInvalid(ukMeta, enMeta, publicationType, seoValue.ticketUrl);
+    const isSeoInvalid = checkIsSeoInvalid(ukMeta, enMeta, publicationType, seoValue.ticketUrl, seoValue.ogImage);
     const isPublishDateInvalid = Boolean(publishDate && !publishDate.isValid());
 
     if (isTitleInvalid || isSeoInvalid || isPublishDateInvalid) {
@@ -223,7 +223,10 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       publishedAt: getDateIsoString(publishDate),
       coverImage: {
         src: seoValue.ogImage || adminTitle,
-        alt: { uk: ukMeta.altText?.uk || adminTitle, en: enMeta.altText?.en || adminTitle },
+        alt: {
+          uk: ukMeta.altText?.uk?.trim() || adminTitle,
+          en: enMeta.altText?.en?.trim() || adminTitle
+        },
         caption: { uk: adminTitle, en: adminTitle },
         ...buildCoverImageCropPayload(crop)
       }

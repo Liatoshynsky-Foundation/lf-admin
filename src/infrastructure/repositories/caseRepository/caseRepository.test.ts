@@ -157,13 +157,33 @@ describe('caseRepository', () => {
       lean: jest.fn().mockResolvedValue(resolvedValue)
     });
 
+    const expectedSearchCondition = {
+      $or: [
+        { 'caseName.uk': expect.any(RegExp) },
+        { 'caseName.en': expect.any(RegExp) },
+        { 'caseDescriptions.uk': expect.any(RegExp) },
+        { 'caseDescriptions.en': expect.any(RegExp) },
+        { 'detailedCaseDescription.uk': expect.any(RegExp) },
+        { 'detailedCaseDescription.en': expect.any(RegExp) }
+      ]
+    };
+
     it('should query without a fundId condition when the fundId filter is not provided', async () => {
       findAllMock.mockReturnValue(createMockQueryBuilder([]));
 
       await repository.findAll({ search: 'Справа' });
 
-      expect(findAllMock).toHaveBeenCalledWith({
-        $or: [{ 'caseName.uk': expect.any(RegExp) }, { 'caseName.en': expect.any(RegExp) }]
+      expect(findAllMock).toHaveBeenCalledWith(expectedSearchCondition);
+    });
+
+    it('should search with a case-insensitive regex', async () => {
+      findAllMock.mockReturnValue(createMockQueryBuilder([]));
+
+      await repository.findAll({ search: 'справа' });
+
+      const query = findAllMock.mock.calls[0][0] as { $or: Record<string, RegExp>[] };
+      query.$or.forEach((condition) => {
+        expect(Object.values(condition)[0].flags).toContain('i');
       });
     });
 
@@ -189,10 +209,17 @@ describe('caseRepository', () => {
       await repository.findAll({ fundId: mockFundId, search: 'Справа' });
 
       expect(findAllMock).toHaveBeenCalledWith({
-        $and: [
-          { $or: [{ 'caseName.uk': expect.any(RegExp) }, { 'caseName.en': expect.any(RegExp) }] },
-          { fundId: mockFundId }
-        ]
+        $and: [expectedSearchCondition, { fundId: mockFundId }]
+      });
+    });
+
+    it('should apply both the status and the search conditions when they are combined', async () => {
+      findAllMock.mockReturnValue(createMockQueryBuilder([]));
+
+      await repository.findAll({ search: 'Справа', statuses: [BaseContentStatuses.Published] });
+
+      expect(findAllMock).toHaveBeenCalledWith({
+        $and: [{ status: { $in: [BaseContentStatuses.Published] } }, expectedSearchCondition]
       });
     });
   });
