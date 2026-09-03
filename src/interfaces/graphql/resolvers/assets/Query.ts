@@ -1,4 +1,6 @@
 import { endpointRepositoryHandler } from '../helpers';
+import type { ICompositionRepository } from '~/src/domain/repositories/compositionRepository';
+import type { AssetEntity } from '~/src/infrastructure/repositories/assetRepository/assetRepository';
 import { SortOrder } from '~/types/enums/common.enums';
 import { AssetType } from '~/types/graphql/generated/graphql';
 
@@ -39,9 +41,61 @@ export interface DeleteAssetArgs {
 }
 
 const endpointHandler = endpointRepositoryHandler('assetsRepository');
+const OBJECT_ID = /^[a-f\d]{24}$/i;
+
+type AssetUsageRef = AssetEntity['usageRefs'][number];
+type AssetWithCompositionNames = Omit<AssetEntity, 'usageRefs'> & {
+  usageRefs: Array<AssetUsageRef & { compositionName?: string }>;
+};
+
+const getCompositionId = (ref: AssetUsageRef): string | undefined =>
+  ref.compositionId ?? (ref.pageId && OBJECT_ID.test(ref.pageId) ? ref.pageId : undefined);
+
+const enrichAssetUsageRefs = async (
+  assets: AssetEntity[],
+  compositionsRepository: ICompositionRepository
+): Promise<AssetWithCompositionNames[]> => {
+  const compositionIds = [
+    ...new Set(
+      assets.flatMap((asset) =>
+        asset.usageRefs.flatMap((ref) => {
+          const id = getCompositionId(ref);
+          return id ? [id] : [];
+        })
+      )
+    )
+  ];
+
+  if (compositionIds.length === 0) {
+    return assets;
+  }
+
+  const compositions = await compositionsRepository.findByIds(compositionIds);
+  const namesById = new Map(
+    compositions.map((composition) => [
+      composition.id,
+      composition.name.uk || composition.name.en || composition.id
+    ])
+  );
+
+  return assets.map((asset) => ({
+    ...asset,
+    usageRefs: asset.usageRefs.map((ref) => {
+      const compositionId = getCompositionId(ref);
+
+      return compositionId
+        ? { ...ref, compositionName: namesById.get(compositionId) }
+        : ref;
+    })
+  }));
+};
 
 export const AssetsQuery = {
-  allAssets: endpointHandler<AllAssetsArgs, unknown>(async ({ args: { filters }, repo }) => repo.findAll(filters))
+  allAssets: endpointHandler<AllAssetsArgs, unknown>(async ({ args: { filters }, repo, requestContainer }) => {
+    const assets = await repo.findAll(filters);
+
+    return enrichAssetUsageRefs(assets, requestContainer.cradle.compositionsRepository);
+  })
 };
 
 export const AssetsMutation = {

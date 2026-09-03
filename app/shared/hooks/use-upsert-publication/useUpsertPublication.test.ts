@@ -319,7 +319,7 @@ describe('useUpsertPublication Hook', () => {
         });
       });
 
-      it('should parse numeric timestamp string dates via safeParseDate', async () => {
+      it('should parse numeric timestamp string dates', async () => {
         const fetchedNewsData: FetchedPublicationData = {
           adminTitle: 'Timestamp News',
           newsDate: '1704110400000',
@@ -433,6 +433,22 @@ describe('useUpsertPublication Hook', () => {
       expect(mockCreateNews).not.toHaveBeenCalled();
     });
 
+    it('should block save if publication date is invalid', async () => {
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
+
+      act(() => {
+        result.current.setAdminTitle('Valid News Title');
+        result.current.setSeoValue(createValidSeoState('news'));
+        result.current.setPublishDate(dayjs('invalid-date'));
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(mockCreateNews).not.toHaveBeenCalled();
+    });
+
     it('should block save if Event type lacks valid ticket URLs', async () => {
       const { result } = renderHook(() => useUpsertPublication({ type: 'events' }));
 
@@ -445,6 +461,26 @@ describe('useUpsertPublication Hook', () => {
 
       act(() => {
         result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(result.current.forceShowErrors).toBe(true);
+      expect(mockCreateEvent).not.toHaveBeenCalled();
+    });
+
+    it('should block save when preview image is uploaded without alt text', async () => {
+      const { result } = renderHook(() => useUpsertPublication({ type: 'events' }));
+
+      act(() => {
+        result.current.setAdminTitle('Event Title');
+        const seoState = createValidSeoState('events');
+        seoState.ogImage = 'https://example.com/image.jpg';
+        seoState.meta.uk.altText = { uk: '', en: '' };
+        seoState.meta.en.altText = { uk: '', en: '' };
+        result.current.setSeoValue(seoState);
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Published);
       });
 
       expect(result.current.forceShowErrors).toBe(true);
@@ -804,6 +840,32 @@ describe('useUpsertPublication Hook', () => {
 
       expect(result.current.publishDate).toBeNull();
       expect(result.current.hasUnsavedChanges).toBe(false);
+    });
+
+    it('should not crash when edited publishDate becomes invalid', async () => {
+      const fetchedNewsData: FetchedPublicationData = {
+        adminTitle: 'Fetched Title',
+        newsDate: '2024-01-01T12:00:00Z',
+        title: { uk: 'UK', en: 'EN' },
+        description: { uk: 'UK D', en: 'EN D' },
+        allowIndexation: { uk: true, en: true },
+        coverImage: { src: 'img.png', crop: null, alt: { uk: '', en: '' } }
+      };
+
+      mockNewsQuery.mockReturnValue({ data: { newsById: fetchedNewsData }, loading: false });
+
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news', id: '123' }));
+
+      await waitFor(() => {
+        expect(result.current.hasUnsavedChanges).toBe(false);
+      });
+
+      act(() => {
+        result.current.setPublishDate(dayjs('invalid-date'));
+      });
+
+      expect(result.current.publishDate?.isValid()).toBe(false);
+      expect(result.current.hasUnsavedChanges).toBe(true);
     });
   });
 });

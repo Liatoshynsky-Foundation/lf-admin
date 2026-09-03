@@ -1,6 +1,6 @@
 'use client';
 
-import { Box } from '@mui/material';
+import { Box, SxProps, Theme } from '@mui/material';
 
 import { styles } from './ConfigurableList.styles';
 import ItemWrapper from '~/components/configurable-list/item-wrapper/ItemWrapper';
@@ -11,6 +11,8 @@ import { ConfigurableListItem } from '~/types/accordionBlocks';
 export interface RenderItemParams<T> {
   item: T;
   onChange: (newValue: T) => void;
+  onDelete: () => void;
+  index: number;
 }
 
 export interface ConfigurableListProps<T extends ConfigurableListItem> {
@@ -23,6 +25,7 @@ export interface ConfigurableListProps<T extends ConfigurableListItem> {
   onDelete: (id: T['id']) => void;
   separator?: boolean;
   allowFirstItemDeletion?: boolean;
+  addButtonSx?: SxProps<Theme>;
 }
 
 const ConfigurableList = <T extends ConfigurableListItem>({
@@ -34,7 +37,8 @@ const ConfigurableList = <T extends ConfigurableListItem>({
   items,
   addBtnLabel,
   editable,
-  allowFirstItemDeletion = false
+  allowFirstItemDeletion = false,
+  addButtonSx
 }: ConfigurableListProps<T>) => {
   const withSeparator = (index: number) => Boolean(separator && index < items.length - 1);
 
@@ -47,15 +51,23 @@ const ConfigurableList = <T extends ConfigurableListItem>({
     >
       {renderItem({
         item,
-        onChange: (newValue) => onChange(newValue)
+        onChange: (newValue) => onChange(newValue),
+        onDelete: () => onDelete(item.id),
+        index
       })}
     </ItemWrapper>
   ));
 
   return (
-    <Box>
+    <Box sx={addButtonSx}>
       <Box sx={styles.container}>{list}</Box>
-      <Button startIcon={<PlusIcon />} variant="outlined" color="primary" onClick={onCreate}>
+      <Button
+        sx={{ width: 'fit-content', mx: 'auto' }}
+        startIcon={<PlusIcon />}
+        variant="outlined"
+        color="primary"
+        onClick={onCreate}
+      >
         {addBtnLabel}
       </Button>
     </Box>

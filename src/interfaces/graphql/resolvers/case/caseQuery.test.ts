@@ -70,15 +70,6 @@ describe('CaseQuery Resolvers', () => {
       });
     });
 
-    it('should map legacy fondId filter to fundId', async () => {
-      const filters: FiltersGQLInput = {
-        fondId: 'fond-id'
-      };
-
-      await CaseQuery.allCases({}, { filters }, authorizedContext);
-
-      expect(mockRepo.findAll).toHaveBeenCalledWith(expect.objectContaining({ fundId: 'fond-id' }));
-    });
   });
 
   describe('paginatedCases', () => {

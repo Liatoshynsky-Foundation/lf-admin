@@ -20,7 +20,7 @@ input CasePdfFileInput {
 
 type Case {
     id: ID!
-    fondId: ID!
+    fundId: ID!
     descriptionNumber: Int!
     caseNumber: Int!
     caseName: LocalizedString!
@@ -36,7 +36,7 @@ type Case {
 }
 
 input CreateCaseInput {
-    fondId: ID!
+    fundId: ID!
     descriptionNumber: Int!
     caseNumber: Int!
     caseName: JSON!
@@ -49,7 +49,7 @@ input CreateCaseInput {
 }
 
 input UpdateCaseInput {
-    fondId: ID
+    fundId: ID
     descriptionNumber: Int
     caseNumber: Int
     caseName: JSON
@@ -69,13 +69,13 @@ type PaginatedCases {
 }
 
 input CaseFiltersInput {
-    fondId: ID
-    statuses: [CaseStatus!]
+    fundId: ID
     limit: Int
     skip: Int
     search: String
     languages: [ContentLanguage!]
     sort: [SortOptions!]
+    statuses: [CaseStatus!]
 }
 
 extend type Query {

@@ -236,6 +236,14 @@ describe('OpusRepository', () => {
 
       await expect(repository.create(createInput)).rejects.toThrow(opusServiceErrors.OPUS_ALREADY_EXISTS);
     });
+
+    it('keeps non-duplicate database errors', async () => {
+      const error = new Error('database unavailable');
+      findOneMock.mockReturnValue(createQueryMock(null));
+      createMock.mockRejectedValue(error);
+
+      await expect(repository.create(createInput)).rejects.toThrow(error);
+    });
   });
 
   describe('update', () => {
@@ -247,6 +255,13 @@ describe('OpusRepository', () => {
       await expect(repository.update(MOCK_ID, { number: OPUS_NUMBER_2 })).rejects.toThrow(
         opusServiceErrors.OPUS_ALREADY_EXISTS
       );
+    });
+
+    it('keeps non-duplicate update errors', async () => {
+      const error = new Error('update unavailable');
+      findByIdAndUpdateMock.mockReturnValue({ lean: jest.fn().mockRejectedValue(error) });
+
+      await expect(repository.update(MOCK_ID, { number: OPUS_NUMBER_2 })).rejects.toThrow(error);
     });
   });
 
@@ -424,6 +439,15 @@ describe('OpusRepository', () => {
       });
 
       expect(chain.sort).toHaveBeenCalledWith({ number: -1, additionalText: -1 });
+    });
+
+    it('uses the base sort for fields other than opus number', async () => {
+      const chain = mockChain();
+      findMock.mockReturnValue(chain);
+
+      await repository.findAll({ sort: [{ sortBy: 'createdAt', sortOrder: SortOrder.Asc }] });
+
+      expect(chain.sort).toHaveBeenCalledWith({ createdAt: 1 });
     });
 
     it('applies fallback logic for numberKind === Op inside buildQuery', async () => {

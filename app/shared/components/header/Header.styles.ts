@@ -1,3 +1,5 @@
+import { SxProps, Theme } from '@mui/material';
+
 export const styles = {
   container: {
     minHeight: '172px',
@@ -10,11 +12,11 @@ export const styles = {
     flexWrap: 'wrap',
     gap: 2
   },
-  
+
   actionButton: {
     '&.Mui-disabled': {
       cursor: 'not-allowed',
       pointerEvents: 'auto'
     }
   }
-};
+} satisfies Record<string, SxProps<Theme>>;

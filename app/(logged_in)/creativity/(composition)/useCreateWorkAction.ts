@@ -7,7 +7,6 @@ import toast from 'react-hot-toast';
 import { CompositionErrors } from '~/constants/errors';
 import { COMPOSITION_MUTATION_RESULTS } from '~/constants/opus';
 import { safeMutate } from '~/lib/utils/safeMutate';
-import { resolveMediaName } from '~/shared/hooks/use-group-content/compositionMedia';
 import { CreateCompositionInput, CreateCompositionMutation, CreateCompositionMutationVariables, useCreateCompositionMutation } from '~/types/graphql/generated/graphql';
 import type { OpusCompositionData } from '~/types/opus';
 
@@ -48,15 +47,13 @@ const mapToCreateInput = (work: OpusCompositionData): CreateCompositionInput => 
     name: { uk: work.name, en: work.name },
     year: isValidYear ? parsedYear : undefined,
     genre: work.genre || undefined,
-    audioAvailable: work.audios.length > 0,
-    sheetAvailable: work.notes.some((n) => Boolean(n.fileUrl)),
     audios: work.audios.map((a) => ({
-      name: resolveMediaName(a),
+      name: a.name.trim(),
       url: a.fileUrl
     })),
     sheetMusic: work.notes.map((n) => ({
-      name: resolveMediaName(n),
-      publishDate: n.publishDate || '',
+      name: n.name?.trim() || undefined,
+      publishDate: n.publishDate?.trim() || undefined,
       url: n.fileUrl || null,
       isFree: n.isFree ?? false,
       dateUploaded: new Date().toISOString()

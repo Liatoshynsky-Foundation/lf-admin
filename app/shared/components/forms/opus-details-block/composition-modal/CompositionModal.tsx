@@ -14,11 +14,17 @@ import {
   COMPOSITION_VALIDATION_MESSAGES,
   COMPOSITION_YEAR_LIMITS
 } from '~/constants/opus';
-import { formatPublishDate, formatPublishDateForSave, formatPublishDateInput, publishDateToDayjs } from '~/lib/utils/date';
+import {
+  formatPublishDate,
+  formatPublishDateForSave,
+  formatPublishDateInput,
+  publishDateToDayjs
+} from '~/lib/utils/date';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import { isAudioUploadFile, isPdfUploadFile } from '~/shared/components/media-modal/MediaModal.utils';
 import { createCompositionId } from '~/shared/hooks/use-upsert-opus/useUpsertOpus';
+import { displayNameFromFile } from '~/src/shared/utils/assets/assetFilename';
 import type { OpusCompositionData, OpusMediaFileData } from '~/types/opus';
 import { compositionGenreSchema, compositionTitleSchema, compositionYearSchema } from '~/validators/composition.schema';
 
@@ -44,16 +50,6 @@ const emptyComposition = (): OpusCompositionData => ({
   notes: []
 });
 
-const fileNameFromUrl = (url?: string): string => {
-  if (!url) {
-    return '';
-  }
-
-  const segment = url.split('/').pop() as string;
-
-  return decodeURIComponent(segment.split('?')[0]);
-};
-
 export default function CompositionModal({
   open,
   mode,
@@ -69,6 +65,7 @@ export default function CompositionModal({
   const [yearError, setYearError] = useState('');
   const [noteErrors, setNoteErrors] = useState<NoteErrors>({});
   const [mediaTarget, setMediaTarget] = useState<MediaTarget | null>(null);
+  const [assetErrorTarget, setAssetErrorTarget] = useState<MediaTarget | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -78,6 +75,7 @@ export default function CompositionModal({
       setYearError('');
       setNoteErrors({});
       setMediaTarget(null);
+      setAssetErrorTarget(null);
     }
   }, [open, initialValue]);
 
@@ -118,6 +116,8 @@ export default function CompositionModal({
       }
       return updated;
     });
+
+    onClearError?.();
   };
 
   const removeMediaRow = (field: 'audios' | 'notes', id: string): void => {
@@ -134,13 +134,13 @@ export default function CompositionModal({
   const clearNoteFile = (id: string): void => {
     setComposition((prev) => ({
       ...prev,
-      notes: prev.notes.map((row) => (row.id === id ? { ...row, fileUrl: undefined } : row))
+      notes: prev.notes.map((row) => (row.id === id ? { ...row, fileUrl: undefined, fileName: undefined } : row))
     }));
   };
 
   const handleMediaApply = (result: MediaModalResult): void => {
     const url = result.uploadResult?.url ?? (result.selected.kind === 'upload' ? undefined : result.selected.src);
-    const fileName = result.uploadResult?.originalName ?? result.selected.fileName;
+    const fileName = result.uploadResult?.originalName ?? displayNameFromFile(result.selected.fileName, url);
 
     if (!url || !mediaTarget) {
       setMediaTarget(null);
@@ -148,13 +148,16 @@ export default function CompositionModal({
       return;
     }
 
+    onClearError?.();
+    setAssetErrorTarget(mediaTarget);
+
     if (mediaTarget.field === 'audios') {
       setComposition((prev) => ({
         ...prev,
         audios: [...prev.audios, { id: createCompositionId(), name: fileName, fileUrl: url }]
       }));
     } else if (mediaTarget.rowId) {
-      updateNoteRow(mediaTarget.rowId, { fileUrl: url });
+      updateNoteRow(mediaTarget.rowId, { fileUrl: url, fileName });
     }
 
     setMediaTarget(null);
@@ -248,8 +251,8 @@ export default function CompositionModal({
           label={`${COMPOSITION_MODAL_LABELS.name} *`}
           value={composition.name}
           onChange={(event) => updateField('name', event.target.value.slice(0, COMPOSITION_TITLE_LIMITS.max))}
-          error={Boolean(titleError || error)}
-          helperText={titleError || error}
+          error={Boolean(titleError)}
+          helperText={titleError}
           fullWidth
           size="small"
           sx={styles.field}
@@ -313,16 +316,19 @@ export default function CompositionModal({
           </Box>
 
           {composition.audios.map((audio) => (
-            <Box key={audio.id} sx={styles.fileChip}>
-              <Music size={20} strokeWidth={1.5} />
-              <Typography sx={styles.fileChipName}>{audio.name || fileNameFromUrl(audio.fileUrl)}</Typography>
-              <IconButton
-                aria-label={COMPOSITION_MODAL_TEXTS.deleteAriaLabel}
-                onClick={() => removeMediaRow('audios', audio.id)}
-                sx={styles.mediaIcon}
-              >
-                <Trash2 size={20} strokeWidth={1.5} />
-              </IconButton>
+            <Box key={audio.id}>
+              <Box sx={styles.fileChip}>
+                <Music size={20} strokeWidth={1.5} />
+                <Typography sx={styles.fileChipName}>{displayNameFromFile(audio.name, audio.fileUrl)}</Typography>
+                <IconButton
+                  aria-label={COMPOSITION_MODAL_TEXTS.deleteAriaLabel}
+                  onClick={() => removeMediaRow('audios', audio.id)}
+                  sx={styles.mediaIcon}
+                >
+                  <Trash2 size={20} strokeWidth={1.5} />
+                </IconButton>
+              </Box>
+              {error && assetErrorTarget?.field === 'audios' && <Typography sx={styles.fileError}>{error}</Typography>}
             </Box>
           ))}
         </Box>
@@ -381,16 +387,23 @@ export default function CompositionModal({
                 </Box>
 
                 {note.fileUrl && (
-                  <Box sx={styles.fileChip}>
-                    <FileText size={20} strokeWidth={1.5} />
-                    <Typography sx={styles.fileChipName}>{fileNameFromUrl(note.fileUrl)}</Typography>
-                    <IconButton
-                      aria-label={COMPOSITION_MODAL_TEXTS.deleteFileAriaLabel}
-                      onClick={() => clearNoteFile(note.id)}
-                      sx={styles.mediaIcon}
-                    >
-                      <Trash2 size={20} strokeWidth={1.5} />
-                    </IconButton>
+                  <Box>
+                    <Box sx={styles.fileChip}>
+                      <FileText size={20} strokeWidth={1.5} />
+                      <Typography sx={styles.fileChipName}>
+                        {displayNameFromFile(note.fileName, note.fileUrl)}
+                      </Typography>
+                      <IconButton
+                        aria-label={COMPOSITION_MODAL_TEXTS.deleteFileAriaLabel}
+                        onClick={() => clearNoteFile(note.id)}
+                        sx={styles.mediaIcon}
+                      >
+                        <Trash2 size={20} strokeWidth={1.5} />
+                      </IconButton>
+                    </Box>
+                    {error && assetErrorTarget?.field === 'notes' && assetErrorTarget.rowId === note.id && (
+                      <Typography sx={styles.fileError}>{error}</Typography>
+                    )}
                   </Box>
                 )}
               </Box>

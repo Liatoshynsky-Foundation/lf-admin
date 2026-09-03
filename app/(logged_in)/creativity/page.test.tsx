@@ -134,9 +134,11 @@ jest.mock('./(composition)/useDeleteWorkAction', () => ({
     deleteComposition: null,
     setDeleteComposition: jest.fn(),
     handleConfirmCompositionDelete: jest.fn(),
+    isDeleting: false,
     unlinkComposition: null,
     setUnlinkComposition: jest.fn(),
-    handleConfirmUnlinkComposition: jest.fn()
+    handleConfirmUnlinkComposition: jest.fn(),
+    isUnlinking: false
   }))
 }));
 
@@ -144,7 +146,8 @@ jest.mock('./(composition)/useUpdateWorkAction', () => ({
   useUpdateWorkAction: jest.fn(() => ({
     handleUpdateComposition: jest.fn(),
     error: null,
-    clearError: jest.fn()
+    clearError: jest.fn(),
+    isUpdating: false
   }))
 }));
 

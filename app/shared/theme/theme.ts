@@ -1290,7 +1290,7 @@ export const createAdminTheme = () =>
           ul: {
             display: 'flex',
             alignItems: 'center',
-            gap: '4px',           
+            gap: '4px',
             flexWrap: 'nowrap',
           },
         },
@@ -1300,7 +1300,7 @@ export const createAdminTheme = () =>
           root: ({ ownerState }) => ({
             borderRadius: '50%',
             minWidth: 40,
-            margin: 0, 
+            margin: 0,
             height: 40,
             fontWeight: 500,
             lineHeight: 1.5,
@@ -1315,10 +1315,10 @@ export const createAdminTheme = () =>
               padding: '8px',
               color: mainHexPalette.black,
               '& path': {
-                stroke: 'currentColor', 
+                stroke: 'currentColor',
               },
             }),
-           
+
             ...(ownerState.type === 'previous' && {
               marginRight: '28px'
             }),

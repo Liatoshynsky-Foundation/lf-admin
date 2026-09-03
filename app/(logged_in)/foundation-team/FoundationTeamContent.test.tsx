@@ -1,11 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { FoundationFounders } from './FoundationFounders';
+import { FoundationTeamContent } from './FoundationTeamContent';
 import { createDocNode } from '~/__mocks__/utils';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { TeamMemberWithId } from '~/types/store/pages/about-us/blocks/foundationFounderBlock';
-
 
 export interface MockContributorCardProps {
   readonly contributor: TeamMemberWithId;
@@ -52,7 +51,7 @@ jest.mock('~/components/contributor-card/ContributorCard', () => ({
       </button>
       <button
         data-testid={`trigger-member-photo-change-${contributor.id}`}
-        onClick={() => onChangePhoto({ src: 'new-photo.jpg', alt: {}, caption: {}, generatedSrc: '' })}
+        onClick={() => onChangePhoto({ src: 'new-photo.jpg', alt: {}, generatedSrc: '' })}
       >
         Change Photo
       </button>
@@ -61,14 +60,25 @@ jest.mock('~/components/contributor-card/ContributorCard', () => ({
 }));
 
 const TARGET_MEMBER_ID = 'target-member-1';
+const OTHER_MEMBER_ID = 'other-member-id';
 
-beforeAll(() => {
-  globalThis.crypto.randomUUID = jest.fn(() => 'test-id') as unknown as typeof crypto.randomUUID;
-});
+jest.mock('uuid', () => ({
+  v4: jest.fn(() => 'test-id')
+}));
 
 const mockIntroJson = createDocNode('Вступ');
 const mockListTitleJson = createDocNode('Список');
 const mockMemberNameJson = createDocNode('Тест');
+
+const createMockMember = (id: string): TeamMemberWithId => ({
+  id,
+  name: { uk: mockMemberNameJson, en: {} },
+  description: { uk: {}, en: {} },
+  photo: { src: '', alt: { uk: {}, en: {} }, generatedSrc: '' }
+});
+
+const mockTargetMember = createMockMember(TARGET_MEMBER_ID);
+const mockOtherMember = createMockMember(OTHER_MEMBER_ID);
 
 const defaultMockBlock = {
   titleText: { uk: mockIntroJson, en: { type: 'doc', content: [] } },
@@ -78,25 +88,23 @@ const defaultMockBlock = {
 
 const populatedMockBlock = {
   ...defaultMockBlock,
-  members: [
-    {
-      id: TARGET_MEMBER_ID,
-      name: { uk: mockMemberNameJson, en: {} },
-      description: { uk: {}, en: {} },
-      photo: { src: '', alt: {}, caption: {}, generatedSrc: '' }
-    }
-  ] as TeamMemberWithId[]
+  members: [mockTargetMember]
 };
 
-const runSimulation = (blockData: unknown, testidToClick?: string) => {
+const multiMemberBlock = {
+  ...defaultMockBlock,
+  members: [mockTargetMember, mockOtherMember]
+};
+
+const runSimulation = (blockData: typeof defaultMockBlock | null, testidToClick?: string) => {
   usePageBlockMock.mockReturnValue({ block: blockData });
-  render(<FoundationFounders />);
+  render(<FoundationTeamContent />);
   if (testidToClick) {
     fireEvent.click(screen.getByTestId(testidToClick));
   }
 };
 
-describe('FoundationFounders', () => {
+describe('FoundationTeamContent', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -107,47 +115,11 @@ describe('FoundationFounders', () => {
     expect(document.querySelector('.MuiSkeleton-root')).toBeInTheDocument();
   });
 
-  it('should verify initial layout textfield rich text payloads match serialization expectations', () => {
-    runSimulation(defaultMockBlock);
 
-    expect(screen.getByTestId('textfield-json-Вступний текст секції')).toHaveTextContent(JSON.stringify(mockIntroJson));
-    expect(screen.getByTestId('textfield-json-Заголовок секції')).toHaveTextContent(JSON.stringify(mockListTitleJson));
-  });
-
-  it('should call toggleBlockVisibility with pageId and blockId when the visibility toggle is clicked', () => {
-    runSimulation(defaultMockBlock, 'collapsible-block-toggle-visibility');
-
-    expect(toggleBlockVisibilityMock).toHaveBeenCalledWith(PAGE_IDS.ABOUT_US, BLOCK_IDS.FOUNDATION_FOUNDERS);
-  });
-
-  it.each([
-    ['titleText', 'Вступний текст секції', 'titleText'],
-    ['listTitle', 'Заголовок секції', 'listTitle']
-  ])('should mark %s as invalid after blur when it is empty, and clear the flag on unmount', (_label, fieldLabel, blockField) => {
-    const emptyBlock = { ...defaultMockBlock, [blockField]: { uk: { type: 'doc', content: [] } } };
-    usePageBlockMock.mockReturnValue({ block: emptyBlock });
-
-    const { unmount } = render(<FoundationFounders />);
-
-    fireEvent.click(screen.getByTestId(`trigger-blur-${fieldLabel}`));
-
-    expect(screen.getByTestId(`textfield-error-${fieldLabel}`)).toBeInTheDocument();
-    expect(setFieldValidityMock).toHaveBeenCalledWith(
-      `${PAGE_IDS.ABOUT_US}:${BLOCK_IDS.FOUNDATION_FOUNDERS}:${blockField}`,
-      true
-    );
-
-    unmount();
-
-    expect(setFieldValidityMock).toHaveBeenCalledWith(
-      `${PAGE_IDS.ABOUT_US}:${BLOCK_IDS.FOUNDATION_FOUNDERS}:${blockField}`,
-      false
-    );
-  });
 
   it('should update member name, description, and photo via ContributorCard callbacks', () => {
     usePageBlockMock.mockReturnValue({ block: populatedMockBlock });
-    render(<FoundationFounders />);
+    render(<FoundationTeamContent />);
 
     fireEvent.click(screen.getByTestId(`trigger-member-name-change-${TARGET_MEMBER_ID}`));
     expect(setFieldMock).toHaveBeenCalledWith(
@@ -190,19 +162,9 @@ describe('FoundationFounders', () => {
   });
 
   it('should leave unrelated members untouched when updating a single member in a multi-member list', () => {
-    const otherMember = {
-      id: 'other-member-id',
-      name: { uk: mockMemberNameJson, en: {} },
-      description: { uk: {}, en: {} },
-      photo: { src: '', alt: {}, caption: {}, generatedSrc: '' }
-    };
-    const multiMemberBlock = {
-      ...defaultMockBlock,
-      members: [populatedMockBlock.members[0], otherMember] as TeamMemberWithId[]
-    };
     usePageBlockMock.mockReturnValue({ block: multiMemberBlock });
 
-    render(<FoundationFounders />);
+    render(<FoundationTeamContent />);
     fireEvent.click(screen.getByTestId(`trigger-member-name-change-${TARGET_MEMBER_ID}`));
 
     expect(setFieldMock).toHaveBeenCalledWith(
@@ -214,26 +176,12 @@ describe('FoundationFounders', () => {
           id: TARGET_MEMBER_ID,
           name: expect.objectContaining({ uk: createDocNode('Updated Member Name') })
         }),
-        otherMember
+        mockOtherMember
       ]
     );
   });
 
   it.each([
-    [
-      'intro section text fields',
-      defaultMockBlock,
-      'trigger-change-Вступний текст секції',
-      'titleText',
-      expect.objectContaining({ uk: createDocNode('Updated Вступний текст секції') })
-    ],
-    [
-      'list structural headers',
-      defaultMockBlock,
-      'trigger-change-Заголовок секції',
-      'listTitle',
-      expect.objectContaining({ uk: createDocNode('Updated Заголовок секції') })
-    ],
     [
       'clean localized item layout additions',
       defaultMockBlock,
@@ -242,18 +190,18 @@ describe('FoundationFounders', () => {
       expect.arrayContaining([
         expect.objectContaining({
           id: 'test-id',
-          name: { uk: {}, en: {} },
-          description: { uk: {}, en: {} },
+          name: { uk: { type: 'doc', content: [] }, en: { type: 'doc', content: [] } },
+          description: { uk: { type: 'doc', content: [] }, en: { type: 'doc', content: [] } },
           photo: expect.objectContaining({ src: '' })
         })
       ])
     ],
     [
       'targeted item removal matrices',
-      populatedMockBlock,
+      multiMemberBlock,
       `delete-${TARGET_MEMBER_ID}`,
       'members',
-      []
+      [mockOtherMember]
     ]
   ])(
     'should correctly dispatch setField parameters when modifying %s',
@@ -269,3 +217,4 @@ describe('FoundationFounders', () => {
     }
   );
 });
+
