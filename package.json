@@ -9,6 +9,7 @@
     "lint": "next lint",
     "lint:fix": "npx eslint . --fix",
     "test": "jest",
+    "test:lite": "jest --maxWorkers=50%",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:debug-handles": "jest --detectOpenHandles --no-forceExit",

@@ -23,7 +23,7 @@ export const NAVIGATION_DATA = {
       element: { title: 'Секції сайту', iconSrc: 'siteMap' },
       collapseElements: [
         { title: 'Часті запитання', href: '', disabled: true },
-        { title: 'Команда фундації', href: '', disabled: true },
+        { title: 'Команда фундації', href: '/foundation-team' },
         { title: 'Контакти', href: '/contacts', disabled: true },
         { title: 'Футер', href: '', disabled: true }
       ]

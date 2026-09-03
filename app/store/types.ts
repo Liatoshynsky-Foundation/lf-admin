@@ -26,6 +26,7 @@ export interface AdminUserState {
 export interface EditState {
   isChanged: boolean;
   isInitialized: boolean;
+  showValidationErrors: boolean;
   initializedPages: Record<string, boolean>;
 
   invalidFields: Record<string, boolean>;
@@ -74,6 +75,7 @@ export interface EditState {
   saveAsDraft: (pageId: string) => void;
   publishPage: (pageId: string) => void;
   discardChanges: (pageId: string) => void;
+  setShowValidationErrors: (show: boolean) => void;
 }
 
 export interface NavigationState {

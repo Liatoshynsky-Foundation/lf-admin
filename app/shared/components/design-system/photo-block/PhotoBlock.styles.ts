@@ -1,6 +1,9 @@
 export const PREVIEW_W = 196;
 export const PREVIEW_H = 120;
 
+const ELIPSE_PREVIEW_W = 220;
+const ELIPSE_PREVIEW_H = 197;
+
 export const styles = {
   container: {
     width: '100%'
@@ -12,7 +15,7 @@ export const styles = {
 
   imageBlock: {
     display: 'flex',
-    gap: 3,
+    gap: 4,
     alignItems: 'flex-start',
     minWidth: '366px'
   },
@@ -36,8 +39,7 @@ export const styles = {
     flex: '1',
     minWidth: 0,
     display: 'flex',
-    flexDirection: 'column',
-    gap: 2
+    flexDirection: 'column'
   },
 
   textStack: {
@@ -49,11 +51,9 @@ export const styles = {
     gap: '4px',
     minWidth: 0
   },
-
-  imageOvalPreview: {
-    objectFit: 'cover',
-    maxWidth: '150px',
-    maxHeight: '136px',
+  imageElipsePreview: {
+    width: `${ELIPSE_PREVIEW_W}px`,
+    height: `${ELIPSE_PREVIEW_H}px`,
     borderRadius: '60% 40% 60% 40% / 55% 45% 55% 45%'
   },
 
