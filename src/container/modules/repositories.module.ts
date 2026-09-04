@@ -21,9 +21,12 @@ import { PageRepository } from '~/infrastructure/repositories/pageRepository/pag
 import { RateLimitRepository } from '~/infrastructure/repositories/rateLimitRepository/rateLimitRepository';
 import { RefreshTokenRepository } from '~/infrastructure/repositories/refreshTokenRepository/refreshTokenRepository';
 import CaseModel from '~/src/infrastructure/models/case.model';
+import { BrandingInfo } from '~/src/infrastructure/models/foundation-info/foundationInfoBranding';
+import { ContactInfo } from '~/src/infrastructure/models/foundation-info/foundationInfoContact';
 import FundModel from '~/src/infrastructure/models/fund.model';
 import { MediaMentionModel } from '~/src/infrastructure/models/mediaMention.model';
 import { CaseRepository } from '~/src/infrastructure/repositories/caseRepository/caseRepository';
+import { ContactsRepository } from '~/src/infrastructure/repositories/contactsRepository/contactsRepository';
 import { FundRepository } from '~/src/infrastructure/repositories/fundRepository/fundRepository';
 import { createFundLoader } from '~/src/interfaces/graphql/resolvers/case/fundLoader';
 
@@ -40,6 +43,7 @@ export type RepositoriesModule = {
   compositionsRepository: ReturnType<typeof CompositionRepository>;
   fundRepository: ReturnType<typeof FundRepository>;
   caseRepository: ReturnType<typeof CaseRepository>;
+  contactsRepository: ReturnType<typeof ContactsRepository>;
   fundLoader: ReturnType<typeof createFundLoader>;
 };
 
@@ -57,6 +61,8 @@ export const registerRepositories = (container: AwilixContainer) => {
     CategoryModel: asValue(CategoryModel),
     FundModel: asValue(FundModel),
     CaseModel: asValue(CaseModel),
+    ContactInfo: asValue(ContactInfo),
+    BrandingInfo: asValue(BrandingInfo),
 
     RateLimitModel: asValue(RateLimit),
 
@@ -73,6 +79,7 @@ export const registerRepositories = (container: AwilixContainer) => {
     rateLimitRepository: asFunction(RateLimitRepository).scoped(),
     fundRepository: asFunction(FundRepository).scoped(),
     caseRepository: asFunction(CaseRepository).scoped(),
-    fundLoader: asFunction(createFundLoader).scoped()
+    fundLoader: asFunction(createFundLoader).scoped(),
+    contactsRepository: asFunction(ContactsRepository).scoped(),
   });
 };

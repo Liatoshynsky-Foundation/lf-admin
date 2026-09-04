@@ -80,3 +80,7 @@ export const MediaMentionsServiceErrors = {
   INVALID_ID: newError('The provided ID is invalid'),
   NO_PUBLISHED_MEDIA: newError('No published media mentions found')
 };
+
+export const contactsErrors = {
+  CONTACTS_NOT_FOUND: 'Contacts information was not found'
+};

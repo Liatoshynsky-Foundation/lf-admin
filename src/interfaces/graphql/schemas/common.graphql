@@ -77,3 +77,8 @@ input CropRectInput {
   width: Float!
   height: Float!
 }
+
+input LocalizedStringInput {
+  uk: String!
+  en: String!
+}
