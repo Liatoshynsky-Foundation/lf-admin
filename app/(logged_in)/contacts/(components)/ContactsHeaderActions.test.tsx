@@ -2,12 +2,12 @@ import { fireEvent, render, screen } from '@testing-library/react';
 
 import { CONTACT_LOCALES } from '../__mocks__/contacts';
 import { ContactsHeaderActions } from './ContactsHeaderActions';
-import type { LanguageSwitcherProps } from '~/components/language-switcher/LanguageSwitcher';
+import type { LanguageSwitcherProps } from '~/shared/components/language-switcher/LanguageSwitcher';
 
 const LANGUAGE_BUTTON_LABEL = 'language';
 const SAVE_BUTTON_NAME_PATTERN = /зберегти/i;
 
-jest.mock('~/components/language-switcher/LanguageSwitcher', () => ({
+jest.mock('~/shared/components/language-switcher/LanguageSwitcher', () => ({
   __esModule: true,
   default: ({ languageSwitcher }: LanguageSwitcherProps) => (
     <button onClick={() => languageSwitcher(CONTACT_LOCALES.en)}>{LANGUAGE_BUTTON_LABEL}</button>

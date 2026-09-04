@@ -13,20 +13,20 @@ import {
   type ContactInformation,
   CONTACTS_ERROR,
   CONTACTS_LOADING,
-  type ContactsLocale,
-  INIT_LOCALE,
   INITIAL_CONTACT_INFORMATION,
   type SocialNetworkFormItem
 } from '~/constants/contacts';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { ContentPageLayout } from '~/shared/components/content-page-layout/ContentPageLayout';
 import { EmptyState } from '~/shared/components/empty-state';
+import { useStore } from '~/store';
 
 const ContactsPageContent = () => {
   const { data, loading } = useContacts();
   const { updateContacts } = useUpsertContacts();
 
-  const [locale, setLocale] = useState<ContactsLocale>(INIT_LOCALE);
+  const locale = useStore((state) => state.locale);
+  const setLocale = useStore((state) => state.setLocale);
   const [contactInformation, setContactInformation] = useState<ContactInformation>(INITIAL_CONTACT_INFORMATION);
   const [socialNetworks, setSocialNetworks] = useState<SocialNetworkFormItem[]>([]);
 

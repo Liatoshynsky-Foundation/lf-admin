@@ -26,9 +26,14 @@ export const MockConfigurableList = ({
   renderItem
 }: ConfigurableListProps<SocialNetworkFormItem>) => (
   <div>
-    {items.map((item) => (
+    {items.map((item, index) => (
       <div key={item.id} data-testid={`social-${item.id}`}>
-        {renderItem({ item, onChange: (updatedItem) => onChange(updatedItem) })}
+        {renderItem({
+          item,
+          onChange: (updatedItem) => onChange(updatedItem),
+          onDelete: () => onDelete(item.id),
+          index
+        })}
         <button onClick={() => onDelete(item.id)}>{`${SOCIAL_NETWORK_DELETE_LABEL}-${item.id}`}</button>
         <button
           onClick={() => onChange({ ...item, link: 'https://updated.example' })}
