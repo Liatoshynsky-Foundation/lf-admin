@@ -114,11 +114,11 @@ const fund = defaultProps.funds[0];
 const rowWithActions = {
   type: 'individual', id: fund.id, plainData: {
     ...defaultProps.funds[0], editAction: {
-      editHref: `/archive/fund/${fund.id}/edit`, editLabel: 'Редагувати фонд Фонд 1'
+      editHref: `/archive/fund/${fund.id}/edit`, editLabel: `Редагувати фонд Фонд ${fund.id}`
     },
 
     menuActions: {
-      menuItems: [{ items: [{ id: 'edit', text: { name: 'Редагувати' }, href: `/archive/fund/${fund.id}/edit` }, { id: 'share', text: { name: 'Поширити' }, href: `/archive/fund/${fund.id}/share` }] }, { items: [{ id: 'delete', text: { name: 'Видалити' } }] }], menuTriggerLabel: 'Дії для фонду Фонд 1'
+      menuItems: [{ items: [{ id: 'edit', text: { name: 'Редагувати' }, href: `/archive/fund/${fund.id}/edit` }, { id: 'share', text: { name: 'Поширити' }, href: `/archive/fund/${fund.id}/share` }] }, { items: [{ id: 'delete', text: { name: 'Видалити' } }] }], menuTriggerLabel: `Дії для фонду Фонд ${fund.id}`
     }
   },
 };
@@ -134,7 +134,7 @@ describe('ArchiveFundsTable', () => {
     expect(screen.getByTestId('mock-table-layout')).toBeInTheDocument();
     expect(screen.getByTestId('mock-table-layout-columns')).toBeInTheDocument();
     expect(screen.getByTestId('mock-table-layout-data')).toBeInTheDocument();
-    expect(screen.getByTestId('mock-table-layout-row-1')).toHaveTextContent(JSON.stringify(rowWithActions));
+    expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).toHaveTextContent(JSON.stringify(rowWithActions));
   });
 
   it.each([
@@ -176,14 +176,14 @@ describe('ArchiveFundsTable', () => {
 
       await user.click(screen.getByTestId('action-delete'));
       expect(screen.getByTestId('mock-delete-modal')).toHaveAttribute('data-open', 'true');
-      expect(screen.getByText(/Ви впевнені, що хочете видалити фонд «Фонд 1»\?/)).toBeInTheDocument();
+      expect(screen.getByText(new RegExp(`Ви впевнені, що хочете видалити фонд «${fund.name}»\\?`))).toBeInTheDocument();
 
       await user.click(screen.getByTestId('mock-delete-close'));
       expect(screen.getByTestId('mock-delete-modal')).toHaveAttribute('data-open', 'false');
 
       await user.click(screen.getByTestId('action-delete'));
       await user.click(screen.getByTestId('mock-delete-confirm'));
-      expect(mockDeleteFund).toHaveBeenCalledWith({ id: '1' });
+      expect(mockDeleteFund).toHaveBeenCalledWith({ id: fund.id });
       expect(onDeletedMock).toHaveBeenCalled();
       expect(screen.getByTestId('mock-delete-modal')).toHaveAttribute('data-open', 'false');
     });
@@ -194,7 +194,7 @@ describe('ArchiveFundsTable', () => {
 
       await user.click(screen.getByTestId('action-delete'));
       await user.click(screen.getByTestId('mock-delete-confirm'));
-      expect(mockDeleteFund).toHaveBeenCalledWith({ id: '1' });
+      expect(mockDeleteFund).toHaveBeenCalledWith({ id: fund.id });
       expect(screen.getByTestId('mock-delete-modal')).toHaveAttribute('data-open', 'false');
     });
   });
@@ -205,15 +205,15 @@ describe('ArchiveFundsTable', () => {
       onPublish: jest.fn()
     });
 
-    expect(screen.getByTestId('mock-table-layout-row-1')).toHaveTextContent('Опублікувати');
-    expect(screen.getByTestId('mock-table-layout-row-1')).toHaveTextContent('"id":"publish"');
+    expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).toHaveTextContent('Опублікувати');
+    expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).toHaveTextContent('"id":"publish"');
   });
 
   it('should not add the publish action for non-hidden funds', () => {
     renderComponent({ onPublish: jest.fn() });
 
-    expect(screen.getByTestId('mock-table-layout-row-1')).not.toHaveTextContent('Опублікувати');
-    expect(screen.getByTestId('mock-table-layout-row-1')).not.toHaveTextContent('"id":"publish"');
+    expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).not.toHaveTextContent('Опублікувати');
+    expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).not.toHaveTextContent('"id":"publish"');
   });
 
   describe('should render state UIs', () => {

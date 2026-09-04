@@ -518,7 +518,7 @@ describe('useFunds', () => {
       const { result } = renderHook(() => useCreateCase());
       const [createCase] = result.current;
 
-      const input = { title: { uk: 'Нова справа' }, fundId: 'fund-1' } as any;
+      const input = { title: { uk: 'Нова справа' }, fundId: 'fund-1' } as unknown as Parameters<typeof createCase>[0];
       await createCase(input);
 
       expect(mockedSafeMutate).toHaveBeenCalledWith(
@@ -539,7 +539,7 @@ describe('useFunds', () => {
       const { result } = renderHook(() => useUpdateCase());
       const [updateCase] = result.current;
 
-      const variables = { id: 'case-1', input: { title: { uk: 'Оновлена справа' } } } as any;
+      const variables = { id: 'case-1', input: { title: { uk: 'Оновлена справа' } } } as Parameters<typeof updateCase>[0];
       await updateCase(variables);
 
       expect(mockedSafeMutate).toHaveBeenCalledWith(
@@ -560,7 +560,7 @@ describe('useFunds', () => {
       const { result } = renderHook(() => useDeleteCase());
       const [deleteCase] = result.current;
 
-      const variables = { id: 'case-1' } as any;
+      const variables = { id: 'case-1' } as Parameters<typeof deleteCase>[0];
       await deleteCase(variables);
 
       expect(mockedSafeMutate).toHaveBeenCalledWith(

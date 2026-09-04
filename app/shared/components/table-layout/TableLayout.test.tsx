@@ -87,7 +87,8 @@ describe('TableLayout Component', () => {
   });
 
   it('should return null for unknown item types', () => {
-    render(<TableLayout data={dataWithUnknown as any} columns={mockColumns} />);
+    // @ts-expect-error: intentionally passing an unknown type to test the fallback behavior
+    render(<TableLayout data={dataWithUnknown} columns={mockColumns} />);
     
     expect(screen.queryByTestId('grouped-row')).not.toBeInTheDocument();
     expect(screen.queryByTestId('plain-row')).not.toBeInTheDocument();
