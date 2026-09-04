@@ -84,3 +84,11 @@ export const MediaMentionsServiceErrors = {
 export const contactsErrors = {
   CONTACTS_NOT_FOUND: 'Contacts information was not found'
 };
+
+export const contactsValidationErrors = {
+  LOCALIZED_FIELD_REQUIRED: 'Поле обов’язкове для заповнення',
+  EMAIL_INVALID: 'Некоректна електронна адреса',
+  PHONE_INVALID: 'Телефон має відповідати формату +38 XXX XXX XXXX',
+  PLATFORM_INVALID: 'Некоректна соціальна мережа',
+  LINK_INVALID: 'Посилання на соціальну мережу має бути коректною URL-адресою'
+} as const;

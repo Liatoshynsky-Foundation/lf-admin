@@ -14,7 +14,7 @@ export type SocialNetworkName = (typeof SOCIAL_NETWORK_PLATFORMS)[number]['label
 
 export type SocialNetwork = {
 	platform: SocialNetworkPlatform;
-	url: string;
+	link: string;
 };
 
 export type Contacts = {

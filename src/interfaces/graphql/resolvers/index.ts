@@ -6,6 +6,7 @@ import { CaseQuery } from './case/caseQuery';
 import { CaseType } from './case/caseType';
 import { CompositionsMutation } from './compositions/compositionsMutation';
 import { CompositionsQuery } from './compositions/compositionsQuery';
+import { ContactsMutation } from './contacts/contactsMutation';
 import { ContactsQuery } from './contacts/contactsQuery';
 import { EventsMutation } from './events/eventsMutation';
 import { EventsQuery } from './events/eventsQuery';
@@ -31,7 +32,8 @@ export const resolvers = {
     ...AssetsMutation,
     ...CompositionsMutation,
     ...CaseMutation,
-    ...FundMutation
+    ...FundMutation,
+    ...ContactsMutation
   },
   Query: {
     ...AdminQuery,

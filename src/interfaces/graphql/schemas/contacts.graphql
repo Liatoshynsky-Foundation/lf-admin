@@ -16,7 +16,7 @@ type ContactInformation {
 
 type SocialNetwork {
   platform: SocialNetworkTypes!
-  url: String!
+  link: String!
 }
 
 type Contacts {
@@ -33,12 +33,12 @@ input ContactInformationInput {
 
 input SocialNetworkInput {
   platform: SocialNetworkTypes!
-  url: String!
+  link: String!
 }
 
 input UpdateContactsInput {
   contactInformation: ContactInformationInput!
-  socialNetworks: [SocialNetworkInput!]
+  socialNetworks: [SocialNetworkInput!]!
 }
 
 extend type Query {

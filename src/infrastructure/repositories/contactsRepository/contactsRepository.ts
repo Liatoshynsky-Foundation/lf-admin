@@ -2,12 +2,23 @@ import type { Model } from 'mongoose';
 
 import {
   Contacts,
+  SOCIAL_NETWORK_PLATFORMS,
   SocialNetworkName,
   SocialNetworkPlatform
 } from '~/domain/entities/Contacts';
-import { IContactsRepository } from '~/domain/repositories/contactsRepository';
+import {
+  IContactsRepository,
+  UpdateContactsInput
+} from '~/domain/repositories/contactsRepository';
 import dbConnect from '~/infrastructure/db/connect';
+import { withTransaction } from '~/infrastructure/repositories/helpers';
 import { LocalizedString } from '~/types/common';
+
+type DbSocialLink = {
+  icon: SocialNetworkPlatform;
+  platform: SocialNetworkName;
+  link: string;
+};
 
 export type DbContactInfo = {
   _id: { toString(): string };
@@ -15,11 +26,7 @@ export type DbContactInfo = {
   address: LocalizedString;
   email: string;
   phone: string;
-  socialLinks?: Array<{
-    icon: SocialNetworkPlatform;
-    platform: SocialNetworkName;
-    link: string;
-  }>;
+  socialLinks?: DbSocialLink[];
   createdAt: string | Date;
   updatedAt: string | Date;
 };
@@ -38,6 +45,24 @@ type ContactsRepositoryDeps = Readonly<{
   BrandingInfo: Model<DbBrandingInfo>;
 }>;
 
+const CONTACT_INFO_SLUG = 'contact-info';
+const BRANDING_INFO_SLUG = 'branding-info';
+
+const findPlatform = (value: string) =>
+  SOCIAL_NETWORK_PLATFORMS.find(({ value: platformValue, label }) =>
+    platformValue === value || label === value
+  )!;
+
+const toDbSocialLink = ({ platform, link }: Contacts['socialNetworks'][number]): DbSocialLink => {
+  const platformData = findPlatform(platform);
+
+  return {
+    icon: platformData.value,
+    platform: platformData.label,
+    link
+  };
+};
+
 const toEntity = (contactInfo: DbContactInfo, brandingInfo: DbBrandingInfo): Contacts => ({
   contactInformation: {
     foundationName: brandingInfo.foundationName,
@@ -47,7 +72,7 @@ const toEntity = (contactInfo: DbContactInfo, brandingInfo: DbBrandingInfo): Con
   },
   socialNetworks: (contactInfo.socialLinks ?? []).map(({ link, icon }) => ({
     platform: icon,
-    url: link,
+    link
   }))
 });
 
@@ -56,12 +81,40 @@ export const ContactsRepository = ({ ContactInfo, BrandingInfo }: ContactsReposi
     await dbConnect();
 
     const [contactInfo, brandingInfo] = await Promise.all([
-      ContactInfo.findOne().lean<DbContactInfo>().exec(),
-      BrandingInfo.findOne().lean<DbBrandingInfo>().exec()
+      ContactInfo.findOne({ slug: CONTACT_INFO_SLUG }).lean<DbContactInfo>().exec(),
+      BrandingInfo.findOne({ slug: BRANDING_INFO_SLUG }).lean<DbBrandingInfo>().exec()
     ]);
 
     if (!contactInfo || !brandingInfo) return null;
 
     return toEntity(contactInfo, brandingInfo);
-  }
+  },
+
+  updateContacts: async (input: UpdateContactsInput): Promise<Contacts | null> =>
+    withTransaction(async (session) => {
+      const contactInfo = await ContactInfo.findOneAndUpdate(
+        { slug: CONTACT_INFO_SLUG },
+        {
+          $set: {
+            address: input.contactInformation.address,
+            email: input.contactInformation.email,
+            phone: input.contactInformation.phone,
+            socialLinks: input.socialNetworks.map(toDbSocialLink)
+          }
+        },
+        { new: true, runValidators: true, session }
+      ).lean<DbContactInfo>().exec();
+
+      if (!contactInfo) throw new Error('CONTACTS_NOT_FOUND');
+      
+      const brandingInfo = await BrandingInfo.findOneAndUpdate(
+        { slug: BRANDING_INFO_SLUG },
+        { $set: { foundationName: input.contactInformation.foundationName } },
+        { new: true, runValidators: true, session }
+      ).lean<DbBrandingInfo>().exec();
+
+      if (!brandingInfo) throw new Error('CONTACTS_NOT_FOUND');
+
+      return toEntity(contactInfo, brandingInfo);
+    })
 });
