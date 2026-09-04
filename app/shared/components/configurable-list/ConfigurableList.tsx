@@ -8,14 +8,14 @@ import Button from '~/ds-components/button/Button';
 import PlusIcon from '~/public/icons/plus.svg';
 import { ConfigurableListItem } from '~/types/accordionBlocks';
 
-interface RenderItemParams<T> {
+export interface RenderItemParams<T> {
   item: T;
   onChange: (newValue: T) => void;
   onDelete: () => void;
   index: number;
 }
 
-interface ConfigurableListProps<T extends ConfigurableListItem> {
+export interface ConfigurableListProps<T extends ConfigurableListItem> {
   items: T[];
   renderItem: (params: RenderItemParams<T>) => React.ReactNode;
   addBtnLabel: string;
@@ -24,6 +24,7 @@ interface ConfigurableListProps<T extends ConfigurableListItem> {
   onChange: (newValue: T) => void;
   onDelete: (id: T['id']) => void;
   separator?: boolean;
+  allowFirstItemDeletion?: boolean;
   addButtonSx?: SxProps<Theme>;
 }
 
@@ -36,6 +37,7 @@ const ConfigurableList = <T extends ConfigurableListItem>({
   items,
   addBtnLabel,
   editable,
+  allowFirstItemDeletion = false,
   addButtonSx
 }: ConfigurableListProps<T>) => {
   const withSeparator = (index: number) => Boolean(separator && index < items.length - 1);
@@ -43,7 +45,7 @@ const ConfigurableList = <T extends ConfigurableListItem>({
   const list = items.map((item, index) => (
     <ItemWrapper
       key={item.id}
-      editable={index !== 0 && editable}
+      editable={editable && (allowFirstItemDeletion || index !== 0)}
       withSeparator={withSeparator(index)}
       onDelete={() => onDelete(item.id)}
     >

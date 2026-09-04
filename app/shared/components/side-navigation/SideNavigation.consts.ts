@@ -24,7 +24,7 @@ export const NAVIGATION_DATA = {
       collapseElements: [
         { title: 'Часті запитання', href: '', disabled: true },
         { title: 'Команда фундації', href: '/foundation-team' },
-        { title: 'Контакти', href: '/contacts', disabled: true },
+        { title: 'Контакти', href: '/contacts' },
         { title: 'Футер', href: '', disabled: true }
       ]
     },

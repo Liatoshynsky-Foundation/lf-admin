@@ -100,4 +100,11 @@ describe('DividedHeader Component', () => {
     expect(mockOnBackClick).toHaveBeenCalledTimes(1);
     expect(mockPush).not.toHaveBeenCalled();
   });
+
+  it('should hide the back button and render without right actions when configured', () => {
+    render(<DividedHeader showBackButton={false}>Title</DividedHeader>);
+
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.getByText('Title')).toBeInTheDocument();
+  });
 });

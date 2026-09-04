@@ -4,7 +4,11 @@ import Button from '../design-system/button/Button';
 import ButtonGroup from '../design-system/button-group/ButtonGroup';
 import { useStore } from '~/store';
 
-const LanguageSwitcher = ({ languageSwitcher }: { languageSwitcher: (language: 'uk' | 'en') => void }) => {
+export type LanguageSwitcherProps = Readonly<{
+  languageSwitcher: (language: 'uk' | 'en') => void;
+}>;
+
+const LanguageSwitcher = ({ languageSwitcher }: LanguageSwitcherProps) => {
   const currentLocale = useStore((s) => s.locale);
 
   const languages = [
