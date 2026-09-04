@@ -160,6 +160,10 @@ describe('EditPublicationsPage Container', () => {
   });
 
   it('should redirect to UK preview page when onPreview is triggered', async () => {
+    (usePublicationManager as jest.Mock).mockReturnValue({
+      ...baseMockManager,
+      currentData: { ...baseMockManager.currentData, status: BaseContentStatuses.Published }
+    });
     (fetchPreview as jest.Mock).mockResolvedValue(null);
     render(<EditPublicationsPage />);
 
@@ -168,6 +172,10 @@ describe('EditPublicationsPage Container', () => {
 
     await waitFor(() => {
       expect(fetchPreview).toHaveBeenCalledTimes(1);
+    });
+    expect(mockHandleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
+    expect(baseMockManager.updateResource).toHaveBeenCalledWith(BaseContentStatuses.Published, {
+      content: baseMockManager.editedContent
     });
     expect(fetchPreview).toHaveBeenCalledWith({ slug: `news/${handleSaveSlug}`, lang: 'uk', draftId: '123' });
 
