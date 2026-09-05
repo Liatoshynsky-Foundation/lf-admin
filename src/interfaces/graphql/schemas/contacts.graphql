@@ -15,7 +15,7 @@ type ContactInformation {
 }
 
 type SocialNetwork {
-  platform: SocialNetworkTypes!
+  icon: SocialNetworkTypes!
   link: String!
 }
 
@@ -32,7 +32,7 @@ input ContactInformationInput {
 }
 
 input SocialNetworkInput {
-  platform: SocialNetworkTypes!
+  icon: SocialNetworkTypes!
   link: String!
 }
 

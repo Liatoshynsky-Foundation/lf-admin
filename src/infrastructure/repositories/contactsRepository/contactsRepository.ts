@@ -3,7 +3,7 @@ import type { Model } from 'mongoose';
 import {
   Contacts,
   SOCIAL_NETWORK_PLATFORMS,
-  SocialNetworkName,
+  SocialNetworkIcon,
   SocialNetworkPlatform
 } from '~/domain/entities/Contacts';
 import {
@@ -15,8 +15,8 @@ import { withTransaction } from '~/infrastructure/repositories/helpers';
 import { LocalizedString } from '~/types/common';
 
 type DbSocialLink = {
-  icon: SocialNetworkPlatform;
-  platform: SocialNetworkName;
+  icon: SocialNetworkIcon;
+  platform: SocialNetworkPlatform;
   link: string;
 };
 
@@ -48,17 +48,15 @@ type ContactsRepositoryDeps = Readonly<{
 const CONTACT_INFO_SLUG = 'contact-info';
 const BRANDING_INFO_SLUG = 'branding-info';
 
-const findPlatform = (value: string) =>
-  SOCIAL_NETWORK_PLATFORMS.find(({ value: platformValue, label }) =>
-    platformValue === value || label === value
-  )!;
+const findPlatform = (icon: SocialNetworkIcon) =>
+  SOCIAL_NETWORK_PLATFORMS.find(({ icon: platformIcon }) => platformIcon === icon)!;
 
-const toDbSocialLink = ({ platform, link }: Contacts['socialNetworks'][number]): DbSocialLink => {
-  const platformData = findPlatform(platform);
+const toDbSocialLink = ({ icon, link }: Contacts['socialNetworks'][number]): DbSocialLink => {
+  const platformData = findPlatform(icon);
 
   return {
-    icon: platformData.value,
-    platform: platformData.label,
+    icon: platformData.icon,
+    platform: platformData.platform,
     link
   };
 };
@@ -71,7 +69,7 @@ const toEntity = (contactInfo: DbContactInfo, brandingInfo: DbBrandingInfo): Con
     phone: contactInfo.phone
   },
   socialNetworks: (contactInfo.socialLinks ?? []).map(({ link, icon }) => ({
-    platform: icon,
+    icon,
     link
   }))
 });

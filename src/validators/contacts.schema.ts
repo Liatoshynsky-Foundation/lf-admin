@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { contactsValidationErrors } from '~/back-constants/errors';
 import {
   SOCIAL_NETWORK_PLATFORMS,
-  SocialNetworkPlatform
+  SocialNetworkIcon
 } from '~/domain/entities/Contacts';
 
 const localizedStringSchema = z.object({
@@ -11,8 +11,8 @@ const localizedStringSchema = z.object({
   en: z.string().trim().min(1, contactsValidationErrors.LOCALIZED_FIELD_REQUIRED)
 });
 
-const socialNetworkPlatformSchema = z.enum(
-  SOCIAL_NETWORK_PLATFORMS.map(({ value }) => value) as [SocialNetworkPlatform, ...SocialNetworkPlatform[]],
+const socialNetworkIconSchema = z.enum(
+  SOCIAL_NETWORK_PLATFORMS.map(({ icon }) => icon) as [SocialNetworkIcon, ...SocialNetworkIcon[]],
   { error: contactsValidationErrors.PLATFORM_INVALID }
 );
 
@@ -25,7 +25,7 @@ export const zContactsSchema = z.object({
   }),
   socialNetworks: z.array(
     z.object({
-      platform: socialNetworkPlatformSchema,
+      icon: socialNetworkIconSchema,
       link: z.string().trim().pipe(z.url({ error: contactsValidationErrors.LINK_INVALID }))
     })
   )
