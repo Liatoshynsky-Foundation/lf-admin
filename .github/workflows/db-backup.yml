@@ -17,7 +17,7 @@ jobs:
       DB_SOURCE_URL: ${{ secrets.DB_SOURCE_URL }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set Date env
         id: set-date
