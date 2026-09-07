@@ -7,6 +7,8 @@ export const styles = {
   },
   itemWrapper: {
     display: 'flex',
+    width: '100%',
+    minWidth: 0,
     gap: '24px',
     alignItems: 'center'
   },

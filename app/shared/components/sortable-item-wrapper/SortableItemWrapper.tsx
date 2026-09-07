@@ -7,13 +7,13 @@ import { Grip, GripPosition } from '../grip/Grip';
 import { styles } from './SortableItemWrapper.style';
 
 interface SortableItemWrapperProps {
-  id: string;
+  id: string | number;
   children: React.ReactNode;
   gripHandle?: boolean;
   gripPosition?: GripPosition;
 }
 
-export const SortableItemContext = createContext<{ id: string, attributes: DraggableAttributes, listeners: SyntheticListenerMap | undefined } | null>(null);
+export const SortableItemContext = createContext<{ id: string | number, attributes: DraggableAttributes, listeners: SyntheticListenerMap | undefined } | null>(null);
 
 export const useSortableItemContext = () => {
   const context = useContext(SortableItemContext);

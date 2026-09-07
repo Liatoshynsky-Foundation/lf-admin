@@ -6,7 +6,7 @@ import {
 
 export interface SortableContainerProps {
   id: string;
-  items: string[];
+  items: (string | number)[];
   children: React.ReactNode
   strategy?: SortingStrategy;
 }

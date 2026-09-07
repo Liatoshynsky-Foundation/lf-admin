@@ -7,7 +7,7 @@ import { SortableContainer } from '../sortable-container/SortableContainer';
 
 interface SortableListProps {
   id: string;
-  items: string[];
+  items: (string | number)[];
   onDragEnd: (event: DragEndEvent) => void;
   children: ReactNode;
   strategy?: SortingStrategy;
