@@ -52,6 +52,7 @@ const ConfigurableList = <T extends ConfigurableListItem>({
   const list = items.map((item, index) => {
     const content = (
       <ItemWrapper
+        key={item.id}
         editable={editable && (allowFirstItemDeletion || index !== 0)}
         withSeparator={withSeparator(index)}
         onDelete={() => onDelete(item.id)}

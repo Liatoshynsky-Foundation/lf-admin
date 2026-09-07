@@ -5,15 +5,16 @@ import { createContext, useContext, useMemo } from 'react';
 
 import { Grip, GripPosition } from '../grip/Grip';
 import { styles } from './SortableItemWrapper.style';
+import { SortableItemId } from '~/types/common';
 
 interface SortableItemWrapperProps {
-  id: string | number;
+  id: SortableItemId;
   children: React.ReactNode;
   gripHandle?: boolean;
   gripPosition?: GripPosition;
 }
 
-export const SortableItemContext = createContext<{ id: string | number, attributes: DraggableAttributes, listeners: SyntheticListenerMap | undefined } | null>(null);
+export const SortableItemContext = createContext<{ id: SortableItemId, attributes: DraggableAttributes, listeners: SyntheticListenerMap | undefined } | null>(null);
 
 export const useSortableItemContext = () => {
   const context = useContext(SortableItemContext);

@@ -4,9 +4,11 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable';
 
+import { SortableItemId } from '~/types/common';
+
 export interface SortableContainerProps {
   id: string;
-  items: (string | number)[];
+  items: SortableItemId[];
   children: React.ReactNode
   strategy?: SortingStrategy;
 }
