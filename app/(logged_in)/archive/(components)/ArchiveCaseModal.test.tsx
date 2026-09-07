@@ -185,7 +185,6 @@ const defaultHookValues = {
 };
 
 describe('ArchiveCaseModal', () => {
-  // Хелперы для устранения дублирования в тестах
   const renderModal = (props = {}) => render(<ArchiveCaseModal {...defaultProps} {...props} />);
 
   const clickApply = async (testId: string) => {
@@ -350,7 +349,6 @@ describe('ArchiveCaseModal', () => {
   });
 
   describe('onSave callback passed into useArchiveCaseModal', () => {
-    // Хелпер для симуляции сохранения (убирает 50 строк дублирующегося объекта)
     const execSave = async (props: any, inputOverrides: any = {}) => {
       const onSaved = jest.fn();
       renderModal({ ...props, onSaved });

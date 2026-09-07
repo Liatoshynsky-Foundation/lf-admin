@@ -107,8 +107,7 @@ export default function FundCasesBlock({ fundId }: Readonly<{ fundId?: string }>
     open: false
   });
 
-  // TODO: `order` — remnant from another PR's schema, unused for cases (no drag-and-drop here).
-  // Remove `order` field from Case schema/DB once confirmed it's not needed elsewhere.
+  // TODO: `order` — remnant from another PR's schema, unused for cases (no drag-and-drop here). Remove when schema is updated.
   const sortedCases = [...cases].sort((a, b) =>
     a.descriptionNumber !== b.descriptionNumber
       ? a.descriptionNumber - b.descriptionNumber
