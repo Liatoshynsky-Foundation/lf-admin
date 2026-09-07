@@ -5,6 +5,7 @@ import {
   markImagesAsUsed,
   syncImagesCrops
 } from '../helpers';
+import { validateSeoLengths } from '../seoValidation';
 import { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
 import { EventsEntity } from '~/domain/entities/Events';
@@ -37,6 +38,8 @@ export const EventsMutation = {
     const titleUk = input.title?.uk;
 
     if (!titleUk) throw new Error('TITLE_REQUIRED_FOR_SLUG');
+
+    validateSeoLengths(input);
 
     const slug = await generateUniqueSlug(titleUk, {
       checkExists: async (s: string) => {
@@ -72,6 +75,9 @@ export const EventsMutation = {
     }
 
     const repo = context.requestContainer.cradle.eventsRepository;
+
+    validateSeoLengths(input);
+
     const updateData = { ...input };
     if (updateData.meta?.views === undefined) {
       delete updateData.meta;

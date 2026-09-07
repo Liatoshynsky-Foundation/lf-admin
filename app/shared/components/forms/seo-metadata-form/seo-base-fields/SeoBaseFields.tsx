@@ -4,6 +4,11 @@ import type { LocalizedMeta } from '../SeoMetadataForm';
 import { styles } from '../SeoMetadataForm.styles';
 import { META_DESCRIPTION_LENGTH, META_KEYWORDS_LENGTH, META_TITLE_LENGTH } from '~/constants/publications';
 
+export type SeoFieldsRequired = boolean | Readonly<{ title?: boolean; description?: boolean }>;
+
+export const isSeoFieldRequired = (required: SeoFieldsRequired, field: 'title' | 'description'): boolean =>
+  typeof required === 'boolean' ? required : Boolean(required[field]);
+
 interface SeoBaseFieldsProps {
   readonly value: LocalizedMeta;
   readonly errors: Partial<Record<keyof LocalizedMeta, string>>;
@@ -11,7 +16,7 @@ interface SeoBaseFieldsProps {
   readonly onFieldChange: (field: keyof LocalizedMeta, val: string) => void;
   readonly onBlur?: (field: keyof LocalizedMeta) => void;
   readonly showKeywords?: boolean;
-  readonly required?: boolean;
+  readonly required?: SeoFieldsRequired;
   readonly labels?: {
     readonly metaTitle?: string;
     readonly metaDescription?: string;
@@ -33,13 +38,13 @@ export function SeoBaseFields({
     {
       key: 'title' as const,
       label: labels.metaTitle || 'Meta title',
-      required,
+      required: isSeoFieldRequired(required, 'title'),
       maxLength: META_TITLE_LENGTH.max
     },
     {
       key: 'description' as const,
       label: labels.metaDescription || 'Meta description',
-      required,
+      required: isSeoFieldRequired(required, 'description'),
       maxLength: META_DESCRIPTION_LENGTH.max,
       multiline: true,
       minRows: 3,

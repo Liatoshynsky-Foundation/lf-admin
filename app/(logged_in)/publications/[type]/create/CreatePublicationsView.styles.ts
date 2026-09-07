@@ -71,6 +71,16 @@ export const styles = {
     '& .MuiPickersOutlinedInput-root.Mui-focused:not(.Mui-error) .MuiPickersOutlinedInput-notchedOutline': {
       borderColor: 'black',
       borderWidth: '1px'
+    },
+    '& .MuiPickersOutlinedInput-root.Mui-error .MuiPickersOutlinedInput-notchedOutline': {
+      borderColor: 'blue.500'
+    },
+    '& .MuiPickersOutlinedInput-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline': {
+      borderColor: 'black',
+      borderWidth: '1px'
+    },
+    '& .MuiInputLabel-root.Mui-error': {
+      color: 'blue.800'
     }
   },
   datePickerInput: {

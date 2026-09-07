@@ -14,8 +14,9 @@ import {
   MENU_ACTION_CONFIGS,
   MenuActionId,
   PAGE_TITLES,
-  PUBLICATIONS_BASE_PATH
-} from '~/constants/publications';
+  PUBLICATION_SEO_LABELS,
+  PUBLICATION_SEO_REQUIRED,
+  PUBLICATIONS_BASE_PATH} from '~/constants/publications';
 import { normalizeFetchedCrop } from '~/lib/utils/CropperHelper';
 import { fetchPreview } from '~/lib/utils/fetchPreview';
 import { getPreviewSlug } from '~/lib/utils/getPreviewSlug';
@@ -58,6 +59,7 @@ export default function CreatePublicationsView({
     setCrop,
     handleSave,
     forceShowErrors,
+    seoErrors,
     handleDateTimeChange
   } = data;
   const router = useRouter();
@@ -210,19 +212,22 @@ export default function CreatePublicationsView({
       )}
       <Box sx={styles.contentWrapper}>
         <SeoCollapsibleBlock
-          title="Деталі"
+          title="Нотатки й дата публікації"
           defaultExpanded
           sx={styles.seoBlock as object}
           childrenContainerSx={styles.seoBlockChildren as object}
           showAlternativeText
           showTicketUrl={publicationType === 'events'}
           extraFieldsBeforeKeywords={publicationType === 'media'}
+          required={PUBLICATION_SEO_REQUIRED}
           forceShowErrors={forceShowErrors}
+          errors={seoErrors}
           crop={normalizeFetchedCrop(crop) ?? undefined}
           onChangeCrop={setCrop}
           value={seoValue}
           onChange={setSeoValue}
           extraFields={seoExtraFields}
+          labels={PUBLICATION_SEO_LABELS}
         >
           <TextField
             label={ADMIN_TITLE_LABELS[publicationType]}
@@ -236,10 +241,14 @@ export default function CreatePublicationsView({
           <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="uk">
             <DatePicker
               label="Дата публікації"
-              value={publishDate}
-              onChange={(newVal) => setPublishDate(newVal)}
+              value={publishDate?.isValid() ? publishDate : null}
+              onChange={(newVal) => setPublishDate(newVal?.isValid() ? newVal : null)}
               slotProps={{
-                textField: { sx: styles.datePickerTextField, InputProps: { sx: styles.datePickerInput } }
+                textField: {
+                  sx: styles.datePickerTextField,
+                  InputProps: { sx: styles.datePickerInput },
+                  error: false
+                }
               }}
             />
           </LocalizationProvider>

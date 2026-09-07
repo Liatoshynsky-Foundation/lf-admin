@@ -42,7 +42,7 @@ describe('media-mentions Mutation', () => {
     adminTitle: 'Admin Title',
     title: { uk: 'Заголовок', en: 'Title' },
     description: { uk: 'Опис', en: 'Desc' },
-    keywords: { uk: 'к', en: 'k' },
+    keywords: { uk: 'ключі', en: 'keys' },
     allowIndexation: { uk: true, en: true },
     slug: 'slug-test',
     coverImage: { src: '', alt: { uk: '', en: '' }, caption: { uk: '', en: '' } },
@@ -100,6 +100,60 @@ describe('media-mentions Mutation', () => {
       await expect(MediaMentionsMutation.createMediaMention({}, { input: invalidInput }, adminContext)).rejects.toThrow(
         'Title is required for slug generation'
       );
+    });
+
+    it.each([
+      {
+        caseName: 'title is shorter than 2 characters',
+        overrides: { title: { uk: 'З', en: 'T' } },
+        fields: ['title.uk', 'title.en']
+      },
+      {
+        caseName: 'title exceeds 150 characters',
+        overrides: { title: { uk: 'a'.repeat(151), en: 'Title' } },
+        fields: ['title.uk']
+      },
+      {
+        caseName: 'description exceeds 250 characters',
+        overrides: { description: { uk: 'a'.repeat(251), en: 'Desc' } },
+        fields: ['description.uk']
+      },
+      {
+        caseName: 'provided keywords are shorter than 2 characters',
+        overrides: { keywords: { uk: 'к', en: 'keys' } },
+        fields: ['keywords.uk']
+      },
+      {
+        caseName: 'provided alt text exceeds 250 characters',
+        overrides: {
+          coverImage: {
+            src: 'img.jpg',
+            alt: { uk: 'a'.repeat(251), en: '' },
+            caption: { uk: '', en: '' }
+          }
+        },
+        fields: ['altText.uk']
+      }
+    ])('should reject createMediaMention when $caseName', async ({ overrides, fields }) => {
+      const invalidInput = { ...input, ...overrides } as CreateMediaMentionGQLInput;
+
+      await expect(
+        MediaMentionsMutation.createMediaMention({}, { input: invalidInput }, adminContext)
+      ).rejects.toMatchObject({
+        extensions: { code: 'BAD_USER_INPUT', fields }
+      });
+
+      expect(mockRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('should reject updateMediaMention when the updated description is too short', async () => {
+      await expect(
+        MediaMentionsMutation.updateMediaMention({}, { id: 'existing-id', input: { description: { uk: 'О', en: 'D' } } }, adminContext)
+      ).rejects.toMatchObject({
+        extensions: { code: 'BAD_USER_INPUT', fields: ['description.uk', 'description.en'] }
+      });
+
+      expect(mockRepo.update).not.toHaveBeenCalled();
     });
 
     it('should default to Draft status when status is omitted', async () => {

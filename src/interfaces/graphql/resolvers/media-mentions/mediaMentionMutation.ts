@@ -6,6 +6,7 @@ import {
   processSlugUpdate,
   syncImagesCrops
 } from '../helpers';
+import { validateSeoLengths } from '../seoValidation';
 import { MediaMentionsServiceErrors } from '~/back-constants/errors';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
@@ -60,6 +61,8 @@ export const MediaMentionsMutation = {
       throw new Error('Title is required for slug generation');
     }
 
+    validateSeoLengths(input);
+
     const slug = await generateUniqueSlug(titleForSlug, {
       checkExists: async (slug: string) => {
         const existing = await repo.findBySlug(slug);
@@ -95,6 +98,9 @@ export const MediaMentionsMutation = {
     }
 
     const repo = context.requestContainer.cradle.mediaMentionsRepository;
+
+    validateSeoLengths(input);
+
     const updateData: UpdateMediaMentionInput = { ...input };
 
     if (input.title) {

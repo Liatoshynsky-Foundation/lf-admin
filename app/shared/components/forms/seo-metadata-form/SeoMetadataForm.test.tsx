@@ -69,85 +69,90 @@ jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
   )
 }));
 
-jest.mock('./seo-base-fields/SeoBaseFields', () => ({
-  SeoBaseFields: ({
-    onBlur,
-    onFieldChange,
-    showKeywords,
-    value,
-    errors,
-    touched = {}
-  }: {
-    onBlur: (field: keyof LocalizedMeta) => void;
-    onFieldChange: (field: keyof LocalizedMeta, val: string) => void;
-    showKeywords?: boolean;
-    value: LocalizedMeta;
-    errors: Partial<Record<keyof LocalizedMeta, string>>;
-    touched?: Partial<Record<keyof LocalizedMeta, boolean>>;
-  }) => (
-    <div data-testid="mock-seo-base-fields">
-      <button
-        data-testid="trigger-canonical-valid"
-        onClick={() => {
-          onBlur('canonicalUrl');
-          onFieldChange('canonicalUrl', 'https://example.com');
-        }}
-      >
-        Valid Canonical
-      </button>
+jest.mock('./seo-base-fields/SeoBaseFields', () => {
+  const actual = jest.requireActual('./seo-base-fields/SeoBaseFields') as typeof import('./seo-base-fields/SeoBaseFields');
 
-      <button
-        data-testid="trigger-canonical-invalid"
-        onClick={() => {
-          onBlur('canonicalUrl');
-          onFieldChange('canonicalUrl', 'invalid-url');
-        }}
-      >
-        Invalid Canonical
-      </button>
+  return {
+    ...actual,
+    SeoBaseFields: ({
+      onBlur,
+      onFieldChange,
+      showKeywords,
+      value,
+      errors,
+      touched = {}
+    }: {
+      onBlur: (field: keyof LocalizedMeta) => void;
+      onFieldChange: (field: keyof LocalizedMeta, val: string) => void;
+      showKeywords?: boolean;
+      value: LocalizedMeta;
+      errors: Partial<Record<keyof LocalizedMeta, string>>;
+      touched?: Partial<Record<keyof LocalizedMeta, boolean>>;
+    }) => (
+      <div data-testid="mock-seo-base-fields">
+        <button
+          data-testid="trigger-canonical-valid"
+          onClick={() => {
+            onBlur('canonicalUrl');
+            onFieldChange('canonicalUrl', 'https://example.com');
+          }}
+        >
+          Valid Canonical
+        </button>
 
-      <button
-        data-testid="trigger-default-case"
-        onClick={() => {
-          onBlur('startDateTime');
-        }}
-      >
-        Default Case
-      </button>
+        <button
+          data-testid="trigger-canonical-invalid"
+          onClick={() => {
+            onBlur('canonicalUrl');
+            onFieldChange('canonicalUrl', 'invalid-url');
+          }}
+        >
+          Invalid Canonical
+        </button>
 
-      <label htmlFor="meta-title-input">Meta title</label>
-      <input
-        id="meta-title-input"
-        value={value.title}
-        onBlur={() => onBlur('title')}
-        onChange={(e) => onFieldChange('title', e.target.value)}
-      />
-      {errors.title && <span>{errors.title}</span>}
+        <button
+          data-testid="trigger-default-case"
+          onClick={() => {
+            onBlur('startDateTime');
+          }}
+        >
+          Default Case
+        </button>
 
-      <label htmlFor="meta-description-input">Meta description</label>
-      <input
-        id="meta-description-input"
-        value={value.description}
-        onBlur={() => onBlur('description')}
-        onChange={(e) => onFieldChange('description', e.target.value)}
-      />
-      {errors.description && <span>{errors.description}</span>}
+        <label htmlFor="meta-title-input">Meta title</label>
+        <input
+          id="meta-title-input"
+          value={value.title}
+          onBlur={() => onBlur('title')}
+          onChange={(e) => onFieldChange('title', e.target.value)}
+        />
+        {errors.title && <span>{errors.title}</span>}
 
-      {showKeywords && (
-        <>
-          <label htmlFor="meta-keywords-input">Meta keywords</label>
-          <input
-            id="meta-keywords-input"
-            value={value.keywords}
-            onBlur={() => onBlur('keywords')}
-            onChange={(e) => onFieldChange('keywords', e.target.value)}
-          />
-          {touched.keywords && errors.keywords && <span>{errors.keywords}</span>}
-        </>
-      )}
-    </div>
-  )
-}));
+        <label htmlFor="meta-description-input">Meta description</label>
+        <input
+          id="meta-description-input"
+          value={value.description}
+          onBlur={() => onBlur('description')}
+          onChange={(e) => onFieldChange('description', e.target.value)}
+        />
+        {errors.description && <span>{errors.description}</span>}
+
+        {showKeywords && (
+          <>
+            <label htmlFor="meta-keywords-input">Meta keywords</label>
+            <input
+              id="meta-keywords-input"
+              value={value.keywords}
+              onBlur={() => onBlur('keywords')}
+              onChange={(e) => onFieldChange('keywords', e.target.value)}
+            />
+            {touched.keywords && errors.keywords && <span>{errors.keywords}</span>}
+          </>
+        )}
+      </div>
+    )
+  };
+});
 
 const defaultProps: SeoMetadataFormProps = {
   value: {
@@ -379,7 +384,7 @@ describe('SeoMetadataForm', () => {
     expect(onChange).toHaveBeenCalled();
   });
 
-  it('requires alt text when an OG image is present', async () => {
+  it('does not require alt text when an OG image is present', async () => {
     render(
       <SeoMetadataForm
         {...defaultProps}
@@ -391,7 +396,8 @@ describe('SeoMetadataForm', () => {
 
     fireEvent.blur(screen.getByRole('textbox', { name: /^Alt/i }));
 
-    expect(await screen.findByText(seoFormErrors.uk.required)).toBeInTheDocument();
+    expect(screen.queryByText(seoFormErrors.uk.required)).not.toBeInTheDocument();
+    expect(screen.queryByText(seoFormErrors.uk.minLength)).not.toBeInTheDocument();
   });
 
   it('validates alt text changes after the field has been touched', async () => {
@@ -426,7 +432,8 @@ describe('SeoMetadataForm', () => {
 
     fireEvent.blur(screen.getByRole('textbox', { name: /^Alt/i }));
 
-    expect(await screen.findByText(seoFormErrors.uk.required)).toBeInTheDocument();
+    expect(screen.queryByText(seoFormErrors.uk.required)).not.toBeInTheDocument();
+    expect(screen.queryByText(seoFormErrors.uk.minLength)).not.toBeInTheDocument();
   });
 
   it('validates alt text maximum length', async () => {
