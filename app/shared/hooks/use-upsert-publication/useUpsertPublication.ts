@@ -175,6 +175,17 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
   const changeAdminTitle = (val: string) => {
     latestDataRef.current.adminTitle = val;
     setAdminTitle(val);
+
+    if(val.trim()) setAdminTitleError('');
+  };
+  const validateAdminTitle = (val: string) => {
+    if (!val.trim()) {
+      setAdminTitleError('Обов\'язкове поле');
+      return false;
+    }
+
+    setAdminTitleError('');
+    return true;
   };
   const changePublishDate = (val: Dayjs | null) => {
     latestDataRef.current.publishDate = val;
@@ -425,6 +436,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     adminTitle,
     setAdminTitle: changeAdminTitle,
     adminTitleError,
+    validateAdminTitle,
     setAdminTitleError,
     canonicalUrlError,
     setCanonicalUrlError,
