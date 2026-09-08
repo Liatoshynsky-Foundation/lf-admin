@@ -36,6 +36,10 @@ const OPUS_NUMBER = 10;
 const DUP_OPUS_NUMBER = 20;
 const SLUG_VALUE = 'slug-test';
 const CREATION_YEAR = '2020';
+const UPDATED_NAME_UK = 'Нова назва';
+const UPDATED_NAME_EN = 'New name';
+const UPDATED_GENRE_UK = 'Новий жанр';
+const UPDATED_GENRE_EN = 'New genre';
 
 const MAPPED_SHEETS = [
   { url: 'http://file.pdf', name: 'Note 1', fileName: 'file.pdf', publishDate: '2020-01-01', isFree: true },
@@ -64,7 +68,7 @@ const MOCK_OPUS_ENTITY: Opus = {
   numberKind: 'op',
   title: { uk: 'Опус', en: 'Opus' },
   name: { uk: 'Назва', en: 'Name' },
-  genre: { uk: 'Genre', en: 'Genre' },
+  genre: { uk: 'Жанр', en: 'Genre' },
   status: OpusStatus.Draft,
   meta: { views: 0 },
   compositions: [COMPOSITION_ID_1, COMPOSITION_ID_2]
@@ -676,7 +680,10 @@ describe('OpusMutation Resolvers', () => {
       expect(mockOpusRepo.update).not.toHaveBeenCalled();
     });
 
-    it('preserves existing English values when the update omits them', async () => {
+    it.each([
+      { description: 'preserves existing English values when omitted', en: '' },
+      { description: 'uses explicitly supplied English values', en: UPDATED_NAME_EN }
+    ])('$description during the update', async ({ en }) => {
       mockOpusRepo.update.mockResolvedValue(MOCK_OPUS_ENTITY);
 
       await OpusMutation.updateOpus(
@@ -685,8 +692,8 @@ describe('OpusMutation Resolvers', () => {
           id: OPUS_ID,
           input: {
             ...BASE_UPDATE_INPUT,
-            name: { uk: 'Нова назва', en: '' },
-            genre: { uk: 'Новий жанр', en: '' },
+            name: { uk: UPDATED_NAME_UK, en },
+            genre: { uk: UPDATED_GENRE_UK, en: en === '' ? '' : UPDATED_GENRE_EN },
             compositions: []
           }
         },
@@ -696,35 +703,8 @@ describe('OpusMutation Resolvers', () => {
       expect(mockOpusRepo.update).toHaveBeenCalledWith(
         OPUS_ID,
         expect.objectContaining({
-          name: { uk: 'Нова назва', en: 'Name' },
-          genre: { uk: 'Новий жанр', en: 'Genre' }
-        }),
-        expect.anything()
-      );
-    });
-
-    it('uses explicitly supplied English values during the update', async () => {
-      mockOpusRepo.update.mockResolvedValue(MOCK_OPUS_ENTITY);
-
-      await OpusMutation.updateOpus(
-        {},
-        {
-          id: OPUS_ID,
-          input: {
-            ...BASE_UPDATE_INPUT,
-            name: { uk: 'Нова назва', en: 'New name' },
-            genre: { uk: 'Новий жанр', en: 'New genre' },
-            compositions: []
-          }
-        },
-        adminContext
-      );
-
-      expect(mockOpusRepo.update).toHaveBeenCalledWith(
-        OPUS_ID,
-        expect.objectContaining({
-          name: { uk: 'Нова назва', en: 'New name' },
-          genre: { uk: 'Новий жанр', en: 'New genre' }
+          name: { uk: UPDATED_NAME_UK, en: en || 'Name' },
+          genre: { uk: UPDATED_GENRE_UK, en: en === '' ? 'Genre' : UPDATED_GENRE_EN }
         }),
         expect.anything()
       );
