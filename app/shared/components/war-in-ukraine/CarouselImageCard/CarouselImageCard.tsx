@@ -10,6 +10,8 @@ import { ImagePreviewBlock } from '~/shared/components/design-system/photo-block
 import { getEventValue } from '~/src/shared/utils/formHelpers';
 import { CropResult } from '~/types/common';
 
+const COLUMN_WIDTH = '50%';
+
 export type CarouselImageData = {
   id: string | number;
   src: string;
@@ -63,7 +65,7 @@ export const CarouselImageCard = ({ image, currentLocale, onChangeImage }: Carou
       minWidth={0}
       sx={styles.card}
     >
-      <Stack sx={styles.preview} gap={2} width="50%">
+      <Stack sx={styles.preview} gap={2} width={COLUMN_WIDTH}>
         <ImagePreviewBlock
           key={`preview-${image.id}-${image.crop ? 'cropped' : 'raw'}`}
           imageUrl={image.src || '/images/light-logo.svg'}
@@ -76,7 +78,7 @@ export const CarouselImageCard = ({ image, currentLocale, onChangeImage }: Carou
           stackSpacing="24px"
         />
       </Stack>
-      <Stack direction="column" gap={2} width="50%" mt={2}>
+      <Stack direction="column" gap={2} width={COLUMN_WIDTH} mt={2}>
         <CustomTextField
           fullWidth
           title="Альтернативний текст"
