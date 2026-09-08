@@ -4,6 +4,8 @@ import { BaseContentStatuses } from '~/types/enums/common.enums';
 export interface PdfEntry {
   name: string | null;
   fileName: string | null;
+  url?: string | null;
+  mimeType?: string | null;
 }
 
 export type ArchiveTabValue = 'all' | 'funds' | 'cases';

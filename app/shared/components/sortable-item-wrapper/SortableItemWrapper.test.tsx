@@ -14,11 +14,7 @@ jest.mock('../grip/Grip', () => ({
 
 const TestChild = () => {
   const context = useSortableItemContext();
-  return (
-    <div data-testid="test-child">
-      ID: {context.id}
-    </div>
-  );
+  return <div data-testid="test-child">ID: {context.id}</div>;
 };
 
 describe('SortableItemWrapper', () => {
@@ -30,7 +26,7 @@ describe('SortableItemWrapper', () => {
       setNodeRef: jest.fn(),
       transform: null,
       transition: undefined,
-      isDragging: false,
+      isDragging: false
     });
   });
 
@@ -69,5 +65,4 @@ describe('SortableItemWrapper', () => {
 
     spy.mockRestore();
   });
-
 });

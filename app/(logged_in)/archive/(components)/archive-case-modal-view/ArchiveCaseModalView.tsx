@@ -26,6 +26,7 @@ export interface ArchiveCaseModalViewProps {
   setCaseName: (value: string) => void;
   caseDescriptions: string;
   setCaseDescriptions: (value: string) => void;
+  fieldErrors?: Record<string, string>;
   handleOpenUploadFlow: () => void;
   handleDeletePdf: () => void;
   handleSave: () => void;
@@ -53,6 +54,7 @@ export const ArchiveCaseModalView = ({
   setCaseName,
   caseDescriptions,
   setCaseDescriptions,
+  fieldErrors = {},
   handleOpenUploadFlow,
   handleDeletePdf,
   handleSave,
@@ -79,6 +81,8 @@ export const ArchiveCaseModalView = ({
               value={descriptionNumber}
               onChange={(e) => setDescriptionNumber(e.target.value)}
               required
+              error={Boolean(fieldErrors.descriptionNumber)}
+              helperText={fieldErrors.descriptionNumber}
               fullWidth
             />
             <TextField
@@ -86,6 +90,8 @@ export const ArchiveCaseModalView = ({
               value={caseNumber}
               onChange={(e) => setCaseNumber(e.target.value)}
               required
+              error={Boolean(fieldErrors.caseNumber)}
+              helperText={fieldErrors.caseNumber}
               fullWidth
             />
           </Stack>
@@ -94,6 +100,8 @@ export const ArchiveCaseModalView = ({
             value={caseName}
             onChange={(e) => setCaseName(e.target.value)}
             required
+            error={Boolean(fieldErrors.caseName)}
+            helperText={fieldErrors.caseName}
             fullWidth
           />
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3}>
@@ -103,6 +111,8 @@ export const ArchiveCaseModalView = ({
               value={sheetsNumber}
               onChange={(e) => setSheetsNumber(e.target.value)}
               required
+              error={Boolean(fieldErrors.sheetsNumber)}
+              helperText={fieldErrors.sheetsNumber}
             />
             <TextField
               sx={styles.shortTextField}
@@ -110,6 +120,8 @@ export const ArchiveCaseModalView = ({
               value={caseDate}
               onChange={(e) => setCaseDate(e.target.value)}
               required
+              error={Boolean(fieldErrors.caseDate)}
+              helperText={fieldErrors.caseDate}
             />
           </Stack>
           <TextField
@@ -117,6 +129,8 @@ export const ArchiveCaseModalView = ({
             value={caseDescriptions}
             onChange={(e) => setCaseDescriptions(e.target.value)}
             required
+            error={Boolean(fieldErrors.caseDescriptions)}
+            helperText={fieldErrors.caseDescriptions}
             fullWidth
           />
           <Box>

@@ -140,7 +140,21 @@ export const FundRepository = ({ FundModel }: FundRepoDeps): IFundRepository => 
 
       return query;
     },
-    getDefaultSort: getBaseSort
+    getDefaultSort: () => ({ id: 1 }),
+    getSort: (filters) => {
+      if (!filters?.sort?.length) {
+        return { id: 1 };
+      }
+
+      const { sortBy, sortOrder } = filters.sort[0];
+      const order = sortOrder === 'asc' ? 1 : -1;
+
+      if (sortBy === 'fundNumber') {
+        return { id: order };
+      }
+
+      return getBaseSort(filters, { fundNumber: 'id' });
+    }
   });
 
   return {
@@ -184,6 +198,10 @@ export const FundRepository = ({ FundModel }: FundRepoDeps): IFundRepository => 
       const updateData: Record<string, unknown> = {
         updatedAt: new Date().toISOString()
       };
+
+      if (input.fundNumber !== undefined) {
+        updateData.id = input.fundNumber;
+      }
 
       if (input.name) {
         updateData.title = input.name;

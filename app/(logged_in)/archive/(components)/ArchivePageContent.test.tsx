@@ -292,7 +292,11 @@ describe('ArchivePageContent', () => {
     expect(mockUsePaginatedFunds).toHaveBeenCalledWith(
       1,
       ARCHIVE_ITEMS_PER_PAGE,
-      { search: undefined, statuses: undefined },
+      {
+        search: undefined,
+        statuses: undefined,
+        sort: [{ field: 'fundNumber', order: 'asc' }]
+      },
       { skip: false }
     );
     expect(mockUseAllCases).toHaveBeenCalledWith(
@@ -313,7 +317,11 @@ describe('ArchivePageContent', () => {
     expect(mockUsePaginatedFunds).toHaveBeenCalledWith(
       1,
       ARCHIVE_ITEMS_PER_PAGE,
-      { search: 'archive', statuses: ['published'] },
+      {
+        search: 'archive',
+        statuses: ['published'],
+        sort: [{ field: 'fundNumber', order: 'asc' }]
+      },
       { skip: false }
     );
     expect(mockUseAllCases).toHaveBeenCalledWith(
@@ -327,7 +335,11 @@ describe('ArchivePageContent', () => {
     expect(mockUsePaginatedFunds).toHaveBeenCalledWith(
       1,
       ARCHIVE_ITEMS_PER_PAGE,
-      { search: undefined, statuses: undefined },
+      {
+        search: undefined,
+        statuses: undefined,
+        sort: [{ field: 'fundNumber', order: 'asc' }]
+      },
       { skip: false }
     );
     expect(mockUseAllCases).toHaveBeenCalledWith(
@@ -342,7 +354,11 @@ describe('ArchivePageContent', () => {
     expect(mockUsePaginatedFunds).toHaveBeenCalledWith(
       1,
       ARCHIVE_ITEMS_PER_PAGE,
-      { search: undefined, statuses: undefined },
+      {
+        search: undefined,
+        statuses: undefined,
+        sort: [{ field: 'fundNumber', order: 'asc' }]
+      },
       { skip: true }
     );
     expect(mockUseAllCases).toHaveBeenCalledWith(
@@ -418,9 +434,9 @@ describe('ArchivePageContent', () => {
     it('should render the funds table, sorted ascending by fundNumber, when funds are present', () => {
       mockUsePaginatedFunds.mockReturnValue({
         funds: [
-          mockFund({ id: '3', fundNumber: 3, name: 'C Fund' }),
           mockFund({ id: '1', fundNumber: 1, name: 'A Fund' }),
-          mockFund({ id: '2', fundNumber: 2, name: 'B Fund' })
+          mockFund({ id: '2', fundNumber: 2, name: 'B Fund' }),
+          mockFund({ id: '3', fundNumber: 3, name: 'C Fund' })
         ],
         totalPages: 1,
         loading: false,
@@ -738,7 +754,11 @@ describe('ArchivePageContent', () => {
       expect(mockUsePaginatedFunds).toHaveBeenLastCalledWith(
         2,
         ARCHIVE_ITEMS_PER_PAGE,
-        { search: undefined, statuses: undefined },
+        {
+          search: undefined,
+          statuses: undefined,
+          sort: [{ field: 'fundNumber', order: 'asc' }]
+        },
         { skip: false }
       );
     });
@@ -793,7 +813,11 @@ describe('ArchivePageContent', () => {
         expect(mockUsePaginatedFunds).toHaveBeenLastCalledWith(
           1,
           ARCHIVE_ITEMS_PER_PAGE,
-          { search: undefined, statuses: undefined },
+          {
+            search: undefined,
+            statuses: undefined,
+            sort: [{ field: 'fundNumber', order: 'asc' }]
+          },
           { skip: false }
         );
       });

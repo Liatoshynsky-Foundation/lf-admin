@@ -145,12 +145,13 @@ const extractValidationErrors = (error: unknown): FundDetailsErrors | null => {
   }
 };
 
-export const useUpsertFund = () => {
+export const useUpsertFund = (fundId?: string) => {
   const params = useParams<{ id?: string }>();
-  const id = params.id;
+  const id = fundId ?? params.id;
   const mode = id ? 'edit' : 'create';
 
   const [details, setDetails] = useState<FundDetailsValue>(INITIAL_DETAILS);
+  const [initialDetails, setInitialDetails] = useState<FundDetailsValue | null>(null);
   const [errors, setErrors] = useState<FundDetailsErrors>({});
   const [forceShowErrors, setForceShowErrors] = useState(false);
   const [isSaved, setIsSaved] = useState(true);
@@ -165,7 +166,7 @@ export const useUpsertFund = () => {
   useEffect(() => {
     if (queryData?.findFundById) {
       const fund = queryData.findFundById;
-      setDetails({
+      const nextDetails = {
         fundNumber: String(fund.fundNumber),
         name: { uk: fund.name?.uk ?? '', en: fund.name?.en ?? '' },
         documentCreationDate: fund.documentCreationDate?.uk ?? '',
@@ -177,14 +178,22 @@ export const useUpsertFund = () => {
         },
         casesCount: fund.casesCount ?? 0,
         descriptionsCount: fund.descriptionsCount ?? 0
-      });
+      };
+
+      setDetails(nextDetails);
+      setInitialDetails(nextDetails);
+      setIsSaved(true);
       setCurrentStatus(resolveFundStatus(fund.status));
     }
   }, [queryData]);
 
   useEffect(() => {
-    setIsSaved(false);
-  }, [details]);
+    if (initialDetails) {
+      setIsSaved(JSON.stringify(details) === JSON.stringify(initialDetails));
+    }
+  }, [details, initialDetails]);
+
+  const hasUnsavedChanges = initialDetails !== null && JSON.stringify(details) !== JSON.stringify(initialDetails);
 
   const validate = useCallback((): boolean => {
     const newErrors: FundDetailsErrors = {};
@@ -273,6 +282,7 @@ export const useUpsertFund = () => {
         const savedId = await saveFund(payload);
 
         if (savedId) {
+          setInitialDetails(details);
           setIsSaved(true);
           setCurrentStatus(status);
           toast.success(successMessage);
@@ -298,6 +308,7 @@ export const useUpsertFund = () => {
     errors,
     forceShowErrors,
     isSaved,
+    hasUnsavedChanges,
     currentStatus,
     fundId: id,
     handleSave

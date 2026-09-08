@@ -23,7 +23,12 @@ export const useSortableItemContext = () => {
   return context;
 };
 
-export const SortableItemWrapper = ({ id, children, gripHandle = false, gripPosition = 'center' }: SortableItemWrapperProps) => {
+export const SortableItemWrapper = ({
+  id,
+  children,
+  gripHandle = false,
+  gripPosition = 'center'
+}: SortableItemWrapperProps) => {
   const {
     attributes,
     listeners,

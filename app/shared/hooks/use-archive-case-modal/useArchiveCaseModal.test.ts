@@ -1,7 +1,16 @@
 import { act, renderHook } from '@testing-library/react';
+import toast from 'react-hot-toast';
 
 import { useArchiveCaseModal, type UseArchiveCaseModalProps } from './useArchiveCaseModal';
 import { INITIAL_PDF_ENTRY } from '~/constants/archive';
+import { CASE_VALIDATION_MESSAGES } from '~/constants/case';
+
+jest.mock('react-hot-toast', () => ({
+  __esModule: true,
+  default: {
+    error: jest.fn(),
+  },
+}));
 
 const createMockFile = (name: string, type: string): File => {
   return new File(['dummy content'], name, { type });
@@ -15,6 +24,17 @@ describe('useArchiveCaseModal', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
+
+  const fillValidForm = (result: { current: ReturnType<typeof useArchiveCaseModal> }) => {
+    act(() => {
+      result.current.setDescriptionNumber('10');
+      result.current.setCaseNumber('123');
+      result.current.setCaseName('Case Title');
+      result.current.setSheetsNumber('5');
+      result.current.setCaseDate('2026-07-24');
+      result.current.setCaseDescriptions('Descriptions');
+    });
+  };
 
   describe('initial state', () => {
     it('should initialize all state values with their defaults', () => {
@@ -30,9 +50,10 @@ describe('useArchiveCaseModal', () => {
         sheetsNumber: '',
         isUploadModalOpen: false,
         currentPdfFile: INITIAL_PDF_ENTRY,
+        fieldErrors: {},
 
-        isSubmitDisabled: true, 
-        isCancelDisabled: true, 
+        isSubmitDisabled: true,
+        isCancelDisabled: true,
 
         clearInputs: expect.any(Function),
         handleApplyPdf: expect.any(Function),
@@ -192,19 +213,75 @@ describe('useArchiveCaseModal', () => {
   });
 
   describe('handleSave', () => {
-    it('should clear inputs and call setIsOpen with false', () => {
+    it('should set fieldErrors and return early if validation fails', async () => {
       const { result } = renderHook(() => useArchiveCaseModal(defaultProps));
 
-      act(() => {
-        result.current.setCaseNumber('123');
+      await act(async () => {
+        await result.current.handleSave();
       });
 
-      act(() => {
-        result.current.handleSave();
+      expect(result.current.fieldErrors).toHaveProperty('descriptionNumber');
+      expect(result.current.fieldErrors).toHaveProperty('caseNumber');
+      expect(mockSetIsOpen).not.toHaveBeenCalled();
+    });
+
+    it('should clear inputs and call setIsOpen with false on success', async () => {
+      const { result } = renderHook(() => useArchiveCaseModal(defaultProps));
+
+      fillValidForm(result);
+
+      await act(async () => {
+        await result.current.handleSave();
       });
 
       expect(result.current.caseNumber).toBe('');
       expect(mockSetIsOpen).toHaveBeenCalledWith(false);
+    });
+
+    it('should catch generic error from onSave and call toast.error', async () => {
+      const onSaveMock = jest.fn().mockRejectedValue(new Error('Some generic error'));
+      const { result } = renderHook(() => useArchiveCaseModal({ ...defaultProps, onSave: onSaveMock }));
+
+      fillValidForm(result);
+
+      await act(async () => {
+        await result.current.handleSave();
+      });
+
+      expect(toast.error).toHaveBeenCalledWith('Some generic error');
+      expect(mockSetIsOpen).not.toHaveBeenCalled();
+    });
+
+    it('should set duplicate fieldErrors if onSave throws DUPLICATE_CASE_NUMBERS error', async () => {
+      const onSaveMock = jest.fn().mockRejectedValue(new Error('DUPLICATE_CASE_NUMBERS'));
+      const { result } = renderHook(() => useArchiveCaseModal({ ...defaultProps, onSave: onSaveMock }));
+
+      fillValidForm(result);
+
+      await act(async () => {
+        await result.current.handleSave();
+      });
+
+      expect(result.current.fieldErrors.descriptionNumber).toBe(CASE_VALIDATION_MESSAGES.duplicateNumbers);
+      expect(result.current.fieldErrors.caseNumber).toBe(CASE_VALIDATION_MESSAGES.duplicateNumbers);
+      expect(toast.error).toHaveBeenCalledWith('DUPLICATE_CASE_NUMBERS');
+      expect(mockSetIsOpen).not.toHaveBeenCalled();
+    });
+
+    it('should set duplicate fieldErrors if onSave throws error containing "таким номером"', async () => {
+      const onSaveMock = jest.fn().mockRejectedValue('Справа з таким номером вже існує');
+      const { result } = renderHook(() => useArchiveCaseModal({ ...defaultProps, onSave: onSaveMock }));
+
+      fillValidForm(result);
+
+      await act(async () => {
+        await result.current.handleSave();
+      });
+
+      expect(result.current.fieldErrors.descriptionNumber).toBe(CASE_VALIDATION_MESSAGES.duplicateNumbers);
+      expect(result.current.fieldErrors.caseNumber).toBe(CASE_VALIDATION_MESSAGES.duplicateNumbers);
+      expect(toast.error).toHaveBeenCalledWith('Справа з таким номером вже існує');
+      expect(mockSetIsOpen).not.toHaveBeenCalled();
     });
   });
 
@@ -239,14 +316,7 @@ describe('useArchiveCaseModal', () => {
     it('should return isSubmitDisabled false if all required fields have values', () => {
       const { result } = renderHook(() => useArchiveCaseModal(defaultProps));
 
-      act(() => {
-        result.current.setDescriptionNumber('10');
-        result.current.setCaseNumber('123');
-        result.current.setCaseName('Case Title');
-        result.current.setSheetsNumber('5');
-        result.current.setCaseDate('2026-07-24');
-        result.current.setCaseDescriptions('Descriptions');
-      });
+      fillValidForm(result);
 
       expect(result.current.isSubmitDisabled).toBe(false);
     });

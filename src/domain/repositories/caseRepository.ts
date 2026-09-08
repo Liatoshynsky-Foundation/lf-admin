@@ -7,9 +7,13 @@ export type CaseFilters = Omit<FiltersInput, 'slug'> & {
   statuses?: BaseContentStatuses[];
 };
 
-export type CreateCaseInput = Omit<Case, 'id' | 'createdAt' | 'updatedAt'>;
+export type CreateCaseInput = Omit<Case, 'id' | 'createdAt' | 'updatedAt' | 'order'> & {
+  order?: number;
+};
 
-export type UpdateCaseInput = Partial<Omit<Case, 'id' | 'createdAt' | 'updatedAt'>>;
+export type UpdateCaseInput = Partial<Omit<Case, 'id' | 'createdAt' | 'updatedAt' | 'order'>> & {
+  order?: number;
+};
 
 export type ICaseRepository = IBaseRepository<Case, CaseFilters> & {
   create(input: CreateCaseInput): Promise<Case>;

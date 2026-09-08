@@ -70,12 +70,12 @@ type PaginatedCases {
 
 input CaseFiltersInput {
     fundId: ID
+    statuses: [CaseStatus!]
     limit: Int
     skip: Int
     search: String
     languages: [ContentLanguage!]
     sort: [SortOptions!]
-    statuses: [CaseStatus!]
 }
 
 extend type Query {

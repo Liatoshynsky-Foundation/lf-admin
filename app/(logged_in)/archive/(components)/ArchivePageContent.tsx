@@ -52,7 +52,7 @@ import { SearchStatusToolbar } from '~/shared/components/search-status-toolbar/S
 import { useAllCases } from '~/shared/hooks/use-cases/useCases';
 import { usePaginatedFunds, useUpdateFund } from '~/shared/hooks/use-funds/useFunds';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
-import { CaseStatus, FundStatus } from '~/types/graphql/generated/graphql';
+import { CaseStatus, FundStatus, SortOrder } from '~/types/graphql/generated/graphql';
 
 interface ArchivePageContentProps {
   activeTab: ArchiveTabValue;
@@ -68,18 +68,21 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
 
   const filterValues = statusFilterProps.value;
   const isAllStatus = filterValues.length === 0;
-
   const showFunds = activeTab === 'all' || activeTab === 'funds';
   const showCases = activeTab === 'all' || activeTab === 'cases';
   const isAllTab = activeTab === 'all';
 
-  const search = appliedSearch || undefined;
-  const statuses = isAllStatus ? undefined : filterValues;
+  const search = appliedSearch?.trim() || undefined;
+  const statuses = isAllStatus ? undefined : (filterValues as FundStatus[] | undefined);
 
-  const { funds, totalPages, loading: fundsLoading, error: fundsError } = usePaginatedFunds(
+  const { funds, totalPages, loading: fundsLoading, error: fundsError, refetch } = usePaginatedFunds(
     page,
     ARCHIVE_ITEMS_PER_PAGE,
-    { search, statuses: statuses as FundStatus[] | undefined },
+    {
+      search,
+      statuses,
+      sort: [{ field: 'fundNumber', order: SortOrder.Asc }]
+    },
     { skip: !showFunds }
   );
 
@@ -193,6 +196,7 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
           funds={sortedFunds}
           hasActiveSearch={hasActiveSearch}
           hasActiveStatusFilter={hasActiveStatusFilter}
+          onDeleted={refetch}
           onPublish={handlePublishRequest}
         />
       );

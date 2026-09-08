@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import {
   ARCHIVE_BASE_PATH,
   ARCHIVE_EMPTY_STATE_DESCRIPTION,
@@ -10,12 +12,14 @@ import {
   ARCHIVE_FUNDS_TABLE_HEADERS,
 } from '~/constants/archive';
 import { Fund } from '~/constants/fund';
+import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
 import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import { EmptyState } from '~/shared/components/empty-state';
 import { RowActions } from '~/shared/components/table-layout/components/RowActions';
 import { StatusBadge } from '~/shared/components/table-layout/components/StatusBadge';
 import { ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
+import { useDeleteFund } from '~/shared/hooks/use-funds/useFunds';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 export type FundRow = Fund & {
@@ -27,15 +31,19 @@ export interface FundsTableProps {
   funds: Fund[];
   hasActiveSearch: boolean;
   hasActiveStatusFilter: boolean;
+  onDeleted?: () => Promise<unknown>;
   onPublish?: (fund: Fund) => void;
 }
 
-export const FundsTable = ({ funds, hasActiveSearch, hasActiveStatusFilter, onPublish }: FundsTableProps) => {
+export const FundsTable = ({ funds, hasActiveSearch, hasActiveStatusFilter, onDeleted, onPublish }: FundsTableProps) => {
+  const [deleteFund] = useDeleteFund();
+  const [deleteState, setDeleteState] = useState<{ open: boolean; id?: string; name?: string }>({ open: false });
+
   const rows = funds.map((fund) => {
     const canPublish = fund.status === BaseContentStatuses.Hidden && Boolean(onPublish);
     const statusActions = [
       ...(canPublish ? [{ id: 'publish', text: { name: 'Опублікувати' }, onClick: () => onPublish?.(fund) }] : []),
-      { id: 'delete', text: { name: 'Видалити' } }
+      { id: 'delete', text: { name: 'Видалити' }, onClick: () => setDeleteState({ open: true, id: fund.id, name: fund.name }) }
     ];
 
     return {
@@ -117,7 +125,7 @@ export const FundsTable = ({ funds, hasActiveSearch, hasActiveStatusFilter, onPu
       }} menuActions={fund.menuActions} />
     }
   ];
- 
+
   if (rows.length === 0) {
     const hasActiveCriteria = hasActiveSearch || hasActiveStatusFilter;
 
@@ -148,6 +156,20 @@ export const FundsTable = ({ funds, hasActiveSearch, hasActiveStatusFilter, onPu
   }
 
   return (
-    <TableLayout data={rows} columns={columns} />
+    <>
+      <TableLayout data={rows} columns={columns} />
+      <DeleteCompositionModal
+        open={deleteState.open}
+        onClose={() => setDeleteState({ open: false })}
+        title="Підтвердити видалення"
+        description={`Ви впевнені, що хочете видалити фонд «${deleteState.name ?? ''}»?`}
+        onConfirm={async () => {
+          if (!deleteState.id) return;
+          await deleteFund({ id: deleteState.id });
+          setDeleteState({ open: false });
+          await onDeleted?.();
+        }}
+      />
+    </>
   );
 };
