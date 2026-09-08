@@ -48,6 +48,7 @@ mutation UpdateOpus($id: ID!, $input: UpdateOpusInput!) {
       }
       sheetMusic {
         name
+        fileName
         url
         publishDate
       }

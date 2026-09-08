@@ -8,9 +8,6 @@ export const checkIsSeoInvalid = (
   publicationType: PublicationsItemType,
   ticketUrl: SeoBlockValue['ticketUrl']
 ): boolean => {
-  if (!ukMeta.title.trim() || !enMeta.title.trim()) return true;
-  if (!ukMeta.description.trim() || !enMeta.description.trim()) return true;
-
   if (publicationType === 'media') {
     const ukUrl = ukMeta.canonicalUrl ?? '';
     const enUrl = enMeta.canonicalUrl ?? '';

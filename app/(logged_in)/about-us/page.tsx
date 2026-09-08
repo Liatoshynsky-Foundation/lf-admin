@@ -9,7 +9,7 @@ import {
 } from '~/constants/blockSchemas';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
-import { FoundationFounders } from '~/shared/components/about-us/foundation-founders/FoundationFounders';
+import FoundationFoundersRedirect from '~/shared/components/about-us/foundation-founders-redirect/FoundationFoundersRedirect';
 import { IntroSection } from '~/shared/components/about-us/intro-section/IntroSection';
 import { foundationAdapter } from '~/shared/components/about-us/liatoshynsky-foundation/foundation.adapter';
 import { officeAdapter } from '~/shared/components/about-us/liatoshynsky-office/office.adapter';
@@ -83,7 +83,7 @@ const BLOCKS_CONFIG: Record<string, () => React.JSX.Element> = {
   goals: OurGoalsBlockView,
   office: LiatoshynskyOfficeBlockView,
   'what-we-do': WhatWeDoBlockView,
-  founders: FoundationFounders
+  founders: FoundationFoundersRedirect
 };
 
 export default function Page() {

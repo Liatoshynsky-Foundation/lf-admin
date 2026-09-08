@@ -14,8 +14,9 @@ jest.mock('~/shared/components/block/Block', () => ({
   Block: ({ blockId }: { blockId: string }) => <div data-testid={blockId}>{blockId}</div>
 }));
 
-jest.mock('~/shared/components/about-us/foundation-founders/FoundationFounders', () => ({
-  FoundationFounders: () => <div data-testid="founders">FoundationFounders</div>
+jest.mock('~/shared/components/about-us/foundation-founders-redirect/FoundationFoundersRedirect', () => ({
+  __esModule: true,
+  default: () => <div data-testid="founders">FoundationFoundersRedirect</div>
 }));
 
 jest.mock('~/shared/components/sortable-list/SortableList');

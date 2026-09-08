@@ -193,6 +193,7 @@ const createMockData = (
   setPublishDate: jest.fn(),
   seoValue: initialSeoValue,
   setSeoValue: jest.fn(),
+  seoErrors: undefined,
   crop: null,
   setCrop: jest.fn(),
   forceShowErrors: false,
@@ -219,7 +220,7 @@ describe('CreatePublicationsView Component', () => {
       const mockData = createMockData({ publicationType: 'news' });
       render(<CreatePublicationsView data={mockData} />);
 
-      expect(screen.getByLabelText('Назва новини в адмінці')).toBeInTheDocument();
+      expect(screen.getByLabelText('Нотатки адміністратора')).toBeInTheDocument();
 
       expect(screen.getByTestId('mock-date-picker')).toBeInTheDocument();
 
@@ -231,7 +232,7 @@ describe('CreatePublicationsView Component', () => {
       const mockData = createMockData({ publicationType: 'events' });
       render(<CreatePublicationsView data={mockData} />);
 
-      expect(screen.getByLabelText('Назва події в адмінці')).toBeInTheDocument();
+      expect(screen.getByLabelText('Нотатки адміністратора')).toBeInTheDocument();
       expect(screen.getByTestId('mock-seo-datetime-fields')).toBeInTheDocument();
     });
 
@@ -239,7 +240,7 @@ describe('CreatePublicationsView Component', () => {
       const mockData = createMockData({ publicationType: 'media' });
       render(<CreatePublicationsView data={mockData} />);
 
-      expect(screen.getByLabelText('Назва публікації в адмінці')).toBeInTheDocument();
+      expect(screen.getByLabelText('Нотатки адміністратора')).toBeInTheDocument();
       expect(screen.getByTestId('mock-seo-canonical-url-field')).toBeInTheDocument();
     });
   });
@@ -276,7 +277,7 @@ describe('CreatePublicationsView Component', () => {
 
       render(<CreatePublicationsView data={mockData} />);
 
-      const input = screen.getByLabelText('Назва новини в адмінці');
+      const input = screen.getByLabelText('Нотатки адміністратора');
       fireEvent.change(input, { target: { value: title } });
 
       expect(mockSetAdminTitle).toHaveBeenCalledTimes(1);

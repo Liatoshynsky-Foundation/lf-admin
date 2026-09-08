@@ -5,6 +5,8 @@ query AllAssets($filters: AssetsFiltersInput) {
     tags
     usageRefs {
       pageId
+      compositionId
+      compositionName
       blockId
       locale
     }

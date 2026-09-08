@@ -13,13 +13,13 @@ const getBorderState = (isFocused: boolean | null, hasError: boolean): BorderSta
 };
 
 export const styles = {
-  container: {
+  container: (error?: boolean) => ({
     position: 'relative',
     width: '100%',
     '&:hover fieldset': {
-      borderColor: 'blue.500',
+      borderColor: error ? 'error.main' : 'blue.500',
     }
-  },
+  }),
   input: {
     width: '100%',
 
@@ -83,12 +83,13 @@ export const styles = {
     ml: '14px'
   },
 
-  legend: (isActive: boolean) => ({
+  legend: (isActive: boolean, hasError: boolean = false) => ({
     display: 'block',
     fontSize: '12px',
     maxWidth: isActive ? '100%' : '0',
     transition: 'max-width 0.2s',
-    visibility: 'hidden'
+    visibility: 'hidden',
+    color: hasError ? 'error.main' : 'inherit'
   }),
 
   contentWrapper: {

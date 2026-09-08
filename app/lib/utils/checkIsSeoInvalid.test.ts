@@ -18,32 +18,6 @@ describe('checkIsSeoInvalid', () => {
   const validTicketUrl = { uk: 'https://ticket.ua', en: 'https://ticket.com' };
 
   describe('it fails (return true)', () => {
-    it.each([
-      ['uk'],
-      ['en'],
-    ] as const)('if title for %s is missing', (locale) => {
-      const result = checkIsSeoInvalid(
-        locale === 'uk' ? { ...validUkMeta, title: '' } : validUkMeta,
-        locale === 'en' ? { ...validEnMeta, title: '' } : validEnMeta,
-        'media',
-        validTicketUrl
-      );
-      expect(result).toBe(true);
-    });
-
-    it.each([
-      ['uk'],
-      ['en'],
-    ] as const)('if description for %s is missing', (locale) => {
-      const result = checkIsSeoInvalid(
-        locale === 'uk' ? { ...validUkMeta, description: '' } : validUkMeta,
-        locale === 'en' ? { ...validEnMeta, description: '' } : validEnMeta,
-        'media',
-        validTicketUrl
-      );
-      expect(result).toBe(true);
-    });
-
     it('if type is "media" and uk canonicalUrl is invalid', () => {
       const result = checkIsSeoInvalid(
         { ...validUkMeta, canonicalUrl: 'not-a-url' },
@@ -74,9 +48,23 @@ describe('checkIsSeoInvalid', () => {
     it.each([
       ['generic type (news)', 'news'],
       ['type "media"', 'media'],
-      ['type "events"', 'events'],
+      ['type "events"', 'events']
     ])('if %s and both uk & en urls are correct & valid', (_, type) => {
       const result = checkIsSeoInvalid(validUkMeta, validEnMeta, type as PublicationsItemType, validTicketUrl);
+      expect(result).toBe(false);
+    });
+
+    it.each([
+      ['title', 'title'],
+      ['description', 'description'],
+      ['keywords', 'keywords']
+    ])('if %s is empty, since meta lengths are validated separately', (_, field) => {
+      const result = checkIsSeoInvalid(
+        { ...validUkMeta, [field]: '' },
+        { ...validEnMeta, [field]: '' },
+        'news',
+        validTicketUrl
+      );
       expect(result).toBe(false);
     });
   });
@@ -107,7 +95,7 @@ describe('checkIsSeoInvalid', () => {
         ['events', 'en', undefined],
         ['events', 'en', ''],
         ['events', 'en', '   '],
-        ['events', 'en', 'not-a-url'],
+        ['events', 'en', 'not-a-url']
       ] as const)(
         'should return expected validity status for type "%s" when %s canonicalUrl is %p',
         (type, locale, value) => {

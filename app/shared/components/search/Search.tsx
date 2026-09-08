@@ -12,6 +12,7 @@ export type SearchOption = {
 };
 
 export type SearchProps = Readonly<{
+  onEnter?: () => void;
   search: string;
   setSearch: (value: string) => void;
   options: SearchOption[];
@@ -57,6 +58,7 @@ const filterAndSortOptions = (list: SearchOption[], inputValue: string): SearchO
 };
 
 export function Search({
+  onEnter,
   search,
   setSearch,
   options,
@@ -107,6 +109,11 @@ export function Search({
           inputProps={params.inputProps}
           placeholder={placeholder}
           fullWidth
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              onEnter?.();
+            }
+          }}
           startAdornment={
             <InputAdornment
               position="start"

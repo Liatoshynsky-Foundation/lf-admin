@@ -106,8 +106,8 @@ export const PUBLICATIONS_CREATE_OPTIONS: ReadonlyArray<PublicationsCreateOption
 );
 
 const PUBLICATIONS_STATUS_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
-  { value: BaseContentStatuses.Draft, label: 'Чернетка (прихована)' },
-  { value: BaseContentStatuses.Published, label: 'Опублікована' }
+  { value: BaseContentStatuses.Draft, label: 'Приховано' },
+  { value: BaseContentStatuses.Published, label: 'Опубліковано' }
 ];
 
 export const PUBLICATIONS_FILTERS: ReadonlyArray<PublicationsFilterConfig> = [
@@ -261,9 +261,31 @@ export const initialSeoValue: SeoBlockValue = {
 };
 
 export const ADMIN_TITLE_LABELS: Record<PublicationsItemType, string> = {
-  events: 'Назва події в адмінці',
-  news: 'Назва новини в адмінці',
-  media: 'Назва публікації в адмінці'
+  events: 'Нотатки адміністратора',
+  news: 'Нотатки адміністратора',
+  media: 'Нотатки адміністратора'
+} as const;
+
+export const PUBLICATION_SEO_REQUIRED = {
+  uk: { title: true, description: true },
+  en: { title: true, description: false }
+} as const;
+
+export const PUBLICATION_SEO_LABELS = {
+  uk: {
+    sectionTitle: 'Деталі публікації | UA',
+    metaTitle: 'Заголовок публікації',
+    metaDescription: 'Короткий опис',
+    metaKeywords: 'Ключові слова',
+    alternativeText: 'Опис зображення'
+  },
+  en: {
+    sectionTitle: 'Publication details | ENG',
+    metaTitle: 'Publication title',
+    metaDescription: 'Short description',
+    metaKeywords: 'Key words',
+    alternativeText: 'Image description'
+  }
 } as const;
 
 const META_TEXT_LENGTH = {

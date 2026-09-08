@@ -15,6 +15,7 @@ mutation CreateComposition($input: CreateCompositionInput!) {
     }
     sheetMusic {
       name
+      fileName
       url
       publishDate
       isFree
@@ -42,6 +43,7 @@ mutation UpdateComposition($id: ID!, $input: UpdateCompositionInput!) {
     }
     sheetMusic {
       name
+      fileName
       url
       publishDate
       isFree

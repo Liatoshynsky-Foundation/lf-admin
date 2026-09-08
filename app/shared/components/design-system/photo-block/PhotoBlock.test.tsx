@@ -1,11 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import toast from 'react-hot-toast';
 
 import { ImagePreviewBlock } from './PhotoBlock';
 import type { MediaModalOpenState, MediaModalResult, MediaModalTab } from '~/shared/components/media-modal/MediaModal.types';
-
-/* -------------------- MOCKS -------------------- */
 
 jest.mock('react-hot-toast', () => ({
   success: jest.fn(),
@@ -119,8 +117,6 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
     );
   }
 }));
-
-/* -------------------- TESTS -------------------- */
 
 describe('ImagePreviewBlock', () => {
   const onChangeImage = jest.fn();
@@ -259,20 +255,21 @@ describe('ImagePreviewBlock', () => {
   });
 
   it('renders and updates alt text', async () => {
-    const user = userEvent.setup();
+    jest.useFakeTimers();
     const onChangeAltText = jest.fn();
+    renderComponent({ showAlternativeText: true, altText: 'initial alt', onChangeAltText });
 
-    renderComponent({
-      showAlternativeText: true,
-      altText: 'old alt',
-      onChangeAltText
+    const input = screen.getByLabelText('Alt текст зображення');
+    expect(input).toHaveValue('initial alt');
+
+    fireEvent.change(input, { target: { value: 'initial alt!' } });
+
+    act(() => {
+      jest.advanceTimersByTime(500);
     });
 
-    const input = screen.getByLabelText(/alt текст зображення/i);
-    expect(input).toHaveValue('old alt');
-
-    await user.type(input, '!');
     expect(onChangeAltText).toHaveBeenCalled();
+    jest.useRealTimers();
   });
 
   it('reports alt text blur and displays its validation error', async () => {

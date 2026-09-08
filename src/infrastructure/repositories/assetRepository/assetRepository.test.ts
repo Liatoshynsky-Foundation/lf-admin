@@ -21,7 +21,8 @@ jest.mock('../../../uploads/storage', () => ({
     delete: jest.fn().mockResolvedValue({ success: true }),
     exists: jest.fn().mockResolvedValue(false),
     move: jest.fn().mockResolvedValue({ success: true }),
-    getUrl: jest.fn((filename: string) => `https://example.com/${filename}`)
+    getUrl: jest.fn((filename: string) => `https://example.com/${filename}`),
+    getMetadata: jest.fn().mockResolvedValue(null)
   }))
 }));
 
@@ -35,6 +36,20 @@ const getRepoConfig = () => {
     buildQuery: (filters?: Record<string, unknown>) => Record<string, unknown>;
     getDefaultSort: (filters?: Record<string, unknown>) => Record<string, 1 | -1>;
   };
+};
+
+const MOCK_ASSET_DOC = {
+  _id: { toString: () => 'asset-id' },
+  type: 'audio' as const,
+  tags: [],
+  usageRefs: [],
+  filename: 'track.mp3',
+  mimeType: 'audio/mpeg',
+  sizeBytes: 0,
+  url: 'https://example.com/compositions/track.mp3',
+  isStarred: false,
+  createdAt: new Date('2026-01-01T00:00:00.000Z'),
+  updatedAt: new Date('2026-01-01T00:00:00.000Z')
 };
 
 describe('AssetRepository', () => {
@@ -169,6 +184,7 @@ describe('AssetRepository', () => {
     let mockStorageExists: jest.Mock;
     let mockStorageMove: jest.Mock;
     let mockStorageGetUrl: jest.Mock;
+    let mockStorageGetMetadata: jest.Mock;
 
     beforeAll(() => {
       const mockStorage = (createStorageAdapter as jest.Mock).mock.results[0].value;
@@ -176,6 +192,7 @@ describe('AssetRepository', () => {
       mockStorageExists = mockStorage.exists;
       mockStorageMove = mockStorage.move;
       mockStorageGetUrl = mockStorage.getUrl;
+      mockStorageGetMetadata = mockStorage.getMetadata;
     });
 
     beforeEach(() => {
@@ -184,6 +201,7 @@ describe('AssetRepository', () => {
       mockStorageExists.mockResolvedValue(false);
       mockStorageMove.mockResolvedValue({ success: true });
       mockStorageGetUrl.mockImplementation((filename: string) => `https://example.com/${filename}`);
+      mockStorageGetMetadata.mockResolvedValue(null);
       mockAssetModel.find.mockResolvedValue([]);
     });
 
@@ -501,6 +519,28 @@ describe('AssetRepository', () => {
         expect(result.isStarred).toBe(false);
       });
 
+      it('should use storage upload time and create with the supplied session', async () => {
+        const uploadedAt = new Date('2026-04-02T12:00:00.000Z');
+        const session = {} as never;
+        
+        mockStorageGetMetadata.mockResolvedValueOnce({ uploadedAt });
+        mockAssetModel.create.mockResolvedValueOnce([MOCK_ASSET_DOC]);
+
+        await repository.createAsset({
+          filename: 'track.mp3',
+          mimeType: 'audio/mpeg',
+          sizeBytes: 0,
+          url: 'https://example.com/compositions/track.mp3',
+          type: 'audio'
+        }, session);
+
+        expect(mockStorageGetMetadata).toHaveBeenCalledWith('track.mp3', 'compositions');
+        expect(mockAssetModel.create).toHaveBeenCalledWith(
+          [expect.objectContaining({ createdAt: uploadedAt })],
+          { session }
+        );
+      });
+
       it('should throw duplicate error using filename when originalname is undefined', async () => {
         mockAssetModel.find.mockResolvedValueOnce([
           {
@@ -624,6 +664,23 @@ describe('AssetRepository', () => {
         expect(mockAssetModel.findOneAndUpdate).toHaveBeenCalledWith(
           { url: 'https://example.com/photo.jpg' },
           { $addToSet: { usageRefs: { pageId: 'about', blockId: 'hero' } } },
+          { session: undefined }
+        );
+      });
+
+      it('should find assets by URLs and remove a usage reference', async () => {
+        const usageRefs = { compositionId: 'composition-id' };
+        mockAssetModel.find.mockResolvedValueOnce([MOCK_ASSET_DOC]);
+
+        await expect(repository.findByUrls([MOCK_ASSET_DOC.url])).resolves.toEqual([
+          expect.objectContaining({ id: 'asset-id', url: MOCK_ASSET_DOC.url })
+        ]);
+        await repository.removeUsageRef(MOCK_ASSET_DOC.url, usageRefs);
+
+        expect(mockAssetModel.find).toHaveBeenCalledWith({ url: { $in: [MOCK_ASSET_DOC.url] } });
+        expect(mockAssetModel.findOneAndUpdate).toHaveBeenCalledWith(
+          { url: MOCK_ASSET_DOC.url },
+          { $pull: { usageRefs: { ...usageRefs } } },
           { session: undefined }
         );
       });

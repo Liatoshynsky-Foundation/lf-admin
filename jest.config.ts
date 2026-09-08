@@ -4,7 +4,6 @@ import nextJest from 'next/jest';
 const createJestConfig = nextJest({
   dir: './'
 });
-const isCI = !!process.env.CI;
 
 const config: Config = {
   bail: 1,
@@ -73,9 +72,9 @@ const config: Config = {
   ],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   testTimeout: 15000,
-  detectOpenHandles: isCI,
+  detectOpenHandles: !!process.env.CI,
   forceExit: true,
-  maxWorkers: isCI ? 2 : '50%'
+  maxWorkers: '100%'
 };
 
 export default createJestConfig(config);

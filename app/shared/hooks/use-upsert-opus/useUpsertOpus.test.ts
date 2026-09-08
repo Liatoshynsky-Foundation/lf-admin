@@ -170,7 +170,7 @@ describe('useUpsertOpus', () => {
       ],
       notes: [
         { name: 'Ноти', fileUrl: 'https://example.com/notes.pdf', publishDate: '2020-01-01' },
-        { name: 'notes2.pdf', fileUrl: 'https://example.com/notes2.pdf?test=true', publishDate: '' }
+        { name: '', fileUrl: 'https://example.com/notes2.pdf?test=true', publishDate: '' }
       ]
     });
   });
@@ -686,7 +686,7 @@ describe('useUpsertOpus', () => {
     expect(composition.year).toBe('');
     expect(composition.audios[0].name).toBe('derived.mp3');
     expect(composition.audios[1].name).toBe('');
-    expect(composition.notes[0].name).toBe('derived-notes.pdf');
+    expect(composition.notes[0].name).toBe('');
 
     expect(result.current.seoValue.ogImage).toBeNull();
     expect(result.current.seoValue.allowIndexing.uk).toBe(true);

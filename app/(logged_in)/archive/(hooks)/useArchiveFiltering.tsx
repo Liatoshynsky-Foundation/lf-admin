@@ -1,28 +1,39 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { ARCHIVE_STATUS_FILTER_OPTIONS } from '~/constants/archive';
+import { ARCHIVE_SEARCH_PLACEHOLDER, ARCHIVE_STATUS_FILTER_OPTIONS } from '~/constants/archive';
 import { SearchProps } from '~/shared/components/search/Search';
 import { FilterSelectProps } from '~/shared/components/selector/FilterSelect';
-
+import { useDebounce } from '~/shared/hooks/use-debounce/useDebounce';
 
 export const useArchiveFiltering = (): {
-  activeStatusFilters: string[],
-  searchProps: SearchProps,
-  statusFilterProps: Omit<FilterSelectProps, 'value'> & { value: string[] }
+  activeStatusFilters: string[];
+  searchProps: SearchProps;
+  appliedSearch: string;
+  statusFilterProps: Omit<FilterSelectProps, 'value'> & { value: string[] };
 } => {
   const [search, setSearch] = useState<string>('');
+  const debouncedSearch = useDebounce(search.trim(), 300);
+  const [appliedSearch, setAppliedSearch] = useState('');
   const [statusFilters, setStatusFilters] = useState<string[]>([]);
 
-  const activeStatusFilters = statusFilters;
+  useEffect(() => {
+    setAppliedSearch(debouncedSearch);
+  }, [debouncedSearch]);
+
+  const commitSearch = () => {
+    setAppliedSearch(search.trim());
+  };
 
   return {
-    activeStatusFilters,
+    appliedSearch,
+    activeStatusFilters: statusFilters,
     searchProps: {
       search,
       setSearch,
+      onEnter: commitSearch,
       options: [],
-      placeholder: 'Пошук за назвою фонду, назвою справи або змістом документів',
-      maxWidth: '580px',
+      placeholder: ARCHIVE_SEARCH_PLACEHOLDER,
+      maxWidth: '580px'
     },
     statusFilterProps: {
       label: 'Статус',

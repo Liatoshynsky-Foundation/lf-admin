@@ -60,8 +60,6 @@ describe('useCreateWorkAction', () => {
     name: { uk: MOCK_WORK.name, en: MOCK_WORK.name },
     year: Number(MOCK_YEAR),
     genre: MOCK_WORK.genre,
-    audioAvailable: true,
-    sheetAvailable: true,
     audios: [{ name: 'Audio 1', url: MOCK_AUDIO_URL }],
     sheetMusic: [
       {
@@ -78,8 +76,6 @@ describe('useCreateWorkAction', () => {
     name: { uk: MOCK_WORK_EMPTY.name, en: MOCK_WORK_EMPTY.name },
     year: undefined,
     genre: undefined,
-    audioAvailable: false,
-    sheetAvailable: false,
     audios: [],
     sheetMusic: [],
   };
@@ -95,7 +91,7 @@ describe('useCreateWorkAction', () => {
         id: '1',
         name: 'Note without optionals',
         fileUrl: '',
-        publishDate: '',
+        publishDate: undefined,
         isFree: undefined as unknown as boolean,
       },
     ],
@@ -105,14 +101,12 @@ describe('useCreateWorkAction', () => {
     name: { uk: MOCK_WORK_NAME, en: MOCK_WORK_NAME },
     year: Number(MOCK_YEAR),
     genre: MOCK_GENRE,
-    audioAvailable: true,
-    sheetAvailable: false,
     audios: [{ name: 'Audio 1', url: '' }],
     sheetMusic: [
-      {
+      { 
         name: 'Note without optionals',
         url: null,
-        publishDate: '',
+        publishDate: undefined,
         isFree: false,
         dateUploaded: expect.any(String),
       },

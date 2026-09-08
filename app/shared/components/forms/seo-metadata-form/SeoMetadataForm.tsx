@@ -6,14 +6,17 @@ import { Box, Checkbox, Divider, FormControlLabel, Stack, TextField, Typography 
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
-import { SeoBaseFields } from './seo-base-fields/SeoBaseFields';
+import { isSeoFieldRequired, SeoBaseFields, type SeoFieldsRequired } from './seo-base-fields/SeoBaseFields';
 import { styles } from './SeoMetadataForm.styles';
 import { type SeoField, validateSeoField } from './validateSeoField';
 import { seoFormErrors } from '~/constants/errors';
 import { CROP_RATIOS } from '~/constants/publications';
 import { ImagePreviewBlock as PhotoBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
 import TooltipCustom from '~/shared/components/design-system/tooltip/Tooltip';
+import { fileNameFromUrl } from '~/src/shared/utils/assets/assetFilename';
 import { CropRect, CropResult } from '~/types/common';
+
+export type { SeoFieldsRequired };
 
 export interface LocalizedMeta {
   title: string;
@@ -25,6 +28,17 @@ export interface LocalizedMeta {
   altText?: { uk: string; en: string };
 }
 
+export type SeoFormLabels = {
+  readonly metaTitle?: string;
+  readonly metaDescription?: string;
+  readonly metaKeywords?: string;
+  readonly ogImage?: string;
+  readonly ogImageHint?: string;
+  readonly allowIndexing?: string;
+  readonly sectionTitle?: string;
+  readonly alternativeText?: string;
+};
+
 export interface SeoMetadataFormProps {
   readonly value: LocalizedMeta;
   readonly onChange: (value: LocalizedMeta) => void;
@@ -35,21 +49,13 @@ export interface SeoMetadataFormProps {
   readonly onIndexingChange: (val: boolean) => void;
   readonly showAlternativeText?: boolean;
   readonly extraFieldsBeforeKeywords?: boolean;
-  readonly required?: boolean;
+  readonly required?: SeoFieldsRequired;
   readonly forceShowErrors?: boolean;
   readonly errors?: Partial<Record<keyof LocalizedMeta, string>>;
   readonly extraFields?: (value: LocalizedMeta, onChange: (val: LocalizedMeta) => void) => ReactNode;
   readonly crop?: CropRect | null;
   readonly onChangeCrop?: (crop: CropRect | null) => void;
-  readonly labels?: {
-    readonly metaTitle?: string;
-    readonly metaDescription?: string;
-    readonly metaKeywords?: string;
-    readonly ogImage?: string;
-    readonly ogImageHint?: string;
-    readonly allowIndexing?: string;
-    readonly sectionTitle?: string;
-  };
+  readonly labels?: SeoFormLabels;
 }
 
 const getFileNameFromUrl = (url: string | null): string | undefined =>
@@ -72,13 +78,17 @@ const getSeoFieldError = (
   field: keyof LocalizedMeta,
   value: string,
   locale: 'uk' | 'en',
-  required: boolean,
-  hasOgImage: boolean
+  required: SeoFieldsRequired,
 ): string => {
   if (!seoFields.has(field as SeoField)) return '';
-  const error = validateSeoField(field as SeoField, value, {
-    required: field === 'altText' ? hasOgImage : required || Boolean(value.trim())
-  });
+
+  let fieldRequired = Boolean(value.trim());
+
+  if (field === 'title' || field === 'description') {
+    fieldRequired = isSeoFieldRequired(required, field) || Boolean(value.trim());
+  }
+
+  const error = validateSeoField(field as SeoField, value, { required: fieldRequired });
   return error ? seoFormErrors[locale][error] : '';
 };
 
@@ -129,16 +139,15 @@ export default function SeoMetadataForm({
     if (!forceShowErrors || isExternalValidation) return;
     setTouched({ title: true, description: true, keywords: true, altText: true });
     setLocalErrors({
-      title: getSeoFieldError('title', value.title, locale, required, Boolean(ogImage)),
-      description: getSeoFieldError('description', value.description, locale, required, Boolean(ogImage)),
-      keywords: getSeoFieldError('keywords', value.keywords, locale, required, Boolean(ogImage)),
-      altText: getSeoFieldError('altText', value.altText?.[locale] ?? '', locale, required, Boolean(ogImage))
+      title: getSeoFieldError('title', value.title, locale, required),
+      description: getSeoFieldError('description', value.description, locale, required),
+      keywords: getSeoFieldError('keywords', value.keywords, locale, required),
+      altText: getSeoFieldError('altText', value.altText?.[locale] ?? '', locale, required)
     });
   }, [
     forceShowErrors,
     isExternalValidation,
     locale,
-    ogImage,
     required,
     value.altText,
     value.description,
@@ -157,7 +166,7 @@ export default function SeoMetadataForm({
     }
     setLocalErrors((prev) => ({
       ...prev,
-      [field]: getSeoFieldError(field, fieldValue, locale, required, Boolean(ogImage))
+      [field]: getSeoFieldError(field, fieldValue, locale, required)
     }));
   };
 
@@ -168,7 +177,7 @@ export default function SeoMetadataForm({
     } else if (touched[field]) {
       setLocalErrors((prev) => ({
         ...prev,
-        [field]: getSeoFieldError(field, val, locale, required, Boolean(ogImage))
+        [field]: getSeoFieldError(field, val, locale, required)
       }));
     }
   };
@@ -188,7 +197,7 @@ export default function SeoMetadataForm({
     } else if (touched.altText) {
       setLocalErrors((prev) => ({
         ...prev,
-        altText: getSeoFieldError('altText', val, locale, required, Boolean(ogImage))
+        altText: getSeoFieldError('altText', val, locale, required)
       }));
     }
   };
@@ -196,8 +205,7 @@ export default function SeoMetadataForm({
   const handleImageChange = async (url: string, crop: CropResult | null | undefined) => {
     setIsUploading(true);
     setOgImagePreview(url);
-    const fileNameFromUrl = url.split('/').pop()?.split('?')[0];
-    setDisplayFileName(fileNameFromUrl || 'image');
+    setDisplayFileName(fileNameFromUrl(url) || 'image');
 
     onImageChange(url);
     onChangeCrop?.(crop?.rect ?? null);
@@ -231,6 +239,7 @@ export default function SeoMetadataForm({
         altTextErrorState={Boolean(errors.altText && (isExternalValidation || touched.altText))}
         altTextError={errors.altText && (isExternalValidation || touched.altText) ? errors.altText : ''}
         locale={locale}
+        alternativeTextLabel={labels.alternativeText}
       />
       <Typography variant="textMd" sx={styles.ogImageHint}>
         {'Оптимальний розмір: 1200×630 px.'}

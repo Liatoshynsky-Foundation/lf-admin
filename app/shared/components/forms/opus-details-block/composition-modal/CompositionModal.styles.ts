@@ -116,6 +116,12 @@ export const styles: Record<string, SxProps<Theme>> = {
     whiteSpace: 'nowrap'
   },
 
+  fileError: {
+    marginTop: '4px',
+    fontSize: '14px',
+    color: 'error.main'
+  },
+
   noticeBanner: {
     display: 'flex',
     alignItems: 'flex-start',

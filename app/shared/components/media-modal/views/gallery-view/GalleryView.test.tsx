@@ -400,7 +400,7 @@ describe('GalleryView', () => {
   it.each([
     ['audio', 'recording.mp3', 'image/jpeg'],
     ['pdf', 'score.pdf', 'audio/mpeg']
-  ] as const)('should reject a %s file when Asset MIME metadata conflicts', (mediaKind, filename, mimeType) => {
+  ] as const)('should accept a %s file when its filename matches despite conflicting Asset MIME metadata', (mediaKind, filename, mimeType) => {
     const url = `https://example.com/${filename}`;
 
     (useGalleryFiles as jest.Mock).mockReturnValue({
@@ -441,7 +441,7 @@ describe('GalleryView', () => {
       />
     );
 
-    expect(screen.queryByText(filename)).not.toBeInTheDocument();
+    expect(screen.getByText(filename)).toBeInTheDocument();
   });
 
   it('should match items by usage page from asset usageRefs', () => {

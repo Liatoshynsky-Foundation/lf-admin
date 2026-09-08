@@ -94,8 +94,6 @@ describe('useUpdateWorkAction', () => {
           name: { uk: 'Symphony No. 5', en: 'Symphony No. 5' },
           year: 1808,
           genre: 'Symphony',
-          audioAvailable: true,
-          sheetAvailable: true,
           audios: [
             {
               name: 'Movement 1',
@@ -154,12 +152,10 @@ describe('useUpdateWorkAction', () => {
           name: { uk: 'Sonata', en: 'Sonata' },
           year: undefined,
           genre: undefined,
-          audioAvailable: false,
-          sheetAvailable: false,
           audios: [],
           sheetMusic: [
             {
-              name: '',
+              name: undefined,
               url: undefined,
               publishDate: undefined,
               isFree: false,

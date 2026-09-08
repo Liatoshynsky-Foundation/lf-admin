@@ -93,7 +93,7 @@ describe('useContentCardActions', () => {
   });
 
   describe('handleDelete', () => {
-    it('should delete news, close modal, and refresh', async () => {
+    it('should delete news and close modal', async () => {
       const { result } = renderHook(() => useContentCardActions({ id: MOCK_ID, type: 'news', status: 'draft' }));
 
       act(() => {
@@ -106,7 +106,7 @@ describe('useContentCardActions', () => {
 
       expect(mockDeleteNewsFn).toHaveBeenCalledWith({ id: MOCK_ID });
       expect(result.current.deleteModalOpen).toBe(false);
-      expect(mockRefresh).toHaveBeenCalledTimes(1);
+      expect(mockRefresh).not.toHaveBeenCalled();
     });
 
     it('should delete events content type', async () => {
@@ -117,7 +117,7 @@ describe('useContentCardActions', () => {
       });
 
       expect(mockDeleteEventFn).toHaveBeenCalledWith({ id: MOCK_ID });
-      expect(mockRefresh).toHaveBeenCalledTimes(1);
+      expect(mockRefresh).not.toHaveBeenCalled();
     });
 
     it('should delete media content type', async () => {
@@ -128,7 +128,7 @@ describe('useContentCardActions', () => {
       });
 
       expect(mockDeleteMediaFn).toHaveBeenCalledWith(MOCK_ID);
-      expect(mockRefresh).toHaveBeenCalledTimes(1);
+      expect(mockRefresh).not.toHaveBeenCalled();
     });
 
     it('should show toast when delete fails', async () => {

@@ -62,11 +62,11 @@ export const WORKS_TABS: ReadonlyArray<WorksTabConfig> = [
 const WORKS_STATUS_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
   {
     value: BaseContentStatuses.Draft,
-    label: 'Чернетка (приховано)'
+    label: 'Приховано'
   },
   {
     value: BaseContentStatuses.Published,
-    label: 'Опубліковане'
+    label: 'Опубліковано'
   }
 ];
 

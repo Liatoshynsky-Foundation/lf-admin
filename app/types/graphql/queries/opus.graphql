@@ -99,6 +99,7 @@ query OpusById($id: ID!) {
       sheetMusic {
         url
         name
+        fileName
         publishDate
         isFree
         dateUploaded
@@ -128,6 +129,7 @@ query CompositionById($id: ID!) {
     sheetMusic {
       url
       name
+      fileName
       publishDate
       isFree
       dateUploaded
@@ -200,6 +202,7 @@ query SearchCompositions($search: String!) {
     sheetMusic {
       url
       name
+      fileName
       publishDate
       isFree
       dateUploaded

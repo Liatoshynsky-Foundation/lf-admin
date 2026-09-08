@@ -1,13 +1,8 @@
 import { useState } from 'react';
 
 import { createCompositionId } from '../use-upsert-opus/useUpsertOpus';
+import { fileNameFromUrl } from '~/src/shared/utils/assets/assetFilename';
 import type { OpusAudioFileData, OpusCompositionData, OpusCompositionSuggestion, OpusMediaFileData } from '~/types/opus';
-
-const fileNameFromUrl = (url?: string | null): string => {
-  if (!url) return '';
-  const segment = url.split('/').pop() as string;
-  return decodeURIComponent(segment.split('?')[0]);
-};
 
 type AudioItem = NonNullable<OpusCompositionSuggestion['audios']>[number];
 type SheetMusicItem = NonNullable<OpusCompositionSuggestion['sheetMusic']>[number];
@@ -20,7 +15,8 @@ export const toSuggestionAudio = (audio: AudioItem): OpusAudioFileData => ({
 
 export const toSuggestionNote = (sheet: SheetMusicItem): OpusMediaFileData => ({
   id: createCompositionId(),
-  name: sheet.name || fileNameFromUrl(sheet.url),
+  name: sheet.name || '',
+  fileName: sheet.fileName || fileNameFromUrl(sheet.url),
   fileUrl: sheet.url ?? undefined,
   publishDate: sheet.publishDate ?? ''
 });

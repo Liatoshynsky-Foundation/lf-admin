@@ -32,27 +32,26 @@ describe('CompositionsMutation', () => {
   const MOCK_ADMIN: AdminContextType = {
     id: 'admin-id',
     email: 'admin@example.com',
-    role: 'ADMIN',
+    role: 'ADMIN'
   } as unknown as AdminContextType;
 
   const MOCK_COMPOSITION_ID = 'composition-id';
 
+  const SHEET_MUSIC_FILE_NAME = 'sheet1.pdf';
+  const AUDIO_FILE_NAME = 'audio1.mp3';
   const MOCK_SHEET_MUSIC: CompositionSheetMusicInput[] = [
-    { title: 'Sheet 1', fileUrl: 'https://example.com/sheet1.pdf' } as CompositionSheetMusicInput,
+    { name: 'Sheet 1', url: `https://example.com/${SHEET_MUSIC_FILE_NAME}`, fileName: SHEET_MUSIC_FILE_NAME }
   ];
-
-  const MOCK_AUDIOS: CompositionAudioInput[] = [
-    { title: 'Audio 1', fileUrl: 'https://example.com/audio1.mp3' } as unknown as CompositionAudioInput,
-  ];
+  const MOCK_AUDIOS: CompositionAudioInput[] = [{ name: 'Audio 1', url: `https://example.com/${AUDIO_FILE_NAME}` }];
 
   const MOCK_INPUT: CreateCompositionInput = {
     name: { uk: 'Тестова композиція', en: 'Test Composition' },
     year: 2026,
     genre: 'Classical',
     audioAvailable: true,
-    sheetAvailable: false,
+    sheetAvailable: true,
     sheetMusic: MOCK_SHEET_MUSIC,
-    audios: MOCK_AUDIOS,
+    audios: MOCK_AUDIOS
   };
 
   const MOCK_INPUT_PARTIAL: CreateCompositionInput = {
@@ -62,17 +61,7 @@ describe('CompositionsMutation', () => {
     audioAvailable: undefined,
     sheetAvailable: undefined,
     sheetMusic: undefined,
-    audios: undefined,
-  };
-
-  const MOCK_MAPPED_INPUT: CompositionInput = {
-    name: MOCK_INPUT.name,
-    year: MOCK_INPUT.year ?? null,
-    genre: MOCK_INPUT.genre ?? null,
-    audioAvailable: MOCK_INPUT.audioAvailable ?? false,
-    sheetAvailable: MOCK_INPUT.sheetAvailable ?? false,
-    sheetMusic: MOCK_INPUT.sheetMusic ?? [],
-    audios: MOCK_INPUT.audios ?? [],
+    audios: undefined
   };
 
   const MOCK_MAPPED_INPUT_PARTIAL: CompositionInput = {
@@ -82,7 +71,7 @@ describe('CompositionsMutation', () => {
     audioAvailable: false,
     sheetAvailable: false,
     sheetMusic: [],
-    audios: [],
+    audios: []
   };
 
   const MOCK_COMPOSITION: Composition = {
@@ -95,7 +84,7 @@ describe('CompositionsMutation', () => {
     audioAvailable: MOCK_INPUT.audioAvailable ?? false,
     sheetAvailable: MOCK_INPUT.sheetAvailable ?? false,
     sheetMusic: [],
-    audios: [],
+    audios: []
   };
 
   const createMockCompositionsRepository = (
@@ -108,7 +97,7 @@ describe('CompositionsMutation', () => {
         update: jest.fn().mockResolvedValue(MOCK_COMPOSITION),
         delete: jest.fn().mockResolvedValue(true),
         findAll: jest.fn().mockResolvedValue([MOCK_COMPOSITION]),
-        ...overrides,
+        ...overrides
       } as MockCompositionsRepository,
       {
         get: (target, prop: string | symbol) => {
@@ -116,7 +105,7 @@ describe('CompositionsMutation', () => {
             return target[prop as keyof MockCompositionsRepository];
           }
           return jest.fn();
-        },
+        }
       }
     );
 
@@ -125,7 +114,7 @@ describe('CompositionsMutation', () => {
   ): MockOpusRepository => ({
     moveCompositionsToCompositionsOpus: jest.fn().mockResolvedValue(undefined),
     removeCompositionsFromCompositionsOpus: jest.fn().mockResolvedValue(undefined),
-    ...overrides,
+    ...overrides
   });
 
   const createMockContext = (
@@ -135,6 +124,14 @@ describe('CompositionsMutation', () => {
   ): GraphQLContext => {
     const compositionsRepository = createMockCompositionsRepository(compositionsRepoMock);
     const opusRepository = createMockOpusRepository(opusRepoMock);
+    const assetsRepository = {
+      findByUrls: jest.fn(async (urls: string[]) =>
+        urls.map((url) => ({ url, filename: url.split('/').pop() ?? '', usageRefs: [] }))
+      ),
+      createAsset: jest.fn(),
+      addUsageRef: jest.fn().mockResolvedValue(undefined),
+      removeUsageRef: jest.fn().mockResolvedValue(undefined)
+    };
 
     return {
       admin,
@@ -142,8 +139,9 @@ describe('CompositionsMutation', () => {
         cradle: {
           compositionsRepository,
           opusRepository,
-        },
-      },
+          assetsRepository
+        }
+      }
     } as unknown as GraphQLContext;
   };
 
@@ -181,8 +179,8 @@ describe('CompositionsMutation', () => {
 
       const result = await CompositionsMutation.createComposition(null, { input: MOCK_INPUT }, context);
 
-      expect(createMock).toHaveBeenCalledWith(MOCK_MAPPED_INPUT, expect.anything());
-      expect(moveMock).toHaveBeenCalledWith([MOCK_COMPOSITION_ID], expect.anything());
+      expect(createMock).toHaveBeenCalledWith(MOCK_INPUT, {});
+      expect(moveMock).toHaveBeenCalledWith([MOCK_COMPOSITION_ID], {});
       expect(result).toEqual(MOCK_COMPOSITION);
     });
 
@@ -229,9 +227,18 @@ describe('CompositionsMutation', () => {
         message: 'Композиція "Trimmed" вже існує',
         extensions: { code: 'COMPOSITION_NAME_TAKEN' }
       });
-      expect(createMock).toHaveBeenCalledWith(
-        expect.objectContaining({ name: { uk: 'Trimmed', en: 'English' } }),
-        expect.anything()
+      expect(createMock).toHaveBeenCalledWith(expect.objectContaining({ name: { uk: 'Trimmed', en: 'English' } }), {});
+    });
+
+    it('should preserve a non-duplicate repository error when creating', async () => {
+      const repositoryError = new Error('Repository unavailable');
+      const context = createMockContext(MOCK_ADMIN, {
+        findByName: jest.fn().mockResolvedValue(null),
+        create: jest.fn().mockRejectedValue(repositoryError)
+      });
+
+      await expect(CompositionsMutation.createComposition(null, { input: MOCK_INPUT }, context)).rejects.toThrow(
+        repositoryError
       );
     });
 
@@ -246,7 +253,7 @@ describe('CompositionsMutation', () => {
 
       await CompositionsMutation.createComposition(null, { input: MOCK_INPUT_PARTIAL }, context);
 
-      expect(createMock).toHaveBeenCalledWith(MOCK_MAPPED_INPUT_PARTIAL, expect.anything());
+      expect(createMock).toHaveBeenCalledWith(MOCK_MAPPED_INPUT_PARTIAL, {});
     });
   });
 
@@ -258,7 +265,7 @@ describe('CompositionsMutation', () => {
       audioAvailable: false,
       sheetAvailable: true,
       sheetMusic: MOCK_SHEET_MUSIC,
-      audios: MOCK_AUDIOS,
+      audios: MOCK_AUDIOS
     };
 
     it('should throw unauthenticated error when admin is missing', async () => {
@@ -272,14 +279,14 @@ describe('CompositionsMutation', () => {
         )
       ).rejects.toThrow(
         new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
-          extensions: { code: graphqlErrors.UNAUTHENTICATED.code },
+          extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
         })
       );
     });
 
     it('should throw GraphQLError when composition is not found', async () => {
       const context = createMockContext(MOCK_ADMIN, {
-        findById: jest.fn().mockResolvedValue(null),
+        findById: jest.fn().mockResolvedValue(null)
       });
 
       await expect(
@@ -290,7 +297,7 @@ describe('CompositionsMutation', () => {
         )
       ).rejects.toThrow(
         new GraphQLError(compositionsServiceErrors.COMPOSITION_NOT_FOUND(MOCK_COMPOSITION_ID), {
-          extensions: { code: 'COMPOSITION_NOT_FOUND' },
+          extensions: { code: 'COMPOSITION_NOT_FOUND' }
         })
       );
     });
@@ -298,7 +305,7 @@ describe('CompositionsMutation', () => {
     it('should throw GraphQLError when update returns null', async () => {
       const context = createMockContext(MOCK_ADMIN, {
         findById: jest.fn().mockResolvedValue(MOCK_COMPOSITION),
-        update: jest.fn().mockResolvedValue(null),
+        update: jest.fn().mockResolvedValue(null)
       });
 
       await expect(
@@ -309,7 +316,7 @@ describe('CompositionsMutation', () => {
         )
       ).rejects.toThrow(
         new GraphQLError(`Failed to update composition with id ${MOCK_COMPOSITION_ID}`, {
-          extensions: { code: 'COMPOSITION_UPDATE_FAILED' },
+          extensions: { code: 'COMPOSITION_UPDATE_FAILED' }
         })
       );
     });
@@ -317,12 +324,12 @@ describe('CompositionsMutation', () => {
     it('should successfully update composition with all provided input fields', async () => {
       const updateMock = jest.fn().mockResolvedValue({
         ...MOCK_COMPOSITION,
-        ...updateInputFull,
+        ...updateInputFull
       });
 
       const context = createMockContext(MOCK_ADMIN, {
         findById: jest.fn().mockResolvedValue(MOCK_COMPOSITION),
-        update: updateMock,
+        update: updateMock
       });
 
       const result = await CompositionsMutation.updateComposition(
@@ -335,12 +342,12 @@ describe('CompositionsMutation', () => {
         name: updateInputFull.name,
         year: updateInputFull.year,
         genre: updateInputFull.genre,
-        audioAvailable: updateInputFull.audioAvailable,
+        audioAvailable: true,
         sheetAvailable: updateInputFull.sheetAvailable,
-        sheetMusic: updateInputFull.sheetMusic,
+        sheetMusic: [{ ...MOCK_SHEET_MUSIC[0] }],
         audios: updateInputFull.audios,
-      });
-      expect(result).toEqual({
+      }, {});
+      expect(result).toEqual({  
         ...MOCK_COMPOSITION,
         ...updateInputFull,
       });
@@ -362,7 +369,7 @@ describe('CompositionsMutation', () => {
 
       expect(updateMock).toHaveBeenCalledWith(MOCK_COMPOSITION_ID, {
         name: { uk: 'Соната', en: 'Sonata' }
-      });
+      }, {});
     });
 
     it('should translate a duplicate-key update error', async () => {
@@ -382,6 +389,22 @@ describe('CompositionsMutation', () => {
         message: 'Композиція "Taken" вже існує',
         extensions: { code: 'COMPOSITION_NAME_TAKEN' }
       });
+    });
+
+    it('should preserve a non-duplicate repository error when updating', async () => {
+      const repositoryError = new Error('Repository unavailable');
+      const context = createMockContext(MOCK_ADMIN, {
+        findById: jest.fn().mockResolvedValue(MOCK_COMPOSITION),
+        update: jest.fn().mockRejectedValue(repositoryError)
+      });
+
+      await expect(
+        CompositionsMutation.updateComposition(
+          null,
+          { id: MOCK_COMPOSITION_ID, input: { year: MOCK_INPUT.year } },
+          context
+        )
+      ).rejects.toThrow(repositoryError);
     });
 
     it.each([
@@ -407,14 +430,14 @@ describe('CompositionsMutation', () => {
 
     it('should process undefined and null values in update input correctly', async () => {
       const partialUpdateInput: UpdateCompositionInput = {
-        year: null,
+        year: null
       };
 
       const updateMock = jest.fn().mockResolvedValue(MOCK_COMPOSITION);
 
       const context = createMockContext(MOCK_ADMIN, {
         findById: jest.fn().mockResolvedValue(MOCK_COMPOSITION),
-        update: updateMock,
+        update: updateMock
       });
 
       await CompositionsMutation.updateComposition(
@@ -425,7 +448,27 @@ describe('CompositionsMutation', () => {
 
       expect(updateMock).toHaveBeenCalledWith(MOCK_COMPOSITION_ID, {
         year: null,
+      }, {});
+    });
+
+    it('should mark null media collections as unavailable', async () => {
+      const updateMock = jest.fn().mockResolvedValue(MOCK_COMPOSITION);
+      const context = createMockContext(MOCK_ADMIN, {
+        findById: jest.fn().mockResolvedValue(MOCK_COMPOSITION),
+        update: updateMock
       });
+
+      await CompositionsMutation.updateComposition(
+        null,
+        { id: MOCK_COMPOSITION_ID, input: { audios: null, sheetMusic: null } },
+        context
+      );
+
+      expect(updateMock).toHaveBeenCalledWith(
+        MOCK_COMPOSITION_ID,
+        { audioAvailable: false, sheetAvailable: false, audios: null, sheetMusic: [] },
+        {}
+      );
     });
   });
 
@@ -476,9 +519,8 @@ describe('CompositionsMutation', () => {
         { id: MOCK_COMPOSITION_ID },
         context
       );
-
-      expect(removeMock).toHaveBeenCalledWith([MOCK_COMPOSITION_ID], expect.anything());
-      expect(deleteMock).toHaveBeenCalledWith(MOCK_COMPOSITION_ID, expect.anything());
+      expect(removeMock).toHaveBeenCalledWith([MOCK_COMPOSITION_ID], {});
+      expect(deleteMock).toHaveBeenCalledWith(MOCK_COMPOSITION_ID, {});
       expect(result).toBe(true);
     });
   });

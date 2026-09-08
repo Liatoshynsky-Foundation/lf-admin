@@ -111,10 +111,11 @@ const mapFundListItem = (f: FundListItem) => {
   };
 };
 
-export function useAllFunds(filters?: FundFiltersInput | null) {
+export function useAllFunds(filters?: FundFiltersInput | null, options: QueryHookOptions = {}) {
   const { data, loading, error, refetch } = useAllFundsQuery({
     variables: { filters },
-    fetchPolicy: 'network-only'
+    fetchPolicy: 'network-only',
+    skip: options.skip
   });
 
   const funds = (data?.findAllFunds ?? []).map(mapFundListItem);
@@ -122,14 +123,20 @@ export function useAllFunds(filters?: FundFiltersInput | null) {
   return { funds, loading, error, refetch };
 }
 
-export function usePaginatedFunds(page: number, limit: number, filters?: FundFiltersInput | null) {
+export function usePaginatedFunds(
+  page: number,
+  limit: number,
+  filters?: FundFiltersInput | null,
+  options: QueryHookOptions = {}
+) {
   const normalizedFilters = filters
     ? { ...filters, sort: filters.sort ?? [{ field: 'fundNumber', order: SortOrder.Asc }] }
     : { sort: [{ field: 'fundNumber', order: SortOrder.Asc }] };
 
   const { data, loading, error, refetch } = usePaginatedFundsQuery({
     variables: { page, limit, filters: normalizedFilters },
-    fetchPolicy: 'network-only'
+    fetchPolicy: 'network-only',
+    skip: options.skip
   });
 
   const funds = (data?.findFundsPaginated?.items ?? []).map(mapFundListItem);
@@ -187,7 +194,7 @@ export const useHasPublishedCasesInFund = () => {
         query: PUBLISHED_CASES_BY_FUND_QUERY,
         variables: {
           filters: {
-            fundId: fundId,
+            fundId,
             statuses: [BaseContentStatuses.Published]
           }
         },

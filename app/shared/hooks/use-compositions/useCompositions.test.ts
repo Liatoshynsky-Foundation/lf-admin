@@ -21,7 +21,8 @@ describe('useCompositions helpers', () => {
     const note = { name: '', url: 'http://test.com/score.pdf?token=123', publishDate: '2023-01-01' };
     expect(toSuggestionNote(note)).toEqual({
       id: 'mocked-id',
-      name: 'score.pdf',
+      name: '',
+      fileName: 'score.pdf',
       fileUrl: 'http://test.com/score.pdf?token=123',
       publishDate: '2023-01-01'
     });
@@ -41,6 +42,7 @@ describe('useCompositions helpers', () => {
     expect(toSuggestionNote(note)).toEqual({
       id: 'mocked-id',
       name: 'Note without date',
+      fileName: '',
       fileUrl: undefined,
       publishDate: ''
     });

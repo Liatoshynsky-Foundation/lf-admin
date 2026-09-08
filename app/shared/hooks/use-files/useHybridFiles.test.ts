@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 
 import { toCreateAssetInput, useHybridFiles, useR2Files } from './useHybridFiles';
+import { COMPOSITION_MODAL_PARAM, WORKS_BASE_PATH } from '~/constants/creativity';
 import { type AllAssetsQuery, AssetType } from '~/types/graphql/generated/graphql';
 
 type AssetItem = AllAssetsQuery['allAssets'][number];
@@ -169,6 +170,26 @@ describe('useHybridFiles', () => {
       description: undefined,
       usage: [{ href: '/already-absolute' }]
     });
+  });
+
+  it('uses a composition name and links directly to the referenced composition', () => {
+    const compositionAsset: AssetItem = {
+      ...mongoAsset,
+      usageRefs: [{
+        __typename: 'AssetUsageRef',
+        pageId: null,
+        compositionId: 'composition id',
+        compositionName: 'Соната',
+        blockId: null,
+        locale: null
+      }]
+    };
+
+    const { result } = renderHook(() => useHybridFiles([compositionAsset], []));
+
+    expect(result.current[0].usage).toEqual([
+      expect.objectContaining({ label: compositionAsset.usageRefs[0].compositionName, href: `${WORKS_BASE_PATH}?${COMPOSITION_MODAL_PARAM}=${encodeURIComponent(`${compositionAsset.usageRefs[0].compositionId}`)}` })
+    ]);
   });
 
   it.each([

@@ -94,7 +94,6 @@ export function useContentCardActions({ id, type, status }: UseContentCardAction
 
       if (result?.data) {
         setDeleteModalOpen(false);
-        router.refresh();
       }
     } catch {
       toast.error(CONTENT_MUTATION_RESULTS.publicationDeleteError);

@@ -26,6 +26,7 @@ const resolveIsTmp = (field: string, value: unknown): boolean | undefined => {
 export const createEditSlice: StateCreator<EditState> = (set, get) => ({
   isChanged: false,
   isInitialized: false,
+  showValidationErrors: false,
   initializedPages: {},
 
   invalidFields: {},
@@ -248,5 +249,6 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
     });
   },
 
-  setLocale: (locale: 'uk' | 'en') => set({ locale })
+  setLocale: (locale: 'uk' | 'en') => set({ locale }),
+  setShowValidationErrors: (show: boolean) => set({ showValidationErrors: show })
 });

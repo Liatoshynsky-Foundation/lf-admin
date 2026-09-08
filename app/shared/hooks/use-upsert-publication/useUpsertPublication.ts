@@ -2,17 +2,24 @@ import dayjs, { type Dayjs } from 'dayjs';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { seoFormErrors } from '~/constants/errors';
 import {
   FetchedPublicationData,
   ImageCropData,
   initialSeoValue,
   PAGE_TITLES,
+  PUBLICATION_SEO_REQUIRED,
   PUBLICATIONS_TYPES,
   PublicationsItemType
 } from '~/constants/publications';
 import { checkIsSeoInvalid } from '~/lib/utils/checkIsSeoInvalid';
 import { buildCoverImageCropPayload } from '~/lib/utils/CropperHelper';
-import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
+import type {
+  SeoBlockErrors,
+  SeoBlockValue
+} from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
+import type { LocalizedMeta } from '~/shared/components/forms/seo-metadata-form/SeoMetadataForm';
+import { type SeoField, validateSeoField } from '~/shared/components/forms/seo-metadata-form/validateSeoField';
 import { useCreateEvent, useEventById, useUpdateEvent } from '~/shared/hooks/use-events/useEvents';
 import {
   useCreateMediaMention,
@@ -59,6 +66,66 @@ const parseDate = (dateVal: Dayjs | string | null | undefined) => {
 
 const getDateIsoString = (date: Dayjs | null | undefined) => (isValidDate(date) ? date.toISOString() : undefined);
 
+const getPublicationSeoMetaErrors = (
+  meta: LocalizedMeta,
+  locale: 'uk' | 'en',
+  requiredFields: Readonly<{ title: boolean; description: boolean }>
+): Partial<Record<keyof LocalizedMeta, string>> => {
+  const getError = (field: SeoField, value: string, required = false): string => {
+    const code = validateSeoField(field, value, { required });
+    return code ? seoFormErrors[locale][code] : '';
+  };
+
+  const isRequired = (field: 'title' | 'description', value: string): boolean =>
+    requiredFields[field] || Boolean(value.trim());
+
+  return {
+    title: getError('title', meta.title, isRequired('title', meta.title)),
+    description: getError('description', meta.description, isRequired('description', meta.description)),
+    keywords: getError('keywords', meta.keywords),
+    altText: getError('altText', meta.altText?.[locale] ?? '')
+  };
+};
+
+const getTicketUrlError = (value: string, locale: 'uk' | 'en'): string => {
+  if (!value.trim()) return seoFormErrors[locale].required;
+  try {
+    new URL(value);
+    return '';
+  } catch {
+    return seoFormErrors[locale].invalidUrl;
+  }
+};
+
+const validatePublicationSeo = (
+  seoValue: SeoBlockValue,
+  publicationType: PublicationsItemType
+): { seoErrors: SeoBlockErrors; hasMetaErrors: boolean; hasUrlErrors: boolean } => {
+  const { uk: ukMeta, en: enMeta } = seoValue.meta;
+  const hasUrlErrors = checkIsSeoInvalid(ukMeta, enMeta, publicationType, seoValue.ticketUrl);
+
+  const seoErrors: SeoBlockErrors = {
+    meta: {
+      uk: getPublicationSeoMetaErrors(ukMeta, 'uk', PUBLICATION_SEO_REQUIRED.uk),
+      en: getPublicationSeoMetaErrors(enMeta, 'en', PUBLICATION_SEO_REQUIRED.en)
+    },
+    ...(publicationType === 'events' && hasUrlErrors
+      ? {
+        ticketUrl: {
+          uk: getTicketUrlError(seoValue.ticketUrl?.uk ?? '', 'uk'),
+          en: getTicketUrlError(seoValue.ticketUrl?.en ?? '', 'en')
+        }
+      }
+      : {})
+  };
+
+  return {
+    seoErrors,
+    hasMetaErrors: Object.values(seoErrors.meta).some((errors) => Object.values(errors).some(Boolean)),
+    hasUrlErrors
+  };
+};
+
 export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) => {
   const isEditing = Boolean(id);
 
@@ -94,6 +161,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     crop: ImageCropData;
   } | null>(null);
   const [forceShowErrors, setForceShowErrors] = useState(false);
+  const [seoErrors, setSeoErrors] = useState<SeoBlockErrors | undefined>();
 
   const latestDataRef = useRef({
     adminTitle: '',
@@ -116,6 +184,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     const newValue = typeof val === 'function' ? val(latestDataRef.current.seoValue) : val;
     latestDataRef.current.seoValue = newValue;
     setSeoValue(newValue);
+    setSeoErrors(undefined);
   };
 
   const changeCrop = (val: ImageCropData) => {
@@ -205,12 +274,20 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     const { uk: ukMeta, en: enMeta } = seoValue.meta;
 
     const isTitleInvalid = !adminTitle.trim();
-    const isSeoInvalid = checkIsSeoInvalid(ukMeta, enMeta, publicationType, seoValue.ticketUrl);
     const isPublishDateInvalid = Boolean(publishDate && !publishDate.isValid());
 
-    if (isTitleInvalid || isSeoInvalid || isPublishDateInvalid) {
+    const {
+      seoErrors: nextSeoErrors,
+      hasMetaErrors,
+      hasUrlErrors
+    } = validatePublicationSeo(seoValue, publicationType);
+
+    if (isTitleInvalid || hasMetaErrors || hasUrlErrors || isPublishDateInvalid) {
       if (isTitleInvalid) setAdminTitleError('Обов\'язкове поле');
-      if (isSeoInvalid) setForceShowErrors(true);
+      if (hasMetaErrors || hasUrlErrors) {
+        setSeoErrors(nextSeoErrors);
+        setForceShowErrors(true);
+      }
       return;
     }
 
@@ -223,7 +300,10 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       publishedAt: getDateIsoString(publishDate),
       coverImage: {
         src: seoValue.ogImage || adminTitle,
-        alt: { uk: ukMeta.altText?.uk || adminTitle, en: enMeta.altText?.en || adminTitle },
+        alt: {
+          uk: ukMeta.altText?.uk?.trim() || adminTitle,
+          en: enMeta.altText?.en?.trim() || adminTitle
+        },
         caption: { uk: adminTitle, en: adminTitle },
         ...buildCoverImageCropPayload(crop)
       }
@@ -353,11 +433,10 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     seoValue,
     setSeoValue: changeSeoValue,
     hasUnsavedChanges,
-
+    seoErrors,
+    forceShowErrors,
     crop,
     setCrop: changeCrop,
-
-    forceShowErrors,
     handleSave,
     handleDateTimeChange
   };

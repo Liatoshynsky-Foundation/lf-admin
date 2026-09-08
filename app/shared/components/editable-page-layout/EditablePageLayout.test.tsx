@@ -42,6 +42,11 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
 }));
 
 jest.mock('~/shared/components/header/Header');
+jest.mock('~/shared/components/language-switcher/LanguageSwitcher', () => {
+  const MockLanguageSwitcher = () => <div data-testid="language-switcher" />;
+  MockLanguageSwitcher.displayName = 'MockLanguageSwitcher';
+  return MockLanguageSwitcher;
+});
 
 const pageSlug = 'test-page';
 const headerTitle = 'Test Header Title';
@@ -51,13 +56,22 @@ const runSimulation = ({
   slug = pageSlug,
   title = headerTitle,
   childrenText: textVal = childrenText,
+  variant,
+  validateBeforeSave,
 }: {
   slug?: string;
   title?: string;
   childrenText?: string;
+  variant?: 'default' | 'simple-layout';
+  validateBeforeSave?: () => boolean | 'uk' | 'en';
 } = {}) => {
   return render(
-    <EditablePageLayout pageSlug={slug} headerTitle={title}>
+    <EditablePageLayout
+      pageSlug={slug}
+      headerTitle={title}
+      variant={variant}
+      validateBeforeSave={validateBeforeSave}
+    >
       <div data-testid="child-content">{textVal}</div>
     </EditablePageLayout>
   );
@@ -89,15 +103,17 @@ describe('EditablePageLayout', () => {
   });
 
   describe('UI', () => {
-    it('should render nothing when page query is loading', () => {
+    it('should render Header and skeletons when page query is loading', () => {
       (useGetPageQuery as jest.Mock).mockReturnValue({
         data: null,
         loading: true,
       });
 
-      const { container } = runSimulation();
+      runSimulation();
 
-      expect(container.firstChild).toBeNull();
+      expect(screen.getByTestId('header')).toBeInTheDocument();
+      expect(screen.getByTestId('title')).toHaveTextContent(headerTitle);
+      expect(screen.queryByTestId('child-content')).not.toBeInTheDocument();
     });
 
     it('should render Header with correct title and children when loaded', () => {
@@ -252,6 +268,88 @@ describe('EditablePageLayout', () => {
       runSimulation();
 
       expect(mockSetIsSaving).toHaveBeenCalledWith(false);
+    });
+  });
+
+  describe('validateBeforeSave logic', () => {
+    it('should not call save if validateBeforeSave returns false', () => {
+      mockStoreState.isChanged = true;
+      const validateBeforeSave = jest.fn(() => false);
+      runSimulation({ validateBeforeSave });
+
+      fireEvent.click(screen.getByTestId('save-btn'));
+
+      expect(validateBeforeSave).toHaveBeenCalled();
+      expect(mockSave).not.toHaveBeenCalled();
+    });
+
+    it('should call setLocale and not call save if validateBeforeSave returns a string', () => {
+      mockStoreState.isChanged = true;
+      const validateBeforeSave = jest.fn(() => 'en' as const);
+      runSimulation({ validateBeforeSave });
+
+      fireEvent.click(screen.getByTestId('save-btn'));
+
+      expect(validateBeforeSave).toHaveBeenCalled();
+      expect(mockSetLocale).toHaveBeenCalledWith('en');
+      expect(mockSave).not.toHaveBeenCalled();
+    });
+
+    it('should call save if validateBeforeSave returns true', () => {
+      mockStoreState.isChanged = true;
+      const validateBeforeSave = jest.fn(() => true);
+      runSimulation({ validateBeforeSave });
+
+      fireEvent.click(screen.getByTestId('save-btn'));
+
+      expect(validateBeforeSave).toHaveBeenCalled();
+      expect(mockSave).toHaveBeenCalled();
+    });
+  });
+
+  describe('simple-layout variant', () => {
+    it('should render correctly with simple-layout', () => {
+      runSimulation({ variant: 'simple-layout' });
+
+      expect(screen.getByRole('heading', { name: headerTitle })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Зберегти' })).toBeInTheDocument();
+      expect(screen.getByTestId('child-content')).toBeInTheDocument();
+    });
+
+    it('should call handleSave when save button is clicked in simple-layout', () => {
+      mockStoreState.isChanged = true;
+      runSimulation({ variant: 'simple-layout' });
+
+      fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
+
+      expect(mockSave).toHaveBeenCalled();
+    });
+
+    it('should disable save button when loading or not changed', () => {
+      mockStoreState.isChanged = false;
+      const { rerender } = render(
+        <EditablePageLayout pageSlug={pageSlug} headerTitle={headerTitle} variant="simple-layout">
+          <div data-testid="child-content">{childrenText}</div>
+        </EditablePageLayout>
+      );
+      expect(screen.getByRole('button', { name: 'Зберегти' })).toBeDisabled();
+
+      mockStoreState.isChanged = true;
+      (useSavePageBlocks as jest.Mock).mockReturnValue({ save: mockSave, loading: true });
+      rerender(
+        <EditablePageLayout pageSlug={pageSlug} headerTitle={headerTitle} variant="simple-layout">
+          <div data-testid="child-content">{childrenText}</div>
+        </EditablePageLayout>
+      );
+      expect(screen.getByRole('button')).toBeDisabled();
+      expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    });
+
+    it('should render loading skeleton content when query is loading in simple-layout', () => {
+      (useGetPageQuery as jest.Mock).mockReturnValue({ data: null, loading: true });
+      runSimulation({ variant: 'simple-layout' });
+
+      expect(screen.queryByTestId('child-content')).not.toBeInTheDocument();
     });
   });
 });

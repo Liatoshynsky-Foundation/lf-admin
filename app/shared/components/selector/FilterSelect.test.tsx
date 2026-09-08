@@ -28,14 +28,28 @@ jest.mock('~/public/icons/close.svg', () => ({
 }));
 
 jest.mock('./FilterSelectItem/FilterSelectItem', () => {
-  const MockFilterSelectItem = ({ onClick, label }: { onClick: () => void; label: string }) => (
+  const MockFilterSelectItem = ({
+    onClick,
+    label,
+    icon
+  }: {
+    onClick: () => void;
+    label: string;
+    icon?: React.ReactNode;
+  }) => (
     <button data-testid={`item-${label}`} onClick={onClick}>
       {label}
+      {icon && <span data-testid={`icon-for-${label}`}>{icon}</span>}
     </button>
   );
   MockFilterSelectItem.displayName = 'MockFilterSelectItem';
   return MockFilterSelectItem;
 });
+
+jest.mock('~/shared/components/badge/Badge', () => ({
+  __esModule: true,
+  default: ({ variant }: { variant: string }) => <div data-testid={`badge-${variant}`} />
+}));
 
 describe('FilterSelect', () => {
   beforeEach(() => {
@@ -308,5 +322,26 @@ describe('FilterSelect', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Badgeable Select' }));
     expect(screen.getByTestId('item-Published')).toBeInTheDocument();
     expect(screen.getByTestId('item-Hidden')).toBeInTheDocument();
+  });
+
+  it('should render Badge with Hidden variant when status is Draft', () => {
+    const badgeableOptions = [
+      { label: 'Draft Item', value: BaseContentStatuses.Draft },
+      { label: 'Published Item', value: BaseContentStatuses.Published },
+      { label: 'Hidden Item', value: BaseContentStatuses.Hidden }
+    ];
+
+    render(<FilterSelect label="Draft Badge Select" options={badgeableOptions} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Draft Badge Select' }));
+
+    const draftIconContainer = screen.getByTestId('icon-for-Draft Item');
+    expect(draftIconContainer.querySelector('[data-testid="badge-hidden"]')).toBeInTheDocument();
+
+    const publishedIconContainer = screen.getByTestId('icon-for-Published Item');
+    expect(publishedIconContainer.querySelector('[data-testid="badge-published"]')).toBeInTheDocument();
+
+    const hiddenIconContainer = screen.getByTestId('icon-for-Hidden Item');
+    expect(hiddenIconContainer.querySelector('[data-testid="badge-hidden"]')).toBeInTheDocument();
   });
 });

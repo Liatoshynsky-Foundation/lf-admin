@@ -16,6 +16,8 @@ enum AssetSortBy {
 
 type AssetUsageRef {
   pageId: String
+  compositionId: String
+  compositionName: String
   blockId: String
   locale: String
 }

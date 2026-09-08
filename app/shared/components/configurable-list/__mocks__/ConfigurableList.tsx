@@ -7,6 +7,8 @@ interface MockConfigurableListProps<T> {
   readonly renderItem: (props: {
     readonly item: T;
     readonly onChange: (item: T) => void;
+    readonly onDelete: () => void;
+    readonly index: number;
   }) => React.ReactNode;
   readonly editable: boolean;
   readonly onChange: (item: T) => void;
@@ -29,24 +31,24 @@ const ConfigurableList = <T extends { readonly id: string; readonly value: JSONC
       >
       Trigger Change
       </button>
-      {items.map((item) => (
+      {items.map((item, index) => (
         <div key={item.id} data-testid="item">
           {renderItem({
             item,
-            onChange: (updatedItem) => onChange(updatedItem)
+            onChange: (updatedItem) => onChange(updatedItem),
+            onDelete: () => onDelete(item.id),
+            index: index
           })}
           {editable && (
             <button data-testid={`delete-${item.id}`} onClick={() => onDelete(item.id)}>
-                        Delete
+              Delete
             </button>
           )}
         </div>
       ))}
-      {editable && (
-        <button data-testid="add-btn" onClick={onCreate}>
-          {addBtnLabel}
-        </button>
-      )}
+      <button data-testid="add-btn" onClick={onCreate}>
+        {addBtnLabel}
+      </button>
     </div>
   );
 

@@ -7,6 +7,7 @@ const sheetMusicSchema = new Schema(
   {
     url: { type: String, default: null },
     name: { type: String, default: null },
+    fileName: { type: String, default: null },
     publishDate: { type: String, default: null },
     isFree: { type: Boolean, default: false },
     dateUploaded: { type: Date, default: Date.now }

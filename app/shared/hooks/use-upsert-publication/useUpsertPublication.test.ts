@@ -2,7 +2,15 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import dayjs from 'dayjs';
 
 import { useUpsertPublication } from './useUpsertPublication';
-import { FetchedPublicationData, initialSeoValue, PublicationsItemType } from '~/constants/publications';
+import { seoFormErrors } from '~/constants/errors';
+import {
+  FetchedPublicationData,
+  initialSeoValue,
+  META_ALT_TEXT_LENGTH,
+  META_KEYWORDS_LENGTH,
+  META_TITLE_LENGTH,
+  PublicationsItemType
+} from '~/constants/publications';
 import { checkIsSeoInvalid } from '~/lib/utils/checkIsSeoInvalid';
 import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
@@ -464,7 +472,195 @@ describe('useUpsertPublication Hook', () => {
       });
 
       expect(result.current.forceShowErrors).toBe(true);
+      expect(result.current.seoErrors?.ticketUrl?.uk).toBe(seoFormErrors.uk.invalidUrl);
+      expect(result.current.seoErrors?.ticketUrl?.en).toBe(seoFormErrors.en.invalidUrl);
       expect(mockCreateEvent).not.toHaveBeenCalled();
+    });
+
+    it('should set ticketUrl and meta seoErrors together when both fail', async () => {
+      const { result } = renderHook(() => useUpsertPublication({ type: 'events' }));
+
+      act(() => {
+        result.current.setAdminTitle('Event Title');
+        const invalidSeo = createValidSeoState('events');
+        invalidSeo.meta.uk.title = '';
+        invalidSeo.ticketUrl = { uk: 'not-a-url', en: 'https://ticket.com' };
+        result.current.setSeoValue(invalidSeo);
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(mockCreateEvent).not.toHaveBeenCalled();
+      expect(result.current.seoErrors?.meta.uk.title).toBe(seoFormErrors.uk.minLength);
+      expect(result.current.seoErrors?.ticketUrl?.uk).toBe(seoFormErrors.uk.invalidUrl);
+      expect(result.current.seoErrors?.ticketUrl?.en).toBe('');
+    });
+
+    it('should allow save when preview image is set without alt text', async () => {
+      mockCreateEvent.mockResolvedValue({ data: { createEvent: { id: 'event-no-alt' } } });
+      const { result } = renderHook(() => useUpsertPublication({ type: 'events' }));
+
+      act(() => {
+        result.current.setAdminTitle('Event Title');
+        const seoState = createValidSeoState('events');
+        seoState.ogImage = 'https://example.com/image.jpg';
+        seoState.meta.uk.altText = { uk: '', en: '' };
+        seoState.meta.en.altText = { uk: '', en: '' };
+        result.current.setSeoValue(seoState);
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(result.current.forceShowErrors).toBe(false);
+      expect(result.current.seoErrors).toBeUndefined();
+      expect(mockCreateEvent).toHaveBeenCalled();
+    });
+
+    it('should block save and set seoErrors when UA title exceeds max length', async () => {
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
+
+      act(() => {
+        result.current.setAdminTitle('Valid News Title');
+        const seoState = createValidSeoState('news');
+        seoState.meta.uk.title = 'a'.repeat(META_TITLE_LENGTH.max + 1);
+        result.current.setSeoValue(seoState);
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(mockCreateNews).not.toHaveBeenCalled();
+      expect(result.current.seoErrors?.meta.uk.title).toBe(seoFormErrors.uk.maxLength);
+      expect(result.current.forceShowErrors).toBe(true);
+    });
+
+    it('should block save when provided keywords exceed the max length', async () => {
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
+
+      act(() => {
+        result.current.setAdminTitle('Valid News Title');
+        const seoState = createValidSeoState('news');
+        seoState.meta.uk.keywords = 'a'.repeat(META_KEYWORDS_LENGTH.max + 1);
+        result.current.setSeoValue(seoState);
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(mockCreateNews).not.toHaveBeenCalled();
+      expect(result.current.seoErrors?.meta.uk.keywords).toBe(seoFormErrors.uk.keywordsMaxLength);
+    });
+
+    it('should block save when alt text exceeds the max length while a preview image is set', async () => {
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
+
+      act(() => {
+        result.current.setAdminTitle('Valid News Title');
+        const seoState = createValidSeoState('news');
+        seoState.ogImage = 'https://example.com/image.jpg';
+        const tooLongAlt = 'a'.repeat(META_ALT_TEXT_LENGTH.max + 1);
+        seoState.meta.uk.altText = { uk: tooLongAlt, en: 'Alt EN' };
+        seoState.meta.en.altText = { uk: tooLongAlt, en: 'Alt EN' };
+        result.current.setSeoValue(seoState);
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(mockCreateNews).not.toHaveBeenCalled();
+      expect(result.current.seoErrors?.meta.uk.altText).toBe(seoFormErrors.uk.altTextMaxLength);
+    });
+
+    it('should block save when a filled EN field is too short, even though EN is not required', async () => {
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
+
+      act(() => {
+        result.current.setAdminTitle('Valid News Title');
+        const seoState = createValidSeoState('news');
+        seoState.meta.en.description = 'A';
+        result.current.setSeoValue(seoState);
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(mockCreateNews).not.toHaveBeenCalled();
+      expect(result.current.seoErrors?.meta.en.description).toBe(seoFormErrors.en.minLength);
+    });
+
+    it.each(['description', 'keywords'] as const)(
+      'should allow save when the optional EN %s is empty',
+      async (field) => {
+        mockCreateNews.mockResolvedValue({ data: { createNews: { id: 'en-optional' } } });
+        const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
+
+        act(() => {
+          result.current.setAdminTitle('Valid News Title');
+          const seoState = createValidSeoState('news');
+          seoState.meta.en[field] = '';
+          result.current.setSeoValue(seoState);
+        });
+
+        await act(async () => {
+          await result.current.handleSave(BaseContentStatuses.Draft);
+        });
+
+        expect(mockCreateNews).toHaveBeenCalled();
+        expect(result.current.seoErrors).toBeUndefined();
+      }
+    );
+
+    it('should block save when the required EN title is empty', async () => {
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
+
+      act(() => {
+        result.current.setAdminTitle('Valid News Title');
+        const seoState = createValidSeoState('news');
+        seoState.meta.en.title = '';
+        result.current.setSeoValue(seoState);
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(mockCreateNews).not.toHaveBeenCalled();
+      expect(result.current.seoErrors?.meta.en.title).toBe(seoFormErrors.en.minLength);
+    });
+
+    it('should keep seoErrors undefined until a save attempt fails, and drop them once seo values change', async () => {
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
+
+      expect(result.current.seoErrors).toBeUndefined();
+
+      act(() => {
+        result.current.setAdminTitle('Valid News Title');
+        const seoState = createValidSeoState('news');
+        seoState.meta.uk.title = 'A';
+        result.current.setSeoValue(seoState);
+      });
+
+      expect(result.current.seoErrors).toBeUndefined();
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(result.current.seoErrors?.meta.uk.title).toBe(seoFormErrors.uk.minLength);
+
+      act(() => {
+        result.current.setSeoValue(createValidSeoState('news'));
+      });
+
+      expect(result.current.seoErrors).toBeUndefined();
     });
   });
 
@@ -617,17 +813,33 @@ describe('useUpsertPublication Hook', () => {
       expect(returnedId).toBe('new-media-77');
     });
 
-    it('should fallback title to adminTitle and description to empty string when seo fields are empty', async () => {
-      (checkIsSeoInvalid as jest.Mock).mockReturnValueOnce(false);
-      mockCreateNews.mockResolvedValue({ data: { createNews: { id: 'fallback-news' } } });
+    it('should block save when UA meta title or description is empty', async () => {
       const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
 
       act(() => {
         result.current.setAdminTitle('Fallback Admin Title');
         const seoState = createValidSeoState('news');
         seoState.meta.uk.title = '';
-        seoState.meta.en.title = '';
         seoState.meta.uk.description = '';
+        result.current.setSeoValue(seoState);
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(mockCreateNews).not.toHaveBeenCalled();
+      expect(result.current.seoErrors?.meta.uk.title).toBe(seoFormErrors.uk.minLength);
+      expect(result.current.forceShowErrors).toBe(true);
+    });
+
+    it('should block save when EN title is empty instead of relying on adminTitle fallback alone', async () => {
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
+
+      act(() => {
+        result.current.setAdminTitle('Fallback Admin Title');
+        const seoState = createValidSeoState('news');
+        seoState.meta.en.title = '';
         seoState.meta.en.description = '';
         result.current.setSeoValue(seoState);
       });
@@ -636,12 +848,8 @@ describe('useUpsertPublication Hook', () => {
         await result.current.handleSave(BaseContentStatuses.Draft);
       });
 
-      expect(mockCreateNews).toHaveBeenCalledWith(
-        expect.objectContaining({
-          title: { uk: 'Fallback Admin Title', en: 'Fallback Admin Title' },
-          description: { uk: '', en: '' }
-        })
-      );
+      expect(mockCreateNews).not.toHaveBeenCalled();
+      expect(result.current.seoErrors?.meta.en.title).toBe(seoFormErrors.en.minLength);
     });
 
     it('should fallback media url to adminTitle when canonicalUrl is missing in both locales', async () => {

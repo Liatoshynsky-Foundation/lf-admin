@@ -7,6 +7,10 @@ import {
   normalizeCompositionName,
   throwIfCompositionNameDuplicateKey
 } from './compositionNameValidation';
+import {
+  prepareCompositionMedia,
+  syncCompositionMediaUsage
+} from '~/application/use-cases/compositionMedia/compositionMedia';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
 import type { Composition } from '~/domain/entities/Composition';
@@ -45,8 +49,8 @@ const mapCompositionInput = (input: CreateCompositionInput): CompositionInput =>
   name: mapCompositionName(input.name),
   year: input.year ?? null,
   genre: input.genre ?? null,
-  audioAvailable: input.audioAvailable ?? false,
-  sheetAvailable: input.sheetAvailable ?? false,
+  audioAvailable: (input.audios ?? []).some((audio) => Boolean(audio.url?.trim())),
+  sheetAvailable: (input.sheetMusic ?? []).some((sheet) => Boolean(sheet.url?.trim())),
   sheetMusic: input.sheetMusic ?? [],
   audios: input.audios ?? [],
 });
@@ -59,7 +63,7 @@ export const CompositionsMutation = {
   ): Promise<Composition> => {
     assertAuthenticated(context);
 
-    const { compositionsRepository: repo, opusRepository: opusRepo } = context.requestContainer.cradle;
+    const { compositionsRepository: repo, opusRepository: opusRepo, assetsRepository } = context.requestContainer.cradle;
 
     await assertCompositionNameNotTaken(repo, input.name.uk);
     assertCompositionGenreValid(input.genre);
@@ -67,12 +71,13 @@ export const CompositionsMutation = {
 
     const compositionData = mapCompositionInput(input);
 
-    return withTransaction(async (session) => {
+    const composition = await withTransaction(async (session) => {
+      const preparedCompositionData = await prepareCompositionMedia(compositionData, assetsRepository, session);
       let composition: Composition;
       try {
-        composition = await repo.create(compositionData, session);
+        composition = await repo.create(preparedCompositionData, session);
       } catch (error) {
-        throwIfCompositionNameDuplicateKey(error, compositionData.name.uk);
+        throwIfCompositionNameDuplicateKey(error, preparedCompositionData.name.uk);
         throw error;
       }
       if (!composition) {
@@ -81,16 +86,19 @@ export const CompositionsMutation = {
 
 
       await opusRepo.moveCompositionsToCompositionsOpus([composition.id], session);
+      await syncCompositionMediaUsage(composition.id, null, composition, assetsRepository, session);
 
       return composition;
     });
+
+    return composition;
   },
 
   updateComposition: async (_: unknown, { id, input }: UpdateCompositionArgs, context: GraphQLContext): Promise<Composition> => {
     assertAuthenticated(context);
-    const repo = context.requestContainer.cradle.compositionsRepository;
+    const { compositionsRepository: repo, assetsRepository } = context.requestContainer.cradle;
 
-    await findExistingComposition(repo, id);
+    const existingComposition = await findExistingComposition(repo, id);
     if (input.name != null) {
       await assertCompositionNameNotTaken(repo, input.name.uk, id);
     }
@@ -101,19 +109,31 @@ export const CompositionsMutation = {
       ...(input.name && { name: mapCompositionName(input.name) }),
       ...(input.year !== undefined && { year: input.year ?? null }),
       ...(input.genre !== undefined && { genre: input.genre }),
-      ...(input.audioAvailable !== undefined && { audioAvailable: input.audioAvailable }),
-      ...(input.sheetAvailable !== undefined && { sheetAvailable: input.sheetAvailable }),
+      ...(input.audios !== undefined && {
+        audioAvailable: (input.audios ?? []).some((audio) => Boolean(audio.url?.trim()))
+      }),
+      ...(input.sheetMusic !== undefined && {
+        sheetAvailable: input.sheetMusic?.some((sheet) => Boolean(sheet.url?.trim())) ?? false
+      }),
       ...(input.sheetMusic !== undefined && { sheetMusic: input.sheetMusic }),
       ...(input.audios !== undefined && { audios: input.audios })
     };
-
-    let updatedComposition: Composition | null;
-    try {
-      updatedComposition = await repo.update(id, updateData);
-    } catch (error) {
-      throwIfCompositionNameDuplicateKey(error, input.name?.uk ?? '');
-      throw error;
-    }
+    const updatedComposition = await withTransaction(async (session) => {
+      const preparedUpdateData = updateData.sheetMusic !== undefined || updateData.audios !== undefined
+        ? await prepareCompositionMedia(updateData, assetsRepository, session)
+        : updateData;
+      let updated: Composition | null;
+      try {
+        updated = await repo.update(id, preparedUpdateData, session);
+      } catch (error) {
+        throwIfCompositionNameDuplicateKey(error, input.name?.uk ?? '');
+        throw error;
+      }
+      if (updated && (input.sheetMusic !== undefined || input.audios !== undefined)) {
+        await syncCompositionMediaUsage(updated.id, existingComposition, updated, assetsRepository, session);
+      }
+      return updated;
+    });
 
     if (!updatedComposition) {
       throw new GraphQLError(`Failed to update composition with id ${id}`, {

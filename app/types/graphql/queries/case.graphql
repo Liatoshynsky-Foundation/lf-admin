@@ -4,12 +4,28 @@ query AllCases($filters: CaseFiltersInput) {
     fundId
     descriptionNumber
     caseNumber
-    caseName { uk en }
-    caseDate { uk en }
+    caseName {
+      uk
+      en
+    }
+    caseDate {
+      uk
+      en
+    }
     sheetsNumber
-    caseDescriptions { uk en }
-    detailedCaseDescription { uk en }
-    pdfFile { filename url mimeType }
+    caseDescriptions {
+      uk
+      en
+    }
+    detailedCaseDescription {
+      uk
+      en
+    }
+    pdfFile {
+      filename
+      url
+      mimeType
+    }
     status
     cipher
     updatedAt
@@ -23,12 +39,28 @@ mutation CreateCase($input: CreateCaseInput!) {
     fundId
     descriptionNumber
     caseNumber
-    caseName { uk en }
-    caseDate { uk en }
+    caseName {
+      uk
+      en
+    }
+    caseDate {
+      uk
+      en
+    }
     sheetsNumber
-    caseDescriptions { uk en }
-    detailedCaseDescription { uk en }
-    pdfFile { filename url mimeType }
+    caseDescriptions {
+      uk
+      en
+    }
+    detailedCaseDescription {
+      uk
+      en
+    }
+    pdfFile {
+      filename
+      url
+      mimeType
+    }
     status
     cipher
     updatedAt
@@ -42,12 +74,28 @@ mutation UpdateCase($id: ID!, $input: UpdateCaseInput!) {
     fundId
     descriptionNumber
     caseNumber
-    caseName { uk en }
-    caseDate { uk en }
+    caseName {
+      uk
+      en
+    }
+    caseDate {
+      uk
+      en
+    }
     sheetsNumber
-    caseDescriptions { uk en }
-    detailedCaseDescription { uk en }
-    pdfFile { filename url mimeType }
+    caseDescriptions {
+      uk
+      en
+    }
+    detailedCaseDescription {
+      uk
+      en
+    }
+    pdfFile {
+      filename
+      url
+      mimeType
+    }
     status
     cipher
     updatedAt
@@ -58,3 +106,4 @@ mutation UpdateCase($id: ID!, $input: UpdateCaseInput!) {
 mutation DeleteCase($id: ID!) {
   deleteCase(id: $id)
 }
+

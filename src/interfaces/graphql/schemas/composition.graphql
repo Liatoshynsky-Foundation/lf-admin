@@ -1,6 +1,7 @@
 type CompositionSheetMusic {
   url: String
   name: String
+  fileName: String
   publishDate: String
   isFree: Boolean
   dateUploaded: String
@@ -31,6 +32,7 @@ extend type Query {
 input CompositionSheetMusicInput {
   url: String
   name: String
+  fileName: String
   publishDate: String
   isFree: Boolean
   dateUploaded: String

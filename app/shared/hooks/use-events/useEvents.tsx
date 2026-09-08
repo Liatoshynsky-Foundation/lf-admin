@@ -6,6 +6,7 @@ import { buildStatusUpdater } from '../buildStatusUpdater';
 import { EventsErrors } from '~/constants/errors';
 import { safeMutate } from '~/lib/utils/safeMutate';
 import {
+  AllEventsDocument,
   type CreateEventInput,
   type CreateEventMutation,
   type CreateEventMutationVariables,
@@ -93,7 +94,10 @@ export const useUpdateEventStatus = () => {
 };
 
 export const useDeleteEvent = () => {
-  const [mutate, meta] = useDeleteEventMutation();
+  const [mutate, meta] = useDeleteEventMutation({
+    refetchQueries: [AllEventsDocument],
+    awaitRefetchQueries: true
+  });
   const deleteEvent = useCallback(
     async (variables: DeleteEventMutationVariables) =>
       safeMutate(mutate, variables, EventsErrors.NETWORK_ERROR_DELETE, EventsErrors.FAILED_TO_DELETE),

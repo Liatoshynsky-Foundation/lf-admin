@@ -6,6 +6,8 @@ import { CaseQuery } from './case/caseQuery';
 import { CaseType } from './case/caseType';
 import { CompositionsMutation } from './compositions/compositionsMutation';
 import { CompositionsQuery } from './compositions/compositionsQuery';
+import { ContactsMutation } from './contacts/contactsMutation';
+import { ContactsQuery } from './contacts/contactsQuery';
 import { EventsMutation } from './events/eventsMutation';
 import { EventsQuery } from './events/eventsQuery';
 import { FundMutation } from './fund/fundMutation';
@@ -30,7 +32,8 @@ export const resolvers = {
     ...AssetsMutation,
     ...CompositionsMutation,
     ...CaseMutation,
-    ...FundMutation
+    ...FundMutation,
+    ...ContactsMutation
   },
   Query: {
     ...AdminQuery,
@@ -42,7 +45,8 @@ export const resolvers = {
     ...AssetsQuery,
     ...CompositionsQuery,
     ...CaseQuery,
-    ...FundQuery
+    ...FundQuery,
+    ...ContactsQuery
   },
   Case: {
     ...CaseType

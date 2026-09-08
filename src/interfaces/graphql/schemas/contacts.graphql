@@ -1,0 +1,50 @@
+enum SocialNetworkTypes {
+  facebook
+  instagram
+  linkedin
+  tiktok
+  youtube
+  anotherMedia
+}
+
+type ContactInformation {
+  foundationName: LocalizedString!
+  address: LocalizedString!
+  email: String!
+  phone: String!
+}
+
+type SocialNetwork {
+  icon: SocialNetworkTypes!
+  link: String!
+}
+
+type Contacts {
+  contactInformation: ContactInformation!
+  socialNetworks: [SocialNetwork!]!
+}
+
+input ContactInformationInput {
+  foundationName: LocalizedStringInput!
+  email: String!
+  phone: String!
+  address: LocalizedStringInput!
+}
+
+input SocialNetworkInput {
+  icon: SocialNetworkTypes!
+  link: String!
+}
+
+input UpdateContactsInput {
+  contactInformation: ContactInformationInput!
+  socialNetworks: [SocialNetworkInput!]!
+}
+
+extend type Query {
+  contacts: Contacts!
+}
+
+extend type Mutation {
+  updateContacts(input: UpdateContactsInput!): Contacts!
+}

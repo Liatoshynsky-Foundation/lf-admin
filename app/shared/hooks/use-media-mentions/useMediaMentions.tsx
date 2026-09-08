@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 
 import { buildStatusUpdater } from '../buildStatusUpdater';
 import {
+  AllMediaMentionsDocument,
   CreateMediaMentionInput,
   MediaMentionsCountQueryVariables,
   MediaMentionsFiltersInput,
@@ -68,7 +69,15 @@ export const useCreateMediaMention = () => {
 
 export const useDeleteMediaMention = () => {
   const [mutate, meta] = useDeleteMediaMentionMutation();
-  const deleteMediaMention = useCallback(async (id: string) => mutate({ variables: { id } }), [mutate]);
+  const deleteMediaMention = useCallback(
+    async (id: string) =>
+      mutate({
+        variables: { id },
+        refetchQueries: [AllMediaMentionsDocument],
+        awaitRefetchQueries: true
+      }),
+    [mutate]
+  );
   return [deleteMediaMention, meta] as const;
 };
 

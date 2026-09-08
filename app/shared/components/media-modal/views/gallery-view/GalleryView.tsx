@@ -65,7 +65,12 @@ type GalleryItem = {
   url: string;
   isStarred: boolean;
   tags: string[];
-  usageRefs: { pageId?: string | null; blockId?: string | null }[];
+  usageRefs: {
+    pageId?: string | null;
+    compositionId?: string | null;
+    compositionName?: string | null;
+    blockId?: string | null;
+  }[];
   createdAt: string;
 };
 
@@ -83,6 +88,12 @@ const usageFilterOptions = [
   { value: 'unused', label: 'Не використані' }
 ];
 
+const getUsageLabel = (
+  ref: GalleryItem['usageRefs'][number],
+  pageNameMap: Record<string, string>
+): string | undefined =>
+  ref.compositionName || pageNameMap[ref.pageId ?? ''] || ref.pageId || ref.compositionId || undefined;
+
 const getPageNames = (usageRefs: GalleryItem['usageRefs']): string[] => {
   const pageNameMap: Record<string, string> = {
     about: 'Про Фундацію',
@@ -90,7 +101,10 @@ const getPageNames = (usageRefs: GalleryItem['usageRefs']): string[] => {
     news: 'Новини',
     events: 'Події'
   };
-  return usageRefs.map((ref) => pageNameMap[ref.pageId ?? ''] ?? ref.pageId ?? '');
+  return usageRefs.flatMap((ref) => {
+    const label = getUsageLabel(ref, pageNameMap);
+    return label ? [label] : [];
+  });
 };
 
 const matchesFavoritesFilter = (item: GalleryItem, filter: string): boolean => {
@@ -124,7 +138,12 @@ export function GalleryView({ selected, onPick, filters, onFiltersChange, mediaK
     originalname?: string;
     isStarred: boolean;
     tags: string[];
-    usageRefs: { pageId?: string | null; blockId?: string | null }[];
+    usageRefs: {
+      pageId?: string | null;
+      compositionId?: string | null;
+      compositionName?: string | null;
+      blockId?: string | null;
+    }[];
   };
 
   const assetByUrl = useMemo(() => {
@@ -178,7 +197,7 @@ export function GalleryView({ selected, onPick, filters, onFiltersChange, mediaK
     onPick({
       kind: 'gallery',
       id: item.id,
-      fileName: item.filename,
+      fileName: item.originalname || item.filename,
       src: item.url,
       locale: 'uk'
     });

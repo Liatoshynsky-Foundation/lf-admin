@@ -5,6 +5,7 @@ import { handleGroup } from './tab-handlers/handleGroup';
 import { handleMixed } from './tab-handlers/handleMixed';
 import { handleWork } from './tab-handlers/handleWork';
 import { orderCompositionsByIds } from './tab-handlers/tabHandlersHelpers';
+import { withCompositionMediaDisplayNames } from '~/application/use-cases/compositionMedia/compositionMedia';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
 import { Composition } from '~/domain/entities/Composition';
@@ -63,7 +64,12 @@ export const OpusQuery = {
       await context.requestContainer.cradle.compositionsRepository.findByIds(compositionIds)
     );
 
-    return { ...opus, compositions };
+    const compositionsWithDisplayNames = await withCompositionMediaDisplayNames(
+      compositions,
+      context.requestContainer.cradle.assetsRepository
+    );
+
+    return { ...opus, compositions: compositionsWithDisplayNames };
   },
 
   searchCompositions: async (

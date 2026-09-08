@@ -171,6 +171,7 @@ describe('CustomFormattingField', () => {
 
   describe('3. Value Synchronization', () => {
     it('should call onChange once with updated JSON when the editor content changes', () => {
+      jest.useFakeTimers();
       const updatedJSON: JSONContent = { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Hello' }] }] };
       mockGetJSON.mockReturnValue(updatedJSON);
 
@@ -178,12 +179,16 @@ describe('CustomFormattingField', () => {
       const editorContent = screen.getByTestId('editor-content');
 
       fireEvent.input(editorContent);
+      
+      jest.advanceTimersByTime(300);
 
       expect(mockOnChange).toHaveBeenCalledTimes(1);
       expect(mockOnChange).toHaveBeenCalledWith(updatedJSON);
+      jest.useRealTimers();
     });
 
     it('should call editor.getJSON twice when the editor content changes', () => {
+      jest.useFakeTimers();
       const updatedJSON: JSONContent = { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Hello' }] }] };
       mockGetJSON.mockReturnValue(updatedJSON);
 
@@ -191,8 +196,11 @@ describe('CustomFormattingField', () => {
       const editorContent = screen.getByTestId('editor-content');
 
       fireEvent.input(editorContent);
+      
+      jest.advanceTimersByTime(300);
 
       expect(mockGetJSON).toHaveBeenCalledTimes(2);
+      jest.useRealTimers();
     });
 
     it('should call editor.commands.setContent ONLY when the external value prop changes', () => {
@@ -204,6 +212,48 @@ describe('CustomFormattingField', () => {
 
       expect(mockSetContent).toHaveBeenCalledTimes(1);
       expect(mockSetContent).toHaveBeenCalledWith(newJSON, { emitUpdate: false });
+    });
+
+    it('should set content to empty if value is empty and editor is not empty', () => {
+      Object.defineProperty(mockEditor, 'isEmpty', { value: false, configurable: true });
+      const { rerender } = render(<CustomFormattingField value={defaultJSON} onChange={mockOnChange} />);
+      mockSetContent.mockClear();
+      
+      rerender(<CustomFormattingField value={undefined} onChange={mockOnChange} />);
+      
+      expect(mockSetContent).toHaveBeenCalledTimes(1);
+      expect(mockSetContent).toHaveBeenCalledWith('', { emitUpdate: false });
+    });
+
+    it('should sync string value to editor', () => {
+      mockEditor.getText = jest.fn(() => 'old text');
+      const { rerender } = render(<CustomFormattingField value={defaultJSON} onChange={mockOnChange} />);
+      mockSetContent.mockClear();
+      
+      rerender(<CustomFormattingField value={'new text'} onChange={mockOnChange} />);
+      
+      expect(mockSetContent).toHaveBeenCalledTimes(1);
+      expect(mockSetContent).toHaveBeenCalledWith('new text', { emitUpdate: false });
+    });
+
+    it('should return early if valueStr is equal to lastSentRef', () => {
+      jest.useFakeTimers();
+      const updatedJSON: JSONContent = { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Hello' }] }] };
+      mockGetJSON.mockReturnValue(updatedJSON);
+      
+      const { rerender } = render(<CustomFormattingField value={defaultJSON} onChange={mockOnChange} />);
+      const editorContent = screen.getByTestId('editor-content');
+      
+      fireEvent.input(editorContent);
+      jest.advanceTimersByTime(300);
+      
+      mockSetContent.mockClear();
+      
+      rerender(<CustomFormattingField value={updatedJSON} onChange={mockOnChange} />);
+      
+      expect(mockSetContent).not.toHaveBeenCalled();
+      
+      jest.useRealTimers();
     });
   });
 });

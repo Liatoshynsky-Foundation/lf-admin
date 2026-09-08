@@ -3,7 +3,7 @@ import { Box, TextField } from '@mui/material';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
-import type { LocalizedMeta } from '../SeoMetadataForm';
+import type { LocalizedMeta, SeoFieldsRequired, SeoFormLabels } from '../SeoMetadataForm';
 import SeoMetadataForm from '../SeoMetadataForm';
 import { styles } from '../SeoMetadataForm.styles';
 import { seoFormErrors } from '~/constants/errors';
@@ -38,7 +38,7 @@ export interface SeoMetadataBlockProps {
   readonly showAlternativeText?: boolean;
   readonly showTicketUrl?: boolean;
   readonly extraFieldsBeforeKeywords?: boolean;
-  readonly required?: boolean;
+  readonly required?: boolean | Readonly<Record<'uk' | 'en', SeoFieldsRequired>>;
   readonly forceShowErrors?: boolean;
   readonly errors?: SeoBlockErrors;
   readonly value?: SeoBlockValue;
@@ -50,6 +50,7 @@ export interface SeoMetadataBlockProps {
     value: LocalizedMeta,
     onChange: (val: LocalizedMeta) => void
   ) => ReactNode;
+  readonly labels?: Readonly<{ uk?: SeoFormLabels; en?: SeoFormLabels }>;
 }
 
 export default function SeoMetadataBlock({
@@ -63,7 +64,8 @@ export default function SeoMetadataBlock({
   crop,
   onChangeCrop,
   onChange: externalOnChange,
-  extraFields
+  extraFields,
+  labels
 }: SeoMetadataBlockProps) {
   const [internalValue, setInternalValue] = useState<SeoBlockValue>(defaultValue);
   const [ticketUrlTouched, setTicketUrlTouched] = useState<{ uk: boolean; en: boolean }>({ uk: false, en: false });
@@ -72,6 +74,8 @@ export default function SeoMetadataBlock({
   const [displayTicketErrors, setDisplayTicketErrors] = useState(errors?.ticketUrl);
   const isControlled = externalValue !== undefined && externalOnChange !== undefined;
   const value = isControlled ? externalValue : internalValue;
+  const isLocaleRequired = (locale: 'uk' | 'en'): SeoFieldsRequired =>
+    typeof required === 'boolean' ? required : required[locale];
 
   const handleChange = (next: SeoBlockValue) => {
     if (isControlled) {
@@ -168,11 +172,12 @@ export default function SeoMetadataBlock({
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, uk: val } })}
         showAlternativeText={showAlternativeText}
         extraFieldsBeforeKeywords={extraFieldsBeforeKeywords}
-        required={required}
+        required={isLocaleRequired('uk')}
         forceShowErrors={forceShowErrors}
         errors={errors?.meta.uk}
         crop={crop?.uk ?? null}
         onChangeCrop={(newUkCrop) => onChangeCrop?.({ uk: newUkCrop, en: crop?.en ?? null })}
+        labels={labels?.uk}
         extraFields={
           showTicketUrl || extraFields
             ? (localeMeta, onLocaleMeta) => buildExtraFields('uk', localeMeta, onLocaleMeta)
@@ -189,11 +194,12 @@ export default function SeoMetadataBlock({
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, en: val } })}
         showAlternativeText={showAlternativeText}
         extraFieldsBeforeKeywords={extraFieldsBeforeKeywords}
-        required={required}
+        required={isLocaleRequired('en')}
         forceShowErrors={forceShowErrors}
         errors={errors?.meta.en}
         crop={crop?.en ?? null}
         onChangeCrop={(newEnCrop) => onChangeCrop?.({ uk: crop?.uk ?? null, en: newEnCrop })}
+        labels={labels?.en}
         extraFields={
           showTicketUrl || extraFields
             ? (localeMeta, onLocaleMeta) => buildExtraFields('en', localeMeta, onLocaleMeta)

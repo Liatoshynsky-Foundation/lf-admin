@@ -186,3 +186,15 @@ export const seoFormErrors = {
     keywords: 'Keywords must be comma-separated, without empty values.'
   }
 };
+
+export const FoundationTeamErrors = {
+  MISSING_INTRO: 'Будь ласка, заповніть вступну секцію',
+  MISSING_INTRO_UK: 'Будь ласка, заповніть вступну секцію для української версії',
+  MISSING_INTRO_EN: 'Будь ласка, заповніть вступну секцію для англійської версії',
+  MISSING_MEMBER_UK: 'Будь ласка, заповніть всі обов\'язкові поля (Ім\'я, Опис, Alt-текст) українською мовою для учасника.',
+  MISSING_MEMBER_EN: 'Будь ласка, заповніть всі обов\'язкові поля (Ім\'я, Опис, Alt-текст) англійською мовою для учасника.'
+};
+export const compositionMediaErrors = {
+  ASSET_NAME_CONFLICT: (filename: string): string =>
+    `Неможливо обрати файл «${filename}». Змініть назву або виберіть інший файл.`
+};

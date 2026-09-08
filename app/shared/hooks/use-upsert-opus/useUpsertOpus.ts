@@ -26,6 +26,7 @@ import type { SeoBlockErrors, SeoBlockValue } from '~/shared/components/forms/se
 import type { LocalizedMeta } from '~/shared/components/forms/seo-metadata-form/SeoMetadataForm';
 import { type SeoField, validateSeoField } from '~/shared/components/forms/seo-metadata-form/validateSeoField';
 import { useCreateOpus, useOpusById, useUpdateOpus } from '~/shared/hooks/use-opuses/useOpuses';
+import { fileNameFromUrl } from '~/src/shared/utils/assets/assetFilename';
 import { CropRect } from '~/types/common';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import {
@@ -41,16 +42,6 @@ import type {
 } from '~/types/opus';
 
 export const createCompositionId = (): string => generateUniqueId();
-
-const fileNameFromUrl = (url?: string | null): string => {
-  if (!url) {
-    return '';
-  }
-
-  const segment = url.split('/').pop() ?? url;
-
-  return decodeURIComponent(segment.split('?')[0]);
-};
 
 const getSeoMetaErrors = (
   meta: SeoBlockValue['meta']['uk'],
@@ -98,7 +89,7 @@ export const toCompositionInput = (
   notes: composition.notes
     .filter((note) => note.name?.trim() || note.fileUrl || note.publishDate?.trim())
     .map((note) => ({
-      name: note.name?.trim() || fileNameFromUrl(note.fileUrl),
+      name: note.name?.trim() || '',
       fileUrl: note.fileUrl,
       publishDate: note.publishDate
     }))
@@ -245,8 +236,9 @@ export const useUpsertOpus = (
         })),
         notes: (composition.sheetMusic ?? []).map((sheet) => ({
           id: createCompositionId(),
-          name: sheet.name ?? fileNameFromUrl(sheet.url),
+          name: sheet.name ?? '',
           fileUrl: sheet.url ?? '',
+          fileName: sheet.fileName ?? fileNameFromUrl(sheet.url),
           publishDate: sheet.publishDate ?? ''
         }))
       }))

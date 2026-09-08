@@ -3,6 +3,7 @@ import { LocalizedString } from '~/domain/entities/BaseContent';
 export type CompositionSheetMusic = {
   url?: string | null;
   name?: string | null;
+  fileName?: string | null;
   publishDate?: string | null;
   isFree?: boolean | null;
   dateUploaded?: string | null;

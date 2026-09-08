@@ -3,8 +3,15 @@ import { act, renderHook } from '@testing-library/react';
 jest.mock('~/lib/utils/safeMutate', () => ({ safeMutate: jest.fn() }));
 jest.mock('~/types/graphql/generated/graphql', () => ({
   useUpsertPageDraftMutation: jest.fn(),
-  usePublishPageMutation: jest.fn()
+  usePublishPageMutation: jest.fn(),
+  GetPageDocument: {}
 }));
+
+jest.mock('@apollo/client', () => ({
+  useApolloClient: jest.fn()
+}));
+
+import { useApolloClient } from '@apollo/client';
 
 import { safeMutate } from '~/lib/utils/safeMutate';
 import * as graphqlModule from '~/types/graphql/generated/graphql';
@@ -12,6 +19,7 @@ import * as graphqlModule from '~/types/graphql/generated/graphql';
 const mockUseUpsert = graphqlModule.useUpsertPageDraftMutation as jest.Mock;
 const mockUsePublish = graphqlModule.usePublishPageMutation as jest.Mock;
 const mockSafeMutate = safeMutate as jest.Mock;
+const mockUseApolloClient = useApolloClient as jest.Mock;
 
 const upsertMutate = jest.fn();
 const publishMutate = jest.fn();
@@ -56,6 +64,17 @@ beforeEach(() => {
       mutate(variables)
   );
 
+  mockUseApolloClient.mockReturnValue({
+    query: jest.fn().mockResolvedValue({
+      data: {
+        pageBlocks: {
+          blocks: { PUBLISHED_BLOCK: 'data' },
+          blocksOrder: ['PUBLISHED_BLOCK']
+        }
+      }
+    })
+  });
+
   storeState = {
     blocks: { test: { A: { title: 't' } } },
     originalBlocks: {},
@@ -81,6 +100,26 @@ it('saves draft and publishes, calling markSaved and returning published page', 
   });
 
   expect(markSavedMock).toHaveBeenCalledWith('test');
+});
+
+it('partially publishes a block if blockIdToPublish is provided', async () => {
+  const { result } = renderHook(() => useSavePageBlocks('test', 'A'));
+
+  await act(async () => {
+    await result.current.save();
+  });
+
+  expect(upsertMutate).toHaveBeenCalledWith({
+    input: { slug: 'test', blocks: { A: { title: 't' } }, blocksOrder: ['A'] }
+  });
+
+  expect(publishMutate).toHaveBeenCalledWith({
+    input: { 
+      slug: 'test', 
+      blocks: { PUBLISHED_BLOCK: 'data', A: { title: 't' } }, 
+      blocksOrder: ['PUBLISHED_BLOCK', 'A'] 
+    }
+  });
 });
 
 it('throws when no page blocks found', async () => {

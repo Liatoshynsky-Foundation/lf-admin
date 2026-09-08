@@ -14,6 +14,7 @@ export type DividedHeaderProps = {
   children?: ReactNode;
   sx?: SxProps<Theme>;
   onBackClick?: () => void;
+  showBackButton?: boolean;
 };
 
 export default function DividedHeader({
@@ -21,7 +22,8 @@ export default function DividedHeader({
   rightActionsComponent,
   children,
   sx,
-  onBackClick
+  onBackClick,
+  showBackButton = true
 }: Readonly<DividedHeaderProps>) {
   const router = useRouter();
 
@@ -36,13 +38,26 @@ export default function DividedHeader({
   return (
     <Box sx={[styles.container, ...sxToArray(sx)]}>
       <Box sx={styles.contentStack}>
-        <IconButton onClick={handleReturn} sx={styles.returnButton} aria-label={`Повернутись на сторінку ${originUrl}`}>
-          <ChevronLeft strokeWidth="1.5px" size={24} />
-        </IconButton>
-
-        <Box sx={styles.children}>{children}</Box>
+        {showBackButton && (
+          <IconButton
+            onClick={handleReturn}
+            sx={styles.returnButton}
+            aria-label={`Повернутись на сторінку ${originUrl}`}
+          >
+            <ChevronLeft strokeWidth="1.5px" size={24} />
+          </IconButton>
+        )}
+        <Box
+          sx={[
+            ...sxToArray(styles.children),
+            showBackButton ? {} : { borderLeft: 'none' },
+            rightActionsComponent ? {} : { borderRight: 'none' }
+          ]}
+        >
+          {children}
+        </Box>
       </Box>
-      <Box>{rightActionsComponent}</Box>
+      {rightActionsComponent && <Box>{rightActionsComponent}</Box>}
     </Box>
   );
 }

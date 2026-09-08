@@ -292,4 +292,33 @@ describe('editSlice', () => {
     store.getState().setLocale('en');
     expect(store.getState().locale).toBe('en');
   });
+
+  describe('toggleBlockVisibility', () => {
+    it('should toggle hidden property of a block', () => {
+      const initBlocks = { [BLOCK_ID as string]: { hidden: false } } as unknown as SetPageDataPayload;
+      store.getState().setPageData(PAGE_ID, initBlocks, [BLOCK_ID as string]);
+      
+      store.getState().toggleBlockVisibility(PAGE_ID, BLOCK_ID);
+      expect(getBlock(store, PAGE_ID, BLOCK_ID)?.hidden).toBe(true);
+      expect(store.getState().isChanged).toBe(true);
+
+      store.getState().toggleBlockVisibility(PAGE_ID, BLOCK_ID);
+      expect(getBlock(store, PAGE_ID, BLOCK_ID)?.hidden).toBe(false);
+    });
+
+    it('should return early if block does not exist', () => {
+      store.getState().toggleBlockVisibility('unknownPage', BLOCK_ID);
+      expect(store.getState().isChanged).toBe(false);
+    });
+  });
+
+  describe('setShowValidationErrors', () => {
+    it('should set showValidationErrors', () => {
+      store.getState().setShowValidationErrors(true);
+      expect(store.getState().showValidationErrors).toBe(true);
+      
+      store.getState().setShowValidationErrors(false);
+      expect(store.getState().showValidationErrors).toBe(false);
+    });
+  });
 });

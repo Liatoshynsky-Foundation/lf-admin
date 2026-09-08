@@ -21,7 +21,13 @@ const items: ConfigurableListItem[] = [
   { id: '3', value: 'Item 3' }
 ];
 
-const renderItem = ({ item, onChange }: any) => (
+const renderItem = ({
+  item,
+  onChange
+}: {
+  item: ConfigurableListItem;
+  onChange: (item: ConfigurableListItem) => void;
+}) => (
   <input
     data-testid={`input-${item.id}`}
     value={item.value}
@@ -119,7 +125,7 @@ describe('ConfigurableList', () => {
     expect(onChange).toHaveBeenCalledWith({ id: '1', value: 'Changed' });
   });
 
-  it('should pass editable=false for first item, editable=prop for others', () => {
+  it('should pass editable=true for all items except the first one when editable=prop is true', () => {
     render(
       <ConfigurableList
         items={items}
@@ -132,7 +138,26 @@ describe('ConfigurableList', () => {
       />
     );
     const deleteButtons = screen.getAllByRole('button');
-    expect(deleteButtons.length).toBe(3);
+    expect(deleteButtons).toHaveLength(3);
+  });
+
+  it('should allow deletion of the first item when configured', () => {
+    const onDelete = jest.fn();
+    render(
+      <ConfigurableList
+        items={items}
+        renderItem={renderItem}
+        addBtnLabel="Add"
+        editable={true}
+        allowFirstItemDeletion={true}
+        onCreate={jest.fn()}
+        onChange={jest.fn()}
+        onDelete={onDelete}
+      />
+    );
+    const deleteButtons = screen.getAllByRole('button');
+    fireEvent.click(deleteButtons[0]);
+    expect(onDelete).toHaveBeenCalledWith('1');
   });
 
   it('should pass withSeparator=true only for items except last (if separator=true)', () => {
@@ -149,7 +174,7 @@ describe('ConfigurableList', () => {
       />
     );
     const separators = screen.queryAllByTestId('separator');
-    expect(separators.length).toBe(2);
+    expect(separators).toHaveLength(2);
   });
 
   it('should pass withSeparator=false for all if separator is false/undefined', () => {
@@ -165,6 +190,6 @@ describe('ConfigurableList', () => {
       />
     );
     const separators = screen.queryAllByTestId('separator');
-    expect(separators.length).toBe(0);
+    expect(separators).toHaveLength(0);
   });
 });

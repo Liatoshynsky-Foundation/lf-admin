@@ -27,14 +27,12 @@ const mapCompositionToUpdateInput = (composition: OpusCompositionData): UpdateCo
   name: { uk: composition.name, en: composition.name },
   year: composition.year.trim() ? Number(composition.year) : undefined,
   genre: composition.genre.trim() || undefined,
-  audioAvailable: composition.audios.length > 0,
-  sheetAvailable: composition.notes.some((note) => Boolean(note.fileUrl)),
   audios: composition.audios.map((audio) => ({
     name: audio.name.trim(),
     url: audio.fileUrl
   })),
   sheetMusic: composition.notes.map((note) => ({
-    name: note.name?.trim() || '',
+    name: note.name?.trim() || undefined,
     url: note.fileUrl || undefined,
     publishDate: note.publishDate?.trim() || undefined,
     isFree: false,
