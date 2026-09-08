@@ -173,6 +173,14 @@ const validateOpusName = (name?: LocalizedString): void => {
   }
 };
 
+const preserveEnglish = (
+  value: LocalizedString,
+  existing?: LocalizedString | null
+): LocalizedString => ({
+  ...value,
+  en: value.en?.trim() || existing?.en || value.uk
+});
+
 const validateCreationYear = (year?: string): void => {
   if (year === undefined) return;
 
@@ -542,8 +550,24 @@ export const OpusMutation = {
     return { id: updatedOpus.id, status: updatedOpus.status as OpusStatus };
   },
 
-  updateOpus: async (_: unknown, { id, input }: UpdateOpusArgs, context: GraphQLContext): Promise<OpusFull> => {
+  updateOpus: async (_: unknown, { id, input: rawInput }: UpdateOpusArgs, context: GraphQLContext): Promise<OpusFull> => {
     assertAuthenticated(context);
+
+    const {
+      opusRepository: repo,
+      compositionsRepository: compositionsRepo,
+      assetsRepository: assetsRepo
+    } = context.requestContainer.cradle;
+
+    const existingOpus = await findExistingOpus(repo, id);
+
+    const input: UpdateOpusGQLInput = {
+      ...rawInput,
+      name: preserveEnglish(rawInput.name, existingOpus.name),
+      genre: rawInput.genre
+        ? preserveEnglish(rawInput.genre, existingOpus.genre)
+        : undefined
+    };
 
     validateOpusFields(input);
     validateOpusName(input.name);
@@ -554,14 +578,6 @@ export const OpusMutation = {
     if (input.performances !== undefined) {
       validatePerformances(input.performances);
     }
-
-    const {
-      opusRepository: repo,
-      compositionsRepository: compositionsRepo,
-      assetsRepository: assetsRepo
-    } = context.requestContainer.cradle;
-
-    const existingOpus = await findExistingOpus(repo, id);
 
     const additionalText =
       input.additionalText === undefined ? existingOpus.additionalText ?? null : formattedAdditionalText(input.additionalText);

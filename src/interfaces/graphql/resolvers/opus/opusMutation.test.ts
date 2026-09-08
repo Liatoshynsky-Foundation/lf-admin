@@ -36,6 +36,10 @@ const OPUS_NUMBER = 10;
 const DUP_OPUS_NUMBER = 20;
 const SLUG_VALUE = 'slug-test';
 const CREATION_YEAR = '2020';
+const UPDATED_NAME_UK = 'Нова назва';
+const UPDATED_NAME_EN = 'New name';
+const UPDATED_GENRE_UK = 'Новий жанр';
+const UPDATED_GENRE_EN = 'New genre';
 
 const MAPPED_SHEETS = [
   { url: 'http://file.pdf', name: 'Note 1', fileName: 'file.pdf', publishDate: '2020-01-01', isFree: true },
@@ -64,6 +68,7 @@ const MOCK_OPUS_ENTITY: Opus = {
   numberKind: 'op',
   title: { uk: 'Опус', en: 'Opus' },
   name: { uk: 'Назва', en: 'Name' },
+  genre: { uk: 'Жанр', en: 'Genre' },
   status: OpusStatus.Draft,
   meta: { views: 0 },
   compositions: [COMPOSITION_ID_1, COMPOSITION_ID_2]
@@ -141,6 +146,7 @@ describe('OpusMutation Resolvers', () => {
     adminContext = adminSetup.context;
     mockOpusRepo = adminSetup.opusRepo;
     mockCompositionsRepo = adminSetup.compositionsRepo;
+    mockOpusRepo.findById.mockResolvedValue(MOCK_OPUS_ENTITY);
 
     const userSetup = createMockContext(false);
     userContext = userSetup.context;
@@ -672,6 +678,36 @@ describe('OpusMutation Resolvers', () => {
       );
       expect(mockOpusRepo.findById).toHaveBeenCalledWith(OPUS_ID);
       expect(mockOpusRepo.update).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      { description: 'preserves existing English values when omitted', en: '' },
+      { description: 'uses explicitly supplied English values', en: UPDATED_NAME_EN }
+    ])('$description during the update', async ({ en }) => {
+      mockOpusRepo.update.mockResolvedValue(MOCK_OPUS_ENTITY);
+
+      await OpusMutation.updateOpus(
+        {},
+        {
+          id: OPUS_ID,
+          input: {
+            ...BASE_UPDATE_INPUT,
+            name: { uk: UPDATED_NAME_UK, en },
+            genre: { uk: UPDATED_GENRE_UK, en: en === '' ? '' : UPDATED_GENRE_EN },
+            compositions: []
+          }
+        },
+        adminContext
+      );
+
+      expect(mockOpusRepo.update).toHaveBeenCalledWith(
+        OPUS_ID,
+        expect.objectContaining({
+          name: { uk: UPDATED_NAME_UK, en: en || 'Name' },
+          genre: { uk: UPDATED_GENRE_UK, en: en === '' ? 'Genre' : UPDATED_GENRE_EN }
+        }),
+        expect.anything()
+      );
     });
 
     it('should throw duplicate error if number is changed and belongs to another opus', async () => {
