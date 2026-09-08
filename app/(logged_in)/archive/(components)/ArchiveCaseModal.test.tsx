@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 import toast from 'react-hot-toast';
 
 import { ArchiveCaseModal } from './ArchiveCaseModal';
@@ -25,6 +26,17 @@ jest.mock('~/shared/hooks/use-funds/useFunds', () => ({
 }));
 
 const mockCreateAsset = jest.fn();
+
+interface MediaModalProps {
+  open?: boolean;
+  initial?: { tab: string };
+  mediaKind?: string;
+  onClose?: () => void;
+  onApply?: (result: unknown) => void;
+  renderers?: {
+    upload?: (props: { selected: unknown; onPick: () => void }) => ReactNode;
+  };
+}
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
   __esModule: true,
@@ -54,7 +66,7 @@ jest.mock('./archive-case-modal-view/ArchiveCaseModalView', () => ({
 
 jest.mock('~/shared/components/media-modal/MediaModal', () => ({
   __esModule: true,
-  MediaModal: ({ open, initial, mediaKind, onClose, onApply, renderers }: any) =>
+  MediaModal: ({ open, initial, mediaKind, onClose, onApply, renderers }: MediaModalProps) =>
     open ? (
       <div data-testid="media-modal">
         <span data-testid="media-initial">{JSON.stringify(initial)}</span>

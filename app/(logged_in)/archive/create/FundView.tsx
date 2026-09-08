@@ -17,6 +17,7 @@ import { TitleDropdown } from '~/shared/components/divided-header/title-dropdown
 import ActionMenu, { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import FundCasesBlock from '~/shared/components/forms/fund-cases-block/FundCasesBlock';
 import FundDetailsBlock from '~/shared/components/forms/fund-details-block/FundDetailsBlock';
+import type { Locale } from '~/shared/components/media-modal/MediaModal.types';
 import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
 import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
 import { useUpsertFund } from '~/shared/hooks/use-upsert-fund/useUpsertFund';
@@ -48,8 +49,8 @@ export default function FundView({ data, mode = 'create' }: Readonly<FundViewPro
 
   const router = useRouter();
   const checkFundPublishWarning = useFundPublishWarning();
-  const currentLocale = useStore((state) => state.locale as 'uk' | 'en');
-  const setLocale = useStore((state) => state.setLocale as (locale: 'uk' | 'en') => void);
+  const currentLocale = useStore((state) => state.locale as Locale);
+  const setLocale = useStore((state) => state.setLocale as (locale: Locale) => void);
   const { navigateBack } = useNavigationGuard();
 
   useUnsavedChanges(mode === 'edit' ? Boolean(hasUnsavedChanges) : false);
@@ -72,21 +73,30 @@ export default function FundView({ data, mode = 'create' }: Readonly<FundViewPro
 
     const statusToSave = currentStatus ?? BaseContentStatuses.Hidden;
 
-    if (action === 'SAVE') {
+    switch (action) {
+    case 'SAVE': {
       const id = await handleSave(statusToSave);
       if (mode === 'create' && id) {
         router.push(`${ARCHIVE_BASE_PATH}/fund/${id}/edit`);
       }
-    } else if (action === 'SAVE_AND_EXIT') {
+      break;
+    }
+    case 'SAVE_AND_EXIT': {
       const id = await handleSave(statusToSave);
       if (id) {
         router.push(ARCHIVE_BASE_PATH);
       }
-    } else if (action === 'PUBLISH') {
+      break;
+    }
+    case 'PUBLISH': {
       const id = await handleSave(BaseContentStatuses.Published);
       if (mode === 'create' && id) {
         router.push(`${ARCHIVE_BASE_PATH}/fund/${id}/edit`);
       }
+      break;
+    }
+    default:
+      break;
     }
   };
 
