@@ -84,3 +84,15 @@ export const MediaMentionsServiceErrors = {
   INVALID_ID: newError('The provided ID is invalid'),
   NO_PUBLISHED_MEDIA: newError('No published media mentions found')
 };
+
+export const contactsErrors = {
+  CONTACTS_NOT_FOUND: 'Contacts information was not found'
+};
+
+export const contactsValidationErrors = {
+  LOCALIZED_FIELD_REQUIRED: 'Поле обов’язкове для заповнення',
+  EMAIL_INVALID: 'Некоректна електронна адреса',
+  PHONE_INVALID: 'Телефон має відповідати формату +38 XXX XXX XXXX',
+  PLATFORM_INVALID: 'Некоректна соціальна мережа',
+  LINK_INVALID: 'Посилання на соціальну мережу має бути коректною URL-адресою'
+} as const;
