@@ -733,7 +733,8 @@ describe('useUpsertOpus', () => {
     expect(args.id).toBe('opus-1');
     expect(args.input).toEqual(
       expect.objectContaining({
-        name: { uk: 'Симфонія', en: 'Симфонія' },
+        name: { uk: 'Симфонія', en: undefined },
+        genre: { uk: 'Симфонія', en: undefined },
         number: 42
       })
     );

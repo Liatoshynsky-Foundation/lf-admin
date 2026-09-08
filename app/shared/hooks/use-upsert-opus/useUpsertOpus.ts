@@ -398,7 +398,7 @@ export const useUpsertOpus = (
       number: Number(currentDetails.number.trim()),
       name: { 
         uk: opusName, 
-        en: opusName 
+        en: isEditing ? undefined : opusName
       },
       additionalText: currentDetails.additionalText.trim() || undefined,
       creationYear: currentDetails.creationYear.trim(),
@@ -406,7 +406,7 @@ export const useUpsertOpus = (
       datesNote: currentDetails.datesNote.trim() || undefined,
       genre: {
         uk: currentDetails.genre.trim() || undefined,
-        en: currentDetails.genre.trim() || undefined
+        en: isEditing ? undefined : currentDetails.genre.trim() || undefined
       },
       compositions: currentDetails.compositions.map(toCompositionInput),
       adminTitle: opusName,

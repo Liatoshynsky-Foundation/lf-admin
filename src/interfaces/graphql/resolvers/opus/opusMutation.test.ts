@@ -64,6 +64,7 @@ const MOCK_OPUS_ENTITY: Opus = {
   numberKind: 'op',
   title: { uk: 'Опус', en: 'Opus' },
   name: { uk: 'Назва', en: 'Name' },
+  genre: { uk: 'Genre', en: 'Genre' },
   status: OpusStatus.Draft,
   meta: { views: 0 },
   compositions: [COMPOSITION_ID_1, COMPOSITION_ID_2]
@@ -141,6 +142,7 @@ describe('OpusMutation Resolvers', () => {
     adminContext = adminSetup.context;
     mockOpusRepo = adminSetup.opusRepo;
     mockCompositionsRepo = adminSetup.compositionsRepo;
+    mockOpusRepo.findById.mockResolvedValue(MOCK_OPUS_ENTITY);
 
     const userSetup = createMockContext(false);
     userContext = userSetup.context;
@@ -672,6 +674,60 @@ describe('OpusMutation Resolvers', () => {
       );
       expect(mockOpusRepo.findById).toHaveBeenCalledWith(OPUS_ID);
       expect(mockOpusRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('preserves existing English values when the update omits them', async () => {
+      mockOpusRepo.update.mockResolvedValue(MOCK_OPUS_ENTITY);
+
+      await OpusMutation.updateOpus(
+        {},
+        {
+          id: OPUS_ID,
+          input: {
+            ...BASE_UPDATE_INPUT,
+            name: { uk: 'Нова назва', en: '' },
+            genre: { uk: 'Новий жанр', en: '' },
+            compositions: []
+          }
+        },
+        adminContext
+      );
+
+      expect(mockOpusRepo.update).toHaveBeenCalledWith(
+        OPUS_ID,
+        expect.objectContaining({
+          name: { uk: 'Нова назва', en: 'Name' },
+          genre: { uk: 'Новий жанр', en: 'Genre' }
+        }),
+        expect.anything()
+      );
+    });
+
+    it('uses explicitly supplied English values during the update', async () => {
+      mockOpusRepo.update.mockResolvedValue(MOCK_OPUS_ENTITY);
+
+      await OpusMutation.updateOpus(
+        {},
+        {
+          id: OPUS_ID,
+          input: {
+            ...BASE_UPDATE_INPUT,
+            name: { uk: 'Нова назва', en: 'New name' },
+            genre: { uk: 'Новий жанр', en: 'New genre' },
+            compositions: []
+          }
+        },
+        adminContext
+      );
+
+      expect(mockOpusRepo.update).toHaveBeenCalledWith(
+        OPUS_ID,
+        expect.objectContaining({
+          name: { uk: 'Нова назва', en: 'New name' },
+          genre: { uk: 'Новий жанр', en: 'New genre' }
+        }),
+        expect.anything()
+      );
     });
 
     it('should throw duplicate error if number is changed and belongs to another opus', async () => {
