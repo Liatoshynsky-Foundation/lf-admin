@@ -18,26 +18,6 @@ describe('checkIsSeoInvalid', () => {
   const validTicketUrl = { uk: 'https://ticket.ua', en: 'https://ticket.com' };
 
   describe('it fails (return true)', () => {
-    it.each([['uk'], ['en']] as const)('if title for %s is missing', (locale) => {
-      const result = checkIsSeoInvalid(
-        locale === 'uk' ? { ...validUkMeta, title: '' } : validUkMeta,
-        locale === 'en' ? { ...validEnMeta, title: '' } : validEnMeta,
-        'media',
-        validTicketUrl
-      );
-      expect(result).toBe(true);
-    });
-
-    it.each([['uk'], ['en']] as const)('if description for %s is missing', (locale) => {
-      const result = checkIsSeoInvalid(
-        locale === 'uk' ? { ...validUkMeta, description: '' } : validUkMeta,
-        locale === 'en' ? { ...validEnMeta, description: '' } : validEnMeta,
-        'media',
-        validTicketUrl
-      );
-      expect(result).toBe(true);
-    });
-
     it('if type is "media" and uk canonicalUrl is invalid', () => {
       const result = checkIsSeoInvalid(
         { ...validUkMeta, canonicalUrl: 'not-a-url' },
@@ -62,18 +42,6 @@ describe('checkIsSeoInvalid', () => {
       const result = checkIsSeoInvalid(validUkMeta, validEnMeta, 'events', undefined);
       expect(result).toBe(true);
     });
-
-    it.each(['uk', 'en'] as const)('if preview image is uploaded and %s alt text is missing', (emptyLocale) => {
-      const altText = { uk: 'Alt UK', en: 'Alt EN' };
-      const result = checkIsSeoInvalid(
-        { ...validUkMeta, altText: { ...altText, [emptyLocale]: '' } },
-        { ...validEnMeta, altText: { ...altText, [emptyLocale]: '' } },
-        'events',
-        validTicketUrl,
-        'https://example.com/image.jpg'
-      );
-      expect(result).toBe(true);
-    });
   });
 
   describe('it successes (return false)', () => {
@@ -86,24 +54,16 @@ describe('checkIsSeoInvalid', () => {
       expect(result).toBe(false);
     });
 
-    it('if preview image is uploaded and both locale alt texts are provided', () => {
+    it.each([
+      ['title', 'title'],
+      ['description', 'description'],
+      ['keywords', 'keywords']
+    ])('if %s is empty, since meta lengths are validated separately', (_, field) => {
       const result = checkIsSeoInvalid(
-        { ...validUkMeta, altText: { uk: 'Alt UK', en: 'Alt EN' } },
-        { ...validEnMeta, altText: { uk: 'Alt UK', en: 'Alt EN' } },
-        'events',
-        validTicketUrl,
-        'https://example.com/image.jpg'
-      );
-      expect(result).toBe(false);
-    });
-
-    it('if preview image is missing, alt text is not required', () => {
-      const result = checkIsSeoInvalid(
-        { ...validUkMeta, altText: { uk: '', en: '' } },
-        { ...validEnMeta, altText: { uk: '', en: '' } },
-        'events',
-        validTicketUrl,
-        null
+        { ...validUkMeta, [field]: '' },
+        { ...validEnMeta, [field]: '' },
+        'news',
+        validTicketUrl
       );
       expect(result).toBe(false);
     });

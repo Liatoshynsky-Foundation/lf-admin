@@ -4,7 +4,7 @@ import { CreateNewsGQLInput, NewsMutation, UpdateNewsGQLInput } from './newsMuta
 import type { LocalizedString } from '~/domain/entities/BaseContent';
 import type { News } from '~/domain/entities/News';
 import { createMockContext } from '~/interfaces/graphql/resolvers/testUtils';
-import { newsServiceErrors } from '~/src/constants/errors';
+import { newsServiceErrors, seoValidationErrors } from '~/src/constants/errors';
 import { INewsRepository } from '~/src/domain/repositories/newsRepository';
 import { NewsStatus } from '~/types/enums/common.enums';
 
@@ -55,7 +55,7 @@ describe('NewsMutation Resolvers', () => {
     adminTitle: 'Test News',
     title: { uk: 'Новина', en: 'News' },
     description: { uk: 'Опис', en: 'Desc' },
-    keywords: { uk: 'к', en: 'k' },
+    keywords: { uk: 'ключі', en: 'keys' },
     allowIndexation: { uk: true, en: true },
     content: { uk: { blocks: [] }, en: { blocks: [] } } as News['content'],
     coverImage: {
@@ -92,21 +92,21 @@ describe('NewsMutation Resolvers', () => {
     it('should throw TITLE_LENGTH_INVALID if title is empty', async () => {
       const invalidInput = { ...baseInput, title: { uk: '', en: '' } };
       await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toThrow(
-        newsServiceErrors.TITLE_LENGTH_INVALID
+        seoValidationErrors.TITLE_LENGTH_INVALID
       );
     });
 
     it('should throw TITLE_LENGTH_INVALID if title uk is missing (via partial object)', async () => {
       const invalidInput = { ...baseInput, title: { uk: '' } } as unknown as CreateNewsGQLInput;
       await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toThrow(
-        newsServiceErrors.TITLE_LENGTH_INVALID
+        seoValidationErrors.TITLE_LENGTH_INVALID
       );
     });
 
     it('should throw TITLE_LENGTH_INVALID if title has fewer than 2 characters', async () => {
       const invalidInput = { ...baseInput, title: { uk: 'Т', en: 'T' } };
       await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toThrow(
-        newsServiceErrors.TITLE_LENGTH_INVALID
+        seoValidationErrors.TITLE_LENGTH_INVALID
       );
     });
 
@@ -118,9 +118,82 @@ describe('NewsMutation Resolvers', () => {
         await NewsMutation.createNews({}, { input: invalidInput }, adminContext);
       } catch (error) {
         expect(error).toBeInstanceOf(GraphQLError);
-        expect((error as GraphQLError).message).toBe(newsServiceErrors.TITLE_LENGTH_INVALID);
+        expect((error as GraphQLError).message).toBe(seoValidationErrors.TITLE_LENGTH_INVALID);
         expect((error as GraphQLError).extensions.code).toBe('BAD_USER_INPUT');
       }
+    });
+
+    it.each([
+      {
+        caseName: 'provided keywords are shorter than 2 characters',
+        overrides: { keywords: { uk: 'к', en: 'keys' } },
+        message: seoValidationErrors.KEYWORDS_LENGTH_INVALID,
+        fields: ['keywords.uk']
+      },
+      {
+        caseName: 'provided keywords exceed 250 characters',
+        overrides: { keywords: { uk: 'a'.repeat(251), en: 'keys' } },
+        message: seoValidationErrors.KEYWORDS_LENGTH_INVALID,
+        fields: ['keywords.uk']
+      },
+      {
+        caseName: 'provided alt text exceeds 250 characters',
+        overrides: {
+          coverImage: {
+            src: 'test.jpg',
+            alt: { uk: 'a'.repeat(251), en: '' },
+            caption: { uk: '', en: '' }
+          }
+        },
+        message: seoValidationErrors.ALT_TEXT_LENGTH_INVALID,
+        fields: ['altText.uk']
+      }
+    ])('should throw GraphQLError with BAD_USER_INPUT if $caseName', async ({ overrides, message, fields }) => {
+      const invalidInput = { ...baseInput, ...overrides } as CreateNewsGQLInput;
+
+      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toMatchObject({
+        message,
+        extensions: { code: 'BAD_USER_INPUT', fields }
+      });
+
+      expect(mockRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('should accept empty keywords', async () => {
+      const validInput = { ...baseInput, keywords: { uk: '', en: '' } };
+      mockAction('create', createMockNews({ id: 'news-empty-keywords' }));
+
+      await expect(NewsMutation.createNews({}, { input: validInput }, adminContext)).resolves.toBeDefined();
+    });
+
+    it('should accept an empty EN description because only the UA description is mandatory', async () => {
+      const validInput = { ...baseInput, description: { uk: 'Опис', en: '' } } as CreateNewsGQLInput;
+      mockAction('create', createMockNews({ id: 'news-en-optional-desc' }));
+
+      await expect(NewsMutation.createNews({}, { input: validInput }, adminContext)).resolves.toBeDefined();
+    });
+
+    it('should reject an empty EN title', async () => {
+      const invalidInput = { ...baseInput, title: { uk: 'Новина', en: '' } } as CreateNewsGQLInput;
+
+      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toMatchObject({
+        extensions: { code: 'BAD_USER_INPUT', fields: ['title.en'] }
+      });
+
+      expect(mockRepo.create).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      { caseName: 'title', overrides: { title: { uk: '', en: 'News' } }, fields: ['title.uk'] },
+      { caseName: 'description', overrides: { description: { uk: '', en: 'Desc' } }, fields: ['description.uk'] }
+    ])('should still reject an empty UA $caseName', async ({ overrides, fields }) => {
+      const invalidInput = { ...baseInput, ...overrides } as CreateNewsGQLInput;
+
+      await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toMatchObject({
+        extensions: { code: 'BAD_USER_INPUT', fields }
+      });
+
+      expect(mockRepo.create).not.toHaveBeenCalled();
     });
 
     it('should throw GraphQLError with BAD_USER_INPUT if title.en exceeds 150 characters (lf-manual-tests#469)', async () => {
@@ -131,7 +204,7 @@ describe('NewsMutation Resolvers', () => {
         await NewsMutation.createNews({}, { input: invalidInput }, adminContext);
       } catch (error) {
         expect(error).toBeInstanceOf(GraphQLError);
-        expect((error as GraphQLError).message).toBe(newsServiceErrors.TITLE_LENGTH_INVALID);
+        expect((error as GraphQLError).message).toBe(seoValidationErrors.TITLE_LENGTH_INVALID);
         expect((error as GraphQLError).extensions.code).toBe('BAD_USER_INPUT');
       }
     });
@@ -182,7 +255,7 @@ describe('NewsMutation Resolvers', () => {
       };
 
       await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toMatchObject({
-        message: newsServiceErrors.DESCRIPTION_LENGTH_INVALID,
+        message: seoValidationErrors.DESCRIPTION_LENGTH_INVALID,
         extensions: {
           code: 'BAD_USER_INPUT',
           fields
@@ -296,7 +369,7 @@ describe('NewsMutation Resolvers', () => {
 
       await expect(
         NewsMutation.updateNews({}, { id, input: { title: { uk: '', en: '' } } }, adminContext)
-      ).rejects.toThrow(newsServiceErrors.TITLE_LENGTH_INVALID);
+      ).rejects.toThrow(seoValidationErrors.TITLE_LENGTH_INVALID);
 
       expect(mockRepo.update).not.toHaveBeenCalled();
     });
@@ -306,7 +379,7 @@ describe('NewsMutation Resolvers', () => {
 
       await expect(
         NewsMutation.updateNews({}, { id, input: { title: { uk: 'Т', en: 'T' } } }, adminContext)
-      ).rejects.toThrow(newsServiceErrors.TITLE_LENGTH_INVALID);
+      ).rejects.toThrow(seoValidationErrors.TITLE_LENGTH_INVALID);
 
       expect(mockRepo.update).not.toHaveBeenCalled();
     });
@@ -323,7 +396,7 @@ describe('NewsMutation Resolvers', () => {
         );
       } catch (error) {
         expect(error).toBeInstanceOf(GraphQLError);
-        expect((error as GraphQLError).message).toBe(newsServiceErrors.TITLE_LENGTH_INVALID);
+        expect((error as GraphQLError).message).toBe(seoValidationErrors.TITLE_LENGTH_INVALID);
         expect((error as GraphQLError).extensions.code).toBe('BAD_USER_INPUT');
       }
 
@@ -465,7 +538,7 @@ describe('NewsMutation Resolvers', () => {
       };
 
       await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toMatchObject({
-        message: newsServiceErrors.ALT_TEXT_TOO_SHORT,
+        message: seoValidationErrors.ALT_TEXT_LENGTH_INVALID,
         extensions: {
           code: 'BAD_USER_INPUT',
           fields: [`altText.${lang}`]
@@ -514,7 +587,7 @@ describe('NewsMutation Resolvers', () => {
         adminContext
       )
     ).rejects.toMatchObject({
-      message: newsServiceErrors.ALT_TEXT_TOO_SHORT,
+      message: seoValidationErrors.ALT_TEXT_LENGTH_INVALID,
       extensions: {
         code: 'BAD_USER_INPUT',
         fields: ['altText.uk']

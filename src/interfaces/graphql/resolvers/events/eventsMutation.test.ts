@@ -40,7 +40,7 @@ describe('EventsMutation Resolvers', () => {
     eventLink: 'https://test.com',
     title: { uk: 'Тест', en: 'Test' },
     description: { uk: 'Опис', en: 'Desc' },
-    keywords: { uk: 'к', en: 'k' },
+    keywords: { uk: 'ключі', en: 'keys' },
     allowIndexation: { uk: true, en: true },
     slug: 'slug-test',
     content: { uk: { blocks: [] }, en: { blocks: [] } } as EventsEntity['content'],
@@ -57,7 +57,7 @@ describe('EventsMutation Resolvers', () => {
     eventLink: 'https://link.com',
     title: { uk: 'Подія', en: 'Event' },
     description: { uk: 'Опис', en: 'Desc' },
-    keywords: { uk: 'к', en: 'k' },
+    keywords: { uk: 'ключі', en: 'keys' },
     allowIndexation: { uk: true, en: true },
     content: { uk: { blocks: [] }, en: { blocks: [] } } as EventsEntity['content'],
     coverImage: {
@@ -95,6 +95,81 @@ describe('EventsMutation Resolvers', () => {
     it('should throw UNAUTHENTICATED error for updateEvent if not admin', async () => {
       await expect(EventsMutation.updateEvent({}, { id: '1', input: {} }, userContext))
         .rejects.toThrow('You must be logged in to access this resource.');
+    });
+  });
+
+  describe('SEO length validation', () => {
+    const tooLong = (max: number) => 'a'.repeat(max + 1);
+
+    it.each([
+      { caseName: 'title is shorter than 2 characters', overrides: { title: { uk: 'П', en: 'E' } }, fields: ['title.uk', 'title.en'] },
+      { caseName: 'title exceeds 150 characters', overrides: { title: { uk: tooLong(150), en: 'Event' } }, fields: ['title.uk'] },
+      {
+        caseName: 'description exceeds 250 characters',
+        overrides: { description: { uk: tooLong(250), en: 'Desc' } },
+        fields: ['description.uk']
+      },
+      {
+        caseName: 'provided keywords exceed 250 characters',
+        overrides: { keywords: { uk: tooLong(250), en: 'keys' } },
+        fields: ['keywords.uk']
+      },
+      {
+        caseName: 'provided alt text is shorter than 2 characters',
+        overrides: {
+          coverImage: { src: 'event.jpg', alt: { uk: 'a', en: 'alt en' }, caption: { uk: '', en: '' } }
+        },
+        fields: ['altText.uk']
+      }
+    ])('should reject createEvent when $caseName', async ({ overrides, fields }) => {
+      const input = createMockInput(overrides as Partial<CreateEventInput>);
+
+      await expect(EventsMutation.createEvent({}, { input }, adminContext)).rejects.toMatchObject({
+        extensions: { code: 'BAD_USER_INPUT', fields }
+      });
+
+      expect(mockRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('should reject updateEvent when the updated title is too short', async () => {
+      await expect(
+        EventsMutation.updateEvent({}, { id: '1', input: { title: { uk: 'П', en: 'E' } } }, adminContext)
+      ).rejects.toMatchObject({
+        extensions: { code: 'BAD_USER_INPUT', fields: ['title.uk', 'title.en'] }
+      });
+
+      expect(mockRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('should accept empty keywords and empty alt text', async () => {
+      const input = createMockInput({
+        keywords: { uk: '', en: '' },
+        coverImage: { src: 'event.jpg', alt: { uk: '', en: '' }, caption: { uk: '', en: '' } }
+      } as Partial<CreateEventInput>);
+      (mockRepo.create as jest.Mock).mockResolvedValue(createMockEntity({ id: 'event-ok' }));
+
+      await expect(EventsMutation.createEvent({}, { input }, adminContext)).resolves.toBeDefined();
+    });
+
+    it('should accept empty EN description while requiring EN title', async () => {
+      const input = createMockInput({
+        title: { uk: 'Подія', en: 'Event' },
+        description: { uk: 'Опис', en: '' }
+      } as Partial<CreateEventInput>);
+      (mockRepo.create as jest.Mock).mockResolvedValue(createMockEntity({ id: 'event-en-desc-optional' }));
+
+      await expect(EventsMutation.createEvent({}, { input }, adminContext)).resolves.toBeDefined();
+    });
+
+    it('should reject empty EN title', async () => {
+      const input = createMockInput({
+        title: { uk: 'Подія', en: '' },
+        description: { uk: 'Опис', en: 'Desc' }
+      } as Partial<CreateEventInput>);
+
+      await expect(EventsMutation.createEvent({}, { input }, adminContext)).rejects.toMatchObject({
+        extensions: { code: 'BAD_USER_INPUT', fields: ['title.en'] }
+      });
     });
   });
 
@@ -224,7 +299,7 @@ describe('EventsMutation Resolvers', () => {
       (mockRepo.update as jest.Mock).mockResolvedValue(null);
 
       await expect(
-        EventsMutation.updateEvent({}, { id, input: { title: { uk: 'x', en: 'x' } } }, adminContext)
+        EventsMutation.updateEvent({}, { id, input: { title: { uk: 'Подія', en: 'Event' } } }, adminContext)
       ).rejects.toThrow('EVENT_NOT_FOUND');
     });
 

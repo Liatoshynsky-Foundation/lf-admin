@@ -40,7 +40,7 @@ export const metaSchema = new mongoose.Schema(
 export const descriptionsSchema = new mongoose.Schema(
   {
     uk: { type: String, required: true },
-    en: { type: String, required: true },
+    en: { type: String, required: false, default: '' },
     meta: metaSchema
   },
   { _id: false }

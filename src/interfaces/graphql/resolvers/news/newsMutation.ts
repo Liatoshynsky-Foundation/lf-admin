@@ -7,6 +7,7 @@ import {
   processSlugUpdate,
   syncImagesCrops
 } from '../helpers';
+import { validateSeoLengths } from '../seoValidation';
 import { processNewsContent } from './processNewsContent/processNewsContent';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
@@ -58,92 +59,6 @@ const processContentFields = async (input: UpdateNewsGQLInput, updateData: Updat
   }
 };
 
-const TITLE_MIN_LENGTH = 2;
-const TITLE_MAX_LENGTH = 150;
-
-const DESCRIPTION_MIN_LENGTH = 2;
-const DESCRIPTION_MAX_LENGTH = 250;
-
-const ALT_TEXT_MIN_LENGTH = 2;
-
-type LocalizedLengthValidationOptions = {
-  fieldName: 'title' | 'description' | 'altText';
-  minLength?: number;
-  maxLength?: number;
-};
-
-const getInvalidLocalizedLengthFields = (
-  value: LocalizedString | undefined,
-  { fieldName, minLength, maxLength }: LocalizedLengthValidationOptions
-): string[] => {
-  if (!value) return [];
-
-  const invalidFields = (['uk', 'en'] as const)
-    .filter((lang) => {
-      const localizedValue = value[lang];
-
-      if (typeof localizedValue !== 'string') {
-        return false;
-      }
-
-      const length = localizedValue.trim().length;
-
-      return (minLength !== undefined && length < minLength) || (maxLength !== undefined && length > maxLength);
-    })
-    .map((lang) => `${fieldName}.${lang}`);
-
-  return invalidFields;
-};
-
-const throwBadUserInput = (message: string, fields: string[]): void => {
-  if (fields.length === 0) return;
-
-  throw new GraphQLError(message, {
-    extensions: {
-      code: 'BAD_USER_INPUT',
-      fields
-    }
-  });
-};
-
-const validateDescriptionLength = (description: LocalizedString | undefined): void => {
-  const invalidFields = getInvalidLocalizedLengthFields(description, {
-    fieldName: 'description',
-    minLength: DESCRIPTION_MIN_LENGTH,
-    maxLength: DESCRIPTION_MAX_LENGTH
-  });
-
-  throwBadUserInput(newsServiceErrors.DESCRIPTION_LENGTH_INVALID, invalidFields);
-};
-
-const validateTitleLength = (title: LocalizedString | undefined): void => {
-  const invalidFields = getInvalidLocalizedLengthFields(title, {
-    fieldName: 'title',
-    maxLength: TITLE_MAX_LENGTH,
-    minLength: TITLE_MIN_LENGTH
-  });
-
-  throwBadUserInput(newsServiceErrors.TITLE_LENGTH_INVALID, invalidFields);
-};
-
-const validateAltTextMinLength = (coverImage: LocalizedImage | undefined): void => {
-  if (!coverImage?.alt) return;
-
-  const { alt } = coverImage;
-
-  const invalidFields = (['uk', 'en'] as const)
-    .filter((lang) => {
-      const localizedValue = alt[lang];
-      if (typeof localizedValue !== 'string') return false;
-
-      const length = localizedValue.trim().length;
-      return length > 0 && length < ALT_TEXT_MIN_LENGTH;
-    })
-    .map((lang) => `altText.${lang}`);
-
-  throwBadUserInput(newsServiceErrors.ALT_TEXT_TOO_SHORT, invalidFields);
-};
-
 const trimLocalizedString = (value: LocalizedString | undefined): LocalizedString | undefined => {
   if (!value) return value;
 
@@ -190,9 +105,7 @@ export const NewsMutation = {
 
     const titleForSlug = extractTitleForSlug(trimmedInput.title);
 
-    validateTitleLength(trimmedInput.title);
-    validateDescriptionLength(trimmedInput.description);
-    validateAltTextMinLength(trimmedInput.coverImage);
+    validateSeoLengths(trimmedInput);
 
     const slug = await generateUniqueSlug(titleForSlug, {
       checkExists: async (slug: string) => {
@@ -256,18 +169,13 @@ export const NewsMutation = {
       coverImage: trimLocalizedImageAlt(input.coverImage) ?? input.coverImage
     };
 
-    validateDescriptionLength(trimmedInput.description);
-    if (input.coverImage) {
-      validateAltTextMinLength(trimmedInput.coverImage);
-    }
+    validateSeoLengths(trimmedInput);
 
     if (input.content || input.description || input.coverImage) {
       await processContentFields(trimmedInput, updateData);
     }
 
     if (trimmedInput.title) {
-      validateTitleLength(trimmedInput.title);
-
       await processSlugUpdate(id, trimmedInput.title, repo, updateData);
       updateData.title = trimmedInput.title;
     }

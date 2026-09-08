@@ -33,10 +33,14 @@ export const newsServiceErrors = {
   FAILED_TO_DELETE: (id: string) => `News with id "${id}" not found or could not be deleted`,
   TITLE_REQUIRED_FOR_SLUG: 'Title is required to generate a slug',
   TITLE_TOO_SHORT_FOR_SLUG: 'Title must be at least 2 characters long to generate a slug',
-  TITLE_TOO_LONG_FOR_SLUG: 'Title must not exceed 150 characters',
+  TITLE_TOO_LONG_FOR_SLUG: 'Title must not exceed 150 characters'
+};
+
+export const seoValidationErrors = {
+  TITLE_LENGTH_INVALID: 'Title must contain from 2 to 150 characters',
   DESCRIPTION_LENGTH_INVALID: 'Description must contain from 2 to 250 characters',
-  ALT_TEXT_TOO_SHORT: 'Alt text must contain at least 2 characters',
-  TITLE_LENGTH_INVALID: 'Title must contain from 2 to 150 characters'
+  KEYWORDS_LENGTH_INVALID: 'Keywords must contain from 2 to 250 characters',
+  ALT_TEXT_LENGTH_INVALID: 'Alt text must contain from 2 to 250 characters'
 };
 
 export const opusServiceErrors = {

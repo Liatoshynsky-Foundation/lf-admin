@@ -39,6 +39,7 @@ interface ImagePreviewBlockProps extends StackProps {
   previewWidth?: number;
   previewHeight?: number;
   alignActionsToPreviewBottom?: boolean;
+  alternativeTextLabel?: string;
 }
 
 export const ImagePreviewBlock = ({
@@ -58,6 +59,7 @@ export const ImagePreviewBlock = ({
   onChangeAltText,
   altTextError,
   altTextErrorState,
+  alternativeTextLabel,
   onBlurAltText,
   disabled = false,
   locale = 'uk',
@@ -226,7 +228,7 @@ export const ImagePreviewBlock = ({
 
       {showAlternativeText && (
         <TextField
-          label="Alt текст зображення"
+          label={alternativeTextLabel ?? 'Alt текст зображення'}
           value={localAltText}
           onChange={(e) => setLocalAltText(e.target.value)}
           onBlur={() => {
