@@ -7,6 +7,7 @@ import { styles } from './ContactInformationBlock.styles';
 import type { ContactInformation, ContactsLocale } from '~/constants/contacts';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { mergeLocalizedValue } from '~/lib/utils/mergeLocalizedValue';
+import { PHONE_MASK, usePhoneInput } from '~/shared/hooks/use-phone-input/usePhoneInput';
 
 type ContactInformationField = keyof ContactInformation;
 
@@ -27,6 +28,8 @@ export const ContactInformationBlock = ({
   onFieldChange,
   onFieldBlur
 }: ContactInformationBlockProps) => {
+  const { formatPhoneNumber, handlePhoneKeyDown } = usePhoneInput();
+
   const updateLocalizedField = (field: 'foundationName' | 'address', value: string) => {
     onChange({ ...data, [field]: mergeLocalizedValue(data[field], locale, value) });
     onFieldChange?.(field, locale);
@@ -63,8 +66,10 @@ export const ContactInformationBlock = ({
         />
         <CustomTextField
           label="Номер телефону"
-          value={data.phone}
-          onChange={(event) => updateField('phone', event.target.value)}
+          value={formatPhoneNumber(data.phone)}
+          placeholder={PHONE_MASK}
+          onChange={(event) => updateField('phone', formatPhoneNumber(event.target.value))}
+          onKeyDown={handlePhoneKeyDown}
           error={Boolean(errors?.phone)}
           helperText={errors?.phone}
           onBlur={() => onFieldBlur?.('phone')}
