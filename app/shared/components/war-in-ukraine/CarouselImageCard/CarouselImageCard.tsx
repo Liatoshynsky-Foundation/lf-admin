@@ -4,6 +4,7 @@ import { Stack } from '@mui/material';
 import React from 'react';
 
 import { styles } from './CarouselImageCard.styles';
+import { DEFAULT_IMAGE_PLACEHOLDER } from '~/constants/files';
 import { CROP_RATIOS } from '~/constants/publications';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { ImagePreviewBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
@@ -68,7 +69,7 @@ export const CarouselImageCard = ({ image, currentLocale, onChangeImage }: Carou
       <Stack sx={styles.preview} gap={2} width={COLUMN_WIDTH}>
         <ImagePreviewBlock
           key={`preview-${image.id}-${image.crop ? 'cropped' : 'raw'}`}
-          imageUrl={image.src || '/images/light-logo.svg'}
+          imageUrl={image.src || DEFAULT_IMAGE_PLACEHOLDER}
           fileName={image.alt?.[currentLocale] || 'image'}
           initialCrop={image.crop ?? undefined}
           aspectRatio={CROP_RATIOS.CAROUSEL_BIG}
