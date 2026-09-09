@@ -1,0 +1,20 @@
+mutation UpdateContacts($input: UpdateContactsInput!) {
+  updateContacts(input: $input) {
+    contactInformation {
+      foundationName {
+        uk
+        en
+      }
+      address {
+        uk
+        en
+      }
+      email
+      phone
+    }
+    socialNetworks {
+      icon
+      link
+    }
+  }
+}

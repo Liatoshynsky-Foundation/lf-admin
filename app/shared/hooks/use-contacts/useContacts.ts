@@ -1,25 +1,34 @@
-import { CONTACTS_MOCK } from '../../../(logged_in)/contacts/(temp)/contacts.mock';
 import {
-  type ContactInformation,
   type ContactsData,
-  INITIAL_CONTACT_INFORMATION,
   type SocialNetworkInput
 } from '~/constants/contacts';
+import {
+  type GetContactsQuery,
+  useGetContactsQuery
+} from '~/types/graphql/generated/graphql';
 
-type ContactsDataResponse = {
-  contactInformation?: ContactInformation | null;
-  socialNetworks?: SocialNetworkInput[] | null;
+type ContactsDataResponse = GetContactsQuery['contacts'] | null | undefined;
+
+export const normalizeContactsData = (data: ContactsDataResponse): ContactsData | null => {
+  if (!data) return null;
+
+  return {
+    contactInformation: data.contactInformation,
+    socialNetworks: data.socialNetworks.map<SocialNetworkInput>(({ icon, link }) => ({
+      platform: icon,
+      link
+    }))
+  };
 };
 
-export const normalizeContactsData = (data: ContactsDataResponse): ContactsData => ({
-  contactInformation: data.contactInformation ?? INITIAL_CONTACT_INFORMATION,
-  socialNetworks: data.socialNetworks ?? []
-});
+export const useContacts = () => {
+  const { data, loading, error } = useGetContactsQuery();
+  const contacts = useMemo(() => normalizeContactsData(data?.contacts), [data]);
 
-const NORMALIZED_CONTACTS_DATA = normalizeContactsData(CONTACTS_MOCK);
-
-export const useContacts = (): { data: ContactsData | null; loading: boolean; error: undefined } => ({
-  data: NORMALIZED_CONTACTS_DATA,
-  loading: false,
-  error: undefined
-});
+  return {
+    data: contacts,
+    loading,
+    error
+  };
+};
+import { useMemo } from 'react';

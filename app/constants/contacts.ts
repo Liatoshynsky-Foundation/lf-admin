@@ -11,7 +11,7 @@ export type ContactsLocale = 'uk' | 'en';
 
 export type LocalizedText = Record<ContactsLocale, string>;
 
-export type SocialNetworkPlatform = 'instagram' | 'facebook' | 'linkedin' | 'tiktok' | 'youtube' | 'other';
+export type SocialNetworkPlatform = 'instagram' | 'facebook' | 'linkedin' | 'tiktok' | 'youtube' | 'anotherMedia';
 
 export type SocialNetworkOption = {
   value: SocialNetworkPlatform;
@@ -25,7 +25,7 @@ export const SOCIAL_NETWORK_OPTIONS: readonly SocialNetworkOption[] = [
   { value: 'linkedin', label: 'LinkedIn', icon: LinkedInIcon },
   { value: 'tiktok', label: 'TikTok', icon: TikTokIcon },
   { value: 'youtube', label: 'YouTube', icon: YouTubeIcon },
-  { value: 'other', label: 'Інше', icon:  Link }
+  { value: 'anotherMedia', label: 'Інше', icon:  Link }
 ];
 
 export type SocialNetworkInput = {
@@ -38,15 +38,15 @@ export type SocialNetworkFormItem = SocialNetworkInput & {
 };
 
 export type ContactInformation = {
-  name: LocalizedText;
-  location: LocalizedText;
+  foundationName: LocalizedText;
+  address: LocalizedText;
   phone: string;
   email: string;
 };
 
 export const INITIAL_CONTACT_INFORMATION: ContactInformation = {
-  name: { uk: '', en: '' },
-  location: { uk: '', en: '' },
+  foundationName: { uk: '', en: '' },
+  address: { uk: '', en: '' },
   phone: '',
   email: ''
 };
@@ -70,3 +70,7 @@ export const CONTACTS_ERROR = {
 };
 
 export const INIT_LOCALE: ContactsLocale = 'uk';
+
+export const CONTACTS_SAVE_ERROR = 'Не вдалося зберегти контакти';
+export const CONTACTS_SAVE_SUCCESS = 'Контакти успішно збережено';
+

@@ -1,8 +1,8 @@
 import type { ContactInformation, ContactsData, ContactsLocale, SocialNetworkFormItem } from '~/constants/contacts';
 
 export const CONTACT_INFORMATION: ContactInformation = {
-  name: { uk: 'Фундація', en: 'Foundation' },
-  location: { uk: 'Київ', en: 'Kyiv' },
+  foundationName: { uk: 'Фундація', en: 'Foundation' },
+  address: { uk: 'Київ', en: 'Kyiv' },
   phone: '+380 000 000 001',
   email: 'foundation@example.com'
 };
