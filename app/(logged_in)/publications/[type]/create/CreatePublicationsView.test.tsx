@@ -188,6 +188,7 @@ const createMockData = (
   adminTitle: '',
   setAdminTitle: jest.fn(),
   adminTitleError: '',
+  validateAdminTitle: jest.fn(() => true),
   setAdminTitleError: jest.fn(),
   publishDate: null,
   setPublishDate: jest.fn(),

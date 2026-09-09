@@ -50,6 +50,7 @@ export default function CreatePublicationsView({
     adminTitle,
     setAdminTitle,
     adminTitleError,
+    validateAdminTitle,
     canonicalUrlError,
     publishDate,
     setPublishDate,
@@ -233,6 +234,7 @@ export default function CreatePublicationsView({
             label={ADMIN_TITLE_LABELS[publicationType]}
             value={adminTitle}
             onChange={(e) => setAdminTitle(e.target.value.toUpperCase())}
+            onBlur={(e) => validateAdminTitle(e.target.value)}
             error={Boolean(adminTitleError)}
             helperText={adminTitleError}
             sx={styles.textField}
