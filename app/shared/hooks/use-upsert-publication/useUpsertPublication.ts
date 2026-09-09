@@ -175,8 +175,6 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
   const changeAdminTitle = (val: string) => {
     latestDataRef.current.adminTitle = val;
     setAdminTitle(val);
-
-    if(val.trim()) setAdminTitleError('');
   };
   const validateAdminTitle = (val: string) => {
     if (!val.trim()) {
