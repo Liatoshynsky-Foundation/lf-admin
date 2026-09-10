@@ -45,7 +45,6 @@ type TiptapInternal = {
   };
 };
 
-
 const DEFAULT_EDITOR_SETTINGS = {
   placeholder: 'Почніть вводити текст або використайте "/" для команд...',
   editable: true,
@@ -62,28 +61,63 @@ const defaultFileUploadHandler = async (file: File): Promise<string> => {
   });
 };
 
-export const customSchema = BlockNoteSchema.create(
-  {
-    blockSpecs: {
-      ...defaultBlockSpecs,
-      image: CroppedImageBlock()
-    },
-    inlineContentSpecs: defaultInlineContentSpecs,
-    styleSpecs: defaultStyleSpecs
-  }
-);
+export const customSchema = BlockNoteSchema.create({
+  blockSpecs: {
+    ...defaultBlockSpecs,
+    image: CroppedImageBlock()
+  },
+  inlineContentSpecs: defaultInlineContentSpecs,
+  styleSpecs: defaultStyleSpecs
+});
 
-const RESTRICTED_SYMBOLS_REGEX = /[\p{Extended_Pictographic}\p{So}]/gu;
-const getCleanedText = (input: string) => {
-  if (RESTRICTED_SYMBOLS_REGEX.test(input)) {
-    toast.error('Використання емодзі та спецсимволів не дозволено');
-    return input
-      .replace(RESTRICTED_SYMBOLS_REGEX, '')
-      .replace(/[ \t]{2,}/g, ' ');
-  }
-  return input;
+const RESTRICTED_SYMBOLS_REGEX = /\p{So}/u;
+const EMOJI_PRESENTATION_REGEX = /\p{Emoji_Presentation}/u;
+const EMOJI_VARIATION_SELECTOR_REGEX = /\uFE0F/u;
+const REGIONAL_INDICATOR_REGEX = /\p{Regional_Indicator}/u;
+
+type SegmenterConstructor = new (
+  locale?: string | string[],
+  options?: { granularity?: 'grapheme' | 'word' | 'sentence' }
+) => {
+  segment: (input: string) => Iterable<{ segment: string }>;
 };
 
+const getGraphemeSegments = (input: string) => {
+  const Segmenter = (Intl as typeof Intl & { Segmenter?: SegmenterConstructor }).Segmenter;
+
+  if (!Segmenter) {
+    return Array.from(input);
+  }
+
+  return Array.from(new Segmenter(undefined, { granularity: 'grapheme' }).segment(input), ({ segment }) => segment);
+};
+
+const isAllowedEmoji = (segment: string) =>
+  EMOJI_PRESENTATION_REGEX.test(segment) ||
+  EMOJI_VARIATION_SELECTOR_REGEX.test(segment) ||
+  REGIONAL_INDICATOR_REGEX.test(segment);
+
+const getCleanedText = (input: string) => {
+  let hasRestrictedSymbols = false;
+
+  const cleanedText = getGraphemeSegments(input)
+    .filter((segment) => {
+      if (!RESTRICTED_SYMBOLS_REGEX.test(segment) || isAllowedEmoji(segment)) {
+        return true;
+      }
+
+      hasRestrictedSymbols = true;
+      return false;
+    })
+    .join('');
+
+  if (hasRestrictedSymbols) {
+    toast.error('Використання спецсимволів не дозволено');
+    return cleanedText.replace(/[ \t]{2,}/g, ' ');
+  }
+
+  return input;
+};
 
 const processHTML = (html: string) => {
   const parser = new DOMParser();
@@ -94,11 +128,7 @@ const processHTML = (html: string) => {
     el.removeAttribute('class');
   });
 
-  const walker = document.createTreeWalker(
-    doc.body,
-    NodeFilter.SHOW_TEXT,
-    null
-  );
+  const walker = document.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, null);
 
   let node: Node | null = null;
 
@@ -110,8 +140,6 @@ const processHTML = (html: string) => {
 
   return doc.body.innerHTML;
 };
-
-
 
 const getDocTextContent = (editorInstance: unknown): string => {
   const internal = editorInstance as TiptapInternal;
@@ -128,7 +156,6 @@ const getCharCount = (editorInstance: unknown) => {
   const textContent = getDocTextContent(editorInstance);
   return textContent.length;
 };
-
 
 export const BlockNoteEditor = (props: BlockNoteEditorProps) => {
   const {
@@ -178,12 +205,10 @@ export const BlockNoteEditor = (props: BlockNoteEditorProps) => {
         const cleanedHTML = html ? processHTML(html) : '';
         const cleanedText = text ? getCleanedText(text).trim() : '';
 
-
         const dt = new DataTransfer();
 
         if (cleanedHTML) dt.setData('text/html', cleanedHTML);
         if (cleanedText) dt.setData('text/plain', cleanedText);
-
 
         if (clipboardData.files && clipboardData.files.length > 0) {
           [...clipboardData.files].forEach((file) => {
@@ -193,14 +218,14 @@ export const BlockNoteEditor = (props: BlockNoteEditorProps) => {
 
         try {
           Object.defineProperty(event, 'clipboardData', {
-            value: dt,
+            value: dt
           });
         } catch (e) {
           toast.error('Помилка обробки вставленого тексту');
           console.error('Помилка обробки вставленого тексту:', e);
         }
         return defaultPasteHandler();
-      },
+      }
     },
     [isMounted]
   );
@@ -251,9 +276,7 @@ export const BlockNoteEditor = (props: BlockNoteEditorProps) => {
   }, []);
 
   const renderFormattingToolbar = useCallback(
-    () => (
-      <CustomFormattingToolbar openMediaModal={openMediaModal} />
-    ),
+    () => <CustomFormattingToolbar openMediaModal={openMediaModal} />,
     [openMediaModal]
   );
 
@@ -280,9 +303,7 @@ export const BlockNoteEditor = (props: BlockNoteEditorProps) => {
           triggerCharacter="/"
           getItems={async (query) => getCustomSlashMenuItems(editor, query, openMediaModal)}
         />
-        <FormattingToolbarController
-          formattingToolbar={renderFormattingToolbar}
-        />
+        <FormattingToolbarController formattingToolbar={renderFormattingToolbar} />
       </BlockNoteView>
 
       <MediaModal
