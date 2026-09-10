@@ -174,6 +174,8 @@ describe('EventsRepository Comprehensive Tests', () => {
     description: { uk: 'Опис', en: 'Desc' },
     keywords: { uk: 'к', en: 'k' },
     allowIndexation: { uk: true, en: true },
+    eventDateTimeStart: '2024-05-01T10:00:00.000Z',
+    eventDateTimeEnd: '2024-05-01T12:00:00.000Z',
     meta: { views: 10 },
     createdAt: '2026-03-10T10:00:00.000Z',
     updatedAt: '2026-03-11T12:00:00.000Z',
@@ -275,7 +277,8 @@ describe('EventsRepository Comprehensive Tests', () => {
         coverImage: { src: 'img.jpg', alt: { uk: 'а', en: 'a' }, caption: { uk: '', en: '' } },
         description: { uk: 'Опис', en: 'Desc' },
         keywords: { uk: 'к', en: 'k' },
-        allowIndexation: { uk: true, en: true }
+        allowIndexation: { uk: true, en: true },
+        eventDateTimeStart: '2024-05-01T10:00:00.000Z'
       };
 
       saveMock.mockResolvedValue({
@@ -299,7 +302,8 @@ describe('EventsRepository Comprehensive Tests', () => {
         description: { uk: 'Опис', en: 'Desc' },
         keywords: { uk: 'к', en: 'k' },
         allowIndexation: { uk: true, en: true },
-        meta: { views: 25 }
+        meta: { views: 25 },
+        eventDateTimeStart: '2024-05-01T10:00:00.000Z'
       };
 
       saveMock.mockResolvedValue({

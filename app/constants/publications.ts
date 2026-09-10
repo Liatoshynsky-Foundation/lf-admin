@@ -277,16 +277,36 @@ export const PUBLICATION_SEO_LABELS = {
     metaTitle: 'Заголовок публікації',
     metaDescription: 'Короткий опис',
     metaKeywords: 'Ключові слова',
-    alternativeText: 'Опис зображення'
+    alternativeText: 'Опис зображення',
+    ticketUrl: 'Де придбати квитки (посилання)',
+    startDateTime: 'Початок події',
+    endDateTime: 'Закінчення події',
+    ogImage: 'Зображення для соцмереж',
+    ogImageHint: 'Оптимальний розмір: 1200×630 px.',
+    allowIndexing: 'Дозволити індексацію сторінки пошуковими системами',
+    fileNameLabel: 'Назва файлу',
+    editImageLabel: 'Редагувати',
+    changeImageLabel: 'Змінити зображення'
   },
   en: {
     sectionTitle: 'Publication details | ENG',
     metaTitle: 'Publication title',
     metaDescription: 'Short description',
     metaKeywords: 'Key words',
-    alternativeText: 'Image description'
+    alternativeText: 'Image description',
+    ticketUrl: 'Where to buy tickets (URL)',
+    startDateTime: 'Event start',
+    endDateTime: 'Event end',
+    ogImage: 'Social media image',
+    ogImageHint: 'Optimal size: 1200×630 px.',
+    allowIndexing: 'Allow search engines to index this page',
+    fileNameLabel: 'File name',
+    editImageLabel: 'Edit',
+    changeImageLabel: 'Change image'
   }
 } as const;
+
+export const TICKET_URL_PLACEHOLDER = 'https://example.com';
 
 const META_TEXT_LENGTH = {
   min: 2,

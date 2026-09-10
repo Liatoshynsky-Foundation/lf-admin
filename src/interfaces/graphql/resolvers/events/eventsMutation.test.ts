@@ -46,6 +46,7 @@ describe('EventsMutation Resolvers', () => {
     content: { uk: { blocks: [] }, en: { blocks: [] } } as EventsEntity['content'],
     coverImage: { src: '', alt: { uk: '', en: '' }, caption: { uk: '', en: '' } },
     status: EventStatus.Draft,
+    eventDateTimeStart: '2024-05-01T10:00:00.000Z',
     meta: { views: 0 },
     createdAt: '2024-01-01',
     updatedAt: '2024-01-01',
@@ -67,6 +68,7 @@ describe('EventsMutation Resolvers', () => {
       crop: { x: 10, y: 10, width: 50, height: 50 }
     },
     status: EventStatus.Draft,
+    eventDateTimeStart: '2024-05-01T10:00:00.000Z',
     meta: { views: 0 },
     ...overrides
   } as Omit<CreateEventInput, 'slug'>);

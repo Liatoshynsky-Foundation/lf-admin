@@ -11,6 +11,7 @@ import { styles } from './SeoMetadataForm.styles';
 import { type SeoField, validateSeoField } from './validateSeoField';
 import { seoFormErrors } from '~/constants/errors';
 import { CROP_RATIOS } from '~/constants/publications';
+import { isValidHttpUrl } from '~/lib/utils/isValidUrl';
 import { ImagePreviewBlock as PhotoBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
 import TooltipCustom from '~/shared/components/design-system/tooltip/Tooltip';
 import { fileNameFromUrl } from '~/src/shared/utils/assets/assetFilename';
@@ -37,6 +38,10 @@ export type SeoFormLabels = {
   readonly allowIndexing?: string;
   readonly sectionTitle?: string;
   readonly alternativeText?: string;
+  readonly ticketUrl?: string;
+  readonly fileNameLabel?: string;
+  readonly editImageLabel?: string;
+  readonly changeImageLabel?: string;
 };
 
 export interface SeoMetadataFormProps {
@@ -61,17 +66,6 @@ export interface SeoMetadataFormProps {
 const getFileNameFromUrl = (url: string | null): string | undefined =>
   url ? url.split('/').pop()?.split('?')[0] : undefined;
 
-const isValidHttpUrl = (url: string | null): boolean => {
-  if (!url) return false;
-
-  try {
-    const { protocol } = new URL(url);
-    return protocol === 'http:' || protocol === 'https:';
-  } catch {
-    return false;
-  }
-};
-
 const seoFields = new Set<SeoField>(['title', 'description', 'keywords', 'canonicalUrl', 'altText']);
 
 const getSeoFieldError = (
@@ -79,6 +73,7 @@ const getSeoFieldError = (
   value: string,
   locale: 'uk' | 'en',
   required: SeoFieldsRequired,
+  options: { altRequired?: boolean } = {}
 ): string => {
   if (!seoFields.has(field as SeoField)) return '';
 
@@ -88,9 +83,28 @@ const getSeoFieldError = (
     fieldRequired = isSeoFieldRequired(required, field) || Boolean(value.trim());
   }
 
+  if (field === 'altText') {
+    fieldRequired = Boolean(options.altRequired) || Boolean(value.trim());
+  }
+
   const error = validateSeoField(field as SeoField, value, { required: fieldRequired });
   return error ? seoFormErrors[locale][error] : '';
 };
+
+const shouldShowAltFieldError = ({
+  forceShowErrors,
+  touched,
+  altValue,
+  nextError,
+  altRequired
+}: {
+  forceShowErrors: boolean;
+  touched: boolean;
+  altValue: string;
+  nextError: string;
+  altRequired: boolean;
+}): boolean =>
+  forceShowErrors || touched || Boolean(altValue && nextError) || (altRequired && !altValue.trim());
 
 export default function SeoMetadataForm({
   value,
@@ -120,6 +134,7 @@ export default function SeoMetadataForm({
   const isExternalValidation = externalErrors !== undefined;
   const [displayErrors, setDisplayErrors] = useState(externalErrors);
   const errors = isExternalValidation ? (displayErrors ?? {}) : localErrors;
+  const hasCoverImage = isValidHttpUrl(ogImage);
 
   useEffect(() => {
     if (isValidHttpUrl(ogImage)) {
@@ -142,10 +157,13 @@ export default function SeoMetadataForm({
       title: getSeoFieldError('title', value.title, locale, required),
       description: getSeoFieldError('description', value.description, locale, required),
       keywords: getSeoFieldError('keywords', value.keywords, locale, required),
-      altText: getSeoFieldError('altText', value.altText?.[locale] ?? '', locale, required)
+      altText: getSeoFieldError('altText', value.altText?.[locale] ?? '', locale, required, {
+        altRequired: hasCoverImage
+      })
     });
   }, [
     forceShowErrors,
+    hasCoverImage,
     isExternalValidation,
     locale,
     required,
@@ -153,6 +171,41 @@ export default function SeoMetadataForm({
     value.description,
     value.keywords,
     value.title
+  ]);
+
+  useEffect(() => {
+    if (!showAlternativeText) return;
+
+    const altVal = value.altText?.[locale] ?? '';
+    const nextError = getSeoFieldError('altText', altVal, locale, required, {
+      altRequired: hasCoverImage
+    });
+    const shouldShow = shouldShowAltFieldError({
+      forceShowErrors,
+      touched: Boolean(touched.altText),
+      altValue: altVal,
+      nextError,
+      altRequired: hasCoverImage
+    });
+
+    if (!shouldShow) return;
+
+    setTouched((prev) => (prev.altText ? prev : { ...prev, altText: true }));
+
+    if (isExternalValidation) {
+      setDisplayErrors((previous) => (previous?.altText === nextError ? previous : { ...previous, altText: nextError }));
+    } else {
+      setLocalErrors((prev) => (prev.altText === nextError ? prev : { ...prev, altText: nextError }));
+    }
+  }, [
+    forceShowErrors,
+    hasCoverImage,
+    isExternalValidation,
+    locale,
+    required,
+    showAlternativeText,
+    touched.altText,
+    value.altText
   ]);
 
   const handleBlur = (field: keyof LocalizedMeta) => {
@@ -166,7 +219,7 @@ export default function SeoMetadataForm({
     }
     setLocalErrors((prev) => ({
       ...prev,
-      [field]: getSeoFieldError(field, fieldValue, locale, required)
+      [field]: getSeoFieldError(field, fieldValue, locale, required, { altRequired: hasCoverImage })
     }));
   };
 
@@ -177,7 +230,7 @@ export default function SeoMetadataForm({
     } else if (touched[field]) {
       setLocalErrors((prev) => ({
         ...prev,
-        [field]: getSeoFieldError(field, val, locale, required)
+        [field]: getSeoFieldError(field, val, locale, required, { altRequired: hasCoverImage })
       }));
     }
   };
@@ -185,10 +238,7 @@ export default function SeoMetadataForm({
   const handleAltTextChange = (val: string) => {
     const nextValue = {
       ...value,
-      altText: {
-        uk: locale === 'uk' ? val : (value.altText?.uk ?? ''),
-        en: locale === 'en' ? val : (value.altText?.en ?? '')
-      }
+      altText: { uk: val, en: val }
     };
 
     onChange(nextValue);
@@ -197,7 +247,7 @@ export default function SeoMetadataForm({
     } else if (touched.altText) {
       setLocalErrors((prev) => ({
         ...prev,
-        altText: getSeoFieldError('altText', val, locale, required)
+        altText: getSeoFieldError('altText', val, locale, required, { altRequired: hasCoverImage })
       }));
     }
   };
@@ -217,7 +267,7 @@ export default function SeoMetadataForm({
     <Stack sx={styles.photoBlock}>
       <Box sx={styles.photoBlockHeader}>
         <Typography variant="subtitle2" sx={styles.photoBlockTitle}>
-          {'Зображення для соцмереж'}
+          {labels.ogImage || 'Зображення для соцмереж'}
         </Typography>
         <Divider sx={styles.photoBlockHeaderDivider} />
       </Box>
@@ -228,7 +278,7 @@ export default function SeoMetadataForm({
         aspectRatio={CROP_RATIOS.GROUP_PHOTO}
         disabled={isUploading}
         buttonSpacing="8px"
-        stackSpacing="0"
+        stackSpacing="16px"
         typographySpacing="4px"
         direction="column"
         initialCrop={crop ? { rect: crop } : null}
@@ -240,9 +290,13 @@ export default function SeoMetadataForm({
         altTextError={errors.altText && (isExternalValidation || touched.altText) ? errors.altText : ''}
         locale={locale}
         alternativeTextLabel={labels.alternativeText}
+        alternativeTextRequired={hasCoverImage}
+        fileNameLabel={labels.fileNameLabel}
+        editImageLabel={labels.editImageLabel}
+        changeImageLabel={labels.changeImageLabel}
       />
       <Typography variant="textMd" sx={styles.ogImageHint}>
-        {'Оптимальний розмір: 1200×630 px.'}
+        {labels.ogImageHint || 'Оптимальний розмір: 1200×630 px.'}
       </Typography>
     </Stack>
   );
@@ -288,7 +342,7 @@ export default function SeoMetadataForm({
           control={<Checkbox checked={allowIndexing} onChange={(e) => onIndexingChange(e.target.checked)} />}
           sx={styles.indexingCheckbox}
         />
-        <TooltipCustom title={'Дозволити індексацію сторінки пошуковими системами'}>
+        <TooltipCustom title={labels.allowIndexing || 'Дозволити індексацію сторінки пошуковими системами'}>
           <InfoOutlinedIcon sx={styles.infoIcon} />
         </TooltipCustom>
       </Box>

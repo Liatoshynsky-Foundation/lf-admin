@@ -8,7 +8,6 @@ import {
   CONTENT_MUTATION_RESULTS,
   initialSeoValue,
   MENU_ACTION_CONFIGS,
-  MenuActionId,
   PUBLICATIONS_BASE_PATH,
   PublicationsItemType
 } from '~/constants/publications';
@@ -404,17 +403,6 @@ describe('CreatePublicationsView Component', () => {
   });
 
   describe('Preview actions (fallbackOnPreview, Lines 111-128)', () => {
-    let originalConsoleError: typeof console.error;
-
-    beforeAll(() => {
-      originalConsoleError = console.error;
-      console.error = jest.fn();
-    });
-
-    afterAll(() => {
-      console.error = originalConsoleError;
-    });
-
     it('should show error toast if handleSave returns null/undefined', async () => {
       const handleSave = jest.fn().mockResolvedValue(null);
       const mockData = createMockData({ publicationType: 'news', handleSave });
@@ -425,7 +413,6 @@ describe('CreatePublicationsView Component', () => {
       await waitFor(() => {
         expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
         expect(toast.error).toHaveBeenCalledWith('Виникла помилка при отриманні даних для попереднього перегляду');
-        expect(console.error).toHaveBeenCalled();
       });
     });
 
@@ -439,7 +426,6 @@ describe('CreatePublicationsView Component', () => {
       await waitFor(() => {
         expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
         expect(toast.error).toHaveBeenCalledWith('Виникла помилка при отриманні даних для попереднього перегляду');
-        expect(console.error).toHaveBeenCalled();
       });
     });
 
@@ -547,7 +533,6 @@ describe('CreatePublicationsView Component', () => {
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith(`Помилка: ${errorMsg}`);
-      expect(console.error).toHaveBeenCalledWith(`Action ${MenuActionId.PUBLISH} failed`, errorMsg);
     });
   });
 

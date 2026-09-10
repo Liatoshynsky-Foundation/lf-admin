@@ -10,19 +10,28 @@ jest.mock('../seo-date-time-picker/DateTimePicker', () => ({
     startDateTime,
     endDateTime,
     onChange,
+    forceShowErrors,
+    onStartBlur,
+    locale,
     labels
   }: {
     startDateTime?: string;
     endDateTime?: string;
     onChange: (start?: string, end?: string) => void;
+    forceShowErrors?: boolean;
+    onStartBlur?: () => void;
+    locale?: 'uk' | 'en';
     labels?: { startDateTime?: string; endDateTime?: string };
   }) => (
     <div>
       <span data-testid="start">{startDateTime ?? ''}</span>
       <span data-testid="end">{endDateTime ?? ''}</span>
+      <span data-testid="force-show-errors">{String(Boolean(forceShowErrors))}</span>
+      <span data-testid="locale">{locale ?? 'uk'}</span>
       <span data-testid="start-label">{labels?.startDateTime ?? ''}</span>
       <span data-testid="end-label">{labels?.endDateTime ?? ''}</span>
       <button onClick={() => onChange('2025-01-01T10:00:00', '2025-01-02T10:00:00')}>trigger</button>
+      <button onClick={() => onStartBlur?.()}>blur-start</button>
     </div>
   )
 }));
@@ -40,6 +49,23 @@ describe('SeoDateTimeFields', () => {
     render(<SeoDateTimeFields onChange={jest.fn()} labels={{ startDateTime: 'Start', endDateTime: 'End' }} />);
     expect(screen.getByTestId('start-label')).toHaveTextContent('Start');
     expect(screen.getByTestId('end-label')).toHaveTextContent('End');
+  });
+
+  it('passes forceShowErrors to DateTimePicker', () => {
+    render(<SeoDateTimeFields onChange={jest.fn()} forceShowErrors />);
+    expect(screen.getByTestId('force-show-errors')).toHaveTextContent('true');
+  });
+
+  it('passes onStartBlur to DateTimePicker', () => {
+    const onStartBlur = jest.fn();
+    render(<SeoDateTimeFields onChange={jest.fn()} onStartBlur={onStartBlur} />);
+    fireEvent.click(screen.getByText('blur-start'));
+    expect(onStartBlur).toHaveBeenCalledTimes(1);
+  });
+
+  it('passes locale to DateTimePicker', () => {
+    render(<SeoDateTimeFields onChange={jest.fn()} locale="en" />);
+    expect(screen.getByTestId('locale')).toHaveTextContent('en');
   });
 
   it('calls onChange when DateTimePicker triggers change', () => {

@@ -67,8 +67,8 @@ const createValidSeoState = (type: PublicationsItemType): SeoBlockValue => ({
       description: 'UK Desc',
       keywords: '',
       canonicalUrl: type === 'media' ? 'https://example.com' : '',
-      startDateTime: undefined,
-      endDateTime: undefined,
+      startDateTime: type === 'events' ? '2025-01-01T10:00:00.000Z' : undefined,
+      endDateTime: type === 'events' ? '2025-01-01T12:00:00.000Z' : undefined,
       altText: { uk: '', en: '' }
     },
     en: {
@@ -76,8 +76,8 @@ const createValidSeoState = (type: PublicationsItemType): SeoBlockValue => ({
       description: 'EN Desc',
       keywords: '',
       canonicalUrl: type === 'media' ? 'https://example.com' : '',
-      startDateTime: undefined,
-      endDateTime: undefined,
+      startDateTime: type === 'events' ? '2025-01-01T10:00:00.000Z' : undefined,
+      endDateTime: type === 'events' ? '2025-01-01T12:00:00.000Z' : undefined,
       altText: { uk: '', en: '' }
     }
   },
@@ -327,6 +327,69 @@ describe('useUpsertPublication Hook', () => {
         });
       });
 
+      it('should normalize mismatched shared ticketUrl and alt on event load', async () => {
+        const fetchedEventsData: FetchedPublicationData = {
+          adminTitle: 'Fetched Event',
+          publishedAt: '2024-01-01T12:00:00Z',
+          title: { uk: 'UK T', en: 'EN T' },
+          description: { uk: 'UK D', en: 'EN D' },
+          allowIndexation: { uk: true, en: true },
+          coverImage: {
+            src: 'img.png',
+            crop: {
+              uk: { x: 1, y: 2, width: 3, height: 4 },
+              en: { x: 9, y: 8, width: 7, height: 6 }
+            },
+            alt: { uk: 'Alt UK', en: 'Alt EN' }
+          },
+          ticketUrl: { uk: 'https://uk-tickets.com', en: 'https://en-tickets.com' },
+          eventDateTimeStart: '2024-05-01T10:00:00Z',
+          eventDateTimeEnd: '2024-05-01T12:00:00Z'
+        };
+
+        mockEventQuery.mockReturnValue({ data: { eventById: fetchedEventsData }, loading: false });
+
+        const { result } = renderHook(() => useUpsertPublication({ type: 'events', id: '123' }));
+
+        await waitFor(() => {
+          expect(result.current.seoValue.ticketUrl).toEqual({
+            uk: 'https://uk-tickets.com',
+            en: 'https://uk-tickets.com'
+          });
+          expect(result.current.seoValue.meta.uk.altText).toEqual({ uk: 'Alt UK', en: 'Alt UK' });
+          expect(result.current.seoValue.meta.en.altText).toEqual({ uk: 'Alt UK', en: 'Alt UK' });
+          expect(result.current.crop).toEqual({
+            uk: { x: 1, y: 2, width: 3, height: 4 },
+            en: { x: 1, y: 2, width: 3, height: 4 }
+          });
+        });
+      });
+
+      it('should keep flat GraphQL crop on event load (mirrored to both locales)', async () => {
+        const flatCrop = { x: 10, y: 20, width: 30, height: 40 };
+        const fetchedEventsData: FetchedPublicationData = {
+          adminTitle: 'Fetched Event',
+          publishedAt: '2024-01-01T12:00:00Z',
+          title: { uk: 'UK T', en: 'EN T' },
+          description: { uk: 'UK D', en: 'EN D' },
+          allowIndexation: { uk: true, en: true },
+          coverImage: {
+            src: 'img.png',
+            crop: flatCrop,
+            alt: { uk: '', en: '' }
+          },
+          eventDateTimeStart: '2024-05-01T10:00:00Z'
+        };
+
+        mockEventQuery.mockReturnValue({ data: { eventById: fetchedEventsData }, loading: false });
+
+        const { result } = renderHook(() => useUpsertPublication({ type: 'events', id: '123' }));
+
+        await waitFor(() => {
+          expect(result.current.crop).toEqual({ uk: flatCrop, en: flatCrop });
+        });
+      });
+
       it('should parse numeric timestamp string dates', async () => {
         const fetchedNewsData: FetchedPublicationData = {
           adminTitle: 'Timestamp News',
@@ -498,8 +561,74 @@ describe('useUpsertPublication Hook', () => {
       expect(result.current.seoErrors?.ticketUrl?.en).toBe('');
     });
 
-    it('should allow save when preview image is set without alt text', async () => {
-      mockCreateEvent.mockResolvedValue({ data: { createEvent: { id: 'event-no-alt' } } });
+    it('should block save when event start datetime is missing', async () => {
+      const { result } = renderHook(() => useUpsertPublication({ type: 'events' }));
+
+      act(() => {
+        result.current.setAdminTitle('Event Title');
+        const seoState = createValidSeoState('events');
+        seoState.meta.uk.startDateTime = undefined;
+        seoState.meta.uk.endDateTime = undefined;
+        seoState.meta.en.startDateTime = undefined;
+        seoState.meta.en.endDateTime = undefined;
+        result.current.setSeoValue(seoState);
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(result.current.forceShowErrors).toBe(true);
+      expect(result.current.seoErrors?.meta.uk.startDateTime).toBe(seoFormErrors.uk.required);
+      expect(result.current.seoErrors?.meta.en.startDateTime).toBe(seoFormErrors.en.required);
+      expect(mockCreateEvent).not.toHaveBeenCalled();
+    });
+
+    it('should allow save when event end datetime is missing but start is set', async () => {
+      mockCreateEvent.mockResolvedValue({ data: { createEvent: { id: 'event-no-end' } } });
+      const { result } = renderHook(() => useUpsertPublication({ type: 'events' }));
+
+      act(() => {
+        result.current.setAdminTitle('Event Title');
+        const seoState = createValidSeoState('events');
+        seoState.meta.uk.endDateTime = undefined;
+        seoState.meta.en.endDateTime = undefined;
+        result.current.setSeoValue(seoState);
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(result.current.forceShowErrors).toBe(false);
+      expect(mockCreateEvent).toHaveBeenCalled();
+      expect(mockCreateEvent.mock.calls[0][0].eventDateTimeEnd).toBeNull();
+    });
+
+    it('should block save when event end datetime is before start', async () => {
+      const { result } = renderHook(() => useUpsertPublication({ type: 'events' }));
+
+      act(() => {
+        result.current.setAdminTitle('Event Title');
+        const seoState = createValidSeoState('events');
+        seoState.meta.uk.startDateTime = '2025-01-02T15:00:00.000Z';
+        seoState.meta.uk.endDateTime = '2025-01-02T12:00:00.000Z';
+        seoState.meta.en.startDateTime = '2025-01-02T15:00:00.000Z';
+        seoState.meta.en.endDateTime = '2025-01-02T12:00:00.000Z';
+        result.current.setSeoValue(seoState);
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(result.current.forceShowErrors).toBe(true);
+      expect(result.current.seoErrors?.meta.uk.endDateTime).toBe(seoFormErrors.uk.endBeforeStart);
+      expect(result.current.seoErrors?.meta.en.endDateTime).toBe(seoFormErrors.en.endBeforeStart);
+      expect(mockCreateEvent).not.toHaveBeenCalled();
+    });
+
+    it('should block save when preview image is set without alt text', async () => {
       const { result } = renderHook(() => useUpsertPublication({ type: 'events' }));
 
       act(() => {
@@ -515,9 +644,10 @@ describe('useUpsertPublication Hook', () => {
         await result.current.handleSave(BaseContentStatuses.Draft);
       });
 
-      expect(result.current.forceShowErrors).toBe(false);
-      expect(result.current.seoErrors).toBeUndefined();
-      expect(mockCreateEvent).toHaveBeenCalled();
+      expect(result.current.forceShowErrors).toBe(true);
+      expect(result.current.seoErrors?.meta.uk.altText).toBe(seoFormErrors.uk.required);
+      expect(result.current.seoErrors?.meta.en.altText).toBe(seoFormErrors.en.required);
+      expect(mockCreateEvent).not.toHaveBeenCalled();
     });
 
     it('should block save and set seoErrors when UA title exceeds max length', async () => {
