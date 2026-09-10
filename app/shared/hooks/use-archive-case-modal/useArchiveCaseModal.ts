@@ -45,6 +45,60 @@ const validateNumber = (value: string, required: string, invalid: string, negati
   return /[a-zа-яіїєґ]/i.test(value) ? notNumber : invalid;
 };
 
+const validateCaseForm = (
+  descriptionNumber: string,
+  caseNumber: string,
+  sheetsNumber: string,
+  caseName: string,
+  caseDate: string,
+  caseDescriptions: string,
+  detailedCaseDescription: string
+) => {
+  const errors: Record<string, string> = {};
+
+  const descriptionError = validateNumber(
+    descriptionNumber,
+    CASE_VALIDATION_MESSAGES.descriptionNumberRequired,
+    CASE_VALIDATION_MESSAGES.descriptionNumberInvalid,
+    CASE_VALIDATION_MESSAGES.descriptionNumberNegative,
+    CASE_VALIDATION_MESSAGES.descriptionNumberNotNumber
+  );
+  const caseError = validateNumber(
+    caseNumber,
+    CASE_VALIDATION_MESSAGES.caseNumberRequired,
+    CASE_VALIDATION_MESSAGES.caseNumberInvalid,
+    CASE_VALIDATION_MESSAGES.caseNumberNegative,
+    CASE_VALIDATION_MESSAGES.caseNumberNotNumber
+  );
+  const sheetsError = validateNumber(
+    sheetsNumber,
+    CASE_VALIDATION_MESSAGES.sheetsNumberRequired,
+    CASE_VALIDATION_MESSAGES.sheetsNumberInvalid,
+    CASE_VALIDATION_MESSAGES.sheetsNumberNegative,
+    CASE_VALIDATION_MESSAGES.sheetsNumberNotNumber
+  );
+
+  if (descriptionError) errors.descriptionNumber = descriptionError;
+  if (caseError) errors.caseNumber = caseError;
+  if (sheetsError) errors.sheetsNumber = sheetsError;
+
+  if (!caseName.trim()) errors.caseName = CASE_VALIDATION_MESSAGES.caseNameRequired;
+  else if (caseName.length > 150) errors.caseName = CASE_VALIDATION_MESSAGES.caseNameMaxLength;
+
+  if (!caseDate.trim()) errors.caseDate = CASE_VALIDATION_MESSAGES.caseDateRequired;
+  else if (caseDate.length > 150) errors.caseDate = CASE_VALIDATION_MESSAGES.caseDateMaxLength;
+
+  if (!caseDescriptions.trim()) errors.caseDescriptions = CASE_VALIDATION_MESSAGES.caseDescriptionsRequired;
+  else if (caseDescriptions.length > 300)
+    errors.caseDescriptions = CASE_VALIDATION_MESSAGES.caseDescriptionsMaxLength;
+
+  if (detailedCaseDescription.length > 1000) {
+    errors.detailedCaseDescription = CASE_VALIDATION_MESSAGES.detailedCaseDescriptionMaxLength;
+  }
+
+  return errors;
+};
+
 export const useArchiveCaseModal = ({ setIsOpen, initialData, onSave }: UseArchiveCaseModalProps) => {
   const [descriptionNumber, setDescriptionNumber] = useState(initialData?.descriptionNumber ?? '');
   const [caseNumber, setCaseNumber] = useState(initialData?.caseNumber ?? '');
@@ -109,47 +163,15 @@ export const useArchiveCaseModal = ({ setIsOpen, initialData, onSave }: UseArchi
   };
 
   const handleSave = async () => {
-    const nextErrors: Record<string, string> = {};
-
-    const descriptionError = validateNumber(
+    const nextErrors = validateCaseForm(
       descriptionNumber,
-      CASE_VALIDATION_MESSAGES.descriptionNumberRequired,
-      CASE_VALIDATION_MESSAGES.descriptionNumberInvalid,
-      CASE_VALIDATION_MESSAGES.descriptionNumberNegative,
-      CASE_VALIDATION_MESSAGES.descriptionNumberNotNumber
-    );
-    const caseError = validateNumber(
       caseNumber,
-      CASE_VALIDATION_MESSAGES.caseNumberRequired,
-      CASE_VALIDATION_MESSAGES.caseNumberInvalid,
-      CASE_VALIDATION_MESSAGES.caseNumberNegative,
-      CASE_VALIDATION_MESSAGES.caseNumberNotNumber
-    );
-    const sheetsError = validateNumber(
       sheetsNumber,
-      CASE_VALIDATION_MESSAGES.sheetsNumberRequired,
-      CASE_VALIDATION_MESSAGES.sheetsNumberInvalid,
-      CASE_VALIDATION_MESSAGES.sheetsNumberNegative,
-      CASE_VALIDATION_MESSAGES.sheetsNumberNotNumber
+      caseName,
+      caseDate,
+      caseDescriptions,
+      detailedCaseDescription
     );
-
-    if (descriptionError) nextErrors.descriptionNumber = descriptionError;
-    if (caseError) nextErrors.caseNumber = caseError;
-    if (sheetsError) nextErrors.sheetsNumber = sheetsError;
-
-    if (!caseName.trim()) nextErrors.caseName = CASE_VALIDATION_MESSAGES.caseNameRequired;
-    else if (caseName.length > 150) nextErrors.caseName = CASE_VALIDATION_MESSAGES.caseNameMaxLength;
-
-    if (!caseDate.trim()) nextErrors.caseDate = CASE_VALIDATION_MESSAGES.caseDateRequired;
-    else if (caseDate.length > 150) nextErrors.caseDate = CASE_VALIDATION_MESSAGES.caseDateMaxLength;
-
-    if (!caseDescriptions.trim()) nextErrors.caseDescriptions = CASE_VALIDATION_MESSAGES.caseDescriptionsRequired;
-    else if (caseDescriptions.length > 300)
-      nextErrors.caseDescriptions = CASE_VALIDATION_MESSAGES.caseDescriptionsMaxLength;
-
-    if (detailedCaseDescription.length > 1000) {
-      nextErrors.detailedCaseDescription = CASE_VALIDATION_MESSAGES.detailedCaseDescriptionMaxLength;
-    }
 
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;

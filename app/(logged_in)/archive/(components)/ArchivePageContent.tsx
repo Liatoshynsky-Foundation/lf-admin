@@ -58,6 +58,55 @@ interface ArchivePageContentProps {
   activeTab: ArchiveTabValue;
 }
 
+const getPaginationData = (
+  page: number,
+  showFunds: boolean,
+  showCases: boolean,
+  isAllTab: boolean,
+  totalPages: number,
+  knownFundPageCount: number,
+  knownFundTotal: number,
+  sortedCasesLength: number
+) => {
+  const fundPageCount = showFunds ? totalPages || knownFundPageCount : 0;
+
+  const remainder = knownFundTotal % ARCHIVE_ITEMS_PER_PAGE;
+  const fallbackItemCount = remainder || ARCHIVE_ITEMS_PER_PAGE;
+  const lastFundItemCount = fundPageCount > 0 && knownFundTotal > 0 ? fallbackItemCount : 0;
+
+  const firstCasePageCapacity =
+    fundPageCount > 0 ? Math.max(0, ARCHIVE_ITEMS_PER_PAGE - lastFundItemCount) : ARCHIVE_ITEMS_PER_PAGE;
+
+  const remainingCasesAfterFunds = Math.max(0, sortedCasesLength - firstCasePageCapacity);
+  const isAllTabWithFunds = Boolean(isAllTab && fundPageCount > 0);
+  const casesToPaginate = isAllTabWithFunds ? remainingCasesAfterFunds : sortedCasesLength;
+  const casePageCount = showCases ? Math.ceil(casesToPaginate / ARCHIVE_ITEMS_PER_PAGE) : 0;
+
+  const combinedPageCount = fundPageCount > 0 ? fundPageCount + casePageCount : casePageCount;
+  const totalArchivePages = isAllTab ? combinedPageCount : casePageCount || fundPageCount;
+
+  const isMissingFunds = Boolean(!showFunds || page > fundPageCount);
+  const isCasePage = Boolean(showCases && isMissingFunds);
+  const isBoundaryPage = Boolean(isAllTab && page === fundPageCount);
+
+  const allTabCaseStartOffset = isBoundaryPage
+    ? 0
+    : firstCasePageCapacity + (page - fundPageCount - 1) * ARCHIVE_ITEMS_PER_PAGE;
+  const caseStart = isAllTabWithFunds ? allTabCaseStartOffset : (page - 1) * ARCHIVE_ITEMS_PER_PAGE;
+
+  const caseLimit = isBoundaryPage ? firstCasePageCapacity : ARCHIVE_ITEMS_PER_PAGE;
+  const isCaseVisible = Boolean(showCases && (isCasePage || isBoundaryPage));
+
+  return {
+    fundPageCount,
+    totalArchivePages,
+    isCasePage,
+    caseStart,
+    caseLimit,
+    isCaseVisible
+  };
+};
+
 export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
   const { searchProps, statusFilterProps, appliedSearch } = useArchiveFiltering();
   const [page, setPage] = useState(1);
@@ -133,24 +182,23 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
 
   const sortedFunds = [...fundsWithOverrides].sort((a, b) => Number(a.fundNumber) - Number(b.fundNumber));
   const sortedCases = [...cases].sort((a, b) => Number(a.caseNumber) - Number(b.caseNumber));
-  const fundPageCount = showFunds ? totalPages || knownFundPageCount : 0;
-  const lastFundItemCount =
-    fundPageCount > 0 && knownFundTotal > 0 ? knownFundTotal % ARCHIVE_ITEMS_PER_PAGE || ARCHIVE_ITEMS_PER_PAGE : 0;
-  const firstCasePageCapacity =
-    fundPageCount > 0 ? Math.max(0, ARCHIVE_ITEMS_PER_PAGE - lastFundItemCount) : ARCHIVE_ITEMS_PER_PAGE;
-  const remainingCasesAfterFunds = Math.max(0, sortedCases.length - firstCasePageCapacity);
-  const casesToPaginate = isAllTab && fundPageCount > 0 ? remainingCasesAfterFunds : sortedCases.length;
-  const casePageCount = showCases ? Math.ceil(casesToPaginate / ARCHIVE_ITEMS_PER_PAGE) : 0;
-  const combinedPageCount = fundPageCount > 0 ? fundPageCount + casePageCount : casePageCount;
-  const totalArchivePages = isAllTab ? combinedPageCount : casePageCount || fundPageCount;
-  const isCasePage = showCases && (!showFunds || page > fundPageCount);
-  const visibleFunds = isCasePage ? [] : sortedFunds;
-  const allTabCaseStartOffset =
-    page === fundPageCount ? 0 : firstCasePageCapacity + (page - fundPageCount - 1) * ARCHIVE_ITEMS_PER_PAGE;
-  const caseStart = isAllTab && fundPageCount > 0 ? allTabCaseStartOffset : (page - 1) * ARCHIVE_ITEMS_PER_PAGE;
-  const caseLimit = isAllTab && page === fundPageCount ? firstCasePageCapacity : ARCHIVE_ITEMS_PER_PAGE;
-  const isCaseVisible = showCases && (isCasePage || (isAllTab && page === fundPageCount));
-  const visibleCases = isCaseVisible ? sortedCases.slice(caseStart, caseStart + caseLimit) : [];
+
+  const paginationData = getPaginationData(
+    page,
+    showFunds,
+    showCases,
+    isAllTab,
+    totalPages,
+    knownFundPageCount,
+    knownFundTotal,
+    sortedCases.length
+  );
+
+  const visibleFunds = paginationData.isCasePage ? [] : sortedFunds;
+  const visibleCases = paginationData.isCaseVisible
+    ? sortedCases.slice(paginationData.caseStart, paginationData.caseStart + paginationData.caseLimit)
+    : [];
+  const totalArchivePages = paginationData.totalArchivePages;
 
   useEffect(() => {
     if (totalArchivePages > 0 && page > totalArchivePages) {
