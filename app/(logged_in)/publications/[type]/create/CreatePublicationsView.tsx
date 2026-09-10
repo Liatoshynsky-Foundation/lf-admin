@@ -185,7 +185,7 @@ export default function CreatePublicationsView({
   const onEdit = async () => {
     const result = await handleSave(BaseContentStatuses.Draft);
     if (result?.id) {
-      router.push(`${PUBLICATIONS_BASE_PATH}/${publicationType}/${result.id}/edit`);
+      router.replace(`${PUBLICATIONS_BASE_PATH}/${publicationType}/${result.id}/edit`);
     }
   };
 
