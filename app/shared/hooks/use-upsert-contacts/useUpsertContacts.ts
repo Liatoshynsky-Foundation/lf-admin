@@ -1,5 +1,4 @@
 import toast from 'react-hot-toast';
-import type { z } from 'zod';
 
 import {
   type ContactInformation,
@@ -15,55 +14,36 @@ import {
   type UpdateContactsMutationVariables,
   useUpdateContactsMutation
 } from '~/types/graphql/generated/graphql';
-import { zContactsSchema } from '~/validators/contacts.schema';
 
-type ContactsUpdateInput = {
+export type ContactsUpdateInput = {
   contactInformation: ContactInformation;
   socialNetworks: SocialNetworkFormItem[];
 };
 
-export type ContactsFormErrors = {
-  contactInformation: Record<string, string>;
-  socialNetworks: Record<string, string>;
-};
-
-type ValidatedContactsInput = z.output<typeof zContactsSchema>;
-
-const mapContactsInput = ({ contactInformation, socialNetworks }: ContactsUpdateInput) => ({
-  contactInformation,
-  socialNetworks: socialNetworks.map(({ platform, link }) => ({ icon: platform, link }))
+export const mapContactsInput = ({
+  contactInformation: { foundationName, address, phone, email },
+  socialNetworks
+}: ContactsUpdateInput): GraphQLUpdateContactsInput => ({
+  contactInformation: {
+    foundationName: { uk: foundationName.uk, en: foundationName.en },
+    address: { uk: address.uk, en: address.en },
+    phone,
+    email
+  },
+  socialNetworks: socialNetworks.map(({ platform, link }) => ({
+    icon: platform as SocialNetworkTypes,
+    link
+  }))
 });
-
-const mapMutationInput = ({ contactInformation, socialNetworks }: ValidatedContactsInput): GraphQLUpdateContactsInput => ({
-  contactInformation,
-  socialNetworks: socialNetworks.map(({ icon, link }) => ({ icon: icon as SocialNetworkTypes, link }))
-});
-
-const getValidationErrors = (error: z.ZodError): ContactsFormErrors => {
-  const errors: ContactsFormErrors = { contactInformation: {}, socialNetworks: {} };
-
-  error.issues.forEach((issue) => {
-    const [section, ...path] = issue.path;
-
-    if (section === 'contactInformation' || section === 'socialNetworks') {
-      errors[section][path.join('.')] = issue.message;
-    }
-  });
-
-  return errors;
-};
 
 export const useUpsertContacts = () => {
   const [mutate, { loading, error }] = useUpdateContactsMutation();
 
-  const updateContacts = async (input: ContactsUpdateInput): Promise<ContactsFormErrors | null> => {
-    const validation = zContactsSchema.safeParse(mapContactsInput(input));
-    if (!validation.success) return getValidationErrors(validation.error);
-
+  const updateContacts = async (input: ContactsUpdateInput) => {
     try {
       const result = await safeMutate<UpdateContactsMutation, UpdateContactsMutationVariables>(
         mutate,
-        { input: mapMutationInput(validation.data) },
+        { input: mapContactsInput(input) },
         CONTACTS_SAVE_ERROR,
         CONTACTS_SAVE_ERROR
       );
@@ -73,11 +53,11 @@ export const useUpsertContacts = () => {
       }
 
       toast.success(CONTACTS_SAVE_SUCCESS);
+      return result;
     } catch (mutationError) {
       toast.error(mutationError instanceof Error ? mutationError.message : CONTACTS_SAVE_ERROR);
+      return null;
     }
-
-    return null;
   };
 
   return { updateContacts, loading, error };

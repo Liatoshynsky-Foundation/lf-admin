@@ -28,7 +28,7 @@ export const ContactInformationBlock = ({
   onFieldChange,
   onFieldBlur
 }: ContactInformationBlockProps) => {
-  const { formatPhoneNumber, handlePhoneKeyDown } = usePhoneInput();
+  const { formatPhoneNumber } = usePhoneInput();
 
   const updateLocalizedField = (field: 'foundationName' | 'address', value: string) => {
     onChange({ ...data, [field]: mergeLocalizedValue(data[field], locale, value) });
@@ -69,7 +69,6 @@ export const ContactInformationBlock = ({
           value={formatPhoneNumber(data.phone)}
           placeholder={PHONE_MASK}
           onChange={(event) => updateField('phone', formatPhoneNumber(event.target.value))}
-          onKeyDown={handlePhoneKeyDown}
           error={Boolean(errors?.phone)}
           helperText={errors?.phone}
           onBlur={() => onFieldBlur?.('phone')}

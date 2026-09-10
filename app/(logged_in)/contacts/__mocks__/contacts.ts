@@ -3,7 +3,7 @@ import type { ContactInformation, ContactsData, ContactsLocale, SocialNetworkFor
 export const CONTACT_INFORMATION: ContactInformation = {
   foundationName: { uk: 'Фундація', en: 'Foundation' },
   address: { uk: 'Київ', en: 'Kyiv' },
-  phone: '+380 000 000 001',
+  phone: '+38 000 000 0001',
   email: 'foundation@example.com'
 };
 

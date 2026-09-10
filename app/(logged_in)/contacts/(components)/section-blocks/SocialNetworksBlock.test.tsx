@@ -25,6 +25,9 @@ jest.mock('~/shared/components/icon-text-field/IconTextField', () => {
   return { IconTextField: MockIconTextField };
 });
 
+const onChange = jest.fn();
+const onFieldChange = jest.fn();
+
 const EMPTY_SOCIAL_NETWORK = { id: 0, link: '' } as const;
 const NEW_SOCIAL_NETWORK = { id: SOCIAL_NETWORKS.at(-1)!.id + 1, link: '' } as const;
 const UPDATED_SOCIAL_LINK = 'https://updated.example';
@@ -34,7 +37,16 @@ const SELECTED_PLATFORM = 'youtube' as const;
 describe('SocialNetworksBlock', () => {
   it('adds, updates and removes social networks', () => {
     const onChange = jest.fn();
-    render(<SocialNetworksBlock items={SOCIAL_NETWORKS} onChange={onChange} />);
+    const onFieldChange = jest.fn();
+    const onFieldBlur = jest.fn();
+    render(
+      <SocialNetworksBlock
+        items={SOCIAL_NETWORKS}
+        onChange={onChange}
+        onFieldChange={onFieldChange}
+        onFieldBlur={onFieldBlur}
+      />
+    );
 
     fireEvent.click(screen.getByRole('button', { name: SOCIAL_NETWORK_ADD_LABEL }));
     expect(onChange).toHaveBeenCalledWith([...SOCIAL_NETWORKS, NEW_SOCIAL_NETWORK]);
@@ -44,6 +56,9 @@ describe('SocialNetworksBlock', () => {
       target: { value: TYPED_SOCIAL_LINK }
     });
     expect(onChange).toHaveBeenCalledWith([{ ...SOCIAL_NETWORKS[0], link: TYPED_SOCIAL_LINK }, SOCIAL_NETWORKS[1]]);
+    expect(onFieldChange).toHaveBeenCalledWith(0);
+    fireEvent.blur(screen.getAllByRole('textbox', { name: SOCIAL_NETWORK_FIELD_LABEL })[0]);
+    expect(onFieldBlur).toHaveBeenCalledWith(0);
     fireEvent.click(screen.getByRole('button', { name: `${SOCIAL_NETWORK_DELETE_LABEL}-1` }));
     expect(onChange).toHaveBeenCalledWith([SOCIAL_NETWORKS[0]]);
   });
@@ -57,14 +72,24 @@ describe('SocialNetworksBlock', () => {
     expect(onChange).toHaveBeenCalledWith([EMPTY_SOCIAL_NETWORK]);
   });
 
-  it('opens the platform menu and updates the selected platform', () => {
-    const onChange = jest.fn();
+  it('updates a network when field callbacks are not provided', () => {
     render(<SocialNetworksBlock items={SOCIAL_NETWORKS} onChange={onChange} />);
+
+    const socialNetworkInput = screen.getAllByRole('textbox', { name: SOCIAL_NETWORK_FIELD_LABEL })[0];
+    fireEvent.change(socialNetworkInput, { target: { value: TYPED_SOCIAL_LINK } });
+    fireEvent.blur(socialNetworkInput);
+
+    expect(onChange).toHaveBeenCalledWith([{ ...SOCIAL_NETWORKS[0], link: TYPED_SOCIAL_LINK }, SOCIAL_NETWORKS[1]]);
+  });
+
+  it('opens the platform menu and updates the selected platform', () => {
+    render(<SocialNetworksBlock items={SOCIAL_NETWORKS} onChange={onChange} onFieldChange={onFieldChange} />);
 
     fireEvent.click(screen.getAllByRole('button', { name: SOCIAL_NETWORK_ICON_LABEL })[0]);
     fireEvent.click(screen.getByRole('button', { name: `${SOCIAL_NETWORK_SELECT_PREFIX}${SELECTED_PLATFORM}` }));
 
     expect(onChange).toHaveBeenCalledWith([{ ...SOCIAL_NETWORKS[0], platform: SELECTED_PLATFORM }, SOCIAL_NETWORKS[1]]);
+    expect(onFieldChange).toHaveBeenCalledWith(0);
     expect(screen.queryByTestId('icon-picker')).not.toBeInTheDocument();
   });
 

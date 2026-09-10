@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import {
   type ContactsData,
   type SocialNetworkInput
@@ -31,4 +33,3 @@ export const useContacts = () => {
     error
   };
 };
-import { useMemo } from 'react';

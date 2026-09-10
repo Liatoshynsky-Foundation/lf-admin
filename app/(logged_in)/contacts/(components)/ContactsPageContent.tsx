@@ -2,9 +2,14 @@
 
 import { Box, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import { useContacts } from '../../../shared/hooks/use-contacts/useContacts';
-import { useUpsertContacts } from '../../../shared/hooks/use-upsert-contacts/useUpsertContacts';
+import {
+  type ContactsUpdateInput,
+  mapContactsInput,
+  useUpsertContacts
+} from '../../../shared/hooks/use-upsert-contacts/useUpsertContacts';
 import { ContactsHeaderActions } from './ContactsHeaderActions';
 import { styles } from './ContactsPageContent.styles';
 import { ContactInformationBlock } from './section-blocks/ContactInformationBlock';
@@ -13,6 +18,7 @@ import {
   type ContactInformation,
   CONTACTS_ERROR,
   CONTACTS_LOADING,
+  CONTACTS_VALIDATION_ERROR,
   type ContactsLocale,
   INITIAL_CONTACT_INFORMATION,
   type SocialNetworkFormItem
@@ -20,8 +26,12 @@ import {
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { ContentPageLayout } from '~/shared/components/content-page-layout/ContentPageLayout';
 import { EmptyState } from '~/shared/components/empty-state';
-import { type ContactsFormErrors } from '~/shared/hooks/use-upsert-contacts/useUpsertContacts';
+import {
+  getFormErrorsByPrefix,
+  useZodFormValidation
+} from '~/shared/hooks/use-zod-form-validation/useZodFormValidation';
 import { useStore } from '~/store';
+import { zContactsSchema } from '~/validators/contacts.schema';
 
 const ContactsPageContent = () => {
   const { data, loading } = useContacts();
@@ -31,7 +41,13 @@ const ContactsPageContent = () => {
   const setLocale = useStore((state) => state.setLocale);
   const [contactInformation, setContactInformation] = useState<ContactInformation>(INITIAL_CONTACT_INFORMATION);
   const [socialNetworks, setSocialNetworks] = useState<SocialNetworkFormItem[]>([]);
-  const [errors, setErrors] = useState<ContactsFormErrors>({ contactInformation: {}, socialNetworks: {} });
+  const { errors, validateOnSubmit, revalidateFields, clearFieldErrors, resetValidation } =
+    useZodFormValidation({
+      validate: (input: ContactsUpdateInput) => zContactsSchema.safeParse(mapContactsInput(input))
+    });
+
+  const contactInformationErrors = getFormErrorsByPrefix(errors, 'contactInformation');
+  const socialNetworksErrors = getFormErrorsByPrefix(errors, 'socialNetworks');
 
   useEffect(() => {
     if (!data) return;
@@ -41,26 +57,38 @@ const ContactsPageContent = () => {
   }, [data]);
 
   const handleSave = async () => {
-    const validationErrors = await updateContacts({ contactInformation, socialNetworks });
-    setErrors(validationErrors ?? { contactInformation: {}, socialNetworks: {} });
-  };
+    const input = { contactInformation, socialNetworks };
+    const validationResult = validateOnSubmit(input);
+    if (!validationResult.success) {
+      toast.error(CONTACTS_VALIDATION_ERROR);
+      return;
+    }
 
-  const clearErrors = (section: keyof ContactsFormErrors, ...paths: string[]) => {
-    setErrors((currentErrors) => {
-      if (!paths.some((path) => path in currentErrors[section])) return currentErrors;
-
-      const nextErrors = { ...currentErrors, [section]: { ...currentErrors[section] } };
-      paths.forEach((path) => delete nextErrors[section][path]);
-      return nextErrors;
-    });
+    const updateResult = await updateContacts(input);
+    if (updateResult) resetValidation();
   };
 
   const handleContactFieldChange = (field: keyof ContactInformation, fieldLocale?: ContactsLocale) => {
-    clearErrors('contactInformation', `${field}${fieldLocale ? `.${fieldLocale}` : ''}`);
+    clearFieldErrors(`contactInformation.${field}${fieldLocale ? `.${fieldLocale}` : ''}`);
   };
 
   const handleSocialNetworkFieldChange = (index: number) => {
-    clearErrors('socialNetworks', `${index}.icon`, `${index}.link`);
+    clearFieldErrors(`socialNetworks.${index}.icon`, `socialNetworks.${index}.link`);
+  };
+
+  const handleContactFieldBlur = (field: keyof ContactInformation, fieldLocale?: ContactsLocale) => {
+    revalidateFields(
+      { contactInformation, socialNetworks },
+      `contactInformation.${field}${fieldLocale ? `.${fieldLocale}` : ''}`
+    );
+  };
+
+  const handleSocialNetworkFieldBlur = (index: number) => {
+    revalidateFields(
+      { contactInformation, socialNetworks },
+      `socialNetworks.${index}.icon`,
+      `socialNetworks.${index}.link`
+    );
   };
 
   if (loading) {
@@ -85,14 +113,16 @@ const ContactsPageContent = () => {
             data={contactInformation}
             locale={locale}
             onChange={setContactInformation}
-            errors={errors.contactInformation}
+            errors={contactInformationErrors}
             onFieldChange={handleContactFieldChange}
+            onFieldBlur={handleContactFieldBlur}
           />
           <SocialNetworksBlock
             items={socialNetworks}
             onChange={setSocialNetworks}
-            errors={errors.socialNetworks}
+            errors={socialNetworksErrors}
             onFieldChange={handleSocialNetworkFieldChange}
+            onFieldBlur={handleSocialNetworkFieldBlur}
           />
         </Box>
       </CollapsibleBlock>

@@ -73,4 +73,5 @@ export const INIT_LOCALE: ContactsLocale = 'uk';
 
 export const CONTACTS_SAVE_ERROR = 'Не вдалося зберегти контакти';
 export const CONTACTS_SAVE_SUCCESS = 'Контакти успішно збережено';
+export const CONTACTS_VALIDATION_ERROR = 'Перевірте правильність заповнених полів';
 

@@ -22,7 +22,7 @@ type SocialNetworkFieldProps = Readonly<{
   onItemChange: (item: SocialNetworkFormItem) => void;
   errors: Record<string, string>;
   onFieldChange: (index: number) => void;
-  onFieldBlur: (id: number) => void;
+  onFieldBlur: (index: number) => void;
 }>;
 
 const SocialNetworkField = ({
@@ -56,7 +56,7 @@ const SocialNetworkField = ({
       iconButtonVariant={selectedOption ? 'filled' : 'outlined'}
       error={Boolean(errors[`${index}.link`] || errors[`${index}.icon`])}
       helperText={errors[`${index}.link`] || errors[`${index}.icon`]}
-      onBlur={() => onFieldBlur(item.id)}
+      onBlur={() => onFieldBlur(index)}
     />
   );
 };
@@ -76,7 +76,7 @@ type SocialNetworksBlockProps = Readonly<{
   onChange: (items: SocialNetworkFormItem[]) => void;
   errors?: Record<string, string>;
   onFieldChange?: (index: number) => void;
-  onFieldBlur?: (id: number) => void;
+  onFieldBlur?: (index: number) => void;
 }>;
 
 export const SocialNetworksBlock = ({

@@ -11,10 +11,15 @@ export const SOCIAL_NETWORK_FIELD_LABEL = 'URL';
 export const SOCIAL_NETWORK_SELECT_PREFIX = 'select-';
 export const SOCIAL_NETWORK_SELECT_WITHOUT_ANCHOR_LABEL = 'select-without-anchor';
 
-export const MockIconTextField = ({ value, onChange, onIconClick }: IconTextFieldProps) => (
+export const MockIconTextField = ({ value, onChange, onIconClick, onBlur }: IconTextFieldProps) => (
   <div>
     <button onClick={onIconClick}>choose icon</button>
-    <input aria-label={SOCIAL_NETWORK_FIELD_LABEL} value={value} onChange={(event) => onChange(event.target.value)} />
+    <input
+      aria-label={SOCIAL_NETWORK_FIELD_LABEL}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      onBlur={onBlur}
+    />
   </div>
 );
 
