@@ -6,7 +6,7 @@ import {
   PDF_MIME_TYPE,
   PdfEntry,
 } from '~/constants/archive';
-import { CASE_VALIDATION_MESSAGES } from '~/constants/case';
+import { CASE_INTEGER_MAX, CASE_VALIDATION_MESSAGES } from '~/constants/case';
 
 export interface ArchiveCaseInitialData {
   descriptionNumber?: string;
@@ -94,7 +94,10 @@ export const useArchiveCaseModal = ({ setIsOpen, initialData, onSave }: UseArchi
     ) => {
       if (!value.trim()) return required;
       if (/^-\d+$/.test(value.trim())) return negative;
-      if (/^[1-9]\d*$/.test(value.trim())) return undefined;
+      if (/^[1-9]\d*$/.test(value.trim())) {
+        const numericValue = Number(value.trim());
+        return Number.isSafeInteger(numericValue) && numericValue <= CASE_INTEGER_MAX ? undefined : invalid;
+      }
       if (/^0+$/.test(value.trim())) return negative;
       return /[a-zа-яіїєґ]/i.test(value) ? notNumber : invalid;
     };
@@ -105,8 +108,14 @@ export const useArchiveCaseModal = ({ setIsOpen, initialData, onSave }: UseArchi
     if (caseError) nextErrors.caseNumber = caseError;
     if (sheetsError) nextErrors.sheetsNumber = sheetsError;
     if (!caseName.trim()) nextErrors.caseName = CASE_VALIDATION_MESSAGES.caseNameRequired;
+    else if (caseName.length > 150) nextErrors.caseName = CASE_VALIDATION_MESSAGES.caseNameMaxLength;
     if (!caseDate.trim()) nextErrors.caseDate = CASE_VALIDATION_MESSAGES.caseDateRequired;
+    else if (caseDate.length > 150) nextErrors.caseDate = CASE_VALIDATION_MESSAGES.caseDateMaxLength;
     if (!caseDescriptions.trim()) nextErrors.caseDescriptions = CASE_VALIDATION_MESSAGES.caseDescriptionsRequired;
+    else if (caseDescriptions.length > 300) nextErrors.caseDescriptions = CASE_VALIDATION_MESSAGES.caseDescriptionsMaxLength;
+    if (detailedCaseDescription.length > 1000) {
+      nextErrors.detailedCaseDescription = CASE_VALIDATION_MESSAGES.detailedCaseDescriptionMaxLength;
+    }
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
 
