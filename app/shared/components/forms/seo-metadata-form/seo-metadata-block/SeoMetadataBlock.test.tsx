@@ -135,38 +135,18 @@ describe('SeoMetadataBlock', () => {
     );
   });
 
-  it('syncs altText across both meta locales when uk alt changes', () => {
+  it.each(locales)('syncs altText across both meta locales when %s alt changes', (locale) => {
     const onChange = jest.fn();
     renderBlock({ value: controlledValue, onChange });
-    clickButton('alt-uk');
-
+    clickButton(`alt-${locale}`);
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
         meta: {
           uk: expect.objectContaining({
-            altText: { uk: 'alt-from-uk', en: 'alt-from-uk' }
+            altText: { uk: `alt-from-${locale}`, en: `alt-from-${locale}` }
           }),
           en: expect.objectContaining({
-            altText: { uk: 'alt-from-uk', en: 'alt-from-uk' }
-          })
-        }
-      })
-    );
-  });
-
-  it('syncs altText across both meta locales when en alt changes', () => {
-    const onChange = jest.fn();
-    renderBlock({ value: controlledValue, onChange });
-    clickButton('alt-en');
-
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({
-        meta: {
-          uk: expect.objectContaining({
-            altText: { uk: 'alt-from-en', en: 'alt-from-en' }
-          }),
-          en: expect.objectContaining({
-            altText: { uk: 'alt-from-en', en: 'alt-from-en' }
+            altText: { uk: `alt-from-${locale}`, en: `alt-from-${locale}` }
           })
         }
       })
