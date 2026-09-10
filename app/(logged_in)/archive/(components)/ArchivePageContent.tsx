@@ -58,16 +58,29 @@ interface ArchivePageContentProps {
   activeTab: ArchiveTabValue;
 }
 
-const getPaginationData = (
-  page: number,
-  showFunds: boolean,
-  showCases: boolean,
-  isAllTab: boolean,
-  totalPages: number,
-  knownFundPageCount: number,
-  knownFundTotal: number,
-  sortedCasesLength: number
-) => {
+// Описываем тип для объекта с аргументами
+interface PaginationParams {
+  page: number;
+  showFunds: boolean;
+  showCases: boolean;
+  isAllTab: boolean;
+  totalPages: number;
+  knownFundPageCount: number;
+  knownFundTotal: number;
+  sortedCasesLength: number;
+}
+
+// Теперь функция принимает ровно 1 аргумент (объект) — Сонар доволен
+const getPaginationData = ({
+  page,
+  showFunds,
+  showCases,
+  isAllTab,
+  totalPages,
+  knownFundPageCount,
+  knownFundTotal,
+  sortedCasesLength
+}: PaginationParams) => {
   const fundPageCount = showFunds ? totalPages || knownFundPageCount : 0;
 
   const remainder = knownFundTotal % ARCHIVE_ITEMS_PER_PAGE;
@@ -183,7 +196,8 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
   const sortedFunds = [...fundsWithOverrides].sort((a, b) => Number(a.fundNumber) - Number(b.fundNumber));
   const sortedCases = [...cases].sort((a, b) => Number(a.caseNumber) - Number(b.caseNumber));
 
-  const paginationData = getPaginationData(
+  // Вызываем функцию, передавая аргументы как ключи объекта
+  const paginationData = getPaginationData({
     page,
     showFunds,
     showCases,
@@ -191,8 +205,8 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
     totalPages,
     knownFundPageCount,
     knownFundTotal,
-    sortedCases.length
-  );
+    sortedCasesLength: sortedCases.length
+  });
 
   const visibleFunds = paginationData.isCasePage ? [] : sortedFunds;
   const visibleCases = paginationData.isCaseVisible
