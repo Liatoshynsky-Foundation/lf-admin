@@ -298,6 +298,10 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
       );
     }
 
+    if (!isAllTab && (casesLoading || casesError)) {
+      return renderCasesSection();
+    }
+
     if (hasFunds || hasCases) {
       return renderFundsSection();
     }

@@ -69,7 +69,7 @@ function mockCase(overrides: Partial<{ id: string; caseNumber: number; name: str
 
 jest.mock('./archive-funds-table/ArchiveFundsTable', () => ({
   __esModule: true,
-  FundsTable: ({ funds, hasActiveSearch, hasActiveStatusFilter, onPublish }: FundsTableProps) => (
+  FundsTable: ({ funds, cases = [], hasActiveSearch, hasActiveStatusFilter, onPublish }: FundsTableProps) => (
     <div data-testid="funds-table">
       <div data-testid="funds-table-has-active-search">{JSON.stringify(hasActiveSearch)}</div>
       <div data-testid="funds-table-has-active-status-filter">{JSON.stringify(hasActiveStatusFilter)}</div>
@@ -81,6 +81,13 @@ jest.mock('./archive-funds-table/ArchiveFundsTable', () => ({
           </div>
         ))}
       </div>
+      {cases.length > 0 && (
+        <ul data-testid="cases-list">
+          {cases.map((item) => (
+            <li key={item.id}>{item.name}</li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }));
