@@ -18,8 +18,9 @@ import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useU
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 const mockPush = jest.fn();
+const mockReplace = jest.fn();
 jest.mock('next/navigation', () => ({
-  useRouter: jest.fn(() => ({ push: mockPush })),
+  useRouter: jest.fn(() => ({ push: mockPush, replace: mockReplace })),
   usePathname: jest.fn(() => '/publications/news/create')
 }));
 
@@ -562,7 +563,8 @@ describe('CreatePublicationsView Component', () => {
 
       await waitFor(() => {
         expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
-        expect(mockPush).toHaveBeenCalledWith(`${PUBLICATIONS_BASE_PATH}/news/news-456/edit`);
+        expect(mockPush).not.toHaveBeenCalled();
+        expect(mockReplace).toHaveBeenCalledWith(`${PUBLICATIONS_BASE_PATH}/news/news-456/edit`);
       });
     });
 
@@ -576,7 +578,7 @@ describe('CreatePublicationsView Component', () => {
       await waitFor(() => {
         expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
       });
-      expect(mockPush).not.toHaveBeenCalled();
+      expect(mockReplace).not.toHaveBeenCalled();
     });
   });
 
