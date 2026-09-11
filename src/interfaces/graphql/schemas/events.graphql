@@ -52,7 +52,7 @@ input CreateEventInput {
   coverImage: JSON!
   status: EventStatus
   publishedAt: String
-  eventDateTimeStart: String
+  eventDateTimeStart: String!
   eventDateTimeEnd: String
   ticketUrl: JSON
 }

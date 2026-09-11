@@ -2,6 +2,8 @@ import dayjs, { type Dayjs } from 'dayjs';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { resolveSharedLocalizedFields } from './normalizeSharedLocalizedFields';
+import { applyEventDateSeoErrors, validateEventDates } from './validateEventDates';
 import { seoFormErrors } from '~/constants/errors';
 import {
   FetchedPublicationData,
@@ -14,6 +16,7 @@ import {
 } from '~/constants/publications';
 import { checkIsSeoInvalid } from '~/lib/utils/checkIsSeoInvalid';
 import { buildCoverImageCropPayload } from '~/lib/utils/CropperHelper';
+import { isValidHttpUrl } from '~/lib/utils/isValidUrl';
 import type {
   SeoBlockErrors,
   SeoBlockValue
@@ -69,7 +72,8 @@ const getDateIsoString = (date: Dayjs | null | undefined) => (isValidDate(date) 
 const getPublicationSeoMetaErrors = (
   meta: LocalizedMeta,
   locale: 'uk' | 'en',
-  requiredFields: Readonly<{ title: boolean; description: boolean }>
+  requiredFields: Readonly<{ title: boolean; description: boolean }>,
+  options: { altRequired?: boolean } = {}
 ): Partial<Record<keyof LocalizedMeta, string>> => {
   const getError = (field: SeoField, value: string, required = false): string => {
     const code = validateSeoField(field, value, { required });
@@ -79,11 +83,14 @@ const getPublicationSeoMetaErrors = (
   const isRequired = (field: 'title' | 'description', value: string): boolean =>
     requiredFields[field] || Boolean(value.trim());
 
+  const altValue = meta.altText?.[locale] ?? '';
+  const altRequired = Boolean(options.altRequired) || Boolean(altValue.trim());
+
   return {
     title: getError('title', meta.title, isRequired('title', meta.title)),
     description: getError('description', meta.description, isRequired('description', meta.description)),
     keywords: getError('keywords', meta.keywords),
-    altText: getError('altText', meta.altText?.[locale] ?? '')
+    altText: getError('altText', altValue, altRequired)
   };
 };
 
@@ -103,11 +110,12 @@ const validatePublicationSeo = (
 ): { seoErrors: SeoBlockErrors; hasMetaErrors: boolean; hasUrlErrors: boolean } => {
   const { uk: ukMeta, en: enMeta } = seoValue.meta;
   const hasUrlErrors = checkIsSeoInvalid(ukMeta, enMeta, publicationType, seoValue.ticketUrl);
+  const altRequired = isValidHttpUrl(seoValue.ogImage);
 
   const seoErrors: SeoBlockErrors = {
     meta: {
-      uk: getPublicationSeoMetaErrors(ukMeta, 'uk', PUBLICATION_SEO_REQUIRED.uk),
-      en: getPublicationSeoMetaErrors(enMeta, 'en', PUBLICATION_SEO_REQUIRED.en)
+      uk: getPublicationSeoMetaErrors(ukMeta, 'uk', PUBLICATION_SEO_REQUIRED.uk, { altRequired }),
+      en: getPublicationSeoMetaErrors(enMeta, 'en', PUBLICATION_SEO_REQUIRED.en, { altRequired })
     },
     ...(publicationType === 'events' && hasUrlErrors
       ? {
@@ -220,7 +228,13 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       const mainDate = type === 'news' ? fetchedData.newsDate : fetchedData.publishedAt;
       changePublishDate(parseDate(mainDate));
 
-      changeCrop(fetchedData.coverImage?.crop ?? null);
+      const {
+        altText: sharedAltText,
+        ticketUrl: sharedTicketUrl,
+        crop: nextCrop
+      } = resolveSharedLocalizedFields(type, fetchedData);
+
+      changeCrop(nextCrop);
 
       const getLangMeta = (lang: 'uk' | 'en') => {
         const start = parseDate(fetchedData?.eventDateTimeStart);
@@ -232,44 +246,29 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
           keywords: fetchedData?.keywords?.[lang] || '',
 
           canonicalUrl: type === 'media' ? fetchedData?.url || '' : '',
-          altText: {
-            uk: fetchedData?.coverImage?.alt?.uk || '',
-            en: fetchedData?.coverImage?.alt?.en || ''
-          },
+          altText: sharedAltText,
           startDateTime: getDateIsoString(start),
           endDateTime: getDateIsoString(end)
         };
       };
 
-      changeSeoValue({
+      const nextSeoValue: SeoBlockValue = {
         meta: { uk: getLangMeta('uk'), en: getLangMeta('en') },
         ogImage: fetchedData.coverImage?.src || null,
         allowIndexing: {
           uk: fetchedData.allowIndexation?.uk ?? true,
           en: fetchedData.allowIndexation?.en ?? true
         },
-        ticketUrl: {
-          uk: fetchedData.ticketUrl?.uk || '',
-          en: fetchedData.ticketUrl?.en || ''
-        }
-      });
+        ticketUrl: sharedTicketUrl
+      };
+
+      changeSeoValue(nextSeoValue);
 
       setInitialState({
         adminTitle: fetchedData.adminTitle || '',
         publishDate: getDateIsoString(parseDate(mainDate)) ?? null,
-        seoValue: {
-          meta: { uk: getLangMeta('uk'), en: getLangMeta('en') },
-          ogImage: fetchedData.coverImage?.src || null,
-          allowIndexing: {
-            uk: fetchedData.allowIndexation?.uk ?? true,
-            en: fetchedData.allowIndexation?.en ?? true
-          },
-          ticketUrl: {
-            uk: fetchedData.ticketUrl?.uk || '',
-            en: fetchedData.ticketUrl?.en || ''
-          }
-        },
-        crop: fetchedData.coverImage?.crop ?? null
+        seoValue: nextSeoValue,
+        crop: nextCrop
       });
 
       isInitializedRef.current = true;
@@ -281,9 +280,14 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
 
     const { adminTitle, seoValue, publishDate, crop } = latestDataRef.current;
     const { uk: ukMeta, en: enMeta } = seoValue.meta;
+    const startDateTime = ukMeta.startDateTime;
+    const endDateTime = ukMeta.endDateTime;
 
     const isTitleInvalid = !adminTitle.trim();
     const isPublishDateInvalid = Boolean(publishDate && !publishDate.isValid());
+
+    const eventDatesValidation = validateEventDates(publicationType, startDateTime, endDateTime);
+    const { isInvalid: areEventDatesInvalid } = eventDatesValidation;
 
     const {
       seoErrors: nextSeoErrors,
@@ -291,10 +295,11 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       hasUrlErrors
     } = validatePublicationSeo(seoValue, publicationType);
 
-    if (isTitleInvalid || hasMetaErrors || hasUrlErrors || isPublishDateInvalid) {
+    if (isTitleInvalid || hasMetaErrors || hasUrlErrors || isPublishDateInvalid || areEventDatesInvalid) {
       if (isTitleInvalid) setAdminTitleError('Обов\'язкове поле');
-      if (hasMetaErrors || hasUrlErrors) {
-        setSeoErrors(nextSeoErrors);
+
+      if (hasMetaErrors || hasUrlErrors || areEventDatesInvalid) {
+        setSeoErrors(applyEventDateSeoErrors(nextSeoErrors, eventDatesValidation));
         setForceShowErrors(true);
       }
       return;
@@ -333,8 +338,8 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
           const payload = {
             ...commonInput,
             eventLink: adminTitle,
-            eventDateTimeStart: ukMeta.startDateTime,
-            eventDateTimeEnd: ukMeta.endDateTime,
+            eventDateTimeStart: startDateTime!,
+            eventDateTimeEnd: ukMeta.endDateTime ?? null,
             ticketUrl: seoValue.ticketUrl,
             status: status as unknown as EventStatus
           };

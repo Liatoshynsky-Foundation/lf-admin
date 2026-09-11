@@ -6,8 +6,12 @@ export type EventFilters = FiltersInput & {
     statuses?: EventStatus[];
 };
 
-export type CreateEventInput = Omit<EventsEntity, 'id' | 'createdAt' | 'updatedAt' | 'meta'> & {
-    meta?: Partial<EventsEntity['meta']>;
+export type CreateEventInput = Omit<
+  EventsEntity,
+  'id' | 'createdAt' | 'updatedAt' | 'meta' | 'eventDateTimeStart'
+> & {
+  meta?: Partial<EventsEntity['meta']>;
+  eventDateTimeStart: string;
 };
 
 export type UpdateEventInput = Partial<CreateEventInput> & {

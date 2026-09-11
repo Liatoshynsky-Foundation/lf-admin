@@ -71,16 +71,31 @@ export default function CreatePublicationsView({
 
   const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [startDateTouched, setStartDateTouched] = useState(false);
+
+  const showStartDateErrors =
+    forceShowErrors || startDateTouched || Boolean(seoErrors?.meta?.uk?.startDateTime);
+
+  const handleStartDateBlur = useCallback(() => {
+    setStartDateTouched(true);
+  }, []);
 
   const eventsExtraFields = useCallback(
-    (_locale: 'uk' | 'en', value: SeoBlockValue['meta']['uk']) => (
+    (locale: 'uk' | 'en', value: SeoBlockValue['meta']['uk']) => (
       <SeoDateTimeFields
         startDateTime={value.startDateTime}
         endDateTime={value.endDateTime}
         onChange={handleDateTimeChange}
+        forceShowErrors={showStartDateErrors}
+        onStartBlur={handleStartDateBlur}
+        locale={locale}
+        labels={{
+          startDateTime: PUBLICATION_SEO_LABELS[locale].startDateTime,
+          endDateTime: PUBLICATION_SEO_LABELS[locale].endDateTime
+        }}
       />
     ),
-    [handleDateTimeChange]
+    [handleDateTimeChange, showStartDateErrors, handleStartDateBlur]
   );
 
   const mediaExtraFields = useCallback(
@@ -178,7 +193,6 @@ export default function CreatePublicationsView({
       }
     } catch (err) {
       toast.error(`Помилка: ${err instanceof Error ? err.message : String(err)}`);
-      console.error(`Action ${actionId} failed`, err);
     }
   };
 

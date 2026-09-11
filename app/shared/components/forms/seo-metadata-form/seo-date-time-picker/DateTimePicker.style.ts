@@ -7,6 +7,11 @@ export const styles = {
     justifyContent: 'space-between', 
     width: '100%' 
   },
+  field: {
+    display: 'flex',
+    flexDirection: 'column',
+    minWidth: 0
+  },
   separator: {
     textAlign: 'center',
     display: 'flex',

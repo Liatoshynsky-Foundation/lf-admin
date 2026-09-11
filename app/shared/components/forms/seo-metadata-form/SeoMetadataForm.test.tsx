@@ -384,7 +384,7 @@ describe('SeoMetadataForm', () => {
     expect(onChange).toHaveBeenCalled();
   });
 
-  it('does not require alt text when an OG image is present', async () => {
+  it('requires alt text when an OG image is present', async () => {
     render(
       <SeoMetadataForm
         {...defaultProps}
@@ -396,8 +396,7 @@ describe('SeoMetadataForm', () => {
 
     fireEvent.blur(screen.getByRole('textbox', { name: /^Alt/i }));
 
-    expect(screen.queryByText(seoFormErrors.uk.required)).not.toBeInTheDocument();
-    expect(screen.queryByText(seoFormErrors.uk.minLength)).not.toBeInTheDocument();
+    expect(await screen.findByText(seoFormErrors.uk.required)).toBeInTheDocument();
   });
 
   it('validates alt text changes after the field has been touched', async () => {
@@ -416,11 +415,11 @@ describe('SeoMetadataForm', () => {
     fireEvent.blur(altInput);
     fireEvent.change(altInput, { target: { value: 'valid alt text' } });
 
-    expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ altText: { uk: 'valid alt text', en: '' } }));
+    expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ altText: { uk: 'valid alt text', en: 'valid alt text' } }));
     await waitFor(() => expect(screen.queryByText(seoFormErrors.uk.required)).not.toBeInTheDocument());
   });
 
-  it('uses an empty value when blurring an undefined alt text field', async () => {
+  it('uses an empty value when blurring an undefined alt text field with image', async () => {
     render(
       <SeoMetadataForm
         {...defaultProps}
@@ -432,8 +431,7 @@ describe('SeoMetadataForm', () => {
 
     fireEvent.blur(screen.getByRole('textbox', { name: /^Alt/i }));
 
-    expect(screen.queryByText(seoFormErrors.uk.required)).not.toBeInTheDocument();
-    expect(screen.queryByText(seoFormErrors.uk.minLength)).not.toBeInTheDocument();
+    expect(await screen.findByText(seoFormErrors.uk.required)).toBeInTheDocument();
   });
 
   it('validates alt text maximum length', async () => {
@@ -575,7 +573,7 @@ describe('SeoMetadataForm', () => {
     await user.type(altInput, 'a');
     expect(onChangeMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        altText: { uk: 'a', en: '' }
+        altText: { uk: 'a', en: 'a' }
       })
     );
   });
@@ -603,7 +601,7 @@ describe('SeoMetadataForm', () => {
     expect(defaultProps.onImageChange).toHaveBeenCalledWith(`${IMAGE_URL}?v=1.0`);
   });
 
-  it('preserves existing altText in other locale when updating altText in uk locale', async () => {
+  it('syncs altText to both locales when updating altText in uk locale', async () => {
     const onChangeMock = jest.fn();
     render(
       <SeoMetadataForm
@@ -621,12 +619,12 @@ describe('SeoMetadataForm', () => {
     await user.type(altInput, '2');
     expect(onChangeMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        altText: { uk: 'Початковий укр2', en: 'Existing English' }
+        altText: { uk: 'Початковий укр2', en: 'Початковий укр2' }
       })
     );
   });
 
-  it('preserves existing altText in other locale when updating altText in en locale', async () => {
+  it('syncs altText to both locales when updating altText in en locale', async () => {
     const onChangeMock = jest.fn();
     render(
       <SeoMetadataForm
@@ -644,9 +642,31 @@ describe('SeoMetadataForm', () => {
     await user.type(altInput, '2');
     expect(onChangeMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        altText: { uk: 'Existing Ukrainian', en: 'Initial English2' }
+        altText: { uk: 'Initial English2', en: 'Initial English2' }
       })
     );
+  });
+
+  it('shows altText min length error when short altText is synced in via props', async () => {
+    const { rerender } = render(
+      <SeoMetadataForm
+        {...defaultProps}
+        locale="en"
+        showAlternativeText={true}
+        value={{ ...defaultProps.value, altText: { uk: '', en: '' } }}
+      />
+    );
+
+    rerender(
+      <SeoMetadataForm
+        {...defaultProps}
+        locale="en"
+        showAlternativeText={true}
+        value={{ ...defaultProps.value, altText: { uk: 'т', en: 'т' } }}
+      />
+    );
+
+    expect(await screen.findByText(seoFormErrors.en.minLength)).toBeInTheDocument();
   });
 
   it('preserves existing touched state when forceShowErrors is triggered', async () => {
@@ -738,7 +758,7 @@ describe('SeoMetadataForm', () => {
     await user.type(altInput, 'b');
     expect(onChangeMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        altText: { uk: '', en: 'b' }
+        altText: { uk: 'b', en: 'b' }
       })
     );
   });
