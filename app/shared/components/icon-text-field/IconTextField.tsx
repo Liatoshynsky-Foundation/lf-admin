@@ -13,13 +13,34 @@ export type IconTextFieldProps = Readonly<{
   value: string;
   onChange: (value: string) => void;
   iconButtonVariant?: CircleIconButtonVariant;
+  error?: boolean;
+  helperText?: string;
+  onBlur?: () => void;
 }>;
 
 const defaultIcon = <Plus size={40} strokeWidth={1} />;
 
-export const IconTextField = ({ icon, onIconClick, label, value, onChange, iconButtonVariant }: IconTextFieldProps) => (
+export const IconTextField = ({
+  icon,
+  onIconClick,
+  label,
+  value,
+  onChange,
+  iconButtonVariant,
+  error,
+  helperText,
+  onBlur
+}: IconTextFieldProps) => (
   <Box sx={styles.container}>
     <CircleIconButton icon={icon ?? defaultIcon} onClick={onIconClick} variant={iconButtonVariant} />
-    <CustomTextField label={label} value={value} onChange={(event) => onChange(event.target.value)} fullWidth />
+    <CustomTextField
+      label={label}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      error={error}
+      helperText={helperText}
+      onBlur={onBlur}
+      fullWidth
+    />
   </Box>
 );

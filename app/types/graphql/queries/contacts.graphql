@@ -1,0 +1,20 @@
+query GetContacts {
+  contacts {
+    contactInformation {
+      foundationName {
+        uk
+        en
+      }
+      address {
+        uk
+        en
+      }
+      email
+      phone
+    }
+    socialNetworks {
+      icon
+      link
+    }
+  }
+}
