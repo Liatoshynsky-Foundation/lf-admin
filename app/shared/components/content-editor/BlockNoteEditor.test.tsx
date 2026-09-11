@@ -526,7 +526,28 @@ describe('BlockNoteEditor', () => {
       expect(mockDefaultPasteHandler).toHaveBeenCalled();
     });
 
-    it('should remove emojiis and special symbols from pasted text and show error toast', () => {
+    it('should keep emojis in pasted text without showing error toast', () => {
+      render(<BlockNoteEditor />);
+
+      const textWithEmojis = 'Test 😊 ❤️ 🇺🇦 🎵';
+      const event = {
+        clipboardData: {
+          getData: (type: 'text/html' | 'text/plain') => {
+            if (type === 'text/plain') return textWithEmojis;
+            return null;
+          }
+        }
+      };
+
+      capturedCreateOptions?.pasteHandler({ event, defaultPasteHandler: mockDefaultPasteHandler });
+
+      expect(event.clipboardData.getData('text/html')).toBe('');
+      expect(event.clipboardData.getData('text/plain')).toBe(textWithEmojis);
+      expect(mockDefaultPasteHandler).toHaveBeenCalled();
+      expect(toast.error).not.toHaveBeenCalled();
+    });
+
+    it('should keep emojis, remove special symbols from pasted text and show error toast', () => {
       render(<BlockNoteEditor />);
 
       const invalidPlainText = 'Test 😀 🎉 ★ ♞ ♣';
@@ -538,16 +559,16 @@ describe('BlockNoteEditor', () => {
           }
         }
       };
-      const sanitizedText = 'Test';
+      const sanitizedText = 'Test 😀 🎉';
 
       capturedCreateOptions?.pasteHandler({ event, defaultPasteHandler: mockDefaultPasteHandler });
       expect(event.clipboardData.getData('text/html')).toBe('');
       expect(event.clipboardData.getData('text/plain')).toBe(sanitizedText);
       expect(mockDefaultPasteHandler).toHaveBeenCalled();
-      expect(toast.error).toHaveBeenCalledWith('Використання емодзі та спецсимволів не дозволено');
+      expect(toast.error).toHaveBeenCalledWith('Використання спецсимволів не дозволено');
     });
 
-    it('should remove any styles & emojiis from pasted HTML and show error toast', () => {
+    it('should remove styles, classes and special symbols from pasted HTML while keeping emojis', () => {
       render(<BlockNoteEditor />);
 
       const formattedHTML = '<p style="color: red" class="test-class">test 😀 🎉 ★ ♞ ♣</p>';
@@ -561,9 +582,9 @@ describe('BlockNoteEditor', () => {
       };
 
       capturedCreateOptions?.pasteHandler({ event, defaultPasteHandler: mockDefaultPasteHandler });
-      expect(event.clipboardData.getData('text/html')).toBe('<p>test </p>');
+      expect(event.clipboardData.getData('text/html')).toBe('<p>test 😀 🎉 </p>');
       expect(event.clipboardData.getData('text/plain')).toBe('');
-      expect(toast.error).toHaveBeenCalledWith('Використання емодзі та спецсимволів не дозволено');
+      expect(toast.error).toHaveBeenCalledWith('Використання спецсимволів не дозволено');
     });
 
     it('should show error toast if Object.defineProperty throws during paste handler', () => {
