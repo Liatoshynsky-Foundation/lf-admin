@@ -563,6 +563,7 @@ describe('CreatePublicationsView Component', () => {
 
       await waitFor(() => {
         expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
+        expect(mockPush).not.toHaveBeenCalled();
         expect(mockReplace).toHaveBeenCalledWith(`${PUBLICATIONS_BASE_PATH}/news/news-456/edit`);
       });
     });
