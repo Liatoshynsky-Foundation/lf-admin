@@ -69,7 +69,8 @@ const ContactsPageContent = () => {
   };
 
   const handleContactFieldChange = (field: keyof ContactInformation, fieldLocale?: ContactsLocale) => {
-    clearFieldErrors(`contactInformation.${field}${fieldLocale ? `.${fieldLocale}` : ''}`);
+    const fieldPath = ['contactInformation', field, fieldLocale].filter(Boolean).join('.');
+    clearFieldErrors(fieldPath);
   };
 
   const handleSocialNetworkFieldChange = (index: number) => {
@@ -77,10 +78,8 @@ const ContactsPageContent = () => {
   };
 
   const handleContactFieldBlur = (field: keyof ContactInformation, fieldLocale?: ContactsLocale) => {
-    revalidateFields(
-      { contactInformation, socialNetworks },
-      `contactInformation.${field}${fieldLocale ? `.${fieldLocale}` : ''}`
-    );
+    const fieldPath = ['contactInformation', field, fieldLocale].filter(Boolean).join('.');
+    revalidateFields({ contactInformation, socialNetworks }, fieldPath);
   };
 
   const handleSocialNetworkFieldBlur = (index: number) => {

@@ -161,9 +161,7 @@ describe('ContactsPageContent', () => {
     expect(screen.getByTestId(CONTACT_INFORMATION_ID)).toHaveTextContent(CONTACT_LOCALES.uk);
     fireEvent.click(screen.getByRole('button', { name: LANGUAGE_BUTTON_LABEL }));
     expect(screen.getByTestId(CONTACT_INFORMATION_ID)).toHaveTextContent(CONTACT_LOCALES.en);
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: SAVE_BUTTON_LABEL }));
-    });
+    fireEvent.click(screen.getByRole('button', { name: SAVE_BUTTON_LABEL }));
 
     fireEvent.click(screen.getByRole('button', { name: LOCALIZED_FIELD_CHANGE_LABEL }));
     fireEvent.click(screen.getByRole('button', { name: PLAIN_FIELD_CHANGE_LABEL }));
