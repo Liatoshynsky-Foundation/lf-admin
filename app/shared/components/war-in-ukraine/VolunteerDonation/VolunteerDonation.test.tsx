@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { VolunteerDonation } from './VolunteerDonation';
+import { DEFAULT_IMAGE_PLACEHOLDER } from '~/constants/files';
 import { BLOCK_IDS } from '~/constants/pageBlocks';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
 import { useStore } from '~/store';
@@ -181,7 +182,7 @@ describe('VolunteerDonation', () => {
     expect(screen.getByTestId('collapsible-block')).toHaveAttribute('data-hidden', 'true');
     expect(screen.getByLabelText('Заголовок') as HTMLInputElement).toHaveValue('');
     expect(screen.getByLabelText('Підпис під фотографією') as HTMLInputElement).toHaveValue('');
-    expect(screen.getByTestId('image-preview-block')).toHaveAttribute('data-url', '/images/light-logo.svg');
+    expect(screen.getByTestId('image-preview-block')).toHaveAttribute('data-url', DEFAULT_IMAGE_PLACEHOLDER);
     expect(screen.getByTestId('configurable-list')).toHaveAttribute('data-count', '0');
   });
 

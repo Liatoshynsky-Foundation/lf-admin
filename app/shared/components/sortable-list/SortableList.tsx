@@ -4,10 +4,11 @@ import { ReactNode } from 'react';
 
 import { SortableBoard } from '../sortable-board/SortableBoard';
 import { SortableContainer } from '../sortable-container/SortableContainer';
+import { SortableItemId } from '~/types/common';
 
 interface SortableListProps {
   id: string;
-  items: string[];
+  items: SortableItemId[];
   onDragEnd: (event: DragEndEvent) => void;
   children: ReactNode;
   strategy?: SortingStrategy;

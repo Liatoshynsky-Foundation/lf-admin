@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { CarouselImageCard, CarouselImageData } from './CarouselImageCard';
+import { DEFAULT_IMAGE_PLACEHOLDER } from '~/constants/files';
 
 jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
   ImagePreviewBlock: ({ imageUrl, fileName, onChangeImage, initialCrop }: any) => (
@@ -97,7 +98,7 @@ describe('CarouselImageCard', () => {
     const bareImage: CarouselImageData = { id: 9, src: '', alt: {} as any };
     render(<CarouselImageCard image={bareImage} currentLocale="uk" onChangeImage={mockOnChangeImage} />);
 
-    expect(screen.getByTestId('image-preview-block')).toHaveAttribute('data-url', '/images/light-logo.svg');
+    expect(screen.getByTestId('image-preview-block')).toHaveAttribute('data-url', DEFAULT_IMAGE_PLACEHOLDER);
     expect(screen.getByTestId('image-preview-block')).toHaveAttribute('data-filename', 'image');
   });
 

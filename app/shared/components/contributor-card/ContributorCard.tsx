@@ -4,6 +4,7 @@ import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
 import { styles } from './ContributorCard.styles';
+import { DEFAULT_IMAGE_PLACEHOLDER } from '~/constants/files';
 import { CROP_RATIOS } from '~/constants/publications';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { proseToText, textToProse } from '~/lib/utils/prose';
@@ -54,7 +55,7 @@ export const ContributorCard = ({
   return (
     <Stack sx={styles.cardContainer}>
       <ImagePreviewBlock
-        imageUrl={contributor.photo.generatedSrc || contributor.photo.src || '/images/light-logo.svg'}
+        imageUrl={contributor.photo.generatedSrc || contributor.photo.src || DEFAULT_IMAGE_PLACEHOLDER  }
         initialCrop={contributor.photo.crop}
         aspectRatio={CROP_RATIOS.TEAM_AVATAR}
         onChangeImage={handleChangeImage}

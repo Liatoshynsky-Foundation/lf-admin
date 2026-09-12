@@ -3,6 +3,7 @@ import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
 import { ContributorCard } from './ContributorCard';
+import { DEFAULT_IMAGE_PLACEHOLDER } from '~/constants/files';
 import { CropResult } from '~/types/common';
 
 interface MockCustomTextFieldProps {
@@ -167,7 +168,7 @@ describe('ContributorCard', () => {
     });
 
     const img = screen.getByTestId('preview-img') as HTMLImageElement;
-    expect(img.src).toContain('/images/light-logo.svg');
+    expect(img.src).toContain(DEFAULT_IMAGE_PLACEHOLDER);
   });
 
   it('should call onChangePhoto with updated photo configurations when uploading an image file asset', () => {
