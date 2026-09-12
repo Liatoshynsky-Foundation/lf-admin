@@ -1,12 +1,8 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
-import {
-  INITIAL_PDF_ENTRY,
-  PDF_MIME_TYPE,
-  PdfEntry,
-} from '~/constants/archive';
-import { CASE_VALIDATION_MESSAGES } from '~/constants/case';
+import { INITIAL_PDF_ENTRY, PDF_MIME_TYPE, PdfEntry } from '~/constants/archive';
+import { CASE_INTEGER_MAX, CASE_VALIDATION_MESSAGES } from '~/constants/case';
 
 export interface ArchiveCaseInitialData {
   descriptionNumber?: string;
@@ -38,13 +34,80 @@ export interface UseArchiveCaseModalProps {
   onSave?: (data: ArchiveCaseSaveData) => Promise<void> | void;
 }
 
+const validateNumber = (value: string, required: string, invalid: string, negative: string, notNumber: string) => {
+  if (!value.trim()) return required;
+  if (/^-\d+$/.test(value.trim())) return negative;
+  if (/^[1-9]\d*$/.test(value.trim())) {
+    const numericValue = Number(value.trim());
+    return Number.isSafeInteger(numericValue) && numericValue <= CASE_INTEGER_MAX ? undefined : invalid;
+  }
+  if (/^0+$/.test(value.trim())) return negative;
+  return /[a-zа-яіїєґ]/i.test(value) ? notNumber : invalid;
+};
+
+const validateCaseForm = (
+  descriptionNumber: string,
+  caseNumber: string,
+  sheetsNumber: string,
+  caseName: string,
+  caseDate: string,
+  caseDescriptions: string,
+  detailedCaseDescription: string
+) => {
+  const errors: Record<string, string> = {};
+
+  const descriptionError = validateNumber(
+    descriptionNumber,
+    CASE_VALIDATION_MESSAGES.descriptionNumberRequired,
+    CASE_VALIDATION_MESSAGES.descriptionNumberInvalid,
+    CASE_VALIDATION_MESSAGES.descriptionNumberNegative,
+    CASE_VALIDATION_MESSAGES.descriptionNumberNotNumber
+  );
+  const caseError = validateNumber(
+    caseNumber,
+    CASE_VALIDATION_MESSAGES.caseNumberRequired,
+    CASE_VALIDATION_MESSAGES.caseNumberInvalid,
+    CASE_VALIDATION_MESSAGES.caseNumberNegative,
+    CASE_VALIDATION_MESSAGES.caseNumberNotNumber
+  );
+  const sheetsError = validateNumber(
+    sheetsNumber,
+    CASE_VALIDATION_MESSAGES.sheetsNumberRequired,
+    CASE_VALIDATION_MESSAGES.sheetsNumberInvalid,
+    CASE_VALIDATION_MESSAGES.sheetsNumberNegative,
+    CASE_VALIDATION_MESSAGES.sheetsNumberNotNumber
+  );
+
+  if (descriptionError) errors.descriptionNumber = descriptionError;
+  if (caseError) errors.caseNumber = caseError;
+  if (sheetsError) errors.sheetsNumber = sheetsError;
+
+  if (!caseName.trim()) errors.caseName = CASE_VALIDATION_MESSAGES.caseNameRequired;
+  else if (caseName.length > 150) errors.caseName = CASE_VALIDATION_MESSAGES.caseNameMaxLength;
+
+  if (!caseDate.trim()) errors.caseDate = CASE_VALIDATION_MESSAGES.caseDateRequired;
+  else if (caseDate.length > 150) errors.caseDate = CASE_VALIDATION_MESSAGES.caseDateMaxLength;
+
+  if (!caseDescriptions.trim()) errors.caseDescriptions = CASE_VALIDATION_MESSAGES.caseDescriptionsRequired;
+  else if (caseDescriptions.length > 300)
+    errors.caseDescriptions = CASE_VALIDATION_MESSAGES.caseDescriptionsMaxLength;
+
+  if (detailedCaseDescription.length > 1000) {
+    errors.detailedCaseDescription = CASE_VALIDATION_MESSAGES.detailedCaseDescriptionMaxLength;
+  }
+
+  return errors;
+};
+
 export const useArchiveCaseModal = ({ setIsOpen, initialData, onSave }: UseArchiveCaseModalProps) => {
   const [descriptionNumber, setDescriptionNumber] = useState(initialData?.descriptionNumber ?? '');
   const [caseNumber, setCaseNumber] = useState(initialData?.caseNumber ?? '');
   const [sheetsNumber, setSheetsNumber] = useState(initialData?.sheetsNumber ?? '');
   const [caseDate, setCaseDate] = useState(initialData?.caseDate ?? '');
   const [currentPdfFile, setCurrentPdfFile] = useState<PdfEntry>(initialData?.currentPdfFile ?? INITIAL_PDF_ENTRY);
-  const [detailedCaseDescription, setDetailedCaseDescription] = useState<string>(initialData?.detailedCaseDescription ?? '');
+  const [detailedCaseDescription, setDetailedCaseDescription] = useState<string>(
+    initialData?.detailedCaseDescription ?? ''
+  );
   const [caseName, setCaseName] = useState<string>(initialData?.caseName ?? '');
   const [caseDescriptions, setCaseDescriptions] = useState<string>(initialData?.caseDescriptions ?? '');
 
@@ -62,9 +125,25 @@ export const useArchiveCaseModal = ({ setIsOpen, initialData, onSave }: UseArchi
     setCaseDescriptions(initialData?.caseDescriptions ?? '');
   }, [initialData]);
 
-  const isDirty = Boolean(descriptionNumber.trim() || caseNumber.trim() || sheetsNumber.trim() || caseDate.trim() || currentPdfFile.fileName || detailedCaseDescription.trim() || caseName.trim() || caseDescriptions.trim());
-  
-  const isFormValid = Boolean(descriptionNumber.trim() && caseNumber.trim() && caseName.trim() && sheetsNumber.trim() && caseDate.trim() && caseDescriptions.trim());
+  const isDirty = Boolean(
+    descriptionNumber.trim() ||
+      caseNumber.trim() ||
+      sheetsNumber.trim() ||
+      caseDate.trim() ||
+      currentPdfFile.fileName ||
+      detailedCaseDescription.trim() ||
+      caseName.trim() ||
+      caseDescriptions.trim()
+  );
+
+  const isFormValid = Boolean(
+    descriptionNumber.trim() &&
+      caseNumber.trim() &&
+      caseName.trim() &&
+      sheetsNumber.trim() &&
+      caseDate.trim() &&
+      caseDescriptions.trim()
+  );
 
   const clearInputs = () => {
     setDescriptionNumber('');
@@ -84,29 +163,16 @@ export const useArchiveCaseModal = ({ setIsOpen, initialData, onSave }: UseArchi
   };
 
   const handleSave = async () => {
-    const nextErrors: Record<string, string> = {};
-    const validateNumber = (
-      value: string,
-      required: string,
-      invalid: string,
-      negative: string,
-      notNumber: string
-    ) => {
-      if (!value.trim()) return required;
-      if (/^-\d+$/.test(value.trim())) return negative;
-      if (/^[1-9]\d*$/.test(value.trim())) return undefined;
-      if (/^0+$/.test(value.trim())) return negative;
-      return /[a-zа-яіїєґ]/i.test(value) ? notNumber : invalid;
-    };
-    const descriptionError = validateNumber(descriptionNumber, CASE_VALIDATION_MESSAGES.descriptionNumberRequired, CASE_VALIDATION_MESSAGES.descriptionNumberInvalid, CASE_VALIDATION_MESSAGES.descriptionNumberNegative, CASE_VALIDATION_MESSAGES.descriptionNumberNotNumber);
-    const caseError = validateNumber(caseNumber, CASE_VALIDATION_MESSAGES.caseNumberRequired, CASE_VALIDATION_MESSAGES.caseNumberInvalid, CASE_VALIDATION_MESSAGES.caseNumberNegative, CASE_VALIDATION_MESSAGES.caseNumberNotNumber);
-    const sheetsError = validateNumber(sheetsNumber, CASE_VALIDATION_MESSAGES.sheetsNumberRequired, CASE_VALIDATION_MESSAGES.sheetsNumberInvalid, CASE_VALIDATION_MESSAGES.sheetsNumberNegative, CASE_VALIDATION_MESSAGES.sheetsNumberNotNumber);
-    if (descriptionError) nextErrors.descriptionNumber = descriptionError;
-    if (caseError) nextErrors.caseNumber = caseError;
-    if (sheetsError) nextErrors.sheetsNumber = sheetsError;
-    if (!caseName.trim()) nextErrors.caseName = CASE_VALIDATION_MESSAGES.caseNameRequired;
-    if (!caseDate.trim()) nextErrors.caseDate = CASE_VALIDATION_MESSAGES.caseDateRequired;
-    if (!caseDescriptions.trim()) nextErrors.caseDescriptions = CASE_VALIDATION_MESSAGES.caseDescriptionsRequired;
+    const nextErrors = validateCaseForm(
+      descriptionNumber,
+      caseNumber,
+      sheetsNumber,
+      caseName,
+      caseDate,
+      caseDescriptions,
+      detailedCaseDescription
+    );
+
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
 
@@ -154,7 +220,7 @@ export const useArchiveCaseModal = ({ setIsOpen, initialData, onSave }: UseArchi
   };
 
   const handleApplyPdf = ({
-    uploadResult,
+    uploadResult
   }: {
     uploadResult?: { filename?: string; url?: string; mimeType?: string } | null;
   }) => {
@@ -163,7 +229,7 @@ export const useArchiveCaseModal = ({ setIsOpen, initialData, onSave }: UseArchi
       ...prev,
       fileName: uploadResult.filename ?? null,
       url: uploadResult.url ?? null,
-      mimeType: uploadResult.mimeType ?? null,
+      mimeType: uploadResult.mimeType ?? null
     }));
   };
 
@@ -201,6 +267,6 @@ export const useArchiveCaseModal = ({ setIsOpen, initialData, onSave }: UseArchi
     handleSubmit,
     handleSave,
     handleCancel,
-    clearInputs,
+    clearInputs
   };
 };

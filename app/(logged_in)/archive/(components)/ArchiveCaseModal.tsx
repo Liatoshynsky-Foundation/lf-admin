@@ -78,15 +78,13 @@ export const ArchiveCaseModal = ({ isOpen, setIsOpen, mode = 'create', initialDa
         detailedCaseDescription: input.contentDescription
           ? { uk: input.contentDescription, en: input.contentDescription }
           : undefined,
-        ...(input.pdfUrl
+        pdfFile: input.pdfUrl
           ? {
-            pdfFile: {
-              filename: input.pdfUrl.split('/').pop() ?? 'document.pdf',
-              url: input.pdfUrl,
-              mimeType: 'application/pdf'
-            }
+            filename: input.pdfUrl.split('/').pop() ?? 'document.pdf',
+            url: input.pdfUrl,
+            mimeType: 'application/pdf'
           }
-          : {})
+          : null
       };
 
       if (caseId) {

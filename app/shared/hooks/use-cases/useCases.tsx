@@ -16,7 +16,7 @@ const statusMap: Record<string, BaseContentStatuses> = {
 };
 
 export function useAllCases(filters?: CaseFiltersInput | null, options: QueryHookOptions = {}) {
-  const { data, loading, error } = useAllCasesQuery({
+  const { data, loading, error, refetch } = useAllCasesQuery({
     variables: { filters },
     fetchPolicy: 'network-only',
     skip: options.skip
@@ -35,9 +35,20 @@ export function useAllCases(filters?: CaseFiltersInput | null, options: QueryHoo
       status,
       dates: c.caseDate.uk,
       updatedAt: c.updatedAt,
-      createdAt: c.createdAt
+      createdAt: c.createdAt,
+      editCaseDate: c.caseDate.uk,
+      editCaseDescriptions: c.caseDescriptions.uk,
+      detailedCaseDescription: c.detailedCaseDescription?.uk ?? '',
+      pdfFile: c.pdfFile
+        ? {
+          name: c.pdfFile.filename,
+          fileName: c.pdfFile.filename,
+          url: c.pdfFile.url,
+          mimeType: c.pdfFile.mimeType
+        }
+        : undefined
     };
   });
 
-  return { cases, loading, error };
+  return { cases, loading, error, refetch };
 }

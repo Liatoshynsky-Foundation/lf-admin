@@ -24,8 +24,12 @@ type TableLayoutProps<TGroup, TSub, TPlain> = {
 };
 
 const mockDeleteFund = jest.fn();
+const mockDeleteCase = jest.fn();
+const mockUpdateCase = jest.fn();
 jest.mock('~/shared/hooks/use-funds/useFunds', () => ({
   useDeleteFund: () => [mockDeleteFund],
+  useDeleteCase: () => [mockDeleteCase],
+  useUpdateCase: () => [mockUpdateCase],
 }));
 
 jest.mock('~/shared/components/empty-state', () => ({

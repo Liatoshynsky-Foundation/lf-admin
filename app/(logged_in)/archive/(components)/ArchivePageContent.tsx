@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -58,9 +58,71 @@ interface ArchivePageContentProps {
   activeTab: ArchiveTabValue;
 }
 
+interface PaginationParams {
+  page: number;
+  showFunds: boolean;
+  showCases: boolean;
+  isAllTab: boolean;
+  totalPages: number;
+  knownFundPageCount: number;
+  knownFundTotal: number;
+  sortedCasesLength: number;
+}
+
+const getPaginationData = ({
+  page,
+  showFunds,
+  showCases,
+  isAllTab,
+  totalPages,
+  knownFundPageCount,
+  knownFundTotal,
+  sortedCasesLength
+}: PaginationParams) => {
+  const fundPageCount = showFunds ? totalPages || knownFundPageCount : 0;
+
+  const remainder = knownFundTotal % ARCHIVE_ITEMS_PER_PAGE;
+  const fallbackItemCount = remainder || ARCHIVE_ITEMS_PER_PAGE;
+  const lastFundItemCount = fundPageCount > 0 && knownFundTotal > 0 ? fallbackItemCount : 0;
+
+  const firstCasePageCapacity =
+    fundPageCount > 0 ? Math.max(0, ARCHIVE_ITEMS_PER_PAGE - lastFundItemCount) : ARCHIVE_ITEMS_PER_PAGE;
+
+  const remainingCasesAfterFunds = Math.max(0, sortedCasesLength - firstCasePageCapacity);
+  const isAllTabWithFunds = Boolean(isAllTab && fundPageCount > 0);
+  const casesToPaginate = isAllTabWithFunds ? remainingCasesAfterFunds : sortedCasesLength;
+  const casePageCount = showCases ? Math.ceil(casesToPaginate / ARCHIVE_ITEMS_PER_PAGE) : 0;
+
+  const combinedPageCount = fundPageCount > 0 ? fundPageCount + casePageCount : casePageCount;
+  const totalArchivePages = isAllTab ? combinedPageCount : casePageCount || fundPageCount;
+
+  const isMissingFunds = Boolean(!showFunds || page > fundPageCount);
+  const isCasePage = Boolean(showCases && isMissingFunds);
+  const isBoundaryPage = Boolean(isAllTab && page === fundPageCount);
+
+  const allTabCaseStartOffset = isBoundaryPage
+    ? 0
+    : firstCasePageCapacity + (page - fundPageCount - 1) * ARCHIVE_ITEMS_PER_PAGE;
+  const caseStart = isAllTabWithFunds ? allTabCaseStartOffset : (page - 1) * ARCHIVE_ITEMS_PER_PAGE;
+
+  const caseLimit = isBoundaryPage ? firstCasePageCapacity : ARCHIVE_ITEMS_PER_PAGE;
+  const isCaseVisible = Boolean(showCases && (isCasePage || isBoundaryPage));
+
+  return {
+    fundPageCount,
+    totalArchivePages,
+    isCasePage,
+    caseStart,
+    caseLimit,
+    isCaseVisible
+  };
+};
+
 export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
   const { searchProps, statusFilterProps, appliedSearch } = useArchiveFiltering();
   const [page, setPage] = useState(1);
+  const [knownFundPageCount, setKnownFundPageCount] = useState(0);
+  const [knownFundTotal, setKnownFundTotal] = useState(0);
   const [publishCandidate, setPublishCandidate] = useState<Fund | null>(null);
   const [publishedOverrides, setPublishedOverrides] = useState<Record<string, string>>({});
   const [updateFund] = useUpdateFund();
@@ -75,8 +137,16 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
   const search = appliedSearch?.trim() || undefined;
   const statuses = isAllStatus ? undefined : (filterValues as FundStatus[] | undefined);
 
-  const { funds, totalPages, loading: fundsLoading, error: fundsError, refetch } = usePaginatedFunds(
-    page,
+  const fundRequestPage = knownFundPageCount > 0 ? Math.min(page, knownFundPageCount) : page;
+  const {
+    funds,
+    total,
+    totalPages,
+    loading: fundsLoading,
+    error: fundsError,
+    refetch
+  } = usePaginatedFunds(
+    fundRequestPage,
     ARCHIVE_ITEMS_PER_PAGE,
     {
       search,
@@ -86,20 +156,27 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
     { skip: !showFunds }
   );
 
-  const { cases, loading: casesLoading, error: casesError } = useAllCases(
-    { search, statuses: statuses as CaseStatus[] | undefined },
-    { skip: !showCases }
-  );
+  const {
+    cases,
+    loading: casesLoading,
+    error: casesError,
+    refetch: refetchCases
+  } = useAllCases({ search, statuses: statuses as CaseStatus[] | undefined }, { skip: !showCases });
 
   useEffect(() => {
     setPage(1);
+    setKnownFundPageCount(0);
+    setKnownFundTotal(0);
   }, [appliedSearch, filterValues]);
 
   useEffect(() => {
-    if (page > totalPages && totalPages > 0) {
-      setPage(totalPages);
+    if (totalPages > 0) {
+      setKnownFundPageCount(totalPages);
     }
-  }, [page, totalPages]);
+    if (total > 0) {
+      setKnownFundTotal(total);
+    }
+  }, [total, totalPages]);
 
   const handlePageChange = (_: ChangeEvent<unknown>, value: number) => {
     setPage(value);
@@ -117,11 +194,34 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
   const sortedFunds = [...fundsWithOverrides].sort((a, b) => Number(a.fundNumber) - Number(b.fundNumber));
   const sortedCases = [...cases].sort((a, b) => Number(a.caseNumber) - Number(b.caseNumber));
 
+  const paginationData = getPaginationData({
+    page,
+    showFunds,
+    showCases,
+    isAllTab,
+    totalPages,
+    knownFundPageCount,
+    knownFundTotal,
+    sortedCasesLength: sortedCases.length
+  });
+
+  const visibleFunds = paginationData.isCasePage ? [] : sortedFunds;
+  const visibleCases = paginationData.isCaseVisible
+    ? sortedCases.slice(paginationData.caseStart, paginationData.caseStart + paginationData.caseLimit)
+    : [];
+  const totalArchivePages = paginationData.totalArchivePages;
+
+  useEffect(() => {
+    if (totalArchivePages > 0 && page > totalArchivePages) {
+      setPage(totalArchivePages);
+    }
+  }, [page, totalArchivePages]);
+
   const hasActiveSearch = Boolean(appliedSearch);
   const hasActiveStatusFilter = !isAllStatus;
   const hasActiveCriteria = hasActiveSearch || hasActiveStatusFilter;
-  const hasFunds = sortedFunds.length > 0;
-  const hasCases = sortedCases.length > 0;
+  const hasFunds = visibleFunds.length > 0;
+  const hasCases = visibleCases.length > 0;
   const isAllTabLoading = isAllTab && (fundsLoading || casesLoading);
   const isAllTabError = isAllTab && Boolean(fundsError || casesError);
 
@@ -179,24 +279,22 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
 
   const renderFundsSection = () => {
     if (fundsLoading) {
-      return (
-        <EmptyState title={FUNDS_LOADING_STATE_TITLE} description={FUNDS_LOADING_STATE_DESCRIPTION} />
-      );
+      return <EmptyState title={FUNDS_LOADING_STATE_TITLE} description={FUNDS_LOADING_STATE_DESCRIPTION} />;
     }
 
     if (fundsError) {
-      return (
-        <EmptyState title={FUNDS_ERROR_STATE_TITLE} description={FUNDS_ERROR_STATE_DESCRIPTION} />
-      );
+      return <EmptyState title={FUNDS_ERROR_STATE_TITLE} description={FUNDS_ERROR_STATE_DESCRIPTION} />;
     }
 
-    if (hasFunds) {
+    if (hasFunds || hasCases) {
       return (
         <FundsTable
-          funds={sortedFunds}
+          funds={visibleFunds}
+          cases={visibleCases}
           hasActiveSearch={hasActiveSearch}
           hasActiveStatusFilter={hasActiveStatusFilter}
           onDeleted={refetch}
+          onCaseChanged={refetchCases}
           onPublish={handlePublishRequest}
         />
       );
@@ -215,30 +313,14 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
 
   const renderCasesSection = () => {
     if (casesLoading) {
-      return (
-        <EmptyState title={CASES_LOADING_STATE_TITLE} description={CASES_LOADING_STATE_DESCRIPTION} />
-      );
+      return <EmptyState title={CASES_LOADING_STATE_TITLE} description={CASES_LOADING_STATE_DESCRIPTION} />;
     }
 
     if (casesError) {
-      return (
-        <EmptyState title={CASES_ERROR_STATE_TITLE} description={CASES_ERROR_STATE_DESCRIPTION} />
-      );
+      return <EmptyState title={CASES_ERROR_STATE_TITLE} description={CASES_ERROR_STATE_DESCRIPTION} />;
     }
 
-    if (hasCases) {
-      return (
-        <Box component="ul" data-testid="cases-list" sx={styles.casesList}>
-          {sortedCases.map((archiveCase) => (
-            <Box component="li" key={archiveCase.id} sx={styles.caseItem}>
-              <Typography variant="textMd">
-                {archiveCase.caseNumber} — {archiveCase.name}
-              </Typography>
-            </Box>
-          ))}
-        </Box>
-      );
-    }
+    if (hasCases) return null;
 
     if (isAllTab) {
       return null;
@@ -246,10 +328,7 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
 
     if (hasActiveCriteria) {
       return (
-        <EmptyState
-          title={CASES_EMPTY_STATE_NO_RESULTS_TITLE}
-          description={CASES_EMPTY_STATE_NO_RESULTS_DESCRIPTION}
-        />
+        <EmptyState title={CASES_EMPTY_STATE_NO_RESULTS_TITLE} description={CASES_EMPTY_STATE_NO_RESULTS_DESCRIPTION} />
       );
     }
 
@@ -258,23 +337,22 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
 
   const renderSections = () => {
     if (isAllTabLoading) {
-      return (
-        <EmptyState title={ARCHIVE_LOADING_STATE_TITLE} description={ARCHIVE_LOADING_STATE_DESCRIPTION} />
-      );
+      return <EmptyState title={ARCHIVE_LOADING_STATE_TITLE} description={ARCHIVE_LOADING_STATE_DESCRIPTION} />;
     }
 
     if (isAllTabError) {
-      return (
-        <EmptyState title={ARCHIVE_ERROR_STATE_TITLE} description={ARCHIVE_ERROR_STATE_DESCRIPTION} />
-      );
+      return <EmptyState title={ARCHIVE_ERROR_STATE_TITLE} description={ARCHIVE_ERROR_STATE_DESCRIPTION} />;
     }
 
-    return (
-      <>
-        {showFunds && renderFundsSection()}
-        {showCases && renderCasesSection()}
-      </>
-    );
+    if (!isAllTab && (casesLoading || casesError)) {
+      return renderCasesSection();
+    }
+
+    if (hasFunds || hasCases) {
+      return renderFundsSection();
+    }
+
+    return activeTab === 'cases' ? renderCasesSection() : renderFundsSection();
   };
 
   return (
@@ -293,8 +371,8 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
 
       <Box sx={styles.sections}>{renderSections()}</Box>
 
-      {showFunds && totalPages > 1 && (
-        <Pagination totalPages={totalPages} currentPage={page} onPageChange={handlePageChange} />
+      {totalArchivePages > 1 && (
+        <Pagination totalPages={totalArchivePages} currentPage={page} onPageChange={handlePageChange} />
       )}
 
       <PublishEmptyFundDialog

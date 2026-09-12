@@ -2,6 +2,8 @@ import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 export type CaseStatus = BaseContentStatuses;
 
+export const CASE_INTEGER_MAX = 2 ** 31 - 1;
+
 export type CaseListItem = {
   id: string;
   fundId: string;
