@@ -11,6 +11,8 @@ export const styles = {
     gripPosition: GripPosition = 'center'
   ) => ({
     display: gripHandle ? 'flex' : 'block',
+    width: '100%',
+    minWidth: 0,
     alignItems: gripPosition === 'top' ? 'flex-start' : 'center',
     gap: gripHandle ? '12px' : '0px',
     transform: CSS.Transform.toString(transform),

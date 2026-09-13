@@ -9,6 +9,7 @@ import {
 } from '../VolunteerDonationMethodCard/VolunteerDonationMethodCard';
 import { styles } from './VolunteerDonation.styles';
 import ConfigurableList from '~/components/configurable-list/ConfigurableList';
+import { DEFAULT_IMAGE_PLACEHOLDER } from '~/constants/files';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { CROP_RATIOS } from '~/constants/publications';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
@@ -99,7 +100,7 @@ export const VolunteerDonation = () => {
 
         <Typography sx={styles.sectionTitle}>Фотографія</Typography>
         <ImagePreviewBlock
-          imageUrl={block.imageSrc || '/images/light-logo.svg'}
+          imageUrl={block.imageSrc || DEFAULT_IMAGE_PLACEHOLDER}
           fileName="volunteer-donation-image"
           onChangeImage={handleChangeImage}
           direction="column"

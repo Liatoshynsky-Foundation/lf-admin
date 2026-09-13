@@ -3,11 +3,15 @@
 import { Stack } from '@mui/material';
 import React from 'react';
 
+import { styles } from './CarouselImageCard.styles';
+import { DEFAULT_IMAGE_PLACEHOLDER } from '~/constants/files';
 import { CROP_RATIOS } from '~/constants/publications';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { ImagePreviewBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
 import { getEventValue } from '~/src/shared/utils/formHelpers';
 import { CropResult } from '~/types/common';
+
+const COLUMN_WIDTH = '50%';
 
 export type CarouselImageData = {
   id: string | number;
@@ -54,19 +58,28 @@ export const CarouselImageCard = ({ image, currentLocale, onChangeImage }: Carou
   };
 
   return (
-    <Stack display="flex" flexDirection="row" gap="16px" width="100%">
-      <ImagePreviewBlock
-        key={`preview-${image.id}-${image.crop ? 'cropped' : 'raw'}`}
-        imageUrl={image.src || '/images/light-logo.svg'}
-        fileName={image.alt?.[currentLocale] || 'image'}
-        initialCrop={image.crop ?? undefined}
-        aspectRatio={CROP_RATIOS.CAROUSEL_BIG}
-        onChangeImage={handleChangeFile}
-        direction="column"
-        buttonSpacing="8px"
-        stackSpacing="24px"
-      />
-      <Stack direction="column" gap={2} width="100%" mt={2}>
+    <Stack
+      display="flex"
+      flexDirection="row"
+      gap="16px"
+      width="100%"
+      minWidth={0}
+      sx={styles.card}
+    >
+      <Stack sx={styles.preview} gap={2} width={COLUMN_WIDTH}>
+        <ImagePreviewBlock
+          key={`preview-${image.id}-${image.crop ? 'cropped' : 'raw'}`}
+          imageUrl={image.src || DEFAULT_IMAGE_PLACEHOLDER}
+          fileName={image.alt?.[currentLocale] || 'image'}
+          initialCrop={image.crop ?? undefined}
+          aspectRatio={CROP_RATIOS.CAROUSEL_BIG}
+          onChangeImage={handleChangeFile}
+          direction="column"
+          buttonSpacing="8px"
+          stackSpacing="24px"
+        />
+      </Stack>
+      <Stack direction="column" gap={2} width={COLUMN_WIDTH} mt={2}>
         <CustomTextField
           fullWidth
           title="Альтернативний текст"

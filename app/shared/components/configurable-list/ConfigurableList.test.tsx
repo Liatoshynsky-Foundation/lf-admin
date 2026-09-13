@@ -12,7 +12,26 @@ jest.mock('~/public/icons/trash.svg', () => {
   return TrashIcon;
 });
 
+jest.mock('~/lib/utils/sortableDragEndHelper', () => ({
+  handleSortableDragEnd: jest.fn((_event, _items, onReorder) => onReorder([]))
+}));
+
+jest.mock('~/shared/components/sortable-list/SortableList', () => ({
+  SortableList: ({
+    children,
+    onDragEnd
+  }: {
+    children: React.ReactNode;
+    onDragEnd: (event: unknown) => void;
+  }) => (
+    <div data-testid="sortable-list" onClick={() => onDragEnd({})}>
+      {children}
+    </div>
+  )
+}));
+
 import ConfigurableList from './ConfigurableList';
+import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import { ConfigurableListItem } from '~/types/accordionBlocks';
 
 const items: ConfigurableListItem[] = [
@@ -191,5 +210,88 @@ describe('ConfigurableList', () => {
     );
     const separators = screen.queryAllByTestId('separator');
     expect(separators).toHaveLength(0);
+  });
+
+  it('should call onDelete with correct id when renderItem invokes params.onDelete', () => {
+    const onDelete = jest.fn();
+    const renderItemWithDelete = ({
+      item,
+      onDelete: paramsOnDelete
+    }: {
+      item: ConfigurableListItem;
+      onDelete: () => void;
+    }) => (
+      <button data-testid={`param-delete-${item.id}`} onClick={paramsOnDelete}>
+        {item.value}
+      </button>
+    );
+    render(
+      <ConfigurableList
+        items={items}
+        renderItem={renderItemWithDelete}
+        addBtnLabel="Add"
+        editable={true}
+        onCreate={jest.fn()}
+        onChange={jest.fn()}
+        onDelete={onDelete}
+      />
+    );
+    fireEvent.click(screen.getByTestId('param-delete-2'));
+    expect(onDelete).toHaveBeenCalledWith('2');
+  });
+
+  it('should render items within a SortableList when sortable=true', () => {
+    render(
+      <ConfigurableList
+        items={items}
+        renderItem={renderItem}
+        addBtnLabel="Add"
+        editable={true}
+        sortable={true}
+        onReorder={jest.fn()}
+        onCreate={jest.fn()}
+        onChange={jest.fn()}
+        onDelete={jest.fn()}
+      />
+    );
+    items.forEach((item) => {
+      expect(screen.getByTestId(`input-${item.id}`)).toBeInTheDocument();
+    });
+  });
+
+  it('should call handleSortableDragEnd on drag end when sortable=true', () => {
+    const onReorder = jest.fn();
+    render(
+      <ConfigurableList
+        items={items}
+        renderItem={renderItem}
+        addBtnLabel="Add"
+        editable={true}
+        sortable={true}
+        onReorder={onReorder}
+        onCreate={jest.fn()}
+        onChange={jest.fn()}
+        onDelete={jest.fn()}
+      />
+    );
+    fireEvent.click(screen.getByTestId('sortable-list'));
+    expect(handleSortableDragEnd).toHaveBeenCalledWith({}, items, onReorder);
+  });
+
+  it('should call handleSortableDragEnd with a no-op fallback when onReorder is not provided', () => {
+    render(
+      <ConfigurableList
+        items={items}
+        renderItem={renderItem}
+        addBtnLabel="Add"
+        editable={true}
+        sortable={true}
+        onCreate={jest.fn()}
+        onChange={jest.fn()}
+        onDelete={jest.fn()}
+      />
+    );
+    fireEvent.click(screen.getByTestId('sortable-list'));
+    expect(handleSortableDragEnd).toHaveBeenCalledWith({}, items, expect.any(Function));
   });
 });

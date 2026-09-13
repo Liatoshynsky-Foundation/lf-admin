@@ -113,3 +113,5 @@ export const isError = <T>(r: Result<T>): r is { ok: false; error: ErrorMessage 
 export interface WithHidden {
   hidden: boolean;
 }
+
+export type SortableItemId = string | number;

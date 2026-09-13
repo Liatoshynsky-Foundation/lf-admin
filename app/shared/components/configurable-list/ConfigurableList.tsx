@@ -5,7 +5,10 @@ import { Box, SxProps, Theme } from '@mui/material';
 import { styles } from './ConfigurableList.styles';
 import ItemWrapper from '~/components/configurable-list/item-wrapper/ItemWrapper';
 import Button from '~/ds-components/button/Button';
+import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import PlusIcon from '~/public/icons/plus.svg';
+import { SortableItemWrapper } from '~/shared/components/sortable-item-wrapper/SortableItemWrapper';
+import { SortableList } from '~/shared/components/sortable-list/SortableList';
 import { ConfigurableListItem } from '~/types/accordionBlocks';
 
 export interface RenderItemParams<T> {
@@ -23,6 +26,8 @@ export interface ConfigurableListProps<T extends ConfigurableListItem> {
   onCreate: () => void;
   onChange: (newValue: T) => void;
   onDelete: (id: T['id']) => void;
+  sortable?: boolean;
+  onReorder?: (newItems: T[]) => void;
   separator?: boolean;
   allowFirstItemDeletion?: boolean;
   addButtonSx?: SxProps<Theme>;
@@ -33,6 +38,8 @@ const ConfigurableList = <T extends ConfigurableListItem>({
   onChange,
   onCreate,
   onDelete,
+  sortable = false,
+  onReorder,
   renderItem,
   items,
   addBtnLabel,
@@ -42,25 +49,43 @@ const ConfigurableList = <T extends ConfigurableListItem>({
 }: ConfigurableListProps<T>) => {
   const withSeparator = (index: number) => Boolean(separator && index < items.length - 1);
 
-  const list = items.map((item, index) => (
-    <ItemWrapper
-      key={item.id}
-      editable={editable && (allowFirstItemDeletion || index !== 0)}
-      withSeparator={withSeparator(index)}
-      onDelete={() => onDelete(item.id)}
+  const list = items.map((item, index) => {
+    const content = (
+      <ItemWrapper
+        key={item.id}
+        editable={editable && (allowFirstItemDeletion || index !== 0)}
+        withSeparator={withSeparator(index)}
+        onDelete={() => onDelete(item.id)}
+      >
+        {renderItem({
+          item,
+          onChange: (newValue) => onChange(newValue),
+          onDelete: () => onDelete(item.id),
+          index
+        })}
+      </ItemWrapper>
+    );
+
+    return sortable ? (
+      <SortableItemWrapper key={item.id} id={item.id} gripHandle>
+        {content}
+      </SortableItemWrapper>
+    ) : content;
+  });
+
+  const listContent = sortable ? (
+    <SortableList
+      id="configurable-list"
+      items={items.map((item) => item.id)}
+      onDragEnd={(event) => handleSortableDragEnd(event, items, onReorder ?? (() => undefined))}
     >
-      {renderItem({
-        item,
-        onChange: (newValue) => onChange(newValue),
-        onDelete: () => onDelete(item.id),
-        index
-      })}
-    </ItemWrapper>
-  ));
+      {list}
+    </SortableList>
+  ) : list;
 
   return (
-    <Box sx={addButtonSx}>
-      <Box sx={styles.container}>{list}</Box>
+    <Box sx={{ width: '100%', ...addButtonSx }}>
+      <Box sx={styles.container}>{listContent}</Box>
       <Button
         sx={{ width: 'fit-content', mx: 'auto' }}
         startIcon={<PlusIcon />}

@@ -70,6 +70,8 @@ export const WarCarousel = () => {
         items={imagesList}
         addBtnLabel="Додати фотографію"
         editable
+        sortable
+        onReorder={updateImages}
         onCreate={handleAddImage}
         onChange={handleUpdateSingleImage}
         onDelete={handleRemoveImage}
