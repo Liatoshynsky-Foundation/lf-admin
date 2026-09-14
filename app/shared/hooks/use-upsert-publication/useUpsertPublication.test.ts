@@ -967,14 +967,7 @@ describe('useUpsertPublication Hook', () => {
 
   describe('hasUnsavedChanges', () => {
     it('should be false initially and true after modifying publishDate, and false if reverted to null', async () => {
-      const fetchedNewsData: FetchedPublicationData = {
-        adminTitle: 'Fetched Title',
-        newsDate: null,
-        title: { uk: 'UK', en: 'EN' },
-        description: { uk: 'UK D', en: 'EN D' },
-        allowIndexation: { uk: true, en: true },
-        coverImage: { src: 'img.png', crop: null, alt: { uk: '', en: '' } }
-      };
+      const fetchedNewsData = createFetchedNewsData({ newsDate: null, title: { uk: 'UK', en: 'EN' } });
 
       mockNewsQuery.mockReturnValue({ data: { newsById: fetchedNewsData }, loading: false });
 
