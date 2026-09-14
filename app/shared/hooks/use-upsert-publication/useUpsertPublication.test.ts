@@ -97,6 +97,33 @@ const setupPublication = (type: PublicationsItemType, adminTitle: string, id?: s
   return result;
 };
 
+const createFetchedNewsData = (overrides: Partial<FetchedPublicationData> = {}): FetchedPublicationData => ({
+  adminTitle: 'Fetched Title',
+  newsDate: '2024-01-01T12:00:00Z',
+  title: { uk: 'UK T', en: 'EN T' },
+  description: { uk: 'UK D', en: 'EN D' },
+  allowIndexation: { uk: true, en: true },
+  coverImage: { src: 'img.png', crop: null, alt: { uk: '', en: '' } },
+  ...overrides
+});
+
+const saveNewsDraftAndExpectCreation = async (result: ReturnType<typeof setupPublication>) => {
+  await act(async () => {
+    await result.current.handleSave(BaseContentStatuses.Draft);
+  });
+
+  expect(mockCreateNews).toHaveBeenCalledWith(
+    expect.objectContaining({
+      adminTitle: 'Valid News Title',
+      status: NewsStatus.Draft,
+      content: {
+        uk: { content: { blocks: [] } },
+        en: { content: { blocks: [] } }
+      }
+    })
+  );
+};
+
 describe('useUpsertPublication Hook', () => {
   let consoleErrorSpy: jest.SpyInstance;
 
@@ -127,14 +154,7 @@ describe('useUpsertPublication Hook', () => {
     });
 
     it('should initialize in Edit mode and populate state from fetched data', async () => {
-      const fetchedNewsData: FetchedPublicationData = {
-        adminTitle: 'Fetched Title',
-        newsDate: '2024-01-01T12:00:00Z',
-        title: { uk: 'UK T', en: 'EN T' },
-        description: { uk: 'UK D', en: 'EN D' },
-        allowIndexation: { uk: true, en: true },
-        coverImage: { src: 'img.png', crop: null, alt: { uk: '', en: '' } }
-      };
+      const fetchedNewsData = createFetchedNewsData();
 
       mockNewsQuery.mockReturnValue({ data: { newsById: fetchedNewsData }, loading: false });
 
@@ -150,14 +170,7 @@ describe('useUpsertPublication Hook', () => {
     });
 
     it('should initialize in Edit mode and populate adminTitle with an empty string', async () => {
-      const fetchedNewsData: FetchedPublicationData = {
-        adminTitle: '',
-        newsDate: '2024-01-01T12:00:00Z',
-        title: { uk: 'UK T', en: 'EN T' },
-        description: { uk: 'UK D', en: 'EN D' },
-        allowIndexation: { uk: true, en: true },
-        coverImage: { src: 'img.png', crop: null, alt: { uk: '', en: '' } }
-      };
+      const fetchedNewsData = createFetchedNewsData({ adminTitle: '' });
 
       mockNewsQuery.mockReturnValue({ data: { newsById: fetchedNewsData }, loading: false });
 
@@ -339,14 +352,7 @@ describe('useUpsertPublication Hook', () => {
       });
 
       it('should parse numeric timestamp string dates', async () => {
-        const fetchedNewsData: FetchedPublicationData = {
-          adminTitle: 'Timestamp News',
-          newsDate: '1704110400000',
-          title: { uk: 'UK T', en: 'EN T' },
-          description: { uk: 'UK D', en: 'EN D' },
-          allowIndexation: { uk: true, en: true },
-          coverImage: { src: 'img.png', crop: null, alt: { uk: '', en: '' } }
-        };
+        const fetchedNewsData = createFetchedNewsData({ adminTitle: 'Timestamp News', newsDate: '1704110400000' });
 
         mockNewsQuery.mockReturnValue({ data: { newsById: fetchedNewsData }, loading: false });
 
@@ -728,18 +734,7 @@ describe('useUpsertPublication Hook', () => {
     it('should NOT create a News publication and set canonical URL error if the error contains url_1', async () => {
       mockCreateNews.mockRejectedValue(new Error('E11000 url_1'));
       const result = setupPublication('news', 'Valid News Title');
-
-      await act(async () => {
-        await result.current.handleSave(BaseContentStatuses.Draft);
-      });
-
-      expect(mockCreateNews).toHaveBeenCalledWith(
-        expect.objectContaining({
-          adminTitle: 'Valid News Title',
-          status: NewsStatus.Draft,
-          content: { uk: { content: { blocks: [] } }, en: { content: { blocks: [] } } }
-        })
-      );
+      await saveNewsDraftAndExpectCreation(result);
 
       expect(result.current.canonicalUrlError).toBe('Публікація з таким canonical URL вже існує.');
       expect(mockToastError).not.toHaveBeenCalled();
@@ -748,18 +743,7 @@ describe('useUpsertPublication Hook', () => {
     it('should NOT create a News publication and show the error toast', async () => {
       mockCreateNews.mockRejectedValue(new Error('Error E11000'));
       const result = setupPublication('news', 'Valid News Title');
-
-      await act(async () => {
-        await result.current.handleSave(BaseContentStatuses.Draft);
-      });
-
-      expect(mockCreateNews).toHaveBeenCalledWith(
-        expect.objectContaining({
-          adminTitle: 'Valid News Title',
-          status: NewsStatus.Draft,
-          content: { uk: { content: { blocks: [] } }, en: { content: { blocks: [] } } }
-        })
-      );
+      await saveNewsDraftAndExpectCreation(result);
 
       expect(mockToastError).toHaveBeenCalledWith('Публікація з такими даними вже існує.');
       expect(result.current.canonicalUrlError).toBe('');
@@ -1016,14 +1000,7 @@ describe('useUpsertPublication Hook', () => {
     });
 
     it('should not crash when edited publishDate becomes invalid', async () => {
-      const fetchedNewsData: FetchedPublicationData = {
-        adminTitle: 'Fetched Title',
-        newsDate: '2024-01-01T12:00:00Z',
-        title: { uk: 'UK', en: 'EN' },
-        description: { uk: 'UK D', en: 'EN D' },
-        allowIndexation: { uk: true, en: true },
-        coverImage: { src: 'img.png', crop: null, alt: { uk: '', en: '' } }
-      };
+      const fetchedNewsData = createFetchedNewsData({ title: { uk: 'UK', en: 'EN' } });
 
       mockNewsQuery.mockReturnValue({ data: { newsById: fetchedNewsData }, loading: false });
 
