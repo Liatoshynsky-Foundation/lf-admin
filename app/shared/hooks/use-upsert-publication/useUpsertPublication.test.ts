@@ -699,11 +699,7 @@ describe('useUpsertPublication Hook', () => {
 
       act(() => {
         result.current.setAdminTitle('Internal Admin Title');
-        const seoState = createValidSeoState('news');
-        seoState.ogImage = '';
-        seoState.meta.uk.altText = { uk: '', en: '' };
-        seoState.meta.en.altText = { uk: '', en: '' };
-        result.current.setSeoValue(seoState);
+        result.current.setSeoValue(createValidSeoState('news'));
       });
 
       await act(async () => {
