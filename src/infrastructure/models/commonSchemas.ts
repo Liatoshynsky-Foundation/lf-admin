@@ -56,9 +56,9 @@ export const translatedBooleanSchema = new mongoose.Schema(
 
 export const localizedImageSchema = new mongoose.Schema(
   {
-    src: { type: String, required: true },
-    alt: translatedFieldSchema,
-    caption: translatedFieldSchema,
+    src: { type: String, required: false, default: '' },
+    alt: translatedFieldUnrequiredSchema,
+    caption: translatedFieldUnrequiredSchema,
     isTmp: { type: Boolean, default: false },
     crop: { type: cropRectSchema, default: null }
   },

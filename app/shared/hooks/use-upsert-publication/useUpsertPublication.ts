@@ -308,12 +308,12 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       allowIndexation: { uk: seoValue.allowIndexing.uk, en: seoValue.allowIndexing.en },
       publishedAt: getDateIsoString(publishDate),
       coverImage: {
-        src: seoValue.ogImage || adminTitle,
+        src: seoValue.ogImage || '',
         alt: {
-          uk: ukMeta.altText?.uk?.trim() || adminTitle,
-          en: enMeta.altText?.en?.trim() || adminTitle
+          uk: ukMeta.altText?.uk?.trim() || '',
+          en: enMeta.altText?.en?.trim() || ''
         },
-        caption: { uk: adminTitle, en: adminTitle },
+        caption: { uk: '', en: '' },
         ...buildCoverImageCropPayload(crop)
       }
     };

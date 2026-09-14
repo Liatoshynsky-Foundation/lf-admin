@@ -693,6 +693,41 @@ describe('useUpsertPublication Hook', () => {
       expect(result.current.canonicalUrlError).toBe('');
     });
 
+    it('should not fallback to adminTitle for coverImage fields', async () => {
+      mockCreateNews.mockResolvedValue({ data: { createNews: { id: 'new-news-100' } } });
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
+
+      act(() => {
+        result.current.setAdminTitle('Internal Admin Title');
+        const seoState = createValidSeoState('news');
+        seoState.ogImage = '';
+        seoState.meta.uk.altText = { uk: '', en: '' };
+        seoState.meta.en.altText = { uk: '', en: '' };
+        result.current.setSeoValue(seoState);
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(mockCreateNews).toHaveBeenCalledWith(
+        expect.objectContaining({
+          adminTitle: 'Internal Admin Title',
+          coverImage: expect.objectContaining({
+            src: '',
+            alt: {
+              uk: '',
+              en: ''
+            },
+            caption: {
+              uk: '',
+              en: ''
+            }
+          })
+        })
+      );
+    });
+
     it('should NOT create a News publication and set canonical URL error if the error contains url_1', async () => {
       mockCreateNews.mockRejectedValue(new Error('E11000 url_1'));
       const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
