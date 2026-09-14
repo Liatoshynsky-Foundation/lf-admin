@@ -86,6 +86,17 @@ const createValidSeoState = (type: PublicationsItemType): SeoBlockValue => ({
   allowIndexing: { uk: true, en: true }
 });
 
+const setupNewsCreation = (adminTitle: string) => {
+  const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
+
+  act(() => {
+    result.current.setAdminTitle(adminTitle);
+    result.current.setSeoValue(createValidSeoState('news'));
+  });
+
+  return result;
+};
+
 describe('useUpsertPublication Hook', () => {
   let consoleErrorSpy: jest.SpyInstance;
 
@@ -667,12 +678,7 @@ describe('useUpsertPublication Hook', () => {
   describe('Creation Flows (Save)', () => {
     it('should successfully create a News publication and return ID', async () => {
       mockCreateNews.mockResolvedValue({ data: { createNews: { id: 'new-news-99' } } });
-      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
-
-      act(() => {
-        result.current.setAdminTitle('Valid News Title');
-        result.current.setSeoValue(createValidSeoState('news'));
-      });
+      const result = setupNewsCreation('Valid News Title');
 
       let returnedId;
       await act(async () => {
@@ -695,12 +701,7 @@ describe('useUpsertPublication Hook', () => {
 
     it('should not fallback to adminTitle for coverImage fields', async () => {
       mockCreateNews.mockResolvedValue({ data: { createNews: { id: 'new-news-100' } } });
-      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
-
-      act(() => {
-        result.current.setAdminTitle('Internal Admin Title');
-        result.current.setSeoValue(createValidSeoState('news'));
-      });
+      const result = setupNewsCreation('Internal Admin Title');
 
       await act(async () => {
         await result.current.handleSave(BaseContentStatuses.Draft);
@@ -726,12 +727,7 @@ describe('useUpsertPublication Hook', () => {
 
     it('should NOT create a News publication and set canonical URL error if the error contains url_1', async () => {
       mockCreateNews.mockRejectedValue(new Error('E11000 url_1'));
-      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
-
-      act(() => {
-        result.current.setAdminTitle('Valid News Title');
-        result.current.setSeoValue(createValidSeoState('news'));
-      });
+      const result = setupNewsCreation('Valid News Title');
 
       await act(async () => {
         await result.current.handleSave(BaseContentStatuses.Draft);
@@ -751,12 +747,7 @@ describe('useUpsertPublication Hook', () => {
 
     it('should NOT create a News publication and show the error toast', async () => {
       mockCreateNews.mockRejectedValue(new Error('Error E11000'));
-      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
-
-      act(() => {
-        result.current.setAdminTitle('Valid News Title');
-        result.current.setSeoValue(createValidSeoState('news'));
-      });
+      const result = setupNewsCreation('Valid News Title');
 
       await act(async () => {
         await result.current.handleSave(BaseContentStatuses.Draft);
@@ -776,12 +767,7 @@ describe('useUpsertPublication Hook', () => {
 
     it('should show generic error toast when error message is empty', async () => {
       mockCreateNews.mockRejectedValue(new Error(''));
-      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
-
-      act(() => {
-        result.current.setAdminTitle('Valid News Title');
-        result.current.setSeoValue(createValidSeoState('news'));
-      });
+      const result = setupNewsCreation('Valid News Title');
 
       await act(async () => {
         await result.current.handleSave(BaseContentStatuses.Draft);
