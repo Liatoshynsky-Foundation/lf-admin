@@ -69,15 +69,35 @@ export default function EditPublicationsPage() {
 
   const handlePreview = async () => {
     const locale = manager.currentLanguage === 'UA' ? 'uk' : 'en';
-    const slug = manager.currentData?.slug;
-
-    if (!slug) {
-      toast.error('Виникла помилка при отриманні даних для попереднього перегляду');
-      console.error('Не вдалося завантажити slug для попереднього перегляду');
-      return;
-    }
 
     try {
+      if (type === 'events' || type === 'news') {
+        const result = await publicationData.handlePreviewSave();
+
+        if (!result?.id || !result?.slug) {
+          toast.error('Виникла помилка підчас публікації для попереднього перегляду');
+          return;
+        }
+
+        await manager.updatePreviewResource(
+          result.id,
+          BaseContentStatuses.Draft,
+          { content: manager.editedContent }
+        );
+
+        const previewSlug = getPreviewSlug({ publicationType: type, dbSlug: result.slug });
+        await fetchPreview({ slug: previewSlug, lang: locale, draftId: result.id });
+        return;
+      }
+
+      const slug = manager.currentData?.slug;
+
+      if (!slug) {
+        toast.error('Виникла помилка при отриманні даних для попереднього перегляду');
+        console.error('Не вдалося завантажити slug для попереднього перегляду');
+        return;
+      }
+
       const currentStatus = (manager.currentData?.status ?? BaseContentStatuses.Draft) as BaseContentStatuses;
 
       const result = await publicationData.handleSave(currentStatus);
