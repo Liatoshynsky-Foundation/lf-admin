@@ -86,6 +86,44 @@ const createValidSeoState = (type: PublicationsItemType): SeoBlockValue => ({
   allowIndexing: { uk: true, en: true }
 });
 
+const setupPublication = (type: PublicationsItemType, adminTitle: string, id?: string) => {
+  const { result } = renderHook(() => useUpsertPublication(id ? { type, id } : { type }));
+
+  act(() => {
+    result.current.setAdminTitle(adminTitle);
+    result.current.setSeoValue(createValidSeoState(type));
+  });
+
+  return result;
+};
+
+const createFetchedNewsData = (overrides: Partial<FetchedPublicationData> = {}): FetchedPublicationData => ({
+  adminTitle: 'Fetched Title',
+  newsDate: '2024-01-01T12:00:00Z',
+  title: { uk: 'UK T', en: 'EN T' },
+  description: { uk: 'UK D', en: 'EN D' },
+  allowIndexation: { uk: true, en: true },
+  coverImage: { src: 'img.png', crop: null, alt: { uk: '', en: '' } },
+  ...overrides
+});
+
+const saveNewsDraftAndExpectCreation = async (result: ReturnType<typeof setupPublication>) => {
+  await act(async () => {
+    await result.current.handleSave(BaseContentStatuses.Draft);
+  });
+
+  expect(mockCreateNews).toHaveBeenCalledWith(
+    expect.objectContaining({
+      adminTitle: 'Valid News Title',
+      status: NewsStatus.Draft,
+      content: {
+        uk: { content: { blocks: [] } },
+        en: { content: { blocks: [] } }
+      }
+    })
+  );
+};
+
 describe('useUpsertPublication Hook', () => {
   let consoleErrorSpy: jest.SpyInstance;
 
@@ -116,14 +154,7 @@ describe('useUpsertPublication Hook', () => {
     });
 
     it('should initialize in Edit mode and populate state from fetched data', async () => {
-      const fetchedNewsData: FetchedPublicationData = {
-        adminTitle: 'Fetched Title',
-        newsDate: '2024-01-01T12:00:00Z',
-        title: { uk: 'UK T', en: 'EN T' },
-        description: { uk: 'UK D', en: 'EN D' },
-        allowIndexation: { uk: true, en: true },
-        coverImage: { src: 'img.png', crop: null, alt: { uk: '', en: '' } }
-      };
+      const fetchedNewsData = createFetchedNewsData();
 
       mockNewsQuery.mockReturnValue({ data: { newsById: fetchedNewsData }, loading: false });
 
@@ -139,14 +170,7 @@ describe('useUpsertPublication Hook', () => {
     });
 
     it('should initialize in Edit mode and populate adminTitle with an empty string', async () => {
-      const fetchedNewsData: FetchedPublicationData = {
-        adminTitle: '',
-        newsDate: '2024-01-01T12:00:00Z',
-        title: { uk: 'UK T', en: 'EN T' },
-        description: { uk: 'UK D', en: 'EN D' },
-        allowIndexation: { uk: true, en: true },
-        coverImage: { src: 'img.png', crop: null, alt: { uk: '', en: '' } }
-      };
+      const fetchedNewsData = createFetchedNewsData({ adminTitle: '' });
 
       mockNewsQuery.mockReturnValue({ data: { newsById: fetchedNewsData }, loading: false });
 
@@ -391,14 +415,7 @@ describe('useUpsertPublication Hook', () => {
       });
 
       it('should parse numeric timestamp string dates', async () => {
-        const fetchedNewsData: FetchedPublicationData = {
-          adminTitle: 'Timestamp News',
-          newsDate: '1704110400000',
-          title: { uk: 'UK T', en: 'EN T' },
-          description: { uk: 'UK D', en: 'EN D' },
-          allowIndexation: { uk: true, en: true },
-          coverImage: { src: 'img.png', crop: null, alt: { uk: '', en: '' } }
-        };
+        const fetchedNewsData = createFetchedNewsData({ adminTitle: 'Timestamp News', newsDate: '1704110400000' });
 
         mockNewsQuery.mockReturnValue({ data: { newsById: fetchedNewsData }, loading: false });
 
@@ -797,12 +814,7 @@ describe('useUpsertPublication Hook', () => {
   describe('Creation Flows (Save)', () => {
     it('should successfully create a News publication and return ID', async () => {
       mockCreateNews.mockResolvedValue({ data: { createNews: { id: 'new-news-99' } } });
-      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
-
-      act(() => {
-        result.current.setAdminTitle('Valid News Title');
-        result.current.setSeoValue(createValidSeoState('news'));
-      });
+      const result = setupPublication('news', 'Valid News Title');
 
       let returnedId;
       await act(async () => {
@@ -823,14 +835,9 @@ describe('useUpsertPublication Hook', () => {
       expect(result.current.canonicalUrlError).toBe('');
     });
 
-    it('should NOT create a News publication and set canonical URL error if the error contains url_1', async () => {
-      mockCreateNews.mockRejectedValue(new Error('E11000 url_1'));
-      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
-
-      act(() => {
-        result.current.setAdminTitle('Valid News Title');
-        result.current.setSeoValue(createValidSeoState('news'));
-      });
+    it('should not fallback to adminTitle for coverImage fields', async () => {
+      mockCreateNews.mockResolvedValue({ data: { createNews: { id: 'new-news-100' } } });
+      const result = setupPublication('news', 'Internal Admin Title');
 
       await act(async () => {
         await result.current.handleSave(BaseContentStatuses.Draft);
@@ -838,11 +845,26 @@ describe('useUpsertPublication Hook', () => {
 
       expect(mockCreateNews).toHaveBeenCalledWith(
         expect.objectContaining({
-          adminTitle: 'Valid News Title',
-          status: NewsStatus.Draft,
-          content: { uk: { content: { blocks: [] } }, en: { content: { blocks: [] } } }
+          adminTitle: 'Internal Admin Title',
+          coverImage: expect.objectContaining({
+            src: '',
+            alt: {
+              uk: '',
+              en: ''
+            },
+            caption: {
+              uk: '',
+              en: ''
+            }
+          })
         })
       );
+    });
+
+    it('should NOT create a News publication and set canonical URL error if the error contains url_1', async () => {
+      mockCreateNews.mockRejectedValue(new Error('E11000 url_1'));
+      const result = setupPublication('news', 'Valid News Title');
+      await saveNewsDraftAndExpectCreation(result);
 
       expect(result.current.canonicalUrlError).toBe('Публікація з таким canonical URL вже існує.');
       expect(mockToastError).not.toHaveBeenCalled();
@@ -850,24 +872,8 @@ describe('useUpsertPublication Hook', () => {
 
     it('should NOT create a News publication and show the error toast', async () => {
       mockCreateNews.mockRejectedValue(new Error('Error E11000'));
-      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
-
-      act(() => {
-        result.current.setAdminTitle('Valid News Title');
-        result.current.setSeoValue(createValidSeoState('news'));
-      });
-
-      await act(async () => {
-        await result.current.handleSave(BaseContentStatuses.Draft);
-      });
-
-      expect(mockCreateNews).toHaveBeenCalledWith(
-        expect.objectContaining({
-          adminTitle: 'Valid News Title',
-          status: NewsStatus.Draft,
-          content: { uk: { content: { blocks: [] } }, en: { content: { blocks: [] } } }
-        })
-      );
+      const result = setupPublication('news', 'Valid News Title');
+      await saveNewsDraftAndExpectCreation(result);
 
       expect(mockToastError).toHaveBeenCalledWith('Публікація з такими даними вже існує.');
       expect(result.current.canonicalUrlError).toBe('');
@@ -875,12 +881,7 @@ describe('useUpsertPublication Hook', () => {
 
     it('should show generic error toast when error message is empty', async () => {
       mockCreateNews.mockRejectedValue(new Error(''));
-      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
-
-      act(() => {
-        result.current.setAdminTitle('Valid News Title');
-        result.current.setSeoValue(createValidSeoState('news'));
-      });
+      const result = setupPublication('news', 'Valid News Title');
 
       await act(async () => {
         await result.current.handleSave(BaseContentStatuses.Draft);
@@ -891,12 +892,7 @@ describe('useUpsertPublication Hook', () => {
 
     it('should successfully create an Event and return ID', async () => {
       mockCreateEvent.mockResolvedValue({ data: { createEvent: { id: 'new-event-77' } } });
-      const { result } = renderHook(() => useUpsertPublication({ type: 'events' }));
-
-      act(() => {
-        result.current.setAdminTitle('Valid Event Title');
-        result.current.setSeoValue(createValidSeoState('events'));
-      });
+      const result = setupPublication('events', 'Valid Event Title');
 
       let returnedId;
       await act(async () => {
@@ -918,13 +914,7 @@ describe('useUpsertPublication Hook', () => {
 
     it('should successfully create Media and return ID', async () => {
       mockCreateMedia.mockResolvedValue({ data: { createMediaMention: { id: 'new-media-77' } } });
-
-      const { result } = renderHook(() => useUpsertPublication({ type: 'media' }));
-
-      act(() => {
-        result.current.setAdminTitle('Valid Media Title');
-        result.current.setSeoValue(createValidSeoState('media'));
-      });
+      const result = setupPublication('media', 'Valid Media Title');
 
       let returnedId;
       await act(async () => {
@@ -1009,13 +999,7 @@ describe('useUpsertPublication Hook', () => {
 
   it('should hit catch block in handleSave when mutation fails', async () => {
     mockCreateNews.mockRejectedValue(new Error('Server Crash'));
-
-    const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
-
-    act(() => {
-      result.current.setAdminTitle('Test');
-      result.current.setSeoValue(createValidSeoState('news'));
-    });
+    const result = setupPublication('news', 'Test');
 
     let returnedId;
     await act(async () => {
@@ -1029,12 +1013,7 @@ describe('useUpsertPublication Hook', () => {
   describe('Update Flows (Edit)', () => {
     it('should successfully update Media and return its ID', async () => {
       mockUpdateMedia.mockResolvedValue({ data: { updateMediaMention: { id: 'media-55' } } });
-      const { result } = renderHook(() => useUpsertPublication({ type: 'media', id: 'media-55' }));
-
-      act(() => {
-        result.current.setAdminTitle('Updated Media Title');
-        result.current.setSeoValue(createValidSeoState('media'));
-      });
+      const result = setupPublication('media', 'Updated Media Title', 'media-55');
 
       let returnedId;
       await act(async () => {
@@ -1057,12 +1036,7 @@ describe('useUpsertPublication Hook', () => {
 
     it('should successfully update Events and return its ID', async () => {
       mockUpdateEvent.mockResolvedValue({ data: { updateEvent: { id: 'events-55', slug: 'event-slug' } } });
-      const { result } = renderHook(() => useUpsertPublication({ type: 'events', id: 'events-55' }));
-
-      act(() => {
-        result.current.setAdminTitle('Updated Event Title');
-        result.current.setSeoValue(createValidSeoState('events'));
-      });
+      const result = setupPublication('events', 'Updated Event Title', 'events-55');
 
       let returnedId;
       await act(async () => {
@@ -1085,12 +1059,7 @@ describe('useUpsertPublication Hook', () => {
 
     it('should successfully update News and return its ID', async () => {
       mockUpdateNews.mockResolvedValue({ data: { updateNews: { id: 'news-55', slug: 'news-slug' } } });
-      const { result } = renderHook(() => useUpsertPublication({ type: 'news', id: 'news-55' }));
-
-      act(() => {
-        result.current.setAdminTitle('Updated News Title');
-        result.current.setSeoValue(createValidSeoState('news'));
-      });
+      const result = setupPublication('news', 'Updated News Title', 'news-55');
 
       let returnedId;
       await act(async () => {
@@ -1128,14 +1097,7 @@ describe('useUpsertPublication Hook', () => {
 
   describe('hasUnsavedChanges', () => {
     it('should be false initially and true after modifying publishDate, and false if reverted to null', async () => {
-      const fetchedNewsData: FetchedPublicationData = {
-        adminTitle: 'Fetched Title',
-        newsDate: null,
-        title: { uk: 'UK', en: 'EN' },
-        description: { uk: 'UK D', en: 'EN D' },
-        allowIndexation: { uk: true, en: true },
-        coverImage: { src: 'img.png', crop: null, alt: { uk: '', en: '' } }
-      };
+      const fetchedNewsData = createFetchedNewsData({ newsDate: null, title: { uk: 'UK', en: 'EN' } });
 
       mockNewsQuery.mockReturnValue({ data: { newsById: fetchedNewsData }, loading: false });
 
@@ -1161,14 +1123,7 @@ describe('useUpsertPublication Hook', () => {
     });
 
     it('should not crash when edited publishDate becomes invalid', async () => {
-      const fetchedNewsData: FetchedPublicationData = {
-        adminTitle: 'Fetched Title',
-        newsDate: '2024-01-01T12:00:00Z',
-        title: { uk: 'UK', en: 'EN' },
-        description: { uk: 'UK D', en: 'EN D' },
-        allowIndexation: { uk: true, en: true },
-        coverImage: { src: 'img.png', crop: null, alt: { uk: '', en: '' } }
-      };
+      const fetchedNewsData = createFetchedNewsData({ title: { uk: 'UK', en: 'EN' } });
 
       mockNewsQuery.mockReturnValue({ data: { newsById: fetchedNewsData }, loading: false });
 
