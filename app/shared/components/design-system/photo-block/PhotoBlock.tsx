@@ -40,6 +40,10 @@ interface ImagePreviewBlockProps extends StackProps {
   previewHeight?: number;
   alignActionsToPreviewBottom?: boolean;
   alternativeTextLabel?: string;
+  alternativeTextRequired?: boolean;
+  fileNameLabel?: string;
+  editImageLabel?: string;
+  changeImageLabel?: string;
 }
 
 export const ImagePreviewBlock = ({
@@ -60,6 +64,10 @@ export const ImagePreviewBlock = ({
   altTextError,
   altTextErrorState,
   alternativeTextLabel,
+  alternativeTextRequired = false,
+  fileNameLabel = 'Назва файлу',
+  editImageLabel = 'Редагувати',
+  changeImageLabel = 'Змінити зображення',
   onBlurAltText,
   disabled = false,
   locale = 'uk',
@@ -212,7 +220,7 @@ export const ImagePreviewBlock = ({
       <Stack spacing={typographySpacing} sx={styles.textStack}>
         <Box sx={styles.fileNameContainer}>
           <Typography variant="body1" sx={{ ...styles.fileNameText, flexShrink: 0 }}>
-            Назва файлу
+            {fileNameLabel}
           </Typography>
           <Typography variant="body1" sx={styles.fileNameText}>
             {displayedFileName}
@@ -243,6 +251,7 @@ export const ImagePreviewBlock = ({
           multiline
           maxRows={2}
           disabled={!previewImage}
+          required={alternativeTextRequired}
           error={altTextErrorState}
           helperText={altTextError}
           slotProps={{ htmlInput: { maxLength: 250 } }}
@@ -262,7 +271,7 @@ export const ImagePreviewBlock = ({
         sx={[styles.imageActionButton, styles.editButton]}
         disabled={disabled || !previewImage}
       >
-        Редагувати
+        {editImageLabel}
       </Button>
 
       <Button
@@ -274,7 +283,7 @@ export const ImagePreviewBlock = ({
         sx={[styles.imageActionButton, styles.changeButton]}
         disabled={disabled}
       >
-        Змінити зображення
+        {changeImageLabel}
       </Button>
     </Stack>
   );

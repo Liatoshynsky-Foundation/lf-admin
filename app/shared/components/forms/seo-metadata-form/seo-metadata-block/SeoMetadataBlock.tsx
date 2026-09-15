@@ -6,7 +6,9 @@ import { useEffect, useState } from 'react';
 import type { LocalizedMeta, SeoFieldsRequired, SeoFormLabels } from '../SeoMetadataForm';
 import SeoMetadataForm from '../SeoMetadataForm';
 import { styles } from '../SeoMetadataForm.styles';
+import { syncAltAcrossLocales } from './syncAltAcrossLocales';
 import { seoFormErrors } from '~/constants/errors';
+import { TICKET_URL_PLACEHOLDER } from '~/constants/publications';
 import { LocalizedCropRect } from '~/types/common';
 
 export interface SeoBlockValue {
@@ -108,19 +110,27 @@ export default function SeoMetadataBlock({
     }
   };
 
-  const handleTicketUrlChange = (locale: 'uk' | 'en', val: string) => {
-    handleChange({ ...value, ticketUrl: { ...(value.ticketUrl ?? { uk: '', en: '' }), [locale]: val } });
+  const handleTicketUrlChange = (_locale: 'uk' | 'en', val: string) => {
+    handleChange({ ...value, ticketUrl: { uk: val, en: val } });
+
     if (isExternalValidation) {
-      setDisplayTicketErrors((previous) => ({ ...previous, [locale]: '' }));
-    } else if (ticketUrlTouched[locale]) {
-      setTicketUrlError((prev) => ({ ...prev, [locale]: validateTicketUrl(val, locale) }));
+      setDisplayTicketErrors({ uk: '', en: '' });
+    } else if (ticketUrlTouched.uk || ticketUrlTouched.en) {
+      setTicketUrlError({
+        uk: validateTicketUrl(val, 'uk'),
+        en: validateTicketUrl(val, 'en')
+      });
     }
   };
 
   const handleTicketUrlBlur = (locale: 'uk' | 'en') => {
     if (isExternalValidation) return;
-    setTicketUrlTouched((prev) => ({ ...prev, [locale]: true }));
-    setTicketUrlError((prev) => ({ ...prev, [locale]: validateTicketUrl(value.ticketUrl?.[locale] ?? '', locale) }));
+    const currentUrl = value.ticketUrl?.[locale] ?? '';
+    setTicketUrlTouched({ uk: true, en: true });
+    setTicketUrlError({
+      uk: validateTicketUrl(currentUrl, 'uk'),
+      en: validateTicketUrl(currentUrl, 'en')
+    });
   };
 
   const buildExtraFields = (
@@ -140,7 +150,7 @@ export default function SeoMetadataBlock({
     return (
       <>
         <TextField
-          label="Ticket URL"
+          label={labels?.[locale]?.ticketUrl ?? 'Ticket URL'}
           value={value.ticketUrl?.[locale] ?? ''}
           onChange={(e) => handleTicketUrlChange(locale, e.target.value)}
           onBlur={() => handleTicketUrlBlur(locale)}
@@ -150,6 +160,7 @@ export default function SeoMetadataBlock({
               : ticketUrlTouched[locale] && Boolean(ticketUrlError[locale])
           }
           helperText={ticketUrlHelperText}
+          placeholder={TICKET_URL_PLACEHOLDER}
           fullWidth
           size="small"
           sx={styles.textField}
@@ -164,7 +175,7 @@ export default function SeoMetadataBlock({
     <Box sx={{ display: 'flex', flexDirection: 'row', gap: '4%', width: '100%' }}>
       <SeoMetadataForm
         value={value.meta.uk}
-        onChange={(newMeta) => handleChange({ ...value, meta: { ...value.meta, uk: newMeta } })}
+        onChange={(newMeta) => handleChange(syncAltAcrossLocales(value, 'uk', newMeta))}
         locale="uk"
         ogImage={value.ogImage}
         onImageChange={(url) => handleChange({ ...value, ogImage: url })}
@@ -176,7 +187,7 @@ export default function SeoMetadataBlock({
         forceShowErrors={forceShowErrors}
         errors={errors?.meta.uk}
         crop={crop?.uk ?? null}
-        onChangeCrop={(newUkCrop) => onChangeCrop?.({ uk: newUkCrop, en: crop?.en ?? null })}
+        onChangeCrop={(newUkCrop) => onChangeCrop?.({ uk: newUkCrop, en: newUkCrop })}
         labels={labels?.uk}
         extraFields={
           showTicketUrl || extraFields
@@ -186,7 +197,7 @@ export default function SeoMetadataBlock({
       />
       <SeoMetadataForm
         value={value.meta.en}
-        onChange={(newMeta) => handleChange({ ...value, meta: { ...value.meta, en: newMeta } })}
+        onChange={(newMeta) => handleChange(syncAltAcrossLocales(value, 'en', newMeta))}
         locale="en"
         ogImage={value.ogImage}
         onImageChange={(url) => handleChange({ ...value, ogImage: url })}
@@ -198,7 +209,7 @@ export default function SeoMetadataBlock({
         forceShowErrors={forceShowErrors}
         errors={errors?.meta.en}
         crop={crop?.en ?? null}
-        onChangeCrop={(newEnCrop) => onChangeCrop?.({ uk: crop?.uk ?? null, en: newEnCrop })}
+        onChangeCrop={(newEnCrop) => onChangeCrop?.({ uk: newEnCrop, en: newEnCrop })}
         labels={labels?.en}
         extraFields={
           showTicketUrl || extraFields

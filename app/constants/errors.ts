@@ -173,7 +173,8 @@ export const seoFormErrors = {
     maxLength: 'Значення не може перевищувати 150 символів.',
     required: 'Обовʼязкове поле.',
     invalidUrl: 'Некоректний URL.',
-    keywords: 'Ключові слова мають бути через кому, без порожніх значень.'
+    keywords: 'Ключові слова мають бути через кому, без порожніх значень.',
+    endBeforeStart: 'Дата кінця не може бути раніше дати початку'
   },
   en: {
     descriptionMaxLength: 'Value must not exceed 250 characters.',
@@ -183,7 +184,8 @@ export const seoFormErrors = {
     maxLength: 'Value must not exceed 150 characters.',
     required: 'Required field.',
     invalidUrl: 'Invalid URL.',
-    keywords: 'Keywords must be comma-separated, without empty values.'
+    keywords: 'Keywords must be comma-separated, without empty values.',
+    endBeforeStart: 'End date cannot be earlier than start date'
   }
 };
 

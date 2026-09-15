@@ -38,6 +38,18 @@ jest.mock('../SeoMetadataForm', () => ({
       <span data-testid={`indexing-${locale}`}>{String(allowIndexing)}</span>
       <span data-testid={`required-${locale}`}>{String(required ?? true)}</span>
       <button onClick={() => onChange({ title: 'test', description: 'desc', keywords: 'kw' })}>change-{locale}</button>
+      <button
+        onClick={() =>
+          onChange({
+            title: value?.title ?? '',
+            description: value?.description ?? '',
+            keywords: value?.keywords ?? '',
+            altText: { uk: `alt-from-${locale}`, en: `alt-from-${locale}` }
+          })
+        }
+      >
+        alt-{locale}
+      </button>
       <button onClick={() => onImageChange('https://example.com/test.png')}>image-{locale}</button>
       <button onClick={() => onIndexingChange(false)}>indexing-{locale}</button>
       <button onClick={() => onChangeCrop?.({ x: 10 })}>crop-{locale}</button>
@@ -123,6 +135,24 @@ describe('SeoMetadataBlock', () => {
     );
   });
 
+  it.each(locales)('syncs altText across both meta locales when %s alt changes', (locale) => {
+    const onChange = jest.fn();
+    renderBlock({ value: controlledValue, onChange });
+    clickButton(`alt-${locale}`);
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        meta: {
+          uk: expect.objectContaining({
+            altText: { uk: `alt-from-${locale}`, en: `alt-from-${locale}` }
+          }),
+          en: expect.objectContaining({
+            altText: { uk: `alt-from-${locale}`, en: `alt-from-${locale}` }
+          })
+        }
+      })
+    );
+  });
+
   it('renders extraFields for both locales when provided', () => {
     renderBlock({ extraFields: (locale: string) => <span>extra-{locale}</span> });
     locales.forEach((locale) => {
@@ -194,12 +224,12 @@ describe('SeoMetadataBlock', () => {
     clickButton('crop-uk');
     expect(onChangeCropMock).toHaveBeenCalledWith({
       uk: { x: 10 },
-      en: null
+      en: { x: 10 }
     });
 
     clickButton('crop-en');
     expect(onChangeCropMock).toHaveBeenCalledWith({
-      uk: { x: 1, y: 1, width: 10, height: 10 },
+      uk: { x: 10 },
       en: { x: 10 }
     });
   });
@@ -214,12 +244,12 @@ describe('SeoMetadataBlock', () => {
     clickButton('crop-uk');
     expect(onChangeCropMock).toHaveBeenCalledWith({
       uk: { x: 10 },
-      en: { x: 2, y: 2, width: 20, height: 20 }
+      en: { x: 10 }
     });
 
     clickButton('crop-en');
     expect(onChangeCropMock).toHaveBeenCalledWith({
-      uk: { x: 1, y: 1, width: 10, height: 10 },
+      uk: { x: 10 },
       en: { x: 10 }
     });
   });
@@ -231,12 +261,12 @@ describe('SeoMetadataBlock', () => {
     clickButton('crop-uk');
     expect(onChangeCropMock).toHaveBeenCalledWith({
       uk: { x: 10 },
-      en: null
+      en: { x: 10 }
     });
 
     clickButton('crop-en');
     expect(onChangeCropMock).toHaveBeenCalledWith({
-      uk: null,
+      uk: { x: 10 },
       en: { x: 10 }
     });
   });
@@ -262,7 +292,7 @@ describe('SeoMetadataBlock', () => {
       })
     );
   });
-  it('handles typing and blurring ticketUrl in en locale when uk ticketUrl is defined', () => {
+  it('syncs ticketUrl to both locales when typing in en', () => {
     const onChangeMock = jest.fn();
     renderBlock({
       showTicketUrl: true,
@@ -279,7 +309,7 @@ describe('SeoMetadataBlock', () => {
 
     expect(onChangeMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        ticketUrl: { uk: 'https://uk-tickets.com', en: 'https://en-tickets.com' }
+        ticketUrl: { uk: 'https://en-tickets.com', en: 'https://en-tickets.com' }
       })
     );
   });
@@ -365,7 +395,7 @@ describe('SeoMetadataBlock', () => {
 
     expect(onChangeMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        ticketUrl: { uk: 'https://new-uk.com', en: '' }
+        ticketUrl: { uk: 'https://new-uk.com', en: 'https://new-uk.com' }
       })
     );
   });
