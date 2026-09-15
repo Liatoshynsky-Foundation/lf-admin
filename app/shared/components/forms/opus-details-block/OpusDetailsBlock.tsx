@@ -11,6 +11,7 @@ import type { OpusDetailsErrors, OpusDetailsValue } from '~/types/opus';
 interface OpusDetailsBlockProps {
   value: OpusDetailsValue;
   onChange: (updater: (prev: OpusDetailsValue) => OpusDetailsValue) => void;
+  handleBlur: (field: 'number' | 'name' | 'creationYear', value: string) => void;
   errors: OpusDetailsErrors;
   compositionErrors?: Record<string, string>;
 }
@@ -18,6 +19,7 @@ interface OpusDetailsBlockProps {
 export default function OpusDetailsBlock({
   value,
   onChange,
+  handleBlur,
   errors,
   compositionErrors
 }: Readonly<OpusDetailsBlockProps>) {
@@ -46,6 +48,7 @@ export default function OpusDetailsBlock({
           label={`${OPUS_DETAILS_LABELS.number} *`}
           value={value.number}
           onChange={(event) => updateField('number', event.target.value)}
+          onBlur={(event) => handleBlur('number', event.target.value)}
           error={Boolean(errors.number)}
           helperText={errors.number}
           sx={styles.numberField}
@@ -65,6 +68,7 @@ export default function OpusDetailsBlock({
         label={`${OPUS_DETAILS_LABELS.name} *`}
         value={value.name}
         onChange={(event) => updateField('name', event.target.value)}
+        onBlur={(event) => handleBlur('name', event.target.value)}
         error={Boolean(errors.name)}
         helperText={errors.name}
         sx={styles.titleField}
