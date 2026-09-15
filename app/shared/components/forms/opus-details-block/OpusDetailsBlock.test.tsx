@@ -92,7 +92,7 @@ const Harness = ({
 }): ReactElement => {
   const [value, setValue] = useState<OpusDetailsValue>(initial);
 
-  return <OpusDetailsBlock value={value} onChange={setValue} errors={errors} />;
+  return <OpusDetailsBlock value={value} onChange={setValue} handleBlur={jest.fn()} errors={errors} />;
 };
 
 describe('OpusDetailsBlock', () => {

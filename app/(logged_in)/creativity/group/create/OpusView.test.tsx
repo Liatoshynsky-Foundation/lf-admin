@@ -60,6 +60,7 @@ const createMockData = (
   isLoading: false,
   details: initialOpusDetails,
   setDetails: jest.fn(),
+  handleDetailsFieldBlur: jest.fn(),
   detailsErrors: { number: '', name: '', creationYear: '' },
   compositionErrors: {},
   seoValue: initialOpusSeoValue,
